@@ -164,6 +164,7 @@ HEADERS += src/qt/bitcoingui.h \
     src/ui_interface.h \
     src/scrypt.h \
     src/qt/miningpage.h \
+    src/version.h \
     src/qt/rpcconsole.h
 
 SOURCES += src/qt/bitcoin.cpp src/qt/bitcoingui.cpp \
@@ -356,3 +357,4 @@ contains(RELEASE, 1) {
 }
 
 system($$QMAKE_LRELEASE -silent $$_PRO_FILE_)
+
