@@ -85,7 +85,7 @@ void ipcInit()
     try {
         mq = new message_queue(open_or_create, BITCOINURI_QUEUE_NAME, 2, MAX_URI_LENGTH);
 
-        // Make sure we don't lose any bitcoin: URIs
+        // Make sure we don't lose any litecoin: URIs
         for (int i = 0; i < 2; i++)
         {
             ptime d = boost::posix_time::microsec_clock::universal_time() + millisec(1);
@@ -97,7 +97,7 @@ void ipcInit()
                 break;
         }
 
-        // Make sure only one bitcoin instance is listening
+        // Make sure only one litecoin instance is listening
         message_queue::remove(BITCOINURI_QUEUE_NAME);
         delete mq;
 

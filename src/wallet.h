@@ -186,7 +186,9 @@ public:
     bool IsMine(const CTransaction& tx) const
     {
         BOOST_FOREACH(const CTxOut& txout, tx.vout)
-            if (IsMine(txout))
+            // If output is less than minimum value, then don't include transaction.
+            // This is to help deal with dust spam bloating the wallet.
+            if (IsMine(txout) && txout.nValue >= nMinimumInputValue)
                 return true;
         return false;
     }
