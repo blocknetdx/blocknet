@@ -71,7 +71,7 @@ OBJS= \
 all: litecoind.exe
 
 obj/scrypt.o: scrypt.c
-	gcc -c -o $@ $^
+	gcc -c $(CFLAGS) -o $@ $^
 
 obj/%.o: %.cpp $(HEADERS)
 	g++ -c $(CFLAGS) -o $@ $<
