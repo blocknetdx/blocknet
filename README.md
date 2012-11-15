@@ -35,4 +35,4 @@ Issues with no commits will be given a similar warning, and closed after
 15 days from their last activity. Issues closed in this manner will be 
 labeled 'stale'. 
 
-Check out http://forum.litecoin.net/index.php/board,2.0.html for more info om the development.
+Check out http://forum.litecoin.net/index.php/board,2.0.html for more info about the development.
