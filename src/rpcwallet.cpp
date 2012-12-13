@@ -830,6 +830,7 @@ struct tallyitem
 {
     int64 nAmount;
     int nConf;
+    vector<uint256> txids;
     tallyitem()
     {
         nAmount = 0;
@@ -871,6 +872,7 @@ Value ListReceived(const Array& params, bool fByAccounts)
             tallyitem& item = mapTally[address];
             item.nAmount += txout.nValue;
             item.nConf = min(item.nConf, nDepth);
+            item.txids.push_back(wtx.GetHash());
         }
     }
 
@@ -906,6 +908,12 @@ Value ListReceived(const Array& params, bool fByAccounts)
             obj.push_back(Pair("account",       strAccount));
             obj.push_back(Pair("amount",        ValueFromAmount(nAmount)));
             obj.push_back(Pair("confirmations", (nConf == std::numeric_limits<int>::max() ? 0 : nConf)));
+            Array transactions;
+            BOOST_FOREACH(const uint256& item, (*it).second.txids)
+            {
+                transactions.push_back(item.GetHex());
+            }
+            obj.push_back(Pair("txids", transactions));
             ret.push_back(obj);
         }
     }
