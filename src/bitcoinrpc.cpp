@@ -1,6 +1,6 @@
 // Copyright (c) 2010 Satoshi Nakamoto
 // Copyright (c) 2009-2012 The Bitcoin developers
-// Copyright (c) 2011-2012 Litecoin Developers
+// Copyright (c) 2011-2012 The Litecoin Developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -65,7 +65,6 @@ Object JSONRPCError(int code, const string& message)
     error.push_back(Pair("message", message));
     return error;
 }
-
 void RPCTypeCheck(const Array& params,
                   const list<Value_type>& typesExpected)
 {
@@ -85,7 +84,6 @@ void RPCTypeCheck(const Array& params,
         i++;
     }
 }
-
 void RPCTypeCheck(const Object& o,
                   const map<string, Value_type>& typesExpected)
 {
@@ -227,12 +225,7 @@ Object blockToJSON(const CBlock& block, const CBlockIndex* blockindex)
     return result;
 }
 
-
-
-
-///
 /// Note: This interface may still be subject to change.
-///
 
 string CRPCTable::help(string strCommand) const
 {
@@ -293,7 +286,7 @@ Value stop(const Array& params, bool fHelp)
             "Stop Litecoin server.");
     // Shutdown will take long enough that the response should get back
     StartShutdown();
-    return "Litecoin server stopping";
+    return "Litecoin server has now stopped running!";
 }
 
 
