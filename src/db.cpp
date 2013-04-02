@@ -104,6 +104,28 @@ bool CDBEnv::Open(boost::filesystem::path pathEnv_)
     if (ret > 0)
         return error("CDB() : error %d opening database environment", ret);
 
+    // Check that the number of locks is sufficient
+    u_int32_t nMaxLocks;
+    if (!dbenv.get_lk_max_locks(&nMaxLocks))
+    {
+	int nBlocks, nDeepReorg;
+	std::string strMessage;
+
+	nBlocks = nMaxLocks / 48768;
+	nDeepReorg = (nBlocks - 1) / 2;
+	printf("Final lk_max_locks is %lu, sufficient for (worst case) %d block%s in a single transaction (up to a %d-deep reorganization)\n", (unsigned long)nMaxLocks, nBlocks, (nBlocks == 1) ? "" : "s", nDeepReorg);
+	if (nDeepReorg < 3)
+	{
+	    if (nBlocks < 1)
+		strMessage = strprintf(_("Warning: DB_CONFIG has set_lk_max_locks %lu, which may be too low for a single block. If this limit is reached, Bitcoin may stop working."), (unsigned long)nMaxLocks);
+	    else
+		strMessage = strprintf(_("Warning: DB_CONFIG has set_lk_max_locks %lu, which may be too low for a common blockchain reorganization. If this limit is reached, Bitcoin may stop working."), (unsigned long)nMaxLocks);
+
+	    strMiscWarning = strMessage;
+	    printf("*** %s\n", strMessage.c_str());
+	}
+    }
+
     fDbEnvInit = true;
     return true;
 }
