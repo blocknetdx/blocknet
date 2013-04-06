@@ -2,16 +2,28 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <openssl/ecdsa.h>
 #include <openssl/rand.h>
-#include <openssl/obj_mac.h>
 
 #include "key.h"
 
+#ifdef USE_SECP256K1
+#include <secp256k1.h>
+class CSecp256k1Init {
+public:
+    CSecp256k1Init() {
+        secp256k1_start();
+    }
+    ~CSecp256k1Init() {
+        secp256k1_stop();
+    }
+};
+static CSecp256k1Init instance_of_csecp256k1;
 
+#else
+#include <openssl/obj_mac.h>
+#include <openssl/ecdsa.h>
 // anonymous namespace with local implementation code (OpenSSL interaction)
 namespace {
-
 // Generate a private key from just the secret parameter
 int EC_KEY_regenerate_key(EC_KEY *eckey, BIGNUM *priv_key)
 {
@@ -255,8 +267,8 @@ public:
         return ret;
     }
 };
-
 }; // end of anonymous namespace
+#endif
 
 bool CKey::Check(const unsigned char *vch) {
     // Do not convert to OpenSSL's data structures for range-checking keys,
@@ -291,10 +303,15 @@ void CKey::MakeNewKey(bool fCompressedIn) {
 }
 
 bool CKey::SetPrivKey(const CPrivKey &privkey, bool fCompressedIn) {
+#ifdef USE_SECP256K1
+    if (!secp256k1_ecdsa_privkey_import((unsigned char*)begin(), &privkey[0], privkey.size()))
+        return false;
+#else
     CECKey key;
     if (!key.SetPrivKey(privkey))
         return false;
     key.GetSecretBytes(vch);
+#endif
     fCompressed = fCompressedIn;
     fValid = true;
     return true;
@@ -302,39 +319,77 @@ bool CKey::SetPrivKey(const CPrivKey &privkey, bool fCompressedIn) {
 
 CPrivKey CKey::GetPrivKey() const {
     assert(fValid);
+    CPrivKey privkey;
+#ifdef USE_SECP256K1
+    privkey.resize(279);
+    int privkeylen = 279;
+    int ret = secp256k1_ecdsa_privkey_export(begin(), (unsigned char*)&privkey[0], &privkeylen, fCompressed);
+    assert(ret);
+    privkey.resize(privkeylen);
+#else
     CECKey key;
     key.SetSecretBytes(vch);
-    CPrivKey privkey;
     key.GetPrivKey(privkey, fCompressed);
+#endif
     return privkey;
 }
 
 CPubKey CKey::GetPubKey() const {
     assert(fValid);
+    CPubKey pubkey;
+#ifdef USE_SECP256K1
+    int clen = 65;
+    int ret = secp256k1_ecdsa_pubkey_create((unsigned char*)pubkey.begin(), &clen, begin(), fCompressed);
+    assert(ret);
+    assert(pubkey.IsValid());
+    assert((int)pubkey.size() == clen);
+#else
     CECKey key;
     key.SetSecretBytes(vch);
-    CPubKey pubkey;
     key.GetPubKey(pubkey, fCompressed);
+#endif
     return pubkey;
 }
 
 bool CKey::Sign(const uint256 &hash, std::vector<unsigned char>& vchSig) const {
     if (!fValid)
         return false;
+#ifdef USE_SECP256K1
+    vchSig.resize(72);
+    int nSigLen = 72;
+    CKey nonce;
+    do {
+        nonce.MakeNewKey(true);
+        if (secp256k1_ecdsa_sign((const unsigned char*)&hash, 32, (unsigned char*)&vchSig[0], &nSigLen, begin(), nonce.begin()))
+            break;
+    } while(true);
+    vchSig.resize(nSigLen);
+    return true;
+#else
     CECKey key;
     key.SetSecretBytes(vch);
     return key.Sign(hash, vchSig);
+#endif
 }
 
 bool CKey::SignCompact(const uint256 &hash, std::vector<unsigned char>& vchSig) const {
     if (!fValid)
         return false;
-    CECKey key;
-    key.SetSecretBytes(vch);
     vchSig.resize(65);
     int rec = -1;
+#ifdef USE_SECP256K1
+    CKey nonce;
+    do {
+        nonce.MakeNewKey(true);
+        if (secp256k1_ecdsa_sign_compact((const unsigned char*)&hash, 32, &vchSig[1], begin(), nonce.begin(), &rec))
+            break;
+    } while(true);
+#else
+    CECKey key;
+    key.SetSecretBytes(vch);
     if (!key.SignCompact(hash, &vchSig[1], rec))
         return false;
+#endif
     assert(rec != -1);
     vchSig[0] = 27 + rec + (fCompressed ? 4 : 0);
     return true;
@@ -343,21 +398,35 @@ bool CKey::SignCompact(const uint256 &hash, std::vector<unsigned char>& vchSig) 
 bool CPubKey::Verify(const uint256 &hash, const std::vector<unsigned char>& vchSig) const {
     if (!IsValid())
         return false;
+#ifdef USE_SECP256K1
+    if (secp256k1_ecdsa_verify((const unsigned char*)&hash, 32, &vchSig[0], vchSig.size(), begin(), size()) != 1)
+        return false;
+#else
     CECKey key;
     if (!key.SetPubKey(*this))
         return false;
     if (!key.Verify(hash, vchSig))
         return false;
+#endif
     return true;
 }
 
 bool CPubKey::RecoverCompact(const uint256 &hash, const std::vector<unsigned char>& vchSig) {
     if (vchSig.size() != 65)
         return false;
-    CECKey key;
-    if (!key.Recover(hash, &vchSig[1], (vchSig[0] - 27) & ~4))
+    int recid = (vchSig[0] - 27) & 3;
+    bool fComp = (vchSig[0] - 27) & 4;
+#ifdef USE_SECP256K1
+    int pubkeylen = 65;
+    if (!secp256k1_ecdsa_recover_compact((const unsigned char*)&hash, 32, &vchSig[1], (unsigned char*)begin(), &pubkeylen, fComp, recid))
         return false;
-    key.GetPubKey(*this, (vchSig[0] - 27) & 4);
+    assert((int)size() == pubkeylen);
+#else
+    CECKey key;
+    if (!key.Recover(hash, &vchSig[1], recid))
+        return false;
+    key.GetPubKey(*this, fComp);
+#endif
     return true;
 }
 
@@ -366,11 +435,20 @@ bool CPubKey::VerifyCompact(const uint256 &hash, const std::vector<unsigned char
         return false;
     if (vchSig.size() != 65)
         return false;
-    CECKey key;
-    if (!key.Recover(hash, &vchSig[1], (vchSig[0] - 27) & ~4))
-        return false;
+    int recid = (vchSig[0] - 27) & 3;
+    bool fComp = IsCompressed();
     CPubKey pubkeyRec;
+#ifdef USE_SECP256K1
+    int pubkeylen = 65;
+    if (!secp256k1_ecdsa_recover_compact((const unsigned char*)&hash, 32, &vchSig[1], (unsigned char*)&pubkeyRec[0], &pubkeylen, fComp, recid))
+        return false;
+    assert((int)pubkeyRec.size() == pubkeylen);
+#else
+    CECKey key;
+    if (!key.Recover(hash, &vchSig[1], recid))
+        return false;
     key.GetPubKey(pubkeyRec, IsCompressed());
+#endif
     if (*this != pubkeyRec)
         return false;
     return true;
@@ -379,18 +457,30 @@ bool CPubKey::VerifyCompact(const uint256 &hash, const std::vector<unsigned char
 bool CPubKey::IsFullyValid() const {
     if (!IsValid())
         return false;
+#ifdef USE_SECP256K1
+    if (!secp256k1_ecdsa_pubkey_verify(begin(), size()))
+        return false;
+#else
     CECKey key;
     if (!key.SetPubKey(*this))
         return false;
+#endif
     return true;
 }
 
 bool CPubKey::Decompress() {
     if (!IsValid())
         return false;
+#ifdef USE_SECP256K1
+    int clen = size();
+    int ret = secp256k1_ecdsa_pubkey_decompress((unsigned char*)begin(), &clen);
+    assert(ret);
+    assert(clen == (int)size());
+#else
     CECKey key;
     if (!key.SetPubKey(*this))
         return false;
     key.GetPubKey(*this, false);
+#endif
     return true;
 }
