@@ -94,6 +94,7 @@ OBJS= \
     obj/rpcblockchain.o \
     obj/rpcrawtransaction.o \
     obj/script.o \
+    obj/scrypt.o \
     obj/sync.o \
     obj/util.o \
     obj/wallet.o \
@@ -137,6 +138,13 @@ leveldb/libleveldb.a:
 # auto-generated dependencies:
 -include obj/*.P
 -include obj-test/*.P
+
+obj/scrypt.o: scrypt.c
+	gcc -c $(CFLAGS) -MMD -o $@ $<
+	@cp $(@:%.o=%.d) $(@:%.o=%.P); \
+	  sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
+	      -e '/^$$/ d' -e 's/$$/ :/' < $(@:%.o=%.d) >> $(@:%.o=%.P); \
+	  rm -f $(@:%.o=%.d)
 
 obj/build.h: FORCE
 	/bin/sh ../share/genbuild.sh obj/build.h
