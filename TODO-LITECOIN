@@ -1,0 +1,10 @@
+TODO:
+- src/net.cpp - Add a second testnet DNS seed.
+- src/net.cpp - Regenerate the pnSeed table.
+- Investigate if we want this reduced free bytes https://github.com/coblee/litecoin-old/commit/332adc52190d079ccc3a6da0457ad2a494fc3866
+- src/init.cpp         "\n" + _("SSL options: (see the Litecoin Wiki for SSL setup instructions)") + "\n" +
+- doc/release-process.txt - Rewrite for Litecoin!!!!
+- Artwork
+   splash.png needs rework
+   splash_testnet.png missing
+   about needs rework
