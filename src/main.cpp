@@ -2235,6 +2235,8 @@ bool CBlock::AcceptBlock(CValidationState &state, CDiskBlockPos *dbp)
 
 bool CBlockIndex::IsSuperMajority(int minVersion, const CBlockIndex* pstart, unsigned int nRequired, unsigned int nToCheck)
 {
+    // Litecoin: temporarily disable v2 block lockin until we are ready for v2 transition
+    return false;
     unsigned int nFound = 0;
     for (unsigned int i = 0; i < nToCheck && nFound < nRequired && pstart != NULL; i++)
     {
@@ -4157,10 +4159,6 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
     unsigned int nBlockMaxSize = GetArg("-blockmaxsize", MAX_BLOCK_SIZE_GEN/5);
     // Limit to betweeen 1K and MAX_BLOCK_SIZE-1K for sanity:
     nBlockMaxSize = std::max((unsigned int)1000, std::min((unsigned int)(MAX_BLOCK_SIZE-1000), nBlockMaxSize));
-
-    // Special compatibility rule before 15 July: limit size to 250,000 bytes:
-    if (GetAdjustedTime() < 1373846400)
-        nBlockMaxSize = std::min(nBlockMaxSize, (unsigned int)(MAX_BLOCK_SIZE_GEN/4));
 
     // How much of the block should be dedicated to high-priority transactions,
     // included regardless of the fees they pay
