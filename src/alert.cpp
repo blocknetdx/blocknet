@@ -270,6 +270,7 @@ bool CAlert::ProcessAlert(bool fThread)
 
 
 bool fLargeWorkForkFound = false;
+bool fLargeWorkInvalidChainFound = false;
 CBlockIndex *pindexBestForkTip = NULL, *pindexBestForkBase = NULL;
 
 void CheckForkWarningConditions()
@@ -286,15 +287,30 @@ void CheckForkWarningConditions()
             std::string strCmd = GetArg("-alertnotify", "");
             if (!strCmd.empty())
             {
-                std::string warning("'Warning: Large-work fork detected. You may need to upgrade, or other nodes may need to upgrade.'");
+                std::string warning = std::string("'Warning: Large-work fork detected, forking after block ") +
+                                      pindexBestForkBase->phashBlock->ToString() + std::string("'");
                 boost::replace_all(strCmd, "%s", warning);
                 boost::thread t(runCommand, strCmd); // thread runs free
             }
         }
-        fLargeWorkForkFound = true;
-        printf("CheckForkWarningConditions: Warning: Displayed transactions may not be correct! You may need to upgrade, or other nodes may need to upgrade.\n");
-    } else
+        if (pindexBestForkTip)
+        {
+            printf("CheckForkWarningConditions: Warning: Large valid fork found\n  forking the chain at height %d (%s)\n  lasting to height %d (%s).\n",
+                   pindexBestForkBase->nHeight, pindexBestForkBase->phashBlock->ToString().c_str(),
+                   pindexBestForkTip->nHeight, pindexBestForkTip->phashBlock->ToString().c_str());
+            fLargeWorkForkFound = true;
+        }
+        else
+        {
+            printf("CheckForkWarningConditions: Warning: Found invalid chain at least ~6 blocks longer than our best chain.\n");
+            fLargeWorkInvalidChainFound = true;
+        }
+    }
+    else
+    {
         fLargeWorkForkFound = false;
+        fLargeWorkInvalidChainFound = false;
+    }
 }
 
 void CheckForkWarningConditionsOnNewFork(CBlockIndex* pindexNewForkTip)

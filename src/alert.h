@@ -101,6 +101,7 @@ public:
 };
 
 extern bool fLargeWorkForkFound;
+extern bool fLargeWorkInvalidChainFound;
 void CheckForkWarningConditions();
 void CheckForkWarningConditionsOnNewFork(CBlockIndex* pindexNewForkTip);
 
