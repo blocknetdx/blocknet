@@ -1108,7 +1108,7 @@ void ThreadMapPort()
             }
         }
 
-        string strDesc = "Bitcoin " + FormatFullVersion();
+        string strDesc = "Litecoin " + FormatFullVersion();
 
         try {
             loop {
