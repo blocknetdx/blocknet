@@ -8,3 +8,5 @@ TODO:
    splash.png needs rework
    splash_testnet.png missing
    about needs rework
+- Investigate change behavior.  Does Litecoin currently create change outputs below 0.01 in size thus increasing the required fee?
+  If so we might be better off throwing that change directly into fee. See IsDust()
