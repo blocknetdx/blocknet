@@ -71,7 +71,7 @@ int64 nHPSTimerStart = 0;
 
 // Settings
 int64 nTransactionFee = 0;
-int64 nMinimumInputValue = CENT / 100;
+int64 nMinimumInputValue = DUST_HARD_LIMIT;
 
 
 
@@ -618,9 +618,9 @@ int64 CTransaction::GetMinFee(unsigned int nBlockSize, bool fAllowFree,
     }
 
     // Litecoin
-    // To limit dust spam, add nBaseFee for each output less than 0.01
+    // To limit dust spam, add nBaseFee for each output less than DUST_SOFT_LIMIT
     BOOST_FOREACH(const CTxOut& txout, vout)
-        if (txout.nValue < 0.01)
+        if (txout.nValue < DUST_SOFT_LIMIT)
             nMinFee += nBaseFee;
 
     // Raise the price as the block approaches full
@@ -2095,7 +2095,7 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
         }
         size_t nTxids = setTxIn.size();
         if (nTxids > 4500)
-            return error("CheckBlock() : 15 May maxlocks violation");
+            return error("CheckBlock() : 15 July maxlocks violation");
     }
 
     // Check proof of work matches claimed amount
@@ -4157,7 +4157,7 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
     pblocktemplate->vTxSigOps.push_back(-1); // updated at end
 
     // Largest block you're willing to create:
-    unsigned int nBlockMaxSize = GetArg("-blockmaxsize", MAX_BLOCK_SIZE_GEN/5);
+    unsigned int nBlockMaxSize = GetArg("-blockmaxsize", MAX_BLOCK_SIZE_GEN/4);
     // Limit to betweeen 1K and MAX_BLOCK_SIZE-1K for sanity:
     nBlockMaxSize = std::max((unsigned int)1000, std::min((unsigned int)(MAX_BLOCK_SIZE-1000), nBlockMaxSize));
 
