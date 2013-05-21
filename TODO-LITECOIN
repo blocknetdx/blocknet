@@ -3,10 +3,11 @@ TODO:
 - src/net.cpp - Regenerate the pnSeed table.
 - Investigate if we want this reduced free bytes https://github.com/coblee/litecoin-old/commit/332adc52190d079ccc3a6da0457ad2a494fc3866
 - src/init.cpp         "\n" + _("SSL options: (see the Litecoin Wiki for SSL setup instructions)") + "\n" +
+                       Add this to Litecoin Wiki so the doc is not lying?  Just copy the relevant info from Bitcoin wiki.
 - doc/release-process.txt - Rewrite for Litecoin!!!!
 - Artwork
    splash.png needs rework
    splash_testnet.png missing
    about needs rework
-- Investigate change behavior.  Does Litecoin currently create change outputs below 0.01 in size thus increasing the required fee?
-  If so we might be better off throwing that change directly into fee. See IsDust()
+- Investigate change behavior.  Does Litecoin currently create change outputs below 0.01?
+  If so we might be better off throwing that change directly into fee.
