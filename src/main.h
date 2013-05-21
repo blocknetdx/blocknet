@@ -46,7 +46,7 @@ static const unsigned int UNDOFILE_CHUNK_SIZE = 0x100000; // 1 MiB
 /** Fake height value used in CCoins to signify they are only in the memory pool (since 0.8) */
 static const unsigned int MEMPOOL_HEIGHT = 0x7FFFFFFF;
 /** Default minimum fee per KB for reference clients */
-static const int64 STANDARD_TX_FEE = 10000000;
+static const int64 STANDARD_KB_FEE = 10000000;
 /** Dust Soft Limit, allowed with additional fee per output */
 static const int64 DUST_SOFT_LIMIT = 0.01;
 /** Dust Hard Limit, blocked from relay/mining, ignored as wallet inputs */
