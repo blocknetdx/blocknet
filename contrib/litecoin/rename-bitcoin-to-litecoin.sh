@@ -10,6 +10,10 @@ for regex in $PROTECT; do sed -i "$regex" *.ts; done
 REPLACE="s/bitcoin/litecoin/g s/Bitcoin/Litecoin/g s/BITCOIN/LITECOIN/g"
 for regex in $REPLACE; do sed -i "$regex" *.ts; done
 
+# Cyrillic languages prefer Litecoin instead of Лайткоин
+REPLACE="s/Биткоин/Litecoin/g"
+for regex in $REPLACE; do sed -i "$regex" *.ts; done
+
 UNPROTECT="s/FoobarGUI/BitcoinGUI/ s/foobar.cpp/bitcoin.cpp/ s/foobargui.cpp/bitcoingui.cpp/ s/foobar-core/bitcoin-core/ s/foobarstrings.cpp/bitcoinstrings.cpp/ s/foobargui.cpp/bitcoingui.cpp/"
 for regex in $UNPROTECT; do sed -i "$regex" *.ts; done
 
