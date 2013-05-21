@@ -371,7 +371,15 @@ bool CTxOut::IsDust() const
     // need a CTxIn of at least 148 bytes to spend,
     // so dust is a txout less than 54 uBTC
     // (5430 satoshis) with default nMinRelayTxFee
-    return ((nValue*1000)/(3*((int)GetSerializeSize(SER_DISK,0)+148)) < CTransaction::nMinRelayTxFee);
+    //return ((nValue*1000)/(3*((int)GetSerializeSize(SER_DISK,0)+148)) < CTransaction::nMinRelayTxFee);
+    
+    // Bitcoin's IsDust formula above doesn't make sense in the context
+    // of Litecoin's standard kb fee that is added for each per-txo that 
+    // is of an amount below DUST_SOFT_LIMIT.  Since mininput already 
+    // ignores inputs below DUST_HARD_LIMIT, we might as well make that
+    // the threshold below which we consider to be dust that is not 
+    // worthwhile to accept by standard clients.
+    return nValue < nMinimumInputValue;
 }
 
 bool CTransaction::IsStandard() const
