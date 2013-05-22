@@ -14,6 +14,14 @@ for regex in $REPLACE; do sed -i "$regex" *.ts; done
 REPLACE="s/Биткоин/Litecoin/g"
 for regex in $REPLACE; do sed -i "$regex" *.ts; done
 
+# Chinese Simplified 比特币 and 位元币 => 莱特币
+REPLACE="s/比特币/莱特币/g s/位元币/莱特幣/g"
+for regex in $REPLACE; do sed -i "$regex" bitcoin_zh_CN.ts; done
+
+# Chinese Traditional 比特幣 and 位元幣 => 莱特幣
+REPLACE="s/比特幣/莱特幣/g s/位元幣/莱特幣/g"
+for regex in $REPLACE; do sed -i "$regex" bitcoin_zh_TW.ts; done
+
 UNPROTECT="s/FoobarGUI/BitcoinGUI/ s/foobar.cpp/bitcoin.cpp/ s/foobargui.cpp/bitcoingui.cpp/ s/foobar-core/bitcoin-core/ s/foobarstrings.cpp/bitcoinstrings.cpp/ s/foobargui.cpp/bitcoingui.cpp/"
 for regex in $UNPROTECT; do sed -i "$regex" *.ts; done
 
