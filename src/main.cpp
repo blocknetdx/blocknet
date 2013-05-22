@@ -363,23 +363,9 @@ unsigned int LimitOrphanTxSize(unsigned int nMaxOrphans)
 
 bool CTxOut::IsDust() const
 {
-    // "Dust" is defined in terms of CTransaction::nMinRelayTxFee,
-    // which has units satoshis-per-kilobyte.
-    // If you'd pay more than 1/3 in fees
-    // to spend something, then we consider it dust.
-    // A typical txout is 33 bytes big, and will
-    // need a CTxIn of at least 148 bytes to spend,
-    // so dust is a txout less than 54 uBTC
-    // (5430 satoshis) with default nMinRelayTxFee
-    //return ((nValue*1000)/(3*((int)GetSerializeSize(SER_DISK,0)+148)) < CTransaction::nMinRelayTxFee);
-    
-    // Bitcoin's IsDust formula above doesn't make sense in the context
-    // of Litecoin's standard kb fee that is added for each per-txo that 
-    // is of an amount below DUST_SOFT_LIMIT.  Since mininput already 
-    // ignores inputs below DUST_HARD_LIMIT, we might as well make that
-    // the threshold below which we consider to be dust that is not 
-    // worthwhile to accept by standard clients.
-    return nValue < nMinimumInputValue;
+    // Litecoin: IsDust() detection disabled, allows any valid dust to be relayed.
+    // The fees imposed on each dust txo is considered sufficient spam deterrant. 
+    return false;
 }
 
 bool CTransaction::IsStandard() const
