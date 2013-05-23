@@ -101,9 +101,6 @@ DEFS += -I"$(CURDIR)/leveldb/helpers"
 leveldb/libleveldb.a:
 	@echo "Building LevelDB ..." && cd leveldb && TARGET_OS=OS_WINDOWS_CROSSCOMPILE $(MAKE) CC=$(CC) CXX=$(CXX) OPT="$(xCXXFLAGS)" libleveldb.a libmemenv.a && i586-mingw32msvc-ranlib libleveldb.a && i586-mingw32msvc-ranlib libmemenv.a && cd ..
 
-obj/scrypt.o: scrypt.c
-	i586-mingw32msvc-gcc -c $(CFLAGS) -o $@ $^
-
 obj/build.h: FORCE
 	/bin/sh ../share/genbuild.sh obj/build.h
 version.cpp: obj/build.h

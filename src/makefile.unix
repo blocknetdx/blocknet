@@ -164,9 +164,6 @@ leveldb/libleveldb.a:
 -include obj/*.P
 -include obj-test/*.P
 
-obj/scrypt.o: scrypt.c
-	gcc -c -O2 -o $@ $^
-
 obj/build.h: FORCE
 	/bin/sh ../share/genbuild.sh obj/build.h
 version.cpp: obj/build.h

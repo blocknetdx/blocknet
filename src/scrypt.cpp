@@ -73,7 +73,7 @@ typedef struct HMAC_SHA256Context {
 
 /* Initialize an HMAC-SHA256 operation with the given key. */
 static void
-HMAC_SHA256_Init(HMAC_SHA256_CTX *ctx, const void *_K, size_t Klen)
+HMAC_SHA256_Init(HMAC_SHA256_CTX *ctx, const unsigned char *_K, size_t Klen)
 {
 	unsigned char pad[64];
 	unsigned char khash[32];
