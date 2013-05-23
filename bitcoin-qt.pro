@@ -277,7 +277,7 @@ SOURCES += src/qt/bitcoin.cpp \
     src/qt/notificator.cpp \
     src/qt/paymentserver.cpp \
     src/qt/rpcconsole.cpp \
-    src/scrypt.c \
+    src/scrypt.cpp \
     src/noui.cpp \
     src/leveldb.cpp \
     src/txdb.cpp \
