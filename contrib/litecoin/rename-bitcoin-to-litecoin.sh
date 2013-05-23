@@ -14,6 +14,10 @@ for regex in $REPLACE; do sed -i "$regex" *.ts; done
 REPLACE="s/Биткоин/Litecoin/g"
 for regex in $REPLACE; do sed -i "$regex" *.ts; done
 
+# Cyrillic plural
+REPLACE="s/биткоины/Litecoin/g s/БИТКОИНЫ/LITECOIN/g"
+for regex in $REPLACE; do sed -i "$regex" *.ts; done
+
 # Chinese Simplified 比特币 and 位元币 => 莱特币
 REPLACE="s/比特币/莱特币/g s/位元币/莱特幣/g"
 for regex in $REPLACE; do sed -i "$regex" bitcoin_zh_CN.ts; done
