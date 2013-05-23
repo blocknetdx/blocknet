@@ -21,3 +21,6 @@ KNOWN BUGS
 - Assertion Failure During Shutdown?
   litecoind: /usr/include/boost/thread/pthread/recursive_mutex.hpp:105: void boost::recursive_mutex::lock(): Assertion `!pthread_mutex_lock(&m)' failed
   gmaxwell reported seeing it often with bitcoin-0.8.2rc1, likely with his Fedora native builds.  I saw it on my Fedora native build but not gitian builds so far.
+- Looping "Flushed 12035 addresses to peers.dat  38ms" messages forever after Litecoin-Qt is told to Exit.
+  kill -9 required to kill it.
+  Uncertain if litecoind is also affected.
