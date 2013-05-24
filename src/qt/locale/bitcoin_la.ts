@@ -809,7 +809,7 @@ Inscriptio: %4
     <message>
         <location line="+6"/>
         <source>Optional transaction fee per kB that helps make sure your transactions are processed quickly. Most transactions are 1 kB.</source>
-        <translation type="unfinished"/>
+        <translation>Optionalis merces transactionum singulis kB quae adiuvat curare tuas transactiones processas esse celeriter.  Plurimi transactiones 1kB sunt.</translation>
     </message>
     <message>
         <location line="+15"/>
@@ -2136,7 +2136,7 @@ Inscriptio: %4
     <message>
         <location filename="../walletmodel.cpp" line="+193"/>
         <source>Send Coins</source>
-        <translation type="unfinished"/>
+        <translation>Mitte Nummos</translation>
     </message>
 </context>
 <context>
@@ -2144,7 +2144,7 @@ Inscriptio: %4
     <message>
         <location filename="../walletview.cpp" line="+42"/>
         <source>&amp;Export</source>
-        <translation type="unfinished"/>
+        <translation>&amp;Exporta</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -2236,8 +2236,8 @@ Inscriptio: %4
     </message>
     <message>
         <location line="-28"/>
-        <source>Listen for connections on &lt;port&gt; (default: 9333 or testnet: 19333)</source>
-        <translation>Ausculta pro conexionibus in &lt;porta&gt; (praedefinitum: 9333 vel testnet: 19333)</translation>
+        <source>Listen for connections on &lt;port&gt; (default: 8333 or testnet: 18333)</source>
+        <translation>Ausculta pro conexionibus in &lt;porta&gt; (praedefinitum: 8333 vel testnet: 18333)</translation>
     </message>
     <message>
         <location line="+5"/>
@@ -2271,8 +2271,8 @@ Inscriptio: %4
     </message>
     <message>
         <location line="+27"/>
-        <source>Listen for JSON-RPC connections on &lt;port&gt; (default: 9332 or testnet: 19332)</source>
-        <translation>Ausculta pro conexionibus JSON-RPC in &lt;porta&gt; (praedefinitum: 9332 vel testnet: 19332)</translation>
+        <source>Listen for JSON-RPC connections on &lt;port&gt; (default: 8332 or testnet: 18332)</source>
+        <translation>Ausculta pro conexionibus JSON-RPC in &lt;porta&gt; (praedefinitum: 8332 vel testnet: 18332)</translation>
     </message>
     <message>
         <location line="+37"/>
@@ -2517,7 +2517,7 @@ exempli gratia: alertnotify=echo %%s | mail -s &quot;Litecoin Notificatio&quot; 
     <message>
         <location line="+1"/>
         <source>Generate coins (default: 0)</source>
-        <translation type="unfinished"/>
+        <translation>Genera nummos (praedefinitum: 0)</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -2532,7 +2532,7 @@ exempli gratia: alertnotify=echo %%s | mail -s &quot;Litecoin Notificatio&quot; 
     <message>
         <location line="+19"/>
         <source>Not enough file descriptors available.</source>
-        <translation type="unfinished"/>
+        <translation>Inopia descriptorum plicarum.</translation>
     </message>
     <message>
         <location line="+8"/>
@@ -2562,7 +2562,7 @@ exempli gratia: alertnotify=echo %%s | mail -s &quot;Litecoin Notificatio&quot; 
     <message>
         <location line="-76"/>
         <source>Set the number of script verification threads (up to 16, 0 = auto, &lt;0 = leave that many cores free, default: 0)</source>
-        <translation type="unfinished"/>
+        <translation>Constitue numerum filorum verificationis scriptorum (Maximum 16, 0 = auto, &lt;0 = tot corda libera erunt, praedefinitum: 0)</translation>
     </message>
     <message>
         <location line="+77"/>
@@ -2577,12 +2577,12 @@ exempli gratia: alertnotify=echo %%s | mail -s &quot;Litecoin Notificatio&quot; 
     <message>
         <location line="+1"/>
         <source>Invalid amount for -minrelaytxfee=&lt;amount&gt;: &apos;%s&apos;</source>
-        <translation type="unfinished"/>
+        <translation>Quantitas non valida pro -minrelaytxfee=&lt;amount&gt;: &apos;%s&apos;</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Invalid amount for -mintxfee=&lt;amount&gt;: &apos;%s&apos;</source>
-        <translation type="unfinished"/>
+        <translation>Quantitas non valida pro -mintxfee=&lt;amount&gt;: &apos;%s&apos;</translation>
     </message>
     <message>
         <location line="+8"/>
@@ -2662,7 +2662,7 @@ exempli gratia: alertnotify=echo %%s | mail -s &quot;Litecoin Notificatio&quot; 
     <message>
         <location line="+1"/>
         <source>Signing transaction failed</source>
-        <translation type="unfinished"/>
+        <translation>Signandum transactionis abortum est</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -2677,17 +2677,17 @@ exempli gratia: alertnotify=echo %%s | mail -s &quot;Litecoin Notificatio&quot; 
     <message>
         <location line="+4"/>
         <source>Transaction amount too small</source>
-        <translation type="unfinished"/>
+        <translation>Magnitudo transactionis nimis parva</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Transaction amounts must be positive</source>
-        <translation type="unfinished"/>
+        <translation>Necesse est magnitudines transactionum positivas esse.</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Transaction too large</source>
-        <translation type="unfinished"/>
+        <translation>Transactio nimis magna</translation>
     </message>
     <message>
         <location line="+7"/>
