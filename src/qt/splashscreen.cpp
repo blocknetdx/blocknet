@@ -9,20 +9,21 @@ SplashScreen::SplashScreen(const QPixmap &pixmap, Qt::WindowFlags f) :
     QSplashScreen(pixmap, f)
 {
     // set reference point, paddings
-    int paddingLeft             = 40;
-    int paddingTop              = 386;
-    int titleVersionVSpace      = 17;
-    int marginCopyrightLeft     = 220;
-    int titleCopyrightVSpace1    = -1;
-    int titleCopyrightVSpace2    = 16;
+    int paddingLeftCol1         = 34;
+    int paddingLeftCol2         = 230;
+    int paddingTopCol1              = 396;
+    int paddingTopCol2          = 376;
+    int line1 = 0;
+    int line2 = 13;
+    int line3 = 26;
 
     float fontFactor            = 1.0;
 
     // define text to place
     QString titleText       = QString(QApplication::applicationName()).replace(QString("-testnet"), QString(""), Qt::CaseSensitive); // cut of testnet, place it as single object further down
-    QString versionText     = QString("Version %1").arg(QString::fromStdString(FormatFullVersion()));
+    QString versionText     = QString("Version %1 ").arg(QString::fromStdString(FormatFullVersion()));
     QString copyrightText1   = QChar(0xA9)+QString(" 2009-%1 ").arg(COPYRIGHT_YEAR) + QString(tr("The Bitcoin developers"));
-    QString copyrightText2   = QChar(0xA9)+QString(" 20011-%1 ").arg(COPYRIGHT_YEAR) + QString(tr("The Litecoin developers"));
+    QString copyrightText2   = QChar(0xA9)+QString(" 2011-%1 ").arg(COPYRIGHT_YEAR) + QString(tr("The Litecoin developers"));
     QString testnetAddText  = QString(tr("[testnet]")); // define text to place as single text object
 
     QString font            = "Arial";
@@ -37,7 +38,7 @@ SplashScreen::SplashScreen(const QPixmap &pixmap, Qt::WindowFlags f) :
     }
 
     QPainter pixPaint(&newPixmap);
-    pixPaint.setPen(QColor(60,60,60));
+    pixPaint.setPen(QColor(70,70,70));
 
     // check font size and drawing with
     pixPaint.setFont(QFont(font, fontFactor));
@@ -48,23 +49,23 @@ SplashScreen::SplashScreen(const QPixmap &pixmap, Qt::WindowFlags f) :
         fontFactor = 0.75;
     }
 
-    pixPaint.setFont(QFont(font, 20*fontFactor));
+    pixPaint.setFont(QFont(font, 28*fontFactor));
     fm = pixPaint.fontMetrics();
     titleTextWidth  = fm.width(titleText);
-    pixPaint.drawText(paddingLeft,paddingTop,titleText);
+    pixPaint.drawText(paddingLeftCol1,paddingTopCol1,titleText);
 
-    pixPaint.setFont(QFont(font, 10*fontFactor));
+    pixPaint.setFont(QFont(font, 9*fontFactor));
 
     // if the version string is to long, reduce size
     fm = pixPaint.fontMetrics();
     int versionTextWidth  = fm.width(versionText);
 
-    pixPaint.drawText(paddingLeft,paddingTop+titleVersionVSpace,versionText);
+    pixPaint.drawText(paddingLeftCol2,paddingTopCol2+line3,versionText);
 
     // draw copyright stuff
-    pixPaint.setFont(QFont(font, 10*fontFactor));
-    pixPaint.drawText(marginCopyrightLeft,paddingTop+titleCopyrightVSpace1,copyrightText1);
-    pixPaint.drawText(marginCopyrightLeft,paddingTop+titleCopyrightVSpace2,copyrightText2);
+    pixPaint.setFont(QFont(font, 9*fontFactor));
+    pixPaint.drawText(paddingLeftCol2,paddingTopCol2+line1,copyrightText1);
+    pixPaint.drawText(paddingLeftCol2,paddingTopCol2+line2,copyrightText2);
 
     // draw testnet string if -testnet is on
     if(QApplication::applicationName().contains(QString("-testnet"))) {
