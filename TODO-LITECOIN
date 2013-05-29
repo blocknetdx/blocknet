@@ -1,10 +1,5 @@
 TODO
 ====
-- src/net.cpp - Add a second testnet DNS seed.
-- src/net.cpp - Regenerate the pnSeed table.
-- src/checkpoints.cpp
-              - Fix main and testnet data - why does it seem to not matter!?
-              - Fix testnet checkpoints
 - src/init.cpp         "\n" + _("SSL options: (see the Litecoin Wiki for SSL setup instructions)") + "\n" +
                        Add this to Litecoin Wiki so the doc is not lying?  Just copy the relevant info from Bitcoin wiki.
 - doc/release-process.md - Rewrite for Litecoin!!!!
@@ -13,8 +8,4 @@ TODO
 
 KNOWN BUGS
 ==========
-- Assertion Failure During Shutdown?
-  litecoind: /usr/include/boost/thread/pthread/recursive_mutex.hpp:105: void boost::recursive_mutex::lock(): Assertion `!pthread_mutex_lock(&m)' failed
-- Looping "Flushed 12035 addresses to peers.dat  38ms" messages forever after Litecoin-Qt is told to Exit.
-  kill -9 required to kill it.
-  Happens often on Fedora 18.
+
