@@ -6,6 +6,11 @@ TODO
 - Investigate change behavior.  Does Litecoin currently create change outputs below 0.01?
   If so we might be better off throwing that change directly into fee.
 
+CREDITS
+=======
+- Litecoin logo https://bitcointalk.org/index.php?topic=140642.0
+
+
 KNOWN BUGS
 ==========
 
