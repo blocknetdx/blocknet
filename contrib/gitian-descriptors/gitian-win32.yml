@@ -10,6 +10,7 @@ packages:
 - "unzip"
 - "nsis"
 - "faketime"
+- "yasm"
 reference_datetime: "2011-01-30 00:00:00"
 remotes:
 - "url": "https://github.com/litecoin-project/litecoin.git"
@@ -18,6 +19,7 @@ files:
 - "qt-win32-4.8.3-gitian-r1.zip"
 - "boost-win32-1.50.0-gitian2.zip"
 - "litecoin-deps-0.0.5.zip"
+- "gmp-deps-0.0.1.zip"
 script: |
   #
   mkdir $HOME/qt
@@ -40,18 +42,35 @@ script: |
   cd ..
   #
   unzip litecoin-deps-0.0.5.zip
+  unzip gmp-deps-0.0.1.zip
   #
   find -type f | xargs touch --date="$REFERENCE_DATETIME"
   #
   cd litecoin
   mkdir -p $OUTDIR/src
   git archive HEAD | tar -x -C $OUTDIR/src
+  # FIXME: win32 gitian ugly hacks for secp256k1 build
+  cat > src/secp256k1/config.mk <<'EOF'
+  CC=i586-mingw32msvc-gcc
+  AR=i586-mingw32msvc-ar
+  YASM=yasm
+  CFLAGS_EXTRA=-I/home/ubuntu/build/gmp-5.0.5 -DUSE_FIELD_GMP -DUSE_NUM_GMP -DUSE_FIELD_INV_NUM
+  CFLAGS_TEST_EXTRA=
+  LDFLAGS_EXTRA=-Wl,-Bstatic -L /home/ubuntu/build/gmp-5.0.5/.libs -lgmp
+  LDFLAGS_TEST_EXTRA=
+  USE_ASM=0
+  HAVE_LIMB=52
+  OPTLEVEL=O2
+  EOF
+  sed -i 's^libsecp256k1.so: obj/secp256k1.o $(OBJS)^^'  src/secp256k1/Makefile
+  sed -i 's^.*$(CC) -std=$(STD) $(LDFLAGS_EXTRA) $(OBJS) obj/secp256k1.o -shared -o libsecp256k1.so^^'  src/secp256k1/Makefile
+  # end win32 gitian ugly hacks for secp256k1
   cp $OUTDIR/src/doc/README_windows.txt $OUTDIR/readme.txt
   cp $OUTDIR/src/COPYING $OUTDIR/COPYING.txt
   export LD_PRELOAD=/usr/lib/faketime/libfaketime.so.1
   export FAKETIME=$REFERENCE_DATETIME
   export TZ=UTC
-  $HOME/qt/src/bin/qmake -spec unsupported/win32-g++-cross MINIUPNPC_LIB_PATH=$HOME/build/miniupnpc MINIUPNPC_INCLUDE_PATH=$HOME/build/ BDB_LIB_PATH=$HOME/build/db-4.8.30.NC/build_unix BDB_INCLUDE_PATH=$HOME/build/db-4.8.30.NC/build_unix BOOST_LIB_PATH=$HOME/build/boost_1_50_0/stage/lib BOOST_INCLUDE_PATH=$HOME/build/boost_1_50_0 BOOST_LIB_SUFFIX=-mt-s BOOST_THREAD_LIB_SUFFIX=_win32-mt-s OPENSSL_LIB_PATH=$HOME/build/openssl-1.0.1c OPENSSL_INCLUDE_PATH=$HOME/build/openssl-1.0.1c/include QRENCODE_LIB_PATH=$HOME/build/qrencode-3.2.0/.libs QRENCODE_INCLUDE_PATH=$HOME/build/qrencode-3.2.0 USE_QRCODE=1 INCLUDEPATH=$HOME/build DEFINES=BOOST_THREAD_USE_LIB BITCOIN_NEED_QT_PLUGINS=1 QMAKE_LRELEASE=lrelease QMAKE_CXXFLAGS=-frandom-seed=litecoin USE_BUILD_INFO=1
+  $HOME/qt/src/bin/qmake -spec unsupported/win32-g++-cross MINIUPNPC_LIB_PATH=$HOME/build/miniupnpc MINIUPNPC_INCLUDE_PATH=$HOME/build/ BDB_LIB_PATH=$HOME/build/db-4.8.30.NC/build_unix BDB_INCLUDE_PATH=$HOME/build/db-4.8.30.NC/build_unix BOOST_LIB_PATH=$HOME/build/boost_1_50_0/stage/lib BOOST_INCLUDE_PATH=$HOME/build/boost_1_50_0 BOOST_LIB_SUFFIX=-mt-s BOOST_THREAD_LIB_SUFFIX=_win32-mt-s OPENSSL_LIB_PATH=$HOME/build/openssl-1.0.1c OPENSSL_INCLUDE_PATH=$HOME/build/openssl-1.0.1c/include QRENCODE_LIB_PATH=$HOME/build/qrencode-3.2.0/.libs QRENCODE_INCLUDE_PATH=$HOME/build/qrencode-3.2.0 USE_QRCODE=1 GMP_LIB_PATH=$HOME/build/gmp-5.0.5/.libs GMP_INCLUDE_PATH=$HOME/build/gmp-5.0.5 INCLUDEPATH=$HOME/build DEFINES=BOOST_THREAD_USE_LIB BITCOIN_NEED_QT_PLUGINS=1 QMAKE_LRELEASE=lrelease QMAKE_CXXFLAGS=-frandom-seed=bitcoin USE_BUILD_INFO=1
   make $MAKEOPTS
   i586-mingw32msvc-strip release/litecoin-qt.exe
   cp release/litecoin-qt.exe $OUTDIR/
