@@ -16,12 +16,14 @@ INCLUDEPATHS= \
  -I"$(DEPSDIR)/boost_1_50_0" \
  -I"$(DEPSDIR)/db-4.8.30.NC/build_unix" \
  -I"$(DEPSDIR)/openssl-1.0.1c/include" \
+ -I"$(DEPSDIR)/gmp-5.0.5" \
  -I"$(DEPSDIR)"
 
 LIBPATHS= \
  -L"$(DEPSDIR)/boost_1_50_0/stage/lib" \
  -L"$(DEPSDIR)/db-4.8.30.NC/build_unix" \
- -L"$(DEPSDIR)/openssl-1.0.1c"
+ -L"$(DEPSDIR)/openssl-1.0.1c" \
+ -L"$(DEPSDIR)/gmp-5.0.5/.libs"
 
 LIBS= \
   $(CURDIR)/leveldb/libleveldb.a $(CURDIR)/leveldb/libmemenv.a \
@@ -100,6 +102,12 @@ DEFS += -I"$(CURDIR)/leveldb/include"
 DEFS += -I"$(CURDIR)/leveldb/helpers"
 leveldb/libleveldb.a:
 	@echo "Building LevelDB ..." && cd leveldb && TARGET_OS=OS_WINDOWS_CROSSCOMPILE $(MAKE) CC=$(CC) CXX=$(CXX) OPT="$(xCXXFLAGS)" libleveldb.a libmemenv.a && i586-mingw32msvc-ranlib libleveldb.a && i586-mingw32msvc-ranlib libmemenv.a && cd ..
+
+# libsecp256k1 support
+LIBS += $(CURDIR)/secp256k1/libsecp256k1.a -lgmp
+DEFS += $(addprefix -I,$(CURDIR)/secp256k1/include) -DUSE_SECP256K1
+$(shell mkdir -p $(CURDIR)/secp256k1/obj >/dev/null)
+$(shell make -C $(CURDIR)/secp256k1 libsecp256k1.a CC=i586-mingw32msvc-cc >/dev/null)
 
 obj/build.h: FORCE
 	/bin/sh ../share/genbuild.sh obj/build.h
