@@ -1,6 +1,6 @@
 #!/bin/bash
 ###############################################################
-### Safely rename bitcoin to litecoin in src/qt/locale/*.ts ###
+### Safely replace bitcoin stuff in src/qt/locale/*.ts      ###
 ### Direction: Run this within src/qt/locale/               ###
 ###############################################################
 
@@ -32,3 +32,9 @@ for regex in $UNPROTECT; do sed -i "$regex" *.ts; done
 # High priority/Free TX bytes per Block s/27000/10000/
 REPLACE="s/27000/10000/"
 for regex in $REPLACE; do sed -i "$regex" *.ts; done
+
+# Example Litecoin Address
+REPLACE="s/1NS17iag9jJgTHD1VXjvLCEnZuQ3rJDE9L/Ler4HNAEfwYhBmGXcFP2Po1NpRUEiK8km2/"
+for regex in $REPLACE; do sed -i "$regex" *.ts; done
+REPLACE="s/1H7wyVL5HCNoVFyyBJSDojwyxcCChU7TPA/Ler4HNAEfwYhBmGXcFP2Po1NpRUEiK8km2/"
+for regex in $REPLACE; do sed -i "$regex" bitcoin_af_ZA.ts; done
