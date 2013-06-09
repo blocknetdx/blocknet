@@ -13,4 +13,4 @@ CREDITS
 
 KNOWN BUGS
 ==========
-
+- "When doing SEND and selecting address book, the window title says "&Address Book" (there is & at the beginning, donno why)"
