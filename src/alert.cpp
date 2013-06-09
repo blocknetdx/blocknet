@@ -13,6 +13,7 @@
 #include "net.h"
 #include "sync.h"
 #include "ui_interface.h"
+#include "main.h"
 
 using namespace std;
 
@@ -144,9 +145,7 @@ bool CAlert::RelayTo(CNode* pnode) const
 
 bool CAlert::CheckSignature() const
 {
-    CKey key;
-    if (!key.SetPubKey(ParseHex(fTestNet ? pszTestKey : pszMainKey)))
-        return error("CAlert::CheckSignature() : SetPubKey failed");
+    CPubKey key(ParseHex(fTestNet ? pszTestKey : pszMainKey));
     if (!key.Verify(Hash(vchMsg.begin(), vchMsg.end()), vchSig))
         return error("CAlert::CheckSignature() : verify signature failed");
 
@@ -265,4 +264,83 @@ bool CAlert::ProcessAlert(bool fThread)
 
     printf("accepted alert %d, AppliesToMe()=%d\n", nID, AppliesToMe());
     return true;
+}
+
+
+
+
+bool fLargeWorkForkFound = false;
+bool fLargeWorkInvalidChainFound = false;
+CBlockIndex *pindexBestForkTip = NULL, *pindexBestForkBase = NULL;
+
+void CheckForkWarningConditions()
+{
+    // If our best fork is no longer within 72 blocks (+/- 12 hours if no one mines it)
+    // of our head, drop it
+    if (pindexBestForkTip && nBestHeight - pindexBestForkTip->nHeight >= 72)
+        pindexBestForkTip = NULL;
+
+    if (pindexBestForkTip || nBestInvalidWork > nBestChainWork + (pindexBest->GetBlockWork() * 6).getuint256())
+    {
+        if (!fLargeWorkForkFound)
+        {
+            std::string strCmd = GetArg("-alertnotify", "");
+            if (!strCmd.empty())
+            {
+                std::string warning = std::string("'Warning: Large-work fork detected, forking after block ") +
+                                      pindexBestForkBase->phashBlock->ToString() + std::string("'");
+                boost::replace_all(strCmd, "%s", warning);
+                boost::thread t(runCommand, strCmd); // thread runs free
+            }
+        }
+        if (pindexBestForkTip)
+        {
+            printf("CheckForkWarningConditions: Warning: Large valid fork found\n  forking the chain at height %d (%s)\n  lasting to height %d (%s).\n",
+                   pindexBestForkBase->nHeight, pindexBestForkBase->phashBlock->ToString().c_str(),
+                   pindexBestForkTip->nHeight, pindexBestForkTip->phashBlock->ToString().c_str());
+            fLargeWorkForkFound = true;
+        }
+        else
+        {
+            printf("CheckForkWarningConditions: Warning: Found invalid chain at least ~6 blocks longer than our best chain.\n");
+            fLargeWorkInvalidChainFound = true;
+        }
+    }
+    else
+    {
+        fLargeWorkForkFound = false;
+        fLargeWorkInvalidChainFound = false;
+    }
+}
+
+void CheckForkWarningConditionsOnNewFork(CBlockIndex* pindexNewForkTip)
+{
+    // If we are on a fork that is sufficiently large, set a warning flag
+    CBlockIndex* pfork = pindexNewForkTip;
+    CBlockIndex* plonger = pindexBest;
+    while (pfork && pfork != plonger)
+    {
+        while (plonger && plonger->nHeight > pfork->nHeight)
+            plonger = plonger->pprev;
+        if (pfork == plonger)
+            break;
+        pfork = pfork->pprev;
+    }
+
+    // We define a condition which we should warn the user about as a fork of at least 7 blocks
+    // who's tip is within 72 blocks (+/- 12 hours if no one mines it) of ours
+    // We use 7 blocks rather arbitrarily as it represents just under 10% of sustained network
+    // hash rate operating on the fork.
+    // or a chain that is entirely longer than ours and invalid (note that this should be detected by both)
+    // We define it this way because it allows us to only store the highest fork tip (+ base) which meets
+    // the 7-block condition and from this always have the most-likely-to-cause-warning fork
+    if (pfork && (!pindexBestForkTip || (pindexBestForkTip && pindexNewForkTip->nHeight > pindexBestForkTip->nHeight)) &&
+            pindexNewForkTip->nChainWork - pfork->nChainWork > (pfork->GetBlockWork() * 7).getuint256() &&
+            nBestHeight - pindexNewForkTip->nHeight < 72)
+    {
+        pindexBestForkTip = pindexNewForkTip;
+        pindexBestForkBase = pfork;
+    }
+
+    CheckForkWarningConditions();
 }

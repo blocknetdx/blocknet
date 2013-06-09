@@ -368,37 +368,51 @@ bool CTxOut::IsDust() const
     return false;
 }
 
-bool CTransaction::IsStandard() const
+bool CTransaction::IsStandard(string& strReason) const
 {
-    if (nVersion > CTransaction::CURRENT_VERSION)
+    if (nVersion > CTransaction::CURRENT_VERSION) {
+        strReason = "version";
         return false;
+    }
 
-    if (!IsFinal())
+    if (!IsFinal()) {
+        strReason = "not-final";
         return false;
+    }
 
     // Extremely large transactions with lots of inputs can cost the network
     // almost as much to process as they cost the sender in fees, because
     // computing signature hashes is O(ninputs*txsize). Limiting transactions
     // to MAX_STANDARD_TX_SIZE mitigates CPU exhaustion attacks.
     unsigned int sz = this->GetSerializeSize(SER_NETWORK, CTransaction::CURRENT_VERSION);
-    if (sz >= MAX_STANDARD_TX_SIZE)
+    if (sz >= MAX_STANDARD_TX_SIZE) {
+        strReason = "tx-size";
         return false;
+    }
 
     BOOST_FOREACH(const CTxIn& txin, vin)
     {
         // Biggest 'standard' txin is a 3-signature 3-of-3 CHECKMULTISIG
         // pay-to-script-hash, which is 3 ~80-byte signatures, 3
         // ~65-byte public keys, plus a few script ops.
-        if (txin.scriptSig.size() > 500)
+        if (txin.scriptSig.size() > 500) {
+            strReason = "scriptsig-size";
             return false;
-        if (!txin.scriptSig.IsPushOnly())
+        }
+        if (!txin.scriptSig.IsPushOnly()) {
+            strReason = "scriptsig-not-pushonly";
             return false;
+        }
     }
     BOOST_FOREACH(const CTxOut& txout, vout) {
-        if (!::IsStandard(txout.scriptPubKey))
+        if (!::IsStandard(txout.scriptPubKey)) {
+            strReason = "scriptpubkey";
             return false;
-        if (txout.IsDust())
+        }
+        if (txout.IsDust()) {
+            strReason = "dust";
             return false;
+        }
     }
     return true;
 }
@@ -661,8 +675,10 @@ bool CTxMemPool::accept(CValidationState &state, CTransaction &tx, bool fCheckIn
         return error("CTxMemPool::accept() : not accepting nLockTime beyond 2038 yet");
 
     // Rather not work on nonstandard transactions (unless -testnet)
-    if (!fTestNet && !tx.IsStandard())
-        return error("CTxMemPool::accept() : nonstandard transaction type");
+    string strNonStd;
+    if (!fTestNet && !tx.IsStandard(strNonStd))
+        return error("CTxMemPool::accept() : nonstandard transaction (%s)",
+                     strNonStd.c_str());
 
     // is it already in the memory pool?
     uint256 hash = tx.GetHash();
@@ -1221,8 +1237,7 @@ void static InvalidChainFound(CBlockIndex* pindexNew)
     printf("InvalidChainFound:  current best=%s  height=%d  log2_work=%.8g  date=%s\n",
       hashBestChain.ToString().c_str(), nBestHeight, log(nBestChainWork.getdouble())/log(2.0),
       DateTimeStrFormat("%Y-%m-%d %H:%M:%S", pindexBest->GetBlockTime()).c_str());
-    if (pindexBest && nBestInvalidWork > nBestChainWork + (pindexBest->GetBlockWork() * 6).getuint256())
-        printf("InvalidChainFound: Warning: Displayed transactions may not be correct! You may need to upgrade, or other nodes may need to upgrade.\n");
+    CheckForkWarningConditions();
 }
 
 void static InvalidBlockFound(CBlockIndex *pindex) {
@@ -1952,11 +1967,14 @@ bool CBlock::AddToBlockIndex(CValidationState &state, const CDiskBlockPos &pos)
 
     if (pindexNew == pindexBest)
     {
+        // Clear fork warning if its no longer applicable
+        CheckForkWarningConditions();
         // Notify UI to display prev block's coinbase if it was ours
         static uint256 hashPrevBestCoinBase;
         UpdatedTransaction(hashPrevBestCoinBase);
         hashPrevBestCoinBase = GetTxHash(0);
-    }
+    } else
+        CheckForkWarningConditionsOnNewFork(pindexNew);
 
     if (!pblocktree->Flush())
         return state.Abort(_("Failed to sync block index"));
@@ -2976,11 +2994,15 @@ string GetWarnings(string strFor)
         strStatusBar = strMiscWarning;
     }
 
-    // Longer invalid proof-of-work chain
-    if (pindexBest && nBestInvalidWork > nBestChainWork + (pindexBest->GetBlockWork() * 6).getuint256())
+    if (fLargeWorkForkFound)
     {
         nPriority = 2000;
-        strStatusBar = strRPC = _("Warning: Displayed transactions may not be correct! You may need to upgrade, or other nodes may need to upgrade.");
+        strStatusBar = strRPC = _("Warning: The network does not appear to fully agree! Some miners appear to be experiencing issues.");
+    }
+    else if (fLargeWorkInvalidChainFound)
+    {
+        nPriority = 2000;
+        strStatusBar = strRPC = _("Warning: We do not appear to fully agree with our peers! You may need to upgrade, or other nodes may need to upgrade.");
     }
 
     // Alerts

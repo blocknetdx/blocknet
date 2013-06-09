@@ -350,7 +350,7 @@ std::string HelpMessage()
         "  -rpcthreads=<n>        " + _("Set the number of threads to service RPC calls (default: 4)") + "\n" +
         "  -blocknotify=<cmd>     " + _("Execute command when the best block changes (%s in cmd is replaced by block hash)") + "\n" +
         "  -walletnotify=<cmd>    " + _("Execute command when a wallet transaction changes (%s in cmd is replaced by TxID)") + "\n" +
-        "  -alertnotify=<cmd>     " + _("Execute command when a relevant alert is received (%s in cmd is replaced by message)") + "\n" +
+        "  -alertnotify=<cmd>     " + _("Execute command when a relevant alert is received or we see a really long fork (%s in cmd is replaced by message)") + "\n" +
         "  -upgradewallet         " + _("Upgrade wallet to latest format") + "\n" +
         "  -keypool=<n>           " + _("Set key pool size to <n> (default: 100)") + "\n" +
         "  -rescan                " + _("Rescan the block chain for missing wallet transactions") + "\n" +
@@ -532,7 +532,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     // Make sure enough file descriptors are available
     int nBind = std::max((int)mapArgs.count("-bind"), 1);
     nMaxConnections = GetArg("-maxconnections", 125);
-    nMaxConnections = std::max(std::min(nMaxConnections, FD_SETSIZE - nBind - MIN_CORE_FILEDESCRIPTORS), 0);
+    nMaxConnections = std::max(std::min(nMaxConnections, (int)(FD_SETSIZE - nBind - MIN_CORE_FILEDESCRIPTORS)), 0);
     int nFD = RaiseFileDescriptorLimit(nMaxConnections + MIN_CORE_FILEDESCRIPTORS);
     if (nFD < MIN_CORE_FILEDESCRIPTORS)
         return InitError(_("Not enough file descriptors available."));
@@ -871,6 +871,17 @@ bool AppInit2(boost::thread_group& threadGroup)
                     break;
                 }
 
+                // If the loaded chain has a wrong genesis, bail out immediately
+                // (we're likely using a testnet datadir, or the other way around).
+                if (!mapBlockIndex.empty() && pindexGenesisBlock == NULL)
+                    return InitError(_("Incorrect or no genesis block found. Wrong datadir for network?"));
+
+                // Check for changed -txindex state (only necessary if we are not reindexing anyway)
+                if (!fReindex && fTxIndex != GetBoolArg("-txindex", false)) {
+                    strLoadError = _("You need to rebuild the database using -reindex to change -txindex");
+                    break;
+                }
+
                 // Initialize the block index (no-op if non-empty database was already loaded)
                 if (!InitBlockIndex()) {
                     strLoadError = _("Error initializing block database");
@@ -894,7 +905,7 @@ bool AppInit2(boost::thread_group& threadGroup)
             // first suggest a reindex
             if (!fReset) {
                 bool fRet = uiInterface.ThreadSafeMessageBox(
-                    strLoadError + ".\n" + _("Do you want to rebuild the block database now?"),
+                    strLoadError + ".\n\n" + _("Do you want to rebuild the block database now?"),
                     "", CClientUIInterface::MSG_ERROR | CClientUIInterface::BTN_ABORT);
                 if (fRet) {
                     fReindex = true;
@@ -907,9 +918,6 @@ bool AppInit2(boost::thread_group& threadGroup)
             }
         }
     }
-
-    if (mapArgs.count("-txindex") && fTxIndex != GetBoolArg("-txindex", false))
-        return InitError(_("You need to rebuild the databases using -reindex to change -txindex"));
 
     // as LoadBlockIndex can take several minutes, it's possible the user
     // requested to kill bitcoin-qt during the last operation. If so, exit.

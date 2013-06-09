@@ -13,6 +13,7 @@
 #include "util.h"
 
 class CNode;
+class CBlockIndex;
 
 /** Alerts are for notifying old versions if they become too obsolete and
  * need to upgrade.  The message is displayed in the status bar.
@@ -98,5 +99,10 @@ public:
      */
     static CAlert getAlertByHash(const uint256 &hash);
 };
+
+extern bool fLargeWorkForkFound;
+extern bool fLargeWorkInvalidChainFound;
+void CheckForkWarningConditions();
+void CheckForkWarningConditionsOnNewFork(CBlockIndex* pindexNewForkTip);
 
 #endif
