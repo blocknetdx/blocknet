@@ -2367,8 +2367,8 @@ alertnotify=echo %%s | mail -s &quot;Litecoin Alert&quot; admin@foo.com
     </message>
     <message>
         <location line="+11"/>
-        <source>Set maximum size of high-priority/low-fee transactions in bytes (default: 27000)</source>
-        <translation>設定高優先權或低手續費的交易資料大小上限為多少位元組 (預設: 27000)</translation>
+        <source>Set maximum size of high-priority/low-fee transactions in bytes (default: 10000)</source>
+        <translation>設定高優先權或低手續費的交易資料大小上限為多少位元組 (預設: 10000)</translation>
     </message>
     <message>
         <location line="+6"/>

@@ -2357,8 +2357,8 @@ par exemple : alertnotify=echo %%s | mail -s &quot;Litecoin Alert&quot; admin@fo
     </message>
     <message>
         <location line="+11"/>
-        <source>Set maximum size of high-priority/low-fee transactions in bytes (default: 27000)</source>
-        <translation>Définir la taille maximale en octets des transactions prioritaires/à frais modiques (par défaut : 27000)</translation>
+        <source>Set maximum size of high-priority/low-fee transactions in bytes (default: 10000)</source>
+        <translation>Définir la taille maximale en octets des transactions prioritaires/à frais modiques (par défaut : 10000)</translation>
     </message>
     <message>
         <location line="+6"/>

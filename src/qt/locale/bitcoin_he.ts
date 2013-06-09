@@ -2356,8 +2356,8 @@ rpcpassword=%s
     </message>
     <message>
         <location line="+11"/>
-        <source>Set maximum size of high-priority/low-fee transactions in bytes (default: 27000)</source>
-        <translation>קבע גודל מקסימלי עבור פעולות עדיפות גבוהה/עמלה נמוכה בבתים (ברירת מחדל: 27000)</translation>
+        <source>Set maximum size of high-priority/low-fee transactions in bytes (default: 10000)</source>
+        <translation>קבע גודל מקסימלי עבור פעולות עדיפות גבוהה/עמלה נמוכה בבתים (ברירת מחדל: 10000)</translation>
     </message>
     <message>
         <location line="+6"/>
