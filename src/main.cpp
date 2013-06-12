@@ -1720,6 +1720,24 @@ bool CBlock::CheckBlock() const
     if (vtx.empty() || vtx.size() > MAX_BLOCK_SIZE || ::GetSerializeSize(*this, SER_NETWORK, PROTOCOL_VERSION) > MAX_BLOCK_SIZE)
         return DoS(100, error("CheckBlock() : size limits failed"));
 
+    // Special short-term limits to avoid 10,000 BDB lock limit:
+    if (GetBlockTime() < 1376568000)  // stop enforcing 15 August 2013 noon GMT
+    {
+        // Rule is: #unique txids referenced <= 4,500
+        // ... to prevent 10,000 BDB lock exhaustion on old clients
+        set<uint256> setTxIn;
+        for (size_t i = 0; i < vtx.size(); i++)
+        {
+            setTxIn.insert(vtx[i].GetHash());
+            if (i == 0) continue; // skip coinbase txin
+            BOOST_FOREACH(const CTxIn& txin, vtx[i].vin)
+                setTxIn.insert(txin.prevout.hash);
+        }
+        size_t nTxids = setTxIn.size();
+        if (nTxids > 4500)
+            return error("CheckBlock() : 15 Aug maxlocks violation");
+    }
+
     // Check proof of work matches claimed amount
     if (!CheckProofOfWork(GetPoWHash(), nBits))
         return DoS(50, error("CheckBlock() : proof of work failed"));
