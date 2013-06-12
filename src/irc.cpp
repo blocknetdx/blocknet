@@ -208,11 +208,11 @@ void ThreadIRCSeed(void* parg)
 
 void ThreadIRCSeed2(void* parg)
 {
+    /* Disable IRC Seeding Entirely */
+    return;
+
     /* Dont advertise on IRC if we don't allow incoming connections */
     if (mapArgs.count("-connect") || fNoListen)
-        return;
-
-    if (!GetBoolArg("-irc", false))
         return;
 
     printf("ThreadIRCSeed started\n");
