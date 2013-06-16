@@ -20,33 +20,6 @@ ClientModel::ClientModel(OptionsModel *optionsModel, QObject *parent) :
     numBlocksAtStartup = -1;
 
     pollTimer = new QTimer(this);
-    // Read our specific settings from the wallet db
-    /*
-    CWalletDB walletdb(optionsModel->getWallet()->strWalletFile);
-    walletdb.ReadSetting("miningDebug", miningDebug);
-    walletdb.ReadSetting("miningScanTime", miningScanTime);
-    std::string str;
-    walletdb.ReadSetting("miningServer", str);
-    miningServer = QString::fromStdString(str);
-    walletdb.ReadSetting("miningPort", str);
-    miningPort = QString::fromStdString(str);
-    walletdb.ReadSetting("miningUsername", str);
-    miningUsername = QString::fromStdString(str);
-    walletdb.ReadSetting("miningPassword", str);
-    miningPassword = QString::fromStdString(str);
-    */
-//    if (fGenerateBitcoins)
-//    {
-        miningType = SoloMining;
-        miningStarted = true;
-//    }
-//    else
-//    {
-//        miningType = PoolMining;
-//        walletdb.ReadSetting("miningStarted", miningStarted);
-//    }
-//    miningThreads = nLimitProcessors;
-
     pollTimer->setInterval(MODEL_UPDATE_DELAY);
     pollTimer->start();
     connect(pollTimer, SIGNAL(timeout()), this, SLOT(updateTimer()));
@@ -73,87 +46,6 @@ int ClientModel::getNumBlocksAtStartup()
 {
     if (numBlocksAtStartup == -1) numBlocksAtStartup = getNumBlocks();
     return numBlocksAtStartup;
-}
-
-ClientModel::MiningType ClientModel::getMiningType() const
-{
-    return miningType;
-}
-
-int ClientModel::getMiningThreads() const
-{
-    return miningThreads;
-}
-
-bool ClientModel::getMiningStarted() const
-{
-    return miningStarted;
-}
-
-bool ClientModel::getMiningDebug() const
-{
-    return miningDebug;
-}
-
-void ClientModel::setMiningDebug(bool debug)
-{
-    miningDebug = debug;
-//    WriteSetting("miningDebug", miningDebug);
-}
-
-int ClientModel::getMiningScanTime() const
-{
-    return miningScanTime;
-}
-
-void ClientModel::setMiningScanTime(int scantime)
-{
-    miningScanTime = scantime;
-//    WriteSetting("miningScanTime", miningScanTime);
-}
-
-QString ClientModel::getMiningServer() const
-{
-    return miningServer;
-}
-
-void ClientModel::setMiningServer(QString server)
-{
-    miningServer = server;
-//    WriteSetting("miningServer", miningServer.toStdString());
-}
-
-QString ClientModel::getMiningPort() const
-{
-    return miningPort;
-}
-
-void ClientModel::setMiningPort(QString port)
-{
-    miningPort = port;
-//    WriteSetting("miningPort", miningPort.toStdString());
-}
-
-QString ClientModel::getMiningUsername() const
-{
-    return miningUsername;
-}
-
-void ClientModel::setMiningUsername(QString username)
-{
-    miningUsername = username;
-//    WriteSetting("miningUsername", miningUsername.toStdString());
-}
-
-QString ClientModel::getMiningPassword() const
-{
-    return miningPassword;
-}
-
-void ClientModel::setMiningPassword(QString password)
-{
-    miningPassword = password;
-//    WriteSetting("miningPassword", miningPassword.toStdString());
 }
 
 int ClientModel::getHashrate() const
@@ -207,15 +99,6 @@ void ClientModel::updateTimer()
 
     cachedNumBlocks = newNumBlocks;
     cachedNumBlocksOfPeers = newNumBlocksOfPeers;
-
-    // Only need to update if solo mining. When pool mining, stats are pushed.
-    if (miningType == SoloMining)
-    {
-        int newHashrate = getHashrate();
-        if (cachedHashrate != newHashrate)
-            emit miningChanged(miningStarted, newHashrate);
-        cachedHashrate = newHashrate;
-    }
 }
 
 void ClientModel::updateNumConnections(int numConnections)
@@ -255,20 +138,6 @@ bool ClientModel::inInitialBlockDownload() const
 int ClientModel::getNumBlocksOfPeers() const
 {
     return GetNumBlocksOfPeers();
-}
-
-void ClientModel::setMining(MiningType type, bool mining, int threads, int hashrate)
-{
-    if (type == SoloMining && mining != miningStarted)
-    {
-        GenerateBitcoins(mining ? 1 : 0, pwalletMain);
-    }
-    miningType = type;
-    miningStarted = mining;
-//    WriteSetting("miningStarted", mining);
-//    WriteSetting("fLimitProcessors", 1);
-//    WriteSetting("nLimitProcessors", threads);
-    emit miningChanged(mining, hashrate);
 }
 
 QString ClientModel::getStatusBarWarnings() const
