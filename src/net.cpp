@@ -1918,9 +1918,6 @@ void StartNode(void* parg)
     // Dump network addresses
     if (!CreateThread(ThreadDumpAddress, NULL))
         printf("Error; CreateThread(ThreadDumpAddress) failed\n");
-
-    // Generate coins in the background
-    GenerateBitcoins(GetBoolArg("-gen", false), pwalletMain);
 }
 
 bool StopNode()

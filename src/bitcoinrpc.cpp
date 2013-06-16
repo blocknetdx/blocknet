@@ -349,6 +349,9 @@ Value getnetworkhashps(const Array& params, bool fHelp)
 
 Value getgenerate(const Array& params, bool fHelp)
 {
+    throw runtime_error("The getgenerate command has been disabled.");
+    return false;
+
     if (fHelp || params.size() != 0)
         throw runtime_error(
             "getgenerate\n"
@@ -360,6 +363,9 @@ Value getgenerate(const Array& params, bool fHelp)
 
 Value setgenerate(const Array& params, bool fHelp)
 {
+    throw runtime_error("The setgenerate command has been disabled.");
+    return Value::null;
+
     if (fHelp || params.size() < 1 || params.size() > 2)
         throw runtime_error(
             "setgenerate <generate> [genproclimit]\n"
@@ -386,6 +392,9 @@ Value setgenerate(const Array& params, bool fHelp)
 
 Value gethashespersec(const Array& params, bool fHelp)
 {
+    // Disabled mining, so therefore we will return 0.
+    return (boost::int64_t)0;
+
     if (fHelp || params.size() != 0)
         throw runtime_error(
             "gethashespersec\n"
