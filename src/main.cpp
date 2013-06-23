@@ -617,7 +617,7 @@ bool CTxMemPool::accept(CTxDB& txdb, CTransaction &tx, bool fCheckInputs,
         EraseFromWallets(ptxOld->GetHash());
 
     printf("CTxMemPool::accept() : accepted %s (poolsz %u)\n",
-           hash.ToString().substr(0,10).c_str(),
+           hash.ToString().c_str(),
            mapTx.size());
     return true;
 }
