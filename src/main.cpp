@@ -620,7 +620,7 @@ int64 CTransaction::GetMinFee(unsigned int nBlockSize, bool fAllowFree,
         else
         {
             // Free transaction area
-            if (nNewBlockSize < 10000)
+            if (nNewBlockSize < 27000)
                 nMinFee = 0;
         }
     }
@@ -4162,7 +4162,7 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
 
     // How much of the block should be dedicated to high-priority transactions,
     // included regardless of the fees they pay
-    unsigned int nBlockPrioritySize = GetArg("-blockprioritysize", 10000);
+    unsigned int nBlockPrioritySize = GetArg("-blockprioritysize", 27000);
     nBlockPrioritySize = std::min(nBlockMaxSize, nBlockPrioritySize);
 
     // Minimum block size you want to create; block will be filled with free transactions

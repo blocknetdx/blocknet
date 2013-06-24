@@ -55,7 +55,7 @@ QT_TRANSLATE_NOOP("bitcoin-core", ""
 "86400)"),
 QT_TRANSLATE_NOOP("bitcoin-core", ""
 "Set maximum size of high-priority/low-fee transactions in bytes (default: "
-"10000)"),
+"27000)"),
 QT_TRANSLATE_NOOP("bitcoin-core", ""
 "Set the number of script verification threads (up to 16, 0 = auto, <0 = "
 "leave that many cores free, default: 0)"),

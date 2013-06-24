@@ -29,10 +29,6 @@ for regex in $REPLACE; do sed -i "$regex" bitcoin_zh_TW.ts; done
 UNPROTECT="s/FoobarGUI/BitcoinGUI/ s/foobar.cpp/bitcoin.cpp/ s/foobargui.cpp/bitcoingui.cpp/ s/foobar-core/bitcoin-core/ s/foobarstrings.cpp/bitcoinstrings.cpp/ s/foobargui.cpp/bitcoingui.cpp/"
 for regex in $UNPROTECT; do sed -i "$regex" *.ts; done
 
-# High priority/Free TX bytes per Block s/27000/10000/
-REPLACE="s/27000/10000/"
-for regex in $REPLACE; do sed -i "$regex" *.ts; done
-
 # Example Litecoin Address
 REPLACE="s/1NS17iag9jJgTHD1VXjvLCEnZuQ3rJDE9L/Ler4HNAEfwYhBmGXcFP2Po1NpRUEiK8km2/"
 for regex in $REPLACE; do sed -i "$regex" *.ts; done
