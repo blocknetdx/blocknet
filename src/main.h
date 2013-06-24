@@ -563,7 +563,7 @@ public:
             else
             {
                 // Free transaction area
-                if (nNewBlockSize < 10000)
+                if (nNewBlockSize < 27000)
                     nMinFee = 0;
             }
         }
