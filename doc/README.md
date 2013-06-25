@@ -1,4 +1,4 @@
-Litecoin 0.8.2 BETA
+Litecoin 0.8.3 BETA
 ====================
 
 Copyright (c) 2009-2013 Bitcoin Developers
