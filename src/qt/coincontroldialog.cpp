@@ -382,17 +382,17 @@ void CoinControlDialog::viewItemChanged(QTreeWidgetItem* item, int column)
 // helper function, return human readable label for priority number
 QString CoinControlDialog::getPriorityLabel(double dPriority)
 {
-    if (dPriority > 57600000ULL) // at least medium, this number is from AllowFree(), the other thresholds are kinda random
+    if (dPriority > 230400000ULL)// at least medium, this number is from AllowFree(), the other thresholds are kinda random
     {
-        if      (dPriority > 576000000000ULL)   return tr("highest");
-        else if (dPriority > 57600000000ULL)    return tr("high");
-        else if (dPriority > 5760000000ULL)     return tr("medium-high");
+        if      (dPriority > 230400000000000ULL)   return tr("very high");
+        else if (dPriority > 2304000000000ULL)    return tr("high");
+        else if (dPriority > 23040000000ULL)     return tr("medium-high");
         else                                    return tr("medium");
     }
     else
     {
-        if      (dPriority > 576000ULL) return tr("low-medium");
-        else if (dPriority > 5760ULL)   return tr("low");
+        if      (dPriority > 2304000ULL) return tr("low-medium");
+        else if (dPriority > 23000ULL)   return tr("low");
         else                            return tr("lowest");
     }
 }
@@ -418,14 +418,17 @@ void CoinControlDialog::updateLabels(WalletModel *model, QDialog* dialog)
     qint64 nPayAmount = 0;
     bool fLowOutput = false;
     bool fDust = false;
+    unsigned int nQuantityDust = 0;
     foreach(const qint64 &amount, CoinControlDialog::payAmounts)
     {
         nPayAmount += amount;
         
         if (amount > 0)
         {
-            if (amount < CENT)
+            if (amount < CENT) {
                 fLowOutput = true;
+                nQuantityDust++;
+            }
 
             CTxOut txout(amount, (CScript)vector<unsigned char>(24, 0));
             if (txout.IsDust())
@@ -488,7 +491,7 @@ void CoinControlDialog::updateLabels(WalletModel *model, QDialog* dialog)
         int64 nFee = nTransactionFee * (1 + (int64)nBytes / 1000);
         
         // Min Fee
-        int64 nMinFee = CTransaction::nMinTxFee * (1 + (int64)nBytes / 1000);
+        int64 nMinFee = CTransaction::nMinTxFee * (1 + (int64)nBytes / 1000) + CTransaction::nMinTxFee * nQuantityDust;
         if (CTransaction::AllowFree(dPriority) && nBytes < 10000)
             nMinFee = 0;
         
