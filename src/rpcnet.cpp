@@ -203,3 +203,21 @@ Value getaddednodeinfo(const Array& params, bool fHelp)
     return ret;
 }
 
+
+Value bannode(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() != 2)
+        throw runtime_error(
+            "bannode <node> <expiration>\n"
+            "Bans <node> until unix timestamp <expiration>. Set <expiration> to -1 to unban a node.");
+
+    std::vector<CNetAddr> addrs;
+    if (!LookupHost(params[0].get_str().c_str(), addrs, 50, true)) 
+        throw JSONRPCError(-25, "Error: Node lookup failed.");
+
+    BOOST_FOREACH(const CNetAddr& addr, addrs) {
+        CNode::Ban(addr, params[1].get_int64());
+    }
+
+    return Value::null;
+}

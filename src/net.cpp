@@ -577,6 +577,17 @@ bool CNode::IsBanned(CNetAddr ip)
     return fResult;
 }
 
+void CNode::Ban(CNetAddr ip, int64_t expiration)
+{
+    LOCK(cs_setBanned);
+    if (expiration < 0) {
+        setBanned.erase(ip);
+    }
+    else {
+        setBanned[ip] = expiration;
+    }
+}
+
 bool CNode::Misbehaving(int howmuch)
 {
     if (addr.IsLocal())
