@@ -627,6 +627,7 @@ public:
     // new code.
     static void ClearBanned(); // needed for unit testing
     static bool IsBanned(CNetAddr ip);
+    static void Ban(CNetAddr ip, int64_t expiration); // negative expiration unbans the node.
     bool Misbehaving(int howmuch); // 1 == a little, 100 == a lot
     void copyStats(CNodeStats &stats);
 };
