@@ -221,3 +221,21 @@ Value bannode(const Array& params, bool fHelp)
 
     return Value::null;
 }
+
+Value listbannednodes(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() != 0)
+        throw runtime_error(
+            "listbannednodes\n"
+            "Returns a list of currently banned nodes along with the ban expiration timestamps.");
+
+    Array ret;
+    BOOST_FOREACH(const banned_map_t::value_type& pair, CNode::GetBannedMap()) {
+        Object node;
+        node.push_back(Pair("addr", pair.first.ToStringIP()));
+        node.push_back(Pair("until", (boost::int64_t)pair.second));
+        ret.push_back(node);
+    }
+
+    return ret;
+}

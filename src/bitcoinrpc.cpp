@@ -207,6 +207,7 @@ static const CRPCCommand vRPCCommands[] =
     { "addnode",                &addnode,                true,      true },
     { "getaddednodeinfo",       &getaddednodeinfo,       true,      true },
     { "bannode",                &bannode,                true,      true },
+    { "listbannednodes",        &listbannednodes,        true,      true },
     { "getdifficulty",          &getdifficulty,          true,      false },
     { "getnetworkhashps",       &getnetworkhashps,       true,      false },
     { "getinfo",                &getinfo,                true,      false },
