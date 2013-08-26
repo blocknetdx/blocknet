@@ -1520,7 +1520,7 @@ Value validateaddress(const Array& params, bool fHelp)
         CTxDestination dest = address.Get();
         string currentAddress = address.ToString();
         ret.push_back(Pair("address", currentAddress));
-        bool fMine = IsMine(*pwalletMain, dest);
+        bool fMine = pwalletMain ? IsMine(*pwalletMain, dest) : false;
         ret.push_back(Pair("ismine", fMine));
         if (fMine) {
             Object detail = boost::apply_visitor(DescribeAddressVisitor(), dest);
