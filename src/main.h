@@ -155,7 +155,7 @@ bool SendMessages(CNode* pto, bool fSendTrickle);
 /** Run an instance of the script checking thread */
 void ThreadScriptCheck();
 /** Generate a new block, without valid proof-of-work */
-CBlockTemplate* CreateNewBlock(CScript& scriptPubKeyIn);
+CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn);
 CBlockTemplate* CreateNewBlockWithKey(CReserveKey& reservekey);
 /** Modify the extranonce in a block */
 void IncrementExtraNonce(CBlock* pblock, CBlockIndex* pindexPrev, unsigned int& nExtraNonce);
