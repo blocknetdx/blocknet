@@ -553,7 +553,7 @@ void CNode::PushVersion()
 
 
 
-std::map<CNetAddr, int64> CNode::setBanned;
+banned_map_t CNode::setBanned;
 CCriticalSection CNode::cs_setBanned;
 
 void CNode::ClearBanned()
@@ -575,6 +575,17 @@ bool CNode::IsBanned(CNetAddr ip)
         }
     }
     return fResult;
+}
+
+void CNode::Ban(CNetAddr ip, int64_t expiration)
+{
+    LOCK(cs_setBanned);
+    if (expiration < 0) {
+        setBanned.erase(ip);
+    }
+    else {
+        setBanned[ip] = expiration;
+    }
 }
 
 bool CNode::Misbehaving(int howmuch)
