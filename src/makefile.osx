@@ -135,6 +135,12 @@ DEFS += $(addprefix -I,$(CURDIR)/leveldb/helpers)
 leveldb/libleveldb.a:
 	@echo "Building LevelDB ..." && cd leveldb && $(MAKE) CC=$(CC) CXX=$(CXX) OPT="$(CFLAGS)" libleveldb.a libmemenv.a && cd ..
 
+# libsecp256k1 support
+LIBS += $(CURDIR)/secp256k1/libsecp256k1.a -lgmp
+DEFS += $(addprefix -I,$(CURDIR)/secp256k1/include) -DUSE_SECP256K1
+$(shell mkdir -p $(CURDIR)/secp256k1/obj >/dev/null)
+$(shell make -C $(CURDIR)/secp256k1 libsecp256k1.a >/dev/null)
+
 # auto-generated dependencies:
 -include obj/*.P
 -include obj-test/*.P
