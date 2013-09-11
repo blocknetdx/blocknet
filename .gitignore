@@ -32,3 +32,9 @@ qrc_*.cpp
 build
 
 !src/leveldb-*/Makefile
+
+# secp256k1
+src/secp256k1/config.mk
+src/secp256k1/libsecp256k1.a
+src/secp256k1/libsecp256k1.so
+src/secp256k1/tests
