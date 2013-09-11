@@ -256,7 +256,10 @@ static inline void xor_salsa8(__m128i B[4], const __m128i Bx[4])
 void scrypt_1024_1_1_256_sp(const char *input, char *output, char *scratchpad)
 {
 	uint8_t B[128];
-	__m128i X[8];
+	union {
+		__m128i i128[8];
+		uint32_t u32[32];
+	} X;
 	__m128i *V;
 	uint32_t i, j, k;
 
@@ -266,27 +269,27 @@ void scrypt_1024_1_1_256_sp(const char *input, char *output, char *scratchpad)
 
 	for (k = 0; k < 2; k++) {
 		for (i = 0; i < 16; i++) {
-			((uint32_t *)X)[k * 16 + i] = le32dec(&B[(k * 16 + (i * 5 % 16)) * 4]);
+			X.u32[k * 16 + i] = le32dec(&B[(k * 16 + (i * 5 % 16)) * 4]);
 		}
 	}
 
 	for (i = 0; i < 1024; i++) {
 		for (k = 0; k < 8; k++)
-			((__m128i *)V)[i * 8 + k] = X[k];
-		xor_salsa8(&X[0], &X[4]);
-		xor_salsa8(&X[4], &X[0]);
+			V[i * 8 + k] = X.i128[k];
+		xor_salsa8(&X.i128[0], &X.i128[4]);
+		xor_salsa8(&X.i128[4], &X.i128[0]);
 	}
 	for (i = 0; i < 1024; i++) {
-		j = 8 * (((uint32_t *)X)[16] & 1023);
+		j = 8 * (X.u32[16] & 1023);
 		for (k = 0; k < 8; k++)
-			X[k] = _mm_xor_si128(X[k], V[j + k]);
-		xor_salsa8(&X[0], &X[4]);
-		xor_salsa8(&X[4], &X[0]);
+			X.i128[k] = _mm_xor_si128(X.i128[k], V[j + k]);
+		xor_salsa8(&X.i128[0], &X.i128[4]);
+		xor_salsa8(&X.i128[4], &X.i128[0]);
 	}
 
 	for (k = 0; k < 2; k++) {
 		for (i = 0; i < 16; i++) {
-			le32enc(&B[(k * 16 + (i * 5 % 16)) * 4], ((uint32_t *)X)[k * 16 + i]);
+			le32enc(&B[(k * 16 + (i * 5 % 16)) * 4], X.u32[k * 16 + i]);
 		}
 	}
 
