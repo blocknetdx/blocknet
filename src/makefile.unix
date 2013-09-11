@@ -40,7 +40,8 @@ LIBS += \
    -l boost_thread$(BOOST_LIB_SUFFIX) \
    -l db_cxx$(BDB_LIB_SUFFIX) \
    -l ssl \
-   -l crypto
+   -l crypto \
+   -l gmp
 
 TESTLIBS += \
  -Wl,-B$(LMODE) \
@@ -161,7 +162,7 @@ leveldb/libleveldb.a:
 	@echo "Building LevelDB ..." && cd leveldb && $(MAKE) CC=$(CC) CXX=$(CXX) OPT="$(xCXXFLAGS)" libleveldb.a libmemenv.a && cd ..
 
 # libsecp256k1 support
-LIBS += $(CURDIR)/secp256k1/libsecp256k1.a -lgmp
+LIBS += $(CURDIR)/secp256k1/libsecp256k1.a
 DEFS += $(addprefix -I,$(CURDIR)/secp256k1/include) -DUSE_SECP256K1
 $(shell mkdir -p $(CURDIR)/secp256k1/obj >/dev/null)
 $(shell make -C $(CURDIR)/secp256k1 libsecp256k1.a >/dev/null)
