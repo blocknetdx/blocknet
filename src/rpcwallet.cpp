@@ -1526,7 +1526,7 @@ Value validateaddress(const Array& params, bool fHelp)
             Object detail = boost::apply_visitor(DescribeAddressVisitor(), dest);
             ret.insert(ret.end(), detail.begin(), detail.end());
         }
-        if (pwalletMain->mapAddressBook.count(dest))
+        if (pwalletMain && pwalletMain->mapAddressBook.count(dest))
             ret.push_back(Pair("account", pwalletMain->mapAddressBook[dest]));
     }
     return ret;
