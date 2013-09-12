@@ -209,6 +209,8 @@ static const CRPCCommand vRPCCommands[] =
     { "getpeerinfo",            &getpeerinfo,            true,      false,      false },
     { "addnode",                &addnode,                true,      true,       false },
     { "getaddednodeinfo",       &getaddednodeinfo,       true,      true,       false },
+    { "bannode",                &bannode,                true,      true,       false },
+    { "listbannednodes",        &listbannednodes,        true,      true,       false },
     { "getdifficulty",          &getdifficulty,          true,      false,      false },
     { "getnetworkhashps",       &getnetworkhashps,       true,      false,      false },
     { "getinfo",                &getinfo,                true,      false,      false },
@@ -1193,6 +1195,7 @@ Array RPCConvertValues(const std::string &strMethod, const std::vector<std::stri
     if (strMethod == "lockunspent"            && n > 0) ConvertTo<bool>(params[0]);
     if (strMethod == "lockunspent"            && n > 1) ConvertTo<Array>(params[1]);
     if (strMethod == "importprivkey"          && n > 2) ConvertTo<bool>(params[2]);
+    if (strMethod == "bannode"                && n > 1) ConvertTo<boost::int64_t>(params[1]);
 
     return params;
 }
