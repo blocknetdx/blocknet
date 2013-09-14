@@ -5,7 +5,8 @@
 static const int SCRYPT_SCRATCHPAD_SIZE = 131072 + 63;
 
 void scrypt_1024_1_1_256_sp_sse2(const char *input, char *output, char *scratchpad);
-void scrypt_1024_1_1_256_sp(const char *input, char *output, char *scratchpad);
+void scrypt_1024_1_1_256_sp_generic(const char *input, char *output, char *scratchpad);
+extern void (*scrypt_1024_1_1_256_sp)(const char *input, char *output, char *scratchpad);
 void scrypt_1024_1_1_256(const char *input, char *output);
 
 void
@@ -27,6 +28,5 @@ static inline void le32enc(void *pp, uint32_t x)
         p[2] = (x >> 16) & 0xff;
         p[3] = (x >> 24) & 0xff;
 }
-
 
 #endif

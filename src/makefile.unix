@@ -144,10 +144,9 @@ OBJS= \
     obj/leveldb.o \
     obj/txdb.o
 
-OBJS_SSE2= obj/scrypt-sse2.o
 
 ifdef SSE2
-DEFS += -DUSE_SSE2
+OBJS_SSE2= obj/scrypt-sse2.o
 OBJS += $(OBJS_SSE2)
 endif
 
@@ -175,7 +174,7 @@ obj/build.h: FORCE
 version.cpp: obj/build.h
 DEFS += -DHAVE_BUILD_INFO
 
-obj/%-sse2.o: %-sse2.cpp
+obj/%-sse2.o: %-sse2.cc
 	$(CXX) -c $(xCXXFLAGS) -msse2 -MMD -MF $(@:%.o=%.d) -o $@ $<
 	@cp $(@:%.o=%.d) $(@:%.o=%.P); \
 	  sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \

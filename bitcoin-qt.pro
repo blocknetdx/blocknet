@@ -280,6 +280,7 @@ SOURCES += src/qt/bitcoin.cpp \
     src/qt/paymentserver.cpp \
     src/qt/rpcconsole.cpp \
     src/scrypt.cpp \
+    src/scrypt-sse2.cc \
     src/noui.cpp \
     src/leveldb.cpp \
     src/txdb.cpp \

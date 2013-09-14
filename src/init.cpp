@@ -20,6 +20,9 @@
 
 #ifndef WIN32
 #include <signal.h>
+#include <cpuid.h>
+#else
+#include <intrin.h>
 #endif
 
 using namespace std;
@@ -492,6 +495,19 @@ bool AppInit2(boost::thread_group& threadGroup)
     sigaction(SIGHUP, &sa_hup, NULL);
 #endif
 
+    // Obtain cpuid_edx to be tested for CPU features on x86 architecture hardware
+#if defined(_M_IX86) || defined(__i386__) || defined(__i386) || defined(_M_X64) || defined(__x86_64__) || (_M_AMD64)
+    unsigned int cpuid_edx=0;
+#if defined WIN32
+    int x86cpuid[4];
+    __cpuid(x86cpuid, 1);
+    cpuid_edx = (unsigned int)buffer[3];
+#else
+    unsigned int eax, ebx, ecx;
+    __get_cpuid(1, &eax, &ebx, &ecx, &cpuid_edx);
+#endif
+#endif
+
     // ********************************************************* Step 2: parameter interactions
 
     fTestNet = GetBoolArg("-testnet");
@@ -890,6 +906,20 @@ bool AppInit2(boost::thread_group& threadGroup)
                     strLoadError = _("You need to rebuild the database using -reindex to change -txindex");
                     break;
                 }
+
+            // XXX: ARCH_CPU_X86_64 always has SSE2, so detection should only be on 32bit x86_64, fix this later
+#if defined(_M_IX86) || defined(__i386__) || defined(__i386) || defined(_M_X64) || defined(__x86_64__) || (_M_AMD64)
+                if (!(cpuid_edx & 1<<26) == 0)
+                {
+                    scrypt_1024_1_1_256_sp = &scrypt_1024_1_1_256_sp_sse2;
+                    uiInterface.InitMessage("SSE2 detected, using scrypt-sse2.");
+                }
+                    else
+                {
+                    scrypt_1024_1_1_256_sp = &scrypt_1024_1_1_256_sp_generic;
+                    uiInterface.InitMessage("SSE2 unavailable, using scrypt-generic.");
+                }
+#endif
 
                 uiInterface.InitMessage(_("Verifying blocks..."));
                 if (!VerifyDB()) {

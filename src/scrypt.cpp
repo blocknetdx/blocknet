@@ -242,7 +242,7 @@ static inline void xor_salsa8(uint32_t B[16], const uint32_t Bx[16])
 	B[15] += x15;
 }
 
-void scrypt_1024_1_1_256_sp(const char *input, char *output, char *scratchpad)
+void scrypt_1024_1_1_256_sp_generic(const char *input, char *output, char *scratchpad)
 {
 	uint8_t B[128];
 	uint32_t X[32];
@@ -275,14 +275,11 @@ void scrypt_1024_1_1_256_sp(const char *input, char *output, char *scratchpad)
 	PBKDF2_SHA256((const uint8_t *)input, 80, B, 128, 1, (uint8_t *)output, 32);
 }
 
+// XXX: SSE2 only on x86_64, no detection
+void (*scrypt_1024_1_1_256_sp)(const char *input, char *output, char *scratchpad);
+
 void scrypt_1024_1_1_256(const char *input, char *output)
 {
 	char scratchpad[SCRYPT_SCRATCHPAD_SIZE];
-#ifdef USE_SSE2
-        // todo: runtime detection at startup and use function pointer
-        if(1)
-          scrypt_1024_1_1_256_sp_sse2(input, output, scratchpad);
-        else
-#endif
-          scrypt_1024_1_1_256_sp(input, output, scratchpad);
+        scrypt_1024_1_1_256_sp(input, output, scratchpad);
 }
