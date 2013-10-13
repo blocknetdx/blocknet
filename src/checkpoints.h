@@ -24,6 +24,12 @@ namespace Checkpoints
     CBlockIndex* GetLastCheckpoint(const std::map<uint256, CBlockIndex*>& mapBlockIndex);
 
     double GuessVerificationProgress(CBlockIndex *pindex);
+
+    extern bool fEnabled;
+
+    /** Check whether we are doing an initial block download (synchronizing from disk or network) */
+    bool IsInitialBlockDownload();
 }
+
 
 #endif
