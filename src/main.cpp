@@ -1199,21 +1199,6 @@ int GetNumBlocksOfPeers()
     return std::max(cPeerBlockCounts.median(), Checkpoints::GetTotalBlocksEstimate());
 }
 
-bool IsInitialBlockDownload()
-{
-    if (pindexBest == NULL || fImporting || fReindex || nBestHeight < Checkpoints::GetTotalBlocksEstimate())
-        return true;
-    static int64 nLastUpdate;
-    static CBlockIndex* pindexLastBest;
-    if (pindexBest != pindexLastBest)
-    {
-        pindexLastBest = pindexBest;
-        nLastUpdate = GetTime();
-    }
-    return (GetTime() - nLastUpdate < 10 &&
-            pindexBest->GetBlockTime() < GetTime() - 24 * 60 * 60);
-}
-
 void static InvalidChainFound(CBlockIndex* pindexNew)
 {
     if (pindexNew->nChainWork > nBestInvalidWork)
@@ -1838,7 +1823,7 @@ bool SetBestChain(CValidationState &state, CBlockIndex* pindexNew)
         printf("- Flush %i transactions: %.2fms (%.4fms/tx)\n", nModified, 0.001 * nTime, 0.001 * nTime / nModified);
 
     // Make sure it's successfully written to disk before changing memory structure
-    bool fIsInitialDownload = IsInitialBlockDownload();
+    bool fIsInitialDownload = Checkpoints::IsInitialBlockDownload();
     if (!fIsInitialDownload || pcoinsTip->GetCacheSize() > nCoinCacheSize) {
         // Typical CCoins structures on disk are around 100 bytes in size.
         // Pushing a new one to the database can cause it to be written
@@ -3251,6 +3236,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         else
             pfrom->fRelayTxes = true;
 
+        pfrom->addrMe = addrMe;
         if (pfrom->fInbound && addrMe.IsRoutable())
         {
             pfrom->addrLocal = addrMe;
@@ -3280,12 +3266,8 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         if (!pfrom->fInbound)
         {
             // Advertise our address
-            if (!fNoListen && !IsInitialBlockDownload())
-            {
-                CAddress addr = GetLocalAddress(&pfrom->addr);
-                if (addr.IsRoutable())
-                    pfrom->PushAddress(addr);
-            }
+            if (!fNoListen && !Checkpoints::IsInitialBlockDownload())
+                AdvertizeLocalNode(pfrom, true);
 
             // Get recent addresses
             if (pfrom->fOneShot || pfrom->nVersion >= CADDR_TIME_VERSION || addrman.size() < 1000)
@@ -3932,14 +3914,14 @@ bool SendMessages(CNode* pto, bool fSendTrickle)
         // Resend wallet transactions that haven't gotten in a block yet
         // Except during reindex, importing and IBD, when old wallet
         // transactions become unconfirmed and spams other nodes.
-        if (!fReindex && !fImporting && !IsInitialBlockDownload())
+        if (!fReindex && !fImporting && !Checkpoints::IsInitialBlockDownload())
         {
             ResendWalletTransactions();
         }
 
         // Address refresh broadcast
         static int64 nLastRebroadcast;
-        if (!IsInitialBlockDownload() && (GetTime() - nLastRebroadcast > 24 * 60 * 60))
+        if (!Checkpoints::IsInitialBlockDownload() && (GetTime() - nLastRebroadcast > 24 * 60 * 60) && (GetTime() - nNodeStartTime > 60 * 60))
         {
             {
                 LOCK(cs_vNodes);
@@ -3951,11 +3933,7 @@ bool SendMessages(CNode* pto, bool fSendTrickle)
 
                     // Rebroadcast our address
                     if (!fNoListen)
-                    {
-                        CAddress addr = GetLocalAddress(&pnode->addr);
-                        if (addr.IsRoutable())
-                            pnode->PushAddress(addr);
-                    }
+                        AdvertizeLocalNode(pnode,true);
                 }
             }
             nLastRebroadcast = GetTime();
