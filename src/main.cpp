@@ -3167,6 +3167,9 @@ void static ProcessGetData(CNode* pfrom)
 
             // Track requests for our stuff.
             Inventory(inv.hash);
+            
+            if (inv.type == MSG_BLOCK || inv.type == MSG_FILTERED_BLOCK)
+                break;
         }
     }
 
