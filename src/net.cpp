@@ -1541,7 +1541,7 @@ void ThreadMessageHandler()
                     if (!ProcessMessages(pnode))
                         pnode->CloseSocketDisconnect();
                     
-                    if (!pnode->vRecvGetData.empty() || !pnode->vRecvMsg.empty())
+                    if (!pnode->vRecvGetData.empty() || !pnode->vRecvMsg.empty() && pnode->nSendSize < SendBufferSize())
                         fSleep = false;
                 }
             }
