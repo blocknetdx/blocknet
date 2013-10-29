@@ -3787,7 +3787,10 @@ bool ProcessMessages(CNode* pfrom)
 
     if (!pfrom->vRecvGetData.empty())
         ProcessGetData(pfrom);
-
+    
+    // this maintains the order of responses
+    if (!pfrom->vRecvGetData.empty()) return fOk;
+    
     std::deque<CNetMessage>::iterator it = pfrom->vRecvMsg.begin();
     while (!pfrom->fDisconnect && it != pfrom->vRecvMsg.end()) {
         // Don't bother if send buffer is too full to respond anyway
