@@ -967,7 +967,7 @@ int64 CWallet::GetImmatureBalance() const
 }
 
 // populate vCoins with vector of available COutputs.
-void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const CCoinControl *coinControl) const
+void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, bool fOnlySpendable, const CCoinControl *coinControl) const
 {
     vCoins.clear();
 
@@ -988,9 +988,9 @@ void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const
 
             for (unsigned int i = 0; i < pcoin->vout.size(); i++) {
                 isminetype mine = IsMine(pcoin->vout[i]);
-                if (!(pcoin->IsSpent(i)) && mine &&
-                    !IsLockedCoin((*it).first, i) && pcoin->vout[i].nValue >= nMinimumInputValue &&
-                    (!coinControl || !coinControl->HasSelected() || coinControl->IsSelected((*it).first, i))) 
+                if (fOnlySpendable && mine != MINE_SPENDABLE) continue;
+                if (!(pcoin->IsSpent(i)) && !IsLockedCoin((*it).first, i) && pcoin->vout[i].nValue >= nMinimumInputValue &&
+                    (!coinControl || !coinControl->HasSelected() || coinControl->IsSelected((*it).first, i)))
                     vCoins.push_back(COutput(pcoin, i, pcoin->GetDepthInMainChain(), mine == MINE_SPENDABLE));
             }
         }
