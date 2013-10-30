@@ -1541,8 +1541,13 @@ void ThreadMessageHandler()
                     if (!ProcessMessages(pnode))
                         pnode->CloseSocketDisconnect();
                     
-                    if ((!pnode->vRecvGetData.empty() || !pnode->vRecvMsg.empty()) && pnode->nSendSize < SendBufferSize())
-                        fSleep = false;
+                    if (pnode->nSendSize < SendBufferSize())
+                    {
+                        if (!pnode->vRecvGetData.empty() || (!pnode->vRecvMsg.empty() && pnode->vRecvMsg[0].complete()))
+                        {
+                            fSleep = false;
+                        }
+                    }
                 }
             }
             boost::this_thread::interruption_point();
