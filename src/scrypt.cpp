@@ -291,8 +291,26 @@ void scrypt_detect_sse2(unsigned int cpuid_edx)
 {
     if (cpuid_edx & 1<<26)
     {
+#ifdef WIN32
+        // mingw32 gcc-4.6.3 SSE2 crashes on Windows XP
+        OSVERSIONINFO osvi;
+        BOOL bIsWindows7OrLater;
+        ZeroMemory(&osvi, sizeof(OSVERSIONINFO));
+        osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+        GetVersionEx(&osvi);
+        bIsWindows7OrLater = ((osvi.dwMajorVersion == 6) && (osvi.dwMinorVersion >= 1));
+        if (bIsWindows7OrLater) {
+            scrypt_1024_1_1_256_sp = &scrypt_1024_1_1_256_sp_sse2;
+            printf("scrypt: using scrypt-sse2 as detected on Windows 7+.\n");
+        }
+        else {
+            scrypt_1024_1_1_256_sp = &scrypt_1024_1_1_256_sp_sse2;
+            printf("scrypt: using scrypt-generic, pre-Windows 7.\n");
+        }
+#else
         scrypt_1024_1_1_256_sp = &scrypt_1024_1_1_256_sp_sse2;
         printf("scrypt: using scrypt-sse2 as detected.\n");
+#endif
     }
     else
     {
