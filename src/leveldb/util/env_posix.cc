@@ -395,9 +395,13 @@ class PosixWriteableFile : public WritableFile {
   }
 
   virtual Status Append(const Slice& data) {
-    Status s;    
-    if (write(fd_, data.data(), data.size()) < 0) {
+    Status s;
+    int ret;
+    ret = write(fd_, data.data(), data.size());
+    if (ret < 0) {
       s = IOError(filename_, errno);
+    } else if (ret < data.size()) {
+      s = Status::IOError(filename_, "short write");
     }
     
     return s;
