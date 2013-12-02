@@ -377,6 +377,56 @@ class PosixMmapFile : public WritableFile {
   }
 };
 
+class PosixWriteableFile : public WritableFile {
+ private:
+  std::string filename_;
+  int fd_;
+ public:
+  PosixWriteableFile(const std::string& fname, int fd)
+  : filename_(fname),
+  fd_(fd)
+  { }
+
+
+  ~PosixWriteableFile() {
+    if (fd_ >= 0) {
+      PosixWriteableFile::Close();
+    }
+  }
+
+  virtual Status Append(const Slice& data) {
+    Status s;    
+    if (write(fd_, data.data(), data.size()) < 0) {
+      s = IOError(filename_, errno);
+    }
+    
+    return s;
+  }
+
+  virtual Status Close() {
+    Status s;
+    if (close(fd_) < 0) {
+      s = IOError(filename_, errno);
+    }
+    fd_ = -1;
+    return s;
+  }
+
+  virtual Status Flush() {
+    return Status::OK();
+  }
+  
+  virtual Status Sync() {
+    Status s;
+    
+    if (fdatasync(fd_) < 0) {
+      s = IOError(filename_, errno);
+    }
+    
+    return s;
+  }
+};
+
 static int LockOrUnlock(int fd, bool lock) {
   errno = 0;
   struct flock f;
@@ -439,21 +489,6 @@ class PosixEnv : public Env {
     int fd = open(fname.c_str(), O_RDONLY);
     if (fd < 0) {
       s = IOError(fname, errno);
-    } else if (mmap_limit_.Acquire()) {
-      uint64_t size;
-      s = GetFileSize(fname, &size);
-      if (s.ok()) {
-        void* base = mmap(NULL, size, PROT_READ, MAP_SHARED, fd, 0);
-        if (base != MAP_FAILED) {
-          *result = new PosixMmapReadableFile(fname, base, size, &mmap_limit_);
-        } else {
-          s = IOError(fname, errno);
-        }
-      }
-      close(fd);
-      if (!s.ok()) {
-        mmap_limit_.Release();
-      }
     } else {
       *result = new PosixRandomAccessFile(fname, fd);
     }
@@ -468,7 +503,7 @@ class PosixEnv : public Env {
       *result = NULL;
       s = IOError(fname, errno);
     } else {
-      *result = new PosixMmapFile(fname, fd, page_size_);
+      *result = new PosixWriteableFile(fname, fd);
     }
     return s;
   }
