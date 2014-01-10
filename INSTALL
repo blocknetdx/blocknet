@@ -1,9 +1,9 @@
-Building Litecoin
+Building Xcoin
 
-See doc/readme-qt.rst for instructions on building Litecoin-Qt,
+See doc/readme-qt.rst for instructions on building Xcoin-Qt,
 the intended-for-end-users, nice-graphical-interface, reference
-implementation of Litecoin.
+implementation of Xcoin.
 
-See doc/build-*.txt for instructions on building litecoind,
+See doc/build-*.txt for instructions on building xcoind,
 the intended-for-services, no-graphical-interface, reference
-implementation of Litecoin.
+implementation of Xcoin.
