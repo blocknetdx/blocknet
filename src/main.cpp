@@ -1066,13 +1066,13 @@ int64 static GetBlockValue(int nHeight, int64 nFees)
     int64 nSubsidy = 50 * COIN;
 
     // Subsidy is cut in half every 840000 blocks, which will occur approximately every 4 years
-    nSubsidy >>= (nHeight / 840000); // Xcoin: 840k blocks in ~4 years
+    nSubsidy >>= (nHeight / (840000/16)); // Xcoin: 840k blocks in ~0.25 years
 
     return nSubsidy + nFees;
 }
 
-static const int64 nTargetTimespan = 3.5 * 24 * 60 * 60; // Xcoin: 3.5 days
-static const int64 nTargetSpacing = 2.5 * 60; // Xcoin: 2.5 minutes
+static const int64 nTargetTimespan = 60 * 60; // Xcoin: 1 hour
+static const int64 nTargetSpacing = 5 * 60; // Xcoin: 5 minutes
 static const int64 nInterval = nTargetTimespan / nTargetSpacing;
 
 //
