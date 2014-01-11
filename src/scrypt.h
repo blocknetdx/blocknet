@@ -3,12 +3,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-static const int SCRYPT_SCRATCHPAD_SIZE = 131072 + 63;
-
-void scrypt_1024_1_1_256(const char *input, char *output);
-void scrypt_1024_1_1_256_sp_generic(const char *input, char *output, char *scratchpad);
-void scrypt_1024_1_1_256_sp(const char *input, char *output, char *scratchpad);
-
+void shash(const char *input, char *output);
 
 void
 PBKDF2_SHA256(const uint8_t *passwd, size_t passwdlen, const uint8_t *salt,

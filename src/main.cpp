@@ -31,7 +31,7 @@ CTxMemPool mempool;
 unsigned int nTransactionsUpdated = 0;
 
 map<uint256, CBlockIndex*> mapBlockIndex;
-uint256 hashGenesisBlock("0x0a6ce14cc21b2a5798cc9a0f8d562d6e7c5ab2345080570d702d0f37fd84a120");
+uint256 hashGenesisBlock("0xe4bda88bbd289f266060f8e3f19167e819278df379a32614cad9acf02dfcdb3c");
 static CBigNum bnProofOfWorkLimit(~uint256(0) >> 20); // Xcoin: starting difficulty is 1 / 2^12
 CBlockIndex* pindexGenesisBlock = NULL;
 int nBestHeight = -1;
@@ -2770,7 +2770,7 @@ bool InitBlockIndex() {
         block.nVersion = 1;
         block.nTime    = 1389401959;
         block.nBits    = 0x1e0ffff0;
-        block.nNonce   = 176466910;
+        block.nNonce   = 21029584;
 
         if (fTestNet)
         {
@@ -2785,11 +2785,10 @@ bool InitBlockIndex() {
             // creating a different genesis block:
             uint256 hashTarget = CBigNum().SetCompact(block.nBits).getuint256();
             uint256 thash;
-            char scratchpad[SCRYPT_SCRATCHPAD_SIZE];
 
             loop
             {
-                scrypt_1024_1_1_256_sp_generic(BEGIN(block.nVersion), BEGIN(thash), scratchpad);
+                shash(BEGIN(block.nVersion), BEGIN(thash));
                 if (thash <= hashTarget)
                     break;
                 if ((block.nNonce & 0xFFF) == 0)
@@ -2805,6 +2804,7 @@ bool InitBlockIndex() {
             }
             printf("block.nTime = %u \n", block.nTime);
             printf("block.nNonce = %u \n", block.nNonce);
+            printf("block.nVersion = %u \n", block.nVersion);
             printf("block.GetHash = %s\n", block.GetHash().ToString().c_str());
         }
 
@@ -4623,10 +4623,9 @@ void static XcoinMiner(CWallet *pwallet)
             unsigned int nHashesDone = 0;
 
             uint256 thash;
-            char scratchpad[SCRYPT_SCRATCHPAD_SIZE];
             loop
             {
-                scrypt_1024_1_1_256_sp_generic(BEGIN(pblock->nVersion), BEGIN(thash), scratchpad);
+                shash(BEGIN(pblock->nVersion), BEGIN(thash));
 
                 if (thash <= hashTarget)
                 {
