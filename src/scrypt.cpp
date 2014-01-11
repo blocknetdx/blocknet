@@ -267,12 +267,12 @@ void scrypt_1024_1_1_256_sp_generic(const char *input, char *output, char *scrat
 	for (k = 0; k < 32; k++)
 		X[k] = le32dec(&B[4 * k]);
 
-	for (i = 0; i < 1024; i++) {
+	for (i = 0; i < 32; i++) {
 		memcpy(&V[i * 32], X, 128);
 		xor_salsa8(&X[0], &X[16]);
 		xor_salsa8(&X[16], &X[0]);
 	}
-	for (i = 0; i < 1024; i++) {
+	for (i = 0; i < 32; i++) {
 		j = 32 * (X[16] & 1023);
 		for (k = 0; k < 32; k++)
 			X[k] ^= V[j + k];
