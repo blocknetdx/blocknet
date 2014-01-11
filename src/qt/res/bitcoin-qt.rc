@@ -8,7 +8,7 @@ IDI_ICON2 ICON DISCARDABLE "icons/bitcoin_testnet.ico"
 #define VER_PRODUCTVERSION_STR STRINGIZE(CLIENT_VERSION_MAJOR) "." STRINGIZE(CLIENT_VERSION_MINOR) "." STRINGIZE(CLIENT_VERSION_REVISION) "." STRINGIZE(CLIENT_VERSION_BUILD)
 #define VER_FILEVERSION        VER_PRODUCTVERSION
 #define VER_FILEVERSION_STR    VER_PRODUCTVERSION_STR
-#define COPYRIGHT_STR          "2009-" STRINGIZE(COPYRIGHT_YEAR) " The Bitcoin developers 2011-" STRINGIZE(COPYRIGHT_YEAR) " The Xcoin developers"
+#define COPYRIGHT_STR          "2009-" STRINGIZE(COPYRIGHT_YEAR) " The Bitcoin developers 2011-" STRINGIZE(COPYRIGHT_YEAR) " The xcoin developers"
 
 VS_VERSION_INFO VERSIONINFO
 FILEVERSION     VER_FILEVERSION
@@ -20,14 +20,14 @@ BEGIN
     BEGIN
         BLOCK "040904E4" // U.S. English - multilingual (hex)
         BEGIN
-            VALUE "CompanyName",        "Xcoin"
-            VALUE "FileDescription",    "Xcoin-Qt (OSS GUI client for Xcoin)"
+            VALUE "CompanyName",        "xcoin"
+            VALUE "FileDescription",    "xcoin-Qt (OSS GUI client for xcoin)"
             VALUE "FileVersion",        VER_FILEVERSION_STR
             VALUE "InternalName",       "xcoin-qt"
             VALUE "LegalCopyright",     COPYRIGHT_STR
             VALUE "LegalTrademarks1",   "Distributed under the MIT/X11 software license, see the accompanying file COPYING or http://www.opensource.org/licenses/mit-license.php."
             VALUE "OriginalFilename",   "xcoin-qt.exe"
-            VALUE "ProductName",        "Xcoin-Qt"
+            VALUE "ProductName",        "xcoin-Qt"
             VALUE "ProductVersion",     VER_PRODUCTVERSION_STR
         END
     END
