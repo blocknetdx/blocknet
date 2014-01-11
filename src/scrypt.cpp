@@ -257,12 +257,20 @@ void shash(const char *input, char *output)
 {
 	uint8_t B[128];
 	uint32_t X[32];
-	uint32_t k;
+	uint32_t i, j, k;
+	uint32_t *V;
 
 	PBKDF2_SHA256((const uint8_t *)input, 80, (const uint8_t *)input, 80, 1, B, 128);
 
 	for (k = 0; k < 32; k++)
-		X[k] = le32dec(&B[4 * k]); 
+		X[k] = le32dec(&B[4 * k]);
+
+	for (k = 0; k < 16; k++){
+		for (i = 0; i < 16; i++){
+			xor_salsa8(&X[k+i], &X[k]);
+			xor_salsa8(&X[k], &X[k+i]);
+		} 
+	}
 
 	for (k = 0; k < 32; k++)
 		le32enc(&B[4 * k], X[k]);
