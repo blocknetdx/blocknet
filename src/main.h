@@ -1366,9 +1366,7 @@ public:
 
     uint256 GetPoWHash() const
     {
-        uint256 thash;
-        shash(BEGIN(nVersion), BEGIN(thash));
-        return thash;
+        return GetHash();
     }
 
     CBlockHeader GetBlockHeader() const
