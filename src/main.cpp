@@ -31,7 +31,7 @@ CTxMemPool mempool;
 unsigned int nTransactionsUpdated = 0;
 
 map<uint256, CBlockIndex*> mapBlockIndex;
-uint256 hashGenesisBlock("0xcc6ad89cfa240c375eb1915f8baa1defcc8dc50433646e73cb3106f5f55fa6a8");
+uint256 hashGenesisBlock("0x00000f4c04743a25d640a9a7f73700718218bca8b3a961fc0e64787d62971f33");
 static CBigNum bnProofOfWorkLimit(~uint256(0) >> 20); // Xcoin: starting difficulty is 1 / 2^12
 CBlockIndex* pindexGenesisBlock = NULL;
 int nBestHeight = -1;
@@ -2770,7 +2770,7 @@ bool InitBlockIndex() {
         block.nVersion = 1;
         block.nTime    = 1389401959;
         block.nBits    = 0x1e0ffff0;
-        block.nNonce   = 25493744;
+        block.nNonce   = 26998604;
 
         if (fTestNet)
         {
@@ -2788,7 +2788,7 @@ bool InitBlockIndex() {
 
             loop
             {
-                shash(BEGIN(block.nVersion), BEGIN(thash));
+                thash = block.GetHash();
                 if (thash <= hashTarget)
                     break;
                 if ((block.nNonce & 0xFFF) == 0)
@@ -4234,6 +4234,8 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
     txNew.vout.resize(1);
     txNew.vout[0].scriptPubKey = scriptPubKeyIn;
 
+    printf("%d\n", scriptPubKeyIn[0]);
+
     // Add our coinbase tx as first transaction
     pblock->vtx.push_back(txNew);
     pblocktemplate->vTxFees.push_back(-1); // updated at end
@@ -4625,8 +4627,7 @@ void static XcoinMiner(CWallet *pwallet)
             uint256 thash;
             loop
             {
-                shash(BEGIN(pblock->nVersion), BEGIN(thash));
-
+                hashTarget = pblock->GetHash();
                 if (thash <= hashTarget)
                 {
                     // Found a solution
