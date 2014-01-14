@@ -2993,7 +2993,7 @@ bool LoadExternalBlockFile(FILE* fileIn, CDiskBlockPos *dbp)
 //
 // CAlert
 //
-4
+
 extern map<uint256, CAlert> mapAlerts;
 extern CCriticalSection cs_mapAlerts;
 
@@ -4628,7 +4628,6 @@ void static XcoinMiner(CWallet *pwallet)
             loop
             {
                 thash = pblock->GetHash();
-
                 if (thash <= hashTarget)
                 {
                     // Found a solution
