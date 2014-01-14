@@ -102,12 +102,6 @@ OBJS= \
     obj/shavite.o \
     obj/simd.o 
 
-ifdef USE_SSE2
-DEFS += -DUSE_SSE2
-OBJS_SSE2= obj/scrypt-sse2.o
-OBJS += $(OBJS_SSE2)
-endif
-
 all: xcoind.exe
 
 DEFS += -I"$(CURDIR)/leveldb/include"
@@ -120,11 +114,11 @@ obj/build.h: FORCE
 version.cpp: obj/build.h
 DEFS += -DHAVE_BUILD_INFO
 
-obj/%-sse2.o: %-sse2.cpp
-	$(CXX) -c $(xCXXFLAGS) -msse2 -mstackrealign -o $@ $<
-
 obj/%.o: %.cpp $(HEADERS)
 	$(CXX) -c $(xCXXFLAGS) -o $@ $<
+
+obj/%.o: %.c $(HEADERS)
+	$(CXX) -c $(xCXXFLAGS) -fpermissive -o $@ $<
 
 xcoind.exe: $(OBJS:obj/%=obj/%)
 	$(CXX) $(xCXXFLAGS) $(xLDFLAGS) -o $@ $(LIBPATHS) $^ $(LIBS)

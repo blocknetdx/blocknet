@@ -114,12 +114,6 @@ OBJS= \
     obj/shavite.o \
     obj/simd.o 
 
-ifdef USE_SSE2
-DEFS += -DUSE_SSE2
-OBJS_SSE2= obj/scrypt-sse2.o
-OBJS += $(OBJS_SSE2)
-endif
-
 all: xcoind.exe
 
 test check: test_xcoin.exe FORCE
@@ -139,6 +133,9 @@ obj/%-sse2.o: %-sse2.cpp
 
 obj/%.o: %.cpp $(HEADERS)
 	$(CXX) -c $(CFLAGS) -o $@ $<
+
+obj/%.o: %.c $(HEADERS)
+	$(CXX) -c $(CFLAGS) -fpermissive -o $@ $<
 
 xcoind.exe: $(OBJS:obj/%=obj/%)
 	$(CXX) $(CFLAGS) $(LDFLAGS) -o $@ $(LIBPATHS) $^ $(LIBS)
