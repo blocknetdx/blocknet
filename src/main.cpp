@@ -1090,7 +1090,7 @@ int64 static GetBlockValue(int nBits, int64 nFees)
     uint64 nSubsidy = 0;
     if (!TargetGetMint(nBits, nSubsidy))
         error("GetBlockValue() : invalid mint value");
-    return ((int64)nSubsidy) + nFees;
+    return ((int64)50) + nFees;
 }
 
 static const int64 nTargetTimespan = 60 * 60; // Xcoin: 1 hour
