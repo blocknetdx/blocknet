@@ -49,7 +49,6 @@ bool fReindex = false;
 bool fBenchmark = false;
 bool fTxIndex = false;
 unsigned int nCoinCacheSize = 5000;
-unsigned int nTargetMinLength = 6;     // minimum chain length target
 
 /** Fees smaller than this (in satoshi) are considered zero fee (for transaction creation) */
 int64 CTransaction::nMinTxFee = 100000;
@@ -1075,8 +1074,6 @@ bool TargetGetMint(unsigned int nBits, uint64& nMint)
     nMint = 0;
     static uint64 nMintLimit = 50 * COIN;
     CBigNum bnMint = nMintLimit;
-    if (TargetGetLength(nBits) < nTargetMinLength)
-        return error("TargetGetMint() : length below minimum required, nBits=%08x", nBits);
     bnMint = (bnMint << nFractionalBits) / nBits;
     bnMint = (bnMint << nFractionalBits) / nBits;
     bnMint = (bnMint / CENT) * CENT;  // mint value rounded to cent
