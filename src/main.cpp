@@ -49,6 +49,7 @@ bool fReindex = false;
 bool fBenchmark = false;
 bool fTxIndex = false;
 unsigned int nCoinCacheSize = 5000;
+unsigned int nTargetMinLength = 6;     // minimum chain length target
 
 /** Fees smaller than this (in satoshi) are considered zero fee (for transaction creation) */
 int64 CTransaction::nMinTxFee = 100000;
@@ -1063,14 +1064,37 @@ uint256 static GetOrphanRoot(const CBlockHeader* pblock)
     return pblock->GetHash();
 }
 
-int64 static GetBlockValue(int nHeight, int64 nFees)
+
+unsigned int TargetGetLength(unsigned int nBits)
 {
-    int64 nSubsidy = 50 * COIN;
+    return ((nBits & TARGET_LENGTH_MASK) >> nFractionalBits);
+}
 
-    // Subsidy is cut in half every 840000 blocks, which will occur approximately every 4 years
-    nSubsidy >>= (nHeight / (840000/16)); // Xcoin: 840k blocks in ~0.25 years
+bool TargetGetMint(unsigned int nBits, uint64& nMint)
+{
+    nMint = 0;
+    static uint64 nMintLimit = 50 * COIN;
+    CBigNum bnMint = nMintLimit;
+    if (TargetGetLength(nBits) < nTargetMinLength)
+        return error("TargetGetMint() : length below minimum required, nBits=%08x", nBits);
+    bnMint = (bnMint << nFractionalBits) / nBits;
+    bnMint = (bnMint << nFractionalBits) / nBits;
+    bnMint = (bnMint / CENT) * CENT;  // mint value rounded to cent
+    nMint = bnMint.getuint256().Get64();
+    if (nMint > nMintLimit)
+    {
+        nMint = 0;
+        return error("TargetGetMint() : mint value over limit, nBits=%08x", nBits);
+    }
+    return true;
+}
 
-    return nSubsidy + nFees;
+int64 static GetBlockValue(int nBits, int64 nFees)
+{
+    uint64 nSubsidy = 0;
+    if (!TargetGetMint(nBits, nSubsidy))
+        error("GetBlockValue() : invalid mint value");
+    return ((int64)nSubsidy) + nFees;
 }
 
 static const int64 nTargetTimespan = 60 * 60; // Xcoin: 1 hour
@@ -1696,8 +1720,8 @@ bool CBlock::ConnectBlock(CValidationState &state, CBlockIndex* pindex, CCoinsVi
     if (fBenchmark)
         printf("- Connect %u transactions: %.2fms (%.3fms/tx, %.3fms/txin)\n", (unsigned)vtx.size(), 0.001 * nTime, 0.001 * nTime / vtx.size(), nInputs <= 1 ? 0 : 0.001 * nTime / (nInputs-1));
 
-    if (vtx[0].GetValueOut() > GetBlockValue(pindex->nHeight, nFees))
-        return state.DoS(100, error("ConnectBlock() : coinbase pays too much (actual=%"PRI64d" vs limit=%"PRI64d")", vtx[0].GetValueOut(), GetBlockValue(pindex->nHeight, nFees)));
+    if (vtx[0].GetValueOut() > GetBlockValue(pindex->nBits, nFees))
+        return state.DoS(100, error("ConnectBlock() : coinbase pays too much (actual=%"PRI64d" vs limit=%"PRI64d")", vtx[0].GetValueOut(), GetBlockValue(pindex->nBits, nFees)));
 
     if (!control.Wait())
         return state.DoS(100, false);
