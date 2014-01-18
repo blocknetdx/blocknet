@@ -1068,8 +1068,8 @@ int64 static GetBlockValue(int nBits, int64 nFees)
     double dDiff =
         (double)0x0000ffff / (double)(nBits & 0x00ffffff);
 
-    int64 nSubsidy = (999 / (pow((dDiff+1),2)));
-    if (nSubsidy > 50) nSubsidy = 50;
+    int64 nSubsidy = (1500 / (pow((dDiff+1),2)));
+    if (nSubsidy > 500) nSubsidy = 500;
     if (nSubsidy < 1) nSubsidy = 1;
     nSubsidy *= COIN;
 
