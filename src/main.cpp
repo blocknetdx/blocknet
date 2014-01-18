@@ -31,8 +31,7 @@ CTxMemPool mempool;
 unsigned int nTransactionsUpdated = 0;
 
 map<uint256, CBlockIndex*> mapBlockIndex;
-uint256 hashGenesisBlock("0x000002fc63b8222f7cb9cea3e535dca1d691f3c9a6d27cd5bf3afab49554e3ba");
-//uint256 hashGenesisBlock("0x00000f4c04743a25d640a9a7f73700718218bca8b3a961fc0e64787d62971f33");
+uint256 hashGenesisBlock("0x000002fc63b8222f7cbcea3e535dca1d691f3c9a6d2cd5bf3afab49554e3a");
 
 static CBigNum bnProofOfWorkLimit(~uint256(0) >> 20); // Xcoin: starting difficulty is 1 / 2^12
 CBlockIndex* pindexGenesisBlock = NULL;
@@ -1068,7 +1067,7 @@ int64 static GetBlockValue(int nBits, int64 nFees)
     double dDiff =
         (double)0x0000ffff / (double)(nBits & 0x00ffffff);
 
-    int64 nSubsidy = (1500 / (pow((dDiff+1),2)));
+    int64 nSubsidy = (1111 / (pow((dDiff+1),2)));
     if (nSubsidy > 500) nSubsidy = 500;
     if (nSubsidy < 1) nSubsidy = 1;
     nSubsidy *= COIN;
