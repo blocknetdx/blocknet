@@ -124,10 +124,6 @@ class CValidationState;
 
 struct CBlockTemplate;
 
-static const unsigned int nFractionalBits = 24;
-static const unsigned int TARGET_FRACTIONAL_MASK = (1u<<nFractionalBits) - 1;
-static const unsigned int TARGET_LENGTH_MASK = ~TARGET_FRACTIONAL_MASK;
-
 /** Register a wallet to receive updates from core */
 void RegisterWallet(CWallet* pwalletIn);
 /** Unregister a wallet from core */

@@ -14,7 +14,6 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
-#include <math.h>
 
 using namespace std;
 using namespace boost;
@@ -1064,33 +1063,14 @@ uint256 static GetOrphanRoot(const CBlockHeader* pblock)
     return pblock->GetHash();
 }
 
-
-unsigned int TargetGetLength(unsigned int nBits)
+int64 static GetBlockValue(int nHeight, int64 nFees)
 {
-    return ((nBits & TARGET_LENGTH_MASK) >> nFractionalBits);
-}
+    int64 nSubsidy = 50 * COIN;
 
-bool TargetGetMint(unsigned int nBits, uint64& nMint)
-{
-    double dDiff =
-        (double)0x0000ffff / (double)(nBits & 0x00ffffff);
+    // Subsidy is cut in half every 840000 blocks, which will occur approximately every 4 years
+    nSubsidy >>= (nHeight / (840000/16)); // Xcoin: 840k blocks in ~0.25 years
 
-    double mint = 999.0 / (pow((dDiff+1.0),2.0));
-    if (mint > 50) mint = 50;
-    if (mint < 1) mint = 1;
-
-    nMint = (uint64)mint;
-    printf("%u\n", nMint);
-
-    return true;
-}
-
-int64 static GetBlockValue(int nBits, int64 nFees)
-{
-    uint64 nSubsidy = 0;
-    if (!TargetGetMint(nBits, nSubsidy))
-        error("GetBlockValue() : invalid mint value");
-    return ((int64)50) + nFees;
+    return nSubsidy + nFees;
 }
 
 static const int64 nTargetTimespan = 60 * 60; // Xcoin: 1 hour
@@ -1154,7 +1134,7 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBl
     }
 
     // Xcoin: This fixes an issue where a 51% attack can change difficulty at will.
-    // Go back the full period unless it's the first retarget after genesis. Code courtesy of Art For
+    // Go back the full period unless it's the first retarget after genesis. Code courtesy of Art Forz
     int blockstogoback = nInterval-1;
     if ((pindexLast->nHeight+1) != nInterval)
         blockstogoback = nInterval;
@@ -1716,8 +1696,8 @@ bool CBlock::ConnectBlock(CValidationState &state, CBlockIndex* pindex, CCoinsVi
     if (fBenchmark)
         printf("- Connect %u transactions: %.2fms (%.3fms/tx, %.3fms/txin)\n", (unsigned)vtx.size(), 0.001 * nTime, 0.001 * nTime / vtx.size(), nInputs <= 1 ? 0 : 0.001 * nTime / (nInputs-1));
 
-    if (vtx[0].GetValueOut() > GetBlockValue(pindex->nBits, nFees))
-        return state.DoS(100, error("ConnectBlock() : coinbase pays too much (actual=%"PRI64d" vs limit=%"PRI64d")", vtx[0].GetValueOut(), GetBlockValue(pindex->nBits, nFees)));
+    if (vtx[0].GetValueOut() > GetBlockValue(pindex->nHeight, nFees))
+        return state.DoS(100, error("ConnectBlock() : coinbase pays too much (actual=%"PRI64d" vs limit=%"PRI64d")", vtx[0].GetValueOut(), GetBlockValue(pindex->nHeight, nFees)));
 
     if (!control.Wait())
         return state.DoS(100, false);
@@ -4459,7 +4439,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         nLastBlockSize = nBlockSize;
         printf("CreateNewBlock(): total size %"PRI64u"\n", nBlockSize);
 
-        pblock->vtx[0].vout[0].nValue = GetBlockValue(pindexPrev->nBits, nFees);
+        pblock->vtx[0].vout[0].nValue = GetBlockValue(pindexPrev->nHeight+1, nFees);
         pblocktemplate->vTxFees[0] = -nFees;
 
         // Fill in header
