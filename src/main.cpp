@@ -14,6 +14,7 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
+#include <math.h>
 
 using namespace std;
 using namespace boost;
@@ -40,7 +41,6 @@ int nBestHeight = -1;
 uint256 nBestChainWork = 0;
 uint256 nBestInvalidWork = 0;
 uint256 hashBestChain = 0;
-unsigned int nTargetMinLength = 6;     // minimum chain length target
 CBlockIndex* pindexBest = NULL;
 set<CBlockIndex*, CBlockIndexWorkComparator> setBlockIndexValid; // may contain all CBlockIndex*'s that have validness >=BLOCK_VALID_TRANSACTIONS, and must contain those who aren't failed
 int64 nTimeBestReceived = 0;
@@ -1072,20 +1072,15 @@ unsigned int TargetGetLength(unsigned int nBits)
 
 bool TargetGetMint(unsigned int nBits, uint64& nMint)
 {
-    nMint = 0;
-    static uint64 nMintLimit = 999llu * COIN;
-    CBigNum bnMint = nMintLimit;
-    if (TargetGetLength(nBits) < nTargetMinLength)
-        return error("TargetGetMint() : length below minimum required, nBits=%08x", nBits);
-    bnMint = (bnMint << nFractionalBits) / nBits;
-    bnMint = (bnMint << nFractionalBits) / nBits;
-    bnMint = (bnMint / CENT) * CENT;  // mint value rounded to cent
-    nMint = bnMint.getuint256().Get64();
-    if (nMint > nMintLimit)
-    {
-        nMint = 0;
-        return error("TargetGetMint() : mint value over limit, nBits=%08x", nBits);
-    }
+    double dDiff =
+        (double)0x0000ffff / (double)(nBits & 0x00ffffff);
+
+    double mint = 999.0 / (pow((dDiff+1.0),2.0));
+    if (mint > 500) mint = 500;
+    if (mint < 0.1) mint = .1;
+
+    nMint = (uint64)mint;
+
     return true;
 }
 
@@ -1158,7 +1153,7 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBl
     }
 
     // Xcoin: This fixes an issue where a 51% attack can change difficulty at will.
-    // Go back the full period unless it's the first retarget after genesis. Code courtesy of Art Forz
+    // Go back the full period unless it's the first retarget after genesis. Code courtesy of Art For
     int blockstogoback = nInterval-1;
     if ((pindexLast->nHeight+1) != nInterval)
         blockstogoback = nInterval;
