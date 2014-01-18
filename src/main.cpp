@@ -1075,8 +1075,8 @@ int64 static GetBlockValue(int nBits, int64 nFees)
     return nSubsidy + nFees;
 }
 
-static const int64 nTargetTimespan = 60 * 60; // Xcoin: 1 hour
-static const int64 nTargetSpacing = 5 * 60; // Xcoin: 5 minutes
+static const int64 nTargetTimespan = 24 * 60 * 60; // Xcoin: 1 day
+static const int64 nTargetSpacing = 2.5 * 60; // Xcoin: 2.5 minutes
 static const int64 nInterval = nTargetTimespan / nTargetSpacing;
 
 //
@@ -4441,7 +4441,11 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         nLastBlockSize = nBlockSize;
         printf("CreateNewBlock(): total size %"PRI64u"\n", nBlockSize);
 
+        float dDiff =
+                (float)0x0000ffff / (float)(pindexPrev->nBits & 0x00ffffff);
         pblock->vtx[0].vout[0].nValue = GetBlockValue(pindexPrev->nBits, nFees);
+
+        printf(" ----> %u %.20f\n", pindexPrev->nBits, dDiff);
         pblocktemplate->vTxFees[0] = -nFees;
 
         // Fill in header
