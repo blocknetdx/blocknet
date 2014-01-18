@@ -1076,8 +1076,8 @@ bool TargetGetMint(unsigned int nBits, uint64& nMint)
         (double)0x0000ffff / (double)(nBits & 0x00ffffff);
 
     double mint = 999.0 / (pow((dDiff+1.0),2.0));
-    if (mint > 500) mint = 500;
-    if (mint < 0.1) mint = .1;
+    if (mint > 50) mint = 50;
+    if (mint < 1) mint = 1;
 
     nMint = (uint64)mint;
     printf("%u\n", nMint);
