@@ -1064,16 +1064,33 @@ uint256 static GetOrphanRoot(const CBlockHeader* pblock)
 
 int64 static GetBlockValue(int nBits, int nHeight, int64 nFees)
 {
+    int nShift = (nBits >> 24) & 0xff;
+
     double dDiff =
         (double)0x0000ffff / (double)(nBits & 0x00ffffff);
 
-    int64 nSubsidy = (1111 / (pow((dDiff+1),2)));
+    /* fixed bug caused diff to not be correctly calculated */
+    if(nHeight > 4500) {
+        while (nShift < 29)
+        {
+            dDiff *= 256.0;
+            nShift++;
+        }
+        while (nShift > 29)
+        {
+            dDiff /= 256.0;
+            nShift--;
+        }
+    }
+
+    int64 nSubsidy = (1111.0 / (pow((dDiff+1.0),2.0)));
+    
     if (nSubsidy > 500) nSubsidy = 500;
     if (nSubsidy < 1) nSubsidy = 1;
     nSubsidy *= COIN;
 
     // Subsidy is cut in half every 840000 blocks, which will occur approximately every 2 years
-    nSubsidy >>= (nHeight / 5); // XCoin: 840k blocks in ~2 years
+    nSubsidy >>= (nHeight / 840000); // XCoin: 840k blocks in ~2 years
 
     return nSubsidy + nFees;
 }
@@ -2782,10 +2799,10 @@ bool InitBlockIndex() {
         if (fTestNet)
         {
             block.nTime    = 1317798646;
-            block.nNonce   = 385270584;
+            block.nNonce   = 386037278;
         }
 
-        if (true && block.GetHash() != hashGenesisBlock)
+        if (false && block.GetHash() != hashGenesisBlock)
         {
             printf("Searching for genesis block...\n");
             // This will figure out a valid hash and Nonce if you're
