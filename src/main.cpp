@@ -1062,15 +1062,35 @@ uint256 static GetOrphanRoot(const CBlockHeader* pblock)
     return pblock->GetHash();
 }
 
-int64 static GetBlockValue(int nBits, int64 nFees)
+int64 static GetBlockValue(int nBits, int nHeight, int64 nFees)
 {
+    int nShift = (nBits >> 24) & 0xff;
+
     double dDiff =
         (double)0x0000ffff / (double)(nBits & 0x00ffffff);
 
-    int64 nSubsidy = (1111 / (pow((dDiff+1),2)));
+    /* fixed bug caused diff to not be correctly calculated */
+    if(nHeight > 4500) {
+        while (nShift < 29)
+        {
+            dDiff *= 256.0;
+            nShift++;
+        }
+        while (nShift > 29)
+        {
+            dDiff /= 256.0;
+            nShift--;
+        }
+    }
+
+    int64 nSubsidy = (1111.0 / (pow((dDiff+1.0),2.0)));
+    
     if (nSubsidy > 500) nSubsidy = 500;
     if (nSubsidy < 1) nSubsidy = 1;
     nSubsidy *= COIN;
+
+    // Subsidy is cut in half every 840000 blocks, which will occur approximately every 2 years
+    nSubsidy >>= (nHeight / 840000); // XCoin: 840k blocks in ~2 years
 
     return nSubsidy + nFees;
 }
@@ -1698,8 +1718,8 @@ bool CBlock::ConnectBlock(CValidationState &state, CBlockIndex* pindex, CCoinsVi
     if (fBenchmark)
         printf("- Connect %u transactions: %.2fms (%.3fms/tx, %.3fms/txin)\n", (unsigned)vtx.size(), 0.001 * nTime, 0.001 * nTime / vtx.size(), nInputs <= 1 ? 0 : 0.001 * nTime / (nInputs-1));
 
-    if (vtx[0].GetValueOut() > GetBlockValue(pindex->pprev->nBits, nFees))
-        return state.DoS(100, error("ConnectBlock() : coinbase pays too much (actual=%"PRI64d" vs limit=%"PRI64d")", vtx[0].GetValueOut(), GetBlockValue(pindex->pprev->nBits, nFees)));
+    if (vtx[0].GetValueOut() > GetBlockValue(pindex->pprev->nBits, pindex->nHeight, nFees))
+        return state.DoS(100, error("ConnectBlock() : coinbase pays too much (actual=%"PRI64d" vs limit=%"PRI64d")", vtx[0].GetValueOut(), GetBlockValue(pindex->pprev->nBits, pindex->nHeight, nFees)));
 
     if (!control.Wait())
         return state.DoS(100, false);
@@ -2779,10 +2799,10 @@ bool InitBlockIndex() {
         if (fTestNet)
         {
             block.nTime    = 1317798646;
-            block.nNonce   = 385270584;
+            block.nNonce   = 386037278;
         }
 
-        if (true && block.GetHash() != hashGenesisBlock)
+        if (false && block.GetHash() != hashGenesisBlock)
         {
             printf("Searching for genesis block...\n");
             // This will figure out a valid hash and Nonce if you're
@@ -4443,7 +4463,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
 
         float dDiff =
                 (float)0x0000ffff / (float)(pindexPrev->nBits & 0x00ffffff);
-        pblock->vtx[0].vout[0].nValue = GetBlockValue(pindexPrev->nBits, nFees);
+        pblock->vtx[0].vout[0].nValue = GetBlockValue(pindexPrev->nBits, pindexPrev->nHeight, nFees);
 
         pblocktemplate->vTxFees[0] = -nFees;
 
