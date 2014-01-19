@@ -31,7 +31,7 @@ CTxMemPool mempool;
 unsigned int nTransactionsUpdated = 0;
 
 map<uint256, CBlockIndex*> mapBlockIndex;
-uint256 hashGenesisBlock("0x000002fc63b8222f7cb9cea3e535dca1d691f3c9a6d27cd5bf3afab49554e3ba");
+uint256 hashGenesisBlock("0x00000ffd590b1485b3caadc19b22e6379c733355108f107a430458cdf3407ab6");
 
 static CBigNum bnProofOfWorkLimit(~uint256(0) >> 20); // Xcoin: starting difficulty is 1 / 2^12
 CBlockIndex* pindexGenesisBlock = NULL;
@@ -2772,9 +2772,9 @@ bool InitBlockIndex() {
         block.hashPrevBlock = 0;
         block.hashMerkleRoot = block.BuildMerkleTree();
         block.nVersion = 1;
-        block.nTime    = 1389401959;
+        block.nTime    = 1390095618;
         block.nBits    = 0x1e0ffff0;
-        block.nNonce   = 28812068;
+        block.nNonce   = 28917698;
 
         if (fTestNet)
         {
