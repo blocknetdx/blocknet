@@ -4445,7 +4445,6 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
                 (float)0x0000ffff / (float)(pindexPrev->nBits & 0x00ffffff);
         pblock->vtx[0].vout[0].nValue = GetBlockValue(pindexPrev->nBits, nFees);
 
-        printf(" ----> %u %.20f\n", pindexPrev->nBits, dDiff);
         pblocktemplate->vTxFees[0] = -nFees;
 
         // Fill in header
