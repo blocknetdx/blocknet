@@ -19,7 +19,7 @@ using namespace std;
 using namespace boost;
 
 //
-// Global state
+// Global state -
 //
 
 CCriticalSection cs_setpwalletRegistered;
