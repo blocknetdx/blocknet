@@ -248,7 +248,7 @@ This product includes software developed by the OpenSSL Project for use in the O
     </message>
     <message>
         <location line="+1"/>
-        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR LITECOINS&lt;/b&gt;!</source>
+        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR XCOINS&lt;/b&gt;!</source>
         <translation>警告: 如果將錢包加密後忘記密碼, 你會&lt;b&gt;失去其中所有的莱特幣&lt;/b&gt;!</translation>
     </message>
     <message>
