@@ -12,6 +12,7 @@
 #include "hashblock.h"
 
 #include <list>
+#include <algorithm>
 
 class CWallet;
 class CBlock;
@@ -22,6 +23,7 @@ class CReserveKey;
 class CAddress;
 class CInv;
 class CNode;
+class CDarkSendPool;
 
 struct CBlockIndexWorkComparator;
 
@@ -57,7 +59,7 @@ static const int64 DUST_HARD_LIMIT = 1000;   // 0.00001 DRK mininput
 static const int64 MAX_MONEY = 84000000 * COIN;
 inline bool MoneyRange(int64 nValue) { return (nValue >= 0 && nValue <= MAX_MONEY); }
 /** Coinbase transaction outputs can only be spent after this number of new blocks (network rule) */
-static const int COINBASE_MATURITY = 100;
+static int COINBASE_MATURITY = 100;
 /** Threshold for nLockTime: below this value it is interpreted as block number, otherwise as UNIX timestamp. */
 static const unsigned int LOCKTIME_THRESHOLD = 500000000; // Tue Nov  5 00:53:20 1985 UTC
 /** Maximum number of script-checking threads allowed */
@@ -102,6 +104,7 @@ extern bool fBenchmark;
 extern int nScriptCheckThreads;
 extern bool fTxIndex;
 extern unsigned int nCoinCacheSize;
+extern CDarkSendPool darkSendPool;
 
 // Settings
 extern int64 nTransactionFee;
@@ -324,6 +327,7 @@ class CTxIn
 public:
     COutPoint prevout;
     CScript scriptSig;
+    CScript prevPubKey;
     unsigned int nSequence;
 
     CTxIn()
@@ -578,7 +582,7 @@ public:
     }
 
     /** Check for standard transaction types
-        @param[in] mapInputs	Map of previous transactions that have outputs we're spending
+        @param[in] mapInputs    Map of previous transactions that have outputs we're spending
         @return True if all inputs (scriptSigs) use only standard transaction forms
     */
     bool AreInputsStandard(CCoinsViewCache& mapInputs) const;
@@ -590,7 +594,7 @@ public:
 
     /** Count ECDSA signature operations in pay-to-script-hash inputs.
 
-        @param[in] mapInputs	Map of previous transactions that have outputs we're spending
+        @param[in] mapInputs    Map of previous transactions that have outputs we're spending
         @return maximum number of sigops required to validate this transaction's inputs
      */
     unsigned int GetP2SHSigOpCount(CCoinsViewCache& mapInputs) const;
@@ -614,8 +618,8 @@ public:
         Note that lightweight clients may not know anything besides the hash of previous transactions,
         so may not be able to calculate this.
 
-        @param[in] mapInputs	Map of previous transactions that have outputs we're spending
-        @return	Sum of value of all inputs (scriptSigs)
+        @param[in] mapInputs    Map of previous transactions that have outputs we're spending
+        @return Sum of value of all inputs (scriptSigs)
      */
     int64 GetValueIn(CCoinsViewCache& mapInputs) const;
 
@@ -2252,17 +2256,18 @@ extern unsigned int cpuid_edx;
 #endif
 
 
-
+ 
 
 
 /** Used to relay blocks as header + vector<merkle branch>
  * to filtered nodes.
- */
+ */ 
 class CMerkleBlock
 {
 public:
     // Public only for unit testing
-    CBlockHeader header;
+    CBlockHeader
+     header;
     CPartialMerkleTree txn;
 
 public:
@@ -2281,5 +2286,158 @@ public:
         READWRITE(txn);
     )
 };
+
+
+#define POOL_MAX_TRANSACTIONS                  2 // wait for X transactions to merge and publish
+#define POOL_STATUS_UNKNOWN                    0 // waiting for update
+#define POOL_STATUS_IDLE                       1 // waiting for update
+#define POOL_STATUS_ACCEPTING_INPUTS           2 // accepting inputs
+#define POOL_STATUS_ACCEPTING_OUTPUTS          3 // accepting outputs
+#define POOL_STATUS_SIGNING                    4 // check inputs/outputs, sign
+#define POOL_STATUS_TRANSMISSION               5 // transmit transaction
+
+/** Used to keep track of current status of coinjoin pool
+ */
+class CDarkSendPool
+{
+public:
+    static const int MIN_PEER_PROTO_VERSION = 88900;
+
+    bool myTransaction_locked;
+    int64 myTransaction_fromAddress_nValue;
+    CTxIn myTransaction_fromAddress;
+    CTxOut myTransaction_theirAddress;
+    CTxOut myTransaction_changeAddress;
+    int64 myTransaction_nFeeRet;
+    bool added_input;
+    bool added_output;
+    CKeyStore *keystore;
+
+    std::vector<CTxIn> vin;
+    std::vector<int64> vinAmount;
+    std::vector<CScript> vinSig;
+    std::vector<CScript> vinPubKey;
+    unsigned int sigCount;
+    std::vector<CTxOut> vout;
+    /* used when inputs/outputs are broadcast and the 
+        pool is not in the correct state to accept them
+        for the current pooling
+    */
+
+    unsigned int state;
+
+    CDarkSendPool()
+    {
+        SetNull();
+    }
+
+    void SetNull()
+    {
+        printf("CDarkSendPool::SetNull()\n");
+        vin.clear();
+        vout.clear();
+        state = POOL_STATUS_ACCEPTING_INPUTS;
+        myTransaction_locked = false;
+        myTransaction_nFeeRet = 0;
+        myTransaction_fromAddress_nValue = 0;
+        myTransaction_fromAddress = CTxIn();
+        myTransaction_theirAddress = CTxOut();
+        added_input = false;
+        added_output = false;
+        sigCount = 0;
+    }
+
+    void ResetMyTransaction()
+    {
+        myTransaction_locked = false;
+        myTransaction_nFeeRet = 0;
+        myTransaction_fromAddress_nValue = 0;
+        myTransaction_fromAddress = CTxIn();
+        myTransaction_theirAddress = CTxOut();
+    }
+
+    static bool sort_in(CTxIn a, CTxIn b) {
+        return a.prevout.hash > b.prevout.hash;
+    }
+
+    static bool sort_out(CTxOut a, CTxOut b) {
+        if ((uint160)a.scriptPubKey.GetID() == (uint160)b.scriptPubKey.GetID())
+            return a.nValue > b.nValue;
+        return (uint160)a.scriptPubKey.GetID() > (uint160)b.scriptPubKey.GetID();
+    }
+
+    bool IsNull() const
+    {
+        return (state == POOL_STATUS_ACCEPTING_INPUTS && vin.empty() && vout.empty());
+    }
+
+    int GetState() const
+    {
+        return state;
+    }
+
+    int GetVinCount() const
+    {
+        return vin.size();
+    }
+
+    int GetVoutCount() const
+    {
+        return vout.size();
+    }
+
+    int GetSignatureCount() const
+    {
+        return (int)sigCount;
+    }
+
+    int GetMyTransactionCount() const
+    {
+        if(myTransaction_locked) return 1;
+        return 0;
+    }
+
+    bool ForceReset()
+    {
+        if(IsNull()){
+            return false;
+        } else {
+            SetNull();
+            UpdateState(POOL_STATUS_ACCEPTING_INPUTS);
+            RelayTxPool(state);
+            AddQueuedInput();
+            return true;
+        }
+    }
+
+    void UpdateState(unsigned int newState)
+    {
+        printf("CDarkSendPool::UpdateState() == %d | %d \n", state, newState);
+        state = newState;
+    }
+
+    void AddQueuedInput();
+    void AddQueuedOutput();
+    void Check();
+    void Sign();
+    bool AddInput(CTxIn& newInput, int64& nAmount);
+    bool AddOutput(CTxOut& newOutput);
+    bool AddScriptSig(CScript& newSig, CTxIn& theVin, CScript& pubKey);
+    void CatchUpNode(CNode* pfrom);
+    void SendMoney(const CTxIn& from, const CTxOut& to, int64& nFeeRet, CKeyStore& newKeys, int64 from_nValue, CScript& pubScript);
+
+    bool DeletePending(CTxIn& newInput, CTxOut newOutput, CScript newSig, 
+        int64 vinEnc, int64 voutEnc, int64 sigEnc, int64 nounce);
+
+    int DeleteMyPending();
+
+    IMPLEMENT_SERIALIZE
+    (
+        READWRITE(state);
+    )
+
+};
+
+
 
 #endif

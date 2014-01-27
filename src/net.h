@@ -638,7 +638,16 @@ public:
 
 
 class CTransaction;
+class CTxIn;
+class CTxOut;
 void RelayTransaction(const CTransaction& tx, const uint256& hash);
 void RelayTransaction(const CTransaction& tx, const uint256& hash, const CDataStream& ss);
+void RelayTxPool(const unsigned int state);
+void RelayTxPoolIn(const CTxIn& tx, int64& nAmount);
+void RelayTxPoolOut(const CTxOut& tx);
+void RelayTxPoolSig(const CScript& sig, const CTxIn& vin, const CScript& pubKey);
+void RelayTxPoolDeletePending(const CTxIn& newInput, const CTxOut newOutput, const CScript newSig,  
+    const int64 vinEnc, const  int64 voutEnc, const int64 sigEnc, const int64 nounce);
+void RelayTxPoolForceReset();
 
 #endif

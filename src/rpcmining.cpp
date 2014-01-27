@@ -161,6 +161,47 @@ Value getmininginfo(const Array& params, bool fHelp)
     return obj;
 }
 
+Value getpoolinfo(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() != 0)
+        throw runtime_error(
+            "getpoolinfo\n"
+            "Returns an object containing anonymous pool-related information.");
+
+    Object obj;
+    obj.push_back(Pair("state",        darkSendPool.GetState()));
+    obj.push_back(Pair("pooled_inputs",   darkSendPool.GetVinCount()));
+    obj.push_back(Pair("pooled_outputs",   darkSendPool.GetVoutCount()));
+    obj.push_back(Pair("pooled_signatures",   darkSendPool.GetSignatureCount()));
+    obj.push_back(Pair("my_transactions",   darkSendPool.GetMyTransactionCount()));
+    return obj;
+}
+
+Value resetpool(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() != 0)
+        throw runtime_error(
+            "resetpool\n"
+            "Reset anonymous transaction pool.");
+
+    Object obj;
+    obj.push_back(Pair("success",        darkSendPool.ForceReset()));
+    RelayTxPoolForceReset();
+
+    return obj;
+}
+
+Value withdrawpooltx(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() != 0)
+        throw runtime_error(
+            "withdrawlpooltx\n"
+            "Remove my pending transaction from pool.");
+
+    Object obj;
+    obj.push_back(Pair("success",        darkSendPool.DeleteMyPending()));
+    return obj;
+}
 
 Value getworkex(const Array& params, bool fHelp)
 {

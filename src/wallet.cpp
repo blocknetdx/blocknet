@@ -994,6 +994,34 @@ void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const
     }
 }
 
+void CWallet::AvailableCoins2(vector<COutput>& vCoins, bool fOnlyConfirmed) const
+{
+    vCoins.clear();
+
+    {
+        LOCK(cs_wallet);
+        for (map<uint256, CWalletTx>::const_iterator it = mapWallet.begin(); it != mapWallet.end(); ++it)
+        {
+            const CWalletTx* pcoin = &(*it).second;
+
+            if (!pcoin->IsFinal())
+                continue;
+
+            if (fOnlyConfirmed && !pcoin->IsConfirmed())
+                continue;
+
+            if (pcoin->IsCoinBase() && pcoin->GetBlocksToMaturity() > 0)
+                continue;
+
+            for (unsigned int i = 0; i < pcoin->vout.size(); i++) {
+                if (!(pcoin->IsSpent(i)) && IsMine(pcoin->vout[i]) &&
+                    !IsLockedCoin((*it).first, i) && pcoin->vout[i].nValue >= nMinimumInputValue) 
+                        vCoins.push_back(COutput(pcoin, i, pcoin->GetDepthInMainChain()));
+            }
+        }
+    }
+}
+
 static void ApproximateBestSubset(vector<pair<int64, pair<const CWalletTx*,unsigned int> > >vValue, int64 nTotalLower, int64 nTargetValue,
                                   vector<char>& vfBest, int64& nBest, int iterations = 1000)
 {
@@ -1160,8 +1188,29 @@ bool CWallet::SelectCoins(int64 nTargetValue, set<pair<const CWalletTx*,unsigned
             SelectCoinsMinConf(nTargetValue, 0, 1, vCoins, setCoinsRet, nValueRet));
 }
 
+/* select coins with 1 unspent output */
+bool CWallet::SelectCoinsMinOutput(int64 nTargetValue, CTxIn& vin, int64& nValueRet, CScript& pubScript, const CCoinControl* coinControl) const
+{
+    vector<COutput> vCoins;
+    AvailableCoins2(vCoins, true);
+    
+    // coin control -> return all selected outputs (we want all selected to go into the transaction for sure)
+    {
+        printf("has coinControl\n");
+        BOOST_FOREACH(const COutput& out, vCoins)
+        {
+            if(out.tx->vout[out.i].nValue > nValueRet){ //more than min
+                vin = CTxIn(out.tx->GetHash(),out.i);
+                pubScript = out.tx->vout[out.i].scriptPubKey; // the inputs PubKey
+                nValueRet = out.tx->vout[out.i].nValue;
+                printf("Found unspent input larger than nValue\n");
+                return (nValueRet >= nTargetValue);
+            }
+        }
+    }
 
-
+    return false;
+}
 
 bool CWallet::CreateTransaction(const vector<pair<CScript, int64> >& vecSend,
                                 CWalletTx& wtxNew, CReserveKey& reservekey, int64& nFeeRet, std::string& strFailReason, const CCoinControl* coinControl)
@@ -1415,8 +1464,6 @@ string CWallet::SendMoney(CScript scriptPubKey, int64 nValue, CWalletTx& wtxNew,
     return "";
 }
 
-
-
 string CWallet::SendMoneyToDestination(const CTxDestination& address, int64 nValue, CWalletTx& wtxNew, bool fAskFee)
 {
     // Check amount
@@ -1432,8 +1479,43 @@ string CWallet::SendMoneyToDestination(const CTxDestination& address, int64 nVal
     return SendMoney(scriptPubKey, nValue, wtxNew, fAskFee);
 }
 
+string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 nValue)
+{
+    // Check amount
+    if (nValue <= 0)
+        return _("Invalid amount");
+    if (nValue + nTransactionFee > GetBalance())
+        return _("Insufficient funds");
 
+    // Parse Bitcoin address
+    CScript scriptPubKey;
+    scriptPubKey.SetDestination(address);    
+    //CScript s;
+    //s << OP_DUP << OP_HASH160 << scriptPubKey.GetID() << OP_EQUALVERIFY << OP_CHECKSIG;
 
+    //CTxOut out(nValue, s);
+    CTxOut out(nValue, scriptPubKey);
+    CReserveKey reservekey(this);
+
+    //**************
+
+    int64 nFeeRet = 0; ///need to get a better fee calc
+    CCoinControl* coinControl = new CCoinControl();
+    int64 nTotalValue = nValue + nFeeRet;
+    // Choose coins to use
+    int64 nValueIn = 0;
+    CScript pubScript = CScript();
+    CTxIn vin;
+    
+    if (!SelectCoinsMinOutput(nTotalValue, vin, nValueIn, pubScript, coinControl))
+    {
+        return _("Insufficient funds");
+    }
+
+    darkSendPool.SendMoney(vin, out, nFeeRet, *this, nValueIn, pubScript);
+
+    return "";
+}
 
 DBErrors CWallet::LoadWallet(bool& fFirstRunRet)
 {
