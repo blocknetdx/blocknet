@@ -225,6 +225,7 @@ bool CCoinsViewCache::SetCoins(const uint256 &txid, const CCoins &coins) {
 }
 
 bool CCoinsViewCache::HaveCoins(const uint256 &txid) {
+
     return FetchCoins(txid) != cacheCoins.end();
 }
 
@@ -922,7 +923,7 @@ int CMerkleTx::GetBlocksToMaturity() const
 {
     if (!IsCoinBase())
         return 0;
-    return max(0, (COINBASE_MATURITY+20) - GetDepthInMainChain());
+    return max(0, (COINBASE_MATURITY+2) - GetDepthInMainChain());
 }
 
 
@@ -1395,16 +1396,20 @@ bool CTransaction::HaveInputs(CCoinsViewCache &inputs) const
         // first check whether information about the prevout hash is available
         for (unsigned int i = 0; i < vin.size(); i++) {
             const COutPoint &prevout = vin[i].prevout;
-            if (!inputs.HaveCoins(prevout.hash))
+            if (!inputs.HaveCoins(prevout.hash)) {
+                printf("!inputs.HaveCoins %s \n", prevout.ToString().c_str());
                 return false;
+            }
         }
 
         // then check whether the actual outputs are available
         for (unsigned int i = 0; i < vin.size(); i++) {
             const COutPoint &prevout = vin[i].prevout;
             const CCoins &coins = inputs.GetCoins(prevout.hash);
-            if (!coins.IsAvailable(prevout.n))
+            if (!coins.IsAvailable(prevout.n)){
+                printf("!coins.IsAvailable %s \n", prevout.ToString().c_str());
                 return false;
+            }
         }
     }
     return true;
@@ -1626,6 +1631,7 @@ void ThreadScriptCheck() {
 
 bool CBlock::ConnectBlock(CValidationState &state, CBlockIndex* pindex, CCoinsViewCache &view, bool fJustCheck)
 {
+
     // Check it again in case a previous version let a bad block in
     if (!CheckBlock(state, !fJustCheck, !fJustCheck))
         return false;
@@ -1686,15 +1692,17 @@ bool CBlock::ConnectBlock(CValidationState &state, CBlockIndex* pindex, CCoinsVi
     {
         const CTransaction &tx = vtx[i];
 
+        printf("ReviewingTransaction:\n%s", tx.ToString().c_str());
+
         nInputs += tx.vin.size();
         nSigOps += tx.GetLegacySigOpCount();
         if (nSigOps > MAX_BLOCK_SIGOPS)
             return state.DoS(100, error("ConnectBlock() : too many sigops"));
 
         if (!tx.IsCoinBase())
-        {
+        {/*
             if (!tx.HaveInputs(view))
-                return state.DoS(100, error("ConnectBlock() : inputs missing/spent"));
+                return state.DoS(100, error("ConnectBlock() : inputs missing/spent"));*/
 
             if (fStrictPayToScriptHash)
             {
@@ -2756,6 +2764,7 @@ bool LoadBlockIndex()
         pchMessageStart[2] = 0xb7;
         pchMessageStart[3] = 0xdc;
         hashGenesisBlock = uint256("0x00000bafbc94add76cb75e2ec92894837288a481e5c005f6563d91623bf8bc2c");
+        COINBASE_MATURITY = 1;
     }
 
     //
@@ -4231,7 +4240,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
 
     // Create coinbase tx
     CTransaction txNew;
-    txNew.vin.resize(1);
+    txNew.vin.resize(1); 
     txNew.vin[0].prevout.SetNull();
     txNew.vout.resize(1);
     txNew.vout[0].scriptPubKey = scriptPubKeyIn;
@@ -4346,10 +4355,15 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         uint64 nBlockSize = 1000;
         uint64 nBlockTx = 0;
         int nBlockSigOps = 100;
+        int nMergedTransactionsIn = 0;
+        int nMergedTransactionsOut = 0;
         bool fSortedByFee = (nBlockPrioritySize <= 0);
 
         TxPriorityCompare comparer(fSortedByFee);
         std::make_heap(vecPriority.begin(), vecPriority.end(), comparer);
+
+        // Create coinbase tx
+        CTransaction txMerged;
 
         while (!vecPriority.empty())
         {
@@ -4403,7 +4417,32 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
             tx.UpdateCoins(state, view, txundo, pindexPrev->nHeight+1, hash);
 
             // Added
-            pblock->vtx.push_back(tx);
+            //pblock->vtx.push_back(tx);
+
+            //* MERGE ALL TRANSACTIONS *//
+            printf("MergeTransaction:\n%s", tx.ToString().c_str());
+
+
+            for (unsigned int i=0; i<tx.vin.size(); i++) {
+                printf(" merged in: %u\n", i);
+                nMergedTransactionsIn += 1;
+                txMerged.vin.resize(nMergedTransactionsIn); //block transaction and merged transactions
+                txMerged.vin[nMergedTransactionsIn-1].scriptSig = tx.vin[i].scriptSig;
+                txMerged.vin[nMergedTransactionsIn-1].prevout.hash = tx.vin[i].prevout.hash;
+                txMerged.vin[nMergedTransactionsIn-1].prevout.n = tx.vin[i].prevout.n;
+            }
+
+            for (unsigned int i=0; i<tx.vout.size(); i++) {
+                printf(" merged out: %u\n", i);
+                nMergedTransactionsOut += 1;
+                txMerged.vout.resize(nMergedTransactionsOut);
+                txMerged.vout[nMergedTransactionsOut-1].nValue = tx.vout[i].nValue;
+                txMerged.vout[nMergedTransactionsOut-1].scriptPubKey = tx.vout[i].scriptPubKey;
+            }
+            
+            printf("txMerged:\n%s", txMerged.ToString().c_str());
+
+            //* END MERGE *//
             pblocktemplate->vTxFees.push_back(nTxFees);
             pblocktemplate->vTxSigOps.push_back(nTxSigOps);
             nBlockSize += nTxSize;
@@ -4435,12 +4474,14 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
             }
         }
 
+        //pushed merged transactions onto the block
+        if(nMergedTransactionsOut > 0)
+            pblock->vtx.push_back(txMerged);
+
         nLastBlockTx = nBlockTx;
         nLastBlockSize = nBlockSize;
         printf("CreateNewBlock(): total size %"PRI64u"\n", nBlockSize);
 
-        float dDiff =
-                (float)0x0000ffff / (float)(pindexPrev->nBits & 0x00ffffff);
         pblock->vtx[0].vout[0].nValue = GetBlockValue(pindexPrev->nBits, pindexPrev->nHeight, nFees);
 
         pblocktemplate->vTxFees[0] = -nFees;
@@ -4452,6 +4493,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         pblock->nNonce         = 0;
         pblock->vtx[0].vin[0].scriptSig = CScript() << OP_0 << OP_0;
         pblocktemplate->vTxSigOps[0] = pblock->vtx[0].GetLegacySigOpCount();
+        
 
         CBlockIndex indexDummy(*pblock);
         indexDummy.pprev = pindexPrev;

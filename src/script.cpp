@@ -1480,10 +1480,12 @@ bool VerifyScript(const CScript& scriptSig, const CScript& scriptPubKey, const C
     vector<vector<unsigned char> > stack, stackCopy;
     if (!EvalScript(stack, scriptSig, txTo, nIn, flags, nHashType))
         return false;
+
     if (flags & SCRIPT_VERIFY_P2SH)
         stackCopy = stack;
     if (!EvalScript(stack, scriptPubKey, txTo, nIn, flags, nHashType))
         return false;
+
     if (stack.empty())
         return false;
 
@@ -1501,14 +1503,17 @@ bool VerifyScript(const CScript& scriptSig, const CScript& scriptPubKey, const C
         // an empty stack and the EvalScript above would return false.
         assert(!stackCopy.empty());
 
+        
         const valtype& pubKeySerialized = stackCopy.back();
         CScript pubKey2(pubKeySerialized.begin(), pubKeySerialized.end());
         popstack(stackCopy);
 
         if (!EvalScript(stackCopy, pubKey2, txTo, nIn, flags, nHashType))
             return false;
+
         if (stackCopy.empty())
             return false;
+
         return CastToBool(stackCopy.back());
     }
 
