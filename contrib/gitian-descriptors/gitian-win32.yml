@@ -1,5 +1,5 @@
 ---
-name: "xcoin"
+name: "darkcoin"
 suites:
 - "precise"
 architectures:
@@ -13,8 +13,8 @@ packages:
 - "faketime"
 reference_datetime: "2011-01-30 00:00:00"
 remotes:
-- "url": "https://github.com/xcoin-project/xcoin.git"
-  "dir": "xcoin"
+- "url": "https://github.com/darkcoin-project/darkcoin.git"
+  "dir": "darkcoin"
 files:
 - "qt-win32-4.8.3-gitian-r4.zip"
 - "boost-win32-1.55.0-gitian-r6.zip"
@@ -31,7 +31,7 @@ script: |
   unzip ../build/bitcoin-deps-win32-gitian-r9.zip
   cd $HOME/build/
   #
-  cd xcoin
+  cd darkcoin
   export PATH=$STAGING/host/bin:$PATH
   mkdir -p $OUTDIR/src
   git archive HEAD | tar -x -C $OUTDIR/src
@@ -41,19 +41,19 @@ script: |
   export FAKETIME=$REFERENCE_DATETIME
   export TZ=UTC
   ln -s $STAGING $HOME/qt
-  $HOME/staging/host/bin/qmake -spec unsupported/win32-g++-cross MINIUPNPC_LIB_PATH=$STAGING MINIUPNPC_INCLUDE_PATH=$STAGING BDB_LIB_PATH=$STAGING BDB_INCLUDE_PATH=$STAGING BOOST_LIB_PATH=$STAGING BOOST_INCLUDE_PATH=$STAGING BOOST_LIB_SUFFIX=-mt-s BOOST_THREAD_LIB_SUFFIX=_win32-mt-s OPENSSL_LIB_PATH=$STAGING OPENSSL_INCLUDE_PATH=$STAGING QRENCODE_LIB_PATH=$STAGING QRENCODE_INCLUDE_PATH=$STAGING USE_QRCODE=1 INCLUDEPATH=$STAGING DEFINES=BOOST_THREAD_USE_LIB BITCOIN_NEED_QT_PLUGINS=1 QMAKE_LRELEASE=lrelease QMAKE_CXXFLAGS=-frandom-seed=xcoin USE_BUILD_INFO=1 USE_SSE2=1
+  $HOME/staging/host/bin/qmake -spec unsupported/win32-g++-cross MINIUPNPC_LIB_PATH=$STAGING MINIUPNPC_INCLUDE_PATH=$STAGING BDB_LIB_PATH=$STAGING BDB_INCLUDE_PATH=$STAGING BOOST_LIB_PATH=$STAGING BOOST_INCLUDE_PATH=$STAGING BOOST_LIB_SUFFIX=-mt-s BOOST_THREAD_LIB_SUFFIX=_win32-mt-s OPENSSL_LIB_PATH=$STAGING OPENSSL_INCLUDE_PATH=$STAGING QRENCODE_LIB_PATH=$STAGING QRENCODE_INCLUDE_PATH=$STAGING USE_QRCODE=1 INCLUDEPATH=$STAGING DEFINES=BOOST_THREAD_USE_LIB BITCOIN_NEED_QT_PLUGINS=1 QMAKE_LRELEASE=lrelease QMAKE_CXXFLAGS=-frandom-seed=darkcoin USE_BUILD_INFO=1 USE_SSE2=1
   make $MAKEOPTS
-  $HOST-strip release/xcoin-qt.exe
-  cp release/xcoin-qt.exe $OUTDIR/
+  $HOST-strip release/darkcoin-qt.exe
+  cp release/darkcoin-qt.exe $OUTDIR/
   #
   cd src
   export LD_PRELOAD=/usr/lib/faketime/libfaketime.so.1
   export FAKETIME=$REFERENCE_DATETIME
   export TZ=UTC
-  make -f makefile.linux-mingw $MAKEOPTS DEPSDIR=$STAGING xcoind.exe USE_UPNP=0 DEBUGFLAGS="-frandom-seed=xcoin" USE_SSE2=1
-  $HOST-strip xcoind.exe
+  make -f makefile.linux-mingw $MAKEOPTS DEPSDIR=$STAGING darkcoind.exe USE_UPNP=0 DEBUGFLAGS="-frandom-seed=darkcoin" USE_SSE2=1
+  $HOST-strip darkcoind.exe
   mkdir $OUTDIR/daemon
-  cp xcoind.exe $OUTDIR/daemon
+  cp darkcoind.exe $OUTDIR/daemon
   cd ..
   mkdir nsis
   git archive HEAD | tar -x -C nsis
@@ -62,4 +62,4 @@ script: |
   cp ../../release/* ../release/
   cp ../../src/*.exe .
   makensis ../share/setup.nsi
-  cp ../share/xcoin-*-win32-setup.exe $OUTDIR/
+  cp ../share/darkcoin-*-win32-setup.exe $OUTDIR/

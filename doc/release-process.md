@@ -6,7 +6,7 @@ Release Process
 ###update (commit) version in sources
 
 
-	xcoin-qt.pro
+	darkcoin-qt.pro
 	contrib/verifysfbinaries/verify.sh
 	doc/README*
 	share/setup.nsi
@@ -24,7 +24,7 @@ Release Process
 
 ##perform gitian builds
 
- From a directory containing the xcoin source, gitian-builder and gitian.sigs
+ From a directory containing the darkcoin source, gitian-builder and gitian.sigs
   
 	export SIGNER=(your gitian key, ie bluematt, sipa, etc)
 	export VERSION=0.8.0
@@ -42,54 +42,54 @@ Release Process
 	wget 'http://downloads.sourceforge.net/project/boost/boost/1.50.0/boost_1_50_0.tar.bz2'
 	wget 'http://releases.qt-project.org/qt4/source/qt-everywhere-opensource-src-4.8.3.tar.gz'
 	cd ..
-	./bin/gbuild ../xcoin/contrib/gitian-descriptors/boost-win32.yml
+	./bin/gbuild ../darkcoin/contrib/gitian-descriptors/boost-win32.yml
 	mv build/out/boost-win32-1.50.0-gitian2.zip inputs/
-	./bin/gbuild ../xcoin/contrib/gitian-descriptors/qt-win32.yml
+	./bin/gbuild ../darkcoin/contrib/gitian-descriptors/qt-win32.yml
 	mv build/out/qt-win32-4.8.3-gitian-r1.zip inputs/
-	./bin/gbuild ../xcoin/contrib/gitian-descriptors/deps-win32.yml
-	mv build/out/xcoin-deps-0.0.5.zip inputs/
+	./bin/gbuild ../darkcoin/contrib/gitian-descriptors/deps-win32.yml
+	mv build/out/darkcoin-deps-0.0.5.zip inputs/
 
- Build xcoind and xcoin-qt on Linux32, Linux64, and Win32:
+ Build darkcoind and darkcoin-qt on Linux32, Linux64, and Win32:
   
-	./bin/gbuild --commit xcoin=v${VERSION} ../xcoin/contrib/gitian-descriptors/gitian.yml
-	./bin/gsign --signer $SIGNER --release ${VERSION} --destination ../gitian.sigs/ ../xcoin/contrib/gitian-descriptors/gitian.yml
+	./bin/gbuild --commit darkcoin=v${VERSION} ../darkcoin/contrib/gitian-descriptors/gitian.yml
+	./bin/gsign --signer $SIGNER --release ${VERSION} --destination ../gitian.sigs/ ../darkcoin/contrib/gitian-descriptors/gitian.yml
 	pushd build/out
-	zip -r xcoin-${VERSION}-linux-gitian.zip *
-	mv xcoin-${VERSION}-linux-gitian.zip ../../
+	zip -r darkcoin-${VERSION}-linux-gitian.zip *
+	mv darkcoin-${VERSION}-linux-gitian.zip ../../
 	popd
-	./bin/gbuild --commit xcoin=v${VERSION} ../xcoin/contrib/gitian-descriptors/gitian-win32.yml
-	./bin/gsign --signer $SIGNER --release ${VERSION}-win32 --destination ../gitian.sigs/ ../xcoin/contrib/gitian-descriptors/gitian-win32.yml
+	./bin/gbuild --commit darkcoin=v${VERSION} ../darkcoin/contrib/gitian-descriptors/gitian-win32.yml
+	./bin/gsign --signer $SIGNER --release ${VERSION}-win32 --destination ../gitian.sigs/ ../darkcoin/contrib/gitian-descriptors/gitian-win32.yml
 	pushd build/out
-	zip -r xcoin-${VERSION}-win32-gitian.zip *
-	mv xcoin-${VERSION}-win32-gitian.zip ../../
+	zip -r darkcoin-${VERSION}-win32-gitian.zip *
+	mv darkcoin-${VERSION}-win32-gitian.zip ../../
 	popd
 
   Build output expected:
 
-  1. linux 32-bit and 64-bit binaries + source (xcoin-${VERSION}-linux-gitian.zip)
-  2. windows 32-bit binary, installer + source (xcoin-${VERSION}-win32-gitian.zip)
+  1. linux 32-bit and 64-bit binaries + source (darkcoin-${VERSION}-linux-gitian.zip)
+  2. windows 32-bit binary, installer + source (darkcoin-${VERSION}-win32-gitian.zip)
   3. Gitian signatures (in gitian.sigs/${VERSION}[-win32]/(your gitian key)/
 
 repackage gitian builds for release as stand-alone zip/tar/installer exe
 
 **Linux .tar.gz:**
 
-	unzip xcoin-${VERSION}-linux-gitian.zip -d xcoin-${VERSION}-linux
-	tar czvf xcoin-${VERSION}-linux.tar.gz xcoin-${VERSION}-linux
-	rm -rf xcoin-${VERSION}-linux
+	unzip darkcoin-${VERSION}-linux-gitian.zip -d darkcoin-${VERSION}-linux
+	tar czvf darkcoin-${VERSION}-linux.tar.gz darkcoin-${VERSION}-linux
+	rm -rf darkcoin-${VERSION}-linux
 
 **Windows .zip and setup.exe:**
 
-	unzip xcoin-${VERSION}-win32-gitian.zip -d xcoin-${VERSION}-win32
-	mv xcoin-${VERSION}-win32/xcoin-*-setup.exe .
-	zip -r xcoin-${VERSION}-win32.zip bitcoin-${VERSION}-win32
-	rm -rf xcoin-${VERSION}-win32
+	unzip darkcoin-${VERSION}-win32-gitian.zip -d darkcoin-${VERSION}-win32
+	mv darkcoin-${VERSION}-win32/darkcoin-*-setup.exe .
+	zip -r darkcoin-${VERSION}-win32.zip bitcoin-${VERSION}-win32
+	rm -rf darkcoin-${VERSION}-win32
 
 **Perform Mac build:**
 
   OSX binaries are created by Gavin Andresen on a 32-bit, OSX 10.6 machine.
 
-	qmake RELEASE=1 USE_UPNP=1 USE_QRCODE=1 xcoin-qt.pro
+	qmake RELEASE=1 USE_UPNP=1 USE_QRCODE=1 darkcoin-qt.pro
 	make
 	export QTDIR=/opt/local/share/qt4  # needed to find translations/qt_*.qm files
 	T=$(contrib/qt_translations.py $QTDIR/translations src/qt/locale)
@@ -107,14 +107,14 @@ repackage gitian builds for release as stand-alone zip/tar/installer exe
 
 * create SHA256SUMS for builds, and PGP-sign it
 
-* update xcoin.org version
+* update darkcoin.io version
   make sure all OS download links go to the right versions
 
 * update forum version
 
 * update wiki download links
 
-* update wiki changelog: [https://en.xcoin.it/wiki/Changelog](https://en.bitcoin.it/wiki/Changelog)
+* update wiki changelog: [https://en.darkcoin.it/wiki/Changelog](https://en.bitcoin.it/wiki/Changelog)
 
 Commit your signature to gitian.sigs:
 
@@ -129,32 +129,32 @@ Commit your signature to gitian.sigs:
 
 ### After 3 or more people have gitian-built, repackage gitian-signed zips:
 
-From a directory containing xcoin source, gitian.sigs and gitian zips
+From a directory containing darkcoin source, gitian.sigs and gitian zips
 
 	export VERSION=0.5.1
-	mkdir xcoin-${VERSION}-linux-gitian
-	pushd xcoin-${VERSION}-linux-gitian
-	unzip ../xcoin-${VERSION}-linux-gitian.zip
+	mkdir darkcoin-${VERSION}-linux-gitian
+	pushd darkcoin-${VERSION}-linux-gitian
+	unzip ../darkcoin-${VERSION}-linux-gitian.zip
 	mkdir gitian
-	cp ../xcoin/contrib/gitian-downloader/*.pgp ./gitian/
+	cp ../darkcoin/contrib/gitian-downloader/*.pgp ./gitian/
 	for signer in $(ls ../gitian.sigs/${VERSION}/); do
-	 cp ../gitian.sigs/${VERSION}/${signer}/xcoin-build.assert ./gitian/${signer}-build.assert
-	 cp ../gitian.sigs/${VERSION}/${signer}/xcoin-build.assert.sig ./gitian/${signer}-build.assert.sig
+	 cp ../gitian.sigs/${VERSION}/${signer}/darkcoin-build.assert ./gitian/${signer}-build.assert
+	 cp ../gitian.sigs/${VERSION}/${signer}/darkcoin-build.assert.sig ./gitian/${signer}-build.assert.sig
 	done
-	zip -r xcoin-${VERSION}-linux-gitian.zip *
-	cp xcoin-${VERSION}-linux-gitian.zip ../
+	zip -r darkcoin-${VERSION}-linux-gitian.zip *
+	cp darkcoin-${VERSION}-linux-gitian.zip ../
 	popd
-	mkdir xcoin-${VERSION}-win32-gitian
-	pushd xcoin-${VERSION}-win32-gitian
-	unzip ../xcoin-${VERSION}-win32-gitian.zip
+	mkdir darkcoin-${VERSION}-win32-gitian
+	pushd darkcoin-${VERSION}-win32-gitian
+	unzip ../darkcoin-${VERSION}-win32-gitian.zip
 	mkdir gitian
-	cp ../xcoin/contrib/gitian-downloader/*.pgp ./gitian/
+	cp ../darkcoin/contrib/gitian-downloader/*.pgp ./gitian/
 	for signer in $(ls ../gitian.sigs/${VERSION}-win32/); do
-	 cp ../gitian.sigs/${VERSION}-win32/${signer}/xcoin-build.assert ./gitian/${signer}-build.assert
-	 cp ../gitian.sigs/${VERSION}-win32/${signer}/xcoin-build.assert.sig ./gitian/${signer}-build.assert.sig
+	 cp ../gitian.sigs/${VERSION}-win32/${signer}/darkcoin-build.assert ./gitian/${signer}-build.assert
+	 cp ../gitian.sigs/${VERSION}-win32/${signer}/darkcoin-build.assert.sig ./gitian/${signer}-build.assert.sig
 	done
-	zip -r xcoin-${VERSION}-win32-gitian.zip *
-	cp xcoin-${VERSION}-win32-gitian.zip ../
+	zip -r darkcoin-${VERSION}-win32-gitian.zip *
+	cp darkcoin-${VERSION}-win32-gitian.zip ../
 	popd
 
 - Upload gitian zips to SourceForge

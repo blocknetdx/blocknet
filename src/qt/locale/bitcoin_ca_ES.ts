@@ -4,13 +4,13 @@
     <name>AboutDialog</name>
     <message>
         <location filename="../forms/aboutdialog.ui" line="+14"/>
-        <source>About Xcoin</source>
-        <translation>Sobre Xcoin</translation>
+        <source>About DarkCoin</source>
+        <translation>Sobre DarkCoin</translation>
     </message>
     <message>
         <location line="+39"/>
-        <source>&lt;b&gt;Xcoin&lt;/b&gt; version</source>
-        <translation>&lt;b&gt;Xcoin&lt;/b&gt; versió</translation>
+        <source>&lt;b&gt;DarkCoin&lt;/b&gt; version</source>
+        <translation>&lt;b&gt;DarkCoin&lt;/b&gt; versió</translation>
     </message>
     <message>
         <location line="+57"/>
@@ -29,7 +29,7 @@ This product includes software developed by the OpenSSL Project for use in the O
     </message>
     <message>
         <location line="+0"/>
-        <source>The Xcoin developers</source>
+        <source>The DarkCoin developers</source>
         <translation type="unfinished"/>
     </message>
 </context>
@@ -62,8 +62,8 @@ This product includes software developed by the OpenSSL Project for use in the O
     </message>
     <message>
         <location filename="../addressbookpage.cpp" line="+63"/>
-        <source>These are your Xcoin addresses for receiving payments. You may want to give a different one to each sender so you can keep track of who is paying you.</source>
-        <translation>Aquestes són les teves adreces Xcoin per a rebre pagaments. Pot interesar-te proveïr diferents adreces a cadascun dels enviadors així pots identificar qui et va pagant.</translation>
+        <source>These are your DarkCoin addresses for receiving payments. You may want to give a different one to each sender so you can keep track of who is paying you.</source>
+        <translation>Aquestes són les teves adreces DarkCoin per a rebre pagaments. Pot interesar-te proveïr diferents adreces a cadascun dels enviadors així pots identificar qui et va pagant.</translation>
     </message>
     <message>
         <location filename="../forms/addressbookpage.ui" line="+14"/>
@@ -77,8 +77,8 @@ This product includes software developed by the OpenSSL Project for use in the O
     </message>
     <message>
         <location line="+11"/>
-        <source>Sign a message to prove you own a Xcoin address</source>
-        <translation>Signa el missatge per provar que ets propietari de l&apos;adreça Xcoin</translation>
+        <source>Sign a message to prove you own a DarkCoin address</source>
+        <translation>Signa el missatge per provar que ets propietari de l&apos;adreça DarkCoin</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -102,8 +102,8 @@ This product includes software developed by the OpenSSL Project for use in the O
     </message>
     <message>
         <location line="-44"/>
-        <source>Verify a message to ensure it was signed with a specified Xcoin address</source>
-        <translation>Verificar un missatge per asegurar-se que ha estat signat amb una adreça Xcoin específica</translation>
+        <source>Verify a message to ensure it was signed with a specified DarkCoin address</source>
+        <translation>Verificar un missatge per asegurar-se que ha estat signat amb una adreça DarkCoin específica</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -117,8 +117,8 @@ This product includes software developed by the OpenSSL Project for use in the O
     </message>
     <message>
         <location filename="../addressbookpage.cpp" line="-5"/>
-        <source>These are your Xcoin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
-        <translation>Aquestes són la seva adreça de Xcoin per enviar els pagaments. Sempre revisi la quantitat i l&apos;adreça del destinatari abans transferència de monedes.</translation>
+        <source>These are your DarkCoin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <translation>Aquestes són la seva adreça de DarkCoin per enviar els pagaments. Sempre revisi la quantitat i l&apos;adreça del destinatari abans transferència de monedes.</translation>
     </message>
     <message>
         <location line="+13"/>
@@ -243,8 +243,8 @@ This product includes software developed by the OpenSSL Project for use in the O
     </message>
     <message>
         <location line="+1"/>
-        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR XCOINS&lt;/b&gt;!</source>
-        <translation>Advertència: Si encripteu el vostre moneder i perdeu la constrasenya, &lt;b&gt;PERDREU TOTS ELS VOSTRES XCOINS&lt;/b&gt;!</translation>
+        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR DARKCOINS&lt;/b&gt;!</source>
+        <translation>Advertència: Si encripteu el vostre moneder i perdeu la constrasenya, &lt;b&gt;PERDREU TOTS ELS VOSTRES DARKCOINS&lt;/b&gt;!</translation>
     </message>
     <message>
         <location line="+0"/>
@@ -270,8 +270,8 @@ This product includes software developed by the OpenSSL Project for use in the O
     </message>
     <message>
         <location line="-56"/>
-        <source>Xcoin will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your xcoins from being stolen by malware infecting your computer.</source>
-        <translation>Xcoin es tancarà ara per acabar el procés d&apos;encriptació. Recorda que encriptar el teu moneder no protegeix completament els teus xcoins de ser robades per programari maliciós instal·lat al teu ordinador.</translation>
+        <source>DarkCoin will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your darkcoins from being stolen by malware infecting your computer.</source>
+        <translation>DarkCoin es tancarà ara per acabar el procés d&apos;encriptació. Recorda que encriptar el teu moneder no protegeix completament els teus darkcoins de ser robades per programari maliciós instal·lat al teu ordinador.</translation>
     </message>
     <message>
         <location line="+13"/>
@@ -369,8 +369,8 @@ This product includes software developed by the OpenSSL Project for use in the O
     </message>
     <message>
         <location line="+4"/>
-        <source>Show information about Xcoin</source>
-        <translation>Mostra informació sobre Xcoin</translation>
+        <source>Show information about DarkCoin</source>
+        <translation>Mostra informació sobre DarkCoin</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -414,13 +414,13 @@ This product includes software developed by the OpenSSL Project for use in the O
     </message>
     <message>
         <location line="-347"/>
-        <source>Send coins to a Xcoin address</source>
-        <translation>Enviar monedes a una adreça Xcoin</translation>
+        <source>Send coins to a DarkCoin address</source>
+        <translation>Enviar monedes a una adreça DarkCoin</translation>
     </message>
     <message>
         <location line="+49"/>
-        <source>Modify configuration options for Xcoin</source>
-        <translation>Modificar les opcions de configuració per xcoin</translation>
+        <source>Modify configuration options for DarkCoin</source>
+        <translation>Modificar les opcions de configuració per darkcoin</translation>
     </message>
     <message>
         <location line="+9"/>
@@ -450,8 +450,8 @@ This product includes software developed by the OpenSSL Project for use in the O
     <message>
         <location line="-165"/>
         <location line="+530"/>
-        <source>Xcoin</source>
-        <translation>Xcoin</translation>
+        <source>DarkCoin</source>
+        <translation>DarkCoin</translation>
     </message>
     <message>
         <location line="-530"/>
@@ -475,8 +475,8 @@ This product includes software developed by the OpenSSL Project for use in the O
     </message>
     <message>
         <location line="+22"/>
-        <source>&amp;About Xcoin</source>
-        <translation>&amp;Sobre Xcoin</translation>
+        <source>&amp;About DarkCoin</source>
+        <translation>&amp;Sobre DarkCoin</translation>
     </message>
     <message>
         <location line="+9"/>
@@ -495,13 +495,13 @@ This product includes software developed by the OpenSSL Project for use in the O
     </message>
     <message>
         <location line="+7"/>
-        <source>Sign messages with your Xcoin addresses to prove you own them</source>
-        <translation>Signa el missatges amb la seva adreça de Xcoin per provar que les poseeixes</translation>
+        <source>Sign messages with your DarkCoin addresses to prove you own them</source>
+        <translation>Signa el missatges amb la seva adreça de DarkCoin per provar que les poseeixes</translation>
     </message>
     <message>
         <location line="+2"/>
-        <source>Verify messages to ensure they were signed with specified Xcoin addresses</source>
-        <translation>Verificar els missatges per assegurar-te que han estat signades amb una adreça Xcoin específica.</translation>
+        <source>Verify messages to ensure they were signed with specified DarkCoin addresses</source>
+        <translation>Verificar els missatges per assegurar-te que han estat signades amb una adreça DarkCoin específica.</translation>
     </message>
     <message>
         <location line="+28"/>
@@ -531,13 +531,13 @@ This product includes software developed by the OpenSSL Project for use in the O
     </message>
     <message>
         <location line="+47"/>
-        <source>Xcoin client</source>
-        <translation>Client Xcoin</translation>
+        <source>DarkCoin client</source>
+        <translation>Client DarkCoin</translation>
     </message>
     <message numerus="yes">
         <location line="+141"/>
-        <source>%n active connection(s) to Xcoin network</source>
-        <translation><numerusform>%n connexió activa a la xarxa Xcoin</numerusform><numerusform>%n connexions actives a la xarxa Xcoin</numerusform></translation>
+        <source>%n active connection(s) to DarkCoin network</source>
+        <translation><numerusform>%n connexió activa a la xarxa DarkCoin</numerusform><numerusform>%n connexions actives a la xarxa DarkCoin</numerusform></translation>
     </message>
     <message>
         <location line="+22"/>
@@ -647,8 +647,8 @@ Address: %4
     <message>
         <location line="-23"/>
         <location line="+23"/>
-        <source>URI can not be parsed! This can be caused by an invalid Xcoin address or malformed URI parameters.</source>
-        <translation>la URI no pot ser processada! Això es pot ser causat per una adreça Xcoin invalida o paràmetres URI malformats.</translation>
+        <source>URI can not be parsed! This can be caused by an invalid DarkCoin address or malformed URI parameters.</source>
+        <translation>la URI no pot ser processada! Això es pot ser causat per una adreça DarkCoin invalida o paràmetres URI malformats.</translation>
     </message>
     <message>
         <location line="+17"/>
@@ -662,8 +662,8 @@ Address: %4
     </message>
     <message>
         <location filename="../bitcoin.cpp" line="+111"/>
-        <source>A fatal error occurred. Xcoin can no longer continue safely and will quit.</source>
-        <translation>Ha tingut lloc un error fatal. Xcoin no pot continuar executant-se de manera segura i es tancará.</translation>
+        <source>A fatal error occurred. DarkCoin can no longer continue safely and will quit.</source>
+        <translation>Ha tingut lloc un error fatal. DarkCoin no pot continuar executant-se de manera segura i es tancará.</translation>
     </message>
 </context>
 <context>
@@ -728,8 +728,8 @@ Address: %4
     </message>
     <message>
         <location line="-5"/>
-        <source>The entered address &quot;%1&quot; is not a valid Xcoin address.</source>
-        <translation>L&apos;adreça introduida &quot;%1&quot; no és una adreça Xcoin valida.</translation>
+        <source>The entered address &quot;%1&quot; is not a valid DarkCoin address.</source>
+        <translation>L&apos;adreça introduida &quot;%1&quot; no és una adreça DarkCoin valida.</translation>
     </message>
     <message>
         <location line="+10"/>
@@ -747,8 +747,8 @@ Address: %4
     <message>
         <location filename="../guiutil.cpp" line="+424"/>
         <location line="+12"/>
-        <source>Xcoin-Qt</source>
-        <translation>Xcoin-Qt</translation>
+        <source>DarkCoin-Qt</source>
+        <translation>DarkCoin-Qt</translation>
     </message>
     <message>
         <location line="-12"/>
@@ -810,13 +810,13 @@ Address: %4
     </message>
     <message>
         <location line="+31"/>
-        <source>Automatically start Xcoin after logging in to the system.</source>
-        <translation>Iniciar automàticament Xcoin després de l&apos;inici de sessió del sistema.</translation>
+        <source>Automatically start DarkCoin after logging in to the system.</source>
+        <translation>Iniciar automàticament DarkCoin després de l&apos;inici de sessió del sistema.</translation>
     </message>
     <message>
         <location line="+3"/>
-        <source>&amp;Start Xcoin on system login</source>
-        <translation>&amp;Iniciar Xcoin al inici de sessió del sistema.</translation>
+        <source>&amp;Start DarkCoin on system login</source>
+        <translation>&amp;Iniciar DarkCoin al inici de sessió del sistema.</translation>
     </message>
     <message>
         <location line="+35"/>
@@ -835,8 +835,8 @@ Address: %4
     </message>
     <message>
         <location line="+6"/>
-        <source>Automatically open the Xcoin client port on the router. This only works when your router supports UPnP and it is enabled.</source>
-        <translation>Obrir el port del client de Xcoin al router de forma automàtica. Això només funciona quan el teu router implementa UPnP i l&apos;opció està activada.</translation>
+        <source>Automatically open the DarkCoin client port on the router. This only works when your router supports UPnP and it is enabled.</source>
+        <translation>Obrir el port del client de DarkCoin al router de forma automàtica. Això només funciona quan el teu router implementa UPnP i l&apos;opció està activada.</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -845,8 +845,8 @@ Address: %4
     </message>
     <message>
         <location line="+7"/>
-        <source>Connect to the Xcoin network through a SOCKS proxy (e.g. when connecting through Tor).</source>
-        <translation>Connectar a la xarxa Xcoin a través de un SOCKS proxy (per exemple connectant a través de Tor).</translation>
+        <source>Connect to the DarkCoin network through a SOCKS proxy (e.g. when connecting through Tor).</source>
+        <translation>Connectar a la xarxa DarkCoin a través de un SOCKS proxy (per exemple connectant a través de Tor).</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -920,8 +920,8 @@ Address: %4
     </message>
     <message>
         <location line="+13"/>
-        <source>The user interface language can be set here. This setting will take effect after restarting Xcoin.</source>
-        <translation>Aquí pots definir el llenguatge de l&apos;aplicatiu. Aquesta configuració tindrà efecte un cop es reiniciï Xcoin.</translation>
+        <source>The user interface language can be set here. This setting will take effect after restarting DarkCoin.</source>
+        <translation>Aquí pots definir el llenguatge de l&apos;aplicatiu. Aquesta configuració tindrà efecte un cop es reiniciï DarkCoin.</translation>
     </message>
     <message>
         <location line="+11"/>
@@ -935,8 +935,8 @@ Address: %4
     </message>
     <message>
         <location line="+9"/>
-        <source>Whether to show Xcoin addresses in the transaction list or not.</source>
-        <translation>Mostrar adreces Xcoin als llistats de transaccions o no.</translation>
+        <source>Whether to show DarkCoin addresses in the transaction list or not.</source>
+        <translation>Mostrar adreces DarkCoin als llistats de transaccions o no.</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -987,8 +987,8 @@ Address: %4
     <message>
         <location line="-9"/>
         <location line="+9"/>
-        <source>This setting will take effect after restarting Xcoin.</source>
-        <translation>Aquesta configuració tindrà efecte un cop es reiniciï Xcoin.</translation>
+        <source>This setting will take effect after restarting DarkCoin.</source>
+        <translation>Aquesta configuració tindrà efecte un cop es reiniciï DarkCoin.</translation>
     </message>
     <message>
         <location line="+29"/>
@@ -1006,8 +1006,8 @@ Address: %4
     <message>
         <location line="+50"/>
         <location line="+166"/>
-        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Xcoin network after a connection is established, but this process has not completed yet.</source>
-        <translation>La informació mostrada pot no estar al día. El teu moneder es sincronitza automàticament amb la xarxa Xcoin un cop s&apos;ha establert connexió, però aquest proces no s&apos;ha completat encara.</translation>
+        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the DarkCoin network after a connection is established, but this process has not completed yet.</source>
+        <translation>La informació mostrada pot no estar al día. El teu moneder es sincronitza automàticament amb la xarxa DarkCoin un cop s&apos;ha establert connexió, però aquest proces no s&apos;ha completat encara.</translation>
     </message>
     <message>
         <location line="-124"/>
@@ -1060,8 +1060,8 @@ Address: %4
     <name>PaymentServer</name>
     <message>
         <location filename="../paymentserver.cpp" line="+107"/>
-        <source>Cannot start xcoin: click-to-pay handler</source>
-        <translation>No es pot iniciar xcoin: manejador clicla-per-pagar</translation>
+        <source>Cannot start darkcoin: click-to-pay handler</source>
+        <translation>No es pot iniciar darkcoin: manejador clicla-per-pagar</translation>
     </message>
 </context>
 <context>
@@ -1210,8 +1210,8 @@ Address: %4
     </message>
     <message>
         <location line="+7"/>
-        <source>Show the Xcoin-Qt help message to get a list with possible Xcoin command-line options.</source>
-        <translation>Mostrar el missatge d&apos;ajuda de Xcoin-Qt per a obtenir un llistat de possibles ordres per a la línia d&apos;ordres de Xcoin.</translation>
+        <source>Show the DarkCoin-Qt help message to get a list with possible DarkCoin command-line options.</source>
+        <translation>Mostrar el missatge d&apos;ajuda de DarkCoin-Qt per a obtenir un llistat de possibles ordres per a la línia d&apos;ordres de DarkCoin.</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -1230,13 +1230,13 @@ Address: %4
     </message>
     <message>
         <location line="-104"/>
-        <source>Xcoin - Debug window</source>
-        <translation>Xcoin -Finestra de debug</translation>
+        <source>DarkCoin - Debug window</source>
+        <translation>DarkCoin -Finestra de debug</translation>
     </message>
     <message>
         <location line="+25"/>
-        <source>Xcoin Core</source>
-        <translation>Nucli de Xcoin</translation>
+        <source>DarkCoin Core</source>
+        <translation>Nucli de DarkCoin</translation>
     </message>
     <message>
         <location line="+279"/>
@@ -1245,8 +1245,8 @@ Address: %4
     </message>
     <message>
         <location line="+7"/>
-        <source>Open the Xcoin debug log file from the current data directory. This can take a few seconds for large log files.</source>
-        <translation>Obrir el dietari de debug de Xcoin del directori de dades actual. Aixó pot trigar uns quants segons per a dietàris grossos.</translation>
+        <source>Open the DarkCoin debug log file from the current data directory. This can take a few seconds for large log files.</source>
+        <translation>Obrir el dietari de debug de DarkCoin del directori de dades actual. Aixó pot trigar uns quants segons per a dietàris grossos.</translation>
     </message>
     <message>
         <location line="+102"/>
@@ -1255,8 +1255,8 @@ Address: %4
     </message>
     <message>
         <location filename="../rpcconsole.cpp" line="-30"/>
-        <source>Welcome to the Xcoin RPC console.</source>
-        <translation>Benvingut a la consola RPC de Xcoin</translation>
+        <source>Welcome to the DarkCoin RPC console.</source>
+        <translation>Benvingut a la consola RPC de DarkCoin</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -1439,8 +1439,8 @@ Address: %4
     </message>
     <message>
         <location filename="../sendcoinsentry.cpp" line="+1"/>
-        <source>Enter a Xcoin address (e.g. Ler4HNAEfwYhBmGXcFP2Po1NpRUEiK8km2)</source>
-        <translation>Introdueixi una adreça de Xcoin (per exemple Ler4HNAEfwYhBmGXcFP2Po1NpRUEiK8km2)</translation>
+        <source>Enter a DarkCoin address (e.g. Ler4HNAEfwYhBmGXcFP2Po1NpRUEiK8km2)</source>
+        <translation>Introdueixi una adreça de DarkCoin (per exemple Ler4HNAEfwYhBmGXcFP2Po1NpRUEiK8km2)</translation>
     </message>
 </context>
 <context>
@@ -1504,8 +1504,8 @@ Address: %4
     </message>
     <message>
         <location line="+21"/>
-        <source>Sign the message to prove you own this Xcoin address</source>
-        <translation>Signa el missatge per provar que ets propietari d&apos;aquesta adreça Xcoin</translation>
+        <source>Sign the message to prove you own this DarkCoin address</source>
+        <translation>Signa el missatge per provar que ets propietari d&apos;aquesta adreça DarkCoin</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -1540,8 +1540,8 @@ Address: %4
     </message>
     <message>
         <location line="+40"/>
-        <source>Verify the message to ensure it was signed with the specified Xcoin address</source>
-        <translation>Verificar el missatge per assegurar-se que ha estat signat amb una adreça Xcoin específica</translation>
+        <source>Verify the message to ensure it was signed with the specified DarkCoin address</source>
+        <translation>Verificar el missatge per assegurar-se que ha estat signat amb una adreça DarkCoin específica</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -1556,8 +1556,8 @@ Address: %4
     <message>
         <location filename="../signverifymessagedialog.cpp" line="+27"/>
         <location line="+3"/>
-        <source>Enter a Xcoin address (e.g. Ler4HNAEfwYhBmGXcFP2Po1NpRUEiK8km2)</source>
-        <translation>Introdueixi una adreça de Xcoin (per exemple Ler4HNAEfwYhBmGXcFP2Po1NpRUEiK8km2)</translation>
+        <source>Enter a DarkCoin address (e.g. Ler4HNAEfwYhBmGXcFP2Po1NpRUEiK8km2)</source>
+        <translation>Introdueixi una adreça de DarkCoin (per exemple Ler4HNAEfwYhBmGXcFP2Po1NpRUEiK8km2)</translation>
     </message>
     <message>
         <location line="-2"/>
@@ -1566,8 +1566,8 @@ Address: %4
     </message>
     <message>
         <location line="+3"/>
-        <source>Enter Xcoin signature</source>
-        <translation>Introduïr una clau Xcoin</translation>
+        <source>Enter DarkCoin signature</source>
+        <translation>Introduïr una clau DarkCoin</translation>
     </message>
     <message>
         <location line="+82"/>
@@ -1640,7 +1640,7 @@ Address: %4
     <name>SplashScreen</name>
     <message>
         <location filename="../splashscreen.cpp" line="+22"/>
-        <source>The Xcoin developers</source>
+        <source>The DarkCoin developers</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -2178,8 +2178,8 @@ Address: %4
     <name>bitcoin-core</name>
     <message>
         <location filename="../bitcoinstrings.cpp" line="+94"/>
-        <source>Xcoin version</source>
-        <translation>Versió de Xcoin</translation>
+        <source>DarkCoin version</source>
+        <translation>Versió de DarkCoin</translation>
     </message>
     <message>
         <location line="+102"/>
@@ -2188,8 +2188,8 @@ Address: %4
     </message>
     <message>
         <location line="-29"/>
-        <source>Send command to -server or xcoind</source>
-        <translation>Enviar comanda a -servidor o xcoind</translation>
+        <source>Send command to -server or darkcoind</source>
+        <translation>Enviar comanda a -servidor o darkcoind</translation>
     </message>
     <message>
         <location line="-23"/>
@@ -2208,13 +2208,13 @@ Address: %4
     </message>
     <message>
         <location line="+24"/>
-        <source>Specify configuration file (default: xcoin.conf)</source>
-        <translation>Especificat arxiu de configuració (per defecte: xcoin.conf)</translation>
+        <source>Specify configuration file (default: darkcoin.conf)</source>
+        <translation>Especificat arxiu de configuració (per defecte: darkcoin.conf)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <source>Specify pid file (default: xcoind.pid)</source>
-        <translation>Especificar arxiu pid (per defecte: xcoind.pid)</translation>
+        <source>Specify pid file (default: darkcoind.pid)</source>
+        <translation>Especificar arxiu pid (per defecte: darkcoind.pid)</translation>
     </message>
     <message>
         <location line="-1"/>
@@ -2291,15 +2291,15 @@ Address: %4
         <source>%s, you must set a rpcpassword in the configuration file:
 %s
 It is recommended you use the following random password:
-rpcuser=xcoinrpc
+rpcuser=darkcoinrpc
 rpcpassword=%s
 (you do not need to remember this password)
 The username and password MUST NOT be the same.
 If the file does not exist, create it with owner-readable-only file permissions.
 It is also recommended to set alertnotify so you are notified of problems;
-for example: alertnotify=echo %%s | mail -s &quot;Xcoin Alert&quot; admin@foo.com
+for example: alertnotify=echo %%s | mail -s &quot;DarkCoin Alert&quot; admin@foo.com
 </source>
-        <translation>%s has de establir una contrasenya RPC a l&apos;arxiu de configuració:\n%s\nEs recomana que useu la següent constrasenya aleatòria:\nrpcuser=xcoinrpc\nrpcpassword=%s\n(no necesiteu recordar aquesta contrsenya)\nEl nom d&apos;usuari i contrasenya NO HAN de ser els mateixos.\nSi l&apos;arxiu no existeix, crea&apos;l amb els permisos d&apos;arxiu de només lectura per al propietari.\nTambé es recomana establir la notificació d&apos;alertes i així seràs notificat de les incidències;\nper exemple: alertnotify=echo %%s | mail -s &quot;Xcoin Alert&quot; admin@foo.com</translation>
+        <translation>%s has de establir una contrasenya RPC a l&apos;arxiu de configuració:\n%s\nEs recomana que useu la següent constrasenya aleatòria:\nrpcuser=darkcoinrpc\nrpcpassword=%s\n(no necesiteu recordar aquesta contrsenya)\nEl nom d&apos;usuari i contrasenya NO HAN de ser els mateixos.\nSi l&apos;arxiu no existeix, crea&apos;l amb els permisos d&apos;arxiu de només lectura per al propietari.\nTambé es recomana establir la notificació d&apos;alertes i així seràs notificat de les incidències;\nper exemple: alertnotify=echo %%s | mail -s &quot;DarkCoin Alert&quot; admin@foo.com</translation>
     </message>
     <message>
         <location line="+17"/>
@@ -2313,8 +2313,8 @@ for example: alertnotify=echo %%s | mail -s &quot;Xcoin Alert&quot; admin@foo.co
     </message>
     <message>
         <location line="+3"/>
-        <source>Cannot obtain a lock on data directory %s. Xcoin is probably already running.</source>
-        <translation>No es pot bloquejar el directori de dades %s. Probablement Xcoin ja estigui en execució.</translation>
+        <source>Cannot obtain a lock on data directory %s. DarkCoin is probably already running.</source>
+        <translation>No es pot bloquejar el directori de dades %s. Probablement DarkCoin ja estigui en execució.</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -2358,8 +2358,8 @@ for example: alertnotify=echo %%s | mail -s &quot;Xcoin Alert&quot; admin@foo.co
     </message>
     <message>
         <location line="+3"/>
-        <source>Warning: Please check that your computer&apos;s date and time are correct! If your clock is wrong Xcoin will not work properly.</source>
-        <translation>Advertència: Si us plau comprovi que la data i hora del seu computador siguin correctes! Si el seu rellotge està mal configurat, Xcoin no funcionará de manera apropiada.</translation>
+        <source>Warning: Please check that your computer&apos;s date and time are correct! If your clock is wrong DarkCoin will not work properly.</source>
+        <translation>Advertència: Si us plau comprovi que la data i hora del seu computador siguin correctes! Si el seu rellotge està mal configurat, DarkCoin no funcionará de manera apropiada.</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -2608,8 +2608,8 @@ for example: alertnotify=echo %%s | mail -s &quot;Xcoin Alert&quot; admin@foo.co
     </message>
     <message>
         <location line="+5"/>
-        <source>SSL options: (see the Xcoin Wiki for SSL setup instructions)</source>
-        <translation>Opcions SSL: (veure la Wiki de Xcoin per a instruccions de configuració SSL)</translation>
+        <source>SSL options: (see the DarkCoin Wiki for SSL setup instructions)</source>
+        <translation>Opcions SSL: (veure la Wiki de DarkCoin per a instruccions de configuració SSL)</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -2798,13 +2798,13 @@ for example: alertnotify=echo %%s | mail -s &quot;Xcoin Alert&quot; admin@foo.co
     </message>
     <message>
         <location line="+1"/>
-        <source>Error loading wallet.dat: Wallet requires newer version of Xcoin</source>
-        <translation>Error carregant wallet.dat: El moneder requereix una versió de Xcoin més moderna</translation>
+        <source>Error loading wallet.dat: Wallet requires newer version of DarkCoin</source>
+        <translation>Error carregant wallet.dat: El moneder requereix una versió de DarkCoin més moderna</translation>
     </message>
     <message>
         <location line="+93"/>
-        <source>Wallet needed to be rewritten: restart Xcoin to complete</source>
-        <translation>El moneder necesita ser re-escrit: re-inicia Xcoin per a completar la tasca</translation>
+        <source>Wallet needed to be rewritten: restart DarkCoin to complete</source>
+        <translation>El moneder necesita ser re-escrit: re-inicia DarkCoin per a completar la tasca</translation>
     </message>
     <message>
         <location line="-95"/>
@@ -2863,8 +2863,8 @@ for example: alertnotify=echo %%s | mail -s &quot;Xcoin Alert&quot; admin@foo.co
     </message>
     <message>
         <location line="-25"/>
-        <source>Unable to bind to %s on this computer. Xcoin is probably already running.</source>
-        <translation>Impossible d&apos;unir %s en aquest ordinador. Probablement Xcoin ja estigui en execució.</translation>
+        <source>Unable to bind to %s on this computer. DarkCoin is probably already running.</source>
+        <translation>Impossible d&apos;unir %s en aquest ordinador. Probablement DarkCoin ja estigui en execució.</translation>
     </message>
     <message>
         <location line="+64"/>

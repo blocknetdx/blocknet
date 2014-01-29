@@ -3,7 +3,7 @@
 <plist version="0.9">
 <dict>
 	<key>CFBundleIconFile</key>
-	<string>xcoin.icns</string>
+	<string>darkcoin.icns</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleGetInfoString</key>
@@ -15,19 +15,19 @@
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleExecutable</key>
-	<string>Xcoin-Qt</string>
+	<string>DarkCoin-Qt</string>
 	<key>CFBundleIdentifier</key>
-	<string>org.xcoin.Xcoin-Qt</string>
+	<string>org.darkcoin.DarkCoin-Qt</string>
         <key>CFBundleURLTypes</key>
         <array>
           <dict>
             <key>CFBundleTypeRole</key>
             <string>Editor</string>
             <key>CFBundleURLName</key>
-            <string>org.xcoin.XcoinPayment</string>
+            <string>org.darkcoin.DarkCoinPayment</string>
             <key>CFBundleURLSchemes</key>
             <array>
-              <string>xcoin</string>
+              <string>darkcoin</string>
             </array>
           </dict>
         </array>
