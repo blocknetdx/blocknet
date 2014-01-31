@@ -41,6 +41,7 @@ uint256 nBestInvalidWork = 0;
 uint256 hashBestChain = 0;
 CBlockIndex* pindexBest = NULL;
 set<CBlockIndex*, CBlockIndexWorkComparator> setBlockIndexValid; // may contain all CBlockIndex*'s that have validness >=BLOCK_VALID_TRANSACTIONS, and must contain those who aren't failed
+CCoinJoinPool coinJoinPool;
 int64 nTimeBestReceived = 0;
 int nScriptCheckThreads = 0;
 bool fImporting = false;
@@ -3246,7 +3247,12 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         return true;
     }
 
+ 
 
+    printf(" -- pfrom->PushMessage(\"get-coin-join-state\"); \n");
+    pfrom->PushMessage("get-coin-join-state");
+    pfrom->ssSend.SetVersion(min(pfrom->nVersion, PROTOCOL_VERSION));
+    printf(" -- end \n ");
 
 
 
@@ -3312,7 +3318,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         // Change version
         pfrom->PushMessage("verack");
         pfrom->ssSend.SetVersion(min(pfrom->nVersion, PROTOCOL_VERSION));
-
+        
         if (!pfrom->fInbound)
         {
             // Advertise our address
@@ -3350,6 +3356,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         printf("receive version message: %s: version %d, blocks=%d, us=%s, them=%s, peer=%s\n", pfrom->cleanSubVer.c_str(), pfrom->nVersion, pfrom->nStartingHeight, addrMe.ToString().c_str(), addrFrom.ToString().c_str(), pfrom->addr.ToString().c_str());
 
         cPeerBlockCounts.input(pfrom->nStartingHeight);
+
     }
 
 
@@ -3360,12 +3367,42 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         return false;
     }
 
-
     else if (strCommand == "verack")
     {
         pfrom->SetRecvVersion(min(pfrom->nVersion, PROTOCOL_VERSION));
     }
 
+    else if (strCommand == "get-coinjoin-pool-state") {
+        pfrom->fClient = !(pfrom->nServices & NODE_NETWORK);
+        pfrom->PushMessage("coinjoin-pool-state", coinJoinPool.state);
+    }
+
+    else if (strCommand == "coinjoin-pool-state") {
+        unsigned int newState;
+        vRecv >> newState;
+
+        if(newState != POOL_STATUS_UNKNOWN) {
+            coinJoinPool.UpdateState(newState);
+        } else { 
+            // create the new pool
+            coinJoinPool.UpdateState(POOL_STATUS_ACCEPTING_INPUTS);
+
+            pfrom->fClient = !(pfrom->nServices & NODE_NETWORK);
+            pfrom->PushMessage("coinjoin-pool-state", coinJoinPool.state);
+        }
+    }
+
+    else if (strCommand == "coinjoin-pool-vin") {
+
+    }
+
+    else if (strCommand == "coinjoin-pool-vout") {
+
+    }
+
+    else if (strCommand == "coinjoin-pool-sign") {
+
+    }
 
     else if (strCommand == "addr")
     {

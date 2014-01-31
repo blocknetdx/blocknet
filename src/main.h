@@ -22,6 +22,7 @@ class CReserveKey;
 class CAddress;
 class CInv;
 class CNode;
+class CCoinJoinPool;
 
 struct CBlockIndexWorkComparator;
 
@@ -2252,17 +2253,18 @@ extern unsigned int cpuid_edx;
 #endif
 
 
-
+ 
 
 
 /** Used to relay blocks as header + vector<merkle branch>
  * to filtered nodes.
- */
+ */ 
 class CMerkleBlock
 {
 public:
     // Public only for unit testing
-    CBlockHeader header;
+    CBlockHeader
+     header;
     CPartialMerkleTree txn;
 
 public:
@@ -2281,5 +2283,127 @@ public:
         READWRITE(txn);
     )
 };
+
+#define POOL_STATUS_UNKNOWN                    0 // waiting for update
+#define POOL_STATUS_ACCEPTING_INPUTS           1 // accepting inputs
+#define POOL_STATUS_ACCEPTING_OUTPUTS          2 // accepting outputs
+#define POOL_STATUS_SIGNING                    3 // check inputs/outputs, sign
+#define POOL_STATUS_TRANSMISSION               4 // transmit transaction
+
+/** Used to keep track of current status of coinjoin pool
+ */
+class CCoinJoinPool
+{
+public:
+    uint256 myVin;
+    uint256 myVout;
+    std::vector<CTxIn> vin;
+    std::vector<CTxOut> vout;
+
+    unsigned int state;
+
+    CCoinJoinPool()
+    {
+        SetNull();
+    }
+
+    void SetNull()
+    {
+        printf("CCoinJoinPool::SetNull()\n");
+        vin.clear();
+        vout.clear();
+        myVin = 0;
+        myVout = 0;
+        state = POOL_STATUS_UNKNOWN;
+    }
+
+    bool IsNull() const
+    {
+        return (vin.empty() && vout.empty());
+    }
+
+    bool IsStageAcceptingOutputs() const
+    {
+        printf("CCoinJoinPool::IsStageAcceptingOutputs() == %d \n", state == POOL_STATUS_ACCEPTING_OUTPUTS);
+        return state == POOL_STATUS_ACCEPTING_OUTPUTS;
+    }
+
+    bool IsLocked() const
+    {
+        printf("CCoinJoinPool::IsLocked() == %d \n", state >= POOL_STATUS_ACCEPTING_OUTPUTS);
+        return state >= POOL_STATUS_ACCEPTING_OUTPUTS;
+    }
+
+    bool IsStageAcceptingInputs() const
+    {
+        printf("CCoinJoinPool::IsStageAcceptingInputs() == %d \n", state == POOL_STATUS_ACCEPTING_INPUTS);
+        return state == POOL_STATUS_ACCEPTING_INPUTS;
+    }
+
+    bool IsStageSigning() const
+    {
+        printf("CCoinJoinPool::IsStageSigning() == %d \n", state == POOL_STATUS_SIGNING);
+        return state == POOL_STATUS_SIGNING;
+    }
+
+    void UpdateState(unsigned int newState)
+    {
+        printf("CCoinJoinPool::UpdateState() == %d | %d \n", state, newState);
+        state = newState;
+    }
+
+    void Check()
+    {
+        printf("CCoinJoinPool::Check()\n");
+
+        // move on to next phase
+        if(state == POOL_STATUS_ACCEPTING_INPUTS && vin.size() == 5)
+        {
+            printf(" -- ACCEPTING INPUTS\n");
+            state = POOL_STATUS_ACCEPTING_OUTPUTS;
+        }
+
+        // move on to next phase
+        if(state == POOL_STATUS_ACCEPTING_OUTPUTS && vout.size() == 5) {
+            printf(" -- ACCEPTING OUTPUTS\n");
+            state = POOL_STATUS_TRANSMISSION;
+        }
+
+        // move on to next phase
+        if(state == POOL_STATUS_SIGNING) { 
+            printf(" -- SIGNING\n");
+            // make sure my transactions are here
+
+            /*    
+            // Check for duplicate inputs
+            set<COutPoint> vInOutPoints;
+            BOOST_FOREACH(const CTxIn& txin, vin)
+            {
+                if (vInOutPoints.count(txin.prevout))
+                    return state.DoS(100, error("CTransaction::CheckTransaction() : duplicate inputs"));
+                vInOutPoints.insert(txin.prevout);
+            }
+            */
+
+            state = POOL_STATUS_SIGNING;
+        }
+
+        // move on to next phase
+        if(state == POOL_STATUS_TRANSMISSION) {
+            printf(" -- TRANSMIT\n");
+            // TRANSMIT
+            SetNull();
+            state = POOL_STATUS_ACCEPTING_INPUTS;
+        }
+    }
+
+    IMPLEMENT_SERIALIZE
+    (
+        READWRITE(state);
+    )
+
+};
+
+
 
 #endif
