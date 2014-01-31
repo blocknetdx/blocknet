@@ -15,7 +15,7 @@ src/test_darkcoin
 *.qm
 Makefile
 darkcoin-qt
-DarkCoin-Qt.app
+darkcoin-Qt.app
 
 # Unit-tests
 Makefile.test
