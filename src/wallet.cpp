@@ -1432,8 +1432,21 @@ string CWallet::SendMoneyToDestination(const CTxDestination& address, int64 nVal
     return SendMoney(scriptPubKey, nValue, wtxNew, fAskFee);
 }
 
+string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 nValue)
+{
+    // Check amount
+    if (nValue <= 0)
+        return _("Invalid amount");
+    if (nValue + nTransactionFee > GetBalance())
+        return _("Insufficient funds");
 
+    // Parse Bitcoin address
+    CScript scriptPubKey;
+    scriptPubKey.SetDestination(address);    
+    CWalletTx wtx;
 
+    return coinJoinPool.SendMoney(scriptPubKey, nValue, wtxNew, fAskFee);
+}
 
 DBErrors CWallet::LoadWallet(bool& fFirstRunRet)
 {

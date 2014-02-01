@@ -3247,15 +3247,6 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         return true;
     }
 
- 
-
-    printf(" -- pfrom->PushMessage(\"get-coin-join-state\"); \n");
-    pfrom->PushMessage("get-coin-join-state");
-    pfrom->ssSend.SetVersion(min(pfrom->nVersion, PROTOCOL_VERSION));
-    printf(" -- end \n ");
-
-
-
     if (strCommand == "version")
     {
         // Each connection can only send one version message
@@ -3318,6 +3309,9 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         // Change version
         pfrom->PushMessage("verack");
         pfrom->ssSend.SetVersion(min(pfrom->nVersion, PROTOCOL_VERSION));
+
+        pfrom->PushMessage("gettxpool");
+        pfrom->ssSend.SetVersion(min(pfrom->nVersion, PROTOCOL_VERSION));
         
         if (!pfrom->fInbound)
         {
@@ -3372,12 +3366,12 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         pfrom->SetRecvVersion(min(pfrom->nVersion, PROTOCOL_VERSION));
     }
 
-    else if (strCommand == "get-coinjoin-pool-state") {
+    else if (strCommand == "gettxpool") {
         pfrom->fClient = !(pfrom->nServices & NODE_NETWORK);
-        pfrom->PushMessage("coinjoin-pool-state", coinJoinPool.state);
+        pfrom->PushMessage("txpool", coinJoinPool.state);
     }
 
-    else if (strCommand == "coinjoin-pool-state") {
+    else if (strCommand == "txpool") {
         unsigned int newState;
         vRecv >> newState;
 
@@ -3388,19 +3382,19 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             coinJoinPool.UpdateState(POOL_STATUS_ACCEPTING_INPUTS);
 
             pfrom->fClient = !(pfrom->nServices & NODE_NETWORK);
-            pfrom->PushMessage("coinjoin-pool-state", coinJoinPool.state);
+            pfrom->PushMessage("txpool", coinJoinPool.state);
         }
     }
 
-    else if (strCommand == "coinjoin-pool-vin") {
+    else if (strCommand == "txpoolvin") { //new coinjoin pool tx vin
 
     }
 
-    else if (strCommand == "coinjoin-pool-vout") {
+    else if (strCommand == "txpoolvout") { //new coinjoin pool tx vout
 
     }
 
-    else if (strCommand == "coinjoin-pool-sign") {
+    else if (strCommand == "txpool-sign") { //new coinjoin pool tx sign
 
     }
 

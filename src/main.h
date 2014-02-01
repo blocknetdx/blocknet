@@ -103,6 +103,7 @@ extern bool fBenchmark;
 extern int nScriptCheckThreads;
 extern bool fTxIndex;
 extern unsigned int nCoinCacheSize;
+extern CCoinJoinPool coinJoinPool;
 
 // Settings
 extern int64 nTransactionFee;
@@ -2295,10 +2296,20 @@ public:
 class CCoinJoinPool
 {
 public:
-    uint256 myVin;
-    uint256 myVout;
+    bool myTransaction_locked;
+    CReserveKey myTransaction_fromAddress;
+    CTxDestination myTransaction_theirAddress;
+    int64 myTransaction_nValue;
+    int64 myTransaction_nFeeRet;
+
     std::vector<CTxIn> vin;
     std::vector<CTxOut> vout;
+    /* used when inputs/outputs are broadcast and the 
+        pool is not in the correct state to accept them
+        for the current pooling
+    */
+    std::vector<CTxIn> vinQueue;
+    std::vector<CTxOut> voutQueue;
 
     unsigned int state;
 
@@ -2315,6 +2326,7 @@ public:
         myVin = 0;
         myVout = 0;
         state = POOL_STATUS_UNKNOWN;
+        myTransaction_locked = false;
     }
 
     bool IsNull() const
@@ -2392,8 +2404,46 @@ public:
         if(state == POOL_STATUS_TRANSMISSION) {
             printf(" -- TRANSMIT\n");
             // TRANSMIT
+                /*
+                CScript scriptPubKey;
+                scriptPubKey.SetDestination(address);
+
+                bool CWallet::CreateTransaction(const vector<pair<CScript, int64> >& vecSend,
+                  CWalletTx& wtxNew, CReserveKey& reservekey, int64& nFeeRet, std::string& strFailReason, const CCoinControl* coinControl)
+                CommitTransaction
+
+                */
+
             SetNull();
             state = POOL_STATUS_ACCEPTING_INPUTS;
+
+        }
+    }
+
+    void addInput(uint256 vin){
+        if(state == POOL_STATUS_ACCEPTING_INPUTS) {
+            vin.push_back(vin);
+        } else {
+            printf("CCoinJoinPool::addInput(): Dropped input due to current state \n");
+        }
+    }
+
+    void addOutput(uint256 vout){
+        if(state == POOL_STATUS_ACCEPTING_OUTPUTS) {
+            vin.push_back(vout);
+        } else {
+            printf("CCoinJoinPool::addOutput(): Dropped output due to current state \n");
+        }
+    }
+
+    void SendMoney(const CReserveKey& fromAddress, const CTxDestination& toAddress, int64& nValue, int64& nValue){
+        if(!myTransaction_locked){
+            myTransaction_fromAddress = fromAddress;
+            myTransaction_theirAddress = toAddress;
+            myTransaction_nValue = nValue;
+            myTransaction_nFeeRet = nFeeRet;
+        } else {
+            printf("CCoinJoinPool::SendMoney() - Error, transaction locked. Multiple transactions per pool are not supported yet.\n", );
         }
     }
 
