@@ -2286,10 +2286,11 @@ public:
 };
 
 #define POOL_STATUS_UNKNOWN                    0 // waiting for update
-#define POOL_STATUS_ACCEPTING_INPUTS           1 // accepting inputs
-#define POOL_STATUS_ACCEPTING_OUTPUTS          2 // accepting outputs
-#define POOL_STATUS_SIGNING                    3 // check inputs/outputs, sign
-#define POOL_STATUS_TRANSMISSION               4 // transmit transaction
+#define POOL_STATUS_IDLE                       1 // waiting for update
+#define POOL_STATUS_ACCEPTING_INPUTS           2 // accepting inputs
+#define POOL_STATUS_ACCEPTING_OUTPUTS          3 // accepting outputs
+#define POOL_STATUS_SIGNING                    4 // check inputs/outputs, sign
+#define POOL_STATUS_TRANSMISSION               5 // transmit transaction
 
 /** Used to keep track of current status of coinjoin pool
  */
@@ -2297,9 +2298,8 @@ class CCoinJoinPool
 {
 public:
     bool myTransaction_locked;
-    CReserveKey myTransaction_fromAddress;
-    CTxDestination myTransaction_theirAddress;
-    int64 myTransaction_nValue;
+    std::vector<CTxIn> myTransaction_fromAddress;
+    CTxOut myTransaction_theirAddress;
     int64 myTransaction_nFeeRet;
 
     std::vector<CTxIn> vin;
@@ -2308,8 +2308,6 @@ public:
         pool is not in the correct state to accept them
         for the current pooling
     */
-    std::vector<CTxIn> vinQueue;
-    std::vector<CTxOut> voutQueue;
 
     unsigned int state;
 
@@ -2323,10 +2321,11 @@ public:
         printf("CCoinJoinPool::SetNull()\n");
         vin.clear();
         vout.clear();
-        myVin = 0;
-        myVout = 0;
         state = POOL_STATUS_UNKNOWN;
         myTransaction_locked = false;
+        myTransaction_nFeeRet = 0;
+        //myTransaction_fromAddress;
+        //myTransaction_theirAddress;
     }
 
     bool IsNull() const
@@ -2364,15 +2363,28 @@ public:
         state = newState;
     }
 
-    void Check()
+    void Check(CNode* pfrom)
     {
         printf("CCoinJoinPool::Check()\n");
 
-        // move on to next phase
+     
+        if(state == POOL_STATUS_IDLE && vin.size() == 0)
+        {
+            printf(" -- ACCEPTING INPUTS\n");
+            state = POOL_STATUS_ACCEPTING_INPUTS;
+
+            for(unsigned int i = 0; i < myTransaction_fromAddress.size(); i++) {
+                AddInput(myTransaction_fromAddress[i]);
+                pfrom->PushMessage("txpoolvin", myTransaction_fromAddress[i]);
+            }
+        }
+           // move on to next phase
         if(state == POOL_STATUS_ACCEPTING_INPUTS && vin.size() == 5)
         {
             printf(" -- ACCEPTING INPUTS\n");
             state = POOL_STATUS_ACCEPTING_OUTPUTS;
+            AddOutput(myTransaction_theirAddress);
+            pfrom->PushMessage("txpoolvout", myTransaction_theirAddress);
         }
 
         // move on to next phase
@@ -2408,6 +2420,12 @@ public:
                 CScript scriptPubKey;
                 scriptPubKey.SetDestination(address);
 
+                vector< pair<CScript, int64> > vecSend;
+
+                for each v
+                vecSend.push_back(make_pair(scriptPubKey, nValue));
+                return CreateTransaction(vecSend, wtxNew, reservekey, nFeeRet, strFailReason, coinControl);
+
                 bool CWallet::CreateTransaction(const vector<pair<CScript, int64> >& vecSend,
                   CWalletTx& wtxNew, CReserveKey& reservekey, int64& nFeeRet, std::string& strFailReason, const CCoinControl* coinControl)
                 CommitTransaction
@@ -2420,30 +2438,30 @@ public:
         }
     }
 
-    void addInput(uint256 vin){
+    void AddInput(CTxIn& newInput){
         if(state == POOL_STATUS_ACCEPTING_INPUTS) {
-            vin.push_back(vin);
+            vin.push_back(newInput);
         } else {
             printf("CCoinJoinPool::addInput(): Dropped input due to current state \n");
         }
     }
 
-    void addOutput(uint256 vout){
+    void AddOutput(CTxOut& newOutput){
         if(state == POOL_STATUS_ACCEPTING_OUTPUTS) {
-            vin.push_back(vout);
+            vout.push_back(newOutput);
         } else {
             printf("CCoinJoinPool::addOutput(): Dropped output due to current state \n");
         }
     }
 
-    void SendMoney(const CReserveKey& fromAddress, const CTxDestination& toAddress, int64& nValue, int64& nValue){
+    void SendMoney(const std::vector<CTxIn>& from, const CTxOut& to, int64& nFeeRet){
         if(!myTransaction_locked){
-            myTransaction_fromAddress = fromAddress;
-            myTransaction_theirAddress = toAddress;
-            myTransaction_nValue = nValue;
+            myTransaction_fromAddress = from;
+            myTransaction_theirAddress = to;
             myTransaction_nFeeRet = nFeeRet;
+            myTransaction_locked = true;
         } else {
-            printf("CCoinJoinPool::SendMoney() - Error, transaction locked. Multiple transactions per pool are not supported yet.\n", );
+            printf("CCoinJoinPool::SendMoney() - Error, transaction locked. Multiple transactions per pool are not supported yet.\n");
         }
     }
 

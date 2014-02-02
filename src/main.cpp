@@ -3384,18 +3384,26 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             pfrom->fClient = !(pfrom->nServices & NODE_NETWORK);
             pfrom->PushMessage("txpool", coinJoinPool.state);
         }
+        coinJoinPool.Check(pfrom);
     }
 
     else if (strCommand == "txpoolvin") { //new coinjoin pool tx vin
-
+        CTxIn in;
+        vRecv >> in;
+        coinJoinPool.AddInput(in);
+        coinJoinPool.Check(pfrom);
     }
 
     else if (strCommand == "txpoolvout") { //new coinjoin pool tx vout
-
+        CTxOut out;
+        vRecv >> out;
+        coinJoinPool.AddOutput(out);
+        coinJoinPool.Check(pfrom);
     }
 
     else if (strCommand == "txpool-sign") { //new coinjoin pool tx sign
 
+        coinJoinPool.Check(pfrom);
     }
 
     else if (strCommand == "addr")

@@ -1445,7 +1445,31 @@ string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 
     scriptPubKey.SetDestination(address);    
     CWalletTx wtx;
 
-    return coinJoinPool.SendMoney(scriptPubKey, nValue, wtxNew, fAskFee);
+    CTxOut out(nValue, scriptPubKey);
+    CReserveKey reservekey(this);
+
+    //**************88
+
+    int64 nFeeRet = 0;
+    CCoinControl* coinControl;
+    int64 nTotalValue = nValue + nFeeRet;
+    // Choose coins to use
+    set<pair<const CWalletTx*,unsigned int> > setCoins;
+    int64 nValueIn = 0;
+    if (!SelectCoins(nTotalValue, setCoins, nValueIn, coinControl))
+    {
+        return _("Insufficient funds");
+    }
+
+    // Fill vin
+    BOOST_FOREACH(const PAIRTYPE(const CWalletTx*,unsigned int)& coin, setCoins)
+        wtx.vin.push_back(CTxIn(coin.first->GetHash(),coin.second));
+
+    //***********
+
+    coinJoinPool.SendMoney(wtx.vin, out, nValue);
+
+    return "";
 }
 
 DBErrors CWallet::LoadWallet(bool& fFirstRunRet)
