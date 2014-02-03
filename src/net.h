@@ -638,7 +638,11 @@ public:
 
 
 class CTransaction;
+class CTxIn;
+class CTxOut;
 void RelayTransaction(const CTransaction& tx, const uint256& hash);
 void RelayTransaction(const CTransaction& tx, const uint256& hash, const CDataStream& ss);
-
+void RelayTxPool(const unsigned int state);
+void RelayTxPoolIn(const CTxIn& tx);
+void RelayTxPoolOut(const CTxOut& tx);
 #endif

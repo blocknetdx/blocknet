@@ -580,7 +580,7 @@ public:
     }
 
     /** Check for standard transaction types
-        @param[in] mapInputs	Map of previous transactions that have outputs we're spending
+        @param[in] mapInputs    Map of previous transactions that have outputs we're spending
         @return True if all inputs (scriptSigs) use only standard transaction forms
     */
     bool AreInputsStandard(CCoinsViewCache& mapInputs) const;
@@ -592,7 +592,7 @@ public:
 
     /** Count ECDSA signature operations in pay-to-script-hash inputs.
 
-        @param[in] mapInputs	Map of previous transactions that have outputs we're spending
+        @param[in] mapInputs    Map of previous transactions that have outputs we're spending
         @return maximum number of sigops required to validate this transaction's inputs
      */
     unsigned int GetP2SHSigOpCount(CCoinsViewCache& mapInputs) const;
@@ -616,8 +616,8 @@ public:
         Note that lightweight clients may not know anything besides the hash of previous transactions,
         so may not be able to calculate this.
 
-        @param[in] mapInputs	Map of previous transactions that have outputs we're spending
-        @return	Sum of value of all inputs (scriptSigs)
+        @param[in] mapInputs    Map of previous transactions that have outputs we're spending
+        @return Sum of value of all inputs (scriptSigs)
      */
     int64 GetValueIn(CCoinsViewCache& mapInputs) const;
 
@@ -2301,6 +2301,9 @@ public:
     std::vector<CTxIn> myTransaction_fromAddress;
     CTxOut myTransaction_theirAddress;
     int64 myTransaction_nFeeRet;
+    CReserveKey myTransaction_reservekey;
+    bool added_inputs;
+    bool added_outputs;
 
     std::vector<CTxIn> vin;
     std::vector<CTxOut> vout;
@@ -2326,6 +2329,8 @@ public:
         myTransaction_nFeeRet = 0;
         //myTransaction_fromAddress;
         //myTransaction_theirAddress;
+        added_inputs = false;
+        added_outputs = false;
     }
 
     bool IsNull() const
@@ -2363,43 +2368,61 @@ public:
         state = newState;
     }
 
-    void Check(CNode* pfrom)
+    void AddQueuedInputs()
+    {
+        if(state != POOL_STATUS_ACCEPTING_INPUTS || added_inputs)
+            return;
+
+        for(unsigned int i = 0; i < myTransaction_fromAddress.size(); i++) {
+            printf(" --- adding my input\n");
+            AddInput(myTransaction_fromAddress[i]);
+            RelayTxPoolIn(myTransaction_fromAddress[i]);
+        }
+    }
+
+    void AddQueuedOutputs()
+    {
+        if(state != POOL_STATUS_ACCEPTING_OUTPUTS || added_outputs)
+            return;
+
+        printf(" --- adding my output\n");
+        AddOutput(myTransaction_theirAddress);
+        RelayTxPoolOut(myTransaction_theirAddress);
+    }
+
+    void Check()
     {
         printf("CCoinJoinPool::Check()\n");
 
-     
+
+        printf("vin %d vout %d \n", vin.size(), vout.size());
+
         if(state == POOL_STATUS_IDLE && vin.size() == 0)
         {
             printf(" -- ACCEPTING INPUTS\n");
             state = POOL_STATUS_ACCEPTING_INPUTS;
-
-            for(unsigned int i = 0; i < myTransaction_fromAddress.size(); i++) {
-                AddInput(myTransaction_fromAddress[i]);
-                pfrom->PushMessage("txpoolvin", myTransaction_fromAddress[i]);
-            }
+            RelayTxPool(state);
+            AddQueuedInputs();
         }
-           // move on to next phase
-        if(state == POOL_STATUS_ACCEPTING_INPUTS && vin.size() == 5)
+        
+        // move on to next phase
+        if(state == POOL_STATUS_ACCEPTING_INPUTS && vin.size() == 1)
         {
-            printf(" -- ACCEPTING INPUTS\n");
-            state = POOL_STATUS_ACCEPTING_OUTPUTS;
-            AddOutput(myTransaction_theirAddress);
-            pfrom->PushMessage("txpoolvout", myTransaction_theirAddress);
-        }
-
-        // move on to next phase
-        if(state == POOL_STATUS_ACCEPTING_OUTPUTS && vout.size() == 5) {
             printf(" -- ACCEPTING OUTPUTS\n");
-            state = POOL_STATUS_TRANSMISSION;
+            printf(" --- adding my output\n");
+            state = POOL_STATUS_ACCEPTING_OUTPUTS;
+            RelayTxPool(state);
+            AddQueuedOutputs();
         }
 
         // move on to next phase
-        if(state == POOL_STATUS_SIGNING) { 
-            printf(" -- SIGNING\n");
-            // make sure my transactions are here
-
-            /*    
-            // Check for duplicate inputs
+        if(state == POOL_STATUS_ACCEPTING_OUTPUTS && vout.size() == 1) {
+            printf(" -- ACCEPTING OUTPUTS\n");
+            state = POOL_STATUS_SIGNING;
+            RelayTxPool(state);
+            
+            /**
+            // CHECK FOR MY INPUTS AND OUTPUTS AND CORRECT PAYMENT AMOUNTS
             set<COutPoint> vInOutPoints;
             BOOST_FOREACH(const CTxIn& txin, vin)
             {
@@ -2407,35 +2430,52 @@ public:
                     return state.DoS(100, error("CTransaction::CheckTransaction() : duplicate inputs"));
                 vInOutPoints.insert(txin.prevout);
             }
-            */
+            *//
+        }
 
-            state = POOL_STATUS_SIGNING;
+        // move on to next phase
+        if(state == POOL_STATUS_SIGNING) { 
+            printf(" -- SIGNING\n");
+            state = POOL_STATUS_TRANSMISSION;
+            RelayTxPool(state);
+            // make sure my transactions are here
+
+
         }
 
         // move on to next phase
         if(state == POOL_STATUS_TRANSMISSION) {
             printf(" -- TRANSMIT\n");
             // TRANSMIT
-                /*
-                CScript scriptPubKey;
-                scriptPubKey.SetDestination(address);
 
-                vector< pair<CScript, int64> > vecSend;
+            /*
+            CScript scriptPubKey;
+            scriptPubKey.SetDestination(address);
 
-                for each v
-                vecSend.push_back(make_pair(scriptPubKey, nValue));
-                return CreateTransaction(vecSend, wtxNew, reservekey, nFeeRet, strFailReason, coinControl);
+            vector< pair<CScript, int64> > vecSend;
 
-                bool CWallet::CreateTransaction(const vector<pair<CScript, int64> >& vecSend,
-                  CWalletTx& wtxNew, CReserveKey& reservekey, int64& nFeeRet, std::string& strFailReason, const CCoinControl* coinControl)
-                CommitTransaction
+            for each v
+            vecSend.push_back(make_pair(scriptPubKey, nValue));
+            return CreateTransaction(vecSend, wtxNew, reservekey, nFeeRet, strFailReason, coinControl);
 
-                */
+            pwalletMain->CreateTransaction(const vector<pair<CScript, int64> >& vecSend,
+              CWalletTx& wtxNew, CReserveKey& reservekey, int64& nFeeRet, std::string& strFailReason, const CCoinControl* coinControl)
+            CommitTransaction
+
+            */
 
             SetNull();
             state = POOL_STATUS_ACCEPTING_INPUTS;
 
         }
+
+
+        // recovery phase if needed
+        {
+
+        }
+
+        printf(" -- after -- vin %d vout %d \n", vin.size(), vout.size());
     }
 
     void AddInput(CTxIn& newInput){
@@ -2454,12 +2494,18 @@ public:
         }
     }
 
-    void SendMoney(const std::vector<CTxIn>& from, const CTxOut& to, int64& nFeeRet){
+    void SendMoney(const std::vector<CTxIn>& from, const CTxOut& to, int64& nFeeRet, CReserveKey& reservekey){
         if(!myTransaction_locked){
+            printf("CCoinJoinPool::SendMoney() - Added transaction to pool.\n");
             myTransaction_fromAddress = from;
             myTransaction_theirAddress = to;
             myTransaction_nFeeRet = nFeeRet;
             myTransaction_locked = true;
+            myTransaction_reservekey = reservekey;
+
+            AddQueuedInputs();
+            AddQueuedOutputs();
+            Check();
         } else {
             printf("CCoinJoinPool::SendMoney() - Error, transaction locked. Multiple transactions per pool are not supported yet.\n");
         }

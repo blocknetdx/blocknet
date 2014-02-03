@@ -1901,3 +1901,37 @@ void RelayTransaction(const CTransaction& tx, const uint256& hash, const CDataSt
             pnode->PushInventory(inv);
     }
 }
+
+
+void RelayTxPool(const unsigned int state)
+{
+    LOCK(cs_vNodes);
+    BOOST_FOREACH(CNode* pnode, vNodes)
+    {
+        if(!pnode->fRelayTxes)
+            continue;
+        pnode->PushMessage("txpoolv", state);
+    }
+}
+
+void RelayTxPoolIn(const CTxIn& tx)
+{
+    LOCK(cs_vNodes);
+    BOOST_FOREACH(CNode* pnode, vNodes)
+    {
+        if(!pnode->fRelayTxes)
+            continue;
+        pnode->PushMessage("txpli", tx);
+    }
+}
+
+void RelayTxPoolOut(const CTxOut& tx)
+{
+    LOCK(cs_vNodes);
+    BOOST_FOREACH(CNode* pnode, vNodes)
+    {
+        if(!pnode->fRelayTxes)
+            continue;
+        pnode->PushMessage("txplo", tx);
+    }
+}
