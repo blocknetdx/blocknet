@@ -2305,6 +2305,7 @@ public:
     bool added_output;
 
     std::vector<CTxIn> vin;
+    std::vector<CScript> vScriptSig;
     std::vector<CTxOut> vout;
     /* used when inputs/outputs are broadcast and the 
         pool is not in the correct state to accept them
@@ -2447,33 +2448,29 @@ public:
             RelayTxPool(state);
             // make sure my transactions are here
 
+            // Create coinbase tx
+            CTransaction txNew;
+            txNew.vin.push_back(myTransaction_fromAddress);
 
+            for (unsigned int i=0; i<vout.size(); i++) {
+                printf(" merged out: %u\n", i);
+                txNew.vout.push_back(vout[i]);
+            }
+            
+            printf("txNew:\n%s", txNew.ToString().c_str());
+
+            RelayTransaction((CTransaction)txNew, txNew.GetHash());
         }
+
 
         // move on to next phase
         if(state == POOL_STATUS_TRANSMISSION) {
             printf(" -- TRANSMIT\n");
             // TRANSMIT
 
-            /*
-            CScript scriptPubKey;
-            scriptPubKey.SetDestination(address);
-
-            vector< pair<CScript, int64> > vecSend;
-
-            for each v
-            vecSend.push_back(make_pair(scriptPubKey, nValue));
-            return CreateTransaction(vecSend, wtxNew, reservekey, nFeeRet, strFailReason, coinControl);
-
-            pwalletMain->CreateTransaction(const vector<pair<CScript, int64> >& vecSend,
-              CWalletTx& wtxNew, CReserveKey& reservekey, int64& nFeeRet, std::string& strFailReason, const CCoinControl* coinControl)
-            CommitTransaction
-
-            */
 
             SetNull();
             state = POOL_STATUS_ACCEPTING_INPUTS;
-
         }
 
 
@@ -2498,6 +2495,14 @@ public:
             vout.push_back(newOutput);
         } else {
             printf("CCoinJoinPool::addOutput(): Dropped output due to current state \n");
+        }
+    }
+
+    void AddScriptSig(CScript& newSig){
+        if(state == POOL_STATUS_SIGNING) {
+            vScriptSig.push_back(newSig);
+        } else {
+            printf("CCoinJoinPool::AddScriptSig(): Dropped signature due to current state \n");
         }
     }
 

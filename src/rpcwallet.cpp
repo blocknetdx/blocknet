@@ -316,7 +316,6 @@ Value sendtoaddressanon(const Array& params, bool fHelp)
 
     // Amount
     int64 nAmount = AmountFromValue(params[1]);
-    CWalletTx wtx;
 
     if (pwalletMain->IsLocked())
         throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
@@ -325,7 +324,7 @@ Value sendtoaddressanon(const Array& params, bool fHelp)
     if (strError != "")
         throw JSONRPCError(RPC_WALLET_ERROR, strError);
 
-    return wtx.GetHash().GetHex();
+    return "";
 }
 
 Value listaddressgroupings(const Array& params, bool fHelp)

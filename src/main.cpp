@@ -4456,30 +4456,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
             tx.UpdateCoins(state, view, txundo, pindexPrev->nHeight+1, hash);
 
             // Added
-            //pblock->vtx.push_back(tx);
-
-            //* MERGE ALL TRANSACTIONS *//
-            printf("MergeTransaction:\n%s", tx.ToString().c_str());
-
-
-            for (unsigned int i=0; i<tx.vin.size(); i++) {
-                printf(" merged in: %u\n", i);
-                nMergedTransactionsIn += 1;
-                txMerged.vin.resize(nMergedTransactionsIn); //block transaction and merged transactions
-                txMerged.vin[nMergedTransactionsIn-1].scriptSig = tx.vin[i].scriptSig;
-                txMerged.vin[nMergedTransactionsIn-1].prevout.hash = tx.vin[i].prevout.hash;
-                txMerged.vin[nMergedTransactionsIn-1].prevout.n = tx.vin[i].prevout.n;
-            }
-
-            for (unsigned int i=0; i<tx.vout.size(); i++) {
-                printf(" merged out: %u\n", i);
-                nMergedTransactionsOut += 1;
-                txMerged.vout.resize(nMergedTransactionsOut);
-                txMerged.vout[nMergedTransactionsOut-1].nValue = tx.vout[i].nValue;
-                txMerged.vout[nMergedTransactionsOut-1].scriptPubKey = tx.vout[i].scriptPubKey;
-            }
-            
-            printf("txMerged:\n%s", txMerged.ToString().c_str());
+            pblock->vtx.push_back(tx);
 
             //* END MERGE *//
             pblocktemplate->vTxFees.push_back(nTxFees);
@@ -4512,10 +4489,6 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
                 }
             }
         }
-
-        //pushed merged transactions onto the block
-        if(nMergedTransactionsOut > 0)
-            pblock->vtx.push_back(txMerged);
 
         nLastBlockTx = nBlockTx;
         nLastBlockSize = nBlockSize;
