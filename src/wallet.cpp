@@ -994,6 +994,34 @@ void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const
     }
 }
 
+void CWallet::AvailableCoins2(vector<COutput>& vCoins, bool fOnlyConfirmed) const
+{
+    vCoins.clear();
+
+    {
+        LOCK(cs_wallet);
+        for (map<uint256, CWalletTx>::const_iterator it = mapWallet.begin(); it != mapWallet.end(); ++it)
+        {
+            const CWalletTx* pcoin = &(*it).second;
+
+            if (!pcoin->IsFinal())
+                continue;
+
+            if (fOnlyConfirmed && !pcoin->IsConfirmed())
+                continue;
+
+            if (pcoin->IsCoinBase() && pcoin->GetBlocksToMaturity() > 0)
+                continue;
+
+            for (unsigned int i = 0; i < pcoin->vout.size(); i++) {
+                if (!(pcoin->IsSpent(i)) && IsMine(pcoin->vout[i]) &&
+                    !IsLockedCoin((*it).first, i) && pcoin->vout[i].nValue >= nMinimumInputValue) 
+                        vCoins.push_back(COutput(pcoin, i, pcoin->GetDepthInMainChain()));
+            }
+        }
+    }
+}
+
 static void ApproximateBestSubset(vector<pair<int64, pair<const CWalletTx*,unsigned int> > >vValue, int64 nTotalLower, int64 nTargetValue,
                                   vector<char>& vfBest, int64& nBest, int iterations = 1000)
 {
@@ -1160,8 +1188,29 @@ bool CWallet::SelectCoins(int64 nTargetValue, set<pair<const CWalletTx*,unsigned
             SelectCoinsMinConf(nTargetValue, 0, 1, vCoins, setCoinsRet, nValueRet));
 }
 
+/* select coins with 1 unspent output */
+bool CWallet::SelectCoinsMinOutput(int64 nTargetValue, CTxIn& vin, int64& nValueRet, const CCoinControl* coinControl) const
+{
+    vector<COutput> vCoins;
+    AvailableCoins2(vCoins, true);
+    
+    // coin control -> return all selected outputs (we want all selected to go into the transaction for sure)
+    {
+        printf("has coinControl\n");
+        BOOST_FOREACH(const COutput& out, vCoins)
+        {
+            printf(" -- %lu \n", out.i);
+            if(out.tx->vout[out.i].nValue > nValueRet){
+                vin = CTxIn(out.tx->GetHash(),out.i);
+                nValueRet += out.tx->vout[out.i].nValue;
+                printf("Found unspent input larger than nValue\n");
+                return (nValueRet >= nTargetValue);
+            }
+        }
+    }
 
-
+    return false;
+}
 
 bool CWallet::CreateTransaction(const vector<pair<CScript, int64> >& vecSend,
                                 CWalletTx& wtxNew, CReserveKey& reservekey, int64& nFeeRet, std::string& strFailReason, const CCoinControl* coinControl)
@@ -1451,23 +1500,18 @@ string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 
     //**************88
 
     int64 nFeeRet = 0;
-    CCoinControl* coinControl;
+    CCoinControl* coinControl = new CCoinControl();
     int64 nTotalValue = nValue + nFeeRet;
     // Choose coins to use
-    set<pair<const CWalletTx*,unsigned int> > setCoins;
     int64 nValueIn = 0;
-    if (!SelectCoins(nTotalValue, setCoins, nValueIn, coinControl))
+    CTxIn vin;
+    
+    if (!SelectCoinsMinOutput(nTotalValue, vin, nValueIn, coinControl))
     {
         return _("Insufficient funds");
     }
 
-    // Fill vin
-    BOOST_FOREACH(const PAIRTYPE(const CWalletTx*,unsigned int)& coin, setCoins)
-        wtx.vin.push_back(CTxIn(coin.first->GetHash(),coin.second));
-
-    //***********
-
-    coinJoinPool.SendMoney(wtx.vin, out, nValue);
+    coinJoinPool.SendMoney(vin, out, nValue);
 
     return "";
 }

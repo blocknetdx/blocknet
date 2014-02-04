@@ -2298,12 +2298,11 @@ class CCoinJoinPool
 {
 public:
     bool myTransaction_locked;
-    std::vector<CTxIn> myTransaction_fromAddress;
+    CTxIn myTransaction_fromAddress;
     CTxOut myTransaction_theirAddress;
     int64 myTransaction_nFeeRet;
-    CReserveKey myTransaction_reservekey;
-    bool added_inputs;
-    bool added_outputs;
+    bool added_input;
+    bool added_output;
 
     std::vector<CTxIn> vin;
     std::vector<CTxOut> vout;
@@ -2329,8 +2328,8 @@ public:
         myTransaction_nFeeRet = 0;
         //myTransaction_fromAddress;
         //myTransaction_theirAddress;
-        added_inputs = false;
-        added_outputs = false;
+        added_input = false;
+        added_output = false;
     }
 
     bool IsNull() const
@@ -2368,26 +2367,34 @@ public:
         state = newState;
     }
 
-    void AddQueuedInputs()
+    void AddQueuedInput()
     {
-        if(state != POOL_STATUS_ACCEPTING_INPUTS || added_inputs)
+        printf("AddQueuedInput\n");
+        if(!myTransaction_locked)
+            return;
+        printf(" --- -- input\n");
+        if(state != POOL_STATUS_ACCEPTING_INPUTS || added_input)
             return;
 
-        for(unsigned int i = 0; i < myTransaction_fromAddress.size(); i++) {
-            printf(" --- adding my input\n");
-            AddInput(myTransaction_fromAddress[i]);
-            RelayTxPoolIn(myTransaction_fromAddress[i]);
-        }
+        printf(" --- adding my input\n");
+        AddInput(myTransaction_fromAddress);
+        RelayTxPoolIn(myTransaction_fromAddress);
+        added_input = true;
     }
 
-    void AddQueuedOutputs()
+    void AddQueuedOutput()
     {
-        if(state != POOL_STATUS_ACCEPTING_OUTPUTS || added_outputs)
+        printf("AddQueuedOutput\n");
+        if(!myTransaction_locked)
+            return;
+        printf(" --- -- output\n");
+        if(state != POOL_STATUS_ACCEPTING_OUTPUTS || added_output)
             return;
 
         printf(" --- adding my output\n");
         AddOutput(myTransaction_theirAddress);
         RelayTxPoolOut(myTransaction_theirAddress);
+        added_output = true;
     }
 
     void Check()
@@ -2395,14 +2402,14 @@ public:
         printf("CCoinJoinPool::Check()\n");
 
 
-        printf("vin %d vout %d \n", vin.size(), vout.size());
+        printf("vin %lu vout %lu \n", vin.size(), vout.size());
 
         if(state == POOL_STATUS_IDLE && vin.size() == 0)
         {
             printf(" -- ACCEPTING INPUTS\n");
             state = POOL_STATUS_ACCEPTING_INPUTS;
             RelayTxPool(state);
-            AddQueuedInputs();
+            AddQueuedInput();
         }
         
         // move on to next phase
@@ -2412,7 +2419,7 @@ public:
             printf(" --- adding my output\n");
             state = POOL_STATUS_ACCEPTING_OUTPUTS;
             RelayTxPool(state);
-            AddQueuedOutputs();
+            AddQueuedOutput();
         }
 
         // move on to next phase
@@ -2430,7 +2437,7 @@ public:
                     return state.DoS(100, error("CTransaction::CheckTransaction() : duplicate inputs"));
                 vInOutPoints.insert(txin.prevout);
             }
-            *//
+            */
         }
 
         // move on to next phase
@@ -2475,7 +2482,7 @@ public:
 
         }
 
-        printf(" -- after -- vin %d vout %d \n", vin.size(), vout.size());
+        printf(" -- after -- vin %lu vout %lu \n", vin.size(), vout.size());
     }
 
     void AddInput(CTxIn& newInput){
@@ -2494,17 +2501,16 @@ public:
         }
     }
 
-    void SendMoney(const std::vector<CTxIn>& from, const CTxOut& to, int64& nFeeRet, CReserveKey& reservekey){
+    void SendMoney(const CTxIn& from, const CTxOut& to, int64& nFeeRet){
         if(!myTransaction_locked){
             printf("CCoinJoinPool::SendMoney() - Added transaction to pool.\n");
             myTransaction_fromAddress = from;
             myTransaction_theirAddress = to;
             myTransaction_nFeeRet = nFeeRet;
             myTransaction_locked = true;
-            myTransaction_reservekey = reservekey;
 
-            AddQueuedInputs();
-            AddQueuedOutputs();
+            AddQueuedInput();
+            AddQueuedOutput();
             Check();
         } else {
             printf("CCoinJoinPool::SendMoney() - Error, transaction locked. Multiple transactions per pool are not supported yet.\n");
