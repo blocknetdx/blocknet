@@ -292,7 +292,7 @@ bool AddOrphanTx(const CTransaction& tx)
     if (mapOrphanTransactions.count(hash))
         return false;
 
-    // Ignore big transactions, to avoid a
+    // Ignore big transactions, to avoid af
     // send-big-orphans memory exhaustion attack. If a peer has a legitimate
     // large transaction with a missing parent then we assume
     // it will rebroadcast it later, after the parent transaction(s)
@@ -3389,7 +3389,8 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
     else if (strCommand == "txpli") { //new coinjoin pool tx vin
         CTxIn in;
-        vRecv >> in;
+        CScript pubScript;
+        vRecv >> in >> pubScript;
         coinJoinPool.AddInput(in);
         coinJoinPool.Check();
     }
@@ -3402,7 +3403,9 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
     }
 
     else if (strCommand == "txpls") { //new coinjoin pool tx sign
-
+        CScript sig;
+        vRecv >> sig;
+        coinJoinPool.AddScriptSig(sig);
         coinJoinPool.Check();
     }
 

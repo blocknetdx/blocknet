@@ -1914,14 +1914,14 @@ void RelayTxPool(const unsigned int state)
     }
 }
 
-void RelayTxPoolIn(const CTxIn& tx)
+void RelayTxPoolIn(const CTxIn& tx, CScript& pubScript)
 {
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
         if(!pnode->fRelayTxes)
             continue;
-        pnode->PushMessage("txpli", tx);
+        pnode->PushMessage("txpli", tx, pubScript);
     }
 }
 
@@ -1933,5 +1933,16 @@ void RelayTxPoolOut(const CTxOut& tx)
         if(!pnode->fRelayTxes)
             continue;
         pnode->PushMessage("txplo", tx);
+    }
+}
+
+void RelayTxPoolSig(const CScript& sig)
+{
+    LOCK(cs_vNodes);
+    BOOST_FOREACH(CNode* pnode, vNodes)
+    {
+        if(!pnode->fRelayTxes)
+            continue;
+        pnode->PushMessage("txpls", sig);
     }
 }

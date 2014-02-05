@@ -2384,7 +2384,7 @@ public:
 
         printf(" --- adding my input\n");
         AddInput(myTransaction_fromAddress);
-        RelayTxPoolIn(myTransaction_fromAddress);
+        RelayTxPoolIn(myTransaction_fromAddress, myTransaction_fromAddress_pubScript);
         added_input = true;
     }
 
@@ -2430,34 +2430,75 @@ public:
 
         // move on to next phase
         if(state == POOL_STATUS_ACCEPTING_OUTPUTS && vout.size() == 1) {
-            printf(" -- ACCEPTING OUTPUTS\n");
+            printf(" -- ACCEPTING SIGNATURES\n");
             state = POOL_STATUS_SIGNING;
             RelayTxPool(state);
             
-            /**
-            // CHECK FOR MY INPUTS AND OUTPUTS AND CORRECT PAYMENT AMOUNTS
-            set<COutPoint> vInOutPoints;
-            BOOST_FOREACH(const CTxIn& txin, vin)
-            {
-                if (vInOutPoints.count(txin.prevout))
-                    return state.DoS(100, error("CTransaction::CheckTransaction() : duplicate inputs"));
-                vInOutPoints.insert(txin.prevout);
-            }
-            */
+            Sign();
+            
         }
 
         // move on to next phase
-        if(state == POOL_STATUS_SIGNING) { 
+        if(state == POOL_STATUS_SIGNING && vScriptSig.size() == 1) { 
             printf(" -- SIGNING\n");
             state = POOL_STATUS_TRANSMISSION;
             RelayTxPool(state);
             // make sure my transactions are here
 
-            /*
-                assert(nIn < txTo.vin.size());
-                CTxIn& txin = txTo.vin[nIn];
-                assert(txin.prevout.n < txFrom.vout.size());*/
+            if(myTransaction_locked) {
+                int64 nTotalValueIn = myTransaction_fromAddress_nValue;
+                int64 nTotalValueOut = myTransaction_theirAddress.nValue;
+                printf("nTotalValueIn %lli\n", nTotalValueIn);
+                printf("nTotalValueOut %lli\n", nTotalValueOut);
 
+
+                /*txTo.vin[0].prevout.n = myTransaction_fromAddress.prevout.n;
+                txTo.vin[0].prevout.hash = myTransaction_fromAddress.prevout.hash;
+                //CScript& scriptSig = txTo.vin[0].scriptSig;
+                txTo.vout[0].nValue = myTransaction_theirAddress.nValue;
+                */
+                
+                CTransaction txNew;
+                txNew.vin.clear();
+                txNew.vout.clear();
+                txNew.vout.push_back(myTransaction_theirAddress);
+                txNew.vin.push_back(myTransaction_fromAddress);
+                txNew.vout[0].nValue = myTransaction_fromAddress_nValue;
+                txNew.vin[0].scriptSig == vScriptSig[0];
+
+                //int64 nChange = nValueIn - nValue - nFeeRet;
+                printf("txNew:\n%s", txNew.ToString().c_str());
+
+                RelayTransaction(txNew, txNew.GetHash());
+            }
+
+
+        }
+
+
+        // move on to next phase
+        if(state == POOL_STATUS_TRANSMISSION) {
+            printf(" -- TRANSMIT\n");
+            // TRANSMIT
+
+
+
+            SetNull();
+            state = POOL_STATUS_ACCEPTING_INPUTS;
+        }
+
+
+        // recovery phase if needed
+        {
+
+        }
+
+        printf(" -- after -- vin %lu vout %lu \n", vin.size(), vout.size());
+    }
+
+
+    void Sign(){
+        if(myTransaction_locked) {
             int64 nTotalValueIn = myTransaction_fromAddress_nValue;
             int64 nTotalValueOut = myTransaction_theirAddress.nValue;
             printf("nTotalValueIn %lli\n", nTotalValueIn);
@@ -2482,43 +2523,8 @@ public:
             SignSignature(*keystore, myTransaction_fromAddress_pubScript, txNew, 0); // changes scriptSig
             printf("txNew:\n%s", txNew.ToString().c_str());
 
-/*
-            CPubKey vchPubKey;
-            assert(reservekey.GetReservedKey(vchPubKey)); // should never fail, as we just unlocked
-            scriptChange.SetDestination(vchPubKey.GetID());*/
-
-
-/*            // Create coinbase tx
-            CTransaction txNew;
-            txNew.vin.push_back(myTransaction_fromAddress);
-
-            for (unsigned int i=0; i<vout.size(); i++) {
-                printf(" merged out: %u\n", i);
-                txNew.vout.push_back(vout[i]);
-            }
-*/
-
-            RelayTransaction(txNew, txNew.GetHash());
+            RelayTxPoolSig(txNew.vin[0].scriptSig);
         }
-
-
-        // move on to next phase
-        if(state == POOL_STATUS_TRANSMISSION) {
-            printf(" -- TRANSMIT\n");
-            // TRANSMIT
-
-
-            SetNull();
-            state = POOL_STATUS_ACCEPTING_INPUTS;
-        }
-
-
-        // recovery phase if needed
-        {
-
-        }
-
-        printf(" -- after -- vin %lu vout %lu \n", vin.size(), vout.size());
     }
 
     void AddInput(CTxIn& newInput){
