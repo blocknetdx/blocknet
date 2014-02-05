@@ -70,7 +70,8 @@ class CWallet : public CCryptoKeyStore
 {
 private:
     bool SelectCoins(int64 nTargetValue, std::set<std::pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64& nValueRet, const CCoinControl *coinControl=NULL) const;
-    bool SelectCoinsMinOutput(int64 nTargetValue, CTxIn& vin, int64& nValueRet, const CCoinControl* coinControl) const;
+    bool SelectCoinsMinOutput(int64 nTargetValue, CTxIn& vin, int64& nValueRet, CScript& pubScript, const CCoinControl* coinControl) const;
+
 
     CWalletDB *pwalletdbEncryption;
 

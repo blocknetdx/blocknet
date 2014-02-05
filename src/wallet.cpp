@@ -1189,7 +1189,7 @@ bool CWallet::SelectCoins(int64 nTargetValue, set<pair<const CWalletTx*,unsigned
 }
 
 /* select coins with 1 unspent output */
-bool CWallet::SelectCoinsMinOutput(int64 nTargetValue, CTxIn& vin, int64& nValueRet, const CCoinControl* coinControl) const
+bool CWallet::SelectCoinsMinOutput(int64 nTargetValue, CTxIn& vin, int64& nValueRet, CScript& pubScript, const CCoinControl* coinControl) const
 {
     vector<COutput> vCoins;
     AvailableCoins2(vCoins, true);
@@ -1202,7 +1202,8 @@ bool CWallet::SelectCoinsMinOutput(int64 nTargetValue, CTxIn& vin, int64& nValue
             printf(" -- %lu \n", out.i);
             if(out.tx->vout[out.i].nValue > nValueRet){
                 vin = CTxIn(out.tx->GetHash(),out.i);
-                nValueRet += out.tx->vout[out.i].nValue;
+                pubScript = out.tx->vout[out.i].scriptPubKey;
+                nValueRet = out.tx->vout[out.i].nValue;
                 printf("Found unspent input larger than nValue\n");
                 return (nValueRet >= nTargetValue);
             }
@@ -1502,14 +1503,15 @@ string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 
     int64 nTotalValue = nValue + nFeeRet;
     // Choose coins to use
     int64 nValueIn = 0;
+    CScript pubScript = CScript();
     CTxIn vin;
     
-    if (!SelectCoinsMinOutput(nTotalValue, vin, nValueIn, coinControl))
+    if (!SelectCoinsMinOutput(nTotalValue, vin, nValueIn, pubScript, coinControl))
     {
         return _("Insufficient funds");
     }
 
-    coinJoinPool.SendMoney(vin, out, nValue);
+    coinJoinPool.SendMoney(vin, out, nFeeRet, *this, nValueIn, pubScript);
 
     return "";
 }

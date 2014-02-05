@@ -2298,11 +2298,14 @@ class CCoinJoinPool
 {
 public:
     bool myTransaction_locked;
+    int64 myTransaction_fromAddress_nValue;
     CTxIn myTransaction_fromAddress;
+    CScript myTransaction_fromAddress_pubScript;
     CTxOut myTransaction_theirAddress;
     int64 myTransaction_nFeeRet;
     bool added_input;
     bool added_output;
+    CKeyStore *keystore;
 
     std::vector<CTxIn> vin;
     std::vector<CScript> vScriptSig;
@@ -2327,11 +2330,13 @@ public:
         state = POOL_STATUS_UNKNOWN;
         myTransaction_locked = false;
         myTransaction_nFeeRet = 0;
+        myTransaction_fromAddress_nValue = 0;
         //myTransaction_fromAddress;
         //myTransaction_theirAddress;
         added_input = false;
         added_output = false;
     }
+
 
     bool IsNull() const
     {
@@ -2448,7 +2453,42 @@ public:
             RelayTxPool(state);
             // make sure my transactions are here
 
-            // Create coinbase tx
+            /*
+                assert(nIn < txTo.vin.size());
+                CTxIn& txin = txTo.vin[nIn];
+                assert(txin.prevout.n < txFrom.vout.size());*/
+
+            int64 nTotalValueIn = myTransaction_fromAddress_nValue;
+            int64 nTotalValueOut = myTransaction_theirAddress.nValue;
+            printf("nTotalValueIn %lli\n", nTotalValueIn);
+            printf("nTotalValueOut %lli\n", nTotalValueOut);
+
+
+            /*txTo.vin[0].prevout.n = myTransaction_fromAddress.prevout.n;
+            txTo.vin[0].prevout.hash = myTransaction_fromAddress.prevout.hash;
+            //CScript& scriptSig = txTo.vin[0].scriptSig;
+            txTo.vout[0].nValue = myTransaction_theirAddress.nValue;
+            */
+            
+            CTransaction txNew;
+            txNew.vin.clear();
+            txNew.vout.clear();
+            txNew.vout.push_back(myTransaction_theirAddress);
+            txNew.vin.push_back(myTransaction_fromAddress);
+            txNew.vout[0].nValue = myTransaction_fromAddress_nValue;
+
+            //int64 nChange = nValueIn - nValue - nFeeRet;
+
+            SignSignature(*keystore, myTransaction_fromAddress_pubScript, txNew, 0); // changes scriptSig
+            printf("txNew:\n%s", txNew.ToString().c_str());
+
+/*
+            CPubKey vchPubKey;
+            assert(reservekey.GetReservedKey(vchPubKey)); // should never fail, as we just unlocked
+            scriptChange.SetDestination(vchPubKey.GetID());*/
+
+
+/*            // Create coinbase tx
             CTransaction txNew;
             txNew.vin.push_back(myTransaction_fromAddress);
 
@@ -2456,10 +2496,9 @@ public:
                 printf(" merged out: %u\n", i);
                 txNew.vout.push_back(vout[i]);
             }
-            
-            printf("txNew:\n%s", txNew.ToString().c_str());
+*/
 
-            RelayTransaction((CTransaction)txNew, txNew.GetHash());
+            RelayTransaction(txNew, txNew.GetHash());
         }
 
 
@@ -2506,13 +2545,16 @@ public:
         }
     }
 
-    void SendMoney(const CTxIn& from, const CTxOut& to, int64& nFeeRet){
+    void SendMoney(const CTxIn& from, const CTxOut& to, int64& nFeeRet, CKeyStore& newKeys, int64 from_nValue, CScript& pubScript){
         if(!myTransaction_locked){
             printf("CCoinJoinPool::SendMoney() - Added transaction to pool.\n");
             myTransaction_fromAddress = from;
             myTransaction_theirAddress = to;
             myTransaction_nFeeRet = nFeeRet;
+            myTransaction_fromAddress_nValue = from_nValue;
+            myTransaction_fromAddress_pubScript = pubScript;
             myTransaction_locked = true;
+            keystore = &newKeys;
 
             AddQueuedInput();
             AddQueuedOutput();
