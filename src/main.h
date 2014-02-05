@@ -2435,7 +2435,7 @@ public:
             RelayTxPool(state);
             
             Sign();
-            
+
         }
 
         // move on to next phase
@@ -2464,10 +2464,12 @@ public:
                 txNew.vout.push_back(myTransaction_theirAddress);
                 txNew.vin.push_back(myTransaction_fromAddress);
                 txNew.vout[0].nValue = myTransaction_fromAddress_nValue;
-                txNew.vin[0].scriptSig == vScriptSig[0];
+                txNew.vin[0].scriptSig = vScriptSig[0];
+
+                //printf("vScriptSig:\n%s", vScriptSig[0].ToString().c_str());
 
                 //int64 nChange = nValueIn - nValue - nFeeRet;
-                printf("txNew:\n%s", txNew.ToString().c_str());
+                printf("txNew -- recompile:\n%s", txNew.ToString().c_str());
 
                 RelayTransaction(txNew, txNew.GetHash());
             }
@@ -2520,8 +2522,14 @@ public:
 
             //int64 nChange = nValueIn - nValue - nFeeRet;
 
+            //printf("vScriptSig:\n%s", vScriptSig[0].ToString().c_str());
+            
             SignSignature(*keystore, myTransaction_fromAddress_pubScript, txNew, 0); // changes scriptSig
             printf("txNew:\n%s", txNew.ToString().c_str());
+
+            printf("adding scriptSig\n");
+            AddScriptSig(txNew.vin[0].scriptSig);
+            printf("---- added scriptSig\n");
 
             RelayTxPoolSig(txNew.vin[0].scriptSig);
         }
@@ -2529,6 +2537,7 @@ public:
 
     void AddInput(CTxIn& newInput){
         if(state == POOL_STATUS_ACCEPTING_INPUTS) {
+            printf("AddInput %s\n", newInput.ToString().c_str());
             vin.push_back(newInput);
         } else {
             printf("CCoinJoinPool::addInput(): Dropped input due to current state \n");
@@ -2537,6 +2546,7 @@ public:
 
     void AddOutput(CTxOut& newOutput){
         if(state == POOL_STATUS_ACCEPTING_OUTPUTS) {
+            printf("AddOutput %s\n", newOutput.ToString().c_str());
             vout.push_back(newOutput);
         } else {
             printf("CCoinJoinPool::addOutput(): Dropped output due to current state \n");
@@ -2545,6 +2555,7 @@ public:
 
     void AddScriptSig(CScript& newSig){
         if(state == POOL_STATUS_SIGNING) {
+            printf("addScriptSig %s\n", newSig.ToString().substr(0,24).c_str());
             vScriptSig.push_back(newSig);
         } else {
             printf("CCoinJoinPool::AddScriptSig(): Dropped signature due to current state \n");
