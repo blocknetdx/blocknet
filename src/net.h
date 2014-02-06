@@ -643,7 +643,7 @@ class CTxOut;
 void RelayTransaction(const CTransaction& tx, const uint256& hash);
 void RelayTransaction(const CTransaction& tx, const uint256& hash, const CDataStream& ss);
 void RelayTxPool(const unsigned int state);
-void RelayTxPoolIn(const CTxIn& tx, CScript& pubScript);
+void RelayTxPoolIn(const CTxIn& tx, int64& nAmount);
 void RelayTxPoolOut(const CTxOut& tx);
 void RelayTxPoolSig(const CScript& sig);
 

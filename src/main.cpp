@@ -3389,9 +3389,9 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
     else if (strCommand == "txpli") { //new coinjoin pool tx vin
         CTxIn in;
-        CScript pubScript;
-        vRecv >> in >> pubScript;
-        coinJoinPool.AddInput(in);
+        int64 nAmount;
+        vRecv >> in >> nAmount;
+        coinJoinPool.AddInput(in, nAmount);
         coinJoinPool.Check();
     }
 
@@ -4861,3 +4861,207 @@ public:
         mapOrphanTransactions.clear();
     }
 } instance_of_cmaincleanup;
+
+
+void CCoinJoinPool::AddQueuedInput()
+{
+    printf("AddQueuedInput\n");
+    if(!myTransaction_locked)
+        return;
+    printf(" --- -- input\n");
+    if(state != POOL_STATUS_ACCEPTING_INPUTS || added_input)
+        return;
+
+    printf(" --- adding my input\n");
+    AddInput(myTransaction_fromAddress, myTransaction_fromAddress_nValue);
+    RelayTxPoolIn(myTransaction_fromAddress, myTransaction_fromAddress_nValue);
+    added_input = true;
+}
+
+void CCoinJoinPool::AddQueuedOutput()
+{
+    printf("AddQueuedOutput\n");
+    if(!myTransaction_locked)
+        return;
+    printf(" --- -- output\n");
+    if(state != POOL_STATUS_ACCEPTING_OUTPUTS || added_output)
+        return;
+
+    printf(" --- adding my output\n");
+    AddOutput(myTransaction_theirAddress);
+    RelayTxPoolOut(myTransaction_theirAddress);
+    
+    printf(" --- adding my output -- change\n");
+    AddOutput(myTransaction_changeAddress);
+    RelayTxPoolOut(myTransaction_changeAddress);
+
+    added_output = true;
+}
+
+void CCoinJoinPool::Check()
+{
+    printf("CCoinJoinPool::Check()\n");
+    printf("vin %lu vout %lu \n", vin.size(), vout.size());
+
+    if(state == POOL_STATUS_IDLE && vin.size() == 0)
+    {
+        printf(" -- ACCEPTING INPUTS\n");
+        state = POOL_STATUS_ACCEPTING_INPUTS;
+        RelayTxPool(state);
+        AddQueuedInput();
+    }
+    
+    // move on to next phase
+    if(state == POOL_STATUS_ACCEPTING_INPUTS && vin.size() == 1)
+    {
+        printf(" -- ACCEPTING OUTPUTS\n");
+        printf(" --- adding my output\n");
+        state = POOL_STATUS_ACCEPTING_OUTPUTS;
+        RelayTxPool(state);
+        AddQueuedOutput();
+    }
+
+    // move on to next phase
+    if(state == POOL_STATUS_ACCEPTING_OUTPUTS && vout.size() == 1*2) {
+        printf(" -- ACCEPTING SIGNATURES\n");
+        state = POOL_STATUS_SIGNING;
+        RelayTxPool(state);
+        
+        Sign();
+
+    }
+
+    // move on to next phase
+    if(state == POOL_STATUS_SIGNING && vScriptSig.size() == 1) { 
+        printf(" -- SIGNING\n");
+        state = POOL_STATUS_TRANSMISSION;
+        RelayTxPool(state);
+        // make sure my transactions are here
+
+        if(myTransaction_locked) {
+            int64 nTotalValueIn = myTransaction_fromAddress_nValue;
+            int64 nTotalValueOut = myTransaction_theirAddress.nValue;
+            printf("nTotalValueIn %lli\n", nTotalValueIn);
+            printf("nTotalValueOut %lli\n", nTotalValueOut);
+            
+            CTransaction txNew;
+            txNew.vin.clear();
+            txNew.vout.clear();
+            for(unsigned int i = 0; i < vout.size(); i++){
+                txNew.vout.push_back(vout[i]);
+            }
+            txNew.vin.push_back(myTransaction_fromAddress);
+            //txNew.vout[0].nValue = myTransaction_fromAddress_nValue;
+            txNew.vin[0].scriptSig = vScriptSig[0];
+
+            //printf("vScriptSig:\n%s", vScriptSig[0].ToString().c_str());
+
+            //int64 nChange = nValueIn - nValue - nFeeRet;
+            printf("txNew -- recompile:\n%s", txNew.ToString().c_str());
+
+            RelayTransaction(txNew, txNew.GetHash());
+        }
+
+
+    }
+
+
+    // move on to next phase
+    if(state == POOL_STATUS_TRANSMISSION) {
+        printf(" -- TRANSMIT\n");
+        // TRANSMIT
+
+        SetNull();
+        state = POOL_STATUS_ACCEPTING_INPUTS;
+    }
+
+
+    // recovery phase if needed
+    {
+
+    }
+
+    printf(" -- after -- vin %lu vout %lu \n", vin.size(), vout.size());
+}
+
+
+void CCoinJoinPool::Sign(){
+    if(myTransaction_locked) {
+        int64 nTotalValueIn = myTransaction_fromAddress_nValue;
+        int64 nTotalValueOut = myTransaction_theirAddress.nValue;
+        printf("nTotalValueIn %lli\n", nTotalValueIn);
+        printf("nTotalValueOut %lli\n", nTotalValueOut);
+
+        /* Sign my transaction and all outputs */
+        
+        CTransaction txNew;
+        txNew.vin.clear();
+        txNew.vout.clear();
+        for(unsigned int i = 0; i < vout.size(); i++){
+            txNew.vout.push_back(vout[i]);
+        }
+        txNew.vin.push_back(myTransaction_fromAddress);
+        //txNew.vout[0].nValue = myTransaction_fromAddress_nValue;
+
+        //int64 nChange = nValueIn - nValue - nFeeRet;
+
+        //printf("vScriptSig:\n%s", vScriptSig[0].ToString().c_str());
+        
+        SignSignature(*keystore, myTransaction_fromAddress_pubScript, txNew, 0); // changes scriptSig
+        printf("txNew:\n%s", txNew.ToString().c_str());
+
+        printf("adding scriptSig\n");
+        AddScriptSig(txNew.vin[0].scriptSig);
+        printf("---- added scriptSig\n");
+
+        RelayTxPoolSig(txNew.vin[0].scriptSig);
+    }
+}
+
+void CCoinJoinPool::AddInput(CTxIn& newInput, int64& nAmount){
+    if(state == POOL_STATUS_ACCEPTING_INPUTS) {
+        printf("AddInput %s\n", newInput.ToString().c_str());
+        vin.push_back(newInput);
+        vinAmount.push_back(nAmount);
+    } else {
+        printf("CCoinJoinPool::addInput(): Dropped input due to current state \n");
+    }
+}
+
+void CCoinJoinPool::AddOutput(CTxOut& newOutput){
+    if(state == POOL_STATUS_ACCEPTING_OUTPUTS) {
+        printf("AddOutput %s\n", newOutput.ToString().c_str());
+        vout.push_back(newOutput);
+    } else {
+        printf("CCoinJoinPool::addOutput(): Dropped output due to current state \n");
+    }
+}
+
+void CCoinJoinPool::AddScriptSig(CScript& newSig){
+    if(state == POOL_STATUS_SIGNING) {
+        printf("addScriptSig %s\n", newSig.ToString().substr(0,24).c_str());
+        vScriptSig.push_back(newSig);
+    } else {
+        printf("CCoinJoinPool::AddScriptSig(): Dropped signature due to current state \n");
+    }
+}
+
+void CCoinJoinPool::SendMoney(const CTxIn& from, const CTxOut& to, int64& nFeeRet, CKeyStore& newKeys, int64 from_nValue, CScript& pubScript){
+    if(!myTransaction_locked){
+        printf("CCoinJoinPool::SendMoney() - Added transaction to pool.\n");
+        myTransaction_fromAddress = from;
+        myTransaction_theirAddress = to;
+        myTransaction_changeAddress = CTxOut(from_nValue-to.nValue-nFeeRet, pubScript);
+        myTransaction_nFeeRet = nFeeRet;
+        myTransaction_fromAddress_nValue = from_nValue;
+        myTransaction_fromAddress_pubScript = pubScript;
+        myTransaction_locked = true;
+        keystore = &newKeys;
+
+        AddQueuedInput();
+        AddQueuedOutput();
+        Check();
+    } else {
+        printf("CCoinJoinPool::SendMoney() - Error, transaction locked. Multiple transactions per pool are not supported yet.\n");
+    }
+}

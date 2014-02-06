@@ -1914,14 +1914,14 @@ void RelayTxPool(const unsigned int state)
     }
 }
 
-void RelayTxPoolIn(const CTxIn& tx, CScript& pubScript)
+void RelayTxPoolIn(const CTxIn& tx, int64& nAmount)
 {
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
         if(!pnode->fRelayTxes)
             continue;
-        pnode->PushMessage("txpli", tx, pubScript);
+        pnode->PushMessage("txpli", tx, nAmount);
     }
 }
 
