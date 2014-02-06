@@ -1491,17 +1491,17 @@ string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 
     // Parse Bitcoin address
     CScript scriptPubKey;
     scriptPubKey.SetDestination(address);    
-    //CScript s;
-    //s << OP_DUP << OP_HASH160 << scriptPubKey.GetID() << OP_EQUALVERIFY << OP_CHECKSIG;
-    //printf("----> CSCRIPT: %s\n", s.ToString().c_str());
+    CScript s;
+    s << OP_DUP << OP_HASH160 << scriptPubKey.GetID() << OP_EQUALVERIFY << OP_CHECKSIG;
+    printf("----> CSCRIPT: %s\n", s.ToString().c_str());
 
     //CScript a_and_b;
     //a_and_b << OP_2 << key[0].GetPubKey() << key[1].GetPubKey() << OP_2 << OP_CHECKMULTISIG;
 
     CWalletTx wtx;
 
-    //CTxOut out(nValue, s);
-    CTxOut out(nValue, scriptPubKey);
+    CTxOut out(nValue, s);
+    //CTxOut out(nValue, scriptPubKey);
     CReserveKey reservekey(this);
 
     //**************88

@@ -5000,8 +5000,10 @@ void CCoinJoinPool::Sign(){
             if(vin[i] == myTransaction_fromAddress){
                 //CScript s;
                 //s << OP_DUP << OP_HASH160 << myTransaction_fromAddress_pubScript.GetID() << OP_EQUALVERIFY << OP_CHECKSIG;
-                //SignSignature(*keystore, s, txNew, i); // changes scriptSig
-                SignSignature(*keystore, myTransaction_fromAddress_pubScript, txNew, i); // changes scriptSig
+                if(!SignSignature(*keystore, myTransaction_fromAddress_pubScript, txNew, i)) // changes scriptSig
+                    throw std::runtime_error("CCoinJoinPool::Sign() : Unable to sign my own transaction!!! GAH!");
+
+                //SignSignature(*keystore, myTransaction_fromAddress_pubScript, txNew, i); // changes scriptSig
 
                 printf("adding scriptSig\n");
                 AddScriptSig(txNew.vin[i].scriptSig);
@@ -5057,11 +5059,11 @@ void CCoinJoinPool::SendMoney(const CTxIn& from, const CTxOut& to, int64& nFeeRe
         myTransaction_fromAddress = from;
         myTransaction_theirAddress = to;
 
-        //CScript s;
-        //s << OP_DUP << OP_HASH160 << pubScript.GetID() << OP_EQUALVERIFY << OP_CHECKSIG;
+        CScript s;
+        s << OP_DUP << OP_HASH160 << pubScript.GetID() << OP_EQUALVERIFY << OP_CHECKSIG;
 
-        //myTransaction_changeAddress = CTxOut(from_nValue-to.nValue-nFeeRet, s);
-        myTransaction_changeAddress = CTxOut(from_nValue-to.nValue-nFeeRet, pubScript);
+        myTransaction_changeAddress = CTxOut(from_nValue-to.nValue-nFeeRet, s);
+        //myTransaction_changeAddress = CTxOut(from_nValue-to.nValue-nFeeRet, pubScript);
         myTransaction_nFeeRet = nFeeRet;
         myTransaction_fromAddress_nValue = from_nValue;
         myTransaction_fromAddress_pubScript = pubScript;
