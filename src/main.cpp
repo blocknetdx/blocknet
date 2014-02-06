@@ -4397,8 +4397,6 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         uint64 nBlockSize = 1000;
         uint64 nBlockTx = 0;
         int nBlockSigOps = 100;
-        int nMergedTransactionsIn = 0;
-        int nMergedTransactionsOut = 0;
         bool fSortedByFee = (nBlockPrioritySize <= 0);
 
         TxPriorityCompare comparer(fSortedByFee);
@@ -4900,6 +4898,8 @@ void CCoinJoinPool::AddQueuedOutput()
 
 void CCoinJoinPool::Check()
 {
+    unsigned int POOL_MAX_TRANSACTIONS = 1;
+
     printf("CCoinJoinPool::Check()\n");
     printf("vin %lu vout %lu \n", vin.size(), vout.size());
 
@@ -4912,7 +4912,7 @@ void CCoinJoinPool::Check()
     }
     
     // move on to next phase
-    if(state == POOL_STATUS_ACCEPTING_INPUTS && vin.size() == 1)
+    if(state == POOL_STATUS_ACCEPTING_INPUTS && vin.size() == POOL_MAX_TRANSACTIONS)
     {
         printf(" -- ACCEPTING OUTPUTS\n");
         printf(" --- adding my output\n");
@@ -4922,7 +4922,8 @@ void CCoinJoinPool::Check()
     }
 
     // move on to next phase
-    if(state == POOL_STATUS_ACCEPTING_OUTPUTS && vout.size() == 1*2) {
+    //                                       What if some didn't have change addresses, or multiple outputs (3+)?
+    if(state == POOL_STATUS_ACCEPTING_OUTPUTS && vout.size() == POOL_MAX_TRANSACTIONS*2) {
         printf(" -- ACCEPTING SIGNATURES\n");
         state = POOL_STATUS_SIGNING;
         RelayTxPool(state);
@@ -4932,37 +4933,31 @@ void CCoinJoinPool::Check()
     }
 
     // move on to next phase
-    if(state == POOL_STATUS_SIGNING && vScriptSig.size() == 1) { 
+    if(state == POOL_STATUS_SIGNING && vScriptSig.size() == POOL_MAX_TRANSACTIONS) { 
         printf(" -- SIGNING\n");
         state = POOL_STATUS_TRANSMISSION;
         RelayTxPool(state);
         // make sure my transactions are here
 
-        if(myTransaction_locked) {
-            int64 nTotalValueIn = myTransaction_fromAddress_nValue;
-            int64 nTotalValueOut = myTransaction_theirAddress.nValue;
-            printf("nTotalValueIn %lli\n", nTotalValueIn);
-            printf("nTotalValueOut %lli\n", nTotalValueOut);
-            
-            CTransaction txNew;
-            txNew.vin.clear();
-            txNew.vout.clear();
-            for(unsigned int i = 0; i < vout.size(); i++){
-                txNew.vout.push_back(vout[i]);
-            }
-            txNew.vin.push_back(myTransaction_fromAddress);
-            //txNew.vout[0].nValue = myTransaction_fromAddress_nValue;
-            txNew.vin[0].scriptSig = vScriptSig[0];
-
-            //printf("vScriptSig:\n%s", vScriptSig[0].ToString().c_str());
-
-            //int64 nChange = nValueIn - nValue - nFeeRet;
-            printf("txNew -- recompile:\n%s", txNew.ToString().c_str());
-
-            RelayTransaction(txNew, txNew.GetHash());
+        CTransaction txNew;
+        txNew.vin.clear();
+        txNew.vout.clear();
+        for(unsigned int i = 0; i < vout.size(); i++){
+            txNew.vout.push_back(vout[i]);
         }
+        for(unsigned int i = 0; i < vin.size(); i++){
+            txNew.vin.push_back(vin[i]);
+            txNew.vin[i].scriptSig = vScriptSig[i];
+        }
+        
+        //txNew.vout[0].nValue = myTransaction_fromAddress_nValue;
 
+        //printf("vScriptSig:\n%s", vScriptSig[0].ToString().c_str());
 
+        //int64 nChange = nValueIn - nValue - nFeeRet;
+        printf("txNew -- recompile:\n%s", txNew.ToString().c_str());
+
+        RelayTransaction(txNew, txNew.GetHash());
     }
 
 
@@ -5000,21 +4995,29 @@ void CCoinJoinPool::Sign(){
         for(unsigned int i = 0; i < vout.size(); i++){
             txNew.vout.push_back(vout[i]);
         }
-        txNew.vin.push_back(myTransaction_fromAddress);
+        for(unsigned int i = 0; i < vin.size(); i++){
+            txNew.vin.push_back(vin[i]);
+            if(vin[i] == myTransaction_fromAddress){
+                //CScript s;
+                //s << OP_DUP << OP_HASH160 << myTransaction_fromAddress_pubScript.GetID() << OP_EQUALVERIFY << OP_CHECKSIG;
+                //SignSignature(*keystore, s, txNew, i); // changes scriptSig
+                SignSignature(*keystore, myTransaction_fromAddress_pubScript, txNew, i); // changes scriptSig
+
+                printf("adding scriptSig\n");
+                AddScriptSig(txNew.vin[i].scriptSig);
+                printf("added scriptSig %s\n", txNew.vin[i].scriptSig.ToString().substr(0,24).c_str());
+                RelayTxPoolSig(txNew.vin[i].scriptSig);
+                printf("relayed\n");
+            }
+        }
         //txNew.vout[0].nValue = myTransaction_fromAddress_nValue;
 
         //int64 nChange = nValueIn - nValue - nFeeRet;
 
         //printf("vScriptSig:\n%s", vScriptSig[0].ToString().c_str());
         
-        SignSignature(*keystore, myTransaction_fromAddress_pubScript, txNew, 0); // changes scriptSig
         printf("txNew:\n%s", txNew.ToString().c_str());
 
-        printf("adding scriptSig\n");
-        AddScriptSig(txNew.vin[0].scriptSig);
-        printf("---- added scriptSig\n");
-
-        RelayTxPoolSig(txNew.vin[0].scriptSig);
     }
 }
 
@@ -5049,8 +5052,15 @@ void CCoinJoinPool::AddScriptSig(CScript& newSig){
 void CCoinJoinPool::SendMoney(const CTxIn& from, const CTxOut& to, int64& nFeeRet, CKeyStore& newKeys, int64 from_nValue, CScript& pubScript){
     if(!myTransaction_locked){
         printf("CCoinJoinPool::SendMoney() - Added transaction to pool.\n");
+        nFeeRet = 0.01;
+
         myTransaction_fromAddress = from;
         myTransaction_theirAddress = to;
+
+        //CScript s;
+        //s << OP_DUP << OP_HASH160 << pubScript.GetID() << OP_EQUALVERIFY << OP_CHECKSIG;
+
+        //myTransaction_changeAddress = CTxOut(from_nValue-to.nValue-nFeeRet, s);
         myTransaction_changeAddress = CTxOut(from_nValue-to.nValue-nFeeRet, pubScript);
         myTransaction_nFeeRet = nFeeRet;
         myTransaction_fromAddress_nValue = from_nValue;

@@ -1477,20 +1477,32 @@ bool ExtractDestinations(const CScript& scriptPubKey, txnouttype& typeRet, vecto
 bool VerifyScript(const CScript& scriptSig, const CScript& scriptPubKey, const CTransaction& txTo, unsigned int nIn,
                   unsigned int flags, int nHashType)
 {
+    int i = 0;
+
+    printf("VS %i\n", i++);
     vector<vector<unsigned char> > stack, stackCopy;
     if (!EvalScript(stack, scriptSig, txTo, nIn, flags, nHashType))
         return false;
 
+    printf("VS %i\n", i++);
     if (flags & SCRIPT_VERIFY_P2SH)
         stackCopy = stack;
+
+    printf("VS %i\n", i++);
     if (!EvalScript(stack, scriptPubKey, txTo, nIn, flags, nHashType))
         return false;
+
+    printf("VS-- %i\n", i++);
 
     if (stack.empty())
         return false;
 
+    printf("VS--- %i\n", i++);
+
     if (CastToBool(stack.back()) == false)
         return false;
+
+    printf("VS %i\n", i++);
 
     // Additional validation for spend-to-script-hash transactions:
     if ((flags & SCRIPT_VERIFY_P2SH) && scriptPubKey.IsPayToScriptHash())
@@ -1498,15 +1510,19 @@ bool VerifyScript(const CScript& scriptSig, const CScript& scriptPubKey, const C
         if (!scriptSig.IsPushOnly()) // scriptSig must be literals-only
             return false;            // or validation fails
 
+        printf("VS %i\n", i++);
         // stackCopy cannot be empty here, because if it was the
         // P2SH  HASH <> EQUAL  scriptPubKey would be evaluated with
         // an empty stack and the EvalScript above would return false.
         assert(!stackCopy.empty());
 
         
+        printf("VS %i\n", i++);
         const valtype& pubKeySerialized = stackCopy.back();
         CScript pubKey2(pubKeySerialized.begin(), pubKeySerialized.end());
         popstack(stackCopy);
+
+        printf("VS %i\n", i++);
 
         if (!EvalScript(stackCopy, pubKey2, txTo, nIn, flags, nHashType))
             return false;
@@ -1517,6 +1533,7 @@ bool VerifyScript(const CScript& scriptSig, const CScript& scriptPubKey, const C
         return CastToBool(stackCopy.back());
     }
 
+    printf("VS %i\n", i++);
     return true;
 }
 
