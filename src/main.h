@@ -2332,7 +2332,9 @@ public:
     }
 
     static bool sort_out(CTxOut a, CTxOut b) {
-        return a.nValue > b.nValue;
+        if ((uint160)a.scriptPubKey.GetID() == (uint160)b.scriptPubKey.GetID())
+            return a.nValue > b.nValue;
+        return (uint160)a.scriptPubKey.GetID() > (uint160)b.scriptPubKey.GetID();
     }
 
     void SetNull()

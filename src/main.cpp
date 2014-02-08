@@ -5025,6 +5025,9 @@ void CCoinJoinPool::Sign(){
     if(myTransaction_locked) {
         /* Sign my transaction and all outputs */
         
+        std::sort (vin.begin(), vin.end(), sort_in);
+        std::sort (vout.begin(), vout.end(), sort_out);
+
         CTransaction txNew;
         txNew.vin.clear();
         txNew.vout.clear();
@@ -5032,6 +5035,7 @@ void CCoinJoinPool::Sign(){
             //if(vout[i] == myTransaction_changeAddress || vout[i] == myTransaction_theirAddress){
             txNew.vout.push_back(vout[i]);
             //}
+            printf("AddOutput %u - %u\n", (uint160)vout[i].scriptPubKey.GetID(), vout[i].nValue);
         }
         int mine = -1;
         for(unsigned int i = 0; i < vin.size(); i++){
@@ -5076,7 +5080,6 @@ void CCoinJoinPool::AddInput(CTxIn& newInput, int64& nAmount){
         vinSig.push_back(CScript());
         vinPubKey.push_back(CScript());
 
-        std::sort (vin.begin(), vin.end(), sort_in);
 
         printf("AddInput %s\n", newInput.ToString().c_str());
     } else {
@@ -5087,9 +5090,7 @@ void CCoinJoinPool::AddInput(CTxIn& newInput, int64& nAmount){
 void CCoinJoinPool::AddOutput(CTxOut& newOutput){
     if(state == POOL_STATUS_ACCEPTING_OUTPUTS) {
         vout.push_back(newOutput);
-
-        std::sort (vout.begin(), vout.end(), sort_out);
-        printf("AddOutput %s\n", newOutput.ToString().c_str());
+        printf("AddOutput %u - %u\n", (uint160)newOutput.scriptPubKey.GetID(), newOutput.nValue);
     } else {
         printf("CCoinJoinPool::addOutput(): Dropped output due to current state \n");
     }
