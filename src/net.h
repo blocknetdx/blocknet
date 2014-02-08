@@ -645,6 +645,6 @@ void RelayTransaction(const CTransaction& tx, const uint256& hash, const CDataSt
 void RelayTxPool(const unsigned int state);
 void RelayTxPoolIn(const CTxIn& tx, int64& nAmount);
 void RelayTxPoolOut(const CTxOut& tx);
-void RelayTxPoolSig(const CScript& sig);
+void RelayTxPoolSig(const CScript& sig, const CTxIn& vin, const CScript& pubKey);
 
 #endif

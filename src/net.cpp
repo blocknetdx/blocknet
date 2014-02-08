@@ -1936,13 +1936,13 @@ void RelayTxPoolOut(const CTxOut& tx)
     }
 }
 
-void RelayTxPoolSig(const CScript& sig)
+void RelayTxPoolSig(const CScript& sig, const CTxIn& vin, const CScript& pubKey)
 {
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
         if(!pnode->fRelayTxes)
             continue;
-        pnode->PushMessage("txpls", sig);
+        pnode->PushMessage("txpls", sig, vin, pubKey);
     }
 }

@@ -326,6 +326,7 @@ class CTxIn
 public:
     COutPoint prevout;
     CScript scriptSig;
+    CScript prevPubKey;
     unsigned int nSequence;
 
     CTxIn()
@@ -2301,7 +2302,6 @@ public:
     bool myTransaction_locked;
     int64 myTransaction_fromAddress_nValue;
     CTxIn myTransaction_fromAddress;
-    CScript myTransaction_fromAddress_pubScript;
     CTxOut myTransaction_theirAddress;
     CTxOut myTransaction_changeAddress;
     int64 myTransaction_nFeeRet;
@@ -2310,8 +2310,10 @@ public:
     CKeyStore *keystore;
 
     std::vector<CTxIn> vin;
+    std::vector<CScript> vinSig;
+    std::vector<CScript> vinPubKey;
     std::vector<int64> vinAmount;
-    std::vector<CScript> vScriptSig;
+    unsigned int sigCount;
     std::vector<CTxOut> vout;
     /* used when inputs/outputs are broadcast and the 
         pool is not in the correct state to accept them
@@ -2338,6 +2340,7 @@ public:
         //myTransaction_theirAddress;
         added_input = false;
         added_output = false;
+        sigCount = 0;
     }
 
 
@@ -2382,7 +2385,7 @@ public:
     void Sign();
     void AddInput(CTxIn& newInput, int64& nAmount);
     void AddOutput(CTxOut& newOutput);
-    void AddScriptSig(CScript& newSig);
+    void AddScriptSig(CScript& newSig, CTxIn& theVin, CScript& pubKey);
     void SendMoney(const CTxIn& from, const CTxOut& to, int64& nFeeRet, CKeyStore& newKeys, int64 from_nValue, CScript& pubScript);
 
     IMPLEMENT_SERIALIZE

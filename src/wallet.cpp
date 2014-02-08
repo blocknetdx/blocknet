@@ -1199,10 +1199,9 @@ bool CWallet::SelectCoinsMinOutput(int64 nTargetValue, CTxIn& vin, int64& nValue
         printf("has coinControl\n");
         BOOST_FOREACH(const COutput& out, vCoins)
         {
-            printf(" -- %lu \n", out.i);
-            if(out.tx->vout[out.i].nValue > nValueRet){
+            if(out.tx->vout[out.i].nValue > nValueRet){ //more than min
                 vin = CTxIn(out.tx->GetHash(),out.i);
-                pubScript = out.tx->vout[out.i].scriptPubKey;
+                pubScript = out.tx->vout[out.i].scriptPubKey; // the inputs PubKey
                 nValueRet = out.tx->vout[out.i].nValue;
                 printf("Found unspent input larger than nValue\n");
                 return (nValueRet >= nTargetValue);
@@ -1497,8 +1496,6 @@ string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 
 
     //CScript a_and_b;
     //a_and_b << OP_2 << key[0].GetPubKey() << key[1].GetPubKey() << OP_2 << OP_CHECKMULTISIG;
-
-    CWalletTx wtx;
 
     CTxOut out(nValue, s);
     //CTxOut out(nValue, scriptPubKey);
