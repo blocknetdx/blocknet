@@ -15,6 +15,8 @@
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
 
+#include <algorithm>
+
 using namespace std;
 using namespace boost;
 
@@ -4917,7 +4919,6 @@ void CCoinJoinPool::Check()
     if(state == POOL_STATUS_ACCEPTING_INPUTS && vin.size() == POOL_MAX_TRANSACTIONS)
     {
         printf(" -- ACCEPTING OUTPUTS\n");
-        printf(" --- adding my output\n");
         state = POOL_STATUS_ACCEPTING_OUTPUTS;
         RelayTxPool(state);
         AddQueuedOutput();
@@ -4929,7 +4930,6 @@ void CCoinJoinPool::Check()
         printf(" -- ACCEPTING SIGNATURES\n");
         state = POOL_STATUS_SIGNING;
         RelayTxPool(state);
-        
         Sign();
 
     }
@@ -4950,25 +4950,34 @@ void CCoinJoinPool::Check()
 
         for(unsigned int i = 0; i < vin.size(); i++){
             txNew.vin.push_back(vin[i]);
+            if(txNew.vin[i] == myTransaction_fromAddress){
+                printf ("MINE\n");
+            } else {
+                printf ("THEIRS\n");
+            }
+            txNew.vin[i].scriptSig = vinSig[i];
+            if (!VerifyScript(txNew.vin[i].scriptSig, vinPubKey[i], txNew, i, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC, 0))
+                printf("ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR %i !!!\n", i);
         }
 
-        for(unsigned int i = 0; i < vin.size(); i++){ //  for (unsigned int i = 0; i < mergedTx.vin.size(); i++)
+
+/*        for(unsigned int i = 0; i < vin.size(); i++){ //  for (unsigned int i = 0; i < mergedTx.vin.size(); i++)
             CTxIn& txin = vin[i];
             txin.scriptSig.clear();
             txin.scriptSig = vinSig[i];
 
-        /*    for(unsigned int a = 0; a < vin.size(); a++){ // BOOST_FOREACH(const CTransaction& txv, txVariants)
+            for(unsigned int a = 0; a < vin.size(); a++){ // BOOST_FOREACH(const CTransaction& txv, txVariants)
                 //if(i != a) {
                 printf("COMBINE %u-%u\n", i, a);
                 txin.scriptSig = CombineSignatures(vinPubKey[i], txNew, i, txin.scriptSig, vin[a].scriptSig);
                 //}
-            }*/
+            }
 
             if (!VerifyScript(txin.scriptSig, vinPubKey[i], txNew, i, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC, 0))
                 printf("ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR %i !!!\n", i);
             
             txNew.vin[i].scriptSig = txin.scriptSig;
-        }
+        }*/
 
 /*            if (!VerifyScript(txin.scriptSig, prevPubKey, mergedTx, i, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC, 0))
                 throw std::runtime_error("CCoinJoinPool::Sign() : Unable to sign my own transaction!!! GAH!");
@@ -5063,11 +5072,13 @@ void CCoinJoinPool::Sign(){
 
 void CCoinJoinPool::AddInput(CTxIn& newInput, int64& nAmount){
     if(state == POOL_STATUS_ACCEPTING_INPUTS) {
-        printf("AddInput %s\n", newInput.ToString().c_str());
         vin.push_back(newInput);
         vinSig.push_back(CScript());
         vinPubKey.push_back(CScript());
-        vinAmount.push_back(nAmount);
+
+        std::sort (vin.begin(), vin.end(), sort_in);
+
+        printf("AddInput %s\n", newInput.ToString().c_str());
     } else {
         printf("CCoinJoinPool::addInput(): Dropped input due to current state \n");
     }
@@ -5075,8 +5086,10 @@ void CCoinJoinPool::AddInput(CTxIn& newInput, int64& nAmount){
 
 void CCoinJoinPool::AddOutput(CTxOut& newOutput){
     if(state == POOL_STATUS_ACCEPTING_OUTPUTS) {
-        printf("AddOutput %s\n", newOutput.ToString().c_str());
         vout.push_back(newOutput);
+
+        std::sort (vout.begin(), vout.end(), sort_out);
+        printf("AddOutput %s\n", newOutput.ToString().c_str());
     } else {
         printf("CCoinJoinPool::addOutput(): Dropped output due to current state \n");
     }

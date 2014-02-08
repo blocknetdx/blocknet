@@ -12,6 +12,7 @@
 #include "hashblock.h"
 
 #include <list>
+#include <algorithm>
 
 class CWallet;
 class CBlock;
@@ -2312,7 +2313,6 @@ public:
     std::vector<CTxIn> vin;
     std::vector<CScript> vinSig;
     std::vector<CScript> vinPubKey;
-    std::vector<int64> vinAmount;
     unsigned int sigCount;
     std::vector<CTxOut> vout;
     /* used when inputs/outputs are broadcast and the 
@@ -2325,6 +2325,14 @@ public:
     CCoinJoinPool()
     {
         SetNull();
+    }
+
+    static bool sort_in(CTxIn a, CTxIn b) {
+        return a.prevout.hash > b.prevout.hash;
+    }
+
+    static bool sort_out(CTxOut a, CTxOut b) {
+        return a.nValue > b.nValue;
     }
 
     void SetNull()
