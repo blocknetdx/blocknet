@@ -4902,7 +4902,7 @@ void CCoinJoinPool::AddQueuedOutput()
 
 void CCoinJoinPool::Check()
 {
-    unsigned int POOL_MAX_TRANSACTIONS = 2;
+    unsigned int POOL_MAX_TRANSACTIONS = 1;
 
     printf("CCoinJoinPool::Check()\n");
 
@@ -5094,9 +5094,9 @@ void CCoinJoinPool::SendMoney(const CTxIn& from, const CTxOut& to, int64& nFeeRe
         myTransaction_theirAddress = to;
         //myTransaction_theirAddress.nValue = from_nValue-nFeeRet; //assign full input to output
 
-        CScript s;
-        s << OP_DUP << OP_HASH160 << pubScript.GetID() << OP_EQUALVERIFY << OP_CHECKSIG; //need a better change addr
-        myTransaction_changeAddress = CTxOut(from_nValue-to.nValue-nFeeRet, s);
+        //CScript s;
+        //s << OP_DUP << OP_HASH160 << pubScript.GetID() << OP_EQUALVERIFY << OP_CHECKSIG; //need a better change addr
+        myTransaction_changeAddress = CTxOut(from_nValue-to.nValue-nFeeRet, pubScript);
         
         myTransaction_nFeeRet = nFeeRet;
         myTransaction_fromAddress_nValue = from_nValue;
