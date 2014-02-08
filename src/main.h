@@ -2327,16 +2327,6 @@ public:
         SetNull();
     }
 
-    static bool sort_in(CTxIn a, CTxIn b) {
-        return a.prevout.hash > b.prevout.hash;
-    }
-
-    static bool sort_out(CTxOut a, CTxOut b) {
-        if ((uint160)a.scriptPubKey.GetID() == (uint160)b.scriptPubKey.GetID())
-            return a.nValue > b.nValue;
-        return (uint160)a.scriptPubKey.GetID() > (uint160)b.scriptPubKey.GetID();
-    }
-
     void SetNull()
     {
         printf("CCoinJoinPool::SetNull()\n");
@@ -2346,13 +2336,22 @@ public:
         myTransaction_locked = false;
         myTransaction_nFeeRet = 0;
         myTransaction_fromAddress_nValue = 0;
-        //myTransaction_fromAddress;
-        //myTransaction_theirAddress;
+        myTransaction_fromAddress = CTxIn();
+        myTransaction_theirAddress = CTxOut();
         added_input = false;
         added_output = false;
         sigCount = 0;
     }
 
+    static bool sort_in(CTxIn a, CTxIn b) {
+        return a.prevout.hash > b.prevout.hash;
+    }
+
+    static bool sort_out(CTxOut a, CTxOut b) {
+        if ((uint160)a.scriptPubKey.GetID() == (uint160)b.scriptPubKey.GetID())
+            return a.nValue > b.nValue;
+        return (uint160)a.scriptPubKey.GetID() > (uint160)b.scriptPubKey.GetID();
+    }
 
     bool IsNull() const
     {

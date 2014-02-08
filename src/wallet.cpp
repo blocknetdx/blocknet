@@ -1492,18 +1492,14 @@ string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 
     scriptPubKey.SetDestination(address);    
     CScript s;
     s << OP_DUP << OP_HASH160 << scriptPubKey.GetID() << OP_EQUALVERIFY << OP_CHECKSIG;
-    printf("----> CSCRIPT: %s\n", s.ToString().c_str());
-
-    //CScript a_and_b;
-    //a_and_b << OP_2 << key[0].GetPubKey() << key[1].GetPubKey() << OP_2 << OP_CHECKMULTISIG;
 
     CTxOut out(nValue, s);
     //CTxOut out(nValue, scriptPubKey);
     CReserveKey reservekey(this);
 
-    //**************88
+    //**************
 
-    int64 nFeeRet = 0;
+    int64 nFeeRet = 0; ///need to get a better fee calc
     CCoinControl* coinControl = new CCoinControl();
     int64 nTotalValue = nValue + nFeeRet;
     // Choose coins to use

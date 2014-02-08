@@ -4905,12 +4905,12 @@ void CCoinJoinPool::Check()
     unsigned int POOL_MAX_TRANSACTIONS = 2;
 
     printf("CCoinJoinPool::Check()\n");
-    printf("vin %lu vout %lu \n", vin.size(), vout.size());
 
     if(state == POOL_STATUS_IDLE && vin.size() == 0)
     {
+
         printf(" -- ACCEPTING INPUTS\n");
-        state = POOL_STATUS_ACCEPTING_INPUTS;
+        UpdateState(POOL_STATUS_ACCEPTING_INPUTS);
         RelayTxPool(state);
         AddQueuedInput();
     }
@@ -4919,7 +4919,7 @@ void CCoinJoinPool::Check()
     if(state == POOL_STATUS_ACCEPTING_INPUTS && vin.size() == POOL_MAX_TRANSACTIONS)
     {
         printf(" -- ACCEPTING OUTPUTS\n");
-        state = POOL_STATUS_ACCEPTING_OUTPUTS;
+        UpdateState(POOL_STATUS_ACCEPTING_OUTPUTS);
         RelayTxPool(state);
         AddQueuedOutput();
     }
@@ -4928,7 +4928,7 @@ void CCoinJoinPool::Check()
     //                                       What if some didn't have change addresses, or multiple outputs (3+)?
     if(state == POOL_STATUS_ACCEPTING_OUTPUTS && vout.size() == POOL_MAX_TRANSACTIONS*2) {
         printf(" -- ACCEPTING SIGNATURES\n");
-        state = POOL_STATUS_SIGNING;
+        UpdateState(POOL_STATUS_SIGNING);
         RelayTxPool(state);
         Sign();
 
@@ -4937,7 +4937,7 @@ void CCoinJoinPool::Check()
     // move on to next phase
     if(state == POOL_STATUS_SIGNING && sigCount == POOL_MAX_TRANSACTIONS) { 
         printf(" -- SIGNING\n");
-        state = POOL_STATUS_TRANSMISSION;
+        UpdateState(POOL_STATUS_TRANSMISSION);
         RelayTxPool(state);
         // make sure my transactions are here
 
@@ -4950,52 +4950,25 @@ void CCoinJoinPool::Check()
 
         for(unsigned int i = 0; i < vin.size(); i++){
             txNew.vin.push_back(vin[i]);
-            if(txNew.vin[i] == myTransaction_fromAddress){
-                printf ("MINE\n");
-            } else {
-                printf ("THEIRS\n");
-            }
             txNew.vin[i].scriptSig = vinSig[i];
-            if (!VerifyScript(txNew.vin[i].scriptSig, vinPubKey[i], txNew, i, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC, 0))
-                printf("ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR %i !!!\n", i);
+            if (!VerifyScript(txNew.vin[i].scriptSig, vinPubKey[i], txNew, i, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC, 0)){
+                printf("Signing - ERROR signing input %u\n", i);
+                //failure will result, how to recover from this?
+            } else {
+                printf("Signing - Succesfully signed input %u\n", i);
+            }
         }
 
-
-/*        for(unsigned int i = 0; i < vin.size(); i++){ //  for (unsigned int i = 0; i < mergedTx.vin.size(); i++)
-            CTxIn& txin = vin[i];
-            txin.scriptSig.clear();
-            txin.scriptSig = vinSig[i];
-
-            for(unsigned int a = 0; a < vin.size(); a++){ // BOOST_FOREACH(const CTransaction& txv, txVariants)
-                //if(i != a) {
-                printf("COMBINE %u-%u\n", i, a);
-                txin.scriptSig = CombineSignatures(vinPubKey[i], txNew, i, txin.scriptSig, vin[a].scriptSig);
-                //}
-            }
-
-            if (!VerifyScript(txin.scriptSig, vinPubKey[i], txNew, i, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC, 0))
-                printf("ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR %i !!!\n", i);
-            
-            txNew.vin[i].scriptSig = txin.scriptSig;
-        }*/
-
-/*            if (!VerifyScript(txin.scriptSig, prevPubKey, mergedTx, i, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC, 0))
-                throw std::runtime_error("CCoinJoinPool::Sign() : Unable to sign my own transaction!!! GAH!");
-*/        
-        //txNew.vout[0].nValue = myTransaction_fromAddress_nValue;
-
-        //printf("vScriptSig:\n%s", vScriptSig[0].ToString().c_str());
-
         //int64 nChange = nValueIn - nValue - nFeeRet;
-        printf("txNew -- recompile:\n%s", txNew.ToString().c_str());
+        printf("txNew -- compiled all signatures:\n%s", txNew.ToString().c_str());
 
         CValidationState vs;
         // Broadcast
         if (!txNew.AcceptToMemoryPool(vs, true, false))
         {
-            // This must not fail. The transaction has already been signed and recorded.
             printf("CommitTransaction() : Error: Transaction not valid\n");
             //do something... ???
+            SetNull();
             return;
         }
         
@@ -5008,7 +4981,7 @@ void CCoinJoinPool::Check()
         // TRANSMIT
 
         SetNull();
-        state = POOL_STATUS_ACCEPTING_INPUTS;
+        UpdateState(POOL_STATUS_IDLE);
     }
 
 
@@ -5016,8 +4989,6 @@ void CCoinJoinPool::Check()
     {
 
     }
-
-    printf(" -- after -- vin %lu vout %lu \n", vin.size(), vout.size());
 }
 
 
@@ -5031,11 +5002,9 @@ void CCoinJoinPool::Sign(){
         CTransaction txNew;
         txNew.vin.clear();
         txNew.vout.clear();
+
         for(unsigned int i = 0; i < vout.size(); i++){
-            //if(vout[i] == myTransaction_changeAddress || vout[i] == myTransaction_theirAddress){
             txNew.vout.push_back(vout[i]);
-            //}
-            printf("AddOutput %u - %u\n", (uint160)vout[i].scriptPubKey.GetID(), vout[i].nValue);
         }
         int mine = -1;
         for(unsigned int i = 0; i < vin.size(); i++){
@@ -5047,27 +5016,18 @@ void CCoinJoinPool::Sign(){
         if(mine >= 0){ //might have to do this one input at a time?
             int n = mine;
             printf("Signing my input %i\n", mine);
-
-            //CScript s;
-            //s << OP_DUP << OP_HASH160 << myTransaction_fromAddress_pubScript.GetID() << OP_EQUALVERIFY << OP_CHECKSIG;
-            if(!SignSignature(*keystore, myTransaction_fromAddress.prevPubKey, txNew, n, int(SIGHASH_ALL|SIGHASH_ANYONECANPAY))) // changes scriptSig
-                throw std::runtime_error("CCoinJoinPool::Sign() : Unable to sign my own transaction!!! GAH!");
-
-            //CDataStream s(SER_NETWORK, PROTOCOL_VERSION);
-            //txNew.Serialize(s, SER_NETWORK, PROTOCOL_VERSION);
-
-            //SignSignature(*keystore, myTransaction_fromAddress_pubScript, txNew, i); // changes scriptSig
+            if(!SignSignature(*keystore, myTransaction_fromAddress.prevPubKey, txNew, n, int(SIGHASH_ALL|SIGHASH_ANYONECANPAY))) { // changes scriptSig
+                printf("CCoinJoinPool::Sign() : Unable to sign my own transaction!!! GAH! \n");
+                SetNull();
+            }
 
             AddScriptSig(txNew.vin[n].scriptSig, myTransaction_fromAddress, myTransaction_fromAddress.prevPubKey);
             printf("added scriptSig %s\n", txNew.vin[n].scriptSig.ToString().substr(0,24).c_str());
             RelayTxPoolSig(txNew.vin[n].scriptSig, myTransaction_fromAddress, myTransaction_fromAddress.prevPubKey);
-            printf("relayed\n");
         }
+
         //txNew.vout[0].nValue = myTransaction_fromAddress_nValue;
-
         //int64 nChange = nValueIn - nValue - nFeeRet;
-
-        //printf("vScriptSig:\n%s", vScriptSig[0].ToString().c_str());
         
         printf("txNew:\n%s", txNew.ToString().c_str());
 
@@ -5079,7 +5039,6 @@ void CCoinJoinPool::AddInput(CTxIn& newInput, int64& nAmount){
         vin.push_back(newInput);
         vinSig.push_back(CScript());
         vinPubKey.push_back(CScript());
-
 
         printf("AddInput %s\n", newInput.ToString().c_str());
     } else {
@@ -5123,16 +5082,21 @@ void CCoinJoinPool::SendMoney(const CTxIn& from, const CTxOut& to, int64& nFeeRe
             note to self: 
                 - check for posive output values, including fees
         */
+
+        printf("from_nValue %+"PRI64d"\n", from_nValue);
+        printf("nFeeRet %+"PRI64d"\n", from_nValue);
+        printf("to.nValue %+"PRI64d"\n", to.nValue);
+        printf("from_nValue-to.nValue-nFeeRet %+"PRI64d"\n", from_nValue-to.nValue-nFeeRet);
+
+
         myTransaction_fromAddress = from;
         myTransaction_fromAddress.prevPubKey = pubScript;
         myTransaction_theirAddress = to;
-
-        //PrintHex(to.scriptPubKey.begin(), to.scriptPubKey.end(), "pubkey1: %s\n");
+        //myTransaction_theirAddress.nValue = from_nValue-nFeeRet; //assign full input to output
 
         CScript s;
-        s << OP_DUP << OP_HASH160 << pubScript.GetID() << OP_EQUALVERIFY << OP_CHECKSIG;
+        s << OP_DUP << OP_HASH160 << pubScript.GetID() << OP_EQUALVERIFY << OP_CHECKSIG; //need a better change addr
         myTransaction_changeAddress = CTxOut(from_nValue-to.nValue-nFeeRet, s);
-        //myTransaction_changeAddress = CTxOut(from_nValue-to.nValue-nFeeRet, pubScript);
         
         myTransaction_nFeeRet = nFeeRet;
         myTransaction_fromAddress_nValue = from_nValue;

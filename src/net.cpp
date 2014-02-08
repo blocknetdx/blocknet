@@ -1910,7 +1910,7 @@ void RelayTxPool(const unsigned int state)
     {
         if(!pnode->fRelayTxes)
             continue;
-        pnode->PushMessage("txpoolv", state);
+        pnode->PushMessage("txpoolv", state); //v is wrong
     }
 }
 
