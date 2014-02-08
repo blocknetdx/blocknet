@@ -4902,7 +4902,7 @@ void CCoinJoinPool::AddQueuedOutput()
 
 void CCoinJoinPool::Check()
 {
-    unsigned int POOL_MAX_TRANSACTIONS = 1;
+    unsigned int POOL_MAX_TRANSACTIONS = 2;
 
     printf("CCoinJoinPool::Check()\n");
 
