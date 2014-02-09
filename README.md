@@ -4,19 +4,21 @@ DarkCoin integration/staging tree
 http://www.darkcoin.io
 
 Copyright (c) 2009-2013 Bitcoin Developers
-Copyright (c) 2011-2013 DarkCoin Developers
+Copyright (c) 2013-2014 DarkCoin Developers
 
 What is DarkCoin?
 ----------------
 
-DarkCoin is a lite version of Bitcoin using scrypt as a proof-of-work algorithm.
- - 2.5 minute block targets
- - subsidy halves in 840k blocks (~4 years)
- - ~84 million total coins
-
-The rest is the same as Bitcoin.
- - 50 coins per block
- - 2016 blocks to retarget difficulty
+DarkCoin is a lite version of Bitcoin using X11 as a proof-of-work algorithm.
+ - Super secure hashing algorithm: 11 rounds of scientific hashing functions (blake, bmw, groestl, jh, keccak, skein, luffa, cubehash, shavite, simd, echo)
+ - Block reward is controlled by moore's law: (11111 / (((Difficulty+51)/6) ^ 2))
+ - CPU only mining
+ - Block generation: 2.5 minutes
+ - Difficulty Retargets every 576 blocks
+ - 84 Million Coins Max
+ - Block reward halving every 2 years
+ - Encrypted transaction network: Work In Progress
+ - Anonymous blockchain using coinjoin technology: Work In Progress
 
 For more information, as well as an immediately useable, binary version of
 the DarkCoin client sofware, see http://www.darkcoin.io.
