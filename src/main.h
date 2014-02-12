@@ -2358,28 +2358,30 @@ public:
         return (vin.empty() && vout.empty());
     }
 
-    bool IsStageAcceptingOutputs() const
+    int GetState() const
     {
-        printf("CCoinJoinPool::IsStageAcceptingOutputs() == %d \n", state == POOL_STATUS_ACCEPTING_OUTPUTS);
-        return state == POOL_STATUS_ACCEPTING_OUTPUTS;
+        return state;
     }
 
-    bool IsLocked() const
+    int GetVinCount() const
     {
-        printf("CCoinJoinPool::IsLocked() == %d \n", state >= POOL_STATUS_ACCEPTING_OUTPUTS);
-        return state >= POOL_STATUS_ACCEPTING_OUTPUTS;
+        return vin.size()-1;
     }
 
-    bool IsStageAcceptingInputs() const
+    int GetVoutCount() const
     {
-        printf("CCoinJoinPool::IsStageAcceptingInputs() == %d \n", state == POOL_STATUS_ACCEPTING_INPUTS);
-        return state == POOL_STATUS_ACCEPTING_INPUTS;
+        return vout.size()-1;
     }
 
-    bool IsStageSigning() const
+    int GetSignatureCount() const
     {
-        printf("CCoinJoinPool::IsStageSigning() == %d \n", state == POOL_STATUS_SIGNING);
-        return state == POOL_STATUS_SIGNING;
+        return (int)sigCount;
+    }
+
+    int GetMyTransactionCount() const
+    {
+        if(myTransaction_locked) return 1;
+        return 0;
     }
 
     void UpdateState(unsigned int newState)
