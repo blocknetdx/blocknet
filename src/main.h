@@ -2365,12 +2365,12 @@ public:
 
     int GetVinCount() const
     {
-        return vin.size()-1;
+        return vin.size();
     }
 
     int GetVoutCount() const
     {
-        return vout.size()-1;
+        return vout.size();
     }
 
     int GetSignatureCount() const
@@ -2382,6 +2382,15 @@ public:
     {
         if(myTransaction_locked) return 1;
         return 0;
+    }
+
+    int ForceReset()
+    {
+        SetNull();
+        UpdateState(POOL_STATUS_ACCEPTING_INPUTS);
+        RelayTxPool(state);
+        AddQueuedInput();
+        return 1;
     }
 
     void UpdateState(unsigned int newState)

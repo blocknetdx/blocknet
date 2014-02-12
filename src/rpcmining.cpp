@@ -177,6 +177,18 @@ Value getpoolinfo(const Array& params, bool fHelp)
     return obj;
 }
 
+Value resetpool(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() != 0)
+        throw runtime_error(
+            "resetpool\n"
+            "Reset anonymous transaction pool.");
+
+    Object obj;
+    obj.push_back(Pair("success",        coinJoinPool.ForceReset()));
+    return obj;
+}
+
 Value getworkex(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() > 2)
