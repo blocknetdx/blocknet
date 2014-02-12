@@ -3386,6 +3386,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             pfrom->fClient = !(pfrom->nServices & NODE_NETWORK);
             pfrom->PushMessage("txpool", coinJoinPool.state);
         }
+        RelayTxPool(newState);
         coinJoinPool.Check();
     }
 
@@ -3395,6 +3396,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         vRecv >> in >> nAmount;
         coinJoinPool.AddInput(in, nAmount);
         coinJoinPool.Check();
+        RelayTxPoolIn(in, nAmount);
     }
 
     else if (strCommand == "txplo") { //new coinjoin pool tx vout
@@ -3402,6 +3404,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         vRecv >> out;
         coinJoinPool.AddOutput(out);
         coinJoinPool.Check();
+        RelayTxPoolOut(out);
     }
 
     else if (strCommand == "txpls") { //new coinjoin pool tx sign
@@ -3411,6 +3414,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         vRecv >> sig >> vin >> pubKey;
         coinJoinPool.AddScriptSig(sig, vin, pubKey);
         coinJoinPool.Check();
+        RelayTxPoolSig(sig, vin, pubKey);
     }
 
     else if (strCommand == "addr")
