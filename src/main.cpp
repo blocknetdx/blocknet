@@ -4906,6 +4906,8 @@ void CCoinJoinPool::Check()
 
     printf("CCoinJoinPool::Check()\n");
 
+    printf(" vin %i\n", vin.size());
+
     if(state == POOL_STATUS_IDLE && vin.size() == 0)
     {
 
@@ -4981,7 +4983,9 @@ void CCoinJoinPool::Check()
         // TRANSMIT
 
         SetNull();
-        UpdateState(POOL_STATUS_IDLE);
+        UpdateState(POOL_STATUS_ACCEPTING_INPUTS);
+        RelayTxPool(state);
+        AddQueuedInput();
     }
 
 
