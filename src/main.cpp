@@ -3371,6 +3371,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
     else if (strCommand == "gettxpool") {
         pfrom->fClient = !(pfrom->nServices & NODE_NETWORK);
         pfrom->PushMessage("txpool", coinJoinPool.state);
+        coinJoinPool.CatchUpNode(pfrom);
     }
 
     else if (strCommand == "txpool") {
@@ -3394,17 +3395,19 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         CTxIn in;
         int64 nAmount;
         vRecv >> in >> nAmount;
-        coinJoinPool.AddInput(in, nAmount);
-        coinJoinPool.Check();
-        RelayTxPoolIn(in, nAmount);
+        if(coinJoinPool.AddInput(in, nAmount)){
+            coinJoinPool.Check();
+            RelayTxPoolIn(in, nAmount);
+        }
     }
 
     else if (strCommand == "txplo") { //new coinjoin pool tx vout
         CTxOut out;
         vRecv >> out;
-        coinJoinPool.AddOutput(out);
-        coinJoinPool.Check();
-        RelayTxPoolOut(out);
+        if(coinJoinPool.AddOutput(out)){
+            coinJoinPool.Check();
+            RelayTxPoolOut(out);
+        }
     }
 
     else if (strCommand == "txpls") { //new coinjoin pool tx sign
@@ -3412,9 +3415,10 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         CTxIn vin;
         CScript pubKey;
         vRecv >> sig >> vin >> pubKey;
-        coinJoinPool.AddScriptSig(sig, vin, pubKey);
-        coinJoinPool.Check();
-        RelayTxPoolSig(sig, vin, pubKey);
+        if(coinJoinPool.AddScriptSig(sig, vin, pubKey)){
+            coinJoinPool.Check();
+            RelayTxPoolSig(sig, vin, pubKey);
+        }
     }
 
     else if (strCommand == "addr")
@@ -4910,7 +4914,7 @@ void CCoinJoinPool::Check()
 
     printf("CCoinJoinPool::Check()\n");
 
-    printf(" vin %i\n", vin.size());
+    printf(" vin %lu\n", vin.size());
 
     if(state == POOL_STATUS_IDLE && vin.size() == 0)
     {
@@ -4988,8 +4992,6 @@ void CCoinJoinPool::Check()
 
         SetNull();
         UpdateState(POOL_STATUS_ACCEPTING_INPUTS);
-        RelayTxPool(state);
-        AddQueuedInput();
     }
 
 
@@ -5033,51 +5035,77 @@ void CCoinJoinPool::Sign(){
             printf("added scriptSig %s\n", txNew.vin[n].scriptSig.ToString().substr(0,24).c_str());
             RelayTxPoolSig(txNew.vin[n].scriptSig, myTransaction_fromAddress, myTransaction_fromAddress.prevPubKey);
         }
-
-        //txNew.vout[0].nValue = myTransaction_fromAddress_nValue;
-        //int64 nChange = nValueIn - nValue - nFeeRet;
         
         printf("txNew:\n%s", txNew.ToString().c_str());
 
     }
 }
 
-void CCoinJoinPool::AddInput(CTxIn& newInput, int64& nAmount){
+bool CCoinJoinPool::AddInput(CTxIn& newInput, int64& nAmount){
     if(state == POOL_STATUS_ACCEPTING_INPUTS) {
+        BOOST_FOREACH(CTxIn v, vin)
+            if(v == newInput) return false;
+
         vin.push_back(newInput);
+        vinAmount.push_back(nAmount);
         vinSig.push_back(CScript());
         vinPubKey.push_back(CScript());
 
         printf("AddInput %s\n", newInput.ToString().c_str());
+        return true;
     } else {
         printf("CCoinJoinPool::addInput(): Dropped input due to current state \n");
     }
+    return false;
 }
 
-void CCoinJoinPool::AddOutput(CTxOut& newOutput){
+bool CCoinJoinPool::AddOutput(CTxOut& newOutput){
     if(state == POOL_STATUS_ACCEPTING_OUTPUTS) {
+        BOOST_FOREACH(CTxOut v, vout) //if 2 people want to pay the same addr the same amount it won't work
+            if(v == newOutput) return false;
+
         vout.push_back(newOutput);
-        printf("AddOutput %u - %u\n", (uint160)newOutput.scriptPubKey.GetID(), newOutput.nValue);
+        printf("AddOutput %s - %llu\n", newOutput.scriptPubKey.ToString().c_str(), newOutput.nValue);
+        return true;
     } else {
         printf("CCoinJoinPool::addOutput(): Dropped output due to current state \n");
     }
+    return false;
 }
 
-void CCoinJoinPool::AddScriptSig(CScript& newSig, CTxIn& theVin, CScript& pubKey){
+bool CCoinJoinPool::AddScriptSig(CScript& newSig, CTxIn& theVin, CScript& pubKey){
     if(state == POOL_STATUS_SIGNING) {
-        printf("addScriptSig %s\n", newSig.ToString().substr(0,24).c_str());
-        //vScriptSig.push_back(newSig);
+        BOOST_FOREACH(CScript s, vinSig)
+            if(s == newSig) return false;
+
 
         for(unsigned int i = 0; i < vin.size(); i++){
             if(vin[i] == theVin){
+                //return false if verify script fails on input
                 vinSig[i] = newSig; 
                 vinPubKey[i] = pubKey;
                 sigCount++;
+                printf("addScriptSig %s\n", newSig.ToString().substr(0,24).c_str());
                 printf("adding scriptSig %u, total sigs %u\n", i, sigCount);
+                return true;
             }
         }
     } else {
         printf("CCoinJoinPool::AddScriptSig(): Dropped signature due to current state \n");
+    }
+    return false;
+}
+
+void CCoinJoinPool::CatchUpNode(CNode* pfrom){
+    for(unsigned int i = 0; i < vin.size(); i++){
+        pfrom->PushMessage("txpli", vin[i], vinAmount[i]);
+    }
+
+    BOOST_FOREACH(CTxOut v, vout)
+        pfrom->PushMessage("txplo", v);
+
+    for(unsigned int i = 0; i < vin.size(); i++){
+        pfrom->PushMessage("txpls", vinSig[i], vin[i], vinPubKey[i]);
     }
 }
 

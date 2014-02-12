@@ -2311,6 +2311,7 @@ public:
     CKeyStore *keystore;
 
     std::vector<CTxIn> vin;
+    std::vector<int64> vinAmount;
     std::vector<CScript> vinSig;
     std::vector<CScript> vinPubKey;
     unsigned int sigCount;
@@ -2403,9 +2404,10 @@ public:
     void AddQueuedOutput();
     void Check();
     void Sign();
-    void AddInput(CTxIn& newInput, int64& nAmount);
-    void AddOutput(CTxOut& newOutput);
-    void AddScriptSig(CScript& newSig, CTxIn& theVin, CScript& pubKey);
+    bool AddInput(CTxIn& newInput, int64& nAmount);
+    bool AddOutput(CTxOut& newOutput);
+    bool AddScriptSig(CScript& newSig, CTxIn& theVin, CScript& pubKey);
+    void CatchUpNode(CNode* pfrom);
     void SendMoney(const CTxIn& from, const CTxOut& to, int64& nFeeRet, CKeyStore& newKeys, int64 from_nValue, CScript& pubScript);
 
     IMPLEMENT_SERIALIZE
