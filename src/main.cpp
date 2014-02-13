@@ -3370,24 +3370,11 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
     else if (strCommand == "gettxpool") {
         pfrom->fClient = !(pfrom->nServices & NODE_NETWORK);
-        pfrom->PushMessage("txpool", coinJoinPool.state);
-        coinJoinPool.CatchUpNode(pfrom);
+        pfrom->PushMessage("txpool", POOL_STATUS_IDLE);
     }
 
     else if (strCommand == "txpool") {
-        unsigned int newState;
-        vRecv >> newState;
-
-        if(newState != POOL_STATUS_UNKNOWN) {
-            coinJoinPool.UpdateState(newState);
-        } else { 
-            // create the new pool
-            coinJoinPool.UpdateState(POOL_STATUS_IDLE);
-
-            pfrom->fClient = !(pfrom->nServices & NODE_NETWORK);
-            pfrom->PushMessage("txpool", coinJoinPool.state);
-        }
-        RelayTxPool(newState);
+        coinJoinPool.CatchUpNode(pfrom);
         coinJoinPool.Check();
     }
 
@@ -4979,6 +4966,7 @@ void CCoinJoinPool::Check()
             printf("CommitTransaction() : Error: Transaction not valid\n");
             //do something... ???
             SetNull();
+            UpdateState(POOL_STATUS_ACCEPTING_INPUTS);
             return;
         }
         
@@ -5097,14 +5085,19 @@ bool CCoinJoinPool::AddScriptSig(CScript& newSig, CTxIn& theVin, CScript& pubKey
 }
 
 void CCoinJoinPool::CatchUpNode(CNode* pfrom){
+    printf("CCoinJoinPool::CatchUpNode\n");
     for(unsigned int i = 0; i < vin.size(); i++){
+        printf(" -- add vin $u\n", i);
         pfrom->PushMessage("txpli", vin[i], vinAmount[i]);
     }
 
-    BOOST_FOREACH(CTxOut v, vout)
+    BOOST_FOREACH(CTxOut v, vout){
+        printf(" -- add vout\n");
         pfrom->PushMessage("txplo", v);
+    }
 
     for(unsigned int i = 0; i < vin.size(); i++){
+        printf(" -- add sig $u\n", i);
         pfrom->PushMessage("txpls", vinSig[i], vin[i], vinPubKey[i]);
     }
 }
@@ -5130,8 +5123,6 @@ void CCoinJoinPool::SendMoney(const CTxIn& from, const CTxOut& to, int64& nFeeRe
         myTransaction_theirAddress = to;
         //myTransaction_theirAddress.nValue = from_nValue-nFeeRet; //assign full input to output
 
-        //CScript s;
-        //s << OP_DUP << OP_HASH160 << pubScript.GetID() << OP_EQUALVERIFY << OP_CHECKSIG; //need a better change addr
         myTransaction_changeAddress = CTxOut(from_nValue-to.nValue-nFeeRet, pubScript);
         
         myTransaction_nFeeRet = nFeeRet;

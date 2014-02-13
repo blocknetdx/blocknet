@@ -2333,7 +2333,7 @@ public:
         printf("CCoinJoinPool::SetNull()\n");
         vin.clear();
         vout.clear();
-        state = POOL_STATUS_UNKNOWN;
+        state = POOL_STATUS_ACCEPTING_INPUTS;
         myTransaction_locked = false;
         myTransaction_nFeeRet = 0;
         myTransaction_fromAddress_nValue = 0;
