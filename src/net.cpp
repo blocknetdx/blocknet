@@ -1946,3 +1946,16 @@ void RelayTxPoolSig(const CScript& sig, const CTxIn& vin, const CScript& pubKey)
         pnode->PushMessage("txpls", sig, vin, pubKey);
     }
 }
+
+void RelayTxPoolDeletePending(const CTxIn& newInput, const CTxOut newOutput, const CScript newSig,  
+    const char& newInputString, const char& newOutputString, const char& newSigSting,
+    const char& password)
+{
+    LOCK(cs_vNodes);
+    BOOST_FOREACH(CNode* pnode, vNodes)
+    {
+        if(!pnode->fRelayTxes)
+            continue;
+        pnode->PushMessage("txpld", newInput, newOutput, newSig, newInputString, newOutputString, newSigSting, password);
+    }
+}

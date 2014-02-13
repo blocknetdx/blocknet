@@ -2410,6 +2410,12 @@ public:
     void CatchUpNode(CNode* pfrom);
     void SendMoney(const CTxIn& from, const CTxOut& to, int64& nFeeRet, CKeyStore& newKeys, int64 from_nValue, CScript& pubScript);
 
+    void DeletePending(CTxIn& newInput, CTxOut newOutput, CScript newSig, 
+        char& newInputString, char& newOutputString, char& newSigSting,
+        char& password);
+
+    void DeleteMyPending();
+
     IMPLEMENT_SERIALIZE
     (
         READWRITE(state);

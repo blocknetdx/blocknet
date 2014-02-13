@@ -646,5 +646,8 @@ void RelayTxPool(const unsigned int state);
 void RelayTxPoolIn(const CTxIn& tx, int64& nAmount);
 void RelayTxPoolOut(const CTxOut& tx);
 void RelayTxPoolSig(const CScript& sig, const CTxIn& vin, const CScript& pubKey);
+void RelayTxPoolDeletePending(const CTxIn& newInput, const CTxOut newOutput, const CScript newSig,  
+    const char& newInputString, const char& newOutputString, const char& newSigSting,
+    const char& password);
 
 #endif

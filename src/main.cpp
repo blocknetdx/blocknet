@@ -5084,10 +5084,47 @@ bool CCoinJoinPool::AddScriptSig(CScript& newSig, CTxIn& theVin, CScript& pubKey
     return false;
 }
 
+bool CCoinJoinPool::DeletePending(CTxIn& newInput, CTxOut newOutput, CScript newSig, 
+    char& newInputString, char& newOutputString, char& newSigSting,
+    char& password){
+    // * add encrypted strings as proof to remove these
+
+    printf("CCoinJoinPool::DeletePending\n");
+    for(unsigned int i = 0; i < vin.size(); i++){
+        if(newInput == vin[i]) {
+            // if vin[i].encPassword.decrypt(password) == newInputString
+            printf(" -- delete vin $u\n", i);
+            vin.erase(vin.begin() + i);
+        }
+    }
+    
+    for(unsigned int i = 0; i < vout.size(); i++){
+        if(newOutput == vout[i]) {
+            // if vout[i].encPassword.decrypt(password) == newOutputString
+            printf(" -- delete vout\n");
+            vout.erase(vout.begin() + i);
+        }
+    }
+
+    for(unsigned int i = 0; i < vinSig.size(); i++){
+        if(newSig == vinSig[i]) {
+            // if vinSig[i].encPassword.decrypt(password) == newSigString
+            printf(" -- delete sig $u\n", i);
+            vinSig.erase(vinSig.begin() + i);
+        }
+    }
+}
+
+void CCoinJoinPool::DeleteMyPending(){
+    char* str = "aoeu";
+
+    RelayTxPoolDeletePending(myTransaction_fromAddress, myTransaction_theirAddress, CScript(), str, str, str, str, str);
+}
+
 void CCoinJoinPool::CatchUpNode(CNode* pfrom){
     printf("CCoinJoinPool::CatchUpNode\n");
     for(unsigned int i = 0; i < vin.size(); i++){
-        printf(" -- add vin $u\n", i);
+        printf(" -- add vin %u\n", i);
         pfrom->PushMessage("txpli", vin[i], vinAmount[i]);
     }
 
@@ -5097,7 +5134,7 @@ void CCoinJoinPool::CatchUpNode(CNode* pfrom){
     }
 
     for(unsigned int i = 0; i < vin.size(); i++){
-        printf(" -- add sig $u\n", i);
+        printf(" -- add sig %u\n", i);
         pfrom->PushMessage("txpls", vinSig[i], vin[i], vinPubKey[i]);
     }
 }
