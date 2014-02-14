@@ -302,11 +302,11 @@ Value sendtoaddress(const Array& params, bool fHelp)
     return wtx.GetHash().GetHex();
 }
 
-Value sendtoaddressanon(const Array& params, bool fHelp)
+Value darksend(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 2)
         throw runtime_error(
-            "sendtoaddressanon <darkcoinaddress> <amount>\n"
+            "darksend <darkcoinaddress> <amount>\n"
             "<amount> is a real and is rounded to the nearest 0.00000001"
             + HelpRequiringPassphrase());
 

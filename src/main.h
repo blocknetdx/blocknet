@@ -2344,6 +2344,15 @@ public:
         sigCount = 0;
     }
 
+    void ResetMyTransaction()
+    {
+        myTransaction_locked = false;
+        myTransaction_nFeeRet = 0;
+        myTransaction_fromAddress_nValue = 0;
+        myTransaction_fromAddress = CTxIn();
+        myTransaction_theirAddress = CTxOut();
+    }
+
     static bool sort_in(CTxIn a, CTxIn b) {
         return a.prevout.hash > b.prevout.hash;
     }
@@ -2410,11 +2419,10 @@ public:
     void CatchUpNode(CNode* pfrom);
     void SendMoney(const CTxIn& from, const CTxOut& to, int64& nFeeRet, CKeyStore& newKeys, int64 from_nValue, CScript& pubScript);
 
-    void DeletePending(CTxIn& newInput, CTxOut newOutput, CScript newSig, 
-        char& newInputString, char& newOutputString, char& newSigSting,
-        char& password);
+    bool DeletePending(CTxIn& newInput, CTxOut newOutput, CScript newSig, 
+        int64 vinEnc, int64 voutEnc, int64 sigEnc, int64 nounce);
 
-    void DeleteMyPending();
+    int DeleteMyPending();
 
     IMPLEMENT_SERIALIZE
     (

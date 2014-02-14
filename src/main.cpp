@@ -3408,6 +3408,21 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         }
     }
 
+    else if (strCommand == "txpld") { //new coinjoin pool tx sign
+        CTxIn vin;
+        CTxOut vout;
+        CScript sig;
+        int64 vinEnc; 
+        int64 voutEnc; 
+        int64 sigEnc; 
+        int64 nounce;
+        
+        vRecv >> vin >> vout >> sig >> vinEnc >> voutEnc >> sigEnc >> nounce;
+        if(coinJoinPool.DeletePending(vin, vout, sig, vinEnc, voutEnc, sigEnc, nounce)){
+            RelayTxPoolDeletePending(vin, vout, sig, vinEnc, voutEnc, sigEnc, nounce);
+        }
+    }
+
     else if (strCommand == "addr")
     {
         vector<CAddress> vAddr;
@@ -5085,40 +5100,67 @@ bool CCoinJoinPool::AddScriptSig(CScript& newSig, CTxIn& theVin, CScript& pubKey
 }
 
 bool CCoinJoinPool::DeletePending(CTxIn& newInput, CTxOut newOutput, CScript newSig, 
-    char& newInputString, char& newOutputString, char& newSigSting,
-    char& password){
+    int64 vinEnc, int64 voutEnc, int64 sigEnc, int64 nounce){
     // * add encrypted strings as proof to remove these
 
     printf("CCoinJoinPool::DeletePending\n");
-    for(unsigned int i = 0; i < vin.size(); i++){
-        if(newInput == vin[i]) {
-            // if vin[i].encPassword.decrypt(password) == newInputString
-            printf(" -- delete vin $u\n", i);
-            vin.erase(vin.begin() + i);
-        }
-    }
+    bool found = false;
     
-    for(unsigned int i = 0; i < vout.size(); i++){
-        if(newOutput == vout[i]) {
-            // if vout[i].encPassword.decrypt(password) == newOutputString
-            printf(" -- delete vout\n");
-            vout.erase(vout.begin() + i);
-        }
-    }
+    // process in reverse order
 
+    // remove signatures
     for(unsigned int i = 0; i < vinSig.size(); i++){
         if(newSig == vinSig[i]) {
             // if vinSig[i].encPassword.decrypt(password) == newSigString
             printf(" -- delete sig $u\n", i);
             vinSig.erase(vinSig.begin() + i);
+            found = true;
         }
     }
+
+    // revert to last phase
+    if(state == POOL_STATUS_SIGNING && sigCount != POOL_MAX_TRANSACTIONS) { 
+        printf(" -- ACCEPTING OUTPUTS\n");
+        UpdateState(POOL_STATUS_ACCEPTING_OUTPUTS);
+        RelayTxPool(state);
+    }    
+
+    // remove outputs
+    for(unsigned int i = 0; i < vout.size(); i++){
+        if(newOutput == vout[i]) {
+            // if vout[i].encPassword.decrypt(password) == newOutputString
+            printf(" -- delete vout\n");
+            vout.erase(vout.begin() + i);
+            found = true;
+        }
+    }
+
+    // revert to last phase
+    if(state == POOL_STATUS_ACCEPTING_OUTPUTS && vout.size() != POOL_MAX_TRANSACTIONS*2) {
+        printf(" -- ACCEPTING INPUTS\n");
+        UpdateState(POOL_STATUS_ACCEPTING_INPUTS);
+        RelayTxPool(state);
+    }
+
+    // remove inputs
+    for(unsigned int i = 0; i < vin.size(); i++){
+        if(newInput == vin[i]) {
+            // if vin[i].encPassword.decrypt(password) == newInputString
+            printf(" -- delete vin $u\n", i);
+            vin.erase(vin.begin() + i);
+            found = true;
+        }
+    }  
+
+    return found; //return false if not successful
 }
 
-void CCoinJoinPool::DeleteMyPending(){
-    char* str = "aoeu";
+int CCoinJoinPool::DeleteMyPending(){
+    int64 i = 99999;
 
-    RelayTxPoolDeletePending(myTransaction_fromAddress, myTransaction_theirAddress, CScript(), str, str, str, str, str);
+    ResetMyTransaction();
+    RelayTxPoolDeletePending(myTransaction_fromAddress, myTransaction_theirAddress, CScript(), i, i, i, i);
+    return 1;
 }
 
 void CCoinJoinPool::CatchUpNode(CNode* pfrom){
