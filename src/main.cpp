@@ -2536,6 +2536,7 @@ bool AbortNode(const std::string &strMessage) {
     strMiscWarning = strMessage;
     printf("*** %s\n", strMessage.c_str());
     uiInterface.ThreadSafeMessageBox(strMessage, "", CClientUIInterface::MSG_ERROR);
+
     StartShutdown();
     return false;
 }
@@ -4912,8 +4913,6 @@ void CCoinJoinPool::AddQueuedOutput()
 
 void CCoinJoinPool::Check()
 {
-    unsigned int POOL_MAX_TRANSACTIONS = 2;
-
     printf("CCoinJoinPool::Check()\n");
 
     printf(" vin %lu\n", vin.size());
@@ -5156,11 +5155,16 @@ bool CCoinJoinPool::DeletePending(CTxIn& newInput, CTxOut newOutput, CScript new
 }
 
 int CCoinJoinPool::DeleteMyPending(){
-    int64 i = 99999;
-
-    ResetMyTransaction();
-    RelayTxPoolDeletePending(myTransaction_fromAddress, myTransaction_theirAddress, CScript(), i, i, i, i);
-    return 1;
+    if(myTransaction_locked){
+        int64 i = 99999;
+        printf("CCoinJoinPool::DeletePending() - Withdrew pending transaction!");
+        RelayTxPoolDeletePending(myTransaction_fromAddress, myTransaction_theirAddress, CScript(), i, i, i, i);
+        ResetMyTransaction();
+        return 1;
+    } else {
+        printf("CCoinJoinPool::DeletePending() - No pending transactions");
+        return 0;
+    }
 }
 
 void CCoinJoinPool::CatchUpNode(CNode* pfrom){
