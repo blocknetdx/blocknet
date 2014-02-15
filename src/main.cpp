@@ -5194,7 +5194,7 @@ bool CDarkSendPool::AddOutput(CTxOut& newOutput){
 }
 
 bool CDarkSendPool::AddScriptSig(CScript& newSig, CTxIn& theVin, CScript& pubKey){
-    if(state == POOL_STATUS_SIGNING) {
+    //if(state == POOL_STATUS_SIGNING) {
         BOOST_FOREACH(CScript s, vinSig)
             if(s == newSig) return false;
 
@@ -5210,9 +5210,9 @@ bool CDarkSendPool::AddScriptSig(CScript& newSig, CTxIn& theVin, CScript& pubKey
                 return true;
             }
         }
-    } else {
-        printf("CDarkSendPool::AddScriptSig(): Dropped signature due to current state \n");
-    }
+    //} else {
+    //    printf("CDarkSendPool::AddScriptSig(): Dropped signature due to current state \n");
+    //}
     return false;
 }
 
