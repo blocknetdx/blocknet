@@ -186,6 +186,8 @@ Value resetpool(const Array& params, bool fHelp)
 
     Object obj;
     obj.push_back(Pair("success",        coinJoinPool.ForceReset()));
+    RelayTxPoolForceReset();
+
     return obj;
 }
 

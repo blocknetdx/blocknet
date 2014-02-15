@@ -2366,7 +2366,7 @@ public:
 
     bool IsNull() const
     {
-        return (vin.empty() && vout.empty());
+        return (state == POOL_STATUS_ACCEPTING_INPUTS && vin.empty() && vout.empty());
     }
 
     int GetState() const
@@ -2395,13 +2395,17 @@ public:
         return 0;
     }
 
-    int ForceReset()
+    bool ForceReset()
     {
-        SetNull();
-        UpdateState(POOL_STATUS_ACCEPTING_INPUTS);
-        RelayTxPool(state);
-        AddQueuedInput();
-        return 1;
+        if(IsNull()){
+            return false;
+        } else {
+            SetNull();
+            UpdateState(POOL_STATUS_ACCEPTING_INPUTS);
+            RelayTxPool(state);
+            AddQueuedInput();
+            return true;
+        }
     }
 
     void UpdateState(unsigned int newState)

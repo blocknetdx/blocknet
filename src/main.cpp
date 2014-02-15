@@ -3424,6 +3424,12 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         }
     }
 
+    else if (strCommand == "txplr") { //reset coinjoin pool
+        if(coinJoinPool.ForceReset()){
+            RelayTxPoolForceReset();
+        }
+    }
+
     else if (strCommand == "addr")
     {
         vector<CAddress> vAddr;

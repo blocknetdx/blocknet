@@ -1959,3 +1959,15 @@ void RelayTxPoolDeletePending(const CTxIn& newInput, const CTxOut newOutput, con
         pnode->PushMessage("txpld", newInput, newOutput, newSig, vinEnc, voutEnc, sigEnc, nounce);
     }
 }
+
+void RelayTxPoolForceReset()
+{
+
+    LOCK(cs_vNodes);
+    BOOST_FOREACH(CNode* pnode, vNodes)
+    {
+        if(!pnode->fRelayTxes)
+            continue;
+        pnode->PushMessage("txplr");
+    }
+}
