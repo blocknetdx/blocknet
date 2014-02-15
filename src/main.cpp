@@ -3461,7 +3461,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
     }
 
     else if (strCommand == "gettxpool") {
-        if (pfrom->nVersion < CDarkSendPool.MIN_PEER_PROTO_VERSION)
+        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION)
             return false;
 
         pfrom->fClient = !(pfrom->nServices & NODE_NETWORK);
@@ -3469,7 +3469,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
     }
 
     else if (strCommand == "txpool") {
-        if (pfrom->nVersion < CDarkSendPool.MIN_PEER_PROTO_VERSION)
+        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION)
             return false;
 
         darkSendPool.CatchUpNode(pfrom);
@@ -3477,7 +3477,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
     }
 
     else if (strCommand == "txpli") { //new coinjoin pool tx vin
-        if (pfrom->nVersion < CDarkSendPool.MIN_PEER_PROTO_VERSION)
+        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION)
             return false;
 
         CTxIn in;
@@ -3490,7 +3490,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
     }
 
     else if (strCommand == "txplo") { //new coinjoin pool tx vout
-        if (pfrom->nVersion < CDarkSendPool.MIN_PEER_PROTO_VERSION)
+        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION)
             return false;
 
         CTxOut out;
@@ -3502,7 +3502,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
     }
 
     else if (strCommand == "txpls") { //new coinjoin pool tx sign
-        if (pfrom->nVersion < CDarkSendPool.MIN_PEER_PROTO_VERSION)
+        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION)
             return false;
 
         CScript sig;
@@ -3516,7 +3516,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
     }
 
     else if (strCommand == "txpld") { //new coinjoin pool tx sign
-        if (pfrom->nVersion < CDarkSendPool.MIN_PEER_PROTO_VERSION)
+        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION)
             return false;
 
         CTxIn vin;
@@ -3534,7 +3534,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
     }
 
     else if (strCommand == "txplr") { //reset coinjoin pool
-        if (pfrom->nVersion < CDarkSendPool.MIN_PEER_PROTO_VERSION)
+        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION)
             return false;
 
         if(darkSendPool.ForceReset()){

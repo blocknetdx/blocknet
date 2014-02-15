@@ -2301,7 +2301,7 @@ public:
 class CDarkSendPool
 {
 public:
-    static const int MIN_PEER_PROTO_VERSION = 88900;
+    static const int MIN_PEER_PROTO_VERSION = 70002;
 
     bool myTransaction_locked;
     int64 myTransaction_fromAddress_nValue;
