@@ -3461,24 +3461,27 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
     }
 
     else if (strCommand == "gettxpool") {
-        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION)
+        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION) {
             return false;
+        }
 
         pfrom->fClient = !(pfrom->nServices & NODE_NETWORK);
         pfrom->PushMessage("txpool", POOL_STATUS_IDLE);
     }
 
     else if (strCommand == "txpool") {
-        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION)
+        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION) {
             return false;
+        }
 
         darkSendPool.CatchUpNode(pfrom);
         darkSendPool.Check();
     }
 
     else if (strCommand == "txpli") { //new coinjoin pool tx vin
-        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION)
+        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION) {
             return false;
+        }
 
         CTxIn in;
         int64 nAmount;
@@ -3490,8 +3493,9 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
     }
 
     else if (strCommand == "txplo") { //new coinjoin pool tx vout
-        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION)
+        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION) {
             return false;
+        }
 
         CTxOut out;
         vRecv >> out;
@@ -3502,8 +3506,9 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
     }
 
     else if (strCommand == "txpls") { //new coinjoin pool tx sign
-        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION)
+        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION) {
             return false;
+        }
 
         CScript sig;
         CTxIn vin;
@@ -3516,8 +3521,9 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
     }
 
     else if (strCommand == "txpld") { //new coinjoin pool tx sign
-        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION)
+        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION) {
             return false;
+        }
 
         CTxIn vin;
         CTxOut vout;
@@ -3534,8 +3540,9 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
     }
 
     else if (strCommand == "txplr") { //reset coinjoin pool
-        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION)
+        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION) {
             return false;
+        }
 
         if(darkSendPool.ForceReset()){
             RelayTxPoolForceReset();
@@ -4996,53 +5003,80 @@ public:
 
 void CDarkSendPool::AddQueuedInput()
 {
-    printf("AddQueuedInput\n");
-    if(!myTransaction_locked)
-        return;
     printf(" --- -- input\n");
     if(state != POOL_STATUS_ACCEPTING_INPUTS || added_input)
         return;
 
-    printf(" --- adding my input\n");
-    AddInput(myTransaction_fromAddress, myTransaction_fromAddress_nValue);
-    RelayTxPoolIn(myTransaction_fromAddress, myTransaction_fromAddress_nValue);
+    printf("AddQueuedInput\n");
+    if(myTransaction_locked){
+        printf(" --- adding my input\n");
+        AddInput(myTransaction_fromAddress, myTransaction_fromAddress_nValue);
+        RelayTxPoolIn(myTransaction_fromAddress, myTransaction_fromAddress_nValue);
+    }
+
+    for(unsigned int i = 0; i < queuedVin.size(); i++){
+        printf(" --- adding queued input %u\n", i);
+        AddInput(queuedVin[i], queuedVinAmount[i]);
+        RelayTxPoolIn(queuedVin[i], queuedVinAmount[i]);
+    }
+    queuedVin.clear();
+    queuedVinAmount.clear();
+
     added_input = true;
 }
 
 void CDarkSendPool::AddQueuedOutput()
 {
-    printf("AddQueuedOutput\n");
-    if(!myTransaction_locked)
-        return;
-    printf(" --- -- output\n");
     if(state != POOL_STATUS_ACCEPTING_OUTPUTS || added_output)
         return;
 
-    printf(" --- adding my output\n");
-    AddOutput(myTransaction_theirAddress);
-    RelayTxPoolOut(myTransaction_theirAddress);
-    
-    printf(" --- adding my output -- change\n");
-    AddOutput(myTransaction_changeAddress);
-    RelayTxPoolOut(myTransaction_changeAddress);
+    printf("AddQueuedOutput\n");
+    if(myTransaction_locked){
+        printf(" --- adding my output\n");
+        AddOutput(myTransaction_theirAddress);
+        RelayTxPoolOut(myTransaction_theirAddress);
+        
+        printf(" --- adding my output -- change\n");
+        AddOutput(myTransaction_changeAddress);
+        RelayTxPoolOut(myTransaction_changeAddress);
+    }
+
+    for(unsigned int i = 0; i < queuedVout.size(); i++){
+        printf(" --- adding queued output %u\n", i);
+        AddOutput(queuedVout[i]);
+        RelayTxPoolOut(queuedVout[i]);
+    }
+    queuedVout.clear();
 
     added_output = true;
 }
+
+
+void CDarkSendPool::AddQueuedSignatures()
+{
+    if(state != POOL_STATUS_ACCEPTING_OUTPUTS || added_output)
+        return;
+
+    printf("AddQueuedSignatures\n");
+
+    for(unsigned int i = 0; i < queuedVinSig.size(); i++){
+        printf(" --- adding queued signature %u\n", i);
+        AddScriptSig(queuedVinSig[i], queuedVinSigVin[i], queuedVinSigPubKey[i]);
+        RelayTxPoolSig(queuedVinSig[i], queuedVinSigVin[i], queuedVinSigPubKey[i]);
+    }
+    queuedVinSig.clear();
+    queuedVinSigVin.clear();
+    queuedVinSigPubKey.clear();
+
+    added_output = true;
+}
+
 
 void CDarkSendPool::Check()
 {
     printf("CDarkSendPool::Check()\n");
 
     printf(" vin %lu\n", vin.size());
-
-    if(state == POOL_STATUS_IDLE && vin.size() == 0)
-    {
-
-        printf(" -- ACCEPTING INPUTS\n");
-        UpdateState(POOL_STATUS_ACCEPTING_INPUTS);
-        RelayTxPool(state);
-        AddQueuedInput();
-    }
     
     // move on to next phase
     if(state == POOL_STATUS_ACCEPTING_INPUTS && vin.size() == POOL_MAX_TRANSACTIONS)
@@ -5058,9 +5092,9 @@ void CDarkSendPool::Check()
     if(state == POOL_STATUS_ACCEPTING_OUTPUTS && vout.size() == POOL_MAX_TRANSACTIONS*2) {
         printf(" -- ACCEPTING SIGNATURES\n");
         UpdateState(POOL_STATUS_SIGNING);
+        AddQueuedSignatures();
         RelayTxPool(state);
         Sign();
-
     }
 
     // move on to next phase
@@ -5162,10 +5196,12 @@ void CDarkSendPool::Sign(){
 }
 
 bool CDarkSendPool::AddInput(CTxIn& newInput, int64& nAmount){
-    if(state == POOL_STATUS_ACCEPTING_INPUTS) {
-        BOOST_FOREACH(CTxIn v, vin)
-            if(v == newInput) return false;
+    BOOST_FOREACH(CTxIn v, vin)
+        if(v == newInput) return false;
+    BOOST_FOREACH(CTxIn v, queuedVin)
+        if(v == newInput) return false;
 
+    if(state == POOL_STATUS_ACCEPTING_INPUTS) {
         vin.push_back(newInput);
         vinAmount.push_back(nAmount);
         vinSig.push_back(CScript());
@@ -5174,31 +5210,39 @@ bool CDarkSendPool::AddInput(CTxIn& newInput, int64& nAmount){
         printf("AddInput %s\n", newInput.ToString().c_str());
         return true;
     } else {
-        printf("CDarkSendPool::addInput(): Dropped input due to current state \n");
+        queuedVin.push_back(newInput);
+        queuedVinAmount.push_back(nAmount);
+
+        printf("AddInput Queued %s\n", newInput.ToString().c_str());
+        return true;
     }
     return false;
 }
 
 bool CDarkSendPool::AddOutput(CTxOut& newOutput){
-    if(state == POOL_STATUS_ACCEPTING_OUTPUTS) {
-        BOOST_FOREACH(CTxOut v, vout) //if 2 people want to pay the same addr the same amount it won't work
-            if(v == newOutput) return false;
+    BOOST_FOREACH(CTxOut v, vout) //if 2 people want to pay the same addr the same amount it won't work
+        if(v == newOutput) return false;
+    BOOST_FOREACH(CTxOut v, queuedVout)
+        if(v == newOutput) return false;
 
+    if(state == POOL_STATUS_ACCEPTING_OUTPUTS) {
         vout.push_back(newOutput);
         printf("AddOutput %s - %llu\n", newOutput.scriptPubKey.ToString().c_str(), newOutput.nValue);
         return true;
     } else {
-        printf("CDarkSendPool::addOutput(): Dropped output due to current state \n");
+        queuedVout.push_back(newOutput);
+        printf("AddOutput Queued %s - %llu\n", newOutput.scriptPubKey.ToString().c_str(), newOutput.nValue);
     }
     return false;
 }
 
 bool CDarkSendPool::AddScriptSig(CScript& newSig, CTxIn& theVin, CScript& pubKey){
-    //if(state == POOL_STATUS_SIGNING) {
-        BOOST_FOREACH(CScript s, vinSig)
-            if(s == newSig) return false;
+    BOOST_FOREACH(CScript s, vinSig)
+        if(s == newSig) return false;
+    BOOST_FOREACH(CScript s, queuedVinSig)
+        if(s == newSig) return false;
 
-
+    if(state == POOL_STATUS_SIGNING) {
         for(unsigned int i = 0; i < vin.size(); i++){
             if(vin[i] == theVin){
                 //return false if verify script fails on input
@@ -5210,9 +5254,14 @@ bool CDarkSendPool::AddScriptSig(CScript& newSig, CTxIn& theVin, CScript& pubKey
                 return true;
             }
         }
-    //} else {
-    //    printf("CDarkSendPool::AddScriptSig(): Dropped signature due to current state \n");
-    //}
+    } else {
+        queuedVinSig.push_back(newSig);
+        queuedVinSigPubKey.push_back(pubKey);
+        queuedVinSigVin.push_back(theVin);
+
+        printf("addScriptSig Queued %s\n", newSig.ToString().substr(0,24).c_str());
+        return true;
+    }
     return false;
 }
 
@@ -5297,7 +5346,7 @@ void CDarkSendPool::CatchUpNode(CNode* pfrom){
         pfrom->PushMessage("txplo", v);
     }
 
-    for(unsigned int i = 0; i < vin.size(); i++){
+    for(unsigned int i = 0; i < vinSig.size(); i++){
         printf(" -- add sig %u\n", i);
         pfrom->PushMessage("txpls", vinSig[i], vin[i], vinPubKey[i]);
     }

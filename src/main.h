@@ -2301,7 +2301,7 @@ public:
 class CDarkSendPool
 {
 public:
-    static const int MIN_PEER_PROTO_VERSION = 70002;
+    static const int MIN_PEER_PROTO_VERSION = 70004;
 
     bool myTransaction_locked;
     int64 myTransaction_fromAddress_nValue;
@@ -2319,6 +2319,16 @@ public:
     std::vector<CScript> vinPubKey;
     unsigned int sigCount;
     std::vector<CTxOut> vout;
+
+    // For receiving out of order 
+    std::vector<CTxIn> queuedVin;
+    std::vector<int64> queuedVinAmount;
+    // queued sig
+    std::vector<CScript> queuedVinSig;
+    std::vector<CTxIn> queuedVinSigVin;
+    std::vector<CScript> queuedVinSigPubKey;
+    std::vector<CTxOut> queuedVout;
+
     /* used when inputs/outputs are broadcast and the 
         pool is not in the correct state to accept them
         for the current pooling
@@ -2345,6 +2355,13 @@ public:
         added_input = false;
         added_output = false;
         sigCount = 0;
+
+        queuedVin.clear();
+        queuedVinAmount.clear();
+        queuedVinSig.clear();
+        queuedVinSigVin.clear();
+        queuedVinSigPubKey.clear();
+        queuedVout.clear();
     }
 
     void ResetMyTransaction()
@@ -2425,6 +2442,7 @@ public:
     bool AddScriptSig(CScript& newSig, CTxIn& theVin, CScript& pubKey);
     void CatchUpNode(CNode* pfrom);
     void SendMoney(const CTxIn& from, const CTxOut& to, int64& nFeeRet, CKeyStore& newKeys, int64 from_nValue, CScript& pubScript);
+    void AddQueuedSignatures();
 
     bool DeletePending(CTxIn& newInput, CTxOut newOutput, CScript newSig, 
         int64 vinEnc, int64 voutEnc, int64 sigEnc, int64 nounce);
