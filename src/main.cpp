@@ -5054,7 +5054,7 @@ void CDarkSendPool::AddQueuedOutput()
 
 void CDarkSendPool::AddQueuedSignatures()
 {
-    if(state != POOL_STATUS_ACCEPTING_OUTPUTS || added_output)
+    if(state != POOL_STATUS_SIGNING || added_signatures)
         return;
 
     printf("AddQueuedSignatures\n");
@@ -5068,7 +5068,7 @@ void CDarkSendPool::AddQueuedSignatures()
     queuedVinSigVin.clear();
     queuedVinSigPubKey.clear();
 
-    added_output = true;
+    added_signatures = true;
 }
 
 
@@ -5114,6 +5114,8 @@ void CDarkSendPool::Check()
         for(unsigned int i = 0; i < vin.size(); i++){
             txNew.vin.push_back(vin[i]);
             txNew.vin[i].scriptSig = vinSig[i];
+            printf("Sign with sig %s\n", vinSig[i].ToString().substr(0,24).c_str());
+            printf(" -- Signed pubkey %s\n", vinPubKey[i].ToString().substr(0,24).c_str());
             if (!VerifyScript(txNew.vin[i].scriptSig, vinPubKey[i], txNew, i, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC, 0)){
                 printf("Signing - ERROR signing input %u\n", i);
                 //failure will result, how to recover from this?
@@ -5157,11 +5159,11 @@ void CDarkSendPool::Check()
 
 
 void CDarkSendPool::Sign(){
+    std::sort (vin.begin(), vin.end(), sort_in);
+    std::sort (vout.begin(), vout.end(), sort_out);
+
     if(myTransaction_locked) {
         /* Sign my transaction and all outputs */
-        
-        std::sort (vin.begin(), vin.end(), sort_in);
-        std::sort (vout.begin(), vout.end(), sort_out);
 
         CTransaction txNew;
         txNew.vin.clear();
@@ -5186,7 +5188,7 @@ void CDarkSendPool::Sign(){
             }
 
             AddScriptSig(txNew.vin[n].scriptSig, myTransaction_fromAddress, myTransaction_fromAddress.prevPubKey);
-            printf("added scriptSig %s\n", txNew.vin[n].scriptSig.ToString().substr(0,24).c_str());
+            printf("added my scriptSig %s\n", txNew.vin[n].scriptSig.ToString().substr(0,24).c_str());
             RelayTxPoolSig(txNew.vin[n].scriptSig, myTransaction_fromAddress, myTransaction_fromAddress.prevPubKey);
         }
         
@@ -5255,12 +5257,17 @@ bool CDarkSendPool::AddScriptSig(CScript& newSig, CTxIn& theVin, CScript& pubKey
             }
         }
     } else {
-        queuedVinSig.push_back(newSig);
-        queuedVinSigPubKey.push_back(pubKey);
-        queuedVinSigVin.push_back(theVin);
+        if(state == POOL_STATUS_ACCEPTING_OUTPUTS){
+            queuedVinSig.push_back(newSig);
+            queuedVinSigPubKey.push_back(pubKey);
+            queuedVinSigVin.push_back(theVin);
 
-        printf("addScriptSig Queued %s\n", newSig.ToString().substr(0,24).c_str());
-        return true;
+            printf("addScriptSig Queued %s\n", newSig.ToString().substr(0,24).c_str());
+            return true;
+        } else {
+            printf("addScriptSig Caught weird bug... returning false - sig %s\n", newSig.ToString().substr(0,24).c_str());
+            return false;
+        }
     }
     return false;
 }
@@ -5347,7 +5354,7 @@ void CDarkSendPool::CatchUpNode(CNode* pfrom){
     }
 
     for(unsigned int i = 0; i < vinSig.size(); i++){
-        printf(" -- add sig %u\n", i);
+        printf(" -- add sig %u -- %"PRI64d" \n", i, vinSig[i].GetID());
         pfrom->PushMessage("txpls", vinSig[i], vin[i], vinPubKey[i]);
     }
 }

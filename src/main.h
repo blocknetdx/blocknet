@@ -2311,6 +2311,7 @@ public:
     int64 myTransaction_nFeeRet;
     bool added_input;
     bool added_output;
+    bool added_signatures;
     CKeyStore *keystore;
 
     std::vector<CTxIn> vin;
@@ -2346,14 +2347,25 @@ public:
         printf("CDarkSendPool::SetNull()\n");
         vin.clear();
         vout.clear();
+        vinSig.clear();
+        vinPubKey.clear();
+        vinAmount.clear();
+
+
+        printf("SetNull vin %lu\n", vin.size());
+        printf("SetNull vout %lu\n", vout.size());
+        printf("SetNull vinSig %lu\n", vinSig.size()); 
+
         state = POOL_STATUS_ACCEPTING_INPUTS;
         myTransaction_locked = false;
         myTransaction_nFeeRet = 0;
         myTransaction_fromAddress_nValue = 0;
         myTransaction_fromAddress = CTxIn();
         myTransaction_theirAddress = CTxOut();
+        myTransaction_changeAddress = CTxOut();
         added_input = false;
         added_output = false;
+        added_signatures = false;
         sigCount = 0;
 
         queuedVin.clear();
@@ -2385,7 +2397,7 @@ public:
 
     bool IsNull() const
     {
-        return (state == POOL_STATUS_ACCEPTING_INPUTS && vin.empty() && vout.empty());
+        return (state == POOL_STATUS_ACCEPTING_INPUTS && vin.empty() && vout.empty() && !myTransaction_locked);
     }
 
     int GetState() const
