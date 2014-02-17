@@ -105,6 +105,7 @@ extern int nScriptCheckThreads;
 extern bool fTxIndex;
 extern unsigned int nCoinCacheSize;
 extern CDarkSendPool darkSendPool;
+extern CWallet pmainWallet;
 
 // Settings
 extern int64 nTransactionFee;
@@ -2368,6 +2369,9 @@ public:
         added_signatures = false;
         sigCount = 0;
 
+        printf("IsNull %i\n", (int)IsNull());
+        printf("MyTransactions %i\n", (int)IsNull());
+
         queuedVin.clear();
         queuedVinAmount.clear();
         queuedVinSig.clear();
@@ -2434,7 +2438,6 @@ public:
             SetNull();
             UpdateState(POOL_STATUS_ACCEPTING_INPUTS);
             RelayTxPool(state);
-            AddQueuedInput();
             return true;
         }
     }

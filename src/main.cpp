@@ -5104,41 +5104,70 @@ void CDarkSendPool::Check()
         RelayTxPool(state);
         // make sure my transactions are here
 
-        CTransaction txNew;
-        txNew.vin.clear();
-        txNew.vout.clear();
-        for(unsigned int i = 0; i < vout.size(); i++){
-            txNew.vout.push_back(vout[i]);
-        }
+        CWalletTx txNew;
 
-        for(unsigned int i = 0; i < vin.size(); i++){
-            txNew.vin.push_back(vin[i]);
-            txNew.vin[i].scriptSig = vinSig[i];
-            printf("Sign with sig %s\n", vinSig[i].ToString().substr(0,24).c_str());
-            printf(" -- Signed pubkey %s\n", vinPubKey[i].ToString().substr(0,24).c_str());
-            if (!VerifyScript(txNew.vin[i].scriptSig, vinPubKey[i], txNew, i, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC, 0)){
-                printf("Signing - ERROR signing input %u\n", i);
-                //failure will result, how to recover from this?
-            } else {
-                printf("Signing - Succesfully signed input %u\n", i);
-            }
-        }
+        txNew.BindWallet(pwalletMain);
 
-        //int64 nChange = nValueIn - nValue - nFeeRet;
-        printf("txNew -- compiled all signatures:\n%s", txNew.ToString().c_str());
-
-        CValidationState vs;
-        // Broadcast
-        if (!txNew.AcceptToMemoryPool(vs, true, false))
+        LOCK2(cs_main, pwalletMain->cs_wallet);
         {
-            printf("CommitTransaction() : Error: Transaction not valid\n");
-            //do something... ???
-            SetNull();
-            UpdateState(POOL_STATUS_ACCEPTING_INPUTS);
-            return;
+
+            txNew.vin.clear();
+            txNew.vout.clear();
+            for(unsigned int i = 0; i < vout.size(); i++){
+                txNew.vout.push_back(vout[i]);
+            }
+
+            for(unsigned int i = 0; i < vin.size(); i++){
+                txNew.vin.push_back(vin[i]);
+                txNew.vin[i].scriptSig = vinSig[i];
+                printf("Sign with sig %s\n", vinSig[i].ToString().substr(0,24).c_str());
+                printf(" -- Signed pubkey %s\n", vinPubKey[i].ToString().substr(0,24).c_str());
+                if (!VerifyScript(txNew.vin[i].scriptSig, vinPubKey[i], txNew, i, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC, 0)){
+                    printf("Signing - ERROR signing input %u\n", i);
+                    //failure will result, how to recover from this?
+                } else {
+                    printf("Signing - Succesfully signed input %u\n", i);
+                }
+            }
+
+            //int64 nChange = nValueIn - nValue - nFeeRet;
+            printf("txNew -- compiled all signatures:\n%s", txNew.ToString().c_str());
+           
+            
+            int i = 0;
+            BOOST_FOREACH(const CTxIn& txin, txNew.vin)
+            {
+                if(txin == myTransaction_fromAddress){
+                    printf("marking vin %i", i);
+                    CWalletTx &coin = pwalletMain->mapWallet[txin.prevout.hash];
+                    coin.BindWallet(pwalletMain);
+                    coin.MarkSpent(txin.prevout.n);
+                    coin.WriteToDisk();
+                    //NotifyTransactionChanged(pwalletMain, coin.GetHash(), CT_UPDATED);
+                }
+                i++;
+            }
+
+            // Broadcast
+            if (!txNew.AcceptToMemoryPool(true, false))
+            {
+                printf("CommitTransaction() : Error: Transaction not valid\n");
+                //do something... ???
+                SetNull();
+                UpdateState(POOL_STATUS_ACCEPTING_INPUTS);
+                return;
+            }
+
+            pwalletMain->AddToWallet(txNew);
+            txNew.AddSupportingTransactions();
+            
+            txNew.RelayWalletTransaction();
+
+            // this is to fix a dumb bug
+            boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+            ForceReset();
+            RelayTxPoolForceReset();
         }
-        
-        RelayTransaction(txNew, txNew.GetHash());
     }
 
     // move on to next phase
@@ -5198,10 +5227,12 @@ void CDarkSendPool::Sign(){
 }
 
 bool CDarkSendPool::AddInput(CTxIn& newInput, int64& nAmount){
-    BOOST_FOREACH(CTxIn v, vin)
-        if(v == newInput) return false;
-    BOOST_FOREACH(CTxIn v, queuedVin)
-        if(v == newInput) return false;
+    BOOST_FOREACH(CTxIn v, vin){
+        if(v == newInput) {printf ("found in queued\n"); return false;}
+    }
+    BOOST_FOREACH(CTxIn v, queuedVin) {
+        if(v == newInput) {printf ("found in queued\n"); return false;}
+    }
 
     if(state == POOL_STATUS_ACCEPTING_INPUTS) {
         vin.push_back(newInput);
