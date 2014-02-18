@@ -2415,6 +2415,17 @@ public:
         return state;
     }
 
+    unsigned int GetSessionID() const
+    {
+        return session_id;
+    }
+
+    void SetSessionID(unsigned int i)
+    {
+        printf("new session_id %u\n", i);
+        session_id = i;
+    }
+
     int GetVinCount() const
     {
         return vin.size();

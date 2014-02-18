@@ -1902,8 +1902,7 @@ void RelayTransaction(const CTransaction& tx, const uint256& hash, const CDataSt
     }
 }
 
-
-void RelayTxPool(const unsigned int state)
+void RelayTxPool(const unsigned int session_id, const unsigned int state)
 {
     return;
     /*LOCK(cs_vNodes);
@@ -1915,7 +1914,7 @@ void RelayTxPool(const unsigned int state)
     }*/
 }
 
-void RelayTxPoolIn(const CTxIn& tx, int64& nAmount)
+void RelayTxPoolIn(const unsigned int session_id, const CTxIn& tx, int64& nAmount)
 {
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
@@ -1923,11 +1922,11 @@ void RelayTxPoolIn(const CTxIn& tx, int64& nAmount)
         if(!pnode->fRelayTxes)
             continue;
         printf("Sending txpli\n");
-        pnode->PushMessage("txpli", tx, nAmount);
+        pnode->PushMessage("txpli", session_id, tx, nAmount);
     }
 }
 
-void RelayTxPoolOut(const CTxOut& tx)
+void RelayTxPoolOut(const unsigned int session_id, const CTxOut& tx)
 {
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
@@ -1935,11 +1934,11 @@ void RelayTxPoolOut(const CTxOut& tx)
         if(!pnode->fRelayTxes)
             continue;
         printf("Sending txplo\n");
-        pnode->PushMessage("txplo", tx);
+        pnode->PushMessage("txplo", session_id,  tx);
     }
 }
 
-void RelayTxPoolSig(const CScript& sig, const CTxIn& vin, const CScript& pubKey)
+void RelayTxPoolSig(const unsigned int session_id, const CScript& sig, const CTxIn& vin, const CScript& pubKey)
 {
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
@@ -1947,11 +1946,11 @@ void RelayTxPoolSig(const CScript& sig, const CTxIn& vin, const CScript& pubKey)
         if(!pnode->fRelayTxes)
             continue;
         printf("Sending txpls\n");
-        pnode->PushMessage("txpls", sig, vin, pubKey);
+        pnode->PushMessage("txpls", session_id,  sig, vin, pubKey);
     }
 }
 
-void RelayTxPoolDeletePending(const CTxIn& newInput, const CTxOut newOutput, const CScript newSig,  
+void RelayTxPoolDeletePending(const unsigned int session_id, const CTxIn& newInput, const CTxOut newOutput, const CScript newSig,  
     int64 vinEnc, int64 voutEnc, int64 sigEnc, int64 nounce)
 {
 
@@ -1960,7 +1959,7 @@ void RelayTxPoolDeletePending(const CTxIn& newInput, const CTxOut newOutput, con
     {
         if(!pnode->fRelayTxes)
             continue;
-        pnode->PushMessage("txpld", newInput, newOutput, newSig, vinEnc, voutEnc, sigEnc, nounce);
+        pnode->PushMessage("txpld", session_id, newInput, newOutput, newSig, vinEnc, voutEnc, sigEnc, nounce);
     }
 }
 
