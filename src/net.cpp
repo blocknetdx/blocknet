@@ -1905,13 +1905,14 @@ void RelayTransaction(const CTransaction& tx, const uint256& hash, const CDataSt
 
 void RelayTxPool(const unsigned int state)
 {
-    LOCK(cs_vNodes);
+    return;
+    /*LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
         if(!pnode->fRelayTxes)
             continue;
         pnode->PushMessage("txpoolv", state); //v is wrong
-    }
+    }*/
 }
 
 void RelayTxPoolIn(const CTxIn& tx, int64& nAmount)
@@ -1921,6 +1922,7 @@ void RelayTxPoolIn(const CTxIn& tx, int64& nAmount)
     {
         if(!pnode->fRelayTxes)
             continue;
+        printf("Sending txpli\n");
         pnode->PushMessage("txpli", tx, nAmount);
     }
 }
@@ -1932,6 +1934,7 @@ void RelayTxPoolOut(const CTxOut& tx)
     {
         if(!pnode->fRelayTxes)
             continue;
+        printf("Sending txplo\n");
         pnode->PushMessage("txplo", tx);
     }
 }
@@ -1943,6 +1946,7 @@ void RelayTxPoolSig(const CScript& sig, const CTxIn& vin, const CScript& pubKey)
     {
         if(!pnode->fRelayTxes)
             continue;
+        printf("Sending txpls\n");
         pnode->PushMessage("txpls", sig, vin, pubKey);
     }
 }

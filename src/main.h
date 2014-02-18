@@ -2304,6 +2304,8 @@ class CDarkSendPool
 public:
     static const int MIN_PEER_PROTO_VERSION = 70004;
 
+    unsigned int session_id;
+    unsigned int next_session_id;
     bool myTransaction_locked;
     int64 myTransaction_fromAddress_nValue;
     CTxIn myTransaction_fromAddress;
@@ -2340,6 +2342,7 @@ public:
 
     CDarkSendPool()
     {
+        next_session_id = 1000;
         SetNull();
     }
 
@@ -2353,9 +2356,9 @@ public:
         vinAmount.clear();
 
 
-        printf("SetNull vin %lu\n", vin.size());
-        printf("SetNull vout %lu\n", vout.size());
-        printf("SetNull vinSig %lu\n", vinSig.size()); 
+        printf("SetNull::vin %lu\n", vin.size());
+        printf("SetNull::vout %lu\n", vout.size());
+        printf("SetNull::vinSig %lu\n", vinSig.size()); 
 
         state = POOL_STATUS_ACCEPTING_INPUTS;
         myTransaction_locked = false;
@@ -2369,8 +2372,7 @@ public:
         added_signatures = false;
         sigCount = 0;
 
-        printf("IsNull %i\n", (int)IsNull());
-        printf("MyTransactions %i\n", (int)IsNull());
+        printf("SetNull::IsNull %i\n", (int)IsNull());
 
         queuedVin.clear();
         queuedVinAmount.clear();
@@ -2378,6 +2380,9 @@ public:
         queuedVinSigVin.clear();
         queuedVinSigPubKey.clear();
         queuedVout.clear();
+
+        session_id = next_session_id;
+        printf("SetNull::exit \n");
     }
 
     void ResetMyTransaction()
@@ -2400,8 +2405,9 @@ public:
     }
 
     bool IsNull() const
-    {
-        return (state == POOL_STATUS_ACCEPTING_INPUTS && vin.empty() && vout.empty() && !myTransaction_locked);
+    {   
+        printf("IsNull %i\n", (int)(state == POOL_STATUS_ACCEPTING_INPUTS && vin.empty() && vout.empty() && myTransaction_locked == false));
+        return (state == POOL_STATUS_ACCEPTING_INPUTS && vin.empty() && vout.empty() && myTransaction_locked == false);
     }
 
     int GetState() const
@@ -2437,7 +2443,7 @@ public:
         } else {
             SetNull();
             UpdateState(POOL_STATUS_ACCEPTING_INPUTS);
-            RelayTxPool(state);
+            //RelayTxPool(state);
             return true;
         }
     }
