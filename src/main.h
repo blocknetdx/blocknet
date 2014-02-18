@@ -2342,6 +2342,7 @@ public:
 
     CDarkSendPool()
     {
+        printf("CDarkSendPool::INIT()\n");
         next_session_id = 1000;
         SetNull();
     }

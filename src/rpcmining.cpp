@@ -170,6 +170,7 @@ Value getpoolinfo(const Array& params, bool fHelp)
 
     Object obj;
     obj.push_back(Pair("state",        darkSendPool.GetState()));
+    obj.push_back(Pair("session_id",   (int)darkSendPool.GetSessionID()));
     obj.push_back(Pair("pooled_inputs",   darkSendPool.GetVinCount()));
     obj.push_back(Pair("pooled_outputs",   darkSendPool.GetVoutCount()));
     obj.push_back(Pair("pooled_signatures",   darkSendPool.GetSignatureCount()));

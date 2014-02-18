@@ -3479,11 +3479,6 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         unsigned int state;
         vRecv >> session_id >> state;
 
-        if(session_id != darkSendPool.GetSessionID()){
-            printf("Main::txpld - stale session \n");
-            return false;
-        }
-
         darkSendPool.SetSessionID(session_id);
         darkSendPool.CatchUpNode(pfrom);
         darkSendPool.Check();
