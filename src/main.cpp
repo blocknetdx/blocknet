@@ -3475,11 +3475,14 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             return false;
         }
 
+
         unsigned int session_id;
         unsigned int state;
         vRecv >> session_id >> state;
 
-        darkSendPool.SetSessionID(session_id);
+        if(session_id != 1000) 
+            darkSendPool.SetSessionID(session_id);
+    
         darkSendPool.CatchUpNode(pfrom);
         darkSendPool.Check();
     }
@@ -5330,6 +5333,7 @@ bool CDarkSendPool::AddOutput(CTxOut& newOutput){
     }
 }
 */
+
 bool CDarkSendPool::AddScriptSig(CScript& newSig, CTxIn& theVin, CScript& pubKey){
     BOOST_FOREACH(CScript s, vinSig)
         if(s == newSig) return false;

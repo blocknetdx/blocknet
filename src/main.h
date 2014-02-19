@@ -2306,6 +2306,7 @@ public:
 
     unsigned int session_id;
     unsigned int next_session_id;
+    bool session_locked;
     bool myTransaction_locked;
     int64 myTransaction_fromAddress_nValue;
     CTxIn myTransaction_fromAddress;
@@ -2423,8 +2424,13 @@ public:
 
     void SetSessionID(unsigned int i)
     {
+        if(session_locked)
+            return;
+
         printf("new session_id %u\n", i);
         session_id = i;
+        next_session_id = i;
+        session_locked = true;
     }
 
     int GetVinCount() const
