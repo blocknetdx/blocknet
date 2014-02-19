@@ -5175,42 +5175,16 @@ void CDarkSendPool::Check()
             //int64 nChange = nValueIn - nValue - nFeeRet;
             printf("CDarkSendPool::Check() - txNew -- compiled all signatures:\n%s", txNew.ToString().c_str());
            
-            
-            int i = 0;
-            BOOST_FOREACH(const CTxIn& txin, txNew.vin)
-            {
-                if(txin == myTransaction_fromAddress){
-                    printf("CDarkSendPool::Check() - marking vin %i", i);
-                    CWalletTx &coin = pwalletMain->mapWallet[txin.prevout.hash];
-                    coin.BindWallet(pwalletMain);
-                    coin.MarkSpent(txin.prevout.n);
-                    coin.WriteToDisk();
-                }
-                i++;
-            }
-
-            // Broadcast
-            if (!txNew.AcceptToMemoryPool(true, false))
-            {
-                printf("CDarkSendPool::Check() - CommitTransaction : Error: Transaction not valid\n");
-                //do something... ???
-                SetNull();
-                UpdateState(POOL_STATUS_ACCEPTING_INPUTS);
-                return;
-            }
-
-            pwalletMain->AddToWallet(txNew);
             txNew.AddSupportingTransactions();
             txNew.fTimeReceivedIsTxTime = true;
-            
-            txNew.RelayWalletTransaction();
+        }
 
-            next_session_id++;
-
-            // this is to fix a dumb bug
-            //boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
-            //ForceReset();
-            //RelayTxPoolForceReset();
+        if (!pwalletMain->CommitTransaction(txNew, *reservekey))
+        {
+            printf("CDarkSendPool::Check() - Error: The transaction was rejected!.\n");
+            SetNull();
+            UpdateState(POOL_STATUS_ACCEPTING_INPUTS);
+            return;
         }
     }
 
@@ -5381,7 +5355,7 @@ bool CDarkSendPool::DeletePending(CTxIn& newInput, CTxOut newOutput, CScript new
     for(unsigned int i = 0; i < vinSig.size(); i++){
         if(newSig == vinSig[i]) {
             // if vinSig[i].encPassword.decrypt(password) == newSigString
-            printf("CDarkSendPool::DeletePending -- delete sig $u\n", i);
+            printf("CDarkSendPool::DeletePending -- delete sig %u\n", i);
             vinSig.erase(vinSig.begin() + i);
             found = true;
         }
@@ -5415,7 +5389,7 @@ bool CDarkSendPool::DeletePending(CTxIn& newInput, CTxOut newOutput, CScript new
     for(unsigned int i = 0; i < vin.size(); i++){
         if(newInput == vin[i]) {
             // if vin[i].encPassword.decrypt(password) == newInputString
-            printf("CDarkSendPool::DeletePending -- delete vin $u\n", i);
+            printf("CDarkSendPool::DeletePending -- delete vin %u\n", i);
             vin.erase(vin.begin() + i);
             found = true;
         }
@@ -5455,7 +5429,7 @@ void CDarkSendPool::CatchUpNode(CNode* pfrom){
     }
 }
 
-void CDarkSendPool::SendMoney(const CTxIn& from, const CTxOut& to, int64& nFeeRet, CKeyStore& newKeys, int64 from_nValue, CScript& pubScript){
+void CDarkSendPool::SendMoney(const CTxIn& from, const CTxOut& to, int64& nFeeRet, CKeyStore& newKeys, int64 from_nValue, CScript& pubScript, CReserveKey& newReserveKey){
     if(!myTransaction_locked){
         printf("CDarkSendPool::SendMoney() - Added transaction to pool.\n");
         nFeeRet = .01;
@@ -5475,13 +5449,41 @@ void CDarkSendPool::SendMoney(const CTxIn& from, const CTxOut& to, int64& nFeeRe
         myTransaction_fromAddress.prevPubKey = pubScript;
         myTransaction_theirAddress = to;
         //myTransaction_theirAddress.nValue = from_nValue-nFeeRet; //assign full input to output
+        reservekey = &newReserveKey;
 
-        myTransaction_changeAddress = CTxOut(from_nValue-to.nValue-nFeeRet, pubScript);
+        CScript scriptChange;
+        CPubKey vchPubKey;
+        assert(reservekey->GetReservedKey(vchPubKey)); // should never fail, as we just unlocked
+        scriptChange.SetDestination(vchPubKey.GetID());
+
+        //todo, handle zero change
+        myTransaction_changeAddress = CTxOut(from_nValue-to.nValue-nFeeRet, scriptChange);
         
         myTransaction_nFeeRet = nFeeRet;
         myTransaction_fromAddress_nValue = from_nValue;
         myTransaction_locked = true;
         keystore = &newKeys;
+
+        // add change address to addressbook
+
+        {
+            LOCK(pwalletMain->cs_wallet);
+
+            // Offline transaction
+            CTxDestination dest;
+            std::string strLabel = "";
+
+            if (ExtractDestination(myTransaction_changeAddress.scriptPubKey, dest))
+            {
+                std::map<CTxDestination, std::string>::iterator mi = pwalletMain->mapAddressBook.find(dest);
+
+                // Check if we have a new address or an updated label
+                if (mi == pwalletMain->mapAddressBook.end() || mi->second != strLabel)
+                {
+                    pwalletMain->SetAddressBookName(dest, strLabel);
+                }
+            }
+        }
 
         AddQueuedInput();
         AddQueuedOutput();

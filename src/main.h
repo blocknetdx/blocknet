@@ -2317,6 +2317,7 @@ public:
     bool added_output;
     bool added_signatures;
     CKeyStore *keystore;
+    CReserveKey *reservekey;
 
     std::vector<CTxIn> vin;
     std::vector<int64> vinAmount;
@@ -2383,6 +2384,7 @@ public:
         queuedVinSigPubKey.clear();
         queuedVout.clear();
 
+        next_session_id++;
         session_id = next_session_id;
         printf("CDarkSend::SetNull::exit \n");
     }
@@ -2480,7 +2482,7 @@ public:
     bool AddOutput(CTxOut& newOutput);
     bool AddScriptSig(CScript& newSig, CTxIn& theVin, CScript& pubKey);
     void CatchUpNode(CNode* pfrom);
-    void SendMoney(const CTxIn& from, const CTxOut& to, int64& nFeeRet, CKeyStore& newKeys, int64 from_nValue, CScript& pubScript);
+    void SendMoney(const CTxIn& from, const CTxOut& to, int64& nFeeRet, CKeyStore& newKeys, int64 from_nValue, CScript& pubScript, CReserveKey& reservekey);
     void AddQueuedSignatures();
 
     bool DeletePending(CTxIn& newInput, CTxOut newOutput, CScript newSig, 

@@ -1512,7 +1512,7 @@ string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 
         return _("Insufficient funds");
     }
 
-    darkSendPool.SendMoney(vin, out, nFeeRet, *this, nValueIn, pubScript);
+    darkSendPool.SendMoney(vin, out, nFeeRet, *this, nValueIn, pubScript, reservekey);
 
     return "";
 }
