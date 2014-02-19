@@ -5174,8 +5174,24 @@ void CDarkSendPool::Check()
 
             //int64 nChange = nValueIn - nValue - nFeeRet;
             printf("CDarkSendPool::Check() - txNew -- compiled all signatures:\n%s", txNew.ToString().c_str());
-           
-            
+
+            // Broadcast
+            if (!txNew.AcceptToMemoryPool(true, false))
+            {
+                printf("CDarkSendPool::Check() - CommitTransaction : Error: Transaction not valid\n");
+                //do something... ???
+                SetNull();
+                UpdateState(POOL_STATUS_ACCEPTING_INPUTS);
+                return;
+            }
+
+            txNew.AddSupportingTransactions();
+            txNew.fTimeReceivedIsTxTime = true;
+
+            //reservekey->KeepKey();
+
+            pwalletMain->AddToWallet(txNew);
+
             int i = 0;
             BOOST_FOREACH(const CTxIn& txin, txNew.vin)
             {
@@ -5189,29 +5205,11 @@ void CDarkSendPool::Check()
                 i++;
             }
 
-            // Broadcast
-            if (!txNew.AcceptToMemoryPool(true, false))
-            {
-                printf("CDarkSendPool::Check() - CommitTransaction : Error: Transaction not valid\n");
-                //do something... ???
-                SetNull();
-                UpdateState(POOL_STATUS_ACCEPTING_INPUTS);
-                return;
-            }
-
-            pwalletMain->AddToWallet(txNew);
-            txNew.AddSupportingTransactions();
-            txNew.fTimeReceivedIsTxTime = true;
-            
-            txNew.RelayWalletTransaction();
-
-            next_session_id++;
-
-            // this is to fix a dumb bug
-            //boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
-            //ForceReset();
-            //RelayTxPoolForceReset();
         }
+
+        //pwalletMain->mapRequestCount[txNew.GetHash()] = 0;
+        
+        txNew.RelayWalletTransaction();
     }
 
     // move on to next phase
