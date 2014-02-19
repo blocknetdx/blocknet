@@ -2289,7 +2289,7 @@ public:
 };
 
 
-#define POOL_MAX_TRANSACTIONS                  2 // wait for X transactions to merge and publish
+#define POOL_MAX_TRANSACTIONS                  1 // wait for X transactions to merge and publish
 #define POOL_STATUS_UNKNOWN                    0 // waiting for update
 #define POOL_STATUS_IDLE                       1 // waiting for update
 #define POOL_STATUS_ACCEPTING_INPUTS           2 // accepting inputs
@@ -2358,9 +2358,9 @@ public:
         vinAmount.clear();
 
 
-        printf("SetNull::vin %lu\n", vin.size());
-        printf("SetNull::vout %lu\n", vout.size());
-        printf("SetNull::vinSig %lu\n", vinSig.size()); 
+        printf("CDarkSend::SetNull::vin %lu\n", vin.size());
+        printf("CDarkSend::SetNull::vout %lu\n", vout.size());
+        printf("CDarkSend::SetNull::vinSig %lu\n", vinSig.size()); 
 
         state = POOL_STATUS_ACCEPTING_INPUTS;
         myTransaction_locked = false;
@@ -2374,7 +2374,7 @@ public:
         added_signatures = false;
         sigCount = 0;
 
-        printf("SetNull::IsNull %i\n", (int)IsNull());
+        printf("CDarkSend::SetNull::IsNull %i\n", (int)IsNull());
 
         queuedVin.clear();
         queuedVinAmount.clear();
@@ -2384,7 +2384,7 @@ public:
         queuedVout.clear();
 
         session_id = next_session_id;
-        printf("SetNull::exit \n");
+        printf("CDarkSend::SetNull::exit \n");
     }
 
     void ResetMyTransaction()
@@ -2408,7 +2408,7 @@ public:
 
     bool IsNull() const
     {   
-        printf("IsNull %i\n", (int)(state == POOL_STATUS_ACCEPTING_INPUTS && vin.empty() && vout.empty() && myTransaction_locked == false));
+        printf("CDarkSend::IsNull %i\n", (int)(state == POOL_STATUS_ACCEPTING_INPUTS && vin.empty() && vout.empty() && myTransaction_locked == false));
         return (state == POOL_STATUS_ACCEPTING_INPUTS && vin.empty() && vout.empty() && myTransaction_locked == false);
     }
 
@@ -2427,7 +2427,7 @@ public:
         if(session_locked)
             return;
 
-        printf("new session_id %u\n", i);
+        printf("CDarkSend::SetSessionID - new %u\n", i);
         session_id = i;
         next_session_id = i;
         session_locked = true;
