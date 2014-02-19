@@ -5175,16 +5175,42 @@ void CDarkSendPool::Check()
             //int64 nChange = nValueIn - nValue - nFeeRet;
             printf("CDarkSendPool::Check() - txNew -- compiled all signatures:\n%s", txNew.ToString().c_str());
            
+            
+            int i = 0;
+            BOOST_FOREACH(const CTxIn& txin, txNew.vin)
+            {
+                if(txin == myTransaction_fromAddress){
+                    printf("CDarkSendPool::Check() - marking vin %i", i);
+                    CWalletTx &coin = pwalletMain->mapWallet[txin.prevout.hash];
+                    coin.BindWallet(pwalletMain);
+                    coin.MarkSpent(txin.prevout.n);
+                    coin.WriteToDisk();
+                }
+                i++;
+            }
+
+            // Broadcast
+            if (!txNew.AcceptToMemoryPool(true, false))
+            {
+                printf("CDarkSendPool::Check() - CommitTransaction : Error: Transaction not valid\n");
+                //do something... ???
+                SetNull();
+                UpdateState(POOL_STATUS_ACCEPTING_INPUTS);
+                return;
+            }
+
+            pwalletMain->AddToWallet(txNew);
             txNew.AddSupportingTransactions();
             txNew.fTimeReceivedIsTxTime = true;
-        }
+            
+            txNew.RelayWalletTransaction();
 
-        if (!pwalletMain->CommitTransaction(txNew, *reservekey))
-        {
-            printf("CDarkSendPool::Check() - Error: The transaction was rejected!.\n");
-            SetNull();
-            UpdateState(POOL_STATUS_ACCEPTING_INPUTS);
-            return;
+            next_session_id++;
+
+            // this is to fix a dumb bug
+            //boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+            //ForceReset();
+            //RelayTxPoolForceReset();
         }
     }
 
