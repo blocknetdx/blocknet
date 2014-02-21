@@ -5199,7 +5199,10 @@ void CDarkSendPool::Check()
                 return;
             }
 
-            pwalletMain->AddToWallet(txNew);
+            if(myTransaction_locked) {
+                // add to my wallet if it's mine
+                pwalletMain->AddToWallet(txNew);
+            }
             txNew.AddSupportingTransactions();
             txNew.fTimeReceivedIsTxTime = true;
             
