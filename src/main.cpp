@@ -3503,6 +3503,8 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             return false;
         }
 
+        //check to see if input is spent already? (and probably not confirmed)
+
         if(darkSendPool.AddInput(in, nAmount)){
             RelayTxPoolIn(session_id, in, nAmount);
             darkSendPool.Check();
@@ -5207,13 +5209,6 @@ void CDarkSendPool::Check()
             txNew.fTimeReceivedIsTxTime = true;
             
             txNew.RelayWalletTransaction();
-
-            next_session_id++;
-
-            // this is to fix a dumb bug
-            //boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
-            //ForceReset();
-            //RelayTxPoolForceReset();
         }
     }
 
@@ -5222,8 +5217,16 @@ void CDarkSendPool::Check()
         printf("CDarkSendPool::Check() -- TRANSMIT\n");
         SetNull();
     }
+
 }
 
+void CDarkSendPool::CheckTimeout(){
+    // catching hanging sessions
+    if((state == POOL_STATUS_ACCEPTING_OUTPUTS || state == POOL_STATUS_SIGNING) && GetTimeMillis()-last_time_stage_changed >= 5000 ) {
+        printf("CDarkSendPool::Check() -- SESSION TIMED OUT -- RESETTING\n");
+        SetNull();
+    }
+}
 
 void CDarkSendPool::Sign(){
     std::sort (vin.begin(), vin.end(), sort_in);
@@ -5519,5 +5522,19 @@ void CDarkSendPool::SendMoney(const CTxIn& from, const CTxOut& to, int64& nFeeRe
         Check();
     } else {
         printf("CDarkSendPool::SendMoney() - Error, transaction locked. Multiple transactions per pool are not supported yet.\n");
+    }
+}
+
+
+void ThreadCheckDarkSendPool()
+{
+    // Make this thread recognisable as the wallet flushing thread
+    RenameThread("bitcoin-darksend");
+
+    while (true)
+    {
+        MilliSleep(1000);
+        //printf("ThreadCheckDarkSendPool::check timeout\n");
+        darkSendPool.CheckTimeout();
     }
 }

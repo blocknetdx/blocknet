@@ -1145,5 +1145,7 @@ bool AppInit2(boost::thread_group& threadGroup)
         threadGroup.create_thread(boost::bind(&ThreadFlushWalletDB, boost::ref(pwalletMain->strWalletFile)));
     }
 
+    threadGroup.create_thread(boost::bind(&ThreadCheckDarkSendPool));
+
     return !fRequestShutdown;
 }

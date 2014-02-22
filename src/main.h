@@ -2316,6 +2316,7 @@ public:
     bool added_input;
     bool added_output;
     bool added_signatures;
+    int64 last_time_stage_changed;
     CKeyStore *keystore;
     CReserveKey *reservekey;
 
@@ -2373,6 +2374,7 @@ public:
         added_input = false;
         added_output = false;
         added_signatures = false;
+        last_time_stage_changed = GetTimeMillis();
         sigCount = 0;
 
         printf("CDarkSend::SetNull::IsNull %i\n", (int)IsNull());
@@ -2471,12 +2473,16 @@ public:
     void UpdateState(unsigned int newState)
     {
         printf("CDarkSendPool::UpdateState() == %d | %d \n", state, newState);
+        if(state != newState){
+            last_time_stage_changed = GetTimeMillis();
+        }
         state = newState;
     }
 
     void AddQueuedInput();
     void AddQueuedOutput();
     void Check();
+    void CheckTimeout();
     void Sign();
     bool AddInput(CTxIn& newInput, int64& nAmount);
     bool AddOutput(CTxOut& newOutput);
@@ -2496,6 +2502,8 @@ public:
     )
 
 };
+
+void ThreadCheckDarkSendPool();
 
 
 
