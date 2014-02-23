@@ -1085,9 +1085,16 @@ int64 static GetBlockValue(int nBits, int nHeight, int64 nFees)
 
     int64 nSubsidy = 0; 
     if(nHeight >= 5465) {
-        nSubsidy = (11111.0 / (pow((dDiff+51.0)/6.0,2.0)));
-        if (nSubsidy > 500) nSubsidy = 500;
-        if (nSubsidy < 25) nSubsidy = 25;
+        if(nHeight >= 17000 && dDiff > 75) { // GPU/ASIC difficulty calc
+            // 2222222/(((x+2600)/9)^2)
+            nSubsidy = (2222222.0 / (pow((dDiff+2600.0)/9.0,2.0)));
+            if (nSubsidy > 25) nSubsidy = 25;
+            if (nSubsidy < 5) nSubsidy = 5;
+        } else { // CPU mining calc
+            nSubsidy = (11111.0 / (pow((dDiff+51.0)/6.0,2.0)));
+            if (nSubsidy > 500) nSubsidy = 500;
+            if (nSubsidy < 25) nSubsidy = 25;
+        }
     } else {
         nSubsidy = (1111.0 / (pow((dDiff+1.0),2.0)));
         if (nSubsidy > 500) nSubsidy = 500;
@@ -1097,8 +1104,8 @@ int64 static GetBlockValue(int nBits, int nHeight, int64 nFees)
     //printf("height %u diff %4.2f reward %i \n", nHeight, dDiff, nSubsidy);
     nSubsidy *= COIN;
 
-    // Subsidy is cut in half every 840000 blocks, which will occur approximately every 2 years
-    nSubsidy >>= (nHeight / 840000); // DarkCoin: 840k blocks in ~2 years
+    // Subsidy is cut in half every 210240 blocks, which will occur approximately every year
+    nSubsidy >>= (nHeight / 210240); // DarkCoin: 210k blocks in 1 year
 
     return nSubsidy + nFees;
 }
