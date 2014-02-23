@@ -2356,6 +2356,11 @@ public:
         nPoolDenomination = nNewPoolDenomination;
     }
 
+    int64 GetDenomination()
+    {
+        return nPoolDenomination;
+    }
+
     void SetNull()
     {
         printf("CDarkSendPool::SetNull()\n");

@@ -3406,8 +3406,12 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         pfrom->PushMessage("verack");
         pfrom->ssSend.SetVersion(min(pfrom->nVersion, PROTOCOL_VERSION));
 
-        pfrom->PushMessage("gettxpool");
-        pfrom->ssSend.SetVersion(min(pfrom->nVersion, PROTOCOL_VERSION));
+        //get pool version for all denominations
+        pfrom->PushMessage("gettxpool", COIN*50);
+        pfrom->PushMessage("gettxpool", COIN*10);
+        pfrom->PushMessage("gettxpool", COIN*5);
+        pfrom->PushMessage("gettxpool", COIN*2);
+        pfrom->PushMessage("gettxpool", COIN*1);
         
         if (!pfrom->fInbound)
         {
@@ -3463,12 +3467,15 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
     }
 
     else if (strCommand == "gettxpool") {
-        if (pfrom->nVersion < darkSendPool[COIN*1].MIN_PEER_PROTO_VERSION) {
+        int64 nDenomination;
+        vRecv >> nDenomination;
+
+        if (pfrom->nVersion < darkSendPool[nDenomination].MIN_PEER_PROTO_VERSION) {
             return false;
         }
 
         pfrom->fClient = !(pfrom->nServices & NODE_NETWORK);
-        pfrom->PushMessage("txpool", darkSendPool[COIN*1].GetSessionID(), POOL_STATUS_IDLE);
+        pfrom->PushMessage("txpool", nDenomination, darkSendPool[nDenomination].GetSessionID(), POOL_STATUS_IDLE);
     }
 
     else if (strCommand == "txpool") {        
@@ -3599,7 +3606,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         vRecv >> nDenomination;
 
         if(darkSendPool[nDenomination].ForceReset()){
-            RelayTxPoolForceReset();
+            RelayTxPoolForceReset(nDenomination);
         }
     }
 

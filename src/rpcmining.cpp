@@ -163,31 +163,47 @@ Value getmininginfo(const Array& params, bool fHelp)
 
 Value getpoolinfo(const Array& params, bool fHelp)
 {
-    if (fHelp || params.size() != 0)
+    if (fHelp || params.size() != 1)
         throw runtime_error(
-            "getpoolinfo\n"
+            "getpoolinfo pool_no (1,2,5,10,20,50)\n"
             "Returns an object containing anonymous pool-related information.");
 
+    int nPool = params[0].get_int();
+    /*if(nPool != 1 || nPool != 2 || nPool != 5 || nPool != 10 || nPool != 20 || nPool != 50) {
+        throw runtime_error("Invalid pool number\n");
+    }*/
+
     Object obj;
-    obj.push_back(Pair("state",        darkSendPool[COIN*10].GetState()));
-    obj.push_back(Pair("session_id",   (int)darkSendPool[COIN*10].GetSessionID()));
-    obj.push_back(Pair("pooled_inputs",   darkSendPool[COIN*10].GetVinCount()));
-    obj.push_back(Pair("pooled_outputs",   darkSendPool[COIN*10].GetVoutCount()));
-    obj.push_back(Pair("pooled_signatures",   darkSendPool[COIN*10].GetSignatureCount()));
-    obj.push_back(Pair("my_transactions",   darkSendPool[COIN*10].GetMyTransactionCount()));
+    obj.push_back(Pair("denomination", (int)(darkSendPool[COIN*nPool].GetDenomination()/COIN)));
+    obj.push_back(Pair("state",        darkSendPool[COIN*nPool].GetState()));
+    obj.push_back(Pair("session_id",   (int)darkSendPool[COIN*nPool].GetSessionID()));
+    obj.push_back(Pair("pooled_inputs",   darkSendPool[COIN*nPool].GetVinCount()));
+    obj.push_back(Pair("pooled_outputs",   darkSendPool[COIN*nPool].GetVoutCount()));
+    obj.push_back(Pair("pooled_signatures",   darkSendPool[COIN*nPool].GetSignatureCount()));
+    obj.push_back(Pair("my_transactions",   darkSendPool[COIN*nPool].GetMyTransactionCount()));
     return obj;
 }
 
 Value resetpool(const Array& params, bool fHelp)
 {
-    if (fHelp || params.size() != 0)
+    if (fHelp || params.size() != 1)
         throw runtime_error(
             "resetpool\n"
             "Reset anonymous transaction pool.");
 
     Object obj;
-    obj.push_back(Pair("success",        darkSendPool[COIN*10].ForceReset()));
-    RelayTxPoolForceReset();
+    obj.push_back(Pair("success_50",        darkSendPool[COIN*50].ForceReset()));
+    obj.push_back(Pair("success_20",        darkSendPool[COIN*20].ForceReset()));
+    obj.push_back(Pair("success_10",        darkSendPool[COIN*10].ForceReset()));
+    obj.push_back(Pair("success_5",        darkSendPool[COIN*5].ForceReset()));
+    obj.push_back(Pair("success_2",        darkSendPool[COIN*2].ForceReset()));
+    obj.push_back(Pair("success_1",        darkSendPool[COIN*1].ForceReset()));
+    RelayTxPoolForceReset(COIN*50);
+    RelayTxPoolForceReset(COIN*20);
+    RelayTxPoolForceReset(COIN*10);
+    RelayTxPoolForceReset(COIN*5);
+    RelayTxPoolForceReset(COIN*2);
+    RelayTxPoolForceReset(COIN*1);
 
     return obj;
 }
@@ -200,7 +216,12 @@ Value withdrawpooltx(const Array& params, bool fHelp)
             "Remove my pending transaction from pool.");
 
     Object obj;
-    obj.push_back(Pair("success",        darkSendPool[COIN*10].DeleteMyPending()));
+    obj.push_back(Pair("success_50",        darkSendPool[COIN*50].DeleteMyPending()));
+    obj.push_back(Pair("success_20",        darkSendPool[COIN*20].DeleteMyPending()));
+    obj.push_back(Pair("success_10",        darkSendPool[COIN*10].DeleteMyPending()));
+    obj.push_back(Pair("success_5",        darkSendPool[COIN*5].DeleteMyPending()));
+    obj.push_back(Pair("success_2",        darkSendPool[COIN*2].DeleteMyPending()));
+    obj.push_back(Pair("success_1",        darkSendPool[COIN*1].DeleteMyPending()));
     return obj;
 }
 

@@ -648,6 +648,6 @@ void RelayTxPoolOut(const int64 nDenomination, const unsigned int session_id, co
 void RelayTxPoolSig(const int64 nDenomination, const unsigned int session_id, const CScript& sig, const CTxIn& vin, const CScript& pubKey);
 void RelayTxPoolDeletePending(const int64 nDenomination, const unsigned int session_id, const CTxIn& newInput, const CTxOut newOutput, const CScript newSig,  
     int64 vinEnc, int64 voutEnc, int64 sigEnc, int64 nounce);
-void RelayTxPoolForceReset();
+void RelayTxPoolForceReset(const int64 nDenomination);
 
 #endif

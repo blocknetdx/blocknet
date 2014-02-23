@@ -1963,7 +1963,7 @@ void RelayTxPoolDeletePending(const int64 nDenomination, const unsigned int sess
     }
 }
 
-void RelayTxPoolForceReset()
+void RelayTxPoolForceReset(const int64 nDenomination)
 {
 
     LOCK(cs_vNodes);
@@ -1971,6 +1971,6 @@ void RelayTxPoolForceReset()
     {
         if(!pnode->fRelayTxes)
             continue;
-        pnode->PushMessage("txplr");
+        pnode->PushMessage("txplr", nDenomination);
     }
 }
