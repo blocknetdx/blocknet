@@ -642,12 +642,12 @@ class CTxIn;
 class CTxOut;
 void RelayTransaction(const CTransaction& tx, const uint256& hash);
 void RelayTransaction(const CTransaction& tx, const uint256& hash, const CDataStream& ss);
-void RelayTxPool(const unsigned int session_id, const unsigned int state);
-void RelayTxPoolIn(const unsigned int session_id, const CTxIn& tx, int64& nAmount);
-void RelayTxPoolOut(const unsigned int session_id, const CTxOut& tx);
-void RelayTxPoolSig(const unsigned int session_id, const CScript& sig, const CTxIn& vin, const CScript& pubKey);
-void RelayTxPoolDeletePending(const unsigned int session_id, const CTxIn& newInput, const CTxOut newOutput, const CScript newSig,  
-    const int64 vinEnc, const  int64 voutEnc, const int64 sigEnc, const int64 nounce);
+void RelayTxPool(const int64 nDenomination, const unsigned int session_id, const unsigned int state);
+void RelayTxPoolIn(const int64 nDenomination, const unsigned int session_id, const CTxIn& tx, int64& nAmount);
+void RelayTxPoolOut(const int64 nDenomination, const unsigned int session_id, const CTxOut& tx);
+void RelayTxPoolSig(const int64 nDenomination, const unsigned int session_id, const CScript& sig, const CTxIn& vin, const CScript& pubKey);
+void RelayTxPoolDeletePending(const int64 nDenomination, const unsigned int session_id, const CTxIn& newInput, const CTxOut newOutput, const CScript newSig,  
+    int64 vinEnc, int64 voutEnc, int64 sigEnc, int64 nounce);
 void RelayTxPoolForceReset();
 
 #endif

@@ -104,7 +104,7 @@ extern bool fBenchmark;
 extern int nScriptCheckThreads;
 extern bool fTxIndex;
 extern unsigned int nCoinCacheSize;
-extern CDarkSendPool darkSendPool;
+extern std::map<int64, CDarkSendPool> darkSendPool;
 extern CWallet pmainWallet;
 
 // Settings
@@ -2304,6 +2304,7 @@ class CDarkSendPool
 public:
     static const int MIN_PEER_PROTO_VERSION = 70004;
 
+    int64 nPoolDenomination;
     unsigned int session_id;
     unsigned int next_session_id;
     bool session_locked;
@@ -2348,6 +2349,11 @@ public:
         printf("CDarkSendPool::INIT()\n");
         next_session_id = 1000;
         SetNull();
+    }
+
+    void SetDenomination(int64 nNewPoolDenomination)
+    {
+        nPoolDenomination = nNewPoolDenomination;
     }
 
     void SetNull()

@@ -95,7 +95,13 @@ void Shutdown()
     if (!lockShutdown) return;
 
     /// deal with this in a better (sane?) way
-    darkSendPool.DeleteMyPending();
+    darkSendPool[COIN*50].DeleteMyPending();
+    darkSendPool[COIN*20].DeleteMyPending();
+    darkSendPool[COIN*10].DeleteMyPending();
+    darkSendPool[COIN*5].DeleteMyPending();
+    darkSendPool[COIN*2].DeleteMyPending();
+    darkSendPool[COIN*1].DeleteMyPending();
+
     boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
     
     RenameThread("bitcoin-shutoff");
@@ -1144,6 +1150,17 @@ bool AppInit2(boost::thread_group& threadGroup)
         // Run a thread to flush wallet periodically
         threadGroup.create_thread(boost::bind(&ThreadFlushWalletDB, boost::ref(pwalletMain->strWalletFile)));
     }
+    darkSendPool.insert(make_pair(COIN*50, CDarkSendPool()));
+    darkSendPool.insert(make_pair(COIN*10, CDarkSendPool()));
+    darkSendPool.insert(make_pair(COIN*5, CDarkSendPool()));
+    darkSendPool.insert(make_pair(COIN*2, CDarkSendPool()));
+    darkSendPool.insert(make_pair(COIN*1, CDarkSendPool()));
+
+    darkSendPool[COIN*50].SetDenomination(COIN*50);
+    darkSendPool[COIN*10].SetDenomination(COIN*10);
+    darkSendPool[COIN*5].SetDenomination(COIN*5);
+    darkSendPool[COIN*2].SetDenomination(COIN*2);
+    darkSendPool[COIN*1].SetDenomination(COIN*1);
 
     threadGroup.create_thread(boost::bind(&ThreadCheckDarkSendPool));
 

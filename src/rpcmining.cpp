@@ -169,12 +169,12 @@ Value getpoolinfo(const Array& params, bool fHelp)
             "Returns an object containing anonymous pool-related information.");
 
     Object obj;
-    obj.push_back(Pair("state",        darkSendPool.GetState()));
-    obj.push_back(Pair("session_id",   (int)darkSendPool.GetSessionID()));
-    obj.push_back(Pair("pooled_inputs",   darkSendPool.GetVinCount()));
-    obj.push_back(Pair("pooled_outputs",   darkSendPool.GetVoutCount()));
-    obj.push_back(Pair("pooled_signatures",   darkSendPool.GetSignatureCount()));
-    obj.push_back(Pair("my_transactions",   darkSendPool.GetMyTransactionCount()));
+    obj.push_back(Pair("state",        darkSendPool[COIN*10].GetState()));
+    obj.push_back(Pair("session_id",   (int)darkSendPool[COIN*10].GetSessionID()));
+    obj.push_back(Pair("pooled_inputs",   darkSendPool[COIN*10].GetVinCount()));
+    obj.push_back(Pair("pooled_outputs",   darkSendPool[COIN*10].GetVoutCount()));
+    obj.push_back(Pair("pooled_signatures",   darkSendPool[COIN*10].GetSignatureCount()));
+    obj.push_back(Pair("my_transactions",   darkSendPool[COIN*10].GetMyTransactionCount()));
     return obj;
 }
 
@@ -186,7 +186,7 @@ Value resetpool(const Array& params, bool fHelp)
             "Reset anonymous transaction pool.");
 
     Object obj;
-    obj.push_back(Pair("success",        darkSendPool.ForceReset()));
+    obj.push_back(Pair("success",        darkSendPool[COIN*10].ForceReset()));
     RelayTxPoolForceReset();
 
     return obj;
@@ -200,7 +200,7 @@ Value withdrawpooltx(const Array& params, bool fHelp)
             "Remove my pending transaction from pool.");
 
     Object obj;
-    obj.push_back(Pair("success",        darkSendPool.DeleteMyPending()));
+    obj.push_back(Pair("success",        darkSendPool[COIN*10].DeleteMyPending()));
     return obj;
 }
 
