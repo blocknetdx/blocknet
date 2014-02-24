@@ -1199,16 +1199,17 @@ bool CWallet::SelectCoinsMinOutput(int64 nTargetValue, CTxIn& vin, int64& nValue
         printf("has coinControl\n");
         BOOST_FOREACH(const COutput& out, vCoins)
         {
-            if(out.tx->vout[out.i].nValue > nValueRet){ //more than min
+            if(out.tx->vout[out.i].nValue > nTargetValue){ //more than min
                 vin = CTxIn(out.tx->GetHash(),out.i);
                 pubScript = out.tx->vout[out.i].scriptPubKey; // the inputs PubKey
                 nValueRet = out.tx->vout[out.i].nValue;
                 printf("Found unspent input larger than nValue\n");
-                return (nValueRet >= nTargetValue);
+                return true;
             }
         }
     }
 
+    printf("Can't find unspent output large enough\n");
     return false;
 }
 
@@ -1491,7 +1492,6 @@ string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 
     CScript scriptPubKey;
     scriptPubKey.SetDestination(address);    
 
-    CTxOut out(nValue, scriptPubKey);
     CReserveKey reservekey(this);
 
     //**************
@@ -1499,17 +1499,61 @@ string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 
     int64 nFeeRet = 0; ///need to get a better fee calc
     CCoinControl* coinControl = new CCoinControl();
     int64 nTotalValue = nValue + nFeeRet;
-    // Choose coins to use
-    int64 nValueIn = 0;
-    CScript pubScript = CScript();
-    CTxIn vin;
     
-    if (!SelectCoinsMinOutput(nTotalValue, vin, nValueIn, pubScript, coinControl))
-    {
-        return _("Insufficient funds");
+    int64 amount = nValue;
+    int64 amount_out = 0;
+    BOOST_FOREACH(const int64 d, darkSendPoolDenominations) {
+        if(d <= amount){
+            // Choose coins to use
+            int64 nValueIn = 0;
+            CScript pubScript = CScript();
+            CTxIn vin;
+
+            printf(" %"PRI64d" <= %"PRI64d" \n", d, amount);
+
+            if (!SelectCoinsMinOutput(d, vin, nValueIn, pubScript, coinControl))
+            {
+                return _("Insufficient funds");
+            }
+
+            printf(" ---- %"PRI64d" \n", nValueIn);
+
+            if(darkSendPool[d].GetMyTransactionCount() >= 1){
+                return _("Pool is locked, you can only send 1 transaction at a time");
+            }
+
+            amount -= d;
+            amount_out += d;
+        }
     }
 
-    darkSendPool[COIN*1].SendMoney(vin, out, nFeeRet, *this, nValueIn, pubScript, reservekey);
+    if(amount > 0.01){
+        return _("DarkSend can't send amounts more percise than XXXX.XX");
+    }
+
+    amount = nValue;
+    amount_out = 0;
+    BOOST_FOREACH(const int64 d, darkSendPoolDenominations) {
+        if(d <= amount){
+            // Choose coins to use
+            int64 nValueIn = 0;
+            CScript pubScript = CScript();
+            CTxIn vin;
+
+            printf(" %"PRI64d" <= %"PRI64d" \n", d, amount);
+
+            if (!SelectCoinsMinOutput(d, vin, nValueIn, pubScript, coinControl))
+            {
+                return _("Insufficient funds");
+            }
+            CTxOut out(d, scriptPubKey);
+
+            darkSendPool[d].SendMoney(vin, out, nFeeRet, *this, nValueIn, pubScript, reservekey);
+
+            amount -= d;
+            amount_out += d;
+        }
+    }
 
     return "";
 }

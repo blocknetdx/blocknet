@@ -105,6 +105,7 @@ extern int nScriptCheckThreads;
 extern bool fTxIndex;
 extern unsigned int nCoinCacheSize;
 extern std::map<int64, CDarkSendPool> darkSendPool;
+extern std::vector<int64> darkSendPoolDenominations;
 extern CWallet pmainWallet;
 
 // Settings
@@ -2305,6 +2306,7 @@ public:
     static const int MIN_PEER_PROTO_VERSION = 70004;
 
     int64 nPoolDenomination;
+    float fPoolDenomination;
     unsigned int session_id;
     unsigned int next_session_id;
     bool session_locked;
@@ -2347,6 +2349,8 @@ public:
     CDarkSendPool()
     {
         printf("CDarkSendPool::INIT()\n");
+        nPoolDenomination = 0;
+        fPoolDenomination = 0;
         next_session_id = 1000;
         SetNull();
     }
@@ -2354,6 +2358,7 @@ public:
     void SetDenomination(int64 nNewPoolDenomination)
     {
         nPoolDenomination = nNewPoolDenomination;
+        fPoolDenomination = nPoolDenomination / COIN;
     }
 
     int64 GetDenomination()
@@ -2363,7 +2368,7 @@ public:
 
     void SetNull()
     {
-        printf("CDarkSendPool::SetNull()\n");
+        printf("CDarkSendPool::SetNull(%.2f)\n", fPoolDenomination);
         vin.clear();
         vout.clear();
         vinSig.clear();
@@ -2371,9 +2376,9 @@ public:
         vinAmount.clear();
 
 
-        printf("CDarkSend::SetNull::vin %lu\n", vin.size());
-        printf("CDarkSend::SetNull::vout %lu\n", vout.size());
-        printf("CDarkSend::SetNull::vinSig %lu\n", vinSig.size()); 
+        printf("CDarkSend(%.2f)::SetNull::vin %lu\n", fPoolDenomination, vin.size());
+        printf("CDarkSend(%.2f)::SetNull::vout %lu\n", fPoolDenomination, vout.size());
+        printf("CDarkSend(%.2f)::SetNull::vinSig %lu\n", fPoolDenomination, vinSig.size()); 
 
         state = POOL_STATUS_ACCEPTING_INPUTS;
         myTransaction_locked = false;
@@ -2388,7 +2393,7 @@ public:
         last_time_stage_changed = GetTimeMillis();
         sigCount = 0;
 
-        printf("CDarkSend::SetNull::IsNull %i\n", (int)IsNull());
+        printf("CDarkSend(%.2f)::SetNull::IsNull %i\n", fPoolDenomination, (int)IsNull());
 
         queuedVin.clear();
         queuedVinAmount.clear();
@@ -2399,7 +2404,7 @@ public:
 
         next_session_id++;
         session_id = next_session_id;
-        printf("CDarkSend::SetNull::exit \n");
+        printf("CDarkSend(%.2f)::SetNull::exit \n", fPoolDenomination);
     }
 
     void ResetMyTransaction()
@@ -2423,7 +2428,7 @@ public:
 
     bool IsNull() const
     {   
-        printf("CDarkSend::IsNull %i\n", (int)(state == POOL_STATUS_ACCEPTING_INPUTS && vin.empty() && vout.empty() && myTransaction_locked == false));
+        printf("CDarkSend(%.2f)::IsNull %i\n", fPoolDenomination, (int)(state == POOL_STATUS_ACCEPTING_INPUTS && vin.empty() && vout.empty() && myTransaction_locked == false));
         return (state == POOL_STATUS_ACCEPTING_INPUTS && vin.empty() && vout.empty() && myTransaction_locked == false);
     }
 
@@ -2442,7 +2447,7 @@ public:
         if(session_locked)
             return;
 
-        printf("CDarkSend::SetSessionID - new %u\n", i);
+        printf("CDarkSend(%.2f)::SetSessionID - new %u\n", fPoolDenomination, i);
         session_id = i;
         next_session_id = i;
         session_locked = true;

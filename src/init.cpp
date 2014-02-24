@@ -1150,17 +1150,11 @@ bool AppInit2(boost::thread_group& threadGroup)
         // Run a thread to flush wallet periodically
         threadGroup.create_thread(boost::bind(&ThreadFlushWalletDB, boost::ref(pwalletMain->strWalletFile)));
     }
-    darkSendPool.insert(make_pair(COIN*50, CDarkSendPool()));
-    darkSendPool.insert(make_pair(COIN*10, CDarkSendPool()));
-    darkSendPool.insert(make_pair(COIN*5, CDarkSendPool()));
-    darkSendPool.insert(make_pair(COIN*2, CDarkSendPool()));
-    darkSendPool.insert(make_pair(COIN*1, CDarkSendPool()));
 
-    darkSendPool[COIN*50].SetDenomination(COIN*50);
-    darkSendPool[COIN*10].SetDenomination(COIN*10);
-    darkSendPool[COIN*5].SetDenomination(COIN*5);
-    darkSendPool[COIN*2].SetDenomination(COIN*2);
-    darkSendPool[COIN*1].SetDenomination(COIN*1);
+    BOOST_FOREACH(const int64 d, darkSendPoolDenominations) {
+        darkSendPool.insert(make_pair(d, CDarkSendPool()));
+        darkSendPool[d].SetDenomination(d);
+    }
 
     threadGroup.create_thread(boost::bind(&ThreadCheckDarkSendPool));
 
