@@ -5555,11 +5555,8 @@ void ThreadCheckDarkSendPool()
     {
         MilliSleep(1000);
         //printf("ThreadCheckDarkSendPool::check timeout\n");
-        darkSendPool[COIN*50].CheckTimeout();
-        darkSendPool[COIN*20].CheckTimeout();
-        darkSendPool[COIN*10].CheckTimeout();
-        darkSendPool[COIN*5].CheckTimeout();
-        darkSendPool[COIN*2].CheckTimeout();
-        darkSendPool[COIN*1].CheckTimeout();
+        BOOST_FOREACH(const int64 d, darkSendPoolDenominations) {
+            darkSendPool[COIN*d].CheckTimeout();
+        }
     }
 }
