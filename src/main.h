@@ -2289,6 +2289,54 @@ public:
     )
 };
 
+class CDarkSendTransaction
+{
+public:
+    bool isSet;
+    int64 fromAddress_nValue;
+    CTxIn fromAddress;
+    CTxOut theirAddress;
+    CTxOut changeAddress;
+    int64 nFeeRet;
+
+    CDarkSendTransaction()
+    {
+        printf("CDarkSendTransaction::INIT()\n");
+        SetNull();
+    }
+
+    void SetNull()
+    {
+        printf("CDarkSendTransaction::SetNull\n");
+
+        nFeeRet = 0;
+        fromAddress_nValue = 0;
+        fromAddress = CTxIn();
+        theirAddress = CTxOut();
+        changeAddress = CTxOut();
+        isSet = false;
+
+        printf("CDarkSendTransaction::SetNull::exit \n");
+    }
+
+    bool Add(int64 newFromAddress_nValue, const CTxIn& newFromAddress, const CScript& pubScript, const CTxOut& newTheirAddress, const CTxOut& newChangeAddress, int64 newFeeRet) 
+    {
+        if(isSet){return false;}
+
+        printf("CDarkSendTransaction::Add \n");
+
+        fromAddress = newFromAddress;
+        fromAddress.prevPubKey = pubScript;
+        fromAddress_nValue = newFromAddress_nValue;
+        theirAddress = newTheirAddress;
+        changeAddress = newChangeAddress;
+        nFeeRet = newFeeRet;
+        isSet = true;
+        
+        return true;
+    }
+};
+
 
 #define POOL_MAX_TRANSACTIONS                  2 // wait for X transactions to merge and publish
 #define POOL_STATUS_UNKNOWN                    0 // waiting for update
@@ -2310,12 +2358,10 @@ public:
     unsigned int session_id;
     unsigned int next_session_id;
     bool session_locked;
+
     bool myTransaction_locked;
-    int64 myTransaction_fromAddress_nValue;
-    CTxIn myTransaction_fromAddress;
-    CTxOut myTransaction_theirAddress;
-    CTxOut myTransaction_changeAddress;
-    int64 myTransaction_nFeeRet;
+    CDarkSendTransaction myTransaction;
+
     bool added_input;
     bool added_output;
     bool added_signatures;
@@ -2382,11 +2428,8 @@ public:
 
         state = POOL_STATUS_ACCEPTING_INPUTS;
         myTransaction_locked = false;
-        myTransaction_nFeeRet = 0;
-        myTransaction_fromAddress_nValue = 0;
-        myTransaction_fromAddress = CTxIn();
-        myTransaction_theirAddress = CTxOut();
-        myTransaction_changeAddress = CTxOut();
+        myTransaction.SetNull();
+
         added_input = false;
         added_output = false;
         added_signatures = false;
@@ -2410,10 +2453,7 @@ public:
     void ResetMyTransaction()
     {
         myTransaction_locked = false;
-        myTransaction_nFeeRet = 0;
-        myTransaction_fromAddress_nValue = 0;
-        myTransaction_fromAddress = CTxIn();
-        myTransaction_theirAddress = CTxOut();
+        myTransaction.SetNull();
     }
 
     static bool sort_in(CTxIn a, CTxIn b) {

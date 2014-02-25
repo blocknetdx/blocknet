@@ -5073,8 +5073,8 @@ void CDarkSendPool::AddQueuedInput()
     printf("CDarkSendPool(%.2f)::AddQueuedInput 2\n", fPoolDenomination);
     if(myTransaction_locked){
         printf("CDarkSendPool(%.2f)::AddQueuedInput: adding my input\n", fPoolDenomination);
-        AddInput(myTransaction_fromAddress, myTransaction_fromAddress_nValue);
-        RelayTxPoolIn(nPoolDenomination, session_id, myTransaction_fromAddress, myTransaction_fromAddress_nValue);
+        AddInput(myTransaction.fromAddress, myTransaction.fromAddress_nValue);
+        RelayTxPoolIn(nPoolDenomination, session_id, myTransaction.fromAddress, myTransaction.fromAddress_nValue);
     }
 
     for(unsigned int i = 0; i < queuedVin.size(); i++){
@@ -5096,12 +5096,12 @@ void CDarkSendPool::AddQueuedOutput()
     printf("CDarkSendPool(%.2f)::AddQueuedOutput\n", fPoolDenomination);
     if(myTransaction_locked){
         printf("CDarkSendPool(%.2f)::AddQueuedOutput: adding my output\n", fPoolDenomination);
-        AddOutput(myTransaction_theirAddress);
-        RelayTxPoolOut(nPoolDenomination, session_id, myTransaction_theirAddress);
+        AddOutput(myTransaction.theirAddress);
+        RelayTxPoolOut(nPoolDenomination, session_id, myTransaction.theirAddress);
         
         printf("CDarkSendPool(%.2f)::AddQueuedOutput: adding my output -- change\n", fPoolDenomination);
-        AddOutput(myTransaction_changeAddress);
-        RelayTxPoolOut(nPoolDenomination, session_id, myTransaction_changeAddress);
+        AddOutput(myTransaction.changeAddress);
+        RelayTxPoolOut(nPoolDenomination, session_id, myTransaction.changeAddress);
     }
 
     for(unsigned int i = 0; i < queuedVout.size(); i++){
@@ -5200,7 +5200,7 @@ void CDarkSendPool::Check()
             int i = 0;
             BOOST_FOREACH(const CTxIn& txin, txNew.vin)
             {
-                if(txin == myTransaction_fromAddress){
+                if(txin == myTransaction.fromAddress){
                     printf("CDarkSendPool(%.2f)::Check() - marking vin %i", fPoolDenomination, i);
                     CWalletTx &coin = pwalletMain->mapWallet[txin.prevout.hash];
                     coin.BindWallet(pwalletMain);
@@ -5265,21 +5265,21 @@ void CDarkSendPool::Sign(){
         int mine = -1;
         for(unsigned int i = 0; i < vin.size(); i++){
             txNew.vin.push_back(vin[i]);
-            if(vin[i] == myTransaction_fromAddress){
+            if(vin[i] == myTransaction.fromAddress){
                 mine = i;
             }
         }
         if(mine >= 0){ //might have to do this one input at a time?
             int n = mine;
             printf("CDarkSendPool(%.2f)::Sign - Signing my input %i\n", fPoolDenomination, mine);
-            if(!SignSignature(*keystore, myTransaction_fromAddress.prevPubKey, txNew, n, int(SIGHASH_ALL|SIGHASH_ANYONECANPAY))) { // changes scriptSig
+            if(!SignSignature(*keystore, myTransaction.fromAddress.prevPubKey, txNew, n, int(SIGHASH_ALL|SIGHASH_ANYONECANPAY))) { // changes scriptSig
                 printf("CDarkSendPool(%.2f)::Sign - Unable to sign my own transaction!!! GAH! \n", fPoolDenomination);
                 SetNull();
             }
 
-            AddScriptSig(txNew.vin[n].scriptSig, myTransaction_fromAddress, myTransaction_fromAddress.prevPubKey);
+            AddScriptSig(txNew.vin[n].scriptSig, myTransaction.fromAddress, myTransaction.fromAddress.prevPubKey);
             printf("CDarkSendPool(%.2f)::Sign - added my scriptSig %s\n", fPoolDenomination, txNew.vin[n].scriptSig.ToString().substr(0,24).c_str());
-            RelayTxPoolSig(nPoolDenomination, session_id, txNew.vin[n].scriptSig, myTransaction_fromAddress, myTransaction_fromAddress.prevPubKey);
+            RelayTxPoolSig(nPoolDenomination, session_id, txNew.vin[n].scriptSig, myTransaction.fromAddress, myTransaction.fromAddress.prevPubKey);
         }
         
         printf("CDarkSendPool(%.2f)::Sign - txNew:\n%s", fPoolDenomination, txNew.ToString().c_str());
@@ -5454,7 +5454,7 @@ int CDarkSendPool::DeleteMyPending(){
     if(myTransaction_locked){
         int64 i = 99999;
         printf("CDarkSendPool(%.2f)::DeletePending() - Withdrew pending transaction!", fPoolDenomination);
-        RelayTxPoolDeletePending(nPoolDenomination, session_id, myTransaction_fromAddress, myTransaction_theirAddress, CScript(), i, i, i, i);
+        RelayTxPoolDeletePending(nPoolDenomination, session_id, myTransaction.fromAddress, myTransaction.theirAddress, CScript(), i, i, i, i);
         ResetMyTransaction();
         return 1;
     } else {
@@ -5496,11 +5496,7 @@ void CDarkSendPool::SendMoney(const CTxIn& from, const CTxOut& to, int64& nFeeRe
         printf("CDarkSendPool(%.2f)::SendMoney() - to.nValue %+"PRI64d"\n", fPoolDenomination, to.nValue);
         printf("CDarkSendPool(%.2f)::SendMoney() - from_nValue-to.nValue-nFeeRet %+"PRI64d"\n", fPoolDenomination, from_nValue-to.nValue-nFeeRet);
 
-
-        myTransaction_fromAddress = from;
-        myTransaction_fromAddress.prevPubKey = pubScript;
-        myTransaction_theirAddress = to;
-        //myTransaction_theirAddress.nValue = from_nValue-nFeeRet; //assign full input to output
+        //myTransaction.theirAddress.nValue = from_nValue-nFeeRet; //assign full input to output
         reservekey = &newReserveKey;
 
         CScript scriptChange;
@@ -5509,11 +5505,15 @@ void CDarkSendPool::SendMoney(const CTxIn& from, const CTxOut& to, int64& nFeeRe
         scriptChange.SetDestination(vchPubKey.GetID());
 
         //todo, handle zero change
-        myTransaction_changeAddress = CTxOut(from_nValue-to.nValue-nFeeRet, scriptChange);
+        CTxOut change = CTxOut(from_nValue-to.nValue-nFeeRet, scriptChange);
         
-        myTransaction_nFeeRet = nFeeRet;
-        myTransaction_fromAddress_nValue = from_nValue;
+        printf("from %s\n", from.ToString().c_str());
+
+        myTransaction.Add(from_nValue, from, pubScript, to, change, nFeeRet);
         myTransaction_locked = true;
+
+        printf("myTransaction %s\n", myTransaction.fromAddress.ToString().c_str());
+
         keystore = &newKeys;
 
         // add change address to addressbook
@@ -5525,7 +5525,7 @@ void CDarkSendPool::SendMoney(const CTxIn& from, const CTxOut& to, int64& nFeeRe
             CTxDestination dest;
             std::string strLabel = "";
 
-            if (ExtractDestination(myTransaction_changeAddress.scriptPubKey, dest))
+            if (ExtractDestination(myTransaction.changeAddress.scriptPubKey, dest))
             {
                 std::map<CTxDestination, std::string>::iterator mi = pwalletMain->mapAddressBook.find(dest);
 
