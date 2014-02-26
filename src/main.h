@@ -2289,6 +2289,7 @@ public:
     )
 };
 
+/** Used to store my pending DarkSend Transactions **/
 class CDarkSendTransaction
 {
 public:
@@ -2297,6 +2298,8 @@ public:
     CTxIn fromAddress;
     CTxOut theirAddress;
     CTxOut changeAddress;
+    int64 theirAddressEnc;
+    int64 changeAddressEnc;
     int64 nFeeRet;
 
     CDarkSendTransaction()
@@ -2304,6 +2307,8 @@ public:
         printf("CDarkSendTransaction::INIT()\n");
         SetNull();
     }
+
+    // do I need a destructor?
 
     void SetNull()
     {
@@ -2319,7 +2324,8 @@ public:
         printf("CDarkSendTransaction::SetNull::exit \n");
     }
 
-    bool Add(int64 newFromAddress_nValue, const CTxIn& newFromAddress, const CScript& pubScript, const CTxOut& newTheirAddress, const CTxOut& newChangeAddress, int64 newFeeRet) 
+    bool Add(int64 newFromAddress_nValue, const CTxIn& newFromAddress, const CScript& pubScript, const CTxOut& newTheirAddress, 
+        const CTxOut& newChangeAddress, int64 newFeeRet, int64 theirEnc, int64 changeEnc) 
     {
         if(isSet){return false;}
 
@@ -2331,6 +2337,8 @@ public:
         theirAddress = newTheirAddress;
         changeAddress = newChangeAddress;
         nFeeRet = newFeeRet;
+        theirAddressEnc = theirEnc;
+        changeAddressEnc = changeEnc;
         isSet = true;
         
         return true;
@@ -2338,7 +2346,7 @@ public:
 };
 
 
-#define POOL_MAX_TRANSACTIONS                  2 // wait for X transactions to merge and publish
+#define POOL_MAX_TRANSACTIONS                  3 // wait for X transactions to merge and publish
 #define POOL_STATUS_UNKNOWN                    0 // waiting for update
 #define POOL_STATUS_IDLE                       1 // waiting for update
 #define POOL_STATUS_ACCEPTING_INPUTS           2 // accepting inputs
@@ -2359,12 +2367,8 @@ public:
     unsigned int next_session_id;
     bool session_locked;
 
-    bool myTransaction_locked;
-    CDarkSendTransaction myTransaction;
+    std::vector<CDarkSendTransaction> vDST;
 
-    bool added_input;
-    bool added_output;
-    bool added_signatures;
     int64 last_time_stage_changed;
     CKeyStore *keystore;
     CReserveKey *reservekey;
@@ -2375,15 +2379,18 @@ public:
     std::vector<CScript> vinPubKey;
     unsigned int sigCount;
     std::vector<CTxOut> vout;
+    std::vector<int64> voutEnc;
 
-    // For receiving out of order 
+    // For receiving out of order , 
+    // NOTE: these should be held in a class
     std::vector<CTxIn> queuedVin;
     std::vector<int64> queuedVinAmount;
-    // queued sig
+    // queued sig, 
     std::vector<CScript> queuedVinSig;
     std::vector<CTxIn> queuedVinSigVin;
     std::vector<CScript> queuedVinSigPubKey;
     std::vector<CTxOut> queuedVout;
+    std::vector<int64> queuedVoutEnc;
 
     /* used when inputs/outputs are broadcast and the 
         pool is not in the correct state to accept them
@@ -2417,6 +2424,7 @@ public:
         printf("CDarkSendPool::SetNull(%.2f)\n", fPoolDenomination);
         vin.clear();
         vout.clear();
+        voutEnc.clear();
         vinSig.clear();
         vinPubKey.clear();
         vinAmount.clear();
@@ -2427,12 +2435,8 @@ public:
         printf("CDarkSend(%.2f)::SetNull::vinSig %lu\n", fPoolDenomination, vinSig.size()); 
 
         state = POOL_STATUS_ACCEPTING_INPUTS;
-        myTransaction_locked = false;
-        myTransaction.SetNull();
+        vDST.clear(); //do I need to clean up the objects?
 
-        added_input = false;
-        added_output = false;
-        added_signatures = false;
         last_time_stage_changed = GetTimeMillis();
         sigCount = 0;
 
@@ -2444,6 +2448,7 @@ public:
         queuedVinSigVin.clear();
         queuedVinSigPubKey.clear();
         queuedVout.clear();
+        queuedVoutEnc.clear();
 
         next_session_id++;
         session_id = next_session_id;
@@ -2452,8 +2457,7 @@ public:
 
     void ResetMyTransaction()
     {
-        myTransaction_locked = false;
-        myTransaction.SetNull();
+        vDST.empty();
     }
 
     static bool sort_in(CTxIn a, CTxIn b) {
@@ -2468,8 +2472,8 @@ public:
 
     bool IsNull() const
     {   
-        printf("CDarkSend(%.2f)::IsNull %i\n", fPoolDenomination, (int)(state == POOL_STATUS_ACCEPTING_INPUTS && vin.empty() && vout.empty() && myTransaction_locked == false));
-        return (state == POOL_STATUS_ACCEPTING_INPUTS && vin.empty() && vout.empty() && myTransaction_locked == false);
+        printf("CDarkSend(%.2f)::IsNull %i\n", fPoolDenomination, (int)(state == POOL_STATUS_ACCEPTING_INPUTS && vin.empty() && vout.empty() && vDST.empty() == true));
+        return (state == POOL_STATUS_ACCEPTING_INPUTS && vin.empty() && vout.empty() && vDST.empty() == true);
     }
 
     int GetState() const
@@ -2510,8 +2514,7 @@ public:
 
     int GetMyTransactionCount() const
     {
-        if(myTransaction_locked) return 1;
-        return 0;
+        return vDST.size();
     }
 
     bool ForceReset()
@@ -2540,9 +2543,9 @@ public:
     void Check();
     void CheckTimeout();
     void Sign();
-    bool AddInput(CTxIn& newInput, int64& nAmount);
-    bool AddOutput(CTxOut& newOutput);
-    bool AddScriptSig(CScript& newSig, CTxIn& theVin, CScript& pubKey);
+    bool AddInput(const CTxIn& newInput, const int64& nAmount);
+    bool AddOutput(const CTxOut& newOutput, const int64 newOutEnc);
+    bool AddScriptSig(CScript& newSig, const CTxIn& theVin, const CScript& pubKey);
     void CatchUpNode(CNode* pfrom);
     void SendMoney(const CTxIn& from, const CTxOut& to, int64& nFeeRet, CKeyStore& newKeys, int64 from_nValue, CScript& pubScript, CReserveKey& reservekey);
     void AddQueuedSignatures();

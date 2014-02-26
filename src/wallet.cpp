@@ -1518,8 +1518,8 @@ string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 
 
             printf(" ---- %"PRI64d" \n", nValueIn);
 
-            if(darkSendPool[d].GetMyTransactionCount() >= 1){
-                return _("Pool is locked, you can only send 1 transaction at a time");
+            if(darkSendPool[d].GetMyTransactionCount() >= 3){
+                return _("Pool is locked, you can only send 3 transactions at a time");
             }
 
             amount -= d;
@@ -1547,6 +1547,7 @@ string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 
                 return _("Insufficient funds");
             }
             CTxOut out(d, scriptPubKey);
+            LockCoin(vin.prevout);
 
             darkSendPool[d].SendMoney(vin, out, nFeeRet, *this, nValueIn, pubScript, reservekey);
 

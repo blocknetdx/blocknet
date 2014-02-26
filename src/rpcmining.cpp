@@ -192,6 +192,7 @@ Value resetpool(const Array& params, bool fHelp)
             "Reset anonymous transaction pool.");
 
     Object obj;
+    
     obj.push_back(Pair("success_50",        darkSendPool[COIN*50].ForceReset()));
     obj.push_back(Pair("success_20",        darkSendPool[COIN*20].ForceReset()));
     obj.push_back(Pair("success_10",        darkSendPool[COIN*10].ForceReset()));
