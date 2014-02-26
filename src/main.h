@@ -2408,12 +2408,8 @@ public:
         SetNull();
     }
 
-    void SetDenomination(int64 nNewPoolDenomination)
-    {
-        nPoolDenomination = nNewPoolDenomination;
-        fPoolDenomination = nPoolDenomination / COIN;
-    }
-
+    void SetDenomination(int64 nNewPoolDenomination);
+    
     int64 GetDenomination()
     {
         return nPoolDenomination;

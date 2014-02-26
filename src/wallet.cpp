@@ -1499,9 +1499,22 @@ string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 
     int64 nFeeRet = 0; ///need to get a better fee calc
     CCoinControl* coinControl = new CCoinControl();
     int64 nTotalValue = nValue + nFeeRet;
-    
-    int64 amount = nValue;
+
+    int64 amount = roundUp64(nTotalValue, COIN/100);
     int64 amount_out = 0;
+
+
+    printf(" amount %"PRI64d"\n", amount);
+    printf(" nValue %"PRI64d"\n", nValue);
+
+    if(amount > 1000*COIN){
+        return _("DarkSend can't send amounts more than 1000DRK");
+    }
+
+    if(nValue != amount){
+        return _("DarkSend can't send amounts more percise than XXXX.XX DRK");
+    }
+
     BOOST_FOREACH(const int64 d, darkSendPoolDenominations) {
         if(d <= amount){
             // Choose coins to use
@@ -1527,11 +1540,11 @@ string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 
         }
     }
 
-    if(amount > 0.01){
-        return _("DarkSend can't send amounts more percise than XXXX.XX");
+    if(amount > 0){
+        return _("DarkSend can't send that amount for some reason, please report to dev");
     }
 
-    amount = nValue;
+    amount = roundUp64(nTotalValue, COIN/100);
     amount_out = 0;
     BOOST_FOREACH(const int64 d, darkSendPoolDenominations) {
         if(d <= amount){

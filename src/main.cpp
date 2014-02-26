@@ -54,7 +54,9 @@ unsigned int nCoinCacheSize = 5000;
 
 // create DarkSend pools
 map<int64, CDarkSendPool> darkSendPool;
-vector<int64> darkSendPoolDenominations = boost::assign::list_of(COIN*50)(COIN*10)(COIN*5)(COIN*2)(COIN*1);
+vector<int64> darkSendPoolDenominations = 
+boost::assign::list_of(COIN*1000)(COIN*500)(COIN*100)(COIN*50)(COIN*20)(COIN*10)
+(COIN*5)(COIN*2)(COIN*1)(COIN*0.5)(COIN*0.25)(COIN*0.10)(COIN*0.05)(COIN*0.01);
 
 /** Fees smaller than this (in satoshi) are considered zero fee (for transaction creation) */
 int64 CTransaction::nMinTxFee = 100000;
@@ -3409,11 +3411,9 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         pfrom->ssSend.SetVersion(min(pfrom->nVersion, PROTOCOL_VERSION));
 
         //get pool version for all denominations
-        pfrom->PushMessage("gettxpool", COIN*50);
-        pfrom->PushMessage("gettxpool", COIN*10);
-        pfrom->PushMessage("gettxpool", COIN*5);
-        pfrom->PushMessage("gettxpool", COIN*2);
-        pfrom->PushMessage("gettxpool", COIN*1);
+        BOOST_FOREACH(const int64 d, darkSendPoolDenominations) {
+            pfrom->PushMessage("gettxpool", COIN*d);
+        }
         
         if (!pfrom->fInbound)
         {
@@ -5067,6 +5067,15 @@ public:
 
 /* *** BEGIN DARKSEND MAGIC - (Contact evan@darkcoin.io with questions/comments) *******************/
 
+void CDarkSendPool::SetDenomination(int64 nNewPoolDenomination)
+{
+    nPoolDenomination = nNewPoolDenomination;
+    float coin100 = COIN;
+    fPoolDenomination = nPoolDenomination / coin100;
+    printf("CDarkSendPool::SetDenomination(%"PRI64d", %.2f)\n", nPoolDenomination, fPoolDenomination);
+}
+
+
 void CDarkSendPool::AddQueuedInput()
 {
     printf("CDarkSendPool(%.2f)::AddQueuedInput \n", fPoolDenomination);
@@ -5319,13 +5328,13 @@ bool CDarkSendPool::AddInput(const CTxIn& newInput, const int64& nAmount){
 bool CDarkSendPool::AddOutput(const CTxOut& newOutput, const int64 newOutEnc){
     for(unsigned int i = 0; i < vout.size(); i++){
         if(vout[i] == newOutput && voutEnc[i] == newOutEnc) {
-            printf("CDarkSendPool(%.2f)::AddOutput -- Detected duplicate output -- %s\n", fPoolDenomination, newInput.ToString().c_str());
+            printf("CDarkSendPool(%.2f)::AddOutput -- Detected duplicate output -- %s\n", fPoolDenomination, newOutput.ToString().c_str());
             return false;
         }
     }
     for(unsigned int i = 0; i < queuedVout.size(); i++){
         if(queuedVout[i] == newOutput && queuedVoutEnc[i] == newOutEnc) {
-            printf("CDarkSendPool(%.2f)::AddOutput -- Detected duplicate output -- queued -- %s\n", fPoolDenomination, newInput.ToString().c_str());
+            printf("CDarkSendPool(%.2f)::AddOutput -- Detected duplicate output -- queued -- %s\n", fPoolDenomination, newOutput.ToString().c_str());
             return false;
         }
     }

@@ -200,6 +200,18 @@ uint256 GetRandHash()
 }
 
 
+int64 roundUp64(int64 numToRound, int64 multiple)
+{ 
+ if(multiple == 0) 
+ { 
+  return numToRound; 
+ } 
+
+ int remainder = numToRound % multiple;
+ if (remainder == 0)
+  return numToRound;
+ return numToRound + multiple - remainder;
+} 
 
 
 

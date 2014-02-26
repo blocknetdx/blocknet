@@ -232,13 +232,7 @@ std::string FormatSubVersion(const std::string& name, int nClientVersion, const 
 void AddTimeData(const CNetAddr& ip, int64 nTime);
 void runCommand(std::string strCommand);
 
-
-
-
-
-
-
-
+int64 roundUp64(int64 numToRound, int64 multiple);
 
 inline std::string i64tostr(int64 n)
 {
