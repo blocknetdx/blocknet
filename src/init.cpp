@@ -1096,7 +1096,16 @@ bool AppInit2(boost::thread_group& threadGroup)
     }
     threadGroup.create_thread(boost::bind(&ThreadImport, vImportFiles));
 
-    // ********************************************************* Step 10: load peers
+    // ********************************************************* Step 10: setup DarkSend
+
+    BOOST_FOREACH(const int64 d, darkSendPoolDenominations) {
+        darkSendPool.insert(make_pair(d, CDarkSendPool()));
+        darkSendPool[d].SetDenomination(d);
+    }
+
+    threadGroup.create_thread(boost::bind(&ThreadCheckDarkSendPool));
+
+    // ********************************************************* Step 11: load peers
 
     uiInterface.InitMessage(_("Loading addresses..."));
 
@@ -1111,7 +1120,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     printf("Loaded %i addresses from peers.dat  %"PRI64d"ms\n",
            addrman.size(), GetTimeMillis() - nStart);
 
-    // ********************************************************* Step 11: start node
+    // ********************************************************* Step 12: start node
 
     if (!CheckDiskSpace())
         return false;
@@ -1139,7 +1148,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     if (pwalletMain)
         GenerateBitcoins(GetBoolArg("-gen", false), pwalletMain);
 
-    // ********************************************************* Step 12: finished
+    // ********************************************************* Step 13: finished
 
     uiInterface.InitMessage(_("Done loading"));
 
@@ -1150,13 +1159,6 @@ bool AppInit2(boost::thread_group& threadGroup)
         // Run a thread to flush wallet periodically
         threadGroup.create_thread(boost::bind(&ThreadFlushWalletDB, boost::ref(pwalletMain->strWalletFile)));
     }
-
-    BOOST_FOREACH(const int64 d, darkSendPoolDenominations) {
-        darkSendPool.insert(make_pair(d, CDarkSendPool()));
-        darkSendPool[d].SetDenomination(d);
-    }
-
-    threadGroup.create_thread(boost::bind(&ThreadCheckDarkSendPool));
 
     return !fRequestShutdown;
 }

@@ -3412,7 +3412,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         //get pool version for all denominations
         BOOST_FOREACH(const int64 d, darkSendPoolDenominations) {
-            pfrom->PushMessage("gettxpool", COIN*d);
+            pfrom->PushMessage("gettxpool", d);
         }
         
         if (!pfrom->fInbound)
@@ -5065,7 +5065,17 @@ public:
 } instance_of_cmaincleanup;
 
 
-/* *** BEGIN DARKSEND MAGIC - (Contact evan@darkcoin.io with questions/comments) *******************/
+/* *** BEGIN DARKSEND MAGIC - DARKCOIN **********
+    Copyright 2014, written By: 
+        eduffield - evan@darkcoin.io
+        InternetApe - kyle@darkcoin.io
+
+    Pool Documentation: 
+        Stages - (1,2,3,4,5,6)
+
+    API Usage:
+    *********************************************
+*/
 
 void CDarkSendPool::SetDenomination(int64 nNewPoolDenomination)
 {
