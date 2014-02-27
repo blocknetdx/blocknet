@@ -1501,7 +1501,7 @@ string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 
     CCoinControl* coinControl = new CCoinControl();
     int64 nTotalValue = nValue + nFeeRet;
 
-    int64 amount = roundUp64(nValue, COIN/10);
+    int64 amount = roundUp64(nValue, COIN/100);
     int64 amount_out = 0;
 
 
@@ -1513,7 +1513,7 @@ string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 
     }
 
     if(nValue != amount){
-        return _("DarkSend can't send amounts more percise than XXXX.X DRK");
+        return _("DarkSend can't send amounts more percise than XXXX.XX DRK");
     }
 
     amount = roundUp64(nTotalValue, COIN/100);
