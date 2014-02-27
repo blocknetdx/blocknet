@@ -3,6 +3,7 @@ src/darkcoin
 src/darkcoind
 src/test_darkcoin
 src/darksend.py
+src/darksend_refill.py
 .*.swp
 *.*~*
 *.bak
