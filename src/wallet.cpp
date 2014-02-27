@@ -1516,7 +1516,7 @@ string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 
     }
 
     BOOST_FOREACH(const int64 d, darkSendPoolDenominations) {
-        if(d <= amount){
+        while(d <= amount){
             // Choose coins to use
             int64 nValueIn = 0;
             CScript pubScript = CScript();
@@ -1547,7 +1547,7 @@ string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 
     amount = roundUp64(nTotalValue, COIN/100);
     amount_out = 0;
     BOOST_FOREACH(const int64 d, darkSendPoolDenominations) {
-        if(d <= amount){
+        while(d <= amount){
             // Choose coins to use
             int64 nValueIn = 0;
             CScript pubScript = CScript();
