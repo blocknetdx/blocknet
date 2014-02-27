@@ -55,9 +55,7 @@ unsigned int nCoinCacheSize = 5000;
 // create DarkSend pools
 map<int64, CDarkSendPool> darkSendPool;
 vector<int64> darkSendPoolDenominations = 
-boost::assign::list_of(COIN*1000)(COIN*500)(COIN*100)(COIN*50)(COIN*20)(COIN*10)(COIN*5)(COIN*2)(COIN*1)
-// these are all the same pool, stored in 0.5
-(COIN*0.5)(COIN*0.30)(COIN*0.10);
+boost::assign::list_of(COIN*1);
 
 /** Fees smaller than this (in satoshi) are considered zero fee (for transaction creation) */
 int64 CTransaction::nMinTxFee = 100000;
