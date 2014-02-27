@@ -1192,7 +1192,7 @@ bool CWallet::SelectCoins(int64 nTargetValue, set<pair<const CWalletTx*,unsigned
 bool CWallet::SelectCoinsMinOutput(int64 nTargetValue, CTxIn& vin, int64& nValueRet, CScript& pubScript, const CCoinControl* coinControl) const
 {
     vector<COutput> vCoins;
-    AvailableCoins2(vCoins, false);
+    AvailableCoins2(vCoins, true);
     
     // coin control -> return all selected outputs (we want all selected to go into the transaction for sure)
     {

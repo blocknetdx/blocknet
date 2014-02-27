@@ -2359,7 +2359,7 @@ public:
 class CDarkSendPool
 {
 public:
-    static const int MIN_PEER_PROTO_VERSION = 70004;
+    static const int MIN_PEER_PROTO_VERSION = 70005;
 
     int64 nPoolDenomination;
     float fPoolDenomination;
