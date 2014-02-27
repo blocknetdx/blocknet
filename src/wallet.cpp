@@ -1192,13 +1192,14 @@ bool CWallet::SelectCoins(int64 nTargetValue, set<pair<const CWalletTx*,unsigned
 bool CWallet::SelectCoinsMinOutput(int64 nTargetValue, CTxIn& vin, int64& nValueRet, CScript& pubScript, const CCoinControl* coinControl) const
 {
     vector<COutput> vCoins;
-    AvailableCoins2(vCoins, true);
+    AvailableCoins2(vCoins, false);
     
     // coin control -> return all selected outputs (we want all selected to go into the transaction for sure)
     {
-        printf("has coinControl\n");
+        //printf("has coinControl\n");
         BOOST_FOREACH(const COutput& out, vCoins)
         {
+            //printf("Checking input %"PRI64d" > %"PRI64d"\n", out.tx->vout[out.i].nValue, nTargetValue);
             if(out.tx->vout[out.i].nValue > nTargetValue){ //more than min
                 vin = CTxIn(out.tx->GetHash(),out.i);
                 pubScript = out.tx->vout[out.i].scriptPubKey; // the inputs PubKey
@@ -1496,11 +1497,11 @@ string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 
 
     //**************
 
-    int64 nFeeRet = 0; ///need to get a better fee calc
+    int64 nFeeRet = 0; //.01*COIN; ///need to get a better fee calc
     CCoinControl* coinControl = new CCoinControl();
     int64 nTotalValue = nValue + nFeeRet;
 
-    int64 amount = roundUp64(nTotalValue, COIN/10);
+    int64 amount = roundUp64(nValue, COIN/10);
     int64 amount_out = 0;
 
 

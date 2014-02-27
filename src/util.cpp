@@ -70,6 +70,7 @@ using namespace std;
 
 map<string, string> mapArgs;
 map<string, vector<string> > mapMultiArgs;
+bool fMaster = false;
 bool fDebug = false;
 bool fDebugNet = false;
 bool fPrintToConsole = false;

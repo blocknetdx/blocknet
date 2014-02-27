@@ -127,14 +127,9 @@ inline void MilliSleep(int64 n)
 #endif
 
 
-
-
-
-
-
-
 extern std::map<std::string, std::string> mapArgs;
 extern std::map<std::string, std::vector<std::string> > mapMultiArgs;
+extern bool fMaster;
 extern bool fDebug;
 extern bool fDebugNet;
 extern bool fPrintToConsole;

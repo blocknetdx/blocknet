@@ -5182,72 +5182,74 @@ void CDarkSendPool::Check()
         RelayTxPool(nPoolDenomination, session_id, state);
         // make sure my transactions are here
 
-        CWalletTx txNew;
+        if (fMaster) {
+            CWalletTx txNew;
 
-        txNew.BindWallet(pwalletMain);
+            txNew.BindWallet(pwalletMain);
 
-        LOCK2(cs_main, pwalletMain->cs_wallet);
-        {
-
-            txNew.vin.clear();
-            txNew.vout.clear();
-            for(unsigned int i = 0; i < vout.size(); i++){
-                txNew.vout.push_back(vout[i]);
-            }
-
-            for(unsigned int i = 0; i < vin.size(); i++){
-                txNew.vin.push_back(vin[i]);
-                txNew.vin[i].scriptSig = vinSig[i];
-                printf("CDarkSendPool(%.2f)::Check() - Sign with sig %s\n", fPoolDenomination, vinSig[i].ToString().substr(0,24).c_str());
-                printf("CDarkSendPool(%.2f)::Check() - Signed pubkey %s\n", fPoolDenomination, vinPubKey[i].ToString().substr(0,24).c_str());
-                if (!VerifyScript(txNew.vin[i].scriptSig, vinPubKey[i], txNew, i, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC, 0)){
-                    printf("CDarkSendPool(%.2f)::Check() - Signing - ERROR signing input %u\n", fPoolDenomination, i);
-                    //failure will result, how to recover from this?
-                } else {
-                    printf("CDarkSendPool(%.2f)::Check() - Signing - Succesfully signed input %u\n", fPoolDenomination, i);
-                }
-            }
-
-            //int64 nChange = nValueIn - nValue - nFeeRet;
-            printf("CDarkSendPool(%.2f)::Check() - txNew -- compiled all signatures:\n%s", fPoolDenomination, txNew.ToString().c_str());
-           
-            
-            int i = 0;
-            BOOST_FOREACH(const CTxIn& txin, txNew.vin)
+            LOCK2(cs_main, pwalletMain->cs_wallet);
             {
-                BOOST_FOREACH(const CDarkSendTransaction dst, vDST)
-                {
-                    //find my pending transaction that matches
-                    if(txin == dst.fromAddress)
-                    {
-                        printf("CDarkSendPool(%.2f)::Check() - marking vin %i", fPoolDenomination, i);
-                        CWalletTx &coin = pwalletMain->mapWallet[txin.prevout.hash];
-                        coin.BindWallet(pwalletMain);
-                        coin.MarkSpent(txin.prevout.n);
-                        coin.WriteToDisk();
+
+                txNew.vin.clear();
+                txNew.vout.clear();
+                for(unsigned int i = 0; i < vout.size(); i++){
+                    txNew.vout.push_back(vout[i]);
+                }
+
+                for(unsigned int i = 0; i < vin.size(); i++){
+                    txNew.vin.push_back(vin[i]);
+                    txNew.vin[i].scriptSig = vinSig[i];
+                    printf("CDarkSendPool(%.2f)::Check() - Sign with sig %s\n", fPoolDenomination, vinSig[i].ToString().substr(0,24).c_str());
+                    printf("CDarkSendPool(%.2f)::Check() - Signed pubkey %s\n", fPoolDenomination, vinPubKey[i].ToString().substr(0,24).c_str());
+                    if (!VerifyScript(txNew.vin[i].scriptSig, vinPubKey[i], txNew, i, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC, 0)){
+                        printf("CDarkSendPool(%.2f)::Check() - Signing - ERROR signing input %u\n", fPoolDenomination, i);
+                        //failure will result, how to recover from this?
+                    } else {
+                        printf("CDarkSendPool(%.2f)::Check() - Signing - Succesfully signed input %u\n", fPoolDenomination, i);
                     }
                 }
-                i++;
-            }
 
-            // Broadcast
-            if (!txNew.AcceptToMemoryPool(true, false))
-            {
-                printf("CDarkSendPool(%.2f)::Check() - CommitTransaction : Error: Transaction not valid\n", fPoolDenomination);
-                //do something... ???
-                SetNull();
-                UpdateState(POOL_STATUS_ACCEPTING_INPUTS);
-                return;
-            }
+                //int64 nChange = nValueIn - nValue - nFeeRet;
+                printf("CDarkSendPool(%.2f)::Check() - txNew -- compiled all signatures:\n%s", fPoolDenomination, txNew.ToString().c_str());
+               
+                
+                int i = 0;
+                BOOST_FOREACH(const CTxIn& txin, txNew.vin)
+                {
+                    BOOST_FOREACH(const CDarkSendTransaction dst, vDST)
+                    {
+                        //find my pending transaction that matches
+                        if(txin == dst.fromAddress)
+                        {
+                            printf("CDarkSendPool(%.2f)::Check() - marking vin %i", fPoolDenomination, i);
+                            CWalletTx &coin = pwalletMain->mapWallet[txin.prevout.hash];
+                            coin.BindWallet(pwalletMain);
+                            coin.MarkSpent(txin.prevout.n);
+                            coin.WriteToDisk();
+                        }
+                    }
+                    i++;
+                }
 
-            if(vDST.size() > 0) {
-                // add to my wallet if it's mine
-                pwalletMain->AddToWallet(txNew);
+                // Broadcast
+                if (!txNew.AcceptToMemoryPool(true, false))
+                {
+                    printf("CDarkSendPool(%.2f)::Check() - CommitTransaction : Error: Transaction not valid\n", fPoolDenomination);
+                    //do something... ???
+                    SetNull();
+                    UpdateState(POOL_STATUS_ACCEPTING_INPUTS);
+                    return;
+                }
+
+                if(vDST.size() > 0) {
+                    // add to my wallet if it's mine
+                    pwalletMain->AddToWallet(txNew);
+                }
+                txNew.AddSupportingTransactions();
+                txNew.fTimeReceivedIsTxTime = true;
+                
+                txNew.RelayWalletTransaction();
             }
-            txNew.AddSupportingTransactions();
-            txNew.fTimeReceivedIsTxTime = true;
-            
-            txNew.RelayWalletTransaction();
         }
     }
 

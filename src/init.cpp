@@ -1098,6 +1098,10 @@ bool AppInit2(boost::thread_group& threadGroup)
 
     // ********************************************************* Step 10: setup DarkSend
 
+    fMaster = GetBoolArg("-master");
+
+    if(fMaster) {printf("IS DARKSEND MASTER\n");}
+
     BOOST_FOREACH(const int64 d, darkSendPoolDenominations) {
         if(d >= (COIN*0.5)) {
             darkSendPool.insert(make_pair(d, CDarkSendPool()));
