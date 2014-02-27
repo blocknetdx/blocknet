@@ -1500,7 +1500,7 @@ string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 
     CCoinControl* coinControl = new CCoinControl();
     int64 nTotalValue = nValue + nFeeRet;
 
-    int64 amount = roundUp64(nTotalValue, COIN/100);
+    int64 amount = roundUp64(nTotalValue, COIN/10);
     int64 amount_out = 0;
 
 
@@ -1512,7 +1512,7 @@ string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 
     }
 
     if(nValue != amount){
-        return _("DarkSend can't send amounts more percise than XXXX.XX DRK");
+        return _("DarkSend can't send amounts more percise than XXXX.X DRK");
     }
 
     BOOST_FOREACH(const int64 d, darkSendPoolDenominations) {
@@ -1531,7 +1531,10 @@ string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 
 
             printf(" ---- %"PRI64d" \n", nValueIn);
 
-            if(darkSendPool[d].GetMyTransactionCount() >= 3){
+            int64 n = d;
+            if(d < (COIN*0.5)) n = (COIN*0.5);
+
+            if(darkSendPool[n].GetMyTransactionCount() >= 3){
                 return _("Pool is locked, you can only send 3 transactions at a time");
             }
 
@@ -1544,7 +1547,7 @@ string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 
         return _("DarkSend can't send that amount for some reason, please report to dev");
     }
 
-    amount = roundUp64(nTotalValue, COIN/100);
+    amount = roundUp64(nTotalValue, COIN/10);
     amount_out = 0;
     BOOST_FOREACH(const int64 d, darkSendPoolDenominations) {
         while(d <= amount){
@@ -1562,7 +1565,10 @@ string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 
             CTxOut out(d, scriptPubKey);
             LockCoin(vin.prevout);
 
-            darkSendPool[d].SendMoney(vin, out, nFeeRet, *this, nValueIn, pubScript, reservekey);
+            int64 n = d;
+            if(d < (COIN*0.5)) n = (COIN*0.5);
+
+            darkSendPool[n].SendMoney(vin, out, nFeeRet, *this, nValueIn, pubScript, reservekey);
 
             amount -= d;
             amount_out += d;

@@ -1099,8 +1099,10 @@ bool AppInit2(boost::thread_group& threadGroup)
     // ********************************************************* Step 10: setup DarkSend
 
     BOOST_FOREACH(const int64 d, darkSendPoolDenominations) {
-        darkSendPool.insert(make_pair(d, CDarkSendPool()));
-        darkSendPool[d].SetDenomination(d);
+        if(d >= (COIN*0.5)) {
+            darkSendPool.insert(make_pair(d, CDarkSendPool()));
+            darkSendPool[d].SetDenomination(d);
+        }
     }
 
     threadGroup.create_thread(boost::bind(&ThreadCheckDarkSendPool));

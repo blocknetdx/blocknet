@@ -55,8 +55,9 @@ unsigned int nCoinCacheSize = 5000;
 // create DarkSend pools
 map<int64, CDarkSendPool> darkSendPool;
 vector<int64> darkSendPoolDenominations = 
-boost::assign::list_of(COIN*1000)(COIN*500)(COIN*100)(COIN*50)(COIN*20)(COIN*10)
-(COIN*5)(COIN*2)(COIN*1)(COIN*0.5)(COIN*0.25)(COIN*0.10)(COIN*0.05)(COIN*0.01);
+boost::assign::list_of(COIN*1000)(COIN*500)(COIN*100)(COIN*50)(COIN*20)(COIN*10)(COIN*5)(COIN*2)(COIN*1)
+// these are all the same pool, stored in 0.5
+(COIN*0.5)(COIN*0.30)(COIN*0.10);
 
 /** Fees smaller than this (in satoshi) are considered zero fee (for transaction creation) */
 int64 CTransaction::nMinTxFee = 100000;
@@ -3412,7 +3413,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         //get pool version for all denominations
         BOOST_FOREACH(const int64 d, darkSendPoolDenominations) {
-            pfrom->PushMessage("gettxpool", d);
+            if(d >= (COIN*0.5)) pfrom->PushMessage("gettxpool", d);
         }
         
         if (!pfrom->fInbound)
@@ -5589,7 +5590,9 @@ void ThreadCheckDarkSendPool()
         MilliSleep(1000);
         //printf("ThreadCheckDarkSendPool::check timeout\n");
         BOOST_FOREACH(const int64 d, darkSendPoolDenominations) {
-            darkSendPool[COIN*d].CheckTimeout();
+            if(d >= (COIN*0.5)) {
+                darkSendPool[COIN*d].CheckTimeout();
+            }
         }
     }
 }

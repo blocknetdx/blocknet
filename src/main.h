@@ -2346,7 +2346,7 @@ public:
 };
 
 
-#define POOL_MAX_TRANSACTIONS                  2 // wait for X transactions to merge and publish
+#define POOL_MAX_TRANSACTIONS                  4 // wait for X transactions to merge and publish
 #define POOL_STATUS_UNKNOWN                    0 // waiting for update
 #define POOL_STATUS_IDLE                       1 // waiting for update
 #define POOL_STATUS_ACCEPTING_INPUTS           2 // accepting inputs
