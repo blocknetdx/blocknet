@@ -198,16 +198,16 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
         CReserveKey keyChange(wallet);
         int64 nFeeRequired = 0;
         std::string strFailReason;
-        bool fCreated = false; 
+        bool fCreated = false;
 
         if(!isDarkSend) {
             fCreated = wallet->CreateTransaction(vecSend, wtx, keyChange, nFeeRequired, strFailReason, coinControl);
         } else {
             foreach(const SendCoinsRecipient &rcp, recipients)
             {            
-                wallet->SendMoneyToDestinationAnon(CBitcoinAddress(rcp.address.toStdString()).Get(), rcp.amount);
+                strFailReason = wallet->SendMoneyToDestinationAnon(CBitcoinAddress(rcp.address.toStdString()).Get(), rcp.amount);
             }
-            fCreated = true; //need to get message from above
+            if(strFailReason == "") fCreated = true; //need to get message from above
         }
 
         if(!fCreated)
