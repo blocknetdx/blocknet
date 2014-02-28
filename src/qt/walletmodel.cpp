@@ -138,6 +138,7 @@ bool WalletModel::validateAddress(const QString &address)
 WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipient> &recipients, const CCoinControl *coinControl)
 {
     qint64 total = 0;
+    bool isDarkSend = false;
     QSet<QString> setAddress;
     QString hex;
 

@@ -24,6 +24,7 @@
 
 using namespace std;
 QList<qint64> CoinControlDialog::payAmounts;
+QList<qint64> CoinControlDialog::isDarkSend;
 CCoinControl* CoinControlDialog::coinControl = new CCoinControl();
 
 CoinControlDialog::CoinControlDialog(QWidget *parent) :
@@ -422,11 +423,21 @@ void CoinControlDialog::updateLabels(WalletModel *model, QDialog* dialog)
     if (!model) return;
 
     // nPayAmount
+    bool isDarkSend = false;
     qint64 nPayAmount = 0;
     bool fLowOutput = false;
     bool fDust = false;
     unsigned int nQuantityDust = 0;
     CTransaction txDummy;
+
+    foreach(const bool &isTrue, CoinControlDialog::isDarkSend)
+    {
+        if(isTrue) isDarkSend = true;
+    }
+
+    printf("Is Darksend %u\n", isDarkSend);
+
+
     foreach(const qint64 &amount, CoinControlDialog::payAmounts)
     {
         nPayAmount += amount;
