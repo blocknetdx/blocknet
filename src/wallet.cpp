@@ -1513,7 +1513,7 @@ string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 
     }
 
     if(nValue != amount){
-        return _("DarkSend can't send amounts more percise than XXXX.XX DRK");
+        return _("DarkSend can't send amounts more precise than XXXX.XX DRK");
     }
 
     amount = roundUp64(nTotalValue, COIN/100);
