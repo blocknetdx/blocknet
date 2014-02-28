@@ -2474,17 +2474,17 @@ public:
         return state;
     }
 
-    unsigned int GetSessionID() const
+    int64 GetSessionID() const
     {
         return session_id;
     }
 
-    void SetSessionID(unsigned int i)
+    void SetSessionID(int64 i)
     {
         if(session_locked)
             return;
 
-        printf("CDarkSend()::SetSessionID - new %u\n", i);
+        printf("CDarkSend()::SetSessionID - new %"PRI64d"\n", i);
         session_id = i;
         next_session_id = i;
         session_locked = true;

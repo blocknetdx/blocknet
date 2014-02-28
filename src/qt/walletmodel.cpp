@@ -190,13 +190,25 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
             CScript scriptPubKey;
             scriptPubKey.SetDestination(CBitcoinAddress(rcp.address.toStdString()).Get());
             vecSend.push_back(make_pair(scriptPubKey, rcp.amount));
+            printf("IsDarkSend %u\n", rcp.isDarkSend);
+            if(rcp.isDarkSend) {isDarkSend = true;}
         }
 
         CWalletTx wtx;
         CReserveKey keyChange(wallet);
         int64 nFeeRequired = 0;
         std::string strFailReason;
-        bool fCreated = wallet->CreateTransaction(vecSend, wtx, keyChange, nFeeRequired, strFailReason, coinControl);
+        bool fCreated = false; 
+
+        if(!isDarkSend) {
+            fCreated = wallet->CreateTransaction(vecSend, wtx, keyChange, nFeeRequired, strFailReason, coinControl);
+        } else {
+            foreach(const SendCoinsRecipient &rcp, recipients)
+            {            
+                wallet->SendMoneyToDestinationAnon(CBitcoinAddress(rcp.address.toStdString()).Get(), rcp.amount);
+            }
+            fCreated = true; //need to get message from above
+        }
 
         if(!fCreated)
         {
@@ -212,11 +224,16 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
         {
             return Aborted;
         }
-        if(!wallet->CommitTransaction(wtx, keyChange))
+        if(!isDarkSend && !wallet->CommitTransaction(wtx, keyChange))
         {
             return TransactionCommitFailed;
         }
-        hex = QString::fromStdString(wtx.GetHash().GetHex());
+
+        if(isDarkSend) {
+            hex = "";
+        } else {
+            hex = QString::fromStdString(wtx.GetHash().GetHex());
+        }
     }
 
     // Add addresses / update labels that we've sent to to the address book

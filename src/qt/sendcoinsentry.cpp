@@ -74,7 +74,6 @@ void SendCoinsEntry::setModel(WalletModel *model)
         connect(model->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(updateDisplayUnit()));
 
     connect(ui->payAmount, SIGNAL(textChanged()), this, SIGNAL(payAmountChanged()));
-   // connect(ui->isDarkSend, SIGNAL(textChanged()), this, SIGNAL(isDarkSendChanged()));
 
     clear();
 }
@@ -89,7 +88,6 @@ void SendCoinsEntry::clear()
     ui->payTo->clear();
     ui->addAsLabel->clear();
     ui->payAmount->clear();
-    //ui->isDarkSend->clear();
     ui->payTo->setFocus();
     // update the display unit, to not use the default ("BTC")
     updateDisplayUnit();
@@ -136,6 +134,8 @@ SendCoinsRecipient SendCoinsEntry::getValue()
     rv.address = ui->payTo->text();
     rv.label = ui->addAsLabel->text();
     rv.amount = ui->payAmount->value();
+    rv.isDarkSend = false;
+    if(ui->isDarkSend->checkState() == Qt::Checked) rv.isDarkSend = true;
 
     return rv;
 }
@@ -155,6 +155,7 @@ void SendCoinsEntry::setValue(const SendCoinsRecipient &value)
     ui->payTo->setText(value.address);
     ui->addAsLabel->setText(value.label);
     ui->payAmount->setValue(value.amount);
+    ui->isDarkSend->setTristate(value.isDarkSend);
 }
 
 void SendCoinsEntry::setAddress(const QString &address)
