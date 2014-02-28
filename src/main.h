@@ -104,8 +104,7 @@ extern bool fBenchmark;
 extern int nScriptCheckThreads;
 extern bool fTxIndex;
 extern unsigned int nCoinCacheSize;
-extern std::map<int64, CDarkSendPool> darkSendPool;
-extern std::vector<int64> darkSendPoolDenominations;
+extern CDarkSendPool darkSendPool;
 extern CWallet pmainWallet;
 
 // Settings
@@ -2361,9 +2360,7 @@ class CDarkSendPool
 public:
     static const int MIN_PEER_PROTO_VERSION = 70005;
 
-    int64 nPoolDenomination;
-    float fPoolDenomination;
-    unsigned int session_id;
+    int64 session_id;
     unsigned int next_session_id;
     bool session_locked;
 
@@ -2397,27 +2394,23 @@ public:
         for the current pooling
     */
 
+    std::vector<int64> sessions;
+    std::map<int64, std::string> sessionTxID;
+
     unsigned int state;
 
     CDarkSendPool()
     {
         printf("CDarkSendPool::INIT()\n");
-        nPoolDenomination = 0;
-        fPoolDenomination = 0;
         next_session_id = 1000;
         SetNull();
     }
 
-    void SetDenomination(int64 nNewPoolDenomination);
-    
-    int64 GetDenomination()
-    {
-        return nPoolDenomination;
-    }
+    std::string GetSessionTxID(int64 lookupSessionID);
 
     void SetNull()
     {
-        printf("CDarkSendPool::SetNull(%.2f)\n", fPoolDenomination);
+        printf("CDarkSendPool::SetNull()\n");
         vin.clear();
         vout.clear();
         voutEnc.clear();
@@ -2426,9 +2419,9 @@ public:
         vinAmount.clear();
 
 
-        printf("CDarkSend(%.2f)::SetNull::vin %lu\n", fPoolDenomination, vin.size());
-        printf("CDarkSend(%.2f)::SetNull::vout %lu\n", fPoolDenomination, vout.size());
-        printf("CDarkSend(%.2f)::SetNull::vinSig %lu\n", fPoolDenomination, vinSig.size()); 
+        printf("CDarkSend()::SetNull::vin %lu\n", vin.size());
+        printf("CDarkSend()::SetNull::vout %lu\n", vout.size());
+        printf("CDarkSend()::SetNull::vinSig %lu\n", vinSig.size()); 
 
         state = POOL_STATUS_ACCEPTING_INPUTS;
         vDST.clear(); //do I need to clean up the objects?
@@ -2436,7 +2429,7 @@ public:
         last_time_stage_changed = GetTimeMillis();
         sigCount = 0;
 
-        printf("CDarkSend(%.2f)::SetNull::IsNull %i\n", fPoolDenomination, (int)IsNull());
+        printf("CDarkSend()::SetNull::IsNull %i\n", (int)IsNull());
 
         queuedVin.clear();
         queuedVinAmount.clear();
@@ -2448,7 +2441,11 @@ public:
 
         next_session_id++;
         session_id = next_session_id;
-        printf("CDarkSend(%.2f)::SetNull::exit \n", fPoolDenomination);
+
+        sessionTxID.insert(std::make_pair(session_id, "incomplete"));
+        sessions.push_back(session_id);
+
+        printf("CDarkSend()::SetNull::exit \n");
     }
 
     void ResetMyTransaction()
@@ -2468,7 +2465,7 @@ public:
 
     bool IsNull() const
     {   
-        printf("CDarkSend(%.2f)::IsNull %i\n", fPoolDenomination, (int)(state == POOL_STATUS_ACCEPTING_INPUTS && vin.empty() && vout.empty() && vDST.empty() == true));
+        printf("CDarkSend()::IsNull %i\n", (int)(state == POOL_STATUS_ACCEPTING_INPUTS && vin.empty() && vout.empty() && vDST.empty() == true));
         return (state == POOL_STATUS_ACCEPTING_INPUTS && vin.empty() && vout.empty() && vDST.empty() == true);
     }
 
@@ -2487,7 +2484,7 @@ public:
         if(session_locked)
             return;
 
-        printf("CDarkSend(%.2f)::SetSessionID - new %u\n", fPoolDenomination, i);
+        printf("CDarkSend()::SetSessionID - new %u\n", i);
         session_id = i;
         next_session_id = i;
         session_locked = true;

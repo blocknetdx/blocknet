@@ -1508,12 +1508,12 @@ string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 
     printf(" amount %"PRI64d"\n", amount);
     printf(" nValue %"PRI64d"\n", nValue);
 
-    if(amount > 1000*COIN){
-        return _("DarkSend can't send amounts more than 1000DRK");
+    if(amount > 100*COIN){
+        return _("DarkSend can't send amounts more than 100DRK");
     }
 
     if(nValue != amount){
-        return _("DarkSend can't send amounts more precise than XXXX.XX DRK");
+        return _("DarkSend can't send amounts more precise than XX.XX DRK");
     }
 
     amount = roundUp64(nTotalValue, COIN/100);
@@ -1535,7 +1535,7 @@ string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 
 
     int64 n = COIN*1;
 
-    darkSendPool[n].SendMoney(vin, out, nFeeRet, *this, nValueIn, pubScript, reservekey);
+    darkSendPool.SendMoney(vin, out, nFeeRet, *this, nValueIn, pubScript, reservekey);
 
     return "";
 }

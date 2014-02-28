@@ -324,7 +324,25 @@ Value darksend(const Array& params, bool fHelp)
     if (strError != "")
         throw JSONRPCError(RPC_WALLET_ERROR, strError);
 
-    return "";
+    unsigned int session =  darkSendPool.GetSessionID();
+    ostringstream convert;
+    convert << session;
+    return convert.str();
+}
+
+
+Value getdarksendtxid(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() != 1)
+        throw runtime_error(
+            "getdarksendtxid <session_id>\n"
+            "<session_id> is a integer for the darksend pooling session you wish to get the txid for"
+            + HelpRequiringPassphrase());
+
+    // Session ID
+    int64 nSessionID = (int64)params[0].get_real();
+
+    return darkSendPool.GetSessionTxID(nSessionID);
 }
 
 Value listaddressgroupings(const Array& params, bool fHelp)

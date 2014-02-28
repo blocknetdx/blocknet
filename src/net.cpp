@@ -1902,7 +1902,7 @@ void RelayTransaction(const CTransaction& tx, const uint256& hash, const CDataSt
     }
 }
 
-void RelayTxPool(const int64 nDenomination, const unsigned int session_id, const unsigned int state)
+void RelayTxPool(const int64 session_id, const unsigned int state)
 {
     return;
     /*LOCK(cs_vNodes);
@@ -1914,7 +1914,7 @@ void RelayTxPool(const int64 nDenomination, const unsigned int session_id, const
     }*/
 }
 
-void RelayTxPoolIn(const int64 nDenomination, const unsigned int session_id, const CTxIn& tx, const int64& nAmount)
+void RelayTxPoolIn(const int64 session_id, const CTxIn& tx, const int64& nAmount)
 {
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
@@ -1922,11 +1922,11 @@ void RelayTxPoolIn(const int64 nDenomination, const unsigned int session_id, con
         if(!pnode->fRelayTxes)
             continue;
         printf("Sending txpli\n");
-        pnode->PushMessage("txpli", nDenomination, session_id, tx, nAmount);
+        pnode->PushMessage("txpli", session_id, tx, nAmount);
     }
 }
 
-void RelayTxPoolOut(const int64 nDenomination, const unsigned int session_id, const CTxOut& tx, const int64 voutEnc)
+void RelayTxPoolOut(const int64 session_id, const CTxOut& tx, const int64 voutEnc)
 {
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
@@ -1934,11 +1934,11 @@ void RelayTxPoolOut(const int64 nDenomination, const unsigned int session_id, co
         if(!pnode->fRelayTxes)
             continue;
         printf("Sending txplo\n");
-        pnode->PushMessage("txplo", nDenomination, session_id, tx, voutEnc);
+        pnode->PushMessage("txplo", session_id, tx, voutEnc);
     }
 }
 
-void RelayTxPoolSig(const int64 nDenomination, const unsigned int session_id, const CScript& sig, const CTxIn& vin, const CScript& pubKey)
+void RelayTxPoolSig(const int64 session_id, const CScript& sig, const CTxIn& vin, const CScript& pubKey)
 {
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
@@ -1946,11 +1946,11 @@ void RelayTxPoolSig(const int64 nDenomination, const unsigned int session_id, co
         if(!pnode->fRelayTxes)
             continue;
         printf("Sending txpls\n");
-        pnode->PushMessage("txpls", nDenomination, session_id, sig, vin, pubKey);
+        pnode->PushMessage("txpls", session_id, sig, vin, pubKey);
     }
 }
 
-void RelayTxPoolDeletePending(const int64 nDenomination, const unsigned int session_id, const CTxIn& newInput, const CTxOut newOutput, const CScript newSig,  
+void RelayTxPoolDeletePending(const int64 session_id, const CTxIn& newInput, const CTxOut newOutput, const CScript newSig,  
     const int64 vinEnc, const int64 voutEnc, const int64 sigEnc, const int64 nounce)
 {
 
@@ -1959,11 +1959,11 @@ void RelayTxPoolDeletePending(const int64 nDenomination, const unsigned int sess
     {
         if(!pnode->fRelayTxes)
             continue;
-        pnode->PushMessage("txpld", nDenomination, session_id, newInput, newOutput, newSig, vinEnc, voutEnc, sigEnc, nounce);
+        pnode->PushMessage("txpld", session_id, newInput, newOutput, newSig, vinEnc, voutEnc, sigEnc, nounce);
     }
 }
 
-void RelayTxPoolForceReset(const int64 nDenomination)
+void RelayTxPoolForceReset()
 {
 
     LOCK(cs_vNodes);
@@ -1971,6 +1971,6 @@ void RelayTxPoolForceReset(const int64 nDenomination)
     {
         if(!pnode->fRelayTxes)
             continue;
-        pnode->PushMessage("txplr", nDenomination);
+        pnode->PushMessage("txplr");
     }
 }

@@ -53,9 +53,7 @@ bool fTxIndex = false;
 unsigned int nCoinCacheSize = 5000;
 
 // create DarkSend pools
-map<int64, CDarkSendPool> darkSendPool;
-vector<int64> darkSendPoolDenominations = 
-boost::assign::list_of(COIN*1);
+CDarkSendPool darkSendPool;
 
 /** Fees smaller than this (in satoshi) are considered zero fee (for transaction creation) */
 int64 CTransaction::nMinTxFee = 100000;
@@ -3406,10 +3404,8 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         pfrom->PushMessage("verack");
         pfrom->ssSend.SetVersion(min(pfrom->nVersion, PROTOCOL_VERSION));
 
-        //get pool version for all denominations
-        BOOST_FOREACH(const int64 d, darkSendPoolDenominations) {
-            if(d >= (COIN*0.5)) pfrom->PushMessage("gettxpool", d);
-        }
+        //get pool state
+        pfrom->PushMessage("gettxpool");
         
         if (!pfrom->fInbound)
         {
@@ -3465,116 +3461,107 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
     }
 
     else if (strCommand == "gettxpool") {
-        int64 nDenomination;
-        vRecv >> nDenomination;
-
-        if (pfrom->nVersion < darkSendPool[nDenomination].MIN_PEER_PROTO_VERSION) {
+        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION) {
             return false;
         }
 
         pfrom->fClient = !(pfrom->nServices & NODE_NETWORK);
-        pfrom->PushMessage("txpool", nDenomination, darkSendPool[nDenomination].GetSessionID(), POOL_STATUS_IDLE);
+        pfrom->PushMessage("txpool", darkSendPool.GetSessionID(), POOL_STATUS_IDLE);
     }
 
     else if (strCommand == "txpool") {        
         printf("Main::txpool\n");
-        if (pfrom->nVersion < darkSendPool[COIN*1].MIN_PEER_PROTO_VERSION) {
+        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION) {
             return false;
         }
 
-
-        int64 nDenomination;
-        unsigned int session_id;
+        int64 session_id;
         unsigned int state;
-        vRecv >> nDenomination >> session_id >> state;
+        vRecv >> session_id >> state;
 
         if(session_id != 1000) 
-            darkSendPool[nDenomination].SetSessionID(session_id);
+            darkSendPool.SetSessionID(session_id);
     
-        darkSendPool[nDenomination].CatchUpNode(pfrom);
-        darkSendPool[nDenomination].Check();
+        darkSendPool.CatchUpNode(pfrom);
+        darkSendPool.Check();
     }
 
     else if (strCommand == "txpli") { //new coinjoin pool tx vin        
         printf("Main::txpli\n");
-        if (pfrom->nVersion < darkSendPool[COIN*1].MIN_PEER_PROTO_VERSION) {
+        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION) {
             return false;
         }
 
-        int64 nDenomination;
-        unsigned int session_id;
+        int64 session_id;
         CTxIn in;
         int64 nAmount;
-        vRecv >> nDenomination >> session_id >> in >> nAmount;
+        vRecv >> session_id >> in >> nAmount;
 
-        if(session_id != darkSendPool[nDenomination].GetSessionID()){
+        if(session_id != darkSendPool.GetSessionID()){
             printf("Main::txpld - stale session \n");
             return false;
         }
 
         //check to see if input is spent already? (and probably not confirmed)
 
-        if(darkSendPool[nDenomination].AddInput(in, nAmount)){
-            RelayTxPoolIn(nDenomination, session_id, in, nAmount);
-            darkSendPool[nDenomination].Check();
+        if(darkSendPool.AddInput(in, nAmount)){
+            RelayTxPoolIn(session_id, in, nAmount);
+            darkSendPool.Check();
         }
     }
 
     else if (strCommand == "txplo") { //new coinjoin pool tx vout
         printf("Main::txplo\n");
-        if (pfrom->nVersion < darkSendPool[COIN*1].MIN_PEER_PROTO_VERSION) {
+        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION) {
             return false;
         }
 
-        int64 nDenomination;
-        unsigned int session_id;
+        int64 session_id;
         CTxOut out;
         int64 voutEnc;
-        vRecv >> nDenomination >> session_id >> out >> voutEnc;
+        vRecv >> session_id >> out >> voutEnc;
 
-        if(session_id != darkSendPool[nDenomination].GetSessionID()){
+        if(session_id != darkSendPool.GetSessionID()){
             printf("Main::txpld - stale session \n");
             return false;
         }
 
-        if(darkSendPool[nDenomination].AddOutput(out, voutEnc)){
-            RelayTxPoolOut(nDenomination, session_id, out, voutEnc);
-            darkSendPool[nDenomination].Check();
+        if(darkSendPool.AddOutput(out, voutEnc)){
+            RelayTxPoolOut(session_id, out, voutEnc);
+            darkSendPool.Check();
         }
     }
 
     else if (strCommand == "txpls") { //new coinjoin pool tx sign
         printf("Main::txpls\n");
-        if (pfrom->nVersion < darkSendPool[COIN*1].MIN_PEER_PROTO_VERSION) {
+        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION) {
             return false;
         }
 
-        int64 nDenomination;
-        unsigned int session_id;
+        int64 session_id;
         CScript sig;
         CTxIn vin;
         CScript pubKey;
-        vRecv >> nDenomination >> session_id >> sig >> vin >> pubKey;
+        vRecv >> session_id >> sig >> vin >> pubKey;
 
-        if(session_id != darkSendPool[nDenomination].GetSessionID()){
+        if(session_id != darkSendPool.GetSessionID()){
             printf("Main::txpld - stale session \n");
             return false;
         }
 
-        if(darkSendPool[nDenomination].AddScriptSig(sig, vin, pubKey)){
-            RelayTxPoolSig(nDenomination, session_id, sig, vin, pubKey);
-            darkSendPool[nDenomination].Check();
+        if(darkSendPool.AddScriptSig(sig, vin, pubKey)){
+            RelayTxPoolSig(session_id, sig, vin, pubKey);
+            darkSendPool.Check();
         }
     }
 
     else if (strCommand == "txpld") { //new coinjoin pool tx sign        
         printf("Main::txpld\n");
-        if (pfrom->nVersion < darkSendPool[COIN*1].MIN_PEER_PROTO_VERSION) {
+        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION) {
             return false;
         }
 
-        int64 nDenomination;
-        unsigned int session_id;
+        int64 session_id;
         CTxIn vin;
         CTxOut vout;
         CScript sig;
@@ -3583,29 +3570,26 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         int64 sigEnc; 
         int64 nounce;
         
-        vRecv >> nDenomination >> session_id >> vin >> vout >> sig >> vinEnc >> voutEnc >> sigEnc >> nounce;
+        vRecv >> session_id >> vin >> vout >> sig >> vinEnc >> voutEnc >> sigEnc >> nounce;
 
-        if(session_id != darkSendPool[nDenomination].GetSessionID()){
+        if(session_id != darkSendPool.GetSessionID()){
             printf("Main::txpld - stale session \n");
             return false;
         }
 
-        if(darkSendPool[nDenomination].DeletePending(vin, vout, sig, vinEnc, voutEnc, sigEnc, nounce)){
-            RelayTxPoolDeletePending(nDenomination, session_id, vin, vout, sig, vinEnc, voutEnc, sigEnc, nounce);
+        if(darkSendPool.DeletePending(vin, vout, sig, vinEnc, voutEnc, sigEnc, nounce)){
+            RelayTxPoolDeletePending(session_id, vin, vout, sig, vinEnc, voutEnc, sigEnc, nounce);
         }
     }
 
     else if (strCommand == "txplr") { //reset coinjoin pool        
         printf("Main::txplr\n");
-        if (pfrom->nVersion < darkSendPool[COIN*1].MIN_PEER_PROTO_VERSION) {
+        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION) {
             return false;
         }
 
-        int64 nDenomination;
-        vRecv >> nDenomination;
-
-        if(darkSendPool[nDenomination].ForceReset()){
-            RelayTxPoolForceReset(nDenomination);
+        if(darkSendPool.ForceReset()){
+            RelayTxPoolForceReset();
         }
     }
 
@@ -5073,33 +5057,36 @@ public:
     *********************************************
 */
 
-void CDarkSendPool::SetDenomination(int64 nNewPoolDenomination)
-{
-    nPoolDenomination = nNewPoolDenomination;
-    float coin100 = COIN;
-    fPoolDenomination = nPoolDenomination / coin100;
-    printf("CDarkSendPool::SetDenomination(%"PRI64d", %.2f)\n", nPoolDenomination, fPoolDenomination);
+std::string CDarkSendPool::GetSessionTxID(int64 lookupSessionID){
+    BOOST_FOREACH(const int64 s, sessions) {
+        printf("Looking at %"PRI64u" %"PRI64u" %u\n", s, lookupSessionID, s == lookupSessionID);
+        if(s == lookupSessionID){
+            printf("Found\n");
+            return sessionTxID[s];
+        }
+    }
+    return "unknown_session_id";
 }
 
 
 void CDarkSendPool::AddQueuedInput()
 {
-    printf("CDarkSendPool(%.2f)::AddQueuedInput \n", fPoolDenomination);
+    printf("CDarkSendPool::AddQueuedInput \n");
     if(state != POOL_STATUS_ACCEPTING_INPUTS)
         return;
 
-    printf("CDarkSendPool(%.2f)::AddQueuedInput 2\n", fPoolDenomination);
+    printf("CDarkSendPool::AddQueuedInput 2\n");
 
     BOOST_FOREACH(const CDarkSendTransaction dst, vDST) {
-        printf("CDarkSendPool(%.2f)::AddQueuedInput: adding my input\n", fPoolDenomination);
+        printf("CDarkSendPool::AddQueuedInput: adding my input\n");
         AddInput(dst.fromAddress, dst.fromAddress_nValue);
-        RelayTxPoolIn(nPoolDenomination, session_id, dst.fromAddress, dst.fromAddress_nValue);
+        RelayTxPoolIn(session_id, dst.fromAddress, dst.fromAddress_nValue);
     }
 
     for(unsigned int i = 0; i < queuedVin.size(); i++){
-        printf("CDarkSendPool(%.2f)::AddQueuedInput: adding queued input %u\n", fPoolDenomination, i);
+        printf("CDarkSendPool::AddQueuedInput: adding queued input %u\n", i);
         AddInput(queuedVin[i], queuedVinAmount[i]);
-        RelayTxPoolIn(nPoolDenomination, session_id, queuedVin[i], queuedVinAmount[i]);
+        RelayTxPoolIn(session_id, queuedVin[i], queuedVinAmount[i]);
     }
     queuedVin.clear();
     queuedVinAmount.clear();
@@ -5110,21 +5097,21 @@ void CDarkSendPool::AddQueuedOutput()
     if(state != POOL_STATUS_ACCEPTING_OUTPUTS)
         return;
 
-    printf("CDarkSendPool(%.2f)::AddQueuedOutput\n", fPoolDenomination);
+    printf("CDarkSendPool::AddQueuedOutput\n");
     BOOST_FOREACH(const CDarkSendTransaction dst, vDST) {
-        printf("CDarkSendPool(%.2f)::AddQueuedOutput: adding my output\n", fPoolDenomination);
+        printf("CDarkSendPool::AddQueuedOutput: adding my output\n");
         AddOutput(dst.theirAddress, dst.theirAddressEnc);
-        RelayTxPoolOut(nPoolDenomination, session_id, dst.theirAddress, dst.theirAddressEnc);
+        RelayTxPoolOut(session_id, dst.theirAddress, dst.theirAddressEnc);
         
-        printf("CDarkSendPool(%.2f)::AddQueuedOutput: adding my output -- change\n", fPoolDenomination);
+        printf("CDarkSendPool::AddQueuedOutput: adding my output -- change\n");
         AddOutput(dst.changeAddress, dst.changeAddressEnc);
-        RelayTxPoolOut(nPoolDenomination, session_id, dst.changeAddress, dst.changeAddressEnc);
+        RelayTxPoolOut(session_id, dst.changeAddress, dst.changeAddressEnc);
     }
 
     for(unsigned int i = 0; i < queuedVout.size(); i++){
-        printf("CDarkSendPool(%.2f)::AddQueuedOutput: adding queued output %u\n", fPoolDenomination, i);
+        printf("CDarkSendPool::AddQueuedOutput: adding queued output %u\n", i);
         AddOutput(queuedVout[i], queuedVoutEnc[i]);
-        RelayTxPoolOut(nPoolDenomination, session_id, queuedVout[i], queuedVoutEnc[i]);
+        RelayTxPoolOut(session_id, queuedVout[i], queuedVoutEnc[i]);
     }
     queuedVout.clear();
 }
@@ -5135,12 +5122,12 @@ void CDarkSendPool::AddQueuedSignatures()
     if(state != POOL_STATUS_SIGNING)
         return;
 
-    printf("CDarkSendPool(%.2f)::AddQueuedSignatures\n", fPoolDenomination);
+    printf("CDarkSendPool::AddQueuedSignatures\n");
 
     for(unsigned int i = 0; i < queuedVinSig.size(); i++){
-        printf("CDarkSendPool(%.2f)::AddQueuedSignatures - adding queued signature %u\n", fPoolDenomination, i);
+        printf("CDarkSendPool::AddQueuedSignatures - adding queued signature %u\n", i);
         AddScriptSig(queuedVinSig[i], queuedVinSigVin[i], queuedVinSigPubKey[i]);
-        RelayTxPoolSig(nPoolDenomination, session_id, queuedVinSig[i], queuedVinSigVin[i], queuedVinSigPubKey[i]);
+        RelayTxPoolSig(session_id, queuedVinSig[i], queuedVinSigVin[i], queuedVinSigPubKey[i]);
     }
     queuedVinSig.clear();
     queuedVinSigVin.clear();
@@ -5150,65 +5137,65 @@ void CDarkSendPool::AddQueuedSignatures()
 
 void CDarkSendPool::Check()
 {
-    printf("CDarkSendPool(%.2f)::Check()\n", fPoolDenomination);
+    printf("CDarkSendPool::Check()\n");
 
-    printf("CDarkSendPool(%.2f)::Check() - vin %lu\n", fPoolDenomination, vin.size());
+    printf("CDarkSendPool::Check() - vin %lu\n", vin.size());
     
     // move on to next phase
     if(state == POOL_STATUS_ACCEPTING_INPUTS && vin.size() == POOL_MAX_TRANSACTIONS)
     {
-        printf("CDarkSendPool(%.2f)::Check() -- ACCEPTING OUTPUTS\n", fPoolDenomination);
+        printf("CDarkSendPool::Check() -- ACCEPTING OUTPUTS\n");
         UpdateState(POOL_STATUS_ACCEPTING_OUTPUTS);
-        RelayTxPool(nPoolDenomination, session_id, state);
+        RelayTxPool(session_id, state);
         AddQueuedOutput();
     }
 
     // move on to next phase
     //                                       What if some didn't have change addresses, or multiple outputs (3+)?
     if(state == POOL_STATUS_ACCEPTING_OUTPUTS && vout.size() == POOL_MAX_TRANSACTIONS*2) {
-        printf("CDarkSendPool(%.2f)::Check() -- ACCEPTING SIGNATURES\n", fPoolDenomination);
+        printf("CDarkSendPool::Check() -- ACCEPTING SIGNATURES\n");
         UpdateState(POOL_STATUS_SIGNING);
         AddQueuedSignatures();
-        RelayTxPool(nPoolDenomination, session_id, state);
+        RelayTxPool(session_id, state);
         Sign();
     }
 
     // move on to next phase
     if(state == POOL_STATUS_SIGNING && sigCount == POOL_MAX_TRANSACTIONS) { 
-        printf("CDarkSendPool(%.2f)::Check() -- SIGNING\n", fPoolDenomination);
+        printf("CDarkSendPool::Check() -- SIGNING\n");
         UpdateState(POOL_STATUS_TRANSMISSION);
-        RelayTxPool(nPoolDenomination, session_id, state);
+        RelayTxPool(session_id, state);
         // make sure my transactions are here
 
-        if (fMaster) {
-            CWalletTx txNew;
+        CWalletTx txNew;
 
-            txNew.BindWallet(pwalletMain);
+        txNew.BindWallet(pwalletMain);
 
-            LOCK2(cs_main, pwalletMain->cs_wallet);
-            {
+        LOCK2(cs_main, pwalletMain->cs_wallet);
+        {
 
-                txNew.vin.clear();
-                txNew.vout.clear();
-                for(unsigned int i = 0; i < vout.size(); i++){
-                    txNew.vout.push_back(vout[i]);
+            txNew.vin.clear();
+            txNew.vout.clear();
+            for(unsigned int i = 0; i < vout.size(); i++){
+                txNew.vout.push_back(vout[i]);
+            }
+
+            for(unsigned int i = 0; i < vin.size(); i++){
+                txNew.vin.push_back(vin[i]);
+                txNew.vin[i].scriptSig = vinSig[i];
+                printf("CDarkSendPool::Check() - Sign with sig %s\n", vinSig[i].ToString().substr(0,24).c_str());
+                printf("CDarkSendPool::Check() - Signed pubkey %s\n", vinPubKey[i].ToString().substr(0,24).c_str());
+                if (!VerifyScript(txNew.vin[i].scriptSig, vinPubKey[i], txNew, i, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC, 0)){
+                    printf("CDarkSendPool::Check() - Signing - ERROR signing input %u\n", i);
+                    //failure will result, how to recover from this?
+                } else {
+                    printf("CDarkSendPool::Check() - Signing - Succesfully signed input %u\n", i);
                 }
-
-                for(unsigned int i = 0; i < vin.size(); i++){
-                    txNew.vin.push_back(vin[i]);
-                    txNew.vin[i].scriptSig = vinSig[i];
-                    printf("CDarkSendPool(%.2f)::Check() - Sign with sig %s\n", fPoolDenomination, vinSig[i].ToString().substr(0,24).c_str());
-                    printf("CDarkSendPool(%.2f)::Check() - Signed pubkey %s\n", fPoolDenomination, vinPubKey[i].ToString().substr(0,24).c_str());
-                    if (!VerifyScript(txNew.vin[i].scriptSig, vinPubKey[i], txNew, i, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC, 0)){
-                        printf("CDarkSendPool(%.2f)::Check() - Signing - ERROR signing input %u\n", fPoolDenomination, i);
-                        //failure will result, how to recover from this?
-                    } else {
-                        printf("CDarkSendPool(%.2f)::Check() - Signing - Succesfully signed input %u\n", fPoolDenomination, i);
-                    }
-                }
-
+            }
+            printf("CDarkSendPool::Check() - txNew -- compiled all signatures:\n%s", txNew.ToString().c_str());
+            
+            if (fMaster) {
                 //int64 nChange = nValueIn - nValue - nFeeRet;
-                printf("CDarkSendPool(%.2f)::Check() - txNew -- compiled all signatures:\n%s", fPoolDenomination, txNew.ToString().c_str());
                
                 
                 int i = 0;
@@ -5219,7 +5206,7 @@ void CDarkSendPool::Check()
                         //find my pending transaction that matches
                         if(txin == dst.fromAddress)
                         {
-                            printf("CDarkSendPool(%.2f)::Check() - marking vin %i", fPoolDenomination, i);
+                            printf("CDarkSendPool::Check() - marking vin %i", i);
                             CWalletTx &coin = pwalletMain->mapWallet[txin.prevout.hash];
                             coin.BindWallet(pwalletMain);
                             coin.MarkSpent(txin.prevout.n);
@@ -5232,7 +5219,7 @@ void CDarkSendPool::Check()
                 // Broadcast
                 if (!txNew.AcceptToMemoryPool(true, false))
                 {
-                    printf("CDarkSendPool(%.2f)::Check() - CommitTransaction : Error: Transaction not valid\n", fPoolDenomination);
+                    printf("CDarkSendPool::Check() - CommitTransaction : Error: Transaction not valid\n");
                     //do something... ???
                     SetNull();
                     UpdateState(POOL_STATUS_ACCEPTING_INPUTS);
@@ -5248,12 +5235,14 @@ void CDarkSendPool::Check()
                 
                 txNew.RelayWalletTransaction();
             }
+
+            sessionTxID[session_id] = txNew.GetHash().GetHex();
         }
     }
 
     // move on to next phase
     if(state == POOL_STATUS_TRANSMISSION) {
-        printf("CDarkSendPool(%.2f)::Check() -- TRANSMIT\n", fPoolDenomination);
+        printf("CDarkSendPool::Check() -- TRANSMIT\n");
         SetNull();
     }
 
@@ -5262,7 +5251,7 @@ void CDarkSendPool::Check()
 void CDarkSendPool::CheckTimeout(){
     // catching hanging sessions
     if((state == POOL_STATUS_ACCEPTING_OUTPUTS || state == POOL_STATUS_SIGNING) && GetTimeMillis()-last_time_stage_changed >= 5000 ) {
-        printf("CDarkSendPool(%.2f)::Check() -- SESSION TIMED OUT -- RESETTING\n", fPoolDenomination);
+        printf("CDarkSendPool::Check() -- SESSION TIMED OUT -- RESETTING\n");
         SetNull();
         //add my transactions to the new session
     }
@@ -5291,28 +5280,28 @@ void CDarkSendPool::Sign(){
         }
         if(mine >= 0){ //might have to do this one input at a time?
             int n = mine;
-            printf("CDarkSendPool(%.2f)::Sign - Signing my input %i\n", fPoolDenomination, mine);
+            printf("CDarkSendPool::Sign - Signing my input %i\n", mine);
             if(!SignSignature(*keystore, dst.fromAddress.prevPubKey, txNew, n, int(SIGHASH_ALL|SIGHASH_ANYONECANPAY))) { // changes scriptSig
-                printf("CDarkSendPool(%.2f)::Sign - Unable to sign my own transaction!!! GAH! \n", fPoolDenomination);
+                printf("CDarkSendPool::Sign - Unable to sign my own transaction!!! GAH! \n");
                 SetNull();
             }
 
             AddScriptSig(txNew.vin[n].scriptSig, dst.fromAddress, dst.fromAddress.prevPubKey);
-            printf("CDarkSendPool(%.2f)::Sign - added my scriptSig %s\n", fPoolDenomination, txNew.vin[n].scriptSig.ToString().substr(0,24).c_str());
-            RelayTxPoolSig(nPoolDenomination, session_id, txNew.vin[n].scriptSig, dst.fromAddress, dst.fromAddress.prevPubKey);
+            printf("CDarkSendPool::Sign - added my scriptSig %s\n", txNew.vin[n].scriptSig.ToString().substr(0,24).c_str());
+            RelayTxPoolSig(session_id, txNew.vin[n].scriptSig, dst.fromAddress, dst.fromAddress.prevPubKey);
         }
         
-        printf("CDarkSendPool(%.2f)::Sign - txNew:\n%s", fPoolDenomination, txNew.ToString().c_str());
+        printf("CDarkSendPool::Sign - txNew:\n%s", txNew.ToString().c_str());
 
     }
 }
 
 bool CDarkSendPool::AddInput(const CTxIn& newInput, const int64& nAmount){
     BOOST_FOREACH(CTxIn v, vin){
-        if(v == newInput) {printf ("CDarkSendPool(%.2f)::AddInput - found in vin\n", fPoolDenomination); return false;}
+        if(v == newInput) {printf ("CDarkSendPool::AddInput - found in vin\n"); return false;}
     }
     BOOST_FOREACH(CTxIn v, queuedVin) {
-        if(v == newInput) {printf ("CDarkSendPool(%.2f)::AddInput - found in queued\n", fPoolDenomination); return false;}
+        if(v == newInput) {printf ("CDarkSendPool::AddInput - found in queued\n"); return false;}
     }
 
     if(state == POOL_STATUS_ACCEPTING_INPUTS) {
@@ -5321,13 +5310,13 @@ bool CDarkSendPool::AddInput(const CTxIn& newInput, const int64& nAmount){
         vinSig.push_back(CScript());
         vinPubKey.push_back(CScript());
 
-        printf("CDarkSendPool(%.2f)::AddInput -- adding %s\n", fPoolDenomination, newInput.ToString().c_str());
+        printf("CDarkSendPool::AddInput -- adding %s\n", newInput.ToString().c_str());
         return true;
     } else {
         queuedVin.push_back(newInput);
         queuedVinAmount.push_back(nAmount);
 
-        printf("CDarkSendPool(%.2f)::AddInput -- queuing %s\n", fPoolDenomination, newInput.ToString().c_str());
+        printf("CDarkSendPool::AddInput -- queuing %s\n", newInput.ToString().c_str());
         return true;
     }
     return false;
@@ -5336,13 +5325,13 @@ bool CDarkSendPool::AddInput(const CTxIn& newInput, const int64& nAmount){
 bool CDarkSendPool::AddOutput(const CTxOut& newOutput, const int64 newOutEnc){
     for(unsigned int i = 0; i < vout.size(); i++){
         if(vout[i] == newOutput && voutEnc[i] == newOutEnc) {
-            printf("CDarkSendPool(%.2f)::AddOutput -- Detected duplicate output -- %s\n", fPoolDenomination, newOutput.ToString().c_str());
+            printf("CDarkSendPool::AddOutput -- Detected duplicate output -- %s\n", newOutput.ToString().c_str());
             return false;
         }
     }
     for(unsigned int i = 0; i < queuedVout.size(); i++){
         if(queuedVout[i] == newOutput && queuedVoutEnc[i] == newOutEnc) {
-            printf("CDarkSendPool(%.2f)::AddOutput -- Detected duplicate output -- queued -- %s\n", fPoolDenomination, newOutput.ToString().c_str());
+            printf("CDarkSendPool::AddOutput -- Detected duplicate output -- queued -- %s\n", newOutput.ToString().c_str());
             return false;
         }
     }
@@ -5354,12 +5343,12 @@ bool CDarkSendPool::AddOutput(const CTxOut& newOutput, const int64 newOutEnc){
     if(state == POOL_STATUS_ACCEPTING_OUTPUTS) {
         vout.push_back(newOutput);
         voutEnc.push_back(newOutEnc);
-        printf("CDarkSendPool(%.2f)::AddOutput - adding %s - %llu\n", fPoolDenomination, newOutput.scriptPubKey.ToString().c_str(), newOutput.nValue);
+        printf("CDarkSendPool::AddOutput - adding %s - %llu\n", newOutput.scriptPubKey.ToString().c_str(), newOutput.nValue);
         return true;
     } else {
         queuedVout.push_back(newOutput);
         queuedVoutEnc.push_back(newOutEnc);
-        printf("CDarkSendPool(%.2f)::AddOutput - queued %s - %llu\n", fPoolDenomination, newOutput.scriptPubKey.ToString().c_str(), newOutput.nValue);
+        printf("CDarkSendPool::AddOutput - queued %s - %llu\n", newOutput.scriptPubKey.ToString().c_str(), newOutput.nValue);
     }
     return false;
 }
@@ -5407,8 +5396,8 @@ bool CDarkSendPool::AddScriptSig(CScript& newSig, const CTxIn& theVin, const CSc
                 vinSig[i] = newSig; 
                 vinPubKey[i] = pubKey;
                 sigCount++;
-                printf("CDarkSendPool(%.2f)::AddScriptSig -- adding  %s\n", fPoolDenomination, newSig.ToString().substr(0,24).c_str());
-                printf("CDarkSendPool(%.2f)::AddScriptSig -- scriptSig %u, total sigs %u\n", fPoolDenomination, i, sigCount);
+                printf("CDarkSendPool::AddScriptSig -- adding  %s\n", newSig.ToString().substr(0,24).c_str());
+                printf("CDarkSendPool::AddScriptSig -- scriptSig %u, total sigs %u\n", i, sigCount);
                 return true;
             }
         }
@@ -5418,10 +5407,10 @@ bool CDarkSendPool::AddScriptSig(CScript& newSig, const CTxIn& theVin, const CSc
             queuedVinSigPubKey.push_back(pubKey);
             queuedVinSigVin.push_back(theVin);
 
-            printf("CDarkSendPool(%.2f)::AddScriptSig -- Queued %s\n", fPoolDenomination, newSig.ToString().substr(0,24).c_str());
+            printf("CDarkSendPool::AddScriptSig -- Queued %s\n", newSig.ToString().substr(0,24).c_str());
             return true;
         } else {
-            printf("CDarkSendPool(%.2f)::AddScriptSig -- Caught weird bug... returning false - sig %s\n", fPoolDenomination, newSig.ToString().substr(0,24).c_str());
+            printf("CDarkSendPool::AddScriptSig -- Caught weird bug... returning false - sig %s\n", newSig.ToString().substr(0,24).c_str());
             return false;
         }
     }
@@ -5432,7 +5421,7 @@ bool CDarkSendPool::DeletePending(CTxIn& newInput, CTxOut newOutput, CScript new
     int64 vinEnc, int64 voutEnc, int64 sigEnc, int64 nounce){
     // * add encrypted strings as proof to remove these
 
-    printf("CDarkSendPool(%.2f)::DeletePending\n", fPoolDenomination);
+    printf("CDarkSendPool::DeletePending\n");
     bool found = false;
     
     // process in reverse order
@@ -5441,7 +5430,7 @@ bool CDarkSendPool::DeletePending(CTxIn& newInput, CTxOut newOutput, CScript new
     for(unsigned int i = 0; i < vinSig.size(); i++){
         if(newSig == vinSig[i]) {
             // if vinSig[i].encPassword.decrypt(password) == newSigString
-            printf("CDarkSendPool(%.2f)::DeletePending -- delete sig %u\n", fPoolDenomination, i);
+            printf("CDarkSendPool::DeletePending -- delete sig %u\n", i);
             vinSig.erase(vinSig.begin() + i);
             found = true;
         }
@@ -5449,7 +5438,7 @@ bool CDarkSendPool::DeletePending(CTxIn& newInput, CTxOut newOutput, CScript new
 
     // revert to last phase
     if(state == POOL_STATUS_SIGNING && sigCount != POOL_MAX_TRANSACTIONS) { 
-        printf("CDarkSendPool(%.2f)::DeletePending -- ACCEPTING OUTPUTS\n", fPoolDenomination);
+        printf("CDarkSendPool::DeletePending -- ACCEPTING OUTPUTS\n");
         UpdateState(POOL_STATUS_ACCEPTING_OUTPUTS);
         //RelayTxPool(state);
     }    
@@ -5458,7 +5447,7 @@ bool CDarkSendPool::DeletePending(CTxIn& newInput, CTxOut newOutput, CScript new
     for(unsigned int i = 0; i < vout.size(); i++){
         if(newOutput == vout[i]) {
             // if vout[i].encPassword.decrypt(password) == newOutputString
-            printf("CDarkSendPool(%.2f)::DeletePending -- delete vout\n", fPoolDenomination);
+            printf("CDarkSendPool::DeletePending -- delete vout\n");
             vout.erase(vout.begin() + i);
             found = true;
         }
@@ -5466,7 +5455,7 @@ bool CDarkSendPool::DeletePending(CTxIn& newInput, CTxOut newOutput, CScript new
 
     // revert to last phase
     if(state == POOL_STATUS_ACCEPTING_OUTPUTS && vout.size() != POOL_MAX_TRANSACTIONS*2) {
-        printf("CDarkSendPool(%.2f)::DeletePending -- ACCEPTING INPUTS\n", fPoolDenomination);
+        printf("CDarkSendPool::DeletePending -- ACCEPTING INPUTS\n");
         UpdateState(POOL_STATUS_ACCEPTING_INPUTS);
         //RelayTxPool(state);
     }
@@ -5475,7 +5464,7 @@ bool CDarkSendPool::DeletePending(CTxIn& newInput, CTxOut newOutput, CScript new
     for(unsigned int i = 0; i < vin.size(); i++){
         if(newInput == vin[i]) {
             // if vin[i].encPassword.decrypt(password) == newInputString
-            printf("CDarkSendPool(%.2f)::DeletePending -- delete vin %u\n", fPoolDenomination, i);
+            printf("CDarkSendPool::DeletePending -- delete vin %u\n", i);
             vin.erase(vin.begin() + i);
             found = true;
         }
@@ -5487,38 +5476,38 @@ bool CDarkSendPool::DeletePending(CTxIn& newInput, CTxOut newOutput, CScript new
 int CDarkSendPool::DeleteMyPending(){
     BOOST_FOREACH(const CDarkSendTransaction dst, vDST) {
         int64 i = 99999;
-        printf("CDarkSendPool(%.2f)::DeletePending() - Withdrew pending transaction!", fPoolDenomination);
-        RelayTxPoolDeletePending(nPoolDenomination, session_id, dst.fromAddress, dst.theirAddress, CScript(), i, i, i, i);
+        printf("CDarkSendPool::DeletePending() - Withdrew pending transaction!");
+        RelayTxPoolDeletePending(session_id, dst.fromAddress, dst.theirAddress, CScript(), i, i, i, i);
         ResetMyTransaction();
         return 1;
     }
 
     if (vDST.size() == 0){
-        printf("CDarkSendPool(%.2f)::DeletePending() - No pending transactions", fPoolDenomination);
+        printf("CDarkSendPool::DeletePending() - No pending transactions");
         return 0;
     }
 }
 
 void CDarkSendPool::CatchUpNode(CNode* pfrom){
-    printf("CDarkSendPool(%.2f)::CatchUpNode\n", fPoolDenomination);
+    printf("CDarkSendPool::CatchUpNode\n");
     for(unsigned int i = 0; i < vin.size(); i++){
-        printf("CDarkSendPool(%.2f)::CatchUpNode -- add vin %u\n", fPoolDenomination, i);
-        pfrom->PushMessage("txpli", nPoolDenomination, session_id, vin[i], vinAmount[i]);
+        printf("CDarkSendPool::CatchUpNode -- add vin %u\n", i);
+        pfrom->PushMessage("txpli", session_id, vin[i], vinAmount[i]);
     }
 
     BOOST_FOREACH(CTxOut v, vout){
-        printf("CDarkSendPool(%.2f)::CatchUpNode -- add vout\n", fPoolDenomination);
-        pfrom->PushMessage("txplo", nPoolDenomination, session_id, v);
+        printf("CDarkSendPool::CatchUpNode -- add vout\n");
+        pfrom->PushMessage("txplo", session_id, v);
     }
 
     for(unsigned int i = 0; i < vinSig.size(); i++){
-        printf("CDarkSendPool(%.2f)::CatchUpNode -- add sig %u\n", fPoolDenomination, i);
-        pfrom->PushMessage("txpls", nPoolDenomination, session_id, vinSig[i], vin[i], vinPubKey[i]);
+        printf("CDarkSendPool::CatchUpNode -- add sig %u\n", i);
+        pfrom->PushMessage("txpls", session_id, vinSig[i], vin[i], vinPubKey[i]);
     }
 }
 
 void CDarkSendPool::SendMoney(const CTxIn& from, const CTxOut& to, int64& nFeeRet, CKeyStore& newKeys, int64 from_nValue, CScript& pubScript, CReserveKey& newReserveKey){
-    printf("CDarkSendPool(%.2f)::SendMoney() - Added transaction to pool.\n", fPoolDenomination);
+    printf("CDarkSendPool::SendMoney() - Added transaction to pool.\n");
     nFeeRet = .01;
 
     /*
@@ -5526,12 +5515,12 @@ void CDarkSendPool::SendMoney(const CTxIn& from, const CTxOut& to, int64& nFeeRe
             - check for posive output values, including fees
     */
 
-    printf("CDarkSendPool(%.2f)::SendMoney() - from_nValue %+"PRI64d"\n", fPoolDenomination, from_nValue);
-    printf("CDarkSendPool(%.2f)::SendMoney() - nFeeRet %+"PRI64d"\n", fPoolDenomination, from_nValue);
-    printf("CDarkSendPool(%.2f)::SendMoney() - to.nValue %+"PRI64d"\n", fPoolDenomination, to.nValue);
-    printf("CDarkSendPool(%.2f)::SendMoney() - from_nValue-to.nValue-nFeeRet %+"PRI64d"\n", fPoolDenomination, from_nValue-to.nValue-nFeeRet);
+    printf("CDarkSendPool::SendMoney() - from_nValue %+"PRI64d"\n", from_nValue);
+    printf("CDarkSendPool::SendMoney() - nFeeRet %+"PRI64d"\n", from_nValue);
+    printf("CDarkSendPool::SendMoney() - to.nValue %+"PRI64d"\n", to.nValue);
+    printf("CDarkSendPool::SendMoney() - from_nValue-to.nValue-nFeeRet %+"PRI64d"\n", from_nValue-to.nValue-nFeeRet);
 
-    printf("CDarkSendPool(%.2f)::SendMoney() -- NEW INPUT -- adding %s\n", fPoolDenomination, from.ToString().c_str());
+    printf("CDarkSendPool::SendMoney() -- NEW INPUT -- adding %s\n", from.ToString().c_str());
 
     //vDST.theirAddress.nValue = from_nValue-nFeeRet; //assign full input to output
     reservekey = &newReserveKey;
@@ -5586,10 +5575,6 @@ void ThreadCheckDarkSendPool()
     {
         MilliSleep(1000);
         //printf("ThreadCheckDarkSendPool::check timeout\n");
-        BOOST_FOREACH(const int64 d, darkSendPoolDenominations) {
-            if(d >= (COIN*0.5)) {
-                darkSendPool[COIN*d].CheckTimeout();
-            }
-        }
+        darkSendPool.CheckTimeout();
     }
 }

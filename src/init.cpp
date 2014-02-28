@@ -95,13 +95,7 @@ void Shutdown()
     if (!lockShutdown) return;
 
     /// deal with this in a better (sane?) way
-    darkSendPool[COIN*50].DeleteMyPending();
-    darkSendPool[COIN*20].DeleteMyPending();
-    darkSendPool[COIN*10].DeleteMyPending();
-    darkSendPool[COIN*5].DeleteMyPending();
-    darkSendPool[COIN*2].DeleteMyPending();
-    darkSendPool[COIN*1].DeleteMyPending();
-
+    darkSendPool.DeleteMyPending();
     boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
     
     RenameThread("bitcoin-shutoff");
@@ -1099,15 +1093,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     // ********************************************************* Step 10: setup DarkSend
 
     fMaster = GetBoolArg("-master");
-
     if(fMaster) {printf("IS DARKSEND MASTER\n");}
-
-    BOOST_FOREACH(const int64 d, darkSendPoolDenominations) {
-        if(d >= (COIN*0.5)) {
-            darkSendPool.insert(make_pair(d, CDarkSendPool()));
-            darkSendPool[d].SetDenomination(d);
-        }
-    }
 
     threadGroup.create_thread(boost::bind(&ThreadCheckDarkSendPool));
 
