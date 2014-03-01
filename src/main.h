@@ -2358,7 +2358,7 @@ public:
 class CDarkSendPool
 {
 public:
-    static const int MIN_PEER_PROTO_VERSION = 70005;
+    static const int MIN_PEER_PROTO_VERSION = 70006;
 
     int64 session_id;
     unsigned int next_session_id;

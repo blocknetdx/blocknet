@@ -5138,7 +5138,6 @@ void CDarkSendPool::AddQueuedSignatures()
 void CDarkSendPool::Check()
 {
     printf("CDarkSendPool::Check()\n");
-
     printf("CDarkSendPool::Check() - vin %lu\n", vin.size());
     
     // move on to next phase
@@ -5194,10 +5193,7 @@ void CDarkSendPool::Check()
             }
             printf("CDarkSendPool::Check() - txNew -- compiled all signatures:\n%s", txNew.ToString().c_str());
             
-            if (fMaster) {
-                //int64 nChange = nValueIn - nValue - nFeeRet;
-               
-                
+            if (fMaster) { //only the main node is master atm                
                 int i = 0;
                 BOOST_FOREACH(const CTxIn& txin, txNew.vin)
                 {
@@ -5221,6 +5217,7 @@ void CDarkSendPool::Check()
                 {
                     printf("CDarkSendPool::Check() - CommitTransaction : Error: Transaction not valid\n");
                     //do something... ???
+                    sessionTxID[session_id] = 'failed';
                     SetNull();
                     UpdateState(POOL_STATUS_ACCEPTING_INPUTS);
                     return;
@@ -5250,7 +5247,7 @@ void CDarkSendPool::Check()
 
 void CDarkSendPool::CheckTimeout(){
     // catching hanging sessions
-    if((state == POOL_STATUS_ACCEPTING_OUTPUTS || state == POOL_STATUS_SIGNING) && GetTimeMillis()-last_time_stage_changed >= 5000 ) {
+    if((state == POOL_STATUS_ACCEPTING_OUTPUTS || state == POOL_STATUS_SIGNING) && GetTimeMillis()-last_time_stage_changed >= 10000 ) {
         printf("CDarkSendPool::Check() -- SESSION TIMED OUT -- RESETTING\n");
         SetNull();
         //add my transactions to the new session
@@ -5352,36 +5349,6 @@ bool CDarkSendPool::AddOutput(const CTxOut& newOutput, const int64 newOutEnc){
     }
     return false;
 }
-
-/*bool CDarkSendPool::IsMineOutput(CTxOut& out){
-    map<string, int64> mapAccountBalances;
-    BOOST_FOREACH(const PAIRTYPE(CTxDestination, string)& entry, pwalletMain->mapAddressBook) {
-        if (IsMine(*pwalletMain, entry.first)) // This address belongs to me
-            mapAccountBalances[entry.second] = 0;
-    }
-
-    for (map<uint256, CWalletTx>::iterator it = pwalletMain->mapWallet.begin(); it != pwalletMain->mapWallet.end(); ++it)
-    {
-        const CWalletTx& wtx = (*it).second;
-        int64 nFee;
-        string strSentAccount;
-        list<pair<CTxDestination, int64> > listReceived;
-        list<pair<CTxDestination, int64> > listSent;
-        wtx.GetAmounts(listReceived, listSent, nFee, strSentAccount);
-        mapAccountBalances[strSentAccount] -= nFee;
-        BOOST_FOREACH(const PAIRTYPE(CTxDestination, int64)& s, listSent)
-            mapAccountBalances[strSentAccount] -= s.second;
-        if (wtx.GetDepthInMainChain() >= nMinDepth)
-        {
-            BOOST_FOREACH(const PAIRTYPE(CTxDestination, int64)& r, listReceived)
-                if (pwalletMain->mapAddressBook.count(r.first))
-                    mapAccountBalances[pwalletMain->mapAddressBook[r.first]] += r.second;
-                else
-                    mapAccountBalances[""] += r.second;
-        }
-    }
-}
-*/
 
 bool CDarkSendPool::AddScriptSig(CScript& newSig, const CTxIn& theVin, const CScript& pubKey){
     BOOST_FOREACH(CScript s, vinSig)
@@ -5508,7 +5475,6 @@ void CDarkSendPool::CatchUpNode(CNode* pfrom){
 
 void CDarkSendPool::SendMoney(const CTxIn& from, const CTxOut& to, int64& nFeeRet, CKeyStore& newKeys, int64 from_nValue, CScript& pubScript, CReserveKey& newReserveKey){
     printf("CDarkSendPool::SendMoney() - Added transaction to pool.\n");
-    nFeeRet = .01;
 
     /*
         note to self: 

@@ -89,6 +89,7 @@ void SendCoinsEntry::clear()
     ui->addAsLabel->clear();
     ui->payAmount->clear();
     ui->payTo->setFocus();
+    ui->isDarkSend->setChecked(true);
     // update the display unit, to not use the default ("BTC")
     updateDisplayUnit();
 }

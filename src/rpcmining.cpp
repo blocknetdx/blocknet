@@ -186,9 +186,13 @@ Value resetpool(const Array& params, bool fHelp)
             "Reset anonymous transaction pool.");
 
     Object obj;
-    
-    obj.push_back(Pair("success",        darkSendPool.ForceReset()));
-    RelayTxPoolForceReset();
+ 
+    if (fMaster) {   
+        obj.push_back(Pair("success",        darkSendPool.ForceReset()));
+        RelayTxPoolForceReset();
+    } else {
+        obj.push_back(Pair("success",        0));
+    }
 
     return obj;
 }

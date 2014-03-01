@@ -1497,7 +1497,7 @@ string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 
 
     //**************
 
-    int64 nFeeRet = 0; //.01*COIN; ///need to get a better fee calc
+    int64 nFeeRet = 0.001*COIN; ///need to get a better fee calc
     CCoinControl* coinControl = new CCoinControl();
     int64 nTotalValue = nValue + nFeeRet;
 
@@ -1526,11 +1526,11 @@ string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 
 
     //printf(" %"PRI64d" <= %"PRI64d" \n", d, amount);
 
-    if (!SelectCoinsMinOutput(amount, vin, nValueIn, pubScript, coinControl))
+    if (!SelectCoinsMinOutput(nTotalValue, vin, nValueIn, pubScript, coinControl))
     {
         return _("Insufficient funds");
     }
-    CTxOut out(amount, scriptPubKey);
+    CTxOut out(nValue, scriptPubKey);
     LockCoin(vin.prevout);
 
     int64 n = COIN*1;
