@@ -156,7 +156,7 @@ void SendCoinsEntry::setValue(const SendCoinsRecipient &value)
     ui->payTo->setText(value.address);
     ui->addAsLabel->setText(value.label);
     ui->payAmount->setValue(value.amount);
-    ui->isDarkSend->setTristate(value.isDarkSend);
+    ui->isDarkSend->setChecked(value.isDarkSend);
 }
 
 void SendCoinsEntry::setAddress(const QString &address)

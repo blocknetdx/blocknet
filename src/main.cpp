@@ -929,7 +929,11 @@ int CMerkleTx::GetBlocksToMaturity() const
 {
     if (!IsCoinBase())
         return 0;
-    return max(0, (COINBASE_MATURITY+2) - GetDepthInMainChain());
+
+    int n = 20;
+    if(fTestNet) n = 2;
+
+    return max(0, (COINBASE_MATURITY+n) - GetDepthInMainChain());
 }
 
 
@@ -2859,6 +2863,7 @@ bool LoadBlockIndex()
         pchMessageStart[2] = 0xb7;
         pchMessageStart[3] = 0xdc;
         hashGenesisBlock = uint256("0x00000bafbc94add76cb75e2ec92894837288a481e5c005f6563d91623bf8bc2c");
+
         COINBASE_MATURITY = 1;
     }
 
