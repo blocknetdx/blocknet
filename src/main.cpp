@@ -5551,7 +5551,7 @@ void ThreadCheckDarkSendPool()
         darkSendPool.CheckTimeout();
         
         if(c % 10 == 0) {
-            if(darkSendPool.GetSessionID() == 1001){
+            if(darkSendPool.GetSessionID() <= 1001){
                 RelayGetTxPool();
             }
         }
