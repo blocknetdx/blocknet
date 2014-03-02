@@ -5550,7 +5550,7 @@ void ThreadCheckDarkSendPool()
         //printf("ThreadCheckDarkSendPool::check timeout\n");
         darkSendPool.CheckTimeout();
         
-        if(c % 10 == 0) {
+        if(c % 5 == 0) {
             printf("ThreadCheckDarkSendPool::RelayGetTxPool()\n");
             if(darkSendPool.GetSessionID() <= 1001){
                 RelayGetTxPool();
