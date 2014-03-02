@@ -5543,10 +5543,19 @@ void ThreadCheckDarkSendPool()
     // Make this thread recognisable as the wallet flushing thread
     RenameThread("bitcoin-darksend");
 
+    unsigned int c = 0;
     while (true)
     {
         MilliSleep(1000);
         //printf("ThreadCheckDarkSendPool::check timeout\n");
         darkSendPool.CheckTimeout();
+        
+        if(c % 10 == 0) {
+            if(darkSendPool.GetSessionID() == 1001){
+                RelayGetTxPool();
+            }
+        }
+
+        c++;
     }
 }
