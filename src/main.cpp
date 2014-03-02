@@ -5512,7 +5512,7 @@ void CDarkSendPool::SendMoney(const CTxIn& from, const CTxOut& to, int64& nFeeRe
 
     // add change address to addressbook
 
-    {
+    /*{
         LOCK(pwalletMain->cs_wallet);
 
         // Offline transaction
@@ -5529,7 +5529,7 @@ void CDarkSendPool::SendMoney(const CTxIn& from, const CTxOut& to, int64& nFeeRe
                 pwalletMain->SetAddressBookName(dest, strLabel);
             }
         }
-    }
+    }*/
 
     AddQueuedInput();
     AddQueuedOutput();
