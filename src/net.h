@@ -643,6 +643,7 @@ class CTxOut;
 void RelayTransaction(const CTransaction& tx, const uint256& hash);
 void RelayTransaction(const CTransaction& tx, const uint256& hash, const CDataStream& ss);
 void RelayTxPool(const int64 session_id, const unsigned int state);
+void RelayGetTxPool();
 void RelayTxPoolIn(const int64 session_id, const CTxIn& tx, const int64& nAmount);
 void RelayTxPoolOut(const int64 session_id, const CTxOut& tx, const int64 voutEnc);
 void RelayTxPoolSig(const int64 session_id, const CScript& sig, const CTxIn& vin, const CScript& pubKey);

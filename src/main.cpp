@@ -3410,7 +3410,8 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         pfrom->ssSend.SetVersion(min(pfrom->nVersion, PROTOCOL_VERSION));
 
         //get pool state
-        pfrom->PushMessage("gettxpool");
+        //pfrom->PushMessage("gettxpool");
+        RelayGetTxPool();
         
         if (!pfrom->fInbound)
         {

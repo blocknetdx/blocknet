@@ -1914,6 +1914,23 @@ void RelayTxPool(const int64 session_id, const unsigned int state)
     }*/
 }
 
+void RelayGetTxPool()
+{
+    LOCK(cs_vNodes);
+    BOOST_FOREACH(CNode* pnode, vNodes)
+    {
+        if(!pnode->fRelayTxes)
+            continue;
+        if (pnode->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION)
+            continue;
+
+        printf("Sending gettxpool\n");
+        pnode->PushMessage("gettxpool");
+        return;
+    }
+}
+
+
 void RelayTxPoolIn(const int64 session_id, const CTxIn& tx, const int64& nAmount)
 {
     LOCK(cs_vNodes);
