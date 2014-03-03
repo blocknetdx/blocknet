@@ -16,7 +16,7 @@ DarkCoin is a lite version of Bitcoin using X11 as a proof-of-work algorithm.
  - Block generation: 2.5 minutes
  - Difficulty Retargets every block using Kimoto Gravity Well
  - 84 Million Coins Max
- - Anonymous blockchain using coinjoin technology: Work In Progress
+ - Anonymous blockchain using DarkSend technology (Based on CoinJoin): Beta Testing
 
 For more information, as well as an immediately useable, binary version of
 the DarkCoin client sofware, see http://www.darkcoin.io.
