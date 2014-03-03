@@ -11,12 +11,11 @@ What is DarkCoin?
 
 DarkCoin is a lite version of Bitcoin using X11 as a proof-of-work algorithm.
  - Super secure hashing algorithm: 11 rounds of scientific hashing functions (blake, bmw, groestl, jh, keccak, skein, luffa, cubehash, shavite, simd, echo)
- - Block reward is controlled by moore's law: (11111 / (((Difficulty+51)/6) ^ 2))
- - CPU only mining
+ - Block reward is controlled by moore's law: 2222222/(((Difficulty+2600)/9)^2)
+ - GPU/CPU only mining
  - Block generation: 2.5 minutes
- - Difficulty Retargets every 576 blocks
+ - Difficulty Retargets every block using Kimoto Gravity Well
  - 84 Million Coins Max
- - Encrypted transaction network: Work In Progress
  - Anonymous blockchain using coinjoin technology: Work In Progress
 
 For more information, as well as an immediately useable, binary version of
