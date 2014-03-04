@@ -5368,9 +5368,17 @@ void CDarkSendPool::Check()
 
 void CDarkSendPool::ChargeFees(){
     if(fMaster) {
+        bool charged = false;
+        // who didn't provide outputs?
         for(unsigned int i = 0; i < vin.size(); i++){
-            if(vinSig[i] == CScript()){
-                printf("CDarkSendPool::ChargeFees -- found uncooperative node. charging fees. %u\n", i);
+            int count = 0;
+            for(unsigned int a = 0; a < vout.size(); a++){
+                if(vinCollateral[i] == voutCollateral[a]){
+                    count++;
+                }
+            }
+            if(count != 2){
+                printf("CDarkSendPool::ChargeFees -- found uncooperative node (didn't provide outputs). charging fees. %u\n", i);
 
                 CReserveKey reserveKey(pwalletMain);
                 CWalletTx wtxCollateral = CWalletTx(pwalletMain, vinCollateral[i]);
@@ -5382,6 +5390,28 @@ void CDarkSendPool::ChargeFees(){
                     printf("CDarkSendPool::ChargeFees() : Error: Transaction not valid");
                 }
                 wtxCollateral.RelayWalletTransaction();
+                charged = true;
+            }
+        }
+
+        if(charged) return;
+
+        // who didn't sign?
+        for(unsigned int i = 0; i < vin.size(); i++){
+            if(vinSig[i] == CScript()){
+                printf("CDarkSendPool::ChargeFees -- found uncooperative node (didn't sign). charging fees. %u\n", i);
+
+                CReserveKey reserveKey(pwalletMain);
+                CWalletTx wtxCollateral = CWalletTx(pwalletMain, vinCollateral[i]);
+
+                // Broadcast
+                if (!wtxCollateral.AcceptToMemoryPool(true, false))
+                {
+                    // This must not fail. The transaction has already been signed and recorded.
+                    printf("CDarkSendPool::ChargeFees() : Error: Transaction not valid");
+                }
+                wtxCollateral.RelayWalletTransaction();
+                charged = true;
             }
         }
     }
@@ -5470,9 +5500,10 @@ bool CDarkSendPool::SignatureValid(CScript& newSig, const CTxIn& theVin, const C
 }
 
 
-bool CDarkSendPool::IsCollateralValid(const CTransaction& txCollateral){
+bool CDarkSendPool::IsCollateralValid(const CTransaction& txCollateral, bool fRunIsAcceptable){
     CValidationState valState;
     if (!txCollateral.CheckTransaction(valState)){
+        if(fDebug) printf ("CDarkSendPool::IsCollateralValid - invalid transaction\n");
         return false;
     }
 
@@ -5487,13 +5518,20 @@ bool CDarkSendPool::IsCollateralValid(const CTransaction& txCollateral){
         }
     }
 
-    if (!foundCollateralAmount || !foundCollateralAddr) return false;
+    if (!foundCollateralAmount || !foundCollateralAddr) {
+        if(fDebug) printf ("CDarkSendPool::IsCollateralValid - not correct amount or addr\n");
+        return false;
+    }
 
     CReserveKey reserveKey(pwalletMain);
     CWalletTx wtxCollateral = CWalletTx(pwalletMain, txCollateral);
 
-    if (!wtxCollateral.IsAcceptable(true, false))
-        return false;
+    if (fRunIsAcceptable) {
+        if (!wtxCollateral.IsAcceptable(true, false)){
+            if(fDebug) printf ("CDarkSendPool::IsCollateralValid - didn't pass IsAcceptable\n");
+            return false;
+        }
+    }
 
     return true;
 }
@@ -5502,7 +5540,7 @@ bool CDarkSendPool::AddInput(const CTxIn& newInput, const int64& nAmount, const 
     if (newInput.prevout.IsNull() || nAmount < 0)
         return false;
 
-    if (!IsCollateralValid(txCollateral)){
+    if (!IsCollateralValid(txCollateral, true)){
         if(fDebug) printf ("CDarkSendPool::AddInput - collateral not valid!\n");
         return false;
     }
@@ -5538,11 +5576,6 @@ bool CDarkSendPool::AddInput(const CTxIn& newInput, const int64& nAmount, const 
 }
 
 bool CDarkSendPool::AddOutput(const CTxOut& newOutput, const int64 newOutEnc, const CTransaction& txCollateral){
-    if (!IsCollateralValid(txCollateral)){
-        if(fDebug) printf ("CDarkSendPool::AddOutput - collateral not valid!\n");
-        return false;
-    }
-
     if(vout.size() + queuedVout.size() >= POOL_MAX_TRANSACTIONS*2)
         return false;
 
