@@ -1520,7 +1520,7 @@ string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 
 
     //**************
 
-    int64 nFeeRet = 0.001*COIN; ///need to get a better fee calc
+    int64 nFeeRet = 0.003*COIN; ///need to get a better fee calc
     CCoinControl* coinControl = new CCoinControl();
     int64 nTotalValue = nValue + nFeeRet;
 

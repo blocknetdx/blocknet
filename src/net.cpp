@@ -1923,8 +1923,6 @@ void RelayGetTxPool()
             continue;
         if (pnode->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION)
             continue;
-
-        printf("Sending gettxpool\n");
         pnode->PushMessage("gettxpool");
         return;
     }
@@ -1938,7 +1936,6 @@ void RelayTxPoolIn(const int64 session_id, const CTxIn& tx, const int64& nAmount
     {
         if(!pnode->fRelayTxes)
             continue;
-        printf("Sending txpli\n");
         pnode->PushMessage("txpli", session_id, tx, nAmount, txCollateral);
     }
 }
@@ -1950,7 +1947,6 @@ void RelayTxPoolOut(const int64 session_id, const CTxOut& tx, const int64 voutEn
     {
         if(!pnode->fRelayTxes)
             continue;
-        printf("Sending txplo\n");
         pnode->PushMessage("txplo", session_id, tx, voutEnc, txCollateral);
     }
 }
@@ -1962,7 +1958,6 @@ void RelayTxPoolSig(const int64 session_id, const CScript& sig, const CTxIn& vin
     {
         if(!pnode->fRelayTxes)
             continue;
-        printf("Sending txpls\n");
         pnode->PushMessage("txpls", session_id, sig, vin, pubKey);
     }
 }

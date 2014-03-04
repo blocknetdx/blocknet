@@ -856,22 +856,6 @@ bool CTxMemPool::acceptable(CValidationState &state, CTransaction &tx, bool fChe
         {
             // Disable replacement feature for now
             return false;
-
-            // Allow replacing with a newer version of the same transaction
-            if (i != 0)
-                return false;
-            ptxOld = mapNextTx[outpoint].ptx;
-            if (ptxOld->IsFinal())
-                return false;
-            if (!tx.IsNewerThan(*ptxOld))
-                return false;
-            for (unsigned int i = 0; i < tx.vin.size(); i++)
-            {
-                COutPoint outpoint = tx.vin[i].prevout;
-                if (!mapNextTx.count(outpoint) || mapNextTx[outpoint].ptx != ptxOld)
-                    return false;
-            }
-            break;
         }
     }
 
@@ -5500,7 +5484,7 @@ bool CDarkSendPool::SignatureValid(CScript& newSig, const CTxIn& theVin, const C
 }
 
 
-bool CDarkSendPool::IsCollateralValid(const CTransaction& txCollateral, bool fRunIsAcceptable){
+bool CDarkSendPool::IsCollateralValid(const CTransaction& txCollateral){
     CValidationState valState;
     if (!txCollateral.CheckTransaction(valState)){
         if(fDebug) printf ("CDarkSendPool::IsCollateralValid - invalid transaction\n");
@@ -5526,11 +5510,9 @@ bool CDarkSendPool::IsCollateralValid(const CTransaction& txCollateral, bool fRu
     CReserveKey reserveKey(pwalletMain);
     CWalletTx wtxCollateral = CWalletTx(pwalletMain, txCollateral);
 
-    if (fRunIsAcceptable) {
-        if (!wtxCollateral.IsAcceptable(true, false)){
-            if(fDebug) printf ("CDarkSendPool::IsCollateralValid - didn't pass IsAcceptable\n");
-            return false;
-        }
+    if (!wtxCollateral.IsAcceptable(true, false)){
+        if(fDebug) printf ("CDarkSendPool::IsCollateralValid - didn't pass IsAcceptable\n");
+        return false;
     }
 
     return true;
@@ -5540,7 +5522,7 @@ bool CDarkSendPool::AddInput(const CTxIn& newInput, const int64& nAmount, const 
     if (newInput.prevout.IsNull() || nAmount < 0)
         return false;
 
-    if (!IsCollateralValid(txCollateral, true)){
+    if (!IsCollateralValid(txCollateral)){
         if(fDebug) printf ("CDarkSendPool::AddInput - collateral not valid!\n");
         return false;
     }
@@ -5578,6 +5560,11 @@ bool CDarkSendPool::AddInput(const CTxIn& newInput, const int64& nAmount, const 
 bool CDarkSendPool::AddOutput(const CTxOut& newOutput, const int64 newOutEnc, const CTransaction& txCollateral){
     if(vout.size() + queuedVout.size() >= POOL_MAX_TRANSACTIONS*2)
         return false;
+
+    if (!IsCollateralValid(txCollateral)){
+        if(fDebug) printf ("CDarkSendPool::AddInput - collateral not valid!\n");
+        return false;
+    }
 
     bool fFoundMatchingCollateral = false;
     for(unsigned int i = 0; i < vinCollateral.size(); i++){
@@ -5663,9 +5650,10 @@ void CDarkSendPool::CatchUpNode(CNode* pfrom){
         pfrom->PushMessage("txpli", session_id, vin[i], vinAmount[i], vinCollateral[i]);
     }
 
-    BOOST_FOREACH(CTxOut v, vout){
+
+    for(unsigned int i = 0; i < vout.size(); i++){
         if(fDebug) printf("CDarkSendPool::CatchUpNode -- add vout\n");
-        pfrom->PushMessage("txplo", session_id, v);
+        pfrom->PushMessage("txplo", session_id, vout[i], voutCollateral[i]);
     }
 
     for(unsigned int i = 0; i < vinSig.size(); i++){
@@ -5722,17 +5710,17 @@ void ThreadCheckDarkSendPool()
     unsigned int c = 0;
     while (true)
     {
-        MilliSleep(1000)
-;        //printf("ThreadCheckDarkSendPool::check timeout\n");
+        MilliSleep(1000);
+        //printf("ThreadCheckDarkSendPool::check timeout\n");
         darkSendPool.CheckTimeout();
         
-/*        if(c % 5 == 0) {
+        if(c % 5 == 0) {
             if(darkSendPool.GetSessionID() == 1000){
                 printf("ThreadCheckDarkSendPool::RelayGetTxPool()\n");
                 RelayGetTxPool();
             }
         }
-*/
+
         c++;
     }
 }

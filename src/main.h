@@ -2558,7 +2558,7 @@ public:
     void CheckTimeout();
     bool SignatureValid(CScript& newSig, const CTxIn& theVin, const CScript& pubKey);
     void Sign();
-    bool IsCollateralValid(const CTransaction& txCollateral, bool fRunIsAcceptable);
+    bool IsCollateralValid(const CTransaction& txCollateral);
     bool AddInput(const CTxIn& newInput, const int64& nAmount, const CTransaction& txCollateral);
     bool AddOutput(const CTxOut& newOutput, const int64 newOutEnc, const CTransaction& txCollateral);
     bool AddScriptSig(CScript& newSig, const CTxIn& theVin, const CScript& pubKey);
