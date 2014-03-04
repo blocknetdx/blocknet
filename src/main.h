@@ -24,6 +24,7 @@ class CAddress;
 class CInv;
 class CNode;
 class CDarkSendPool;
+class CBitcoinAddress;
 
 struct CBlockIndexWorkComparator;
 
@@ -691,6 +692,9 @@ void UpdateCoins(const CTransaction& tx, CValidationState &state, CCoinsViewCach
     // Try to accept this transaction into the memory pool
     bool AcceptToMemoryPool(CValidationState &state, bool fCheckInputs=true, bool fLimitFree = true, bool* pfMissingInputs=NULL);
 
+    // Check everything without accepting into the pool
+    bool IsAcceptable(CValidationState &state, bool fCheckInputs=true, bool fLimitFree = true, bool* pfMissingInputs=NULL);
+
 protected:
     static const CTxOut &GetOutputFor(const CTxIn& input, CCoinsViewCache& mapInputs);
 };
@@ -1169,6 +1173,7 @@ public:
     bool IsInMainChain() const { return GetDepthInMainChain() > 0; }
     int GetBlocksToMaturity() const;
     bool AcceptToMemoryPool(bool fCheckInputs=true, bool fLimitFree=true);
+    bool IsAcceptable(bool fCheckInputs=true, bool fLimitFree=true);
 };
 
 
@@ -2105,6 +2110,7 @@ public:
     std::map<COutPoint, CInPoint> mapNextTx;
 
     bool accept(CValidationState &state, CTransaction &tx, bool fCheckInputs, bool fLimitFree, bool* pfMissingInputs);
+    bool acceptable(CValidationState &state, CTransaction &tx, bool fCheckInputs, bool fLimitFree, bool* pfMissingInputs);
     bool addUnchecked(const uint256& hash, const CTransaction &tx);
     bool remove(const CTransaction &tx, bool fRecursive = false);
     bool removeConflicts(const CTransaction &tx);
@@ -2300,6 +2306,7 @@ public:
     int64 theirAddressEnc;
     int64 changeAddressEnc;
     int64 nFeeRet;
+    CTransaction txCollateral;
 
     CDarkSendTransaction()
     {
@@ -2324,7 +2331,7 @@ public:
     }
 
     bool Add(int64 newFromAddress_nValue, const CTxIn& newFromAddress, const CScript& pubScript, const CTxOut& newTheirAddress, 
-        const CTxOut& newChangeAddress, int64 newFeeRet, int64 theirEnc, int64 changeEnc) 
+        const CTxOut& newChangeAddress, int64 newFeeRet, int64 theirEnc, int64 changeEnc, CTransaction newTxCollateral) 
     {
         if(isSet){return false;}
 
@@ -2338,6 +2345,7 @@ public:
         nFeeRet = newFeeRet;
         theirAddressEnc = theirEnc;
         changeAddressEnc = changeEnc;
+        txCollateral = newTxCollateral;
         isSet = true;
         
         return true;
@@ -2358,7 +2366,7 @@ public:
 class CDarkSendPool
 {
 public:
-    static const int MIN_PEER_PROTO_VERSION = 70006;
+    static const int MIN_PEER_PROTO_VERSION = 70007;
 
     int64 session_id;
     unsigned int next_session_id;
@@ -2372,22 +2380,26 @@ public:
 
     std::vector<CTxIn> vin;
     std::vector<int64> vinAmount;
+    std::vector<CTransaction> vinCollateral;
     std::vector<CScript> vinSig;
     std::vector<CScript> vinPubKey;
     unsigned int sigCount;
     std::vector<CTxOut> vout;
     std::vector<int64> voutEnc;
+    std::vector<CTransaction> voutCollateral;
 
     // For receiving out of order , 
     // NOTE: these should be held in a class
     std::vector<CTxIn> queuedVin;
     std::vector<int64> queuedVinAmount;
+    std::vector<CTransaction> queuedVinCollateral;
     // queued sig, 
     std::vector<CScript> queuedVinSig;
     std::vector<CTxIn> queuedVinSigVin;
     std::vector<CScript> queuedVinSigPubKey;
     std::vector<CTxOut> queuedVout;
     std::vector<int64> queuedVoutEnc;
+    std::vector<CTransaction> queuedVoutCollateral;
 
     /* used when inputs/outputs are broadcast and the 
         pool is not in the correct state to accept them
@@ -2398,14 +2410,28 @@ public:
     std::map<int64, std::string> sessionTxID;
 
     unsigned int state;
+    CScript collateralPubKey;
 
     CDarkSendPool()
     {
         printf("CDarkSendPool::INIT()\n");
-        next_session_id = 1000;
+        next_session_id = 999;
+
+        /* DarkSend uses collateral addresses to trust parties entering the pool
+            to behave themselves. If they don't it takes their money. */
+
+        std::string strAddress = "";  
+        if(!fTestNet) {
+            strAddress = "XvgkUjmaWpnN2uChNpsGPGmo65mVN92vxn";
+        } else {
+            strAddress = "mxE2Rp3oYpSEFdsN5TdHWhZvEHm3PJQQVm";
+        }
+        
+        SetCollateralAddress(strAddress);
         SetNull();
     }
 
+    void SetCollateralAddress(std::string strAddress);
     std::string GetSessionTxID(int64 lookupSessionID);
 
     void SetNull()
@@ -2414,9 +2440,11 @@ public:
         vin.clear();
         vout.clear();
         voutEnc.clear();
+        voutCollateral.clear();
         vinSig.clear();
         vinPubKey.clear();
         vinAmount.clear();
+        vinCollateral.clear();
 
 
         printf("CDarkSend()::SetNull::vin %lu\n", vin.size());
@@ -2433,11 +2461,13 @@ public:
 
         queuedVin.clear();
         queuedVinAmount.clear();
+        queuedVinCollateral.clear();
         queuedVinSig.clear();
         queuedVinSigVin.clear();
         queuedVinSigPubKey.clear();
         queuedVout.clear();
         queuedVoutEnc.clear();
+        queuedVoutCollateral.clear();
 
         next_session_id++;
         session_id = next_session_id;
@@ -2534,19 +2564,17 @@ public:
     void AddQueuedInput();
     void AddQueuedOutput();
     void Check();
+    void ChargeFees();
     void CheckTimeout();
+    bool SignatureValid(CScript& newSig, const CTxIn& theVin, const CScript& pubKey);
     void Sign();
-    bool AddInput(const CTxIn& newInput, const int64& nAmount);
-    bool AddOutput(const CTxOut& newOutput, const int64 newOutEnc);
+    bool IsCollateralValid(const CTransaction& txCollateral);
+    bool AddInput(const CTxIn& newInput, const int64& nAmount, const CTransaction& txCollateral);
+    bool AddOutput(const CTxOut& newOutput, const int64 newOutEnc, const CTransaction& txCollateral);
     bool AddScriptSig(CScript& newSig, const CTxIn& theVin, const CScript& pubKey);
     void CatchUpNode(CNode* pfrom);
-    void SendMoney(const CTxIn& from, const CTxOut& to, int64& nFeeRet, CKeyStore& newKeys, int64 from_nValue, CScript& pubScript, CReserveKey& reservekey);
+    void SendMoney(const CTransaction& txCollateral, const CTxIn& from, const CTxOut& to, int64& nFeeRet, CKeyStore& newKeys, int64 from_nValue, CScript& pubScript, CReserveKey& reservekey);
     void AddQueuedSignatures();
-
-    bool DeletePending(CTxIn& newInput, CTxOut newOutput, CScript newSig, 
-        int64 vinEnc, int64 voutEnc, int64 sigEnc, int64 nounce);
-
-    int DeleteMyPending();
 
     IMPLEMENT_SERIALIZE
     (

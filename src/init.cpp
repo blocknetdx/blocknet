@@ -93,10 +93,6 @@ void Shutdown()
     static CCriticalSection cs_Shutdown;
     TRY_LOCK(cs_Shutdown, lockShutdown);
     if (!lockShutdown) return;
-
-    /// deal with this in a better (sane?) way
-    darkSendPool.DeleteMyPending();
-    boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
     
     RenameThread("bitcoin-shutoff");
     nTransactionsUpdated++;

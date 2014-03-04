@@ -197,18 +197,6 @@ Value resetpool(const Array& params, bool fHelp)
     return obj;
 }
 
-Value withdrawpooltx(const Array& params, bool fHelp)
-{
-    if (fHelp || params.size() != 0)
-        throw runtime_error(
-            "withdrawlpooltx\n"
-            "Remove my pending transaction from pool.");
-
-    Object obj;
-    obj.push_back(Pair("success",        darkSendPool.DeleteMyPending()));
-    return obj;
-}
-
 Value getworkex(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() > 2)

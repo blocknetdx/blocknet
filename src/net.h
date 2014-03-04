@@ -644,11 +644,9 @@ void RelayTransaction(const CTransaction& tx, const uint256& hash);
 void RelayTransaction(const CTransaction& tx, const uint256& hash, const CDataStream& ss);
 void RelayTxPool(const int64 session_id, const unsigned int state);
 void RelayGetTxPool();
-void RelayTxPoolIn(const int64 session_id, const CTxIn& tx, const int64& nAmount);
-void RelayTxPoolOut(const int64 session_id, const CTxOut& tx, const int64 voutEnc);
+void RelayTxPoolIn(const int64 session_id, const CTxIn& tx, const int64& nAmount, const CTransaction& txCollateral);
+void RelayTxPoolOut(const int64 session_id, const CTxOut& tx, const int64 voutEnc, const CTransaction& txCollateral);
 void RelayTxPoolSig(const int64 session_id, const CScript& sig, const CTxIn& vin, const CScript& pubKey);
-void RelayTxPoolDeletePending(const int64 session_id, const CTxIn& newInput, const CTxOut newOutput, const CScript newSig,  
-    const int64 vinEnc, const int64 voutEnc, const int64 sigEnc, const int64 nounce);
 void RelayTxPoolForceReset();
 
 

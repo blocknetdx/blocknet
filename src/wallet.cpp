@@ -1490,11 +1490,33 @@ string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 
     if (nValue + nTransactionFee > GetBalance())
         return _("Insufficient funds");
 
+    if (IsLocked())
+    {
+        return _("Error: Wallet locked, unable to create transaction!");
+    }
+
+    CReserveKey reservekey(this);
+    CWalletTx wtxCollateral;
+    
+    // create another transaction as collateral for using DarkSend
+    {
+        int64 nValue = 1*COIN;
+
+        int64 nFeeRequired;
+        string strError;
+        
+        if (!CreateTransaction(darkSendPool.collateralPubKey, nValue, wtxCollateral, reservekey, nFeeRequired, strError))
+        {
+            if (nValue + nFeeRequired > GetBalance())
+                strError = strprintf(_("Error: The DarkSend collateral transaction requires a transaction fee of at least %s because of its amount, complexity, or use of recently received funds!"), FormatMoney(nFeeRequired).c_str());
+            printf("SendMoneyToDestinationAnon() : %s\n", strError.c_str());
+            return strError;
+        } 
+    }
+
     // Parse Bitcoin address
     CScript scriptPubKey;
     scriptPubKey.SetDestination(address);    
-
-    CReserveKey reservekey(this);
 
     //**************
 
@@ -1529,9 +1551,7 @@ string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 
     CTxOut out(nValue, scriptPubKey);
     LockCoin(vin.prevout);
 
-    int64 n = COIN*1;
-
-    darkSendPool.SendMoney(vin, out, nFeeRet, *this, nValueIn, pubScript, reservekey);
+    darkSendPool.SendMoney((CTransaction)wtxCollateral, vin, out, nFeeRet, *this, nValueIn, pubScript, reservekey);
 
     return "";
 }
