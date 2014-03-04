@@ -1500,7 +1500,7 @@ string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 
     
     // create another transaction as collateral for using DarkSend
     {
-        int64 nValue = 1*COIN;
+        int64 nValue = 0.25*COIN;
 
         int64 nFeeRequired;
         string strError;

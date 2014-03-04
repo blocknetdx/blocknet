@@ -5512,7 +5512,7 @@ bool CDarkSendPool::IsCollateralValid(const CTransaction& txCollateral, bool fRu
     BOOST_FOREACH(CTxOut v, txCollateral.vout){
         if(v.scriptPubKey == collateralPubKey) {
             foundCollateralAddr = true;
-            if(v.nValue == 1*COIN){
+            if(v.nValue == 0.25*COIN){
                 foundCollateralAmount = true;
             }
         }
