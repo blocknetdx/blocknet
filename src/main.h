@@ -2446,18 +2446,11 @@ public:
         vinAmount.clear();
         vinCollateral.clear();
 
-
-        printf("CDarkSend()::SetNull::vin %lu\n", vin.size());
-        printf("CDarkSend()::SetNull::vout %lu\n", vout.size());
-        printf("CDarkSend()::SetNull::vinSig %lu\n", vinSig.size()); 
-
         state = POOL_STATUS_ACCEPTING_INPUTS;
         vDST.clear(); //do I need to clean up the objects?
 
         last_time_stage_changed = GetTimeMillis();
         sigCount = 0;
-
-        printf("CDarkSend()::SetNull::IsNull %i\n", (int)IsNull());
 
         queuedVin.clear();
         queuedVinAmount.clear();
@@ -2474,8 +2467,6 @@ public:
 
         sessionTxID.insert(std::make_pair(session_id, "incomplete"));
         sessions.push_back(session_id);
-
-        printf("CDarkSend()::SetNull::exit \n");
     }
 
     void ResetMyTransaction()
@@ -2495,7 +2486,6 @@ public:
 
     bool IsNull() const
     {   
-        printf("CDarkSend()::IsNull %i\n", (int)(state == POOL_STATUS_ACCEPTING_INPUTS && vin.empty() && vout.empty() && vDST.empty() == true));
         return (state == POOL_STATUS_ACCEPTING_INPUTS && vin.empty() && vout.empty() && vDST.empty() == true);
     }
 
