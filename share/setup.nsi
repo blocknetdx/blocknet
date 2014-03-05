@@ -5,7 +5,7 @@ SetCompressor /SOLID lzma
 
 # General Symbol Definitions
 !define REGKEY "SOFTWARE\$(^Name)"
-!define VERSION 0.8.9.0
+!define VERSION 0.8.9.3
 !define COMPANY "DarkCoin project"
 !define URL http://www.darkcoin.io/
 
@@ -51,7 +51,7 @@ CRCCheck on
 XPStyle on
 BrandingText " "
 ShowInstDetails show
-VIProductVersion 0.8.9.0
+VIProductVersion 0.8.9.3
 VIAddVersionKey ProductName DarkCoin
 VIAddVersionKey ProductVersion "${VERSION}"
 VIAddVersionKey CompanyName "${COMPANY}"
