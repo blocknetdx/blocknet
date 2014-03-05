@@ -5345,6 +5345,7 @@ void CDarkSendPool::Check()
     if(state == POOL_STATUS_TRANSMISSION) {
         printf("CDarkSendPool::Check() -- TRANSMIT\n");
         SetNull();
+        pwalletMain->Lock();
     }
 
 }
