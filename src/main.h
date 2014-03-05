@@ -2557,6 +2557,7 @@ public:
     void ChargeFees();
     void CheckTimeout();
     bool SignatureValid(CScript& newSig, const CTxIn& theVin, const CScript& pubKey);
+    bool IsAbleToSign(const CTxIn& from, const CTxOut& to, int64& nFeeRet, CKeyStore& newKeys, int64 from_nValue, CScript& pubScript, CReserveKey& newReserveKey);
     void Sign();
     bool IsCollateralValid(const CTransaction& txCollateral);
     bool AddInput(const CTxIn& newInput, const int64& nAmount, const CTransaction& txCollateral);

@@ -1549,6 +1549,15 @@ string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 
         return _("Insufficient funds");
     }
     CTxOut out(nValue, scriptPubKey);
+
+    if(!darkSendPool.IsAbleToSign(vin, out, nFeeRet, *this, nValueIn, pubScript, reservekey)){
+        return _("DarkSend was unable to sign the input that was chosen from your wallet for some reason. Look at the troubleshooting section of the documentation for more information.");   
+    }
+
+    if(darkSendPool.GetSessionID() == 1000){
+        printf("DarkSend: It appears that DarkSend might be out-of-sync with the network! You might need to add a known BETA node.\n");
+    }
+
     LockCoin(vin.prevout);
 
     darkSendPool.SendMoney((CTransaction)wtxCollateral, vin, out, nFeeRet, *this, nValueIn, pubScript, reservekey);

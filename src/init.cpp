@@ -89,6 +89,11 @@ static CCoinsViewDB *pcoinsdbview;
 
 void Shutdown()
 {
+
+    if(darkSendPool.GetMyTransactionCount() != 0){
+        printf("Error: Darksend appears to have a transaction in progress, you will possibly be charged fees for shuting down.\n");
+    }
+
     printf("Shutdown : In progress...\n");
     static CCriticalSection cs_Shutdown;
     TRY_LOCK(cs_Shutdown, lockShutdown);

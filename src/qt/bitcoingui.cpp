@@ -698,6 +698,7 @@ void BitcoinGUI::closeEvent(QCloseEvent *event)
         }
 #endif
     }
+    
     QMainWindow::closeEvent(event);
 }
 
@@ -834,6 +835,7 @@ void BitcoinGUI::toggleHidden()
 
 void BitcoinGUI::detectShutdown()
 {
-    if (ShutdownRequested())
+    if (ShutdownRequested()) {
         QMetaObject::invokeMethod(QCoreApplication::instance(), "quit", Qt::QueuedConnection);
+    }
 }

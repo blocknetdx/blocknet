@@ -848,7 +848,6 @@ bool CTxMemPool::acceptable(CValidationState &state, CTransaction &tx, bool fChe
     }
 
     // Check for conflicts with in-memory transactions
-    CTransaction* ptxOld = NULL;
     for (unsigned int i = 0; i < tx.vin.size(); i++)
     {
         COutPoint outpoint = tx.vin[i].prevout;
@@ -5410,6 +5409,28 @@ void CDarkSendPool::CheckTimeout(){
         SetNull();
         //add my transactions to the new session
     }
+}
+
+bool CDarkSendPool::IsAbleToSign(const CTxIn& from, const CTxOut& to, int64& nFeeRet, CKeyStore& newKeys, int64 from_nValue, CScript& pubScript, CReserveKey& newReserveKey){
+    CTransaction txNew;
+    txNew.vin.clear();
+    txNew.vout.clear();
+
+    CTxOut change = CTxOut(from_nValue-to.nValue-nFeeRet, pubScript);
+
+    txNew.vin.push_back(from);
+    txNew.vout.push_back(to);
+    txNew.vout.push_back(change);
+    
+    int n = 0;
+    if(fDebug) printf("CDarkSendPool::IsAbleToSign - Signing my input %i\n", n);
+    if(!SignSignature(newKeys, pubScript, txNew, n, int(SIGHASH_ALL|SIGHASH_ANYONECANPAY))) { // changes scriptSig
+        if(fDebug) printf("CDarkSendPool::IsAbleToSign - Unable to sign my own transaction! \n");
+        // not sure what to do here, it will timeout...?
+        return false;
+    }
+    
+    return true;
 }
 
 void CDarkSendPool::Sign(){
