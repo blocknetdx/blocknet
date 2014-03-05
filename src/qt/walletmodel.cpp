@@ -308,7 +308,7 @@ bool WalletModel::setWalletLocked(bool locked, const SecureString &passPhrase)
     if(locked)
     {
         // Lock
-        return wallet->Lock();
+        return false; //wallet->Lock();
     }
     else
     {
