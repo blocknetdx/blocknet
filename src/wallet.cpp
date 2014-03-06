@@ -1544,12 +1544,12 @@ string CWallet::DarkSendMoney(const CTxDestination& address, int64 nValue)
     {
         if (!SelectCoinsExactOutput(10*COIN, vin, nValueIn, pubScript, false, coinControl))
         {
-            return _("Found a unspend output equal to 10DRK, but it is non-confirmed, please wait for a confirmation before using DarkSend.");
+            return _("Found an unspend output equal to 10DRK, but it is non-confirmed, please wait for a confirmation before using DarkSend.");
         }
         return _("Couldn't find a confirmed unspend output equal to 10DRK.");
     }
+    
     CTxOut out(nValue, scriptPubKey);
-
     if(!darkSendPool.IsAbleToSign(vin, out, nFeeRet, *this, nValueIn, pubScript, reservekey)){
         return _("DarkSend was unable to sign the input that was chosen from your wallet for some reason. Look at the troubleshooting section of the documentation for more information.");   
     }

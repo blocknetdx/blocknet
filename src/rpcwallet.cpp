@@ -341,8 +341,10 @@ Value denominate(const Array& params, bool fHelp)
 
     int count = 0;
     int successful = 0;
+    bool error = false;
+
     // create another transaction as collateral for using DarkSend
-    while(pwalletMain->GetBalance() > (10*COIN+(0.01*COIN)+POOL_FEE_AMOUNT) && count <= 5)
+    while(!error && count <= 5)
     {        
         int64 nFeeRequired;
         string strError;
@@ -363,19 +365,24 @@ Value denominate(const Array& params, bool fHelp)
         scriptNewAddr2.SetDestination(vchPubKey2.GetID());
 
         //try to create the larger size input
+        int successful2 = successful;
         if(pwalletMain->CreateTransaction(scriptNewAddr, 10*COIN, wtxNew, reservekey, nFeeRequired, strError)){
             if (pwalletMain->CommitTransaction(wtxNew, reservekey)) {
                 //if successfull, create the collateral needed to submit
-                if(pwalletMain->CreateTransaction(scriptNewAddr2, POOL_FEE_AMOUNT+(0.01*COIN), wtxNew, reservekey, nFeeRequired, strError)){
-                    if (pwalletMain->CommitTransaction(wtxNew, reservekey)){
+                if(pwalletMain->CreateTransaction(scriptNewAddr2, POOL_FEE_AMOUNT+(0.01*COIN), wtxNew2, reservekey, nFeeRequired, strError)){
+                    if (pwalletMain->CommitTransaction(wtxNew2, reservekey)){
                         successful++;
                     }
-                }
+                } 
             }
         }
+        if(successful2 == successful) error = true;
         count++;
     }
 
+    if(successful == 0)
+        return "An error occurred created DarkSend compatible inputs. Please consult the documentation for help.";
+    
     ostringstream convert;
     convert << "Created inputs for " << successful << " DarkSends";
     return convert.str();

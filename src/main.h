@@ -2368,7 +2368,7 @@ static const int64 POOL_FEE_AMOUNT = 0.1*COIN;
 class CDarkSendPool
 {
 public:
-    static const int MIN_PEER_PROTO_VERSION = 70007;
+    static const int MIN_PEER_PROTO_VERSION = 70008;
 
     int64 session_id;
     unsigned int next_session_id;
