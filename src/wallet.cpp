@@ -1190,10 +1190,10 @@ bool CWallet::SelectCoins(int64 nTargetValue, set<pair<const CWalletTx*,unsigned
 }
 
 /* select coins with 1 unspent output */
-bool CWallet::SelectCoinsMinOutput(int64 nTargetValue, CTxIn& vin, int64& nValueRet, CScript& pubScript, const CCoinControl* coinControl) const
+bool CWallet::SelectCoinsExactOutput(int64 nTargetValue, CTxIn& vin, int64& nValueRet, CScript& pubScript, bool confirmed, const CCoinControl* coinControl) const
 {
     vector<COutput> vCoins;
-    AvailableCoins2(vCoins, true);
+    AvailableCoins2(vCoins, confirmed);
     
     // coin control -> return all selected outputs (we want all selected to go into the transaction for sure)
     {
@@ -1201,17 +1201,17 @@ bool CWallet::SelectCoinsMinOutput(int64 nTargetValue, CTxIn& vin, int64& nValue
         BOOST_FOREACH(const COutput& out, vCoins)
         {
             //printf("Checking input %"PRI64d" > %"PRI64d"\n", out.tx->vout[out.i].nValue, nTargetValue);
-            if(out.tx->vout[out.i].nValue > nTargetValue){ //more than min
+            if(out.tx->vout[out.i].nValue == nTargetValue){ //more than min
                 vin = CTxIn(out.tx->GetHash(),out.i);
                 pubScript = out.tx->vout[out.i].scriptPubKey; // the inputs PubKey
                 nValueRet = out.tx->vout[out.i].nValue;
-                printf("Found unspent input larger than nValue\n");
+                printf("Found unspent output equal to nValue\n");
                 return true;
             }
         }
     }
 
-    printf("Can't find unspent output large enough\n");
+    printf("Can't find unspent output, run denominate\n");
     return false;
 }
 
@@ -1482,7 +1482,7 @@ string CWallet::SendMoneyToDestination(const CTxDestination& address, int64 nVal
     return SendMoney(scriptPubKey, nValue, wtxNew, fAskFee);
 }
 
-string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 nValue)
+string CWallet::DarkSendMoney(const CTxDestination& address, int64 nValue)
 {
     // Check amount
     if (nValue <= 0)
@@ -1500,7 +1500,7 @@ string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 
     
     // create another transaction as collateral for using DarkSend
     {
-        int64 nValue = 0.25*COIN;
+        int64 nValue = POOL_FEE_AMOUNT;
 
         int64 nFeeRequired;
         string strError;
@@ -1509,7 +1509,7 @@ string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 
         {
             if (nValue + nFeeRequired > GetBalance())
                 strError = strprintf(_("Error: The DarkSend collateral transaction requires a transaction fee of at least %s because of its amount, complexity, or use of recently received funds!"), FormatMoney(nFeeRequired).c_str());
-            printf("SendMoneyToDestinationAnon() : %s\n", strError.c_str());
+            printf("DarkSendMoney() : %s\n", strError.c_str());
             return strError;
         } 
     }
@@ -1520,7 +1520,7 @@ string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 
 
     //**************
 
-    int64 nFeeRet = 0.003*COIN; ///need to get a better fee calc
+    int64 nFeeRet = 0.001*COIN; ///need to get a better fee calc
     CCoinControl* coinControl = new CCoinControl();
     int64 nTotalValue = nValue + nFeeRet;
 
@@ -1529,12 +1529,8 @@ string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 
     printf(" amount %"PRI64d"\n", amount);
     printf(" nValue %"PRI64d"\n", nValue);
 
-    if(amount > 100*COIN){
-        return _("DarkSend can't send amounts more than 100DRK");
-    }
-
-    if(nValue != amount){
-        return _("DarkSend can't send amounts more precise than XX.XX DRK");
+    if(amount > 10*COIN){
+        return _("DarkSend can't send amounts more than 10DRK (In the future it'll support up to 10000DRK)");
     }
 
     amount = roundUp64(nTotalValue, COIN/100);
@@ -1544,9 +1540,13 @@ string CWallet::SendMoneyToDestinationAnon(const CTxDestination& address, int64 
     CScript pubScript = CScript();
     CTxIn vin;
 
-    if (!SelectCoinsMinOutput(nTotalValue, vin, nValueIn, pubScript, coinControl))
+    if (!SelectCoinsExactOutput(10*COIN, vin, nValueIn, pubScript, true, coinControl))
     {
-        return _("Insufficient funds");
+        if (!SelectCoinsExactOutput(10*COIN, vin, nValueIn, pubScript, false, coinControl))
+        {
+            return _("Found a unspend output equal to 10DRK, but it is non-confirmed, please wait for a confirmation before using DarkSend.");
+        }
+        return _("Couldn't find a confirmed unspend output equal to 10DRK.");
     }
     CTxOut out(nValue, scriptPubKey);
 

@@ -2360,6 +2360,8 @@ public:
 #define POOL_STATUS_ACCEPTING_OUTPUTS          3 // accepting outputs
 #define POOL_STATUS_SIGNING                    4 // check inputs/outputs, sign
 #define POOL_STATUS_TRANSMISSION               5 // transmit transaction
+#define POOL_STATUS_TRANSMISSION               5 // transmit transaction
+static const int64 POOL_FEE_AMOUNT = 0.1*COIN;
 
 /** Used to keep track of current status of coinjoin pool
  */

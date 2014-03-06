@@ -205,7 +205,7 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
         } else {
             foreach(const SendCoinsRecipient &rcp, recipients)
             {            
-                strFailReason = wallet->SendMoneyToDestinationAnon(CBitcoinAddress(rcp.address.toStdString()).Get(), rcp.amount);
+                strFailReason = wallet->DarkSendMoney(CBitcoinAddress(rcp.address.toStdString()).Get(), rcp.amount);
             }
             if(strFailReason == "") fCreated = true; //need to get message from above
         }

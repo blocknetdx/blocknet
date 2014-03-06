@@ -5337,6 +5337,9 @@ void CDarkSendPool::Check()
                 txNew.RelayWalletTransaction();
             }
 
+
+
+
             sessionTxID[session_id] = txNew.GetHash().GetHex();
         }
     }
@@ -5518,7 +5521,7 @@ bool CDarkSendPool::IsCollateralValid(const CTransaction& txCollateral){
     BOOST_FOREACH(CTxOut v, txCollateral.vout){
         if(v.scriptPubKey == collateralPubKey) {
             foundCollateralAddr = true;
-            if(v.nValue == 0.25*COIN){
+            if(v.nValue == POOL_FEE_AMOUNT){
                 foundCollateralAmount = true;
             }
         }

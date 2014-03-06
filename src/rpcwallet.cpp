@@ -320,7 +320,7 @@ Value darksend(const Array& params, bool fHelp)
     if (pwalletMain->IsLocked())
         throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
 
-    string strError = pwalletMain->SendMoneyToDestinationAnon(address.Get(), nAmount);
+    string strError = pwalletMain->DarkSendMoney(address.Get(), nAmount);
     if (strError != "")
         throw JSONRPCError(RPC_WALLET_ERROR, strError);
 
@@ -330,6 +330,56 @@ Value darksend(const Array& params, bool fHelp)
     return convert.str();
 }
 
+Value denominate(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() != 0)
+        throw runtime_error(
+            "denominate\n"
+            "Creates compatible inputs for DarkSend"
+            + HelpRequiringPassphrase());
+
+
+    int count = 0;
+    int successful = 0;
+    // create another transaction as collateral for using DarkSend
+    while(pwalletMain->GetBalance() > (10*COIN+(0.01*COIN)+POOL_FEE_AMOUNT) && count <= 5)
+    {        
+        int64 nFeeRequired;
+        string strError;
+
+        CWalletTx wtxNew;
+        CWalletTx wtxNew2;
+        CReserveKey reservekey(pwalletMain);
+    
+        //get 2 new keys
+        CScript scriptNewAddr;
+        CPubKey vchPubKey;
+        assert(reservekey.GetReservedKey(vchPubKey)); // should never fail, as we just unlocked
+        scriptNewAddr.SetDestination(vchPubKey.GetID());
+
+        CScript scriptNewAddr2;
+        CPubKey vchPubKey2;
+        assert(reservekey.GetReservedKey(vchPubKey2)); // should never fail, as we just unlocked
+        scriptNewAddr2.SetDestination(vchPubKey2.GetID());
+
+        //try to create the larger size input
+        if(pwalletMain->CreateTransaction(scriptNewAddr, 10*COIN, wtxNew, reservekey, nFeeRequired, strError)){
+            if (pwalletMain->CommitTransaction(wtxNew, reservekey)) {
+                //if successfull, create the collateral needed to submit
+                if(pwalletMain->CreateTransaction(scriptNewAddr2, POOL_FEE_AMOUNT+(0.01*COIN), wtxNew, reservekey, nFeeRequired, strError)){
+                    if (pwalletMain->CommitTransaction(wtxNew, reservekey)){
+                        successful++;
+                    }
+                }
+            }
+        }
+        count++;
+    }
+
+    ostringstream convert;
+    convert << "Created inputs for " << successful << " DarkSends";
+    return convert.str();
+}
 
 Value getdarksendtxid(const Array& params, bool fHelp)
 {

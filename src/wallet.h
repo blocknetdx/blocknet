@@ -70,7 +70,7 @@ class CWallet : public CCryptoKeyStore
 {
 private:
     bool SelectCoins(int64 nTargetValue, std::set<std::pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64& nValueRet, const CCoinControl *coinControl=NULL) const;
-    bool SelectCoinsMinOutput(int64 nTargetValue, CTxIn& vin, int64& nValueRet, CScript& pubScript, const CCoinControl* coinControl) const;
+    bool SelectCoinsExactOutput(int64 nTargetValue, CTxIn& vin, int64& nValueRet, CScript& pubScript, bool confirmed, const CCoinControl* coinControl) const;
 
 
     CWalletDB *pwalletdbEncryption;
@@ -189,7 +189,7 @@ public:
     bool CommitTransaction(CWalletTx& wtxNew, CReserveKey& reservekey);
     std::string SendMoney(CScript scriptPubKey, int64 nValue, CWalletTx& wtxNew, bool fAskFee=false);
     std::string SendMoneyToDestination(const CTxDestination &address, int64 nValue, CWalletTx& wtxNew, bool fAskFee=false);
-    std::string SendMoneyToDestinationAnon(const CTxDestination &address, int64 nValue);
+    std::string DarkSendMoney(const CTxDestination &address, int64 nValue);
 
     bool NewKeyPool();
     bool TopUpKeyPool();
