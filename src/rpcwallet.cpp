@@ -339,15 +339,19 @@ Value denominate(const Array& params, bool fHelp)
             + HelpRequiringPassphrase());
 
 
-    int count = 0;
+    int count = 10;
     int successful = 0;
-    bool error = false;
+    bool done = false;
 
+    if(pwalletMain->GetBalance() < 11*COIN){
+        return "To use denominate you must have at least 11DRK with 1 confirmation.";
+    }
+
+    int64 nFeeRequired;
+    string strError;
     // create another transaction as collateral for using DarkSend
-    while(!error && count <= 5)
+    while(!done && count > 0)
     {        
-        int64 nFeeRequired;
-        string strError;
 
         CWalletTx wtxNew;
         CWalletTx wtxNew2;
@@ -364,27 +368,29 @@ Value denominate(const Array& params, bool fHelp)
         assert(reservekey.GetReservedKey(vchPubKey2)); // should never fail, as we just unlocked
         scriptNewAddr2.SetDestination(vchPubKey2.GetID());
 
+        vector< pair<CScript, int64> > vecSend;
+        for(int i = 1; i <= count; i++) {
+            vecSend.push_back(make_pair(scriptNewAddr, 10*COIN));
+            vecSend.push_back(make_pair(scriptNewAddr2, POOL_FEE_AMOUNT+(0.01*COIN)));
+        }
+
         //try to create the larger size input
-        int successful2 = successful;
-        if(pwalletMain->CreateTransaction(scriptNewAddr, 10*COIN, wtxNew, reservekey, nFeeRequired, strError)){
+        if(pwalletMain->CreateTransaction(vecSend, wtxNew, reservekey, nFeeRequired, strError, NULL, true)){
             if (pwalletMain->CommitTransaction(wtxNew, reservekey)) {
                 //if successfull, create the collateral needed to submit
-                if(pwalletMain->CreateTransaction(scriptNewAddr2, POOL_FEE_AMOUNT+(0.01*COIN), wtxNew2, reservekey, nFeeRequired, strError)){
-                    if (pwalletMain->CommitTransaction(wtxNew2, reservekey)){
-                        successful++;
-                    }
-                } 
+                done = true;
+                successful = count;
             }
         }
-        if(successful2 == successful) error = true;
-        count++;
+        count--;
     }
 
-    if(successful == 0)
-        return "An error occurred created DarkSend compatible inputs. Please consult the documentation for help.";
-    
     ostringstream convert;
-    convert << "Created inputs for " << successful << " DarkSends";
+    if(successful == 0) {
+        convert << "An error occurred created DarkSend compatible inputs. Error was " << strError;
+    } else {
+        convert << "Created inputs for " << successful << " DarkSends";
+    }    
     return convert.str();
 }
 
