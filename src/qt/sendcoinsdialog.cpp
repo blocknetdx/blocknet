@@ -274,6 +274,9 @@ void SendCoinsDialog::denominate()
             tr(message.c_str()),
             QMessageBox::Ok, QMessageBox::Ok);
     }
+
+    //should lock again
+    model->Lock();
 }
 
 void SendCoinsDialog::reject()
