@@ -1615,32 +1615,35 @@ std::string CWallet::Denominate()
     string strError;
     CReserveKey reservekey(this);
 
+    //get 2 new keys
+    CScript scriptNewAddr;
+    CPubKey vchPubKey;
+    assert(reservekey.GetReservedKey(vchPubKey)); // should never fail, as we just unlocked
+    scriptNewAddr.SetDestination(vchPubKey.GetID());
+
+    CScript scriptNewAddr2;
+    CPubKey vchPubKey2;
+    assert(reservekey.GetReservedKey(vchPubKey2)); // should never fail, as we just unlocked
+    scriptNewAddr2.SetDestination(vchPubKey2.GetID());
+
     // create another transaction as collateral for using DarkSend
     while(!done && count > 0)
     {        
 
         CWalletTx wtxNew;
         CWalletTx wtxNew2;
-    
-        //get 2 new keys
-        CScript scriptNewAddr;
-        CPubKey vchPubKey;
-        assert(reservekey.GetReservedKey(vchPubKey)); // should never fail, as we just unlocked
-        scriptNewAddr.SetDestination(vchPubKey.GetID());
-
-        CScript scriptNewAddr2;
-        CPubKey vchPubKey2;
-        assert(reservekey.GetReservedKey(vchPubKey2)); // should never fail, as we just unlocked
-        scriptNewAddr2.SetDestination(vchPubKey2.GetID());
 
         vector< pair<CScript, int64> > vecSend;
+        printf("Creating transaction\n");
         for(int i = 1; i <= count; i++) {
+            printf(" -- %d \n", i);
             vecSend.push_back(make_pair(scriptNewAddr, 10*COIN));
             vecSend.push_back(make_pair(scriptNewAddr2, POOL_FEE_AMOUNT+(0.01*COIN)));
         }
 
-        //try to create the larger size input
+        printf("Creating\n");
         if(CreateTransaction(vecSend, wtxNew, reservekey, nFeeRequired, strError, NULL, true)){
+            printf("Committing\n");
             if (CommitTransaction(wtxNew, reservekey)) {
                 //if successfull, create the collateral needed to submit
                 done = true;

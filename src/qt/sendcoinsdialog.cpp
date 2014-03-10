@@ -259,6 +259,14 @@ void SendCoinsDialog::clear()
 
 void SendCoinsDialog::denominate()
 {
+
+    WalletModel::UnlockContext ctx(model->requestUnlock());
+    if(!ctx.isValid())
+    {
+        // Unlock wallet was cancelled
+        return;
+    }
+
     std::string message = darkSendPool.Denominate();
 
     if(message != ""){
