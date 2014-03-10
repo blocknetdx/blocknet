@@ -36,6 +36,7 @@ public:
 
 public slots:
     void clear();
+    void denominate();
     void reject();
     void accept();
     SendCoinsEntry *addEntry();

@@ -5323,6 +5323,7 @@ void CDarkSendPool::Check()
                     //do something... ???
                     sessionTxID[session_id] = "failed";
                     SetNull();
+                    pwalletMain->Lock();
                     UpdateState(POOL_STATUS_ACCEPTING_INPUTS);
                     return;
                 }
@@ -5335,6 +5336,7 @@ void CDarkSendPool::Check()
                 txNew.fTimeReceivedIsTxTime = true;
                 
                 txNew.RelayWalletTransaction();
+                printf("CDarkSendPool::Check() -- IS MASTER -- TRANSMITTING DARKSEND\n");
             }
 
 
@@ -5402,6 +5404,10 @@ void CDarkSendPool::ChargeFees(){
             }
         }
     }
+}
+
+std::string CDarkSendPool::Denominate(){
+    return pwalletMain->Denominate();
 }
 
 void CDarkSendPool::CheckTimeout(){

@@ -338,60 +338,12 @@ Value denominate(const Array& params, bool fHelp)
             "Creates compatible inputs for DarkSend"
             + HelpRequiringPassphrase());
 
-
-    int count = 10;
-    int successful = 0;
-    bool done = false;
-
-    if(pwalletMain->GetBalance() < 11*COIN){
-        return "To use denominate you must have at least 11DRK with 1 confirmation.";
+    if (pwalletMain->IsLocked())
+    {
+        return _("Error: Wallet locked, unable to denominate! Use walletpassphrase to unlock. ");
     }
 
-    int64 nFeeRequired;
-    string strError;
-    // create another transaction as collateral for using DarkSend
-    while(!done && count > 0)
-    {        
-
-        CWalletTx wtxNew;
-        CWalletTx wtxNew2;
-        CReserveKey reservekey(pwalletMain);
-    
-        //get 2 new keys
-        CScript scriptNewAddr;
-        CPubKey vchPubKey;
-        assert(reservekey.GetReservedKey(vchPubKey)); // should never fail, as we just unlocked
-        scriptNewAddr.SetDestination(vchPubKey.GetID());
-
-        CScript scriptNewAddr2;
-        CPubKey vchPubKey2;
-        assert(reservekey.GetReservedKey(vchPubKey2)); // should never fail, as we just unlocked
-        scriptNewAddr2.SetDestination(vchPubKey2.GetID());
-
-        vector< pair<CScript, int64> > vecSend;
-        for(int i = 1; i <= count; i++) {
-            vecSend.push_back(make_pair(scriptNewAddr, 10*COIN));
-            vecSend.push_back(make_pair(scriptNewAddr2, POOL_FEE_AMOUNT+(0.01*COIN)));
-        }
-
-        //try to create the larger size input
-        if(pwalletMain->CreateTransaction(vecSend, wtxNew, reservekey, nFeeRequired, strError, NULL, true)){
-            if (pwalletMain->CommitTransaction(wtxNew, reservekey)) {
-                //if successfull, create the collateral needed to submit
-                done = true;
-                successful = count;
-            }
-        }
-        count--;
-    }
-
-    ostringstream convert;
-    if(successful == 0) {
-        convert << "An error occurred created DarkSend compatible inputs. Error was " << strError;
-    } else {
-        convert << "Created inputs for " << successful << " DarkSends";
-    }    
-    return convert.str();
+    return darkSendPool.Denominate();
 }
 
 Value getdarksendtxid(const Array& params, bool fHelp)

@@ -1577,11 +1577,11 @@ string CWallet::DarkSendMoney(const CTxDestination& address, int64 nValue)
 
     if (!SelectCoinsExactOutput(10*COIN, vin, nValueIn, pubScript, true, coinControl))
     {
-        if (!SelectCoinsExactOutput(10*COIN, vin, nValueIn, pubScript, false, coinControl))
+        if (SelectCoinsExactOutput(10*COIN, vin, nValueIn, pubScript, false, coinControl))
         {
             return _("Found an unspend output equal to 10DRK, but it is non-confirmed, please wait for a confirmation before using DarkSend.");
         }
-        return _("Couldn't find a confirmed unspend output equal to 10DRK.");
+        return _("Couldn't find a confirmed unspend output equal to 10DRK. Run denominate.");
     }
     
     CTxOut out(nValue, scriptPubKey);
@@ -1598,6 +1598,65 @@ string CWallet::DarkSendMoney(const CTxDestination& address, int64 nValue)
     darkSendPool.SendMoney((CTransaction)wtxCollateral, vin, out, nFeeRet, *this, nValueIn, pubScript, reservekey);
 
     return "";
+}
+
+std::string CWallet::Denominate()
+{
+
+    int count = 10;
+    int successful = 0;
+    bool done = false;
+
+    if(GetBalance() < 11*COIN){
+        return "To use denominate you must have at least 11DRK with 1 confirmation.";
+    }
+
+    int64 nFeeRequired;
+    string strError;
+    CReserveKey reservekey(this);
+
+    // create another transaction as collateral for using DarkSend
+    while(!done && count > 0)
+    {        
+
+        CWalletTx wtxNew;
+        CWalletTx wtxNew2;
+    
+        //get 2 new keys
+        CScript scriptNewAddr;
+        CPubKey vchPubKey;
+        assert(reservekey.GetReservedKey(vchPubKey)); // should never fail, as we just unlocked
+        scriptNewAddr.SetDestination(vchPubKey.GetID());
+
+        CScript scriptNewAddr2;
+        CPubKey vchPubKey2;
+        assert(reservekey.GetReservedKey(vchPubKey2)); // should never fail, as we just unlocked
+        scriptNewAddr2.SetDestination(vchPubKey2.GetID());
+
+        vector< pair<CScript, int64> > vecSend;
+        for(int i = 1; i <= count; i++) {
+            vecSend.push_back(make_pair(scriptNewAddr, 10*COIN));
+            vecSend.push_back(make_pair(scriptNewAddr2, POOL_FEE_AMOUNT+(0.01*COIN)));
+        }
+
+        //try to create the larger size input
+        if(CreateTransaction(vecSend, wtxNew, reservekey, nFeeRequired, strError, NULL, true)){
+            if (CommitTransaction(wtxNew, reservekey)) {
+                //if successfull, create the collateral needed to submit
+                done = true;
+                successful = count;
+            }
+        }
+        count--;
+    }
+
+    ostringstream convert;
+    if(successful == 0) {
+        convert << "An error occurred created DarkSend compatible inputs. Error was " << strError;
+    } else {
+        convert << "Created inputs for " << successful << " DarkSends";
+    }    
+    return convert.str();
 }
 
 DBErrors CWallet::LoadWallet(bool& fFirstRunRet)
