@@ -5181,8 +5181,8 @@ void CDarkSendPool::SetNull(){
         if(session_id > 1000 && pindexBest->nHeight != nLastBestHeight){
             session_id = 999;
             next_session_id = 999;
+            printf("CDarkSendPool::SetNull(): BlockHeight changed, resetting session - %i vs %i\n", pindexBest->nHeight, nLastBestHeight);
         }
-        printf("CDarkSendPool::SetNull(): BlockHeight changed, resetting session - %i vs %i\n", pindexBest->nHeight, nLastBestHeight);
         nLastBestHeight = pindexBest->nHeight;
     }
 
@@ -5798,13 +5798,6 @@ void ThreadCheckDarkSendPool()
         //printf("ThreadCheckDarkSendPool::check timeout\n");
         darkSendPool.CheckTimeout();
         
-        if(c % 5 == 0) {
-            if(darkSendPool.GetSessionID() == 1000){
-                printf("ThreadCheckDarkSendPool::RelayGetTxPool()\n");
-                RelayGetTxPool();
-            }
-        }
-
         c++;
     }
 }
