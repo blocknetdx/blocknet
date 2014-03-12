@@ -2360,7 +2360,6 @@ public:
 #define POOL_STATUS_ACCEPTING_OUTPUTS          3 // accepting outputs
 #define POOL_STATUS_SIGNING                    4 // check inputs/outputs, sign
 #define POOL_STATUS_TRANSMISSION               5 // transmit transaction
-#define POOL_STATUS_TRANSMISSION               5 // transmit transaction
 static const int64 POOL_FEE_AMOUNT = 0.1*COIN;
 
 /** Used to keep track of current status of coinjoin pool
@@ -2368,10 +2367,11 @@ static const int64 POOL_FEE_AMOUNT = 0.1*COIN;
 class CDarkSendPool
 {
 public:
-    static const int MIN_PEER_PROTO_VERSION = 70008;
+    static const int MIN_PEER_PROTO_VERSION = 70009;
 
     int64 session_id;
-    unsigned int next_session_id;
+    int64 next_session_id;
+    int nLastBestHeight;
     bool session_locked;
 
     std::vector<CDarkSendTransaction> vDST;
@@ -2436,45 +2436,7 @@ public:
     void SetCollateralAddress(std::string strAddress);
     std::string GetSessionTxID(int64 lookupSessionID);
 
-    void SetNull()
-    {
-        printf("CDarkSendPool::SetNull()\n");
-        vin.clear();
-        vout.clear();
-        voutEnc.clear();
-        voutCollateral.clear();
-        vinSig.clear();
-        vinPubKey.clear();
-        vinAmount.clear();
-        vinCollateral.clear();
-
-        state = POOL_STATUS_ACCEPTING_INPUTS;
-        vDST.clear(); //do I need to clean up the objects?
-
-        last_time_stage_changed = GetTimeMillis();
-        sigCount = 0;
-
-        queuedVin.clear();
-        queuedVinAmount.clear();
-        queuedVinCollateral.clear();
-        queuedVinSig.clear();
-        queuedVinSigVin.clear();
-        queuedVinSigPubKey.clear();
-        queuedVout.clear();
-        queuedVoutEnc.clear();
-        queuedVoutCollateral.clear();
-
-        next_session_id++;
-        session_id = next_session_id;
-
-        sessionTxID.insert(std::make_pair(session_id, "incomplete"));
-        sessions.push_back(session_id);
-    }
-
-    void ResetMyTransaction()
-    {
-        vDST.empty();
-    }
+    void SetNull();
 
     static bool sort_in(CTxIn a, CTxIn b) {
         return a.prevout.hash > b.prevout.hash;

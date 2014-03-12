@@ -3585,7 +3585,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
     }
 
     else if (strCommand == "gettxpool") {
-        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION) {
+        if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
             return false;
         }
 
@@ -3594,7 +3594,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
     }
 
     else if (strCommand == "txpool") {        
-        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION) {
+        if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
             return false;
         }
 
@@ -3610,7 +3610,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
     }
 
     else if (strCommand == "txpli") { //new coinjoin pool tx vin        
-        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION) {
+        if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
             return false;
         }
 
@@ -3633,7 +3633,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
     }
 
     else if (strCommand == "txplo") { //new coinjoin pool tx vout
-        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION) {
+        if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
             return false;
         }
 
@@ -3655,7 +3655,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
     }
 
     else if (strCommand == "txpls") { //new coinjoin pool tx sign
-        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION) {
+        if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
             return false;
         }
 
@@ -3677,7 +3677,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
     }
 
     else if (strCommand == "txplr") { //reset coinjoin pool        
-        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION) {
+        if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
             return false;
         }
 
@@ -5150,6 +5150,50 @@ public:
     *********************************************
 */
 
+void CDarkSendPool::SetNull(){
+    printf("CDarkSendPool::SetNull()\n");
+    vin.clear();
+    vout.clear();
+    voutEnc.clear();
+    voutCollateral.clear();
+    vinSig.clear();
+    vinPubKey.clear();
+    vinAmount.clear();
+    vinCollateral.clear();
+
+    state = POOL_STATUS_ACCEPTING_INPUTS;
+    vDST.clear(); //do I need to clean up the objects?
+
+    last_time_stage_changed = GetTimeMillis();
+    sigCount = 0;
+
+    queuedVin.clear();
+    queuedVinAmount.clear();
+    queuedVinCollateral.clear();
+    queuedVinSig.clear();
+    queuedVinSigVin.clear();
+    queuedVinSigPubKey.clear();
+    queuedVout.clear();
+    queuedVoutEnc.clear();
+    queuedVoutCollateral.clear();
+
+    if(pindexBest != NULL) {
+        if(pindexBest->nHeight != nLastBestHeight){
+            session_id = 999;
+            next_session_id = 999;
+        }
+        printf("CDarkSendPool::SetNull(): BlockHeight changed, resetting session - %i vs %i\n", pindexBest->nHeight, nLastBestHeight);
+        nLastBestHeight = pindexBest->nHeight;
+    }
+
+    next_session_id++;
+    session_id = next_session_id;
+
+    sessionTxID.insert(std::make_pair(session_id, "incomplete"));
+    sessions.push_back(session_id);
+}
+
+
 void CDarkSendPool::SetCollateralAddress(std::string strAddress){
     CBitcoinAddress address;
     if (!address.SetString(strAddress))
@@ -5418,6 +5462,15 @@ void CDarkSendPool::CheckTimeout(){
         ChargeFees();
         SetNull();
         //add my transactions to the new session
+    }
+
+    // if it's the next block and it's null, reset the session
+    if(IsNull()){
+        if(pindexBest != NULL) {
+            if(session_id > 1000 && pindexBest->nHeight != nLastBestHeight){
+                SetNull();
+            }
+        }
     }
 }
 
