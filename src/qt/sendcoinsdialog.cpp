@@ -168,19 +168,6 @@ void SendCoinsDialog::on_sendButton_clicked()
         if(rcp.isDarkSend) {isDarkSend = true;}
     }
 
-    if(isDarkSend && darkSendPool.GetSessionID() == 1000){
-        QMessageBox::StandardButton retval = QMessageBox::question(this, tr("DarkSend appears to be out-of-sync"),
-                              tr("It appears that DarkSend might be out-of-sync with the network! You might need to add a known BETA node. Continue?"),
-              QMessageBox::Yes|QMessageBox::Cancel,
-              QMessageBox::Cancel);
-        if(retval != QMessageBox::Yes)
-        {
-            fNewRecipientAllowed = true;
-            return;
-        }
-    }
-
-
     WalletModel::UnlockContext ctx(model->requestUnlock());
     if(!ctx.isValid())
     {
