@@ -2582,6 +2582,9 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
         mapOrphanBlocksByPrev.erase(hashPrev);
     }
 
+    //might need to reset pool
+    darkSendPool.CheckTimeout();
+
     printf("ProcessBlock: ACCEPTED\n");
     return true;
 }
