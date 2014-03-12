@@ -5178,7 +5178,7 @@ void CDarkSendPool::SetNull(){
     queuedVoutCollateral.clear();
 
     if(pindexBest != NULL) {
-        if(pindexBest->nHeight != nLastBestHeight){
+        if(session_id > 1000 && pindexBest->nHeight != nLastBestHeight){
             session_id = 999;
             next_session_id = 999;
         }
