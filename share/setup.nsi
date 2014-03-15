@@ -5,8 +5,8 @@ SetCompressor /SOLID lzma
 
 # General Symbol Definitions
 !define REGKEY "SOFTWARE\$(^Name)"
-!define VERSION 0.8.9.0
 !define COMPANY "DarkCoin project"
+!define VERSION 0.9.0.0
 !define URL http://www.darkcoin.io/
 
 # MUI Symbol Definitions
@@ -45,13 +45,13 @@ Var StartMenuGroup
 !insertmacro MUI_LANGUAGE English
 
 # Installer attributes
-OutFile darkcoin-0.8.0.0-win32-setup.exe
+OutFile darkcoin-0.9.0.0-win32-setup.exe
 InstallDir $PROGRAMFILES\DarkCoin
 CRCCheck on
 XPStyle on
 BrandingText " "
 ShowInstDetails show
-VIProductVersion 0.8.9.0
+VIProductVersion 0.9.0.0
 VIAddVersionKey ProductName DarkCoin
 VIAddVersionKey ProductVersion "${VERSION}"
 VIAddVersionKey CompanyName "${COMPANY}"
