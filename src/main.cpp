@@ -5239,6 +5239,8 @@ public:
 
 void CDarkSendPool::SetNull(){
     printf("CDarkSendPool::SetNull()\n");
+    IsMaster = false;
+
     vin.clear();
     vout.clear();
     voutEnc.clear();
@@ -5396,9 +5398,12 @@ void CDarkSendPool::Check()
     // move on to next phase
     if(state == POOL_STATUS_SIGNING && sigCount == POOL_MAX_TRANSACTIONS) { 
         if(fDebug) printf("CDarkSendPool::Check() -- SIGNING\n");
+            
         UpdateState(POOL_STATUS_TRANSMISSION);
         RelayTxPool(session_id, state);
         // make sure my transactions are here
+
+        SelectMasterNode();
 
         CWalletTx txNew;
 
@@ -5428,7 +5433,7 @@ void CDarkSendPool::Check()
             }
             printf("CDarkSendPool::Check() -- compiled all signatures:\n%s", txNew.ToString().c_str());
             
-            if (fMaster) { //only the main node is master atm                
+            if (IsMaster) { //only the main node is master atm                
                 int i = 0;
                 BOOST_FOREACH(const CTxIn& txin, txNew.vin)
                 {
@@ -5487,7 +5492,7 @@ void CDarkSendPool::Check()
 }
 
 void CDarkSendPool::ChargeFees(){
-    if(fMaster) {
+    if(fPaymentNode) {
         bool charged = false;
         // who didn't provide outputs?
         for(unsigned int i = 0; i < vin.size(); i++){
@@ -5870,6 +5875,49 @@ void CDarkSendPool::SendMoney(const CTransaction& txCollateral, const CTxIn& fro
     AddQueuedInput();
     AddQueuedOutput();
     Check();
+}
+
+void CDarkSendPool::SelectMasterNode(){
+    uint256 Target = 0;
+    uint256 n = 0;
+
+    printf("CDarkSendPool::SelectMasterNode: Start\n");
+    
+    // calculate target
+    BOOST_FOREACH(CTxIn v, vin){
+        Target += v.prevout.n;
+        n += v.nSequence;
+    }
+    Target = Hash9(BEGIN(Target), END(n));
+
+    // find the master
+    uint256 BestScore = 0;
+    bool BestMaster = false;
+    for(unsigned int a = 0; a < vin.size(); a++){
+        for(unsigned int b = 0; b < vout.size(); b++){
+            if(vinCollateral[a] == voutCollateral[b]){
+                uint256 val = vout[b].nValue;
+                uint256 Score = Hash9(BEGIN(val), END(n));
+
+                if(Target-Score > BestScore) {
+                    BestScore = Target-Score;
+                    BestMaster = false;
+                    BOOST_FOREACH(const CDarkSendTransaction dst, vDST) {
+                        if(vin[a] == dst.fromAddress){
+                            BestMaster = true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if(BestMaster){
+        printf("CDarkSendPool::SelectMasterNode: I have been elected master!\n");
+        IsMaster = true;
+    } else {
+        printf("CDarkSendPool::SelectMasterNode: I'm not master :(\n");        
+    }
 }
 
 

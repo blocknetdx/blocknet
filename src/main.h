@@ -2413,6 +2413,7 @@ public:
 
     unsigned int state;
     CScript collateralPubKey;
+    bool IsMaster;
 
     CDarkSendPool()
     {
@@ -2531,6 +2532,7 @@ public:
     void SendMoney(const CTransaction& txCollateral, const CTxIn& from, const CTxOut& to, int64& nFeeRet, CKeyStore& newKeys, int64 from_nValue, CScript& pubScript, CReserveKey& reservekey);
     void AddQueuedSignatures();
     std::string Denominate();
+    void SelectMasterNode();
 
     IMPLEMENT_SERIALIZE
     (

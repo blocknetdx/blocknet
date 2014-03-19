@@ -187,7 +187,7 @@ Value resetpool(const Array& params, bool fHelp)
 
     Object obj;
  
-    if (fMaster) {   
+    if (fPaymentNode) {   
         obj.push_back(Pair("success",        darkSendPool.ForceReset()));
         RelayTxPoolForceReset();
     } else {
