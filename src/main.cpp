@@ -3696,7 +3696,9 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         darkSendPool.Check();
     }
 
-    else if (strCommand == "dsf") { //DarkSend Final tx        
+    else if (strCommand == "dsf") { //DarkSend Final tx  
+        printf("got RelayTxPoolFinalTransaction\n");
+
         if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
             return false;
         }
@@ -3707,12 +3709,14 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         vRecv >> session_id >> txNew;
 
         if(session_id != darkSendPool.GetSessionID()){
-            printf("CDarkSendPool()::%s - stale session \n", strCommand);
+            printf("CDarkSendPool()::%s - stale session \n", strCommand.c_str());
             return false;
         }
 
         //check to see if input is spent already? (and probably not confirmed)
+        printf("got AddFinalTransaction\n");
         if(darkSendPool.AddFinalTransaction(txNew)){
+            printf("good\n");
             RelayTxPoolFinalTransaction(session_id, txNew);
         }
     }
@@ -3729,7 +3733,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         vRecv >> session_id >> in >> nAmount >> txCollateral;
 
         if(session_id != darkSendPool.GetSessionID()){
-            printf("CDarkSendPool()::%s - stale session \n", strCommand);
+            printf("CDarkSendPool()::%s - stale session \n", strCommand.c_str());
             return false;
         }
 
@@ -3752,7 +3756,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         vRecv >> session_id >> out >> voutEnc >> txCollateral;
 
         if(session_id != darkSendPool.GetSessionID()){
-            printf("CDarkSendPool()::%s - stale session \n", strCommand);
+            printf("CDarkSendPool()::%s - stale session \n", strCommand.c_str());
             return false;
         }
 
@@ -3774,7 +3778,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         vRecv >> session_id >> sig >> vin >> pubKey;
 
         if(session_id != darkSendPool.GetSessionID()){
-            printf("CDarkSendPool()::%s - stale session \n", strCommand);
+            printf("CDarkSendPool()::%s - stale session \n", strCommand.c_str());
             return false;
         }
 
@@ -5117,7 +5121,7 @@ void static DarkCoinMiner(CWallet *pwallet)
             }
 
             // Check for stop or if block needs to be rebuilt
-            boost::this_thread::interruption_point();11
+            boost::this_thread::interruption_point();
             if (vNodes.empty())
                 break;
             if (pblock->nNonce >= 0xffff0000)
@@ -5262,7 +5266,8 @@ void CDarkSendPool::SetNull(){
     printf("CDarkSendPool::SetNull()\n");
     IsMaster = false;
 
-    txFinalTransaction = CTransaction(); 
+    txFinalTransaction.vin.clear();
+    txFinalTransaction.vout.clear();
 
     vin.clear();
     vout.clear();
@@ -5421,19 +5426,17 @@ void CDarkSendPool::Check()
         UpdateState(POOL_STATUS_SIGNING);
 
         if (IsMaster) {
-            CTransaction txNew;
-            txNew.vin.clear();
-            txNew.vout.clear();
+            txFinalTransaction.vin.clear();
+            txFinalTransaction.vout.clear();
 
             for(unsigned int i = 0; i < vout.size(); i++){
-                txNew.vout.push_back(vout[i]);
+                txFinalTransaction.vout.push_back(vout[i]);
             }
-            int mine = -1;
             for(unsigned int i = 0; i < vin.size(); i++){
-                txNew.vin.push_back(vin[i]);
+                txFinalTransaction.vin.push_back(vin[i]);
             }
 
-            RelayTxPoolFinalTransaction(txNew);
+            RelayTxPoolFinalTransaction(session_id, txFinalTransaction);
         }
 
         Sign();
@@ -5659,7 +5662,7 @@ void CDarkSendPool::Sign(){
             RelayTxPoolSig(session_id, txFinalTransaction.vin[n].scriptSig, dst.fromAddress, dst.fromAddress.prevPubKey);
         }
         
-        if(fDebug) printf("CDarkSendPool::Sign - txNew:\n%s", txNew.ToString().c_str());
+        if(fDebug) printf("CDarkSendPool::Sign - txNew:\n%s", txFinalTransaction.ToString().c_str());
 
     }
 }
@@ -5922,11 +5925,17 @@ void CDarkSendPool::SendMoney(const CTransaction& txCollateral, const CTxIn& fro
 bool CDarkSendPool::AddFinalTransaction(CTransaction& txNewFinalTransaction){
     if(fDebug) printf("CDarkSendPool::AddFinalTransaction - Got Finalized Transaction\n");
 
+    if(!txFinalTransaction.vin.empty()){
+        printf("CDarkSendPool::AddFinalTransaction - Rejected Final Transaction!\n");
+        return false;
+    }
+
     txFinalTransaction = txNewFinalTransaction;
     
     if(state == POOL_STATUS_SIGNING) { 
         Sign();
     }
+
     return true; //check validity of sig
 }
 

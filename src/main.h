@@ -2417,8 +2417,6 @@ public:
     CScript collateralPubKey;
     bool IsMaster;
 
-    bool IsMaster;
-
     CDarkSendPool()
     {
         printf("CDarkSendPool::INIT()\n");
@@ -2537,8 +2535,7 @@ public:
     void SendMoney(const CTransaction& txCollateral, const CTxIn& from, const CTxOut& to, int64& nFeeRet, CKeyStore& newKeys, int64 from_nValue, CScript& pubScript, CReserveKey& reservekey);
     void AddQueuedSignatures();
     std::string Denominate();
-    void SelectMasterNode();
-    bool AddFinalTransaction(CTransaction txNewFinalTransaction);
+    bool AddFinalTransaction(CTransaction& txNewFinalTransaction);
 
     IMPLEMENT_SERIALIZE
     (

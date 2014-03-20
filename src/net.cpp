@@ -1927,9 +1927,9 @@ void RelayGetTxPool()
         return;
     }
 }
-
-void RelayTxPoolFinalTransaction(const CTransaction txNew)
+void RelayTxPoolFinalTransaction(const int64 session_id, const CTransaction& txNew)
 {
+    printf("RelayTxPoolFinalTransaction\n");
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
