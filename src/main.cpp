@@ -5239,6 +5239,8 @@ public:
 
 void CDarkSendPool::SetNull(){
     printf("CDarkSendPool::SetNull()\n");
+    IsMaster = false;
+        
     vin.clear();
     vout.clear();
     voutEnc.clear();
@@ -5428,7 +5430,7 @@ void CDarkSendPool::Check()
             }
             printf("CDarkSendPool::Check() -- compiled all signatures:\n%s", txNew.ToString().c_str());
             
-            if (fMaster) { //only the main node is master atm                
+            if (IsMaster) { //only the main node is master atm                
                 int i = 0;
                 BOOST_FOREACH(const CTxIn& txin, txNew.vin)
                 {
@@ -5487,7 +5489,7 @@ void CDarkSendPool::Check()
 }
 
 void CDarkSendPool::ChargeFees(){
-    if(fMaster) {
+    if(fPaymentNode) {
         bool charged = false;
         // who didn't provide outputs?
         for(unsigned int i = 0; i < vin.size(); i++){
@@ -5848,6 +5850,11 @@ void CDarkSendPool::SendMoney(const CTransaction& txCollateral, const CTxIn& fro
         printf("CDarkSendPool::SendMoney() - from_nValue-to.nValue-nFeeRet %+"PRI64d"\n", from_nValue-to.nValue-nFeeRet);
 
         printf("CDarkSendPool::SendMoney() -- NEW INPUT -- adding %s\n", from.ToString().c_str());
+    }
+
+    if(IsNull()){
+        printf("CDarkSendPool::SendMoney() -- SELECTED AS MASTER\n");
+        IsMaster = true;
     }
 
     //vDST.theirAddress.nValue = from_nValue-nFeeRet; //assign full input to output

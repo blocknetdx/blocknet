@@ -1093,8 +1093,8 @@ bool AppInit2(boost::thread_group& threadGroup)
 
     // ********************************************************* Step 10: setup DarkSend
 
-    fMaster = GetBoolArg("-master");
-    if(fMaster) {printf("IS DARKSEND MASTER\n");}
+    fPaymentNode = GetBoolArg("-paymentnode");
+    if(fPaymentNode) {printf("IS DARKSEND PAYMENT NODE\n");}
 
     threadGroup.create_thread(boost::bind(&ThreadCheckDarkSendPool));
 

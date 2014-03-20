@@ -2414,11 +2414,14 @@ public:
     unsigned int state;
     CScript collateralPubKey;
 
+    bool IsMaster;
+
     CDarkSendPool()
     {
         printf("CDarkSendPool::INIT()\n");
         next_session_id = 999;
-
+        IsMaster = false;
+        
         /* DarkSend uses collateral addresses to trust parties entering the pool
             to behave themselves. If they don't it takes their money. */
 
