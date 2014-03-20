@@ -5714,11 +5714,11 @@ bool CDarkSendPool::IsCollateralValid(const CTransaction& txCollateral){
     CReserveKey reserveKey(pwalletMain);
     CWalletTx wtxCollateral = CWalletTx(pwalletMain, txCollateral);
 
-/*    if (!wtxCollateral.IsAcceptable(true, false)){
+    if (!wtxCollateral.IsAcceptable(true, false)){
         if(fDebug) printf ("CDarkSendPool::IsCollateralValid - didn't pass IsAcceptable\n");
         return false;
     }
-*/
+
     return true;
 }
 
