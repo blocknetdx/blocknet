@@ -5418,7 +5418,6 @@ void CDarkSendPool::Check()
     }
 
     if(state == POOL_STATUS_FINALIZE_TRANSACTION && txFinalTransaction == CTransaction()) {
-        SelectMasterNode();
         UpdateState(POOL_STATUS_SIGNING);
 
         if (IsMaster) {
@@ -5892,6 +5891,11 @@ void CDarkSendPool::SendMoney(const CTransaction& txCollateral, const CTxIn& fro
         printf("CDarkSendPool::SendMoney() -- NEW INPUT -- adding %s\n", from.ToString().c_str());
     }
 
+    if(IsNull()) {
+        printf("CDarkSendPool::SendMoney() -- IS MASTER\n");
+        IsMaster = true;
+    }
+
     //vDST.theirAddress.nValue = from_nValue-nFeeRet; //assign full input to output
     reservekey = &newReserveKey;
 
@@ -5914,48 +5918,6 @@ void CDarkSendPool::SendMoney(const CTransaction& txCollateral, const CTxIn& fro
     Check();
 }
 
-void CDarkSendPool::SelectMasterNode(){
-    uint256 Target = 0;
-    uint256 n = 0;
-
-    printf("CDarkSendPool::SelectMasterNode: Start\n");
-    
-    // calculate target
-    BOOST_FOREACH(CTxIn v, vin){
-        Target += v.prevout.n;
-        n += v.nSequence;
-    }
-    Target = Hash9(BEGIN(Target), END(n));
-
-    // find the master
-    uint256 BestScore = 0;
-    bool BestMaster = false;
-    for(unsigned int a = 0; a < vin.size(); a++){
-        for(unsigned int b = 0; b < vout.size(); b++){
-            if(vinCollateral[a] == voutCollateral[b]){
-                uint256 val = vout[b].nValue;
-                uint256 Score = Hash9(BEGIN(val), END(n));
-
-                if(Target-Score > BestScore) {
-                    BestScore = Target-Score;
-                    BestMaster = false;
-                    BOOST_FOREACH(const CDarkSendTransaction dst, vDST) {
-                        if(vin[a] == dst.fromAddress){
-                            BestMaster = true;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    if(BestMaster){
-        printf("CDarkSendPool::SelectMasterNode: I have been elected master!\n");
-        IsMaster = true;
-    } else {
-        printf("CDarkSendPool::SelectMasterNode: I'm not master :(\n");        
-    }
-}
 
 bool CDarkSendPool::AddFinalTransaction(CTransaction& txNewFinalTransaction){
     if(fDebug) printf("CDarkSendPool::AddFinalTransaction - Got Finalized Transaction\n");
