@@ -5422,24 +5422,35 @@ void CDarkSendPool::Check()
         RelayTxPool(session_id, state);
     }
 
+    printf("CDarkSendPool::Check() -- h1\n");     
     if(state == POOL_STATUS_FINALIZE_TRANSACTION && txFinalTransaction == CTransaction()) {
+        if(fDebug) printf("CDarkSendPool::Check() -- FINALIZE TRANSACTIONS\n");
         UpdateState(POOL_STATUS_SIGNING);
 
-        if (IsMaster) {
-            txFinalTransaction.vin.clear();
-            txFinalTransaction.vout.clear();
+        std::sort (vin.begin(), vin.end(), sort_in);
+        std::sort (vout.begin(), vout.end(), sort_out);
+
+        printf("CDarkSendPool::Check() -- h2\n");
+
+        if (IsMaster) { 
+            printf("CDarkSendPool::Check() -- h3\n");
+            CTransaction txNew;
 
             for(unsigned int i = 0; i < vout.size(); i++){
-                txFinalTransaction.vout.push_back(vout[i]);
+                txNew.vout.push_back(vout[i]);
             }
             for(unsigned int i = 0; i < vin.size(); i++){
-                txFinalTransaction.vin.push_back(vin[i]);
+                txNew.vin.push_back(vin[i]);
             }
 
-            RelayTxPoolFinalTransaction(session_id, txFinalTransaction);
+            printf("CDarkSendPool::Check() -- h4\n");
+
+            AddFinalTransaction(txNew);
+            RelayTxPoolFinalTransaction(session_id, txNew);
+            
+            Sign();
         }
 
-        Sign();
     }
 
     // move on to next phase
@@ -5450,6 +5461,8 @@ void CDarkSendPool::Check()
         RelayTxPool(session_id, state);
         // make sure my transactions are here
 
+        std::sort (vin.begin(), vin.end(), sort_in);
+        std::sort (vout.begin(), vout.end(), sort_out);
 
         CWalletTx txNew;
 
@@ -5520,9 +5533,6 @@ void CDarkSendPool::Check()
                 txNew.RelayWalletTransaction();
                 printf("CDarkSendPool::Check() -- IS MASTER -- TRANSMITTING DARKSEND\n");
             }
-
-
-
 
             sessionTxID[session_id] = txNew.GetHash().GetHex();
         }
@@ -5610,28 +5620,6 @@ void CDarkSendPool::CheckTimeout(){
             }
         }
     }
-}
-
-bool CDarkSendPool::IsAbleToSign(const CTxIn& from, const CTxOut& to, int64& nFeeRet, CKeyStore& newKeys, int64 from_nValue, CScript& pubScript, CReserveKey& newReserveKey){
-    CTransaction txNew;
-    txNew.vin.clear();
-    txNew.vout.clear();
-
-    CTxOut change = CTxOut(from_nValue-to.nValue-nFeeRet, pubScript);
-
-    txNew.vin.push_back(from);
-    txNew.vout.push_back(to);
-    txNew.vout.push_back(change);
-    
-    int n = 0;
-    if(fDebug) printf("CDarkSendPool::IsAbleToSign - Signing my input %i\n", n);
-    if(!SignSignature(newKeys, pubScript, txNew, n, int(SIGHASH_ALL|SIGHASH_ANYONECANPAY))) { // changes scriptSig
-        if(fDebug) printf("CDarkSendPool::IsAbleToSign - Unable to sign my own transaction! \n");
-        // not sure what to do here, it will timeout...?
-        return false;
-    }
-    
-    return true;
 }
 
 void CDarkSendPool::Sign(){
@@ -5726,11 +5714,11 @@ bool CDarkSendPool::IsCollateralValid(const CTransaction& txCollateral){
     CReserveKey reserveKey(pwalletMain);
     CWalletTx wtxCollateral = CWalletTx(pwalletMain, txCollateral);
 
-    if (!wtxCollateral.IsAcceptable(true, false)){
+/*    if (!wtxCollateral.IsAcceptable(true, false)){
         if(fDebug) printf ("CDarkSendPool::IsCollateralValid - didn't pass IsAcceptable\n");
         return false;
     }
-
+*/
     return true;
 }
 
@@ -5803,7 +5791,6 @@ bool CDarkSendPool::AddOutput(const CTxOut& newOutput, const int64 newOutEnc, co
         }
     }
 
-    BOOST_FOREACH(CTxOut v, vout) //if 2 people want to pay the same addr the same amount it won't work
     BOOST_FOREACH(CTxOut v, queuedVout)
         if(v == newOutput) return false;
 
