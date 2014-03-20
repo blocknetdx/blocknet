@@ -2358,8 +2358,9 @@ public:
 #define POOL_STATUS_IDLE                       1 // waiting for update
 #define POOL_STATUS_ACCEPTING_INPUTS           2 // accepting inputs
 #define POOL_STATUS_ACCEPTING_OUTPUTS          3 // accepting outputs
-#define POOL_STATUS_SIGNING                    4 // check inputs/outputs, sign
-#define POOL_STATUS_TRANSMISSION               5 // transmit transaction
+#define POOL_STATUS_FINALIZE_TRANSACTION       4 // master node will broadcast what it accepted
+#define POOL_STATUS_SIGNING                    5 // check inputs/outputs, sign final tx
+#define POOL_STATUS_TRANSMISSION               6 // transmit transaction
 static const int64 POOL_FEE_AMOUNT = 0.1*COIN;
 
 /** Used to keep track of current status of coinjoin pool
@@ -2375,6 +2376,7 @@ public:
     bool session_locked;
 
     std::vector<CDarkSendTransaction> vDST;
+    CTransaction txFinalTransaction;
 
     int64 last_time_stage_changed;
     CKeyStore *keystore;
@@ -2413,6 +2415,7 @@ public:
 
     unsigned int state;
     CScript collateralPubKey;
+    bool IsMaster;
 
     bool IsMaster;
 
@@ -2534,6 +2537,8 @@ public:
     void SendMoney(const CTransaction& txCollateral, const CTxIn& from, const CTxOut& to, int64& nFeeRet, CKeyStore& newKeys, int64 from_nValue, CScript& pubScript, CReserveKey& reservekey);
     void AddQueuedSignatures();
     std::string Denominate();
+    void SelectMasterNode();
+    bool AddFinalTransaction(CTransaction txNewFinalTransaction);
 
     IMPLEMENT_SERIALIZE
     (
