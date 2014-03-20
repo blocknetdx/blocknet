@@ -1928,6 +1928,17 @@ void RelayGetTxPool()
     }
 }
 
+void RelayTxPoolFinalTransaction(const CTransaction txNew)
+{
+    LOCK(cs_vNodes);
+    BOOST_FOREACH(CNode* pnode, vNodes)
+    {
+        if(!pnode->fRelayTxes)
+            continue;
+        pnode->PushMessage("dsf", session_id, txNew);
+    }
+}
+
 
 void RelayTxPoolIn(const int64 session_id, const CTxIn& tx, const int64& nAmount, const CTransaction& txCollateral)
 {
@@ -1936,7 +1947,7 @@ void RelayTxPoolIn(const int64 session_id, const CTxIn& tx, const int64& nAmount
     {
         if(!pnode->fRelayTxes)
             continue;
-        pnode->PushMessage("txpli", session_id, tx, nAmount, txCollateral);
+        pnode->PushMessage("dsi", session_id, tx, nAmount, txCollateral);
     }
 }
 
@@ -1947,7 +1958,7 @@ void RelayTxPoolOut(const int64 session_id, const CTxOut& tx, const int64 voutEn
     {
         if(!pnode->fRelayTxes)
             continue;
-        pnode->PushMessage("txplo", session_id, tx, voutEnc, txCollateral);
+        pnode->PushMessage("dso", session_id, tx, voutEnc, txCollateral);
     }
 }
 
@@ -1958,7 +1969,7 @@ void RelayTxPoolSig(const int64 session_id, const CScript& sig, const CTxIn& vin
     {
         if(!pnode->fRelayTxes)
             continue;
-        pnode->PushMessage("txpls", session_id, sig, vin, pubKey);
+        pnode->PushMessage("dss", session_id, sig, vin, pubKey);
     }
 }
 
@@ -1970,6 +1981,6 @@ void RelayTxPoolForceReset()
     {
         if(!pnode->fRelayTxes)
             continue;
-        pnode->PushMessage("txplr");
+        pnode->PushMessage("dsr");
     }
 }
