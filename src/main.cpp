@@ -5958,6 +5958,7 @@ void CDarkSendPool::SelectMasterNode(){
 }
 
 bool CDarkSendPool::AddFinalTransaction(CTransaction& txNewFinalTransaction){
+    if(fDebug) printf("CDarkSendPool::AddFinalTransaction - Got Finalized Transaction\n");
 
     txFinalTransaction = txNewFinalTransaction;
     
