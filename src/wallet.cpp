@@ -1533,22 +1533,6 @@ string CWallet::DarkSendMoney(const CTxDestination& address, int64 nValue)
     CReserveKey reservekey(this);
     CWalletTx wtxCollateral;
     
-    // create another transaction as collateral for using DarkSend
-    {
-        int64 nValue = POOL_FEE_AMOUNT;
-
-        int64 nFeeRequired;
-        string strError;
-        
-        if (!CreateTransaction(darkSendPool.collateralPubKey, nValue, wtxCollateral, reservekey, nFeeRequired, strError))
-        {
-            if (nValue + nFeeRequired > GetBalance())
-                strError = strprintf(_("Error: The DarkSend collateral transaction requires a transaction fee of at least %s because of its amount, complexity, or use of recently received funds!"), FormatMoney(nFeeRequired).c_str());
-            printf("DarkSendMoney() : %s\n", strError.c_str());
-            return strError;
-        } 
-    }
-
     // Parse Bitcoin address
     CScript scriptPubKey;
     scriptPubKey.SetDestination(address);    
@@ -1575,6 +1559,13 @@ string CWallet::DarkSendMoney(const CTxDestination& address, int64 nValue)
     CScript pubScript = CScript();
     CTxIn vin;
 
+    // try once before we try to denominate
+    if (!SelectCoinsExactOutput(10*COIN, vin, nValueIn, pubScript, true, coinControl))
+    {
+        Denominate();
+    }
+
+
     if (!SelectCoinsExactOutput(10*COIN, vin, nValueIn, pubScript, true, coinControl))
     {
         if (SelectCoinsExactOutput(10*COIN, vin, nValueIn, pubScript, false, coinControl))
@@ -1583,6 +1574,23 @@ string CWallet::DarkSendMoney(const CTxDestination& address, int64 nValue)
         }
         return _("Couldn't find a confirmed unspend output equal to 10DRK. Run denominate.");
     }
+
+    // create another transaction as collateral for using DarkSend
+    {
+        int64 nValue = POOL_FEE_AMOUNT;
+
+        int64 nFeeRequired;
+        string strError;
+        
+        if (!CreateTransaction(darkSendPool.collateralPubKey, nValue, wtxCollateral, reservekey, nFeeRequired, strError))
+        {
+            if (nValue + nFeeRequired > GetBalance())
+                strError = strprintf(_("Error: The DarkSend collateral transaction requires a transaction fee of at least %s because of its amount, complexity, or use of recently received funds!"), FormatMoney(nFeeRequired).c_str());
+            printf("DarkSendMoney() : %s\n", strError.c_str());
+            return strError;
+        } 
+    }
+
     
     LockCoin(vin.prevout);
 
@@ -1607,7 +1615,7 @@ std::string CWallet::Denominate()
     string strError;
     CReserveKey reservekey(this);
 
-    //get 2 new keys
+    // 2 new keys
     CScript scriptNewAddr;
     CPubKey vchPubKey;
     assert(reservekey.GetReservedKey(vchPubKey)); // should never fail, as we just unlocked

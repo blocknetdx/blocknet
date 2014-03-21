@@ -703,32 +703,6 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="denominateButton">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="toolTip">
-        <string>Create inputs compatible with DarkSend</string>
-       </property>
-       <property name="text">
-        <string>Denominate</string>
-       </property>
-       <property name="icon">
-        <iconset resource="../bitcoin.qrc">
-         <normaloff>:/icons/denominate</normaloff>:/icons/denominate</iconset>
-       </property>
-       <property name="autoRepeatDelay">
-        <number>300</number>
-       </property>
-       <property name="autoDefault">
-        <bool>false</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
       <layout class="QHBoxLayout" name="horizontalLayout_2">
        <property name="spacing">
         <number>3</number>

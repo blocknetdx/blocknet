@@ -221,7 +221,7 @@ static const CRPCCommand vRPCCommands[] =
     { "getaddressesbyaccount",  &getaddressesbyaccount,  true,      false,      true },
     { "sendtoaddress",          &sendtoaddress,          false,     false,      true },
     { "darksend",               &darksend,               false,     false,      true },
-    { "denominate",             &denominate,             false,     false,      true },
+//    { "denominate",             &denominate,             false,     false,      true },
     { "getdarksendtxid",        &getdarksendtxid,        false,     false,      true },
     { "resetpool",              &resetpool,              false,     false,      true },
     { "getreceivedbyaddress",   &getreceivedbyaddress,   false,     false,      true },
