@@ -73,7 +73,6 @@ private:
     bool SelectCoinsWithoutDenomination(int64 nTargetValue, std::set<std::pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64& nValueRet, const CCoinControl *coinControl=NULL) const;
     bool SelectCoinsExactOutput(int64 nTargetValue, CTxIn& vin, int64& nValueRet, CScript& pubScript, bool confirmed, const CCoinControl* coinControl) const;
 
-
     CWalletDB *pwalletdbEncryption;
 
     // the current wallet version: clients below this version are not able to load the wallet
@@ -83,6 +82,8 @@ private:
     int nWalletMaxVersion;
 
 public:
+    bool SelectCoinsMoreThanOutput(int64 nTargetValue, CTxIn& vin, int64& nValueRet, CScript& pubScript, bool confirmed, const CCoinControl* coinControl) const;
+
     mutable CCriticalSection cs_wallet;
 
     bool fFileBacked;
@@ -127,7 +128,7 @@ public:
 
     // check whether we are allowed to upgrade (or already support) to the named feature
     bool CanSupportFeature(enum WalletFeature wf) { return nWalletMaxVersion >= wf; }
-    std::string Denominate();
+    std::string Denominate(CWalletTx& wtxDenominate);
     void AvailableCoins(std::vector<COutput>& vCoins, bool fOnlyConfirmed=true, const CCoinControl *coinControl=NULL, bool noDenominatedInputs=false) const;
     void AvailableCoins2(std::vector<COutput>& vCoins, bool fOnlyConfirmed) const;
     bool SelectCoinsMinConf(int64 nTargetValue, int nConfMine, int nConfTheirs, std::vector<COutput> vCoins, std::set<std::pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64& nValueRet) const;

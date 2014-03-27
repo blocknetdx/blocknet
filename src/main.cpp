@@ -843,8 +843,10 @@ bool CTxMemPool::acceptable(CValidationState &state, CTransaction &tx, bool fChe
     uint256 hash = tx.GetHash();
     {
         LOCK(cs);
-        if (mapTx.count(hash))
+        if (mapTx.count(hash)) {
+            printf("false1\n");
             return false;
+        }
     }
 
     // Check for conflicts with in-memory transactions
@@ -853,6 +855,7 @@ bool CTxMemPool::acceptable(CValidationState &state, CTransaction &tx, bool fChe
         COutPoint outpoint = tx.vin[i].prevout;
         if (mapNextTx.count(outpoint))
         {
+            printf("false2\n");
             // Disable replacement feature for now
             return false;
         }
@@ -869,23 +872,28 @@ bool CTxMemPool::acceptable(CValidationState &state, CTransaction &tx, bool fChe
         view.SetBackend(viewMemPool);
 
         // do we already have it?
-        if (view.HaveCoins(hash))
+        if (view.HaveCoins(hash)){
+            printf("false3\n");
             return false;
+        }
 
         // do all inputs exist?
         // Note that this does not check for the presence of actual outputs (see the next check for that),
         // only helps filling in pfMissingInputs (to determine missing vs spent).
         BOOST_FOREACH(const CTxIn txin, tx.vin) {
             if (!view.HaveCoins(txin.prevout.hash)) {
-                if (pfMissingInputs)
+                if (pfMissingInputs) 
                     *pfMissingInputs = true;
+                printf("false4\n");
                 return false;
             }
         }
 
         // are the actual inputs available?
-        if (!tx.HaveInputs(view))
+        if (!tx.HaveInputs(view)) {
+            printf("false5\n");
             return state.Invalid(error("CTxMemPool::accept() : inputs already spent"));
+        }
 
         // Bring the best block into scope
         view.GetBestBlock();
@@ -895,8 +903,10 @@ bool CTxMemPool::acceptable(CValidationState &state, CTransaction &tx, bool fChe
         }
 
         // Check for non-standard pay-to-script-hash in inputs
-        if (!tx.AreInputsStandard(view) && !fTestNet)
+        if (!tx.AreInputsStandard(view) && !fTestNet) {
+            printf("false6\n");
             return error("CTxMemPool::accept() : nonstandard transaction input");
+        }
 
         // Note: if you modify this code to accept non-standard transactions, then
         // you should add code here to check that the transaction does a
@@ -906,15 +916,18 @@ bool CTxMemPool::acceptable(CValidationState &state, CTransaction &tx, bool fChe
 
         // Don't accept it if it can't get into a block
         int64 txMinFee = tx.GetMinFee(1000, true, GMF_RELAY);
-        if (fLimitFree && nFees < txMinFee)
+        if (fLimitFree && nFees < txMinFee) {
+            printf("false7\n");
             return error("CTxMemPool::accept() : not enough fees %s, %"PRI64d" < %"PRI64d,
                          hash.ToString().c_str(),
                          nFees, txMinFee);
+        }
 
         // Check against previous transactions
         // This is done last to help prevent CPU exhaustion denial-of-service attacks.
         if (!tx.CheckInputs(state, view, true, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC))
         {
+            printf("false8\n");
             return error("CTxMemPool::accept() : ConnectInputs failed %s", hash.ToString().c_str());
         }
     }
@@ -3298,14 +3311,6 @@ bool LoadExternalBlockFile(FILE* fileIn, CDiskBlockPos *dbp)
 }
 
 
-
-
-
-
-
-
-
-
 //////////////////////////////////////////////////////////////////////////////
 //
 // CAlert
@@ -3730,16 +3735,23 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         CTxIn in;
         int64 nAmount;
         CTransaction txCollateral;
-        vRecv >> session_id >> in >> nAmount >> txCollateral;
+        CTransaction txSupporting;
+        vRecv >> session_id >> in >> nAmount >> txCollateral >> txSupporting;
 
         if(session_id != darkSendPool.GetSessionID()){
             printf("CDarkSendPool()::%s - stale session \n", strCommand.c_str());
             return false;
         }
 
+        if(txSupporting != CTransaction()) {
+            CValidationState state;
+            bool fMissingInputs = false;
+            txSupporting.AcceptToMemoryPool(state, true, true, &fMissingInputs);
+        }
+
         //check to see if input is spent already? (and probably not confirmed)
         if(darkSendPool.AddInput(in, nAmount, txCollateral)){
-            RelayTxPoolIn(session_id, in, nAmount, txCollateral);
+            RelayTxPoolIn(session_id, in, nAmount, txCollateral, txSupporting);
             darkSendPool.Check();
         }
     }
@@ -5341,13 +5353,13 @@ void CDarkSendPool::AddQueuedInput()
     BOOST_FOREACH(const CDarkSendTransaction dst, vDST) {
         if(fDebug) printf("CDarkSendPool::AddQueuedInput: adding my input\n");
         AddInput(dst.fromAddress, dst.fromAddress_nValue, dst.txCollateral);
-        RelayTxPoolIn(session_id, dst.fromAddress, dst.fromAddress_nValue, dst.txCollateral);
+        RelayTxPoolIn(session_id, dst.fromAddress, dst.fromAddress_nValue, dst.txCollateral, dst.txSupporting); //*** ! do I need this here?
     }
 
     for(unsigned int i = 0; i < queuedVin.size(); i++){
         if(fDebug) printf("CDarkSendPool::AddQueuedInput: adding queued input %u\n", i);
         AddInput(queuedVin[i], queuedVinAmount[i], queuedVinCollateral[i]);
-        RelayTxPoolIn(session_id, queuedVin[i], queuedVinAmount[i], queuedVinCollateral[i]);
+        RelayTxPoolIn(session_id, queuedVin[i], queuedVinAmount[i], queuedVinCollateral[i], CTransaction());
     }
     queuedVin.clear();
     queuedVinAmount.clear();
@@ -5363,11 +5375,11 @@ void CDarkSendPool::AddQueuedOutput()
     BOOST_FOREACH(const CDarkSendTransaction dst, vDST) {
         if(fDebug) printf("CDarkSendPool::AddQueuedOutput: adding my output\n");
         AddOutput(dst.theirAddress, dst.theirAddressEnc, dst.txCollateral);
-        RelayTxPoolOut(session_id, dst.theirAddress, dst.theirAddressEnc, dst.txCollateral);
+        RelayTxPoolOut(session_id, dst.theirAddress, dst.theirAddressEnc, dst.txCollateral); //*** ! do I need this here?
         
         if(fDebug) printf("CDarkSendPool::AddQueuedOutput: adding my output -- change\n");
         AddOutput(dst.changeAddress, dst.changeAddressEnc, dst.txCollateral);
-        RelayTxPoolOut(session_id, dst.changeAddress, dst.changeAddressEnc, dst.txCollateral);
+        RelayTxPoolOut(session_id, dst.changeAddress, dst.changeAddressEnc, dst.txCollateral); //*** ! do I need this here?
     }
 
     for(unsigned int i = 0; i < queuedVout.size(); i++){
@@ -5599,7 +5611,8 @@ void CDarkSendPool::ChargeFees(){
 }
 
 std::string CDarkSendPool::Denominate(){
-    return pwalletMain->Denominate();
+    CWalletTx wtxDenominate = CWalletTx();
+    return pwalletMain->Denominate(wtxDenominate);
 }
 
 void CDarkSendPool::CheckTimeout(){
@@ -5687,27 +5700,21 @@ bool CDarkSendPool::SignatureValid(CScript& newSig, const CTxIn& theVin, const C
     return true;
 }
 
+bool CDarkSendPool::IsCollateralValid(const CTransaction& txCollateral){    
 
-bool CDarkSendPool::IsCollateralValid(const CTransaction& txCollateral){
-    CValidationState valState;
-    if (!txCollateral.CheckTransaction(valState)){
-        if(fDebug) printf ("CDarkSendPool::IsCollateralValid - invalid transaction\n");
+    if(txCollateral.vout.size() != 1){
+        if(fDebug) printf ("CDarkSendPool::IsCollateralValid - vout wrong size\n");
         return false;
     }
 
-    bool foundCollateralAddr = false;
-    bool foundCollateralAmount = false;
-    BOOST_FOREACH(CTxOut v, txCollateral.vout){
-        if(v.scriptPubKey == collateralPubKey) {
-            foundCollateralAddr = true;
-            if(v.nValue == POOL_FEE_AMOUNT){
-                foundCollateralAmount = true;
-            }
-        }
+    if(txCollateral.vin.size() != 1){
+        if(fDebug) printf ("CDarkSendPool::IsCollateralValid - vin wrong size\n");
+        return false;
     }
 
-    if (!foundCollateralAmount || !foundCollateralAddr) {
-        if(fDebug) printf ("CDarkSendPool::IsCollateralValid - not correct amount or addr\n");
+    if(txCollateral.vout[0].scriptPubKey != collateralPubKey || 
+       txCollateral.vout[0].nValue != POOL_FEE_AMOUNT) {
+        if(fDebug) printf ("CDarkSendPool::IsCollateralValid - not correct amount or addr (0)\n");
         return false;
     }
 
@@ -5850,7 +5857,7 @@ void CDarkSendPool::CatchUpNode(CNode* pfrom){
     if(fDebug) printf("CDarkSendPool::CatchUpNode\n");
     for(unsigned int i = 0; i < vin.size(); i++){
         if(fDebug) printf("CDarkSendPool::CatchUpNode -- add vin %u\n", i);
-        pfrom->PushMessage("dsi", session_id, vin[i], vinAmount[i], vinCollateral[i]);
+        pfrom->PushMessage("dsi", session_id, vin[i], vinAmount[i], vinCollateral[i], CTransaction());
     }
 
     for(unsigned int i = 0; i < vout.size(); i++){
@@ -5864,7 +5871,7 @@ void CDarkSendPool::CatchUpNode(CNode* pfrom){
     }
 }
 
-void CDarkSendPool::SendMoney(const CTransaction& txCollateral, const CTxIn& from, const CTxOut& to, int64& nFeeRet, CKeyStore& newKeys, int64 from_nValue, CScript& pubScript, CReserveKey& newReserveKey){
+void CDarkSendPool::SendMoney(const CTransaction& txCollateral, const CTxIn& from, const CTxOut& to, int64& nFeeRet, CKeyStore& newKeys, int64 from_nValue, CScript& pubScript, CReserveKey& newReserveKey, const CTransaction& txSupporting){
     printf("CDarkSendPool::SendMoney() - Added transaction to pool.\n");
 
     /*
@@ -5873,11 +5880,6 @@ void CDarkSendPool::SendMoney(const CTransaction& txCollateral, const CTxIn& fro
     */
 
     if(fDebug){
-        printf("CDarkSendPool::SendMoney() - from_nValue %+"PRI64d"\n", from_nValue);
-        printf("CDarkSendPool::SendMoney() - nFeeRet %+"PRI64d"\n", from_nValue);
-        printf("CDarkSendPool::SendMoney() - to.nValue %+"PRI64d"\n", to.nValue);
-        printf("CDarkSendPool::SendMoney() - from_nValue-to.nValue-nFeeRet %+"PRI64d"\n", from_nValue-to.nValue-nFeeRet);
-
         printf("CDarkSendPool::SendMoney() -- NEW INPUT -- adding %s\n", from.ToString().c_str());
     }
 
@@ -5898,7 +5900,7 @@ void CDarkSendPool::SendMoney(const CTransaction& txCollateral, const CTxIn& fro
     CTxOut change = CTxOut(from_nValue-to.nValue-nFeeRet, scriptChange);
     
     CDarkSendTransaction dst;
-    dst.Add(from_nValue, from, pubScript, to, change, nFeeRet, GetRand(999999), GetRand(999999), txCollateral);
+    dst.Add(from_nValue, from, pubScript, to, change, nFeeRet, GetRand(999999), GetRand(999999), txCollateral, txSupporting);
     vDST.push_back(dst);
 
     keystore = &newKeys;

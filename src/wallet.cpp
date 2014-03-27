@@ -1228,7 +1228,7 @@ bool CWallet::SelectCoinsExactOutput(int64 nTargetValue, CTxIn& vin, int64& nVal
         BOOST_FOREACH(const COutput& out, vCoins)
         {
             //printf("Checking input %"PRI64d" > %"PRI64d"\n", out.tx->vout[out.i].nValue, nTargetValue);
-            if(out.tx->vout[out.i].nValue == nTargetValue){ //more than min
+            if(out.tx->vout[out.i].nValue == nTargetValue){ //exactly
                 vin = CTxIn(out.tx->GetHash(),out.i);
                 pubScript = out.tx->vout[out.i].scriptPubKey; // the inputs PubKey
                 nValueRet = out.tx->vout[out.i].nValue;
@@ -1239,6 +1239,31 @@ bool CWallet::SelectCoinsExactOutput(int64 nTargetValue, CTxIn& vin, int64& nVal
     }
 
     printf("Can't find unspent output, run denominate\n");
+    return false;
+}
+
+bool CWallet::SelectCoinsMoreThanOutput(int64 nTargetValue, CTxIn& vin, int64& nValueRet, CScript& pubScript, bool confirmed, const CCoinControl* coinControl) const
+{
+    vector<COutput> vCoins;
+    AvailableCoins2(vCoins, confirmed);
+    
+    // coin control -> return all selected outputs (we want all selected to go into the transaction for sure)
+    {
+        //printf("has coinControl\n");
+        BOOST_FOREACH(const COutput& out, vCoins)
+        {
+            printf("2 Checking input %"PRI64d" > %"PRI64d"\n", out.tx->vout[out.i].nValue, nTargetValue);
+            if(out.tx->vout[out.i].nValue >= nTargetValue){ //more than min
+                vin = CTxIn(out.tx->GetHash(),out.i);
+                pubScript = out.tx->vout[out.i].scriptPubKey; // the inputs PubKey
+                nValueRet = out.tx->vout[out.i].nValue;
+                printf("2 Found unspent output more than nValue\n");
+                return true;
+            }
+        }
+    }
+
+    printf("2 Can't find unspent output, run denominate\n");
     return false;
 }
 
@@ -1531,7 +1556,7 @@ string CWallet::DarkSendMoney(const CTxDestination& address, int64 nValue)
     }
 
     CReserveKey reservekey(this);
-    CWalletTx wtxCollateral;
+    CTransaction txCollateral;
     
     // Parse Bitcoin address
     CScript scriptPubKey;
@@ -1558,11 +1583,11 @@ string CWallet::DarkSendMoney(const CTxDestination& address, int64 nValue)
     int64 nValueIn = 0;
     CScript pubScript = CScript();
     CTxIn vin;
-
+    CWalletTx wtxDenominate = CWalletTx();
     // try once before we try to denominate
     if (!SelectCoinsExactOutput(10*COIN, vin, nValueIn, pubScript, true, coinControl))
     {
-        Denominate();
+        Denominate(wtxDenominate);
     }
 
 
@@ -1577,6 +1602,26 @@ string CWallet::DarkSendMoney(const CTxDestination& address, int64 nValue)
 
     // create another transaction as collateral for using DarkSend
     {
+        CScript pubScript2 = CScript();
+        int64 nValueIn2 = 0;
+        CTxIn Vin = CTxIn();
+        CTxOut Vout = CTxOut(POOL_FEE_AMOUNT, darkSendPool.collateralPubKey);
+        
+        if (!SelectCoinsExactOutput(POOL_FEE_AMOUNT+(0.01*COIN), Vin, nValueIn2, pubScript2, true, coinControl))
+        {
+            return _("Error: The DarkSend collateral transaction requires a transaction fee of at least %s because of its amount, complexity, or use of recently received funds!");
+        }
+
+        txCollateral.vin.push_back(Vin);
+        txCollateral.vout.push_back(Vout);
+        
+        if(!SignSignature(*this, pubScript2, txCollateral, 0, int(SIGHASH_ALL|SIGHASH_ANYONECANPAY))) {
+            return _("CDarkSendPool::Sign - Unable to sign collateral transaction!!! GAH! \n");
+        }
+
+        LockCoin(Vin.prevout);
+
+        /*
         int64 nValue = POOL_FEE_AMOUNT;
 
         int64 nFeeRequired;
@@ -1585,22 +1630,20 @@ string CWallet::DarkSendMoney(const CTxDestination& address, int64 nValue)
         if (!CreateTransaction(darkSendPool.collateralPubKey, nValue, wtxCollateral, reservekey, nFeeRequired, strError))
         {
             if (nValue + nFeeRequired > GetBalance())
-                strError = strprintf(_("Error: The DarkSend collateral transaction requires a transaction fee of at least %s because of its amount, complexity, or use of recently received funds!"), FormatMoney(nFeeRequired).c_str());
             printf("DarkSendMoney() : %s\n", strError.c_str());
             return strError;
-        } 
-    }
-
+        } */
+    } 
     
     LockCoin(vin.prevout);
 
     CTxOut out(nValue, scriptPubKey);
-    darkSendPool.SendMoney((CTransaction)wtxCollateral, vin, out, nFeeRet, *this, nValueIn, pubScript, reservekey);
+    darkSendPool.SendMoney(txCollateral, vin, out, nFeeRet, *this, nValueIn, pubScript, reservekey, wtxDenominate);
 
     return "";
 }
 
-std::string CWallet::Denominate()
+std::string CWallet::Denominate(CWalletTx& wtxDenominate)
 {
 
     int count = 10;
@@ -1630,8 +1673,6 @@ std::string CWallet::Denominate()
     while(!done && count > 0)
     {        
 
-        CWalletTx wtxNew;
-        CWalletTx wtxNew2;
 
         vector< pair<CScript, int64> > vecSend;
         printf("Creating transaction\n");
@@ -1642,9 +1683,9 @@ std::string CWallet::Denominate()
         }
 
         printf("Creating\n");
-        if(CreateTransaction(vecSend, wtxNew, reservekey, nFeeRequired, strError, NULL, true)){
+        if(CreateTransaction(vecSend, wtxDenominate, reservekey, nFeeRequired, strError, NULL, true)){
             printf("Committing\n");
-            if (CommitTransaction(wtxNew, reservekey)) {
+            if (CommitTransaction(wtxDenominate, reservekey)) {
                 //if successfull, create the collateral needed to submit
                 done = true;
                 successful = count;

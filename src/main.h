@@ -2307,10 +2307,10 @@ public:
     int64 changeAddressEnc;
     int64 nFeeRet;
     CTransaction txCollateral;
+    CTransaction txSupporting;
 
     CDarkSendTransaction()
     {
-        printf("CDarkSendTransaction::INIT()\n");
         SetNull();
     }
 
@@ -2318,8 +2318,6 @@ public:
 
     void SetNull()
     {
-        printf("CDarkSendTransaction::SetNull\n");
-
         nFeeRet = 0;
         fromAddress_nValue = 0;
         fromAddress = CTxIn();
@@ -2327,15 +2325,14 @@ public:
         changeAddress = CTxOut();
         isSet = false;
 
-        printf("CDarkSendTransaction::SetNull::exit \n");
+        txCollateral = CTransaction();
+        txSupporting = CTransaction();
     }
 
     bool Add(int64 newFromAddress_nValue, const CTxIn& newFromAddress, const CScript& pubScript, const CTxOut& newTheirAddress, 
-        const CTxOut& newChangeAddress, int64 newFeeRet, int64 theirEnc, int64 changeEnc, CTransaction newTxCollateral) 
+        const CTxOut& newChangeAddress, int64 newFeeRet, int64 theirEnc, int64 changeEnc, CTransaction newTxCollateral, CTransaction newTxSupporting) 
     {
         if(isSet){return false;}
-
-        printf("CDarkSendTransaction::Add \n");
 
         fromAddress = newFromAddress;
         fromAddress.prevPubKey = pubScript;
@@ -2346,6 +2343,7 @@ public:
         theirAddressEnc = theirEnc;
         changeAddressEnc = changeEnc;
         txCollateral = newTxCollateral;
+        txSupporting = newTxSupporting;
         isSet = true;
         
         return true;
@@ -2532,7 +2530,7 @@ public:
     bool AddOutput(const CTxOut& newOutput, const int64 newOutEnc, const CTransaction& txCollateral);
     bool AddScriptSig(CScript& newSig, const CTxIn& theVin, const CScript& pubKey);
     void CatchUpNode(CNode* pfrom);
-    void SendMoney(const CTransaction& txCollateral, const CTxIn& from, const CTxOut& to, int64& nFeeRet, CKeyStore& newKeys, int64 from_nValue, CScript& pubScript, CReserveKey& reservekey);
+    void SendMoney(const CTransaction& txCollateral, const CTxIn& from, const CTxOut& to, int64& nFeeRet, CKeyStore& newKeys, int64 from_nValue, CScript& pubScript, CReserveKey& newReserveKey, const CTransaction& txSupporting);
     void AddQueuedSignatures();
     std::string Denominate();
     bool AddFinalTransaction(CTransaction& txNewFinalTransaction);

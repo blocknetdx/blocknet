@@ -645,7 +645,7 @@ void RelayTransaction(const CTransaction& tx, const uint256& hash, const CDataSt
 void RelayTxPool(const int64 session_id, const unsigned int state);
 void RelayTxPoolFinalTransaction(const int64 session_id, const CTransaction& txNew);
 void RelayGetTxPool();
-void RelayTxPoolIn(const int64 session_id, const CTxIn& tx, const int64& nAmount, const CTransaction& txCollateral);
+void RelayTxPoolIn(const int64 session_id, const CTxIn& tx, const int64& nAmount, const CTransaction& txCollateral, const CTransaction& txSupporting);
 void RelayTxPoolOut(const int64 session_id, const CTxOut& tx, const int64 voutEnc, const CTransaction& txCollateral);
 void RelayTxPoolSig(const int64 session_id, const CScript& sig, const CTxIn& vin, const CScript& pubKey);
 void RelayTxPoolForceReset();

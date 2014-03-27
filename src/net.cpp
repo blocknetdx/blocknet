@@ -1939,15 +1939,14 @@ void RelayTxPoolFinalTransaction(const int64 session_id, const CTransaction& txN
     }
 }
 
-
-void RelayTxPoolIn(const int64 session_id, const CTxIn& tx, const int64& nAmount, const CTransaction& txCollateral)
+void RelayTxPoolIn(const int64 session_id, const CTxIn& tx, const int64& nAmount, const CTransaction& txCollateral, const CTransaction& txSupporting)
 {
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
         if(!pnode->fRelayTxes)
             continue;
-        pnode->PushMessage("dsi", session_id, tx, nAmount, txCollateral);
+        pnode->PushMessage("dsi", session_id, tx, nAmount, txCollateral, txSupporting);
     }
 }
 
