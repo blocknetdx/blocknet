@@ -40,7 +40,7 @@ SendCoinsDialog::SendCoinsDialog(QWidget *parent) :
 
     connect(ui->addButton, SIGNAL(clicked()), this, SLOT(addEntry()));
     connect(ui->clearButton, SIGNAL(clicked()), this, SLOT(clear()));
-    connect(ui->denominateButton, SIGNAL(clicked()), this, SLOT(denominate()));
+    //connect(ui->denominateButton, SIGNAL(clicked()), this, SLOT(denominate()));
 
     // Coin Control
     ui->lineEditCoinControlChange->setFont(GUIUtil::bitcoinAddressFont());
