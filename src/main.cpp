@@ -3751,7 +3751,6 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         //check to see if input is spent already? (and probably not confirmed)
         if(darkSendPool.AddInput(in, nAmount, txCollateral)){
-            RelayTxPoolIn(session_id, in, nAmount, txCollateral, txSupporting);
             darkSendPool.Check();
         }
     }
@@ -3773,7 +3772,6 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         }
 
         if(darkSendPool.AddOutput(out, voutEnc, txCollateral)){
-            RelayTxPoolOut(session_id, out, voutEnc, txCollateral);
             darkSendPool.Check();
         }
     }
@@ -3795,7 +3793,6 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         }
 
         if(darkSendPool.AddScriptSig(sig, vin, pubKey)){
-            RelayTxPoolSig(session_id, sig, vin, pubKey);
             darkSendPool.Check();
         }
     }
@@ -5297,8 +5294,6 @@ void CDarkSendPool::SetNull(){
     sigCount = 0;
 
     queuedVin.clear();
-    queuedVinAmount.clear();
-    queuedVinCollateral.clear();
     queuedVinSig.clear();
     queuedVinSigVin.clear();
     queuedVinSigPubKey.clear();
@@ -5352,18 +5347,18 @@ void CDarkSendPool::AddQueuedInput()
 
     BOOST_FOREACH(const CDarkSendTransaction dst, vDST) {
         if(fDebug) printf("CDarkSendPool::AddQueuedInput: adding my input\n");
-        AddInput(dst.fromAddress, dst.fromAddress_nValue, dst.txCollateral);
-        RelayTxPoolIn(session_id, dst.fromAddress, dst.fromAddress_nValue, dst.txCollateral, dst.txSupporting); //*** ! do I need this here?
+        if(AddInput(dst.fromAddress, dst.fromAddress_nValue, dst.txCollateral)) {
+            RelayTxPoolIn(session_id, dst.fromAddress, dst.fromAddress_nValue, dst.txCollateral, dst.txSupporting);
+        }
     }
 
-    for(unsigned int i = 0; i < queuedVin.size(); i++){
-        if(fDebug) printf("CDarkSendPool::AddQueuedInput: adding queued input %u\n", i);
-        AddInput(queuedVin[i], queuedVinAmount[i], queuedVinCollateral[i]);
-        RelayTxPoolIn(session_id, queuedVin[i], queuedVinAmount[i], queuedVinCollateral[i], CTransaction());
+    BOOST_FOREACH(const CDarkSendQueuedVin v, queuedVin) {
+        if(fDebug) printf("CDarkSendPool::AddQueuedInput: adding queued input\n");
+        if(AddInput(v.vin, v.amount, v.collateral)) {
+            RelayTxPoolIn(session_id, v.vin, v.amount, v.collateral, CTransaction());
+        }
     }
     queuedVin.clear();
-    queuedVinAmount.clear();
-    queuedVinCollateral.clear();
 }
 
 void CDarkSendPool::AddQueuedOutput()
@@ -5374,18 +5369,21 @@ void CDarkSendPool::AddQueuedOutput()
     if(fDebug) printf("CDarkSendPool::AddQueuedOutput\n");
     BOOST_FOREACH(const CDarkSendTransaction dst, vDST) {
         if(fDebug) printf("CDarkSendPool::AddQueuedOutput: adding my output\n");
-        AddOutput(dst.theirAddress, dst.theirAddressEnc, dst.txCollateral);
-        RelayTxPoolOut(session_id, dst.theirAddress, dst.theirAddressEnc, dst.txCollateral); //*** ! do I need this here?
+        if(AddOutput(dst.theirAddress, dst.theirAddressEnc, dst.txCollateral)){
+            RelayTxPoolOut(session_id, dst.theirAddress, dst.theirAddressEnc, dst.txCollateral);
+        }
         
         if(fDebug) printf("CDarkSendPool::AddQueuedOutput: adding my output -- change\n");
-        AddOutput(dst.changeAddress, dst.changeAddressEnc, dst.txCollateral);
-        RelayTxPoolOut(session_id, dst.changeAddress, dst.changeAddressEnc, dst.txCollateral); //*** ! do I need this here?
+        if(AddOutput(dst.changeAddress, dst.changeAddressEnc, dst.txCollateral)){
+            RelayTxPoolOut(session_id, dst.changeAddress, dst.changeAddressEnc, dst.txCollateral); //*** ! do I need this here?
+        }
     }
 
     for(unsigned int i = 0; i < queuedVout.size(); i++){
         if(fDebug) printf("CDarkSendPool::AddQueuedOutput: adding queued output %u\n", i);
-        AddOutput(queuedVout[i], queuedVoutEnc[i], queuedVoutCollateral[i]);
-        RelayTxPoolOut(session_id, queuedVout[i], queuedVoutEnc[i], queuedVoutCollateral[i]);
+        if(AddOutput(queuedVout[i], queuedVoutEnc[i], queuedVoutCollateral[i])){
+            RelayTxPoolOut(session_id, queuedVout[i], queuedVoutEnc[i], queuedVoutCollateral[i]);
+        }
     }
     queuedVout.clear();
     queuedVoutEnc.clear();
@@ -5434,7 +5432,6 @@ void CDarkSendPool::Check()
         RelayTxPool(session_id, state);
     }
 
-    printf("CDarkSendPool::Check() -- h1\n");     
     if(state == POOL_STATUS_FINALIZE_TRANSACTION && txFinalTransaction == CTransaction()) {
         if(fDebug) printf("CDarkSendPool::Check() -- FINALIZE TRANSACTIONS\n");
         UpdateState(POOL_STATUS_SIGNING);
@@ -5442,10 +5439,7 @@ void CDarkSendPool::Check()
         std::sort (vin.begin(), vin.end(), sort_in);
         std::sort (vout.begin(), vout.end(), sort_out);
 
-        printf("CDarkSendPool::Check() -- h2\n");
-
         if (IsMaster) { 
-            printf("CDarkSendPool::Check() -- h3\n");
             CTransaction txNew;
 
             for(unsigned int i = 0; i < vout.size(); i++){
@@ -5454,8 +5448,6 @@ void CDarkSendPool::Check()
             for(unsigned int i = 0; i < vin.size(); i++){
                 txNew.vin.push_back(vin[i]);
             }
-
-            printf("CDarkSendPool::Check() -- h4\n");
 
             AddFinalTransaction(txNew);
             RelayTxPoolFinalTransaction(session_id, txNew);
@@ -5744,8 +5736,8 @@ bool CDarkSendPool::AddInput(const CTxIn& newInput, const int64& nAmount, const 
     BOOST_FOREACH(CTxIn v, vin){
         if(v == newInput) {if(fDebug) printf ("CDarkSendPool::AddInput - found in vin\n"); return false;}
     }
-    BOOST_FOREACH(CTxIn v, queuedVin) {
-        if(v == newInput) {if(fDebug) printf ("CDarkSendPool::AddInput - found in queued\n"); return false;}
+    BOOST_FOREACH(const CDarkSendQueuedVin v, queuedVin) {
+        if(v.vin == newInput) {if(fDebug) printf ("CDarkSendPool::AddInput - found in queued\n"); return false;}
     }
 
     if(state == POOL_STATUS_ACCEPTING_INPUTS) {
@@ -5758,9 +5750,9 @@ bool CDarkSendPool::AddInput(const CTxIn& newInput, const int64& nAmount, const 
         printf("CDarkSendPool::AddInput -- adding %s\n", newInput.ToString().c_str());
         return true;
     } else {
-        queuedVin.push_back(newInput);
-        queuedVinAmount.push_back(nAmount);
-        queuedVinCollateral.push_back(txCollateral);
+        CDarkSendQueuedVin qv;
+        qv.Add(newInput, nAmount, txCollateral);
+        queuedVin.push_back(qv);
 
         printf("CDarkSendPool::AddInput -- queuing %s\n", newInput.ToString().c_str());
         return true;

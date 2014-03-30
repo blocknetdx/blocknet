@@ -2350,6 +2350,41 @@ public:
     }
 };
 
+class CDarkSendQueuedVin
+{
+public:
+    bool isSet;
+    CTxIn vin;
+    int64 amount;
+    CTransaction collateral;
+
+    CDarkSendQueuedVin()
+    {
+        SetNull();
+    }
+
+    // do I need a destructor?
+
+    void SetNull()
+    {
+        isSet = false;
+        vin = CTxIn();
+        collateral = CTransaction();
+        amount = 0;
+    }
+
+    bool Add(const CTxIn vinNew, int64 amountNew, const CTransaction collateralNew)
+    {
+        if(isSet){return false;}
+
+        vin = vinNew;
+        amount = amountNew;
+        collateral = collateralNew;
+        isSet = true;
+        
+        return true;
+    }
+};
 
 #define POOL_MAX_TRANSACTIONS                  3 // wait for X transactions to merge and publish
 #define POOL_STATUS_UNKNOWN                    0 // waiting for update
@@ -2392,9 +2427,8 @@ public:
 
     // For receiving out of order , 
     // NOTE: these should be held in a class
-    std::vector<CTxIn> queuedVin;
-    std::vector<int64> queuedVinAmount;
-    std::vector<CTransaction> queuedVinCollateral;
+    std::vector<CDarkSendQueuedVin> queuedVin;
+
     // queued sig, 
     std::vector<CScript> queuedVinSig;
     std::vector<CTxIn> queuedVinSigVin;
