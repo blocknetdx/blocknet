@@ -5282,10 +5282,6 @@ void CDarkSendPool::SetNull(){
     vout.clear();
     voutEnc.clear();
     voutCollateral.clear();
-    vinSig.clear();
-    vinPubKey.clear();
-    vinAmount.clear();
-    vinCollateral.clear();
 
     state = POOL_STATUS_ACCEPTING_INPUTS;
     vDST.clear(); //do I need to clean up the objects?
@@ -5352,7 +5348,7 @@ void CDarkSendPool::AddQueuedInput()
         }
     }
 
-    BOOST_FOREACH(const CDarkSendQueuedVin v, queuedVin) {
+    BOOST_FOREACH(const CDarkSendVin v, queuedVin) {
         if(fDebug) printf("CDarkSendPool::AddQueuedInput: adding queued input\n");
         if(AddInput(v.vin, v.amount, v.collateral)) {
             RelayTxPoolIn(session_id, v.vin, v.amount, v.collateral, CTransaction());
@@ -5445,8 +5441,9 @@ void CDarkSendPool::Check()
             for(unsigned int i = 0; i < vout.size(); i++){
                 txNew.vout.push_back(vout[i]);
             }
-            for(unsigned int i = 0; i < vin.size(); i++){
-                txNew.vin.push_back(vin[i]);
+
+            BOOST_FOREACH(const CDarkSendVin v, vin) {
+                txNew.vin.push_back(v.vin);
             }
 
             AddFinalTransaction(txNew);
@@ -5482,17 +5479,19 @@ void CDarkSendPool::Check()
                 txNew.vout.push_back(vout[i]);
             }
 
-            for(unsigned int i = 0; i < vin.size(); i++){
-                txNew.vin.push_back(vin[i]);
-                txNew.vin[i].scriptSig = vinSig[i];
-                printf("CDarkSendPool::Check() - Sign with sig %s\n", vinSig[i].ToString().substr(0,24).c_str());
-                printf("CDarkSendPool::Check() - Signed pubkey %s\n", vinPubKey[i].ToString().substr(0,24).c_str());
-                if (!VerifyScript(txNew.vin[i].scriptSig, vinPubKey[i], txNew, i, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC, 0)){
+            int i = 0;
+            BOOST_FOREACH(const CDarkSendVin v, vin) {
+                txNew.vin.push_back(v.vin);
+                txNew.vin[i].scriptSig = v.sig;
+                printf("CDarkSendPool::Check() - Sign with sig %s\n", v.sig.ToString().substr(0,24).c_str());
+                printf("CDarkSendPool::Check() - Signed pubkey %s\n", v.sigPubKey.ToString().substr(0,24).c_str());
+                if (!VerifyScript(txNew.vin[i].scriptSig, v.sigPubKey, txNew, i, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC, 0)){
                     printf("CDarkSendPool::Check() - Signing - ERROR signing input %u\n", i);
                     //failure will result, how to recover from this?
                 } else {
                     printf("CDarkSendPool::Check() - Signing - Succesfully signed input %u\n", i);
                 }
+                i++;
             }
             printf("CDarkSendPool::Check() -- compiled all signatures:\n%s", txNew.ToString().c_str());
             
@@ -5555,10 +5554,11 @@ void CDarkSendPool::ChargeFees(){
     if(fPaymentNode) {
         bool charged = false;
         // who didn't provide outputs?
-        for(unsigned int i = 0; i < vin.size(); i++){
+        int i = 0;
+        BOOST_FOREACH(const CDarkSendVin v, vin) {
             int count = 0;
             for(unsigned int a = 0; a < vout.size(); a++){
-                if(vinCollateral[i] == voutCollateral[a]){
+                if(v.collateral == voutCollateral[a]){
                     count++;
                 }
             }
@@ -5566,7 +5566,7 @@ void CDarkSendPool::ChargeFees(){
                 printf("CDarkSendPool::ChargeFees -- found uncooperative node (didn't provide outputs). charging fees. %u\n", i);
 
                 CReserveKey reserveKey(pwalletMain);
-                CWalletTx wtxCollateral = CWalletTx(pwalletMain, vinCollateral[i]);
+                CWalletTx wtxCollateral = CWalletTx(pwalletMain, v.collateral);
 
                 // Broadcast
                 if (!wtxCollateral.AcceptToMemoryPool(true, false))
@@ -5577,17 +5577,18 @@ void CDarkSendPool::ChargeFees(){
                 wtxCollateral.RelayWalletTransaction();
                 charged = true;
             }
+            i++;
         }
 
         if(charged) return;
 
         // who didn't sign?
-        for(unsigned int i = 0; i < vin.size(); i++){
-            if(vinSig[i] == CScript()){
+        BOOST_FOREACH(const CDarkSendVin v, vin) {
+            if(v.sig == CScript()){
                 printf("CDarkSendPool::ChargeFees -- found uncooperative node (didn't sign). charging fees. %u\n", i);
 
                 CReserveKey reserveKey(pwalletMain);
-                CWalletTx wtxCollateral = CWalletTx(pwalletMain, vinCollateral[i]);
+                CWalletTx wtxCollateral = CWalletTx(pwalletMain, v.collateral);
 
                 // Broadcast
                 if (!wtxCollateral.AcceptToMemoryPool(true, false))
@@ -5637,7 +5638,8 @@ void CDarkSendPool::Sign(){
         /* Sign my transaction and all outputs */
 
         int mine = -1;
-        for(unsigned int i = 0; i < vin.size(); i++){
+
+        for(unsigned int i = 0; i < txFinalTransaction.vin.size(); i++){
             if(txFinalTransaction.vin[i] == dst.fromAddress){
                 mine = i;
             }
@@ -5671,19 +5673,21 @@ bool CDarkSendPool::SignatureValid(CScript& newSig, const CTxIn& theVin, const C
     for(unsigned int i = 0; i < vout.size(); i++){
         txNew.vout.push_back(vout[i]);
     }
-    int found = -1;
-    for(unsigned int i = 0; i < vin.size(); i++){
-        txNew.vin.push_back(vin[i]);
-        if(vin[i] == theVin){
-            found = i;
+    CScript foundPubKey = CScript();
+    int n = 0;
+    int i = 0;
+    BOOST_FOREACH(const CDarkSendVin v, vin) {
+        txNew.vin.push_back(v.vin);
+        if(v.vin == theVin){
+            foundPubKey = v.sigPubKey;
+            n = i;
         }
+        i++;
     }
-    if(found >= 0){ //might have to do this one input at a time?
-        int n = found;
-        txNew.vin[n].scriptSig = newSig;
+    if(foundPubKey != CScript()){ //might have to do this one input at a time?
         if(fDebug) printf("CDarkSendPool::SignatureValid() - Sign with sig %s\n", newSig.ToString().substr(0,24).c_str());
-        if (!VerifyScript(txNew.vin[n].scriptSig, vinPubKey[n], txNew, n, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC, 0)){
-            if(fDebug) printf("CDarkSendPool::SignatureValid() - Signing - ERROR signing input %u\n", n);
+        if (!VerifyScript(txNew.vin[n].scriptSig, foundPubKey, txNew, n, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC, 0)){
+            if(fDebug) printf("CDarkSendPool::SignatureValid() - Signing - ERROR signing input\n");
             return false;
         }
     }
@@ -5733,24 +5737,22 @@ bool CDarkSendPool::AddInput(const CTxIn& newInput, const int64& nAmount, const 
     if(vin.size() + queuedVin.size() >= POOL_MAX_TRANSACTIONS)
         return false;
 
-    BOOST_FOREACH(CTxIn v, vin){
-        if(v == newInput) {if(fDebug) printf ("CDarkSendPool::AddInput - found in vin\n"); return false;}
+    BOOST_FOREACH(const CDarkSendVin v, vin) {
+        if(v.vin == newInput) {if(fDebug) printf ("CDarkSendPool::AddInput - found in vin\n"); return false;}
     }
-    BOOST_FOREACH(const CDarkSendQueuedVin v, queuedVin) {
+    BOOST_FOREACH(const CDarkSendVin v, queuedVin) {
         if(v.vin == newInput) {if(fDebug) printf ("CDarkSendPool::AddInput - found in queued\n"); return false;}
     }
 
     if(state == POOL_STATUS_ACCEPTING_INPUTS) {
-        vin.push_back(newInput);
-        vinAmount.push_back(nAmount);
-        vinSig.push_back(CScript());
-        vinPubKey.push_back(CScript());
-        vinCollateral.push_back(txCollateral);
+        CDarkSendVin v;
+        v.Add(newInput, nAmount, txCollateral);
+        vin.push_back(v);
 
         printf("CDarkSendPool::AddInput -- adding %s\n", newInput.ToString().c_str());
         return true;
     } else {
-        CDarkSendQueuedVin qv;
+        CDarkSendVin qv;
         qv.Add(newInput, nAmount, txCollateral);
         queuedVin.push_back(qv);
 
@@ -5770,9 +5772,9 @@ bool CDarkSendPool::AddOutput(const CTxOut& newOutput, const int64 newOutEnc, co
     }
 
     bool fFoundMatchingCollateral = false;
-    for(unsigned int i = 0; i < vinCollateral.size(); i++){
-        if(vinCollateral[i] == txCollateral)
-            fFoundMatchingCollateral = true;
+
+    BOOST_FOREACH(const CDarkSendVin v, vin) {
+        if(v.collateral == txCollateral) fFoundMatchingCollateral = true;
     }
     if(!fFoundMatchingCollateral) 
         return false;
@@ -5810,13 +5812,13 @@ bool CDarkSendPool::AddOutput(const CTxOut& newOutput, const int64 newOutEnc, co
 }
 
 bool CDarkSendPool::AddScriptSig(CScript& newSig, const CTxIn& theVin, const CScript& pubKey){
-    BOOST_FOREACH(CScript s, vinSig)
-        if(s == newSig) return false;
-    BOOST_FOREACH(CScript s, queuedVinSig)
-        if(s == newSig) return false;
+    BOOST_FOREACH(const CDarkSendVin v, vin)
+        if(v.sig == newSig) return false;
+    BOOST_FOREACH(const CDarkSendVin v, queuedVin)
+        if(v.sig == newSig) return false;
 
-    if(sigCount + queuedVinSig.size() >= POOL_MAX_TRANSACTIONS)
-        return false;
+    /*if(sigCount + sigCount > POOL_MAX_TRANSACTIONS)
+        return false;*/
 
     if(!SignatureValid(newSig, theVin, pubKey)){
         return false;
@@ -5824,13 +5826,13 @@ bool CDarkSendPool::AddScriptSig(CScript& newSig, const CTxIn& theVin, const CSc
 
     if(state == POOL_STATUS_SIGNING) {
         for(unsigned int i = 0; i < vin.size(); i++){
-            if(vin[i] == theVin){
+            if(vin[i].vin == theVin){
                 //return false if verify script fails on input
-                vinSig[i] = newSig; 
-                vinPubKey[i] = pubKey;
+                vin[i].AddSig(newSig, pubKey);
                 sigCount++;
+                printf("CDarkSendPool::AddScriptSig -- vin isSigSet %i\n", vin[i].isSigSet);
                 printf("CDarkSendPool::AddScriptSig -- adding  %s\n", newSig.ToString().substr(0,24).c_str());
-                printf("CDarkSendPool::AddScriptSig -- scriptSig %u, total sigs %u\n", i, sigCount);
+                printf("CDarkSendPool::AddScriptSig -- scriptSig, total sigs %u\n", sigCount);
                 return true;
             }
         }
@@ -5847,19 +5849,16 @@ bool CDarkSendPool::AddScriptSig(CScript& newSig, const CTxIn& theVin, const CSc
 
 void CDarkSendPool::CatchUpNode(CNode* pfrom){
     if(fDebug) printf("CDarkSendPool::CatchUpNode\n");
-    for(unsigned int i = 0; i < vin.size(); i++){
-        if(fDebug) printf("CDarkSendPool::CatchUpNode -- add vin %u\n", i);
-        pfrom->PushMessage("dsi", session_id, vin[i], vinAmount[i], vinCollateral[i], CTransaction());
+
+    BOOST_FOREACH(const CDarkSendVin v, vin) {
+        if(fDebug) printf("CDarkSendPool::CatchUpNode -- add vin\n");
+        pfrom->PushMessage("dsi", session_id, v.vin, v.amount, v.collateral, CTransaction());
+        if(v.isSigSet) pfrom->PushMessage("dss", session_id, v.sig, v.vin, v.sigPubKey);
     }
 
     for(unsigned int i = 0; i < vout.size(); i++){
         if(fDebug) printf("CDarkSendPool::CatchUpNode -- add vout\n");
         pfrom->PushMessage("dso", session_id, vout[i], voutCollateral[i]);
-    }
-
-    for(unsigned int i = 0; i < vinSig.size(); i++){
-        if(fDebug) printf("CDarkSendPool::CatchUpNode -- add sig %u\n", i);
-        pfrom->PushMessage("dss", session_id, vinSig[i], vin[i], vinPubKey[i]);
     }
 }
 

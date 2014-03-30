@@ -2350,15 +2350,18 @@ public:
     }
 };
 
-class CDarkSendQueuedVin
+class CDarkSendVin
 {
 public:
     bool isSet;
+    bool isSigSet;
     CTxIn vin;
     int64 amount;
     CTransaction collateral;
+    CScript sig;
+    CScript sigPubKey;
 
-    CDarkSendQueuedVin()
+    CDarkSendVin()
     {
         SetNull();
     }
@@ -2368,8 +2371,11 @@ public:
     void SetNull()
     {
         isSet = false;
+        isSigSet = false;
         vin = CTxIn();
         collateral = CTransaction();
+        sig = CScript();
+        sigPubKey = CScript();
         amount = 0;
     }
 
@@ -2381,6 +2387,17 @@ public:
         amount = amountNew;
         collateral = collateralNew;
         isSet = true;
+        
+        return true;
+    }
+
+    bool AddSig(const CScript sigNew, const CScript sigPubKeyNew)
+    {
+        if(isSigSet){return false;}
+
+        sig = sigNew;
+        sigPubKey = sigPubKeyNew;
+        isSigSet = true;
         
         return true;
     }
@@ -2415,11 +2432,7 @@ public:
     CKeyStore *keystore;
     CReserveKey *reservekey;
 
-    std::vector<CTxIn> vin;
-    std::vector<int64> vinAmount;
-    std::vector<CTransaction> vinCollateral;
-    std::vector<CScript> vinSig;
-    std::vector<CScript> vinPubKey;
+    std::vector<CDarkSendVin> vin;
     unsigned int sigCount;
     std::vector<CTxOut> vout;
     std::vector<int64> voutEnc;
@@ -2427,7 +2440,7 @@ public:
 
     // For receiving out of order , 
     // NOTE: these should be held in a class
-    std::vector<CDarkSendQueuedVin> queuedVin;
+    std::vector<CDarkSendVin> queuedVin;
 
     // queued sig, 
     std::vector<CScript> queuedVinSig;
@@ -2474,8 +2487,8 @@ public:
 
     void SetNull();
 
-    static bool sort_in(CTxIn a, CTxIn b) {
-        return a.prevout.hash > b.prevout.hash;
+    static bool sort_in(CDarkSendVin a, CDarkSendVin b) {
+        return a.vin.prevout.hash > b.vin.prevout.hash;
     }
 
     static bool sort_out(CTxOut a, CTxOut b) {
