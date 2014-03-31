@@ -2294,63 +2294,7 @@ public:
     )
 };
 
-/** Used to store my pending DarkSend Transactions **/
-class CDarkSendTransaction
-{
-public:
-    bool isSet;
-    int64 fromAddress_nValue;
-    CTxIn fromAddress;
-    CTxOut theirAddress;
-    CTxOut changeAddress;
-    int64 theirAddressEnc;
-    int64 changeAddressEnc;
-    int64 nFeeRet;
-    CTransaction txCollateral;
-    CTransaction txSupporting;
-
-    CDarkSendTransaction()
-    {
-        SetNull();
-    }
-
-    // do I need a destructor?
-
-    void SetNull()
-    {
-        nFeeRet = 0;
-        fromAddress_nValue = 0;
-        fromAddress = CTxIn();
-        theirAddress = CTxOut();
-        changeAddress = CTxOut();
-        isSet = false;
-
-        txCollateral = CTransaction();
-        txSupporting = CTransaction();
-    }
-
-    bool Add(int64 newFromAddress_nValue, const CTxIn& newFromAddress, const CScript& pubScript, const CTxOut& newTheirAddress, 
-        const CTxOut& newChangeAddress, int64 newFeeRet, int64 theirEnc, int64 changeEnc, CTransaction newTxCollateral, CTransaction newTxSupporting) 
-    {
-        if(isSet){return false;}
-
-        fromAddress = newFromAddress;
-        fromAddress.prevPubKey = pubScript;
-        fromAddress_nValue = newFromAddress_nValue;
-        theirAddress = newTheirAddress;
-        changeAddress = newChangeAddress;
-        nFeeRet = newFeeRet;
-        theirAddressEnc = theirEnc;
-        changeAddressEnc = changeEnc;
-        txCollateral = newTxCollateral;
-        txSupporting = newTxSupporting;
-        isSet = true;
-        
-        return true;
-    }
-};
-
-class CDarkSendVin
+class CDarkSendEntry
 {
 public:
     bool isSet;
@@ -2360,15 +2304,10 @@ public:
     CTransaction collateral;
     CScript sig;
     CScript sigPubKey;
+    CTxOut vout;
+    CTxOut vout2;
 
-    CDarkSendVin()
-    {
-        SetNull();
-    }
-
-    // do I need a destructor?
-
-    void SetNull()
+    CDarkSendEntry()
     {
         isSet = false;
         isSigSet = false;
@@ -2376,16 +2315,20 @@ public:
         collateral = CTransaction();
         sig = CScript();
         sigPubKey = CScript();
+        vout = CTxOut();
+        vout2 = CTxOut();
         amount = 0;
     }
 
-    bool Add(const CTxIn vinNew, int64 amountNew, const CTransaction collateralNew)
+    bool Add(const CTxIn vinNew, int64 amountNew, const CTransaction collateralNew, const CTxOut voutNew, const CTxOut voutNew2)
     {
         if(isSet){return false;}
 
         vin = vinNew;
         amount = amountNew;
         collateral = collateralNew;
+        vout = voutNew;
+        vout2 = voutNew2;
         isSet = true;
         
         return true;
@@ -2403,14 +2346,14 @@ public:
     }
 };
 
+
 #define POOL_MAX_TRANSACTIONS                  3 // wait for X transactions to merge and publish
 #define POOL_STATUS_UNKNOWN                    0 // waiting for update
 #define POOL_STATUS_IDLE                       1 // waiting for update
-#define POOL_STATUS_ACCEPTING_INPUTS           2 // accepting inputs
-#define POOL_STATUS_ACCEPTING_OUTPUTS          3 // accepting outputs
-#define POOL_STATUS_FINALIZE_TRANSACTION       4 // master node will broadcast what it accepted
-#define POOL_STATUS_SIGNING                    5 // check inputs/outputs, sign final tx
-#define POOL_STATUS_TRANSMISSION               6 // transmit transaction
+#define POOL_STATUS_ACCEPTING_ENTRIES          2 // accepting entries
+#define POOL_STATUS_FINALIZE_TRANSACTION       3 // master node will broadcast what it accepted
+#define POOL_STATUS_SIGNING                    4 // check inputs/outputs, sign final tx
+#define POOL_STATUS_TRANSMISSION               5 // transmit transaction
 static const int64 POOL_FEE_AMOUNT = 0.1*COIN;
 
 /** Used to keep track of current status of coinjoin pool
@@ -2420,54 +2363,22 @@ class CDarkSendPool
 public:
     static const int MIN_PEER_PROTO_VERSION = 70009;
 
-    int64 session_id;
-    int64 next_session_id;
-    int nLastBestHeight;
-    bool session_locked;
-
-    std::vector<CDarkSendTransaction> vDST;
+    std::vector<CDarkSendEntry> myEntries;
+    std::vector<CDarkSendEntry> entries;
     CTransaction txFinalTransaction;
 
     int64 last_time_stage_changed;
     CKeyStore *keystore;
     CReserveKey *reservekey;
 
-    std::vector<CDarkSendVin> vin;
     unsigned int sigCount;
-    std::vector<CTxOut> vout;
-    std::vector<int64> voutEnc;
-    std::vector<CTransaction> voutCollateral;
-
-    // For receiving out of order , 
-    // NOTE: these should be held in a class
-    std::vector<CDarkSendVin> queuedVin;
-
-    // queued sig, 
-    std::vector<CScript> queuedVinSig;
-    std::vector<CTxIn> queuedVinSigVin;
-    std::vector<CScript> queuedVinSigPubKey;
-    std::vector<CTxOut> queuedVout;
-    std::vector<int64> queuedVoutEnc;
-    std::vector<CTransaction> queuedVoutCollateral;
-
-    /* used when inputs/outputs are broadcast and the 
-        pool is not in the correct state to accept them
-        for the current pooling
-    */
-
-    std::vector<int64> sessions;
-    std::map<int64, std::string> sessionTxID;
 
     unsigned int state;
     CScript collateralPubKey;
-    bool IsMaster;
 
     CDarkSendPool()
     {
-        printf("CDarkSendPool::INIT()\n");
-        next_session_id = 999;
-        IsMaster = false;
-        
+        printf("CDarkSendPool::INIT()\n");        
         /* DarkSend uses collateral addresses to trust parties entering the pool
             to behave themselves. If they don't it takes their money. */
 
@@ -2483,23 +2394,11 @@ public:
     }
 
     void SetCollateralAddress(std::string strAddress);
-    std::string GetSessionTxID(int64 lookupSessionID);
-
     void SetNull();
-
-    static bool sort_in(CDarkSendVin a, CDarkSendVin b) {
-        return a.vin.prevout.hash > b.vin.prevout.hash;
-    }
-
-    static bool sort_out(CTxOut a, CTxOut b) {
-        if ((uint160)a.scriptPubKey.GetID() == (uint160)b.scriptPubKey.GetID())
-            return a.nValue > b.nValue;
-        return (uint160)a.scriptPubKey.GetID() > (uint160)b.scriptPubKey.GetID();
-    }
 
     bool IsNull() const
     {   
-        return (state == POOL_STATUS_ACCEPTING_INPUTS && vin.empty() && vout.empty() && vDST.empty() == true);
+        return (state == POOL_STATUS_ACCEPTING_ENTRIES && entries.empty() && myEntries.empty());
     }
 
     int GetState() const
@@ -2507,30 +2406,9 @@ public:
         return state;
     }
 
-    int64 GetSessionID() const
+    int GetEntriesCount() const
     {
-        return session_id;
-    }
-
-    void SetSessionID(int64 i)
-    {
-        if(session_locked)
-            return;
-
-        printf("CDarkSend()::SetSessionID - new %"PRI64d"\n", i);
-        session_id = i;
-        next_session_id = i;
-        session_locked = true;
-    }
-
-    int GetVinCount() const
-    {
-        return vin.size();
-    }
-
-    int GetVoutCount() const
-    {
-        return vout.size();
+        return entries.size();
     }
 
     int GetSignatureCount() const
@@ -2540,19 +2418,7 @@ public:
 
     int GetMyTransactionCount() const
     {
-        return vDST.size();
-    }
-
-    bool ForceReset()
-    {
-        if(IsNull()){
-            return false;
-        } else {
-            SetNull();
-            UpdateState(POOL_STATUS_ACCEPTING_INPUTS);
-            //RelayTxPool(state);
-            return true;
-        }
+        return myEntries.size();
     }
 
     void UpdateState(unsigned int newState)
@@ -2564,28 +2430,19 @@ public:
         state = newState;
     }
 
-    void AddQueuedInput();
-    void AddQueuedOutput();
     void Check();
     void ChargeFees();
     void CheckTimeout();
-    bool SignatureValid(CScript& newSig, const CTxIn& theVin, const CScript& pubKey);
-    bool IsAbleToSign(const CTxIn& from, const CTxOut& to, int64& nFeeRet, CKeyStore& newKeys, int64 from_nValue, CScript& pubScript, CReserveKey& newReserveKey);
-    void Sign();
+    bool SignatureValid(const CScript& newSig, const CTxIn& theVin, const CScript& pubKey);
+    void Sign(CNode* pfrom);
     bool IsCollateralValid(const CTransaction& txCollateral);
-    bool AddInput(const CTxIn& newInput, const int64& nAmount, const CTransaction& txCollateral);
-    bool AddOutput(const CTxOut& newOutput, const int64 newOutEnc, const CTransaction& txCollateral);
-    bool AddScriptSig(CScript& newSig, const CTxIn& theVin, const CScript& pubKey);
-    void CatchUpNode(CNode* pfrom);
-    void SendMoney(const CTransaction& txCollateral, const CTxIn& from, const CTxOut& to, int64& nFeeRet, CKeyStore& newKeys, int64 from_nValue, CScript& pubScript, CReserveKey& newReserveKey, const CTransaction& txSupporting);
-    void AddQueuedSignatures();
-    std::string Denominate();
-    bool AddFinalTransaction(CTransaction& txNewFinalTransaction);
+    bool AddEntry(const CTxIn& newInput, const int64& nAmount, const CTransaction& txCollateral, const CTxOut& newOutput, const CTxOut& newOutput2);
+    bool AddScriptSig(const CScript& newSig, const CTxIn& theVin, const CScript& pubKey);
+    void SendMoney(const CTransaction& collateral, CTxIn& in, CTxOut& out, int64& fee, CKeyStore& newKeys, int64 amount, CScript& pubScript, CReserveKey& newReserveKey, const CTransaction& txSupporting);
 
-    IMPLEMENT_SERIALIZE
-    (
-        READWRITE(state);
-    )
+    std::string Denominate();
+    bool SignFinalTransaction(CTransaction& finalTransactionNew, CNode* pfrom);
+
 
 };
 

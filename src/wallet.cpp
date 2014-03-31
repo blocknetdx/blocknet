@@ -1573,8 +1573,8 @@ string CWallet::DarkSendMoney(const CTxDestination& address, int64 nValue)
     printf(" amount %"PRI64d"\n", amount);
     printf(" nValue %"PRI64d"\n", nValue);
 
-    if(amount > 10*COIN){
-        return _("DarkSend can't send amounts more than 10DRK (In the future it'll support up to 10000DRK)");
+    if(amount > 9.99*COIN){
+        return _("DarkSend can't send amounts more than 9.99DRK (In the future it'll support up to 10000DRK)");
     }
 
     amount = roundUp64(nTotalValue, COIN/100);
@@ -1585,11 +1585,11 @@ string CWallet::DarkSendMoney(const CTxDestination& address, int64 nValue)
     CTxIn vin;
     CWalletTx wtxDenominate = CWalletTx();
     // try once before we try to denominate
-    if (!SelectCoinsExactOutput(10*COIN, vin, nValueIn, pubScript, true, coinControl))
+    if (!SelectCoinsExactOutput(10*COIN, vin, nValueIn, pubScript, true, coinControl) || 
+        !SelectCoinsExactOutput(POOL_FEE_AMOUNT+(0.01*COIN), vin, nValueIn, pubScript, true, coinControl))
     {
         Denominate(wtxDenominate);
     }
-
 
     if (!SelectCoinsExactOutput(10*COIN, vin, nValueIn, pubScript, true, coinControl))
     {
@@ -1609,7 +1609,7 @@ string CWallet::DarkSendMoney(const CTxDestination& address, int64 nValue)
         
         if (!SelectCoinsExactOutput(POOL_FEE_AMOUNT+(0.01*COIN), Vin, nValueIn2, pubScript2, true, coinControl))
         {
-            return _("Error: The DarkSend collateral transaction requires a transaction fee of at least %s because of its amount, complexity, or use of recently received funds!");
+            return _("Error: The DarkSend requires a collateral transaction and could not locate the input!");
         }
 
         txCollateral.vin.push_back(Vin);

@@ -324,40 +324,7 @@ Value darksend(const Array& params, bool fHelp)
     if (strError != "")
         throw JSONRPCError(RPC_WALLET_ERROR, strError);
 
-    unsigned int session =  darkSendPool.GetSessionID();
-    ostringstream convert;
-    convert << session;
-    return convert.str();
-}
-
-Value denominate(const Array& params, bool fHelp)
-{
-    if (fHelp || params.size() != 0)
-        throw runtime_error(
-            "denominate\n"
-            "Creates compatible inputs for DarkSend"
-            + HelpRequiringPassphrase());
-
-    if (pwalletMain->IsLocked())
-    {
-        return _("Error: Wallet locked, unable to denominate! Use walletpassphrase to unlock. ");
-    }
-
-    return darkSendPool.Denominate();
-}
-
-Value getdarksendtxid(const Array& params, bool fHelp)
-{
-    if (fHelp || params.size() != 1)
-        throw runtime_error(
-            "getdarksendtxid <session_id>\n"
-            "<session_id> is a integer for the darksend pooling session you wish to get the txid for"
-            + HelpRequiringPassphrase());
-
-    // Session ID
-    int64 nSessionID = (int64)params[0].get_real();
-
-    return darkSendPool.GetSessionTxID(nSessionID);
+    return "";
 }
 
 Value listaddressgroupings(const Array& params, bool fHelp)

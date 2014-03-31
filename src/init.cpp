@@ -315,6 +315,7 @@ std::string HelpMessage()
         "  -port=<port>           " + _("Listen for connections on <port> (default: 9333 or testnet: 19333)") + "\n" +
         "  -maxconnections=<n>    " + _("Maintain at most <n> connections to peers (default: 125)") + "\n" +
         "  -addnode=<ip>          " + _("Add a node to connect to and attempt to keep the connection open") + "\n" +
+        "  -darksendnode=<ip>     " + _("Add a DarkSend node to connect to for anonymous transactions") + "\n" +
         "  -connect=<ip>          " + _("Connect only to the specified node(s)") + "\n" +
         "  -seednode=<ip>         " + _("Connect to a node to retrieve peer addresses, and disconnect") + "\n" +
         "  -externalip=<ip>       " + _("Specify your own public address") + "\n" +
@@ -1093,8 +1094,8 @@ bool AppInit2(boost::thread_group& threadGroup)
 
     // ********************************************************* Step 10: setup DarkSend
 
-    fPaymentNode = GetBoolArg("-paymentnode");
-    if(fPaymentNode) {printf("IS DARKSEND PAYMENT NODE\n");}
+    fMasterNode = GetBoolArg("-masternode");
+    if(fMasterNode) {printf("IS DARKSEND MASTER NODE\n");}
 
     threadGroup.create_thread(boost::bind(&ThreadCheckDarkSendPool));
 

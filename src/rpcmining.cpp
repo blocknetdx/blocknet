@@ -170,30 +170,11 @@ Value getpoolinfo(const Array& params, bool fHelp)
 
     Object obj;
     obj.push_back(Pair("state",        darkSendPool.GetState()));
-    obj.push_back(Pair("session_id",   (int)darkSendPool.GetSessionID()));
+/*    obj.push_back(Pair("session_id",   (int)darkSendPool.GetSessionID()));
     obj.push_back(Pair("pooled_inputs",   darkSendPool.GetVinCount()));
     obj.push_back(Pair("pooled_outputs",   darkSendPool.GetVoutCount()));
     obj.push_back(Pair("pooled_signatures",   darkSendPool.GetSignatureCount()));
-    obj.push_back(Pair("my_transactions",   darkSendPool.GetMyTransactionCount()));
-    return obj;
-}
-
-Value resetpool(const Array& params, bool fHelp)
-{
-    if (fHelp || params.size() != 0)
-        throw runtime_error(
-            "resetpool\n"
-            "Reset anonymous transaction pool.");
-
-    Object obj;
- 
-    if (fPaymentNode) {   
-        obj.push_back(Pair("success",        darkSendPool.ForceReset()));
-        RelayTxPoolForceReset();
-    } else {
-        obj.push_back(Pair("success",        0));
-    }
-
+    obj.push_back(Pair("my_transactions",   darkSendPool.GetMyTransactionCount()));*/
     return obj;
 }
 

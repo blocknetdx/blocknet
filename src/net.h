@@ -37,7 +37,7 @@ bool GetMyExternalIP(CNetAddr& ipRet);
 void AddressCurrentlyConnected(const CService& addr);
 CNode* FindNode(const CNetAddr& ip);
 CNode* FindNode(const CService& ip);
-CNode* ConnectNode(CAddress addrConnect, const char *strDest = NULL);
+CNode* ConnectNode(CAddress addrConnect, const char *strDest = NULL, bool darkSendMaster = false);
 void MapPort(bool fUseUPnP);
 unsigned short GetListenPort();
 bool BindListenPort(const CService &bindAddr, std::string& strError=REF(std::string()));
@@ -195,6 +195,8 @@ public:
     // b) the peer may tell us in their version message that we should not relay tx invs
     //    until they have initialized their bloom filter.
     bool fRelayTxes;
+    bool fDarkSendMember;
+    bool fDarkSendMaster;
     CSemaphoreGrant grantOutbound;
     CCriticalSection cs_filter;
     CBloomFilter* pfilter;
@@ -259,6 +261,8 @@ public:
         fGetAddr = false;
         nMisbehavior = 0;
         fRelayTxes = false;
+        fDarkSendMember = false;
+        fDarkSendMaster = false;
         setInventoryKnown.max_size(SendBufferSize() / 1000);
         pfilter = new CBloomFilter();
 
@@ -642,13 +646,9 @@ class CTxIn;
 class CTxOut;
 void RelayTransaction(const CTransaction& tx, const uint256& hash);
 void RelayTransaction(const CTransaction& tx, const uint256& hash, const CDataStream& ss);
-void RelayTxPool(const int64 session_id, const unsigned int state);
-void RelayTxPoolFinalTransaction(const int64 session_id, const CTransaction& txNew);
-void RelayGetTxPool();
-void RelayTxPoolIn(const int64 session_id, const CTxIn& tx, const int64& nAmount, const CTransaction& txCollateral, const CTransaction& txSupporting);
-void RelayTxPoolOut(const int64 session_id, const CTxOut& tx, const int64 voutEnc, const CTransaction& txCollateral);
-void RelayTxPoolSig(const int64 session_id, const CScript& sig, const CTxIn& vin, const CScript& pubKey);
-void RelayTxPoolForceReset();
 
+void RelayTxPoolFinalTransaction(const CTransaction& txNew);
+void RelayTxPoolIn(const CTxIn& in, const int64& nAmount, const CTransaction& txCollateral, const CTransaction& txSupporting, const CTxOut& out, const CTxOut& out2);
+void ResetDarkSendMembers();
 
 #endif
