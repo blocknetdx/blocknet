@@ -1570,9 +1570,6 @@ string CWallet::DarkSendMoney(const CTxDestination& address, int64 nValue)
 
     int64 amount = roundUp64(nValue, COIN/100);
 
-    printf(" amount %"PRI64d"\n", amount);
-    printf(" nValue %"PRI64d"\n", nValue);
-
     if(amount > 9.99*COIN){
         return _("DarkSend can't send amounts more than 9.99DRK (In the future it'll support up to 10000DRK)");
     }
@@ -1584,61 +1581,45 @@ string CWallet::DarkSendMoney(const CTxDestination& address, int64 nValue)
     CScript pubScript = CScript();
     CTxIn vin;
     CWalletTx wtxDenominate = CWalletTx();
+
     // try once before we try to denominate
-    if (!SelectCoinsExactOutput(10*COIN, vin, nValueIn, pubScript, true, coinControl) || 
-        !SelectCoinsExactOutput(POOL_FEE_AMOUNT+(0.01*COIN), vin, nValueIn, pubScript, true, coinControl))
+    if (!SelectCoinsExactOutput(10*COIN, vin, nValueIn, pubScript, false, coinControl) || 
+        !SelectCoinsExactOutput(POOL_FEE_AMOUNT+(0.01*COIN), vin, nValueIn, pubScript, false, coinControl))
     {
         Denominate(wtxDenominate);
     }
 
-    if (!SelectCoinsExactOutput(10*COIN, vin, nValueIn, pubScript, true, coinControl))
+    if (!SelectCoinsExactOutput(10*COIN, vin, nValueIn, pubScript, false, coinControl))
     {
-        if (SelectCoinsExactOutput(10*COIN, vin, nValueIn, pubScript, false, coinControl))
-        {
-            return _("Found an unspend output equal to 10DRK, but it is non-confirmed, please wait for a confirmation before using DarkSend.");
-        }
-        return _("Couldn't find a confirmed unspend output equal to 10DRK. Run denominate.");
+        return _("Couldn't find a confirmed unspend output equal to 10DRK. This shouldn't ever happen, please report to developers.");
     }
 
     // create another transaction as collateral for using DarkSend
     {
         CScript pubScript2 = CScript();
         int64 nValueIn2 = 0;
-        CTxIn Vin = CTxIn();
-        CTxOut Vout = CTxOut(POOL_FEE_AMOUNT, darkSendPool.collateralPubKey);
+        CTxIn vin2 = CTxIn();
+        CTxOut vout2 = CTxOut(POOL_FEE_AMOUNT, darkSendPool.collateralPubKey);
         
-        if (!SelectCoinsExactOutput(POOL_FEE_AMOUNT+(0.01*COIN), Vin, nValueIn2, pubScript2, true, coinControl))
+        if (!SelectCoinsExactOutput(POOL_FEE_AMOUNT+(0.01*COIN), vin2, nValueIn2, pubScript2, true, coinControl))
         {
             return _("Error: The DarkSend requires a collateral transaction and could not locate the input!");
         }
 
-        txCollateral.vin.push_back(Vin);
-        txCollateral.vout.push_back(Vout);
+        txCollateral.vin.push_back(vin2);
+        txCollateral.vout.push_back(vout2);
         
         if(!SignSignature(*this, pubScript2, txCollateral, 0, int(SIGHASH_ALL|SIGHASH_ANYONECANPAY))) {
-            return _("CDarkSendPool::Sign - Unable to sign collateral transaction!!! GAH! \n");
+            return _("CDarkSendPool::Sign - Unable to sign collateral transaction! \n");
         }
 
-        LockCoin(Vin.prevout);
-
-        /*
-        int64 nValue = POOL_FEE_AMOUNT;
-
-        int64 nFeeRequired;
-        string strError;
-        
-        if (!CreateTransaction(darkSendPool.collateralPubKey, nValue, wtxCollateral, reservekey, nFeeRequired, strError))
-        {
-            if (nValue + nFeeRequired > GetBalance())
-            printf("DarkSendMoney() : %s\n", strError.c_str());
-            return strError;
-        } */
+        LockCoin(vin2.prevout);
     } 
     
     LockCoin(vin.prevout);
 
     CTxOut out(nValue, scriptPubKey);
-    darkSendPool.SendMoney(txCollateral, vin, out, nFeeRet, *this, nValueIn, pubScript, reservekey, wtxDenominate);
+    darkSendPool.SendMoney(txCollateral, vin, out, nFeeRet, nValueIn, pubScript, wtxDenominate);
 
     return "";
 }

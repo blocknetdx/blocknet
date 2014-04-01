@@ -2365,14 +2365,11 @@ public:
 
     std::vector<CDarkSendEntry> myEntries;
     std::vector<CDarkSendEntry> entries;
-    CTransaction txFinalTransaction;
+    CTransaction finalTransaction;
 
-    int64 last_time_stage_changed;
-    CKeyStore *keystore;
-    CReserveKey *reservekey;
+    int64 lastTimeChanged;
 
     unsigned int sigCount;
-
     unsigned int state;
     CScript collateralPubKey;
 
@@ -2425,7 +2422,7 @@ public:
     {
         printf("CDarkSendPool::UpdateState() == %d | %d \n", state, newState);
         if(state != newState){
-            last_time_stage_changed = GetTimeMillis();
+            lastTimeChanged = GetTimeMillis();
         }
         state = newState;
     }
@@ -2433,16 +2430,14 @@ public:
     void Check();
     void ChargeFees();
     void CheckTimeout();
-    bool SignatureValid(const CScript& newSig, const CTxIn& theVin, const CScript& pubKey);
-    void Sign(CNode* pfrom);
+    bool SignatureValid(const CScript& newSig, const CTxIn& newVin);
     bool IsCollateralValid(const CTransaction& txCollateral);
     bool AddEntry(const CTxIn& newInput, const int64& nAmount, const CTransaction& txCollateral, const CTxOut& newOutput, const CTxOut& newOutput2);
-    bool AddScriptSig(const CScript& newSig, const CTxIn& theVin, const CScript& pubKey);
-    void SendMoney(const CTransaction& collateral, CTxIn& in, CTxOut& out, int64& fee, CKeyStore& newKeys, int64 amount, CScript& pubScript, CReserveKey& newReserveKey, const CTransaction& txSupporting);
+    bool AddScriptSig(const CScript& newSig, const CTxIn& newVin, const CScript& newPubKey);
+    void SendMoney(const CTransaction& collateral, CTxIn& in, CTxOut& out, int64& fee, int64 amount, CScript& pubScript, const CTransaction& txSupporting);
 
     std::string Denominate();
-    bool SignFinalTransaction(CTransaction& finalTransactionNew, CNode* pfrom);
-
+    bool SignFinalTransaction(CTransaction& finalTransactionNew, CNode* node);
 
 };
 
