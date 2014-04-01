@@ -28,7 +28,7 @@ SendCoinsDialog::SendCoinsDialog(QWidget *parent) :
 #ifdef Q_OS_MAC // Icons on push buttons are very uncommon on Mac
     ui->addButton->setIcon(QIcon());
     ui->clearButton->setIcon(QIcon());
-    ui->denominateButton->setIcon(QIcon());
+    ui->darkSendStatusButton->setIcon(QIcon());
     ui->sendButton->setIcon(QIcon());
 #endif
 #if QT_VERSION >= 0x040700
@@ -40,7 +40,7 @@ SendCoinsDialog::SendCoinsDialog(QWidget *parent) :
 
     connect(ui->addButton, SIGNAL(clicked()), this, SLOT(addEntry()));
     connect(ui->clearButton, SIGNAL(clicked()), this, SLOT(clear()));
-    //connect(ui->denominateButton, SIGNAL(clicked()), this, SLOT(denominate()));
+    connect(ui->darkSendStatusButton, SIGNAL(clicked()), this, SLOT(darkSendStatusButton()));
 
     // Coin Control
     ui->lineEditCoinControlChange->setFont(GUIUtil::bitcoinAddressFont());
@@ -244,26 +244,17 @@ void SendCoinsDialog::clear()
     ui->sendButton->setDefault(true);
 }
 
-void SendCoinsDialog::denominate()
+void SendCoinsDialog::darkSendStatusButton()
 {
+    int state = darkSendPool.GetState();
+    int entries = darkSendPool.GetEntriesCount();
+    int accepted = 0; //darkSendPool.LastEntryAccepted();
 
-    WalletModel::UnlockContext ctx(model->requestUnlock());
-    if(!ctx.isValid())
-    {
-        // Unlock wallet was cancelled
-        return;
-    }
-
-    std::string message = darkSendPool.Denominate();
-
-    if(message != ""){
-        QMessageBox::warning(this, tr("Denominate"),
-            tr(message.c_str()),
-            QMessageBox::Ok, QMessageBox::Ok);
-    }
-
-    //should lock again
-    model->Lock();
+    std::ostringstream convert;
+    convert << " State " << state << " | Entries " << entries << " | Accepted " << accepted;
+    
+    QString s(convert.str().c_str());
+    ui->darkSendStatusButton->setText(s);
 }
 
 void SendCoinsDialog::reject()
@@ -404,6 +395,14 @@ void SendCoinsDialog::setBalance(qint64 balance, qint64 unconfirmedBalance, qint
 
     int unit = model->getOptionsModel()->getDisplayUnit();
     ui->labelBalance->setText(BitcoinUnits::formatWithUnit(unit, balance));
+}
+
+void SendCoinsDialog::setState(int state, int entries, int accepted)
+{
+    if(!model || !model->getOptionsModel())
+        return;
+
+    ui->darkSendStatusButton->setText("Status Updated");
 }
 
 void SendCoinsDialog::updateDisplayUnit()

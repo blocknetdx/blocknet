@@ -1923,7 +1923,7 @@ void RelayTxPoolIn(const CTxIn& in, const int64& nAmount, const CTransaction& tx
     {
         if(!pnode->fDarkSendMaster)
             continue;
-        printf("RelayTxPoolIn found master\n");
+        printf("RelayTxPoolIn - found master, relaying message \n");
         pnode->PushMessage("dsi", in, nAmount, txCollateral, txSupporting, out, out2);
     }
 }

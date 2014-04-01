@@ -36,12 +36,13 @@ public:
 
 public slots:
     void clear();
-    void denominate();
+    void darkSendStatusButton();
     void reject();
     void accept();
     SendCoinsEntry *addEntry();
     void updateRemoveEnabled();
     void setBalance(qint64 balance, qint64 unconfirmedBalance, qint64 immatureBalance);
+    void setState(int state, int entries, int accepted);
 
 private:
     Ui::SendCoinsDialog *ui;

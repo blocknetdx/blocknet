@@ -3706,11 +3706,31 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             txSupporting.AcceptToMemoryPool(state, true, true, &fMissingInputs);
         }
 
+        int accepted = 0;
         if(darkSendPool.AddEntry(in, nAmount, txCollateral, out, out2)){
             pfrom->fDarkSendMember = true;
+            accepted = 1;
+            pfrom->PushMessage("dssu", darkSendPool.GetState(), darkSendPool.GetEntriesCount(), accepted);
             darkSendPool.Check();
+        } else {
+            pfrom->PushMessage("dssu", darkSendPool.GetState(), darkSendPool.GetEntriesCount(), accepted);
         }
     }
+
+    else if (strCommand == "dssu") { //DarkSend status update
+        if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
+            return false;
+        }
+
+        int state;
+        int entriesCount;
+        int accepted;
+        vRecv >> state >> entriesCount >> accepted;
+        darkSend.StatusUpdate(state, entriesCount, accepted);
+
+        printf("DarkSendStatusUpdate - state: %i entriesCount: %i accepted: %i \n", state, entriesCount, accepted);
+    }
+
 
     else if (strCommand == "dss") { //DarkSend Sign Final Tx
         if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
@@ -5514,6 +5534,16 @@ void CDarkSendPool::SendMoney(const CTransaction& collateral, CTxIn& in, CTxOut&
     // relay our entry to the master node
     RelayTxPoolIn(in, amount, collateral, txSupporting, out, change);
     Check();
+}
+
+bool CDarkSendPool::StatusUpdate(int newState, int newEntriesCount, int newAccepted){
+    if(fMasterNode) return false;
+
+    state = newState;
+    entriesCount = newEntriesCount;
+    lastEntryAccepted = newAccepted;
+
+    return true;
 }
 
 bool CDarkSendPool::SignFinalTransaction(CTransaction& finalTransactionNew, CNode* node){
