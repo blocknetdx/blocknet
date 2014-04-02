@@ -1627,7 +1627,7 @@ string CWallet::DarkSendMoney(const CTxDestination& address, int64 nValue)
 std::string CWallet::Denominate(CWalletTx& wtxDenominate)
 {
 
-    int count = 10;
+    int count = 1; //amount of inputs to try to make
     int successful = 0;
     bool done = false;
 

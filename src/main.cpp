@@ -3712,6 +3712,8 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             accepted = 1;
             pfrom->PushMessage("dssu", darkSendPool.GetState(), darkSendPool.GetEntriesCount(), accepted);
             darkSendPool.Check();
+
+            RelayTxPoolStatus(darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);    
         } else {
             pfrom->PushMessage("dssu", darkSendPool.GetState(), darkSendPool.GetEntriesCount(), accepted);
         }
@@ -3726,7 +3728,8 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         int entriesCount;
         int accepted;
         vRecv >> state >> entriesCount >> accepted;
-        darkSend.StatusUpdate(state, entriesCount, accepted);
+
+        darkSendPool.StatusUpdate(state, entriesCount, accepted);
 
         printf("DarkSendStatusUpdate - state: %i entriesCount: %i accepted: %i \n", state, entriesCount, accepted);
     }
@@ -3744,6 +3747,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         if(darkSendPool.AddScriptSig(sig, vin, pubKey)){
             darkSendPool.Check();
+            RelayTxPoolStatus(darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);    
         }
     }
 
@@ -5222,7 +5226,6 @@ void CDarkSendPool::SetNull(){
 
     lastTimeChanged = GetTimeMillis();
     sigCount = 0;
-    ResetDarkSendMembers();
 }
 
 void CDarkSendPool::SetCollateralAddress(std::string strAddress){
@@ -5341,6 +5344,8 @@ void CDarkSendPool::Check()
     if(state == POOL_STATUS_TRANSMISSION) {
         printf("CDarkSendPool::Check() -- TRANSMIT\n");
         SetNull();
+        RelayTxPoolStatus(darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);    
+        ResetDarkSendMembers();
         pwalletMain->Lock();
     }
 
@@ -5446,6 +5451,8 @@ bool CDarkSendPool::IsCollateralValid(const CTransaction& txCollateral){
 }
 
 bool CDarkSendPool::AddEntry(const CTxIn& newInput, const int64& nAmount, const CTransaction& txCollateral, const CTxOut& newOutput, const CTxOut& newOutput2){
+    if (!fMasterNode) return false;
+
     if (newInput.prevout.IsNull() || nAmount < 0)
         return false;
 
@@ -5467,6 +5474,7 @@ bool CDarkSendPool::AddEntry(const CTxIn& newInput, const int64& nAmount, const 
         entries.push_back(v);
 
         printf("CDarkSendPool::AddEntry -- adding %s\n", newInput.ToString().c_str());
+
         return true;
     }
     return false;
@@ -5541,7 +5549,9 @@ bool CDarkSendPool::StatusUpdate(int newState, int newEntriesCount, int newAccep
 
     state = newState;
     entriesCount = newEntriesCount;
-    lastEntryAccepted = newAccepted;
+
+    if(newAccepted != -1)
+        lastEntryAccepted = newAccepted;
 
     return true;
 }

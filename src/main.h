@@ -2407,7 +2407,16 @@ public:
 
     int GetEntriesCount() const
     {
-        return entries.size();
+        if(fMasterNode){
+            return entries.size(); 
+        } else {
+            return entriesCount;
+        }
+    }
+
+    int GetLastEntryAccepted() const
+    {
+        return lastEntryAccepted;
     }
 
     int GetSignatureCount() const
@@ -2425,6 +2434,9 @@ public:
         printf("CDarkSendPool::UpdateState() == %d | %d \n", state, newState);
         if(state != newState){
             lastTimeChanged = GetTimeMillis();
+            if(fMasterNode) {
+                RelayTxPoolStatus(darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);
+            }
         }
         state = newState;
     }

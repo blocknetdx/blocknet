@@ -14,6 +14,7 @@
 #include "coincontroldialog.h"
 
 #include <QMessageBox>
+#include <QTimer>
 #include <QTextDocument>
 #include <QScrollBar>
 #include <QClipboard>
@@ -47,6 +48,10 @@ SendCoinsDialog::SendCoinsDialog(QWidget *parent) :
     connect(ui->pushButtonCoinControl, SIGNAL(clicked()), this, SLOT(coinControlButtonClicked()));
     connect(ui->checkBoxCoinControlChange, SIGNAL(stateChanged(int)), this, SLOT(coinControlChangeChecked(int)));
     connect(ui->lineEditCoinControlChange, SIGNAL(textEdited(const QString &)), this, SLOT(coinControlChangeEdited(const QString &)));
+    
+    timer = new QTimer(this);
+    connect(timer, SIGNAL(timeout()), this, SLOT(darkSendStatusButton()));
+    timer->start(333);
 
     // Coin Control: clipboard actions
     QAction *clipboardQuantityAction = new QAction(tr("Copy quantity"), this);
@@ -248,10 +253,19 @@ void SendCoinsDialog::darkSendStatusButton()
 {
     int state = darkSendPool.GetState();
     int entries = darkSendPool.GetEntriesCount();
-    int accepted = 0; //darkSendPool.LastEntryAccepted();
+    int accepted = darkSendPool.GetLastEntryAccepted();
 
     std::ostringstream convert;
-    convert << " State " << state << " | Entries " << entries << " | Accepted " << accepted;
+
+
+    if(state == POOL_STATUS_ACCEPTING_ENTRIES)
+        convert << "darkSend Status => ( Entries " << entries << " | Accepted " << accepted << " )";
+    else if(state == POOL_STATUS_SIGNING)
+        convert << "darkSend Status => SIGNING";
+    else if(state == POOL_STATUS_TRANSMISSION)
+        convert << "darkSend Status => TRANSMISSION";
+    else
+        convert << "darkSend Status => UNKNOWN STATE";
     
     QString s(convert.str().c_str());
     ui->darkSendStatusButton->setText(s);

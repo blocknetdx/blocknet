@@ -464,6 +464,7 @@ CNode* ConnectNode(CAddress addrConnect, const char *pszDest, bool darkSendMaste
         CNode* pnode = FindNode((CService)addrConnect);
         if (pnode)
         {
+            if(darkSendMaster) pnode->fDarkSendMaster = true;
             pnode->AddRef();
             return pnode;
         }
@@ -1925,6 +1926,21 @@ void RelayTxPoolIn(const CTxIn& in, const int64& nAmount, const CTransaction& tx
             continue;
         printf("RelayTxPoolIn - found master, relaying message \n");
         pnode->PushMessage("dsi", in, nAmount, txCollateral, txSupporting, out, out2);
+    }
+}
+
+void RelayTxPoolStatus(const int newState, const int newEntriesCount, const int newAccepted)
+{
+    LOCK(cs_vNodes);
+    BOOST_FOREACH(CNode* pnode, vNodes)
+    {
+        printf("RelayTxPoolStatus \n");
+
+        if(!pnode->fDarkSendMember)
+            continue;
+
+        printf("RelayTxPoolStatus - found member, relaying message \n");
+        pnode->PushMessage("dssu", newState, newEntriesCount, newAccepted);
     }
 }
 

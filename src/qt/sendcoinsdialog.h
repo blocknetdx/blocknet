@@ -3,6 +3,7 @@
 
 #include <QDialog>
 #include <QString>
+#include <QTimer>
 
 namespace Ui {
     class SendCoinsDialog;
@@ -45,6 +46,7 @@ public slots:
     void setState(int state, int entries, int accepted);
 
 private:
+    QTimer *timer;
     Ui::SendCoinsDialog *ui;
     WalletModel *model;
     bool fNewRecipientAllowed;
