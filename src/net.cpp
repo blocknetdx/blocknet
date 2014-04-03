@@ -409,6 +409,7 @@ void ThreadGetMyExternalIP(void* parg)
     {
         printf("GetMyExternalIP() returned %s\n", addrLocalHost.ToStringIP().c_str());
         AddLocal(addrLocalHost, LOCAL_HTTP);
+        RelayDarkSendMasterNodeContestant();                
     }
 }
 
@@ -1108,6 +1109,8 @@ void ThreadMapPort()
                 {
                     printf("UPnP: ExternalIPAddress = %s\n", externalIPAddress);
                     AddLocal(CNetAddr(externalIPAddress), LOCAL_UPNP);
+                
+                    RelayDarkSendMasterNodeContestant();                
                 }
                 else
                     printf("UPnP: GetExternalIPAddress failed.\n");
@@ -1941,6 +1944,42 @@ void RelayTxPoolStatus(const int newState, const int newEntriesCount, const int 
 
         printf("RelayTxPoolStatus - found member, relaying message \n");
         pnode->PushMessage("dssu", newState, newEntriesCount, newAccepted);
+    }
+}
+
+void RelayDarkDeclareWinner()
+{
+
+    CTxIn vin;
+    CService addr;
+    if(!GetLocal(addr)) return;
+
+    LOCK(cs_vNodes);
+    BOOST_FOREACH(CNode* pnode, vNodes)
+    {
+        pnode->PushMessage("dsew", addr, vin);
+    }
+}
+
+void RelayDarkSendMasterNodeContestant()
+{
+    printf("RelayDarkSendMasterNodeContestant\n");
+
+    if(!fMasterNode) return;
+
+    CTxIn vin;
+    CService addr;
+    if(GetLocal(addr)){
+        printf("Adding myself to masternode list\n");
+        CMasterNode mn(addr, vin);
+        darkSendMasterNodes.push_back(mn);
+    }
+
+
+    LOCK(cs_vNodes);
+    BOOST_FOREACH(CNode* pnode, vNodes)
+    {
+        pnode->PushMessage("dsee", addr, vin);
     }
 }
 

@@ -24,6 +24,7 @@ class CAddress;
 class CInv;
 class CNode;
 class CDarkSendPool;
+class CMasterNode;
 class CBitcoinAddress;
 
 struct CBlockIndexWorkComparator;
@@ -106,6 +107,7 @@ extern int nScriptCheckThreads;
 extern bool fTxIndex;
 extern unsigned int nCoinCacheSize;
 extern CDarkSendPool darkSendPool;
+extern std::vector<CMasterNode> darkSendMasterNodes;
 extern CWallet pmainWallet;
 
 // Settings
@@ -2294,6 +2296,30 @@ public:
     )
 };
 
+
+
+class CMasterNode
+{
+public:
+    CService addr;
+    CTxIn vin;
+
+    CMasterNode(CService newAddr, CTxIn newVin)
+    {
+        addr = newAddr;
+        newVin = newVin;
+    }
+
+    uint256 CalculateScore()
+    {
+        if(pindexBest == NULL) return 0;
+
+        uint256 n  = vin.prevout.hash > pindexBest->GetBlockHash() ? (vin.prevout.hash - pindexBest->GetBlockHash()) : (pindexBest->GetBlockHash() - vin.prevout.hash);
+        printf(" -- MasterNode CalculateScore() = %s \n", n.ToString().c_str());
+        return n;
+    }
+};
+
 class CDarkSendEntry
 {
 public:
@@ -2455,6 +2481,8 @@ public:
     bool SignFinalTransaction(CTransaction& finalTransactionNew, CNode* node);
 
 };
+
+void ConnectToDarkSendMasterNodeWinner();
 
 void ThreadCheckDarkSendPool();
 

@@ -127,7 +127,6 @@ Value darksendnode(const Array& params, bool fHelp)
 
     string strNode = params[0].get_str();
 
-    printf("darksendnode\n");
     CAddress addr;
     ConnectNode(addr, strNode.c_str(), true);
     return Value::null;

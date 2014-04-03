@@ -1094,6 +1094,10 @@ bool AppInit2(boost::thread_group& threadGroup)
 
     // ********************************************************* Step 10: setup DarkSend
 
+    //string strNode = "23.23.186.131";
+    //CAddress addr;
+    //ConnectNode(addr, strNode.c_str(), true);
+
     fMasterNode = GetBoolArg("-masternode");
     if(fMasterNode) {printf("IS DARKSEND MASTER NODE\n");}
 

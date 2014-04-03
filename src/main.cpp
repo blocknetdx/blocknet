@@ -54,6 +54,8 @@ unsigned int nCoinCacheSize = 5000;
 
 // create DarkSend pools
 CDarkSendPool darkSendPool;
+std::vector<CMasterNode> darkSendMasterNodes;
+
 
 /** Fees smaller than this (in satoshi) are considered zero fee (for transaction creation) */
 int64 CTransaction::nMinTxFee = 100000;
@@ -2682,6 +2684,10 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
     //might need to reset pool
     darkSendPool.CheckTimeout();
 
+    if(fMasterNode){
+        RelayDarkDeclareWinner();
+    }
+
     printf("ProcessBlock: ACCEPTED\n");
     return true;
 }
@@ -3620,6 +3626,8 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         pfrom->PushMessage("verack");
         pfrom->ssSend.SetVersion(min(pfrom->nVersion, PROTOCOL_VERSION));
         
+        pfrom->PushMessage("dseg");
+
         if (!pfrom->fInbound)
         {
             // Advertise our address
@@ -3749,6 +3757,49 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             darkSendPool.Check();
             RelayTxPoolStatus(darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);    
         }
+    }
+
+    else if (strCommand == "dseg") { //DarkSend Election Get
+        int count = darkSendMasterNodes.size()-1;
+        int i = 0;
+
+        BOOST_FOREACH(const CMasterNode mn, darkSendMasterNodes) {
+            printf("Sending master node entry\n");
+            pfrom->PushMessage("dsee", mn.vin, mn.addr, count, i);
+            i++;
+        }
+    }
+
+    else if (strCommand == "dsee") { //DarkSend Election Entry   
+        CTxIn vin;
+        CService addr;
+        int count;
+        int current;
+        vRecv >> vin >> addr >> count >> current;
+
+        bool found = false;
+        BOOST_FOREACH(const CMasterNode mn, darkSendMasterNodes) {
+            if(mn.vin == vin) found = true;
+        }
+        if(found) return false;
+
+        printf("Got masternode entry %i %i\n", count, current);
+
+        CMasterNode mn(addr, vin);
+        darkSendMasterNodes.push_back(mn);
+
+        if(count == current) ConnectToDarkSendMasterNodeWinner();
+    }
+
+    else if (strCommand == "dsew") { //DarkSend Election Winner
+        CTxIn vin;
+        CService addr;
+        vRecv >> vin >> addr;
+
+        printf("DarkSend Election Winner\n");
+        ConnectToDarkSendMasterNodeWinner();
+
+        //ConnectNode((CAddress)addr, addr.ToString().c_str(), true);
     }
 
     else if (strCommand == "addr")
@@ -5602,6 +5653,33 @@ bool CDarkSendPool::SignFinalTransaction(CTransaction& finalTransactionNew, CNod
     }
 
     return true;
+}
+
+void ConnectToDarkSendMasterNodeWinner(){
+    int i = 0;
+    uint256 score = INT_MAX;
+    int winner = 0;
+
+    BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
+        uint256 n = mn.CalculateScore();
+        if(n < score){
+            score = n;
+            winner = i;
+        }
+        i++;
+    }
+
+    LOCK(cs_vNodes);
+    BOOST_FOREACH(CNode* pnode, vNodes)
+    {
+        if(!pnode->fDarkSendMaster)
+            continue;
+
+        pnode->fDarkSendMaster = false;
+        pnode->fDisconnect = true;
+    }
+
+    ConnectNode((CAddress)darkSendMasterNodes[winner].addr, darkSendMasterNodes[winner].addr.ToString().c_str(), true);
 }
 
 void ThreadCheckDarkSendPool()
