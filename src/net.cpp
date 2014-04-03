@@ -409,7 +409,7 @@ void ThreadGetMyExternalIP(void* parg)
     {
         printf("GetMyExternalIP() returned %s\n", addrLocalHost.ToStringIP().c_str());
         AddLocal(addrLocalHost, LOCAL_HTTP);
-        RelayDarkSendMasterNodeContestant();                
+        darkSendPool.RegisterAsMasterNode();                
     }
 }
 
@@ -1110,7 +1110,7 @@ void ThreadMapPort()
                     printf("UPnP: ExternalIPAddress = %s\n", externalIPAddress);
                     AddLocal(CNetAddr(externalIPAddress), LOCAL_UPNP);
                 
-                    RelayDarkSendMasterNodeContestant();                
+                    darkSendPool.RegisterAsMasterNode();                
                 }
                 else
                     printf("UPnP: GetExternalIPAddress failed.\n");
@@ -1944,61 +1944,5 @@ void RelayTxPoolStatus(const int newState, const int newEntriesCount, const int 
 
         printf("RelayTxPoolStatus - found member, relaying message \n");
         pnode->PushMessage("dssu", newState, newEntriesCount, newAccepted);
-    }
-}
-
-void RelayDarkDeclareWinner()
-{
-    // Choose coins to use
-    int64 nValueIn = 0;
-    CScript pubScript = CScript();
-    CTxIn vin;
-    CWalletTx wtxDenominate = CWalletTx();
-
-    // try once before we try to denominate
-    if (!SelectCoinsExactOutput(1000*COIN, vin, nValueIn, pubScript, false, coinControl))
-    {
-        //I'm not a capable masternode
-        return;
-    }
-
-    CService addr;
-    if(!GetLocal(addr)) return;
-
-    LOCK(cs_vNodes);
-    BOOST_FOREACH(CNode* pnode, vNodes)
-    {
-        pnode->PushMessage("dsep", addr, vin);
-    }
-}
-
-void RelayDarkSendMasterNodeContestant()
-{
-    printf("RelayDarkSendMasterNodeContestant\n");
-
-    if(!fMasterNode) return;
-
-    CTxIn vin;
-    CService addr;
-    if(GetLocal(addr)){
-        printf("Adding myself to masternode list\n");
-        CMasterNode mn(addr, vin);
-        darkSendMasterNodes.push_back(mn);
-    }
-
-
-    LOCK(cs_vNodes);
-    BOOST_FOREACH(CNode* pnode, vNodes)
-    {
-        pnode->PushMessage("dsee", addr, vin);
-    }
-}
-
-void ResetDarkSendMembers()
-{
-    LOCK(cs_vNodes);
-    BOOST_FOREACH(CNode* pnode, vNodes)
-    {
-        pnode->fDarkSendMember = false;
     }
 }

@@ -69,9 +69,6 @@ public:
 class CWallet : public CCryptoKeyStore
 {
 private:
-    bool SelectCoins(int64 nTargetValue, std::set<std::pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64& nValueRet, const CCoinControl *coinControl=NULL) const;
-    bool SelectCoinsWithoutDenomination(int64 nTargetValue, std::set<std::pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64& nValueRet, const CCoinControl *coinControl=NULL) const;
-    bool SelectCoinsExactOutput(int64 nTargetValue, CTxIn& vin, int64& nValueRet, CScript& pubScript, bool confirmed, const CCoinControl* coinControl) const;
 
     CWalletDB *pwalletdbEncryption;
 
@@ -82,6 +79,9 @@ private:
     int nWalletMaxVersion;
 
 public:
+    bool SelectCoins(int64 nTargetValue, std::set<std::pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64& nValueRet, const CCoinControl *coinControl=NULL) const;
+    bool SelectCoinsWithoutDenomination(int64 nTargetValue, std::set<std::pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64& nValueRet, const CCoinControl *coinControl=NULL) const;
+    bool SelectCoinsExactOutput(int64 nTargetValue, CTxIn& vin, int64& nValueRet, CScript& pubScript, bool confirmed, const CCoinControl* coinControl) const;
     bool SelectCoinsMoreThanOutput(int64 nTargetValue, CTxIn& vin, int64& nValueRet, CScript& pubScript, bool confirmed, const CCoinControl* coinControl) const;
 
     mutable CCriticalSection cs_wallet;

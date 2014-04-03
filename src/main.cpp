@@ -2685,7 +2685,7 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
     darkSendPool.CheckTimeout();
 
     if(fMasterNode){
-        RelayDarkDeclareWinner();
+        darkSendPool.RelayDarkDeclareWinner();
     }
 
     printf("ProcessBlock: ACCEPTED\n");
@@ -5692,21 +5692,87 @@ void CDarkSendPool::DisconnectMasterNode(){
 
 void CDarkSendPool::ConnectToBestMasterNode(){
     int i = 0;
-    uint256 score = INT_MAX;
-    int winner = 0;
+    uint256 score = 0;
+    int winner = -1;
 
     BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
         uint256 n = mn.CalculateScore();
         // GetTimeMillis()-mv.lastSeen <= 60000
-        if(n < score){
+        if(n > score){
             score = n;
             winner = i;
         }
         i++;
     }
 
-    ConnectNode((CAddress)darkSendMasterNodes[winner].addr, darkSendMasterNodes[winner].addr.ToString().c_str(), true);
+    if(winner >= 0)
+        ConnectNode((CAddress)darkSendMasterNodes[winner].addr, darkSendMasterNodes[winner].addr.ToString().c_str(), true);
 }
+
+bool CDarkSendPool::GetMasterNodeVin(CTxIn& vin)
+{
+    int64 nValueIn = 0;
+    CScript pubScript = CScript();
+
+    // try once before we try to denominate
+    if (!pwalletMain->SelectCoinsExactOutput(1000*COIN, vin, nValueIn, pubScript, false, NULL))
+    {
+        printf("I'm not a capable masternode\n");
+        return false;
+    }
+
+    return true;
+}
+
+void CDarkSendPool::RelayDarkDeclareWinner()
+{
+    // Choose coins to use
+    CService addr;
+    if(!GetLocal(addr)) return;
+
+    CTxIn vin;
+    if(!GetMasterNodeVin(vin)) return;
+
+    LOCK(cs_vNodes);
+    BOOST_FOREACH(CNode* pnode, vNodes)
+    {
+        pnode->PushMessage("dsep", addr, vin);
+    }
+}
+
+void CDarkSendPool::ResetDarkSendMembers()
+{
+    LOCK(cs_vNodes);
+    BOOST_FOREACH(CNode* pnode, vNodes)
+    {
+        pnode->fDarkSendMember = false;
+    }
+}
+
+void CDarkSendPool::RegisterAsMasterNode()
+{
+    printf("RegisterAsMasterNode\n");
+
+    if(!fMasterNode) return;
+
+    CTxIn vin;
+    if(!GetMasterNodeVin(vin)) return;
+
+    CService addr;
+    if(GetLocal(addr)){
+        printf("Adding myself to masternode list\n");
+        CMasterNode mn(addr, vin);
+        darkSendMasterNodes.push_back(mn);
+    }
+
+
+    LOCK(cs_vNodes);
+    BOOST_FOREACH(CNode* pnode, vNodes)
+    {
+        pnode->PushMessage("dsee", addr, vin);
+    }
+}
+
 
 void ThreadCheckDarkSendPool()
 {

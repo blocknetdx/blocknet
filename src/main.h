@@ -2489,6 +2489,12 @@ public:
     bool IsConnectedToMasterNode();
     void DisconnectMasterNode();
     void ConnectToBestMasterNode();
+
+    bool GetMasterNodeVin(CTxIn& vin);
+    void RelayDarkDeclareWinner();
+    void ResetDarkSendMembers();
+    void RegisterAsMasterNode();
+
 };
 
 void ConnectToDarkSendMasterNodeWinner();
