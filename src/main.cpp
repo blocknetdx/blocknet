@@ -1581,7 +1581,7 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBl
 {
         int DiffMode = 1;
         if (fTestNet) {
-                if (pindexLast->nHeight+1 >= 15) { DiffMode = 4; }
+                if (pindexLast->nHeight+1 >= 430) { DiffMode = 4; }
                 else if (pindexLast->nHeight+1 >= 5) { DiffMode = 3; }
         }
         else {
@@ -5852,6 +5852,18 @@ void CDarkSendPool::RegisterAsMasterNode()
     {
         pnode->PushMessage("dsee", addr, vin);
     }
+}
+
+uint256 CMasterNode::CalculateScore()
+{
+    if(pindexBest == NULL) return 0;
+
+    int nVersion = 1;
+    uint256 n1 = pindexBest->GetBlockHash();
+    uint256 n2 = Hash9(BEGIN(nVersion), END(n1));
+    uint256 n3 = vin.prevout.hash > n2 ? (vin.prevout.hash - n2) : (n2 - vin.prevout.hash);
+    printf(" -- MasterNode CalculateScore() = %s \n", n3.ToString().c_str());
+    return n3;
 }
 
 

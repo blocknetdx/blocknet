@@ -2311,14 +2311,7 @@ public:
         newVin = newVin;
     }
 
-    uint256 CalculateScore()
-    {
-        if(pindexBest == NULL) return 0;
-
-        uint256 n  = vin.prevout.hash > pindexBest->GetBlockHash() ? (vin.prevout.hash - pindexBest->GetBlockHash()) : (pindexBest->GetBlockHash() - vin.prevout.hash);
-        printf(" -- MasterNode CalculateScore() = %s \n", n.ToString().c_str());
-        return n;
-    }
+    uint256 CalculateScore();
 
     void UpdateLastSeen()
     {
