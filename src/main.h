@@ -2303,6 +2303,7 @@ class CMasterNode
 public:
     CService addr;
     CTxIn vin;
+    int64 lastTimeSeen;
 
     CMasterNode(CService newAddr, CTxIn newVin)
     {
@@ -2317,6 +2318,11 @@ public:
         uint256 n  = vin.prevout.hash > pindexBest->GetBlockHash() ? (vin.prevout.hash - pindexBest->GetBlockHash()) : (pindexBest->GetBlockHash() - vin.prevout.hash);
         printf(" -- MasterNode CalculateScore() = %s \n", n.ToString().c_str());
         return n;
+    }
+
+    void UpdateLastSeen()
+    {
+        lastTimeSeen = GetTimeMillis();
     }
 };
 
@@ -2480,6 +2486,9 @@ public:
     std::string Denominate();
     bool SignFinalTransaction(CTransaction& finalTransactionNew, CNode* node);
 
+    bool IsConnectedToMasterNode();
+    void DisconnectMasterNode();
+    void ConnectToBestMasterNode();
 };
 
 void ConnectToDarkSendMasterNodeWinner();

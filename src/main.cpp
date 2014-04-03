@@ -3787,19 +3787,18 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         CMasterNode mn(addr, vin);
         darkSendMasterNodes.push_back(mn);
-
-        if(count == current) ConnectToDarkSendMasterNodeWinner();
     }
 
-    else if (strCommand == "dsew") { //DarkSend Election Winner
+    else if (strCommand == "dsep") { //DarkSend Election Ping
         CTxIn vin;
         CService addr;
         vRecv >> vin >> addr;
 
         printf("DarkSend Election Winner\n");
-        ConnectToDarkSendMasterNodeWinner();
 
-        //ConnectNode((CAddress)addr, addr.ToString().c_str(), true);
+        BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
+            if(mn.vin == vin) mn.UpdateLastSeen();
+        }
     }
 
     else if (strCommand == "addr")
@@ -5255,7 +5254,7 @@ public:
 
 
 /* *** BEGIN DARKSEND MAGIC - DARKCOIN **********
-    Copyright 2014, written By: 
+    Copyright 2014, Darkcoin Developers 
         eduffield - evan@darkcoin.io
         InternetApe - kyle@darkcoin.io
 */
@@ -5290,7 +5289,7 @@ void CDarkSendPool::SetCollateralAddress(std::string strAddress){
 void CDarkSendPool::Check()
 {
     if(fDebug) printf("CDarkSendPool::Check()\n");
-    if(fDebug) printf("CDarkSendPool::Check() - vin %lu\n", entries.size());
+    if(fDebug) printf("CDarkSendPool::Check() - entries count %lu\n", entries.size());
     
     // move on to next phase
     if(state == POOL_STATUS_ACCEPTING_ENTRIES && entries.size() == POOL_MAX_TRANSACTIONS)
@@ -5391,13 +5390,14 @@ void CDarkSendPool::Check()
         }
     }
 
-    // move on to next phase
-    if(state == POOL_STATUS_TRANSMISSION) {
-        printf("CDarkSendPool::Check() -- TRANSMIT\n");
+    // move on to next phase, allow 3 seconds incase the masternode wants to send us anything else
+    if(state == POOL_STATUS_TRANSMISSION && GetTimeMillis()-lastTimeChanged >= 3000) {
+        printf("CDarkSendPool::Check() -- COMPLETED -- RESETTING \n");
         SetNull();
         RelayTxPoolStatus(darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);    
         ResetDarkSendMembers();
         pwalletMain->Lock();
+        DisconnectMasterNode();
     }
 
 }
@@ -5432,7 +5432,12 @@ std::string CDarkSendPool::Denominate(){
 
 void CDarkSendPool::CheckTimeout(){
     // catching hanging sessions
-    if(!fMasterNode) return;
+    if(!fMasterNode) {
+        if(state == POOL_STATUS_TRANSMISSION) {
+            printf("CDarkSendPool::Check() -- SESSION COMPLETED -- CHECKING\n");
+            Check();
+        }        
+    }
 
     if(state == POOL_STATUS_SIGNING && GetTimeMillis()-lastTimeChanged >= 10000 ) {
         printf("CDarkSendPool::Check() -- SESSION TIMED OUT -- RESETTING\n");
@@ -5573,6 +5578,10 @@ void CDarkSendPool::SendMoney(const CTransaction& collateral, CTxIn& in, CTxOut&
         printf("CDarkSendPool::SendMoney() -- NEW INPUT -- adding %s\n", in.ToString().c_str());
     }
 
+    if(!IsConnectedToMasterNode()){
+        ConnectToBestMasterNode();
+    }
+
     CReserveKey reservekey(pwalletMain);
 
     // make our change address
@@ -5641,6 +5650,7 @@ bool CDarkSendPool::SignFinalTransaction(CTransaction& finalTransactionNew, CNod
             if(fDebug) printf("CDarkSendPool::Sign - added my scriptSig %s\n", finalTransaction.vin[n].scriptSig.ToString().substr(0,24).c_str());
 
             if(node != NULL) node->PushMessage("dss", finalTransaction.vin[n].scriptSig, e.vin, e.vin.prevPubKey);
+
         }
         
         if(fDebug) printf("CDarkSendPool::Sign - txNew:\n%s", finalTransaction.ToString().c_str());
@@ -5655,20 +5665,20 @@ bool CDarkSendPool::SignFinalTransaction(CTransaction& finalTransactionNew, CNod
     return true;
 }
 
-void ConnectToDarkSendMasterNodeWinner(){
-    int i = 0;
-    uint256 score = INT_MAX;
-    int winner = 0;
+bool CDarkSendPool::IsConnectedToMasterNode(){
+    bool connected = false;
+    LOCK(cs_vNodes);
+    BOOST_FOREACH(CNode* pnode, vNodes)
+    {
+        if(!pnode->fDarkSendMaster)
+            continue;
 
-    BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
-        uint256 n = mn.CalculateScore();
-        if(n < score){
-            score = n;
-            winner = i;
-        }
-        i++;
+        connected = true;
     }
+    return connected;
+}
 
+void CDarkSendPool::DisconnectMasterNode(){
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
@@ -5677,6 +5687,22 @@ void ConnectToDarkSendMasterNodeWinner(){
 
         pnode->fDarkSendMaster = false;
         pnode->fDisconnect = true;
+    }
+}
+
+void CDarkSendPool::ConnectToBestMasterNode(){
+    int i = 0;
+    uint256 score = INT_MAX;
+    int winner = 0;
+
+    BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
+        uint256 n = mn.CalculateScore();
+        // GetTimeMillis()-mv.lastSeen <= 60000
+        if(n < score){
+            score = n;
+            winner = i;
+        }
+        i++;
     }
 
     ConnectNode((CAddress)darkSendMasterNodes[winner].addr, darkSendMasterNodes[winner].addr.ToString().c_str(), true);

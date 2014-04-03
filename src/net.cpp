@@ -1949,15 +1949,26 @@ void RelayTxPoolStatus(const int newState, const int newEntriesCount, const int 
 
 void RelayDarkDeclareWinner()
 {
-
+    // Choose coins to use
+    int64 nValueIn = 0;
+    CScript pubScript = CScript();
     CTxIn vin;
+    CWalletTx wtxDenominate = CWalletTx();
+
+    // try once before we try to denominate
+    if (!SelectCoinsExactOutput(1000*COIN, vin, nValueIn, pubScript, false, coinControl))
+    {
+        //I'm not a capable masternode
+        return;
+    }
+
     CService addr;
     if(!GetLocal(addr)) return;
 
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
-        pnode->PushMessage("dsew", addr, vin);
+        pnode->PushMessage("dsep", addr, vin);
     }
 }
 
