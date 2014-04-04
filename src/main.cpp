@@ -889,7 +889,7 @@ bool CTxMemPool::acceptableInputs(CValidationState &state, CTransaction &tx, boo
 
         // Check against previous transactions
         // This is done last to help prevent CPU exhaustion denial-of-service attacks.
-        if (!tx.CheckInputs(state, view, true, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC))
+        if (!tx.CheckInputs(state, view, false, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC))
         {
             printf("false8\n");
             return error("CTxMemPool::acceptableInputs() : ConnectInputs failed \n");
@@ -3891,7 +3891,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         int current;
         vRecv >> vin >> addr >> count >> current;
 
-        printf("Searching existing masternodes\n");
+        printf("Searching existing masternodes : %s\n", vin.ToString().c_str());
 
         bool found = false;
         BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
@@ -5850,6 +5850,9 @@ bool CDarkSendPool::GetMasterNodeVin(CTxIn& vin)
 
 void CDarkSendPool::RelayDarkDeclareWinner()
 {
+
+    if(!fMasterNode) return;
+
     // Choose coins to use
     CService addr;
     if(!GetLocal(addr)) return;
@@ -5884,7 +5887,7 @@ void CDarkSendPool::RegisterAsMasterNode()
 
     CService addr;
     if(GetLocal(addr)){
-        printf("Adding myself to masternode list\n");
+        printf("Adding myself to masternode list %s\n", vin.ToString().c_str());
         CMasterNode mn(addr, vin);
         darkSendMasterNodes.push_back(mn);
     }
@@ -5893,7 +5896,7 @@ void CDarkSendPool::RegisterAsMasterNode()
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
-        pnode->PushMessage("dsee", addr, vin);
+        pnode->PushMessage("dsee", addr, vin, -1, -1);
     }
 }
 

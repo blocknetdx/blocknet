@@ -2313,7 +2313,7 @@ public:
     CMasterNode(CService newAddr, CTxIn newVin)
     {
         addr = newAddr;
-        newVin = newVin;
+        vin = newVin;
         spent = 0;
         lastTimeSeen = 0;
     }
