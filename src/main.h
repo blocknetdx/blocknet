@@ -698,7 +698,7 @@ void UpdateCoins(const CTransaction& tx, CValidationState &state, CCoinsViewCach
     bool IsAcceptable(CValidationState &state, bool fCheckInputs=true, bool fLimitFree = true, bool* pfMissingInputs=NULL);
     
     // Check only the inputs in a transaction
-    bool IsAcceptableInputs(CValidationState &state, bool fLimitFree, bool* pfMissingInputs);
+    bool AcceptableInputs(CValidationState &state, bool fLimitFree);
 
 protected:
     static const CTxOut &GetOutputFor(const CTxIn& input, CCoinsViewCache& mapInputs);
@@ -2116,7 +2116,7 @@ public:
 
     bool accept(CValidationState &state, CTransaction &tx, bool fCheckInputs, bool fLimitFree, bool* pfMissingInputs);
     bool acceptable(CValidationState &state, CTransaction &tx, bool fCheckInputs, bool fLimitFree, bool* pfMissingInputs);
-    bool acceptableInputs(CValidationState &state, CTransaction &tx, bool fLimitFree, bool* pfMissingInputs);
+    bool acceptableInputs(CValidationState &state, CTransaction &tx, bool fLimitFree);
     bool addUnchecked(const uint256& hash, const CTransaction &tx);
     bool remove(const CTransaction &tx, bool fRecursive = false);
     bool removeConflicts(const CTransaction &tx);
@@ -2308,14 +2308,15 @@ public:
     CService addr;
     CTxIn vin;
     int64 lastTimeSeen;
-    int spent;
+    int enabled;
 
     CMasterNode(CService newAddr, CTxIn newVin)
     {
         addr = newAddr;
         vin = newVin;
-        spent = 0;
+        enabled = 0;
         lastTimeSeen = 0;
+    
     }
 
     uint256 CalculateScore();
@@ -2325,22 +2326,16 @@ public:
         lastTimeSeen = GetTimeMillis();
     }
 
-    void Check()
-    {
-        /*CValidationState state;
-        CTransaction tx = CTransaction();
-        tx.vin.push_back(vin);
-        tx.IsAcceptable(state, true, false);*/
-    }
+    void Check();
 
-    bool RecentlyUpdated()
+    bool UpdatedWithin(int milliSeconds)
     {
-        return GetTimeMillis() - lastTimeSeen < 60000;
+        return GetTimeMillis() - lastTimeSeen < milliSeconds;
     }
 
     bool IsEnabled()
     {
-        return spent == 0;
+        return enabled == 0;
     }
 };
 
@@ -2425,6 +2420,9 @@ public:
     unsigned int lastEntryAccepted;
     CScript collateralPubKey;
 
+    CTxIn vinMasterNode;
+    bool isCapableMasterNode;
+
     CDarkSendPool()
     {
         printf("CDarkSendPool::INIT()\n");        
@@ -2438,6 +2436,8 @@ public:
             strAddress = "mxE2Rp3oYpSEFdsN5TdHWhZvEHm3PJQQVm";
         }
         
+        isCapableMasterNode = NULL;
+
         SetCollateralAddress(strAddress);
         SetNull();
     }
@@ -2512,7 +2512,7 @@ public:
     void RelayDarkDeclareWinner();
     void ResetDarkSendMembers();
     void RegisterAsMasterNode();
-
+    void NewBlock();
 };
 
 void ConnectToDarkSendMasterNodeWinner();

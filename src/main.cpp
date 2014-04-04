@@ -818,12 +818,8 @@ bool CTxMemPool::accept(CValidationState &state, CTransaction &tx, bool fCheckIn
     return true;
 }
 
-bool CTxMemPool::acceptableInputs(CValidationState &state, CTransaction &tx, bool fLimitFree,
-                        bool* pfMissingInputs)
+bool CTxMemPool::acceptableInputs(CValidationState &state, CTransaction &tx, bool fLimitFree)
 {
-    if (pfMissingInputs)
-        *pfMissingInputs = false;
-
     // To help v0.1.5 clients who would see it as a negative number
     if ((int64)tx.nLockTime > std::numeric_limits<int>::max())
         return error("CTxMemPool::acceptableInputs() : not accepting nLockTime beyond 2038 yet");
@@ -861,8 +857,6 @@ bool CTxMemPool::acceptableInputs(CValidationState &state, CTransaction &tx, boo
             // only helps filling in pfMissingInputs (to determine missing vs spent).
             BOOST_FOREACH(const CTxIn txin, tx.vin) {
                 if (!view.HaveCoins(txin.prevout.hash)) {
-                    if (pfMissingInputs) 
-                        *pfMissingInputs = true;
                     printf("false4\n");
                     return false;
                 }
@@ -1037,10 +1031,10 @@ bool CTransaction::IsAcceptable(CValidationState &state, bool fCheckInputs, bool
     }
 }
 
-bool CTransaction::IsAcceptableInputs(CValidationState &state, bool fLimitFree, bool* pfMissingInputs)
+bool CTransaction::AcceptableInputs(CValidationState &state, bool fLimitFree)
 {
     try {
-        return mempool.acceptableInputs(state, *this, fLimitFree, pfMissingInputs);
+        return mempool.acceptableInputs(state, *this, fLimitFree);
     } catch(std::runtime_error &e) {
         return state.Abort(_("System error: ") + e.what());
     }
@@ -2799,7 +2793,7 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
     darkSendPool.CheckTimeout();
 
     if(fMasterNode){
-        darkSendPool.RelayDarkDeclareWinner();
+        darkSendPool.NewBlock();
     }
 
     printf("ProcessBlock: ACCEPTED\n");
@@ -3877,10 +3871,13 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         int count = darkSendMasterNodes.size()-1;
         int i = 0;
 
-        BOOST_FOREACH(const CMasterNode mn, darkSendMasterNodes) {
+        BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
             printf("Sending master node entry\n");
-            pfrom->PushMessage("dsee", mn.vin, mn.addr, count, i);
-            i++;
+            mn.Check();
+            if(mn.IsEnabled()) {
+                pfrom->PushMessage("dsee", mn.vin, mn.addr, count, i);
+                i++;
+            }
         }
     }
 
@@ -3895,7 +3892,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         bool found = false;
         BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
-            if(mn.vin == vin && mn.RecentlyUpdated()) {
+            if(mn.vin == vin && mn.UpdatedWithin(60000)) {
                 found = true;
             }
         }
@@ -3908,7 +3905,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         CTxOut vout = CTxOut(999.99*COIN, darkSendPool.collateralPubKey);
         tx.vin.push_back(vin);
         tx.vout.push_back(vout);
-        if(tx.IsAcceptableInputs(state, true, false)){
+        if(tx.AcceptableInputs(state, true)){
             printf("Accepted masternode entry %i %i\n", count, current);
 
             CMasterNode mn(addr, vin);
@@ -3918,6 +3915,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             RelayTxPoolElectionEntry(vin, addr, count, current);
         } else {
             printf("Got bad masternode entry %i %i\n", count, current);
+            pfrom->Misbehaving(20);
         }
     }
 
@@ -5848,25 +5846,6 @@ bool CDarkSendPool::GetMasterNodeVin(CTxIn& vin)
     return true;
 }
 
-void CDarkSendPool::RelayDarkDeclareWinner()
-{
-
-    if(!fMasterNode) return;
-
-    // Choose coins to use
-    CService addr;
-    if(!GetLocal(addr)) return;
-
-    CTxIn vin;
-    if(!GetMasterNodeVin(vin)) return;
-
-    LOCK(cs_vNodes);
-    BOOST_FOREACH(CNode* pnode, vNodes)
-    {
-        pnode->PushMessage("dsee", addr, vin, -1, -1);
-    }
-}
-
 void CDarkSendPool::ResetDarkSendMembers()
 {
     LOCK(cs_vNodes);
@@ -5878,26 +5857,36 @@ void CDarkSendPool::ResetDarkSendMembers()
 
 void CDarkSendPool::RegisterAsMasterNode()
 {
+    if(!fMasterNode) return;
     printf("RegisterAsMasterNode\n");
 
-    if(!fMasterNode) return;
-
-    CTxIn vin;
-    if(!GetMasterNodeVin(vin)) return;
-
+    // Choose coins to use
     CService addr;
-    if(GetLocal(addr)){
-        printf("Adding myself to masternode list %s\n", vin.ToString().c_str());
-        CMasterNode mn(addr, vin);
-        darkSendMasterNodes.push_back(mn);
+    if(!GetLocal(addr)) return;
+
+    if(isCapableMasterNode == NULL) {
+        vinMasterNode = CTxIn();
+        isCapableMasterNode = false;
+        if(fMasterNode){
+            if(GetMasterNodeVin(vinMasterNode)) {
+                printf("Is capable master node!\n");
+                isCapableMasterNode = true;
+            }
+        }
     }
 
+    if(!isCapableMasterNode) return;
 
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
-        pnode->PushMessage("dsee", addr, vin, -1, -1);
+        pnode->PushMessage("dsee", vinMasterNode, addr, -1, -1);
     }
+}
+
+void CDarkSendPool::NewBlock()
+{
+
 }
 
 uint256 CMasterNode::CalculateScore()
@@ -5910,6 +5899,23 @@ uint256 CMasterNode::CalculateScore()
     uint256 n3 = vin.prevout.hash > n2 ? (vin.prevout.hash - n2) : (n2 - vin.prevout.hash);
     printf(" -- MasterNode CalculateScore() = %s \n", n3.ToString().c_str());
     return n3;
+}
+
+void CMasterNode::Check()
+{
+    if(!UpdatedWithin(60000)){
+        enabled = 0;
+        return;
+    }
+
+    CValidationState state;
+    CTransaction tx = CTransaction();
+    CTxOut vout = CTxOut(999.99*COIN, darkSendPool.collateralPubKey);
+    tx.vin.push_back(vin);
+    tx.vout.push_back(vout);
+
+    if(!tx.AcceptableInputs(state, true))        
+        enabled = 0;
 }
 
 
@@ -5925,6 +5931,10 @@ void ThreadCheckDarkSendPool()
         //printf("ThreadCheckDarkSendPool::check timeout\n");
         darkSendPool.CheckTimeout();
         
+        if(c == 30){
+            darkSendPool.RegisterAsMasterNode();
+            c = 0;
+        }
         c++;
     }
 }
