@@ -1272,80 +1272,6 @@ unsigned int static KimotoGravityWell(const CBlockIndex* pindexLast, const CBloc
 }
 
 unsigned int static DarkGravityWave(const CBlockIndex* pindexLast, const CBlockHeader *pblock) {
-    /* current difficulty formula, darkcoin - DarkGravity, written by Evan Duffield - evan@darkcoin.io */
-    const CBlockIndex *BlockLastSolved = pindexLast;
-    const CBlockIndex *BlockReading = pindexLast;
-    const CBlockHeader *BlockCreating = pblock;
-    BlockCreating = BlockCreating;
-    int64 nBlockTimeAverage = 0;
-    int64 nBlockTimeAveragePrev = 0;
-    int64 nBlockTimeCount = 0;
-    int64 nBlockTimeSum2 = 0;
-    int64 nBlockTimeCount2 = 0;
-    int64 LastBlockTime = 0;
-    int64 PastBlocksMin = 14;
-    int64 PastBlocksMax = 140;
-    int64 CountBlocks = 0;
-    CBigNum PastDifficultyAverage;
-    CBigNum PastDifficultyAveragePrev;
-
-    if (BlockLastSolved == NULL || BlockLastSolved->nHeight == 0 || BlockLastSolved->nHeight < PastBlocksMin) { return bnProofOfWorkLimit.GetCompact(); }
-        
-    for (unsigned int i = 1; BlockReading && BlockReading->nHeight > 0; i++) {
-        if (PastBlocksMax > 0 && i > PastBlocksMax) { break; }
-        CountBlocks++;
-
-        if(CountBlocks <= PastBlocksMin) {
-            if (CountBlocks == 1) { PastDifficultyAverage.SetCompact(BlockReading->nBits); }
-            else { PastDifficultyAverage = ((CBigNum().SetCompact(BlockReading->nBits) - PastDifficultyAveragePrev) / CountBlocks) + PastDifficultyAveragePrev; }
-            PastDifficultyAveragePrev = PastDifficultyAverage;
-        }
-
-        if(LastBlockTime > 0){
-            int64 Diff = (LastBlockTime - BlockReading->GetBlockTime());
-            if(Diff < 0) Diff = 0;
-            if(nBlockTimeCount <= PastBlocksMin) {
-                nBlockTimeCount++;
-
-                if (nBlockTimeCount == 1) { nBlockTimeAverage = Diff; }
-                else { nBlockTimeAverage = ((Diff - nBlockTimeAveragePrev) / nBlockTimeCount) + nBlockTimeAveragePrev; }
-                nBlockTimeAveragePrev = nBlockTimeAverage;
-            }
-            nBlockTimeCount2++;
-            nBlockTimeSum2 += Diff;
-        }
-        LastBlockTime = BlockReading->GetBlockTime();      
-
-        if (BlockReading->pprev == NULL) { assert(BlockReading); break; }
-        BlockReading = BlockReading->pprev;
-    }
-    
-    CBigNum bnNew(PastDifficultyAverage);
-    if (nBlockTimeCount != 0 && nBlockTimeCount2 != 0) {
-            double SmartAverage = (((nBlockTimeAverage)*0.7)+((nBlockTimeSum2 / nBlockTimeCount2)*0.3));
-            if(SmartAverage < 1) SmartAverage = 1;
-            double Shift = nTargetSpacing/SmartAverage;
-
-            int64 nActualTimespan = (CountBlocks*nTargetSpacing)/Shift;
-            int64 nTargetTimespan = (CountBlocks*nTargetSpacing);
-            if (nActualTimespan < nTargetTimespan/3)
-                nActualTimespan = nTargetTimespan/3;
-            if (nActualTimespan > nTargetTimespan*3)
-                nActualTimespan = nTargetTimespan*3;
-
-            // Retarget
-            bnNew *= nActualTimespan;
-            bnNew /= nTargetTimespan;
-    }
-
-    if (bnNew > bnProofOfWorkLimit){
-        bnNew = bnProofOfWorkLimit;
-    }
-     
-    return bnNew.GetCompact();
-}
-
-unsigned int static DarkGravityWave2(const CBlockIndex* pindexLast, const CBlockHeader *pblock) {
     /* current difficulty formula, darkcoin - DarkGravity v2, written by Evan Duffield - evan@darkcoin.io */
     const CBlockIndex *BlockLastSolved = pindexLast;
     const CBlockIndex *BlockReading = pindexLast;
@@ -1438,20 +1364,17 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBl
 {
         int DiffMode = 1;
         if (fTestNet) {
-                if (pindexLast->nHeight+1 >= 15) { DiffMode = 4; }
-                else if (pindexLast->nHeight+1 >= 5) { DiffMode = 3; }
+            if (pindexLast->nHeight+1 >= 5) { DiffMode = 3; }
         }
         else {
-                if (pindexLast->nHeight+1 >= 45000) { DiffMode = 4; }
-                else if (pindexLast->nHeight+1 >= 34140) { DiffMode = 3; }
-                else if (pindexLast->nHeight+1 >= 15200) { DiffMode = 2; }
+            if (pindexLast->nHeight+1 >= 34140) { DiffMode = 3; }
+            else if (pindexLast->nHeight+1 >= 15200) { DiffMode = 2; }
         }
 
         if (DiffMode == 1) { return GetNextWorkRequired_V1(pindexLast, pblock); }
         else if (DiffMode == 2) { return GetNextWorkRequired_V2(pindexLast, pblock); }
         else if (DiffMode == 3) { return DarkGravityWave(pindexLast, pblock); }
-        else if (DiffMode == 4) { return DarkGravityWave2(pindexLast, pblock); }
-        return DarkGravityWave2(pindexLast, pblock);
+        return DarkGravityWave(pindexLast, pblock);
 }
 
 
@@ -2447,23 +2370,17 @@ bool CBlock::AcceptBlock(CValidationState &state, CDiskBlockPos *dbp)
         nHeight = pindexPrev->nHeight+1;
 
 
-        // Check proof of work
-        /*        
+        // Check proof of work       
         if(nHeight >= 34140 && nHeight <= 45000){
             unsigned int nBitsNext = GetNextWorkRequired(pindexPrev, this);
-            unsigned int a = 0;
-            if(nBits > nBitsNext) a = nBits - nBitsNext;
-            else if (nBits < nBitsNext) a = nBitsNext - nBits;
-            printf(" !--- %u %u, %u \n", nBits, nBitsNext, a);
             double n1 = ConvertBitsToDouble(nBits);
             double n2 = ConvertBitsToDouble(nBitsNext);
-            printf(" !--- %f %f, %f \n", n1, n2, n1-n2);
-            if (abs(n1-n2) > 5)
+            if (abs(n1-n2) > n1*0.2)
                 return state.DoS(100, error("AcceptBlock() : incorrect proof of work (DGW pre-fork)"));
-        } else {*/
+        } else {
             if (nBits != GetNextWorkRequired(pindexPrev, this))
                 return state.DoS(100, error("AcceptBlock() : incorrect proof of work"));
-        //}
+        }
 
 
         // Prevent blocks from too far in the future
