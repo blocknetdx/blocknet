@@ -1946,3 +1946,12 @@ void RelayTxPoolStatus(const int newState, const int newEntriesCount, const int 
         pnode->PushMessage("dssu", newState, newEntriesCount, newAccepted);
     }
 }
+
+void RelayTxPoolElectionEntry(const CTxIn vin, const CService addr, const int count, const int current)
+{
+    LOCK(cs_vNodes);
+    BOOST_FOREACH(CNode* pnode, vNodes)
+    {
+        pnode->PushMessage("dsee", vin, addr, count, current);
+    }   
+}

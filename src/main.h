@@ -696,6 +696,9 @@ void UpdateCoins(const CTransaction& tx, CValidationState &state, CCoinsViewCach
 
     // Check everything without accepting into the pool
     bool IsAcceptable(CValidationState &state, bool fCheckInputs=true, bool fLimitFree = true, bool* pfMissingInputs=NULL);
+    
+    // Check only the inputs in a transaction
+    bool IsAcceptableInputs(CValidationState &state, bool fLimitFree, bool* pfMissingInputs);
 
 protected:
     static const CTxOut &GetOutputFor(const CTxIn& input, CCoinsViewCache& mapInputs);
@@ -2113,6 +2116,7 @@ public:
 
     bool accept(CValidationState &state, CTransaction &tx, bool fCheckInputs, bool fLimitFree, bool* pfMissingInputs);
     bool acceptable(CValidationState &state, CTransaction &tx, bool fCheckInputs, bool fLimitFree, bool* pfMissingInputs);
+    bool acceptableInputs(CValidationState &state, CTransaction &tx, bool fLimitFree, bool* pfMissingInputs);
     bool addUnchecked(const uint256& hash, const CTransaction &tx);
     bool remove(const CTransaction &tx, bool fRecursive = false);
     bool removeConflicts(const CTransaction &tx);
@@ -2304,11 +2308,14 @@ public:
     CService addr;
     CTxIn vin;
     int64 lastTimeSeen;
+    int spent;
 
     CMasterNode(CService newAddr, CTxIn newVin)
     {
         addr = newAddr;
         newVin = newVin;
+        spent = 0;
+        lastTimeSeen = 0;
     }
 
     uint256 CalculateScore();
@@ -2316,6 +2323,24 @@ public:
     void UpdateLastSeen()
     {
         lastTimeSeen = GetTimeMillis();
+    }
+
+    void Check()
+    {
+        /*CValidationState state;
+        CTransaction tx = CTransaction();
+        tx.vin.push_back(vin);
+        tx.IsAcceptable(state, true, false);*/
+    }
+
+    bool RecentlyUpdated()
+    {
+        return GetTimeMillis() - lastTimeSeen < 60000;
+    }
+
+    bool IsEnabled()
+    {
+        return spent == 0;
     }
 };
 

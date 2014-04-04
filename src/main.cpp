@@ -818,6 +818,88 @@ bool CTxMemPool::accept(CValidationState &state, CTransaction &tx, bool fCheckIn
     return true;
 }
 
+bool CTxMemPool::acceptableInputs(CValidationState &state, CTransaction &tx, bool fLimitFree,
+                        bool* pfMissingInputs)
+{
+    if (pfMissingInputs)
+        *pfMissingInputs = false;
+
+    // To help v0.1.5 clients who would see it as a negative number
+    if ((int64)tx.nLockTime > std::numeric_limits<int>::max())
+        return error("CTxMemPool::acceptableInputs() : not accepting nLockTime beyond 2038 yet");
+
+    // Rather not work on nonstandard transactions (unless -testnet)
+    string strNonStd;
+    if (!fTestNet && !tx.IsStandard(strNonStd))
+        return error("CTxMemPool::acceptableInputs() : nonstandard transaction (%s)",
+                     strNonStd.c_str());
+
+    // Check for conflicts with in-memory transactions
+    for (unsigned int i = 0; i < tx.vin.size(); i++)
+    {
+        COutPoint outpoint = tx.vin[i].prevout;
+        if (mapNextTx.count(outpoint))
+        {
+            printf("false2\n");
+            // Disable replacement feature for now
+            return false;
+        }
+    }
+
+    if (true)
+    {
+        CCoinsView dummy;
+        CCoinsViewCache view(dummy);
+
+        {
+            LOCK(cs);
+            CCoinsViewMemPool viewMemPool(*pcoinsTip, *this);
+            view.SetBackend(viewMemPool);
+
+            // do all inputs exist?
+            // Note that this does not check for the presence of actual outputs (see the next check for that),
+            // only helps filling in pfMissingInputs (to determine missing vs spent).
+            BOOST_FOREACH(const CTxIn txin, tx.vin) {
+                if (!view.HaveCoins(txin.prevout.hash)) {
+                    if (pfMissingInputs) 
+                        *pfMissingInputs = true;
+                    printf("false4\n");
+                    return false;
+                }
+            }
+
+            // are the actual inputs available?
+            if (!tx.HaveInputs(view)) {
+                printf("false5\n");
+                return state.Invalid(error("CTxMemPool::acceptableInputs() : inputs already spent"));
+            }
+
+            // Bring the best block into scope
+            view.GetBestBlock();
+
+            // we have all inputs cached now, so switch back to dummy, so we don't need to keep lock on mempool
+            view.SetBackend(dummy);
+        }
+
+        // Check for non-standard pay-to-script-hash in inputs
+        if (!tx.AreInputsStandard(view) && !fTestNet) {
+            printf("false6\n");
+            return error("CTxMemPool::acceptableInputs() : nonstandard transaction input");
+        }
+
+        // Check against previous transactions
+        // This is done last to help prevent CPU exhaustion denial-of-service attacks.
+        if (!tx.CheckInputs(state, view, true, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC))
+        {
+            printf("false8\n");
+            return error("CTxMemPool::acceptableInputs() : ConnectInputs failed \n");
+        }
+    }
+
+    return true;
+}
+
+
 bool CTxMemPool::acceptable(CValidationState &state, CTransaction &tx, bool fCheckInputs, bool fLimitFree,
                         bool* pfMissingInputs)
 {
@@ -825,20 +907,20 @@ bool CTxMemPool::acceptable(CValidationState &state, CTransaction &tx, bool fChe
         *pfMissingInputs = false;
 
     if (!tx.CheckTransaction(state))
-        return error("CTxMemPool::accept() : CheckTransaction failed");
+        return error("CTxMemPool::acceptable() : CheckTransaction failed");
 
     // Coinbase is only valid in a block, not as a loose transaction
     if (tx.IsCoinBase())
-        return state.DoS(100, error("CTxMemPool::accept() : coinbase as individual tx"));
+        return state.DoS(100, error("CTxMemPool::acceptable() : coinbase as individual tx"));
 
     // To help v0.1.5 clients who would see it as a negative number
     if ((int64)tx.nLockTime > std::numeric_limits<int>::max())
-        return error("CTxMemPool::accept() : not accepting nLockTime beyond 2038 yet");
+        return error("CTxMemPool::acceptable() : not accepting nLockTime beyond 2038 yet");
 
     // Rather not work on nonstandard transactions (unless -testnet)
     string strNonStd;
     if (!fTestNet && !tx.IsStandard(strNonStd))
-        return error("CTxMemPool::accept() : nonstandard transaction (%s)",
+        return error("CTxMemPool::acceptable() : nonstandard transaction (%s)",
                      strNonStd.c_str());
 
     // is it already in the memory pool?
@@ -894,7 +976,7 @@ bool CTxMemPool::acceptable(CValidationState &state, CTransaction &tx, bool fChe
         // are the actual inputs available?
         if (!tx.HaveInputs(view)) {
             printf("false5\n");
-            return state.Invalid(error("CTxMemPool::accept() : inputs already spent"));
+            return state.Invalid(error("CTxMemPool::acceptable() : inputs already spent"));
         }
 
         // Bring the best block into scope
@@ -907,7 +989,7 @@ bool CTxMemPool::acceptable(CValidationState &state, CTransaction &tx, bool fChe
         // Check for non-standard pay-to-script-hash in inputs
         if (!tx.AreInputsStandard(view) && !fTestNet) {
             printf("false6\n");
-            return error("CTxMemPool::accept() : nonstandard transaction input");
+            return error("CTxMemPool::acceptable() : nonstandard transaction input");
         }
 
         // Note: if you modify this code to accept non-standard transactions, then
@@ -920,7 +1002,7 @@ bool CTxMemPool::acceptable(CValidationState &state, CTransaction &tx, bool fChe
         int64 txMinFee = tx.GetMinFee(1000, true, GMF_RELAY);
         if (fLimitFree && nFees < txMinFee) {
             printf("false7\n");
-            return error("CTxMemPool::accept() : not enough fees %s, %"PRI64d" < %"PRI64d,
+            return error("CTxMemPool::acceptable() : not enough fees %s, %"PRI64d" < %"PRI64d,
                          hash.ToString().c_str(),
                          nFees, txMinFee);
         }
@@ -930,7 +1012,7 @@ bool CTxMemPool::acceptable(CValidationState &state, CTransaction &tx, bool fChe
         if (!tx.CheckInputs(state, view, true, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC))
         {
             printf("false8\n");
-            return error("CTxMemPool::accept() : ConnectInputs failed %s", hash.ToString().c_str());
+            return error("CTxMemPool::acceptable() : ConnectInputs failed %s", hash.ToString().c_str());
         }
     }
 
@@ -950,6 +1032,15 @@ bool CTransaction::IsAcceptable(CValidationState &state, bool fCheckInputs, bool
 {
     try {
         return mempool.acceptable(state, *this, fCheckInputs, fLimitFree, pfMissingInputs);
+    } catch(std::runtime_error &e) {
+        return state.Abort(_("System error: ") + e.what());
+    }
+}
+
+bool CTransaction::IsAcceptableInputs(CValidationState &state, bool fLimitFree, bool* pfMissingInputs)
+{
+    try {
+        return mempool.acceptableInputs(state, *this, fLimitFree, pfMissingInputs);
     } catch(std::runtime_error &e) {
         return state.Abort(_("System error: ") + e.what());
     }
@@ -1414,81 +1505,6 @@ unsigned int static KimotoGravityWell(const CBlockIndex* pindexLast, const CBloc
 }
 
 unsigned int static DarkGravityWave(const CBlockIndex* pindexLast, const CBlockHeader *pblock) {
-    /* current difficulty formula, darkcoin - DarkGravity, written by Evan Duffield - evan@darkcoin.io */
-    const CBlockIndex *BlockLastSolved = pindexLast;
-    const CBlockIndex *BlockReading = pindexLast;
-    const CBlockHeader *BlockCreating = pblock;
-    BlockCreating = BlockCreating;
-    int64 nBlockTimeAverage = 0;
-    int64 nBlockTimeAveragePrev = 0;
-    int64 nBlockTimeCount = 0;
-    int64 nBlockTimeSum2 = 0;
-    int64 nBlockTimeCount2 = 0;
-    int64 LastBlockTime = 0;
-    int64 PastBlocksMin = 14;
-    int64 PastBlocksMax = 140;
-    int64 CountBlocks = 0;
-    CBigNum PastDifficultyAverage;
-    CBigNum PastDifficultyAveragePrev;
-
-    if (BlockLastSolved == NULL || BlockLastSolved->nHeight == 0 || BlockLastSolved->nHeight < PastBlocksMin) { return bnProofOfWorkLimit.GetCompact(); }
-        
-    for (unsigned int i = 1; BlockReading && BlockReading->nHeight > 0; i++) {
-        if (PastBlocksMax > 0 && i > PastBlocksMax) { break; }
-        CountBlocks++;
-
-        if(CountBlocks <= PastBlocksMin) {
-            if (CountBlocks == 1) { PastDifficultyAverage.SetCompact(BlockReading->nBits); }
-            else { PastDifficultyAverage = ((CBigNum().SetCompact(BlockReading->nBits) - PastDifficultyAveragePrev) / CountBlocks) + PastDifficultyAveragePrev; }
-            PastDifficultyAveragePrev = PastDifficultyAverage;
-        }
-
-        if(LastBlockTime > 0){
-            int64 Diff = (LastBlockTime - BlockReading->GetBlockTime());
-            if(Diff < 0) Diff = 0;
-            if(nBlockTimeCount <= PastBlocksMin) {
-                nBlockTimeCount++;
-
-                if (nBlockTimeCount == 1) { nBlockTimeAverage = Diff; }
-                else { nBlockTimeAverage = ((Diff - nBlockTimeAveragePrev) / nBlockTimeCount) + nBlockTimeAveragePrev; }
-                nBlockTimeAveragePrev = nBlockTimeAverage;
-            }
-            nBlockTimeCount2++;
-            nBlockTimeSum2 += Diff;
-        }
-        LastBlockTime = BlockReading->GetBlockTime();      
-
-        if (BlockReading->pprev == NULL) { assert(BlockReading); break; }
-        BlockReading = BlockReading->pprev;
-    }
-    
-    CBigNum bnNew(PastDifficultyAverage);
-    if (nBlockTimeCount != 0 && nBlockTimeCount2 != 0) {
-            double SmartAverage = (((nBlockTimeAverage)*0.7)+((nBlockTimeSum2 / nBlockTimeCount2)*0.3));
-            if(SmartAverage < 1) SmartAverage = 1;
-            double Shift = nTargetSpacing/SmartAverage;
-
-            int64 nActualTimespan = (CountBlocks*nTargetSpacing)/Shift;
-            int64 nTargetTimespan = (CountBlocks*nTargetSpacing);
-            if (nActualTimespan < nTargetTimespan/3)
-                nActualTimespan = nTargetTimespan/3;
-            if (nActualTimespan > nTargetTimespan*3)
-                nActualTimespan = nTargetTimespan*3;
-
-            // Retarget
-            bnNew *= nActualTimespan;
-            bnNew /= nTargetTimespan;
-    }
-
-    if (bnNew > bnProofOfWorkLimit){
-        bnNew = bnProofOfWorkLimit;
-    }
-     
-    return bnNew.GetCompact();
-}
-
-
-unsigned int static DarkGravityWave2(const CBlockIndex* pindexLast, const CBlockHeader *pblock) {
     /* current difficulty formula, darkcoin - DarkGravity v2, written by Evan Duffield - evan@darkcoin.io */
     const CBlockIndex *BlockLastSolved = pindexLast;
     const CBlockIndex *BlockReading = pindexLast;
@@ -1581,20 +1597,17 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBl
 {
         int DiffMode = 1;
         if (fTestNet) {
-                if (pindexLast->nHeight+1 >= 430) { DiffMode = 4; }
-                else if (pindexLast->nHeight+1 >= 5) { DiffMode = 3; }
+            if (pindexLast->nHeight+1 >= 5) { DiffMode = 3; }
         }
         else {
-                if (pindexLast->nHeight+1 >= 45000) { DiffMode = 4; }
-                else if (pindexLast->nHeight+1 >= 34140) { DiffMode = 3; }
-                else if (pindexLast->nHeight+1 >= 15200) { DiffMode = 2; }
+            if (pindexLast->nHeight+1 >= 34140) { DiffMode = 3; }
+            else if (pindexLast->nHeight+1 >= 15200) { DiffMode = 2; }
         }
 
         if (DiffMode == 1) { return GetNextWorkRequired_V1(pindexLast, pblock); }
         else if (DiffMode == 2) { return GetNextWorkRequired_V2(pindexLast, pblock); }
         else if (DiffMode == 3) { return DarkGravityWave(pindexLast, pblock); }
-        else if (DiffMode == 4) { return DarkGravityWave2(pindexLast, pblock); }
-        return DarkGravityWave2(pindexLast, pblock);
+        return DarkGravityWave(pindexLast, pblock);
 }
 
 
@@ -2598,8 +2611,28 @@ bool CBlock::AcceptBlock(CValidationState &state, CDiskBlockPos *dbp)
         nHeight = pindexPrev->nHeight+1;
 
         // Check proof of work
-        if (nBits != GetNextWorkRequired(pindexPrev, this))
-            return state.DoS(100, error("AcceptBlock() : incorrect proof of work"));
+        if(nHeight >= 34140 && nHeight <= 45000){
+            unsigned int nBitsNext = GetNextWorkRequired(pindexPrev, this);
+            double n1 = ConvertBitsToDouble(nBits);
+            double n2 = ConvertBitsToDouble(nBitsNext);
+            if (abs(n1-n2) > n1*0.2)
+                return state.DoS(100, error("AcceptBlock() : incorrect proof of work (DGW pre-fork)"));
+        } else {
+            if (nBits != GetNextWorkRequired(pindexPrev, this))
+                return state.DoS(100, error("AcceptBlock() : incorrect proof of work"));
+        }
+
+        // Prevent blocks from too far in the future
+        if(fTestNet || nHeight >= 45000){
+            if (GetBlockTime() > GetAdjustedTime() + 15 * 60) {
+                return error("AcceptBlock() : block's timestamp too far in the future");
+            }
+
+            // Check timestamp is not too far in the past
+            if (GetBlockTime() <= pindexPrev->GetBlockTime() - 15 * 60) {
+                return error("AcceptBlock() : block's timestamp is too early compare to last block");
+            }
+        }
 
         // Check timestamp against prev
         if (GetBlockTime() <= pindexPrev->GetMedianTimePast())
@@ -3858,27 +3891,33 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         int current;
         vRecv >> vin >> addr >> count >> current;
 
+        printf("Searching existing masternodes\n");
+
         bool found = false;
-        BOOST_FOREACH(const CMasterNode mn, darkSendMasterNodes) {
-            if(mn.vin == vin) found = true;
+        BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
+            if(mn.vin == vin && mn.RecentlyUpdated()) {
+                found = true;
+            }
         }
+        printf("Got masternode entry\n");
+
         if(found) return false;
 
-        printf("Got masternode entry %i %i\n", count, current);
+        CValidationState state;
+        CTransaction tx = CTransaction();
+        CTxOut vout = CTxOut(999.99*COIN, darkSendPool.collateralPubKey);
+        tx.vin.push_back(vin);
+        tx.vout.push_back(vout);
+        if(tx.IsAcceptableInputs(state, true, false)){
+            printf("Accepted masternode entry %i %i\n", count, current);
 
-        CMasterNode mn(addr, vin);
-        darkSendMasterNodes.push_back(mn);
-    }
+            CMasterNode mn(addr, vin);
+            mn.UpdateLastSeen();
+            darkSendMasterNodes.push_back(mn);
 
-    else if (strCommand == "dsep") { //DarkSend Election Ping
-        CTxIn vin;
-        CService addr;
-        vRecv >> vin >> addr;
-
-        printf("DarkSend Election Winner\n");
-
-        BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
-            if(mn.vin == vin) mn.UpdateLastSeen();
+            RelayTxPoolElectionEntry(vin, addr, count, current);
+        } else {
+            printf("Got bad masternode entry %i %i\n", count, current);
         }
     }
 
@@ -5777,6 +5816,8 @@ void CDarkSendPool::ConnectToBestMasterNode(){
     int winner = -1;
 
     BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
+        mn.Check();
+        if(!mn.IsEnabled()) return;
         uint256 n = mn.CalculateScore();
         // GetTimeMillis()-mv.lastSeen <= 60000
         if(n > score){
@@ -5788,6 +5829,8 @@ void CDarkSendPool::ConnectToBestMasterNode(){
 
     if(winner >= 0)
         ConnectNode((CAddress)darkSendMasterNodes[winner].addr, darkSendMasterNodes[winner].addr.ToString().c_str(), true);
+
+    //if couldn't connect, disable that one and try next
 }
 
 bool CDarkSendPool::GetMasterNodeVin(CTxIn& vin)
@@ -5817,7 +5860,7 @@ void CDarkSendPool::RelayDarkDeclareWinner()
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
-        pnode->PushMessage("dsep", addr, vin);
+        pnode->PushMessage("dsee", addr, vin, -1, -1);
     }
 }
 
