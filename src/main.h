@@ -2330,6 +2330,7 @@ public:
 
     bool UpdatedWithin(int milliSeconds)
     {
+        printf("UpdatedWithin %i\n", GetTimeMillis() - lastTimeSeen);
         return GetTimeMillis() - lastTimeSeen < milliSeconds;
     }
 

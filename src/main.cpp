@@ -3891,14 +3891,20 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         printf("Searching existing masternodes : %s\n", vin.ToString().c_str());
 
         bool found = false;
-        BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
-            if(mn.vin == vin && mn.UpdatedWithin(60000)) {
+        BOOST_FOREACH(CMasterNode& mn, darkSendMasterNodes) {
+            if(mn.vin == vin) {
                 found = true;
+                if(!mn.UpdatedWithin(60000)){
+                    mn.UpdateLastSeen();
+                    RelayTxPoolElectionEntry(vin, addr, count, current);
+                    return true;
+                }
             }
         }
-        printf("Got masternode entry\n");
 
+        printf("Got masternode entry\n");
         if(found) return false;
+        
 
         CValidationState state;
         CTransaction tx = CTransaction();
@@ -5903,7 +5909,7 @@ uint256 CMasterNode::CalculateScore()
 
 void CMasterNode::Check()
 {
-    if(!UpdatedWithin(60000)){
+    if(!UpdatedWithin(120000)){
         enabled = 0;
         return;
     }
@@ -5931,7 +5937,7 @@ void ThreadCheckDarkSendPool()
         //printf("ThreadCheckDarkSendPool::check timeout\n");
         darkSendPool.CheckTimeout();
         
-        if(c == 30){
+        if(c == 45){
             darkSendPool.RegisterAsMasterNode();
             c = 0;
         }
