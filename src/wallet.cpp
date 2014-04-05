@@ -1238,7 +1238,7 @@ bool CWallet::SelectCoinsExactOutput(int64 nTargetValue, CTxIn& vin, int64& nVal
         }
     }
 
-    printf("Can't find unspent output, run denominate\n");
+    printf("Can't find unspent output equal to nValue\n");
     return false;
 }
 

@@ -875,12 +875,6 @@ bool CTxMemPool::acceptableInputs(CValidationState &state, CTransaction &tx, boo
             view.SetBackend(dummy);
         }
 
-        // Check for non-standard pay-to-script-hash in inputs
-        if (!tx.AreInputsStandard(view) && !fTestNet) {
-            printf("false6\n");
-            return error("CTxMemPool::acceptableInputs() : nonstandard transaction input");
-        }
-
         // Check against previous transactions
         // This is done last to help prevent CPU exhaustion denial-of-service attacks.
         if (!tx.CheckInputs(state, view, false, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC))
