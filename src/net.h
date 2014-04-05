@@ -651,7 +651,7 @@ void RelayDarkSendIn(const CTxIn& in, const int64& nAmount, const CTransaction& 
 void RelayDarkSendStatus(const int newState, const int newEntriesCount, const int newAccepted);
 void RelayDarkSendElectionEntry(const CTxIn vin, const CService addr, const int count, const int current);
 void ResetDarkSendMembers();
-void RelayDarkSendCompletedTransaction();
+void RelayDarkSendCompletedTransaction(const bool error, const std::string errorMessage);
 void RelayDarkDeclareWinner();
 void RelayDarkSendMasterNodeContestant();
 

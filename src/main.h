@@ -2522,7 +2522,7 @@ public:
     void RegisterAsMasterNode();
     bool GetLastValidBlockHash(uint256& hash);
     void NewBlock();
-    void CompletedTransaction();
+    void CompletedTransaction(bool error, std::string errorMessageNew);
 };
 
 void ConnectToDarkSendMasterNodeWinner();

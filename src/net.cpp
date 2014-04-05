@@ -1961,7 +1961,7 @@ void RelayDarkSendElectionEntry(const CTxIn vin, const CService addr, const int 
     }   
 }
 
-void RelayDarkSendCompletedTransaction()
+void RelayDarkSendCompletedTransaction(const bool error, const std::string errorMessage)
 {
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
@@ -1970,6 +1970,6 @@ void RelayDarkSendCompletedTransaction()
             continue;
 
         printf("RelayDarkSendCompletedTransaction - found member, relaying message \n");
-        pnode->PushMessage("dsc");
+        pnode->PushMessage("dsc", error, errorMessage);
     }
 }

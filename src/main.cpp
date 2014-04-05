@@ -3813,7 +3813,12 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         //tx hash
         //Masternode Signature, sign tx hash
 
-        darkSendPool.CompletedTransaction();
+
+        bool error;
+        std::string errorMessage;
+        vRecv >> error >> errorMessage;
+
+        darkSendPool.CompletedTransaction(error, errorMessage);
     }
 
 
@@ -5517,6 +5522,7 @@ void CDarkSendPool::Check()
                     SetNull();
                     pwalletMain->Lock();
                     UpdateState(POOL_STATUS_ACCEPTING_ENTRIES);
+                    RelayDarkSendCompletedTransaction(true, "Transaction not valid");
                     return;
                 }
 
@@ -5528,7 +5534,8 @@ void CDarkSendPool::Check()
                 txNew.fTimeReceivedIsTxTime = true;
                 
                 txNew.RelayWalletTransaction();
-                RelayDarkSendCompletedTransaction();
+                
+                RelayDarkSendCompletedTransaction(false, "");
                 printf("CDarkSendPool::Check() -- IS MASTER -- TRANSMITTING DARKSEND\n");
             }
         }
@@ -5857,11 +5864,15 @@ void CDarkSendPool::ConnectToBestMasterNode(int depth){
             UpdateState(POOL_STATUS_ACCEPTING_ENTRIES);
             GetLastValidBlockHash(masterNodeBlockHash);
         } else {
+            darkSendMasterNodes[winner].enabled = 0;
             if(depth < 5){
-                depth++;
                 UpdateState(POOL_STATUS_ERROR);
                 errorMessage = "Trying MasterNode #" + to_string(depth);
                 ConnectToBestMasterNode(depth+1);
+            } else {
+                UpdateState(POOL_STATUS_ERROR);
+                errorMessage = "No valid MasterNode";
+                printf("ERROR: %s\n", errorMessage.c_str());
             }
         }
     } else {
@@ -5993,8 +6004,13 @@ void CDarkSendPool::NewBlock()
 */
 }
 
-void CDarkSendPool::CompletedTransaction()
+void CDarkSendPool::CompletedTransaction(bool error, std::string errorMessageNew)
 {
+    if(error){
+        state = POOL_STATUS_ERROR;
+        errorMessage = errorMessageNew;
+    }
+
     completedTransaction = true;
     Check();
 }
