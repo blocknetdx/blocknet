@@ -264,6 +264,8 @@ void SendCoinsDialog::darkSendStatusButton()
         convert << "darkSend Status => SIGNING";
     else if(state == POOL_STATUS_TRANSMISSION)
         convert << "darkSend Status => TRANSMISSION";
+    else if(state == POOL_STATUS_ERROR)
+        convert << "darkSend Status => ERROR : " << darkSendPool.errorMessage;
     else
         convert << "darkSend Status => UNKNOWN STATE";
     

@@ -2330,7 +2330,7 @@ public:
 
     bool UpdatedWithin(int milliSeconds)
     {
-        printf("UpdatedWithin %i\n", GetTimeMillis() - lastTimeSeen);
+        printf("UpdatedWithin %"PRI64u"\n", GetTimeMillis() - lastTimeSeen);
         return GetTimeMillis() - lastTimeSeen < milliSeconds;
     }
 
@@ -2352,6 +2352,7 @@ public:
     CScript sigPubKey;
     CTxOut vout;
     CTxOut vout2;
+    CTransaction txSupporting;
 
     CDarkSendEntry()
     {
@@ -2366,7 +2367,7 @@ public:
         amount = 0;
     }
 
-    bool Add(const CTxIn vinNew, int64 amountNew, const CTransaction collateralNew, const CTxOut voutNew, const CTxOut voutNew2)
+    bool Add(const CTxIn vinNew, int64 amountNew, const CTransaction collateralNew, const CTxOut voutNew, const CTxOut voutNew2, const CTransaction txSupportingNew = CTransaction())
     {
         if(isSet){return false;}
 
@@ -2376,6 +2377,7 @@ public:
         vout = voutNew;
         vout2 = voutNew2;
         isSet = true;
+        txSupporting = txSupportingNew;
         
         return true;
     }
@@ -2400,6 +2402,8 @@ public:
 #define POOL_STATUS_FINALIZE_TRANSACTION       3 // master node will broadcast what it accepted
 #define POOL_STATUS_SIGNING                    4 // check inputs/outputs, sign final tx
 #define POOL_STATUS_TRANSMISSION               5 // transmit transaction
+#define POOL_STATUS_ERROR                      6 // error
+
 static const int64 POOL_FEE_AMOUNT = 0.1*COIN;
 
 /** Used to keep track of current status of coinjoin pool
@@ -2423,6 +2427,9 @@ public:
 
     CTxIn vinMasterNode;
     bool isCapableMasterNode;
+    uint256 masterNodeBlockHash;
+    std::string errorMessage;
+    bool completedTransaction;
 
     CDarkSendPool()
     {
@@ -2486,7 +2493,7 @@ public:
         if(state != newState){
             lastTimeChanged = GetTimeMillis();
             if(fMasterNode) {
-                RelayTxPoolStatus(darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);
+                RelayDarkSendStatus(darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);
             }
         }
         state = newState;
@@ -2507,13 +2514,15 @@ public:
 
     bool IsConnectedToMasterNode();
     void DisconnectMasterNode();
-    void ConnectToBestMasterNode();
+    void ConnectToBestMasterNode(int depth=0);
 
     bool GetMasterNodeVin(CTxIn& vin);
     void RelayDarkDeclareWinner();
     void ResetDarkSendMembers();
     void RegisterAsMasterNode();
+    bool GetLastValidBlockHash(uint256& hash);
     void NewBlock();
+    void CompletedTransaction();
 };
 
 void ConnectToDarkSendMasterNodeWinner();

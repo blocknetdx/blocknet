@@ -2792,7 +2792,7 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
     //might need to reset pool
     darkSendPool.CheckTimeout();
 
-    if(fMasterNode){
+    if(!fMasterNode){
         darkSendPool.NewBlock();
     }
 
@@ -3790,7 +3790,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
     }
 
     else if (strCommand == "dsf") { //DarkSend Final tx  
-        printf("got RelayTxPoolFinalTransaction\n");
+        printf("got RelayDarkSendFinalTransaction\n");
 
         if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
             return false;
@@ -3802,6 +3802,20 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         //check to see if input is spent already? (and probably not confirmed)
         darkSendPool.SignFinalTransaction(txNew, pfrom);
     }
+
+    else if (strCommand == "dsc") { //DarkSend Complete
+        printf("got RelayDarkSendCompletedTransaction\n");
+
+        if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
+            return false;
+        }
+
+        //tx hash
+        //Masternode Signature, sign tx hash
+
+        darkSendPool.CompletedTransaction();
+    }
+
 
     else if (strCommand == "dsi") { //DarkSend vIn        
         if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
@@ -3829,7 +3843,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             pfrom->PushMessage("dssu", darkSendPool.GetState(), darkSendPool.GetEntriesCount(), accepted);
             darkSendPool.Check();
 
-            RelayTxPoolStatus(darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);    
+            RelayDarkSendStatus(darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);    
         } else {
             pfrom->PushMessage("dssu", darkSendPool.GetState(), darkSendPool.GetEntriesCount(), accepted);
         }
@@ -3863,7 +3877,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         if(darkSendPool.AddScriptSig(sig, vin, pubKey)){
             darkSendPool.Check();
-            RelayTxPoolStatus(darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);    
+            RelayDarkSendStatus(darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);    
         }
     }
 
@@ -3892,19 +3906,21 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         bool found = false;
         BOOST_FOREACH(CMasterNode& mn, darkSendMasterNodes) {
+            printf(" -- %s\n", mn.vin.ToString().c_str());
+
             if(mn.vin == vin) {
                 found = true;
-                if(!mn.UpdatedWithin(60000)){
+                if(!mn.UpdatedWithin(30000)){
                     mn.UpdateLastSeen();
-                    RelayTxPoolElectionEntry(vin, addr, count, current);
+                    RelayDarkSendElectionEntry(vin, addr, count, current);
                     return true;
                 }
             }
         }
 
-        printf("Got masternode entry\n");
-        if(found) return false;
-        
+        if(found) return true;
+
+        printf("Got NEW masternode entry\n");        
 
         CValidationState state;
         CTransaction tx = CTransaction();
@@ -3918,7 +3934,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             mn.UpdateLastSeen();
             darkSendMasterNodes.push_back(mn);
 
-            RelayTxPoolElectionEntry(vin, addr, count, current);
+            RelayDarkSendElectionEntry(vin, addr, count, current);
         } else {
             printf("Got bad masternode entry %i %i\n", count, current);
             pfrom->Misbehaving(20);
@@ -5400,6 +5416,9 @@ void CDarkSendPool::SetNull(){
 
     lastTimeChanged = GetTimeMillis();
     sigCount = 0;
+
+    errorMessage = "";
+    completedTransaction = false;
 }
 
 void CDarkSendPool::SetCollateralAddress(std::string strAddress){
@@ -5437,7 +5456,7 @@ void CDarkSendPool::Check()
             }
 
             SignFinalTransaction(txNew, NULL);
-            RelayTxPoolFinalTransaction(txNew);
+            RelayDarkSendFinalTransaction(txNew);
         }
     }
 
@@ -5509,16 +5528,17 @@ void CDarkSendPool::Check()
                 txNew.fTimeReceivedIsTxTime = true;
                 
                 txNew.RelayWalletTransaction();
+                RelayDarkSendCompletedTransaction();
                 printf("CDarkSendPool::Check() -- IS MASTER -- TRANSMITTING DARKSEND\n");
             }
         }
     }
 
     // move on to next phase, allow 3 seconds incase the masternode wants to send us anything else
-    if(state == POOL_STATUS_TRANSMISSION && GetTimeMillis()-lastTimeChanged >= 3000) {
+    if((state == POOL_STATUS_TRANSMISSION && fMasterNode) || (state == POOL_STATUS_SIGNING && completedTransaction) ) {
         printf("CDarkSendPool::Check() -- COMPLETED -- RESETTING \n");
         SetNull();
-        RelayTxPoolStatus(darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);    
+        RelayDarkSendStatus(darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);    
         ResetDarkSendMembers();
         pwalletMain->Lock();
         DisconnectMasterNode();
@@ -5633,16 +5653,20 @@ bool CDarkSendPool::IsCollateralValid(const CTransaction& txCollateral){
 bool CDarkSendPool::AddEntry(const CTxIn& newInput, const int64& nAmount, const CTransaction& txCollateral, const CTxOut& newOutput, const CTxOut& newOutput2){
     if (!fMasterNode) return false;
 
-    if (newInput.prevout.IsNull() || nAmount < 0)
+    if (newInput.prevout.IsNull() || nAmount < 0) {
+        if(fDebug) printf ("CDarkSendPool::AddEntry - input not valid!\n");
         return false;
+    }
 
     if (!IsCollateralValid(txCollateral)){
         if(fDebug) printf ("CDarkSendPool::AddEntry - collateral not valid!\n");
         return false;
     }
 
-    if(entries.size() >= POOL_MAX_TRANSACTIONS)
+    if(entries.size() >= POOL_MAX_TRANSACTIONS){
+        if(fDebug) printf ("CDarkSendPool::AddEntry - entries is full!\n");   
         return false;
+    }
 
     BOOST_FOREACH(const CDarkSendEntry v, entries) {
         if(v.vin == newInput) {if(fDebug) printf ("CDarkSendPool::AddEntry - found in vin\n"); return false;}
@@ -5657,6 +5681,8 @@ bool CDarkSendPool::AddEntry(const CTxIn& newInput, const int64& nAmount, const 
 
         return true;
     }
+
+    if(fDebug) printf ("CDarkSendPool::AddEntry - can't aceept new entry, wrong state!\n");
     return false;
 }
 
@@ -5720,11 +5746,11 @@ void CDarkSendPool::SendMoney(const CTransaction& collateral, CTxIn& in, CTxOut&
 
     // store our entry for later use
     CDarkSendEntry e;
-    e.Add(in, amount, collateral, out, change);
+    e.Add(in, amount, collateral, out, change, txSupporting);
     myEntries.push_back(e);
 
     // relay our entry to the master node
-    RelayTxPoolIn(in, amount, collateral, txSupporting, out, change);
+    RelayDarkSendIn(in, amount, collateral, txSupporting, out, change);
     Check();
 }
 
@@ -5778,12 +5804,6 @@ bool CDarkSendPool::SignFinalTransaction(CTransaction& finalTransactionNew, CNod
         }
         
         if(fDebug) printf("CDarkSendPool::Sign - txNew:\n%s", finalTransaction.ToString().c_str());
-
-    }
-
-    if (!fMasterNode) {
-        UpdateState(POOL_STATUS_TRANSMISSION);
-        Check();
     }
 
     return true;
@@ -5814,7 +5834,7 @@ void CDarkSendPool::DisconnectMasterNode(){
     }
 }
 
-void CDarkSendPool::ConnectToBestMasterNode(){
+void CDarkSendPool::ConnectToBestMasterNode(int depth){
     int i = 0;
     uint256 score = 0;
     int winner = -1;
@@ -5831,8 +5851,24 @@ void CDarkSendPool::ConnectToBestMasterNode(){
         i++;
     }
 
-    if(winner >= 0)
-        ConnectNode((CAddress)darkSendMasterNodes[winner].addr, darkSendMasterNodes[winner].addr.ToString().c_str(), true);
+    if(winner >= 0) {
+        printf("Connecting to masternode at %s\n", darkSendMasterNodes[winner].addr.ToString().c_str());
+        if(ConnectNode((CAddress)darkSendMasterNodes[winner].addr, NULL, true)){
+            UpdateState(POOL_STATUS_ACCEPTING_ENTRIES);
+            GetLastValidBlockHash(masterNodeBlockHash);
+        } else {
+            if(depth < 5){
+                depth++;
+                UpdateState(POOL_STATUS_ERROR);
+                errorMessage = "Trying MasterNode #" + to_string(depth);
+                ConnectToBestMasterNode(depth+1);
+            }
+        }
+    } else {
+        UpdateState(POOL_STATUS_ERROR);
+        errorMessage = "No valid MasterNode";
+        printf("ERROR: %s\n", errorMessage.c_str());
+    }
 
     //if couldn't connect, disable that one and try next
 }
@@ -5879,6 +5915,11 @@ void CDarkSendPool::RegisterAsMasterNode()
                 isCapableMasterNode = true;
             }
         }
+
+        printf("Adding myself to masternode list %s\n", vinMasterNode.ToString().c_str());
+        CMasterNode mn(addr, vinMasterNode);
+        mn.UpdateLastSeen();
+        darkSendMasterNodes.push_back(mn);
     }
 
     if(!isCapableMasterNode) return;
@@ -5890,17 +5931,82 @@ void CDarkSendPool::RegisterAsMasterNode()
     }
 }
 
+//Get last block hash
+bool CDarkSendPool::GetLastValidBlockHash(uint256& hash)
+{
+    const CBlockIndex *BlockLastSolved = pindexBest;
+    const CBlockIndex *BlockReading = pindexBest;
+
+    if (BlockLastSolved == NULL || BlockLastSolved->nHeight == 0) { return false; }
+        
+    for (unsigned int i = 1; BlockReading && BlockReading->nHeight > 0; i++) {
+        if(BlockReading->nHeight % 10 == 0) {
+            hash = BlockReading->GetBlockHash();
+            return true;
+        }
+
+        if (BlockReading->pprev == NULL) { assert(BlockReading); break; }
+        BlockReading = BlockReading->pprev;
+    }
+
+    return false;    
+}
+
 void CDarkSendPool::NewBlock()
 {
+    printf("CDarkSendPool::NewBlock \n");
 
+    uint256 n1 = 0;
+    if(!GetLastValidBlockHash(n1)) return;
+    if(n1 == masterNodeBlockHash) return;
+
+    if(!IsConnectedToMasterNode()){
+        DisconnectMasterNode();
+    }
+
+    printf(" -- connect \n");
+    ConnectToBestMasterNode();
+
+    printf(" -- save entries \n");
+    if(myEntries.size() > 0) {
+        printf("ERROR: You have existing pending payments and a new masternode was detected. You must resubmit them.");
+    }
+
+    /*std::vector<CDarkSendEntry> myEntriesSave;
+    BOOST_FOREACH(CDarkSendEntry e, myEntries) {
+        myEntriesSave.push_back(e);
+    }
+    */
+
+    printf(" -- set null \n");
+    SetNull();
+
+
+    printf(" -- boost foreach \n");
+
+/*    BOOST_FOREACH(CDarkSendEntry e, myEntriesSave) {
+        myEntries.push_back(e);
+
+        // relay our entry to the master node
+        RelayDarkSendIn(e.vin, e.amount, e.collateral, e.txSupporting, e.vout, e.vout2);
+    }
+*/
+}
+
+void CDarkSendPool::CompletedTransaction()
+{
+    completedTransaction = true;
+    Check();
 }
 
 uint256 CMasterNode::CalculateScore()
 {
     if(pindexBest == NULL) return 0;
 
+    uint256 n1 = 0;
+    if(!darkSendPool.GetLastValidBlockHash(n1)) return 0;
+
     int nVersion = 1;
-    uint256 n1 = pindexBest->GetBlockHash();
     uint256 n2 = Hash9(BEGIN(nVersion), END(n1));
     uint256 n3 = vin.prevout.hash > n2 ? (vin.prevout.hash - n2) : (n2 - vin.prevout.hash);
     printf(" -- MasterNode CalculateScore() = %s \n", n3.ToString().c_str());
@@ -5937,7 +6043,7 @@ void ThreadCheckDarkSendPool()
         //printf("ThreadCheckDarkSendPool::check timeout\n");
         darkSendPool.CheckTimeout();
         
-        if(c == 45){
+        if(c == 55){
             darkSendPool.RegisterAsMasterNode();
             c = 0;
         }

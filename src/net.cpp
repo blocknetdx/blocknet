@@ -449,9 +449,11 @@ CNode* FindNode(std::string addrName)
 CNode* FindNode(const CService& addr)
 {
     LOCK(cs_vNodes);
-    BOOST_FOREACH(CNode* pnode, vNodes)
+    BOOST_FOREACH(CNode* pnode, vNodes){
+        printf(" -- FindNode %s == %s\n", (CService)pnode->addr.ToString().c_str(), addr.ToString().c_str());
         if ((CService)pnode->addr == addr)
             return (pnode);
+    }
     return NULL;
 }
 
@@ -465,7 +467,10 @@ CNode* ConnectNode(CAddress addrConnect, const char *pszDest, bool darkSendMaste
         CNode* pnode = FindNode((CService)addrConnect);
         if (pnode)
         {
-            if(darkSendMaster) pnode->fDarkSendMaster = true;
+            if(darkSendMaster) {
+                pnode->fDarkSendMaster = true;
+                printf("Found existing connection\n");
+            }
             pnode->AddRef();
             return pnode;
         }
@@ -1907,51 +1912,64 @@ void RelayTransaction(const CTransaction& tx, const uint256& hash, const CDataSt
     }
 }
 
-void RelayTxPoolFinalTransaction(const CTransaction& txNew)
+void RelayDarkSendFinalTransaction(const CTransaction& txNew)
 {
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
-        printf("RelayTxPoolFinalTransaction\n");
+        printf("RelayDarkSendFinalTransaction\n");
         if(!pnode->fDarkSendMember)
             continue;
-        printf("RelayTxPoolFinalTransaction found member\n");
+        printf("RelayDarkSendFinalTransaction found member\n");
         pnode->PushMessage("dsf", txNew);
     }
 }
 
-void RelayTxPoolIn(const CTxIn& in, const int64& nAmount, const CTransaction& txCollateral, const CTransaction& txSupporting, const CTxOut& out, const CTxOut& out2)
+void RelayDarkSendIn(const CTxIn& in, const int64& nAmount, const CTransaction& txCollateral, const CTransaction& txSupporting, const CTxOut& out, const CTxOut& out2)
 {
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
         if(!pnode->fDarkSendMaster)
             continue;
-        printf("RelayTxPoolIn - found master, relaying message \n");
+        printf("RelayDarkSendIn - found master, relaying message \n");
         pnode->PushMessage("dsi", in, nAmount, txCollateral, txSupporting, out, out2);
     }
 }
 
-void RelayTxPoolStatus(const int newState, const int newEntriesCount, const int newAccepted)
+void RelayDarkSendStatus(const int newState, const int newEntriesCount, const int newAccepted)
 {
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
-        printf("RelayTxPoolStatus \n");
+        printf("RelayDarkSendStatus \n");
 
         if(!pnode->fDarkSendMember)
             continue;
 
-        printf("RelayTxPoolStatus - found member, relaying message \n");
+        printf("RelayDarkSendStatus - found member, relaying message \n");
         pnode->PushMessage("dssu", newState, newEntriesCount, newAccepted);
     }
 }
 
-void RelayTxPoolElectionEntry(const CTxIn vin, const CService addr, const int count, const int current)
+void RelayDarkSendElectionEntry(const CTxIn vin, const CService addr, const int count, const int current)
 {
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
         pnode->PushMessage("dsee", vin, addr, count, current);
     }   
+}
+
+void RelayDarkSendCompletedTransaction()
+{
+    LOCK(cs_vNodes);
+    BOOST_FOREACH(CNode* pnode, vNodes)
+    {
+        if(!pnode->fDarkSendMember)
+            continue;
+
+        printf("RelayDarkSendCompletedTransaction - found member, relaying message \n");
+        pnode->PushMessage("dsc");
+    }
 }
