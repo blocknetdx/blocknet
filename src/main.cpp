@@ -5924,13 +5924,13 @@ void CDarkSendPool::RegisterAsMasterNode()
             if(GetMasterNodeVin(vinMasterNode)) {
                 printf("Is capable master node!\n");
                 isCapableMasterNode = true;
+                printf("Adding myself to masternode list %s\n", vinMasterNode.ToString().c_str());
+                CMasterNode mn(addr, vinMasterNode);
+                mn.UpdateLastSeen();
+                darkSendMasterNodes.push_back(mn);
             }
         }
 
-        printf("Adding myself to masternode list %s\n", vinMasterNode.ToString().c_str());
-        CMasterNode mn(addr, vinMasterNode);
-        mn.UpdateLastSeen();
-        darkSendMasterNodes.push_back(mn);
     }
 
     if(!isCapableMasterNode) return;

@@ -450,7 +450,6 @@ CNode* FindNode(const CService& addr)
 {
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes){
-        printf(" -- FindNode %s == %s\n", (CService)pnode->addr.ToString().c_str(), addr.ToString().c_str());
         if ((CService)pnode->addr == addr)
             return (pnode);
     }
