@@ -3809,10 +3809,10 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
 
         bool error;
-        std::string errorMessage;
-        vRecv >> error >> errorMessage;
+        std::string lastMessage;
+        vRecv >> error >> lastMessage;
 
-        darkSendPool.CompletedTransaction(error, errorMessage);
+        darkSendPool.CompletedTransaction(error, lastMessage);
     }
 
 
@@ -3901,7 +3901,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         int current;
         vRecv >> vin >> addr >> count >> current;
 
-        printf("Searching existing masternodes : %s\n", vin.ToString().c_str());
+        printf("Searching existing masternodes : %s - %s\n", addr.ToString().c_str(),  vin.ToString().c_str());
 
         bool found = false;
         BOOST_FOREACH(CMasterNode& mn, darkSendMasterNodes) {
@@ -5416,8 +5416,9 @@ void CDarkSendPool::SetNull(){
     lastTimeChanged = GetTimeMillis();
     sigCount = 0;
 
-    errorMessage = "";
-    completedTransaction = false;
+    entriesCount = 0;
+    lastEntryAccepted = 0;
+    countEntriesAccepted = 0;
 }
 
 void CDarkSendPool::SetCollateralAddress(std::string strAddress){
@@ -5516,7 +5517,7 @@ void CDarkSendPool::Check()
                     SetNull();
                     pwalletMain->Lock();
                     UpdateState(POOL_STATUS_ACCEPTING_ENTRIES);
-                    RelayDarkSendCompletedTransaction(true, "Transaction not valid");
+                    RelayDarkSendCompletedTransaction(true, "Transaction not valid, please try again");
                     return;
                 }
 
@@ -5529,7 +5530,7 @@ void CDarkSendPool::Check()
                 
                 txNew.RelayWalletTransaction();
                 
-                RelayDarkSendCompletedTransaction(false, "");
+                RelayDarkSendCompletedTransaction(false, "Transaction Created Successfully");
                 printf("CDarkSendPool::Check() -- IS MASTER -- TRANSMITTING DARKSEND\n");
             }
         }
@@ -5545,6 +5546,10 @@ void CDarkSendPool::Check()
         DisconnectMasterNode();
     }
 
+    if((state == POOL_STATUS_ERROR || state == POOL_STATUS_SUCCESS) && GetTimeMillis()-lastTimeChanged >= 10000) {
+        printf("CDarkSendPool::Check() -- RESETTING MESSAGE \n");
+        SetNull();
+    }
 }
 
 void CDarkSendPool::ChargeFees(){
@@ -5729,6 +5734,8 @@ void CDarkSendPool::SendMoney(const CTransaction& collateral, CTxIn& in, CTxOut&
         printf("CDarkSendPool::SendMoney() -- NEW INPUT -- adding %s\n", in.ToString().c_str());
     }
 
+    if(state == POOL_STATUS_ERROR || state == POOL_STATUS_SUCCESS) ClearLastMessage();
+
     if(!IsConnectedToMasterNode()){
         ConnectToBestMasterNode();
     }
@@ -5757,12 +5764,15 @@ void CDarkSendPool::SendMoney(const CTransaction& collateral, CTxIn& in, CTxOut&
 
 bool CDarkSendPool::StatusUpdate(int newState, int newEntriesCount, int newAccepted){
     if(fMasterNode) return false;
+    if(state == POOL_STATUS_ERROR || state == POOL_STATUS_SUCCESS) return false;
 
-    state = newState;
+    UpdateState(newState);
     entriesCount = newEntriesCount;
 
-    if(newAccepted != -1)
+    if(newAccepted != -1) {
         lastEntryAccepted = newAccepted;
+        countEntriesAccepted += newAccepted;
+    }
 
     return true;
 }
@@ -5861,18 +5871,18 @@ void CDarkSendPool::ConnectToBestMasterNode(int depth){
             darkSendMasterNodes[winner].enabled = 0;
             if(depth < 5){
                 UpdateState(POOL_STATUS_ERROR);
-                errorMessage = "Trying MasterNode #" + to_string(depth);
+                lastMessage = "Trying MasterNode #" + to_string(depth);
                 ConnectToBestMasterNode(depth+1);
             } else {
                 UpdateState(POOL_STATUS_ERROR);
-                errorMessage = "No valid MasterNode";
-                printf("ERROR: %s\n", errorMessage.c_str());
+                lastMessage = "No valid MasterNode";
+                printf("ERROR: %s\n", lastMessage.c_str());
             }
         }
     } else {
         UpdateState(POOL_STATUS_ERROR);
-        errorMessage = "No valid MasterNode";
-        printf("ERROR: %s\n", errorMessage.c_str());
+        lastMessage = "No valid MasterNode";
+        printf("ERROR: %s\n", lastMessage.c_str());
     }
 
     //if couldn't connect, disable that one and try next
@@ -5918,6 +5928,8 @@ void CDarkSendPool::RegisterAsMasterNode()
             if(GetMasterNodeVin(vinMasterNode)) {
                 printf("Is capable master node!\n");
                 isCapableMasterNode = true;
+
+                pwalletMain->LockCoin(vinMasterNode.prevout);
                 printf("Adding myself to masternode list %s\n", vinMasterNode.ToString().c_str());
                 CMasterNode mn(addr, vinMasterNode);
                 mn.UpdateLastSeen();
@@ -5998,15 +6010,27 @@ void CDarkSendPool::NewBlock()
 */
 }
 
-void CDarkSendPool::CompletedTransaction(bool error, std::string errorMessageNew)
+void CDarkSendPool::CompletedTransaction(bool error, std::string lastMessageNew)
 {
+
+    printf("CompletedTransaction\n");
     if(error){
-        state = POOL_STATUS_ERROR;
-        errorMessage = errorMessageNew;
+        printf("CompletedTransaction -- error \n");
+        UpdateState(POOL_STATUS_ERROR);
+    } else {
+        printf("CompletedTransaction -- success \n");
+        UpdateState(POOL_STATUS_SUCCESS);
     }
+    lastMessage = lastMessageNew;
 
     completedTransaction = true;
     Check();
+}
+
+void CDarkSendPool::ClearLastMessage()
+{
+    SetNull();
+    lastMessage = "";
 }
 
 uint256 CMasterNode::CalculateScore()

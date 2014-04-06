@@ -14,6 +14,9 @@
 #include <list>
 #include <algorithm>
 
+
+//#define static_assert(numeric_limits<double>::max_exponent() > 8, "your double sux");
+
 class CWallet;
 class CBlock;
 class CBlockIndex;
@@ -2403,6 +2406,7 @@ public:
 #define POOL_STATUS_SIGNING                    4 // check inputs/outputs, sign final tx
 #define POOL_STATUS_TRANSMISSION               5 // transmit transaction
 #define POOL_STATUS_ERROR                      6 // error
+#define POOL_STATUS_SUCCESS                      7 // success
 
 static const int64 POOL_FEE_AMOUNT = 0.1*COIN;
 
@@ -2423,12 +2427,14 @@ public:
     unsigned int state;
     unsigned int entriesCount;
     unsigned int lastEntryAccepted;
+    unsigned int countEntriesAccepted;
     CScript collateralPubKey;
 
     CTxIn vinMasterNode;
     bool isCapableMasterNode;
     uint256 masterNodeBlockHash;
-    std::string errorMessage;
+
+    std::string lastMessage;
     bool completedTransaction;
 
     CDarkSendPool()
@@ -2477,6 +2483,11 @@ public:
         return lastEntryAccepted;
     }
 
+    int GetCountEntriesAccepted() const
+    {
+        return countEntriesAccepted;
+    }
+
     int GetSignatureCount() const
     {
         return (int)sigCount;
@@ -2522,7 +2533,8 @@ public:
     void RegisterAsMasterNode();
     bool GetLastValidBlockHash(uint256& hash);
     void NewBlock();
-    void CompletedTransaction(bool error, std::string errorMessageNew);
+    void CompletedTransaction(bool error, std::string lastMessageNew);
+    void ClearLastMessage();
 };
 
 void ConnectToDarkSendMasterNodeWinner();

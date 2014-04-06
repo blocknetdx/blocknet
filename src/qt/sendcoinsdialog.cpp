@@ -80,6 +80,7 @@ SendCoinsDialog::SendCoinsDialog(QWidget *parent) :
     ui->labelCoinControlChange->addAction(clipboardChangeAction);
 
     fNewRecipientAllowed = true;
+    showingDarkSendMessage = 0;
 }
 
 void SendCoinsDialog::setModel(WalletModel *model)
@@ -254,23 +255,44 @@ void SendCoinsDialog::darkSendStatusButton()
     int state = darkSendPool.GetState();
     int entries = darkSendPool.GetEntriesCount();
     int accepted = darkSendPool.GetLastEntryAccepted();
+    int countAccepted = darkSendPool.GetCountEntriesAccepted();
 
     std::ostringstream convert;
 
-
     if(state == POOL_STATUS_ACCEPTING_ENTRIES)
-        convert << "darkSend Status => ( Entries " << entries << " | Accepted " << accepted << " )";
+        if(entries == 0) {
+            convert << "darkSend Status => Idle";
+            showingDarkSendMessage = 0;
+        } else if (accepted == 1) {
+            if(showingDarkSendMessage % 10 <= 8) {
+                convert << "darkSend Status => Your transaction was accepted into the pool!";
+            } else {
+                darkSendPool.lastEntryAccepted = 0;
+                showingDarkSendMessage = 0;
+            }
+        } else {
+            if(showingDarkSendMessage % 70 <= 40) convert << "darkSend Status => ( Entries " << entries << "/" << POOL_MAX_TRANSACTIONS << ")";
+            else if(showingDarkSendMessage % 70 <= 50) convert << "darkSend Status => Waiting for more entries (" << entries << "/" << POOL_MAX_TRANSACTIONS << ") .";
+            else if(showingDarkSendMessage % 70 <= 60) convert << "darkSend Status => Waiting for more entries (" << entries << "/" << POOL_MAX_TRANSACTIONS << ") ..";
+            else if(showingDarkSendMessage % 70 <= 70) convert << "darkSend Status => Waiting for more entries (" << entries << "/" << POOL_MAX_TRANSACTIONS << ") ...";
+        }
     else if(state == POOL_STATUS_SIGNING)
         convert << "darkSend Status => SIGNING";
     else if(state == POOL_STATUS_TRANSMISSION)
         convert << "darkSend Status => TRANSMISSION";
     else if(state == POOL_STATUS_ERROR)
-        convert << "darkSend Status => ERROR : " << darkSendPool.errorMessage;
+        convert << "darkSend Status => ERROR : " << darkSendPool.lastMessage;
+    else if(state == POOL_STATUS_SUCCESS)
+        convert << "darkSend Status => SUCCESS : " << darkSendPool.lastMessage;
     else
         convert << "darkSend Status => UNKNOWN STATE";
+
+    if(state == POOL_STATUS_ERROR || state == POOL_STATUS_SUCCESS) darkSendPool.Check();
     
     QString s(convert.str().c_str());
     ui->darkSendStatusButton->setText(s);
+
+    showingDarkSendMessage++;
 }
 
 void SendCoinsDialog::reject()

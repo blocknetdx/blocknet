@@ -50,6 +50,7 @@ private:
     Ui::SendCoinsDialog *ui;
     WalletModel *model;
     bool fNewRecipientAllowed;
+    int showingDarkSendMessage;
 
 private slots:
     void on_sendButton_clicked();
