@@ -169,13 +169,19 @@ Value getpoolinfo(const Array& params, bool fHelp)
             "Returns an object containing anonymous pool-related information.");
 
     Object obj;
+    obj.push_back(Pair("masternode",        darkSendPool.GetMasterNodeAddr()));
     obj.push_back(Pair("state",        darkSendPool.GetState()));
-/*    obj.push_back(Pair("session_id",   (int)darkSendPool.GetSessionID()));
-    obj.push_back(Pair("pooled_inputs",   darkSendPool.GetVinCount()));
-    obj.push_back(Pair("pooled_outputs",   darkSendPool.GetVoutCount()));
-    obj.push_back(Pair("pooled_signatures",   darkSendPool.GetSignatureCount()));
-    obj.push_back(Pair("my_transactions",   darkSendPool.GetMyTransactionCount()));*/
+    obj.push_back(Pair("entries",      darkSendPool.GetEntriesCount()));
+    obj.push_back(Pair("entries_accepted",      darkSendPool.GetCountEntriesAccepted()));
+    obj.push_back(Pair("signatures",   darkSendPool.GetSignatureCount()));
+    obj.push_back(Pair("my_transactions",   darkSendPool.GetMyTransactionCount()));
     return obj;
+}
+
+Value darksendsub(const Array& params, bool fHelp)
+{
+    darkSendPool.SubscribeToMasterNode();
+    return Value::null;
 }
 
 Value getworkex(const Array& params, bool fHelp)

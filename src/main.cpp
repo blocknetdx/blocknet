@@ -3870,6 +3870,20 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         }
     }
 
+    else if (strCommand == "dssub") { //DarkSend Subscribe To         
+        if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
+            return false;
+        }
+
+        if(!fMasterNode) return false;
+
+        std::string error = "";
+        pfrom->fDarkSendMember = true;
+        pfrom->PushMessage("dssu", darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1, error);
+        //pfrom->fDisconnect = true;
+        return true;
+    }
+
     else if (strCommand == "dssu") { //DarkSend status update
         if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
             return false;
@@ -5899,6 +5913,7 @@ void CDarkSendPool::ConnectToBestMasterNode(int depth){
     if(winner >= 0) {
         printf("Connecting to masternode at %s\n", darkSendMasterNodes[winner].addr.ToString().c_str());
         if(ConnectNode((CAddress)darkSendMasterNodes[winner].addr, NULL, true)){
+            masterNodeAddr = darkSendMasterNodes[winner].addr.ToString();
             UpdateState(POOL_STATUS_ACCEPTING_ENTRIES);
             GetLastValidBlockHash(masterNodeBlockHash);
         } else {
@@ -5937,6 +5952,7 @@ bool CDarkSendPool::GetMasterNodeVin(CTxIn& vin)
     return true;
 }
 
+
 void CDarkSendPool::ResetDarkSendMembers()
 {
     LOCK(cs_vNodes);
@@ -5944,6 +5960,24 @@ void CDarkSendPool::ResetDarkSendMembers()
     {
         pnode->fDarkSendMember = false;
     }
+}
+
+bool CDarkSendPool::SubscribeToMasterNode()
+{
+    if(IsConnectedToMasterNode()) return false;
+
+    ConnectToBestMasterNode();
+
+    LOCK(cs_vNodes);
+    BOOST_FOREACH(CNode* pnode, vNodes)
+    {
+        if(!pnode->fDarkSendMaster)
+            continue;
+
+        pnode->PushMessage("dssub");
+    }
+
+    return true;
 }
 
 void CDarkSendPool::RegisterAsMasterNode()

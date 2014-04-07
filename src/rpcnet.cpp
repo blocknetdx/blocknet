@@ -114,24 +114,6 @@ Value addnode(const Array& params, bool fHelp)
     return Value::null;
 }
 
-Value darksendnode(const Array& params, bool fHelp)
-{
-    string strCommand;
-    if (params.size() == 2)
-        strCommand = params[1].get_str();
-    if (fHelp || params.size() != 2 ||
-        (strCommand != "onetry" && strCommand != "add" && strCommand != "remove"))
-        throw runtime_error(
-            "darksendnode <node> <add|remove|onetry>\n"
-            "Attempts add or remove <node> from the addnode list or try a connection to <node> once.");
-
-    string strNode = params[0].get_str();
-
-    CAddress addr;
-    ConnectNode(addr, strNode.c_str(), true);
-    return Value::null;
-}
-
 Value getaddednodeinfo(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() < 1 || params.size() > 2)

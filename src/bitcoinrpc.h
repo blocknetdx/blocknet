@@ -139,7 +139,7 @@ extern void EnsureWalletIsUnlocked();
 extern json_spirit::Value getconnectioncount(const json_spirit::Array& params, bool fHelp); // in rpcnet.cpp
 extern json_spirit::Value getpeerinfo(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value addnode(const json_spirit::Array& params, bool fHelp);
-extern json_spirit::Value darksendnode(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value darksendsub(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value getaddednodeinfo(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value dumpprivkey(const json_spirit::Array& params, bool fHelp); // in rpcdump.cpp
 extern json_spirit::Value importprivkey(const json_spirit::Array& params, bool fHelp);
@@ -164,7 +164,6 @@ extern json_spirit::Value getaddressesbyaccount(const json_spirit::Array& params
 extern json_spirit::Value sendtoaddress(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value darksend(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value denominate(const json_spirit::Array& params, bool fHelp);
-extern json_spirit::Value getdarksendtxid(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value signmessage(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value verifymessage(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value getreceivedbyaddress(const json_spirit::Array& params, bool fHelp);

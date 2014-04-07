@@ -20,7 +20,7 @@
 class CWallet;
 class CBlock;
 class CBlockIndex;
-class CKeyItem;
+class CKeyItem; 
 class CReserveKey;
 
 class CAddress;
@@ -2433,6 +2433,7 @@ public:
     CTxIn vinMasterNode;
     bool isCapableMasterNode;
     uint256 masterNodeBlockHash;
+    std::string masterNodeAddr;
 
     std::string lastMessage;
     bool completedTransaction;
@@ -2498,6 +2499,11 @@ public:
         return myEntries.size();
     }
 
+    std::string GetMasterNodeAddr()
+    {
+        return masterNodeAddr;
+    }
+
     void UpdateState(unsigned int newState)
     {
         printf("CDarkSendPool::UpdateState() == %d | %d \n", state, newState);
@@ -2526,6 +2532,7 @@ public:
     bool IsConnectedToMasterNode();
     void DisconnectMasterNode();
     void ConnectToBestMasterNode(int depth=0);
+    bool SubscribeToMasterNode();
 
     bool GetMasterNodeVin(CTxIn& vin);
     void RelayDarkDeclareWinner();
