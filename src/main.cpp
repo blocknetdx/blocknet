@@ -3900,7 +3900,6 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         printf("DarkSendStatusUpdate - state: %i entriesCount: %i accepted: %i \n", state, entriesCount, accepted);
     }
 
-
     else if (strCommand == "dss") { //DarkSend Sign Final Tx
         if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
             return false;
@@ -3918,6 +3917,10 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
     }
 
     else if (strCommand == "dseg") { //DarkSend Election Get
+        if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
+            return false;
+        }
+        
         int count = darkSendMasterNodes.size()-1;
         int i = 0;
 
@@ -3932,6 +3935,9 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
     }
 
     else if (strCommand == "dsee") { //DarkSend Election Entry   
+        if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
+            return false;
+        }
         CTxIn vin;
         CService addr;
         int count;
