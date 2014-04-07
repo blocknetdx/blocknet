@@ -3836,15 +3836,16 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         }
 
         int accepted = 0;
-        if(darkSendPool.AddEntry(in, nAmount, txCollateral, out, out2)){
+        std::string error = "";
+        if(darkSendPool.AddEntry(in, nAmount, txCollateral, out, out2, error)){
             pfrom->fDarkSendMember = true;
             accepted = 1;
-            pfrom->PushMessage("dssu", darkSendPool.GetState(), darkSendPool.GetEntriesCount(), accepted);
+            pfrom->PushMessage("dssu", darkSendPool.GetState(), darkSendPool.GetEntriesCount(), accepted, error);
             darkSendPool.Check();
 
             RelayDarkSendStatus(darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);    
         } else {
-            pfrom->PushMessage("dssu", darkSendPool.GetState(), darkSendPool.GetEntriesCount(), accepted);
+            pfrom->PushMessage("dssu", darkSendPool.GetState(), darkSendPool.GetEntriesCount(), accepted, error);
         }
     }
 
@@ -3856,9 +3857,10 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         int state;
         int entriesCount;
         int accepted;
-        vRecv >> state >> entriesCount >> accepted;
+        std::string error;
+        vRecv >> state >> entriesCount >> accepted >> error;
 
-        darkSendPool.StatusUpdate(state, entriesCount, accepted);
+        darkSendPool.StatusUpdate(state, entriesCount, accepted, error);
 
         printf("DarkSendStatusUpdate - state: %i entriesCount: %i accepted: %i \n", state, entriesCount, accepted);
     }
@@ -5629,7 +5631,6 @@ bool CDarkSendPool::SignatureValid(const CScript& newSig, const CTxIn& newVin){
 }
 
 bool CDarkSendPool::IsCollateralValid(const CTransaction& txCollateral){    
-
     if(txCollateral.vout.size() != 1){
         if(fDebug) printf ("CDarkSendPool::IsCollateralValid - vout wrong size\n");
         return false;
@@ -5656,26 +5657,33 @@ bool CDarkSendPool::IsCollateralValid(const CTransaction& txCollateral){
     return true;
 }
 
-bool CDarkSendPool::AddEntry(const CTxIn& newInput, const int64& nAmount, const CTransaction& txCollateral, const CTxOut& newOutput, const CTxOut& newOutput2){
+bool CDarkSendPool::AddEntry(const CTxIn& newInput, const int64& nAmount, const CTransaction& txCollateral, const CTxOut& newOutput, const CTxOut& newOutput2, std::string& error){
     if (!fMasterNode) return false;
 
     if (newInput.prevout.IsNull() || nAmount < 0) {
         if(fDebug) printf ("CDarkSendPool::AddEntry - input not valid!\n");
+        error = "input not valid";
         return false;
     }
 
     if (!IsCollateralValid(txCollateral)){
         if(fDebug) printf ("CDarkSendPool::AddEntry - collateral not valid!\n");
+        error = "collateral not valid";
         return false;
     }
 
     if(entries.size() >= POOL_MAX_TRANSACTIONS){
         if(fDebug) printf ("CDarkSendPool::AddEntry - entries is full!\n");   
+        error = "entries is full";
         return false;
     }
 
     BOOST_FOREACH(const CDarkSendEntry v, entries) {
-        if(v.vin == newInput) {if(fDebug) printf ("CDarkSendPool::AddEntry - found in vin\n"); return false;}
+        if(v.vin == newInput) {
+            if(fDebug) printf ("CDarkSendPool::AddEntry - found in vin\n"); 
+            error = "already have than vin";
+            return false;
+        }
     }
 
     if(state == POOL_STATUS_ACCEPTING_ENTRIES) {
@@ -5684,11 +5692,12 @@ bool CDarkSendPool::AddEntry(const CTxIn& newInput, const int64& nAmount, const 
         entries.push_back(v);
 
         printf("CDarkSendPool::AddEntry -- adding %s\n", newInput.ToString().c_str());
-
+        error = "";
         return true;
     }
 
     if(fDebug) printf ("CDarkSendPool::AddEntry - can't aceept new entry, wrong state!\n");
+    error = "wrong state";
     return false;
 }
 
@@ -5762,7 +5771,7 @@ void CDarkSendPool::SendMoney(const CTransaction& collateral, CTxIn& in, CTxOut&
     Check();
 }
 
-bool CDarkSendPool::StatusUpdate(int newState, int newEntriesCount, int newAccepted){
+bool CDarkSendPool::StatusUpdate(int newState, int newEntriesCount, int newAccepted, std::string& error){
     if(fMasterNode) return false;
     if(state == POOL_STATUS_ERROR || state == POOL_STATUS_SUCCESS) return false;
 
@@ -5772,6 +5781,10 @@ bool CDarkSendPool::StatusUpdate(int newState, int newEntriesCount, int newAccep
     if(newAccepted != -1) {
         lastEntryAccepted = newAccepted;
         countEntriesAccepted += newAccepted;
+        if(newAccepted == 0){
+            UpdateState(POOL_STATUS_ERROR);
+            lastMessage = error;
+        }
     }
 
     return true;

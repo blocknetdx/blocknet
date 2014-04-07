@@ -1936,7 +1936,7 @@ void RelayDarkSendIn(const CTxIn& in, const int64& nAmount, const CTransaction& 
     }
 }
 
-void RelayDarkSendStatus(const int newState, const int newEntriesCount, const int newAccepted)
+void RelayDarkSendStatus(const int newState, const int newEntriesCount, const int newAccepted, const std::string error)
 {
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
@@ -1947,7 +1947,7 @@ void RelayDarkSendStatus(const int newState, const int newEntriesCount, const in
             continue;
 
         printf("RelayDarkSendStatus - found member, relaying message \n");
-        pnode->PushMessage("dssu", newState, newEntriesCount, newAccepted);
+        pnode->PushMessage("dssu", newState, newEntriesCount, newAccepted, error);
     }
 }
 

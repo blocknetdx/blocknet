@@ -259,33 +259,36 @@ void SendCoinsDialog::darkSendStatusButton()
 
     std::ostringstream convert;
 
-    if(state == POOL_STATUS_ACCEPTING_ENTRIES)
+    if(state == POOL_STATUS_ACCEPTING_ENTRIES) {
         if(entries == 0) {
             convert << "darkSend Status => Idle";
             showingDarkSendMessage = 0;
         } else if (accepted == 1) {
-            if(showingDarkSendMessage % 10 <= 8) {
-                convert << "darkSend Status => Your transaction was accepted into the pool!";
-            } else {
+            convert << "darkSend Status => Your transaction was accepted into the pool!";
+            if(showingDarkSendMessage % 10 > 8) {
                 darkSendPool.lastEntryAccepted = 0;
                 showingDarkSendMessage = 0;
             }
         } else {
-            if(showingDarkSendMessage % 70 <= 40) convert << "darkSend Status => ( Entries " << entries << "/" << POOL_MAX_TRANSACTIONS << ")";
-            else if(showingDarkSendMessage % 70 <= 50) convert << "darkSend Status => Waiting for more entries (" << entries << "/" << POOL_MAX_TRANSACTIONS << ") .";
-            else if(showingDarkSendMessage % 70 <= 60) convert << "darkSend Status => Waiting for more entries (" << entries << "/" << POOL_MAX_TRANSACTIONS << ") ..";
-            else if(showingDarkSendMessage % 70 <= 70) convert << "darkSend Status => Waiting for more entries (" << entries << "/" << POOL_MAX_TRANSACTIONS << ") ...";
+            if(showingDarkSendMessage % 70 <= 40) convert << "darkSend Status => ( Entries " << entries << "/" << POOL_MAX_TRANSACTIONS << " )";
+            else if(showingDarkSendMessage % 70 <= 50) convert << "darkSend Status => Waiting for more entries (" << entries << "/" << POOL_MAX_TRANSACTIONS << " ) .";
+            else if(showingDarkSendMessage % 70 <= 60) convert << "darkSend Status => Waiting for more entries (" << entries << "/" << POOL_MAX_TRANSACTIONS << " ) ..";
+            else if(showingDarkSendMessage % 70 <= 70) convert << "darkSend Status => Waiting for more entries (" << entries << "/" << POOL_MAX_TRANSACTIONS << " ) ...";
         }
-    else if(state == POOL_STATUS_SIGNING)
-        convert << "darkSend Status => SIGNING";
-    else if(state == POOL_STATUS_TRANSMISSION)
+    } else if(state == POOL_STATUS_SIGNING) {
+        if(showingDarkSendMessage % 70 <= 10) convert << "darkSend Status => SIGNING";
+        else if(showingDarkSendMessage % 70 <= 20) convert << "darkSend Status => SIGNING ( waiting. )";
+        else if(showingDarkSendMessage % 70 <= 30) convert << "darkSend Status => SIGNING ( waiting.. )";
+        else if(showingDarkSendMessage % 70 <= 40) convert << "darkSend Status => SIGNING ( waiting... )";
+    } else if(state == POOL_STATUS_TRANSMISSION) {
         convert << "darkSend Status => TRANSMISSION";
-    else if(state == POOL_STATUS_ERROR)
+    } else if(state == POOL_STATUS_ERROR) {
         convert << "darkSend Status => ERROR : " << darkSendPool.lastMessage;
-    else if(state == POOL_STATUS_SUCCESS)
+    } else if(state == POOL_STATUS_SUCCESS) {
         convert << "darkSend Status => SUCCESS : " << darkSendPool.lastMessage;
-    else
+    } else {
         convert << "darkSend Status => UNKNOWN STATE";
+    }
 
     if(state == POOL_STATUS_ERROR || state == POOL_STATUS_SUCCESS) darkSendPool.Check();
     

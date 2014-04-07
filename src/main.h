@@ -2515,10 +2515,10 @@ public:
     void CheckTimeout();
     bool SignatureValid(const CScript& newSig, const CTxIn& newVin);
     bool IsCollateralValid(const CTransaction& txCollateral);
-    bool AddEntry(const CTxIn& newInput, const int64& nAmount, const CTransaction& txCollateral, const CTxOut& newOutput, const CTxOut& newOutput2);
+    bool AddEntry(const CTxIn& newInput, const int64& nAmount, const CTransaction& txCollateral, const CTxOut& newOutput, const CTxOut& newOutput2, std::string& error);
     bool AddScriptSig(const CScript& newSig, const CTxIn& newVin, const CScript& newPubKey);
     void SendMoney(const CTransaction& collateral, CTxIn& in, CTxOut& out, int64& fee, int64 amount, CScript& pubScript, const CTransaction& txSupporting);
-    bool StatusUpdate(int newState, int newEntriesCount, int newAccepted);
+    bool StatusUpdate(int newState, int newEntriesCount, int newAccepted, std::string& error);
 
     std::string Denominate();
     bool SignFinalTransaction(CTransaction& finalTransactionNew, CNode* node);
