@@ -3920,7 +3920,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
             return false;
         }
-        
+
         int count = darkSendMasterNodes.size()-1;
         int i = 0;
 
@@ -5452,7 +5452,14 @@ void CDarkSendPool::SetNull(){
     finalTransaction.vout.clear();
 
     entries.clear();
-    myEntries.clear(); //do I need to clean up the objects?
+
+    /*
+        Cleaning this up causes a race condition
+        ./darkcoind darksend msyUY4CdjTfigzCSYgSqB6zTSh6kbfyw3X 5 && ./darkcoind darksend msyUY4CdjTfigzCSYgSqB6zTSh6kbfyw3X 5 && ./darkcoind darksend msyUY4CdjTfigzCSYgSqB6zTSh6kbfyw3X 5  && ./darkcoind darksend msyUY4CdjTfigzCSYgSqB6zTSh6kbfyw3X 5 && ./darkcoind darksend msyUY4CdjTfigzCSYgSqB6zTSh6kbfyw3X 5  && ./darkcoind darksend msyUY4CdjTfigzCSYgSqB6zTSh6kbfyw3X 5 && ./darkcoind darksend msyUY4CdjTfigzCSYgSqB6zTSh6kbfyw3X 5  && ./darkcoind darksend msyUY4CdjTfigzCSYgSqB6zTSh6kbfyw3X 5 && ./darkcoind darksend msyUY4CdjTfigzCSYgSqB6zTSh6kbfyw3X 5  && ./darkcoind darksend msyUY4CdjTfigzCSYgSqB6zTSh6kbfyw3X 5 && ./darkcoind darksend msyUY4CdjTfigzCSYgSqB6zTSh6kbfyw3X 5  && ./darkcoind darksend msyUY4CdjTfigzCSYgSqB6zTSh6kbfyw3X 5 && ./darkcoind darksend msyUY4CdjTfigzCSYgSqB6zTSh6kbfyw3X 5  && ./darkcoind darksend msyUY4CdjTfigzCSYgSqB6zTSh6kbfyw3X 5 && ./darkcoind darksend msyUY4CdjTfigzCSYgSqB6zTSh6kbfyw3X 5  && ./darkcoind darksend msyUY4CdjTfigzCSYgSqB6zTSh6kbfyw3X 5 && ./darkcoind darksend msyUY4CdjTfigzCSYgSqB6zTSh6kbfyw3X 5  && ./darkcoind darksend msyUY4CdjTfigzCSYgSqB6zTSh6kbfyw3X 5
+    
+        To fix this we need to queue an entry, request acceptance from masternode, then add upon success
+    */
+    //myEntries.clear();
 
     state = POOL_STATUS_ACCEPTING_ENTRIES;
 
@@ -5847,12 +5854,24 @@ bool CDarkSendPool::SignFinalTransaction(CTransaction& finalTransactionNew, CNod
         /* Sign my transaction and all outputs */
 
         int mine = -1;
-
+        int foundOutputs = 0;
         for(unsigned int i = 0; i < finalTransaction.vin.size(); i++){
             if(finalTransaction.vin[i] == e.vin){
                 mine = i;
             }
         }
+
+        for(unsigned int i = 0; i < finalTransaction.vout.size(); i++){
+            if(finalTransaction.vout[i] == e.vout || finalTransaction.vout[i] == e.vout2){
+                foundOutputs++;
+            }
+        }
+
+        if(foundOutputs < 2) {
+            if(fDebug) printf("CDarkSendPool::Sign - My entries are not correct! Refusing to sign. %d entries. \n", foundOutputs);
+            return false;
+        }
+
         if(mine >= 0){ //might have to do this one input at a time?
             int n = mine;
             if(fDebug) printf("CDarkSendPool::Sign - Signing my input %i\n", mine);
