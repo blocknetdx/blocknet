@@ -2,9 +2,6 @@ src/*.exe
 src/darkcoin
 src/darkcoind
 src/test_darkcoin
-src/darksend.py
-src/darksend_refill.py
-src/robo.py
 .*.swp
 *.*~*
 *.bak
