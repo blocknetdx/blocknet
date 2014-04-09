@@ -6064,6 +6064,8 @@ bool CDarkSendPool::GetLastValidBlockHash(uint256& hash)
 
 void CDarkSendPool::NewBlock()
 {
+    if(myEntries.size() == 0) return;
+
     printf("CDarkSendPool::NewBlock \n");
 
     uint256 n1 = 0;

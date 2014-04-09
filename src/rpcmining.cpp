@@ -161,28 +161,6 @@ Value getmininginfo(const Array& params, bool fHelp)
     return obj;
 }
 
-Value getpoolinfo(const Array& params, bool fHelp)
-{
-    if (fHelp || params.size() != 0)
-        throw runtime_error(
-            "getpoolinfo\n"
-            "Returns an object containing anonymous pool-related information.");
-
-    Object obj;
-    obj.push_back(Pair("masternode",        darkSendPool.GetMasterNodeAddr()));
-    obj.push_back(Pair("state",        darkSendPool.GetState()));
-    obj.push_back(Pair("entries",      darkSendPool.GetEntriesCount()));
-    obj.push_back(Pair("entries_accepted",      darkSendPool.GetCountEntriesAccepted()));
-    obj.push_back(Pair("signatures",   darkSendPool.GetSignatureCount()));
-    return obj;
-}
-
-Value darksendsub(const Array& params, bool fHelp)
-{
-    darkSendPool.SubscribeToMasterNode();
-    return Value::null;
-}
-
 Value getworkex(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() > 2)
