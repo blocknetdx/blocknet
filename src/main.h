@@ -2317,7 +2317,7 @@ public:
     {
         addr = newAddr;
         vin = newVin;
-        enabled = 0;
+        enabled = 1;
         lastTimeSeen = 0;
     
     }
@@ -2339,7 +2339,7 @@ public:
 
     bool IsEnabled()
     {
-        return enabled == 0;
+        return enabled == 1;
     }
 };
 

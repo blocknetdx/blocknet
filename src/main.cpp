@@ -3925,7 +3925,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         int i = 0;
 
         BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
-            printf("Sending master node entry\n");
+            printf("Sending master node entry - %s \n", mn.addr.ToString().c_str());
             mn.Check();
             if(mn.IsEnabled()) {
                 pfrom->PushMessage("dsee", mn.vin, mn.addr, count, i);
@@ -3944,11 +3944,11 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         int current;
         vRecv >> vin >> addr >> count >> current;
 
-        printf("Searching existing masternodes : %s - %s\n", addr.ToString().c_str(),  vin.ToString().c_str());
+        //printf("Searching existing masternodes : %s - %s\n", addr.ToString().c_str(),  vin.ToString().c_str());
 
         bool found = false;
         BOOST_FOREACH(CMasterNode& mn, darkSendMasterNodes) {
-            printf(" -- %s\n", mn.vin.ToString().c_str());
+            //printf(" -- %s\n", mn.vin.ToString().c_str());
 
             if(mn.vin == vin) {
                 found = true;
@@ -3962,7 +3962,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         if(found) return true;
 
-        printf("Got NEW masternode entry\n");        
+        printf("Got NEW masternode entry %s\n", addr.ToString().c_str());        
 
         CValidationState state;
         CTransaction tx = CTransaction();
@@ -5785,6 +5785,11 @@ bool CDarkSendPool::AddScriptSig(const CScript& newSig, const CTxIn& newVin, con
 }
 
 void CDarkSendPool::SendMoney(const CTransaction& collateral, CTxIn& in, CTxOut& out, int64& fee, int64 amount, CScript& pubScript, const CTransaction& txSupporting){
+    if(fMasterNode) {
+        printf("CDarkSendPool::SendMoney() - DarkSend from a masternode is not supported currently.\n");
+        return;
+    }
+
     printf("CDarkSendPool::SendMoney() - Added transaction to pool.\n");
 
     if(fDebug){
@@ -5925,7 +5930,7 @@ void CDarkSendPool::ConnectToBestMasterNode(int depth){
 
     BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
         mn.Check();
-        if(!mn.IsEnabled()) return;
+        if(!mn.IsEnabled()) break;
         uint256 n = mn.CalculateScore();
         // GetTimeMillis()-mv.lastSeen <= 60000
         if(n > score){
@@ -6107,6 +6112,7 @@ void CDarkSendPool::NewBlock()
 
 void CDarkSendPool::CompletedTransaction(bool error, std::string lastMessageNew)
 {
+    if(fMasterNode) return;
 
     printf("CompletedTransaction\n");
     if(error){
