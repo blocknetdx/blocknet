@@ -5439,10 +5439,10 @@ public:
 */
 
 void CDarkSendPool::SetNull(){
-    printf("CDarkSendPool::SetNull()\n");
+    //printf("CDarkSendPool::SetNull()\n");
 
     if(fMasterNode){
-        printf("CDarkSendPool - I AM MASTER NODE!\n");
+    //    printf("CDarkSendPool - I AM MASTER NODE!\n");
     }
 
     finalTransaction.vin.clear();

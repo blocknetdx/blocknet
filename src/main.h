@@ -2440,7 +2440,7 @@ public:
 
     CDarkSendPool()
     {
-        printf("CDarkSendPool::INIT()\n");        
+        //printf("CDarkSendPool::INIT()\n");        
         /* DarkSend uses collateral addresses to trust parties entering the pool
             to behave themselves. If they don't it takes their money. */
 
