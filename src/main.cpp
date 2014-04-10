@@ -2806,10 +2806,7 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
 
     //might need to reset pool
     darkSendPool.CheckTimeout();
-
-    if(!fMasterNode){
-        darkSendPool.NewBlock();
-    }
+    darkSendPool.NewBlock();
 
     printf("ProcessBlock: ACCEPTED\n");
     return true;
@@ -5924,6 +5921,8 @@ void CDarkSendPool::DisconnectMasterNode(){
 }
 
 void CDarkSendPool::ConnectToBestMasterNode(int depth){
+    if(fMasterNode) return;
+    
     int i = 0;
     uint256 score = 0;
     int winner = -1;
@@ -6073,20 +6072,25 @@ void CDarkSendPool::NewBlock()
 
     printf("CDarkSendPool::NewBlock \n");
 
-    uint256 n1 = 0;
-    if(!GetLastValidBlockHash(n1)) return;
-    if(n1 == masterNodeBlockHash) return;
+    if(!fMasterNode){
+        uint256 n1 = 0;
+        if(!GetLastValidBlockHash(n1)) return;
+        if(n1 == masterNodeBlockHash) return;
 
-    if(!IsConnectedToMasterNode()){
-        DisconnectMasterNode();
+        if(IsConnectedToMasterNode()){
+            printf("Disconnecting from old masternode\n");
+            DisconnectMasterNode();
+        }
+
+        printf(" -- connect \n");
+        ConnectToBestMasterNode();
     }
 
-    printf(" -- connect \n");
-    ConnectToBestMasterNode();
-
+    bool resetEntries=false;
     printf(" -- save entries \n");
     if(myEntries.size() > 0) {
         printf("ERROR: You have existing pending payments and a new masternode was detected. You must resubmit them.");
+        resetEntries = true;
     }
 
     /*std::vector<CDarkSendEntry> myEntriesSave;
@@ -6097,6 +6101,11 @@ void CDarkSendPool::NewBlock()
 
     printf(" -- set null \n");
     SetNull();
+
+    if(resetEntries){
+        UpdateState(POOL_STATUS_ERROR);
+        lastMessage = "masternode switched, please resubmit";
+    }
 
 
     printf(" -- boost foreach \n");
