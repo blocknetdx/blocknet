@@ -5585,7 +5585,6 @@ void CDarkSendPool::Check()
         RelayDarkSendStatus(darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);    
         ResetDarkSendMembers();
         pwalletMain->Lock();
-        DisconnectMasterNode();
     }
 
     if((state == POOL_STATUS_ERROR || state == POOL_STATUS_SUCCESS) && GetTimeMillis()-lastTimeChanged >= 10000) {
@@ -5925,7 +5924,7 @@ void CDarkSendPool::ConnectToBestMasterNode(int depth){
 
     BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
         mn.Check();
-        if(!mn.IsEnabled()) break;
+        if(!mn.IsEnabled()) continue;
         uint256 n = mn.CalculateScore();
         // GetTimeMillis()-mv.lastSeen <= 60000
         if(n > score){
