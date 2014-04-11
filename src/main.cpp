@@ -6067,7 +6067,7 @@ void CDarkSendPool::NewBlock()
         uint256 n1 = 0;
         if(!GetLastValidBlockHash(n1)) return;
         if(n1 == masterNodeBlockHash) return;
-        
+
         ResetDarkSendMembers();
     }
 
@@ -6154,7 +6154,10 @@ uint256 CMasterNode::CalculateScore()
     int nVersion = 1;
     uint256 n2 = Hash9(BEGIN(nVersion), END(n1));
     uint256 n3 = vin.prevout.hash > n2 ? (vin.prevout.hash - n2) : (n2 - vin.prevout.hash);
-    printf(" -- MasterNode CalculateScore() = %s \n", n3.ToString().c_str());
+    printf(" -- MasterNode CalculateScore() n1 = %s \n", n1.ToString().c_str());
+    printf(" -- MasterNode CalculateScore() n2 = %s \n", n2.ToString().c_str());
+    printf(" -- MasterNode CalculateScore() vin = %s \n", vin.prevout.hash.ToString().c_str());
+    printf(" -- MasterNode CalculateScore() n3 = %s \n", n3.ToString().c_str());
     return n3;
 }
 
