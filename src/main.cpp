@@ -5583,7 +5583,6 @@ void CDarkSendPool::Check()
         printf("CDarkSendPool::Check() -- COMPLETED -- RESETTING \n");
         SetNull();
         RelayDarkSendStatus(darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);    
-        ResetDarkSendMembers();
         pwalletMain->Lock();
     }
 
@@ -6064,6 +6063,14 @@ bool CDarkSendPool::GetLastValidBlockHash(uint256& hash)
 
 void CDarkSendPool::NewBlock()
 {
+    if(fMasterNode) {
+        uint256 n1 = 0;
+        if(!GetLastValidBlockHash(n1)) return;
+        if(n1 == masterNodeBlockHash) return;
+        
+        ResetDarkSendMembers();
+    }
+
     if(myEntries.size() == 0) return;
 
     printf("CDarkSendPool::NewBlock \n");
