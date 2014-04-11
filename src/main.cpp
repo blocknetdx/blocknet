@@ -6078,12 +6078,11 @@ void CDarkSendPool::NewBlock()
             DisconnectMasterNode();
         }
 
-        printf(" -- connect \n");
-        ConnectToBestMasterNode();
+        //printf(" -- connect \n");
+        //ConnectToBestMasterNode();
     }
 
     bool resetEntries=false;
-    printf(" -- save entries \n");
     if(myEntries.size() > 0) {
         printf("ERROR: You have existing pending payments and a new masternode was detected. You must resubmit them.");
         resetEntries = true;
@@ -6095,7 +6094,6 @@ void CDarkSendPool::NewBlock()
     }
     */
 
-    printf(" -- set null \n");
     SetNull();
 
     if(resetEntries){
@@ -6104,8 +6102,6 @@ void CDarkSendPool::NewBlock()
     }
 
 
-    printf(" -- boost foreach \n");
-
 /*    BOOST_FOREACH(CDarkSendEntry e, myEntriesSave) {
         myEntries.push_back(e);
 
@@ -6113,6 +6109,8 @@ void CDarkSendPool::NewBlock()
         RelayDarkSendIn(e.vin, e.amount, e.collateral, e.txSupporting, e.vout, e.vout2);
     }
 */
+
+    myEntries.clear();
 }
 
 void CDarkSendPool::CompletedTransaction(bool error, std::string lastMessageNew)
@@ -6156,7 +6154,7 @@ uint256 CMasterNode::CalculateScore()
 void CMasterNode::Check()
 {
     if(!UpdatedWithin(120000)){
-        enabled = 0;
+        enabled = 2;
         return;
     }
 
@@ -6167,7 +6165,7 @@ void CMasterNode::Check()
     tx.vout.push_back(vout);
 
     if(!tx.AcceptableInputs(state, true))        
-        enabled = 0;
+        enabled = 3;
 }
 
 
@@ -6183,7 +6181,7 @@ void ThreadCheckDarkSendPool()
         //printf("ThreadCheckDarkSendPool::check timeout\n");
         darkSendPool.CheckTimeout();
         
-        if(c == 55){
+        if(c == 25){
             darkSendPool.RegisterAsMasterNode();
             c = 0;
         }

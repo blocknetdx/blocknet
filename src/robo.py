@@ -14,7 +14,7 @@ while True:
         obj = json.loads(check_output(["./darkcoind", "-datadir=datadir2", "getpoolinfo"]).strip())
 
         print obj
-        print obj2['blocks'], obj['masternode']
+        print obj2['blocks'], obj['connected_to_masternode'], , obj['connected_to_masternode'] == obj['current_masternode']
 
         if last_block != obj2['blocks']:
                 print "subscribe to masternode"
