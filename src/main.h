@@ -2529,7 +2529,7 @@ public:
 
         BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
             mn.Check();
-            if(!mn.IsEnabled()) break;
+            if(!mn.IsEnabled()) continue;
             uint256 n = mn.CalculateScore();
 
             if(n > score){
