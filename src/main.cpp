@@ -6150,13 +6150,14 @@ uint256 CMasterNode::CalculateScore()
 
     uint256 n1 = 0;
     if(!darkSendPool.GetLastValidBlockHash(n1)) return 0;
-    uint64 n11 = n1.Get64();
+    unsigned int n11 = 0;
+    memcpy(&n11, &n1, sizeof(n11));
 
     int nVersion = 1;
     uint256 n2 = Hash9(BEGIN(nVersion), END(n11));
     uint256 n3 = vin.prevout.hash > n2 ? (vin.prevout.hash - n2) : (n2 - vin.prevout.hash);
     printf(" -- MasterNode CalculateScore() n1 = %s \n", n1.ToString().c_str());
-    printf(" -- MasterNode CalculateScore() n11 = %llu \n", n11);
+    printf(" -- MasterNode CalculateScore() n11 = %u \n", n11);
     printf(" -- MasterNode CalculateScore() n2 = %s \n", n2.ToString().c_str());
     printf(" -- MasterNode CalculateScore() vin = %s \n", vin.prevout.hash.ToString().c_str());
     printf(" -- MasterNode CalculateScore() n3 = %s \n", n3.ToString().c_str());
