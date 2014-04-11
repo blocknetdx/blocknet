@@ -6152,7 +6152,7 @@ uint256 CMasterNode::CalculateScore()
     if(!darkSendPool.GetLastValidBlockHash(n1)) return 0;
 
     int nVersion = 1;
-    uint256 n2 = Hash9(BEGIN(nVersion), END(n1));
+    uint256 n2 = Hash9(BEGIN(nVersion), END(n1.Get64()));
     uint256 n3 = vin.prevout.hash > n2 ? (vin.prevout.hash - n2) : (n2 - vin.prevout.hash);
     printf(" -- MasterNode CalculateScore() n1 = %s \n", n1.ToString().c_str());
     printf(" -- MasterNode CalculateScore() n2 = %s \n", n2.ToString().c_str());
