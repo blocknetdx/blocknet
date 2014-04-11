@@ -5856,25 +5856,26 @@ bool CDarkSendPool::SignFinalTransaction(CTransaction& finalTransactionNew, CNod
         /* Sign my transaction and all outputs */
 
         int mine = -1;
-        int foundOutputs = 0;
         for(unsigned int i = 0; i < finalTransaction.vin.size(); i++){
             if(finalTransaction.vin[i] == e.vin){
                 mine = i;
             }
         }
 
-        for(unsigned int i = 0; i < finalTransaction.vout.size(); i++){
-            if(finalTransaction.vout[i] == e.vout || finalTransaction.vout[i] == e.vout2){
-                foundOutputs++;
-            }
-        }
-
-        if(foundOutputs < 2) {
-            if(fDebug) printf("CDarkSendPool::Sign - My entries are not correct! Refusing to sign. %d entries. \n", foundOutputs);
-            return false;
-        }
-
         if(mine >= 0){ //might have to do this one input at a time?
+            int foundOutputs = 0;
+            
+            for(unsigned int i = 0; i < finalTransaction.vout.size(); i++){
+                if(finalTransaction.vout[i] == e.vout || finalTransaction.vout[i] == e.vout2){
+                    foundOutputs++;
+                }
+            }
+
+            if(foundOutputs < 2) {
+                printf("CDarkSendPool::Sign - My entries are not correct! Refusing to sign. %d entries. \n", foundOutputs);
+                return false;
+            }
+
             int n = mine;
             if(fDebug) printf("CDarkSendPool::Sign - Signing my input %i\n", mine);
             if(!SignSignature(*pwalletMain, e.vin.prevPubKey, finalTransaction, n, int(SIGHASH_ALL|SIGHASH_ANYONECANPAY))) { // changes scriptSig
