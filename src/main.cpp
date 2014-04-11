@@ -5912,6 +5912,7 @@ void CDarkSendPool::DisconnectMasterNode(){
 
         pnode->fDarkSendMaster = false;
         pnode->fDisconnect = true;
+        masterNodeAddr = "";
     }
 }
 
