@@ -49,6 +49,7 @@ Value getpoolinfo(const Array& params, bool fHelp)
     Object obj;
     obj.push_back(Pair("connected_to_masternode",        darkSendPool.GetMasterNodeAddr()));
     obj.push_back(Pair("current_masternode",        darkSendPool.GetCurrentMasterNode()));
+    obj.push_back(Pair("is_connected_to_masternode", darkSendPool.IsConnectedToMasterNode()));
     obj.push_back(Pair("state",        darkSendPool.GetState()));
     obj.push_back(Pair("entries",      darkSendPool.GetEntriesCount()));
     obj.push_back(Pair("entries_accepted",      darkSendPool.GetCountEntriesAccepted()));
