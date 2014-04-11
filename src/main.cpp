@@ -1159,10 +1159,7 @@ int CMerkleTx::GetBlocksToMaturity() const
     if (!IsCoinBase())
         return 0;
 
-    int n = 20;
-    if(fTestNet) n = 2;
-
-    return max(0, (COINBASE_MATURITY+n) - GetDepthInMainChain());
+    return max(0, (COINBASE_MATURITY+20) - GetDepthInMainChain());
 }
 
 
@@ -1585,7 +1582,7 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBl
 {
         int DiffMode = 1;
         if (fTestNet) {
-            if (pindexLast->nHeight+1 >= 5) { DiffMode = 3; }
+            if (pindexLast->nHeight+1 >= 1000) { DiffMode = 3; }
         }
         else {
             if (pindexLast->nHeight+1 >= 34140) { DiffMode = 3; }
@@ -3208,8 +3205,6 @@ bool LoadBlockIndex()
         pchMessageStart[2] = 0xb7;
         pchMessageStart[3] = 0xdc;
         hashGenesisBlock = uint256("0x00000bafbc94add76cb75e2ec92894837288a481e5c005f6563d91623bf8bc2c");
-
-        COINBASE_MATURITY = 1;
     }
 
     //
