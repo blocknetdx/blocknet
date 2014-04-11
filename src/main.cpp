@@ -5903,14 +5903,15 @@ bool CDarkSendPool::IsConnectedToMasterNode(){
 }
 
 void CDarkSendPool::DisconnectMasterNode(){
+    printf("CDarkSendPool::DisconnectMasterNode\n");
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
         if(!pnode->fDarkSendMaster)
             continue;
 
+        printf("CDarkSendPool::DisconnectMasterNode -- disabled masternode\n");
         pnode->fDarkSendMaster = false;
-        pnode->fDisconnect = true;
         masterNodeAddr = "";
     }
 }
