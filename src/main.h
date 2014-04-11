@@ -2521,6 +2521,31 @@ public:
         state = newState;
     }
 
+    std::string GetCurrentMasterNode()
+    {
+        int i = 0;
+        uint256 score = 0;
+        int winner = -1;
+
+        BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
+            mn.Check();
+            if(!mn.IsEnabled()) break;
+            uint256 n = mn.CalculateScore();
+
+            if(n > score){
+                score = n;
+                winner = i;
+            }
+            i++;
+        }
+
+        if(winner >= 0) {
+            return darkSendMasterNodes[winner].addr.ToString().c_str();
+        }
+
+        return "unknown";
+    }
+
     void Check();
     void ChargeFees();
     void CheckTimeout();

@@ -47,7 +47,8 @@ Value getpoolinfo(const Array& params, bool fHelp)
             "Returns an object containing anonymous pool-related information.");
 
     Object obj;
-    obj.push_back(Pair("masternode",        darkSendPool.GetMasterNodeAddr()));
+    obj.push_back(Pair("connected_to_masternode",        darkSendPool.GetMasterNodeAddr()));
+    obj.push_back(Pair("current_masternode",        darkSendPool.GetCurrentMasterNode()));
     obj.push_back(Pair("state",        darkSendPool.GetState()));
     obj.push_back(Pair("entries",      darkSendPool.GetEntriesCount()));
     obj.push_back(Pair("entries_accepted",      darkSendPool.GetCountEntriesAccepted()));
@@ -68,9 +69,9 @@ Value masternode(const Array& params, bool fHelp)
         strCommand = params[0].get_str();
     if (fHelp || params.size() != 1 ||
         (strCommand != "start" && strCommand != "stop" && strCommand != "list" && strCommand != "count" 
-            && strCommand != "debug" && strCommand != "create"))
+            && strCommand != "debug" && strCommand != "create" && strCommand != "current"))
         throw runtime_error(
-            "masternode <start|stop|list|count|debug|create>\n");
+            "masternode <start|stop|list|count|debug|create|current>\n");
 
     if (strCommand == "stop")
     {
@@ -105,6 +106,11 @@ Value masternode(const Array& params, bool fHelp)
     if (strCommand == "create")
     {
         return "Not implemented yet";
+    }
+
+    if (strCommand == "current")
+    {
+        return darkSendPool.GetCurrentMasterNode();
     }
 
     return Value::null;
