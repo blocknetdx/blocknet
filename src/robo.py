@@ -14,7 +14,7 @@ while True:
         obj = json.loads(check_output(["./darkcoind", "-datadir=datadir2", "getpoolinfo"]).strip())
 
         print obj
-        print obj2['blocks'], obj['connected_to_masternode'], , obj['connected_to_masternode'] == obj['current_masternode']
+        print obj2['blocks'], obj['connected_to_masternode'], obj['connected_to_masternode'] == obj['current_masternode']
 
         if last_block != obj2['blocks']:
                 print "subscribe to masternode"
@@ -29,7 +29,7 @@ while True:
                 call(["./darkcoind", "-datadir=datadir2", "darksend", addr, str(amount)])
                 restart_daemon += 1
 
-        if restart_daemon >= 15:
+        if restart_daemon >= 15 or obj['state'] == 6 or obj['state'] == 7:
                 print "Restarting daemon"
                 sleep(10)
                 call(["./darkcoind", "-datadir=datadir2", "stop"])
@@ -37,6 +37,7 @@ while True:
                 call(["./darkcoind", "-datadir=datadir2", "-daemon"])
                 sleep(60)
                 restart_daemon = 0
+                last_block = 0
                 print "Restarted"
 
         sleep(random()*15)
