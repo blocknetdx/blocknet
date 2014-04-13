@@ -29,7 +29,7 @@ while True:
                 call(["./darkcoind", "-datadir=datadir2", "darksend", addr, str(amount)])
                 restart_daemon += 1
 
-        if restart_daemon >= 15 or obj['state'] == 6 or obj['state'] == 7:
+        if obj['state'] == 6 or obj['state'] == 7:
                 print "Restarting daemon"
                 sleep(10)
                 call(["./darkcoind", "-datadir=datadir2", "stop"])

@@ -5919,21 +5919,7 @@ void CDarkSendPool::DisconnectMasterNode(){
 void CDarkSendPool::ConnectToBestMasterNode(int depth){
     if(fMasterNode) return;
     
-    int i = 0;
-    uint256 score = 0;
-    int winner = -1;
-
-    BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
-        mn.Check();
-        if(!mn.IsEnabled()) continue;
-        uint256 n = mn.CalculateScore();
-        // GetTimeMillis()-mv.lastSeen <= 60000
-        if(n > score){
-            score = n;
-            winner = i;
-        }
-        i++;
-    }
+    int winner = GetCurrentMasterNode();
 
     if(winner >= 0) {
         printf("Connecting to masternode at %s\n", darkSendMasterNodes[winner].addr.ToString().c_str());
@@ -6048,7 +6034,7 @@ bool CDarkSendPool::GetLastValidBlockHash(uint256& hash)
     const CBlockIndex *BlockReading = pindexBest;
 
     if (BlockLastSolved == NULL || BlockLastSolved->nHeight == 0) { return false; }
-        
+    
     for (unsigned int i = 1; BlockReading && BlockReading->nHeight > 0; i++) {
         if(BlockReading->nHeight % 10 == 0) {
             hash = BlockReading->GetBlockHash();
@@ -6154,15 +6140,44 @@ uint256 CMasterNode::CalculateScore()
     unsigned int n11 = 0;
     memcpy(&n11, &n1, sizeof(n11));
 
-    int nVersion = 1;
-    uint256 n2 = Hash9(BEGIN(nVersion), END(n11));
+    int pend = 1;
+    uint256 n2 = Hash9(BEGIN(n11), END(pend));
     uint256 n3 = vin.prevout.hash > n2 ? (vin.prevout.hash - n2) : (n2 - vin.prevout.hash);
+    
+    /*
     printf(" -- MasterNode CalculateScore() n1 = %s \n", n1.ToString().c_str());
     printf(" -- MasterNode CalculateScore() n11 = %u \n", n11);
     printf(" -- MasterNode CalculateScore() n2 = %s \n", n2.ToString().c_str());
     printf(" -- MasterNode CalculateScore() vin = %s \n", vin.prevout.hash.ToString().c_str());
-    printf(" -- MasterNode CalculateScore() n3 = %s \n", n3.ToString().c_str());
+    printf(" -- MasterNode CalculateScore() n3 = %s \n", n3.ToString().c_str());*/
+
     return n3;
+}
+
+int CDarkSendPool::GetCurrentMasterNode()
+{
+    int i = 0;
+    unsigned int score = 0;
+    int winner = -1;
+
+    BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
+        mn.Check();
+        if(!mn.IsEnabled()) continue;
+        uint256 n = mn.CalculateScore();
+        unsigned int n2 = 0;
+        memcpy(&n2, &n, sizeof(n2));
+        // GetTimeMillis()-mv.lastSeen <= 60000
+        if(n2 > score){
+            //printf("winner %d - %u\n", i, n2);
+            score = n2;
+            winner = i;
+        }
+        i++;
+    }
+
+    //printf("!winner %d\n", winner);
+
+    return winner;
 }
 
 void CMasterNode::Check()

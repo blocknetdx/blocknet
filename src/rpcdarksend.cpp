@@ -111,7 +111,12 @@ Value masternode(const Array& params, bool fHelp)
 
     if (strCommand == "current")
     {
-        return darkSendPool.GetCurrentMasterNode();
+        int winner = darkSendPool.GetCurrentMasterNode();
+        if(winner >= 0) {
+            return darkSendMasterNodes[winner].addr.ToString().c_str();
+        }
+
+        return "unknown";
     }
 
     return Value::null;
