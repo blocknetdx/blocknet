@@ -1263,7 +1263,6 @@ bool CWallet::SelectCoinsMoreThanOutput(int64 nTargetValue, CTxIn& vin, int64& n
         }
     }
 
-    printf("2 Can't find unspent output, run denominate\n");
     return false;
 }
 
@@ -1586,6 +1585,10 @@ string CWallet::DarkSendMoney(const CTxDestination& address, int64 nValue)
     if (!SelectCoinsExactOutput(10*COIN, vin, nValueIn, pubScript, false, coinControl) || 
         !SelectCoinsExactOutput(POOL_FEE_AMOUNT+(0.01*COIN), vin, nValueIn, pubScript, false, coinControl))
     {
+        if(GetBalance() < 11*COIN){
+            return _("To use denominate you must have at least 11DRK with 1 confirmation.");
+        }
+
         Denominate(wtxDenominate);
     }
 
