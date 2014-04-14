@@ -2542,7 +2542,6 @@ public:
 
     bool GetMasterNodeVin(CTxIn& vin);
     void RelayDarkDeclareWinner();
-    void ResetDarkSendMembers();
     void RegisterAsMasterNode();
     bool GetLastValidBlockHash(uint256& hash);
     void NewBlock();

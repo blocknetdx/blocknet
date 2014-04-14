@@ -195,7 +195,6 @@ public:
     // b) the peer may tell us in their version message that we should not relay tx invs
     //    until they have initialized their bloom filter.
     bool fRelayTxes;
-    bool fDarkSendMember;
     bool fDarkSendMaster;
     CSemaphoreGrant grantOutbound;
     CCriticalSection cs_filter;
@@ -261,7 +260,6 @@ public:
         fGetAddr = false;
         nMisbehavior = 0;
         fRelayTxes = false;
-        fDarkSendMember = false;
         fDarkSendMaster = false;
         setInventoryKnown.max_size(SendBufferSize() / 1000);
         pfilter = new CBloomFilter();
@@ -650,7 +648,6 @@ void RelayDarkSendFinalTransaction(const CTransaction& txNew);
 void RelayDarkSendIn(const CTxIn& in, const int64& nAmount, const CTransaction& txCollateral, const CTransaction& txSupporting, const CTxOut& out, const CTxOut& out2);
 void RelayDarkSendStatus(const int newState, const int newEntriesCount, const int newAccepted, const std::string error="");
 void RelayDarkSendElectionEntry(const CTxIn vin, const CService addr, const int count, const int current);
-void ResetDarkSendMembers();
 void RelayDarkSendCompletedTransaction(const bool error, const std::string errorMessage);
 void RelayDarkDeclareWinner();
 void RelayDarkSendMasterNodeContestant();

@@ -3851,7 +3851,6 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         int accepted = 0;
         std::string error = "";
         if(darkSendPool.AddEntry(in, nAmount, txCollateral, out, out2, error)){
-            pfrom->fDarkSendMember = true;
             accepted = 1;
             pfrom->PushMessage("dssu", darkSendPool.GetState(), darkSendPool.GetEntriesCount(), accepted, error);
             darkSendPool.Check();
@@ -3870,7 +3869,6 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         if(!fMasterNode) return false;
 
         std::string error = "";
-        pfrom->fDarkSendMember = true;
         pfrom->PushMessage("dssu", darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1, error);
         //pfrom->fDisconnect = true;
         return true;
@@ -5961,16 +5959,6 @@ bool CDarkSendPool::GetMasterNodeVin(CTxIn& vin)
     return true;
 }
 
-
-void CDarkSendPool::ResetDarkSendMembers()
-{
-    LOCK(cs_vNodes);
-    BOOST_FOREACH(CNode* pnode, vNodes)
-    {
-        pnode->fDarkSendMember = false;
-    }
-}
-
 bool CDarkSendPool::SubscribeToMasterNode()
 {
     if(IsConnectedToMasterNode()) return false;
@@ -6054,14 +6042,6 @@ bool CDarkSendPool::GetLastValidBlockHash(uint256& hash)
 
 void CDarkSendPool::NewBlock()
 {
-    if(fMasterNode) {
-        uint256 n1 = 0;
-        if(!GetLastValidBlockHash(n1)) return;
-        if(n1 == masterNodeBlockHash) return;
-
-        ResetDarkSendMembers();
-    }
-
     if(myEntries.size() == 0) return;
 
     printf("CDarkSendPool::NewBlock \n");

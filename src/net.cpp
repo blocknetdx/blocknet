@@ -1867,11 +1867,6 @@ public:
 instance_of_cnetcleanup;
 
 
-
-
-
-
-
 void RelayTransaction(const CTransaction& tx, const uint256& hash)
 {
     CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
@@ -1917,8 +1912,6 @@ void RelayDarkSendFinalTransaction(const CTransaction& txNew)
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
         printf("RelayDarkSendFinalTransaction\n");
-        // if(!pnode->fDarkSendMember) continue;
-        printf("RelayDarkSendFinalTransaction found member\n");
         pnode->PushMessage("dsf", txNew);
     }
 }
@@ -1941,10 +1934,6 @@ void RelayDarkSendStatus(const int newState, const int newEntriesCount, const in
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
         printf("RelayDarkSendStatus \n");
-
-        //if(!pnode->fDarkSendMember) continue;
-
-        printf("RelayDarkSendStatus - found member, relaying message \n");
         pnode->PushMessage("dssu", newState, newEntriesCount, newAccepted, error);
     }
 }
@@ -1964,8 +1953,6 @@ void RelayDarkSendCompletedTransaction(const bool error, const std::string error
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
         printf("RelayDarkSendCompletedTransaction \n");
-        // if(!pnode->fDarkSendMember) continue;
-        printf("RelayDarkSendCompletedTransaction - found member, relaying message \n");
         pnode->PushMessage("dsc", error, errorMessage);
     }
 }
