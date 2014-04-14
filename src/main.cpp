@@ -3969,9 +3969,6 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             darkSendMasterNodes.push_back(mn);
 
             RelayDarkSendElectionEntry(vin, addr, count, current);
-        } else {
-            printf("Got bad masternode entry %i %i\n", count, current);
-            pfrom->Misbehaving(20);
         }
     }
 
