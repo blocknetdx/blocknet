@@ -1099,7 +1099,18 @@ bool AppInit2(boost::thread_group& threadGroup)
     //ConnectNode(addr, strNode.c_str(), true);
 
     fMasterNode = GetBoolArg("-masternode");
-    if(fMasterNode) {printf("IS DARKSEND MASTER NODE\n");}
+    if(fMasterNode) {
+        printf("IS DARKSEND MASTER NODE\n");
+        strMasterNodeAddr = GetArg("-masternodeaddr", "");
+
+        printf(" addr %s\n", strMasterNodeAddr.c_str());
+
+        if(!strMasterNodeAddr.empty()){
+            CService addrTest = CService(strMasterNodeAddr);
+            if (!addrTest.IsValid())
+                printf("Invalid -masternodeaddr address: '%s'\n", mapArgs["-strMasterNodeAddr"].c_str());
+        }
+    }
 
     threadGroup.create_thread(boost::bind(&ThreadCheckDarkSendPool));
 

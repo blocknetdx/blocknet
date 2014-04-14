@@ -5917,6 +5917,7 @@ void CDarkSendPool::ConnectToBestMasterNode(int depth){
     if(fMasterNode) return;
     
     int winner = GetCurrentMasterNode();
+    printf("winner %d\n", winner);
 
     if(winner >= 0) {
         printf("Connecting to masternode at %s\n", darkSendMasterNodes[winner].addr.ToString().c_str());
@@ -5995,7 +5996,13 @@ void CDarkSendPool::RegisterAsMasterNode()
 
     // Choose coins to use
     CService addr;
-    if(!GetLocal(addr)) return;
+    printf(" addr %s!\n", strMasterNodeAddr.c_str());
+
+    if(strMasterNodeAddr.empty()) {
+        if(!GetLocal(addr)) return;
+    } else {
+        addr = CService(strMasterNodeAddr);
+    }
 
     if(isCapableMasterNode == NULL) {
         vinMasterNode = CTxIn();
@@ -6006,7 +6013,7 @@ void CDarkSendPool::RegisterAsMasterNode()
                 isCapableMasterNode = true;
 
                 pwalletMain->LockCoin(vinMasterNode.prevout);
-                printf("Adding myself to masternode list %s\n", vinMasterNode.ToString().c_str());
+                printf("Adding myself to masternode list %s - %s\n", addr.ToString().c_str(), vinMasterNode.ToString().c_str());
                 CMasterNode mn(addr, vinMasterNode);
                 mn.UpdateLastSeen();
                 darkSendMasterNodes.push_back(mn);
@@ -6158,14 +6165,17 @@ int CDarkSendPool::GetCurrentMasterNode()
     int winner = -1;
 
     BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
+        printf(" -- check %d\n", i);
         mn.Check();
         if(!mn.IsEnabled()) continue;
+        printf(" -- check2 %d\n", i);
+
         uint256 n = mn.CalculateScore();
         unsigned int n2 = 0;
         memcpy(&n2, &n, sizeof(n2));
         // GetTimeMillis()-mv.lastSeen <= 60000
         if(n2 > score){
-            //printf("winner %d - %u\n", i, n2);
+            printf("winner %d - %u\n", i, n2);
             score = n2;
             winner = i;
         }
