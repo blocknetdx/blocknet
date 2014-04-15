@@ -6042,11 +6042,21 @@ bool CDarkSendPool::GetLastValidBlockHash(uint256& hash)
 
 void CDarkSendPool::NewBlock()
 {
-    if(myEntries.size() == 0) return;
-
     printf("CDarkSendPool::NewBlock \n");
 
-    if(!fMasterNode){
+    if(fMasterNode){
+        uint256 n1 = 0;
+        
+        if(!GetLastValidBlockHash(n1)) return;
+        if(n1 == masterNodeBlockHash) return;
+        printf("CDarkSendPool::NewBlock - Is Masternode, resetting\n");
+        SetNull();
+
+        RelayDarkSendStatus(darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);    
+    } else {
+
+        if(myEntries.size() == 0) return;
+
         uint256 n1 = 0;
         if(!GetLastValidBlockHash(n1)) return;
         if(n1 == masterNodeBlockHash) return;
@@ -6058,37 +6068,36 @@ void CDarkSendPool::NewBlock()
 
         //printf(" -- connect \n");
         //ConnectToBestMasterNode();
+
+        bool resetEntries=false;
+        if(myEntries.size() > 0) {
+            printf("ERROR: You have existing pending payments and a new masternode was detected. You must resubmit them.");
+            resetEntries = true;
+        }
+
+        /*std::vector<CDarkSendEntry> myEntriesSave;
+        BOOST_FOREACH(CDarkSendEntry e, myEntries) {
+            myEntriesSave.push_back(e);
+        }
+        */
+
+        SetNull();
+
+        if(resetEntries){
+            UpdateState(POOL_STATUS_ERROR);
+            lastMessage = "masternode switched, please resubmit";
+        }
+
+        /*    BOOST_FOREACH(CDarkSendEntry e, myEntriesSave) {
+                myEntries.push_back(e);
+
+                // relay our entry to the master node
+                RelayDarkSendIn(e.vin, e.amount, e.collateral, e.txSupporting, e.vout, e.vout2);
+            }
+        */
+
+        myEntries.clear();
     }
-
-    bool resetEntries=false;
-    if(myEntries.size() > 0) {
-        printf("ERROR: You have existing pending payments and a new masternode was detected. You must resubmit them.");
-        resetEntries = true;
-    }
-
-    /*std::vector<CDarkSendEntry> myEntriesSave;
-    BOOST_FOREACH(CDarkSendEntry e, myEntries) {
-        myEntriesSave.push_back(e);
-    }
-    */
-
-    SetNull();
-
-    if(resetEntries){
-        UpdateState(POOL_STATUS_ERROR);
-        lastMessage = "masternode switched, please resubmit";
-    }
-
-
-/*    BOOST_FOREACH(CDarkSendEntry e, myEntriesSave) {
-        myEntries.push_back(e);
-
-        // relay our entry to the master node
-        RelayDarkSendIn(e.vin, e.amount, e.collateral, e.txSupporting, e.vout, e.vout2);
-    }
-*/
-
-    myEntries.clear();
 }
 
 void CDarkSendPool::CompletedTransaction(bool error, std::string lastMessageNew)
