@@ -1,0 +1,30 @@
+#include <boost/algorithm/string.hpp>
+#include <boost/foreach.hpp>
+#include <boost/test/unit_test.hpp>
+
+#include "base58.h"
+#include "util.h"
+#include "main.h"
+
+using namespace std;
+
+BOOST_AUTO_TEST_SUITE(darksend_tests)
+
+BOOST_AUTO_TEST_CASE(darksend_sign)
+{
+
+    std::string errorMessage = "";
+    std::string strBase64;
+    CKey key;
+    CPubKey pubkey;
+
+    printf("here\n");
+    CDarkSendSigner dss;
+    dss.SetKey("XDPugk3QgxVpQ4BubgzKaXhQudtaBnjuos9w6ZTojYx68EipNnt7", errorMessage, key, pubkey);
+    BOOST_CHECK(dss.SignMessage("hello", errorMessage, strBase64, key) == true);
+    BOOST_CHECK(dss.VerifyMessage(pubkey, strBase64, "hello", errorMessage) == true);
+    BOOST_CHECK(dss.VerifyMessage(pubkey, strBase64, "hello2", errorMessage) == false);
+
+}
+
+BOOST_AUTO_TEST_SUITE_END()
