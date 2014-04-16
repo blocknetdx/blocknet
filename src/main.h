@@ -2412,7 +2412,7 @@ public:
 
     bool SetKey(std::string strSecret, std::string& errorMessage, CKey& key, CPubKey& pubkey);
     bool SignMessage(std::string strMessage, std::string& errorMessage, std::string& strBase64, CKey key);
-    bool VerifyMessage(CBitcoinAddress addr, std::string& strSign, std::string strMessage, std::string& errorMessage);
+    bool VerifyMessage(CPubKey pubkey, std::string& strSign, std::string strMessage, std::string& errorMessage);
 
 };
 

@@ -1113,17 +1113,30 @@ bool AppInit2(boost::thread_group& threadGroup)
             }
         }
 
-
         std::string strMasterNodePrivKey = GetArg("-masternodeprivkey", "");
         if(!strMasterNodePrivKey.empty()){
             std::string errorMessage;
             CKey key;
             CPubKey pubkey;
+
             if(!darkSendSigner.SetKey(strMasterNodePrivKey, errorMessage, key, pubkey))
             {
                 printf("Invalid -masternodeprivkey: '%s'\n", errorMessage.c_str());
                 exit(0);
             }
+/*
+            std::string strBase64;
+            darkSendSigner.SignMessage("hello", errorMessage, strBase64, key);
+            printf("errorMessage1 %s\n", errorMessage.c_str());
+            printf("strBase64 %s\n", strBase64.c_str());
+
+            if(darkSendSigner.VerifyMessage(pubkey, strBase64, "hello", errorMessage))
+                printf("Message is OK\n");
+
+            if(!darkSendSigner.VerifyMessage(pubkey, strBase64, "hello1", errorMessage))
+                printf("Message2 is OK\n");
+
+            exit(0);*/
         }
 
     }

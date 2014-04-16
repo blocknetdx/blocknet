@@ -6208,13 +6208,13 @@ bool CDarkSendSigner::SetKey(std::string strSecret, std::string& errorMessage, C
     key = vchSecret.GetKey();
     pubkey = key.GetPubKey();
 
+    printf("----- 123 \n");
+
     return true;
 }
 
 bool CDarkSendSigner::SignMessage(std::string strMessage, std::string& errorMessage, std::string& strBase64, CKey key)
 {
-    if(isKey){return false;}
-
     CHashWriter ss(SER_GETHASH, 0);
     ss << strMessageMagic;
     ss << strMessage;
@@ -6229,16 +6229,8 @@ bool CDarkSendSigner::SignMessage(std::string strMessage, std::string& errorMess
     return true;
 }
 
-bool CDarkSendSigner::VerifyMessage(CBitcoinAddress addr, std::string& strSign, std::string strMessage, std::string& errorMessage)
+bool CDarkSendSigner::VerifyMessage(CPubKey pubkey, std::string& strSign, std::string strMessage, std::string& errorMessage)
 {
-    if(isKey){return false;}
-
-    CKeyID keyID;
-    if (!addr.GetKeyID(keyID)) {
-        errorMessage = "Address does not refer to key";
-        return false;
-    }
-
     bool fInvalid = false;
     vector<unsigned char> vchSig = DecodeBase64(strSign.c_str(), &fInvalid);
 
@@ -6251,13 +6243,13 @@ bool CDarkSendSigner::VerifyMessage(CBitcoinAddress addr, std::string& strSign, 
     ss << strMessageMagic;
     ss << strMessage;
 
-    CPubKey pubkey;
-    if (!pubkey.RecoverCompact(ss.GetHash(), vchSig)) {
+    CPubKey pubkey2;
+    if (!pubkey2.RecoverCompact(ss.GetHash(), vchSig)) {
         errorMessage = "Error recovering pubkey";
         return false;
     }
 
-    return (pubkey.GetID() == keyID);
+    return (pubkey2.GetID() == pubkey.GetID());
 }
 
 
