@@ -3919,7 +3919,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             printf("Sending master node entry - %s \n", mn.addr.ToString().c_str());
             mn.Check();
             if(mn.IsEnabled()) {
-                pfrom->PushMessage("dsee", mn.vin, mn.addr, count, i);
+                pfrom->PushMessage("dsee", mn.vin, mn.addr, mn.pubkey, count, i);
                 i++;
             }
         }
@@ -3931,9 +3931,10 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         }
         CTxIn vin;
         CService addr;
+        CScript pubkey;
         int count;
         int current;
-        vRecv >> vin >> addr >> count >> current;
+        vRecv >> vin >> addr >> pubkey >> count >> current;
 
         //printf("Searching existing masternodes : %s - %s\n", addr.ToString().c_str(),  vin.ToString().c_str());
 
@@ -3945,7 +3946,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
                 found = true;
                 if(!mn.UpdatedWithin(30000)){
                     mn.UpdateLastSeen();
-                    RelayDarkSendElectionEntry(vin, addr, count, current);
+                    RelayDarkSendElectionEntry(vin, addr, pubkey, count, current);
                     return true;
                 }
             }
@@ -3963,11 +3964,11 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         if(tx.AcceptableInputs(state, true)){
             printf("Accepted masternode entry %i %i\n", count, current);
 
-            CMasterNode mn(addr, vin);
+            CMasterNode mn(addr, vin, pubkey);
             mn.UpdateLastSeen();
             darkSendMasterNodes.push_back(mn);
 
-            RelayDarkSendElectionEntry(vin, addr, count, current);
+            RelayDarkSendElectionEntry(vin, addr, pubkey, count, current);
         }
     }
 
@@ -5945,13 +5946,12 @@ void CDarkSendPool::ConnectToBestMasterNode(int depth){
     //if couldn't connect, disable that one and try next
 }
 
-bool CDarkSendPool::GetMasterNodeVin(CTxIn& vin)
+bool CDarkSendPool::GetMasterNodeVin(CTxIn& vin, CScript& pubkey)
 {
     int64 nValueIn = 0;
-    CScript pubScript = CScript();
 
     // try once before we try to denominate
-    if (!pwalletMain->SelectCoinsExactOutput(1000*COIN, vin, nValueIn, pubScript, false, NULL))
+    if (!pwalletMain->SelectCoinsExactOutput(1000*COIN, vin, nValueIn, pubkey, false, NULL))
     {
         printf("I'm not a capable masternode\n");
         return false;
@@ -5995,17 +5995,20 @@ void CDarkSendPool::RegisterAsMasterNode()
 
     if(isCapableMasterNode == NULL) {
         vinMasterNode = CTxIn();
+        pubkeyMasterNode = CScript();
         isCapableMasterNode = false;
         if(fMasterNode){
-            if(GetMasterNodeVin(vinMasterNode)) {
+            if(GetMasterNodeVin(vinMasterNode, pubkeyMasterNode)) {
                 printf("Is capable master node!\n");
                 isCapableMasterNode = true;
 
                 pwalletMain->LockCoin(vinMasterNode.prevout);
                 printf("Adding myself to masternode list %s - %s\n", addr.ToString().c_str(), vinMasterNode.ToString().c_str());
-                CMasterNode mn(addr, vinMasterNode);
+                CMasterNode mn(addr, vinMasterNode, pubkeyMasterNode);
                 mn.UpdateLastSeen();
                 darkSendMasterNodes.push_back(mn);
+
+                printf("Masternode input = %s\n", vinMasterNode.ToString().c_str());
             }
         }
 
@@ -6016,7 +6019,7 @@ void CDarkSendPool::RegisterAsMasterNode()
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
-        pnode->PushMessage("dsee", vinMasterNode, addr, -1, -1);
+        pnode->PushMessage("dsee", vinMasterNode, addr, pubkeyMasterNode, -1, -1);
     }
 }
 

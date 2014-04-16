@@ -2314,12 +2314,14 @@ public:
     CService addr;
     CTxIn vin;
     int64 lastTimeSeen;
+    CScript pubkey;
     int enabled;
 
-    CMasterNode(CService newAddr, CTxIn newVin)
+    CMasterNode(CService newAddr, CTxIn newVin, CScript newPubkey)
     {
         addr = newAddr;
         vin = newVin;
+        pubkey = newPubkey;
         enabled = 1;
         lastTimeSeen = 0;
     
@@ -2450,6 +2452,7 @@ public:
     CScript collateralPubKey;
 
     CTxIn vinMasterNode;
+    CScript pubkeyMasterNode;
     bool isCapableMasterNode;
     uint256 masterNodeBlockHash;
     std::string masterNodeAddr;
@@ -2559,7 +2562,7 @@ public:
     void ConnectToBestMasterNode(int depth=0);
     bool SubscribeToMasterNode();
 
-    bool GetMasterNodeVin(CTxIn& vin);
+    bool GetMasterNodeVin(CTxIn& vin, CScript& pubkey);
     void RelayDarkDeclareWinner();
     void RegisterAsMasterNode();
     bool GetLastValidBlockHash(uint256& hash);

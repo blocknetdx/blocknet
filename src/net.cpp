@@ -1938,12 +1938,12 @@ void RelayDarkSendStatus(const int newState, const int newEntriesCount, const in
     }
 }
 
-void RelayDarkSendElectionEntry(const CTxIn vin, const CService addr, const int count, const int current)
+void RelayDarkSendElectionEntry(const CTxIn vin, const CService addr, const CScript pubkey, const int count, const int current)
 {
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
-        pnode->PushMessage("dsee", vin, addr, count, current);
+        pnode->PushMessage("dsee", vin, addr, pubkey, count, current);
     }   
 }
 
