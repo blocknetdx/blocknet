@@ -114,6 +114,8 @@ extern unsigned int nCoinCacheSize;
 extern CDarkSendPool darkSendPool;
 extern CDarkSendSigner darkSendSigner;
 extern std::vector<CMasterNode> darkSendMasterNodes;
+extern CKey darkSendMasterNodeKey;
+extern CPubKey darkSendMasterNodePubkey;
 extern CWallet pmainWallet;
 
 // Settings
@@ -2315,13 +2317,15 @@ public:
     CTxIn vin;
     int64 lastTimeSeen;
     CScript pubkey;
+    std::string sig;
     int enabled;
 
-    CMasterNode(CService newAddr, CTxIn newVin, CScript newPubkey)
+    CMasterNode(CService newAddr, CTxIn newVin, CScript newPubkey, std::string newSig)
     {
         addr = newAddr;
         vin = newVin;
         pubkey = newPubkey;
+        sig = newSig;
         enabled = 1;
         lastTimeSeen = 0;
     
@@ -2405,13 +2409,6 @@ public:
 class CDarkSendSigner
 {
 public:
-    bool isKey;
-
-    CDarkSendSigner()
-    {
-        isKey = false;
-    }
-
     bool SetKey(std::string strSecret, std::string& errorMessage, CKey& key, CPubKey& pubkey);
     bool SignMessage(std::string strMessage, std::string& errorMessage, std::string& strBase64, CKey key);
     bool VerifyMessage(CPubKey pubkey, std::string& strSign, std::string strMessage, std::string& errorMessage);
@@ -2453,6 +2450,8 @@ public:
 
     CTxIn vinMasterNode;
     CScript pubkeyMasterNode;
+    std::string strMasterNodeSignature;
+     
     bool isCapableMasterNode;
     uint256 masterNodeBlockHash;
     std::string masterNodeAddr;

@@ -55,6 +55,8 @@ unsigned int nCoinCacheSize = 5000;
 // create DarkSend pools
 CDarkSendPool darkSendPool;
 CDarkSendSigner darkSendSigner;
+CKey darkSendMasterNodeKey;
+CPubKey darkSendMasterNodePubkey;
 std::vector<CMasterNode> darkSendMasterNodes;
 
 
@@ -3919,7 +3921,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             printf("Sending master node entry - %s \n", mn.addr.ToString().c_str());
             mn.Check();
             if(mn.IsEnabled()) {
-                pfrom->PushMessage("dsee", mn.vin, mn.addr, mn.pubkey, count, i);
+                pfrom->PushMessage("dsee", mn.vin, mn.addr, mn.sig, mn.pubkey, count, i);
                 i++;
             }
         }
@@ -3932,9 +3934,18 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         CTxIn vin;
         CService addr;
         CScript pubkey;
+        std::string strAddrSignature;
         int count;
         int current;
-        vRecv >> vin >> addr >> pubkey >> count >> current;
+        vRecv >> vin >> addr >> strAddrSignature >> pubkey >> count >> current;
+
+
+        std::string errorMessage = "";
+        if(!darkSendSigner.VerifyMessage(pubkey, strAddrSignature, addr.ToString(), errorMessage)){
+            printf("Got bad masternode address signature\n");
+            pfrom->Misbehaving(20);
+            return false;
+        }
 
         //printf("Searching existing masternodes : %s - %s\n", addr.ToString().c_str(),  vin.ToString().c_str());
 
@@ -3946,7 +3957,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
                 found = true;
                 if(!mn.UpdatedWithin(30000)){
                     mn.UpdateLastSeen();
-                    RelayDarkSendElectionEntry(vin, addr, pubkey, count, current);
+                    RelayDarkSendElectionEntry(vin, addr, strAddrSignature, pubkey, count, current);
                     return true;
                 }
             }
@@ -3964,11 +3975,11 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         if(tx.AcceptableInputs(state, true)){
             printf("Accepted masternode entry %i %i\n", count, current);
 
-            CMasterNode mn(addr, vin, pubkey);
+            CMasterNode mn(addr, vin, pubkey, strAddrSignature);
             mn.UpdateLastSeen();
             darkSendMasterNodes.push_back(mn);
 
-            RelayDarkSendElectionEntry(vin, addr, pubkey, count, current);
+            RelayDarkSendElectionEntry(vin, addr, strAddrSignature, pubkey, count, current);
         }
     }
 
@@ -5994,6 +6005,9 @@ void CDarkSendPool::RegisterAsMasterNode()
     }
 
     if(isCapableMasterNode == NULL) {
+        std::string errorMessage;
+        if(!darkSendSigner.SignMessage(addr.ToString(), errorMessage, strMasterNodeSignature, darkSendMasterNodeKey)) return;
+
         vinMasterNode = CTxIn();
         pubkeyMasterNode = CScript();
         isCapableMasterNode = false;
@@ -6004,7 +6018,7 @@ void CDarkSendPool::RegisterAsMasterNode()
 
                 pwalletMain->LockCoin(vinMasterNode.prevout);
                 printf("Adding myself to masternode list %s - %s\n", addr.ToString().c_str(), vinMasterNode.ToString().c_str());
-                CMasterNode mn(addr, vinMasterNode, pubkeyMasterNode);
+                CMasterNode mn(addr, vinMasterNode, pubkeyMasterNode, strMasterNodeSignature);
                 mn.UpdateLastSeen();
                 darkSendMasterNodes.push_back(mn);
 
@@ -6019,7 +6033,7 @@ void CDarkSendPool::RegisterAsMasterNode()
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
-        pnode->PushMessage("dsee", vinMasterNode, addr, pubkeyMasterNode, -1, -1);
+        pnode->PushMessage("dsee", vinMasterNode, addr, strMasterNodeSignature, pubkeyMasterNode, -1, -1);
     }
 }
 
@@ -6198,8 +6212,6 @@ void CMasterNode::Check()
 }
 
 bool CDarkSendSigner::SetKey(std::string strSecret, std::string& errorMessage, CKey& key, CPubKey& pubkey){
-    isKey = true;
-
     CBitcoinSecret vchSecret;
     bool fGood = vchSecret.SetString(strSecret);
 
@@ -6210,8 +6222,6 @@ bool CDarkSendSigner::SetKey(std::string strSecret, std::string& errorMessage, C
 
     key = vchSecret.GetKey();
     pubkey = key.GetPubKey();
-
-    printf("----- 123 \n");
 
     return true;
 }
