@@ -10,6 +10,7 @@
 #include "net.h"
 #include "script.h"
 #include "hashblock.h"
+#include "base58.h"
 
 #include <list>
 #include <algorithm>
@@ -27,6 +28,7 @@ class CAddress;
 class CInv;
 class CNode;
 class CDarkSendPool;
+class CDarkSendSigner;
 class CMasterNode;
 class CBitcoinAddress;
 
@@ -110,6 +112,7 @@ extern int nScriptCheckThreads;
 extern bool fTxIndex;
 extern unsigned int nCoinCacheSize;
 extern CDarkSendPool darkSendPool;
+extern CDarkSendSigner darkSendSigner;
 extern std::vector<CMasterNode> darkSendMasterNodes;
 extern CWallet pmainWallet;
 
@@ -2397,6 +2400,22 @@ public:
     }
 };
 
+class CDarkSendSigner
+{
+public:
+    bool isKey;
+
+    CDarkSendSigner()
+    {
+        isKey = false;
+    }
+
+    bool SetKey(std::string strSecret, std::string& errorMessage, CKey& key, CPubKey& pubkey);
+    bool SignMessage(std::string strMessage, std::string& errorMessage, std::string& strBase64, CKey key);
+    bool VerifyMessage(CBitcoinAddress addr, std::string& strSign, std::string strMessage, std::string& errorMessage);
+
+};
+
 
 #define POOL_MAX_TRANSACTIONS                  3 // wait for X transactions to merge and publish
 #define POOL_STATUS_UNKNOWN                    0 // waiting for update
@@ -2410,7 +2429,7 @@ public:
 
 static const int64 POOL_FEE_AMOUNT = 0.1*COIN;
 
-/** Used to keep track of current status of coinjoin pool
+/** Used to keep track of current status of darksend pool
  */
 class CDarkSendPool
 {

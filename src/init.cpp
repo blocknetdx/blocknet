@@ -1107,9 +1107,25 @@ bool AppInit2(boost::thread_group& threadGroup)
 
         if(!strMasterNodeAddr.empty()){
             CService addrTest = CService(strMasterNodeAddr);
-            if (!addrTest.IsValid())
+            if (!addrTest.IsValid()) {
                 printf("Invalid -masternodeaddr address: '%s'\n", mapArgs["-strMasterNodeAddr"].c_str());
+                exit(0);
+            }
         }
+
+
+        std::string strMasterNodePrivKey = GetArg("-masternodeprivkey", "");
+        if(!strMasterNodePrivKey.empty()){
+            std::string errorMessage;
+            CKey key;
+            CPubKey pubkey;
+            if(!darkSendSigner.SetKey(strMasterNodePrivKey, errorMessage, key, pubkey))
+            {
+                printf("Invalid -masternodeprivkey: '%s'\n", errorMessage.c_str());
+                exit(0);
+            }
+        }
+
     }
 
     threadGroup.create_thread(boost::bind(&ThreadCheckDarkSendPool));

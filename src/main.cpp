@@ -54,6 +54,7 @@ unsigned int nCoinCacheSize = 5000;
 
 // create DarkSend pools
 CDarkSendPool darkSendPool;
+CDarkSendSigner darkSendSigner;
 std::vector<CMasterNode> darkSendMasterNodes;
 
 
@@ -6192,6 +6193,73 @@ void CMasterNode::Check()
     if(!tx.AcceptableInputs(state, true))        
         enabled = 3;
 }
+
+bool CDarkSendSigner::SetKey(std::string strSecret, std::string& errorMessage, CKey& key, CPubKey& pubkey){
+    isKey = true;
+
+    CBitcoinSecret vchSecret;
+    bool fGood = vchSecret.SetString(strSecret);
+
+    if (!fGood) {
+        errorMessage = "Invalid private key";
+        return false;
+    }     
+
+    key = vchSecret.GetKey();
+    pubkey = key.GetPubKey();
+
+    return true;
+}
+
+bool CDarkSendSigner::SignMessage(std::string strMessage, std::string& errorMessage, std::string& strBase64, CKey key)
+{
+    if(isKey){return false;}
+
+    CHashWriter ss(SER_GETHASH, 0);
+    ss << strMessageMagic;
+    ss << strMessage;
+
+    vector<unsigned char> vchSig;
+    if (!key.SignCompact(ss.GetHash(), vchSig)) {
+        errorMessage = "Sign failed";
+        return false;
+    }
+
+    strBase64 = EncodeBase64(&vchSig[0], vchSig.size());        
+    return true;
+}
+
+bool CDarkSendSigner::VerifyMessage(CBitcoinAddress addr, std::string& strSign, std::string strMessage, std::string& errorMessage)
+{
+    if(isKey){return false;}
+
+    CKeyID keyID;
+    if (!addr.GetKeyID(keyID)) {
+        errorMessage = "Address does not refer to key";
+        return false;
+    }
+
+    bool fInvalid = false;
+    vector<unsigned char> vchSig = DecodeBase64(strSign.c_str(), &fInvalid);
+
+    if (fInvalid) {
+        errorMessage = "Malformed base64 encoding";
+        return false;
+    }
+
+    CHashWriter ss(SER_GETHASH, 0);
+    ss << strMessageMagic;
+    ss << strMessage;
+
+    CPubKey pubkey;
+    if (!pubkey.RecoverCompact(ss.GetHash(), vchSig)) {
+        errorMessage = "Error recovering pubkey";
+        return false;
+    }
+
+    return (pubkey.GetID() == keyID);
+}
+
 
 
 void ThreadCheckDarkSendPool()
