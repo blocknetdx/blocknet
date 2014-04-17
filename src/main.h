@@ -2472,7 +2472,7 @@ public:
 
         std::string strAddress = "";  
         if(!fTestNet) {
-            strAddress = "XvgkUjmaWpnN2uChNpsGPGmo65mVN92vxn";
+            strAddress = "Xq19GqFvajRrEdDHYRKGYjTsQfpV5jyipF";
         } else {
             strAddress = "mxE2Rp3oYpSEFdsN5TdHWhZvEHm3PJQQVm";
         }
