@@ -1112,21 +1112,6 @@ bool AppInit2(boost::thread_group& threadGroup)
                 exit(0);
             }
         }
-
-        strMasterNodePrivKey = GetArg("-masternodeprivkey", "");
-        if(!strMasterNodePrivKey.empty()){
-            std::string errorMessage;
-                
-            CKey key;
-            CPubKey pubkey;
-
-            if(!darkSendSigner.SetKey(strMasterNodePrivKey, errorMessage, key, pubkey))
-            {
-                printf("Invalid -masternodeprivkey: '%s'\n", errorMessage.c_str());
-                exit(0);
-            }
-        }
-
     }
 
     threadGroup.create_thread(boost::bind(&ThreadCheckDarkSendPool));

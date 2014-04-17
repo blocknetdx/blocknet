@@ -2317,14 +2317,16 @@ public:
     int64 lastTimeSeen;
     CPubKey pubkey;
     std::vector<unsigned char> sig;
+    int64 now;
     int enabled;
 
-    CMasterNode(CService newAddr, CTxIn newVin, CPubKey newPubkey, std::vector<unsigned char> newSig)
+    CMasterNode(CService newAddr, CTxIn newVin, CPubKey newPubkey, std::vector<unsigned char> newSig, int64 newNow)
     {
         addr = newAddr;
         vin = newVin;
         pubkey = newPubkey;
         sig = newSig;
+        now = newNow;
         enabled = 1;
         lastTimeSeen = 0;
     
@@ -2422,7 +2424,11 @@ public:
 #define POOL_STATUS_SIGNING                    4 // check inputs/outputs, sign final tx
 #define POOL_STATUS_TRANSMISSION               5 // transmit transaction
 #define POOL_STATUS_ERROR                      6 // error
-#define POOL_STATUS_SUCCESS                      7 // success
+#define POOL_STATUS_SUCCESS                    7 // success
+
+#define MASTERNODE_NOT_PROCESSED               0 // initial state
+#define MASTERNODE_IS_CAPABLE                  1
+#define MASTERNODE_NOT_CAPABLE                 2
 
 static const int64 POOL_FEE_AMOUNT = 0.1*COIN;
 
@@ -2431,7 +2437,7 @@ static const int64 POOL_FEE_AMOUNT = 0.1*COIN;
 class CDarkSendPool
 {
 public:
-    static const int MIN_PEER_PROTO_VERSION = 70012;
+    static const int MIN_PEER_PROTO_VERSION = 70013;
 
     std::vector<CDarkSendEntry> myEntries;
     std::vector<CDarkSendEntry> entries;
@@ -2450,9 +2456,10 @@ public:
     CPubKey pubkeyMasterNode;
     std::vector<unsigned char> vchMasterNodeSignature;
      
-    bool isCapableMasterNode;
+    int isCapableMasterNode;
     uint256 masterNodeBlockHash;
     std::string masterNodeAddr;
+    int64 masterNodeSignatureTime;
 
     std::string lastMessage;
     bool completedTransaction;
@@ -2470,7 +2477,7 @@ public:
             strAddress = "mxE2Rp3oYpSEFdsN5TdHWhZvEHm3PJQQVm";
         }
         
-        isCapableMasterNode = NULL;
+        isCapableMasterNode = MASTERNODE_NOT_PROCESSED;
 
         SetCollateralAddress(strAddress);
         SetNull();

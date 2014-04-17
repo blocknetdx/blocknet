@@ -255,7 +255,7 @@ void SendCoinsDialog::darkSendStatusButton()
     int state = darkSendPool.GetState();
     int entries = darkSendPool.GetEntriesCount();
     int accepted = darkSendPool.GetLastEntryAccepted();
-    int countAccepted = darkSendPool.GetCountEntriesAccepted();
+    //int countAccepted = darkSendPool.GetCountEntriesAccepted();
 
     std::ostringstream convert;
 

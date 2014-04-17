@@ -648,7 +648,7 @@ void RelayTransaction(const CTransaction& tx, const uint256& hash, const CDataSt
 void RelayDarkSendFinalTransaction(const CTransaction& txNew);
 void RelayDarkSendIn(const CTxIn& in, const int64& nAmount, const CTransaction& txCollateral, const CTransaction& txSupporting, const CTxOut& out, const CTxOut& out2);
 void RelayDarkSendStatus(const int newState, const int newEntriesCount, const int newAccepted, const std::string error="");
-void RelayDarkSendElectionEntry(const CTxIn vin, const CService addr, const std::vector<unsigned char> vchSig, const CPubKey pubkey, const int count, const int current);
+void RelayDarkSendElectionEntry(const CTxIn vin, const CService addr, const std::vector<unsigned char> vchSig, const int64 nNow, const CPubKey pubkey, const int count, const int current);
 void RelayDarkSendCompletedTransaction(const bool error, const std::string errorMessage);
 void RelayDarkDeclareWinner();
 void RelayDarkSendMasterNodeContestant();
