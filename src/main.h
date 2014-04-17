@@ -2316,10 +2316,10 @@ public:
     CTxIn vin;
     int64 lastTimeSeen;
     CPubKey pubkey;
-    std::string sig;
+    std::vector<unsigned char> sig;
     int enabled;
 
-    CMasterNode(CService newAddr, CTxIn newVin, CPubKey newPubkey, std::string newSig)
+    CMasterNode(CService newAddr, CTxIn newVin, CPubKey newPubkey, std::vector<unsigned char> newSig)
     {
         addr = newAddr;
         vin = newVin;
@@ -2409,8 +2409,8 @@ class CDarkSendSigner
 {
 public:
     bool SetKey(std::string strSecret, std::string& errorMessage, CKey& key, CPubKey& pubkey);
-    bool SignMessage(std::string strMessage, std::string& errorMessage, std::string& strBase64, CKey key);
-    bool VerifyMessage(CPubKey pubkey, std::string& strSign, std::string strMessage, std::string& errorMessage);
+    bool SignMessage(std::string strMessage, std::string& errorMessage, std::vector<unsigned char>& vchSig, CKey key);
+    bool VerifyMessage(CPubKey pubkey, std::vector<unsigned char>& vchSig, std::string strMessage, std::string& errorMessage);
 };
 
 
@@ -2448,7 +2448,7 @@ public:
 
     CTxIn vinMasterNode;
     CPubKey pubkeyMasterNode;
-    std::string strMasterNodeSignature;
+    std::vector<unsigned char> vchMasterNodeSignature;
      
     bool isCapableMasterNode;
     uint256 masterNodeBlockHash;

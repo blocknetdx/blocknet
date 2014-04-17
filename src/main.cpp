@@ -3933,13 +3933,13 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         CTxIn vin;
         CService addr;
         CPubKey pubkey;
-        std::string strAddrSignature;
+        vector<unsigned char> vchSig;
         int count;
         int current;
-        vRecv >> vin >> addr >> strAddrSignature >> pubkey >> count >> current;
+        vRecv >> vin >> addr >> vchSig >> pubkey >> count >> current;
 
         std::string errorMessage = "";
-        if(!darkSendSigner.VerifyMessage(pubkey, strAddrSignature, addr.ToString(), errorMessage)){
+        if(!darkSendSigner.VerifyMessage(pubkey, vchSig, addr.ToString(), errorMessage)){
             printf("Got bad masternode address signature\n");
             pfrom->Misbehaving(20);
             return false;
@@ -3955,7 +3955,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
                 found = true;
                 if(!mn.UpdatedWithin(30000)){
                     mn.UpdateLastSeen();
-                    RelayDarkSendElectionEntry(vin, addr, strAddrSignature, pubkey, count, current);
+                    RelayDarkSendElectionEntry(vin, addr, vchSig, pubkey, count, current);
                     return true;
                 }
             }
@@ -3973,11 +3973,11 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         if(tx.AcceptableInputs(state, true)){
             printf("Accepted masternode entry %i %i\n", count, current);
 
-            CMasterNode mn(addr, vin, pubkey, strAddrSignature);
+            CMasterNode mn(addr, vin, pubkey, vchSig);
             mn.UpdateLastSeen();
             darkSendMasterNodes.push_back(mn);
 
-            RelayDarkSendElectionEntry(vin, addr, strAddrSignature, pubkey, count, current);
+            RelayDarkSendElectionEntry(vin, addr, vchSig, pubkey, count, current);
         }
     }
 
@@ -6037,12 +6037,12 @@ void CDarkSendPool::RegisterAsMasterNode()
 */
                 std::string strMessage = addr.ToString();
 
-                if(!darkSendSigner.SignMessage(strMessage, errorMessage, strMasterNodeSignature, vchSecret)) {
+                if(!darkSendSigner.SignMessage(strMessage, errorMessage, vchMasterNodeSignature, vchSecret)) {
                     printf("Sign message failed");
                     return;
                 }
 
-                if(!darkSendSigner.VerifyMessage(pubkeyMasterNode, strMasterNodeSignature, strMessage, errorMessage)) {
+                if(!darkSendSigner.VerifyMessage(pubkeyMasterNode, vchMasterNodeSignature, strMessage, errorMessage)) {
                     printf("Verify message failed");
                     return;
                 }
@@ -6052,7 +6052,7 @@ void CDarkSendPool::RegisterAsMasterNode()
 
                 pwalletMain->LockCoin(vinMasterNode.prevout);
                 printf("Adding myself to masternode list %s - %s\n", addr.ToString().c_str(), vinMasterNode.ToString().c_str());
-                CMasterNode mn(addr, vinMasterNode, pubkeyMasterNode, strMasterNodeSignature);
+                CMasterNode mn(addr, vinMasterNode, pubkeyMasterNode, vchMasterNodeSignature);
                 mn.UpdateLastSeen();
                 darkSendMasterNodes.push_back(mn);
 
@@ -6067,7 +6067,7 @@ void CDarkSendPool::RegisterAsMasterNode()
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
-        pnode->PushMessage("dsee", vinMasterNode, addr, strMasterNodeSignature, pubkeyMasterNode, -1, -1);
+        pnode->PushMessage("dsee", vinMasterNode, addr, vchMasterNodeSignature, pubkeyMasterNode, -1, -1);
     }
 }
 
@@ -6260,32 +6260,22 @@ bool CDarkSendSigner::SetKey(std::string strSecret, std::string& errorMessage, C
     return true;
 }
 
-bool CDarkSendSigner::SignMessage(std::string strMessage, std::string& errorMessage, std::string& strBase64, CKey key)
+bool CDarkSendSigner::SignMessage(std::string strMessage, std::string& errorMessage, vector<unsigned char>& vchSig, CKey key)
 {
     CHashWriter ss(SER_GETHASH, 0);
     ss << strMessageMagic;
     ss << strMessage;
 
-    vector<unsigned char> vchSig;
     if (!key.SignCompact(ss.GetHash(), vchSig)) {
         errorMessage = "Sign failed";
         return false;
     }
 
-    strBase64 = EncodeBase64(&vchSig[0], vchSig.size());        
     return true;
 }
 
-bool CDarkSendSigner::VerifyMessage(CPubKey pubkey, std::string& strSign, std::string strMessage, std::string& errorMessage)
+bool CDarkSendSigner::VerifyMessage(CPubKey pubkey, vector<unsigned char>& vchSig, std::string strMessage, std::string& errorMessage)
 {
-    bool fInvalid = false;
-    vector<unsigned char> vchSig = DecodeBase64(strSign.c_str(), &fInvalid);
-
-    if (fInvalid) {
-        errorMessage = "Malformed base64 encoding";
-        return false;
-    }
-
     CHashWriter ss(SER_GETHASH, 0);
     ss << strMessageMagic;
     ss << strMessage;
