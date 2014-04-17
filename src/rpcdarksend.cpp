@@ -96,8 +96,9 @@ Value masternode(const Array& params, bool fHelp)
         if(darkSendPool.isCapableMasterNode) return "is masternode";
 
         CTxIn vin = CTxIn();
-        CScript pubkey = CScript();
-        bool found = darkSendPool.GetMasterNodeVin(vin, pubkey);
+        CPubKey pubkey = CScript();
+        CKey key;
+        bool found = darkSendPool.GetMasterNodeVin(vin, pubkey, key);
         if(!found){
             return "Missing masternode input, try running masternode create";
         } else {

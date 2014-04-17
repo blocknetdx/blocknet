@@ -55,8 +55,7 @@ unsigned int nCoinCacheSize = 5000;
 // create DarkSend pools
 CDarkSendPool darkSendPool;
 CDarkSendSigner darkSendSigner;
-CKey darkSendMasterNodeKey;
-CPubKey darkSendMasterNodePubkey;
+std::string strMasterNodePrivKey;
 std::vector<CMasterNode> darkSendMasterNodes;
 
 
@@ -3933,12 +3932,11 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         }
         CTxIn vin;
         CService addr;
-        CScript pubkey;
+        CPubKey pubkey;
         std::string strAddrSignature;
         int count;
         int current;
         vRecv >> vin >> addr >> strAddrSignature >> pubkey >> count >> current;
-
 
         std::string errorMessage = "";
         if(!darkSendSigner.VerifyMessage(pubkey, strAddrSignature, addr.ToString(), errorMessage)){
@@ -5957,17 +5955,34 @@ void CDarkSendPool::ConnectToBestMasterNode(int depth){
     //if couldn't connect, disable that one and try next
 }
 
-bool CDarkSendPool::GetMasterNodeVin(CTxIn& vin, CScript& pubkey)
+bool CDarkSendPool::GetMasterNodeVin(CTxIn& vin, CPubKey& pubkey, CKey& secretKey)
 {
     int64 nValueIn = 0;
+    CScript pubScript;
 
     // try once before we try to denominate
-    if (!pwalletMain->SelectCoinsExactOutput(1000*COIN, vin, nValueIn, pubkey, false, NULL))
+    if (!pwalletMain->SelectCoinsExactOutput(1000*COIN, vin, nValueIn, pubScript, false, NULL))
     {
         printf("I'm not a capable masternode\n");
         return false;
     }
 
+    CTxDestination address1;
+    ExtractDestination(pubScript, address1);
+    CBitcoinAddress address2(address1);
+
+    CKeyID keyID;
+    if (!address2.GetKeyID(keyID)) {
+        printf("Address does not refer to a key");
+        return false;
+    }
+
+    if (!pwalletMain->GetKey(keyID, secretKey)) {
+        printf ("Private key for address is not known");
+        return false;
+    }
+
+    pubkey = secretKey.GetPubKey();
     return true;
 }
 
@@ -6006,13 +6021,32 @@ void CDarkSendPool::RegisterAsMasterNode()
 
     if(isCapableMasterNode == NULL) {
         std::string errorMessage;
-        if(!darkSendSigner.SignMessage(addr.ToString(), errorMessage, strMasterNodeSignature, darkSendMasterNodeKey)) return;
-
         vinMasterNode = CTxIn();
         pubkeyMasterNode = CScript();
+
         isCapableMasterNode = false;
         if(fMasterNode){
-            if(GetMasterNodeVin(vinMasterNode, pubkeyMasterNode)) {
+
+            CKey vchSecret;
+            if(GetMasterNodeVin(vinMasterNode, pubkeyMasterNode, vchSecret)) { 
+/*                if(!darkSendSigner.SetKey(strMasterNodePrivKey, errorMessage, key, pubkey))
+                {
+                    printf("Invalid -masternodeprivkey: '%s'\n", errorMessage.c_str());
+                    exit(0);
+                }
+*/
+                std::string strMessage = addr.ToString();
+
+                if(!darkSendSigner.SignMessage(strMessage, errorMessage, strMasterNodeSignature, vchSecret)) {
+                    printf("Sign message failed");
+                    return;
+                }
+
+                if(!darkSendSigner.VerifyMessage(pubkeyMasterNode, strMasterNodeSignature, strMessage, errorMessage)) {
+                    printf("Verify message failed");
+                    return;
+                }
+
                 printf("Is capable master node!\n");
                 isCapableMasterNode = true;
 

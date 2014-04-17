@@ -114,8 +114,7 @@ extern unsigned int nCoinCacheSize;
 extern CDarkSendPool darkSendPool;
 extern CDarkSendSigner darkSendSigner;
 extern std::vector<CMasterNode> darkSendMasterNodes;
-extern CKey darkSendMasterNodeKey;
-extern CPubKey darkSendMasterNodePubkey;
+extern std::string strMasterNodePrivKey;
 extern CWallet pmainWallet;
 
 // Settings
@@ -2316,11 +2315,11 @@ public:
     CService addr;
     CTxIn vin;
     int64 lastTimeSeen;
-    CScript pubkey;
+    CPubKey pubkey;
     std::string sig;
     int enabled;
 
-    CMasterNode(CService newAddr, CTxIn newVin, CScript newPubkey, std::string newSig)
+    CMasterNode(CService newAddr, CTxIn newVin, CPubKey newPubkey, std::string newSig)
     {
         addr = newAddr;
         vin = newVin;
@@ -2412,7 +2411,6 @@ public:
     bool SetKey(std::string strSecret, std::string& errorMessage, CKey& key, CPubKey& pubkey);
     bool SignMessage(std::string strMessage, std::string& errorMessage, std::string& strBase64, CKey key);
     bool VerifyMessage(CPubKey pubkey, std::string& strSign, std::string strMessage, std::string& errorMessage);
-
 };
 
 
@@ -2449,7 +2447,7 @@ public:
     CScript collateralPubKey;
 
     CTxIn vinMasterNode;
-    CScript pubkeyMasterNode;
+    CPubKey pubkeyMasterNode;
     std::string strMasterNodeSignature;
      
     bool isCapableMasterNode;
@@ -2561,7 +2559,7 @@ public:
     void ConnectToBestMasterNode(int depth=0);
     bool SubscribeToMasterNode();
 
-    bool GetMasterNodeVin(CTxIn& vin, CScript& pubkey);
+    bool GetMasterNodeVin(CTxIn& vin, CPubKey& pubkey, CKey& secretKey);
     void RelayDarkDeclareWinner();
     void RegisterAsMasterNode();
     bool GetLastValidBlockHash(uint256& hash);

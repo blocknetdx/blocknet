@@ -6,6 +6,7 @@
 #include "db.h"
 #include "net.h"
 #include "init.h"
+#include "key.h"
 #include "addrman.h"
 #include "ui_interface.h"
 #include "script.h"
@@ -1938,7 +1939,7 @@ void RelayDarkSendStatus(const int newState, const int newEntriesCount, const in
     }
 }
 
-void RelayDarkSendElectionEntry(const CTxIn vin, const CService addr, const std::string strAddrSignature, const CScript pubkey, const int count, const int current)
+void RelayDarkSendElectionEntry(const CTxIn vin, const CService addr, const std::string strAddrSignature, const CPubKey pubkey, const int count, const int current)
 {
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
