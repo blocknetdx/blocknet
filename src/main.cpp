@@ -6010,11 +6010,9 @@ bool CDarkSendPool::SubscribeToMasterNode()
 void CDarkSendPool::RegisterAsMasterNode()
 {
     if(!fMasterNode) return;
-    printf("RegisterAsMasterNode\n");
 
     // Choose coins to use
     CService addr;
-    printf(" addr %s!\n", strMasterNodeAddr.c_str());
 
     if(strMasterNodeAddr.empty()) {
         if(!GetLocal(addr)) return;
@@ -6023,6 +6021,10 @@ void CDarkSendPool::RegisterAsMasterNode()
     }
 
     if(isCapableMasterNode == MASTERNODE_NOT_PROCESSED) {
+        if(pwalletMain->IsLocked()){
+            return;
+        }
+
         std::string errorMessage;
         vinMasterNode = CTxIn();
         pubkeyMasterNode = CScript();

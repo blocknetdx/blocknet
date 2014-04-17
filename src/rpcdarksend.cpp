@@ -66,13 +66,14 @@ Value darksendsub(const Array& params, bool fHelp)
 Value masternode(const Array& params, bool fHelp)
 {
     string strCommand;
-    if (params.size() == 1)
+    if (params.size() >= 1)
         strCommand = params[0].get_str();
-    if (fHelp || params.size() != 1 ||
+
+    if (fHelp  ||
         (strCommand != "start" && strCommand != "stop" && strCommand != "list" && strCommand != "count" 
             && strCommand != "debug" && strCommand != "create" && strCommand != "current"))
         throw runtime_error(
-            "masternode <start|stop|list|count|debug|create|current>\n");
+            "masternode <start|stop|list|count|debug|create|current> passphrase\n");
 
     if (strCommand == "stop")
     {
@@ -91,9 +92,35 @@ Value masternode(const Array& params, bool fHelp)
 
     if (strCommand == "count") return (int)darkSendMasterNodes.size();
 
+    if (strCommand == "start")
+    {
+        if(pwalletMain->IsLocked()) {
+            SecureString strWalletPass;
+            strWalletPass.reserve(100);
+
+            if (params.size() == 2){
+                strWalletPass = params[1].get_str().c_str();
+            } else {
+                throw runtime_error(
+                    "Your wallet is locked, passphrase is required\n");
+            }
+            
+            if(!pwalletMain->Unlock(strWalletPass)){
+                return "incorrect passphrase";
+            }
+        }
+
+        darkSendPool.RegisterAsMasterNode();
+        if(darkSendPool.isCapableMasterNode == MASTERNODE_IS_CAPABLE) return "successfully started masternode";
+        if(darkSendPool.isCapableMasterNode == MASTERNODE_NOT_CAPABLE) return "not capable masternode";
+
+        pwalletMain->Lock();
+    }
+
     if (strCommand == "debug")
     {
-        if(darkSendPool.isCapableMasterNode) return "is masternode";
+        if(darkSendPool.isCapableMasterNode == MASTERNODE_IS_CAPABLE) return "successfully started masternode";
+        if(darkSendPool.isCapableMasterNode == MASTERNODE_NOT_CAPABLE) return "not capable masternode";
 
         CTxIn vin = CTxIn();
         CPubKey pubkey = CScript();
