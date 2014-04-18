@@ -3981,6 +3981,10 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             darkSendMasterNodes.push_back(mn);
 
             RelayDarkSendElectionEntry(vin, addr, vchSig, sigTime, pubkey, count, current);
+        } else {
+            printf("Rejected masternode entry\n");
+            // if caught up on blocks, then do this:
+            //pfrom->Misbehaving(20);
         }
     }
 
@@ -4919,8 +4923,8 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
                     // or other transactions in the memory pool.
                     if (!mempool.mapTx.count(txin.prevout.hash))
                     {
-                        printf("ERROR: mempool transaction missing input\n");
-                        if (fDebug) assert("mempool transaction missing input" == 0);
+                        printf("ERROR: mempool transaction missing input %s\n", txin.prevout.hash.ToString().c_str());
+                        if (!fTestNet && fDebug) assert("mempool transaction missing input" == 0);
                         fMissingInputs = true;
                         if (porphan)
                             vOrphan.pop_back();
@@ -5643,6 +5647,9 @@ void CDarkSendPool::CheckTimeout(){
         ChargeFees();
         SetNull();
         //add my transactions to the new session
+
+        UpdateState(POOL_STATUS_ERROR);
+        lastMessage = "Signing timed out, please resubmit";
     }
 }
 

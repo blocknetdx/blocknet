@@ -36,7 +36,7 @@ Value darksend(const Array& params, bool fHelp)
     if (strError != "")
         throw JSONRPCError(RPC_WALLET_ERROR, strError);
 
-    return "";
+    return darkSendPool.lastMessage;
 }
 
 Value getpoolinfo(const Array& params, bool fHelp)
