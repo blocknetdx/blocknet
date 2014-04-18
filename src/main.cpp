@@ -5475,7 +5475,7 @@ void CDarkSendPool::SetNull(){
 void CDarkSendPool::SetCollateralAddress(std::string strAddress){
     CBitcoinAddress address;
     if (!address.SetString(strAddress))
-        printf("Invalid DarkSend collateral address\n");
+        printf("CDarkSendPool::SetCollateralAddress - Invalid DarkSend collateral address\n");
 
     collateralPubKey.SetDestination(address.Get());
 }
@@ -5591,7 +5591,7 @@ void CDarkSendPool::Check()
     if((state == POOL_STATUS_TRANSMISSION && fMasterNode) || (state == POOL_STATUS_SIGNING && completedTransaction) ) {
         printf("CDarkSendPool::Check() -- COMPLETED -- RESETTING \n");
         SetNull();
-        RelayDarkSendStatus(darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);    
+        if(fMasterNode) RelayDarkSendStatus(darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);    
         pwalletMain->Lock();
     }
 
@@ -5633,13 +5633,13 @@ void CDarkSendPool::CheckTimeout(){
     // catching hanging sessions
     if(!fMasterNode) {
         if(state == POOL_STATUS_TRANSMISSION) {
-            printf("CDarkSendPool::Check() -- SESSION COMPLETED -- CHECKING\n");
+            if(fDebug) printf("CDarkSendPool::Check() -- SESSION COMPLETED -- CHECKING\n");
             Check();
         }        
     }
 
     if(state == POOL_STATUS_SIGNING && GetTimeMillis()-lastTimeChanged >= 10000 ) {
-        printf("CDarkSendPool::Check() -- SESSION TIMED OUT -- RESETTING\n");
+        if(fDebug) printf("CDarkSendPool::Check() -- SESSION TIMED OUT -- RESETTING\n");
         ChargeFees();
         SetNull();
         //add my transactions to the new session
@@ -5790,7 +5790,6 @@ void CDarkSendPool::SendMoney(const CTransaction& collateral, CTxIn& in, CTxOut&
     }
 
     printf("CDarkSendPool::SendMoney() - Added transaction to pool.\n");
-
     if(fDebug){
         printf("CDarkSendPool::SendMoney() -- NEW INPUT -- adding %s\n", in.ToString().c_str());
     }
@@ -5932,7 +5931,7 @@ void CDarkSendPool::ConnectToBestMasterNode(int depth){
     printf("winner %d\n", winner);
 
     if(winner >= 0) {
-        printf("Connecting to masternode at %s\n", darkSendMasterNodes[winner].addr.ToString().c_str());
+        printf("CDarkSendPool::ConnectToBestMasterNode - Connecting to masternode at %s\n", darkSendMasterNodes[winner].addr.ToString().c_str());
         if(ConnectNode((CAddress)darkSendMasterNodes[winner].addr, NULL, true)){
             masterNodeAddr = darkSendMasterNodes[winner].addr.ToString();
             UpdateState(POOL_STATUS_ACCEPTING_ENTRIES);
@@ -5946,13 +5945,13 @@ void CDarkSendPool::ConnectToBestMasterNode(int depth){
             } else {
                 UpdateState(POOL_STATUS_ERROR);
                 lastMessage = "No valid MasterNode";
-                printf("ERROR: %s\n", lastMessage.c_str());
+                printf("CDarkSendPool::ConnectToBestMasterNode - ERROR: %s\n", lastMessage.c_str());
             }
         }
     } else {
         UpdateState(POOL_STATUS_ERROR);
         lastMessage = "No valid MasterNode";
-        printf("ERROR: %s\n", lastMessage.c_str());
+        printf("CDarkSendPool::ConnectToBestMasterNode - ERROR: %s\n", lastMessage.c_str());
     }
 
     //if couldn't connect, disable that one and try next
@@ -5966,7 +5965,7 @@ bool CDarkSendPool::GetMasterNodeVin(CTxIn& vin, CPubKey& pubkey, CKey& secretKe
     // try once before we try to denominate
     if (!pwalletMain->SelectCoinsExactOutput(1000*COIN, vin, nValueIn, pubScript, false, NULL))
     {
-        printf("I'm not a capable masternode\n");
+        if(fDebug) printf("CDarkSendPool::GetMasterNodeVin - I'm not a capable masternode\n");
         return false;
     }
 
@@ -5976,12 +5975,12 @@ bool CDarkSendPool::GetMasterNodeVin(CTxIn& vin, CPubKey& pubkey, CKey& secretKe
 
     CKeyID keyID;
     if (!address2.GetKeyID(keyID)) {
-        printf("Address does not refer to a key");
+        printf("CDarkSendPool::GetMasterNodeVin - Address does not refer to a key");
         return false;
     }
 
     if (!pwalletMain->GetKey(keyID, secretKey)) {
-        printf ("Private key for address is not known");
+        printf ("CDarkSendPool::GetMasterNodeVin - Private key for address is not known");
         return false;
     }
 
@@ -6038,25 +6037,25 @@ void CDarkSendPool::RegisterAsMasterNode()
                 std::string strMessage = addr.ToString() + boost::lexical_cast<std::string>(masterNodeSignatureTime);
 
                 if(!darkSendSigner.SignMessage(strMessage, errorMessage, vchMasterNodeSignature, vchSecret)) {
-                    printf("Sign message failed");
+                    printf("CDarkSendPool::RegisterAsMasterNode() - Sign message failed");
                     return;
                 }
 
                 if(!darkSendSigner.VerifyMessage(pubkeyMasterNode, vchMasterNodeSignature, strMessage, errorMessage)) {
-                    printf("Verify message failed");
+                    printf("CDarkSendPool::RegisterAsMasterNode() - Verify message failed");
                     return;
                 }
 
-                printf("Is capable master node!\n");
+                printf("CDarkSendPool::RegisterAsMasterNode() - Is capable master node!\n");
                 isCapableMasterNode = MASTERNODE_IS_CAPABLE;
 
                 pwalletMain->LockCoin(vinMasterNode.prevout);
-                printf("Adding myself to masternode list %s - %s\n", addr.ToString().c_str(), vinMasterNode.ToString().c_str());
+                printf("CDarkSendPool::RegisterAsMasterNode() - Adding myself to masternode list %s - %s\n", addr.ToString().c_str(), vinMasterNode.ToString().c_str());
                 CMasterNode mn(addr, vinMasterNode, pubkeyMasterNode, vchMasterNodeSignature, masterNodeSignatureTime);
                 mn.UpdateLastSeen();
                 darkSendMasterNodes.push_back(mn);
 
-                printf("Masternode input = %s\n", vinMasterNode.ToString().c_str());
+                printf("CDarkSendPool::RegisterAsMasterNode() - Masternode input = %s\n", vinMasterNode.ToString().c_str());
             }
         }
 
@@ -6094,7 +6093,7 @@ bool CDarkSendPool::GetLastValidBlockHash(uint256& hash)
 
 void CDarkSendPool::NewBlock()
 {
-    printf("CDarkSendPool::NewBlock \n");
+    if(fDebug) printf("CDarkSendPool::NewBlock \n");
 
     if(fMasterNode){
         uint256 n1 = 0;
@@ -6114,7 +6113,7 @@ void CDarkSendPool::NewBlock()
         if(n1 == masterNodeBlockHash) return;
 
         if(IsConnectedToMasterNode()){
-            printf("Disconnecting from old masternode\n");
+            printf("CDarkSendPool::NewBlock - Disconnecting from old masternode\n");
             DisconnectMasterNode();
         }
 
@@ -6123,7 +6122,7 @@ void CDarkSendPool::NewBlock()
 
         bool resetEntries=false;
         if(myEntries.size() > 0) {
-            printf("ERROR: You have existing pending payments and a new masternode was detected. You must resubmit them.");
+            printf("CDarkSendPool::NewBlock - ERROR: You have existing pending payments and a new masternode was detected. You must resubmit them.");
             resetEntries = true;
         }
 
@@ -6156,12 +6155,12 @@ void CDarkSendPool::CompletedTransaction(bool error, std::string lastMessageNew)
 {
     if(fMasterNode) return;
 
-    printf("CompletedTransaction\n");
+    if(fDebug) printf("CompletedTransaction\n");
     if(error){
-        printf("CompletedTransaction -- error \n");
+        if(fDebug) printf("CompletedTransaction -- error \n");
         UpdateState(POOL_STATUS_ERROR);
     } else {
-        printf("CompletedTransaction -- success \n");
+        if(fDebug) printf("CompletedTransaction -- success \n");
         UpdateState(POOL_STATUS_SUCCESS);
     }
     lastMessage = lastMessageNew;
@@ -6206,31 +6205,25 @@ int CDarkSendPool::GetCurrentMasterNode()
     int winner = -1;
 
     BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
-        printf(" -- check %d\n", i);
         mn.Check();
         if(!mn.IsEnabled()) continue;
-        printf(" -- check2 %d\n", i);
 
         uint256 n = mn.CalculateScore();
         unsigned int n2 = 0;
         memcpy(&n2, &n, sizeof(n2));
-        // GetTimeMillis()-mv.lastSeen <= 60000
         if(n2 > score){
-            printf("winner %d - %u\n", i, n2);
             score = n2;
             winner = i;
         }
         i++;
     }
 
-    //printf("!winner %d\n", winner);
-
     return winner;
 }
 
 void CMasterNode::Check()
 {
-    if(!UpdatedWithin(120000)){
+    if(!UpdatedWithin(1000*50*60)){
         enabled = 2;
         return;
     }
@@ -6241,8 +6234,11 @@ void CMasterNode::Check()
     tx.vin.push_back(vin);
     tx.vout.push_back(vout);
 
-    if(!tx.AcceptableInputs(state, true))        
+    if(!tx.AcceptableInputs(state, true)) {
         enabled = 3;
+    }
+
+    enabled = 1; // OK
 }
 
 bool CDarkSendSigner::SetKey(std::string strSecret, std::string& errorMessage, CKey& key, CPubKey& pubkey){
@@ -6303,7 +6299,7 @@ void ThreadCheckDarkSendPool()
         //printf("ThreadCheckDarkSendPool::check timeout\n");
         darkSendPool.CheckTimeout();
         
-        if(c == 25){
+        if(c == 25*60){
             darkSendPool.RegisterAsMasterNode();
             c = 0;
         }

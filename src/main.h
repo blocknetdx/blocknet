@@ -2437,7 +2437,7 @@ static const int64 POOL_FEE_AMOUNT = 0.1*COIN;
 class CDarkSendPool
 {
 public:
-    static const int MIN_PEER_PROTO_VERSION = 70013;
+    static const int MIN_PEER_PROTO_VERSION = 70014;
 
     std::vector<CDarkSendEntry> myEntries;
     std::vector<CDarkSendEntry> entries;
