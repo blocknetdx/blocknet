@@ -30,6 +30,7 @@ class CNode;
 class CDarkSendPool;
 class CDarkSendSigner;
 class CMasterNode;
+class CMasterNodeVote;
 class CBitcoinAddress;
 
 struct CBlockIndexWorkComparator;
@@ -1357,6 +1358,7 @@ class CBlock : public CBlockHeader
 public:
     // network and disk
     std::vector<CTransaction> vtx;
+    std::vector<CMasterNodeVote> vmn;
 
     // memory only
     mutable std::vector<uint256> vMerkleTree;
@@ -1376,6 +1378,8 @@ public:
     (
         READWRITE(*(CBlockHeader*)this);
         READWRITE(vtx);
+        if(nVersion >= 2) 
+            READWRITE(vmn);
     )
 
     void SetNull()
@@ -2308,6 +2312,57 @@ public:
 };
 
 
+class CMasterNodeVote
+{   
+protected:
+    int votes;
+    CPubKey pubkey;
+    int nVersion;
+ 
+public:
+    int64 blockHeight;
+    static const int CURRENT_VERSION=1;
+
+    CMasterNodeVote() {
+        SetNull();
+    }
+
+    void Set(CPubKey pubKeyIn, int64 blockHeightIn)
+    {
+        pubkey = pubKeyIn;
+        blockHeight = blockHeightIn;
+        votes = 1;
+    }
+
+    void SetNull()
+    {
+        nVersion = CTransaction::CURRENT_VERSION;
+        votes = 0;
+        pubkey = CPubKey();
+        blockHeight = 0;
+    }
+
+    void Vote(bool Agreed)
+    { 
+        if(Agreed) votes += 1; 
+        if(!Agreed) votes -= 1; 
+    }
+
+    int GetVote()
+    { 
+        return votes;
+    }
+
+    IMPLEMENT_SERIALIZE
+    (
+        nVersion = this->nVersion;
+        READWRITE(blockHeight);
+        READWRITE(pubkey);
+        READWRITE(votes);
+    )
+
+
+};
 
 class CMasterNode
 {
