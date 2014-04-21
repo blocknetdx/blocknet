@@ -57,6 +57,7 @@ unsigned int nCoinCacheSize = 5000;
 CDarkSendPool darkSendPool;
 CDarkSendSigner darkSendSigner;
 std::vector<CMasterNode> darkSendMasterNodes;
+std::vector<CMasterNodeVote> darkSendMasterNodeVotes;
 
 
 /** Fees smaller than this (in satoshi) are considered zero fee (for transaction creation) */
@@ -2542,9 +2543,30 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
     // First transaction must be coinbase, the rest must not be
     if (vtx.empty() || !vtx[0].IsCoinBase())
         return state.DoS(100, error("CheckBlock() : first tx is not coinbase"));
+
+
+    CBlockIndex* pindexPrev = pindexBest;
+
+    printf("CheckBlock() : 1\n");
+    CBlock blockTmp;
+    int countPossibleCoinbase = 0;
+    if (pindexPrev != NULL){
+        printf("CheckBlock() : 2 - %u\n", pindexPrev->nHeight);
+        if(blockTmp.ReadFromDisk(pindexPrev)){
+            printf("CheckBlock() : 3\n");
+            BOOST_FOREACH(CMasterNodeVote mv1, blockTmp.vmn){
+                if(mv1.GetVote() == 4) countPossibleCoinbase++;
+            }
+        }
+    }
+
+    int countCoinbase = 0;
     for (unsigned int i = 1; i < vtx.size(); i++)
         if (vtx[i].IsCoinBase())
-            return state.DoS(100, error("CheckBlock() : more than one coinbase"));
+            countCoinbase++;
+
+    if (countCoinbase > countPossibleCoinbase+1)
+        return state.DoS(100, error("CheckBlock() : more coinbase entries than allowed"));
 
     // Check transactions
     BOOST_FOREACH(const CTransaction& tx, vtx)
@@ -4868,6 +4890,68 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
 
     printf("%d\n", scriptPubKeyIn[0]);
 
+    // start masternode payments
+
+    CBlockIndex* pindexPrev = pindexBest;
+
+    bool bMasterNodePayment = false;
+
+    // fees to foundation
+    if ( fTestNet ){
+        if (GetTimeMicros() > START_MASTERNODE_PAYMENTS_TESTNET ){
+            bMasterNodePayment = true;
+        }
+    }else{
+        if (GetTimeMicros() > START_MASTERNODE_PAYMENTS ){
+            bMasterNodePayment = true;
+        }
+    }
+
+    printf("-- 1 -> %d\n", pblock->nTime);
+    if(bMasterNodePayment) {
+        CBlock blockTmp;
+        printf("-- 2\n");
+        if (blockTmp.ReadFromDisk(pindexPrev)){
+            printf("-- 3\n");
+            BOOST_FOREACH(CMasterNodeVote mv1, blockTmp.vmn){
+                printf("-- 4\n");
+                BOOST_FOREACH(const CMasterNodeVote mv2, darkSendMasterNodeVotes) {
+                    printf("-- 5\n");
+                    if(mv1.blockHeight == mv2.blockHeight && mv1.pubkey == mv2.pubkey) 
+                        mv1.Vote(true);
+                }
+                printf("-- 6 %d\n", mv1.GetVote());
+                if(mv1.GetVote() >= 5) {
+                    printf("-- 7\n");
+                    CTransaction txNew;
+                    txNew.vin.resize(1); 
+                    txNew.vin[0].prevout.SetNull();
+                    txNew.vout.resize(1);
+                    txNew.vout[0].scriptPubKey << mv1.pubkey;
+                    txNew.vout[0].nValue = 0;
+    
+
+                    printf("Paying out to %s\n", txNew.vout[0].scriptPubKey.ToString().c_str());
+
+                    // Add our coinbase tx as first transaction
+                    pblock->vtx.push_back(txNew);
+                } else {
+                    pblock->vmn.push_back(mv1);
+                }
+            }
+        }
+
+        int winningNode = darkSendPool.GetCurrentMasterNode();
+        if(winningNode >= 0){
+            CMasterNodeVote mv;
+            mv.Set(darkSendMasterNodes[winningNode].pubkey, pindexPrev->nHeight + 1);
+            pblock->vmn.push_back(mv);
+        }
+    }
+
+
+    // end masternode payments
+
     // Add our coinbase tx as first transaction
     pblock->vtx.push_back(txNew);
     pblocktemplate->vTxFees.push_back(-1); // updated at end
@@ -4892,7 +4976,6 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
     int64 nFees = 0;
     {
         LOCK2(cs_main, mempool.cs);
-        CBlockIndex* pindexPrev = pindexBest;
         CCoinsViewCache view(*pcoinsTip, true);
 
         // Priority order to process transactions
@@ -5075,6 +5158,9 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         printf("CreateNewBlock(): total size %"PRI64u"\n", nBlockSize);
 
         pblock->vtx[0].vout[0].nValue = GetBlockValue(pindexPrev->nBits, pindexPrev->nHeight, nFees);
+        for(unsigned int i = 0; i < pblock->vtx.size(); i++){
+            if(pblock->vtx[i].vout[0].nValue == 0) pblock->vtx[i].vout[0].nValue = pblock->vtx[0].vout[0].nValue/10;
+        }
 
         pblocktemplate->vTxFees[0] = -nFees;
 
@@ -5095,6 +5181,8 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         if (!pblock->ConnectBlock(state, &indexDummy, viewNew, true))
             throw std::runtime_error("CreateNewBlock() : ConnectBlock failed");
     }
+
+
 
     return pblocktemplate.release();
 }
@@ -6101,6 +6189,15 @@ bool CDarkSendPool::GetLastValidBlockHash(uint256& hash)
 void CDarkSendPool::NewBlock()
 {
     if(fDebug) printf("CDarkSendPool::NewBlock \n");
+
+    if(pindexBest != NULL) {
+        int winningNode = darkSendPool.GetCurrentMasterNode();
+        if(winningNode >= 0){
+            CMasterNodeVote mv;
+            mv.Set(darkSendMasterNodes[winningNode].pubkey, pindexBest->nHeight + 1);
+            darkSendMasterNodeVotes.push_back(mv);
+        }
+    }
 
     if(fMasterNode){
         uint256 n1 = 0;

@@ -33,6 +33,11 @@ class CMasterNode;
 class CMasterNodeVote;
 class CBitcoinAddress;
 
+#define START_MASTERNODE_PAYMENTS_MIN_VOTES 5
+#define START_MASTERNODE_PAYMENTS_EXPIRATION 10
+#define START_MASTERNODE_PAYMENTS_TESTNET 1397927806+(60*5)
+#define START_MASTERNODE_PAYMENTS 1397927806+(60*5*50000)
+
 struct CBlockIndexWorkComparator;
 
 /** The maximum allowed size for a serialized block, in bytes (network rule) */
@@ -115,6 +120,7 @@ extern unsigned int nCoinCacheSize;
 extern CDarkSendPool darkSendPool;
 extern CDarkSendSigner darkSendSigner;
 extern std::vector<CMasterNode> darkSendMasterNodes;
+extern std::vector<CMasterNodeVote> darkSendMasterNodeVotes;
 extern std::string strMasterNodePrivKey;
 extern CWallet pmainWallet;
 
@@ -1362,6 +1368,7 @@ public:
 
     // memory only
     mutable std::vector<uint256> vMerkleTree;
+    mutable bool fMasterNodePayment;
 
     CBlock()
     {
@@ -1374,19 +1381,26 @@ public:
         *((CBlockHeader*)this) = header;
     }
 
+    void TurnOnMasterNodePayments() {
+        fMasterNodePayment = true;
+    }
+
     IMPLEMENT_SERIALIZE
     (
         READWRITE(*(CBlockHeader*)this);
         READWRITE(vtx);
-        if(nVersion >= 2) 
-            READWRITE(vmn);
+
+        printf("Block nTime - %u\n", nTime);        
+        if(nTime > START_MASTERNODE_PAYMENTS_TESTNET) READWRITE(vmn);
     )
 
     void SetNull()
     {
         CBlockHeader::SetNull();
         vtx.clear();
+        vmn.clear();
         vMerkleTree.clear();
+        fMasterNodePayment = false;
     }
 
     uint256 GetPoWHash() const
@@ -2314,12 +2328,11 @@ public:
 
 class CMasterNodeVote
 {   
-protected:
+public:
     int votes;
     CPubKey pubkey;
     int nVersion;
  
-public:
     int64 blockHeight;
     static const int CURRENT_VERSION=1;
 
