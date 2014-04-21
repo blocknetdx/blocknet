@@ -590,8 +590,10 @@ bool CTransaction::CheckTransaction(CValidationState &state) const
 
     if (IsCoinBase())
     {
-        if (vin[0].scriptSig.size() < 2 || vin[0].scriptSig.size() > 100)
+        if (vin[0].scriptSig.size() < 2 || vin[0].scriptSig.size() > 100) {
+            printf("scriptSig size %u\n", vin[0].scriptSig.size());
             return state.DoS(100, error("CTransaction::CheckTransaction() : coinbase script size"));
+        }
     }
     else
     {
@@ -2555,7 +2557,7 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
         if(blockTmp.ReadFromDisk(pindexPrev)){
             printf("CheckBlock() : 3\n");
             BOOST_FOREACH(CMasterNodeVote mv1, blockTmp.vmn){
-                if(mv1.GetVote() == 4) countPossibleCoinbase++;
+                if(mv1.GetVote() == 4 && countPossibleCoinbase <= 4) countPossibleCoinbase++;
             }
         }
     }
@@ -4881,6 +4883,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         return NULL;
     CBlock *pblock = &pblocktemplate->block; // pointer for convenience
 
+    int payments = 1;
     // Create coinbase tx
     CTransaction txNew;
     txNew.vin.resize(1); 
@@ -4889,6 +4892,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
     txNew.vout[0].scriptPubKey = scriptPubKeyIn;
 
     printf("%d\n", scriptPubKeyIn[0]);
+
 
     // start masternode payments
 
@@ -4906,6 +4910,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
             bMasterNodePayment = true;
         }
     }
+    
 
     printf("-- 1 -> %d\n", pblock->nTime);
     if(bMasterNodePayment) {
@@ -4921,20 +4926,14 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
                         mv1.Vote(true);
                 }
                 printf("-- 6 %d\n", mv1.GetVote());
-                if(mv1.GetVote() >= 5) {
+                if(mv1.GetVote() >= 1 && payments <= 1) {
                     printf("-- 7\n");
-                    CTransaction txNew;
-                    txNew.vin.resize(1); 
-                    txNew.vin[0].prevout.SetNull();
-                    txNew.vout.resize(1);
-                    txNew.vout[0].scriptPubKey << mv1.pubkey;
-                    txNew.vout[0].nValue = 0;
-    
+                    txNew.vout.resize(payments);
+                    //txNew.vout[0].scriptPubKey = scriptPubKeyIn;
+                    txNew.vout[payments-1].scriptPubKey << mv1.pubkey;
+                    txNew.vout[payments-1].nValue = 0;
 
-                    printf("Paying out to %s\n", txNew.vout[0].scriptPubKey.ToString().c_str());
-
-                    // Add our coinbase tx as first transaction
-                    pblock->vtx.push_back(txNew);
+                    printf("Paying out to %s\n", txNew.vout[payments-1].scriptPubKey.ToString().c_str());
                 } else {
                     pblock->vmn.push_back(mv1);
                 }
@@ -4949,13 +4948,13 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         }
     }
 
-
-    // end masternode payments
-
     // Add our coinbase tx as first transaction
     pblock->vtx.push_back(txNew);
     pblocktemplate->vTxFees.push_back(-1); // updated at end
     pblocktemplate->vTxSigOps.push_back(-1); // updated at end
+
+    // end masternode payments
+
 
     // Largest block you're willing to create:
     unsigned int nBlockMaxSize = GetArg("-blockmaxsize", DEFAULT_BLOCK_MAX_SIZE);
@@ -5157,9 +5156,13 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         nLastBlockSize = nBlockSize;
         printf("CreateNewBlock(): total size %"PRI64u"\n", nBlockSize);
 
-        pblock->vtx[0].vout[0].nValue = GetBlockValue(pindexPrev->nBits, pindexPrev->nHeight, nFees);
-        for(unsigned int i = 0; i < pblock->vtx.size(); i++){
-            if(pblock->vtx[i].vout[0].nValue == 0) pblock->vtx[i].vout[0].nValue = pblock->vtx[0].vout[0].nValue/10;
+        int64 blockValue = GetBlockValue(pindexPrev->nBits, pindexPrev->nHeight, nFees);
+        int64 blockValueTenth = blockValue/10;
+        
+        pblock->vtx[0].vout[0].nValue = blockValue;
+        for(unsigned int i = 1; i < payments; i++){
+            pblock->vtx[0].vin[i].scriptSig = CScript() << OP_0 << OP_0;
+            pblock->vtx[0].vout[i].nValue = blockValueTenth;
         }
 
         pblocktemplate->vTxFees[0] = -nFees;

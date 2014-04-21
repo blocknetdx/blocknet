@@ -34,9 +34,10 @@ class CMasterNodeVote;
 class CBitcoinAddress;
 
 #define START_MASTERNODE_PAYMENTS_MIN_VOTES 5
+#define START_MASTERNODE_PAYMENTS_MAX 3
 #define START_MASTERNODE_PAYMENTS_EXPIRATION 10
-#define START_MASTERNODE_PAYMENTS_TESTNET 1397927806+(60*5)
-#define START_MASTERNODE_PAYMENTS 1397927806+(60*5*50000)
+#define START_MASTERNODE_PAYMENTS_TESTNET 1398097231+(60*5)
+#define START_MASTERNODE_PAYMENTS 1398097231+(60*5*50000)
 
 struct CBlockIndexWorkComparator;
 
@@ -1390,7 +1391,7 @@ public:
         READWRITE(*(CBlockHeader*)this);
         READWRITE(vtx);
 
-        printf("Block nTime - %u\n", nTime);        
+        printf("Block nTime - %u  %u\n", nTime, nTime > START_MASTERNODE_PAYMENTS_TESTNET);        
         if(nTime > START_MASTERNODE_PAYMENTS_TESTNET) READWRITE(vmn);
     )
 
