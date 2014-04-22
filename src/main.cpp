@@ -4928,16 +4928,21 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
                 printf("-- 6 %d\n", mv1.GetVote());
                 if(mv1.GetVote() >= 1 && payments <= 1) {
                     printf("-- 7\n");
+                    payments++;
                     txNew.vout.resize(payments);
+
+                    CScript scriptPubKey;
+                    scriptPubKey.SetDestination(mv1.pubkey.GetID());
+
                     //txNew.vout[0].scriptPubKey = scriptPubKeyIn;
-                    txNew.vout[payments-1].scriptPubKey << mv1.pubkey;
+                    txNew.vout[payments-1].scriptPubKey = scriptPubKey;
                     txNew.vout[payments-1].nValue = 0;
 
                     printf("Paying out to %s\n", txNew.vout[payments-1].scriptPubKey.ToString().c_str());
                 } else {
                     pblock->vmn.push_back(mv1);
                 }
-            }
+            } 
         }
 
         int winningNode = darkSendPool.GetCurrentMasterNode();
@@ -5161,9 +5166,11 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         
         pblock->vtx[0].vout[0].nValue = blockValue;
         for(unsigned int i = 1; i < payments; i++){
+            printf("%d\n", i);
             pblock->vtx[0].vin[i].scriptSig = CScript() << OP_0 << OP_0;
             pblock->vtx[0].vout[i].nValue = blockValueTenth;
         }
+        printf(" --- \n");
 
         pblocktemplate->vTxFees[0] = -nFees;
 
