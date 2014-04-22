@@ -2327,12 +2327,13 @@ public:
 
 class CMasterNodeVote
 {   
-    
 public:
     int votes;
     CScript pubkey;
+    uint160 hash;
     int nVersion;
- 
+    bool setPubkey;
+
     int64 blockHeight;
     static const int CURRENT_VERSION=1;
 
@@ -2342,7 +2343,7 @@ public:
 
     void Set(CPubKey& pubKeyIn, int64 blockHeightIn)
     {
-        pubkey.SetDestination(pubKeyIn.GetID());
+        hash = pubKeyIn.GetID();
         blockHeight = blockHeightIn;
         votes = 1;
     }
@@ -2353,6 +2354,7 @@ public:
         votes = 0;
         pubkey = CScript();
         blockHeight = 0;
+        setPubkey = true;
     }
 
     void Vote(bool Agreed)
@@ -2366,11 +2368,20 @@ public:
         return votes;
     }
 
+    CScript& GetPubKey()
+    {
+        if(!setPubkey){
+            pubkey.SetDestination((CKeyID)hash);
+            setPubkey = true;
+        }
+        return pubkey;
+    }
+
     IMPLEMENT_SERIALIZE
     (
         nVersion = this->nVersion;
         READWRITE(blockHeight);
-        READWRITE(pubkey);
+        READWRITE(hash);
         READWRITE(votes);
     )
 

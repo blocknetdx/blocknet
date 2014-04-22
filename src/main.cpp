@@ -2559,17 +2559,17 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
     if (pindexPrev != NULL){
         printf("CheckBlock() : 2 - %u\n", pindexPrev->nHeight);
         if(blockTmp.ReadFromDisk(pindexPrev)){
-            votingRecordsThisBlock = vmn.size();
+            votingRecordsThisBlock = vmn.size()-1;
             printf("CheckBlock() : 3\n");
             BOOST_FOREACH(CMasterNodeVote mv1, blockTmp.vmn){
                 if(mv1.GetVote() == START_MASTERNODE_PAYMENTS_MIN_VOTES-1 && foundMasterNodePaymentPrev < 2) {
                     for (unsigned int i = 1; i < vtx[0].vout.size(); i++)
-                        if(vtx[0].vout[i].nValue == masternodePaymentAmount && mv1.pubkey == vtx[0].vout[i].scriptPubKey)
+                        if(vtx[0].vout[i].nValue == masternodePaymentAmount && mv1.GetPubKey() == vtx[0].vout[i].scriptPubKey)
                             foundMasterNodePayment++;
                     foundMasterNodePaymentPrev++;
                 } else {
                     BOOST_FOREACH(CMasterNodeVote mv2, vmn){
-                        if(mv1.blockHeight == mv2.blockHeight && mv1.pubkey == mv2.pubkey){
+                        if((mv1.blockHeight == mv2.blockHeight && mv1.GetPubKey() == mv2.GetPubKey())){
                             matchingVoteRecords++;
                             if(mv1.GetVote() != mv2.GetVote() && mv1.GetVote()+1 != mv2.GetVote()) badVote++;
                         }
@@ -4949,11 +4949,11 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
             printf("-- 3\n");
             BOOST_FOREACH(CMasterNodeVote mv1, blockTmp.vmn){
                 printf("-- 4\n");
-                BOOST_FOREACH(const CMasterNodeVote mv2, darkSendMasterNodeVotes) {
+                BOOST_FOREACH(CMasterNodeVote mv2, darkSendMasterNodeVotes) {
                     printf("-- 5\n");
                     // vote if you agree with it, if you're the last vote you must vote yes to avoid the greedy voter exploit
                     // i.e: You only vote yes when you're not the one that is going to pay
-                    if((mv1.blockHeight == mv2.blockHeight && mv1.pubkey == mv2.pubkey) || mv1.GetVote() == START_MASTERNODE_PAYMENTS_MIN_VOTES-1) 
+                    if((mv1.blockHeight == mv2.blockHeight && mv1.GetPubKey() == mv2.GetPubKey()) || mv1.GetVote() == START_MASTERNODE_PAYMENTS_MIN_VOTES-1) 
                         mv1.Vote(true);
                 }
                 printf("-- 6 %d\n", mv1.GetVote());
@@ -4963,7 +4963,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
                     txNew.vout.resize(payments);
 
                     //txNew.vout[0].scriptPubKey = scriptPubKeyIn;
-                    txNew.vout[payments-1].scriptPubKey = mv1.pubkey;
+                    txNew.vout[payments-1].scriptPubKey = mv1.GetPubKey();
                     txNew.vout[payments-1].nValue = 0;
 
                     printf("Paying out to %s\n", txNew.vout[payments-1].scriptPubKey.ToString().c_str());
