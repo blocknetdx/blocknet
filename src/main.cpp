@@ -5164,12 +5164,12 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         int64 blockValue = GetBlockValue(pindexPrev->nBits, pindexPrev->nHeight, nFees);
         int64 blockValueTenth = blockValue/10;
         
-        pblock->vtx[0].vout[0].nValue = blockValue;
         for(unsigned int i = 1; i < payments; i++){
             printf("%d\n", i);
-            pblock->vtx[0].vin[i].scriptSig = CScript() << OP_0 << OP_0;
             pblock->vtx[0].vout[i].nValue = blockValueTenth;
+            blockValue -= blockValueTenth;
         }
+        pblock->vtx[0].vout[0].nValue = blockValue;
         printf(" --- \n");
 
         pblocktemplate->vTxFees[0] = -nFees;
