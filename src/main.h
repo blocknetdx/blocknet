@@ -15,7 +15,6 @@
 #include <list>
 #include <algorithm>
 
-
 //#define static_assert(numeric_limits<double>::max_exponent() > 8, "your double sux");
 
 class CWallet;
@@ -2326,12 +2325,12 @@ public:
     )
 };
 
-
 class CMasterNodeVote
 {   
+    
 public:
     int votes;
-    CPubKey pubkey;
+    CScript pubkey;
     int nVersion;
  
     int64 blockHeight;
@@ -2341,9 +2340,9 @@ public:
         SetNull();
     }
 
-    void Set(CPubKey pubKeyIn, int64 blockHeightIn)
+    void Set(CPubKey& pubKeyIn, int64 blockHeightIn)
     {
-        pubkey = pubKeyIn;
+        pubkey.SetDestination(pubKeyIn.GetID());
         blockHeight = blockHeightIn;
         votes = 1;
     }
@@ -2352,7 +2351,7 @@ public:
     {
         nVersion = CTransaction::CURRENT_VERSION;
         votes = 0;
-        pubkey = CPubKey();
+        pubkey = CScript();
         blockHeight = 0;
     }
 

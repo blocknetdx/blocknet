@@ -590,10 +590,8 @@ bool CTransaction::CheckTransaction(CValidationState &state) const
 
     if (IsCoinBase())
     {
-        if (vin[0].scriptSig.size() < 2 || vin[0].scriptSig.size() > 100) {
-            printf("scriptSig size %u\n", vin[0].scriptSig.size());
+        if (vin[0].scriptSig.size() < 2 || vin[0].scriptSig.size() > 100)
             return state.DoS(100, error("CTransaction::CheckTransaction() : coinbase script size"));
-        }
     }
     else
     {
@@ -2551,24 +2549,58 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
 
     printf("CheckBlock() : 1\n");
     CBlock blockTmp;
-    int countPossibleCoinbase = 0;
+    int votingRecordsThisBlock = 0;
+    int matchingVoteRecords = 0;
+    int badVote = 0;
+    int foundMasterNodePaymentPrev = 0;
+    int foundMasterNodePayment = 0;
+    int64 masternodePaymentAmount = vtx[0].GetValueOut()/10;
+    
     if (pindexPrev != NULL){
         printf("CheckBlock() : 2 - %u\n", pindexPrev->nHeight);
         if(blockTmp.ReadFromDisk(pindexPrev)){
+            votingRecordsThisBlock = vmn.size();
             printf("CheckBlock() : 3\n");
             BOOST_FOREACH(CMasterNodeVote mv1, blockTmp.vmn){
-                if(mv1.GetVote() == 4 && countPossibleCoinbase <= 4) countPossibleCoinbase++;
+                if(mv1.GetVote() == START_MASTERNODE_PAYMENTS_MIN_VOTES-1 && foundMasterNodePaymentPrev < 2) {
+                    for (unsigned int i = 1; i < vtx[0].vout.size(); i++)
+                        if(vtx[0].vout[i].nValue == masternodePaymentAmount && mv1.pubkey == vtx[0].vout[i].scriptPubKey)
+                            foundMasterNodePayment++;
+                    foundMasterNodePaymentPrev++;
+                } else {
+                    BOOST_FOREACH(CMasterNodeVote mv2, vmn){
+                        if(mv1.blockHeight == mv2.blockHeight && mv1.pubkey == mv2.pubkey){
+                            matchingVoteRecords++;
+                            if(mv1.GetVote() != mv2.GetVote() && mv1.GetVote()+1 != mv2.GetVote()) badVote++;
+                        }
+                    }
+                }
             }
+        }
+        
+
+        if(badVote!=0){
+            printf("CheckBlock() : Bad vote detected - %d!=0", badVote);
+            return state.DoS(100, error("CheckBlock() : Bad vote detected"));
+        }
+
+        if(foundMasterNodePayment!=foundMasterNodePaymentPrev){
+            printf("CheckBlock() : Required masternode payment missing - %d!=%d", foundMasterNodePayment, foundMasterNodePaymentPrev);
+            return state.DoS(100, error("CheckBlock() : Required masternode payment missing"));
+        }
+        if(matchingVoteRecords+foundMasterNodePayment!=votingRecordsThisBlock){
+            printf("CheckBlock() : Missing masternode votes - %d+%d!=%d", matchingVoteRecords, foundMasterNodePayment, votingRecordsThisBlock);
+            return state.DoS(100, error("CheckBlock() : Missing masternode votes"));
+        }
+        if(matchingVoteRecords+foundMasterNodePayment>START_MASTERNODE_PAYMENTS_EXPIRATION){
+            printf("CheckBlock() : Too many vote records found - %d+%d>%d", matchingVoteRecords,foundMasterNodePayment,START_MASTERNODE_PAYMENTS_EXPIRATION);
+            return state.DoS(100, error("CheckBlock() : Too many vote records found"));
         }
     }
 
-    int countCoinbase = 0;
     for (unsigned int i = 1; i < vtx.size(); i++)
         if (vtx[i].IsCoinBase())
-            countCoinbase++;
-
-    if (countCoinbase > countPossibleCoinbase+1)
-        return state.DoS(100, error("CheckBlock() : more coinbase entries than allowed"));
+            return state.DoS(100, error("CheckBlock() : more than one coinbase"));
 
     // Check transactions
     BOOST_FOREACH(const CTransaction& tx, vtx)
@@ -4911,31 +4943,27 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         }
     }
     
-
-    printf("-- 1 -> %d\n", pblock->nTime);
     if(bMasterNodePayment) {
         CBlock blockTmp;
-        printf("-- 2\n");
         if (blockTmp.ReadFromDisk(pindexPrev)){
             printf("-- 3\n");
             BOOST_FOREACH(CMasterNodeVote mv1, blockTmp.vmn){
                 printf("-- 4\n");
                 BOOST_FOREACH(const CMasterNodeVote mv2, darkSendMasterNodeVotes) {
                     printf("-- 5\n");
-                    if(mv1.blockHeight == mv2.blockHeight && mv1.pubkey == mv2.pubkey) 
+                    // vote if you agree with it, if you're the last vote you must vote yes to avoid the greedy voter exploit
+                    // i.e: You only vote yes when you're not the one that is going to pay
+                    if((mv1.blockHeight == mv2.blockHeight && mv1.pubkey == mv2.pubkey) || mv1.GetVote() == START_MASTERNODE_PAYMENTS_MIN_VOTES-1) 
                         mv1.Vote(true);
                 }
                 printf("-- 6 %d\n", mv1.GetVote());
-                if(mv1.GetVote() >= 1 && payments <= 1) {
+                if(mv1.GetVote() >= START_MASTERNODE_PAYMENTS_MIN_VOTES && payments < 2) {
                     printf("-- 7\n");
                     payments++;
                     txNew.vout.resize(payments);
 
-                    CScript scriptPubKey;
-                    scriptPubKey.SetDestination(mv1.pubkey.GetID());
-
                     //txNew.vout[0].scriptPubKey = scriptPubKeyIn;
-                    txNew.vout[payments-1].scriptPubKey = scriptPubKey;
+                    txNew.vout[payments-1].scriptPubKey = mv1.pubkey;
                     txNew.vout[payments-1].nValue = 0;
 
                     printf("Paying out to %s\n", txNew.vout[payments-1].scriptPubKey.ToString().c_str());
@@ -5164,13 +5192,12 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         int64 blockValue = GetBlockValue(pindexPrev->nBits, pindexPrev->nHeight, nFees);
         int64 blockValueTenth = blockValue/10;
         
-        for(unsigned int i = 1; i < payments; i++){
+        for(int i = 1; i < payments; i++){
             printf("%d\n", i);
             pblock->vtx[0].vout[i].nValue = blockValueTenth;
             blockValue -= blockValueTenth;
         }
         pblock->vtx[0].vout[0].nValue = blockValue;
-        printf(" --- \n");
 
         pblocktemplate->vTxFees[0] = -nFees;
 
