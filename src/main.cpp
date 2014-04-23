@@ -2549,7 +2549,7 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
 
     printf("CheckBlock() : 1\n");
     CBlock blockTmp;
-    int votingRecordsThisBlock = 0;
+    int votingRecordsBlockPrev = 0;
     int matchingVoteRecords = 0;
     int badVote = 0;
     int foundMasterNodePaymentPrev = 0;
@@ -2559,17 +2559,20 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
     if (pindexPrev != NULL){
         printf("CheckBlock() : 2 - %u\n", pindexPrev->nHeight);
         if(blockTmp.ReadFromDisk(pindexPrev)){
-            votingRecordsThisBlock = vmn.size()-1;
+            votingRecordsBlockPrev = blockTmp.vmn.size();
             printf("CheckBlock() : 3\n");
             BOOST_FOREACH(CMasterNodeVote mv1, blockTmp.vmn){
                 if(mv1.GetVote() == START_MASTERNODE_PAYMENTS_MIN_VOTES-1 && foundMasterNodePaymentPrev < 2) {
+                    printf("CheckBlock() : 4\n");
                     for (unsigned int i = 1; i < vtx[0].vout.size(); i++)
                         if(vtx[0].vout[i].nValue == masternodePaymentAmount && mv1.GetPubKey() == vtx[0].vout[i].scriptPubKey)
                             foundMasterNodePayment++;
                     foundMasterNodePaymentPrev++;
                 } else {
                     BOOST_FOREACH(CMasterNodeVote mv2, vmn){
+                        printf("CheckBlock() : 5\n");
                         if((mv1.blockHeight == mv2.blockHeight && mv1.GetPubKey() == mv2.GetPubKey())){
+                            printf("CheckBlock() : 6\n");
                             matchingVoteRecords++;
                             if(mv1.GetVote() != mv2.GetVote() && mv1.GetVote()+1 != mv2.GetVote()) badVote++;
                         }
@@ -2578,7 +2581,7 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
             }
         }
         
-
+/*
         if(badVote!=0){
             printf("CheckBlock() : Bad vote detected - %d!=0", badVote);
             return state.DoS(100, error("CheckBlock() : Bad vote detected"));
@@ -2588,14 +2591,14 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
             printf("CheckBlock() : Required masternode payment missing - %d!=%d", foundMasterNodePayment, foundMasterNodePaymentPrev);
             return state.DoS(100, error("CheckBlock() : Required masternode payment missing"));
         }
-        if(matchingVoteRecords+foundMasterNodePayment!=votingRecordsThisBlock){
-            printf("CheckBlock() : Missing masternode votes - %d+%d!=%d", matchingVoteRecords, foundMasterNodePayment, votingRecordsThisBlock);
+        if(matchingVoteRecords+foundMasterNodePayment!=votingRecordsBlockPrev){
+            printf("CheckBlock() : Missing masternode votes - %d+%d!=%d", matchingVoteRecords, foundMasterNodePayment, votingRecordsBlockPrev);
             return state.DoS(100, error("CheckBlock() : Missing masternode votes"));
         }
         if(matchingVoteRecords+foundMasterNodePayment>START_MASTERNODE_PAYMENTS_EXPIRATION){
             printf("CheckBlock() : Too many vote records found - %d+%d>%d", matchingVoteRecords,foundMasterNodePayment,START_MASTERNODE_PAYMENTS_EXPIRATION);
             return state.DoS(100, error("CheckBlock() : Too many vote records found"));
-        }
+        }*/
     }
 
     for (unsigned int i = 1; i < vtx.size(); i++)
@@ -4954,7 +4957,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
                     // vote if you agree with it, if you're the last vote you must vote yes to avoid the greedy voter exploit
                     // i.e: You only vote yes when you're not the one that is going to pay
                     if((mv1.blockHeight == mv2.blockHeight && mv1.GetPubKey() == mv2.GetPubKey()) || mv1.GetVote() == START_MASTERNODE_PAYMENTS_MIN_VOTES-1) 
-                        mv1.Vote(true);
+                        mv1.Vote();
                 }
                 printf("-- 6 %d\n", mv1.GetVote());
                 if(mv1.GetVote() >= START_MASTERNODE_PAYMENTS_MIN_VOTES && payments < 2) {
