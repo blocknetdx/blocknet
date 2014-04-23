@@ -34,9 +34,9 @@ BOOST_AUTO_TEST_CASE(darksend_vote)
     CMasterNodeVote mnv;
     mnv.Set(key, 1);
     mnv.Vote(false);
-    BOOST_CHECK(mnv.GetVote() == 0);
+    BOOST_CHECK(mnv.GetVotes() == 0);
     mnv.Vote(false);
-    BOOST_CHECK(mnv.GetVote() == -1);
+    BOOST_CHECK(mnv.GetVotes() == -1);
 }
 
 

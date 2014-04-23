@@ -32,7 +32,7 @@ class CMasterNode;
 class CMasterNodeVote;
 class CBitcoinAddress;
 
-#define START_MASTERNODE_PAYMENTS_MIN_VOTES 5
+#define START_MASTERNODE_PAYMENTS_MIN_VOTES 6
 #define START_MASTERNODE_PAYMENTS_MAX 3
 #define START_MASTERNODE_PAYMENTS_EXPIRATION 10
 #define START_MASTERNODE_PAYMENTS_TESTNET 1398097231+(60*5)
@@ -2340,11 +2340,18 @@ public:
         SetNull();
     }
 
-    void Set(CPubKey& pubKeyIn, int64 blockHeightIn)
+    void Set(CPubKey& pubKeyIn, int64 blockHeightIn, int votesIn=1)
     {
         pubkey.SetDestination(pubKeyIn.GetID());
         blockHeight = blockHeightIn;
-        votes = 1;
+        votes = votesIn;
+    }
+
+    void Set(CScript pubKeyIn, int64 blockHeightIn, int votesIn=1)
+    {
+        pubkey = pubKeyIn;
+        blockHeight = blockHeightIn;
+        votes = votesIn;
     }
 
     void SetNull()
@@ -2360,9 +2367,14 @@ public:
         votes += 1; 
     }
 
-    int GetVote()
+    int GetVotes()
     { 
         return votes;
+    }
+
+    int GetHeight()
+    { 
+        return blockHeight;
     }
 
     CScript& GetPubKey()
