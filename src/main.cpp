@@ -2557,6 +2557,7 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
         int badVote = 0;
         int foundMasterNodePaymentPrev = 0;
         int foundMasterNodePayment = 0;
+
         int64 masternodePaymentAmount = vtx[0].GetValueOut()/10;
         
         if (pindexPrev != NULL){
@@ -2567,7 +2568,12 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
                 votingRecordsBlockPrev = blockLast.vmn.size();
                 printf("CheckBlock() : 3\n");
                 BOOST_FOREACH(CMasterNodeVote mv1, blockLast.vmn){
-                    if(mv1.GetVotes() == START_MASTERNODE_PAYMENTS_MIN_VOTES-1 && foundMasterNodePaymentPrev < 2) {
+                    if(pindexPrev->nHeight - mv1.GetHeight() >= START_MASTERNODE_PAYMENTS_EXPIRATION)){
+                        printf("CheckBlock() : Vote too old - %"PRI64u, mv1.GetHeight());
+                        return state.DoS(100, error("CheckBlock() : Vote too old"));
+                    }
+                        
+                    if(mv1.GetVotes() == START_MASTERNODE_PAYMENTS_MIN_VOTES-1 && foundMasterNodePaymentPrev <= START_MASTERNODE_PAYMENTS_MAX) {
                         printf("CheckBlock() : 4\n");
                         for (unsigned int i = 1; i < vtx[0].vout.size(); i++)
                             if(vtx[0].vout[i].nValue == masternodePaymentAmount && mv1.GetPubKey() == vtx[0].vout[i].scriptPubKey)
@@ -4975,7 +4981,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
                         }
                     }
                     printf("-- 6 %d\n", mv1.GetVotes());
-                    if(mv1.GetVotes() >= START_MASTERNODE_PAYMENTS_MIN_VOTES && payments < 3) {
+                    if(mv1.GetVotes() >= START_MASTERNODE_PAYMENTS_MIN_VOTES && payments <= START_MASTERNODE_PAYMENTS_MAX) {
                         printf("-- 7 : %d %d\n", mv1.GetVotes(), START_MASTERNODE_PAYMENTS_MIN_VOTES);
                         payments++;
                         txNew.vout.resize(payments);
