@@ -1567,7 +1567,7 @@ public:
     bool AddToBlockIndex(CValidationState &state, const CDiskBlockPos &pos);
 
     // Context-independent validity checks
-    bool CheckBlock(CValidationState &state, bool fCheckPOW=true, bool fCheckMerkleRoot=true) const;
+    bool CheckBlock(CValidationState &state, bool fCheckPOW=true, bool fCheckMerkleRoot=true, bool fCheckVotes=true) const;
 
     // Store block on disk
     // if dbp is provided, the file is known to already reside on disk

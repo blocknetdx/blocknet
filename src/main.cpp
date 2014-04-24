@@ -2505,7 +2505,7 @@ bool FindUndoPos(CValidationState &state, int nFile, CDiskBlockPos &pos, unsigne
 }
 
 
-bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerkleRoot) const
+bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerkleRoot, bool fCheckVotes) const
 {
     // These are checks that are independent of context
     // that can be verified before saving an orphan block.
@@ -2550,7 +2550,6 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
 
         CBlockIndex* pindexPrev = pindexBest;
 
-        printf("CheckBlock() : 1\n");
         CBlock blockTmp;
         int votingRecordsBlockPrev = 0;
         int matchingVoteRecords = 0;
@@ -2560,30 +2559,25 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
 
         int64 masternodePaymentAmount = vtx[0].GetValueOut()/10;
         
-        if (pindexPrev != NULL){
-            printf("CheckBlock() : 2 - %u\n", pindexPrev->nHeight);
-
+        if (pindexPrev != NULL && fCheckVotes && false){
             CBlock blockLast;
             if(blockLast.ReadFromDisk(pindexPrev)){
                 votingRecordsBlockPrev = blockLast.vmn.size();
-                printf("CheckBlock() : 3\n");
                 BOOST_FOREACH(CMasterNodeVote mv1, blockLast.vmn){
-                    if(pindexPrev->nHeight - mv1.GetHeight() >= START_MASTERNODE_PAYMENTS_EXPIRATION)){
-                        printf("CheckBlock() : Vote too old - %"PRI64u, mv1.GetHeight());
+                    if((pindexPrev->nHeight+1) - mv1.GetHeight() > START_MASTERNODE_PAYMENTS_EXPIRATION){
                         return state.DoS(100, error("CheckBlock() : Vote too old"));
+                    } else if((pindexPrev->nHeight+1) - mv1.GetHeight() == START_MASTERNODE_PAYMENTS_EXPIRATION){
+                        votingRecordsBlockPrev--;
                     }
-                        
+
                     if(mv1.GetVotes() == START_MASTERNODE_PAYMENTS_MIN_VOTES-1 && foundMasterNodePaymentPrev <= START_MASTERNODE_PAYMENTS_MAX) {
-                        printf("CheckBlock() : 4\n");
                         for (unsigned int i = 1; i < vtx[0].vout.size(); i++)
                             if(vtx[0].vout[i].nValue == masternodePaymentAmount && mv1.GetPubKey() == vtx[0].vout[i].scriptPubKey)
                                 foundMasterNodePayment++;
                         foundMasterNodePaymentPrev++;
                     } else {
                         BOOST_FOREACH(CMasterNodeVote mv2, vmn){
-                            printf("CheckBlock() : 5\n");
                             if((mv1.blockHeight == mv2.blockHeight && mv1.GetPubKey() == mv2.GetPubKey())){
-                                printf("CheckBlock() : 6\n");
                                 matchingVoteRecords++;
                                 if(mv1.GetVotes() != mv2.GetVotes() && mv1.GetVotes()+1 != mv2.GetVotes()) badVote++;
                             }
@@ -2593,23 +2587,17 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
             }
             
             
-            if(badVote!=0){
-                printf("CheckBlock() : Bad vote detected - %d!=0", badVote);
+            if(badVote!=0)
                 return state.DoS(100, error("CheckBlock() : Bad vote detected"));
-            }
 
-            if(foundMasterNodePayment!=foundMasterNodePaymentPrev){
-                printf("CheckBlock() : Required masternode payment missing - %d!=%d", foundMasterNodePayment, foundMasterNodePaymentPrev);
+            if(foundMasterNodePayment!=foundMasterNodePaymentPrev)
                 return state.DoS(100, error("CheckBlock() : Required masternode payment missing"));
-            }
-            if(matchingVoteRecords+foundMasterNodePayment!=votingRecordsBlockPrev){
-                printf("CheckBlock() : Missing masternode votes - %d+%d!=%d", matchingVoteRecords, foundMasterNodePayment, votingRecordsBlockPrev);
+
+            if(matchingVoteRecords+foundMasterNodePayment!=votingRecordsBlockPrev)
                 return state.DoS(100, error("CheckBlock() : Missing masternode votes"));
-            }
-            if(matchingVoteRecords+foundMasterNodePayment>START_MASTERNODE_PAYMENTS_EXPIRATION){
-                printf("CheckBlock() : Too many vote records found - %d+%d>%d", matchingVoteRecords,foundMasterNodePayment,START_MASTERNODE_PAYMENTS_EXPIRATION);
+
+            if(matchingVoteRecords+foundMasterNodePayment>START_MASTERNODE_PAYMENTS_EXPIRATION)
                 return state.DoS(100, error("CheckBlock() : Too many vote records found"));
-            }
         }
     }
 
@@ -3211,7 +3199,7 @@ bool VerifyDB(int nCheckLevel, int nCheckDepth)
         if (!block.ReadFromDisk(pindex))
             return error("VerifyDB() : *** block.ReadFromDisk failed at %d, hash=%s", pindex->nHeight, pindex->GetBlockHash().ToString().c_str());
         // check level 1: verify block validity
-        if (nCheckLevel >= 1 && !block.CheckBlock(state))
+        if (nCheckLevel >= 1 && !block.CheckBlock(state, true, true, false))
             return error("VerifyDB() : *** found bad block at %d, hash=%s\n", pindex->nHeight, pindex->GetBlockHash().ToString().c_str());
         // check level 2: verify undo validity
         if (nCheckLevel >= 2 && pindex) {
@@ -4966,23 +4954,20 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         if(bMasterNodePayment) {
             CBlock blockLast;
             if(blockLast.ReadFromDisk(pindexPrev)){
-                printf("-- 3\n");
                 BOOST_FOREACH(CMasterNodeVote mv1, blockLast.vmn){
-                    printf("-- 4\n");
-                    int i = 0;
-                    BOOST_FOREACH(CMasterNodeVote mv2, darkSendMasterNodeVotes) {
-                        printf("-- 5 : %"PRI64u"\n", mv2.blockHeight);
-                        // vote if you agree with it, if you're the last vote you must vote yes to avoid the greedy voter exploit
-                        // i.e: You only vote yes when you're not the one that is going to pay
-                        if((mv1.blockHeight == mv2.blockHeight && mv1.GetPubKey() == mv2.GetPubKey()) || mv1.GetVotes() == START_MASTERNODE_PAYMENTS_MIN_VOTES-1) {
-                            printf("-- 5.1");
-                            mv1.Vote();
-                            break;
+                    // vote if you agree with it, if you're the last vote you must vote yes to avoid the greedy voter exploit
+                    // i.e: You only vote yes when you're not the one that is going to pay
+                    if(mv1.GetVotes() == START_MASTERNODE_PAYMENTS_MIN_VOTES-1){
+                        mv1.Vote();
+                    } else {
+                        BOOST_FOREACH(CMasterNodeVote mv2, darkSendMasterNodeVotes) {
+                            if((mv1.blockHeight == mv2.blockHeight && mv1.GetPubKey() == mv2.GetPubKey())) {
+                                mv1.Vote();
+                                break;
+                            }
                         }
                     }
-                    printf("-- 6 %d\n", mv1.GetVotes());
                     if(mv1.GetVotes() >= START_MASTERNODE_PAYMENTS_MIN_VOTES && payments <= START_MASTERNODE_PAYMENTS_MAX) {
-                        printf("-- 7 : %d %d\n", mv1.GetVotes(), START_MASTERNODE_PAYMENTS_MIN_VOTES);
                         payments++;
                         txNew.vout.resize(payments);
 
@@ -4990,8 +4975,8 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
                         txNew.vout[payments-1].scriptPubKey = mv1.GetPubKey();
                         txNew.vout[payments-1].nValue = 0;
 
-                        printf("Paying out to %s\n", txNew.vout[payments-1].scriptPubKey.ToString().c_str());
-                    } else if (pindexPrev->nHeight - mv1.GetHeight() < START_MASTERNODE_PAYMENTS_EXPIRATION) {
+                        printf("Masternode payment to %s\n", txNew.vout[payments-1].scriptPubKey.ToString().c_str());
+                    } else if (((pindexPrev->nHeight+1) - mv1.GetHeight()) < START_MASTERNODE_PAYMENTS_EXPIRATION) {
                         pblock->vmn.push_back(mv1);
                     }
                 } 
@@ -6255,6 +6240,10 @@ void CDarkSendPool::NewBlock()
                 CMasterNodeVote mv;
                 mv.Set(darkSendMasterNodes[winningNode].pubkey, pindexBest->nHeight + 1);
                 darkSendMasterNodeVotes.push_back(mv);
+
+                if(darkSendMasterNodeVotes.size() > START_MASTERNODE_PAYMENTS_EXPIRATION){
+                    darkSendMasterNodeVotes.erase(darkSendMasterNodeVotes.begin(), darkSendMasterNodeVotes.end()-START_MASTERNODE_PAYMENTS_EXPIRATION);
+                }
             }
         }
     }
