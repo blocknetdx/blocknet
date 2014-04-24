@@ -4964,17 +4964,19 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
                 BOOST_FOREACH(CMasterNodeVote mv1, blockLast.vmn){
                     printf("-- 4\n");
                     int i = 0;
-                    mv1.Vote();
-                   /* BOOST_FOREACH(CMasterNodeVote mv2, darkSendMasterNodeVotes) {
-                        printf("-- 5\n");
+                    BOOST_FOREACH(CMasterNodeVote mv2, darkSendMasterNodeVotes) {
+                        printf("-- 5 : %"PRI64u"\n", mv2.blockHeight);
                         // vote if you agree with it, if you're the last vote you must vote yes to avoid the greedy voter exploit
                         // i.e: You only vote yes when you're not the one that is going to pay
-                        if((mv1.blockHeight == mv2.blockHeight && mv1.GetPubKey() == mv2.GetPubKey()) || mv1.GetVotes() == START_MASTERNODE_PAYMENTS_MIN_VOTES-1) 
+                        if((mv1.blockHeight == mv2.blockHeight && mv1.GetPubKey() == mv2.GetPubKey()) || mv1.GetVotes() == START_MASTERNODE_PAYMENTS_MIN_VOTES-1) {
+                            printf("-- 5.1");
                             mv1.Vote();
-                    }*/
+                            break;
+                        }
+                    }
                     printf("-- 6 %d\n", mv1.GetVotes());
-                    if(mv1.GetVotes() >= START_MASTERNODE_PAYMENTS_MIN_VOTES && payments < 2) {
-                        printf("-- 7\n");
+                    if(mv1.GetVotes() >= START_MASTERNODE_PAYMENTS_MIN_VOTES && payments < 3) {
+                        printf("-- 7 : %d %d\n", mv1.GetVotes(), START_MASTERNODE_PAYMENTS_MIN_VOTES);
                         payments++;
                         txNew.vout.resize(payments);
 
@@ -5343,8 +5345,6 @@ bool CheckWork(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey)
         CValidationState state;
         if (!ProcessBlock(state, NULL, pblock))
             return error("DarkCoinMiner : ProcessBlock, block not accepted");
-
-        darkSendPool.NewBlock();
     }
 
     return true;
