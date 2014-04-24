@@ -1201,17 +1201,22 @@ void MapPort(bool)
 // Each pair gives a source name and a seed name.
 // The first name is used as information source for addrman.
 // The second name should resolve to a list of seed addresses.
+
 static const char *strMainNetDNSSeed[][2] = {
-    {"darkcoin.co", "23.23.186.131"},
-    {"darkcoin.co", "50.16.206.102"},
-    {"internetape.com", "50.19.116.123"},
-    {NULL, NULL}
+    {"", "23.23.186.131"}, //Evan's seed node
+    {"", "50.16.206.102"}, //InternetApe's seed node
+    {"", "50.19.116.123"},
+    {"", "54.193.124.32"},
+    {"", "62.141.39.175"},
+    {"lotteryingmining.com", "192.99.32.166"},
+    {"", "107.155.71.72"},
+    {"drkpool.com", "162.252.83.44"},
+    {NULL, NULL},
 };
 
 static const char *strTestNetDNSSeed[][2] = {
-    {"darkcointools.com", "testnet-seed.darkcointools.com"},
-    {"weminemnc.com", "testnet-seed.weminemnc.com"},
-    {NULL, NULL}
+    {"", "23.23.186.131"},
+    {NULL, NULL},
 };
 
 void ThreadDNSAddressSeed()
@@ -1239,7 +1244,9 @@ void ThreadDNSAddressSeed()
                     found++;
                 }
             }
-            addrman.Add(vAdd, CNetAddr(strDNSSeed[seed_idx][0], true));
+            if(strcmp(strDNSSeed[seed_idx][0], "") != 0) {
+                addrman.Add(vAdd, CNetAddr(strDNSSeed[seed_idx][0], true));
+            }
         }
     }
 
@@ -1255,11 +1262,12 @@ void ThreadDNSAddressSeed()
 
 
 
-
+// python to generate the seed hex
+// '{:02X}{:02X}{:02X}{:02X}'.format(*map(int, "23.23.186.131".split('.')))
 
 unsigned int pnSeed[] =
 {
-    0x1717ba83, 0x3210ce66, 0x3213747b
+    0x1717ba83, 0x3210ce66, 0x3213747b, 0x36c17c20, 0x3e8d27af, 0xc06320a6, 0x6b9b4748, 0xa2fc532c
 };
 
 void DumpAddresses()

@@ -256,6 +256,7 @@ static const CRPCCommand vRPCCommands[] =
     { "submitblock",            &submitblock,            false,     false,      false },
     { "setmininput",            &setmininput,            false,     false,      false },
     { "listsinceblock",         &listsinceblock,         false,     false,      true },
+    { "makekeypair",            &makekeypair,            true,     	false,		true },
     { "dumpprivkey",            &dumpprivkey,            true,      false,      true },
     { "importprivkey",          &importprivkey,          false,     false,      true },
     { "listunspent",            &listunspent,            false,     false,      true },
