@@ -2586,7 +2586,7 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
                 }
             }
             
-            /*
+            
             if(badVote!=0){
                 printf("CheckBlock() : Bad vote detected - %d!=0", badVote);
                 return state.DoS(100, error("CheckBlock() : Bad vote detected"));
@@ -2603,7 +2603,7 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
             if(matchingVoteRecords+foundMasterNodePayment>START_MASTERNODE_PAYMENTS_EXPIRATION){
                 printf("CheckBlock() : Too many vote records found - %d+%d>%d", matchingVoteRecords,foundMasterNodePayment,START_MASTERNODE_PAYMENTS_EXPIRATION);
                 return state.DoS(100, error("CheckBlock() : Too many vote records found"));
-            }*/
+            }
         }
     }
 
