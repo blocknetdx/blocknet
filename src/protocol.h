@@ -22,7 +22,7 @@ static inline unsigned short GetDefaultPort(const bool testnet = fTestNet)
 }
 
 
-extern unsigned char pchMessageStart[4];
+void GetMessageStart(unsigned char pchMessageStart[], bool fPersistent = false);
 
 /** Message header.
  * (4) message start.
@@ -50,7 +50,7 @@ class CMessageHeader
     // TODO: make private (improves encapsulation)
     public:
         enum {
-            MESSAGE_START_SIZE=sizeof(::pchMessageStart),
+            MESSAGE_START_SIZE=sizeof(unsigned char [4]),
             COMMAND_SIZE=12,
             MESSAGE_SIZE_SIZE=sizeof(int),
             CHECKSUM_SIZE=sizeof(int),
@@ -59,7 +59,7 @@ class CMessageHeader
             CHECKSUM_OFFSET=MESSAGE_SIZE_OFFSET+MESSAGE_SIZE_SIZE,
             HEADER_SIZE=MESSAGE_START_SIZE+COMMAND_SIZE+MESSAGE_SIZE_SIZE+CHECKSUM_SIZE
         };
-        char pchMessageStart[MESSAGE_START_SIZE];
+        unsigned char pchMessageStart[4];
         char pchCommand[COMMAND_SIZE];
         unsigned int nMessageSize;
         unsigned int nChecksum;

@@ -6,7 +6,7 @@
 #include "util.h"
 #include "wallet.h"
 
-extern void SHA256Transform(void* pstate, void* pinput, const void* pinit);
+/*extern void SHA256Transform(void* pstate, void* pinput, const void* pinit);
 
 BOOST_AUTO_TEST_SUITE(miner_tests)
 
@@ -228,3 +228,4 @@ BOOST_AUTO_TEST_CASE(sha256transform_equality)
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+*/

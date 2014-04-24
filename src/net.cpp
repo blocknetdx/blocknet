@@ -1909,3 +1909,13 @@ void RelayTransaction(const CTransaction& tx, const uint256& hash, const CDataSt
             pnode->PushInventory(inv);
     }
 }
+
+
+void RelayDarkSendElectionEntry(const CTxIn vin, const CService addr, const std::vector<unsigned char> vchSig, const int64 nNow, const CPubKey pubkey, const int count, const int current)
+{
+    LOCK(cs_vNodes);
+    BOOST_FOREACH(CNode* pnode, vNodes)
+    {
+        pnode->PushMessage("dsee", vin, addr, vchSig, nNow, pubkey, count, current);
+    }   
+}

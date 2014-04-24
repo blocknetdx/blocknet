@@ -20,6 +20,7 @@
 #include "protocol.h"
 #include "addrman.h"
 #include "hash.h"
+#include "key.h"
 #include "bloom.h"
 
 class CNode;
@@ -638,7 +639,11 @@ public:
 
 
 class CTransaction;
+class CTxIn;
+class CTxOut;
 void RelayTransaction(const CTransaction& tx, const uint256& hash);
 void RelayTransaction(const CTransaction& tx, const uint256& hash, const CDataStream& ss);
+void RelayDarkSendElectionEntry(const CTxIn vin, const CService addr, const std::vector<unsigned char> vchSig, const int64 nNow, const CPubKey pubkey, const int count, const int current);
+
 
 #endif

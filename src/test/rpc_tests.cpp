@@ -9,7 +9,7 @@
 using namespace std;
 using namespace json_spirit;
 
-BOOST_AUTO_TEST_SUITE(rpc_tests)
+/*BOOST_AUTO_TEST_SUITE(rpc_tests)
 
 static Array
 createArgs(int nRequired, const char* address1=NULL, const char* address2=NULL)
@@ -169,3 +169,4 @@ BOOST_AUTO_TEST_CASE(rpc_rawsign)
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+*/

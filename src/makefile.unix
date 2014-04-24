@@ -20,7 +20,8 @@ LIBS = $(addprefix -L,$(BOOST_LIB_PATH) $(BDB_LIB_PATH) $(OPENSSL_LIB_PATH))
 
 TESTDEFS = -DTEST_DATA_DIR=$(abspath test/data)
 
-LMODE = dynamic
+STATIC = 1
+LMODE = dynamiic
 LMODE2 = dynamic
 ifdef STATIC
 	LMODE = static
@@ -126,6 +127,7 @@ OBJS= \
     obj/net.o \
     obj/protocol.o \
     obj/bitcoinrpc.o \
+    obj/rpcdarksend.o \
     obj/rpcdump.o \
     obj/rpcnet.o \
     obj/rpcmining.o \

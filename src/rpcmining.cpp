@@ -541,12 +541,19 @@ Value getblocktemplate(const Array& params, bool fHelp)
         aMutable.push_back("prevblock");
     }
 
+    Array aVotes;
+    BOOST_FOREACH(CMasterNodeVote& mv, pblock->vmn){        
+        CDataStream ssMNV(SER_NETWORK, PROTOCOL_VERSION);
+        ssMNV << mv;
+        aVotes.push_back(HexStr(ssMNV.begin(), ssMNV.end()));
+    }
+
     Object result;
     result.push_back(Pair("version", pblock->nVersion));
     result.push_back(Pair("previousblockhash", pblock->hashPrevBlock.GetHex()));
     result.push_back(Pair("transactions", transactions));
     result.push_back(Pair("coinbaseaux", aux));
-    result.push_back(Pair("coinbasevalue", (int64_t)pblock->vtx[0].vout[0].nValue));
+    result.push_back(Pair("coinbasevalue", (int64_t)pblock->vtx[0].GetValueOut()));
     result.push_back(Pair("target", hashTarget.GetHex()));
     result.push_back(Pair("mintime", (int64_t)pindexPrev->GetMedianTimePast()+1));
     result.push_back(Pair("mutable", aMutable));
@@ -556,6 +563,18 @@ Value getblocktemplate(const Array& params, bool fHelp)
     result.push_back(Pair("curtime", (int64_t)pblock->nTime));
     result.push_back(Pair("bits", HexBits(pblock->nBits)));
     result.push_back(Pair("height", (int64_t)(pindexPrev->nHeight+1)));
+    result.push_back(Pair("votes", aVotes));
+
+    if(pblock->payee != CScript()){
+        CTxDestination address1;
+        ExtractDestination(pblock->payee, address1);
+        CBitcoinAddress address2(address1);
+        result.push_back(Pair("payee", address2.ToString().c_str()));
+    } else {
+        result.push_back(Pair("payee", ""));
+    }
+    result.push_back(Pair("masternode_payments", pblock->MasterNodePaymentsOn()));
+    
 
     return result;
 }
