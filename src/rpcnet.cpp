@@ -4,6 +4,8 @@
 
 #include "net.h"
 #include "bitcoinrpc.h"
+#include "alert.h"
+#include "base58.h"
 
 using namespace json_spirit;
 using namespace std;
@@ -206,3 +208,33 @@ Value getaddednodeinfo(const Array& params, bool fHelp)
     return ret;
 }
 
+Value makekeypair(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() > 1)
+        throw runtime_error(
+            "makekeypair [prefix]\n"
+            "Make a public/private key pair.\n"
+            "[prefix] is optional preferred prefix for the public key.\n");
+
+    string strPrefix = "";
+    if (params.size() > 0)
+        strPrefix = params[0].get_str();
+
+    CKey key;
+    CPubKey pubkey;
+    int nCount = 0;
+    do
+    {
+        key.MakeNewKey(false);
+        pubkey = key.GetPubKey();
+        nCount++;
+    } while (nCount < 10000 && strPrefix != HexStr(pubkey.begin(), pubkey.end()).substr(0, strPrefix.size()));
+
+    if (strPrefix != HexStr(pubkey.begin(), pubkey.end()).substr(0, strPrefix.size()))
+        return Value::null;
+
+    Object result;
+    result.push_back(Pair("PublicKey", HexStr(pubkey.begin(), pubkey.end())));
+    result.push_back(Pair("PrivateKey", CBitcoinSecret(key).ToString()));
+    return result;
+}
