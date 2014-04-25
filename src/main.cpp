@@ -1569,6 +1569,62 @@ unsigned int static DarkGravityWave(const CBlockIndex* pindexLast, const CBlockH
     return bnNew.GetCompact();
 }
 
+unsigned int static DarkGravityWave3(const CBlockIndex* pindexLast, const CBlockHeader *pblock) {
+    /* current difficulty formula, darkcoin - DarkGravity v3, written by Evan Duffield - evan@darkcoin.io */
+    const CBlockIndex *BlockLastSolved = pindexLast;
+    const CBlockIndex *BlockReading = pindexLast;
+    const CBlockHeader *BlockCreating = pblock;
+    BlockCreating = BlockCreating;
+    int64 nActualTimespan = 0;
+    int64 LastBlockTime = 0;
+    int64 PastBlocksMin = 14;
+    int64 PastBlocksMax = 14;
+    int64 CountBlocks = 0;
+    CBigNum PastDifficultyAverage;
+    CBigNum PastDifficultyAveragePrev;
+
+    if (BlockLastSolved == NULL || BlockLastSolved->nHeight == 0 || BlockLastSolved->nHeight < PastBlocksMin) { return bnProofOfWorkLimit.GetCompact(); }
+        
+    for (unsigned int i = 1; BlockReading && BlockReading->nHeight > 0; i++) {
+        if (PastBlocksMax > 0 && i > PastBlocksMax) { break; }
+        CountBlocks++;
+
+        if(CountBlocks <= PastBlocksMin) {
+            if (CountBlocks == 1) { PastDifficultyAverage.SetCompact(BlockReading->nBits); }
+            else { PastDifficultyAverage = ((CBigNum().SetCompact(BlockReading->nBits) - PastDifficultyAveragePrev) / CountBlocks) + PastDifficultyAveragePrev; }
+            PastDifficultyAveragePrev = PastDifficultyAverage;
+        }
+
+        if(LastBlockTime > 0){
+            int64 Diff = (LastBlockTime - BlockReading->GetBlockTime());
+            nActualTimespan += Diff;
+        }
+        LastBlockTime = BlockReading->GetBlockTime();      
+
+        if (BlockReading->pprev == NULL) { assert(BlockReading); break; }
+        BlockReading = BlockReading->pprev;
+    }
+    
+    CBigNum bnNew(PastDifficultyAverage);
+
+    int64 nTargetTimespan = CountBlocks*nTargetSpacing;
+
+    if (nActualTimespan < nTargetTimespan/3)
+        nActualTimespan = nTargetTimespan/3;
+    if (nActualTimespan > nTargetTimespan*3)
+        nActualTimespan = nTargetTimespan*3;
+
+    // Retarget
+    bnNew *= nActualTimespan;
+    bnNew /= nTargetTimespan;
+
+    if (bnNew > bnProofOfWorkLimit){
+        bnNew = bnProofOfWorkLimit;
+    }
+     
+    return bnNew.GetCompact();
+}
+
 unsigned int static GetNextWorkRequired_V2(const CBlockIndex* pindexLast, const CBlockHeader *pblock)
 {
         static const int64 BlocksTargetSpacing = 2.5 * 60; // 2.5 minutes
@@ -1585,17 +1641,19 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBl
 {
         int DiffMode = 1;
         if (fTestNet) {
-            if (pindexLast->nHeight+1 >= 1000) { DiffMode = 3; }
+            if (pindexLast->nHeight+1 >= 162) { DiffMode = 4; }
         }
         else {
-            if (pindexLast->nHeight+1 >= 34140) { DiffMode = 3; }
+            if (pindexLast->nHeight+1 >= 65535) { DiffMode = 4; }
+            else if (pindexLast->nHeight+1 >= 34140) { DiffMode = 3; }
             else if (pindexLast->nHeight+1 >= 15200) { DiffMode = 2; }
         }
 
         if (DiffMode == 1) { return GetNextWorkRequired_V1(pindexLast, pblock); }
         else if (DiffMode == 2) { return GetNextWorkRequired_V2(pindexLast, pblock); }
         else if (DiffMode == 3) { return DarkGravityWave(pindexLast, pblock); }
-        return DarkGravityWave(pindexLast, pblock);
+        else if (DiffMode == 4) { return DarkGravityWave3(pindexLast, pblock); }
+        return DarkGravityWave3(pindexLast, pblock);
 }
 
 
@@ -2564,13 +2622,13 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
             if(blockLast.ReadFromDisk(pindexPrev)){
                 votingRecordsBlockPrev = blockLast.vmn.size();
                 BOOST_FOREACH(CMasterNodeVote mv1, blockLast.vmn){
-                    if((pindexPrev->nHeight+1) - mv1.GetHeight() > START_MASTERNODE_PAYMENTS_EXPIRATION){
+                    if((pindexPrev->nHeight+1) - mv1.GetHeight() > MASTERNODE_PAYMENTS_EXPIRATION){
                         return state.DoS(100, error("CheckBlock() : Vote too old"));
-                    } else if((pindexPrev->nHeight+1) - mv1.GetHeight() == START_MASTERNODE_PAYMENTS_EXPIRATION){
+                    } else if((pindexPrev->nHeight+1) - mv1.GetHeight() == MASTERNODE_PAYMENTS_EXPIRATION){
                         votingRecordsBlockPrev--;
                     }
 
-                    if(mv1.GetVotes() == START_MASTERNODE_PAYMENTS_MIN_VOTES-1 && foundMasterNodePaymentPrev <= START_MASTERNODE_PAYMENTS_MAX) {
+                    if(mv1.GetVotes() == MASTERNODE_PAYMENTS_MIN_VOTES-1 && foundMasterNodePaymentPrev <= MASTERNODE_PAYMENTS_MAX) {
                         for (unsigned int i = 1; i < vtx[0].vout.size(); i++)
                             if(vtx[0].vout[i].nValue == masternodePaymentAmount && mv1.GetPubKey() == vtx[0].vout[i].scriptPubKey)
                                 foundMasterNodePayment++;
@@ -2596,7 +2654,7 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
             if(matchingVoteRecords+foundMasterNodePayment!=votingRecordsBlockPrev)
                 return state.DoS(100, error("CheckBlock() : Missing masternode votes"));
 
-            if(matchingVoteRecords+foundMasterNodePayment>START_MASTERNODE_PAYMENTS_EXPIRATION)
+            if(matchingVoteRecords+foundMasterNodePayment>MASTERNODE_PAYMENTS_EXPIRATION)
                 return state.DoS(100, error("CheckBlock() : Too many vote records found"));
         }
     }
@@ -4957,7 +5015,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
                 BOOST_FOREACH(CMasterNodeVote mv1, blockLast.vmn){
                     // vote if you agree with it, if you're the last vote you must vote yes to avoid the greedy voter exploit
                     // i.e: You only vote yes when you're not the one that is going to pay
-                    if(mv1.GetVotes() == START_MASTERNODE_PAYMENTS_MIN_VOTES-1){
+                    if(mv1.GetVotes() == MASTERNODE_PAYMENTS_MIN_VOTES-1){
                         mv1.Vote();
                     } else {
                         BOOST_FOREACH(CMasterNodeVote mv2, darkSendMasterNodeVotes) {
@@ -4967,7 +5025,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
                             }
                         }
                     }
-                    if(mv1.GetVotes() >= START_MASTERNODE_PAYMENTS_MIN_VOTES && payments <= START_MASTERNODE_PAYMENTS_MAX) {
+                    if(mv1.GetVotes() >= MASTERNODE_PAYMENTS_MIN_VOTES && payments <= MASTERNODE_PAYMENTS_MAX) {
                         payments++;
                         txNew.vout.resize(payments);
 
@@ -4976,7 +5034,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
                         txNew.vout[payments-1].nValue = 0;
 
                         printf("Masternode payment to %s\n", txNew.vout[payments-1].scriptPubKey.ToString().c_str());
-                    } else if (((pindexPrev->nHeight+1) - mv1.GetHeight()) < START_MASTERNODE_PAYMENTS_EXPIRATION) {
+                    } else if (((pindexPrev->nHeight+1) - mv1.GetHeight()) < MASTERNODE_PAYMENTS_EXPIRATION) {
                         pblock->vmn.push_back(mv1);
                     }
                 } 
@@ -6241,8 +6299,8 @@ void CDarkSendPool::NewBlock()
                 mv.Set(darkSendMasterNodes[winningNode].pubkey, pindexBest->nHeight + 1);
                 darkSendMasterNodeVotes.push_back(mv);
 
-                if(darkSendMasterNodeVotes.size() > START_MASTERNODE_PAYMENTS_EXPIRATION){
-                    darkSendMasterNodeVotes.erase(darkSendMasterNodeVotes.begin(), darkSendMasterNodeVotes.end()-START_MASTERNODE_PAYMENTS_EXPIRATION);
+                if(darkSendMasterNodeVotes.size() > MASTERNODE_PAYMENTS_EXPIRATION){
+                    darkSendMasterNodeVotes.erase(darkSendMasterNodeVotes.begin(), darkSendMasterNodeVotes.end()-MASTERNODE_PAYMENTS_EXPIRATION);
                 }
             }
         }
