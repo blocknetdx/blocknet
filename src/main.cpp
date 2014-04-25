@@ -2714,38 +2714,42 @@ bool CBlock::AcceptBlock(CValidationState &state, CDiskBlockPos *dbp)
         pindexPrev = (*mi).second;
         nHeight = pindexPrev->nHeight+1;
 
+        if(fTestNet) {
+            if (nBits != GetNextWorkRequired(pindexPrev, this))
+                return state.DoS(100, error("AcceptBlock() : incorrect proof of work"));
+        } else {
+            #ifdef _WIN32
+                // Check proof of work       
+                if(nHeight >= 34140){
+                    unsigned int nBitsNext = GetNextWorkRequired(pindexPrev, this);
+                    double n1 = ConvertBitsToDouble(nBits);
+                    double n2 = ConvertBitsToDouble(nBitsNext);
 
-        #ifdef _WIN32
-            // Check proof of work       
-            if(nHeight >= 34140){
-                unsigned int nBitsNext = GetNextWorkRequired(pindexPrev, this);
-                double n1 = ConvertBitsToDouble(nBits);
-                double n2 = ConvertBitsToDouble(nBitsNext);
-
-                if (nHeight <= 45000) {
-                    if (abs(n1-n2) > n1*0.2) 
+                    if (nHeight <= 45000) {
+                        if (abs(n1-n2) > n1*0.2) 
+                            return state.DoS(100, error("AcceptBlock() : incorrect proof of work (DGW pre-fork)"));
+                    } else {
+                        if (abs(n1-n2) > n1*0.005) 
+                            return state.DoS(100, error("AcceptBlock() : incorrect proof of work (DGW2)"));
+                    }
+                } else {
+                    if (nBits != GetNextWorkRequired(pindexPrev, this))
+                        return state.DoS(100, error("AcceptBlock() : incorrect proof of work"));
+                }
+            #else
+                // Check proof of work
+                if(nHeight >= 34140 && nHeight <= 45000){
+                    unsigned int nBitsNext = GetNextWorkRequired(pindexPrev, this);
+                    double n1 = ConvertBitsToDouble(nBits);
+                    double n2 = ConvertBitsToDouble(nBitsNext);
+                    if (abs(n1-n2) > n1*0.2)
                         return state.DoS(100, error("AcceptBlock() : incorrect proof of work (DGW pre-fork)"));
                 } else {
-                    if (abs(n1-n2) > n1*0.005) 
-                        return state.DoS(100, error("AcceptBlock() : incorrect proof of work (DGW2)"));
+                    if (nBits != GetNextWorkRequired(pindexPrev, this))
+                        return state.DoS(100, error("AcceptBlock() : incorrect proof of work"));
                 }
-            } else {
-                if (nBits != GetNextWorkRequired(pindexPrev, this))
-                    return state.DoS(100, error("AcceptBlock() : incorrect proof of work"));
+            #endif
             }
-        #else
-            // Check proof of work
-            if(nHeight >= 34140 && nHeight <= 45000){
-                unsigned int nBitsNext = GetNextWorkRequired(pindexPrev, this);
-                double n1 = ConvertBitsToDouble(nBits);
-                double n2 = ConvertBitsToDouble(nBitsNext);
-                if (abs(n1-n2) > n1*0.2)
-                    return state.DoS(100, error("AcceptBlock() : incorrect proof of work (DGW pre-fork)"));
-            } else {
-                if (nBits != GetNextWorkRequired(pindexPrev, this))
-                    return state.DoS(100, error("AcceptBlock() : incorrect proof of work"));
-            }
-        #endif
 
         // Prevent blocks from too far in the future
         if(fTestNet || nHeight >= 45000){
