@@ -15,7 +15,6 @@
 #include <list>
 #include <algorithm>
 
-
 //#define static_assert(numeric_limits<double>::max_exponent() > 8, "your double sux");
 
 class CWallet;
@@ -30,7 +29,14 @@ class CNode;
 class CDarkSendPool;
 class CDarkSendSigner;
 class CMasterNode;
+class CMasterNodeVote;
 class CBitcoinAddress;
+
+#define MASTERNODE_PAYMENTS_MIN_VOTES 6
+#define MASTERNODE_PAYMENTS_MAX 2
+#define MASTERNODE_PAYMENTS_EXPIRATION 10
+#define START_MASTERNODE_PAYMENTS_TESTNET 1398097231+(60*5)
+#define START_MASTERNODE_PAYMENTS 1399489716 //Wed, 07 May 2014 19:08:36 GMT
 
 struct CBlockIndexWorkComparator;
 
@@ -114,6 +120,7 @@ extern unsigned int nCoinCacheSize;
 extern CDarkSendPool darkSendPool;
 extern CDarkSendSigner darkSendSigner;
 extern std::vector<CMasterNode> darkSendMasterNodes;
+extern std::vector<CMasterNodeVote> darkSendMasterNodeVotes;
 extern std::string strMasterNodePrivKey;
 extern CWallet pmainWallet;
 
@@ -1357,9 +1364,11 @@ class CBlock : public CBlockHeader
 public:
     // network and disk
     std::vector<CTransaction> vtx;
+    std::vector<CMasterNodeVote> vmn;
 
     // memory only
     mutable std::vector<uint256> vMerkleTree;
+    mutable bool fMasterNodePayment;
 
     CBlock()
     {
@@ -1372,17 +1381,26 @@ public:
         *((CBlockHeader*)this) = header;
     }
 
+    void TurnOnMasterNodePayments() {
+        fMasterNodePayment = true;
+    }
+
     IMPLEMENT_SERIALIZE
     (
         READWRITE(*(CBlockHeader*)this);
         READWRITE(vtx);
+
+        printf("Block nTime - %u  %u\n", nTime, nTime > START_MASTERNODE_PAYMENTS_TESTNET);        
+        if(nTime > START_MASTERNODE_PAYMENTS_TESTNET) READWRITE(vmn);
     )
 
     void SetNull()
     {
         CBlockHeader::SetNull();
         vtx.clear();
+        vmn.clear();
         vMerkleTree.clear();
+        fMasterNodePayment = false;
     }
 
     uint256 GetPoWHash() const
@@ -1549,7 +1567,7 @@ public:
     bool AddToBlockIndex(CValidationState &state, const CDiskBlockPos &pos);
 
     // Context-independent validity checks
-    bool CheckBlock(CValidationState &state, bool fCheckPOW=true, bool fCheckMerkleRoot=true) const;
+    bool CheckBlock(CValidationState &state, bool fCheckPOW=true, bool fCheckMerkleRoot=true, bool fCheckVotes=true) const;
 
     // Store block on disk
     // if dbp is provided, the file is known to already reside on disk
@@ -2307,7 +2325,73 @@ public:
     )
 };
 
+class CMasterNodeVote
+{   
+public:
+    int votes;
+    CScript pubkey;
+    int nVersion;
+    bool setPubkey;
 
+    int64 blockHeight;
+    static const int CURRENT_VERSION=1;
+
+    CMasterNodeVote() {
+        SetNull();
+    }
+
+    void Set(CPubKey& pubKeyIn, int64 blockHeightIn, int votesIn=1)
+    {
+        pubkey.SetDestination(pubKeyIn.GetID());
+        blockHeight = blockHeightIn;
+        votes = votesIn;
+    }
+
+    void Set(CScript pubKeyIn, int64 blockHeightIn, int votesIn=1)
+    {
+        pubkey = pubKeyIn;
+        blockHeight = blockHeightIn;
+        votes = votesIn;
+    }
+
+    void SetNull()
+    {
+        nVersion = CTransaction::CURRENT_VERSION;
+        votes = 0;
+        pubkey = CScript();
+        blockHeight = 0;
+    }
+
+    void Vote()
+    { 
+        votes += 1; 
+    }
+
+    int GetVotes()
+    { 
+        return votes;
+    }
+
+    int GetHeight()
+    { 
+        return blockHeight;
+    }
+
+    CScript& GetPubKey()
+    {
+        return pubkey;
+    }
+
+    IMPLEMENT_SERIALIZE
+    (
+        nVersion = this->nVersion;
+        READWRITE(blockHeight);
+        READWRITE(pubkey);
+        READWRITE(votes);
+    )
+
+
+};
 
 class CMasterNode
 {
