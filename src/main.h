@@ -1391,7 +1391,11 @@ public:
         READWRITE(vtx);
 
         printf("Block nTime - %u  %u\n", nTime, nTime > START_MASTERNODE_PAYMENTS_TESTNET);        
-        if(nTime > START_MASTERNODE_PAYMENTS_TESTNET) READWRITE(vmn);
+        if(fTestNet){
+            if(nTime > START_MASTERNODE_PAYMENTS_TESTNET) READWRITE(vmn);
+        } else {
+            if(nTime > START_MASTERNODE_PAYMENTS) READWRITE(vmn);    
+        }
     )
 
     void SetNull()
