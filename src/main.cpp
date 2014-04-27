@@ -1335,6 +1335,9 @@ int64 static GetBlockValue(int nBits, int nHeight, int64 nFees)
     //printf("height %u diff %4.2f reward %i \n", nHeight, dDiff, nSubsidy);
     nSubsidy *= COIN;
 
+    // yearly decline of production by 7% per year, projected 21.3M coins max by year 2050.
+    for(int i = 210240; i <= nHeight; i += 210240) nSubsidy *= 0.93;
+
     return nSubsidy + nFees;
 }
 
@@ -2156,9 +2159,9 @@ bool CBlock::ConnectBlock(CValidationState &state, CBlockIndex* pindex, CCoinsVi
             return state.DoS(100, error("ConnectBlock() : too many sigops"));
 
         if (!tx.IsCoinBase())
-        {/*
+        {
             if (!tx.HaveInputs(view))
-                return state.DoS(100, error("ConnectBlock() : inputs missing/spent"));*/
+                return state.DoS(100, error("ConnectBlock() : inputs missing/spent"));
 
             if (fStrictPayToScriptHash)
             {
