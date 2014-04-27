@@ -2420,7 +2420,7 @@ public:
     
     }
 
-    uint256 CalculateScore();
+    uint256 CalculateScore(int mod=10);
 
     void UpdateLastSeen()
     {
@@ -2635,7 +2635,7 @@ public:
         state = newState;
     }
 
-    int GetCurrentMasterNode();
+    int GetCurrentMasterNode(int mod=10);
     void Check();
     void ChargeFees();
     void CheckTimeout();
@@ -2657,7 +2657,7 @@ public:
     bool GetMasterNodeVin(CTxIn& vin, CPubKey& pubkey, CKey& secretKey);
     void RelayDarkDeclareWinner();
     void RegisterAsMasterNode();
-    bool GetLastValidBlockHash(uint256& hash);
+    bool GetLastValidBlockHash(uint256& hash, int mod=10);
     void NewBlock();
     void CompletedTransaction(bool error, std::string lastMessageNew);
     void ClearLastMessage();
