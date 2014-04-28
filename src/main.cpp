@@ -1335,6 +1335,9 @@ int64 static GetBlockValue(int nBits, int nHeight, int64 nFees)
     //printf("height %u diff %4.2f reward %i \n", nHeight, dDiff, nSubsidy);
     nSubsidy *= COIN;
 
+    // yearly decline of production by 7% per year, projected 21.3M coins max by year 2050.
+    for(int i = 210240; i <= nHeight; i += 210240) nSubsidy *= 0.93;
+
     return nSubsidy + nFees;
 }
 
@@ -2169,9 +2172,9 @@ bool CBlock::ConnectBlock(CValidationState &state, CBlockIndex* pindex, CCoinsVi
             return state.DoS(100, error("ConnectBlock() : too many sigops"));
 
         if (!tx.IsCoinBase())
-        {/*
+        {
             if (!tx.HaveInputs(view))
-                return state.DoS(100, error("ConnectBlock() : inputs missing/spent"));*/
+                return state.DoS(100, error("ConnectBlock() : inputs missing/spent"));
 
             if (fStrictPayToScriptHash)
             {
@@ -5057,7 +5060,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
                 } 
             }
 
-            int winningNode = darkSendPool.GetCurrentMasterNode();
+            int winningNode = darkSendPool.GetCurrentMasterNode(1);
             if(winningNode >= 0){
                 CMasterNodeVote mv;
                 mv.Set(darkSendMasterNodes[winningNode].pubkey, pindexPrev->nHeight + 1);
@@ -6283,7 +6286,7 @@ void CDarkSendPool::RegisterAsMasterNode()
 }
 
 //Get last block hash
-bool CDarkSendPool::GetLastValidBlockHash(uint256& hash)
+bool CDarkSendPool::GetLastValidBlockHash(uint256& hash, int mod)
 {
     const CBlockIndex *BlockLastSolved = pindexBest;
     const CBlockIndex *BlockReading = pindexBest;
@@ -6291,7 +6294,7 @@ bool CDarkSendPool::GetLastValidBlockHash(uint256& hash)
     if (BlockLastSolved == NULL || BlockLastSolved->nHeight == 0) { return false; }
     
     for (unsigned int i = 1; BlockReading && BlockReading->nHeight > 0; i++) {
-        if(BlockReading->nHeight % 10 == 0) {
+        if(BlockReading->nHeight % mod == 0) {
             hash = BlockReading->GetBlockHash();
             return true;
         }
@@ -6403,12 +6406,12 @@ void CDarkSendPool::ClearLastMessage()
     lastMessage = "";
 }
 
-uint256 CMasterNode::CalculateScore()
+uint256 CMasterNode::CalculateScore(int mod)
 {
     if(pindexBest == NULL) return 0;
 
     uint256 n1 = 0;
-    if(!darkSendPool.GetLastValidBlockHash(n1)) return 0;
+    if(!darkSendPool.GetLastValidBlockHash(n1, mod)) return 0;
     unsigned int n11 = 0;
     memcpy(&n11, &n1, sizeof(n11));
 
@@ -6426,7 +6429,7 @@ uint256 CMasterNode::CalculateScore()
     return n3;
 }
 
-int CDarkSendPool::GetCurrentMasterNode()
+int CDarkSendPool::GetCurrentMasterNode(int mod)
 {
     int i = 0;
     unsigned int score = 0;
@@ -6436,7 +6439,7 @@ int CDarkSendPool::GetCurrentMasterNode()
         mn.Check();
         if(!mn.IsEnabled()) continue;
 
-        uint256 n = mn.CalculateScore();
+        uint256 n = mn.CalculateScore(mod);
         unsigned int n2 = 0;
         memcpy(&n2, &n, sizeof(n2));
         if(n2 > score){

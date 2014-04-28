@@ -94,6 +94,8 @@ Value masternode(const Array& params, bool fHelp)
 
     if (strCommand == "start")
     {
+        if(!fMasterNode) return "you must set masternode=1 in the configuration";
+
         if(pwalletMain->IsLocked()) {
             SecureString strWalletPass;
             strWalletPass.reserve(100);
@@ -111,10 +113,12 @@ Value masternode(const Array& params, bool fHelp)
         }
 
         darkSendPool.RegisterAsMasterNode();
+        pwalletMain->Lock();
+        
         if(darkSendPool.isCapableMasterNode == MASTERNODE_IS_CAPABLE) return "successfully started masternode";
         if(darkSendPool.isCapableMasterNode == MASTERNODE_NOT_CAPABLE) return "not capable masternode";
-
-        pwalletMain->Lock();
+        
+        return "unknown";
     }
 
     if (strCommand == "debug")
