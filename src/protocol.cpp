@@ -17,10 +17,9 @@
 // The characters are rarely used upper ascii, not valid as UTF-8, and produce
 // a large 4-byte int at any alignment.
 // Public testnet message start
-// unsigned char pchMessageStartTestBitcoin[4] = { 0x9b, 0xa1, 0xb2, 0xb6 };
 static unsigned char pchMessageStartTestOld[4] = { 0xfc, 0xc1, 0xb7, 0xdc };
 static unsigned char pchMessageStartTestNew[4] = { 0xce, 0xe2, 0xca, 0xff };
-static unsigned int nMessageStartTestSwitchTime = 1398701692+(60*5);
+static unsigned int nMessageStartTestSwitchTime = 1398712624+(60*5);
 
 // Darkcoin message start (switch from Litecoin's)
 static unsigned char pchMessageStartLitecoin[4] = { 0xfb, 0xc0, 0xb6, 0xdb };

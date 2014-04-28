@@ -14,7 +14,7 @@
 
 #include <list>
 #include <algorithm>
-
+#include <boost/lexical_cast.hpp>
 //#define static_assert(numeric_limits<double>::max_exponent() > 8, "your double sux");
 
 class CWallet;
@@ -1316,6 +1316,7 @@ public:
     unsigned int nBits;
     unsigned int nNonce;
 
+    std::vector<CMasterNodeVote> vmn;
     unsigned int payee1;
     unsigned int payee2;
 
@@ -1368,11 +1369,9 @@ class CBlock : public CBlockHeader
 public:
     // network and disk
     std::vector<CTransaction> vtx;
-    std::vector<CMasterNodeVote> vmn;
 
     // memory only
     mutable std::vector<uint256> vMerkleTree;
-    mutable bool fMasterNodePayment;
 
     CBlock()
     {
@@ -1383,10 +1382,6 @@ public:
     {
         SetNull();
         *((CBlockHeader*)this) = header;
-    }
-
-    void TurnOnMasterNodePayments() {
-        fMasterNodePayment = true;
     }
 
     IMPLEMENT_SERIALIZE
@@ -1408,7 +1403,6 @@ public:
         vtx.clear();
         vmn.clear();
         vMerkleTree.clear();
-        fMasterNodePayment = false;
     }
 
     uint256 GetPoWHash() const

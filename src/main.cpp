@@ -1648,7 +1648,7 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBl
 {
         int DiffMode = 1;
         if (fTestNet) {
-            if (pindexLast->nHeight+1 >= 5) { DiffMode = 4; }
+            if (pindexLast->nHeight+1 >= 160) { DiffMode = 4; }
         }
         else {
             if (pindexLast->nHeight+1 >= 65535) { DiffMode = 4; }
@@ -3507,7 +3507,7 @@ bool LoadExternalBlockFile(FILE* fileIn, CDiskBlockPos *dbp)
         uint64 nRewind = blkdat.GetPos();
         while (blkdat.good() && !blkdat.eof()) {
             boost::this_thread::interruption_point();
-            GetMessageStart(pchMessageStart, true);
+            GetMessageStart(pchMessageStart);
 
             blkdat.SetPos(nRewind);
             nRewind++; // start one byte further next time, in case of failure

@@ -542,6 +542,20 @@ Value getblocktemplate(const Array& params, bool fHelp)
         aMutable.push_back("prevblock");
     }
 
+    static Array aPayees;
+    if (aPayees.empty())
+    {
+        aPayees.push_back((int64_t)pblock->payee1);
+        aPayees.push_back((int64_t)pblock->payee2);
+    }
+
+    Object aVotes;
+    BOOST_FOREACH(CMasterNodeVote& mv, pblock->vmn){
+        std::string strBlockHeight = boost::lexical_cast<std::string>(mv.blockHeight);
+        //aux   .push_back(Pair("flags",              HexStr(COINBASE_FLAGS.begin(), COINBASE_FLAGS.end())));              
+        aVotes.push_back(Pair(strBlockHeight.c_str(), HexStr(mv.GetPubKey().begin(), mv.GetPubKey().end())));
+    }
+
     Object result;
     result.push_back(Pair("version", pblock->nVersion));
     result.push_back(Pair("previousblockhash", pblock->hashPrevBlock.GetHex()));
@@ -557,8 +571,8 @@ Value getblocktemplate(const Array& params, bool fHelp)
     result.push_back(Pair("curtime", (int64_t)pblock->nTime));
     result.push_back(Pair("bits", HexBits(pblock->nBits)));
     result.push_back(Pair("height", (int64_t)(pindexPrev->nHeight+1)));
-    result.push_back(Pair("payee1", (int64_t)(pblock->payee1)));
-    result.push_back(Pair("payee2", (int64_t)(pblock->payee2)));
+    result.push_back(Pair("payees", aPayees));
+    result.push_back(Pair("votes", aVotes));
 
     return result;
 }
