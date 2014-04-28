@@ -1586,9 +1586,9 @@ unsigned int static DarkGravityWave3(const CBlockIndex* pindexLast, const CBlock
     CBigNum PastDifficultyAverage;
     CBigNum PastDifficultyAveragePrev;
 
-    printf("DGW3\n");
+    //printf("DGW3\n");
     if (BlockLastSolved == NULL || BlockLastSolved->nHeight == 0 || BlockLastSolved->nHeight < PastBlocksMin) { 
-        printf("here!");
+        //printf("here!");
         return bnProofOfWorkLimit.GetCompact(); 
     }
         
@@ -1600,7 +1600,6 @@ unsigned int static DarkGravityWave3(const CBlockIndex* pindexLast, const CBlock
             if (CountBlocks == 1) { PastDifficultyAverage.SetCompact(BlockReading->nBits); }
             else { PastDifficultyAverage = ((PastDifficultyAveragePrev * CountBlocks)+(CBigNum().SetCompact(BlockReading->nBits))) / (CountBlocks+1); }
             PastDifficultyAveragePrev = PastDifficultyAverage;
-            //printf(" -- %"PRIszu" %"PRIszu" %"PRIszu" \n", BlockReading->nHeight, CountBlocks, PastDifficultyAveragePrev.GetCompact());
         }
 
         if(LastBlockTime > 0){
@@ -1622,21 +1621,13 @@ unsigned int static DarkGravityWave3(const CBlockIndex* pindexLast, const CBlock
     if (nActualTimespan > nTargetTimespan*3)
         nActualTimespan = nTargetTimespan*3;
 
-    printf(" -- %"PRIszu" %"PRIszu" %"PRIszu" \n", BlockReading->nHeight, nActualTimespan, nTargetTimespan);
-
-    printf("nBits1 %f\n", ConvertBitsToDouble(bnNew.GetCompact()));
-
     // Retarget
     bnNew *= nActualTimespan;
     bnNew /= nTargetTimespan;
 
-    printf("nBits2 %f\n", ConvertBitsToDouble(bnNew.GetCompact()));
-
     if (bnNew > bnProofOfWorkLimit){
         bnNew = bnProofOfWorkLimit;
     }
-
-    printf("nBits3 %f\n", ConvertBitsToDouble(bnNew.GetCompact()));
      
     return bnNew.GetCompact();
 }
