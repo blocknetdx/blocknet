@@ -3330,10 +3330,6 @@ bool LoadBlockIndex()
 {
     if (fTestNet)
     {
-        pchMessageStart[0] = 0xfc;
-        pchMessageStart[1] = 0xc1;
-        pchMessageStart[2] = 0xb7;
-        pchMessageStart[3] = 0xdc;
         hashGenesisBlock = uint256("0x00000bafbc94add76cb75e2ec92894837288a481e5c005f6563d91623bf8bc2c");
     }
 
@@ -3493,6 +3489,9 @@ bool LoadExternalBlockFile(FILE* fileIn, CDiskBlockPos *dbp)
 {
     int64 nStart = GetTimeMillis();
 
+
+    unsigned char pchMessageStart[4];
+
     int nLoaded = 0;
     try {
         CBufferedFile blkdat(fileIn, 2*MAX_BLOCK_SIZE, MAX_BLOCK_SIZE+8, SER_DISK, CLIENT_VERSION);
@@ -3508,6 +3507,7 @@ bool LoadExternalBlockFile(FILE* fileIn, CDiskBlockPos *dbp)
         uint64 nRewind = blkdat.GetPos();
         while (blkdat.good() && !blkdat.eof()) {
             boost::this_thread::interruption_point();
+            GetMessageStart(pchMessageStart, true);
 
             blkdat.SetPos(nRewind);
             nRewind++; // start one byte further next time, in case of failure
@@ -3654,14 +3654,6 @@ bool static AlreadyHave(const CInv& inv)
 }
 
 
-
-
-// The message start string is designed to be unlikely to occur in normal data.
-// The characters are rarely used upper ASCII, not valid as UTF-8, and produce
-// a large 4-byte int at any alignment.
-unsigned char pchMessageStart[4] = { 0xfb, 0xc0, 0xb6, 0xdb }; // DarkCoin: increase each by adding 2 to bitcoin's value.
-
-
 void static ProcessGetData(CNode* pfrom)
 {
     std::deque<CInv>::iterator it = pfrom->vRecvGetData.begin();
@@ -3806,6 +3798,18 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
     {
         printf("dropmessagestest DROPPING RECV MESSAGE\n");
         return true;
+    }
+
+
+    unsigned char pchMessageStart[4];
+    GetMessageStart(pchMessageStart);
+    static int64 nTimeLastPrintMessageStart = 0;
+    if (fDebug && GetBoolArg("-printmessagestart") && nTimeLastPrintMessageStart + 30 < GetAdjustedTime())
+    {
+        string strMessageStart((const char *)pchMessageStart);
+        vector<unsigned char> vchMessageStart(strMessageStart.begin(), strMessageStart.end());
+        printf("ProcessMessages : AdjustedTime=%"PRI64d" MessageStart=%s\n", GetAdjustedTime(), HexStr(vchMessageStart).c_str());
+        nTimeLastPrintMessageStart = GetAdjustedTime();
     }
 
     if (strCommand == "version")
@@ -4594,6 +4598,10 @@ bool ProcessMessages(CNode* pfrom)
     //  (4) checksum
     //  (x) data
     //
+
+    unsigned char pchMessageStart[4];
+    GetMessageStart(pchMessageStart);
+
     bool fOk = true;
 
     if (!pfrom->vRecvGetData.empty())

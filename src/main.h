@@ -110,7 +110,6 @@ extern int64 nHPSTimerStart;
 extern int64 nTimeBestReceived;
 extern CCriticalSection cs_setpwalletRegistered;
 extern std::set<CWallet*> setpwalletRegistered;
-extern unsigned char pchMessageStart[4];
 extern bool fImporting;
 extern bool fReindex;
 extern bool fBenchmark;
@@ -817,6 +816,8 @@ public:
             return error("CBlockUndo::WriteToDisk() : OpenUndoFile failed");
 
         // Write index header
+        unsigned char pchMessageStart[4];
+        GetMessageStart(pchMessageStart, true);
         unsigned int nSize = fileout.GetSerializeSize(*this);
         fileout << FLATDATA(pchMessageStart) << nSize;
 
@@ -1315,6 +1316,9 @@ public:
     unsigned int nBits;
     unsigned int nNonce;
 
+    unsigned int payee1;
+    unsigned int payee2;
+
     CBlockHeader()
     {
         SetNull();
@@ -1488,6 +1492,8 @@ public:
             return error("CBlock::WriteToDisk() : OpenBlockFile failed");
 
         // Write index header
+        unsigned char pchMessageStart[4];
+        GetMessageStart(pchMessageStart);
         unsigned int nSize = fileout.GetSerializeSize(*this);
         fileout << FLATDATA(pchMessageStart) << nSize;
 
