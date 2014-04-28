@@ -1583,7 +1583,11 @@ unsigned int static DarkGravityWave3(const CBlockIndex* pindexLast, const CBlock
     CBigNum PastDifficultyAverage;
     CBigNum PastDifficultyAveragePrev;
 
-    if (BlockLastSolved == NULL || BlockLastSolved->nHeight == 0 || BlockLastSolved->nHeight < PastBlocksMin) { return bnProofOfWorkLimit.GetCompact(); }
+    printf("DGW3\n");
+    if (BlockLastSolved == NULL || BlockLastSolved->nHeight == 0 || BlockLastSolved->nHeight < PastBlocksMin) { 
+        printf("here!");
+        return bnProofOfWorkLimit.GetCompact(); 
+    }
         
     for (unsigned int i = 1; BlockReading && BlockReading->nHeight > 0; i++) {
         if (PastBlocksMax > 0 && i > PastBlocksMax) { break; }
@@ -1591,8 +1595,9 @@ unsigned int static DarkGravityWave3(const CBlockIndex* pindexLast, const CBlock
 
         if(CountBlocks <= PastBlocksMin) {
             if (CountBlocks == 1) { PastDifficultyAverage.SetCompact(BlockReading->nBits); }
-            else { PastDifficultyAverage = ((CBigNum().SetCompact(BlockReading->nBits) - PastDifficultyAveragePrev) / CountBlocks) + PastDifficultyAveragePrev; }
+            else { PastDifficultyAverage = ((PastDifficultyAveragePrev * CountBlocks)+(CBigNum().SetCompact(BlockReading->nBits))) / (CountBlocks+1); }
             PastDifficultyAveragePrev = PastDifficultyAverage;
+            //printf(" -- %"PRIszu" %"PRIszu" %"PRIszu" \n", BlockReading->nHeight, CountBlocks, PastDifficultyAveragePrev.GetCompact());
         }
 
         if(LastBlockTime > 0){
@@ -1614,13 +1619,21 @@ unsigned int static DarkGravityWave3(const CBlockIndex* pindexLast, const CBlock
     if (nActualTimespan > nTargetTimespan*3)
         nActualTimespan = nTargetTimespan*3;
 
+    printf(" -- %"PRIszu" %"PRIszu" %"PRIszu" \n", BlockReading->nHeight, nActualTimespan, nTargetTimespan);
+
+    printf("nBits1 %f\n", ConvertBitsToDouble(bnNew.GetCompact()));
+
     // Retarget
     bnNew *= nActualTimespan;
     bnNew /= nTargetTimespan;
 
+    printf("nBits2 %f\n", ConvertBitsToDouble(bnNew.GetCompact()));
+
     if (bnNew > bnProofOfWorkLimit){
         bnNew = bnProofOfWorkLimit;
     }
+
+    printf("nBits3 %f\n", ConvertBitsToDouble(bnNew.GetCompact()));
      
     return bnNew.GetCompact();
 }
@@ -1641,7 +1654,7 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBl
 {
         int DiffMode = 1;
         if (fTestNet) {
-            if (pindexLast->nHeight+1 >= 162) { DiffMode = 4; }
+            if (pindexLast->nHeight+1 >= 5) { DiffMode = 4; }
         }
         else {
             if (pindexLast->nHeight+1 >= 65535) { DiffMode = 4; }
