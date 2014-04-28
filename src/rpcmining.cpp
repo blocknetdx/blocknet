@@ -545,15 +545,21 @@ Value getblocktemplate(const Array& params, bool fHelp)
     static Array aPayees;
     if (aPayees.empty())
     {
-        aPayees.push_back((int64_t)pblock->payee1);
-        aPayees.push_back((int64_t)pblock->payee2);
+        aPayees.push_back(pblock->payee1.c_str());
+        aPayees.push_back(pblock->payee2.c_str());
     }
 
     Object aVotes;
     BOOST_FOREACH(CMasterNodeVote& mv, pblock->vmn){
         std::string strBlockHeight = boost::lexical_cast<std::string>(mv.blockHeight);
+        
+        Object o;
+        o.push_back(Pair("pubkey", HexStr(mv.GetPubKey().begin(), mv.GetPubKey().end())));
+        o.push_back(Pair("blockHeight", (int64_t)mv.blockHeight));
+        o.push_back(Pair("votes", (int64_t)mv.GetVotes()));
+    
         //aux   .push_back(Pair("flags",              HexStr(COINBASE_FLAGS.begin(), COINBASE_FLAGS.end())));              
-        aVotes.push_back(Pair(strBlockHeight.c_str(), HexStr(mv.GetPubKey().begin(), mv.GetPubKey().end())));
+        aVotes.push_back(Pair(strBlockHeight.c_str(), o));
     }
 
     Object result;

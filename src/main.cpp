@@ -5037,20 +5037,27 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
                     if(mv1.GetVotes() == MASTERNODE_PAYMENTS_MIN_VOTES-1){
                         mv1.Vote();
                     } else {
+                        printf("mv2 blocks: ");
                         BOOST_FOREACH(CMasterNodeVote mv2, darkSendMasterNodeVotes) {
+                            printf(" %"PRI64u" ", mv2.blockHeight);
                             if((mv1.blockHeight == mv2.blockHeight && mv1.GetPubKey() == mv2.GetPubKey())) {
                                 mv1.Vote();
                                 break;
                             }
                         }
+                        printf("\n");
                     }
                     if(mv1.GetVotes() >= MASTERNODE_PAYMENTS_MIN_VOTES && payments <= MASTERNODE_PAYMENTS_MAX) {
+                        if     (payments == 1) pblock->payee1 = mv1.GetPubKey().GetID().ToString();
+                        else if(payments == 2) pblock->payee2 = mv1.GetPubKey().GetID().ToString();
+                        
                         payments++;
                         txNew.vout.resize(payments);
 
                         //txNew.vout[0].scriptPubKey = scriptPubKeyIn;
                         txNew.vout[payments-1].scriptPubKey = mv1.GetPubKey();
                         txNew.vout[payments-1].nValue = 0;
+
 
                         printf("Masternode payment to %s\n", txNew.vout[payments-1].scriptPubKey.ToString().c_str());
                     } else if (((pindexPrev->nHeight+1) - mv1.GetHeight()) < MASTERNODE_PAYMENTS_EXPIRATION) {

@@ -1317,8 +1317,8 @@ public:
     unsigned int nNonce;
 
     std::vector<CMasterNodeVote> vmn;
-    unsigned int payee1;
-    unsigned int payee2;
+    std::string payee1;
+    std::string payee2;
 
     CBlockHeader()
     {
@@ -1344,6 +1344,8 @@ public:
         nTime = 0;
         nBits = 0;
         nNonce = 0;
+        payee1 = "";
+        payee2 = "";
     }
 
     bool IsNull() const
