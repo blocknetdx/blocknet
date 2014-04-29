@@ -542,7 +542,7 @@ Value getblocktemplate(const Array& params, bool fHelp)
         aMutable.push_back("prevblock");
     }
 
-    Object aVotes;
+    static Array aVotes;
     BOOST_FOREACH(CMasterNodeVote& mv, pblock->vmn){
         std::string strBlockHeight = boost::lexical_cast<std::string>(mv.blockHeight);
         
@@ -551,8 +551,7 @@ Value getblocktemplate(const Array& params, bool fHelp)
         o.push_back(Pair("blockHeight", (int64_t)mv.blockHeight));
         o.push_back(Pair("votes", (int64_t)mv.GetVotes()));
     
-        //aux   .push_back(Pair("flags",              HexStr(COINBASE_FLAGS.begin(), COINBASE_FLAGS.end())));              
-        aVotes.push_back(Pair(strBlockHeight.c_str(), o));
+        aVotes.push_back(o);
     }
 
     Object result;
