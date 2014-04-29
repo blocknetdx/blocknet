@@ -605,7 +605,6 @@ Value submitblock(const Array& params, bool fHelp)
     CValidationState state;
     bool fAccepted = ProcessBlock(state, NULL, &pblock);
     if (!fAccepted){
-        printf(" ProcessBlock Fail - %s\n", state.ToString().c_str());
         return "rejected"; // TODO: report validation state
     }
     return Value::null;
