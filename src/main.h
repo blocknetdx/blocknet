@@ -1340,8 +1340,6 @@ public:
         nTime = 0;
         nBits = 0;
         nNonce = 0;
-        payee1 = "";
-        payee2 = "";
     }
 
     bool IsNull() const
@@ -1404,6 +1402,8 @@ public:
         vtx.clear();
         vmn.clear();
         vMerkleTree.clear();
+        payee1 = "";
+        payee2 = "";
     }
 
     uint256 GetPoWHash() const
