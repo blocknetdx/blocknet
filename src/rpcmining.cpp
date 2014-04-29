@@ -534,7 +534,7 @@ Value getblocktemplate(const Array& params, bool fHelp)
 
     uint256 hashTarget = CBigNum().SetCompact(pblock->nBits).getuint256();
 
-    static Array aMutable;
+    Array aMutable;
     if (aMutable.empty())
     {
         aMutable.push_back("time");
@@ -542,7 +542,7 @@ Value getblocktemplate(const Array& params, bool fHelp)
         aMutable.push_back("prevblock");
     }
 
-    static Array aVotes;
+    Array aVotes;
     BOOST_FOREACH(CMasterNodeVote& mv, pblock->vmn){
         std::string strBlockHeight = boost::lexical_cast<std::string>(mv.blockHeight);
         
@@ -553,7 +553,7 @@ Value getblocktemplate(const Array& params, bool fHelp)
     
         aVotes.push_back(o);
     }
-
+ 
     Object result;
     result.push_back(Pair("version", pblock->nVersion));
     result.push_back(Pair("previousblockhash", pblock->hashPrevBlock.GetHex()));

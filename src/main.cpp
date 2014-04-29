@@ -2649,10 +2649,15 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
                         }
                     }
                 }
+
                 //find new votes, must be for this block height
+                bool foundThisBlock = false;
                 BOOST_FOREACH(CMasterNodeVote mv2, vmn){
                     bool found = false;
-                    if(mv2.blockHeight == pindexPrev->nHeight+1) continue;
+                    if(!foundThisBlock && mv2.blockHeight == pindexPrev->nHeight+1) {
+                        foundThisBlock = true;
+                        continue;
+                    }
 
                     BOOST_FOREACH(CMasterNodeVote mv1, blockLast.vmn){
                         if((mv1.blockHeight == mv2.blockHeight && mv1.GetPubKey() == mv2.GetPubKey()))
