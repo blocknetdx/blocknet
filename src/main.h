@@ -3,7 +3,7 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #ifndef BITCOIN_MAIN_H
-#define BITCOIN_MAIN_H
+#define BITCOIN_MAIN_HC
 
 #include "bignum.h"
 #include "sync.h"
@@ -1316,10 +1316,6 @@ public:
     unsigned int nBits;
     unsigned int nNonce;
 
-    std::vector<CMasterNodeVote> vmn;
-    std::string payee1;
-    std::string payee2;
-
     CBlockHeader()
     {
         SetNull();
@@ -1371,6 +1367,9 @@ class CBlock : public CBlockHeader
 public:
     // network and disk
     std::vector<CTransaction> vtx;
+    std::vector<CMasterNodeVote> vmn;
+    std::string payee1;
+    std::string payee2;
 
     // memory only
     mutable std::vector<uint256> vMerkleTree;
