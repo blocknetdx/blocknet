@@ -2624,7 +2624,7 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
 
         int64 masternodePaymentAmount = vtx[0].GetValueOut()/10;
         
-        if (pindexPrev != NULL && fCheckVotes && false){
+        if (pindexPrev != NULL && fCheckVotes){
             CBlock blockLast;
             if(blockLast.ReadFromDisk(pindexPrev)){
                 votingRecordsBlockPrev = blockLast.vmn.size();
