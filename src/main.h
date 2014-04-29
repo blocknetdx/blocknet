@@ -1386,6 +1386,7 @@ public:
     IMPLEMENT_SERIALIZE
     (
         READWRITE(*(CBlockHeader*)this);
+        READWRITE(vtx);
 
         printf("Block nTime - %u  %u\n", nTime, nTime > START_MASTERNODE_PAYMENTS_TESTNET);        
         if(fTestNet){
@@ -1394,7 +1395,6 @@ public:
             if(nTime > START_MASTERNODE_PAYMENTS) READWRITE(vmn);    
         }
 
-        READWRITE(vtx);
     )
 
     void SetNull()
