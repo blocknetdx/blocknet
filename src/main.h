@@ -1386,7 +1386,6 @@ public:
     IMPLEMENT_SERIALIZE
     (
         READWRITE(*(CBlockHeader*)this);
-        READWRITE(vtx);
 
         printf("Block nTime - %u  %u\n", nTime, nTime > START_MASTERNODE_PAYMENTS_TESTNET);        
         if(fTestNet){
@@ -1394,6 +1393,8 @@ public:
         } else {
             if(nTime > START_MASTERNODE_PAYMENTS) READWRITE(vmn);    
         }
+
+        READWRITE(vtx);
     )
 
     void SetNull()
@@ -2391,8 +2392,11 @@ public:
     (
         nVersion = this->nVersion;
         READWRITE(blockHeight);
+        printf("blockHeight %"PRI64d"\n", blockHeight);
         READWRITE(pubkey);
+        printf("pubkey %s\n", pubkey.ToString().c_str());
         READWRITE(votes);
+        printf("blockHeight %d\n", votes);
     )
 
 
