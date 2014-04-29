@@ -5056,7 +5056,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
                     }
                     if(mv1.GetVotes() >= MASTERNODE_PAYMENTS_MIN_VOTES && payments <= MASTERNODE_PAYMENTS_MAX) {
                         if     (payments == 1) pblock->payee1 = mv1.GetPubKey().GetID().ToString();
-                        else if(payments == 2) pblock->payee2 = mv1.GetPubKey().GetID();
+                        else if(payments == 2) pblock->payee2 = mv1.GetPubKey().GetID().ToString();
                         
                         payments++;
                         txNew.vout.resize(payments);
