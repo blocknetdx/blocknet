@@ -543,15 +543,10 @@ Value getblocktemplate(const Array& params, bool fHelp)
     }
 
     Array aVotes;
-    BOOST_FOREACH(CMasterNodeVote& mv, pblock->vmn){
-        std::string strBlockHeight = boost::lexical_cast<std::string>(mv.blockHeight);
-        
-        Object o;
-        o.push_back(Pair("pubkey", HexStr(mv.GetPubKey().begin(), mv.GetPubKey().end())));
-        o.push_back(Pair("blockHeight", (int64_t)mv.blockHeight));
-        o.push_back(Pair("votes", (int64_t)mv.GetVotes()));
-    
-        aVotes.push_back(o);
+    BOOST_FOREACH(CMasterNodeVote& mv, pblock->vmn){        
+        CDataStream ssMNV(SER_NETWORK, PROTOCOL_VERSION);
+        ssMNV << mv;
+        aVotes.push_back(HexStr(ssMNV.begin(), ssMNV.end()));
     }
  
     Object result;
@@ -569,8 +564,11 @@ Value getblocktemplate(const Array& params, bool fHelp)
     result.push_back(Pair("curtime", (int64_t)pblock->nTime));
     result.push_back(Pair("bits", HexBits(pblock->nBits)));
     result.push_back(Pair("height", (int64_t)(pindexPrev->nHeight+1)));
-    result.push_back(Pair("payee", pblock->payee1.c_str()));
     result.push_back(Pair("votes", aVotes));
+
+    CDataStream ssPayee(SER_NETWORK, PROTOCOL_VERSION);
+    ssPayee << pblock->payee;
+    result.push_back(Pair("payee", HexStr(ssPayee.begin(), ssPayee.end())));
 
     return result;
 }

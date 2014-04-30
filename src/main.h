@@ -1366,10 +1366,9 @@ public:
     // network and disk
     std::vector<CTransaction> vtx;
     std::vector<CMasterNodeVote> vmn;
-    std::string payee1;
-    std::string payee2;
 
     // memory only
+    mutable CScript payee;
     mutable std::vector<uint256> vMerkleTree;
 
     CBlock()
@@ -1403,8 +1402,7 @@ public:
         vtx.clear();
         vmn.clear();
         vMerkleTree.clear();
-        payee1 = "";
-        payee2 = "";
+        payee = CScript();
     }
 
     uint256 GetPoWHash() const
