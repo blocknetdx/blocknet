@@ -2390,11 +2390,11 @@ public:
     (
         nVersion = this->nVersion;
         READWRITE(blockHeight);
-        printf("blockHeight %"PRI64d"\n", blockHeight);
+        //printf("blockHeight %"PRI64d"\n", blockHeight);
         READWRITE(pubkey);
-        printf("pubkey %s\n", pubkey.ToString().c_str());
+        //printf("pubkey %s\n", pubkey.ToString().c_str());
         READWRITE(votes);
-        printf("blockHeight %d\n", votes);
+        //printf("blockHeight %d\n", votes);
     )
 
 

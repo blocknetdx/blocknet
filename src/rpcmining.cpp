@@ -566,9 +566,11 @@ Value getblocktemplate(const Array& params, bool fHelp)
     result.push_back(Pair("height", (int64_t)(pindexPrev->nHeight+1)));
     result.push_back(Pair("votes", aVotes));
 
-    CDataStream ssPayee(SER_NETWORK, PROTOCOL_VERSION);
-    ssPayee << pblock->payee;
-    result.push_back(Pair("payee", HexStr(ssPayee.begin(), ssPayee.end())));
+
+    CTxDestination address1;
+    ExtractDestination(pblock->payee, address1);
+    CBitcoinAddress address2(address1);
+    result.push_back(Pair("payee", address2.ToString().c_str()));
 
     return result;
 }
