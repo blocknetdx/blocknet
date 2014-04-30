@@ -1387,13 +1387,11 @@ public:
         READWRITE(*(CBlockHeader*)this);
         READWRITE(vtx);
 
-        printf("Block nTime - %u  %u\n", nTime, nTime > START_MASTERNODE_PAYMENTS_TESTNET);        
         if(fTestNet){
             if(nTime > START_MASTERNODE_PAYMENTS_TESTNET) READWRITE(vmn);
         } else {
             if(nTime > START_MASTERNODE_PAYMENTS) READWRITE(vmn);    
         }
-
     )
 
     void SetNull()
@@ -1576,6 +1574,17 @@ public:
     // Store block on disk
     // if dbp is provided, the file is known to already reside on disk
     bool AcceptBlock(CValidationState &state, CDiskBlockPos *dbp = NULL);
+
+    
+    bool MasterNodePaymentsOn()
+    {
+        if(fTestNet){
+            if(nTime > START_MASTERNODE_PAYMENTS_TESTNET) return true;
+        } else {
+            if(nTime > START_MASTERNODE_PAYMENTS) return true;
+        }
+        return false;
+    }
 };
 
 

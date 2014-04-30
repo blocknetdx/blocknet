@@ -575,6 +575,8 @@ Value getblocktemplate(const Array& params, bool fHelp)
     } else {
         result.push_back(Pair("payee", ""));
     }
+    result.push_back(Pair("masternode_payments", pblock->MasterNodePaymentsOn()));
+    
     return result;
 }
 
