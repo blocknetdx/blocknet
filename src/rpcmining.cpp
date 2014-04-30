@@ -567,11 +567,14 @@ Value getblocktemplate(const Array& params, bool fHelp)
     result.push_back(Pair("votes", aVotes));
 
 
-    CTxDestination address1;
-    ExtractDestination(pblock->payee, address1);
-    CBitcoinAddress address2(address1);
-    result.push_back(Pair("payee", address2.ToString().c_str()));
-
+    if(pblock->payee != CScript()){
+        CTxDestination address1;
+        ExtractDestination(pblock->payee, address1);
+        CBitcoinAddress address2(address1);
+        result.push_back(Pair("payee", address2.ToString().c_str()));
+    } else {
+        result.push_back(Pair("payee", ""));
+    }
     return result;
 }
 
