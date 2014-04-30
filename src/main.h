@@ -35,7 +35,7 @@ class CBitcoinAddress;
 #define MASTERNODE_PAYMENTS_MIN_VOTES 6
 #define MASTERNODE_PAYMENTS_MAX 1
 #define MASTERNODE_PAYMENTS_EXPIRATION 10
-#define START_MASTERNODE_PAYMENTS_TESTNET 1398871014+(60*6)
+#define START_MASTERNODE_PAYMENTS_TESTNET 1398872033+(60*25)
 #define START_MASTERNODE_PAYMENTS 1399489716 //Wed, 07 May 2014 19:08:36 GMT
 
 struct CBlockIndexWorkComparator;
@@ -1578,6 +1578,7 @@ public:
     
     bool MasterNodePaymentsOn()
     {
+        //printf("nTime > START_MASTERNODE_PAYMENTS_TESTNET %"PRI64u" > %f = %d\n", nTime, START_MASTERNODE_PAYMENTS_TESTNET, nTime > START_MASTERNODE_PAYMENTS_TESTNET);
         if(fTestNet){
             if(nTime > START_MASTERNODE_PAYMENTS_TESTNET) return true;
         } else {
