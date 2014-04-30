@@ -1312,7 +1312,7 @@ int64 static GetBlockValue(int nBits, int nHeight, int64 nFees)
         (double)0x0000ffff / (double)(nBits & 0x00ffffff);
 
     /* fixed bug caused diff to not be correctly calculated */
-    if(nHeight > 4500) dDiff = ConvertBitsToDouble(nBits);
+    if(nHeight > 4500 || fTestNet) dDiff = ConvertBitsToDouble(nBits);
 
     int64 nSubsidy = 0; 
     if(nHeight >= 5465) {
@@ -1580,8 +1580,8 @@ unsigned int static DarkGravityWave3(const CBlockIndex* pindexLast, const CBlock
     BlockCreating = BlockCreating;
     int64 nActualTimespan = 0;
     int64 LastBlockTime = 0;
-    int64 PastBlocksMin = 55;
-    int64 PastBlocksMax = 55;
+    int64 PastBlocksMin = 24;
+    int64 PastBlocksMax = 24;
     int64 CountBlocks = 0;
     CBigNum PastDifficultyAverage;
     CBigNum PastDifficultyAveragePrev;
@@ -1648,10 +1648,10 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBl
 {
         int DiffMode = 1;
         if (fTestNet) {
-            if (pindexLast->nHeight+1 >= 160) { DiffMode = 4; }
+            if (pindexLast->nHeight+1 >= 16) { DiffMode = 4; }
         }
         else {
-            if (pindexLast->nHeight+1 >= 65535) { DiffMode = 4; }
+            if (pindexLast->nHeight+1 >= 68589) { DiffMode = 4; }
             else if (pindexLast->nHeight+1 >= 34140) { DiffMode = 3; }
             else if (pindexLast->nHeight+1 >= 15200) { DiffMode = 2; }
         }

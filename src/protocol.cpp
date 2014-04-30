@@ -24,7 +24,7 @@ static unsigned int nMessageStartTestSwitchTime = 1398869551+(60*5);
 // Darkcoin message start (switch from Litecoin's)
 static unsigned char pchMessageStartLitecoin[4] = { 0xfb, 0xc0, 0xb6, 0xdb };
 static unsigned char pchMessageStartDarkcoin[4] = { 0xbf, 0x0c, 0x6b, 0xbd };
-static unsigned int nMessageStartSwitchTime = 1398702790+(60*24*14);
+static unsigned int nMessageStartSwitchTime = 1400094580; //Wed, 14 May 2014 19:09:40 GMT
 
 void GetMessageStart(unsigned char pchMessageStart[], bool fPersistent)
 {

@@ -36,8 +36,8 @@ class CBitcoinAddress;
 #define MASTERNODE_PAYMENTS_MAX 1
 #define MASTERNODE_PAYMENTS_EXPIRATION 10
 #define START_MASTERNODE_PAYMENTS_TESTNET 1398872033+(60*25)
-#define START_MASTERNODE_PAYMENTS 1399489716 //Wed, 07 May 2014 19:08:36 GMT
-
+#define START_MASTERNODE_PAYMENTS 1400094580 //Wed, 14 May 2014 19:09:40 GMT
+ 
 struct CBlockIndexWorkComparator;
 
 /** The maximum allowed size for a serialized block, in bytes (network rule) */
