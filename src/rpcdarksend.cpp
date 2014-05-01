@@ -144,7 +144,12 @@ Value masternode(const Array& params, bool fHelp)
 
     if (strCommand == "current")
     {
-        int winner = darkSendPool.GetCurrentMasterNode();
+        int mod = 10;
+        if (params.size() == 2){
+            mod = 1;
+        }
+
+        int winner = darkSendPool.GetCurrentMasterNode(mod);
         if(winner >= 0) {
             return darkSendMasterNodes[winner].addr.ToString().c_str();
         }

@@ -6442,11 +6442,8 @@ uint256 CMasterNode::CalculateScore(int mod)
 
     uint256 n1 = 0;
     if(!darkSendPool.GetLastValidBlockHash(n1, mod)) return 0;
-    unsigned int n11 = 0;
-    memcpy(&n11, &n1, sizeof(n11));
 
-    int pend = 1;
-    uint256 n2 = Hash9(BEGIN(n11), END(pend));
+    uint256 n2 = Hash9(BEGIN(n1), END(n1));
     uint256 n3 = vin.prevout.hash > n2 ? (vin.prevout.hash - n2) : (n2 - vin.prevout.hash);
     
     /*
@@ -6472,12 +6469,15 @@ int CDarkSendPool::GetCurrentMasterNode(int mod)
         uint256 n = mn.CalculateScore(mod);
         unsigned int n2 = 0;
         memcpy(&n2, &n, sizeof(n2));
+
+        printf("GetCurrentMasterNode: %d : %s : %u > %u\n", i, mn.addr.ToString().c_str(), n2, score);
         if(n2 > score){
             score = n2;
             winner = i;
         }
         i++;
     }
+    printf("GetCurrentMasterNode: winner %d\n", winner);
 
     return winner;
 }
