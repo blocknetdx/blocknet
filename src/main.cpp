@@ -4942,10 +4942,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
                     if(mv1.GetVotes() == MASTERNODE_PAYMENTS_MIN_VOTES-1){
                         mv1.Vote();
                     } else {
-                        printf("Looking for block %"PRI64u"  %s\n", mv1.blockHeight, mv1.GetPubKey().ToString().c_str());
                         BOOST_FOREACH(CMasterNodeVote& mv2, darkSendMasterNodeVotes) {
-                            printf(" ---- %"PRI64u" %s \n", mv2.blockHeight, mv2.GetPubKey().ToString().c_str());
-
                             if((mv1.blockHeight == mv2.blockHeight && mv1.GetPubKey() == mv2.GetPubKey())) {
                                 mv1.Vote();
                                 break;
