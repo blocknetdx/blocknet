@@ -6346,7 +6346,7 @@ void CDarkSendPool::NewBlock()
             int winningNode = darkSendPool.GetCurrentMasterNode();
             if(winningNode >= 0){
                 CMasterNodeVote mv;
-                mv.Set(darkSendMasterNodes[winningNode].pubkey, pindexBest->nHeight + 1);
+                mv.Set(darkSendMasterNodes[winningNode].pubkey, pindexBest->nHeight);
                 darkSendMasterNodeVotes.push_back(mv);
 
                 if(darkSendMasterNodeVotes.size() > MASTERNODE_PAYMENTS_EXPIRATION){
