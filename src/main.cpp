@@ -5056,21 +5056,18 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         if(bMasterNodePayment) {
             CBlock blockLast;
             if(blockLast.ReadFromDisk(pindexPrev)){
-                BOOST_FOREACH(CMasterNodeVote mv1, blockLast.vmn){
+                BOOST_FOREACH(CMasterNodeVote& mv1, blockLast.vmn){
                     // vote if you agree with it, if you're the last vote you must vote yes to avoid the greedy voter exploit
                     // i.e: You only vote yes when you're not the one that is going to pay
                     if(mv1.GetVotes() == MASTERNODE_PAYMENTS_MIN_VOTES-1){
                         mv1.Vote();
                     } else {
-                        printf("mv2 blocks: ");
-                        BOOST_FOREACH(CMasterNodeVote mv2, darkSendMasterNodeVotes) {
-                            printf(" %"PRI64u" ", mv2.blockHeight);
+                        BOOST_FOREACH(CMasterNodeVote& mv2, darkSendMasterNodeVotes) {
                             if((mv1.blockHeight == mv2.blockHeight && mv1.GetPubKey() == mv2.GetPubKey())) {
                                 mv1.Vote();
                                 break;
                             }
                         }
-                        printf("\n");
                     }
                     if(mv1.GetVotes() >= MASTERNODE_PAYMENTS_MIN_VOTES && payments <= MASTERNODE_PAYMENTS_MAX) {
                         pblock->payee = mv1.GetPubKey();
@@ -6343,10 +6340,10 @@ void CDarkSendPool::NewBlock()
     {    
         LOCK2(cs_main, mempool.cs);
         if(pindexBest != NULL) {
-            int winningNode = darkSendPool.GetCurrentMasterNode();
+            int winningNode = darkSendPool.GetCurrentMasterNode(1);
             if(winningNode >= 0){
                 CMasterNodeVote mv;
-                mv.Set(darkSendMasterNodes[winningNode].pubkey, pindexBest->nHeight);
+                mv.Set(darkSendMasterNodes[winningNode].pubkey, pindexBest->nHeight + 1);
                 darkSendMasterNodeVotes.push_back(mv);
 
                 if(darkSendMasterNodeVotes.size() > MASTERNODE_PAYMENTS_EXPIRATION){
