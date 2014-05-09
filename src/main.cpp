@@ -4103,7 +4103,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             return false;
         }
 
-        if((fTestNet && !addr.GetPort() == 19999) || (!fTestNet && !addr.GetPort() == 9999)) return true;
+        if((fTestNet && addr.GetPort() != 19999) || (!fTestNet && addr.GetPort() != 9999)) return true;
 
         //printf("Searching existing masternodes : %s - %s\n", addr.ToString().c_str(),  vin.ToString().c_str());
 
@@ -4123,7 +4123,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         if(found) return true;
 
-        printf("Got NEW masternode entry %s\n", addr.ToString().c_str());        
+        printf("Got NEW masternode entry %s - %d\n", addr.ToString().c_str(), addr.GetPort());
 
         CValidationState state;
         CTransaction tx = CTransaction();
@@ -6257,6 +6257,11 @@ void CDarkSendPool::RegisterAsMasterNode()
         if(!GetLocal(addr)) return;
     } else {
         addr = CService(strMasterNodeAddr);
+    }
+
+    if((fTestNet && addr.GetPort() != 19999) || (!fTestNet && addr.GetPort() != 9999)) {
+        printf("CDarkSendPool::RegisterAsMasterNode() - Invalid port");
+        isCapableMasterNode = MASTERNODE_NOT_CAPABLE;
     }
 
     if(isCapableMasterNode == MASTERNODE_NOT_PROCESSED) {

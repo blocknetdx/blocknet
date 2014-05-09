@@ -2444,7 +2444,7 @@ public:
 
     bool UpdatedWithin(int milliSeconds)
     {
-        printf("UpdatedWithin %"PRI64u"\n", GetTimeMillis() - lastTimeSeen);
+        //printf("UpdatedWithin %"PRI64u"\n", GetTimeMillis() - lastTimeSeen);
         return GetTimeMillis() - lastTimeSeen < milliSeconds;
     }
 
