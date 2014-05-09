@@ -51,6 +51,7 @@ bool fImporting = false;
 bool fReindex = false;
 bool fBenchmark = false;
 bool fTxIndex = false;
+bool fRequestedMasterNodeList = false;
 unsigned int nCoinCacheSize = 5000;
 
 // create DarkSend pools
@@ -3877,8 +3878,14 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         // Change version
         pfrom->PushMessage("verack");
         pfrom->ssSend.SetVersion(min(pfrom->nVersion, PROTOCOL_VERSION));
-        
-        pfrom->PushMessage("dseg");
+
+        if(!fRequestedMasterNodeList) {
+            bool fIsInitialDownload = IsInitialBlockDownload();
+            if(!fIsInitialDownload) {
+                pfrom->PushMessage("dseg");
+                fRequestedMasterNodeList = true;
+            }
+        }
 
         if (!pfrom->fInbound)
         {
