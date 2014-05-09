@@ -51,6 +51,7 @@ bool fImporting = false;
 bool fReindex = false;
 bool fBenchmark = false;
 bool fTxIndex = false;
+bool fRequestedMasterNodeList = false;
 unsigned int nCoinCacheSize = 5000;
 
 // create DarkSend pools
@@ -839,7 +840,6 @@ bool CTxMemPool::acceptableInputs(CValidationState &state, CTransaction &tx, boo
         COutPoint outpoint = tx.vin[i].prevout;
         if (mapNextTx.count(outpoint))
         {
-            printf("false2\n");
             // Disable replacement feature for now
             return false;
         }
@@ -860,14 +860,12 @@ bool CTxMemPool::acceptableInputs(CValidationState &state, CTransaction &tx, boo
             // only helps filling in pfMissingInputs (to determine missing vs spent).
             BOOST_FOREACH(const CTxIn txin, tx.vin) {
                 if (!view.HaveCoins(txin.prevout.hash)) {
-                    printf("false4\n");
                     return false;
                 }
             }
 
             // are the actual inputs available?
             if (!tx.HaveInputs(view)) {
-                printf("false5\n");
                 return state.Invalid(error("CTxMemPool::acceptableInputs() : inputs already spent"));
             }
 
@@ -882,7 +880,6 @@ bool CTxMemPool::acceptableInputs(CValidationState &state, CTransaction &tx, boo
         // This is done last to help prevent CPU exhaustion denial-of-service attacks.
         if (!tx.CheckInputs(state, view, false, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC))
         {
-            printf("false8\n");
             return error("CTxMemPool::acceptableInputs() : ConnectInputs failed \n");
         }
     }
@@ -919,7 +916,6 @@ bool CTxMemPool::acceptable(CValidationState &state, CTransaction &tx, bool fChe
     {
         LOCK(cs);
         if (mapTx.count(hash)) {
-            printf("false1\n");
             return false;
         }
     }
@@ -930,7 +926,6 @@ bool CTxMemPool::acceptable(CValidationState &state, CTransaction &tx, bool fChe
         COutPoint outpoint = tx.vin[i].prevout;
         if (mapNextTx.count(outpoint))
         {
-            printf("false2\n");
             // Disable replacement feature for now
             return false;
         }
@@ -948,7 +943,6 @@ bool CTxMemPool::acceptable(CValidationState &state, CTransaction &tx, bool fChe
 
         // do we already have it?
         if (view.HaveCoins(hash)){
-            printf("false3\n");
             return false;
         }
 
@@ -959,14 +953,12 @@ bool CTxMemPool::acceptable(CValidationState &state, CTransaction &tx, bool fChe
             if (!view.HaveCoins(txin.prevout.hash)) {
                 if (pfMissingInputs) 
                     *pfMissingInputs = true;
-                printf("false4\n");
                 return false;
             }
         }
 
         // are the actual inputs available?
         if (!tx.HaveInputs(view)) {
-            printf("false5\n");
             return state.Invalid(error("CTxMemPool::acceptable() : inputs already spent"));
         }
 
@@ -979,7 +971,6 @@ bool CTxMemPool::acceptable(CValidationState &state, CTransaction &tx, bool fChe
 
         // Check for non-standard pay-to-script-hash in inputs
         if (!tx.AreInputsStandard(view) && !fTestNet) {
-            printf("false6\n");
             return error("CTxMemPool::acceptable() : nonstandard transaction input");
         }
 
@@ -992,7 +983,6 @@ bool CTxMemPool::acceptable(CValidationState &state, CTransaction &tx, bool fChe
         // Don't accept it if it can't get into a block
         int64 txMinFee = tx.GetMinFee(1000, true, GMF_RELAY);
         if (fLimitFree && nFees < txMinFee) {
-            printf("false7\n");
             return error("CTxMemPool::acceptable() : not enough fees %s, %"PRI64d" < %"PRI64d,
                          hash.ToString().c_str(),
                          nFees, txMinFee);
@@ -1002,7 +992,6 @@ bool CTxMemPool::acceptable(CValidationState &state, CTransaction &tx, bool fChe
         // This is done last to help prevent CPU exhaustion denial-of-service attacks.
         if (!tx.CheckInputs(state, view, true, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC))
         {
-            printf("false8\n");
             return error("CTxMemPool::acceptable() : ConnectInputs failed %s", hash.ToString().c_str());
         }
     }
@@ -2621,10 +2610,12 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
         int badVote = 0;
         int foundMasterNodePaymentPrev = 0;
         int foundMasterNodePayment = 0;
+        int removedMasterNodePayments = 0;
 
         int64 masternodePaymentAmount = vtx[0].GetValueOut()/10;
+        bool fIsInitialDownload = IsInitialBlockDownload();
         
-        if (pindexPrev != NULL && fCheckVotes){
+        if (pindexPrev != NULL && fCheckVotes && !fIsInitialDownload){
             CBlock blockLast;
             if(blockLast.ReadFromDisk(pindexPrev)){
                 votingRecordsBlockPrev = blockLast.vmn.size();
@@ -2632,10 +2623,8 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
                     if((pindexPrev->nHeight+1) - mv1.GetHeight() > MASTERNODE_PAYMENTS_EXPIRATION){
                         return state.DoS(100, error("CheckBlock() : Vote too old"));
                     } else if((pindexPrev->nHeight+1) - mv1.GetHeight() == MASTERNODE_PAYMENTS_EXPIRATION){
-                        votingRecordsBlockPrev--;
-                    }
-
-                    if(mv1.GetVotes() == MASTERNODE_PAYMENTS_MIN_VOTES-1 && foundMasterNodePaymentPrev <= MASTERNODE_PAYMENTS_MAX) {
+                        removedMasterNodePayments++;
+                    } else if(mv1.GetVotes() == MASTERNODE_PAYMENTS_MIN_VOTES-1 && foundMasterNodePaymentPrev <= MASTERNODE_PAYMENTS_MAX) {
                         for (unsigned int i = 1; i < vtx[0].vout.size(); i++)
                             if(vtx[0].vout[i].nValue == masternodePaymentAmount && mv1.GetPubKey() == vtx[0].vout[i].scriptPubKey)
                                 foundMasterNodePayment++;
@@ -2676,9 +2665,9 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
             if(foundMasterNodePayment!=foundMasterNodePaymentPrev)
                 return state.DoS(100, error("CheckBlock() : Required masternode payment missing"));
 
-            if(matchingVoteRecords+foundMasterNodePayment!=votingRecordsBlockPrev)
+            if(matchingVoteRecords+foundMasterNodePayment+removedMasterNodePayments!=votingRecordsBlockPrev)
                 return state.DoS(100, error("CheckBlock() : Missing masternode votes"));
-
+            
             if(matchingVoteRecords+foundMasterNodePayment>MASTERNODE_PAYMENTS_EXPIRATION)
                 return state.DoS(100, error("CheckBlock() : Too many vote records found"));
         }
@@ -3900,7 +3889,13 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         pfrom->PushMessage("verack");
         pfrom->ssSend.SetVersion(min(pfrom->nVersion, PROTOCOL_VERSION));
         
-        pfrom->PushMessage("dseg");
+        if(!fRequestedMasterNodeList) {
+            bool fIsInitialDownload = IsInitialBlockDownload();
+            if(!fIsInitialDownload) {
+                pfrom->PushMessage("dseg");
+                fRequestedMasterNodeList = true;
+            }
+        }
 
         if (!pfrom->fInbound)
         {
@@ -4087,6 +4082,9 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
             return false;
         }
+        bool fIsInitialDownload = IsInitialBlockDownload();
+        if(fIsInitialDownload) return true;
+
         CTxIn vin;
         CService addr;
         CPubKey pubkey;
