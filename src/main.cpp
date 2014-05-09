@@ -4123,7 +4123,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         if(found) return true;
 
-        printf("Got NEW masternode entry %s - %d\n", addr.ToString().c_str(), addr.GetPort());
+        printf("Got NEW masternode entry %s\n", addr.ToString().c_str());
 
         CValidationState state;
         CTransaction tx = CTransaction();
