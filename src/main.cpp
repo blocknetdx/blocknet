@@ -3983,6 +3983,8 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             return false;
         }
 
+        if((fTestNet && !addr.GetPort() == 19999) || (!fTestNet && !addr.GetPort() == 9999)) return true;
+
         //printf("Searching existing masternodes : %s - %s\n", addr.ToString().c_str(),  vin.ToString().c_str());
 
         bool found = false;
@@ -3991,7 +3993,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
             if(mn.vin == vin) {
                 found = true;
-                if(!mn.UpdatedWithin(30000)){
+                if(!mn.UpdatedWithin(1000*15*60)){
                     mn.UpdateLastSeen();
                     RelayDarkSendElectionEntry(vin, addr, vchSig, sigTime, pubkey, count, current);
                     return true;
@@ -4014,8 +4016,6 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             CMasterNode mn(addr, vin, pubkey, vchSig, sigTime);
             mn.UpdateLastSeen();
             darkSendMasterNodes.push_back(mn);
-
-            RelayDarkSendElectionEntry(vin, addr, vchSig, sigTime, pubkey, count, current);
         } else {
             printf("Rejected masternode entry\n");
             // if caught up on blocks, then do this:
