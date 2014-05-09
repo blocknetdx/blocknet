@@ -4111,7 +4111,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
             if(mn.vin == vin) {
                 found = true;
-                if(!mn.UpdatedWithin(30000)){
+                if(!mn.UpdatedWithin(1000*15*60)){
                     mn.UpdateLastSeen();
                     RelayDarkSendElectionEntry(vin, addr, vchSig, sigTime, pubkey, count, current);
                     return true;
