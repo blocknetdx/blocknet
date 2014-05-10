@@ -2612,7 +2612,7 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
                         return state.DoS(100, error("CheckBlock() : Vote too old"));
                     } else if((pindexPrev->nHeight+1) - mv1.GetHeight() == MASTERNODE_PAYMENTS_EXPIRATION){
                         removedMasterNodePayments++;
-                    } else if(mv1.GetVotes() == MASTERNODE_PAYMENTS_MIN_VOTES-1 && foundMasterNodePaymentPrev <= MASTERNODE_PAYMENTS_MAX) {
+                    } else if(mv1.GetVotes() >= MASTERNODE_PAYMENTS_MIN_VOTES-1 && foundMasterNodePaymentPrev < MASTERNODE_PAYMENTS_MAX) {
                         for (unsigned int i = 1; i < vtx[0].vout.size(); i++)
                             if(vtx[0].vout[i].nValue == masternodePaymentAmount && mv1.GetPubKey() == vtx[0].vout[i].scriptPubKey)
                                 foundMasterNodePayment++;
@@ -4937,7 +4937,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
                 BOOST_FOREACH(CMasterNodeVote& mv1, blockLast.vmn){
                     // vote if you agree with it, if you're the last vote you must vote yes to avoid the greedy voter exploit
                     // i.e: You only vote yes when you're not the one that is going to pay
-                    if(mv1.GetVotes() == MASTERNODE_PAYMENTS_MIN_VOTES-1){
+                    if(mv1.GetVotes() >= MASTERNODE_PAYMENTS_MIN_VOTES-1){
                         mv1.Vote();
                     } else {
                         BOOST_FOREACH(CMasterNodeVote& mv2, darkSendMasterNodeVotes) {
