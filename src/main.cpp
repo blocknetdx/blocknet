@@ -4947,7 +4947,10 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
                             }
                         }
                     }
-                    if(mv1.GetVotes() >= MASTERNODE_PAYMENTS_MIN_VOTES && payments <= MASTERNODE_PAYMENTS_MAX) {
+
+                    if (((pindexPrev->nHeight+1) - mv1.GetHeight()) >= MASTERNODE_PAYMENTS_EXPIRATION) {
+                        // do nothing
+                    } else if(mv1.GetVotes() >= MASTERNODE_PAYMENTS_MIN_VOTES && payments <= MASTERNODE_PAYMENTS_MAX) {
                         pblock->payee = mv1.GetPubKey();
                         
                         payments++;
@@ -5664,14 +5667,14 @@ int CDarkSendPool::GetCurrentMasterNode(int mod)
         unsigned int n2 = 0;
         memcpy(&n2, &n, sizeof(n2));
 
-        printf("GetCurrentMasterNode: %d : %s : %u > %u\n", i, mn.addr.ToString().c_str(), n2, score);
+        //printf("GetCurrentMasterNode: %d : %s : %u > %u\n", i, mn.addr.ToString().c_str(), n2, score);
         if(n2 > score){
             score = n2;
             winner = i;
         }
         i++;
     }
-    printf("GetCurrentMasterNode: winner %d\n", winner);
+    //printf("GetCurrentMasterNode: winner %d\n", winner);
 
     return winner;
 }
