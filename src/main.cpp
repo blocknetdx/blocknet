@@ -2662,8 +2662,9 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
             if(badVote!=0)
                 return state.DoS(100, error("CheckBlock() : Bad vote detected"));
 
-            if(foundMasterNodePayment!=foundMasterNodePaymentPrev)
+            if(foundMasterNodePayment!=foundMasterNodePaymentPrev) {
                 return state.DoS(100, error("CheckBlock() : Required masternode payment missing"));
+            }
 
             if(matchingVoteRecords+foundMasterNodePayment+removedMasterNodePayments!=votingRecordsBlockPrev)
                 return state.DoS(100, error("CheckBlock() : Missing masternode votes"));
@@ -5067,7 +5068,10 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
                             }
                         }
                     }
-                    if(mv1.GetVotes() >= MASTERNODE_PAYMENTS_MIN_VOTES && payments <= MASTERNODE_PAYMENTS_MAX) {
+
+                    if (((pindexPrev->nHeight+1) - mv1.GetHeight()) >= MASTERNODE_PAYMENTS_EXPIRATION) {
+                        // do nothing
+                    } else if(mv1.GetVotes() >= MASTERNODE_PAYMENTS_MIN_VOTES && payments <= MASTERNODE_PAYMENTS_MAX) {
                         pblock->payee = mv1.GetPubKey();
                         
                         payments++;
@@ -5076,7 +5080,6 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
                         //txNew.vout[0].scriptPubKey = scriptPubKeyIn;
                         txNew.vout[payments-1].scriptPubKey = mv1.GetPubKey();
                         txNew.vout[payments-1].nValue = 0;
-
 
                         printf("Masternode payment to %s\n", txNew.vout[payments-1].scriptPubKey.ToString().c_str());
                     } else if (((pindexPrev->nHeight+1) - mv1.GetHeight()) < MASTERNODE_PAYMENTS_EXPIRATION) {
@@ -6470,14 +6473,14 @@ int CDarkSendPool::GetCurrentMasterNode(int mod)
         unsigned int n2 = 0;
         memcpy(&n2, &n, sizeof(n2));
 
-        printf("GetCurrentMasterNode: %d : %s : %u > %u\n", i, mn.addr.ToString().c_str(), n2, score);
+        //printf("GetCurrentMasterNode: %d : %s : %u > %u\n", i, mn.addr.ToString().c_str(), n2, score);
         if(n2 > score){
             score = n2;
             winner = i;
         }
         i++;
     }
-    printf("GetCurrentMasterNode: winner %d\n", winner);
+    //printf("GetCurrentMasterNode: winner %d\n", winner);
 
     return winner;
 }
