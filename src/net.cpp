@@ -1913,9 +1913,12 @@ void RelayTransaction(const CTransaction& tx, const uint256& hash, const CDataSt
 
 void RelayDarkSendElectionEntry(const CTxIn vin, const CService addr, const std::vector<unsigned char> vchSig, const int64 nNow, const CPubKey pubkey, const int count, const int current)
 {
+    int c = 0;
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
+        c++;
+        if(c > 4) break;
         pnode->PushMessage("dsee", vin, addr, vchSig, nNow, pubkey, count, current);
     }   
 }
