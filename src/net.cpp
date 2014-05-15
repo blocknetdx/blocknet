@@ -1920,7 +1920,6 @@ void RelayDarkSendFinalTransaction(const CTransaction& txNew)
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
-        printf("RelayDarkSendFinalTransaction\n");
         pnode->PushMessage("dsf", txNew);
     }
 }
@@ -1930,9 +1929,7 @@ void RelayDarkSendIn(const CTxIn& in, const int64& nAmount, const CTransaction& 
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
-        printf("RelayDarkSendIn\n");
         if(!pnode->fDarkSendMaster) continue;
-        printf("RelayDarkSendIn - found master, relaying message \n");
         pnode->PushMessage("dsi", in, nAmount, txCollateral, txSupporting, out, out2);
     }
 }
@@ -1942,7 +1939,6 @@ void RelayDarkSendStatus(const int newState, const int newEntriesCount, const in
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
-        printf("RelayDarkSendStatus \n");
         pnode->PushMessage("dssu", newState, newEntriesCount, newAccepted, error);
     }
 }
@@ -1952,6 +1948,8 @@ void RelayDarkSendElectionEntry(const CTxIn vin, const CService addr, const std:
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
+        c++;
+        if(c > 4) break;
         pnode->PushMessage("dsee", vin, addr, vchSig, nNow, pubkey, count, current);
     }   
 }
@@ -1961,7 +1959,6 @@ void RelayDarkSendCompletedTransaction(const bool error, const std::string error
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
-        printf("RelayDarkSendCompletedTransaction \n");
         pnode->PushMessage("dsc", error, errorMessage);
     }
 }

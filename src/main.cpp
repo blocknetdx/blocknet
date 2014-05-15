@@ -2733,37 +2733,18 @@ bool CBlock::AcceptBlock(CValidationState &state, CDiskBlockPos *dbp)
             if (nBits != GetNextWorkRequired(pindexPrev, this))
                 return state.DoS(100, error("AcceptBlock() : incorrect proof of work"));
         } else {
-            #ifdef _WIN32
-                // Check proof of work       
-                if(nHeight >= 34140){
-                    unsigned int nBitsNext = GetNextWorkRequired(pindexPrev, this);
-                    double n1 = ConvertBitsToDouble(nBits);
-                    double n2 = ConvertBitsToDouble(nBitsNext);
+            // Check proof of work (Here for the architecture issues with DGW v1 and v2)
+            if(nHeight <= 68589){
+                unsigned int nBitsNext = GetNextWorkRequired(pindexPrev, this);
+                double n1 = ConvertBitsToDouble(nBits);
+                double n2 = ConvertBitsToDouble(nBitsNext);
 
-                    if (nHeight <= 45000) {
-                        if (abs(n1-n2) > n1*0.2) 
-                            return state.DoS(100, error("AcceptBlock() : incorrect proof of work (DGW pre-fork)"));
-                    } else {
-                        if (abs(n1-n2) > n1*0.005) 
-                            return state.DoS(100, error("AcceptBlock() : incorrect proof of work (DGW2)"));
-                    }
-                } else {
-                    if (nBits != GetNextWorkRequired(pindexPrev, this))
-                        return state.DoS(100, error("AcceptBlock() : incorrect proof of work"));
-                }
-            #else
-                // Check proof of work
-                if(nHeight >= 34140 && nHeight <= 45000){
-                    unsigned int nBitsNext = GetNextWorkRequired(pindexPrev, this);
-                    double n1 = ConvertBitsToDouble(nBits);
-                    double n2 = ConvertBitsToDouble(nBitsNext);
-                    if (abs(n1-n2) > n1*0.2)
-                        return state.DoS(100, error("AcceptBlock() : incorrect proof of work (DGW pre-fork)"));
-                } else {
-                    if (nBits != GetNextWorkRequired(pindexPrev, this))
-                        return state.DoS(100, error("AcceptBlock() : incorrect proof of work"));
-                }
-            #endif
+                if (abs(n1-n2) > n1*0.2) 
+                    return state.DoS(100, error("AcceptBlock() : incorrect proof of work (DGW pre-fork)"));
+            } else {
+                if (nBits != GetNextWorkRequired(pindexPrev, this))
+                    return state.DoS(100, error("AcceptBlock() : incorrect proof of work"));
+            }
         }
 
         // Prevent blocks from too far in the future
@@ -4140,7 +4121,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         } else {
             printf("Rejected masternode entry\n");
             // if caught up on blocks, then do this:
-            pfrom->Misbehaving(20);
+            // pfrom->Misbehaving(20);
         }
     }
 
