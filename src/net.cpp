@@ -1945,6 +1945,7 @@ void RelayDarkSendStatus(const int newState, const int newEntriesCount, const in
 
 void RelayDarkSendElectionEntry(const CTxIn vin, const CService addr, const std::vector<unsigned char> vchSig, const int64 nNow, const CPubKey pubkey, const int count, const int current)
 {
+    int c = 0;
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
