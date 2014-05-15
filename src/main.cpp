@@ -4140,7 +4140,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         } else {
             printf("Rejected masternode entry\n");
             // if caught up on blocks, then do this:
-            //pfrom->Misbehaving(20);
+            pfrom->Misbehaving(20);
         }
     }
 
