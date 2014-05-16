@@ -77,7 +77,31 @@ Value masternode(const Array& params, bool fHelp)
 
     if (strCommand == "stop")
     {
-        return "Not implemented yet";
+        if(!fMasterNode) return "you must set masternode=1 in the configuration";
+
+        if(pwalletMain->IsLocked()) {
+            SecureString strWalletPass;
+            strWalletPass.reserve(100);
+
+            if (params.size() == 2){
+                strWalletPass = params[1].get_str().c_str();
+            } else {
+                throw runtime_error(
+                    "Your wallet is locked, passphrase is required\n");
+            }
+            
+            if(!pwalletMain->Unlock(strWalletPass)){
+                return "incorrect passphrase";
+            }
+        }
+
+        darkSendPool.RegisterAsMasterNode(true);
+        pwalletMain->Lock();
+        
+        if(darkSendPool.isCapableMasterNode == MASTERNODE_STOPPED) return "successfully stopped masternode";
+        if(darkSendPool.isCapableMasterNode == MASTERNODE_NOT_CAPABLE) return "not capable masternode";
+        
+        return "unknown";
     }
 
     if (strCommand == "list")
@@ -112,9 +136,10 @@ Value masternode(const Array& params, bool fHelp)
             }
         }
 
-        darkSendPool.RegisterAsMasterNode();
+        darkSendPool.RegisterAsMasterNode(false);
         pwalletMain->Lock();
         
+        if(darkSendPool.isCapableMasterNode == MASTERNODE_STOPPED) return "masternode is stopped";
         if(darkSendPool.isCapableMasterNode == MASTERNODE_IS_CAPABLE) return "successfully started masternode";
         if(darkSendPool.isCapableMasterNode == MASTERNODE_NOT_CAPABLE) return "not capable masternode";
         
@@ -125,13 +150,14 @@ Value masternode(const Array& params, bool fHelp)
     {
         if(darkSendPool.isCapableMasterNode == MASTERNODE_IS_CAPABLE) return "successfully started masternode";
         if(darkSendPool.isCapableMasterNode == MASTERNODE_NOT_CAPABLE) return "not capable masternode";
+        if(darkSendPool.isCapableMasterNode == MASTERNODE_STOPPED) return "masternode is stopped";
 
         CTxIn vin = CTxIn();
         CPubKey pubkey = CScript();
         CKey key;
         bool found = darkSendPool.GetMasterNodeVin(vin, pubkey, key);
         if(!found){
-            return "Missing masternode input, try running masternode create";
+            return "Missing masternode input, please look at the documentation for instructions on masternode creation";
         } else {
             return "No problems were found";
         }
@@ -139,7 +165,7 @@ Value masternode(const Array& params, bool fHelp)
 
     if (strCommand == "create")
     {
-        return "Not implemented yet";
+        return "Not implemented yet, please look at the documentation for instructions on masternode creation";
     }
 
     if (strCommand == "current")

@@ -2417,15 +2417,17 @@ public:
     CTxIn vin;
     int64 lastTimeSeen;
     CPubKey pubkey;
+    CPubKey pubkey2;
     std::vector<unsigned char> sig;
     int64 now;
     int enabled;
 
-    CMasterNode(CService newAddr, CTxIn newVin, CPubKey newPubkey, std::vector<unsigned char> newSig, int64 newNow)
+    CMasterNode(CService newAddr, CTxIn newVin, CPubKey newPubkey, std::vector<unsigned char> newSig, int64 newNow, CPubKey newPubkey2)
     {
         addr = newAddr;
         vin = newVin;
         pubkey = newPubkey;
+        pubkey2 = newPubkey2;
         sig = newSig;
         now = newNow;
         enabled = 1;
@@ -2446,6 +2448,11 @@ public:
     {
         //printf("UpdatedWithin %"PRI64u"\n", GetTimeMillis() - lastTimeSeen);
         return GetTimeMillis() - lastTimeSeen < milliSeconds;
+    }
+
+    bool Disable()
+    {
+        enabled = 9;
     }
 
     bool IsEnabled()
@@ -2530,6 +2537,7 @@ public:
 #define MASTERNODE_NOT_PROCESSED               0 // initial state
 #define MASTERNODE_IS_CAPABLE                  1
 #define MASTERNODE_NOT_CAPABLE                 2
+#define MASTERNODE_STOPPED                     3
 
 static const int64 POOL_FEE_AMOUNT = 0.1*COIN;
 
@@ -2555,6 +2563,9 @@ public:
 
     CTxIn vinMasterNode;
     CPubKey pubkeyMasterNode;
+    Key MasterNodeSigningKey;
+    CPubKey MasterNodeSigningPubKey;
+
     std::vector<unsigned char> vchMasterNodeSignature;
      
     int isCapableMasterNode;
@@ -2669,11 +2680,12 @@ public:
 
     bool GetMasterNodeVin(CTxIn& vin, CPubKey& pubkey, CKey& secretKey);
     void RelayDarkDeclareWinner();
-    void RegisterAsMasterNode();
+    void RegisterAsMasterNode(bool stop);
     bool GetLastValidBlockHash(uint256& hash, int mod=10);
     void NewBlock();
     void CompletedTransaction(bool error, std::string lastMessageNew);
     void ClearLastMessage();
+    void SetMasterNodePrivKey(Key key, CPubKey pubkey);
 };
 
 void ConnectToDarkSendMasterNodeWinner();
