@@ -409,8 +409,7 @@ void ThreadGetMyExternalIP(void* parg)
     if (GetMyExternalIP(addrLocalHost))
     {
         printf("GetMyExternalIP() returned %s\n", addrLocalHost.ToStringIP().c_str());
-        AddLocal(addrLocalHost, LOCAL_HTTP);
-        darkSendPool.RegisterAsMasterNode();                
+        AddLocal(addrLocalHost, LOCAL_HTTP);              
     }
 }
 
@@ -1113,9 +1112,7 @@ void ThreadMapPort()
                 if(externalIPAddress[0])
                 {
                     printf("UPnP: ExternalIPAddress = %s\n", externalIPAddress);
-                    AddLocal(CNetAddr(externalIPAddress), LOCAL_UPNP);
-                
-                    darkSendPool.RegisterAsMasterNode();                
+                    AddLocal(CNetAddr(externalIPAddress), LOCAL_UPNP);             
                 }
                 else
                     printf("UPnP: GetExternalIPAddress failed.\n");

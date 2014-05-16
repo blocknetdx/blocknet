@@ -8,6 +8,7 @@
 #include "bignum.h"
 #include "sync.h"
 #include "net.h"
+#include "key.h"
 #include "script.h"
 #include "hashblock.h"
 #include "base58.h"
@@ -2450,7 +2451,7 @@ public:
         return GetTimeMillis() - lastTimeSeen < milliSeconds;
     }
 
-    bool Disable()
+    void Disable()
     {
         enabled = 9;
     }
@@ -2563,8 +2564,6 @@ public:
 
     CTxIn vinMasterNode;
     CPubKey pubkeyMasterNode;
-    Key MasterNodeSigningKey;
-    CPubKey MasterNodeSigningPubKey;
 
     std::vector<unsigned char> vchMasterNodeSignature;
      
@@ -2685,7 +2684,6 @@ public:
     void NewBlock();
     void CompletedTransaction(bool error, std::string lastMessageNew);
     void ClearLastMessage();
-    void SetMasterNodePrivKey(Key key, CPubKey pubkey);
 };
 
 void ConnectToDarkSendMasterNodeWinner();

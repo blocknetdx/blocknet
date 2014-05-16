@@ -1126,7 +1126,6 @@ bool AppInit2(boost::thread_group& threadGroup)
                 exit(0);
             }
 
-            darkSendPool.SetMasterNodePrivKey(key);
         } else {
             printf("You must specific a masternodeprivkey in the configuration. Please see documentation for help.");
             exit(0);
