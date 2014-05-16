@@ -2539,14 +2539,14 @@ public:
 #define MASTERNODE_NOT_CAPABLE                 2
 #define MASTERNODE_STOPPED                     3
 
-static const int64 POOL_FEE_AMOUNT = 0.1*COIN;
+static const int64 POOL_FEE_AMOUNT = 0.025*COIN;
 
 /** Used to keep track of current status of darksend pool
  */
 class CDarkSendPool
 {
 public:
-    static const int MIN_PEER_PROTO_VERSION = 70014;
+    static const int MIN_PEER_PROTO_VERSION = 70015;
 
     std::vector<CDarkSendEntry> myEntries;
     std::vector<CDarkSendEntry> entries;

@@ -1943,7 +1943,7 @@ void RelayDarkSendStatus(const int newState, const int newEntriesCount, const in
     }
 }
 
-void RelayDarkSendElectionEntry(const CTxIn vin, const CService addr, const std::vector<unsigned char> vchSig, const int64 nNow, const CPubKey pubkey, const int count, const int current)
+void RelayDarkSendElectionEntry(const CTxIn vin, const CService addr, const std::vector<unsigned char> vchSig, const int64 nNow, const CPubKey pubkey, const CPubKey pubkey2, const int count, const int current)
 {
     int c = 0;
     LOCK(cs_vNodes);
@@ -1951,9 +1951,22 @@ void RelayDarkSendElectionEntry(const CTxIn vin, const CService addr, const std:
     {
         c++;
         if(c > 4) break;
-        pnode->PushMessage("dsee", vin, addr, vchSig, nNow, pubkey, count, current);
+        pnode->PushMessage("dsee", vin, addr, vchSig, nNow, pubkey, pubkey2, count, current);
     }   
 }
+
+void RelayDarkSendElectionEntryPing(const CTxIn vin, const std::vector<unsigned char> vchSig, const int64 nNow, const bool stop)
+{
+    int c = 0;
+    LOCK(cs_vNodes);
+    BOOST_FOREACH(CNode* pnode, vNodes)
+    {
+        c++;
+        if(c > 4) break;
+        pnode->PushMessage("dseep", vin, vchSig, nNow, stop);
+    }   
+}
+
 
 void RelayDarkSendCompletedTransaction(const bool error, const std::string errorMessage)
 {
