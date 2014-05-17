@@ -1026,6 +1026,28 @@ bool CTransaction::AcceptableInputs(CValidationState &state, bool fLimitFree)
     }
 }
 
+int GetInputAge(CTxIn& vin)
+{
+    // Fetch previous transactions (inputs):
+    CCoinsView viewDummy;
+    CCoinsViewCache view(viewDummy);
+    {
+        LOCK(mempool.cs);
+        CCoinsViewCache &viewChain = *pcoinsTip;
+        CCoinsViewMemPool viewMempool(viewChain, mempool);
+        view.SetBackend(viewMempool); // temporarily switch cache backend to db+mempool view
+
+        const uint256& prevHash = vin.prevout.hash;
+        CCoins coins;
+        view.GetCoins(prevHash, coins); // this is certainly allowed to fail
+        view.SetBackend(viewDummy); // switch back to avoid locking mempool for too long
+    }
+
+    const CCoins &coins = view.GetCoins(vin.prevout.hash);
+
+    return pindexBest->nHeight - coins.nHeight;
+}
+
 bool CTxMemPool::addUnchecked(const uint256& hash, const CTransaction &tx)
 {
     // Add to memory pool without checking anything.  Don't call this directly,
@@ -4079,19 +4101,19 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         CBlockIndex* pindexPrev = pindexBest;
 
-        if (sigTime > GetAdjustedTime() + 5 * 60) {
+        if (sigTime/1000000 > GetAdjustedTime() + 5 * 60) {
             printf("dsee: Signature rejected, too far into the future");
             pfrom->Misbehaving(20);
             return false;
         }
 
-        if (sigTime <= pindexPrev->GetBlockTime() - 5 * 60) {
+        if (sigTime/1000000 <= pindexPrev->GetBlockTime() - 5 * 60) {
             printf("dsee: Signature rejected, too far into the past");
             pfrom->Misbehaving(20);
             return false;
         }
 
-        std::string vchPubKey(pubkey2.begin(), pubkey2.end());
+        std::string vchPubKey(pubkey.begin(), pubkey.end());
         std::string strMessage = addr.ToString() + boost::lexical_cast<std::string>(sigTime) + vchPubKey; 
 
         std::string errorMessage = "";
@@ -4125,6 +4147,13 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         if(tx.AcceptableInputs(state, true)){
             printf("Accepted masternode entry %i %i\n", count, current);
 
+            if(GetInputAge(vin) < MASTERNODE_MIN_CONFIRMATIONS){
+                printf("CDarkSendPool::RegisterAsMasterNode() - Input must have least %d confirmations\n", MASTERNODE_MIN_CONFIRMATIONS);
+                pfrom->Misbehaving(20);
+                return false;
+            }
+
+
             CMasterNode mn(addr, vin, pubkey, vchSig, sigTime, pubkey2);
             mn.UpdateLastSeen();
             darkSendMasterNodes.push_back(mn);
@@ -4154,13 +4183,13 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         CBlockIndex* pindexPrev = pindexBest;
 
-        if (sigTime > GetAdjustedTime() + 5 * 60) {
+        if (sigTime/1000000 > GetAdjustedTime() + 5 * 60) {
             printf("dseep: Signature rejected, too far into the future");
             pfrom->Misbehaving(20);
             return false;
         }
 
-        if (sigTime <= pindexPrev->GetBlockTime() - 5 * 60) {
+        if (sigTime/1000000 <= pindexPrev->GetBlockTime() - 5 * 60) {
             printf("dseep: Signature rejected, too far into the past");
             pfrom->Misbehaving(20);
             return false;
@@ -4169,7 +4198,6 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         //printf("Searching existing masternodes : %s - %s\n", addr.ToString().c_str(),  vin.ToString().c_str());
 
         BOOST_FOREACH(CMasterNode& mn, darkSendMasterNodes) {
-            //printf(" -- %s\n", mn.vin.ToString().c_str());
 
             if(mn.vin == vin) {
                 std::string strMessage = mn.addr.ToString() + boost::lexical_cast<std::string>(sigTime) + boost::lexical_cast<std::string>(stop); 
@@ -4182,10 +4210,13 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
                 }
 
                 if(stop) {
-                    mn.Disable();
-                    RelayDarkSendElectionEntryPing(vin, vchSig, sigTime, stop);
+                    if(mn.IsEnabled()){
+                        mn.Disable();
+                        mn.Check();
+                        RelayDarkSendElectionEntryPing(vin, vchSig, sigTime, stop);
+                    }
                     return true;
-                } else if(!mn.UpdatedWithin(1000*15*60)){
+                } else if(!mn.UpdatedWithin(MASTERNODE_MIN_MICROSECONDS)){
                     mn.UpdateLastSeen();
                     RelayDarkSendElectionEntryPing(vin, vchSig, sigTime, stop);
                     return true;
@@ -6256,7 +6287,7 @@ bool CDarkSendPool::GetMasterNodeVin(CTxIn& vin, CPubKey& pubkey, CKey& secretKe
     CScript pubScript;
 
     // try once before we try to denominate
-    if (!pwalletMain->SelectCoinsExactOutput(1000*COIN, vin, nValueIn, pubScript, false, NULL))
+    if (!pwalletMain->SelectCoinsExactOutput(1000*COIN, vin, nValueIn, pubScript, true, NULL))
     {
         if(fDebug) printf("CDarkSendPool::GetMasterNodeVin - I'm not a capable masternode\n");
         return false;
@@ -6329,6 +6360,12 @@ void CDarkSendPool::RegisterAsMasterNode(bool stop)
         exit(0);
     }
 
+    if(isCapableMasterNode == MASTERNODE_INPUT_TOO_NEW || 
+        isCapableMasterNode == MASTERNODE_NOT_CAPABLE){
+
+        isCapableMasterNode = MASTERNODE_NOT_PROCESSED;
+    }
+
     if(isCapableMasterNode == MASTERNODE_NOT_PROCESSED) {
         if(pwalletMain->IsLocked()){
             return;
@@ -6338,6 +6375,13 @@ void CDarkSendPool::RegisterAsMasterNode(bool stop)
 
         CKey SecretKey;
         if(GetMasterNodeVin(vinMasterNode, pubkeyMasterNode, SecretKey)) {
+
+            if(GetInputAge(vinMasterNode) < MASTERNODE_MIN_CONFIRMATIONS){
+                printf("CDarkSendPool::RegisterAsMasterNode() - Input must have least %d confirmations - %d confirmations\n", MASTERNODE_MIN_CONFIRMATIONS, GetInputAge(vinMasterNode));
+                isCapableMasterNode = MASTERNODE_INPUT_TOO_NEW;
+                return;
+            }
+
             masterNodeSignatureTime = GetTimeMicros();
 
             std::string vchPubKey(pubkeyMasterNode.begin(), pubkeyMasterNode.end());
@@ -6382,8 +6426,7 @@ void CDarkSendPool::RegisterAsMasterNode(bool stop)
 
     masterNodeSignatureTime = GetTimeMicros();
 
-    std::string vchPubKey(pubkey2.begin(), pubkey2.end());
-    std::string strMessage = addr.ToString() + boost::lexical_cast<std::string>(masterNodeSignatureTime) + vchPubKey;
+    std::string strMessage = addr.ToString() + boost::lexical_cast<std::string>(masterNodeSignatureTime) + boost::lexical_cast<std::string>(stop);
 
     if(!darkSendSigner.SignMessage(strMessage, errorMessage, vchMasterNodeSignature, key2)) {
         printf("CDarkSendPool::RegisterAsMasterNode() - Sign message failed");
@@ -6582,7 +6625,7 @@ int CDarkSendPool::GetCurrentMasterNode(int mod)
 
 void CMasterNode::Check()
 {
-    if(!UpdatedWithin(1000*50*60)){
+    if(!UpdatedWithin(MASTERNODE_EXPIRATION_MICROSECONDS)){
         enabled = 2;
         return;
     }
@@ -6658,7 +6701,7 @@ void ThreadCheckDarkSendPool()
         //printf("ThreadCheckDarkSendPool::check timeout\n");
         darkSendPool.CheckTimeout();
         
-        if(c == 25*60){
+        if(c == MASTERNODE_PING_SECONDS){
             darkSendPool.RegisterAsMasterNode(false);
             c = 0;
         }

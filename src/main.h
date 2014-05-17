@@ -179,6 +179,8 @@ bool ProcessMessages(CNode* pfrom);
 bool SendMessages(CNode* pto, bool fSendTrickle);
 /** Run an instance of the script checking thread */
 void ThreadScriptCheck();
+//** Get age of an input */
+int GetInputAge(CTxIn& vin);
 /** Run the miner threads */
 void GenerateBitcoins(bool fGenerate, CWallet* pwallet);
 /** Generate a new block, without valid proof-of-work */
@@ -648,8 +650,8 @@ public:
         return dPriority > COIN * 576 / 250;
     }
 
-// Apply the effects of this transaction on the UTXO set represented by view
-void UpdateCoins(const CTransaction& tx, CValidationState &state, CCoinsViewCache &inputs, CTxUndo &txundo, int nHeight, const uint256 &txhash);
+    // Apply the effects of this transaction on the UTXO set represented by view
+    void UpdateCoins(const CTransaction& tx, CValidationState &state, CCoinsViewCache &inputs, CTxUndo &txundo, int nHeight, const uint256 &txhash);
 
     int64 GetMinFee(unsigned int nBlockSize=1, bool fAllowFree=true, enum GetMinFee_mode mode=GMF_BLOCK) const;
 
@@ -2453,7 +2455,7 @@ public:
 
     void Disable()
     {
-        enabled = 9;
+        lastTimeSeen = 0;
     }
 
     bool IsEnabled()
@@ -2539,6 +2541,12 @@ public:
 #define MASTERNODE_IS_CAPABLE                  1
 #define MASTERNODE_NOT_CAPABLE                 2
 #define MASTERNODE_STOPPED                     3
+#define MASTERNODE_INPUT_TOO_NEW               4
+
+#define MASTERNODE_MIN_CONFIRMATIONS           6
+#define MASTERNODE_MIN_MICROSECONDS            25*60*1000
+#define MASTERNODE_PING_SECONDS                30*60
+#define MASTERNODE_EXPIRATION_MICROSECONDS     35*60*1000
 
 static const int64 POOL_FEE_AMOUNT = 0.025*COIN;
 

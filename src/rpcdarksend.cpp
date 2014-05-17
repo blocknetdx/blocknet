@@ -71,9 +71,9 @@ Value masternode(const Array& params, bool fHelp)
 
     if (fHelp  ||
         (strCommand != "start" && strCommand != "stop" && strCommand != "list" && strCommand != "count" 
-            && strCommand != "debug" && strCommand != "create" && strCommand != "current"))
+            && strCommand != "debug" && strCommand != "create" && strCommand != "current" && strCommand != "votes"))
         throw runtime_error(
-            "masternode <start|stop|list|count|debug|create|current> passphrase\n");
+            "masternode <start|stop|list|count|debug|create|current|votes> passphrase\n");
 
     if (strCommand == "stop")
     {
@@ -139,6 +139,7 @@ Value masternode(const Array& params, bool fHelp)
         darkSendPool.RegisterAsMasterNode(false);
         pwalletMain->Lock();
         
+        if(darkSendPool.isCapableMasterNode == MASTERNODE_INPUT_TOO_NEW) return "masternode input must have at least 6 confirmations";
         if(darkSendPool.isCapableMasterNode == MASTERNODE_STOPPED) return "masternode is stopped";
         if(darkSendPool.isCapableMasterNode == MASTERNODE_IS_CAPABLE) return "successfully started masternode";
         if(darkSendPool.isCapableMasterNode == MASTERNODE_NOT_CAPABLE) return "not capable masternode";
@@ -148,6 +149,7 @@ Value masternode(const Array& params, bool fHelp)
 
     if (strCommand == "debug")
     {
+        if(darkSendPool.isCapableMasterNode == MASTERNODE_INPUT_TOO_NEW) return "masternode input must have at least 6 confirmations";
         if(darkSendPool.isCapableMasterNode == MASTERNODE_IS_CAPABLE) return "successfully started masternode";
         if(darkSendPool.isCapableMasterNode == MASTERNODE_NOT_CAPABLE) return "not capable masternode";
         if(darkSendPool.isCapableMasterNode == MASTERNODE_STOPPED) return "masternode is stopped";
@@ -161,6 +163,15 @@ Value masternode(const Array& params, bool fHelp)
         } else {
             return "No problems were found";
         }
+    }
+
+    if (strCommand == "votes")
+    {
+        Object obj;
+        BOOST_FOREACH(CMasterNodeVote& mv, darkSendMasterNodeVotes) {
+            obj.push_back(Pair(boost::lexical_cast<std::string>((int)mv.blockHeight),      mv.GetPubKey().ToString().c_str()));
+        }    
+        return obj;
     }
 
     if (strCommand == "create")
