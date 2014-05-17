@@ -14,6 +14,7 @@
 
 #include <list>
 #include <algorithm>
+#include <boost/lexical_cast.hpp>
 
 //#define static_assert(numeric_limits<double>::max_exponent() > 8, "your double sux");
 
@@ -37,6 +38,11 @@ class CBitcoinAddress;
 #define MASTERNODE_PAYMENTS_EXPIRATION 10
 #define START_MASTERNODE_PAYMENTS_TESTNET 1398872033+(60*25)
 #define START_MASTERNODE_PAYMENTS 1401033600 //Sun, 25 May 2014 16:00:00 GMT
+
+#define MASTERNODE_MIN_CONFIRMATIONS           6
+#define MASTERNODE_MIN_MICROSECONDS            55*60*1000
+#define MASTERNODE_PING_SECONDS                60*60
+#define MASTERNODE_EXPIRATION_MICROSECONDS     65*60*1000
 
 struct CBlockIndexWorkComparator;
 
@@ -176,6 +182,8 @@ CBlockIndex* FindBlockByHeight(int nHeight);
 bool ProcessMessages(CNode* pfrom);
 /** Send queued protocol messages to be sent to a give node */
 bool SendMessages(CNode* pto, bool fSendTrickle);
+//** Get age of an input */
+int GetInputAge(CTxIn& vin);
 /** Run an instance of the script checking thread */
 void ThreadScriptCheck();
 /** Run the miner threads */
@@ -2413,15 +2421,17 @@ public:
     CTxIn vin;
     int64 lastTimeSeen;
     CPubKey pubkey;
+    CPubKey pubkey2;
     std::vector<unsigned char> sig;
     int64 now;
     int enabled;
 
-    CMasterNode(CService newAddr, CTxIn newVin, CPubKey newPubkey, std::vector<unsigned char> newSig, int64 newNow)
+    CMasterNode(CService newAddr, CTxIn newVin, CPubKey newPubkey, std::vector<unsigned char> newSig, int64 newNow, CPubKey newPubkey2)
     {
         addr = newAddr;
         vin = newVin;
         pubkey = newPubkey;
+        pubkey2 = newPubkey2;
         sig = newSig;
         now = newNow;
         enabled = 1;
@@ -2440,8 +2450,13 @@ public:
 
     bool UpdatedWithin(int milliSeconds)
     {
-        printf("UpdatedWithin %"PRI64u"\n", GetTimeMillis() - lastTimeSeen);
+        //printf("UpdatedWithin %"PRI64u"\n", GetTimeMillis() - lastTimeSeen);
         return GetTimeMillis() - lastTimeSeen < milliSeconds;
+    }
+
+    void Disable()
+    {
+        lastTimeSeen = 0;
     }
 
     bool IsEnabled()
@@ -2449,6 +2464,7 @@ public:
         return enabled == 1;
     }
 };
+
 
 
 class CDarkSendSigner
@@ -2459,14 +2475,14 @@ public:
     bool VerifyMessage(CPubKey pubkey, std::vector<unsigned char>& vchSig, std::string strMessage, std::string& errorMessage);
 };
 
-static const int64 POOL_FEE_AMOUNT = 0.1*COIN;
+static const int64 POOL_FEE_AMOUNT = 0.025*COIN;
 
 /** Used to keep track of current status of darksend pool
  */
 class CDarkSendPool
 {
 public:
-    static const int MIN_PEER_PROTO_VERSION = 70014;
+    static const int MIN_PEER_PROTO_VERSION = 70015;
 
     CTxIn vinMasterNode;
     CPubKey pubkeyMasterNode;

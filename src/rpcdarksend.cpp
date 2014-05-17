@@ -20,7 +20,7 @@ Value masternode(const Array& params, bool fHelp)
     if (fHelp  ||
         (strCommand != "list" && strCommand != "count" && strCommand != "current"))
         throw runtime_error(
-            "masternode list|count|current> passphrase\n");
+            "masternode list|count|current|votes> passphrase\n");
 
     if (strCommand == "list")
     {
@@ -47,6 +47,15 @@ Value masternode(const Array& params, bool fHelp)
         }
 
         return "unknown";
+    }
+
+    if (strCommand == "votes")
+    {
+        Object obj;
+        BOOST_FOREACH(CMasterNodeVote& mv, darkSendMasterNodeVotes) {
+            obj.push_back(Pair(boost::lexical_cast<std::string>((int)mv.blockHeight),      mv.GetPubKey().ToString().c_str()));
+        }    
+        return obj;
     }
 
     return Value::null;
