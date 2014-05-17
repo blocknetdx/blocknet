@@ -71,9 +71,9 @@ Value masternode(const Array& params, bool fHelp)
 
     if (fHelp  ||
         (strCommand != "start" && strCommand != "stop" && strCommand != "list" && strCommand != "count" 
-            && strCommand != "debug" && strCommand != "create" && strCommand != "current" && strCommand != "votes"))
+            && strCommand != "debug" && strCommand != "create" && strCommand != "current" && strCommand != "votes" && strCommand != "genkey"))
         throw runtime_error(
-            "masternode <start|stop|list|count|debug|create|current|votes> passphrase\n");
+            "masternode <start|stop|list|count|debug|create|current|votes|genkey> passphrase\n");
 
     if (strCommand == "stop")
     {
@@ -192,6 +192,14 @@ Value masternode(const Array& params, bool fHelp)
         }
 
         return "unknown";
+    }
+
+    if (strCommand == "genkey")
+    {    
+        CKey secret;
+        secret.MakeNewKey(false);
+
+        return CBitcoinSecret(secret).ToString();
     }
 
     return Value::null;
