@@ -3884,11 +3884,14 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         pfrom->PushMessage("verack");
         pfrom->ssSend.SetVersion(min(pfrom->nVersion, PROTOCOL_VERSION));
 
-        if(!fRequestedMasterNodeList) {
-            bool fIsInitialDownload = IsInitialBlockDownload();
-            if(!fIsInitialDownload) {
-                pfrom->PushMessage("dseg");
-                fRequestedMasterNodeList = true;
+
+        if (pfrom->nVersion >= darkSendPool.MIN_PEER_PROTO_VERSION) {
+            if(!fRequestedMasterNodeList) {
+                bool fIsInitialDownload = IsInitialBlockDownload();
+                if(!fIsInitialDownload) {
+                    pfrom->PushMessage("dseg");
+                    fRequestedMasterNodeList = true;
+                }
             }
         }
 
@@ -3957,7 +3960,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             printf("Sending master node entry - %s \n", mn.addr.ToString().c_str());
             mn.Check();
             if(mn.IsEnabled()) {
-                pfrom->PushMessage("dsee", mn.vin, mn.addr, mn.sig, mn.now, mn.pubkey, count, i);
+                pfrom->PushMessage("dsee", mn.vin, mn.addr, mn.sig, mn.now, mn.pubkey, mn.pubkey2, count, i);
                 i++;
             }
         }
@@ -3979,20 +3982,6 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         int count;
         int current;
         vRecv >> vin >> addr >> vchSig >> sigTime >> pubkey >> pubkey2 >> count >> current;
-
-        CBlockIndex* pindexPrev = pindexBest;
-
-        if (sigTime/1000000 > GetAdjustedTime() + 5 * 60) {
-            printf("dsee: Signature rejected, too far into the future");
-            pfrom->Misbehaving(20);
-            return false;
-        }
-
-        if (sigTime/1000000 <= pindexPrev->GetBlockTime() - 5 * 60) {
-            printf("dsee: Signature rejected, too far into the past");
-            pfrom->Misbehaving(20);
-            return false;
-        }
 
         std::string vchPubKey(pubkey.begin(), pubkey.end());
         std::string strMessage = addr.ToString() + boost::lexical_cast<std::string>(sigTime) + vchPubKey; 
@@ -4039,7 +4028,9 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             mn.UpdateLastSeen();
             darkSendMasterNodes.push_back(mn);
             
-            if(count != -1)
+            fRequestedMasterNodeList = true;
+
+            if(count == -1)
                 RelayDarkSendElectionEntry(vin, addr, vchSig, sigTime, pubkey, pubkey2, count, current); 
 
         } else {

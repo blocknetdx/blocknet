@@ -18,7 +18,7 @@ Value masternode(const Array& params, bool fHelp)
         strCommand = params[0].get_str();
 
     if (fHelp  ||
-        (strCommand != "list" && strCommand != "count" && strCommand != "current"))
+        (strCommand != "list" && strCommand != "count" && strCommand != "current" && strCommand != "votes"))
         throw runtime_error(
             "masternode list|count|current|votes> passphrase\n");
 
