@@ -1946,8 +1946,6 @@ void RelayDarkSendElectionEntry(const CTxIn vin, const CService addr, const std:
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
-        c++;
-        if(c > 4) break;
         pnode->PushMessage("dsee", vin, addr, vchSig, nNow, pubkey, pubkey2, count, current);
     }   
 }
@@ -1958,8 +1956,6 @@ void RelayDarkSendElectionEntryPing(const CTxIn vin, const std::vector<unsigned 
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
-        c++;
-        if(c > 4) break;
         pnode->PushMessage("dseep", vin, vchSig, nNow, stop);
     }   
 }
