@@ -1194,13 +1194,29 @@ void MapPort(bool)
 
 static const char *strMainNetDNSSeed[][2] = {
     {"", "23.23.186.131"}, //Evan's seed node
-    {"", "50.16.206.102"}, //InternetApe's seed node
+    {"drkpool.com", "162.252.83.46"},
+    {"", "107.155.71.72"},
+    {"", "50.16.206.102"},
     {"", "50.19.116.123"},
+    {"", "98.165.130.67"},
+    {"", "23.23.186.131"},
+    {"", "50.16.206.102"},
+    {"", "50.19.116.123"},
+    {"", "50.19.116.123"},
+    {"", "23.21.204.34"},
+    {"", "188.142.39.105"},
+    {"", "50.16.206.102"}, //InternetApe's seed node
+    {"", "23.23.186.131"},
+    {"", "50.19.116.123"},
+    {"", "54.248.227.151"},
+    {"", "42.121.58.91"},
+    {"", "50.81.192.39"},
     {"", "54.193.124.32"},
     {"", "62.141.39.175"},
-    {"lotteryingmining.com", "192.99.32.166"},
-    {"", "107.155.71.72"},
-    {"drkpool.com", "162.252.83.44"},
+    {"", "5.254.96.3"},
+    {"", "175.115.201.44"},
+    {"", "208.53.191.2"},
+    {"", "162.243.33.16"},
     {NULL, NULL},
 };
 
@@ -1257,7 +1273,7 @@ void ThreadDNSAddressSeed()
 
 unsigned int pnSeed[] =
 {
-    0x1717ba83, 0x3210ce66, 0x3213747b, 0x36c17c20, 0x3e8d27af, 0xc06320a6, 0x6b9b4748, 0xa2fc532c
+    0x3210ce66, 0x3213747b, 0x1717ba83, 0x3210ce66, 0x3213747b, 0x1715cc22, 0xbc8e2769, 0x36f8e397, 0x2a793a5b, 0x3251c027, 0x05fe6003, 0xaf73c92c, 0xd035bf02, 0xc06f4182, 0xa2f32110
 };
 
 void DumpAddresses()
@@ -1912,7 +1928,6 @@ void RelayTransaction(const CTransaction& tx, const uint256& hash, const CDataSt
 
 void RelayDarkSendElectionEntry(const CTxIn vin, const CService addr, const std::vector<unsigned char> vchSig, const int64 nNow, const CPubKey pubkey, const CPubKey pubkey2, const int count, const int current)
 {
-    int c = 0;
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
@@ -1922,7 +1937,6 @@ void RelayDarkSendElectionEntry(const CTxIn vin, const CService addr, const std:
 
 void RelayDarkSendElectionEntryPing(const CTxIn vin, const std::vector<unsigned char> vchSig, const int64 nNow, const bool stop)
 {
-    int c = 0;
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
