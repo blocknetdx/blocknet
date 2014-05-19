@@ -2654,6 +2654,9 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
                 //find new votes, must be for this block height
                 bool foundThisBlock = false;
                 BOOST_FOREACH(CMasterNodeVote mv2, vmn){
+                    if(mv2.GetPubKey().size() != 25)
+                        return state.DoS(100, error("CheckBlock() : pubkey wrong size"));
+
                     bool found = false;
                     if(!foundThisBlock && mv2.blockHeight == pindexPrev->nHeight+1) {
                         foundThisBlock = true;
@@ -3984,12 +3987,31 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         vRecv >> vin >> addr >> vchSig >> sigTime >> pubkey >> pubkey2 >> count >> current;
 
         std::string vchPubKey(pubkey.begin(), pubkey.end());
+
+        CScript pubkeyScript;
+        pubkeyScript.SetDestination(pubkey.GetID());
+
+        if(pubkeyScript.size() != 25) {
+            printf("dsee - pubkey the wrong size\n");
+            pfrom->Misbehaving(100);
+            return false;  
+        }
+
         std::string strMessage = addr.ToString() + boost::lexical_cast<std::string>(sigTime) + vchPubKey; 
+
+        CScript pubkeyScript2;
+        pubkeyScript2.SetDestination(pubkey2.GetID());
+        
+        if(pubkeyScript2.size() != 25) {
+            printf("dsee - pubkey the wrong size\n");
+            pfrom->Misbehaving(100);
+            return false;  
+        }
 
         std::string errorMessage = "";
         if(!darkSendSigner.VerifyMessage(pubkey, vchSig, strMessage, errorMessage)){
-            printf("Got bad masternode address signature\n");
-            pfrom->Misbehaving(20);
+            printf("dsee - Got bad masternode address signature\n");
+            pfrom->Misbehaving(100);
             return false;
         }
 
@@ -4007,7 +4029,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         if(found) return true;
 
-        printf("Got NEW masternode entry %s\n", addr.ToString().c_str());
+        printf("dsee - Got NEW masternode entry %s\n", addr.ToString().c_str());
 
         CValidationState state;
         CTransaction tx = CTransaction();
@@ -4015,10 +4037,10 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         tx.vin.push_back(vin);
         tx.vout.push_back(vout);
         if(tx.AcceptableInputs(state, true)){
-            printf("Accepted masternode entry %i %i\n", count, current);
+            printf("dsee - Accepted masternode entry %i %i\n", count, current);
 
             if(GetInputAge(vin) < MASTERNODE_MIN_CONFIRMATIONS){
-                printf("CDarkSendPool::RegisterAsMasterNode() - Input must have least %d confirmations\n", MASTERNODE_MIN_CONFIRMATIONS);
+                printf("dsee - Input must have least %d confirmations\n", MASTERNODE_MIN_CONFIRMATIONS);
                 pfrom->Misbehaving(20);
                 return false;
             }
@@ -4034,7 +4056,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
                 RelayDarkSendElectionEntry(vin, addr, vchSig, sigTime, pubkey, pubkey2, count, current); 
 
         } else {
-            printf("Rejected masternode entry\n");
+            printf("dsee - Rejected masternode entry\n");
             // if caught up on blocks, then do this:
             pfrom->Misbehaving(20);
         }
