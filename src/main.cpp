@@ -51,7 +51,7 @@ bool fImporting = false;
 bool fReindex = false;
 bool fBenchmark = false;
 bool fTxIndex = false;
-bool fRequestedMasterNodeList = false;
+int RequestedMasterNodeList = 0;
 unsigned int nCoinCacheSize = 5000;
 
 // create DarkSend pools
@@ -3897,10 +3897,11 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         pfrom->ssSend.SetVersion(min(pfrom->nVersion, PROTOCOL_VERSION));
         
         if (pfrom->nVersion >= darkSendPool.MIN_PEER_PROTO_VERSION) {
-            if(!fRequestedMasterNodeList) {
+            if(!RequestedMasterNodeList <= 5) {
                 bool fIsInitialDownload = IsInitialBlockDownload();
                 if(!fIsInitialDownload) {
                     pfrom->PushMessage("dseg");
+                    RequestedMasterNodeList++;
                 }
             }
         }
@@ -4166,8 +4167,6 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             CMasterNode mn(addr, vin, pubkey, vchSig, sigTime, pubkey2);
             mn.UpdateLastSeen();
             darkSendMasterNodes.push_back(mn);
-            
-            fRequestedMasterNodeList = true;
 
             if(count == -1)
                 RelayDarkSendElectionEntry(vin, addr, vchSig, sigTime, pubkey, pubkey2, count, current); 
