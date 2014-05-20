@@ -4136,16 +4136,21 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         if((fTestNet && addr.GetPort() != 19999) || (!fTestNet && addr.GetPort() != 9999)) return true;
 
         //printf("Searching existing masternodes : %s - %s\n", addr.ToString().c_str(),  vin.ToString().c_str());
-
-        bool found = false;
+        
         BOOST_FOREACH(CMasterNode& mn, darkSendMasterNodes) {
             //printf(" -- %s\n", mn.vin.ToString().c_str());
 
-            if(mn.vin == vin)
-                found = true;
-        }
+            if(mn.vin == vin) {
+                if(!mn.UpdatedWithin(5*60*1000)){
+                    mn.UpdateLastSeen();
 
-        if(found) return true;
+                    if(count == -1)
+                        RelayDarkSendElectionEntry(vin, addr, vchSig, sigTime, pubkey, pubkey2, count, current);
+                }
+
+                return true;
+            }
+        }
 
         printf("dsee - Got NEW masternode entry %s\n", addr.ToString().c_str());
 
