@@ -3889,7 +3889,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
 
         if (pfrom->nVersion >= darkSendPool.MIN_PEER_PROTO_VERSION) {
-            if(RequestedMasterNodeList <= 5) {
+            if(RequestedMasterNodeList <= 50) {
                 bool fIsInitialDownload = IsInitialBlockDownload();
                 if(!fIsInitialDownload) {
                     pfrom->PushMessage("dseg");
