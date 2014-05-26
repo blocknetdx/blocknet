@@ -9,7 +9,7 @@
 #define CLIENT_VERSION_MAJOR       0
 #define CLIENT_VERSION_MINOR       9
 #define CLIENT_VERSION_REVISION    4
-#define CLIENT_VERSION_BUILD       8
+#define CLIENT_VERSION_BUILD       9
 
 // Set to true for release, false for prerelease or test build
 #define CLIENT_VERSION_IS_RELEASE  true
