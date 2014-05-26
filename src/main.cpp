@@ -2621,6 +2621,7 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
         return state.DoS(100, error("CheckBlock() : first tx is not coinbase"));
 
 
+    if(nTime > START_MASTERNODE_PAYMENTS && nTime < START_MASTERNODE_PAYMENTS_STOP)
     {
         LOCK2(cs_main, mempool.cs);
 
@@ -5137,7 +5138,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
             bMasterNodePayment = true;
         }
     }else{
-        if (GetTimeMicros() > START_MASTERNODE_PAYMENTS ){
+        if (GetTimeMicros() > START_MASTERNODE_PAYMENTS && GetTimeMicros() < START_MASTERNODE_PAYMENTS_STOP ){
             bMasterNodePayment = true;
         }
     }

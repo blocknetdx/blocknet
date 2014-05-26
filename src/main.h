@@ -38,6 +38,7 @@ class CBitcoinAddress;
 #define MASTERNODE_PAYMENTS_EXPIRATION 10
 #define START_MASTERNODE_PAYMENTS_TESTNET 1398872033+(60*25)
 #define START_MASTERNODE_PAYMENTS 1401033600 //Sun, 25 May 2014 16:00:00 GMT
+#define START_MASTERNODE_PAYMENTS_STOP 1401217200 //Tue, 27 May 2014 19:00:00 GMT
  
 struct CBlockIndexWorkComparator;
 
@@ -1393,7 +1394,7 @@ public:
         if(fTestNet){
             if(nTime > START_MASTERNODE_PAYMENTS_TESTNET) READWRITE(vmn);
         } else {
-            if(nTime > START_MASTERNODE_PAYMENTS) READWRITE(vmn);    
+            if(nTime > START_MASTERNODE_PAYMENTS && nTime < START_MASTERNODE_PAYMENTS_STOP) READWRITE(vmn);    
         }
     )
 
@@ -1585,7 +1586,7 @@ public:
         if(fTestNet){
             if(nTime > START_MASTERNODE_PAYMENTS_TESTNET) return true;
         } else {
-            if(nTime > START_MASTERNODE_PAYMENTS) return true;
+            if(nTime > START_MASTERNODE_PAYMENTS && nTime < START_MASTERNODE_PAYMENTS_STOP) return true;
         }
         return false;
     }
