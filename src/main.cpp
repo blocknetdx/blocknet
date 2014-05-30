@@ -2631,10 +2631,10 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
         if (pindexPrev != NULL && fCheckVotes && !fIsInitialDownload){
             CBlock blockLast;
             if(blockLast.ReadFromDisk(pindexPrev)){
-                if(hashBestChain != blockLast->hash)
+                if(hashBestChain != blockLast.hash)
                     return state.DoS(100, error("CheckBlock() : hashBestChain != blockLast->hash"));
 
-                if(pblock->hashPrevBlock != hashBestChain)
+                if(pblock.hashPrevBlock != hashBestChain)
                     return state.DoS(100, error("CheckBlock() : pblock->hashPrevBlock != hashBestChain"));
 
                 votingRecordsBlockPrev = blockLast.vmn.size();
