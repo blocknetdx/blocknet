@@ -2631,8 +2631,12 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
         if (pindexPrev != NULL && fCheckVotes && !fIsInitialDownload){
             CBlock blockLast;
             if(blockLast.ReadFromDisk(pindexPrev)){
-                ASSERT(hashBestChain == blockLast->hash);
-                
+                if(hashBestChain != blockLast->hash)
+                    return state.DoS(100, error("CheckBlock() : hashBestChain != blockLast->hash"));
+
+                if(pblock->hashPrevBlock != hashBestChain)
+                    return state.DoS(100, error("CheckBlock() : pblock->hashPrevBlock != hashBestChain"));
+
                 votingRecordsBlockPrev = blockLast.vmn.size();
                 BOOST_FOREACH(CMasterNodeVote mv1, blockLast.vmn){
                     if((pindexPrev->nHeight+1) - mv1.GetHeight() > MASTERNODE_PAYMENTS_EXPIRATION){
@@ -2672,7 +2676,7 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
                     }
                     
                     if(!found)
-                        return state.DoS(100, error("CheckBlock() : Bad vote detected"));
+                        return state.DoS(100, error("CheckBlock() : Vote not found in previous block"));
                 }
             }
             
