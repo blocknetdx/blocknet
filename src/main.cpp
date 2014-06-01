@@ -2620,8 +2620,14 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
     if (vtx.empty() || !vtx[0].IsCoinBase())
         return state.DoS(100, error("CheckBlock() : first tx is not coinbase"));
 
+    bool MasternodePayments = false;
+    if(fTestNet){
+      if(nTime > START_MASTERNODE_PAYMENTS_TESTNET) MasternodePayments = true;
+    } else {
+      if(nTime > START_MASTERNODE_PAYMENTS && nTime < START_MASTERNODE_PAYMENTS_STOP) MasternodePayments = true;    
+    }
 
-    if(nTime > START_MASTERNODE_PAYMENTS && nTime < START_MASTERNODE_PAYMENTS_STOP)
+    if(MasternodePayments)
     {
         LOCK2(cs_main, mempool.cs);
 
@@ -2641,6 +2647,16 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
         if (pindexPrev != NULL && fCheckVotes && !fIsInitialDownload){
             CBlock blockLast;
             if(blockLast.ReadFromDisk(pindexPrev)){
+                if(hashBestChain != pindexPrev->GetBlockHash()){
+                    printf ("CheckBlock() : hashBestChain != pindexPrev->GetBlockHash() : %s != %s\n", hashBestChain.ToString().c_str(), pindexPrev->GetBlockHash().ToString().c_str());
+                    return state.DoS(100, error("CheckBlock() : hashBestChain != pindexPrev->GetBlockHash()"));
+                }
+
+                if(hashPrevBlock != pindexPrev->GetBlockHash()){
+                    printf ("CheckBlock() : hashPrevBlock != pindexPrev->GetBlockHash() : %s != %s\n", hashPrevBlock.ToString().c_str(), pindexPrev->GetBlockHash().ToString().c_str());
+                    return state.DoS(100, error("CheckBlock() : pblock->hashPrevBlock != blockLast->GetBlockHash()"));
+                }
+
                 votingRecordsBlockPrev = blockLast.vmn.size();
                 BOOST_FOREACH(CMasterNodeVote mv1, blockLast.vmn){
                     if((pindexPrev->nHeight+1) - mv1.GetHeight() > MASTERNODE_PAYMENTS_EXPIRATION){
@@ -2680,7 +2696,7 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
                     }
                     
                     if(!found)
-                        return state.DoS(100, error("CheckBlock() : Bad vote detected"));
+                        return state.DoS(100, error("CheckBlock() : Vote not found in previous block"));
                 }
             }
             
