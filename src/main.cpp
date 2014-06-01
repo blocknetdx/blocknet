@@ -2611,7 +2611,15 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
         return state.DoS(100, error("CheckBlock() : first tx is not coinbase"));
 
 
-    if(nTime > START_MASTERNODE_PAYMENTS && nTime < START_MASTERNODE_PAYMENTS_STOP)
+
+    bool MasternodePayments = false;
+    if(fTestNet){
+      if(nTime > START_MASTERNODE_PAYMENTS_TESTNET) MasternodePayments = true;
+    } else {
+      if(nTime > START_MASTERNODE_PAYMENTS && nTime < START_MASTERNODE_PAYMENTS_STOP) MasternodePayments = true;    
+    }
+
+    if(MasternodePayments)
     {
         LOCK2(cs_main, mempool.cs);
 
@@ -2628,15 +2636,20 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
         int64 masternodePaymentAmount = vtx[0].GetValueOut()/10;
         bool fIsInitialDownload = IsInitialBlockDownload();
         
+        if(nTime > START_MASTERNODE_PAYMENTS && nTime < START_MASTERNODE_PAYMENTS_STOP)
+
         if (pindexPrev != NULL && fCheckVotes && !fIsInitialDownload){
             CBlock blockLast;
             if(blockLast.ReadFromDisk(pindexPrev)){
-                if(hashBestChain != blockLast.hashMerkleRoot)
-                    return state.DoS(100, error("CheckBlock() : hashBestChain != blockLast->hash"));
+                if(hashBestChain != pindexPrev->GetBlockHash()){
+                    printf ("CheckBlock() : hashBestChain != pindexPrev->GetBlockHash() : %s != %s\n", hashBestChain.ToString().c_str(), pindexPrev->GetBlockHash().ToString().c_str());
+                    return state.DoS(100, error("CheckBlock() : hashBestChain != pindexPrev->GetBlockHash()"));
+                }
 
-                if(hashPrevBlock != hashBestChain)
-                    return state.DoS(100, error("CheckBlock() : pblock->hashPrevBlock != hashBestChain"));
-                
+                if(hashPrevBlock != pindexPrev->GetBlockHash()){
+                    printf ("CheckBlock() : hashPrevBlock != pindexPrev->GetBlockHash() : %s != %s\n", hashPrevBlock.ToString().c_str(), pindexPrev->GetBlockHash().ToString().c_str());
+                    return state.DoS(100, error("CheckBlock() : pblock->hashPrevBlock != blockLast->GetBlockHash()"));
+                }
 
                 votingRecordsBlockPrev = blockLast.vmn.size();
                 BOOST_FOREACH(CMasterNodeVote mv1, blockLast.vmn){
