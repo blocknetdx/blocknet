@@ -2657,6 +2657,11 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
                     return state.DoS(100, error("CheckBlock() : pblock->hashPrevBlock != blockLast->GetBlockHash()"));
                 }
 
+
+                printf ("CheckBlock() : nHeight : %d\n", pindexPrev->nHeight);
+                printf ("CheckBlock() : hashPrevBlock : %s\n", hashPrevBlock);
+                printf ("CheckBlock() : pindexPrev->GetBlockHash() : %s\n", pindexPrev->GetBlockHash().ToString().c_str());
+
                 votingRecordsBlockPrev = blockLast.vmn.size();
                 BOOST_FOREACH(CMasterNodeVote mv1, blockLast.vmn){
                     if((pindexPrev->nHeight+1) - mv1.GetHeight() > MASTERNODE_PAYMENTS_EXPIRATION){
@@ -2672,15 +2677,22 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
                         BOOST_FOREACH(CMasterNodeVote mv2, vmn){
                             if((mv1.blockHeight == mv2.blockHeight && mv1.GetPubKey() == mv2.GetPubKey())){
                                 matchingVoteRecords++;
-                                if(mv1.GetVotes() != mv2.GetVotes() && mv1.GetVotes()+1 != mv2.GetVotes()) badVote++;
+                                if(mv1.GetVotes() != mv2.GetVotes() && mv1.GetVotes()+1 != mv2.GetVotes()) {
+                                    printf(" BAD VOTE DETECTED:  %d %d\n", mv1.blockHeight, mv1.GetPubKey().ToString().c_str());
+                                    printf("  -- %d %d\n", mv1.GetVotes(), mv2.GetVotes());
+                                    badVote++;
+                                }
                             }
                         }
                     }
                 }
 
+
                 //find new votes, must be for this block height
                 bool foundThisBlock = false;
-                BOOST_FOREACH(CMasterNodeVote mv2, vmn){                  
+                BOOST_FOREACH(CMasterNodeVote mv2, vmn){       
+                    printf("CheckBlock(): height %d %s\n", mv2.blockHeight, mv2.GetPubKey().ToString().c_str());
+
                     if(mv2.GetPubKey().size() != 25)
                         return state.DoS(100, error("CheckBlock() : pubkey wrong size"));
 
@@ -2691,6 +2703,8 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
                     }
 
                     BOOST_FOREACH(CMasterNodeVote mv1, blockLast.vmn){
+                        printf("CheckBlock(): height2 %d %s\n", mv1.blockHeight, mv1.GetPubKey().ToString().c_str());
+                    
                         if((mv1.blockHeight == mv2.blockHeight && mv1.GetPubKey() == mv2.GetPubKey()))
                             found = true;
                     }

@@ -36,7 +36,7 @@ class CBitcoinAddress;
 #define MASTERNODE_PAYMENTS_MIN_VOTES 6
 #define MASTERNODE_PAYMENTS_MAX 1
 #define MASTERNODE_PAYMENTS_EXPIRATION 10
-#define START_MASTERNODE_PAYMENTS_TESTNET 1398872033+(60*25)
+#define START_MASTERNODE_PAYMENTS_TESTNET 1401757793
 #define START_MASTERNODE_PAYMENTS 1401033600 //Sun, 25 May 2014 16:00:00 GMT
 #define START_MASTERNODE_PAYMENTS_STOP 1401134533 // Mon, 26 May 2014 20:02:13 GMT
  
@@ -2408,7 +2408,7 @@ public:
         READWRITE(pubkey);
         //printf("pubkey %s\n", pubkey.ToString().c_str());
         READWRITE(votes);
-        //printf("blockHeight %d\n", votes);
+        //printf("votes %d\n", votes);
     )
 
 
