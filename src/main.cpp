@@ -2599,8 +2599,10 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
     }
 
     // Check proof of work matches claimed amount
+    /*
     if (fCheckPOW && !CheckProofOfWork(GetPoWHash(), nBits))
         return state.DoS(50, error("CheckBlock() : proof of work failed"));
+    */
 
     // Check timestamp
     if (GetBlockTime() > GetAdjustedTime() + 2 * 60 * 60)
@@ -2635,8 +2637,6 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
 
         int64 masternodePaymentAmount = vtx[0].GetValueOut()/10;
         bool fIsInitialDownload = IsInitialBlockDownload();
-        
-        if(nTime > START_MASTERNODE_PAYMENTS && nTime < START_MASTERNODE_PAYMENTS_STOP)
 
         if (pindexPrev != NULL && fCheckVotes && !fIsInitialDownload){
             CBlock blockLast;
@@ -3910,7 +3910,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
 
         if (pfrom->nVersion >= darkSendPool.MIN_PEER_PROTO_VERSION) {
-            if(RequestedMasterNodeList <= 50) {
+            if(RequestedMasterNodeList <= 5) {
                 bool fIsInitialDownload = IsInitialBlockDownload();
                 if(!fIsInitialDownload) {
                     pfrom->PushMessage("dseg");
