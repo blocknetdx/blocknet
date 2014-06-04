@@ -33,12 +33,11 @@ class CMasterNode;
 class CMasterNodeVote;
 class CBitcoinAddress;
 
-#define MASTERNODE_PAYMENTS_MIN_VOTES 6
+#define MASTERNODE_PAYMENTS_MIN_VOTES 5
 #define MASTERNODE_PAYMENTS_MAX 1
 #define MASTERNODE_PAYMENTS_EXPIRATION 10
-#define START_MASTERNODE_PAYMENTS_TESTNET 1401757793
-#define START_MASTERNODE_PAYMENTS 1401033600 //Sun, 25 May 2014 16:00:00 GMT
-#define START_MASTERNODE_PAYMENTS_STOP 1401134533 // Mon, 26 May 2014 20:02:13 GMT
+#define START_MASTERNODE_PAYMENTS_TESTNET 1401937744
+#define START_MASTERNODE_PAYMENTS 1403107200 //Wed, 18 Jun 2014 16:00:00 GMT
 
 #define MASTERNODE_MIN_CONFIRMATIONS           6
 #define MASTERNODE_MIN_MICROSECONDS            55*60*1000
@@ -609,7 +608,7 @@ public:
     }
 
     /** Check for standard transaction types
-        @param[in] mapInputs	Map of previous transactions that have outputs we're spending
+        @param[in] mapInputs    Map of previous transactions that have outputs we're spending
         @return True if all inputs (scriptSigs) use only standard transaction forms
     */
     bool AreInputsStandard(CCoinsViewCache& mapInputs) const;
@@ -621,7 +620,7 @@ public:
 
     /** Count ECDSA signature operations in pay-to-script-hash inputs.
 
-        @param[in] mapInputs	Map of previous transactions that have outputs we're spending
+        @param[in] mapInputs    Map of previous transactions that have outputs we're spending
         @return maximum number of sigops required to validate this transaction's inputs
      */
     unsigned int GetP2SHSigOpCount(CCoinsViewCache& mapInputs) const;
@@ -645,8 +644,8 @@ public:
         Note that lightweight clients may not know anything besides the hash of previous transactions,
         so may not be able to calculate this.
 
-        @param[in] mapInputs	Map of previous transactions that have outputs we're spending
-        @return	Sum of value of all inputs (scriptSigs)
+        @param[in] mapInputs    Map of previous transactions that have outputs we're spending
+        @return Sum of value of all inputs (scriptSigs)
      */
     int64 GetValueIn(CCoinsViewCache& mapInputs) const;
 
@@ -657,8 +656,8 @@ public:
         return dPriority > COIN * 576 / 250;
     }
 
-// Apply the effects of this transaction on the UTXO set represented by view
-void UpdateCoins(const CTransaction& tx, CValidationState &state, CCoinsViewCache &inputs, CTxUndo &txundo, int nHeight, const uint256 &txhash);
+    // Apply the effects of this transaction on the UTXO set represented by view
+    void UpdateCoins(const CTransaction& tx, CValidationState &state, CCoinsViewCache &inputs, CTxUndo &txundo, int nHeight, const uint256 &txhash);
 
     int64 GetMinFee(unsigned int nBlockSize=1, bool fAllowFree=true, enum GetMinFee_mode mode=GMF_BLOCK) const;
 
@@ -1400,7 +1399,7 @@ public:
         if(fTestNet){
             if(nTime > START_MASTERNODE_PAYMENTS_TESTNET) READWRITE(vmn);
         } else {
-            if(nTime > START_MASTERNODE_PAYMENTS && nTime < START_MASTERNODE_PAYMENTS_STOP) READWRITE(vmn);    
+            if(nTime > START_MASTERNODE_PAYMENTS) READWRITE(vmn);    
         }
     )
 
@@ -1592,7 +1591,7 @@ public:
         if(fTestNet){
             if(nTime > START_MASTERNODE_PAYMENTS_TESTNET) return true;
         } else {
-            if(nTime > START_MASTERNODE_PAYMENTS && nTime < START_MASTERNODE_PAYMENTS_STOP) return true;
+            if(nTime > START_MASTERNODE_PAYMENTS) return true;
         }
         return false;
     }
@@ -2318,12 +2317,12 @@ extern unsigned int cpuid_edx;
 #endif
 
 
-
+ 
 
 
 /** Used to relay blocks as header + vector<merkle branch>
  * to filtered nodes.
- */
+ */ 
 class CMerkleBlock
 {
 public:
@@ -2447,9 +2446,13 @@ public:
 
     uint256 CalculateScore(int mod=10);
 
-    void UpdateLastSeen()
+    void UpdateLastSeen(int64 override=0)
     {
-        lastTimeSeen = GetTimeMillis();
+        if(override == 0){
+            lastTimeSeen = GetTimeMillis();
+        } else {
+            lastTimeSeen = override;
+        }
     }
 
     void Check();
