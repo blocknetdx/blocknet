@@ -45,6 +45,7 @@ class CBitcoinAddress;
 #define MASTERNODE_PING_SECONDS                60*60
 #define MASTERNODE_EXPIRATION_MICROSECONDS     65*60*1000
 
+
 struct CBlockIndexWorkComparator;
 
 /** The maximum allowed size for a serialized block, in bytes (network rule) */
@@ -184,10 +185,10 @@ CBlockIndex* FindBlockByHeight(int nHeight);
 bool ProcessMessages(CNode* pfrom);
 /** Send queued protocol messages to be sent to a give node */
 bool SendMessages(CNode* pto, bool fSendTrickle);
-//** Get age of an input */
-int GetInputAge(CTxIn& vin);
 /** Run an instance of the script checking thread */
 void ThreadScriptCheck();
+//** Get age of an input */
+int GetInputAge(CTxIn& vin);
 /** Run the miner threads */
 void GenerateBitcoins(bool fGenerate, CWallet* pwallet);
 /** Generate a new block, without valid proof-of-work */
@@ -2409,8 +2410,11 @@ public:
     (
         nVersion = this->nVersion;
         READWRITE(blockHeight);
+        //printf("blockHeight %"PRI64d"\n", blockHeight);
         READWRITE(pubkey);
+        //printf("pubkey %s\n", pubkey.ToString().c_str());
         READWRITE(votes);
+        //printf("votes %d\n", votes);
     )
 
 

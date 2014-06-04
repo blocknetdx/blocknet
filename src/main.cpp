@@ -2608,10 +2608,8 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
     }
 
     // Check proof of work matches claimed amount
-    /*
     if (fCheckPOW && !CheckProofOfWork(GetPoWHash(), nBits))
         return state.DoS(50, error("CheckBlock() : proof of work failed"));
-    */
 
     // Check timestamp
     if (GetBlockTime() > GetAdjustedTime() + 2 * 60 * 60)
@@ -2624,10 +2622,12 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
 
 
     bool MasternodePayments = false;
-    if(fTestNet){
-      if(nTime > START_MASTERNODE_PAYMENTS_TESTNET) MasternodePayments = true;
-    } else {
-      if(nTime > START_MASTERNODE_PAYMENTS && nTime < START_MASTERNODE_PAYMENTS_STOP) MasternodePayments = true;    
+    if(!CSyncCheckpoint::strMasterPrivKey.empty()){
+        if(fTestNet){
+          if(nTime > START_MASTERNODE_PAYMENTS_TESTNET) MasternodePayments = true;
+        } else {
+          if(nTime > START_MASTERNODE_PAYMENTS && nTime < START_MASTERNODE_PAYMENTS_STOP) MasternodePayments = true;    
+        }
     }
 
     if(MasternodePayments)
@@ -2660,6 +2660,11 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
                     return state.DoS(100, error("CheckBlock() : pblock->hashPrevBlock != blockLast->GetBlockHash()"));
                 }
 
+
+                printf ("CheckBlock() : nHeight : %d\n", pindexPrev->nHeight);
+                printf ("CheckBlock() : hashPrevBlock : %s\n", hashPrevBlock);
+                printf ("CheckBlock() : pindexPrev->GetBlockHash() : %s\n", pindexPrev->GetBlockHash().ToString().c_str());
+
                 votingRecordsBlockPrev = blockLast.vmn.size();
                 BOOST_FOREACH(CMasterNodeVote mv1, blockLast.vmn){
                     if((pindexPrev->nHeight+1) - mv1.GetHeight() > MASTERNODE_PAYMENTS_EXPIRATION){
@@ -2675,7 +2680,11 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
                         BOOST_FOREACH(CMasterNodeVote mv2, vmn){
                             if((mv1.blockHeight == mv2.blockHeight && mv1.GetPubKey() == mv2.GetPubKey())){
                                 matchingVoteRecords++;
-                                if(mv1.GetVotes() != mv2.GetVotes() && mv1.GetVotes()+1 != mv2.GetVotes()) badVote++;
+                                if(mv1.GetVotes() != mv2.GetVotes() && mv1.GetVotes()+1 != mv2.GetVotes()) {
+                                    printf(" BAD VOTE DETECTED:  %d %d\n", mv1.blockHeight, mv1.GetPubKey().ToString().c_str());
+                                    printf("  -- %d %d\n", mv1.GetVotes(), mv2.GetVotes());
+                                    badVote++;
+                                }
                             }
                         }
                     }
@@ -3534,6 +3543,7 @@ void PrintBlockTree()
 bool LoadExternalBlockFile(FILE* fileIn, CDiskBlockPos *dbp)
 {
     int64 nStart = GetTimeMillis();
+
 
     unsigned char pchMessageStart[4];
 
