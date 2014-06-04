@@ -33,13 +33,35 @@ class CMasterNode;
 class CMasterNodeVote;
 class CBitcoinAddress;
 
-#define MASTERNODE_PAYMENTS_MIN_VOTES 6
+#define MASTERNODE_PAYMENTS_MIN_VOTES 5
 #define MASTERNODE_PAYMENTS_MAX 1
 #define MASTERNODE_PAYMENTS_EXPIRATION 10
-#define START_MASTERNODE_PAYMENTS_TESTNET 1401757793
-#define START_MASTERNODE_PAYMENTS 1401033600 //Sun, 25 May 2014 16:00:00 GMT
-#define START_MASTERNODE_PAYMENTS_STOP 1401134533 // Mon, 26 May 2014 20:02:13 GMT
- 
+#define START_MASTERNODE_PAYMENTS_TESTNET 1401937744
+#define START_MASTERNODE_PAYMENTS 1403107200 //Wed, 18 Jun 2014 16:00:00 GMT
+
+#define POOL_MAX_TRANSACTIONS                  3 // wait for X transactions to merge and publish
+#define POOL_STATUS_UNKNOWN                    0 // waiting for update
+#define POOL_STATUS_IDLE                       1 // waiting for update
+#define POOL_STATUS_ACCEPTING_ENTRIES          2 // accepting entries
+#define POOL_STATUS_FINALIZE_TRANSACTION       3 // master node will broadcast what it accepted
+#define POOL_STATUS_SIGNING                    4 // check inputs/outputs, sign final tx
+#define POOL_STATUS_TRANSMISSION               5 // transmit transaction
+#define POOL_STATUS_ERROR                      6 // error
+#define POOL_STATUS_SUCCESS                    7 // success
+
+#define MASTERNODE_NOT_PROCESSED               0 // initial state
+#define MASTERNODE_IS_CAPABLE                  1
+#define MASTERNODE_NOT_CAPABLE                 2
+#define MASTERNODE_STOPPED                     3
+#define MASTERNODE_INPUT_TOO_NEW               4
+
+#define MASTERNODE_MIN_CONFIRMATIONS           6
+#define MASTERNODE_MIN_MICROSECONDS            5*60*1000*1000
+#define MASTERNODE_PING_SECONDS                30*60
+#define MASTERNODE_EXPIRATION_MICROSECONDS     35*60*1000*1000
+
+
+>>>>>>> 10bdae8... Stabilized masternodes and payments.
 struct CBlockIndexWorkComparator;
 
 /** The maximum allowed size for a serialized block, in bytes (network rule) */
@@ -1394,7 +1416,7 @@ public:
         if(fTestNet){
             if(nTime > START_MASTERNODE_PAYMENTS_TESTNET) READWRITE(vmn);
         } else {
-            if(nTime > START_MASTERNODE_PAYMENTS && nTime < START_MASTERNODE_PAYMENTS_STOP) READWRITE(vmn);    
+            if(nTime > START_MASTERNODE_PAYMENTS) READWRITE(vmn);    
         }
     )
 
@@ -1586,7 +1608,7 @@ public:
         if(fTestNet){
             if(nTime > START_MASTERNODE_PAYMENTS_TESTNET) return true;
         } else {
-            if(nTime > START_MASTERNODE_PAYMENTS && nTime < START_MASTERNODE_PAYMENTS_STOP) return true;
+            if(nTime > START_MASTERNODE_PAYMENTS) return true;
         }
         return false;
     }
@@ -2441,17 +2463,22 @@ public:
 
     uint256 CalculateScore(int mod=10);
 
-    void UpdateLastSeen()
+    void UpdateLastSeen(int64 override=0)
     {
-        lastTimeSeen = GetTimeMillis();
+        if(override == 0){
+            lastTimeSeen = GetTimeMicros();
+        } else {
+            lastTimeSeen = override;
+        }
     }
 
     void Check();
 
-    bool UpdatedWithin(int milliSeconds)
+    bool UpdatedWithin(int microSeconds)
     {
-        //printf("UpdatedWithin %"PRI64u"\n", GetTimeMillis() - lastTimeSeen);
-        return GetTimeMillis() - lastTimeSeen < milliSeconds;
+        //printf("UpdatedWithin %"PRI64u", %"PRI64u" --  %d \n", GetTimeMicros() , lastTimeSeen, (GetTimeMicros() - lastTimeSeen) < microSeconds);
+
+        return (GetTimeMicros() - lastTimeSeen) < microSeconds;
     }
 
     void Disable()
@@ -2556,7 +2583,7 @@ static const int64 POOL_FEE_AMOUNT = 0.025*COIN;
 class CDarkSendPool
 {
 public:
-    static const int MIN_PEER_PROTO_VERSION = 70015;
+    static const int MIN_PEER_PROTO_VERSION = 70018;
 
     std::vector<CDarkSendEntry> myEntries;
     std::vector<CDarkSendEntry> entries;
@@ -2573,12 +2600,15 @@ public:
 
     CTxIn vinMasterNode;
     CPubKey pubkeyMasterNode;
+    CPubKey pubkeyMasterNode2;
 
+    std::string strMasterNodeSignMessage;
     std::vector<unsigned char> vchMasterNodeSignature;
      
     int isCapableMasterNode;
     uint256 masterNodeBlockHash;
     std::string masterNodeAddr;
+    CService masterNodeSignAddr;
     int64 masterNodeSignatureTime;
 
     std::string lastMessage;
@@ -2688,6 +2718,7 @@ public:
 
     bool GetMasterNodeVin(CTxIn& vin, CPubKey& pubkey, CKey& secretKey);
     void RelayDarkDeclareWinner();
+    bool EnableHotColdMasterNode(CTxIn& vin, int64 sigTime, CService& addr);
     void RegisterAsMasterNode(bool stop);
     bool GetLastValidBlockHash(uint256& hash, int mod=10);
     void NewBlock();
