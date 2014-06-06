@@ -24,10 +24,26 @@ Value masternode(const Array& params, bool fHelp)
 
     if (strCommand == "list")
     {
+        std::string strCommand = "active";
+
+        if (params.size() == 2){
+            strCommand = params[1].get_str().c_str();
+        }
+
+        if (strCommand != "active" && strCommand != "vin"){
+            throw runtime_error(
+                "list supports 'active' and 'vin' \n");
+        }
+
         Object obj;
         BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
-            mn.Check();            
-            obj.push_back(Pair(mn.addr.ToString().c_str(),       (int)mn.IsEnabled()));
+            mn.Check();   
+
+            if(strCommand == "active"){
+                obj.push_back(Pair(mn.addr.ToString().c_str(),       (int)mn.IsEnabled()));
+            } else if (strCommand == "vin") {
+                obj.push_back(Pair(mn.addr.ToString().c_str(),       mn.vin.prevout.hash.ToString().c_str()));
+            }
         }
         return obj;
     }
