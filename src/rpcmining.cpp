@@ -432,6 +432,7 @@ Value getblocktemplate(const Array& params, bool fHelp)
             "  \"sizelimit\" : limit of block size\n"
             "  \"bits\" : compressed target of next block\n"
             "  \"height\" : height of the next block\n"
+            "  \"payee1\" : required payee1\n"
             "See https://en.bitcoin.it/wiki/BIP_0022 for full specification.");
 
     std::string strMode = "template";
@@ -533,7 +534,7 @@ Value getblocktemplate(const Array& params, bool fHelp)
 
     uint256 hashTarget = CBigNum().SetCompact(pblock->nBits).getuint256();
 
-    static Array aMutable;
+    Array aMutable;
     if (aMutable.empty())
     {
         aMutable.push_back("time");

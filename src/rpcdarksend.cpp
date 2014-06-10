@@ -24,10 +24,38 @@ Value masternode(const Array& params, bool fHelp)
 
     if (strCommand == "list")
     {
+        std::string strCommand = "active";
+
+        if (params.size() == 2){
+            strCommand = params[1].get_str().c_str();
+        }
+
+        if (strCommand != "active" && strCommand != "vin" && strCommand != "pubkey" && strCommand != "lastseen" && strCommand != "activeseconds"){
+            throw runtime_error(
+                "list supports 'active', 'vin', 'pubkey', 'lastseen', 'activeseconds'\n");
+        }
+
         Object obj;
         BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
-            mn.Check();            
-            obj.push_back(Pair(mn.addr.ToString().c_str(),       (int)mn.IsEnabled()));
+            mn.Check();   
+
+            if(strCommand == "active"){
+                obj.push_back(Pair(mn.addr.ToString().c_str(),       (int)mn.IsEnabled()));
+            } else if (strCommand == "vin") {
+                obj.push_back(Pair(mn.addr.ToString().c_str(),       mn.vin.prevout.hash.ToString().c_str()));
+            } else if (strCommand == "pubkey") {
+                CScript pubkey;
+                pubkey.SetDestination(mn.pubkey.GetID());
+                CTxDestination address1;
+                ExtractDestination(pubkey, address1);
+                CBitcoinAddress address2(address1);
+
+                obj.push_back(Pair(mn.addr.ToString().c_str(),       address2.ToString().c_str()));
+            } else if (strCommand == "lastseen") {
+                obj.push_back(Pair(mn.addr.ToString().c_str(),       (int64_t)mn.lastTimeSeen));
+            } else if (strCommand == "activeseconds") {
+                obj.push_back(Pair(mn.addr.ToString().c_str(),       (int64_t)(mn.lastTimeSeen - mn.now)/(1000*1000)));
+            }
         }
         return obj;
     }

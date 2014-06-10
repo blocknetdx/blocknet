@@ -33,17 +33,16 @@ class CMasterNode;
 class CMasterNodeVote;
 class CBitcoinAddress;
 
-#define MASTERNODE_PAYMENTS_MIN_VOTES 6
+#define MASTERNODE_PAYMENTS_MIN_VOTES 5
 #define MASTERNODE_PAYMENTS_MAX 1
 #define MASTERNODE_PAYMENTS_EXPIRATION 10
-#define START_MASTERNODE_PAYMENTS_TESTNET 1398872033+(60*25)
-#define START_MASTERNODE_PAYMENTS 1401033600 //Sun, 25 May 2014 16:00:00 GMT
-#define START_MASTERNODE_PAYMENTS_STOP 1401134533 // Mon, 26 May 2014 20:02:13 GMT
+#define START_MASTERNODE_PAYMENTS_TESTNET 1401937744
+#define START_MASTERNODE_PAYMENTS 1403107200 //Wed, 18 Jun 2014 16:00:00 GMT
 
 #define MASTERNODE_MIN_CONFIRMATIONS           6
-#define MASTERNODE_MIN_MICROSECONDS            55*60*1000
-#define MASTERNODE_PING_SECONDS                60*60
-#define MASTERNODE_EXPIRATION_MICROSECONDS     65*60*1000
+#define MASTERNODE_MIN_MICROSECONDS            5*60*1000*1000
+#define MASTERNODE_PING_SECONDS                30*60
+#define MASTERNODE_EXPIRATION_MICROSECONDS     35*60*1000*1000
 
 struct CBlockIndexWorkComparator;
 
@@ -183,10 +182,10 @@ CBlockIndex* FindBlockByHeight(int nHeight);
 bool ProcessMessages(CNode* pfrom);
 /** Send queued protocol messages to be sent to a give node */
 bool SendMessages(CNode* pto, bool fSendTrickle);
-//** Get age of an input */
-int GetInputAge(CTxIn& vin);
 /** Run an instance of the script checking thread */
 void ThreadScriptCheck();
+//** Get age of an input */
+int GetInputAge(CTxIn& vin);
 /** Run the miner threads */
 void GenerateBitcoins(bool fGenerate, CWallet* pwallet);
 /** Generate a new block, without valid proof-of-work */
@@ -1398,7 +1397,7 @@ public:
         if(fTestNet){
             if(nTime > START_MASTERNODE_PAYMENTS_TESTNET) READWRITE(vmn);
         } else {
-            if(nTime > START_MASTERNODE_PAYMENTS && nTime < START_MASTERNODE_PAYMENTS_STOP) READWRITE(vmn);    
+            if(nTime > START_MASTERNODE_PAYMENTS) READWRITE(vmn);    
         }
     )
 
@@ -1590,7 +1589,7 @@ public:
         if(fTestNet){
             if(nTime > START_MASTERNODE_PAYMENTS_TESTNET) return true;
         } else {
-            if(nTime > START_MASTERNODE_PAYMENTS && nTime < START_MASTERNODE_PAYMENTS_STOP) return true;
+            if(nTime > START_MASTERNODE_PAYMENTS) return true;
         }
         return false;
     }
@@ -2442,17 +2441,22 @@ public:
 
     uint256 CalculateScore(int mod=10);
 
-    void UpdateLastSeen()
+    void UpdateLastSeen(int64 override=0)
     {
-        lastTimeSeen = GetTimeMillis();
+        if(override == 0){
+            lastTimeSeen = GetTimeMicros();
+        } else {
+            lastTimeSeen = override;
+        }
     }
 
     void Check();
 
-    bool UpdatedWithin(int milliSeconds)
+    bool UpdatedWithin(int microSeconds)
     {
-        //printf("UpdatedWithin %"PRI64u"\n", GetTimeMillis() - lastTimeSeen);
-        return GetTimeMillis() - lastTimeSeen < milliSeconds;
+        //printf("UpdatedWithin %"PRI64u", %"PRI64u" --  %d \n", GetTimeMicros() , lastTimeSeen, (GetTimeMicros() - lastTimeSeen) < microSeconds);
+
+        return (GetTimeMicros() - lastTimeSeen) < microSeconds;
     }
 
     void Disable()
@@ -2483,7 +2487,7 @@ static const int64 POOL_FEE_AMOUNT = 0.025*COIN;
 class CDarkSendPool
 {
 public:
-    static const int MIN_PEER_PROTO_VERSION = 70015;
+    static const int MIN_PEER_PROTO_VERSION = 70018;
 
     CTxIn vinMasterNode;
     CPubKey pubkeyMasterNode;
