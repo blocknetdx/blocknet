@@ -432,7 +432,6 @@ Value getblocktemplate(const Array& params, bool fHelp)
             "  \"bits\" : compressed target of next block\n"
             "  \"height\" : height of the next block\n"
             "  \"payee1\" : required payee1\n"
-            "  \"payee2\" : required payee2\n"
             "See https://en.bitcoin.it/wiki/BIP_0022 for full specification.");
 
     std::string strMode = "template";

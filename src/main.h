@@ -36,7 +36,7 @@ class CBitcoinAddress;
 #define MASTERNODE_PAYMENTS_MIN_VOTES 5
 #define MASTERNODE_PAYMENTS_MAX 1
 #define MASTERNODE_PAYMENTS_EXPIRATION 10
-#define START_MASTERNODE_PAYMENTS_TESTNET 1401937744
+#define START_MASTERNODE_PAYMENTS_TESTNET 1402440553
 #define START_MASTERNODE_PAYMENTS 1403107200 //Wed, 18 Jun 2014 16:00:00 GMT
 
 #define POOL_MAX_TRANSACTIONS                  3 // wait for X transactions to merge and publish
@@ -2551,28 +2551,6 @@ public:
     bool SignMessage(std::string strMessage, std::string& errorMessage, std::vector<unsigned char>& vchSig, CKey key);
     bool VerifyMessage(CPubKey pubkey, std::vector<unsigned char>& vchSig, std::string strMessage, std::string& errorMessage);
 };
-
-
-#define POOL_MAX_TRANSACTIONS                  3 // wait for X transactions to merge and publish
-#define POOL_STATUS_UNKNOWN                    0 // waiting for update
-#define POOL_STATUS_IDLE                       1 // waiting for update
-#define POOL_STATUS_ACCEPTING_ENTRIES          2 // accepting entries
-#define POOL_STATUS_FINALIZE_TRANSACTION       3 // master node will broadcast what it accepted
-#define POOL_STATUS_SIGNING                    4 // check inputs/outputs, sign final tx
-#define POOL_STATUS_TRANSMISSION               5 // transmit transaction
-#define POOL_STATUS_ERROR                      6 // error
-#define POOL_STATUS_SUCCESS                    7 // success
-
-#define MASTERNODE_NOT_PROCESSED               0 // initial state
-#define MASTERNODE_IS_CAPABLE                  1
-#define MASTERNODE_NOT_CAPABLE                 2
-#define MASTERNODE_STOPPED                     3
-#define MASTERNODE_INPUT_TOO_NEW               4
-
-#define MASTERNODE_MIN_CONFIRMATIONS           6
-#define MASTERNODE_MIN_MICROSECONDS            55*60*1000
-#define MASTERNODE_PING_SECONDS                60*60
-#define MASTERNODE_EXPIRATION_MICROSECONDS     65*60*1000
 
 static const int64 POOL_FEE_AMOUNT = 0.025*COIN;
 
