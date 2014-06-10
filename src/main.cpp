@@ -4071,10 +4071,6 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
                 if(!mn.UpdatedWithin(MASTERNODE_MIN_MICROSECONDS)){
                     mn.UpdateLastSeen();
 
-                    if(pubkey2 == darkSendPool.pubkeyMasterNode2){
-                        darkSendPool.EnableHotColdMasterNode(vin, sigTime, addr);
-                    }
-
                     if(count == -1)
                         RelayDarkSendElectionEntry(vin, addr, vchSig, sigTime, pubkey, pubkey2, count, current, lastUpdated);
                 }
@@ -4103,10 +4099,6 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             CMasterNode mn(addr, vin, pubkey, vchSig, sigTime, pubkey2);
             mn.UpdateLastSeen(lastUpdated);
             darkSendMasterNodes.push_back(mn);
-
-            if(pubkey2 == darkSendPool.pubkeyMasterNode2){
-                darkSendPool.EnableHotColdMasterNode(vin, sigTime, addr);
-            }
 
             if(count == -1)
                 RelayDarkSendElectionEntry(vin, addr, vchSig, sigTime, pubkey, pubkey2, count, current, lastUpdated); 
