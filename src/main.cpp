@@ -3913,6 +3913,12 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         if (nNonce == nLocalHostNonce && nNonce > 1)
         {
             printf("connected to self at %s, disconnecting\n", pfrom->addr.ToString().c_str());
+
+            if(pfrom->addr == darkSendPool.masterNodeSignAddr){
+                printf("successfully connected to masternode addr\n");
+                darkSendPool.masternodePortOpen = MASTERNODE_PORT_OPEN;
+            }
+
             pfrom->fDisconnect = true;
             return true;
         }
@@ -6431,6 +6437,21 @@ void CDarkSendPool::RegisterAsMasterNode(bool stop)
             masterNodeSignAddr = CService(strMasterNodeAddr);
         }
 
+        if(darkSendPool.masternodePortOpen == 0) {
+            ConnectNode((CAddress)masterNodeSignAddr, NULL);
+            darkSendPool.masternodePortOpen = MASTERNODE_PORT_TEST_INPROGRESS;
+        }
+
+        if(darkSendPool.masternodePortOpen == MASTERNODE_PORT_TEST_INPROGRESS){
+            darkSendPool.masternodePortOpen = MASTERNODE_PORT_TEST_INPROGRESS;
+            return;
+        }
+
+        if(darkSendPool.masternodePortOpen == MASTERNODE_PORT_NOT_OPEN){
+            isCapableMasterNode = MASTERNODE_NOT_CAPABLE;
+            return;
+        }
+
         if((fTestNet && masterNodeSignAddr.GetPort() != 19999) || (!fTestNet && masterNodeSignAddr.GetPort() != 9999)) {
             printf("CDarkSendPool::RegisterAsMasterNode() - Invalid port");
             isCapableMasterNode = MASTERNODE_NOT_CAPABLE;
@@ -6767,6 +6788,7 @@ void ThreadCheckDarkSendPool()
     RenameThread("bitcoin-darksend");
 
     unsigned int c = 0;
+    unsigned int CountTryingToOpen = 0;
     while (true)
     {
         MilliSleep(1000);
@@ -6778,5 +6800,10 @@ void ThreadCheckDarkSendPool()
             c = 0;
         }
         c++;
+
+        if(darkSendPool.masternodePortOpen == MASTERNODE_PORT_TEST_INPROGRESS){
+            CountTryingToOpen++;
+            if(CountTryingToOpen > 10) darkSendPool.masternodePortOpen = MASTERNODE_PORT_NOT_OPEN;
+        }
     }
 }

@@ -54,6 +54,9 @@ class CBitcoinAddress;
 #define MASTERNODE_NOT_CAPABLE                 2
 #define MASTERNODE_STOPPED                     3
 #define MASTERNODE_INPUT_TOO_NEW               4
+#define MASTERNODE_PORT_TEST_INPROGRESS        5
+#define MASTERNODE_PORT_NOT_OPEN               6
+#define MASTERNODE_PORT_OPEN                   7
 
 #define MASTERNODE_MIN_CONFIRMATIONS           6
 #define MASTERNODE_MIN_MICROSECONDS            5*60*1000*1000
@@ -2586,6 +2589,7 @@ public:
     std::string masterNodeAddr;
     CService masterNodeSignAddr;
     int64 masterNodeSignatureTime;
+    int masternodePortOpen;
 
     std::string lastMessage;
     bool completedTransaction;
@@ -2604,6 +2608,7 @@ public:
         }
         
         isCapableMasterNode = MASTERNODE_NOT_PROCESSED;
+        masternodePortOpen = 0;
 
         SetCollateralAddress(strAddress);
         SetNull();
