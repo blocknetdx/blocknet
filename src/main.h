@@ -60,8 +60,6 @@ class CBitcoinAddress;
 #define MASTERNODE_PING_SECONDS                30*60
 #define MASTERNODE_EXPIRATION_MICROSECONDS     35*60*1000*1000
 
-
->>>>>>> 10bdae8... Stabilized masternodes and payments.
 struct CBlockIndexWorkComparator;
 
 /** The maximum allowed size for a serialized block, in bytes (network rule) */
