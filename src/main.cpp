@@ -5183,6 +5183,8 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
             bMasterNodePayment = true;
         }
     }
+
+    printf ("CreateNewBlock() : start \n");
     
     int64 nFees = 0;
     {
@@ -5193,6 +5195,15 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         if(bMasterNodePayment) {
             CBlock blockLast;
             if(blockLast.ReadFromDisk(pindexPrev)){
+
+                printf ("CreateNewBlock() : nHeight : %d\n", pindexPrev->nHeight);
+                printf ("CreateNewBlock() : hashBestChain : %s\n", hashBestChain.ToString().c_str());
+                printf ("CreateNewBlock() : pindexPrev->GetBlockHash() : %s\n", pindexPrev->GetBlockHash().ToString().c_str());
+
+                if(hashBestChain != pindexPrev->GetBlockHash()){
+                    throw std::runtime_error("CreateNewBlock() : hashBestChain != pindexPrev->GetBlockHash()");
+                }
+
                 BOOST_FOREACH(CMasterNodeVote& mv1, blockLast.vmn){
                     // vote if you agree with it, if you're the last vote you must vote yes to avoid the greedy voter exploit
                     // i.e: You only vote yes when you're not the one that is going to pay
