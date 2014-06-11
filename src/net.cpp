@@ -475,7 +475,6 @@ CNode* ConnectNode(CAddress addrConnect, const char *pszDest, bool darkSendMaste
         }
     }
 
-
     /// debug print
     printf("trying connection %s lastseen=%.1fhrs\n",
         pszDest ? pszDest : addrConnect.ToString().c_str(),
