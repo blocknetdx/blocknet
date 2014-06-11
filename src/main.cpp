@@ -2641,14 +2641,14 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
         if (pindexPrev != NULL && fCheckVotes && !fIsInitialDownload){
             CBlock blockLast;
             if(blockLast.ReadFromDisk(pindexPrev)){
+                printf ("CheckBlock() : nHeight : %d\n", pindexPrev->nHeight);
+                printf ("CheckBlock() : hashBestChain : %s\n", hashBestChain.ToString().c_str());
+                printf ("CheckBlock() : pindexPrev->GetBlockHash() : %s\n", pindexPrev->GetBlockHash().ToString().c_str());
+                
                 if(hashBestChain != pindexPrev->GetBlockHash()){
                     printf ("CheckBlock() : hashBestChain != pindexPrev->GetBlockHash() : %s != %s\n", hashBestChain.ToString().c_str(), pindexPrev->GetBlockHash().ToString().c_str());
                     return state.DoS(100, error("CheckBlock() : hashBestChain != pindexPrev->GetBlockHash()"));
                 }
-
-                printf ("CheckBlock() : nHeight : %d\n", pindexPrev->nHeight);
-                printf ("CheckBlock() : hashBestChain : %s\n", hashBestChain.ToString().c_str());
-                printf ("CheckBlock() : pindexPrev->GetBlockHash() : %s\n", pindexPrev->GetBlockHash().ToString().c_str());
 
                 votingRecordsBlockPrev = blockLast.vmn.size();
                 BOOST_FOREACH(CMasterNodeVote mv1, blockLast.vmn){
