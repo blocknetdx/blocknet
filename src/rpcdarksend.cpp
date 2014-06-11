@@ -169,7 +169,6 @@ if (strCommand == "list")
         if(darkSendPool.isCapableMasterNode == MASTERNODE_INPUT_TOO_NEW) return "masternode input must have at least 6 confirmations";
         if(darkSendPool.isCapableMasterNode == MASTERNODE_STOPPED) return "masternode is stopped";
         if(darkSendPool.isCapableMasterNode == MASTERNODE_IS_CAPABLE) return "successfully started masternode";
-        if(darkSendPool.masternodePortOpen == MASTERNODE_PORT_TEST_INPROGRESS) return "testing inbound connection, please try this command again in a few seconds";
         if(darkSendPool.masternodePortOpen == MASTERNODE_PORT_NOT_OPEN) return "inbound port is not open. Please open it and try again. (19999 for testnet and 9999 for mainnet)";
         if(darkSendPool.isCapableMasterNode == MASTERNODE_NOT_CAPABLE) return "not capable masternode";
 
@@ -181,7 +180,6 @@ if (strCommand == "list")
         if(darkSendPool.isCapableMasterNode == MASTERNODE_INPUT_TOO_NEW) return "masternode input must have at least 6 confirmations";
         if(darkSendPool.isCapableMasterNode == MASTERNODE_IS_CAPABLE) return "successfully started masternode";
         if(darkSendPool.isCapableMasterNode == MASTERNODE_STOPPED) return "masternode is stopped";
-        if(darkSendPool.masternodePortOpen == MASTERNODE_PORT_TEST_INPROGRESS) return "testing inbound connection, please try this command again in a few seconds";
         if(darkSendPool.masternodePortOpen == MASTERNODE_PORT_NOT_OPEN) return "inbound port is not open. Please open it and try again. (19999 for testnet and 9999 for mainnet)";
         if(darkSendPool.isCapableMasterNode == MASTERNODE_NOT_CAPABLE) return "not capable masternode";
 
