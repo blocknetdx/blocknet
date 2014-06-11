@@ -2588,6 +2588,7 @@ public:
     std::string masterNodeAddr;
     CService masterNodeSignAddr;
     int64 masterNodeSignatureTime;
+    int masternodePortOpen;
 
     std::string lastMessage;
     bool completedTransaction;
@@ -2606,6 +2607,7 @@ public:
         }
         
         isCapableMasterNode = MASTERNODE_NOT_PROCESSED;
+        masternodePortOpen = 0;
 
         SetCollateralAddress(strAddress);
         SetNull();
