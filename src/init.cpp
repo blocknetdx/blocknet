@@ -1128,7 +1128,7 @@ bool AppInit2(boost::thread_group& threadGroup)
             darkSendPool.pubkeyMasterNode2 = pubkey;
             
         } else {
-            return InitError(_("You must specific a masternodeprivkey in the configuration. Please see documentation for help."));
+            return InitError(_("You must specify a masternodeprivkey in the configuration. Please see documentation for help."));
         }
     }
 

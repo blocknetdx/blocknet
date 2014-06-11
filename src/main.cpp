@@ -6437,6 +6437,8 @@ void CDarkSendPool::RegisterAsMasterNode(bool stop)
             exit(0);
         }
 
+        printf("CDarkSendPool::RegisterAsMasterNode() - Checking inbound connection to '%s'\n", masterNodeSignAddr.ToString().c_str());
+
         if(ConnectNode((CAddress)masterNodeSignAddr, masterNodeSignAddr.ToString().c_str())){
             darkSendPool.masternodePortOpen = MASTERNODE_PORT_OPEN;
         } else {
