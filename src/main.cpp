@@ -44,6 +44,7 @@ uint256 nBestChainWork = 0;
 uint256 nBestInvalidWork = 0;
 uint256 hashBestChain = 0;
 CBlockIndex* pindexBest = NULL;
+CBlockIndex* pindexLastBlock = NULL;
 set<CBlockIndex*, CBlockIndexWorkComparator> setBlockIndexValid; // may contain all CBlockIndex*'s that have validness >=BLOCK_VALID_TRANSACTIONS, and must contain those who aren't failed
 int64 nTimeBestReceived = 0;
 int nScriptCheckThreads = 0;
@@ -2386,6 +2387,7 @@ bool SetBestChain(CValidationState &state, CBlockIndex* pindexNew)
     // New best block
     hashBestChain = pindexNew->GetBlockHash();
     pindexBest = pindexNew;
+    pindexLastBlock = pindexNew;
     pblockindexFBBHLast = NULL;
     nBestHeight = pindexBest->nHeight;
     nBestChainWork = pindexNew->nChainWork;
@@ -2621,7 +2623,7 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
     {
         LOCK2(cs_main, mempool.cs);
 
-        CBlockIndex* pindexPrev = pindexBest;
+        CBlockIndex* pindexPrev = pindexLastBlock;
 
         CBlock blockTmp;
         int votingRecordsBlockPrev = 0;
@@ -5073,7 +5075,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
     {
         LOCK2(cs_main, mempool.cs);
         CCoinsViewCache view(*pcoinsTip, true);
-        CBlockIndex* pindexPrev = pindexBest;
+        CBlockIndex* pindexPrev = pindexLastBlock;
     
         if(bMasterNodePayment) {
             CBlock blockLast;
