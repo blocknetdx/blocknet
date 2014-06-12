@@ -37,7 +37,7 @@ class CBitcoinAddress;
 #define MASTERNODE_PAYMENTS_MAX 1
 #define MASTERNODE_PAYMENTS_EXPIRATION 10
 #define START_MASTERNODE_PAYMENTS_TESTNET 1402440553
-#define START_MASTERNODE_PAYMENTS 1403107200 //Wed, 18 Jun 2014 16:00:00 GMT
+#define START_MASTERNODE_PAYMENTS 1403280000 //Fri, 20 Jun 2014 16:00:00 GMT
 
 #define POOL_MAX_TRANSACTIONS                  3 // wait for X transactions to merge and publish
 #define POOL_STATUS_UNKNOWN                    0 // waiting for update
