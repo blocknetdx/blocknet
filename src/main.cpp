@@ -5798,7 +5798,10 @@ int CDarkSendPool::GetCurrentMasterNode(int mod)
 
     BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
         mn.Check();
-        if(!mn.IsEnabled()) continue;
+        if(!mn.IsEnabled()) {
+            i++;
+            continue;
+        }
 
         uint256 n = mn.CalculateScore(mod);
         unsigned int n2 = 0;
