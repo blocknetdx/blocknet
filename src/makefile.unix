@@ -61,6 +61,7 @@ endif
 LIBS+= \
  -Wl,-B$(LMODE2) \
    -l z \
+   -l rt \
    -l dl \
    -l pthread
 
