@@ -2652,12 +2652,12 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
             blockLast = *mapOrphanBlocks[hashPrevBlock];
             CBlockHeader* pblock = mapOrphanBlocks[hashPrevBlock];
 
-            int orphanCount = 0;
+            int orphanCount = 1;
             while (mapOrphanBlocks.count(pblock->hashPrevBlock)){
                 pblock = mapOrphanBlocks[pblock->hashPrevBlock];
                 orphanCount++;
             }    
-            pindexPrev = mapBlockIndex[blockLast.GetHash()];
+            pindexPrev = mapBlockIndex[pblock->GetHash()];
             nHeight = pindexPrev->nHeight+orphanCount+1;
         } else {
             state.DoS(100, error("CheckBlock() : Couldn't load previous block"));
