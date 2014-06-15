@@ -2707,15 +2707,10 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
                         CTxDestination address1;
                         ExtractDestination(pubkey, address1);
                         CBitcoinAddress address2(address1);
-                        std::string addr = address2.ToString();
 
                         std::string votes = boost::lexical_cast<std::string>(mv2.votes);
-
-
-                        stringstream ss;
-                        ss << setw(10) << blockHeight << setw(40) << addr << setw(10) << votes;
                         
-                        printf("CheckBlock():  %s\n", ss.str().c_str());
+                        printf("CheckBlock():  %s       %s       %s\n",  blockHeight.c_str(), address2.ToString().c_str(), votes.c_str());
                     }
                     
                     if(mv2.GetPubKey().size() != 25)
