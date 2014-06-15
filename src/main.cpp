@@ -2639,34 +2639,40 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
         bool fIsInitialDownload = IsInitialBlockDownload();
         
         CBlock blockLast;
+        uint64 nHeight = 0;
         
         // Work back to the first block in the orphan chain
         if (mapBlockIndex.count(hashPrevBlock)){
             printf("CheckBlock() : loading prev block  %s\n", hashPrevBlock.ToString().c_str());
             pindexPrev = mapBlockIndex[hashPrevBlock];
             blockLast.ReadFromDisk(pindexPrev);
+            nHeight = pindexPrev->nHeight+1;
         } else if (mapOrphanBlocks.count(hashPrevBlock)){
             printf("CheckBlock() : loading prev orphan block %s\n", hashPrevBlock.ToString().c_str());
             blockLast = *mapOrphanBlocks[hashPrevBlock];
+            CBlockHeader* pblock = mapOrphanBlocks[hashPrevBlock];
+
+            int orphanCount = 0;
+            while (mapOrphanBlocks.count(pblock->hashPrevBlock)){
+                pblock = mapOrphanBlocks[pblock->hashPrevBlock];
+                orphanCount++;
+            }    
+            pindexPrev = mapBlockIndex[blockLast.GetHash()];
+            nHeight = pindexPrev->nHeight+orphanCount+1;
         } else {
             state.DoS(100, error("CheckBlock() : Couldn't load previous block"));
         }
 
         if (pindexPrev != NULL && fCheckVotes && !fIsInitialDownload){
             {
-                if(blockLast.GetHash() != pindexPrev->GetBlockHash()){
-                    printf ("CheckBlock() : blockLast.GetHash() != pindexPrev->GetBlockHash() : %s != %s\n", blockLast.GetHash().ToString().c_str(), pindexPrev->GetBlockHash().ToString().c_str());
-                    return state.DoS(100, error("CheckBlock() : blockLast.GetHash() != pindexPrev->GetBlockHash()"));
-                }
-
-                printf ("CheckBlock() : nHeight : %d\n", pindexPrev->nHeight);
-                printf ("CheckBlock() : pindexPrev->GetBlockHash() : %s\n", pindexPrev->GetBlockHash().ToString().c_str());
+                printf ("CheckBlock() : nHeight : %d\n", nHeight);
+                printf ("CheckBlock() : pindexPrev->GetBlockHash() : %s\n", blockLast.GetHash().ToString().c_str());
 
                 votingRecordsBlockPrev = blockLast.vmn.size();
                 BOOST_FOREACH(CMasterNodeVote mv1, blockLast.vmn){
-                    if((pindexPrev->nHeight+1) - mv1.GetHeight() > MASTERNODE_PAYMENTS_EXPIRATION){
+                    if(nHeight - mv1.GetHeight() > MASTERNODE_PAYMENTS_EXPIRATION){
                         return state.DoS(100, error("CheckBlock() : Vote too old"));
-                    } else if((pindexPrev->nHeight+1) - mv1.GetHeight() == MASTERNODE_PAYMENTS_EXPIRATION){
+                    } else if(nHeight - mv1.GetHeight() == MASTERNODE_PAYMENTS_EXPIRATION){
                         removedMasterNodePayments++;
                     } else if(mv1.GetVotes() >= MASTERNODE_PAYMENTS_MIN_VOTES-1 && foundMasterNodePayment < MASTERNODE_PAYMENTS_MAX) {
                         for (unsigned int i = 0; i < vtx[0].vout.size(); i++)
@@ -2717,7 +2723,7 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
                         return state.DoS(100, error("CheckBlock() : pubkey wrong size"));
 
                     bool found = false;
-                    if(!foundThisBlock && mv2.blockHeight == pindexPrev->nHeight+1) {
+                    if(!foundThisBlock && mv2.blockHeight == nHeight) {
                         foundThisBlock = true;
                         continue;
                     }
