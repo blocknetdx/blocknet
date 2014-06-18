@@ -6716,6 +6716,11 @@ int CDarkSendPool::GetCurrentMasterNode(int mod)
 
 void CMasterNode::Check()
 {
+    if(!UpdatedWithin(MASTERNODE_REMOVAL_MICROSECONDS)){
+        enabled = 4;
+        return;
+    }
+
     if(!UpdatedWithin(MASTERNODE_EXPIRATION_MICROSECONDS)){
         enabled = 2;
         return;
@@ -6793,6 +6798,18 @@ void ThreadCheckDarkSendPool()
         //printf("ThreadCheckDarkSendPool::check timeout\n");
         darkSendPool.CheckTimeout();
         
+        if(c % 600 == 0){
+            vector<CMasterNode>::iterator it;
+            for(it=darkSendMasterNodes.begin();it<darkSendMasterNodes.end();it++){
+                (*it).Check();
+                if((*it).enabled == 4){
+                    printf("REMOVING INACTIVE MASTERNODE %s\n", (*it).addr.ToString().c_str());
+                    darkSendMasterNodes.erase(it);
+                    break;
+                }
+            }
+        }
+
         if(c == MASTERNODE_PING_SECONDS){
             darkSendPool.RegisterAsMasterNode(false);
             c = 0;

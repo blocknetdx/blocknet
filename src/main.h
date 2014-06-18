@@ -61,6 +61,7 @@ class CBitcoinAddress;
 #define MASTERNODE_MIN_MICROSECONDS            5*60*1000*1000
 #define MASTERNODE_PING_SECONDS                30*60
 #define MASTERNODE_EXPIRATION_MICROSECONDS     35*60*1000*1000
+#define MASTERNODE_REMOVAL_MICROSECONDS        35.5*60*1000*1000
 
 struct CBlockIndexWorkComparator;
 
