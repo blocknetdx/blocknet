@@ -59,7 +59,7 @@ CDarkSendPool darkSendPool;
 CDarkSendSigner darkSendSigner;
 std::vector<CMasterNode> darkSendMasterNodes;
 std::vector<CMasterNodeVote> darkSendMasterNodeVotes;
-
+std::vector<int64> darkSendDenominations;
 
 /** Fees smaller than this (in satoshi) are considered zero fee (for transaction creation) */
 int64 CTransaction::nMinTxFee = 100000;
@@ -4038,23 +4038,15 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             return false;
         }
 
-        CTxIn in;
+        std::vector<CTxIn> in;
         int64 nAmount;
         CTransaction txCollateral;
-        CTransaction txSupporting;
-        CTxOut out;
-        CTxOut out2;
-        vRecv >> in >> nAmount >> txCollateral >> txSupporting >> out >> out2;
-
-        if(txSupporting != CTransaction()) {
-            CValidationState state;
-            bool fMissingInputs = false;
-            txSupporting.AcceptToMemoryPool(state, true, true, &fMissingInputs);
-        }
+        std::vector<CTxOut> out;
+        vRecv >> in >> nAmount >> txCollateral >> out;
 
         int accepted = 0;
         std::string error = "";
-        if(darkSendPool.AddEntry(in, nAmount, txCollateral, out, out2, error)){
+        if(darkSendPool.AddEntry(in, nAmount, txCollateral, out, error)){
             accepted = 1;
             pfrom->PushMessage("dssu", darkSendPool.GetState(), darkSendPool.GetEntriesCount(), accepted, error);
             darkSendPool.Check();
@@ -5887,9 +5879,11 @@ void CDarkSendPool::Check()
             CTransaction txNew;
 
             for(unsigned int i = 0; i < entries.size(); i++){
-                txNew.vout.push_back(entries[i].vout);
-                txNew.vout.push_back(entries[i].vout2);
-                txNew.vin.push_back(entries[i].vin);
+                BOOST_FOREACH(const CTxOut v, entries[i].vout)
+                    txNew.vout.push_back(v);
+
+                BOOST_FOREACH(const CDarkSendEntryVin s, entries[i].sev)
+                    txNew.vin.push_back(s.vin);
             }
 
             SignFinalTransaction(txNew, NULL);
@@ -5908,23 +5902,26 @@ void CDarkSendPool::Check()
         LOCK2(cs_main, pwalletMain->cs_wallet);
         {
             for(unsigned int i = 0; i < entries.size(); i++){
-                txNew.vout.push_back(entries[i].vout);
-                txNew.vout.push_back(entries[i].vout2);
+                BOOST_FOREACH(const CTxOut v, entries[i].vout)
+                    txNew.vout.push_back(v);
             }
 
             int i = 0;
             BOOST_FOREACH(const CDarkSendEntry v, entries) {
-                txNew.vin.push_back(v.vin);
-                txNew.vin[i].scriptSig = v.sig;
-                printf("CDarkSendPool::Check() - Sign with sig %s\n", v.sig.ToString().substr(0,24).c_str());
-                printf("CDarkSendPool::Check() - Signed pubkey %s\n", v.sigPubKey.ToString().substr(0,24).c_str());
-                if (!VerifyScript(txNew.vin[i].scriptSig, v.sigPubKey, txNew, i, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC, 0)){
-                    printf("CDarkSendPool::Check() - Signing - ERROR signing input %u\n", i);
-                    //failure will result, how to recover from this?
-                } else {
-                    printf("CDarkSendPool::Check() - Signing - Succesfully signed input %u\n", i);
+                BOOST_FOREACH(const CDarkSendEntryVin s, entries[i].sev) {
+                    txNew.vin.push_back(s.vin);
+                    txNew.vin[i].scriptSig = s.sig;
+
+                    printf("CDarkSendPool::Check() - Sign with sig %s\n", s.sig.ToString().substr(0,24).c_str());
+                    printf("CDarkSendPool::Check() - Signed pubkey %s\n", s.sigPubKey.ToString().substr(0,24).c_str());
+                    if (!VerifyScript(txNew.vin[i].scriptSig, s.sigPubKey, txNew, i, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC, 0)){
+                        printf("CDarkSendPool::Check() - Signing - ERROR signing input %u\n", i);
+                        //failure will result, how to recover from this?
+                    } else {
+                        printf("CDarkSendPool::Check() - Signing - Succesfully signed input %u\n", i);
+                    }
+                    i++;
                 }
-                i++;
             }
             printf("CDarkSendPool::Check() -- compiled all signatures:\n%s", txNew.ToString().c_str());
             
@@ -5934,14 +5931,16 @@ void CDarkSendPool::Check()
                 {
                     BOOST_FOREACH(const CDarkSendEntry e, myEntries)
                     {
-                        //find my pending transaction that matches
-                        if(txin == e.vin)
-                        {
-                            printf("CDarkSendPool::Check() - marking vin spent %i", i);
-                            CWalletTx &coin = pwalletMain->mapWallet[txin.prevout.hash];
-                            coin.BindWallet(pwalletMain);
-                            coin.MarkSpent(txin.prevout.n);
-                            coin.WriteToDisk();
+                        BOOST_FOREACH(const CDarkSendEntryVin s, e.sev) {
+                            //find my pending transaction that matches
+                            if(txin == s.vin)
+                            {
+                                printf("CDarkSendPool::Check() - marking vin spent %i", i);
+                                CWalletTx &coin = pwalletMain->mapWallet[txin.prevout.hash];
+                                coin.BindWallet(pwalletMain);
+                                coin.MarkSpent(txin.prevout.n);
+                                coin.WriteToDisk();
+                            }
                         }
                     }
                     i++;
@@ -5992,27 +5991,24 @@ void CDarkSendPool::ChargeFees(){
         int i = 0;
         // who didn't sign?
         BOOST_FOREACH(const CDarkSendEntry v, entries) {
-            if(!v.isSigSet){
-                printf("CDarkSendPool::ChargeFees -- found uncooperative node (didn't sign). charging fees. %u\n", i);
+            BOOST_FOREACH(const CDarkSendEntryVin s, v.sev) {
+                if(!s.isSigSet){
+                    printf("CDarkSendPool::ChargeFees -- found uncooperative node (didn't sign). charging fees. %u\n", i);
 
-                CWalletTx wtxCollateral = CWalletTx(pwalletMain, v.collateral);
+                    CWalletTx wtxCollateral = CWalletTx(pwalletMain, v.collateral);
 
-                // Broadcast
-                if (!wtxCollateral.AcceptToMemoryPool(true, false))
-                {
-                    // This must not fail. The transaction has already been signed and recorded.
-                    printf("CDarkSendPool::ChargeFees() : Error: Transaction not valid");
+                    // Broadcast
+                    if (!wtxCollateral.AcceptToMemoryPool(true, false))
+                    {
+                        // This must not fail. The transaction has already been signed and recorded.
+                        printf("CDarkSendPool::ChargeFees() : Error: Transaction not valid");
+                    }
+                    wtxCollateral.RelayWalletTransaction();
                 }
-                wtxCollateral.RelayWalletTransaction();
+                i++;
             }
-            i++;
         }
     }
-}
-
-std::string CDarkSendPool::Denominate(){
-    CWalletTx d = CWalletTx();
-    return pwalletMain->Denominate(d);
 }
 
 void CDarkSendPool::CheckTimeout(){
@@ -6042,13 +6038,20 @@ bool CDarkSendPool::SignatureValid(const CScript& newSig, const CTxIn& newVin){
 
     int found = -1;
     CScript sigPubKey = CScript();
-    for(unsigned int i = 0; i < entries.size(); i++){
-        txNew.vout.push_back(entries[i].vout);
-        txNew.vout.push_back(entries[i].vout2);
-        txNew.vin.push_back(entries[i].vin);
-        if(entries[i].vin == newVin){
-            found = i;
-            sigPubKey = entries[i].sigPubKey;
+    unsigned int i = 0;
+
+    BOOST_FOREACH(CDarkSendEntry e, entries) {
+        BOOST_FOREACH(const CTxOut out, e.vout)
+            txNew.vout.push_back(out);
+
+        BOOST_FOREACH(const CDarkSendEntryVin s, e.sev){
+            txNew.vin.push_back(s.vin);
+
+            if(s.vin == newVin){
+                found = i;
+                sigPubKey = s.sigPubKey;
+            }
+            i++;
         }
     }
 
@@ -6093,13 +6096,15 @@ bool CDarkSendPool::IsCollateralValid(const CTransaction& txCollateral){
     return true;
 }
 
-bool CDarkSendPool::AddEntry(const CTxIn& newInput, const int64& nAmount, const CTransaction& txCollateral, const CTxOut& newOutput, const CTxOut& newOutput2, std::string& error){
+bool CDarkSendPool::AddEntry(const std::vector<CTxIn>& newInput, const int64& nAmount, const CTransaction& txCollateral, const std::vector<CTxOut>& newOutput, std::string& error){
     if (!fMasterNode) return false;
 
-    if (newInput.prevout.IsNull() || nAmount < 0) {
-        if(fDebug) printf ("CDarkSendPool::AddEntry - input not valid!\n");
-        error = "input not valid";
-        return false;
+    BOOST_FOREACH(CTxIn in, newInput) {
+        if (in.prevout.IsNull() || nAmount < 0) {
+            if(fDebug) printf ("CDarkSendPool::AddEntry - input not valid!\n");
+            error = "input not valid";
+            return false;
+        }
     }
 
     if (!IsCollateralValid(txCollateral)){
@@ -6114,25 +6119,29 @@ bool CDarkSendPool::AddEntry(const CTxIn& newInput, const int64& nAmount, const 
         return false;
     }
 
-    BOOST_FOREACH(const CDarkSendEntry v, entries) {
-        if(v.vin == newInput) {
-            if(fDebug) printf ("CDarkSendPool::AddEntry - found in vin\n"); 
-            error = "already have than vin";
-            return false;
+    BOOST_FOREACH(CTxIn in, newInput) {
+        BOOST_FOREACH(const CDarkSendEntry v, entries) {
+            BOOST_FOREACH(const CDarkSendEntryVin s, v.sev){
+                if(s.vin == in) {
+                    if(fDebug) printf ("CDarkSendPool::AddEntry - found in vin\n"); 
+                    error = "already have than vin";
+                    return false;
+                }
+            }
         }
     }
 
     if(state == POOL_STATUS_ACCEPTING_ENTRIES) {
         CDarkSendEntry v;
-        v.Add(newInput, nAmount, txCollateral, newOutput, newOutput2);
+        v.Add(newInput, nAmount, txCollateral, newOutput);
         entries.push_back(v);
 
-        printf("CDarkSendPool::AddEntry -- adding %s\n", newInput.ToString().c_str());
+        printf("CDarkSendPool::AddEntry -- adding %s\n", newInput[0].ToString().c_str());
         error = "";
         return true;
     }
 
-    if(fDebug) printf ("CDarkSendPool::AddEntry - can't aceept new entry, wrong state!\n");
+    if(fDebug) printf ("CDarkSendPool::AddEntry - can't accept new entry, wrong state!\n");
     error = "wrong state";
     return false;
 }
@@ -6142,9 +6151,11 @@ bool CDarkSendPool::AddScriptSig(const CScript& newSig, const CTxIn& newVin, con
     printf("CDarkSendPool::AddScriptSig -- new sig  %s\n", newSig.ToString().substr(0,24).c_str());
     
     BOOST_FOREACH(const CDarkSendEntry v, entries) {
-        if(v.sig == newSig) {
-            printf("CDarkSendPool::AddScriptSig - already exists ");
-            return false;
+        BOOST_FOREACH(const CDarkSendEntryVin s, v.sev){
+            if(s.sig == newSig) {
+                printf("CDarkSendPool::AddScriptSig - already exists ");
+                return false;
+            }
         }
     }
 
@@ -6158,11 +6169,9 @@ bool CDarkSendPool::AddScriptSig(const CScript& newSig, const CTxIn& newVin, con
 
     if(state == POOL_STATUS_SIGNING) {
         for(unsigned int i = 0; i < entries.size(); i++){
-            if(entries[i].vin == newVin){
+            if(entries[i].AddSig(newSig, newPubKey, newVin)){
                 //return false if verify script fails on input
-                entries[i].AddSig(newSig, newPubKey);
                 sigCount++;
-                printf("CDarkSendPool::AddScriptSig -- vin isSigSet %i\n", entries[i].isSigSet);
                 printf("CDarkSendPool::AddScriptSig -- adding  %s\n", newSig.ToString().substr(0,24).c_str());
                 printf("CDarkSendPool::AddScriptSig -- scriptSig, total sigs %u\n", sigCount);
                 return true;
@@ -6172,7 +6181,7 @@ bool CDarkSendPool::AddScriptSig(const CScript& newSig, const CTxIn& newVin, con
     return false;
 }
 
-void CDarkSendPool::SendMoney(const CTransaction& collateral, CTxIn& in, CTxOut& out, int64& fee, int64 amount, CScript& pubScript, const CTransaction& txSupporting){
+void CDarkSendPool::SendMoney(const CTransaction& collateral, std::vector<CTxIn>& in, std::vector<CTxOut>& out, int64& fee, int64 amount){
     if(fMasterNode) {
         printf("CDarkSendPool::SendMoney() - DarkSend from a masternode is not supported currently.\n");
         return;
@@ -6180,7 +6189,7 @@ void CDarkSendPool::SendMoney(const CTransaction& collateral, CTxIn& in, CTxOut&
 
     printf("CDarkSendPool::SendMoney() - Added transaction to pool.\n");
     if(fDebug){
-        printf("CDarkSendPool::SendMoney() -- NEW INPUT -- adding %s\n", in.ToString().c_str());
+        printf("CDarkSendPool::SendMoney() -- NEW INPUT -- adding %s\n", in[0].ToString().c_str());
     }
 
     if(state == POOL_STATUS_ERROR || state == POOL_STATUS_SUCCESS) ClearLastMessage();
@@ -6189,25 +6198,13 @@ void CDarkSendPool::SendMoney(const CTransaction& collateral, CTxIn& in, CTxOut&
         ConnectToBestMasterNode();
     }
 
-    CReserveKey reservekey(pwalletMain);
-
-    // make our change address
-    CScript scriptChange;
-    CPubKey vchPubKey;
-    assert(reservekey.GetReservedKey(vchPubKey)); // should never fail, as we just unlocked
-    scriptChange.SetDestination(vchPubKey.GetID());
-
-    CTxOut change = CTxOut(amount-out.nValue-fee, scriptChange);
-    
-    in.prevPubKey = pubScript;
-
     // store our entry for later use
     CDarkSendEntry e;
-    e.Add(in, amount, collateral, out, change, txSupporting);
+    e.Add(in, amount, collateral, out);
     myEntries.push_back(e);
 
     // relay our entry to the master node
-    RelayDarkSendIn(in, amount, collateral, txSupporting, out, change);
+    RelayDarkSendIn(in, amount, collateral, out);
     Check();
 }
 
@@ -6243,41 +6240,46 @@ bool CDarkSendPool::SignFinalTransaction(CTransaction& finalTransactionNew, CNod
     //make sure my inputs/outputs are present, otherwise refuse to sign
 
     BOOST_FOREACH(const CDarkSendEntry e, myEntries) {
-        /* Sign my transaction and all outputs */
-
-        int mine = -1;
-        for(unsigned int i = 0; i < finalTransaction.vin.size(); i++){
-            if(finalTransaction.vin[i] == e.vin){
-                mine = i;
-            }
-        }
-
-        if(mine >= 0){ //might have to do this one input at a time?
-            int foundOutputs = 0;
+        BOOST_FOREACH(const CDarkSendEntryVin s, e.sev) {
+            /* Sign my transaction and all outputs */
+            int mine = -1;
+            CScript prevPubKey = CScript();
+            CTxIn vin = CTxIn();
             
-            for(unsigned int i = 0; i < finalTransaction.vout.size(); i++){
-                if(finalTransaction.vout[i] == e.vout || finalTransaction.vout[i] == e.vout2){
-                    foundOutputs++;
+            for(unsigned int i = 0; i < finalTransaction.vin.size(); i++){
+                if(finalTransaction.vin[i] == s.vin){
+                    mine = i;
+                    prevPubKey = s.vin.prevPubKey;
+                    vin = s.vin;
                 }
             }
 
-            if(foundOutputs < 2) {
-                printf("CDarkSendPool::Sign - My entries are not correct! Refusing to sign. %d entries. \n", foundOutputs);
-                return false;
+            if(mine >= 0){ //might have to do this one input at a time?
+                int foundOutputs = 0;
+                
+                for(unsigned int i = 0; i < finalTransaction.vout.size(); i++){
+                    BOOST_FOREACH(const CTxOut o, e.vout) {
+                        if(finalTransaction.vout[i] == o){
+                            foundOutputs++;
+                        }
+                    }
+                }
+
+                int targetOuputs = e.vout.size();
+                if(foundOutputs < targetOuputs) {
+                    printf("CDarkSendPool::Sign - My entries are not correct! Refusing to sign. %d entries %d target. \n", foundOutputs, targetOuputs);
+                    return false;
+                }
+
+                if(fDebug) printf("CDarkSendPool::Sign - Signing my input %i\n", mine);
+                if(!SignSignature(*pwalletMain, prevPubKey, finalTransaction, mine, int(SIGHASH_ALL|SIGHASH_ANYONECANPAY))) { // changes scriptSig
+                    if(fDebug) printf("CDarkSendPool::Sign - Unable to sign my own transaction! \n");
+                    // not sure what to do here, it will timeout...?
+                }
+
+                if(node != NULL) node->PushMessage("dss", finalTransaction.vin[mine].scriptSig, s.vin, s.vin.prevPubKey);
             }
-
-            int n = mine;
-            if(fDebug) printf("CDarkSendPool::Sign - Signing my input %i\n", mine);
-            if(!SignSignature(*pwalletMain, e.vin.prevPubKey, finalTransaction, n, int(SIGHASH_ALL|SIGHASH_ANYONECANPAY))) { // changes scriptSig
-                if(fDebug) printf("CDarkSendPool::Sign - Unable to sign my own transaction! \n");
-                // not sure what to do here, it will timeout...?
-            }
-
-            AddScriptSig(finalTransaction.vin[n].scriptSig, e.vin, e.vin.prevPubKey);
-            if(fDebug) printf("CDarkSendPool::Sign - added my scriptSig %s\n", finalTransaction.vin[n].scriptSig.ToString().substr(0,24).c_str());
-
-            if(node != NULL) node->PushMessage("dss", finalTransaction.vin[n].scriptSig, e.vin, e.vin.prevPubKey);
-
+            
         }
         
         if(fDebug) printf("CDarkSendPool::Sign - txNew:\n%s", finalTransaction.ToString().c_str());
@@ -6459,7 +6461,7 @@ void CDarkSendPool::RegisterAsMasterNode(bool stop)
             return;
         }
 
-        isCapableMasterNode = MASTERNODE_NOT_CAPABLE;
+         isCapableMasterNode = MASTERNODE_NOT_CAPABLE;
 
         CKey SecretKey;
         // Choose coins to use

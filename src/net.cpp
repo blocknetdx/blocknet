@@ -1936,13 +1936,14 @@ void RelayDarkSendFinalTransaction(const CTransaction& txNew)
     }
 }
 
-void RelayDarkSendIn(const CTxIn& in, const int64& nAmount, const CTransaction& txCollateral, const CTransaction& txSupporting, const CTxOut& out, const CTxOut& out2)
+void RelayDarkSendIn(const std::vector<CTxIn>& in, const int64& nAmount, const CTransaction& txCollateral, const std::vector<CTxOut>& out)
 {
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
         if(!pnode->fDarkSendMaster) continue;
-        pnode->PushMessage("dsi", in, nAmount, txCollateral, txSupporting, out, out2);
+        printf("RelayDarkSendIn - found master, relaying message \n");
+        pnode->PushMessage("dsi", in, nAmount, txCollateral, out);
     }
 }
 

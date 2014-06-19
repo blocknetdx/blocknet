@@ -145,6 +145,7 @@ extern CDarkSendPool darkSendPool;
 extern CDarkSendSigner darkSendSigner;
 extern std::vector<CMasterNode> darkSendMasterNodes;
 extern std::vector<CMasterNodeVote> darkSendMasterNodeVotes;
+extern std::vector<int64> darkSendDenominations;
 extern std::string strMasterNodePrivKey;
 extern CWallet pmainWallet;
 
@@ -2493,57 +2494,72 @@ public:
     }
 };
 
+
+class CDarkSendEntryVin
+{
+public:
+    bool isSigSet;
+    CTxIn vin;
+    CScript sig;
+    CScript sigPubKey;    
+
+    CDarkSendEntryVin()
+    {
+        isSigSet = false;
+        vin = CTxIn();
+        sig = CScript();
+        sigPubKey = CScript();
+    }
+};
+
 class CDarkSendEntry
 {
 public:
     bool isSet;
-    bool isSigSet;
-    CTxIn vin;
+    std::vector<CDarkSendEntryVin> sev;
     int64 amount;
     CTransaction collateral;
-    CScript sig;
-    CScript sigPubKey;
-    CTxOut vout;
-    CTxOut vout2;
+    std::vector<CTxOut> vout;
     CTransaction txSupporting;
 
     CDarkSendEntry()
     {
         isSet = false;
-        isSigSet = false;
-        vin = CTxIn();
         collateral = CTransaction();
-        sig = CScript();
-        sigPubKey = CScript();
-        vout = CTxOut();
-        vout2 = CTxOut();
         amount = 0;
     }
 
-    bool Add(const CTxIn vinNew, int64 amountNew, const CTransaction collateralNew, const CTxOut voutNew, const CTxOut voutNew2, const CTransaction txSupportingNew = CTransaction())
+    bool Add(const std::vector<CTxIn> vinIn, int64 amountIn, const CTransaction collateralIn, const std::vector<CTxOut> voutIn)
     {
         if(isSet){return false;}
 
-        vin = vinNew;
-        amount = amountNew;
-        collateral = collateralNew;
-        vout = voutNew;
-        vout2 = voutNew2;
+        BOOST_FOREACH(const CTxIn v, vinIn) {
+            CDarkSendEntryVin s = CDarkSendEntryVin();
+            s.vin = v;
+            sev.push_back(s);
+        }
+        vout = voutIn;
+        amount = amountIn;
+        collateral = collateralIn;
         isSet = true;
-        txSupporting = txSupportingNew;
         
         return true;
     }
 
-    bool AddSig(const CScript sigNew, const CScript sigPubKeyNew)
+    bool AddSig(const CScript sigIn, const CScript sigPubKeyIn, const CTxIn vin)
     {
-        if(isSigSet){return false;}
+        BOOST_FOREACH(CDarkSendEntryVin s, sev) {
+            if(s.vin == vin){
+                if(s.isSigSet){return false;}
+                s.sig = sigIn;
+                s.sigPubKey = sigPubKeyIn;
+                s.isSigSet = true;
+                
+                return true;
+            }
+        }
 
-        sig = sigNew;
-        sigPubKey = sigPubKeyNew;
-        isSigSet = true;
-        
-        return true;
+        return false;
     }
 };
 
@@ -2562,7 +2578,7 @@ static const int64 POOL_FEE_AMOUNT = 0.025*COIN;
 class CDarkSendPool
 {
 public:
-    static const int MIN_PEER_PROTO_VERSION = 70018;
+    static const int MIN_PEER_PROTO_VERSION = 70019;
 
     std::vector<CDarkSendEntry> myEntries;
     std::vector<CDarkSendEntry> entries;
@@ -2684,12 +2700,11 @@ public:
     void CheckTimeout();
     bool SignatureValid(const CScript& newSig, const CTxIn& newVin);
     bool IsCollateralValid(const CTransaction& txCollateral);
-    bool AddEntry(const CTxIn& newInput, const int64& nAmount, const CTransaction& txCollateral, const CTxOut& newOutput, const CTxOut& newOutput2, std::string& error);
+    bool AddEntry(const std::vector<CTxIn>& newInput, const int64& nAmount, const CTransaction& txCollateral, const std::vector<CTxOut>& newOutput, std::string& error);
     bool AddScriptSig(const CScript& newSig, const CTxIn& newVin, const CScript& newPubKey);
-    void SendMoney(const CTransaction& collateral, CTxIn& in, CTxOut& out, int64& fee, int64 amount, CScript& pubScript, const CTransaction& txSupporting);
+    void SendMoney(const CTransaction& collateral, std::vector<CTxIn>& in, std::vector<CTxOut>& out, int64& fee, int64 amount);
     bool StatusUpdate(int newState, int newEntriesCount, int newAccepted, std::string& error);
 
-    std::string Denominate();
     bool SignFinalTransaction(CTransaction& finalTransactionNew, CNode* node);
 
     bool IsConnectedToMasterNode();

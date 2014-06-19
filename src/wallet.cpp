@@ -987,8 +987,10 @@ void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const
             for (unsigned int i = 0; i < pcoin->vout.size(); i++) {
                 if(noDenominatedInputs) {
                     //should make this a vector
-                    if(pcoin->vout[i].nValue == 10*COIN || pcoin->vout[i].nValue == 1*COIN)
-                        continue;
+                    BOOST_FOREACH(int64 d, darkSendDenominations)
+                        if(pcoin->vout[i].nValue == d)
+                            continue;
+
                 }
 
                 if (!(pcoin->IsSpent(i)) && IsMine(pcoin->vout[i]) &&
@@ -1073,6 +1075,32 @@ static void ApproximateBestSubset(vector<pair<int64, pair<const CWalletTx*,unsig
             }
         }
     }
+}
+
+/* select coins with 1 unspent output */
+bool CWallet::SelectCoinsExactOutput(int64 nTargetValue, CTxIn& vin, int64& nValueRet, CScript& pubScript, bool confirmed, const CCoinControl* coinControl) const
+{
+    vector<COutput> vCoins;
+    AvailableCoins2(vCoins, confirmed);
+    
+    // coin control -> return all selected outputs (we want all selected to go into the transaction for sure)
+    {
+        //printf("has coinControl\n");
+        BOOST_FOREACH(const COutput& out, vCoins)
+        {
+            //printf("Checking input %"PRI64d" > %"PRI64d"\n", out.tx->vout[out.i].nValue, nTargetValue);
+            if(out.tx->vout[out.i].nValue == nTargetValue){ //exactly
+                vin = CTxIn(out.tx->GetHash(),out.i);
+                pubScript = out.tx->vout[out.i].scriptPubKey; // the inputs PubKey
+                nValueRet = out.tx->vout[out.i].nValue;
+                printf("Found unspent output equal to nValue\n");
+                return true;
+            }
+        }
+    }
+
+    printf("Can't find unspent output equal to nValue\n");
+    return false;
 }
 
 bool CWallet::SelectCoinsMinConf(int64 nTargetValue, int nConfMine, int nConfTheirs, vector<COutput> vCoins,
@@ -1195,6 +1223,55 @@ bool CWallet::SelectCoins(int64 nTargetValue, set<pair<const CWalletTx*,unsigned
             SelectCoinsMinConf(nTargetValue, 0, 1, vCoins, setCoinsRet, nValueRet));
 }
 
+bool CWallet::SelectCoinsDark(int64 nTargetValue, std::vector<CTxIn>& setCoinsRet, int64& nValueRet, const CCoinControl* coinControl) const 
+{
+    vector<COutput> vCoins;
+    AvailableCoins(vCoins, true, coinControl);
+    
+    // coin control -> return all selected outputs (we want all selected to go into the transaction for sure)
+    if (coinControl && coinControl->HasSelected())
+    {
+        BOOST_FOREACH(const COutput& out, vCoins)
+        {
+            CTxIn vin = CTxIn(out.tx->GetHash(),out.i);
+            nValueRet += out.tx->vout[out.i].nValue;
+            setCoinsRet.push_back(vin);
+        }
+        return (nValueRet >= nTargetValue);
+    }
+
+    return false;
+}
+
+bool CWallet::SelectCoinsDarkDenominated(int64 nTargetValue, std::vector<CTxIn>& setCoinsRet, int64& nValueRet, const CCoinControl* coinControl) const 
+{
+    vector<COutput> vCoins;
+    AvailableCoins(vCoins, true, coinControl);
+    
+    // coin control -> return all selected outputs (we want all selected to go into the transaction for sure)
+    if (coinControl && coinControl->HasSelected())
+    {
+        //printf("has coinControl\n");
+        BOOST_FOREACH(const COutput& out, vCoins)
+        {
+            bool isDenominated = false;
+            BOOST_FOREACH(int64 d, darkSendDenominations)
+                if(out.tx->vout[out.i].nValue == d)
+                    isDenominated = true;
+
+            if(!isDenominated) continue;
+            if(nValueRet + out.tx->vout[out.i].nValue > nTargetValue) continue;
+
+            CTxIn vin = CTxIn(out.tx->GetHash(), out.i);
+            nValueRet += out.tx->vout[out.i].nValue;
+            setCoinsRet.push_back(vin);
+        }
+        return (nValueRet >= nTargetValue);
+    }
+
+    return false;
+}
+
 bool CWallet::SelectCoinsWithoutDenomination(int64 nTargetValue, set<pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64& nValueRet, const CCoinControl* coinControl) const
 {
     vector<COutput> vCoins;
@@ -1216,8 +1293,7 @@ bool CWallet::SelectCoinsWithoutDenomination(int64 nTargetValue, set<pair<const 
             SelectCoinsMinConf(nTargetValue, 0, 1, vCoins, setCoinsRet, nValueRet));
 }
 
-/* select coins with 1 unspent output */
-bool CWallet::SelectCoinsExactOutput(int64 nTargetValue, CTxIn& vin, int64& nValueRet, CScript& pubScript, bool confirmed, const CCoinControl* coinControl) const
+bool CWallet::SelectCoinsMoreThanOutput(int64 nTargetValue, CTxIn& vin, int64& nValueRet, bool confirmed, const CCoinControl* coinControl) const
 {
     vector<COutput> vCoins;
     AvailableCoins2(vCoins, confirmed);
@@ -1227,37 +1303,9 @@ bool CWallet::SelectCoinsExactOutput(int64 nTargetValue, CTxIn& vin, int64& nVal
         //printf("has coinControl\n");
         BOOST_FOREACH(const COutput& out, vCoins)
         {
-            //printf("Checking input %"PRI64d" > %"PRI64d"\n", out.tx->vout[out.i].nValue, nTargetValue);
-            if(out.tx->vout[out.i].nValue == nTargetValue){ //exactly
-                vin = CTxIn(out.tx->GetHash(),out.i);
-                pubScript = out.tx->vout[out.i].scriptPubKey; // the inputs PubKey
-                nValueRet = out.tx->vout[out.i].nValue;
-                printf("Found unspent output equal to nValue\n");
-                return true;
-            }
-        }
-    }
-
-    printf("Can't find unspent output equal to nValue\n");
-    return false;
-}
-
-bool CWallet::SelectCoinsMoreThanOutput(int64 nTargetValue, CTxIn& vin, int64& nValueRet, CScript& pubScript, bool confirmed, const CCoinControl* coinControl) const
-{
-    vector<COutput> vCoins;
-    AvailableCoins2(vCoins, confirmed);
-    
-    // coin control -> return all selected outputs (we want all selected to go into the transaction for sure)
-    {
-        //printf("has coinControl\n");
-        BOOST_FOREACH(const COutput& out, vCoins)
-        {
-            printf("2 Checking input %"PRI64d" > %"PRI64d"\n", out.tx->vout[out.i].nValue, nTargetValue);
             if(out.tx->vout[out.i].nValue >= nTargetValue){ //more than min
-                vin = CTxIn(out.tx->GetHash(),out.i);
-                pubScript = out.tx->vout[out.i].scriptPubKey; // the inputs PubKey
+                CTxIn vin = CTxIn(out.tx->GetHash(),out.i);
                 nValueRet = out.tx->vout[out.i].nValue;
-                printf("2 Found unspent output more than nValue\n");
                 return true;
             }
         }
@@ -1541,6 +1589,136 @@ string CWallet::SendMoneyToDestination(const CTxDestination& address, int64 nVal
     return SendMoney(scriptPubKey, nValue, wtxNew, fAskFee);
 }
 
+string CWallet::DarkSendDenominate(int64 nValue)
+{
+    // Check amount
+    if (nValue <= 0)
+        return _("Invalid amount");
+    if (nValue + nTransactionFee > GetBalance())
+        return _("Insufficient funds");
+
+    if (IsLocked())
+    {
+        return _("Error: Wallet locked, unable to create transaction!");
+    }
+
+    CReserveKey reservekey(this);
+    CTransaction txCollateral;   
+
+    //**************
+
+    int64 nFeeRet = 0.001*COIN; ///need to get a better fee calc
+    CCoinControl* coinControl = new CCoinControl();
+    int64 nTotalValue = nValue + nFeeRet;
+
+    int64 amount = roundUp64(nValue, COIN/100);
+
+    if(nValue != amount){
+        return _("DarkSend can't send amounts more precise than XXXX.XX DRK");
+    }
+
+    if(amount > 999.99*COIN){
+        return _("DarkSend can't send amounts more than 999.99DRK");
+    }
+
+    amount = roundUp64(nTotalValue, COIN/100);
+
+    // ** find the coins we'll use
+    std::vector<CTxIn> vCoins;
+    int64 nValueIn = 0;
+
+    //try to use denominated funds (for added anonymity)
+    if (!SelectCoinsDarkDenominated(nTotalValue, vCoins, nValueIn, coinControl))
+    {
+        nValueIn = 0;
+        if (!SelectCoinsDark(nTotalValue, vCoins, nValueIn, coinControl))
+        {
+            return _("Insufficient funds");
+        }
+    }
+
+    BOOST_FOREACH(CTxIn v, vCoins)
+        LockCoin(v.prevout);
+
+    // create another transaction as collateral for using DarkSend
+    {
+        int64 nValueIn2 = 0;
+        std::vector<CTxIn> vCoinsCollateral;
+
+        if (!SelectCoinsDark(POOL_FEE_AMOUNT+(0.01*COIN), vCoinsCollateral, nValueIn2, coinControl))
+        {
+            BOOST_FOREACH(CTxIn v, vCoins)
+                UnlockCoin(v.prevout);
+
+            return _("Error: The DarkSend requires a collateral transaction and could not locate the input!");
+        }
+
+        // make our change address
+        CScript scriptChange;
+        CPubKey vchPubKey;
+        assert(reservekey.GetReservedKey(vchPubKey)); // should never fail, as we just unlocked
+        scriptChange.SetDestination(vchPubKey.GetID());
+
+        CTxOut vout2 = CTxOut(POOL_FEE_AMOUNT, darkSendPool.collateralPubKey);
+
+        BOOST_FOREACH(CTxIn v, vCoinsCollateral)
+            txCollateral.vin.push_back(v);
+        
+        txCollateral.vout.push_back(vout2);
+
+        if(nValueIn2 - POOL_FEE_AMOUNT > 0) {
+            CTxOut vout3 = CTxOut(nValueIn2 - POOL_FEE_AMOUNT, scriptChange);
+            txCollateral.vout.push_back(vout3);
+        }
+        
+/*        if(!SignSignature(*this, pubScript2, txCollateral, 0, int(SIGHASH_ALL|SIGHASH_ANYONECANPAY))) {
+            BOOST_FOREACH(CTxIn v, vCoins)
+                UnlockCoin(v.prevout);
+
+            return _("CDarkSendPool::Sign - Unable to sign collateral transaction! \n");
+        }
+*/
+        BOOST_FOREACH(CTxIn v, vCoinsCollateral)
+            LockCoin(v.prevout);
+    }
+
+    //** denominate our funds ** //
+    int64 nValueLeft = nValue;
+    std::vector<CTxOut> vOut;
+
+    for(int tries = 0; tries <= 1000; tries++){
+        int r = rand() % darkSendDenominations.size();
+        int64 v = darkSendDenominations[r];
+        
+        if(nValueLeft - v >= 0) {
+            nValueLeft -= v;
+
+            CScript scriptChange;
+            CPubKey vchPubKey;
+            assert(reservekey.GetReservedKey(vchPubKey)); // should never fail, as we just unlocked
+            scriptChange.SetDestination(vchPubKey.GetID());
+
+            CTxOut o(v, scriptChange);
+            vOut.push_back(o);
+        }
+        if(nValueLeft == 0) break;
+    }
+
+    if(nValueLeft > 0){
+        CScript scriptChange;
+        CPubKey vchPubKey;
+        assert(reservekey.GetReservedKey(vchPubKey)); // should never fail, as we just unlocked
+        scriptChange.SetDestination(vchPubKey.GetID());
+
+        CTxOut o(nValueLeft, scriptChange);
+        vOut.push_back(o);
+    }
+
+    darkSendPool.SendMoney(txCollateral, vCoins, vOut, nFeeRet, nValueIn);
+
+    return "";
+}
+
 string CWallet::DarkSendMoney(const CTxDestination& address, int64 nValue)
 {
     // Check amount
@@ -1569,122 +1747,84 @@ string CWallet::DarkSendMoney(const CTxDestination& address, int64 nValue)
 
     int64 amount = roundUp64(nValue, COIN/100);
 
-    if(amount > 9.99*COIN){
-        return _("DarkSend can't send amounts more than 9.99DRK (In the future it'll support up to 10000DRK)");
+    if(nValue != amount){
+        return _("DarkSend can't send amounts more precise than XXXX.XX DRK");
+    }
+
+    if(amount > 999.99*COIN){
+        return _("DarkSend can't send amounts more than 999.99DRK");
     }
 
     amount = roundUp64(nTotalValue, COIN/100);
 
     // Choose coins to use
     int64 nValueIn = 0;
-    CScript pubScript = CScript();
-    CTxIn vin;
-    CWalletTx wtxDenominate = CWalletTx();
+    std::vector<CTxIn> vCoins;
 
-    // try once before we try to denominate
-    if (!SelectCoinsExactOutput(10*COIN, vin, nValueIn, pubScript, false, coinControl) || 
-        !SelectCoinsExactOutput(POOL_FEE_AMOUNT+(0.01*COIN), vin, nValueIn, pubScript, false, coinControl))
+    // ** find the coins we'll use
+    if (!SelectCoinsDarkDenominated(nTotalValue, vCoins, nValueIn, coinControl))
     {
-        if(GetBalance() < 11*COIN){
-            return _("To use denominate you must have at least 11DRK with 1 confirmation.");
-        }
-
-        Denominate(wtxDenominate);
+        return _("Insufficient funds");
     }
 
-    if (!SelectCoinsExactOutput(10*COIN, vin, nValueIn, pubScript, false, coinControl))
-    {
-        return _("Couldn't find a confirmed unspend output equal to 10DRK. This shouldn't ever happen, please report to developers.");
+    if(nValueIn != nTotalValue) {            
+        return _("DarkSend couldn't find the denominated funds to build this transaction");
+    }
+
+    BOOST_FOREACH(CTxIn v, vCoins){
+        LockCoin(v.prevout);
     }
 
     // create another transaction as collateral for using DarkSend
     {
-        CScript pubScript2 = CScript();
         int64 nValueIn2 = 0;
-        CTxIn vin2 = CTxIn();
-        CTxOut vout2 = CTxOut(POOL_FEE_AMOUNT, darkSendPool.collateralPubKey);
-        
-        if (!SelectCoinsExactOutput(POOL_FEE_AMOUNT+(0.01*COIN), vin2, nValueIn2, pubScript2, true, coinControl))
+        std::vector<CTxIn> vCoinsCollateral;
+
+        if (!SelectCoinsDark(POOL_FEE_AMOUNT+(0.01*COIN), vCoinsCollateral, nValueIn2, coinControl))
         {
+            BOOST_FOREACH(CTxIn v, vCoins)
+                UnlockCoin(v.prevout);
+
             return _("Error: The DarkSend requires a collateral transaction and could not locate the input!");
         }
 
-        txCollateral.vin.push_back(vin2);
-        txCollateral.vout.push_back(vout2);
+        // make our change address
+        CScript scriptChange;
+        CPubKey vchPubKey;
+        assert(reservekey.GetReservedKey(vchPubKey)); // should never fail, as we just unlocked
+        scriptChange.SetDestination(vchPubKey.GetID());
+
+
+        CTxOut vout2 = CTxOut(POOL_FEE_AMOUNT, darkSendPool.collateralPubKey);
+
+        BOOST_FOREACH(CTxIn v, vCoinsCollateral)
+            txCollateral.vin.push_back(v);
         
-        if(!SignSignature(*this, pubScript2, txCollateral, 0, int(SIGHASH_ALL|SIGHASH_ANYONECANPAY))) {
-            return _("CDarkSendPool::Sign - Unable to sign collateral transaction! \n");
+        txCollateral.vout.push_back(vout2);
+
+        if(nValueIn2 - POOL_FEE_AMOUNT > 0) {
+            CTxOut vout3 = CTxOut(nValueIn2 - POOL_FEE_AMOUNT, scriptChange);
+            txCollateral.vout.push_back(vout3);
         }
+        
+/*        if(!SignSignature(*this, pubScript2, txCollateral, 0, int(SIGHASH_ALL|SIGHASH_ANYONECANPAY))) {
+            BOOST_FOREACH(CTxIn v, vCoins)
+                UnlockCoin(v.prevout);
+                
+            return _("CDarkSendPool::Sign - Unable to sign collateral transaction! \n");
+        }*/
 
-        LockCoin(vin2.prevout);
-    } 
-    
-    LockCoin(vin.prevout);
+        BOOST_FOREACH(CTxIn v, vCoinsCollateral)
+            LockCoin(v.prevout);
+    }
 
-    CTxOut out(nValue, scriptPubKey);
-    darkSendPool.SendMoney(txCollateral, vin, out, nFeeRet, nValueIn, pubScript, wtxDenominate);
+    std::vector<CTxOut> vOut;
+    CTxOut o(nValue, scriptPubKey);
+    vOut.push_back(o);
+
+    darkSendPool.SendMoney(txCollateral, vCoins, vOut, nFeeRet, nValueIn);
 
     return "";
-}
-
-std::string CWallet::Denominate(CWalletTx& wtxDenominate)
-{
-
-    int count = 1; //amount of inputs to try to make
-    int successful = 0;
-    bool done = false;
-
-    if(GetBalance() < 11*COIN){
-        return "To use denominate you must have at least 11DRK with 1 confirmation.";
-    }
-
-    int64 nFeeRequired;
-    string strError;
-    CReserveKey reservekey(this);
-
-    // 2 new keys
-    CScript scriptNewAddr;
-    CPubKey vchPubKey;
-    assert(reservekey.GetReservedKey(vchPubKey)); // should never fail, as we just unlocked
-    scriptNewAddr.SetDestination(vchPubKey.GetID());
-
-    CScript scriptNewAddr2;
-    CPubKey vchPubKey2;
-    assert(reservekey.GetReservedKey(vchPubKey2)); // should never fail, as we just unlocked
-    scriptNewAddr2.SetDestination(vchPubKey2.GetID());
-
-    // create another transaction as collateral for using DarkSend
-    while(!done && count > 0)
-    {        
-
-
-        vector< pair<CScript, int64> > vecSend;
-        printf("Creating transaction\n");
-        for(int i = 1; i <= count; i++) {
-            printf(" -- %d \n", i);
-            vecSend.push_back(make_pair(scriptNewAddr, 10*COIN));
-            vecSend.push_back(make_pair(scriptNewAddr2, POOL_FEE_AMOUNT+(0.01*COIN)));
-        }
-
-        printf("Creating\n");
-        if(CreateTransaction(vecSend, wtxDenominate, reservekey, nFeeRequired, strError, NULL, true)){
-            printf("Committing\n");
-            if (CommitTransaction(wtxDenominate, reservekey)) {
-                //if successfull, create the collateral needed to submit
-                done = true;
-                successful = count;
-            }
-        }
-        count--;
-    }
-
-    ostringstream convert;
-    if(successful == 0) {
-        convert << "An error occurred created DarkSend compatible inputs. Error was " << strError;
-    } else {
-        convert << "Created inputs for " << successful << " DarkSends";
-    }    
-    return convert.str();
 }
 
 DBErrors CWallet::LoadWallet(bool& fFirstRunRet)
