@@ -18,9 +18,9 @@ Value masternode(const Array& params, bool fHelp)
         strCommand = params[0].get_str();
 
     if (fHelp  ||
-        (strCommand != "list" && strCommand != "count" && strCommand != "current" && strCommand != "votes"))
+        (strCommand != "list" && strCommand != "count" && strCommand != "current" && strCommand != "votes" && strCommand != "enforce"))
         throw runtime_error(
-            "masternode list|count|current|votes> passphrase\n");
+            "masternode list|count|current|votes|enforce> passphrase\n");
 
     if (strCommand == "list")
     {
@@ -85,6 +85,12 @@ Value masternode(const Array& params, bool fHelp)
         }    
         return obj;
     }
+
+    if(strCommand == "enforce")
+    {
+        return (uint64_t)enforceMasternodePaymentsTime;
+    }
+
 
     return Value::null;
 }
