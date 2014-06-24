@@ -1804,32 +1804,35 @@ void CBlockHeader::UpdateTime(const CBlockIndex* pindexPrev)
         nBits = GetNextWorkRequired(pindexPrev, this);
 }
 
-uint256 CBlockHeader::GetHash(bool pow) const
+uint256 CBlockHeader::GetHash() const
 {   
-    if(!pow){
-        // calculate additional masternode vote info to include in hash
-        uint256 hash = 0;
-        uint256 vmnAdditional;
+    return Hash9(BEGIN(nVersion), END(nNonce));
+}
 
-        //printf("------------------------------------------------\n");
-        if( (fTestNet && nTime > START_MASTERNODE_PAYMENTS_TESTNET) || (!fTestNet && nTime > START_MASTERNODE_PAYMENTS)) {
-            BOOST_FOREACH(CMasterNodeVote mv1, vmn){
-                uint160 n2 = mv1.pubkey.GetID();
-                uint256 n = 0;
-                memcpy(&n, &n2, sizeof(n2));
-                //printf(" vmnAdd1 %s\n", n.GetHex().c_str());
+uint256 CBlockHeader::GetSpecialHash() const
+{   
+    // calculate additional masternode vote info to include in hash
+    uint256 hash = 0;
+    uint256 vmnAdditional;
 
-                vmnAdditional += n;
-                //printf(" vmnAdd2 %s\n", vmnAdditional.GetHex().c_str());
-                vmnAdditional <<= (mv1.votes*8) + (mv1.blockHeight % 64);
-                //printf(" vmnAdd3 %s\n", vmnAdditional.GetHex().c_str());
-            }
+    //printf("------------------------------------------------\n");
+    if( (fTestNet && nTime > START_MASTERNODE_PAYMENTS_TESTNET) || (!fTestNet && nTime > START_MASTERNODE_PAYMENTS)) {
+        BOOST_FOREACH(CMasterNodeVote mv1, vmn){
+            uint160 n2 = mv1.pubkey.GetID();
+            uint256 n = 0;
+            memcpy(&n, &n2, sizeof(n2));
+            //printf(" vmnAdd1 %s\n", n.GetHex().c_str());
 
-            hash = Hash9(BEGIN(nVersion), END(nNonce));
-            return Hash9(BEGIN(hash), END(vmnAdditional));
-        };           
-    }
+            vmnAdditional += n;
+            //printf(" vmnAdd2 %s\n", vmnAdditional.GetHex().c_str());
+            vmnAdditional <<= (mv1.votes*8) + (mv1.blockHeight % 64);
+            //printf(" vmnAdd3 %s\n", vmnAdditional.GetHex().c_str());
+        }
 
+        hash = Hash9(BEGIN(nVersion), END(nNonce));
+        return Hash9(BEGIN(hash), END(vmnAdditional));
+    };           
+    
     return Hash9(BEGIN(nVersion), END(nNonce));
 }
 

@@ -1431,7 +1431,9 @@ public:
         return (nBits == 0);
     }
 
-    uint256 GetHash(bool pow=false) const;
+    //special has includes voting info in the hash
+    uint256 GetSpecialHash() const;
+    uint256 GetHash() const;
 
     int64 GetBlockTime() const
     {
@@ -1484,7 +1486,7 @@ public:
 
     uint256 GetPoWHash() const
     {
-        return GetHash(true);
+        return GetHash();
     }
 
     CBlockHeader GetBlockHeader() const
