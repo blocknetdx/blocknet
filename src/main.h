@@ -1431,7 +1431,7 @@ public:
         return (nBits == 0);
     }
 
-    uint256 GetHash() const;
+    uint256 GetHash(bool pow=false) const;
 
     int64 GetBlockTime() const
     {
@@ -1484,7 +1484,7 @@ public:
 
     uint256 GetPoWHash() const
     {
-        return GetHash();
+        return GetHash(true);
     }
 
     CBlockHeader GetBlockHeader() const
