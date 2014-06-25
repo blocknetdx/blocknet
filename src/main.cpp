@@ -4080,7 +4080,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
     else if (strCommand == "misbehave") {
         int howmuch;
         vRecv >> howmuch;
-        printf("peer=%d says we are misbehaving %d\n", howmuch);
+        printf("peer=%d says we are misbehaving %d\n", pfrom->id, howmuch);
     }
 
     else if (strCommand == "dseg") { //DarkSend Election Get
