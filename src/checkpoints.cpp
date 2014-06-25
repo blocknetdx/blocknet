@@ -146,4 +146,21 @@ namespace Checkpoints
         }
         return NULL;
     }
+
+    uint256 GetLastAvailableCheckpoint() {
+        const MapCheckpoints& checkpoints = (fTestNet ? mapCheckpointsTestnet : mapCheckpoints);
+
+        BOOST_REVERSE_FOREACH(const MapCheckpoints::value_type& i, checkpoints) {
+            const uint256& hash = i.second;
+            if(mapBlockIndex.count(hash) && mapBlockIndex[hash]->IsInMainChain())
+                return(hash);
+        }
+        return(hashGenesisBlock);
+   }
+
+    uint256 GetLatestHardenedCheckpoint()
+    {
+        const MapCheckpoints& checkpoints = *Checkpoints().mapCheckpoints;
+        return (checkpoints.rbegin()->second);
+    }
 }

@@ -36,13 +36,14 @@ class CBitcoinAddress;
 #define MASTERNODE_PAYMENTS_MIN_VOTES 5
 #define MASTERNODE_PAYMENTS_MAX 1
 #define MASTERNODE_PAYMENTS_EXPIRATION 10
-#define START_MASTERNODE_PAYMENTS_TESTNET 1402440553
-#define START_MASTERNODE_PAYMENTS 4085657524 //Fri, 20 Jun 2014 16:00:00 GMT
+#define START_MASTERNODE_PAYMENTS_TESTNET 1403568776 //Tue, 24 Jun 2014 00:12:56 GMT
+#define START_MASTERNODE_PAYMENTS 1403728576 //Wed, 25 Jun 2014 20:36:16 GMT
 
 #define MASTERNODE_MIN_CONFIRMATIONS           6
 #define MASTERNODE_MIN_MICROSECONDS            5*60*1000*1000
 #define MASTERNODE_PING_SECONDS                30*60
 #define MASTERNODE_EXPIRATION_MICROSECONDS     35*60*1000*1000
+#define MASTERNODE_REMOVAL_MICROSECONDS        35.5*60*1000*1000
 
 struct CBlockIndexWorkComparator;
 
@@ -75,7 +76,7 @@ static const int64 DUST_SOFT_LIMIT = 100000; // 0.001 DRK
 /** Dust Hard Limit, ignored as wallet inputs (mininput default) */
 static const int64 DUST_HARD_LIMIT = 1000;   // 0.00001 DRK mininput
 /** No amount larger than this (in satoshi) is valid */
-static const int64 MAX_MONEY = 84000000 * COIN;
+static const int64 MAX_MONEY = 22000000 * COIN;
 inline bool MoneyRange(int64 nValue) { return (nValue >= 0 && nValue <= MAX_MONEY); }
 /** Coinbase transaction outputs can only be spent after this number of new blocks (network rule) */
 static const int COINBASE_MATURITY = 100;
@@ -120,6 +121,7 @@ extern bool fImporting;
 extern bool fReindex;
 extern bool fBenchmark;
 extern int nScriptCheckThreads;
+extern int nAskedForBlocks;    // Nodes sent a getblocks 0
 extern bool fTxIndex;
 extern unsigned int nCoinCacheSize;
 extern CDarkSendPool darkSendPool;
@@ -127,7 +129,9 @@ extern CDarkSendSigner darkSendSigner;
 extern std::vector<CMasterNode> darkSendMasterNodes;
 extern std::vector<CMasterNodeVote> darkSendMasterNodeVotes;
 extern std::string strMasterNodePrivKey;
+extern int64 enforceMasternodePaymentsTime;
 extern CWallet pmainWallet;
+extern std::map<uint256, CBlock*> mapOrphanBlocks;
 
 // Settings
 extern int64 nTransactionFee;
@@ -1304,6 +1308,78 @@ public:
 };
 
 
+class CMasterNodeVote
+{   
+public:
+    int votes;
+    CScript pubkey;
+    int nVersion;
+    bool setPubkey;
+
+    int64 blockHeight;
+    static const int CURRENT_VERSION=1;
+
+    CMasterNodeVote() {
+        SetNull();
+    }
+
+    void Set(CPubKey& pubKeyIn, int64 blockHeightIn, int votesIn=1)
+    {
+        pubkey.SetDestination(pubKeyIn.GetID());
+        blockHeight = blockHeightIn;
+        votes = votesIn;
+    }
+
+    void Set(CScript pubKeyIn, int64 blockHeightIn, int votesIn=1)
+    {
+        pubkey = pubKeyIn;
+        blockHeight = blockHeightIn;
+        votes = votesIn;
+    }
+
+    void SetNull()
+    {
+        nVersion = CTransaction::CURRENT_VERSION;
+        votes = 0;
+        pubkey = CScript();
+        blockHeight = 0;
+    }
+
+    void Vote()
+    { 
+        votes += 1; 
+    }
+
+    int GetVotes()
+    { 
+        return votes;
+    }
+
+    int GetHeight()
+    { 
+        return blockHeight;
+    }
+
+    CScript& GetPubKey()
+    {
+        return pubkey;
+    }
+
+    IMPLEMENT_SERIALIZE
+    (
+        nVersion = this->nVersion;
+        READWRITE(blockHeight);
+        //printf("blockHeight %"PRI64d"\n", blockHeight);
+        READWRITE(pubkey);
+        //printf("pubkey %s\n", pubkey.ToString().c_str());
+        READWRITE(votes);
+        //printf("votes %d\n", votes);
+    )
+
+
+};
+
+
 /** Nodes collect new transactions into a block, hash them into a hash tree,
  * and scan through nonce values to make the block's hash satisfy proof-of-work
  * requirements.  When they solve the proof-of-work, they broadcast the block
@@ -1322,6 +1398,8 @@ public:
     unsigned int nTime;
     unsigned int nBits;
     unsigned int nNonce;
+    unsigned int vmnAdditional;
+    std::vector<CMasterNodeVote> vmn;
 
     CBlockHeader()
     {
@@ -1354,10 +1432,9 @@ public:
         return (nBits == 0);
     }
 
-    uint256 GetHash() const
-    {
-        return Hash9(BEGIN(nVersion), END(nNonce));
-    }
+    //special has includes voting info in the hash
+    uint256 GetSpecialHash() const;
+    uint256 GetHash() const;
 
     int64 GetBlockTime() const
     {
@@ -1372,7 +1449,6 @@ class CBlock : public CBlockHeader
 public:
     // network and disk
     std::vector<CTransaction> vtx;
-    std::vector<CMasterNodeVote> vmn;
 
     // memory only
     mutable CScript payee;
@@ -1393,19 +1469,12 @@ public:
     (
         READWRITE(*(CBlockHeader*)this);
         READWRITE(vtx);
-
-        if(fTestNet){
-            if(nTime > START_MASTERNODE_PAYMENTS_TESTNET) READWRITE(vmn);
-        } else {
-            if(nTime > START_MASTERNODE_PAYMENTS) READWRITE(vmn);    
-        }
     )
 
     void SetNull()
     {
         CBlockHeader::SetNull();
         vtx.clear();
-        vmn.clear();
         vMerkleTree.clear();
         payee = CScript();
     }
@@ -1583,14 +1652,20 @@ public:
     bool AcceptBlock(CValidationState &state, CDiskBlockPos *dbp = NULL);
 
     
-    bool MasterNodePaymentsOn()
+    bool MasterNodePaymentsOn() const
     {
-        //printf("nTime > START_MASTERNODE_PAYMENTS_TESTNET %"PRI64u" > %f = %d\n", nTime, START_MASTERNODE_PAYMENTS_TESTNET, nTime > START_MASTERNODE_PAYMENTS_TESTNET);
         if(fTestNet){
             if(nTime > START_MASTERNODE_PAYMENTS_TESTNET) return true;
         } else {
             if(nTime > START_MASTERNODE_PAYMENTS) return true;
         }
+        return false;
+    }
+    
+    bool MasterNodePaymentsEnforcing() const
+    {
+        if(nTime > enforceMasternodePaymentsTime) return true;
+
         return false;
     }
 };
@@ -2344,74 +2419,6 @@ public:
         READWRITE(header);
         READWRITE(txn);
     )
-};
-
-class CMasterNodeVote
-{   
-public:
-    int votes;
-    CScript pubkey;
-    int nVersion;
-    bool setPubkey;
-
-    int64 blockHeight;
-    static const int CURRENT_VERSION=1;
-
-    CMasterNodeVote() {
-        SetNull();
-    }
-
-    void Set(CPubKey& pubKeyIn, int64 blockHeightIn, int votesIn=1)
-    {
-        pubkey.SetDestination(pubKeyIn.GetID());
-        blockHeight = blockHeightIn;
-        votes = votesIn;
-    }
-
-    void Set(CScript pubKeyIn, int64 blockHeightIn, int votesIn=1)
-    {
-        pubkey = pubKeyIn;
-        blockHeight = blockHeightIn;
-        votes = votesIn;
-    }
-
-    void SetNull()
-    {
-        nVersion = CTransaction::CURRENT_VERSION;
-        votes = 0;
-        pubkey = CScript();
-        blockHeight = 0;
-    }
-
-    void Vote()
-    { 
-        votes += 1; 
-    }
-
-    int GetVotes()
-    { 
-        return votes;
-    }
-
-    int GetHeight()
-    { 
-        return blockHeight;
-    }
-
-    CScript& GetPubKey()
-    {
-        return pubkey;
-    }
-
-    IMPLEMENT_SERIALIZE
-    (
-        nVersion = this->nVersion;
-        READWRITE(blockHeight);
-        READWRITE(pubkey);
-        READWRITE(votes);
-    )
-
-
 };
 
 class CMasterNode

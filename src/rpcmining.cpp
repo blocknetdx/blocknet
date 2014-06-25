@@ -161,7 +161,6 @@ Value getmininginfo(const Array& params, bool fHelp)
     return obj;
 }
 
-
 Value getworkex(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() > 2)
@@ -433,6 +432,9 @@ Value getblocktemplate(const Array& params, bool fHelp)
             "  \"bits\" : compressed target of next block\n"
             "  \"height\" : height of the next block\n"
             "  \"payee1\" : required payee1\n"
+            "  \"votes\" : show vote candidates for this block\n"
+            "  \"masternode_payments\" : if masternode payments are active\n"
+            "  \"masternode_payments_enforcing\" : if masternode payments are being actively enforced by the network\n"
             "See https://en.bitcoin.it/wiki/BIP_0022 for full specification.");
 
     std::string strMode = "template";
@@ -548,7 +550,7 @@ Value getblocktemplate(const Array& params, bool fHelp)
         ssMNV << mv;
         aVotes.push_back(HexStr(ssMNV.begin(), ssMNV.end()));
     }
-
+ 
     Object result;
     result.push_back(Pair("version", pblock->nVersion));
     result.push_back(Pair("previousblockhash", pblock->hashPrevBlock.GetHex()));
@@ -566,6 +568,7 @@ Value getblocktemplate(const Array& params, bool fHelp)
     result.push_back(Pair("height", (int64_t)(pindexPrev->nHeight+1)));
     result.push_back(Pair("votes", aVotes));
 
+
     if(pblock->payee != CScript()){
         CTxDestination address1;
         ExtractDestination(pblock->payee, address1);
@@ -575,7 +578,7 @@ Value getblocktemplate(const Array& params, bool fHelp)
         result.push_back(Pair("payee", ""));
     }
     result.push_back(Pair("masternode_payments", pblock->MasterNodePaymentsOn()));
-    
+    result.push_back(Pair("enforce_masternode_payments", pblock->MasterNodePaymentsEnforcing()));
 
     return result;
 }
