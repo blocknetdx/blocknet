@@ -2638,7 +2638,7 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
     bool MasternodePayments = MasterNodePaymentsOn();
     bool EnforceMasternodePayments = MasterNodePaymentsEnforcing();
 
-    if(MasternodePayments)
+    if(MasternodePayments && EnforceMasternodePayments)
     {
         LOCK2(cs_main, mempool.cs);
 
