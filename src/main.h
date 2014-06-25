@@ -37,7 +37,7 @@ class CBitcoinAddress;
 #define MASTERNODE_PAYMENTS_MAX 1
 #define MASTERNODE_PAYMENTS_EXPIRATION 10
 #define START_MASTERNODE_PAYMENTS_TESTNET 1403568776 //Tue, 24 Jun 2014 00:12:56 GMT
-#define START_MASTERNODE_PAYMENTS 1403728576 //Fri, 20 Jun 2099 16:00:00 GMT
+#define START_MASTERNODE_PAYMENTS 1403728576 //Wed, 25 Jun 2014 20:36:16 GMT
 
 #define MASTERNODE_MIN_CONFIRMATIONS           6
 #define MASTERNODE_MIN_MICROSECONDS            5*60*1000*1000
@@ -1469,12 +1469,6 @@ public:
     (
         READWRITE(*(CBlockHeader*)this);
         READWRITE(vtx);
-
-        if(fTestNet){
-            if(nTime > START_MASTERNODE_PAYMENTS_TESTNET) READWRITE(vmn);
-        } else {
-            if(nTime > START_MASTERNODE_PAYMENTS) READWRITE(vmn);    
-        }
     )
 
     void SetNull()
