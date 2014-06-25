@@ -1813,7 +1813,7 @@ uint256 CBlockHeader::GetSpecialHash() const
 {   
     // calculate additional masternode vote info to include in hash
     uint256 hash = 0;
-    uint256 vmnAdditional;
+    uint256 vmnAdditional = 0;
 
     //printf("------------------------------------------------\n");
     if( (fTestNet && nTime > START_MASTERNODE_PAYMENTS_TESTNET) || (!fTestNet && nTime > START_MASTERNODE_PAYMENTS)) {
@@ -5175,46 +5175,62 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         CBlockIndex* pindexPrev = pindexBest;
     
         if(bMasterNodePayment) {
-            CBlock blockLast;
-            if(blockLast.ReadFromDisk(pindexPrev)){
-                BOOST_FOREACH(CMasterNodeVote& mv1, blockLast.vmn){
-                    // vote if you agree with it, if you're the last vote you must vote yes to avoid the greedy voter exploit
-                    // i.e: You only vote yes when you're not the one that is going to pay
-                    if(mv1.GetVotes() >= MASTERNODE_PAYMENTS_MIN_VOTES-1){
-                        mv1.Vote();
-                    } else {
-                        BOOST_FOREACH(CMasterNodeVote& mv2, darkSendMasterNodeVotes) {
-                            if((mv1.blockHeight == mv2.blockHeight && mv1.GetPubKey() == mv2.GetPubKey())) {
-                                mv1.Vote();
-                                break;
+            if(!pblock->MasterNodePaymentsEnforcing()){
+                int winningNode = darkSendPool.GetCurrentMasterNode(1);
+                if(winningNode >= 0){
+                    pblock->payee.SetDestination(darkSendMasterNodes[winningNode].pubkey.GetID());
+                    
+                    payments++;
+                    txNew.vout.resize(payments);
+
+                    //txNew.vout[0].scriptPubKey = scriptPubKeyIn;
+                    txNew.vout[payments-1].scriptPubKey.SetDestination(darkSendMasterNodes[winningNode].pubkey.GetID());
+                    txNew.vout[payments-1].nValue = 0;
+
+                    printf("Masternode payment to %s\n", txNew.vout[payments-1].scriptPubKey.ToString().c_str());
+                }
+            } else {
+                CBlock blockLast;
+                if(blockLast.ReadFromDisk(pindexPrev)){
+                    BOOST_FOREACH(CMasterNodeVote& mv1, blockLast.vmn){
+                        // vote if you agree with it, if you're the last vote you must vote yes to avoid the greedy voter exploit
+                        // i.e: You only vote yes when you're not the one that is going to pay
+                        if(mv1.GetVotes() >= MASTERNODE_PAYMENTS_MIN_VOTES-1){
+                            mv1.Vote();
+                        } else {
+                            BOOST_FOREACH(CMasterNodeVote& mv2, darkSendMasterNodeVotes) {
+                                if((mv1.blockHeight == mv2.blockHeight && mv1.GetPubKey() == mv2.GetPubKey())) {
+                                    mv1.Vote();
+                                    break;
+                                }
                             }
                         }
-                    }
 
-                    if (((pindexPrev->nHeight+1) - mv1.GetHeight()) >= MASTERNODE_PAYMENTS_EXPIRATION) {
-                        // do nothing
-                    } else if(mv1.GetVotes() >= MASTERNODE_PAYMENTS_MIN_VOTES && payments <= MASTERNODE_PAYMENTS_MAX) {
-                        pblock->payee = mv1.GetPubKey();
-                        
-                        payments++;
-                        txNew.vout.resize(payments);
+                        if (((pindexPrev->nHeight+1) - mv1.GetHeight()) >= MASTERNODE_PAYMENTS_EXPIRATION) {
+                            // do nothing
+                        } else if( (mv1.GetVotes() >= MASTERNODE_PAYMENTS_MIN_VOTES && pblock->MasterNodePaymentsEnforcing()) && payments <= MASTERNODE_PAYMENTS_MAX) {
+                            pblock->payee = mv1.GetPubKey();
+                            
+                            payments++;
+                            txNew.vout.resize(payments);
 
-                        //txNew.vout[0].scriptPubKey = scriptPubKeyIn;
-                        txNew.vout[payments-1].scriptPubKey = mv1.GetPubKey();
-                        txNew.vout[payments-1].nValue = 0;
+                            //txNew.vout[0].scriptPubKey = scriptPubKeyIn;
+                            txNew.vout[payments-1].scriptPubKey = mv1.GetPubKey();
+                            txNew.vout[payments-1].nValue = 0;
 
-                        printf("Masternode payment to %s\n", txNew.vout[payments-1].scriptPubKey.ToString().c_str());
-                    } else if (((pindexPrev->nHeight+1) - mv1.GetHeight()) < MASTERNODE_PAYMENTS_EXPIRATION) {
-                        pblock->vmn.push_back(mv1);
-                    }
-                } 
-            }
+                            printf("Masternode payment to %s\n", txNew.vout[payments-1].scriptPubKey.ToString().c_str());
+                        } else if (((pindexPrev->nHeight+1) - mv1.GetHeight()) < MASTERNODE_PAYMENTS_EXPIRATION) {
+                            pblock->vmn.push_back(mv1);
+                        }
+                    } 
+                }
 
-            int winningNode = darkSendPool.GetCurrentMasterNode(1);
-            if(winningNode >= 0){
-                CMasterNodeVote mv;
-                mv.Set(darkSendMasterNodes[winningNode].pubkey, pindexPrev->nHeight + 1);
-                pblock->vmn.push_back(mv);
+                int winningNode = darkSendPool.GetCurrentMasterNode(1);
+                if(winningNode >= 0){
+                    CMasterNodeVote mv;
+                    mv.Set(darkSendMasterNodes[winningNode].pubkey, pindexPrev->nHeight + 1);
+                    pblock->vmn.push_back(mv);
+                }
             }
         }
 
