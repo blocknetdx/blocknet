@@ -4236,7 +4236,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
                 std::string errorMessage = "";
                 if(!darkSendSigner.VerifyMessage(mn.pubkey2, vchSig, strMessage, errorMessage)){
                     printf("Got bad masternode address signature\n");
-                    pfrom->Misbehaving(20);
+                    //pfrom->Misbehaving(20);
                     return false;
                 }
 
