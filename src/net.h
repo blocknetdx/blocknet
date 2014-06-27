@@ -646,7 +646,7 @@ class CTxOut;
 void RelayTransaction(const CTransaction& tx, const uint256& hash);
 void RelayTransaction(const CTransaction& tx, const uint256& hash, const CDataStream& ss);
 void RelayDarkSendFinalTransaction(const CTransaction& txNew);
-void RelayDarkSendIn(const CTxIn& in, const int64& nAmount, const CTransaction& txCollateral, const CTransaction& txSupporting, const CTxOut& out, const CTxOut& out2);
+void RelayDarkSendIn(const std::vector<CTxIn>& in, const int64& nAmount, const CTransaction& txCollateral, const std::vector<CTxOut>& out);
 void RelayDarkSendStatus(const int newState, const int newEntriesCount, const int newAccepted, const std::string error="");
 void RelayDarkSendElectionEntry(const CTxIn vin, const CService addr, const std::vector<unsigned char> vchSig, const int64 nNow, const CPubKey pubkey, const CPubKey pubkey2, const int count, const int current, const int64 lastUpdated);
 void RelayDarkSendElectionEntryPing(const CTxIn vin, const std::vector<unsigned char> vchSig, const int64 nNow, const bool stop);

@@ -80,10 +80,13 @@ private:
 
 public:
     bool SelectCoins(int64 nTargetValue, std::set<std::pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64& nValueRet, const CCoinControl *coinControl=NULL) const;
-    bool SelectCoinsWithoutDenomination(int64 nTargetValue, std::set<std::pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64& nValueRet, const CCoinControl *coinControl=NULL) const;
+    bool SelectCoinsDark(int64 nTargetValue, std::vector<CTxIn>& setCoinsRet, int64& nValueRet, const CCoinControl* coinControl) const;
+    bool SelectCoinsDarkDenominated(int64 nTargetValue, std::vector<CTxIn>& setCoinsRet, int64& nValueRet, const CCoinControl* coinControl) const;
     bool SelectCoinsExactOutput(int64 nTargetValue, CTxIn& vin, int64& nValueRet, CScript& pubScript, bool confirmed, const CCoinControl* coinControl) const;
-    bool SelectCoinsMoreThanOutput(int64 nTargetValue, CTxIn& vin, int64& nValueRet, CScript& pubScript, bool confirmed, const CCoinControl* coinControl) const;
 
+    bool SelectCoinsWithoutDenomination(int64 nTargetValue, std::set<std::pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64& nValueRet, const CCoinControl *coinControl=NULL) const;
+    bool SelectCoinsMoreThanOutput(int64 nTargetValue, CTxIn& vin, int64& nValueRet, bool confirmed, const CCoinControl* coinControl) const;
+    
     mutable CCriticalSection cs_wallet;
 
     bool fFileBacked;
@@ -192,6 +195,7 @@ public:
     std::string SendMoney(CScript scriptPubKey, int64 nValue, CWalletTx& wtxNew, bool fAskFee=false);
     std::string SendMoneyToDestination(const CTxDestination &address, int64 nValue, CWalletTx& wtxNew, bool fAskFee=false);
     std::string DarkSendMoney(const CTxDestination &address, int64 nValue);
+    std::string DarkSendDenominate(int64 nValue);
 
     bool NewKeyPool();
     bool TopUpKeyPool();
