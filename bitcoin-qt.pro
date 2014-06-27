@@ -346,6 +346,8 @@ HEADERS += src/qt/test/uritests.h \
            src/qt/qrcodedialog.h
 DEPENDPATH += src/qt/test
 QT += testlib
+DEFINES += USE_QRCODE
+LIBS += -lqrencode
 TARGET = darkcoin-qt_test
 DEFINES += BITCOIN_QT_TEST
   macx: CONFIG -= app_bundle

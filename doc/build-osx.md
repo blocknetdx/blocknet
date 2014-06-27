@@ -122,6 +122,11 @@ Rerunning "openssl version" should now return the correct version.
 
         patch -p1 < contrib/homebrew/makefile.osx.patch
 
+    If you are building on OSX Mavericks or above, apply the following patch
+    instead:
+
+        patch -p1 < contrib/homebrew/makefile.osx.mavericks.patch
+
 3.  Build darkcoind:
 
         cd src
