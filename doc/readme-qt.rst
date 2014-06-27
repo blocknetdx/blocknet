@@ -68,9 +68,24 @@ Mac OS X
 	brew update
 	brew install boost miniupnpc openssl berkeley-db4
 
-- If using HomeBrew,  edit `darkcoin-qt.pro` to account for library location differences. There's a diff in `contrib/homebrew/bitcoin-qt-pro.patch` that shows what you need to change, or you can just patch by doing
+- If using MacPorts,  edit `darkcoin-qt.pro` to account for library location differences. 
 
-        patch -p1 < contrib/homebrew/bitcoin.qt.pro.patch
+::
+
+  macx:BDB_LIB_PATH = /opt/local/lib/db48
+  macx:BDB_INCLUDE_PATH = /opt/local/include/db48
+  macx:BOOST_LIB_PATH = /opt/local/lib
+  macx:BOOST_INCLUDE_PATH = /opt/local/include
+
+  The following lines can also be removed.
+  
+  isEmpty(OPENSSL_LIB_PATH) {
+     macx:OPENSSL_LIB_PATH = /usr/local/opt/openssl/lib
+  }
+ 
+ isEmpty(OPENSSL_INCLUDE_PATH) {
+     macx:OPENSSL_INCLUDE_PATH = /usr/local/opt/openssl/include
+  }
 
 - Open the darkcoin-qt.pro file in Qt Creator and build as normal (cmd-B)
 

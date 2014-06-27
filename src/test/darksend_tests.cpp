@@ -33,10 +33,10 @@ BOOST_AUTO_TEST_CASE(darksend_vote)
     CPubKey key;
     CMasterNodeVote mnv;
     mnv.Set(key, 1);
-    mnv.Vote(false);
-    BOOST_CHECK(mnv.GetVotes() == 0);
-    mnv.Vote(false);
-    BOOST_CHECK(mnv.GetVotes() == -1);
+    mnv.Vote();
+    BOOST_CHECK(mnv.GetVotes() == 2);
+    mnv.Vote();
+    BOOST_CHECK(mnv.GetVotes() == 3);
 }
 
 
