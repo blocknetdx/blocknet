@@ -2516,7 +2516,7 @@ public:
         SetCollateralAddress(strAddress);
     }
 
-    void SetCollateralAddress(std::string strAddress);
+    bool SetCollateralAddress(std::string strAddress);
     bool GetLastValidBlockHash(uint256& hash, int mod=10);
     int GetCurrentMasterNode(int mod=10);
     void NewBlock();
