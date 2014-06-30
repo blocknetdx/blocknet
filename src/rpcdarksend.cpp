@@ -70,10 +70,10 @@ Value masternode(const Array& params, bool fHelp)
         strCommand = params[0].get_str();
 
     if (fHelp  ||
-        (strCommand != "start" && strCommand != "stop" && strCommand != "list" && strCommand != "count" 
+        (strCommand != "start" && strCommand != "stop" && strCommand != "list" && strCommand != "count"  && strCommand != "enforce"
             && strCommand != "debug" && strCommand != "create" && strCommand != "current" && strCommand != "votes" && strCommand != "genkey"))
         throw runtime_error(
-            "masternode <start|stop|list|count|debug|create|current|votes|genkey> passphrase\n");
+            "masternode <start|stop|list|count|debug|create|current|votes|genkey|enforce> passphrase\n");
 
     if (strCommand == "stop")
     {
@@ -229,6 +229,11 @@ if (strCommand == "list")
         secret.MakeNewKey(false);
 
         return CBitcoinSecret(secret).ToString();
+    }
+
+    if(strCommand == "enforce")
+    {
+        return (uint64_t)enforceMasternodePaymentsTime;
     }
 
     return Value::null;

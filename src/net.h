@@ -46,6 +46,8 @@ void StartNode(boost::thread_group& threadGroup);
 bool StopNode();
 void SocketSendData(CNode *pnode);
 
+typedef int NodeId;
+
 enum
 {
     LOCAL_NONE,   // unknown
@@ -87,7 +89,8 @@ extern limitedmap<CInv, int64> mapAlreadyAskedFor;
 extern std::vector<std::string> vAddedNodes;
 extern CCriticalSection cs_vAddedNodes;
 
-
+extern NodeId nLastNodeId;
+extern CCriticalSection cs_nLastNodeId;
 
 
 class CNodeStats
@@ -191,6 +194,7 @@ public:
     bool fNetworkNode;
     bool fSuccessfullyConnected;
     bool fDisconnect;
+    bool fAskedForBlocks;    // true when getblocks 0 sent
     // We use fRelayTxes for two purposes -
     // a) it allows us to not relay tx invs before receiving the peer's version message
     // b) the peer may tell us in their version message that we should not relay tx invs
@@ -201,6 +205,7 @@ public:
     CCriticalSection cs_filter;
     CBloomFilter* pfilter;
     int nRefCount;
+    NodeId id;
 protected:
 
     // Denial-of-service detection/prevention
@@ -221,6 +226,7 @@ public:
     std::set<CAddress> setAddrKnown;
     bool fGetAddr;
     std::set<uint256> setKnown;
+    uint256 hashCheckpointKnown;
 
     // inventory based relay
     mruset<CInv> setInventoryKnown;
@@ -250,6 +256,8 @@ public:
         fNetworkNode = false;
         fSuccessfullyConnected = false;
         fDisconnect = false;
+        hashCheckpointKnown = 0;
+        fAskedForBlocks = false;
         nRefCount = 0;
         nSendSize = 0;
         nSendOffset = 0;
@@ -264,6 +272,11 @@ public:
         fDarkSendMaster = false;
         setInventoryKnown.max_size(SendBufferSize() / 1000);
         pfilter = new CBloomFilter();
+
+        {
+            LOCK(cs_nLastNodeId);
+            id = nLastNodeId++;
+        }
 
         // Be shy and don't send version until we hear
         if (hSocket != INVALID_SOCKET && !fInbound)
@@ -610,7 +623,7 @@ public:
         }
     }
 
-    void PushGetBlocks(CBlockIndex* pindexBegin, uint256 hashEnd);
+    bool PushGetBlocks(CBlockIndex* pindexBegin, uint256 hashEnd);
     bool IsSubscribed(unsigned int nChannel);
     void Subscribe(unsigned int nChannel, unsigned int nHops=0);
     void CancelSubscribe(unsigned int nChannel);

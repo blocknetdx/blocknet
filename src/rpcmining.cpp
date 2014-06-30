@@ -432,6 +432,9 @@ Value getblocktemplate(const Array& params, bool fHelp)
             "  \"bits\" : compressed target of next block\n"
             "  \"height\" : height of the next block\n"
             "  \"payee1\" : required payee1\n"
+            "  \"votes\" : show vote candidates for this block\n"
+            "  \"masternode_payments\" : if masternode payments are active\n"
+            "  \"masternode_payments_enforcing\" : if masternode payments are being actively enforced by the network\n"
             "See https://en.bitcoin.it/wiki/BIP_0022 for full specification.");
 
     std::string strMode = "template";
@@ -575,7 +578,8 @@ Value getblocktemplate(const Array& params, bool fHelp)
         result.push_back(Pair("payee", ""));
     }
     result.push_back(Pair("masternode_payments", pblock->MasterNodePaymentsOn()));
-    
+    result.push_back(Pair("enforce_masternode_payments", pblock->MasterNodePaymentsEnforcing()));
+
     return result;
 }
 
