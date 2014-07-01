@@ -1,0 +1,83 @@
+---
+name: "darkcoin"
+suites:
+- "precise"
+architectures:
+- "i386"
+packages:
+- "git-core"
+- "automake"
+- "faketime"
+- "bsdmainutils"
+- "pkg-config"
+- "p7zip-full"
+
+reference_datetime: "2014-01-10 00:00:00"
+remotes:
+- "url": "https://github.com/darkcoinproject/darkcoin.git"
+  "dir": "darkcoin"
+files:
+- "osx-native-depends-r3.tar.gz"
+- "osx-depends-r4.tar.gz"
+- "osx-depends-qt-5.2.1-r4.tar.gz"
+- "MacOSX10.7.sdk.tar.gz"
+
+script: |
+
+  HOST=x86_64-apple-darwin11
+  PREFIX=`pwd`/osx-cross-depends/prefix
+  SDK=`pwd`/osx-cross-depends/SDKs/MacOSX10.7.sdk
+  NATIVEPREFIX=`pwd`/osx-cross-depends/native-prefix
+  NEEDDIST=1
+  export TAR_OPTIONS="-m --mtime="$REFERENCE_DATE\\\ $REFERENCE_TIME""
+
+  export SOURCES_PATH=`pwd`
+
+  mkdir -p osx-cross-depends/SDKs
+
+  tar -C osx-cross-depends/SDKs -xf ${SOURCES_PATH}/MacOSX10.7.sdk.tar.gz
+
+  tar -C osx-cross-depends -xf osx-native-depends-r3.tar.gz
+  tar -C osx-cross-depends -xf osx-depends-r4.tar.gz
+  tar -C osx-cross-depends -xf osx-depends-qt-5.2.1-r4.tar.gz
+  
+  export PATH=`pwd`/osx-cross-depends/native-prefix/bin:$PATH
+
+  if [ "$NEEDDIST" == "1" ]; then
+    # Make source code archive which is architecture independent so it only needs to be done once
+    cd $HOME/build/darkcoin
+    git archive HEAD --format=tar.gz > darkcoin.tar.gz
+    DISTNAME=`echo darkcoin.tar.gz`
+    NEEDDIST=0
+  fi
+ 
+  export ZERO_AR_DATE=1
+  export QT_RCC_TEST=1
+  
+  mkdir -p distsrc
+  cd distsrc
+  tar -xvf $HOME/build/darkcoin/darkcoin.tar.gz
+  
+  sed 's/mmacosx-version-min\=10.5/mmacosx-version-min=10.6/' -i bitcoin-qt.pro
+  sed 's/10.5/10.7/' -i bitcoin-qt.pro
+  sed 's/\/Developer\//\/home\/ubuntu\/build\/osx-cross-depends\//' -i bitcoin-qt.pro
+  sed 's/10.5/10.7/' -i bitcoin-qt.pro
+  sed 's/arch i386/arch x86_64/' -i bitcoin-qt.pro
+  sed 's/CXX $(MAKE)/CXX AR=x86_64-apple-darwin11-ar $(MAKE)/' -i bitcoin-qt.pro
+
+  qmake -spec macx-clang-linux MINIUPNPC_LIB_PATH=$PREFIX/lib MINIUPNPC_INCLUDE_PATH=$PREFIX/include BDB_LIB_PATH=$PREFIX/lib BDB_INCLUDE_PATH=$PREFIX/include BOOST_LIB_PATH=$PREFIX/lib BOOST_INCLUDE_PATH=$PREFIX/include BOOST_LIB_SUFFIX=-mt-s OPENSSL_LIB_PATH=$PREFIX/lib OPENSSL_INCLUDE_PATH=$PREFIX/include QRENCODE_LIB_PATH=$PREFIX/lib QRENCODE_INCLUDE_PATH=$PREFIX/include USE_QRCODE=1 INCLUDEPATH=$PREFIX/include DEFINES=BOOST_THREAD_USE_LIB QMAKE_LRELEASE=lrelease USE_BUILD_INFO=1 USE_SSE2=1 USE_UPNP=1 RELEASE=1
+  make TARGET_OS=Darwin
+  INSTALLNAMETOOL=/home/ubuntu/build/osx-cross-depends/native-prefix/bin/x86_64-apple-darwin11-install_name_tool  OTOOL=/home/ubuntu/build/osx-cross-depends/native-prefix/bin/x86_64-apple-darwin11-otool STRIP=/home/ubuntu/build/osx-cross-depends/native-prefix/bin/x86_64-apple-darwin11-strip ./contrib/macdeploy/macdeployqtplus DarkCoin-Qt.app -add-qt-tr da,de,es,hu,ru,uk,zh_CN,zh_TW -verbose 2
+
+
+  export LD_PRELOAD=/usr/lib/faketime/libfaketime.so.1
+  export FAKETIME=$REFERENCE_DATETIME
+  export TZ=UTC
+
+
+  /bin/mkdir -p dist/.background
+  /usr/bin/install -c contrib/macdeploy/background.png dist/.background
+  /usr/bin/install -c contrib/macdeploy/DS_Store dist/.DS_Store
+  cd dist; ln -s /Applications Applications; cd ..
+  genisoimage -no-cache-inodes -l -probe -V "DarkCoin-Qt" -no-pad -r -apple -o DarkCoin-Qt.dmg dist
+  dmg dmg DarkCoin-Qt.dmg /home/ubuntu/out/DarkCoin-Qt.dmg
