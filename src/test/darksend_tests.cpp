@@ -26,17 +26,91 @@ BOOST_AUTO_TEST_CASE(darksend_sign)
     BOOST_CHECK(dss.VerifyMessage(pubkey, vchSig, "hello2", errorMessage) == false);
 
 }
-
-
 BOOST_AUTO_TEST_CASE(darksend_vote)
 {
     CPubKey key;
     CMasterNodeVote mnv;
     mnv.Set(key, 1);
-    mnv.Vote(false);
-    BOOST_CHECK(mnv.GetVotes() == 0);
-    mnv.Vote(false);
-    BOOST_CHECK(mnv.GetVotes() == -1);
+    mnv.Vote();
+    BOOST_CHECK(mnv.GetVotes() == 2);
+    mnv.Vote();
+    BOOST_CHECK(mnv.GetVotes() == 3);
+}
+
+BOOST_AUTO_TEST_CASE(darksend_masternode_voting)
+{
+    uint256 n1 = 10000;
+    uint256 n2 = 10001;
+    CTxIn testVin1 = CTxIn(n1, 0);
+    CTxIn testVin2 = CTxIn(n2, 0);
+    CService addr;
+    std::vector<unsigned char> vchSig;
+
+    //setup a couple fake masternodes
+    CMasterNode mn1(addr, testVin1, CPubKey(), vchSig, 0, CPubKey());
+    darkSendMasterNodes.push_back(mn1);
+
+    CMasterNode mn2(addr, testVin2, CPubKey(), vchSig, 0, CPubKey());
+    darkSendMasterNodes.push_back(mn2);
+
+    // return -1 if nothing present
+    BOOST_CHECK(darkSendPool.GetCurrentMasterNodeConsessus(1000) == -1);
+
+
+    darkSendPool.SubmitMasternodeVote(testVin1, 1000);
+    BOOST_CHECK(darkSendPool.GetCurrentMasterNodeConsessus(1000) == 0); // vin1
+
+    darkSendPool.SubmitMasternodeVote(testVin2, 1000);
+    BOOST_CHECK(darkSendPool.GetCurrentMasterNodeConsessus(1000) == 1); // vin2 - prevout breaks ties
+    darkSendPool.SubmitMasternodeVote(testVin2, 1000);
+    BOOST_CHECK(darkSendPool.GetCurrentMasterNodeConsessus(1000) == 1); // vin2
+
+    darkSendPool.SubmitMasternodeVote(testVin2, 1000);
+    darkSendPool.SubmitMasternodeVote(testVin2, 1000);
+
+    BOOST_CHECK(darkSendPool.GetCurrentMasterNodeConsessus(1001) == -1);
+
+    darkSendPool.SubmitMasternodeVote(testVin2, 1001);
+    darkSendPool.SubmitMasternodeVote(testVin1, 1001);
+    BOOST_CHECK(darkSendPool.GetCurrentMasterNodeConsessus(1001) == 1); // vin2 - prevout breaks ties
+
+    darkSendPool.SubmitMasternodeVote(testVin1, 1001);
+    darkSendPool.SubmitMasternodeVote(testVin1, 1001);
+
+    darkSendPool.SubmitMasternodeVote(testVin2, 1001);
+    darkSendPool.SubmitMasternodeVote(testVin2, 1001);
+    BOOST_CHECK(darkSendPool.GetCurrentMasterNodeConsessus(1000) == 1); // vin2
+
+    darkSendPool.SubmitMasternodeVote(testVin2, 1001);
+    darkSendPool.SubmitMasternodeVote(testVin2, 1001);
+
+    vecBlockVotes.push_back(make_pair(1001, make_pair(testVin1, 10)));
+    vecBlockVotes.push_back(make_pair(1001, make_pair(testVin2, 4)));
+
+    BOOST_CHECK(darkSendPool.GetCurrentMasterNodeConsessus(1001) == 0); //vin1
+}
+
+
+BOOST_AUTO_TEST_CASE(darksend_masternode_rank)
+{
+    uint256 n1 = 10000;
+    uint256 n2 = 10001;
+    CTxIn testVin1 = CTxIn(n1, 0);
+    CTxIn testVin2 = CTxIn(n2, 0);
+    CService addr;
+    std::vector<unsigned char> vchSig;
+
+    //setup a couple fake masternodes
+    CMasterNode mn1(addr, testVin1, CPubKey(), vchSig, 0, CPubKey());
+    darkSendMasterNodes.push_back(mn1);
+
+    CMasterNode mn2(addr, testVin2, CPubKey(), vchSig, 0, CPubKey());
+    darkSendMasterNodes.push_back(mn2);
+
+    printf("here\n");
+
+    // return -1 if nothing present
+    darkSendPool.GetMasternodeRank(testVin1, 1);
 }
 
 

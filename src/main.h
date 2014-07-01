@@ -151,6 +151,7 @@ extern std::string strMasterNodePrivKey;
 extern int64 enforceMasternodePaymentsTime;
 extern CWallet pmainWallet;
 extern std::map<uint256, CBlock*> mapOrphanBlocks;
+extern std::vector<std::pair<int64, std::pair<CTxIn, int> > > vecBlockVotes;
 
 // Settings
 extern int64 nTransactionFee;
@@ -2697,6 +2698,12 @@ public:
     }
 
     int GetCurrentMasterNode(int mod=10);
+    int GetCurrentMasterNodeConsessus(int64 blockHeight);
+    void SubmitMasternodeVote(CTxIn vinWinningMasternode, int64 nBlockHeight);
+
+    int GetMasternodeByVin(CTxIn vin);
+    int GetMasternodeRank(CTxIn vin, int mod);
+
     void Check();
     void ChargeFees();
     void CheckTimeout();
