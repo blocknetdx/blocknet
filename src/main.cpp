@@ -4160,7 +4160,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             return false;  
         }
 
-        std::string strMessage = addr.ToString() + boost::lexical_cast<std::string>(sigTime) + vchPubKey; 
+        std::string strMessage = addr.ToString() + boost::lexical_cast<std::string>(sigTime) + vchPubKey + vchPubKey2; 
 
         CScript pubkeyScript2;
         pubkeyScript2.SetDestination(pubkey2.GetID());
