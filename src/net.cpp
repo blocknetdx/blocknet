@@ -1988,3 +1988,12 @@ void RelayDarkSendCompletedTransaction(const bool error, const std::string error
         pnode->PushMessage("dsc", error, errorMessage);
     }
 }
+
+void RelayDarkSendMasterNodeConsessusVote(const CTxIn inWinningMasternode, const CTxIn inFromMasternode, const int64 nBlockHeight, const std::vector<unsigned char>& vchSig)
+{
+    LOCK(cs_vNodes);
+    BOOST_FOREACH(CNode* pnode, vNodes)
+    {
+        pnode->PushMessage("dmcv", inWinningMasternode, inFromMasternode, nBlockHeight, vchSig);
+    }   
+}

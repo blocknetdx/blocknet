@@ -3893,7 +3893,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         pfrom->ssSend.SetVersion(min(pfrom->nVersion, PROTOCOL_VERSION));
         
         if (pfrom->nVersion >= darkSendPool.MIN_PEER_PROTO_VERSION) {
-            if(RequestedMasterNodeList <= 3) {
+            if(RequestedMasterNodeList <= 2) {
                 bool fIsInitialDownload = IsInitialBlockDownload();
                 if(!fIsInitialDownload) {
                     pfrom->PushMessage("dseg", CTxIn());
@@ -4165,15 +4165,17 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         if(rank >= 0){
             printf("dmcv -submitted vote\n");
             darkSendPool.SubmitMasternodeVote(vinWinningMasternode, vinMasterNodeFrom, nBlockHeight);
+            RelayDarkSendMasterNodeConsessusVote(vinWinningMasternode, vinMasterNodeFrom, nBlockHeight, vchSig);
         } else {
             // ask for the dsee info once from this node
 
             BOOST_FOREACH(CTxIn vinAsked, vecMasternodeAskedFor)
-                if (vinAsked == vin) return true;
+                if (vinAsked == vinWinningMasternode) return true;
 
-            vecMasternodeAskedFor.push_back(vin);
-            pfrom->PushMessage("dseg", vin);
+            vecMasternodeAskedFor.push_back(vinWinningMasternode);
+            pfrom->PushMessage("dseg", vinWinningMasternode);
         }
+        return true;
 
     } else if (strCommand == "dsee") { //DarkSend Election Entry   
         if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
@@ -6632,17 +6634,25 @@ void CDarkSendPool::RegisterAsMasterNode(bool stop)
 }
 
 //Get last block hash
-bool CDarkSendPool::GetLastValidBlockHash(uint256& hash, int mod)
+bool CDarkSendPool::GetLastValidBlockHash(uint256& hash, int mod, int nBlockHeight)
 {
     const CBlockIndex *BlockLastSolved = pindexBest;
     const CBlockIndex *BlockReading = pindexBest;
 
     if (BlockLastSolved == NULL || BlockLastSolved->nHeight == 0) { return false; }
+
+    int nBlocksAgo = 0;
+    if(nBlockHeight > 0) nBlocksAgo = nBlockHeight - (pindexBest->nHeight+1);
+    assert(nBlocksAgo <= 0);
     
+    int n = 0;
     for (unsigned int i = 1; BlockReading && BlockReading->nHeight > 0; i++) {
         if(BlockReading->nHeight % mod == 0) {
-            hash = BlockReading->GetBlockHash();
-            return true;
+            if(n >= nBlocksAgo){
+                hash = BlockReading->GetBlockHash();
+                return true;
+            }
+            n++;
         }
 
         if (BlockReading->pprev == NULL) { assert(BlockReading); break; }
@@ -6650,6 +6660,47 @@ bool CDarkSendPool::GetLastValidBlockHash(uint256& hash, int mod)
     }
 
     return false;    
+}
+
+bool CDarkSendPool::DoConcessusVote()
+{
+    //If masternode, vote for whoever I think should win next block
+    if(fMasterNode){
+        int nBlockHeight = pindexBest->nHeight + 2;
+        int rank = GetMasternodeRank(vinMasterNode, 1);
+        int winner = GetCurrentMasterNode(1, nBlockHeight);
+        if(rank <= 10 && winner != 1){
+            std::vector<unsigned char> vchMasterNodeSignature;
+            std::string errorMessage = "";
+
+            CKey key2;
+            CPubKey pubkey2;
+
+            if(!darkSendSigner.SetKey(strMasterNodePrivKey, errorMessage, key2, pubkey2))
+            {
+                printf("Invalid masternodeprivkey: '%s'\n", errorMessage.c_str());
+                exit(0);
+            }
+
+            std::string vchPubKey(darkSendMasterNodes[winner].pubkey.begin(), darkSendMasterNodes[winner].pubkey.end());
+            std::string strMessage = darkSendMasterNodes[winner].vin.prevout.ToString() + vinMasterNode.prevout.ToString() + boost::lexical_cast<std::string>(nBlockHeight) + vchPubKey; 
+
+            if(!darkSendSigner.SignMessage(strMessage, errorMessage, vchMasterNodeSignature, key2)) {
+                printf("CDarkSendPool::RegisterAsMasterNode() - Sign message failed");
+                return false;
+            }
+
+            if(!darkSendSigner.VerifyMessage(pubkey2, vchMasterNodeSignature, strMessage, errorMessage)) {
+                printf("CDarkSendPool::RegisterAsMasterNode() - Verify message failed");
+                return false;
+            }
+
+            RelayDarkSendMasterNodeConsessusVote(darkSendMasterNodes[winner].vin, vinMasterNode, nBlockHeight, vchMasterNodeSignature);
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void CDarkSendPool::NewBlock()
@@ -6670,6 +6721,8 @@ void CDarkSendPool::NewBlock()
                 }
             }
         }
+
+        DoConcessusVote();
     }
 
     if(fMasterNode){
@@ -6751,12 +6804,12 @@ void CDarkSendPool::ClearLastMessage()
     lastMessage = "";
 }
 
-uint256 CMasterNode::CalculateScore(int mod)
+uint256 CMasterNode::CalculateScore(int mod, int64 nBlockHeight)
 {
     if(pindexBest == NULL) return 0;
 
     uint256 n1 = 0;
-    if(!darkSendPool.GetLastValidBlockHash(n1, mod)) return 0;
+    if(!darkSendPool.GetLastValidBlockHash(n1, mod, nBlockHeight)) return 0;
 
     uint256 n2 = Hash9(BEGIN(n1), END(n1));
     uint256 n3 = vin.prevout.hash > n2 ? (vin.prevout.hash - n2) : (n2 - vin.prevout.hash);
@@ -6782,7 +6835,7 @@ int CDarkSendPool::GetMasternodeByVin(CTxIn& vin)
     return -1;
 }
 
-int CDarkSendPool::GetCurrentMasterNode(int mod)
+int CDarkSendPool::GetCurrentMasterNode(int mod, int64 nBlockHeight)
 {
     int i = 0;
     unsigned int score = 0;
@@ -6795,7 +6848,7 @@ int CDarkSendPool::GetCurrentMasterNode(int mod)
             continue;
         }
 
-        uint256 n = mn.CalculateScore(mod);
+        uint256 n = mn.CalculateScore(mod, nBlockHeight);
         unsigned int n2 = 0;
         memcpy(&n2, &n, sizeof(n2));
 

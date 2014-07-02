@@ -651,11 +651,10 @@ public:
     void copyStats(CNodeStats &stats);
 };
 
-
-
 class CTransaction;
 class CTxIn;
 class CTxOut;
+
 void RelayTransaction(const CTransaction& tx, const uint256& hash);
 void RelayTransaction(const CTransaction& tx, const uint256& hash, const CDataStream& ss);
 void RelayDarkSendFinalTransaction(const CTransaction& txNew);
@@ -664,6 +663,7 @@ void RelayDarkSendStatus(const int newState, const int newEntriesCount, const in
 void RelayDarkSendElectionEntry(const CTxIn vin, const CService addr, const std::vector<unsigned char> vchSig, const int64 nNow, const CPubKey pubkey, const CPubKey pubkey2, const int count, const int current, const int64 lastUpdated);
 void RelayDarkSendElectionEntryPing(const CTxIn vin, const std::vector<unsigned char> vchSig, const int64 nNow, const bool stop);
 void RelayDarkSendCompletedTransaction(const bool error, const std::string errorMessage);
+void RelayDarkSendMasterNodeConsessusVote(const CTxIn inWinningMasternode, const CTxIn inFromMasternode, const int64 nBlockHeight, const std::vector<unsigned char>& vchSig);
 void RelayDarkDeclareWinner();
 void RelayDarkSendMasterNodeContestant();
 

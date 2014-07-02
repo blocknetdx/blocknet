@@ -2466,7 +2466,7 @@ public:
     
     }
 
-    uint256 CalculateScore(int mod=10);
+    uint256 CalculateScore(int mod=10, int64 nBlockHeight=0);
 
     void UpdateLastSeen(int64 override=0)
     {
@@ -2697,7 +2697,7 @@ public:
         state = newState;
     }
 
-    int GetCurrentMasterNode(int mod=10);
+    int GetCurrentMasterNode(int mod=10, int64 nBlockHeight=0);
     int GetCurrentMasterNodeConsessus(int64 blockHeight);
     void SubmitMasternodeVote(CTxIn& vinWinningMasternode, CTxIn& vinMasterNodeFrom, int64 nBlockHeight);
 
@@ -2725,10 +2725,11 @@ public:
     void RelayDarkDeclareWinner();
     bool EnableHotColdMasterNode(CTxIn& vin, int64 sigTime, CService& addr);
     void RegisterAsMasterNode(bool stop);
-    bool GetLastValidBlockHash(uint256& hash, int mod=10);
+    bool GetLastValidBlockHash(uint256& hash, int mod=10, int nBlockHeight=0);
     void NewBlock();
     void CompletedTransaction(bool error, std::string lastMessageNew);
     void ClearLastMessage();
+    bool DoConcessusVote();
 };
 
 void ConnectToDarkSendMasterNodeWinner();
