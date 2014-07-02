@@ -104,7 +104,7 @@ Value masternode(const Array& params, bool fHelp)
         return "unknown";
     }
 
-if (strCommand == "list")
+    if (strCommand == "list")
     {
         std::string strCommand = "active";
 
@@ -112,9 +112,9 @@ if (strCommand == "list")
             strCommand = params[1].get_str().c_str();
         }
 
-        if (strCommand != "active" && strCommand != "vin" && strCommand != "pubkey" && strCommand != "lastseen" && strCommand != "activeseconds"){
+        if (strCommand != "active" && strCommand != "vin" && strCommand != "pubkey" && strCommand != "lastseen" && strCommand != "activeseconds" && strCommand != "rank"){
             throw runtime_error(
-                "list supports 'active', 'vin', 'pubkey', 'lastseen', 'activeseconds'\n");
+                "list supports 'active', 'vin', 'pubkey', 'lastseen', 'activeseconds', 'rank'\n");
         }
 
         Object obj;
@@ -137,6 +137,8 @@ if (strCommand == "list")
                 obj.push_back(Pair(mn.addr.ToString().c_str(),       (int64_t)mn.lastTimeSeen));
             } else if (strCommand == "activeseconds") {
                 obj.push_back(Pair(mn.addr.ToString().c_str(),       (int64_t)(mn.lastTimeSeen - mn.now)/(1000*1000)));
+            } else if (strCommand == "rank") {
+                obj.push_back(Pair(mn.addr.ToString().c_str(),       (int)(darkSendPool.GetMasternodeRank(mn.vin, 1))));
             }
         }
         return obj;
