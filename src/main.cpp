@@ -6711,7 +6711,6 @@ uint256 CMasterNode::CalculateScore(int mod)
     
     /*
     printf(" -- MasterNode CalculateScore() n1 = %s \n", n1.ToString().c_str());
-    printf(" -- MasterNode CalculateScore() n11 = %u \n", n11);
     printf(" -- MasterNode CalculateScore() n2 = %s \n", n2.ToString().c_str());
     printf(" -- MasterNode CalculateScore() vin = %s \n", vin.prevout.hash.ToString().c_str());
     printf(" -- MasterNode CalculateScore() n3 = %s \n", n3.ToString().c_str());*/
@@ -6731,10 +6730,39 @@ int CDarkSendPool::GetMasternodeByVin(CTxIn vin)
     return -1;
 }
 
+int CDarkSendPool::GetCurrentMasterNode(int mod)
+{
+    int i = 0;
+    unsigned int score = 0;
+    int winner = -1;
+
+    BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
+        mn.Check();
+        if(!mn.IsEnabled()) {
+            i++;
+            continue;
+        }
+
+        uint256 n = mn.CalculateScore(mod);
+        unsigned int n2 = 0;
+        memcpy(&n2, &n, sizeof(n2));
+
+        printf("GetCurrentMasterNode: %d : %s : %u > %u\n", i, mn.addr.ToString().c_str(), n2, score);
+        if(n2 > score){
+            score = n2;
+            winner = i;
+        }
+        i++;
+    }
+    printf("GetCurrentMasterNode: winner %d\n", winner);
+
+    return winner;
+}
+
 
 int CDarkSendPool::GetMasternodeRank(CTxIn vin, int mod)
 {
-    std::vector<pair<int, CTxIn> > vecMasternodeScores;
+    std::vector<pair<uint, CTxIn> > vecMasternodeScores;
 
     BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
         mn.Check();
@@ -6745,6 +6773,8 @@ int CDarkSendPool::GetMasternodeRank(CTxIn vin, int mod)
         uint256 n = mn.CalculateScore(mod);
         unsigned int n2 = 0;
         memcpy(&n2, &n, sizeof(n2));
+ 
+        printf(" -- %u %s\n", n2, mn.addr.ToString().c_str());
 
         vecMasternodeScores.push_back(make_pair(n2, mn.vin));
     }
@@ -6752,7 +6782,7 @@ int CDarkSendPool::GetMasternodeRank(CTxIn vin, int mod)
     sort(vecMasternodeScores.rbegin(), vecMasternodeScores.rend(), CompareValueOnly());
     
     unsigned int rank = 0;
-    BOOST_FOREACH (PAIRTYPE(int, CTxIn)& s, vecMasternodeScores){
+    BOOST_FOREACH (PAIRTYPE(uint, CTxIn)& s, vecMasternodeScores){
         rank++;
 
         printf(" -- %d\n", s.first);
@@ -6796,35 +6826,6 @@ int CDarkSendPool::GetCurrentMasterNodeConsessus(int64 blockHeight)
     }
 
     return -1;
-}
-
-int CDarkSendPool::GetCurrentMasterNode(int mod)
-{
-    int i = 0;
-    unsigned int score = 0;
-    int winner = -1;
-
-    BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
-        mn.Check();
-        if(!mn.IsEnabled()) {
-            i++;
-            continue;
-        }
-
-        uint256 n = mn.CalculateScore(mod);
-        unsigned int n2 = 0;
-        memcpy(&n2, &n, sizeof(n2));
-
-        //printf("GetCurrentMasterNode: %d : %s : %u > %u\n", i, mn.addr.ToString().c_str(), n2, score);
-        if(n2 > score){
-            score = n2;
-            winner = i;
-        }
-        i++;
-    }
-    //printf("GetCurrentMasterNode: winner %d\n", winner);
-
-    return winner;
 }
 
 

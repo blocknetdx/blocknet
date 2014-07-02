@@ -105,7 +105,7 @@ Value masternode(const Array& params, bool fHelp)
     }
 
     if (strCommand == "list")
-    {
+    {        
         std::string strCommand = "active";
 
         if (params.size() == 2){
