@@ -1664,7 +1664,7 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBl
 {
         int DiffMode = 1;
         if (fTestNet) {
-            if (pindexLast->nHeight+1 >= 16) { DiffMode = 4; }
+            if (pindexLast->nHeight+1 >= 160) { DiffMode = 4; }
         }
         else {
             if (pindexLast->nHeight+1 >= 68589) { DiffMode = 4; }
@@ -2651,22 +2651,29 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
         int64 masternodePaymentAmount = vtx[0].GetValueOut()/5;        
         bool fIsInitialDownload = IsInitialBlockDownload();
 
-        if (EnforceMasternodePayments && !fIsInitialDownload)
+        if (!fIsInitialDownload && pindexBest != NULL)
         {
-            bool foundPayment = false;
+            bool foundPaymentAmount = false;
+            bool foundPaymentPayee = false;
+            int winningNode = darkSendPool.GetCurrentMasterNodeConsessus(pindexBest->nHeight+1);
             
-            masternodePaymentAmount = masternodePaymentAmount;
-            /*
-            for (unsigned int i = 0; i < vtx[0].vout.size(); i++) {
-                if(vtx[0].vout[i].nValue == masternodePaymentAmount && mv1.GetPubKey() == vtx[0].vout[i].scriptPubKey) {
-                    foundPayment = true;
-                }
-            }*/
+            if(winningNode >= 0) {
+                CScript payee;
+                payee.SetDestination(darkSendMasterNodes[winningNode].pubkey.GetID());
 
-            if(!foundPayment) {
-                printf("CheckBlock() : Couldn't find masternode payment\n");
-                if(EnforceMasternodePayments) return state.DoS(100, error("CheckBlock() : Couldn't find masternode payment"));
+                for (unsigned int i = 0; i < vtx[0].vout.size(); i++) {
+                    if(vtx[0].vout[i].nValue == masternodePaymentAmount )
+                        foundPaymentAmount = true;
+                    if(payee == vtx[0].vout[i].scriptPubKey)
+                        foundPaymentPayee = true;
+                }
+
+                if(!foundPaymentPayee || !foundPaymentAmount ) {
+                    printf("CheckBlock() : Couldn't find masternode payment. Found Amount %d Found Payee %d \n", (int)foundPaymentAmount, (int)foundPaymentPayee);
+                    if(EnforceMasternodePayments) return state.DoS(100, error("CheckBlock() : Couldn't find masternode payment"));
+                }
             }
+
         }
     }
 
@@ -4140,7 +4147,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         printf("dmcv -hasn't voted\n");
 
         int rank = darkSendPool.GetMasternodeRank(vinMasterNodeFrom, 1);
-        CPubKey pubkey = darkSendMasterNodes[mn].pubkey;
+        CPubKey pubkey = darkSendMasterNodes[mn].pubkey2;
 
         if (rank > 10 || rank == -1){
             printf("dmcv: rejecting masternode vote\n");
@@ -4154,7 +4161,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         std::string strMessage = vinWinningMasternode.prevout.ToString() + vinMasterNodeFrom.prevout.ToString() + boost::lexical_cast<std::string>(nBlockHeight) + vchPubKey; 
         std::string errorMessage = "";
         if(!darkSendSigner.VerifyMessage(pubkey, vchSig, strMessage, errorMessage)){
-            printf("dsee - Got bad masternode address signature\n");
+            printf("dmcv - Got bad masternode address signature\n");
             pfrom->Misbehaving(100);
             return false;
         }
@@ -5285,13 +5292,16 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         CBlockIndex* pindexPrev = pindexBest;
     
         if(bMasterNodePayment) {
-            bool enforcing = pblock->MasterNodePaymentsEnforcing();
+            int winningNode = -1; 
 
-            if(!enforcing){
-                int winningNode = darkSendPool.GetCurrentMasterNodeConsessus(pindexPrev->nHeight+1);
-                if(winningNode == -1) 
-                    return pblocktemplate.release();
-                
+            //spork
+            winningNode = darkSendPool.GetCurrentMasterNodeConsessus(pindexPrev->nHeight+1);
+            if(winningNode == -1) {
+                //no enforcement
+                printf("CreateNewBlock - network could not reach consessus on payee for block %d\n", pindexPrev->nHeight+1);
+                winningNode = darkSendPool.GetCurrentMasterNode(1);
+            }
+            if(winningNode >= 0) {
                 pblock->payee.SetDestination(darkSendMasterNodes[winningNode].pubkey.GetID());
                 
                 payments++;
@@ -5300,7 +5310,6 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
                 //txNew.vout[0].scriptPubKey = scriptPubKeyIn;
                 txNew.vout[payments-1].scriptPubKey.SetDestination(darkSendMasterNodes[winningNode].pubkey.GetID());
                 txNew.vout[payments-1].nValue = 0;
-
                 printf("Masternode payment to %s\n", txNew.vout[payments-1].scriptPubKey.ToString().c_str());
             }
         }
@@ -6643,7 +6652,7 @@ bool CDarkSendPool::GetLastValidBlockHash(uint256& hash, int mod, int nBlockHeig
 
     int nBlocksAgo = 0;
     if(nBlockHeight > 0) nBlocksAgo = nBlockHeight - (pindexBest->nHeight+1);
-    assert(nBlocksAgo <= 0);
+    assert(nBlocksAgo >= 0);
     
     int n = 0;
     for (unsigned int i = 1; BlockReading && BlockReading->nHeight > 0; i++) {
@@ -6664,40 +6673,43 @@ bool CDarkSendPool::GetLastValidBlockHash(uint256& hash, int mod, int nBlockHeig
 
 bool CDarkSendPool::DoConcessusVote()
 {
+    bool fIsInitialDownload = IsInitialBlockDownload();
+    if(fIsInitialDownload) return false;
+
     //If masternode, vote for whoever I think should win next block
-    if(fMasterNode){
-        int nBlockHeight = pindexBest->nHeight + 2;
-        int rank = GetMasternodeRank(vinMasterNode, 1);
-        int winner = GetCurrentMasterNode(1, nBlockHeight);
-        if(rank <= 10 && winner != 1){
-            std::vector<unsigned char> vchMasterNodeSignature;
-            std::string errorMessage = "";
+    if(!fMasterNode || isCapableMasterNode != MASTERNODE_IS_CAPABLE) return false;
 
-            CKey key2;
-            CPubKey pubkey2;
+    int nBlockHeight = pindexBest->nHeight + 2;
+    int rank = GetMasternodeRank(vinMasterNode, 1);
+    int winner = GetCurrentMasterNode(1, nBlockHeight);
+    if(rank <= 10 && winner != 1){
+        std::vector<unsigned char> vchMasterNodeSignature;
+        std::string errorMessage = "";
 
-            if(!darkSendSigner.SetKey(strMasterNodePrivKey, errorMessage, key2, pubkey2))
-            {
-                printf("Invalid masternodeprivkey: '%s'\n", errorMessage.c_str());
-                exit(0);
-            }
+        CKey key2;
+        CPubKey pubkey2;
 
-            std::string vchPubKey(darkSendMasterNodes[winner].pubkey.begin(), darkSendMasterNodes[winner].pubkey.end());
-            std::string strMessage = darkSendMasterNodes[winner].vin.prevout.ToString() + vinMasterNode.prevout.ToString() + boost::lexical_cast<std::string>(nBlockHeight) + vchPubKey; 
-
-            if(!darkSendSigner.SignMessage(strMessage, errorMessage, vchMasterNodeSignature, key2)) {
-                printf("CDarkSendPool::RegisterAsMasterNode() - Sign message failed");
-                return false;
-            }
-
-            if(!darkSendSigner.VerifyMessage(pubkey2, vchMasterNodeSignature, strMessage, errorMessage)) {
-                printf("CDarkSendPool::RegisterAsMasterNode() - Verify message failed");
-                return false;
-            }
-
-            RelayDarkSendMasterNodeConsessusVote(darkSendMasterNodes[winner].vin, vinMasterNode, nBlockHeight, vchMasterNodeSignature);
-            return true;
+        if(!darkSendSigner.SetKey(strMasterNodePrivKey, errorMessage, key2, pubkey2))
+        {
+            printf("Invalid masternodeprivkey: '%s'\n", errorMessage.c_str());
+            exit(0);
         }
+
+        std::string vchPubKey(darkSendMasterNodes[winner].pubkey.begin(), darkSendMasterNodes[winner].pubkey.end());
+        std::string strMessage = darkSendMasterNodes[winner].vin.prevout.ToString() + vinMasterNode.prevout.ToString() + boost::lexical_cast<std::string>(nBlockHeight) + vchPubKey; 
+
+        if(!darkSendSigner.SignMessage(strMessage, errorMessage, vchMasterNodeSignature, key2)) {
+            printf("CDarkSendPool::RegisterAsMasterNode() - Sign message failed");
+            return false;
+        }
+
+        if(!darkSendSigner.VerifyMessage(pubkey2, vchMasterNodeSignature, strMessage, errorMessage)) {
+            printf("CDarkSendPool::RegisterAsMasterNode() - Verify message failed");
+            return false;
+        }
+
+        RelayDarkSendMasterNodeConsessusVote(darkSendMasterNodes[winner].vin, vinMasterNode, nBlockHeight, vchMasterNodeSignature);
+        return true;
     }
 
     return false;
@@ -6852,14 +6864,14 @@ int CDarkSendPool::GetCurrentMasterNode(int mod, int64 nBlockHeight)
         unsigned int n2 = 0;
         memcpy(&n2, &n, sizeof(n2));
 
-        printf("GetCurrentMasterNode: %d : %s : %u > %u\n", i, mn.addr.ToString().c_str(), n2, score);
+        //printf("GetCurrentMasterNode: %d : %s : %u > %u\n", i, mn.addr.ToString().c_str(), n2, score);
         if(n2 > score){
             score = n2;
             winner = i;
         }
         i++;
     }
-    printf("GetCurrentMasterNode: winner %d\n", winner);
+    //printf("GetCurrentMasterNode: winner %d\n", winner);
 
     return winner;
 }
@@ -6878,8 +6890,6 @@ int CDarkSendPool::GetMasternodeRank(CTxIn& vin, int mod)
         uint256 n = mn.CalculateScore(mod);
         unsigned int n2 = 0;
         memcpy(&n2, &n, sizeof(n2));
- 
-        printf(" -- %u %s\n", n2, mn.addr.ToString().c_str());
 
         vecMasternodeScores.push_back(make_pair(n2, mn.vin));
     }
@@ -6889,11 +6899,7 @@ int CDarkSendPool::GetMasternodeRank(CTxIn& vin, int mod)
     unsigned int rank = 0;
     BOOST_FOREACH (PAIRTYPE(uint, CTxIn)& s, vecMasternodeScores){
         rank++;
-
-        printf(" -- %d\n", s.first);
-        if(s.second == vin){
-            return rank;
-        }
+        if(s.second == vin) return rank;
     }
 
     return -1;
