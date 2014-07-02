@@ -4114,11 +4114,11 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         printf("dmcv -done downloading\n");
 
         if(pindexBest == NULL) return true;
-        if(nBlockHeight + 5 > pindexBest->nHeight + 1) {
+        if(nBlockHeight > pindexBest->nHeight + 5) {
             printf("dmcv - vote too far into the future\n");
             return false;
         }
-        if(nBlockHeight < pindexBest->nHeight + 1) {
+        if(nBlockHeight < pindexBest->nHeight - 1) {
             printf("dmcv - vote too far into the past\n");
             return false;
         }
@@ -4131,7 +4131,8 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         printf("dmcv -know masternode\n");
 
         BOOST_FOREACH (PAIRTYPE(int64, CTxIn)& s, vecMasternodesVoted){
-            if(s.second == vinMasterNodeFrom && s.first == nBlockHeight){
+            if(s.first == nBlockHeight && s.second == vinMasterNodeFrom){
+                printf("dmcv - found prev masternode vote for block\n");
                 return true;
             }
         }
@@ -4141,7 +4142,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         int rank = darkSendPool.GetMasternodeRank(vinMasterNodeFrom, 1);
         CPubKey pubkey = darkSendMasterNodes[mn].pubkey;
 
-        if (rank > 10 || rank != -1){
+        if (rank > 10 || rank == -1){
             printf("dmcv: rejecting masternode vote\n");
             return true;
         }
@@ -4164,6 +4165,14 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         if(rank >= 0){
             printf("dmcv -submitted vote\n");
             darkSendPool.SubmitMasternodeVote(vinWinningMasternode, vinMasterNodeFrom, nBlockHeight);
+        } else {
+            // ask for the dsee info once from this node
+
+            BOOST_FOREACH(CTxIn vinAsked, vecMasternodeAskedFor)
+                if (vinAsked == vin) return true;
+
+            vecMasternodeAskedFor.push_back(vin);
+            pfrom->PushMessage("dseg", vin);
         }
 
     } else if (strCommand == "dsee") { //DarkSend Election Entry   
