@@ -2699,10 +2699,10 @@ public:
 
     int GetCurrentMasterNode(int mod=10);
     int GetCurrentMasterNodeConsessus(int64 blockHeight);
-    void SubmitMasternodeVote(CTxIn vinWinningMasternode, int64 nBlockHeight);
+    void SubmitMasternodeVote(CTxIn& vinWinningMasternode, CTxIn& vinMasterNodeFrom, int64 nBlockHeight);
 
-    int GetMasternodeByVin(CTxIn vin);
-    int GetMasternodeRank(CTxIn vin, int mod);
+    int GetMasternodeByVin(CTxIn& vin);
+    int GetMasternodeRank(CTxIn& vin, int mod);
 
     void Check();
     void ChargeFees();

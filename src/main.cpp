@@ -63,7 +63,7 @@ std::vector<CMasterNode> darkSendMasterNodes;
 std::vector<CMasterNodeVote> darkSendMasterNodeVotes;
 std::vector<int64> darkSendDenominations;
 std::vector<pair<int64, pair<CTxIn, int> > > vecBlockVotes;
-std::vector<CTxIn> vecMasternodesVoted;
+std::vector<pair<int64, CTxIn> > vecMasternodesVoted;
 int64 enforceMasternodePaymentsTime = 4085657524;
 
 /** Fees smaller than this (in satoshi) are considered zero fee (for transaction creation) */
@@ -4098,11 +4098,24 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         vRecv >> vinWinningMasternode >> vinMasterNodeFrom >> nBlockHeight >> vchSig;
 
+        bool fIsInitialDownload = IsInitialBlockDownload();
+        if(fIsInitialDownload) return true;
+
+        if(pindexBest == NULL) return true;
+        if(nBlockHeight + 5 > pindexBest->nHeight + 1) {
+            printf("dmcv - vote too far into the future\n");
+            return false;
+        }
+        if(nBlockHeight < pindexBest->nHeight + 1) {
+            printf("dmcv - vote too far into the past\n");
+            return false;
+        }
+
         int mn = darkSendPool.GetMasternodeByVin(vinMasterNodeFrom);
         if (mn == -1) return false;
 
-        BOOST_FOREACH(CTxIn vin, vecMasternodesVoted){
-            if(vin == vinMasterNodeFrom){
+        BOOST_FOREACH (PAIRTYPE(int64, CTxIn)& s, vecMasternodesVoted){
+            if(s.second == vinMasterNodeFrom && s.first == nBlockHeight){
                 return true;
             }
         }
@@ -4110,7 +4123,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         int rank = darkSendPool.GetMasternodeRank(vinMasterNodeFrom, 1);
         CPubKey pubkey = darkSendMasterNodes[mn].pubkey;
 
-        if (rank > 10 && rank != -1){
+        if (rank > 10 || rank != -1){
             printf("dmcv: rejecting masternode vote\n");
             return true;
         }
@@ -4127,7 +4140,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         rank = darkSendPool.GetMasternodeRank(vinWinningMasternode, 1);
         if(rank >= 0){
-            darkSendPool.SubmitMasternodeVote(vinWinningMasternode, nBlockHeight);
+            darkSendPool.SubmitMasternodeVote(vinWinningMasternode, vinMasterNodeFrom, nBlockHeight);
         }
 
     } else if (strCommand == "dsee") { //DarkSend Election Entry   
@@ -6718,7 +6731,7 @@ uint256 CMasterNode::CalculateScore(int mod)
     return n3;
 }
 
-int CDarkSendPool::GetMasternodeByVin(CTxIn vin)
+int CDarkSendPool::GetMasternodeByVin(CTxIn& vin)
 {
     int i = 0;
 
@@ -6760,7 +6773,7 @@ int CDarkSendPool::GetCurrentMasterNode(int mod)
 }
 
 
-int CDarkSendPool::GetMasternodeRank(CTxIn vin, int mod)
+int CDarkSendPool::GetMasternodeRank(CTxIn& vin, int mod)
 {
     std::vector<pair<uint, CTxIn> > vecMasternodeScores;
 
@@ -6829,7 +6842,7 @@ int CDarkSendPool::GetCurrentMasterNodeConsessus(int64 blockHeight)
 }
 
 
-void CDarkSendPool::SubmitMasternodeVote(CTxIn vinWinningMasternode, int64 nBlockHeight)
+void CDarkSendPool::SubmitMasternodeVote(CTxIn& vinWinningMasternode, CTxIn& vinMasterNodeFrom, int64 nBlockHeight)
 {
     BOOST_FOREACH (PAIRTYPE(int64, PAIRTYPE(CTxIn, int))& s, vecBlockVotes)
     {
@@ -6838,6 +6851,7 @@ void CDarkSendPool::SubmitMasternodeVote(CTxIn vinWinningMasternode, int64 nBloc
     }
 
     vecBlockVotes.push_back(make_pair(nBlockHeight, make_pair(vinWinningMasternode, 1)));
+    vecMasternodesVoted.push_back(make_pair(nBlockHeight, vinWinningMasternode));
 }
 
 void CMasterNode::Check()
