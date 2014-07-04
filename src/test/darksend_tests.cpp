@@ -5,6 +5,7 @@
 #include "base58.h"
 #include "util.h"
 #include "main.h"
+#include "key.h"
 
 using namespace std;
 
@@ -100,6 +101,53 @@ BOOST_AUTO_TEST_CASE(darksend_masternode_search_by_vin)
     BOOST_CHECK(darkSendPool.GetMasternodeByVin(testVinNotFound) == -1);
     BOOST_CHECK(darkSendPool.GetMasternodeByVin(testVin1) == 0);
     BOOST_CHECK(darkSendPool.GetMasternodeByVin(testVin2) == 1);
+}
+
+BOOST_AUTO_TEST_CASE(darksend_add_entry)
+{
+    std::vector<CTxIn> vin;
+    vin.push_back( CTxIn(1000, 0) );
+    vin.push_back( CTxIn(1001, 0) );
+
+    std::vector<CTxOut> vout;
+    vout.push_back( CTxOut(1, CScript()) );
+    vout.push_back( CTxOut(1, CScript()) );
+
+    //try added entries
+    CDarkSendEntry e;
+    BOOST_CHECK(e.sev.size() == 0);
+    BOOST_CHECK(e.Add(vin, 1, CTransaction(), vout) == true);
+    BOOST_CHECK(e.sev.size() == 2);
+    BOOST_CHECK(e.Add(vin, 1, CTransaction(), vout) == false);
+    BOOST_CHECK(e.sev.size() == 2);
+
+    //sign one of the vin
+    BOOST_CHECK(e.AddSig(CScript(), CScript(), CTxIn(1001, 0)) == true);
+    BOOST_CHECK(e.AddSig(CScript(), CScript(), CTxIn(1001, 0)) == false);
+
+    //sign non-existant
+    BOOST_CHECK(e.AddSig(CScript(), CScript(), CTxIn(9999001, 0)) == false);
+
+}
+
+BOOST_AUTO_TEST_CASE(darksend_masternode_class)
+{
+    std::string strPubKey = "XpAy7r5RVdGLnnjWNKuB9EUDiJ5Tje9GZ8";
+    CPubKey pubkey(ParseHex(strPubKey));
+
+    std::vector<unsigned char> newSig;
+    int64 newNow = GetTimeMicros();
+
+    CMasterNode mn(CService("10.10.10.10:9999"), CTxIn(1000, 0), pubkey, newSig, newNow, pubkey);
+    mn.UpdateLastSeen();
+    mn.Check();
+    BOOST_CHECK(mn.enabled == 3); // bad vin
+    mn.lastTimeSeen -= MASTERNODE_EXPIRATION_MICROSECONDS;
+    mn.Check();
+    BOOST_CHECK(mn.enabled == 2); // hasn't pinged
+    mn.lastTimeSeen -= MASTERNODE_EXPIRATION_MICROSECONDS;
+    mn.Check();
+    BOOST_CHECK(mn.enabled == 4); // expired
 }
 
 BOOST_AUTO_TEST_SUITE_END()

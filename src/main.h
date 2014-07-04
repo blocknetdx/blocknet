@@ -2481,7 +2481,7 @@ public:
 
     bool UpdatedWithin(int microSeconds)
     {
-        //printf("UpdatedWithin %"PRI64u", %"PRI64u" --  %d \n", GetTimeMicros() , lastTimeSeen, (GetTimeMicros() - lastTimeSeen) < microSeconds);
+        printf("UpdatedWithin %"PRI64u", %"PRI64u" --  %d \n", GetTimeMicros() , lastTimeSeen, (GetTimeMicros() - lastTimeSeen) < microSeconds);
 
         return (GetTimeMicros() - lastTimeSeen) < microSeconds;
     }
@@ -2551,7 +2551,7 @@ public:
 
     bool AddSig(const CScript sigIn, const CScript sigPubKeyIn, const CTxIn vin)
     {
-        BOOST_FOREACH(CDarkSendEntryVin s, sev) {
+        BOOST_FOREACH(CDarkSendEntryVin& s, sev) {
             if(s.vin == vin){
                 if(s.isSigSet){return false;}
                 s.sig = sigIn;
