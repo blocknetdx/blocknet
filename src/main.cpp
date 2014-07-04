@@ -2670,7 +2670,7 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
 
                 if(!foundPaymentPayee || !foundPaymentAmount ) {
                     printf("CheckBlock() : Couldn't find masternode payment. Found Amount %d Found Payee %d \n", (int)foundPaymentAmount, (int)foundPaymentPayee);
-                    if(EnforceMasternodePayments) return state.DoS(100, error("CheckBlock() : Couldn't find masternode payment"));
+                    if(EnforceMasternodePayments) return state.DoS(0, error("CheckBlock() : Couldn't find masternode payment"));
                 }
             }
 

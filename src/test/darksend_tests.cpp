@@ -102,5 +102,4 @@ BOOST_AUTO_TEST_CASE(darksend_masternode_search_by_vin)
     BOOST_CHECK(darkSendPool.GetMasternodeByVin(testVin2) == 1);
 }
 
-
 BOOST_AUTO_TEST_SUITE_END()
