@@ -150,4 +150,30 @@ BOOST_AUTO_TEST_CASE(darksend_masternode_class)
     BOOST_CHECK(mn.enabled == 4); // expired
 }
 
+BOOST_AUTO_TEST_CASE(darksend_pool_add_entry)
+{
+    std::vector<CTxIn> vin;
+    vin.push_back( CTxIn(1000, 0) );
+    vin.push_back( CTxIn(1001, 0) );
+
+    std::vector<CTxOut> vout;
+    vout.push_back( CTxOut(1, CScript()) );
+    vout.push_back( CTxOut(1, CScript()) );
+
+    //try added entries
+    CDarkSendEntry e;
+    BOOST_CHECK(e.Add(vin, 1, CTransaction(), vout) == true);
+    darkSendPool.entries.push_back(e);
+
+    // add first entry
+    BOOST_CHECK(darkSendPool.state == POOL_STATUS_ACCEPTING_ENTRIES);
+    BOOST_CHECK(darkSendPool.entries.size() == 1);
+    darkSendPool.Check();
+    BOOST_CHECK(darkSendPool.state == POOL_STATUS_ACCEPTING_ENTRIES);
+    BOOST_CHECK(darkSendPool.entries.size() == 1);
+
+    
+}
+
+
 BOOST_AUTO_TEST_SUITE_END()
