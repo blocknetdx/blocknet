@@ -26,17 +26,11 @@ BOOST_AUTO_TEST_CASE(darksend_sign)
     BOOST_CHECK(dss.VerifyMessage(pubkey, vchSig, "hello2", errorMessage) == false);
 
 }
-<<<<<<< HEAD
-=======
-
-
->>>>>>> nightlydarkcoin-gitian
 BOOST_AUTO_TEST_CASE(darksend_vote)
 {
     CPubKey key;
     CMasterNodeVote mnv;
     mnv.Set(key, 1);
-<<<<<<< HEAD
     mnv.Vote();
     BOOST_CHECK(mnv.GetVotes() == 2);
     mnv.Vote();
@@ -107,13 +101,5 @@ BOOST_AUTO_TEST_CASE(darksend_masternode_search_by_vin)
     BOOST_CHECK(darkSendPool.GetMasternodeByVin(testVin1) == 0);
     BOOST_CHECK(darkSendPool.GetMasternodeByVin(testVin2) == 1);
 }
-=======
-    mnv.Vote(false);
-    BOOST_CHECK(mnv.GetVotes() == 0);
-    mnv.Vote(false);
-    BOOST_CHECK(mnv.GetVotes() == -1);
-}
-
->>>>>>> nightlydarkcoin-gitian
 
 BOOST_AUTO_TEST_SUITE_END()
