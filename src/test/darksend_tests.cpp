@@ -6,8 +6,43 @@
 #include "util.h"
 #include "main.h"
 #include "key.h"
+#include "wallet.h"
 
 using namespace std;
+
+typedef set<pair<const CWalletTx*,unsigned int> > CoinSet;
+
+static CWallet wallet;
+static std::vector<CTxIn> vCoins;
+
+
+static void add_coin(int64 nValue, int nAge = 6*24, bool fIsFromMe = false, int nInput=0)
+{
+    static int nextLockTime = 0;
+    CTransaction tx;
+    tx.nLockTime = nextLockTime++;        // so all transactions get different hashes
+    tx.vout.resize(nInput+1);
+    tx.vout[nInput].nValue = nValue;
+    CWalletTx* wtx = new CWalletTx(&wallet, tx);
+    if (fIsFromMe)
+    {
+        // IsFromMe() returns (GetDebit() > 0), and GetDebit() is 0 if vin.empty(),
+        // so stop vin being empty, and cache a non-zero Debit to fake out IsFromMe()
+        wtx->vin.resize(1);
+        wtx->fDebitCached = true;
+        wtx->nDebitCached = 1;
+    }
+    COutput output(wtx, nInput, nAge);
+    vCoins.push_back(output);
+}
+
+static void empty_wallet(void)
+{
+    BOOST_FOREACH(COutput output, vCoins)
+        delete output.tx;
+    vCoins.clear();
+}
+
 
 BOOST_AUTO_TEST_SUITE(darksend_tests)
 
@@ -190,5 +225,23 @@ BOOST_AUTO_TEST_CASE(darksend_pool_add_entry)
 
 }
 
+
+BOOST_AUTO_TEST_CASE(darksend_coin_selection)
+{
+    CCoinControl *coinControl=NULL;
+    CoinSet setCoinsRet, setCoinsRet2;
+    int64 nValueRet;
+
+    empty_wallet();
+
+    BOOST_CHECK(!wallet.SelectCoinsDark(100*COIN, vCoins, nValueRet, coinControl));
+
+    add_coin(100*CENT, 4);
+
+    BOOST_CHECK(wallet.SelectCoinsDark(100*COIN, vCoins, nValueRet, coinControl));
+
+ 
+
+}
 
 BOOST_AUTO_TEST_SUITE_END()
