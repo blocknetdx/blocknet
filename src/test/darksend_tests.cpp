@@ -163,16 +163,31 @@ BOOST_AUTO_TEST_CASE(darksend_pool_add_entry)
     //try added entries
     CDarkSendEntry e;
     BOOST_CHECK(e.Add(vin, 1, CTransaction(), vout) == true);
-    darkSendPool.entries.push_back(e);
 
     // add first entry
+    darkSendPool.entries.push_back(e);
     BOOST_CHECK(darkSendPool.state == POOL_STATUS_ACCEPTING_ENTRIES);
     BOOST_CHECK(darkSendPool.entries.size() == 1);
     darkSendPool.Check();
     BOOST_CHECK(darkSendPool.state == POOL_STATUS_ACCEPTING_ENTRIES);
     BOOST_CHECK(darkSendPool.entries.size() == 1);
-
     
+    // add second entry
+    darkSendPool.entries.push_back(e);
+    BOOST_CHECK(darkSendPool.state == POOL_STATUS_ACCEPTING_ENTRIES);
+    BOOST_CHECK(darkSendPool.entries.size() == 2);
+    darkSendPool.Check();
+    BOOST_CHECK(darkSendPool.state == POOL_STATUS_ACCEPTING_ENTRIES);
+    BOOST_CHECK(darkSendPool.entries.size() == 2);
+
+    // add third entry
+    darkSendPool.entries.push_back(e);
+    BOOST_CHECK(darkSendPool.state == POOL_STATUS_ACCEPTING_ENTRIES);
+    BOOST_CHECK(darkSendPool.entries.size() == 3);
+    darkSendPool.Check();
+    BOOST_CHECK(darkSendPool.state == POOL_STATUS_FINALIZE_TRANSACTION);
+    BOOST_CHECK(darkSendPool.entries.size() == 3);
+
 }
 
 

@@ -1721,11 +1721,14 @@ string CWallet::DarkSendDenominate(int64 nValue)
 
 string CWallet::DarkSendMoney(const CTxDestination& address, int64 nValue)
 {
+    printf("--- 1\n");
     // Check amount
     if (nValue <= 0)
         return _("Invalid amount");
     if (nValue + nTransactionFee > GetBalance())
         return _("Insufficient funds");
+
+    printf("--- 2\n");
 
     if (IsLocked())
     {
@@ -1761,11 +1764,15 @@ string CWallet::DarkSendMoney(const CTxDestination& address, int64 nValue)
     int64 nValueIn = 0;
     std::vector<CTxIn> vCoins;
 
+    printf("--- 3\n");
+
     // ** find the coins we'll use
     if (!SelectCoinsDarkDenominated(nTotalValue, vCoins, nValueIn, coinControl))
     {
         return _("Insufficient funds");
     }
+
+    printf("--- 4\n");
 
     if(nValueIn != nTotalValue) {            
         return _("DarkSend couldn't find the denominated funds to build this transaction");
