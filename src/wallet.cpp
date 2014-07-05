@@ -1078,24 +1078,21 @@ static void ApproximateBestSubset(vector<pair<int64, pair<const CWalletTx*,unsig
 }
 
 /* select coins with 1 unspent output */
-bool CWallet::SelectCoinsExactOutput(int64 nTargetValue, CTxIn& vin, int64& nValueRet, CScript& pubScript, bool confirmed, const CCoinControl* coinControl) const
+bool CWallet::SelectCoinsExactOutput(int64 nTargetValue, CTxIn& vin, int64& nValueRet, CScript& pubScript, bool confirmed) const
 {
     vector<COutput> vCoins;
     AvailableCoins2(vCoins, confirmed);
     
-    // coin control -> return all selected outputs (we want all selected to go into the transaction for sure)
+    //printf("has coinControl\n");
+    BOOST_FOREACH(const COutput& out, vCoins)
     {
-        //printf("has coinControl\n");
-        BOOST_FOREACH(const COutput& out, vCoins)
-        {
-            //printf("Checking input %"PRI64d" > %"PRI64d"\n", out.tx->vout[out.i].nValue, nTargetValue);
-            if(out.tx->vout[out.i].nValue == nTargetValue){ //exactly
-                vin = CTxIn(out.tx->GetHash(),out.i);
-                pubScript = out.tx->vout[out.i].scriptPubKey; // the inputs PubKey
-                nValueRet = out.tx->vout[out.i].nValue;
-                printf("Found unspent output equal to nValue\n");
-                return true;
-            }
+        //printf("Checking input %"PRI64d" > %"PRI64d"\n", out.tx->vout[out.i].nValue, nTargetValue);
+        if(out.tx->vout[out.i].nValue == nTargetValue){ //exactly
+            vin = CTxIn(out.tx->GetHash(),out.i);
+            pubScript = out.tx->vout[out.i].scriptPubKey; // the inputs PubKey
+            nValueRet = out.tx->vout[out.i].nValue;
+            printf("Found unspent output equal to nValue\n");
+            return true;
         }
     }
 
@@ -1223,91 +1220,78 @@ bool CWallet::SelectCoins(int64 nTargetValue, set<pair<const CWalletTx*,unsigned
             SelectCoinsMinConf(nTargetValue, 0, 1, vCoins, setCoinsRet, nValueRet));
 }
 
-bool CWallet::SelectCoinsDark(int64 nTargetValue, std::vector<CTxIn>& setCoinsRet, int64& nValueRet, const CCoinControl* coinControl) const 
+bool CWallet::SelectCoinsDark(int64 nTargetValue, std::vector<CTxIn>& setCoinsRet, int64& nValueRet) const 
 {
+    CCoinControl *coinControl=NULL;
+
     vector<COutput> vCoins;
     AvailableCoins(vCoins, true, coinControl);
     
-    // coin control -> return all selected outputs (we want all selected to go into the transaction for sure)
-    if (coinControl && coinControl->HasSelected())
+    printf("found coins %d\n", vCoins.size());
+
+    BOOST_FOREACH(const COutput& out, vCoins)
     {
-        BOOST_FOREACH(const COutput& out, vCoins)
-        {
-            CTxIn vin = CTxIn(out.tx->GetHash(),out.i);
-            nValueRet += out.tx->vout[out.i].nValue;
-            setCoinsRet.push_back(vin);
-        }
-        return (nValueRet >= nTargetValue);
+        CTxIn vin = CTxIn(out.tx->GetHash(),out.i);
+        printf(" vin nValue %"PRI64d"\n", out.tx->vout[out.i].nValue);
+        nValueRet += out.tx->vout[out.i].nValue;
+        setCoinsRet.push_back(vin);
+        if(nValueRet >= nTargetValue) return true;
     }
 
     return false;
 }
 
-bool CWallet::SelectCoinsDarkDenominated(int64 nTargetValue, std::vector<CTxIn>& setCoinsRet, int64& nValueRet, const CCoinControl* coinControl) const 
+bool CWallet::SelectCoinsDarkDenominated(int64 nTargetValue, std::vector<CTxIn>& setCoinsRet, int64& nValueRet) const 
 {
+    CCoinControl *coinControl=NULL;
+
     vector<COutput> vCoins;
     AvailableCoins(vCoins, true, coinControl);
     
-    // coin control -> return all selected outputs (we want all selected to go into the transaction for sure)
-    if (coinControl && coinControl->HasSelected())
+    //printf("has coinControl\n");
+    BOOST_FOREACH(const COutput& out, vCoins)
     {
-        //printf("has coinControl\n");
-        BOOST_FOREACH(const COutput& out, vCoins)
-        {
-            bool isDenominated = false;
-            BOOST_FOREACH(int64 d, darkSendDenominations)
-                if(out.tx->vout[out.i].nValue == d)
-                    isDenominated = true;
+        bool isDenominated = false;
+        BOOST_FOREACH(int64 d, darkSendDenominations)
+            if(out.tx->vout[out.i].nValue == d)
+                isDenominated = true;
 
-            if(!isDenominated) continue;
-            if(nValueRet + out.tx->vout[out.i].nValue > nTargetValue) continue;
+        if(!isDenominated) continue;
+        if(nValueRet + out.tx->vout[out.i].nValue > nTargetValue) continue;
 
-            CTxIn vin = CTxIn(out.tx->GetHash(), out.i);
-            nValueRet += out.tx->vout[out.i].nValue;
-            setCoinsRet.push_back(vin);
-        }
-        return (nValueRet >= nTargetValue);
+        CTxIn vin = CTxIn(out.tx->GetHash(), out.i);
+        nValueRet += out.tx->vout[out.i].nValue;
+        setCoinsRet.push_back(vin);
     }
-
-    return false;
+    return (nValueRet >= nTargetValue);
 }
 
-bool CWallet::SelectCoinsWithoutDenomination(int64 nTargetValue, set<pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64& nValueRet, const CCoinControl* coinControl) const
+bool CWallet::SelectCoinsWithoutDenomination(int64 nTargetValue, set<pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64& nValueRet) const
 {
+    CCoinControl *coinControl=NULL;
+
     vector<COutput> vCoins;
     AvailableCoins(vCoins, true, coinControl, true);
     
-    // coin control -> return all selected outputs (we want all selected to go into the transaction for sure)
-    if (coinControl && coinControl->HasSelected())
+    BOOST_FOREACH(const COutput& out, vCoins)
     {
-        BOOST_FOREACH(const COutput& out, vCoins)
-        {
-            nValueRet += out.tx->vout[out.i].nValue;
-            setCoinsRet.insert(make_pair(out.tx, out.i));
-        }
-        return (nValueRet >= nTargetValue);
+        nValueRet += out.tx->vout[out.i].nValue;
+        setCoinsRet.insert(make_pair(out.tx, out.i));
     }
-
-    return (SelectCoinsMinConf(nTargetValue, 1, 6, vCoins, setCoinsRet, nValueRet) ||
-            SelectCoinsMinConf(nTargetValue, 1, 1, vCoins, setCoinsRet, nValueRet) ||
-            SelectCoinsMinConf(nTargetValue, 0, 1, vCoins, setCoinsRet, nValueRet));
+    return (nValueRet >= nTargetValue);
 }
 
-bool CWallet::SelectCoinsMoreThanOutput(int64 nTargetValue, CTxIn& vin, int64& nValueRet, bool confirmed, const CCoinControl* coinControl) const
+bool CWallet::SelectCoinsMoreThanOutput(int64 nTargetValue, CTxIn& vin, int64& nValueRet, bool confirmed) const
 {
     vector<COutput> vCoins;
     AvailableCoins2(vCoins, confirmed);
     
-    // coin control -> return all selected outputs (we want all selected to go into the transaction for sure)
+    BOOST_FOREACH(const COutput& out, vCoins)
     {
-        //printf("has coinControl\n");
-        BOOST_FOREACH(const COutput& out, vCoins)
-        {
-            if(out.tx->vout[out.i].nValue >= nTargetValue){ //more than min
-                CTxIn vin = CTxIn(out.tx->GetHash(),out.i);
-                nValueRet = out.tx->vout[out.i].nValue;
-                return true;
-            }
+        if(out.tx->vout[out.i].nValue >= nTargetValue){ //more than min
+            CTxIn vin = CTxIn(out.tx->GetHash(),out.i);
+            nValueRet = out.tx->vout[out.i].nValue;
+            return true;
         }
     }
 
@@ -1363,7 +1347,7 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64> >& vecSend,
                 set<pair<const CWalletTx*,unsigned int> > setCoins;
                 int64 nValueIn = 0;
                 if(noDenominatedInputs){
-                    if (!SelectCoinsWithoutDenomination(nTotalValue, setCoins, nValueIn, coinControl))
+                    if (!SelectCoinsWithoutDenomination(nTotalValue, setCoins, nValueIn))
                     {
                         strFailReason = _("Insufficient funds (non-denominated)");
                         return false;
@@ -1595,7 +1579,7 @@ string CWallet::DarkSendDenominate(int64 nValue)
     if (nValue <= 0)
         return _("Invalid amount");
     if (nValue + nTransactionFee > GetBalance())
-        return _("Insufficient funds");
+        return _("Insufficient funds 1");
 
     if (IsLocked())
     {
@@ -1608,7 +1592,6 @@ string CWallet::DarkSendDenominate(int64 nValue)
     //**************
 
     int64 nFeeRet = 0.001*COIN; ///need to get a better fee calc
-    CCoinControl* coinControl = new CCoinControl();
     int64 nTotalValue = nValue + nFeeRet;
 
     int64 amount = roundUp64(nValue, COIN/100);
@@ -1628,12 +1611,12 @@ string CWallet::DarkSendDenominate(int64 nValue)
     int64 nValueIn = 0;
 
     //try to use denominated funds (for added anonymity)
-    if (!SelectCoinsDarkDenominated(nTotalValue, vCoins, nValueIn, coinControl))
+    if (!SelectCoinsDarkDenominated(nTotalValue, vCoins, nValueIn))
     {
         nValueIn = 0;
-        if (!SelectCoinsDark(nTotalValue, vCoins, nValueIn, coinControl))
+        if (!SelectCoinsDark(nTotalValue, vCoins, nValueIn))
         {
-            return _("Insufficient funds");
+            return _("Insufficient funds 2");
         }
     }
 
@@ -1645,7 +1628,7 @@ string CWallet::DarkSendDenominate(int64 nValue)
         int64 nValueIn2 = 0;
         std::vector<CTxIn> vCoinsCollateral;
 
-        if (!SelectCoinsDark(POOL_FEE_AMOUNT+(0.01*COIN), vCoinsCollateral, nValueIn2, coinControl))
+        if (!SelectCoinsDark(POOL_FEE_AMOUNT+(0.01*COIN), vCoinsCollateral, nValueIn2))
         {
             BOOST_FOREACH(CTxIn v, vCoins)
                 UnlockCoin(v.prevout);
@@ -1745,7 +1728,6 @@ string CWallet::DarkSendMoney(const CTxDestination& address, int64 nValue)
     //**************
 
     int64 nFeeRet = 0.001*COIN; ///need to get a better fee calc
-    CCoinControl* coinControl = new CCoinControl();
     int64 nTotalValue = nValue + nFeeRet;
 
     int64 amount = roundUp64(nValue, COIN/100);
@@ -1767,7 +1749,7 @@ string CWallet::DarkSendMoney(const CTxDestination& address, int64 nValue)
     printf("--- 3\n");
 
     // ** find the coins we'll use
-    if (!SelectCoinsDarkDenominated(nTotalValue, vCoins, nValueIn, coinControl))
+    if (!SelectCoinsDarkDenominated(nTotalValue, vCoins, nValueIn))
     {
         return _("Insufficient funds");
     }
@@ -1787,7 +1769,7 @@ string CWallet::DarkSendMoney(const CTxDestination& address, int64 nValue)
         int64 nValueIn2 = 0;
         std::vector<CTxIn> vCoinsCollateral;
 
-        if (!SelectCoinsDark(POOL_FEE_AMOUNT+(0.01*COIN), vCoinsCollateral, nValueIn2, coinControl))
+        if (!SelectCoinsDark(POOL_FEE_AMOUNT+(0.01*COIN), vCoinsCollateral, nValueIn2))
         {
             BOOST_FOREACH(CTxIn v, vCoins)
                 UnlockCoin(v.prevout);

@@ -6445,7 +6445,7 @@ bool CDarkSendPool::GetMasterNodeVin(CTxIn& vin, CPubKey& pubkey, CKey& secretKe
     CScript pubScript;
 
     // try once before we try to denominate
-    if (!pwalletMain->SelectCoinsExactOutput(1000*COIN, vin, nValueIn, pubScript, true, NULL))
+    if (!pwalletMain->SelectCoinsExactOutput(1000*COIN, vin, nValueIn, pubScript, true))
     {
         if(fDebug) printf("CDarkSendPool::GetMasterNodeVin - I'm not a capable masternode\n");
         return false;
