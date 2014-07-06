@@ -4003,10 +4003,12 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
     }
 
 
-    else if (strCommand == "dsi") { //DarkSend vIn        
+    else if (strCommand == "dsi") { //DarkSend vIn   
+        printf("dsi 1\n");     
         if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
             return false;
         }
+        printf("dsi 2\n");     
 
         std::vector<CTxIn> in;
         int64 nAmount;
@@ -4014,17 +4016,22 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         std::vector<CTxOut> out;
         vRecv >> in >> nAmount >> txCollateral >> out;
 
+        printf("dsi 3\n");     
+
         int accepted = 0;
         std::string error = "";
         if(darkSendPool.AddEntry(in, nAmount, txCollateral, out, error)){
+            printf("dsi 4\n");     
             accepted = 1;
             pfrom->PushMessage("dssu", darkSendPool.GetState(), darkSendPool.GetEntriesCount(), accepted, error);
             darkSendPool.Check();
 
             RelayDarkSendStatus(darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);    
         } else {
+            printf("dsi 5\n");
             pfrom->PushMessage("dssu", darkSendPool.GetState(), darkSendPool.GetEntriesCount(), accepted, error);
         }
+        printf("dsi 6\n");
     }
 
     else if (strCommand == "dssub") { //DarkSend Subscribe To         
@@ -6161,21 +6168,13 @@ bool CDarkSendPool::SignatureValid(const CScript& newSig, const CTxIn& newVin){
 }
 
 bool CDarkSendPool::IsCollateralValid(const CTransaction& txCollateral){    
-    if(txCollateral.vout.size() != 1){
-        if(fDebug) printf ("CDarkSendPool::IsCollateralValid - vout wrong size\n");
-        return false;
-    }
-
-    if(txCollateral.vin.size() != 1){
-        if(fDebug) printf ("CDarkSendPool::IsCollateralValid - vin wrong size\n");
-        return false;
-    }
-
     if(txCollateral.vout[0].scriptPubKey != collateralPubKey || 
        txCollateral.vout[0].nValue != POOL_FEE_AMOUNT) {
         if(fDebug) printf ("CDarkSendPool::IsCollateralValid - not correct amount or addr (0)\n");
         return false;
     }
+
+    printf("CDarkSendPool::IsCollateralValid %s\n", txCollateral.ToString().c_str());
 
     CWalletTx wtxCollateral = CWalletTx(pwalletMain, txCollateral);
 
@@ -6285,9 +6284,16 @@ void CDarkSendPool::SendMoney(const CTransaction& collateral, std::vector<CTxIn>
 
     if(state == POOL_STATUS_ERROR || state == POOL_STATUS_SUCCESS) ClearLastMessage();
 
+    printf("CDarkSendPool::SendMoney() - Is connected to masternode?.\n");
+
     if(!IsConnectedToMasterNode()){
-        ConnectToBestMasterNode();
+        if(!ConnectToBestMasterNode()){
+            printf("CDarkSendPool::SendMoney() - Couldn't connect to masternode.\n");
+            return;
+        }
     }
+
+    printf("CDarkSendPool::SendMoney() - connected to masternode.\n");
 
     // store our entry for later use
     CDarkSendEntry e;
@@ -6406,8 +6412,8 @@ void CDarkSendPool::DisconnectMasterNode(){
     }
 }
 
-void CDarkSendPool::ConnectToBestMasterNode(int depth){
-    if(fMasterNode) return;
+bool CDarkSendPool::ConnectToBestMasterNode(int depth){
+    if(fMasterNode) return false;
     
     int winner = GetCurrentMasterNode();
     printf("winner %d\n", winner);
@@ -6418,12 +6424,13 @@ void CDarkSendPool::ConnectToBestMasterNode(int depth){
             masterNodeAddr = darkSendMasterNodes[winner].addr.ToString();
             UpdateState(POOL_STATUS_ACCEPTING_ENTRIES);
             GetLastValidBlockHash(masterNodeBlockHash);
+            return true;
         } else {
             darkSendMasterNodes[winner].enabled = 0;
             if(depth < 5){
                 UpdateState(POOL_STATUS_ERROR);
                 lastMessage = "Trying MasterNode #" + to_string(depth);
-                ConnectToBestMasterNode(depth+1);
+                return ConnectToBestMasterNode(depth+1);
             } else {
                 UpdateState(POOL_STATUS_ERROR);
                 lastMessage = "No valid MasterNode";
@@ -6437,6 +6444,7 @@ void CDarkSendPool::ConnectToBestMasterNode(int depth){
     }
 
     //if couldn't connect, disable that one and try next
+    return false;
 }
 
 bool CDarkSendPool::GetMasterNodeVin(CTxIn& vin, CPubKey& pubkey, CKey& secretKey)

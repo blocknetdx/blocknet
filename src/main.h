@@ -2718,7 +2718,7 @@ public:
 
     bool IsConnectedToMasterNode();
     void DisconnectMasterNode();
-    void ConnectToBestMasterNode(int depth=0);
+    bool ConnectToBestMasterNode(int depth=0);
     bool SubscribeToMasterNode();
 
     bool GetMasterNodeVin(CTxIn& vin, CPubKey& pubkey, CKey& secretKey);

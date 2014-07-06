@@ -1232,6 +1232,7 @@ bool CWallet::SelectCoinsDark(int64 nTargetValue, std::vector<CTxIn>& setCoinsRe
     BOOST_FOREACH(const COutput& out, vCoins)
     {
         CTxIn vin = CTxIn(out.tx->GetHash(),out.i);
+        vin.prevPubKey = out.tx->vout[out.i].scriptPubKey; // the inputs PubKey
         printf(" vin nValue %"PRI64d"\n", out.tx->vout[out.i].nValue);
         nValueRet += out.tx->vout[out.i].nValue;
         setCoinsRet.push_back(vin);
@@ -1260,6 +1261,7 @@ bool CWallet::SelectCoinsDarkDenominated(int64 nTargetValue, std::vector<CTxIn>&
         if(nValueRet + out.tx->vout[out.i].nValue > nTargetValue) continue;
 
         CTxIn vin = CTxIn(out.tx->GetHash(), out.i);
+        vin.prevPubKey = out.tx->vout[out.i].scriptPubKey; // the inputs PubKey
         nValueRet += out.tx->vout[out.i].nValue;
         setCoinsRet.push_back(vin);
     }
@@ -1290,6 +1292,7 @@ bool CWallet::SelectCoinsMoreThanOutput(int64 nTargetValue, CTxIn& vin, int64& n
     {
         if(out.tx->vout[out.i].nValue >= nTargetValue){ //more than min
             CTxIn vin = CTxIn(out.tx->GetHash(),out.i);
+            vin.prevPubKey = out.tx->vout[out.i].scriptPubKey; // the inputs PubKey
             nValueRet = out.tx->vout[out.i].nValue;
             return true;
         }
@@ -1654,13 +1657,16 @@ string CWallet::DarkSendDenominate(int64 nValue)
             txCollateral.vout.push_back(vout3);
         }
         
-/*        if(!SignSignature(*this, pubScript2, txCollateral, 0, int(SIGHASH_ALL|SIGHASH_ANYONECANPAY))) {
-            BOOST_FOREACH(CTxIn v, vCoins)
-                UnlockCoin(v.prevout);
+        int vinNumber = 0;
+        BOOST_FOREACH(CTxIn v, txCollateral.vin) {
+            if(!SignSignature(*this, v.prevPubKey, txCollateral, vinNumber, int(SIGHASH_ALL|SIGHASH_ANYONECANPAY))) {
+                BOOST_FOREACH(CTxIn v, vCoins)
+                    UnlockCoin(v.prevout);
 
-            return _("CDarkSendPool::Sign - Unable to sign collateral transaction! \n");
+                return _("CDarkSendPool::Sign - Unable to sign collateral transaction! \n");
+            }
         }
-*/
+
         BOOST_FOREACH(CTxIn v, vCoinsCollateral)
             LockCoin(v.prevout);
     }
