@@ -1,0 +1,67 @@
+diff --git a/src/makefile.osx b/src/makefile.osx
+index 038135c..796e59a 100644
+--- a/src/makefile.osx
++++ b/src/makefile.osx
+@@ -7,17 +7,22 @@
+ # Originally by Laszlo Hanyecz (solar@heliacal.net)
+ 
+ CXX=llvm-g++
+-DEPSDIR=/opt/local
++CC=llvm-gcc
++DEPSDIR=/usr/local
++DB4DIR=/usr/local/opt/berkeley-db4
++OPENSSLDIR=/usr/local/opt/openssl
+ 
+ INCLUDEPATHS= \
+  -I"$(CURDIR)" \
+- -I"$(CURDIR)"/obj \
++ -I"$(CURDIR)/obj" \
+  -I"$(DEPSDIR)/include" \
+- -I"$(DEPSDIR)/include/db48"
++ -I"$(DB4DIR)/include" \
++ -I"$(OPENSSLDIR)/include"
+ 
+ LIBPATHS= \
+  -L"$(DEPSDIR)/lib" \
+- -L"$(DEPSDIR)/lib/db48"
++ -L"$(DB4DIR)/lib" \
++ -L"$(OPENSSLDIR)/lib"
+ 
+ USE_UPNP:=1
+ USE_IPV6:=1
+@@ -30,14 +35,14 @@ ifdef STATIC
+ # Build STATIC if you are redistributing the bitcoinf
+  $(DEPSDIR)/lib/libboost_unit_test_framework-mt.a
+ LIBS += \
+- $(DEPSDIR)/lib/db48/libdb_cxx-4.8.a \
++ $(DB4DIR)/lib/libdb_cxx-4.8.a \
+  $(DEPSDIR)/lib/libboost_system-mt.a \
+  $(DEPSDIR)/lib/libboost_filesystem-mt.a \
+  $(DEPSDIR)/lib/libboost_program_options-mt.a \
+  $(DEPSDIR)/lib/libboost_thread-mt.a \
+  $(DEPSDIR)/lib/libboost_chrono-mt.a \
+- $(DEPSDIR)/lib/libssl.a \
+- $(DEPSDIR)/lib/libcrypto.a \
++ $(OPENSSLDIR)/lib/libssl.a \
++ $(OPENSSLDIR)/lib/libcrypto.a \
+  -lz
+ else
+ TESTLIBS += \
+@@ -67,7 +72,7 @@ DEBUGFLAGS = -g
+ endif
+ 
+ # osx 10.9 has changed the stdlib default to libc++. To prevent some link error, you may need to use libstdc++
+-CFLAGS += -stdlib=libstdc++
++# CFLAGS += -stdlib=libstdc++
+ 
+ # ppc doesn't work because we don't support big-endian
+ CFLAGS += -Wall -Wextra -Wformat -Wformat-security -Wno-unused-parameter \
+@@ -167,7 +172,7 @@ obj/%.o: %.cpp
+ 	  rm -f $(@:%.o=%.d)
+ 
+ obj/%.o: %.c
+-	$(CXX) -c $(CFLAGS) -fpermissive -MMD -MF $(@:%.o=%.d) -o $@ $<
++	$(CC) -c $(CFLAGS) -fpermissive -MMD -MF $(@:%.o=%.d) -o $@ $<
+ 	@cp $(@:%.o=%.d) $(@:%.o=%.P); \
+ 	  sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
+ 	      -e '/^$$/ d' -e 's/$$/ :/' < $(@:%.o=%.d) >> $(@:%.o=%.P); \

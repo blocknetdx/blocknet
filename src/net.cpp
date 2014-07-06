@@ -1202,38 +1202,16 @@ void MapPort(bool)
 // Each pair gives a source name and a seed name.
 // The first name is used as information source for addrman.
 // The second name should resolve to a list of seed addresses.
-
 static const char *strMainNetDNSSeed[][2] = {
-    {"", "23.23.186.131"}, //Evan's seed node
-    {"drkpool.com", "162.252.83.46"},
-    {"", "107.155.71.72"},
-    {"", "50.16.206.102"},
-    {"", "50.19.116.123"},
-    {"", "98.165.130.67"},
-    {"", "23.23.186.131"},
-    {"", "50.16.206.102"},
-    {"", "50.19.116.123"},
-    {"", "50.19.116.123"},
-    {"", "23.21.204.34"},
-    {"", "188.142.39.105"},
-    {"", "50.16.206.102"}, //InternetApe's seed node
-    {"", "23.23.186.131"},
-    {"", "50.19.116.123"},
-    {"", "54.248.227.151"},
-    {"", "42.121.58.91"},
-    {"", "50.81.192.39"},
-    {"", "54.193.124.32"},
-    {"", "62.141.39.175"},
-    {"", "5.254.96.3"},
-    {"", "175.115.201.44"},
-    {"", "208.53.191.2"},
-    {"", "162.243.33.16"},
-    {NULL, NULL},
+    {"darkcoin.io", "dnsseed.darkcoin.io"},
+    {"darkcoin.qa", "dnsseed.darkcoin.qa"},
+    {NULL, NULL}
 };
 
 static const char *strTestNetDNSSeed[][2] = {
-    {"", "23.23.186.131"},
-    {NULL, NULL},
+    {"darkcoin.io", "testnet-seed.darkcoin.io"},
+    {"darkcoin.qa", "testnet-seed.darkcoin.qa"},
+    {NULL, NULL}
 };
 
 void ThreadDNSAddressSeed()
@@ -1967,7 +1945,7 @@ void RelayDarkSendElectionEntry(const CTxIn vin, const CService addr, const std:
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
         pnode->PushMessage("dsee", vin, addr, vchSig, nNow, pubkey, pubkey2, count, current, lastUpdated);
-    }   
+    }
 }
 
 void RelayDarkSendElectionEntryPing(const CTxIn vin, const std::vector<unsigned char> vchSig, const int64 nNow, const bool stop)
@@ -1976,7 +1954,7 @@ void RelayDarkSendElectionEntryPing(const CTxIn vin, const std::vector<unsigned 
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
         pnode->PushMessage("dseep", vin, vchSig, nNow, stop);
-    }   
+    }
 }
 
 
