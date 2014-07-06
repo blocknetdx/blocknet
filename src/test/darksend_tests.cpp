@@ -27,16 +27,46 @@ BOOST_AUTO_TEST_CASE(darksend_sign)
 
 }
 
+BOOST_AUTO_TEST_CASE(set_collateral_address_bad)
+{
+	CDarkSendPool * dsp_ptr = new CDarkSendPool();
+
+	string crappy = "badaddress";
+
+	BOOST_CHECK( dsp_ptr->SetCollateralAddress(crappy) == false );
+	delete dsp_ptr;
+}
+
+BOOST_AUTO_TEST_CASE(set_collateral_address_production)
+{
+	CDarkSendPool * dsp_ptr = new CDarkSendPool();
+
+	string prod = "Xq19GqFvajRrEdDHYRKGYjTsQfpV5jyipF";
+
+	BOOST_CHECK( dsp_ptr->SetCollateralAddress(prod) == true );
+	delete dsp_ptr;
+}
+
+BOOST_AUTO_TEST_CASE(set_collateral_address_testnet)
+{
+	CDarkSendPool * dsp_ptr = new CDarkSendPool();
+
+	string testnet = "mxE2Rp3oYpSEFdsN5TdHWhZvEHm3PJQQVm";
+
+	BOOST_CHECK( dsp_ptr->SetCollateralAddress(testnet) == true );
+	delete dsp_ptr;
+}
+
 
 BOOST_AUTO_TEST_CASE(darksend_vote)
 {
     CPubKey key;
     CMasterNodeVote mnv;
     mnv.Set(key, 1);
-    mnv.Vote(false);
-    BOOST_CHECK(mnv.GetVotes() == 0);
-    mnv.Vote(false);
-    BOOST_CHECK(mnv.GetVotes() == -1);
+    mnv.Vote();
+    BOOST_CHECK(mnv.GetVotes() == 2);
+    mnv.Vote();
+    BOOST_CHECK(mnv.GetVotes() == 3);
 }
 
 
