@@ -5840,12 +5840,15 @@ public:
 */
 
 
-void CDarkSendPool::SetCollateralAddress(std::string strAddress){
+bool CDarkSendPool::SetCollateralAddress(std::string strAddress){
     CBitcoinAddress address;
     if (!address.SetString(strAddress))
+    {
         printf("CDarkSendPool::SetCollateralAddress - Invalid DarkSend collateral address\n");
-
+        return false;
+    }
     collateralPubKey.SetDestination(address.Get());
+    return true;
 }
 
 //Get last block hash
