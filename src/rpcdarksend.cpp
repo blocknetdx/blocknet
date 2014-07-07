@@ -63,7 +63,6 @@ Value getpoolinfo(const Array& params, bool fHelp)
     obj.push_back(Pair("state",        darkSendPool.GetState()));
     obj.push_back(Pair("entries",      darkSendPool.GetEntriesCount()));
     obj.push_back(Pair("entries_accepted",      darkSendPool.GetCountEntriesAccepted()));
-    obj.push_back(Pair("signatures",   darkSendPool.GetSignatureCount()));
     return obj;
 }
 

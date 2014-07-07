@@ -1009,6 +1009,7 @@ bool CTransaction::AcceptToMemoryPool(CValidationState &state, bool fCheckInputs
     try {
         return mempool.accept(state, *this, fCheckInputs, fLimitFree, pfMissingInputs);
     } catch(std::runtime_error &e) {
+        printf("System error: %s\n", e.what());
         return state.Abort(_("System error: ") + e.what());
     }
 }
@@ -4003,12 +4004,10 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
     }
 
 
-    else if (strCommand == "dsi") { //DarkSend vIn   
-        printf("dsi 1\n");     
+    else if (strCommand == "dsi") { //DarkSend vIn
         if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
             return false;
         }
-        printf("dsi 2\n");     
 
         std::vector<CTxIn> in;
         int64 nAmount;
@@ -4016,22 +4015,38 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         std::vector<CTxOut> out;
         vRecv >> in >> nAmount >> txCollateral >> out;
 
-        printf("dsi 3\n");     
-
         int accepted = 0;
         std::string error = "";
+
+        /*//check it like a transaction
+        {
+            CValidationState state;
+            CTransaction txNew;
+
+            BOOST_FOREACH(const CTxOut o, out)
+                txNew.vout.push_back(o);
+
+            BOOST_FOREACH(const CTxIn i, in)
+                txNew.vin.push_back(i);
+
+            if (!txNew.AcceptToMemoryPool(state, true, false)){ //AcceptableInputs(state, true)){
+                printf("dsi -- transactione not valid! %s\n", txNew.ToString().c_str());
+                accepted = 0;
+                error = "transaction not valid";
+                pfrom->PushMessage("dssu", darkSendPool.GetState(), darkSendPool.GetEntriesCount(), accepted, error);
+                return false;
+            }
+        }*/
+
         if(darkSendPool.AddEntry(in, nAmount, txCollateral, out, error)){
-            printf("dsi 4\n");     
             accepted = 1;
             pfrom->PushMessage("dssu", darkSendPool.GetState(), darkSendPool.GetEntriesCount(), accepted, error);
             darkSendPool.Check();
 
             RelayDarkSendStatus(darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);    
         } else {
-            printf("dsi 5\n");
             pfrom->PushMessage("dssu", darkSendPool.GetState(), darkSendPool.GetEntriesCount(), accepted, error);
         }
-        printf("dsi 6\n");
     }
 
     else if (strCommand == "dssub") { //DarkSend Subscribe To         
@@ -4060,7 +4075,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         darkSendPool.StatusUpdate(state, entriesCount, accepted, error);
 
-        printf("DarkSendStatusUpdate - state: %i entriesCount: %i accepted: %i \n", state, entriesCount, accepted);
+        printf("DarkSendStatusUpdate - state: %i entriesCount: %i accepted: %i error: %s \n", state, entriesCount, accepted, error.c_str());
     }
 
     else if (strCommand == "dss") { //DarkSend Sign Final Tx
@@ -4068,15 +4083,26 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             return false;
         }
 
-        CScript sig;
-        CTxIn vin;
-        CScript pubKey;
-        vRecv >> sig >> vin >> pubKey;
+        vector<CTxIn> sigs;
+        vRecv >> sigs;
 
-        if(darkSendPool.AddScriptSig(sig, vin, pubKey)){
+        bool success = false;
+        int count = 0;
+
+        printf(" -- sigs count %d %d\n", (int)sigs.size(), count);
+
+        BOOST_FOREACH(const CTxIn item, sigs)
+        {
+            if(darkSendPool.AddScriptSig(item)) success = true;
+            printf(" -- sigs count %d %d\n", (int)sigs.size(), count);
+            count++;
+        }
+
+        if(success){
             darkSendPool.Check();
             RelayDarkSendStatus(darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);    
         }
+
     }
     else if (strCommand == "misbehave") {
         int howmuch;
@@ -5941,7 +5967,6 @@ void CDarkSendPool::SetNull(){
     state = POOL_STATUS_ACCEPTING_ENTRIES;
 
     lastTimeChanged = GetTimeMillis();
-    sigCount = 0;
 
     entriesCount = 0;
     lastEntryAccepted = 0;
@@ -5990,7 +6015,7 @@ void CDarkSendPool::Check()
     }
 
     // move on to next phase
-    if(state == POOL_STATUS_SIGNING && sigCount == POOL_MAX_TRANSACTIONS) { 
+    if(state == POOL_STATUS_SIGNING && SignaturesComplete()) { 
         if(fDebug) printf("CDarkSendPool::Check() -- SIGNING\n");            
         UpdateState(POOL_STATUS_TRANSMISSION);
 
@@ -6002,26 +6027,11 @@ void CDarkSendPool::Check()
             for(unsigned int i = 0; i < entries.size(); i++){
                 BOOST_FOREACH(const CTxOut v, entries[i].vout)
                     txNew.vout.push_back(v);
-            }
 
-            int i = 0;
-            BOOST_FOREACH(const CDarkSendEntry v, entries) {
-                BOOST_FOREACH(const CDarkSendEntryVin s, entries[i].sev) {
+                BOOST_FOREACH(const CDarkSendEntryVin s, entries[i].sev){
                     txNew.vin.push_back(s.vin);
-                    txNew.vin[i].scriptSig = s.sig;
-
-                    printf("CDarkSendPool::Check() - Sign with sig %s\n", s.sig.ToString().substr(0,24).c_str());
-                    printf("CDarkSendPool::Check() - Signed pubkey %s\n", s.sigPubKey.ToString().substr(0,24).c_str());
-                    if (!VerifyScript(txNew.vin[i].scriptSig, s.sigPubKey, txNew, i, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC, 0)){
-                        printf("CDarkSendPool::Check() - Signing - ERROR signing input %u\n", i);
-                        //failure will result, how to recover from this?
-                    } else {
-                        printf("CDarkSendPool::Check() - Signing - Succesfully signed input %u\n", i);
-                    }
-                    i++;
                 }
             }
-            printf("CDarkSendPool::Check() -- compiled all signatures:\n%s", txNew.ToString().c_str());
             
             if (fMasterNode) { //only the main node is master atm                
                 int i = 0;
@@ -6147,7 +6157,7 @@ bool CDarkSendPool::SignatureValid(const CScript& newSig, const CTxIn& newVin){
 
             if(s.vin == newVin){
                 found = i;
-                sigPubKey = s.sigPubKey;
+                sigPubKey = s.vin.prevPubKey;
             }
             i++;
         }
@@ -6163,7 +6173,7 @@ bool CDarkSendPool::SignatureValid(const CScript& newSig, const CTxIn& newVin){
         }
     }
 
-    if(fDebug) printf("CDarkSendPool::SignatureValid() - Signing - Succesfully signed input");
+    if(fDebug) printf("CDarkSendPool::SignatureValid() - Signing - Succesfully signed input\n");
     return true;
 }
 
@@ -6236,39 +6246,47 @@ bool CDarkSendPool::AddEntry(const std::vector<CTxIn>& newInput, const int64& nA
     return false;
 }
 
-
-bool CDarkSendPool::AddScriptSig(const CScript& newSig, const CTxIn& newVin, const CScript& newPubKey){
-    printf("CDarkSendPool::AddScriptSig -- new sig  %s\n", newSig.ToString().substr(0,24).c_str());
+bool CDarkSendPool::AddScriptSig(const CTxIn& newVin){
+    printf("CDarkSendPool::AddScriptSig -- new sig  %s\n", newVin.scriptSig.ToString().substr(0,24).c_str());
     
     BOOST_FOREACH(const CDarkSendEntry v, entries) {
         BOOST_FOREACH(const CDarkSendEntryVin s, v.sev){
-            if(s.sig == newSig) {
-                printf("CDarkSendPool::AddScriptSig - already exists ");
+            if(s.vin.scriptSig == newVin.scriptSig) {
+                printf("CDarkSendPool::AddScriptSig - already exists \n");
                 return false;
             }
         }
     }
 
-    /*if(sigCount + sigCount > POOL_MAX_TRANSACTIONS)
-        return false;*/
-
-    if(!SignatureValid(newSig, newVin)){
+    if(!SignatureValid(newVin.scriptSig, newVin)){
         printf("CDarkSendPool::AddScriptSig - Invalid Sig\n");
         return false;
     }
 
+    printf(" --- POOL_STATUS %d\n", state);
+
+    printf("CDarkSendPool::AddScriptSig -- sig %s\n", newVin.ToString().c_str());
+
     if(state == POOL_STATUS_SIGNING) {
         for(unsigned int i = 0; i < entries.size(); i++){
-            if(entries[i].AddSig(newSig, newPubKey, newVin)){
-                //return false if verify script fails on input
-                sigCount++;
-                printf("CDarkSendPool::AddScriptSig -- adding  %s\n", newSig.ToString().substr(0,24).c_str());
-                printf("CDarkSendPool::AddScriptSig -- scriptSig, total sigs %u\n", sigCount);
+            if(entries[i].AddSig(newVin)){
+                //printf("CDarkSendPool::AddScriptSig -- adding  %s\n", newVin.scriptSig.ToString().substr(0,24).c_str());
                 return true;
             }
         }
     }
+
+    printf("CDarkSendPool::AddScriptSig -- Couldn't set sig!\n" );
     return false;
+}
+
+bool CDarkSendPool::SignaturesComplete(){
+    BOOST_FOREACH(const CDarkSendEntry v, entries) {
+        BOOST_FOREACH(const CDarkSendEntryVin s, v.sev){
+            if(!s.isSigSet) return false;
+        }
+    }
+    return true;
 }
 
 void CDarkSendPool::SendMoney(const CTransaction& collateral, std::vector<CTxIn>& in, std::vector<CTxOut>& out, int64& fee, int64 amount){
@@ -6299,6 +6317,9 @@ void CDarkSendPool::SendMoney(const CTransaction& collateral, std::vector<CTxIn>
     CDarkSendEntry e;
     e.Add(in, amount, collateral, out);
     myEntries.push_back(e);
+
+    BOOST_FOREACH(const CTxIn& i, in)
+        printf(" -- new input %s\n", i.ToString().c_str());
 
     // relay our entry to the master node
     RelayDarkSendIn(in, amount, collateral, out);
@@ -6333,8 +6354,13 @@ bool CDarkSendPool::SignFinalTransaction(CTransaction& finalTransactionNew, CNod
     }
 
     finalTransaction = finalTransactionNew;
+
+    printf("CDarkSendPool::SignFinalTransaction %s\n", finalTransaction.ToString().c_str());
+    
     //make sure node is master
     //make sure my inputs/outputs are present, otherwise refuse to sign
+
+    vector<CTxIn> sigs;
 
     BOOST_FOREACH(const CDarkSendEntry e, myEntries) {
         BOOST_FOREACH(const CDarkSendEntryVin s, e.sev) {
@@ -6374,13 +6400,17 @@ bool CDarkSendPool::SignFinalTransaction(CTransaction& finalTransactionNew, CNod
                     // not sure what to do here, it will timeout...?
                 }
 
-                if(node != NULL) node->PushMessage("dss", finalTransaction.vin[mine].scriptSig, s.vin, s.vin.prevPubKey);
+                sigs.push_back(finalTransaction.vin[mine]);
+                printf(" -- dss %d %d %s\n", mine, (int)sigs.size(), finalTransaction.vin[mine].scriptSig.ToString().c_str());
             }
             
         }
         
         if(fDebug) printf("CDarkSendPool::Sign - txNew:\n%s", finalTransaction.ToString().c_str());
     }
+
+    if(sigs.size() > 0 && node != NULL)
+        node->PushMessage("dss", sigs);
 
     return true;
 }

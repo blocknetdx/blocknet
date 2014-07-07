@@ -2503,15 +2503,11 @@ class CDarkSendEntryVin
 public:
     bool isSigSet;
     CTxIn vin;
-    CScript sig;
-    CScript sigPubKey;    
 
     CDarkSendEntryVin()
     {
         isSigSet = false;
         vin = CTxIn();
-        sig = CScript();
-        sigPubKey = CScript();
     }
 };
 
@@ -2549,13 +2545,13 @@ public:
         return true;
     }
 
-    bool AddSig(const CScript sigIn, const CScript sigPubKeyIn, const CTxIn vin)
+    bool AddSig(const CTxIn& vin)
     {
         BOOST_FOREACH(CDarkSendEntryVin& s, sev) {
-            if(s.vin == vin){
+            if(s.vin.prevout == vin.prevout && s.vin.nSequence == vin.nSequence){
                 if(s.isSigSet){return false;}
-                s.sig = sigIn;
-                s.sigPubKey = sigPubKeyIn;
+                s.vin.scriptSig = vin.scriptSig;
+                s.vin.prevPubKey = vin.prevPubKey;
                 s.isSigSet = true;
                 
                 return true;
@@ -2589,7 +2585,6 @@ public:
 
     int64 lastTimeChanged;
 
-    unsigned int sigCount;
     unsigned int state;
     unsigned int entriesCount;
     unsigned int lastEntryAccepted;
@@ -2665,11 +2660,6 @@ public:
         return countEntriesAccepted;
     }
 
-    int GetSignatureCount() const
-    {
-        return (int)sigCount;
-    }
-
     int GetMyTransactionCount() const
     {
         return myEntries.size();
@@ -2710,7 +2700,8 @@ public:
     bool SignatureValid(const CScript& newSig, const CTxIn& newVin);
     bool IsCollateralValid(const CTransaction& txCollateral);
     bool AddEntry(const std::vector<CTxIn>& newInput, const int64& nAmount, const CTransaction& txCollateral, const std::vector<CTxOut>& newOutput, std::string& error);
-    bool AddScriptSig(const CScript& newSig, const CTxIn& newVin, const CScript& newPubKey);
+    bool AddScriptSig(const CTxIn& newVin);
+    bool SignaturesComplete();
     void SendMoney(const CTransaction& collateral, std::vector<CTxIn>& in, std::vector<CTxOut>& out, int64& fee, int64 amount);
     bool StatusUpdate(int newState, int newEntriesCount, int newAccepted, std::string& error);
 
