@@ -2591,6 +2591,8 @@ public:
     unsigned int countEntriesAccepted;
     CScript collateralPubKey;
 
+    std::vector<CTxIn> lockedCoins;
+
     CTxIn vinMasterNode;
     CPubKey pubkeyMasterNode;
     CPubKey pubkeyMasterNode2;
@@ -2630,6 +2632,8 @@ public:
 
     void SetCollateralAddress(std::string strAddress);
     void SetNull();
+
+    void UnlockCoins();
 
     bool IsNull() const
     {   
@@ -2688,7 +2692,7 @@ public:
     }
 
     int GetCurrentMasterNode(int mod=10, int64 nBlockHeight=0);
-    int GetCurrentMasterNodeConsessus(int64 blockHeight);
+    bool GetCurrentMasterNodeConsessus(int64 blockHeight, CScript& payee);
     void SubmitMasternodeVote(CTxIn& vinWinningMasternode, CTxIn& vinMasterNodeFrom, int64 nBlockHeight);
 
     int GetMasternodeByVin(CTxIn& vin);
@@ -2702,7 +2706,7 @@ public:
     bool AddEntry(const std::vector<CTxIn>& newInput, const int64& nAmount, const CTransaction& txCollateral, const std::vector<CTxOut>& newOutput, std::string& error);
     bool AddScriptSig(const CTxIn& newVin);
     bool SignaturesComplete();
-    void SendMoney(const CTransaction& collateral, std::vector<CTxIn>& in, std::vector<CTxOut>& out, int64& fee, int64 amount);
+    void SendMoney(const CTransaction& collateral, std::vector<CTxIn>& vin, std::vector<CTxOut>& vout, int64& fee, int64 amount);
     bool StatusUpdate(int newState, int newEntriesCount, int newAccepted, std::string& error);
 
     bool SignFinalTransaction(CTransaction& finalTransactionNew, CNode* node);

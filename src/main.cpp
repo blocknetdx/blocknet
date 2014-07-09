@@ -1055,7 +1055,6 @@ int GetInputAge(CTxIn& vin)
     return (pindexBest->nHeight+1) - coins.nHeight;
 }
 
-
 bool CTxMemPool::addUnchecked(const uint256& hash, const CTransaction &tx)
 {
     // Add to memory pool without checking anything.  Don't call this directly,
@@ -2656,12 +2655,10 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
         {
             bool foundPaymentAmount = false;
             bool foundPaymentPayee = false;
-            int winningNode = darkSendPool.GetCurrentMasterNodeConsessus(pindexBest->nHeight+1);
+            CScript payee; 
+            bool success = darkSendPool.GetCurrentMasterNodeConsessus(pindexBest->nHeight+1, payee);
             
-            if(winningNode >= 0) {
-                CScript payee;
-                payee.SetDestination(darkSendMasterNodes[winningNode].pubkey.GetID());
-
+            if(success) {
                 for (unsigned int i = 0; i < vtx[0].vout.size(); i++) {
                     if(vtx[0].vout[i].nValue == masternodePaymentAmount )
                         foundPaymentAmount = true;
@@ -5328,20 +5325,26 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
             int winningNode = -1; 
 
             //spork
-            winningNode = darkSendPool.GetCurrentMasterNodeConsessus(pindexPrev->nHeight+1);
-            if(winningNode == -1) {
+            CScript payee;
+            bool success = darkSendPool.GetCurrentMasterNodeConsessus(pindexPrev->nHeight+1, payee);
+            if(!success) {
                 //no enforcement
                 printf("CreateNewBlock - network could not reach consessus on payee for block %d\n", pindexPrev->nHeight+1);
                 winningNode = darkSendPool.GetCurrentMasterNode(1);
+                if(winningNode >= 0){
+                    payee.SetDestination(darkSendMasterNodes[winningNode].pubkey.GetID());   
+                    success = true;
+                }
             }
-            if(winningNode >= 0) {
-                pblock->payee.SetDestination(darkSendMasterNodes[winningNode].pubkey.GetID());
+
+            if(success) {
+                pblock->payee = payee;
                 
                 payments++;
                 txNew.vout.resize(payments);
 
                 //txNew.vout[0].scriptPubKey = scriptPubKeyIn;
-                txNew.vout[payments-1].scriptPubKey.SetDestination(darkSendMasterNodes[winningNode].pubkey.GetID());
+                txNew.vout[payments-1].scriptPubKey = payee;
                 txNew.vout[payments-1].nValue = 0;
                 printf("Masternode payment to %s\n", txNew.vout[payments-1].scriptPubKey.ToString().c_str());
             }
@@ -5981,6 +5984,14 @@ void CDarkSendPool::SetCollateralAddress(std::string strAddress){
     collateralPubKey.SetDestination(address.Get());
 }
 
+
+void CDarkSendPool::UnlockCoins(){
+    BOOST_FOREACH(CTxIn v, lockedCoins)
+        pwalletMain->UnlockCoin(v.prevout);
+
+    lockedCoins.clear();
+}
+
 void CDarkSendPool::Check()
 {
     if(fDebug) printf("CDarkSendPool::Check()\n");
@@ -6289,15 +6300,24 @@ bool CDarkSendPool::SignaturesComplete(){
     return true;
 }
 
-void CDarkSendPool::SendMoney(const CTransaction& collateral, std::vector<CTxIn>& in, std::vector<CTxOut>& out, int64& fee, int64 amount){
+void CDarkSendPool::SendMoney(const CTransaction& collateral, std::vector<CTxIn>& vin, std::vector<CTxOut>& vout, int64& fee, int64 amount){
+    
+    BOOST_FOREACH(CTxIn in, collateral.vin)
+        lockedCoins.push_back(in);
+    
+    BOOST_FOREACH(CTxIn in, vin)
+        lockedCoins.push_back(in);
+
+
     if(fMasterNode) {
         printf("CDarkSendPool::SendMoney() - DarkSend from a masternode is not supported currently.\n");
+        UnlockCoins();
         return;
     }
 
     printf("CDarkSendPool::SendMoney() - Added transaction to pool.\n");
     if(fDebug){
-        printf("CDarkSendPool::SendMoney() -- NEW INPUT -- adding %s\n", in[0].ToString().c_str());
+        printf("CDarkSendPool::SendMoney() -- NEW INPUT -- adding %s\n", vin[0].ToString().c_str());
     }
 
     if(state == POOL_STATUS_ERROR || state == POOL_STATUS_SUCCESS) ClearLastMessage();
@@ -6307,6 +6327,7 @@ void CDarkSendPool::SendMoney(const CTransaction& collateral, std::vector<CTxIn>
     if(!IsConnectedToMasterNode()){
         if(!ConnectToBestMasterNode()){
             printf("CDarkSendPool::SendMoney() - Couldn't connect to masternode.\n");
+            UnlockCoins();
             return;
         }
     }
@@ -6315,14 +6336,14 @@ void CDarkSendPool::SendMoney(const CTransaction& collateral, std::vector<CTxIn>
 
     // store our entry for later use
     CDarkSendEntry e;
-    e.Add(in, amount, collateral, out);
+    e.Add(vin, amount, collateral, vout);
     myEntries.push_back(e);
 
-    BOOST_FOREACH(const CTxIn& i, in)
+    BOOST_FOREACH(const CTxIn& i, vin)
         printf(" -- new input %s\n", i.ToString().c_str());
 
     // relay our entry to the master node
-    RelayDarkSendIn(in, amount, collateral, out);
+    RelayDarkSendIn(vin, amount, collateral, vout);
     Check();
 }
 
@@ -6472,6 +6493,9 @@ bool CDarkSendPool::ConnectToBestMasterNode(int depth){
         lastMessage = "No valid MasterNode";
         printf("CDarkSendPool::ConnectToBestMasterNode - ERROR: %s\n", lastMessage.c_str());
     }
+
+    //failed, so unlock any coins.
+    UnlockCoins();
 
     //if couldn't connect, disable that one and try next
     return false;
@@ -6943,7 +6967,7 @@ int CDarkSendPool::GetMasternodeRank(CTxIn& vin, int mod)
     return -1;
 }
 
-int CDarkSendPool::GetCurrentMasterNodeConsessus(int64 blockHeight)
+bool CDarkSendPool::GetCurrentMasterNodeConsessus(int64 blockHeight, CScript& payee)
 {
     int winner_votes = -1;
     CTxIn winner_vin;
@@ -6951,7 +6975,7 @@ int CDarkSendPool::GetCurrentMasterNodeConsessus(int64 blockHeight)
     if (vecBlockVotes.empty())
     {
         printf("CDarkSendPool::GetCurrentMasterNodeConsessus : No consessus information for block %"PRI64u"\n", blockHeight);
-        return -1;
+        return false;
     }
 
     BOOST_FOREACH (const PAIRTYPE(int64, PAIRTYPE(CTxIn, int))& s, vecBlockVotes)
@@ -6967,22 +6991,25 @@ int CDarkSendPool::GetCurrentMasterNodeConsessus(int64 blockHeight)
     }
 
 
-    if (winner_votes == -1) return -1;
+    if (winner_votes == -1) return false;
     printf("MasternodeConsessus - found a winner\n");
 
     // we want a strong consessus, otherwise take any payee
-    if (winner_votes < 8) return -1;
+    //if (winner_votes < 8) return CScript();
 
     printf("MasternodeConsessus - strong consessus\n");
 
-    int i = 0;
-    BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
-        if(mn.vin == winner_vin) return i;
-        i++;
+    CTransaction tx;
+    uint256 hash;
+    if(GetTransaction(winner_vin.prevout.hash, tx, hash, true)){
+        payee = tx.vout[0].scriptPubKey;
+        printf("MasternodeConsessus - Masternode payment to %s\n", payee.ToString().c_str());
+
+        return true;
     }
 
-    printf("MasternodeConsessus - node not found??? \n");
-    return -1;
+    printf("MasternodeConsessus - couldn't locate pubkey??? \n");
+    return false;
 }
 
 
