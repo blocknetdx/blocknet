@@ -1220,7 +1220,7 @@ bool CWallet::SelectCoins(int64 nTargetValue, set<pair<const CWalletTx*,unsigned
             SelectCoinsMinConf(nTargetValue, 0, 1, vCoins, setCoinsRet, nValueRet));
 }
 
-bool CWallet::SelectCoinsDark(int64 nTargetValue, std::vector<CTxIn>& setCoinsRet, int64& nValueRet) const 
+bool CWallet::SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxIn>& setCoinsRet, int64& nValueRet) const 
 {
     CCoinControl *coinControl=NULL;
 
@@ -1236,10 +1236,10 @@ bool CWallet::SelectCoinsDark(int64 nTargetValue, std::vector<CTxIn>& setCoinsRe
         printf(" vin nValue %"PRI64d"\n", out.tx->vout[out.i].nValue);
         nValueRet += out.tx->vout[out.i].nValue;
         setCoinsRet.push_back(vin);
-        if(nValueRet >= nTargetValue) return true;
+        if(nValueRet >= nValueMax) return true;
     }
 
-    return false;
+    return (nValueRet >= nValueMin);
 }
 
 bool CWallet::SelectCoinsDarkDenominated(int64 nTargetValue, std::vector<CTxIn>& setCoinsRet, int64& nValueRet) const 
@@ -1626,7 +1626,7 @@ string CWallet::DarkSendDenominate(int64 nValue)
     {
         vCoins.clear();
         nValueIn = 0;
-        if (!SelectCoinsDark(nTotalValue, vCoins, nValueIn))
+        if (!SelectCoinsDark(nTotalValue, nTotalValue, vCoins, nValueIn))
         {
             vCoins.clear();
             return _("Insufficient funds 2");
@@ -1643,7 +1643,7 @@ string CWallet::DarkSendDenominate(int64 nValue)
         int64 nValueIn2 = 0;
         std::vector<CTxIn> vCoinsCollateral;
 
-        if (!SelectCoinsDark(POOL_FEE_AMOUNT+(0.01*COIN), vCoinsCollateral, nValueIn2))
+        if (!SelectCoinsDark(POOL_FEE_AMOUNT+(0.01*COIN), POOL_FEE_AMOUNT+(0.01*COIN), vCoinsCollateral, nValueIn2))
         {
             BOOST_FOREACH(CTxIn v, vCoins)
                 UnlockCoin(v.prevout);
@@ -1791,7 +1791,7 @@ string CWallet::DarkSendMoney(const CTxDestination& address, int64 nValue)
         int64 nValueIn2 = 0;
         std::vector<CTxIn> vCoinsCollateral;
 
-        if (!SelectCoinsDark(POOL_FEE_AMOUNT+(0.01*COIN), vCoinsCollateral, nValueIn2))
+        if (!SelectCoinsDark(POOL_FEE_AMOUNT+(0.01*COIN), POOL_FEE_AMOUNT+(0.01*COIN), vCoinsCollateral, nValueIn2))
         {
             BOOST_FOREACH(CTxIn v, vCoins)
                 UnlockCoin(v.prevout);

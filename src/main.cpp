@@ -5960,7 +5960,7 @@ void CDarkSendPool::SetNull(){
     entries.clear();
 
     /*
-        Cleaning this up causes a race condition
+        Clearing myEntries causes a race condition
         ./darkcoind darksend msyUY4CdjTfigzCSYgSqB6zTSh6kbfyw3X 5 && ./darkcoind darksend msyUY4CdjTfigzCSYgSqB6zTSh6kbfyw3X 5 && ./darkcoind darksend msyUY4CdjTfigzCSYgSqB6zTSh6kbfyw3X 5  && ./darkcoind darksend msyUY4CdjTfigzCSYgSqB6zTSh6kbfyw3X 5 && ./darkcoind darksend msyUY4CdjTfigzCSYgSqB6zTSh6kbfyw3X 5  && ./darkcoind darksend msyUY4CdjTfigzCSYgSqB6zTSh6kbfyw3X 5 && ./darkcoind darksend msyUY4CdjTfigzCSYgSqB6zTSh6kbfyw3X 5  && ./darkcoind darksend msyUY4CdjTfigzCSYgSqB6zTSh6kbfyw3X 5 && ./darkcoind darksend msyUY4CdjTfigzCSYgSqB6zTSh6kbfyw3X 5  && ./darkcoind darksend msyUY4CdjTfigzCSYgSqB6zTSh6kbfyw3X 5 && ./darkcoind darksend msyUY4CdjTfigzCSYgSqB6zTSh6kbfyw3X 5  && ./darkcoind darksend msyUY4CdjTfigzCSYgSqB6zTSh6kbfyw3X 5 && ./darkcoind darksend msyUY4CdjTfigzCSYgSqB6zTSh6kbfyw3X 5  && ./darkcoind darksend msyUY4CdjTfigzCSYgSqB6zTSh6kbfyw3X 5 && ./darkcoind darksend msyUY4CdjTfigzCSYgSqB6zTSh6kbfyw3X 5  && ./darkcoind darksend msyUY4CdjTfigzCSYgSqB6zTSh6kbfyw3X 5 && ./darkcoind darksend msyUY4CdjTfigzCSYgSqB6zTSh6kbfyw3X 5  && ./darkcoind darksend msyUY4CdjTfigzCSYgSqB6zTSh6kbfyw3X 5
     
         To fix this we need to queue an entry, request acceptance from masternode, then add upon success
@@ -5974,6 +5974,8 @@ void CDarkSendPool::SetNull(){
     entriesCount = 0;
     lastEntryAccepted = 0;
     countEntriesAccepted = 0;
+
+    UnlockCoins();
 }
 
 void CDarkSendPool::SetCollateralAddress(std::string strAddress){
@@ -6809,49 +6811,60 @@ void CDarkSendPool::NewBlock()
         RelayDarkSendStatus(darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);    
     } else {
 
-        if(myEntries.size() == 0) return;
+        if(myEntries.size() != 0) {
 
-        uint256 n1 = 0;
-        if(!GetLastValidBlockHash(n1)) return;
-        if(n1 == masterNodeBlockHash) return;
+            bool run = true;
+            uint256 n1 = 0;
+            if(!GetLastValidBlockHash(n1)) run = false;
+            if(n1 == masterNodeBlockHash) run = false;
 
-        if(IsConnectedToMasterNode()){
-            printf("CDarkSendPool::NewBlock - Disconnecting from old masternode\n");
-            DisconnectMasterNode();
-        }
+            if(run){
+                if(IsConnectedToMasterNode()){
+                    printf("CDarkSendPool::NewBlock - Disconnecting from old masternode\n");
+                    DisconnectMasterNode();
+                }
 
-        //printf(" -- connect \n");
-        //ConnectToBestMasterNode();
+                //printf(" -- connect \n");
+                //ConnectToBestMasterNode();
 
-        bool resetEntries=false;
-        if(myEntries.size() > 0) {
-            printf("CDarkSendPool::NewBlock - ERROR: You have existing pending payments and a new masternode was detected. You must resubmit them.");
-            resetEntries = true;
-        }
+                bool resetEntries=false;
+                if(myEntries.size() > 0) {
+                    printf("CDarkSendPool::NewBlock - ERROR: You have existing pending payments and a new masternode was detected. You must resubmit them.");
+                    resetEntries = true;
+                }
 
-        /*std::vector<CDarkSendEntry> myEntriesSave;
-        BOOST_FOREACH(CDarkSendEntry e, myEntries) {
-            myEntriesSave.push_back(e);
-        }
-        */
+                /*std::vector<CDarkSendEntry> myEntriesSave;
+                BOOST_FOREACH(CDarkSendEntry e, myEntries) {
+                    myEntriesSave.push_back(e);
+                }
+                */
 
-        SetNull();
+                SetNull();
 
-        if(resetEntries){
-            UpdateState(POOL_STATUS_ERROR);
-            lastMessage = "masternode switched, please resubmit";
-        }
+                if(resetEntries){
+                    UpdateState(POOL_STATUS_ERROR);
+                    lastMessage = "masternode switched, please resubmit";
+                }
 
-        /*    BOOST_FOREACH(CDarkSendEntry e, myEntriesSave) {
-                myEntries.push_back(e);
+                /*    BOOST_FOREACH(CDarkSendEntry e, myEntriesSave) {
+                        myEntries.push_back(e);
 
-                // relay our entry to the master node
-                RelayDarkSendIn(e.vin, e.amount, e.collateral, e.txSupporting, e.vout, e.vout2);
+                        // relay our entry to the master node
+                        RelayDarkSendIn(e.vin, e.amount, e.collateral, e.txSupporting, e.vout, e.vout2);
+                    }
+                */
+
+                myEntries.clear();
+
+                UnlockCoins();
             }
-        */
+        }
 
-        myEntries.clear();
+        //denominate all non-denominated inputs every 25 minutes.
+        if(pindexBest->nHeight % 10 == 0)
+            DoAutomaticDenominating();
     }
+
 }
 
 void CDarkSendPool::CompletedTransaction(bool error, std::string lastMessageNew)
@@ -6870,6 +6883,7 @@ void CDarkSendPool::CompletedTransaction(bool error, std::string lastMessageNew)
 
     completedTransaction = true;
     Check();
+    UnlockCoins();
 }
 
 void CDarkSendPool::ClearLastMessage()
@@ -6938,6 +6952,25 @@ int CDarkSendPool::GetCurrentMasterNode(int mod, int64 nBlockHeight)
     return winner;
 }
 
+void CDarkSendPool::DoAutomaticDenominating()
+{
+    // ** find the coins we'll use
+    std::vector<CTxIn> vCoins;
+    int64 nValueMin = 0.01*COIN;
+    int64 nValueMax = 100*COIN;
+    int64 nValueIn = 0;
+
+    //simply look for non-denominated coins
+    nValueIn = 0;
+    if (!pwalletMain->SelectCoinsDark(nValueMin, nValueMax, vCoins, nValueIn))
+    {
+        printf("DoAutomaticDenominating : No funds detected in need of denominating\n");
+        return;
+    }
+
+    printf("DoAutomaticDenominating : Running darksend denominate for %"PRI64d" coins\n", nValueIn/COIN);
+    pwalletMain->DarkSendDenominate(nValueIn);
+}
 
 int CDarkSendPool::GetMasternodeRank(CTxIn& vin, int mod)
 {
@@ -7032,6 +7065,9 @@ void CDarkSendPool::SubmitMasternodeVote(CTxIn& vinWinningMasternode, CTxIn& vin
 
 void CMasterNode::Check()
 {
+    //once spent, stop doing the checks
+    if(enabled==3) return;
+
     if(!UpdatedWithin(MASTERNODE_REMOVAL_MICROSECONDS)){
         enabled = 4;
         return;

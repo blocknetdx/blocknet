@@ -225,23 +225,4 @@ BOOST_AUTO_TEST_CASE(darksend_pool_add_entry)
 
 }
 
-
-BOOST_AUTO_TEST_CASE(darksend_coin_selection)
-{
-    CCoinControl *coinControl=NULL;
-    CoinSet setCoinsRet, setCoinsRet2;
-    int64 nValueRet;
-
-    empty_wallet();
-
-    BOOST_CHECK(!wallet.SelectCoinsDark(100*COIN, vCoins, nValueRet, coinControl));
-
-    add_coin(100*CENT, 4);
-
-    BOOST_CHECK(wallet.SelectCoinsDark(100*COIN, vCoins, nValueRet, coinControl));
-
- 
-
-}
-
 BOOST_AUTO_TEST_SUITE_END()
