@@ -965,7 +965,7 @@ int64 CWallet::GetImmatureBalance() const
 }
 
 // populate vCoins with vector of spendable COutputs
-void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const CCoinControl *coinControl, bool noDenominatedInputs) const
+void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const CCoinControl *coinControl, bool onlyDarksendInputs) const
 {
     vCoins.clear();
 
@@ -985,13 +985,16 @@ void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const
                 continue;
 
             for (unsigned int i = 0; i < pcoin->vout.size(); i++) {
-                if(noDenominatedInputs) {
+                bool found = false;
+                if(onlyDarksendInputs) {
                     //should make this a vector
                     BOOST_FOREACH(int64 d, darkSendDenominations)
                         if(pcoin->vout[i].nValue == d)
-                            continue;
-
+                            found = true;
+                } else {
+                    found = true;
                 }
+                if(!found) continue;
 
                 if (!(pcoin->IsSpent(i)) && IsMine(pcoin->vout[i]) &&
                     !IsLockedCoin((*it).first, i) && pcoin->vout[i].nValue >= nMinimumInputValue &&
@@ -1199,10 +1202,10 @@ bool CWallet::SelectCoinsMinConf(int64 nTargetValue, int nConfMine, int nConfThe
     return true;
 }
 
-bool CWallet::SelectCoins(int64 nTargetValue, set<pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64& nValueRet, const CCoinControl* coinControl) const
+bool CWallet::SelectCoins(int64 nTargetValue, set<pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64& nValueRet, const CCoinControl* coinControl, bool onlyDarksendInputs) const
 {
     vector<COutput> vCoins;
-    AvailableCoins(vCoins, true, coinControl);
+    AvailableCoins(vCoins, true, coinControl, onlyDarksendInputs);
     
     // coin control -> return all selected outputs (we want all selected to go into the transaction for sure)
     if (coinControl && coinControl->HasSelected())
@@ -1309,12 +1312,16 @@ bool CWallet::SelectCoinsMoreThanOutput(int64 nTargetValue, CTxIn& vin, int64& n
     return false;
 }
 
-bool CWallet::CreateTransaction(const vector<pair<CScript, int64> >& vecSend,
-                                CWalletTx& wtxNew, CReserveKey& reservekey, int64& nFeeRet, std::string& strFailReason, const CCoinControl* coinControl, bool noDenominatedInputs)
+bool CWallet::CreateTransaction(std::vector<pair<CScript, int64> >& vecSend,
+                                CWalletTx& wtxNew, CReserveKey& reservekey, int64& nFeeRet, std::string& strFailReason, const CCoinControl* coinControl, bool onlyDarkSendInputs)
 {
     int64 nValue = 0;
-    BOOST_FOREACH (const PAIRTYPE(CScript, int64)& s, vecSend)
+    BOOST_FOREACH (PAIRTYPE(CScript, int64)& s, vecSend)
     {
+        BOOST_FOREACH(int64 d, darkSendDenominations)
+            if(s.second == d)
+                s.second += 1; //denominations are reserved, add 1 satoshi
+
         if (nValue < 0)
         {
             strFailReason = _("Transaction amounts must be positive");
@@ -1357,19 +1364,13 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64> >& vecSend,
                 // Choose coins to use
                 set<pair<const CWalletTx*,unsigned int> > setCoins;
                 int64 nValueIn = 0;
-                if(noDenominatedInputs){
-                    if (!SelectCoinsWithoutDenomination(nTotalValue, setCoins, nValueIn))
-                    {
-                        strFailReason = _("Insufficient funds (non-denominated)");
-                        return false;
-                    }
-                } else {
-                    if (!SelectCoins(nTotalValue, setCoins, nValueIn, coinControl))
-                    {
-                        strFailReason = _("Insufficient funds");
-                        return false;
-                    }
+                if (!SelectCoins(nTotalValue, setCoins, nValueIn, coinControl, onlyDarkSendInputs))
+                {
+                    strFailReason = _("Insufficient funds");
+                    return false;
                 }
+
+                
                 BOOST_FOREACH(PAIRTYPE(const CWalletTx*, unsigned int) pcoin, setCoins)
                 {
                     int64 nCredit = pcoin.first->vout[pcoin.second].nValue;

@@ -200,16 +200,8 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
         std::string strFailReason;
         bool fCreated = false;
 
-        if(!isDarkSend) {
-            fCreated = wallet->CreateTransaction(vecSend, wtx, keyChange, nFeeRequired, strFailReason, coinControl);
-        } else {
-            foreach(const SendCoinsRecipient &rcp, recipients)
-            {            
-                strFailReason = wallet->DarkSendMoney(CBitcoinAddress(rcp.address.toStdString()).Get(), rcp.amount);
-            }
-            if(strFailReason == "") fCreated = true; //need to get message from above
-        }
-
+        fCreated = wallet->CreateTransaction(vecSend, wtx, keyChange, nFeeRequired, strFailReason, coinControl, isDarkSend);
+        
         if(!fCreated)
         {
             if((total + nFeeRequired) > nBalance)
@@ -229,11 +221,7 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
             return TransactionCommitFailed;
         }
 
-        if(isDarkSend) {
-            hex = "";
-        } else {
-            hex = QString::fromStdString(wtx.GetHash().GetHex());
-        }
+        hex = QString::fromStdString(wtx.GetHash().GetHex());
     }
 
     // Add addresses / update labels that we've sent to to the address book
