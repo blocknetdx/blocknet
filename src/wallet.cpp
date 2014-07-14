@@ -1366,7 +1366,11 @@ bool CWallet::CreateTransaction(std::vector<pair<CScript, int64> >& vecSend,
                 int64 nValueIn = 0;
                 if (!SelectCoins(nTotalValue, setCoins, nValueIn, coinControl, onlyDarkSendInputs))
                 {
-                    strFailReason = _("Insufficient funds");
+                    if(!onlyDarkSendInputs)
+                        strFailReason = _("Insufficient funds");
+                    else
+                        strFailReason = _("Unable to locate enough Darksend denominated funds for this transaction");
+                        
                     return false;
                 }
 
