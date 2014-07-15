@@ -19,6 +19,8 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <openssl/crypto.h>
 
+#include <QSet>
+
 #ifndef WIN32
 #include <signal.h>
 #endif

@@ -24,6 +24,8 @@
 #include <QTimer>
 #include <QTranslator>
 #include <QLibraryInfo>
+#include <iostream>
+#include <fstream>  
 
 #ifdef Q_OS_MAC
 #include "macdockiconhandler.h"
@@ -250,43 +252,84 @@ int main(int argc, char *argv[])
 
                 optionsModel.Upgrade(); // Must be done after AppInit2
 
+
                 if (splashref)
                     splash.finish(&window);
 
-                ClientModel clientModel(&optionsModel);
-                WalletModel *walletModel = 0;
-                if(pwalletMain)
-                    walletModel = new WalletModel(pwalletMain, &optionsModel);
+                bool agreed_to_tou=false;
 
-                window.setClientModel(&clientModel);
-                if(walletModel)
-                {
-                    window.addWallet("~Default", walletModel);
-                    window.setCurrentWallet("~Default");
+                //check if file exists
+
+                boost::filesystem::path pathDebug = GetDataDir() / ".agreed_to_tou";
+                if (FILE *file = fopen(pathDebug.string().c_str(), "r")) {
+                    file=file;
+                    fclose(file);
+                    agreed_to_tou = true;
+                }
+             
+
+                if(!agreed_to_tou){
+                    QMessageBox::StandardButton retval = QMessageBox::question(guiref, "Agree to the terms of use?",
+                                          window.tr("Do you agreed to the following terms of use? <br>") + 
+                                          window.tr("--- terms go here --- <br>") + 
+                                          window.tr(pathDebug.string().c_str()),
+                          QMessageBox::Yes|QMessageBox::Cancel,
+                          QMessageBox::Cancel);
+
+                    if(retval != QMessageBox::Yes)
+                    {
+                        window.hide();
+                        window.setClientModel(0);
+
+                        // Shutdown the core and its threads, but don't exit Bitcoin-Qt here
+                        threadGroup.interrupt_all();
+                        threadGroup.join_all();
+                        Shutdown();
+                    } else {
+                        //touch file
+                        std::ofstream outfile (pathDebug.string().c_str());
+                        outfile << "I Agree!" << std::endl;
+                        outfile.close();
+                        agreed_to_tou=true;
+                    }
                 }
 
-                // If -min option passed, start window minimized.
-                if(GetBoolArg("-min"))
-                {
-                    window.showMinimized();
+                if(agreed_to_tou){
+                    ClientModel clientModel(&optionsModel);
+                    WalletModel *walletModel = 0;
+                    if(pwalletMain)
+                        walletModel = new WalletModel(pwalletMain, &optionsModel);
+
+                    window.setClientModel(&clientModel);
+                    if(walletModel)
+                    {
+                        window.addWallet("~Default", walletModel);
+                        window.setCurrentWallet("~Default");
+                    }
+
+                    // If -min option passed, start window minimized.
+                    if(GetBoolArg("-min"))
+                    {
+                        window.showMinimized();
+                    }
+                    else
+                    {
+                        window.show();
+                    }
+
+                    // Now that initialization/startup is done, process any command-line
+                    // bitcoin: URIs
+                    QObject::connect(paymentServer, SIGNAL(receivedURI(QString)), &window, SLOT(handleURI(QString)));
+                    QTimer::singleShot(100, paymentServer, SLOT(uiReady()));
+
+                    app.exec();
+
+                    window.hide();
+                    window.setClientModel(0);
+                    window.removeAllWallets();
+                    guiref = 0;
+                    delete walletModel;
                 }
-                else
-                {
-                    window.show();
-                }
-
-                // Now that initialization/startup is done, process any command-line
-                // bitcoin: URIs
-                QObject::connect(paymentServer, SIGNAL(receivedURI(QString)), &window, SLOT(handleURI(QString)));
-                QTimer::singleShot(100, paymentServer, SLOT(uiReady()));
-
-                app.exec();
-
-                window.hide();
-                window.setClientModel(0);
-                window.removeAllWallets();
-                guiref = 0;
-                delete walletModel;
             }
             // Shutdown the core and its threads, but don't exit Bitcoin-Qt here
             threadGroup.interrupt_all();

@@ -12,6 +12,7 @@
 #include "transactiontablemodel.h"
 #include "optionsdialog.h"
 #include "aboutdialog.h"
+#include "tou.h"
 #include "clientmodel.h"
 #include "walletmodel.h"
 #include "walletframe.h"
