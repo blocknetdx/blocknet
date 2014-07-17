@@ -6954,6 +6954,8 @@ int CDarkSendPool::GetCurrentMasterNode(int mod, int64 nBlockHeight)
 
 void CDarkSendPool::DoAutomaticDenominating()
 {
+    if(fDisableDarksend) return;
+    
     // ** find the coins we'll use
     std::vector<CTxIn> vCoins;
     int64 nValueMin = 0.01*COIN;

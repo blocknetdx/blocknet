@@ -1168,11 +1168,16 @@ bool AppInit2(boost::thread_group& threadGroup)
         }
     }
 
-    nDarksendRounds = GetArg("-darksendrounds", 2);
-    if(nDarksendRounds > 8) nDarksendRounds = 8;
-    if(nDarksendRounds < 1) nDarksendRounds = 1;
+    fDisableDarksend = GetBoolArg("-disabledarksend", false);
+    if(!fDisableDarksend){
+        nDarksendRounds = GetArg("-darksendrounds", 2);
+        if(nDarksendRounds > 8) nDarksendRounds = 8;
+        if(nDarksendRounds < 1) nDarksendRounds = 1;
 
-    printf("Darksend rounds %d\n", nDarksendRounds);
+        printf("Darksend rounds %d\n", nDarksendRounds);
+    } else {
+        printf("Darksend is disabled!\n");
+    }
 
     darkSendDenominations.push_back( 1000  * COIN );
     darkSendDenominations.push_back( 100   * COIN );
