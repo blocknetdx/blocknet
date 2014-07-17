@@ -381,6 +381,14 @@ std::string HelpMessage()
         "  -reindex               " + _("Rebuild block chain index from current blk000??.dat files") + "\n" +
         "  -par=<n>               " + _("Set the number of script verification threads (up to 16, 0 = auto, <0 = leave that many cores free, default: 0)") + "\n" +
 
+        "\n" + _("Masternode options:") + "\n" +
+        "  -masternode=<n>      "   + _("Enable the client to act as a masternode (0-1, default: 0)") + "\n" +
+        "  -masternodeprivkey=<n>      "   + _("Set the masternode private key") + "\n" +
+        "  -masternodeaddr=<n> "   + _("Set external address:port to get to this masternode (example: address:port)") + "\n" +
+
+        "\n" + _("Darksend options:") + "\n" +
+        "  -disabledarksend=<n>      "   + _("Disable use of automated darksend for funds stored in this wallet (0-1, default: 0)") + "\n" +
+
         "\n" + _("Block creation options:") + "\n" +
         "  -blockminsize=<n>      "   + _("Set minimum block size in bytes (default: 0)") + "\n" +
         "  -blockmaxsize=<n>      "   + _("Set maximum block size in bytes (default: 250000)") + "\n" +
@@ -1159,6 +1167,12 @@ bool AppInit2(boost::thread_group& threadGroup)
             return InitError(_("You must specify a masternodeprivkey in the configuration. Please see documentation for help."));
         }
     }
+
+    nDarksendRounds = GetArg("-darksendrounds", 2);
+    if(nDarksendRounds > 8) nDarksendRounds = 8;
+    if(nDarksendRounds < 1) nDarksendRounds = 1;
+
+    printf("Darksend rounds %d\n", nDarksendRounds);
 
     darkSendDenominations.push_back( 1000  * COIN );
     darkSendDenominations.push_back( 100   * COIN );

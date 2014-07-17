@@ -2726,6 +2726,7 @@ public:
     void CompletedTransaction(bool error, std::string lastMessageNew);
     void ClearLastMessage();
     bool DoConcessusVote();
+    int GetInputDarksendRounds(CTxIn in, int rounds=0);
 };
 
 void ConnectToDarkSendMasterNodeWinner();

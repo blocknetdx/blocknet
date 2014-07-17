@@ -1223,7 +1223,7 @@ bool CWallet::SelectCoins(int64 nTargetValue, set<pair<const CWalletTx*,unsigned
             SelectCoinsMinConf(nTargetValue, 0, 1, vCoins, setCoinsRet, nValueRet));
 }
 
-bool CWallet::SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxIn>& setCoinsRet, int64& nValueRet) const 
+bool CWallet::SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxIn>& setCoinsRet, int64& nValueRet, int nDarksendRounds) const 
 {
     CCoinControl *coinControl=NULL;
 
@@ -1235,6 +1235,12 @@ bool CWallet::SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxI
     BOOST_FOREACH(const COutput& out, vCoins)
     {
         CTxIn vin = CTxIn(out.tx->GetHash(),out.i);
+
+        if(nDarksendRounds!=0){    
+            //check attempted darksends, if >= 3... abort
+            if(!darkSendPool.GetInputDarksendRounds(vin) >= nDarksendRounds) continue;
+        }
+
         vin.prevPubKey = out.tx->vout[out.i].scriptPubKey; // the inputs PubKey
         printf(" vin nValue %"PRI64d"\n", out.tx->vout[out.i].nValue);
         nValueRet += out.tx->vout[out.i].nValue;

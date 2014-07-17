@@ -130,6 +130,7 @@ inline void MilliSleep(int64 n)
 extern std::map<std::string, std::string> mapArgs;
 extern std::map<std::string, std::vector<std::string> > mapMultiArgs;
 extern bool fMasterNode;
+extern int nDarksendRounds;
 extern std::string strMasterNodeAddr;
 extern bool fDebug;
 extern bool fDebugNet;

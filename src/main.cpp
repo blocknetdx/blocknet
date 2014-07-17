@@ -6962,7 +6962,7 @@ void CDarkSendPool::DoAutomaticDenominating()
 
     //simply look for non-denominated coins
     nValueIn = 0;
-    if (!pwalletMain->SelectCoinsDark(nValueMin, nValueMax, vCoins, nValueIn))
+    if (!pwalletMain->SelectCoinsDark(nValueMin, nValueMax, vCoins, nValueIn, nDarksendRounds))
     {
         printf("DoAutomaticDenominating : No funds detected in need of denominating\n");
         return;
@@ -7045,6 +7045,31 @@ bool CDarkSendPool::GetCurrentMasterNodeConsessus(int64 blockHeight, CScript& pa
     return false;
 }
 
+// recursively find how many transactions deep the darksending goes
+int CDarkSendPool::GetInputDarksendRounds(CTxIn in, int rounds)
+{
+    if(rounds >= nDarksendRounds) return rounds;
+
+    CTransaction tx;
+    uint256 hash;
+    if(GetTransaction(in.prevout.hash, tx, hash, true)){
+        bool fNonDenominatedFound = false;
+        BOOST_FOREACH(CTxOut out, tx.vout){
+            bool found = false;
+            BOOST_FOREACH(int64 d, darkSendDenominations)
+                if(out.nValue == d)
+                    found = true;
+            if(!found) fNonDenominatedFound = true;
+            if(fNonDenominatedFound) return rounds;
+        }
+
+        // find my vin and look that up
+        BOOST_FOREACH(CTxIn in2, tx.vin)
+            if(pwalletMain->IsMine(in2))
+                return GetInputDarksendRounds(in2, rounds+1);
+    }
+
+}
 
 void CDarkSendPool::SubmitMasternodeVote(CTxIn& vinWinningMasternode, CTxIn& vinMasterNodeFrom, int64 nBlockHeight)
 {
