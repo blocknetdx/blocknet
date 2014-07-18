@@ -5,44 +5,8 @@
 #include "base58.h"
 #include "util.h"
 #include "main.h"
-#include "key.h"
-#include "wallet.h"
 
 using namespace std;
-
-typedef set<pair<const CWalletTx*,unsigned int> > CoinSet;
-
-static CWallet wallet;
-static std::vector<CTxIn> vCoins;
-
-
-static void add_coin(int64 nValue, int nAge = 6*24, bool fIsFromMe = false, int nInput=0)
-{
-    static int nextLockTime = 0;
-    CTransaction tx;
-    tx.nLockTime = nextLockTime++;        // so all transactions get different hashes
-    tx.vout.resize(nInput+1);
-    tx.vout[nInput].nValue = nValue;
-    CWalletTx* wtx = new CWalletTx(&wallet, tx);
-    if (fIsFromMe)
-    {
-        // IsFromMe() returns (GetDebit() > 0), and GetDebit() is 0 if vin.empty(),
-        // so stop vin being empty, and cache a non-zero Debit to fake out IsFromMe()
-        wtx->vin.resize(1);
-        wtx->fDebitCached = true;
-        wtx->nDebitCached = 1;
-    }
-    COutput output(wtx, nInput, nAge);
-    vCoins.push_back(output);
-}
-
-static void empty_wallet(void)
-{
-    BOOST_FOREACH(COutput output, vCoins)
-        delete output.tx;
-    vCoins.clear();
-}
-
 
 BOOST_AUTO_TEST_SUITE(darksend_tests)
 
@@ -72,6 +36,37 @@ BOOST_AUTO_TEST_CASE(darksend_vote)
     mnv.Vote();
     BOOST_CHECK(mnv.GetVotes() == 3);
 }
+
+BOOST_AUTO_TEST_CASE(set_collateral_address_bad)
+{
+	CDarkSendPool * dsp_ptr = new CDarkSendPool();
+
+	string crappy = "badaddress";
+
+	BOOST_CHECK( dsp_ptr->SetCollateralAddress(crappy) == false );
+	delete dsp_ptr;
+}
+
+BOOST_AUTO_TEST_CASE(set_collateral_address_production)
+{
+	CDarkSendPool * dsp_ptr = new CDarkSendPool();
+
+	string prod = "Xq19GqFvajRrEdDHYRKGYjTsQfpV5jyipF";
+
+	BOOST_CHECK( dsp_ptr->SetCollateralAddress(prod) == true );
+	delete dsp_ptr;
+}
+
+BOOST_AUTO_TEST_CASE(set_collateral_address_testnet)
+{
+	CDarkSendPool * dsp_ptr = new CDarkSendPool();
+
+	string testnet = "mxE2Rp3oYpSEFdsN5TdHWhZvEHm3PJQQVm";
+
+	BOOST_CHECK( dsp_ptr->SetCollateralAddress(testnet) == true );
+	delete dsp_ptr;
+}
+
 
 BOOST_AUTO_TEST_CASE(darksend_masternode_voting)
 {

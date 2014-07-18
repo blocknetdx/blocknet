@@ -64,8 +64,10 @@ std::vector<CMasterNodeVote> darkSendMasterNodeVotes;
 std::vector<int64> darkSendDenominations;
 std::vector<pair<int64, pair<CTxIn, int> > > vecBlockVotes;
 std::vector<pair<int64, CTxIn> > vecMasternodesVoted;
-std::vector<CTxIn> vecMasternodeAskedFor;
 int64 enforceMasternodePaymentsTime = 4085657524;
+std::vector<CTxIn> vecMasternodeAskedFor;
+
+
 
 /** Fees smaller than this (in satoshi) are considered zero fee (for transaction creation) */
 int64 CTransaction::nMinTxFee = 100000;
@@ -1513,83 +1515,6 @@ unsigned int static KimotoGravityWell(const CBlockIndex* pindexLast, const CBloc
     return bnNew.GetCompact();
 }
 
-unsigned int static DarkGravityWave(const CBlockIndex* pindexLast, const CBlockHeader *pblock) {
-    /* current difficulty formula, darkcoin - DarkGravity v2, written by Evan Duffield - evan@darkcoin.io */
-    const CBlockIndex *BlockLastSolved = pindexLast;
-    const CBlockIndex *BlockReading = pindexLast;
-    const CBlockHeader *BlockCreating = pblock;
-    BlockCreating = BlockCreating;
-    int64 nBlockTimeAverage = 0;
-    int64 nBlockTimeAveragePrev = 0;
-    int64 nBlockTimeCount = 0;
-    int64 nBlockTimeSum2 = 0;
-    int64 nBlockTimeCount2 = 0;
-    int64 LastBlockTime = 0;
-    int64 PastBlocksMin = 14;
-    int64 PastBlocksMax = 140;
-    int64 CountBlocks = 0;
-    CBigNum PastDifficultyAverage;
-    CBigNum PastDifficultyAveragePrev;
-
-    if (BlockLastSolved == NULL || BlockLastSolved->nHeight == 0 || BlockLastSolved->nHeight < PastBlocksMin) { return bnProofOfWorkLimit.GetCompact(); }
-        
-    for (unsigned int i = 1; BlockReading && BlockReading->nHeight > 0; i++) {
-        if (PastBlocksMax > 0 && i > PastBlocksMax) { break; }
-        CountBlocks++;
-
-        if(CountBlocks <= PastBlocksMin) {
-            if (CountBlocks == 1) { PastDifficultyAverage.SetCompact(BlockReading->nBits); }
-            else { PastDifficultyAverage = ((CBigNum().SetCompact(BlockReading->nBits) - PastDifficultyAveragePrev) / CountBlocks) + PastDifficultyAveragePrev; }
-            PastDifficultyAveragePrev = PastDifficultyAverage;
-        }
-
-        if(LastBlockTime > 0){
-            int64 Diff = (LastBlockTime - BlockReading->GetBlockTime());
-            if(nBlockTimeCount <= PastBlocksMin) {
-                nBlockTimeCount++;
-
-                if (nBlockTimeCount == 1) { nBlockTimeAverage = Diff; }
-                else { nBlockTimeAverage = ((Diff - nBlockTimeAveragePrev) / nBlockTimeCount) + nBlockTimeAveragePrev; }
-                nBlockTimeAveragePrev = nBlockTimeAverage;
-            }
-            nBlockTimeCount2++;
-            nBlockTimeSum2 += Diff;
-        }
-        LastBlockTime = BlockReading->GetBlockTime();      
-
-        if (BlockReading->pprev == NULL) { assert(BlockReading); break; }
-        BlockReading = BlockReading->pprev;
-    }
-    
-    CBigNum bnNew(PastDifficultyAverage);
-    if (nBlockTimeCount != 0 && nBlockTimeCount2 != 0) {
-            double SmartAverage = ((((long double)nBlockTimeAverage)*0.7)+(((long double)nBlockTimeSum2 / (long double)nBlockTimeCount2)*0.3));
-            if(SmartAverage < 1) SmartAverage = 1;
-            double Shift = nTargetSpacing/SmartAverage;
-
-            double fActualTimespan = ((long double)CountBlocks*(double)nTargetSpacing)/Shift;
-            double fTargetTimespan = ((long double)CountBlocks*(double)nTargetSpacing);
-
-            if (fActualTimespan < fTargetTimespan/3)
-                fActualTimespan = fTargetTimespan/3;
-            if (fActualTimespan > fTargetTimespan*3)
-                fActualTimespan = fTargetTimespan*3;
-
-            int64 nActualTimespan = fActualTimespan;
-            int64 nTargetTimespan = fTargetTimespan;
-
-            // Retarget
-            bnNew *= nActualTimespan;
-            bnNew /= nTargetTimespan;
-    }
-
-    if (bnNew > bnProofOfWorkLimit){
-        bnNew = bnProofOfWorkLimit;
-    }
-     
-    return bnNew.GetCompact();
-}
-
 unsigned int static DarkGravityWave3(const CBlockIndex* pindexLast, const CBlockHeader *pblock) {
     /* current difficulty formula, darkcoin - DarkGravity v3, written by Evan Duffield - evan@darkcoin.io */
     const CBlockIndex *BlockLastSolved = pindexLast;
@@ -1663,23 +1588,20 @@ unsigned int static GetNextWorkRequired_V2(const CBlockIndex* pindexLast, const 
 unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHeader *pblock)
 {
         int DiffMode = 1;
+        
         if (fTestNet) {
-            if (pindexLast->nHeight+1 >= 160) { DiffMode = 4; }
+            if (pindexLast->nHeight+1 >= 256) DiffMode = 3;
         }
         else {
-            if (pindexLast->nHeight+1 >= 68589) { DiffMode = 4; }
-            else if (pindexLast->nHeight+1 >= 34140) { DiffMode = 3; }
-            else if (pindexLast->nHeight+1 >= 15200) { DiffMode = 2; }
+            if (pindexLast->nHeight+1 >= 34140) DiffMode = 3;
+            else if (pindexLast->nHeight+1 >= 15200) DiffMode = 2;
         }
 
         if (DiffMode == 1) { return GetNextWorkRequired_V1(pindexLast, pblock); }
         else if (DiffMode == 2) { return GetNextWorkRequired_V2(pindexLast, pblock); }
-        else if (DiffMode == 3) { return DarkGravityWave(pindexLast, pblock); }
-        else if (DiffMode == 4) { return DarkGravityWave3(pindexLast, pblock); }
+        else if (DiffMode == 3) { return DarkGravityWave3(pindexLast, pblock); }
         return DarkGravityWave3(pindexLast, pblock);
 }
-
-
 
 bool CheckProofOfWork(uint256 hash, unsigned int nBits)
 {
@@ -1811,33 +1733,6 @@ void CBlockHeader::UpdateTime(const CBlockIndex* pindexPrev)
 
 uint256 CBlockHeader::GetHash() const
 {   
-    return Hash9(BEGIN(nVersion), END(nNonce));
-}
-
-uint256 CBlockHeader::GetSpecialHash() const
-{   
-    // calculate additional masternode vote info to include in hash
-    uint256 hash = 0;
-    uint256 vmnAdditional = 0;
-
-    //printf("------------------------------------------------\n");
-    if( (fTestNet && nTime > START_MASTERNODE_PAYMENTS_TESTNET) || (!fTestNet && nTime > START_MASTERNODE_PAYMENTS)) {
-        BOOST_FOREACH(CMasterNodeVote mv1, vmn){
-            uint160 n2 = mv1.pubkey.GetID();
-            uint256 n = 0;
-            memcpy(&n, &n2, sizeof(n2));
-            //printf(" vmnAdd1 %s\n", n.GetHex().c_str());
-
-            vmnAdditional += n;
-            //printf(" vmnAdd2 %s\n", vmnAdditional.GetHex().c_str());
-            vmnAdditional <<= (mv1.votes*8) + (mv1.blockHeight % 64);
-            //printf(" vmnAdd3 %s\n", vmnAdditional.GetHex().c_str());
-        }
-
-        hash = Hash9(BEGIN(nVersion), END(nNonce));
-        return Hash9(BEGIN(hash), END(vmnAdditional));
-    };           
-    
     return Hash9(BEGIN(nVersion), END(nNonce));
 }
 
@@ -5934,7 +5829,6 @@ public:
 /* *** BEGIN DARKSEND MAGIC - DARKCOIN **********
     Copyright 2014, Darkcoin Developers 
         eduffield - evan@darkcoin.io
-        InternetApe - kyle@darkcoin.io
 */
 
 
