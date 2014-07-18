@@ -269,10 +269,9 @@ int main(int argc, char *argv[])
              
 
                 if(!agreed_to_tou){
-                    QMessageBox::StandardButton retval = QMessageBox::question(guiref, "Agree to the terms of use?",
-                                          window.tr("Do you agreed to the following terms of use? <br>") + 
-                                          window.tr("--- terms go here --- <br>") + 
-                                          window.tr(pathDebug.string().c_str()),
+                    QMessageBox::StandardButton retval = QMessageBox::question(guiref, "Darkcoin Terms Of Use",
+                                          window.tr("Do you agreed to the following terms of use? <br><br>") + 
+                                          window.tr("I understand that Darkcoin is not intended for any illegal activity and that no person or entity associated with Darkcoin can be held responsible for any use against the law.<br>"),
                           QMessageBox::Yes|QMessageBox::Cancel,
                           QMessageBox::Cancel);
 
