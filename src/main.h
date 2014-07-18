@@ -132,6 +132,7 @@ extern std::string strMasterNodePrivKey;
 extern int64 enforceMasternodePaymentsTime;
 extern CWallet pmainWallet;
 extern std::map<uint256, CBlock*> mapOrphanBlocks;
+extern std::vector<std::pair<int64, std::pair<CTxIn, int> > > vecBlockVotes;
 
 // Settings
 extern int64 nTransactionFee;
@@ -1432,8 +1433,6 @@ public:
         return (nBits == 0);
     }
 
-    //special has includes voting info in the hash
-    uint256 GetSpecialHash() const;
     uint256 GetHash() const;
 
     int64 GetBlockTime() const
@@ -2446,7 +2445,7 @@ public:
     
     }
 
-    uint256 CalculateScore(int mod=10);
+    uint256 CalculateScore(int mod=10, int64 nBlockHeight=0);
 
     void UpdateLastSeen(int64 override=0)
     {
@@ -2461,7 +2460,7 @@ public:
 
     bool UpdatedWithin(int microSeconds)
     {
-        //printf("UpdatedWithin %"PRI64u", %"PRI64u" --  %d \n", GetTimeMicros() , lastTimeSeen, (GetTimeMicros() - lastTimeSeen) < microSeconds);
+        printf("UpdatedWithin %"PRI64u", %"PRI64u" --  %d \n", GetTimeMicros() , lastTimeSeen, (GetTimeMicros() - lastTimeSeen) < microSeconds);
 
         return (GetTimeMicros() - lastTimeSeen) < microSeconds;
     }
@@ -2491,13 +2490,15 @@ static const int64 POOL_FEE_AMOUNT = 0.025*COIN;
 
 /** Used to keep track of current status of darksend pool
  */
+
 class CDarkSendPool
 {
 public:
-    static const int MIN_PEER_PROTO_VERSION = 70018;
+    static const int MIN_PEER_PROTO_VERSION = 70019;
 
     CTxIn vinMasterNode;
     CPubKey pubkeyMasterNode;
+    CPubKey pubkeyMasterNode2;
     std::vector<unsigned char> vchMasterNodeSignature;
     CScript collateralPubKey;
     
@@ -2517,8 +2518,12 @@ public:
     }
 
     bool SetCollateralAddress(std::string strAddress);
-    bool GetLastValidBlockHash(uint256& hash, int mod=10);
-    int GetCurrentMasterNode(int mod=10);
+    bool GetCurrentMasterNodeConsessus(int64 blockHeight, CScript& payee);
+    void SubmitMasternodeVote(CTxIn& vinWinningMasternode, CTxIn& vinMasterNodeFrom, int64 nBlockHeight);
+    int GetMasternodeByVin(CTxIn& vin);
+    int GetMasternodeRank(CTxIn& vin, int mod);
+    int GetCurrentMasterNode(int mod=10, int64 nBlockHeight=0);
+    bool GetLastValidBlockHash(uint256& hash, int mod=10, int nBlockHeight=0);
     void NewBlock();
 };
 

@@ -1926,3 +1926,13 @@ void RelayDarkSendElectionEntryPing(const CTxIn vin, const std::vector<unsigned 
         pnode->PushMessage("dseep", vin, vchSig, nNow, stop);
     }
 }
+
+
+void RelayDarkSendMasterNodeConsessusVote(const CTxIn inWinningMasternode, const CTxIn inFromMasternode, const int64 nBlockHeight, const std::vector<unsigned char>& vchSig)
+{
+    LOCK(cs_vNodes);
+    BOOST_FOREACH(CNode* pnode, vNodes)
+    {
+        pnode->PushMessage("dmcv", inWinningMasternode, inFromMasternode, nBlockHeight, vchSig);
+    }   
+}

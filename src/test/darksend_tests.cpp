@@ -26,6 +26,16 @@ BOOST_AUTO_TEST_CASE(darksend_sign)
     BOOST_CHECK(dss.VerifyMessage(pubkey, vchSig, "hello2", errorMessage) == false);
 
 }
+BOOST_AUTO_TEST_CASE(darksend_vote)
+{
+    CPubKey key;
+    CMasterNodeVote mnv;
+    mnv.Set(key, 1);
+    mnv.Vote();
+    BOOST_CHECK(mnv.GetVotes() == 2);
+    mnv.Vote();
+    BOOST_CHECK(mnv.GetVotes() == 3);
+}
 
 BOOST_AUTO_TEST_CASE(set_collateral_address_bad)
 {
@@ -56,18 +66,5 @@ BOOST_AUTO_TEST_CASE(set_collateral_address_testnet)
 	BOOST_CHECK( dsp_ptr->SetCollateralAddress(testnet) == true );
 	delete dsp_ptr;
 }
-
-
-BOOST_AUTO_TEST_CASE(darksend_vote)
-{
-    CPubKey key;
-    CMasterNodeVote mnv;
-    mnv.Set(key, 1);
-    mnv.Vote();
-    BOOST_CHECK(mnv.GetVotes() == 2);
-    mnv.Vote();
-    BOOST_CHECK(mnv.GetVotes() == 3);
-}
-
 
 BOOST_AUTO_TEST_SUITE_END()

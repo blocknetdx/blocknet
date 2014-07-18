@@ -658,6 +658,6 @@ void RelayTransaction(const CTransaction& tx, const uint256& hash);
 void RelayTransaction(const CTransaction& tx, const uint256& hash, const CDataStream& ss);
 void RelayDarkSendElectionEntry(const CTxIn vin, const CService addr, const std::vector<unsigned char> vchSig, const int64 nNow, const CPubKey pubkey, const CPubKey pubkey2, const int count, const int current, const int64 lastUpdated);
 void RelayDarkSendElectionEntryPing(const CTxIn vin, const std::vector<unsigned char> vchSig, const int64 nNow, const bool stop);
-
+void RelayDarkSendMasterNodeConsessusVote(const CTxIn inWinningMasternode, const CTxIn inFromMasternode, const int64 nBlockHeight, const std::vector<unsigned char>& vchSig);
 
 #endif
