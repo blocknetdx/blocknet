@@ -1284,7 +1284,7 @@ Value keypoolrefill(const Array& params, bool fHelp)
 
     pwalletMain->TopUpKeyPool();
 
-    if (pwalletMain->GetKeyPoolSize() < GetArg("-keypool", 100))
+    if (pwalletMain->GetKeyPoolSize() < GetArg("-keypool", 1000))
         throw JSONRPCError(RPC_WALLET_ERROR, "Error refreshing keypool.");
 
     return Value::null;
