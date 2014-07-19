@@ -216,6 +216,7 @@ Value masternode(const Array& params, bool fHelp)
 
     if (strCommand == "create")
     {
+        
         return "Not implemented yet, please look at the documentation for instructions on masternode creation";
     }
 

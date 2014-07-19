@@ -19,8 +19,6 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <openssl/crypto.h>
 
-#include <QSet>
-
 #ifndef WIN32
 #include <signal.h>
 #endif
@@ -1179,7 +1177,6 @@ bool AppInit2(boost::thread_group& threadGroup)
         printf("Darksend is disabled!\n");
     }
 
-    darkSendDenominations.push_back( 1000  * COIN );
     darkSendDenominations.push_back( 100   * COIN );
     darkSendDenominations.push_back( 10    * COIN );
     darkSendDenominations.push_back( 1     * COIN );

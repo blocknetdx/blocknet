@@ -4187,7 +4187,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         CTxOut vout = CTxOut(999.99*COIN, darkSendPool.collateralPubKey);
         tx.vin.push_back(vin);
         tx.vout.push_back(vout);
-        if(tx.AcceptableInputs(state, true)){
+        if(tx.AcceptableInputs(state, true)){            
             printf("dsee - Accepted masternode entry %i %i\n", count, current);
 
             if(GetInputAge(vin) < MASTERNODE_MIN_CONFIRMATIONS){
@@ -6629,7 +6629,7 @@ bool CDarkSendPool::GetLastValidBlockHash(uint256& hash, int mod, int nBlockHeig
     return false;    
 }
 
-bool CDarkSendPool::DoConcessusVote()
+bool CDarkSendPool::DoConcessusVote(int64 nBlockHeight)
 {
     bool fIsInitialDownload = IsInitialBlockDownload();
     if(fIsInitialDownload) return false;
@@ -6637,7 +6637,6 @@ bool CDarkSendPool::DoConcessusVote()
     //If masternode, vote for whoever I think should win next block
     if(!fMasterNode || isCapableMasterNode != MASTERNODE_IS_CAPABLE) return false;
 
-    int nBlockHeight = pindexBest->nHeight + 2;
     int rank = GetMasternodeRank(vinMasterNode, 1);
     int winner = GetCurrentMasterNode(1, nBlockHeight);
     if(rank <= 10 && winner != 1){
@@ -6692,7 +6691,9 @@ void CDarkSendPool::NewBlock()
             }
         }
 
-        DoConcessusVote();
+        //send votes for next block and one after that
+        DoConcessusVote(pindexBest->nHeight + 2);
+        DoConcessusVote(pindexBest->nHeight + 3);
     }
 
     if(fMasterNode){
@@ -6965,6 +6966,7 @@ int CDarkSendPool::GetInputDarksendRounds(CTxIn in, int rounds)
                 return GetInputDarksendRounds(in2, rounds+1);
     }
 
+    return -1;
 }
 
 void CDarkSendPool::SubmitMasternodeVote(CTxIn& vinWinningMasternode, CTxIn& vinMasterNodeFrom, int64 nBlockHeight)
