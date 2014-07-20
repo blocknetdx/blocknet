@@ -79,6 +79,8 @@ BOOST_AUTO_TEST_CASE(darksend_masternode_voting)
     int i = 0;
     std::vector<unsigned char> vchSig;
 
+    CScript payee = CScript();
+
     //setup a couple fake masternodes
     CMasterNode mn1(addr, testVin1, CPubKey(), vchSig, 0, CPubKey());
     darkSendMasterNodes.push_back(mn1);
@@ -86,27 +88,29 @@ BOOST_AUTO_TEST_CASE(darksend_masternode_voting)
     CMasterNode mn2(addr, testVin2, CPubKey(), vchSig, 0, CPubKey());
     darkSendMasterNodes.push_back(mn2);
 
+    darkSendPool.unitTest = true;
+
     // return -1 if nothing present
-    BOOST_CHECK(darkSendPool.GetCurrentMasterNodeConsessus(1000) == -1);
+    BOOST_CHECK(darkSendPool.GetCurrentMasterNodeConsessus(1000, payee) == false);
 
     //block 1000
     for(i = 0; i <= 2; i++)
         darkSendPool.SubmitMasternodeVote(testVin1, fromMn1,1000);
 
     // not enough votes
-    BOOST_CHECK(darkSendPool.GetCurrentMasterNodeConsessus(1000) == -1); // 
+    BOOST_CHECK(darkSendPool.GetCurrentMasterNodeConsessus(1000, payee) == false); // 
 
     for(i = 0; i <= 4; i++)
         darkSendPool.SubmitMasternodeVote(testVin2, fromMn1, 1000);
 
     // not enough votes
-    BOOST_CHECK(darkSendPool.GetCurrentMasterNodeConsessus(1000) == -1); // 
+    BOOST_CHECK(darkSendPool.GetCurrentMasterNodeConsessus(1000, payee) == false); // 
 
     for(i = 0; i <= 4; i++)
         darkSendPool.SubmitMasternodeVote(testVin2, fromMn1, 1000);
     
     // should have 8 votes now
-    BOOST_CHECK(darkSendPool.GetCurrentMasterNodeConsessus(1000) == 1); // vin2
+    BOOST_CHECK(darkSendPool.GetCurrentMasterNodeConsessus(1000, payee) == true); // vin2
 }
 
 
@@ -152,11 +156,11 @@ BOOST_AUTO_TEST_CASE(darksend_add_entry)
     BOOST_CHECK(e.sev.size() == 2);
 
     //sign one of the vin
-    BOOST_CHECK(e.AddSig(CScript(), CScript(), CTxIn(1001, 0)) == true);
-    BOOST_CHECK(e.AddSig(CScript(), CScript(), CTxIn(1001, 0)) == false);
+    BOOST_CHECK(e.AddSig(CTxIn(1001, 0)) == true);
+    BOOST_CHECK(e.AddSig(CTxIn(1001, 0)) == false);
 
     //sign non-existant
-    BOOST_CHECK(e.AddSig(CScript(), CScript(), CTxIn(9999001, 0)) == false);
+    BOOST_CHECK(e.AddSig(CTxIn(9999001, 0)) == false);
 
 }
 
@@ -169,9 +173,10 @@ BOOST_AUTO_TEST_CASE(darksend_masternode_class)
     int64 newNow = GetTimeMicros();
 
     CMasterNode mn(CService("10.10.10.10:9999"), CTxIn(1000, 0), pubkey, newSig, newNow, pubkey);
+    mn.unitTest = true;
     mn.UpdateLastSeen();
     mn.Check();
-    BOOST_CHECK(mn.enabled == 3); // bad vin
+    BOOST_CHECK(mn.enabled == 1); // ok
     mn.lastTimeSeen -= MASTERNODE_EXPIRATION_MICROSECONDS;
     mn.Check();
     BOOST_CHECK(mn.enabled == 2); // hasn't pinged
@@ -215,7 +220,7 @@ BOOST_AUTO_TEST_CASE(darksend_pool_add_entry)
     BOOST_CHECK(darkSendPool.state == POOL_STATUS_ACCEPTING_ENTRIES);
     BOOST_CHECK(darkSendPool.entries.size() == 3);
     darkSendPool.Check();
-    BOOST_CHECK(darkSendPool.state == POOL_STATUS_FINALIZE_TRANSACTION);
+    BOOST_CHECK(darkSendPool.state == POOL_STATUS_SIGNING);
     BOOST_CHECK(darkSendPool.entries.size() == 3);
 
 }

@@ -5872,14 +5872,16 @@ void CDarkSendPool::SetNull(){
     UnlockCoins();
 }
 
-void CDarkSendPool::SetCollateralAddress(std::string strAddress){
+bool CDarkSendPool::SetCollateralAddress(std::string strAddress){
     CBitcoinAddress address;
     if (!address.SetString(strAddress))
+    {
         printf("CDarkSendPool::SetCollateralAddress - Invalid DarkSend collateral address\n");
-
+        return false;
+    }
     collateralPubKey.SetDestination(address.Get());
+    return true;
 }
-
 
 void CDarkSendPool::UnlockCoins(){
     BOOST_FOREACH(CTxIn v, lockedCoins)
@@ -6925,9 +6927,11 @@ bool CDarkSendPool::GetCurrentMasterNodeConsessus(int64 blockHeight, CScript& pa
     printf("MasternodeConsessus - found a winner\n");
 
     // we want a strong consessus, otherwise take any payee
-    //if (winner_votes < 8) return CScript();
+    if (winner_votes < 8) return false;
 
     printf("MasternodeConsessus - strong consessus\n");
+
+    if (unitTest) return true;
 
     CTransaction tx;
     uint256 hash;
@@ -7001,15 +7005,17 @@ void CMasterNode::Check()
         return;
     }
 
-    CValidationState state;
-    CTransaction tx = CTransaction();
-    CTxOut vout = CTxOut(999.99*COIN, darkSendPool.collateralPubKey);
-    tx.vin.push_back(vin);
-    tx.vout.push_back(vout);
+    if(!unitTest){
+        CValidationState state;
+        CTransaction tx = CTransaction();
+        CTxOut vout = CTxOut(999.99*COIN, darkSendPool.collateralPubKey);
+        tx.vin.push_back(vin);
+        tx.vout.push_back(vout);
 
-    if(!tx.AcceptableInputs(state, true)) {
-        enabled = 3;
-        return; 
+        if(!tx.AcceptableInputs(state, true)) {
+            enabled = 3;
+            return; 
+        }
     }
 
     enabled = 1; // OK

@@ -2451,6 +2451,7 @@ public:
     std::vector<unsigned char> sig;
     int64 now;
     int enabled;
+    bool unitTest;
 
     CMasterNode(CService newAddr, CTxIn newVin, CPubKey newPubkey, std::vector<unsigned char> newSig, int64 newNow, CPubKey newPubkey2)
     {
@@ -2462,7 +2463,7 @@ public:
         now = newNow;
         enabled = 1;
         lastTimeSeen = 0;
-    
+        unitTest = false;    
     }
 
     uint256 CalculateScore(int mod=10, int64 nBlockHeight=0);
@@ -2609,6 +2610,8 @@ public:
     std::string lastMessage;
     bool completedTransaction;
 
+    bool unitTest;
+
     CDarkSendPool()
     {
         //printf("CDarkSendPool::INIT()\n");        
@@ -2624,12 +2627,13 @@ public:
         
         isCapableMasterNode = MASTERNODE_NOT_PROCESSED;
         masternodePortOpen = 0;
+        unitTest = false;
 
         SetCollateralAddress(strAddress);
         SetNull();
     }
 
-    void SetCollateralAddress(std::string strAddress);
+    bool SetCollateralAddress(std::string strAddress);
     void SetNull();
 
     void UnlockCoins();
