@@ -6871,7 +6871,7 @@ void CDarkSendPool::DoAutomaticDenominating()
 
 int CDarkSendPool::GetMasternodeRank(CTxIn& vin, int mod)
 {
-    std::vector<pair<uint, CTxIn> > vecMasternodeScores;
+    std::vector<pair<unsigned int, CTxIn> > vecMasternodeScores;
 
     BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
         mn.Check();
@@ -6889,7 +6889,7 @@ int CDarkSendPool::GetMasternodeRank(CTxIn& vin, int mod)
     sort(vecMasternodeScores.rbegin(), vecMasternodeScores.rend(), CompareValueOnly());
     
     unsigned int rank = 0;
-    BOOST_FOREACH (PAIRTYPE(uint, CTxIn)& s, vecMasternodeScores){
+    BOOST_FOREACH (PAIRTYPE(unsigned int, CTxIn)& s, vecMasternodeScores){
         rank++;
         if(s.second == vin) return rank;
     }
