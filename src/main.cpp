@@ -4056,9 +4056,21 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         }
 
         printf("dmcv -block height ok\n");
+        printf("dmcv - masternode from vin %s\n", vinMasterNodeFrom.ToString().c_str());
 
         int mn = darkSendPool.GetMasternodeByVin(vinMasterNodeFrom);
-        if (mn == -1) return false;
+        if (mn == -1) {
+            // ask for the dsee info once from the node that sent dseep
+
+            BOOST_FOREACH(CTxIn vinAsked, vecMasternodeAskedFor)
+                if (vinAsked == vinMasterNodeFrom) return false;
+
+            vecMasternodeAskedFor.push_back(vinMasterNodeFrom);
+            pfrom->PushMessage("dseg", vinMasterNodeFrom);
+
+            return false;
+        }
+
 
         printf("dmcv -know masternode\n");
 
@@ -4081,8 +4093,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         printf("dmcv -rank in range\n");
 
-        std::string vchPubKey(darkSendMasterNodes[mn].pubkey.begin(), darkSendMasterNodes[mn].pubkey.end());
-
+        std::string vchPubKey(pubkey.begin(), pubkey.end());
         std::string strMessage = vinWinningMasternode.prevout.ToString() + vinMasterNodeFrom.prevout.ToString() + boost::lexical_cast<std::string>(nBlockHeight) + vchPubKey; 
         std::string errorMessage = "";
         if(!darkSendSigner.VerifyMessage(pubkey, vchSig, strMessage, errorMessage)){
@@ -6654,7 +6665,7 @@ bool CDarkSendPool::DoConcessusVote(int64 nBlockHeight)
             exit(0);
         }
 
-        std::string vchPubKey(darkSendMasterNodes[winner].pubkey.begin(), darkSendMasterNodes[winner].pubkey.end());
+        std::string vchPubKey(pubkey2.begin(), pubkey2.end());
         std::string strMessage = darkSendMasterNodes[winner].vin.prevout.ToString() + vinMasterNode.prevout.ToString() + boost::lexical_cast<std::string>(nBlockHeight) + vchPubKey; 
 
         if(!darkSendSigner.SignMessage(strMessage, errorMessage, vchMasterNodeSignature, key2)) {
