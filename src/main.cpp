@@ -1588,7 +1588,7 @@ unsigned int static GetNextWorkRequired_V2(const CBlockIndex* pindexLast, const 
 unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHeader *pblock)
 {
         int DiffMode = 1;
-        
+
         if (fTestNet) {
             if (pindexLast->nHeight+1 >= 256) DiffMode = 3;
         }
@@ -5887,7 +5887,7 @@ bool CDarkSendPool::GetCurrentMasterNodeConsessus(int64 blockHeight, CScript& pa
     printf("MasternodeConsessus - found a winner\n");
 
     // we want a strong consessus, otherwise take any payee
-    //if (winner_votes < 8) return CScript();
+    if (winner_votes < 8) return false;
 
     printf("MasternodeConsessus - strong consessus\n");
 
