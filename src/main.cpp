@@ -6947,8 +6947,13 @@ bool CDarkSendPool::GetCurrentMasterNodeConsessus(int64 blockHeight, CScript& pa
     CTransaction tx;
     uint256 hash;
     if(GetTransaction(winner_vin.prevout.hash, tx, hash, true)){
-        payee = tx.vout[0].scriptPubKey;
-        printf("MasternodeConsessus - Masternode payment to %s\n", payee.ToString().c_str());
+        BOOST_FOREACH(CTxOut out, tx.vout){
+            if(out.nValue == 1000*COIN){
+                payee = out.scriptPubKey;
+                printf("MasternodeConsessus - Masternode payment to %s\n", payee.ToString().c_str());
+                break;
+            }
+        }
 
         return true;
     }
