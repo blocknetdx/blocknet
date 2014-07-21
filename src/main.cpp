@@ -896,7 +896,7 @@ bool CTxMemPool::acceptableInputs(CValidationState &state, CTransaction &tx, boo
 
 
 bool CTxMemPool::acceptable(CValidationState &state, CTransaction &tx, bool fCheckInputs, bool fLimitFree,
-                        bool* pfMissingInputs)
+                        bool* pfMissingInputs, bool fScriptChecks)
 {
     if (pfMissingInputs)
         *pfMissingInputs = false;
@@ -997,7 +997,7 @@ bool CTxMemPool::acceptable(CValidationState &state, CTransaction &tx, bool fChe
 
         // Check against previous transactions
         // This is done last to help prevent CPU exhaustion denial-of-service attacks.
-        if (!tx.CheckInputs(state, view, true, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC))
+        if (!tx.CheckInputs(state, view, fScriptChecks, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC))
         {
             return error("CTxMemPool::acceptable() : ConnectInputs failed %s", hash.ToString().c_str());
         }
@@ -1016,10 +1016,10 @@ bool CTransaction::AcceptToMemoryPool(CValidationState &state, bool fCheckInputs
     }
 }
 
-bool CTransaction::IsAcceptable(CValidationState &state, bool fCheckInputs, bool fLimitFree, bool* pfMissingInputs)
+bool CTransaction::IsAcceptable(CValidationState &state, bool fCheckInputs, bool fLimitFree, bool* pfMissingInputs, bool fScriptChecks)
 {
     try {
-        return mempool.acceptable(state, *this, fCheckInputs, fLimitFree, pfMissingInputs);
+        return mempool.acceptable(state, *this, fCheckInputs, fLimitFree, pfMissingInputs, fScriptChecks);
     } catch(std::runtime_error &e) {
         return state.Abort(_("System error: ") + e.what());
     }
@@ -3910,25 +3910,71 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         int accepted = 0;
         std::string error = "";
 
-        /*//check it like a transaction
+        //check it like a transaction
         {
+            int64 nValueIn = 0;
+            int64 nValueOut = 0;
+            bool missingTx = false;
+
             CValidationState state;
-            CTransaction txNew;
+            CTransaction tx;
 
-            BOOST_FOREACH(const CTxOut o, out)
-                txNew.vout.push_back(o);
+            BOOST_FOREACH(const CTxOut o, out){
+                nValueOut += o.nValue;
+                tx.vout.push_back(o);
+            }
 
-            BOOST_FOREACH(const CTxIn i, in)
-                txNew.vin.push_back(i);
+            BOOST_FOREACH(const CTxIn i, in){
+                tx.vin.push_back(i);
 
-            if (!txNew.AcceptToMemoryPool(state, true, false)){ //AcceptableInputs(state, true)){
-                printf("dsi -- transactione not valid! %s\n", txNew.ToString().c_str());
+                printf("dsi -- tx in %s\n", i.ToString().c_str());                
+
+                CTransaction tx2;
+                uint256 hash;
+                if(GetTransaction(i.prevout.hash, tx2, hash, true))
+                    nValueIn += tx2.vout[i.prevout.n].nValue;    
+                else
+                    missingTx = true;
+            }
+
+
+            if(!missingTx){
+                int64 nFees = nValueIn-nValueOut;
+                int64 txMinFee = tx.GetMinFee(1000, true, GMF_RELAY);
+                printf("dsi -- min fee %"PRI64d"\n", txMinFee);
+                printf("dsi -- fees %"PRI64d"-%"PRI64d"=%"PRI64d" \ntx:%s\n", nValueIn, nValueOut, nFees, tx.ToString().c_str());
+                if (nFees < txMinFee) {
+                    printf("dsi -- fees are too low! %"PRI64d"-%"PRI64d"=%"PRI64d" \ntx:%s\n", nValueIn, nValueOut, nFees, tx.ToString().c_str());
+                    accepted = 0;
+                    error = "transaction fees are too low";
+                    pfrom->PushMessage("dssu", darkSendPool.GetState(), darkSendPool.GetEntriesCount(), accepted, error);
+                    return false;
+                }
+
+                if (nValueIn-nValueOut > nValueIn*.01) {
+                    printf("dsi -- fees are too high! %s\n", tx.ToString().c_str());
+                    accepted = 0;
+                    error = "transaction fees are too high";
+                    pfrom->PushMessage("dssu", darkSendPool.GetState(), darkSendPool.GetEntriesCount(), accepted, error);
+                    return false;
+                }
+            } else {
+                printf("dsi -- missing input tx! %s\n", tx.ToString().c_str());
+                accepted = 0;
+                error = "missing input tx information";
+                pfrom->PushMessage("dssu", darkSendPool.GetState(), darkSendPool.GetEntriesCount(), accepted, error);
+                return false;
+            }
+
+            bool missing = false;
+            if (!tx.IsAcceptable(state, true, false, &missing, false)){ //AcceptableInputs(state, true)){
+                printf("dsi -- transactione not valid! %s\n", tx.ToString().c_str());
                 accepted = 0;
                 error = "transaction not valid";
                 pfrom->PushMessage("dssu", darkSendPool.GetState(), darkSendPool.GetEntriesCount(), accepted, error);
                 return false;
             }
-        }*/
+        }
 
         if(darkSendPool.AddEntry(in, nAmount, txCollateral, out, error)){
             accepted = 1;
@@ -6867,13 +6913,19 @@ void CDarkSendPool::DoAutomaticDenominating()
     // ** find the coins we'll use
     std::vector<CTxIn> vCoins;
     int64 nValueMin = 0.01*COIN;
-    int64 nValueMax = 100*COIN;
+    int64 nValueMax = 501*COIN;
     int64 nValueIn = 0;
 
     //simply look for non-denominated coins
     nValueIn = 0;
     if (!pwalletMain->SelectCoinsDark(nValueMin, nValueMax, vCoins, nValueIn, nDarksendRounds))
     {
+        if (pwalletMain->SelectCoinsDark(nValueMax+1, 9999999*COIN, vCoins, nValueIn, nDarksendRounds))
+        {
+            printf("DoAutomaticDenominating Error: Found inputs too large to denominate. These must be broken up manually to use DarkSend.\n");
+            return;
+        }
+
         printf("DoAutomaticDenominating : No funds detected in need of denominating\n");
         return;
     }
@@ -6951,11 +7003,9 @@ bool CDarkSendPool::GetCurrentMasterNodeConsessus(int64 blockHeight, CScript& pa
             if(out.nValue == 1000*COIN){
                 payee = out.scriptPubKey;
                 printf("MasternodeConsessus - Masternode payment to %s\n", payee.ToString().c_str());
-                break;
+                return true;
             }
         }
-
-        return true;
     }
 
     printf("MasternodeConsessus - couldn't locate pubkey??? \n");

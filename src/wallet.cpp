@@ -1646,6 +1646,25 @@ string CWallet::DarkSendDenominate(int64 nValue)
 
     printf(" --- nValueIn %"PRI64d" nTotalValue %"PRI64d"\n", nValueIn, nTotalValue);
 
+    // calculate total value out --------
+
+    nTotalValue = 0;
+    CWalletTx wtx;
+    BOOST_FOREACH(CTxIn i, vCoins){
+        if (mapWallet.count(i.prevout.hash))
+        {
+            CWalletTx& wtx = mapWallet[i.prevout.hash];
+            nTotalValue += wtx.vout[i.prevout.n].nValue;
+        } else {
+            printf("SelectCoinsDarkDenominated -- Couldn't find transaction\n");
+        }
+    }
+    nTotalValue -= nFeeRet; //minus fees
+
+    //--------------
+
+
+
     BOOST_FOREACH(CTxIn v, vCoins)
         LockCoin(v.prevout);
 
@@ -1700,6 +1719,7 @@ string CWallet::DarkSendDenominate(int64 nValue)
     int64 nValueLeft = nTotalValue;
     std::vector<CTxOut> vOut;
     int nOutputs = 0;
+    printf("nValueLeft %"PRI64d"\n", nValueLeft/COIN);
     BOOST_FOREACH(int64 v, darkSendDenominations){
         nOutputs = 0;
         while(nValueLeft - v >= 0 && nOutputs <= 10) {
@@ -1713,6 +1733,9 @@ string CWallet::DarkSendDenominate(int64 nValue)
             
             nOutputs++;
             nValueLeft -= v;
+            
+            printf(" -- denom %"PRI64d"\n", v/COIN);
+            printf("nValueLeft %"PRI64d"\n", nValueLeft/COIN);
         }
 
         if(nValueLeft == 0) break;
