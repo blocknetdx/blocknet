@@ -113,8 +113,9 @@ CoinControlDialog::CoinControlDialog(QWidget *parent) :
     ui->treeWidget->setColumnWidth(COLUMN_CHECKBOX, 84);
     ui->treeWidget->setColumnWidth(COLUMN_AMOUNT, 100);
     ui->treeWidget->setColumnWidth(COLUMN_LABEL, 170);
-    ui->treeWidget->setColumnWidth(COLUMN_ADDRESS, 290);
-    ui->treeWidget->setColumnWidth(COLUMN_DATE, 110);
+    ui->treeWidget->setColumnWidth(COLUMN_ADDRESS, 190);
+    ui->treeWidget->setColumnWidth(COLUMN_DARKSEND_ROUNDS, 120);
+    ui->treeWidget->setColumnWidth(COLUMN_DATE, 60);
     ui->treeWidget->setColumnWidth(COLUMN_CONFIRMATIONS, 100);
     ui->treeWidget->setColumnWidth(COLUMN_PRIORITY, 100);
     ui->treeWidget->setColumnHidden(COLUMN_TXHASH, true);         // store transacton hash in this column, but dont show it
@@ -423,20 +424,11 @@ void CoinControlDialog::updateLabels(WalletModel *model, QDialog* dialog)
     if (!model) return;
 
     // nPayAmount
-    bool isDarkSend = false;
     qint64 nPayAmount = 0;
     bool fLowOutput = false;
     bool fDust = false;
     unsigned int nQuantityDust = 0;
     CTransaction txDummy;
-
-    foreach(const bool &isTrue, CoinControlDialog::isDarkSend)
-    {
-        if(isTrue) isDarkSend = true;
-    }
-
-    printf("Is Darksend %u\n", isDarkSend);
-
 
     foreach(const qint64 &amount, CoinControlDialog::payAmounts)
     {
@@ -727,6 +719,10 @@ void CoinControlDialog::updateView()
             // date
             itemOutput->setText(COLUMN_DATE, QDateTime::fromTime_t(out.tx->GetTxTime()).toString("yy-MM-dd hh:mm"));
             
+            // ds+ rounds
+            CTxIn vin = CTxIn(out.tx->GetHash(), out.i);
+            itemOutput->setText(COLUMN_DARKSEND_ROUNDS, strPad(QString::number(darkSendPool.GetInputDarksendRounds(vin)), 15, " "));
+
             // confirmations
             itemOutput->setText(COLUMN_CONFIRMATIONS, strPad(QString::number(out.nDepth), 8, " "));
             
