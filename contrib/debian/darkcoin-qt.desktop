@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Darkcoin
+Comment=Darkcoin P2P Cryptocurrency
+Exec=/usr/bin/darkcoin-qt %u
+Terminal=false
+Type=Application
+Icon=/usr/share/pixmaps/darkcoin128.png
+MimeType=x-scheme-handler/darkcoin;
+Categories=Office; Finance;
