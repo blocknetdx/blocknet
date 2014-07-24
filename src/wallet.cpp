@@ -1633,7 +1633,7 @@ string CWallet::DarkSendDenominate(int64 nValue)
     int64 nValueIn = 0;
 
     //try to use denominated funds (for added anonymity)
-    if (true) //!SelectCoinsDarkDenominated(nTotalValue, vCoins, nValueIn))
+    if (!SelectCoinsDarkDenominated(nTotalValue, vCoins, nValueIn))
     {
         vCoins.clear();
         nValueIn = 0;

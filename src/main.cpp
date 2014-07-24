@@ -7067,23 +7067,33 @@ int CDarkSendPool::GetInputDarksendRounds(CTxIn in, int rounds)
 {
     if(rounds >= nDarksendRounds) return rounds;
 
+    printf("CDarkSendPool::GetInputDarksendRounds :: %d %s\n", rounds, in.ToString().c_str());
     CTransaction tx;
     uint256 hash;
     if(GetTransaction(in.prevout.hash, tx, hash, true)){
-        bool fNonDenominatedFound = false;
-        BOOST_FOREACH(CTxOut out, tx.vout){
+        if(rounds == 0){ //make sure the final output is non-denominate
             bool found = false;
+            BOOST_FOREACH(int64 d, darkSendDenominations)
+                if(tx.vout[in.prevout.n].nValue == d) found = true;
+
+            if(!found) return -2;
+        }
+        bool fNonDenominatedFound = false;
+        bool found = false;
+        BOOST_FOREACH(CTxOut out, tx.vout){
             BOOST_FOREACH(int64 d, darkSendDenominations)
                 if(out.nValue == d)
                     found = true;
-            if(!found) fNonDenominatedFound = true;
-            if(fNonDenominatedFound) return rounds;
         }
+        
+        if(!found) return rounds;
 
         // find my vin and look that up
-        BOOST_FOREACH(CTxIn in2, tx.vin)
+        BOOST_FOREACH(CTxIn in2, tx.vin) {
+            printf("CDarkSendPool::GetInputDarksendRounds :: %d %d %s - %s\n", rounds, pwalletMain->IsMine(in2), in2.ToString().c_str());
             if(pwalletMain->IsMine(in2))
                 return GetInputDarksendRounds(in2, rounds+1);
+        }
     }
 
     return -1;
