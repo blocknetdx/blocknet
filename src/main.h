@@ -2696,7 +2696,7 @@ public:
     }
 
     void DoAutomaticDenominating();
-    int GetCurrentMasterNode(int mod=10, int64 nBlockHeight=0);
+    int GetCurrentMasterNode(int mod=1, int64 nBlockHeight=0);
     bool GetCurrentMasterNodeConsessus(int64 blockHeight, CScript& payee);
     void SubmitMasternodeVote(CTxIn& vinWinningMasternode, CTxIn& vinMasterNodeFrom, int64 nBlockHeight);
 

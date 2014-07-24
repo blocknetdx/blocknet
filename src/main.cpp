@@ -6848,7 +6848,7 @@ void CDarkSendPool::NewBlock()
         }
 
         //denominate all non-denominated inputs every 25 minutes.
-        if(pindexBest->nHeight % 10 == 0)
+        if(pindexBest->nHeight % 1 == 0)
             DoAutomaticDenominating();
     }
 
@@ -6870,6 +6870,7 @@ void CDarkSendPool::CompletedTransaction(bool error, std::string lastMessageNew)
 
     completedTransaction = true;
     Check();
+    UnlockCoins();
 }
 
 void CDarkSendPool::ClearLastMessage()
@@ -7078,7 +7079,6 @@ int CDarkSendPool::GetInputDarksendRounds(CTxIn in, int rounds)
 
             if(!found) return -2;
         }
-        bool fNonDenominatedFound = false;
         bool found = false;
         BOOST_FOREACH(CTxOut out, tx.vout){
             BOOST_FOREACH(int64 d, darkSendDenominations)
@@ -7096,7 +7096,7 @@ int CDarkSendPool::GetInputDarksendRounds(CTxIn in, int rounds)
         }
     }
 
-    return -1;
+    return rounds-1;
 }
 
 void CDarkSendPool::SubmitMasternodeVote(CTxIn& vinWinningMasternode, CTxIn& vinMasterNodeFrom, int64 nBlockHeight)
