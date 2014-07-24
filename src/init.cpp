@@ -1177,12 +1177,13 @@ bool AppInit2(boost::thread_group& threadGroup)
         printf("Darksend is disabled!\n");
     }
 
+    //override masternode
+    strUseMasternode = GetArg("-usemasternode", "");
+
+    darkSendDenominations.push_back( 500   * COIN );
     darkSendDenominations.push_back( 100   * COIN );
     darkSendDenominations.push_back( 10    * COIN );
     darkSendDenominations.push_back( 1     * COIN );
-    darkSendDenominations.push_back( 0.1   * COIN );
-    darkSendDenominations.push_back( 0.01  * COIN );
-    darkSendDenominations.push_back( 0.001 * COIN );
 
     threadGroup.create_thread(boost::bind(&ThreadCheckDarkSendPool));
 

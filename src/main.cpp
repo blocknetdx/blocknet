@@ -66,7 +66,7 @@ std::vector<pair<int64, pair<CTxIn, int> > > vecBlockVotes;
 std::vector<pair<int64, CTxIn> > vecMasternodesVoted;
 int64 enforceMasternodePaymentsTime = 4085657524;
 std::vector<CTxIn> vecMasternodeAskedFor;
-
+std::string strUseMasternode = "";
 
 
 /** Fees smaller than this (in satoshi) are considered zero fee (for transaction creation) */
@@ -901,22 +901,30 @@ bool CTxMemPool::acceptable(CValidationState &state, CTransaction &tx, bool fChe
     if (pfMissingInputs)
         *pfMissingInputs = false;
 
+    printf("CTxMemPool::acceptable -- 1\n");
     if (!tx.CheckTransaction(state))
         return error("CTxMemPool::acceptable() : CheckTransaction failed");
+
+    printf("CTxMemPool::acceptable -- 2\n");
 
     // Coinbase is only valid in a block, not as a loose transaction
     if (tx.IsCoinBase())
         return state.DoS(100, error("CTxMemPool::acceptable() : coinbase as individual tx"));
 
+    printf("CTxMemPool::acceptable -- 3\n");
+
     // To help v0.1.5 clients who would see it as a negative number
     if ((int64)tx.nLockTime > std::numeric_limits<int>::max())
         return error("CTxMemPool::acceptable() : not accepting nLockTime beyond 2038 yet");
 
+    printf("CTxMemPool::acceptable -- 4\n");
     // Rather not work on nonstandard transactions (unless -testnet)
     string strNonStd;
     if (!fTestNet && !tx.IsStandard(strNonStd))
         return error("CTxMemPool::acceptable() : nonstandard transaction (%s)",
                      strNonStd.c_str());
+
+    printf("CTxMemPool::acceptable -- 5\n");
 
     // is it already in the memory pool?
     uint256 hash = tx.GetHash();
@@ -927,31 +935,43 @@ bool CTxMemPool::acceptable(CValidationState &state, CTransaction &tx, bool fChe
         }
     }
 
+    printf("CTxMemPool::acceptable -- 6\n");
+
     // Check for conflicts with in-memory transactions
     for (unsigned int i = 0; i < tx.vin.size(); i++)
     {
         COutPoint outpoint = tx.vin[i].prevout;
         if (mapNextTx.count(outpoint))
         {
+            printf("conflict with in-memory transaction : %s \n", outpoint.ToString().c_str());
             // Disable replacement feature for now
             return false;
         }
     }
+
+    printf("CTxMemPool::acceptable -- 7\n");
 
     if (fCheckInputs)
     {
         CCoinsView dummy;
         CCoinsViewCache view(dummy);
 
+        printf("CTxMemPool::acceptable -- 8\n");
+
         {
         LOCK(cs);
         CCoinsViewMemPool viewMemPool(*pcoinsTip, *this);
         view.SetBackend(viewMemPool);
 
+
+        printf("CTxMemPool::acceptable -- 9\n");
+
         // do we already have it?
         if (view.HaveCoins(hash)){
             return false;
         }
+
+        printf("CTxMemPool::acceptable -- 10\n");
 
         // do all inputs exist?
         // Note that this does not check for the presence of actual outputs (see the next check for that),
@@ -964,28 +984,40 @@ bool CTxMemPool::acceptable(CValidationState &state, CTransaction &tx, bool fChe
             }
         }
 
+        printf("CTxMemPool::acceptable -- 11\n");
+
         // are the actual inputs available?
         if (!tx.HaveInputs(view)) {
             return state.Invalid(error("CTxMemPool::acceptable() : inputs already spent"));
         }
 
+        printf("CTxMemPool::acceptable -- 12\n");
+
         // Bring the best block into scope
         view.GetBestBlock();
+
+        printf("CTxMemPool::acceptable -- 13\n");
 
         // we have all inputs cached now, so switch back to dummy, so we don't need to keep lock on mempool
         view.SetBackend(dummy);
         }
+
+        printf("CTxMemPool::acceptable -- 14\n");
 
         // Check for non-standard pay-to-script-hash in inputs
         if (!tx.AreInputsStandard(view) && !fTestNet) {
             return error("CTxMemPool::acceptable() : nonstandard transaction input");
         }
 
+        printf("CTxMemPool::acceptable -- 15\n");
+
         // Note: if you modify this code to accept non-standard transactions, then
         // you should add code here to check that the transaction does a
         // reasonable number of ECDSA signature verifications.
 
         int64 nFees = tx.GetValueIn(view)-tx.GetValueOut();
+
+        printf("CTxMemPool::acceptable -- 16\n");
 
         // Don't accept it if it can't get into a block
         int64 txMinFee = tx.GetMinFee(1000, true, GMF_RELAY);
@@ -995,12 +1027,16 @@ bool CTxMemPool::acceptable(CValidationState &state, CTransaction &tx, bool fChe
                          nFees, txMinFee);
         }
 
+        printf("CTxMemPool::acceptable -- 17\n");
+
         // Check against previous transactions
         // This is done last to help prevent CPU exhaustion denial-of-service attacks.
         if (!tx.CheckInputs(state, view, fScriptChecks, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC))
         {
             return error("CTxMemPool::acceptable() : ConnectInputs failed %s", hash.ToString().c_str());
         }
+
+        printf("CTxMemPool::acceptable -- 18\n");
     }
 
     return true;
@@ -1018,11 +1054,13 @@ bool CTransaction::AcceptToMemoryPool(CValidationState &state, bool fCheckInputs
 
 bool CTransaction::IsAcceptable(CValidationState &state, bool fCheckInputs, bool fLimitFree, bool* pfMissingInputs, bool fScriptChecks)
 {
-    try {
-        return mempool.acceptable(state, *this, fCheckInputs, fLimitFree, pfMissingInputs, fScriptChecks);
-    } catch(std::runtime_error &e) {
-        return state.Abort(_("System error: ") + e.what());
-    }
+    return mempool.acceptable(state, *this, fCheckInputs, fLimitFree, pfMissingInputs, fScriptChecks);
+    
+    /*try {*/
+/*    } catch(std::runtime_error &e) {*/
+/*        printf("System error: %s\n", e.what());*/
+/*        return state.Abort(_("System error: ") + e.what());*/
+/*    }*/
 }
 
 bool CTransaction::AcceptableInputs(CValidationState &state, bool fLimitFree)
@@ -3968,7 +4006,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
             bool missing = false;
             if (!tx.IsAcceptable(state, true, false, &missing, false)){ //AcceptableInputs(state, true)){
-                printf("dsi -- transactione not valid! %s\n", tx.ToString().c_str());
+                printf("dsi -- transactione not valid! \n");
                 accepted = 0;
                 error = "transaction not valid";
                 pfrom->PushMessage("dssu", darkSendPool.GetState(), darkSendPool.GetEntriesCount(), accepted, error);
@@ -5925,8 +5963,6 @@ void CDarkSendPool::SetNull(){
     entriesCount = 0;
     lastEntryAccepted = 0;
     countEntriesAccepted = 0;
-
-    UnlockCoins();
 }
 
 bool CDarkSendPool::SetCollateralAddress(std::string strAddress){
@@ -6186,6 +6222,7 @@ bool CDarkSendPool::AddEntry(const std::vector<CTxIn>& newInput, const int64& nA
     }
 
     BOOST_FOREACH(CTxIn in, newInput) {
+        printf("looking for vin -- %s\n", in.ToString().c_str());
         BOOST_FOREACH(const CDarkSendEntry v, entries) {
             BOOST_FOREACH(const CDarkSendEntryVin s, v.sev){
                 if(s.vin == in) {
@@ -6266,7 +6303,6 @@ void CDarkSendPool::SendMoney(const CTransaction& collateral, std::vector<CTxIn>
 
     if(fMasterNode) {
         printf("CDarkSendPool::SendMoney() - DarkSend from a masternode is not supported currently.\n");
-        UnlockCoins();
         return;
     }
 
@@ -6282,7 +6318,6 @@ void CDarkSendPool::SendMoney(const CTransaction& collateral, std::vector<CTxIn>
     if(!IsConnectedToMasterNode()){
         if(!ConnectToBestMasterNode()){
             printf("CDarkSendPool::SendMoney() - Couldn't connect to masternode.\n");
-            UnlockCoins();
             return;
         }
     }
@@ -6809,8 +6844,6 @@ void CDarkSendPool::NewBlock()
                 */
 
                 myEntries.clear();
-
-                UnlockCoins();
             }
         }
 
@@ -6837,7 +6870,6 @@ void CDarkSendPool::CompletedTransaction(bool error, std::string lastMessageNew)
 
     completedTransaction = true;
     Check();
-    UnlockCoins();
 }
 
 void CDarkSendPool::ClearLastMessage()
@@ -6882,6 +6914,24 @@ int CDarkSendPool::GetCurrentMasterNode(int mod, int64 nBlockHeight)
     int i = 0;
     unsigned int score = 0;
     int winner = -1;
+
+    printf(" --- strUseMasternode %s\n", strUseMasternode.c_str());
+
+    if(!strUseMasternode.empty()){
+        CService overrideAddr = CService(strUseMasternode);
+
+        BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
+            if(mn.addr == overrideAddr){
+                printf("found addr %s\n", mn.addr.ToString().c_str());
+                return i;
+            }
+            i++;
+        }
+
+        return -1;
+    }
+
+    // --- scan for winner
 
     BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
         mn.Check();

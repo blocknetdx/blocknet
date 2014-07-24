@@ -148,6 +148,7 @@ extern std::vector<CMasterNode> darkSendMasterNodes;
 extern std::vector<CMasterNodeVote> darkSendMasterNodeVotes;
 extern std::vector<int64> darkSendDenominations;
 extern std::string strMasterNodePrivKey;
+extern std::string strUseMasternode;
 extern int64 enforceMasternodePaymentsTime;
 extern CWallet pmainWallet;
 extern std::map<uint256, CBlock*> mapOrphanBlocks;
@@ -2481,7 +2482,7 @@ public:
 
     bool UpdatedWithin(int microSeconds)
     {
-        printf("UpdatedWithin %"PRI64u", %"PRI64u" --  %d \n", GetTimeMicros() , lastTimeSeen, (GetTimeMicros() - lastTimeSeen) < microSeconds);
+        //printf("UpdatedWithin %"PRI64u", %"PRI64u" --  %d \n", GetTimeMicros() , lastTimeSeen, (GetTimeMicros() - lastTimeSeen) < microSeconds);
 
         return (GetTimeMicros() - lastTimeSeen) < microSeconds;
     }
