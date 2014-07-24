@@ -2522,8 +2522,8 @@ public:
     void SubmitMasternodeVote(CTxIn& vinWinningMasternode, CTxIn& vinMasterNodeFrom, int64 nBlockHeight);
     int GetMasternodeByVin(CTxIn& vin);
     int GetMasternodeRank(CTxIn& vin, int mod);
-    int GetCurrentMasterNode(int mod=10, int64 nBlockHeight=0);
-    bool GetLastValidBlockHash(uint256& hash, int mod=10, int nBlockHeight=0);
+    int GetCurrentMasterNode(int mod=1, int64 nBlockHeight=0);
+    bool GetLastValidBlockHash(uint256& hash, int mod=1, int nBlockHeight=0);
     void NewBlock();
 };
 
