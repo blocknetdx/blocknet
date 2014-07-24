@@ -2725,7 +2725,7 @@ public:
     void RelayDarkDeclareWinner();
     bool EnableHotColdMasterNode(CTxIn& vin, int64 sigTime, CService& addr);
     void RegisterAsMasterNode(bool stop);
-    bool GetLastValidBlockHash(uint256& hash, int mod=10, int nBlockHeight=0);
+    bool GetLastValidBlockHash(uint256& hash, int mod=1, int nBlockHeight=0);
     void NewBlock();
     void CompletedTransaction(bool error, std::string lastMessageNew);
     void ClearLastMessage();
