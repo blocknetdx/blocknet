@@ -4122,12 +4122,12 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         vRecv >> vinWinningMasternode >> vinMasterNodeFrom >> nBlockHeight >> vchSig;
 
-        printf("dmcv -received\n");
+        //printf("dmcv -received\n");
 
         bool fIsInitialDownload = IsInitialBlockDownload();
         if(fIsInitialDownload) return true;
 
-        printf("dmcv -done downloading\n");
+        //printf("dmcv -done downloading\n");
 
         if(pindexBest == NULL) return true;
         if(nBlockHeight > pindexBest->nHeight + 5) {
@@ -4139,8 +4139,8 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             return false;
         }
 
-        printf("dmcv -block height ok\n");
-        printf("dmcv - masternode from vin %s\n", vinMasterNodeFrom.ToString().c_str());
+        //printf("dmcv -block height ok\n");
+        //printf("dmcv - masternode from vin %s\n", vinMasterNodeFrom.ToString().c_str());
 
         int mn = darkSendPool.GetMasternodeByVin(vinMasterNodeFrom);
         if (mn == -1) {
@@ -4156,16 +4156,16 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         }
 
 
-        printf("dmcv -know masternode\n");
+        //printf("dmcv -know masternode\n");
 
         BOOST_FOREACH (PAIRTYPE(int64, CTxIn)& s, vecMasternodesVoted){
             if(s.first == nBlockHeight && s.second == vinMasterNodeFrom){
-                printf("dmcv - found prev masternode vote for block\n");
+                //printf("dmcv - found prev masternode vote for block\n");
                 return true;
             }
         }
 
-        printf("dmcv -hasn't voted\n");
+        //printf("dmcv -hasn't voted\n");
 
         int rank = darkSendPool.GetMasternodeRank(vinMasterNodeFrom, 1);
         CPubKey pubkey = darkSendMasterNodes[mn].pubkey2;
@@ -4175,7 +4175,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             return true;
         }
 
-        printf("dmcv -rank in range\n");
+        //printf("dmcv -rank in range\n");
 
         std::string vchPubKey(pubkey.begin(), pubkey.end());
         std::string strMessage = vinWinningMasternode.prevout.ToString() + vinMasterNodeFrom.prevout.ToString() + boost::lexical_cast<std::string>(nBlockHeight) + vchPubKey; 
@@ -4186,11 +4186,11 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             return false;
         }
 
-        printf("dmcv -sig ok\n");
+        //printf("dmcv -sig ok\n");
 
         rank = darkSendPool.GetMasternodeRank(vinWinningMasternode, 1);
         if(rank >= 0){
-            printf("dmcv -submitted vote\n");
+            //printf("dmcv -submitted vote\n");
             darkSendPool.SubmitMasternodeVote(vinWinningMasternode, vinMasterNodeFrom, nBlockHeight);
             RelayDarkSendMasterNodeConsessusVote(vinWinningMasternode, vinMasterNodeFrom, nBlockHeight, vchSig);
         } else {
@@ -6791,13 +6791,15 @@ void CDarkSendPool::NewBlock()
     }
 
     if(fMasterNode){
-        uint256 n1 = 0;
-        
-        if(!GetLastValidBlockHash(n1)) return;
-        if(n1 == masterNodeBlockHash) return;
-        printf("CDarkSendPool::NewBlock - Is Masternode, resetting\n");
-        SetNull();
-        RelayDarkSendStatus(darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);    
+        if(pindexBest->nHeight % 10 == 0){
+            uint256 n1 = 0;
+            
+            if(!GetLastValidBlockHash(n1)) return;
+            if(n1 == masterNodeBlockHash) return;
+            printf("CDarkSendPool::NewBlock - Is Masternode, resetting\n");
+            SetNull();
+            RelayDarkSendStatus(darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);    
+        }
     } else {
 
         if(myEntries.size() != 0) {
@@ -6848,8 +6850,8 @@ void CDarkSendPool::NewBlock()
         }
 
         //denominate all non-denominated inputs every 25 minutes.
-        if(pindexBest->nHeight % 1 == 0)
-            DoAutomaticDenominating();
+        if(pindexBest->nHeight % 10 == 0) UnlockCoins();
+        DoAutomaticDenominating();
     }
 
 }
@@ -6960,20 +6962,48 @@ int CDarkSendPool::GetCurrentMasterNode(int mod, int64 nBlockHeight)
 void CDarkSendPool::DoAutomaticDenominating()
 {
     if(fDisableDarksend) return;
-    
+
+    if (pwalletMain->IsLocked()){
+        printf("DoAutomaticDenominating Error: Wallet is locked. Please unlock wallet to autodenominate..\n");
+        return;
+    }
+
     // ** find the coins we'll use
     std::vector<CTxIn> vCoins;
     int64 nValueMin = 0.01*COIN;
     int64 nValueMax = 501*COIN;
     int64 nValueIn = 0;
 
-    //simply look for non-denominated coins
-    nValueIn = 0;
-    if (!pwalletMain->SelectCoinsDark(nValueMin, nValueMax, vCoins, nValueIn, nDarksendRounds))
+    if (!pwalletMain->SelectCoinsDark(nValueMin, nValueMax, vCoins, nValueIn, 0, nDarksendRounds))
     {
-        if (pwalletMain->SelectCoinsDark(nValueMax+1, 9999999*COIN, vCoins, nValueIn, nDarksendRounds))
+        nValueIn = 0;
+        vCoins.clear();
+
+        //simply look for non-denominated coins
+        if (pwalletMain->SelectCoinsDark(nValueMax+1, 9999999*COIN, vCoins, nValueIn, 0, nDarksendRounds))
         {
             printf("DoAutomaticDenominating Error: Found inputs too large to denominate. These must be broken up manually to use DarkSend.\n");
+            // Amount
+            int64 nAmount = pwalletMain->GetBalance();
+            if(nAmount > 500*COIN) nAmount = 500*COIN;
+
+            // make our change address
+            CReserveKey reservekey(pwalletMain);
+            CScript scriptChange;
+            CPubKey vchPubKey;
+            assert(reservekey.GetReservedKey(vchPubKey)); // should never fail, as we just unlocked
+            scriptChange.SetDestination(vchPubKey.GetID());
+
+
+            // Wallet comments
+            CWalletTx wtx;
+
+            string strError = pwalletMain->SendMoney(scriptChange, nAmount, wtx);
+            if(strError != ""){
+                printf("DoAutomaticDenominating: Error - %s\n", strError.c_str());
+                return;
+            }
+            printf("DoAutomaticDenominating: Split up large input, tx: %s", wtx.GetHash().GetHex().c_str());
             return;
         }
 
@@ -6981,8 +7011,13 @@ void CDarkSendPool::DoAutomaticDenominating()
         return;
     }
 
-    printf("DoAutomaticDenominating : Running darksend denominate for %"PRI64d" coins\n", nValueIn/COIN);
-    pwalletMain->DarkSendDenominate(nValueIn);
+    int64 amount = roundUp64(nValueIn-(0.001*COIN)-(0.001*COIN), COIN/100);
+
+    std::string strError = pwalletMain->DarkSendDenominate(amount);
+    printf("DoAutomaticDenominating : Running darksend denominate for %"PRI64d" coins.\n", nValueIn/COIN);
+
+    if(strError != "")
+        printf("DoAutomaticDenominating : Error running denominate, %s\n", strError.c_str());
 }
 
 int CDarkSendPool::GetMasternodeRank(CTxIn& vin, int mod)
@@ -7068,7 +7103,7 @@ int CDarkSendPool::GetInputDarksendRounds(CTxIn in, int rounds)
 {
     if(rounds >= nDarksendRounds) return rounds;
 
-    printf("CDarkSendPool::GetInputDarksendRounds :: %d %s\n", rounds, in.ToString().c_str());
+    //printf("CDarkSendPool::GetInputDarksendRounds :: %d %s\n", rounds, in.ToString().c_str());
     CTransaction tx;
     uint256 hash;
     if(GetTransaction(in.prevout.hash, tx, hash, true)){
@@ -7090,7 +7125,7 @@ int CDarkSendPool::GetInputDarksendRounds(CTxIn in, int rounds)
 
         // find my vin and look that up
         BOOST_FOREACH(CTxIn in2, tx.vin) {
-            printf("CDarkSendPool::GetInputDarksendRounds :: %d %d %s - %s\n", rounds, pwalletMain->IsMine(in2), in2.ToString().c_str());
+            //printf("CDarkSendPool::GetInputDarksendRounds :: %d %d %s - %s\n", rounds, pwalletMain->IsMine(in2), in2.ToString().c_str());
             if(pwalletMain->IsMine(in2))
                 return GetInputDarksendRounds(in2, rounds+1);
         }
