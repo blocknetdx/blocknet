@@ -2445,7 +2445,7 @@ public:
     
     }
 
-    uint256 CalculateScore(int mod=10, int64 nBlockHeight=0);
+    uint256 CalculateScore(int mod=1, int64 nBlockHeight=0);
 
     void UpdateLastSeen(int64 override=0)
     {
