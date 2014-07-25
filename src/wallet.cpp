@@ -1237,18 +1237,21 @@ bool CWallet::SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxI
 
     BOOST_FOREACH(const COutput& out, vCoins)
     {
-        CTxIn vin = CTxIn(out.tx->GetHash(),out.i);
 
-        int rounds = darkSendPool.GetInputDarksendRounds(vin);
-        if(rounds < 0) rounds = 0;
-        if(rounds < nDarksendRoundsMin && rounds >= nDarksendRoundsMax) continue;
+        if(nValueRet + out.tx->vout[out.i].nValue <= nValueMax){
+            CTxIn vin = CTxIn(out.tx->GetHash(),out.i);
 
-        vin.prevPubKey = out.tx->vout[out.i].scriptPubKey; // the inputs PubKey
-        printf(" vin nValue %"PRI64d"\n", out.tx->vout[out.i].nValue);
-        nValueRet += out.tx->vout[out.i].nValue;
-        setCoinsRet.push_back(vin);
-        setCoinsRet2.insert(make_pair(out.tx, out.i));
-        if(nValueRet >= nValueMax) return true;
+            int rounds = darkSendPool.GetInputDarksendRounds(vin);
+            if(rounds < 0) rounds = 0;
+            if(rounds < nDarksendRoundsMin && rounds >= nDarksendRoundsMax) continue;
+
+            vin.prevPubKey = out.tx->vout[out.i].scriptPubKey; // the inputs PubKey
+            printf(" vin nValue %"PRI64d"\n", out.tx->vout[out.i].nValue);
+            nValueRet += out.tx->vout[out.i].nValue;
+            setCoinsRet.push_back(vin);
+            setCoinsRet2.insert(make_pair(out.tx, out.i));
+            if(nValueRet >= nValueMin) return true;
+        }
     }
 
     return false;
@@ -1567,8 +1570,6 @@ string CWallet::SendMoneyToDestination(const CTxDestination& address, int64 nVal
 string CWallet::DarkSendDenominate(int64 nValue)
 {
 
-    printf(" -- bal %"PRI64d" , nv %"PRI64d"\n", GetBalance(), nValue);
-
     // Check amount
     if (nValue <= 0)
         return _("Invalid amount");
@@ -1605,13 +1606,13 @@ string CWallet::DarkSendDenominate(int64 nValue)
     int64 nValueIn = 0;
 
     //try to use denominated funds (for added anonymity)
-    if (!SelectCoinsDark(nTotalValue, nTotalValue, vCoins, nValueIn, 0, nDarksendRounds))
+    if (!SelectCoinsDark(nTotalValue, 1000*COIN, vCoins, nValueIn, 0, nDarksendRounds))
     {
         vCoins.clear();
         return _("Insufficient funds 2");
     }
 
-    printf(" --- nValueIn %"PRI64d" nTotalValue %"PRI64d"\n", nValueIn, nTotalValue);
+    //printf(" --- nValueIn %"PRI64d" nTotalValue %"PRI64d"\n", nValueIn, nTotalValue);
 
     // calculate total value out --------
 
@@ -1638,7 +1639,7 @@ string CWallet::DarkSendDenominate(int64 nValue)
         int64 nValueIn2 = 0;
         std::vector<CTxIn> vCoinsCollateral;
 
-        if (!SelectCoinsDark(POOL_FEE_AMOUNT+(0.01*COIN), POOL_FEE_AMOUNT+(0.01*COIN), vCoinsCollateral, nValueIn2, 0, nDarksendRounds))
+        if (!SelectCoinsDark(POOL_FEE_AMOUNT+(0.01*COIN), 99999*COIN, vCoinsCollateral, nValueIn2, 0, nDarksendRounds))
         {
             BOOST_FOREACH(CTxIn v, vCoins)
                 UnlockCoin(v.prevout);
@@ -1684,7 +1685,7 @@ string CWallet::DarkSendDenominate(int64 nValue)
     int64 nValueLeft = nTotalValue;
     std::vector<CTxOut> vOut;
     int nOutputs = 0;
-    printf("nValueLeft %"PRI64d"\n", nValueLeft/COIN);
+    //printf("nValueLeft %"PRI64d"\n", nValueLeft/COIN);
     BOOST_FOREACH(int64 v, darkSendDenominations){
         nOutputs = 0;
         while(nValueLeft - v >= 0 && nOutputs <= 10) {
@@ -1699,8 +1700,8 @@ string CWallet::DarkSendDenominate(int64 nValue)
             nOutputs++;
             nValueLeft -= v;
             
-            printf(" -- denom %"PRI64d"\n", v/COIN);
-            printf("nValueLeft %"PRI64d"\n", nValueLeft/COIN);
+            //printf(" -- denom %"PRI64d"\n", v/COIN);
+            //printf("nValueLeft %"PRI64d"\n", nValueLeft/COIN);
         }
 
         if(nValueLeft == 0) break;

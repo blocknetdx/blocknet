@@ -6971,7 +6971,7 @@ void CDarkSendPool::DoAutomaticDenominating()
     // ** find the coins we'll use
     std::vector<CTxIn> vCoins;
     int64 nValueMin = 0.01*COIN;
-    int64 nValueMax = 501*COIN;
+    int64 nValueMax = 999*COIN;
     int64 nValueIn = 0;
 
     if (!pwalletMain->SelectCoinsDark(nValueMin, nValueMax, vCoins, nValueIn, 0, nDarksendRounds))
@@ -6985,7 +6985,7 @@ void CDarkSendPool::DoAutomaticDenominating()
             printf("DoAutomaticDenominating Error: Found inputs too large to denominate. These must be broken up manually to use DarkSend.\n");
             // Amount
             int64 nAmount = pwalletMain->GetBalance();
-            if(nAmount > 500*COIN) nAmount = 500*COIN;
+            if(nAmount > 1000*COIN) nAmount = (500+(rand() % 500))*COIN;
 
             // make our change address
             CReserveKey reservekey(pwalletMain);
