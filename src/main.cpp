@@ -6779,8 +6779,8 @@ void CDarkSendPool::NewBlock()
                 mv.Set(darkSendMasterNodes[winningNode].pubkey, pindexBest->nHeight + 1);
                 darkSendMasterNodeVotes.push_back(mv);
 
-                if(darkSendMasterNodeVotes.size() > MASTERNODE_PAYMENTS_EXPIRATION){
-                    darkSendMasterNodeVotes.erase(darkSendMasterNodeVotes.begin(), darkSendMasterNodeVotes.end()-MASTERNODE_PAYMENTS_EXPIRATION);
+                if(darkSendMasterNodeVotes.size() > 10){
+                    darkSendMasterNodeVotes.erase(darkSendMasterNodeVotes.begin(), darkSendMasterNodeVotes.end()-10);
                 }
             }
         }
