@@ -5989,7 +5989,7 @@ void CDarkSendPool::Check()
     if(fDebug) printf("CDarkSendPool::Check() - entries count %lu\n", entries.size());
     
     // move on to next phase
-    if(state == POOL_STATUS_ACCEPTING_ENTRIES && entries.size() == POOL_MAX_TRANSACTIONS)
+    if(state == POOL_STATUS_ACCEPTING_ENTRIES && entries.size() >= POOL_MAX_TRANSACTIONS)
     {
         if(fDebug) printf("CDarkSendPool::Check() -- ACCEPTING OUTPUTS\n");
         UpdateState(POOL_STATUS_FINALIZE_TRANSACTION);
@@ -6962,6 +6962,7 @@ int CDarkSendPool::GetCurrentMasterNode(int mod, int64 nBlockHeight)
 void CDarkSendPool::DoAutomaticDenominating()
 {
     if(fDisableDarksend) return;
+    if (IsInitialBlockDownload()) return;
 
     if (pwalletMain->IsLocked()){
         printf("DoAutomaticDenominating Error: Wallet is locked. Please unlock wallet to autodenominate..\n");
@@ -6982,28 +6983,7 @@ void CDarkSendPool::DoAutomaticDenominating()
         //simply look for non-denominated coins
         if (pwalletMain->SelectCoinsDark(nValueMax+1, 9999999*COIN, vCoins, nValueIn, 0, nDarksendRounds))
         {
-            printf("DoAutomaticDenominating Error: Found inputs too large to denominate. These must be broken up manually to use DarkSend.\n");
-            // Amount
-            int64 nAmount = pwalletMain->GetBalance();
-            if(nAmount > 1000*COIN) nAmount = (500+(rand() % 500))*COIN;
-
-            // make our change address
-            CReserveKey reservekey(pwalletMain);
-            CScript scriptChange;
-            CPubKey vchPubKey;
-            assert(reservekey.GetReservedKey(vchPubKey)); // should never fail, as we just unlocked
-            scriptChange.SetDestination(vchPubKey.GetID());
-
-
-            // Wallet comments
-            CWalletTx wtx;
-
-            string strError = pwalletMain->SendMoney(scriptChange, nAmount, wtx);
-            if(strError != ""){
-                printf("DoAutomaticDenominating: Error - %s\n", strError.c_str());
-                return;
-            }
-            printf("DoAutomaticDenominating: Split up large input, tx: %s", wtx.GetHash().GetHex().c_str());
+            SplitUpMoney();
             return;
         }
 
@@ -7011,13 +6991,65 @@ void CDarkSendPool::DoAutomaticDenominating()
         return;
     }
 
-    int64 amount = roundUp64(nValueIn-(0.001*COIN)-(0.001*COIN), COIN/100);
+
+    int64 amount = pwalletMain->GetBalance();
+    if(amount > 999*COIN) amount = (999*COIN);
+    amount -= (rand() % (amount/10));
+    amount = roundUp64(amount, COIN/100);
 
     std::string strError = pwalletMain->DarkSendDenominate(amount);
     printf("DoAutomaticDenominating : Running darksend denominate for %"PRI64d" coins.\n", nValueIn/COIN);
 
-    if(strError != "")
+    if(strError == "") return;
+
+    if(strError == "Error: The DarkSend requires a collateral transaction and could not locate the input!") {
+        SplitUpMoney();
+    } else {
         printf("DoAutomaticDenominating : Error running denominate, %s\n", strError.c_str());
+    }
+}
+
+bool CDarkSendPool::SplitUpMoney()
+{
+    int64 nTotalBalance = pwalletMain->GetBalance();
+    if(nTotalBalance > 1000*COIN) nTotalBalance = 999*COIN;
+    int64 nTotalOut = 0;
+
+    printf("DoAutomaticDenominating: Split up large input:\n");
+
+    // make our change address
+    CReserveKey reservekey(pwalletMain);
+    CScript scriptChange;
+    CPubKey vchPubKey;
+    assert(reservekey.GetReservedKey(vchPubKey)); // should never fail, as we just unlocked
+    scriptChange.SetDestination(vchPubKey.GetID());
+
+    CWalletTx wtx;
+    int64 nFeeRet = 0;
+    std::string strFail = "";
+    vector< pair<CScript, int64> > vecSend;
+
+    while(nTotalOut + ((nTotalBalance/5) + (nTotalBalance/5/5) + 0.01*COIN) < nTotalBalance-(0.002*COIN)){
+        //printf(" nTotalOut %"PRI64d"\n", nTotalOut);
+        //printf(" nTotalOut + ((nTotalBalance/5) + (nTotalBalance/5/5) + 0.01*COIN) %"PRI64d"\n", nTotalOut + ((nTotalBalance/5) + (nTotalBalance/5/5) + 0.01*COIN));
+        //printf(" nTotalBalance-(0.002*COIN) %"PRI64d"\n", nTotalBalance-(0.002*COIN));
+        vecSend.push_back(make_pair(scriptChange, nTotalBalance/5));
+        vecSend.push_back(make_pair(scriptChange, nTotalBalance/5/5));
+        vecSend.push_back(make_pair(scriptChange, 0.01*COIN));
+        nTotalOut += (nTotalBalance/5) + (nTotalBalance/5/5) + 0.01*COIN; 
+    }
+    
+    bool success = pwalletMain->CreateTransaction(vecSend, wtx, reservekey, nFeeRet, strFail);
+    if(!success){
+        printf("SplitUpMoney: Error - %s\n", strFail.c_str());
+        return false;
+    }
+
+    pwalletMain->CommitTransaction(wtx, reservekey);
+
+    printf("SplitUpMoney Success: tx %s\n", wtx.GetHash().GetHex().c_str());
+    return true;
+
 }
 
 int CDarkSendPool::GetMasternodeRank(CTxIn& vin, int mod)

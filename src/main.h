@@ -33,13 +33,10 @@ class CMasterNode;
 class CMasterNodeVote;
 class CBitcoinAddress;
 
-#define MASTERNODE_PAYMENTS_MIN_VOTES 5
-#define MASTERNODE_PAYMENTS_MAX 1
-#define MASTERNODE_PAYMENTS_EXPIRATION 10
 #define START_MASTERNODE_PAYMENTS_TESTNET 1403568776 //Tue, 24 Jun 2014 00:12:56 GMT
 #define START_MASTERNODE_PAYMENTS 1403728576 //Wed, 25 Jun 2014 20:36:16 GMT
 
-#define POOL_MAX_TRANSACTIONS                  5 // wait for X transactions to merge and publish
+#define POOL_MAX_TRANSACTIONS                  2 // wait for X transactions to merge and publish
 #define POOL_STATUS_UNKNOWN                    0 // waiting for update
 #define POOL_STATUS_IDLE                       1 // waiting for update
 #define POOL_STATUS_ACCEPTING_ENTRIES          2 // accepting entries
@@ -2731,6 +2728,7 @@ public:
     void ClearLastMessage();
     bool DoConcessusVote(int64 nBlockHeight);
     int GetInputDarksendRounds(CTxIn in, int rounds=0);
+    bool SplitUpMoney();
 };
 
 void ConnectToDarkSendMasterNodeWinner();
