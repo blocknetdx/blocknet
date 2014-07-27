@@ -988,9 +988,12 @@ void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const
                 bool found = false;
                 if(onlyDarksendInputs) {
                     //should make this a vector
-                    BOOST_FOREACH(int64 d, darkSendDenominations)
-                        if(pcoin->vout[i].nValue == d)
-                            found = true;
+
+                   COutput out = COutput(pcoin, i, pcoin->GetDepthInMainChain());
+                   CTxIn vin = CTxIn(out.tx->GetHash(), out.i);  
+                   int rounds = darkSendPool.GetInputDarksendRounds(vin);
+                   if(rounds >= nDarksendRounds) found = true;
+
                 } else {
                     found = true;
                 }
@@ -1226,7 +1229,6 @@ bool CWallet::SelectCoins(int64 nTargetValue, set<pair<const CWalletTx*,unsigned
 bool CWallet::SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxIn>& setCoinsRet, int64& nValueRet, int nDarksendRoundsMin, int nDarksendRoundsMax) const 
 {
     CCoinControl *coinControl=NULL;
-    int64 nTargetValue = 0;
 
     vector<COutput> vCoins;
     AvailableCoins(vCoins, false, coinControl);
@@ -1237,6 +1239,7 @@ bool CWallet::SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxI
 
     BOOST_FOREACH(const COutput& out, vCoins)
     {
+        if(out.tx->vout[out.i].nValue == POOL_FEE_AMOUNT*4) continue; //these are made for collateral
 
         if(nValueRet + out.tx->vout[out.i].nValue <= nValueMax){
             CTxIn vin = CTxIn(out.tx->GetHash(),out.i);
@@ -1250,6 +1253,7 @@ bool CWallet::SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxI
             nValueRet += out.tx->vout[out.i].nValue;
             setCoinsRet.push_back(vin);
             setCoinsRet2.insert(make_pair(out.tx, out.i));
+            printf(" -- nValueRet %"PRI64d"\n", nValueRet);
             if(nValueRet >= nValueMin) return true;
         }
     }
