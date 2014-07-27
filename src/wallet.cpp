@@ -993,9 +993,12 @@ void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const
                    CTxIn vin = CTxIn(out.tx->GetHash(), out.i);  
                    int rounds = darkSendPool.GetInputDarksendRounds(vin);
                    if(rounds >= nDarksendRounds) found = true;
-
                 } else {
                     found = true;
+                    BOOST_FOREACH(int64 d, darkSendDenominations)
+                        if(pcoin->vout[i].nValue == d)
+                            found = false;
+
                 }
                 if(!found) continue;
 
