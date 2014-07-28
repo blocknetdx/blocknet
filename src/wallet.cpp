@@ -1236,7 +1236,7 @@ bool CWallet::SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxI
     CCoinControl *coinControl=NULL;
 
     vector<COutput> vCoins;
-    AvailableCoins(vCoins, false, coinControl);
+    AvailableCoins(vCoins, false, coinControl, ALL_COINS);
     
     printf("found coins %d\n", (int)vCoins.size());
 
@@ -1248,20 +1248,57 @@ bool CWallet::SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxI
 
         if(nValueRet + out.tx->vout[out.i].nValue <= nValueMax){
             CTxIn vin = CTxIn(out.tx->GetHash(),out.i);
+            printf(" vin nValue %"PRI64d"\n", out.tx->vout[out.i].nValue);
 
             int rounds = darkSendPool.GetInputDarksendRounds(vin);
-            if(rounds < 0) rounds = 0;
-            if(rounds < nDarksendRoundsMin && rounds >= nDarksendRoundsMax) continue;
+
+            printf(" -- rounds %d\n", rounds);
+            if(rounds >= nDarksendRoundsMax) continue;
+            printf(" -- rounds continue\n");
+            
+            if(rounds < nDarksendRoundsMin) continue;
 
             vin.prevPubKey = out.tx->vout[out.i].scriptPubKey; // the inputs PubKey
-            printf(" vin nValue %"PRI64d"\n", out.tx->vout[out.i].nValue);
             nValueRet += out.tx->vout[out.i].nValue;
             setCoinsRet.push_back(vin);
             setCoinsRet2.insert(make_pair(out.tx, out.i));
             printf(" -- nValueRet %"PRI64d"\n", nValueRet);
-            if(nValueRet >= nValueMin) return true;
+            if(nValueRet >= nValueMax) return true;
         }
     }
+
+    if(nValueRet >= nValueMin) return true;
+
+    return false;
+}
+
+bool CWallet::SelectCoinsCollateral(int64 nValueMin, int64 nValueMax, std::vector<CTxIn>& setCoinsRet, int64& nValueRet) const 
+{
+    CCoinControl *coinControl=NULL;
+
+    vector<COutput> vCoins;
+    AvailableCoins(vCoins, false, coinControl, ALL_COINS);
+    
+    printf("found coins %d\n", (int)vCoins.size());
+
+    set<pair<const CWalletTx*,unsigned int> > setCoinsRet2;
+
+    BOOST_FOREACH(const COutput& out, vCoins)
+    {
+        if(nValueRet + out.tx->vout[out.i].nValue <= nValueMax){
+            CTxIn vin = CTxIn(out.tx->GetHash(),out.i);
+            printf(" vin nValue %"PRI64d"\n", out.tx->vout[out.i].nValue);
+
+            vin.prevPubKey = out.tx->vout[out.i].scriptPubKey; // the inputs PubKey
+            nValueRet += out.tx->vout[out.i].nValue;
+            setCoinsRet.push_back(vin);
+            setCoinsRet2.insert(make_pair(out.tx, out.i));
+            printf(" -- nValueRet %"PRI64d"\n", nValueRet);
+            if(nValueRet >= nValueMax) return true;
+        }
+    }
+
+    if(nValueRet >= nValueMin) return true;
 
     return false;
 }
@@ -1615,7 +1652,7 @@ string CWallet::DarkSendDenominate(int64 nValue)
     int64 nValueIn = 0;
 
     //try to use denominated funds (for added anonymity)
-    if (!SelectCoinsDark(nTotalValue, 1000*COIN, vCoins, nValueIn, 0, nDarksendRounds))
+    if (!SelectCoinsDark(0, nTotalValue, vCoins, nValueIn, -2, nDarksendRounds))
     {
         vCoins.clear();
         return _("Insufficient funds 2");
@@ -1648,12 +1685,12 @@ string CWallet::DarkSendDenominate(int64 nValue)
         int64 nValueIn2 = 0;
         std::vector<CTxIn> vCoinsCollateral;
 
-        if (!SelectCoinsDark(POOL_FEE_AMOUNT+(0.01*COIN), 99999*COIN, vCoinsCollateral, nValueIn2, 0, nDarksendRounds))
+        if (!SelectCoinsCollateral(POOL_FEE_AMOUNT, POOL_FEE_AMOUNT*6, vCoinsCollateral, nValueIn2))
         {
             BOOST_FOREACH(CTxIn v, vCoins)
                 UnlockCoin(v.prevout);
 
-            return _("Error: The DarkSend requires a collateral transaction and could not locate the input!");
+            return _("Error: Darksend requires a collateral transaction and could not locate an acceptable input!");
         }
 
         // make our change address

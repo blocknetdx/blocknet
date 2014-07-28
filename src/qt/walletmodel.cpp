@@ -197,9 +197,7 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
         std::string strFailReason;
         bool fCreated = false;
 
-        AvailableCoinsType act = ONLY_NONDENOMINATED;
-        //if(isDarkSend) act = ONLY_DENOMINATED;
-
+        AvailableCoinsType act = ONLY_DENOMINATED;
         if(recipients[0].inputType == "ONLY_NONDENOMINATED"){
             act = ONLY_NONDENOMINATED;
         } else if(recipients[0].inputType == "ONLY_DENOMINATED"){

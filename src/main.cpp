@@ -6977,19 +6977,24 @@ void CDarkSendPool::DoAutomaticDenominating()
     int64 nValueMax = 999*COIN;
     int64 nValueIn = 0;
 
-    if (!pwalletMain->SelectCoinsDark(nValueMin, nValueMax, vCoins, nValueIn, 0, nDarksendRounds))
+    if (!pwalletMain->SelectCoinsDark(nValueMin, nValueMax, vCoins, nValueIn, -2, nDarksendRounds))
     {
         nValueIn = 0;
         vCoins.clear();
 
         //simply look for non-denominated coins
-        if (pwalletMain->SelectCoinsDark(nValueMax+1, 9999999*COIN, vCoins, nValueIn, 0, nDarksendRounds))
+        if (pwalletMain->SelectCoinsDark(nValueMax+1, 9999999*COIN, vCoins, nValueIn, -2, nDarksendRounds))
         {
             SplitUpMoney();
             return;
         }
 
         printf("DoAutomaticDenominating : No funds detected in need of denominating\n");
+        return;
+    }
+
+    if(nValueIn < COIN*1.1){
+        printf("DoAutomaticDenominating : Too little to denominate (must have 1.1DRK) \n");
         return;
     }
 
@@ -7044,7 +7049,8 @@ bool CDarkSendPool::SplitUpMoney()
         nTotalOut += (nTotalBalance/5) + (nTotalBalance/5/5) + (POOL_FEE_AMOUNT*4); 
     }
     
-    bool success = pwalletMain->CreateTransaction(vecSend, wtx, reservekey, nFeeRet, strFail);
+    CCoinControl *coinControl=NULL;
+    bool success = pwalletMain->CreateTransaction(vecSend, wtx, reservekey, nFeeRet, strFail, coinControl, ONLY_NONDENOMINATED);
     if(!success){
         printf("SplitUpMoney: Error - %s\n", strFail.c_str());
         return false;
@@ -7138,7 +7144,7 @@ bool CDarkSendPool::GetCurrentMasterNodeConsessus(int64 blockHeight, CScript& pa
 // recursively find how many transactions deep the darksending goes
 int CDarkSendPool::GetInputDarksendRounds(CTxIn in, int rounds)
 {
-    if(rounds >= 8) return rounds;
+    if(rounds >= 9) return rounds;
 
     std::string padding = "";
     padding.insert(0, ((rounds+1)*5)+3, ' ');
