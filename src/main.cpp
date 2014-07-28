@@ -7152,7 +7152,7 @@ int CDarkSendPool::GetInputDarksendRounds(CTxIn in, int rounds)
                 if(tx.vout[in.prevout.n].nValue == d) found = true;
 
             if(!found) {
-                printf("rounds :: %s %s %d NOT DENOM\n", padding.c_str(), in.ToString().c_str(), rounds);
+                //printf("rounds :: %s %s %d NOT DENOM\n", padding.c_str(), in.ToString().c_str(), rounds);
                 return -2;
             }
         }
@@ -7164,24 +7164,24 @@ int CDarkSendPool::GetInputDarksendRounds(CTxIn in, int rounds)
         }
         
         if(!found) {
-            printf("rounds :: %s %s %d NOT FOUND\n", padding.c_str(), in.ToString().c_str(), rounds);
+            //printf("rounds :: %s %s %d NOT FOUND\n", padding.c_str(), in.ToString().c_str(), rounds);
             return rounds;
         }
 
 
-        printf("rounds :: %s %s %d FOUND\n", padding.c_str(), in.ToString().c_str(), rounds);            
+        //printf("rounds :: %s %s %d FOUND\n", padding.c_str(), in.ToString().c_str(), rounds);            
 
         // find my vin and look that up
         BOOST_FOREACH(CTxIn in2, tx.vin) {
-            printf("rounds :: %s %s %d VIN\n", padding.c_str(), in.ToString().c_str(), rounds);  
+            //printf("rounds :: %s %s %d VIN\n", padding.c_str(), in.ToString().c_str(), rounds);  
             //printf("CDarkSendPool::GetInputDarksendRounds :: %d %d %s - %s\n", rounds, pwalletMain->IsMine(in2), in2.ToString().c_str());
             if(pwalletMain->IsMine(in2)){
-                printf("rounds :: %s %s %d NEXT\n", padding.c_str(), in.ToString().c_str(), rounds);  
+                //printf("rounds :: %s %s %d NEXT\n", padding.c_str(), in.ToString().c_str(), rounds);  
                 return GetInputDarksendRounds(in2, rounds+1);
             }
         }
     } else {
-        printf("rounds :: %s %s %d NOTFOUND\n", padding.c_str(), in.ToString().c_str(), rounds);
+        //printf("rounds :: %s %s %d NOTFOUND\n", padding.c_str(), in.ToString().c_str(), rounds);
     }
 
     return rounds-1;
