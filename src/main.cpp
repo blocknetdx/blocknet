@@ -6982,12 +6982,10 @@ void CDarkSendPool::DoAutomaticDenominating()
         nValueIn = 0;
         vCoins.clear();
 
-        printf("failed\n");
-
         //simply look for non-denominated coins
         if (pwalletMain->SelectCoinsDark(nValueMax+1, 9999999*COIN, vCoins, nValueIn, 0, nDarksendRounds))
         {
-            SplitUpMoney();
+            //SplitUpMoney();
             return;
         }
 
@@ -7002,13 +7000,13 @@ void CDarkSendPool::DoAutomaticDenominating()
     amount = roundUp64(amount, COIN/100);
 
 
-    std::string strError = pwalletMain->DarkSendDenominate(amount);
+    std::string strError = ""; //pwalletMain->DarkSendDenominate(amount);
     printf("DoAutomaticDenominating : Running darksend denominate for %"PRI64d" coins. Return '%s'\n", nValueIn, strError.c_str());
 
     if(strError == "") return;
 
     if(strError == "Error: The DarkSend requires a collateral transaction and could not locate the input!" || strError == "Insufficient funds 2") {
-        SplitUpMoney();
+        //SplitUpMoney();
     } else {
         printf("DoAutomaticDenominating : Error running denominate, %s\n", strError.c_str());
     }
@@ -7142,16 +7140,21 @@ int CDarkSendPool::GetInputDarksendRounds(CTxIn in, int rounds)
 {
     if(rounds >= 8) return rounds;
 
-    //printf("CDarkSendPool::GetInputDarksendRounds :: %d %s\n", rounds, in.ToString().c_str());
-    CTransaction tx;
+    std::string padding = "";
+    padding.insert(0, ((rounds+1)*5)+3, ' ');
+
+    CWalletTx tx;
     uint256 hash;
-    if(GetTransaction(in.prevout.hash, tx, hash, true)){
+    if(pwalletMain->GetTransaction(in.prevout.hash,tx)){
         if(rounds == 0){ //make sure the final output is non-denominate
             bool found = false;
             BOOST_FOREACH(int64 d, darkSendDenominations)
                 if(tx.vout[in.prevout.n].nValue == d) found = true;
 
-            if(!found) return -2;
+            if(!found) {
+                printf("rounds :: %s %s %d NOT DENOM\n", padding.c_str(), in.ToString().c_str(), rounds);
+                return -2;
+            }
         }
         bool found = false;
         BOOST_FOREACH(CTxOut out, tx.vout){
@@ -7160,14 +7163,25 @@ int CDarkSendPool::GetInputDarksendRounds(CTxIn in, int rounds)
                     found = true;
         }
         
-        if(!found) return rounds;
+        if(!found) {
+            printf("rounds :: %s %s %d NOT FOUND\n", padding.c_str(), in.ToString().c_str(), rounds);
+            return rounds;
+        }
+
+
+        printf("rounds :: %s %s %d FOUND\n", padding.c_str(), in.ToString().c_str(), rounds);            
 
         // find my vin and look that up
         BOOST_FOREACH(CTxIn in2, tx.vin) {
+            printf("rounds :: %s %s %d VIN\n", padding.c_str(), in.ToString().c_str(), rounds);  
             //printf("CDarkSendPool::GetInputDarksendRounds :: %d %d %s - %s\n", rounds, pwalletMain->IsMine(in2), in2.ToString().c_str());
-            if(pwalletMain->IsMine(in2))
+            if(pwalletMain->IsMine(in2)){
+                printf("rounds :: %s %s %d NEXT\n", padding.c_str(), in.ToString().c_str(), rounds);  
                 return GetInputDarksendRounds(in2, rounds+1);
+            }
         }
+    } else {
+        printf("rounds :: %s %s %d NOTFOUND\n", padding.c_str(), in.ToString().c_str(), rounds);
     }
 
     return rounds-1;
