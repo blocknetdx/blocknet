@@ -6985,7 +6985,7 @@ void CDarkSendPool::DoAutomaticDenominating()
         //simply look for non-denominated coins
         if (pwalletMain->SelectCoinsDark(nValueMax+1, 9999999*COIN, vCoins, nValueIn, 0, nDarksendRounds))
         {
-            //SplitUpMoney();
+            SplitUpMoney();
             return;
         }
 
@@ -7000,13 +7000,13 @@ void CDarkSendPool::DoAutomaticDenominating()
     amount = roundUp64(amount, COIN/100);
 
 
-    std::string strError = ""; //pwalletMain->DarkSendDenominate(amount);
+    std::string strError = pwalletMain->DarkSendDenominate(amount);
     printf("DoAutomaticDenominating : Running darksend denominate for %"PRI64d" coins. Return '%s'\n", nValueIn, strError.c_str());
 
     if(strError == "") return;
 
     if(strError == "Error: The DarkSend requires a collateral transaction and could not locate the input!" || strError == "Insufficient funds 2") {
-        //SplitUpMoney();
+        SplitUpMoney();
     } else {
         printf("DoAutomaticDenominating : Error running denominate, %s\n", strError.c_str());
     }
