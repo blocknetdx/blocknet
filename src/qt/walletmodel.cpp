@@ -218,7 +218,7 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
         {
             return Aborted;
         }
-        if(!isDarkSend && !wallet->CommitTransaction(wtx, keyChange))
+        if(!wallet->CommitTransaction(wtx, keyChange))
         {
             return TransactionCommitFailed;
         }
