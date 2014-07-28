@@ -28,7 +28,7 @@ public:
     QString address;
     QString label;
     qint64 amount;
-    bool isDarkSend;
+    std::string inputType;
 };
 
 /** Interface to Bitcoin wallet from Qt view code. */

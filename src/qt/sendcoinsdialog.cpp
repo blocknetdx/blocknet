@@ -155,6 +155,16 @@ void SendCoinsDialog::on_sendButton_clicked()
 #endif
     }
 
+    recipients[0].inputType = "ONLY_DENOMINATED";
+
+    if(ui->inputType->currentText() == "Only Non DS+ Inputs"){
+        recipients[0].inputType = "ONLY_NONDENOMINATED";
+    } else if(ui->inputType->currentText() == "Only DS+ Inputs"){
+        recipients[0].inputType = "ONLY_DENOMINATED";
+    } else {
+        recipients[0].inputType = "ALL_COINS";
+    }
+
     fNewRecipientAllowed = false;
 
     QMessageBox::StandardButton retval = QMessageBox::question(this, tr("Confirm send coins"),
@@ -166,12 +176,6 @@ void SendCoinsDialog::on_sendButton_clicked()
     {
         fNewRecipientAllowed = true;
         return;
-    }
-
-    bool isDarkSend = false;
-    foreach(const SendCoinsRecipient &rcp, recipients)
-    {
-        if(rcp.isDarkSend) {isDarkSend = true;}
     }
 
     WalletModel::UnlockContext ctx(model->requestUnlock());
@@ -315,7 +319,6 @@ SendCoinsEntry *SendCoinsDialog::addEntry()
     ui->entries->addWidget(entry);
     connect(entry, SIGNAL(removeEntry(SendCoinsEntry*)), this, SLOT(removeEntry(SendCoinsEntry*)));
     connect(entry, SIGNAL(payAmountChanged()), this, SLOT(coinControlUpdateLabels()));
-    connect(entry, SIGNAL(isDarkSendChanged()), this, SLOT(coinControlUpdateLabels()));
 
     updateRemoveEnabled();
 

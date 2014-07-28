@@ -24,7 +24,6 @@
 
 using namespace std;
 QList<qint64> CoinControlDialog::payAmounts;
-QList<qint64> CoinControlDialog::isDarkSend;
 CCoinControl* CoinControlDialog::coinControl = new CCoinControl();
 
 CoinControlDialog::CoinControlDialog(QWidget *parent) :

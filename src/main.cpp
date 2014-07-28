@@ -7140,7 +7140,7 @@ bool CDarkSendPool::GetCurrentMasterNodeConsessus(int64 blockHeight, CScript& pa
 // recursively find how many transactions deep the darksending goes
 int CDarkSendPool::GetInputDarksendRounds(CTxIn in, int rounds)
 {
-    if(rounds >= nDarksendRounds) return rounds;
+    if(rounds >= 8) return rounds;
 
     //printf("CDarkSendPool::GetInputDarksendRounds :: %d %s\n", rounds, in.ToString().c_str());
     CTransaction tx;

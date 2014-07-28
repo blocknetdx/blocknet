@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>850</width>
-    <height>400</height>
+    <width>883</width>
+    <height>401</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -39,7 +39,7 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayoutCoinControl2">
       <property name="spacing">
-       <number>-1</number>
+       <number>6</number>
       </property>
       <property name="leftMargin">
        <number>0</number>
@@ -625,8 +625,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>830</width>
-        <height>165</height>
+        <width>863</width>
+        <height>153</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -702,7 +702,6 @@
        </property>
       </widget>
      </item>
-
      <item>
       <widget class="QPushButton" name="darkSendStatusButton">
        <property name="sizePolicy">
@@ -727,6 +726,31 @@
        <property name="autoDefault">
         <bool>false</bool>
        </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="inputType">
+       <property name="minimumSize">
+        <size>
+         <width>155</width>
+         <height>0</height>
+        </size>
+       </property>
+       <item>
+        <property name="text">
+         <string>Only DS+ Inputs</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Only Non DS+ Inputs</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>All Inputs</string>
+        </property>
+       </item>
       </widget>
      </item>
      <item>

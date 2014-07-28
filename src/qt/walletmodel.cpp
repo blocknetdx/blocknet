@@ -138,7 +138,6 @@ bool WalletModel::validateAddress(const QString &address)
 WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipient> &recipients, const CCoinControl *coinControl)
 {
     qint64 total = 0;
-    bool isDarkSend = false;
     QSet<QString> setAddress;
     QString hex;
 
@@ -190,8 +189,6 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
             CScript scriptPubKey;
             scriptPubKey.SetDestination(CBitcoinAddress(rcp.address.toStdString()).Get());
             vecSend.push_back(make_pair(scriptPubKey, rcp.amount));
-            printf("IsDarkSend %u\n", rcp.isDarkSend);
-            if(rcp.isDarkSend) {isDarkSend = true;}
         }
 
         CWalletTx wtx;
@@ -199,8 +196,17 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
         int64 nFeeRequired = 0;
         std::string strFailReason;
         bool fCreated = false;
+
         AvailableCoinsType act = ONLY_NONDENOMINATED;
-        if(isDarkSend) act = ONLY_DENOMINATED;
+        //if(isDarkSend) act = ONLY_DENOMINATED;
+
+        if(recipients[0].inputType == "ONLY_NONDENOMINATED"){
+            act = ONLY_NONDENOMINATED;
+        } else if(recipients[0].inputType == "ONLY_DENOMINATED"){
+            act = ONLY_DENOMINATED;
+        } else if(recipients[0].inputType == "ALL_COINS"){
+            act = ALL_COINS;
+        }
 
         fCreated = wallet->CreateTransaction(vecSend, wtx, keyChange, nFeeRequired, strFailReason, coinControl, act);
         

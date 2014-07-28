@@ -31,7 +31,6 @@ public:
     static QString getPriorityLabel(double);
     
     static QList<qint64> payAmounts;
-    static QList<qint64> isDarkSend;
     static CCoinControl *coinControl;
 
 private:

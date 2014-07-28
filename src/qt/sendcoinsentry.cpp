@@ -89,7 +89,6 @@ void SendCoinsEntry::clear()
     ui->addAsLabel->clear();
     ui->payAmount->clear();
     ui->payTo->setFocus();
-    ui->isDarkSend->setChecked(true);
     // update the display unit, to not use the default ("BTC")
     updateDisplayUnit();
 }
@@ -135,9 +134,7 @@ SendCoinsRecipient SendCoinsEntry::getValue()
     rv.address = ui->payTo->text();
     rv.label = ui->addAsLabel->text();
     rv.amount = ui->payAmount->value();
-    rv.isDarkSend = false;
-    if(ui->isDarkSend->checkState() == Qt::Checked) rv.isDarkSend = true;
-
+ 
     return rv;
 }
 
@@ -156,7 +153,6 @@ void SendCoinsEntry::setValue(const SendCoinsRecipient &value)
     ui->payTo->setText(value.address);
     ui->addAsLabel->setText(value.label);
     ui->payAmount->setValue(value.amount);
-    ui->isDarkSend->setChecked(value.isDarkSend);
 }
 
 void SendCoinsEntry::setAddress(const QString &address)
