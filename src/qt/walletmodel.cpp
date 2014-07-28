@@ -42,7 +42,7 @@ qint64 WalletModel::getBalance(const CCoinControl *coinControl) const
     {
         int64 nBalance = 0;
         std::vector<COutput> vCoins;
-        wallet->AvailableCoins(vCoins, true, coinControl);
+        wallet->AvailableCoins(vCoins, true, coinControl, ALL_COINS);
         BOOST_FOREACH(const COutput& out, vCoins)
             nBalance += out.tx->vout[out.i].nValue;   
         
@@ -199,8 +199,10 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
         int64 nFeeRequired = 0;
         std::string strFailReason;
         bool fCreated = false;
+        AvailableCoinsType act = ONLY_NONDENOMINATED;
+        if(isDarkSend) act = ONLY_DENOMINATED;
 
-        fCreated = wallet->CreateTransaction(vecSend, wtx, keyChange, nFeeRequired, strFailReason, coinControl, isDarkSend);
+        fCreated = wallet->CreateTransaction(vecSend, wtx, keyChange, nFeeRequired, strFailReason, coinControl, act);
         
         if(!fCreated)
         {
@@ -423,8 +425,9 @@ void WalletModel::getOutputs(const std::vector<COutPoint>& vOutpoints, std::vect
 // AvailableCoins + LockedCoins grouped by wallet address (put change in one group with wallet address) 
 void WalletModel::listCoins(std::map<QString, std::vector<COutput> >& mapCoins) const
 {
+    CCoinControl *coinControl=NULL;
     std::vector<COutput> vCoins;
-    wallet->AvailableCoins(vCoins);
+    wallet->AvailableCoins(vCoins, true, coinControl, ALL_COINS);
     
     std::vector<COutPoint> vLockedCoins;
     wallet->ListLockedCoins(vLockedCoins);

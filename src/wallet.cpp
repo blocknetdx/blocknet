@@ -965,7 +965,7 @@ int64 CWallet::GetImmatureBalance() const
 }
 
 // populate vCoins with vector of spendable COutputs
-void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const CCoinControl *coinControl, bool onlyDarksendInputs) const
+void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const CCoinControl *coinControl, AvailableCoinsType coin_type) const
 {
     vCoins.clear();
 
@@ -986,19 +986,21 @@ void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const
 
             for (unsigned int i = 0; i < pcoin->vout.size(); i++) {
                 bool found = false;
-                if(onlyDarksendInputs) {
+                if(coin_type == ONLY_DENOMINATED) {
                     //should make this a vector
 
                    COutput out = COutput(pcoin, i, pcoin->GetDepthInMainChain());
                    CTxIn vin = CTxIn(out.tx->GetHash(), out.i);  
                    int rounds = darkSendPool.GetInputDarksendRounds(vin);
                    if(rounds >= nDarksendRounds) found = true;
-                } else {
+                } else if(coin_type == ONLY_NONDENOMINATED) {
                     found = true;
                     BOOST_FOREACH(int64 d, darkSendDenominations)
                         if(pcoin->vout[i].nValue == d)
                             found = false;
 
+                } else {
+                    found = true;
                 }
                 if(!found) continue;
 
@@ -1208,10 +1210,10 @@ bool CWallet::SelectCoinsMinConf(int64 nTargetValue, int nConfMine, int nConfThe
     return true;
 }
 
-bool CWallet::SelectCoins(int64 nTargetValue, set<pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64& nValueRet, const CCoinControl* coinControl, bool onlyDarksendInputs) const
+bool CWallet::SelectCoins(int64 nTargetValue, set<pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64& nValueRet, const CCoinControl* coinControl, AvailableCoinsType coin_type) const
 {
     vector<COutput> vCoins;
-    AvailableCoins(vCoins, true, coinControl, onlyDarksendInputs);
+    AvailableCoins(vCoins, true, coinControl, coin_type);
     
     // coin control -> return all selected outputs (we want all selected to go into the transaction for sure)
     if (coinControl && coinControl->HasSelected())
@@ -1269,7 +1271,7 @@ bool CWallet::SelectCoinsWithoutDenomination(int64 nTargetValue, set<pair<const 
     CCoinControl *coinControl=NULL;
 
     vector<COutput> vCoins;
-    AvailableCoins(vCoins, true, coinControl, true);
+    AvailableCoins(vCoins, true, coinControl, ONLY_NONDENOMINATED);
     
     BOOST_FOREACH(const COutput& out, vCoins)
     {
@@ -1298,7 +1300,7 @@ bool CWallet::SelectCoinsMoreThanOutput(int64 nTargetValue, CTxIn& vin, int64& n
 }
 
 bool CWallet::CreateTransaction(std::vector<pair<CScript, int64> >& vecSend,
-                                CWalletTx& wtxNew, CReserveKey& reservekey, int64& nFeeRet, std::string& strFailReason, const CCoinControl* coinControl, bool onlyDarkSendInputs)
+                                CWalletTx& wtxNew, CReserveKey& reservekey, int64& nFeeRet, std::string& strFailReason, const CCoinControl* coinControl, AvailableCoinsType coin_type)
 {
     int64 nValue = 0;
     BOOST_FOREACH (PAIRTYPE(CScript, int64)& s, vecSend)
@@ -1349,9 +1351,9 @@ bool CWallet::CreateTransaction(std::vector<pair<CScript, int64> >& vecSend,
                 // Choose coins to use
                 set<pair<const CWalletTx*,unsigned int> > setCoins;
                 int64 nValueIn = 0;
-                if (!SelectCoins(nTotalValue, setCoins, nValueIn, coinControl, onlyDarkSendInputs))
+                if (!SelectCoins(nTotalValue, setCoins, nValueIn, coinControl, coin_type))
                 {
-                    if(!onlyDarkSendInputs)
+                    if(coin_type == ALL_COINS || coin_type == ONLY_NONDENOMINATED)
                         strFailReason = _("Insufficient funds");
                     else
                         strFailReason = _("Unable to locate enough Darksend denominated funds for this transaction");
