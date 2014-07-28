@@ -7010,7 +7010,7 @@ void CDarkSendPool::DoAutomaticDenominating()
 
     if(strError == "") return;
 
-    if(strError == "Error: The DarkSend requires a collateral transaction and could not locate the input!" || strError == "Insufficient funds 2") {
+    if(strError == "Error: Darksend requires a collateral transaction and could not locate an acceptable input!" || strError == "Insufficient funds 2") {
         SplitUpMoney();
     } else {
         printf("DoAutomaticDenominating : Error running denominate, %s\n", strError.c_str());
