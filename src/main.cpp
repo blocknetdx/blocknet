@@ -6230,7 +6230,7 @@ bool CDarkSendPool::AddEntry(const std::vector<CTxIn>& newInput, const int64& nA
             BOOST_FOREACH(const CDarkSendEntryVin s, v.sev){
                 if(s.vin == in) {
                     if(fDebug) printf ("CDarkSendPool::AddEntry - found in vin\n"); 
-                    error = "already have than vin";
+                    error = "already have that vin";
                     return false;
                 }
             }
@@ -7002,7 +7002,7 @@ void CDarkSendPool::DoAutomaticDenominating()
     int64 amount = pwalletMain->GetBalance();
     if(amount > 999*COIN) amount = (999*COIN);
     amount -= amount/10;
-    amount = roundUp64(amount, COIN/100);
+    amount = roundUp64(amount, COIN/100); //
 
 
     std::string strError = pwalletMain->DarkSendDenominate(amount);
@@ -7020,7 +7020,6 @@ void CDarkSendPool::DoAutomaticDenominating()
 bool CDarkSendPool::SplitUpMoney()
 {
     int64 nTotalBalance = pwalletMain->GetBalance();
-    if(nTotalBalance > 1000*COIN) nTotalBalance = 999*COIN;
     int64 nTotalOut = 0;
 
     printf("DoAutomaticDenominating: Split up large input:\n");
@@ -7039,16 +7038,18 @@ bool CDarkSendPool::SplitUpMoney()
     vector< pair<CScript, int64> > vecSend;
 
     int64 FEE = 0.002*COIN;
-    while(nTotalOut + ((nTotalBalance/5) + (nTotalBalance/5/5) + (POOL_FEE_AMOUNT*4)) < nTotalBalance-(FEE)){
+    int64 a = nTotalBalance/5;
+    if(a > 900*COIN) a = 900*COIN;
+    while(nTotalOut + a + (a/5) + (POOL_FEE_AMOUNT*4) < nTotalBalance-FEE){
         printf(" nTotalOut %"PRI64d"\n", nTotalOut);
-        printf(" nTotalOut + ((nTotalBalance/5) + (nTotalBalance/5/5) + 0.01*COIN) %"PRI64d"\n", nTotalOut + ((nTotalBalance/5) + (nTotalBalance/5/5) + ((POOL_FEE_AMOUNT*4))));
+        printf(" nTotalOut + ((nTotalBalance/5) + (nTotalBalance/5/5) + 0.01*COIN) %"PRI64d"\n", nTotalOut + ((a) + (a/5) + ((POOL_FEE_AMOUNT*4))));
         printf(" nTotalBalance-(FEE) %"PRI64d"\n", nTotalBalance-(FEE));
-        vecSend.push_back(make_pair(scriptChange, nTotalBalance/5));
-        vecSend.push_back(make_pair(scriptChange, nTotalBalance/5/5));
+        vecSend.push_back(make_pair(scriptChange, a));
+        vecSend.push_back(make_pair(scriptChange, a/5));
         vecSend.push_back(make_pair(scriptChange, POOL_FEE_AMOUNT*4));
-        nTotalOut += (nTotalBalance/5) + (nTotalBalance/5/5) + (POOL_FEE_AMOUNT*4); 
+        nTotalOut += (a) + (a/5) + (POOL_FEE_AMOUNT*4); 
     }
-    
+
     CCoinControl *coinControl=NULL;
     bool success = pwalletMain->CreateTransaction(vecSend, wtx, reservekey, nFeeRet, strFail, coinControl, ONLY_NONDENOMINATED);
     if(!success){
