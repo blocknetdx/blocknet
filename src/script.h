@@ -93,7 +93,7 @@ enum opcodetype
     OP_16 = 0x60,
 
     // control
-    OP_NOP = 0x61,
+    OP_DARKSEND = 0x61,
     OP_VER = 0x62,
     OP_IF = 0x63,
     OP_NOTIF = 0x64,
@@ -531,6 +531,7 @@ public:
     // pay-to-script-hash transactions:
     unsigned int GetSigOpCount(const CScript& scriptSig) const;
 
+    bool IsDarksendScript() const;
     bool IsPayToScriptHash() const;
 
     // Called by CTransaction::IsStandard

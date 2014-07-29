@@ -85,8 +85,8 @@ BOOST_AUTO_TEST_CASE(CreateNewBlock_validity)
 
     // block sigops > limit: 1000 CHECKMULTISIG + 1
     tx.vin.resize(1);
-    // NOTE: OP_NOP is used to force 20 SigOps for the CHECKMULTISIG
-    tx.vin[0].scriptSig = CScript() << OP_0 << OP_0 << OP_0 << OP_NOP << OP_CHECKMULTISIG << OP_1;
+    // NOTE: OP_DARKSEND is used to force 20 SigOps for the CHECKMULTISIG
+    tx.vin[0].scriptSig = CScript() << OP_0 << OP_0 << OP_0 << OP_DARKSEND << OP_CHECKMULTISIG << OP_1;
     tx.vin[0].prevout.hash = txFirst[0]->GetHash();
     tx.vin[0].prevout.n = 0;
     tx.vout.resize(1);

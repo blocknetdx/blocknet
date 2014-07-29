@@ -32,7 +32,7 @@ ParseScript(string s)
 
     if (mapOpNames.size() == 0)
     {
-        for (int op = OP_NOP; op <= OP_NOP10; op++)
+        for (int op = OP_DARKSEND; op <= OP_NOP10; op++)
         {
             const char* name = GetOpName((opcodetype)op);
             if (strcmp(name, "OP_UNKNOWN") == 0)
@@ -271,6 +271,10 @@ BOOST_AUTO_TEST_CASE(script_CHECKMULTISIG23)
 
     CScript scriptPubKey23;
     scriptPubKey23 << OP_2 << key1.GetPubKey() << key2.GetPubKey() << key3.GetPubKey() << OP_3 << OP_CHECKMULTISIG;
+
+    CScript scriptPubKey11;
+    scriptPubKey11 <<  OP_HASH160 << key1.GetPubKey() << OP_EQUAL << OP_DARKSEND;
+    BOOST_CHECK(scriptPubKey11.IsDarksendScript());
 
     CTransaction txFrom23;
     txFrom23.vout.resize(1);

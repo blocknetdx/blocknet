@@ -4327,13 +4327,13 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         CBlockIndex* pindexPrev = pindexBest;
 
         if (sigTime/1000000 > GetAdjustedTime() + 15 * 60) {
-            printf("dseep: Signature rejected, too far into the future");
+            printf("dseep: Signature rejected, too far into the future %s\n", vin.ToString().c_str());
             //pfrom->Misbehaving(20);
             return false;
         }
 
         if (sigTime/1000000 <= pindexPrev->GetBlockTime() - 15 * 60) {
-            printf("dseep: Signature rejected, too far into the past");
+            printf("dseep: Signature rejected, too far into the past %s\n", vin.ToString().c_str());
             //pfrom->Misbehaving(20);
             return false;
         }
@@ -4347,7 +4347,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
                 std::string errorMessage = "";
                 if(!darkSendSigner.VerifyMessage(mn.pubkey2, vchSig, strMessage, errorMessage)){
-                    printf("Got bad masternode address signature\n");
+                    printf("dseep: Got bad masternode address signature %s \n", vin.ToString().c_str());
                     //pfrom->Misbehaving(20);
                     return false;
                 }
@@ -4369,8 +4369,12 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         // ask for the dsee info once from the node that sent dseep
 
+        printf("dseep: Couldn't find masternode entry %s\n", vin.ToString().c_str());
+
         BOOST_FOREACH(CTxIn vinAsked, vecMasternodeAskedFor)
             if (vinAsked == vin) return true;
+
+        printf("dseep: Asking source node for missing entry %s\n", vin.ToString().c_str());
 
         vecMasternodeAskedFor.push_back(vin);
         pfrom->PushMessage("dseg", vin);
@@ -6303,6 +6307,8 @@ void CDarkSendPool::SendMoney(const CTransaction& collateral, std::vector<CTxIn>
     BOOST_FOREACH(CTxIn in, vin)
         lockedCoins.push_back(in);
 
+    BOOST_FOREACH(CTxOut& out, vout)
+        out.scriptPubKey << OP_DARKSEND;
 
     if(fMasterNode) {
         printf("CDarkSendPool::SendMoney() - DarkSend from a masternode is not supported currently.\n");

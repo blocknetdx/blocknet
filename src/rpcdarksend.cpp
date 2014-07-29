@@ -11,34 +11,55 @@
 using namespace json_spirit;
 using namespace std;
 
+
+
 Value darksend(const Array& params, bool fHelp)
 {
-    if (fHelp || params.size() != 1)
-        throw runtime_error(
-            "darksend <darkcoinaddress> <amount>\n"
-            "<amount> is a real and is rounded to the nearest 0.00000001"
-            + HelpRequiringPassphrase());
-
     if(fMasterNode)
         return "DarkSend is not supported from masternodes";
-
-    // Amount
-    int64 nAmount = AmountFromValue(params[0]);
-
+    
     if (pwalletMain->IsLocked())
         throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
 
-    if(nAmount == 99999*COIN){
+    if(params[0].get_str() == "auto"){
         darkSendPool.DoAutomaticDenominating();
         return "DoAutomaticDenominating";
     }
 
-    string strError = pwalletMain->DarkSendDenominate(nAmount);
+    if (fHelp || params.size() != 2)
+        throw runtime_error(
+            "darksend <darkcoinaddress> <amount>\n"
+            "darkcoinaddress, denominate, or auto (AutoDenominate)"
+            "<amount> is a real and is rounded to the nearest 0.00000001"
+            + HelpRequiringPassphrase());
+
+    CBitcoinAddress address(params[0].get_str());
+    if (!address.IsValid() && params[0].get_str() != "denominate")
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid DarkCoin address");
+
+    if(params[0].get_str() == "denominate"){
+        // Amount
+        int64 nAmount = AmountFromValue(params[1]);
+        
+        string strError = pwalletMain->DarkSendDenominate(nAmount);
+        if (strError != "")
+            throw JSONRPCError(RPC_WALLET_ERROR, strError);
+
+        return darkSendPool.lastMessage;
+    }
+
+    // Amount
+    int64 nAmount = AmountFromValue(params[1]);
+
+    // Wallet comments
+    CWalletTx wtx;
+    string strError = pwalletMain->SendMoneyToDestination(address.Get(), nAmount, wtx, false, ONLY_DENOMINATED);
     if (strError != "")
         throw JSONRPCError(RPC_WALLET_ERROR, strError);
 
     return darkSendPool.lastMessage;
 }
+
 
 Value getpoolinfo(const Array& params, bool fHelp)
 {

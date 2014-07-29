@@ -217,7 +217,7 @@ BOOST_AUTO_TEST_CASE(is)
     not_p2sh.clear(); not_p2sh << OP_HASH160 << dummy << dummy << OP_EQUAL;
     BOOST_CHECK(!not_p2sh.IsPayToScriptHash());
 
-    not_p2sh.clear(); not_p2sh << OP_NOP << dummy << OP_EQUAL;
+    not_p2sh.clear(); not_p2sh << OP_DARKSEND << dummy << OP_EQUAL;
     BOOST_CHECK(!not_p2sh.IsPayToScriptHash());
 
     not_p2sh.clear(); not_p2sh << OP_HASH160 << dummy << OP_CHECKSIG;
