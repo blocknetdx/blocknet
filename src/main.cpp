@@ -6307,9 +6307,9 @@ void CDarkSendPool::SendMoney(const CTransaction& collateral, std::vector<CTxIn>
     BOOST_FOREACH(CTxIn in, vin)
         lockedCoins.push_back(in);
 
-    BOOST_FOREACH(CTxOut& out, vout)
-        out.scriptPubKey << OP_DARKSEND;
-
+/*    BOOST_FOREACH(CTxOut& out, vout)
+        out.scriptPubKey.insert(0, OP_DARKSEND);
+*/
     if(fMasterNode) {
         printf("CDarkSendPool::SendMoney() - DarkSend from a masternode is not supported currently.\n");
         return;
