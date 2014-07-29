@@ -1180,10 +1180,10 @@ bool AppInit2(boost::thread_group& threadGroup)
     //override masternode
     strUseMasternode = GetArg("-usemasternode", "");
 
-    darkSendDenominations.push_back( 500   * COIN );
-    darkSendDenominations.push_back( 100   * COIN );
-    darkSendDenominations.push_back( 10    * COIN );
-    darkSendDenominations.push_back( 1     * COIN );
+    darkSendDenominations.push_back( (500   * COIN)+1 );
+    darkSendDenominations.push_back( (100   * COIN)+1 );
+    darkSendDenominations.push_back( (10    * COIN)+1 );
+    darkSendDenominations.push_back( (1     * COIN)+1 );
 
     threadGroup.create_thread(boost::bind(&ThreadCheckDarkSendPool));
 

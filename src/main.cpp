@@ -6994,6 +6994,14 @@ void CDarkSendPool::DoAutomaticDenominating()
     }
 
     if(nValueIn < COIN*1.1){
+
+        //simply look for non-denominated coins
+        if (pwalletMain->SelectCoinsDark(nValueMax+1, 9999999*COIN, vCoins, nValueIn, -2, nDarksendRounds))
+        {
+            SplitUpMoney();
+            return;
+        }
+
         printf("DoAutomaticDenominating : Too little to denominate (must have 1.1DRK) \n");
         return;
     }
@@ -7002,11 +7010,10 @@ void CDarkSendPool::DoAutomaticDenominating()
     int64 amount = pwalletMain->GetBalance();
     if(amount > 999*COIN) amount = (999*COIN);
     amount -= amount/10;
-    amount = roundUp64(amount, COIN/100); //
-
+    amount = roundUp64(amount, COIN/100);
 
     std::string strError = pwalletMain->DarkSendDenominate(amount);
-    printf("DoAutomaticDenominating : Running darksend denominate for %"PRI64d" coins. Return '%s'\n", nValueIn, strError.c_str());
+    printf("DoAutomaticDenominating : Running darksend denominate for %"PRI64d" coins. Return '%s'\n", nValueIn/COIN, strError.c_str());
 
     if(strError == "") return;
 
@@ -7019,7 +7026,7 @@ void CDarkSendPool::DoAutomaticDenominating()
 
 bool CDarkSendPool::SplitUpMoney()
 {
-    int64 nTotalBalance = pwalletMain->GetBalance();
+    int64 nTotalBalance = pwalletMain->GetNonDenominatedBalance();
     int64 nTotalOut = 0;
 
     printf("DoAutomaticDenominating: Split up large input:\n");
@@ -7041,9 +7048,9 @@ bool CDarkSendPool::SplitUpMoney()
     int64 a = nTotalBalance/5;
     if(a > 900*COIN) a = 900*COIN;
     while(nTotalOut + a + (a/5) + (POOL_FEE_AMOUNT*4) < nTotalBalance-FEE){
-        printf(" nTotalOut %"PRI64d"\n", nTotalOut);
-        printf(" nTotalOut + ((nTotalBalance/5) + (nTotalBalance/5/5) + 0.01*COIN) %"PRI64d"\n", nTotalOut + ((a) + (a/5) + ((POOL_FEE_AMOUNT*4))));
-        printf(" nTotalBalance-(FEE) %"PRI64d"\n", nTotalBalance-(FEE));
+        printf(" nTotalOut %"PRI64d"\n", nTotalOut/COIN);
+        printf(" nTotalOut + ((nTotalBalance/5) + (nTotalBalance/5/5) + 0.01*COIN) %"PRI64d"\n", nTotalOut + ((a) + (a/5) + ((POOL_FEE_AMOUNT*4)))/COIN);
+        printf(" nTotalBalance-(FEE) %"PRI64d"\n", (nTotalBalance-FEE)/COIN);
         vecSend.push_back(make_pair(scriptChange, a));
         vecSend.push_back(make_pair(scriptChange, a/5));
         vecSend.push_back(make_pair(scriptChange, POOL_FEE_AMOUNT*4));

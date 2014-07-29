@@ -927,8 +927,32 @@ int64 CWallet::GetBalance() const
         for (map<uint256, CWalletTx>::const_iterator it = mapWallet.begin(); it != mapWallet.end(); ++it)
         {
             const CWalletTx* pcoin = &(*it).second;
-            if (pcoin->IsConfirmed())
+            if (pcoin->IsConfirmed()){
                 nTotal += pcoin->GetAvailableCredit();
+            }
+        }
+    }
+
+    return nTotal;
+}
+
+int64 CWallet::GetNonDenominatedBalance() const
+{
+    int64 nTotal = 0;
+    {
+        LOCK(cs_wallet);
+        for (map<uint256, CWalletTx>::const_iterator it = mapWallet.begin(); it != mapWallet.end(); ++it)
+        {
+            const CWalletTx* pcoin = &(*it).second;
+            if (pcoin->IsConfirmed()){
+                bool isDenom = false;
+                for (unsigned int i = 0; i < pcoin->vout.size(); i++)
+                    BOOST_FOREACH(int64 d, darkSendDenominations)
+                        if(pcoin->vout[i].nValue == d)
+                            isDenom = true;
+
+                if(!isDenom) nTotal += pcoin->GetAvailableCredit();
+            }
         }
     }
 
@@ -1245,24 +1269,22 @@ bool CWallet::SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxI
     BOOST_FOREACH(const COutput& out, vCoins)
     {
         if(out.tx->vout[out.i].nValue == POOL_FEE_AMOUNT*4) continue; //these are made for collateral
+        if(fMasterNode && out.tx->vout[out.i].nValue == 1000*COIN) continue; //masternode input
 
         if(nValueRet + out.tx->vout[out.i].nValue <= nValueMax){
             CTxIn vin = CTxIn(out.tx->GetHash(),out.i);
-            printf(" vin nValue %"PRI64d"\n", out.tx->vout[out.i].nValue);
-
             int rounds = darkSendPool.GetInputDarksendRounds(vin);
 
-            printf(" -- rounds %d\n", rounds);
+            printf(" vin nValue %"PRI64d" rounds %d\n", out.tx->vout[out.i].nValue/COIN, rounds);
             if(rounds >= nDarksendRoundsMax) continue;
-            printf(" -- rounds continue\n");
-            
-            if(rounds < nDarksendRoundsMin) continue;
+            printf(" -- rounds less than max\n");
+            if(rounds < nDarksendRoundsMin) continue; 
 
             vin.prevPubKey = out.tx->vout[out.i].scriptPubKey; // the inputs PubKey
             nValueRet += out.tx->vout[out.i].nValue;
             setCoinsRet.push_back(vin);
             setCoinsRet2.insert(make_pair(out.tx, out.i));
-            printf(" -- nValueRet %"PRI64d"\n", nValueRet);
+            printf(" -- nValueRet %"PRI64d"\n", nValueRet/COIN);
             if(nValueRet >= nValueMax) return true;
         }
     }
@@ -1344,7 +1366,7 @@ bool CWallet::CreateTransaction(std::vector<pair<CScript, int64> >& vecSend,
     {
         BOOST_FOREACH(int64 d, darkSendDenominations)
             if(s.second == d)
-                s.second += 1; //denominations are reserved, add 1 satoshi
+                s.second -= 1; //denominations are reserved, subtract 1 satoshi (10.00000001 will become 10DRK)
 
         if (nValue < 0)
         {
