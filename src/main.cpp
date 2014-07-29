@@ -3891,15 +3891,15 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
             printf("Sending master node entry - %s \n", mn.addr.ToString().c_str());
-            mn.Check();
-            if(mn.IsEnabled()) {
-                if(vin == CTxIn()){
-                    pfrom->PushMessage("dsee", mn.vin, mn.addr, mn.sig, mn.now, mn.pubkey, mn.pubkey2, count, i, mn.lastTimeSeen);
-                } else if (vin == mn.vin) {
+            if(vin == CTxIn()){
+                mn.Check();
+                if(mn.IsEnabled()) {
                     pfrom->PushMessage("dsee", mn.vin, mn.addr, mn.sig, mn.now, mn.pubkey, mn.pubkey2, count, i, mn.lastTimeSeen);
                 }
-                i++;
+            } else if (vin == mn.vin) {
+                pfrom->PushMessage("dsee", mn.vin, mn.addr, mn.sig, mn.now, mn.pubkey, mn.pubkey2, count, i, mn.lastTimeSeen);
             }
+            i++;
         }
     }
     else if (strCommand == "dmcv") { //DarkSend Masternode Consessus Vote   
