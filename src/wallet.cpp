@@ -1649,7 +1649,6 @@ string CWallet::DarkSendDenominate()
         return _("Error: Wallet locked, unable to create transaction!");
     }
 
-    CReserveKey reservekey(this);
     CTransaction txCollateral;   
 
     int64 nFeeRet = 0.001*COIN; ///need to get a better fee calc
@@ -1705,6 +1704,7 @@ string CWallet::DarkSendDenominate()
         CPubKey vchPubKey;
         assert(reservekey.GetReservedKey(vchPubKey)); // should never fail, as we just unlocked
         scriptChange.SetDestination(vchPubKey.GetID());
+        reservekey.KeepKey()
 
         CTxOut vout2 = CTxOut(POOL_FEE_AMOUNT, darkSendPool.collateralPubKey);
 
