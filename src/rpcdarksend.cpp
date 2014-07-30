@@ -15,7 +15,7 @@ using namespace std;
 
 Value darksend(const Array& params, bool fHelp)
 {
-    if (fHelp)
+    if (fHelp || params.size() == 0)
         throw runtime_error(
             "darksend <darkcoinaddress> <amount>\n"
             "darkcoinaddress, denominate, or auto (AutoDenominate)"
@@ -43,17 +43,6 @@ Value darksend(const Array& params, bool fHelp)
     CBitcoinAddress address(params[0].get_str());
     if (!address.IsValid() && params[0].get_str() != "denominate")
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid DarkCoin address");
-
-    if(params[0].get_str() == "denominate"){
-        // Amount
-        int64 nAmount = AmountFromValue(params[1]);
-        
-        string strError = pwalletMain->DarkSendDenominate(nAmount);
-        if (strError != "")
-            throw JSONRPCError(RPC_WALLET_ERROR, strError);
-
-        return darkSendPool.lastMessage;
-    }
 
     // Amount
     int64 nAmount = AmountFromValue(params[1]);

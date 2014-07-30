@@ -1641,14 +1641,8 @@ string CWallet::SendMoneyToDestination(const CTxDestination& address, int64 nVal
     return SendMoney(scriptPubKey, nValue, wtxNew, fAskFee, coin_type);
 }
 
-string CWallet::DarkSendDenominate(int64 nValue)
+string CWallet::DarkSendDenominate()
 {
-
-    // Check amount
-    if (nValue <= 0)
-        return _("Invalid amount");
-    if (nValue + nTransactionFee > GetBalance())
-        return _("Insufficient funds 1");
 
     if (IsLocked())
     {
@@ -1658,39 +1652,24 @@ string CWallet::DarkSendDenominate(int64 nValue)
     CReserveKey reservekey(this);
     CTransaction txCollateral;   
 
-    //**************
-
     int64 nFeeRet = 0.001*COIN; ///need to get a better fee calc
-    int64 nTotalValue = nValue + nFeeRet+ nFeeRet;
-
-    int64 amount = roundUp64(nValue, COIN/100);
-
-    if(nValue != amount){
-        return _("DarkSend can't send amounts more precise than XXXX.XX DRK.");
-    }
-
-    if(amount > 999.99*COIN){
-        return _("DarkSend can't send amounts more than 999.99DRK");
-    }
-
-    amount = roundUp64(nTotalValue, COIN/100);
 
     // ** find the coins we'll use
     std::vector<CTxIn> vCoins;
     int64 nValueIn = 0;
 
     //try to use denominated funds (for added anonymity)
-    if (!SelectCoinsDark(nTotalValue, 1000*COIN, vCoins, nValueIn, -2, nDarksendRounds))
+    if (!SelectCoinsDark(1*COIN, 1000*COIN, vCoins, nValueIn, -2, nDarksendRounds))
     {
         vCoins.clear();
-        return _("Insufficient funds 2");
+        return _("Insufficient funds");
     }
 
     //printf(" --- nValueIn %"PRI64d" nTotalValue %"PRI64d"\n", nValueIn, nTotalValue);
 
     // calculate total value out --------
 
-    nTotalValue = 0;
+    int64 nTotalValue = 0;
     CWalletTx wtx;
     BOOST_FOREACH(CTxIn i, vCoins){
         if (mapWallet.count(i.prevout.hash))

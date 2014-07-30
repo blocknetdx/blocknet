@@ -7012,18 +7012,12 @@ void CDarkSendPool::DoAutomaticDenominating()
         return;
     }
 
-
-    int64 amount = pwalletMain->GetBalance();
-    if(amount > 999*COIN) amount = (999*COIN);
-    amount -= amount/10;
-    amount = roundUp64(amount, COIN/100);
-
-    std::string strError = pwalletMain->DarkSendDenominate(amount);
-    printf("DoAutomaticDenominating : Running darksend denominate for %"PRI64d" coins. Return '%s'\n", nValueIn/COIN, strError.c_str());
+    std::string strError = pwalletMain->DarkSendDenominate();
+    printf("DoAutomaticDenominating : Running darksend denominate. Return '%s'\n", strError.c_str());
 
     if(strError == "") return;
 
-    if(strError == "Error: Darksend requires a collateral transaction and could not locate an acceptable input!" || strError == "Insufficient funds 2") {
+    if(strError == "Error: Darksend requires a collateral transaction and could not locate an acceptable input!" || strError == "Insufficient funds") {
         SplitUpMoney();
     } else {
         printf("DoAutomaticDenominating : Error running denominate, %s\n", strError.c_str());
