@@ -1656,18 +1656,16 @@ string CWallet::DarkSendDenominate()
     // ** find the coins we'll use
     std::vector<CTxIn> vCoins;
     int64 nValueIn = 0;
+    CReserveKey reservekey(this);
 
-    //try to use denominated funds (for added anonymity)
+    //select coins we'll use
     if (!SelectCoinsDark(1*COIN, 1000*COIN, vCoins, nValueIn, -2, nDarksendRounds))
     {
         vCoins.clear();
         return _("Insufficient funds");
     }
 
-    //printf(" --- nValueIn %"PRI64d" nTotalValue %"PRI64d"\n", nValueIn, nTotalValue);
-
-    // calculate total value out --------
-
+    // calculate total value out
     int64 nTotalValue = 0;
     CWalletTx wtx;
     BOOST_FOREACH(CTxIn i, vCoins){
@@ -1704,7 +1702,7 @@ string CWallet::DarkSendDenominate()
         CPubKey vchPubKey;
         assert(reservekey.GetReservedKey(vchPubKey)); // should never fail, as we just unlocked
         scriptChange.SetDestination(vchPubKey.GetID());
-        reservekey.KeepKey()
+        reservekey.KeepKey();
 
         CTxOut vout2 = CTxOut(POOL_FEE_AMOUNT, darkSendPool.collateralPubKey);
 
