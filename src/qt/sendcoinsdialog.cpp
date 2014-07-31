@@ -286,12 +286,16 @@ void SendCoinsDialog::darkSendStatusButton()
         else if(showingDarkSendMessage % 70 <= 40) convert << "darkSend Status => SIGNING ( waiting... )";
     } else if(state == POOL_STATUS_TRANSMISSION) {
         convert << "darkSend Status => TRANSMISSION";
+    } else if (state == POOL_STATUS_IDLE) {
+        convert << "darkSend Status => POOL_STATUS_IDLE";
+    } else if (state == POOL_STATUS_FINALIZE_TRANSACTION) {
+        convert << "darkSend Status => POOL_STATUS_FINALIZE_TRANSACTION";
     } else if(state == POOL_STATUS_ERROR) {
         convert << "darkSend Status => ERROR : " << darkSendPool.lastMessage;
     } else if(state == POOL_STATUS_SUCCESS) {
         convert << "darkSend Status => SUCCESS : " << darkSendPool.lastMessage;
     } else {
-        convert << "darkSend Status => UNKNOWN STATE";
+        convert << "darkSend Status => UNKNOWN STATE : ID=" << state;
     }
 
     if(state == POOL_STATUS_ERROR || state == POOL_STATUS_SUCCESS) darkSendPool.Check();

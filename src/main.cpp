@@ -6299,13 +6299,18 @@ bool CDarkSendPool::SignaturesComplete(){
     return true;
 }
 
-void CDarkSendPool::SendMoney(const CTransaction& collateral, std::vector<CTxIn>& vin, std::vector<CTxOut>& vout, int64& fee, int64 amount){
+void CDarkSendPool::SendMoney(const CTransaction& collateral, std::vector<CTxIn>& vin, std::vector<CTxOut>& vout, int64& fee, int64 amount, std::vector<int64> reservedKeysIn){
     
     BOOST_FOREACH(CTxIn in, collateral.vin)
         lockedCoins.push_back(in);
     
     BOOST_FOREACH(CTxIn in, vin)
         lockedCoins.push_back(in);
+
+    BOOST_FOREACH(int64 index, reservedKeysIn){
+        printf(" reserved key -- %"PRI64d"\n", index);
+        keypoolIndexes.push_back(index);
+    }
 
 /*    BOOST_FOREACH(CTxOut& out, vout)
         out.scriptPubKey.insert(0, OP_DARKSEND);
@@ -6359,6 +6364,16 @@ bool CDarkSendPool::StatusUpdate(int newState, int newEntriesCount, int newAccep
         if(newAccepted == 0){
             UpdateState(POOL_STATUS_ERROR);
             lastMessage = error;
+        }
+    }
+
+    //transaction made successfully
+    if(newState == POOL_STATUS_SUCCESS) {
+        int nOutputs = 0;
+        BOOST_FOREACH(const int64 index, keypoolIndexes) {
+            CReserveKey reservekey(pwalletMain);
+            reservekey.SetIndex(index);
+            reservekey.KeepKey();
         }
     }
 
@@ -6777,6 +6792,8 @@ bool CDarkSendPool::DoConcessusVote(int64 nBlockHeight)
 
 void CDarkSendPool::NewBlock()
 {
+    if(IsInitialBlockDownload()) return;
+    if(nBestHeight < GetNumBlocksOfPeers()) return;
     if(fDebug) printf("CDarkSendPool::NewBlock \n");
 
     {    
@@ -6969,13 +6986,11 @@ int CDarkSendPool::GetCurrentMasterNode(int mod, int64 nBlockHeight)
 
 void CDarkSendPool::DoAutomaticDenominating()
 {
-    if(fDisableDarksend) return;
-    if (IsInitialBlockDownload()) return;
-
     if (pwalletMain->IsLocked()){
         printf("DoAutomaticDenominating Error: Wallet is locked. Please unlock wallet to autodenominate..\n");
         return;
     }
+
 
     // ** find the coins we'll use
     std::vector<CTxIn> vCoins;
@@ -7104,7 +7119,7 @@ bool CDarkSendPool::GetCurrentMasterNodeConsessus(int64 blockHeight, CScript& pa
     int winner_votes = -1;
     CTxIn winner_vin;
 
-    if (vecBlockVotes.empty())
+    if (vecBlockVotes.empty() && nBestHeight >= GetNumBlocksOfPeers()-1)
     {
         printf("CDarkSendPool::GetCurrentMasterNodeConsessus : No consessus information for block %"PRI64u"\n", blockHeight);
         return false;

@@ -2590,6 +2590,7 @@ public:
     CScript collateralPubKey;
 
     std::vector<CTxIn> lockedCoins;
+    std::vector<int64> keypoolIndexes;
 
     CTxIn vinMasterNode;
     CPubKey pubkeyMasterNode;
@@ -2607,7 +2608,6 @@ public:
 
     std::string lastMessage;
     bool completedTransaction;
-
     bool unitTest;
 
     CDarkSendPool()
@@ -2708,7 +2708,7 @@ public:
     bool AddEntry(const std::vector<CTxIn>& newInput, const int64& nAmount, const CTransaction& txCollateral, const std::vector<CTxOut>& newOutput, std::string& error);
     bool AddScriptSig(const CTxIn& newVin);
     bool SignaturesComplete();
-    void SendMoney(const CTransaction& collateral, std::vector<CTxIn>& vin, std::vector<CTxOut>& vout, int64& fee, int64 amount);
+    void SendMoney(const CTransaction& collateral, std::vector<CTxIn>& vin, std::vector<CTxOut>& vout, int64& fee, int64 amount, std::vector<int64> reservedKeysIn);
     bool StatusUpdate(int newState, int newEntriesCount, int newAccepted, std::string& error);
 
     bool SignFinalTransaction(CTransaction& finalTransactionNew, CNode* node);

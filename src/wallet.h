@@ -340,6 +340,7 @@ protected:
     CWallet* pwallet;
     int64 nIndex;
     CPubKey vchPubKey;
+    CKeyPool keypool;
 public:
     CReserveKey(CWallet* pwalletIn)
     {
@@ -354,7 +355,22 @@ public:
 
     void ReturnKey();
     bool GetReservedKey(CPubKey &pubkey);
+    void ReserveKey();
     void KeepKey();
+
+    int64 GetIndex(){
+        return nIndex;
+    }
+
+    void SetIndex(int64 newIndex){
+        nIndex = newIndex;
+    }
+
+    void Reset(){
+        nIndex = -1;
+        vchPubKey = CPubKey();
+    }
+
 };
 
 

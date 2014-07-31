@@ -1667,6 +1667,7 @@ string CWallet::DarkSendDenominate()
 
     // calculate total value out
     int64 nTotalValue = 0;
+    std::vector<int64> reservedKeys;
     CWalletTx wtx;
     BOOST_FOREACH(CTxIn i, vCoins){
         if (mapWallet.count(i.prevout.hash))
@@ -1702,7 +1703,9 @@ string CWallet::DarkSendDenominate()
         CPubKey vchPubKey;
         assert(reservekey.GetReservedKey(vchPubKey)); // should never fail, as we just unlocked
         scriptChange.SetDestination(vchPubKey.GetID());
-        reservekey.KeepKey();
+        reservekey.ReserveKey();
+        reservedKeys.push_back(reservekey.GetIndex());
+        reservekey.Reset();
 
         CTxOut vout2 = CTxOut(POOL_FEE_AMOUNT, darkSendPool.collateralPubKey);
 
@@ -1735,6 +1738,7 @@ string CWallet::DarkSendDenominate()
 
     int64 nValueLeft = nTotalValue;
     std::vector<CTxOut> vOut;
+
     int nOutputs = 0;
     //printf("nValueLeft %"PRI64d"\n", nValueLeft/COIN);
     BOOST_FOREACH(int64 v, darkSendDenominations){
@@ -1744,6 +1748,9 @@ string CWallet::DarkSendDenominate()
             CPubKey vchPubKey;
             assert(reservekey.GetReservedKey(vchPubKey)); // should never fail, as we just unlocked
             scriptChange.SetDestination(vchPubKey.GetID());
+            reservekey.ReserveKey();
+            reservedKeys.push_back(reservekey.GetIndex());
+            reservekey.Reset();
 
             CTxOut o(v, scriptChange);
             vOut.push_back(o);
@@ -1763,12 +1770,18 @@ string CWallet::DarkSendDenominate()
         CPubKey vchPubKey;
         assert(reservekey.GetReservedKey(vchPubKey)); // should never fail, as we just unlocked
         scriptChange.SetDestination(vchPubKey.GetID());
+        reservekey.ReserveKey();
+        reservedKeys.push_back(reservekey.GetIndex());
+        reservekey.Reset();
+
 
         CTxOut o(nValueLeft, scriptChange);
         vOut.push_back(o);
+
+        nOutputs++;
     }
 
-    darkSendPool.SendMoney(txCollateral, vCoins, vOut, nFeeRet, nValueIn);
+    darkSendPool.SendMoney(txCollateral, vCoins, vOut, nFeeRet, nValueIn, reservedKeys);
 
     return "";
 }
@@ -2152,7 +2165,6 @@ bool CReserveKey::GetReservedKey(CPubKey& pubkey)
 {
     if (nIndex == -1)
     {
-        CKeyPool keypool;
         pwallet->ReserveKeyFromKeyPool(nIndex, keypool);
         if (nIndex != -1)
             vchPubKey = keypool.vchPubKey;
@@ -2167,6 +2179,12 @@ bool CReserveKey::GetReservedKey(CPubKey& pubkey)
     assert(vchPubKey.IsValid());
     pubkey = vchPubKey;
     return true;
+}
+
+void CReserveKey::ReserveKey()
+{
+    if (nIndex != -1)
+        pwallet->AddReserveKey(keypool);
 }
 
 void CReserveKey::KeepKey()
@@ -2184,6 +2202,8 @@ void CReserveKey::ReturnKey()
     nIndex = -1;
     vchPubKey = CPubKey();
 }
+
+
 
 void CWallet::GetAllReserveKeys(set<CKeyID>& setAddress)
 {
