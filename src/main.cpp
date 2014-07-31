@@ -5958,7 +5958,7 @@ void CDarkSendPool::SetNull(){
     
         To fix this we need to queue an entry, request acceptance from masternode, then add upon success
     */
-    //myEntries.clear();
+    myEntries.clear();
 
     state = POOL_STATUS_ACCEPTING_ENTRIES;
 
@@ -6095,7 +6095,7 @@ void CDarkSendPool::Check()
         pwalletMain->Lock();
     }
 
-    if((state == POOL_STATUS_ERROR || state == POOL_STATUS_SUCCESS) && GetTimeMillis()-lastTimeChanged >= 10000) {
+    if((state == POOL_STATUS_ERROR || state == POOL_STATUS_SUCCESS || state == POOL_STATUS_FINALIZE_TRANSACTION) && GetTimeMillis()-lastTimeChanged >= 10000) {
         printf("CDarkSendPool::Check() -- RESETTING MESSAGE \n");
         SetNull();
         UnlockCoins();
@@ -6325,7 +6325,10 @@ void CDarkSendPool::SendMoney(const CTransaction& collateral, std::vector<CTxIn>
         printf("CDarkSendPool::SendMoney() -- NEW INPUT -- adding %s\n", vin[0].ToString().c_str());
     }
 
-    if(state == POOL_STATUS_ERROR || state == POOL_STATUS_SUCCESS) ClearLastMessage();
+    if(state == POOL_STATUS_ERROR || state == POOL_STATUS_SUCCESS) {
+        //SetNull();
+        ClearLastMessage();
+    }
 
     printf("CDarkSendPool::SendMoney() - Is connected to masternode?.\n");
 

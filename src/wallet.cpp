@@ -1649,6 +1649,12 @@ string CWallet::DarkSendDenominate()
         return _("Error: Wallet locked, unable to create transaction!");
     }
 
+    if(darkSendPool.GetState() != POOL_STATUS_ERROR && darkSendPool.GetState() != POOL_STATUS_SUCCESS){
+        if(darkSendPool.GetMyTransactionCount() > 0){
+            return _("Error: You already have pending entries in the Darksend pool");
+        }
+    }
+
     CTransaction txCollateral;   
 
     int64 nFeeRet = 0.001*COIN; ///need to get a better fee calc
