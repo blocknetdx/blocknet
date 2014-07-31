@@ -93,7 +93,7 @@ enum opcodetype
     OP_16 = 0x60,
 
     // control
-    OP_DARKSEND = 0x61,
+    OP_NOP = 0x61,
     OP_VER = 0x62,
     OP_IF = 0x63,
     OP_NOTIF = 0x64,

@@ -3948,6 +3948,16 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         int accepted = 0;
         std::string error = "";
 
+        if(darkSendPool.IsCompatibleWithEntries(out))
+        {
+            printf("dsi -- not compatible with existing transactions! \n");
+            accepted = 0;
+            error = "not compatible with existing transactions";
+            pfrom->PushMessage("dssu", darkSendPool.GetState(), darkSendPool.GetEntriesCount(), accepted, error);
+            return true;
+
+        }
+
         //check it like a transaction
         {
             int64 nValueIn = 0;
@@ -3986,7 +3996,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
                     accepted = 0;
                     error = "transaction fees are too low";
                     pfrom->PushMessage("dssu", darkSendPool.GetState(), darkSendPool.GetEntriesCount(), accepted, error);
-                    return false;
+                    return true;
                 }
 
                 if (nValueIn-nValueOut > nValueIn*.01) {
@@ -3994,14 +4004,14 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
                     accepted = 0;
                     error = "transaction fees are too high";
                     pfrom->PushMessage("dssu", darkSendPool.GetState(), darkSendPool.GetEntriesCount(), accepted, error);
-                    return false;
+                    return true;
                 }
             } else {
                 printf("dsi -- missing input tx! %s\n", tx.ToString().c_str());
                 accepted = 0;
                 error = "missing input tx information";
                 pfrom->PushMessage("dssu", darkSendPool.GetState(), darkSendPool.GetEntriesCount(), accepted, error);
-                return false;
+                return true;
             }
 
             bool missing = false;
@@ -4010,7 +4020,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
                 accepted = 0;
                 error = "transaction not valid";
                 pfrom->PushMessage("dssu", darkSendPool.GetState(), darkSendPool.GetEntriesCount(), accepted, error);
-                return false;
+                return true;
             }
         }
 
@@ -6313,7 +6323,7 @@ void CDarkSendPool::SendMoney(const CTransaction& collateral, std::vector<CTxIn>
     }
 
 /*    BOOST_FOREACH(CTxOut& out, vout)
-        out.scriptPubKey.insert(0, OP_DARKSEND);
+        out.scriptPubKey.insert(0, OP_NOP);
 */
     if(fMasterNode) {
         printf("CDarkSendPool::SendMoney() - DarkSend from a masternode is not supported currently.\n");
@@ -6451,6 +6461,25 @@ bool CDarkSendPool::SignFinalTransaction(CTransaction& finalTransactionNew, CNod
         node->PushMessage("dss", sigs);
 
     return true;
+}
+
+int CDarkSendPool::GetDenominations(std::vector<CTxOut> vout){
+    std::vector<pair<int64, int> > denomUsed;
+
+    BOOST_FOREACH(int64 d, darkSendDenominations)
+        denomUsed.push_back(make_pair(d, 0));
+
+    BOOST_FOREACH(CTxOut out, vout)
+        BOOST_FOREACH (PAIRTYPE(int64, int)& s, denomUsed)
+            if (out.nValue == s.first)
+                s.second = 1;
+
+    int denom = 0;
+    int c = 0;
+    BOOST_FOREACH (PAIRTYPE(int64, int)& s, denomUsed)
+        denom |= s.second << c++;
+
+    return denom;
 }
 
 bool CDarkSendPool::IsConnectedToMasterNode(){

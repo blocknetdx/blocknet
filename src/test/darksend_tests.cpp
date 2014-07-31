@@ -67,6 +67,44 @@ BOOST_AUTO_TEST_CASE(set_collateral_address_testnet)
 	delete dsp_ptr;
 }
 
+BOOST_AUTO_TEST_CASE(darksend_denom)
+{
+
+    darkSendDenominations.push_back( (500   * COIN)+1 );
+    darkSendDenominations.push_back( (100   * COIN)+1 );
+    darkSendDenominations.push_back( (10    * COIN)+1 );
+    darkSendDenominations.push_back( (1     * COIN)+1 );
+
+    std::vector<CTxOut> vout1;
+    std::vector<CTxOut> vout2;
+
+    CTxOut d1 = CTxOut(); d1.nValue = (500   * COIN)+1;
+    CTxOut d2 = CTxOut(); d2.nValue = (100   * COIN)+1;
+    CTxOut d3 = CTxOut(); d3.nValue = (10   * COIN)+1;
+    CTxOut d4 = CTxOut(); d4.nValue = (1   * COIN)+1;
+
+    vout1.push_back(d1);
+    vout1.push_back(d3);
+
+    vout2.push_back(d1);
+    vout2.push_back(d2);
+    vout2.push_back(d3);
+
+    BOOST_CHECK(darkSendPool.GetDenominations(vout1) != darkSendPool.GetDenominations(vout2));
+
+    vout1.push_back(d2);
+
+    BOOST_CHECK(darkSendPool.GetDenominations(vout1) == darkSendPool.GetDenominations(vout2));
+
+    vout1.push_back(d2);
+
+    BOOST_CHECK(darkSendPool.GetDenominations(vout1) == darkSendPool.GetDenominations(vout2));
+
+    vout1.push_back(d4);
+
+    BOOST_CHECK(darkSendPool.GetDenominations(vout1) != darkSendPool.GetDenominations(vout2));
+
+}
 
 BOOST_AUTO_TEST_CASE(darksend_masternode_voting)
 {

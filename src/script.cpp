@@ -113,7 +113,7 @@ const char* GetOpName(opcodetype opcode)
     case OP_16                     : return "16";
 
     // control
-    case OP_DARKSEND                    : return "OP_DARKSEND";
+    case OP_NOP                    : return "OP_NOP";
     case OP_VER                    : return "OP_VER";
     case OP_IF                     : return "OP_IF";
     case OP_NOTIF                  : return "OP_NOTIF";
@@ -373,7 +373,7 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, co
                 //
                 // Control
                 //
-                case OP_DARKSEND:
+                case OP_NOP:
                 case OP_NOP1: case OP_NOP2: case OP_NOP3: case OP_NOP4: case OP_NOP5:
                 case OP_NOP6: case OP_NOP7: case OP_NOP8: case OP_NOP9: case OP_NOP10:
                 break;
@@ -1821,7 +1821,7 @@ bool CScript::IsDarksendScript() const
         opcodetype opcode;
         if (!this->GetOp(pc, opcode, data))
             continue;
-        if (opcode == OP_DARKSEND)
+        if (opcode == OP_NOP)
             return true;
     }
 

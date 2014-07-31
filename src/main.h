@@ -2692,6 +2692,14 @@ public:
         state = newState;
     }
 
+    bool IsCompatibleWithEntries(std::vector<CTxOut> vout)
+    {
+        BOOST_FOREACH(const CDarkSendEntry v, entries)
+            if(GetDenominations(vout) != GetDenominations(v.vout)) return false;
+
+        return true;
+    }
+
     void DoAutomaticDenominating();
     int GetCurrentMasterNode(int mod=1, int64 nBlockHeight=0);
     bool GetCurrentMasterNodeConsessus(int64 blockHeight, CScript& payee);
@@ -2729,6 +2737,7 @@ public:
     bool DoConcessusVote(int64 nBlockHeight);
     int GetInputDarksendRounds(CTxIn in, int rounds=0);
     bool SplitUpMoney();
+    int GetDenominations(std::vector<CTxOut> vout);
 };
 
 void ConnectToDarkSendMasterNodeWinner();
