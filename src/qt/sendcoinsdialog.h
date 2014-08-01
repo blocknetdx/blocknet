@@ -51,6 +51,7 @@ private:
     WalletModel *model;
     bool fNewRecipientAllowed;
     int showingDarkSendMessage;
+    int darksendActionCheck;
 
 private slots:
     void on_sendButton_clicked();

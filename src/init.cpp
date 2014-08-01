@@ -1167,6 +1167,9 @@ bool AppInit2(boost::thread_group& threadGroup)
     }
 
     fDisableDarksend = GetBoolArg("-disabledarksend", false);
+    bool fEnabledDaemonDarksend = GetBoolArg("-enabledaemondarksend", false);
+    if(fDaemon && !fEnabledDaemonDarksend) fDisableDarksend = true;
+
     if(!fDisableDarksend){
         nDarksendRounds = GetArg("-darksendrounds", 2);
         if(nDarksendRounds > 8) nDarksendRounds = 8;

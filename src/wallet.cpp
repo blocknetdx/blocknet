@@ -1696,7 +1696,7 @@ string CWallet::DarkSendDenominate()
         int64 nValueIn2 = 0;
         std::vector<CTxIn> vCoinsCollateral;
 
-        if (!SelectCoinsCollateral(POOL_FEE_AMOUNT, POOL_FEE_AMOUNT*6, vCoinsCollateral, nValueIn2))
+        if (!SelectCoinsCollateral(POOL_FEE_AMOUNT, 1*COIN, vCoinsCollateral, nValueIn2))
         {
             BOOST_FOREACH(CTxIn v, vCoins)
                 UnlockCoin(v.prevout);
