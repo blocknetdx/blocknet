@@ -2673,7 +2673,7 @@ bool CBlock::AcceptBlock(CValidationState &state, CDiskBlockPos *dbp)
                 double n1 = ConvertBitsToDouble(nBits);
                 double n2 = ConvertBitsToDouble(nBitsNext);
 
-                if (abs(n1-n2) > n1*0.2) 
+                if (abs(n1-n2) > n1*0.5) 
                     return state.DoS(100, error("AcceptBlock() : incorrect proof of work (DGW pre-fork) - %f", abs(n1-n2)));
             } else {
                 if (nBits != GetNextWorkRequired(pindexPrev, this))
@@ -5940,6 +5940,8 @@ struct CompareValueOnly
     }
 };
 
+int randomizeList (int i) { return std::rand()%i;}
+
 void CDarkSendPool::SetNull(){
     //printf("CDarkSendPool::SetNull()\n");
 
@@ -6022,18 +6024,9 @@ void CDarkSendPool::Check()
 
         LOCK2(cs_main, pwalletMain->cs_wallet);
         {
-            for(unsigned int i = 0; i < entries.size(); i++){
-                BOOST_FOREACH(const CTxOut v, entries[i].vout)
-                    txNew.vout.push_back(v);
-
-                BOOST_FOREACH(const CDarkSendEntryVin s, entries[i].sev){
-                    txNew.vin.push_back(s.vin);
-                }
-            }
-            
             if (fMasterNode) { //only the main node is master atm                
                 int i = 0;
-                BOOST_FOREACH(const CTxIn& txin, txNew.vin)
+                BOOST_FOREACH(const CTxIn& txin, finalTransaction.vin)
                 {
                     BOOST_FOREACH(const CDarkSendEntry e, myEntries)
                     {
@@ -6123,13 +6116,13 @@ void CDarkSendPool::CheckTimeout(){
     // catching hanging sessions
     if(!fMasterNode) {
         if(state == POOL_STATUS_TRANSMISSION) {
-            if(fDebug) printf("CDarkSendPool::Check() -- SESSION COMPLETED -- CHECKING\n");
+            if(fDebug) printf("CDarkSendPool::CheckTimeout() -- SESSION COMPLETED -- CHECKING\n");
             Check();
         }        
     }
 
     if(state == POOL_STATUS_SIGNING && GetTimeMillis()-lastTimeChanged >= 10000 ) {
-        if(fDebug) printf("CDarkSendPool::Check() -- SESSION TIMED OUT -- RESETTING\n");
+        if(fDebug) printf("CDarkSendPool::CheckTimeout() -- SESSION TIMED OUT -- RESETTING\n");
         ChargeFees();
         SetNull();
         //add my transactions to the new session
@@ -6274,6 +6267,11 @@ bool CDarkSendPool::AddScriptSig(const CTxIn& newVin){
             if(entries[i].AddSig(newVin)){
                 //printf("CDarkSendPool::AddScriptSig -- adding  %s\n", newVin.scriptSig.ToString().substr(0,24).c_str());
                 return true;
+            }
+        }
+        BOOST_FOREACH(CTxIn in, finalTransaction.vin){
+            if(in == newVin){
+                in.sigScript = newVin.sigScript;
             }
         }
     }
