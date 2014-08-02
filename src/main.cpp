@@ -6008,6 +6008,9 @@ void CDarkSendPool::Check()
                 BOOST_FOREACH(const CDarkSendEntryVin s, entries[i].sev)
                     txNew.vin.push_back(s.vin);
             }
+            std::random_shuffle ( txNew.vout.begin(), txNew.vout.end(), randomizeList);
+
+            printf("Transaction 1: %s\n", txNew.ToString().c_str());
 
             SignFinalTransaction(txNew, NULL);
             RelayDarkSendFinalTransaction(txNew);
@@ -6019,14 +6022,13 @@ void CDarkSendPool::Check()
         if(fDebug) printf("CDarkSendPool::Check() -- SIGNING\n");            
         UpdateState(POOL_STATUS_TRANSMISSION);
 
-        CWalletTx txNew;
-        txNew.BindWallet(pwalletMain);
+        CWalletTx txNew = CWalletTx(pwalletMain, finalTransaction);
 
         LOCK2(cs_main, pwalletMain->cs_wallet);
         {
             if (fMasterNode) { //only the main node is master atm                
                 int i = 0;
-                BOOST_FOREACH(const CTxIn& txin, finalTransaction.vin)
+                BOOST_FOREACH(const CTxIn& txin, txNew.vin)
                 {
                     BOOST_FOREACH(const CDarkSendEntry e, myEntries)
                     {
@@ -6044,6 +6046,8 @@ void CDarkSendPool::Check()
                     }
                     i++;
                 }
+
+                printf("Transaction 2: %s\n", txNew.ToString().c_str());
 
                 // Broadcast
                 if (!txNew.AcceptToMemoryPool(true, false))
@@ -6263,15 +6267,17 @@ bool CDarkSendPool::AddScriptSig(const CTxIn& newVin){
     printf("CDarkSendPool::AddScriptSig -- sig %s\n", newVin.ToString().c_str());
 
     if(state == POOL_STATUS_SIGNING) {
-        for(unsigned int i = 0; i < entries.size(); i++){
-            if(entries[i].AddSig(newVin)){
-                //printf("CDarkSendPool::AddScriptSig -- adding  %s\n", newVin.scriptSig.ToString().substr(0,24).c_str());
-                return true;
+        BOOST_FOREACH(CTxIn& vin, finalTransaction.vin){
+            if(newVin.prevout == vin.prevout && vin.nSequence == newVin.nSequence){
+                vin.scriptSig = newVin.scriptSig;
+                vin.prevPubKey = newVin.prevPubKey;
+                printf("CDarkSendPool::AddScriptSig -- adding to finalTransaction  %s\n", newVin.scriptSig.ToString().substr(0,24).c_str());
             }
         }
-        BOOST_FOREACH(CTxIn in, finalTransaction.vin){
-            if(in == newVin){
-                in.sigScript = newVin.sigScript;
+        for(unsigned int i = 0; i < entries.size(); i++){
+            if(entries[i].AddSig(newVin)){
+                printf("CDarkSendPool::AddScriptSig -- adding  %s\n", newVin.scriptSig.ToString().substr(0,24).c_str());
+                return true;
             }
         }
     }
@@ -6774,8 +6780,6 @@ void CDarkSendPool::NewBlock()
 {
     if(fDisableDarksend) return;
     if(IsInitialBlockDownload()) return;
-    if(nBestHeight < GetNumBlocksOfPeers() || nBestHeight == 0 || GetNumBlocksOfPeers() == 0) return;    
-    if(GetTime() - pindexBest->GetBlockTime() > 60 * 60) return;
 
     if(fDebug) printf("CDarkSendPool::NewBlock \n");
 
@@ -6961,7 +6965,12 @@ int CDarkSendPool::GetCurrentMasterNode(int mod, int64 nBlockHeight)
 
 bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
 {
-    if(fDisableDarksend) return false;
+    if(fDisableDarksend) return false; 
+    
+    if (!fDryRun){
+        if(GetTime() - (60*2) > lastAutoDenomination) return false;
+        lastAutoDenomination = GetTime();
+    }
 
     if (!fDryRun && pwalletMain->IsLocked()){
         printf("DoAutomaticDenominating Error: Wallet is locked. Please unlock wallet to autodenominate..\n");
@@ -7004,8 +7013,8 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
         return false;
     }
 
-    std::string strError = pwalletMain->DarkSendDenominate();
     if(fDryRun) return true;
+    std::string strError = pwalletMain->DarkSendDenominate();
     printf("DoAutomaticDenominating : Running darksend denominate. Return '%s'\n", strError.c_str());
 
     if(strError == "") return true;

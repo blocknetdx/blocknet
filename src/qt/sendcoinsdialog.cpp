@@ -259,18 +259,20 @@ void SendCoinsDialog::darkSendStatusButton()
 {
     // check darksend status and unlock if needed
     if(darksendActionCheck % 30 == 0){
-        bool darkSendAction = darkSendPool.DoAutomaticDenominating(true);
-        if (darkSendAction && model->getEncryptionStatus() == WalletModel::Locked){
-            WalletModel::UnlockContext ctx(model->requestUnlock());
-            if(!ctx.isValid()){
-                //unlock was cancelled
-                fDisableDarksend = true;
-                printf("Wallet is locked and user declined to unlock. Disabling Darksend.\n");
+        if (model->getEncryptionStatus() != WalletModel::Unencrypted){
+            bool darkSendAction = darkSendPool.DoAutomaticDenominating(true);
+            if (darkSendAction && model->getEncryptionStatus() == WalletModel::Locked){
+                WalletModel::UnlockContext ctx(model->requestUnlock());
+                if(!ctx.isValid()){
+                    //unlock was cancelled
+                    fDisableDarksend = true;
+                    printf("Wallet is locked and user declined to unlock. Disabling Darksend.\n");
+                }
             }
-        }
-        if (!darkSendAction && model->getEncryptionStatus() != WalletModel::Locked && darkSendPool.GetMyTransactionCount() == 0){
-            printf("Darksend is complete, locking wallet.\n");
-            model->Lock();
+            if (!darkSendAction && model->getEncryptionStatus() == WalletModel::Unlocked && darkSendPool.GetMyTransactionCount() == 0){
+                printf("Darksend is complete, locking wallet.\n");
+                model->Lock();
+            }
         }
     }
 
