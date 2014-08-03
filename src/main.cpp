@@ -4142,12 +4142,11 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
                         mn.Check();
                         RelayDarkSendElectionEntryPing(vin, vchSig, sigTime, stop);
                     }
-                    return true;
                 } else if(!mn.UpdatedWithin(MASTERNODE_MIN_MICROSECONDS)){
                     mn.UpdateLastSeen();
                     RelayDarkSendElectionEntryPing(vin, vchSig, sigTime, stop);
-                    return true;
                 }
+                return true;
             }
         }
 
