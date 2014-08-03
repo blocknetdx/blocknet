@@ -1268,7 +1268,7 @@ bool CWallet::SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxI
 
     BOOST_FOREACH(const COutput& out, vCoins)
     {
-        if(out.tx->vout[out.i].nValue == POOL_FEE_AMOUNT*4) continue; //these are made for collateral
+        if(out.tx->vout[out.i].nValue <= 1*COIN) continue; //these are made for collateral/fees/etc
         if(fMasterNode && out.tx->vout[out.i].nValue == 1000*COIN) continue; //masternode input
 
         if(nValueRet + out.tx->vout[out.i].nValue <= nValueMax){
@@ -1294,7 +1294,7 @@ bool CWallet::SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxI
     return false;
 }
 
-bool CWallet::SelectCoinsCollateral(int64 nValueMin, int64 nValueMax, std::vector<CTxIn>& setCoinsRet, int64& nValueRet) const 
+bool CWallet::SelectCoinsCollateral(std::vector<CTxIn>& setCoinsRet, int64& nValueRet) const 
 {
     CCoinControl *coinControl=NULL;
 
@@ -1307,7 +1307,13 @@ bool CWallet::SelectCoinsCollateral(int64 nValueMin, int64 nValueMax, std::vecto
 
     BOOST_FOREACH(const COutput& out, vCoins)
     {
-        if(nValueRet + out.tx->vout[out.i].nValue <= nValueMax){
+        if(
+            out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL || 
+            out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL * 2 ||
+            out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL * 3 ||
+            out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL * 4 ||
+            out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL * 5 
+        ){
             CTxIn vin = CTxIn(out.tx->GetHash(),out.i);
             printf(" vin nValue %"PRI64d"\n", out.tx->vout[out.i].nValue);
 
@@ -1316,11 +1322,9 @@ bool CWallet::SelectCoinsCollateral(int64 nValueMin, int64 nValueMax, std::vecto
             setCoinsRet.push_back(vin);
             setCoinsRet2.insert(make_pair(out.tx, out.i));
             printf(" -- nValueRet %"PRI64d"\n", nValueRet);
-            if(nValueRet >= nValueMax) return true;
+            return true;
         }
     }
-
-    if(nValueRet >= nValueMin) return true;
 
     return false;
 }
@@ -1380,6 +1384,7 @@ bool CWallet::CreateTransaction(std::vector<pair<CScript, int64> >& vecSend,
         strFailReason = _("Transaction amounts must be positive");
         return false;
     }
+
 
     wtxNew.BindWallet(this);
 
@@ -1492,6 +1497,8 @@ bool CWallet::CreateTransaction(std::vector<pair<CScript, int64> >& vecSend,
                 BOOST_FOREACH(const PAIRTYPE(const CWalletTx*,unsigned int)& coin, setCoins)
                     wtxNew.vin.push_back(CTxIn(coin.first->GetHash(),coin.second));
 
+                if(fDebug) printf("CreateTransaction %s\n", wtxNew.ToString().c_str());
+                
                 // Sign
                 int nIn = 0;
                 BOOST_FOREACH(const PAIRTYPE(const CWalletTx*,unsigned int)& coin, setCoins)
@@ -1696,7 +1703,7 @@ string CWallet::DarkSendDenominate()
         int64 nValueIn2 = 0;
         std::vector<CTxIn> vCoinsCollateral;
 
-        if (!SelectCoinsCollateral(POOL_FEE_AMOUNT, 1*COIN, vCoinsCollateral, nValueIn2))
+        if (!SelectCoinsCollateral(vCoinsCollateral, nValueIn2))
         {
             BOOST_FOREACH(CTxIn v, vCoins)
                 UnlockCoin(v.prevout);
@@ -1713,15 +1720,15 @@ string CWallet::DarkSendDenominate()
         reservedKeys.push_back(reservekey.GetIndex());
         reservekey.Reset();
 
-        CTxOut vout2 = CTxOut(POOL_FEE_AMOUNT, darkSendPool.collateralPubKey);
+        CTxOut vout2 = CTxOut(DARKSEND_COLLATERAL, darkSendPool.collateralPubKey);
 
         BOOST_FOREACH(CTxIn v, vCoinsCollateral)
             txCollateral.vin.push_back(v);
         
         txCollateral.vout.push_back(vout2);
 
-        if(nValueIn2 - POOL_FEE_AMOUNT > 0) {
-            CTxOut vout3 = CTxOut(nValueIn2 - POOL_FEE_AMOUNT, scriptChange);
+        if(nValueIn2 - DARKSEND_COLLATERAL > 0) {
+            CTxOut vout3 = CTxOut(nValueIn2 - DARKSEND_COLLATERAL, scriptChange);
             txCollateral.vout.push_back(vout3);
         }
         

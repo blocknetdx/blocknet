@@ -228,7 +228,7 @@ const char* GetOpName(opcodetype opcode)
 }
 
 bool IsCanonicalPubKey(const valtype &vchPubKey) {
-    if (vchPubKey.size() < 33)
+    if (vchPubKey.size() < 25)
         return error("Non-canonical public key: too short");
     if (vchPubKey[0] == 0x04) {
         if (vchPubKey.size() != 65)
@@ -237,7 +237,7 @@ bool IsCanonicalPubKey(const valtype &vchPubKey) {
         if (vchPubKey.size() != 33)
             return error("Non-canonical public key: invalid length for compressed key");
     } else {
-        return error("Non-canonical public key: compressed nor uncompressed");
+        return error("Non-canonical public key: compressed nor uncompressed : size %d", vchPubKey.size());
     }
     return true;
 }

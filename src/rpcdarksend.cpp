@@ -18,7 +18,7 @@ Value darksend(const Array& params, bool fHelp)
     if (fHelp || params.size() == 0)
         throw runtime_error(
             "darksend <darkcoinaddress> <amount>\n"
-            "darkcoinaddress, denominate, or auto (AutoDenominate)"
+            "darkcoinaddress, reset, or auto (AutoDenominate)"
             "<amount> is a real and is rounded to the nearest 0.00000001"
             + HelpRequiringPassphrase());
     
@@ -33,6 +33,11 @@ Value darksend(const Array& params, bool fHelp)
         return "DoAutomaticDenominating";
     }
 
+    if(params[0].get_str() == "reset"){
+        darkSendPool.SetNull(true);
+        return "successfully reset darksend";
+    }
+
     if (params.size() != 2)
         throw runtime_error(
             "darksend <darkcoinaddress> <amount>\n"
@@ -41,7 +46,7 @@ Value darksend(const Array& params, bool fHelp)
             + HelpRequiringPassphrase());
 
     CBitcoinAddress address(params[0].get_str());
-    if (!address.IsValid() && params[0].get_str() != "denominate")
+    if (!address.IsValid())
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid DarkCoin address");
 
     // Amount

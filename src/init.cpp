@@ -1190,7 +1190,6 @@ bool AppInit2(boost::thread_group& threadGroup)
 
     threadGroup.create_thread(boost::bind(&ThreadCheckDarkSendPool));
 
-
     // ********************************************************* Step 11: load peers
 
     uiInterface.InitMessage(_("Loading addresses..."));

@@ -36,7 +36,7 @@ class CBitcoinAddress;
 #define START_MASTERNODE_PAYMENTS_TESTNET 1403568776 //Tue, 24 Jun 2014 00:12:56 GMT
 #define START_MASTERNODE_PAYMENTS 1403728576 //Wed, 25 Jun 2014 20:36:16 GMT
 
-#define POOL_MAX_TRANSACTIONS                  1 // wait for X transactions to merge and publish
+#define POOL_MAX_TRANSACTIONS                  3 // wait for X transactions to merge and publish
 #define POOL_STATUS_UNKNOWN                    0 // waiting for update
 #define POOL_STATUS_IDLE                       1 // waiting for update
 #define POOL_STATUS_ACCEPTING_ENTRIES          2 // accepting entries
@@ -2568,7 +2568,8 @@ public:
     bool VerifyMessage(CPubKey pubkey, std::vector<unsigned char>& vchSig, std::string strMessage, std::string& errorMessage);
 };
 
-static const int64 POOL_FEE_AMOUNT = 0.025*COIN;
+static const int64 DARKSEND_COLLATERAL = 0.025*COIN;
+static const int64 DARKSEND_FEE = 0.001*COIN;
 
 /** Used to keep track of current status of darksend pool
  */
@@ -2633,7 +2634,7 @@ public:
     }
 
     bool SetCollateralAddress(std::string strAddress);
-    void SetNull();
+    void SetNull(bool clearEverything=false);
 
     void UnlockCoins();
 
@@ -2737,7 +2738,7 @@ public:
     void ClearLastMessage();
     bool DoConcessusVote(int64 nBlockHeight);
     int GetInputDarksendRounds(CTxIn in, int rounds=0);
-    bool SplitUpMoney();
+    bool SplitUpMoney(bool justCollateral=false);
     int GetDenominations(std::vector<CTxOut> vout);
 };
 

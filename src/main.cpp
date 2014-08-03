@@ -3960,6 +3960,15 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             BOOST_FOREACH(const CTxOut o, out){
                 nValueOut += o.nValue;
                 tx.vout.push_back(o);
+                
+                if(o.scriptPubKey.size() != 25){
+                    printf("dsi - non-standard pubkey detected! %s\n", o.scriptPubKey.ToString().c_str());
+                    accepted = 0;
+                    error = "non-standard pubkey detected";
+                    pfrom->PushMessage("dssu", darkSendPool.GetState(), darkSendPool.GetEntriesCount(), accepted, error);
+                    return false;
+                }
+
             }
 
             BOOST_FOREACH(const CTxIn i, in){
@@ -5942,7 +5951,7 @@ struct CompareValueOnly
 
 int randomizeList (int i) { return std::rand()%i;}
 
-void CDarkSendPool::SetNull(){
+void CDarkSendPool::SetNull(bool clearEverything){
     //printf("CDarkSendPool::SetNull()\n");
 
     if(fMasterNode){
@@ -5961,6 +5970,10 @@ void CDarkSendPool::SetNull(){
     entriesCount = 0;
     lastEntryAccepted = 0;
     countEntriesAccepted = 0;
+
+    if(clearEverything){
+        myEntries.clear();
+    }
 }
 
 bool CDarkSendPool::SetCollateralAddress(std::string strAddress){
@@ -6078,7 +6091,7 @@ void CDarkSendPool::Check()
     // move on to next phase, allow 3 seconds incase the masternode wants to send us anything else
     if((state == POOL_STATUS_TRANSMISSION && fMasterNode) || (state == POOL_STATUS_SIGNING && completedTransaction) ) {
         printf("CDarkSendPool::Check() -- COMPLETED -- RESETTING \n");
-        SetNull();
+        SetNull(true);
         UnlockCoins();
         if(fMasterNode) RelayDarkSendStatus(darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);    
         pwalletMain->Lock();
@@ -6086,7 +6099,7 @@ void CDarkSendPool::Check()
 
     if((state == POOL_STATUS_ERROR || state == POOL_STATUS_SUCCESS) && GetTimeMillis()-lastTimeChanged >= 10000) {
         printf("CDarkSendPool::Check() -- RESETTING MESSAGE \n");
-        SetNull();
+        SetNull(true);
         UnlockCoins();
     }
 }
@@ -6176,7 +6189,7 @@ bool CDarkSendPool::SignatureValid(const CScript& newSig, const CTxIn& newVin){
 
 bool CDarkSendPool::IsCollateralValid(const CTransaction& txCollateral){    
     if(txCollateral.vout[0].scriptPubKey != collateralPubKey || 
-       txCollateral.vout[0].nValue != POOL_FEE_AMOUNT) {
+       txCollateral.vout[0].nValue != DARKSEND_COLLATERAL) {
         if(fDebug) printf ("CDarkSendPool::IsCollateralValid - not correct amount or addr (0)\n");
         return false;
     }
@@ -6374,8 +6387,8 @@ bool CDarkSendPool::SignFinalTransaction(CTransaction& finalTransactionNew, CNod
         return false;
     }
 
-    finalTransaction = finalTransactionNew;
 
+    finalTransaction = finalTransactionNew;
     printf("CDarkSendPool::SignFinalTransaction %s\n", finalTransaction.ToString().c_str());
     
     //make sure node is master
@@ -6833,14 +6846,12 @@ void CDarkSendPool::NewBlock()
                     resetEntries = true;
                 }
 
-                SetNull();
+                SetNull(true);
 
                 if(resetEntries){
                     UpdateState(POOL_STATUS_ERROR);
                     lastMessage = "masternode switched, please resubmit";
                 }
-
-                myEntries.clear();
             }
         }
 
@@ -6965,12 +6976,18 @@ int CDarkSendPool::GetCurrentMasterNode(int mod, int64 nBlockHeight)
 
 bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
 {
-    if(fDisableDarksend) return false; 
-    
-    if (!fDryRun){
-        if(GetTime() - (60*2) > lastAutoDenomination) return false;
-        lastAutoDenomination = GetTime();
+    if(fDisableDarksend) {
+        printf("CDarkSendPool::DoAutomaticDenominating - Darksend is disabled\n");
+        return false; 
     }
+/*    
+    if (!fDryRun){
+        if(lastAutoDenomination + (60*2) > GetTime()) {
+            printf("CDarkSendPool::DoAutomaticDenominating - Not enough time has passed to Darksend again\n");
+            return false;
+        }
+        lastAutoDenomination = GetTime();
+    }*/
 
     if (!fDryRun && pwalletMain->IsLocked()){
         printf("DoAutomaticDenominating Error: Wallet is locked. Please unlock wallet to autodenominate..\n");
@@ -7019,8 +7036,11 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
 
     if(strError == "") return true;
 
-    if(strError == "Error: Darksend requires a collateral transaction and could not locate an acceptable input!" || strError == "Insufficient funds") {
+    if(strError == "Insufficient funds") {
         if(!fDryRun) SplitUpMoney();
+        return true;
+    } else if(strError == "Error: Darksend requires a collateral transaction and could not locate an acceptable input!"){
+        if(!fDryRun) SplitUpMoney(true);
         return true;
     } else {
         printf("DoAutomaticDenominating : Error running denominate, %s\n", strError.c_str());
@@ -7028,12 +7048,15 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
     return false;
 }
 
-bool CDarkSendPool::SplitUpMoney()
+bool CDarkSendPool::SplitUpMoney(bool justCollateral)
 {
     int64 nTotalBalance = pwalletMain->GetNonDenominatedBalance();
+    if(justCollateral && nTotalBalance > 2*COIN) nTotalBalance = 2*COIN;
     int64 nTotalOut = 0;
 
-    printf("DoAutomaticDenominating: Split up large input:\n");
+    printf("DoAutomaticDenominating: Split up large input (justCollateral %d):\n", justCollateral);
+    printf(" auto -- nTotalBalance %"PRI64d"\n", nTotalBalance);
+    printf(" auto-- nTotalOut %"PRI64d"\n", nTotalOut);
 
     // make our change address
     CReserveKey reservekey(pwalletMain);
@@ -7048,17 +7071,37 @@ bool CDarkSendPool::SplitUpMoney()
     std::string strFail = "";
     vector< pair<CScript, int64> > vecSend;
 
-    int64 FEE = 0.002*COIN;
     int64 a = nTotalBalance/5;
     if(a > 900*COIN) a = 900*COIN;
-    while(nTotalOut + a + (a/5) + (POOL_FEE_AMOUNT*4) < nTotalBalance-FEE){
-        printf(" nTotalOut %"PRI64d"\n", nTotalOut/COIN);
-        printf(" nTotalOut + ((nTotalBalance/5) + (nTotalBalance/5/5) + 0.01*COIN) %"PRI64d"\n", nTotalOut + ((a) + (a/5) + ((POOL_FEE_AMOUNT*4)))/COIN);
-        printf(" nTotalBalance-(FEE) %"PRI64d"\n", (nTotalBalance-FEE)/COIN);
-        vecSend.push_back(make_pair(scriptChange, a));
-        vecSend.push_back(make_pair(scriptChange, a/5));
-        vecSend.push_back(make_pair(scriptChange, POOL_FEE_AMOUNT*4));
-        nTotalOut += (a) + (a/5) + (POOL_FEE_AMOUNT*4); 
+
+    printf(" auto-- split amount %"PRI64d"\n", a);
+
+    int64 addingEachRound = (DARKSEND_FEE*5);
+    if(!justCollateral) addingEachRound += (a) + (a/5);
+
+    while(nTotalOut + addingEachRound < nTotalBalance-DARKSEND_FEE){
+        printf(" nTotalOut %"PRI64d"\n", nTotalOut);
+        printf(" nTotalOut + ((nTotalBalance/5) + (nTotalBalance/5/5) + 0.01*COIN) %"PRI64d"\n", nTotalOut + ((a) + (a/5) + ((DARKSEND_FEE*4))));
+        printf(" nTotalBalance-(DARKSEND_COLLATERAL) %"PRI64d"\n", (nTotalBalance-DARKSEND_COLLATERAL));
+        if(!justCollateral){
+            vecSend.push_back(make_pair(scriptChange, a));
+            vecSend.push_back(make_pair(scriptChange, a/5));
+            nTotalOut += (a) + (a/5);
+        }
+        vecSend.push_back(make_pair(scriptChange, DARKSEND_COLLATERAL*5));
+        vecSend.push_back(make_pair(scriptChange, DARKSEND_FEE*5));
+        nTotalOut += (DARKSEND_COLLATERAL*5)+(DARKSEND_FEE*5); 
+    }
+
+    printf(" auto2-- nTotalBalance %"PRI64d"\n", nTotalBalance);
+    printf(" auto2-- nTotalOut %"PRI64d"\n", nTotalOut);
+
+    if(!justCollateral){
+        if(nTotalOut <= 1.1*COIN || vecSend.size() < 4) 
+            return false;
+    } else {
+        if(nTotalOut <= 0.1*COIN || vecSend.size() < 2) 
+            return false;
     }
 
     CCoinControl *coinControl=NULL;
@@ -7071,8 +7114,8 @@ bool CDarkSendPool::SplitUpMoney()
     pwalletMain->CommitTransaction(wtx, reservekey);
 
     printf("SplitUpMoney Success: tx %s\n", wtx.GetHash().GetHex().c_str());
-    return true;
 
+    return true;
 }
 
 int CDarkSendPool::GetMasternodeRank(CTxIn& vin, int mod)
