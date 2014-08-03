@@ -166,23 +166,18 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
             //
             // Mixed Debit
             //
-            TransactionRecord sub(hash, nTime);
-            sub.idx = parts.size();
-            sub.type = TransactionRecord::Other;
+            bool isDarksent = false;
 
             for (unsigned int nOut = 0; nOut < wtx.vout.size(); nOut++)
             {
                 const CTxOut& txout = wtx.vout[nOut];
 
-                BOOST_FOREACH(int64 d, darkSendDenominations){
-                    if(txout.nValue == d) {
-                        sub.type = TransactionRecord::DarksendDenominate;
-                    }
-                }
-
+                BOOST_FOREACH(int64 d, darkSendDenominations)
+                    if(txout.nValue == d)
+                        isDarksent = true;
             }
 
-            parts.append(sub);
+            parts.append(TransactionRecord(hash, nTime, isDarksent ? TransactionRecord::DarksendDenominate : TransactionRecord::Other, "", nNet, 0));
         }
     }
 
