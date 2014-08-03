@@ -369,6 +369,8 @@ QString TransactionTableModel::formatTxType(const TransactionRecord *wtx) const
         return tr("Darksend Collateral Payment");
     case TransactionRecord::DarksendSplitUpLarge:
         return tr("Darksend Split Up Large Inputs");
+    case TransactionRecord::Darksent:
+        return tr("Darksent");
 
     default:
         return QString();

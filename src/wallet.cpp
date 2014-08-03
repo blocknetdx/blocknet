@@ -569,6 +569,27 @@ int64 CWallet::GetDebit(const CTxIn &txin) const
     return 0;
 }
 
+
+int64 CWallet::IsDenominated(const CTxIn &txin) const
+{
+    {
+        LOCK(cs_wallet);
+        map<uint256, CWalletTx>::const_iterator mi = mapWallet.find(txin.prevout.hash);
+        if (mi != mapWallet.end())
+        {
+            const CWalletTx& prev = (*mi).second;
+            if (txin.prevout.n < prev.vout.size()){
+                BOOST_FOREACH(int64 d, darkSendDenominations){
+                    if(prev.vout[txin.prevout.n].nValue == d) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    return 0;
+}
+
 bool CWallet::IsChange(const CTxOut& txout) const
 {
     CTxDestination address;

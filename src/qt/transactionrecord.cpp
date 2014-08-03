@@ -36,6 +36,7 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
         //
         // Credit
         //
+
         BOOST_FOREACH(const CTxOut& txout, wtx.vout)
         {
             
@@ -63,13 +64,12 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
                     sub.type = TransactionRecord::Generated;
                 }
 
-                BOOST_FOREACH(int64 d, darkSendDenominations){
-                    if(txout.nValue == d) {
-                        sub.type = TransactionRecord::RecvWithDarksend;
-                    }
-                }
-
-            
+                // detect received darksent via denom, this only looks at our wallet
+                /*
+                if(wtx.IsDenominated()){
+                    sub.type = TransactionRecord::RecvWithDarksend;
+                }*/
+                            
                 parts.append(sub);
             }
         }
@@ -136,6 +136,10 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
                     // Sent to IP, or other non-address transaction like OP_EVAL
                     sub.type = TransactionRecord::SendToOther;
                     sub.address = mapValue["to"];
+                }
+
+                if(wtx.IsDenominated()){
+                    sub.type = TransactionRecord::Darksent;
                 }
 
                 if(txout.nValue == DARKSEND_COLLATERAL){

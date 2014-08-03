@@ -221,6 +221,7 @@ public:
 
     bool IsMine(const CTxIn& txin) const;
     int64 GetDebit(const CTxIn& txin) const;
+    int64 IsDenominated(const CTxIn &txin) const;
     bool IsMine(const CTxOut& txout) const
     {
         return ::IsMine(*this, txout.scriptPubKey);
@@ -249,6 +250,7 @@ public:
     {
         return (GetDebit(tx) > 0);
     }
+    
     int64 GetDebit(const CTransaction& tx) const
     {
         int64 nDebit = 0;
@@ -260,6 +262,16 @@ public:
         }
         return nDebit;
     }
+
+    int64 IsDenominated(const CTransaction& tx) const
+    {
+        BOOST_FOREACH(const CTxIn& txin, tx.vin)
+        {
+            if(IsDenominated(txin)) return true;
+        }
+        return false;
+    }
+
     int64 GetCredit(const CTransaction& tx) const
     {
         int64 nCredit = 0;
@@ -595,6 +607,13 @@ public:
         nDebitCached = pwallet->GetDebit(*this);
         fDebitCached = true;
         return nDebitCached;
+    }
+
+    int64 IsDenominated() const
+    {
+        if (vin.empty())
+            return 0;
+        return pwallet->IsDenominated(*this);
     }
 
     int64 GetCredit(bool fUseCache=true) const
