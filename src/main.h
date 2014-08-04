@@ -2583,7 +2583,7 @@ static const int64 DARKSEND_FEE = 0.001*COIN;
 class CDarkSendPool
 {
 public:
-    static const int MIN_PEER_PROTO_VERSION = 70023;
+    static const int MIN_PEER_PROTO_VERSION = 70024;
 
     std::vector<CDarkSendEntry> myEntries;
     std::vector<CDarkSendEntry> entries;
