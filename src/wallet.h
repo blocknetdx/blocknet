@@ -193,6 +193,7 @@ public:
     void ReacceptWalletTransactions();
     void ResendWalletTransactions();
     int64 GetBalance() const;
+    int64 GetAnonymizedBalance() const;
     int64 GetNonDenominatedBalance() const;
     int64 GetUnconfirmedBalance() const;
     int64 GetImmatureBalance() const;

@@ -52,6 +52,12 @@ qint64 WalletModel::getBalance(const CCoinControl *coinControl) const
     return wallet->GetBalance();
 }
 
+
+qint64 WalletModel::getAnonymizedBalance() const
+{   
+    return wallet->GetAnonymizedBalance();
+}
+
 qint64 WalletModel::getUnconfirmedBalance() const
 {
     return wallet->GetUnconfirmedBalance();
@@ -97,13 +103,15 @@ void WalletModel::checkBalanceChanged()
     qint64 newBalance = getBalance();
     qint64 newUnconfirmedBalance = getUnconfirmedBalance();
     qint64 newImmatureBalance = getImmatureBalance();
+    qint64 newAnonymizedBalance = getAnonymizedBalance();
 
     if(cachedBalance != newBalance || cachedUnconfirmedBalance != newUnconfirmedBalance || cachedImmatureBalance != newImmatureBalance)
     {
         cachedBalance = newBalance;
         cachedUnconfirmedBalance = newUnconfirmedBalance;
         cachedImmatureBalance = newImmatureBalance;
-        emit balanceChanged(newBalance, newUnconfirmedBalance, newImmatureBalance);
+        cachedAnonymizedBalance = newAnonymizedBalance;
+        emit balanceChanged(newBalance, newUnconfirmedBalance, newImmatureBalance, newAnonymizedBalance);
     }
 }
 

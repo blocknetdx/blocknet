@@ -2829,11 +2829,13 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
         mapOrphanBlocksByPrev.erase(hashPrev);
     }
 
-    //might need to reset pool
+    printf("ProcessBlock: ACCEPTED\n");
+
     darkSendPool.CheckTimeout();
+
+    printf("Darksend NewBlock\n");
     darkSendPool.NewBlock();
 
-    printf("ProcessBlock: ACCEPTED\n");
 
     if (pfrom && !CSyncCheckpoint::strMasterPrivKey.empty() &&
         (int)GetArg("-checkpointdepth", -1) >= 0)
@@ -5289,9 +5291,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
 
     printf("%d\n", scriptPubKeyIn[0]);
 
-
     // start masternode payments
-
 
     bool bMasterNodePayment = false;
 
@@ -6808,10 +6808,11 @@ bool CDarkSendPool::DoConcessusVote(int64 nBlockHeight)
 
 void CDarkSendPool::NewBlock()
 {
-    if(fDisableDarksend) return;
+    if(fDebug) printf("CDarkSendPool::NewBlock \n");
+
     if(IsInitialBlockDownload()) return;
 
-    if(fDebug) printf("CDarkSendPool::NewBlock \n");
+    printf("CDarkSendPool::NewBlock - 2\n");
 
     {    
         LOCK2(cs_main, mempool.cs);
@@ -6828,10 +6829,14 @@ void CDarkSendPool::NewBlock()
             }
         }
 
+        printf("CDarkSendPool::NewBlock - 3\n");
+
         //send votes for next block and one after that
         DoConcessusVote(pindexBest->nHeight + 2);
         DoConcessusVote(pindexBest->nHeight + 3);
     }
+    
+    if(fDisableDarksend) return;
 
     if(!fMasterNode){
         //denominate all non-denominated inputs every 25 minutes.
@@ -7065,7 +7070,6 @@ bool CDarkSendPool::SplitUpMoney(bool justCollateral)
             nTotalOut += (a) + (a/5);
         }
         vecSend.push_back(make_pair(scriptChange, DARKSEND_COLLATERAL*5));
-        vecSend.push_back(make_pair(scriptChange, DARKSEND_FEE*5));
         nTotalOut += (DARKSEND_COLLATERAL*5)+(DARKSEND_FEE*5); 
     }
 
@@ -7073,10 +7077,10 @@ bool CDarkSendPool::SplitUpMoney(bool justCollateral)
     printf(" auto2-- nTotalOut %"PRI64d"\n", nTotalOut);
 
     if(!justCollateral){
-        if(nTotalOut <= 1.1*COIN || vecSend.size() < 4) 
+        if(nTotalOut <= 1.1*COIN || vecSend.size() < 3) 
             return false;
     } else {
-        if(nTotalOut <= 0.1*COIN || vecSend.size() < 2) 
+        if(nTotalOut <= 0.1*COIN || vecSend.size() < 1) 
             return false;
     }
 

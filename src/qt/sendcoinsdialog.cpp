@@ -98,8 +98,8 @@ void SendCoinsDialog::setModel(WalletModel *model)
     }
     if(model && model->getOptionsModel())
     {
-        setBalance(model->getBalance(), model->getUnconfirmedBalance(), model->getImmatureBalance());
-        connect(model, SIGNAL(balanceChanged(qint64, qint64, qint64)), this, SLOT(setBalance(qint64, qint64, qint64)));
+        setBalance(model->getBalance(), model->getUnconfirmedBalance(), model->getImmatureBalance(), model->getAnonymizedBalance());
+        connect(model, SIGNAL(balanceChanged(qint64, qint64, qint64, qint64)), this, SLOT(setBalance(qint64, qint64, qint64, qint64)));
         connect(model->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(updateDisplayUnit()));
 
         // Coin Control
@@ -145,26 +145,31 @@ void SendCoinsDialog::on_sendButton_clicked()
         return;
     }
 
+    QString funds = "Using <b>Anonymous Funds</b>";
+    recipients[0].inputType = "ONLY_DENOMINATED";
+
+    if(ui->inputType->currentText() == "Use Anonymous Funds"){
+        recipients[0].inputType = "ONLY_NONDENOMINATED";
+        funds = "Using <b>Anonymous Funds</b>";
+    } else if(ui->inputType->currentText() == "Use Non-Anonymous Funds"){
+        recipients[0].inputType = "ONLY_DENOMINATED";
+        funds = "Using <b>NON-ANONYMOUS Funds</b>";
+    } else {
+        recipients[0].inputType = "ALL_COINS";
+        funds = "Using <b>ANY AVAILABLE Funds</b>";
+    }
+
     // Format confirmation message
     QStringList formatted;
     foreach(const SendCoinsRecipient &rcp, recipients)
     {
 #if QT_VERSION < 0x050000
-        formatted.append(tr("<b>%1</b> to %2 (%3)").arg(BitcoinUnits::formatWithUnit(BitcoinUnits::BTC, rcp.amount), Qt::escape(rcp.label), rcp.address));
+        formatted.append(tr("<b>%1</b> to %2 (%3) using %4").arg(BitcoinUnits::formatWithUnit(BitcoinUnits::BTC, rcp.amount), Qt::escape(rcp.label), rcp.address, funds));
 #else
-        formatted.append(tr("<b>%1</b> to %2 (%3)").arg(BitcoinUnits::formatWithUnit(BitcoinUnits::BTC, rcp.amount), rcp.label.toHtmlEscaped(), rcp.address));
+        formatted.append(tr("<b>%1</b> to %2 (%3) using %4").arg(BitcoinUnits::formatWithUnit(BitcoinUnits::BTC, rcp.amount), rcp.label.toHtmlEscaped(), rcp.address, funds));
 #endif
     }
 
-    recipients[0].inputType = "ONLY_DENOMINATED";
-
-    if(ui->inputType->currentText() == "Only Non DS+ Inputs"){
-        recipients[0].inputType = "ONLY_NONDENOMINATED";
-    } else if(ui->inputType->currentText() == "Only DS+ Inputs"){
-        recipients[0].inputType = "ONLY_DENOMINATED";
-    } else {
-        recipients[0].inputType = "ALL_COINS";
-    }
 
     fNewRecipientAllowed = false;
 
@@ -457,10 +462,11 @@ bool SendCoinsDialog::handleURI(const QString &uri)
     return false;
 }
 
-void SendCoinsDialog::setBalance(qint64 balance, qint64 unconfirmedBalance, qint64 immatureBalance)
+void SendCoinsDialog::setBalance(qint64 balance, qint64 unconfirmedBalance, qint64 immatureBalance, qint64 anonymizedBalance)
 {
     Q_UNUSED(unconfirmedBalance);
     Q_UNUSED(immatureBalance);
+    Q_UNUSED(anonymizedBalance);
     if(!model || !model->getOptionsModel())
         return;
 

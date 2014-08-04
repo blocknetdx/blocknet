@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>883</width>
-    <height>401</height>
+    <width>920</width>
+    <height>410</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -625,8 +625,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>863</width>
-        <height>153</height>
+        <width>900</width>
+        <height>162</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -732,23 +732,23 @@
       <widget class="QComboBox" name="inputType">
        <property name="minimumSize">
         <size>
-         <width>155</width>
+         <width>175</width>
          <height>0</height>
         </size>
        </property>
        <item>
         <property name="text">
-         <string>Only DS+ Inputs</string>
+         <string>Use Anonymous Funds</string>
         </property>
        </item>
        <item>
         <property name="text">
-         <string>Only Non DS+ Inputs</string>
+         <string>Use Non-Anonymous Funds</string>
         </property>
        </item>
        <item>
         <property name="text">
-         <string>All Inputs</string>
+         <string>No Preference</string>
         </property>
        </item>
       </widget>

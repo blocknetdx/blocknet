@@ -65,6 +65,7 @@ public:
     TransactionTableModel *getTransactionTableModel();
     
     qint64 getBalance(const CCoinControl *coinControl=NULL) const;
+    qint64 getAnonymizedBalance() const;
     qint64 getUnconfirmedBalance() const;
     qint64 getImmatureBalance() const;
     int getNumTransactions() const;
@@ -142,6 +143,7 @@ private:
     qint64 cachedBalance;
     qint64 cachedUnconfirmedBalance;
     qint64 cachedImmatureBalance;
+    qint64 cachedAnonymizedBalance;
     qint64 cachedNumTransactions;
     EncryptionStatus cachedEncryptionStatus;
     int cachedNumBlocks;
@@ -154,7 +156,7 @@ private:
 
 signals:
     // Signal that balance in wallet changed
-    void balanceChanged(qint64 balance, qint64 unconfirmedBalance, qint64 immatureBalance);
+    void balanceChanged(qint64 balance, qint64 unconfirmedBalance, qint64 immatureBalance, qint64 anonymizedBalance);
 
     // Number of transactions in wallet changed
     void numTransactionsChanged(int count);

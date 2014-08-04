@@ -957,6 +957,32 @@ int64 CWallet::GetBalance() const
     return nTotal;
 }
 
+int64 CWallet::GetAnonymizedBalance() const
+{
+    int64 nTotal = 0;
+    {
+        LOCK(cs_wallet);
+        for (map<uint256, CWalletTx>::const_iterator it = mapWallet.begin(); it != mapWallet.end(); ++it)
+        {
+            const CWalletTx* pcoin = &(*it).second;
+            if (pcoin->IsConfirmed()){
+                bool found = false;
+                for (unsigned int i = 0; i < pcoin->vout.size(); i++) {
+                    
+                    COutput out = COutput(pcoin, i, pcoin->GetDepthInMainChain());
+                    CTxIn vin = CTxIn(out.tx->GetHash(), out.i);  
+                    int rounds = darkSendPool.GetInputDarksendRounds(vin);
+                    if(rounds >= nDarksendRounds) found = true;                    
+                }
+
+                if(found) nTotal += pcoin->GetAvailableCredit();
+            }
+        }
+    }
+
+    return nTotal;
+}
+
 int64 CWallet::GetNonDenominatedBalance() const
 {
     int64 nTotal = 0;
