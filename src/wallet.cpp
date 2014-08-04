@@ -1289,14 +1289,16 @@ bool CWallet::SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxI
 
     BOOST_FOREACH(const COutput& out, vCoins)
     {
-        if(out.tx->vout[out.i].nValue <= 1*COIN) continue; //these are made for collateral/fees/etc
+        printf(" vin nValue %"PRI64d" \n", out.tx->vout[out.i].nValue);
+        if(out.tx->vout[out.i].nValue <= DARKSEND_COLLATERAL*5) continue; //these are made for collateral/fees/etc
         if(fMasterNode && out.tx->vout[out.i].nValue == 1000*COIN) continue; //masternode input
 
         if(nValueRet + out.tx->vout[out.i].nValue <= nValueMax){
             CTxIn vin = CTxIn(out.tx->GetHash(),out.i);
             int rounds = darkSendPool.GetInputDarksendRounds(vin);
-
-            printf(" vin nValue %"PRI64d" rounds %d\n", out.tx->vout[out.i].nValue/COIN, rounds);
+            
+            printf(" -- rounds %d\n", rounds);
+        
             if(rounds >= nDarksendRoundsMax) continue;
             printf(" -- rounds less than max\n");
             if(rounds < nDarksendRoundsMin) continue; 
@@ -1748,8 +1750,8 @@ string CWallet::DarkSendDenominate()
         
         txCollateral.vout.push_back(vout2);
 
-        if(nValueIn2 - DARKSEND_COLLATERAL > 0) {
-            CTxOut vout3 = CTxOut(nValueIn2 - DARKSEND_COLLATERAL, scriptChange);
+        if(nValueIn2 - DARKSEND_COLLATERAL - nFeeRet > 0) {
+            CTxOut vout3 = CTxOut(nValueIn2 - DARKSEND_COLLATERAL - nFeeRet, scriptChange);
             txCollateral.vout.push_back(vout3);
         }
         
@@ -2272,13 +2274,13 @@ void CWallet::UpdatedTransaction(const uint256 &hashTx)
 
 void CWallet::LockCoin(COutPoint& output)
 {
-    printf("CWallet::LockCoin - %s\n", output.ToString().c_str());
+    //printf("CWallet::LockCoin - %s\n", output.ToString().c_str());
     setLockedCoins.insert(output);
 }
 
 void CWallet::UnlockCoin(COutPoint& output)
 {
-    printf("CWallet::UnlockCoin - %s\n", output.ToString().c_str());
+    //printf("CWallet::UnlockCoin - %s\n", output.ToString().c_str());
     setLockedCoins.erase(output);
 }
 

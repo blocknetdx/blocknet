@@ -900,31 +900,21 @@ bool CTxMemPool::acceptable(CValidationState &state, CTransaction &tx, bool fChe
 {
     if (pfMissingInputs)
         *pfMissingInputs = false;
-
-    printf("CTxMemPool::acceptable -- 1\n");
     if (!tx.CheckTransaction(state))
         return error("CTxMemPool::acceptable() : CheckTransaction failed");
-
-    printf("CTxMemPool::acceptable -- 2\n");
 
     // Coinbase is only valid in a block, not as a loose transaction
     if (tx.IsCoinBase())
         return state.DoS(100, error("CTxMemPool::acceptable() : coinbase as individual tx"));
 
-    printf("CTxMemPool::acceptable -- 3\n");
-
     // To help v0.1.5 clients who would see it as a negative number
     if ((int64)tx.nLockTime > std::numeric_limits<int>::max())
         return error("CTxMemPool::acceptable() : not accepting nLockTime beyond 2038 yet");
-
-    printf("CTxMemPool::acceptable -- 4\n");
     // Rather not work on nonstandard transactions (unless -testnet)
     string strNonStd;
     if (!fTestNet && !tx.IsStandard(strNonStd))
         return error("CTxMemPool::acceptable() : nonstandard transaction (%s)",
                      strNonStd.c_str());
-
-    printf("CTxMemPool::acceptable -- 5\n");
 
     // is it already in the memory pool?
     uint256 hash = tx.GetHash();
@@ -934,8 +924,6 @@ bool CTxMemPool::acceptable(CValidationState &state, CTransaction &tx, bool fChe
             return false;
         }
     }
-
-    printf("CTxMemPool::acceptable -- 6\n");
 
     // Check for conflicts with in-memory transactions
     for (unsigned int i = 0; i < tx.vin.size(); i++)
@@ -949,14 +937,11 @@ bool CTxMemPool::acceptable(CValidationState &state, CTransaction &tx, bool fChe
         }
     }
 
-    printf("CTxMemPool::acceptable -- 7\n");
-
     if (fCheckInputs)
     {
         CCoinsView dummy;
         CCoinsViewCache view(dummy);
 
-        printf("CTxMemPool::acceptable -- 8\n");
 
         {
         LOCK(cs);
@@ -964,14 +949,12 @@ bool CTxMemPool::acceptable(CValidationState &state, CTransaction &tx, bool fChe
         view.SetBackend(viewMemPool);
 
 
-        printf("CTxMemPool::acceptable -- 9\n");
 
         // do we already have it?
         if (view.HaveCoins(hash)){
             return false;
         }
 
-        printf("CTxMemPool::acceptable -- 10\n");
 
         // do all inputs exist?
         // Note that this does not check for the presence of actual outputs (see the next check for that),
@@ -984,32 +967,27 @@ bool CTxMemPool::acceptable(CValidationState &state, CTransaction &tx, bool fChe
             }
         }
 
-        printf("CTxMemPool::acceptable -- 11\n");
 
         // are the actual inputs available?
         if (!tx.HaveInputs(view)) {
             return state.Invalid(error("CTxMemPool::acceptable() : inputs already spent"));
         }
 
-        printf("CTxMemPool::acceptable -- 12\n");
 
         // Bring the best block into scope
         view.GetBestBlock();
 
-        printf("CTxMemPool::acceptable -- 13\n");
 
         // we have all inputs cached now, so switch back to dummy, so we don't need to keep lock on mempool
         view.SetBackend(dummy);
         }
 
-        printf("CTxMemPool::acceptable -- 14\n");
 
         // Check for non-standard pay-to-script-hash in inputs
         if (!tx.AreInputsStandard(view) && !fTestNet) {
             return error("CTxMemPool::acceptable() : nonstandard transaction input");
         }
 
-        printf("CTxMemPool::acceptable -- 15\n");
 
         // Note: if you modify this code to accept non-standard transactions, then
         // you should add code here to check that the transaction does a
@@ -1017,7 +995,6 @@ bool CTxMemPool::acceptable(CValidationState &state, CTransaction &tx, bool fChe
 
         int64 nFees = tx.GetValueIn(view)-tx.GetValueOut();
 
-        printf("CTxMemPool::acceptable -- 16\n");
 
         // Don't accept it if it can't get into a block
         int64 txMinFee = tx.GetMinFee(1000, true, GMF_RELAY);
@@ -1027,7 +1004,6 @@ bool CTxMemPool::acceptable(CValidationState &state, CTransaction &tx, bool fChe
                          nFees, txMinFee);
         }
 
-        printf("CTxMemPool::acceptable -- 17\n");
 
         // Check against previous transactions
         // This is done last to help prevent CPU exhaustion denial-of-service attacks.
@@ -1036,7 +1012,6 @@ bool CTxMemPool::acceptable(CValidationState &state, CTransaction &tx, bool fChe
             return error("CTxMemPool::acceptable() : ConnectInputs failed %s", hash.ToString().c_str());
         }
 
-        printf("CTxMemPool::acceptable -- 18\n");
     }
 
     return true;
@@ -2592,6 +2567,8 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
             bool success = darkSendPool.GetCurrentMasterNodeConsessus(pindexBest->nHeight+1, payee);
             
             if(success) {
+                printf("CheckBlock() : Masternode consessus payment to %s\n", payee.ToString().c_str());
+
                 for (unsigned int i = 0; i < vtx[0].vout.size(); i++) {
                     if(vtx[0].vout[i].nValue == masternodePaymentAmount )
                         foundPaymentAmount = true;
@@ -2603,6 +2580,8 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
                     printf("CheckBlock() : Couldn't find masternode payment. Found Amount %d Found Payee %d \n", (int)foundPaymentAmount, (int)foundPaymentPayee);
                     if(EnforceMasternodePayments) return state.DoS(0, error("CheckBlock() : Couldn't find masternode payment"));
                 }
+            } else {
+                printf("CheckBlock() : Unable to get consessus on masternode\n");
             }
 
         }
@@ -3922,9 +3901,12 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             return false;
         }
 
-        //tx hash
-        //Masternode Signature, sign tx hash
-
+        int i = darkSendPool.GetCurrentMasterNode(1);
+        if(i < 0) return false;
+        if(darkSendMasterNodes[i].addr != pfrom->addr){   
+            printf("dsc - message doesn't match current masternode\n");
+            return false;
+        }
 
         bool error;
         std::string lastMessage;
@@ -4052,6 +4034,13 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             return false;
         }
 
+        int i = darkSendPool.GetCurrentMasterNode(1);
+        if(i < 0) return false;
+        if(darkSendMasterNodes[i].addr != pfrom->addr){   
+            printf("dssu - message doesn't match current masternode\n");
+            return false;
+        }
+
         int state;
         int entriesCount;
         int accepted;
@@ -4131,12 +4120,12 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         vRecv >> vinWinningMasternode >> vinMasterNodeFrom >> nBlockHeight >> vchSig;
 
-        //printf("dmcv -received\n");
+        printf("dmcv -received\n");
 
         bool fIsInitialDownload = IsInitialBlockDownload();
         if(fIsInitialDownload) return true;
 
-        //printf("dmcv -done downloading\n");
+        printf("dmcv -done downloading\n");
 
         if(pindexBest == NULL) return true;
         if(nBlockHeight > pindexBest->nHeight + 5) {
@@ -4148,8 +4137,8 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             return false;
         }
 
-        //printf("dmcv -block height ok\n");
-        //printf("dmcv - masternode from vin %s\n", vinMasterNodeFrom.ToString().c_str());
+        printf("dmcv -block height ok\n");
+        printf("dmcv - masternode from vin %s\n", vinMasterNodeFrom.ToString().c_str());
 
         int mn = darkSendPool.GetMasternodeByVin(vinMasterNodeFrom);
         if (mn == -1) {
@@ -4165,7 +4154,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         }
 
 
-        //printf("dmcv -know masternode\n");
+        printf("dmcv -know masternode\n");
 
         BOOST_FOREACH (PAIRTYPE(int64, CTxIn)& s, vecMasternodesVoted){
             if(s.first == nBlockHeight && s.second == vinMasterNodeFrom){
@@ -4174,7 +4163,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             }
         }
 
-        //printf("dmcv -hasn't voted\n");
+        printf("dmcv -hasn't voted\n");
 
         int rank = darkSendPool.GetMasternodeRank(vinMasterNodeFrom, 1);
         CPubKey pubkey = darkSendMasterNodes[mn].pubkey2;
@@ -4184,7 +4173,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             return true;
         }
 
-        //printf("dmcv -rank in range\n");
+        printf("dmcv -rank in range\n");
 
         std::string vchPubKey(pubkey.begin(), pubkey.end());
         std::string strMessage = vinWinningMasternode.prevout.ToString() + vinMasterNodeFrom.prevout.ToString() + boost::lexical_cast<std::string>(nBlockHeight) + vchPubKey; 
@@ -4195,11 +4184,11 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             return false;
         }
 
-        //printf("dmcv -sig ok\n");
+        printf("dmcv -sig ok\n");
 
         rank = darkSendPool.GetMasternodeRank(vinWinningMasternode, 1);
         if(rank >= 0){
-            //printf("dmcv -submitted vote\n");
+            printf("dmcv -submitted vote\n");
             darkSendPool.SubmitMasternodeVote(vinWinningMasternode, vinMasterNodeFrom, nBlockHeight);
             RelayDarkSendMasterNodeConsessusVote(vinWinningMasternode, vinMasterNodeFrom, nBlockHeight, vchSig);
         } else {
@@ -6099,6 +6088,7 @@ void CDarkSendPool::Check()
     if((state == POOL_STATUS_ERROR || state == POOL_STATUS_SUCCESS) && GetTimeMillis()-lastTimeChanged >= 10000) {
         printf("CDarkSendPool::Check() -- RESETTING MESSAGE \n");
         SetNull(true);
+        if(fMasterNode) RelayDarkSendStatus(darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);    
         UnlockCoins();
     }
 }
@@ -6135,6 +6125,26 @@ void CDarkSendPool::CheckTimeout(){
             if(fDebug) printf("CDarkSendPool::CheckTimeout() -- SESSION COMPLETED -- CHECKING\n");
             Check();
         }        
+    }
+
+    if(state == POOL_STATUS_ACCEPTING_ENTRIES){
+        int c = 0;
+
+        std::vector<CDarkSendEntry> *vec = &myEntries;
+        if(fMasterNode) vec = &entries; 
+
+        vector<CDarkSendEntry>::iterator it;
+        for(it=vec->begin();it<vec->end();it++){
+            if((*it).IsExpired()){
+                printf("CDarkSendPool::CheckTimeout() : REMOVING EXPIRED ENTRY - %d\n", c);
+                vec->erase(it);
+                if(fMasterNode){
+                    RelayDarkSendStatus(darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);   
+                }
+                break;
+            }
+            c++;
+        }
     }
 
     if(state == POOL_STATUS_SIGNING && GetTimeMillis()-lastTimeChanged >= 10000 ) {
@@ -6747,14 +6757,22 @@ bool CDarkSendPool::GetLastValidBlockHash(uint256& hash, int mod, int nBlockHeig
 
 bool CDarkSendPool::DoConcessusVote(int64 nBlockHeight)
 {
+    printf("CDarkSendPool::DoConcessusVote\n");
     bool fIsInitialDownload = IsInitialBlockDownload();
     if(fIsInitialDownload) return false;
+
+    printf("CDarkSendPool::DoConcessusVote - 2\n");
 
     //If masternode, vote for whoever I think should win next block
     if(!fMasterNode || isCapableMasterNode != MASTERNODE_IS_CAPABLE) return false;
 
+    printf("CDarkSendPool::DoConcessusVote - 3\n");
+
     int rank = GetMasternodeRank(vinMasterNode, 1);
     int winner = GetCurrentMasterNode(1, nBlockHeight);
+
+    printf("CDarkSendPool::DoConcessusVote - 4 %d %d\n", rank, winner);
+
     if(rank <= 10 && winner != 1){
         std::vector<unsigned char> vchMasterNodeSignature;
         std::string errorMessage = "";
@@ -6815,45 +6833,7 @@ void CDarkSendPool::NewBlock()
         DoConcessusVote(pindexBest->nHeight + 3);
     }
 
-    if(fMasterNode){
-        if(pindexBest->nHeight % 10 == 0){
-            uint256 n1 = 0;
-            
-            if(!GetLastValidBlockHash(n1)) return;
-            if(n1 == masterNodeBlockHash) return;
-            printf("CDarkSendPool::NewBlock - Is Masternode, resetting\n");
-            SetNull();
-            RelayDarkSendStatus(darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);    
-        }
-    } else {
-        if(pindexBest->nHeight % 10 == 0 && myEntries.size() != 0) {
-
-            bool run = true;
-            uint256 n1 = 0;
-            if(!GetLastValidBlockHash(n1)) run = false;
-            if(n1 == masterNodeBlockHash) run = false;
-
-            if(run){
-                if(IsConnectedToMasterNode()){
-                    printf("CDarkSendPool::NewBlock - Disconnecting from old masternode\n");
-                    DisconnectMasterNode();
-                }
-
-                bool resetEntries=false;
-                if(myEntries.size() > 0) {
-                    printf("CDarkSendPool::NewBlock - ERROR: You have existing pending payments and a new masternode was detected. You must resubmit them.");
-                    resetEntries = true;
-                }
-
-                SetNull(true);
-
-                if(resetEntries){
-                    UpdateState(POOL_STATUS_ERROR);
-                    lastMessage = "masternode switched, please resubmit";
-                }
-            }
-        }
-
+    if(!fMasterNode){
         //denominate all non-denominated inputs every 25 minutes.
         if(pindexBest->nHeight % 10 == 0) UnlockCoins();
         DoAutomaticDenominating();
@@ -6873,7 +6853,6 @@ void CDarkSendPool::CompletedTransaction(bool error, std::string lastMessageNew)
         if(fDebug) printf("CompletedTransaction -- success \n");
         UpdateState(POOL_STATUS_SUCCESS);
 
-        int nOutputs = 0;
         BOOST_FOREACH(const int64 index, keypoolIndexes) {
             CReserveKey reservekey(pwalletMain);
             reservekey.SetIndex(index);
@@ -6932,14 +6911,12 @@ int CDarkSendPool::GetCurrentMasterNode(int mod, int64 nBlockHeight)
     unsigned int score = 0;
     int winner = -1;
 
-    printf(" --- strUseMasternode %s\n", strUseMasternode.c_str());
-
     if(!strUseMasternode.empty()){
         CService overrideAddr = CService(strUseMasternode);
 
         BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
             if(mn.addr == overrideAddr){
-                printf("found addr %s\n", mn.addr.ToString().c_str());
+                printf("CDarkSendPool::GetCurrentMasterNode() - override %s\n", mn.addr.ToString().c_str());
                 return i;
             }
             i++;
@@ -7152,7 +7129,7 @@ bool CDarkSendPool::GetCurrentMasterNodeConsessus(int64 blockHeight, CScript& pa
 
     if (vecBlockVotes.empty())
     {
-        //printf("CDarkSendPool::GetCurrentMasterNodeConsessus : No consessus information for block %"PRI64u"\n", blockHeight);
+        printf("CDarkSendPool::GetCurrentMasterNodeConsessus : No consessus information for block %"PRI64u"\n", blockHeight);
         return false;
     }
 
