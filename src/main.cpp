@@ -3903,10 +3903,8 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             return false;
         }
 
-        int i = darkSendPool.GetCurrentMasterNode(1);
-        if(i < 0) return false;
-        if(darkSendMasterNodes[i].addr != pfrom->addr){   
-            printf("dsc - message doesn't match current masternode - %s != %s\n", darkSendMasterNodes[i].addr.ToString().c_str(), pfrom->addr.ToString().c_str());
+        if(darkSendPool.submittedToMasternode != pfrom->addr){
+            printf("dsc - message doesn't match current masternode - %s != %s\n", darkSendPool.submittedToMasternode.ToString().c_str(), pfrom->addr.ToString().c_str());
             return false;
         }
 
@@ -4036,10 +4034,9 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             return false;
         }
 
-        int i = darkSendPool.GetCurrentMasterNode(1);
-        if(i < 0) return false;
-        if(darkSendMasterNodes[i].addr != pfrom->addr){   
-            printf("dssu - message doesn't match current masternode - %s != %s\n", darkSendMasterNodes[i].addr.ToString().c_str(), pfrom->addr.ToString().c_str());
+
+        if(darkSendPool.submittedToMasternode != pfrom->addr){   
+            printf("dssu - message doesn't match current masternode - %s != %s\n", darkSendPool.submittedToMasternode.ToString().c_str(), pfrom->addr.ToString().c_str());
             return false;
         }
 
@@ -6338,6 +6335,11 @@ void CDarkSendPool::SendMoney(const CTransaction& collateral, std::vector<CTxIn>
         keypoolIndexes.push_back(index);
     }
 
+    int i = darkSendPool.GetCurrentMasterNode(1);
+    if(i < 0) return;
+
+    submittedToMasternode = darkSendMasterNodes[i].addr;
+
 /*    BOOST_FOREACH(CTxOut& out, vout)
         out.scriptPubKey.insert(0, OP_DARKSEND);
 */
@@ -6478,7 +6480,7 @@ bool CDarkSendPool::IsConnectedToMasterNode(){
         if(darkSendMasterNodes[i].addr == pnode->addr)
             return true;
 
-        if(pnode->fDarkSendMaster)
+        if(darkSendPool.GetMyTransactionCount() == 0 && pnode->fDarkSendMaster)
             pnode->CloseSocketDisconnect();
     }
 

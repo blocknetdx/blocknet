@@ -2618,6 +2618,7 @@ public:
     std::string lastMessage;
     bool completedTransaction;
     bool unitTest;
+    CService submittedToMasternode;
 
     CDarkSendPool()
     {
