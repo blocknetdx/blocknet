@@ -149,10 +149,10 @@ void SendCoinsDialog::on_sendButton_clicked()
     recipients[0].inputType = "ONLY_DENOMINATED";
 
     if(ui->inputType->currentText() == "Use Anonymous Funds"){
-        recipients[0].inputType = "ONLY_NONDENOMINATED";
+        recipients[0].inputType = "ONLY_DENOMINATED";
         funds = "Using <b>Anonymous Funds</b>";
     } else if(ui->inputType->currentText() == "Use Non-Anonymous Funds"){
-        recipients[0].inputType = "ONLY_DENOMINATED";
+        recipients[0].inputType = "ONLY_NONDENOMINATED";
         funds = "Using <b>NON-ANONYMOUS Funds</b>";
     } else {
         recipients[0].inputType = "ALL_COINS";
