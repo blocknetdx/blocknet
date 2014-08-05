@@ -966,16 +966,18 @@ int64 CWallet::GetAnonymizedBalance() const
         {
             const CWalletTx* pcoin = &(*it).second;
             if (pcoin->IsConfirmed()){
-                bool found = false;
                 for (unsigned int i = 0; i < pcoin->vout.size(); i++) {
                     
                     COutput out = COutput(pcoin, i, pcoin->GetDepthInMainChain());
                     CTxIn vin = CTxIn(out.tx->GetHash(), out.i);  
-                    int rounds = darkSendPool.GetInputDarksendRounds(vin);
-                    if(rounds >= nDarksendRounds) found = true;                    
-                }
 
-                if(found) nTotal += pcoin->GetAvailableCredit();
+                    if(pcoin->IsSpent(i) || !IsMine(pcoin->vout[i]) || !IsDenominated(vin)) continue;
+                    
+                    int rounds = darkSendPool.GetInputDarksendRounds(vin);
+                    if(rounds >= nDarksendRounds){
+                        nTotal += pcoin->vout[i].nValue;                    
+                    }
+                }
             }
         }
     }
@@ -1296,6 +1298,16 @@ bool CWallet::SelectCoins(int64 nTargetValue, set<pair<const CWalletTx*,unsigned
         }
         return (nValueRet >= nTargetValue);
     }
+
+    BOOST_FOREACH(const COutput& out, vCoins)
+    {
+        nValueRet += out.tx->vout[out.i].nValue;
+        setCoinsRet.insert(make_pair(out.tx, out.i));
+        printf(" out - %s\n", out.ToString().c_str());
+    }
+    printf("total %"PRI64d"\n", nValueRet);
+    return (nValueRet >= nTargetValue);
+
 
     return (SelectCoinsMinConf(nTargetValue, 1, 6, vCoins, setCoinsRet, nValueRet) ||
             SelectCoinsMinConf(nTargetValue, 1, 1, vCoins, setCoinsRet, nValueRet) ||
