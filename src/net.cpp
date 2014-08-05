@@ -1924,9 +1924,13 @@ void RelayDarkSendFinalTransaction(const CTransaction& txNew)
 void RelayDarkSendIn(const std::vector<CTxIn>& in, const int64& nAmount, const CTransaction& txCollateral, const std::vector<CTxOut>& out)
 {
     LOCK(cs_vNodes);
+
+    int i = darkSendPool.GetCurrentMasterNode(1);
+    if(i < 0) return;
+
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
-        if(!pnode->fDarkSendMaster) continue;
+        if(darkSendMasterNodes[i].addr != pnode->addr) continue;
         printf("RelayDarkSendIn - found master, relaying message - %s \n", pnode->addr.ToString().c_str());
         pnode->PushMessage("dsi", in, nAmount, txCollateral, out);
     }
