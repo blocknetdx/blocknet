@@ -6145,12 +6145,12 @@ void CDarkSendPool::CheckTimeout(){
             }
             c++;
         }
-    } else if(GetTimeMillis()-lastTimeChanged >= 30000){
-        if(fDebug) printf("CDarkSendPool::CheckTimeout() -- SESSION TIMED OUT (30) -- RESETTING\n");
+    } else if(GetTimeMillis()-lastTimeChanged >= 60000*5){
+        if(fDebug) printf("CDarkSendPool::CheckTimeout() -- SESSION TIMED OUT (5m) -- RESETTING\n");
         SetNull();
 
         UpdateState(POOL_STATUS_ERROR);
-        lastMessage = "Signing timed out (30), please resubmit";
+        lastMessage = "Session timed out (5m), please resubmit";
     }
 
     if(state == POOL_STATUS_SIGNING && GetTimeMillis()-lastTimeChanged >= 10000 ) {
