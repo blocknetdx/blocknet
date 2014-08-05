@@ -2563,7 +2563,7 @@ public:
 
     bool IsExpired()
     {
-        return (GetTime() - addedTime) > 60*10; //ten minutes
+        return (GetTime() - addedTime) > 15;// 15 seconds
     }
 };
 
