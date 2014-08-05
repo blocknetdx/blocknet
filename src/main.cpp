@@ -3906,7 +3906,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         int i = darkSendPool.GetCurrentMasterNode(1);
         if(i < 0) return false;
         if(darkSendMasterNodes[i].addr != pfrom->addr){   
-            printf("dsc - message doesn't match current masternode\n");
+            printf("dsc - message doesn't match current masternode - %s != %s\n", darkSendMasterNodes[i].addr.ToString().c_str(), pfrom->addr.ToString().c_str());
             return false;
         }
 
@@ -4039,7 +4039,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         int i = darkSendPool.GetCurrentMasterNode(1);
         if(i < 0) return false;
         if(darkSendMasterNodes[i].addr != pfrom->addr){   
-            printf("dssu - message doesn't match current masternode\n");
+            printf("dssu - message doesn't match current masternode - %s != %s\n", darkSendMasterNodes[i].addr.ToString().c_str(), pfrom->addr.ToString().c_str());
             return false;
         }
 
@@ -5995,7 +5995,7 @@ void CDarkSendPool::Check()
     }
 
     //                                                            better way to do this?
-    if(state == POOL_STATUS_FINALIZE_TRANSACTION && finalTransaction == CTransaction()) {
+    if(state == POOL_STATUS_FINALIZE_TRANSACTION && finalTransaction.vin.empty() && finalTransaction.vout.empty()) {
         if(fDebug) printf("CDarkSendPool::Check() -- FINALIZE TRANSACTIONS\n");
         UpdateState(POOL_STATUS_SIGNING);
 
@@ -6351,7 +6351,7 @@ void CDarkSendPool::SendMoney(const CTransaction& collateral, std::vector<CTxIn>
         printf("CDarkSendPool::SendMoney() -- NEW INPUT -- adding %s\n", vin[0].ToString().c_str());
     }
 
-    if(state == POOL_STATUS_ERROR || state == POOL_STATUS_SUCCESS) ClearLastMessage();
+    ClearLastMessage();
 
     printf("CDarkSendPool::SendMoney() - Is connected to masternode?.\n");
 
@@ -6466,17 +6466,23 @@ bool CDarkSendPool::SignFinalTransaction(CTransaction& finalTransactionNew, CNod
     return true;
 }
 
+
 bool CDarkSendPool::IsConnectedToMasterNode(){
-    bool connected = false;
     LOCK(cs_vNodes);
+    
+    int i = darkSendPool.GetCurrentMasterNode(1);
+    if(i < 0) return false;
+
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
-        if(!pnode->fDarkSendMaster)
-            continue;
+        if(darkSendMasterNodes[i].addr == pnode->addr)
+            return true;
 
-        connected = true;
+        if(pnode->fDarkSendMaster)
+            pnode->CloseSocketDisconnect();
     }
-    return connected;
+
+    return false;
 }
 
 void CDarkSendPool::DisconnectMasterNode(){

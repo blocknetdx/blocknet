@@ -87,7 +87,7 @@ Value masternode(const Array& params, bool fHelp)
 
     if (fHelp  ||
         (strCommand != "start" && strCommand != "stop" && strCommand != "list" && strCommand != "count"  && strCommand != "enforce"
-            && strCommand != "debug" && strCommand != "create" && strCommand != "current" && strCommand != "votes" && strCommand != "genkey"))
+            && strCommand != "debug" && strCommand != "create" && strCommand != "current" && strCommand != "votes" && strCommand != "genkey" && strCommand != "connect"))
         throw runtime_error(
             "masternode <start|stop|list|count|debug|create|current|votes|genkey|enforce> passphrase\n");
 
@@ -248,6 +248,25 @@ Value masternode(const Array& params, bool fHelp)
     if(strCommand == "enforce")
     {
         return (uint64_t)enforceMasternodePaymentsTime;
+    }
+
+    if(strCommand == "connect")
+    {
+        std::string strAddress = "";
+        if (params.size() == 2){
+            strAddress = params[1].get_str().c_str();
+        } else {
+            throw runtime_error(
+                "Masternode address required\n");
+        }        
+
+        CService addr = CService(strAddress);
+
+        if(ConnectNode((CAddress)addr, NULL, true)){
+            return "successfully connected";
+        } else {
+            return "error connecting";
+        }
     }
 
     return Value::null;
