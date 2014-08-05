@@ -4160,7 +4160,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         BOOST_FOREACH (PAIRTYPE(int64, CTxIn)& s, vecMasternodesVoted){
             if(s.first == nBlockHeight && s.second == vinMasterNodeFrom){
-                //printf("dmcv - found prev masternode vote for block\n");
+                printf("dmcv - found prev masternode vote for block\n");
                 return true;
             }
         }
@@ -6145,6 +6145,12 @@ void CDarkSendPool::CheckTimeout(){
             }
             c++;
         }
+    } else if(GetTimeMillis()-lastTimeChanged >= 30000){
+        if(fDebug) printf("CDarkSendPool::CheckTimeout() -- SESSION TIMED OUT (30) -- RESETTING\n");
+        SetNull();
+
+        UpdateState(POOL_STATUS_ERROR);
+        lastMessage = "Signing timed out (30), please resubmit";
     }
 
     if(state == POOL_STATUS_SIGNING && GetTimeMillis()-lastTimeChanged >= 10000 ) {
