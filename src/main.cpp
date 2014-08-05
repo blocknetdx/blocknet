@@ -6148,6 +6148,7 @@ void CDarkSendPool::CheckTimeout(){
     } else if(GetTimeMillis()-lastTimeChanged >= 30000){
         if(fDebug) printf("CDarkSendPool::CheckTimeout() -- SESSION TIMED OUT (30) -- RESETTING\n");
         SetNull();
+        UnlockCoins();
 
         UpdateState(POOL_STATUS_ERROR);
         lastMessage = "Session timed out (30), please resubmit";
@@ -6157,6 +6158,7 @@ void CDarkSendPool::CheckTimeout(){
         if(fDebug) printf("CDarkSendPool::CheckTimeout() -- SESSION TIMED OUT -- RESETTING\n");
         ChargeFees();
         SetNull();
+        UnlockCoins();
         //add my transactions to the new session
 
         UpdateState(POOL_STATUS_ERROR);
