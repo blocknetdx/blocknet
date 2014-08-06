@@ -2620,7 +2620,12 @@ public:
     bool unitTest;
     CService submittedToMasternode;
 
-    int session_id;
+    int sessionID;
+    int64 sessionAmount; //Users must submit an amount compatible with this amount
+    int sessionUsers; //N Users have said they'll join
+    bool sessionFoundMasternode; //If we've found a compatible masternode
+    int sessionTries;
+
 
     CDarkSendPool()
     {
@@ -2698,19 +2703,14 @@ public:
         if(state != newState){
             lastTimeChanged = GetTimeMillis();
             if(fMasterNode) {
-                RelayDarkSendStatus(darkSendPool.session_id, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);
+                RelayDarkSendStatus(darkSendPool.sessionID, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);
             }
         }
         state = newState;
     }
 
-    bool IsCompatibleWithEntries(std::vector<CTxOut> vout)
-    {
-        BOOST_FOREACH(const CDarkSendEntry v, entries)
-            if(GetDenominations(vout) != GetDenominations(v.vout)) return false;
-
-        return true;
-    }
+    bool IsCompatibleWithEntries(std::vector<CTxOut> vout);
+    bool IsCompatibleWithSession(int64 nAmount);
 
     bool DoAutomaticDenominating(bool fDryRun=false);
     int GetCurrentMasterNode(int mod=1, int64 nBlockHeight=0);
@@ -2719,6 +2719,7 @@ public:
 
     int GetMasternodeByVin(CTxIn& vin);
     int GetMasternodeRank(CTxIn& vin, int mod);
+    int GetMasternodeByRank(int findRank);
 
     void Check();
     void ChargeFees();
