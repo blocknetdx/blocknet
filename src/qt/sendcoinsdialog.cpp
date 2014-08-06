@@ -325,6 +325,8 @@ void SendCoinsDialog::darkSendStatusButton()
 
     if(state == POOL_STATUS_ERROR || state == POOL_STATUS_SUCCESS) darkSendPool.Check();
     
+    printf("%s\n", convert.str().c_str());
+
     QString s(convert.str().c_str());
     ui->darkSendStatusButton->setText(s);
 

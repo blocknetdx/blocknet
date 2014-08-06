@@ -1912,12 +1912,12 @@ void RelayTransaction(const CTransaction& tx, const uint256& hash, const CDataSt
     }
 }
 
-void RelayDarkSendFinalTransaction(const CTransaction& txNew)
+void RelayDarkSendFinalTransaction(const int session_id, const CTransaction& txNew)
 {
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
-        pnode->PushMessage("dsf", txNew);
+        pnode->PushMessage("dsf", session_id, txNew);
     }
 }
 
@@ -1936,12 +1936,12 @@ void RelayDarkSendIn(const std::vector<CTxIn>& in, const int64& nAmount, const C
     }
 }
 
-void RelayDarkSendStatus(const int newState, const int newEntriesCount, const int newAccepted, const std::string error)
+void RelayDarkSendStatus(const int session_id, const int newState, const int newEntriesCount, const int newAccepted, const std::string error)
 {
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
-        pnode->PushMessage("dssu", newState, newEntriesCount, newAccepted, error);
+        pnode->PushMessage("dssu", session_id, newState, newEntriesCount, newAccepted, error);
     }
 }
 
@@ -1964,12 +1964,12 @@ void RelayDarkSendElectionEntryPing(const CTxIn vin, const std::vector<unsigned 
 }
 
 
-void RelayDarkSendCompletedTransaction(const bool error, const std::string errorMessage)
+void RelayDarkSendCompletedTransaction(const int session_id, const bool error, const std::string errorMessage)
 {
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
-        pnode->PushMessage("dsc", error, errorMessage);
+        pnode->PushMessage("dsc", session_id, error, errorMessage);
     }
 }
 
