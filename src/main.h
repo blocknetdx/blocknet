@@ -2583,7 +2583,7 @@ static const int64 DARKSEND_FEE = 0.001*COIN;
 class CDarkSendPool
 {
 public:
-    static const int MIN_PEER_PROTO_VERSION = 70026;
+    static const int MIN_PEER_PROTO_VERSION = 70027;
 
     std::vector<CDarkSendEntry> myEntries;
     std::vector<CDarkSendEntry> entries;
@@ -2599,8 +2599,7 @@ public:
     CScript collateralPubKey;
 
     std::vector<CTxIn> lockedCoins;
-    std::vector<int64> keypoolIndexes;
-
+    
     CTxIn vinMasterNode;
     CPubKey pubkeyMasterNode;
     CPubKey pubkeyMasterNode2;
@@ -2729,7 +2728,7 @@ public:
     bool AddEntry(const std::vector<CTxIn>& newInput, const int64& nAmount, const CTransaction& txCollateral, const std::vector<CTxOut>& newOutput, std::string& error);
     bool AddScriptSig(const CTxIn& newVin);
     bool SignaturesComplete();
-    void SendMoney(const CTransaction& collateral, std::vector<CTxIn>& vin, std::vector<CTxOut>& vout, int64& fee, int64 amount, std::vector<int64> reservedKeysIn);
+    void SendMoney(const CTransaction& collateral, std::vector<CTxIn>& vin, std::vector<CTxOut>& vout, int64& fee, int64 amount);
     bool StatusUpdate(int newState, int newEntriesCount, int newAccepted, std::string& error, int newSessionID=0);
 
     bool SignFinalTransaction(CTransaction& finalTransactionNew, CNode* node);

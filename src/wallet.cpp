@@ -1321,13 +1321,13 @@ bool CWallet::SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxI
     vector<COutput> vCoins;
     AvailableCoins(vCoins, false, coinControl, ALL_COINS);
     
-    printf("found coins %d\n", (int)vCoins.size());
+    //printf("found coins %d\n", (int)vCoins.size());
 
     set<pair<const CWalletTx*,unsigned int> > setCoinsRet2;
 
     BOOST_FOREACH(const COutput& out, vCoins)
     {
-        printf(" vin nValue %"PRI64d" \n", out.tx->vout[out.i].nValue);
+        //printf(" vin nValue %"PRI64d" \n", out.tx->vout[out.i].nValue);
         if(out.tx->vout[out.i].nValue <= DARKSEND_COLLATERAL*5) continue; //these are made for collateral/fees/etc
         if(fMasterNode && out.tx->vout[out.i].nValue == 1000*COIN) continue; //masternode input
 
@@ -1335,17 +1335,17 @@ bool CWallet::SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxI
             CTxIn vin = CTxIn(out.tx->GetHash(),out.i);
             int rounds = darkSendPool.GetInputDarksendRounds(vin);
             
-            printf(" -- rounds %d\n", rounds);
+            //printf(" -- rounds %d\n", rounds);
         
             if(rounds >= nDarksendRoundsMax) continue;
-            printf(" -- rounds less than max\n");
+            //printf(" -- rounds less than max\n");
             if(rounds < nDarksendRoundsMin) continue; 
 
             vin.prevPubKey = out.tx->vout[out.i].scriptPubKey; // the inputs PubKey
             nValueRet += out.tx->vout[out.i].nValue;
             setCoinsRet.push_back(vin);
             setCoinsRet2.insert(make_pair(out.tx, out.i));
-            printf(" -- nValueRet %"PRI64d"\n", nValueRet/COIN);
+            //printf(" -- nValueRet %"PRI64d"\n", nValueRet/COIN);
             if(nValueRet >= nValueMax) return true;
         }
     }
@@ -1743,7 +1743,6 @@ string CWallet::DarkSendDenominate()
 
     // calculate total value out
     int64 nTotalValue = 0;
-    std::vector<int64> reservedKeys;
     CWalletTx wtx;
     BOOST_FOREACH(CTxIn i, vCoins){
         if (mapWallet.count(i.prevout.hash))
@@ -1779,9 +1778,7 @@ string CWallet::DarkSendDenominate()
         CPubKey vchPubKey;
         assert(reservekey.GetReservedKey(vchPubKey)); // should never fail, as we just unlocked
         scriptChange.SetDestination(vchPubKey.GetID());
-        reservekey.ReserveKey();
-        reservedKeys.push_back(reservekey.GetIndex());
-        reservekey.Reset();
+        reservekey.KeepKey();
 
         CTxOut vout2 = CTxOut(DARKSEND_COLLATERAL, darkSendPool.collateralPubKey);
 
@@ -1824,9 +1821,7 @@ string CWallet::DarkSendDenominate()
             CPubKey vchPubKey;
             assert(reservekey.GetReservedKey(vchPubKey)); // should never fail, as we just unlocked
             scriptChange.SetDestination(vchPubKey.GetID());
-            reservekey.ReserveKey();
-            reservedKeys.push_back(reservekey.GetIndex());
-            reservekey.Reset();
+            reservekey.KeepKey();
 
             CTxOut o(v, scriptChange);
             vOut.push_back(o);
@@ -1846,10 +1841,7 @@ string CWallet::DarkSendDenominate()
         CPubKey vchPubKey;
         assert(reservekey.GetReservedKey(vchPubKey)); // should never fail, as we just unlocked
         scriptChange.SetDestination(vchPubKey.GetID());
-        reservekey.ReserveKey();
-        reservedKeys.push_back(reservekey.GetIndex());
-        reservekey.Reset();
-
+        reservekey.KeepKey();
 
         CTxOut o(nValueLeft, scriptChange);
         vOut.push_back(o);
@@ -1857,7 +1849,7 @@ string CWallet::DarkSendDenominate()
         nOutputs++;
     }
 
-    darkSendPool.SendMoney(txCollateral, vCoins, vOut, nFeeRet, nValueIn, reservedKeys);
+    darkSendPool.SendMoney(txCollateral, vCoins, vOut, nFeeRet, nValueIn);
 
     return "";
 }

@@ -29,7 +29,7 @@ SendCoinsDialog::SendCoinsDialog(QWidget *parent) :
 #ifdef Q_OS_MAC // Icons on push buttons are very uncommon on Mac
     ui->addButton->setIcon(QIcon());
     ui->clearButton->setIcon(QIcon());
-    ui->darkSendStatusButton->setIcon(QIcon());
+    ui->darkSendStatus->setIcon(QIcon());
     ui->sendButton->setIcon(QIcon());
 #endif
 #if QT_VERSION >= 0x040700
@@ -41,7 +41,6 @@ SendCoinsDialog::SendCoinsDialog(QWidget *parent) :
 
     connect(ui->addButton, SIGNAL(clicked()), this, SLOT(addEntry()));
     connect(ui->clearButton, SIGNAL(clicked()), this, SLOT(clear()));
-    connect(ui->darkSendStatusButton, SIGNAL(clicked()), this, SLOT(darkSendStatusButton()));
 
     // Coin Control
     ui->lineEditCoinControlChange->setFont(GUIUtil::bitcoinAddressFont());
@@ -50,7 +49,7 @@ SendCoinsDialog::SendCoinsDialog(QWidget *parent) :
     connect(ui->lineEditCoinControlChange, SIGNAL(textEdited(const QString &)), this, SLOT(coinControlChangeEdited(const QString &)));
     
     timer = new QTimer(this);
-    connect(timer, SIGNAL(timeout()), this, SLOT(darkSendStatusButton()));
+    connect(timer, SIGNAL(timeout()), this, SLOT(darkSendStatus()));
     timer->start(333);
 
     // Coin Control: clipboard actions
@@ -260,7 +259,7 @@ void SendCoinsDialog::clear()
     ui->sendButton->setDefault(true);
 }
 
-void SendCoinsDialog::darkSendStatusButton()
+void SendCoinsDialog::darkSendStatus()
 {
     // check darksend status and unlock if needed
     if(darksendActionCheck % 30 == 0){
@@ -325,10 +324,13 @@ void SendCoinsDialog::darkSendStatusButton()
 
     if(state == POOL_STATUS_ERROR || state == POOL_STATUS_SUCCESS) darkSendPool.Check();
     
-    printf("%s\n", convert.str().c_str());
 
     QString s(convert.str().c_str());
-    ui->darkSendStatusButton->setText(s);
+
+    if(s != ui->darkSendStatus->text())
+        printf("%s\n", convert.str().c_str());
+    
+    ui->darkSendStatus->setText(s);
 
     showingDarkSendMessage++;
     darksendActionCheck++;
@@ -481,7 +483,7 @@ void SendCoinsDialog::setState(int state, int entries, int accepted)
     if(!model || !model->getOptionsModel())
         return;
 
-    ui->darkSendStatusButton->setText("Status Updated");
+    ui->darkSendStatus->setText("Status Updated");
 }
 
 void SendCoinsDialog::updateDisplayUnit()

@@ -237,7 +237,7 @@ bool IsCanonicalPubKey(const valtype &vchPubKey) {
         if (vchPubKey.size() != 33)
             return error("Non-canonical public key: invalid length for compressed key");
     } else {
-        return error("Non-canonical public key: compressed nor uncompressed : size %d", vchPubKey.size());
+        return error("Non-canonical public key: compressed nor uncompressed : size %d", (int)vchPubKey.size());
     }
     return true;
 }

@@ -37,7 +37,7 @@ public:
 
 public slots:
     void clear();
-    void darkSendStatusButton();
+    void darkSendStatus();
     void reject();
     void accept();
     SendCoinsEntry *addEntry();

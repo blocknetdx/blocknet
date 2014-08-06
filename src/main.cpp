@@ -3941,13 +3941,13 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         if(!darkSendPool.IsCompatibleWithSession(nAmount))
         {
-            printf("dsi -- not compatible with existing transactions! \n");
+            printf("dsa -- not compatible with existing transactions! \n");
             accepted = 0;
             error = "not compatible with existing transactions";
             pfrom->PushMessage("dssu", darkSendPool.sessionID, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), accepted, error);
             return true;
         } else {
-            printf("dsi -- is compatible, please submit! \n");
+            printf("dsa -- is compatible, please submit! \n");
             accepted = 1;
             pfrom->PushMessage("dssu", darkSendPool.sessionID, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), accepted, error);
             return true;
@@ -3967,7 +3967,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         int accepted = 0;
         std::string error = "";
 
-        if(darkSendPool.IsCompatibleWithEntries(out))
+        if(!darkSendPool.IsCompatibleWithEntries(out))
         {
             printf("dsi -- not compatible with existing transactions! \n");
             accepted = 0;
@@ -4093,14 +4093,13 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         std::string error;
         vRecv >> sessionID >> state >> entriesCount >> accepted >> error;
 
-        if(accepted != 1 && darkSendPool.sessionID != sessionID){
+        if((accepted != 1 && accepted != 0) && darkSendPool.sessionID != sessionID){
             printf("dssu - message doesn't match current darksend session\n");
             return false;
         }
-
+        
         darkSendPool.StatusUpdate(state, entriesCount, accepted, error, sessionID);
 
-        printf("DarkSendStatusUpdate - state: %i entriesCount: %i accepted: %i error: %s \n", state, entriesCount, accepted, error.c_str());
     }
 
     else if (strCommand == "dss") { //DarkSend Sign Final Tx
@@ -6018,13 +6017,15 @@ void CDarkSendPool::SetNull(bool clearEverything){
     lastEntryAccepted = 0;
     countEntriesAccepted = 0;
 
-    sessionUsers = 0;
-    sessionAmount = 0;
 
     if(clearEverything){
         myEntries.clear();
 
         sessionID = 1 + (rand() % 999999);
+        sessionUsers = 0;
+        sessionAmount = 0;
+        sessionFoundMasternode = false;
+        sessionTries = 0;
     }
 }
 
@@ -6149,10 +6150,12 @@ void CDarkSendPool::Check()
     }
 
     if((state == POOL_STATUS_ERROR || state == POOL_STATUS_SUCCESS) && GetTimeMillis()-lastTimeChanged >= 10000) {
+        //bool runAgain = state == POOL_STATUS_SUCCESS;
         printf("CDarkSendPool::Check() -- RESETTING MESSAGE \n");
         SetNull(true);
         if(fMasterNode) RelayDarkSendStatus(darkSendPool.sessionID, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);    
         UnlockCoins();
+        //if(runAgain) DoAutomaticDenominating();
     }
 }
 
@@ -6387,18 +6390,13 @@ bool CDarkSendPool::SignaturesComplete(){
     return true;
 }
 
-void CDarkSendPool::SendMoney(const CTransaction& collateral, std::vector<CTxIn>& vin, std::vector<CTxOut>& vout, int64& fee, int64 amount, std::vector<int64> reservedKeysIn){
+void CDarkSendPool::SendMoney(const CTransaction& collateral, std::vector<CTxIn>& vin, std::vector<CTxOut>& vout, int64& fee, int64 amount){
     
     BOOST_FOREACH(CTxIn in, collateral.vin)
         lockedCoins.push_back(in);
     
     BOOST_FOREACH(CTxIn in, vin)
         lockedCoins.push_back(in);
-
-    BOOST_FOREACH(int64 index, reservedKeysIn){
-        printf(" reserved key -- %"PRI64d"\n", index);
-        keypoolIndexes.push_back(index);
-    }
 
     int i = darkSendPool.GetCurrentMasterNode(1);
     if(i < 0) return;
@@ -6414,30 +6412,19 @@ void CDarkSendPool::SendMoney(const CTransaction& collateral, std::vector<CTxIn>
     }
 
     printf("CDarkSendPool::SendMoney() - Added transaction to pool.\n");
-    if(fDebug){
-        printf("CDarkSendPool::SendMoney() -- NEW INPUT -- adding %s\n", vin[0].ToString().c_str());
-    }
 
     ClearLastMessage();
 
-    printf("CDarkSendPool::SendMoney() - Is connected to masternode?.\n");
-
     if(!IsConnectedToMasterNode()){
         if(!ConnectToBestMasterNode()){
-            printf("CDarkSendPool::SendMoney() - Couldn't connect to masternode.\n");
             return;
         }
     }
-
-    printf("CDarkSendPool::SendMoney() - connected to masternode.\n");
 
     // store our entry for later use
     CDarkSendEntry e;
     e.Add(vin, amount, collateral, vout);
     myEntries.push_back(e);
-
-    BOOST_FOREACH(const CTxIn& i, vin)
-        printf(" -- new input %s\n", i.ToString().c_str());
 
     // relay our entry to the master node
     RelayDarkSendIn(vin, amount, collateral, vout);
@@ -6451,16 +6438,18 @@ bool CDarkSendPool::StatusUpdate(int newState, int newEntriesCount, int newAccep
     UpdateState(newState);
     entriesCount = newEntriesCount;
 
+    printf("DarkSendStatusUpdate - state: %i entriesCount: %i accepted: %i error: %s \n", newState, newEntriesCount, newAccepted, error.c_str());
+
     if(newState == POOL_STATUS_ACCEPTING_ENTRIES){
         if(newAccepted == 1){
-            sessionID = newSessionID;
-            printf("CDarkSendPool::StatusUpdate - set sessionID to %d\n", sessionID);
             printf("CDarkSendPool::StatusUpdate - entry accepted! \n");
             sessionFoundMasternode = true;
-        } else {
+            DoAutomaticDenominating();
+        } else if (newAccepted == 0 && sessionID == 0 && !sessionFoundMasternode) {
             printf("CDarkSendPool::StatusUpdate - entry not accepted by masternode \n");
+            DoAutomaticDenominating();
         }
-        DoAutomaticDenominating();
+        if(sessionFoundMasternode) return true;
     }
 
     if(newAccepted != -1) {
@@ -6469,6 +6458,12 @@ bool CDarkSendPool::StatusUpdate(int newState, int newEntriesCount, int newAccep
         if(newAccepted == 0){
             UpdateState(POOL_STATUS_ERROR);
             lastMessage = error;
+        }
+
+        if(newAccepted == 1) {
+            sessionID = newSessionID;
+            printf("CDarkSendPool::StatusUpdate - set sessionID to %d\n", sessionID);
+            sessionFoundMasternode = true;
         }
     }
 
@@ -6951,14 +6946,7 @@ void CDarkSendPool::CompletedTransaction(bool error, std::string lastMessageNew)
         if(fDebug) printf("CompletedTransaction -- success \n");
         UpdateState(POOL_STATUS_SUCCESS);
 
-        BOOST_FOREACH(const int64 index, keypoolIndexes) {
-            CReserveKey reservekey(pwalletMain);
-            reservekey.SetIndex(index);
-            reservekey.KeepKey();
-        }
-
         myEntries.clear();
-        DoAutomaticDenominating();
     }
     lastMessage = lastMessageNew;
 
@@ -7061,17 +7049,20 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
         return false;
     }
 
-    int64 balanceNeedsAnonymized = pwalletMain->GetBalance() - pwalletMain->GetAnonymizedBalance();
-    if(balanceNeedsAnonymized < COIN*1.1){
-        printf("DoAutomaticDenominating : No funds detected in need of denominating \n");
-        return false;
-    }
-
     // ** find the coins we'll use
     std::vector<CTxIn> vCoins;
     int64 nValueMin = 0.01*COIN;
     int64 nValueMax = 999*COIN;
     int64 nValueIn = 0;
+
+    int64 balanceNeedsAnonymized = pwalletMain->GetBalance() - pwalletMain->GetAnonymizedBalance();
+    if(balanceNeedsAnonymized < COIN*1.1){
+        printf("DoAutomaticDenominating : No funds detected in need of denominating \n");
+        return false;
+    }
+    if(balanceNeedsAnonymized > nValueMax){
+        balanceNeedsAnonymized = nValueMax;
+    }
 
     if (!pwalletMain->SelectCoinsDark(nValueMin, nValueMax, vCoins, nValueIn, -2, nDarksendRounds))
     {
@@ -7107,20 +7098,26 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
     // initial phase, find a masternode
     if(!sessionFoundMasternode){
         if(sessionTries++ < 10){
-            int i = GetMasternodeByRank(rand() % 20);
-            if(i != -1) {
-                if(ConnectNode((CAddress)darkSendMasterNodes[i].addr, NULL, true)){
-                    submittedToMasternode = darkSendMasterNodes[i].addr;
-                    LOCK(cs_vNodes);
-                    BOOST_FOREACH(CNode* pnode, vNodes)
-                    {
-                        if(darkSendMasterNodes[i].addr != pnode->addr) continue;
-                        pnode->PushMessage("dsa", balanceNeedsAnonymized);
-                        return true;
-                    }
-                } else {
-                    return DoAutomaticDenominating();
+            int i = GetMasternodeByRank(rand() % 1+(std::min(20, (int)darkSendMasterNodes.size())));
+            if(i == -1) {
+                printf("DoAutomaticDenominating : Error finding a masternode\n");
+                return false;
+            }
+
+            lastTimeChanged = GetTimeMillis();
+            printf("DoAutomaticDenominating -- attempt connection to masternode %s\n", darkSendMasterNodes[i].addr.ToString().c_str());
+            if(ConnectNode((CAddress)darkSendMasterNodes[i].addr, NULL, true)){
+                submittedToMasternode = darkSendMasterNodes[i].addr;
+                LOCK(cs_vNodes);
+                BOOST_FOREACH(CNode* pnode, vNodes)
+                {
+                    if(darkSendMasterNodes[i].addr != pnode->addr) continue;
+                    pnode->PushMessage("dsa", balanceNeedsAnonymized);
+                    printf(" --- connected, sending dsa for %"PRI64d"\n", balanceNeedsAnonymized);
+                    return true;
                 }
+            } else {
+                return DoAutomaticDenominating();
             }
         }
     }
@@ -7228,6 +7225,7 @@ int CDarkSendPool::GetMasternodeByRank(int findRank)
         memcpy(&n2, &n, sizeof(n2));
 
         vecMasternodeScores.push_back(make_pair(n2, i));
+        i++;
     }
 
     sort(vecMasternodeScores.rbegin(), vecMasternodeScores.rend(), CompareValueOnly2());
