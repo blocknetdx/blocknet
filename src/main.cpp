@@ -6001,7 +6001,7 @@ void CDarkSendPool::SetNull(bool clearEverything){
     //printf("CDarkSendPool::SetNull()\n");
 
     if(fMasterNode){
-    //    printf("CDarkSendPool - I AM MASTER NODE!\n");
+        printf("CDarkSendPool - I AM MASTERNODE!\n");
     }
 
     finalTransaction.vin.clear();
@@ -6017,15 +6017,19 @@ void CDarkSendPool::SetNull(bool clearEverything){
     lastEntryAccepted = 0;
     countEntriesAccepted = 0;
 
+    sessionUsers = 0;
+    sessionAmount = 0;
+    sessionFoundMasternode = false;
+    sessionTries = 0;
 
     if(clearEverything){
         myEntries.clear();
 
-        sessionID = 1 + (rand() % 999999);
-        sessionUsers = 0;
-        sessionAmount = 0;
-        sessionFoundMasternode = false;
-        sessionTries = 0;
+        if(fMasterNode){
+            sessionID = 1 + (rand() % 999999);
+        } else {
+            sessionID = 0;
+        }
     }
 }
 
@@ -6150,12 +6154,12 @@ void CDarkSendPool::Check()
     }
 
     if((state == POOL_STATUS_ERROR || state == POOL_STATUS_SUCCESS) && GetTimeMillis()-lastTimeChanged >= 10000) {
-        //bool runAgain = state == POOL_STATUS_SUCCESS;
+        bool runAgain = state == POOL_STATUS_SUCCESS;
         printf("CDarkSendPool::Check() -- RESETTING MESSAGE \n");
         SetNull(true);
         if(fMasterNode) RelayDarkSendStatus(darkSendPool.sessionID, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);    
         UnlockCoins();
-        //if(runAgain) DoAutomaticDenominating();
+        if(runAgain) DoAutomaticDenominating();
     }
 }
 
@@ -7428,6 +7432,7 @@ bool CDarkSendPool::IsCompatibleWithEntries(std::vector<CTxOut> vout)
 
 bool CDarkSendPool::IsCompatibleWithSession(int64 nAmount)
 {
+    printf("CDarkSendPool::IsCompatibleWithSession - %"PRI64d" sessionAmount %d sessionUsers %d\n", sessionAmount, sessionUsers);
     if(sessionAmount == 0) {
         sessionAmount = nAmount;
         sessionUsers++;
@@ -7436,6 +7441,7 @@ bool CDarkSendPool::IsCompatibleWithSession(int64 nAmount)
     }
 
     if(state != POOL_STATUS_ACCEPTING_ENTRIES || sessionUsers >= POOL_MAX_TRANSACTIONS){
+        printf("CDarkSendPool::IsCompatibleWithSession - incompatible mode, return false\n");
         return false;
     }
 
@@ -7467,6 +7473,7 @@ bool CDarkSendPool::IsCompatibleWithSession(int64 nAmount)
     }
 
     if(GetDenominations(vout1) != GetDenominations(vout2)) return false;
+    printf("CDarkSendPool::IsCompatibleWithSession - compatible\n");
 
     sessionUsers++;
     lastTimeChanged = GetTimeMillis();
