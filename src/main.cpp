@@ -7102,7 +7102,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
     // initial phase, find a masternode
     if(!sessionFoundMasternode){
         if(sessionTries++ < 10){
-            int i = GetMasternodeByRank(1); //rand() % 1+(std::min(20, (int)darkSendMasterNodes.size())));
+            int i = GetMasternodeByRank(sessionTries); //rand() % 1+(std::min(20, (int)darkSendMasterNodes.size())));
             if(i == -1) {
                 printf("DoAutomaticDenominating : Error finding a masternode\n");
                 return false;
