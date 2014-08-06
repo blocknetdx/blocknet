@@ -2642,6 +2642,11 @@ public:
         isCapableMasterNode = MASTERNODE_NOT_PROCESSED;
         masternodePortOpen = 0;
         unitTest = false;
+        sessionUsers = 0;
+        sessionAmount = 0;
+        sessionFoundMasternode = false;
+        sessionTries = 0;
+
 
         SetCollateralAddress(strAddress);
         SetNull();

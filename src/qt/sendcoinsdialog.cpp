@@ -29,7 +29,6 @@ SendCoinsDialog::SendCoinsDialog(QWidget *parent) :
 #ifdef Q_OS_MAC // Icons on push buttons are very uncommon on Mac
     ui->addButton->setIcon(QIcon());
     ui->clearButton->setIcon(QIcon());
-    ui->darkSendStatus->setIcon(QIcon());
     ui->sendButton->setIcon(QIcon());
 #endif
 #if QT_VERSION >= 0x040700
