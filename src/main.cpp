@@ -7102,6 +7102,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
         BOOST_FOREACH(CDarksendQueue dsq, vecDarksendQueue){
             CService addr;
             if(!dsq.GetAddress(addr)) continue;
+            dsq.time = 0; //remove node
 
             if(ConnectNode((CAddress)addr, NULL, true)){
                 submittedToMasternode = addr;
