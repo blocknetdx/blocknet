@@ -985,7 +985,7 @@ int64 CWallet::GetAnonymizedBalance() const
     return nTotal;
 }
 
-int64 CWallet::GetNonDenominatedBalance() const
+int64 CWallet::GetDenominatedBalance(bool onlyDenom) const
 {
     int64 nTotal = 0;
     {
@@ -1000,7 +1000,8 @@ int64 CWallet::GetNonDenominatedBalance() const
                         if(pcoin->vout[i].nValue == d)
                             isDenom = true;
 
-                if(!isDenom) nTotal += pcoin->GetAvailableCredit();
+                // if onlyDenom and isdenom, or not onlyDenom and not isDenom
+                if(onlyDenom == isDenom) nTotal += pcoin->GetAvailableCredit();
             }
         }
     }
@@ -1086,35 +1087,6 @@ void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const
     }
 }
 
-// populate vCoins with vector of spendable COutputs
-void CWallet::AvailableCoins2(vector<COutput>& vCoins, bool fOnlyConfirmed) const
-{
-    vCoins.clear();
-
-    {
-        LOCK(cs_wallet);
-        for (map<uint256, CWalletTx>::const_iterator it = mapWallet.begin(); it != mapWallet.end(); ++it)
-        {
-            const CWalletTx* pcoin = &(*it).second;
-
-            if (!pcoin->IsFinal())
-                continue;
-
-            if (fOnlyConfirmed && !pcoin->IsConfirmed())
-                continue;
-
-            if (pcoin->IsCoinBase() && pcoin->GetBlocksToMaturity() > 0)
-                continue;
-
-            for (unsigned int i = 0; i < pcoin->vout.size(); i++) {
-                if (!(pcoin->IsSpent(i)) && IsMine(pcoin->vout[i]) &&
-                    !IsLockedCoin((*it).first, i) && pcoin->vout[i].nValue >= nMinimumInputValue) 
-                        vCoins.push_back(COutput(pcoin, i, pcoin->GetDepthInMainChain()));
-            }
-        }
-    }
-}
-
 static void ApproximateBestSubset(vector<pair<int64, pair<const CWalletTx*,unsigned int> > >vValue, int64 nTotalLower, int64 nTargetValue,
                                   vector<char>& vfBest, int64& nBest, int iterations = 1000)
 {
@@ -1162,16 +1134,16 @@ static void ApproximateBestSubset(vector<pair<int64, pair<const CWalletTx*,unsig
 }
 
 /* select coins with 1 unspent output */
-bool CWallet::SelectCoinsExactOutput(int64 nTargetValue, CTxIn& vin, int64& nValueRet, CScript& pubScript, bool confirmed) const
+bool CWallet::SelectCoinsMasternode(CTxIn& vin, int64& nValueRet, CScript& pubScript) const
 {
+    CCoinControl *coinControl=NULL;
     vector<COutput> vCoins;
-    AvailableCoins2(vCoins, confirmed);
+    AvailableCoins(vCoins, true, coinControl, ALL_COINS);
     
-    //printf("has coinControl\n");
     BOOST_FOREACH(const COutput& out, vCoins)
     {
-        //printf("Checking input %"PRI64d" > %"PRI64d"\n", out.tx->vout[out.i].nValue, nTargetValue);
-        if(out.tx->vout[out.i].nValue == nTargetValue){ //exactly
+        printf("Checking input %"PRI64d" > %d %d\n", out.tx->vout[out.i].nValue, out.tx->vout[out.i].nValue >= 1000*COIN, out.tx->vout[out.i].nValue % 1000*COIN == 0);
+        if(out.tx->vout[out.i].nValue == 1000*COIN){ //exactly
             vin = CTxIn(out.tx->GetHash(),out.i);
             pubScript = out.tx->vout[out.i].scriptPubKey; // the inputs PubKey
             nValueRet = out.tx->vout[out.i].nValue;
@@ -1299,22 +1271,12 @@ bool CWallet::SelectCoins(int64 nTargetValue, set<pair<const CWalletTx*,unsigned
         return (nValueRet >= nTargetValue);
     }
 
-    BOOST_FOREACH(const COutput& out, vCoins)
-    {
-        nValueRet += out.tx->vout[out.i].nValue;
-        setCoinsRet.insert(make_pair(out.tx, out.i));
-        printf(" out - %s\n", out.ToString().c_str());
-    }
-    printf("total %"PRI64d"\n", nValueRet);
-    return (nValueRet >= nTargetValue);
-
-
     return (SelectCoinsMinConf(nTargetValue, 1, 6, vCoins, setCoinsRet, nValueRet) ||
             SelectCoinsMinConf(nTargetValue, 1, 1, vCoins, setCoinsRet, nValueRet) ||
             SelectCoinsMinConf(nTargetValue, 0, 1, vCoins, setCoinsRet, nValueRet));
 }
 
-bool CWallet::SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxIn>& setCoinsRet, int64& nValueRet, int nDarksendRoundsMin, int nDarksendRoundsMax) const 
+bool CWallet::SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxIn>& setCoinsRet, int64& nValueRet, int nDarksendRoundsMin, int nDarksendRoundsMax, int64 nOnlyDenominationAmount) const 
 {
     CCoinControl *coinControl=NULL;
 
@@ -1330,6 +1292,7 @@ bool CWallet::SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxI
         //printf(" vin nValue %"PRI64d" \n", out.tx->vout[out.i].nValue);
         if(out.tx->vout[out.i].nValue <= DARKSEND_COLLATERAL*5) continue; //these are made for collateral/fees/etc
         if(fMasterNode && out.tx->vout[out.i].nValue == 1000*COIN) continue; //masternode input
+        if(nOnlyDenominationAmount != 0 && out.tx->vout[out.i].nValue != nOnlyDenominationAmount) continue; //only get one type of denom
 
         if(nValueRet + out.tx->vout[out.i].nValue <= nValueMax){
             CTxIn vin = CTxIn(out.tx->GetHash(),out.i);
@@ -1403,24 +1366,6 @@ bool CWallet::SelectCoinsWithoutDenomination(int64 nTargetValue, set<pair<const 
         setCoinsRet.insert(make_pair(out.tx, out.i));
     }
     return (nValueRet >= nTargetValue);
-}
-
-bool CWallet::SelectCoinsMoreThanOutput(int64 nTargetValue, CTxIn& vin, int64& nValueRet, bool confirmed) const
-{
-    vector<COutput> vCoins;
-    AvailableCoins2(vCoins, confirmed);
-    
-    BOOST_FOREACH(const COutput& out, vCoins)
-    {
-        if(out.tx->vout[out.i].nValue >= nTargetValue){ //more than min
-            CTxIn vin = CTxIn(out.tx->GetHash(),out.i);
-            vin.prevPubKey = out.tx->vout[out.i].scriptPubKey; // the inputs PubKey
-            nValueRet = out.tx->vout[out.i].nValue;
-            return true;
-        }
-    }
-
-    return false;
 }
 
 bool CWallet::CreateTransaction(std::vector<pair<CScript, int64> >& vecSend,

@@ -4015,7 +4015,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
             if(!missingTx){
                 int64 nFees = nValueIn-nValueOut;
-                int64 txMinFee = tx.GetMinFee(1000, true, GMF_RELAY);
+                int64 txMinFee = std::max((int64)0.001*COIN, tx.GetMinFee(1000, true, GMF_RELAY));
                 printf("dsi -- min fee %"PRI64d"\n", txMinFee);
                 printf("dsi -- fees %"PRI64d"-%"PRI64d"=%"PRI64d" \ntx:%s\n", nValueIn, nValueOut, nFees, tx.ToString().c_str());
                 if (nFees < txMinFee) {
@@ -6395,17 +6395,17 @@ bool CDarkSendPool::SignaturesComplete(){
 }
 
 void CDarkSendPool::SendMoney(const CTransaction& collateral, std::vector<CTxIn>& vin, std::vector<CTxOut>& vout, int64& fee, int64 amount){
-    
+    if(!sessionFoundMasternode){
+        printf("CDarkSendPool::SendMoney() - No masternode has been selected yet.\n");
+        return;
+    }
+
     BOOST_FOREACH(CTxIn in, collateral.vin)
         lockedCoins.push_back(in);
     
     BOOST_FOREACH(CTxIn in, vin)
         lockedCoins.push_back(in);
 
-    int i = darkSendPool.GetCurrentMasterNode(1);
-    if(i < 0) return;
-
-    submittedToMasternode = darkSendMasterNodes[i].addr;
 
 /*    BOOST_FOREACH(CTxOut& out, vout)
         out.scriptPubKey.insert(0, OP_DARKSEND);
@@ -6418,12 +6418,6 @@ void CDarkSendPool::SendMoney(const CTransaction& collateral, std::vector<CTxIn>
     printf("CDarkSendPool::SendMoney() - Added transaction to pool.\n");
 
     ClearLastMessage();
-
-    if(!IsConnectedToMasterNode()){
-        if(!ConnectToBestMasterNode()){
-            return;
-        }
-    }
 
     // store our entry for later use
     CDarkSendEntry e;
@@ -6463,7 +6457,7 @@ bool CDarkSendPool::StatusUpdate(int newState, int newEntriesCount, int newAccep
         if(newAccepted == 1){
             printf("CDarkSendPool::StatusUpdate - entry accepted! \n");
             sessionFoundMasternode = true;
-            DoAutomaticDenominating();
+            if(darkSendPool.GetMyTransactionCount() == 0) DoAutomaticDenominating();
         } else if (newAccepted == 0 && sessionID == 0 && !sessionFoundMasternode) {
             printf("CDarkSendPool::StatusUpdate - entry not accepted by masternode \n");
             DoAutomaticDenominating();
@@ -6545,37 +6539,15 @@ bool CDarkSendPool::SignFinalTransaction(CTransaction& finalTransactionNew, CNod
 }
 
 
-bool CDarkSendPool::IsConnectedToMasterNode(){
+void CDarkSendPool::ProcessMasternodeConnections(){
     LOCK(cs_vNodes);
     
-    int i = darkSendPool.GetCurrentMasterNode(1);
-    if(i < 0) return false;
-
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
-        if(darkSendMasterNodes[i].addr == pnode->addr)
-            return true;
-
         if(darkSendPool.GetMyTransactionCount() == 0 && pnode->fDarkSendMaster){
             printf("Closing masternode connection %s \n", pnode->addr.ToString().c_str());
             pnode->CloseSocketDisconnect();
         }
-    }
-
-    return false;
-}
-
-void CDarkSendPool::DisconnectMasterNode(){
-    printf("CDarkSendPool::DisconnectMasterNode\n");
-    LOCK(cs_vNodes);
-    BOOST_FOREACH(CNode* pnode, vNodes)
-    {
-        if(!pnode->fDarkSendMaster)
-            continue;
-
-        printf("CDarkSendPool::DisconnectMasterNode -- disabled masternode\n");
-        pnode->fDarkSendMaster = false;
-        masterNodeAddr = "";
     }
 }
 
@@ -6623,7 +6595,7 @@ bool CDarkSendPool::GetMasterNodeVin(CTxIn& vin, CPubKey& pubkey, CKey& secretKe
     CScript pubScript;
 
     // try once before we try to denominate
-    if (!pwalletMain->SelectCoinsExactOutput(1000*COIN, vin, nValueIn, pubScript, true))
+    if (!pwalletMain->SelectCoinsMasternode(vin, nValueIn, pubScript))
     {
         if(fDebug) printf("CDarkSendPool::GetMasterNodeVin - I'm not a capable masternode\n");
         return false;
@@ -6645,24 +6617,6 @@ bool CDarkSendPool::GetMasterNodeVin(CTxIn& vin, CPubKey& pubkey, CKey& secretKe
     }
 
     pubkey = secretKey.GetPubKey();
-    return true;
-}
-
-bool CDarkSendPool::SubscribeToMasterNode()
-{
-    if(IsConnectedToMasterNode()) return false;
-
-    ConnectToBestMasterNode();
-
-    LOCK(cs_vNodes);
-    BOOST_FOREACH(CNode* pnode, vNodes)
-    {
-        if(!pnode->fDarkSendMaster)
-            continue;
-
-        pnode->PushMessage("dssub");
-    }
-
     return true;
 }
 
@@ -6935,6 +6889,7 @@ void CDarkSendPool::NewBlock()
     if(!fMasterNode){
         //denominate all non-denominated inputs every 25 minutes.
         if(pindexBest->nHeight % 10 == 0) UnlockCoins();
+        ProcessMasternodeConnections();
         DoAutomaticDenominating();
     }
 
@@ -7045,6 +7000,8 @@ int CDarkSendPool::GetCurrentMasterNode(int mod, int64 nBlockHeight)
 
 bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
 {
+    if(fMasterNode) return false;
+
     if(fDisableDarksend) {
         printf("CDarkSendPool::DoAutomaticDenominating - Darksend is disabled\n");
         return false; 
@@ -7066,9 +7023,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
         printf("DoAutomaticDenominating : No funds detected in need of denominating \n");
         return false;
     }
-    if(balanceNeedsAnonymized > nValueMax){
-        balanceNeedsAnonymized = nValueMax;
-    }
+    if(balanceNeedsAnonymized > nValueMax) balanceNeedsAnonymized = nValueMax;
 
     if (!pwalletMain->SelectCoinsDark(nValueMin, nValueMax, vCoins, nValueIn, -2, nDarksendRounds))
     {
@@ -7148,7 +7103,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
 
 bool CDarkSendPool::SplitUpMoney(bool justCollateral)
 {
-    int64 nTotalBalance = pwalletMain->GetNonDenominatedBalance();
+    int64 nTotalBalance = pwalletMain->GetDenominatedBalance(false);
     if(justCollateral && nTotalBalance > 2*COIN) nTotalBalance = 2*COIN;
     int64 nTotalOut = 0;
 
@@ -7466,7 +7421,7 @@ bool CDarkSendPool::IsCompatibleWithSession(int64 nAmount)
         return false;
     }
 
-    CScript e = CScript();
+    /*CScript e = CScript();
     int64 nValueLeft = nAmount;
 
     std::vector<CTxOut> vout1;
@@ -7494,7 +7449,7 @@ bool CDarkSendPool::IsCompatibleWithSession(int64 nAmount)
     }
 
     if(GetDenominations(vout1) != GetDenominations(vout2)) return false;
-    printf("CDarkSendPool::IsCompatibleWithSession - compatible\n");
+    printf("CDarkSendPool::IsCompatibleWithSession - compatible\n");*/
 
     sessionUsers++;
     lastTimeChanged = GetTimeMillis();

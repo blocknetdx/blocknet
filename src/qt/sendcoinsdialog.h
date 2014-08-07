@@ -52,6 +52,7 @@ private:
     bool fNewRecipientAllowed;
     int showingDarkSendMessage;
     int darksendActionCheck;
+    bool boolCheckedBalance;
 
 private slots:
     void on_sendButton_clicked();

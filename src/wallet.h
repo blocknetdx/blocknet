@@ -87,13 +87,12 @@ private:
 
 public:
     bool SelectCoins(int64 nTargetValue, std::set<std::pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64& nValueRet, const CCoinControl *coinControl=NULL, AvailableCoinsType coin_type=ALL_COINS) const;
-    bool SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxIn>& setCoinsRet, int64& nValueRet, int nDarksendRoundsMin, int nDarksendRoundsMax) const; 
+    bool SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxIn>& setCoinsRet, int64& nValueRet, int nDarksendRoundsMin, int nDarksendRoundsMax, int64 nOnlyDenominationAmount=0) const; 
     bool SelectCoinsDarkDenominated(int64 nTargetValue, std::vector<CTxIn>& setCoinsRet, int64& nValueRet) const;
-    bool SelectCoinsExactOutput(int64 nTargetValue, CTxIn& vin, int64& nValueRet, CScript& pubScript, bool confirmed) const;
+    bool SelectCoinsMasternode(CTxIn& vin, int64& nValueRet, CScript& pubScript) const;
 
     bool SelectCoinsCollateral(std::vector<CTxIn>& setCoinsRet, int64& nValueRet) const ;
     bool SelectCoinsWithoutDenomination(int64 nTargetValue, std::set<std::pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64& nValueRet) const;
-    bool SelectCoinsMoreThanOutput(int64 nTargetValue, CTxIn& vin, int64& nValueRet, bool confirmed) const;
     
     mutable CCriticalSection cs_wallet;
 
@@ -141,7 +140,6 @@ public:
     bool CanSupportFeature(enum WalletFeature wf) { return nWalletMaxVersion >= wf; }
     std::string Denominate(CWalletTx& wtxDenominate);
     void AvailableCoins(std::vector<COutput>& vCoins, bool fOnlyConfirmed=true, const CCoinControl *coinControl=NULL, AvailableCoinsType coin_type=ALL_COINS) const;
-    void AvailableCoins2(std::vector<COutput>& vCoins, bool fOnlyConfirmed) const;
     bool SelectCoinsMinConf(int64 nTargetValue, int nConfMine, int nConfTheirs, std::vector<COutput> vCoins, std::set<std::pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64& nValueRet) const;
     bool IsLockedCoin(uint256 hash, unsigned int n) const;
     void LockCoin(COutPoint& output);
@@ -194,7 +192,7 @@ public:
     void ResendWalletTransactions();
     int64 GetBalance() const;
     int64 GetAnonymizedBalance() const;
-    int64 GetNonDenominatedBalance() const;
+    int64 GetDenominatedBalance(bool onlyDenom=true) const;
     int64 GetUnconfirmedBalance() const;
     int64 GetImmatureBalance() const;
     bool CreateTransaction(std::vector<std::pair<CScript, int64> >& vecSend,

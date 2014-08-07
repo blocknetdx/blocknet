@@ -2583,7 +2583,7 @@ static const int64 DARKSEND_FEE = 0.001*COIN;
 class CDarkSendPool
 {
 public:
-    static const int MIN_PEER_PROTO_VERSION = 70028;
+    static const int MIN_PEER_PROTO_VERSION = 70029;
 
     std::vector<CDarkSendEntry> myEntries;
     std::vector<CDarkSendEntry> entries;
@@ -2625,7 +2625,6 @@ public:
     bool sessionFoundMasternode; //If we've found a compatible masternode
     int sessionTries;
 
-
     CDarkSendPool()
     {
         //printf("CDarkSendPool::INIT()\n");        
@@ -2642,11 +2641,6 @@ public:
         isCapableMasterNode = MASTERNODE_NOT_PROCESSED;
         masternodePortOpen = 0;
         unitTest = false;
-        sessionUsers = 0;
-        sessionAmount = 0;
-        sessionFoundMasternode = false;
-        sessionTries = 0;
-
 
         SetCollateralAddress(strAddress);
         SetNull();
@@ -2738,10 +2732,8 @@ public:
 
     bool SignFinalTransaction(CTransaction& finalTransactionNew, CNode* node);
 
-    bool IsConnectedToMasterNode();
-    void DisconnectMasterNode();
+    void ProcessMasternodeConnections();
     bool ConnectToBestMasterNode(int depth=0);
-    bool SubscribeToMasterNode();
 
     bool GetMasterNodeVin(CTxIn& vin, CPubKey& pubkey, CKey& secretKey);
     void RelayDarkDeclareWinner();
