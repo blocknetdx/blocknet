@@ -3957,12 +3957,14 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         CDarksendQueue dsq;
         vRecv >> dsq;
 
-        //need to sign the vin to check this is real
+        CService addr;
+        if(!dsq.GetAddress(addr)) return false;
 
         BOOST_FOREACH(CDarksendQueue q, vecDarksendQueue){
-            if(q.mnAddr == dsq.mnAddr) return true;
+            if(q.vin == dsq.vin) return true;
         }
 
+        printf("new darksend queue object - %s\n", addr.ToString().c_str());
         dsq.Relay();
         vecDarksendQueue.push_back(dsq);
 
@@ -6205,11 +6207,14 @@ void CDarkSendPool::CheckTimeout(){
     }
 
     int c = 0;
-    vector<CDarksendQueue>::iterator i = vecDarksendQueue.begin();
-    while (i != vecDarksendQueue.end())
-    {
-        printf("CDarkSendPool::CheckTimeout() : REMOVING EXPIRED QUEUE ENTRY - %s\n", (*i).mnAddr.ToString().c_str());
-        if((*i).IsExpired()) vecDarksendQueue.erase(i++);
+    vector<CDarksendQueue>::iterator it;
+    for(it=vecDarksendQueue.begin();it<vecDarksendQueue.end();it++){
+        if((*it).IsExpired()){
+            printf("CDarkSendPool::CheckTimeout() : REMOVING EXPIRED QUEUE ENTRY - %d\n", c);
+            vecDarksendQueue.erase(it);
+            break;
+        }
+        c++;
     }
 
     if(state == POOL_STATUS_ACCEPTING_ENTRIES){
@@ -6361,6 +6366,16 @@ bool CDarkSendPool::AddEntry(const std::vector<CTxIn>& newInput, const int64& nA
 
         printf("CDarkSendPool::AddEntry -- adding %s\n", newInput[0].ToString().c_str());
         error = "";
+
+        if(entries.size() == 1) {
+            //broadcast that I'm accepting entries
+            CDarksendQueue dsq;
+            dsq.nAmount = nAmount;
+            dsq.vin = vinMasterNode;
+            dsq.time = GetTime();
+            dsq.Relay();
+        }
+
         return true;
     }
 
@@ -6916,7 +6931,6 @@ void CDarkSendPool::NewBlock()
         //denominate all non-denominated inputs every 25 minutes.
         if(pindexBest->nHeight % 10 == 0) UnlockCoins();
         ProcessMasternodeConnections();
-        DoAutomaticDenominating();
     }
 
 }
@@ -7084,12 +7098,33 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
 
     // initial phase, find a masternode
     if(!sessionFoundMasternode){
-        if(sessionTries++ < 10){
-            int i = GetMasternodeByRank(sessionTries); //rand() % 1+(std::min(20, (int)darkSendMasterNodes.size())));
-            if(i == -1) {
-                printf("DoAutomaticDenominating : Error finding a masternode\n");
-                return false;
+        // if we have any pending merges
+        BOOST_FOREACH(CDarksendQueue dsq, vecDarksendQueue){
+            CService addr;
+            if(!dsq.GetAddress(addr)) continue;
+
+            if(ConnectNode((CAddress)addr, NULL, true)){
+                submittedToMasternode = addr;
+                LOCK(cs_vNodes);
+                BOOST_FOREACH(CNode* pnode, vNodes)
+                {
+                    if(submittedToMasternode != pnode->addr) continue;
+                    pnode->PushMessage("dsa", balanceNeedsAnonymized);
+                    printf("DoAutomaticDenominating --- connected (from queue), sending dsa for %"PRI64d"\n", balanceNeedsAnonymized);
+                    return true;
+                }
+            } else {
+                printf("DoAutomaticDenominating --- error connecting \n");
+                return DoAutomaticDenominating();
             }
+        }
+
+        // otherwise, try one randomly
+        if(sessionTries++ < 10){
+            //pick a random masternode to use
+            int max_value = darkSendMasterNodes.size();
+            if(max_value <= 0) return false;
+            int i = (rand() % max_value);
 
             lastTimeChanged = GetTimeMillis();
             printf("DoAutomaticDenominating -- attempt %d connection to masternode %s\n", sessionTries, darkSendMasterNodes[i].addr.ToString().c_str());
@@ -7577,6 +7612,11 @@ void ThreadCheckDarkSendPool()
         if(c == MASTERNODE_PING_SECONDS){
             darkSendPool.RegisterAsMasterNode(false);
             c = 0;
+        }
+
+        //auto denom every 30 seconds
+        if(c % 30 == 0){
+            darkSendPool.DoAutomaticDenominating();
         }
         c++;
     }

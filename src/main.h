@@ -2571,28 +2571,41 @@ class CDarksendQueue
 {
 public:
     int64 nAmount;
-    CService mnAddr;
+    CTxIn vin;
     int64 time;
 
     CDarksendQueue()
     {
         nAmount = 0;
-        mnAddr = CService();
+        vin = CTxIn();
         time = 0;   
     }
 
     IMPLEMENT_SERIALIZE
     (
         READWRITE(nAmount);
-        READWRITE(mnAddr);
+        READWRITE(vin);
         READWRITE(time);
     )
 
+    bool GetAddress(CService &addr)
+    {
+        BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
+            if(mn.vin == vin){
+                addr = mn.addr;
+                return true;
+            }
+        }
+        return false;
+    }
+
     void Relay()
     {
+        printf("Relay\n");
         LOCK(cs_vNodes);
         BOOST_FOREACH(CNode* pnode, vNodes)
         {
+            printf("Relay dsq to peer\n");
             pnode->PushMessage("dsq", (*this));
         }   
     }
