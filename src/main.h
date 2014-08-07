@@ -2563,7 +2563,43 @@ public:
 
     bool IsExpired()
     {
-        return (GetTime() - addedTime) > 15;// 15 seconds
+        return (GetTime() - addedTime) > 60;// 60 seconds
+    }
+};
+
+class CDarksendQueue
+{
+public:
+    int64 nAmount;
+    CService mnAddr;
+    int64 time;
+
+    CDarksendQueue()
+    {
+        nAmount = 0;
+        mnAddr = CService();
+        time = 0;   
+    }
+
+    IMPLEMENT_SERIALIZE
+    (
+        READWRITE(nAmount);
+        READWRITE(mnAddr);
+        READWRITE(time);
+    )
+
+    void Relay()
+    {
+        LOCK(cs_vNodes);
+        BOOST_FOREACH(CNode* pnode, vNodes)
+        {
+            pnode->PushMessage("dsq", (*this));
+        }   
+    }
+
+    bool IsExpired()
+    {
+        return (GetTime() - time) > 60;// 60 seconds
     }
 };
 

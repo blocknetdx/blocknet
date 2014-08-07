@@ -66,6 +66,7 @@ std::vector<pair<int64, pair<CTxIn, int> > > vecBlockVotes;
 std::vector<pair<int64, CTxIn> > vecMasternodesVoted;
 int64 enforceMasternodePaymentsTime = 4085657524;
 std::vector<CTxIn> vecMasternodeAskedFor;
+std::vector<CDarksendQueue> vecDarksendQueue;
 std::string strUseMasternode = "";
 
 
@@ -3952,6 +3953,18 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             pfrom->PushMessage("dssu", darkSendPool.sessionID, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), accepted, error);
             return true;
         }
+    } else if (strCommand == "dsq") { //DarkSend Queue
+        CDarksendQueue dsq;
+        vRecv >> dsq;
+
+        //need to sign the vin to check this is real
+
+        BOOST_FOREACH(CDarksendQueue q, vecDarksendQueue){
+            if(q.mnAddr == dsq.mnAddr) return true;
+        }
+
+        dsq.Relay();
+        vecDarksendQueue.push_back(dsq);
 
     } else if (strCommand == "dsi") { //DarkSend vIn
         if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
@@ -6191,17 +6204,25 @@ void CDarkSendPool::CheckTimeout(){
         }        
     }
 
+    int c = 0;
+    vector<CDarksendQueue>::iterator i = vecDarksendQueue.begin();
+    while (i != vecDarksendQueue.end())
+    {
+        printf("CDarkSendPool::CheckTimeout() : REMOVING EXPIRED QUEUE ENTRY - %s\n", (*i).mnAddr.ToString().c_str());
+        if((*i).IsExpired()) vecDarksendQueue.erase(i++);
+    }
+
     if(state == POOL_STATUS_ACCEPTING_ENTRIES){
-        int c = 0;
+        c = 0;
 
         std::vector<CDarkSendEntry> *vec = &myEntries;
         if(fMasterNode) vec = &entries; 
 
-        vector<CDarkSendEntry>::iterator it;
-        for(it=vec->begin();it<vec->end();it++){
-            if((*it).IsExpired()){
+        vector<CDarkSendEntry>::iterator it2;
+        for(it2=vec->begin();it2<vec->end();it2++){
+            if((*it2).IsExpired()){
                 printf("CDarkSendPool::CheckTimeout() : REMOVING EXPIRED ENTRY - %d\n", c);
-                vec->erase(it);
+                vec->erase(it2);
                 if(fMasterNode){
                     RelayDarkSendStatus(darkSendPool.sessionID, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);   
                 }
@@ -6300,6 +6321,7 @@ bool CDarkSendPool::AddEntry(const std::vector<CTxIn>& newInput, const int64& nA
         if (in.prevout.IsNull() || nAmount < 0) {
             if(fDebug) printf ("CDarkSendPool::AddEntry - input not valid!\n");
             error = "input not valid";
+            sessionUsers--;
             return false;
         }
     }
@@ -6307,12 +6329,14 @@ bool CDarkSendPool::AddEntry(const std::vector<CTxIn>& newInput, const int64& nA
     if (!IsCollateralValid(txCollateral)){
         if(fDebug) printf ("CDarkSendPool::AddEntry - collateral not valid!\n");
         error = "collateral not valid";
+        sessionUsers--;
         return false;
     }
 
     if(entries.size() >= POOL_MAX_TRANSACTIONS){
         if(fDebug) printf ("CDarkSendPool::AddEntry - entries is full!\n");   
         error = "entries is full";
+        sessionUsers--;
         return false;
     }
 
@@ -6323,6 +6347,7 @@ bool CDarkSendPool::AddEntry(const std::vector<CTxIn>& newInput, const int64& nA
                 if(s.vin == in) {
                     if(fDebug) printf ("CDarkSendPool::AddEntry - found in vin\n"); 
                     error = "already have that vin";
+                    sessionUsers--;
                     return false;
                 }
             }
@@ -6341,6 +6366,7 @@ bool CDarkSendPool::AddEntry(const std::vector<CTxIn>& newInput, const int64& nA
 
     if(fDebug) printf ("CDarkSendPool::AddEntry - can't accept new entry, wrong state!\n");
     error = "wrong state";
+    sessionUsers--;
     return false;
 }
 
@@ -7409,6 +7435,9 @@ bool CDarkSendPool::IsCompatibleWithEntries(std::vector<CTxOut> vout)
 bool CDarkSendPool::IsCompatibleWithSession(int64 nAmount)
 {
     printf("CDarkSendPool::IsCompatibleWithSession - sessionAmount %"PRI64d" sessionUsers %d\n", sessionAmount, sessionUsers);
+
+    if(sessionUsers < 0) sessionUsers = 0;
+    
     if(sessionAmount == 0) {
         sessionAmount = nAmount;
         sessionUsers++;
