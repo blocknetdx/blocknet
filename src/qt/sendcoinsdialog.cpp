@@ -18,6 +18,8 @@
 #include <QTextDocument>
 #include <QScrollBar>
 #include <QClipboard>
+#include <iostream>
+#include <fstream>  
 
 SendCoinsDialog::SendCoinsDialog(QWidget *parent) :
     QDialog(parent),
@@ -264,7 +266,7 @@ void SendCoinsDialog::darkSendStatus()
     if(fDisableDarksend) return;
 
     if(!boolCheckedBalance){
-        boolCheckedBalance = true
+        boolCheckedBalance = true;
      
         bool alerted=false;
         //check if file exists
@@ -276,14 +278,18 @@ void SendCoinsDialog::darkSendStatus()
             alerted = true;
         }
      
-
-        if(!alerted){
-            if(model->getBalance()+model->getUnconfirmedBalance() > 5000*COIN){
+        if(model->getBalance()+model->getUnconfirmedBalance() > 5000*COIN){
+            if(!alerted){
                 QMessageBox::warning(this, tr("Darksend Disabled"),
                     tr("Darksend has been disabled. It is not designed to run with more than 5000DRK in a wallet, to use darksend please make a new wallet with less than that amount."),
                     QMessageBox::Ok, QMessageBox::Ok);
-                fDisableDarksend = true;
+
+                std::ofstream outfile (pathDebug.string().c_str());
+                outfile << "alerted" << std::endl;
+                outfile.close();
             }
+            
+            fDisableDarksend = true;
         }
     }
 
