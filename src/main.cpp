@@ -6501,6 +6501,7 @@ bool CDarkSendPool::StatusUpdate(int newState, int newEntriesCount, int newAccep
             if(darkSendPool.GetMyTransactionCount() == 0) DoAutomaticDenominating();
         } else if (newAccepted == 0 && sessionID == 0 && !sessionFoundMasternode) {
             printf("CDarkSendPool::StatusUpdate - entry not accepted by masternode \n");
+            UnlockCoins();
             DoAutomaticDenominating();
         }
         if(sessionFoundMasternode) return true;
