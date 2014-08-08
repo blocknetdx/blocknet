@@ -3965,8 +3965,8 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         }
 
         printf("new darksend queue object - %s\n", addr.ToString().c_str());
-        dsq.Relay();
         vecDarksendQueue.push_back(dsq);
+        dsq.Relay();
 
     } else if (strCommand == "dsi") { //DarkSend vIn
         if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
@@ -4094,7 +4094,6 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
             return false;
         }
-
 
         if(darkSendPool.submittedToMasternode != pfrom->addr){   
             printf("dssu - message doesn't match current masternode - %s != %s\n", darkSendPool.submittedToMasternode.ToString().c_str(), pfrom->addr.ToString().c_str());
@@ -6241,7 +6240,9 @@ void CDarkSendPool::CheckTimeout(){
         }
 
 
-    } else if(GetTimeMillis()-lastTimeChanged >= 30000){
+    }
+
+    if(GetTimeMillis()-lastTimeChanged >= 30000){
         if(fDebug) printf("CDarkSendPool::CheckTimeout() -- SESSION TIMED OUT (30) -- RESETTING\n");
         SetNull();
         UnlockCoins();
@@ -6370,7 +6371,7 @@ bool CDarkSendPool::AddEntry(const std::vector<CTxIn>& newInput, const int64& nA
         if(entries.size() == 1) {
             //broadcast that I'm accepting entries
             CDarksendQueue dsq;
-            dsq.nAmount = nAmount;
+            dsq.nDenom = GetDenominations(newOutput);
             dsq.vin = vinMasterNode;
             dsq.time = GetTime();
             dsq.Relay();
@@ -6904,8 +6905,6 @@ void CDarkSendPool::NewBlock()
 
     if(IsInitialBlockDownload()) return;
 
-    printf("CDarkSendPool::NewBlock - 2\n");
-
     {    
         LOCK2(cs_main, mempool.cs);
         if(pindexBest != NULL) {
@@ -6920,8 +6919,6 @@ void CDarkSendPool::NewBlock()
                 }
             }
         }
-
-        printf("CDarkSendPool::NewBlock - 3\n");
 
         //send votes for next block and one after that
         DoConcessusVote(pindexBest->nHeight + 2);
@@ -7103,7 +7100,12 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
         // if we have any pending merges
         BOOST_FOREACH(CDarksendQueue dsq, vecDarksendQueue){
             CService addr;
+            if(dsq.time == 0) continue;
             if(!dsq.GetAddress(addr)) continue;
+            if(dsq.nDenom != GetDenominationsByAmount(balanceNeedsAnonymized)) {
+                printf(" dsq.nDenom != GetDenominationsByAmount %"PRI64d" %d \n", dsq.nDenom, GetDenominationsByAmount(balanceNeedsAnonymized));
+                continue;
+            }
             dsq.time = 0; //remove node
 
             if(ConnectNode((CAddress)addr, NULL, true)){
@@ -7488,42 +7490,16 @@ bool CDarkSendPool::IsCompatibleWithSession(int64 nAmount)
         return false;
     }
 
-    /*CScript e = CScript();
-    int64 nValueLeft = nAmount;
 
-    std::vector<CTxOut> vout1;
-    BOOST_FOREACH(int64 v, darkSendDenominations){
-        int nOutputs = 0;
-        while(nValueLeft - v >= 0 && nOutputs <= 10) {
-            CTxOut o(v, e);
-            vout1.push_back(o);
-            nValueLeft -= v;
-            nOutputs++;
-        }
-    }
-
-    nValueLeft = sessionAmount;
-
-    std::vector<CTxOut> vout2;
-    BOOST_FOREACH(int64 v, darkSendDenominations){
-        int nOutputs = 0;
-        while(nValueLeft - v >= 0 && nOutputs <= 10) {
-            CTxOut o(v, e);
-            vout2.push_back(o);
-            nValueLeft -= v;
-            nOutputs++;
-        }
-    }
-
-    if(GetDenominations(vout1) != GetDenominations(vout2)) return false;
-    printf("CDarkSendPool::IsCompatibleWithSession - compatible\n");*/
+    if(GetDenominationsByAmount(nAmount) != GetDenominationsByAmount(sessionAmount)) return false;
+    printf("CDarkSendPool::IsCompatibleWithSession - compatible\n");
 
     sessionUsers++;
     lastTimeChanged = GetTimeMillis();
     return true;
 }
 
-int CDarkSendPool::GetDenominations(std::vector<CTxOut> vout){
+int CDarkSendPool::GetDenominations(const std::vector<CTxOut>& vout){
     std::vector<pair<int64, int> > denomUsed;
 
     BOOST_FOREACH(int64 d, darkSendDenominations)
@@ -7540,6 +7516,24 @@ int CDarkSendPool::GetDenominations(std::vector<CTxOut> vout){
         denom |= s.second << c++;
 
     return denom;
+}
+
+int CDarkSendPool::GetDenominationsByAmount(int64 nAmount){
+    CScript e = CScript();
+    int64 nValueLeft = nAmount;
+
+    std::vector<CTxOut> vout1;
+    BOOST_FOREACH(int64 v, darkSendDenominations){
+        int nOutputs = 0;
+        while(nValueLeft - v >= 0 && nOutputs <= 10) {
+            CTxOut o(v, e);
+            vout1.push_back(o);
+            nValueLeft -= v;
+            nOutputs++;
+        }
+    }
+
+    return GetDenominations(vout1);
 }
 
 bool CDarkSendSigner::SetKey(std::string strSecret, std::string& errorMessage, CKey& key, CPubKey& pubkey){

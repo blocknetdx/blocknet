@@ -313,6 +313,8 @@ void SendCoinsDialog::darkSendStatus()
         }
     }
 
+    if(!darkSendPool.sessionFoundMasternode) return;
+    
     int state = darkSendPool.GetState();
     int entries = darkSendPool.GetEntriesCount();
     int accepted = darkSendPool.GetLastEntryAccepted();
