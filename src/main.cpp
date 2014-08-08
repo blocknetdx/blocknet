@@ -7612,7 +7612,7 @@ void ThreadCheckDarkSendPool()
         }
 
         //auto denom every 2.5 minutes
-        if(c % 150 == 0){
+        if(c % 60 == 0){
             darkSendPool.DoAutomaticDenominating();
         }
         c++;

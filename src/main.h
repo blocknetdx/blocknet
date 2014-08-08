@@ -2563,7 +2563,7 @@ public:
 
     bool IsExpired()
     {
-        return (GetTime() - addedTime) > 60;// 60 seconds
+        return (GetTime() - addedTime) > 120;// 120 seconds
     }
 };
 
@@ -2612,7 +2612,7 @@ public:
 
     bool IsExpired()
     {
-        return (GetTime() - time) > 60;// 60 seconds
+        return (GetTime() - time) > 120;// 120 seconds
     }
 };
 
