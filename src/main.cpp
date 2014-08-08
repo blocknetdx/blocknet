@@ -6228,6 +6228,10 @@ void CDarkSendPool::CheckTimeout(){
             if((*it2).IsExpired()){
                 printf("CDarkSendPool::CheckTimeout() : REMOVING EXPIRED ENTRY - %d\n", c);
                 vec->erase(it2);
+                if(entries.size() == 0 && myEntries.size() == 0){
+                    SetNull(true);
+                    UnlockCoins();
+                }
                 if(fMasterNode){
                     RelayDarkSendStatus(darkSendPool.sessionID, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);   
                 }
@@ -6236,10 +6240,6 @@ void CDarkSendPool::CheckTimeout(){
             c++;
         }
 
-        if(entries.size() == 0 && myEntries.size() == 0){
-            SetNull(true);
-            UnlockCoins();
-        }
 
     } else if(GetTimeMillis()-lastTimeChanged >= 30000){
         if(fDebug) printf("CDarkSendPool::CheckTimeout() -- SESSION TIMED OUT (30) -- RESETTING\n");
@@ -6438,6 +6438,8 @@ bool CDarkSendPool::SignaturesComplete(){
 void CDarkSendPool::SendMoney(const CTransaction& collateral, std::vector<CTxIn>& vin, std::vector<CTxOut>& vout, int64& fee, int64 amount){
     if(!sessionFoundMasternode){
         printf("CDarkSendPool::SendMoney() - No masternode has been selected yet.\n");
+        SetNull(true);
+        UnlockCoins();
         return;
     }
 
@@ -6959,7 +6961,6 @@ void CDarkSendPool::CompletedTransaction(bool error, std::string lastMessageNew)
 
 void CDarkSendPool::ClearLastMessage()
 {
-    SetNull();
     lastMessage = "";
 }
 
@@ -7616,8 +7617,8 @@ void ThreadCheckDarkSendPool()
             c = 0;
         }
 
-        //auto denom every 30 seconds
-        if(c % 30 == 0){
+        //auto denom every 2.5 minutes
+        if(c % 150 == 0){
             darkSendPool.DoAutomaticDenominating();
         }
         c++;
