@@ -6239,10 +6239,17 @@ void CDarkSendPool::CheckTimeout(){
             c++;
         }
 
+        if(GetTimeMillis()-lastTimeChanged >= 120000){
+            lastTimeChanged = GetTimeMillis();
 
-    }
+            sessionUsers = 0;
+            sessionAmount = 0;
+            sessionFoundMasternode = false;
+            sessionTries = 0;            
+        
+        }
 
-    if(GetTimeMillis()-lastTimeChanged >= 30000){
+    } else if(GetTimeMillis()-lastTimeChanged >= 30000){
         if(fDebug) printf("CDarkSendPool::CheckTimeout() -- SESSION TIMED OUT (30) -- RESETTING\n");
         SetNull();
         UnlockCoins();
@@ -6250,6 +6257,7 @@ void CDarkSendPool::CheckTimeout(){
         UpdateState(POOL_STATUS_ERROR);
         lastMessage = "Session timed out (30), please resubmit";
     }
+
 
     if(state == POOL_STATUS_SIGNING && GetTimeMillis()-lastTimeChanged >= 10000 ) {
         if(fDebug) printf("CDarkSendPool::CheckTimeout() -- SESSION TIMED OUT -- RESETTING\n");
