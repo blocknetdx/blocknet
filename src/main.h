@@ -2563,43 +2563,56 @@ public:
 
     bool IsExpired()
     {
-        return (GetTime() - addedTime) > 60;// 60 seconds
+        return (GetTime() - addedTime) > 120;// 120 seconds
     }
 };
 
 class CDarksendQueue
 {
 public:
-    int64 nAmount;
-    CService mnAddr;
+    CTxIn vin;
     int64 time;
+    int nDenom;
 
     CDarksendQueue()
     {
-        nAmount = 0;
-        mnAddr = CService();
+        nDenom = 0;
+        vin = CTxIn();
         time = 0;   
     }
 
     IMPLEMENT_SERIALIZE
     (
-        READWRITE(nAmount);
-        READWRITE(mnAddr);
+        READWRITE(nDenom);
+        READWRITE(vin);
         READWRITE(time);
     )
 
+    bool GetAddress(CService &addr)
+    {
+        BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
+            if(mn.vin == vin){
+                addr = mn.addr;
+                return true;
+            }
+        }
+        return false;
+    }
+
     void Relay()
     {
+        printf("Relay\n");
         LOCK(cs_vNodes);
         BOOST_FOREACH(CNode* pnode, vNodes)
         {
+            printf("Relay dsq to peer\n");
             pnode->PushMessage("dsq", (*this));
         }   
     }
 
     bool IsExpired()
     {
-        return (GetTime() - time) > 60;// 60 seconds
+        return (GetTime() - time) > 120;// 120 seconds
     }
 };
 
@@ -2619,7 +2632,7 @@ static const int64 DARKSEND_FEE = 0.001*COIN;
 class CDarkSendPool
 {
 public:
-    static const int MIN_PEER_PROTO_VERSION = 70029;
+    static const int MIN_PEER_PROTO_VERSION = 70030;
 
     std::vector<CDarkSendEntry> myEntries;
     std::vector<CDarkSendEntry> entries;
@@ -2782,7 +2795,8 @@ public:
     bool DoConcessusVote(int64 nBlockHeight);
     int GetInputDarksendRounds(CTxIn in, int rounds=0);
     bool SplitUpMoney(bool justCollateral=false);
-    int GetDenominations(std::vector<CTxOut> vout);
+    int GetDenominations(const std::vector<CTxOut>& vout);
+    int GetDenominationsByAmount(int64 nAmount);
 };
 
 void ConnectToDarkSendMasterNodeWinner();
