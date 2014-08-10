@@ -969,7 +969,7 @@ int64 CWallet::GetAnonymizedBalance() const
                 for (unsigned int i = 0; i < pcoin->vout.size(); i++) {
                     
                     COutput out = COutput(pcoin, i, pcoin->GetDepthInMainChain());
-                    CTxIn vin = CTxIn(outf.tx->GetHash(), out.i);  
+                    CTxIn vin = CTxIn(out.tx->GetHash(), out.i);  
 
                     if(pcoin->IsSpent(i) || !IsMine(pcoin->vout[i]) || !IsDenominated(vin)) continue;
                     

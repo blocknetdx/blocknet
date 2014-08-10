@@ -7167,7 +7167,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
         }
     }
 
-    std::string strError = pwalletMain->DarkSendDenominate(minRounds);
+    std::string strError = pwalletMain->DarkSendDenominate(minRounds, maxAmount);
     printf("DoAutomaticDenominating : Running darksend denominate. Return '%s'\n", strError.c_str());
     
     if(strError == "") return true;
