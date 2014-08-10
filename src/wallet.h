@@ -203,7 +203,7 @@ public:
     std::string SendMoney(CScript scriptPubKey, int64 nValue, CWalletTx& wtxNew, bool fAskFee=false, AvailableCoinsType coin_type=ALL_COINS);
     std::string SendMoneyToDestination(const CTxDestination &address, int64 nValue, CWalletTx& wtxNew, bool fAskFee=false, AvailableCoinsType coin_type=ALL_COINS);
     std::string DarkSendMoney(const CTxDestination &address, int64 nValue);
-    std::string DarkSendDenominate();
+    std::string DarkSendDenominate(int minRounds, int maxAmount);
 
     bool NewKeyPool();
     bool TopUpKeyPool();

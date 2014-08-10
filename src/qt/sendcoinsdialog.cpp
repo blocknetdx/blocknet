@@ -266,35 +266,6 @@ void SendCoinsDialog::darkSendStatus()
 {
     if(fDisableDarksend) return;
 
-    if(!boolCheckedBalance){
-        boolCheckedBalance = true;
-     
-        bool alerted=false;
-        //check if file exists
-
-        boost::filesystem::path pathDebug = GetDataDir() / ".darksend_disabled";
-        if (FILE *file = fopen(pathDebug.string().c_str(), "r")) {
-            file=file;
-            fclose(file);
-            alerted = true;
-        }
-     
-        if(model->getBalance()+model->getUnconfirmedBalance() > 5000*COIN){
-            if(!alerted){
-                QMessageBox::warning(this, tr("Darksend Disabled"),
-                    tr("Darksend has been disabled. It is not designed to run with more than 5000DRK in a wallet, to use darksend please make a new wallet with less than that amount."),
-                    QMessageBox::Ok, QMessageBox::Ok);
-
-                std::ofstream outfile (pathDebug.string().c_str());
-                outfile << "alerted" << std::endl;
-                outfile.close();
-            }
-            
-            fDisableDarksend = true;
-        }
-    }
-
-
     // check darksend status and unlock if needed
     if(darksendActionCheck % 30 == 0){
         if (model->getEncryptionStatus() != WalletModel::Unencrypted){

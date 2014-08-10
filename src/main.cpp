@@ -7064,6 +7064,15 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
     int64 nValueMin = 0.01*COIN;
     int64 nValueMax = 999*COIN;
     int64 nValueIn = 0;
+    int minRounds = -2;
+    int maxAmount = 1000;
+
+    // if we have more denominated rounds (of any maturity) than the nAnonymizeDarkcoinAmount, we should use use those
+    if(pwalletMain->GetDenominatedBalance(true) >= nAnonymizeDarkcoinAmount*COIN) {
+        minRounds = 0;
+    }
+    //if we're set to less than a thousand, don't submit for than that to the pool
+    if(nAnonymizeDarkcoinAmount < 1000) maxAmount = nAnonymizeDarkcoinAmount;
 
     int64 balanceNeedsAnonymized = pwalletMain->GetBalance() - pwalletMain->GetAnonymizedBalance();
     if(balanceNeedsAnonymized < COIN*1.1){
@@ -7072,13 +7081,13 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
     }
     if(balanceNeedsAnonymized > nValueMax) balanceNeedsAnonymized = nValueMax;
 
-    if (!pwalletMain->SelectCoinsDark(nValueMin, nValueMax, vCoins, nValueIn, -2, nDarksendRounds))
+    if (!pwalletMain->SelectCoinsDark(nValueMin, nValueMax, vCoins, nValueIn, minRounds, nDarksendRounds))
     {
         nValueIn = 0;
         vCoins.clear();
 
         //simply look for non-denominated coins
-        if (pwalletMain->SelectCoinsDark(nValueMax+1, 9999999*COIN, vCoins, nValueIn, -2, nDarksendRounds))
+        if (pwalletMain->SelectCoinsDark(nValueMax+1, 9999999*COIN, vCoins, nValueIn, minRounds, nDarksendRounds))
         {
             if(!fDryRun) SplitUpMoney();
             return true;
@@ -7091,7 +7100,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
     if(nValueIn < COIN*1.1){
 
         //simply look for non-denominated coins
-        if (pwalletMain->SelectCoinsDark(nValueMax+1, 9999999*COIN, vCoins, nValueIn, -2, nDarksendRounds))
+        if (pwalletMain->SelectCoinsDark(nValueMax+1, 9999999*COIN, vCoins, nValueIn, minRounds, nDarksendRounds))
         {
             if(!fDryRun) SplitUpMoney();
             return true;
@@ -7158,7 +7167,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
         }
     }
 
-    std::string strError = pwalletMain->DarkSendDenominate();
+    std::string strError = pwalletMain->DarkSendDenominate(minRounds);
     printf("DoAutomaticDenominating : Running darksend denominate. Return '%s'\n", strError.c_str());
     
     if(strError == "") return true;

@@ -969,7 +969,7 @@ int64 CWallet::GetAnonymizedBalance() const
                 for (unsigned int i = 0; i < pcoin->vout.size(); i++) {
                     
                     COutput out = COutput(pcoin, i, pcoin->GetDepthInMainChain());
-                    CTxIn vin = CTxIn(out.tx->GetHash(), out.i);  
+                    CTxIn vin = CTxIn(outf.tx->GetHash(), out.i);  
 
                     if(pcoin->IsSpent(i) || !IsMine(pcoin->vout[i]) || !IsDenominated(vin)) continue;
                     
@@ -1656,7 +1656,7 @@ string CWallet::SendMoneyToDestination(const CTxDestination& address, int64 nVal
     return SendMoney(scriptPubKey, nValue, wtxNew, fAskFee, coin_type);
 }
 
-string CWallet::DarkSendDenominate()
+string CWallet::DarkSendDenominate(int minRounds, int maxAmount)
 {
 
     if (IsLocked())
@@ -1680,7 +1680,7 @@ string CWallet::DarkSendDenominate()
     CReserveKey reservekey(this);
 
     //select coins we'll use
-    if (!SelectCoinsDark(1*COIN, 1000*COIN, vCoins, nValueIn, -2, nDarksendRounds))
+    if (!SelectCoinsDark(1*COIN, maxAmount*COIN, vCoins, nValueIn, minRounds, nDarksendRounds))
     {
         vCoins.clear();
         return _("Insufficient funds");
