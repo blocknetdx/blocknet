@@ -7059,6 +7059,12 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
         return false;
     }
 
+    if(darkSendPool.GetState() != POOL_STATUS_ERROR && darkSendPool.GetState() != POOL_STATUS_SUCCESS){
+        if(darkSendPool.GetMyTransactionCount() > 0){
+            return false;
+        }
+    }
+
     // ** find the coins we'll use
     std::vector<CTxIn> vCoins;
     int64 nValueMin = 0.01*COIN;
