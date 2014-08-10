@@ -145,6 +145,7 @@ private:
     qint64 cachedImmatureBalance;
     qint64 cachedAnonymizedBalance;
     qint64 cachedNumTransactions;
+    int cachedDarksendRounds;
     EncryptionStatus cachedEncryptionStatus;
     int cachedNumBlocks;
 

@@ -97,11 +97,9 @@
          </item>
          <item>
           <widget class="QComboBox" name="darksendRounds">
-           <item>
-            <property name="text">
-             <string>Disable Darksend</string>
-            </property>
-           </item>
+           <property name="currentIndex">
+            <number>1</number>
+           </property>
            <item>
             <property name="text">
              <string>1</string>
@@ -171,6 +169,20 @@
            </property>
            <property name="value">
             <number>1000</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <item>
+          <widget class="QCheckBox" name="disableDarksend">
+           <property name="text">
+            <string>Disable Darksend</string>
+           </property>
+           <property name="checked">
+            <bool>false</bool>
            </property>
           </widget>
          </item>

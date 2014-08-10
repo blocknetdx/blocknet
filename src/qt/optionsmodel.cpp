@@ -51,6 +51,7 @@ void OptionsModel::Init()
     fCoinControlFeatures = settings.value("fCoinControlFeatures", false).toBool();
     nDarksendRounds = settings.value("nDarksendRounds").toLongLong();
     nAnonymizeDarkcoinAmount = settings.value("nAnonymizeDarkcoinAmount").toLongLong();
+    fDisableDarksend = settings.value("fDisableDarksend", false).toBool();
     
     // These are shared with core Bitcoin; we want
     // command-line options to override the GUI settings:
@@ -66,6 +67,8 @@ void OptionsModel::Init()
         SoftSetArg("-darksendrounds", settings.value("nDarksendRounds").toString().toStdString());
     if (settings.contains("nAnonymizeDarkcoinAmount"))
         SoftSetArg("-anonymizedarkcoinamount", settings.value("nAnonymizeDarkcoinAmount").toString().toStdString());
+    if (settings.contains("fDisableDarksend"))
+        SoftSetArg("-disabledarksend", settings.value("fDisableDarksend").toString().toStdString());
 
 }
 
@@ -204,6 +207,8 @@ QVariant OptionsModel::data(const QModelIndex & index, int role) const
             return QVariant(bDisplayAddresses);
         case Language:
             return settings.value("language", "");
+        case DisableDarksend:
+            return QVariant(fDisableDarksend);
         case DarksendRounds:
             return QVariant(nDarksendRounds);
         case AnonymizeDarkcoinAmount:
@@ -291,6 +296,11 @@ bool OptionsModel::setData(const QModelIndex & index, const QVariant & value, in
             break;
         case Language:
             settings.setValue("language", value);
+            break;
+        case DisableDarksend: 
+            fDisableDarksend = value.toInt();
+            settings.setValue("fDisableDarksend", value);
+            emit disableDarksendChanged(fDisableDarksend);
             break;
         case DarksendRounds: 
             nDarksendRounds = value.toInt();
