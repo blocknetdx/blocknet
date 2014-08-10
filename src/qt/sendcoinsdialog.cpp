@@ -48,7 +48,7 @@ SendCoinsDialog::SendCoinsDialog(QWidget *parent) :
     connect(ui->pushButtonCoinControl, SIGNAL(clicked()), this, SLOT(coinControlButtonClicked()));
     connect(ui->checkBoxCoinControlChange, SIGNAL(stateChanged(int)), this, SLOT(coinControlChangeChecked(int)));
     connect(ui->lineEditCoinControlChange, SIGNAL(textEdited(const QString &)), this, SLOT(coinControlChangeEdited(const QString &)));
-    
+    connect(ui->inputType, SIGNAL(currentIndexChanged ( int )), this, SLOT(updateDisplayUnit()));
     timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(darkSendStatus()));
     timer->start(333);
@@ -70,6 +70,7 @@ SendCoinsDialog::SendCoinsDialog(QWidget *parent) :
     connect(clipboardPriorityAction, SIGNAL(triggered()), this, SLOT(coinControlClipboardPriority()));
     connect(clipboardLowOutputAction, SIGNAL(triggered()), this, SLOT(coinControlClipboardLowOutput()));
     connect(clipboardChangeAction, SIGNAL(triggered()), this, SLOT(coinControlClipboardChange()));
+
     ui->labelCoinControlQuantity->addAction(clipboardQuantityAction);
     ui->labelCoinControlAmount->addAction(clipboardAmountAction);
     ui->labelCoinControlFee->addAction(clipboardFeeAction);
@@ -510,7 +511,18 @@ void SendCoinsDialog::setBalance(qint64 balance, qint64 unconfirmedBalance, qint
         return;
 
     int unit = model->getOptionsModel()->getDisplayUnit();
-    ui->labelBalance->setText(BitcoinUnits::formatWithUnit(unit, balance));
+
+    uint64 bal = 0;
+    if(ui->inputType->currentText() == "Use Anonymous Funds"){
+        bal = anonymizedBalance;
+    } else if(ui->inputType->currentText() == "Use Non-Anonymous Funds"){
+        bal = balance - anonymizedBalance;
+    } else {
+        bal = balance;
+    }
+
+
+    ui->labelBalance->setText(BitcoinUnits::formatWithUnit(unit, bal));
 }
 
 void SendCoinsDialog::setState(int state, int entries, int accepted)
@@ -525,8 +537,18 @@ void SendCoinsDialog::updateDisplayUnit()
 {
     if(model && model->getOptionsModel())
     {
+
+        uint64 balance = 0;
+        if(ui->inputType->currentText() == "Use Anonymous Funds"){
+            balance = model->getAnonymizedBalance();
+        } else if(ui->inputType->currentText() == "Use Non-Anonymous Funds"){
+            balance = model->getBalance() - model->getAnonymizedBalance();
+        } else {
+            balance = model->getBalance();
+        }
+
         // Update labelBalance with the current balance and the current unit
-        ui->labelBalance->setText(BitcoinUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), model->getBalance()));
+        ui->labelBalance->setText(BitcoinUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), balance));
     }
 }
 

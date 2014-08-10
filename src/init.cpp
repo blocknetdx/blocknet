@@ -1175,9 +1175,15 @@ bool AppInit2(boost::thread_group& threadGroup)
         if(nDarksendRounds > 8) nDarksendRounds = 8;
         if(nDarksendRounds < 1) nDarksendRounds = 1;
 
+        nAnonymizeDarkcoinAmount = GetArg("-anonymizedarkcoinamount", 2);
+        if(nAnonymizeDarkcoinAmount > 999999) nAnonymizeDarkcoinAmount = 999999;
+        if(nAnonymizeDarkcoinAmount < 2) nAnonymizeDarkcoinAmount = 2;
+
         printf("Darksend rounds %d\n", nDarksendRounds);
+        printf("Anonymize Darkcoin Amount %d\n", nAnonymizeDarkcoinAmount);
     } else {
         printf("Darksend is disabled!\n");
+        nDarksendRounds = 0;
     }
 
     //override masternode
