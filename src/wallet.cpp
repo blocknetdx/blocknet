@@ -1142,17 +1142,14 @@ bool CWallet::SelectCoinsMasternode(CTxIn& vin, int64& nValueRet, CScript& pubSc
     
     BOOST_FOREACH(const COutput& out, vCoins)
     {
-        printf("Checking input %"PRI64d" > %d %d\n", out.tx->vout[out.i].nValue, out.tx->vout[out.i].nValue >= 1000*COIN, out.tx->vout[out.i].nValue % 1000*COIN == 0);
         if(out.tx->vout[out.i].nValue == 1000*COIN){ //exactly
             vin = CTxIn(out.tx->GetHash(),out.i);
             pubScript = out.tx->vout[out.i].scriptPubKey; // the inputs PubKey
             nValueRet = out.tx->vout[out.i].nValue;
-            printf("Found unspent output equal to nValue\n");
             return true;
         }
     }
 
-    printf("Can't find unspent output equal to nValue\n");
     return false;
 }
 
@@ -1283,18 +1280,18 @@ bool CWallet::SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxI
     bool allowCollateral = true;
     vector<COutput> vCoins;
     AvailableCoins(vCoins, false, coinControl, ALL_COINS);
-    //printf("found coins %d\n", (int)vCoins.size());
+    //LogPrintf("found coins %d\n", (int)vCoins.size());
     set<pair<const CWalletTx*,unsigned int> > setCoinsRet2;
 
     BOOST_FOREACH(const COutput& out, vCoins)
     {
-        //printf(" vin nValue %"PRI64d" \n", out.tx->vout[out.i].nValue);
+        //LogPrintf(" vin nValue %"PRI64d" \n", out.tx->vout[out.i].nValue);
         if(!allowCollateral && out.tx->vout[out.i].nValue <= DARKSEND_COLLATERAL*5) continue; //these are made for collateral/fees/etc
         if(fMasterNode && out.tx->vout[out.i].nValue == 1000*COIN) continue; //masternode input
         if(nOnlyDenominationAmount != 0 && out.tx->vout[out.i].nValue != nOnlyDenominationAmount && 
             out.tx->vout[out.i].nValue > DARKSEND_COLLATERAL*5) continue; //only get one type of denom
 
-        //printf(" ---- ret %"PRI64d", nValue %"PRI64d", max %"PRI64d" -- %d\n", nValueRet, out.tx->vout[out.i].nValue, nValueMax, nValueRet + out.tx->vout[out.i].nValue <= nValueMax);
+        //LogPrintf(" ---- ret %"PRI64d", nValue %"PRI64d", max %"PRI64d" -- %d\n", nValueRet, out.tx->vout[out.i].nValue, nValueMax, nValueRet + out.tx->vout[out.i].nValue <= nValueMax);
         if(nValueRet + out.tx->vout[out.i].nValue <= nValueMax){
             CTxIn vin = CTxIn(out.tx->GetHash(),out.i);
             
@@ -1303,9 +1300,9 @@ bool CWallet::SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxI
             } else {
                 int rounds = darkSendPool.GetInputDarksendRounds(vin);
                 
-                //printf(" -- rounds %d\n", rounds);            
+                //LogPrintf(" -- rounds %d\n", rounds);            
                 if(rounds >= nDarksendRoundsMax) continue;
-                //printf(" -- rounds less than max\n");
+                //LogPrintf(" -- rounds less than max\n");
                 if(rounds < nDarksendRoundsMin) continue; 
             }
 
@@ -1314,7 +1311,7 @@ bool CWallet::SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxI
             setCoinsRet.push_back(vin);
             setCoinsRet2.insert(make_pair(out.tx, out.i));
 
-            //printf(" -- nValueRet %"PRI64d"\n", nValueRet/COIN);
+            //LogPrintf(" -- nValueRet %"PRI64d"\n", nValueRet/COIN);
             if(nValueRet >= nValueMax) return true;
         }
     }
@@ -1331,7 +1328,7 @@ bool CWallet::SelectCoinsCollateral(std::vector<CTxIn>& setCoinsRet, int64& nVal
     vector<COutput> vCoins;
     AvailableCoins(vCoins, false, coinControl, ALL_COINS);
     
-    //printf("found coins %d\n", (int)vCoins.size());
+    //LogPrintf("found coins %d\n", (int)vCoins.size());
 
     set<pair<const CWalletTx*,unsigned int> > setCoinsRet2;
 
@@ -1345,13 +1342,13 @@ bool CWallet::SelectCoinsCollateral(std::vector<CTxIn>& setCoinsRet, int64& nVal
             out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL * 5 
         ){
             CTxIn vin = CTxIn(out.tx->GetHash(),out.i);
-            //printf(" vin nValue %"PRI64d"\n", out.tx->vout[out.i].nValue);
+            //LogPrintf(" vin nValue %"PRI64d"\n", out.tx->vout[out.i].nValue);
 
             vin.prevPubKey = out.tx->vout[out.i].scriptPubKey; // the inputs PubKey
             nValueRet += out.tx->vout[out.i].nValue;
             setCoinsRet.push_back(vin);
             setCoinsRet2.insert(make_pair(out.tx, out.i));
-            //printf(" -- nValueRet %"PRI64d"\n", nValueRet);
+            //LogPrintf(" -- nValueRet %"PRI64d"\n", nValueRet);
             return true;
         }
     }
@@ -1511,7 +1508,7 @@ bool CWallet::CreateTransaction(std::vector<pair<CScript, int64> >& vecSend,
                 BOOST_FOREACH(const PAIRTYPE(const CWalletTx*,unsigned int)& coin, setCoins)
                     wtxNew.vin.push_back(CTxIn(coin.first->GetHash(),coin.second));
 
-                if(fDebug) printf("CreateTransaction %s\n", wtxNew.ToString().c_str());
+                if(fDebug) LogPrintf("CreateTransaction %s\n", wtxNew.ToString().c_str());
                 
                 // Sign
                 int nIn = 0;
@@ -1701,7 +1698,7 @@ string CWallet::DarkSendDenominate(int minRounds, int maxAmount)
             CWalletTx& wtx = mapWallet[i.prevout.hash];
             nTotalValue += wtx.vout[i.prevout.n].nValue;
         } else {
-            printf("SelectCoinsDarkDenominated -- Couldn't find transaction\n");
+            LogPrintf("SelectCoinsDarkDenominated -- Couldn't find transaction\n");
         }
     }
     nTotalValue -= nFeeRet; //minus fees
@@ -1764,7 +1761,7 @@ string CWallet::DarkSendDenominate(int minRounds, int maxAmount)
     std::vector<CTxOut> vOut;
 
     int nOutputs = 0;
-    //printf("nValueLeft %"PRI64d"\n", nValueLeft/COIN);
+    //LogPrintf("nValueLeft %"PRI64d"\n", nValueLeft/COIN);
     BOOST_FOREACH(int64 v, darkSendDenominations){
         nOutputs = 0;
         while(nValueLeft - v >= 0 && nOutputs <= 10) {
@@ -1780,8 +1777,8 @@ string CWallet::DarkSendDenominate(int minRounds, int maxAmount)
             nOutputs++;
             nValueLeft -= v;
             
-            //printf(" -- denom %"PRI64d"\n", v/COIN);
-            //printf("nValueLeft %"PRI64d"\n", nValueLeft/COIN);
+            //LogPrintf(" -- denom %"PRI64d"\n", v/COIN);
+            //LogPrintf("nValueLeft %"PRI64d"\n", nValueLeft/COIN);
         }
 
         if(nValueLeft == 0) break;
@@ -2257,19 +2254,18 @@ void CWallet::UpdatedTransaction(const uint256 &hashTx)
 
 void CWallet::LockCoin(COutPoint& output)
 {
-    //printf("CWallet::LockCoin - %s\n", output.ToString().c_str());
+    //LogPrintf("CWallet::LockCoin - %s\n", output.ToString().c_str());
     setLockedCoins.insert(output);
 }
 
 void CWallet::UnlockCoin(COutPoint& output)
 {
-    //printf("CWallet::UnlockCoin - %s\n", output.ToString().c_str());
+    //LogPrintf("CWallet::UnlockCoin - %s\n", output.ToString().c_str());
     setLockedCoins.erase(output);
 }
 
 void CWallet::UnlockAllCoins()
 {
-    printf("CWallet::UnlockAllCoin\n");
     setLockedCoins.clear();
 }
 
