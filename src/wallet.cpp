@@ -1280,34 +1280,40 @@ bool CWallet::SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxI
 {
     CCoinControl *coinControl=NULL;
 
+    bool allowCollateral = true;
     vector<COutput> vCoins;
     AvailableCoins(vCoins, false, coinControl, ALL_COINS);
-    
     //printf("found coins %d\n", (int)vCoins.size());
-
     set<pair<const CWalletTx*,unsigned int> > setCoinsRet2;
 
     BOOST_FOREACH(const COutput& out, vCoins)
     {
         //printf(" vin nValue %"PRI64d" \n", out.tx->vout[out.i].nValue);
-        if(out.tx->vout[out.i].nValue <= DARKSEND_COLLATERAL*5) continue; //these are made for collateral/fees/etc
+        if(!allowCollateral && out.tx->vout[out.i].nValue <= DARKSEND_COLLATERAL*5) continue; //these are made for collateral/fees/etc
         if(fMasterNode && out.tx->vout[out.i].nValue == 1000*COIN) continue; //masternode input
-        if(nOnlyDenominationAmount != 0 && out.tx->vout[out.i].nValue != nOnlyDenominationAmount) continue; //only get one type of denom
+        if(nOnlyDenominationAmount != 0 && out.tx->vout[out.i].nValue != nOnlyDenominationAmount && 
+            out.tx->vout[out.i].nValue > DARKSEND_COLLATERAL*5) continue; //only get one type of denom
 
+        //printf(" ---- ret %"PRI64d", nValue %"PRI64d", max %"PRI64d" -- %d\n", nValueRet, out.tx->vout[out.i].nValue, nValueMax, nValueRet + out.tx->vout[out.i].nValue <= nValueMax);
         if(nValueRet + out.tx->vout[out.i].nValue <= nValueMax){
             CTxIn vin = CTxIn(out.tx->GetHash(),out.i);
-            int rounds = darkSendPool.GetInputDarksendRounds(vin);
             
-            //printf(" -- rounds %d\n", rounds);
-        
-            if(rounds >= nDarksendRoundsMax) continue;
-            //printf(" -- rounds less than max\n");
-            if(rounds < nDarksendRoundsMin) continue; 
+            if(out.tx->vout[out.i].nValue <= DARKSEND_COLLATERAL*5) {
+                allowCollateral = false; //these are made for collateral/fees/etc
+            } else {
+                int rounds = darkSendPool.GetInputDarksendRounds(vin);
+                
+                //printf(" -- rounds %d\n", rounds);            
+                if(rounds >= nDarksendRoundsMax) continue;
+                //printf(" -- rounds less than max\n");
+                if(rounds < nDarksendRoundsMin) continue; 
+            }
 
             vin.prevPubKey = out.tx->vout[out.i].scriptPubKey; // the inputs PubKey
             nValueRet += out.tx->vout[out.i].nValue;
             setCoinsRet.push_back(vin);
             setCoinsRet2.insert(make_pair(out.tx, out.i));
+
             //printf(" -- nValueRet %"PRI64d"\n", nValueRet/COIN);
             if(nValueRet >= nValueMax) return true;
         }
