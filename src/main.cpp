@@ -2562,7 +2562,7 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
                 }
 
                 if(!foundPaymentPayee || !foundPaymentAmount ) {
-                    printf("CheckBlock() : Couldn't find masternode payment. Found Amount %d Found Payee %d \n", (int)foundPaymentAmount, (int)foundPaymentPayee);
+                    LogPrintf("CheckBlock() : Couldn't find masternode payment. Found Amount %d Found Payee %d \n", (int)foundPaymentAmount, (int)foundPaymentPayee);
                     if(EnforceMasternodePayments) return state.DoS(0, error("CheckBlock() : Couldn't find masternode payment"));
                 }
             }
@@ -3886,7 +3886,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         int i = 0;
 
         BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
-            printf("Sending master node entry - %s \n", mn.addr.ToString().c_str());
+            LogPrintf("Sending master node entry - %s \n", mn.addr.ToString().c_str());
             if(vin == CTxIn()){
                 mn.Check();
                 if(mn.IsEnabled()) {
@@ -3937,7 +3937,6 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         BOOST_FOREACH (PAIRTYPE(int64, CTxIn)& s, vecMasternodesVoted){
             if(s.first == nBlockHeight && s.second == vinMasterNodeFrom){
-                printf("dmcv - found prev masternode vote for block\n");
                 return true;
             }
         }
@@ -3946,7 +3945,6 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         CPubKey pubkey = darkSendMasterNodes[mn].pubkey2;
 
         if (rank > 10 || rank == -1){
-            printf("dmcv: rejecting masternode vote\n");
             return true;
         }
 
@@ -4129,12 +4127,12 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         // ask for the dsee info once from the node that sent dseep
 
-        printf("dseep: Couldn't find masternode entry %s\n", vin.ToString().c_str());
+        LogPrintf("dseep: Couldn't find masternode entry %s\n", vin.ToString().c_str());
 
         BOOST_FOREACH(CTxIn vinAsked, vecMasternodeAskedFor)
             if (vinAsked == vin) return true;
 
-        printf("dseep: Asking source node for missing entry %s\n", vin.ToString().c_str());
+        LogPrintf("dseep: Asking source node for missing entry %s\n", vin.ToString().c_str());
 
         vecMasternodeAskedFor.push_back(vin);
         pfrom->PushMessage("dseg", vin);
@@ -5085,7 +5083,6 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
             bool success = darkSendPool.GetCurrentMasterNodeConsessus(pindexPrev->nHeight+1, payee);
             if(!success) {
                 //no enforcement
-                printf("CreateNewBlock - network could not reach consessus on payee for block %d\n", pindexPrev->nHeight+1);
                 winningNode = darkSendPool.GetCurrentMasterNode(1);
                 if(winningNode >= 0){
                     payee.SetDestination(darkSendMasterNodes[winningNode].pubkey.GetID());   
@@ -5102,7 +5099,6 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
                 //txNew.vout[0].scriptPubKey = scriptPubKeyIn;
                 txNew.vout[payments-1].scriptPubKey = payee;
                 txNew.vout[payments-1].nValue = 0;
-                printf("Masternode payment to %s\n", txNew.vout[payments-1].scriptPubKey.ToString().c_str());
             }
         }
 
