@@ -68,7 +68,7 @@ void OptionsModel::Init()
     if (settings.contains("nAnonymizeDarkcoinAmount"))
         SoftSetArg("-anonymizedarkcoinamount", settings.value("nAnonymizeDarkcoinAmount").toString().toStdString());
     if (settings.contains("fDisableDarksend"))
-        SoftSetArg("-disabledarksend", settings.value("fDisableDarksend").toString().toStdString());
+        SoftSetBoolArg("-disabledarksend", settings.value("fDisableDarksend").toBool());
 
 }
 
@@ -114,7 +114,7 @@ bool OptionsModel::Upgrade()
         }
     }
     QList<QString> boolOptions;
-    boolOptions << "bDisplayAddresses" << "fMinimizeToTray" << "fMinimizeOnClose" << "fUseProxy" << "fUseUPnP";
+    boolOptions << "bDisplayAddresses" << "fMinimizeToTray" << "fMinimizeOnClose" << "fUseProxy" << "fUseUPnP" ;
     foreach(QString key, boolOptions)
     {
         bool value = false;
@@ -303,7 +303,7 @@ bool OptionsModel::setData(const QModelIndex & index, const QVariant & value, in
             emit disableDarksendChanged(fDisableDarksend);
             break;
         case DarksendRounds: 
-            nDarksendRounds = value.toInt();
+            nDarksendRounds = value.toBool();
             settings.setValue("nDarksendRounds", value);
             emit darksendRoundsChanged(nDarksendRounds);
             break;
