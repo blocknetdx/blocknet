@@ -7166,6 +7166,8 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
                 LogPrintf("DoAutomaticDenominating --- error connecting \n");
                 return DoAutomaticDenominating();
             }
+        } else {
+            return false;
         }
     }
 
