@@ -1331,7 +1331,7 @@ bool CWallet::SelectCoinsCollateral(std::vector<CTxIn>& setCoinsRet, int64& nVal
     vector<COutput> vCoins;
     AvailableCoins(vCoins, false, coinControl, ALL_COINS);
     
-    printf("found coins %d\n", (int)vCoins.size());
+    //printf("found coins %d\n", (int)vCoins.size());
 
     set<pair<const CWalletTx*,unsigned int> > setCoinsRet2;
 
@@ -1345,13 +1345,13 @@ bool CWallet::SelectCoinsCollateral(std::vector<CTxIn>& setCoinsRet, int64& nVal
             out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL * 5 
         ){
             CTxIn vin = CTxIn(out.tx->GetHash(),out.i);
-            printf(" vin nValue %"PRI64d"\n", out.tx->vout[out.i].nValue);
+            //printf(" vin nValue %"PRI64d"\n", out.tx->vout[out.i].nValue);
 
             vin.prevPubKey = out.tx->vout[out.i].scriptPubKey; // the inputs PubKey
             nValueRet += out.tx->vout[out.i].nValue;
             setCoinsRet.push_back(vin);
             setCoinsRet2.insert(make_pair(out.tx, out.i));
-            printf(" -- nValueRet %"PRI64d"\n", nValueRet);
+            //printf(" -- nValueRet %"PRI64d"\n", nValueRet);
             return true;
         }
     }

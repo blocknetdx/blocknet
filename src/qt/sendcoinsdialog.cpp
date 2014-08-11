@@ -275,11 +275,11 @@ void SendCoinsDialog::darkSendStatus()
                 if(!ctx.isValid()){
                     //unlock was cancelled
                     fDisableDarksend = true;
-                    printf("Wallet is locked and user declined to unlock. Disabling Darksend.\n");
+                    LogPrintf("Wallet is locked and user declined to unlock. Disabling Darksend.\n");
                 }
             }
             if (!darkSendAction && model->getEncryptionStatus() == WalletModel::Unlocked && darkSendPool.GetMyTransactionCount() == 0){
-                printf("Darksend is complete, locking wallet.\n");
+                LogPrintf("Darksend is complete, locking wallet.\n");
                 model->Lock();
             }
         }
@@ -335,7 +335,7 @@ void SendCoinsDialog::darkSendStatus()
     QString s(convert.str().c_str());
 
     if(s != ui->darkSendStatus->text())
-        printf("%s\n", convert.str().c_str());
+        LogPrintf("%s\n", convert.str().c_str());
     
     ui->darkSendStatus->setText(s);
 

@@ -1134,10 +1134,10 @@ bool AppInit2(boost::thread_group& threadGroup)
 
     fMasterNode = GetBoolArg("-masternode");
     if(fMasterNode) {
-        printf("IS DARKSEND MASTER NODE\n");
+        LogPrintf("IS DARKSEND MASTER NODE\n");
         strMasterNodeAddr = GetArg("-masternodeaddr", "");
 
-        printf(" addr %s\n", strMasterNodeAddr.c_str());
+        LogPrintf(" addr %s\n", strMasterNodeAddr.c_str());
 
         if(!strMasterNodeAddr.empty()){
             CService addrTest = CService(strMasterNodeAddr);
@@ -1179,10 +1179,10 @@ bool AppInit2(boost::thread_group& threadGroup)
         if(nAnonymizeDarkcoinAmount > 999999) nAnonymizeDarkcoinAmount = 999999;
         if(nAnonymizeDarkcoinAmount < 2) nAnonymizeDarkcoinAmount = 2;
 
-        printf("Darksend rounds %d\n", nDarksendRounds);
-        printf("Anonymize Darkcoin Amount %d\n", nAnonymizeDarkcoinAmount);
+        LogPrintf("Darksend rounds %d\n", nDarksendRounds);
+        LogPrintf("Anonymize Darkcoin Amount %d\n", nAnonymizeDarkcoinAmount);
     } else {
-        printf("Darksend is disabled!\n");
+        LogPrintf("Darksend is disabled!\n");
         nDarksendRounds = 0;
     }
 

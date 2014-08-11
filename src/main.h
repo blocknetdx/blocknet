@@ -2672,7 +2672,7 @@ public:
 
     CDarkSendPool()
     {
-        //printf("CDarkSendPool::INIT()\n");        
+        //LogPrintf("CDarkSendPool::INIT()\n");        
         /* DarkSend uses collateral addresses to trust parties entering the pool
             to behave themselves. If they don't it takes their money. */
 
@@ -2738,11 +2738,11 @@ public:
     void UpdateState(unsigned int newState)
     {
         if (fMasterNode && (newState == POOL_STATUS_ERROR || newState == POOL_STATUS_SUCCESS)){
-            printf("CDarkSendPool::UpdateState() - Can't set state to ERROR or SUCCESS as a masternode. \n");
+            LogPrintf("CDarkSendPool::UpdateState() - Can't set state to ERROR or SUCCESS as a masternode. \n");
             return;
         }
 
-        printf("CDarkSendPool::UpdateState() == %d | %d \n", state, newState);
+        LogPrintf("CDarkSendPool::UpdateState() == %d | %d \n", state, newState);
         if(state != newState){
             lastTimeChanged = GetTimeMillis();
             if(fMasterNode) {
