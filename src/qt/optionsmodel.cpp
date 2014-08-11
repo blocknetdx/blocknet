@@ -298,12 +298,12 @@ bool OptionsModel::setData(const QModelIndex & index, const QVariant & value, in
             settings.setValue("language", value);
             break;
         case DisableDarksend: 
-            fDisableDarksend = value.toInt();
+            fDisableDarksend = value.toBool();
             settings.setValue("fDisableDarksend", value);
             emit disableDarksendChanged(fDisableDarksend);
             break;
         case DarksendRounds: 
-            nDarksendRounds = value.toBool();
+            nDarksendRounds = value.toInt();
             settings.setValue("nDarksendRounds", value);
             emit darksendRoundsChanged(nDarksendRounds);
             break;
