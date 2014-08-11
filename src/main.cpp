@@ -3910,25 +3910,16 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         vRecv >> vinWinningMasternode >> vinMasterNodeFrom >> nBlockHeight >> vchSig;
 
-        printf("dmcv -received\n");
-
         bool fIsInitialDownload = IsInitialBlockDownload();
         if(fIsInitialDownload) return true;
 
-        printf("dmcv -done downloading\n");
-
         if(pindexBest == NULL) return true;
         if(nBlockHeight > pindexBest->nHeight + 5) {
-            printf("dmcv - vote too far into the future\n");
             return false;
         }
         if(nBlockHeight < pindexBest->nHeight - 1) {
-            printf("dmcv - vote too far into the past\n");
             return false;
         }
-
-        printf("dmcv -block height ok\n");
-        printf("dmcv - masternode from vin %s\n", vinMasterNodeFrom.ToString().c_str());
 
         int mn = darkSendPool.GetMasternodeByVin(vinMasterNodeFrom);
         if (mn == -1) {
@@ -3944,16 +3935,12 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         }
 
 
-        printf("dmcv -know masternode\n");
-
         BOOST_FOREACH (PAIRTYPE(int64, CTxIn)& s, vecMasternodesVoted){
             if(s.first == nBlockHeight && s.second == vinMasterNodeFrom){
                 printf("dmcv - found prev masternode vote for block\n");
                 return true;
             }
         }
-
-        printf("dmcv -hasn't voted\n");
 
         int rank = darkSendPool.GetMasternodeRank(vinMasterNodeFrom, 1);
         CPubKey pubkey = darkSendMasterNodes[mn].pubkey2;
@@ -3963,22 +3950,16 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             return true;
         }
 
-        printf("dmcv -rank in range\n");
-
         std::string vchPubKey(pubkey.begin(), pubkey.end());
         std::string strMessage = vinWinningMasternode.prevout.ToString() + vinMasterNodeFrom.prevout.ToString() + boost::lexical_cast<std::string>(nBlockHeight) + vchPubKey; 
         std::string errorMessage = "";
         if(!darkSendSigner.VerifyMessage(pubkey, vchSig, strMessage, errorMessage)){
-            printf("dmcv - Got bad masternode address signature\n");
             pfrom->Misbehaving(100);
             return false;
         }
 
-        printf("dmcv -sig ok\n");
-
         rank = darkSendPool.GetMasternodeRank(vinWinningMasternode, 1);
         if(rank >= 0){
-            printf("dmcv -submitted vote\n");
             darkSendPool.SubmitMasternodeVote(vinWinningMasternode, vinMasterNodeFrom, nBlockHeight);
             RelayDarkSendMasterNodeConsessusVote(vinWinningMasternode, vinMasterNodeFrom, nBlockHeight, vchSig);
         } else {
