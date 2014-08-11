@@ -358,7 +358,7 @@ public:
 
     void print() const
     {
-        printf("%s\n", ToString().c_str());
+        LogPrintf("%s\n", ToString().c_str());
     }
 };
 
@@ -437,7 +437,7 @@ public:
 
     void print() const
     {
-        printf("%s\n", ToString().c_str());
+        LogPrintf("%s\n", ToString().c_str());
     }
 };
 
@@ -508,7 +508,7 @@ public:
 
     void print() const
     {
-        printf("%s\n", ToString().c_str());
+        LogPrintf("%s\n", ToString().c_str());
     }
 };
 
@@ -714,7 +714,7 @@ public:
 
     void print() const
     {
-        printf("%s", ToString().c_str());
+        LogPrintf("%s", ToString().c_str());
     }
 
 
@@ -1388,11 +1388,11 @@ public:
     (
         nVersion = this->nVersion;
         READWRITE(blockHeight);
-        //printf("blockHeight %"PRI64d"\n", blockHeight);
+        //LogPrintf("blockHeight %"PRI64d"\n", blockHeight);
         READWRITE(pubkey);
-        //printf("pubkey %s\n", pubkey.ToString().c_str());
+        //LogPrintf("pubkey %s\n", pubkey.ToString().c_str());
         READWRITE(votes);
-        //printf("votes %d\n", votes);
+        //LogPrintf("votes %d\n", votes);
     )
 
 
@@ -1625,7 +1625,7 @@ public:
 
     void print() const
     {
-        printf("CBlock(hash=%s, input=%s, PoW=%s, ver=%d, hashPrevBlock=%s, hashMerkleRoot=%s, nTime=%u, nBits=%08x, nNonce=%u, vtx=%"PRIszu")\n",
+        LogPrintf("CBlock(hash=%s, input=%s, PoW=%s, ver=%d, hashPrevBlock=%s, hashMerkleRoot=%s, nTime=%u, nBits=%08x, nNonce=%u, vtx=%"PRIszu")\n",
             GetHash().ToString().c_str(),
             HexStr(BEGIN(nVersion),BEGIN(nVersion)+80,false).c_str(),
             GetPoWHash().ToString().c_str(),
@@ -1636,13 +1636,13 @@ public:
             vtx.size());
         for (unsigned int i = 0; i < vtx.size(); i++)
         {
-            printf("  ");
+            LogPrintf("  ");
             vtx[i].print();
         }
-        printf("  vMerkleTree: ");
+        LogPrintf("  vMerkleTree: ");
         for (unsigned int i = 0; i < vMerkleTree.size(); i++)
-            printf("%s ", vMerkleTree[i].ToString().c_str());
-        printf("\n");
+            LogPrintf("%s ", vMerkleTree[i].ToString().c_str());
+        LogPrintf("\n");
     }
 
 
@@ -1967,7 +1967,7 @@ public:
 
     void print() const
     {
-        printf("%s\n", ToString().c_str());
+        LogPrintf("%s\n", ToString().c_str());
     }
 };
 
@@ -2049,7 +2049,7 @@ public:
 
     void print() const
     {
-        printf("%s\n", ToString().c_str());
+        LogPrintf("%s\n", ToString().c_str());
     }
 };
 
@@ -2479,7 +2479,7 @@ public:
 
     bool UpdatedWithin(int microSeconds)
     {
-        //printf("UpdatedWithin %"PRI64u", %"PRI64u" --  %d \n", GetTimeMicros() , lastTimeSeen, (GetTimeMicros() - lastTimeSeen) < microSeconds);
+        //LogPrintf("UpdatedWithin %"PRI64u", %"PRI64u" --  %d \n", GetTimeMicros() , lastTimeSeen, (GetTimeMicros() - lastTimeSeen) < microSeconds);
 
         return (GetTimeMicros() - lastTimeSeen) < microSeconds;
     }
