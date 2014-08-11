@@ -406,8 +406,7 @@ public:
         ENTER_CRITICAL_SECTION(cs_vSend);
         assert(ssSend.size() == 0);
         ssSend << CMessageHeader(pszCommand, 0);
-        if (fDebug)
-            LogPrintf("sending: %s ", pszCommand);
+        LogPrint("net2", "sending (peer=%d): %s ", id, pszCommand);
     }
 
     // TODO: Document the precondition of this function.  Is cs_vSend locked?
@@ -417,8 +416,7 @@ public:
 
         LEAVE_CRITICAL_SECTION(cs_vSend);
 
-        if (fDebug)
-            LogPrintf("(aborted)\n");
+        LogPrint("net2", "(aborted)\n");
     }
 
     // TODO: Document the precondition of this function.  Is cs_vSend locked?
@@ -445,9 +443,7 @@ public:
         assert(ssSend.size () >= CMessageHeader::CHECKSUM_OFFSET + sizeof(nChecksum));
         memcpy((char*)&ssSend[CMessageHeader::CHECKSUM_OFFSET], &nChecksum, sizeof(nChecksum));
 
-        if (fDebug) {
-            LogPrintf("(%d bytes)\n", nSize);
-        }
+        LogPrint("net2", "(%d bytes)\n", nSize);
 
         std::deque<CSerializeData>::iterator it = vSendMsg.insert(vSendMsg.end(), CSerializeData());
         ssSend.GetAndClear(*it);
