@@ -1175,7 +1175,7 @@ bool AppInit2(boost::thread_group& threadGroup)
         if(nDarksendRounds > 8) nDarksendRounds = 8;
         if(nDarksendRounds < 1) nDarksendRounds = 1;
 
-        nAnonymizeDarkcoinAmount = GetArg("-anonymizedarkcoinamount", 2);
+        nAnonymizeDarkcoinAmount = GetArg("-anonymizedarkcoinamount", 1000);
         if(nAnonymizeDarkcoinAmount > 999999) nAnonymizeDarkcoinAmount = 999999;
         if(nAnonymizeDarkcoinAmount < 2) nAnonymizeDarkcoinAmount = 2;
 
