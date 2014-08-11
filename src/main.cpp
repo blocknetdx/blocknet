@@ -7051,7 +7051,6 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
     }
 
     if (!fDryRun && pwalletMain->IsLocked()){
-        LogPrintf("DoAutomaticDenominating Error: Wallet is locked. Please unlock wallet to autodenominate..\n");
         return false;
     }
 
