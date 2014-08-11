@@ -7057,7 +7057,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
 
     if(darkSendPool.GetState() != POOL_STATUS_ERROR && darkSendPool.GetState() != POOL_STATUS_SUCCESS){
         if(darkSendPool.GetMyTransactionCount() > 0){
-            return false;
+            return true;
         }
     }
 
