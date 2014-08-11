@@ -7339,7 +7339,6 @@ bool CDarkSendPool::GetCurrentMasterNodeConsessus(int64 blockHeight, CScript& pa
 
     if (vecBlockVotes.empty())
     {
-        printf("CDarkSendPool::GetCurrentMasterNodeConsessus : No consessus information for block %"PRI64u"\n", blockHeight);
         return false;
     }
 
@@ -7357,14 +7356,9 @@ bool CDarkSendPool::GetCurrentMasterNodeConsessus(int64 blockHeight, CScript& pa
 
 
     if (winner_votes == -1) return false;
-    printf("MasternodeConsessus - found a winner\n");
 
     // we want a strong consessus, otherwise take any payee
     if (winner_votes < 8) return false;
-
-    printf("MasternodeConsessus - strong consessus\n");
-
-    if (unitTest) return true;
 
     CTransaction tx;
     uint256 hash;
@@ -7372,13 +7366,11 @@ bool CDarkSendPool::GetCurrentMasterNodeConsessus(int64 blockHeight, CScript& pa
         BOOST_FOREACH(CTxOut out, tx.vout){
             if(out.nValue == 1000*COIN){
                 payee = out.scriptPubKey;
-                printf("MasternodeConsessus - Masternode payment to %s\n", payee.ToString().c_str());
                 return true;
             }
         }
     }
 
-    printf("MasternodeConsessus - couldn't locate pubkey??? \n");
     return false;
 }
 
