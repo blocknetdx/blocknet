@@ -3881,12 +3881,12 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         LogPrintf("got RelayDarkSendFinalTransaction\n");
 
         if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
-            return false;
+            return true;
         }
 
         if(darkSendPool.submittedToMasternode != pfrom->addr){
             LogPrintf("dsc - message doesn't match current masternode - %s != %s\n", darkSendPool.submittedToMasternode.ToString().c_str(), pfrom->addr.ToString().c_str());
-            return false;
+            return true;
         }
 
         int sessionID;
@@ -3895,7 +3895,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         if(darkSendPool.sessionID != sessionID){
             LogPrintf("dsc - message doesn't match current darksend session %d %d\n", darkSendPool.sessionID, sessionID);
-            return false;
+            return true;
         }
 
         //check to see if input is spent already? (and probably not confirmed)
@@ -3904,12 +3904,12 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
     else if (strCommand == "dsc") { //DarkSend Complete
         if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
-            return false;
+            return true;
         }
 
         if(darkSendPool.submittedToMasternode != pfrom->addr){
             LogPrintf("dsc - message doesn't match current masternode - %s != %s\n", darkSendPool.submittedToMasternode.ToString().c_str(), pfrom->addr.ToString().c_str());
-            return false;
+            return true;
         }
 
         int sessionID;
@@ -3919,7 +3919,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         if(darkSendPool.sessionID != sessionID){
             LogPrintf("dsc - message doesn't match current darksend session %d %d\n", darkSendPool.sessionID, sessionID);
-            return false;
+            return true;
         }
 
         darkSendPool.CompletedTransaction(error, lastMessage);
@@ -4073,10 +4073,10 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
     else if (strCommand == "dssub") { //DarkSend Subscribe To         
         if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
-            return false;
+            return true;
         }
 
-        if(!fMasterNode) return false;
+        if(!fMasterNode) return true;
 
         std::string error = "";
         pfrom->PushMessage("dssu", darkSendPool.sessionID, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1, error);
@@ -4086,12 +4086,12 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
     else if (strCommand == "dssu") { //DarkSend status update
         if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
-            return false;
+            return true;
         }
 
         if(darkSendPool.submittedToMasternode != pfrom->addr){   
             LogPrintf("dssu - message doesn't match current masternode - %s != %s\n", darkSendPool.submittedToMasternode.ToString().c_str(), pfrom->addr.ToString().c_str());
-            return false;
+            return true;
         }
 
         int sessionID;
@@ -4103,7 +4103,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         if((accepted != 1 && accepted != 0) && darkSendPool.sessionID != sessionID){
             LogPrintf("dsc - message doesn't match current darksend session %d %d\n", darkSendPool.sessionID, sessionID);
-            return false;
+            return true;
         }
         
         darkSendPool.StatusUpdate(state, entriesCount, accepted, error, sessionID);
@@ -4112,7 +4112,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
     else if (strCommand == "dss") { //DarkSend Sign Final Tx
         if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
-            return false;
+            return true;
         }
 
         vector<CTxIn> sigs;
@@ -4144,7 +4144,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
     else if (strCommand == "dseg") { //DarkSend Election Get
         if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
-            return false;
+            return true;
         }
 
         CTxIn vin;
@@ -4168,7 +4168,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
     }
     else if (strCommand == "dmcv") { //DarkSend Masternode Consessus Vote   
         if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
-            return false;
+            return true;
         }
 
         CTxIn vinWinningMasternode;
@@ -4262,7 +4262,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
     } else if (strCommand == "dsee") { //DarkSend Election Entry   
         if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
-            return false;
+            return true;
         }
         bool fIsInitialDownload = IsInitialBlockDownload();
         if(fIsInitialDownload) return true;
@@ -4369,7 +4369,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
     else if (strCommand == "dseep") { //DarkSend Election Entry Ping 
         if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
-            return false;
+            return true;
         }
         bool fIsInitialDownload = IsInitialBlockDownload();
         if(fIsInitialDownload) return true;

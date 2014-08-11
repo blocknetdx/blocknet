@@ -53,6 +53,7 @@ private:
     int showingDarkSendMessage;
     int darksendActionCheck;
     bool boolCheckedBalance;
+    int cachedNumBlocks;
 
 private slots:
     void on_sendButton_clicked();

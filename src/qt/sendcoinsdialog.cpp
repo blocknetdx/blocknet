@@ -267,7 +267,11 @@ void SendCoinsDialog::darkSendStatus()
     if(fDisableDarksend) return;
 
     // check darksend status and unlock if needed
-    if(darksendActionCheck % 30 == 0){
+    if(nBestHeight != cachedNumBlocks)
+    {
+        // Balance and number of transactions might have changed
+        cachedNumBlocks = nBestHeight;
+
         if (model->getEncryptionStatus() != WalletModel::Unencrypted){
             bool darkSendAction = darkSendPool.DoAutomaticDenominating(true);
             if (darkSendAction && model->getEncryptionStatus() == WalletModel::Locked){
