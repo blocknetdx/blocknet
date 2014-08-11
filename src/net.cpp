@@ -937,7 +937,7 @@ void ThreadSocketHandler()
                         nInbound++;
             }
 
-            printf("maxconnections check %d\n", nMaxConnections - MAX_OUTBOUND_CONNECTIONS);
+            LogPrintf("maxconnections check %d\n", nMaxConnections - MAX_OUTBOUND_CONNECTIONS);
             
             if (hSocket == INVALID_SOCKET)
             {
