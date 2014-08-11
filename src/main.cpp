@@ -7076,6 +7076,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
     if(nAnonymizeDarkcoinAmount < 1000) maxAmount = nAnonymizeDarkcoinAmount;
 
     int64 balanceNeedsAnonymized = pwalletMain->GetBalance() - pwalletMain->GetAnonymizedBalance();
+    if(balanceNeedsAnonymized > maxAmount*COIN) balanceNeedsAnonymized= maxAmount*COIN;
     if(balanceNeedsAnonymized < COIN*1.1){
         LogPrintf("DoAutomaticDenominating : No funds detected in need of denominating \n");
         return false;
