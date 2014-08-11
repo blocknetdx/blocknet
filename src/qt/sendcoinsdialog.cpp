@@ -273,7 +273,7 @@ void SendCoinsDialog::darkSendStatus()
         cachedNumBlocks = nBestHeight;
 
         if (model->getEncryptionStatus() != WalletModel::Unencrypted){
-            if(pwalletMain->GetAnonymizedBalance() < nAnonymizeDarkcoinAmount && model->getEncryptionStatus() == WalletModel::Locked){
+            if(pwalletMain->GetAnonymizedBalance() < nAnonymizeDarkcoinAmount*COIN && model->getEncryptionStatus() == WalletModel::Locked){
                 WalletModel::UnlockContext ctx(model->requestUnlock());
                 if(!ctx.isValid()){
                     //unlock was cancelled
@@ -281,7 +281,7 @@ void SendCoinsDialog::darkSendStatus()
                     LogPrintf("Wallet is locked and user declined to unlock. Disabling Darksend.\n");
                 }
             }
-            if(pwalletMain->GetAnonymizedBalance() >= nAnonymizeDarkcoinAmount && 
+            if(pwalletMain->GetAnonymizedBalance() >= nAnonymizeDarkcoinAmount*COIN && 
                 model->getEncryptionStatus() == WalletModel::Unlocked && 
                 darkSendPool.GetMyTransactionCount() == 0){
                 LogPrintf("Darksend is complete, locking wallet.\n");
