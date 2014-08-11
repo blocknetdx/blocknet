@@ -2601,13 +2601,9 @@ public:
 
     void Relay()
     {
-        printf("Relay\n");
         LOCK(cs_vNodes);
         BOOST_FOREACH(CNode* pnode, vNodes)
-        {
-            printf("Relay dsq to peer\n");
             pnode->PushMessage("dsq", (*this));
-        }   
     }
 
     bool IsExpired()

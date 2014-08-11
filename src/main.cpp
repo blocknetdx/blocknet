@@ -3963,10 +3963,12 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         BOOST_FOREACH(CDarksendQueue q, vecDarksendQueue){
             if(q.vin == dsq.vin) return true;
         }
+        if(dsq.IsExpired()) return true;
 
         printf("new darksend queue object - %s\n", addr.ToString().c_str());
         vecDarksendQueue.push_back(dsq);
         dsq.Relay();
+        dsq.time = GetTime();
 
     } else if (strCommand == "dsi") { //DarkSend vIn
         if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
@@ -6172,6 +6174,8 @@ void CDarkSendPool::Check()
 }
 
 void CDarkSendPool::ChargeFees(){
+    return; //don't charge fees
+
     if(fMasterNode) {
         int i = 0;
         // who didn't sign?
