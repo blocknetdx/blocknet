@@ -7061,6 +7061,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
     int minRounds = -2;
     int maxAmount = 1000;
 
+
     // if we have more denominated rounds (of any maturity) than the nAnonymizeDarkcoinAmount, we should use use those
     if(pwalletMain->GetDenominatedBalance(true) >= nAnonymizeDarkcoinAmount*COIN) {
         minRounds = 0;
