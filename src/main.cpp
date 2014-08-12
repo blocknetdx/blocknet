@@ -6006,6 +6006,8 @@ struct CompareValueOnly2
 int randomizeList (int i) { return std::rand()%i;}
 
 void CDarkSendPool::SetNull(bool clearEverything){
+    ResendWalletTransactions();
+
     finalTransaction.vin.clear();
     finalTransaction.vout.clear();
 
@@ -7190,7 +7192,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
 bool CDarkSendPool::SplitUpMoney(bool justCollateral)
 {
     int64 nTotalBalance = pwalletMain->GetDenominatedBalance(false);
-    if(justCollateral && nTotalBalance > 2*COIN) nTotalBalance = 2*COIN;
+    if(justCollateral && nTotalBalance > 1*COIN) nTotalBalance = 1*COIN;
     int64 nTotalOut = 0;
 
     LogPrintf("DoAutomaticDenominating: Split up large input (justCollateral %d):\n", justCollateral);
@@ -7218,6 +7220,8 @@ bool CDarkSendPool::SplitUpMoney(bool justCollateral)
     int64 addingEachRound = (DARKSEND_FEE*5);
     if(!justCollateral) addingEachRound += (a) + (a/5);
 
+    bool addedFees = false;
+
     while(nTotalOut + addingEachRound < nTotalBalance-DARKSEND_FEE){
         LogPrintf(" nTotalOut %"PRI64d"\n", nTotalOut);
         LogPrintf(" nTotalOut + ((nTotalBalance/5) + (nTotalBalance/5/5) + 0.01*COIN) %"PRI64d"\n", nTotalOut + ((a) + (a/5) + ((DARKSEND_FEE*4))));
@@ -7227,12 +7231,18 @@ bool CDarkSendPool::SplitUpMoney(bool justCollateral)
             vecSend.push_back(make_pair(scriptChange, a/5));
             nTotalOut += (a) + (a/5);
         }
-        vecSend.push_back(make_pair(scriptChange, DARKSEND_COLLATERAL*5));
-        nTotalOut += (DARKSEND_COLLATERAL*5)+(DARKSEND_FEE*5); 
-    }
+        if(!addedFees || justCollateral){
+            vecSend.push_back(make_pair(scriptChange, DARKSEND_COLLATERAL*5));
+            vecSend.push_back(make_pair(scriptChange, DARKSEND_FEE));
+            vecSend.push_back(make_pair(scriptChange, DARKSEND_FEE));
+            vecSend.push_back(make_pair(scriptChange, DARKSEND_FEE));
+            vecSend.push_back(make_pair(scriptChange, DARKSEND_FEE));
+            vecSend.push_back(make_pair(scriptChange, DARKSEND_FEE));
+            addedFees = true;
+        }
 
-    LogPrintf(" auto2-- nTotalBalance %"PRI64d"\n", nTotalBalance);
-    LogPrintf(" auto2-- nTotalOut %"PRI64d"\n", nTotalOut);
+        nTotalOut += (DARKSEND_COLLATERAL*5)+(DARKSEND_FEE*nDarksendRounds); 
+    }
 
     if(!justCollateral){
         if(nTotalOut <= 1.1*COIN || vecSend.size() < 3) 

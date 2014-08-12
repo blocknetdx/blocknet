@@ -1278,11 +1278,16 @@ struct CompareByDenominated
     bool operator()(const COutput& t1,
                     const COutput& t2) const
     {
+
         int t1b = 0;
+        if(t1.tx->vout[t1.i].nValue == DARKSEND_FEE) t1b = 2;
+
         BOOST_FOREACH(int64 d, darkSendDenominations)
            if(t1.tx->vout[t1.i].nValue == d) t1b = 1;
 
         int t2b = 0;
+        if(t2.tx->vout[t2.i].nValue == DARKSEND_FEE) t2b = 2;
+
         BOOST_FOREACH(int64 d, darkSendDenominations)
            if(t2.tx->vout[t2.i].nValue == d) t2b = 1;
 
@@ -1305,7 +1310,7 @@ bool CWallet::SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxI
     BOOST_FOREACH(const COutput& out, vCoins)
     {
         //LogPrintf(" vin nValue %"PRI64d" \n", out.tx->vout[out.i].nValue);
-        if(!allowCollateral && out.tx->vout[out.i].nValue <= DARKSEND_COLLATERAL*5) continue; //these are made for collateral/fees/etc
+        if(!allowCollateral && out.tx->vout[out.i].nValue <= DARKSEND_COLLATERAL*5) continue; //these are made for fees
         if(fMasterNode && out.tx->vout[out.i].nValue == 1000*COIN) continue; //masternode input
         if(nOnlyDenominationAmount != 0 && out.tx->vout[out.i].nValue != nOnlyDenominationAmount && 
             out.tx->vout[out.i].nValue > DARKSEND_COLLATERAL*5) continue; //only get one type of denom
@@ -1314,8 +1319,8 @@ bool CWallet::SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxI
         if(nValueRet + out.tx->vout[out.i].nValue <= nValueMax){
             CTxIn vin = CTxIn(out.tx->GetHash(),out.i);
             
-            if(out.tx->vout[out.i].nValue <= DARKSEND_COLLATERAL*5) {
-                allowCollateral = false; //these are made for collateral/fees/etc
+            if(out.tx->vout[out.i].nValue == DARKSEND_FEE) {
+                allowCollateral = false; //these are made for fees
             } else {
                 int rounds = darkSendPool.GetInputDarksendRounds(vin);
                 
@@ -1347,12 +1352,13 @@ bool CWallet::SelectCoinsCollateral(std::vector<CTxIn>& setCoinsRet, int64& nVal
     vector<COutput> vCoins;
     AvailableCoins(vCoins, false, coinControl, ALL_COINS);
     
-    //LogPrintf("found coins %d\n", (int)vCoins.size());
+    //printf("found coins %d\n", (int)vCoins.size());
 
     set<pair<const CWalletTx*,unsigned int> > setCoinsRet2;
 
     BOOST_FOREACH(const COutput& out, vCoins)
     {
+        //printf(" vin nValue %"PRI64d"\n", out.tx->vout[out.i].nValue);
         if(
             out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL || 
             out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL * 2 ||
@@ -1360,14 +1366,14 @@ bool CWallet::SelectCoinsCollateral(std::vector<CTxIn>& setCoinsRet, int64& nVal
             out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL * 4 ||
             out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL * 5 
         ){
+            //printf(" -- in\n");
             CTxIn vin = CTxIn(out.tx->GetHash(),out.i);
-            //LogPrintf(" vin nValue %"PRI64d"\n", out.tx->vout[out.i].nValue);
 
             vin.prevPubKey = out.tx->vout[out.i].scriptPubKey; // the inputs PubKey
             nValueRet += out.tx->vout[out.i].nValue;
             setCoinsRet.push_back(vin);
             setCoinsRet2.insert(make_pair(out.tx, out.i));
-            //LogPrintf(" -- nValueRet %"PRI64d"\n", nValueRet);
+            //printf(" -- nValueRet %"PRI64d"\n", nValueRet);
             return true;
         }
     }

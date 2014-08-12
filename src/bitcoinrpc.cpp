@@ -263,6 +263,7 @@ static const CRPCCommand vRPCCommands[] =
     { "importprivkey",          &importprivkey,          false,     false,      true },
     { "listunspent",            &listunspent,            false,     false,      true },
     { "getrawtransaction",      &getrawtransaction,      false,     false,      false },
+    { "erasetransaction",       &erasetransaction,       false,     false,      false },
     { "createrawtransaction",   &createrawtransaction,   false,     false,      false },
     { "decoderawtransaction",   &decoderawtransaction,   false,     false,      false },
     { "signrawtransaction",     &signrawtransaction,     false,     false,      false },
