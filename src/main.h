@@ -2670,6 +2670,8 @@ public:
     bool sessionFoundMasternode; //If we've found a compatible masternode
     int sessionTries;
 
+    int lastSplitUpBlock;
+
     CDarkSendPool()
     {
         //LogPrintf("CDarkSendPool::INIT()\n");        
@@ -2685,6 +2687,7 @@ public:
         
         isCapableMasterNode = MASTERNODE_NOT_PROCESSED;
         masternodePortOpen = 0;
+        lastSplitUpBlock = 0;
         unitTest = false;
 
         SetCollateralAddress(strAddress);

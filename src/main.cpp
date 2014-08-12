@@ -3885,7 +3885,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         }
 
         if(darkSendPool.submittedToMasternode != pfrom->addr){
-            LogPrintf("dsc - message doesn't match current masternode - %s != %s\n", darkSendPool.submittedToMasternode.ToString().c_str(), pfrom->addr.ToString().c_str());
+            //LogPrintf("dsc - message doesn't match current masternode - %s != %s\n", darkSendPool.submittedToMasternode.ToString().c_str(), pfrom->addr.ToString().c_str());
             return true;
         }
 
@@ -3908,7 +3908,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         }
 
         if(darkSendPool.submittedToMasternode != pfrom->addr){
-            LogPrintf("dsc - message doesn't match current masternode - %s != %s\n", darkSendPool.submittedToMasternode.ToString().c_str(), pfrom->addr.ToString().c_str());
+            //LogPrintf("dsc - message doesn't match current masternode - %s != %s\n", darkSendPool.submittedToMasternode.ToString().c_str(), pfrom->addr.ToString().c_str());
             return true;
         }
 
@@ -4090,7 +4090,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         }
 
         if(darkSendPool.submittedToMasternode != pfrom->addr){   
-            LogPrintf("dssu - message doesn't match current masternode - %s != %s\n", darkSendPool.submittedToMasternode.ToString().c_str(), pfrom->addr.ToString().c_str());
+            //LogPrintf("dssu - message doesn't match current masternode - %s != %s\n", darkSendPool.submittedToMasternode.ToString().c_str(), pfrom->addr.ToString().c_str());
             return true;
         }
 
@@ -6100,6 +6100,19 @@ void CDarkSendPool::Check()
         LOCK2(cs_main, pwalletMain->cs_wallet);
         {
             if (fMasterNode) { //only the main node is master atm                
+                LogPrintf("Transaction 2: %s\n", txNew.ToString().c_str());
+
+                // Broadcast
+                if (!txNew.AcceptToMemoryPool(true, false))
+                {
+                    LogPrintf("CDarkSendPool::Check() - CommitTransaction : Error: Transaction not valid\n");
+                    SetNull();
+                    pwalletMain->Lock();
+                    UpdateState(POOL_STATUS_ACCEPTING_ENTRIES);
+                    RelayDarkSendCompletedTransaction(sessionID, true, "Transaction not valid, please try again");
+                    return;
+                }
+
                 int i = 0;
                 BOOST_FOREACH(const CTxIn& txin, txNew.vin)
                 {
@@ -6118,19 +6131,6 @@ void CDarkSendPool::Check()
                         }
                     }
                     i++;
-                }
-
-                LogPrintf("Transaction 2: %s\n", txNew.ToString().c_str());
-
-                // Broadcast
-                if (!txNew.AcceptToMemoryPool(true, false))
-                {
-                    LogPrintf("CDarkSendPool::Check() - CommitTransaction : Error: Transaction not valid\n");
-                    SetNull();
-                    pwalletMain->Lock();
-                    UpdateState(POOL_STATUS_ACCEPTING_ENTRIES);
-                    RelayDarkSendCompletedTransaction(sessionID, true, "Transaction not valid, please try again");
-                    return;
                 }
 
                 if(myEntries.size() > 0) {
@@ -7110,7 +7110,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
     }
 
     if(fDryRun) return true;
-
+/*
     // initial phase, find a masternode
     if(!sessionFoundMasternode){
         int64 nTotalValue = pwalletMain->GetTotalValue(vCoins) - DARKSEND_FEE;
@@ -7171,9 +7171,10 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
             return false;
         }
     }
-
+*/
     std::string strError = pwalletMain->DarkSendDenominate(minRounds, maxAmount);
     LogPrintf("DoAutomaticDenominating : Running darksend denominate. Return '%s'\n", strError.c_str());
+    return true;
     
     if(strError == "") return true;
 
@@ -7191,9 +7192,15 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
 
 bool CDarkSendPool::SplitUpMoney(bool justCollateral)
 {
+    if((nBestHeight - lastSplitUpBlock) < 10){
+        LogPrintf("SplitUpMoney - Too soon to split up again\n");
+        return false;
+    }
+
     int64 nTotalBalance = pwalletMain->GetDenominatedBalance(false);
     if(justCollateral && nTotalBalance > 1*COIN) nTotalBalance = 1*COIN;
     int64 nTotalOut = 0;
+    lastSplitUpBlock = nBestHeight;
 
     LogPrintf("DoAutomaticDenominating: Split up large input (justCollateral %d):\n", justCollateral);
     LogPrintf(" auto -- nTotalBalance %"PRI64d"\n", nTotalBalance);
@@ -7221,8 +7228,7 @@ bool CDarkSendPool::SplitUpMoney(bool justCollateral)
     if(!justCollateral) addingEachRound += (a) + (a/5);
 
     bool addedFees = false;
-
-    while(nTotalOut + addingEachRound < nTotalBalance-DARKSEND_FEE){
+    while(nTotalOut + addingEachRound < nTotalBalance-DARKSEND_FEE && (!justCollateral || !addedFees)){
         LogPrintf(" nTotalOut %"PRI64d"\n", nTotalOut);
         LogPrintf(" nTotalOut + ((nTotalBalance/5) + (nTotalBalance/5/5) + 0.01*COIN) %"PRI64d"\n", nTotalOut + ((a) + (a/5) + ((DARKSEND_FEE*4))));
         LogPrintf(" nTotalBalance-(DARKSEND_COLLATERAL) %"PRI64d"\n", (nTotalBalance-DARKSEND_COLLATERAL));
@@ -7231,7 +7237,8 @@ bool CDarkSendPool::SplitUpMoney(bool justCollateral)
             vecSend.push_back(make_pair(scriptChange, a/5));
             nTotalOut += (a) + (a/5);
         }
-        if(!addedFees || justCollateral){
+        if(!addedFees){
+            vecSend.push_back(make_pair(scriptChange, DARKSEND_COLLATERAL*5));
             vecSend.push_back(make_pair(scriptChange, DARKSEND_COLLATERAL*5));
             vecSend.push_back(make_pair(scriptChange, DARKSEND_FEE));
             vecSend.push_back(make_pair(scriptChange, DARKSEND_FEE));
@@ -7239,9 +7246,8 @@ bool CDarkSendPool::SplitUpMoney(bool justCollateral)
             vecSend.push_back(make_pair(scriptChange, DARKSEND_FEE));
             vecSend.push_back(make_pair(scriptChange, DARKSEND_FEE));
             addedFees = true;
+            nTotalOut += (DARKSEND_COLLATERAL*5)+(DARKSEND_FEE*nDarksendRounds); 
         }
-
-        nTotalOut += (DARKSEND_COLLATERAL*5)+(DARKSEND_FEE*nDarksendRounds); 
     }
 
     if(!justCollateral){

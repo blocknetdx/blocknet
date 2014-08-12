@@ -1078,10 +1078,15 @@ void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const
                 }
                 if(!found) continue;
 
+                //printf(" nValue %"PRI64d"\n", pcoin->vout[i].nValue);                
+                //printf("  ---  %d %d %d %d\n", !(pcoin->IsSpent(i)), IsMine(pcoin->vout[i]), !IsLockedCoin((*it).first, i), pcoin->vout[i].nValue >= nMinimumInputValue);
+
                 if (!(pcoin->IsSpent(i)) && IsMine(pcoin->vout[i]) &&
                     !IsLockedCoin((*it).first, i) && pcoin->vout[i].nValue >= nMinimumInputValue &&
-                    (!coinControl || !coinControl->HasSelected() || coinControl->IsSelected((*it).first, i))) 
+                    (!coinControl || !coinControl->HasSelected() || coinControl->IsSelected((*it).first, i))) {
+                        //printf(" -- added\n");
                         vCoins.push_back(COutput(pcoin, i, pcoin->GetDepthInMainChain()));
+                }
             }
         }
     }
@@ -1299,34 +1304,40 @@ bool CWallet::SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxI
 {
     CCoinControl *coinControl=NULL;
 
-    bool allowCollateral = true;
+    bool allowFees = true;
     vector<COutput> vCoins;
     AvailableCoins(vCoins, false, coinControl, ALL_COINS);
-    //LogPrintf("found coins %d\n", (int)vCoins.size());
+    //printf("found coins %d\n", (int)vCoins.size());
     set<pair<const CWalletTx*,unsigned int> > setCoinsRet2;
 
+    //order the array so fees are first, then denominated money, then the rest. 
     sort(vCoins.rbegin(), vCoins.rend(), CompareByDenominated());
 
+    //the first thing we get is a fee input, then we'll use as many denominated as possible. then the rest
     BOOST_FOREACH(const COutput& out, vCoins)
     {
-        //LogPrintf(" vin nValue %"PRI64d" \n", out.tx->vout[out.i].nValue);
-        if(!allowCollateral && out.tx->vout[out.i].nValue <= DARKSEND_COLLATERAL*5) continue; //these are made for fees
+        //printf(" vin nValue %"PRI64d" \n", out.tx->vout[out.i].nValue);
+        if(!allowFees && out.tx->vout[out.i].nValue == DARKSEND_FEE) continue; //these are made for fees
+        if(out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL || out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL*2 ||
+        out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL*3 || out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL*5 ||
+        out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL*5 
+        ) continue; //these are made for collateral
         if(fMasterNode && out.tx->vout[out.i].nValue == 1000*COIN) continue; //masternode input
         if(nOnlyDenominationAmount != 0 && out.tx->vout[out.i].nValue != nOnlyDenominationAmount && 
-            out.tx->vout[out.i].nValue > DARKSEND_COLLATERAL*5) continue; //only get one type of denom
+            out.tx->vout[out.i].nValue > DARKSEND_FEE) continue; //only get one type of denom
 
-        //LogPrintf(" ---- ret %"PRI64d", nValue %"PRI64d", max %"PRI64d" -- %d\n", nValueRet, out.tx->vout[out.i].nValue, nValueMax, nValueRet + out.tx->vout[out.i].nValue <= nValueMax);
+        //printf(" ---- ret %"PRI64d", nValue %"PRI64d", max %"PRI64d" -- %d\n", nValueRet, out.tx->vout[out.i].nValue, nValueMax, nValueRet + out.tx->vout[out.i].nValue <= nValueMax);
         if(nValueRet + out.tx->vout[out.i].nValue <= nValueMax){
             CTxIn vin = CTxIn(out.tx->GetHash(),out.i);
             
             if(out.tx->vout[out.i].nValue == DARKSEND_FEE) {
-                allowCollateral = false; //these are made for fees
+                allowFees = false; //these are made for fees
             } else {
                 int rounds = darkSendPool.GetInputDarksendRounds(vin);
                 
-                //LogPrintf(" -- rounds %d\n", rounds);            
+                //printf(" -- rounds %d\n", rounds);            
                 if(rounds >= nDarksendRoundsMax) continue;
-                //LogPrintf(" -- rounds less than max\n");
+                //printf(" -- rounds less than max\n");
                 if(rounds < nDarksendRoundsMin) continue; 
             }
 
@@ -1335,11 +1346,11 @@ bool CWallet::SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxI
             setCoinsRet.push_back(vin);
             setCoinsRet2.insert(make_pair(out.tx, out.i));
 
-            //LogPrintf(" -- nValueRet %"PRI64d"\n", nValueRet/COIN);
-            if(nValueRet >= nValueMax) return true;
+            //printf(" -- nValueRet %"PRI64d"\n", nValueRet/COIN);
         }
     }
 
+    // if it's more than min, we're good to return
     if(nValueRet >= nValueMin) return true;
 
     return false;
@@ -1350,6 +1361,8 @@ bool CWallet::SelectCoinsCollateral(std::vector<CTxIn>& setCoinsRet, int64& nVal
     CCoinControl *coinControl=NULL;
 
     vector<COutput> vCoins;
+
+    //printf(" selecting coins for collateral\n");
     AvailableCoins(vCoins, false, coinControl, ALL_COINS);
     
     //printf("found coins %d\n", (int)vCoins.size());
@@ -1359,6 +1372,8 @@ bool CWallet::SelectCoinsCollateral(std::vector<CTxIn>& setCoinsRet, int64& nVal
     BOOST_FOREACH(const COutput& out, vCoins)
     {
         //printf(" vin nValue %"PRI64d"\n", out.tx->vout[out.i].nValue);
+        
+        // collateral inputs will always be a multiple of DARSEND_COLLATERAL, up to five 
         if(
             out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL || 
             out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL * 2 ||
