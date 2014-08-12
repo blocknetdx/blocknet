@@ -6020,8 +6020,6 @@ struct CompareValueOnly2
 int randomizeList (int i) { return std::rand()%i;}
 
 void CDarkSendPool::SetNull(bool clearEverything){
-    ResendWalletTransactions();
-
     finalTransaction.vin.clear();
     finalTransaction.vout.clear();
 
