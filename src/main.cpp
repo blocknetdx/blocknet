@@ -6443,19 +6443,18 @@ bool CDarkSendPool::SignaturesComplete(){
 }
 
 void CDarkSendPool::SendMoney(const CTransaction& collateral, std::vector<CTxIn>& vin, std::vector<CTxOut>& vout, int64& fee, int64 amount){
-    if(!sessionFoundMasternode){
-        LogPrintf("CDarkSendPool::SendMoney() - No masternode has been selected yet.\n");
-        SetNull(true);
-        UnlockCoins();
-        return;
-    }
-
     BOOST_FOREACH(CTxIn in, collateral.vin)
         lockedCoins.push_back(in);
     
     BOOST_FOREACH(CTxIn in, vin)
         lockedCoins.push_back(in);
 
+    if(!sessionFoundMasternode){
+        LogPrintf("CDarkSendPool::SendMoney() - No masternode has been selected yet.\n");
+        UnlockCoins();
+        SetNull(true);
+        return;
+    }
 
 /*    BOOST_FOREACH(CTxOut& out, vout)
         out.scriptPubKey.insert(0, OP_DARKSEND);
@@ -7110,7 +7109,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
     }
 
     if(fDryRun) return true;
-/*
+
     // initial phase, find a masternode
     if(!sessionFoundMasternode){
         int64 nTotalValue = pwalletMain->GetTotalValue(vCoins) - DARKSEND_FEE;
@@ -7171,7 +7170,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
             return false;
         }
     }
-*/
+
     std::string strError = pwalletMain->DarkSendDenominate(minRounds, maxAmount);
     LogPrintf("DoAutomaticDenominating : Running darksend denominate. Return '%s'\n", strError.c_str());
     return true;
