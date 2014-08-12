@@ -272,20 +272,22 @@ void SendCoinsDialog::darkSendStatus()
         // Balance and number of transactions might have changed
         cachedNumBlocks = nBestHeight;
 
-        if (model->getEncryptionStatus() != WalletModel::Unencrypted){
-            if((nAnonymizeDarkcoinAmount*COIN)-pwalletMain->GetAnonymizedBalance() > 1.1*COIN && model->getEncryptionStatus() == WalletModel::Locked){
-                WalletModel::UnlockContext ctx(model->requestUnlock());
-                if(!ctx.isValid()){
-                    //unlock was cancelled
-                    fDisableDarksend = true;
-                    LogPrintf("Wallet is locked and user declined to unlock. Disabling Darksend.\n");
+        if (pwalletMain->GetBalance() - pwalletMain->GetAnonymizedBalance() > 2*COIN){
+            if (model->getEncryptionStatus() != WalletModel::Unencrypted){
+                if((nAnonymizeDarkcoinAmount*COIN)-pwalletMain->GetAnonymizedBalance() > 1.1*COIN && model->getEncryptionStatus() == WalletModel::Locked){
+                    WalletModel::UnlockContext ctx(model->requestUnlock());
+                    if(!ctx.isValid()){
+                        //unlock was cancelled
+                        fDisableDarksend = true;
+                        LogPrintf("Wallet is locked and user declined to unlock. Disabling Darksend.\n");
+                    }
                 }
-            }
-            if((nAnonymizeDarkcoinAmount*COIN)-pwalletMain->GetAnonymizedBalance() <= 1.1*COIN && 
-                model->getEncryptionStatus() == WalletModel::Unlocked && 
-                darkSendPool.GetMyTransactionCount() == 0){
-                LogPrintf("Darksend is complete, locking wallet.\n");
-                model->Lock();
+                if((nAnonymizeDarkcoinAmount*COIN)-pwalletMain->GetAnonymizedBalance() <= 1.1*COIN && 
+                    model->getEncryptionStatus() == WalletModel::Unlocked && 
+                    darkSendPool.GetMyTransactionCount() == 0){
+                    LogPrintf("Darksend is complete, locking wallet.\n");
+                    model->Lock();
+                }
             }
         }
     }
