@@ -270,8 +270,12 @@ int main(int argc, char *argv[])
 
                 if(!agreed_to_tou){
                     QMessageBox::StandardButton retval = QMessageBox::question(guiref, "Darkcoin Terms Of Use",
-                                          window.tr("Do you agreed to the following terms of use? <br><br>") + 
-                                          window.tr("I understand that Darkcoin is not intended for any illegal activity and that no person or entity associated with Darkcoin can be held responsible for any use against the law.<br>"),
+                            window.tr("Do you agreed to the following terms of use? <br><br>") + 
+                            window.tr("By using this software, you acknowledge and understand that Darkcoin is not intended for use in any illegal activity, and that no person or entity associated with the creation, development, marketing, or furtherance of Darkcoin shall be held responsible for use by any individual, group, or entity that is against the law in their respective jurisdiction. <br><br>") +
+                            window.tr("DarkSend is completely trustless because nobody controls the whole system. The risk of something going wrong is very low. However, the software is still in development. This means that things can break and there are no guarantees about it. Use it at your own risk, follow the instructions exactly, and only use money that you can afford to lose should something go wrong. <br> <br>") +
+                            window.tr("Darksend uses a very large keypool and goes through keys quite rapidly. This means that you need to make backups more frequently than with other wallets, because when it anonymizes your funds a lot transactions happen in the background. To be safe make a new backup after each time your anonymized threshold of funds is reached. <br> <br>") +
+                            window.tr("Please don’t run the software in more than one location at the same time . Doing so can create issues with the automatic anonymization of your funds and there is a risk of double spending inputs by your wallet. <br><br>"),
+
                           QMessageBox::Yes|QMessageBox::Cancel,
                           QMessageBox::Cancel);
 

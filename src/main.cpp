@@ -3984,6 +3984,20 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             pfrom->PushMessage("dssu", darkSendPool.sessionID, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), accepted, error);
             return true;
         }
+
+        or
+
+        if(GetDenominationByAmount(sessionAmount) != GetDenominationByAmount(nAmount)){
+    
+        }
+
+        also
+
+        if(entries.size() == 0 && GetDenominationByAmount(sessionAmount) != GetDenominationByAmount(nAmount)) {
+            sessionAmount = nAmount;
+        }
+
+
 */
         //check it like a transaction
         {
