@@ -7121,8 +7121,8 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
             CService addr;
             if(dsq.time == 0) continue;
             if(!dsq.GetAddress(addr)) continue;
-            if(dsq.nDenom != GetDenominationsByAmount(balanceNeedsAnonymized)) {
-                LogPrintf(" dsq.nDenom != GetDenominationsByAmount %"PRI64d" %d \n", dsq.nDenom, GetDenominationsByAmount(balanceNeedsAnonymized));
+            if(dsq.nDenom != GetDenominationsByAmount(nValueIn)) {
+                LogPrintf(" dsq.nDenom != GetDenominationsByAmount %"PRI64d" %d \n", dsq.nDenom, GetDenominationsByAmount(nValueIn));
                 continue;
             }
             dsq.time = 0; //remove node
@@ -7133,7 +7133,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
                 BOOST_FOREACH(CNode* pnode, vNodes)
                 {
                     if(submittedToMasternode != pnode->addr) continue;
-                    pnode->PushMessage("dsa", balanceNeedsAnonymized);
+                    pnode->PushMessage("dsa", nValueIn);
                     LogPrintf("DoAutomaticDenominating --- connected (from queue), sending dsa for %"PRI64d"\n", balanceNeedsAnonymized);
                     return true;
                 }

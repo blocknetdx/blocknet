@@ -1273,6 +1273,23 @@ bool CWallet::SelectCoins(int64 nTargetValue, set<pair<const CWalletTx*,unsigned
             SelectCoinsMinConf(nTargetValue, 0, 1, vCoins, setCoinsRet, nValueRet));
 }
 
+struct CompareByDenominated
+{
+    bool operator()(const COutput& t1,
+                    const COutput& t2) const
+    {
+        int t1b = 0;
+        BOOST_FOREACH(int64 d, darkSendDenominations)
+           if(t1.tx->vout[t1.i].nValue == d) t1b = 1;
+
+        int t2b = 0;
+        BOOST_FOREACH(int64 d, darkSendDenominations)
+           if(t2.tx->vout[t2.i].nValue == d) t2b = 1;
+
+        return t1b > t2b;
+    }
+};
+
 bool CWallet::SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxIn>& setCoinsRet, int64& nValueRet, int nDarksendRoundsMin, int nDarksendRoundsMax, int64 nOnlyDenominationAmount) const 
 {
     CCoinControl *coinControl=NULL;
@@ -1282,6 +1299,8 @@ bool CWallet::SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxI
     AvailableCoins(vCoins, false, coinControl, ALL_COINS);
     //LogPrintf("found coins %d\n", (int)vCoins.size());
     set<pair<const CWalletTx*,unsigned int> > setCoinsRet2;
+
+    sort(vCoins.rbegin(), vCoins.rend(), CompareByDenominated());
 
     BOOST_FOREACH(const COutput& out, vCoins)
     {
