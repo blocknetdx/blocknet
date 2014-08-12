@@ -6854,21 +6854,14 @@ bool CDarkSendPool::GetLastValidBlockHash(uint256& hash, int mod, int nBlockHeig
 
 bool CDarkSendPool::DoConcessusVote(int64 nBlockHeight)
 {
-    LogPrintf("CDarkSendPool::DoConcessusVote\n");
     bool fIsInitialDownload = IsInitialBlockDownload();
     if(fIsInitialDownload) return false;
-
-    LogPrintf("CDarkSendPool::DoConcessusVote - 2\n");
 
     //If masternode, vote for whoever I think should win next block
     if(!fMasterNode || isCapableMasterNode != MASTERNODE_IS_CAPABLE) return false;
 
-    LogPrintf("CDarkSendPool::DoConcessusVote - 3\n");
-
     int rank = GetMasternodeRank(vinMasterNode, 1);
     int winner = GetCurrentMasterNode(1, nBlockHeight);
-
-    LogPrintf("CDarkSendPool::DoConcessusVote - 4 %d %d\n", rank, winner);
 
     if(rank <= 10 && winner != 1){
         std::vector<unsigned char> vchMasterNodeSignature;
@@ -7083,7 +7076,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
     }
     if(balanceNeedsAnonymized > nValueMax) balanceNeedsAnonymized = nValueMax;
 
-    if (!pwalletMain->SelectCoinsDark(nValueMin, nValueMax, vCoins, nValueIn, minRounds, nDarksendRounds))
+    if (!pwalletMain->SelectCoinsDark(nValueMin, maxAmount*COIN, vCoins, nValueIn, minRounds, nDarksendRounds))
     {
         nValueIn = 0;
         vCoins.clear();
@@ -7098,6 +7091,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
         LogPrintf("DoAutomaticDenominating : No funds detected in need of denominating (2)\n");
         return false;
     }
+
 
     if(nValueIn < COIN*1.1){
 
@@ -7116,13 +7110,17 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
 
     // initial phase, find a masternode
     if(!sessionFoundMasternode){
+        int64 nTotalValue = pwalletMain->GetTotalValue(vCoins) - DARKSEND_FEE;
+        double fDarkcoinSubmitted = nTotalValue / COIN;
+        LogPrintf("Submiting Darksend for %f DRK\n", fDarkcoinSubmitted);
+
         // if we have any pending merges
         BOOST_FOREACH(CDarksendQueue dsq, vecDarksendQueue){
             CService addr;
             if(dsq.time == 0) continue;
             if(!dsq.GetAddress(addr)) continue;
-            if(dsq.nDenom != GetDenominationsByAmount(nValueIn)) {
-                LogPrintf(" dsq.nDenom != GetDenominationsByAmount %"PRI64d" %d \n", dsq.nDenom, GetDenominationsByAmount(nValueIn));
+            if(dsq.nDenom != GetDenominationsByAmount(nTotalValue)) {
+                LogPrintf(" dsq.nDenom != GetDenominationsByAmount %"PRI64d" %d \n", dsq.nDenom, GetDenominationsByAmount(nTotalValue));
                 continue;
             }
             dsq.time = 0; //remove node
@@ -7133,8 +7131,8 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
                 BOOST_FOREACH(CNode* pnode, vNodes)
                 {
                     if(submittedToMasternode != pnode->addr) continue;
-                    pnode->PushMessage("dsa", nValueIn);
-                    LogPrintf("DoAutomaticDenominating --- connected (from queue), sending dsa for %"PRI64d"\n", balanceNeedsAnonymized);
+                    pnode->PushMessage("dsa", nTotalValue);
+                    LogPrintf("DoAutomaticDenominating --- connected (from queue), sending dsa for %"PRI64d"\n", nTotalValue);
                     return true;
                 }
             } else {
@@ -7158,8 +7156,8 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
                 BOOST_FOREACH(CNode* pnode, vNodes)
                 {
                     if(darkSendMasterNodes[i].addr != pnode->addr) continue;
-                    pnode->PushMessage("dsa", balanceNeedsAnonymized);
-                    LogPrintf("DoAutomaticDenominating --- connected, sending dsa for %"PRI64d"\n", balanceNeedsAnonymized);
+                    pnode->PushMessage("dsa", nTotalValue);
+                    LogPrintf("DoAutomaticDenominating --- connected, sending dsa for %"PRI64d"\n", nTotalValue);
                     return true;
                 }
             } else {

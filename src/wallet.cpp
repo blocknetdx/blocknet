@@ -1678,6 +1678,21 @@ string CWallet::SendMoneyToDestination(const CTxDestination& address, int64 nVal
     return SendMoney(scriptPubKey, nValue, wtxNew, fAskFee, coin_type);
 }
 
+int64 CWallet::GetTotalValue(std::vector<CTxIn> vCoins) {
+    int64 nTotalValue = 0;
+    CWalletTx wtx;
+    BOOST_FOREACH(CTxIn i, vCoins){
+        if (mapWallet.count(i.prevout.hash))
+        {
+            CWalletTx& wtx = mapWallet[i.prevout.hash];
+            nTotalValue += wtx.vout[i.prevout.n].nValue;
+        } else {
+            LogPrintf("GetTotalValue -- Couldn't find transaction\n");
+        }
+    }
+    return nTotalValue;
+}
+
 string CWallet::DarkSendDenominate(int minRounds, int maxAmount)
 {
 
@@ -1709,18 +1724,7 @@ string CWallet::DarkSendDenominate(int minRounds, int maxAmount)
     }
 
     // calculate total value out
-    int64 nTotalValue = 0;
-    CWalletTx wtx;
-    BOOST_FOREACH(CTxIn i, vCoins){
-        if (mapWallet.count(i.prevout.hash))
-        {
-            CWalletTx& wtx = mapWallet[i.prevout.hash];
-            nTotalValue += wtx.vout[i.prevout.n].nValue;
-        } else {
-            LogPrintf("SelectCoinsDarkDenominated -- Couldn't find transaction\n");
-        }
-    }
-    nTotalValue -= nFeeRet; //minus fees
+    int64 nTotalValue = GetTotalValue(vCoins) - nFeeRet;
 
     //--------------
 
