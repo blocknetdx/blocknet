@@ -6470,6 +6470,9 @@ void CDarkSendPool::SendMoney(const CTransaction& collateral, std::vector<CTxIn>
         return;
     }
 
+    if (!CheckDiskSpace())
+        return false;
+
 /*    BOOST_FOREACH(CTxOut& out, vout)
         out.scriptPubKey.insert(0, OP_DARKSEND);
 */
