@@ -3876,7 +3876,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
     else if (strCommand == "dseg") { //DarkSend Election Get
         if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
-            return false;
+            return true;
         }
 
         CTxIn vin;
@@ -3900,7 +3900,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
     }
     else if (strCommand == "dmcv") { //DarkSend Masternode Consessus Vote   
         if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
-            return false;
+            return true;
         }
 
         CTxIn vinWinningMasternode;
@@ -3973,7 +3973,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
     } else if (strCommand == "dsee") { //DarkSend Election Entry   
         if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
-            return false;
+            return true;
         }
         bool fIsInitialDownload = IsInitialBlockDownload();
         if(fIsInitialDownload) return true;
@@ -4072,7 +4072,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
     else if (strCommand == "dseep") { //DarkSend Election Entry Ping 
         if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
-            return false;
+            return true;
         }
         bool fIsInitialDownload = IsInitialBlockDownload();
         if(fIsInitialDownload) return true;
