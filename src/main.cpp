@@ -837,11 +837,11 @@ bool CTxMemPool::acceptableInputs(CValidationState &state, CTransaction &tx, boo
         return error("CTxMemPool::acceptableInputs() : not accepting nLockTime beyond 2038 yet");
 
     // Rather not work on nonstandard transactions (unless -testnet)
-    string strNonStd;
+/*    string strNonStd;
     if (!fTestNet && !tx.IsStandard(strNonStd))
         return error("CTxMemPool::acceptableInputs() : nonstandard transaction (%s)",
                      strNonStd.c_str());
-
+*/
     // Check for conflicts with in-memory transactions
     for (unsigned int i = 0; i < tx.vin.size(); i++)
     {
@@ -912,11 +912,11 @@ bool CTxMemPool::acceptable(CValidationState &state, CTransaction &tx, bool fChe
     if ((int64)tx.nLockTime > std::numeric_limits<int>::max())
         return error("CTxMemPool::acceptable() : not accepting nLockTime beyond 2038 yet");
     // Rather not work on nonstandard transactions (unless -testnet)
-    string strNonStd;
+    /*string strNonStd;
     if (!fTestNet && !tx.IsStandard(strNonStd))
         return error("CTxMemPool::acceptable() : nonstandard transaction (%s)",
                      strNonStd.c_str());
-
+*/
     // is it already in the memory pool?
     uint256 hash = tx.GetHash();
     {
@@ -984,11 +984,11 @@ bool CTxMemPool::acceptable(CValidationState &state, CTransaction &tx, bool fChe
         }
 
 
-        // Check for non-standard pay-to-script-hash in inputs
+/*        // Check for non-standard pay-to-script-hash in inputs
         if (!tx.AreInputsStandard(view) && !fTestNet) {
             return error("CTxMemPool::acceptable() : nonstandard transaction input");
         }
-
+*/
 
         // Note: if you modify this code to accept non-standard transactions, then
         // you should add code here to check that the transaction does a
@@ -6482,6 +6482,36 @@ void CDarkSendPool::SendMoney(const CTransaction& collateral, std::vector<CTxIn>
     LogPrintf("CDarkSendPool::SendMoney() - Added transaction to pool.\n");
 
     ClearLastMessage();
+
+    //check it like a transaction
+    {
+        int64 nValueIn = 0;
+        int64 nValueOut = 0;
+        bool missingTx = false;
+
+        CValidationState state;
+        CTransaction tx;
+
+        BOOST_FOREACH(const CTxOut o, vout){
+            nValueOut += o.nValue;
+            tx.vout.push_back(o);
+        }
+
+        BOOST_FOREACH(const CTxIn i, vin){
+            tx.vin.push_back(i);
+
+            LogPrintf("dsi -- tx in %s\n", i.ToString().c_str());                
+        }
+
+
+        bool missing = false;
+        if (!tx.IsAcceptable(state, true, false, &missing, false)){ //AcceptableInputs(state, true)){
+            LogPrintf("dsi -- transactione not valid! %s \n", tx.ToString().c_str());
+            return;
+        }
+    }
+
+
 
     // store our entry for later use
     CDarkSendEntry e;
