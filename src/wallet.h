@@ -764,6 +764,16 @@ public:
         return strprintf("COutput(%s, %d, %d) [%s]", tx->GetHash().ToString().c_str(), i, nDepth, FormatMoney(tx->vout[i].nValue).c_str());
     }
 
+    //Used with Darksend. Will return fees, then denominations, everything else, then very small inputs that aren't fees
+    int Priority() const
+    {
+        if(tx->vout[i].nValue == DARKSEND_FEE) return -2;
+        BOOST_FOREACH(int64 d, darkSendDenominations) 
+            if(tx->vout[i].nValue == d) return -1;
+        if(tx->vout[i].nValue < 1*COIN) return 1;
+        return 0;
+    }
+
     void print() const
     {
         LogPrintf("%s\n", ToString().c_str());

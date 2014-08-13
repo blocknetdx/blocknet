@@ -1278,25 +1278,12 @@ bool CWallet::SelectCoins(int64 nTargetValue, set<pair<const CWalletTx*,unsigned
             SelectCoinsMinConf(nTargetValue, 0, 1, vCoins, setCoinsRet, nValueRet));
 }
 
-struct CompareByDenominated
+struct CompareByPriority
 {
     bool operator()(const COutput& t1,
                     const COutput& t2) const
     {
-
-        int t1b = 0;
-        if(t1.tx->vout[t1.i].nValue == DARKSEND_FEE) t1b = 2;
-
-        BOOST_FOREACH(int64 d, darkSendDenominations)
-           if(t1.tx->vout[t1.i].nValue == d) t1b = 1;
-
-        int t2b = 0;
-        if(t2.tx->vout[t2.i].nValue == DARKSEND_FEE) t2b = 2;
-
-        BOOST_FOREACH(int64 d, darkSendDenominations)
-           if(t2.tx->vout[t2.i].nValue == d) t2b = 1;
-
-        return t1b > t2b;
+        return t1.Priority() > t2.Priority();
     }
 };
 
@@ -1312,12 +1299,12 @@ bool CWallet::SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxI
     set<pair<const CWalletTx*,unsigned int> > setCoinsRet2;
 
     //order the array so fees are first, then denominated money, then the rest. 
-    sort(vCoins.rbegin(), vCoins.rend(), CompareByDenominated());
+    sort(vCoins.rbegin(), vCoins.rend(), CompareByPriority());
 
     //the first thing we get is a fee input, then we'll use as many denominated as possible. then the rest
     BOOST_FOREACH(const COutput& out, vCoins)
     {
-        //printf(" vin nValue %"PRI64d" \n", out.tx->vout[out.i].nValue);
+        //printf(" ------ vin nValue %"PRI64d" \n", out.tx->vout[out.i].nValue);
         if(hasFeeInput && out.tx->vout[out.i].nValue == DARKSEND_FEE) continue; //these are made for fees
         if(out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL || out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL*2 ||
         out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL*3 || out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL*5 ||
@@ -1344,7 +1331,7 @@ bool CWallet::SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxI
             setCoinsRet.push_back(vin);
             setCoinsRet2.insert(make_pair(out.tx, out.i));
 
-            //printf(" -- nValueRet %"PRI64d"\n", nValueRet/COIN);
+            //printf(" -- nValueRet %d\n", nValueRet/COIN);
         }
     }
 
