@@ -132,6 +132,7 @@ extern std::string strMasterNodePrivKey;
 extern int64 enforceMasternodePaymentsTime;
 extern CWallet pmainWallet;
 extern std::map<uint256, CBlock*> mapOrphanBlocks;
+extern std::vector<std::pair<int64, std::pair<CTxIn, int> > > vecBlockVotes;
 
 // Settings
 extern int64 nTransactionFee;
@@ -340,7 +341,7 @@ public:
 
     void print() const
     {
-        printf("%s\n", ToString().c_str());
+        LogPrintf("%s\n", ToString().c_str());
     }
 };
 
@@ -418,7 +419,7 @@ public:
 
     void print() const
     {
-        printf("%s\n", ToString().c_str());
+        LogPrintf("%s\n", ToString().c_str());
     }
 };
 
@@ -489,7 +490,7 @@ public:
 
     void print() const
     {
-        printf("%s\n", ToString().c_str());
+        LogPrintf("%s\n", ToString().c_str());
     }
 };
 
@@ -695,7 +696,7 @@ void UpdateCoins(const CTransaction& tx, CValidationState &state, CCoinsViewCach
 
     void print() const
     {
-        printf("%s", ToString().c_str());
+        LogPrintf("%s", ToString().c_str());
     }
 
 
@@ -1369,11 +1370,11 @@ public:
     (
         nVersion = this->nVersion;
         READWRITE(blockHeight);
-        //printf("blockHeight %"PRI64d"\n", blockHeight);
+        //LogPrintf("blockHeight %"PRI64d"\n", blockHeight);
         READWRITE(pubkey);
-        //printf("pubkey %s\n", pubkey.ToString().c_str());
+        //LogPrintf("pubkey %s\n", pubkey.ToString().c_str());
         READWRITE(votes);
-        //printf("votes %d\n", votes);
+        //LogPrintf("votes %d\n", votes);
     )
 
 
@@ -1432,8 +1433,6 @@ public:
         return (nBits == 0);
     }
 
-    //special has includes voting info in the hash
-    uint256 GetSpecialHash() const;
     uint256 GetHash() const;
 
     int64 GetBlockTime() const
@@ -1608,7 +1607,7 @@ public:
 
     void print() const
     {
-        printf("CBlock(hash=%s, input=%s, PoW=%s, ver=%d, hashPrevBlock=%s, hashMerkleRoot=%s, nTime=%u, nBits=%08x, nNonce=%u, vtx=%"PRIszu")\n",
+        LogPrintf("CBlock(hash=%s, input=%s, PoW=%s, ver=%d, hashPrevBlock=%s, hashMerkleRoot=%s, nTime=%u, nBits=%08x, nNonce=%u, vtx=%"PRIszu")\n",
             GetHash().ToString().c_str(),
             HexStr(BEGIN(nVersion),BEGIN(nVersion)+80,false).c_str(),
             GetPoWHash().ToString().c_str(),
@@ -1619,13 +1618,13 @@ public:
             vtx.size());
         for (unsigned int i = 0; i < vtx.size(); i++)
         {
-            printf("  ");
+            LogPrintf("  ");
             vtx[i].print();
         }
-        printf("  vMerkleTree: ");
+        LogPrintf("  vMerkleTree: ");
         for (unsigned int i = 0; i < vMerkleTree.size(); i++)
-            printf("%s ", vMerkleTree[i].ToString().c_str());
-        printf("\n");
+            LogPrintf("%s ", vMerkleTree[i].ToString().c_str());
+        LogPrintf("\n");
     }
 
 
@@ -1950,7 +1949,7 @@ public:
 
     void print() const
     {
-        printf("%s\n", ToString().c_str());
+        LogPrintf("%s\n", ToString().c_str());
     }
 };
 
@@ -2032,7 +2031,7 @@ public:
 
     void print() const
     {
-        printf("%s\n", ToString().c_str());
+        LogPrintf("%s\n", ToString().c_str());
     }
 };
 
@@ -2446,7 +2445,7 @@ public:
     
     }
 
-    uint256 CalculateScore(int mod=10);
+    uint256 CalculateScore(int mod=1, int64 nBlockHeight=0);
 
     void UpdateLastSeen(int64 override=0)
     {
@@ -2461,7 +2460,7 @@ public:
 
     bool UpdatedWithin(int microSeconds)
     {
-        //printf("UpdatedWithin %"PRI64u", %"PRI64u" --  %d \n", GetTimeMicros() , lastTimeSeen, (GetTimeMicros() - lastTimeSeen) < microSeconds);
+        //LogPrintf("UpdatedWithin %"PRI64u", %"PRI64u" --  %d \n", GetTimeMicros() , lastTimeSeen, (GetTimeMicros() - lastTimeSeen) < microSeconds);
 
         return (GetTimeMicros() - lastTimeSeen) < microSeconds;
     }
@@ -2491,13 +2490,15 @@ static const int64 POOL_FEE_AMOUNT = 0.025*COIN;
 
 /** Used to keep track of current status of darksend pool
  */
+
 class CDarkSendPool
 {
 public:
-    static const int MIN_PEER_PROTO_VERSION = 70018;
+    static const int MIN_PEER_PROTO_VERSION = 70034;
 
     CTxIn vinMasterNode;
     CPubKey pubkeyMasterNode;
+    CPubKey pubkeyMasterNode2;
     std::vector<unsigned char> vchMasterNodeSignature;
     CScript collateralPubKey;
     
@@ -2517,8 +2518,12 @@ public:
     }
 
     bool SetCollateralAddress(std::string strAddress);
-    bool GetLastValidBlockHash(uint256& hash, int mod=10);
-    int GetCurrentMasterNode(int mod=10);
+    bool GetCurrentMasterNodeConsessus(int64 blockHeight, CScript& payee);
+    void SubmitMasternodeVote(CTxIn& vinWinningMasternode, CTxIn& vinMasterNodeFrom, int64 nBlockHeight);
+    int GetMasternodeByVin(CTxIn& vin);
+    int GetMasternodeRank(CTxIn& vin, int mod);
+    int GetCurrentMasterNode(int mod=1, int64 nBlockHeight=0);
+    bool GetLastValidBlockHash(uint256& hash, int mod=1, int nBlockHeight=0);
     void NewBlock();
 };
 
