@@ -2494,7 +2494,7 @@ static const int64 POOL_FEE_AMOUNT = 0.025*COIN;
 class CDarkSendPool
 {
 public:
-    static const int MIN_PEER_PROTO_VERSION = 70032;
+    static const int MIN_PEER_PROTO_VERSION = 70033;
 
     CTxIn vinMasterNode;
     CPubKey pubkeyMasterNode;
