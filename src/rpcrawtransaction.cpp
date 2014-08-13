@@ -136,7 +136,7 @@ Value erasetransaction(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 1)
         throw runtime_error(
-            "erasetransactions <txid>\n"
+            "erasetransaction <txid>\n"
             "Remove transaction from wallet.");
 
     uint256 hash = ParseHashV(params[0], "parameter 1");
