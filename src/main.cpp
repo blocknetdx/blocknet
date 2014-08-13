@@ -7076,7 +7076,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
     int64 nValueIn = 0;
     int minRounds = -2;
     int maxAmount = 1000;
-
+    bool hasFeeInput = false;
 
     // if we have more denominated rounds (of any maturity) than the nAnonymizeDarkcoinAmount, we should use use those
     if(pwalletMain->GetDenominatedBalance(true) >= nAnonymizeDarkcoinAmount*COIN) {
@@ -7093,34 +7093,45 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
     }
     if(balanceNeedsAnonymized > nValueMax) balanceNeedsAnonymized = nValueMax;
 
-    if (!pwalletMain->SelectCoinsDark(nValueMin, maxAmount*COIN, vCoins, nValueIn, minRounds, nDarksendRounds))
+    if (!pwalletMain->SelectCoinsDark(nValueMin, maxAmount*COIN, vCoins, nValueIn, minRounds, nDarksendRounds, hasFeeInput))
     {
         nValueIn = 0;
         vCoins.clear();
 
         //simply look for non-denominated coins
-        if (pwalletMain->SelectCoinsDark(nValueMax+1, 9999999*COIN, vCoins, nValueIn, minRounds, nDarksendRounds))
+        if (pwalletMain->SelectCoinsDark(nValueMax+1, 9999999*COIN, vCoins, nValueIn, minRounds, nDarksendRounds, hasFeeInput))
         {
             if(!fDryRun) SplitUpMoney();
             return true;
+        }
+        if(!hasFeeInput){
+            if(!fDryRun) SplitUpMoney(true);
         }
 
         LogPrintf("DoAutomaticDenominating : No funds detected in need of denominating (2)\n");
         return false;
     }
-
+    if(!hasFeeInput){
+        if(!fDryRun) SplitUpMoney(true);
+    }
 
     if(nValueIn < COIN*1.1){
 
         //simply look for non-denominated coins
-        if (pwalletMain->SelectCoinsDark(nValueMax+1, 9999999*COIN, vCoins, nValueIn, minRounds, nDarksendRounds))
+        if (pwalletMain->SelectCoinsDark(nValueMax+1, 9999999*COIN, vCoins, nValueIn, minRounds, nDarksendRounds, hasFeeInput))
         {
             if(!fDryRun) SplitUpMoney();
             return true;
         }
+        if(!hasFeeInput){
+            if(!fDryRun) SplitUpMoney(true);
+        }
 
         LogPrintf("DoAutomaticDenominating : Too little to denominate (must have 1.1DRK) \n");
         return false;
+    }
+    if(!hasFeeInput){
+        if(!fDryRun) SplitUpMoney(true);
     }
 
     if(fDryRun) return true;

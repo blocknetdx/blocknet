@@ -87,7 +87,7 @@ private:
 
 public:
     bool SelectCoins(int64 nTargetValue, std::set<std::pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64& nValueRet, const CCoinControl *coinControl=NULL, AvailableCoinsType coin_type=ALL_COINS) const;
-    bool SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxIn>& setCoinsRet, int64& nValueRet, int nDarksendRoundsMin, int nDarksendRoundsMax, int64 nOnlyDenominationAmount=0) const; 
+    bool SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxIn>& setCoinsRet, int64& nValueRet, int nDarksendRoundsMin, int nDarksendRoundsMax, bool& hasFeeInput) const;
     bool SelectCoinsDarkDenominated(int64 nTargetValue, std::vector<CTxIn>& setCoinsRet, int64& nValueRet) const;
     bool SelectCoinsMasternode(CTxIn& vin, int64& nValueRet, CScript& pubScript) const;
 

@@ -1300,11 +1300,12 @@ struct CompareByDenominated
     }
 };
 
-bool CWallet::SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxIn>& setCoinsRet, int64& nValueRet, int nDarksendRoundsMin, int nDarksendRoundsMax, int64 nOnlyDenominationAmount) const 
+bool CWallet::SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxIn>& setCoinsRet, int64& nValueRet, int nDarksendRoundsMin, int nDarksendRoundsMax, bool& hasFeeInput) const 
 {
     CCoinControl *coinControl=NULL;
 
-    bool allowFees = true;
+    hasFeeInput = false;
+    
     vector<COutput> vCoins;
     AvailableCoins(vCoins, false, coinControl, ALL_COINS);
     //printf("found coins %d\n", (int)vCoins.size());
@@ -1317,21 +1318,18 @@ bool CWallet::SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxI
     BOOST_FOREACH(const COutput& out, vCoins)
     {
         //printf(" vin nValue %"PRI64d" \n", out.tx->vout[out.i].nValue);
-        if(!allowFees && out.tx->vout[out.i].nValue == DARKSEND_FEE) continue; //these are made for fees
+        if(hasFeeInput && out.tx->vout[out.i].nValue == DARKSEND_FEE) continue; //these are made for fees
         if(out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL || out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL*2 ||
         out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL*3 || out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL*5 ||
-        out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL*5 
-        ) continue; //these are made for collateral
+        out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL*5 ) continue; //these are made for collateral
         if(fMasterNode && out.tx->vout[out.i].nValue == 1000*COIN) continue; //masternode input
-        if(nOnlyDenominationAmount != 0 && out.tx->vout[out.i].nValue != nOnlyDenominationAmount && 
-            out.tx->vout[out.i].nValue > DARKSEND_FEE) continue; //only get one type of denom
-
+        
         //printf(" ---- ret %"PRI64d", nValue %"PRI64d", max %"PRI64d" -- %d\n", nValueRet, out.tx->vout[out.i].nValue, nValueMax, nValueRet + out.tx->vout[out.i].nValue <= nValueMax);
         if(nValueRet + out.tx->vout[out.i].nValue <= nValueMax){
             CTxIn vin = CTxIn(out.tx->GetHash(),out.i);
             
             if(out.tx->vout[out.i].nValue == DARKSEND_FEE) {
-                allowFees = false; //these are made for fees
+                hasFeeInput = true; //these are made for fees
             } else {
                 int rounds = darkSendPool.GetInputDarksendRounds(vin);
                 
@@ -1349,6 +1347,8 @@ bool CWallet::SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxI
             //printf(" -- nValueRet %"PRI64d"\n", nValueRet/COIN);
         }
     }
+
+    if(!hasFeeInput) return false; //we need a fee input
 
     // if it's more than min, we're good to return
     if(nValueRet >= nValueMin) return true;
@@ -1737,10 +1737,18 @@ string CWallet::DarkSendDenominate(int minRounds, int maxAmount)
     int64 nValueIn = 0;
     CReserveKey reservekey(this);
 
+    //make sure we
+    bool hasFeeInput = false;
+
     //select coins we'll use
-    if (!SelectCoinsDark(1*COIN, maxAmount*COIN, vCoins, nValueIn, minRounds, nDarksendRounds))
+    if (!SelectCoinsDark(1*COIN, maxAmount*COIN, vCoins, nValueIn, minRounds, nDarksendRounds, hasFeeInput))
     {
         vCoins.clear();
+
+        //need to change this message, it will create a darksend fee input
+        if(!hasFeeInput)
+            return _("Error: Darksend requires a collateral transaction and could not locate an acceptable input!");
+
         return _("Insufficient funds");
     }
 
