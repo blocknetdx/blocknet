@@ -1348,8 +1348,6 @@ bool CWallet::SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxI
         }
     }
 
-    if(!hasFeeInput) return false; //we need a fee input
-
     // if it's more than min, we're good to return
     if(nValueRet >= nValueMin) return true;
 
@@ -1745,12 +1743,12 @@ string CWallet::DarkSendDenominate(int minRounds, int maxAmount)
     {
         vCoins.clear();
 
-        //need to change this message, it will create a darksend fee input
-        if(!hasFeeInput)
-            return _("Error: Darksend requires a collateral transaction and could not locate an acceptable input!");
-
         return _("Insufficient funds");
     }
+
+    //need to change this message, it will create a darksend fee input
+    if(!hasFeeInput)
+        return _("Error: Darksend requires a collateral transaction and could not locate an acceptable input!");
 
     // calculate total value out
     int64 nTotalValue = GetTotalValue(vCoins) - nFeeRet;

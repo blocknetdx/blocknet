@@ -7104,15 +7104,9 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
             if(!fDryRun) SplitUpMoney();
             return true;
         }
-        if(!hasFeeInput){
-            if(!fDryRun) SplitUpMoney(true);
-        }
 
         LogPrintf("DoAutomaticDenominating : No funds detected in need of denominating (2)\n");
         return false;
-    }
-    if(!hasFeeInput){
-        if(!fDryRun) SplitUpMoney(true);
     }
 
     if(nValueIn < COIN*1.1){
@@ -7123,15 +7117,9 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
             if(!fDryRun) SplitUpMoney();
             return true;
         }
-        if(!hasFeeInput){
-            if(!fDryRun) SplitUpMoney(true);
-        }
 
         LogPrintf("DoAutomaticDenominating : Too little to denominate (must have 1.1DRK) \n");
         return false;
-    }
-    if(!hasFeeInput){
-        if(!fDryRun) SplitUpMoney(true);
     }
 
     if(fDryRun) return true;
