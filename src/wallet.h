@@ -190,7 +190,7 @@ public:
     void WalletUpdateSpent(const CTransaction& prevout);
     int ScanForWalletTransactions(CBlockIndex* pindexStart, bool fUpdate = false);
     void ReacceptWalletTransactions();
-    void ResendWalletTransactions();
+    void ResendWalletTransactions(uint256 txid=0);
     int64 GetBalance() const;
     int64 GetAnonymizedBalance() const;
     int64 GetDenominatedBalance(bool onlyDenom=true) const;

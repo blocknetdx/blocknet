@@ -2671,6 +2671,7 @@ public:
     int sessionTries;
 
     int lastSplitUpBlock;
+    int cachedLastSuccess;
 
     CDarkSendPool()
     {
@@ -2688,6 +2689,7 @@ public:
         isCapableMasterNode = MASTERNODE_NOT_PROCESSED;
         masternodePortOpen = 0;
         lastSplitUpBlock = 0;
+        cachedLastSuccess = 0;
         unitTest = false;
 
         SetCollateralAddress(strAddress);

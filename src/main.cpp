@@ -6170,12 +6170,10 @@ void CDarkSendPool::Check()
     }
 
     if((state == POOL_STATUS_ERROR || state == POOL_STATUS_SUCCESS) && GetTimeMillis()-lastTimeChanged >= 10000) {
-        bool runAgain = state == POOL_STATUS_SUCCESS;
         LogPrintf("CDarkSendPool::Check() -- RESETTING MESSAGE \n");
         SetNull(true);
         if(fMasterNode) RelayDarkSendStatus(darkSendPool.sessionID, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);    
         UnlockCoins();
-        if(runAgain) DoAutomaticDenominating();
     }
 }
 
@@ -6982,15 +6980,17 @@ void CDarkSendPool::CompletedTransaction(bool error, std::string lastMessageNew)
 {
     if(fMasterNode) return;
 
-    if(fDebug) LogPrintf("CompletedTransaction\n");
     if(error){
-        if(fDebug) LogPrintf("CompletedTransaction -- error \n");
+        LogPrintf("CompletedTransaction -- error \n");
         UpdateState(POOL_STATUS_ERROR);
     } else {
-        if(fDebug) LogPrintf("CompletedTransaction -- success \n");
+        LogPrintf("CompletedTransaction -- success \n");
         UpdateState(POOL_STATUS_SUCCESS);
 
         myEntries.clear();
+
+        // To avoid race conditions, we'll only let DS run once per block
+        cachedLastSuccess = nBestHeight;
     }
     lastMessage = lastMessageNew;
 
@@ -7084,6 +7084,11 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
 {
     if(fMasterNode) return false;
 
+    //randomly denom between 3 and 8 blocks
+    if(nBestHeight == cachedLastSuccess) {
+        LogPrintf("CDarkSendPool::DoAutomaticDenominating - Last successful ds+ was too recent\n");
+        return false;
+    }
     if(fDisableDarksend) {
         LogPrintf("CDarkSendPool::DoAutomaticDenominating - Darksend is disabled\n");
         return false; 
@@ -7114,6 +7119,9 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
     }
     //if we're set to less than a thousand, don't submit for than that to the pool
     if(nAnonymizeDarkcoinAmount < 1000) maxAmount = nAnonymizeDarkcoinAmount;
+
+    //choose a random amount to denom
+    maxAmount = rand()%(maxAmount-(maxAmount/3))+maxAmount/3;
 
     int64 balanceNeedsAnonymized = pwalletMain->GetBalance() - pwalletMain->GetAnonymizedBalance();
     if(balanceNeedsAnonymized > maxAmount*COIN) balanceNeedsAnonymized= maxAmount*COIN;

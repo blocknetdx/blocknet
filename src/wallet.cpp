@@ -889,23 +889,25 @@ void CWalletTx::RelayWalletTransaction()
     }
 }
 
-void CWallet::ResendWalletTransactions()
+void CWallet::ResendWalletTransactions(uint256 txid)
 {
     // Do this infrequently and randomly to avoid giving away
     // that these are our transactions.
-    static int64 nNextTime;
-    if (GetTime() < nNextTime)
-        return;
-    bool fFirst = (nNextTime == 0);
-    nNextTime = GetTime() + GetRand(30 * 60);
-    if (fFirst)
-        return;
+    if(txid==0){
+        static int64 nNextTime;
+        if (GetTime() < nNextTime)
+            return;
+        bool fFirst = (nNextTime == 0);
+        nNextTime = GetTime() + GetRand(30 * 60);
+        if (fFirst)
+            return;
 
-    // Only do it if there's been a new block since last time
-    static int64 nLastTime;
-    if (nTimeBestReceived < nLastTime)
-        return;
-    nLastTime = GetTime();
+        // Only do it if there's been a new block since last time
+        static int64 nLastTime;
+        if (nTimeBestReceived < nLastTime)
+            return;
+        nLastTime = GetTime();
+    }
 
     // Rebroadcast any of our txes that aren't in a block yet
     LogPrintf("ResendWalletTransactions()\n");
@@ -920,6 +922,12 @@ void CWallet::ResendWalletTransactions()
             // it should have gotten in already by now.
             if (nTimeBestReceived - (int64)wtx.nTimeReceived > 5 * 60)
                 mapSorted.insert(make_pair(wtx.nTimeReceived, &wtx));
+        
+            if (txid == wtx.GetHash()){
+                LogPrintf(" -- Found txid %s, relaying\n", wtx.GetHash().ToString().c_str());
+                wtx.RelayWalletTransaction();
+                return;
+            }
         }
         BOOST_FOREACH(PAIRTYPE(const unsigned int, CWalletTx*)& item, mapSorted)
         {
