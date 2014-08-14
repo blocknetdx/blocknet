@@ -1166,7 +1166,7 @@ bool AppInit2(boost::thread_group& threadGroup)
         }
     }
 
-    fDisableDarksend = GetBoolArg("-disabledarksend", false);
+    fDisableDarksend = GetBoolArg("-disabledarksend", true);
     bool fEnabledDaemonDarksend = GetBoolArg("-enabledaemondarksend", false);
     if(fDaemon && !fEnabledDaemonDarksend) fDisableDarksend = true;
 

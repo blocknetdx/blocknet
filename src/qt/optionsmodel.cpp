@@ -103,7 +103,7 @@ bool OptionsModel::Upgrade()
     CWalletDB walletdb("wallet.dat");
 
     QList<QString> intOptions;
-    intOptions << "nDisplayUnit" << "nTransactionFee";
+    intOptions << "nDisplayUnit" << "nTransactionFee" << "nAnonymizeDarkcoinAmount" << "nDarksendRounds";
     foreach(QString key, intOptions)
     {
         int value = 0;
@@ -114,7 +114,7 @@ bool OptionsModel::Upgrade()
         }
     }
     QList<QString> boolOptions;
-    boolOptions << "bDisplayAddresses" << "fMinimizeToTray" << "fMinimizeOnClose" << "fUseProxy" << "fUseUPnP" ;
+    boolOptions << "bDisplayAddresses" << "fMinimizeToTray" << "fMinimizeOnClose" << "fUseProxy" << "fUseUPnP" << "fDisableDarksend" ;
     foreach(QString key, boolOptions)
     {
         bool value = false;
@@ -299,17 +299,17 @@ bool OptionsModel::setData(const QModelIndex & index, const QVariant & value, in
             break;
         case DisableDarksend: 
             fDisableDarksend = value.toBool();
-            settings.setValue("fDisableDarksend", value);
+            settings.setValue("fDisableDarksend", fDisableDarksend);
             emit disableDarksendChanged(fDisableDarksend);
             break;
         case DarksendRounds: 
             nDarksendRounds = value.toInt();
-            settings.setValue("nDarksendRounds", value);
+            settings.setValue("nDarksendRounds", nDarksendRounds);
             emit darksendRoundsChanged(nDarksendRounds);
             break;
         case AnonymizeDarkcoinAmount: 
             nAnonymizeDarkcoinAmount = value.toInt();
-            settings.setValue("nAnonymizeDarkcoinAmount", value);
+            settings.setValue("nAnonymizeDarkcoinAmount", nAnonymizeDarkcoinAmount);
             emit anonymizeDarkcoinAmountChanged(nAnonymizeDarkcoinAmount);
             break;
         case CoinControlFeatures: {
