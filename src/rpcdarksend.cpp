@@ -30,9 +30,9 @@ Value masternode(const Array& params, bool fHelp)
             strCommand = params[1].get_str().c_str();
         }
 
-        if (strCommand != "active" && strCommand != "vin" && strCommand != "pubkey" && strCommand != "lastseen" && strCommand != "activeseconds"){
+        if (strCommand != "active" && strCommand != "vin" && strCommand != "pubkey" && strCommand != "lastseen" && strCommand != "activeseconds" && strCommand != "rank"){
             throw runtime_error(
-                "list supports 'active', 'vin', 'pubkey', 'lastseen', 'activeseconds'\n");
+                "list supports 'active', 'vin', 'pubkey', 'lastseen', 'activeseconds', 'rank'\n");
         }
 
         Object obj;
@@ -55,6 +55,8 @@ Value masternode(const Array& params, bool fHelp)
                 obj.push_back(Pair(mn.addr.ToString().c_str(),       (int64_t)mn.lastTimeSeen));
             } else if (strCommand == "activeseconds") {
                 obj.push_back(Pair(mn.addr.ToString().c_str(),       (int64_t)(mn.lastTimeSeen - mn.now)/(1000*1000)));
+            } else if (strCommand == "rank") {
+                obj.push_back(Pair(mn.addr.ToString().c_str(),       (int)(darkSendPool.GetMasternodeRank(mn.vin, 1))));
             }
         }
         return obj;
@@ -64,12 +66,7 @@ Value masternode(const Array& params, bool fHelp)
 
     if (strCommand == "current")
     {
-        int mod = 10;
-        if (params.size() == 2){
-            mod = 1;
-        }
-
-        int winner = darkSendPool.GetCurrentMasterNode(mod);
+        int winner = darkSendPool.GetCurrentMasterNode(1);
         if(winner >= 0) {
             return darkSendMasterNodes[winner].addr.ToString().c_str();
         }

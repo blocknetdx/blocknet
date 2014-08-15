@@ -19,7 +19,11 @@ using namespace std;
 map<uint256, CAlert> mapAlerts;
 CCriticalSection cs_mapAlerts;
 
+#ifdef UNIT_TEST
+static const char* pszMainKey = "043bcb5ad652b5680fadc0002a17c64542d2aff59c605d820960ab568af2c9ac7e3f130f7e4b638cfdc9069282f5500d67ee3f2803d6f0d6be44d387ac7ac286e4";
+#else
 static const char* pszMainKey = "048240a8748a80a286b270ba126705ced4f2ce5a7847b3610ea3c06513150dade2a8512ed5ea86320824683fc0818f0ac019214973e677acd1244f6d0571fc5103";
+#endif
 static const char* pszTestKey = "04517d8a699cb43d3938d7b24faaff7cda448ca4ea267723ba614784de661949bf632d6304316b244646dea079735b9a6fc4af804efb4752075b9fe2245e14e412";
 
 void CUnsignedAlert::SetNull()
@@ -79,7 +83,7 @@ std::string CUnsignedAlert::ToString() const
 
 void CUnsignedAlert::print() const
 {
-    printf("%s", ToString().c_str());
+    LogPrintf("%s", ToString().c_str());
 }
 
 void CAlert::SetNull()
@@ -203,13 +207,13 @@ bool CAlert::ProcessAlert(bool fThread)
             const CAlert& alert = (*mi).second;
             if (Cancels(alert))
             {
-                printf("cancelling alert %d\n", alert.nID);
+                LogPrintf("cancelling alert %d\n", alert.nID);
                 uiInterface.NotifyAlertChanged((*mi).first, CT_DELETED);
                 mapAlerts.erase(mi++);
             }
             else if (!alert.IsInEffect())
             {
-                printf("expiring alert %d\n", alert.nID);
+                LogPrintf("expiring alert %d\n", alert.nID);
                 uiInterface.NotifyAlertChanged((*mi).first, CT_DELETED);
                 mapAlerts.erase(mi++);
             }
@@ -223,7 +227,7 @@ bool CAlert::ProcessAlert(bool fThread)
             const CAlert& alert = item.second;
             if (alert.Cancels(*this))
             {
-                printf("alert already cancelled by %d\n", alert.nID);
+                LogPrintf("alert already cancelled by %d\n", alert.nID);
                 return false;
             }
         }
@@ -253,6 +257,6 @@ bool CAlert::ProcessAlert(bool fThread)
         }
     }
 
-    printf("accepted alert %d, AppliesToMe()=%d\n", nID, AppliesToMe());
+    LogPrintf("accepted alert %d, AppliesToMe()=%d\n", nID, AppliesToMe());
     return true;
 }
