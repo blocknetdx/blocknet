@@ -2621,7 +2621,7 @@ public:
 };
 
 static const int64 DARKSEND_COLLATERAL = 0.025*COIN;
-static const int64 DARKSEND_FEE = 0.001*COIN;
+static const int64 DARKSEND_FEE = 0.0125*COIN;
 
 /** Used to keep track of current status of darksend pool
  */

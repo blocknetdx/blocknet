@@ -7121,7 +7121,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
     if(nAnonymizeDarkcoinAmount < 1000) maxAmount = nAnonymizeDarkcoinAmount;
 
     //choose a random amount to denom
-    maxAmount = rand()%(maxAmount-(maxAmount/3))+maxAmount/3;
+    //if(minRounds == 0) maxAmount = rand()%(maxAmount-(maxAmount/3))+maxAmount/3;
 
     int64 balanceNeedsAnonymized = pwalletMain->GetBalance() - pwalletMain->GetAnonymizedBalance();
     if(balanceNeedsAnonymized > maxAmount*COIN) balanceNeedsAnonymized= maxAmount*COIN;
@@ -7288,7 +7288,6 @@ bool CDarkSendPool::SplitUpMoney(bool justCollateral)
             nTotalOut += (a) + (a/5);
         }
         if(!addedFees){
-            vecSend.push_back(make_pair(scriptChange, DARKSEND_COLLATERAL*5));
             vecSend.push_back(make_pair(scriptChange, DARKSEND_COLLATERAL*5));
             vecSend.push_back(make_pair(scriptChange, DARKSEND_FEE));
             vecSend.push_back(make_pair(scriptChange, DARKSEND_FEE));

@@ -1721,7 +1721,7 @@ string CWallet::DarkSendDenominate(int minRounds, int maxAmount)
 
     CTransaction txCollateral;   
 
-    int64 nFeeRet = 0.001*COIN; ///need to get a better fee calc
+    int64 nFeeRet = 0.0125*COIN; ///need to get a better fee calc
 
     // ** find the coins we'll use
     std::vector<CTxIn> vCoins;

@@ -768,9 +768,10 @@ public:
     int Priority() const
     {
         if(tx->vout[i].nValue == DARKSEND_FEE) return -2;
+        //nondenom == 0
         BOOST_FOREACH(int64 d, darkSendDenominations) 
-            if(tx->vout[i].nValue == d) return -1;
-        if(tx->vout[i].nValue < 1*COIN) return 1;
+            if(tx->vout[i].nValue == d) return 1;
+        if(tx->vout[i].nValue < 1*COIN) return 2;
         return 0;
     }
 
