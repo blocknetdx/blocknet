@@ -7446,20 +7446,25 @@ int CDarkSendPool::GetInputDarksendRounds(CTxIn in, int rounds)
     std::string padding = "";
     padding.insert(0, ((rounds+1)*5)+3, ' ');
 
+    //LogPrintf(" - %s %d\n", in.prevout.hash.ToString().c_str(), rounds);
+
+
     CWalletTx tx;
-    uint256 hash;
     if(pwalletMain->GetTransaction(in.prevout.hash,tx)){
+        if(tx.vout[in.prevout.n].nValue == DARKSEND_FEE) return -3;
+
         if(rounds == 0){ //make sure the final output is non-denominate
             bool found = false;
             BOOST_FOREACH(int64 d, darkSendDenominations)
                 if(tx.vout[in.prevout.n].nValue == d) found = true;
 
             if(!found) {
-                //LogPrintf("rounds :: %s %s %d NOT DENOM\n", padding.c_str(), in.ToString().c_str(), rounds);
+                //LogPrintf(" - NOT DENOM\n");
                 return -2;
             }
         }
         bool found = false;
+
         BOOST_FOREACH(CTxOut out, tx.vout){
             BOOST_FOREACH(int64 d, darkSendDenominations)
                 if(out.nValue == d)
@@ -7467,20 +7472,16 @@ int CDarkSendPool::GetInputDarksendRounds(CTxIn in, int rounds)
         }
         
         if(!found) {
-            //LogPrintf("rounds :: %s %s %d NOT FOUND\n", padding.c_str(), in.ToString().c_str(), rounds);
+            //LogPrintf(" - NOT FOUND\n");
             return rounds;
         }
 
-
-        //LogPrintf("rounds :: %s %s %d FOUND\n", padding.c_str(), in.ToString().c_str(), rounds);            
-
         // find my vin and look that up
         BOOST_FOREACH(CTxIn in2, tx.vin) {
-            //LogPrintf("rounds :: %s %s %d VIN\n", padding.c_str(), in.ToString().c_str(), rounds);  
-            //LogPrintf("CDarkSendPool::GetInputDarksendRounds :: %d %d %s - %s\n", rounds, pwalletMain->IsMine(in2), in2.ToString().c_str());
             if(pwalletMain->IsMine(in2)){
                 //LogPrintf("rounds :: %s %s %d NEXT\n", padding.c_str(), in.ToString().c_str(), rounds);  
-                return GetInputDarksendRounds(in2, rounds+1);
+                int n = GetInputDarksendRounds(in2, rounds+1);
+                if(n != -3) return n;
             }
         }
     } else {
@@ -7489,6 +7490,7 @@ int CDarkSendPool::GetInputDarksendRounds(CTxIn in, int rounds)
 
     return rounds-1;
 }
+
 
 void CDarkSendPool::SubmitMasternodeVote(CTxIn& vinWinningMasternode, CTxIn& vinMasterNodeFrom, int64 nBlockHeight)
 {
