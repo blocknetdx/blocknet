@@ -742,6 +742,7 @@ bool AppInit2(boost::thread_group& threadGroup)
             if (r == CDBEnv::RECOVER_FAIL)
                 return InitError(_("wallet.dat corrupt, salvage failed"));
         }
+
     } // (!fDisableWallet)
 
     // ********************************************************* Step 6: network initialization
@@ -1195,6 +1196,20 @@ bool AppInit2(boost::thread_group& threadGroup)
     darkSendDenominations.push_back( (1     * COIN)+1 );
 
     threadGroup.create_thread(boost::bind(&ThreadCheckDarkSendPool));
+
+
+    if (!fDisableWallet) {
+        int walletVersion = pwalletMain->GetVersion();
+
+        if(walletVersion < 60001){
+            if(pwalletMain->IsCrypted()){
+                InitWarning(_("Warning: There is an incompatibility in the new RC4+ wallet due to the larger keypool."
+                                    "It only effects encrypted wallets, but can cause a loss of data in rare situations. "
+                                    "Please create a new wallet and move the funds from this wallet."));
+                fDisableDarksend = true;
+            }
+        }
+    }
 
     // ********************************************************* Step 11: load peers
 
