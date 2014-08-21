@@ -29,12 +29,14 @@ public:
     void showOutOfSyncWarning(bool fShow);
 
 public slots:
+    void darkSendStatus();
     void setBalance(qint64 balance, qint64 unconfirmedBalance, qint64 immatureBalance, qint64 anonymizedBalance);
 
 signals:
     void transactionClicked(const QModelIndex &index);
 
 private:
+    QTimer *timer;
     Ui::OverviewPage *ui;
     ClientModel *clientModel;
     WalletModel *walletModel;
@@ -43,6 +45,10 @@ private:
     qint64 currentImmatureBalance;
     qint64 currentAnonymizedBalance;
 
+    int showingDarkSendMessage;
+    int darksendActionCheck;
+    int cachedNumBlocks;
+    
     TxViewDelegate *txdelegate;
     TransactionFilterProxy *filter;
 

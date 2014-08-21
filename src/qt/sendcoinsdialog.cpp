@@ -49,9 +49,6 @@ SendCoinsDialog::SendCoinsDialog(QWidget *parent) :
     connect(ui->checkBoxCoinControlChange, SIGNAL(stateChanged(int)), this, SLOT(coinControlChangeChecked(int)));
     connect(ui->lineEditCoinControlChange, SIGNAL(textEdited(const QString &)), this, SLOT(coinControlChangeEdited(const QString &)));
     connect(ui->inputType, SIGNAL(currentIndexChanged ( int )), this, SLOT(updateDisplayUnit()));
-    timer = new QTimer(this);
-    connect(timer, SIGNAL(timeout()), this, SLOT(darkSendStatus()));
-    timer->start(333);
 
     // Coin Control: clipboard actions
     QAction *clipboardQuantityAction = new QAction(tr("Copy quantity"), this);
@@ -81,8 +78,6 @@ SendCoinsDialog::SendCoinsDialog(QWidget *parent) :
     ui->labelCoinControlChange->addAction(clipboardChangeAction);
 
     fNewRecipientAllowed = true;
-    showingDarkSendMessage = 0;
-    darksendActionCheck = 0;
     boolCheckedBalance = false;
 }
 
@@ -262,96 +257,6 @@ void SendCoinsDialog::clear()
     ui->sendButton->setDefault(true);
 }
 
-void SendCoinsDialog::darkSendStatus()
-{
-    if(fDisableDarksend) return;
-
-    // check darksend status and unlock if needed
-    if(nBestHeight != cachedNumBlocks)
-    {
-        // Balance and number of transactions might have changed
-        cachedNumBlocks = nBestHeight;
-
-        if (pwalletMain->GetBalance() - pwalletMain->GetAnonymizedBalance() > 2*COIN){
-            if (model->getEncryptionStatus() != WalletModel::Unencrypted){
-                if((nAnonymizeDarkcoinAmount*COIN)-pwalletMain->GetAnonymizedBalance() > 1.1*COIN && model->getEncryptionStatus() == WalletModel::Locked){
-                    WalletModel::UnlockContext ctx(model->requestUnlock());
-                    if(!ctx.isValid()){
-                        //unlock was cancelled
-                        fDisableDarksend = true;
-                        LogPrintf("Wallet is locked and user declined to unlock. Disabling Darksend.\n");
-                    }
-                }
-                if((nAnonymizeDarkcoinAmount*COIN)-pwalletMain->GetAnonymizedBalance() <= 1.1*COIN && 
-                    model->getEncryptionStatus() == WalletModel::Unlocked && 
-                    darkSendPool.GetMyTransactionCount() == 0){
-                    LogPrintf("Darksend is complete, locking wallet.\n");
-                    model->Lock();
-                }
-            }
-        }
-    }
-
-    //if(!darkSendPool.sessionFoundMasternode) return;
-
-    int state = darkSendPool.GetState();
-    int entries = darkSendPool.GetEntriesCount();
-    int accepted = darkSendPool.GetLastEntryAccepted();
-    //int countAccepted = darkSendPool.GetCountEntriesAccepted();
-
-    std::ostringstream convert;
-
-    if(state == POOL_STATUS_ACCEPTING_ENTRIES) {
-        if(entries == 0) {
-            convert << "darkSend Status => Idle";
-            showingDarkSendMessage = 0;
-        } else if (accepted == 1) {
-            convert << "darkSend Status => Your transaction was accepted into the pool!";
-            if(showingDarkSendMessage % 10 > 8) {
-                darkSendPool.lastEntryAccepted = 0;
-                showingDarkSendMessage = 0;
-            }
-        } else {
-            if(showingDarkSendMessage % 70 <= 40) convert << "darkSend Status => ( Entries " << entries << "/" << POOL_MAX_TRANSACTIONS << " )";
-            else if(showingDarkSendMessage % 70 <= 50) convert << "darkSend Status => Waiting for more entries (" << entries << "/" << POOL_MAX_TRANSACTIONS << " ) .";
-            else if(showingDarkSendMessage % 70 <= 60) convert << "darkSend Status => Waiting for more entries (" << entries << "/" << POOL_MAX_TRANSACTIONS << " ) ..";
-            else if(showingDarkSendMessage % 70 <= 70) convert << "darkSend Status => Waiting for more entries (" << entries << "/" << POOL_MAX_TRANSACTIONS << " ) ...";
-        }
-    } else if(state == POOL_STATUS_SIGNING) {
-        if(showingDarkSendMessage % 70 <= 10) convert << "darkSend Status => SIGNING";
-        else if(showingDarkSendMessage % 70 <= 20) convert << "darkSend Status => SIGNING ( waiting. )";
-        else if(showingDarkSendMessage % 70 <= 30) convert << "darkSend Status => SIGNING ( waiting.. )";
-        else if(showingDarkSendMessage % 70 <= 40) convert << "darkSend Status => SIGNING ( waiting... )";
-    } else if(state == POOL_STATUS_TRANSMISSION) {
-        convert << "darkSend Status => TRANSMISSION";
-    } else if (state == POOL_STATUS_IDLE) {
-        convert << "darkSend Status => POOL_STATUS_IDLE";
-    } else if (state == POOL_STATUS_FINALIZE_TRANSACTION) {
-        convert << "darkSend Status => POOL_STATUS_FINALIZE_TRANSACTION";
-    } else if(state == POOL_STATUS_ERROR) {
-        convert << "darkSend Status => ERROR : " << darkSendPool.lastMessage;
-    } else if(state == POOL_STATUS_SUCCESS) {
-        convert << "darkSend Status => SUCCESS : " << darkSendPool.lastMessage;
-    } else {
-        convert << "darkSend Status => UNKNOWN STATE : ID=" << state;
-    }
-
-    if(state == POOL_STATUS_ERROR || state == POOL_STATUS_SUCCESS) darkSendPool.Check();
-    
-
-    QString s(convert.str().c_str());
-
-    if(s != ui->darkSendStatus->text())
-        LogPrintf("%s\n", convert.str().c_str());
-    
-    ui->darkSendStatus->setText(s);
-
-    showingDarkSendMessage++;
-    darksendActionCheck++;
-
-    // Get DarkSend Denomination Status
-}
-
 void SendCoinsDialog::reject()
 {
     clear();
@@ -501,14 +406,6 @@ void SendCoinsDialog::setBalance(qint64 balance, qint64 unconfirmedBalance, qint
 
 
     ui->labelBalance->setText(BitcoinUnits::formatWithUnit(unit, bal));
-}
-
-void SendCoinsDialog::setState(int state, int entries, int accepted)
-{
-    if(!model || !model->getOptionsModel())
-        return;
-
-    ui->darkSendStatus->setText("Status Updated");
 }
 
 void SendCoinsDialog::updateDisplayUnit()

@@ -352,7 +352,7 @@ void CWallet::WalletUpdateSpent(const CTransaction &tx)
                     LogPrintf("WalletUpdateSpent: bad wtx %s\n", wtx.GetHash().ToString().c_str());
                 else if (!wtx.IsSpent(txin.prevout.n) && IsMine(wtx.vout[txin.prevout.n]))
                 {
-                    LogPrintf("WalletUpdateSpent found spent coin %sbc %s\n", FormatMoney(wtx.GetCredit()).c_str(), wtx.GetHash().ToString().c_str());
+                    LogPrintf("WalletUpdateSpent found spent coin %sDRK %s\n", FormatMoney(wtx.GetCredit()).c_str(), wtx.GetHash().ToString().c_str());
                     wtx.MarkSpent(txin.prevout.n);
                     wtx.WriteToDisk();
                     NotifyTransactionChanged(this, txin.prevout.hash, CT_UPDATED);
@@ -847,7 +847,7 @@ void CWallet::ReacceptWalletTransactions()
                 }
                 if (fUpdated)
                 {
-                    LogPrintf("ReacceptWalletTransactions found spent coin %sbc %s\n", FormatMoney(wtx.GetCredit()).c_str(), wtx.GetHash().ToString().c_str());
+                    LogPrintf("ReacceptWalletTransactions found spent coin %sDRK %s\n", FormatMoney(wtx.GetCredit()).c_str(), wtx.GetHash().ToString().c_str());
                     wtx.MarkDirty();
                     wtx.WriteToDisk();
                 }
@@ -992,6 +992,38 @@ int64 CWallet::GetAnonymizedBalance() const
 
     return nTotal;
 }
+
+double CWallet::GetAverageAnonymizedRounds() const
+{
+    double fTotal = 0;
+    double fCount = 0;
+
+    {
+        LOCK(cs_wallet);
+        for (map<uint256, CWalletTx>::const_iterator it = mapWallet.begin(); it != mapWallet.end(); ++it)
+        {
+            const CWalletTx* pcoin = &(*it).second;
+            if (pcoin->IsConfirmed()){
+                for (unsigned int i = 0; i < pcoin->vout.size(); i++) {
+                    
+                    COutput out = COutput(pcoin, i, pcoin->GetDepthInMainChain());
+                    CTxIn vin = CTxIn(out.tx->GetHash(), out.i);  
+
+                    if(pcoin->IsSpent(i) || !IsMine(pcoin->vout[i]) || !IsDenominated(vin)) continue;
+                    
+                    int rounds = darkSendPool.GetInputDarksendRounds(vin);
+                    fTotal += (float)rounds;
+                    fCount += 1;
+                }
+            }
+        }
+    }
+
+    if(fCount == 0) return 0;
+
+    return fTotal/fCount;
+}
+
 
 int64 CWallet::GetDenominatedBalance(bool onlyDenom) const
 {

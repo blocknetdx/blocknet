@@ -193,6 +193,7 @@ public:
     void ResendWalletTransactions(uint256 txid=0);
     int64 GetBalance() const;
     int64 GetAnonymizedBalance() const;
+    double GetAverageAnonymizedRounds() const;
     int64 GetDenominatedBalance(bool onlyDenom=true) const;
     int64 GetUnconfirmedBalance() const;
     int64 GetImmatureBalance() const;

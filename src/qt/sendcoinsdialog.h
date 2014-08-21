@@ -37,21 +37,17 @@ public:
 
 public slots:
     void clear();
-    void darkSendStatus();
     void reject();
     void accept();
     SendCoinsEntry *addEntry();
     void updateRemoveEnabled();
     void setBalance(qint64 balance, qint64 unconfirmedBalance, qint64 immatureBalance, qint64 anonymizedBalance);
-    void setState(int state, int entries, int accepted);
 
 private:
     QTimer *timer;
     Ui::SendCoinsDialog *ui;
     WalletModel *model;
     bool fNewRecipientAllowed;
-    int showingDarkSendMessage;
-    int darksendActionCheck;
     bool boolCheckedBalance;
     int cachedNumBlocks;
 

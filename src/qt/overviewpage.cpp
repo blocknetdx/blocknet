@@ -1,6 +1,7 @@
 #include "overviewpage.h"
 #include "ui_overviewpage.h"
 
+#include "init.h"
 #include "clientmodel.h"
 #include "walletmodel.h"
 #include "bitcoinunits.h"
@@ -12,6 +13,7 @@
 
 #include <QAbstractItemDelegate>
 #include <QPainter>
+#include <QTimer>
 
 #define DECORATION_SIZE 64
 #define NUM_ITEMS 3
@@ -112,9 +114,16 @@ OverviewPage::OverviewPage(QWidget *parent) :
 
     connect(ui->listTransactions, SIGNAL(clicked(QModelIndex)), this, SLOT(handleTransactionClicked(QModelIndex)));
 
+    timer = new QTimer(this);
+    connect(timer, SIGNAL(timeout()), this, SLOT(darkSendStatus()));
+    timer->start(333);
+
     // init "out of sync" warning labels
     ui->labelWalletStatus->setText("(" + tr("out of sync") + ")");
     ui->labelTransactionsStatus->setText("(" + tr("out of sync") + ")");
+
+    showingDarkSendMessage = 0;
+    darksendActionCheck = 0;
 
     // start with displaying the "out of sync" warnings
     showOutOfSyncWarning(true);
@@ -212,4 +221,117 @@ void OverviewPage::showOutOfSyncWarning(bool fShow)
 {
     ui->labelWalletStatus->setVisible(fShow);
     ui->labelTransactionsStatus->setVisible(fShow);
+}
+
+void OverviewPage::darkSendStatus()
+{
+    if(fDisableDarksend) {
+        if(nBestHeight != cachedNumBlocks)
+        {
+            cachedNumBlocks = nBestHeight;
+
+            ui->darksendEnabled->setText("Disabled");
+            ui->darksendStatus->setText("");
+
+            std::ostringstream convert;
+            convert << pwalletMain->GetAverageAnonymizedRounds() << "/" << nDarksendRounds;
+            QString s(convert.str().c_str());
+            ui->darksendAvgRounds->setText(s);
+        }
+
+        return;
+    }
+
+    // check darksend status and unlock if needed
+    if(nBestHeight != cachedNumBlocks)
+    {
+        // Balance and number of transactions might have changed
+        cachedNumBlocks = nBestHeight;
+
+        if (pwalletMain->GetBalance() - pwalletMain->GetAnonymizedBalance() > 2*COIN){
+            if (walletModel->getEncryptionStatus() != WalletModel::Unencrypted){
+                if((nAnonymizeDarkcoinAmount*COIN)-pwalletMain->GetAnonymizedBalance() > 1.1*COIN && walletModel->getEncryptionStatus() == WalletModel::Locked){
+                    WalletModel::UnlockContext ctx(walletModel->requestUnlock());
+                    if(!ctx.isValid()){
+                        //unlock was cancelled
+                        fDisableDarksend = true;
+                        LogPrintf("Wallet is locked and user declined to unlock. Disabling Darksend.\n");
+                    }
+                }
+                if((nAnonymizeDarkcoinAmount*COIN)-pwalletMain->GetAnonymizedBalance() <= 1.1*COIN && 
+                    walletModel->getEncryptionStatus() == WalletModel::Unlocked && 
+                    darkSendPool.GetMyTransactionCount() == 0){
+                    LogPrintf("Darksend is complete, locking wallet.\n");
+                    walletModel->Lock();
+                }
+            }
+        }
+
+        ui->darksendEnabled->setText("Enabled");
+
+        std::ostringstream convert;
+        convert << pwalletMain->GetAverageAnonymizedRounds() << "/" << nDarksendRounds;
+        QString s(convert.str().c_str());
+        ui->darksendAvgRounds->setText(s);
+
+    }
+
+    //if(!darkSendPool.sessionFoundMasternode) return;
+
+    int state = darkSendPool.GetState();
+    int entries = darkSendPool.GetEntriesCount();
+    int accepted = darkSendPool.GetLastEntryAccepted();
+    //int countAccepted = darkSendPool.GetCountEntriesAccepted();
+
+    std::ostringstream convert;
+
+    if(state == POOL_STATUS_ACCEPTING_ENTRIES) {
+        if(entries == 0) {
+            convert << "darkSend Status => Idle";
+            showingDarkSendMessage = 0;
+        } else if (accepted == 1) {
+            convert << "darkSend Status => Your transaction was accepted into the pool!";
+            if(showingDarkSendMessage % 10 > 8) {
+                darkSendPool.lastEntryAccepted = 0;
+                showingDarkSendMessage = 0;
+            }
+        } else {
+            if(showingDarkSendMessage % 70 <= 40) convert << "darkSend Status => ( Entries " << entries << "/" << POOL_MAX_TRANSACTIONS << " )";
+            else if(showingDarkSendMessage % 70 <= 50) convert << "darkSend Status => Waiting for more entries (" << entries << "/" << POOL_MAX_TRANSACTIONS << " ) .";
+            else if(showingDarkSendMessage % 70 <= 60) convert << "darkSend Status => Waiting for more entries (" << entries << "/" << POOL_MAX_TRANSACTIONS << " ) ..";
+            else if(showingDarkSendMessage % 70 <= 70) convert << "darkSend Status => Waiting for more entries (" << entries << "/" << POOL_MAX_TRANSACTIONS << " ) ...";
+        }
+    } else if(state == POOL_STATUS_SIGNING) {
+        if(showingDarkSendMessage % 70 <= 10) convert << "darkSend Status => SIGNING";
+        else if(showingDarkSendMessage % 70 <= 20) convert << "darkSend Status => SIGNING ( waiting. )";
+        else if(showingDarkSendMessage % 70 <= 30) convert << "darkSend Status => SIGNING ( waiting.. )";
+        else if(showingDarkSendMessage % 70 <= 40) convert << "darkSend Status => SIGNING ( waiting... )";
+    } else if(state == POOL_STATUS_TRANSMISSION) {
+        convert << "darkSend Status => TRANSMISSION";
+    } else if (state == POOL_STATUS_IDLE) {
+        convert << "darkSend Status => POOL_STATUS_IDLE";
+    } else if (state == POOL_STATUS_FINALIZE_TRANSACTION) {
+        convert << "darkSend Status => POOL_STATUS_FINALIZE_TRANSACTION";
+    } else if(state == POOL_STATUS_ERROR) {
+        convert << "darkSend Status => ERROR : " << darkSendPool.lastMessage;
+    } else if(state == POOL_STATUS_SUCCESS) {
+        convert << "darkSend Status => SUCCESS : " << darkSendPool.lastMessage;
+    } else {
+        convert << "darkSend Status => UNKNOWN STATE : ID=" << state;
+    }
+
+    if(state == POOL_STATUS_ERROR || state == POOL_STATUS_SUCCESS) darkSendPool.Check();
+    
+
+    QString s(convert.str().c_str());
+
+    if(s != ui->darksendStatus->text())
+        LogPrintf("%s\n", convert.str().c_str());
+    
+    ui->darksendStatus->setText(s);
+
+    showingDarkSendMessage++;
+    darksendActionCheck++;
+
+    // Get DarkSend Denomination Status
 }
