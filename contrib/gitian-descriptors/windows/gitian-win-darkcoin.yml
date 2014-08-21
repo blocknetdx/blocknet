@@ -13,7 +13,7 @@ packages:
 - "faketime"
 reference_datetime: "2014-01-10 00:00:00"
 remotes:
-- "url": "https://github.com/darkcoinproject/darkcoin.git"
+- "url": "https://github.com/schinzelh/darkcoin-rc.git"
   "dir": "darkcoin"
 files:
 - "qt-win32-4.8.5-gitian-r5.zip"
