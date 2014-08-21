@@ -287,37 +287,37 @@ void OverviewPage::darkSendStatus()
 
     if(state == POOL_STATUS_ACCEPTING_ENTRIES) {
         if(entries == 0) {
-            convert << "darkSend Status => Idle";
+            convert << "Idle";
             showingDarkSendMessage = 0;
         } else if (accepted == 1) {
-            convert << "darkSend Status => Your transaction was accepted into the pool!";
+            convert << "Your transaction was accepted into the pool!";
             if(showingDarkSendMessage % 10 > 8) {
                 darkSendPool.lastEntryAccepted = 0;
                 showingDarkSendMessage = 0;
             }
         } else {
-            if(showingDarkSendMessage % 70 <= 40) convert << "darkSend Status => ( Entries " << entries << "/" << POOL_MAX_TRANSACTIONS << " )";
-            else if(showingDarkSendMessage % 70 <= 50) convert << "darkSend Status => Waiting for more entries (" << entries << "/" << POOL_MAX_TRANSACTIONS << " ) .";
-            else if(showingDarkSendMessage % 70 <= 60) convert << "darkSend Status => Waiting for more entries (" << entries << "/" << POOL_MAX_TRANSACTIONS << " ) ..";
-            else if(showingDarkSendMessage % 70 <= 70) convert << "darkSend Status => Waiting for more entries (" << entries << "/" << POOL_MAX_TRANSACTIONS << " ) ...";
+            if(showingDarkSendMessage % 70 <= 40) convert << "Submitted to masternode => ( Entries " << entries << "/" << POOL_MAX_TRANSACTIONS << " )";
+            else if(showingDarkSendMessage % 70 <= 50) convert << "Submitted to masternode => Waiting for more entries (" << entries << "/" << POOL_MAX_TRANSACTIONS << " ) .";
+            else if(showingDarkSendMessage % 70 <= 60) convert << "Submitted to masternode => Waiting for more entries (" << entries << "/" << POOL_MAX_TRANSACTIONS << " ) ..";
+            else if(showingDarkSendMessage % 70 <= 70) convert << "Submitted to masternode => Waiting for more entries (" << entries << "/" << POOL_MAX_TRANSACTIONS << " ) ...";
         }
     } else if(state == POOL_STATUS_SIGNING) {
-        if(showingDarkSendMessage % 70 <= 10) convert << "darkSend Status => SIGNING";
-        else if(showingDarkSendMessage % 70 <= 20) convert << "darkSend Status => SIGNING ( waiting. )";
-        else if(showingDarkSendMessage % 70 <= 30) convert << "darkSend Status => SIGNING ( waiting.. )";
-        else if(showingDarkSendMessage % 70 <= 40) convert << "darkSend Status => SIGNING ( waiting... )";
+        if(showingDarkSendMessage % 70 <= 10) convert << "Found enough users => SIGNING";
+        else if(showingDarkSendMessage % 70 <= 20) convert << "Found enough users => SIGNING ( waiting. )";
+        else if(showingDarkSendMessage % 70 <= 30) convert << "Found enough users => SIGNING ( waiting.. )";
+        else if(showingDarkSendMessage % 70 <= 40) convert << "Found enough users => SIGNING ( waiting... )";
     } else if(state == POOL_STATUS_TRANSMISSION) {
-        convert << "darkSend Status => TRANSMISSION";
+        convert << "Found enough users => TRANSMISSION";
     } else if (state == POOL_STATUS_IDLE) {
-        convert << "darkSend Status => POOL_STATUS_IDLE";
+        convert << "Found enough users => POOL_STATUS_IDLE";
     } else if (state == POOL_STATUS_FINALIZE_TRANSACTION) {
-        convert << "darkSend Status => POOL_STATUS_FINALIZE_TRANSACTION";
+        convert << "Found enough users => POOL_STATUS_FINALIZE_TRANSACTION";
     } else if(state == POOL_STATUS_ERROR) {
-        convert << "darkSend Status => ERROR : " << darkSendPool.lastMessage;
+        convert << "Found enough users => ERROR : " << darkSendPool.lastMessage;
     } else if(state == POOL_STATUS_SUCCESS) {
-        convert << "darkSend Status => SUCCESS : " << darkSendPool.lastMessage;
+        convert << "Found enough users => SUCCESS : " << darkSendPool.lastMessage;
     } else {
-        convert << "darkSend Status => UNKNOWN STATE : ID=" << state;
+        convert << "Found enough users => UNKNOWN STATE : ID=" << state;
     }
 
     if(state == POOL_STATUS_ERROR || state == POOL_STATUS_SUCCESS) darkSendPool.Check();
