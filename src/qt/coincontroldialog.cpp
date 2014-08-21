@@ -720,7 +720,10 @@ void CoinControlDialog::updateView()
             
             // ds+ rounds
             CTxIn vin = CTxIn(out.tx->GetHash(), out.i);
-            itemOutput->setText(COLUMN_DARKSEND_ROUNDS, strPad(QString::number(darkSendPool.GetInputDarksendRounds(vin)), 15, " "));
+            int rounds = darkSendPool.GetInputDarksendRounds(vin);
+
+            if(rounds >= 0) itemOutput->setText(COLUMN_DARKSEND_ROUNDS, strPad(QString::number(rounds), 15, " "));
+            else itemOutput->setText(COLUMN_DARKSEND_ROUNDS, strPad(QString("n/a"), 15, " "));
 
             // confirmations
             itemOutput->setText(COLUMN_CONFIRMATIONS, strPad(QString::number(out.nDepth), 8, " "));
