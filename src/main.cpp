@@ -4169,6 +4169,9 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
             LogPrintf("Sending master node entry - %s \n", mn.addr.ToString().c_str());
+
+            if(mn.addr.IsRFC1918()) continue; //local network
+
             if(vin == CTxIn()){
                 mn.Check();
                 if(mn.IsEnabled()) {
@@ -4292,6 +4295,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         int64 lastUpdated;
         vRecv >> vin >> addr >> vchSig >> sigTime >> pubkey >> pubkey2 >> count >> current >> lastUpdated;
 
+        bool isLocal = addr.IsRFC1918();
         std::string vchPubKey(pubkey.begin(), pubkey.end());
         std::string vchPubKey2(pubkey2.begin(), pubkey2.end());
         
@@ -4371,7 +4375,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
                 darkSendPool.EnableHotColdMasterNode(vin, sigTime, addr);
             }
 
-            if(count == -1)
+            if(count == -1 && !isLocal)
                 RelayDarkSendElectionEntry(vin, addr, vchSig, sigTime, pubkey, pubkey2, count, current, lastUpdated); 
 
         } else {

@@ -1171,21 +1171,16 @@ bool AppInit2(boost::thread_group& threadGroup)
     bool fEnabledDaemonDarksend = GetBoolArg("-enabledaemondarksend", false);
     if(fDaemon && !fEnabledDaemonDarksend) fDisableDarksend = true;
 
-    if(!fDisableDarksend){
-        nDarksendRounds = GetArg("-darksendrounds", 2);
-        if(nDarksendRounds > 8) nDarksendRounds = 8;
-        if(nDarksendRounds < 1) nDarksendRounds = 1;
+    nDarksendRounds = GetArg("-darksendrounds", 2);
+    if(nDarksendRounds > 8) nDarksendRounds = 8;
+    if(nDarksendRounds < 1) nDarksendRounds = 1;
 
-        nAnonymizeDarkcoinAmount = GetArg("-anonymizedarkcoinamount", 1000);
-        if(nAnonymizeDarkcoinAmount > 999999) nAnonymizeDarkcoinAmount = 999999;
-        if(nAnonymizeDarkcoinAmount < 2) nAnonymizeDarkcoinAmount = 2;
+    nAnonymizeDarkcoinAmount = GetArg("-anonymizedarkcoinamount", 1000);
+    if(nAnonymizeDarkcoinAmount > 999999) nAnonymizeDarkcoinAmount = 999999;
+    if(nAnonymizeDarkcoinAmount < 2) nAnonymizeDarkcoinAmount = 2;
 
-        LogPrintf("Darksend rounds %d\n", nDarksendRounds);
-        LogPrintf("Anonymize Darkcoin Amount %d\n", nAnonymizeDarkcoinAmount);
-    } else {
-        LogPrintf("Darksend is disabled!\n");
-        nDarksendRounds = 0;
-    }
+    LogPrintf("Darksend rounds %d\n", nDarksendRounds);
+    LogPrintf("Anonymize Darkcoin Amount %d\n", nAnonymizeDarkcoinAmount);
 
     //override masternode
     strUseMasternode = GetArg("-usemasternode", "");
