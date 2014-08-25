@@ -266,11 +266,17 @@ public:
 
     int64 IsDenominated(const CTransaction& tx) const
     {
+        /*
+            Return false if ANY inputs are non-denom
+        */
+        bool ret = true;
         BOOST_FOREACH(const CTxIn& txin, tx.vin)
         {
-            if(IsDenominated(txin)) return true;
+            if(!IsDenominated(txin)) {
+                ret = false;
+            }
         }
-        return false;
+        return ret;
     }
 
     int64 GetCredit(const CTransaction& tx) const
