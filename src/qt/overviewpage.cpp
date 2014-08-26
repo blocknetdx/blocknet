@@ -5,6 +5,7 @@
 #include "clientmodel.h"
 #include "walletmodel.h"
 #include "bitcoinunits.h"
+#include "darksendconfig.h"
 #include "optionsmodel.h"
 #include "transactiontablemodel.h"
 #include "transactionfilterproxy.h"
@@ -266,6 +267,14 @@ void OverviewPage::darkSendStatus()
                 }
             }
         }
+
+        /* show darksend configuration if client has defaults set */
+
+        DarksendConfig dlg(this);
+        dlg.setModel(walletModel);
+        dlg.exec();
+
+        /* *******************************************************/
 
         ui->darksendEnabled->setText("Enabled");
 

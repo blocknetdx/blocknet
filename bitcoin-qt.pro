@@ -207,6 +207,7 @@ HEADERS += src/qt/bitcoingui.h \
     src/qt/bitcoinunits.h \
     src/qt/qvaluecombobox.h \
     src/qt/askpassphrasedialog.h \
+    src/qt/darksendconfig.h \
     src/protocol.h \
     src/qt/notificator.h \
     src/qt/paymentserver.h \
@@ -298,6 +299,7 @@ SOURCES += src/qt/bitcoin.cpp \
     src/qt/bitcoinunits.cpp \
     src/qt/qvaluecombobox.cpp \
     src/qt/askpassphrasedialog.cpp \
+    src/qt/darksendconfig.cpp \
     src/protocol.cpp \
     src/qt/notificator.cpp \
     src/qt/paymentserver.cpp \
@@ -331,6 +333,7 @@ FORMS += src/qt/forms/sendcoinsdialog.ui \
     src/qt/forms/overviewpage.ui \
     src/qt/forms/sendcoinsentry.ui \
     src/qt/forms/askpassphrasedialog.ui \
+    src/qt/forms/darksendconfig.ui \
     src/qt/forms/rpcconsole.ui \
     src/qt/forms/optionsdialog.ui
 
