@@ -52,7 +52,7 @@ void OptionsModel::Init()
     nDarksendRounds = settings.value("nDarksendRounds").toLongLong();
     nAnonymizeDarkcoinAmount = settings.value("nAnonymizeDarkcoinAmount").toLongLong();
     fDisableDarksend = settings.value("fDisableDarksend", false).toBool();
-    
+
     // These are shared with core Bitcoin; we want
     // command-line options to override the GUI settings:
     if (settings.contains("fUseUPnP"))
