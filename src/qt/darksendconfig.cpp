@@ -3,6 +3,7 @@
 
 #include "guiconstants.h"
 #include "walletmodel.h"
+#include "init.h"
 
 #include <QMessageBox>
 #include <QPushButton>
@@ -19,7 +20,7 @@ DarksendConfig::DarksendConfig(QWidget *parent) :
     connect(ui->buttonNone, SIGNAL(clicked()), this, SLOT(clickNone()));
     connect(ui->buttonBasic, SIGNAL(clicked()), this, SLOT(clickBasic()));
     connect(ui->buttonHigh, SIGNAL(clicked()), this, SLOT(clickHigh()));
-    connect(ui->buttonMax, SIGNAL(clicked()), this, SLOT(clickMaximum()));
+    connect(ui->buttonMax, SIGNAL(clicked()), this, SLOT(clickMax()));
 }
 
 DarksendConfig::~DarksendConfig()
@@ -76,8 +77,11 @@ void DarksendConfig::configure(bool enabled, int coins, int rounds) {
 
     QSettings settings;
 
-    settings.setValue("fDisableDarksend", enabled);
+    settings.setValue("fDisableDarksend", !enabled);
     settings.setValue("nDarksendRounds", rounds);
     settings.setValue("nAnonymizeDarkcoinAmount", coins);
-    
+
+    fDisableDarksend = !enabled;
+    nDarksendRounds = rounds;
+    nAnonymizeDarkcoinAmount = coins;    
 }

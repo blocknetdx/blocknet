@@ -231,6 +231,12 @@ void OverviewPage::darkSendStatus()
         {
             cachedNumBlocks = nBestHeight;
 
+            if(nAnonymizeDarkcoinAmount == 0){
+                DarksendConfig dlg(this);
+                dlg.setModel(walletModel);
+                dlg.exec();
+            }
+
             ui->darksendEnabled->setText("Disabled");
             ui->darksendStatus->setText("");
 
@@ -270,9 +276,11 @@ void OverviewPage::darkSendStatus()
 
         /* show darksend configuration if client has defaults set */
 
-        DarksendConfig dlg(this);
-        dlg.setModel(walletModel);
-        dlg.exec();
+        if(nAnonymizeDarkcoinAmount == 0){
+            DarksendConfig dlg(this);
+            dlg.setModel(walletModel);
+            dlg.exec();
+        }
 
         /* *******************************************************/
 
