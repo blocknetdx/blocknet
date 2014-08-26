@@ -7275,6 +7275,7 @@ bool CDarkSendPool::SplitUpMoney(bool justCollateral)
 
     int64 a = nTotalBalance/5;
     if(a > 900*COIN) a = 900*COIN;
+    if(a > nAnonymizeDarkcoinAmount*COIN) a = nAnonymizeDarkcoinAmount*COIN;
 
     LogPrintf(" auto-- split amount %"PRI64d"\n", a);
 
