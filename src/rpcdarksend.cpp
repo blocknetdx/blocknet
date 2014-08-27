@@ -212,15 +212,6 @@ Value masternode(const Array& params, bool fHelp)
         }
     }
 
-    if (strCommand == "votes")
-    {
-        Object obj;
-        BOOST_FOREACH(CMasterNodeVote& mv, darkSendMasterNodeVotes) {
-            obj.push_back(Pair(boost::lexical_cast<std::string>((int)mv.blockHeight),      mv.GetPubKey().ToString().c_str()));
-        }    
-        return obj;
-    }
-
     if (strCommand == "create")
     {
         

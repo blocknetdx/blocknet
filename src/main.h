@@ -142,14 +142,12 @@ extern unsigned int nCoinCacheSize;
 extern CDarkSendPool darkSendPool;
 extern CDarkSendSigner darkSendSigner;
 extern std::vector<CMasterNode> darkSendMasterNodes;
-extern std::vector<CMasterNodeVote> darkSendMasterNodeVotes;
 extern std::vector<int64> darkSendDenominations;
 extern std::string strMasterNodePrivKey;
 extern std::string strUseMasternode;
 extern int64 enforceMasternodePaymentsTime;
 extern CWallet pmainWallet;
 extern std::map<uint256, CBlock*> mapOrphanBlocks;
-extern std::vector<std::pair<int64, std::pair<CTxIn, int> > > vecBlockVotes;
 
 // Settings
 extern int64 nTransactionFee;
@@ -2762,8 +2760,6 @@ public:
 
     bool DoAutomaticDenominating(bool fDryRun=false);
     int GetCurrentMasterNode(int mod=1, int64 nBlockHeight=0);
-    bool GetCurrentMasterNodeConsessus(int64 blockHeight, CScript& payee);
-    void SubmitMasternodeVote(CTxIn& vinWinningMasternode, CTxIn& vinMasterNodeFrom, int64 nBlockHeight);
 
     int GetMasternodeByVin(CTxIn& vin);
     int GetMasternodeRank(CTxIn& vin, int mod);
@@ -2793,7 +2789,6 @@ public:
     void NewBlock();
     void CompletedTransaction(bool error, std::string lastMessageNew);
     void ClearLastMessage();
-    bool DoConcessusVote(int64 nBlockHeight);
     int GetInputDarksendRounds(CTxIn in, int rounds=0);
     bool SplitUpMoney(bool justCollateral=false);
     int GetDenominations(const std::vector<CTxOut>& vout);

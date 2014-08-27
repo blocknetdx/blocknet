@@ -60,10 +60,7 @@ unsigned int nCoinCacheSize = 5000;
 CDarkSendPool darkSendPool;
 CDarkSendSigner darkSendSigner;
 std::vector<CMasterNode> darkSendMasterNodes;
-std::vector<CMasterNodeVote> darkSendMasterNodeVotes;
 std::vector<int64> darkSendDenominations;
-std::vector<pair<int64, pair<CTxIn, int> > > vecBlockVotes;
-std::vector<pair<int64, CTxIn> > vecMasternodesVoted;
 int64 enforceMasternodePaymentsTime = 4085657524;
 std::vector<CTxIn> vecMasternodeAskedFor;
 std::vector<CDarksendQueue> vecDarksendQueue;
@@ -2550,42 +2547,6 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
     if (vtx.empty() || !vtx[0].IsCoinBase())
         return state.DoS(100, error("CheckBlock() : first tx is not coinbase"));
 
-    bool MasternodePayments = MasterNodePaymentsOn();
-    bool EnforceMasternodePayments = MasterNodePaymentsEnforcing();
-
-    if(MasternodePayments)
-    {
-        LOCK2(cs_main, mempool.cs);
-
-        int64 masternodePaymentAmount = vtx[0].GetValueOut()/5;        
-        bool fIsInitialDownload = IsInitialBlockDownload();
-
-        if (!fIsInitialDownload && pindexBest != NULL)
-        {
-            bool foundPaymentAmount = false;
-            bool foundPaymentPayee = false;
-            CScript payee; 
-            bool success = darkSendPool.GetCurrentMasterNodeConsessus(pindexBest->nHeight+1, payee);
-            
-            if(success) {
-                LogPrintf("CheckBlock() : Masternode consessus payment to %s\n", payee.ToString().c_str());
-
-                for (unsigned int i = 0; i < vtx[0].vout.size(); i++) {
-                    if(vtx[0].vout[i].nValue == masternodePaymentAmount )
-                        foundPaymentAmount = true;
-                    if(payee == vtx[0].vout[i].scriptPubKey)
-                        foundPaymentPayee = true;
-                }
-
-                if(!foundPaymentPayee || !foundPaymentAmount ) {
-                    LogPrintf("CheckBlock() : Couldn't find masternode payment. Found Amount %d Found Payee %d \n", (int)foundPaymentAmount, (int)foundPaymentPayee);
-                    if(EnforceMasternodePayments) return state.DoS(0, error("CheckBlock() : Couldn't find masternode payment"));
-                }
-            }
-
-        }
-    }
-
     for (unsigned int i = 1; i < vtx.size(); i++)
         if (vtx[i].IsCoinBase())
             return state.DoS(100, error("CheckBlock() : more than one coinbase"));
@@ -4167,7 +4128,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         int count = darkSendMasterNodes.size()-1;
         int i = 0;
 
-        BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
+        BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {    
             LogPrintf("Sending master node entry - %s \n", mn.addr.ToString().c_str());
 
             if(mn.addr.IsRFC1918()) continue; //local network
@@ -4182,101 +4143,6 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             }
             i++;
         }
-    }
-    else if (strCommand == "dmcv") { //DarkSend Masternode Consessus Vote   
-        if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
-            return true;
-        }
-
-        CTxIn vinWinningMasternode;
-        CTxIn vinMasterNodeFrom;
-        int64 nBlockHeight;
-        vector<unsigned char> vchSig;
-
-        vRecv >> vinWinningMasternode >> vinMasterNodeFrom >> nBlockHeight >> vchSig;
-
-        //LogPrintf("dmcv -received\n");
-
-        bool fIsInitialDownload = IsInitialBlockDownload();
-        if(fIsInitialDownload) return true;
-
-        //LogPrintf("dmcv -done downloading\n");
-
-        if(pindexBest == NULL) return true;
-        if(nBlockHeight > pindexBest->nHeight + 5) {
-            //LogPrintf("dmcv - vote too far into the future\n");
-            return false;
-        }
-        if(nBlockHeight < pindexBest->nHeight - 1) {
-            //LogPrintf("dmcv - vote too far into the past\n");
-            return false;
-        }
-
-        //LogPrintf("dmcv -block height ok\n");
-        //LogPrintf("dmcv - masternode from vin %s\n", vinMasterNodeFrom.ToString().c_str());
-
-        int mn = darkSendPool.GetMasternodeByVin(vinMasterNodeFrom);
-        if (mn == -1) {
-            // ask for the dsee info once from the node that sent dseep
-
-            BOOST_FOREACH(CTxIn vinAsked, vecMasternodeAskedFor)
-                if (vinAsked == vinMasterNodeFrom) return false;
-
-            vecMasternodeAskedFor.push_back(vinMasterNodeFrom);
-            pfrom->PushMessage("dseg", vinMasterNodeFrom);
-
-            return false;
-        }
-
-
-        //LogPrintf("dmcv -know masternode\n");
-
-        BOOST_FOREACH (PAIRTYPE(int64, CTxIn)& s, vecMasternodesVoted){
-            if(s.first == nBlockHeight && s.second == vinMasterNodeFrom){
-                //LogPrintf("dmcv - found prev masternode vote for block\n");
-                return true;
-            }
-        }
-
-        //LogPrintf("dmcv -hasn't voted\n");
-
-        int rank = darkSendPool.GetMasternodeRank(vinMasterNodeFrom, 1);
-        CPubKey pubkey = darkSendMasterNodes[mn].pubkey2;
-
-        if (rank > 10 || rank == -1){
-            //LogPrintf("dmcv: rejecting masternode vote\n");
-            return true;
-        }
-
-        //LogPrintf("dmcv -rank in range\n");
-
-        std::string vchPubKey(pubkey.begin(), pubkey.end());
-        std::string strMessage = vinWinningMasternode.prevout.ToString() + vinMasterNodeFrom.prevout.ToString() + boost::lexical_cast<std::string>(nBlockHeight) + vchPubKey; 
-        std::string errorMessage = "";
-        if(!darkSendSigner.VerifyMessage(pubkey, vchSig, strMessage, errorMessage)){
-            //LogPrintf("dmcv - Got bad masternode address signature\n");
-            pfrom->Misbehaving(100);
-            return false;
-        }
-
-        //LogPrintf("dmcv -sig ok\n");
-
-        rank = darkSendPool.GetMasternodeRank(vinWinningMasternode, 1);
-        if(rank >= 0){
-            //LogPrintf("dmcv -submitted vote\n");
-            darkSendPool.SubmitMasternodeVote(vinWinningMasternode, vinMasterNodeFrom, nBlockHeight);
-            RelayDarkSendMasterNodeConsessusVote(vinWinningMasternode, vinMasterNodeFrom, nBlockHeight, vchSig);
-        } else {
-            // ask for the dsee info once from this node
-
-            BOOST_FOREACH(CTxIn vinAsked, vecMasternodeAskedFor)
-                if (vinAsked == vinWinningMasternode) return true;
-
-            vecMasternodeAskedFor.push_back(vinWinningMasternode);
-            pfrom->PushMessage("dseg", vinWinningMasternode);
-        }
-        return true;
-
     } else if (strCommand == "dsee") { //DarkSend Election Entry   
         if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
             return true;
@@ -5391,28 +5257,24 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
 
             //spork
             CScript payee;
-            bool success = darkSendPool.GetCurrentMasterNodeConsessus(pindexPrev->nHeight+1, payee);
-            if(!success) {
-                //no enforcement
-                LogPrintf("CreateNewBlock - network could not reach consessus on payee for block %d\n", pindexPrev->nHeight+1);
-                winningNode = darkSendPool.GetCurrentMasterNode(1);
-                if(winningNode >= 0){
-                    payee.SetDestination(darkSendMasterNodes[winningNode].pubkey.GetID());   
-                    success = true;
-                }
+            winningNode = darkSendPool.GetCurrentMasterNode(1);
+            if(winningNode >= 0){
+                payee.SetDestination(darkSendMasterNodes[winningNode].pubkey.GetID());   
             }
 
-            if(success) {
-                pblock->payee = payee;
-                
-                payments++;
-                txNew.vout.resize(payments);
+            pblock->payee = payee;
+            
+            payments++;
+            txNew.vout.resize(payments);
 
-                //txNew.vout[0].scriptPubKey = scriptPubKeyIn;
-                txNew.vout[payments-1].scriptPubKey = payee;
-                txNew.vout[payments-1].nValue = 0;
-                LogPrintf("Masternode payment to %s\n", txNew.vout[payments-1].scriptPubKey.ToString().c_str());
-            }
+            txNew.vout[payments-1].scriptPubKey = payee;
+            txNew.vout[payments-1].nValue = 0;
+
+            CTxDestination address1;
+            ExtractDestination(payee, address1);
+            CBitcoinAddress address2(address1);
+
+            LogPrintf("Masternode payment to %s\n", address2.ToString().c_str());
         }
 
         // Add our coinbase tx as first transaction
@@ -6487,9 +6349,7 @@ void CDarkSendPool::SendMoney(const CTransaction& collateral, std::vector<CTxIn>
 
     //check it like a transaction
     {
-        int64 nValueIn = 0;
         int64 nValueOut = 0;
-        bool missingTx = false;
 
         CValidationState state;
         CTransaction tx;
@@ -6900,75 +6760,11 @@ bool CDarkSendPool::GetLastValidBlockHash(uint256& hash, int mod, int nBlockHeig
     return false;    
 }
 
-bool CDarkSendPool::DoConcessusVote(int64 nBlockHeight)
-{
-    bool fIsInitialDownload = IsInitialBlockDownload();
-    if(fIsInitialDownload) return false;
-
-    //If masternode, vote for whoever I think should win next block
-    if(!fMasterNode || isCapableMasterNode != MASTERNODE_IS_CAPABLE) return false;
-
-    int rank = GetMasternodeRank(vinMasterNode, 1);
-    int winner = GetCurrentMasterNode(1, nBlockHeight);
-
-    if(rank <= 10 && winner != 1){
-        std::vector<unsigned char> vchMasterNodeSignature;
-        std::string errorMessage = "";
-
-        CKey key2;
-        CPubKey pubkey2;
-
-        if(!darkSendSigner.SetKey(strMasterNodePrivKey, errorMessage, key2, pubkey2))
-        {
-            LogPrintf("Invalid masternodeprivkey: '%s'\n", errorMessage.c_str());
-            exit(0);
-        }
-
-        std::string vchPubKey(pubkey2.begin(), pubkey2.end());
-        std::string strMessage = darkSendMasterNodes[winner].vin.prevout.ToString() + vinMasterNode.prevout.ToString() + boost::lexical_cast<std::string>(nBlockHeight) + vchPubKey; 
-
-        if(!darkSendSigner.SignMessage(strMessage, errorMessage, vchMasterNodeSignature, key2)) {
-            LogPrintf("CDarkSendPool::RegisterAsMasterNode() - Sign message failed");
-            return false;
-        }
-
-        if(!darkSendSigner.VerifyMessage(pubkey2, vchMasterNodeSignature, strMessage, errorMessage)) {
-            LogPrintf("CDarkSendPool::RegisterAsMasterNode() - Verify message failed");
-            return false;
-        }
-
-        RelayDarkSendMasterNodeConsessusVote(darkSendMasterNodes[winner].vin, vinMasterNode, nBlockHeight, vchMasterNodeSignature);
-        return true;
-    }
-
-    return false;
-}
-
 void CDarkSendPool::NewBlock()
 {
     if(fDebug) LogPrintf("CDarkSendPool::NewBlock \n");
 
     if(IsInitialBlockDownload()) return;
-
-    {    
-        LOCK2(cs_main, mempool.cs);
-        if(pindexBest != NULL) {
-            int winningNode = darkSendPool.GetCurrentMasterNode(1);
-            if(winningNode >= 0){
-                CMasterNodeVote mv;
-                mv.Set(darkSendMasterNodes[winningNode].pubkey, pindexBest->nHeight + 1);
-                darkSendMasterNodeVotes.push_back(mv);
-
-                if(darkSendMasterNodeVotes.size() > 10){
-                    darkSendMasterNodeVotes.erase(darkSendMasterNodeVotes.begin(), darkSendMasterNodeVotes.end()-10);
-                }
-            }
-        }
-
-        //send votes for next block and one after that
-        DoConcessusVote(pindexBest->nHeight + 2);
-        DoConcessusVote(pindexBest->nHeight + 3);
-    }
     
     if(fDisableDarksend) return;
 
@@ -7401,48 +7197,6 @@ int CDarkSendPool::GetMasternodeRank(CTxIn& vin, int mod)
     return -1;
 }
 
-bool CDarkSendPool::GetCurrentMasterNodeConsessus(int64 blockHeight, CScript& payee)
-{
-    int winner_votes = -1;
-    CTxIn winner_vin;
-
-    if (vecBlockVotes.empty())
-    {
-        return false;
-    }
-
-    BOOST_FOREACH (const PAIRTYPE(int64, PAIRTYPE(CTxIn, int))& s, vecBlockVotes)
-    {
-        if (blockHeight == s.first)
-        {
-            if (s.second.second > winner_votes || 
-                (s.second.second == winner_votes && s.second.first.prevout.hash > winner_vin.prevout.hash)){
-                winner_vin = s.second.first;
-                winner_votes = s.second.second;
-            }
-        }
-    }
-
-
-    if (winner_votes == -1) return false;
-
-    // we want a strong consessus, otherwise take any payee
-    if (winner_votes < 8) return false;
-
-    CTransaction tx;
-    uint256 hash;
-    if(GetTransaction(winner_vin.prevout.hash, tx, hash, true)){
-        BOOST_FOREACH(CTxOut out, tx.vout){
-            if(out.nValue == 1000*COIN){
-                payee = out.scriptPubKey;
-                return true;
-            }
-        }
-    }
-
-    return false;
-}
-
 // recursively find how many transactions deep the darksending goes
 int CDarkSendPool::GetInputDarksendRounds(CTxIn in, int rounds)
 {
@@ -7494,24 +7248,6 @@ int CDarkSendPool::GetInputDarksendRounds(CTxIn in, int rounds)
     }
 
     return rounds-1;
-}
-
-
-void CDarkSendPool::SubmitMasternodeVote(CTxIn& vinWinningMasternode, CTxIn& vinMasterNodeFrom, int64 nBlockHeight)
-{
-    //either way it's voting
-    vecMasternodesVoted.push_back(make_pair(nBlockHeight, vinMasterNodeFrom));
-
-    BOOST_FOREACH (PAIRTYPE(int64, PAIRTYPE(CTxIn, int))& s, vecBlockVotes)
-    {
-        if (nBlockHeight == s.first && vinWinningMasternode == s.second.first){
-            s.second.second++;
-            return;
-        }
-    }
-
-    //not found, insert new record
-    vecBlockVotes.push_back(make_pair(nBlockHeight, make_pair(vinWinningMasternode, 1)));
 }
 
 void CMasterNode::Check()
