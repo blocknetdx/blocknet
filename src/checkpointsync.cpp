@@ -71,6 +71,7 @@
 #include "main.h"
 #include "txdb.h"
 #include "uint256.h"
+#include "darksend.h"
 
 using namespace json_spirit;
 using namespace std;

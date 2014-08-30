@@ -578,7 +578,6 @@ Value getblocktemplate(const Array& params, bool fHelp)
         result.push_back(Pair("payee", ""));
     }
     result.push_back(Pair("masternode_payments", pblock->MasterNodePaymentsOn()));
-    result.push_back(Pair("enforce_masternode_payments", pblock->MasterNodePaymentsEnforcing()));
 
     return result;
 }

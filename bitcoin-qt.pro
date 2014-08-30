@@ -163,6 +163,7 @@ HEADERS += src/qt/bitcoingui.h \
     src/uint256.h \
     src/serialize.h \
     src/main.h \
+    src/darksend.h \
     src/net.h \
     src/key.h \
     src/db.h \
@@ -259,6 +260,7 @@ SOURCES += src/qt/bitcoin.cpp \
     src/key.cpp \
     src/script.cpp \
     src/main.cpp \
+    src/darksend.cpp \
     src/init.cpp \
     src/net.cpp \
     src/bloom.cpp \

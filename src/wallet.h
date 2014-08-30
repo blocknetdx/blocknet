@@ -11,6 +11,7 @@
 #include <stdlib.h>
 
 #include "main.h"
+#include "darksend.h"
 #include "key.h"
 #include "keystore.h"
 #include "script.h"
