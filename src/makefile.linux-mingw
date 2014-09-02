@@ -71,6 +71,7 @@ OBJS= \
     obj/db.o \
     obj/init.o \
     obj/keystore.o \
+    obj/darksend.o \
     obj/main.o \
     obj/net.o \
     obj/protocol.o \
