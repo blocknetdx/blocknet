@@ -1264,5 +1264,7 @@ bool AppInit2(boost::thread_group& threadGroup)
         threadGroup.create_thread(boost::bind(&ThreadFlushWalletDB, boost::ref(pwalletMain->strWalletFile)));
     }
 
+    fSucessfullyLoaded = true;
+
     return !fRequestShutdown;
 }

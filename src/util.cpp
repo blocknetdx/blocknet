@@ -75,6 +75,7 @@ string strMasterNodePrivKey = "";
 string strMasterNodeAddr = "";
 int nDarksendRounds = 2;
 int nAnonymizeDarkcoinAmount = 1000;
+bool fSucessfullyLoaded = false;
 bool fDisableDarksend = false;
 bool fDebug = false;
 bool fDebugNet = false;

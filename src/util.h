@@ -134,6 +134,7 @@ extern int nDarksendRounds;
 extern int nAnonymizeDarkcoinAmount;
 extern bool fDisableDarksend;
 extern std::string strMasterNodeAddr;
+extern bool fSucessfullyLoaded;
 extern bool fDebug;
 extern bool fDebugNet;
 extern bool fPrintToConsole;

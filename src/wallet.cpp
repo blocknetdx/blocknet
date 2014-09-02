@@ -2017,6 +2017,11 @@ bool CWallet::TopUpKeyPool()
                 throw runtime_error("TopUpKeyPool() : writing generated key failed");
             setKeyPool.insert(nEnd);
             LogPrintf("keypool added key %"PRI64d", size=%"PRIszu"\n", nEnd, setKeyPool.size());
+
+            if(!fSucessfullyLoaded) {
+                std::string strMsg = strprintf(_("Loading wallet... (Generating keys %"PRI64d"/1000)"), nEnd);
+                uiInterface.InitMessage(strMsg);
+            }
         }
     }
     return true;
