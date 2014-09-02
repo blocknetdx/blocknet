@@ -1134,6 +1134,8 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
     // initial phase, find a masternode
     if(!sessionFoundMasternode){
         int64 nTotalValue = pwalletMain->GetTotalValue(vCoins) - DARKSEND_FEE;
+        if(nTotalValue/COIN > maxAmount) nTotalValue = maxAmount*COIN;
+        
         double fDarkcoinSubmitted = nTotalValue / COIN;
         LogPrintf("Submiting Darksend for %f DRK\n", fDarkcoinSubmitted);
 
