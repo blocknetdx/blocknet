@@ -162,12 +162,14 @@ public:
     CTxIn vin;
     int64 time;
     int nDenom;
+    std::vector<unsigned char> vchSig;
 
     CDarksendQueue()
     {
         nDenom = 0;
         vin = CTxIn();
         time = 0;   
+        vchSig.clear();
     }
 
     IMPLEMENT_SERIALIZE
@@ -175,6 +177,7 @@ public:
         READWRITE(nDenom);
         READWRITE(vin);
         READWRITE(time);
+        READWRITE(vchSig);
     )
 
     bool GetAddress(CService &addr)
@@ -188,17 +191,16 @@ public:
         return false;
     }
 
-    void Relay()
-    {
-        LOCK(cs_vNodes);
-        BOOST_FOREACH(CNode* pnode, vNodes)
-            pnode->PushMessage("dsq", (*this));
-    }
+    bool Sign();
+    bool Relay();
 
     bool IsExpired()
     {
         return (GetTime() - time) > 120;// 120 seconds
     }
+
+    bool CheckSignature();
+
 };
 
 class CDarkSendSigner
@@ -217,7 +219,7 @@ static const int64 DARKSEND_FEE = 0.0125*COIN;
 class CDarkSendPool
 {
 public:
-    static const int MIN_PEER_PROTO_VERSION = 70035;
+    static const int MIN_PEER_PROTO_VERSION = 70036;
 
     std::vector<CDarkSendEntry> myEntries;
     std::vector<CDarkSendEntry> entries;

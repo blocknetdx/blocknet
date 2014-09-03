@@ -3903,6 +3903,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         CService addr;
         if(!dsq.GetAddress(addr)) return false;
+        if(!dsq.CheckSignature()) return false;
 
         BOOST_FOREACH(CDarksendQueue q, vecDarksendQueue){
             if(q.vin == dsq.vin) return true;
@@ -3948,9 +3949,8 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         if(entries.size() == 0 && GetDenominationByAmount(sessionAmount) != GetDenominationByAmount(nAmount)) {
             sessionAmount = nAmount;
         }
-
-
 */
+        
         //check it like a transaction
         {
             int64 nValueIn = 0;

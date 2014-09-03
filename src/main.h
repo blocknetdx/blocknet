@@ -103,11 +103,6 @@ static const int fHaveUPnP = false;
 
 extern CScript COINBASE_FLAGS;
 
-
-
-
-
-
 extern CCriticalSection cs_main;
 extern std::map<uint256, CBlockIndex*> mapBlockIndex;
 extern std::set<CBlockIndex*, CBlockIndexWorkComparator> setBlockIndexValid;

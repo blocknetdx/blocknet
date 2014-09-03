@@ -425,6 +425,7 @@ bool CDarkSendPool::AddEntry(const std::vector<CTxIn>& newInput, const int64& nA
             dsq.nDenom = GetDenominations(newOutput);
             dsq.vin = vinMasterNode;
             dsq.time = GetTime();
+            dsq.Sign();
             dsq.Relay();
         }
 
@@ -1267,7 +1268,7 @@ bool CDarkSendPool::SplitUpMoney(bool justCollateral)
             vecSend.push_back(make_pair(scriptChange, DARKSEND_FEE));
             vecSend.push_back(make_pair(scriptChange, DARKSEND_FEE));
             addedFees = true;
-            nTotalOut += (DARKSEND_COLLATERAL*5)+(DARKSEND_FEE*nDarksendRounds); 
+            nTotalOut += (DARKSEND_COLLATERAL*5)+(DARKSEND_FEE*5); 
         }
     }
 
@@ -1569,6 +1570,60 @@ bool CDarkSendSigner::VerifyMessage(CPubKey pubkey, vector<unsigned char>& vchSi
     }
 
     return (pubkey2.GetID() == pubkey.GetID());
+}
+
+bool CDarksendQueue::Sign()
+{
+    std::string strMessage = vin.ToString() + boost::lexical_cast<std::string>(nDenom) + boost::lexical_cast<std::string>(time); 
+
+    CKey key2;
+    CPubKey pubkey2;
+    std::string errorMessage = "";
+
+    if(!darkSendSigner.SetKey(strMasterNodePrivKey, errorMessage, key2, pubkey2))
+    {
+        LogPrintf("Invalid masternodeprivkey: '%s'\n", errorMessage.c_str());
+        exit(0);
+    }
+
+    if(!darkSendSigner.SignMessage(strMessage, errorMessage, vchSig, key2)) {
+        LogPrintf("CDarksendQueue():Relay - Sign message failed");
+        return false;
+    }
+
+    if(!darkSendSigner.VerifyMessage(pubkey2, vchSig, strMessage, errorMessage)) {
+        LogPrintf("CDarksendQueue():Relay - Verify message failed");
+        return false;
+    }
+}
+
+bool CDarksendQueue::Relay()
+{
+
+    LOCK(cs_vNodes);
+    BOOST_FOREACH(CNode* pnode, vNodes)
+        pnode->PushMessage("dsq", (*this));
+
+    return true;
+}
+
+bool CDarksendQueue::CheckSignature()
+{
+    BOOST_FOREACH(CMasterNode& mn, darkSendMasterNodes) {
+
+        if(mn.vin == vin) {
+            std::string strMessage = vin.ToString() + boost::lexical_cast<std::string>(nDenom) + boost::lexical_cast<std::string>(time); 
+
+            std::string errorMessage = "";
+            if(!darkSendSigner.VerifyMessage(mn.pubkey2, vchSig, strMessage, errorMessage)){
+                return error("Got bad masternode address signature %s \n", vin.ToString().c_str());
+            }
+
+            return true;
+        }
+    }
+
+    return false;
 }
 
 
