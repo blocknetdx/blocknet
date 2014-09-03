@@ -213,8 +213,6 @@ void CDarkSendPool::Check()
 }
 
 void CDarkSendPool::ChargeFees(){
-    return; //don't charge fees
-
     if(fMasterNode) {
         int i = 0;
         // who didn't sign?
