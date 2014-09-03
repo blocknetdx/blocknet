@@ -1105,7 +1105,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
         vCoins.clear();
 
         //simply look for non-denominated coins
-        if (pwalletMain->SelectCoinsDark(nValueMax+1, 9999999*COIN, vCoins, nValueIn, minRounds, nDarksendRounds, hasFeeInput))
+        if (pwalletMain->SelectCoinsDark(maxAmount*COIN, 9999999*COIN, vCoins, nValueIn, minRounds, nDarksendRounds, hasFeeInput))
         {
             if(!fDryRun) SplitUpMoney();
             return true;
@@ -1118,7 +1118,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
     if(nValueIn < COIN*1.1){
 
         //simply look for non-denominated coins
-        if (pwalletMain->SelectCoinsDark(nValueMax+1, 9999999*COIN, vCoins, nValueIn, minRounds, nDarksendRounds, hasFeeInput))
+        if (pwalletMain->SelectCoinsDark(maxAmount*COIN, 9999999*COIN, vCoins, nValueIn, minRounds, nDarksendRounds, hasFeeInput))
         {
             if(!fDryRun) SplitUpMoney();
             return true;
