@@ -50,8 +50,6 @@ struct CompareValueOnly2
     }
 };
 
-
-
 int randomizeList (int i) { return std::rand()%i;}
 
 void CDarkSendPool::SetNull(bool clearEverything){
@@ -214,7 +212,7 @@ void CDarkSendPool::Check()
 
 void CDarkSendPool::ChargeFees(){
     return; 
-    
+
     if(fMasterNode) {
         int i = 0;
         // who didn't sign?
@@ -1090,9 +1088,6 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
     //if we're set to less than a thousand, don't submit for than that to the pool
     if(nAnonymizeDarkcoinAmount < 1000) maxAmount = nAnonymizeDarkcoinAmount;
 
-    //choose a random amount to denom
-    //if(minRounds == 0) maxAmount = rand()%(maxAmount-(maxAmount/3))+maxAmount/3;
-
     int64 balanceNeedsAnonymized = pwalletMain->GetBalance() - pwalletMain->GetAnonymizedBalance();
     if(balanceNeedsAnonymized > maxAmount*COIN) balanceNeedsAnonymized= maxAmount*COIN;
     if(balanceNeedsAnonymized < COIN*1.1){
@@ -1135,13 +1130,13 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
     // initial phase, find a masternode
     if(!sessionFoundMasternode){
         int64 nTotalValue = pwalletMain->GetTotalValue(vCoins) - DARKSEND_FEE;
-        if(nTotalValue/COIN > maxAmount) nTotalValue = maxAmount*COIN;
+        if(nTotalValue > maxAmount*COIN) nTotalValue = maxAmount*COIN;
         
         double fDarkcoinSubmitted = nTotalValue / COIN;
         LogPrintf("Submiting Darksend for %f DRK\n", fDarkcoinSubmitted);
 
         // if we have any pending merges
-        BOOST_FOREACH(CDarksendQueue dsq, vecDarksendQueue){
+        BOOST_FOREACH(CDarksendQueue& dsq, vecDarksendQueue){
             CService addr;
             if(dsq.time == 0) continue;
             if(!dsq.GetAddress(addr)) continue;
