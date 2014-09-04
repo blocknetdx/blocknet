@@ -3830,8 +3830,6 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
     }
 
     else if (strCommand == "dsf") { //DarkSend Final tx  
-        LogPrintf("got RelayDarkSendFinalTransaction\n");
-
         if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
             return true;
         }
@@ -3846,7 +3844,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         vRecv >> sessionID >> txNew;
 
         if(darkSendPool.sessionID != sessionID){
-            LogPrintf("dsc - message doesn't match current darksend session %d %d\n", darkSendPool.sessionID, sessionID);
+            if (fDebug) LogPrintf("dsf - message doesn't match current darksend session %d %d\n", darkSendPool.sessionID, sessionID);
             return true;
         }
 
@@ -3870,7 +3868,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         vRecv >> sessionID >> error >> lastMessage;
 
         if(darkSendPool.sessionID != sessionID){
-            LogPrintf("dsc - message doesn't match current darksend session %d %d\n", darkSendPool.sessionID, sessionID);
+            if (fDebug) LogPrintf("dsc - message doesn't match current darksend session %d %d\n", darkSendPool.sessionID, sessionID);
             return true;
         }
 
@@ -3878,6 +3876,10 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
     }
 
     else if (strCommand == "dsa") { //DarkSend Acceptable
+        if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
+            return true;
+        }
+
         int64 nAmount;
         vRecv >> nAmount;
 
@@ -3898,6 +3900,10 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             return true;
         }
     } else if (strCommand == "dsq") { //DarkSend Queue
+        if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
+            return true;
+        }
+
         CDarksendQueue dsq;
         vRecv >> dsq;
 
@@ -3910,7 +3916,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         }
         if(dsq.IsExpired()) return true;
 
-        LogPrintf("new darksend queue object - %s\n", addr.ToString().c_str());
+        if (fDebug)  LogPrintf("new darksend queue object - %s\n", addr.ToString().c_str());
         vecDarksendQueue.push_back(dsq);
         dsq.Relay();
         dsq.time = GetTime();
@@ -4067,8 +4073,10 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         std::string error;
         vRecv >> sessionID >> state >> entriesCount >> accepted >> error;
 
+        LogPrintf("dssu - state: %i entriesCount: %i accepted: %i error: %s \n", state, entriesCount, accepted, error.c_str());
+
         if((accepted != 1 && accepted != 0) && darkSendPool.sessionID != sessionID){
-            LogPrintf("dsc - message doesn't match current darksend session %d %d\n", darkSendPool.sessionID, sessionID);
+            LogPrintf("dssu - message doesn't match current darksend session %d %d\n", darkSendPool.sessionID, sessionID);
             return true;
         }
         
@@ -4724,7 +4732,6 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         {
             // Relay
             pfrom->hashCheckpointKnown = checkpoint.hashCheckpoint;
-            LogPrintf("!!! ENFORCING PAYMENTS %"PRI64u"\n", checkpoint.enforcingPaymentsTime);
             enforceMasternodePaymentsTime = checkpoint.enforcingPaymentsTime;
 
             LOCK(cs_vNodes);

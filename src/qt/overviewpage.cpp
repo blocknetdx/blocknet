@@ -241,9 +241,10 @@ void OverviewPage::darkSendStatus()
             ui->darksendStatus->setText("");
 
             std::ostringstream convert;
-            convert << pwalletMain->GetAverageAnonymizedRounds() << "/" << nDarksendRounds;
+            ui->darksendProgress->setValue(((double)pwalletMain->GetAverageAnonymizedRounds() / (double)nDarksendRounds)*100);
+            convert << "Inputs have an average of " << pwalletMain->GetAverageAnonymizedRounds() << " of " << nDarksendRounds << " rounds";
             QString s(convert.str().c_str());
-            ui->darksendAvgRounds->setText(s);
+            ui->darksendProgress->setToolTip(s);
         }
 
         return;
@@ -287,9 +288,10 @@ void OverviewPage::darkSendStatus()
         ui->darksendEnabled->setText("Enabled");
 
         std::ostringstream convert;
-        convert << pwalletMain->GetAverageAnonymizedRounds() << "/" << nDarksendRounds;
+        ui->darksendProgress->setValue(((double)pwalletMain->GetAverageAnonymizedRounds() / (double)nDarksendRounds)*100);
+        convert << "Inputs have an average of " << pwalletMain->GetAverageAnonymizedRounds() << " of " << nDarksendRounds << " rounds";
         QString s(convert.str().c_str());
-        ui->darksendAvgRounds->setText(s);
+        ui->darksendProgress->setToolTip(s);
 
     }
 
@@ -304,7 +306,7 @@ void OverviewPage::darkSendStatus()
 
     if(state == POOL_STATUS_ACCEPTING_ENTRIES) {
         if(entries == 0) {
-            convert << "Idle";
+            convert << "Darksend is idle";
             showingDarkSendMessage = 0;
         } else if (accepted == 1) {
             convert << "Your transaction was accepted into the pool!";
@@ -324,17 +326,17 @@ void OverviewPage::darkSendStatus()
         else if(showingDarkSendMessage % 70 <= 30) convert << "Found enough users => SIGNING ( waiting.. )";
         else if(showingDarkSendMessage % 70 <= 40) convert << "Found enough users => SIGNING ( waiting... )";
     } else if(state == POOL_STATUS_TRANSMISSION) {
-        convert << "Found enough users => TRANSMISSION";
+        convert << "Status => TRANSMISSION";
     } else if (state == POOL_STATUS_IDLE) {
-        convert << "Found enough users => POOL_STATUS_IDLE";
+        convert << "Status => POOL_STATUS_IDLE";
     } else if (state == POOL_STATUS_FINALIZE_TRANSACTION) {
-        convert << "Found enough users => POOL_STATUS_FINALIZE_TRANSACTION";
+        convert << "Status => POOL_STATUS_FINALIZE_TRANSACTION";
     } else if(state == POOL_STATUS_ERROR) {
-        convert << "Found enough users => ERROR : " << darkSendPool.lastMessage;
+        convert << "Status => ERROR : " << darkSendPool.lastMessage;
     } else if(state == POOL_STATUS_SUCCESS) {
-        convert << "Found enough users => SUCCESS : " << darkSendPool.lastMessage;
+        convert << "Status => SUCCESS : " << darkSendPool.lastMessage;
     } else {
-        convert << "Found enough users => UNKNOWN STATE : ID=" << state;
+        convert << "Status => UNKNOWN STATE : ID=" << state;
     }
 
     if(state == POOL_STATUS_ERROR || state == POOL_STATUS_SUCCESS) darkSendPool.Check();

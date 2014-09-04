@@ -1669,9 +1669,6 @@ bool CWallet::CommitTransaction(CWalletTx& wtxNew, CReserveKey& reservekey)
     return true;
 }
 
-
-
-
 string CWallet::SendMoney(CScript scriptPubKey, int64 nValue, CWalletTx& wtxNew, bool fAskFee, AvailableCoinsType coin_type)
 {
     CReserveKey reservekey(this);
@@ -1737,13 +1734,10 @@ int64 CWallet::GetTotalValue(std::vector<CTxIn> vCoins) {
     return nTotalValue;
 }
 
-string CWallet::DarkSendDenominate(int minRounds, int maxAmount)
+string CWallet::PrepareDarksendDenominate(int minRounds, int maxAmount)
 {
-
     if (IsLocked())
-    {
         return _("Error: Wallet locked, unable to create transaction!");
-    }
 
     if(darkSendPool.GetState() != POOL_STATUS_ERROR && darkSendPool.GetState() != POOL_STATUS_SUCCESS){
         if(darkSendPool.GetMyTransactionCount() > 0){
@@ -1751,8 +1745,7 @@ string CWallet::DarkSendDenominate(int minRounds, int maxAmount)
         }
     }
 
-    CTransaction txCollateral;   
-
+    CTransaction txCollateral;
     int64 nFeeRet = 0.0125*COIN; ///need to get a better fee calc
 
     // ** find the coins we'll use
@@ -1830,18 +1823,19 @@ string CWallet::DarkSendDenominate(int minRounds, int maxAmount)
             LockCoin(v.prevout);
     }
 
-    //** denominate our funds ** //
-
+    // denominate our funds
     int64 nValueLeft = nTotalValue;
     std::vector<CTxOut> vOut;
 
     int nOutputs = 0;
-    //LogPrintf("nValueLeft %"PRI64d"\n", nValueLeft/COIN);
+    // Make outputs by looping through denominations, from large to small
     BOOST_FOREACH(int64 v, darkSendDenominations){
         nOutputs = 0;
+        // add each output up to 10 times until it can't be added again
         while(nValueLeft - v >= 0 && nOutputs <= 10) {
             CScript scriptChange;
             CPubKey vchPubKey;
+            //use a unique change address
             assert(reservekey.GetReservedKey(vchPubKey)); // should never fail, as we just unlocked
             scriptChange.SetDestination(vchPubKey.GetID());
             reservekey.KeepKey();
@@ -1849,16 +1843,15 @@ string CWallet::DarkSendDenominate(int minRounds, int maxAmount)
             CTxOut o(v, scriptChange);
             vOut.push_back(o);
             
+            //increment outputs and subtract denomination amount
             nOutputs++;
             nValueLeft -= v;
-            
-            //LogPrintf(" -- denom %"PRI64d"\n", v/COIN);
-            //LogPrintf("nValueLeft %"PRI64d"\n", nValueLeft/COIN);
         }
 
         if(nValueLeft == 0) break;
     }
 
+    // if we have anything left over, send it back as change
     if(nValueLeft > 0){
         CScript scriptChange;
         CPubKey vchPubKey;
@@ -1872,7 +1865,7 @@ string CWallet::DarkSendDenominate(int minRounds, int maxAmount)
         nOutputs++;
     }
 
-    darkSendPool.SendMoney(txCollateral, vCoins, vOut, nFeeRet, nValueIn);
+    darkSendPool.SendDarksendDenominate(txCollateral, vCoins, vOut, nFeeRet, nValueIn);
 
     return "";
 }

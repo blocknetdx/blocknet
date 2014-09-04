@@ -222,6 +222,8 @@ void CDarkSendPool::Check()
 // until the transaction is either complete or fails. 
 //
 void CDarkSendPool::ChargeFees(){
+    return;
+    
     if(fMasterNode) {
         int i = 0;
         // who didn't sign?
@@ -253,7 +255,7 @@ void CDarkSendPool::CheckTimeout(){
     // catching hanging sessions
     if(!fMasterNode) {
         if(state == POOL_STATUS_TRANSMISSION) {
-            if(fDebug) LogPrintf("CDarkSendPool::CheckTimeout() -- SESSION COMPLETED -- CHECKING\n");
+            if(fDebug) LogPrintf("CDarkSendPool::CheckTimeout() -- Session complete -- Running Check()\n");
             Check();
         }        
     }
@@ -263,7 +265,7 @@ void CDarkSendPool::CheckTimeout(){
     vector<CDarksendQueue>::iterator it;
     for(it=vecDarksendQueue.begin();it<vecDarksendQueue.end();it++){
         if((*it).IsExpired()){
-            LogPrintf("CDarkSendPool::CheckTimeout() : REMOVING EXPIRED QUEUE ENTRY - %d\n", c);
+            if(fDebug) LogPrintf("CDarkSendPool::CheckTimeout() : Removing expired queue entry - %d\n", c);
             vecDarksendQueue.erase(it);
             break;
         }
@@ -281,7 +283,7 @@ void CDarkSendPool::CheckTimeout(){
         vector<CDarkSendEntry>::iterator it2;
         for(it2=vec->begin();it2<vec->end();it2++){
             if((*it2).IsExpired()){
-                LogPrintf("CDarkSendPool::CheckTimeout() : REMOVING EXPIRED ENTRY - %d\n", c);
+                if(fDebug) LogPrintf("CDarkSendPool::CheckTimeout() : Removing expired entry - %d\n", c);
                 vec->erase(it2);
                 if(entries.size() == 0 && myEntries.size() == 0){
                     SetNull(true);
@@ -306,7 +308,7 @@ void CDarkSendPool::CheckTimeout(){
         }
 
     } else if(GetTimeMillis()-lastTimeChanged >= 30000){
-        if(fDebug) LogPrintf("CDarkSendPool::CheckTimeout() -- SESSION TIMED OUT (30) -- RESETTING\n");
+        if(fDebug) LogPrintf("CDarkSendPool::CheckTimeout() -- Session timed out (30s) -- resetting\n");
         SetNull();
         UnlockCoins();
 
@@ -316,7 +318,7 @@ void CDarkSendPool::CheckTimeout(){
 
 
     if(state == POOL_STATUS_SIGNING && GetTimeMillis()-lastTimeChanged >= 10000 ) {
-        if(fDebug) LogPrintf("CDarkSendPool::CheckTimeout() -- SESSION TIMED OUT -- RESETTING\n");
+        if(fDebug) LogPrintf("CDarkSendPool::CheckTimeout() -- Session timed out -- restting\n");
         ChargeFees();
         SetNull();
         UnlockCoins();
@@ -357,7 +359,7 @@ bool CDarkSendPool::SignatureValid(const CScript& newSig, const CTxIn& newVin){
         txNew.vin[n].scriptSig = newSig;
         if(fDebug) LogPrintf("CDarkSendPool::SignatureValid() - Sign with sig %s\n", newSig.ToString().substr(0,24).c_str());
         if (!VerifyScript(txNew.vin[n].scriptSig, sigPubKey, txNew, n, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC, 0)){
-            if(fDebug) LogPrintf("CDarkSendPool::SignatureValid() - Signing - ERROR signing input %u\n", n);
+            if(fDebug) LogPrintf("CDarkSendPool::SignatureValid() - Signing - Error signing input %u\n", n);
             return false;
         }
     }
@@ -509,7 +511,7 @@ bool CDarkSendPool::SignaturesComplete(){
 // Execute a darksend denomination via a masternode.
 // This is only ran from clients
 // 
-void CDarkSendPool::SendMoney(const CTransaction& collateral, std::vector<CTxIn>& vin, std::vector<CTxOut>& vout, int64& fee, int64 amount){
+void CDarkSendPool::SendDarksendDenominate(const CTransaction& collateral, std::vector<CTxIn>& vin, std::vector<CTxOut>& vout, int64& fee, int64 amount){
     // lock the funds we're going to use
     BOOST_FOREACH(CTxIn in, collateral.vin)
         lockedCoins.push_back(in);
@@ -519,7 +521,7 @@ void CDarkSendPool::SendMoney(const CTransaction& collateral, std::vector<CTxIn>
 
     // we should already be connected to a masternode
     if(!sessionFoundMasternode){
-        LogPrintf("CDarkSendPool::SendMoney() - No masternode has been selected yet.\n");
+        LogPrintf("CDarkSendPool::SendDarksendDenominate() - No masternode has been selected yet.\n");
         UnlockCoins();
         SetNull(true);
         return;
@@ -529,11 +531,11 @@ void CDarkSendPool::SendMoney(const CTransaction& collateral, std::vector<CTxIn>
         return;
 
     if(fMasterNode) {
-        LogPrintf("CDarkSendPool::SendMoney() - DarkSend from a masternode is not supported currently.\n");
+        LogPrintf("CDarkSendPool::SendDarksendDenominate() - DarkSend from a masternode is not supported currently.\n");
         return;
     }
 
-    LogPrintf("CDarkSendPool::SendMoney() - Added transaction to pool.\n");
+    LogPrintf("CDarkSendPool::SendDarksendDenominate() - Added transaction to pool.\n");
 
     ClearLastMessage();
 
@@ -580,8 +582,6 @@ bool CDarkSendPool::StatusUpdate(int newState, int newEntriesCount, int newAccep
 
     UpdateState(newState);
     entriesCount = newEntriesCount;
-
-    LogPrintf("DarkSendStatusUpdate - state: %i entriesCount: %i accepted: %i error: %s \n", newState, newEntriesCount, newAccepted, error.c_str());
 
     if(newAccepted != -1) {
         lastEntryAccepted = newAccepted;
@@ -1232,7 +1232,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
     }
 
     // Submit transaction to the pool if we get here
-    std::string strError = pwalletMain->DarkSendDenominate(minRounds, maxAmount);
+    std::string strError = pwalletMain->PrepareDarksendDenominate(minRounds, maxAmount);
     LogPrintf("DoAutomaticDenominating : Running darksend denominate. Return '%s'\n", strError.c_str());
     
     if(strError == "") return true;
