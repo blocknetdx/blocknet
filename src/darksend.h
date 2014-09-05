@@ -173,6 +173,7 @@ public:
     CTxIn vin;
     int64 time;
     int nDenom;
+    bool ready; //ready for submit
     std::vector<unsigned char> vchSig;
 
     CDarksendQueue()
@@ -181,6 +182,7 @@ public:
         vin = CTxIn();
         time = 0;   
         vchSig.clear();
+        ready = false;
     }
 
     IMPLEMENT_SERIALIZE
@@ -188,6 +190,7 @@ public:
         READWRITE(nDenom);
         READWRITE(vin);
         READWRITE(time);
+        READWRITE(ready);
         READWRITE(vchSig);
     )
 
@@ -232,7 +235,7 @@ public:
 class CDarkSendPool
 {
 public:
-    static const int MIN_PEER_PROTO_VERSION = 70036;
+    static const int MIN_PEER_PROTO_VERSION = 70037;
 
     // clients entries
     std::vector<CDarkSendEntry> myEntries;
@@ -368,10 +371,10 @@ public:
     // Are these outputs compatible with other client in the pool?
     bool IsCompatibleWithEntries(std::vector<CTxOut> vout);
     // Is this amount compatible with other client in the pool?
-    bool IsCompatibleWithSession(int64 nAmount);
+    bool IsCompatibleWithSession(int64 nAmount, std::string& strReason);
 
     // Passively run Darksend in the background according to the configuration in settings (only for QT)
-    bool DoAutomaticDenominating(bool fDryRun=false);
+    bool DoAutomaticDenominating(bool fDryRun=false, bool ready=false);
 
     // Get the current winner for this block
     int GetCurrentMasterNode(int mod=1, int64 nBlockHeight=0);

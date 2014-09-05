@@ -1419,6 +1419,33 @@ bool CWallet::SelectCoinsCollateral(std::vector<CTxIn>& setCoinsRet, int64& nVal
     return false;
 }
 
+bool CWallet::HasDarksendFeeInputs() const 
+{
+    CCoinControl *coinControl=NULL;
+
+    vector<COutput> vCoins;
+    AvailableCoins(vCoins, false, coinControl, ALL_COINS);
+    
+    bool found_collateral = false;
+    bool found_fee = false;
+    BOOST_FOREACH(const COutput& out, vCoins)
+    {
+        if(
+            out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL || 
+            out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL * 2 ||
+            out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL * 3 ||
+            out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL * 4 ||
+            out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL * 5 
+        ) found_collateral = true;
+
+        if(
+            out.tx->vout[out.i].nValue == DARKSEND_FEE 
+        ) found_fee = true;
+    }
+
+    return found_collateral && found_fee;
+}
+
 bool CWallet::SelectCoinsWithoutDenomination(int64 nTargetValue, set<pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64& nValueRet) const
 {
     CCoinControl *coinControl=NULL;

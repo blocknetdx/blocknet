@@ -335,6 +335,10 @@ void OverviewPage::darkSendStatus()
         convert << "Status => ERROR : " << darkSendPool.lastMessage;
     } else if(state == POOL_STATUS_SUCCESS) {
         convert << "Status => SUCCESS : " << darkSendPool.lastMessage;
+    } else if(state == POOL_STATUS_QUEUE) {
+        if(showingDarkSendMessage % 70 <= 50) convert << "Submitted to masternode => Waiting in queue .";
+        else if(showingDarkSendMessage % 70 <= 60) convert << "Submitted to masternode => Waiting in queue ..";
+        else if(showingDarkSendMessage % 70 <= 70) convert << "Submitted to masternode => Waiting in queue ...";
     } else {
         convert << "Status => UNKNOWN STATE : ID=" << state;
     }

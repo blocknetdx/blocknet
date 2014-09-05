@@ -24,12 +24,13 @@
 #define POOL_MAX_TRANSACTIONS                  2 // wait for X transactions to merge and publish
 #define POOL_STATUS_UNKNOWN                    0 // waiting for update
 #define POOL_STATUS_IDLE                       1 // waiting for update
-#define POOL_STATUS_ACCEPTING_ENTRIES          2 // accepting entries
-#define POOL_STATUS_FINALIZE_TRANSACTION       3 // master node will broadcast what it accepted
-#define POOL_STATUS_SIGNING                    4 // check inputs/outputs, sign final tx
-#define POOL_STATUS_TRANSMISSION               5 // transmit transaction
-#define POOL_STATUS_ERROR                      6 // error
-#define POOL_STATUS_SUCCESS                    7 // success
+#define POOL_STATUS_QUEUE                      2 // waiting in a queue
+#define POOL_STATUS_ACCEPTING_ENTRIES          3 // accepting entries
+#define POOL_STATUS_FINALIZE_TRANSACTION       4 // master node will broadcast what it accepted
+#define POOL_STATUS_SIGNING                    5 // check inputs/outputs, sign final tx
+#define POOL_STATUS_TRANSMISSION               6 // transmit transaction
+#define POOL_STATUS_ERROR                      7 // error
+#define POOL_STATUS_SUCCESS                    8 // success
 
 #define MASTERNODE_NOT_PROCESSED               0 // initial state
 #define MASTERNODE_IS_CAPABLE                  1

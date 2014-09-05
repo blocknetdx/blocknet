@@ -272,7 +272,20 @@ void CDarkSendPool::CheckTimeout(){
         c++;
     }
 
-    if(state == POOL_STATUS_ACCEPTING_ENTRIES){
+    /* Check to see if we're ready for submissions from clients */
+    if(state == POOL_STATUS_QUEUE && sessionUsers == POOL_MAX_TRANSACTIONS) {
+        CDarksendQueue dsq;
+        dsq.nDenom = GetDenominationsByAmount(sessionAmount);
+        dsq.vin = vinMasterNode;
+        dsq.time = GetTime();
+        dsq.ready = true;
+        dsq.Sign();
+        dsq.Relay();
+
+        UpdateState(POOL_STATUS_ACCEPTING_ENTRIES);
+    }
+
+    if(state == POOL_STATUS_ACCEPTING_ENTRIES || state == POOL_STATUS_QUEUE){
         c = 0;
 
         // if it's a masternode, the entries are stored in "entries", otherwise they're stored in myEntries
@@ -305,8 +318,9 @@ void CDarkSendPool::CheckTimeout(){
             sessionAmount = 0;
             sessionFoundMasternode = false;
             sessionTries = 0;            
+            
+            UpdateState(POOL_STATUS_ACCEPTING_ENTRIES);
         }
-
     } else if(GetTimeMillis()-lastTimeChanged >= 30000){
         if(fDebug) LogPrintf("CDarkSendPool::CheckTimeout() -- Session timed out (30s) -- resetting\n");
         SetNull();
@@ -439,16 +453,6 @@ bool CDarkSendPool::AddEntry(const std::vector<CTxIn>& newInput, const int64& nA
         LogPrintf("CDarkSendPool::AddEntry -- adding %s\n", newInput[0].ToString().c_str());
         error = "";
 
-        //broadcast that I'm accepting entries, only if it's the first entry though
-        if(entries.size() == 1) {
-            CDarksendQueue dsq;
-            dsq.nDenom = GetDenominations(newOutput);
-            dsq.vin = vinMasterNode;
-            dsq.time = GetTime();
-            dsq.Sign();
-            dsq.Relay();
-        }
-
         return true;
     }
 
@@ -535,6 +539,8 @@ void CDarkSendPool::SendDarksendDenominate(const CTransaction& collateral, std::
         return;
     }
 
+    UpdateState(POOL_STATUS_ACCEPTING_ENTRIES);
+
     LogPrintf("CDarkSendPool::SendDarksendDenominate() - Added transaction to pool.\n");
 
     ClearLastMessage();
@@ -602,7 +608,8 @@ bool CDarkSendPool::StatusUpdate(int newState, int newEntriesCount, int newAccep
         if(newAccepted == 1){
             LogPrintf("CDarkSendPool::StatusUpdate - entry accepted! \n");
             sessionFoundMasternode = true;
-            if(darkSendPool.GetMyTransactionCount() == 0) DoAutomaticDenominating(); //submit the transaction
+            //wait for other users. Masternode will report when ready
+            UpdateState(POOL_STATUS_QUEUE);
         } else if (newAccepted == 0 && sessionID == 0 && !sessionFoundMasternode) {
             LogPrintf("CDarkSendPool::StatusUpdate - entry not accepted by masternode \n");
             UnlockCoins();
@@ -1083,7 +1090,7 @@ int CDarkSendPool::GetCurrentMasterNode(int mod, int64 nBlockHeight)
 //
 // This does NOT run by default for daemons, only for QT. 
 //
-bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
+bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
 {
     if(fMasterNode) return false;
 
@@ -1105,6 +1112,12 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
         if(darkSendPool.GetMyTransactionCount() > 0){
             return true;
         }
+    }
+
+    //check to see if we have the fee sized inputs, it requires these
+    if(!pwalletMain->HasDarksendFeeInputs()){
+        if(!fDryRun) SplitUpMoney(true);
+        return true;
     }
 
     // ** find the coins we'll use
@@ -1231,21 +1244,14 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun)
         }
     }
 
+    if(!ready) return true;
     // Submit transaction to the pool if we get here
     std::string strError = pwalletMain->PrepareDarksendDenominate(minRounds, maxAmount);
     LogPrintf("DoAutomaticDenominating : Running darksend denominate. Return '%s'\n", strError.c_str());
     
     if(strError == "") return true;
 
-    if(strError == "Insufficient funds") {
-        if(!fDryRun) SplitUpMoney();
-        return true;
-    } else if(strError == "Error: Darksend requires a collateral transaction and could not locate an acceptable input!"){
-        if(!fDryRun) SplitUpMoney(true);
-        return true;
-    } else {
-        LogPrintf("DoAutomaticDenominating : Error running denominate, %s\n", strError.c_str());
-    }
+    LogPrintf("DoAutomaticDenominating : Error running denominate, %s\n", strError.c_str());
     return false;
 }
 
@@ -1500,7 +1506,7 @@ bool CDarkSendPool::IsCompatibleWithEntries(std::vector<CTxOut> vout)
     return true;
 }
 
-bool CDarkSendPool::IsCompatibleWithSession(int64 nAmount)
+bool CDarkSendPool::IsCompatibleWithSession(int64 nAmount, std::string& strReason)
 {
     LogPrintf("CDarkSendPool::IsCompatibleWithSession - sessionAmount %"PRI64d" sessionUsers %d\n", sessionAmount, sessionUsers);
 
@@ -1510,20 +1516,37 @@ bool CDarkSendPool::IsCompatibleWithSession(int64 nAmount)
         sessionAmount = nAmount;
         sessionUsers++;
         lastTimeChanged = GetTimeMillis();
+
+        //broadcast that I'm accepting entries, only if it's the first entry though
+        CDarksendQueue dsq;
+        dsq.nDenom = GetDenominationsByAmount(nAmount);
+        dsq.vin = vinMasterNode;
+        dsq.time = GetTime();
+        dsq.Sign();
+        dsq.Relay();
+
+        UpdateState(POOL_STATUS_QUEUE);
+
         return true;
     }
 
-    if(state != POOL_STATUS_ACCEPTING_ENTRIES || sessionUsers >= POOL_MAX_TRANSACTIONS){
+    if((state != POOL_STATUS_ACCEPTING_ENTRIES && state != POOL_STATUS_QUEUE) || sessionUsers >= POOL_MAX_TRANSACTIONS){
+        if((state != POOL_STATUS_ACCEPTING_ENTRIES && state != POOL_STATUS_QUEUE)) strReason = "Incompatible mode";
+        if(sessionUsers >= POOL_MAX_TRANSACTIONS) strReason = "Queue is full";
         LogPrintf("CDarkSendPool::IsCompatibleWithSession - incompatible mode, return false %d %d\n", state != POOL_STATUS_ACCEPTING_ENTRIES, sessionUsers >= POOL_MAX_TRANSACTIONS);
         return false;
     }
 
+    if(GetDenominationsByAmount(nAmount) != GetDenominationsByAmount(sessionAmount)) {
+        strReason = "Incompatible denominations";
+        return false;
+    }
 
-    if(GetDenominationsByAmount(nAmount) != GetDenominationsByAmount(sessionAmount)) return false;
     LogPrintf("CDarkSendPool::IsCompatibleWithSession - compatible\n");
 
     sessionUsers++;
     lastTimeChanged = GetTimeMillis();
+
     return true;
 }
 
@@ -1626,7 +1649,7 @@ bool CDarkSendSigner::VerifyMessage(CPubKey pubkey, vector<unsigned char>& vchSi
 
 bool CDarksendQueue::Sign()
 {
-    std::string strMessage = vin.ToString() + boost::lexical_cast<std::string>(nDenom) + boost::lexical_cast<std::string>(time); 
+    std::string strMessage = vin.ToString() + boost::lexical_cast<std::string>(nDenom) + boost::lexical_cast<std::string>(time) + boost::lexical_cast<std::string>(ready); 
 
     CKey key2;
     CPubKey pubkey2;
@@ -1653,8 +1676,10 @@ bool CDarksendQueue::Relay()
 {
 
     LOCK(cs_vNodes);
-    BOOST_FOREACH(CNode* pnode, vNodes)
+    BOOST_FOREACH(CNode* pnode, vNodes){
+        printf("relay...\n");
         pnode->PushMessage("dsq", (*this));
+    }
 
     return true;
 }
@@ -1664,7 +1689,7 @@ bool CDarksendQueue::CheckSignature()
     BOOST_FOREACH(CMasterNode& mn, darkSendMasterNodes) {
 
         if(mn.vin == vin) {
-            std::string strMessage = vin.ToString() + boost::lexical_cast<std::string>(nDenom) + boost::lexical_cast<std::string>(time); 
+            std::string strMessage = vin.ToString() + boost::lexical_cast<std::string>(nDenom) + boost::lexical_cast<std::string>(time) + boost::lexical_cast<std::string>(ready); 
 
             std::string errorMessage = "";
             if(!darkSendSigner.VerifyMessage(mn.pubkey2, vchSig, strMessage, errorMessage)){

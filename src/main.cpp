@@ -3886,11 +3886,10 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         int accepted;
         std::string error = "";
 
-        if(!darkSendPool.IsCompatibleWithSession(nAmount))
+        if(!darkSendPool.IsCompatibleWithSession(nAmount, error))
         {
             LogPrintf("dsa -- not compatible with existing transactions! \n");
             accepted = 0;
-            error = "not compatible with existing transactions";
             pfrom->PushMessage("dssu", darkSendPool.sessionID, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), accepted, error);
             return true;
         } else {
@@ -3911,15 +3910,28 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         if(!dsq.GetAddress(addr)) return false;
         if(!dsq.CheckSignature()) return false;
 
-        BOOST_FOREACH(CDarksendQueue q, vecDarksendQueue){
-            if(q.vin == dsq.vin) return true;
-        }
         if(dsq.IsExpired()) return true;
 
-        if (fDebug)  LogPrintf("new darksend queue object - %s\n", addr.ToString().c_str());
-        vecDarksendQueue.push_back(dsq);
-        dsq.Relay();
-        dsq.time = GetTime();
+        // if the queue is ready, submit if we can
+        if(dsq.ready) {
+            if(darkSendPool.submittedToMasternode != addr){
+                LogPrintf("dsq - message doesn't match current masternode - %s != %s\n", darkSendPool.submittedToMasternode.ToString().c_str(), pfrom->addr.ToString().c_str());
+                return true;
+            }
+
+            if (fDebug)  LogPrintf("darksend queue is ready - %s\n", addr.ToString().c_str());
+
+            darkSendPool.DoAutomaticDenominating(false, true);
+        } else {
+            BOOST_FOREACH(CDarksendQueue q, vecDarksendQueue){
+                if(q.vin == dsq.vin) return true;
+            }
+
+            if (fDebug)  LogPrintf("new darksend queue object - %s\n", addr.ToString().c_str());
+            vecDarksendQueue.push_back(dsq);
+            dsq.Relay();
+            dsq.time = GetTime();
+        }
 
     } else if (strCommand == "dsi") { //DarkSend vIn
         if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
