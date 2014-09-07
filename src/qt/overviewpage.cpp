@@ -192,6 +192,8 @@ void OverviewPage::setWalletModel(WalletModel *model)
         connect(model, SIGNAL(balanceChanged(qint64, qint64, qint64, qint64)), this, SLOT(setBalance(qint64, qint64, qint64, qint64)));
 
         connect(model->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(updateDisplayUnit()));
+
+        connect(ui->runAutoDenom, SIGNAL(clicked()), this, SLOT(runDoAutomaticDenomination()));
     }
 
     // update the display unit, to not use the default ("BTC")
@@ -295,12 +297,9 @@ void OverviewPage::darkSendStatus()
 
     }
 
-    //if(!darkSendPool.sessionFoundMasternode) return;
-
     int state = darkSendPool.GetState();
     int entries = darkSendPool.GetEntriesCount();
     int accepted = darkSendPool.GetLastEntryAccepted();
-    //int countAccepted = darkSendPool.GetCountEntriesAccepted();
 
     std::ostringstream convert;
 
@@ -343,8 +342,7 @@ void OverviewPage::darkSendStatus()
         convert << "Status => UNKNOWN STATE : ID=" << state;
     }
 
-    if(state == POOL_STATUS_ERROR || state == POOL_STATUS_SUCCESS) darkSendPool.Check();
-    
+    if(state == POOL_STATUS_ERROR || state == POOL_STATUS_SUCCESS) darkSendPool.Check();    
 
     QString s(convert.str().c_str());
 
@@ -357,4 +355,8 @@ void OverviewPage::darkSendStatus()
     darksendActionCheck++;
 
     // Get DarkSend Denomination Status
+}
+
+void OverviewPage::runDoAutomaticDenomination(){
+    darkSendPool.DoAutomaticDenominating();
 }

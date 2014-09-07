@@ -1443,7 +1443,9 @@ bool CWallet::HasDarksendFeeInputs() const
         ) found_fee = true;
     }
 
-    return found_collateral && found_fee;
+    if(found_collateral && found_fee) return true;
+
+    return false;
 }
 
 bool CWallet::SelectCoinsWithoutDenomination(int64 nTargetValue, set<pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64& nValueRet) const

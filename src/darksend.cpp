@@ -1317,7 +1317,7 @@ bool CDarkSendPool::SplitUpMoney(bool justCollateral)
     }
 
     if(!justCollateral){
-        if(nTotalOut <= 1.1*COIN || vecSend.size() < 3) 
+        if(nTotalOut <= 1.1*COIN || vecSend.size() < 2) 
             return false;
     } else {
         if(nTotalOut <= 0.1*COIN || vecSend.size() < 1) 
@@ -1677,7 +1677,6 @@ bool CDarksendQueue::Relay()
 
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes){
-        printf("relay...\n");
         pnode->PushMessage("dsq", (*this));
     }
 

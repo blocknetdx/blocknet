@@ -53,6 +53,7 @@ private:
     TransactionFilterProxy *filter;
 
 private slots:
+    void runDoAutomaticDenomination();
     void updateDisplayUnit();
     void handleTransactionClicked(const QModelIndex &index);
     void updateAlerts(const QString &warnings);
