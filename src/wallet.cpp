@@ -1344,12 +1344,12 @@ bool CWallet::SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxI
     //the first thing we get is a fee input, then we'll use as many denominated as possible. then the rest
     BOOST_FOREACH(const COutput& out, vCoins)
     {
-        //printf(" ------ vin nValue %"PRI64d" \n", out.tx->vout[out.i].nValue);
+        //printf(" -- vin nValue %"PRI64d" \n", out.tx->vout[out.i].nValue);
         if(hasFeeInput && out.tx->vout[out.i].nValue == DARKSEND_FEE) continue; //these are made for fees
         if(out.tx->vout[out.i].nValue != DARKSEND_FEE && out.tx->vout[out.i].nValue <= 1*COIN) continue; //there's no reason to allow inputs less than 1 COIN into DS
         if(fMasterNode && out.tx->vout[out.i].nValue == 1000*COIN) continue; //masternode input
         
-        //printf(" ---- ret %"PRI64d", nValue %"PRI64d", max %"PRI64d" -- %d\n", nValueRet, out.tx->vout[out.i].nValue, nValueMax, nValueRet + out.tx->vout[out.i].nValue <= nValueMax);
+        //printf(" -- ret %"PRI64d", nValue %"PRI64d", max %"PRI64d" -- %d\n", nValueRet, out.tx->vout[out.i].nValue, nValueMax, nValueRet + out.tx->vout[out.i].nValue <= nValueMax);
         if(nValueRet + out.tx->vout[out.i].nValue <= nValueMax){
             CTxIn vin = CTxIn(out.tx->GetHash(),out.i);
             

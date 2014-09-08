@@ -1114,12 +1114,6 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
         }
     }
 
-    //check to see if we have the fee sized inputs, it requires these
-    if(!pwalletMain->HasDarksendFeeInputs()){
-        if(!fDryRun) SplitUpMoney(true);
-        return true;
-    }
-
     // ** find the coins we'll use
     std::vector<CTxIn> vCoins;
     int64 nValueMin = 0.01*COIN;
@@ -1174,6 +1168,12 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
 
         LogPrintf("DoAutomaticDenominating : Too little to denominate (must have 1.1DRK) \n");
         return false;
+    }
+
+    //check to see if we have the fee sized inputs, it requires these
+    if(!pwalletMain->HasDarksendFeeInputs()){
+        if(!fDryRun) SplitUpMoney(true);
+        return true;
     }
 
     if(fDryRun) return true;
@@ -1285,44 +1285,37 @@ bool CDarkSendPool::SplitUpMoney(bool justCollateral)
     std::string strFail = "";
     vector< pair<CScript, int64> > vecSend;
 
-    int64 a = nTotalBalance/5;
-    if(a > 900*COIN) a = 900*COIN;
-    if(a > nAnonymizeDarkcoinAmount*COIN) a = nAnonymizeDarkcoinAmount*COIN;
+    int64 a = nTotalBalance;
+    if(a > 4096*COIN) a = 4096*COIN;
 
-    if(fDebug) LogPrintf(" auto-- split amount %"PRI64d"\n", a);
+    // ****** Add fees ************ /
+    vecSend.push_back(make_pair(scriptChange, DARKSEND_COLLATERAL*5));
+    vecSend.push_back(make_pair(scriptChange, DARKSEND_FEE));
+    vecSend.push_back(make_pair(scriptChange, DARKSEND_FEE));
+    vecSend.push_back(make_pair(scriptChange, DARKSEND_FEE));
+    vecSend.push_back(make_pair(scriptChange, DARKSEND_FEE));
+    vecSend.push_back(make_pair(scriptChange, DARKSEND_FEE));
+    nTotalOut += (DARKSEND_COLLATERAL*5)+(DARKSEND_FEE*5); 
 
-    int64 addingEachRound = (DARKSEND_FEE*5);
-    if(!justCollateral) addingEachRound += (a) + (a/5);
-
-    bool addedFees = false;
-    while(nTotalOut + addingEachRound < nTotalBalance-DARKSEND_FEE && (!justCollateral || !addedFees)){
-        if(fDebug) LogPrintf(" nTotalOut %"PRI64d"\n", nTotalOut);
-        if(fDebug) LogPrintf(" nTotalOut + ((nTotalBalance/5) + (nTotalBalance/5/5) + 0.01*COIN) %"PRI64d"\n", nTotalOut + ((a) + (a/5) + ((DARKSEND_FEE*4))));
-        if(fDebug) LogPrintf(" nTotalBalance-(DARKSEND_COLLATERAL) %"PRI64d"\n", (nTotalBalance-DARKSEND_COLLATERAL));
-        if(!justCollateral){
-            vecSend.push_back(make_pair(scriptChange, a));
-            vecSend.push_back(make_pair(scriptChange, a/5));
-            nTotalOut += (a) + (a/5);
-        }
-        if(!addedFees){
-            vecSend.push_back(make_pair(scriptChange, DARKSEND_COLLATERAL*5));
-            vecSend.push_back(make_pair(scriptChange, DARKSEND_FEE));
-            vecSend.push_back(make_pair(scriptChange, DARKSEND_FEE));
-            vecSend.push_back(make_pair(scriptChange, DARKSEND_FEE));
-            vecSend.push_back(make_pair(scriptChange, DARKSEND_FEE));
-            vecSend.push_back(make_pair(scriptChange, DARKSEND_FEE));
-            addedFees = true;
-            nTotalOut += (DARKSEND_COLLATERAL*5)+(DARKSEND_FEE*5); 
-        }
-    }
-
+    // ****** Add outputs in bases of two from 4096 darkcoin in reverse *** /
     if(!justCollateral){
-        if(nTotalOut <= 1.1*COIN || vecSend.size() < 2) 
-            return false;
-    } else {
-        if(nTotalOut <= 0.1*COIN || vecSend.size() < 1) 
-            return false;
+        bool continuing = true;
+
+        while(continuing){
+            while(nTotalOut + a < nTotalBalance-DARKSEND_FEE){
+                printf(" nTotalOut %"PRI64d", added %"PRI64d"\n", nTotalOut, a);
+
+                vecSend.push_back(make_pair(scriptChange, a));
+                nTotalOut += a;
+            }
+
+            a = a / 2;
+            if(a < 1*COIN) continuing = false;
+        }
     }
+
+    if(nTotalOut <= 0.1*COIN || vecSend.size() < 1) 
+        return false;
 
     CCoinControl *coinControl=NULL;
     bool success = pwalletMain->CreateTransaction(vecSend, wtx, reservekey, nFeeRet, strFail, coinControl, ONLY_NONDENOMINATED);
@@ -1670,6 +1663,8 @@ bool CDarksendQueue::Sign()
         LogPrintf("CDarksendQueue():Relay - Verify message failed");
         return false;
     }
+
+    return true;
 }
 
 bool CDarksendQueue::Relay()
