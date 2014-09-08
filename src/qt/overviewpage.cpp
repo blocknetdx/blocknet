@@ -228,35 +228,45 @@ void OverviewPage::showOutOfSyncWarning(bool fShow)
 
 void OverviewPage::darkSendStatus()
 {
-    if(fDisableDarksend) {
-        if(nBestHeight != cachedNumBlocks)
-        {
-            cachedNumBlocks = nBestHeight;
+    if(nBestHeight != darkSendPool.cachedNumBlocks)
+    {
+        /* show darksend configuration if client has defaults set */
 
-            if(nAnonymizeDarkcoinAmount == 0){
-                DarksendConfig dlg(this);
-                dlg.setModel(walletModel);
-                dlg.exec();
-            }
+        if(nAnonymizeDarkcoinAmount == 0){
+            DarksendConfig dlg(this);
+            dlg.setModel(walletModel);
+            dlg.exec();
+        }
+
+        std::ostringstream convert;
+        ui->darksendProgress->setValue(((double)pwalletMain->GetAverageAnonymizedRounds() / (double)nDarksendRounds)*100);
+        convert << "Inputs have an average of " << pwalletMain->GetAverageAnonymizedRounds() << " of " << nDarksendRounds << " rounds";
+        QString s(convert.str().c_str());
+        ui->darksendProgress->setToolTip(s);
+
+        std::ostringstream convert2;
+        convert2 << nAnonymizeDarkcoinAmount << " DRK / " << nDarksendRounds << " Rounds";
+        QString s2(convert2.str().c_str());
+        ui->labelAmountRounds->setText(s2);
+    }
+
+    if(fDisableDarksend) {
+        if(nBestHeight != darkSendPool.cachedNumBlocks)
+        {
+            darkSendPool.cachedNumBlocks = nBestHeight;
 
             ui->darksendEnabled->setText("Disabled");
             ui->darksendStatus->setText("");
-
-            std::ostringstream convert;
-            ui->darksendProgress->setValue(((double)pwalletMain->GetAverageAnonymizedRounds() / (double)nDarksendRounds)*100);
-            convert << "Inputs have an average of " << pwalletMain->GetAverageAnonymizedRounds() << " of " << nDarksendRounds << " rounds";
-            QString s(convert.str().c_str());
-            ui->darksendProgress->setToolTip(s);
         }
 
         return;
     }
 
     // check darksend status and unlock if needed
-    if(nBestHeight != cachedNumBlocks)
+    if(nBestHeight != darkSendPool.cachedNumBlocks)
     {
         // Balance and number of transactions might have changed
-        cachedNumBlocks = nBestHeight;
+        darkSendPool.cachedNumBlocks = nBestHeight;
 
         if (pwalletMain->GetBalance() - pwalletMain->GetAnonymizedBalance() > 2*COIN){
             if (walletModel->getEncryptionStatus() != WalletModel::Unencrypted){
@@ -277,24 +287,9 @@ void OverviewPage::darkSendStatus()
             }
         }
 
-        /* show darksend configuration if client has defaults set */
-
-        if(nAnonymizeDarkcoinAmount == 0){
-            DarksendConfig dlg(this);
-            dlg.setModel(walletModel);
-            dlg.exec();
-        }
-
         /* *******************************************************/
 
         ui->darksendEnabled->setText("Enabled");
-
-        std::ostringstream convert;
-        ui->darksendProgress->setValue(((double)pwalletMain->GetAverageAnonymizedRounds() / (double)nDarksendRounds)*100);
-        convert << "Inputs have an average of " << pwalletMain->GetAverageAnonymizedRounds() << " of " << nDarksendRounds << " rounds";
-        QString s(convert.str().c_str());
-        ui->darksendProgress->setToolTip(s);
-
     }
 
     int state = darkSendPool.GetState();
@@ -314,32 +309,32 @@ void OverviewPage::darkSendStatus()
                 showingDarkSendMessage = 0;
             }
         } else {
-            if(showingDarkSendMessage % 70 <= 40) convert << "Submitted to masternode => ( Entries " << entries << "/" << POOL_MAX_TRANSACTIONS << " )";
-            else if(showingDarkSendMessage % 70 <= 50) convert << "Submitted to masternode => Waiting for more entries (" << entries << "/" << POOL_MAX_TRANSACTIONS << " ) .";
-            else if(showingDarkSendMessage % 70 <= 60) convert << "Submitted to masternode => Waiting for more entries (" << entries << "/" << POOL_MAX_TRANSACTIONS << " ) ..";
-            else if(showingDarkSendMessage % 70 <= 70) convert << "Submitted to masternode => Waiting for more entries (" << entries << "/" << POOL_MAX_TRANSACTIONS << " ) ...";
+            if(showingDarkSendMessage % 70 <= 40) convert << "Submitted to masternode, Entries " << entries << "/" << POOL_MAX_TRANSACTIONS;
+            else if(showingDarkSendMessage % 70 <= 50) convert << "Submitted to masternode, Waiting for more entries (" << entries << "/" << POOL_MAX_TRANSACTIONS << " ) .";
+            else if(showingDarkSendMessage % 70 <= 60) convert << "Submitted to masternode, Waiting for more entries (" << entries << "/" << POOL_MAX_TRANSACTIONS << " ) ..";
+            else if(showingDarkSendMessage % 70 <= 70) convert << "Submitted to masternode, Waiting for more entries (" << entries << "/" << POOL_MAX_TRANSACTIONS << " ) ...";
         }
     } else if(state == POOL_STATUS_SIGNING) {
-        if(showingDarkSendMessage % 70 <= 10) convert << "Found enough users => SIGNING";
-        else if(showingDarkSendMessage % 70 <= 20) convert << "Found enough users => SIGNING ( waiting. )";
-        else if(showingDarkSendMessage % 70 <= 30) convert << "Found enough users => SIGNING ( waiting.. )";
-        else if(showingDarkSendMessage % 70 <= 40) convert << "Found enough users => SIGNING ( waiting... )";
+        if(showingDarkSendMessage % 70 <= 10) convert << "Found enough users, SIGNING";
+        else if(showingDarkSendMessage % 70 <= 20) convert << "Found enough users, SIGNING ( waiting. )";
+        else if(showingDarkSendMessage % 70 <= 30) convert << "Found enough users, SIGNING ( waiting.. )";
+        else if(showingDarkSendMessage % 70 <= 40) convert << "Found enough users, SIGNING ( waiting... )";
     } else if(state == POOL_STATUS_TRANSMISSION) {
-        convert << "Status => TRANSMISSION";
+        convert << "Transmitting Final Transaction";
     } else if (state == POOL_STATUS_IDLE) {
-        convert << "Status => POOL_STATUS_IDLE";
+        convert << "Darksend is idle";
     } else if (state == POOL_STATUS_FINALIZE_TRANSACTION) {
-        convert << "Status => POOL_STATUS_FINALIZE_TRANSACTION";
+        convert << "Finalizing Transaction";
     } else if(state == POOL_STATUS_ERROR) {
-        convert << "Status => ERROR : " << darkSendPool.lastMessage;
+        convert << "Attempted passive submission, " << darkSendPool.lastMessage << ", will retry";
     } else if(state == POOL_STATUS_SUCCESS) {
-        convert << "Status => SUCCESS : " << darkSendPool.lastMessage;
+        convert << "Successfully denominated funds! " << darkSendPool.lastMessage;
     } else if(state == POOL_STATUS_QUEUE) {
-        if(showingDarkSendMessage % 70 <= 50) convert << "Submitted to masternode => Waiting in queue .";
-        else if(showingDarkSendMessage % 70 <= 60) convert << "Submitted to masternode => Waiting in queue ..";
-        else if(showingDarkSendMessage % 70 <= 70) convert << "Submitted to masternode => Waiting in queue ...";
+        if(showingDarkSendMessage % 70 <= 50) convert << "Submitted to masternode, Waiting in queue .";
+        else if(showingDarkSendMessage % 70 <= 60) convert << "Submitted to masternode, Waiting in queue ..";
+        else if(showingDarkSendMessage % 70 <= 70) convert << "Submitted to masternode, Waiting in queue ...";
     } else {
-        convert << "Status => UNKNOWN STATE : ID=" << state;
+        convert << "UNKNOWN STATE : ID=" << state;
     }
 
     if(state == POOL_STATUS_ERROR || state == POOL_STATUS_SUCCESS) darkSendPool.Check();    

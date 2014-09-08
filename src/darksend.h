@@ -284,6 +284,7 @@ public:
 
     int lastSplitUpBlock;
     int cachedLastSuccess;
+    int cachedNumBlocks; //used for the overview screen
 
     CDarkSendPool()
     {
@@ -301,6 +302,7 @@ public:
         masternodePortOpen = 0;
         lastSplitUpBlock = 0;
         cachedLastSuccess = 0;
+        cachedNumBlocks = 0;
         unitTest = false;
 
         SetCollateralAddress(strAddress);

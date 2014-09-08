@@ -196,7 +196,7 @@ public:
     int64 GetBalance() const;
     int64 GetAnonymizedBalance() const;
     double GetAverageAnonymizedRounds() const;
-    int64 GetDenominatedBalance(bool onlyDenom=true) const;
+    int64 GetDenominatedBalance(bool onlyDenom=true, bool onlyUnconfirmed=false) const;
     int64 GetUnconfirmedBalance() const;
     int64 GetImmatureBalance() const;
     bool CreateTransaction(std::vector<std::pair<CScript, int64> >& vecSend,

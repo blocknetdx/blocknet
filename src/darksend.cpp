@@ -702,7 +702,10 @@ void CDarkSendPool::ProcessMasternodeConnections(){
     
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
-        if(darkSendPool.GetMyTransactionCount() == 0 && pnode->fDarkSendMaster){
+        //if it's our masternode, let it be
+        if(submittedToMasternode == pnode->addr) continue;
+
+        if(pnode->fDarkSendMaster){
             LogPrintf("Closing masternode connection %s \n", pnode->addr.ToString().c_str());
             pnode->CloseSocketDisconnect();
         }
@@ -1184,7 +1187,13 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
         if(nTotalValue > maxAmount*COIN) nTotalValue = maxAmount*COIN;
         
         double fDarkcoinSubmitted = nTotalValue / COIN;
+
         LogPrintf("Submiting Darksend for %f DRK\n", fDarkcoinSubmitted);
+
+        if(pwalletMain->GetDenominatedBalance(true, true) > 0){ //get denominated unconfirmed inputs 
+            printf("DoAutomaticDenominating -- Found unconfirmed denominated outputs, will wait till they confirm to continue.\n");
+            return false;
+        }
 
         // Look through the queues and see if anything matches
         BOOST_FOREACH(CDarksendQueue& dsq, vecDarksendQueue){

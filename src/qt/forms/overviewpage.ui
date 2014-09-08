@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>580</width>
+    <width>640</width>
     <height>417</height>
    </rect>
   </property>
@@ -178,7 +178,7 @@
          <property name="minimumSize">
           <size>
            <width>0</width>
-           <height>200</height>
+           <height>221</height>
           </size>
          </property>
          <property name="layoutDirection">
@@ -195,8 +195,8 @@
            <rect>
             <x>10</x>
             <y>40</y>
-            <width>283</width>
-            <height>178</height>
+            <width>290</width>
+            <height>171</height>
            </rect>
           </property>
           <layout class="QFormLayout" name="formLayout">
@@ -263,13 +263,27 @@
              </property>
             </widget>
            </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="label_8">
+             <property name="text">
+              <string>Amount and Rounds</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QLabel" name="labelAmountRounds">
+             <property name="text">
+              <string>1000 DRK / 8 Rounds</string>
+             </property>
+            </widget>
+           </item>
           </layout>
          </widget>
          <widget class="QLabel" name="darksendStatus">
           <property name="geometry">
            <rect>
             <x>10</x>
-            <y>140</y>
+            <y>170</y>
             <width>241</width>
             <height>51</height>
            </rect>

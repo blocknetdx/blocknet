@@ -4,6 +4,7 @@
 #include "bitcoinunits.h"
 #include "monitoreddatamapper.h"
 #include "netbase.h"
+#include "init.h"
 #include "optionsmodel.h"
 
 #include <QDir>
@@ -224,6 +225,7 @@ void OptionsDialog::on_cancelButton_clicked()
 void OptionsDialog::on_applyButton_clicked()
 {
     mapper->submit();
+    darkSendPool.cachedNumBlocks = 0;
     disableApplyButton();
 }
 

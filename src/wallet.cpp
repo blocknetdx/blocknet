@@ -1003,18 +1003,16 @@ double CWallet::GetAverageAnonymizedRounds() const
         for (map<uint256, CWalletTx>::const_iterator it = mapWallet.begin(); it != mapWallet.end(); ++it)
         {
             const CWalletTx* pcoin = &(*it).second;
-            if (pcoin->IsConfirmed()){
-                for (unsigned int i = 0; i < pcoin->vout.size(); i++) {
-                    
-                    COutput out = COutput(pcoin, i, pcoin->GetDepthInMainChain());
-                    CTxIn vin = CTxIn(out.tx->GetHash(), out.i);  
+            for (unsigned int i = 0; i < pcoin->vout.size(); i++) {
+                
+                COutput out = COutput(pcoin, i, pcoin->GetDepthInMainChain());
+                CTxIn vin = CTxIn(out.tx->GetHash(), out.i);  
 
-                    if(pcoin->IsSpent(i) || !IsMine(pcoin->vout[i]) || !IsDenominated(vin)) continue;
-                    
-                    int rounds = darkSendPool.GetInputDarksendRounds(vin);
-                    fTotal += (float)rounds;
-                    fCount += 1;
-                }
+                if(pcoin->IsSpent(i) || !IsMine(pcoin->vout[i]) || !IsDenominated(vin)) continue;
+                
+                int rounds = darkSendPool.GetInputDarksendRounds(vin);
+                fTotal += (float)rounds;
+                fCount += 1;
             }
         }
     }
@@ -1025,7 +1023,7 @@ double CWallet::GetAverageAnonymizedRounds() const
 }
 
 
-int64 CWallet::GetDenominatedBalance(bool onlyDenom) const
+int64 CWallet::GetDenominatedBalance(bool onlyDenom, bool onlyUnconfirmed) const
 {
     int64 nTotal = 0;
     {
@@ -1033,13 +1031,17 @@ int64 CWallet::GetDenominatedBalance(bool onlyDenom) const
         for (map<uint256, CWalletTx>::const_iterator it = mapWallet.begin(); it != mapWallet.end(); ++it)
         {
             const CWalletTx* pcoin = &(*it).second;
-            if (pcoin->IsConfirmed()){
-                bool isDenom = false;
-                for (unsigned int i = 0; i < pcoin->vout.size(); i++)
-                    BOOST_FOREACH(int64 d, darkSendDenominations)
-                        if(pcoin->vout[i].nValue == d)
-                            isDenom = true;
 
+            bool isDenom = false;
+            for (unsigned int i = 0; i < pcoin->vout.size(); i++)
+                BOOST_FOREACH(int64 d, darkSendDenominations)
+                    if(pcoin->vout[i].nValue == d)
+                        isDenom = true;
+
+            if(onlyUnconfirmed)
+                if (!pcoin->IsFinal() || !pcoin->IsConfirmed())
+                    if(onlyDenom == isDenom) nTotal += pcoin->GetAvailableCredit();
+            else if (pcoin->IsConfirmed()){
                 // if onlyDenom and isdenom, or not onlyDenom and not isDenom
                 if(onlyDenom == isDenom) nTotal += pcoin->GetAvailableCredit();
             }
