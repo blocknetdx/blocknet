@@ -1038,12 +1038,16 @@ int64 CWallet::GetDenominatedBalance(bool onlyDenom, bool onlyUnconfirmed) const
                     if(pcoin->vout[i].nValue == d)
                         isDenom = true;
 
-            if(onlyUnconfirmed)
-                if (!pcoin->IsFinal() || !pcoin->IsConfirmed())
-                    if(onlyDenom == isDenom) nTotal += pcoin->GetAvailableCredit();
-            else if (pcoin->IsConfirmed()){
-                // if onlyDenom and isdenom, or not onlyDenom and not isDenom
-                if(onlyDenom == isDenom) nTotal += pcoin->GetAvailableCredit();
+            if(onlyUnconfirmed){
+                if (!pcoin->IsFinal() || !pcoin->IsConfirmed()){
+                    if(onlyDenom == isDenom){ 
+                        nTotal += pcoin->GetAvailableCredit();
+                    }
+                }
+            } else if (pcoin->IsConfirmed()) {
+                if(onlyDenom == isDenom) {
+                    nTotal += pcoin->GetAvailableCredit();
+                }
             }
         }
     }

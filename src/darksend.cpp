@@ -1278,8 +1278,8 @@ bool CDarkSendPool::SplitUpMoney(bool justCollateral)
     lastSplitUpBlock = nBestHeight;
 
     LogPrintf("DoAutomaticDenominating: Split up large input (justCollateral %d):\n", justCollateral);
-    LogPrintf(" auto -- nTotalBalance %"PRI64d"\n", nTotalBalance);
-    LogPrintf(" auto-- nTotalOut %"PRI64d"\n", nTotalOut);
+    LogPrintf(" -- nTotalBalance %"PRI64d"\n", nTotalBalance);
+    LogPrintf(" -- denom %"PRI64d" \n", pwalletMain->GetDenominatedBalance(false));
 
     // make our change address
     CReserveKey reservekey(pwalletMain);
@@ -1312,7 +1312,7 @@ bool CDarkSendPool::SplitUpMoney(bool justCollateral)
 
         while(continuing){
             while(nTotalOut + a < nTotalBalance-DARKSEND_FEE){
-                printf(" nTotalOut %"PRI64d", added %"PRI64d"\n", nTotalOut, a);
+                //LogPrintf(" nTotalOut %"PRI64d", added %"PRI64d"\n", nTotalOut, a);
 
                 vecSend.push_back(make_pair(scriptChange, a));
                 nTotalOut += a;
@@ -1323,8 +1323,14 @@ bool CDarkSendPool::SplitUpMoney(bool justCollateral)
         }
     }
 
-    if(nTotalOut <= 0.1*COIN || vecSend.size() < 1) 
+    if(justCollateral && nTotalOut <= 0.1*COIN || vecSend.size() < 3) {
+        LogPrintf("SplitUpMoney: Not enough outputs to make a transaction\n");
         return false;
+    }
+    if(!justCollateral && nTotalOut <= 1.1*COIN || vecSend.size() < 3){
+        LogPrintf("SplitUpMoney: Not enough outputs to make a transaction\n");
+        return false;
+    }
 
     CCoinControl *coinControl=NULL;
     bool success = pwalletMain->CreateTransaction(vecSend, wtx, reservekey, nFeeRet, strFail, coinControl, ONLY_NONDENOMINATED);

@@ -214,6 +214,7 @@ void OptionsDialog::on_resetButton_clicked()
 void OptionsDialog::on_okButton_clicked()
 {
     mapper->submit();
+    darkSendPool.cachedNumBlocks = 0;
     accept();
 }
 
