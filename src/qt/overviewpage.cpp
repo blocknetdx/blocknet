@@ -302,7 +302,7 @@ void OverviewPage::darkSendStatus()
             convert << "Darksend is idle";
             showingDarkSendMessage = 0;
         } else if (accepted == 1) {
-            convert << "Your transaction was accepted into the pool!";
+            convert << "Darksend request complete: Your transaction was accepted into the pool!";
             if(showingDarkSendMessage % 10 > 8) {
                 darkSendPool.lastEntryAccepted = 0;
                 showingDarkSendMessage = 0;
