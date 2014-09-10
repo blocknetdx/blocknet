@@ -23,7 +23,6 @@ extern std::vector<CMasterNode> darkSendMasterNodes;
 extern std::vector<int64> darkSendDenominations;
 extern std::string strMasterNodePrivKey;
 extern std::string strUseMasternode;
-extern int64 enforceMasternodePaymentsTime;
 extern std::vector<CDarksendQueue> vecDarksendQueue;
 extern std::vector<CTxIn> vecMasternodeAskedFor;
 

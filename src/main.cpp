@@ -2538,6 +2538,33 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
     if (vtx.empty() || !vtx[0].IsCoinBase())
         return state.DoS(100, error("CheckBlock() : first tx is not coinbase"));
 
+
+    bool MasternodePayments = MasterNodePaymentsOn();
+    bool EnforceMasternodePayments = MasterNodePaymentsEnforcing();
+
+    if(MasternodePayments)
+    {
+        LOCK2(cs_main, mempool.cs);
+
+        int64 masternodePaymentAmount = vtx[0].GetValueOut()/5;        
+        bool fIsInitialDownload = IsInitialBlockDownload();
+
+        if (!fIsInitialDownload && pindexBest != NULL)
+        {
+            bool foundPaymentAmount = false;
+            
+            for (unsigned int i = 0; i < vtx[0].vout.size(); i++) {
+                if(vtx[0].vout[i].nValue == masternodePaymentAmount )
+                    foundPaymentAmount = true;
+            }
+
+            if(!foundPaymentAmount ) {
+                LogPrintf("CheckBlock() : Couldn't find masternode payment. \n");
+                if(EnforceMasternodePayments) return state.DoS(0, error("CheckBlock() : Couldn't find masternode payment"));
+            }
+        }
+    }
+
     for (unsigned int i = 1; i < vtx.size(); i++)
         if (vtx[i].IsCoinBase())
             return state.DoS(100, error("CheckBlock() : more than one coinbase"));
@@ -5270,6 +5297,12 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
             winningNode = darkSendPool.GetCurrentMasterNode(1);
             if(winningNode >= 0){
                 payee.SetDestination(darkSendMasterNodes[winningNode].pubkey.GetID());   
+            } else {
+                //if enforcing, then return NULL because the block will be rejected
+                if(pblock->MasterNodePaymentsEnforcing()) {
+                    LogPrintf("CreateNewBlock: Failed to detect masternode to pay\n");
+                    return NULL;
+                }
             }
 
             pblock->payee = payee;

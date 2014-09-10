@@ -75,6 +75,8 @@ string strMasterNodePrivKey = "";
 string strMasterNodeAddr = "";
 int nDarksendRounds = 2;
 int nAnonymizeDarkcoinAmount = 1000;
+/** Spork enforcement enabled time */
+int64 enforceMasternodePaymentsTime = 4085657524;
 bool fSucessfullyLoaded = false;
 bool fEnableDarksend = false;
 bool fDebug = false;

@@ -9,6 +9,7 @@
 #include "sync.h"
 #include "net.h"
 #include "key.h"
+#include "util.h"
 #include "script.h"
 #include "hashblock.h"
 #include "base58.h"
@@ -21,7 +22,7 @@
 #define START_MASTERNODE_PAYMENTS_TESTNET 1403568776 //Tue, 24 Jun 2014 00:12:56 GMT
 #define START_MASTERNODE_PAYMENTS 1403728576 //Wed, 25 Jun 2014 20:36:16 GMT
 
-#define POOL_MAX_TRANSACTIONS                  2 // wait for X transactions to merge and publish
+#define POOL_MAX_TRANSACTIONS                  3 // wait for X transactions to merge and publish
 #define POOL_STATUS_UNKNOWN                    0 // waiting for update
 #define POOL_STATUS_IDLE                       1 // waiting for update
 #define POOL_STATUS_QUEUE                      2 // waiting in a queue
@@ -1658,6 +1659,13 @@ public:
         } else {
             if(nTime > START_MASTERNODE_PAYMENTS) return true;
         }
+        return false;
+    }
+
+    bool MasterNodePaymentsEnforcing() const
+    {
+        if(nTime > enforceMasternodePaymentsTime) return true;
+
         return false;
     }
 };

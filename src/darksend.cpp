@@ -24,8 +24,6 @@ CDarkSendSigner darkSendSigner;
 std::vector<CMasterNode> darkSendMasterNodes;
 /** All denominations used by darksend */
 std::vector<int64> darkSendDenominations;
-/** Spork enforcement enabled time */
-int64 enforceMasternodePaymentsTime = 4085657524;
 /** Which masternodes we're asked other clients for */
 std::vector<CTxIn> vecMasternodeAskedFor;
 /** The current darksends in progress on the network */

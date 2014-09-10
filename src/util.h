@@ -133,6 +133,7 @@ extern bool fMasterNode;
 extern int nDarksendRounds;
 extern int nAnonymizeDarkcoinAmount;
 extern bool fEnableDarksend;
+extern int64 enforceMasternodePaymentsTime;
 extern std::string strMasterNodeAddr;
 extern int keysLoaded;
 extern bool fSucessfullyLoaded;
