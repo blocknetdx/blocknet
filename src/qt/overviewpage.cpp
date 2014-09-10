@@ -308,32 +308,32 @@ void OverviewPage::darkSendStatus()
                 showingDarkSendMessage = 0;
             }
         } else {
-            if(showingDarkSendMessage % 70 <= 40) convert << "Submitted to masternode, Entries " << entries << "/" << POOL_MAX_TRANSACTIONS;
+            if(showingDarkSendMessage % 70 <= 40) convert << "Submitted to masternode, entries " << entries << "/" << POOL_MAX_TRANSACTIONS;
             else if(showingDarkSendMessage % 70 <= 50) convert << "Submitted to masternode, Waiting for more entries (" << entries << "/" << POOL_MAX_TRANSACTIONS << " ) .";
             else if(showingDarkSendMessage % 70 <= 60) convert << "Submitted to masternode, Waiting for more entries (" << entries << "/" << POOL_MAX_TRANSACTIONS << " ) ..";
             else if(showingDarkSendMessage % 70 <= 70) convert << "Submitted to masternode, Waiting for more entries (" << entries << "/" << POOL_MAX_TRANSACTIONS << " ) ...";
         }
     } else if(state == POOL_STATUS_SIGNING) {
-        if(showingDarkSendMessage % 70 <= 10) convert << "Found enough users, SIGNING";
-        else if(showingDarkSendMessage % 70 <= 20) convert << "Found enough users, SIGNING ( waiting. )";
-        else if(showingDarkSendMessage % 70 <= 30) convert << "Found enough users, SIGNING ( waiting.. )";
-        else if(showingDarkSendMessage % 70 <= 40) convert << "Found enough users, SIGNING ( waiting... )";
+        if(showingDarkSendMessage % 70 <= 10) convert << "Found enough users, signing";
+        else if(showingDarkSendMessage % 70 <= 20) convert << "Found enough users, signing ( waiting. )";
+        else if(showingDarkSendMessage % 70 <= 30) convert << "Found enough users, signing ( waiting.. )";
+        else if(showingDarkSendMessage % 70 <= 40) convert << "Found enough users, signing ( waiting... )";
     } else if(state == POOL_STATUS_TRANSMISSION) {
-        convert << "Transmitting Final Transaction";
+        convert << "Transmitting final transaction";
     } else if (state == POOL_STATUS_IDLE) {
         convert << "Darksend is idle";
     } else if (state == POOL_STATUS_FINALIZE_TRANSACTION) {
-        convert << "Finalizing Transaction";
+        convert << "Finalizing transaction";
     } else if(state == POOL_STATUS_ERROR) {
         convert << "Darksend request incomplete: " << darkSendPool.lastMessage << ". Wll retry...";
     } else if(state == POOL_STATUS_SUCCESS) {
         convert << "Darksend request complete: " << darkSendPool.lastMessage;
     } else if(state == POOL_STATUS_QUEUE) {
-        if(showingDarkSendMessage % 70 <= 50) convert << "Submitted to masternode, Waiting in queue .";
-        else if(showingDarkSendMessage % 70 <= 60) convert << "Submitted to masternode, Waiting in queue ..";
-        else if(showingDarkSendMessage % 70 <= 70) convert << "Submitted to masternode, Waiting in queue ...";
+        if(showingDarkSendMessage % 70 <= 50) convert << "Submitted to masternode, waiting in queue .";
+        else if(showingDarkSendMessage % 70 <= 60) convert << "Submitted to masternode, waiting in queue ..";
+        else if(showingDarkSendMessage % 70 <= 70) convert << "Submitted to masternode, waiting in queue ...";
     } else {
-        convert << "UNKNOWN STATE : ID=" << state;
+        convert << "unknown state : id=" << state;
     }
 
     if(state == POOL_STATUS_ERROR || state == POOL_STATUS_SUCCESS) darkSendPool.Check();    
