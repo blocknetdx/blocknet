@@ -117,6 +117,9 @@
         <layout class="QHBoxLayout" name="horizontalLayout">
          <item>
           <widget class="QLabel" name="label_2">
+           <property name="toolTip">
+            <string>aoeu</string>
+           </property>
            <property name="text">
             <string>Amount of Darkcoin to keep anonymized</string>
            </property>
