@@ -27,6 +27,7 @@ public:
     void setClientModel(ClientModel *clientModel);
     void setWalletModel(WalletModel *walletModel);
     void showOutOfSyncWarning(bool fShow);
+    void updateDarksendProgress();
 
 public slots:
     void darkSendStatus();

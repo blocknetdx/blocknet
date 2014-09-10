@@ -233,15 +233,29 @@ void OverviewPage::showOutOfSyncWarning(bool fShow)
     ui->labelTransactionsStatus->setVisible(fShow);
 }
 
+void OverviewPage::updateDarksendProgress(){
+    std::ostringstream convert;
+    //Get average rounds of inputs
+    double a = ((double)pwalletMain->GetAverageAnonymizedRounds() / (double)nDarksendRounds)*100;
+    //Get the anon threshold
+    double max = nAnonymizeDarkcoinAmount;
+    //If it's more than the wallet amount, limit to that.
+    if(max > (double)(pwalletMain->GetBalance()/COIN)-1) max = (double)(pwalletMain->GetBalance()/COIN)-1;
+    //denominated balance / anon threshold -- the percentage that we've completed 
+    double b = ((double)(pwalletMain->GetDenominatedBalance()/COIN) / max);
+
+    ui->darksendProgress->setValue(a*b);//rounds avg * denom progress
+    convert << "Inputs have an average of " << pwalletMain->GetAverageAnonymizedRounds() << " of " << nDarksendRounds << " rounds";
+    QString s(convert.str().c_str());
+    ui->darksendProgress->setToolTip(s);
+}
+
+
 void OverviewPage::darkSendStatus()
 {
     if(nBestHeight != darkSendPool.cachedNumBlocks)
     {
-        std::ostringstream convert;
-        ui->darksendProgress->setValue(((double)pwalletMain->GetAverageAnonymizedRounds() / (double)nDarksendRounds)*100);
-        convert << "Inputs have an average of " << pwalletMain->GetAverageAnonymizedRounds() << " of " << nDarksendRounds << " rounds";
-        QString s(convert.str().c_str());
-        ui->darksendProgress->setToolTip(s);
+        updateDarksendProgress();
 
         std::ostringstream convert2;
         convert2 << nAnonymizeDarkcoinAmount << " DRK / " << nDarksendRounds << " Rounds";
