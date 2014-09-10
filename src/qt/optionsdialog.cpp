@@ -150,7 +150,6 @@ void OptionsDialog::setMapper()
     mapper->addMapping(ui->coinControlFeatures, OptionsModel::CoinControlFeatures);
 
     /* Darksend Rounds */
-    mapper->addMapping(ui->disableDarksend, OptionsModel::DisableDarksend);
     mapper->addMapping(ui->darksendRounds, OptionsModel::DarksendRounds);
     mapper->addMapping(ui->anonymizeDarkcoin, OptionsModel::AnonymizeDarkcoinAmount);
 

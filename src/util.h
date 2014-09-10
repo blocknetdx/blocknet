@@ -132,7 +132,7 @@ extern std::map<std::string, std::vector<std::string> > mapMultiArgs;
 extern bool fMasterNode;
 extern int nDarksendRounds;
 extern int nAnonymizeDarkcoinAmount;
-extern bool fDisableDarksend;
+extern bool fEnableDarksend;
 extern std::string strMasterNodeAddr;
 extern int keysLoaded;
 extern bool fSucessfullyLoaded;

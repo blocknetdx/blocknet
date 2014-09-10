@@ -1169,9 +1169,7 @@ bool AppInit2(boost::thread_group& threadGroup)
         }
     }
 
-    fDisableDarksend = GetBoolArg("-disabledarksend", true);
-    bool fEnabledDaemonDarksend = GetBoolArg("-enabledaemondarksend", false);
-    if(fDaemon && !fEnabledDaemonDarksend) fDisableDarksend = true;
+    fEnableDarksend = GetBoolArg("-enabledarksend", false);
 
     nDarksendRounds = GetArg("-darksendrounds", 2);
     if(nDarksendRounds > 8) nDarksendRounds = 8;
@@ -1203,7 +1201,7 @@ bool AppInit2(boost::thread_group& threadGroup)
                 InitWarning(_("Warning: There is an incompatibility in the new RC4+ wallet due to the larger keypool."
                                     "It only effects encrypted wallets, but can cause a loss of data in rare situations. "
                                     "Please create a new wallet and move the funds from this wallet."));
-                fDisableDarksend = true;
+                fEnableDarksend = false;
             }
         }
     }

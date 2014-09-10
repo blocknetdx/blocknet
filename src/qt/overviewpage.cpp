@@ -126,6 +126,12 @@ OverviewPage::OverviewPage(QWidget *parent) :
     showingDarkSendMessage = 0;
     darksendActionCheck = 0;
 
+    if(!fEnableDarksend){
+        ui->toggleDarksend->setText("Start Anonymization");
+    } else {
+        ui->toggleDarksend->setText("Stop Anonymization");
+    }
+
     // start with displaying the "out of sync" warnings
     showOutOfSyncWarning(true);
 }
@@ -194,6 +200,7 @@ void OverviewPage::setWalletModel(WalletModel *model)
         connect(model->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(updateDisplayUnit()));
 
         connect(ui->runAutoDenom, SIGNAL(clicked()), this, SLOT(runDoAutomaticDenomination()));
+        connect(ui->toggleDarksend, SIGNAL(clicked()), this, SLOT(toggleDarksend()));
     }
 
     // update the display unit, to not use the default ("BTC")
@@ -230,14 +237,6 @@ void OverviewPage::darkSendStatus()
 {
     if(nBestHeight != darkSendPool.cachedNumBlocks)
     {
-        /* show darksend configuration if client has defaults set */
-
-        if(nAnonymizeDarkcoinAmount == 0){
-            DarksendConfig dlg(this);
-            dlg.setModel(walletModel);
-            dlg.exec();
-        }
-
         std::ostringstream convert;
         ui->darksendProgress->setValue(((double)pwalletMain->GetAverageAnonymizedRounds() / (double)nDarksendRounds)*100);
         convert << "Inputs have an average of " << pwalletMain->GetAverageAnonymizedRounds() << " of " << nDarksendRounds << " rounds";
@@ -250,7 +249,7 @@ void OverviewPage::darkSendStatus()
         ui->labelAmountRounds->setText(s2);
     }
 
-    if(fDisableDarksend) {
+    if(!fEnableDarksend) {
         if(nBestHeight != darkSendPool.cachedNumBlocks)
         {
             darkSendPool.cachedNumBlocks = nBestHeight;
@@ -274,7 +273,7 @@ void OverviewPage::darkSendStatus()
                     WalletModel::UnlockContext ctx(walletModel->requestUnlock());
                     if(!ctx.isValid()){
                         //unlock was cancelled
-                        fDisableDarksend = true;
+                        fEnableDarksend = false;
                         LogPrintf("Wallet is locked and user declined to unlock. Disabling Darksend.\n");
                     }
                 }
@@ -326,9 +325,9 @@ void OverviewPage::darkSendStatus()
     } else if (state == POOL_STATUS_FINALIZE_TRANSACTION) {
         convert << "Finalizing Transaction";
     } else if(state == POOL_STATUS_ERROR) {
-        convert << "Attempted passive submission, " << darkSendPool.lastMessage << ", will retry";
+        convert << "Darksend request incomplete: " << darkSendPool.lastMessage << ". Wll retry...";
     } else if(state == POOL_STATUS_SUCCESS) {
-        convert << "Successfully denominated funds! " << darkSendPool.lastMessage;
+        convert << "Darksend request complete: " << darkSendPool.lastMessage;
     } else if(state == POOL_STATUS_QUEUE) {
         if(showingDarkSendMessage % 70 <= 50) convert << "Submitted to masternode, Waiting in queue .";
         else if(showingDarkSendMessage % 70 <= 60) convert << "Submitted to masternode, Waiting in queue ..";
@@ -354,4 +353,26 @@ void OverviewPage::darkSendStatus()
 
 void OverviewPage::runDoAutomaticDenomination(){
     darkSendPool.DoAutomaticDenominating();
+}
+
+void OverviewPage::toggleDarksend(){
+    darkSendPool.cachedNumBlocks = 0;
+
+    fEnableDarksend = !fEnableDarksend;
+
+    if(!fEnableDarksend){
+        ui->toggleDarksend->setText("Start Anonymization");
+    } else {
+        ui->toggleDarksend->setText("Stop Anonymization");
+
+        /* show darksend configuration if client has defaults set */
+
+        if(nAnonymizeDarkcoinAmount == 0){
+            DarksendConfig dlg(this);
+            dlg.setModel(walletModel);
+            dlg.exec();
+        }
+
+        darkSendPool.DoAutomaticDenominating();
+    }
 }

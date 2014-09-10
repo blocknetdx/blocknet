@@ -54,6 +54,7 @@ private:
 
 private slots:
     void runDoAutomaticDenomination();
+    void toggleDarksend();
     void updateDisplayUnit();
     void handleTransactionClicked(const QModelIndex &index);
     void updateAlerts(const QString &warnings);

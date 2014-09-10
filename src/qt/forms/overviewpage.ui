@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>640</width>
-    <height>417</height>
+    <width>792</width>
+    <height>624</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -178,7 +178,7 @@
          <property name="minimumSize">
           <size>
            <width>0</width>
-           <height>221</height>
+           <height>275</height>
           </size>
          </property>
          <property name="layoutDirection">
@@ -196,7 +196,7 @@
             <x>10</x>
             <y>40</y>
             <width>290</width>
-            <height>171</height>
+            <height>121</height>
            </rect>
           </property>
           <layout class="QFormLayout" name="formLayout">
@@ -278,25 +278,6 @@
             </widget>
            </item>
           </layout>
-         </widget>
-         <widget class="QLabel" name="darksendStatus">
-          <property name="geometry">
-           <rect>
-            <x>10</x>
-            <y>170</y>
-            <width>241</width>
-            <height>51</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>(Last Message)</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-          </property>
-          <property name="wordWrap">
-           <bool>true</bool>
-          </property>
          </widget>
          <widget class="QLabel" name="label_2">
           <property name="geometry">
@@ -751,6 +732,57 @@
            <string/>
           </property>
           <property name="flat">
+           <bool>true</bool>
+          </property>
+         </widget>
+         <widget class="QPushButton" name="toggleDarksend">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>220</y>
+            <width>291</width>
+            <height>51</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Start/Stop Anonymizing</string>
+          </property>
+         </widget>
+         <widget class="Line" name="line">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>210</y>
+            <width>291</width>
+            <height>16</height>
+           </rect>
+          </property>
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+         <widget class="QLabel" name="darksendStatus">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>170</y>
+            <width>288</width>
+            <height>43</height>
+           </rect>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>288</width>
+            <height>43</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>(Last Message)</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+          </property>
+          <property name="wordWrap">
            <bool>true</bool>
           </property>
          </widget>

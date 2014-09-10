@@ -77,11 +77,9 @@ void DarksendConfig::configure(bool enabled, int coins, int rounds) {
 
     QSettings settings;
 
-    settings.setValue("fDisableDarksend", !enabled);
     settings.setValue("nDarksendRounds", rounds);
     settings.setValue("nAnonymizeDarkcoinAmount", coins);
 
-    fDisableDarksend = !enabled;
     nDarksendRounds = rounds;
     nAnonymizeDarkcoinAmount = coins;    
 }

@@ -294,7 +294,7 @@ Value sendtoaddress(const Array& params, bool fHelp)
     if (pwalletMain->IsLocked())
         throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
 
-    string strError = pwalletMain->SendMoneyToDestination(address.Get(), nAmount, wtx, false, fDisableDarksend ? ALL_COINS : ONLY_NONDENOMINATED);
+    string strError = pwalletMain->SendMoneyToDestination(address.Get(), nAmount, wtx, false, !fEnableDarksend ? ALL_COINS : ONLY_NONDENOMINATED);
     if (strError != "")
         throw JSONRPCError(RPC_WALLET_ERROR, strError);
 

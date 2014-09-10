@@ -974,7 +974,7 @@ void CDarkSendPool::NewBlock()
 
     if(IsInitialBlockDownload()) return;
     
-    if(fDisableDarksend) return;
+    if(!fEnableDarksend) return;
 
     if(!fMasterNode){
         //denominate all non-denominated inputs every 25 minutes.
@@ -1102,7 +1102,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
         LogPrintf("CDarkSendPool::DoAutomaticDenominating - Last successful ds+ was too recent\n");
         return false;
     }
-    if(fDisableDarksend) {
+    if(!fEnableDarksend) {
         LogPrintf("CDarkSendPool::DoAutomaticDenominating - Darksend is disabled\n");
         return false; 
     }
@@ -1323,11 +1323,11 @@ bool CDarkSendPool::SplitUpMoney(bool justCollateral)
         }
     }
 
-    if(justCollateral && nTotalOut <= 0.1*COIN || vecSend.size() < 3) {
+    if((justCollateral && nTotalOut <= 0.1*COIN) || vecSend.size() < 3) {
         LogPrintf("SplitUpMoney: Not enough outputs to make a transaction\n");
         return false;
     }
-    if(!justCollateral && nTotalOut <= 1.1*COIN || vecSend.size() < 3){
+    if((!justCollateral && nTotalOut <= 1.1*COIN) || vecSend.size() < 3){
         LogPrintf("SplitUpMoney: Not enough outputs to make a transaction\n");
         return false;
     }
@@ -1539,14 +1539,14 @@ bool CDarkSendPool::IsCompatibleWithSession(int64 nAmount, std::string& strReaso
     }
 
     if((state != POOL_STATUS_ACCEPTING_ENTRIES && state != POOL_STATUS_QUEUE) || sessionUsers >= POOL_MAX_TRANSACTIONS){
-        if((state != POOL_STATUS_ACCEPTING_ENTRIES && state != POOL_STATUS_QUEUE)) strReason = "Incompatible mode";
-        if(sessionUsers >= POOL_MAX_TRANSACTIONS) strReason = "Queue is full";
+        if((state != POOL_STATUS_ACCEPTING_ENTRIES && state != POOL_STATUS_QUEUE)) strReason = "incompatible mode";
+        if(sessionUsers >= POOL_MAX_TRANSACTIONS) strReason = "masternode queue is full";
         LogPrintf("CDarkSendPool::IsCompatibleWithSession - incompatible mode, return false %d %d\n", state != POOL_STATUS_ACCEPTING_ENTRIES, sessionUsers >= POOL_MAX_TRANSACTIONS);
         return false;
     }
 
     if(GetDenominationsByAmount(nAmount) != GetDenominationsByAmount(sessionAmount)) {
-        strReason = "Incompatible denominations";
+        strReason = "no matching denominations found for mixing";
         return false;
     }
 
