@@ -1297,11 +1297,9 @@ bool CDarkSendPool::SplitUpMoney(bool justCollateral)
 
     // ****** Add fees ************ /
     vecSend.push_back(make_pair(scriptChange, DARKSEND_COLLATERAL*5));
-    vecSend.push_back(make_pair(scriptChange, DARKSEND_FEE));
-    vecSend.push_back(make_pair(scriptChange, DARKSEND_FEE));
-    vecSend.push_back(make_pair(scriptChange, DARKSEND_FEE));
-    vecSend.push_back(make_pair(scriptChange, DARKSEND_FEE));
-    vecSend.push_back(make_pair(scriptChange, DARKSEND_FEE));
+    for(int d = 0; d <= 4+nDarksendRounds; d++)
+        vecSend.push_back(make_pair(scriptChange, DARKSEND_FEE));
+
     nTotalOut += (DARKSEND_COLLATERAL*5)+(DARKSEND_FEE*5); 
 
     // ****** Add outputs in bases of two from 4096 darkcoin in reverse *** /
