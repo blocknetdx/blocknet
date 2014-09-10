@@ -2549,24 +2549,16 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
         if (!fIsInitialDownload && pindexBest != NULL)
         {
             bool foundPaymentAmount = false;
-            bool foundPaymentPayee = false;
-            CScript payee; 
-            bool success = darkSendPool.GetCurrentMasterNodeConsessus(pindexBest->nHeight+1, payee);
             
-            if(success) {
-                for (unsigned int i = 0; i < vtx[0].vout.size(); i++) {
-                    if(vtx[0].vout[i].nValue == masternodePaymentAmount )
-                        foundPaymentAmount = true;
-                    if(payee == vtx[0].vout[i].scriptPubKey)
-                        foundPaymentPayee = true;
-                }
-
-                if(!foundPaymentPayee || !foundPaymentAmount ) {
-                    LogPrintf("CheckBlock() : Couldn't find masternode payment. Found Amount %d Found Payee %d \n", (int)foundPaymentAmount, (int)foundPaymentPayee);
-                    if(EnforceMasternodePayments) return state.DoS(0, error("CheckBlock() : Couldn't find masternode payment"));
-                }
+            for (unsigned int i = 0; i < vtx[0].vout.size(); i++) {
+                if(vtx[0].vout[i].nValue == masternodePaymentAmount )
+                    foundPaymentAmount = true;
             }
 
+            if(!foundPaymentAmount ) {
+                LogPrintf("CheckBlock() : Couldn't find masternode payment. \n");
+                if(EnforceMasternodePayments) return state.DoS(0, error("CheckBlock() : Couldn't find masternode payment"));
+            }
         }
     }
 
@@ -5080,26 +5072,30 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
 
             //spork
             CScript payee;
-            bool success = darkSendPool.GetCurrentMasterNodeConsessus(pindexPrev->nHeight+1, payee);
-            if(!success) {
-                //no enforcement
-                winningNode = darkSendPool.GetCurrentMasterNode(1);
-                if(winningNode >= 0){
-                    payee.SetDestination(darkSendMasterNodes[winningNode].pubkey.GetID());   
-                    success = true;
+            winningNode = darkSendPool.GetCurrentMasterNode(1);
+            if(winningNode >= 0){
+                payee.SetDestination(darkSendMasterNodes[winningNode].pubkey.GetID());   
+            } else {
+                //if enforcing, then return NULL because the block will be rejected
+                if(pblock->MasterNodePaymentsEnforcing()) {
+                    LogPrintf("CreateNewBlock: Failed to detect masternode to pay\n");
+                    return NULL;
                 }
             }
 
-            if(success) {
-                pblock->payee = payee;
-                
-                payments++;
-                txNew.vout.resize(payments);
+            pblock->payee = payee;
+            
+            payments++;
+            txNew.vout.resize(payments);
 
-                //txNew.vout[0].scriptPubKey = scriptPubKeyIn;
-                txNew.vout[payments-1].scriptPubKey = payee;
-                txNew.vout[payments-1].nValue = 0;
-            }
+            txNew.vout[payments-1].scriptPubKey = payee;
+            txNew.vout[payments-1].nValue = 0;
+
+            CTxDestination address1;
+            ExtractDestination(payee, address1);
+            CBitcoinAddress address2(address1);
+
+            LogPrintf("Masternode payment to %s\n", address2.ToString().c_str());
         }
 
         // Add our coinbase tx as first transaction
