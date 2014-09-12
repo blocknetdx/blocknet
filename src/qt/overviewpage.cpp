@@ -126,7 +126,10 @@ OverviewPage::OverviewPage(QWidget *parent) :
     showingDarkSendMessage = 0;
     darksendActionCheck = 0;
 
-    if(!fEnableDarksend){
+    if(fMasterNode){
+        ui->toggleDarksend->setText("(Disabled)");
+        ui->toggleDarksend->setEnabled(false);
+    }else if(!fEnableDarksend){
         ui->toggleDarksend->setText("Start Anonymization");
     } else {
         ui->toggleDarksend->setText("Stop Anonymization");
@@ -234,6 +237,14 @@ void OverviewPage::showOutOfSyncWarning(bool fShow)
 }
 
 void OverviewPage::updateDarksendProgress(){
+    int64 balance = pwalletMain->GetBalance();
+    if(balance == 0){
+        ui->darksendProgress->setValue(0);
+        QString s("No inputs detected");
+        ui->darksendProgress->setToolTip(s);        
+        return;
+    }
+
     std::ostringstream convert;
     //Get average rounds of inputs
     double a = ((double)pwalletMain->GetAverageAnonymizedRounds() / (double)nDarksendRounds)*100;
@@ -244,8 +255,12 @@ void OverviewPage::updateDarksendProgress(){
     //denominated balance / anon threshold -- the percentage that we've completed 
     double b = ((double)(pwalletMain->GetDenominatedBalance()/COIN) / max);
 
-    ui->darksendProgress->setValue(a*b);//rounds avg * denom progress
-    convert << "Inputs have an average of " << pwalletMain->GetAverageAnonymizedRounds() << " of " << nDarksendRounds << " rounds";
+    double val = a*b; 
+    if(val < 0) val = 0;
+    if(val > 100) val = 100;
+
+    ui->darksendProgress->setValue(val);//rounds avg * denom progress
+    convert << "Inputs have an average of " << pwalletMain->GetAverageAnonymizedRounds() << " of " << nDarksendRounds << " rounds (" << a << "/" << b << ")";
     QString s(convert.str().c_str());
     ui->darksendProgress->setToolTip(s);
 }

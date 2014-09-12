@@ -1299,8 +1299,14 @@ bool CDarkSendPool::SplitUpMoney(bool justCollateral)
     vecSend.push_back(make_pair(scriptChange, DARKSEND_COLLATERAL*5));
     for(int d = 0; d <= 4+nDarksendRounds; d++)
         vecSend.push_back(make_pair(scriptChange, DARKSEND_FEE));
-
+    
     nTotalOut += (DARKSEND_COLLATERAL*5)+(DARKSEND_FEE*5); 
+
+    // if over 1000, start by adding 1 darksend compatible input
+    if(nTotalBalance > 999*COIN){
+        vecSend.push_back(make_pair(scriptChange, 999*COIN));
+        nTotalOut += (999*COIN); 
+    }
 
     // ****** Add outputs in bases of two from 4096 darkcoin in reverse *** /
     if(!justCollateral){

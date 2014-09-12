@@ -59,6 +59,7 @@ public:
     bool setCurrentWallet(const QString& name);
 
     void removeAllWallets();
+    void checkTOU();
 
     /** Used by WalletView to allow access to needed QActions */
     // Todo: Use Qt signals for these

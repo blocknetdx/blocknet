@@ -256,83 +256,43 @@ int main(int argc, char *argv[])
                 if (splashref)
                     splash.finish(&window);
 
-                bool agreed_to_tou=false;
+                //make sure user has agreed to TOU
+                window.checkTOU();
 
-                //check if file exists
+                ClientModel clientModel(&optionsModel);
+                WalletModel *walletModel = 0;
+                if(pwalletMain)
+                    walletModel = new WalletModel(pwalletMain, &optionsModel);
 
-                boost::filesystem::path pathDebug = GetDataDir() / ".agreed_to_tou";
-                if (FILE *file = fopen(pathDebug.string().c_str(), "r")) {
-                    file=file;
-                    fclose(file);
-                    agreed_to_tou = true;
-                }
-             
-
-                if(!agreed_to_tou){
-                    QMessageBox::StandardButton retval = QMessageBox::question(guiref, "Darkcoin Terms Of Use",
-                            window.tr("Do you agreed to the following terms of use? <br><br>") + 
-                            window.tr("By using this software, you acknowledge and understand that Darkcoin is not intended for use in any illegal activity, and that no person or entity associated with the creation, development, marketing, or furtherance of Darkcoin shall be held responsible for use by any individual, group, or entity that is against the law in their respective jurisdiction. <br><br>") +
-                            window.tr("DarkSend is completely trustless because nobody controls the whole system. The risk of something going wrong is very low. However, the software is still in development. This means that things can break and there are no guarantees about it. Use it at your own risk, follow the instructions exactly, and only use money that you can afford to lose should something go wrong. <br> <br>") +
-                            window.tr("Darksend uses a very large keypool and goes through keys quite rapidly. This means that you need to make backups more frequently than with other wallets, because when it anonymizes your funds a lot transactions happen in the background. To be safe make a new backup after each time your anonymized threshold of funds is reached. <br> <br>") +
-                            window.tr("Please don’t run the software in more than one location at the same time . Doing so can create issues with the automatic anonymization of your funds and there is a risk of double spending inputs by your wallet. <br><br>"),
-
-                          QMessageBox::Yes|QMessageBox::Cancel,
-                          QMessageBox::Cancel);
-
-                    if(retval != QMessageBox::Yes)
-                    {
-                        window.hide();
-                        window.setClientModel(0);
-
-                        // Shutdown the core and its threads, but don't exit Bitcoin-Qt here
-                        threadGroup.interrupt_all();
-                        threadGroup.join_all();
-                        Shutdown();
-                    } else {
-                        //touch file
-                        std::ofstream outfile (pathDebug.string().c_str());
-                        outfile << "I Agree!" << std::endl;
-                        outfile.close();
-                        agreed_to_tou=true;
-                    }
+                window.setClientModel(&clientModel);
+                if(walletModel)
+                {
+                    window.addWallet("~Default", walletModel);
+                    window.setCurrentWallet("~Default");
                 }
 
-                if(agreed_to_tou){
-                    ClientModel clientModel(&optionsModel);
-                    WalletModel *walletModel = 0;
-                    if(pwalletMain)
-                        walletModel = new WalletModel(pwalletMain, &optionsModel);
-
-                    window.setClientModel(&clientModel);
-                    if(walletModel)
-                    {
-                        window.addWallet("~Default", walletModel);
-                        window.setCurrentWallet("~Default");
-                    }
-
-                    // If -min option passed, start window minimized.
-                    if(GetBoolArg("-min"))
-                    {
-                        window.showMinimized();
-                    }
-                    else
-                    {
-                        window.show();
-                    }
-
-                    // Now that initialization/startup is done, process any command-line
-                    // bitcoin: URIs
-                    QObject::connect(paymentServer, SIGNAL(receivedURI(QString)), &window, SLOT(handleURI(QString)));
-                    QTimer::singleShot(100, paymentServer, SLOT(uiReady()));
-
-                    app.exec();
-
-                    window.hide();
-                    window.setClientModel(0);
-                    window.removeAllWallets();
-                    guiref = 0;
-                    delete walletModel;
+                // If -min option passed, start window minimized.
+                if(GetBoolArg("-min"))
+                {
+                    window.showMinimized();
                 }
+                else
+                {
+                    window.show();
+                }
+
+                // Now that initialization/startup is done, process any command-line
+                // bitcoin: URIs
+                QObject::connect(paymentServer, SIGNAL(receivedURI(QString)), &window, SLOT(handleURI(QString)));
+                QTimer::singleShot(100, paymentServer, SLOT(uiReady()));
+
+                app.exec();
+
+                window.hide();
+                window.setClientModel(0);
+                window.removeAllWallets();
+                guiref = 0;
+                delete walletModel;
             }
             // Shutdown the core and its threads, but don't exit Bitcoin-Qt here
             threadGroup.interrupt_all();
