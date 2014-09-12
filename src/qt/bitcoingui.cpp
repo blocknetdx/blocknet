@@ -344,6 +344,10 @@ void BitcoinGUI::setClientModel(ClientModel *clientModel)
             aboutAction->setIcon(QIcon(":/icons/toolbar_testnet"));
         }
 
+        if(fMasterNode){
+            setWindowTitle(windowTitle() + QString(" ") + tr("[masternode]"));
+        }
+
         // Create system tray menu (or setup the dock menu) that late to prevent users from calling actions,
         // while the client has not yet fully loaded
         createTrayIconMenu();

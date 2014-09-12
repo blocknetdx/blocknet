@@ -195,7 +195,7 @@
            <rect>
             <x>10</x>
             <y>40</y>
-            <width>290</width>
+            <width>293</width>
             <height>121</height>
            </rect>
           </property>
@@ -212,7 +212,7 @@
            <item row="0" column="0">
             <widget class="QLabel" name="label_6">
              <property name="text">
-              <string>Status</string>
+              <string>Status:</string>
              </property>
             </widget>
            </item>
@@ -226,7 +226,7 @@
            <item row="1" column="0">
             <widget class="QLabel" name="label_7">
              <property name="text">
-              <string>Completion</string>
+              <string>Completion:</string>
              </property>
             </widget>
            </item>
@@ -246,7 +246,7 @@
            <item row="2" column="0">
             <widget class="QLabel" name="labelAnonymizedText">
              <property name="text">
-              <string>Anonymized</string>
+              <string>Anonymized:</string>
              </property>
             </widget>
            </item>
@@ -266,7 +266,7 @@
            <item row="3" column="0">
             <widget class="QLabel" name="label_8">
              <property name="text">
-              <string>Amount and Rounds</string>
+              <string>Amount and Rounds:</string>
              </property>
             </widget>
            </item>

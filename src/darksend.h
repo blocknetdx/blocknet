@@ -234,7 +234,7 @@ public:
 class CDarkSendPool
 {
 public:
-    static const int MIN_PEER_PROTO_VERSION = 70037;
+    static const int MIN_PEER_PROTO_VERSION = 70038;
 
     // clients entries
     std::vector<CDarkSendEntry> myEntries;
