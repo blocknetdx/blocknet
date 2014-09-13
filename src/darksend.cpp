@@ -116,7 +116,7 @@ void CDarkSendPool::Check()
     if(fDebug) LogPrintf("CDarkSendPool::Check() - entries count %lu\n", entries.size());
     
     // If entries is full, then move on to the next phase
-    if(state == POOL_STATUS_ACCEPTING_ENTRIES && entries.size() >= POOL_MAX_TRANSACTIONS)
+    if(state == POOL_STATUS_ACCEPTING_ENTRIES && entries.size() >= GetMaxPoolTransactions())
     {
         if(fDebug) LogPrintf("CDarkSendPool::Check() -- ACCEPTING OUTPUTS\n");
         UpdateState(POOL_STATUS_FINALIZE_TRANSACTION);
@@ -271,7 +271,7 @@ void CDarkSendPool::CheckTimeout(){
     }
 
     /* Check to see if we're ready for submissions from clients */
-    if(state == POOL_STATUS_QUEUE && sessionUsers == POOL_MAX_TRANSACTIONS) {
+    if(state == POOL_STATUS_QUEUE && sessionUsers == GetMaxPoolTransactions()) {
         CDarksendQueue dsq;
         dsq.nDenom = GetDenominationsByAmount(sessionAmount);
         dsq.vin = vinMasterNode;
@@ -422,7 +422,7 @@ bool CDarkSendPool::AddEntry(const std::vector<CTxIn>& newInput, const int64& nA
         return false;
     }
 
-    if(entries.size() >= POOL_MAX_TRANSACTIONS){
+    if(entries.size() >= GetMaxPoolTransactions()){
         if(fDebug) LogPrintf ("CDarkSendPool::AddEntry - entries is full!\n");   
         error = "entries is full";
         sessionUsers--;
@@ -1303,9 +1303,10 @@ bool CDarkSendPool::SplitUpMoney(bool justCollateral)
     nTotalOut += (DARKSEND_COLLATERAL*5)+(DARKSEND_FEE*5); 
 
     // if over 1000, start by adding 1 darksend compatible input
-    if(nTotalBalance > 999*COIN){
-        vecSend.push_back(make_pair(scriptChange, 999*COIN));
-        nTotalOut += (999*COIN); 
+    int64 compatibleDsInput = 998*COIN;
+    if(nTotalBalance > compatibleDsInput){
+        vecSend.push_back(make_pair(scriptChange, compatibleDsInput));
+        nTotalOut += (compatibleDsInput); 
     }
 
     // ****** Add outputs in bases of two from 4096 darkcoin in reverse *** /
@@ -1540,10 +1541,10 @@ bool CDarkSendPool::IsCompatibleWithSession(int64 nAmount, std::string& strReaso
         return true;
     }
 
-    if((state != POOL_STATUS_ACCEPTING_ENTRIES && state != POOL_STATUS_QUEUE) || sessionUsers >= POOL_MAX_TRANSACTIONS){
+    if((state != POOL_STATUS_ACCEPTING_ENTRIES && state != POOL_STATUS_QUEUE) || sessionUsers >= GetMaxPoolTransactions()){
         if((state != POOL_STATUS_ACCEPTING_ENTRIES && state != POOL_STATUS_QUEUE)) strReason = "incompatible mode";
-        if(sessionUsers >= POOL_MAX_TRANSACTIONS) strReason = "masternode queue is full";
-        LogPrintf("CDarkSendPool::IsCompatibleWithSession - incompatible mode, return false %d %d\n", state != POOL_STATUS_ACCEPTING_ENTRIES, sessionUsers >= POOL_MAX_TRANSACTIONS);
+        if(sessionUsers >= GetMaxPoolTransactions()) strReason = "masternode queue is full";
+        LogPrintf("CDarkSendPool::IsCompatibleWithSession - incompatible mode, return false %d %d\n", state != POOL_STATUS_ACCEPTING_ENTRIES, sessionUsers >= GetMaxPoolTransactions());
         return false;
     }
 

@@ -337,10 +337,10 @@ void OverviewPage::darkSendStatus()
                 showingDarkSendMessage = 0;
             }
         } else {
-            if(showingDarkSendMessage % 70 <= 40) convert << "Submitted to masternode, entries " << entries << "/" << POOL_MAX_TRANSACTIONS;
-            else if(showingDarkSendMessage % 70 <= 50) convert << "Submitted to masternode, Waiting for more entries (" << entries << "/" << POOL_MAX_TRANSACTIONS << " ) .";
-            else if(showingDarkSendMessage % 70 <= 60) convert << "Submitted to masternode, Waiting for more entries (" << entries << "/" << POOL_MAX_TRANSACTIONS << " ) ..";
-            else if(showingDarkSendMessage % 70 <= 70) convert << "Submitted to masternode, Waiting for more entries (" << entries << "/" << POOL_MAX_TRANSACTIONS << " ) ...";
+            if(showingDarkSendMessage % 70 <= 40) convert << "Submitted to masternode, entries " << entries << "/" << darkSendPool.GetMaxPoolTransactions();
+            else if(showingDarkSendMessage % 70 <= 50) convert << "Submitted to masternode, Waiting for more entries (" << entries << "/" << darkSendPool.GetMaxPoolTransactions() << " ) .";
+            else if(showingDarkSendMessage % 70 <= 60) convert << "Submitted to masternode, Waiting for more entries (" << entries << "/" << darkSendPool.GetMaxPoolTransactions() << " ) ..";
+            else if(showingDarkSendMessage % 70 <= 70) convert << "Submitted to masternode, Waiting for more entries (" << entries << "/" << darkSendPool.GetMaxPoolTransactions() << " ) ...";
         }
     } else if(state == POOL_STATUS_SIGNING) {
         if(showingDarkSendMessage % 70 <= 10) convert << "Found enough users, signing";

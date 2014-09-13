@@ -369,6 +369,16 @@ public:
         state = newState;
     }
 
+    int GetMaxPoolTransactions()
+    {
+        //if we're on testnet, just use two transactions per merge
+        if(fTestNet) return 2;
+
+        //use the production amount
+        return POOL_MAX_TRANSACTIONS;
+    }
+
+
     // Are these outputs compatible with other client in the pool?
     bool IsCompatibleWithEntries(std::vector<CTxOut> vout);
     // Is this amount compatible with other client in the pool?

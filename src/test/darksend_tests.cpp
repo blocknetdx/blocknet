@@ -114,9 +114,9 @@ BOOST_AUTO_TEST_CASE(darksend_session)
     BOOST_CHECK(darkSendPool.IsCompatibleWithSession(151*COIN) == false);
     BOOST_CHECK(darkSendPool.IsCompatibleWithSession(751*COIN) == false);
     BOOST_CHECK(darkSendPool.IsCompatibleWithSession(531*COIN));
-    if(POOL_MAX_TRANSACTIONS >= 3) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(551*COIN));
-    if(POOL_MAX_TRANSACTIONS >= 4) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(571*COIN));
-    if(POOL_MAX_TRANSACTIONS >= 5) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(514*COIN));
+    if(darkSendPool.GetMaxPoolTransactions() >= 3) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(551*COIN));
+    if(darkSendPool.GetMaxPoolTransactions() >= 4) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(571*COIN));
+    if(darkSendPool.GetMaxPoolTransactions() >= 5) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(514*COIN));
     BOOST_CHECK(darkSendPool.IsCompatibleWithSession(531*COIN) == false);
 
     darkSendPool.SetNull();
@@ -126,9 +126,9 @@ BOOST_AUTO_TEST_CASE(darksend_session)
     BOOST_CHECK(darkSendPool.IsCompatibleWithSession(151*COIN) == false);
     BOOST_CHECK(darkSendPool.IsCompatibleWithSession(751*COIN) == false);
     BOOST_CHECK(darkSendPool.IsCompatibleWithSession(34*COIN));
-    if(POOL_MAX_TRANSACTIONS >= 3) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(22*COIN));
-    if(POOL_MAX_TRANSACTIONS >= 4) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(32*COIN));
-    if(POOL_MAX_TRANSACTIONS >= 5) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(44*COIN));
+    if(darkSendPool.GetMaxPoolTransactions() >= 3) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(22*COIN));
+    if(darkSendPool.GetMaxPoolTransactions() >= 4) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(32*COIN));
+    if(darkSendPool.GetMaxPoolTransactions() >= 5) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(44*COIN));
     BOOST_CHECK(darkSendPool.IsCompatibleWithSession(33*COIN) == false);
 
 }
