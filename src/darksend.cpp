@@ -1292,8 +1292,7 @@ bool CDarkSendPool::SplitUpMoney(bool justCollateral)
     std::string strFail = "";
     vector< pair<CScript, int64> > vecSend;
 
-    int64 a = nTotalBalance;
-    if(a > 4096*COIN) a = 4096*COIN;
+    int64 a = 1*COIN;
 
     // ****** Add fees ************ /
     vecSend.push_back(make_pair(scriptChange, DARKSEND_COLLATERAL*5));
@@ -1302,27 +1301,21 @@ bool CDarkSendPool::SplitUpMoney(bool justCollateral)
     
     nTotalOut += (DARKSEND_COLLATERAL*5)+(DARKSEND_FEE*5); 
 
-    // if over 1000, start by adding 1 darksend compatible input
-    int64 compatibleDsInput = 998*COIN;
-    if(nTotalBalance > compatibleDsInput){
-        vecSend.push_back(make_pair(scriptChange, compatibleDsInput));
-        nTotalOut += (compatibleDsInput); 
-    }
-
-    // ****** Add outputs in bases of two from 4096 darkcoin in reverse *** /
+    // ****** Add outputs in bases of two from 1 darkcoin *** /
     if(!justCollateral){
         bool continuing = true;
 
         while(continuing){
-            while(nTotalOut + a < nTotalBalance-DARKSEND_FEE){
+            if(nTotalOut + a < nTotalBalance-DARKSEND_FEE){
                 //LogPrintf(" nTotalOut %"PRI64d", added %"PRI64d"\n", nTotalOut, a);
 
                 vecSend.push_back(make_pair(scriptChange, a));
                 nTotalOut += a;
+            } else {
+                continuing = false;
             }
 
-            a = a / 2;
-            if(a < 1*COIN) continuing = false;
+            a = a * 2;
         }
     }
 
