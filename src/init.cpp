@@ -1182,9 +1182,6 @@ bool AppInit2(boost::thread_group& threadGroup)
     LogPrintf("Darksend rounds %d\n", nDarksendRounds);
     LogPrintf("Anonymize Darkcoin Amount %d\n", nAnonymizeDarkcoinAmount);
 
-    //override masternode
-    strUseMasternode = GetArg("-usemasternode", "");
-
     darkSendDenominations.push_back( (500   * COIN)+1 );
     darkSendDenominations.push_back( (100   * COIN)+1 );
     darkSendDenominations.push_back( (10    * COIN)+1 );

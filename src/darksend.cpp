@@ -28,8 +28,6 @@ std::vector<int64> darkSendDenominations;
 std::vector<CTxIn> vecMasternodeAskedFor;
 /** The current darksends in progress on the network */
 std::vector<CDarksendQueue> vecDarksendQueue;
-/** Override masternode */
-std::string strUseMasternode = "";
 
 /* *** BEGIN DARKSEND MAGIC - DARKCOIN **********
     Copyright 2014, Darkcoin Developers 
@@ -1047,21 +1045,6 @@ int CDarkSendPool::GetCurrentMasterNode(int mod, int64 nBlockHeight)
     unsigned int score = 0;
     int winner = -1;
 
-    // override the winning masternode
-    if(!strUseMasternode.empty()){
-        CService overrideAddr = CService(strUseMasternode);
-
-        BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
-            if(mn.addr == overrideAddr){
-                LogPrintf("CDarkSendPool::GetCurrentMasterNode() - override %s\n", mn.addr.ToString().c_str());
-                return i;
-            }
-            i++;
-        }
-
-        return -1;
-    }
-
     // scan for winner
     BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
         mn.Check();
@@ -1346,21 +1329,6 @@ int CDarkSendPool::GetMasternodeByRank(int findRank)
 {
     int i = 0;
  
-    // override the selected masternode
-    if(!strUseMasternode.empty()){
-        CService overrideAddr = CService(strUseMasternode);
-
-        BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
-            if(mn.addr == overrideAddr){
-                LogPrintf("CDarkSendPool::GetMasternodeByRank() - override %s\n", mn.addr.ToString().c_str());
-                return i;
-            }
-            i++;
-        }
-
-        return -1;
-    }
-
     std::vector<pair<unsigned int, int> > vecMasternodeScores;
 
     i = 0;

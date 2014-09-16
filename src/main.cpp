@@ -4185,6 +4185,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
             return true;
         }
+
         bool fIsInitialDownload = IsInitialBlockDownload();
         if(fIsInitialDownload) return true;
 
@@ -5266,10 +5267,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
     txNew.vout.resize(1);
     txNew.vout[0].scriptPubKey = scriptPubKeyIn;
 
-    LogPrintf("%d\n", scriptPubKeyIn[0]);
-
     // start masternode payments
-
     bool bMasterNodePayment = false;
 
     // fees to foundation
@@ -5297,27 +5295,26 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
             winningNode = darkSendPool.GetCurrentMasterNode(1);
             if(winningNode >= 0){
                 payee.SetDestination(darkSendMasterNodes[winningNode].pubkey.GetID());   
+                pblock->payee = payee;
+                
+                payments++;
+                txNew.vout.resize(payments);
+
+                txNew.vout[payments-1].scriptPubKey = payee;
+                txNew.vout[payments-1].nValue = 0;
+
+                CTxDestination address1;
+                ExtractDestination(payee, address1);
+                CBitcoinAddress address2(address1);
+
+                LogPrintf("Masternode payment to %s\n", address2.ToString().c_str());
             } else {
                 //if enforcing, then return NULL because the block will be rejected
-                if(pblock->MasterNodePaymentsEnforcing()) {
+                if(GetAdjustedTime() > enforceMasternodePaymentsTime) {
                     LogPrintf("CreateNewBlock: Failed to detect masternode to pay\n");
                     return NULL;
                 }
             }
-
-            pblock->payee = payee;
-            
-            payments++;
-            txNew.vout.resize(payments);
-
-            txNew.vout[payments-1].scriptPubKey = payee;
-            txNew.vout[payments-1].nValue = 0;
-
-            CTxDestination address1;
-            ExtractDestination(payee, address1);
-            CBitcoinAddress address2(address1);
-
-            LogPrintf("Masternode payment to %s\n", address2.ToString().c_str());
         }
 
         // Add our coinbase tx as first transaction

@@ -22,7 +22,6 @@ extern CDarkSendSigner darkSendSigner;
 extern std::vector<CMasterNode> darkSendMasterNodes;
 extern std::vector<int64> darkSendDenominations;
 extern std::string strMasterNodePrivKey;
-extern std::string strUseMasternode;
 extern std::vector<CDarksendQueue> vecDarksendQueue;
 extern std::vector<CTxIn> vecMasternodeAskedFor;
 
