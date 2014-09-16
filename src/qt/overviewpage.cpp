@@ -354,7 +354,7 @@ void OverviewPage::darkSendStatus()
     } else if (state == POOL_STATUS_FINALIZE_TRANSACTION) {
         convert << "Finalizing transaction";
     } else if(state == POOL_STATUS_ERROR) {
-        convert << "Darksend request incomplete: " << darkSendPool.lastMessage << ". Wll retry...";
+        convert << "Darksend request incomplete: " << darkSendPool.lastMessage << ". Will retry...";
     } else if(state == POOL_STATUS_SUCCESS) {
         convert << "Darksend request complete: " << darkSendPool.lastMessage;
     } else if(state == POOL_STATUS_QUEUE) {
