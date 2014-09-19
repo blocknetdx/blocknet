@@ -85,9 +85,7 @@ void CDarkSendPool::SetNull(bool clearEverything){
 
     // -- seed random number generator (used for ordering output lists)
     unsigned int seed = 0;
-    unsigned char vs[32];
-    RAND_bytes(vs, 32);
-    std::memcpy(&seed, &vs, sizeof(seed));
+    RAND_bytes((unsigned char*)&seed, sizeof(seed));
     std::srand(seed);
 }
 
