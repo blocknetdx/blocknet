@@ -47,6 +47,11 @@
 #define MASTERNODE_EXPIRATION_MICROSECONDS     35*60*1000*1000
 #define MASTERNODE_REMOVAL_MICROSECONDS        35.5*60*1000*1000
 
+// status update message constants
+#define MASTERNODE_ACCEPTED                    1
+#define MASTERNODE_REJECTED                    0
+#define MASTERNODE_RESET                       -1
+
 class CWallet;
 class CBlock;
 class CBlockIndex;

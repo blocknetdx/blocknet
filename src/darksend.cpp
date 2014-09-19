@@ -192,7 +192,7 @@ void CDarkSendPool::Check()
         LogPrintf("CDarkSendPool::Check() -- COMPLETED -- RESETTING \n");
         SetNull(true);
         UnlockCoins();
-        if(fMasterNode) RelayDarkSendStatus(darkSendPool.sessionID, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);    
+        if(fMasterNode) RelayDarkSendStatus(darkSendPool.sessionID, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), MASTERNODE_RESET);    
         pwalletMain->Lock();
     }
 
@@ -200,7 +200,7 @@ void CDarkSendPool::Check()
     if((state == POOL_STATUS_ERROR || state == POOL_STATUS_SUCCESS) && GetTimeMillis()-lastTimeChanged >= 10000) {
         LogPrintf("CDarkSendPool::Check() -- RESETTING MESSAGE \n");
         SetNull(true);
-        if(fMasterNode) RelayDarkSendStatus(darkSendPool.sessionID, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);    
+        if(fMasterNode) RelayDarkSendStatus(darkSendPool.sessionID, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), MASTERNODE_RESET);    
         UnlockCoins();
     }
 }
@@ -299,7 +299,7 @@ void CDarkSendPool::CheckTimeout(){
                     UnlockCoins();
                 }
                 if(fMasterNode){
-                    RelayDarkSendStatus(darkSendPool.sessionID, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), -1);   
+                    RelayDarkSendStatus(darkSendPool.sessionID, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), MASTERNODE_RESET);   
                 }
                 break;
             }
@@ -580,6 +580,10 @@ void CDarkSendPool::SendDarksendDenominate(const CTransaction& collateral, std::
 }
 
 // Incoming message from masternode updating the progress of darksend
+//    newAccepted:  -1 mean's it'n not a "transaction accepted/not accepted" message, just a standard update
+//                  0 means transaction was not accepted
+//                  1 means transaction was accepted
+
 bool CDarkSendPool::StatusUpdate(int newState, int newEntriesCount, int newAccepted, std::string& error, int newSessionID){
     if(fMasterNode) return false;
     if(state == POOL_STATUS_ERROR || state == POOL_STATUS_SUCCESS) return false;
