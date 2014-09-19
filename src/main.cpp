@@ -4026,10 +4026,13 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
                 CTransaction tx2;
                 uint256 hash;
-                if(GetTransaction(i.prevout.hash, tx2, hash, true))
-                    nValueIn += tx2.vout[i.prevout.n].nValue;    
-                else
+                if(GetTransaction(i.prevout.hash, tx2, hash, true)){
+                    if(tx2.vout.size() > i.prevout.n) {
+                        nValueIn += tx2.vout[i.prevout.n].nValue;    
+                    }
+                } else{
                     missingTx = true;
+                }
             }
 
 

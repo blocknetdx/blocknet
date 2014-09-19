@@ -380,6 +380,8 @@ bool CDarkSendPool::SignatureValid(const CScript& newSig, const CTxIn& newVin){
 
 // check to make sure the collateral provided by the client is valid
 bool CDarkSendPool::IsCollateralValid(const CTransaction& txCollateral){    
+    if(txCollateral.vout.size() < 1) return false;
+
     if(txCollateral.vout[0].scriptPubKey != collateralPubKey || 
        txCollateral.vout[0].nValue != DARKSEND_COLLATERAL) {
         if(fDebug) LogPrintf ("CDarkSendPool::IsCollateralValid - not correct amount or addr (0)\n");
@@ -1396,6 +1398,9 @@ int CDarkSendPool::GetInputDarksendRounds(CTxIn in, int rounds)
 
     CWalletTx tx;
     if(pwalletMain->GetTransaction(in.prevout.hash,tx)){
+        // bounds check
+        if(in.prevout.n >= tx.vout.size()) return -4;
+
         if(tx.vout[in.prevout.n].nValue == DARKSEND_FEE) return -3;
 
         if(rounds == 0){ //make sure the final output is non-denominate

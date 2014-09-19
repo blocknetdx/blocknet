@@ -1761,7 +1761,8 @@ int64 CWallet::GetTotalValue(std::vector<CTxIn> vCoins) {
         if (mapWallet.count(i.prevout.hash))
         {
             CWalletTx& wtx = mapWallet[i.prevout.hash];
-            nTotalValue += wtx.vout[i.prevout.n].nValue;
+            if(i.prevout.n < wtx.vout.size())
+                nTotalValue += wtx.vout[i.prevout.n].nValue;
         } else {
             LogPrintf("GetTotalValue -- Couldn't find transaction\n");
         }
