@@ -3910,7 +3910,6 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         int64 nAmount;
         vRecv >> nAmount;
 
-        int accepted;
         std::string error = "";
 
         if(!darkSendPool.IsCompatibleWithSession(nAmount, error))
@@ -3969,7 +3968,6 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         std::vector<CTxOut> out;
         vRecv >> in >> nAmount >> txCollateral >> out;
 
-        int accepted = 0;
         std::string error = "";
 
 /*        if(!darkSendPool.IsCompatibleWithEntries(out))
