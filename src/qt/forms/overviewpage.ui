@@ -301,10 +301,10 @@
          <widget class="QPushButton" name="runAutoDenom">
           <property name="geometry">
            <rect>
-            <x>90</x>
-            <y>10</y>
-            <width>181</width>
-            <height>27</height>
+            <x>251</x>
+            <y>17</y>
+            <width>1</width>
+            <height>1</height>
            </rect>
           </property>
           <property name="palette">
