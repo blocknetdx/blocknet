@@ -281,6 +281,7 @@ public:
     int sessionTries;
 
     int lastSplitUpBlock;
+    int splitUpInARow; // how many splits we've done since a success?
     int cachedLastSuccess;
     int cachedNumBlocks; //used for the overview screen
 
@@ -302,6 +303,7 @@ public:
         cachedLastSuccess = 0;
         cachedNumBlocks = 0;
         unitTest = false;
+        splitUpInARow = 0;
 
         SetCollateralAddress(strAddress);
         SetNull();

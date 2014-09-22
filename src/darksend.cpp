@@ -1007,6 +1007,7 @@ void CDarkSendPool::CompletedTransaction(bool error, std::string lastMessageNew)
 
         // To avoid race conditions, we'll only let DS run once per block
         cachedLastSuccess = nBestHeight;
+        splitUpInARow = 0;
     }
     lastMessage = lastMessageNew;
 
@@ -1264,6 +1265,12 @@ bool CDarkSendPool::SplitUpMoney(bool justCollateral)
         return false;
     }
 
+    if(splitUpInARow >= 2){
+        LogPrintf("Error: Darksend SplitUpMoney was called multiple times in a row. This should not happen. Please submit a detailed explanation of the steps it took to create this error and submit to evan@darkcoin.io. \n");
+        fEnableDarksend = false;
+        return false;
+    }
+
     int64 nTotalBalance = pwalletMain->GetDenominatedBalance(false);
     if(justCollateral && nTotalBalance > 1*COIN) nTotalBalance = 1*COIN;
     int64 nTotalOut = 0;
@@ -1333,6 +1340,7 @@ bool CDarkSendPool::SplitUpMoney(bool justCollateral)
 
     LogPrintf("SplitUpMoney Success: tx %s\n", wtx.GetHash().GetHex().c_str());
 
+    splitUpInARow++;
     return true;
 }
 
