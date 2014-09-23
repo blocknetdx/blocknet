@@ -1511,13 +1511,15 @@ bool CDarkSendPool::IsCompatibleWithSession(int64 nAmount, std::string& strReaso
         sessionUsers++;
         lastTimeChanged = GetTimeMillis();
 
-        //broadcast that I'm accepting entries, only if it's the first entry though
-        CDarksendQueue dsq;
-        dsq.nDenom = GetDenominationsByAmount(nAmount);
-        dsq.vin = vinMasterNode;
-        dsq.time = GetTime();
-        dsq.Sign();
-        dsq.Relay();
+        if(!unitTest){
+            //broadcast that I'm accepting entries, only if it's the first entry though
+            CDarksendQueue dsq;
+            dsq.nDenom = GetDenominationsByAmount(nAmount);
+            dsq.vin = vinMasterNode;
+            dsq.time = GetTime();
+            dsq.Sign();
+            dsq.Relay();
+        }
 
         UpdateState(POOL_STATUS_QUEUE);
 

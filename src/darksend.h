@@ -379,6 +379,11 @@ public:
         return POOL_MAX_TRANSACTIONS;
     }
 
+    //Do we have enough users to take entries? 
+    bool IsSessionReady(){
+        return sessionUsers >= GetMaxPoolTransactions();
+    }
+
 
     // Are these outputs compatible with other client in the pool?
     bool IsCompatibleWithEntries(std::vector<CTxOut> vout);

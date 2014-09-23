@@ -3962,6 +3962,10 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             return false;
         }
 
+        if(!fMasterNode){
+            return false;
+        }
+
         std::vector<CTxIn> in;
         int64 nAmount;
         CTransaction txCollateral;
@@ -3970,26 +3974,22 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         std::string error = "";
 
-/*        if(!darkSendPool.IsCompatibleWithEntries(out))
+        //do we have enough users in the current session?
+        if(darkSendPool.IsSessionReady()){
+            LogPrintf("dsi -- session not complete! \n");
+            error = "session not complete!";
+            pfrom->PushMessage("dssu", darkSendPool.sessionID, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), MASTERNODE_REJECTED, error);
+            return false;
+        }
+
+        //do we have the same denominations as the current session?
+        if(!darkSendPool.IsCompatibleWithEntries(out))
         {
             LogPrintf("dsi -- not compatible with existing transactions! \n");
             error = "not compatible with existing transactions";
             pfrom->PushMessage("dssu", darkSendPool.sessionID, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), MASTERNODE_REJECTED, error);
             return true;
         }
-
-        or
-
-        if(GetDenominationByAmount(sessionAmount) != GetDenominationByAmount(nAmount)){
-    
-        }
-
-        also
-
-        if(entries.size() == 0 && GetDenominationByAmount(sessionAmount) != GetDenominationByAmount(nAmount)) {
-            sessionAmount = nAmount;
-        }
-*/
         
         //check it like a transaction
         {
