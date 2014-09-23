@@ -233,7 +233,7 @@ public:
 class CDarkSendPool
 {
 public:
-    static const int MIN_PEER_PROTO_VERSION = 70038;
+    static const int MIN_PEER_PROTO_VERSION = 70039;
 
     // clients entries
     std::vector<CDarkSendEntry> myEntries;
@@ -377,6 +377,11 @@ public:
 
         //use the production amount
         return POOL_MAX_TRANSACTIONS;
+    }
+
+    //Do we have enough users to take entries? 
+    bool IsSessionReady(){
+        return sessionUsers >= GetMaxPoolTransactions();
     }
 
 

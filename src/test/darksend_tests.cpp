@@ -5,6 +5,7 @@
 #include "base58.h"
 #include "util.h"
 #include "main.h"
+#include "darksend.h"
 
 using namespace std;
 
@@ -108,76 +109,33 @@ BOOST_AUTO_TEST_CASE(darksend_denom)
 
 BOOST_AUTO_TEST_CASE(darksend_session)
 {
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(511*COIN));
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(131*COIN) == false);
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(31*COIN) == false);
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(151*COIN) == false);
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(751*COIN) == false);
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(531*COIN));
-    if(darkSendPool.GetMaxPoolTransactions() >= 3) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(551*COIN));
-    if(darkSendPool.GetMaxPoolTransactions() >= 4) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(571*COIN));
-    if(darkSendPool.GetMaxPoolTransactions() >= 5) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(514*COIN));
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(531*COIN) == false);
+    darkSendPool.unitTest = true;
+    
+    std::string strReason = "";
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(511*COIN, strReason));
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(131*COIN, strReason) == false);
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(31*COIN, strReason) == false);
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(151*COIN, strReason) == false);
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(751*COIN, strReason) == false);
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(531*COIN, strReason));
+    if(darkSendPool.GetMaxPoolTransactions() >= 3) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(551*COIN, strReason));
+    if(darkSendPool.GetMaxPoolTransactions() >= 4) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(571*COIN, strReason));
+    if(darkSendPool.GetMaxPoolTransactions() >= 5) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(514*COIN, strReason));
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(531*COIN, strReason) == false);
 
     darkSendPool.SetNull();
 
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(12*COIN));
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(131*COIN) == false);
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(151*COIN) == false);
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(751*COIN) == false);
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(34*COIN));
-    if(darkSendPool.GetMaxPoolTransactions() >= 3) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(22*COIN));
-    if(darkSendPool.GetMaxPoolTransactions() >= 4) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(32*COIN));
-    if(darkSendPool.GetMaxPoolTransactions() >= 5) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(44*COIN));
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(33*COIN) == false);
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(12*COIN, strReason));
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(131*COIN, strReason) == false);
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(151*COIN, strReason) == false);
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(751*COIN, strReason) == false);
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(34*COIN, strReason));
+    if(darkSendPool.GetMaxPoolTransactions() >= 3) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(22*COIN, strReason));
+    if(darkSendPool.GetMaxPoolTransactions() >= 4) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(32*COIN, strReason));
+    if(darkSendPool.GetMaxPoolTransactions() >= 5) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(44*COIN, strReason));
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(33*COIN, strReason) == false);
 
 }
-
-BOOST_AUTO_TEST_CASE(darksend_masternode_voting)
-{
-    uint256 n1 = 10000;
-    uint256 n2 = 10001;
-    CTxIn fromMn1 = CTxIn(n2, 0);
-    CTxIn testVin1 = CTxIn(n1, 0);
-    CTxIn testVin2 = CTxIn(n2, 0);
-    CService addr;
-    int i = 0;
-    std::vector<unsigned char> vchSig;
-
-    CScript payee = CScript();
-
-    //setup a couple fake masternodes
-    CMasterNode mn1(addr, testVin1, CPubKey(), vchSig, 0, CPubKey());
-    darkSendMasterNodes.push_back(mn1);
-
-    CMasterNode mn2(addr, testVin2, CPubKey(), vchSig, 0, CPubKey());
-    darkSendMasterNodes.push_back(mn2);
-
-    darkSendPool.unitTest = true;
-
-    // return -1 if nothing present
-    BOOST_CHECK(darkSendPool.GetCurrentMasterNodeConsessus(1000, payee) == false);
-
-    //block 1000
-    for(i = 0; i <= 2; i++)
-        darkSendPool.SubmitMasternodeVote(testVin1, fromMn1,1000);
-
-    // not enough votes
-    BOOST_CHECK(darkSendPool.GetCurrentMasterNodeConsessus(1000, payee) == false); // 
-
-    for(i = 0; i <= 4; i++)
-        darkSendPool.SubmitMasternodeVote(testVin2, fromMn1, 1000);
-
-    // not enough votes
-    BOOST_CHECK(darkSendPool.GetCurrentMasterNodeConsessus(1000, payee) == false); // 
-
-    for(i = 0; i <= 4; i++)
-        darkSendPool.SubmitMasternodeVote(testVin2, fromMn1, 1000);
-    
-    // should have 8 votes now
-    BOOST_CHECK(darkSendPool.GetCurrentMasterNodeConsessus(1000, payee) == true); // vin2
-}
-
 
 BOOST_AUTO_TEST_CASE(darksend_masternode_search_by_vin)
 {
@@ -259,6 +217,9 @@ BOOST_AUTO_TEST_CASE(darksend_pool_add_entry)
     std::vector<CTxOut> vout;
     vout.push_back( CTxOut(1, CScript()) );
     vout.push_back( CTxOut(1, CScript()) );
+
+    //set to entries mode
+    darkSendPool.state = POOL_STATUS_ACCEPTING_ENTRIES;
 
     //try added entries
     CDarkSendEntry e;
