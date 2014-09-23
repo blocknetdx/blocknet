@@ -3975,7 +3975,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         std::string error = "";
 
         //do we have enough users in the current session?
-        if(darkSendPool.IsSessionReady()){
+        if(!darkSendPool.IsSessionReady()){
             LogPrintf("dsi -- session not complete! \n");
             error = "session not complete!";
             pfrom->PushMessage("dssu", darkSendPool.sessionID, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), MASTERNODE_REJECTED, error);
