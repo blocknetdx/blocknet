@@ -218,6 +218,9 @@ BOOST_AUTO_TEST_CASE(darksend_pool_add_entry)
     vout.push_back( CTxOut(1, CScript()) );
     vout.push_back( CTxOut(1, CScript()) );
 
+    //set to entries mode
+    darkSendPool.state = POOL_STATUS_ACCEPTING_ENTRIES;
+
     //try added entries
     CDarkSendEntry e;
     BOOST_CHECK(e.Add(vin, 1, CTransaction(), vout) == true);
