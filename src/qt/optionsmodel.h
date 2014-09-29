@@ -30,6 +30,8 @@ public:
         DisplayAddresses,  // bool
         Language,          // QString
         CoinControlFeatures, // bool
+        DarksendRounds,    // int
+        AnonymizeDarkcoinAmount, //int
         OptionIDRowCount,
     };
 
@@ -63,6 +65,8 @@ private:
 signals:
     void displayUnitChanged(int unit);
     void transactionFeeChanged(qint64);
+    void darksendRoundsChanged(int);
+    void anonymizeDarkcoinAmountChanged(int);
     void coinControlFeaturesChanged(bool);
 };
 

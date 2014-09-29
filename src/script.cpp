@@ -228,7 +228,7 @@ const char* GetOpName(opcodetype opcode)
 }
 
 bool IsCanonicalPubKey(const valtype &vchPubKey) {
-    if (vchPubKey.size() < 33)
+    if (vchPubKey.size() < 25)
         return error("Non-canonical public key: too short");
     if (vchPubKey[0] == 0x04) {
         if (vchPubKey.size() != 65)
@@ -237,7 +237,7 @@ bool IsCanonicalPubKey(const valtype &vchPubKey) {
         if (vchPubKey.size() != 33)
             return error("Non-canonical public key: invalid length for compressed key");
     } else {
-        return error("Non-canonical public key: compressed nor uncompressed");
+        return error("Non-canonical public key: compressed nor uncompressed : size %d", (int)vchPubKey.size());
     }
     return true;
 }
@@ -1810,6 +1810,22 @@ unsigned int CScript::GetSigOpCount(const CScript& scriptSig) const
     /// ... and return its opcount:
     CScript subscript(data.begin(), data.end());
     return subscript.GetSigOpCount(true);
+}
+
+bool CScript::IsDarksendScript() const
+{
+    const_iterator pc = this->begin();
+    vector<unsigned char> data;
+    while (pc < this->end())
+    {
+        opcodetype opcode;
+        if (!this->GetOp(pc, opcode, data))
+            continue;
+        if (opcode == OP_NOP)
+            return true;
+    }
+
+    return false;
 }
 
 bool CScript::IsPayToScriptHash() const

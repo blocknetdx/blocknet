@@ -71,6 +71,7 @@
 #include "main.h"
 #include "txdb.h"
 #include "uint256.h"
+#include "darksend.h"
 
 using namespace json_spirit;
 using namespace std;
@@ -473,7 +474,7 @@ Value getcheckpoint(const Array& params, bool fHelp)
     result.push_back(Pair("subscribemode", IsSyncCheckpointEnforced()? "enforce" : "advisory"));
     if (mapArgs.count("-checkpointkey"))
         result.push_back(Pair("checkpointmaster", true));
-
+    result.push_back(Pair("enforcing", GetAdjustedTime() > enforceMasternodePaymentsTime ? "on" : "off"));
     return result;
 }
 

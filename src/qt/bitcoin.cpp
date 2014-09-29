@@ -24,6 +24,8 @@
 #include <QTimer>
 #include <QTranslator>
 #include <QLibraryInfo>
+#include <iostream>
+#include <fstream>  
 
 #ifdef Q_OS_MAC
 #include "macdockiconhandler.h"
@@ -250,8 +252,12 @@ int main(int argc, char *argv[])
 
                 optionsModel.Upgrade(); // Must be done after AppInit2
 
+
                 if (splashref)
                     splash.finish(&window);
+
+                //make sure user has agreed to TOU
+                window.checkTOU();
 
                 ClientModel clientModel(&optionsModel);
                 WalletModel *walletModel = 0;

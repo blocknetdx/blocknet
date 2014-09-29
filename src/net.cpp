@@ -6,6 +6,7 @@
 #include "db.h"
 #include "net.h"
 #include "init.h"
+#include "key.h"
 #include "addrman.h"
 #include "ui_interface.h"
 #include "script.h"
@@ -452,13 +453,14 @@ CNode* FindNode(std::string addrName)
 CNode* FindNode(const CService& addr)
 {
     LOCK(cs_vNodes);
-    BOOST_FOREACH(CNode* pnode, vNodes)
+    BOOST_FOREACH(CNode* pnode, vNodes){
         if ((CService)pnode->addr == addr)
             return (pnode);
+    }
     return NULL;
 }
 
-CNode* ConnectNode(CAddress addrConnect, const char *pszDest)
+CNode* ConnectNode(CAddress addrConnect, const char *pszDest, bool darkSendMaster)
 {
     if (pszDest == NULL) {
         if (IsLocal(addrConnect))
@@ -468,11 +470,13 @@ CNode* ConnectNode(CAddress addrConnect, const char *pszDest)
         CNode* pnode = FindNode((CService)addrConnect);
         if (pnode)
         {
+            if(darkSendMaster)
+                pnode->fDarkSendMaster = true;
+
             pnode->AddRef();
             return pnode;
         }
     }
-
 
     /// debug print
     LogPrintf("trying connection %s lastseen=%.1fdays\n",
@@ -508,6 +512,7 @@ CNode* ConnectNode(CAddress addrConnect, const char *pszDest)
         }
 
         pnode->nTimeConnected = GetTime();
+        if(darkSendMaster) pnode->fDarkSendMaster = true;
         return pnode;
     }
     else
@@ -932,6 +937,8 @@ void ThreadSocketHandler()
                         nInbound++;
             }
 
+            LogPrintf("maxconnections check %d\n", nMaxConnections - MAX_OUTBOUND_CONNECTIONS);
+            
             if (hSocket == INVALID_SOCKET)
             {
                 int nErr = WSAGetLastError();
@@ -1865,11 +1872,6 @@ public:
 instance_of_cnetcleanup;
 
 
-
-
-
-
-
 void RelayTransaction(const CTransaction& tx, const uint256& hash)
 {
     CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
@@ -1909,6 +1911,36 @@ void RelayTransaction(const CTransaction& tx, const uint256& hash, const CDataSt
     }
 }
 
+void RelayDarkSendFinalTransaction(const int sessionID, const CTransaction& txNew)
+{
+    LOCK(cs_vNodes);
+    BOOST_FOREACH(CNode* pnode, vNodes)
+    {
+        pnode->PushMessage("dsf", sessionID, txNew);
+    }
+}
+
+void RelayDarkSendIn(const std::vector<CTxIn>& in, const int64& nAmount, const CTransaction& txCollateral, const std::vector<CTxOut>& out)
+{
+    LOCK(cs_vNodes);
+
+    BOOST_FOREACH(CNode* pnode, vNodes)
+    {
+        if(darkSendPool.submittedToMasternode != pnode->addr) continue;
+        LogPrintf("RelayDarkSendIn - found master, relaying message - %s \n", pnode->addr.ToString().c_str());
+        pnode->PushMessage("dsi", in, nAmount, txCollateral, out);
+    }
+}
+
+void RelayDarkSendStatus(const int sessionID, const int newState, const int newEntriesCount, const int newAccepted, const std::string error)
+{
+    LOCK(cs_vNodes);
+    BOOST_FOREACH(CNode* pnode, vNodes)
+    {
+        pnode->PushMessage("dssu", sessionID, newState, newEntriesCount, newAccepted, error);
+    }
+}
+
 void RelayDarkSendElectionEntry(const CTxIn vin, const CService addr, const std::vector<unsigned char> vchSig, const int64 nNow, const CPubKey pubkey, const CPubKey pubkey2, const int count, const int current, const int64 lastUpdated)
 {
     LOCK(cs_vNodes);
@@ -1928,11 +1960,11 @@ void RelayDarkSendElectionEntryPing(const CTxIn vin, const std::vector<unsigned 
 }
 
 
-void RelayDarkSendMasterNodeConsessusVote(const CTxIn inWinningMasternode, const CTxIn inFromMasternode, const int64 nBlockHeight, const std::vector<unsigned char>& vchSig)
+void RelayDarkSendCompletedTransaction(const int sessionID, const bool error, const std::string errorMessage)
 {
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
-        pnode->PushMessage("dmcv", inWinningMasternode, inFromMasternode, nBlockHeight, vchSig);
-    }   
+        pnode->PushMessage("dsc", sessionID, error, errorMessage);
+    }
 }

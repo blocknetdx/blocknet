@@ -127,14 +127,16 @@ inline void MilliSleep(int64 n)
 #endif
 
 
-
-
-
-
-
-
 extern std::map<std::string, std::string> mapArgs;
 extern std::map<std::string, std::vector<std::string> > mapMultiArgs;
+extern bool fMasterNode;
+extern int nDarksendRounds;
+extern int nAnonymizeDarkcoinAmount;
+extern bool fEnableDarksend;
+extern int64 enforceMasternodePaymentsTime;
+extern std::string strMasterNodeAddr;
+extern int keysLoaded;
+extern bool fSucessfullyLoaded;
 extern bool fDebug;
 extern bool fDebugNet;
 extern bool fPrintToConsole;
@@ -227,13 +229,7 @@ std::string FormatSubVersion(const std::string& name, int nClientVersion, const 
 void AddTimeData(const CNetAddr& ip, int64 nTime);
 void runCommand(std::string strCommand);
 
-
-
-
-
-
-
-
+int64 roundUp64(int64 numToRound, int64 multiple);
 
 inline std::string i64tostr(int64 n)
 {

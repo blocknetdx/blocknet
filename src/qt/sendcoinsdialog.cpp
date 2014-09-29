@@ -14,9 +14,12 @@
 #include "coincontroldialog.h"
 
 #include <QMessageBox>
+#include <QTimer>
 #include <QTextDocument>
 #include <QScrollBar>
 #include <QClipboard>
+#include <iostream>
+#include <fstream>  
 
 SendCoinsDialog::SendCoinsDialog(QWidget *parent) :
     QDialog(parent),
@@ -45,6 +48,7 @@ SendCoinsDialog::SendCoinsDialog(QWidget *parent) :
     connect(ui->pushButtonCoinControl, SIGNAL(clicked()), this, SLOT(coinControlButtonClicked()));
     connect(ui->checkBoxCoinControlChange, SIGNAL(stateChanged(int)), this, SLOT(coinControlChangeChecked(int)));
     connect(ui->lineEditCoinControlChange, SIGNAL(textEdited(const QString &)), this, SLOT(coinControlChangeEdited(const QString &)));
+    connect(ui->inputType, SIGNAL(currentIndexChanged ( int )), this, SLOT(updateDisplayUnit()));
 
     // Coin Control: clipboard actions
     QAction *clipboardQuantityAction = new QAction(tr("Copy quantity"), this);
@@ -63,6 +67,7 @@ SendCoinsDialog::SendCoinsDialog(QWidget *parent) :
     connect(clipboardPriorityAction, SIGNAL(triggered()), this, SLOT(coinControlClipboardPriority()));
     connect(clipboardLowOutputAction, SIGNAL(triggered()), this, SLOT(coinControlClipboardLowOutput()));
     connect(clipboardChangeAction, SIGNAL(triggered()), this, SLOT(coinControlClipboardChange()));
+
     ui->labelCoinControlQuantity->addAction(clipboardQuantityAction);
     ui->labelCoinControlAmount->addAction(clipboardAmountAction);
     ui->labelCoinControlFee->addAction(clipboardFeeAction);
@@ -73,6 +78,7 @@ SendCoinsDialog::SendCoinsDialog(QWidget *parent) :
     ui->labelCoinControlChange->addAction(clipboardChangeAction);
 
     fNewRecipientAllowed = true;
+    boolCheckedBalance = false;
 }
 
 void SendCoinsDialog::setModel(WalletModel *model)
@@ -89,8 +95,8 @@ void SendCoinsDialog::setModel(WalletModel *model)
     }
     if(model && model->getOptionsModel())
     {
-        setBalance(model->getBalance(), model->getUnconfirmedBalance(), model->getImmatureBalance());
-        connect(model, SIGNAL(balanceChanged(qint64, qint64, qint64)), this, SLOT(setBalance(qint64, qint64, qint64)));
+        setBalance(model->getBalance(), model->getUnconfirmedBalance(), model->getImmatureBalance(), model->getAnonymizedBalance());
+        connect(model, SIGNAL(balanceChanged(qint64, qint64, qint64, qint64)), this, SLOT(setBalance(qint64, qint64, qint64, qint64)));
         connect(model->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(updateDisplayUnit()));
 
         // Coin Control
@@ -136,16 +142,31 @@ void SendCoinsDialog::on_sendButton_clicked()
         return;
     }
 
+    QString funds = "Using <b>Anonymous Funds</b>";
+    recipients[0].inputType = "ONLY_DENOMINATED";
+
+    if(ui->inputType->currentText() == "Use Anonymous Funds"){
+        recipients[0].inputType = "ONLY_DENOMINATED";
+        funds = "Using <b>Anonymous Funds</b>";
+    } else if(ui->inputType->currentText() == "Use Non-Anonymous Funds"){
+        recipients[0].inputType = "ONLY_NONDENOMINATED";
+        funds = "Using <b>NON-ANONYMOUS Funds</b>";
+    } else {
+        recipients[0].inputType = "ALL_COINS";
+        funds = "Using <b>ANY AVAILABLE Funds</b>";
+    }
+
     // Format confirmation message
     QStringList formatted;
     foreach(const SendCoinsRecipient &rcp, recipients)
     {
 #if QT_VERSION < 0x050000
-        formatted.append(tr("<b>%1</b> to %2 (%3)").arg(BitcoinUnits::formatWithUnit(BitcoinUnits::BTC, rcp.amount), Qt::escape(rcp.label), rcp.address));
+        formatted.append(tr("<b>%1</b> to %2 (%3) %4").arg(BitcoinUnits::formatWithUnit(BitcoinUnits::BTC, rcp.amount), Qt::escape(rcp.label), rcp.address, funds));
 #else
-        formatted.append(tr("<b>%1</b> to %2 (%3)").arg(BitcoinUnits::formatWithUnit(BitcoinUnits::BTC, rcp.amount), rcp.label.toHtmlEscaped(), rcp.address));
+        formatted.append(tr("<b>%1</b> to %2 (%3) %4").arg(BitcoinUnits::formatWithUnit(BitcoinUnits::BTC, rcp.amount), rcp.label.toHtmlEscaped(), rcp.address, funds));
 #endif
     }
+
 
     fNewRecipientAllowed = false;
 
@@ -364,23 +385,45 @@ bool SendCoinsDialog::handleURI(const QString &uri)
     return false;
 }
 
-void SendCoinsDialog::setBalance(qint64 balance, qint64 unconfirmedBalance, qint64 immatureBalance)
+void SendCoinsDialog::setBalance(qint64 balance, qint64 unconfirmedBalance, qint64 immatureBalance, qint64 anonymizedBalance)
 {
     Q_UNUSED(unconfirmedBalance);
     Q_UNUSED(immatureBalance);
+    Q_UNUSED(anonymizedBalance);
     if(!model || !model->getOptionsModel())
         return;
 
     int unit = model->getOptionsModel()->getDisplayUnit();
-    ui->labelBalance->setText(BitcoinUnits::formatWithUnit(unit, balance));
+
+    uint64 bal = 0;
+    if(ui->inputType->currentText() == "Use Anonymous Funds"){
+        bal = anonymizedBalance;
+    } else if(ui->inputType->currentText() == "Use Non-Anonymous Funds"){
+        bal = balance - anonymizedBalance;
+    } else {
+        bal = balance;
+    }
+
+
+    ui->labelBalance->setText(BitcoinUnits::formatWithUnit(unit, bal));
 }
 
 void SendCoinsDialog::updateDisplayUnit()
 {
     if(model && model->getOptionsModel())
     {
+
+        uint64 balance = 0;
+        if(ui->inputType->currentText() == "Use Anonymous Funds"){
+            balance = model->getAnonymizedBalance();
+        } else if(ui->inputType->currentText() == "Use Non-Anonymous Funds"){
+            balance = model->getBalance() - model->getAnonymizedBalance();
+        } else {
+            balance = model->getBalance();
+        }
+
         // Update labelBalance with the current balance and the current unit
-        ui->labelBalance->setText(BitcoinUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), model->getBalance()));
+        ui->labelBalance->setText(BitcoinUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), balance));
     }
 }
 
@@ -479,7 +522,7 @@ void SendCoinsDialog::coinControlChangeEdited(const QString & text)
         else if (!CBitcoinAddress(text.toStdString()).IsValid())
         {
             ui->labelCoinControlChangeLabel->setStyleSheet("QLabel{color:red;}");
-            ui->labelCoinControlChangeLabel->setText(tr("Warning: Invalid Bitcoin address"));
+            ui->labelCoinControlChangeLabel->setText(tr("Warning: Invalid Darkcoin address"));
         }
         else
         {

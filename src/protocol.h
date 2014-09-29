@@ -21,7 +21,6 @@ static inline unsigned short GetDefaultPort(const bool testnet = fTestNet)
     return testnet ? 19999 : 9999;
 }
 
-
 void GetMessageStart(unsigned char pchMessageStart[], bool fPersistent = false);
 
 /** Message header.

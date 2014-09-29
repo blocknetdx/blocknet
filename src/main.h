@@ -8,6 +8,8 @@
 #include "bignum.h"
 #include "sync.h"
 #include "net.h"
+#include "key.h"
+#include "util.h"
 #include "script.h"
 #include "hashblock.h"
 #include "base58.h"
@@ -16,34 +18,49 @@
 #include <algorithm>
 #include <boost/lexical_cast.hpp>
 
-//#define static_assert(numeric_limits<double>::max_exponent() > 8, "your double sux");
 
-class CWallet;
-class CBlock;
-class CBlockIndex;
-class CKeyItem;
-class CReserveKey;
-
-class CAddress;
-class CInv;
-class CNode;
-class CDarkSendPool;
-class CDarkSendSigner;
-class CMasterNode;
-class CMasterNodeVote;
-class CBitcoinAddress;
-
-#define MASTERNODE_PAYMENTS_MIN_VOTES 5
-#define MASTERNODE_PAYMENTS_MAX 1
-#define MASTERNODE_PAYMENTS_EXPIRATION 10
 #define START_MASTERNODE_PAYMENTS_TESTNET 1403568776 //Tue, 24 Jun 2014 00:12:56 GMT
 #define START_MASTERNODE_PAYMENTS 1403728576 //Wed, 25 Jun 2014 20:36:16 GMT
+
+#define POOL_MAX_TRANSACTIONS                  3 // wait for X transactions to merge and publish
+#define POOL_STATUS_UNKNOWN                    0 // waiting for update
+#define POOL_STATUS_IDLE                       1 // waiting for update
+#define POOL_STATUS_QUEUE                      2 // waiting in a queue
+#define POOL_STATUS_ACCEPTING_ENTRIES          3 // accepting entries
+#define POOL_STATUS_FINALIZE_TRANSACTION       4 // master node will broadcast what it accepted
+#define POOL_STATUS_SIGNING                    5 // check inputs/outputs, sign final tx
+#define POOL_STATUS_TRANSMISSION               6 // transmit transaction
+#define POOL_STATUS_ERROR                      7 // error
+#define POOL_STATUS_SUCCESS                    8 // success
+
+#define MASTERNODE_NOT_PROCESSED               0 // initial state
+#define MASTERNODE_IS_CAPABLE                  1
+#define MASTERNODE_NOT_CAPABLE                 2
+#define MASTERNODE_STOPPED                     3
+#define MASTERNODE_INPUT_TOO_NEW               4
+#define MASTERNODE_PORT_NOT_OPEN               6
+#define MASTERNODE_PORT_OPEN                   7
 
 #define MASTERNODE_MIN_CONFIRMATIONS           6
 #define MASTERNODE_MIN_MICROSECONDS            5*60*1000*1000
 #define MASTERNODE_PING_SECONDS                30*60
 #define MASTERNODE_EXPIRATION_MICROSECONDS     35*60*1000*1000
 #define MASTERNODE_REMOVAL_MICROSECONDS        35.5*60*1000*1000
+
+// status update message constants
+#define MASTERNODE_ACCEPTED                    1
+#define MASTERNODE_REJECTED                    0
+#define MASTERNODE_RESET                       -1
+
+class CWallet;
+class CBlock;
+class CBlockIndex;
+class CKeyItem; 
+class CReserveKey;
+
+class CAddress;
+class CInv;
+class CNode;
 
 struct CBlockIndexWorkComparator;
 
@@ -93,11 +110,6 @@ static const int fHaveUPnP = false;
 
 extern CScript COINBASE_FLAGS;
 
-
-
-
-
-
 extern CCriticalSection cs_main;
 extern std::map<uint256, CBlockIndex*> mapBlockIndex;
 extern std::set<CBlockIndex*, CBlockIndexWorkComparator> setBlockIndexValid;
@@ -124,15 +136,8 @@ extern int nScriptCheckThreads;
 extern int nAskedForBlocks;    // Nodes sent a getblocks 0
 extern bool fTxIndex;
 extern unsigned int nCoinCacheSize;
-extern CDarkSendPool darkSendPool;
-extern CDarkSendSigner darkSendSigner;
-extern std::vector<CMasterNode> darkSendMasterNodes;
-extern std::vector<CMasterNodeVote> darkSendMasterNodeVotes;
-extern std::string strMasterNodePrivKey;
-extern int64 enforceMasternodePaymentsTime;
 extern CWallet pmainWallet;
 extern std::map<uint256, CBlock*> mapOrphanBlocks;
-extern std::vector<std::pair<int64, std::pair<CTxIn, int> > > vecBlockVotes;
 
 // Settings
 extern int64 nTransactionFee;
@@ -357,6 +362,7 @@ class CTxIn
 public:
     COutPoint prevout;
     CScript scriptSig;
+    CScript prevPubKey;
     unsigned int nSequence;
 
     CTxIn()
@@ -611,7 +617,7 @@ public:
     }
 
     /** Check for standard transaction types
-        @param[in] mapInputs	Map of previous transactions that have outputs we're spending
+        @param[in] mapInputs    Map of previous transactions that have outputs we're spending
         @return True if all inputs (scriptSigs) use only standard transaction forms
     */
     bool AreInputsStandard(CCoinsViewCache& mapInputs) const;
@@ -623,7 +629,7 @@ public:
 
     /** Count ECDSA signature operations in pay-to-script-hash inputs.
 
-        @param[in] mapInputs	Map of previous transactions that have outputs we're spending
+        @param[in] mapInputs    Map of previous transactions that have outputs we're spending
         @return maximum number of sigops required to validate this transaction's inputs
      */
     unsigned int GetP2SHSigOpCount(CCoinsViewCache& mapInputs) const;
@@ -647,8 +653,8 @@ public:
         Note that lightweight clients may not know anything besides the hash of previous transactions,
         so may not be able to calculate this.
 
-        @param[in] mapInputs	Map of previous transactions that have outputs we're spending
-        @return	Sum of value of all inputs (scriptSigs)
+        @param[in] mapInputs    Map of previous transactions that have outputs we're spending
+        @return Sum of value of all inputs (scriptSigs)
      */
     int64 GetValueIn(CCoinsViewCache& mapInputs) const;
 
@@ -659,8 +665,8 @@ public:
         return dPriority > COIN * 576 / 250;
     }
 
-// Apply the effects of this transaction on the UTXO set represented by view
-void UpdateCoins(const CTransaction& tx, CValidationState &state, CCoinsViewCache &inputs, CTxUndo &txundo, int nHeight, const uint256 &txhash);
+    // Apply the effects of this transaction on the UTXO set represented by view
+    void UpdateCoins(const CTransaction& tx, CValidationState &state, CCoinsViewCache &inputs, CTxUndo &txundo, int nHeight, const uint256 &txhash);
 
     int64 GetMinFee(unsigned int nBlockSize=1, bool fAllowFree=true, enum GetMinFee_mode mode=GMF_BLOCK) const;
 
@@ -720,7 +726,7 @@ void UpdateCoins(const CTransaction& tx, CValidationState &state, CCoinsViewCach
     bool AcceptToMemoryPool(CValidationState &state, bool fCheckInputs=true, bool fLimitFree = true, bool* pfMissingInputs=NULL);
 
     // Check everything without accepting into the pool
-    bool IsAcceptable(CValidationState &state, bool fCheckInputs=true, bool fLimitFree = true, bool* pfMissingInputs=NULL);
+    bool IsAcceptable(CValidationState &state, bool fCheckInputs=true, bool fLimitFree = true, bool* pfMissingInputs=NULL, bool fScriptChecks=true);
     
     // Check only the inputs in a transaction
     bool AcceptableInputs(CValidationState &state, bool fLimitFree);
@@ -1660,7 +1666,7 @@ public:
         }
         return false;
     }
-    
+
     bool MasterNodePaymentsEnforcing() const
     {
         if(nTime > enforceMasternodePaymentsTime) return true;
@@ -2235,7 +2241,7 @@ public:
     std::map<COutPoint, CInPoint> mapNextTx;
 
     bool accept(CValidationState &state, CTransaction &tx, bool fCheckInputs, bool fLimitFree, bool* pfMissingInputs);
-    bool acceptable(CValidationState &state, CTransaction &tx, bool fCheckInputs, bool fLimitFree, bool* pfMissingInputs);
+    bool acceptable(CValidationState &state, CTransaction &tx, bool fCheckInputs, bool fLimitFree, bool* pfMissingInputs, bool fScriptChecks=true);
     bool acceptableInputs(CValidationState &state, CTransaction &tx, bool fLimitFree);
     bool addUnchecked(const uint256& hash, const CTransaction &tx);
     bool remove(const CTransaction &tx, bool fRecursive = false);
@@ -2389,12 +2395,12 @@ extern unsigned int cpuid_edx;
 #endif
 
 
-
+ 
 
 
 /** Used to relay blocks as header + vector<merkle branch>
  * to filtered nodes.
- */
+ */ 
 class CMerkleBlock
 {
 public:
@@ -2418,111 +2424,6 @@ public:
         READWRITE(header);
         READWRITE(txn);
     )
-};
-
-class CMasterNode
-{
-public:
-    CService addr;
-    CTxIn vin;
-    int64 lastTimeSeen;
-    CPubKey pubkey;
-    CPubKey pubkey2;
-    std::vector<unsigned char> sig;
-    int64 now;
-    int enabled;
-
-    CMasterNode(CService newAddr, CTxIn newVin, CPubKey newPubkey, std::vector<unsigned char> newSig, int64 newNow, CPubKey newPubkey2)
-    {
-        addr = newAddr;
-        vin = newVin;
-        pubkey = newPubkey;
-        pubkey2 = newPubkey2;
-        sig = newSig;
-        now = newNow;
-        enabled = 1;
-        lastTimeSeen = 0;
-    
-    }
-
-    uint256 CalculateScore(int mod=1, int64 nBlockHeight=0);
-
-    void UpdateLastSeen(int64 override=0)
-    {
-        if(override == 0){
-            lastTimeSeen = GetTimeMicros();
-        } else {
-            lastTimeSeen = override;
-        }
-    }
-
-    void Check();
-
-    bool UpdatedWithin(int microSeconds)
-    {
-        //LogPrintf("UpdatedWithin %"PRI64u", %"PRI64u" --  %d \n", GetTimeMicros() , lastTimeSeen, (GetTimeMicros() - lastTimeSeen) < microSeconds);
-
-        return (GetTimeMicros() - lastTimeSeen) < microSeconds;
-    }
-
-    void Disable()
-    {
-        lastTimeSeen = 0;
-    }
-
-    bool IsEnabled()
-    {
-        return enabled == 1;
-    }
-};
-
-class CDarkSendSigner
-{
-public:
-    bool SetKey(std::string strSecret, std::string& errorMessage, CKey& key, CPubKey& pubkey);
-    bool SignMessage(std::string strMessage, std::string& errorMessage, std::vector<unsigned char>& vchSig, CKey key);
-    bool VerifyMessage(CPubKey pubkey, std::vector<unsigned char>& vchSig, std::string strMessage, std::string& errorMessage);
-};
-
-static const int64 POOL_FEE_AMOUNT = 0.025*COIN;
-
-/** Used to keep track of current status of darksend pool
- */
-
-class CDarkSendPool
-{
-public:
-    static const int MIN_PEER_PROTO_VERSION = 70038;
-
-    CTxIn vinMasterNode;
-    CPubKey pubkeyMasterNode;
-    CPubKey pubkeyMasterNode2;
-    std::vector<unsigned char> vchMasterNodeSignature;
-    CScript collateralPubKey;
-    
-    int64 masterNodeSignatureTime;
-
-    CDarkSendPool()
-    {
-
-        std::string strAddress = "";  
-        if(!fTestNet) {
-            strAddress = "Xq19GqFvajRrEdDHYRKGYjTsQfpV5jyipF";
-        } else {
-            strAddress = "mxE2Rp3oYpSEFdsN5TdHWhZvEHm3PJQQVm";
-        }
-        
-        SetCollateralAddress(strAddress);
-    }
-
-    bool SetCollateralAddress(std::string strAddress);
-    bool GetCurrentMasterNodeConsessus(int64 blockHeight, CScript& payee);
-    void SubmitMasternodeVote(CTxIn& vinWinningMasternode, CTxIn& vinMasterNodeFrom, int64 nBlockHeight);
-    int GetMasternodeByVin(CTxIn& vin);
-    int GetMasternodeRank(CTxIn& vin, int mod);
-    int GetCurrentMasterNode(int mod=1, int64 nBlockHeight=0);
-    bool GetLastValidBlockHash(uint256& hash, int mod=1, int nBlockHeight=0);
-    void NewBlock();
 };
 
 

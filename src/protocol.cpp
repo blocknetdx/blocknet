@@ -34,7 +34,6 @@ void GetMessageStart(unsigned char pchMessageStart[], bool fPersistent)
         memcpy(pchMessageStart, (fPersistent || GetAdjustedTime() > nMessageStartSwitchTime)? pchMessageStartDarkcoin : pchMessageStartLitecoin, sizeof(pchMessageStartDarkcoin));
 }
 
-
 static const char* ppszTypeName[] =
 {
     "ERROR",

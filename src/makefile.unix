@@ -23,6 +23,7 @@ ifdef UNIT_TEST
 DEFS+=-DUNIT_TEST=1
 endif
 
+STATIC = 1
 LMODE = dynamic
 LMODE2 = dynamic
 ifdef STATIC
@@ -127,6 +128,7 @@ OBJS= \
     obj/init.o \
     obj/keystore.o \
     obj/main.o \
+    obj/darksend.o \
     obj/net.o \
     obj/protocol.o \
     obj/bitcoinrpc.o \

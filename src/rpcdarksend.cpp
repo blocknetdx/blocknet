@@ -11,6 +11,74 @@
 using namespace json_spirit;
 using namespace std;
 
+
+
+Value darksend(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() == 0)
+        throw runtime_error(
+            "darksend <darkcoinaddress> <amount>\n"
+            "darkcoinaddress, reset, or auto (AutoDenominate)"
+            "<amount> is a real and is rounded to the nearest 0.00000001"
+            + HelpRequiringPassphrase());
+    
+    if(fMasterNode)
+        return "DarkSend is not supported from masternodes";
+    
+    if (pwalletMain->IsLocked())
+        throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
+
+    if(params[0].get_str() == "auto"){
+        darkSendPool.DoAutomaticDenominating();
+        return "DoAutomaticDenominating";
+    }
+
+    if(params[0].get_str() == "reset"){
+        darkSendPool.SetNull(true);
+        darkSendPool.UnlockCoins();
+        return "successfully reset darksend";
+    }
+
+    if (params.size() != 2)
+        throw runtime_error(
+            "darksend <darkcoinaddress> <amount>\n"
+            "darkcoinaddress, denominate, or auto (AutoDenominate)"
+            "<amount> is a real and is rounded to the nearest 0.00000001"
+            + HelpRequiringPassphrase());
+
+    CBitcoinAddress address(params[0].get_str());
+    if (!address.IsValid())
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid DarkCoin address");
+
+    // Amount
+    int64 nAmount = AmountFromValue(params[1]);
+
+    // Wallet comments
+    CWalletTx wtx;
+    string strError = pwalletMain->SendMoneyToDestination(address.Get(), nAmount, wtx, false, ONLY_DENOMINATED);
+    if (strError != "")
+        throw JSONRPCError(RPC_WALLET_ERROR, strError);
+
+    return wtx.GetHash().GetHex();
+}
+
+
+Value getpoolinfo(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() != 0)
+        throw runtime_error(
+            "getpoolinfo\n"
+            "Returns an object containing anonymous pool-related information.");
+
+    Object obj;
+    obj.push_back(Pair("connected_to_masternode",        darkSendPool.GetMasterNodeAddr()));
+    obj.push_back(Pair("current_masternode",        darkSendPool.GetCurrentMasterNode()));
+    obj.push_back(Pair("state",        darkSendPool.GetState()));
+    obj.push_back(Pair("entries",      darkSendPool.GetEntriesCount()));
+    obj.push_back(Pair("entries_accepted",      darkSendPool.GetCountEntriesAccepted()));
+    return obj;
+}
+
 Value masternode(const Array& params, bool fHelp)
 {
     string strCommand;
@@ -18,12 +86,42 @@ Value masternode(const Array& params, bool fHelp)
         strCommand = params[0].get_str();
 
     if (fHelp  ||
-        (strCommand != "list" && strCommand != "count" && strCommand != "current" && strCommand != "votes" && strCommand != "enforce"))
+        (strCommand != "start" && strCommand != "stop" && strCommand != "list" && strCommand != "count"  && strCommand != "enforce"
+            && strCommand != "debug" && strCommand != "create" && strCommand != "current" && strCommand != "votes" && strCommand != "genkey" && strCommand != "connect"))
         throw runtime_error(
-            "masternode list|count|current|votes|enforce> passphrase\n");
+            "masternode <start|stop|list|count|debug|create|current|votes|genkey|enforce> passphrase\n");
+
+    if (strCommand == "stop")
+    {
+        if(!fMasterNode) return "you must set masternode=1 in the configuration";
+
+        if(pwalletMain->IsLocked()) {
+            SecureString strWalletPass;
+            strWalletPass.reserve(100);
+
+            if (params.size() == 2){
+                strWalletPass = params[1].get_str().c_str();
+            } else {
+                throw runtime_error(
+                    "Your wallet is locked, passphrase is required\n");
+            }
+            
+            if(!pwalletMain->Unlock(strWalletPass)){
+                return "incorrect passphrase";
+            }
+        }
+
+        darkSendPool.RegisterAsMasterNode(true);
+        pwalletMain->Lock();
+        
+        if(darkSendPool.isCapableMasterNode == MASTERNODE_STOPPED) return "successfully stopped masternode";
+        if(darkSendPool.isCapableMasterNode == MASTERNODE_NOT_CAPABLE) return "not capable masternode";
+        
+        return "unknown";
+    }
 
     if (strCommand == "list")
-    {
+    {        
         std::string strCommand = "active";
 
         if (params.size() == 2){
@@ -61,8 +159,64 @@ Value masternode(const Array& params, bool fHelp)
         }
         return obj;
     }
-
     if (strCommand == "count") return (int)darkSendMasterNodes.size();
+
+    if (strCommand == "start")
+    {
+        if(!fMasterNode) return "you must set masternode=1 in the configuration";
+
+        if(pwalletMain->IsLocked()) {
+            SecureString strWalletPass;
+            strWalletPass.reserve(100);
+
+            if (params.size() == 2){
+                strWalletPass = params[1].get_str().c_str();
+            } else {
+                throw runtime_error(
+                    "Your wallet is locked, passphrase is required\n");
+            }
+            
+            if(!pwalletMain->Unlock(strWalletPass)){
+                return "incorrect passphrase";
+            }
+        }
+
+        darkSendPool.RegisterAsMasterNode(false);
+        pwalletMain->Lock();
+        
+        if(darkSendPool.isCapableMasterNode == MASTERNODE_INPUT_TOO_NEW) return "masternode input must have at least 6 confirmations";
+        if(darkSendPool.isCapableMasterNode == MASTERNODE_STOPPED) return "masternode is stopped";
+        if(darkSendPool.isCapableMasterNode == MASTERNODE_IS_CAPABLE) return "successfully started masternode";
+        if(darkSendPool.masternodePortOpen == MASTERNODE_PORT_NOT_OPEN) return "inbound port is not open. Please open it and try again. (19999 for testnet and 9999 for mainnet)";
+        if(darkSendPool.isCapableMasterNode == MASTERNODE_NOT_CAPABLE) return "not capable masternode";
+
+        return "unknown";
+    }
+
+    if (strCommand == "debug")
+    {
+        if(darkSendPool.isCapableMasterNode == MASTERNODE_INPUT_TOO_NEW) return "masternode input must have at least 6 confirmations";
+        if(darkSendPool.isCapableMasterNode == MASTERNODE_IS_CAPABLE) return "successfully started masternode";
+        if(darkSendPool.isCapableMasterNode == MASTERNODE_STOPPED) return "masternode is stopped";
+        if(darkSendPool.masternodePortOpen == MASTERNODE_PORT_NOT_OPEN) return "inbound port is not open. Please open it and try again. (19999 for testnet and 9999 for mainnet)";
+        if(darkSendPool.isCapableMasterNode == MASTERNODE_NOT_CAPABLE) return "not capable masternode";
+
+        CTxIn vin = CTxIn();
+        CPubKey pubkey = CScript();
+        CKey key;
+        bool found = darkSendPool.GetMasterNodeVin(vin, pubkey, key);
+        if(!found){
+            return "Missing masternode input, please look at the documentation for instructions on masternode creation";
+        } else {
+            return "No problems were found";
+        }
+    }
+
+    if (strCommand == "create")
+    {
+        
+        return "Not implemented yet, please look at the documentation for instructions on masternode creation";
+    }
 
     if (strCommand == "current")
     {
@@ -74,13 +228,12 @@ Value masternode(const Array& params, bool fHelp)
         return "unknown";
     }
 
-    if (strCommand == "votes")
-    {
-        Object obj;
-        BOOST_FOREACH(CMasterNodeVote& mv, darkSendMasterNodeVotes) {
-            obj.push_back(Pair(boost::lexical_cast<std::string>((int)mv.blockHeight),      mv.GetPubKey().ToString().c_str()));
-        }    
-        return obj;
+    if (strCommand == "genkey")
+    {    
+        CKey secret;
+        secret.MakeNewKey(false);
+
+        return CBitcoinSecret(secret).ToString();
     }
 
     if(strCommand == "enforce")
@@ -88,6 +241,24 @@ Value masternode(const Array& params, bool fHelp)
         return (uint64_t)enforceMasternodePaymentsTime;
     }
 
+    if(strCommand == "connect")
+    {
+        std::string strAddress = "";
+        if (params.size() == 2){
+            strAddress = params[1].get_str().c_str();
+        } else {
+            throw runtime_error(
+                "Masternode address required\n");
+        }        
+
+        CService addr = CService(strAddress);
+
+        if(ConnectNode((CAddress)addr, NULL, true)){
+            return "successfully connected";
+        } else {
+            return "error connecting";
+        }
+    }
 
     return Value::null;
 }

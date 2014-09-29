@@ -4,6 +4,7 @@
 #include "bitcoinunits.h"
 #include "monitoreddatamapper.h"
 #include "netbase.h"
+#include "init.h"
 #include "optionsmodel.h"
 
 #include <QDir>
@@ -147,6 +148,11 @@ void OptionsDialog::setMapper()
     mapper->addMapping(ui->unit, OptionsModel::DisplayUnit);
     mapper->addMapping(ui->displayAddresses, OptionsModel::DisplayAddresses);
     mapper->addMapping(ui->coinControlFeatures, OptionsModel::CoinControlFeatures);
+
+    /* Darksend Rounds */
+    mapper->addMapping(ui->darksendRounds, OptionsModel::DarksendRounds);
+    mapper->addMapping(ui->anonymizeDarkcoin, OptionsModel::AnonymizeDarkcoinAmount);
+
 }
 
 void OptionsDialog::enableApplyButton()
@@ -207,6 +213,7 @@ void OptionsDialog::on_resetButton_clicked()
 void OptionsDialog::on_okButton_clicked()
 {
     mapper->submit();
+    darkSendPool.cachedNumBlocks = 0;
     accept();
 }
 
@@ -218,6 +225,7 @@ void OptionsDialog::on_cancelButton_clicked()
 void OptionsDialog::on_applyButton_clicked()
 {
     mapper->submit();
+    darkSendPool.cachedNumBlocks = 0;
     disableApplyButton();
 }
 
