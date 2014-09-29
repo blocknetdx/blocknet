@@ -98,7 +98,7 @@ enum
 
     // Public keys in segregated witness scripts must be compressed
     //
-    SCRIPT_VERIFY_WITNESS_PUBKEYTYPE = (1U << 15),
+    SCRIPT_VERIFY_WITNESS_PUBKEYTYPE = (1U << 15)
 };
 
 bool CheckSignatureEncoding(const std::vector<unsigned char> &vchSig, unsigned int flags, ScriptError* serror);
@@ -126,6 +126,11 @@ public:
         return false;
     }
 
+    virtual bool CheckLockTime(const CScriptNum& nLockTime) const
+    {
+         return false;
+    }
+
     virtual bool CheckSequence(const CScriptNum& nSequence) const
     {
          return false;
@@ -147,6 +152,7 @@ protected:
 public:
     TransactionSignatureChecker(const CTransaction* txToIn, unsigned int nInIn, const CAmount& amountIn) : txTo(txToIn), nIn(nInIn), amount(amountIn) {}
     bool CheckSig(const std::vector<unsigned char>& scriptSig, const std::vector<unsigned char>& vchPubKey, const CScript& scriptCode, SigVersion sigversion) const;
+    bool CheckLockTime(const CScriptNum& nLockTime) const;
     bool CheckSequence(const CScriptNum& nSequence) const;
 };
 
