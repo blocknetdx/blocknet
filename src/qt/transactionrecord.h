@@ -70,7 +70,12 @@ public:
         SendToOther,
         RecvWithAddress,
         RecvFromOther,
-        SendToSelf
+        SendToSelf,
+        RecvWithDarksend,
+        DarksendDenominate,
+        DarksendCollateralPayment,
+        DarksendSplitUpLarge,
+        Darksent
     };
 
     /** Number of confirmation needed for transaction */

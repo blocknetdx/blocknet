@@ -70,6 +70,15 @@ using namespace std;
 
 map<string, string> mapArgs;
 map<string, vector<string> > mapMultiArgs;
+bool fMasterNode = false;
+string strMasterNodePrivKey = "";
+string strMasterNodeAddr = "";
+int nDarksendRounds = 2;
+int nAnonymizeDarkcoinAmount = 1000;
+/** Spork enforcement enabled time */
+int64 enforceMasternodePaymentsTime = 4085657524;
+bool fSucessfullyLoaded = false;
+bool fEnableDarksend = false;
 bool fDebug = false;
 bool fDebugNet = false;
 bool fPrintToConsole = false;
@@ -200,6 +209,18 @@ uint256 GetRandHash()
 }
 
 
+int64 roundUp64(int64 numToRound, int64 multiple)
+{ 
+ if(multiple == 0) 
+ { 
+  return numToRound; 
+ } 
+
+ int remainder = numToRound % multiple;
+ if (remainder == 0)
+  return numToRound;
+ return numToRound + multiple - remainder;
+} 
 
 
 

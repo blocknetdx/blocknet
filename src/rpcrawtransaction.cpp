@@ -132,6 +132,42 @@ void TxToJSON(const CTransaction& tx, const uint256 hashBlock, Object& entry)
     }
 }
 
+Value erasetransaction(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() != 1)
+        throw runtime_error(
+            "erasetransaction <txid>\n"
+            "Remove transaction from wallet.");
+
+    uint256 hash = ParseHashV(params[0], "parameter 1");
+
+    CTransaction tx;
+    uint256 hashBlock = 0;
+    if (!GetTransaction(hash, tx, hashBlock, true))
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "No information available about transaction");
+
+    return pwalletMain->EraseFromWallet(hash);
+}
+
+Value resendtransaction(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() != 1)
+        throw runtime_error(
+            "erasetransaction <txid>\n"
+            "Remove transaction from wallet.");
+
+    uint256 hash = ParseHashV(params[0], "parameter 1");
+
+    CTransaction tx;
+    uint256 hashBlock = 0;
+    if (!GetTransaction(hash, tx, hashBlock, true))
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "No information available about transaction");
+
+    pwalletMain->ResendWalletTransactions(hash);
+
+    return "";
+}
+
 Value getrawtransaction(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() < 1 || params.size() > 2)

@@ -42,7 +42,7 @@ qint64 WalletModel::getBalance(const CCoinControl *coinControl) const
     {
         int64 nBalance = 0;
         std::vector<COutput> vCoins;
-        wallet->AvailableCoins(vCoins, true, coinControl);
+        wallet->AvailableCoins(vCoins, true, coinControl, ALL_COINS);
         BOOST_FOREACH(const COutput& out, vCoins)
             nBalance += out.tx->vout[out.i].nValue;   
         
@@ -50,6 +50,12 @@ qint64 WalletModel::getBalance(const CCoinControl *coinControl) const
     }
     
     return wallet->GetBalance();
+}
+
+
+qint64 WalletModel::getAnonymizedBalance() const
+{   
+    return wallet->GetAnonymizedBalance();
 }
 
 qint64 WalletModel::getUnconfirmedBalance() const
@@ -84,10 +90,11 @@ void WalletModel::updateStatus()
 
 void WalletModel::pollBalanceChanged()
 {
-    if(nBestHeight != cachedNumBlocks)
+    if(nBestHeight != cachedNumBlocks || nDarksendRounds != cachedDarksendRounds)
     {
         // Balance and number of transactions might have changed
         cachedNumBlocks = nBestHeight;
+        cachedDarksendRounds = nDarksendRounds;
         checkBalanceChanged();
     }
 }
@@ -97,13 +104,15 @@ void WalletModel::checkBalanceChanged()
     qint64 newBalance = getBalance();
     qint64 newUnconfirmedBalance = getUnconfirmedBalance();
     qint64 newImmatureBalance = getImmatureBalance();
+    qint64 newAnonymizedBalance = getAnonymizedBalance();
 
-    if(cachedBalance != newBalance || cachedUnconfirmedBalance != newUnconfirmedBalance || cachedImmatureBalance != newImmatureBalance)
+    if(cachedBalance != newBalance || cachedUnconfirmedBalance != newUnconfirmedBalance || cachedImmatureBalance != newImmatureBalance|| cachedAnonymizedBalance != newAnonymizedBalance)
     {
         cachedBalance = newBalance;
         cachedUnconfirmedBalance = newUnconfirmedBalance;
         cachedImmatureBalance = newImmatureBalance;
-        emit balanceChanged(newBalance, newUnconfirmedBalance, newImmatureBalance);
+        cachedAnonymizedBalance = newAnonymizedBalance;
+        emit balanceChanged(newBalance, newUnconfirmedBalance, newImmatureBalance, newAnonymizedBalance);
     }
 }
 
@@ -195,8 +204,19 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
         CReserveKey keyChange(wallet);
         int64 nFeeRequired = 0;
         std::string strFailReason;
-        bool fCreated = wallet->CreateTransaction(vecSend, wtx, keyChange, nFeeRequired, strFailReason, coinControl);
+        bool fCreated = false;
 
+        AvailableCoinsType act = ONLY_DENOMINATED;
+        if(recipients[0].inputType == "ONLY_NONDENOMINATED"){
+            act = ONLY_NONDENOMINATED;
+        } else if(recipients[0].inputType == "ONLY_DENOMINATED"){
+            act = ONLY_DENOMINATED;
+        } else if(recipients[0].inputType == "ALL_COINS"){
+            act = ALL_COINS;
+        }
+
+        fCreated = wallet->CreateTransaction(vecSend, wtx, keyChange, nFeeRequired, strFailReason, coinControl, act);
+        
         if(!fCreated)
         {
             if((total + nFeeRequired) > nBalance)
@@ -215,6 +235,7 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
         {
             return TransactionCommitFailed;
         }
+
         hex = QString::fromStdString(wtx.GetHash().GetHex());
     }
 
@@ -290,13 +311,18 @@ bool WalletModel::setWalletLocked(bool locked, const SecureString &passPhrase)
     if(locked)
     {
         // Lock
-        return wallet->Lock();
+        return false; //wallet->Lock();
     }
     else
     {
         // Unlock
         return wallet->Unlock(passPhrase);
     }
+}
+
+void WalletModel::Lock()
+{
+    wallet->Lock();
 }
 
 bool WalletModel::changePassphrase(const SecureString &oldPass, const SecureString &newPass)
@@ -412,8 +438,9 @@ void WalletModel::getOutputs(const std::vector<COutPoint>& vOutpoints, std::vect
 // AvailableCoins + LockedCoins grouped by wallet address (put change in one group with wallet address) 
 void WalletModel::listCoins(std::map<QString, std::vector<COutput> >& mapCoins) const
 {
+    CCoinControl *coinControl=NULL;
     std::vector<COutput> vCoins;
-    wallet->AvailableCoins(vCoins);
+    wallet->AvailableCoins(vCoins, true, coinControl, ALL_COINS);
     
     std::vector<COutPoint> vLockedCoins;
     wallet->ListLockedCoins(vLockedCoins);

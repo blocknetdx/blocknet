@@ -36,8 +36,10 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
         //
         // Credit
         //
+
         BOOST_FOREACH(const CTxOut& txout, wtx.vout)
         {
+            
             if(wallet->IsMine(txout))
             {
                 TransactionRecord sub(hash, nTime);
@@ -62,6 +64,12 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
                     sub.type = TransactionRecord::Generated;
                 }
 
+                // detect received darksent via denom, this only looks at our wallet
+                /*
+                if(wtx.IsDenominated()){
+                    sub.type = TransactionRecord::RecvWithDarksend;
+                }*/
+                            
                 parts.append(sub);
             }
         }
@@ -78,6 +86,18 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
 
         if (fAllFromMe && fAllToMe)
         {
+
+            for (unsigned int nOut = 0; nOut < wtx.vout.size(); nOut++)
+            {
+                const CTxOut& txout = wtx.vout[nOut];
+                TransactionRecord sub(hash, nTime);
+                sub.idx = parts.size();
+
+                if(txout.nValue == DARKSEND_COLLATERAL*5) {
+                    sub.type = TransactionRecord::DarksendSplitUpLarge;
+                }
+            }
+
             // Payment to self
             int64 nChange = wtx.GetChange();
 
@@ -118,6 +138,17 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
                     sub.address = mapValue["to"];
                 }
 
+                if(wtx.IsDenominated()){
+                    sub.type = TransactionRecord::Darksent;
+                }
+
+                if(txout.nValue == DARKSEND_COLLATERAL){
+                    sub.type = TransactionRecord::DarksendCollateralPayment;
+                }
+                if(txout.nValue == DARKSEND_COLLATERAL*5){
+                    sub.type = TransactionRecord::DarksendSplitUpLarge;
+                }
+
                 int64 nValue = txout.nValue;
                 /* Add fee to first output */
                 if (nTxFee > 0)
@@ -133,9 +164,20 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
         else
         {
             //
-            // Mixed debit transaction, can't break down payees
+            // Mixed Debit
             //
-            parts.append(TransactionRecord(hash, nTime, TransactionRecord::Other, "", nNet, 0));
+            bool isDarksent = false;
+
+            for (unsigned int nOut = 0; nOut < wtx.vout.size(); nOut++)
+            {
+                const CTxOut& txout = wtx.vout[nOut];
+
+                BOOST_FOREACH(int64 d, darkSendDenominations)
+                    if(txout.nValue == d)
+                        isDarksent = true;
+            }
+
+            parts.append(TransactionRecord(hash, nTime, isDarksent ? TransactionRecord::DarksendDenominate : TransactionRecord::Other, "", nNet, 0));
         }
     }
 

@@ -90,11 +90,16 @@ static CCoinsViewDB *pcoinsdbview;
 
 void Shutdown()
 {
+
+    if(darkSendPool.GetMyTransactionCount() != 0){
+        printf("Error: Darksend appears to have a transaction in progress, you will possibly be charged fees for shuting down.\n");
+    }
+
     LogPrintf("Shutdown : In progress...\n");
     static CCriticalSection cs_Shutdown;
     TRY_LOCK(cs_Shutdown, lockShutdown);
     if (!lockShutdown) return;
-
+    
     RenameThread("bitcoin-shutoff");
     nTransactionsUpdated++;
     StopRPCThreads();
@@ -372,6 +377,17 @@ std::string HelpMessage()
         "  -loadblock=<file>      " + _("Imports blocks from external blk000??.dat file") + "\n" +
         "  -reindex               " + _("Rebuild block chain index from current blk000??.dat files") + "\n" +
         "  -par=<n>               " + _("Set the number of script verification threads (up to 16, 0 = auto, <0 = leave that many cores free, default: 0)") + "\n" +
+
+        "\n" + _("Masternode options:") + "\n" +
+        "  -masternode=<n>      "   + _("Enable the client to act as a masternode (0-1, default: 0)") + "\n" +
+        "  -masternodeprivkey=<n>      "   + _("Set the masternode private key") + "\n" +
+        "  -masternodeaddr=<n> "   + _("Set external address:port to get to this masternode (example: address:port)") + "\n" +
+
+        "\n" + _("Darksend options:") + "\n" +
+        "  -disabledarksend=<n>      "   + _("Disable use of automated darksend for funds stored in this wallet (0-1, default: 1)") + "\n" +
+        "  -enabledaemondarksend=<n>      "   + _("Darksend is not usually enabled in daemon mode (0-1, default: 1)") + "\n" +
+        "  -darksendrounds=<n>      "   + _("Use N separate masternodes to anonymize funds  (2-8, default: 2)") + "\n" +
+        "  -anonymizedarkcoinamount=<n>      "   + _("Keep N darkcoin anonymized (default: 0)") + "\n" +
 
         "\n" + _("Block creation options:") + "\n" +
         "  -blockminsize=<n>      "   + _("Set minimum block size in bytes (default: 0)") + "\n" +
@@ -728,6 +744,7 @@ bool AppInit2(boost::thread_group& threadGroup)
             if (r == CDBEnv::RECOVER_FAIL)
                 return InitError(_("wallet.dat corrupt, salvage failed"));
         }
+
     } // (!fDisableWallet)
 
     // ********************************************************* Step 6: network initialization
@@ -1112,7 +1129,82 @@ bool AppInit2(boost::thread_group& threadGroup)
     }
     threadGroup.create_thread(boost::bind(&ThreadImport, vImportFiles));
 
-    // ********************************************************* Step 10: load peers
+    // ********************************************************* Step 10: setup DarkSend
+
+    //string strNode = "23.23.186.131";
+    //CAddress addr;
+    //ConnectNode(addr, strNode.c_str(), true);
+
+    fMasterNode = GetBoolArg("-masternode");
+    if(fMasterNode) {
+        LogPrintf("IS DARKSEND MASTER NODE\n");
+        strMasterNodeAddr = GetArg("-masternodeaddr", "");
+
+        LogPrintf(" addr %s\n", strMasterNodeAddr.c_str());
+
+        if(!strMasterNodeAddr.empty()){
+            CService addrTest = CService(strMasterNodeAddr);
+            if (!addrTest.IsValid()) {
+                printf("Invalid -masternodeaddr address: '%s'\n", mapArgs["-strMasterNodeAddr"].c_str());
+                exit(0);
+            }
+        }
+
+        strMasterNodePrivKey = GetArg("-masternodeprivkey", "");
+        if(!strMasterNodePrivKey.empty()){
+            std::string errorMessage;
+                
+            CKey key;
+            CPubKey pubkey;
+
+            if(!darkSendSigner.SetKey(strMasterNodePrivKey, errorMessage, key, pubkey))
+            {
+                return InitError(_("Invalid masternodeprivkey. Please see documenation."));
+            }
+
+            darkSendPool.pubkeyMasterNode2 = pubkey;
+            
+        } else {
+            return InitError(_("You must specify a masternodeprivkey in the configuration. Please see documentation for help."));
+        }
+    }
+
+    fEnableDarksend = GetBoolArg("-enabledarksend", false);
+
+    nDarksendRounds = GetArg("-darksendrounds", 2);
+    if(nDarksendRounds > 8) nDarksendRounds = 8;
+    if(nDarksendRounds < 1) nDarksendRounds = 1;
+
+    nAnonymizeDarkcoinAmount = GetArg("-anonymizedarkcoinamount", 0);
+    if(nAnonymizeDarkcoinAmount > 999999) nAnonymizeDarkcoinAmount = 999999;
+    if(nAnonymizeDarkcoinAmount < 2) nAnonymizeDarkcoinAmount = 2;
+
+    LogPrintf("Darksend rounds %d\n", nDarksendRounds);
+    LogPrintf("Anonymize Darkcoin Amount %d\n", nAnonymizeDarkcoinAmount);
+
+    darkSendDenominations.push_back( (500   * COIN)+1 );
+    darkSendDenominations.push_back( (100   * COIN)+1 );
+    darkSendDenominations.push_back( (10    * COIN)+1 );
+    darkSendDenominations.push_back( (1     * COIN)+1 );
+
+    threadGroup.create_thread(boost::bind(&ThreadCheckDarkSendPool));
+
+
+    if (!fDisableWallet) {
+        int walletVersion = pwalletMain->GetVersion();
+
+        if(walletVersion < 60001){
+            if(pwalletMain->IsCrypted()){
+                InitWarning(_("Warning: There is an incompatibility in the new RC4+ wallet due to the larger keypool."
+                                    "It only effects encrypted wallets, but can cause a loss of data in rare situations. "
+                                    "Please create a new wallet and move the funds from this wallet."));
+                fEnableDarksend = false;
+            }
+        }
+    }
+
+
+    // ********************************************************* Step 11: load peers
 
     uiInterface.InitMessage(_("Loading addresses..."));
 
@@ -1127,7 +1219,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     LogPrintf("Loaded %i addresses from peers.dat  %"PRI64d"ms\n",
            addrman.size(), GetTimeMillis() - nStart);
 
-    // ********************************************************* Step 11: start node
+    // ********************************************************* Step 12: start node
 
     if (!CheckDiskSpace())
         return false;
@@ -1155,7 +1247,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     if (pwalletMain)
         GenerateBitcoins(GetBoolArg("-gen", false), pwalletMain);
 
-    // ********************************************************* Step 12: finished
+    // ********************************************************* Step 13: finished
 
     uiInterface.InitMessage(_("Done loading"));
 
@@ -1166,6 +1258,8 @@ bool AppInit2(boost::thread_group& threadGroup)
         // Run a thread to flush wallet periodically
         threadGroup.create_thread(boost::bind(&ThreadFlushWalletDB, boost::ref(pwalletMain->strWalletFile)));
     }
+
+    fSucessfullyLoaded = true;
 
     return !fRequestShutdown;
 }

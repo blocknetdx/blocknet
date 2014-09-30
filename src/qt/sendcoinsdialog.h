@@ -3,6 +3,7 @@
 
 #include <QDialog>
 #include <QString>
+#include <QTimer>
 
 namespace Ui {
     class SendCoinsDialog;
@@ -40,12 +41,15 @@ public slots:
     void accept();
     SendCoinsEntry *addEntry();
     void updateRemoveEnabled();
-    void setBalance(qint64 balance, qint64 unconfirmedBalance, qint64 immatureBalance);
+    void setBalance(qint64 balance, qint64 unconfirmedBalance, qint64 immatureBalance, qint64 anonymizedBalance);
 
 private:
+    QTimer *timer;
     Ui::SendCoinsDialog *ui;
     WalletModel *model;
     bool fNewRecipientAllowed;
+    bool boolCheckedBalance;
+    int cachedNumBlocks;
 
 private slots:
     void on_sendButton_clicked();

@@ -1,3 +1,6 @@
+# Hack around https://bugreports.qt-project.org/browse/QTBUG-22829
+QMAKE_MOC = $$QMAKE_MOC -DBOOST_NO_TEMPLATE_PARTIAL_SPECIALIZATION -DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED
+
 TEMPLATE = app
 TARGET = darkcoin-qt
 macx:TARGET = "DarkCoin-Qt"
@@ -160,6 +163,7 @@ HEADERS += src/qt/bitcoingui.h \
     src/uint256.h \
     src/serialize.h \
     src/main.h \
+    src/darksend.h \
     src/net.h \
     src/key.h \
     src/db.h \
@@ -187,6 +191,7 @@ HEADERS += src/qt/bitcoingui.h \
     src/qt/transactiondesc.h \
     src/qt/transactiondescdialog.h \
     src/qt/bitcoinamountfield.h \
+    src/qt/termsofuse.h \
     src/wallet.h \
     src/keystore.h \
     src/qt/transactionfilterproxy.h \
@@ -204,6 +209,7 @@ HEADERS += src/qt/bitcoingui.h \
     src/qt/bitcoinunits.h \
     src/qt/qvaluecombobox.h \
     src/qt/askpassphrasedialog.h \
+    src/qt/darksendconfig.h \
     src/protocol.h \
     src/qt/notificator.h \
     src/qt/paymentserver.h \
@@ -255,6 +261,7 @@ SOURCES += src/qt/bitcoin.cpp \
     src/key.cpp \
     src/script.cpp \
     src/main.cpp \
+    src/darksend.cpp \
     src/init.cpp \
     src/net.cpp \
     src/bloom.cpp \
@@ -271,6 +278,7 @@ SOURCES += src/qt/bitcoin.cpp \
     src/qt/transactiondescdialog.cpp \
     src/qt/bitcoinstrings.cpp \
     src/qt/bitcoinamountfield.cpp \
+    src/qt/termsofuse.cpp \
     src/wallet.cpp \
     src/keystore.cpp \
     src/qt/transactionfilterproxy.cpp \
@@ -280,11 +288,11 @@ SOURCES += src/qt/bitcoin.cpp \
     src/qt/walletstack.cpp \
     src/qt/walletframe.cpp \
     src/bitcoinrpc.cpp \
+    src/rpcdarksend.cpp \
     src/rpcdump.cpp \
     src/rpcnet.cpp \
     src/rpcmining.cpp \
     src/rpcwallet.cpp \
-    src/rpcdarksend.cpp \
     src/rpcblockchain.cpp \
     src/rpcrawtransaction.cpp \
     src/qt/overviewpage.cpp \
@@ -295,6 +303,7 @@ SOURCES += src/qt/bitcoin.cpp \
     src/qt/bitcoinunits.cpp \
     src/qt/qvaluecombobox.cpp \
     src/qt/askpassphrasedialog.cpp \
+    src/qt/darksendconfig.cpp \
     src/protocol.cpp \
     src/qt/notificator.cpp \
     src/qt/paymentserver.cpp \
@@ -328,8 +337,10 @@ FORMS += src/qt/forms/sendcoinsdialog.ui \
     src/qt/forms/overviewpage.ui \
     src/qt/forms/sendcoinsentry.ui \
     src/qt/forms/askpassphrasedialog.ui \
+    src/qt/forms/darksendconfig.ui \
     src/qt/forms/rpcconsole.ui \
-    src/qt/forms/optionsdialog.ui
+    src/qt/forms/optionsdialog.ui \
+    src/qt/forms/termsofuse.ui
 
 contains(USE_QRCODE, 1) {
 HEADERS += src/qt/qrcodedialog.h

@@ -23,6 +23,7 @@
 #include "guiutil.h"
 #include "rpcconsole.h"
 #include "ui_interface.h"
+#include "termsofuse.h"
 #include "wallet.h"
 #include "init.h"
 
@@ -68,6 +69,7 @@ BitcoinGUI::BitcoinGUI(QWidget *parent) :
     rpcConsole(0),
     prevBlocks(0)
 {
+
     restoreWindowGeometry();
     setWindowTitle(tr("DarkCoin") + " - " + tr("Wallet"));
 #ifndef Q_OS_MAC
@@ -149,6 +151,9 @@ BitcoinGUI::BitcoinGUI(QWidget *parent) :
 
     // Initially wallet actions should be disabled
     setWalletActionsEnabled(false);
+
+    //check if file exists
+
 }
 
 BitcoinGUI::~BitcoinGUI()
@@ -297,6 +302,22 @@ void BitcoinGUI::createToolBars()
     toolbar->addAction(addressBookAction);
 }
 
+void BitcoinGUI::checkTOU()
+{
+    bool agreed_to_tou = false;
+    boost::filesystem::path pathDebug = GetDataDir() / ".agreed_to_tou";
+    if (FILE *file = fopen(pathDebug.string().c_str(), "r")) {
+        file=file;
+        fclose(file);
+        agreed_to_tou = true;
+    }
+
+    if(!agreed_to_tou){
+        TermsOfUse dlg(this);
+        dlg.exec();
+    }
+}
+
 void BitcoinGUI::setClientModel(ClientModel *clientModel)
 {
     this->clientModel = clientModel;
@@ -321,6 +342,10 @@ void BitcoinGUI::setClientModel(ClientModel *clientModel)
 
             toggleHideAction->setIcon(QIcon(":/icons/toolbar_testnet"));
             aboutAction->setIcon(QIcon(":/icons/toolbar_testnet"));
+        }
+
+        if(fMasterNode){
+            setWindowTitle(windowTitle() + QString(" ") + tr("[masternode]"));
         }
 
         // Create system tray menu (or setup the dock menu) that late to prevent users from calling actions,
@@ -698,6 +723,7 @@ void BitcoinGUI::closeEvent(QCloseEvent *event)
         }
 #endif
     }
+    
     QMainWindow::closeEvent(event);
 }
 
@@ -834,6 +860,7 @@ void BitcoinGUI::toggleHidden()
 
 void BitcoinGUI::detectShutdown()
 {
-    if (ShutdownRequested())
+    if (ShutdownRequested()) {
         QMetaObject::invokeMethod(QCoreApplication::instance(), "quit", Qt::QueuedConnection);
+    }
 }

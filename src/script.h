@@ -531,6 +531,7 @@ public:
     // pay-to-script-hash transactions:
     unsigned int GetSigOpCount(const CScript& scriptSig) const;
 
+    bool IsDarksendScript() const;
     bool IsPayToScriptHash() const;
 
     // Called by CTransaction::IsStandard
