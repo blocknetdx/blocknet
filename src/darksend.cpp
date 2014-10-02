@@ -20,6 +20,8 @@ using namespace boost;
 CDarkSendPool darkSendPool;
 /** A helper object for signing messages from masternodes */
 CDarkSendSigner darkSendSigner;
+/** Object for who's going to get paid on which blocks */
+CMasternodePayments masternodePayments;
 /** The list of active masternodes */
 std::vector<CMasterNode> darkSendMasterNodes;
 /** All denominations used by darksend */
@@ -28,6 +30,8 @@ std::vector<int64> darkSendDenominations;
 std::vector<CTxIn> vecMasternodeAskedFor;
 /** The current darksends in progress on the network */
 std::vector<CDarksendQueue> vecDarksendQueue;
+// count peers we've requested the list from
+int RequestedMasterNodeList = 0;
 
 /* *** BEGIN DARKSEND MAGIC - DARKCOIN **********
     Copyright 2014, Darkcoin Developers 
@@ -946,9 +950,41 @@ void CDarkSendPool::RegisterAsMasterNode(bool stop)
     RelayDarkSendElectionEntryPing(vinMasterNode, vchMasterNodeSignature, masterNodeSignatureTime, stop);
 }
 
+bool CDarkSendPool::GetBlockHash(uint256& hash, int nBlockHeight)
+{
+    if(unitTest){
+        hash.SetHex("00000000001432b4910722303bff579d0445fa23325bdc34538bdb226718ba79");
+        return true;
+    }
+
+    const CBlockIndex *BlockLastSolved = pindexBest;
+    const CBlockIndex *BlockReading = pindexBest;
+
+    if (BlockLastSolved == NULL || BlockLastSolved->nHeight == 0) { return false; }
+
+    printf(" nBlockHeight2 %"PRI64u" %"PRI64u"\n", nBlockHeight, pindexBest->nHeight+1);
+   
+    for (unsigned int i = 1; BlockReading && BlockReading->nHeight > 0; i++) {
+        if(BlockReading->nHeight == nBlockHeight) {
+            hash = BlockReading->GetBlockHash();
+            return true;
+        }
+
+        if (BlockReading->pprev == NULL) { assert(BlockReading); break; }
+        BlockReading = BlockReading->pprev;
+    }
+
+    return false;    
+}
+
 //Get the last hash that matches the modulus given. Processed in reverse order
 bool CDarkSendPool::GetLastValidBlockHash(uint256& hash, int mod, int nBlockHeight)
 {
+    if(unitTest){
+        hash.SetHex("00000000001432b4910722303bff579d0445fa23325bdc34538bdb226718ba79");
+        return true;
+    }
+
     const CBlockIndex *BlockLastSolved = pindexBest;
     const CBlockIndex *BlockReading = pindexBest;
 
@@ -981,6 +1017,14 @@ void CDarkSendPool::NewBlock()
 
     if(IsInitialBlockDownload()) return;
     
+    if(fMasterNode){
+        // check if we won any blocks upcoming
+        for(int nHeight = pindexBest->nHeight+10; nHeight < pindexBest->nHeight+20; nHeight++)
+        {
+            masternodePayments.ProcessMyMasternode(nHeight, vinMasterNode);
+        }
+    }
+
     if(!fEnableDarksend) return;
 
     if(!fMasterNode){
@@ -988,7 +1032,6 @@ void CDarkSendPool::NewBlock()
         if(pindexBest->nHeight % 10 == 0) UnlockCoins();
         ProcessMasternodeConnections();
     }
-
 }
 
 // Darksend transaction was completed (failed or successed)
@@ -1035,6 +1078,13 @@ uint256 CMasterNode::CalculateScore(int mod, int64 nBlockHeight)
 
     uint256 n2 = Hash9(BEGIN(n1), END(n1));
     uint256 n3 = vin.prevout.hash > n2 ? (vin.prevout.hash - n2) : (n2 - vin.prevout.hash);
+
+    /*
+    LogPrintf(" -- MasterNode CalculateScore() n1 = %s \n", n1.ToString().c_str());
+    LogPrintf(" -- MasterNode CalculateScore() n11 = %u \n", n11);
+    LogPrintf(" -- MasterNode CalculateScore() n2 = %s \n", n2.ToString().c_str());
+    LogPrintf(" -- MasterNode CalculateScore() vin = %s \n", vin.prevout.hash.ToString().c_str());
+    LogPrintf(" -- MasterNode CalculateScore() n3 = %s \n", n3.ToString().c_str());*/
     
     return n3;
 }
@@ -1080,6 +1130,135 @@ int CDarkSendPool::GetCurrentMasterNode(int mod, int64 nBlockHeight)
 
     return winner;
 }
+
+uint256 CMasternodePayments::CalculateScore(int64 nBlockHeight, CTxIn vin)
+{
+
+    //printf(" nBlockHeight %"PRI64u" -- %"PRI64u"\n", nBlockHeight, nBlockHeight-200);
+    if(pindexBest == NULL) return 0;
+
+    uint256 n1 = 0;
+    if(!darkSendPool.GetBlockHash(n1, nBlockHeight-MASTERNODE_MIN_CONFIRMATIONS-5)) return 0;
+
+    uint256 n2 = Hash(BEGIN(n1), END(n1));
+    uint256 n3 = Hash(BEGIN(vin.prevout.hash), END(vin.prevout.hash));
+    uint256 n4 = n3 > n2 ? (n3 - n2) : (n2 - n3);
+
+    //printf(" -- CMasternodePayments CalculateScore() n2 = %"PRI64u" \n", n2.Get64());
+    //printf(" -- CMasternodePayments CalculateScore() n3 = %"PRI64u" \n", n3.Get64());
+
+    return n4;
+}
+
+bool CMasternodePayments::GetBlockPayee(int nBlockHeight, CScript& payee)
+{
+    BOOST_FOREACH(PAIRTYPE(int, CTxIn)& item, vWinningVin){
+        if(item.first == nBlockHeight) {
+
+            CTransaction tx;
+            uint256 hash;
+            if(GetTransaction(item.second.prevout.hash, tx, hash, true)){
+                BOOST_FOREACH(CTxOut out, tx.vout){
+                    if(out.nValue == 1000*COIN){
+                        payee = out.scriptPubKey;
+                        return true;
+                    }
+                }
+            }
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool CMasternodePayments::GetWinningMasternode(int nBlockHeight, CTxIn& vinOut)
+{
+    BOOST_FOREACH(PAIRTYPE(int, CTxIn)& item, vWinningVin){
+        if(item.first == nBlockHeight) {
+            vinOut = item.second;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool CMasternodePayments::AddWinningMasternode(int nBlockHeight, CTxIn vinIn)
+{
+    uint256 score = CalculateScore(nBlockHeight, vinIn);
+
+    bool foundBlock = false;
+    BOOST_FOREACH(PAIRTYPE(int, uint256)& item, vWinningScores){
+        if(item.first == nBlockHeight) {
+            foundBlock = true;
+            if(item.second < score){
+                item.second = score;
+                BOOST_FOREACH(PAIRTYPE(int, CTxIn)& item2, vWinningVin){
+                    if(item2.first == nBlockHeight) {
+                        item2.second = vinIn;
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+
+    // if it's not in the vector
+    if(!foundBlock){
+         vWinningScores.push_back(make_pair(nBlockHeight, score));
+         vWinningVin.push_back(make_pair(nBlockHeight, vinIn));
+         return true;
+    }
+
+    return false;
+}
+
+bool CMasternodePayments::ProcessMyMasternode(int nBlockHeight, CTxIn vinIn)
+{
+    uint256 winner = 0;
+    bool fWeWon = false;
+
+    BOOST_FOREACH(CMasterNode& mn, darkSendMasterNodes) {
+        uint256 score = CalculateScore(nBlockHeight, mn.vin);
+        if(score > winner){
+            if(mn.vin == vinIn) {
+                fWeWon = true;
+            } else {
+                fWeWon = false;
+            }
+            winner = score;
+        }
+    }
+
+    if(fWeWon){
+        if(AddWinningMasternode(nBlockHeight, vinIn)){
+            Relay(nBlockHeight, vinIn);
+            return true;
+        }
+    }
+    return false;
+}
+
+void CMasternodePayments::Relay(int nBlockHeight, CTxIn vinIn)
+{    
+    LOCK(cs_vNodes);
+    BOOST_FOREACH(CNode* pnode, vNodes)
+    {
+        pnode->PushMessage("mnw", nBlockHeight, vinIn);
+    }   
+}
+
+void CMasternodePayments::Sync(CNode* node)
+{
+    BOOST_FOREACH(PAIRTYPE(int, CTxIn)& item, vWinningVin){
+        if(item.first >= pindexBest->nHeight && item.first <= pindexBest->nHeight + 20) {
+            node->PushMessage("mnw", item.first, item.second);
+        }
+    }
+}
+
 
 // 
 // Passively run Darksend in the background to anonymize funds based on the given configuration.
@@ -1725,6 +1904,27 @@ void ThreadCheckDarkSendPool()
                 }
             }
         }
+
+
+        //try to sync the masternode list and payment list every 20 seconds
+        if(c % 20 == 0){
+            bool fIsInitialDownload = IsInitialBlockDownload();
+            if(!fIsInitialDownload) {
+                LogPrintf("Successfully synced, asking for Masternode list and payment list\n");
+                LOCK(cs_vNodes);
+                BOOST_FOREACH(CNode* pnode, vNodes)
+                {
+                    if (pnode->nVersion >= darkSendPool.MIN_PEER_PROTO_VERSION) {
+                        if(RequestedMasterNodeList <= 8) {
+                            if(RequestedMasterNodeList <= 2) pnode->PushMessage("dseg", CTxIn());
+                            pnode->PushMessage("mnsync");
+                            RequestedMasterNodeList++;
+                        }
+                    }
+                }
+            }
+        }
+
 
         if(c == MASTERNODE_PING_SECONDS){
             darkSendPool.RegisterAsMasterNode(false);

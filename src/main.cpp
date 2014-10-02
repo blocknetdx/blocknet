@@ -54,7 +54,6 @@ bool fImporting = false;
 bool fReindex = false;
 bool fBenchmark = false;
 bool fTxIndex = false;
-int RequestedMasterNodeList = 0;
 unsigned int nCoinCacheSize = 5000;
 
 
@@ -1363,6 +1362,39 @@ int64 static GetBlockValue(int nBits, int nHeight, int64 nFees)
     return nSubsidy + nFees;
 }
 
+int64 GetMasternodePayment(int nHeight, int64 blockValue)
+{
+    int64 ret = blockValue/5; // start at 20%
+
+    if(fTestNet) {
+        if(nHeight > 39295)             ret += blockValue / 20; //25%
+        if(nHeight > 39295+((576*1)*1)) ret += blockValue / 20; //30% 
+        if(nHeight > 39295+((576*1)*2)) ret += blockValue / 20; //35%
+        if(nHeight > 39295+((576*1)*3)) ret += blockValue / 20; //40%
+        if(nHeight > 39295+((576*1)*4)) ret += blockValue / 20; //45%
+        if(nHeight > 39295+((576*1)*5)) ret += blockValue / 20; //50%
+        if(nHeight > 39295+((576*1)*6)) ret += blockValue / 20; //55%
+        if(nHeight > 39295+((576*1)*7)) ret += blockValue / 20; //60%
+    }
+
+    if(nHeight > 150000)              ret += blockValue / 20; //25%
+    if(nHeight > 150000+((576*30)*1)) ret += blockValue / 20; //30%
+    if(nHeight > 150000+((576*30)*2)) ret += blockValue / 20; //35%
+    if(nHeight > 150000+((576*30)*3)) ret += blockValue / 40; //37.5%
+    if(nHeight > 150000+((576*30)*4)) ret += blockValue / 40; //40%
+    if(nHeight > 150000+((576*30)*5)) ret += blockValue / 40; //42.5%
+    if(nHeight > 150000+((576*30)*6)) ret += blockValue / 40; //45%
+    if(nHeight > 150000+((576*30)*7)) ret += blockValue / 40; //47.5%
+    if(nHeight > 150000+((576*30)*9)) ret += blockValue / 40; //50%
+    if(nHeight > 150000+((576*30)*11)) ret += blockValue / 40; //52.5%
+    if(nHeight > 150000+((576*30)*13)) ret += blockValue / 40; //55%
+    if(nHeight > 150000+((576*30)*15)) ret += blockValue / 40; //57.5%
+    if(nHeight > 150000+((576*30)*17)) ret += blockValue / 40; //60%
+
+    return ret;
+}
+
+
 static const int64 nTargetTimespan = 24 * 60 * 60; // DarkCoin: 1 day
 static const int64 nTargetSpacing = 2.5 * 60; // DarkCoin: 2.5 minutes
 static const int64 nInterval = nTargetTimespan / nTargetSpacing; // 576
@@ -2546,21 +2578,29 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
     {
         LOCK2(cs_main, mempool.cs);
 
-        int64 masternodePaymentAmount = vtx[0].GetValueOut()/5;        
+        int64 masternodePaymentAmount = GetMasternodePayment(pindexBest->nHeight+1, vtx[0].GetValueOut());        
         bool fIsInitialDownload = IsInitialBlockDownload();
 
         if (!fIsInitialDownload && pindexBest != NULL)
         {
             bool foundPaymentAmount = false;
-            
+            bool foundPayee = false;
+
+            CScript payee;
+            if(!masternodePayments.GetBlockPayee(pindexBest->nHeight+1, payee)){
+                foundPayee = true; //doesn't require a specific payee
+            }
+
             for (unsigned int i = 0; i < vtx[0].vout.size(); i++) {
                 if(vtx[0].vout[i].nValue == masternodePaymentAmount )
                     foundPaymentAmount = true;
+                if(vtx[0].vout[i].scriptPubKey == payee )
+                    foundPayee = true;
             }
 
-            if(!foundPaymentAmount ) {
-                LogPrintf("CheckBlock() : Couldn't find masternode payment. \n");
-                if(EnforceMasternodePayments) return state.DoS(100, error("CheckBlock() : Couldn't find masternode payment"));
+            if(!foundPaymentAmount || !foundPayee ) {
+                LogPrintf("CheckBlock() : Couldn't find masternode payment(%d) or payee(%d). \n", foundPaymentAmount, foundPayee);
+                if(EnforceMasternodePayments) return state.DoS(100, error("CheckBlock() : Couldn't find masternode payment or payee"));
             }
         }
     }
@@ -3783,16 +3823,6 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         pfrom->PushMessage("verack");
         pfrom->ssSend.SetVersion(min(pfrom->nVersion, PROTOCOL_VERSION));
         
-        if (pfrom->nVersion >= darkSendPool.MIN_PEER_PROTO_VERSION) {
-            if(RequestedMasterNodeList <= 2) {
-                bool fIsInitialDownload = IsInitialBlockDownload();
-                if(!fIsInitialDownload) {
-                    pfrom->PushMessage("dseg", CTxIn());
-                    RequestedMasterNodeList++;
-                }
-            }
-        }
-
         if (!pfrom->fInbound)
         {
             // Advertise our address
@@ -4146,8 +4176,43 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         vRecv >> howmuch;
         LogPrintf("peer=%d says we are misbehaving %d\n", pfrom->id, howmuch);
     }
+    else if (strCommand == "mnget") { //Masternode Payments Request Sync
+        masternodePayments.Sync(pfrom);
+    }
+    else if (strCommand == "mnw") { //Masternode Payments Declare Winner
 
-    else if (strCommand == "dseg") { //DarkSend Election Get
+        int nBlockHeight;
+        CTxIn vin;
+        vRecv >> nBlockHeight >> vin;
+
+        if(pindexBest == NULL) return false;
+
+        if(nBlockHeight > pindexBest->nHeight + 20 || nBlockHeight < pindexBest->nHeight+10){
+            LogPrintf("mnw - winning votes too close to current block %s\n", vin.ToString().c_str());
+            return false;
+        }
+
+        CValidationState state;
+        CTransaction tx = CTransaction();
+        CTxOut vout = CTxOut(999.99*COIN, darkSendPool.collateralPubKey);
+        tx.vin.push_back(vin);
+        tx.vout.push_back(vout);
+        if(tx.AcceptableInputs(state, true)){
+            if(GetInputAge(vin) < MASTERNODE_MIN_CONFIRMATIONS){
+                LogPrintf("dsee - Input must have least %d confirmations\n", MASTERNODE_MIN_CONFIRMATIONS);
+                pfrom->Misbehaving(20);
+                return false;
+            }
+
+            if(masternodePayments.AddWinningMasternode(nBlockHeight, vin)){
+                masternodePayments.Relay(nBlockHeight, vin);
+            }
+        } else {
+            LogPrintf("mnw - invalid vin %s\n", vin.ToString().c_str());
+            return false;
+        }
+
+    } else if (strCommand == "dseg") { //DarkSend Election Get
         if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
             return true;
         }
@@ -5280,23 +5345,16 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         CBlockIndex* pindexPrev = pindexBest;
     
         if(bMasterNodePayment) {
-            int winningNode = -1; 
-
             //spork
-            CScript payee;
-            winningNode = darkSendPool.GetCurrentMasterNode(1);
-            if(winningNode >= 0){
-                payee.SetDestination(darkSendMasterNodes[winningNode].pubkey.GetID());   
-                pblock->payee = payee;
-                
+            if(masternodePayments.GetBlockPayee(pindexPrev->nHeight+1, pblock->payee)){
                 payments++;
                 txNew.vout.resize(payments);
 
-                txNew.vout[payments-1].scriptPubKey = payee;
+                txNew.vout[payments-1].scriptPubKey = pblock->payee;
                 txNew.vout[payments-1].nValue = 0;
 
                 CTxDestination address1;
-                ExtractDestination(payee, address1);
+                ExtractDestination(pblock->payee, address1);
                 CBitcoinAddress address2(address1);
 
                 LogPrintf("Masternode payment to %s\n", address2.ToString().c_str());
@@ -5315,7 +5373,6 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         pblocktemplate->vTxSigOps.push_back(-1); // updated at end
 
         // end masternode payments
-
 
         // Largest block you're willing to create:
         unsigned int nBlockMaxSize = GetArg("-blockmaxsize", DEFAULT_BLOCK_MAX_SIZE);
@@ -5514,12 +5571,12 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
             LogPrintf("CreateNewBlock(): total size %"PRI64u"\n", nBlockSize);
 
             int64 blockValue = GetBlockValue(pindexPrev->nBits, pindexPrev->nHeight, nFees);
-            int64 blockValueFifth = blockValue/5;
+            int64 masternodePayment = GetMasternodePayment(pindexPrev->nHeight+1, blockValue);
             
-            for(int i = 1; i < payments; i++){
-                LogPrintf("%d\n", i);
-                pblock->vtx[0].vout[i].nValue = blockValueFifth;
-                blockValue -= blockValueFifth;
+            //create masternode payment
+            if(payments > 1){
+                pblock->vtx[0].vout[payments-1].nValue = masternodePayment;
+                blockValue -= masternodePayment;
             }
             pblock->vtx[0].vout[0].nValue = blockValue;
 

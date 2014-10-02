@@ -87,9 +87,9 @@ Value masternode(const Array& params, bool fHelp)
 
     if (fHelp  ||
         (strCommand != "start" && strCommand != "stop" && strCommand != "list" && strCommand != "count"  && strCommand != "enforce"
-            && strCommand != "debug" && strCommand != "create" && strCommand != "current" && strCommand != "votes" && strCommand != "genkey" && strCommand != "connect"))
+            && strCommand != "debug" && strCommand != "current" && strCommand != "winners" && strCommand != "genkey" && strCommand != "connect"))
         throw runtime_error(
-            "masternode <start|stop|list|count|debug|create|current|votes|genkey|enforce> passphrase\n");
+            "masternode <start|stop|list|count|debug|current|winners|genkey|enforce> passphrase\n");
 
     if (strCommand == "stop")
     {
@@ -195,7 +195,7 @@ Value masternode(const Array& params, bool fHelp)
 
     if (strCommand == "debug")
     {
-        if(darkSendPool.isCapableMasterNode == MASTERNODE_INPUT_TOO_NEW) return "masternode input must have at least 6 confirmations";
+        if(darkSendPool.isCapableMasterNode == MASTERNODE_INPUT_TOO_NEW) return "masternode input must have at least 200 confirmations";
         if(darkSendPool.isCapableMasterNode == MASTERNODE_IS_CAPABLE) return "successfully started masternode";
         if(darkSendPool.isCapableMasterNode == MASTERNODE_STOPPED) return "masternode is stopped";
         if(darkSendPool.masternodePortOpen == MASTERNODE_PORT_NOT_OPEN) return "inbound port is not open. Please open it and try again. (19999 for testnet and 9999 for mainnet)";
@@ -234,6 +234,26 @@ Value masternode(const Array& params, bool fHelp)
         secret.MakeNewKey(false);
 
         return CBitcoinSecret(secret).ToString();
+    }
+
+    if (strCommand == "winners")
+    {                
+        Object obj;
+
+        for(int nHeight = pindexBest->nHeight-10; nHeight < pindexBest->nHeight+20; nHeight++)
+        {
+            CScript payee;
+            if(masternodePayments.GetBlockPayee(nHeight, payee)){
+                CTxDestination address1;
+                ExtractDestination(payee, address1);
+                CBitcoinAddress address2(address1);
+                obj.push_back(Pair(boost::lexical_cast<std::string>(nHeight),       address2.ToString().c_str()));
+            } else {
+                obj.push_back(Pair(boost::lexical_cast<std::string>(nHeight),       ""));
+            }
+        }
+
+        return obj;
     }
 
     if(strCommand == "enforce")

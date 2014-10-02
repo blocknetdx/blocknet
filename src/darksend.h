@@ -15,10 +15,11 @@ class CMasterNode;
 class CMasterNodeVote;
 class CBitcoinAddress;
 class CDarksendQueue;
-
+class CMasternodePayments;
 
 extern CDarkSendPool darkSendPool;
 extern CDarkSendSigner darkSendSigner;
+extern CMasternodePayments masternodePayments;
 extern std::vector<CMasterNode> darkSendMasterNodes;
 extern std::vector<int64> darkSendDenominations;
 extern std::string strMasterNodePrivKey;
@@ -27,6 +28,7 @@ extern std::vector<CTxIn> vecMasternodeAskedFor;
 
 static const int64 DARKSEND_COLLATERAL = 0.025*COIN;
 static const int64 DARKSEND_FEE = 0.0125*COIN;
+
 
 // 
 // The Masternode Class. For managing the darksend process. It contains the input of the 1000DRK, signature to prove
@@ -88,6 +90,37 @@ public:
         return enabled == 1;
     }
 };
+
+
+//
+// Masternode Payments Class 
+// Keeps track of who should get paid for which blocks
+//
+
+class CMasternodePayments
+{
+private:
+    std::vector<std::pair<int, uint256> > vWinningScores;
+    std::vector<std::pair<int, CTxIn> > vWinningVin;
+    int nSyncedFromPeer;
+
+public:
+
+    // Deterministically calculate a given "score" for a masternode depending on how close it's hash is 
+    // to the blockHeight. The further away they are the better, the furthest will win the election 
+    // and get paid this block
+    // 
+    uint256 CalculateScore(int64 nBlockHeight, CTxIn vin);
+    bool GetWinningMasternode(int nBlockHeight, CTxIn& vinOut);
+    bool AddWinningMasternode(int nBlockHeight, CTxIn vinIn);
+    bool ProcessMyMasternode(int nBlockHeight, CTxIn vinIn);
+    void Relay(int nBlockHeight, CTxIn vinIn);
+    void Sync(CNode* node);
+
+    //slow
+    bool GetBlockPayee(int nBlockHeight, CScript& payee);
+};
+
 
 // An input in the darksend pool
 class CDarkSendEntryVin
@@ -233,7 +266,7 @@ public:
 class CDarkSendPool
 {
 public:
-    static const int MIN_PEER_PROTO_VERSION = 70038;
+    static const int MIN_PEER_PROTO_VERSION = 70039;
 
     // clients entries
     std::vector<CDarkSendEntry> myEntries;
@@ -433,6 +466,8 @@ public:
     bool EnableHotColdMasterNode(CTxIn& vin, int64 sigTime, CService& addr);
     // start the masternode and register with the network
     void RegisterAsMasterNode(bool stop);
+    // get block hash by height
+    bool GetBlockHash(uint256& hash, int nBlockHeight);
     // get the last valid block hash for a given modulus
     bool GetLastValidBlockHash(uint256& hash, int mod=1, int nBlockHeight=0);
     // process a new block

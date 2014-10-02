@@ -431,7 +431,8 @@ Value getblocktemplate(const Array& params, bool fHelp)
             "  \"sizelimit\" : limit of block size\n"
             "  \"bits\" : compressed target of next block\n"
             "  \"height\" : height of the next block\n"
-            "  \"payee1\" : required payee1\n"
+            "  \"payee\" : required payee\n"
+            "  \"payee_amount\" : required amount to pay\n"
             "  \"votes\" : show vote candidates for this block\n"
             "  \"masternode_payments\" : if masternode payments are active\n"
             "  \"masternode_payments_enforcing\" : if masternode payments are being actively enforced by the network\n"
@@ -545,11 +546,6 @@ Value getblocktemplate(const Array& params, bool fHelp)
     }
 
     Array aVotes;
-    BOOST_FOREACH(CMasterNodeVote& mv, pblock->vmn){        
-        CDataStream ssMNV(SER_NETWORK, PROTOCOL_VERSION);
-        ssMNV << mv;
-        aVotes.push_back(HexStr(ssMNV.begin(), ssMNV.end()));
-    }
  
     Object result;
     result.push_back(Pair("version", pblock->nVersion));
@@ -574,10 +570,13 @@ Value getblocktemplate(const Array& params, bool fHelp)
         ExtractDestination(pblock->payee, address1);
         CBitcoinAddress address2(address1);
         result.push_back(Pair("payee", address2.ToString().c_str()));
+        result.push_back(Pair("payee_amount", (int64_t)GetMasternodePayment(pindexPrev->nHeight+1, pblock->vtx[0].GetValueOut())));
     } else {
         result.push_back(Pair("payee", ""));
+        result.push_back(Pair("payee_amount", ""));
     }
     result.push_back(Pair("masternode_payments", pblock->MasterNodePaymentsOn()));
+    result.push_back(Pair("enforce_masternode_payments", pblock->MasterNodePaymentsEnforcing()));
 
     return result;
 }
