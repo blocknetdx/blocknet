@@ -1772,7 +1772,12 @@ int64 CWallet::GetTotalValue(std::vector<CTxIn> vCoins) {
 
 bool CWallet::CreateCollateralTransaction(CTransaction& txCollateral, std::string strReason)
 {
-    int64 nFeeRet = 0.001*COIN; ///need to get a better fee calc
+    /*
+        To doublespend a collateral transaction, it will require a fee higher than this. So there's 
+        still a significant cost. 
+    */
+    int64 nFeeRet = DARKSEND_COLLATERAL;
+
     CReserveKey reservekey(this);
     int64 nValueIn2 = 0;
     std::vector<CTxIn> vCoinsCollateral;

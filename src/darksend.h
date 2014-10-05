@@ -26,7 +26,7 @@ extern std::string strMasterNodePrivKey;
 extern std::vector<CDarksendQueue> vecDarksendQueue;
 extern std::vector<CTxIn> vecMasternodeAskedFor;
 
-static const int64 DARKSEND_COLLATERAL = 0.025*COIN;
+static const int64 DARKSEND_COLLATERAL = 0.0125*COIN;
 static const int64 DARKSEND_FEE = 0.0125*COIN;
 
 
@@ -312,6 +312,7 @@ public:
     int sessionUsers; //N Users have said they'll join
     bool sessionFoundMasternode; //If we've found a compatible masternode
     int sessionTries;
+    std::vector<CTransaction> vecSessionCollateral;
 
     int lastSplitUpBlock;
     int splitUpInARow; // how many splits we've done since a success?

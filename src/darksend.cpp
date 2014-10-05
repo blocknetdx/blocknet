@@ -227,10 +227,35 @@ void CDarkSendPool::Check()
 // until the transaction is either complete or fails. 
 //
 void CDarkSendPool::ChargeFees(){
-    return;
     
     if(fMasterNode) {
         int i = 0;
+
+        BOOST_FOREACH(const CTransaction& txCollateral, vecSessionCollateral) {
+            bool found = false;
+            BOOST_FOREACH(const CDarkSendEntry v, entries) {
+                if(v.collateral == txCollateral) found = false;
+            }
+
+            // This queue entry didn't send us the promised transaction
+            if(!found){
+                LogPrintf("CDarkSendPool::ChargeFees -- found uncooperative node (didn't send transaction). charging fees. %u\n", i);
+
+                CWalletTx wtxCollateral = CWalletTx(pwalletMain, txCollateral);
+
+                // Broadcast
+                if (!wtxCollateral.AcceptToMemoryPool(true, false))
+                {
+                    // This must not fail. The transaction has already been signed and recorded.
+                    LogPrintf("CDarkSendPool::ChargeFees() : Error: Transaction not valid");
+                }
+                wtxCollateral.RelayWalletTransaction();
+            }
+            i++;
+        }
+
+        i = 0;
+
         // who didn't sign?
         BOOST_FOREACH(const CDarkSendEntry v, entries) {
             BOOST_FOREACH(const CDarkSendEntryVin s, v.sev) {
@@ -394,6 +419,12 @@ bool CDarkSendPool::IsCollateralValid(const CTransaction& txCollateral){
     if(txCollateral.vout[0].scriptPubKey != collateralPubKey || 
        txCollateral.vout[0].nValue != DARKSEND_COLLATERAL) {
         if(fDebug) LogPrintf ("CDarkSendPool::IsCollateralValid - not correct amount or addr (0)\n");
+        return false;
+    }
+    //collateral transactions are required to have abnormally large fees associated, to make double
+    //spending very expensive.
+    if(txCollateral.GetValueOut() < DARKSEND_COLLATERAL*2) {
+        if(fDebug) LogPrintf ("CDarkSendPool::IsCollateralValid - did not include enough fees in transaction\n");
         return false;
     }
 
@@ -1743,6 +1774,7 @@ bool CDarkSendPool::IsCompatibleWithSession(int64 nAmount, CTransaction txCollat
 
     sessionUsers++;
     lastTimeChanged = GetTimeMillis();
+    vecSessionCollateral.push_back(txCollateral);
 
     return true;
 }
