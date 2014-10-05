@@ -1387,7 +1387,15 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
                 BOOST_FOREACH(CNode* pnode, vNodes)
                 {
                     if(submittedToMasternode != pnode->addr) continue;
-                    pnode->PushMessage("dsa", nTotalValue);
+                
+                    std::string strReason;
+                    CTransaction txCollateral;
+                    if(!CreateCollateralTransaction(txCollateral, strReason)){
+                        LogPrintf("DoAutomaticDenominating -- dsa error:%s\n" strReason);
+                        return false; 
+                    }
+                
+                    pnode->PushMessage("dsa", nTotalValue, txCollateral);
                     LogPrintf("DoAutomaticDenominating --- connected (from queue), sending dsa for %"PRI64d"\n", nTotalValue);
                     return true;
                 }
@@ -1412,7 +1420,15 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
                 BOOST_FOREACH(CNode* pnode, vNodes)
                 {
                     if(darkSendMasterNodes[i].addr != pnode->addr) continue;
-                    pnode->PushMessage("dsa", nTotalValue);
+
+                    std::string strReason;
+                    CTransaction txCollateral;
+                    if(!CreateCollateralTransaction(txCollateral, strReason)){
+                        LogPrintf("DoAutomaticDenominating -- dsa error:%s\n" strReason);
+                        return false; 
+                    }
+
+                    pnode->PushMessage("dsa", nTotalValue, txCollateral);
                     LogPrintf("DoAutomaticDenominating --- connected, sending dsa for %"PRI64d"\n", nTotalValue);
                     return true;
                 }
@@ -1679,9 +1695,15 @@ bool CDarkSendPool::IsCompatibleWithEntries(std::vector<CTxOut> vout)
     return true;
 }
 
-bool CDarkSendPool::IsCompatibleWithSession(int64 nAmount, std::string& strReason)
+bool CDarkSendPool::IsCompatibleWithSession(int64 nAmount, CTransaction txCollateral, std::string& strReason)
 {
     LogPrintf("CDarkSendPool::IsCompatibleWithSession - sessionAmount %"PRI64d" sessionUsers %d\n", sessionAmount, sessionUsers);
+
+    if (!IsCollateralValid(txCollateral)){
+        if(fDebug) LogPrintf ("CDarkSendPool::IsCompatibleWithSession - collateral not valid!\n");
+        strReason = "collateral not valid";
+        return false;
+    }
 
     if(sessionUsers < 0) sessionUsers = 0;
     

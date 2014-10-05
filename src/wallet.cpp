@@ -1770,6 +1770,57 @@ int64 CWallet::GetTotalValue(std::vector<CTxIn> vCoins) {
     return nTotalValue;
 }
 
+bool CWallet::CreateCollateralTransaction(CTransaction& txCollateral, std::string strReason)
+{
+    int64 nValueIn2 = 0;
+    std::vector<CTxIn> vCoinsCollateral;
+
+    if (!SelectCoinsCollateral(vCoinsCollateral, nValueIn2))
+    {
+        BOOST_FOREACH(CTxIn v, vCoins)
+            UnlockCoin(v.prevout);
+
+        strReason = "Error: Darksend requires a collateral transaction and could not locate an acceptable input!";
+        return false;
+    }
+
+    // make our change address
+    CScript scriptChange;
+    CPubKey vchPubKey;
+    assert(reservekey.GetReservedKey(vchPubKey)); // should never fail, as we just unlocked
+    scriptChange.SetDestination(vchPubKey.GetID());
+    reservekey.KeepKey();
+
+    CTxOut vout2 = CTxOut(DARKSEND_COLLATERAL, darkSendPool.collateralPubKey);
+
+    BOOST_FOREACH(CTxIn v, vCoinsCollateral)
+        txCollateral.vin.push_back(v);
+    
+    txCollateral.vout.push_back(vout2);
+
+    if(nValueIn2 - DARKSEND_COLLATERAL - nFeeRet > 0) {
+        CTxOut vout3 = CTxOut(nValueIn2 - DARKSEND_COLLATERAL - nFeeRet, scriptChange);
+        txCollateral.vout.push_back(vout3);
+    }
+    
+    int vinNumber = 0;
+    BOOST_FOREACH(CTxIn v, txCollateral.vin) {
+        if(!SignSignature(*this, v.prevPubKey, txCollateral, vinNumber, int(SIGHASH_ALL|SIGHASH_ANYONECANPAY))) {
+            BOOST_FOREACH(CTxIn v, vCoins)
+                UnlockCoin(v.prevout);
+
+            strReason = "CDarkSendPool::Sign - Unable to sign collateral transaction! \n";
+            return false;
+        }
+        vinNumber++;
+    }
+
+    BOOST_FOREACH(CTxIn v, vCoinsCollateral)
+        LockCoin(v.prevout);
+
+    return true;
+}
+
 string CWallet::PrepareDarksendDenominate(int minRounds, int maxAmount)
 {
     if (IsLocked())
@@ -1781,7 +1832,6 @@ string CWallet::PrepareDarksendDenominate(int minRounds, int maxAmount)
         }
     }
 
-    CTransaction txCollateral;
     int64 nFeeRet = 0.0125*COIN; ///need to get a better fee calc
 
     // ** find the coins we'll use
@@ -1812,51 +1862,11 @@ string CWallet::PrepareDarksendDenominate(int minRounds, int maxAmount)
     BOOST_FOREACH(CTxIn v, vCoins)
         LockCoin(v.prevout);
 
-    // create another transaction as collateral for using DarkSend
-    {
-        int64 nValueIn2 = 0;
-        std::vector<CTxIn> vCoinsCollateral;
 
-        if (!SelectCoinsCollateral(vCoinsCollateral, nValueIn2))
-        {
-            BOOST_FOREACH(CTxIn v, vCoins)
-                UnlockCoin(v.prevout);
-
-            return _("Error: Darksend requires a collateral transaction and could not locate an acceptable input!");
-        }
-
-        // make our change address
-        CScript scriptChange;
-        CPubKey vchPubKey;
-        assert(reservekey.GetReservedKey(vchPubKey)); // should never fail, as we just unlocked
-        scriptChange.SetDestination(vchPubKey.GetID());
-        reservekey.KeepKey();
-
-        CTxOut vout2 = CTxOut(DARKSEND_COLLATERAL, darkSendPool.collateralPubKey);
-
-        BOOST_FOREACH(CTxIn v, vCoinsCollateral)
-            txCollateral.vin.push_back(v);
-        
-        txCollateral.vout.push_back(vout2);
-
-        if(nValueIn2 - DARKSEND_COLLATERAL - nFeeRet > 0) {
-            CTxOut vout3 = CTxOut(nValueIn2 - DARKSEND_COLLATERAL - nFeeRet, scriptChange);
-            txCollateral.vout.push_back(vout3);
-        }
-        
-        int vinNumber = 0;
-        BOOST_FOREACH(CTxIn v, txCollateral.vin) {
-            if(!SignSignature(*this, v.prevPubKey, txCollateral, vinNumber, int(SIGHASH_ALL|SIGHASH_ANYONECANPAY))) {
-                BOOST_FOREACH(CTxIn v, vCoins)
-                    UnlockCoin(v.prevout);
-
-                return _("CDarkSendPool::Sign - Unable to sign collateral transaction! \n");
-            }
-            vinNumber++;
-        }
-
-        BOOST_FOREACH(CTxIn v, vCoinsCollateral)
-            LockCoin(v.prevout);
+    std::string strReason;
+    CTransaction txCollateral;
+    if(!CreateCollateralTransaction(txCollateral, strReason)){
+        return _(strReason);
     }
 
     // denominate our funds

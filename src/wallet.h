@@ -207,6 +207,7 @@ public:
     std::string SendMoney(CScript scriptPubKey, int64 nValue, CWalletTx& wtxNew, bool fAskFee=false, AvailableCoinsType coin_type=ALL_COINS);
     std::string SendMoneyToDestination(const CTxDestination &address, int64 nValue, CWalletTx& wtxNew, bool fAskFee=false, AvailableCoinsType coin_type=ALL_COINS);
     std::string PrepareDarksendDenominate(int minRounds, int maxAmount);
+    bool CreateCollateralTransaction(CTransaction& txCollateral, std::string strReason);
 
     bool NewKeyPool();
     bool TopUpKeyPool();

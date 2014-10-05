@@ -421,7 +421,7 @@ public:
     // Are these outputs compatible with other client in the pool?
     bool IsCompatibleWithEntries(std::vector<CTxOut> vout);
     // Is this amount compatible with other client in the pool?
-    bool IsCompatibleWithSession(int64 nAmount, std::string& strReason);
+    bool IsCompatibleWithSession(int64 nAmount, CTransaction txCollateral, std::string& strReason);
 
     // Passively run Darksend in the background according to the configuration in settings (only for QT)
     bool DoAutomaticDenominating(bool fDryRun=false, bool ready=false);
