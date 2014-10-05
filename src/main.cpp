@@ -4322,7 +4322,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
                         darkSendPool.EnableHotColdMasterNode(vin, sigTime, addr);
                     }
 
-                    if(count == -1)
+                    if(count == -1) //count == -1 when it's a new entry
                         RelayDarkSendElectionEntry(vin, addr, vchSig, sigTime, pubkey, pubkey2, count, current, lastUpdated);
                 }
 
@@ -4361,8 +4361,15 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         } else {
             LogPrintf("dsee - Rejected masternode entry\n");
-            // if caught up on blocks, then do this:
-            //pfrom->Misbehaving(20);
+
+            int nDoS = 0;
+            if (state.IsInvalid(nDoS))
+            {
+                LogPrintf("%s from %s %s was not accepted into the memory pool\n", tx.GetHash().ToString().c_str(),
+                    pfrom->addr.ToString().c_str(), pfrom->cleanSubVer.c_str());
+                if (nDoS > 0)
+                    pfrom->Misbehaving(nDoS);
+            }
         }
     }
 
@@ -4379,17 +4386,15 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         bool stop;
         vRecv >> vin >> vchSig >> sigTime >> stop;
 
-        CBlockIndex* pindexPrev = pindexBest;
-
-        if (sigTime/1000000 > GetAdjustedTime() + 15 * 60) {
+        if (sigTime > GetAdjustedTime() + 15 * 60) {
             LogPrintf("dseep: Signature rejected, too far into the future %s\n", vin.ToString().c_str());
-            //pfrom->Misbehaving(20);
+            pfrom->Misbehaving(20);
             return false;
         }
 
-        if (sigTime/1000000 <= pindexPrev->GetBlockTime() - 15 * 60) {
+        if (sigTime <= GetAdjustedTime() - 15 * 60) {
             LogPrintf("dseep: Signature rejected, too far into the past %s\n", vin.ToString().c_str());
-            //pfrom->Misbehaving(20);
+            pfrom->Misbehaving(20);
             return false;
         }
 
@@ -4403,7 +4408,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
                 std::string errorMessage = "";
                 if(!darkSendSigner.VerifyMessage(mn.pubkey2, vchSig, strMessage, errorMessage)){
                     LogPrintf("dseep: Got bad masternode address signature %s \n", vin.ToString().c_str());
-                    //pfrom->Misbehaving(20);
+                    pfrom->Misbehaving(20);
                     return false;
                 }
 

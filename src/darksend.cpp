@@ -846,6 +846,10 @@ void CDarkSendPool::RegisterAsMasterNode(bool stop)
 {
     if(!fMasterNode) return;
 
+    //need correct adjusted time to send ping
+    bool fIsInitialDownload = IsInitialBlockDownload();
+    if(fIsInitialDownload) return;
+
     std::string errorMessage;
 
     CKey key2;
@@ -906,7 +910,7 @@ void CDarkSendPool::RegisterAsMasterNode(bool stop)
                 return;
             }
 
-            masterNodeSignatureTime = GetTimeMicros();
+            masterNodeSignatureTime = GetAdjustedTime();
 
             std::string vchPubKey(pubkeyMasterNode.begin(), pubkeyMasterNode.end());
             std::string vchPubKey2(pubkey2.begin(), pubkey2.end());
@@ -949,7 +953,7 @@ void CDarkSendPool::RegisterAsMasterNode(bool stop)
 
     if(isCapableMasterNode != MASTERNODE_IS_CAPABLE) return;
 
-    masterNodeSignatureTime = GetTimeMicros();
+    masterNodeSignatureTime = GetAdjustedTime();
 
     std::string strMessage = masterNodeSignAddr.ToString() + boost::lexical_cast<std::string>(masterNodeSignatureTime) + boost::lexical_cast<std::string>(stop);
 
