@@ -4229,6 +4229,16 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         CTxIn vin;
         vRecv >> vin;
 
+        if(vin == CTxIn()) { //only should ask for this once
+            if(pfrom->HasFulfilledRequest("dseg")) {
+                printf("dseg -- peer already asked me for the list\n");
+                pfrom->Misbehaving(20);
+                return false;
+            }
+
+            pfrom->FulfilledRequest("dseg");
+        } //else, asking for a specific node which is ok
+
         int count = darkSendMasterNodes.size()-1;
         int i = 0;
 
