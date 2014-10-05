@@ -4,10 +4,21 @@
 #include <vector>
 
 #include "netbase.h"
+#include "net.h"
 
 using namespace std;
 
 BOOST_AUTO_TEST_SUITE(netbase_tests)
+
+BOOST_AUTO_TEST_CASE(cnode_tests)
+{
+    CNode nc(INVALID_SOCKET, CAddress(CService("127.0.0.1", 0), nLocalServices));
+    BOOST_CHECK(nc.HasFulfilledRequest("test1") == false);
+    nc.FulfilledRequest("test1");
+    BOOST_CHECK(nc.HasFulfilledRequest("test1") == true);
+    nc.FulfilledRequest("test1");
+    BOOST_CHECK(nc.HasFulfilledRequest("test1") == true);
+}
 
 BOOST_AUTO_TEST_CASE(netbase_networks)
 {

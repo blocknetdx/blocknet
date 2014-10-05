@@ -26,7 +26,7 @@ extern std::string strMasterNodePrivKey;
 extern std::vector<CDarksendQueue> vecDarksendQueue;
 extern std::vector<CTxIn> vecMasternodeAskedFor;
 
-static const int64 DARKSEND_COLLATERAL = 0.025*COIN;
+static const int64 DARKSEND_COLLATERAL = 0.0125*COIN;
 static const int64 DARKSEND_FEE = 0.0125*COIN;
 
 
@@ -65,7 +65,7 @@ public:
     void UpdateLastSeen(int64 override=0)
     {
         if(override == 0){
-            lastTimeSeen = GetTimeMicros();
+            lastTimeSeen = GetAdjustedTime();
         } else {
             lastTimeSeen = override;
         }
@@ -73,11 +73,11 @@ public:
 
     void Check();
 
-    bool UpdatedWithin(int microSeconds)
+    bool UpdatedWithin(int seconds)
     {
-        //LogPrintf("UpdatedWithin %"PRI64u", %"PRI64u" --  %d \n", GetTimeMicros() , lastTimeSeen, (GetTimeMicros() - lastTimeSeen) < microSeconds);
+        //LogPrintf("UpdatedWithin %"PRI64u", %"PRI64u" --  %d \n", GetTimeMicros() , lastTimeSeen, (GetTimeMicros() - lastTimeSeen) < seconds);
 
-        return (GetTimeMicros() - lastTimeSeen) < microSeconds;
+        return (GetAdjustedTime() - lastTimeSeen) < seconds;
     }
 
     void Disable()
@@ -312,6 +312,7 @@ public:
     int sessionUsers; //N Users have said they'll join
     bool sessionFoundMasternode; //If we've found a compatible masternode
     int sessionTries;
+    std::vector<CTransaction> vecSessionCollateral;
 
     int lastSplitUpBlock;
     int splitUpInARow; // how many splits we've done since a success?
@@ -421,7 +422,7 @@ public:
     // Are these outputs compatible with other client in the pool?
     bool IsCompatibleWithEntries(std::vector<CTxOut> vout);
     // Is this amount compatible with other client in the pool?
-    bool IsCompatibleWithSession(int64 nAmount, std::string& strReason);
+    bool IsCompatibleWithSession(int64 nAmount, CTransaction txCollateral, std::string& strReason);
 
     // Passively run Darksend in the background according to the configuration in settings (only for QT)
     bool DoAutomaticDenominating(bool fDryRun=false, bool ready=false);

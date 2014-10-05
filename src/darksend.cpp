@@ -227,10 +227,35 @@ void CDarkSendPool::Check()
 // until the transaction is either complete or fails. 
 //
 void CDarkSendPool::ChargeFees(){
-    return;
     
     if(fMasterNode) {
         int i = 0;
+
+        BOOST_FOREACH(const CTransaction& txCollateral, vecSessionCollateral) {
+            bool found = false;
+            BOOST_FOREACH(const CDarkSendEntry v, entries) {
+                if(v.collateral == txCollateral) found = false;
+            }
+
+            // This queue entry didn't send us the promised transaction
+            if(!found){
+                LogPrintf("CDarkSendPool::ChargeFees -- found uncooperative node (didn't send transaction). charging fees. %u\n", i);
+
+                CWalletTx wtxCollateral = CWalletTx(pwalletMain, txCollateral);
+
+                // Broadcast
+                if (!wtxCollateral.AcceptToMemoryPool(true, false))
+                {
+                    // This must not fail. The transaction has already been signed and recorded.
+                    LogPrintf("CDarkSendPool::ChargeFees() : Error: Transaction not valid");
+                }
+                wtxCollateral.RelayWalletTransaction();
+            }
+            i++;
+        }
+
+        i = 0;
+
         // who didn't sign?
         BOOST_FOREACH(const CDarkSendEntry v, entries) {
             BOOST_FOREACH(const CDarkSendEntryVin s, v.sev) {
@@ -394,6 +419,12 @@ bool CDarkSendPool::IsCollateralValid(const CTransaction& txCollateral){
     if(txCollateral.vout[0].scriptPubKey != collateralPubKey || 
        txCollateral.vout[0].nValue != DARKSEND_COLLATERAL) {
         if(fDebug) LogPrintf ("CDarkSendPool::IsCollateralValid - not correct amount or addr (0)\n");
+        return false;
+    }
+    //collateral transactions are required to have abnormally large fees associated, to make double
+    //spending very expensive.
+    if(txCollateral.GetValueOut() < DARKSEND_COLLATERAL*2) {
+        if(fDebug) LogPrintf ("CDarkSendPool::IsCollateralValid - did not include enough fees in transaction\n");
         return false;
     }
 
@@ -815,6 +846,14 @@ void CDarkSendPool::RegisterAsMasterNode(bool stop)
 {
     if(!fMasterNode) return;
 
+    //need correct adjusted time to send ping
+    bool fIsInitialDownload = IsInitialBlockDownload();
+    if(fIsInitialDownload) {
+        isCapableMasterNode = MASTERNODE_SYNC_IN_PROCESS;
+        LogPrintf("CDarkSendPool::RegisterAsMasterNode() - Sync in progress. Must wait until sync is complete to start masternode.");
+        return;
+    }
+
     std::string errorMessage;
 
     CKey key2;
@@ -826,7 +865,7 @@ void CDarkSendPool::RegisterAsMasterNode(bool stop)
         exit(0);
     }
 
-    if(isCapableMasterNode == MASTERNODE_INPUT_TOO_NEW || isCapableMasterNode == MASTERNODE_NOT_CAPABLE){
+    if(isCapableMasterNode == MASTERNODE_INPUT_TOO_NEW || isCapableMasterNode == MASTERNODE_NOT_CAPABLE || isCapableMasterNode == MASTERNODE_SYNC_IN_PROCESS){
         isCapableMasterNode = MASTERNODE_NOT_PROCESSED;
     }
 
@@ -875,7 +914,7 @@ void CDarkSendPool::RegisterAsMasterNode(bool stop)
                 return;
             }
 
-            masterNodeSignatureTime = GetTimeMicros();
+            masterNodeSignatureTime = GetAdjustedTime();
 
             std::string vchPubKey(pubkeyMasterNode.begin(), pubkeyMasterNode.end());
             std::string vchPubKey2(pubkey2.begin(), pubkey2.end());
@@ -918,7 +957,7 @@ void CDarkSendPool::RegisterAsMasterNode(bool stop)
 
     if(isCapableMasterNode != MASTERNODE_IS_CAPABLE) return;
 
-    masterNodeSignatureTime = GetTimeMicros();
+    masterNodeSignatureTime = GetAdjustedTime();
 
     std::string strMessage = masterNodeSignAddr.ToString() + boost::lexical_cast<std::string>(masterNodeSignatureTime) + boost::lexical_cast<std::string>(stop);
 
@@ -1387,7 +1426,15 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
                 BOOST_FOREACH(CNode* pnode, vNodes)
                 {
                     if(submittedToMasternode != pnode->addr) continue;
-                    pnode->PushMessage("dsa", nTotalValue);
+                
+                    std::string strReason;
+                    CTransaction txCollateral;
+                    if(!pwalletMain->CreateCollateralTransaction(txCollateral, strReason)){
+                        LogPrintf("DoAutomaticDenominating -- dsa error:%s\n", strReason.c_str());
+                        return false; 
+                    }
+                
+                    pnode->PushMessage("dsa", nTotalValue, txCollateral);
                     LogPrintf("DoAutomaticDenominating --- connected (from queue), sending dsa for %"PRI64d"\n", nTotalValue);
                     return true;
                 }
@@ -1412,7 +1459,15 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
                 BOOST_FOREACH(CNode* pnode, vNodes)
                 {
                     if(darkSendMasterNodes[i].addr != pnode->addr) continue;
-                    pnode->PushMessage("dsa", nTotalValue);
+
+                    std::string strReason;
+                    CTransaction txCollateral;
+                    if(!pwalletMain->CreateCollateralTransaction(txCollateral, strReason)){
+                        LogPrintf("DoAutomaticDenominating -- dsa error:%s\n", strReason.c_str());
+                        return false; 
+                    }
+
+                    pnode->PushMessage("dsa", nTotalValue, txCollateral);
                     LogPrintf("DoAutomaticDenominating --- connected, sending dsa for %"PRI64d"\n", nTotalValue);
                     return true;
                 }
@@ -1642,12 +1697,12 @@ void CMasterNode::Check()
     //once spent, stop doing the checks
     if(enabled==3) return;
 
-    if(!UpdatedWithin(MASTERNODE_REMOVAL_MICROSECONDS)){
+    if(!UpdatedWithin(MASTERNODE_REMOVAL_SECONDS)){
         enabled = 4;
         return;
     }
 
-    if(!UpdatedWithin(MASTERNODE_EXPIRATION_MICROSECONDS)){
+    if(!UpdatedWithin(MASTERNODE_EXPIRATION_SECONDS)){
         enabled = 2;
         return;
     }
@@ -1679,9 +1734,15 @@ bool CDarkSendPool::IsCompatibleWithEntries(std::vector<CTxOut> vout)
     return true;
 }
 
-bool CDarkSendPool::IsCompatibleWithSession(int64 nAmount, std::string& strReason)
+bool CDarkSendPool::IsCompatibleWithSession(int64 nAmount, CTransaction txCollateral, std::string& strReason)
 {
     LogPrintf("CDarkSendPool::IsCompatibleWithSession - sessionAmount %"PRI64d" sessionUsers %d\n", sessionAmount, sessionUsers);
+
+    if (!unitTest && !IsCollateralValid(txCollateral)){
+        if(fDebug) LogPrintf ("CDarkSendPool::IsCompatibleWithSession - collateral not valid!\n");
+        strReason = "collateral not valid";
+        return false;
+    }
 
     if(sessionUsers < 0) sessionUsers = 0;
     
@@ -1721,6 +1782,7 @@ bool CDarkSendPool::IsCompatibleWithSession(int64 nAmount, std::string& strReaso
 
     sessionUsers++;
     lastTimeChanged = GetTimeMillis();
+    vecSessionCollateral.push_back(txCollateral);
 
     return true;
 }
@@ -1910,14 +1972,20 @@ void ThreadCheckDarkSendPool()
         if(c % 20 == 0){
             bool fIsInitialDownload = IsInitialBlockDownload();
             if(!fIsInitialDownload) {
-                LogPrintf("Successfully synced, asking for Masternode list and payment list\n");
                 LOCK(cs_vNodes);
                 BOOST_FOREACH(CNode* pnode, vNodes)
                 {
                     if (pnode->nVersion >= darkSendPool.MIN_PEER_PROTO_VERSION) {
+
+                        //keep track of who we've asked for the list
+                        if(pnode->HasFulfilledRequest("mnsync")) continue;
+                        pnode->FulfilledRequest("mnsync");
+
                         if(RequestedMasterNodeList <= 8) {
-                            if(RequestedMasterNodeList <= 2) pnode->PushMessage("dseg", CTxIn());
-                            pnode->PushMessage("mnsync");
+                            LogPrintf("Successfully synced, asking for Masternode list and payment list\n");
+            
+                            if(RequestedMasterNodeList <= 2) pnode->PushMessage("dseg", CTxIn()); //request full mn list
+                            pnode->PushMessage("mnsync"); //sync payees
                             RequestedMasterNodeList++;
                         }
                     }

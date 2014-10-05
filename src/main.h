@@ -40,12 +40,13 @@
 #define MASTERNODE_INPUT_TOO_NEW               4
 #define MASTERNODE_PORT_NOT_OPEN               6
 #define MASTERNODE_PORT_OPEN                   7
+#define MASTERNODE_SYNC_IN_PROCESS             8
 
 #define MASTERNODE_MIN_CONFIRMATIONS           200
-#define MASTERNODE_MIN_MICROSECONDS            5*60*1000*1000
+#define MASTERNODE_MIN_SECONDS            5*60
 #define MASTERNODE_PING_SECONDS                30*60
-#define MASTERNODE_EXPIRATION_MICROSECONDS     35*60*1000*1000
-#define MASTERNODE_REMOVAL_MICROSECONDS        35.5*60*1000*1000
+#define MASTERNODE_EXPIRATION_SECONDS     35*60
+#define MASTERNODE_REMOVAL_SECONDS        35.5*60
 
 // status update message constants
 #define MASTERNODE_ACCEPTED                    1
