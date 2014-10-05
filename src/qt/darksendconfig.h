@@ -29,7 +29,6 @@ private:
 
 private slots:
 
-    void clickNone();
     void clickBasic();
     void clickHigh();
     void clickMax();

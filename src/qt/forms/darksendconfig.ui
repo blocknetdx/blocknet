@@ -6,26 +6,13 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>627</width>
-    <height>354</height>
+    <width>630</width>
+    <height>307</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Configure Darksend+</string>
   </property>
-  <widget class="QPushButton" name="buttonNone">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>300</y>
-     <width>151</width>
-     <height>27</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Disable Darksend+</string>
-   </property>
-  </widget>
   <widget class="QPushButton" name="buttonBasic">
    <property name="geometry">
     <rect>
@@ -36,7 +23,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>Basic Anonymity</string>
+    <string>Basic Privacy</string>
    </property>
   </widget>
   <widget class="QPushButton" name="buttonHigh">
@@ -49,7 +36,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>High Anonymity</string>
+    <string>High Privacy</string>
    </property>
   </widget>
   <widget class="QPushButton" name="buttonMax">
@@ -62,7 +49,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>Maximum Anonymity</string>
+    <string>Maximum Privacy</string>
    </property>
   </widget>
   <widget class="QLabel" name="label">
@@ -75,7 +62,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>Please select an anonymity level. </string>
+    <string>Please select an privacy level. </string>
    </property>
   </widget>
   <widget class="QLabel" name="label_2">
@@ -88,7 +75,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>Use 2 separate masternodes to anonymize up to 1000DRK</string>
+    <string>Use 2 separate masternodes to mix funds up to 1000DRK</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_3">
@@ -101,7 +88,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>Use 4 separate masternodes to anonymize up to 1000DRK</string>
+    <string>Use 4 separate masternodes to mix funds up to 1000DRK</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_4">
@@ -115,19 +102,6 @@
    </property>
    <property name="text">
     <string>Use 8 separate masternodes</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_5">
-   <property name="geometry">
-    <rect>
-     <x>190</x>
-     <y>300</y>
-     <width>251</width>
-     <height>21</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Use pseudonymous transactions</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_6">
@@ -200,19 +174,6 @@
     <rect>
      <x>10</x>
      <y>190</y>
-     <width>601</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="orientation">
-    <enum>Qt::Horizontal</enum>
-   </property>
-  </widget>
-  <widget class="Line" name="line_3">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>280</y>
      <width>601</width>
      <height>16</height>
     </rect>
