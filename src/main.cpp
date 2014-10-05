@@ -4180,7 +4180,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
     else if (strCommand == "mnget") { //Masternode Payments Request Sync
 
         if(pfrom->HasFulfilledRequest("mnget")) {
-            printf("mnget -- peer already asked me for the list\n");
+            LogPrintf("mnget -- peer already asked me for the list\n");
             pfrom->Misbehaving(20);
             return false;
         }
@@ -4231,7 +4231,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         if(vin == CTxIn()) { //only should ask for this once
             if(pfrom->HasFulfilledRequest("dseg")) {
-                printf("dseg -- peer already asked me for the list\n");
+                LogPrintf("dseg -- peer already asked me for the list\n");
                 pfrom->Misbehaving(20);
                 return false;
             }
@@ -4315,7 +4315,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             //LogPrintf(" -- %s\n", mn.vin.ToString().c_str());
 
             if(mn.vin == vin) {
-                if(!mn.UpdatedWithin(MASTERNODE_MIN_MICROSECONDS)){
+                if(!mn.UpdatedWithin(MASTERNODE_MIN_SECONDS)){
                     mn.UpdateLastSeen();
 
                     if(pubkey2 == darkSendPool.pubkeyMasterNode2){
@@ -4418,7 +4418,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
                         mn.Check();
                         RelayDarkSendElectionEntryPing(vin, vchSig, sigTime, stop);
                     }
-                } else if(!mn.UpdatedWithin(MASTERNODE_MIN_MICROSECONDS)){
+                } else if(!mn.UpdatedWithin(MASTERNODE_MIN_SECONDS)){
                     mn.UpdateLastSeen();
                     RelayDarkSendElectionEntryPing(vin, vchSig, sigTime, stop);
                 }

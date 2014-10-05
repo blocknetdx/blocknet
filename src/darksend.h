@@ -65,7 +65,7 @@ public:
     void UpdateLastSeen(int64 override=0)
     {
         if(override == 0){
-            lastTimeSeen = GetTimeMicros();
+            lastTimeSeen = GetAdjustedTime();
         } else {
             lastTimeSeen = override;
         }
@@ -73,11 +73,11 @@ public:
 
     void Check();
 
-    bool UpdatedWithin(int microSeconds)
+    bool UpdatedWithin(int seconds)
     {
-        //LogPrintf("UpdatedWithin %"PRI64u", %"PRI64u" --  %d \n", GetTimeMicros() , lastTimeSeen, (GetTimeMicros() - lastTimeSeen) < microSeconds);
+        //LogPrintf("UpdatedWithin %"PRI64u", %"PRI64u" --  %d \n", GetTimeMicros() , lastTimeSeen, (GetTimeMicros() - lastTimeSeen) < seconds);
 
-        return (GetTimeMicros() - lastTimeSeen) < microSeconds;
+        return (GetAdjustedTime() - lastTimeSeen) < seconds;
     }
 
     void Disable()

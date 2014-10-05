@@ -267,10 +267,10 @@ BOOST_AUTO_TEST_CASE(darksend_masternode_class)
     mn.UpdateLastSeen();
     mn.Check();
     BOOST_CHECK(mn.enabled == 1); // ok
-    mn.lastTimeSeen -= MASTERNODE_EXPIRATION_MICROSECONDS;
+    mn.lastTimeSeen -= MASTERNODE_EXPIRATION_SECONDS;
     mn.Check();
     BOOST_CHECK(mn.enabled == 2); // hasn't pinged
-    mn.lastTimeSeen -= MASTERNODE_EXPIRATION_MICROSECONDS;
+    mn.lastTimeSeen -= MASTERNODE_EXPIRATION_SECONDS;
     mn.Check();
     BOOST_CHECK(mn.enabled == 4); // expired
 }

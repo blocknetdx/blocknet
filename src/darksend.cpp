@@ -848,7 +848,11 @@ void CDarkSendPool::RegisterAsMasterNode(bool stop)
 
     //need correct adjusted time to send ping
     bool fIsInitialDownload = IsInitialBlockDownload();
-    if(fIsInitialDownload) return;
+    if(fIsInitialDownload) {
+        isCapableMasterNode = MASTERNODE_SYNC_IN_PROCESS;
+        LogPrintf("CDarkSendPool::RegisterAsMasterNode() - Sync in progress. Must wait until sync is complete to start masternode.");
+        return;
+    }
 
     std::string errorMessage;
 
@@ -861,7 +865,7 @@ void CDarkSendPool::RegisterAsMasterNode(bool stop)
         exit(0);
     }
 
-    if(isCapableMasterNode == MASTERNODE_INPUT_TOO_NEW || isCapableMasterNode == MASTERNODE_NOT_CAPABLE){
+    if(isCapableMasterNode == MASTERNODE_INPUT_TOO_NEW || isCapableMasterNode == MASTERNODE_NOT_CAPABLE || isCapableMasterNode == MASTERNODE_SYNC_IN_PROCESS){
         isCapableMasterNode = MASTERNODE_NOT_PROCESSED;
     }
 
@@ -1693,12 +1697,12 @@ void CMasterNode::Check()
     //once spent, stop doing the checks
     if(enabled==3) return;
 
-    if(!UpdatedWithin(MASTERNODE_REMOVAL_MICROSECONDS)){
+    if(!UpdatedWithin(MASTERNODE_REMOVAL_SECONDS)){
         enabled = 4;
         return;
     }
 
-    if(!UpdatedWithin(MASTERNODE_EXPIRATION_MICROSECONDS)){
+    if(!UpdatedWithin(MASTERNODE_EXPIRATION_SECONDS)){
         enabled = 2;
         return;
     }
@@ -1968,14 +1972,20 @@ void ThreadCheckDarkSendPool()
         if(c % 20 == 0){
             bool fIsInitialDownload = IsInitialBlockDownload();
             if(!fIsInitialDownload) {
-                LogPrintf("Successfully synced, asking for Masternode list and payment list\n");
                 LOCK(cs_vNodes);
                 BOOST_FOREACH(CNode* pnode, vNodes)
                 {
                     if (pnode->nVersion >= darkSendPool.MIN_PEER_PROTO_VERSION) {
+
+                        //keep track of who we've asked for the list
+                        if(pnode->HasFulfilledRequest("mnsync")) continue;
+                        pnode->FulfilledRequest("mnsync");
+
                         if(RequestedMasterNodeList <= 8) {
-                            if(RequestedMasterNodeList <= 2) pnode->PushMessage("dseg", CTxIn());
-                            pnode->PushMessage("mnsync");
+                            LogPrintf("Successfully synced, asking for Masternode list and payment list\n");
+            
+                            if(RequestedMasterNodeList <= 2) pnode->PushMessage("dseg", CTxIn()); //request full mn list
+                            pnode->PushMessage("mnsync"); //sync payees
                             RequestedMasterNodeList++;
                         }
                     }
