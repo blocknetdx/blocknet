@@ -4178,6 +4178,14 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         LogPrintf("peer=%d says we are misbehaving %d\n", pfrom->id, howmuch);
     }
     else if (strCommand == "mnget") { //Masternode Payments Request Sync
+
+        if(pfrom->HasFulfilledRequest("mnget")) {
+            printf("mnget -- peer already asked me for the list\n");
+            pfrom->Misbehaving(20);
+            return false;
+        }
+
+        pfrom->FulfilledRequest("mnget");
         masternodePayments.Sync(pfrom);
     }
     else if (strCommand == "mnw") { //Masternode Payments Declare Winner
