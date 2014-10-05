@@ -3938,11 +3938,12 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         }
 
         int64 nAmount;
-        vRecv >> nAmount;
+        CTransaction txCollateral;
+        vRecv >> nAmount >> txCollateral;
 
         std::string error = "";
 
-        if(!darkSendPool.IsCompatibleWithSession(nAmount, error))
+        if(!darkSendPool.IsCompatibleWithSession(nAmount, txCollateral, error))
         {
             LogPrintf("dsa -- not compatible with existing transactions! \n");
             pfrom->PushMessage("dssu", darkSendPool.sessionID, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), MASTERNODE_REJECTED, error);

@@ -1772,12 +1772,14 @@ int64 CWallet::GetTotalValue(std::vector<CTxIn> vCoins) {
 
 bool CWallet::CreateCollateralTransaction(CTransaction& txCollateral, std::string strReason)
 {
+    int64 nFeeRet = 0.001*COIN; ///need to get a better fee calc
+    CReserveKey reservekey(this);
     int64 nValueIn2 = 0;
     std::vector<CTxIn> vCoinsCollateral;
 
     if (!SelectCoinsCollateral(vCoinsCollateral, nValueIn2))
     {
-        BOOST_FOREACH(CTxIn v, vCoins)
+        BOOST_FOREACH(CTxIn v, vCoinsCollateral)
             UnlockCoin(v.prevout);
 
         strReason = "Error: Darksend requires a collateral transaction and could not locate an acceptable input!";
@@ -1806,7 +1808,7 @@ bool CWallet::CreateCollateralTransaction(CTransaction& txCollateral, std::strin
     int vinNumber = 0;
     BOOST_FOREACH(CTxIn v, txCollateral.vin) {
         if(!SignSignature(*this, v.prevPubKey, txCollateral, vinNumber, int(SIGHASH_ALL|SIGHASH_ANYONECANPAY))) {
-            BOOST_FOREACH(CTxIn v, vCoins)
+            BOOST_FOREACH(CTxIn v, vCoinsCollateral)
                 UnlockCoin(v.prevout);
 
             strReason = "CDarkSendPool::Sign - Unable to sign collateral transaction! \n";
@@ -1866,7 +1868,7 @@ string CWallet::PrepareDarksendDenominate(int minRounds, int maxAmount)
     std::string strReason;
     CTransaction txCollateral;
     if(!CreateCollateralTransaction(txCollateral, strReason)){
-        return _(strReason);
+        return _(strReason.c_str());
     }
 
     // denominate our funds

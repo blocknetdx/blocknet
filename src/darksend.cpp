@@ -1390,8 +1390,8 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
                 
                     std::string strReason;
                     CTransaction txCollateral;
-                    if(!CreateCollateralTransaction(txCollateral, strReason)){
-                        LogPrintf("DoAutomaticDenominating -- dsa error:%s\n" strReason);
+                    if(!pwalletMain->CreateCollateralTransaction(txCollateral, strReason)){
+                        LogPrintf("DoAutomaticDenominating -- dsa error:%s\n", strReason.c_str());
                         return false; 
                     }
                 
@@ -1423,8 +1423,8 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
 
                     std::string strReason;
                     CTransaction txCollateral;
-                    if(!CreateCollateralTransaction(txCollateral, strReason)){
-                        LogPrintf("DoAutomaticDenominating -- dsa error:%s\n" strReason);
+                    if(!pwalletMain->CreateCollateralTransaction(txCollateral, strReason)){
+                        LogPrintf("DoAutomaticDenominating -- dsa error:%s\n", strReason.c_str());
                         return false; 
                     }
 
@@ -1699,7 +1699,7 @@ bool CDarkSendPool::IsCompatibleWithSession(int64 nAmount, CTransaction txCollat
 {
     LogPrintf("CDarkSendPool::IsCompatibleWithSession - sessionAmount %"PRI64d" sessionUsers %d\n", sessionAmount, sessionUsers);
 
-    if (!IsCollateralValid(txCollateral)){
+    if (!unitTest && !IsCollateralValid(txCollateral)){
         if(fDebug) LogPrintf ("CDarkSendPool::IsCompatibleWithSession - collateral not valid!\n");
         strReason = "collateral not valid";
         return false;

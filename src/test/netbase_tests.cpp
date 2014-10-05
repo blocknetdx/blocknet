@@ -9,6 +9,16 @@ using namespace std;
 
 BOOST_AUTO_TEST_SUITE(netbase_tests)
 
+BOOST_AUTO_TEST_CASE(cnode_tests)
+{
+    CNode cn;
+    BOOST_CHECK(nc.HasFulfilledRequest('test1') == false);
+    nc.FulfilledRequest('test1');
+    BOOST_CHECK(nc.HasFulfilledRequest('test1') == true);
+    nc.FulfilledRequest('test1');
+    BOOST_CHECK(nc.HasFulfilledRequest('test1') == true);
+}
+
 BOOST_AUTO_TEST_CASE(netbase_networks)
 {
     BOOST_CHECK(CNetAddr("127.0.0.1").GetNetwork()                              == NET_UNROUTABLE);

@@ -177,28 +177,28 @@ BOOST_AUTO_TEST_CASE(darksend_session)
     darkSendPool.unitTest = true;
     
     std::string strReason = "";
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(511*COIN, strReason));
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(131*COIN, strReason) == false);
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(31*COIN, strReason) == false);
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(151*COIN, strReason) == false);
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(751*COIN, strReason) == false);
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(531*COIN, strReason));
-    if(darkSendPool.GetMaxPoolTransactions() >= 3) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(551*COIN, strReason));
-    if(darkSendPool.GetMaxPoolTransactions() >= 4) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(571*COIN, strReason));
-    if(darkSendPool.GetMaxPoolTransactions() >= 5) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(514*COIN, strReason));
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(531*COIN, strReason) == false);
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(511*COIN, CTransaction(), strReason));
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(131*COIN, CTransaction(), strReason) == false);
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(31*COIN, CTransaction(), strReason) == false);
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(151*COIN, CTransaction(), strReason) == false);
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(751*COIN, CTransaction(), strReason) == false);
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(531*COIN, CTransaction(), strReason));
+    if(darkSendPool.GetMaxPoolTransactions() >= 3) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(551*COIN, CTransaction(), strReason));
+    if(darkSendPool.GetMaxPoolTransactions() >= 4) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(571*COIN, CTransaction(), strReason));
+    if(darkSendPool.GetMaxPoolTransactions() >= 5) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(514*COIN, CTransaction(), strReason));
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(531*COIN, CTransaction(), strReason) == false);
 
     darkSendPool.SetNull();
 
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(12*COIN, strReason));
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(131*COIN, strReason) == false);
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(151*COIN, strReason) == false);
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(751*COIN, strReason) == false);
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(34*COIN, strReason));
-    if(darkSendPool.GetMaxPoolTransactions() >= 3) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(22*COIN, strReason));
-    if(darkSendPool.GetMaxPoolTransactions() >= 4) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(32*COIN, strReason));
-    if(darkSendPool.GetMaxPoolTransactions() >= 5) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(44*COIN, strReason));
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(33*COIN, strReason) == false);
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(12*COIN, CTransaction(), strReason));
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(131*COIN, CTransaction(), strReason) == false);
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(151*COIN, CTransaction(), strReason) == false);
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(751*COIN, CTransaction(), strReason) == false);
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(34*COIN, CTransaction(), strReason));
+    if(darkSendPool.GetMaxPoolTransactions() >= 3) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(22*COIN, CTransaction(), strReason));
+    if(darkSendPool.GetMaxPoolTransactions() >= 4) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(32*COIN, CTransaction(), strReason));
+    if(darkSendPool.GetMaxPoolTransactions() >= 5) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(44*COIN, CTransaction(), strReason));
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(33*COIN, CTransaction(), strReason) == false);
 
 }
 
