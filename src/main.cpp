@@ -4208,7 +4208,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         tx.vout.push_back(vout);
         if(tx.AcceptableInputs(state, true)){
             if(GetInputAge(vin) < MASTERNODE_MIN_CONFIRMATIONS){
-                LogPrintf("dsee - Input must have least %d confirmations\n", MASTERNODE_MIN_CONFIRMATIONS);
+                LogPrintf("mnw - Input must have least %d confirmations\n", MASTERNODE_MIN_CONFIRMATIONS);
                 pfrom->Misbehaving(20);
                 return false;
             }
@@ -4218,6 +4218,16 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             }
         } else {
             LogPrintf("mnw - invalid vin %s\n", vin.ToString().c_str());
+
+            int nDoS = 0;
+            if (state.IsInvalid(nDoS))
+            {
+                LogPrintf("%s from %s %s was not accepted into the memory pool\n", tx.GetHash().ToString().c_str(),
+                    pfrom->addr.ToString().c_str(), pfrom->cleanSubVer.c_str());
+                if (nDoS > 0)
+                    pfrom->Misbehaving(nDoS);
+            }
+
             return false;
         }
 

@@ -130,9 +130,9 @@ OverviewPage::OverviewPage(QWidget *parent) :
         ui->toggleDarksend->setText("(Disabled)");
         ui->toggleDarksend->setEnabled(false);
     }else if(!fEnableDarksend){
-        ui->toggleDarksend->setText("Start Anonymization");
+        ui->toggleDarksend->setText("Start Darksend Mixing");
     } else {
-        ui->toggleDarksend->setText("Stop Anonymization");
+        ui->toggleDarksend->setText("Stop Darksend Mixing");
     }
 
     // start with displaying the "out of sync" warnings
@@ -390,9 +390,9 @@ void OverviewPage::toggleDarksend(){
     fEnableDarksend = !fEnableDarksend;
 
     if(!fEnableDarksend){
-        ui->toggleDarksend->setText("Start Anonymization");
+        ui->toggleDarksend->setText("Start Darksend Mixing");
     } else {
-        ui->toggleDarksend->setText("Stop Anonymization");
+        ui->toggleDarksend->setText("Stop Darksend Mixing");
 
         /* show darksend configuration if client has defaults set */
 

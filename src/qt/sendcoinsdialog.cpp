@@ -145,10 +145,10 @@ void SendCoinsDialog::on_sendButton_clicked()
     QString funds = "Using <b>Anonymous Funds</b>";
     recipients[0].inputType = "ONLY_DENOMINATED";
 
-    if(ui->inputType->currentText() == "Use Anonymous Funds"){
+    if(ui->inputType->currentText() == "Create Darksend Transaction"){
         recipients[0].inputType = "ONLY_DENOMINATED";
         funds = "Using <b>Anonymous Funds</b>";
-    } else if(ui->inputType->currentText() == "Use Non-Anonymous Funds"){
+    } else if(ui->inputType->currentText() == "Create Normal Transaction"){
         recipients[0].inputType = "ONLY_NONDENOMINATED";
         funds = "Using <b>NON-ANONYMOUS Funds</b>";
     } else {
@@ -396,9 +396,9 @@ void SendCoinsDialog::setBalance(qint64 balance, qint64 unconfirmedBalance, qint
     int unit = model->getOptionsModel()->getDisplayUnit();
 
     uint64 bal = 0;
-    if(ui->inputType->currentText() == "Use Anonymous Funds"){
+    if(ui->inputType->currentText() == "Create Darksend Transaction"){
         bal = anonymizedBalance;
-    } else if(ui->inputType->currentText() == "Use Non-Anonymous Funds"){
+    } else if(ui->inputType->currentText() == "Create Normal Transaction"){
         bal = balance - anonymizedBalance;
     } else {
         bal = balance;
@@ -414,9 +414,9 @@ void SendCoinsDialog::updateDisplayUnit()
     {
 
         uint64 balance = 0;
-        if(ui->inputType->currentText() == "Use Anonymous Funds"){
+        if(ui->inputType->currentText() == "Create Darksend Transaction"){
             balance = model->getAnonymizedBalance();
-        } else if(ui->inputType->currentText() == "Use Non-Anonymous Funds"){
+        } else if(ui->inputType->currentText() == "Create Normal Transaction"){
             balance = model->getBalance() - model->getAnonymizedBalance();
         } else {
             balance = model->getBalance();
