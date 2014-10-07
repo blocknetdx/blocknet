@@ -1367,29 +1367,29 @@ int64 GetMasternodePayment(int nHeight, int64 blockValue)
     int64 ret = blockValue/5; // start at 20%
 
     if(fTestNet) {
-        if(nHeight > 39295)             ret += blockValue / 20; //25%
-        if(nHeight > 39295+((576*1)*1)) ret += blockValue / 20; //30% 
-        if(nHeight > 39295+((576*1)*2)) ret += blockValue / 20; //35%
-        if(nHeight > 39295+((576*1)*3)) ret += blockValue / 20; //40%
-        if(nHeight > 39295+((576*1)*4)) ret += blockValue / 20; //45%
-        if(nHeight > 39295+((576*1)*5)) ret += blockValue / 20; //50%
-        if(nHeight > 39295+((576*1)*6)) ret += blockValue / 20; //55%
-        if(nHeight > 39295+((576*1)*7)) ret += blockValue / 20; //60%
+        if(nHeight > 39295)             ret += blockValue / 20; //25% - 2014-10-07
+        if(nHeight > 39295+((576*1)*1)) ret += blockValue / 20; //30% - 2014-10-08 
+        if(nHeight > 39295+((576*1)*2)) ret += blockValue / 20; //35% - 2014-10-09
+        if(nHeight > 39295+((576*1)*3)) ret += blockValue / 20; //40% - 2014-10-10
+        if(nHeight > 39295+((576*1)*4)) ret += blockValue / 20; //45% - 2014-10-11
+        if(nHeight > 39295+((576*1)*5)) ret += blockValue / 20; //50% - 2014-10-12
+        if(nHeight > 39295+((576*1)*6)) ret += blockValue / 20; //55% - 2014-10-13
+        if(nHeight > 39295+((576*1)*7)) ret += blockValue / 20; //60% - 2014-10-14
     }
 
-    if(nHeight > 150000)              ret += blockValue / 20; //25%
-    if(nHeight > 150000+((576*30)*1)) ret += blockValue / 20; //30%
-    if(nHeight > 150000+((576*30)*2)) ret += blockValue / 20; //35%
-    if(nHeight > 150000+((576*30)*3)) ret += blockValue / 40; //37.5%
-    if(nHeight > 150000+((576*30)*4)) ret += blockValue / 40; //40%
-    if(nHeight > 150000+((576*30)*5)) ret += blockValue / 40; //42.5%
-    if(nHeight > 150000+((576*30)*6)) ret += blockValue / 40; //45%
-    if(nHeight > 150000+((576*30)*7)) ret += blockValue / 40; //47.5%
-    if(nHeight > 150000+((576*30)*9)) ret += blockValue / 40; //50%
-    if(nHeight > 150000+((576*30)*11)) ret += blockValue / 40; //52.5%
-    if(nHeight > 150000+((576*30)*13)) ret += blockValue / 40; //55%
-    if(nHeight > 150000+((576*30)*15)) ret += blockValue / 40; //57.5%
-    if(nHeight > 150000+((576*30)*17)) ret += blockValue / 40; //60%
+    if(nHeight > 158000)              ret += blockValue / 20;  //25.0%  - 2014-10-23 
+    if(nHeight > 158000+((576*30)*1)) ret += blockValue / 20;  //30.0%  - 2014-11-23
+    if(nHeight > 158000+((576*30)*2)) ret += blockValue / 20;  //35.0%  - 2014-12-23
+    if(nHeight > 158000+((576*30)*3)) ret += blockValue / 40;  //37.5%  - 2015-01-23
+    if(nHeight > 158000+((576*30)*4)) ret += blockValue / 40;  //40.0%  - 2015-02-23
+    if(nHeight > 158000+((576*30)*5)) ret += blockValue / 40;  //42.5%  - 2015-03-23
+    if(nHeight > 158000+((576*30)*6)) ret += blockValue / 40;  //45.0%  - 2015-04-23
+    if(nHeight > 158000+((576*30)*7)) ret += blockValue / 40;  //47.5%  - 2015-05-23
+    if(nHeight > 158000+((576*30)*9)) ret += blockValue / 40;  //50.0%  - 2015-07-23
+    if(nHeight > 158000+((576*30)*11)) ret += blockValue / 40; //52.5%  - 2015-09-23
+    if(nHeight > 158000+((576*30)*13)) ret += blockValue / 40; //55.0%  - 2015-11-23
+    if(nHeight > 158000+((576*30)*15)) ret += blockValue / 40; //57.5%  - 2016-01-23
+    if(nHeight > 158000+((576*30)*17)) ret += blockValue / 40; //60.0%  - 2016-03-23
 
     return ret;
 }
