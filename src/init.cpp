@@ -1190,6 +1190,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     threadGroup.create_thread(boost::bind(&ThreadCheckDarkSendPool));
 
 
+/*  //any users effected by this should have updated by now
     if (!fDisableWallet) {
         int walletVersion = pwalletMain->GetVersion();
 
@@ -1201,7 +1202,7 @@ bool AppInit2(boost::thread_group& threadGroup)
                 fEnableDarksend = false;
             }
         }
-    }
+    }*/
 
 
     // ********************************************************* Step 11: load peers

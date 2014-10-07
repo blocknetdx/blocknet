@@ -1798,15 +1798,12 @@ bool CWallet::CreateCollateralTransaction(CTransaction& txCollateral, std::strin
     scriptChange.SetDestination(vchPubKey.GetID());
     reservekey.KeepKey();
 
-    CTxOut vout2 = CTxOut(DARKSEND_COLLATERAL, darkSendPool.collateralPubKey);
-
     BOOST_FOREACH(CTxIn v, vCoinsCollateral)
         txCollateral.vin.push_back(v);
-    
-    txCollateral.vout.push_back(vout2);
 
     if(nValueIn2 - DARKSEND_COLLATERAL - nFeeRet > 0) {
-        CTxOut vout3 = CTxOut(nValueIn2 - DARKSEND_COLLATERAL - nFeeRet, scriptChange);
+        //pay collateral charge in fees
+        CTxOut vout3 = CTxOut(nValueIn2 - DARKSEND_COLLATERAL, scriptChange);
         txCollateral.vout.push_back(vout3);
     }
     

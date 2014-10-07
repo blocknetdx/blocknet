@@ -26,7 +26,7 @@ extern std::string strMasterNodePrivKey;
 extern std::vector<CDarksendQueue> vecDarksendQueue;
 extern std::vector<CTxIn> vecMasternodeAskedFor;
 
-static const int64 DARKSEND_COLLATERAL = 0.0125*COIN;
+static const int64 DARKSEND_COLLATERAL = 0.1*COIN;
 static const int64 DARKSEND_FEE = 0.0125*COIN;
 
 

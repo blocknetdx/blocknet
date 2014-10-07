@@ -413,17 +413,36 @@ bool CDarkSendPool::SignatureValid(const CScript& newSig, const CTxIn& newVin){
 }
 
 // check to make sure the collateral provided by the client is valid
-bool CDarkSendPool::IsCollateralValid(const CTransaction& txCollateral){    
+bool CDarkSendPool::IsCollateralValid(const CTransaction& txCollateral){
     if(txCollateral.vout.size() < 1) return false;
 
-    if(txCollateral.vout[0].scriptPubKey != collateralPubKey || 
-       txCollateral.vout[0].nValue != DARKSEND_COLLATERAL) {
-        if(fDebug) LogPrintf ("CDarkSendPool::IsCollateralValid - not correct amount or addr (0)\n");
-        return false;
+    int64 nValueIn = 0;
+    int64 nValueOut = 0;
+    bool missingTx = false;
+
+    CTransaction tx;
+    BOOST_FOREACH(const CTxOut o, txCollateral.vout)
+        nValueOut += o.nValue;
+
+    BOOST_FOREACH(const CTxIn i, txCollateral.vin){
+        CTransaction tx2;
+        uint256 hash;
+        if(GetTransaction(i.prevout.hash, tx2, hash, true)){
+            if(tx2.vout.size() > i.prevout.n) {
+                nValueIn += tx2.vout[i.prevout.n].nValue;    
+            }
+        } else{
+            missingTx = true;
+        }
     }
-    //collateral transactions are required to have abnormally large fees associated, to make double
-    //spending very expensive.
-    if(txCollateral.GetValueOut() < DARKSEND_COLLATERAL*2) {
+
+    if(missingTx){
+        if(fDebug) LogPrintf ("CDarkSendPool::IsCollateralValid - Unknown inputs in collateral transaction\n");
+        return false; 
+    }
+
+    //collateral transactions are required to pay out DARKSEND_COLLATERAL as a fee to the miners
+    if(nValueOut-nValueIn < DARKSEND_COLLATERAL) {
         if(fDebug) LogPrintf ("CDarkSendPool::IsCollateralValid - did not include enough fees in transaction\n");
         return false;
     }
@@ -431,7 +450,6 @@ bool CDarkSendPool::IsCollateralValid(const CTransaction& txCollateral){
     LogPrintf("CDarkSendPool::IsCollateralValid %s\n", txCollateral.ToString().c_str());
 
     CWalletTx wtxCollateral = CWalletTx(pwalletMain, txCollateral);
-
     if (!wtxCollateral.IsAcceptable(true, false)){
         if(fDebug) LogPrintf ("CDarkSendPool::IsCollateralValid - didn't pass IsAcceptable\n");
         return false;
