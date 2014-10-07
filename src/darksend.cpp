@@ -1599,6 +1599,23 @@ int CDarkSendPool::GetDenominationsByAmount(int64 nAmount){
     return GetDenominations(vout1);
 }
 
+bool CDarkSendSigner::IsVinAssociatedWithPubkey(CTxIn& vin, CPubKey& pubkey){
+    CScript payee2;
+    payee2.SetDestination(pubkey.GetID());
+
+    CTransaction txVin;
+    uint256 hash;
+    if(GetTransaction(vin.prevout.hash, txVin, hash, true)){
+        BOOST_FOREACH(CTxOut out, txVin.vout){
+            if(out.nValue == 1000*COIN){
+                if(out.scriptPubKey == payee2) return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 bool CDarkSendSigner::SetKey(std::string strSecret, std::string& errorMessage, CKey& key, CPubKey& pubkey){
     CBitcoinSecret vchSecret;
     bool fGood = vchSecret.SetString(strSecret);

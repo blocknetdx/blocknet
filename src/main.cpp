@@ -4216,6 +4216,11 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             return false;  
         }
 
+        if(!darkSendSigner.IsVinAssociatedWithPubkey(vin, pubkey)) {
+            LogPrintf("dsee - Got mismatched pubkey and vin\n");
+            return false;
+        }
+
         std::string errorMessage = "";
         if(!darkSendSigner.VerifyMessage(pubkey, vchSig, strMessage, errorMessage)){
             LogPrintf("dsee - Got bad masternode address signature\n");

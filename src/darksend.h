@@ -221,6 +221,7 @@ public:
 class CDarkSendSigner
 {
 public:
+    bool IsVinAssociatedWithPubkey(CTxIn& vin, CPubKey& pubkey);
     bool SetKey(std::string strSecret, std::string& errorMessage, CKey& key, CPubKey& pubkey);
     bool SignMessage(std::string strMessage, std::string& errorMessage, std::vector<unsigned char>& vchSig, CKey key);
     bool VerifyMessage(CPubKey pubkey, std::vector<unsigned char>& vchSig, std::string strMessage, std::string& errorMessage);
