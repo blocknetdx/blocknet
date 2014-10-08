@@ -1987,7 +1987,7 @@ void ThreadCheckDarkSendPool()
 
 
         //try to sync the masternode list and payment list every 20 seconds
-        if(c % 20 == 0){
+        if(c % 5 == 0 && RequestedMasterNodeList <= 8){
             bool fIsInitialDownload = IsInitialBlockDownload();
             if(!fIsInitialDownload) {
                 LOCK(cs_vNodes);
@@ -1999,13 +1999,11 @@ void ThreadCheckDarkSendPool()
                         if(pnode->HasFulfilledRequest("mnsync")) continue;
                         pnode->FulfilledRequest("mnsync");
 
-                        if(RequestedMasterNodeList <= 8) {
-                            LogPrintf("Successfully synced, asking for Masternode list and payment list\n");
-            
-                            if(RequestedMasterNodeList <= 2) pnode->PushMessage("dseg", CTxIn()); //request full mn list
-                            pnode->PushMessage("mnsync"); //sync payees
-                            RequestedMasterNodeList++;
-                        }
+                        LogPrintf("Successfully synced, asking for Masternode list and payment list\n");
+        
+                        if(RequestedMasterNodeList <= 2) pnode->PushMessage("dseg", CTxIn()); //request full mn list
+                        pnode->PushMessage("mnsync"); //sync payees
+                        RequestedMasterNodeList++;
                     }
                 }
             }
