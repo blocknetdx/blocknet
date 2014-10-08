@@ -442,7 +442,7 @@ bool CDarkSendPool::IsCollateralValid(const CTransaction& txCollateral){
     }
 
     //collateral transactions are required to pay out DARKSEND_COLLATERAL as a fee to the miners
-    if(nValueOut-nValueIn < DARKSEND_COLLATERAL) {
+    if(nValueIn-nValueOut < DARKSEND_COLLATERAL) {
         if(fDebug) LogPrintf ("CDarkSendPool::IsCollateralValid - did not include enough fees in transaction %"PRI64d"\n%s\n", nValueOut-nValueIn, txCollateral.ToString().c_str());
         return false;
     }
