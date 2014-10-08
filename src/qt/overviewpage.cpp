@@ -385,6 +385,15 @@ void OverviewPage::runDoAutomaticDenomination(){
 }
 
 void OverviewPage::toggleDarksend(){
+    int64 balance = pwalletMain->GetBalance();
+    if(balance < 2.5*coin){
+        QMessageBox::warning(this, tr("Darksend"),
+            tr("Darksend requires at least 2.5 DRK to use."),
+            QMessageBox::Ok, QMessageBox::O
+        return;
+    }
+
+
     darkSendPool.cachedNumBlocks = 0;
 
     fEnableDarksend = !fEnableDarksend;

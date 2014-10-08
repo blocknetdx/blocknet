@@ -1784,9 +1784,6 @@ bool CWallet::CreateCollateralTransaction(CTransaction& txCollateral, std::strin
 
     if (!SelectCoinsCollateral(vCoinsCollateral, nValueIn2))
     {
-        BOOST_FOREACH(CTxIn v, vCoinsCollateral)
-            UnlockCoin(v.prevout);
-
         strReason = "Error: Darksend requires a collateral transaction and could not locate an acceptable input!";
         return false;
     }
@@ -1818,9 +1815,6 @@ bool CWallet::CreateCollateralTransaction(CTransaction& txCollateral, std::strin
         }
         vinNumber++;
     }
-
-    BOOST_FOREACH(CTxIn v, vCoinsCollateral)
-        LockCoin(v.prevout);
 
     return true;
 }
