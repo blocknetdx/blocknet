@@ -152,7 +152,7 @@ Value masternode(const Array& params, bool fHelp)
             } else if (strCommand == "lastseen") {
                 obj.push_back(Pair(mn.addr.ToString().c_str(),       (int64_t)mn.lastTimeSeen));
             } else if (strCommand == "activeseconds") {
-                obj.push_back(Pair(mn.addr.ToString().c_str(),       (int64_t)(mn.lastTimeSeen - mn.now)/(1000*1000)));
+                obj.push_back(Pair(mn.addr.ToString().c_str(),       (int64_t)(mn.lastTimeSeen - mn.now)/));
             } else if (strCommand == "rank") {
                 obj.push_back(Pair(mn.addr.ToString().c_str(),       (int)(darkSendPool.GetMasternodeRank(mn.vin, 1))));
             }
