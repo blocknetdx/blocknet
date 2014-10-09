@@ -1019,7 +1019,7 @@ bool CDarkSendPool::GetBlockHash(uint256& hash, int nBlockHeight)
 
     if (BlockLastSolved == NULL || BlockLastSolved->nHeight == 0) { return false; }
 
-    printf(" nBlockHeight2 %"PRI64u" %"PRI64u"\n", nBlockHeight, pindexBest->nHeight+1);
+    //printf(" nBlockHeight2 %"PRI64u" %"PRI64u"\n", nBlockHeight, pindexBest->nHeight+1);
    
     for (unsigned int i = 1; BlockReading && BlockReading->nHeight > 0; i++) {
         if(BlockReading->nHeight == nBlockHeight) {
@@ -1188,23 +1188,17 @@ int CDarkSendPool::GetCurrentMasterNode(int mod, int64 nBlockHeight)
     return winner;
 }
 
-uint256 CMasternodePayments::CalculateScore(int64 nBlockHeight, CTxIn vin)
+uint64 CMasternodePayments::CalculateScore(uint256 blockHash, CTxIn& vin)
 {
-
-    //printf(" nBlockHeight %"PRI64u" -- %"PRI64u"\n", nBlockHeight, nBlockHeight-200);
-    if(pindexBest == NULL) return 0;
-
-    uint256 n1 = 0;
-    if(!darkSendPool.GetBlockHash(n1, nBlockHeight-MASTERNODE_MIN_CONFIRMATIONS-5)) return 0;
-
-    uint256 n2 = Hash(BEGIN(n1), END(n1));
-    uint256 n3 = Hash(BEGIN(vin.prevout.hash), END(vin.prevout.hash));
+    uint256 n1 = blockHash;
+    uint256 n2 = Hash9(BEGIN(n1), END(n1));
+    uint256 n3 = Hash9(BEGIN(vin.prevout.hash), END(vin.prevout.hash));
     uint256 n4 = n3 > n2 ? (n3 - n2) : (n2 - n3);
 
     //printf(" -- CMasternodePayments CalculateScore() n2 = %"PRI64u" \n", n2.Get64());
     //printf(" -- CMasternodePayments CalculateScore() n3 = %"PRI64u" \n", n3.Get64());
 
-    return n4;
+    return n4.Get64();
 }
 
 bool CMasternodePayments::GetBlockPayee(int nBlockHeight, CScript& payee)
@@ -1244,10 +1238,14 @@ bool CMasternodePayments::GetWinningMasternode(int nBlockHeight, CTxIn& vinOut)
 
 bool CMasternodePayments::AddWinningMasternode(int nBlockHeight, CTxIn vinIn)
 {
-    uint256 score = CalculateScore(nBlockHeight, vinIn);
+    if(pindexBest == NULL) return false;
+    uint256 blockHash = 0;
+    if(!darkSendPool.GetBlockHash(blockHash, nBlockHeight-MASTERNODE_MIN_CONFIRMATIONS-5)) return false;
+
+    uint64 score = CalculateScore(blockHash, vinIn);
 
     bool foundBlock = false;
-    BOOST_FOREACH(PAIRTYPE(int, uint256)& item, vWinningScores){
+    BOOST_FOREACH(PAIRTYPE(int, uint64)& item, vWinningScores){
         if(item.first == nBlockHeight) {
             foundBlock = true;
             if(item.second < score){
@@ -1274,11 +1272,14 @@ bool CMasternodePayments::AddWinningMasternode(int nBlockHeight, CTxIn vinIn)
 
 bool CMasternodePayments::ProcessMyMasternode(int nBlockHeight, CTxIn vinIn)
 {
-    uint256 winner = 0;
+    uint64 winner = 0;
     bool fWeWon = false;
 
+    uint256 blockHash = 0;
+    if(!darkSendPool.GetBlockHash(blockHash, nBlockHeight-MASTERNODE_MIN_CONFIRMATIONS-5)) return false;
+
     BOOST_FOREACH(CMasterNode& mn, darkSendMasterNodes) {
-        uint256 score = CalculateScore(nBlockHeight, mn.vin);
+        uint64 score = CalculateScore(blockHash, mn.vin);
         if(score > winner){
             if(mn.vin == vinIn) {
                 fWeWon = true;

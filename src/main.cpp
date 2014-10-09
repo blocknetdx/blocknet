@@ -1356,8 +1356,12 @@ int64 static GetBlockValue(int nBits, int nHeight, int64 nFees)
     // LogPrintf("height %u diff %4.2f reward %i \n", nHeight, dDiff, nSubsidy);
     nSubsidy *= COIN;
 
-    // yearly decline of production by 7% per year, projected 21.3M coins max by year 2050.
-    for(int i = 210240; i <= nHeight; i += 210240) nSubsidy *= 0.93;
+    if(fTestNet){
+        for(int i = 46200; i <= nHeight; i += 210240) nSubsidy -= nSubsidy/14;
+    } else {
+        // yearly decline of production by 7.1% per year, projected 21.3M coins max by year 2050.
+        for(int i = 210240; i <= nHeight; i += 210240) nSubsidy -= nSubsidy/14; 
+    }
 
     return nSubsidy + nFees;
 }
@@ -1393,7 +1397,6 @@ int64 GetMasternodePayment(int nHeight, int64 blockValue)
 
     return ret;
 }
-
 
 static const int64 nTargetTimespan = 24 * 60 * 60; // DarkCoin: 1 day
 static const int64 nTargetSpacing = 2.5 * 60; // DarkCoin: 2.5 minutes

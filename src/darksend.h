@@ -100,7 +100,7 @@ public:
 class CMasternodePayments
 {
 private:
-    std::vector<std::pair<int, uint256> > vWinningScores;
+    std::vector<std::pair<int, uint64> > vWinningScores;
     std::vector<std::pair<int, CTxIn> > vWinningVin;
     int nSyncedFromPeer;
 
@@ -110,7 +110,8 @@ public:
     // to the blockHeight. The further away they are the better, the furthest will win the election 
     // and get paid this block
     // 
-    uint256 CalculateScore(int64 nBlockHeight, CTxIn vin);
+
+    uint64 CalculateScore(uint256 blockHash, CTxIn& vin);
     bool GetWinningMasternode(int nBlockHeight, CTxIn& vinOut);
     bool AddWinningMasternode(int nBlockHeight, CTxIn vinIn);
     bool ProcessMyMasternode(int nBlockHeight, CTxIn vinIn);

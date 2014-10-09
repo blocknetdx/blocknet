@@ -719,7 +719,7 @@ Value sendmany(const Array& params, bool fHelp)
     string strFailReason;
 
     CCoinControl *coinControl=NULL;
-    AvailableCoinsType act = ONLY_DENOMINATED;
+    AvailableCoinsType act = ALL_COINS;
 
     bool fCreated = pwalletMain->CreateTransaction(vecSend, wtx, keyChange, nFeeRequired, strFailReason, coinControl, act);
     if (!fCreated)

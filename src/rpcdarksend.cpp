@@ -121,7 +121,7 @@ Value masternode(const Array& params, bool fHelp)
     }
 
     if (strCommand == "list")
-    {        
+    {                
         std::string strCommand = "active";
 
         if (params.size() == 2){
@@ -184,7 +184,7 @@ Value masternode(const Array& params, bool fHelp)
         darkSendPool.RegisterAsMasterNode(false);
         pwalletMain->Lock();
         
-        if(darkSendPool.isCapableMasterNode == MASTERNODE_INPUT_TOO_NEW) return "masternode input must have at least 6 confirmations";
+        if(darkSendPool.isCapableMasterNode == MASTERNODE_INPUT_TOO_NEW) return "masternode input must have at least 200 confirmations";
         if(darkSendPool.isCapableMasterNode == MASTERNODE_STOPPED) return "masternode is stopped";
         if(darkSendPool.isCapableMasterNode == MASTERNODE_IS_CAPABLE) return "successfully started masternode";
         if(darkSendPool.masternodePortOpen == MASTERNODE_PORT_NOT_OPEN) return "inbound port is not open. Please open it and try again. (19999 for testnet and 9999 for mainnet)";

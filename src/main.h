@@ -43,10 +43,10 @@
 #define MASTERNODE_SYNC_IN_PROCESS             8
 
 #define MASTERNODE_MIN_CONFIRMATIONS           200
-#define MASTERNODE_MIN_SECONDS                 5*1
-#define MASTERNODE_PING_SECONDS                30*1
-#define MASTERNODE_EXPIRATION_SECONDS          35*1
-#define MASTERNODE_REMOVAL_SECONDS             35.5*1
+#define MASTERNODE_MIN_SECONDS                 5*60
+#define MASTERNODE_PING_SECONDS                20*60
+#define MASTERNODE_EXPIRATION_SECONDS          65*60
+#define MASTERNODE_REMOVAL_SECONDS             70*60
 
 // status update message constants
 #define MASTERNODE_ACCEPTED                    1
