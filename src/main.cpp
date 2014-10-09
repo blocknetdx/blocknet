@@ -3940,6 +3940,10 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             return true;
         }
 
+        if(!fMasterNode){
+            return false;
+        }
+
         int64 nAmount;
         CTransaction txCollateral;
         vRecv >> nAmount >> txCollateral;
@@ -4341,6 +4345,12 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
                 return true;
             }
+        }
+
+        if(!darkSendSigner.IsVinAssociatedWithPubkey(vin, pubkey)) {
+            LogPrintf("dsee - Got mismatched pubkey and vin\n");
+            pfrom->Misbehaving(100);
+            return false;
         }
 
         LogPrintf("dsee - Got NEW masternode entry %s\n", addr.ToString().c_str());
