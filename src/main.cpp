@@ -4203,8 +4203,8 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         if(pindexBest == NULL) return false;
 
-        if(nBlockHeight > pindexBest->nHeight + 20 || nBlockHeight < pindexBest->nHeight+10){
-            LogPrintf("mnw - winning votes too close to current block %s\n", vin.ToString().c_str());
+        if(nBlockHeight > pindexBest->nHeight + 20 || nBlockHeight < pindexBest->nHeight+6){
+            LogPrintf("mnw - winning votes too close to current block %s Height %d bestHeight %d\n", vin.ToString().c_str(), nBlockHeight, pindexBest->nHeight);
             return false;
         }
 
@@ -4219,6 +4219,8 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
                 pfrom->Misbehaving(20);
                 return false;
             }
+
+            LogPrintf("mnw - winning vote  %s Height %d bestHeight %d\n", vin.ToString().c_str(), nBlockHeight, pindexBest->nHeight);
 
             if(masternodePayments.AddWinningMasternode(nBlockHeight, vin)){
                 masternodePayments.Relay(nBlockHeight, vin);

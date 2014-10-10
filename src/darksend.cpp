@@ -2022,7 +2022,7 @@ void ThreadCheckDarkSendPool()
                         LogPrintf("Successfully synced, asking for Masternode list and payment list\n");
         
                         if(RequestedMasterNodeList <= 2) pnode->PushMessage("dseg", CTxIn()); //request full mn list
-                        pnode->PushMessage("mnsync"); //sync payees
+                        pnode->PushMessage("mnget"); //sync payees
                         RequestedMasterNodeList++;
                     }
                 }
