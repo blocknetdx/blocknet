@@ -1074,13 +1074,7 @@ void CDarkSendPool::NewBlock()
 
     if(IsInitialBlockDownload()) return;
     
-    if(fMasterNode){
-        // check if we won any blocks upcoming
-        for(int nHeight = pindexBest->nHeight+10; nHeight < pindexBest->nHeight+20; nHeight++)
-        {
-            masternodePayments.ProcessMyMasternode(nHeight, vinMasterNode);
-        }
-    }
+    masternodePayments.ProcessBlock(pindexBest->nHeight+10);
 
     if(!fEnableDarksend) return;
 
@@ -1188,6 +1182,46 @@ int CDarkSendPool::GetCurrentMasterNode(int mod, int64 nBlockHeight)
     return winner;
 }
 
+bool CMasternodePayments::CheckSignature(CMasternodePaymentWinner& winner)
+{
+    std::string strMessage = winner.vin.ToString().c_str() + boost::lexical_cast<std::string>(winner.nBlockHeight); 
+    CPubKey pubkey(ParseHex(strPubKey));
+
+    std::string errorMessage = "";
+    if(!darkSendSigner.VerifyMessage(pubkey, winner.vchSig, strMessage, errorMessage)){
+        return false;
+    }
+
+    return true;
+}
+
+bool CMasternodePayments::Sign(CMasternodePaymentWinner& winner) 
+{
+    std::string strMessage = winner.vin.ToString().c_str() + boost::lexical_cast<std::string>(winner.nBlockHeight); 
+
+    CKey key2;
+    CPubKey pubkey2;
+    std::string errorMessage = "";
+
+    if(!darkSendSigner.SetKey(strMasterPrivKey, errorMessage, key2, pubkey2))
+    {
+        LogPrintf("Invalid masternodeprivkey: '%s'\n", errorMessage.c_str());
+        exit(0);
+    }
+
+    if(!darkSendSigner.SignMessage(strMessage, errorMessage, winner.vchSig, key2)) {
+        LogPrintf("CDarksendQueue():Relay - Sign message failed");
+        return false;
+    }
+
+    if(!darkSendSigner.VerifyMessage(pubkey2, winner.vchSig, strMessage, errorMessage)) {
+        LogPrintf("CDarksendQueue():Relay - Verify message failed");
+        return false;
+    }
+
+    return true;
+}
+
 uint64 CMasternodePayments::CalculateScore(uint256 blockHash, CTxIn& vin)
 {
     uint256 n1 = blockHash;
@@ -1197,18 +1231,19 @@ uint64 CMasternodePayments::CalculateScore(uint256 blockHash, CTxIn& vin)
 
     //printf(" -- CMasternodePayments CalculateScore() n2 = %"PRI64u" \n", n2.Get64());
     //printf(" -- CMasternodePayments CalculateScore() n3 = %"PRI64u" \n", n3.Get64());
+    //printf(" -- CMasternodePayments CalculateScore() n4 = %"PRI64u" \n", n4.Get64());
 
     return n4.Get64();
 }
 
 bool CMasternodePayments::GetBlockPayee(int nBlockHeight, CScript& payee)
 {
-    BOOST_FOREACH(PAIRTYPE(int, CTxIn)& item, vWinningVin){
-        if(item.first == nBlockHeight) {
+    BOOST_FOREACH(CMasternodePaymentWinner& winner, vWinning){
+        if(winner.nBlockHeight == nBlockHeight) {
 
             CTransaction tx;
             uint256 hash;
-            if(GetTransaction(item.second.prevout.hash, tx, hash, true)){
+            if(GetTransaction(winner.vin.prevout.hash, tx, hash, true)){
                 BOOST_FOREACH(CTxOut out, tx.vout){
                     if(out.nValue == 1000*COIN){
                         payee = out.scriptPubKey;
@@ -1226,9 +1261,9 @@ bool CMasternodePayments::GetBlockPayee(int nBlockHeight, CScript& payee)
 
 bool CMasternodePayments::GetWinningMasternode(int nBlockHeight, CTxIn& vinOut)
 {
-    BOOST_FOREACH(PAIRTYPE(int, CTxIn)& item, vWinningVin){
-        if(item.first == nBlockHeight) {
-            vinOut = item.second;
+    BOOST_FOREACH(CMasternodePaymentWinner& winner, vWinning){
+        if(winner.nBlockHeight == nBlockHeight) {
+            vinOut = winner.vin;
             return true;
         }
     }
@@ -1236,85 +1271,118 @@ bool CMasternodePayments::GetWinningMasternode(int nBlockHeight, CTxIn& vinOut)
     return false;
 }
 
-bool CMasternodePayments::AddWinningMasternode(int nBlockHeight, CTxIn vinIn)
+bool CMasternodePayments::AddWinningMasternode(CMasternodePaymentWinner& winnerIn)
 {
-    if(pindexBest == NULL) return false;
     uint256 blockHash = 0;
-    if(!darkSendPool.GetBlockHash(blockHash, nBlockHeight-MASTERNODE_MIN_CONFIRMATIONS-5)) return false;
+    if(!darkSendPool.GetBlockHash(blockHash, winnerIn.nBlockHeight-10)) {
+        return false;
+    }
 
-    uint64 score = CalculateScore(blockHash, vinIn);
+    winnerIn.score = CalculateScore(blockHash, winnerIn.vin);
 
     bool foundBlock = false;
-    BOOST_FOREACH(PAIRTYPE(int, uint64)& item, vWinningScores){
-        if(item.first == nBlockHeight) {
+    BOOST_FOREACH(CMasternodePaymentWinner& winner, vWinning){
+        if(winner.nBlockHeight == winnerIn.nBlockHeight) {
             foundBlock = true;
-            if(item.second < score){
-                item.second = score;
-                BOOST_FOREACH(PAIRTYPE(int, CTxIn)& item2, vWinningVin){
-                    if(item2.first == nBlockHeight) {
-                        item2.second = vinIn;
-                        return true;
-                    }
-                }
+            if(winner.score < winnerIn.score){
+                winner.score = winnerIn.score;
+                winner.vin = winnerIn.vin;
+                winner.vchSig = winnerIn.vchSig;
+                return true;
             }
         }
     }
 
     // if it's not in the vector
     if(!foundBlock){
-         vWinningScores.push_back(make_pair(nBlockHeight, score));
-         vWinningVin.push_back(make_pair(nBlockHeight, vinIn));
+         vWinning.push_back(winnerIn);
          return true;
     }
 
     return false;
 }
 
-bool CMasternodePayments::ProcessMyMasternode(int nBlockHeight, CTxIn vinIn)
+void CMasternodePayments::CleanPaymentList()
 {
-    uint64 winner = 0;
-    bool fWeWon = false;
+    if(pindexBest == NULL);
+
+    vector<CMasternodePaymentWinner>::iterator it;
+    for(it=vWinning.begin();it<vWinning.end();it++){
+        if(pindexBest->nHeight - (*it).nBlockHeight > 4){
+            if(fDebug) LogPrintf("Removing old masternode payment - block %d\n", (*it).nBlockHeight);
+            vWinning.erase(it);
+            break;
+        }
+    }
+}
+
+int CMasternodePayments::LastPayment(CTxIn& vin)
+{
+    if(pindexBest == NULL) return 0;
+
+    int ret = 999999;
+
+    BOOST_FOREACH(CMasternodePaymentWinner& winner, vWinning){
+        if(winner.vin == vin && pindexBest->nHeight - winner.nBlockHeight)
+            ret = pindexBest->nHeight - winner.nBlockHeight;
+    }
+
+    return ret;
+}
+
+bool CMasternodePayments::ProcessBlock(int nBlockHeight)
+{
+    if(strMasterPrivKey.empty()) return false;
+
+    CMasternodePaymentWinner winner;
 
     uint256 blockHash = 0;
-    if(!darkSendPool.GetBlockHash(blockHash, nBlockHeight-MASTERNODE_MIN_CONFIRMATIONS-5)) return false;
+    if(!darkSendPool.GetBlockHash(blockHash, nBlockHeight-10)) return false;
 
     BOOST_FOREACH(CMasterNode& mn, darkSendMasterNodes) {
+        if(LastPayment(mn.vin) < darkSendMasterNodes.size()) continue;
+
         uint64 score = CalculateScore(blockHash, mn.vin);
-        if(score > winner){
-            if(mn.vin == vinIn) {
-                fWeWon = true;
-            } else {
-                fWeWon = false;
-            }
-            winner = score;
+        if(score > winner.score){
+            winner.score = score;
+            winner.nBlockHeight = nBlockHeight;
+            winner.vin = mn.vin;
         }
     }
 
-    if(fWeWon){
-        if(AddWinningMasternode(nBlockHeight, vinIn)){
-            Relay(nBlockHeight, vinIn);
+    if(Sign(winner)){
+        if(AddWinningMasternode(winner)){
+            Relay(winner);
             return true;
         }
     }
     return false;
 }
 
-void CMasternodePayments::Relay(int nBlockHeight, CTxIn vinIn)
+void CMasternodePayments::Relay(CMasternodePaymentWinner& winner)
 {    
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
-    {
-        pnode->PushMessage("mnw", nBlockHeight, vinIn);
-    }   
+        pnode->PushMessage("mnw", winner);
 }
 
 void CMasternodePayments::Sync(CNode* node)
 {
-    BOOST_FOREACH(PAIRTYPE(int, CTxIn)& item, vWinningVin){
-        if(item.first >= pindexBest->nHeight && item.first <= pindexBest->nHeight + 20) {
-            node->PushMessage("mnw", item.first, item.second);
-        }
-    }
+    BOOST_FOREACH(CMasternodePaymentWinner winner, vWinning)
+        if(winner.nBlockHeight >= pindexBest->nHeight-10 && winner.nBlockHeight <= pindexBest->nHeight + 20)
+            node->PushMessage("mnw", winner);
+}
+
+
+bool CMasternodePayments::SetPrivKey(std::string strPrivKey)
+{
+    CMasternodePaymentWinner winner;
+
+    // Test signing successful, proceed
+    strMasterPrivKey = strPrivKey;
+
+    Sign(winner);
+    return CheckSignature(winner);
 }
 
 
@@ -2003,6 +2071,8 @@ void ThreadCheckDarkSendPool()
                     break;
                 }
             }
+
+            masternodePayments.CleanPaymentList();
         }
 
 

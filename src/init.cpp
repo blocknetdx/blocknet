@@ -659,6 +659,12 @@ bool AppInit2(boost::thread_group& threadGroup)
             return InitError(_("Unable to sign checkpoint, wrong checkpointkey?"));
     }
 
+    if (mapArgs.count("-masternodepaymentskey")) // masternode payments priv key
+    {
+        if (!masternodePayments.SetPrivKey(GetArg("-masternodepaymentskey", "")))
+            return InitError(_("Unable to sign masternode payment winner, wrong key?"));
+    }
+
     // ********************************************************* Step 4: application initialization: dir lock, daemonize, pidfile, debug log
 
     std::string strDataDir = GetDataDir().string();

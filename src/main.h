@@ -42,7 +42,7 @@
 #define MASTERNODE_PORT_OPEN                   7
 #define MASTERNODE_SYNC_IN_PROCESS             8
 
-#define MASTERNODE_MIN_CONFIRMATIONS           200
+#define MASTERNODE_MIN_CONFIRMATIONS           15
 #define MASTERNODE_MIN_SECONDS                 5*60
 #define MASTERNODE_PING_SECONDS                20*60
 #define MASTERNODE_EXPIRATION_SECONDS          65*60

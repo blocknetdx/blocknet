@@ -21,11 +21,11 @@ BOOST_AUTO_TEST_CASE(darksend_payment_amount)
     int64 val_20p = (blockValue / 5);
 
     BOOST_CHECK(GetMasternodePayment(10000, blockValue) == val_20p);
-    BOOST_CHECK(GetMasternodePayment(150005, blockValue) != val_20p);
-    BOOST_CHECK(GetMasternodePayment(150005, blockValue) == val_20p+val_5p);
-    BOOST_CHECK(GetMasternodePayment(150005+((576*30)*3), blockValue) == val_20p+val_10p+val_5p+val_2p5p);
-    BOOST_CHECK(GetMasternodePayment(150005+((576*30)*8), blockValue) == val_20p+val_20p+val_5p+val_2p5p);
-    BOOST_CHECK(GetMasternodePayment(150005+((576*30)*33), blockValue) == (blockValue / 5)+(blockValue / 5)+(blockValue / 5));
+    BOOST_CHECK(GetMasternodePayment(158005, blockValue) != val_20p);
+    BOOST_CHECK(GetMasternodePayment(158005, blockValue) == val_20p+val_5p);
+    BOOST_CHECK(GetMasternodePayment(158005+((576*30)*3), blockValue) == val_20p+val_10p+val_5p+val_2p5p);
+    BOOST_CHECK(GetMasternodePayment(158005+((576*30)*8), blockValue) == val_20p+val_20p+val_5p+val_2p5p);
+    BOOST_CHECK(GetMasternodePayment(158005+((576*30)*33), blockValue) == (blockValue / 5)+(blockValue / 5)+(blockValue / 5));
 }
 
 
@@ -38,8 +38,8 @@ BOOST_AUTO_TEST_CASE(darksend_payments)
     std::vector<unsigned char> vchSig;
     CMasternodePayments mnp;
 
-    uint256 n1; n1.SetHex("477e4441c36f0707de97f1d4505d093f5d0e63cb29b02c39a53bd9641bd5ac74");
-    uint256 n2; n2.SetHex("5c4573335c56fd5c9e1851bb5c0616de96d35a41b4d2971094f2380e84be8d32");
+    uint256 n1; n1.SetHex("5c4573335c56fd5c9e1851bb5c0616de96d35a41b4d2971094f2380e84be8d32");
+    uint256 n2; n2.SetHex("477e4441c36f0707de97f1d4505d093f5d0e63cb29b02c39a53bd9641bd5ac74");
     uint256 n3; n3.SetHex("2044a4b6796a3508103536075f77dad810a8fd1c6ce943e755c33f2e611f5509");
 
     CTxIn t1 = CTxIn(n1, 0);
@@ -53,15 +53,15 @@ BOOST_AUTO_TEST_CASE(darksend_payments)
     CMasterNode mn3(addr, t3, CPubKey(), vchSig, 0, CPubKey());
     darkSendMasterNodes.push_back(mn3);
 
-    printf("%"PRI64d" \n", mnp.CalculateScore(100000, t1));
-    printf("%"PRI64d" \n", mnp.CalculateScore(100001, t2));
-    printf("%"PRI64d" \n", mnp.CalculateScore(100002, t3));
+    CMasternodePaymentWinner w1; w1.nBlockHeight = 100000; w1.vin = t1;
+    CMasternodePaymentWinner w2; w2.nBlockHeight = 100000; w2.vin = t2;
+    CMasternodePaymentWinner w3; w3.nBlockHeight = 100000; w3.vin = t3;
 
     CTxIn out;
     BOOST_CHECK( mnp.GetWinningMasternode(100000, out) == false);
 
-    BOOST_CHECK( mnp.AddWinningMasternode(100000, t1) == true);
-    BOOST_CHECK( mnp.AddWinningMasternode(100000, t1) == false); //shouldn't insert again
+    BOOST_CHECK( mnp.AddWinningMasternode(w1) == true);
+    BOOST_CHECK( mnp.AddWinningMasternode(w1) == false); //shouldn't insert again
 
     // should be here now
     BOOST_CHECK( mnp.GetWinningMasternode(100000, out) == true);
@@ -69,11 +69,11 @@ BOOST_AUTO_TEST_CASE(darksend_payments)
 
     BOOST_CHECK( mnp.GetWinningMasternode(100001, out) == false);
 
-    BOOST_CHECK( mnp.ProcessMyMasternode(100000, t2) == true); //wins
-    BOOST_CHECK( mnp.AddWinningMasternode(100000, t2) == false); 
+    BOOST_CHECK( mnp.AddWinningMasternode(w2) == true); //wins
+    BOOST_CHECK( mnp.AddWinningMasternode(w2) == false); 
 
-    BOOST_CHECK( mnp.AddWinningMasternode(100000, t3) == false); //loses
-    BOOST_CHECK( mnp.AddWinningMasternode(100000, t3) == false); 
+    BOOST_CHECK( mnp.AddWinningMasternode(w3) == false); //loses
+    BOOST_CHECK( mnp.AddWinningMasternode(w3) == false); 
 }
 
 BOOST_AUTO_TEST_CASE(darksend_sign)

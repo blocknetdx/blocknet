@@ -4196,37 +4196,41 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         masternodePayments.Sync(pfrom);
     }
     else if (strCommand == "mnw") { //Masternode Payments Declare Winner
-
-        int nBlockHeight;
-        CTxIn vin;
-        vRecv >> nBlockHeight >> vin;
+        CMasternodePaymentWinner winner;
+        vRecv >> winner;
 
         if(pindexBest == NULL) return false;
 
-        if(nBlockHeight > pindexBest->nHeight + 20 || nBlockHeight < pindexBest->nHeight+6){
-            LogPrintf("mnw - winning votes too close to current block %s Height %d bestHeight %d\n", vin.ToString().c_str(), nBlockHeight, pindexBest->nHeight);
+        if(winner.nBlockHeight > pindexBest->nHeight - 10 || winner.nBlockHeight < pindexBest->nHeight+20){
+            LogPrintf("mnw - winner out of range %s Height %d bestHeight %d\n", winner.vin.ToString().c_str(), winner.nBlockHeight, pindexBest->nHeight);
             return false;
         }
 
         CValidationState state;
         CTransaction tx = CTransaction();
         CTxOut vout = CTxOut(999.99*COIN, darkSendPool.collateralPubKey);
-        tx.vin.push_back(vin);
+        tx.vin.push_back(winner.vin);
         tx.vout.push_back(vout);
         if(tx.AcceptableInputs(state, true)){
-            if(GetInputAge(vin) < MASTERNODE_MIN_CONFIRMATIONS){
+            if(GetInputAge(winner.vin) < MASTERNODE_MIN_CONFIRMATIONS){
                 LogPrintf("mnw - Input must have least %d confirmations\n", MASTERNODE_MIN_CONFIRMATIONS);
                 pfrom->Misbehaving(20);
                 return false;
             }
 
-            LogPrintf("mnw - winning vote  %s Height %d bestHeight %d\n", vin.ToString().c_str(), nBlockHeight, pindexBest->nHeight);
+            LogPrintf("mnw - winning vote  %s Height %d bestHeight %d\n", winner.vin.ToString().c_str(), winner.nBlockHeight, pindexBest->nHeight);
 
-            if(masternodePayments.AddWinningMasternode(nBlockHeight, vin)){
-                masternodePayments.Relay(nBlockHeight, vin);
+            if(!masternodePayments.CheckSignature(winner)){
+                LogPrintf("mnw - invalid signature\n");
+                pfrom->Misbehaving(100);
+                return false;
+            }
+
+            if(masternodePayments.AddWinningMasternode(winner)){
+                masternodePayments.Relay(winner);
             }
         } else {
-            LogPrintf("mnw - invalid vin %s\n", vin.ToString().c_str());
+            LogPrintf("mnw - invalid vin %s\n", winner.vin.ToString().c_str());
 
             int nDoS = 0;
             if (state.IsInvalid(nDoS))

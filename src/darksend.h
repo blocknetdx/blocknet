@@ -91,21 +91,56 @@ public:
     }
 };
 
+// for storing the winning payments
+class CMasternodePaymentWinner
+{
+public:
+    int nBlockHeight;
+    uint64 score;
+    CTxIn vin;
+    std::vector<unsigned char> vchSig;
+
+    CMasternodePaymentWinner() {
+        nBlockHeight = 0;
+        score = 0;
+        vin = CTxIn();
+    }
+
+    IMPLEMENT_SERIALIZE(
+        READWRITE(nBlockHeight);
+        READWRITE(score);
+        READWRITE(vin);
+        READWRITE(vchSig);
+     )
+};
 
 //
 // Masternode Payments Class 
 // Keeps track of who should get paid for which blocks
 //
 
+
 class CMasternodePayments
 {
 private:
-    std::vector<std::pair<int, uint64> > vWinningScores;
-    std::vector<std::pair<int, CTxIn> > vWinningVin;
+    std::vector<CMasternodePaymentWinner> vWinning;
     int nSyncedFromPeer;
+    std::string strPubKey;
+    std::string strMasterPrivKey;
 
 public:
 
+    CMasternodePayments() {
+        std::string strTestPubKey = "04bcba2b149fe9d54f218208dd02aecd7b2245ef21c937207966f0814365b4d1c5d521d001f2df294bafb0fbe5ee4c3290b0c25bff8fdd886b6e3e9317758a7d75";
+        std::string strMainPubKey = "04ba2e1494f05a1fccbef6b0cf6124ce05c20bc7868726770dda7a41ba8c9e905b67bb594ebbb282b1159ba8fa176121cb81b8a1c184f0c73e631a8a4999647d30";
+    
+        strPubKey = fTestNet? strTestPubKey : strMainPubKey;
+    }
+
+    bool SetPrivKey(std::string strPrivKey);
+    bool CheckSignature(CMasternodePaymentWinner& winner);
+    bool Sign(CMasternodePaymentWinner& winner);
+    
     // Deterministically calculate a given "score" for a masternode depending on how close it's hash is 
     // to the blockHeight. The further away they are the better, the furthest will win the election 
     // and get paid this block
@@ -113,10 +148,12 @@ public:
 
     uint64 CalculateScore(uint256 blockHash, CTxIn& vin);
     bool GetWinningMasternode(int nBlockHeight, CTxIn& vinOut);
-    bool AddWinningMasternode(int nBlockHeight, CTxIn vinIn);
-    bool ProcessMyMasternode(int nBlockHeight, CTxIn vinIn);
-    void Relay(int nBlockHeight, CTxIn vinIn);
+    bool AddWinningMasternode(CMasternodePaymentWinner& winner);
+    bool ProcessBlock(int nBlockHeight);
+    void Relay(CMasternodePaymentWinner& winner);
     void Sync(CNode* node);
+    void CleanPaymentList();
+    int LastPayment(CTxIn& vin);
 
     //slow
     bool GetBlockPayee(int nBlockHeight, CScript& payee);
@@ -268,7 +305,7 @@ public:
 class CDarkSendPool
 {
 public:
-    static const int MIN_PEER_PROTO_VERSION = 70040;
+    static const int MIN_PEER_PROTO_VERSION = 70041;
 
     // clients entries
     std::vector<CDarkSendEntry> myEntries;
