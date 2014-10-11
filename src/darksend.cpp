@@ -1274,7 +1274,7 @@ bool CMasternodePayments::GetWinningMasternode(int nBlockHeight, CTxIn& vinOut)
 bool CMasternodePayments::AddWinningMasternode(CMasternodePaymentWinner& winnerIn)
 {
     uint256 blockHash = 0;
-    if(!darkSendPool.GetBlockHash(blockHash, winnerIn.nBlockHeight-10)) {
+    if(!darkSendPool.GetBlockHash(blockHash, winnerIn.nBlockHeight-100)) {
         return false;
     }
 
@@ -1333,11 +1333,10 @@ int CMasternodePayments::LastPayment(CTxIn& vin)
 bool CMasternodePayments::ProcessBlock(int nBlockHeight)
 {
     if(strMasterPrivKey.empty()) return false;
-
     CMasternodePaymentWinner winner;
 
     uint256 blockHash = 0;
-    if(!darkSendPool.GetBlockHash(blockHash, nBlockHeight-10)) return false;
+    if(!darkSendPool.GetBlockHash(blockHash, nBlockHeight-100)) return false;
 
     BOOST_FOREACH(CMasterNode& mn, darkSendMasterNodes) {
         if(LastPayment(mn.vin) < darkSendMasterNodes.size()) continue;
@@ -1350,12 +1349,15 @@ bool CMasternodePayments::ProcessBlock(int nBlockHeight)
         }
     }
 
+    if(winner.nBlockHeight == 0) return false; //no masternodes available
+
     if(Sign(winner)){
         if(AddWinningMasternode(winner)){
             Relay(winner);
             return true;
         }
     }
+
     return false;
 }
 
@@ -1382,7 +1384,13 @@ bool CMasternodePayments::SetPrivKey(std::string strPrivKey)
     strMasterPrivKey = strPrivKey;
 
     Sign(winner);
-    return CheckSignature(winner);
+
+    if(CheckSignature(winner)){
+        LogPrintf("Successfully initialized as masternode payments master\n");
+        return true;
+    } else {
+        return false;
+    }
 }
 
 

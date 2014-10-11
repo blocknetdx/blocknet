@@ -4201,7 +4201,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         if(pindexBest == NULL) return false;
 
-        if(winner.nBlockHeight > pindexBest->nHeight - 10 || winner.nBlockHeight < pindexBest->nHeight+20){
+        if(winner.nBlockHeight < pindexBest->nHeight - 10 || winner.nBlockHeight > pindexBest->nHeight+20){
             LogPrintf("mnw - winner out of range %s Height %d bestHeight %d\n", winner.vin.ToString().c_str(), winner.nBlockHeight, pindexBest->nHeight);
             return false;
         }
@@ -5401,7 +5401,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
             //spork
             if(!masternodePayments.GetBlockPayee(pindexPrev->nHeight+1, pblock->payee)){
                 //no masternode detected
-                winningNode = darkSendPool.GetCurrentMasterNode(1);
+                int winningNode = darkSendPool.GetCurrentMasterNode(1);
                 if(winningNode >= 0){
                     pblock->payee.SetDestination(darkSendMasterNodes[winningNode].pubkey.GetID());
                 } else { 
