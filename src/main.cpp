@@ -5399,25 +5399,28 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
     
         if(bMasterNodePayment) {
             //spork
-            if(masternodePayments.GetBlockPayee(pindexPrev->nHeight+1, pblock->payee)){
-                payments++;
-                txNew.vout.resize(payments);
-
-                txNew.vout[payments-1].scriptPubKey = pblock->payee;
-                txNew.vout[payments-1].nValue = 0;
-
-                CTxDestination address1;
-                ExtractDestination(pblock->payee, address1);
-                CBitcoinAddress address2(address1);
-
-                LogPrintf("Masternode payment to %s\n", address2.ToString().c_str());
-            } else {
-                //if enforcing, then return NULL because the block will be rejected
-                if(GetAdjustedTime() > enforceMasternodePaymentsTime) {
+            if(!masternodePayments.GetBlockPayee(pindexPrev->nHeight+1, pblock->payee)){
+                //no masternode detected
+                winningNode = darkSendPool.GetCurrentMasterNode(1);
+                if(winningNode >= 0){
+                    pblock->payee.SetDestination(darkSendMasterNodes[winningNode].pubkey.GetID());
+                } else { 
                     LogPrintf("CreateNewBlock: Failed to detect masternode to pay\n");
                     return NULL;
                 }
             }
+
+            payments++;
+            txNew.vout.resize(payments);
+
+            txNew.vout[payments-1].scriptPubKey = pblock->payee;
+            txNew.vout[payments-1].nValue = 0;
+
+            CTxDestination address1;
+            ExtractDestination(pblock->payee, address1);
+            CBitcoinAddress address2(address1);
+
+            LogPrintf("Masternode payment to %s\n", address2.ToString().c_str());
         }
 
         // Add our coinbase tx as first transaction
