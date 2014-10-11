@@ -1339,7 +1339,7 @@ bool CMasternodePayments::ProcessBlock(int nBlockHeight)
     if(!darkSendPool.GetBlockHash(blockHash, nBlockHeight-100)) return false;
 
     BOOST_FOREACH(CMasterNode& mn, darkSendMasterNodes) {
-        if(LastPayment(mn.vin) < darkSendMasterNodes.size()) continue;
+        if(LastPayment(mn.vin) < darkSendMasterNodes.size()*.9) continue;
 
         uint64 score = CalculateScore(blockHash, mn.vin);
         if(score > winner.score){
