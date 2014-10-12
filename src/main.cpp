@@ -3983,7 +3983,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
             if (fDebug)  LogPrintf("darksend queue is ready - %s\n", addr.ToString().c_str());
 
-            //darkSendPool.DoAutomaticDenominating(false, true);
+            darkSendPool.DoAutomaticDenominating(false, true);
         } else {
             BOOST_FOREACH(CDarksendQueue q, vecDarksendQueue){
                 if(q.vin == dsq.vin) return true;
