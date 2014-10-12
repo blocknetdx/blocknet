@@ -125,16 +125,15 @@ class CMasternodePayments
 private:
     std::vector<CMasternodePaymentWinner> vWinning;
     int nSyncedFromPeer;
-    std::string strPubKey;
     std::string strMasterPrivKey;
+    std::string strTestPubKey;
+    std::string strMainPubKey;
 
 public:
 
     CMasternodePayments() {
-        std::string strTestPubKey = "04bcba2b149fe9d54f218208dd02aecd7b2245ef21c937207966f0814365b4d1c5d521d001f2df294bafb0fbe5ee4c3290b0c25bff8fdd886b6e3e9317758a7d75";
-        std::string strMainPubKey = "04549ac134f694c0243f503e8c8a9a986f5de6610049c40b07816809b0d1d06a21b07be27b9bb555931773f62ba6cf35a25fd52f694d4e1106ccd237a7bb899fdd";
-    
-        strPubKey = fTestNet? strTestPubKey : strMainPubKey;
+        strMainPubKey = "04bcba2b149fe9d54f218208dd02aecd7b2245ef21c937207966f0814365b4d1c5d521d001f2df294bafb0fbe5ee4c3290b0c25bff8fdd886b6e3e9317758a7d75";
+        strTestPubKey = "04ba2e1494f05a1fccbef6b0cf6124ce05c20bc7868726770dda7a41ba8c9e905b67bb594ebbb282b1159ba8fa176121cb81b8a1c184f0c73e631a8a4999647d30";
     }
 
     bool SetPrivKey(std::string strPrivKey);

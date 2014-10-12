@@ -1204,6 +1204,7 @@ int CDarkSendPool::GetCurrentMasterNode(int mod, int64 nBlockHeight)
 bool CMasternodePayments::CheckSignature(CMasternodePaymentWinner& winner)
 {
     std::string strMessage = winner.vin.ToString().c_str() + boost::lexical_cast<std::string>(winner.nBlockHeight); 
+    std::string strPubKey = fTestNet? strTestPubKey : strMainPubKey;
     CPubKey pubkey(ParseHex(strPubKey));
 
     std::string errorMessage = "";
