@@ -4222,7 +4222,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
             if(!masternodePayments.CheckSignature(winner)){
                 LogPrintf("mnw - invalid signature\n");
-                pfrom->Misbehaving(100);
+                //pfrom->Misbehaving(100);
                 return false;
             }
 
