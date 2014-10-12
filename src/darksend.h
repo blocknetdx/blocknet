@@ -305,7 +305,7 @@ public:
 class CDarkSendPool
 {
 public:
-    static const int MIN_PEER_PROTO_VERSION = 70041;
+    static const int MIN_PEER_PROTO_VERSION = 70042;
 
     // clients entries
     std::vector<CDarkSendEntry> myEntries;
@@ -358,6 +358,8 @@ public:
     int cachedLastSuccess;
     int cachedNumBlocks; //used for the overview screen
 
+    CTransaction txCollateral; //collateral tx used during process
+
     CDarkSendPool()
     {
         /* DarkSend uses collateral addresses to trust parties entering the pool
@@ -377,6 +379,7 @@ public:
         cachedNumBlocks = 0;
         unitTest = false;
         splitUpInARow = 0;
+        txCollateral = CTransaction();
 
         SetCollateralAddress(strAddress);
         SetNull();
@@ -489,7 +492,7 @@ public:
     // are all inputs signed?
     bool SignaturesComplete();
     // as a client, send a transaction to a masternode to start the denomination process
-    void SendDarksendDenominate(const CTransaction& collateral, std::vector<CTxIn>& vin, std::vector<CTxOut>& vout, int64& fee, int64 amount);
+    void SendDarksendDenominate(std::vector<CTxIn>& vin, std::vector<CTxOut>& vout, int64& fee, int64 amount);
     // get masternode updates about the progress of darksend
     bool StatusUpdate(int newState, int newEntriesCount, int newAccepted, std::string& error, int newSessionID=0);
 

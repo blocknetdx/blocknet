@@ -76,6 +76,7 @@ void CDarkSendPool::SetNull(bool clearEverything){
     sessionAmount = 0;
     sessionFoundMasternode = false;
     sessionTries = 0;
+    vecSessionCollateral.clear();
 
     if(clearEverything){
         myEntries.clear();
@@ -231,38 +232,20 @@ void CDarkSendPool::ChargeFees(){
     if(fMasterNode) {
         int i = 0;
 
-        BOOST_FOREACH(const CTransaction& txCollateral, vecSessionCollateral) {
-            bool found = false;
-            BOOST_FOREACH(const CDarkSendEntry v, entries) {
-                if(v.collateral == txCollateral) found = false;
-            }
-
-            // This queue entry didn't send us the promised transaction
-            if(!found){
-                LogPrintf("CDarkSendPool::ChargeFees -- found uncooperative node (didn't send transaction). charging fees. %u\n", i);
-
-                CWalletTx wtxCollateral = CWalletTx(pwalletMain, txCollateral);
-
-                // Broadcast
-                if (!wtxCollateral.AcceptToMemoryPool(true, false))
-                {
-                    // This must not fail. The transaction has already been signed and recorded.
-                    LogPrintf("CDarkSendPool::ChargeFees() : Error: Transaction not valid");
+        if(state == POOL_STATUS_ACCEPTING_ENTRIES){
+            BOOST_FOREACH(const CTransaction& txCollateral, vecSessionCollateral) {
+                bool found = false;
+                BOOST_FOREACH(const CDarkSendEntry& v, entries) {
+                    if(v.collateral == txCollateral) {
+                        found = true;
+                    }
                 }
-                wtxCollateral.RelayWalletTransaction();
-            }
-            i++;
-        }
 
-        i = 0;
+                // This queue entry didn't send us the promised transaction
+                if(!found){
+                    LogPrintf("CDarkSendPool::ChargeFees -- found uncooperative node (didn't send transaction). charging fees. %u\n", i);
 
-        // who didn't sign?
-        BOOST_FOREACH(const CDarkSendEntry v, entries) {
-            BOOST_FOREACH(const CDarkSendEntryVin s, v.sev) {
-                if(!s.isSigSet){
-                    LogPrintf("CDarkSendPool::ChargeFees -- found uncooperative node (didn't sign). charging fees. %u\n", i);
-
-                    CWalletTx wtxCollateral = CWalletTx(pwalletMain, v.collateral);
+                    CWalletTx wtxCollateral = CWalletTx(pwalletMain, txCollateral);
 
                     // Broadcast
                     if (!wtxCollateral.AcceptToMemoryPool(true, false))
@@ -271,8 +254,30 @@ void CDarkSendPool::ChargeFees(){
                         LogPrintf("CDarkSendPool::ChargeFees() : Error: Transaction not valid");
                     }
                     wtxCollateral.RelayWalletTransaction();
+                    i++;
                 }
-                i++;
+            }
+        }
+
+        if(state == POOL_STATUS_SIGNING) {
+            // who didn't sign?
+            BOOST_FOREACH(const CDarkSendEntry v, entries) {
+                BOOST_FOREACH(const CDarkSendEntryVin s, v.sev) {
+                    if(!s.isSigSet){
+                        LogPrintf("CDarkSendPool::ChargeFees -- found uncooperative node (didn't sign). charging fees. %u\n", i);
+
+                        CWalletTx wtxCollateral = CWalletTx(pwalletMain, v.collateral);
+
+                        // Broadcast
+                        if (!wtxCollateral.AcceptToMemoryPool(true, false))
+                        {
+                            // This must not fail. The transaction has already been signed and recorded.
+                            LogPrintf("CDarkSendPool::ChargeFees() : Error: Transaction not valid");
+                        }
+                        wtxCollateral.RelayWalletTransaction();
+                    }
+                    i++;
+                }
             }
         }
     }
@@ -340,15 +345,17 @@ void CDarkSendPool::CheckTimeout(){
             c++;
         }
 
-        if(GetTimeMillis()-lastTimeChanged >= 120000){
+        if(GetTimeMillis()-lastTimeChanged >= 30000){
             lastTimeChanged = GetTimeMillis();
 
+            ChargeFees();  
             // reset session information for the queue query stage (before entering a masternode, clients will send a queue request to make sure they're compatible denomination wise)
             sessionUsers = 0;
             sessionAmount = 0;
             sessionFoundMasternode = false;
             sessionTries = 0;            
-            
+            vecSessionCollateral.clear();
+
             UpdateState(POOL_STATUS_ACCEPTING_ENTRIES);
         }
     } else if(GetTimeMillis()-lastTimeChanged >= 30000){
@@ -571,13 +578,19 @@ bool CDarkSendPool::SignaturesComplete(){
 // Execute a darksend denomination via a masternode.
 // This is only ran from clients
 // 
-void CDarkSendPool::SendDarksendDenominate(const CTransaction& collateral, std::vector<CTxIn>& vin, std::vector<CTxOut>& vout, int64& fee, int64 amount){
+void CDarkSendPool::SendDarksendDenominate(std::vector<CTxIn>& vin, std::vector<CTxOut>& vout, int64& fee, int64 amount){
+    if(darkSendPool.txCollateral == CTransaction()){
+        LogPrintf ("CDarksendPool:SendDarksendDenominate() - Darksend collateral not set");
+        return;
+    }
+
     // lock the funds we're going to use
-    BOOST_FOREACH(CTxIn in, collateral.vin)
+    BOOST_FOREACH(CTxIn in, txCollateral.vin)
         lockedCoins.push_back(in);
     
     BOOST_FOREACH(CTxIn in, vin)
         lockedCoins.push_back(in);
+
 
     // we should already be connected to a masternode
     if(!sessionFoundMasternode){
@@ -629,11 +642,11 @@ void CDarkSendPool::SendDarksendDenominate(const CTransaction& collateral, std::
 
     // store our entry for later use
     CDarkSendEntry e;
-    e.Add(vin, amount, collateral, vout);
+    e.Add(vin, amount, txCollateral, vout);
     myEntries.push_back(e);
 
     // relay our entry to the master node
-    RelayDarkSendIn(vin, amount, collateral, vout);
+    RelayDarkSendIn(vin, amount, txCollateral, vout);
     Check();
 }
 
@@ -717,17 +730,23 @@ bool CDarkSendPool::SignFinalTransaction(CTransaction& finalTransactionNew, CNod
 
             if(mine >= 0){ //might have to do this one input at a time?
                 int foundOutputs = 0;
+                int64 nValue1 = 0;
+                int64 nValue2 = 0;
                 
                 for(unsigned int i = 0; i < finalTransaction.vout.size(); i++){
                     BOOST_FOREACH(const CTxOut o, e.vout) {
                         if(finalTransaction.vout[i] == o){
                             foundOutputs++;
+                            nValue1 += finalTransaction.vout[i].nValue;
                         }
                     }
                 }
+                
+                BOOST_FOREACH(const CTxOut o, e.vout)
+                    nValue2 += o.nValue;
 
                 int targetOuputs = e.vout.size();
-                if(foundOutputs < targetOuputs) {
+                if(foundOutputs < targetOuputs || nValue1 != nValue2) {
                     // in this case, something went wrong and we'll refuse to sign. It's possible we'll be charged collateral. But that's 
                     // better then signing if the transaction doesn't look like what we wanted.
                     LogPrintf("CDarkSendPool::Sign - My entries are not correct! Refusing to sign. %d entries %d target. \n", foundOutputs, targetOuputs);
@@ -1523,7 +1542,6 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
                     if(submittedToMasternode != pnode->addr) continue;
                 
                     std::string strReason;
-                    CTransaction txCollateral;
                     if(!pwalletMain->CreateCollateralTransaction(txCollateral, strReason)){
                         LogPrintf("DoAutomaticDenominating -- dsa error:%s\n", strReason.c_str());
                         return false; 
@@ -1556,7 +1574,6 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
                     if(darkSendMasterNodes[i].addr != pnode->addr) continue;
 
                     std::string strReason;
-                    CTransaction txCollateral;
                     if(!pwalletMain->CreateCollateralTransaction(txCollateral, strReason)){
                         LogPrintf("DoAutomaticDenominating -- dsa error:%s\n", strReason.c_str());
                         return false; 
@@ -1857,7 +1874,7 @@ bool CDarkSendPool::IsCompatibleWithSession(int64 nAmount, CTransaction txCollat
         }
 
         UpdateState(POOL_STATUS_QUEUE);
-
+        vecSessionCollateral.push_back(txCollateral);
         return true;
     }
 

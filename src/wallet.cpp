@@ -1860,13 +1860,6 @@ string CWallet::PrepareDarksendDenominate(int minRounds, int maxAmount)
     BOOST_FOREACH(CTxIn v, vCoins)
         LockCoin(v.prevout);
 
-
-    std::string strReason;
-    CTransaction txCollateral;
-    if(!CreateCollateralTransaction(txCollateral, strReason)){
-        return _(strReason.c_str());
-    }
-
     // denominate our funds
     int64 nValueLeft = nTotalValue;
     std::vector<CTxOut> vOut;
@@ -1909,7 +1902,7 @@ string CWallet::PrepareDarksendDenominate(int minRounds, int maxAmount)
         nOutputs++;
     }
 
-    darkSendPool.SendDarksendDenominate(txCollateral, vCoins, vOut, nFeeRet, nValueIn);
+    darkSendPool.SendDarksendDenominate(vCoins, vOut, nFeeRet, nValueIn);
 
     return "";
 }
