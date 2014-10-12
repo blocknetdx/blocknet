@@ -1371,14 +1371,14 @@ int64 GetMasternodePayment(int nHeight, int64 blockValue)
     int64 ret = blockValue/5; // start at 20%
 
     if(fTestNet) {
-        if(nHeight > 39295)             ret += blockValue / 20; //25% - 2014-10-07
-        if(nHeight > 39295+((576*1)*1)) ret += blockValue / 20; //30% - 2014-10-08 
-        if(nHeight > 39295+((576*1)*2)) ret += blockValue / 20; //35% - 2014-10-09
-        if(nHeight > 39295+((576*1)*3)) ret += blockValue / 20; //40% - 2014-10-10
-        if(nHeight > 39295+((576*1)*4)) ret += blockValue / 20; //45% - 2014-10-11
-        if(nHeight > 39295+((576*1)*5)) ret += blockValue / 20; //50% - 2014-10-12
-        if(nHeight > 39295+((576*1)*6)) ret += blockValue / 20; //55% - 2014-10-13
-        if(nHeight > 39295+((576*1)*7)) ret += blockValue / 20; //60% - 2014-10-14
+        if(nHeight > 46000)             ret += blockValue / 20; //25% - 2014-10-07
+        if(nHeight > 46000+((576*1)*1)) ret += blockValue / 20; //30% - 2014-10-08 
+        if(nHeight > 46000+((576*1)*2)) ret += blockValue / 20; //35% - 2014-10-09
+        if(nHeight > 46000+((576*1)*3)) ret += blockValue / 20; //40% - 2014-10-10
+        if(nHeight > 46000+((576*1)*4)) ret += blockValue / 20; //45% - 2014-10-11
+        if(nHeight > 46000+((576*1)*5)) ret += blockValue / 20; //50% - 2014-10-12
+        if(nHeight > 46000+((576*1)*6)) ret += blockValue / 20; //55% - 2014-10-13
+        if(nHeight > 46000+((576*1)*7)) ret += blockValue / 20; //60% - 2014-10-14
     }
 
     if(nHeight > 158000)              ret += blockValue / 20;  //25.0%  - 2014-10-23 
