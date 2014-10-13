@@ -4206,42 +4206,17 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             return false;
         }
 
-        CValidationState state;
-        CTransaction tx = CTransaction();
-        CTxOut vout = CTxOut(999.99*COIN, darkSendPool.collateralPubKey);
-        tx.vin.push_back(winner.vin);
-        tx.vout.push_back(vout);
-        if(tx.AcceptableInputs(state, true)){
-            if(GetInputAge(winner.vin) < MASTERNODE_MIN_CONFIRMATIONS){
-                LogPrintf("mnw - Input must have least %d confirmations\n", MASTERNODE_MIN_CONFIRMATIONS);
-                pfrom->Misbehaving(20);
-                return false;
-            }
 
-            LogPrintf("mnw - winning vote  %s Height %d bestHeight %d\n", winner.vin.ToString().c_str(), winner.nBlockHeight, pindexBest->nHeight);
+        LogPrintf("mnw - winning vote  %s Height %d bestHeight %d\n", winner.vin.ToString().c_str(), winner.nBlockHeight, pindexBest->nHeight);
 
-            if(!masternodePayments.CheckSignature(winner)){
-                LogPrintf("mnw - invalid signature\n");
-                pfrom->Misbehaving(100);
-                return false;
-            }
-
-            if(masternodePayments.AddWinningMasternode(winner)){
-                masternodePayments.Relay(winner);
-            }
-        } else {
-            LogPrintf("mnw - invalid vin %s\n", winner.vin.ToString().c_str());
-
-            int nDoS = 0;
-            if (state.IsInvalid(nDoS))
-            {
-                LogPrintf("%s from %s %s was not accepted into the memory pool\n", tx.GetHash().ToString().c_str(),
-                    pfrom->addr.ToString().c_str(), pfrom->cleanSubVer.c_str());
-                if (nDoS > 0)
-                    pfrom->Misbehaving(nDoS);
-            }
-
+        if(!masternodePayments.CheckSignature(winner)){
+            LogPrintf("mnw - invalid signature\n");
+            pfrom->Misbehaving(100);
             return false;
+        }
+
+        if(masternodePayments.AddWinningMasternode(winner)){
+            masternodePayments.Relay(winner);
         }
 
     } else if (strCommand == "dseg") { //DarkSend Election Get
@@ -5398,6 +5373,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         CBlockIndex* pindexPrev = pindexBest;
     
         if(bMasterNodePayment) {
+            bool hasPayment = true;
             //spork
             if(!masternodePayments.GetBlockPayee(pindexPrev->nHeight+1, pblock->payee)){
                 //no masternode detected
@@ -5406,21 +5382,23 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
                     pblock->payee.SetDestination(darkSendMasterNodes[winningNode].pubkey.GetID());
                 } else { 
                     LogPrintf("CreateNewBlock: Failed to detect masternode to pay\n");
-                    return NULL;
+                    hasPayment = false;
                 }
             }
 
-            payments++;
-            txNew.vout.resize(payments);
+            if(hasPayment){
+                payments++;
+                txNew.vout.resize(payments);
 
-            txNew.vout[payments-1].scriptPubKey = pblock->payee;
-            txNew.vout[payments-1].nValue = 0;
+                txNew.vout[payments-1].scriptPubKey = pblock->payee;
+                txNew.vout[payments-1].nValue = 0;
 
-            CTxDestination address1;
-            ExtractDestination(pblock->payee, address1);
-            CBitcoinAddress address2(address1);
+                CTxDestination address1;
+                ExtractDestination(pblock->payee, address1);
+                CBitcoinAddress address2(address1);
 
-            LogPrintf("Masternode payment to %s\n", address2.ToString().c_str());
+                LogPrintf("Masternode payment to %s\n", address2.ToString().c_str());
+            }
         }
 
         // Add our coinbase tx as first transaction

@@ -1294,7 +1294,7 @@ bool CMasternodePayments::GetWinningMasternode(int nBlockHeight, CTxIn& vinOut)
 bool CMasternodePayments::AddWinningMasternode(CMasternodePaymentWinner& winnerIn)
 {
     uint256 blockHash = 0;
-    if(!darkSendPool.GetBlockHash(blockHash, winnerIn.nBlockHeight-100)) {
+    if(!darkSendPool.GetBlockHash(blockHash, winnerIn.nBlockHeight-576)) {
         return false;
     }
 
@@ -1356,7 +1356,7 @@ bool CMasternodePayments::ProcessBlock(int nBlockHeight)
     CMasternodePaymentWinner winner;
 
     uint256 blockHash = 0;
-    if(!darkSendPool.GetBlockHash(blockHash, nBlockHeight-100)) return false;
+    if(!darkSendPool.GetBlockHash(blockHash, nBlockHeight-576)) return false;
 
     BOOST_FOREACH(CMasterNode& mn, darkSendMasterNodes) {
         if(LastPayment(mn.vin) < darkSendMasterNodes.size()*.9) continue;
@@ -1643,11 +1643,12 @@ bool CDarkSendPool::SplitUpMoney(bool justCollateral)
     int64 a = 1*COIN;
 
     // ****** Add fees ************ /
-    vecSend.push_back(make_pair(scriptChange, DARKSEND_COLLATERAL*5));
+    vecSend.push_back(make_pair(scriptChange, DARKSEND_COLLATERAL*2));
+    vecSend.push_back(make_pair(scriptChange, DARKSEND_COLLATERAL*2));
     for(int d = 0; d <= 4+nDarksendRounds; d++)
         vecSend.push_back(make_pair(scriptChange, DARKSEND_FEE));
     
-    nTotalOut += (DARKSEND_COLLATERAL*5)+(DARKSEND_FEE*5); 
+    nTotalOut += (DARKSEND_COLLATERAL*4)+(DARKSEND_FEE*5); 
 
     // ****** Add outputs in bases of two from 1 darkcoin *** /
     if(!justCollateral){
