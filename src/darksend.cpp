@@ -1343,7 +1343,7 @@ int CMasternodePayments::LastPayment(CTxIn& vin)
     int ret = 999999;
 
     BOOST_FOREACH(CMasternodePaymentWinner& winner, vWinning){
-        if(winner.vin == vin && pindexBest->nHeight - winner.nBlockHeight)
+        if(winner.vin == vin && pindexBest->nHeight - winner.nBlockHeight < ret)
             ret = pindexBest->nHeight - winner.nBlockHeight;
     }
 
