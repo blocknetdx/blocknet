@@ -77,6 +77,7 @@ void CDarkSendPool::SetNull(bool clearEverything){
     sessionFoundMasternode = false;
     sessionTries = 0;
     vecSessionCollateral.clear();
+    txCollateral = CTransaction();
 
     if(clearEverything){
         myEntries.clear();
@@ -1517,7 +1518,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
         LogPrintf("Submiting Darksend for %f DRK\n", fDarkcoinSubmitted);
 
         if(pwalletMain->GetDenominatedBalance(true, true) > 0){ //get denominated unconfirmed inputs 
-            printf("DoAutomaticDenominating -- Found unconfirmed denominated outputs, will wait till they confirm to continue.\n");
+            LogPrintf("DoAutomaticDenominating -- Found unconfirmed denominated outputs, will wait till they confirm to continue.\n");
             return false;
         }
 
@@ -1543,9 +1544,11 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
                     if(submittedToMasternode != pnode->addr) continue;
                 
                     std::string strReason;
-                    if(!pwalletMain->CreateCollateralTransaction(txCollateral, strReason)){
-                        LogPrintf("DoAutomaticDenominating -- dsa error:%s\n", strReason.c_str());
-                        return false; 
+                    if(txCollateral == CTransaction()){
+                        if(!pwalletMain->CreateCollateralTransaction(txCollateral, strReason)){
+                            LogPrintf("DoAutomaticDenominating -- dsa error:%s\n", strReason.c_str());
+                            return false; 
+                        }
                     }
                 
                     pnode->PushMessage("dsa", nTotalValue, txCollateral);
@@ -1575,9 +1578,11 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
                     if(darkSendMasterNodes[i].addr != pnode->addr) continue;
 
                     std::string strReason;
-                    if(!pwalletMain->CreateCollateralTransaction(txCollateral, strReason)){
-                        LogPrintf("DoAutomaticDenominating -- dsa error:%s\n", strReason.c_str());
-                        return false; 
+                    if(txCollateral == CTransaction()){
+                        if(!pwalletMain->CreateCollateralTransaction(txCollateral, strReason)){
+                            LogPrintf("DoAutomaticDenominating -- dsa error:%s\n", strReason.c_str());
+                            return false; 
+                        }
                     }
 
                     pnode->PushMessage("dsa", nTotalValue, txCollateral);

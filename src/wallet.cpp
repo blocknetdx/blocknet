@@ -1778,6 +1778,9 @@ bool CWallet::CreateCollateralTransaction(CTransaction& txCollateral, std::strin
     */
     int64 nFeeRet = DARKSEND_COLLATERAL;
 
+    txCollateral.vin.clear();
+    txCollateral.vout.clear();
+
     CReserveKey reservekey(this);
     int64 nValueIn2 = 0;
     std::vector<CTxIn> vCoinsCollateral;
