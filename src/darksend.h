@@ -26,7 +26,7 @@ extern std::string strMasterNodePrivKey;
 extern std::vector<CDarksendQueue> vecDarksendQueue;
 extern std::vector<CTxIn> vecMasternodeAskedFor;
 
-static const int64 DARKSEND_COLLATERAL = 0.1*COIN;
+static const int64 DARKSEND_COLLATERAL = (0.1*COIN);
 static const int64 DARKSEND_FEE = 0.0125*COIN;
 
 
@@ -304,7 +304,7 @@ public:
 class CDarkSendPool
 {
 public:
-    static const int MIN_PEER_PROTO_VERSION = 70041;
+    static const int MIN_PEER_PROTO_VERSION = 70042;
 
     // clients entries
     std::vector<CDarkSendEntry> myEntries;

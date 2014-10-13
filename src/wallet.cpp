@@ -1404,11 +1404,11 @@ bool CWallet::SelectCoinsCollateral(std::vector<CTxIn>& setCoinsRet, int64& nVal
         
         // collateral inputs will always be a multiple of DARSEND_COLLATERAL, up to five 
         if(
-            out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL || 
-            out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL * 2 ||
-            out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL * 3 ||
-            out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL * 4 ||
-            out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL * 5 
+            out.tx->vout[out.i].nValue == (DARKSEND_COLLATERAL * 5)+DARKSEND_FEE
+            out.tx->vout[out.i].nValue == (DARKSEND_COLLATERAL * 4)+DARKSEND_FEE
+            out.tx->vout[out.i].nValue == (DARKSEND_COLLATERAL * 3)+DARKSEND_FEE
+            out.tx->vout[out.i].nValue == (DARKSEND_COLLATERAL * 2)+DARKSEND_FEE
+            out.tx->vout[out.i].nValue == (DARKSEND_COLLATERAL * 1)+DARKSEND_FEE
         ){
             //printf(" -- in\n");
             CTxIn vin = CTxIn(out.tx->GetHash(),out.i);
