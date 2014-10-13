@@ -321,6 +321,9 @@ void CDarkSendPool::CheckTimeout(){
         UpdateState(POOL_STATUS_ACCEPTING_ENTRIES);
     }
 
+    int addLagTime = 0;
+    if(!fMasterNode) addLagTime = 10000; //if we're the client, give the server a few extra seconds before resetting.
+
     if(state == POOL_STATUS_ACCEPTING_ENTRIES || state == POOL_STATUS_QUEUE){
         c = 0;
 
@@ -346,7 +349,7 @@ void CDarkSendPool::CheckTimeout(){
             c++;
         }
 
-        if(GetTimeMillis()-lastTimeChanged >= 30000){
+        if(GetTimeMillis()-lastTimeChanged >= 30000+addLagTime){
             lastTimeChanged = GetTimeMillis();
 
             ChargeFees();  
@@ -359,7 +362,7 @@ void CDarkSendPool::CheckTimeout(){
 
             UpdateState(POOL_STATUS_ACCEPTING_ENTRIES);
         }
-    } else if(GetTimeMillis()-lastTimeChanged >= 30000){
+    } else if(GetTimeMillis()-lastTimeChanged >= 30000+addLagTime){
         if(fDebug) LogPrintf("CDarkSendPool::CheckTimeout() -- Session timed out (30s) -- resetting\n");
         SetNull();
         UnlockCoins();
@@ -369,7 +372,7 @@ void CDarkSendPool::CheckTimeout(){
     }
 
 
-    if(state == POOL_STATUS_SIGNING && GetTimeMillis()-lastTimeChanged >= 10000 ) {
+    if(state == POOL_STATUS_SIGNING && GetTimeMillis()-lastTimeChanged >= 10000+addLagTime ) {
         if(fDebug) LogPrintf("CDarkSendPool::CheckTimeout() -- Session timed out -- restting\n");
         ChargeFees();
         SetNull();
