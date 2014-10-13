@@ -1340,7 +1340,7 @@ int CMasternodePayments::LastPayment(CTxIn& vin)
 {
     if(pindexBest == NULL) return 0;
 
-    int ret = 999999;
+    int ret = GetInputAge(vin);
 
     BOOST_FOREACH(CMasternodePaymentWinner& winner, vWinning){
         if(winner.vin == vin && pindexBest->nHeight - winner.nBlockHeight < ret)
