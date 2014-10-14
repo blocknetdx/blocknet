@@ -170,6 +170,50 @@ BOOST_AUTO_TEST_CASE(darksend_denom)
 
     BOOST_CHECK(darkSendPool.GetDenominations(vout1) != darkSendPool.GetDenominations(vout2));
 
+    vout1.clear();
+    vout2.clear();
+
+    vout1.push_back(d1);
+    vout1.push_back(d3);
+    vout1.push_back(d2);
+
+    vout2.push_back(d1);
+    vout2.push_back(d2);
+    vout2.push_back(d3);
+
+    BOOST_CHECK(darkSendPool.GetDenominations(vout1) == darkSendPool.GetDenominations(vout2));
+
+    vout1.clear();
+    vout2.clear();
+
+    vout1.push_back(d1);
+    vout1.push_back(d3);
+    vout1.push_back(d2);
+
+    vout2.push_back(d3);
+    vout2.push_back(d2);
+    vout2.push_back(d1);
+
+    BOOST_CHECK(darkSendPool.GetDenominations(vout1) == darkSendPool.GetDenominations(vout2));
+
+    vout1.clear();
+    vout2.clear();
+
+    vout1.push_back(d1);
+    vout1.push_back(d3);
+    vout1.push_back(d2);
+
+    vout2.push_back(d3);
+    vout2.push_back(d2);
+    vout2.push_back(d2);
+    vout2.push_back(d2);
+    vout2.push_back(d1);
+
+    BOOST_CHECK(darkSendPool.GetDenominations(vout1) == darkSendPool.GetDenominations(vout2));
+
+    vout2.push_back(d4);
+
+    BOOST_CHECK(darkSendPool.GetDenominations(vout1) != darkSendPool.GetDenominations(vout2));
 }
 
 BOOST_AUTO_TEST_CASE(darksend_session)

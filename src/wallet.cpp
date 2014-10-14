@@ -1833,7 +1833,7 @@ string CWallet::PrepareDarksendDenominate(int minRounds, int64 maxAmount)
         }
     }
 
-    int64 nFeeRet = 0.0125*COIN; ///need to get a better fee calc
+    int64 nFeeRet = 0.0125*COIN;
 
     // ** find the coins we'll use
     std::vector<CTxIn> vCoins;
@@ -1844,7 +1844,7 @@ string CWallet::PrepareDarksendDenominate(int minRounds, int64 maxAmount)
     bool hasFeeInput = false;
 
     //select coins we'll use
-    if (!SelectCoinsDark(1*COIN, maxAmount, vCoins, nValueIn, minRounds, nDarksendRounds, hasFeeInput))
+    if (!SelectCoinsDark(1*COIN, maxAmount + nFeeRet, vCoins, nValueIn, minRounds, nDarksendRounds, hasFeeInput))
     {
         vCoins.clear();
 
@@ -1857,6 +1857,8 @@ string CWallet::PrepareDarksendDenominate(int minRounds, int64 maxAmount)
 
     // calculate total value out
     int64 nTotalValue = GetTotalValue(vCoins) - nFeeRet;
+
+    LogPrintf("PrepareDarksendDenominate - preparing darksend denominate . Asked for: %"PRI64u",  Got: %"PRI64u" \n", maxAmount, nTotalValue);
 
     //--------------
 

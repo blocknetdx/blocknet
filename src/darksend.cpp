@@ -642,6 +642,8 @@ void CDarkSendPool::SendDarksendDenominate(std::vector<CTxIn>& vin, std::vector<
             LogPrintf("dsi -- transactione not valid! %s \n", tx.ToString().c_str());
             return;
         }
+
+        printf("CDarksendPool::SendDarksendDenominate() - preparing transaction - \n %s\n", tx.ToString().c_str());
     }
 
     // store our entry for later use
@@ -1556,7 +1558,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
                 
                     sessionAmount = nTotalValue;
                     pnode->PushMessage("dsa", nTotalValue, txCollateral);
-                    LogPrintf("DoAutomaticDenominating --- connected (from queue), sending dsa for %"PRI64d"\n", nTotalValue);
+                    LogPrintf("DoAutomaticDenominating --- connected (from queue), sending dsa for %"PRI64d" - denom %d\n", nTotalValue, GetDenominationsByAmount(nTotalValue));
                     return true;
                 }
             } else {
@@ -1591,7 +1593,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
 
                     sessionAmount = nTotalValue;
                     pnode->PushMessage("dsa", nTotalValue, txCollateral);
-                    LogPrintf("DoAutomaticDenominating --- connected, sending dsa for %"PRI64d"\n", nTotalValue);
+                    LogPrintf("DoAutomaticDenominating --- connected, sending dsa for %"PRI64d" - denom %d\n", nTotalValue, GetDenominationsByAmount(nTotalValue));
                     return true;
                 }
             } else {
@@ -1855,6 +1857,13 @@ bool CDarkSendPool::IsCompatibleWithEntries(std::vector<CTxOut> vout)
 {
     BOOST_FOREACH(const CDarkSendEntry v, entries) {
         LogPrintf(" IsCompatibleWithEntries %d %d\n", GetDenominations(vout), GetDenominations(v.vout));
+
+        BOOST_FOREACH(CTxOut o1, vout)
+            LogPrintf(" vout 1 - %s\n", o1.ToString().c_str());
+
+        BOOST_FOREACH(CTxOut o2, v.vout)
+            LogPrintf(" vout 2 - %s\n", o2.ToString().c_str());
+
         if(GetDenominations(vout) != GetDenominations(v.vout)) return false;
     }
 
