@@ -448,7 +448,7 @@ bool CDarkSendPool::IsCollateralValid(const CTransaction& txCollateral){
     }
 
     if(missingTx){
-        if(fDebug) LogPrintf ("CDarkSendPool::IsCollateralValid - Unknown inputs in collateral transaction\n");
+        if(fDebug) LogPrintf ("CDarkSendPool::IsCollateralValid - Unknown inputs in collateral transaction - %s\n", txCollateral.ToString().c_str());
         return false; 
     }
 
@@ -1426,8 +1426,8 @@ bool CMasternodePayments::SetPrivKey(std::string strPrivKey)
 bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
 {
     if(fMasterNode) return false;
+    if(state == POOL_STATUS_ERROR || state == POOL_STATUS_SUCCESS) return false;
 
-    //randomly denom between 3 and 8 blocks
     if(nBestHeight == cachedLastSuccess) {
         LogPrintf("CDarkSendPool::DoAutomaticDenominating - Last successful ds+ was too recent\n");
         return false;
@@ -1554,6 +1554,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
                         }
                     }
                 
+                    sessionAmount = nTotalValue;
                     pnode->PushMessage("dsa", nTotalValue, txCollateral);
                     LogPrintf("DoAutomaticDenominating --- connected (from queue), sending dsa for %"PRI64d"\n", nTotalValue);
                     return true;
@@ -1588,6 +1589,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
                         }
                     }
 
+                    sessionAmount = nTotalValue;
                     pnode->PushMessage("dsa", nTotalValue, txCollateral);
                     LogPrintf("DoAutomaticDenominating --- connected, sending dsa for %"PRI64d"\n", nTotalValue);
                     return true;
@@ -1602,8 +1604,10 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
     }
 
     if(!ready) return true;
-    // Submit transaction to the pool if we get here
-    std::string strError = pwalletMain->PrepareDarksendDenominate(minRounds, maxAmount);
+    if(sessionAmount == 0) return true;
+
+    // Submit transaction to the pool if we get here, use sessionAmount so we use the same amount of money
+    std::string strError = pwalletMain->PrepareDarksendDenominate(minRounds, sessionAmount);
     LogPrintf("DoAutomaticDenominating : Running darksend denominate. Return '%s'\n", strError.c_str());
     
     if(strError == "") return true;
@@ -2113,7 +2117,7 @@ void ThreadCheckDarkSendPool()
 
 
         //try to sync the masternode list and payment list every 20 seconds
-        if(c % 5 == 0 && RequestedMasterNodeList <= 8){
+        if(c % 5 == 0 && RequestedMasterNodeList <= 2){
             bool fIsInitialDownload = IsInitialBlockDownload();
             if(!fIsInitialDownload) {
                 LOCK(cs_vNodes);
@@ -2127,7 +2131,7 @@ void ThreadCheckDarkSendPool()
 
                         LogPrintf("Successfully synced, asking for Masternode list and payment list\n");
         
-                        if(RequestedMasterNodeList <= 2) pnode->PushMessage("dseg", CTxIn()); //request full mn list
+                        pnode->PushMessage("dseg", CTxIn()); //request full mn list
                         pnode->PushMessage("mnget"); //sync payees
                         RequestedMasterNodeList++;
                     }
