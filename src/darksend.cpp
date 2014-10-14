@@ -1886,6 +1886,7 @@ bool CDarkSendPool::IsCompatibleWithSession(int64 nAmount, CTransaction txCollat
         sessionAmount = nAmount;
         sessionUsers++;
         lastTimeChanged = GetTimeMillis();
+        entries.clear();
 
         if(!unitTest){
             //broadcast that I'm accepting entries, only if it's the first entry though
