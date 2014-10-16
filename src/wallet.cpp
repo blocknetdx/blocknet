@@ -1404,11 +1404,11 @@ bool CWallet::SelectCoinsCollateral(std::vector<CTxIn>& setCoinsRet, int64& nVal
         
         // collateral inputs will always be a multiple of DARSEND_COLLATERAL, up to five 
         if(
-            out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL || 
-            out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL * 2 ||
-            out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL * 3 ||
-            out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL * 4 ||
-            out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL * 5 
+            out.tx->vout[out.i].nValue == (DARKSEND_COLLATERAL * 5)+DARKSEND_FEE ||
+            out.tx->vout[out.i].nValue == (DARKSEND_COLLATERAL * 4)+DARKSEND_FEE || 
+            out.tx->vout[out.i].nValue == (DARKSEND_COLLATERAL * 3)+DARKSEND_FEE || 
+            out.tx->vout[out.i].nValue == (DARKSEND_COLLATERAL * 2)+DARKSEND_FEE || 
+            out.tx->vout[out.i].nValue == (DARKSEND_COLLATERAL * 1)+DARKSEND_FEE 
         ){
             //printf(" -- in\n");
             CTxIn vin = CTxIn(out.tx->GetHash(),out.i);
@@ -1437,11 +1437,11 @@ bool CWallet::HasDarksendFeeInputs() const
     BOOST_FOREACH(const COutput& out, vCoins)
     {
         if(
-            out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL || 
-            out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL * 2 ||
-            out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL * 3 ||
-            out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL * 4 ||
-            out.tx->vout[out.i].nValue == DARKSEND_COLLATERAL * 5 
+            out.tx->vout[out.i].nValue == (DARKSEND_COLLATERAL * 5)+DARKSEND_FEE ||
+            out.tx->vout[out.i].nValue == (DARKSEND_COLLATERAL * 4)+DARKSEND_FEE || 
+            out.tx->vout[out.i].nValue == (DARKSEND_COLLATERAL * 3)+DARKSEND_FEE || 
+            out.tx->vout[out.i].nValue == (DARKSEND_COLLATERAL * 2)+DARKSEND_FEE || 
+            out.tx->vout[out.i].nValue == (DARKSEND_COLLATERAL * 1)+DARKSEND_FEE 
         ) found_collateral = true;
 
         if(
@@ -1770,7 +1770,59 @@ int64 CWallet::GetTotalValue(std::vector<CTxIn> vCoins) {
     return nTotalValue;
 }
 
-string CWallet::PrepareDarksendDenominate(int minRounds, int maxAmount)
+bool CWallet::CreateCollateralTransaction(CTransaction& txCollateral, std::string strReason)
+{
+    /*
+        To doublespend a collateral transaction, it will require a fee higher than this. So there's 
+        still a significant cost. 
+    */
+    int64 nFeeRet = DARKSEND_COLLATERAL;
+
+    txCollateral.vin.clear();
+    txCollateral.vout.clear();
+
+    CReserveKey reservekey(this);
+    int64 nValueIn2 = 0;
+    std::vector<CTxIn> vCoinsCollateral;
+
+    if (!SelectCoinsCollateral(vCoinsCollateral, nValueIn2))
+    {
+        strReason = "Error: Darksend requires a collateral transaction and could not locate an acceptable input!";
+        return false;
+    }
+
+    // make our change address
+    CScript scriptChange;
+    CPubKey vchPubKey;
+    assert(reservekey.GetReservedKey(vchPubKey)); // should never fail, as we just unlocked
+    scriptChange.SetDestination(vchPubKey.GetID());
+    reservekey.KeepKey();
+
+    BOOST_FOREACH(CTxIn v, vCoinsCollateral)
+        txCollateral.vin.push_back(v);
+
+    if(nValueIn2 - DARKSEND_COLLATERAL - nFeeRet > 0) {
+        //pay collateral charge in fees
+        CTxOut vout3 = CTxOut(nValueIn2 - DARKSEND_COLLATERAL, scriptChange);
+        txCollateral.vout.push_back(vout3);
+    }
+    
+    int vinNumber = 0;
+    BOOST_FOREACH(CTxIn v, txCollateral.vin) {
+        if(!SignSignature(*this, v.prevPubKey, txCollateral, vinNumber, int(SIGHASH_ALL|SIGHASH_ANYONECANPAY))) {
+            BOOST_FOREACH(CTxIn v, vCoinsCollateral)
+                UnlockCoin(v.prevout);
+
+            strReason = "CDarkSendPool::Sign - Unable to sign collateral transaction! \n";
+            return false;
+        }
+        vinNumber++;
+    }
+
+    return true;
+}
+
+string CWallet::PrepareDarksendDenominate(int minRounds, int64 maxAmount)
 {
     if (IsLocked())
         return _("Error: Wallet locked, unable to create transaction!");
@@ -1781,8 +1833,7 @@ string CWallet::PrepareDarksendDenominate(int minRounds, int maxAmount)
         }
     }
 
-    CTransaction txCollateral;
-    int64 nFeeRet = 0.0125*COIN; ///need to get a better fee calc
+    int64 nFeeRet = 0.0125*COIN;
 
     // ** find the coins we'll use
     std::vector<CTxIn> vCoins;
@@ -1793,7 +1844,7 @@ string CWallet::PrepareDarksendDenominate(int minRounds, int maxAmount)
     bool hasFeeInput = false;
 
     //select coins we'll use
-    if (!SelectCoinsDark(1*COIN, maxAmount*COIN, vCoins, nValueIn, minRounds, nDarksendRounds, hasFeeInput))
+    if (!SelectCoinsDark(1*COIN, maxAmount + nFeeRet, vCoins, nValueIn, minRounds, nDarksendRounds, hasFeeInput))
     {
         vCoins.clear();
 
@@ -1807,57 +1858,12 @@ string CWallet::PrepareDarksendDenominate(int minRounds, int maxAmount)
     // calculate total value out
     int64 nTotalValue = GetTotalValue(vCoins) - nFeeRet;
 
+    LogPrintf("PrepareDarksendDenominate - preparing darksend denominate . Asked for: %"PRI64u",  Got: %"PRI64u" \n", maxAmount, nTotalValue);
+
     //--------------
 
     BOOST_FOREACH(CTxIn v, vCoins)
         LockCoin(v.prevout);
-
-    // create another transaction as collateral for using DarkSend
-    {
-        int64 nValueIn2 = 0;
-        std::vector<CTxIn> vCoinsCollateral;
-
-        if (!SelectCoinsCollateral(vCoinsCollateral, nValueIn2))
-        {
-            BOOST_FOREACH(CTxIn v, vCoins)
-                UnlockCoin(v.prevout);
-
-            return _("Error: Darksend requires a collateral transaction and could not locate an acceptable input!");
-        }
-
-        // make our change address
-        CScript scriptChange;
-        CPubKey vchPubKey;
-        assert(reservekey.GetReservedKey(vchPubKey)); // should never fail, as we just unlocked
-        scriptChange.SetDestination(vchPubKey.GetID());
-        reservekey.KeepKey();
-
-        CTxOut vout2 = CTxOut(DARKSEND_COLLATERAL, darkSendPool.collateralPubKey);
-
-        BOOST_FOREACH(CTxIn v, vCoinsCollateral)
-            txCollateral.vin.push_back(v);
-        
-        txCollateral.vout.push_back(vout2);
-
-        if(nValueIn2 - DARKSEND_COLLATERAL - nFeeRet > 0) {
-            CTxOut vout3 = CTxOut(nValueIn2 - DARKSEND_COLLATERAL - nFeeRet, scriptChange);
-            txCollateral.vout.push_back(vout3);
-        }
-        
-        int vinNumber = 0;
-        BOOST_FOREACH(CTxIn v, txCollateral.vin) {
-            if(!SignSignature(*this, v.prevPubKey, txCollateral, vinNumber, int(SIGHASH_ALL|SIGHASH_ANYONECANPAY))) {
-                BOOST_FOREACH(CTxIn v, vCoins)
-                    UnlockCoin(v.prevout);
-
-                return _("CDarkSendPool::Sign - Unable to sign collateral transaction! \n");
-            }
-            vinNumber++;
-        }
-
-        BOOST_FOREACH(CTxIn v, vCoinsCollateral)
-            LockCoin(v.prevout);
-    }
 
     // denominate our funds
     int64 nValueLeft = nTotalValue;
@@ -1901,7 +1907,7 @@ string CWallet::PrepareDarksendDenominate(int minRounds, int maxAmount)
         nOutputs++;
     }
 
-    darkSendPool.SendDarksendDenominate(txCollateral, vCoins, vOut, nFeeRet, nValueIn);
+    darkSendPool.SendDarksendDenominate(vCoins, vOut, nFeeRet, nValueIn);
 
     return "";
 }
@@ -1930,6 +1936,28 @@ DBErrors CWallet::LoadWallet(bool& fFirstRunRet)
     return DB_LOAD_OK;
 }
 
+DBErrors CWallet::ZapWalletTx(std::vector<CWalletTx>& vWtx)
+{
+    if (!fFileBacked)
+        return DB_LOAD_OK;
+    DBErrors nZapWalletTxRet = CWalletDB(strWalletFile,"cr+").ZapWalletTx(this, vWtx);
+    if (nZapWalletTxRet == DB_NEED_REWRITE)
+    {
+        if (CDB::Rewrite(strWalletFile, "\x04pool"))
+        {
+            LOCK(cs_wallet);
+            setKeyPool.clear();
+            // Note: can't top-up keypool here, because wallet is locked.
+            // User will be prompted to unlock wallet the next operation
+            // the requires a new key.
+        }
+    }
+
+    if (nZapWalletTxRet != DB_LOAD_OK)
+        return nZapWalletTxRet;
+
+    return DB_LOAD_OK;
+}
 
 bool CWallet::SetAddressBookName(const CTxDestination& address, const string& strName)
 {

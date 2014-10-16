@@ -213,6 +213,7 @@ protected:
     static std::map<CNetAddr, int64> setBanned;
     static CCriticalSection cs_setBanned;
     int nMisbehavior;
+    std::vector<std::string> vecRequestsFulfilled; //keep track of what client has asked for
 
 public:
     uint256 hashContinue;
@@ -617,6 +618,21 @@ public:
             AbortMessage();
             throw;
         }
+    }
+
+    bool HasFulfilledRequest(std::string strRequest)
+    {
+        BOOST_FOREACH(std::string& type, vecRequestsFulfilled)
+        {
+            if(type == strRequest) return true;
+        }
+        return false;
+    }
+
+    void FulfilledRequest(std::string strRequest)
+    {
+        if(HasFulfilledRequest(strRequest)) return;
+        vecRequestsFulfilled.push_back(strRequest);
     }
 
     bool PushGetBlocks(CBlockIndex* pindexBegin, uint256 hashEnd);

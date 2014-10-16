@@ -40,12 +40,13 @@
 #define MASTERNODE_INPUT_TOO_NEW               4
 #define MASTERNODE_PORT_NOT_OPEN               6
 #define MASTERNODE_PORT_OPEN                   7
+#define MASTERNODE_SYNC_IN_PROCESS             8
 
-#define MASTERNODE_MIN_CONFIRMATIONS           6
-#define MASTERNODE_MIN_MICROSECONDS            5*60*1000*1000
-#define MASTERNODE_PING_SECONDS                30*60
-#define MASTERNODE_EXPIRATION_MICROSECONDS     35*60*1000*1000
-#define MASTERNODE_REMOVAL_MICROSECONDS        35.5*60*1000*1000
+#define MASTERNODE_MIN_CONFIRMATIONS           15
+#define MASTERNODE_MIN_SECONDS                 5*60
+#define MASTERNODE_PING_SECONDS                20*60
+#define MASTERNODE_EXPIRATION_SECONDS          65*60
+#define MASTERNODE_REMOVAL_SECONDS             70*60
 
 // status update message constants
 #define MASTERNODE_ACCEPTED                    1
@@ -196,6 +197,8 @@ bool SendMessages(CNode* pto, bool fSendTrickle);
 void ThreadScriptCheck();
 //** Get age of an input */
 int GetInputAge(CTxIn& vin);
+// masternode payments for block value
+int64 GetMasternodePayment(int nHeight, int64 blockValue);
 /** Run the miner threads */
 void GenerateBitcoins(bool fGenerate, CWallet* pwallet);
 /** Generate a new block, without valid proof-of-work */

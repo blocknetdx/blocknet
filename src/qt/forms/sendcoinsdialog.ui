@@ -711,16 +711,16 @@
         </size>
        </property>
        <property name="currentIndex">
-        <number>2</number>
+        <number>0</number>
        </property>
        <item>
         <property name="text">
-         <string>Use Anonymous Funds</string>
+         <string>Create Darksend Transaction</string>
         </property>
        </item>
        <item>
         <property name="text">
-         <string>Use Non-Anonymous Funds</string>
+         <string>Create Normal Transaction</string>
         </property>
        </item>
        <item>

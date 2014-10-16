@@ -130,9 +130,9 @@ OverviewPage::OverviewPage(QWidget *parent) :
         ui->toggleDarksend->setText("(Disabled)");
         ui->toggleDarksend->setEnabled(false);
     }else if(!fEnableDarksend){
-        ui->toggleDarksend->setText("Start Anonymization");
+        ui->toggleDarksend->setText("Start Darksend Mixing");
     } else {
-        ui->toggleDarksend->setText("Stop Anonymization");
+        ui->toggleDarksend->setText("Stop Darksend Mixing");
     }
 
     // start with displaying the "out of sync" warnings
@@ -385,14 +385,23 @@ void OverviewPage::runDoAutomaticDenomination(){
 }
 
 void OverviewPage::toggleDarksend(){
+    int64 balance = pwalletMain->GetBalance();
+    if(balance < 2.5*COIN){
+        QMessageBox::warning(this, tr("Darksend"),
+            tr("Darksend requires at least 2.5 DRK to use."),
+            QMessageBox::Ok, QMessageBox::Ok);
+        return;
+    }
+
+
     darkSendPool.cachedNumBlocks = 0;
 
     fEnableDarksend = !fEnableDarksend;
 
     if(!fEnableDarksend){
-        ui->toggleDarksend->setText("Start Anonymization");
+        ui->toggleDarksend->setText("Start Darksend Mixing");
     } else {
-        ui->toggleDarksend->setText("Stop Anonymization");
+        ui->toggleDarksend->setText("Stop Darksend Mixing");
 
         /* show darksend configuration if client has defaults set */
 

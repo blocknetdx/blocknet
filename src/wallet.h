@@ -206,7 +206,8 @@ public:
     bool CommitTransaction(CWalletTx& wtxNew, CReserveKey& reservekey);
     std::string SendMoney(CScript scriptPubKey, int64 nValue, CWalletTx& wtxNew, bool fAskFee=false, AvailableCoinsType coin_type=ALL_COINS);
     std::string SendMoneyToDestination(const CTxDestination &address, int64 nValue, CWalletTx& wtxNew, bool fAskFee=false, AvailableCoinsType coin_type=ALL_COINS);
-    std::string PrepareDarksendDenominate(int minRounds, int maxAmount);
+    std::string PrepareDarksendDenominate(int minRounds, int64 maxAmount);
+    bool CreateCollateralTransaction(CTransaction& txCollateral, std::string strReason);
 
     bool NewKeyPool();
     bool TopUpKeyPool();
@@ -305,6 +306,7 @@ public:
     void SetBestChain(const CBlockLocator& loc);
 
     DBErrors LoadWallet(bool& fFirstRunRet);
+    DBErrors ZapWalletTx(std::vector<CWalletTx>& vWtx);
 
     bool SetAddressBookName(const CTxDestination& address, const std::string& strName);
 

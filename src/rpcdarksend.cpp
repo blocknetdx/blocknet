@@ -87,9 +87,9 @@ Value masternode(const Array& params, bool fHelp)
 
     if (fHelp  ||
         (strCommand != "start" && strCommand != "stop" && strCommand != "list" && strCommand != "count"  && strCommand != "enforce"
-            && strCommand != "debug" && strCommand != "create" && strCommand != "current" && strCommand != "votes" && strCommand != "genkey" && strCommand != "connect"))
+            && strCommand != "debug" && strCommand != "current" && strCommand != "winners" && strCommand != "genkey" && strCommand != "connect"))
         throw runtime_error(
-            "masternode <start|stop|list|count|debug|create|current|votes|genkey|enforce> passphrase\n");
+            "masternode <start|stop|list|count|debug|current|winners|genkey|enforce> passphrase\n");
 
     if (strCommand == "stop")
     {
@@ -121,7 +121,7 @@ Value masternode(const Array& params, bool fHelp)
     }
 
     if (strCommand == "list")
-    {        
+    {                
         std::string strCommand = "active";
 
         if (params.size() == 2){
@@ -152,7 +152,7 @@ Value masternode(const Array& params, bool fHelp)
             } else if (strCommand == "lastseen") {
                 obj.push_back(Pair(mn.addr.ToString().c_str(),       (int64_t)mn.lastTimeSeen));
             } else if (strCommand == "activeseconds") {
-                obj.push_back(Pair(mn.addr.ToString().c_str(),       (int64_t)(mn.lastTimeSeen - mn.now)/(1000*1000)));
+                obj.push_back(Pair(mn.addr.ToString().c_str(),       (int64_t)(mn.lastTimeSeen - mn.now)));
             } else if (strCommand == "rank") {
                 obj.push_back(Pair(mn.addr.ToString().c_str(),       (int)(darkSendPool.GetMasternodeRank(mn.vin, 1))));
             }
@@ -184,22 +184,24 @@ Value masternode(const Array& params, bool fHelp)
         darkSendPool.RegisterAsMasterNode(false);
         pwalletMain->Lock();
         
-        if(darkSendPool.isCapableMasterNode == MASTERNODE_INPUT_TOO_NEW) return "masternode input must have at least 6 confirmations";
+        if(darkSendPool.isCapableMasterNode == MASTERNODE_INPUT_TOO_NEW) return "masternode input must have at least 15 confirmations";
         if(darkSendPool.isCapableMasterNode == MASTERNODE_STOPPED) return "masternode is stopped";
         if(darkSendPool.isCapableMasterNode == MASTERNODE_IS_CAPABLE) return "successfully started masternode";
         if(darkSendPool.masternodePortOpen == MASTERNODE_PORT_NOT_OPEN) return "inbound port is not open. Please open it and try again. (19999 for testnet and 9999 for mainnet)";
         if(darkSendPool.isCapableMasterNode == MASTERNODE_NOT_CAPABLE) return "not capable masternode";
+        if(darkSendPool.isCapableMasterNode == MASTERNODE_SYNC_IN_PROCESS) return "sync in process. Must wait until client is synced to start.";
 
         return "unknown";
     }
 
     if (strCommand == "debug")
     {
-        if(darkSendPool.isCapableMasterNode == MASTERNODE_INPUT_TOO_NEW) return "masternode input must have at least 6 confirmations";
+        if(darkSendPool.isCapableMasterNode == MASTERNODE_INPUT_TOO_NEW) return "masternode input must have at least 15 confirmations";
         if(darkSendPool.isCapableMasterNode == MASTERNODE_IS_CAPABLE) return "successfully started masternode";
         if(darkSendPool.isCapableMasterNode == MASTERNODE_STOPPED) return "masternode is stopped";
         if(darkSendPool.masternodePortOpen == MASTERNODE_PORT_NOT_OPEN) return "inbound port is not open. Please open it and try again. (19999 for testnet and 9999 for mainnet)";
         if(darkSendPool.isCapableMasterNode == MASTERNODE_NOT_CAPABLE) return "not capable masternode";
+        if(darkSendPool.isCapableMasterNode == MASTERNODE_SYNC_IN_PROCESS) return "sync in process. Must wait until client is synced to start.";
 
         CTxIn vin = CTxIn();
         CPubKey pubkey = CScript();
@@ -234,6 +236,26 @@ Value masternode(const Array& params, bool fHelp)
         secret.MakeNewKey(false);
 
         return CBitcoinSecret(secret).ToString();
+    }
+
+    if (strCommand == "winners")
+    {                
+        Object obj;
+
+        for(int nHeight = pindexBest->nHeight-10; nHeight < pindexBest->nHeight+20; nHeight++)
+        {
+            CScript payee;
+            if(masternodePayments.GetBlockPayee(nHeight, payee)){
+                CTxDestination address1;
+                ExtractDestination(payee, address1);
+                CBitcoinAddress address2(address1);
+                obj.push_back(Pair(boost::lexical_cast<std::string>(nHeight),       address2.ToString().c_str()));
+            } else {
+                obj.push_back(Pair(boost::lexical_cast<std::string>(nHeight),       ""));
+            }
+        }
+
+        return obj;
     }
 
     if(strCommand == "enforce")

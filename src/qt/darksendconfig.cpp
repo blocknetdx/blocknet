@@ -17,7 +17,6 @@ DarksendConfig::DarksendConfig(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    connect(ui->buttonNone, SIGNAL(clicked()), this, SLOT(clickNone()));
     connect(ui->buttonBasic, SIGNAL(clicked()), this, SLOT(clickBasic()));
     connect(ui->buttonHigh, SIGNAL(clicked()), this, SLOT(clickHigh()));
     connect(ui->buttonMax, SIGNAL(clicked()), this, SLOT(clickMax()));
@@ -31,16 +30,6 @@ DarksendConfig::~DarksendConfig()
 void DarksendConfig::setModel(WalletModel *model)
 {
     this->model = model;
-}
-
-void DarksendConfig::clickNone()
-{
-    configure(false, 1000, 2);
-
-    QMessageBox::information(this, tr("Darksend Configuration"),
-                         tr("Darksend was successfully disabled. You can change this at any time by opening Darkcoin's configuration screen."));
-
-    close();
 }
 
 void DarksendConfig::clickBasic()

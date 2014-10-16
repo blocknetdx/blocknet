@@ -11,6 +11,71 @@ using namespace std;
 
 BOOST_AUTO_TEST_SUITE(darksend_tests)
 
+BOOST_AUTO_TEST_CASE(darksend_payment_amount)
+{
+    int64 blockValue = 50*COIN;
+
+    int64 val_2p5p = (blockValue / 40);
+    int64 val_5p = (blockValue / 20);
+    int64 val_10p = (blockValue / 10);
+    int64 val_20p = (blockValue / 5);
+
+    BOOST_CHECK(GetMasternodePayment(10000, blockValue) == val_20p);
+    BOOST_CHECK(GetMasternodePayment(158005, blockValue) != val_20p);
+    BOOST_CHECK(GetMasternodePayment(158005, blockValue) == val_20p+val_5p);
+    BOOST_CHECK(GetMasternodePayment(158005+((576*30)*3), blockValue) == val_20p+val_10p+val_5p+val_2p5p);
+    BOOST_CHECK(GetMasternodePayment(158005+((576*30)*8), blockValue) == val_20p+val_20p+val_5p+val_2p5p);
+    BOOST_CHECK(GetMasternodePayment(158005+((576*30)*33), blockValue) == (blockValue / 5)+(blockValue / 5)+(blockValue / 5));
+}
+
+
+BOOST_AUTO_TEST_CASE(darksend_payments)
+{
+    darkSendPool.unitTest = true;
+    darkSendMasterNodes.clear();
+
+    CService addr;
+    std::vector<unsigned char> vchSig;
+    CMasternodePayments mnp;
+
+    uint256 n1; n1.SetHex("5c4573335c56fd5c9e1851bb5c0616de96d35a41b4d2971094f2380e84be8d32");
+    uint256 n2; n2.SetHex("477e4441c36f0707de97f1d4505d093f5d0e63cb29b02c39a53bd9641bd5ac74");
+    uint256 n3; n3.SetHex("2044a4b6796a3508103536075f77dad810a8fd1c6ce943e755c33f2e611f5509");
+
+    CTxIn t1 = CTxIn(n1, 0);
+    CTxIn t2 = CTxIn(n2, 0);
+    CTxIn t3 = CTxIn(n3, 0);
+
+    CMasterNode mn1(addr, t1, CPubKey(), vchSig, 0, CPubKey());
+    darkSendMasterNodes.push_back(mn1);
+    CMasterNode mn2(addr, t2, CPubKey(), vchSig, 0, CPubKey());
+    darkSendMasterNodes.push_back(mn2);
+    CMasterNode mn3(addr, t3, CPubKey(), vchSig, 0, CPubKey());
+    darkSendMasterNodes.push_back(mn3);
+
+    CMasternodePaymentWinner w1; w1.nBlockHeight = 100000; w1.vin = t1;
+    CMasternodePaymentWinner w2; w2.nBlockHeight = 100000; w2.vin = t2;
+    CMasternodePaymentWinner w3; w3.nBlockHeight = 100000; w3.vin = t3;
+
+    CTxIn out;
+    BOOST_CHECK( mnp.GetWinningMasternode(100000, out) == false);
+
+    BOOST_CHECK( mnp.AddWinningMasternode(w1) == true);
+    BOOST_CHECK( mnp.AddWinningMasternode(w1) == false); //shouldn't insert again
+
+    // should be here now
+    BOOST_CHECK( mnp.GetWinningMasternode(100000, out) == true);
+    BOOST_CHECK( mnp.CalculateScore(100000, t1) == mnp.CalculateScore(100000, out)); // should match
+
+    BOOST_CHECK( mnp.GetWinningMasternode(100001, out) == false);
+
+    BOOST_CHECK( mnp.AddWinningMasternode(w2) == true); //wins
+    BOOST_CHECK( mnp.AddWinningMasternode(w2) == false); 
+
+    BOOST_CHECK( mnp.AddWinningMasternode(w3) == false); //loses
+    BOOST_CHECK( mnp.AddWinningMasternode(w3) == false); 
+}
+
 BOOST_AUTO_TEST_CASE(darksend_sign)
 {
 
@@ -25,8 +90,8 @@ BOOST_AUTO_TEST_CASE(darksend_sign)
     BOOST_CHECK(dss.SignMessage("hello", errorMessage, vchSig, key) == true);
     BOOST_CHECK(dss.VerifyMessage(pubkey, vchSig, "hello", errorMessage) == true);
     BOOST_CHECK(dss.VerifyMessage(pubkey, vchSig, "hello2", errorMessage) == false);
-
 }
+
 BOOST_AUTO_TEST_CASE(darksend_vote)
 {
     CPubKey key;
@@ -105,6 +170,50 @@ BOOST_AUTO_TEST_CASE(darksend_denom)
 
     BOOST_CHECK(darkSendPool.GetDenominations(vout1) != darkSendPool.GetDenominations(vout2));
 
+    vout1.clear();
+    vout2.clear();
+
+    vout1.push_back(d1);
+    vout1.push_back(d3);
+    vout1.push_back(d2);
+
+    vout2.push_back(d1);
+    vout2.push_back(d2);
+    vout2.push_back(d3);
+
+    BOOST_CHECK(darkSendPool.GetDenominations(vout1) == darkSendPool.GetDenominations(vout2));
+
+    vout1.clear();
+    vout2.clear();
+
+    vout1.push_back(d1);
+    vout1.push_back(d3);
+    vout1.push_back(d2);
+
+    vout2.push_back(d3);
+    vout2.push_back(d2);
+    vout2.push_back(d1);
+
+    BOOST_CHECK(darkSendPool.GetDenominations(vout1) == darkSendPool.GetDenominations(vout2));
+
+    vout1.clear();
+    vout2.clear();
+
+    vout1.push_back(d1);
+    vout1.push_back(d3);
+    vout1.push_back(d2);
+
+    vout2.push_back(d3);
+    vout2.push_back(d2);
+    vout2.push_back(d2);
+    vout2.push_back(d2);
+    vout2.push_back(d1);
+
+    BOOST_CHECK(darkSendPool.GetDenominations(vout1) == darkSendPool.GetDenominations(vout2));
+
+    vout2.push_back(d4);
+
+    BOOST_CHECK(darkSendPool.GetDenominations(vout1) != darkSendPool.GetDenominations(vout2));
 }
 
 BOOST_AUTO_TEST_CASE(darksend_session)
@@ -112,33 +221,35 @@ BOOST_AUTO_TEST_CASE(darksend_session)
     darkSendPool.unitTest = true;
     
     std::string strReason = "";
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(511*COIN, strReason));
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(131*COIN, strReason) == false);
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(31*COIN, strReason) == false);
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(151*COIN, strReason) == false);
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(751*COIN, strReason) == false);
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(531*COIN, strReason));
-    if(darkSendPool.GetMaxPoolTransactions() >= 3) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(551*COIN, strReason));
-    if(darkSendPool.GetMaxPoolTransactions() >= 4) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(571*COIN, strReason));
-    if(darkSendPool.GetMaxPoolTransactions() >= 5) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(514*COIN, strReason));
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(531*COIN, strReason) == false);
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(511*COIN, CTransaction(), strReason));
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(131*COIN, CTransaction(), strReason) == false);
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(31*COIN, CTransaction(), strReason) == false);
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(151*COIN, CTransaction(), strReason) == false);
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(751*COIN, CTransaction(), strReason) == false);
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(531*COIN, CTransaction(), strReason));
+    if(darkSendPool.GetMaxPoolTransactions() >= 3) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(551*COIN, CTransaction(), strReason));
+    if(darkSendPool.GetMaxPoolTransactions() >= 4) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(571*COIN, CTransaction(), strReason));
+    if(darkSendPool.GetMaxPoolTransactions() >= 5) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(514*COIN, CTransaction(), strReason));
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(531*COIN, CTransaction(), strReason) == false);
 
     darkSendPool.SetNull();
 
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(12*COIN, strReason));
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(131*COIN, strReason) == false);
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(151*COIN, strReason) == false);
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(751*COIN, strReason) == false);
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(34*COIN, strReason));
-    if(darkSendPool.GetMaxPoolTransactions() >= 3) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(22*COIN, strReason));
-    if(darkSendPool.GetMaxPoolTransactions() >= 4) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(32*COIN, strReason));
-    if(darkSendPool.GetMaxPoolTransactions() >= 5) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(44*COIN, strReason));
-    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(33*COIN, strReason) == false);
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(12*COIN, CTransaction(), strReason));
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(131*COIN, CTransaction(), strReason) == false);
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(151*COIN, CTransaction(), strReason) == false);
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(751*COIN, CTransaction(), strReason) == false);
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(34*COIN, CTransaction(), strReason));
+    if(darkSendPool.GetMaxPoolTransactions() >= 3) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(22*COIN, CTransaction(), strReason));
+    if(darkSendPool.GetMaxPoolTransactions() >= 4) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(32*COIN, CTransaction(), strReason));
+    if(darkSendPool.GetMaxPoolTransactions() >= 5) BOOST_CHECK(darkSendPool.IsCompatibleWithSession(44*COIN, CTransaction(), strReason));
+    BOOST_CHECK(darkSendPool.IsCompatibleWithSession(33*COIN, CTransaction(), strReason) == false);
 
 }
 
 BOOST_AUTO_TEST_CASE(darksend_masternode_search_by_vin)
 {
+    darkSendMasterNodes.clear();
+
     uint256 n1 = 10000;
     uint256 n2 = 10001;
     uint256 n3 = 99999;
@@ -200,10 +311,10 @@ BOOST_AUTO_TEST_CASE(darksend_masternode_class)
     mn.UpdateLastSeen();
     mn.Check();
     BOOST_CHECK(mn.enabled == 1); // ok
-    mn.lastTimeSeen -= MASTERNODE_EXPIRATION_MICROSECONDS;
+    mn.lastTimeSeen -= MASTERNODE_EXPIRATION_SECONDS;
     mn.Check();
     BOOST_CHECK(mn.enabled == 2); // hasn't pinged
-    mn.lastTimeSeen -= MASTERNODE_EXPIRATION_MICROSECONDS;
+    mn.lastTimeSeen -= MASTERNODE_EXPIRATION_SECONDS;
     mn.Check();
     BOOST_CHECK(mn.enabled == 4); // expired
 }
