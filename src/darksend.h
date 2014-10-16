@@ -508,6 +508,8 @@ public:
     bool EnableHotColdMasterNode(CTxIn& vin, int64 sigTime, CService& addr);
     // start the masternode and register with the network
     void RegisterAsMasterNode(bool stop);
+    // start a remote masternode
+    bool RegisterAsMasterNodeRemoteOnly(std::string strMasterNodeAddr, std::string strMasterNodePrivKey);
     // get block hash by height
     bool GetBlockHash(uint256& hash, int nBlockHeight);
     // get the last valid block hash for a given modulus

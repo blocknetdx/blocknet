@@ -8,6 +8,7 @@
 #include "init.h"
 #include "bitcoinrpc.h"
 
+#include <fstream>
 using namespace json_spirit;
 using namespace std;
 
@@ -86,10 +87,10 @@ Value masternode(const Array& params, bool fHelp)
         strCommand = params[0].get_str();
 
     if (fHelp  ||
-        (strCommand != "start" && strCommand != "stop" && strCommand != "list" && strCommand != "count"  && strCommand != "enforce"
+        (strCommand != "start" && strCommand != "start-many" && strCommand != "stop" && strCommand != "list" && strCommand != "count"  && strCommand != "enforce"
             && strCommand != "debug" && strCommand != "current" && strCommand != "winners" && strCommand != "genkey" && strCommand != "connect"))
         throw runtime_error(
-            "masternode <start|stop|list|count|debug|current|winners|genkey|enforce> passphrase\n");
+            "masternode <start|start-many|stop|list|count|debug|current|winners|genkey|enforce> passphrase\n");
 
     if (strCommand == "stop")
     {
@@ -192,6 +193,33 @@ Value masternode(const Array& params, bool fHelp)
         if(darkSendPool.isCapableMasterNode == MASTERNODE_SYNC_IN_PROCESS) return "sync in process. Must wait until client is synced to start.";
 
         return "unknown";
+    }
+    
+    if (strCommand == "start-many")
+    {
+        std::ifstream infile("masternode.conf");
+
+        std::string line;
+        int total = 0;
+        int successful = 0;
+        int fail = 0;
+        while (std::getline(infile, line))
+        {
+            std::istringstream iss(line);
+            std::string a, b;
+            if (!(iss >> a >> b)) { break; } // error
+
+            total++;
+            if(darkSendPool.RegisterAsMasterNodeRemoteOnly(a, b)){
+                successful++;
+            } else {
+                fail++;
+            }
+        }
+        
+        printf(" Successfully started %d masternodes, failed to start %d, total %d\n", successful, fail, total);
+        return "";
+
     }
 
     if (strCommand == "debug")

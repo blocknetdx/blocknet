@@ -1032,6 +1032,91 @@ void CDarkSendPool::RegisterAsMasterNode(bool stop)
     RelayDarkSendElectionEntryPing(vinMasterNode, vchMasterNodeSignature, masterNodeSignatureTime, stop);
 }
 
+// 
+// Bootup the masternode, look for a 1000DRK input and register on the network
+// Takes 2 parameters to start a remote masternode
+//
+bool CDarkSendPool::RegisterAsMasterNodeRemoteOnly(std::string strMasterNodeAddr, std::string strMasterNodePrivKey)
+{
+    if(!fMasterNode) return false;
+
+    printf("CDarkSendPool::RegisterAsMasterNodeRemoteOnly() - Address %s MasterNodePrivKey %s\n", strMasterNodeAddr.c_str(), strMasterNodePrivKey.c_str());
+
+    std::string errorMessage;
+
+    CKey key2;
+    CPubKey pubkey2;
+
+    if(!darkSendSigner.SetKey(strMasterNodePrivKey, errorMessage, key2, pubkey2))
+    {
+        printf("     - Invalid masternodeprivkey: '%s'\n", errorMessage.c_str());
+        return false;
+    }
+
+    CService masterNodeSignAddr = CService(strMasterNodeAddr);
+
+    if((fTestNet && masterNodeSignAddr.GetPort() != 19999) || (!fTestNet && masterNodeSignAddr.GetPort() != 9999)) {
+        printf("     - Invalid port");
+        return false;
+    }
+
+    printf("     - Checking inbound connection to '%s'\n", masterNodeSignAddr.ToString().c_str());
+
+    if(!ConnectNode((CAddress)masterNodeSignAddr, masterNodeSignAddr.ToString().c_str())){
+        printf("     - Error connecting to port\n");
+        return false;
+    }
+
+    if(pwalletMain->IsLocked()){
+        printf("     - Wallet is locked\n");
+        return false;
+    }
+
+    CKey SecretKey;
+    CTxIn vinMasterNode;
+    CPubKey pubkeyMasterNode;
+    int masterNodeSignatureTime = 0;
+
+    // Choose coins to use
+    while (GetMasterNodeVin(vinMasterNode, pubkeyMasterNode, SecretKey)) {
+        // don't use a vin that's registered
+        bool found = false;
+        BOOST_FOREACH(CMasterNode& mn, darkSendMasterNodes)
+            if(mn.vin == vinMasterNode)
+                continue;
+
+        if(GetInputAge(vinMasterNode) < MASTERNODE_MIN_CONFIRMATIONS)
+            continue;
+
+        masterNodeSignatureTime = GetTimeMicros();
+
+        std::string vchPubKey(pubkeyMasterNode.begin(), pubkeyMasterNode.end());
+        std::string vchPubKey2(pubkey2.begin(), pubkey2.end());
+        std::string strMessage = masterNodeSignAddr.ToString() + boost::lexical_cast<std::string>(masterNodeSignatureTime) + vchPubKey + vchPubKey2;
+
+        if(!darkSendSigner.SignMessage(strMessage, errorMessage, vchMasterNodeSignature, SecretKey)) {
+            printf("     - Sign message failed");
+            return false;
+        }
+
+        if(!darkSendSigner.VerifyMessage(pubkeyMasterNode, vchMasterNodeSignature, strMessage, errorMessage)) {
+            printf("     - Verify message failed");
+            return false;
+        }
+
+        printf("     - Is capable master node!\n");
+
+        pwalletMain->LockCoin(vinMasterNode.prevout);
+    
+        RelayDarkSendElectionEntry(vinMasterNode, masterNodeSignAddr, vchMasterNodeSignature, masterNodeSignatureTime, pubkeyMasterNode, pubkey2, -1, -1, masterNodeSignatureTime);
+
+        return true;
+    }
+
+    printf("     - No sutable vin found\n");
+    return false;
+}
+
 bool CDarkSendPool::GetBlockHash(uint256& hash, int nBlockHeight)
 {
     if(unitTest){
