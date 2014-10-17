@@ -44,6 +44,8 @@ public:
     CPubKey pubkey2;
     std::vector<unsigned char> sig;
     int64 now;
+    int cacheInputAge;
+    int cacheInputAgeBlock;
     int enabled;
     bool unitTest;
 
@@ -58,6 +60,8 @@ public:
         enabled = 1;
         lastTimeSeen = 0;
         unitTest = false;    
+        cacheInputAge = 0;
+        cacheInputAgeBlock = 0;
     }
 
     uint256 CalculateScore(int mod=1, int64 nBlockHeight=0);
@@ -88,6 +92,18 @@ public:
     bool IsEnabled()
     {
         return enabled == 1;
+    }
+
+    int GetMasternodeInputAge()
+    {
+        if(pindexBest == NULL) return 0;
+
+        if(cacheInputAge == 0){
+            cacheInputAge = GetInputAge(vin);
+            cacheInputAgeBlock = pindexBest->nHeight;
+        }
+
+        return cacheInputAge+(pindexBest->nHeight-cacheInputAgeBlock);
     }
 };
 
@@ -152,7 +168,7 @@ public:
     void Relay(CMasternodePaymentWinner& winner);
     void Sync(CNode* node);
     void CleanPaymentList();
-    int LastPayment(CTxIn& vin);
+    int LastPayment(CMasterNode& mn);
 
     //slow
     bool GetBlockPayee(int nBlockHeight, CScript& payee);

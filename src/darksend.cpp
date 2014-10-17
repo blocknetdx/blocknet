@@ -1427,14 +1427,14 @@ void CMasternodePayments::CleanPaymentList()
     }
 }
 
-int CMasternodePayments::LastPayment(CTxIn& vin)
+int CMasternodePayments::LastPayment(CMasterNode& mn)
 {
     if(pindexBest == NULL) return 0;
 
-    int ret = GetInputAge(vin);
+    int ret = mn.GetMasternodeInputAge();
 
     BOOST_FOREACH(CMasternodePaymentWinner& winner, vWinning){
-        if(winner.vin == vin && pindexBest->nHeight - winner.nBlockHeight < ret)
+        if(winner.vin == mn.vin && pindexBest->nHeight - winner.nBlockHeight < ret)
             ret = pindexBest->nHeight - winner.nBlockHeight;
     }
 
@@ -1450,7 +1450,7 @@ bool CMasternodePayments::ProcessBlock(int nBlockHeight)
     if(!darkSendPool.GetBlockHash(blockHash, nBlockHeight-576)) return false;
 
     BOOST_FOREACH(CMasterNode& mn, darkSendMasterNodes) {
-        if(LastPayment(mn.vin) < darkSendMasterNodes.size()*.9) continue;
+        if(LastPayment(mn) < darkSendMasterNodes.size()*.9) continue;
 
         uint64 score = CalculateScore(blockHash, mn.vin);
         if(score > winner.score){
