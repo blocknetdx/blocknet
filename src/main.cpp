@@ -4317,7 +4317,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         BOOST_FOREACH(CMasterNode& mn, darkSendMasterNodes) {
             //LogPrintf(" -- %s\n", mn.vin.ToString().c_str());
 
-            if(mn.vin == vin) {
+            if(mn.vin.prevout == vin.prevout) {
                 if(!mn.UpdatedWithin(MASTERNODE_MIN_SECONDS)){
                     mn.UpdateLastSeen();
 

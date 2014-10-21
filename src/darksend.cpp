@@ -2111,14 +2111,15 @@ void ThreadCheckDarkSendPool()
         //LogPrintf("ThreadCheckDarkSendPool::check timeout\n");
         darkSendPool.CheckTimeout();
         
-        if(c % 600 == 0){
-            vector<CMasterNode>::iterator it;
-            for(it=darkSendMasterNodes.begin();it<darkSendMasterNodes.end();it++){
+        if(c % 60 == 0){
+            vector<CMasterNode>::iterator it = darkSendMasterNodes.begin();
+            while(it != darkSendMasterNodes.end()){
                 (*it).Check();
-                if((*it).enabled == 4){
-                    if(fDebug) LogPrintf("Removing inactive masternode %s\n", (*it).addr.ToString().c_str());
-                    darkSendMasterNodes.erase(it);
-                    break;
+                if((*it).enabled == 4 || (*it).enabled == 3){
+                    LogPrintf("Removing inactive masternode %s\n", (*it).addr.ToString().c_str());
+                    it = darkSendMasterNodes.erase(it);
+                } else {
+                    ++it;
                 }
             }
 
