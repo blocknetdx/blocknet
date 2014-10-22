@@ -4320,7 +4320,13 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             if(mn.vin.prevout == vin.prevout) {
                 if(!mn.UpdatedWithin(MASTERNODE_MIN_SECONDS)){
                     mn.UpdateLastSeen();
-                    mn.pubkey2 = pubkey2;
+                    
+                    if(mn.now < sigTime){ //take the newest entry
+                        LogPrintf("dsee - Got updated entry for %s\n", addr.ToString().c_str());
+                        mn.pubkey2 = pubkey2;
+                        mn.now = sigTime;
+                        mn.sig = vchSig;
+                    }
 
                     if(pubkey2 == darkSendPool.pubkeyMasterNode2){
                         darkSendPool.EnableHotColdMasterNode(vin, sigTime, addr);
