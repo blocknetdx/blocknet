@@ -1278,7 +1278,7 @@ bool CMasternodePayments::GetBlockPayee(int nBlockHeight, CScript& payee)
                 }
             }
 
-            return true;
+            return false;
         }
     }
 

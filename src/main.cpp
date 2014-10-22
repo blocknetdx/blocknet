@@ -2601,8 +2601,12 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
                     foundPayee = true;
             }
 
-            if(!foundPaymentAmount || !foundPayee ) {
-                LogPrintf("CheckBlock() : Couldn't find masternode payment(%d) or payee(%d). \n", foundPaymentAmount, foundPayee);
+            if(!foundPaymentAmount || !foundPayee) {
+                CTxDestination address1;
+                ExtractDestination(payee, address1);
+                CBitcoinAddress address2(address1);
+
+                LogPrintf("CheckBlock() : Couldn't find masternode payment(%d|%"PRI64u") or payee(%d|%s). \n", foundPaymentAmount, masternodePaymentAmount, foundPayee, address2.ToString().c_str());
                 if(EnforceMasternodePayments) return state.DoS(100, error("CheckBlock() : Couldn't find masternode payment or payee"));
             }
         }
@@ -4320,7 +4324,13 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             if(mn.vin.prevout == vin.prevout) {
                 if(!mn.UpdatedWithin(MASTERNODE_MIN_SECONDS)){
                     mn.UpdateLastSeen();
-                    mn.pubkey2 = pubkey2;
+                    
+                    if(mn.now < sigTime){ //take the newest entry
+                        LogPrintf("dsee - Got updated entry for %s\n", addr.ToString().c_str());
+                        mn.pubkey2 = pubkey2;
+                        mn.now = sigTime;
+                        mn.sig = vchSig;
+                    }
 
                     if(pubkey2 == darkSendPool.pubkeyMasterNode2){
                         darkSendPool.EnableHotColdMasterNode(vin, sigTime, addr);
