@@ -2592,7 +2592,7 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
                 bool foundPayee = false;
 
                 CScript payee;
-                if(!masternodePayments.GetBlockPayee(pindexBest->nHeight+1, payee)){
+                if(!masternodePayments.GetBlockPayee(pindexBest->nHeight+1, payee) || payee == CScript()){
                     foundPayee = true; //doesn't require a specific payee
                 }
 
@@ -2608,7 +2608,7 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
                     ExtractDestination(payee, address1);
                     CBitcoinAddress address2(address1);
 
-                    LogPrintf("CheckBlock() : Couldn't find masternode payment(%d|%"PRI64u") or payee(%d|%s). \n", foundPaymentAmount, masternodePaymentAmount, foundPayee, address2.ToString().c_str());
+                    LogPrintf("CheckBlock() : Couldn't find masternode payment(%d|%"PRI64u") or payee(%d|%s) nHeight %d. \n", foundPaymentAmount, masternodePaymentAmount, foundPayee, address2.ToString().c_str(), pindexBest->nHeight+1);
                     if(EnforceMasternodePayments) return state.DoS(100, error("CheckBlock() : Couldn't find masternode payment or payee"));
                 }
             }
