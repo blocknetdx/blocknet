@@ -30,7 +30,8 @@ std::vector<int64> darkSendDenominations;
 std::vector<CTxIn> vecMasternodeAskedFor;
 /** The current darksends in progress on the network */
 std::vector<CDarksendQueue> vecDarksendQueue;
-// count peers we've requested the list from
+
+
 int RequestedMasterNodeList = 0;
 
 /* *** BEGIN DARKSEND MAGIC - DARKCOIN **********
@@ -1390,8 +1391,12 @@ bool CMasternodePayments::ProcessBlock(int nBlockHeight)
 void CMasternodePayments::Relay(CMasternodePaymentWinner& winner)
 {    
     LOCK(cs_vNodes);
-    BOOST_FOREACH(CNode* pnode, vNodes)
+    BOOST_FOREACH(CNode* pnode, vNodes){
+        if(!pnode->fRelayTxes)
+            continue;
+
         pnode->PushMessage("mnw", winner);
+    }
 }
 
 void CMasternodePayments::Sync(CNode* node)
