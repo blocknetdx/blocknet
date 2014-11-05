@@ -56,6 +56,8 @@ bool fBenchmark = false;
 bool fTxIndex = false;
 unsigned int nCoinCacheSize = 5000;
 
+// keep track of masternode votes I've seen
+map<uint256, int> mapSeenMasternodeVotes;
 
 /** Fees smaller than this (in satoshi) are considered zero fee (for transaction creation) */
 int64 CTransaction::nMinTxFee = 100000;
@@ -4210,11 +4212,18 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         if(pindexBest == NULL) return false;
 
+        uint256 hash = winner.GetHash();
+
+        if(mapSeenMasternodeVotes.count(hash)) {
+            if(fDebug) LogPrintf("mnw - SKIPPED %s Height %d bestHeight %d\n", hash.ToString().c_str(), winner.nBlockHeight, pindexBest->nHeight);
+            return true;
+        } 
+        mapSeenMasternodeVotes.insert(make_pair(hash, 1));
+
         if(winner.nBlockHeight < pindexBest->nHeight - 10 || winner.nBlockHeight > pindexBest->nHeight+20){
             LogPrintf("mnw - winner out of range %s Height %d bestHeight %d\n", winner.vin.ToString().c_str(), winner.nBlockHeight, pindexBest->nHeight);
             return false;
         }
-
 
         LogPrintf("mnw - winning vote  %s Height %d bestHeight %d\n", winner.vin.ToString().c_str(), winner.nBlockHeight, pindexBest->nHeight);
 
@@ -4224,6 +4233,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             return false;
         }
 
+        
         if(masternodePayments.AddWinningMasternode(winner)){
             masternodePayments.Relay(winner);
         }
@@ -4305,11 +4315,6 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             LogPrintf("dsee - pubkey the wrong size\n");
             pfrom->Misbehaving(100);
             return false;  
-        }
-
-        if(!darkSendSigner.IsVinAssociatedWithPubkey(vin, pubkey)) {
-            LogPrintf("dsee - Got mismatched pubkey and vin\n");
-            return false;
         }
 
         std::string errorMessage = "";

@@ -142,6 +142,7 @@ enum
     // Nodes may always request a MSG_FILTERED_BLOCK in a getdata, however,
     // MSG_FILTERED_BLOCK should not appear in any invs except as a part of getdata.
     MSG_FILTERED_BLOCK,
+    MSG_DSEE
 };
 
 #endif // __INCLUDED_PROTOCOL_H__
