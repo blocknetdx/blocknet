@@ -30,6 +30,8 @@ std::vector<int64> darkSendDenominations;
 std::vector<CTxIn> vecMasternodeAskedFor;
 /** The current darksends in progress on the network */
 std::vector<CDarksendQueue> vecDarksendQueue;
+/** Keep track of the used masternodes */
+std::vector<CTxIn> vecMasternodesUsed;
 
 
 int RequestedMasterNodeList = 0;
@@ -1024,7 +1026,11 @@ void CDarkSendPool::RegisterAsMasterNode(bool stop)
             mn.UpdateLastSeen();
         }
     }
-    assert(found);
+    if(!found){
+        LogPrintf("CActiveMasternode::RegisterAsMasterNode() - Darksend Masternode List doesn't include our masternode, Shutting down masternode pinging service! %s\n", vinMasterNode.ToString().c_str());
+        isCapableMasterNode = MASTERNODE_STOPPED;
+        return;
+    }
 
     LogPrintf("CDarkSendPool::RegisterAsMasterNode() - Masternode input = %s\n", vinMasterNode.ToString().c_str());
 
@@ -1538,6 +1544,15 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
             if(dsq.time == 0) continue;
             if(!dsq.GetAddress(addr)) continue;
 
+            //don't reuse masternodes
+            BOOST_FOREACH(CTxIn usedVin, vecMasternodesUsed)
+            {
+                if(dsq.vin == usedVin) {
+                    printf("DoAutomaticDenominating -- Skipping already used masternode - %s\n", dsq.vin.ToString().c_str());
+                    continue;
+                }
+            }
+
             // If we don't match the denominations, we don't want to submit our inputs
             if(dsq.nDenom != GetDenominationsByAmount(nTotalValue)) {
                 if(fDebug) LogPrintf(" dsq.nDenom != GetDenominationsByAmount %"PRI64d" %d \n", dsq.nDenom, GetDenominationsByAmount(nTotalValue));
@@ -1561,6 +1576,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
                         }
                     }
                 
+                    vecMasternodesUsed.push_back(dsq.vin);
                     sessionAmount = nTotalValue;
                     pnode->PushMessage("dsa", nTotalValue, txCollateral);
                     LogPrintf("DoAutomaticDenominating --- connected (from queue), sending dsa for %"PRI64d" - denom %d\n", nTotalValue, GetDenominationsByAmount(nTotalValue));
@@ -1579,6 +1595,10 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
             if(max_value <= 0) return false;
             int i = (rand() % max_value);
 
+            //don't reuse masternodes
+            BOOST_FOREACH(CTxIn usedVin, vecMasternodesUsed)
+                if(darkSendMasterNodes[i].vin == usedVin) return DoAutomaticDenominating();
+
             lastTimeChanged = GetTimeMillis();
             LogPrintf("DoAutomaticDenominating -- attempt %d connection to masternode %s\n", sessionTries, darkSendMasterNodes[i].addr.ToString().c_str());
             if(ConnectNode((CAddress)darkSendMasterNodes[i].addr, NULL, true)){
@@ -1596,6 +1616,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
                         }
                     }
 
+                    vecMasternodesUsed.push_back(darkSendMasterNodes[i].vin);
                     sessionAmount = nTotalValue;
                     pnode->PushMessage("dsa", nTotalValue, txCollateral);
                     LogPrintf("DoAutomaticDenominating --- connected, sending dsa for %"PRI64d" - denom %d\n", nTotalValue, GetDenominationsByAmount(nTotalValue));
@@ -2155,6 +2176,15 @@ void ThreadCheckDarkSendPool()
             }
         }
 
+        if(c % 600 == 0){
+            //if we've used 1/5 of the masternode list, then clear the list.
+            if((int)vecMasternodesUsed.size() > (int)darkSendMasterNodes.size() / 5) 
+                vecMasternodesUsed.clear();
+
+        }
+
+        //clear this every 3 hours
+        if(c % 60*60*3 == 0) vecMasternodeAskedFor.clear();
 
         if(c == MASTERNODE_PING_SECONDS){
             darkSendPool.RegisterAsMasterNode(false);

@@ -4432,28 +4432,31 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         //LogPrintf("Searching existing masternodes : %s - %s\n", addr.ToString().c_str(),  vin.ToString().c_str());
 
         BOOST_FOREACH(CMasterNode& mn, darkSendMasterNodes) {
-
             if(mn.vin == vin) {
-                std::string strMessage = mn.addr.ToString() + boost::lexical_cast<std::string>(sigTime) + boost::lexical_cast<std::string>(stop); 
+                if(mn.now < sigTime){ //take this only if it's newer
+                    mn.now = sigTime;
+                    
+                    std::string strMessage = mn.addr.ToString() + boost::lexical_cast<std::string>(sigTime) + boost::lexical_cast<std::string>(stop); 
 
-                std::string errorMessage = "";
-                if(!darkSendSigner.VerifyMessage(mn.pubkey2, vchSig, strMessage, errorMessage)){
-                    LogPrintf("dseep: Got bad masternode address signature %s \n", vin.ToString().c_str());
-                    //pfrom->Misbehaving(20);
-                    return false;
-                }
+                    std::string errorMessage = "";
+                    if(!darkSendSigner.VerifyMessage(mn.pubkey2, vchSig, strMessage, errorMessage)){
+                        LogPrintf("dseep: Got bad masternode address signature %s \n", vin.ToString().c_str());
+                        //pfrom->Misbehaving(20);
+                        return false;
+                    }
 
-                if(stop) {
-                    if(mn.IsEnabled()){
-                        mn.Disable();
-                        mn.Check();
+                    if(stop) {
+                        if(mn.IsEnabled()){
+                            mn.Disable();
+                            mn.Check();
+                            RelayDarkSendElectionEntryPing(vin, vchSig, sigTime, stop);
+                        }
+                    } else if(!mn.UpdatedWithin(MASTERNODE_MIN_SECONDS)){
+                        mn.UpdateLastSeen();
                         RelayDarkSendElectionEntryPing(vin, vchSig, sigTime, stop);
                     }
-                } else if(!mn.UpdatedWithin(MASTERNODE_MIN_SECONDS)){
-                    mn.UpdateLastSeen();
-                    RelayDarkSendElectionEntryPing(vin, vchSig, sigTime, stop);
+                    return true;
                 }
-                return true;
             }
         }
 
