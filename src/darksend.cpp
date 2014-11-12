@@ -693,7 +693,6 @@ void CDarkSendPool::CheckTimeout(){
 
     /* Check to see if we're ready for submissions from clients */
     if(state == POOL_STATUS_QUEUE && sessionUsers == GetMaxPoolTransactions()) {
-        printf("Broadcasting that I'm ready 2\n");
         CDarksendQueue dsq;
         dsq.nDenom = sessionDenom;
         dsq.vin = activeMasternode.vinMasternode;
@@ -856,7 +855,8 @@ bool CDarkSendPool::IsCollateralValid(const CTransaction& txCollateral){
 // check if we have a valid subscription
 bool CDarkSendPool::CheckSubscription(CTransaction& tx, std::vector<unsigned char>& vchSig, CTransaction& txSupporting)
 {
-
+    return true;
+    
     CWalletTx wtx = CWalletTx(pwalletMain, tx);
 
     //check fees
@@ -1756,7 +1756,6 @@ bool CDarkSendPool::IsCompatibleWithSession(int64 nDenom, CTransaction txCollate
         entries.clear();
 
         if(!unitTest){
-            printf("Broadcasting that I'm ready\n");
             //broadcast that I'm accepting entries, only if it's the first entry though
             CDarksendQueue dsq;
             dsq.nDenom = nDenom;

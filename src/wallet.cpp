@@ -2353,6 +2353,10 @@ void CWallet::GetAllReserveKeys(set<CKeyID>& setAddress)
 
 bool CWallet::GetDarksendSubsciption(CTransaction& tx, std::vector<unsigned char>& vchSig, CTransaction& txSupporting)
 {
+    tx = CTransaction();
+    txSupporting = CTransaction();
+    return true;
+
     {
         LOCK(cs_wallet);
         for (map<uint256, CWalletTx>::const_iterator it = mapWallet.begin(); it != mapWallet.end(); ++it)
@@ -2379,9 +2383,6 @@ bool CWallet::GetDarksendSubsciption(CTransaction& tx, std::vector<unsigned char
 
                 if(missingTx) continue;
                 if(nValueIn-nValueOut < DARKSEND_COLLATERAL) continue;
-
-                printf("fees %"PRI64d"\n", nValueIn-nValueOut);
-                printf("tx %s\n", tx.ToString().c_str());
 
                 tx = (CTransaction)(*pcoin);
                 txSupporting = (CTransaction)wtx;
