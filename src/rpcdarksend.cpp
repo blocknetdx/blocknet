@@ -4,10 +4,14 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "main.h"
+#include "core.h"
 #include "db.h"
 #include "init.h"
+#include "masternode.h"
+#include "activemasternode.h"
 #include "bitcoinrpc.h"
 
+#include <fstream>
 using namespace json_spirit;
 using namespace std;
 
@@ -71,8 +75,8 @@ Value getpoolinfo(const Array& params, bool fHelp)
             "Returns an object containing anonymous pool-related information.");
 
     Object obj;
-    obj.push_back(Pair("connected_to_masternode",        darkSendPool.GetMasterNodeAddr()));
-    obj.push_back(Pair("current_masternode",        darkSendPool.GetCurrentMasterNode()));
+    obj.push_back(Pair("connected_to_masternode",        activeMasternode.masterNodeAddr));
+    obj.push_back(Pair("current_masternode",        GetCurrentMasterNode()));
     obj.push_back(Pair("state",        darkSendPool.GetState()));
     obj.push_back(Pair("entries",      darkSendPool.GetEntriesCount()));
     obj.push_back(Pair("entries_accepted",      darkSendPool.GetCountEntriesAccepted()));
@@ -86,10 +90,10 @@ Value masternode(const Array& params, bool fHelp)
         strCommand = params[0].get_str();
 
     if (fHelp  ||
-        (strCommand != "start" && strCommand != "stop" && strCommand != "list" && strCommand != "count"  && strCommand != "enforce"
+        (strCommand != "start" && strCommand != "start-many" && strCommand != "stop" && strCommand != "list" && strCommand != "count"  && strCommand != "enforce"
             && strCommand != "debug" && strCommand != "current" && strCommand != "winners" && strCommand != "genkey" && strCommand != "connect"))
         throw runtime_error(
-            "masternode <start|stop|list|count|debug|current|winners|genkey|enforce> passphrase\n");
+            "masternode <start|start-many|stop|list|count|debug|current|winners|genkey|enforce> passphrase\n");
 
     if (strCommand == "stop")
     {
@@ -111,11 +115,11 @@ Value masternode(const Array& params, bool fHelp)
             }
         }
 
-        darkSendPool.RegisterAsMasterNode(true);
+        activeMasternode.RegisterAsMasterNode(true);
         pwalletMain->Lock();
         
-        if(darkSendPool.isCapableMasterNode == MASTERNODE_STOPPED) return "successfully stopped masternode";
-        if(darkSendPool.isCapableMasterNode == MASTERNODE_NOT_CAPABLE) return "not capable masternode";
+        if(activeMasternode.isCapableMasterNode == MASTERNODE_STOPPED) return "successfully stopped masternode";
+        if(activeMasternode.isCapableMasterNode == MASTERNODE_NOT_CAPABLE) return "not capable masternode";
         
         return "unknown";
     }
@@ -154,7 +158,7 @@ Value masternode(const Array& params, bool fHelp)
             } else if (strCommand == "activeseconds") {
                 obj.push_back(Pair(mn.addr.ToString().c_str(),       (int64_t)(mn.lastTimeSeen - mn.now)));
             } else if (strCommand == "rank") {
-                obj.push_back(Pair(mn.addr.ToString().c_str(),       (int)(darkSendPool.GetMasternodeRank(mn.vin, 1))));
+                obj.push_back(Pair(mn.addr.ToString().c_str(),       (int)(GetMasternodeRank(mn.vin, 1))));
             }
         }
         return obj;
@@ -181,32 +185,62 @@ Value masternode(const Array& params, bool fHelp)
             }
         }
 
-        darkSendPool.RegisterAsMasterNode(false);
+        activeMasternode.RegisterAsMasterNode(false);
         pwalletMain->Lock();
         
-        if(darkSendPool.isCapableMasterNode == MASTERNODE_INPUT_TOO_NEW) return "masternode input must have at least 15 confirmations";
-        if(darkSendPool.isCapableMasterNode == MASTERNODE_STOPPED) return "masternode is stopped";
-        if(darkSendPool.isCapableMasterNode == MASTERNODE_IS_CAPABLE) return "successfully started masternode";
-        if(darkSendPool.masternodePortOpen == MASTERNODE_PORT_NOT_OPEN) return "inbound port is not open. Please open it and try again. (19999 for testnet and 9999 for mainnet)";
-        if(darkSendPool.isCapableMasterNode == MASTERNODE_NOT_CAPABLE) return "not capable masternode";
-        if(darkSendPool.isCapableMasterNode == MASTERNODE_SYNC_IN_PROCESS) return "sync in process. Must wait until client is synced to start.";
+        if(activeMasternode.isCapableMasterNode == MASTERNODE_REMOTELY_ENABLED) return "masternode started remotely";
+        if(activeMasternode.isCapableMasterNode == MASTERNODE_INPUT_TOO_NEW) return "masternode input must have at least 15 confirmations";
+        if(activeMasternode.isCapableMasterNode == MASTERNODE_STOPPED) return "masternode is stopped";
+        if(activeMasternode.isCapableMasterNode == MASTERNODE_IS_CAPABLE) return "successfully started masternode";
+        if(activeMasternode.masternodePortOpen == MASTERNODE_PORT_NOT_OPEN) return "inbound port is not open. Please open it and try again. (19999 for testnet and 9999 for mainnet)";
+        if(activeMasternode.isCapableMasterNode == MASTERNODE_NOT_CAPABLE) return "not capable masternode";
+        if(activeMasternode.isCapableMasterNode == MASTERNODE_SYNC_IN_PROCESS) return "sync in process. Must wait until client is synced to start.";
 
         return "unknown";
+    }
+    
+    if (strCommand == "start-many")
+    {        
+        boost::filesystem::path pathDebug = GetDataDir() / "masternode.conf";
+        std::ifstream infile(pathDebug.string().c_str());
+
+        std::string line;
+        int total = 0;
+        int successful = 0;
+        int fail = 0;
+        while (std::getline(infile, line))
+        {
+            std::istringstream iss(line);
+            std::string a, b;
+            if (!(iss >> a >> b)) { break; } // error
+
+            total++;
+            if(activeMasternode.RegisterAsMasterNodeRemoteOnly(a, b)){
+                successful++;
+            } else {
+                fail++;
+            }
+        }
+        
+        printf(" Successfully started %d masternodes, failed to start %d, total %d\n", successful, fail, total);
+        return "";
+
     }
 
     if (strCommand == "debug")
     {
-        if(darkSendPool.isCapableMasterNode == MASTERNODE_INPUT_TOO_NEW) return "masternode input must have at least 15 confirmations";
-        if(darkSendPool.isCapableMasterNode == MASTERNODE_IS_CAPABLE) return "successfully started masternode";
-        if(darkSendPool.isCapableMasterNode == MASTERNODE_STOPPED) return "masternode is stopped";
-        if(darkSendPool.masternodePortOpen == MASTERNODE_PORT_NOT_OPEN) return "inbound port is not open. Please open it and try again. (19999 for testnet and 9999 for mainnet)";
-        if(darkSendPool.isCapableMasterNode == MASTERNODE_NOT_CAPABLE) return "not capable masternode";
-        if(darkSendPool.isCapableMasterNode == MASTERNODE_SYNC_IN_PROCESS) return "sync in process. Must wait until client is synced to start.";
+        if(activeMasternode.isCapableMasterNode == MASTERNODE_REMOTELY_ENABLED) return "masternode started remotely";
+        if(activeMasternode.isCapableMasterNode == MASTERNODE_INPUT_TOO_NEW) return "masternode input must have at least 15 confirmations";
+        if(activeMasternode.isCapableMasterNode == MASTERNODE_IS_CAPABLE) return "successfully started masternode";
+        if(activeMasternode.isCapableMasterNode == MASTERNODE_STOPPED) return "masternode is stopped";
+        if(activeMasternode.masternodePortOpen == MASTERNODE_PORT_NOT_OPEN) return "inbound port is not open. Please open it and try again. (19999 for testnet and 9999 for mainnet)";
+        if(activeMasternode.isCapableMasterNode == MASTERNODE_NOT_CAPABLE) return "not capable masternode";
+        if(activeMasternode.isCapableMasterNode == MASTERNODE_SYNC_IN_PROCESS) return "sync in process. Must wait until client is synced to start.";
 
         CTxIn vin = CTxIn();
         CPubKey pubkey = CScript();
         CKey key;
-        bool found = darkSendPool.GetMasterNodeVin(vin, pubkey, key);
+        bool found = activeMasternode.GetMasterNodeVin(vin, pubkey, key);
         if(!found){
             return "Missing masternode input, please look at the documentation for instructions on masternode creation";
         } else {
@@ -222,7 +256,7 @@ Value masternode(const Array& params, bool fHelp)
 
     if (strCommand == "current")
     {
-        int winner = darkSendPool.GetCurrentMasterNode(1);
+        int winner = GetCurrentMasterNode(1);
         if(winner >= 0) {
             return darkSendMasterNodes[winner].addr.ToString().c_str();
         }

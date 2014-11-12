@@ -164,6 +164,10 @@ HEADERS += src/qt/bitcoingui.h \
     src/serialize.h \
     src/main.h \
     src/darksend.h \
+    src/instantx.h \
+    src/core.h \
+    src/masternode.h \
+    src/activemasternode.h \
     src/net.h \
     src/key.h \
     src/db.h \
@@ -262,6 +266,10 @@ SOURCES += src/qt/bitcoin.cpp \
     src/script.cpp \
     src/main.cpp \
     src/darksend.cpp \
+    src/instantx.cpp \
+    src/masternode.cpp \
+    src/activemasternode.cpp \
+    src/core.cpp \
     src/init.cpp \
     src/net.cpp \
     src/bloom.cpp \

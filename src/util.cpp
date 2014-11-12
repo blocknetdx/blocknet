@@ -73,8 +73,10 @@ map<string, vector<string> > mapMultiArgs;
 bool fMasterNode = false;
 string strMasterNodePrivKey = "";
 string strMasterNodeAddr = "";
+int nInstantXDepth = 1;
 int nDarksendRounds = 2;
 int nAnonymizeDarkcoinAmount = 1000;
+int nLiquidityProvider = 0;
 /** Spork enforcement enabled time */
 int64 enforceMasternodePaymentsTime = 4085657524;
 bool fSucessfullyLoaded = false;

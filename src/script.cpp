@@ -13,6 +13,7 @@ using namespace boost;
 #include "bignum.h"
 #include "key.h"
 #include "main.h"
+#include "core.h"
 #include "sync.h"
 #include "util.h"
 

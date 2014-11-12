@@ -5,7 +5,9 @@
 #include "base58.h"
 #include "util.h"
 #include "main.h"
+#include "core.h"
 #include "darksend.h"
+#include "masternode.h"
 
 using namespace std;
 
@@ -148,6 +150,7 @@ BOOST_AUTO_TEST_CASE(darksend_denom)
     CTxOut d2 = CTxOut(); d2.nValue = (100   * COIN)+1;
     CTxOut d3 = CTxOut(); d3.nValue = (10   * COIN)+1;
     CTxOut d4 = CTxOut(); d4.nValue = (1   * COIN)+1;
+    CTxOut d6 = CTxOut(); d6.nValue = 12.3 * COIN; //non-denom
 
     vout1.push_back(d1);
     vout1.push_back(d3);
@@ -170,6 +173,8 @@ BOOST_AUTO_TEST_CASE(darksend_denom)
 
     BOOST_CHECK(darkSendPool.GetDenominations(vout1) != darkSendPool.GetDenominations(vout2));
 
+    // check 2
+
     vout1.clear();
     vout2.clear();
 
@@ -183,6 +188,8 @@ BOOST_AUTO_TEST_CASE(darksend_denom)
 
     BOOST_CHECK(darkSendPool.GetDenominations(vout1) == darkSendPool.GetDenominations(vout2));
 
+    // check 3
+
     vout1.clear();
     vout2.clear();
 
@@ -195,6 +202,8 @@ BOOST_AUTO_TEST_CASE(darksend_denom)
     vout2.push_back(d1);
 
     BOOST_CHECK(darkSendPool.GetDenominations(vout1) == darkSendPool.GetDenominations(vout2));
+
+    // check 4
 
     vout1.clear();
     vout2.clear();
@@ -214,6 +223,38 @@ BOOST_AUTO_TEST_CASE(darksend_denom)
     vout2.push_back(d4);
 
     BOOST_CHECK(darkSendPool.GetDenominations(vout1) != darkSendPool.GetDenominations(vout2));
+
+
+    // check 5
+
+    vout1.clear();
+    vout2.clear();
+
+    vout1.push_back(d1);
+    vout1.push_back(d3);
+    vout1.push_back(d2);
+
+    vout2.push_back(d3);
+    vout2.push_back(d2);
+    vout2.push_back(d2);
+    vout2.push_back(d2);
+    vout2.push_back(d1);
+
+    BOOST_CHECK(darkSendPool.GetDenominations(vout1) == darkSendPool.GetDenominations(vout2));
+
+    vout1.push_back(d6); //add a non-denom, should be different
+
+    BOOST_CHECK(darkSendPool.GetDenominations(vout1) != darkSendPool.GetDenominations(vout2));
+
+    vout2.push_back(d6); //should be the same now
+
+    BOOST_CHECK(darkSendPool.GetDenominations(vout1) == darkSendPool.GetDenominations(vout2));
+
+    vout2.push_back(d6); //multiples shouldn't affect this
+    vout2.push_back(d6); 
+    vout2.push_back(d6); 
+
+    BOOST_CHECK(darkSendPool.GetDenominations(vout1) == darkSendPool.GetDenominations(vout2));
 }
 
 BOOST_AUTO_TEST_CASE(darksend_session)
@@ -266,9 +307,9 @@ BOOST_AUTO_TEST_CASE(darksend_masternode_search_by_vin)
     CMasterNode mn2(addr, testVin2, CPubKey(), vchSig, 0, CPubKey());
     darkSendMasterNodes.push_back(mn2);
 
-    BOOST_CHECK(darkSendPool.GetMasternodeByVin(testVinNotFound) == -1);
-    BOOST_CHECK(darkSendPool.GetMasternodeByVin(testVin1) == 0);
-    BOOST_CHECK(darkSendPool.GetMasternodeByVin(testVin2) == 1);
+    BOOST_CHECK(GetMasternodeByVin(testVinNotFound) == -1);
+    BOOST_CHECK(GetMasternodeByVin(testVin1) == 0);
+    BOOST_CHECK(GetMasternodeByVin(testVin2) == 1);
 }
 
 BOOST_AUTO_TEST_CASE(darksend_add_entry)

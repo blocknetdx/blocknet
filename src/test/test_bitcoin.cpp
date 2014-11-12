@@ -8,7 +8,6 @@
 #include "wallet.h"
 #include "util.h"
 
-CWallet* pwalletMain;
 CClientUIInterface uiInterface;
 
 extern bool fPrintToConsole;

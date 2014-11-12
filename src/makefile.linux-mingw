@@ -70,6 +70,10 @@ OBJS= \
     obj/key.o \
     obj/db.o \
     obj/init.o \
+    obj/core.o \
+    obj/masternode.o \
+    obj/activemasternode.o \
+    obj/instantx.o \
     obj/keystore.o \
     obj/darksend.o \
     obj/main.o \

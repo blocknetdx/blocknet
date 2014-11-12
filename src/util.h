@@ -130,8 +130,10 @@ inline void MilliSleep(int64 n)
 extern std::map<std::string, std::string> mapArgs;
 extern std::map<std::string, std::vector<std::string> > mapMultiArgs;
 extern bool fMasterNode;
+extern int nInstantXDepth;
 extern int nDarksendRounds;
 extern int nAnonymizeDarkcoinAmount;
+extern int nLiquidityProvider;
 extern bool fEnableDarksend;
 extern int64 enforceMasternodePaymentsTime;
 extern std::string strMasterNodeAddr;

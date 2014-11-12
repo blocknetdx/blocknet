@@ -11,6 +11,7 @@
 #include "util.h"
 #include "ui_interface.h"
 #include "checkpointsync.h"
+#include "activemasternode.h"
 
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
@@ -26,7 +27,6 @@
 using namespace std;
 using namespace boost;
 
-CWallet* pwalletMain;
 CClientUIInterface uiInterface;
 
 #ifdef WIN32
@@ -259,6 +259,7 @@ bool AppInit(int argc, char* argv[])
 
 extern void noui_connect();
 int main(int argc, char* argv[])
+
 {
     bool fRet = false;
 
@@ -390,7 +391,12 @@ std::string HelpMessage()
         "  -enabledaemondarksend=<n>      "   + _("Darksend is not usually enabled in daemon mode (0-1, default: 1)") + "\n" +
         "  -darksendrounds=<n>      "   + _("Use N separate masternodes to anonymize funds  (2-8, default: 2)") + "\n" +
         "  -anonymizedarkcoinamount=<n>      "   + _("Keep N darkcoin anonymized (default: 0)") + "\n" +
+        "  -liquidityprovider=<n>      "   + _("Provide liquidity to Darksend by infrequently mixing coins on a continual basis (0-100, default: 0, 1=very frequent, high fees, 100=very infrequent, low fees)") + "\n" +
 
+        "\n" + _("InstantX options:") + "\n" +
+        "  -enableinstantx=<n>      "   + _("Disable instantx, do not show confirmations for locked transactions (bool, default: false)") + "\n" +
+        "  -instantxdepth=<n>      "   + _("Show N confirmations for a successfully locked transaciton (0-9999, default: 1)") + "\n" +
+    
         "\n" + _("Block creation options:") + "\n" +
         "  -blockminsize=<n>      "   + _("Set minimum block size in bytes (default: 0)") + "\n" +
         "  -blockmaxsize=<n>      "   + _("Set maximum block size in bytes (default: 250000)") + "\n" +
@@ -1216,7 +1222,7 @@ bool AppInit2(boost::thread_group& threadGroup)
                 return InitError(_("Invalid masternodeprivkey. Please see documenation."));
             }
 
-            darkSendPool.pubkeyMasterNode2 = pubkey;
+            activeMasternode.pubkeyMasterNode2 = pubkey;
             
         } else {
             return InitError(_("You must specify a masternodeprivkey in the configuration. Please see documentation for help."));
@@ -1229,10 +1235,27 @@ bool AppInit2(boost::thread_group& threadGroup)
     if(nDarksendRounds > 8) nDarksendRounds = 8;
     if(nDarksendRounds < 1) nDarksendRounds = 1;
 
+    nLiquidityProvider = GetArg("-liquidityprovider", 0); //1-100
+    if(nLiquidityProvider != 0) {
+        darkSendPool.SetMinBlockSpacing(std::min(nLiquidityProvider,100)*15);
+        fEnableDarksend = true;
+        nDarksendRounds = 99999;
+    }
+
     nAnonymizeDarkcoinAmount = GetArg("-anonymizedarkcoinamount", 0);
     if(nAnonymizeDarkcoinAmount > 999999) nAnonymizeDarkcoinAmount = 999999;
     if(nAnonymizeDarkcoinAmount < 2) nAnonymizeDarkcoinAmount = 2;
 
+    bool fEnableInstantX = GetBoolArg("-enableinstantx", true);
+    if(fEnableInstantX){
+        nInstantXDepth = GetArg("-instantxdepth", 1);
+        if(nInstantXDepth > 60) nInstantXDepth = 60;
+        if(nInstantXDepth < 0) nAnonymizeDarkcoinAmount = 0;
+    } else {
+        nInstantXDepth = 0;
+    }
+
+    LogPrintf("nInstantXDepth %d\n", nInstantXDepth);
     LogPrintf("Darksend rounds %d\n", nDarksendRounds);
     LogPrintf("Anonymize Darkcoin Amount %d\n", nAnonymizeDarkcoinAmount);
 

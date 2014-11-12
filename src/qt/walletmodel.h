@@ -29,6 +29,7 @@ public:
     QString label;
     qint64 amount;
     std::string inputType;
+    bool useInstantX;
 };
 
 /** Interface to Bitcoin wallet from Qt view code. */
@@ -145,6 +146,7 @@ private:
     qint64 cachedImmatureBalance;
     qint64 cachedAnonymizedBalance;
     qint64 cachedNumTransactions;
+    int cachedTxLocks;
     int cachedDarksendRounds;
     EncryptionStatus cachedEncryptionStatus;
     int cachedNumBlocks;

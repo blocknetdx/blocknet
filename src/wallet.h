@@ -10,20 +10,24 @@
 
 #include <stdlib.h>
 
-#include "main.h"
 #include "darksend.h"
+#include "main.h"
+#include "core.h"
 #include "key.h"
 #include "keystore.h"
 #include "script.h"
 #include "ui_interface.h"
 #include "util.h"
 #include "walletdb.h"
+#include "instantx.h"
 
 class CAccountingEntry;
 class CWalletTx;
 class CReserveKey;
 class COutput;
 class CCoinControl;
+
+extern CWallet* pwalletMain;
 
 /** (client) version numbers for particular wallet features */
 enum WalletFeature
@@ -93,6 +97,7 @@ public:
     bool SelectCoinsMasternode(CTxIn& vin, int64& nValueRet, CScript& pubScript) const;
     bool HasDarksendFeeInputs() const;
 
+    bool GetDarksendSubsciption(CTransaction& tx, std::vector<unsigned char>& vchSig, CTransaction& txSupporting);
     bool SelectCoinsCollateral(std::vector<CTxIn>& setCoinsRet, int64& nValueRet) const ;
     bool SelectCoinsWithoutDenomination(int64 nTargetValue, std::set<std::pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64& nValueRet) const;
     
@@ -203,7 +208,7 @@ public:
                            CWalletTx& wtxNew, CReserveKey& reservekey, int64& nFeeRet, std::string& strFailReason, const CCoinControl *coinControl=NULL, AvailableCoinsType coin_type=ALL_COINS);
     bool CreateTransaction(CScript scriptPubKey, int64 nValue,
                            CWalletTx& wtxNew, CReserveKey& reservekey, int64& nFeeRet, std::string& strFailReason, const CCoinControl *coinControl=NULL);
-    bool CommitTransaction(CWalletTx& wtxNew, CReserveKey& reservekey);
+    bool CommitTransaction(CWalletTx& wtxNew, CReserveKey& reservekey, std::string strCommand="tx");
     std::string SendMoney(CScript scriptPubKey, int64 nValue, CWalletTx& wtxNew, bool fAskFee=false, AvailableCoinsType coin_type=ALL_COINS);
     std::string SendMoneyToDestination(const CTxDestination &address, int64 nValue, CWalletTx& wtxNew, bool fAskFee=false, AvailableCoinsType coin_type=ALL_COINS);
     std::string PrepareDarksendDenominate(int minRounds, int64 maxAmount);
@@ -313,6 +318,7 @@ public:
     bool DelAddressBookName(const CTxDestination& address);
 
     void UpdatedTransaction(const uint256 &hashTx);
+    void UpdatedConfirmations();
 
     void PrintWallet(const CBlock& block);
 
@@ -353,6 +359,9 @@ public:
      * @note called with lock cs_wallet held.
      */
     boost::signals2::signal<void (CWallet *wallet, const uint256 &hashTx, ChangeType status)> NotifyTransactionChanged;
+
+    // called when new locks are received
+    boost::signals2::signal<void (CWallet *wallet)> NotifyUpdateConfirmations;
 };
 
 /** A key allocated from the key pool. */
@@ -703,6 +712,7 @@ public:
 
     bool IsConfirmed() const
     {
+
         // Quick answer in most cases
         if (!IsFinal())
             return false;
@@ -751,7 +761,7 @@ public:
 
     void AddSupportingTransactions();
     bool AcceptWalletTransaction(bool fCheckInputs=true);
-    void RelayWalletTransaction();
+    void RelayWalletTransaction(std::string strCommand="tx");
 };
 
 

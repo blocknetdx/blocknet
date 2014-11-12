@@ -8,6 +8,7 @@
 #include "optionsmodel.h"
 #include "guiutil.h"
 #include "coincontrol.h"
+#include "darksend.h"
 
 #include <QApplication>
 #include <QCheckBox>
@@ -720,7 +721,7 @@ void CoinControlDialog::updateView()
             
             // ds+ rounds
             CTxIn vin = CTxIn(out.tx->GetHash(), out.i);
-            int rounds = darkSendPool.GetInputDarksendRounds(vin);
+            int rounds = GetInputDarksendRounds(vin);
 
             if(rounds >= 0) itemOutput->setText(COLUMN_DARKSEND_ROUNDS, strPad(QString::number(rounds), 15, " "));
             else itemOutput->setText(COLUMN_DARKSEND_ROUNDS, strPad(QString("n/a"), 15, " "));

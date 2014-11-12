@@ -121,6 +121,7 @@ void SendCoinsDialog::on_sendButton_clicked()
     if(!model)
         return;
 
+
     for(int i = 0; i < ui->entries->count(); ++i)
     {
         SendCoinsEntry *entry = qobject_cast<SendCoinsEntry*>(ui->entries->itemAt(i)->widget());
@@ -156,6 +157,8 @@ void SendCoinsDialog::on_sendButton_clicked()
         funds = "Using <b>ANY AVAILABLE Funds</b>";
     }
 
+    recipients[0].useInstantX = false;
+    
     // Format confirmation message
     QStringList formatted;
     foreach(const SendCoinsRecipient &rcp, recipients)
