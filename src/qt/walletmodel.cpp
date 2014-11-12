@@ -8,6 +8,7 @@
 #include "wallet.h"
 #include "walletdb.h" // for BackupWallet
 #include "base58.h"
+#include "instantx.h"
 
 #include <QSet>
 #include <QTimer>
@@ -95,6 +96,7 @@ void WalletModel::pollBalanceChanged()
         // Balance and number of transactions might have changed
         cachedNumBlocks = nBestHeight;
         cachedDarksendRounds = nDarksendRounds;
+        cachedTxLocks = 0;
         checkBalanceChanged();
     }
 }
@@ -231,7 +233,9 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
         {
             return Aborted;
         }
-        if(!wallet->CommitTransaction(wtx, keyChange))
+
+        std::string strCommand = "tx";
+        if(!wallet->CommitTransaction(wtx, keyChange, strCommand))
         {
             return TransactionCommitFailed;
         }
@@ -346,6 +350,13 @@ static void NotifyKeyStoreStatusChanged(WalletModel *walletmodel, CCryptoKeyStor
 {
     LogPrintf("NotifyKeyStoreStatusChanged\n");
     QMetaObject::invokeMethod(walletmodel, "updateStatus", Qt::QueuedConnection);
+
+}
+
+static void NotifyUpdateConfirmations(WalletModel *walletmodel)
+{
+    LogPrintf("NotifyUpdateConfirmations\n");
+    QMetaObject::invokeMethod(walletmodel, "updateConfirmations", Qt::QueuedConnection);
 }
 
 static void NotifyAddressBookChanged(WalletModel *walletmodel, CWallet *wallet, const CTxDestination &address, const std::string &label, bool isMine, ChangeType status)
@@ -370,6 +381,7 @@ void WalletModel::subscribeToCoreSignals()
 {
     // Connect signals to wallet
     wallet->NotifyStatusChanged.connect(boost::bind(&NotifyKeyStoreStatusChanged, this, _1));
+    wallet->NotifyUpdateConfirmations.connect(boost::bind(&NotifyUpdateConfirmations, this));
     wallet->NotifyAddressBookChanged.connect(boost::bind(NotifyAddressBookChanged, this, _1, _2, _3, _4, _5));
     wallet->NotifyTransactionChanged.connect(boost::bind(NotifyTransactionChanged, this, _1, _2, _3));
 }
@@ -378,6 +390,7 @@ void WalletModel::unsubscribeFromCoreSignals()
 {
     // Disconnect signals from wallet
     wallet->NotifyStatusChanged.disconnect(boost::bind(&NotifyKeyStoreStatusChanged, this, _1));
+    wallet->NotifyUpdateConfirmations.disconnect(boost::bind(&NotifyUpdateConfirmations, this));
     wallet->NotifyAddressBookChanged.disconnect(boost::bind(NotifyAddressBookChanged, this, _1, _2, _3, _4, _5));
     wallet->NotifyTransactionChanged.disconnect(boost::bind(NotifyTransactionChanged, this, _1, _2, _3));
 }

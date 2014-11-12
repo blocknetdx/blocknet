@@ -6,164 +6,47 @@
 #ifndef DARKSEND_H
 #define DARKSEND_H
 
+#include "core.h"
+#include "masternode.h"
 #include "main.h"
 
 class CTxIn;
 class CDarkSendPool;
 class CDarkSendSigner;
-class CMasterNode;
 class CMasterNodeVote;
 class CBitcoinAddress;
 class CDarksendQueue;
-class CMasternodePayments;
+
+#define POOL_MAX_TRANSACTIONS                  3 // wait for X transactions to merge and publish
+#define POOL_STATUS_UNKNOWN                    0 // waiting for update
+#define POOL_STATUS_IDLE                       1 // waiting for update
+#define POOL_STATUS_QUEUE                      2 // waiting in a queue
+#define POOL_STATUS_ACCEPTING_ENTRIES          3 // accepting entries
+#define POOL_STATUS_FINALIZE_TRANSACTION       4 // master node will broadcast what it accepted
+#define POOL_STATUS_SIGNING                    5 // check inputs/outputs, sign final tx
+#define POOL_STATUS_TRANSMISSION               6 // transmit transaction
+#define POOL_STATUS_ERROR                      7 // error
+#define POOL_STATUS_SUCCESS                    8 // success
+
+// status update message constants
+#define MASTERNODE_ACCEPTED                    1
+#define MASTERNODE_REJECTED                    0
+#define MASTERNODE_RESET                       -1
 
 extern CDarkSendPool darkSendPool;
 extern CDarkSendSigner darkSendSigner;
-extern CMasternodePayments masternodePayments;
-extern std::vector<CMasterNode> darkSendMasterNodes;
 extern std::vector<int64> darkSendDenominations;
-extern std::string strMasterNodePrivKey;
 extern std::vector<CDarksendQueue> vecDarksendQueue;
-extern std::vector<CTxIn> vecMasternodeAskedFor;
+extern std::string strMasterNodePrivKey;
 
 static const int64 DARKSEND_COLLATERAL = (0.1*COIN);
 static const int64 DARKSEND_FEE = 0.0125*COIN;
 
+//specific messages for the Darksend protocol
+void ProcessMessageDarksend(CNode* pfrom, std::string& strCommand, CDataStream& vRecv);
 
-// 
-// The Masternode Class. For managing the darksend process. It contains the input of the 1000DRK, signature to prove
-// it's the one who own that ip address and code for calculating the payment election.
-//  
-class CMasterNode
-{
-public:
-    CService addr;
-    CTxIn vin;
-    int64 lastTimeSeen;
-    CPubKey pubkey;
-    CPubKey pubkey2;
-    std::vector<unsigned char> sig;
-    int64 now;
-    int enabled;
-    bool unitTest;
-
-    CMasterNode(CService newAddr, CTxIn newVin, CPubKey newPubkey, std::vector<unsigned char> newSig, int64 newNow, CPubKey newPubkey2)
-    {
-        addr = newAddr;
-        vin = newVin;
-        pubkey = newPubkey;
-        pubkey2 = newPubkey2;
-        sig = newSig;
-        now = newNow;
-        enabled = 1;
-        lastTimeSeen = 0;
-        unitTest = false;    
-    }
-
-    uint256 CalculateScore(int mod=1, int64 nBlockHeight=0);
-
-    void UpdateLastSeen(int64 override=0)
-    {
-        if(override == 0){
-            lastTimeSeen = GetAdjustedTime();
-        } else {
-            lastTimeSeen = override;
-        }
-    }
-
-    void Check();
-
-    bool UpdatedWithin(int seconds)
-    {
-        //LogPrintf("UpdatedWithin %"PRI64u", %"PRI64u" --  %d \n", GetTimeMicros() , lastTimeSeen, (GetTimeMicros() - lastTimeSeen) < seconds);
-
-        return (GetAdjustedTime() - lastTimeSeen) < seconds;
-    }
-
-    void Disable()
-    {
-        lastTimeSeen = 0;
-    }
-
-    bool IsEnabled()
-    {
-        return enabled == 1;
-    }
-};
-
-// for storing the winning payments
-class CMasternodePaymentWinner
-{
-public:
-    int nBlockHeight;
-    CTxIn vin;
-    std::vector<unsigned char> vchSig;
-    uint64 score;
-
-    CMasternodePaymentWinner() {
-        nBlockHeight = 0;
-        score = 0;
-        vin = CTxIn();
-    }
-
-    uint256 GetHash(){
-        uint256 n2 = Hash9(BEGIN(nBlockHeight), END(nBlockHeight));
-        uint256 n3 = vin.prevout.hash > n2 ? (vin.prevout.hash - n2) : (n2 - vin.prevout.hash);
-
-        return n3;
-    }
-
-    IMPLEMENT_SERIALIZE(
-        READWRITE(nBlockHeight);
-        READWRITE(score);
-        READWRITE(vin);
-        READWRITE(vchSig);
-    )
-};
-
-//
-// Masternode Payments Class 
-// Keeps track of who should get paid for which blocks
-//
-
-
-class CMasternodePayments
-{
-private:
-    std::vector<CMasternodePaymentWinner> vWinning;
-    int nSyncedFromPeer;
-    std::string strMasterPrivKey;
-    std::string strTestPubKey;
-    std::string strMainPubKey;
-
-public:
-
-    CMasternodePayments() {
-        strMainPubKey = "04549ac134f694c0243f503e8c8a9a986f5de6610049c40b07816809b0d1d06a21b07be27b9bb555931773f62ba6cf35a25fd52f694d4e1106ccd237a7bb899fdd";
-        strTestPubKey = "046f78dcf911fbd61910136f7f0f8d90578f68d0b3ac973b5040fb7afb501b5939f39b108b0569dca71488f5bbf498d92e4d1194f6f941307ffd95f75e76869f0e";
-    }
-
-    bool SetPrivKey(std::string strPrivKey);
-    bool CheckSignature(CMasternodePaymentWinner& winner);
-    bool Sign(CMasternodePaymentWinner& winner);
-    
-    // Deterministically calculate a given "score" for a masternode depending on how close it's hash is 
-    // to the blockHeight. The further away they are the better, the furthest will win the election 
-    // and get paid this block
-    // 
-
-    uint64 CalculateScore(uint256 blockHash, CTxIn& vin);
-    bool GetWinningMasternode(int nBlockHeight, CTxIn& vinOut);
-    bool AddWinningMasternode(CMasternodePaymentWinner& winner);
-    bool ProcessBlock(int nBlockHeight);
-    void Relay(CMasternodePaymentWinner& winner);
-    void Sync(CNode* node);
-    void CleanPaymentList();
-    int LastPayment(CTxIn& vin);
-
-    //slow
-    bool GetBlockPayee(int nBlockHeight, CScript& payee);
-};
+// get the darksend chain depth for a given input
+int GetInputDarksendRounds(CTxIn in, int rounds=0);
 
 
 // An input in the darksend pool
@@ -269,7 +152,7 @@ public:
         READWRITE(vchSig);
     )
 
-    bool GetAddress(CService &addr)
+    int GetAddress(CService &addr)
     {
         BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
             if(mn.vin == vin){
@@ -304,6 +187,10 @@ public:
     bool VerifyMessage(CPubKey pubkey, std::vector<unsigned char>& vchSig, std::string strMessage, std::string& errorMessage);
 };
 
+class CDarksendSession
+{
+
+};
 
 //
 // Used to keep track of current status of darksend pool
@@ -311,7 +198,7 @@ public:
 class CDarkSendPool
 {
 public:
-    static const int MIN_PEER_PROTO_VERSION = 70043;
+    static const int MIN_PEER_PROTO_VERSION = 70045;
 
     // clients entries
     std::vector<CDarkSendEntry> myEntries;
@@ -323,7 +210,7 @@ public:
     int64 lastTimeChanged;
     int64 lastAutoDenomination;
 
-    unsigned int state;
+    unsigned int state; 
     unsigned int entriesCount;
     unsigned int lastEntryAccepted;
     unsigned int countEntriesAccepted;
@@ -333,38 +220,30 @@ public:
 
     std::vector<CTxIn> lockedCoins;
     
-    CTxIn vinMasterNode;
-    CPubKey pubkeyMasterNode;
-    CPubKey pubkeyMasterNode2;
-
-    std::string strMasterNodeSignMessage;
-    std::vector<unsigned char> vchMasterNodeSignature;
-     
-    int isCapableMasterNode;
     uint256 masterNodeBlockHash;
-    std::string masterNodeAddr;
-    CService masterNodeSignAddr;
-    int64 masterNodeSignatureTime;
-    int masternodePortOpen;
-
+     
     std::string lastMessage;
     bool completedTransaction;
     bool unitTest;
     CService submittedToMasternode;
 
     int sessionID;
-    int64 sessionAmount; //Users must submit an amount compatible with this amount
+    int sessionDenom; //Users must submit an denom matching this
     int sessionUsers; //N Users have said they'll join
     bool sessionFoundMasternode; //If we've found a compatible masternode
     int sessionTries;
+    int64 sessionTotalValue; //used for autoDenom
     std::vector<CTransaction> vecSessionCollateral;
 
     int lastSplitUpBlock;
     int splitUpInARow; // how many splits we've done since a success?
     int cachedLastSuccess;
     int cachedNumBlocks; //used for the overview screen
+    int minBlockSpacing; //required blocks between mixes
+    CTransaction txCollateral;
 
-    CTransaction txCollateral; //collateral tx used during process
+    //incremented whenever a DSQ comes through
+    int64 nDsqCount;
 
     CDarkSendPool()
     {
@@ -378,17 +257,21 @@ public:
             strAddress = "mxE2Rp3oYpSEFdsN5TdHWhZvEHm3PJQQVm";
         }
         
-        isCapableMasterNode = MASTERNODE_NOT_PROCESSED;
-        masternodePortOpen = 0;
         lastSplitUpBlock = 0;
         cachedLastSuccess = 0;
         cachedNumBlocks = 0;
         unitTest = false;
         splitUpInARow = 0;
         txCollateral = CTransaction();
+        minBlockSpacing = 1;
+        nDsqCount = 0;
 
         SetCollateralAddress(strAddress);
         SetNull();
+    }
+
+    void SetMinBlockSpacing(int minBlockSpacingIn){
+        minBlockSpacing = minBlockSpacingIn;
     }
 
     bool SetCollateralAddress(std::string strAddress);
@@ -430,11 +313,6 @@ public:
         return myEntries.size();
     }
 
-    std::string GetMasterNodeAddr()
-    {
-        return masterNodeAddr;
-    }
-
     void UpdateState(unsigned int newState)
     {
         if (fMasterNode && (newState == POOL_STATUS_ERROR || newState == POOL_STATUS_SUCCESS)){
@@ -466,7 +344,6 @@ public:
         return sessionUsers >= GetMaxPoolTransactions();
     }
 
-
     // Are these outputs compatible with other client in the pool?
     bool IsCompatibleWithEntries(std::vector<CTxOut> vout);
     // Is this amount compatible with other client in the pool?
@@ -475,17 +352,13 @@ public:
     // Passively run Darksend in the background according to the configuration in settings (only for QT)
     bool DoAutomaticDenominating(bool fDryRun=false, bool ready=false);
 
-    // Get the current winner for this block
-    int GetCurrentMasterNode(int mod=1, int64 nBlockHeight=0);
-
-    int GetMasternodeByVin(CTxIn& vin);
-    int GetMasternodeRank(CTxIn& vin, int mod);
-    int GetMasternodeByRank(int findRank);
 
     // check for process in Darksend
     void Check();
     // charge fees to bad actors
     void ChargeFees();
+    // rarely charge fees to pay miners
+    void ChargeRandomFees();
     void CheckTimeout();
     // check to make sure a signature matches an input in the pool
     bool SignatureValid(const CScript& newSig, const CTxIn& newVin);
@@ -498,23 +371,13 @@ public:
     // are all inputs signed?
     bool SignaturesComplete();
     // as a client, send a transaction to a masternode to start the denomination process
-    void SendDarksendDenominate(std::vector<CTxIn>& vin, std::vector<CTxOut>& vout, int64& fee, int64 amount);
+    void SendDarksendDenominate(std::vector<CTxIn>& vin, std::vector<CTxOut>& vout, int64 amount);
     // get masternode updates about the progress of darksend
     bool StatusUpdate(int newState, int newEntriesCount, int newAccepted, std::string& error, int newSessionID=0);
 
     // as a client, check and sign the final transaction
     bool SignFinalTransaction(CTransaction& finalTransactionNew, CNode* node);
 
-    // close old masternode connections
-    void ProcessMasternodeConnections();
-    bool ConnectToBestMasterNode(int depth=0);
-
-    // Get compatible 1000DRK vin to start a masternode
-    bool GetMasterNodeVin(CTxIn& vin, CPubKey& pubkey, CKey& secretKey);
-    // enable hot wallet mode (run a masternode with no funds)
-    bool EnableHotColdMasterNode(CTxIn& vin, int64 sigTime, CService& addr);
-    // start the masternode and register with the network
-    void RegisterAsMasterNode(bool stop);
     // get block hash by height
     bool GetBlockHash(uint256& hash, int nBlockHeight);
     // get the last valid block hash for a given modulus
@@ -523,8 +386,8 @@ public:
     void NewBlock();
     void CompletedTransaction(bool error, std::string lastMessageNew);
     void ClearLastMessage();
-    // get the darksend chain depth for a given input
-    int GetInputDarksendRounds(CTxIn in, int rounds=0);
+    // used for liquidity providers
+    bool SendRandomPaymentToSelf();
     // split up large inputs or make fee sized inputs
     bool SplitUpMoney(bool justCollateral=false);
     // get the denominations for a list of outputs (returns a bitshifted integer)
@@ -532,6 +395,7 @@ public:
     // get the denominations for a specific amount of darkcoin. 
     int GetDenominationsByAmount(int64 nAmount);
 };
+
 
 void ConnectToDarkSendMasterNodeWinner();
 

@@ -7,6 +7,7 @@
 #include "net.h"
 #include "init.h"
 #include "key.h"
+#include "core.h"
 #include "addrman.h"
 #include "ui_interface.h"
 #include "script.h"
@@ -1911,6 +1912,23 @@ void RelayTransaction(const CTransaction& tx, const uint256& hash, const CDataSt
     }
 }
 
+
+void RelayTransactionLockReq(const CTransaction& tx, const uint256& hash)
+{
+    CInv inv(MSG_TXLOCK_REQUEST, tx.GetHash());
+
+    //broadcast the new lock
+    LOCK(cs_vNodes);
+    BOOST_FOREACH(CNode* pnode, vNodes)
+    {
+        if(!pnode->fRelayTxes)
+            continue;
+
+        pnode->PushMessage("txlreq", tx, pindexBest->nHeight-10);
+    }
+
+}
+
 void RelayDarkSendFinalTransaction(const int sessionID, const CTransaction& txNew)
 {
     LOCK(cs_vNodes);
@@ -1946,9 +1964,8 @@ void RelayDarkSendElectionEntry(const CTxIn vin, const CService addr, const std:
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
-        if(!pnode->fRelayTxes)
-            continue;
-        
+        if(!pnode->fRelayTxes) continue;
+
         pnode->PushMessage("dsee", vin, addr, vchSig, nNow, pubkey, pubkey2, count, current, lastUpdated);
     }
 }
@@ -1958,20 +1975,25 @@ void RelayDarkSendElectionEntryPing(const CTxIn vin, const std::vector<unsigned 
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
-        if(!pnode->fRelayTxes)
-            continue;
-
+        if(!pnode->fRelayTxes) continue;
+        
         pnode->PushMessage("dseep", vin, vchSig, nNow, stop);
     }
 }
-
 
 void RelayDarkSendCompletedTransaction(const int sessionID, const bool error, const std::string errorMessage)
 {
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
-
         pnode->PushMessage("dsc", sessionID, error, errorMessage);
+    }
+}
+
+void RelayDarkSendTransaction(const CTransaction txNew, const CTxIn vin, const std::vector<unsigned char> vchSig, const int64 sigTime){
+    LOCK(cs_vNodes);
+    BOOST_FOREACH(CNode* pnode, vNodes) {
+        if(!pnode->fRelayTxes) continue;
+        pnode->PushMessage("dstx", txNew, vin, vchSig, sigTime);
     }
 }

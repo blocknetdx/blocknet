@@ -10,6 +10,7 @@
 #include "db.h"
 #include "init.h"
 #include "main.h"
+#include "core.h"
 #include "net.h"
 #include "wallet.h"
 

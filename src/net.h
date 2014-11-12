@@ -22,6 +22,7 @@
 #include "hash.h"
 #include "key.h"
 #include "bloom.h"
+#include "core.h"
 
 class CNode;
 class CBlockIndex;
@@ -669,6 +670,7 @@ class CTxOut;
 
 void RelayTransaction(const CTransaction& tx, const uint256& hash);
 void RelayTransaction(const CTransaction& tx, const uint256& hash, const CDataStream& ss);
+void RelayTransactionLockReq(const CTransaction& tx, const uint256& hash);
 void RelayDarkSendFinalTransaction(const int sessionID, const CTransaction& txNew);
 void RelayDarkSendIn(const std::vector<CTxIn>& in, const int64& nAmount, const CTransaction& txCollateral, const std::vector<CTxOut>& out);
 void RelayDarkSendStatus(const int sessionID, const int newState, const int newEntriesCount, const int newAccepted, const std::string error="");
@@ -676,5 +678,6 @@ void RelayDarkSendElectionEntry(const CTxIn vin, const CService addr, const std:
 void RelayDarkSendElectionEntryPing(const CTxIn vin, const std::vector<unsigned char> vchSig, const int64 nNow, const bool stop);
 void RelayDarkSendCompletedTransaction(const int sessionID, const bool error, const std::string errorMessage);
 void RelayDarkSendMasterNodeContestant();
+void RelayDarkSendTransaction(const CTransaction txNew, const CTxIn vin, const std::vector<unsigned char> vchSig, const int64 sigTime);
 
 #endif

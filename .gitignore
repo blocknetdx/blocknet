@@ -2,6 +2,7 @@ src/*.exe
 src/darkcoin
 src/darkcoind
 src/test_darkcoin
+.settings
 .*.swp
 *.*~*
 *.bak
