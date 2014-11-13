@@ -29,7 +29,7 @@ std::vector<CDarksendQueue> vecDarksendQueue;
 /** Keep track of the used masternodes */
 std::vector<CTxIn> vecMasternodesUsed;
 // count peers we've requested the list from
-int RequestedMasterNodeList = 0;
+int RequestedMasterNodeList = 0; 
 
 /* *** BEGIN DARKSEND MAGIC - DARKCOIN **********
     Copyright 2014, Darkcoin Developers 
@@ -151,18 +151,18 @@ void ProcessMessageDarksend(CNode* pfrom, std::string& strCommand, CDataStream& 
 
             darkSendPool.DoAutomaticDenominating(false, true);
         } else {
+            BOOST_FOREACH(CDarksendQueue q, vecDarksendQueue){
+                if(q.vin == dsq.vin) return;
+            }
+            
             //don't allow a few nodes to dominate the queuing process
             darkSendPool.nDsqCount++;
             if(darkSendMasterNodes[mn].nLastDsq + (int)darkSendMasterNodes.size()/5 > darkSendPool.nDsqCount){
-                printf("dsq -- masternode sending too many dsq messages. %s \n", darkSendMasterNodes[mn].addr.ToString().c_str());
+                LogPrintf("dsq -- masternode sending too many dsq messages. %s \n", darkSendMasterNodes[mn].addr.ToString().c_str());
                 return;
             }
             darkSendMasterNodes[mn].nLastDsq = darkSendPool.nDsqCount; 
             darkSendMasterNodes[mn].allowFreeTx = true;
-
-            BOOST_FOREACH(CDarksendQueue q, vecDarksendQueue){
-                if(q.vin == dsq.vin) return;
-            }
 
             if (fDebug)  LogPrintf("new darksend queue object - %s\n", addr.ToString().c_str());
             vecDarksendQueue.push_back(dsq);
@@ -961,6 +961,9 @@ void CDarkSendPool::SendDarksendDenominate(std::vector<CTxIn>& vin, std::vector<
     BOOST_FOREACH(CTxIn in, vin)
         lockedCoins.push_back(in);
 
+    BOOST_FOREACH(CTxOut o, vout)
+        LogPrintf(" vout - %s\n", o.ToString().c_str());
+
 
     // we should already be connected to a masternode
     if(!sessionFoundMasternode){
@@ -1356,6 +1359,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
             for(int a = 0; a < 5; a++){
                 int r = (rand()%(maxAmount-nValueMin))+nValueMin;
 
+                vCoins.clear();
                 if (pwalletMain->SelectCoinsDark(nValueMin, r*COIN, vCoins, nValueIn, minRounds, nDarksendRounds, hasFeeInput)){
                     sessionTotalValue = pwalletMain->GetTotalValue(vCoins);
                     break;
@@ -1566,6 +1570,8 @@ bool CDarkSendPool::SplitUpMoney(bool justCollateral)
     // ****** Add fees ************ /
     vecSend.push_back(make_pair(scriptChange, (DARKSEND_COLLATERAL*5)+DARKSEND_FEE));
     nTotalOut += (DARKSEND_COLLATERAL*5)+DARKSEND_FEE; 
+    vecSend.push_back(make_pair(scriptChange, (DARKSEND_COLLATERAL*5)+DARKSEND_FEE));
+    nTotalOut += (DARKSEND_COLLATERAL*5)+DARKSEND_FEE;
 
     // ****** Add outputs in bases of two from 1 darkcoin *** /
     if(!justCollateral){
@@ -1583,7 +1589,7 @@ bool CDarkSendPool::SplitUpMoney(bool justCollateral)
 
             a = a * 2;
         }
-    }
+    } 
 
     if((justCollateral && nTotalOut <= 0.1*COIN) || vecSend.size() < 1) {
         LogPrintf("SplitUpMoney: Not enough outputs to make a transaction\n");
@@ -1595,7 +1601,8 @@ bool CDarkSendPool::SplitUpMoney(bool justCollateral)
     }
 
     CCoinControl *coinControl=NULL;
-    bool success = pwalletMain->CreateTransaction(vecSend, wtx, reservekey, nFeeRet, strFail, coinControl, ONLY_NONDENOMINATED);
+	bool success = pwalletMain->CreateTransaction(vecSend, wtx, reservekey,
+			nFeeRet, strFail, coinControl, ALL_COINS);
     if(!success){
         LogPrintf("SplitUpMoney: Error - %s\n", strFail.c_str());
         return false;
@@ -1638,7 +1645,7 @@ bool CDarkSendPool::IsCompatibleWithSession(int64 nDenom, CTransaction txCollate
 
     if(sessionUsers < 0) sessionUsers = 0;
     
-    if(sessionDenom == 0) {
+    if(sessionUsers == 0) {
         sessionDenom = nDenom;
         sessionUsers++;
         lastTimeChanged = GetTimeMillis();
@@ -1666,7 +1673,7 @@ bool CDarkSendPool::IsCompatibleWithSession(int64 nDenom, CTransaction txCollate
         return false;
     }
 
-    if(GetDenominationsByAmount(nDenom) != GetDenominationsByAmount(sessionDenom)) {
+    if(nDenom != sessionDenom) {
         strReason = "no matching denominations found for mixing";
         return false;
     }
@@ -1734,12 +1741,18 @@ int CDarkSendPool::GetDenominationsByAmount(int64 nAmount){
     std::vector<CTxOut> vout1;
     BOOST_FOREACH(int64 v, darkSendDenominations){
         int nOutputs = 0;
-        while(nValueLeft - v >= 0 && nOutputs <= 10) {
+        while(nValueLeft - v >= 0 && nOutputs <= 100) {
             CTxOut o(v, e);
             vout1.push_back(o);
             nValueLeft -= v;
             nOutputs++;
         }
+    }
+
+    //add non-denom left overs as change
+    if(nValueLeft > 0){
+        CTxOut o(nValueLeft, e);
+        vout1.push_back(o);
     }
 
     return GetDenominations(vout1);
@@ -1935,7 +1948,7 @@ void ThreadCheckDarkSendPool()
         if(c % 60*60*3 == 0) vecMasternodeAskedFor.clear();
 
         //auto denom every 2.5 minutes (liquidity provides try less often)
-        if(c % 60*nLiquidityProvider == 0){
+        if(c % 60*(nLiquidityProvider+1) == 0){
             if(nLiquidityProvider!=0){
                 int nRand = rand() % (101+nLiquidityProvider);
                 //about 1/100 chance of starting over after 4 rounds. 
