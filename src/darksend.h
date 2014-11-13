@@ -39,8 +39,6 @@ extern std::vector<int64> darkSendDenominations;
 extern std::vector<CDarksendQueue> vecDarksendQueue;
 extern std::string strMasterNodePrivKey;
 
-static const int64 DARKSEND_SUBSCRIPTION_MAX = 576*7;
-static const int64 DARKSEND_SUBSCRIPTION = (0.1*COIN);
 static const int64 DARKSEND_COLLATERAL = (0.1*COIN);
 static const int64 DARKSEND_FEE = 0.0125*COIN;
 
@@ -242,14 +240,10 @@ public:
     int cachedLastSuccess;
     int cachedNumBlocks; //used for the overview screen
     int minBlockSpacing; //required blocks between mixes
+    CTransaction txCollateral;
 
     //incremented whenever a DSQ comes through
     int64 nDsqCount;
-
-    CTransaction txCollateral; //collateral tx used during process
-    CTransaction txSubscription; //active subscription to Darksend
-    CTransaction txSupporting; //Supporting transaction for the subscription
-    std::vector<unsigned char> vchSubscriptionSig;
 
     CDarkSendPool()
     {
@@ -271,8 +265,6 @@ public:
         txCollateral = CTransaction();
         minBlockSpacing = 1;
         nDsqCount = 0;
-        txSubscription = CTransaction();
-        txSupporting = CTransaction();
 
         SetCollateralAddress(strAddress);
         SetNull();
@@ -321,8 +313,6 @@ public:
         return myEntries.size();
     }
 
-    bool CheckSubscription(CTransaction& tx, std::vector<unsigned char>& vchSig, CTransaction& txSupporting);
-
     void UpdateState(unsigned int newState)
     {
         if (fMasterNode && (newState == POOL_STATUS_ERROR || newState == POOL_STATUS_SUCCESS)){
@@ -353,9 +343,6 @@ public:
     bool IsSessionReady(){
         return sessionUsers >= GetMaxPoolTransactions();
     }
-
-    // Look for a valid subscription to Darksend, create one if it doesn't exist
-    bool GetSubscription(bool create, CTransaction& tx, std::vector<unsigned char>& vchSig, CTransaction& txSupporting);
 
     // Are these outputs compatible with other client in the pool?
     bool IsCompatibleWithEntries(std::vector<CTxOut> vout);

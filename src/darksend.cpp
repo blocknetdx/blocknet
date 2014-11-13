@@ -95,10 +95,7 @@ void ProcessMessageDarksend(CNode* pfrom, std::string& strCommand, CDataStream& 
 
         int nDenom;
         CTransaction txCollateral;
-        CTransaction txSubscription;
-        CTransaction txSupporting;
-        std::vector<unsigned char> vchSig;
-        vRecv >> nDenom >> txCollateral >> txSubscription >> txSupporting >> vchSig;
+        vRecv >> nDenom >> txCollateral;
 
         std::string error = "";
         int mn = GetMasternodeByVin(activeMasternode.vinMasternode);
@@ -111,13 +108,6 @@ void ProcessMessageDarksend(CNode* pfrom, std::string& strCommand, CDataStream& 
         if(darkSendMasterNodes[mn].nLastDsq + (int)darkSendMasterNodes.size()/5 > darkSendPool.nDsqCount){
             printf("dsa -- last dsq too recent, must wait. %s \n", darkSendMasterNodes[mn].addr.ToString().c_str());
             std::string strError = "Last darksend was too recent";
-            pfrom->PushMessage("dssu", darkSendPool.sessionID, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), MASTERNODE_REJECTED, strError);
-            return;
-        }
-
-        if(!darkSendPool.CheckSubscription(txSubscription, vchSig, txSupporting)){
-            printf("dsa -- subscription is invalid. %s \n", txSubscription.GetHash().ToString().c_str());
-            std::string strError = "Darksend subscription invalid";
             pfrom->PushMessage("dssu", darkSendPool.sessionID, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), MASTERNODE_REJECTED, strError);
             return;
         }
@@ -438,14 +428,6 @@ void CDarkSendPool::SetNull(bool clearEverything){
         } else {
             sessionID = 0;
         }
-    }
-
-    //check if we should clear the active subscription
-    CWalletTx wtx = CWalletTx(pwalletMain, txSubscription);
-    if(wtx.GetDepthInMainChain() > DARKSEND_SUBSCRIPTION_MAX){
-        txSubscription = CTransaction();
-        vchSubscriptionSig.clear();
-        txSupporting = CTransaction();
     }
 
     // -- seed random number generator (used for ordering output lists)
@@ -850,63 +832,6 @@ bool CDarkSendPool::IsCollateralValid(const CTransaction& txCollateral){
     }
 
     return true;
-}
-
-// check if we have a valid subscription
-bool CDarkSendPool::CheckSubscription(CTransaction& tx, std::vector<unsigned char>& vchSig, CTransaction& txSupporting)
-{
-    return true;
-    
-    CWalletTx wtx = CWalletTx(pwalletMain, tx);
-
-    //check fees
-    int64 nValueIn = 0;
-    int64 nValueOut = 0;
-    bool missingTx = false;
-
-    BOOST_FOREACH(const CTxOut o, wtx.vout)
-        nValueOut += o.nValue;
-
-    if(wtx.vin.size() > 1) return false;
-
-    if(wtx.vin[0].prevout.hash != txSupporting.GetHash()) return false;
-
-    if(txSupporting.vout.size() > wtx.vin[0].prevout.n) {
-        nValueIn += txSupporting.vout[wtx.vin[0].prevout.n].nValue;    
-    } else{
-        missingTx = true;
-    }
-
-    if(missingTx) return false;
-    if(nValueIn-nValueOut < DARKSEND_COLLATERAL) return false;
-
-
-    // check signature
-    std::string strMessage = tx.GetHash().ToString();
-
-    CScript pubkey = txSupporting.vout[wtx.vin[0].prevout.n].scriptPubKey;
-
-    CTxDestination address1;
-    ExtractDestination(pubkey, address1);
-    CBitcoinAddress address2(address1);
-
-    if (!address2.IsValid()) return false;
-
-    CKeyID keyID;
-    if (!address2.GetKeyID(keyID)) return false;
-
-    CHashWriter ss(SER_GETHASH, 0);
-    ss << strMessageMagic;
-    ss << strMessage;
-
-    CPubKey pubkey2;
-    if (!pubkey2.RecoverCompact(ss.GetHash(), vchSig))
-    {
-        LogPrintf("CWallet::GetDarksendSubsciption - Invalid subscription input\n");
-        return false;
-    }
-
-    return (pubkey2.GetID() == keyID);
 }
 
 
@@ -1431,8 +1356,10 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
             for(int a = 0; a < 5; a++){
                 int r = (rand()%(maxAmount-nValueMin))+nValueMin;
 
-                if (pwalletMain->SelectCoinsDark(nValueMin, r*COIN, vCoins, nValueIn, minRounds, nDarksendRounds, hasFeeInput))
-                    maxAmount = r;
+                if (pwalletMain->SelectCoinsDark(nValueMin, r*COIN, vCoins, nValueIn, minRounds, nDarksendRounds, hasFeeInput)){
+                    sessionTotalValue = pwalletMain->GetTotalValue(vCoins);
+                    break;
+                }
             }
         }
         if(sessionTotalValue > maxAmount*COIN) sessionTotalValue = maxAmount*COIN;
@@ -1444,13 +1371,6 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
         if(pwalletMain->GetDenominatedBalance(true, true) > 0){ //get denominated unconfirmed inputs 
             LogPrintf("DoAutomaticDenominating -- Found unconfirmed denominated outputs, will wait till they confirm to continue.\n");
             return false;
-        }
-
-        if(txSubscription == CTransaction()){
-            if(GetSubscription(true, txSubscription, vchSubscriptionSig, txSupporting)){
-                LogPrintf("DoAutomaticDenominating -- Can't create a valid subscription to Darksend, bailing!\n");
-                return true;
-            }
         }
 
         //don't use the queues all of the time for mixing
@@ -1496,7 +1416,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
                     
                         vecMasternodesUsed.push_back(dsq.vin);
                         sessionDenom = GetDenominationsByAmount(sessionTotalValue);
-                        pnode->PushMessage("dsa", sessionDenom, txCollateral, txSubscription, txSupporting, vchSubscriptionSig);
+                        pnode->PushMessage("dsa", sessionDenom, txCollateral);
                         LogPrintf("DoAutomaticDenominating --- connected (from queue), sending dsa for %d %d - %s\n", sessionDenom, GetDenominationsByAmount(sessionTotalValue), pnode->addr.ToString().c_str());
                         return true;
                     }
@@ -1541,7 +1461,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
 
                     vecMasternodesUsed.push_back(darkSendMasterNodes[i].vin);
                     sessionDenom = GetDenominationsByAmount(sessionTotalValue);
-                    pnode->PushMessage("dsa", sessionDenom, txCollateral, txSubscription, txSupporting, vchSubscriptionSig);
+                    pnode->PushMessage("dsa", sessionDenom, txCollateral);
                     LogPrintf("DoAutomaticDenominating --- connected, sending dsa for %d - denom %d\n", sessionDenom, GetDenominationsByAmount(sessionTotalValue));
                     return true;
                 }
@@ -1565,37 +1485,6 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
     if(strError == "") return true;
 
     LogPrintf("DoAutomaticDenominating : Error running denominate, %s\n", strError.c_str());
-    return false;
-}
-
-bool CDarkSendPool::GetSubscription(bool create, CTransaction& tx, std::vector<unsigned char>& vchSig, CTransaction& txSupporting)
-{
-    if(pwalletMain->GetDarksendSubsciption(tx, vchSig, txSupporting)){
-        return true;
-    }
-
-    if(create){
-        std::string strReason = "";
-        CTransaction txNew;
-
-        if(!pwalletMain->CreateCollateralTransaction(txNew, strReason)){
-            LogPrintf("CDarksendPool::GetSubscription -- dsa error:%s\n", strReason.c_str());
-            return false; 
-        }
-
-        CWalletTx wtx = CWalletTx(pwalletMain, txNew);
-
-        // Broadcast the transaction to the network
-        wtx.AddSupportingTransactions();
-        wtx.fTimeReceivedIsTxTime = true;                
-        wtx.RelayWalletTransaction();
-
-        if(pwalletMain->GetDarksendSubsciption(tx, vchSig, txSupporting)){
-            return true;
-        }
-
-    }
-
     return false;
 }
 

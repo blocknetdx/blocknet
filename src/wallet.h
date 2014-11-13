@@ -97,7 +97,6 @@ public:
     bool SelectCoinsMasternode(CTxIn& vin, int64& nValueRet, CScript& pubScript) const;
     bool HasDarksendFeeInputs() const;
 
-    bool GetDarksendSubsciption(CTransaction& tx, std::vector<unsigned char>& vchSig, CTransaction& txSupporting);
     bool SelectCoinsCollateral(std::vector<CTxIn>& setCoinsRet, int64& nValueRet) const ;
     bool SelectCoinsWithoutDenomination(int64 nTargetValue, std::set<std::pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64& nValueRet) const;
     
