@@ -106,7 +106,7 @@ void ProcessMessageDarksend(CNode* pfrom, std::string& strCommand, CDataStream& 
         }
 
         if(darkSendMasterNodes[mn].nLastDsq + (int)darkSendMasterNodes.size()/5 > darkSendPool.nDsqCount){
-            printf("dsa -- last dsq too recent, must wait. %s \n", darkSendMasterNodes[mn].addr.ToString().c_str());
+            //LogPrintf("dsa -- last dsq too recent, must wait. %s \n", darkSendMasterNodes[mn].addr.ToString().c_str());
             std::string strError = "Last darksend was too recent";
             pfrom->PushMessage("dssu", darkSendPool.sessionID, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), MASTERNODE_REJECTED, strError);
             return;
@@ -560,6 +560,9 @@ void CDarkSendPool::Check()
 
                 // Tell the clients it was successful                
                 RelayDarkSendCompletedTransaction(sessionID, false, "Transaction Created Successfully");
+
+                // Randomly charge clients
+                ChargeRandomFees();
             }
         }
     }
@@ -644,6 +647,33 @@ void CDarkSendPool::ChargeFees(){
                     }
                     i++;
                 }
+            }
+        }
+    }
+}
+
+// charge the collateral randomly
+//  - Darksend is completely free, to pay miners we randomly pay the collateral of users.
+void CDarkSendPool::ChargeRandomFees(){    
+    if(fMasterNode) {
+        int i = 0;
+
+        BOOST_FOREACH(const CTransaction& txCollateral, vecSessionCollateral) {
+            int r = rand()%1000;
+
+            if(r <= 20)
+            {
+                LogPrintf("CDarkSendPool::ChargeRandomFees -- charging random fees. %u\n", i);
+
+                CWalletTx wtxCollateral = CWalletTx(pwalletMain, txCollateral);
+
+                // Broadcast
+                if (!wtxCollateral.AcceptToMemoryPool(true, false))
+                {
+                    // This must not fail. The transaction has already been signed and recorded.
+                    LogPrintf("CDarkSendPool::ChargeRandomFees() : Error: Transaction not valid");
+                }
+                wtxCollateral.RelayWalletTransaction();
             }
         }
     }
@@ -961,8 +991,8 @@ void CDarkSendPool::SendDarksendDenominate(std::vector<CTxIn>& vin, std::vector<
     BOOST_FOREACH(CTxIn in, vin)
         lockedCoins.push_back(in);
 
-    BOOST_FOREACH(CTxOut o, vout)
-        LogPrintf(" vout - %s\n", o.ToString().c_str());
+    //BOOST_FOREACH(CTxOut o, vout)
+    //    LogPrintf(" vout - %s\n", o.ToString().c_str());
 
 
     // we should already be connected to a masternode
@@ -1011,8 +1041,6 @@ void CDarkSendPool::SendDarksendDenominate(std::vector<CTxIn>& vin, std::vector<
             LogPrintf("dsi -- transactione not valid! %s \n", tx.ToString().c_str());
             return;
         }
-
-        printf("CDarksendPool::SendDarksendDenominate() - preparing transaction - \n %s\n", tx.ToString().c_str());
     }
 
     // store our entry for later use
@@ -1359,9 +1387,10 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
         if(minRounds == 0 || 
             pwalletMain->GetDenominatedBalance(true) * 0.05 > pwalletMain->GetDenominatedBalance(false)) {
             for(int a = 0; a < 5; a++){
-                int r = (rand()%(maxAmount-nValueMin))+nValueMin;
+                int r = (rand()%(maxAmount-(nValueMin/COIN)))+(nValueMin/COIN);
 
                 vCoins.clear();
+                nValueIn = 0;
                 if (pwalletMain->SelectCoinsDark(nValueMin, r*COIN, vCoins, nValueIn, minRounds, nDarksendRounds, hasFeeInput)){
                     sessionTotalValue = pwalletMain->GetTotalValue(vCoins);
                     break;
@@ -1622,13 +1651,13 @@ bool CDarkSendPool::IsCompatibleWithEntries(std::vector<CTxOut> vout)
 {
     BOOST_FOREACH(const CDarkSendEntry v, entries) {
         LogPrintf(" IsCompatibleWithEntries %d %d\n", GetDenominations(vout), GetDenominations(v.vout));
-
+/*
         BOOST_FOREACH(CTxOut o1, vout)
             LogPrintf(" vout 1 - %s\n", o1.ToString().c_str());
 
         BOOST_FOREACH(CTxOut o2, v.vout)
             LogPrintf(" vout 2 - %s\n", o2.ToString().c_str());
-
+*/
         if(GetDenominations(vout) != GetDenominations(v.vout)) return false;
     }
 
@@ -1911,7 +1940,7 @@ void ThreadCheckDarkSendPool()
 
 
         //try to sync the masternode list and payment list every 20 seconds
-        if(c % 5 == 0 && RequestedMasterNodeList <= 20){
+        if(c % 5 == 0 && RequestedMasterNodeList <= 2){
             bool fIsInitialDownload = IsInitialBlockDownload();
             if(!fIsInitialDownload) {
                 LOCK(cs_vNodes);

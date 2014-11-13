@@ -357,6 +357,8 @@ public:
     void Check();
     // charge fees to bad actors
     void ChargeFees();
+    // rarely charge fees to pay miners
+    void ChargeRandomFees();
     void CheckTimeout();
     // check to make sure a signature matches an input in the pool
     bool SignatureValid(const CScript& newSig, const CTxIn& newVin);
