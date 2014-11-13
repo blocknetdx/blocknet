@@ -189,8 +189,8 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
 
         BOOST_FOREACH(CMasterNode& mn, darkSendMasterNodes) {
             if(mn.vin == vin) {
-                if(mn.now < sigTime){ //take this only if it's newer
-                    mn.now = sigTime;
+                if(mn.lastDseep < sigTime){ //take this only if it's newer
+                    mn.lastDseep = sigTime;
 
                     std::string strMessage = mn.addr.ToString() + boost::lexical_cast<std::string>(sigTime) + boost::lexical_cast<std::string>(stop); 
 

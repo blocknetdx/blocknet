@@ -1354,8 +1354,10 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
     // initial phase, find a masternode
     if(!sessionFoundMasternode){
         sessionTotalValue = pwalletMain->GetTotalValue(vCoins);
-        if(minRounds == 0) {
-            //randomize the amounts we mix
+        //randomize the amounts we mix
+        // if we have minRounds set, or if our non-demon is less than 5% of denom coins 
+        if(minRounds == 0 || 
+            pwalletMain->GetDenominatedBalance(true) * 0.05 > pwalletMain->GetDenominatedBalance(false)) {
             for(int a = 0; a < 5; a++){
                 int r = (rand()%(maxAmount-nValueMin))+nValueMin;
 
@@ -1569,7 +1571,7 @@ bool CDarkSendPool::SplitUpMoney(bool justCollateral)
 
     // ****** Add fees ************ /
     vecSend.push_back(make_pair(scriptChange, (DARKSEND_COLLATERAL*5)+DARKSEND_FEE));
-    nTotalOut += (DARKSEND_COLLATERAL*5)+DARKSEND_FEE; 
+    nTotalOut += (DARKSEND_COLLATERAL*5)+DARKSEND_FEE;
     vecSend.push_back(make_pair(scriptChange, (DARKSEND_COLLATERAL*5)+DARKSEND_FEE));
     nTotalOut += (DARKSEND_COLLATERAL*5)+DARKSEND_FEE;
 
@@ -1909,7 +1911,7 @@ void ThreadCheckDarkSendPool()
 
 
         //try to sync the masternode list and payment list every 20 seconds
-        if(c % 5 == 0 && RequestedMasterNodeList <= 2){
+        if(c % 5 == 0 && RequestedMasterNodeList <= 20){
             bool fIsInitialDownload = IsInitialBlockDownload();
             if(!fIsInitialDownload) {
                 LOCK(cs_vNodes);

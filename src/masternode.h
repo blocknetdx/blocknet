@@ -69,7 +69,8 @@ public:
     CPubKey pubkey;
     CPubKey pubkey2;
     std::vector<unsigned char> sig;
-    int64 now;
+    int64 now; //dsee message times
+    int64 lastDseep;
     int cacheInputAge;
     int cacheInputAgeBlock;
     int enabled;
@@ -93,6 +94,7 @@ public:
         cacheInputAge = 0;
         cacheInputAgeBlock = 0;
         nLastDsq = 0;
+        lastDseep = 0;
         allowFreeTx = true;
     }
 
