@@ -1602,7 +1602,7 @@ bool CDarkSendPool::SplitUpMoney(bool justCollateral)
 
     CCoinControl *coinControl=NULL;
 	bool success = pwalletMain->CreateTransaction(vecSend, wtx, reservekey,
-			nFeeRet, strFail, coinControl, ALL_COINS);
+			nFeeRet, strFail, coinControl, justCollateral ? ALL_COINS : ONLY_NONDENOMINATED);
     if(!success){
         LogPrintf("SplitUpMoney: Error - %s\n", strFail.c_str());
         return false;
