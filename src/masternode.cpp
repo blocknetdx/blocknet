@@ -92,21 +92,21 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
 
             if(mn.vin.prevout == vin.prevout) {
                 if(!mn.UpdatedWithin(MASTERNODE_MIN_SECONDS)){
+                    mn.UpdateLastSeen();
 
                     if(mn.now < sigTime){ //take the newest entry
                         LogPrintf("dsee - Got updated entry for %s\n", addr.ToString().c_str());
                         mn.pubkey2 = pubkey2;
                         mn.now = sigTime;
                         mn.sig = vchSig;
-                        mn.UpdateLastSeen();
-                    }
 
-                    if(pubkey2 == activeMasternode.pubkeyMasterNode2){
-                        activeMasternode.EnableHotColdMasterNode(vin, sigTime, addr);
-                    }
+                        if(pubkey2 == activeMasternode.pubkeyMasterNode2){
+                            activeMasternode.EnableHotColdMasterNode(vin, sigTime, addr);
+                        }
 
-                    if(count == -1) //count == -1 when it's a new entry
-                        RelayDarkSendElectionEntry(vin, addr, vchSig, sigTime, pubkey, pubkey2, count, current, lastUpdated);
+                        if(count == -1) //count == -1 when it's a new entry
+                            RelayDarkSendElectionEntry(vin, addr, vchSig, sigTime, pubkey, pubkey2, count, current, lastUpdated);
+                    }
                 }
 
                 return;
