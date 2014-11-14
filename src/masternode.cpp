@@ -34,6 +34,8 @@ void ProcessMasternodeConnections(){
 void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream& vRecv)
 {
     if (strCommand == "dsee") { //DarkSend Election Entry   
+        return;
+
         if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
             return;
         }
@@ -163,6 +165,8 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
     }
 
     else if (strCommand == "dseep") { //DarkSend Election Entry Ping 
+        return;
+
         if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
             return;
         }
@@ -229,6 +233,8 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
         pfrom->PushMessage("dseg", vin);
 
     } else if (strCommand == "dseg") { //Get masternode list or specific entry
+        return;
+        
         if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
             return;
         }

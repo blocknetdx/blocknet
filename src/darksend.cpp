@@ -1975,7 +1975,7 @@ void ThreadCheckDarkSendPool()
 
                         LogPrintf("Successfully synced, asking for Masternode list and payment list\n");
         
-                        pnode->PushMessage("dseg", CTxIn()); //request full mn list
+                        //pnode->PushMessage("dseg", CTxIn()); //request full mn list
                         pnode->PushMessage("mnget"); //sync payees
                         RequestedMasterNodeList++;
                     }
