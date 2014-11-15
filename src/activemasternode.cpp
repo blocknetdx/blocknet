@@ -158,8 +158,13 @@ void CActiveMasternode::RegisterAsMasterNode(bool stop)
     LogPrintf("CActiveMasternode::RegisterAsMasterNode() - Masternode input = %s\n", vinMasternode.ToString().c_str());
 
     if (stop) isCapableMasterNode = MASTERNODE_STOPPED;
-
-    RelayDarkSendElectionEntryPing(vinMasternode, vchMasterNodeSignature, masterNodeSignatureTime, stop);
+    
+    //relay to all peers
+    LOCK(cs_vNodes);
+    BOOST_FOREACH(CNode* pnode, vNodes)
+    {        
+        pnode->PushMessage("dseep", vinMasternode, vchMasterNodeSignature, masterNodeSignatureTime, stop);
+    }
 }
 
 // 
