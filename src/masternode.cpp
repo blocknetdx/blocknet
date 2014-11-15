@@ -186,7 +186,7 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
         }*/
 
 
-        LogPrintf("MasternodeDebug: RegisterAsMasterNode - Searching existing masternodes : %s - %s\n", addr.ToString().c_str(),  vin.ToString().c_str());
+        LogPrintf("MasternodeDebug: RegisterAsMasterNode - Searching existing masternodes : %s\n", vin.ToString().c_str());
 
         BOOST_FOREACH(CMasterNode& mn, darkSendMasterNodes) {
             if(mn.vin == vin) {
