@@ -171,7 +171,7 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
 
         CTxIn vin;
         vector<unsigned char> vchSig;
-        int64 sigTime;
+        int64 sigTime; 
         bool stop;
         vRecv >> vin >> vchSig >> sigTime >> stop;
 
