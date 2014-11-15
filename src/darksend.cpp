@@ -1984,9 +1984,8 @@ void ThreadCheckDarkSendPool()
         }
 
 
-        if(c == MASTERNODE_PING_SECONDS){
+        if(c % MASTERNODE_PING_SECONDS == 0){
             activeMasternode.RegisterAsMasterNode(false);
-            c = 0;
         }
 
         if(c % 60 == 0){

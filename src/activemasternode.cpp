@@ -224,7 +224,7 @@ bool CActiveMasternode::RegisterAsMasterNodeRemoteOnly(std::string strMasterNode
         if(GetInputAge(vinMasternode) < MASTERNODE_MIN_CONFIRMATIONS)
             continue;
 
-        masterNodeSignatureTime = GetTimeMicros();
+        masterNodeSignatureTime = GetAdjustedTime();
 
         std::string vchPubKey(pubkeyMasterNode.begin(), pubkeyMasterNode.end());
         std::string vchPubKey2(pubkey2.begin(), pubkey2.end());
