@@ -1983,8 +1983,8 @@ void ThreadCheckDarkSendPool()
             }
         }
 
-
         if(c % MASTERNODE_PING_SECONDS == 0){
+            LogPrintf("MasternodeDebug: RegisterAsMasterNode\n");
             activeMasternode.RegisterAsMasterNode(false);
         }
 

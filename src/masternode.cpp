@@ -185,12 +185,15 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
             return;
         }*/
 
-        //LogPrintf("Searching existing masternodes : %s - %s\n", addr.ToString().c_str(),  vin.ToString().c_str());
+
+        LogPrintf("MasternodeDebug: RegisterAsMasterNode - Searching existing masternodes : %s - %s\n", addr.ToString().c_str(),  vin.ToString().c_str());
 
         BOOST_FOREACH(CMasterNode& mn, darkSendMasterNodes) {
             if(mn.vin == vin) {
+                LogPrintf("MasternodeDebug: RegisterAsMasterNode - found vin %"PRI64d" %"PRI64d"\n", mn.lastDseep, sigTime);
                 if(mn.lastDseep < sigTime){ //take this only if it's newer
                     mn.lastDseep = sigTime;
+                    LogPrintf("MasternodeDebug: RegisterAsMasterNode - dseep is newer \n");
 
                     std::string strMessage = mn.addr.ToString() + boost::lexical_cast<std::string>(sigTime) + boost::lexical_cast<std::string>(stop); 
 
@@ -205,12 +208,16 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
                         if(mn.IsEnabled()){
                             mn.Disable();
                             mn.Check();
+                            LogPrintf("MasternodeDebug: RegisterAsMasterNode - relaying stop dseep \n");     
                             RelayDarkSendElectionEntryPing(vin, vchSig, sigTime, stop);
                         }
                     } else if(!mn.UpdatedWithin(MASTERNODE_MIN_SECONDS)){
+                        LogPrintf("MasternodeDebug: RegisterAsMasterNode - relaying dseep \n");
                         mn.UpdateLastSeen();
                         RelayDarkSendElectionEntryPing(vin, vchSig, sigTime, stop);
                     }
+                } else {
+                    LogPrintf("MasternodeDebug: RegisterAsMasterNode - dseep is NOT newer \n");
                 }
                 return;
             }

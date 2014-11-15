@@ -1964,7 +1964,7 @@ void RelayDarkSendElectionEntry(const CTxIn vin, const CService addr, const std:
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
-        if(!pnode->fRelayTxes) continue;
+        //if(!pnode->fRelayTxes) continue;
 
         pnode->PushMessage("dsee", vin, addr, vchSig, nNow, pubkey, pubkey2, count, current, lastUpdated);
     }
@@ -1993,7 +1993,7 @@ void RelayDarkSendCompletedTransaction(const int sessionID, const bool error, co
 void RelayDarkSendTransaction(const CTransaction txNew, const CTxIn vin, const std::vector<unsigned char> vchSig, const int64 sigTime){
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes) {
-        if(!pnode->fRelayTxes) continue;
+        //if(!pnode->fRelayTxes) continue;
         pnode->PushMessage("dstx", txNew, vin, vchSig, sigTime);
     }
 }

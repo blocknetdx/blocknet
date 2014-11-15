@@ -126,6 +126,8 @@ void CActiveMasternode::RegisterAsMasterNode(bool stop)
 
     if(isCapableMasterNode != MASTERNODE_IS_CAPABLE) return;
 
+    LogPrintf("MasternodeDebug: RegisterAsMasterNode - active\n");
+
     masterNodeSignatureTime = GetAdjustedTime();
 
     std::string strMessage = masterNodeSignAddr.ToString() + boost::lexical_cast<std::string>(masterNodeSignatureTime) + boost::lexical_cast<std::string>(stop);
@@ -150,6 +152,9 @@ void CActiveMasternode::RegisterAsMasterNode(bool stop)
         }
     }
     if(!found){
+
+        LogPrintf("MasternodeDebug: Not Found\n");
+
         LogPrintf("CActiveMasternode::RegisterAsMasterNode() - Darksend Masternode List doesn't include our masternode, Shutting down masternode pinging service! %s\n", vinMasternode.ToString().c_str());
         isCapableMasterNode = MASTERNODE_STOPPED;
         return;
@@ -163,6 +168,7 @@ void CActiveMasternode::RegisterAsMasterNode(bool stop)
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {        
+        LogPrintf("MasternodeDebug: RegisterAsMasterNode - relay %s\n", pnode->addr.ToString().c_str());
         pnode->PushMessage("dseep", vinMasternode, vchMasterNodeSignature, masterNodeSignatureTime, stop);
     }
 }
