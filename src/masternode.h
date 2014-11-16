@@ -32,7 +32,7 @@ class CMasternodePayments;
 
 #define MASTERNODE_MIN_CONFIRMATIONS           15
 #define MASTERNODE_MIN_SECONDS                 5*60
-#define MASTERNODE_PING_SECONDS                20*60
+#define MASTERNODE_PING_SECONDS                20*60*60
 #define MASTERNODE_EXPIRATION_SECONDS          65*60
 #define MASTERNODE_REMOVAL_SECONDS             70*60
 
