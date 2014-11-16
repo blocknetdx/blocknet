@@ -105,12 +105,14 @@ void ProcessMessageDarksend(CNode* pfrom, std::string& strCommand, CDataStream& 
             return;            
         }
 
-        if(darkSendMasterNodes[mn].nLastDsq != 0 && 
-            darkSendMasterNodes[mn].nLastDsq + (int)darkSendMasterNodes.size()/5 > darkSendPool.nDsqCount){
-            //LogPrintf("dsa -- last dsq too recent, must wait. %s \n", darkSendMasterNodes[mn].addr.ToString().c_str());
-            std::string strError = "Last darksend was too recent";
-            pfrom->PushMessage("dssu", darkSendPool.sessionID, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), MASTERNODE_REJECTED, strError);
-            return;
+        if(darkSendPool.sessionUsers == 0) {
+            if(darkSendMasterNodes[mn].nLastDsq != 0 && 
+                darkSendMasterNodes[mn].nLastDsq + (int)darkSendMasterNodes.size()/5 > darkSendPool.nDsqCount){
+                //LogPrintf("dsa -- last dsq too recent, must wait. %s \n", darkSendMasterNodes[mn].addr.ToString().c_str());
+                std::string strError = "Last darksend was too recent";
+                pfrom->PushMessage("dssu", darkSendPool.sessionID, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), MASTERNODE_REJECTED, strError);
+                return;
+            }
         }
 
         if(!darkSendPool.IsCompatibleWithSession(nDenom, txCollateral, error))
@@ -156,6 +158,7 @@ void ProcessMessageDarksend(CNode* pfrom, std::string& strCommand, CDataStream& 
                 if(q.vin == dsq.vin) return;
             }
             
+            if(fDebug) LogPrintf("dsq last %"PRI64d" last2 %"PRI64d" count %"PRI64d"\n", darkSendMasterNodes[mn].nLastDsq, darkSendMasterNodes[mn].nLastDsq + (int)darkSendMasterNodes.size()/5, darkSendPool.nDsqCount);
             //don't allow a few nodes to dominate the queuing process
             if(darkSendMasterNodes[mn].nLastDsq != 0 && 
                 darkSendMasterNodes[mn].nLastDsq + (int)darkSendMasterNodes.size()/5 > darkSendPool.nDsqCount){
@@ -166,7 +169,7 @@ void ProcessMessageDarksend(CNode* pfrom, std::string& strCommand, CDataStream& 
             darkSendMasterNodes[mn].nLastDsq = darkSendPool.nDsqCount; 
             darkSendMasterNodes[mn].allowFreeTx = true;
 
-            if (fDebug)  LogPrintf("new darksend queue object - %s\n", addr.ToString().c_str());
+            if(fDebug) LogPrintf("dsq - new darksend queue object - %s\n", addr.ToString().c_str());
             vecDarksendQueue.push_back(dsq);
             dsq.Relay();
             dsq.time = GetTime();

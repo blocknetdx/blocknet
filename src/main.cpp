@@ -4167,6 +4167,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
                 if(mn.vin == vin) {
                     if(!mn.allowFreeTx){
                         //multiple peers can send us a valid masternode transaction
+                        if(fDebug) LogPrintf("dstx: Masternode sending too many transactions %s\n", tx.GetHash().ToString().c_str());
                         return true;
                     }
 
@@ -4178,6 +4179,8 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
                         //pfrom->Misbehaving(20);
                         return false;
                     }
+
+                    LogPrintf("dstx: Got Masternode transaction %s\n", tx.GetHash().ToString().c_str());
 
                     allowFree = true;
                     mn.allowFreeTx = false;
