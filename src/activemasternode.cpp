@@ -124,7 +124,7 @@ void CActiveMasternode::RegisterAsMasterNode(bool stop)
         }
     }
 
-    if(isCapableMasterNode != MASTERNODE_IS_CAPABLE) return;
+    if(isCapableMasterNode != MASTERNODE_IS_CAPABLE && isCapableMasterNode != MASTERNODE_REMOTELY_ENABLED)  return;
 
     masterNodeSignatureTime = GetAdjustedTime();
 
