@@ -604,11 +604,9 @@ void CDarkSendPool::Check()
 //
 void CDarkSendPool::ChargeFees(){    
     if(fMasterNode) {
-        int i = 0;
-
-        //we don't need to charge collateral for every offence. 1/10 offences will get charged.
+        //we don't need to charge collateral for every offence.
         int r = rand()%100;
-        if(r > 10) return;
+        int offences = 0;
 
         if(state == POOL_STATUS_ACCEPTING_ENTRIES){
             BOOST_FOREACH(const CTransaction& txCollateral, vecSessionCollateral) {
@@ -621,7 +619,42 @@ void CDarkSendPool::ChargeFees(){
 
                 // This queue entry didn't send us the promised transaction
                 if(!found){
-                    LogPrintf("CDarkSendPool::ChargeFees -- found uncooperative node (didn't send transaction). charging fees. %u\n", i);
+                    LogPrintf("CDarkSendPool::ChargeFees -- found uncooperative node (didn't send transaction). Found offence.\n");
+                    offences++;
+                }
+            }
+        }
+
+        if(state == POOL_STATUS_SIGNING) {
+            // who didn't sign?
+            BOOST_FOREACH(const CDarkSendEntry v, entries) {
+                BOOST_FOREACH(const CDarkSendEntryVin s, v.sev) {
+                    if(!s.isSigSet){
+                        LogPrintf("CDarkSendPool::ChargeFees -- found uncooperative node (didn't sign). Found offence\n");
+                        offences++;
+                    }
+                }
+            }
+        }
+
+        //mostly offending? 
+        if(offences >= POOL_MAX_TRANSACTIONS-1 && r > 33) return;
+
+        //everyone is an offender? That's not right
+        if(offences >= POOL_MAX_TRANSACTIONS) return;
+
+        if(state == POOL_STATUS_ACCEPTING_ENTRIES){
+            BOOST_FOREACH(const CTransaction& txCollateral, vecSessionCollateral) {
+                bool found = false;
+                BOOST_FOREACH(const CDarkSendEntry& v, entries) {
+                    if(v.collateral == txCollateral) {
+                        found = true;
+                    }
+                }
+
+                // This queue entry didn't send us the promised transaction
+                if(!found){
+                    LogPrintf("CDarkSendPool::ChargeFees -- found uncooperative node (didn't send transaction). charging fees.\n");
 
                     CWalletTx wtxCollateral = CWalletTx(pwalletMain, txCollateral);
 
@@ -632,7 +665,7 @@ void CDarkSendPool::ChargeFees(){
                         LogPrintf("CDarkSendPool::ChargeFees() : Error: Transaction not valid");
                     }
                     wtxCollateral.RelayWalletTransaction();
-                    i++;
+                    return;
                 }
             }
         }
@@ -642,7 +675,7 @@ void CDarkSendPool::ChargeFees(){
             BOOST_FOREACH(const CDarkSendEntry v, entries) {
                 BOOST_FOREACH(const CDarkSendEntryVin s, v.sev) {
                     if(!s.isSigSet){
-                        LogPrintf("CDarkSendPool::ChargeFees -- found uncooperative node (didn't sign). charging fees. %u\n", i);
+                        LogPrintf("CDarkSendPool::ChargeFees -- found uncooperative node (didn't sign). charging fees.\n");
 
                         CWalletTx wtxCollateral = CWalletTx(pwalletMain, v.collateral);
 
@@ -653,8 +686,8 @@ void CDarkSendPool::ChargeFees(){
                             LogPrintf("CDarkSendPool::ChargeFees() : Error: Transaction not valid");
                         }
                         wtxCollateral.RelayWalletTransaction();
+                        return;
                     }
-                    i++;
                 }
             }
         }
