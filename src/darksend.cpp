@@ -605,7 +605,6 @@ void CDarkSendPool::Check()
 void CDarkSendPool::ChargeFees(){    
     if(fMasterNode) {
         //we don't need to charge collateral for every offence.
-        int r = rand()%100;
         int offences = 0;
 
         if(state == POOL_STATUS_ACCEPTING_ENTRIES){
@@ -637,11 +636,20 @@ void CDarkSendPool::ChargeFees(){
             }
         }
 
+        int r = rand()%100;
+        int target = 0;
+
         //mostly offending? 
         if(offences >= POOL_MAX_TRANSACTIONS-1 && r > 33) return;
 
         //everyone is an offender? That's not right
         if(offences >= POOL_MAX_TRANSACTIONS) return;
+
+        //charge one of the offenders randomly
+        if(offences > 1) target = 50;
+        
+        //pick random client to charge
+        r = rand()%100;
 
         if(state == POOL_STATUS_ACCEPTING_ENTRIES){
             BOOST_FOREACH(const CTransaction& txCollateral, vecSessionCollateral) {
@@ -653,7 +661,7 @@ void CDarkSendPool::ChargeFees(){
                 }
 
                 // This queue entry didn't send us the promised transaction
-                if(!found){
+                if(!found && r > target){
                     LogPrintf("CDarkSendPool::ChargeFees -- found uncooperative node (didn't send transaction). charging fees.\n");
 
                     CWalletTx wtxCollateral = CWalletTx(pwalletMain, txCollateral);
@@ -674,7 +682,7 @@ void CDarkSendPool::ChargeFees(){
             // who didn't sign?
             BOOST_FOREACH(const CDarkSendEntry v, entries) {
                 BOOST_FOREACH(const CDarkSendEntryVin s, v.sev) {
-                    if(!s.isSigSet){
+                    if(!s.isSigSet && r > target){
                         LogPrintf("CDarkSendPool::ChargeFees -- found uncooperative node (didn't sign). charging fees.\n");
 
                         CWalletTx wtxCollateral = CWalletTx(pwalletMain, v.collateral);
