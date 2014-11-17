@@ -606,6 +606,10 @@ void CDarkSendPool::ChargeFees(){
     if(fMasterNode) {
         int i = 0;
 
+        //we don't need to charge collateral for every offence. 1/10 offences will get charged.
+        int r = rand()%100;
+        if(r > 10) return;
+
         if(state == POOL_STATUS_ACCEPTING_ENTRIES){
             BOOST_FOREACH(const CTransaction& txCollateral, vecSessionCollateral) {
                 bool found = false;

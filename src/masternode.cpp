@@ -86,30 +86,35 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
         if((fTestNet && addr.GetPort() != 19999) || (!fTestNet && addr.GetPort() != 9999)) return;
 
         //LogPrintf("Searching existing masternodes : %s - %s\n", addr.ToString().c_str(),  vin.ToString().c_str());
-        
-        BOOST_FOREACH(CMasterNode& mn, darkSendMasterNodes) {
-            //LogPrintf(" -- %s\n", mn.vin.ToString().c_str());
 
-            if(mn.vin.prevout == vin.prevout) {
-                if(!mn.UpdatedWithin(MASTERNODE_MIN_SECONDS)){
-                    mn.UpdateLastSeen();
 
-                    if(mn.now < sigTime){ //take the newest entry
-                        LogPrintf("dsee - Got updated entry for %s\n", addr.ToString().c_str());
-                        mn.pubkey2 = pubkey2;
-                        mn.now = sigTime;
-                        mn.sig = vchSig;
+        //count == -1 when it's a new entry
+        // e.g. We don't want the entry relayed/time updated when we're syncing the list
+        if(count == -1) 
+        {
+            BOOST_FOREACH(CMasterNode& mn, darkSendMasterNodes) {
+                //LogPrintf(" -- %s\n", mn.vin.ToString().c_str());
 
-                        if(pubkey2 == activeMasternode.pubkeyMasterNode2){
-                            activeMasternode.EnableHotColdMasterNode(vin, sigTime, addr);
-                        }
+                if(mn.vin.prevout == vin.prevout) {
+                    if(!mn.UpdatedWithin(MASTERNODE_MIN_SECONDS)){
+                        mn.UpdateLastSeen();
 
-                        if(count == -1) //count == -1 when it's a new entry
+                        if(mn.now < sigTime){ //take the newest entry
+                            LogPrintf("dsee - Got updated entry for %s\n", addr.ToString().c_str());
+                            mn.pubkey2 = pubkey2;
+                            mn.now = sigTime;
+                            mn.sig = vchSig;
+
+                            if(pubkey2 == activeMasternode.pubkeyMasterNode2){
+                                activeMasternode.EnableHotColdMasterNode(vin, sigTime, addr);
+                            }
+
                             RelayDarkSendElectionEntry(vin, addr, vchSig, sigTime, pubkey, pubkey2, count, current, lastUpdated);
+                        }
                     }
-                }
 
-                return;
+                    return;
+                }
             }
         }
 
