@@ -18,7 +18,7 @@ map<uint256, int> mapSeenMasternodeVotes;
 // manage the masternode connections
 void ProcessMasternodeConnections(){
     LOCK(cs_vNodes);
-    
+
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
         //if it's our masternode, let it be
@@ -33,7 +33,7 @@ void ProcessMasternodeConnections(){
 
 void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream& vRecv)
 {
-    if (strCommand == "dsee") { //DarkSend Election Entry   
+    if (strCommand == "dsee") { //DarkSend Election Entry
         if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
             return;
         }
@@ -55,25 +55,25 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
         bool isLocal = false; // addr.IsRFC1918();
         std::string vchPubKey(pubkey.begin(), pubkey.end());
         std::string vchPubKey2(pubkey2.begin(), pubkey2.end());
-        
+
         CScript pubkeyScript;
         pubkeyScript.SetDestination(pubkey.GetID());
 
         if(pubkeyScript.size() != 25) {
             LogPrintf("dsee - pubkey the wrong size\n");
             pfrom->Misbehaving(100);
-            return;  
+            return;
         }
 
-        std::string strMessage = addr.ToString() + boost::lexical_cast<std::string>(sigTime) + vchPubKey + vchPubKey2; 
+        std::string strMessage = addr.ToString() + boost::lexical_cast<std::string>(sigTime) + vchPubKey + vchPubKey2;
 
         CScript pubkeyScript2;
         pubkeyScript2.SetDestination(pubkey2.GetID());
-        
+
         if(pubkeyScript2.size() != 25) {
             LogPrintf("dsee - pubkey the wrong size\n");
             pfrom->Misbehaving(100);
-            return;  
+            return;
         }
 
         std::string errorMessage = "";
@@ -86,7 +86,6 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
         if((fTestNet && addr.GetPort() != 19999) || (!fTestNet && addr.GetPort() != 9999)) return;
 
         //LogPrintf("Searching existing masternodes : %s - %s\n", addr.ToString().c_str(),  vin.ToString().c_str());
-
 
         //count == -1 when it's a new entry
         // e.g. We don't want the entry relayed/time updated when we're syncing the list
@@ -131,7 +130,7 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
         CTxOut vout = CTxOut(999.99*COIN, darkSendPool.collateralPubKey);
         tx.vin.push_back(vin);
         tx.vout.push_back(vout);
-        if(tx.AcceptableInputs(state, true)){            
+        if(tx.AcceptableInputs(state, true)){
             LogPrintf("dsee - Accepted masternode entry %i %i\n", count, current);
 
             if(GetInputAge(vin) < MASTERNODE_MIN_CONFIRMATIONS){
@@ -151,7 +150,7 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
             }
 
             if(count == -1 && !isLocal)
-                RelayDarkSendElectionEntry(vin, addr, vchSig, sigTime, pubkey, pubkey2, count, current, lastUpdated); 
+                RelayDarkSendElectionEntry(vin, addr, vchSig, sigTime, pubkey, pubkey2, count, current, lastUpdated);
 
         } else {
             LogPrintf("dsee - Rejected masternode entry\n");
@@ -159,7 +158,7 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
             int nDoS = 0;
             if (state.IsInvalid(nDoS))
             {
-                LogPrintf("%s from %s %s was not accepted into the memory pool\n", tx.GetHash().ToString().c_str(),
+                LogPrintf("dsee - %s from %s %s was not accepted into the memory pool\n", tx.GetHash().ToString().c_str(),
                     pfrom->addr.ToString().c_str(), pfrom->cleanSubVer.c_str());
                 if (nDoS > 0)
                     pfrom->Misbehaving(nDoS);
@@ -167,7 +166,7 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
         }
     }
 
-    else if (strCommand == "dseep") { //DarkSend Election Entry Ping 
+    else if (strCommand == "dseep") { //DarkSend Election Entry Ping
         if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
             return;
         }
@@ -181,12 +180,12 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
         vRecv >> vin >> vchSig >> sigTime >> stop;
 
         if (sigTime > GetAdjustedTime() + 60 * 60) {
-            LogPrintf("dseep: Signature rejected, too far into the future %s\n", vin.ToString().c_str());
+            LogPrintf("dseep - Signature rejected, too far into the future %s\n", vin.ToString().c_str());
             return;
         }
 
         /*if (sigTime <= GetAdjustedTime() - 60 * 60) {
-            LogPrintf("dseep: Signature rejected, too far into the past %s - %"PRI64u" %"PRI64u" \n", vin.ToString().c_str(), sigTime, GetAdjustedTime());
+            LogPrintf("dseep - Signature rejected, too far into the past %s - %"PRI64u" %"PRI64u" \n", vin.ToString().c_str(), sigTime, GetAdjustedTime());
             return;
         }*/
 
@@ -197,11 +196,11 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
                 if(mn.lastDseep < sigTime){ //take this only if it's newer
                     mn.lastDseep = sigTime;
 
-                    std::string strMessage = mn.addr.ToString() + boost::lexical_cast<std::string>(sigTime) + boost::lexical_cast<std::string>(stop); 
+                    std::string strMessage = mn.addr.ToString() + boost::lexical_cast<std::string>(sigTime) + boost::lexical_cast<std::string>(stop);
 
                     std::string errorMessage = "";
                     if(!darkSendSigner.VerifyMessage(mn.pubkey2, vchSig, strMessage, errorMessage)){
-                        LogPrintf("dseep: Got bad masternode address signature %s \n", vin.ToString().c_str());
+                        LogPrintf("dseep - Got bad masternode address signature %s \n", vin.ToString().c_str());
                         //pfrom->Misbehaving(20);
                         return;
                     }
@@ -223,12 +222,12 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
 
         // ask for the dsee info once from the node that sent dseep
 
-        LogPrintf("dseep: Couldn't find masternode entry %s\n", vin.ToString().c_str());
+        LogPrintf("dseep - Couldn't find masternode entry %s\n", vin.ToString().c_str());
 
         BOOST_FOREACH(CTxIn vinAsked, vecMasternodeAskedFor)
             if (vinAsked == vin) return;
 
-        LogPrintf("dseep: Asking source node for missing entry %s\n", vin.ToString().c_str());
+        LogPrintf("dseep - Asking source node for missing entry %s\n", vin.ToString().c_str());
 
         vecMasternodeAskedFor.push_back(vin);
         pfrom->PushMessage("dseg", vin);
@@ -243,7 +242,7 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
 
         if(vin == CTxIn()) { //only should ask for this once
             if(pfrom->HasFulfilledRequest("dseg")) {
-                LogPrintf("dseg -- peer already asked me for the list\n");
+                LogPrintf("dseg - peer already asked me for the list\n");
                 pfrom->Misbehaving(20);
                 return;
             }
@@ -254,8 +253,8 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
         int count = darkSendMasterNodes.size()-1;
         int i = 0;
 
-        BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {    
-            LogPrintf("Sending master node entry - %s \n", mn.addr.ToString().c_str());
+        BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
+            LogPrintf("dseg - Sending master node entry - %s \n", mn.addr.ToString().c_str());
 
             if(mn.addr.IsRFC1918()) continue; //local network
 
@@ -272,9 +271,9 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
     }
 
     else if (strCommand == "mnget") { //Masternode Payments Request Sync
-        
+
         if(pfrom->HasFulfilledRequest("mnget")) {
-            LogPrintf("mnget -- peer already asked me for the list\n");
+            LogPrintf("mnget - peer already asked me for the list\n");
             pfrom->Misbehaving(20);
             return;
         }
@@ -287,7 +286,7 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
         vRecv >> winner;
 
         if(pindexBest == NULL) return;
- 
+
         uint256 hash = winner.GetHash();
         if(mapSeenMasternodeVotes.count(hash)) {
             if(fDebug) LogPrintf("mnw - seen vote %s Height %d bestHeight %d\n", hash.ToString().c_str(), winner.nBlockHeight, pindexBest->nHeight);
@@ -370,11 +369,11 @@ int GetCurrentMasterNode(int mod, int64 nBlockHeight)
         uint256 n = mn.CalculateScore(mod, nBlockHeight);
         unsigned int n2 = 0;
         memcpy(&n2, &n, sizeof(n2));
-        
+
         // determine the winner
         if(n2 > score){
             score = n2;
-            winner = i; 
+            winner = i;
         }
         i++;
     }
@@ -385,7 +384,7 @@ int GetCurrentMasterNode(int mod, int64 nBlockHeight)
 int GetMasternodeByRank(int findRank, int64 nBlockHeight)
 {
     int i = 0;
- 
+
     std::vector<pair<unsigned int, int> > vecMasternodeScores;
 
     i = 0;
@@ -405,7 +404,7 @@ int GetMasternodeByRank(int findRank, int64 nBlockHeight)
     }
 
     sort(vecMasternodeScores.rbegin(), vecMasternodeScores.rend(), CompareValueOnly2());
-    
+
     int rank = 0;
     BOOST_FOREACH (PAIRTYPE(unsigned int, int)& s, vecMasternodeScores){
         rank++;
@@ -433,7 +432,7 @@ int GetMasternodeRank(CTxIn& vin, int64 nBlockHeight)
     }
 
     sort(vecMasternodeScores.rbegin(), vecMasternodeScores.rend(), CompareValueOnly());
-    
+
     unsigned int rank = 0;
     BOOST_FOREACH (PAIRTYPE(unsigned int, CTxIn)& s, vecMasternodeScores){
         rank++;
@@ -443,11 +442,11 @@ int GetMasternodeRank(CTxIn& vin, int64 nBlockHeight)
     return -1;
 }
 
-// 
-// Deterministically calculate a given "score" for a masternode depending on how close it's hash is to 
-// the proof of work for that block. The further away they are the better, the furthest will win the election 
+//
+// Deterministically calculate a given "score" for a masternode depending on how close it's hash is to
+// the proof of work for that block. The further away they are the better, the furthest will win the election
 // and get paid this block
-// 
+//
 uint256 CMasterNode::CalculateScore(int mod, int64 nBlockHeight)
 {
     if(pindexBest == NULL) return 0;
@@ -462,7 +461,7 @@ uint256 CMasterNode::CalculateScore(int mod, int64 nBlockHeight)
     LogPrintf(" -- MasterNode CalculateScore() n2 = %s \n", n2.ToString().c_str());
     LogPrintf(" -- MasterNode CalculateScore() vin = %s \n", vin.prevout.hash.GetHex().c_str());
     LogPrintf(" -- MasterNode CalculateScore() n3 = %s \n", n3.ToString().c_str());*/
-    
+
     return n3;
 }
 
@@ -491,7 +490,7 @@ void CMasterNode::Check()
 
         if(!tx.AcceptableInputs(state, true)) {
             enabled = 3;
-            return; 
+            return;
         }
     }
 
@@ -500,7 +499,7 @@ void CMasterNode::Check()
 
 bool CMasternodePayments::CheckSignature(CMasternodePaymentWinner& winner)
 {
-    std::string strMessage = winner.vin.ToString().c_str() + boost::lexical_cast<std::string>(winner.nBlockHeight); 
+    std::string strMessage = winner.vin.ToString().c_str() + boost::lexical_cast<std::string>(winner.nBlockHeight);
     std::string strPubKey = fTestNet? strTestPubKey : strMainPubKey;
     CPubKey pubkey(ParseHex(strPubKey));
 
@@ -512,9 +511,9 @@ bool CMasternodePayments::CheckSignature(CMasternodePaymentWinner& winner)
     return true;
 }
 
-bool CMasternodePayments::Sign(CMasternodePaymentWinner& winner) 
+bool CMasternodePayments::Sign(CMasternodePaymentWinner& winner)
 {
-    std::string strMessage = winner.vin.ToString().c_str() + boost::lexical_cast<std::string>(winner.nBlockHeight); 
+    std::string strMessage = winner.vin.ToString().c_str() + boost::lexical_cast<std::string>(winner.nBlockHeight);
 
     CKey key2;
     CPubKey pubkey2;
@@ -522,17 +521,17 @@ bool CMasternodePayments::Sign(CMasternodePaymentWinner& winner)
 
     if(!darkSendSigner.SetKey(strMasterPrivKey, errorMessage, key2, pubkey2))
     {
-        LogPrintf("Invalid masternodeprivkey: '%s'\n", errorMessage.c_str());
+        LogPrintf("CMasternodePayments::Sign - Invalid masternodeprivkey: '%s'\n", errorMessage.c_str());
         exit(0);
     }
 
     if(!darkSendSigner.SignMessage(strMessage, errorMessage, winner.vchSig, key2)) {
-        LogPrintf("CDarksendQueue():Relay - Sign message failed");
+        LogPrintf("CMasternodePayments::Sign - Sign message failed");
         return false;
     }
 
     if(!darkSendSigner.VerifyMessage(pubkey2, winner.vchSig, strMessage, errorMessage)) {
-        LogPrintf("CDarksendQueue():Relay - Verify message failed");
+        LogPrintf("CMasternodePayments::Sign - Verify message failed");
         return false;
     }
 
@@ -626,7 +625,7 @@ void CMasternodePayments::CleanPaymentList()
     vector<CMasternodePaymentWinner>::iterator it;
     for(it=vWinning.begin();it<vWinning.end();it++){
         if(pindexBest->nHeight - (*it).nBlockHeight > 1000){
-            if(fDebug) LogPrintf("Removing old masternode payment - block %d\n", (*it).nBlockHeight);
+            if(fDebug) LogPrintf("CMasternodePayments::CleanPaymentList - Removing old masternode payment - block %d\n", (*it).nBlockHeight);
             vWinning.erase(it);
             break;
         }
@@ -685,7 +684,7 @@ bool CMasternodePayments::ProcessBlock(int nBlockHeight)
 }
 
 void CMasternodePayments::Relay(CMasternodePaymentWinner& winner)
-{    
+{
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes){
         if(!pnode->fRelayTxes)
@@ -713,7 +712,7 @@ bool CMasternodePayments::SetPrivKey(std::string strPrivKey)
     Sign(winner);
 
     if(CheckSignature(winner)){
-        LogPrintf("Successfully initialized as masternode payments master\n");
+        LogPrintf("CMasternodePayments::SetPrivKey - Successfully initialized as masternode payments master\n");
         return true;
     } else {
         return false;
