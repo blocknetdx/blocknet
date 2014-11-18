@@ -1216,22 +1216,22 @@ int CMerkleTx::GetDepthInMainChain(CBlockIndex* &pindexRet) const
     minConfirms = IsTransactionLocked();
 
     if (hashBlock == 0 || nIndex == -1)
-        return 0;
+        return minConfirms;
 
     // Find the block it claims to be in
     map<uint256, CBlockIndex*>::iterator mi = mapBlockIndex.find(hashBlock);
     if (mi == mapBlockIndex.end())
-        return 0;
+        return minConfirms;
 
     CBlockIndex* pindex = (*mi).second;
     if (!pindex || !pindex->IsInMainChain())
-        return 0;
+        return minConfirms;
 
     // Make sure the merkle branch connects to this block
     if (!fMerkleVerified)
     {
         if (CBlock::CheckMerkleBranch(GetHash(), vMerkleBranch, nIndex) != pindex->hashMerkleRoot)
-            return 0;
+            return minConfirms;
         fMerkleVerified = true;
     }
 
