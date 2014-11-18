@@ -448,18 +448,35 @@ uint256 CMasterNode::CalculateScore(int mod, int64 nBlockHeight)
 {
     if(pindexBest == NULL) return 0;
 
-    uint256 n1 = 0;
-    if(!darkSendPool.GetLastValidBlockHash(n1, mod, nBlockHeight)) return 0;
+    uint256 hash = 0;
+    if(!darkSendPool.GetLastValidBlockHash(hash, mod, nBlockHeight)) return 0;
+    uint256 hash2 = Hash9(BEGIN(hash), END(hash));
 
-    uint256 n2 = Hash9(BEGIN(n1), END(n1));
-    uint256 n3 = vin.prevout.hash > n2 ? (vin.prevout.hash - n2) : (n2 - vin.prevout.hash);
+    // we'll make a 4 dimensional point in space
+    // the closest masternode to that point wins
+    uint64 a1 = hash2.Get64(0);
+    uint64 a2 = hash2.Get64(1);
+    uint64 a3 = hash2.Get64(2);
+    uint64 a4 = hash2.Get64(3);
+
+    uint64 b1 = vin.prevout.hash.Get64(0);
+    uint64 b2 = vin.prevout.hash.Get64(1);
+    uint64 b3 = vin.prevout.hash.Get64(2);
+    uint64 b4 = vin.prevout.hash.Get64(3);
+
+    // calculate distance between target point and mn point
+    uint256 r = 0;
+    r +=  (a1 > b1 ? a1 - b1 : b1 - a1); 
+    r +=  (a2 > b2 ? a2 - b2 : b2 - a2);
+    r +=  (a3 > b3 ? a3 - b3 : b3 - a3);
+    r +=  (a4 > b4 ? a4 - b4 : b4 - a4);
 
     /*
     LogPrintf(" -- MasterNode CalculateScore() n2 = %s \n", n2.ToString().c_str());
     LogPrintf(" -- MasterNode CalculateScore() vin = %s \n", vin.prevout.hash.GetHex().c_str());
     LogPrintf(" -- MasterNode CalculateScore() n3 = %s \n", n3.ToString().c_str());*/
 
-    return n3;
+    return r;
 }
 
 void CMasterNode::Check()
