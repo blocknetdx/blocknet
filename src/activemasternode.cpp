@@ -118,7 +118,12 @@ void CActiveMasternode::RegisterAsMasterNode(bool stop)
                 LogPrintf("CActiveMasternode::RegisterAsMasterNode() - Masternode input = %s\n", vinMasternode.ToString().c_str());
             }
 
-            RelayDarkSendElectionEntry(vinMasternode, masterNodeSignAddr, vchMasterNodeSignature, masterNodeSignatureTime, pubkeyMasterNode, pubkey2, -1, -1, masterNodeSignatureTime);
+            //relay to all
+            LOCK(cs_vNodes);
+            BOOST_FOREACH(CNode* pnode, vNodes)
+            {
+                pnode->PushMessage("dsee", vinMasternode, masterNodeSignAddr, vchMasterNodeSignature, masterNodeSignatureTime, pubkeyMasterNode, pubkey2, -1, -1, masterNodeSignatureTime);
+            }
 
             return;
         }
@@ -249,7 +254,12 @@ bool CActiveMasternode::RegisterAsMasterNodeRemoteOnly(std::string strMasterNode
 
         pwalletMain->LockCoin(vinMasternode.prevout);
 
-        RelayDarkSendElectionEntry(vinMasternode, masterNodeSignAddr, vchMasterNodeSignature, masterNodeSignatureTime, pubkeyMasterNode, pubkey2, -1, -1, masterNodeSignatureTime);
+        //relay to all
+        LOCK(cs_vNodes);
+        BOOST_FOREACH(CNode* pnode, vNodes)
+        {
+            pnode->PushMessage("dsee", vinMasternode, masterNodeSignAddr, vchMasterNodeSignature, masterNodeSignatureTime, pubkeyMasterNode, pubkey2, -1, -1, masterNodeSignatureTime);
+        }
 
         return true;
     }

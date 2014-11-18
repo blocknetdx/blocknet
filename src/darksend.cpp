@@ -1988,6 +1988,8 @@ void ThreadCheckDarkSendPool()
     unsigned int c = 0;
     while (true)
     {
+        c++;
+
         MilliSleep(1000);
         //LogPrintf("ThreadCheckDarkSendPool::check timeout\n");
         darkSendPool.CheckTimeout();
@@ -2064,7 +2066,5 @@ void ThreadCheckDarkSendPool()
                 darkSendPool.DoAutomaticDenominating();
             }
         }
-
-        c++;
     }
 }

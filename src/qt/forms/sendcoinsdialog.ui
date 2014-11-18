@@ -749,6 +749,13 @@
         </widget>
        </item>
        <item>
+        <widget class="QCheckBox" name="checkInstantX">
+         <property name="text">
+          <string>InstantX</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QLabel" name="label">
          <property name="text">
           <string>Balance:</string>

@@ -108,7 +108,7 @@ void ProcessMessageInstantX(CNode* pfrom, std::string& strCommand, CDataStream& 
         printf(" -- ProcessMessageInstantX::txlock %d  %s\n", mapTxLocks.count(inv.hash), inv.hash.ToString().c_str());
 
         if(!mapTxLocks.count(inv.hash)){
-            if(ctxl.CountSignatures() < INSTANTX_SIGNATURES_REQUIRED){
+            /*if(ctxl.CountSignatures() < INSTANTX_SIGNATURES_REQUIRED){
                 printf("InstantX::txlock - not enough signatures\n");
                 return;
             }
@@ -119,12 +119,12 @@ void ProcessMessageInstantX(CNode* pfrom, std::string& strCommand, CDataStream& 
             if(!ctxl.AllInFavor()){
                 printf("InstantX::txlock - not all in favor of lock, rejected\n");
                 return;
-            }
+            }*/
 
             mapTxLocks.insert(make_pair(inv.hash, ctxl));
 
             //broadcast the new lock
-            LOCK(cs_vNodes);
+/*            LOCK(cs_vNodes);
             BOOST_FOREACH(CNode* pnode, vNodes)
             {
                 if(!pnode->fRelayTxes)
@@ -132,8 +132,8 @@ void ProcessMessageInstantX(CNode* pfrom, std::string& strCommand, CDataStream& 
 
                 pnode->PushMessage("txlock", ctxl);
             }
-            
-            pwalletMain->UpdatedConfirmations();
+*/            
+            //pwalletMain->UpdatedConfirmations();
 
             printf("InstantX :: Got Transaction Lock: %s %s : accepted %s\n",
                 pfrom->addr.ToString().c_str(), pfrom->cleanSubVer.c_str(),
@@ -262,9 +262,6 @@ void ProcessConsensusVote(CConsensusVote& ctx)
                 //broadcast the new lock
                 LOCK(cs_vNodes);
                 BOOST_FOREACH(CNode* pnode, vNodes){
-                    if(!pnode->fRelayTxes)
-                        continue;
-
                     pnode->PushMessage("txlock", ctxl);
                 }
             }

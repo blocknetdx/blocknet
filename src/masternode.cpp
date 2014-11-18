@@ -41,7 +41,7 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
         bool fIsInitialDownload = IsInitialBlockDownload();
         if(fIsInitialDownload) return;
 
-        CTxIn vin;
+        CTxIn vin; 
         CService addr;
         CPubKey pubkey;
         CPubKey pubkey2;

@@ -886,8 +886,12 @@ void CWalletTx::RelayWalletTransaction(std::string strCommand)
         if (GetDepthInMainChain() == 0) {
             uint256 hash = GetHash();
             LogPrintf("Relaying wtx %s\n", hash.ToString().c_str());
-
-            RelayTransaction((CTransaction)*this, hash);
+            
+            if(strCommand == "txlreq"){
+                RelayTransactionLockReq((CTransaction)*this, hash);
+            } else {
+                RelayTransaction((CTransaction)*this, hash);
+            }
         }
     }
 }
