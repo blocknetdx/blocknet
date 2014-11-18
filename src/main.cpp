@@ -711,6 +711,24 @@ bool CTxMemPool::accept(CValidationState &state, CTransaction &tx, bool fCheckIn
             return false;
     }
 
+    // See if this conflicts with any TX locks
+    //printf("mapTxLocks start\n");
+    typedef std::map<uint256, CTransactionLock>::iterator it_ctxl;
+    for(it_ctxl it = mapTxLocks.begin(); it != mapTxLocks.end(); it++) {
+        //printf("%s\n", it->second.tx.ToString().c_str());
+        //printf("%s\n", tx.ToString().c_str());
+        for (unsigned int a = 0; a < it->second.tx.vin.size(); a++) {
+            for (unsigned int b = 0; b < tx.vin.size(); b++) {
+                //printf(" compare %d - %d\n", a, b);
+                if(tx.vin[b].prevout == it->second.tx.vin[a].prevout) {
+                    return error("CTxMemPool::acceptableInputs()::InstantX : invalid transaction, conflicts with existing transaction lock %s", tx.vin[b].ToString().c_str());
+                }
+            }
+        }
+    }
+    //printf("mapTxLocks end\n");
+
+
     // Check for conflicts with in-memory transactions
     CTransaction* ptxOld = NULL;
     for (unsigned int i = 0; i < tx.vin.size(); i++)
@@ -858,6 +876,20 @@ bool CTxMemPool::acceptableInputs(CValidationState &state, CTransaction &tx, boo
         return error("CTxMemPool::acceptableInputs() : nonstandard transaction (%s)",
                      strNonStd.c_str());
 */
+
+    // See if this conflicts with any TX locks
+    typedef std::map<uint256, CTransactionLock>::iterator it_ctxl;
+    for(it_ctxl it = mapTxLocks.begin(); it != mapTxLocks.end(); it++) {
+        for (unsigned int a = 0; a < it->second.tx.vin.size(); a++) {
+            for (unsigned int b = 0; b < tx.vin.size(); b++) {
+                if(tx.vin[b].prevout == it->second.tx.vin[a].prevout) {
+                    return error("CTxMemPool::acceptableInputs()::InstantX : invalid transaction, conflicts with existing transaction lock %s", tx.vin[b].ToString().c_str());
+                }
+            }
+        }
+    }
+
+
     // Check for conflicts with in-memory transactions
     for (unsigned int i = 0; i < tx.vin.size(); i++)
     {
@@ -1154,15 +1186,35 @@ void CTxMemPool::queryHashes(std::vector<uint256>& vtxid)
         vtxid.push_back((*mi).first);
 }
 
-
 int CMerkleTx::IsTransactionLocked() const
 {
+    if(nInstantXDepth == 0) return 0;
+
+    //printf("mapTxLocks start\n");
+    typedef std::map<uint256, CTransactionLock>::iterator it_ctxl;
+
+    int found = 0;
+    for (unsigned int b = 0; b < vout.size(); b++) {
+        for(it_ctxl it = mapTxLocks.begin(); it != mapTxLocks.end(); it++) {
+            for (unsigned int a = 0; a < it->second.tx.vout.size(); a++) {
+                if(vout[b] == it->second.tx.vout[a]) 
+                    found++;
+            }
+            if(found > 0) break;
+        }
+    }
+    //printf("mapTxLocks end %d %d\n", found , (int)vout.size());
+    if(found == (int)vout.size()) return nInstantXDepth;
+
     return 0;
 }
 
 
 int CMerkleTx::GetDepthInMainChain(CBlockIndex* &pindexRet) const
 {
+    int minConfirms = 0;
+    minConfirms = IsTransactionLocked();
+
     if (hashBlock == 0 || nIndex == -1)
         return 0;
 
@@ -1184,7 +1236,7 @@ int CMerkleTx::GetDepthInMainChain(CBlockIndex* &pindexRet) const
     }
 
     pindexRet = pindex;
-    return pindexBest->nHeight - pindex->nHeight + 1;
+    return max(pindexBest->nHeight - pindex->nHeight + 1, minConfirms);
 }
 
 

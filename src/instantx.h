@@ -20,7 +20,69 @@
 using namespace std;
 using namespace boost;
 
+class CConsensusVote;
+class CTransaction;
+class CTransactionLock;
+
+extern map<uint256, CTransaction> mapTxLockReq;
+extern map<uint256, CTransactionLock> mapTxLocks;
+
 void ProcessMessageInstantX(CNode* pfrom, std::string& strCommand, CDataStream& vRecv);
+
+//check if we need to vote on this transaction
+void DoConsensusVote(CTransaction& tx, bool approved, int64 nBlockHeight);
+
+//process consensus vote message
+void ProcessConsensusVote(CConsensusVote& ctx);
+
+// keep transaction locks in memory for an hour
+void CleanTransactionLocksList();
+
+class CConsensusVote
+{
+public:
+    CTxIn vinMasternode;
+    bool approved;
+    uint256 txHash;
+    std::vector<unsigned char> vchMasterNodeSignature;
+    int nBlockHeight;
+
+    bool SignatureValid();
+    bool Sign();
+
+    IMPLEMENT_SERIALIZE
+    (
+        READWRITE(txHash);
+        READWRITE(vinMasternode);
+        READWRITE(approved);
+        READWRITE(vchMasterNodeSignature);
+        READWRITE(nBlockHeight);
+    )
+};
+
+class CTransactionLock
+{
+public:
+    int nBlockHeight;
+    CTransaction tx;
+    std::vector<CConsensusVote> vecConsensusVotes;
+
+    bool SignaturesValid();
+    int CountSignatures();
+    bool AllInFavor();
+    void AddSignature(CConsensusVote cv);
+    uint256 GetHash()
+    {
+        return tx.GetHash();
+    }
+
+    IMPLEMENT_SERIALIZE
+    (
+        READWRITE(tx);
+        READWRITE(nBlockHeight);
+        READWRITE(vecConsensusVotes);
+    )
+};
 
 
 #endif

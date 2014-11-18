@@ -91,12 +91,12 @@ void WalletModel::updateStatus()
 
 void WalletModel::pollBalanceChanged()
 {
-    if(nBestHeight != cachedNumBlocks || nDarksendRounds != cachedDarksendRounds)
+    if(nBestHeight != cachedNumBlocks || nDarksendRounds != cachedDarksendRounds || (int)mapTxLocks.size() != cachedTxLocks)
     {
         // Balance and number of transactions might have changed
         cachedNumBlocks = nBestHeight;
         cachedDarksendRounds = nDarksendRounds;
-        cachedTxLocks = 0;
+        cachedTxLocks = (int)mapTxLocks.size();
         checkBalanceChanged();
     }
 }
@@ -235,6 +235,10 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
         }
 
         std::string strCommand = "tx";
+        if(recipients[0].useInstantX) {
+            printf("!!!! USING INSTANTX2\n");
+            strCommand = "txlreq";
+        }
         if(!wallet->CommitTransaction(wtx, keyChange, strCommand))
         {
             return TransactionCommitFailed;

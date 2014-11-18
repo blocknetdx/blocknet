@@ -2005,6 +2005,7 @@ void ThreadCheckDarkSendPool()
             }
 
             masternodePayments.CleanPaymentList();
+            CleanTransactionLocksList();
         }
 
 

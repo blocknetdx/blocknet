@@ -157,7 +157,12 @@ void SendCoinsDialog::on_sendButton_clicked()
         funds = "Using <b>ANY AVAILABLE Funds</b>";
     }
 
-    recipients[0].useInstantX = false;
+    if(ui->checkInstantX->isChecked()) {
+        printf("!!!! USING INSTANTX\n");
+        recipients[0].useInstantX = true;
+    } else {
+        recipients[0].useInstantX = false;
+    }
     
     // Format confirmation message
     QStringList formatted;
