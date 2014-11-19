@@ -292,12 +292,12 @@ bool OptionsModel::setData(const QModelIndex & index, const QVariant & value, in
         case Language:
             settings.setValue("language", value);
             break;
-        case DarksendRounds: 
+        case DarksendRounds:
             nDarksendRounds = value.toInt();
             settings.setValue("nDarksendRounds", nDarksendRounds);
             emit darksendRoundsChanged(nDarksendRounds);
             break;
-        case AnonymizeDarkcoinAmount: 
+        case AnonymizeDarkcoinAmount:
             nAnonymizeDarkcoinAmount = value.toInt();
             settings.setValue("nAnonymizeDarkcoinAmount", nAnonymizeDarkcoinAmount);
             emit anonymizeDarkcoinAmountChanged(nAnonymizeDarkcoinAmount);
