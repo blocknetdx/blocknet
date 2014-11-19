@@ -121,7 +121,7 @@ public:
 
     bool IsExpired()
     {
-        return (GetTime() - addedTime) > DARKSEND_QUEUE_TIMEOUT;// 30 seconds
+        return (GetTime() - addedTime) > 120;// 120 seconds
     }
 };
 
@@ -171,7 +171,7 @@ public:
 
     bool IsExpired()
     {
-        return (GetTime() - time) > 30;// 30 seconds
+        return (GetTime() - time) > DARKSEND_QUEUE_TIMEOUT;// 120 seconds
     }
 
     bool CheckSignature();
