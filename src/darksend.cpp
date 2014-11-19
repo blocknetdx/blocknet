@@ -796,7 +796,7 @@ void CDarkSendPool::CheckTimeout(){
             c++;
         }
 
-        if(GetTimeMillis()-lastTimeChanged >= DARKSEND_QUEUE_TIMEOUT+addLagTime){
+        if(GetTimeMillis()-lastTimeChanged >= (DARKSEND_QUEUE_TIMEOUT*1000)+addLagTime){
             lastTimeChanged = GetTimeMillis();
 
             ChargeFees();  
@@ -809,7 +809,7 @@ void CDarkSendPool::CheckTimeout(){
 
             UpdateState(POOL_STATUS_ACCEPTING_ENTRIES);
         }
-    } else if(GetTimeMillis()-lastTimeChanged >= DARKSEND_QUEUE_TIMEOUT+addLagTime){
+    } else if(GetTimeMillis()-lastTimeChanged >= (DARKSEND_QUEUE_TIMEOUT*1000)+addLagTime){
         if(fDebug) LogPrintf("CDarkSendPool::CheckTimeout() -- Session timed out (30s) -- resetting\n");
         SetNull();
         UnlockCoins();
@@ -818,8 +818,7 @@ void CDarkSendPool::CheckTimeout(){
         lastMessage = "Session timed out (30), please resubmit";
     }
 
-
-    if(state == POOL_STATUS_SIGNING && GetTimeMillis()-lastTimeChanged >= DARKSEND_SIGNING_TIMEOUT+addLagTime ) {
+    if(state == POOL_STATUS_SIGNING && GetTimeMillis()-lastTimeChanged >= (DARKSEND_SIGNING_TIMEOUT*1000)+addLagTime ) {
         if(fDebug) LogPrintf("CDarkSendPool::CheckTimeout() -- Session timed out -- restting\n");
         ChargeFees();
         SetNull();
