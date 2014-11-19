@@ -753,13 +753,13 @@ bool AppInit2(boost::thread_group& threadGroup)
         if (GetBoolArg("-salvagewallet"))
         {
             // Recover readable keypairs:
-            if (!CWalletDB::Recover(bitdb, strWalletFile, true))
+            if (!CWalletDB::Recover(bitdb, strWalletFile.c_str(), true))
                 return false;
         }
 
-        if (filesystem::exists(GetDataDir() / strWalletFile))
+        if (filesystem::exists(GetDataDir() / strWalletFile.c_str()))
         {
-            CDBEnv::VerifyResult r = bitdb.Verify(strWalletFile, CWalletDB::Recover);
+            CDBEnv::VerifyResult r = bitdb.Verify(strWalletFile.c_str(), CWalletDB::Recover);
             if (r == CDBEnv::RECOVER_OK)
             {
                 string msg = strprintf(_("Warning: wallet.dat corrupt, data salvaged!"
@@ -1059,7 +1059,7 @@ bool AppInit2(boost::thread_group& threadGroup)
         if (GetBoolArg("-zapwallettxes", false)) {
             uiInterface.InitMessage(_("Zapping all transactions from wallet..."));
 
-            pwalletMain = new CWallet(strWalletFile);
+            pwalletMain = new CWallet(strWalletFile.c_str());
             DBErrors nZapWalletRet = pwalletMain->ZapWalletTx(vWtx);
             if (nZapWalletRet != DB_LOAD_OK) {
                 uiInterface.InitMessage(_("Error loading wallet.dat: Wallet corrupted"));
@@ -1074,7 +1074,7 @@ bool AppInit2(boost::thread_group& threadGroup)
 
         nStart = GetTimeMillis();
         bool fFirstRun = true;
-        pwalletMain = new CWallet(strWalletFile);
+        pwalletMain = new CWallet(strWalletFile.c_str());
         DBErrors nLoadWalletRet = pwalletMain->LoadWallet(fFirstRun);
         if (nLoadWalletRet != DB_LOAD_OK)
         {
@@ -1139,7 +1139,7 @@ bool AppInit2(boost::thread_group& threadGroup)
             pindexRescan = pindexGenesisBlock;
         else
         {
-            CWalletDB walletdb(strWalletFile);
+            CWalletDB walletdb(strWalletFile.c_str());
             CBlockLocator locator;
             if (walletdb.ReadBestBlock(locator))
                 pindexRescan = locator.GetBlockIndex();
