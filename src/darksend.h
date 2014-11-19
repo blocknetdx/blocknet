@@ -33,6 +33,9 @@ class CDarksendQueue;
 #define MASTERNODE_REJECTED                    0
 #define MASTERNODE_RESET                       -1
 
+#define DARKSEND_QUEUE_TIMEOUT                 120
+#define DARKSEND_SIGNING_TIMEOUT               10
+
 extern CDarkSendPool darkSendPool;
 extern CDarkSendSigner darkSendSigner;
 extern std::vector<int64> darkSendDenominations;
@@ -118,7 +121,7 @@ public:
 
     bool IsExpired()
     {
-        return (GetTime() - addedTime) > 120;// 120 seconds
+        return (GetTime() - addedTime) > DARKSEND_QUEUE_TIMEOUT;// 120 seconds
     }
 };
 
@@ -168,7 +171,7 @@ public:
 
     bool IsExpired()
     {
-        return (GetTime() - time) > 120;// 120 seconds
+        return (GetTime() - time) > DARKSEND_QUEUE_TIMEOUT;// 120 seconds
     }
 
     bool CheckSignature();
