@@ -606,6 +606,8 @@ void CDarkSendPool::ChargeFees(){
     if(fMasterNode) {
         //we don't need to charge collateral for every offence.
         int offences = 0;
+        int r = rand()%100;
+        if(r > 33) return;
 
         if(state == POOL_STATUS_ACCEPTING_ENTRIES){
             BOOST_FOREACH(const CTransaction& txCollateral, vecSessionCollateral) {
@@ -636,7 +638,7 @@ void CDarkSendPool::ChargeFees(){
             }
         }
 
-        int r = rand()%100;
+        r = rand()%100;
         int target = 0;
 
         //mostly offending? 
@@ -774,7 +776,7 @@ void CDarkSendPool::CheckTimeout(){
 
         // if it's a masternode, the entries are stored in "entries", otherwise they're stored in myEntries
         std::vector<CDarkSendEntry> *vec = &myEntries;
-        if(fMasterNode) vec = &entries; 
+        if(fMasterNode) vec = &entries;
 
         // check for a timeout and reset if needed
         vector<CDarkSendEntry>::iterator it2;
@@ -794,7 +796,7 @@ void CDarkSendPool::CheckTimeout(){
             c++;
         }
 
-        if(GetTimeMillis()-lastTimeChanged >= 30000+addLagTime){
+        if(GetTimeMillis()-lastTimeChanged >= DARKSEND_QUEUE_TIMEOUT+addLagTime){
             lastTimeChanged = GetTimeMillis();
 
             ChargeFees();  
@@ -807,7 +809,7 @@ void CDarkSendPool::CheckTimeout(){
 
             UpdateState(POOL_STATUS_ACCEPTING_ENTRIES);
         }
-    } else if(GetTimeMillis()-lastTimeChanged >= 30000+addLagTime){
+    } else if(GetTimeMillis()-lastTimeChanged >= DARKSEND_QUEUE_TIMEOUT+addLagTime){
         if(fDebug) LogPrintf("CDarkSendPool::CheckTimeout() -- Session timed out (30s) -- resetting\n");
         SetNull();
         UnlockCoins();
@@ -817,7 +819,7 @@ void CDarkSendPool::CheckTimeout(){
     }
 
 
-    if(state == POOL_STATUS_SIGNING && GetTimeMillis()-lastTimeChanged >= 10000+addLagTime ) {
+    if(state == POOL_STATUS_SIGNING && GetTimeMillis()-lastTimeChanged >= DARKSEND_SIGNING_TIMEOUT+addLagTime ) {
         if(fDebug) LogPrintf("CDarkSendPool::CheckTimeout() -- Session timed out -- restting\n");
         ChargeFees();
         SetNull();
@@ -1483,6 +1485,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
                 CService addr;
                 if(dsq.time == 0) continue;
                 if(!dsq.GetAddress(addr)) continue;
+                if(dsq.IsExpired()) continue;
 
                 //don't reuse masternodes
                 BOOST_FOREACH(CTxIn usedVin, vecMasternodesUsed){
