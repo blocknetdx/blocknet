@@ -265,6 +265,7 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
             } else if (vin == mn.vin) {
                 LogPrintf("dseg - Sending masternode entry - %s \n", mn.addr.ToString().c_str());
                 pfrom->PushMessage("dsee", mn.vin, mn.addr, mn.sig, mn.now, mn.pubkey, mn.pubkey2, count, i, mn.lastTimeSeen);
+                return;
             }
             i++;
         }
