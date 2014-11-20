@@ -165,7 +165,7 @@ public:
     }
 
     uint256 GetHash(){
-        uint256 n2 = Hash9(BEGIN(nBlockHeight), END(nBlockHeight));
+        uint256 n2 = HashX11(BEGIN(nBlockHeight), END(nBlockHeight));
         uint256 n3 = vin.prevout.hash > n2 ? (vin.prevout.hash - n2) : (n2 - vin.prevout.hash);
 
         return n3;

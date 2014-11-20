@@ -450,7 +450,7 @@ uint256 CMasterNode::CalculateScore(int mod, int64 nBlockHeight)
 
     uint256 hash = 0;
     if(!darkSendPool.GetLastValidBlockHash(hash, mod, nBlockHeight)) return 0;
-    uint256 hash2 = Hash9(BEGIN(hash), END(hash));
+    uint256 hash2 = HashX11(BEGIN(hash), END(hash));
 
     // we'll make a 4 dimensional point in space
     // the closest masternode to that point wins
@@ -459,10 +459,25 @@ uint256 CMasterNode::CalculateScore(int mod, int64 nBlockHeight)
     uint64 a3 = hash2.Get64(2);
     uint64 a4 = hash2.Get64(3);
 
+    //copy part of our source hash
+    int i1, i2, i3, i4;
+    i1=0;i2=0;i3=0;i4=0;
+    memcpy(&i1, &a1, 1);
+    memcpy(&i2, &a2, 1);
+    memcpy(&i3, &a3, 1);
+    memcpy(&i4, &a4, 1);
+
+    //split up our mn hash
     uint64 b1 = vin.prevout.hash.Get64(0);
     uint64 b2 = vin.prevout.hash.Get64(1);
     uint64 b3 = vin.prevout.hash.Get64(2);
     uint64 b4 = vin.prevout.hash.Get64(3);
+
+    //move mn hash around
+    b1 <<= (i1 % 64);
+    b2 <<= (i2 % 64);
+    b3 <<= (i3 % 64);
+    b4 <<= (i4 % 64);
 
     // calculate distance between target point and mn point
     uint256 r = 0;
@@ -555,8 +570,8 @@ bool CMasternodePayments::Sign(CMasternodePaymentWinner& winner)
 uint64 CMasternodePayments::CalculateScore(uint256 blockHash, CTxIn& vin)
 {
     uint256 n1 = blockHash;
-    uint256 n2 = Hash9(BEGIN(n1), END(n1));
-    uint256 n3 = Hash9(BEGIN(vin.prevout.hash), END(vin.prevout.hash));
+    uint256 n2 = HashX11(BEGIN(n1), END(n1));
+    uint256 n3 = HashX11(BEGIN(vin.prevout.hash), END(vin.prevout.hash));
     uint256 n4 = n3 > n2 ? (n3 - n2) : (n2 - n3);
 
     //printf(" -- CMasternodePayments CalculateScore() n2 = %"PRI64u" \n", n2.Get64());

@@ -59,7 +59,7 @@ GLOBAL sph_echo512_context      z_echo;
 #define ZSKEIN (memcpy(&ctx_skein, &z_skein, sizeof(z_skein)))
 
 template<typename T1>
-inline uint256 Hash9(const T1 pbegin, const T1 pend)
+inline uint256 HashX11(const T1 pbegin, const T1 pend)
 
 {
     sph_blake512_context     ctx_blake;

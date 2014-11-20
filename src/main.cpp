@@ -1852,7 +1852,7 @@ void CBlockHeader::UpdateTime(const CBlockIndex* pindexPrev)
 
 uint256 CBlockHeader::GetHash() const
 {   
-    return Hash9(BEGIN(nVersion), END(nNonce));
+    return HashX11(BEGIN(nVersion), END(nNonce));
 }
 
 const CTxOut &CTransaction::GetOutputFor(const CTxIn& input, CCoinsViewCache& view)
