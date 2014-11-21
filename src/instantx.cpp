@@ -51,6 +51,16 @@ void ProcessMessageInstantX(CNode* pfrom, std::string& strCommand, CDataStream& 
             return;
         }
 
+        nBlockHeight = GetInputAge(tx.vin[0]);
+        if(nBlockHeight < 1){
+            printf("ProcessMessageInstantX::txlreq - Transaction not found: %s\n", tx.GetHash().ToString().c_str());
+            return;   
+        }
+        if(nBlockHeight > pindexBest->nHeight-5){
+            printf("ProcessMessageInstantX::txlreq - Transaction too new: %s\n", tx.GetHash().ToString().c_str());
+            return;   
+        }
+
         bool fMissingInputs = false;
         CValidationState state;
         if (tx.AcceptToMemoryPool(state, true, true, &fMissingInputs))
@@ -388,7 +398,6 @@ bool CTransactionLock::SignaturesValid()
 
 bool CTransactionLock::AllInFavor()
 {
-
     BOOST_FOREACH(CConsensusVote vote, vecConsensusVotes)
         if(vote.approved == false) return false;
 

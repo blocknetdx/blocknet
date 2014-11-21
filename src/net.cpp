@@ -1924,7 +1924,7 @@ void RelayTransactionLockReq(const CTransaction& tx, const uint256& hash)
         if(!pnode->fRelayTxes)
             continue;
 
-        pnode->PushMessage("txlreq", tx, pindexBest->nHeight-10);
+        pnode->PushMessage("txlreq", tx);
     }
 
 }

@@ -456,7 +456,7 @@ uint256 CMasterNode::CalculateScore(int mod, int64 nBlockHeight)
     // the closest masternode to that point wins
     uint64 a1 = hash2.Get64(0);
     uint64 a2 = hash2.Get64(1);
-    uint64 a3 = hash2.Get64(2);
+    uint64 a3 = hash2.Get64(2); 
     uint64 a4 = hash2.Get64(3);
 
     //copy part of our source hash

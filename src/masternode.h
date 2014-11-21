@@ -25,7 +25,7 @@ class CMasternodePayments;
 #define MASTERNODE_NOT_CAPABLE                 2
 #define MASTERNODE_STOPPED                     3
 #define MASTERNODE_INPUT_TOO_NEW               4
-#define MASTERNODE_PORT_NOT_OPEN               6
+#define MASTERNODE_PORT_NOT_OPEN               6 
 #define MASTERNODE_PORT_OPEN                   7
 #define MASTERNODE_SYNC_IN_PROCESS             8
 #define MASTERNODE_REMOTELY_ENABLED            9
