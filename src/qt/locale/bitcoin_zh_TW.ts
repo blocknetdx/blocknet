@@ -2244,8 +2244,8 @@ Address: %4
     </message>
     <message>
         <location line="-28"/>
-        <source>Listen for connections on &lt;port&gt; (default: 9333 or testnet: 19333)</source>
-        <translation>在通訊埠 &lt;port&gt; 聽候連線 (預設: 9333, 或若為測試網路: 19333)</translation>
+        <source>Listen for connections on &lt;port&gt; (default: 9999 or testnet: 19999)</source>
+        <translation>在通訊埠 &lt;port&gt; 聽候連線 (預設: 9999, 或若為測試網路: 19999)</translation>
     </message>
     <message>
         <location line="+5"/>
@@ -2279,8 +2279,8 @@ Address: %4
     </message>
     <message>
         <location line="+27"/>
-        <source>Listen for JSON-RPC connections on &lt;port&gt; (default: 9332 or testnet: 19332)</source>
-        <translation>在通訊埠 &lt;port&gt; 聽候 JSON-RPC 連線 (預設: 9332, 或若為測試網路: 19332)</translation>
+        <source>Listen for JSON-RPC connections on &lt;port&gt; (default: 9998 or testnet: 19998)</source>
+        <translation>在通訊埠 &lt;port&gt; 聽候 JSON-RPC 連線 (預設: 9998, 或若為測試網路: 19998)</translation>
     </message>
     <message>
         <location line="+37"/>
