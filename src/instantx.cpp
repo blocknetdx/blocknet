@@ -16,13 +16,13 @@
 
 using namespace std;
 using namespace boost;
-
+ 
 std::vector<CTransactionLock> vecTxLocks;
 
 std::map<uint256, CTransaction> mapTxLockReq;
 std::map<uint256, CTransactionLock> mapTxLocks;
 
-#define INSTANTX_SIGNATURES_REQUIRED           2
+#define INSTANTX_SIGNATURES_REQUIRED           2 
 
 //txlock - Locks transaction
 //
@@ -37,8 +37,7 @@ void ProcessMessageInstantX(CNode* pfrom, std::string& strCommand, CDataStream& 
         printf("ProcessMessageInstantX::txlreq\n");
         CDataStream vMsg(vRecv);
         CTransaction tx;
-        int nBlockHeight;
-        vRecv >> tx >> nBlockHeight;
+        vRecv >> tx;
 
         CInv inv(MSG_TXLOCK_REQUEST, tx.GetHash());
         pfrom->AddInventoryKnown(inv);
@@ -51,7 +50,7 @@ void ProcessMessageInstantX(CNode* pfrom, std::string& strCommand, CDataStream& 
             return;
         }
 
-        nBlockHeight = GetInputAge(tx.vin[0]);
+        int nBlockHeight = GetInputAge(tx.vin[0]);
         if(nBlockHeight < 1){
             printf("ProcessMessageInstantX::txlreq - Transaction not found: %s\n", tx.GetHash().ToString().c_str());
             return;   
