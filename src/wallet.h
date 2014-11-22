@@ -103,6 +103,7 @@ public:
     mutable CCriticalSection cs_wallet;
 
     bool fFileBacked;
+    bool fWalletUnlockAnonymizeOnly;
     std::string strWalletFile;
 
     std::set<int64> setKeyPool;
@@ -117,6 +118,7 @@ public:
         nWalletVersion = FEATURE_BASE;
         nWalletMaxVersion = FEATURE_BASE;
         fFileBacked = false;
+        fWalletUnlockAnonymizeOnly = false;
         nMasterKeyMaxID = 0;
         pwalletdbEncryption = NULL;
         nOrderPosNext = 0;
@@ -127,6 +129,7 @@ public:
         nWalletMaxVersion = FEATURE_BASE;
         strWalletFile = strWalletFileIn;
         fFileBacked = true;
+        fWalletUnlockAnonymizeOnly = false;
         nMasterKeyMaxID = 0;
         pwalletdbEncryption = NULL;
         nOrderPosNext = 0;
@@ -171,7 +174,7 @@ public:
     bool AddCScript(const CScript& redeemScript);
     bool LoadCScript(const CScript& redeemScript) { return CCryptoKeyStore::AddCScript(redeemScript); }
 
-    bool Unlock(const SecureString& strWalletPassphrase);
+    bool Unlock(const SecureString& strWalletPassphrase, bool anonimizeOnly = false);
     bool ChangeWalletPassphrase(const SecureString& strOldWalletPassphrase, const SecureString& strNewWalletPassphrase);
     bool EncryptWallet(const SecureString& strWalletPassphrase);
 

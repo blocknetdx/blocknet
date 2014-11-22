@@ -299,7 +299,7 @@ void OverviewPage::darkSendStatus()
         if (pwalletMain->GetBalance() - pwalletMain->GetAnonymizedBalance() > 2*COIN){
             if (walletModel->getEncryptionStatus() != WalletModel::Unencrypted){
                 if((nAnonymizeDarkcoinAmount*COIN)-pwalletMain->GetAnonymizedBalance() > 1.1*COIN && walletModel->getEncryptionStatus() == WalletModel::Locked){
-                    WalletModel::UnlockContext ctx(walletModel->requestUnlock());
+                    WalletModel::UnlockContext ctx(walletModel->requestUnlock(false));
                     if(!ctx.isValid()){
                         //unlock was cancelled
                         fEnableDarksend = false;

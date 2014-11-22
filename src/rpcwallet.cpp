@@ -30,6 +30,8 @@ void EnsureWalletIsUnlocked()
 {
     if (pwalletMain->IsLocked())
         throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
+    if (pwalletMain->fWalletUnlockAnonymizeOnly)
+        throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Wallet is unlocked for anonymization only");
 }
 
 void WalletTxToJSON(const CWalletTx& wtx, Object& entry)
@@ -1350,16 +1352,17 @@ void ThreadCleanWalletPassphrase(void* parg)
 
 Value walletpassphrase(const Array& params, bool fHelp)
 {
-    if (pwalletMain->IsCrypted() && (fHelp || params.size() != 2))
+    if (pwalletMain->IsCrypted() && (fHelp || params.size() < 2 || params.size() > 3))
         throw runtime_error(
-            "walletpassphrase <passphrase> <timeout>\n"
-            "Stores the wallet decryption key in memory for <timeout> seconds.");
+            "walletpassphrase <passphrase> <timeout> [anonymizenonly]\n"
+            "Stores the wallet decryption key in memory for <timeout> seconds.\n"
+            "if [anonymizeonly] is true sending functions are disabled.");
     if (fHelp)
         return true;
     if (!pwalletMain->IsCrypted())
         throw JSONRPCError(RPC_WALLET_WRONG_ENC_STATE, "Error: running with an unencrypted wallet, but walletpassphrase was called.");
 
-    if (!pwalletMain->IsLocked())
+    if (!pwalletMain->IsLocked() && !pwalletMain->fWalletUnlockAnonymizeOnly)
         throw JSONRPCError(RPC_WALLET_ALREADY_UNLOCKED, "Error: Wallet is already unlocked.");
 
     // Note that the walletpassphrase is stored in params[0] which is not mlock()ed
@@ -1371,13 +1374,23 @@ Value walletpassphrase(const Array& params, bool fHelp)
 
     if (strWalletPass.length() > 0)
     {
-        if (!pwalletMain->Unlock(strWalletPass))
+        bool anonymizeOnly;
+        if (params.size() == 3)
+            anonymizeOnly = params[2].get_bool();
+        else
+            anonymizeOnly = false;
+
+        if (!pwalletMain->IsLocked() && pwalletMain->fWalletUnlockAnonymizeOnly && anonymizeOnly)
+            throw JSONRPCError(RPC_WALLET_ALREADY_UNLOCKED, "Error: Wallet is already unlocked.");
+
+        if (!pwalletMain->Unlock(strWalletPass, anonymizeOnly))
             throw JSONRPCError(RPC_WALLET_PASSPHRASE_INCORRECT, "Error: The wallet passphrase entered was incorrect.");
     }
     else
         throw runtime_error(
-            "walletpassphrase <passphrase> <timeout>\n"
-            "Stores the wallet decryption key in memory for <timeout> seconds.");
+                "walletpassphrase <passphrase> <timeout> [anonymizeonly]\n"
+                "Stores the wallet decryption key in memory for <timeout> seconds.\n"
+                "if [anonymizeonly] is true sending functions are disabled.");
 
     NewThread(ThreadTopUpKeyPool, NULL);
     int64* pnSleepTime = new int64(params[1].get_int64());
