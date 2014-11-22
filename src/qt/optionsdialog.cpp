@@ -183,7 +183,7 @@ void OptionsDialog::setSaveButtonState(bool fState)
     ui->okButton->setEnabled(fState);
 }
 
-void OptionsDialog::on_resetButton_clicked()
+/*void OptionsDialog::on_resetButton_clicked()
 {
     if(model)
     {
@@ -197,18 +197,18 @@ void OptionsDialog::on_resetButton_clicked()
 
         disableApplyButton();
 
-        /* disable restart warning messages display */
+        // disable restart warning messages display
         fRestartWarningDisplayed_Lang = fRestartWarningDisplayed_Proxy = true;
 
-        /* reset all options and save the default values (QSettings) */
+        // reset all options and save the default values (QSettings)
         model->Reset();
         mapper->toFirst();
         mapper->submit();
 
-        /* re-enable restart warning messages display */
+        // re-enable restart warning messages display
         fRestartWarningDisplayed_Lang = fRestartWarningDisplayed_Proxy = false;
     }
-}
+}*/
 
 void OptionsDialog::on_okButton_clicked()
 {
