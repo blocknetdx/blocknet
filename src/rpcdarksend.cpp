@@ -132,9 +132,9 @@ Value masternode(const Array& params, bool fHelp)
             strCommand = params[1].get_str().c_str();
         }
 
-        if (strCommand != "active" && strCommand != "vin" && strCommand != "pubkey" && strCommand != "lastseen" && strCommand != "activeseconds" && strCommand != "rank"){
+        if (strCommand != "active" && strCommand != "vin" && strCommand != "pubkey" && strCommand != "lastseen" && strCommand != "activeseconds" && strCommand != "rank" && strCommand != "protocol"){
             throw runtime_error(
-                "list supports 'active', 'vin', 'pubkey', 'lastseen', 'activeseconds', 'rank'\n");
+                "list supports 'active', 'vin', 'pubkey', 'lastseen', 'activeseconds', 'rank', 'protocol'\n");
         }
 
         Object obj;
@@ -153,6 +153,8 @@ Value masternode(const Array& params, bool fHelp)
                 CBitcoinAddress address2(address1);
 
                 obj.push_back(Pair(mn.addr.ToString().c_str(),       address2.ToString().c_str()));
+            } else if (strCommand == "protocol") {
+                obj.push_back(Pair(mn.addr.ToString().c_str(),       (int64_t)mn.protocolVersion));
             } else if (strCommand == "lastseen") {
                 obj.push_back(Pair(mn.addr.ToString().c_str(),       (int64_t)mn.lastTimeSeen));
             } else if (strCommand == "activeseconds") {

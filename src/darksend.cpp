@@ -1486,6 +1486,10 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
                 if(!dsq.GetAddress(addr)) continue;
                 if(dsq.IsExpired()) continue;
 
+                int protocolVersion;
+                if(!dsq.GetProtocolVersion(protocolVersion)) continue;
+                if(protocolVersion < MIN_PEER_PROTO_VERSION) continue;
+
                 //don't reuse masternodes
                 BOOST_FOREACH(CTxIn usedVin, vecMasternodesUsed){
                     if(dsq.vin == usedVin) {
@@ -1541,6 +1545,9 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
                 if(darkSendMasterNodes[i].vin == usedVin){
                     return DoAutomaticDenominating();
                 }
+            }
+            if(darkSendMasterNodes[i].protocolVersion < MIN_PEER_PROTO_VERSION) {
+                return DoAutomaticDenominating();
             }
 
             if(darkSendMasterNodes[i].nLastDsq != 0 && 
@@ -2020,7 +2027,7 @@ void ThreadCheckDarkSendPool()
                 LOCK(cs_vNodes);
                 BOOST_FOREACH(CNode* pnode, vNodes)
                 {
-                    if (pnode->nVersion >= darkSendPool.MIN_PEER_PROTO_VERSION) {
+                    if (true){ //pnode->nVersion >= darkSendPool.MIN_PEER_PROTO_VERSION) {
 
                         //keep track of who we've asked for the list
                         if(pnode->HasFulfilledRequest("mnsync")) continue;

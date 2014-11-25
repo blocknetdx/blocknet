@@ -87,7 +87,7 @@ void CActiveMasternode::RegisterAsMasterNode(bool stop)
 
             std::string vchPubKey(pubkeyMasterNode.begin(), pubkeyMasterNode.end());
             std::string vchPubKey2(pubkey2.begin(), pubkey2.end());
-            std::string strMessage = masterNodeSignAddr.ToString() + boost::lexical_cast<std::string>(masterNodeSignatureTime) + vchPubKey + vchPubKey2;
+            std::string strMessage = masterNodeSignAddr.ToString() + boost::lexical_cast<std::string>(masterNodeSignatureTime) + vchPubKey + vchPubKey2 + boost::lexical_cast<std::string>(PROTOCOL_VERSION);
 
             if(!darkSendSigner.SignMessage(strMessage, errorMessage, vchMasterNodeSignature, SecretKey)) {
                 LogPrintf("CActiveMasternode::RegisterAsMasterNode() - Sign message failed\n");
@@ -112,17 +112,18 @@ void CActiveMasternode::RegisterAsMasterNode(bool stop)
 
             if(!found) {
                 LogPrintf("CActiveMasternode::RegisterAsMasterNode() - Adding myself to masternode list %s - %s\n", masterNodeSignAddr.ToString().c_str(), vinMasternode.ToString().c_str());
-                CMasterNode mn(masterNodeSignAddr, vinMasternode, pubkeyMasterNode, vchMasterNodeSignature, masterNodeSignatureTime, pubkey2);
+                CMasterNode mn(masterNodeSignAddr, vinMasternode, pubkeyMasterNode, vchMasterNodeSignature, masterNodeSignatureTime, pubkey2, PROTOCOL_VERSION);
                 mn.UpdateLastSeen(masterNodeSignatureTime);
                 darkSendMasterNodes.push_back(mn);
                 LogPrintf("CActiveMasternode::RegisterAsMasterNode() - Masternode input = %s\n", vinMasternode.ToString().c_str());
             }
 
+            int protocolVersion = PROTOCOL_VERSION;
             //relay to all
             LOCK(cs_vNodes);
             BOOST_FOREACH(CNode* pnode, vNodes)
             {
-                pnode->PushMessage("dsee", vinMasternode, masterNodeSignAddr, vchMasterNodeSignature, masterNodeSignatureTime, pubkeyMasterNode, pubkey2, -1, -1, masterNodeSignatureTime);
+                pnode->PushMessage("dsee", vinMasternode, masterNodeSignAddr, vchMasterNodeSignature, masterNodeSignatureTime, pubkeyMasterNode, pubkey2, -1, -1, masterNodeSignatureTime, protocolVersion);
             }
 
             return;
@@ -238,7 +239,7 @@ bool CActiveMasternode::RegisterAsMasterNodeRemoteOnly(std::string strMasterNode
 
         std::string vchPubKey(pubkeyMasterNode.begin(), pubkeyMasterNode.end());
         std::string vchPubKey2(pubkey2.begin(), pubkey2.end());
-        std::string strMessage = masterNodeSignAddr.ToString() + boost::lexical_cast<std::string>(masterNodeSignatureTime) + vchPubKey + vchPubKey2;
+        std::string strMessage = masterNodeSignAddr.ToString() + boost::lexical_cast<std::string>(masterNodeSignatureTime) + vchPubKey + vchPubKey2 + boost::lexical_cast<std::string>(PROTOCOL_VERSION);
 
         if(!darkSendSigner.SignMessage(strMessage, errorMessage, vchMasterNodeSignature, SecretKey)) {
             LogPrintf("CActiveMasternode::RegisterAsMasterNodeRemoteOnly() - Sign message failed\n");
@@ -254,11 +255,12 @@ bool CActiveMasternode::RegisterAsMasterNodeRemoteOnly(std::string strMasterNode
 
         pwalletMain->LockCoin(vinMasternode.prevout);
 
+        int protocolVersion = PROTOCOL_VERSION;
         //relay to all
         LOCK(cs_vNodes);
         BOOST_FOREACH(CNode* pnode, vNodes)
         {
-            pnode->PushMessage("dsee", vinMasternode, masterNodeSignAddr, vchMasterNodeSignature, masterNodeSignatureTime, pubkeyMasterNode, pubkey2, -1, -1, masterNodeSignatureTime);
+            pnode->PushMessage("dsee", vinMasternode, masterNodeSignAddr, vchMasterNodeSignature, masterNodeSignatureTime, pubkeyMasterNode, pubkey2, -1, -1, masterNodeSignatureTime, protocolVersion);
         }
 
         return true;

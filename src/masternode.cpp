@@ -34,10 +34,6 @@ void ProcessMasternodeConnections(){
 void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream& vRecv)
 {
     if (strCommand == "dsee") { //DarkSend Election Entry
-        if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
-            return;
-        }
-
         bool fIsInitialDownload = IsInitialBlockDownload();
         if(fIsInitialDownload) return;
 
@@ -50,11 +46,32 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
         int count;
         int current;
         int64 lastUpdated;
-        vRecv >> vin >> addr >> vchSig >> sigTime >> pubkey >> pubkey2 >> count >> current >> lastUpdated;
+        int protocolVersion; 
+        std::string strMessage;
+
+        if(vRecv.size() == 249) {
+            protocolVersion = 70046;
+            vRecv >> vin >> addr >> vchSig >> sigTime >> pubkey >> pubkey2 >> count >> current >> lastUpdated;
+        } else {
+            // 70047 and greater
+            vRecv >> vin >> addr >> vchSig >> sigTime >> pubkey >> pubkey2 >> count >> current >> lastUpdated >> protocolVersion;
+        }
+
+        // make sure signature isn't in the future (past is OK)
+        if (sigTime > GetAdjustedTime() + 60 * 60) {
+            LogPrintf("dsee - Signature rejected, too far into the future %s\n", vin.ToString().c_str());
+            return;
+        }
 
         bool isLocal = false; // addr.IsRFC1918();
         std::string vchPubKey(pubkey.begin(), pubkey.end());
         std::string vchPubKey2(pubkey2.begin(), pubkey2.end());
+
+        if(protocolVersion >= 70047){
+            strMessage = addr.ToString() + boost::lexical_cast<std::string>(sigTime) + vchPubKey + vchPubKey2 + boost::lexical_cast<std::string>(protocolVersion);
+        } else {
+            strMessage = addr.ToString() + boost::lexical_cast<std::string>(sigTime) + vchPubKey + vchPubKey2;
+        }
 
         CScript pubkeyScript;
         pubkeyScript.SetDestination(pubkey.GetID());
@@ -64,8 +81,6 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
             pfrom->Misbehaving(100);
             return;
         }
-
-        std::string strMessage = addr.ToString() + boost::lexical_cast<std::string>(sigTime) + vchPubKey + vchPubKey2;
 
         CScript pubkeyScript2;
         pubkeyScript2.SetDestination(pubkey2.GetID());
@@ -101,12 +116,13 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
                         mn.pubkey2 = pubkey2;
                         mn.now = sigTime;
                         mn.sig = vchSig;
+                        mn.protocolVersion = protocolVersion;
 
                         if(pubkey2 == activeMasternode.pubkeyMasterNode2){
                             activeMasternode.EnableHotColdMasterNode(vin, sigTime, addr);
                         }
 
-                        RelayDarkSendElectionEntry(vin, addr, vchSig, sigTime, pubkey, pubkey2, count, current, lastUpdated);
+                        RelayDarkSendElectionEntry(vin, addr, vchSig, sigTime, pubkey, pubkey2, count, current, lastUpdated, protocolVersion);
                     }
                 }
 
@@ -138,7 +154,7 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
 
             addrman.Add(CAddress(addr), pfrom->addr, 2*60*60);
 
-            CMasterNode mn(addr, vin, pubkey, vchSig, sigTime, pubkey2);
+            CMasterNode mn(addr, vin, pubkey, vchSig, sigTime, pubkey2, protocolVersion);
             mn.UpdateLastSeen(lastUpdated);
             darkSendMasterNodes.push_back(mn);
 
@@ -147,7 +163,7 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
             }
 
             if(count == -1 && !isLocal)
-                RelayDarkSendElectionEntry(vin, addr, vchSig, sigTime, pubkey, pubkey2, count, current, lastUpdated);
+                RelayDarkSendElectionEntry(vin, addr, vchSig, sigTime, pubkey, pubkey2, count, current, lastUpdated, protocolVersion);
 
         } else {
             LogPrintf("dsee - Rejected masternode entry\n");
@@ -164,9 +180,6 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
     }
 
     else if (strCommand == "dseep") { //DarkSend Election Entry Ping
-        if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
-            return;
-        }
         bool fIsInitialDownload = IsInitialBlockDownload();
         if(fIsInitialDownload) return;
 
@@ -181,10 +194,10 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
             return;
         }
 
-        /*if (sigTime <= GetAdjustedTime() - 60 * 60) {
+        if (sigTime <= GetAdjustedTime() - 60 * 60) {
             LogPrintf("dseep - Signature rejected, too far into the past %s - %"PRI64u" %"PRI64u" \n", vin.ToString().c_str(), sigTime, GetAdjustedTime());
             return;
-        }*/
+        }
 
         //LogPrintf("Searching existing masternodes : %s - %s\n", addr.ToString().c_str(),  vin.ToString().c_str());
 
@@ -230,10 +243,6 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
         pfrom->PushMessage("dseg", vin);
 
     } else if (strCommand == "dseg") { //Get masternode list or specific entry
-        if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
-            return;
-        }
-
         CTxIn vin;
         vRecv >> vin;
 

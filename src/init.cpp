@@ -1259,8 +1259,9 @@ bool AppInit2(boost::thread_group& threadGroup)
     LogPrintf("Darksend rounds %d\n", nDarksendRounds);
     LogPrintf("Anonymize Darkcoin Amount %d\n", nAnonymizeDarkcoinAmount);
 
-    darkSendDenominations.push_back( (500   * COIN)+1 );
-    darkSendDenominations.push_back( (100   * COIN)+1 );
+    //darkSendDenominations.push_back( (500   * COIN)+1 );
+    //darkSendDenominations.push_back( (100   * COIN)+1 );
+
     darkSendDenominations.push_back( (10    * COIN)+1 );
     darkSendDenominations.push_back( (1     * COIN)+1 );
 
