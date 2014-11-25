@@ -141,7 +141,7 @@ void ProcessMessageInstantX(CNode* pfrom, std::string& strCommand, CDataStream& 
                 {
                     mapTxLockReq.insert(make_pair(inv.hash, ctxl.tx));
 
-                    printf("ProcessMessageInstantX::txlock - Transaction Lock Request: %s %s : accepted %s\n",
+                    printf("ProcessMessageInstantX::txlock - Transaction Lock Request: %s %s : accepted (no reversing) %s\n",
                         pfrom->addr.ToString().c_str(), pfrom->cleanSubVer.c_str(),
                         ctxl.tx.GetHash().ToString().c_str()
                     );
@@ -154,6 +154,22 @@ void ProcessMessageInstantX(CNode* pfrom, std::string& strCommand, CDataStream& 
                             pfrom->addr.ToString().c_str(), pfrom->cleanSubVer.c_str(),
                             ctxl.tx.GetHash().ToString().c_str()
                         );
+                    } else {
+
+                        if (ctxl.tx.AcceptToMemoryPool(state, true, true, &fMissingInputs))
+                        {
+                            mapTxLockReq.insert(make_pair(inv.hash, ctxl.tx));
+
+                            printf("ProcessMessageInstantX::txlock - Transaction Lock Request: %s %s : accepted (reversed) %s\n",
+                                pfrom->addr.ToString().c_str(), pfrom->cleanSubVer.c_str(),
+                                ctxl.tx.GetHash().ToString().c_str()
+                            );
+                        } else {
+                            printf("ProcessMessageInstantX::txlock - Transaction Lock Request: %s %s : rejected (reversed) %s\n",
+                                pfrom->addr.ToString().c_str(), pfrom->cleanSubVer.c_str(),
+                                ctxl.tx.GetHash().ToString().c_str()
+                            );
+                        }
                     }
                 }
             }
