@@ -50,15 +50,12 @@ void ProcessMessageInstantX(CNode* pfrom, std::string& strCommand, CDataStream& 
             return;
         }
 
-        int nBlockHeight = GetInputAge(tx.vin[0]);
-        if(nBlockHeight < 1){
-            printf("ProcessMessageInstantX::txlreq - Transaction not found: %s\n", tx.GetHash().ToString().c_str());
+        int nTxAge = GetInputAge(tx.vin[0]);
+        if(nTxAge < 5){
+            printf("ProcessMessageInstantX::txlreq - Transaction not found / too new: %s\n", tx.GetHash().ToString().c_str());
             return;   
         }
-        if(nBlockHeight > pindexBest->nHeight-5){
-            printf("ProcessMessageInstantX::txlreq - Transaction too new: %s\n", tx.GetHash().ToString().c_str());
-            return;   
-        }
+        int nBlockHeight = pindexBest->nHeight - nTxAge; //calculate the height
 
         bool fMissingInputs = false;
         CValidationState state;
@@ -230,7 +227,7 @@ void DoConsensusVote(CTransaction& tx, bool approved, int64 nBlockHeight)
         return;
     }
     if(!ctx.SignatureValid()) {
-        printf("InstantX::ProcessConsensusVote - Signature invalid\n");
+        printf("InstantX::DoConsensusVote - Signature invalid\n");
         return;
     }
 
@@ -279,13 +276,13 @@ void ProcessConsensusVote(CConsensusVote& ctx)
 
     if(n == -1) 
     {
-        printf("InstantX::DoConsensusVote - Unknown Masternode\n");
+        printf("InstantX::ProcessConsensusVote - Unknown Masternode\n");
         return;
     }
 
     if(n > 10) 
     {
-        printf("InstantX::DoConsensusVote - Masternode not in the top 10\n");
+        printf("InstantX::ProcessConsensusVote - Masternode not in the top 10\n");
         return;
     }
 
@@ -296,19 +293,14 @@ void ProcessConsensusVote(CConsensusVote& ctx)
     }
 
     //compile consessus vote
-    printf(" -- 1\n");
     BOOST_FOREACH(CTransactionLock& ctxl, vecTxLocks){
-        printf(" -- 2\n");
         if(ctxl.nBlockHeight == ctx.nBlockHeight){
             ctxl.AddSignature(ctx);
-            printf(" -- 3 - %d\n", ctxl.CountSignatures());
             if(ctxl.CountSignatures() >= INSTANTX_SIGNATURES_REQUIRED){
                 printf("InstantX::ProcessConsensusVote - Transaction Lock Is Complelete, broadcasting!\n");
 
                 CInv inv(MSG_TXLOCK, ctxl.GetHash());
                 mapTxLocks.insert(make_pair(inv.hash, ctxl));
-
-                printf(" -- 4 %d  %s\n", mapTxLocks.count(inv.hash), inv.hash.ToString().c_str());
 
                 //broadcast the new lock
                 LOCK(cs_vNodes);
