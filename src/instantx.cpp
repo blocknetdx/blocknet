@@ -116,6 +116,7 @@ void ProcessMessageInstantX(CNode* pfrom, std::string& strCommand, CDataStream& 
 
         printf(" -- ProcessMessageInstantX::txlock %d  %s\n", mapTxLocks.count(inv.hash), inv.hash.ToString().c_str());
 
+
         if(!mapTxLocks.count(inv.hash)){
             if(ctxl.CountSignatures() < INSTANTX_SIGNATURES_REQUIRED){
                 printf("InstantX::txlock - not enough signatures\n");
@@ -129,8 +130,33 @@ void ProcessMessageInstantX(CNode* pfrom, std::string& strCommand, CDataStream& 
                 printf("InstantX::txlock - not all in favor of lock, rejected\n");
                 return;
             }
-
             mapTxLocks.insert(make_pair(inv.hash, ctxl));
+
+            //we should have the lock request in place
+            if(!mapTxLockReq.count(inv.hash)){
+                //if we don't 
+                bool fMissingInputs = false;
+                CValidationState state;
+                if (ctxl.tx.AcceptToMemoryPool(state, true, true, &fMissingInputs))
+                {
+                    mapTxLockReq.insert(make_pair(inv.hash, ctxl.tx));
+
+                    printf("ProcessMessageInstantX::txlock - Transaction Lock Request: %s %s : accepted %s\n",
+                        pfrom->addr.ToString().c_str(), pfrom->cleanSubVer.c_str(),
+                        ctxl.tx.GetHash().ToString().c_str()
+                    );
+
+                } else {
+                    // we have a conflicting transaction (an attack)
+                    CValidationState state;
+                    if(!DisconnectBlockAndInputs(state, ctxl.tx.vin)){
+                        printf("ProcessMessageInstantX::txlock - Couldn't reverse conflicting transaction: %s %s : failed %s\n",
+                            pfrom->addr.ToString().c_str(), pfrom->cleanSubVer.c_str(),
+                            ctxl.tx.GetHash().ToString().c_str()
+                        );
+                    }
+                }
+            }
 
             //broadcast the new lock
             LOCK(cs_vNodes);

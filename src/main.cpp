@@ -2470,6 +2470,171 @@ bool SetBestChain(CValidationState &state, CBlockIndex* pindexNew)
     return true;
 }
 
+/*
+    DisconnectBlockAndInputs
+
+    Remove conflicting blocks for successful InstantX transaction locks
+    This should be very rare (Probably will never happen)
+*/
+bool DisconnectBlockAndInputs(CValidationState &state, std::vector<CTxIn> vecInputs)
+{
+    // All modifications to the coin state will be done in this cache.
+    // Only when all have succeeded, we push it to pcoinsTip.
+    CCoinsViewCache view(*pcoinsTip, true);
+
+    CBlockIndex* BlockReading = pindexBest;
+    CBlockIndex* pindexNew = NULL;
+
+    int HeightMin = pindexBest->nHeight-5;
+    bool foundConflictingTx = false;
+
+    // List of what to disconnect (typically nothing)
+    vector<CBlockIndex*> vDisconnect;
+
+    for (unsigned int i = 1; BlockReading && BlockReading->nHeight > 0 && !foundConflictingTx; i++) {
+        vDisconnect.push_back(BlockReading);
+        pindexNew = BlockReading->pprev; //new best block
+
+        CBlock block;
+        if (!block.ReadFromDisk(BlockReading))
+            return state.Abort(_("Failed to read block"));
+
+        // Queue memory transactions to resurrect.
+        // We only do this for blocks after the last checkpoint (reorganisation before that
+        // point should only happen with -reindex/-loadblock, or a misbehaving peer.
+        BOOST_FOREACH(const CTransaction& tx, block.vtx){
+            if (!tx.IsCoinBase() && BlockReading->nHeight > HeightMin){
+                BOOST_FOREACH(const CTxIn& in1, vecInputs){
+                    BOOST_FOREACH(const CTxIn& in2, tx.vin){
+                        if(in1 == in2) foundConflictingTx = true;
+                    }
+                }
+            }
+        }
+
+        if (BlockReading->pprev == NULL) { assert(BlockReading); break; }
+        BlockReading = BlockReading->pprev;
+    }
+
+    if(!foundConflictingTx) {
+        LogPrintf("DisconnectBlockAndInputs: Can't find a conflicting transaction to inputs\n");
+        return false;
+    }
+
+    if (vDisconnect.size() > 0) {
+        LogPrintf("REORGANIZE: Disconnect Conflicting Blocks %"PRIszu" blocks; %s..\n", vDisconnect.size(), pindexNew->GetBlockHash().ToString().c_str());
+    }
+
+    // Disconnect shorter branch
+    vector<CTransaction> vResurrect;
+    BOOST_FOREACH(CBlockIndex* pindex, vDisconnect) {
+        CBlock block;
+        if (!block.ReadFromDisk(pindex))
+            return state.Abort(_("Failed to read block"));
+        int64 nStart = GetTimeMicros();
+        if (!block.DisconnectBlock(state, pindex, view))
+            return error("SetBestBlock() : DisconnectBlock %s failed", pindex->GetBlockHash().ToString().c_str());
+        if (fBenchmark)
+            LogPrintf("- Disconnect: %.2fms\n", (GetTimeMicros() - nStart) * 0.001);
+
+        // Queue memory transactions to resurrect.
+        // We only do this for blocks after the last checkpoint (reorganisation before that
+        // point should only happen with -reindex/-loadblock, or a misbehaving peer.
+        BOOST_FOREACH(const CTransaction& tx, block.vtx){
+            if (!tx.IsCoinBase() && pindex->nHeight > HeightMin){
+                bool isConflict = false;
+                BOOST_FOREACH(const CTxIn& in1, vecInputs){
+                    BOOST_FOREACH(const CTxIn& in2, tx.vin){
+                        if(in1 != in2) isConflict = true;
+                    }
+                }
+                if(!isConflict) vResurrect.push_back(tx);
+            }
+        }
+
+    }
+
+    // Make sure it's successfully written to disk before changing memory structure
+    bool fIsInitialDownload = IsInitialBlockDownload();
+    if (!fIsInitialDownload || pcoinsTip->GetCacheSize() > nCoinCacheSize) {
+        // Typical CCoins structures on disk are around 100 bytes in size.
+        // Pushing a new one to the database can cause it to be written
+        // twice (once in the log, and once in the tables). This is already
+        // an overestimation, as most will delete an existing entry or
+        // overwrite one. Still, use a conservative safety factor of 2.
+        if (!CheckDiskSpace(100 * 2 * 2 * pcoinsTip->GetCacheSize()))
+            return state.Error();
+        FlushBlockFile();
+        pblocktree->Sync();
+        if (!pcoinsTip->Flush())
+            return state.Abort(_("Failed to write to coin database"));
+    }
+
+    // At this point, all changes have been done to the database.
+    // Proceed by updating the memory structures.
+
+    // Disconnect shorter branch
+    BOOST_FOREACH(CBlockIndex* pindex, vDisconnect)
+        if (pindex->pprev)
+            pindex->pprev->pnext = NULL;
+
+    // Resurrect memory transactions that were in the disconnected branch
+    BOOST_FOREACH(CTransaction& tx, vResurrect) {
+        // ignore validation errors in resurrected transactions
+        CValidationState stateDummy;
+        if (!tx.AcceptToMemoryPool(stateDummy, true, false))
+            mempool.remove(tx, true);
+    }
+
+    // Update best block in wallet (so we can detect restored wallets)
+    if ((pindexNew->nHeight % 20160) == 0 || (!fIsInitialDownload && (pindexNew->nHeight % 144) == 0))
+    {
+        const CBlockLocator locator(pindexNew);
+        ::SetBestChain(locator);
+    }
+
+    // New best block
+    hashBestChain = pindexNew->GetBlockHash();
+    pindexBest = pindexNew;
+    pblockindexFBBHLast = NULL;
+    nBestHeight = pindexBest->nHeight;
+    nBestChainWork = pindexNew->nChainWork;
+    nTimeBestReceived = GetTime();
+    nTransactionsUpdated++;
+    LogPrintf("DisconnectBlockAndInputs / SetBestChain: new best=%s  height=%d  log2_work=%.8g  tx=%lu  date=%s progress=%f\n",
+      hashBestChain.ToString().c_str(), nBestHeight, log(nBestChainWork.getdouble())/log(2.0), (unsigned long)pindexNew->nChainTx,
+      DateTimeStrFormat("%Y-%m-%d %H:%M:%S", pindexBest->GetBlockTime()).c_str(),
+      Checkpoints::GuessVerificationProgress(pindexBest));
+
+    // Check the version of the last 100 blocks to see if we need to upgrade:
+    if (!fIsInitialDownload)
+    {
+        int nUpgraded = 0;
+        const CBlockIndex* pindex = pindexBest;
+        for (int i = 0; i < 100 && pindex != NULL; i++)
+        {
+            if (pindex->nVersion > CBlock::CURRENT_VERSION)
+                ++nUpgraded;
+            pindex = pindex->pprev;
+        }
+        if (nUpgraded > 0)
+            LogPrintf("SetBestChain: %d of last 100 blocks above version %d\n", nUpgraded, CBlock::CURRENT_VERSION);
+        if (nUpgraded > 100/2)
+            // strMiscWarning is read by GetWarnings(), called by Qt and the JSON-RPC code to warn the user:
+            strMiscWarning = _("Warning: This version is obsolete, upgrade required!");
+    }
+
+    std::string strCmd = GetArg("-blocknotify", "");
+
+    if (!fIsInitialDownload && !strCmd.empty())
+    {
+        boost::replace_all(strCmd, "%s", hashBestChain.GetHex());
+        boost::thread t(runCommand, strCmd); // thread runs free
+    }
+
+    return true;
+}
+
 
 bool CBlock::AddToBlockIndex(CValidationState &state, const CDiskBlockPos &pos)
 {
