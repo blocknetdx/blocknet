@@ -679,6 +679,9 @@ bool AppInit2(boost::thread_group& threadGroup)
             return InitError(_("Unable to sign masternode payment winner, wrong key?"));
     }
 
+    //ignore masternodes below protocol version
+    nMasternodeMinProtocol = GetArg("-masternodeminprotocol", 0);
+
     // ********************************************************* Step 4: application initialization: dir lock, daemonize, pidfile, debug log
 
     std::string strDataDir = GetDataDir().string();

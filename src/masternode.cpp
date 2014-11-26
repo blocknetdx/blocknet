@@ -73,6 +73,11 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
             strMessage = addr.ToString() + boost::lexical_cast<std::string>(sigTime) + vchPubKey + vchPubKey2;
         }
 
+        if(protocolVersion < nMasternodeMinProtocol) {
+            LogPrintf("dsee - ignoring outdated masternode %s protocol version %d\n", vin.ToString().c_str(), protocolVersion);
+            return;
+        }
+
         CScript pubkeyScript;
         pubkeyScript.SetDestination(pubkey.GetID());
 
