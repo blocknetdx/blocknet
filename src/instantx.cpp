@@ -22,7 +22,7 @@ std::vector<CTransactionLock> vecTxLocks;
 std::map<uint256, CTransaction> mapTxLockReq;
 std::map<uint256, CTransactionLock> mapTxLocks;
 
-#define INSTANTX_SIGNATURES_REQUIRED           2 
+#define INSTANTX_SIGNATURES_REQUIRED           7
 
 //txlock - Locks transaction
 //
