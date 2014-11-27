@@ -1485,13 +1485,10 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
                 if(dsq.time == 0) continue;
                 if(!dsq.GetAddress(addr)) continue;
                 if(dsq.IsExpired()) continue;
-<<<<<<< HEAD
 
                 int protocolVersion;
                 if(!dsq.GetProtocolVersion(protocolVersion)) continue;
                 if(protocolVersion < MIN_PEER_PROTO_VERSION) continue;
-=======
->>>>>>> UdjinM6-master
 
                 //don't reuse masternodes
                 BOOST_FOREACH(CTxIn usedVin, vecMasternodesUsed){
