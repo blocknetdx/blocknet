@@ -1,30 +1,33 @@
-DarkCoin integration/staging tree
+Darkcoin integration/staging tree
 ================================
 
-http://www.darkcoin.io
+https://www.darkcoin.io
 
 Copyright (c) 2009-2013 Bitcoin Developers
-Copyright (c) 2013-2014 DarkCoin Developers
+Copyright (c) 2011-2014 The Litecoin Developers
+Copyright (c) 2012-2013 The Peercoin Developers
+Copyright (c) 2014 The Darkcoin Developers
 
-What is DarkCoin?
+What is Darkcoin?
 ----------------
 
-DarkCoin is a lite version of Bitcoin using X11 as a proof-of-work algorithm.
+Darkcoin (DRK) is an open sourced, privacy-centric digital currency. It allows you keep your finances private as you make transactions, similar to cash.
+
  - Super secure hashing algorithm: 11 rounds of scientific hashing functions (blake, bmw, groestl, jh, keccak, skein, luffa, cubehash, shavite, simd, echo)
  - Block reward is controlled by moore's law: 2222222/(((Difficulty+2600)/9)^2)
  - GPU/CPU only mining
  - Block generation: 2.5 minutes
  - Difficulty Retargets every block using Dark Gravity Wave
  - Est. ~7M Coins in 2015, ~13M in 2020, ~23M in 2030
- - Anonymous blockchain using DarkSend technology
+ - Anonymous blockchain using Darksend technology
 
 For more information, as well as an immediately useable, binary version of
-the DarkCoin client sofware, see http://www.darkcoin.io.
+the Darkcoin client sofware, see https://www.darkcoin.io.
 
 License
 -------
 
-DarkCoin is released under the terms of the MIT license. See `COPYING` for more
+Darkcoin is released under the terms of the MIT license. See `COPYING` for more
 information or see http://opensource.org/licenses/MIT.
 
 Development process
@@ -33,7 +36,7 @@ Development process
 Developers work in their own trees, then submit pull requests when they think
 their feature or bug fix is ready.
 
-If it is a simple/trivial/non-controversial change, then one of the DarkCoin
+If it is a simple/trivial/non-controversial change, then one of the Darkcoin
 development team members simply pulls it.
 
 If it is a *more complicated or potentially controversial* change, then the patch

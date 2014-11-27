@@ -66,6 +66,8 @@ public slots:
     void changePassphrase();
     /** Ask for passphrase to unlock wallet temporarily */
     void unlockWallet();
+    /** Lock wallet */
+    void lockWallet();
 
     /** Set the encryption status as shown in the UI.
      @param[in] status            current encryption status

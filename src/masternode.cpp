@@ -264,18 +264,22 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
         int count = darkSendMasterNodes.size()-1;
         int i = 0;
 
+        if(vin == CTxIn()) LogPrintf("dseg - Sending %d masternode entries\n", count);
+
         BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
-            LogPrintf("dseg - Sending master node entry - %s \n", mn.addr.ToString().c_str());
 
             if(mn.addr.IsRFC1918()) continue; //local network
 
             if(vin == CTxIn()){
                 mn.Check();
                 if(mn.IsEnabled()) {
+                    if(fDebug) LogPrintf("dseg - Sending masternode entry - %s \n", mn.addr.ToString().c_str());
                     pfrom->PushMessage("dsee", mn.vin, mn.addr, mn.sig, mn.now, mn.pubkey, mn.pubkey2, count, i, mn.lastTimeSeen);
                 }
             } else if (vin == mn.vin) {
+                LogPrintf("dseg - Sending masternode entry - %s \n", mn.addr.ToString().c_str());
                 pfrom->PushMessage("dsee", mn.vin, mn.addr, mn.sig, mn.now, mn.pubkey, mn.pubkey2, count, i, mn.lastTimeSeen);
+                return;
             }
             i++;
         }

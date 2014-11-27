@@ -422,6 +422,10 @@ isEmpty(BDB_LIB_SUFFIX) {
 }
 
 isEmpty(BDB_INCLUDE_PATH) {
+# For linux builds
+    !win32:!macx {
+        BDB_INCLUDE_PATH = /usr/include/db4
+    }
     macx:BDB_INCLUDE_PATH = /usr/local/opt/berkeley-db4/include
 }
 

@@ -99,7 +99,7 @@ void Shutdown()
     static CCriticalSection cs_Shutdown;
     TRY_LOCK(cs_Shutdown, lockShutdown);
     if (!lockShutdown) return;
-    
+
     RenameThread("bitcoin-shutoff");
     nTransactionsUpdated++;
     StopRPCThreads();
@@ -315,7 +315,7 @@ std::string HelpMessage()
         "  -socks=<n>             " + _("Select the version of socks proxy to use (4-5, default: 5)") + "\n" +
         "  -tor=<ip:port>         " + _("Use proxy to reach tor hidden services (default: same as -proxy)") + "\n"
         "  -dns                   " + _("Allow DNS lookups for -addnode, -seednode and -connect") + "\n" +
-        "  -port=<port>           " + _("Listen for connections on <port> (default: 9333 or testnet: 19333)") + "\n" +
+        "  -port=<port>           " + _("Listen for connections on <port> (default: 9999 or testnet: 19999)") + "\n" +
         "  -maxconnections=<n>    " + _("Maintain at most <n> connections to peers (default: 125)") + "\n" +
         "  -addnode=<ip>          " + _("Add a node to connect to and attempt to keep the connection open") + "\n" +
         "  -connect=<ip>          " + _("Connect only to the specified node(s)") + "\n" +
@@ -359,7 +359,7 @@ std::string HelpMessage()
 #endif
         "  -rpcuser=<user>        " + _("Username for JSON-RPC connections") + "\n" +
         "  -rpcpassword=<pw>      " + _("Password for JSON-RPC connections") + "\n" +
-        "  -rpcport=<port>        " + _("Listen for JSON-RPC connections on <port> (default: 9332 or testnet: 19332)") + "\n" +
+        "  -rpcport=<port>        " + _("Listen for JSON-RPC connections on <port> (default: 9998 or testnet: 19998)") + "\n" +
         "  -rpcallowip=<ip>       " + _("Allow JSON-RPC connections from specified IP address") + "\n" +
 #ifndef QT_GUI
         "  -rpcconnect=<ip>       " + _("Send commands to node running on <ip> (default: 127.0.0.1)") + "\n" +
@@ -370,6 +370,7 @@ std::string HelpMessage()
 		"  -zapwallettxes=<mode>  " + _("Delete all wallet transactions and only recover those parts of the blockchain through -rescan on startup") + "\n" +
 		"                         " + _("(default: 1, 1 = keep tx meta data e.g. account owner and payment request information, 2 = drop tx meta data)") + "\n" +
         "  -alertnotify=<cmd>     " + _("Execute command when a relevant alert is received (%s in cmd is replaced by message)") + "\n" +
+        "  -wallet=<file>         " + _("Specify wallet file (within data directory)") + " " + strprintf(_("(default: %s)"), "wallet.dat") + "\n" +
         "  -upgradewallet         " + _("Upgrade wallet to latest format") + "\n" +
         "  -keypool=<n>           " + _("Set key pool size to <n> (default: 100)") + "\n" +
         "  -rescan                " + _("Rescan the block chain for missing wallet transactions") + "\n" +
@@ -396,7 +397,7 @@ std::string HelpMessage()
         "\n" + _("InstantX options:") + "\n" +
         "  -enableinstantx=<n>      "   + _("Disable instantx, do not show confirmations for locked transactions (bool, default: false)") + "\n" +
         "  -instantxdepth=<n>      "   + _("Show N confirmations for a successfully locked transaciton (0-9999, default: 1)") + "\n" +
-    
+
         "\n" + _("Block creation options:") + "\n" +
         "  -blockminsize=<n>      "   + _("Set minimum block size in bytes (default: 0)") + "\n" +
         "  -blockmaxsize=<n>      "   + _("Set maximum block size in bytes (default: 250000)") + "\n" +
@@ -681,10 +682,15 @@ bool AppInit2(boost::thread_group& threadGroup)
 
     //ignore masternodes below protocol version
     nMasternodeMinProtocol = GetArg("-masternodeminprotocol", 0);
+    std::string strWalletFile = GetArg("-wallet", "wallet.dat");
 
     // ********************************************************* Step 4: application initialization: dir lock, daemonize, pidfile, debug log
 
     std::string strDataDir = GetDataDir().string();
+
+    // Wallet file must be a plain filename without a directory
+    if (strWalletFile != boost::filesystem::basename(strWalletFile) + boost::filesystem::extension(strWalletFile))
+        return InitError(strprintf(_("Wallet %s resides outside data directory %s"), strWalletFile.c_str(), strDataDir.c_str()));
 
     // Make sure only a single Bitcoin process is using the data directory.
     boost::filesystem::path pathLockFile = GetDataDir() / ".lock";
@@ -749,13 +755,13 @@ bool AppInit2(boost::thread_group& threadGroup)
         if (GetBoolArg("-salvagewallet"))
         {
             // Recover readable keypairs:
-            if (!CWalletDB::Recover(bitdb, "wallet.dat", true))
+            if (!CWalletDB::Recover(bitdb, strWalletFile.c_str(), true))
                 return false;
         }
 
-        if (filesystem::exists(GetDataDir() / "wallet.dat"))
+        if (filesystem::exists(GetDataDir() / strWalletFile.c_str()))
         {
-            CDBEnv::VerifyResult r = bitdb.Verify("wallet.dat", CWalletDB::Recover);
+            CDBEnv::VerifyResult r = bitdb.Verify(strWalletFile.c_str(), CWalletDB::Recover);
             if (r == CDBEnv::RECOVER_OK)
             {
                 string msg = strprintf(_("Warning: wallet.dat corrupt, data salvaged!"
@@ -1055,7 +1061,7 @@ bool AppInit2(boost::thread_group& threadGroup)
         if (GetBoolArg("-zapwallettxes", false)) {
             uiInterface.InitMessage(_("Zapping all transactions from wallet..."));
 
-            pwalletMain = new CWallet("wallet.dat");
+            pwalletMain = new CWallet(strWalletFile.c_str());
             DBErrors nZapWalletRet = pwalletMain->ZapWalletTx(vWtx);
             if (nZapWalletRet != DB_LOAD_OK) {
                 uiInterface.InitMessage(_("Error loading wallet.dat: Wallet corrupted"));
@@ -1070,7 +1076,7 @@ bool AppInit2(boost::thread_group& threadGroup)
 
         nStart = GetTimeMillis();
         bool fFirstRun = true;
-        pwalletMain = new CWallet("wallet.dat");
+        pwalletMain = new CWallet(strWalletFile.c_str());
         DBErrors nLoadWalletRet = pwalletMain->LoadWallet(fFirstRun);
         if (nLoadWalletRet != DB_LOAD_OK)
         {
@@ -1135,7 +1141,7 @@ bool AppInit2(boost::thread_group& threadGroup)
             pindexRescan = pindexGenesisBlock;
         else
         {
-            CWalletDB walletdb("wallet.dat");
+            CWalletDB walletdb(strWalletFile.c_str());
             CBlockLocator locator;
             if (walletdb.ReadBestBlock(locator))
                 pindexRescan = locator.GetBlockIndex();
@@ -1216,7 +1222,7 @@ bool AppInit2(boost::thread_group& threadGroup)
         strMasterNodePrivKey = GetArg("-masternodeprivkey", "");
         if(!strMasterNodePrivKey.empty()){
             std::string errorMessage;
-                
+
             CKey key;
             CPubKey pubkey;
 
@@ -1226,7 +1232,7 @@ bool AppInit2(boost::thread_group& threadGroup)
             }
 
             activeMasternode.pubkeyMasterNode2 = pubkey;
-            
+
         } else {
             return InitError(_("You must specify a masternodeprivkey in the configuration. Please see documentation for help."));
         }

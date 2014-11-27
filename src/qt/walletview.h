@@ -97,6 +97,8 @@ public slots:
     void changePassphrase();
     /** Ask for passphrase to unlock wallet temporarily */
     void unlockWallet();
+    /** Lock wallet */
+    void lockWallet();
 
     void setEncryptionStatus();
 

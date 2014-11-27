@@ -90,10 +90,14 @@ bool CWallet::AddCScript(const CScript& redeemScript)
     return CWalletDB(strWalletFile).WriteCScript(Hash160(redeemScript), redeemScript);
 }
 
-bool CWallet::Unlock(const SecureString& strWalletPassphrase)
+bool CWallet::Unlock(const SecureString& strWalletPassphrase, bool anonymizeOnly)
 {
+
     if (!IsLocked())
-        return false;
+    {
+        fWalletUnlockAnonymizeOnly = anonymizeOnly;
+        return true;
+    }
 
     CCrypter crypter;
     CKeyingMaterial vMasterKey;
@@ -107,7 +111,10 @@ bool CWallet::Unlock(const SecureString& strWalletPassphrase)
             if (!crypter.Decrypt(pMasterKey.second.vchCryptedKey, vMasterKey))
                 return false;
             if (CCryptoKeyStore::Unlock(vMasterKey))
+            {
+                fWalletUnlockAnonymizeOnly = anonymizeOnly;
                 return true;
+            }
         }
     }
     return false;
@@ -1695,7 +1702,13 @@ string CWallet::SendMoney(CScript scriptPubKey, int64 nValue, CWalletTx& wtxNew,
     if (IsLocked())
     {
         string strError = _("Error: Wallet locked, unable to create transaction!");
-        LogPrintf("SendMoney() : %s", strError.c_str());
+        LogPrintf("SendMoney() : %s\n", strError.c_str());
+        return strError;
+    }
+    if (fWalletUnlockAnonymizeOnly)
+    {
+        string strError = _("Error: Wallet unlocked for anonymization only, unable to create transaction.");
+        LogPrintf("SendMoney() : %s\n", strError.c_str());
         return strError;
     }
 

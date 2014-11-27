@@ -612,7 +612,7 @@ void ThreadFlushWalletDB(const string& strFile)
                     map<string, int>::iterator mi = bitdb.mapFileUseCount.find(strFile);
                     if (mi != bitdb.mapFileUseCount.end())
                     {
-                        LogPrintf("Flushing wallet.dat\n");
+                        LogPrintf("Flushing %s\n", strFile.c_str());
                         nLastFlushed = nWalletDBUpdated;
                         int64 nStart = GetTimeMillis();
 
@@ -621,7 +621,7 @@ void ThreadFlushWalletDB(const string& strFile)
                         bitdb.CheckpointLSN(strFile);
 
                         bitdb.mapFileUseCount.erase(mi++);
-                        LogPrintf("Flushed wallet.dat %"PRI64d"ms\n", GetTimeMillis() - nStart);
+                        LogPrintf("Flushed %s %"PRI64d"ms\n", strFile.c_str(), GetTimeMillis() - nStart);
                     }
                 }
             }
@@ -656,10 +656,10 @@ bool BackupWallet(const CWallet& wallet, const string& strDest)
 #else
                     filesystem::copy_file(pathSrc, pathDest);
 #endif
-                    LogPrintf("copied wallet.dat to %s\n", pathDest.string().c_str());
+                    LogPrintf("copied %s to %s\n", pathSrc.string().c_str(), pathDest.string().c_str());
                     return true;
                 } catch(const filesystem::filesystem_error &e) {
-                    LogPrintf("error copying wallet.dat to %s - %s\n", pathDest.string().c_str(), e.what());
+                    LogPrintf("error copying %s to %s - %s\n", pathSrc.string().c_str(), pathDest.string().c_str(), e.what());
                     return false;
                 }
             }
