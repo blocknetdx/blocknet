@@ -1325,10 +1325,8 @@ bool CWallet::SelectCoins(int64 nTargetValue, set<pair<const CWalletTx*,unsigned
     //if we're doing a denominated, we need to round up to the nearest .1DRK
     if(coin_type == ONLY_DENOMINATED){
         // denominate our funds
-        int64 nValueLeft = nTargetValue;
         std::vector<CTxOut> vOut;
 
-        int nOutputs = 0;
         // Make outputs by looping through denominations, from large to small    
         BOOST_FOREACH(int64 v, darkSendDenominations)
         {
