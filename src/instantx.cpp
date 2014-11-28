@@ -297,7 +297,7 @@ void ProcessConsensusVote(CConsensusVote& ctx)
         if(ctxl.nBlockHeight == ctx.nBlockHeight){
             ctxl.AddSignature(ctx);
             if(ctxl.CountSignatures() >= INSTANTX_SIGNATURES_REQUIRED){
-                LogPrintf("InstantX::ProcessConsensusVote - Transaction Lock Is Complelete, broadcasting!\n");
+                LogPrintf("InstantX::ProcessConsensusVote - Transaction Lock Is Complete, broadcasting!\n");
 
                 CInv inv(MSG_TXLOCK, ctxl.GetHash());
                 mapTxLocks.insert(make_pair(inv.hash, ctxl));
