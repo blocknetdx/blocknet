@@ -1379,7 +1379,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
     int64 nValueMax = DARKSEND_POOL_MAX;
     int64 nValueIn = 0;
     int minRounds = -2; //non denominated funds are rounds of less than 0
-    int maxAmount = 300;
+    int maxAmount = DARKSEND_POOL_MAX/COIN;
     bool hasFeeInput = false;
 
     // if we have more denominated funds (of any maturity) than the nAnonymizeDarkcoinAmount, we should use use those
@@ -1387,7 +1387,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
         minRounds = 0;
     }
     //if we're set to less than a thousand, don't submit for than that to the pool
-    if(nAnonymizeDarkcoinAmount < 1000) maxAmount = nAnonymizeDarkcoinAmount;
+    if(nAnonymizeDarkcoinAmount < DARKSEND_POOL_MAX/COIN) maxAmount = nAnonymizeDarkcoinAmount;
 
     int64 balanceNeedsAnonymized = pwalletMain->GetBalance() - pwalletMain->GetAnonymizedBalance();
     if(balanceNeedsAnonymized > maxAmount*COIN) balanceNeedsAnonymized= maxAmount*COIN;

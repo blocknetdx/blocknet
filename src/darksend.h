@@ -34,7 +34,7 @@ class CDarksendQueue;
 #define MASTERNODE_RESET                       -1
 
 #define DARKSEND_QUEUE_TIMEOUT                 120
-#define DARKSEND_SIGNING_TIMEOUT               10
+#define DARKSEND_SIGNING_TIMEOUT               30
 
 extern CDarkSendPool darkSendPool;
 extern CDarkSendSigner darkSendSigner;
@@ -44,7 +44,7 @@ extern std::string strMasterNodePrivKey;
 
 static const int64 DARKSEND_COLLATERAL = (0.1*COIN);
 static const int64 DARKSEND_FEE = (0.0125*COIN);
-static const int64 DARKSEND_POOL_MAX = (299.99*COIN);
+static const int64 DARKSEND_POOL_MAX = (199.99*COIN);
 
 //specific messages for the Darksend protocol
 void ProcessMessageDarksend(CNode* pfrom, std::string& strCommand, CDataStream& vRecv);

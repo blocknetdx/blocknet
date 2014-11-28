@@ -48,7 +48,7 @@ SendCoinsDialog::SendCoinsDialog(QWidget *parent) :
     connect(ui->pushButtonCoinControl, SIGNAL(clicked()), this, SLOT(coinControlButtonClicked()));
     connect(ui->checkBoxCoinControlChange, SIGNAL(stateChanged(int)), this, SLOT(coinControlChangeChecked(int)));
     connect(ui->lineEditCoinControlChange, SIGNAL(textEdited(const QString &)), this, SLOT(coinControlChangeEdited(const QString &)));
-    connect(ui->inputType, SIGNAL(currentIndexChanged ( int )), this, SLOT(updateDisplayUnit()));
+    connect(ui->checkUseDarksend, SIGNAL(stateChanged ( int )), this, SLOT(updateDisplayUnit()));
 
     // Coin Control: clipboard actions
     QAction *clipboardQuantityAction = new QAction(tr("Copy quantity"), this);
@@ -146,12 +146,9 @@ void SendCoinsDialog::on_sendButton_clicked()
     QString funds = "Using <b>Anonymous Funds</b>";
     recipients[0].inputType = "ONLY_DENOMINATED";
 
-    if(ui->inputType->currentText() == "Create Darksend Transaction"){
+    if(ui->checkUseDarksend->isChecked()) {
         recipients[0].inputType = "ONLY_DENOMINATED";
-        funds = "Using <b>Anonymous Funds</b>. This transaction will be rounded up to the nearly 0.1DRK.";
-    } else if(ui->inputType->currentText() == "Create Normal Transaction"){
-        recipients[0].inputType = "ONLY_NONDENOMINATED";
-        funds = "Using <b>NON-ANONYMOUS Funds</b>";
+        funds = "Using <b>Anonymous Funds (will be rounded up to the nearest 0.1DRK)</b>";
     } else {
         recipients[0].inputType = "ALL_COINS";
         funds = "Using <b>ANY AVAILABLE Funds</b>";
@@ -159,7 +156,7 @@ void SendCoinsDialog::on_sendButton_clicked()
 
     if(ui->checkInstantX->isChecked()) {
         recipients[0].useInstantX = true;
-        funds += "(InstantX)";
+        funds += " and InstantX";
     } else {
         recipients[0].useInstantX = false;
     }
@@ -410,10 +407,9 @@ void SendCoinsDialog::setBalance(qint64 balance, qint64 unconfirmedBalance, qint
     int unit = model->getOptionsModel()->getDisplayUnit();
 
     uint64 bal = 0;
-    if(ui->inputType->currentText() == "Create Darksend Transaction"){
+
+    if(ui->checkUseDarksend->isChecked()) {
         bal = anonymizedBalance;
-    } else if(ui->inputType->currentText() == "Create Normal Transaction"){
-        bal = balance - anonymizedBalance;
     } else {
         bal = balance;
     }
@@ -428,10 +424,8 @@ void SendCoinsDialog::updateDisplayUnit()
     {
 
         uint64 balance = 0;
-        if(ui->inputType->currentText() == "Create Darksend Transaction"){
+        if(ui->checkUseDarksend->isChecked()) {
             balance = model->getAnonymizedBalance();
-        } else if(ui->inputType->currentText() == "Create Normal Transaction"){
-            balance = model->getBalance() - model->getAnonymizedBalance();
         } else {
             balance = model->getBalance();
         }

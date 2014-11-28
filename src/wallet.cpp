@@ -1570,6 +1570,7 @@ bool CWallet::CreateTransaction(std::vector<pair<CScript, int64> >& vecSend,
 
                 //over pay for denominated transactions
                 if(coin_type == ONLY_DENOMINATED) {
+                    nFeeRet = nChange;
                     nChange = 0;
                 }
 
@@ -1892,6 +1893,7 @@ string CWallet::PrepareDarksendDenominate(int minRounds, int64 maxAmount)
     // Make outputs by looping through denominations, from small to large
     BOOST_REVERSE_FOREACH(int64 v, darkSendDenominations){
         nOutputs = 0;
+
         // add each output up to 10 times until it can't be added again
         while(nValueLeft - v >= 0 && nOutputs <= 20) {
             CScript scriptChange;

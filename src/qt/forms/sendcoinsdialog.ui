@@ -703,34 +703,6 @@
       </widget>
      </item>
      <item>
-      <widget class="QComboBox" name="inputType">
-       <property name="minimumSize">
-        <size>
-         <width>175</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="currentIndex">
-        <number>0</number>
-       </property>
-       <item>
-        <property name="text">
-         <string>Create Darksend Transaction</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Create Normal Transaction</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>No Preference</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-     <item>
       <layout class="QHBoxLayout" name="horizontalLayout_2">
        <property name="spacing">
         <number>3</number>
@@ -745,6 +717,16 @@
          </property>
          <property name="orientation">
           <enum>Qt::Vertical</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="checkUseDarksend">
+         <property name="text">
+          <string>Darksend</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
          </property>
         </widget>
        </item>
