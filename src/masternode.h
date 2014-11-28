@@ -48,11 +48,11 @@ extern map<uint256, int> mapSeenMasternodeVotes;
 void ProcessMasternodeConnections();
 
 // Get the current winner for this block
-int GetCurrentMasterNode(int mod=1, int64 nBlockHeight=0);
+int GetCurrentMasterNode(int mod=1, int64 nBlockHeight=0, int minProtocol=0);
 
 int GetMasternodeByVin(CTxIn& vin);
-int GetMasternodeRank(CTxIn& vin, int64 nBlockHeight=0);
-int GetMasternodeByRank(int findRank, int64 nBlockHeight=0);
+int GetMasternodeRank(CTxIn& vin, int64 nBlockHeight=0, int minProtocol=0);
+int GetMasternodeByRank(int findRank, int64 nBlockHeight=0, int minProtocol=0);
 
 void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream& vRecv);
 

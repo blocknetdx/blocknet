@@ -366,7 +366,7 @@ int GetMasternodeByVin(CTxIn& vin)
     return -1;
 }
 
-int GetCurrentMasterNode(int mod, int64 nBlockHeight)
+int GetCurrentMasterNode(int mod, int64 nBlockHeight, int minProtocol)
 {
     int i = 0;
     unsigned int score = 0;
@@ -375,6 +375,7 @@ int GetCurrentMasterNode(int mod, int64 nBlockHeight)
     // scan for winner
     BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
         mn.Check();
+        if(mn.protocolVersion < minProtocol) continue;
         if(!mn.IsEnabled()) {
             i++;
             continue;
@@ -396,7 +397,7 @@ int GetCurrentMasterNode(int mod, int64 nBlockHeight)
     return winner;
 }
 
-int GetMasternodeByRank(int findRank, int64 nBlockHeight)
+int GetMasternodeByRank(int findRank, int64 nBlockHeight, int minProtocol)
 {
     int i = 0;
 
@@ -405,6 +406,7 @@ int GetMasternodeByRank(int findRank, int64 nBlockHeight)
     i = 0;
     BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
         mn.Check();
+        if(mn.protocolVersion < minProtocol) continue;
         if(!mn.IsEnabled()) {
             i++;
             continue;
@@ -429,12 +431,13 @@ int GetMasternodeByRank(int findRank, int64 nBlockHeight)
     return -1;
 }
 
-int GetMasternodeRank(CTxIn& vin, int64 nBlockHeight)
+int GetMasternodeRank(CTxIn& vin, int64 nBlockHeight, int minProtocol)
 {
     std::vector<pair<unsigned int, CTxIn> > vecMasternodeScores;
 
     BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
         mn.Check();
+        if(mn.protocolVersion < minProtocol) continue;
         if(!mn.IsEnabled()) {
             continue;
         }

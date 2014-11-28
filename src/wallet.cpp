@@ -1321,7 +1321,32 @@ bool CWallet::SelectCoins(int64 nTargetValue, set<pair<const CWalletTx*,unsigned
 {
     vector<COutput> vCoins;
     AvailableCoins(vCoins, true, coinControl, coin_type);
-    
+
+    //if we're doing a denominated, we need to round up to the nearest .1DRK
+    if(coin_type == ONLY_DENOMINATED){
+        // denominate our funds
+        int64 nValueLeft = nTargetValue;
+        std::vector<CTxOut> vOut;
+
+        int nOutputs = 0;
+        // Make outputs by looping through denominations, from large to small    
+        BOOST_FOREACH(int64 v, darkSendDenominations)
+        {
+            int added = 0;
+            BOOST_FOREACH(const COutput& out, vCoins)
+            {
+                if(out.tx->vout[out.i].nValue == v                                          //make sure it's the denom we're looking for
+                    && nValueRet + out.tx->vout[out.i].nValue < nTargetValue + (0.1*COIN)+1 //round the amount up to .1DRK over 
+                    && added <= 50){                                                        //don't add more than 50 of one denom type
+                        nValueRet += out.tx->vout[out.i].nValue;
+                        setCoinsRet.insert(make_pair(out.tx, out.i));
+                        added++;
+                }
+            }
+        }
+        return (nValueRet >= nTargetValue);
+    }
+
     // coin control -> return all selected outputs (we want all selected to go into the transaction for sure)
     if (coinControl && coinControl->HasSelected())
     {
@@ -1543,6 +1568,11 @@ bool CWallet::CreateTransaction(std::vector<pair<CScript, int64> >& vecSend,
                     int64 nMoveToFee = min(nChange, CTransaction::nMinTxFee - nFeeRet);
                     nChange -= nMoveToFee;
                     nFeeRet += nMoveToFee;
+                }
+
+                //over pay for denominated transactions
+                if(coin_type == ONLY_DENOMINATED) {
+                    nChange = 0;
                 }
 
                 if (nChange > 0)

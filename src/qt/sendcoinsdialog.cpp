@@ -148,7 +148,7 @@ void SendCoinsDialog::on_sendButton_clicked()
 
     if(ui->inputType->currentText() == "Create Darksend Transaction"){
         recipients[0].inputType = "ONLY_DENOMINATED";
-        funds = "Using <b>Anonymous Funds</b>";
+        funds = "Using <b>Anonymous Funds</b>. This transaction will be rounded up to the nearly 0.1DRK.";
     } else if(ui->inputType->currentText() == "Create Normal Transaction"){
         recipients[0].inputType = "ONLY_NONDENOMINATED";
         funds = "Using <b>NON-ANONYMOUS Funds</b>";
@@ -158,11 +158,12 @@ void SendCoinsDialog::on_sendButton_clicked()
     }
 
     if(ui->checkInstantX->isChecked()) {
-        printf("!!!! USING INSTANTX\n");
         recipients[0].useInstantX = true;
+        funds += "(InstantX)";
     } else {
         recipients[0].useInstantX = false;
     }
+
     
     // Format confirmation message
     QStringList formatted;

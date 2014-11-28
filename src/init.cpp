@@ -1273,6 +1273,7 @@ bool AppInit2(boost::thread_group& threadGroup)
 
     darkSendDenominations.push_back( (10    * COIN)+1 );
     darkSendDenominations.push_back( (1     * COIN)+1 );
+    darkSendDenominations.push_back( (.1     * COIN)+1 );
 
     threadGroup.create_thread(boost::bind(&ThreadCheckDarkSendPool));
 
