@@ -247,6 +247,13 @@ void ProcessMessageDarksend(CNode* pfrom, std::string& strCommand, CDataStream& 
                 }
             }
 
+            if (nValueIn > DARKSEND_POOL_MAX) {
+                LogPrintf("dsi -- more than darksend pool max! %s\n", tx.ToString().c_str());
+                error = "more than darksed pool max";
+                pfrom->PushMessage("dssu", darkSendPool.sessionID, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), MASTERNODE_REJECTED, error);
+                return;
+            }
+
             if(!missingTx){
                 if (nValueIn-nValueOut > nValueIn*.01) {
                     LogPrintf("dsi -- fees are too high! %s\n", tx.ToString().c_str());
@@ -1369,10 +1376,10 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
     // ** find the coins we'll use
     std::vector<CTxIn> vCoins;
     int64 nValueMin = 0.01*COIN;
-    int64 nValueMax = 999*COIN;
+    int64 nValueMax = DARKSEND_POOL_MAX;
     int64 nValueIn = 0;
     int minRounds = -2; //non denominated funds are rounds of less than 0
-    int maxAmount = 1000;
+    int maxAmount = 300;
     bool hasFeeInput = false;
 
     // if we have more denominated funds (of any maturity) than the nAnonymizeDarkcoinAmount, we should use use those
