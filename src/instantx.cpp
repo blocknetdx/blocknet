@@ -317,7 +317,7 @@ void ProcessConsensusVote(CConsensusVote& ctx)
 
 void CleanTransactionLocksList()
 {
-    if(pindexBest == NULL) return;
+/*    if(pindexBest == NULL) return;
 
     std::map<uint256, CTransactionLock>::iterator it = mapTxLocks.begin();
     
@@ -328,7 +328,7 @@ void CleanTransactionLocksList()
         }
         ++it;
     }
-
+*/
 }
 
 bool CConsensusVote::SignatureValid()
@@ -410,18 +410,18 @@ bool CTransactionLock::SignaturesValid()
 
         if(n == -1) 
         {
-            printf("InstantX::DoConsensusVote - Unknown Masternode\n");
+            LogPrintf("InstantX::DoConsensusVote - Unknown Masternode\n");
             return false;
         }
 
         if(n > 10) 
         {
-            printf("InstantX::DoConsensusVote - Masternode not in the top 10\n");
+            LogPrintf("InstantX::DoConsensusVote - Masternode not in the top 10\n");
             return false;
         }
 
         if(!vote.SignatureValid()){
-            printf("InstantX::CTransactionLock::SignaturesValid - Signature not valid\n");
+            LogPrintf("InstantX::CTransactionLock::SignaturesValid - Signature not valid\n");
             return false;
         }
     }
