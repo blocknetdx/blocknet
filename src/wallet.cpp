@@ -641,6 +641,9 @@ int CWalletTx::GetRequestCount() const
                     nRequests = (*mi).second;
             }
         }
+        else if(IsTransactionLocked()){
+            return 1;
+        }
         else
         {
             // Did anyone request this transaction?
@@ -895,7 +898,7 @@ void CWalletTx::RelayWalletTransaction(std::string strCommand)
             LogPrintf("Relaying wtx %s\n", hash.ToString().c_str());
             
             if(strCommand == "txlreq"){
-                RelayTransactionLockReq((CTransaction)*this, hash);
+                RelayTransactionLockReq((CTransaction)*this, hash, true);
             } else {
                 RelayTransaction((CTransaction)*this, hash);
             }

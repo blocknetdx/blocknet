@@ -14,6 +14,8 @@ CMasternodePayments masternodePayments;
 std::vector<CTxIn> vecMasternodeAskedFor;
 // keep track of masternode votes I've seen
 map<uint256, int> mapSeenMasternodeVotes;
+// keep track of the scanning errors I've seen
+map<uint256, int> mapSeenMasternodeScanningErrors;
 
 // manage the masternode connections
 void ProcessMasternodeConnections(){
@@ -323,7 +325,32 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
         if(masternodePayments.AddWinningMasternode(winner)){
             masternodePayments.Relay(winner);
         }
-    }
+    } /*else if (strCommand == "mnse") { //Masternode Scanning Error
+        CMasternodeScanningError entry;
+        vRecv >> entry;
+
+        if(pindexBest == NULL) return;
+
+        uint256 hash = entry.GetHash();
+        if(mapSeenMasternodeScanningErrors.count(hash)) {
+            if(fDebug) LogPrintf("mnse - seen entry addr %d error %d\n", entry.addr.ToString().c_str(), entry.error.c_str());
+            return;
+        }
+
+        LogPrintf("mnse - seen entry addr %d error %d\n", entry.addr.ToString().c_str(), entry.error.c_str());
+
+        if(!masternodeScanningError.CheckSignature(entry)){
+            LogPrintf("mnse - invalid signature\n");
+            pfrom->Misbehaving(100);
+            return;
+        }
+
+        mapSeenMasternodeVotes.insert(make_pair(hash, 1));
+
+        if(masternodeScanningError.AddWinningMasternode(entry)){
+            masternodeScanningError.Relay(entry);
+        }
+    }*/
 }
 
 struct CompareValueOnly

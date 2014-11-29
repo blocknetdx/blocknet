@@ -686,7 +686,7 @@ class CTxOut;
 
 void RelayTransaction(const CTransaction& tx, const uint256& hash);
 void RelayTransaction(const CTransaction& tx, const uint256& hash, const CDataStream& ss);
-void RelayTransactionLockReq(const CTransaction& tx, const uint256& hash);
+void RelayTransactionLockReq(const CTransaction& tx, const uint256& hash, bool relayToAll=false);
 void RelayDarkSendFinalTransaction(const int sessionID, const CTransaction& txNew);
 void RelayDarkSendIn(const std::vector<CTxIn>& in, const int64& nAmount, const CTransaction& txCollateral, const std::vector<CTxOut>& out);
 void RelayDarkSendStatus(const int sessionID, const int newState, const int newEntriesCount, const int newAccepted, const std::string error="");

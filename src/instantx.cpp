@@ -20,6 +20,7 @@ using namespace boost;
 std::vector<CTransactionLock> vecTxLocks;
 
 std::map<uint256, CTransaction> mapTxLockReq;
+std::map<uint256, CTransaction> mapTxLockReqRejected;
 std::map<uint256, CTransactionLock> mapTxLocks;
 
 #define INSTANTX_SIGNATURES_REQUIRED           2
@@ -34,7 +35,7 @@ void ProcessMessageInstantX(CNode* pfrom, std::string& strCommand, CDataStream& 
 {
     if (strCommand == "txlreq")
     {
-        LogPrintf("ProcessMessageInstantX::txlreq\n");
+        //LogPrintf("ProcessMessageInstantX::txlreq\n");
         CDataStream vMsg(vRecv);
         CTransaction tx;
         vRecv >> tx;
@@ -42,11 +43,7 @@ void ProcessMessageInstantX(CNode* pfrom, std::string& strCommand, CDataStream& 
         CInv inv(MSG_TXLOCK_REQUEST, tx.GetHash());
         pfrom->AddInventoryKnown(inv);
 
-        if(mapTxLockReq.count(inv.hash)){
-            LogPrintf("ProcessMessageInstantX::txlreq - Already Have Transaction Lock Request: %s %s : accepted %s\n",
-                pfrom->addr.ToString().c_str(), pfrom->cleanSubVer.c_str(),
-                tx.GetHash().ToString().c_str()
-            );
+        if(mapTxLockReq.count(inv.hash) || mapTxLockReqRejected.count(inv.hash)){
             return;
         }
 
@@ -74,7 +71,7 @@ void ProcessMessageInstantX(CNode* pfrom, std::string& strCommand, CDataStream& 
             return;
 
         } else {
-
+            mapTxLockReqRejected.insert(make_pair(inv.hash, tx));
 
             // can we get the conflicting transaction as proof?
 
@@ -181,7 +178,7 @@ void ProcessMessageInstantX(CNode* pfrom, std::string& strCommand, CDataStream& 
                 pnode->PushMessage("txlock", ctxl);
             }
             
-            pwalletMain->UpdatedConfirmations();
+            pwalletMain->UpdatedTransaction(ctxl.GetHash());
 
             LogPrintf("InstantX :: Got Transaction Lock: %s %s : accepted %s\n",
                 pfrom->addr.ToString().c_str(), pfrom->cleanSubVer.c_str(),
@@ -317,18 +314,18 @@ void ProcessConsensusVote(CConsensusVote& ctx)
 
 void CleanTransactionLocksList()
 {
-/*    if(pindexBest == NULL) return;
+    if(pindexBest == NULL) return;
 
     std::map<uint256, CTransactionLock>::iterator it = mapTxLocks.begin();
     
     while(it != mapTxLocks.end()) {
-        if(pindexBest->nHeight - it->second.nBlockHeight > 24){ //keep them for an hour
+        if(pindexBest->nHeight - it->second.nBlockHeight > 3){ //keep them for an hour
             LogPrintf("Removing old transaction lock %s\n", it->second.GetHash().ToString().c_str());
             mapTxLocks.erase(it);
+            break;
         }
-        ++it;
     }
-*/
+
 }
 
 bool CConsensusVote::SignatureValid()

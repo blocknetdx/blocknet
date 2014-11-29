@@ -1913,7 +1913,7 @@ void RelayTransaction(const CTransaction& tx, const uint256& hash, const CDataSt
 }
 
 
-void RelayTransactionLockReq(const CTransaction& tx, const uint256& hash)
+void RelayTransactionLockReq(const CTransaction& tx, const uint256& hash, bool relayToAll)
 {
     CInv inv(MSG_TXLOCK_REQUEST, tx.GetHash());
 
@@ -1921,9 +1921,11 @@ void RelayTransactionLockReq(const CTransaction& tx, const uint256& hash)
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
-        if(!pnode->fRelayTxes)
+        if(!relayToAll && !pnode->fRelayTxes)
             continue;
 
+        //there's no requests for transactions locks, so we should show it was propagated correctly
+        pwalletMain->mapRequestCount[tx.GetHash()]++;
         pnode->PushMessage("txlreq", tx);
     }
 

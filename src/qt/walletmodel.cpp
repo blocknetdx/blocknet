@@ -134,6 +134,11 @@ void WalletModel::updateTransaction(const QString &hash, int status)
     }
 }
 
+void WalletModel::updateConfirmations()
+{
+    //emit numTransactionsChanged(newNumTransactions);
+}
+
 void WalletModel::updateAddressBook(const QString &address, const QString &label, bool isMine, int status)
 {
     if(addressTableModel)
