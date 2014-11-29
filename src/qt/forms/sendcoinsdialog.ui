@@ -732,6 +732,9 @@
        </item>
        <item>
         <widget class="QCheckBox" name="checkInstantX">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="text">
           <string>InstantX</string>
          </property>

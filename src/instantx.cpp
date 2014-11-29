@@ -59,7 +59,7 @@ void ProcessMessageInstantX(CNode* pfrom, std::string& strCommand, CDataStream& 
         if (tx.AcceptToMemoryPool(state, true, true, &fMissingInputs))
         {
             RelayTransactionLockReq(tx, inv.hash);
-            DoConsensusVote(tx, true, nBlockHeight); 
+            //DoConsensusVote(tx, true, nBlockHeight); 
 
             mapTxLockReq.insert(make_pair(inv.hash, tx));
 
@@ -76,7 +76,7 @@ void ProcessMessageInstantX(CNode* pfrom, std::string& strCommand, CDataStream& 
             // can we get the conflicting transaction as proof?
 
             RelayTransactionLockReq(tx, inv.hash);
-            DoConsensusVote(tx, false, nBlockHeight); 
+            //DoConsensusVote(tx, false, nBlockHeight); 
 
             LogPrintf("ProcessMessageInstantX::txlreq - Transaction Lock Request: %s %s : rejected %s\n",
                 pfrom->addr.ToString().c_str(), pfrom->cleanSubVer.c_str(),
@@ -93,13 +93,13 @@ void ProcessMessageInstantX(CNode* pfrom, std::string& strCommand, CDataStream& 
         CConsensusVote ctx;
         vRecv >> ctx;
 
-        ProcessConsensusVote(ctx);
+        //ProcessConsensusVote(ctx);
         
         return;
     }
     else if (strCommand == "txlock") //InstantX Lock Transaction Inputs
     {
-        LogPrintf("ProcessMessageInstantX::txlock\n");
+       /* LogPrintf("ProcessMessageInstantX::txlock\n");
 
         CDataStream vMsg(vRecv);
         CTransactionLock ctxl;
@@ -178,7 +178,7 @@ void ProcessMessageInstantX(CNode* pfrom, std::string& strCommand, CDataStream& 
                 pfrom->addr.ToString().c_str(), pfrom->cleanSubVer.c_str(),
                 ctxl.GetHash().ToString().c_str()
             );
-        }
+        }*/
     }
 }
 
