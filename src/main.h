@@ -195,7 +195,7 @@ int64 GetTransactionFees(CTransaction& tx);
 /** Connect/disconnect blocks until pindexNew is the new tip of the active block chain */
 bool SetBestChain(CValidationState &state, CBlockIndex* pindexNew);
 /** Find a conflicting transcation in a block and disconnect all up to that point **/
-bool DisconnectBlockAndInputs(CValidationState &state, std::vector<CTxIn> vecInputs);
+bool DisconnectBlockAndInputs(CValidationState &state, CTransaction txLock);
 /** Find the best known block, and make it the tip of the block chain */
 bool ConnectBestBlock(CValidationState &state);
 /** Create a new block index entry for a given block hash */

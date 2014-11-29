@@ -143,27 +143,21 @@ void ProcessMessageInstantX(CNode* pfrom, std::string& strCommand, CDataStream& 
                 } else {
                     // we have a conflicting transaction (an attack)
                     CValidationState state;
-                    if(!DisconnectBlockAndInputs(state, ctxl.tx.vin)){
-                        LogPrintf("ProcessMessageInstantX::txlock - Couldn't reverse conflicting transaction: %s %s : failed %s\n",
+                    DisconnectBlockAndInputs(state, ctxl.tx);
+
+                    if (ctxl.tx.AcceptToMemoryPool(state, true, true, &fMissingInputs))
+                    {
+                        mapTxLockReq.insert(make_pair(inv.hash, ctxl.tx));
+
+                        LogPrintf("ProcessMessageInstantX::txlock - Transaction Lock Request: %s %s : accepted (reversed) %s\n",
                             pfrom->addr.ToString().c_str(), pfrom->cleanSubVer.c_str(),
                             ctxl.tx.GetHash().ToString().c_str()
                         );
                     } else {
-
-                        if (ctxl.tx.AcceptToMemoryPool(state, true, true, &fMissingInputs))
-                        {
-                            mapTxLockReq.insert(make_pair(inv.hash, ctxl.tx));
-
-                            LogPrintf("ProcessMessageInstantX::txlock - Transaction Lock Request: %s %s : accepted (reversed) %s\n",
-                                pfrom->addr.ToString().c_str(), pfrom->cleanSubVer.c_str(),
-                                ctxl.tx.GetHash().ToString().c_str()
-                            );
-                        } else {
-                            LogPrintf("ProcessMessageInstantX::txlock - Transaction Lock Request: %s %s : rejected (reversed) %s\n",
-                                pfrom->addr.ToString().c_str(), pfrom->cleanSubVer.c_str(),
-                                ctxl.tx.GetHash().ToString().c_str()
-                            );
-                        }
+                        LogPrintf("ProcessMessageInstantX::txlock - Transaction Lock Request: %s %s : rejected (reversed) %s\n",
+                            pfrom->addr.ToString().c_str(), pfrom->cleanSubVer.c_str(),
+                            ctxl.tx.GetHash().ToString().c_str()
+                        );
                     }
                 }
             }

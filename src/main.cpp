@@ -2446,7 +2446,7 @@ bool SetBestChain(CValidationState &state, CBlockIndex* pindexNew)
     Remove conflicting blocks for successful InstantX transaction locks
     This should be very rare (Probably will never happen)
 */
-bool DisconnectBlockAndInputs(CValidationState &state, std::vector<CTxIn> vecInputs)
+bool DisconnectBlockAndInputs(CValidationState &state, CTransaction txLock)
 {
     // All modifications to the coin state will be done in this cache.
     // Only when all have succeeded, we push it to pcoinsTip.
@@ -2457,6 +2457,9 @@ bool DisconnectBlockAndInputs(CValidationState &state, std::vector<CTxIn> vecInp
 
     int HeightMin = pindexBest->nHeight-5;
     bool foundConflictingTx = false;
+
+    //remove anything conflicting in the memory pool
+    mempool.removeConflicts(txLock);
 
     // List of what to disconnect (typically nothing)
     vector<CBlockIndex*> vDisconnect;
@@ -2474,7 +2477,7 @@ bool DisconnectBlockAndInputs(CValidationState &state, std::vector<CTxIn> vecInp
         // point should only happen with -reindex/-loadblock, or a misbehaving peer.
         BOOST_FOREACH(const CTransaction& tx, block.vtx){
             if (!tx.IsCoinBase() && BlockReading->nHeight > HeightMin){
-                BOOST_FOREACH(const CTxIn& in1, vecInputs){
+                BOOST_FOREACH(const CTxIn& in1, txLock.vin){
                     BOOST_FOREACH(const CTxIn& in2, tx.vin){
                         if(in1 == in2) foundConflictingTx = true;
                     }
@@ -2516,7 +2519,7 @@ bool DisconnectBlockAndInputs(CValidationState &state, std::vector<CTxIn> vecInp
         BOOST_FOREACH(const CTransaction& tx, block.vtx){
             if (!tx.IsCoinBase() && pindex->nHeight > HeightMin){
                 bool isConflict = false;
-                BOOST_FOREACH(const CTxIn& in1, vecInputs){
+                BOOST_FOREACH(const CTxIn& in1, txLock.vin){
                     BOOST_FOREACH(const CTxIn& in2, tx.vin){
                         if(in1 != in2) isConflict = true;
                     }
