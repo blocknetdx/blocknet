@@ -711,24 +711,6 @@ bool CTxMemPool::accept(CValidationState &state, CTransaction &tx, bool fCheckIn
             return false;
     }
 
-    // See if this conflicts with any TX locks
-    //printf("mapTxLocks start\n");
-    typedef std::map<uint256, CTransactionLock>::iterator it_ctxl;
-    for(it_ctxl it = mapTxLocks.begin(); it != mapTxLocks.end(); it++) {
-        //printf("%s\n", it->second.tx.ToString().c_str());
-        //printf("%s\n", tx.ToString().c_str());
-        for (unsigned int a = 0; a < it->second.tx.vin.size(); a++) {
-            for (unsigned int b = 0; b < tx.vin.size(); b++) {
-                //printf(" compare %d - %d\n", a, b);
-                if(tx.vin[b].prevout == it->second.tx.vin[a].prevout) {
-                    return error("CTxMemPool::acceptableInputs()::InstantX : invalid transaction, conflicts with existing transaction lock %s", tx.vin[b].ToString().c_str());
-                }
-            }
-        }
-    }
-    //printf("mapTxLocks end\n");
-
-
     // Check for conflicts with in-memory transactions
     CTransaction* ptxOld = NULL;
     for (unsigned int i = 0; i < tx.vin.size(); i++)
@@ -876,18 +858,6 @@ bool CTxMemPool::acceptableInputs(CValidationState &state, CTransaction &tx, boo
         return error("CTxMemPool::acceptableInputs() : nonstandard transaction (%s)",
                      strNonStd.c_str());
 */
-
-    // See if this conflicts with any TX locks
-    typedef std::map<uint256, CTransactionLock>::iterator it_ctxl;
-    for(it_ctxl it = mapTxLocks.begin(); it != mapTxLocks.end(); it++) {
-        for (unsigned int a = 0; a < it->second.tx.vin.size(); a++) {
-            for (unsigned int b = 0; b < tx.vin.size(); b++) {
-                if(tx.vin[b].prevout == it->second.tx.vin[a].prevout) {
-                    return error("CTxMemPool::acceptableInputs()::InstantX : invalid transaction, conflicts with existing transaction lock %s", tx.vin[b].ToString().c_str());
-                }
-            }
-        }
-    }
 
 
     // Check for conflicts with in-memory transactions
@@ -2523,6 +2493,9 @@ bool DisconnectBlockAndInputs(CValidationState &state, std::vector<CTxIn> vecInp
 
     if (vDisconnect.size() > 0) {
         LogPrintf("REORGANIZE: Disconnect Conflicting Blocks %"PRIszu" blocks; %s..\n", vDisconnect.size(), pindexNew->GetBlockHash().ToString().c_str());
+        BOOST_FOREACH(CBlockIndex* pindex, vDisconnect) {
+            LogPrintf(" -- disconnect %s\n", pindex->GetBlockHash().ToString().c_str());
+        }
     }
 
     // Disconnect shorter branch
