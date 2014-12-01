@@ -16,6 +16,7 @@ class CDarkSendSigner;
 class CMasterNodeVote;
 class CBitcoinAddress;
 class CDarksendQueue;
+class CDarksendBroadcastTx;
 
 #define POOL_MAX_TRANSACTIONS                  3 // wait for X transactions to merge and publish
 #define POOL_STATUS_UNKNOWN                    0 // waiting for update
@@ -40,7 +41,9 @@ extern CDarkSendPool darkSendPool;
 extern CDarkSendSigner darkSendSigner;
 extern std::vector<int64> darkSendDenominations;
 extern std::vector<CDarksendQueue> vecDarksendQueue;
+extern std::vector<CDarksendQueue> vecDarksendQueue;
 extern std::string strMasterNodePrivKey;
+extern map<uint256, CDarksendBroadcastTx> mapDarksendBroadcastTxes;
 
 static const int64 DARKSEND_COLLATERAL = (0.1*COIN);
 static const int64 DARKSEND_FEE = (0.0125*COIN);
@@ -190,6 +193,16 @@ public:
 
 };
 
+// store darksend tx signature information
+class CDarksendBroadcastTx
+{
+public:
+    CTransaction tx;
+    CTxIn vin;
+    vector<unsigned char> vchSig;
+    int64 sigTime;
+};
+
 //
 // Helper object for signing and checking signatures
 //
@@ -213,7 +226,7 @@ class CDarksendSession
 class CDarkSendPool
 {
 public:
-    static const int MIN_PEER_PROTO_VERSION = 70047;
+    static const int MIN_PEER_PROTO_VERSION = 70048;
 
     // clients entries
     std::vector<CDarkSendEntry> myEntries;

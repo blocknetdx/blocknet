@@ -3926,6 +3926,8 @@ void static ProcessGetData(CNode* pfrom)
             {
                 // Send stream from relay memory
                 bool pushed = false;
+                
+                if(!mapDarksendBroadcastTxes.count(inv.hash))
                 {
                     LOCK(cs_mapRelay);
                     map<CInv, CDataStream>::iterator mi = mapRelay.find(inv);
@@ -3934,15 +3936,30 @@ void static ProcessGetData(CNode* pfrom)
                         pushed = true;
                     }
                 }
+
                 if (!pushed && inv.type == MSG_TX) {
-                    LOCK(mempool.cs);
-                    if (mempool.exists(inv.hash)) {
-                        CTransaction tx = mempool.lookup(inv.hash);
+                    //check if it's a darksend mixing session
+                    if(mapDarksendBroadcastTxes.count(inv.hash)){
                         CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
                         ss.reserve(1000);
-                        ss << tx;
-                        pfrom->PushMessage("tx", ss);
+                        ss << 
+                            mapDarksendBroadcastTxes[inv.hash].tx << 
+                            mapDarksendBroadcastTxes[inv.hash].vin << 
+                            mapDarksendBroadcastTxes[inv.hash].vchSig << 
+                            mapDarksendBroadcastTxes[inv.hash].sigTime;
+
+                        pfrom->PushMessage("dstx", ss);
                         pushed = true;
+                    } else { //normal tx
+                        LOCK(mempool.cs);
+                        if (mempool.exists(inv.hash)) {
+                            CTransaction tx = mempool.lookup(inv.hash);
+                            CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
+                            ss.reserve(1000);
+                            ss << tx;
+                            pfrom->PushMessage("tx", ss);
+                            pushed = true;
+                        }
                     }
                 }
                 if (!pushed) {
@@ -4377,6 +4394,16 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
                     allowFree = true;
                     mn.allowFreeTx = false;
+
+                    if(!mapDarksendBroadcastTxes.count(tx.GetHash())){
+                        CDarksendBroadcastTx dstx;
+                        dstx.tx = tx;
+                        dstx.vin = vin;
+                        dstx.vchSig = vchSig;
+                        dstx.sigTime = sigTime;
+
+                        mapDarksendBroadcastTxes.insert(make_pair(tx.GetHash(), dstx));
+                    }
                 }
             }
         }
@@ -4388,15 +4415,14 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         CValidationState state;
         if (tx.AcceptToMemoryPool(state, true, true, &fMissingInputs, allowFree))
         {
-            if(strCommand == "tx") RelayTransaction(tx, inv.hash);
-            else if(strCommand == "dstx") RelayDarkSendTransaction(tx, vin, vchSig, sigTime);
+            RelayTransaction(tx, inv.hash);
 
             mapAlreadyAskedFor.erase(inv);
             vWorkQueue.push_back(inv.hash);
             vEraseQueue.push_back(inv.hash);
 
-            LogPrintf("AcceptToMemoryPool: %s %s : accepted %s (poolsz %"PRIszu")\n",
-                pfrom->addr.ToString().c_str(), pfrom->cleanSubVer.c_str(),
+            LogPrintf("AcceptToMemoryPool (%s): %s %s : accepted %s (poolsz %"PRIszu")\n",
+                strCommand.c_str(), pfrom->addr.ToString().c_str(), pfrom->cleanSubVer.c_str(),
                 tx.GetHash().ToString().c_str(),
                 mempool.mapTx.size());
 

@@ -694,6 +694,5 @@ void RelayDarkSendElectionEntry(const CTxIn vin, const CService addr, const std:
 void RelayDarkSendElectionEntryPing(const CTxIn vin, const std::vector<unsigned char> vchSig, const int64 nNow, const bool stop);
 void RelayDarkSendCompletedTransaction(const int sessionID, const bool error, const std::string errorMessage);
 void RelayDarkSendMasterNodeContestant();
-void RelayDarkSendTransaction(const CTransaction txNew, const CTxIn vin, const std::vector<unsigned char> vchSig, const int64 sigTime);
 
 #endif

@@ -1991,11 +1991,3 @@ void RelayDarkSendCompletedTransaction(const int sessionID, const bool error, co
         pnode->PushMessage("dsc", sessionID, error, errorMessage);
     }
 }
-
-void RelayDarkSendTransaction(const CTransaction txNew, const CTxIn vin, const std::vector<unsigned char> vchSig, const int64 sigTime){
-    LOCK(cs_vNodes);
-    BOOST_FOREACH(CNode* pnode, vNodes) {
-        if(!pnode->fRelayTxes) continue;
-        pnode->PushMessage("dstx", txNew, vin, vchSig, sigTime);
-    }
-}

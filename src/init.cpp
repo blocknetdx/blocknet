@@ -386,6 +386,7 @@ std::string HelpMessage()
         "  -masternode=<n>      "   + _("Enable the client to act as a masternode (0-1, default: 0)") + "\n" +
         "  -masternodeprivkey=<n>      "   + _("Set the masternode private key") + "\n" +
         "  -masternodeaddr=<n> "   + _("Set external address:port to get to this masternode (example: address:port)") + "\n" +
+        "  -masternodeminprotocol=<n> " + _("Ignore masternodes less than version (example: 70050; default : 0)") + "\n" +
 
         "\n" + _("Darksend options:") + "\n" +
         "  -disabledarksend=<n>      "   + _("Disable use of automated darksend for funds stored in this wallet (0-1, default: 1)") + "\n" +
