@@ -33,6 +33,8 @@ std::map<uint256, CTransactionLock> mapTxLocks;
 
 void ProcessMessageInstantX(CNode* pfrom, std::string& strCommand, CDataStream& vRecv)
 {
+    return;
+    
     if (strCommand == "txlreq")
     {
         //LogPrintf("ProcessMessageInstantX::txlreq\n");
