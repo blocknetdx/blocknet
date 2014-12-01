@@ -16,6 +16,8 @@ std::vector<CTxIn> vecMasternodeAskedFor;
 map<uint256, int> mapSeenMasternodeVotes;
 // keep track of the scanning errors I've seen
 map<uint256, int> mapSeenMasternodeScanningErrors;
+// who's asked for the masternode list and the last time
+std::map<CNetAddr, int64> askedForMasternodeList;
 
 // manage the masternode connections
 void ProcessMasternodeConnections(){
@@ -134,7 +136,7 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
             return;
         }
 
-        LogPrintf("dsee - Got NEW masternode entry %s\n", addr.ToString().c_str());
+        if(fDebug) LogPrintf("dsee - Got NEW masternode entry %s\n", addr.ToString().c_str());
 
         CValidationState state;
         CTransaction tx = CTransaction();
@@ -142,7 +144,7 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
         tx.vin.push_back(vin);
         tx.vout.push_back(vout);
         if(tx.AcceptableInputs(state, true)){
-            LogPrintf("dsee - Accepted masternode entry %i %i\n", count, current);
+            if(fDebug) LogPrintf("dsee - Accepted masternode entry %i %i\n", count, current);
 
             if(GetInputAge(vin) < MASTERNODE_MIN_CONFIRMATIONS){
                 LogPrintf("dsee - Input must have least %d confirmations\n", MASTERNODE_MIN_CONFIRMATIONS);
@@ -164,7 +166,7 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
                 RelayDarkSendElectionEntry(vin, addr, vchSig, sigTime, pubkey, pubkey2, count, current, lastUpdated, protocolVersion);
 
         } else {
-            LogPrintf("dsee - Rejected masternode entry\n");
+            LogPrintf("dsee - Rejected masternode entry %s\n", addr.ToString().c_str());
 
             int nDoS = 0;
             if (state.IsInvalid(nDoS))
@@ -245,13 +247,19 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
         vRecv >> vin;
 
         if(vin == CTxIn()) { //only should ask for this once
-            if(pfrom->HasFulfilledRequest("dseg")) {
-                LogPrintf("dseg - peer already asked me for the list\n");
-                pfrom->Misbehaving(20);
-                return;
+            std::map<CNetAddr, int64>::iterator i = askedForMasternodeList.find(pfrom->addr);
+            if (i != askedForMasternodeList.end())
+            {
+                int64 t = (*i).second;
+                if (GetTime() < t) {
+                    pfrom->Misbehaving(100);
+                    LogPrintf("dseg - peer already asked me for the list\n");
+                    return;
+                }
             }
 
-            pfrom->FulfilledRequest("dseg");
+            int64 askAgain = GetTime()+(60*60*24);
+            askedForMasternodeList[pfrom->addr] = askAgain;
         } //else, asking for a specific node which is ok
 
         int count = darkSendMasterNodes.size()-1;
