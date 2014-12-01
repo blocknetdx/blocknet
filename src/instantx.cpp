@@ -34,7 +34,7 @@ std::map<uint256, CTransactionLock> mapTxLocks;
 void ProcessMessageInstantX(CNode* pfrom, std::string& strCommand, CDataStream& vRecv)
 {
     return;
-    
+
     if (strCommand == "txlreq")
     {
         //LogPrintf("ProcessMessageInstantX::txlreq\n");
@@ -317,8 +317,9 @@ void CleanTransactionLocksList()
     while(it != mapTxLocks.end()) {
         if(pindexBest->nHeight - it->second.nBlockHeight > 3){ //keep them for an hour
             LogPrintf("Removing old transaction lock %s\n", it->second.GetHash().ToString().c_str());
-            mapTxLocks.erase(it);
-            break;
+            mapTxLocks.erase(it++);
+        } else {
+            it++;
         }
     }
 
