@@ -47,6 +47,7 @@ extern map<uint256, int> mapSeenMasternodeVotes;
 
 // manage the masternode connections
 void ProcessMasternodeConnections();
+int CountMasternodesAboveProtocol(int protocolVersion);
 
 // Get the current winner for this block
 int GetCurrentMasterNode(int mod=1, int64 nBlockHeight=0, int minProtocol=0);

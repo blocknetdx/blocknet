@@ -110,7 +110,7 @@ void ProcessMessageDarksend(CNode* pfrom, std::string& strCommand, CDataStream& 
 
         if(darkSendPool.sessionUsers == 0) {
             if(darkSendMasterNodes[mn].nLastDsq != 0 && 
-                darkSendMasterNodes[mn].nLastDsq + (int)darkSendMasterNodes.size()/5 > darkSendPool.nDsqCount){
+                darkSendMasterNodes[mn].nLastDsq + CountMasternodesAboveProtocol(darkSendPool.MIN_PEER_PROTO_VERSION)/5 > darkSendPool.nDsqCount){
                 //LogPrintf("dsa -- last dsq too recent, must wait. %s \n", darkSendMasterNodes[mn].addr.ToString().c_str());
                 std::string strError = "Last darksend was too recent";
                 pfrom->PushMessage("dssu", darkSendPool.sessionID, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), MASTERNODE_REJECTED, strError);
@@ -164,7 +164,7 @@ void ProcessMessageDarksend(CNode* pfrom, std::string& strCommand, CDataStream& 
             if(fDebug) LogPrintf("dsq last %"PRI64d" last2 %"PRI64d" count %"PRI64d"\n", darkSendMasterNodes[mn].nLastDsq, darkSendMasterNodes[mn].nLastDsq + (int)darkSendMasterNodes.size()/5, darkSendPool.nDsqCount);
             //don't allow a few nodes to dominate the queuing process
             if(darkSendMasterNodes[mn].nLastDsq != 0 && 
-                darkSendMasterNodes[mn].nLastDsq + (int)darkSendMasterNodes.size()/5 > darkSendPool.nDsqCount){
+                darkSendMasterNodes[mn].nLastDsq + CountMasternodesAboveProtocol(darkSendPool.MIN_PEER_PROTO_VERSION)/5 > darkSendPool.nDsqCount){
                 if(fDebug) LogPrintf("dsq -- masternode sending too many dsq messages. %s \n", darkSendMasterNodes[mn].addr.ToString().c_str());
                 return;
             }
@@ -1583,7 +1583,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
             }
 
             if(darkSendMasterNodes[i].nLastDsq != 0 && 
-                darkSendMasterNodes[i].nLastDsq + (int)darkSendMasterNodes.size()/5 > darkSendPool.nDsqCount){
+                darkSendMasterNodes[i].nLastDsq + CountMasternodesAboveProtocol(darkSendPool.MIN_PEER_PROTO_VERSION)/5 > darkSendPool.nDsqCount){
                 return DoAutomaticDenominating();
             }
 

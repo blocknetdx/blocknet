@@ -377,12 +377,25 @@ struct CompareValueOnly2
     }
 };
 
+int CountMasternodesAboveProtocol(int protocolVersion)
+{
+    int i = 0;
+
+    BOOST_FOREACH(CMasterNode& mn, darkSendMasterNodes) {
+        if(mn.protocolVersion < protocolVersion) continue;
+        i++;
+    }
+
+    return i;
+
+}
+
 
 int GetMasternodeByVin(CTxIn& vin)
 {
     int i = 0;
 
-    BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
+    BOOST_FOREACH(CMasterNode& mn, darkSendMasterNodes) {
         if (mn.vin == vin) return i;
         i++;
     }
