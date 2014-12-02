@@ -51,7 +51,7 @@ void CActiveMasternode::RegisterAsMasterNode(bool stop)
         if((fTestNet && masterNodeSignAddr.GetPort() != 19999) || (!fTestNet && masterNodeSignAddr.GetPort() != 9999)) {
             LogPrintf("CActiveMasternode::RegisterAsMasterNode() - Invalid port\n");
             isCapableMasterNode = MASTERNODE_NOT_CAPABLE;
-            exit(0);
+            return;
         }
 
         LogPrintf("CActiveMasternode::RegisterAsMasterNode() - Checking inbound connection to '%s'\n", masterNodeSignAddr.ToString().c_str());
