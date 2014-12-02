@@ -56,10 +56,10 @@ void ProcessMessageInstantX(CNode* pfrom, std::string& strCommand, CDataStream& 
         }
         int nBlockHeight = pindexBest->nHeight - nTxAge; //calculate the height
 
-        BOOST_FOREACH(const CTxOut o, txCollateral.vout){
+        BOOST_FOREACH(const CTxOut o, tx.vout){
             if(!o.scriptPubKey.IsNormalPaymentScript()){
-                LogPrintf ("ProcessMessageInstantX::txlreq - Invalid Script %s\n", txCollateral.ToString().c_str());
-                return false;
+                LogPrintf ("ProcessMessageInstantX::txlreq - Invalid Script %s\n", tx.ToString().c_str());
+                return;
             }
         }
 
@@ -136,8 +136,8 @@ void ProcessMessageInstantX(CNode* pfrom, std::string& strCommand, CDataStream& 
 
             BOOST_FOREACH(const CTxOut o, ctxl.tx.vout){
                 if(!o.scriptPubKey.IsNormalPaymentScript()){
-                    LogPrintf ("ProcessMessageInstantX::cxlock - Invalid Script %s\n", txCollateral.ToString().c_str());
-                    return false;
+                    LogPrintf ("ProcessMessageInstantX::cxlock - Invalid Script %s\n", ctxl.tx.ToString().c_str());
+                    return;
                 }
             }
             mapTxLocks.insert(make_pair(inv.hash, ctxl));
