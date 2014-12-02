@@ -42,7 +42,7 @@ int RequestedMasterNodeList = 0;
 void ProcessMessageDarksend(CNode* pfrom, std::string& strCommand, CDataStream& vRecv)
 {
     if (strCommand == "dsf") { //DarkSend Final tx  
-        if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
+        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION) {
             return;
         }
 
@@ -65,7 +65,7 @@ void ProcessMessageDarksend(CNode* pfrom, std::string& strCommand, CDataStream& 
     }
 
     else if (strCommand == "dsc") { //DarkSend Complete
-        if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
+        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION) {
             return;
         }
 
@@ -88,7 +88,7 @@ void ProcessMessageDarksend(CNode* pfrom, std::string& strCommand, CDataStream& 
     }
 
     else if (strCommand == "dsa") { //DarkSend Acceptable
-        if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
+        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION) {
             return;
         }
 
@@ -129,7 +129,7 @@ void ProcessMessageDarksend(CNode* pfrom, std::string& strCommand, CDataStream& 
             return;
         }
     } else if (strCommand == "dsq") { //DarkSend Queue
-        if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
+        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION) {
             return;
         }
 
@@ -179,7 +179,7 @@ void ProcessMessageDarksend(CNode* pfrom, std::string& strCommand, CDataStream& 
         }
 
     } else if (strCommand == "dsi") { //DarkSend vIn
-        if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
+        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION) {
             return;
         }
 
@@ -231,7 +231,12 @@ void ProcessMessageDarksend(CNode* pfrom, std::string& strCommand, CDataStream& 
                     pfrom->PushMessage("dssu", darkSendPool.sessionID, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), MASTERNODE_REJECTED, error);
                     return;
                 }
-
+                if(!o.scriptPubKey.IsNormalPaymentScript()){
+                    LogPrintf("dsi - invalid script! %s\n", o.scriptPubKey.ToString().c_str());
+                    error = "invalid script detected";
+                    pfrom->PushMessage("dssu", darkSendPool.sessionID, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), MASTERNODE_REJECTED, error);
+                    return;
+                }
             }
 
             BOOST_FOREACH(const CTxIn i, in){
@@ -239,7 +244,7 @@ void ProcessMessageDarksend(CNode* pfrom, std::string& strCommand, CDataStream& 
 
                 if(fDebug) LogPrintf("dsi -- tx in %s\n", i.ToString().c_str());                
 
-                CTransaction tx2;
+                CTransaction tx2; 
                 uint256 hash;
                 if(GetTransaction(i.prevout.hash, tx2, hash, true)){
                     if(tx2.vout.size() > i.prevout.n) {
@@ -291,7 +296,7 @@ void ProcessMessageDarksend(CNode* pfrom, std::string& strCommand, CDataStream& 
     }
 
     else if (strCommand == "dssub") { //DarkSend Subscribe To         
-        if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
+        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION) {
             return;
         }
 
@@ -304,7 +309,7 @@ void ProcessMessageDarksend(CNode* pfrom, std::string& strCommand, CDataStream& 
     }
 
     else if (strCommand == "dssu") { //DarkSend status update
-        if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
+        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION) {
             return;
         }
 
@@ -332,7 +337,7 @@ void ProcessMessageDarksend(CNode* pfrom, std::string& strCommand, CDataStream& 
     }
 
     else if (strCommand == "dss") { //DarkSend Sign Final Tx
-        if (pfrom->nVersion != darkSendPool.MIN_PEER_PROTO_VERSION) {
+        if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION) {
             return;
         }
 
@@ -892,14 +897,21 @@ bool CDarkSendPool::SignatureValid(const CScript& newSig, const CTxIn& newVin){
 // check to make sure the collateral provided by the client is valid
 bool CDarkSendPool::IsCollateralValid(const CTransaction& txCollateral){
     if(txCollateral.vout.size() < 1) return false;
+    if(txCollateral.nLockTime != 0) return false;
 
     int64 nValueIn = 0;
     int64 nValueOut = 0;
     bool missingTx = false;
 
     CTransaction tx;
-    BOOST_FOREACH(const CTxOut o, txCollateral.vout)
+    BOOST_FOREACH(const CTxOut o, txCollateral.vout){
         nValueOut += o.nValue;
+
+        if(!o.scriptPubKey.IsNormalPaymentScript()){
+            LogPrintf ("CDarkSendPool::IsCollateralValid - Invalid Script %s\n", txCollateral.ToString().c_str());
+            return false;
+        }
+    }
 
     BOOST_FOREACH(const CTxIn i, txCollateral.vin){
         CTransaction tx2;

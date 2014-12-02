@@ -108,7 +108,7 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
             if(mn.vin.prevout == vin.prevout) {
                 //count == -1 when it's a new entry
                 // e.g. We don't want the entry relayed/time updated when we're syncing the list
-                if(count == -1 && !mn.UpdatedWithin(MASTERNODE_MIN_SECONDS)){
+                if(count == -1 && !mn.UpdatedWithin(MASTERNODE_MIN_DSEE_SECONDS)){
                     mn.UpdateLastSeen();
 
                     if(mn.now < sigTime){ //take the newest entry
@@ -215,14 +215,12 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
                         return;
                     }
 
-                    if(stop) {
-                        if(mn.IsEnabled()){
+                    if(!mn.UpdatedWithin(MASTERNODE_MIN_DSEEP_SECONDS)){
+                        mn.UpdateLastSeen();
+                        if(stop) {
                             mn.Disable();
                             mn.Check();
-                            RelayDarkSendElectionEntryPing(vin, vchSig, sigTime, stop);
                         }
-                    } else if(!mn.UpdatedWithin(MASTERNODE_MIN_SECONDS)){
-                        mn.UpdateLastSeen();
                         RelayDarkSendElectionEntryPing(vin, vchSig, sigTime, stop);
                     }
                 }
@@ -247,19 +245,23 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
         vRecv >> vin;
 
         if(vin == CTxIn()) { //only should ask for this once
-            std::map<CNetAddr, int64>::iterator i = askedForMasternodeList.find(pfrom->addr);
-            if (i != askedForMasternodeList.end())
+            //local network
+            if(!pfrom->addr.IsRFC1918()) 
             {
-                int64 t = (*i).second;
-                if (GetTime() < t) {
-                    pfrom->Misbehaving(100);
-                    LogPrintf("dseg - peer already asked me for the list\n");
-                    return;
+                std::map<CNetAddr, int64>::iterator i = askedForMasternodeList.find(pfrom->addr);
+                if (i != askedForMasternodeList.end())
+                {
+                    int64 t = (*i).second;
+                    if (GetTime() < t) {
+                        pfrom->Misbehaving(100);
+                        LogPrintf("dseg - peer already asked me for the list\n");
+                        return;
+                    }
                 }
-            }
 
-            int64 askAgain = GetTime()+(60*60*24);
-            askedForMasternodeList[pfrom->addr] = askAgain;
+                int64 askAgain = GetTime()+(60*60*24);
+                askedForMasternodeList[pfrom->addr] = askAgain;
+            }
         } //else, asking for a specific node which is ok
 
         int count = darkSendMasterNodes.size()-1;
