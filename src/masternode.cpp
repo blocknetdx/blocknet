@@ -118,10 +118,6 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
                         mn.sig = vchSig;
                         mn.protocolVersion = protocolVersion;
 
-                        if(pubkey2 == activeMasternode.pubkeyMasterNode2){
-                            activeMasternode.EnableHotColdMasterNode(vin, sigTime, addr);
-                        }
-
                         RelayDarkSendElectionEntry(vin, addr, vchSig, sigTime, pubkey, pubkey2, count, current, lastUpdated, protocolVersion);
                     }
                 }
@@ -158,7 +154,7 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
             mn.UpdateLastSeen(lastUpdated);
             darkSendMasterNodes.push_back(mn);
 
-            if(pubkey2 == activeMasternode.pubkeyMasterNode2){
+            if(pubkey2 == activeMasternode.pubkeyMasterNode2 && protocolVersion == PROTOCOL_VERSION){
                 activeMasternode.EnableHotColdMasterNode(vin, sigTime, addr);
             }
 
