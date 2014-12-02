@@ -1462,11 +1462,21 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
 
     if(fDryRun) return true;
 
+    if(vecDisabledDenominations.size() == 0){
+        //if we have 20x 0.1DRk and 1DRK inputs, we can start just anonymizing 10DRK inputs.
+        if(pwalletMain->CountInputsWithAmount((1     * COIN)+1) >= 20 && 
+            pwalletMain->CountInputsWithAmount((.1     * COIN)+1) >= 20){
+            vecDisabledDenominations.push_back((1     * COIN)+1);
+            vecDisabledDenominations.push_back((.1     * COIN)+1);
+        }
+    }
+
     // initial phase, find a masternode
     if(!sessionFoundMasternode){
         int nUseQueue = rand()%100;
 
         sessionTotalValue = pwalletMain->GetTotalValue(vCoins);
+
         //randomize the amounts we mix
         // if we have minRounds set, or if our non-demon is less than 5% of denom coins 
         if(minRounds == 0 || 
@@ -1880,9 +1890,16 @@ int CDarkSendPool::GetDenominationsByAmount(int64 nAmount){
     int64 nValueLeft = nAmount;
 
     std::vector<CTxOut> vout1;
-    BOOST_FOREACH(int64 v, darkSendDenominations){
+
+    // Make outputs by looping through denominations, from small to large
+    BOOST_REVERSE_FOREACH(int64 v, darkSendDenominations){
         int nOutputs = 0;
-        while(nValueLeft - v >= 0 && nOutputs <= 100) {
+
+        if(std::find(vecDisabledDenominations.begin(), vecDisabledDenominations.end(), v) != vecDisabledDenominations.end())
+            continue;
+
+        // add each output up to 10 times until it can't be added again
+        while(nValueLeft - v >= 0 && nOutputs <= 20) {
             CTxOut o(v, e);
             vout1.push_back(o);
             nValueLeft -= v;

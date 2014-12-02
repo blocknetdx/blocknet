@@ -270,6 +270,8 @@ public:
     int minBlockSpacing; //required blocks between mixes
     CTransaction txCollateral;
 
+    std::vector<int64> vecDisabledDenominations;
+
     //incremented whenever a DSQ comes through
     int64 nDsqCount;
 
@@ -293,6 +295,7 @@ public:
         txCollateral = CTransaction();
         minBlockSpacing = 1;
         nDsqCount = 0;
+        vecDisabledDenominations.clear();
 
         SetCollateralAddress(strAddress);
         SetNull();

@@ -1447,6 +1447,22 @@ bool CWallet::SelectCoinsCollateral(std::vector<CTxIn>& setCoinsRet, int64& nVal
     return false;
 }
 
+int CWallet::CountInputsWithAmount(int64 nInputAmount)
+{
+    CCoinControl *coinControl=NULL;
+
+    vector<COutput> vCoins;
+    AvailableCoins(vCoins, false, coinControl, ALL_COINS);
+    
+    int count = 0;
+    BOOST_FOREACH(const COutput& out, vCoins)
+    {
+        if(out.tx->vout[out.i].nValue == nInputAmount) count++;
+    }
+
+    return count;
+}
+
 bool CWallet::HasDarksendFeeInputs() const 
 {
     CCoinControl *coinControl=NULL;
@@ -1892,10 +1908,15 @@ string CWallet::PrepareDarksendDenominate(int minRounds, int64 maxAmount)
     int64 nValueLeft = nTotalValue;
     std::vector<CTxOut> vOut;
 
-    int nOutputs = 0;
     // Make outputs by looping through denominations, from small to large
     BOOST_REVERSE_FOREACH(int64 v, darkSendDenominations){
-        nOutputs = 0;
+        int nOutputs = 0;
+
+        if(std::find(darkSendPool.vecDisabledDenominations.begin(), 
+            darkSendPool.vecDisabledDenominations.end(), v) != 
+            darkSendPool.vecDisabledDenominations.end()){
+            continue;
+        }
 
         // add each output up to 10 times until it can't be added again
         while(nValueLeft - v >= 0 && nOutputs <= 20) {
@@ -1927,8 +1948,6 @@ string CWallet::PrepareDarksendDenominate(int minRounds, int64 maxAmount)
 
         CTxOut o(nValueLeft, scriptChange);
         vOut.push_back(o);
-
-        nOutputs++;
     }
 
     darkSendPool.SendDarksendDenominate(vCoins, vOut, nValueIn);
