@@ -1388,7 +1388,8 @@ bool CWallet::SelectCoinsDark(int64 nValueMin, int64 nValueMax, std::vector<CTxI
     //the first thing we get is a fee input, then we'll use as many denominated as possible. then the rest
     BOOST_FOREACH(const COutput& out, vCoins)
     {
-        if(out.tx->vout[out.i].nValue <= 1*COIN) continue; //there's no reason to allow inputs less than 1 COIN into DS
+        //there's no reason to allow inputs less than 1 COIN into DS (other than denominations smaller than that amount)
+        if(out.tx->vout[out.i].nValue <= 1*COIN && out.tx->vout[out.i].nValue != (.1*COIN)+1) continue; 
         if(fMasterNode && out.tx->vout[out.i].nValue == 1000*COIN) continue; //masternode input
         
         if(nValueRet + out.tx->vout[out.i].nValue <= nValueMax){
