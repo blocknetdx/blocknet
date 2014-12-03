@@ -89,10 +89,18 @@ void ProcessMessageDarksend(CNode* pfrom, std::string& strCommand, CDataStream& 
 
     else if (strCommand == "dsa") { //DarkSend Acceptable
         if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION) {
+            std::string strError = "incompatible version";
+            LogPrintf("dsa -- incompatible version! \n");
+            pfrom->PushMessage("dssu", darkSendPool.sessionID, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), MASTERNODE_REJECTED, strError);
+
             return;
         }
 
         if(!fMasterNode){
+            std::string strError = "not a masternode";
+            LogPrintf("dsa -- not a masternode! \n");
+            pfrom->PushMessage("dssu", darkSendPool.sessionID, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), MASTERNODE_REJECTED, strError);
+
             return;
         }
 
@@ -179,11 +187,20 @@ void ProcessMessageDarksend(CNode* pfrom, std::string& strCommand, CDataStream& 
         }
 
     } else if (strCommand == "dsi") { //DarkSend vIn
+        std::string error = "";
         if (pfrom->nVersion < darkSendPool.MIN_PEER_PROTO_VERSION) {
+            LogPrintf("dsi -- incompatible version! \n");
+            error = "incompatible version";
+            pfrom->PushMessage("dssu", darkSendPool.sessionID, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), MASTERNODE_REJECTED, error);
+
             return;
         }
 
         if(!fMasterNode){
+            LogPrintf("dsi -- not a masternode! \n");
+            error = "not a masternode";
+            pfrom->PushMessage("dssu", darkSendPool.sessionID, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), MASTERNODE_REJECTED, error);
+
             return;
         }
 
@@ -192,8 +209,6 @@ void ProcessMessageDarksend(CNode* pfrom, std::string& strCommand, CDataStream& 
         CTransaction txCollateral;
         std::vector<CTxOut> out;
         vRecv >> in >> nAmount >> txCollateral >> out;
-
-        std::string error = "";
 
         //do we have enough users in the current session?
         if(!darkSendPool.IsSessionReady()){
@@ -1899,7 +1914,7 @@ int CDarkSendPool::GetDenominationsByAmount(int64 nAmount){
             continue;
 
         // add each output up to 10 times until it can't be added again
-        while(nValueLeft - v >= 0 && nOutputs <= 20) {
+        while(nValueLeft - v >= 0 && nOutputs <= 10) {
             CTxOut o(v, e);
             vout1.push_back(o);
             nValueLeft -= v;

@@ -1919,7 +1919,7 @@ string CWallet::PrepareDarksendDenominate(int minRounds, int64 maxAmount)
         }
 
         // add each output up to 10 times until it can't be added again
-        while(nValueLeft - v >= 0 && nOutputs <= 20) {
+        while(nValueLeft - v >= 0 && nOutputs <= 10) {
             CScript scriptChange;
             CPubKey vchPubKey;
             //use a unique change address

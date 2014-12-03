@@ -47,7 +47,7 @@ extern map<uint256, CDarksendBroadcastTx> mapDarksendBroadcastTxes;
 
 static const int64 DARKSEND_COLLATERAL = (0.1*COIN);
 static const int64 DARKSEND_FEE = (0.0125*COIN);
-static const int64 DARKSEND_POOL_MAX = (199.99*COIN);
+static const int64 DARKSEND_POOL_MAX = (999.99*COIN);
 
 //specific messages for the Darksend protocol
 void ProcessMessageDarksend(CNode* pfrom, std::string& strCommand, CDataStream& vRecv);
@@ -226,7 +226,7 @@ class CDarksendSession
 class CDarkSendPool
 {
 public:
-    static const int MIN_PEER_PROTO_VERSION = 70050;
+    static const int MIN_PEER_PROTO_VERSION = 70051;
 
     // clients entries
     std::vector<CDarkSendEntry> myEntries;
