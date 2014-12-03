@@ -1439,9 +1439,6 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
     // if the balance is more the pool max, take the pool max
     if(balanceNeedsAnonymized > nValueMax) {
         balanceNeedsAnonymized = nValueMax;
-    } else if (nValueIn < balanceNeedsAnonymized*0.9 && balanceNeedsAnonymized > 10*COIN) {
-        if(!fDryRun) SplitUpMoney(); 
-        return true;
     }
 
     // select coins that should be given to the pool
