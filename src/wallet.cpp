@@ -1449,18 +1449,31 @@ bool CWallet::SelectCoinsCollateral(std::vector<CTxIn>& setCoinsRet, int64& nVal
 
 int CWallet::CountInputsWithAmount(int64 nInputAmount)
 {
-    CCoinControl *coinControl=NULL;
-
-    vector<COutput> vCoins;
-    AvailableCoins(vCoins, false, coinControl, ALL_COINS);
-    
-    int count = 0;
-    BOOST_FOREACH(const COutput& out, vCoins)
+    int64 nTotal = 0;
     {
-        if(out.tx->vout[out.i].nValue == nInputAmount) count++;
+        LOCK(cs_wallet);
+        for (map<uint256, CWalletTx>::const_iterator it = mapWallet.begin(); it != mapWallet.end(); ++it)
+        {
+            const CWalletTx* pcoin = &(*it).second;
+            if (pcoin->IsConfirmed()){
+                for (unsigned int i = 0; i < pcoin->vout.size(); i++) {
+                    COutput out = COutput(pcoin, i, pcoin->GetDepthInMainChain());
+                    CTxIn vin = CTxIn(out.tx->GetHash(), out.i);  
+
+                    if(out.tx->vout[out.i].nValue != nInputAmount) continue;
+
+                    if(pcoin->IsSpent(i) || !IsMine(pcoin->vout[i]) || !IsDenominated(vin)) continue;
+
+                    int rounds = GetInputDarksendRounds(vin);
+                    if(rounds >= nDarksendRounds){
+                        nTotal++;                    
+                    }
+                }
+            }
+        }
     }
 
-    return count;
+    return nTotal;
 }
 
 bool CWallet::HasDarksendFeeInputs() const 
