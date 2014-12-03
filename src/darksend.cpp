@@ -1456,9 +1456,6 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
 
         LogPrintf("DoAutomaticDenominating : No funds detected in need of denominating (2)\n");
         return false;
-    } else if (nValueIn < balanceNeedsAnonymized*0.9 && balanceNeedsAnonymized > 10*COIN) {
-        if(!fDryRun) SplitUpMoney(); 
-        return true;
     }
 
     // the darksend pool can only take 1.1DRK minimum
