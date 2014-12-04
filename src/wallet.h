@@ -216,6 +216,7 @@ public:
     std::string SendMoneyToDestination(const CTxDestination &address, int64 nValue, CWalletTx& wtxNew, bool fAskFee=false, AvailableCoinsType coin_type=ALL_COINS);
     std::string PrepareDarksendDenominate(int minRounds, int maxRounds, int64 maxAmount);
     bool CreateCollateralTransaction(CTransaction& txCollateral, std::string strReason);
+    bool ConvertList(std::vector<CTxIn> vCoins, std::vector<int64>& vecAmounts);
 
     bool NewKeyPool();
     bool TopUpKeyPool();

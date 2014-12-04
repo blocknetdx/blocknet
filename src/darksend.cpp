@@ -1519,7 +1519,10 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
                             if(dsq.time == 0) continue;
                             if(!dsq.GetAddress(addr)) continue;
 
-                            if(dsq.nDenom == GetDenominationsByAmount(sessionTotalValue)) {
+                            std::vector<int64> vecAmounts;
+                            pwalletMain->ConvertList(vCoins, vecAmounts);
+
+                            if(dsq.nDenom == GetDenominationsByAmounts(vecAmounts)) {
                                 break;
                             }
                         }
@@ -1586,7 +1589,17 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
                         }
                     
                         vecMasternodesUsed.push_back(dsq.vin);
-                        sessionDenom = GetDenominationsByAmount(sessionTotalValue);
+
+                        if(minRounds >= 0){
+                            //use same denominations
+                            std::vector<int64> vecAmounts;
+                            pwalletMain->ConvertList(vCoins, vecAmounts);
+                            sessionDenom = GetDenominationsByAmounts(vecAmounts);
+                        } else {
+                            //use all possible denominations
+                            sessionDenom = GetDenominationsByAmount(sessionTotalValue);
+                        }
+
                         pnode->PushMessage("dsa", sessionDenom, txCollateral);
                         LogPrintf("DoAutomaticDenominating --- connected (from queue), sending dsa for %d %d - %s\n", sessionDenom, GetDenominationsByAmount(sessionTotalValue), pnode->addr.ToString().c_str());
                         return true;
@@ -1638,7 +1651,17 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
                     }
 
                     vecMasternodesUsed.push_back(darkSendMasterNodes[i].vin);
-                    sessionDenom = GetDenominationsByAmount(sessionTotalValue);
+
+                    if(minRounds >= 0){
+                        //use same denominations
+                        std::vector<int64> vecAmounts;
+                        pwalletMain->ConvertList(vCoins, vecAmounts);
+                        sessionDenom = GetDenominationsByAmounts(vecAmounts);
+                    } else {
+                        //use all possible denominations
+                        sessionDenom = GetDenominationsByAmount(sessionTotalValue);
+                    }
+                    
                     pnode->PushMessage("dsa", sessionDenom, txCollateral);
                     LogPrintf("DoAutomaticDenominating --- connected, sending dsa for %d - denom %d\n", sessionDenom, GetDenominationsByAmount(sessionTotalValue));
                     return true;
@@ -1906,8 +1929,22 @@ int CDarkSendPool::GetDenominations(const std::vector<CTxOut>& vout){
     return denom;
 }
 
-// calculate the outputs from a given amount of darkcoin and 
-// return the bitshifted integer to represent them
+int CDarkSendPool::GetDenominationsByAmounts(std::vector<int64>& vecAmount){
+    CScript e = CScript();
+    std::vector<CTxOut> vout1;
+
+    // Make outputs by looping through denominations, from small to large
+    BOOST_REVERSE_FOREACH(int64 v, vecAmount){
+        int nOutputs = 0;
+
+        CTxOut o(v, e);
+        vout1.push_back(o);
+        nOutputs++;
+    }
+
+    return GetDenominations(vout1);
+}
+
 int CDarkSendPool::GetDenominationsByAmount(int64 nAmount){
     CScript e = CScript();
     int64 nValueLeft = nAmount;
