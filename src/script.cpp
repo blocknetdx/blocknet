@@ -1813,20 +1813,28 @@ unsigned int CScript::GetSigOpCount(const CScript& scriptSig) const
     return subscript.GetSigOpCount(true);
 }
 
-bool CScript::IsDarksendScript() const
+bool CScript::IsNormalPaymentScript() const
 {
-    const_iterator pc = this->begin();
-    vector<unsigned char> data;
-    while (pc < this->end())
+    if(this->size() != 25) return false;
+
+    std::string str;
+    opcodetype opcode;
+    const_iterator pc = begin();
+    int i = 0;
+    while (pc < end())
     {
-        opcodetype opcode;
-        if (!this->GetOp(pc, opcode, data))
-            continue;
-        if (opcode == OP_NOP)
-            return true;
+        GetOp(pc, opcode);
+
+        if(     i == 0 && opcode != OP_DUP) return false;
+        else if(i == 1 && opcode != OP_HASH160) return false;
+        else if(i == 3 && opcode != OP_EQUALVERIFY) return false;
+        else if(i == 4 && opcode != OP_CHECKSIG) return false;
+        else if(i == 5) return false;
+
+        i++;
     }
 
-    return false;
+    return true;
 }
 
 bool CScript::IsPayToScriptHash() const

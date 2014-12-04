@@ -386,6 +386,7 @@ std::string HelpMessage()
         "  -masternode=<n>      "   + _("Enable the client to act as a masternode (0-1, default: 0)") + "\n" +
         "  -masternodeprivkey=<n>      "   + _("Set the masternode private key") + "\n" +
         "  -masternodeaddr=<n> "   + _("Set external address:port to get to this masternode (example: address:port)") + "\n" +
+        "  -masternodeminprotocol=<n> " + _("Ignore masternodes less than version (example: 70050; default : 0)") + "\n" +
 
         "\n" + _("Darksend options:") + "\n" +
         "  -disabledarksend=<n>      "   + _("Disable use of automated darksend for funds stored in this wallet (0-1, default: 1)") + "\n" +
@@ -680,6 +681,8 @@ bool AppInit2(boost::thread_group& threadGroup)
             return InitError(_("Unable to sign masternode payment winner, wrong key?"));
     }
 
+    //ignore masternodes below protocol version
+    nMasternodeMinProtocol = GetArg("-masternodeminprotocol", 0);
     std::string strWalletFile = GetArg("-wallet", "wallet.dat");
 
     // ********************************************************* Step 4: application initialization: dir lock, daemonize, pidfile, debug log
@@ -1266,10 +1269,10 @@ bool AppInit2(boost::thread_group& threadGroup)
     LogPrintf("Darksend rounds %d\n", nDarksendRounds);
     LogPrintf("Anonymize Darkcoin Amount %d\n", nAnonymizeDarkcoinAmount);
 
-    darkSendDenominations.push_back( (500   * COIN)+1 );
     darkSendDenominations.push_back( (100   * COIN)+1 );
     darkSendDenominations.push_back( (10    * COIN)+1 );
     darkSendDenominations.push_back( (1     * COIN)+1 );
+    darkSendDenominations.push_back( (.1     * COIN)+1 );
 
     threadGroup.create_thread(boost::bind(&ThreadCheckDarkSendPool));
 

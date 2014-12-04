@@ -91,12 +91,12 @@ void WalletModel::updateStatus()
 
 void WalletModel::pollBalanceChanged()
 {
-    if(nBestHeight != cachedNumBlocks || nDarksendRounds != cachedDarksendRounds)
+    if(nBestHeight != cachedNumBlocks || nDarksendRounds != cachedDarksendRounds || (int)mapTxLocks.size() != cachedTxLocks)
     {
         // Balance and number of transactions might have changed
         cachedNumBlocks = nBestHeight;
         cachedDarksendRounds = nDarksendRounds;
-        cachedTxLocks = 0;
+        cachedTxLocks = (int)mapTxLocks.size();
         checkBalanceChanged();
     }
 }
@@ -134,6 +134,11 @@ void WalletModel::updateTransaction(const QString &hash, int status)
     }
 }
 
+void WalletModel::updateConfirmations()
+{
+    //emit numTransactionsChanged(newNumTransactions);
+}
+
 void WalletModel::updateAddressBook(const QString &address, const QString &label, bool isMine, int status)
 {
     if(addressTableModel)
@@ -155,6 +160,11 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
     if(recipients.empty())
     {
         return OK;
+    }
+
+    if(isAnonymizeOnlyUnlocked())
+    {
+        return AnonymizeOnlyUnlocked;
     }
 
     // Pre-check input data for validity
@@ -235,6 +245,10 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
         }
 
         std::string strCommand = "tx";
+        if(recipients[0].useInstantX) {
+            printf("!!!! USING INSTANTX2\n");
+            strCommand = "txlreq";
+        }
         if(!wallet->CommitTransaction(wtx, keyChange, strCommand))
         {
             return TransactionCommitFailed;
@@ -290,6 +304,10 @@ WalletModel::EncryptionStatus WalletModel::getEncryptionStatus() const
     {
         return Locked;
     }
+    else if (wallet->fWalletUnlockAnonymizeOnly)
+    {
+        return UnlockedForAnonymizationOnly;
+    }
     else
     {
         return Unlocked;
@@ -310,23 +328,29 @@ bool WalletModel::setWalletEncrypted(bool encrypted, const SecureString &passphr
     }
 }
 
-bool WalletModel::setWalletLocked(bool locked, const SecureString &passPhrase)
+bool WalletModel::setWalletLocked(bool locked, const SecureString &passPhrase, bool anonymizeOnly)
 {
     if(locked)
     {
         // Lock
-        return false; //wallet->Lock();
+        // return false; //wallet->Lock();
+        return wallet->Lock();
     }
     else
     {
         // Unlock
-        return wallet->Unlock(passPhrase);
+        return wallet->Unlock(passPhrase, anonymizeOnly);
     }
 }
 
 void WalletModel::Lock()
 {
     wallet->Lock();
+}
+
+bool WalletModel::isAnonymizeOnlyUnlocked()
+{
+    return wallet->fWalletUnlockAnonymizeOnly;
 }
 
 bool WalletModel::changePassphrase(const SecureString &oldPass, const SecureString &newPass)
@@ -396,9 +420,16 @@ void WalletModel::unsubscribeFromCoreSignals()
 }
 
 // WalletModel::UnlockContext implementation
-WalletModel::UnlockContext WalletModel::requestUnlock()
+WalletModel::UnlockContext WalletModel::requestUnlock(bool relock)
 {
     bool was_locked = getEncryptionStatus() == Locked;
+
+    if (!was_locked && isAnonymizeOnlyUnlocked())
+    {
+       setWalletLocked(true);
+       was_locked = getEncryptionStatus() == Locked;
+    }
+
     if(was_locked)
     {
         // Request UI to unlock wallet
@@ -407,7 +438,8 @@ WalletModel::UnlockContext WalletModel::requestUnlock()
     // If wallet is still locked, unlock was failed or cancelled, mark context as invalid
     bool valid = getEncryptionStatus() != Locked;
 
-    return UnlockContext(this, valid, was_locked);
+    return UnlockContext(this, valid, relock);
+//    return UnlockContext(this, valid, was_locked && !isAnonymizeOnlyUnlocked());
 }
 
 WalletModel::UnlockContext::UnlockContext(WalletModel *wallet, bool valid, bool relock):

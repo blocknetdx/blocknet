@@ -1913,7 +1913,7 @@ void RelayTransaction(const CTransaction& tx, const uint256& hash, const CDataSt
 }
 
 
-void RelayTransactionLockReq(const CTransaction& tx, const uint256& hash)
+void RelayTransactionLockReq(const CTransaction& tx, const uint256& hash, bool relayToAll)
 {
     CInv inv(MSG_TXLOCK_REQUEST, tx.GetHash());
 
@@ -1921,10 +1921,12 @@ void RelayTransactionLockReq(const CTransaction& tx, const uint256& hash)
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
-        if(!pnode->fRelayTxes)
+        if(!relayToAll && !pnode->fRelayTxes)
             continue;
 
-        pnode->PushMessage("txlreq", tx, pindexBest->nHeight-10);
+        //there's no requests for transactions locks, so we should show it was propagated correctly
+        pwalletMain->mapRequestCount[tx.GetHash()]++;
+        pnode->PushMessage("txlreq", tx);
     }
 
 }
@@ -1959,14 +1961,14 @@ void RelayDarkSendStatus(const int sessionID, const int newState, const int newE
     }
 }
 
-void RelayDarkSendElectionEntry(const CTxIn vin, const CService addr, const std::vector<unsigned char> vchSig, const int64 nNow, const CPubKey pubkey, const CPubKey pubkey2, const int count, const int current, const int64 lastUpdated)
+void RelayDarkSendElectionEntry(const CTxIn vin, const CService addr, const std::vector<unsigned char> vchSig, const int64 nNow, const CPubKey pubkey, const CPubKey pubkey2, const int count, const int current, const int64 lastUpdated, const int protocolVersion)
 {
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
         if(!pnode->fRelayTxes) continue;
 
-        pnode->PushMessage("dsee", vin, addr, vchSig, nNow, pubkey, pubkey2, count, current, lastUpdated);
+        pnode->PushMessage("dsee", vin, addr, vchSig, nNow, pubkey, pubkey2, count, current, lastUpdated, protocolVersion);
     }
 }
 
@@ -1987,13 +1989,5 @@ void RelayDarkSendCompletedTransaction(const int sessionID, const bool error, co
     BOOST_FOREACH(CNode* pnode, vNodes)
     {
         pnode->PushMessage("dsc", sessionID, error, errorMessage);
-    }
-}
-
-void RelayDarkSendTransaction(const CTransaction txNew, const CTxIn vin, const std::vector<unsigned char> vchSig, const int64 sigTime){
-    LOCK(cs_vNodes);
-    BOOST_FOREACH(CNode* pnode, vNodes) {
-        if(!pnode->fRelayTxes) continue;
-        pnode->PushMessage("dstx", txNew, vin, vchSig, sigTime);
     }
 }

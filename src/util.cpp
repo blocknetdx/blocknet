@@ -79,6 +79,7 @@ int nAnonymizeDarkcoinAmount = 1000;
 int nLiquidityProvider = 0;
 /** Spork enforcement enabled time */
 int64 enforceMasternodePaymentsTime = 4085657524;
+int nMasternodeMinProtocol = 0;
 bool fSucessfullyLoaded = false;
 bool fEnableDarksend = false;
 bool fDebug = false;

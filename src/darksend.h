@@ -16,6 +16,7 @@ class CDarkSendSigner;
 class CMasterNodeVote;
 class CBitcoinAddress;
 class CDarksendQueue;
+class CDarksendBroadcastTx;
 
 #define POOL_MAX_TRANSACTIONS                  3 // wait for X transactions to merge and publish
 #define POOL_STATUS_UNKNOWN                    0 // waiting for update
@@ -34,16 +35,19 @@ class CDarksendQueue;
 #define MASTERNODE_RESET                       -1
 
 #define DARKSEND_QUEUE_TIMEOUT                 120
-#define DARKSEND_SIGNING_TIMEOUT               10
+#define DARKSEND_SIGNING_TIMEOUT               30
 
 extern CDarkSendPool darkSendPool;
 extern CDarkSendSigner darkSendSigner;
 extern std::vector<int64> darkSendDenominations;
 extern std::vector<CDarksendQueue> vecDarksendQueue;
+extern std::vector<CDarksendQueue> vecDarksendQueue;
 extern std::string strMasterNodePrivKey;
+extern map<uint256, CDarksendBroadcastTx> mapDarksendBroadcastTxes;
 
 static const int64 DARKSEND_COLLATERAL = (0.1*COIN);
-static const int64 DARKSEND_FEE = 0.0125*COIN;
+static const int64 DARKSEND_FEE = (0.0125*COIN);
+static const int64 DARKSEND_POOL_MAX = (999.99*COIN);
 
 //specific messages for the Darksend protocol
 void ProcessMessageDarksend(CNode* pfrom, std::string& strCommand, CDataStream& vRecv);
@@ -155,11 +159,22 @@ public:
         READWRITE(vchSig);
     )
 
-    int GetAddress(CService &addr)
+    bool GetAddress(CService &addr)
     {
         BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
             if(mn.vin == vin){
                 addr = mn.addr;
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    bool GetProtocolVersion(int &protocolVersion)
+    {
+        BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
+            if(mn.vin == vin){
+                protocolVersion = mn.protocolVersion;
                 return true;
             }
         }
@@ -176,6 +191,16 @@ public:
 
     bool CheckSignature();
 
+};
+
+// store darksend tx signature information
+class CDarksendBroadcastTx
+{
+public:
+    CTransaction tx;
+    CTxIn vin;
+    vector<unsigned char> vchSig;
+    int64 sigTime;
 };
 
 //
@@ -201,7 +226,7 @@ class CDarksendSession
 class CDarkSendPool
 {
 public:
-    static const int MIN_PEER_PROTO_VERSION = 70046;
+    static const int MIN_PEER_PROTO_VERSION = 70051;
 
     // clients entries
     std::vector<CDarkSendEntry> myEntries;
@@ -245,6 +270,8 @@ public:
     int minBlockSpacing; //required blocks between mixes
     CTransaction txCollateral;
 
+    std::vector<int64> vecDisabledDenominations;
+
     //incremented whenever a DSQ comes through
     int64 nDsqCount;
 
@@ -268,6 +295,7 @@ public:
         txCollateral = CTransaction();
         minBlockSpacing = 1;
         nDsqCount = 0;
+        vecDisabledDenominations.clear();
 
         SetCollateralAddress(strAddress);
         SetNull();
@@ -397,6 +425,7 @@ public:
     int GetDenominations(const std::vector<CTxOut>& vout);
     // get the denominations for a specific amount of darkcoin. 
     int GetDenominationsByAmount(int64 nAmount);
+    int GetDenominationsByAmounts(std::vector<int64>& vecAmount);
 };
 
 

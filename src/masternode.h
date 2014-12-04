@@ -25,14 +25,15 @@ class CMasternodePayments;
 #define MASTERNODE_NOT_CAPABLE                 2
 #define MASTERNODE_STOPPED                     3
 #define MASTERNODE_INPUT_TOO_NEW               4
-#define MASTERNODE_PORT_NOT_OPEN               6
+#define MASTERNODE_PORT_NOT_OPEN               6 
 #define MASTERNODE_PORT_OPEN                   7
 #define MASTERNODE_SYNC_IN_PROCESS             8
 #define MASTERNODE_REMOTELY_ENABLED            9
 
 #define MASTERNODE_MIN_CONFIRMATIONS           15
-#define MASTERNODE_MIN_SECONDS                 (5*60)
-#define MASTERNODE_PING_SECONDS                (5*60)
+#define MASTERNODE_MIN_DSEEP_SECONDS           (30*60)
+#define MASTERNODE_MIN_DSEE_SECONDS            (5*60)
+#define MASTERNODE_PING_SECONDS                (1*60)
 #define MASTERNODE_EXPIRATION_SECONDS          (65*60)
 #define MASTERNODE_REMOVAL_SECONDS             (70*60)
 
@@ -46,13 +47,14 @@ extern map<uint256, int> mapSeenMasternodeVotes;
 
 // manage the masternode connections
 void ProcessMasternodeConnections();
+int CountMasternodesAboveProtocol(int protocolVersion);
 
 // Get the current winner for this block
-int GetCurrentMasterNode(int mod=1, int64 nBlockHeight=0);
+int GetCurrentMasterNode(int mod=1, int64 nBlockHeight=0, int minProtocol=0);
 
 int GetMasternodeByVin(CTxIn& vin);
-int GetMasternodeRank(CTxIn& vin, int64 nBlockHeight=0);
-int GetMasternodeByRank(int findRank, int64 nBlockHeight=0);
+int GetMasternodeRank(CTxIn& vin, int64 nBlockHeight=0, int minProtocol=0);
+int GetMasternodeByRank(int findRank, int64 nBlockHeight=0, int minProtocol=0);
 
 void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream& vRecv);
 
@@ -76,11 +78,12 @@ public:
     int enabled;
     bool unitTest;
     bool allowFreeTx;
+    int protocolVersion;
 
     //the dsq count from the last dsq broadcast of this node
     int64 nLastDsq;
 
-    CMasterNode(CService newAddr, CTxIn newVin, CPubKey newPubkey, std::vector<unsigned char> newSig, int64 newNow, CPubKey newPubkey2)
+    CMasterNode(CService newAddr, CTxIn newVin, CPubKey newPubkey, std::vector<unsigned char> newSig, int64 newNow, CPubKey newPubkey2, int protocolVersionIn)
     {
         addr = newAddr;
         vin = newVin;
@@ -96,6 +99,7 @@ public:
         nLastDsq = 0;
         lastDseep = 0;
         allowFreeTx = true;
+        protocolVersion = protocolVersionIn;
     }
 
     uint256 CalculateScore(int mod=1, int64 nBlockHeight=0);
@@ -107,6 +111,13 @@ public:
         } else {
             lastTimeSeen = override;
         }
+    }
+
+    inline uint64 SliceHash(uint256& hash, int slice)
+    {
+        uint64 n = 0;
+        memcpy(&n, &hash+slice*64, 64);
+        return n;
     }
 
     void Check();
@@ -158,7 +169,7 @@ public:
     }
 
     uint256 GetHash(){
-        uint256 n2 = Hash9(BEGIN(nBlockHeight), END(nBlockHeight));
+        uint256 n2 = HashX11(BEGIN(nBlockHeight), END(nBlockHeight));
         uint256 n3 = vin.prevout.hash > n2 ? (vin.prevout.hash - n2) : (n2 - vin.prevout.hash);
 
         return n3;
@@ -214,5 +225,49 @@ public:
     //slow
     bool GetBlockPayee(int nBlockHeight, CScript& payee);
 };
+
+/*//
+// Masternode Scanning Error 
+// Enforces proof-of-service by scanning the masternode network
+//
+
+class CMasternodePayments
+{
+private:
+    std::vector<CMasternodePaymentWinner> vWinning;
+    int nSyncedFromPeer;
+    std::string strMasterPrivKey;
+    std::string strTestPubKey;
+    std::string strMainPubKey;
+
+public:
+
+    CMasternodePayments() {
+        strMainPubKey = "04549ac134f694c0243f503e8c8a9a986f5de6610049c40b07816809b0d1d06a21b07be27b9bb555931773f62ba6cf35a25fd52f694d4e1106ccd237a7bb899fdd";
+        strTestPubKey = "046f78dcf911fbd61910136f7f0f8d90578f68d0b3ac973b5040fb7afb501b5939f39b108b0569dca71488f5bbf498d92e4d1194f6f941307ffd95f75e76869f0e";
+    }
+
+    bool SetPrivKey(std::string strPrivKey);
+    bool CheckSignature(CMasternodePaymentWinner& winner);
+    bool Sign(CMasternodePaymentWinner& winner);
+    
+    // Deterministically calculate a given "score" for a masternode depending on how close it's hash is 
+    // to the blockHeight. The further away they are the better, the furthest will win the election 
+    // and get paid this block
+    // 
+
+    uint64 CalculateScore(uint256 blockHash, CTxIn& vin);
+    bool GetWinningMasternode(int nBlockHeight, CTxIn& vinOut);
+    bool AddWinningMasternode(CMasternodePaymentWinner& winner);
+    bool ProcessBlock(int nBlockHeight);
+    void Relay(CMasternodePaymentWinner& winner);
+    void Sync(CNode* node);
+    void CleanPaymentList();
+    int LastPayment(CMasterNode& mn);
+
+    //slow
+    bool GetBlockPayee(int nBlockHeight, CScript& payee);
+};*/
+
 
 #endif

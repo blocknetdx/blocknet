@@ -858,6 +858,8 @@ bool CTxMemPool::acceptableInputs(CValidationState &state, CTransaction &tx, boo
         return error("CTxMemPool::acceptableInputs() : nonstandard transaction (%s)",
                      strNonStd.c_str());
 */
+
+
     // Check for conflicts with in-memory transactions
     for (unsigned int i = 0; i < tx.vin.size(); i++)
     {
@@ -1154,37 +1156,57 @@ void CTxMemPool::queryHashes(std::vector<uint256>& vtxid)
         vtxid.push_back((*mi).first);
 }
 
-
 int CMerkleTx::IsTransactionLocked() const
 {
+    if(nInstantXDepth == 0) return 0;
+
+    //printf("mapTxLocks start\n");
+    typedef std::map<uint256, CTransactionLock>::iterator it_ctxl;
+
+    int found = 0;
+    for (unsigned int b = 0; b < vout.size(); b++) {
+        for(it_ctxl it = mapTxLocks.begin(); it != mapTxLocks.end(); it++) {
+            for (unsigned int a = 0; a < it->second.tx.vout.size(); a++) {
+                if(vout[b] == it->second.tx.vout[a]) 
+                    found++;
+            }
+            if(found > 0) break;
+        }
+    }
+    //printf("mapTxLocks end %d %d\n", found , (int)vout.size());
+    if(found == (int)vout.size()) return nInstantXDepth;
+
     return 0;
 }
 
 
 int CMerkleTx::GetDepthInMainChain(CBlockIndex* &pindexRet) const
 {
+    int minConfirms = 0;
+    minConfirms = IsTransactionLocked();
+
     if (hashBlock == 0 || nIndex == -1)
-        return 0;
+        return minConfirms;
 
     // Find the block it claims to be in
     map<uint256, CBlockIndex*>::iterator mi = mapBlockIndex.find(hashBlock);
     if (mi == mapBlockIndex.end())
-        return 0;
+        return minConfirms;
 
     CBlockIndex* pindex = (*mi).second;
     if (!pindex || !pindex->IsInMainChain())
-        return 0;
+        return minConfirms;
 
     // Make sure the merkle branch connects to this block
     if (!fMerkleVerified)
     {
         if (CBlock::CheckMerkleBranch(GetHash(), vMerkleBranch, nIndex) != pindex->hashMerkleRoot)
-            return 0;
+            return minConfirms;
         fMerkleVerified = true;
     }
 
     pindexRet = pindex;
-    return pindexBest->nHeight - pindex->nHeight + 1;
+    return max(pindexBest->nHeight - pindex->nHeight + 1, minConfirms);
 }
 
 
@@ -1800,7 +1822,7 @@ void CBlockHeader::UpdateTime(const CBlockIndex* pindexPrev)
 
 uint256 CBlockHeader::GetHash() const
 {   
-    return Hash9(BEGIN(nVersion), END(nNonce));
+    return HashX11(BEGIN(nVersion), END(nNonce));
 }
 
 const CTxOut &CTransaction::GetOutputFor(const CTxIn& input, CCoinsViewCache& view)
@@ -2402,6 +2424,177 @@ bool SetBestChain(CValidationState &state, CBlockIndex* pindexNew)
         }
         if (nUpgraded > 0)
             LogPrintf("SetBestChain: %d of last 100 blocks above version %d\n", nUpgraded, CBlock::CURRENT_VERSION);
+        if (nUpgraded > 100/2)
+            // strMiscWarning is read by GetWarnings(), called by Qt and the JSON-RPC code to warn the user:
+            strMiscWarning = _("Warning: This version is obsolete, upgrade required!");
+    }
+
+    std::string strCmd = GetArg("-blocknotify", "");
+
+    if (!fIsInitialDownload && !strCmd.empty())
+    {
+        boost::replace_all(strCmd, "%s", hashBestChain.GetHex());
+        boost::thread t(runCommand, strCmd); // thread runs free
+    }
+
+    return true;
+}
+
+/*
+    DisconnectBlockAndInputs
+
+    Remove conflicting blocks for successful InstantX transaction locks
+    This should be very rare (Probably will never happen)
+*/
+bool DisconnectBlockAndInputs(CValidationState &state, CTransaction txLock)
+{
+    // All modifications to the coin state will be done in this cache.
+    // Only when all have succeeded, we push it to pcoinsTip.
+    CCoinsViewCache view(*pcoinsTip, true);
+
+    CBlockIndex* BlockReading = pindexBest;
+    CBlockIndex* pindexNew = NULL;
+
+    int HeightMin = pindexBest->nHeight-5;
+    bool foundConflictingTx = false;
+
+    //remove anything conflicting in the memory pool
+    mempool.removeConflicts(txLock);
+
+    // List of what to disconnect (typically nothing)
+    vector<CBlockIndex*> vDisconnect;
+
+    for (unsigned int i = 1; BlockReading && BlockReading->nHeight > 0 && !foundConflictingTx; i++) {
+        vDisconnect.push_back(BlockReading);
+        pindexNew = BlockReading->pprev; //new best block
+
+        CBlock block;
+        if (!block.ReadFromDisk(BlockReading))
+            return state.Abort(_("Failed to read block"));
+
+        // Queue memory transactions to resurrect.
+        // We only do this for blocks after the last checkpoint (reorganisation before that
+        // point should only happen with -reindex/-loadblock, or a misbehaving peer.
+        BOOST_FOREACH(const CTransaction& tx, block.vtx){
+            if (!tx.IsCoinBase() && BlockReading->nHeight > HeightMin){
+                BOOST_FOREACH(const CTxIn& in1, txLock.vin){
+                    BOOST_FOREACH(const CTxIn& in2, tx.vin){
+                        if(in1 == in2) foundConflictingTx = true;
+                    }
+                }
+            }
+        }
+
+        if (BlockReading->pprev == NULL) { assert(BlockReading); break; }
+        BlockReading = BlockReading->pprev;
+    }
+
+    if(!foundConflictingTx) {
+        LogPrintf("DisconnectBlockAndInputs: Can't find a conflicting transaction to inputs\n");
+        return false;
+    }
+
+    if (vDisconnect.size() > 0) {
+        LogPrintf("REORGANIZE: Disconnect Conflicting Blocks %"PRIszu" blocks; %s..\n", vDisconnect.size(), pindexNew->GetBlockHash().ToString().c_str());
+        BOOST_FOREACH(CBlockIndex* pindex, vDisconnect) {
+            LogPrintf(" -- disconnect %s\n", pindex->GetBlockHash().ToString().c_str());
+        }
+    }
+
+    // Disconnect shorter branch
+    vector<CTransaction> vResurrect;
+    BOOST_FOREACH(CBlockIndex* pindex, vDisconnect) {
+        CBlock block;
+        if (!block.ReadFromDisk(pindex))
+            return state.Abort(_("Failed to read block"));
+        int64 nStart = GetTimeMicros();
+        if (!block.DisconnectBlock(state, pindex, view))
+            return error("DisconnectBlockAndInputs/SetBestBlock() : DisconnectBlock %s failed", pindex->GetBlockHash().ToString().c_str());
+        if (fBenchmark)
+            LogPrintf("- Disconnect: %.2fms\n", (GetTimeMicros() - nStart) * 0.001);
+
+        // Queue memory transactions to resurrect.
+        // We only do this for blocks after the last checkpoint (reorganisation before that
+        // point should only happen with -reindex/-loadblock, or a misbehaving peer.
+        BOOST_FOREACH(const CTransaction& tx, block.vtx){
+            if (!tx.IsCoinBase() && pindex->nHeight > HeightMin){
+                bool isConflict = false;
+                BOOST_FOREACH(const CTxIn& in1, txLock.vin){
+                    BOOST_FOREACH(const CTxIn& in2, tx.vin){
+                        if(in1 != in2) isConflict = true;
+                    }
+                }
+                if(!isConflict) vResurrect.push_back(tx);
+            }
+        }
+
+    }
+
+    // Make sure it's successfully written to disk before changing memory structure
+    bool fIsInitialDownload = IsInitialBlockDownload();
+    if (!fIsInitialDownload || pcoinsTip->GetCacheSize() > nCoinCacheSize) {
+        // Typical CCoins structures on disk are around 100 bytes in size.
+        // Pushing a new one to the database can cause it to be written
+        // twice (once in the log, and once in the tables). This is already
+        // an overestimation, as most will delete an existing entry or
+        // overwrite one. Still, use a conservative safety factor of 2.
+        if (!CheckDiskSpace(100 * 2 * 2 * pcoinsTip->GetCacheSize()))
+            return state.Error();
+        FlushBlockFile();
+        pblocktree->Sync();
+        if (!pcoinsTip->Flush())
+            return state.Abort(_("Failed to write to coin database"));
+    }
+
+    // At this point, all changes have been done to the database.
+    // Proceed by updating the memory structures.
+
+    // Disconnect shorter branch
+    BOOST_FOREACH(CBlockIndex* pindex, vDisconnect)
+        if (pindex->pprev)
+            pindex->pprev->pnext = NULL;
+
+    // Resurrect memory transactions that were in the disconnected branch
+    BOOST_FOREACH(CTransaction& tx, vResurrect) {
+        // ignore validation errors in resurrected transactions
+        CValidationState stateDummy;
+        if (!tx.AcceptToMemoryPool(stateDummy, true, false))
+            mempool.remove(tx, true);
+    }
+
+    // Update best block in wallet (so we can detect restored wallets)
+    if ((pindexNew->nHeight % 20160) == 0 || (!fIsInitialDownload && (pindexNew->nHeight % 144) == 0))
+    {
+        const CBlockLocator locator(pindexNew);
+        ::SetBestChain(locator);
+    }
+
+    // New best block
+    hashBestChain = pindexNew->GetBlockHash();
+    pindexBest = pindexNew;
+    pblockindexFBBHLast = NULL;
+    nBestHeight = pindexBest->nHeight;
+    nBestChainWork = pindexNew->nChainWork;
+    nTimeBestReceived = GetTime();
+    nTransactionsUpdated++;
+    LogPrintf("DisconnectBlockAndInputs / SetBestChain: new best=%s  height=%d  log2_work=%.8g  tx=%lu  date=%s progress=%f\n",
+      hashBestChain.ToString().c_str(), nBestHeight, log(nBestChainWork.getdouble())/log(2.0), (unsigned long)pindexNew->nChainTx,
+      DateTimeStrFormat("%Y-%m-%d %H:%M:%S", pindexBest->GetBlockTime()).c_str(),
+      Checkpoints::GuessVerificationProgress(pindexBest));
+
+    // Check the version of the last 100 blocks to see if we need to upgrade:
+    if (!fIsInitialDownload)
+    {
+        int nUpgraded = 0;
+        const CBlockIndex* pindex = pindexBest;
+        for (int i = 0; i < 100 && pindex != NULL; i++)
+        {
+            if (pindex->nVersion > CBlock::CURRENT_VERSION)
+                ++nUpgraded;
+            pindex = pindex->pprev;
+        }
+        if (nUpgraded > 0)
+            LogPrintf("DisconnectBlockAndInputs/SetBestChain: %d of last 100 blocks above version %d\n", nUpgraded, CBlock::CURRENT_VERSION);
         if (nUpgraded > 100/2)
             // strMiscWarning is read by GetWarnings(), called by Qt and the JSON-RPC code to warn the user:
             strMiscWarning = _("Warning: This version is obsolete, upgrade required!");
@@ -3733,6 +3926,8 @@ void static ProcessGetData(CNode* pfrom)
             {
                 // Send stream from relay memory
                 bool pushed = false;
+                
+                if(!mapDarksendBroadcastTxes.count(inv.hash))
                 {
                     LOCK(cs_mapRelay);
                     map<CInv, CDataStream>::iterator mi = mapRelay.find(inv);
@@ -3741,15 +3936,30 @@ void static ProcessGetData(CNode* pfrom)
                         pushed = true;
                     }
                 }
+
                 if (!pushed && inv.type == MSG_TX) {
-                    LOCK(mempool.cs);
-                    if (mempool.exists(inv.hash)) {
-                        CTransaction tx = mempool.lookup(inv.hash);
+                    //check if it's a darksend mixing session
+                    if(mapDarksendBroadcastTxes.count(inv.hash)){
                         CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
                         ss.reserve(1000);
-                        ss << tx;
-                        pfrom->PushMessage("tx", ss);
+                        ss << 
+                            mapDarksendBroadcastTxes[inv.hash].tx << 
+                            mapDarksendBroadcastTxes[inv.hash].vin << 
+                            mapDarksendBroadcastTxes[inv.hash].vchSig << 
+                            mapDarksendBroadcastTxes[inv.hash].sigTime;
+
+                        pfrom->PushMessage("dstx", ss);
                         pushed = true;
+                    } else { //normal tx
+                        LOCK(mempool.cs);
+                        if (mempool.exists(inv.hash)) {
+                            CTransaction tx = mempool.lookup(inv.hash);
+                            CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
+                            ss.reserve(1000);
+                            ss << tx;
+                            pfrom->PushMessage("tx", ss);
+                            pushed = true;
+                        }
                     }
                 }
                 if (!pushed) {
@@ -4184,6 +4394,16 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
                     allowFree = true;
                     mn.allowFreeTx = false;
+
+                    if(!mapDarksendBroadcastTxes.count(tx.GetHash())){
+                        CDarksendBroadcastTx dstx;
+                        dstx.tx = tx;
+                        dstx.vin = vin;
+                        dstx.vchSig = vchSig;
+                        dstx.sigTime = sigTime;
+
+                        mapDarksendBroadcastTxes.insert(make_pair(tx.GetHash(), dstx));
+                    }
                 }
             }
         }
@@ -4195,15 +4415,14 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         CValidationState state;
         if (tx.AcceptToMemoryPool(state, true, true, &fMissingInputs, allowFree))
         {
-            if(strCommand == "tx") RelayTransaction(tx, inv.hash);
-            else if(strCommand == "dstx") RelayDarkSendTransaction(tx, vin, vchSig, sigTime);
+            RelayTransaction(tx, inv.hash);
 
             mapAlreadyAskedFor.erase(inv);
             vWorkQueue.push_back(inv.hash);
             vEraseQueue.push_back(inv.hash);
 
-            LogPrintf("AcceptToMemoryPool: %s %s : accepted %s (poolsz %"PRIszu")\n",
-                pfrom->addr.ToString().c_str(), pfrom->cleanSubVer.c_str(),
+            LogPrintf("AcceptToMemoryPool (%s): %s %s : accepted %s (poolsz %"PRIszu")\n",
+                strCommand.c_str(), pfrom->addr.ToString().c_str(), pfrom->cleanSubVer.c_str(),
                 tx.GetHash().ToString().c_str(),
                 mempool.mapTx.size());
 
