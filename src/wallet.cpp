@@ -1881,7 +1881,7 @@ bool CWallet::CreateCollateralTransaction(CTransaction& txCollateral, std::strin
     return true;
 }
 
-string CWallet::PrepareDarksendDenominate(int minRounds, int64 maxAmount)
+string CWallet::PrepareDarksendDenominate(int minRounds, int maxRounds, int64 maxAmount)
 {
     if (IsLocked())
         return _("Error: Wallet locked, unable to create transaction!");
@@ -1901,7 +1901,7 @@ string CWallet::PrepareDarksendDenominate(int minRounds, int64 maxAmount)
     bool hasFeeInput = false;
 
     //select coins we'll use
-    if (!SelectCoinsDark(1*COIN, maxAmount, vCoins, nValueIn, minRounds, nDarksendRounds, hasFeeInput))
+    if (!SelectCoinsDark(1*COIN, maxAmount, vCoins, nValueIn, minRounds, maxRounds, hasFeeInput))
     {
         vCoins.clear();
 

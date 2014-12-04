@@ -1419,6 +1419,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
     int64 nValueMax = DARKSEND_POOL_MAX;
     int64 nValueIn = 0;
     int minRounds = -2; //non denominated funds are rounds of less than 0
+    int maxRounds = 2;
     int maxAmount = DARKSEND_POOL_MAX/COIN;
     bool hasFeeInput = false;
 
@@ -1426,6 +1427,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
     if(pwalletMain->GetDenominatedBalance(true) >= nAnonymizeDarkcoinAmount*COIN ||
         pwalletMain->GetDenominatedBalance(true) >= pwalletMain->GetBalance()*.9) {
         minRounds = 0;
+        maxRounds = nDarksendRounds;
     }
     //if we're set to less than a thousand, don't submit for than that to the pool
     if(nAnonymizeDarkcoinAmount < DARKSEND_POOL_MAX/COIN) maxAmount = nAnonymizeDarkcoinAmount;
@@ -1444,13 +1446,13 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
     }
 
     // select coins that should be given to the pool
-    if (!pwalletMain->SelectCoinsDark(nValueMin, maxAmount*COIN, vCoins, nValueIn, minRounds, nDarksendRounds, hasFeeInput))
+    if (!pwalletMain->SelectCoinsDark(nValueMin, maxAmount*COIN, vCoins, nValueIn, minRounds, maxRounds, hasFeeInput))
     {
         nValueIn = 0;
         vCoins.clear();
 
         // look for inputs larger than the max amount, if we find anything we need to split it up
-        if (pwalletMain->SelectCoinsDark(maxAmount*COIN, 9999999*COIN, vCoins, nValueIn, minRounds, nDarksendRounds, hasFeeInput))
+        if (pwalletMain->SelectCoinsDark(maxAmount*COIN, 9999999*COIN, vCoins, nValueIn, minRounds, maxRounds, hasFeeInput))
         {
             if(!fDryRun) SplitUpMoney();
             return true;
@@ -1465,7 +1467,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
         (vecDisabledDenominations.size() > 0 && nValueIn < COIN*12.5)
     ){
         //simply look for non-denominated coins
-        if (pwalletMain->SelectCoinsDark(maxAmount*COIN, 9999999*COIN, vCoins, nValueIn, minRounds, nDarksendRounds, hasFeeInput))
+        if (pwalletMain->SelectCoinsDark(maxAmount*COIN, 9999999*COIN, vCoins, nValueIn, minRounds, maxRounds, hasFeeInput))
         {
             if(!fDryRun) SplitUpMoney();
             return true;
@@ -1507,7 +1509,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
 
                 vCoins.clear();
                 nValueIn = 0;
-                if (pwalletMain->SelectCoinsDark(nValueMin, r*COIN, vCoins, nValueIn, minRounds, nDarksendRounds, hasFeeInput)){
+                if (pwalletMain->SelectCoinsDark(nValueMin, r*COIN, vCoins, nValueIn, minRounds, maxRounds, hasFeeInput)){
                     sessionTotalValue = pwalletMain->GetTotalValue(vCoins);
 
                     // if it's in the queue, take it
@@ -1655,7 +1657,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
     if(sessionDenom == 0) return true;
 
     // Submit transaction to the pool if we get here, use sessionDenom so we use the same amount of money
-    std::string strError = pwalletMain->PrepareDarksendDenominate(minRounds, sessionTotalValue);
+    std::string strError = pwalletMain->PrepareDarksendDenominate(minRounds, maxRounds, sessionTotalValue);
     LogPrintf("DoAutomaticDenominating : Running darksend denominate. Return '%s'\n", strError.c_str());
    
     if(strError == "") return true;
