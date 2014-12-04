@@ -1423,7 +1423,8 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
     bool hasFeeInput = false;
 
     // if we have more denominated funds (of any maturity) than the nAnonymizeDarkcoinAmount, we should use use those
-    if(pwalletMain->GetDenominatedBalance(true) >= nAnonymizeDarkcoinAmount*COIN) {
+    if(pwalletMain->GetDenominatedBalance(true) >= nAnonymizeDarkcoinAmount*COIN ||
+        pwalletMain->GetDenominatedBalance(true) >= pwalletMain->GetBalance()*.9) {
         minRounds = 0;
     }
     //if we're set to less than a thousand, don't submit for than that to the pool
@@ -1431,7 +1432,8 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
 
     int64 balanceNeedsAnonymized = pwalletMain->GetBalance() - pwalletMain->GetAnonymizedBalance();
     if(balanceNeedsAnonymized > maxAmount*COIN) balanceNeedsAnonymized= maxAmount*COIN;
-    if(balanceNeedsAnonymized < COIN*2.5){
+    if(balanceNeedsAnonymized < COIN*2.5 || 
+        (vecDisabledDenominations.size() > 0 && balanceNeedsAnonymized < COIN*12.5)){
         LogPrintf("DoAutomaticDenominating : No funds detected in need of denominating \n");
         return false;
     }
@@ -1458,8 +1460,10 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
         return false;
     }
 
-    // the darksend pool can only take 1.1DRK minimum
-    if(nValueIn < COIN*1.1){
+    // the darksend pool can only take 2.5DRK minimum
+    if(nValueIn < COIN*2.5 || 
+        (vecDisabledDenominations.size() > 0 && nValueIn < COIN*12.5)
+    ){
         //simply look for non-denominated coins
         if (pwalletMain->SelectCoinsDark(maxAmount*COIN, 9999999*COIN, vCoins, nValueIn, minRounds, nDarksendRounds, hasFeeInput))
         {
@@ -1467,7 +1471,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
             return true;
         }
 
-        LogPrintf("DoAutomaticDenominating : Too little to denominate (must have 1.1DRK) \n");
+        LogPrintf("DoAutomaticDenominating : Too little to denominate \n");
         return false;
     }
 
