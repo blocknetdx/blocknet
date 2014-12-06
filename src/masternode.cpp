@@ -108,7 +108,9 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
             if(mn.vin.prevout == vin.prevout) {
                 //count == -1 when it's a new entry
                 // e.g. We don't want the entry relayed/time updated when we're syncing the list
-                if(count == -1 && !mn.UpdatedWithin(MASTERNODE_MIN_DSEE_SECONDS)){
+                // mn.pubkey = pubkey, IsVinAssociatedWithPubkey is validated once below, 
+                //   after that they just need to match
+                if(count == -1 && mn.pubkey == pubkey && !mn.UpdatedWithin(MASTERNODE_MIN_DSEE_SECONDS)){
                     mn.UpdateLastSeen();
 
                     if(mn.now < sigTime){ //take the newest entry
@@ -268,8 +270,6 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
 
         int count = darkSendMasterNodes.size()-1;
         int i = 0;
-
-        if(vin == CTxIn()) LogPrintf("dseg - Sending %d masternode entries\n", count);
 
         BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
 
