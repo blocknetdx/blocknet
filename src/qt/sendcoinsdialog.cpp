@@ -205,7 +205,7 @@ void SendCoinsDialog::on_sendButton_clicked()
         send(recipients);
         return;
     }
-
+    // already unlocked or not encrypted at all
     send(recipients);
 }
 
