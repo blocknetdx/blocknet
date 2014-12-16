@@ -2818,6 +2818,8 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
                 CScript payee;
                 if(!masternodePayments.GetBlockPayee(pindexBest->nHeight+1, payee) || payee == CScript()){
                     foundPayee = true; //doesn't require a specific payee
+                    foundPaymentAmount = true;
+                    foundPaymentAndPayee = true;
                 }
 
                 for (unsigned int i = 0; i < vtx[0].vout.size(); i++) {
