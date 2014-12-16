@@ -23,10 +23,10 @@ Value darksend(const Array& params, bool fHelp)
             "darkcoinaddress, reset, or auto (AutoDenominate)"
             "<amount> is a real and is rounded to the nearest 0.00000001"
             + HelpRequiringPassphrase());
-    
+
     if(fMasterNode)
         return "DarkSend is not supported from masternodes";
-    
+
     if (pwalletMain->IsLocked())
         throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
 
@@ -89,9 +89,9 @@ Value masternode(const Array& params, bool fHelp)
 
     if (fHelp  ||
         (strCommand != "start" && strCommand != "start-alias" && strCommand != "start-many" && strCommand != "stop" && strCommand != "stop-alias" && strCommand != "stop-many" && strCommand != "list" && strCommand != "list-conf" && strCommand != "count"  && strCommand != "enforce"
-            && strCommand != "debug" && strCommand != "current" && strCommand != "winners" && strCommand != "genkey" && strCommand != "connect"))
+            && strCommand != "debug" && strCommand != "current" && strCommand != "winners" && strCommand != "genkey" && strCommand != "connect" && strCommand != "outputs"))
         throw runtime_error(
-            "masternode <start|start-alias|start-many|stop|stop-alias|stop-many|list|list-conf|count|debug|current|winners|genkey|enforce> passphrase\n");
+            "masternode <start|start-alias|start-many|stop|stop-alias|stop-many|list|list-conf|count|debug|current|winners|genkey|enforce|outputs> [passphrase]\n");
 
     if (strCommand == "stop")
     {
@@ -107,7 +107,7 @@ Value masternode(const Array& params, bool fHelp)
                 throw runtime_error(
                     "Your wallet is locked, passphrase is required\n");
             }
-            
+
             if(!pwalletMain->Unlock(strWalletPass)){
                 return "incorrect passphrase";
             }
@@ -118,10 +118,10 @@ Value masternode(const Array& params, bool fHelp)
         	return "stop failed: " + errorMessage;
         }
         pwalletMain->Lock();
-        
+
         if(activeMasternode.status == MASTERNODE_STOPPED) return "successfully stopped masternode";
         if(activeMasternode.status == MASTERNODE_NOT_CAPABLE) return "not capable masternode";
-        
+
         return "unknown";
     }
 
@@ -234,7 +234,7 @@ Value masternode(const Array& params, bool fHelp)
     }
 
     if (strCommand == "list")
-    {                
+    {
         std::string strCommand = "active";
 
         if (params.size() == 2){
@@ -248,7 +248,7 @@ Value masternode(const Array& params, bool fHelp)
 
         Object obj;
         BOOST_FOREACH(CMasterNode mn, darkSendMasterNodes) {
-            mn.Check();   
+            mn.Check();
 
             if(strCommand == "active"){
                 obj.push_back(Pair(mn.addr.ToString().c_str(),       (int)mn.IsEnabled()));
@@ -290,7 +290,7 @@ Value masternode(const Array& params, bool fHelp)
                 throw runtime_error(
                     "Your wallet is locked, passphrase is required\n");
             }
-            
+
             if(!pwalletMain->Unlock(strWalletPass)){
                 return "incorrect passphrase";
             }
@@ -300,7 +300,7 @@ Value masternode(const Array& params, bool fHelp)
         std::string errorMessage;
         activeMasternode.ManageStatus();
         pwalletMain->Lock();
-        
+
         if(activeMasternode.status == MASTERNODE_REMOTELY_ENABLED) return "masternode started remotely";
         if(activeMasternode.status == MASTERNODE_INPUT_TOO_NEW) return "masternode input must have at least 15 confirmations";
         if(activeMasternode.status == MASTERNODE_STOPPED) return "masternode is stopped";
@@ -364,9 +364,9 @@ Value masternode(const Array& params, bool fHelp)
     	return statusObj;
 
     }
-    
+
     if (strCommand == "start-many")
-    {        
+    {
     	if(pwalletMain->IsLocked()) {
 			SecureString strWalletPass;
 			strWalletPass.reserve(100);
@@ -442,9 +442,22 @@ Value masternode(const Array& params, bool fHelp)
         }
     }
 
+    if (strCommand == "outputs"){
+        // Find possible candidates
+        vector<COutput> possibleCoins = activeMasternode.SelectCoinsMasternode();
+
+        Object obj;
+        BOOST_FOREACH(COutput& out, possibleCoins) {
+            obj.push_back(Pair(out.tx->GetHash().ToString().c_str(), boost::lexical_cast<std::string>(out.i)));
+        }
+
+        return obj;
+
+    }
+
     if (strCommand == "create")
     {
-        
+
         return "Not implemented yet, please look at the documentation for instructions on masternode creation";
     }
 
@@ -459,7 +472,7 @@ Value masternode(const Array& params, bool fHelp)
     }
 
     if (strCommand == "genkey")
-    {    
+    {
         CKey secret;
         secret.MakeNewKey(false);
 
@@ -467,7 +480,7 @@ Value masternode(const Array& params, bool fHelp)
     }
 
     if (strCommand == "winners")
-    {                
+    {
         Object obj;
 
         for(int nHeight = pindexBest->nHeight-10; nHeight < pindexBest->nHeight+20; nHeight++)
@@ -499,7 +512,7 @@ Value masternode(const Array& params, bool fHelp)
         } else {
             throw runtime_error(
                 "Masternode address required\n");
-        }        
+        }
 
         CService addr = CService(strAddress);
 
