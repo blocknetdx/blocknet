@@ -272,10 +272,10 @@ class CBitcoinAddress : public CBase58Data
 public:
     enum
     {
-        PUBKEY_ADDRESS = 48+28, // DarkCoin addresses start with X
-        SCRIPT_ADDRESS = 5,
-        PUBKEY_ADDRESS_TEST = 111,
-        SCRIPT_ADDRESS_TEST = 196,
+        PUBKEY_ADDRESS      =  76, // Darkcoin addresses start with 'X'
+        SCRIPT_ADDRESS      =  16, // Darkcoin script addresses start with '7'
+        PUBKEY_ADDRESS_TEST = 139, // Testnet darkcoin addresses start with 'x' or 'y'
+        SCRIPT_ADDRESS_TEST =  19, // Testnet darkcoin script addresses start with '8' or '9'
     };
 
     bool Set(const CKeyID &id) {
@@ -400,8 +400,8 @@ class CBitcoinSecret : public CBase58Data
 public:
     enum
     {
-        PRIVKEY_ADDRESS = CBitcoinAddress::PUBKEY_ADDRESS + 128,
-        PRIVKEY_ADDRESS_TEST = CBitcoinAddress::PUBKEY_ADDRESS_TEST + 128,
+        PRIVKEY_ADDRESS      = 204, // Darkcoin private keys start with '7' or 'X'
+        PRIVKEY_ADDRESS_TEST = 239, // Testnet private keys start with '9' or 'c' (Bitcoin defaults)
     };
 
     void SetKey(const CKey& vchSecret)
