@@ -59,7 +59,7 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
             return;
         }
 
-        bool isLocal = false; // addr.IsRFC1918();
+        bool isLocal = addr.IsRFC1918();
         std::string vchPubKey(pubkey.begin(), pubkey.end());
         std::string vchPubKey2(pubkey2.begin(), pubkey2.end());
 
