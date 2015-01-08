@@ -38,7 +38,7 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
         bool fIsInitialDownload = IsInitialBlockDownload();
         if(fIsInitialDownload) return;
 
-        CTxIn vin; 
+        CTxIn vin;
         CService addr;
         CPubKey pubkey;
         CPubKey pubkey2;
@@ -47,7 +47,7 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
         int count;
         int current;
         int64 lastUpdated;
-        int protocolVersion; 
+        int protocolVersion;
         std::string strMessage;
 
         // 70047 and greater
@@ -59,12 +59,12 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
             return;
         }
 
-        bool isLocal = false; // addr.IsRFC1918();
+        bool isLocal = addr.IsRFC1918();
         std::string vchPubKey(pubkey.begin(), pubkey.end());
         std::string vchPubKey2(pubkey2.begin(), pubkey2.end());
 
         strMessage = addr.ToString() + boost::lexical_cast<std::string>(sigTime) + vchPubKey + vchPubKey2 + boost::lexical_cast<std::string>(protocolVersion);
-        
+
         if(protocolVersion < nMasternodeMinProtocol) {
             LogPrintf("dsee - ignoring outdated masternode %s protocol version %d\n", vin.ToString().c_str(), protocolVersion);
             return;
@@ -103,7 +103,7 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
             if(mn.vin.prevout == vin.prevout) {
                 // count == -1 when it's a new entry
                 //   e.g. We don't want the entry relayed/time updated when we're syncing the list
-                // mn.pubkey = pubkey, IsVinAssociatedWithPubkey is validated once below, 
+                // mn.pubkey = pubkey, IsVinAssociatedWithPubkey is validated once below,
                 //   after that they just need to match
                 if(count == -1 && mn.pubkey == pubkey && !mn.UpdatedWithin(MASTERNODE_MIN_DSEE_SECONDS)){
                     mn.UpdateLastSeen();
@@ -209,7 +209,7 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
             if(mn.vin.prevout == vin.prevout) {
             	// LogPrintf("dseep - Found corresponding mn for vin: %s\n", vin.ToString().c_str());
             	// take this only if it's newer
-                if(mn.lastDseep < sigTime){ 
+                if(mn.lastDseep < sigTime){
                     std::string strMessage = mn.addr.ToString() + boost::lexical_cast<std::string>(sigTime) + boost::lexical_cast<std::string>(stop);
 
                     std::string errorMessage = "";
@@ -258,7 +258,7 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
 
         if(vin == CTxIn()) { //only should ask for this once
             //local network
-            if(!pfrom->addr.IsRFC1918()) 
+            if(!pfrom->addr.IsRFC1918())
             {
                 std::map<CNetAddr, int64>::iterator i = askedForMasternodeList.find(pfrom->addr);
                 if (i != askedForMasternodeList.end())
@@ -532,7 +532,7 @@ uint256 CMasterNode::CalculateScore(int mod, int64 nBlockHeight)
     // the closest masternode to that point wins
     uint64 a1 = hash2.Get64(0);
     uint64 a2 = hash2.Get64(1);
-    uint64 a3 = hash2.Get64(2); 
+    uint64 a3 = hash2.Get64(2);
     uint64 a4 = hash2.Get64(3);
 
     //copy part of our source hash
@@ -557,7 +557,7 @@ uint256 CMasterNode::CalculateScore(int mod, int64 nBlockHeight)
 
     // calculate distance between target point and mn point
     uint256 r = 0;
-    r +=  (a1 > b1 ? a1 - b1 : b1 - a1); 
+    r +=  (a1 > b1 ? a1 - b1 : b1 - a1);
     r +=  (a2 > b2 ? a2 - b2 : b2 - a2);
     r +=  (a3 > b3 ? a3 - b3 : b3 - a3);
     r +=  (a4 > b4 ? a4 - b4 : b4 - a4);
@@ -729,7 +729,7 @@ void CMasternodePayments::CleanPaymentList()
 
     vector<CMasternodePaymentWinner>::iterator it;
     for(it=vWinning.begin();it<vWinning.end();it++){
-        if(pindexBest->nHeight - (*it).nBlockHeight > 1000){
+        if(pindexBest->nHeight - (*it).nBlockHeight > 10000){
             if(fDebug) LogPrintf("CMasternodePayments::CleanPaymentList - Removing old masternode payment - block %d\n", (*it).nBlockHeight);
             vWinning.erase(it);
             break;
