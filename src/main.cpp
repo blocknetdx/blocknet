@@ -2883,6 +2883,8 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
         if(block.nTime > START_MASTERNODE_PAYMENTS) MasternodePayments = true;
     }
 
+    LogPrintf("CheckBlock() : Masternode payments\n");
+
     if(MasternodePayments)
     {
         LOCK2(cs_main, mempool.cs);
@@ -2936,6 +2938,8 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
         } else {
             LogPrintf("CheckBlock() : pindex is null, skipping masternode payment check\n");
         }
+    } else {
+        LogPrintf("CheckBlock() : payments disabled\n");
     }
 
 
