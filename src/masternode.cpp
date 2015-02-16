@@ -735,9 +735,12 @@ void CMasternodePayments::CleanPaymentList()
 
 bool CMasternodePayments::ProcessBlock(int nBlockHeight)
 {
-
     if(!enabled) return false;
     CMasternodePaymentWinner winner;
+
+    //only do this once per blockheight
+    CScript payee;
+    if(GetBlockPayee(nBlockHeight, payee)) return true;
 
     std::vector<CTxIn> vecLastPayments;
     int c = 0;
@@ -770,10 +773,11 @@ bool CMasternodePayments::ProcessBlock(int nBlockHeight)
 
     //if we can't find someone to get paid, pick randomly
     if(winner.nBlockHeight == 0 && vecMasternodes.size() > 1) {
+        int i = rand() % (int)(vecMasternodes.size() - 1);
         winner.score = 0;
         winner.nBlockHeight = nBlockHeight;
-        winner.vin = vecMasternodes[0].vin;
-        winner.payee.SetDestination(vecMasternodes[0].pubkey.GetID());
+        winner.vin = vecMasternodes[i].vin;
+        winner.payee.SetDestination(vecMasternodes[i].pubkey.GetID());
     }
 
     if(Sign(winner)){
