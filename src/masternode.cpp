@@ -756,6 +756,7 @@ bool CMasternodePayments::ProcessBlock(int nBlockHeight)
 
         nActiveMasternodes++;
     }
+    nActiveMasternodes *= 0.95;
 
     //make an array with 1 payment cycle of active masternodes
     std::vector<CTxIn> vecLastPayments;
