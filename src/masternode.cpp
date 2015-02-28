@@ -793,6 +793,9 @@ bool CMasternodePayments::ProcessBlock(int nBlockHeight)
             continue;
         }
 
+        if(mn.GetMasternodeInputAge() < (int)nActiveMasternodes)
+            continue;
+
 
         winner.score = 0;
         winner.nBlockHeight = nBlockHeight;
