@@ -3,13 +3,13 @@
     <name>AboutDialog</name>
     <message>
         <location filename="../forms/aboutdialog.ui" line="14"/>
-        <source>About Darkcoin Core</source>
+        <source>About Dash Core</source>
         <translation>Mogsch mea´ wissn?</translation>
     </message>
     <message>
         <location filename="../forms/aboutdialog.ui" line="53"/>
-        <source>&lt;b&gt;Darkcoin Core&lt;/b&gt; version</source>
-        <translation>&lt;b&gt;Darkcoin Koa&lt;/b&gt; Wersion</translation>
+        <source>&lt;b&gt;Dash Core&lt;/b&gt; version</source>
+        <translation>&lt;b&gt;Dash Koa&lt;/b&gt; Wersion</translation>
     </message>
     <message>
         <location filename="../forms/aboutdialog.ui" line="111"/>
@@ -46,8 +46,8 @@ Deshalb treffma uns imma Midwochs um zwangsg Ua (Wenn die Kirchnkoa-Probm rum is
     </message>
     <message>
         <location filename="../utilitydialog.cpp" line="31"/>
-        <source>The Darkcoin Core developers</source>
-        <translation>Di Darkcoin Coa Ma´ha</translation>
+        <source>The Dash Core developers</source>
+        <translation>Di Dash Coa Ma´ha</translation>
     </message>
     <message>
         <location filename="../utilitydialog.cpp" line="43"/>
@@ -135,12 +135,12 @@ Deshalb treffma uns imma Midwochs um zwangsg Ua (Wenn die Kirchnkoa-Probm rum is
     </message>
     <message>
         <location filename="../addressbookpage.cpp" line="65"/>
-        <source>These are your Darkcoin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
-        <translation>Däs son daine Darkcoin Adresssn fon denen du los-schicka konsch. Obachd gebn ob du au dem richdign des richdige Goild niabaschiabsd. (net z´vui!)</translation>
+        <source>These are your Dash addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <translation>Däs son daine Dash Adresssn fon denen du los-schicka konsch. Obachd gebn ob du au dem richdign des richdige Goild niabaschiabsd. (net z´vui!)</translation>
     </message>
     <message>
         <location filename="../addressbookpage.cpp" line="69"/>
-        <source>These are your Darkcoin addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
+        <source>These are your Dash addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
         <translation>Däs son daine Adressn wodu daine Monedn grischd. I dad ja füa jedes mal a Andere verwendn.</translation>
     </message>
     <message>
@@ -293,8 +293,8 @@ Gib Obachd, das &lt;b&gt;zmindeschd 10 zuafällige Buachstob&lt;/b&gt; verwendes
     </message>
     <message>
         <location filename="../askpassphrasedialog.cpp" line="124"/>
-        <source>Darkcoin will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your darkcoins from being stolen by malware infecting your computer.</source>
-        <translation>Darkcoin wiard zua-gmocht damid des mit dem Schprücherl und so funktioniert. 
+        <source>Dash will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your dashs from being stolen by malware infecting your computer.</source>
+        <translation>Dash wiard zua-gmocht damid des mit dem Schprücherl und so funktioniert. 
 
 Weil ma groad dabei san: Wennd da so an Virus oda so was auf dain Kompjuta hoschd, dann hilfd da des fai nix, mid dem Sprücherl und so.</translation>
     </message>
@@ -357,8 +357,8 @@ Wenn´d jezzad anfängsch den noin Goidbaild zu nuzzn dann gehd da alde nimma. W
     <name>BitcoinGUI</name>
     <message>
         <location filename="../bitcoingui.cpp" line="76"/>
-        <source>Darkcoin Core</source>
-        <translation>Darkcoin Koa</translation>
+        <source>Dash Core</source>
+        <translation>Dash Koa</translation>
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="85"/>
@@ -393,8 +393,8 @@ Wenn´d jezzad anfängsch den noin Goidbaild zu nuzzn dann gehd da alde nimma. W
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="234"/>
-        <source>Send coins to a Darkcoin address</source>
-        <translation>Di Darkcoins losschicka (A Adressn braichtma)</translation>
+        <source>Send coins to a Dash address</source>
+        <translation>Di Dash losschicka (A Adressn braichtma)</translation>
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="240"/>
@@ -403,7 +403,7 @@ Wenn´d jezzad anfängsch den noin Goidbaild zu nuzzn dann gehd da alde nimma. W
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="241"/>
-        <source>Request payments (generates QR codes and darkcoin: URIs)</source>
+        <source>Request payments (generates QR codes and dash: URIs)</source>
         <translation>Schicktsma Goid! (däs machda an KUH ÄR KOD und a Uri wo da Anda s Goid hischicka koa)</translation>
     </message>
     <message>
@@ -429,13 +429,13 @@ Wenn´d jezzad anfängsch den noin Goidbaild zu nuzzn dann gehd da alde nimma. W
     <message>
         <location filename="../bitcoingui.cpp" line="270"/>
         <location filename="../bitcoingui.cpp" line="272"/>
-        <source>&amp;About Darkcoin Core</source>
-        <translation>Üba Darkcoin Koa</translation>
+        <source>&amp;About Dash Core</source>
+        <translation>Üba Dash Koa</translation>
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="273"/>
-        <source>Show information about Darkcoin</source>
-        <translation>Zaigma wosd waischd üba den Darkcoin</translation>
+        <source>Show information about Dash</source>
+        <translation>Zaigma wosd waischd üba den Dash</translation>
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="276"/>
@@ -455,7 +455,7 @@ Wenn´d jezzad anfängsch den noin Goidbaild zu nuzzn dann gehd da alde nimma. W
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="283"/>
-        <source>Modify configuration options for Darkcoin</source>
+        <source>Modify configuration options for Dash</source>
         <translation>Di Oischdellunga ändan</translation>
     </message>
     <message>
@@ -521,7 +521,7 @@ Wenn´d jezzad anfängsch den noin Goidbaild zu nuzzn dann gehd da alde nimma. W
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="302"/>
-        <source>Sign messages with your Darkcoin addresses to prove you own them</source>
+        <source>Sign messages with your Dash addresses to prove you own them</source>
         <translation>Dai Adressn konsch wie an Servus verwendn, dann wais da Andre, dos des DAI Adressn i´s. 
 (Muschd di Messidsch fürn Andan mid da Adressn umanandaduan)</translation>
     </message>
@@ -532,7 +532,7 @@ Wenn´d jezzad anfängsch den noin Goidbaild zu nuzzn dann gehd da alde nimma. W
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="304"/>
-        <source>Verify messages to ensure they were signed with specified Darkcoin addresses</source>
+        <source>Verify messages to ensure they were signed with specified Dash addresses</source>
         <translation>Du kansch schaun ob di Mesidsch vom Andan mid saina Adressn zambast (obs wirklich von iam is)</translation>
     </message>
     <message>
@@ -592,8 +592,8 @@ Wenn´d jezzad anfängsch den noin Goidbaild zu nuzzn dann gehd da alde nimma. W
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="319"/>
-        <source>Open a darkcoin: URI or payment request</source>
-        <translation>So a Darkcoin-Uri oda so aufmaha (damidsch zala kosch)</translation>
+        <source>Open a dash: URI or payment request</source>
+        <translation>So a Dash-Uri oda so aufmaha (damidsch zala kosch)</translation>
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="321"/>
@@ -602,7 +602,7 @@ Wenn´d jezzad anfängsch den noin Goidbaild zu nuzzn dann gehd da alde nimma. W
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="322"/>
-        <source>Show the Darkcoin Core help message to get a list with possible Darkcoin command-line options</source>
+        <source>Show the Dash Core help message to get a list with possible Dash command-line options</source>
         <translation>Zeigma des Gschraibsl wo ois drinnschded wos ma so baim Zailn-Dingsn ma´ha koa</translation>
     </message>
     <message>
@@ -633,13 +633,13 @@ Wenn´d jezzad anfängsch den noin Goidbaild zu nuzzn dann gehd da alde nimma. W
     <message>
         <location filename="../bitcoingui.cpp" line="489"/>
         <location filename="../bitcoingui.cpp" line="494"/>
-        <source>Darkcoin client</source>
-        <translation>Darkcoin Klaiänd</translation>
+        <source>Dash client</source>
+        <translation>Dash Klaiänd</translation>
     </message>
     <message numerus="yes">
         <location filename="../bitcoingui.cpp" line="638"/>
-        <source>%n active connection(s) to Darkcoin network</source>
-        <translation><numerusform>%n (Oanen) sehma där au Darkcoin machd</numerusform><numerusform>%n Laids sehma die au Darkcoin ma´ha</numerusform></translation>
+        <source>%n active connection(s) to Dash network</source>
+        <translation><numerusform>%n (Oanen) sehma där au Dash machd</numerusform><numerusform>%n Laids sehma die au Dash ma´ha</numerusform></translation>
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="650"/>
@@ -719,8 +719,8 @@ Wenn´d jezzad anfängsch den noin Goidbaild zu nuzzn dann gehd da alde nimma. W
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="750"/>
-        <source>Darkcoin</source>
-        <translation>Darkcoin</translation>
+        <source>Dash</source>
+        <translation>Dash</translation>
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="764"/>
@@ -776,8 +776,8 @@ Addressn: %4
         <translation>D´Goidbaidl hod sai &lt;b&gt;Schprücherl drauf&lt;/b&gt; und is &lt;b&gt;zuagschlossn&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../darkcoin.cpp" line="449"/>
-        <source>A fatal error occurred. Darkcoin can no longer continue safely and will quit.</source>
+        <location filename="../dash.cpp" line="449"/>
+        <source>A fatal error occurred. Dash can no longer continue safely and will quit.</source>
         <translation>WEILD A DEPP BISCH. Däs gonze Programm is fürn Arsch gangen. 
 Wird zugmachd, wails bessa is.</translation>
     </message>
@@ -1116,12 +1116,12 @@ Wird zugmachd, wails bessa is.</translation>
     </message>
     <message>
         <location filename="../forms/darksendconfig.ui" line="78"/>
-        <source>Use 2 separate masternodes to mix funds up to 1000 DRK</source>
+        <source>Use 2 separate masternodes to mix funds up to 1000 DASH</source>
         <translation>Zwo faschihdene Mastanoods füa Beträge bis 1000DRK</translation>
     </message>
     <message>
         <location filename="../forms/darksendconfig.ui" line="91"/>
-        <source>Use 8 separate masternodes to mix funds up to 1000 DRK</source>
+        <source>Use 8 separate masternodes to mix funds up to 1000 DASH</source>
         <translation>Achd faschihdene Mastanoods füa Beträge bis 1000DRK</translation>
     </message>
     <message>
@@ -1131,18 +1131,18 @@ Wird zugmachd, wails bessa is.</translation>
     </message>
     <message>
         <location filename="../forms/darksendconfig.ui" line="117"/>
-        <source>This option is the quickest and will cost about ~0.025 DRK to anonymize 1000 DRK</source>
-        <translation>S´ god am schnellsdn und kosst so umgfahr 0.025 DRK um 1000 DRK dih Kapuzzn aufzumsäzzn.</translation>
+        <source>This option is the quickest and will cost about ~0.025 DASH to anonymize 1000 DASH</source>
+        <translation>S´ god am schnellsdn und kosst so umgfahr 0.025 DASH um 1000 DASH dih Kapuzzn aufzumsäzzn.</translation>
     </message>
     <message>
         <location filename="../forms/darksendconfig.ui" line="130"/>
-        <source>This option is moderately fast and will cost about 0.05 DRK to anonymize 1000 DRK</source>
-        <translation>S´ god so middl schnell und kosst so umgfahr 0.05 DRK dih Kapuzzn aufzumsäzzn.</translation>
+        <source>This option is moderately fast and will cost about 0.05 DASH to anonymize 1000 DASH</source>
+        <translation>S´ god so middl schnell und kosst so umgfahr 0.05 DASH dih Kapuzzn aufzumsäzzn.</translation>
     </message>
     <message>
         <location filename="../forms/darksendconfig.ui" line="156"/>
-        <source>0.1 DRK per 1000 DRK you anonymize.</source>
-        <translation>kost zirka 0.1 DRK per 1000 Kapuzzn-DRK </translation>
+        <source>0.1 DASH per 1000 DASH you anonymize.</source>
+        <translation>kost zirka 0.1 DASH per 1000 Kapuzzn-DASH </translation>
     </message>
     <message>
         <location filename="../forms/darksendconfig.ui" line="143"/>
@@ -1158,17 +1158,17 @@ Wird zugmachd, wails bessa is.</translation>
     </message>
     <message>
         <location filename="../darksendconfig.cpp" line="44"/>
-        <source>Darksend was successfully set to basic (%1 and 2 rounds). You can change this at any time by opening Darkcoin&apos;s configuration screen.</source>
+        <source>Darksend was successfully set to basic (%1 and 2 rounds). You can change this at any time by opening Dash&apos;s configuration screen.</source>
         <translation>Di Kapuzzngoid-Ainschdellunga (Darksend+) sin edzd auf &quot;Bäisik - Oifache Kapuzzn&quot; (%1 and 2 rounds). Des kansch fai immä ändan, wendas nimma passd. Oifach auf di Ainschdellunga druggn.</translation>
     </message>
     <message>
         <location filename="../darksendconfig.cpp" line="59"/>
-        <source>Darksend was successfully set to high (%1 and 8 rounds). You can change this at any time by opening Darkcoin&apos;s configuration screen.</source>
+        <source>Darksend was successfully set to high (%1 and 8 rounds). You can change this at any time by opening Dash&apos;s configuration screen.</source>
         <translation>Di Kapuzzngoid-Ainschdellunga (Darksend+) sin edzd auf &quot;Hai - Suppa Kapuzzn&quot; (%1 and 8 rounds). Des kansch fai immä ändan, wendas nimma passd. Oifach auf di Ainschdellunga druggn.</translation>
     </message>
     <message>
         <location filename="../darksendconfig.cpp" line="74"/>
-        <source>Darksend was successfully set to maximum (%1 and 16 rounds). You can change this at any time by opening Darkcoin&apos;s configuration screen.</source>
+        <source>Darksend was successfully set to maximum (%1 and 16 rounds). You can change this at any time by opening Dash&apos;s configuration screen.</source>
         <translation>Di Kapuzzngoid-Ainschdellunga (Darksend+) sin edzd auf &quot;Maximum&quot; - mid da Ultrasdn Kapuzzn übahaupt (%1 and 8 rounds). Des kansch fai immä ändan, wendas nimma passd. Oifach auf di Ainschdellunga druggn.</translation>
     </message>
 </context>
@@ -1221,8 +1221,8 @@ Wird zugmachd, wails bessa is.</translation>
     </message>
     <message>
         <location filename="../editaddressdialog.cpp" line="111"/>
-        <source>The entered address &quot;%1&quot; is not a valid Darkcoin address.</source>
-        <translation>Depp, %1 is koi Darkcoin-Adressn!</translation>
+        <source>The entered address &quot;%1&quot; is not a valid Dash address.</source>
+        <translation>Depp, %1 is koi Dash-Adressn!</translation>
     </message>
     <message>
         <location filename="../editaddressdialog.cpp" line="116"/>
@@ -1272,13 +1272,13 @@ Wird zugmachd, wails bessa is.</translation>
     <name>HelpMessageDialog</name>
     <message>
         <location filename="../forms/helpmessagedialog.ui" line="19"/>
-        <source>Darkcoin Core - Command-line options</source>
-        <translation>Darkcoin Koa - Zailn-Dingsn-Opzionän</translation>
+        <source>Dash Core - Command-line options</source>
+        <translation>Dash Koa - Zailn-Dingsn-Opzionän</translation>
     </message>
     <message>
         <location filename="../utilitydialog.cpp" line="69"/>
-        <source>Darkcoin Core</source>
-        <translation>Darkcoin Koa</translation>
+        <source>Dash Core</source>
+        <translation>Dash Koa</translation>
     </message>
     <message>
         <location filename="../utilitydialog.cpp" line="69"/>
@@ -1335,19 +1335,19 @@ Wird zugmachd, wails bessa is.</translation>
     </message>
     <message>
         <location filename="../forms/intro.ui" line="23"/>
-        <source>Welcome to Darkcoin Core.</source>
-        <translation>Habe di Ehre. Binda Darkcoin Koa. 
+        <source>Welcome to Dash Core.</source>
+        <translation>Habe di Ehre. Binda Dash Koa. 
 Sezdi, bschdellda was!</translation>
     </message>
     <message>
         <location filename="../forms/intro.ui" line="49"/>
-        <source>As this is the first time the program is launched, you can choose where Darkcoin Core will store its data.</source>
+        <source>As this is the first time the program is launched, you can choose where Dash Core will store its data.</source>
         <translation>Weil des edzd des äarschde mal is, wo du des Programm aufma´ha duasd, kanschda aussu´ha wo du des Zeigl hi-schbaichan wuisch, des des Programm so brauchd.</translation>
     </message>
     <message>
         <location filename="../forms/intro.ui" line="59"/>
-        <source>Darkcoin Core will download and store a copy of the Darkcoin block chain. At least %1GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</source>
-        <translation>Darkcoin Koa wi´d an ganzn Bazn Zeigl nunderladn. Dazu kört die BLOGG-TSCHAIN (&quot;wer, wann, was, wo - von ALLE&quot;) und natürlich schbaichads au dain Goidbaidl. 
+        <source>Dash Core will download and store a copy of the Dash block chain. At least %1GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</source>
+        <translation>Dash Koa wi´d an ganzn Bazn Zeigl nunderladn. Dazu kört die BLOGG-TSCHAIN (&quot;wer, wann, was, wo - von ALLE&quot;) und natürlich schbaichads au dain Goidbaidl. 
 
 Zam sin des mindeschdns %1GB Dadn. Und des wi´d grössa weadn. Gwies.</translation>
     </message>
@@ -1363,8 +1363,8 @@ Zam sin des mindeschdns %1GB Dadn. Und des wi´d grössa weadn. Gwies.</translat
     </message>
     <message>
         <location filename="../intro.cpp" line="185"/>
-        <source>Darkcoin</source>
-        <translation>Darkcoin</translation>
+        <source>Dash</source>
+        <translation>Dash</translation>
     </message>
     <message>
         <location filename="../intro.cpp" line="186"/>
@@ -1429,12 +1429,12 @@ Zam sin des mindeschdns %1GB Dadn. Und des wi´d grössa weadn. Gwies.</translat
     </message>
     <message>
         <location filename="../forms/optionsdialog.ui" line="33"/>
-        <source>Automatically start Darkcoin after logging in to the system.</source>
-        <translation>Darkcoin anma´ha sobald dun Kompjuda a-ma´ha duasd.</translation>
+        <source>Automatically start Dash after logging in to the system.</source>
+        <translation>Dash anma´ha sobald dun Kompjuda a-ma´ha duasd.</translation>
     </message>
     <message>
         <location filename="../forms/optionsdialog.ui" line="36"/>
-        <source>&amp;Start Darkcoin on system login</source>
+        <source>&amp;Start Dash on system login</source>
         <translation>&amp;soford anma´ha</translation>
     </message>
     <message>
@@ -1461,7 +1461,7 @@ Zam sin des mindeschdns %1GB Dadn. Und des wi´d grössa weadn. Gwies.</translat
         <location filename="../forms/optionsdialog.ui" line="138"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This setting determines the amount of individual masternodes that an input will be anonymized through. More rounds of anonymization gives a higher degree of privacy, but also costs more in fees.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Mid der Ainschdellung schdellsch ain &lt;/br&gt;
-wie ofd mid daine Kapuuzzerl-Darkcoin des &lt;br&gt;[&quot;Kappuzzerl auf, umanandatauschn, noch a Kapuzzn auf, und so weiter&quot;-Schbiel]&lt;br&gt;
+wie ofd mid daine Kapuuzzerl-Dash des &lt;br&gt;[&quot;Kappuzzerl auf, umanandatauschn, noch a Kapuzzn auf, und so weiter&quot;-Schbiel]&lt;br&gt;
 gschbield wiad.&lt;br&gt;&lt;br&gt;Je öfdas desto bessa (!!!), kost aber au mea.
  &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
@@ -1472,8 +1472,8 @@ gschbield wiad.&lt;br&gt;&lt;br&gt;Je öfdas desto bessa (!!!), kost aber au mea
     </message>
     <message>
         <location filename="../forms/optionsdialog.ui" line="180"/>
-        <source>Amount of Darkcoin to keep anonymized</source>
-        <translation>Wiefui Darkcoin solln imma im Goidbaidl sain, wo imma gschaud wiad, dasse a Kapuzzn aufham?</translation>
+        <source>Amount of Dash to keep anonymized</source>
+        <translation>Wiefui Dash solln imma im Goidbaidl sain, wo imma gschaud wiad, dasse a Kapuzzn aufham?</translation>
     </message>
     <message>
         <location filename="../forms/optionsdialog.ui" line="206"/>
@@ -1522,7 +1522,7 @@ gschbield wiad.&lt;br&gt;&lt;br&gt;Je öfdas desto bessa (!!!), kost aber au mea
     </message>
     <message>
         <location filename="../forms/optionsdialog.ui" line="307"/>
-        <source>Automatically open the Darkcoin client port on the router. This only works when your router supports UPnP and it is enabled.</source>
+        <source>Automatically open the Dash client port on the router. This only works when your router supports UPnP and it is enabled.</source>
         <translation>Da Ruta soll den Port fon allain aufmaha. Des ged nua, wenn dai Ruta UPnP kann unds au anschalted is.</translation>
     </message>
     <message>
@@ -1532,8 +1532,8 @@ gschbield wiad.&lt;br&gt;&lt;br&gt;Je öfdas desto bessa (!!!), kost aber au mea
     </message>
     <message>
         <location filename="../forms/optionsdialog.ui" line="317"/>
-        <source>Connect to the Darkcoin network through a SOCKS proxy.</source>
-        <translation>Zum Darkcoin Netzwäark midm SOCKS Proxi fabindn.</translation>
+        <source>Connect to the Dash network through a SOCKS proxy.</source>
+        <translation>Zum Dash Netzwäark midm SOCKS Proxi fabindn.</translation>
     </message>
     <message>
         <location filename="../forms/optionsdialog.ui" line="320"/>
@@ -1607,22 +1607,22 @@ gschbield wiad.&lt;br&gt;&lt;br&gt;Je öfdas desto bessa (!!!), kost aber au mea
     </message>
     <message>
         <location filename="../forms/optionsdialog.ui" line="503"/>
-        <source>The user interface language can be set here. This setting will take effect after restarting Darkcoin.</source>
+        <source>The user interface language can be set here. This setting will take effect after restarting Dash.</source>
         <translation>Hia kansch aischdelln obsch des in am kschaidn Daidsch ham wouisch, oder lieba wi die Schdodara, oder glai englisch, oda was wus i....</translation>
     </message>
     <message>
         <location filename="../forms/optionsdialog.ui" line="514"/>
         <source>&amp;Unit to show amounts in:</source>
-        <translation>&amp;wi sollma dia di Darkcoins anzaign:</translation>
+        <translation>&amp;wi sollma dia di Dash anzaign:</translation>
     </message>
     <message>
         <location filename="../forms/optionsdialog.ui" line="527"/>
         <source>Choose the default subdivision unit to show in the interface and when sending coins.</source>
-        <translation>Magsch liaba ganze Darkcoins seng, oder lieaba &quot;zehntl&quot; oder glai &quot;hundadstl&quot;....</translation>
+        <translation>Magsch liaba ganze Dash seng, oder lieaba &quot;zehntl&quot; oder glai &quot;hundadstl&quot;....</translation>
     </message>
     <message>
         <location filename="../forms/optionsdialog.ui" line="536"/>
-        <source>Whether to show Darkcoin addresses in the transaction list or not.</source>
+        <source>Whether to show Dash addresses in the transaction list or not.</source>
         <translation>Soll di Adressn in da Listn imma zaigd wean?</translation>
     </message>
     <message>
@@ -1718,7 +1718,7 @@ gschbield wiad.&lt;br&gt;&lt;br&gt;Je öfdas desto bessa (!!!), kost aber au mea
     <message>
         <location filename="../forms/overviewpage.ui" line="70"/>
         <location filename="../forms/overviewpage.ui" line="986"/>
-        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Darkcoin network after a connection is established, but this process has not completed yet.</source>
+        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Dash network after a connection is established, but this process has not completed yet.</source>
         <translation>Ois was hia schdaad is a bissal ald.
 
 Aba, wards ab, des wird. Brauchd bloss a Minudn bis der Darkcon Koa mid di andan Koas gred hod, und si wida alle ainig sin....</translation>
@@ -1785,8 +1785,8 @@ Aba, wards ab, des wird. Brauchd bloss a Minudn bis der Darkcon Koa mid di andan
     </message>
     <message>
         <location filename="../forms/overviewpage.ui" line="349"/>
-        <source>0 DRK</source>
-        <translation>koi oanziga DRK</translation>
+        <source>0 DASH</source>
+        <translation>koi oanziga DASH</translation>
     </message>
     <message>
         <location filename="../forms/overviewpage.ui" line="356"/>
@@ -1795,8 +1795,8 @@ Aba, wards ab, des wird. Brauchd bloss a Minudn bis der Darkcon Koa mid di andan
     </message>
     <message>
         <location filename="../forms/overviewpage.ui" line="363"/>
-        <source>0 DRK / 0 Rounds</source>
-        <translation>koi DRK / koine Rundn</translation>
+        <source>0 DASH / 0 Rounds</source>
+        <translation>koi DASH / koine Rundn</translation>
     </message>
     <message>
         <location filename="../forms/overviewpage.ui" line="370"/>
@@ -2031,8 +2031,8 @@ Aba, wards ab, des wird. Brauchd bloss a Minudn bis der Darkcon Koa mid di andan
     </message>
     <message>
         <location filename="../paymentserver.cpp" line="294"/>
-        <source>Cannot start darkcoin: click-to-pay handler</source>
-        <translation>Darkcoin ged ned  (click-to-pay handler)</translation>
+        <source>Cannot start dash: click-to-pay handler</source>
+        <translation>Dash ged ned  (click-to-pay handler)</translation>
     </message>
     <message>
         <location filename="../paymentserver.cpp" line="352"/>
@@ -2057,7 +2057,7 @@ Aba, wards ab, des wird. Brauchd bloss a Minudn bis der Darkcon Koa mid di andan
     </message>
     <message>
         <location filename="../paymentserver.cpp" line="418"/>
-        <source>URI can not be parsed! This can be caused by an invalid Darkcoin address or malformed URI parameters.</source>
+        <source>URI can not be parsed! This can be caused by an invalid Dash address or malformed URI parameters.</source>
         <translation>D´ Uri kanni ned lesn. Warscheinlich walls kaine is, oda irgendoina had an Schaiss gmachd...</translation>
     </message>
     <message>
@@ -2114,42 +2114,42 @@ Aba, wards ab, des wird. Brauchd bloss a Minudn bis der Darkcon Koa mid di andan
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../darkcoin.cpp" line="525"/>
-        <location filename="../darkcoin.cpp" line="532"/>
-        <location filename="../darkcoin.cpp" line="539"/>
-        <location filename="../darkcoin.cpp" line="552"/>
-        <source>Darkcoin</source>
-        <translation>Darkcoin</translation>
+        <location filename="../dash.cpp" line="525"/>
+        <location filename="../dash.cpp" line="532"/>
+        <location filename="../dash.cpp" line="539"/>
+        <location filename="../dash.cpp" line="552"/>
+        <source>Dash</source>
+        <translation>Dash</translation>
     </message>
     <message>
-        <location filename="../darkcoin.cpp" line="526"/>
+        <location filename="../dash.cpp" line="526"/>
         <source>Error: Specified data directory &quot;%1&quot; does not exist.</source>
         <translation>OBACHD: S gehd ned! Des Da-Ta-Di-Rec-To-Ri %1 gibds goa ned.</translation>
     </message>
     <message>
-        <location filename="../darkcoin.cpp" line="533"/>
+        <location filename="../dash.cpp" line="533"/>
         <source>Error: Cannot parse configuration file: %1. Only use key=value syntax.</source>
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../darkcoin.cpp" line="540"/>
+        <location filename="../dash.cpp" line="540"/>
         <source>Error reading masternode configuration file: %1</source>
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../darkcoin.cpp" line="552"/>
+        <location filename="../dash.cpp" line="552"/>
         <source>Error: Invalid combination of -regtest and -testnet.</source>
         <translation>Depp, im Kindazimma gibds koin &quot;-regtest&quot;</translation>
     </message>
     <message>
-        <location filename="../darkcoin.cpp" line="612"/>
-        <source>Darkcoin Core didn&apos;t yet exit safely...</source>
+        <location filename="../dash.cpp" line="612"/>
+        <source>Dash Core didn&apos;t yet exit safely...</source>
         <translation>´S Programmal is no ned gsund haim kimma. Wardsch bessa no....</translation>
     </message>
     <message>
         <location filename="../guiutil.cpp" line="101"/>
-        <source>Enter a Darkcoin address (e.g. XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg)</source>
-        <translation>A Darkcoin-Adressn aingebn (z.B XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg)</translation>
+        <source>Enter a Dash address (e.g. XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg)</source>
+        <translation>A Dash-Adressn aingebn (z.B XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg)</translation>
     </message>
 </context>
 <context>
@@ -2228,7 +2228,7 @@ Aba, wards ab, des wird. Brauchd bloss a Minudn bis der Darkcon Koa mid di andan
     </message>
     <message>
         <location filename="../forms/rpcconsole.ui" line="90"/>
-        <source>Open the Darkcoin debug log file from the current data directory. This can take a few seconds for large log files.</source>
+        <source>Open the Dash debug log file from the current data directory. This can take a few seconds for large log files.</source>
         <translation>S Protokoll aufma´ha. Kann fai a bissal dauan, wenns z gross is...</translation>
     </message>
     <message>
@@ -2320,8 +2320,8 @@ Aba, wards ab, des wird. Brauchd bloss a Minudn bis der Darkcon Koa mid di andan
     </message>
     <message>
         <location filename="../rpcconsole.cpp" line="331"/>
-        <source>Welcome to the Darkcoin RPC console.</source>
-        <translation>Servus inda Darkcoin Är Pe ZE Konsoln</translation>
+        <source>Welcome to the Dash RPC console.</source>
+        <translation>Servus inda Dash Är Pe ZE Konsoln</translation>
     </message>
     <message>
         <location filename="../rpcconsole.cpp" line="332"/>
@@ -2384,7 +2384,7 @@ Aba, wards ab, des wird. Brauchd bloss a Minudn bis der Darkcon Koa mid di andan
     <message>
         <location filename="../forms/receivecoinsdialog.ui" line="51"/>
         <location filename="../forms/receivecoinsdialog.ui" line="74"/>
-        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the Darkcoin network.</source>
+        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the Dash network.</source>
         <translation>Damidsch morgn no woasd, was des war kansd dir an Hinwais schraibm. Den siggd aba koana ausa dia.</translation>
     </message>
     <message>
@@ -2792,7 +2792,7 @@ Aba, wards ab, des wird. Brauchd bloss a Minudn bis der Darkcon Koa mid di andan
     <message>
         <location filename="../sendcoinsdialog.cpp" line="442"/>
         <source>Invalid payment address %1</source>
-        <translation>Die Adressn di koi Darkcoin-Adressn is %1</translation>
+        <translation>Die Adressn di koi Dash-Adressn is %1</translation>
     </message>
     <message>
         <location filename="../sendcoinsdialog.cpp" line="489"/>
@@ -2836,8 +2836,8 @@ Aba, wards ab, des wird. Brauchd bloss a Minudn bis der Darkcon Koa mid di andan
     </message>
     <message>
         <location filename="../sendcoinsdialog.cpp" line="626"/>
-        <source>Warning: Invalid Darkcoin address</source>
-        <translation>Obachd du Depp, des is koi Darkcoin-Adressn!</translation>
+        <source>Warning: Invalid Dash address</source>
+        <translation>Obachd du Depp, des is koi Dash-Adressn!</translation>
     </message>
     <message>
         <location filename="../sendcoinsdialog.cpp" line="635"/>
@@ -2865,7 +2865,7 @@ Aba, wards ab, des wird. Brauchd bloss a Minudn bis der Darkcon Koa mid di andan
     <message>
         <location filename="../forms/sendcoinsentry.ui" line="54"/>
         <source>The address to send the payment to (e.g. XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg)</source>
-        <translation>An di Darkcoin-Adressn soll dann übawisn wean (z.B XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg)</translation>
+        <translation>An di Dash-Adressn soll dann übawisn wean (z.B XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg)</translation>
     </message>
     <message>
         <location filename="../forms/sendcoinsentry.ui" line="61"/>
@@ -2918,7 +2918,7 @@ Aba, wards ab, des wird. Brauchd bloss a Minudn bis der Darkcon Koa mid di andan
     </message>
     <message>
         <location filename="../forms/sendcoinsentry.ui" line="157"/>
-        <source>A message that was attached to the darkcoin: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the Darkcoin network.</source>
+        <source>A message that was attached to the dash: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the Dash network.</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -2953,8 +2953,8 @@ Aba, wards ab, des wird. Brauchd bloss a Minudn bis der Darkcon Koa mid di andan
     <name>ShutdownWindow</name>
     <message>
         <location filename="../utilitydialog.cpp" line="129"/>
-        <source>Darkcoin Core is shutting down...</source>
-        <translation>Darkcoin Koa wiad zugmachd...</translation>
+        <source>Dash Core is shutting down...</source>
+        <translation>Dash Koa wiad zugmachd...</translation>
     </message>
     <message>
         <location filename="../utilitydialog.cpp" line="130"/>
@@ -3023,7 +3023,7 @@ Aba, wards ab, des wird. Brauchd bloss a Minudn bis der Darkcon Koa mid di andan
     </message>
     <message>
         <location filename="../forms/signverifymessagedialog.ui" line="152"/>
-        <source>Sign the message to prove you own this Darkcoin address</source>
+        <source>Sign the message to prove you own this Dash address</source>
         <translation>An Servus unterd Mässidsch damid klaar is das des dai Adressn is....</translation>
     </message>
     <message>
@@ -3059,7 +3059,7 @@ Aba, wards ab, des wird. Brauchd bloss a Minudn bis der Darkcon Koa mid di andan
     </message>
     <message>
         <location filename="../forms/signverifymessagedialog.ui" line="295"/>
-        <source>Verify the message to ensure it was signed with the specified Darkcoin address</source>
+        <source>Verify the message to ensure it was signed with the specified Dash address</source>
         <translation>Du kansch schaun ob di Mesidsch vom Andan mid saina Adressn zambast (obs wirklich von iam is)</translation>
     </message>
     <message>
@@ -3079,14 +3079,14 @@ Aba, wards ab, des wird. Brauchd bloss a Minudn bis der Darkcon Koa mid di andan
     </message>
     <message>
         <location filename="../signverifymessagedialog.cpp" line="31"/>
-        <source>Enter a Darkcoin address (e.g. XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg)</source>
-        <translation>A Darkcoin-Adressn aingebn (z.B XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg)</translation>
+        <source>Enter a Dash address (e.g. XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg)</source>
+        <translation>A Dash-Adressn aingebn (z.B XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg)</translation>
     </message>
     <message>
         <location filename="../signverifymessagedialog.cpp" line="114"/>
         <location filename="../signverifymessagedialog.cpp" line="194"/>
         <source>The entered address is invalid.</source>
-        <translation>Depp, des is koi Darkcoin-Adressn!</translation>
+        <translation>Depp, des is koi Dash-Adressn!</translation>
     </message>
     <message>
         <location filename="../signverifymessagedialog.cpp" line="114"/>
@@ -3153,8 +3153,8 @@ Aba, wards ab, des wird. Brauchd bloss a Minudn bis der Darkcon Koa mid di andan
     <name>SplashScreen</name>
     <message>
         <location filename="../splashscreen.cpp" line="33"/>
-        <source>Darkcoin Core</source>
-        <translation>Darkcoin Koa</translation>
+        <source>Dash Core</source>
+        <translation>Dash Koa</translation>
     </message>
     <message>
         <location filename="../splashscreen.cpp" line="34"/>
@@ -3168,8 +3168,8 @@ Aba, wards ab, des wird. Brauchd bloss a Minudn bis der Darkcon Koa mid di andan
     </message>
     <message>
         <location filename="../splashscreen.cpp" line="36"/>
-        <source>The Darkcoin Core developers</source>
-        <translation>Die Darkcoin Coa Ma´ha</translation>
+        <source>The Dash Core developers</source>
+        <translation>Die Dash Coa Ma´ha</translation>
     </message>
     <message>
         <location filename="../splashscreen.cpp" line="37"/>
@@ -3850,19 +3850,19 @@ Wenn dai Kischdn rechd schiach ausschaugd, dann sagen di Andan &quot;bäh&quot; 
     </message>
 </context>
 <context>
-    <name>darkcoin-core</name>
+    <name>dash-core</name>
     <message>
         <location filename="../bitcoinstrings.cpp" line="16"/>
         <source>%s, you must set a rpcpassword in the configuration file:
 %s
 It is recommended you use the following random password:
-rpcuser=darkcoinrpc
+rpcuser=dashrpc
 rpcpassword=%s
 (you do not need to remember this password)
 The username and password MUST NOT be the same.
 If the file does not exist, create it with owner-readable-only file permissions.
 It is also recommended to set alertnotify so you are notified of problems;
-for example: alertnotify=echo %%s | mail -s &quot;Darkcoin Alert&quot; admin@foo.com
+for example: alertnotify=echo %%s | mail -s &quot;Dash Alert&quot; admin@foo.com
 </source>
         <translation type="unfinished"/>
     </message>
@@ -3888,7 +3888,7 @@ for example: alertnotify=echo %%s | mail -s &quot;Darkcoin Alert&quot; admin@foo
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="40"/>
-        <source>Cannot obtain a lock on data directory %s. Darkcoin Core is probably already running.</source>
+        <source>Cannot obtain a lock on data directory %s. Dash Core is probably already running.</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -4053,7 +4053,7 @@ for example: alertnotify=echo %%s | mail -s &quot;Darkcoin Alert&quot; admin@foo
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="133"/>
-        <source>Unable to bind to %s on this computer. Darkcoin Core is probably already running.</source>
+        <source>Unable to bind to %s on this computer. Dash Core is probably already running.</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -4063,7 +4063,7 @@ for example: alertnotify=echo %%s | mail -s &quot;Darkcoin Alert&quot; admin@foo
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="138"/>
-        <source>Unable to locate enough Darksend non-denominated funds for this transaction that are not equal 1000 DRK.</source>
+        <source>Unable to locate enough Darksend non-denominated funds for this transaction that are not equal 1000 DASH.</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -4083,7 +4083,7 @@ for example: alertnotify=echo %%s | mail -s &quot;Darkcoin Alert&quot; admin@foo
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="149"/>
-        <source>Warning: Please check that your computer&apos;s date and time are correct! If your clock is wrong Darkcoin will not work properly.</source>
+        <source>Warning: Please check that your computer&apos;s date and time are correct! If your clock is wrong Dash will not work properly.</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -4255,12 +4255,12 @@ If the file does not exist, create it with owner-readable-only file permissions.
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="200"/>
-        <source>Darkcoin Core Daemon</source>
-        <translation>Darkcoin Koa Dämon</translation>
+        <source>Dash Core Daemon</source>
+        <translation>Dash Koa Dämon</translation>
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="201"/>
-        <source>Darkcoin Core RPC client version</source>
+        <source>Dash Core RPC client version</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -4345,7 +4345,7 @@ If the file does not exist, create it with owner-readable-only file permissions.
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="218"/>
-        <source>Error loading wallet.dat: Wallet requires newer version of Darkcoin</source>
+        <source>Error loading wallet.dat: Wallet requires newer version of Dash</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -4515,8 +4515,8 @@ If the file does not exist, create it with owner-readable-only file permissions.
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="252"/>
-        <source>Initialization sanity check failed. Darkcoin Core is shutting down.</source>
-        <translation>Dai Programmerl schaugsd ungsund aus. Darkcoin Koa wiad ezd zua-gmachd.</translation>
+        <source>Initialization sanity check failed. Dash Core is shutting down.</source>
+        <translation>Dai Programmerl schaugsd ungsund aus. Dash Koa wiad ezd zua-gmachd.</translation>
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="253"/>
@@ -4595,7 +4595,7 @@ If the file does not exist, create it with owner-readable-only file permissions.
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="268"/>
-        <source>Keep N darkcoin anonymized (default: 0)</source>
+        <source>Keep N dash anonymized (default: 0)</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -4835,7 +4835,7 @@ If the file does not exist, create it with owner-readable-only file permissions.
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="316"/>
-        <source>Send command to Darkcoin Core</source>
+        <source>Send command to Dash Core</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -4935,7 +4935,7 @@ If the file does not exist, create it with owner-readable-only file permissions.
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="336"/>
-        <source>Specify configuration file (default: darkcoin.conf)</source>
+        <source>Specify configuration file (default: dash.conf)</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -4955,7 +4955,7 @@ If the file does not exist, create it with owner-readable-only file permissions.
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="340"/>
-        <source>Specify pid file (default: darkcoind.pid)</source>
+        <source>Specify pid file (default: dashd.pid)</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -4975,7 +4975,7 @@ If the file does not exist, create it with owner-readable-only file permissions.
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="344"/>
-        <source>Start Darkcoin Core Daemon</source>
+        <source>Start Dash Core Daemon</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -5070,8 +5070,8 @@ If the file does not exist, create it with owner-readable-only file permissions.
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="363"/>
-        <source>Usage (deprecated, use darkcoin-cli):</source>
-        <translation>Des gibds scho lang nimma, mai machsd hald &quot;darkcoin-cli&quot; wi sies kört. </translation>
+        <source>Usage (deprecated, use dash-cli):</source>
+        <translation>Des gibds scho lang nimma, mai machsd hald &quot;dash-cli&quot; wi sies kört. </translation>
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="364"/>
@@ -5145,8 +5145,8 @@ If the file does not exist, create it with owner-readable-only file permissions.
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="378"/>
-        <source>Wallet needed to be rewritten: restart Darkcoin to complete</source>
-        <translation>Dai Darkcoin Koa - Programmal mussma kurz zuma´ha damit dai Goidbaidl final wida funzt.</translation>
+        <source>Wallet needed to be rewritten: restart Dash to complete</source>
+        <translation>Dai Dash Koa - Programmal mussma kurz zuma´ha damit dai Goidbaidl final wida funzt.</translation>
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="379"/>

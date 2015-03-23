@@ -3,13 +3,13 @@
     <name>AboutDialog</name>
     <message>
         <location filename="../forms/aboutdialog.ui" line="14"/>
-        <source>About Darkcoin Core</source>
-        <translation>Darkcoin Core névjegye</translation>
+        <source>About Dash Core</source>
+        <translation>Dash Core névjegye</translation>
     </message>
     <message>
         <location filename="../forms/aboutdialog.ui" line="53"/>
-        <source>&lt;b&gt;Darkcoin Core&lt;/b&gt; version</source>
-        <translation>&lt;b&gt;Darkcoin Core&lt;/b&gt; verzió</translation>
+        <source>&lt;b&gt;Dash Core&lt;/b&gt; version</source>
+        <translation>&lt;b&gt;Dash Core&lt;/b&gt; verzió</translation>
     </message>
     <message>
         <location filename="../forms/aboutdialog.ui" line="111"/>
@@ -38,8 +38,8 @@ Ez a termék az OpenSSL Project által lett kifejlesztve az OpenSSL Toolkit (htt
     </message>
     <message>
         <location filename="../utilitydialog.cpp" line="31"/>
-        <source>The Darkcoin Core developers</source>
-        <translation>A Darkcoin Core fejlesztők</translation>
+        <source>The Dash Core developers</source>
+        <translation>A Dash Core fejlesztők</translation>
     </message>
     <message>
         <location filename="../utilitydialog.cpp" line="43"/>
@@ -127,13 +127,13 @@ Ez a termék az OpenSSL Project által lett kifejlesztve az OpenSSL Toolkit (htt
     </message>
     <message>
         <location filename="../addressbookpage.cpp" line="65"/>
-        <source>These are your Darkcoin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
-        <translation>Ezek a mentett Darkcoin címeid fizetések küldéséhez. A biztonság kedvéért ajánlott  fizetés küldése előtt a cím újbóli ellenőrzése.</translation>
+        <source>These are your Dash addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <translation>Ezek a mentett Dash címeid fizetések küldéséhez. A biztonság kedvéért ajánlott  fizetés küldése előtt a cím újbóli ellenőrzése.</translation>
     </message>
     <message>
         <location filename="../addressbookpage.cpp" line="69"/>
-        <source>These are your Darkcoin addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
-        <translation>Ezek a Darkcoin címeid fizetések fogadásához. Ajánlott minden tranzakcióhoz új fogadási címet használni.</translation>
+        <source>These are your Dash addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
+        <translation>Ezek a Dash címeid fizetések fogadásához. Ajánlott minden tranzakcióhoz új fogadási címet használni.</translation>
     </message>
     <message>
         <location filename="../addressbookpage.cpp" line="75"/>
@@ -285,8 +285,8 @@ Ez a termék az OpenSSL Project által lett kifejlesztve az OpenSSL Toolkit (htt
     </message>
     <message>
         <location filename="../askpassphrasedialog.cpp" line="124"/>
-        <source>Darkcoin will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your darkcoins from being stolen by malware infecting your computer.</source>
-        <translation>A Darkcoin kliens most befejezi a kódolási folyamatot. Ne felejtsd, hogy egy kódolt pénztárca önmagában nem elegendő a Darkcoinjaid teljes mértékű védelméhez egy fertőzött számítógép esetén.</translation>
+        <source>Dash will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your dashs from being stolen by malware infecting your computer.</source>
+        <translation>A Dash kliens most befejezi a kódolási folyamatot. Ne felejtsd, hogy egy kódolt pénztárca önmagában nem elegendő a Darkcoinjaid teljes mértékű védelméhez egy fertőzött számítógép esetén.</translation>
     </message>
     <message>
         <location filename="../askpassphrasedialog.cpp" line="128"/>
@@ -345,8 +345,8 @@ Ez a termék az OpenSSL Project által lett kifejlesztve az OpenSSL Toolkit (htt
     <name>BitcoinGUI</name>
     <message>
         <location filename="../bitcoingui.cpp" line="76"/>
-        <source>Darkcoin Core</source>
-        <translation>Darkcoin Core</translation>
+        <source>Dash Core</source>
+        <translation>Dash Core</translation>
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="85"/>
@@ -381,8 +381,8 @@ Ez a termék az OpenSSL Project által lett kifejlesztve az OpenSSL Toolkit (htt
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="234"/>
-        <source>Send coins to a Darkcoin address</source>
-        <translation>Pénz küldése egy Darkcoin címre</translation>
+        <source>Send coins to a Dash address</source>
+        <translation>Pénz küldése egy Dash címre</translation>
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="240"/>
@@ -391,8 +391,8 @@ Ez a termék az OpenSSL Project által lett kifejlesztve az OpenSSL Toolkit (htt
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="241"/>
-        <source>Request payments (generates QR codes and darkcoin: URIs)</source>
-        <translation>Fizetési bekérő generálása (QR kód, valamint darkcoin: URI)</translation>
+        <source>Request payments (generates QR codes and dash: URIs)</source>
+        <translation>Fizetési bekérő generálása (QR kód, valamint dash: URI)</translation>
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="247"/>
@@ -417,13 +417,13 @@ Ez a termék az OpenSSL Project által lett kifejlesztve az OpenSSL Toolkit (htt
     <message>
         <location filename="../bitcoingui.cpp" line="270"/>
         <location filename="../bitcoingui.cpp" line="272"/>
-        <source>&amp;About Darkcoin Core</source>
-        <translation>Darkcoin Core &amp;névjegye</translation>
+        <source>&amp;About Dash Core</source>
+        <translation>Dash Core &amp;névjegye</translation>
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="273"/>
-        <source>Show information about Darkcoin</source>
-        <translation>Információ mutatása a Darkcoin-ról</translation>
+        <source>Show information about Dash</source>
+        <translation>Információ mutatása a Dash-ról</translation>
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="276"/>
@@ -443,7 +443,7 @@ Ez a termék az OpenSSL Project által lett kifejlesztve az OpenSSL Toolkit (htt
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="283"/>
-        <source>Modify configuration options for Darkcoin</source>
+        <source>Modify configuration options for Dash</source>
         <translation>Beállítások módosítása</translation>
     </message>
     <message>
@@ -509,7 +509,7 @@ Ez a termék az OpenSSL Project által lett kifejlesztve az OpenSSL Toolkit (htt
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="302"/>
-        <source>Sign messages with your Darkcoin addresses to prove you own them</source>
+        <source>Sign messages with your Dash addresses to prove you own them</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -519,7 +519,7 @@ Ez a termék az OpenSSL Project által lett kifejlesztve az OpenSSL Toolkit (htt
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="304"/>
-        <source>Verify messages to ensure they were signed with specified Darkcoin addresses</source>
+        <source>Verify messages to ensure they were signed with specified Dash addresses</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -579,7 +579,7 @@ Ez a termék az OpenSSL Project által lett kifejlesztve az OpenSSL Toolkit (htt
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="319"/>
-        <source>Open a darkcoin: URI or payment request</source>
+        <source>Open a dash: URI or payment request</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -589,7 +589,7 @@ Ez a termék az OpenSSL Project által lett kifejlesztve az OpenSSL Toolkit (htt
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="322"/>
-        <source>Show the Darkcoin Core help message to get a list with possible Darkcoin command-line options</source>
+        <source>Show the Dash Core help message to get a list with possible Dash command-line options</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -620,13 +620,13 @@ Ez a termék az OpenSSL Project által lett kifejlesztve az OpenSSL Toolkit (htt
     <message>
         <location filename="../bitcoingui.cpp" line="489"/>
         <location filename="../bitcoingui.cpp" line="494"/>
-        <source>Darkcoin client</source>
-        <translation>Darkcoin kliens</translation>
+        <source>Dash client</source>
+        <translation>Dash kliens</translation>
     </message>
     <message numerus="yes">
         <location filename="../bitcoingui.cpp" line="638"/>
-        <source>%n active connection(s) to Darkcoin network</source>
-        <translation><numerusform>%n aktív kapcsolat a Darkcoin hálózattal</numerusform><numerusform>%n aktív kapcsolat a Darkcoin hálózattal</numerusform></translation>
+        <source>%n active connection(s) to Dash network</source>
+        <translation><numerusform>%n aktív kapcsolat a Dash hálózattal</numerusform><numerusform>%n aktív kapcsolat a Dash hálózattal</numerusform></translation>
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="650"/>
@@ -706,8 +706,8 @@ Ez a termék az OpenSSL Project által lett kifejlesztve az OpenSSL Toolkit (htt
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="750"/>
-        <source>Darkcoin</source>
-        <translation>Darkcoin</translation>
+        <source>Dash</source>
+        <translation>Dash</translation>
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="764"/>
@@ -763,9 +763,9 @@ Cím: %4
         <translation>Tárca &lt;b&gt;kódolva&lt;/b&gt; és jelenleg &lt;b&gt;zárva&lt;/b&gt;.</translation>
     </message>
     <message>
-        <location filename="../darkcoin.cpp" line="449"/>
-        <source>A fatal error occurred. Darkcoin can no longer continue safely and will quit.</source>
-        <translation>Végzetes hiba történt. A Darkcoin kliens nem futtatható tovább biztonságban, ezért bezáródik.</translation>
+        <location filename="../dash.cpp" line="449"/>
+        <source>A fatal error occurred. Dash can no longer continue safely and will quit.</source>
+        <translation>Végzetes hiba történt. A Dash kliens nem futtatható tovább biztonságban, ezért bezáródik.</translation>
     </message>
 </context>
 <context>
@@ -1102,12 +1102,12 @@ Cím: %4
     </message>
     <message>
         <location filename="../forms/darksendconfig.ui" line="78"/>
-        <source>Use 2 separate masternodes to mix funds up to 1000 DRK</source>
+        <source>Use 2 separate masternodes to mix funds up to 1000 DASH</source>
         <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../forms/darksendconfig.ui" line="91"/>
-        <source>Use 8 separate masternodes to mix funds up to 1000 DRK</source>
+        <source>Use 8 separate masternodes to mix funds up to 1000 DASH</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -1117,17 +1117,17 @@ Cím: %4
     </message>
     <message>
         <location filename="../forms/darksendconfig.ui" line="117"/>
-        <source>This option is the quickest and will cost about ~0.025 DRK to anonymize 1000 DRK</source>
+        <source>This option is the quickest and will cost about ~0.025 DASH to anonymize 1000 DASH</source>
         <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../forms/darksendconfig.ui" line="130"/>
-        <source>This option is moderately fast and will cost about 0.05 DRK to anonymize 1000 DRK</source>
+        <source>This option is moderately fast and will cost about 0.05 DASH to anonymize 1000 DASH</source>
         <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../forms/darksendconfig.ui" line="156"/>
-        <source>0.1 DRK per 1000 DRK you anonymize.</source>
+        <source>0.1 DASH per 1000 DASH you anonymize.</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -1144,17 +1144,17 @@ Cím: %4
     </message>
     <message>
         <location filename="../darksendconfig.cpp" line="44"/>
-        <source>Darksend was successfully set to basic (%1 and 2 rounds). You can change this at any time by opening Darkcoin&apos;s configuration screen.</source>
+        <source>Darksend was successfully set to basic (%1 and 2 rounds). You can change this at any time by opening Dash&apos;s configuration screen.</source>
         <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../darksendconfig.cpp" line="59"/>
-        <source>Darksend was successfully set to high (%1 and 8 rounds). You can change this at any time by opening Darkcoin&apos;s configuration screen.</source>
+        <source>Darksend was successfully set to high (%1 and 8 rounds). You can change this at any time by opening Dash&apos;s configuration screen.</source>
         <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../darksendconfig.cpp" line="74"/>
-        <source>Darksend was successfully set to maximum (%1 and 16 rounds). You can change this at any time by opening Darkcoin&apos;s configuration screen.</source>
+        <source>Darksend was successfully set to maximum (%1 and 16 rounds). You can change this at any time by opening Dash&apos;s configuration screen.</source>
         <translation type="unfinished"/>
     </message>
 </context>
@@ -1207,8 +1207,8 @@ Cím: %4
     </message>
     <message>
         <location filename="../editaddressdialog.cpp" line="111"/>
-        <source>The entered address &quot;%1&quot; is not a valid Darkcoin address.</source>
-        <translation>A megadott &quot;%1&quot; cím nem érvényes Darkcoin cím.</translation>
+        <source>The entered address &quot;%1&quot; is not a valid Dash address.</source>
+        <translation>A megadott &quot;%1&quot; cím nem érvényes Dash cím.</translation>
     </message>
     <message>
         <location filename="../editaddressdialog.cpp" line="116"/>
@@ -1258,13 +1258,13 @@ Cím: %4
     <name>HelpMessageDialog</name>
     <message>
         <location filename="../forms/helpmessagedialog.ui" line="19"/>
-        <source>Darkcoin Core - Command-line options</source>
-        <translation>Darkcoin Code - Parancssorban használható parancsok</translation>
+        <source>Dash Core - Command-line options</source>
+        <translation>Dash Code - Parancssorban használható parancsok</translation>
     </message>
     <message>
         <location filename="../utilitydialog.cpp" line="69"/>
-        <source>Darkcoin Core</source>
-        <translation>Darkcoin Core</translation>
+        <source>Dash Core</source>
+        <translation>Dash Core</translation>
     </message>
     <message>
         <location filename="../utilitydialog.cpp" line="69"/>
@@ -1322,18 +1322,18 @@ Cím: %4
     </message>
     <message>
         <location filename="../forms/intro.ui" line="23"/>
-        <source>Welcome to Darkcoin Core.</source>
-        <translation>Üdvözlünk a Darkcoin Core-ban</translation>
+        <source>Welcome to Dash Core.</source>
+        <translation>Üdvözlünk a Dash Core-ban</translation>
     </message>
     <message>
         <location filename="../forms/intro.ui" line="49"/>
-        <source>As this is the first time the program is launched, you can choose where Darkcoin Core will store its data.</source>
-        <translation>Ez a program első indítása, így kiválaszthatod, hogy a Darkcoin Core hol tárolja az adataidat.</translation>
+        <source>As this is the first time the program is launched, you can choose where Dash Core will store its data.</source>
+        <translation>Ez a program első indítása, így kiválaszthatod, hogy a Dash Core hol tárolja az adataidat.</translation>
     </message>
     <message>
         <location filename="../forms/intro.ui" line="59"/>
-        <source>Darkcoin Core will download and store a copy of the Darkcoin block chain. At least %1GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</source>
-        <translation>A Darkcoin Core működéséhez szükséges a Darkcoin blokklánc letöltése és tárolása, melyhez legalább %1GB tárhely szükséges. A jövőben a tárhelyigény tovább nőhet.
+        <source>Dash Core will download and store a copy of the Dash block chain. At least %1GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</source>
+        <translation>A Dash Core működéséhez szükséges a Dash blokklánc letöltése és tárolása, melyhez legalább %1GB tárhely szükséges. A jövőben a tárhelyigény tovább nőhet.
 A pénztárca fájl is ebben a könyvtárban kerül letárolásra.</translation>
     </message>
     <message>
@@ -1348,8 +1348,8 @@ A pénztárca fájl is ebben a könyvtárban kerül letárolásra.</translation>
     </message>
     <message>
         <location filename="../intro.cpp" line="185"/>
-        <source>Darkcoin</source>
-        <translation>Darkcoin</translation>
+        <source>Dash</source>
+        <translation>Dash</translation>
     </message>
     <message>
         <location filename="../intro.cpp" line="186"/>
@@ -1414,12 +1414,12 @@ A pénztárca fájl is ebben a könyvtárban kerül letárolásra.</translation>
     </message>
     <message>
         <location filename="../forms/optionsdialog.ui" line="33"/>
-        <source>Automatically start Darkcoin after logging in to the system.</source>
-        <translation>Darkcoin kliens automatikus indítása a rendszerbe való bejelentkezéskor</translation>
+        <source>Automatically start Dash after logging in to the system.</source>
+        <translation>Dash kliens automatikus indítása a rendszerbe való bejelentkezéskor</translation>
     </message>
     <message>
         <location filename="../forms/optionsdialog.ui" line="36"/>
-        <source>&amp;Start Darkcoin on system login</source>
+        <source>&amp;Start Dash on system login</source>
         <translation>&amp;Indítás bejelentkezéskor</translation>
     </message>
     <message>
@@ -1454,8 +1454,8 @@ A pénztárca fájl is ebben a könyvtárban kerül letárolásra.</translation>
     </message>
     <message>
         <location filename="../forms/optionsdialog.ui" line="180"/>
-        <source>Amount of Darkcoin to keep anonymized</source>
-        <translation>Mindig legyen anonimizálva ennyi Darkcoin</translation>
+        <source>Amount of Dash to keep anonymized</source>
+        <translation>Mindig legyen anonimizálva ennyi Dash</translation>
     </message>
     <message>
         <location filename="../forms/optionsdialog.ui" line="206"/>
@@ -1504,8 +1504,8 @@ A pénztárca fájl is ebben a könyvtárban kerül letárolásra.</translation>
     </message>
     <message>
         <location filename="../forms/optionsdialog.ui" line="307"/>
-        <source>Automatically open the Darkcoin client port on the router. This only works when your router supports UPnP and it is enabled.</source>
-        <translation>Automatikusan megnyitja a Darkcoin kliens portját a routeren. Csak abban az esetben működik, ha a routeren engedélyezve van az UPnP használata.</translation>
+        <source>Automatically open the Dash client port on the router. This only works when your router supports UPnP and it is enabled.</source>
+        <translation>Automatikusan megnyitja a Dash kliens portját a routeren. Csak abban az esetben működik, ha a routeren engedélyezve van az UPnP használata.</translation>
     </message>
     <message>
         <location filename="../forms/optionsdialog.ui" line="310"/>
@@ -1514,8 +1514,8 @@ A pénztárca fájl is ebben a könyvtárban kerül letárolásra.</translation>
     </message>
     <message>
         <location filename="../forms/optionsdialog.ui" line="317"/>
-        <source>Connect to the Darkcoin network through a SOCKS proxy.</source>
-        <translation>Darkcoin hálózathoz való kapcsolódás SOCKS proxy-n keresztül</translation>
+        <source>Connect to the Dash network through a SOCKS proxy.</source>
+        <translation>Dash hálózathoz való kapcsolódás SOCKS proxy-n keresztül</translation>
     </message>
     <message>
         <location filename="../forms/optionsdialog.ui" line="320"/>
@@ -1589,7 +1589,7 @@ A pénztárca fájl is ebben a könyvtárban kerül letárolásra.</translation>
     </message>
     <message>
         <location filename="../forms/optionsdialog.ui" line="503"/>
-        <source>The user interface language can be set here. This setting will take effect after restarting Darkcoin.</source>
+        <source>The user interface language can be set here. This setting will take effect after restarting Dash.</source>
         <translation>A program megjelenítési nyelve itt állítható. Ez a beállítás a program újraindítása után lép életbe.</translation>
     </message>
     <message>
@@ -1604,7 +1604,7 @@ A pénztárca fájl is ebben a könyvtárban kerül letárolásra.</translation>
     </message>
     <message>
         <location filename="../forms/optionsdialog.ui" line="536"/>
-        <source>Whether to show Darkcoin addresses in the transaction list or not.</source>
+        <source>Whether to show Dash addresses in the transaction list or not.</source>
         <translation>A tranzakció listában ennek a beállításnak a függvényében jelennek meg a címek.</translation>
     </message>
     <message>
@@ -1700,8 +1700,8 @@ A pénztárca fájl is ebben a könyvtárban kerül letárolásra.</translation>
     <message>
         <location filename="../forms/overviewpage.ui" line="70"/>
         <location filename="../forms/overviewpage.ui" line="986"/>
-        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Darkcoin network after a connection is established, but this process has not completed yet.</source>
-        <translation>A megjelenített információ elavult lehet. A pénztárca automatikusan szinkronizál a Darkcoin hálózattal a kapcsolat létesítése után, de ez a folyamat még nem fejeződött be.</translation>
+        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Dash network after a connection is established, but this process has not completed yet.</source>
+        <translation>A megjelenített információ elavult lehet. A pénztárca automatikusan szinkronizál a Dash hálózattal a kapcsolat létesítése után, de ez a folyamat még nem fejeződött be.</translation>
     </message>
     <message>
         <location filename="../forms/overviewpage.ui" line="114"/>
@@ -1765,8 +1765,8 @@ A pénztárca fájl is ebben a könyvtárban kerül letárolásra.</translation>
     </message>
     <message>
         <location filename="../forms/overviewpage.ui" line="349"/>
-        <source>0 DRK</source>
-        <translation>0 DRK</translation>
+        <source>0 DASH</source>
+        <translation>0 DASH</translation>
     </message>
     <message>
         <location filename="../forms/overviewpage.ui" line="356"/>
@@ -1775,8 +1775,8 @@ A pénztárca fájl is ebben a könyvtárban kerül letárolásra.</translation>
     </message>
     <message>
         <location filename="../forms/overviewpage.ui" line="363"/>
-        <source>0 DRK / 0 Rounds</source>
-        <translation>0 DRK / 0 kör</translation>
+        <source>0 DASH / 0 Rounds</source>
+        <translation>0 DASH / 0 kör</translation>
     </message>
     <message>
         <location filename="../forms/overviewpage.ui" line="370"/>
@@ -2010,7 +2010,7 @@ A pénztárca fájl is ebben a könyvtárban kerül letárolásra.</translation>
     </message>
     <message>
         <location filename="../paymentserver.cpp" line="294"/>
-        <source>Cannot start darkcoin: click-to-pay handler</source>
+        <source>Cannot start dash: click-to-pay handler</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -2036,7 +2036,7 @@ A pénztárca fájl is ebben a könyvtárban kerül letárolásra.</translation>
     </message>
     <message>
         <location filename="../paymentserver.cpp" line="418"/>
-        <source>URI can not be parsed! This can be caused by an invalid Darkcoin address or malformed URI parameters.</source>
+        <source>URI can not be parsed! This can be caused by an invalid Dash address or malformed URI parameters.</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -2093,41 +2093,41 @@ A pénztárca fájl is ebben a könyvtárban kerül letárolásra.</translation>
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../darkcoin.cpp" line="525"/>
-        <location filename="../darkcoin.cpp" line="532"/>
-        <location filename="../darkcoin.cpp" line="539"/>
-        <location filename="../darkcoin.cpp" line="552"/>
-        <source>Darkcoin</source>
-        <translation>Darkcoin</translation>
+        <location filename="../dash.cpp" line="525"/>
+        <location filename="../dash.cpp" line="532"/>
+        <location filename="../dash.cpp" line="539"/>
+        <location filename="../dash.cpp" line="552"/>
+        <source>Dash</source>
+        <translation>Dash</translation>
     </message>
     <message>
-        <location filename="../darkcoin.cpp" line="526"/>
+        <location filename="../dash.cpp" line="526"/>
         <source>Error: Specified data directory &quot;%1&quot; does not exist.</source>
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../darkcoin.cpp" line="533"/>
+        <location filename="../dash.cpp" line="533"/>
         <source>Error: Cannot parse configuration file: %1. Only use key=value syntax.</source>
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../darkcoin.cpp" line="540"/>
+        <location filename="../dash.cpp" line="540"/>
         <source>Error reading masternode configuration file: %1</source>
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../darkcoin.cpp" line="552"/>
+        <location filename="../dash.cpp" line="552"/>
         <source>Error: Invalid combination of -regtest and -testnet.</source>
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../darkcoin.cpp" line="612"/>
-        <source>Darkcoin Core didn&apos;t yet exit safely...</source>
+        <location filename="../dash.cpp" line="612"/>
+        <source>Dash Core didn&apos;t yet exit safely...</source>
         <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../guiutil.cpp" line="101"/>
-        <source>Enter a Darkcoin address (e.g. XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg)</source>
+        <source>Enter a Dash address (e.g. XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg)</source>
         <translation type="unfinished"/>
     </message>
 </context>
@@ -2207,8 +2207,8 @@ A pénztárca fájl is ebben a könyvtárban kerül letárolásra.</translation>
     </message>
     <message>
         <location filename="../forms/rpcconsole.ui" line="90"/>
-        <source>Open the Darkcoin debug log file from the current data directory. This can take a few seconds for large log files.</source>
-        <translation>A Darkcoin debug log megnyitása az aktuális adatkönyvtárból. Ez néhány másodpercig is eltarthat nagyobb log fájlok esetén.</translation>
+        <source>Open the Dash debug log file from the current data directory. This can take a few seconds for large log files.</source>
+        <translation>A Dash debug log megnyitása az aktuális adatkönyvtárból. Ez néhány másodpercig is eltarthat nagyobb log fájlok esetén.</translation>
     </message>
     <message>
         <location filename="../forms/rpcconsole.ui" line="93"/>
@@ -2299,7 +2299,7 @@ A pénztárca fájl is ebben a könyvtárban kerül letárolásra.</translation>
     </message>
     <message>
         <location filename="../rpcconsole.cpp" line="331"/>
-        <source>Welcome to the Darkcoin RPC console.</source>
+        <source>Welcome to the Dash RPC console.</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -2363,8 +2363,8 @@ A pénztárca fájl is ebben a könyvtárban kerül letárolásra.</translation>
     <message>
         <location filename="../forms/receivecoinsdialog.ui" line="51"/>
         <location filename="../forms/receivecoinsdialog.ui" line="74"/>
-        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the Darkcoin network.</source>
-        <translation>Egy opcionális üzenet, melyet a fizetési bekérőhöz csatolhat, és ami a bekérő megnyitásakor megjelenik. Figyelem: Az üzenet NEM kerül elküldésre a Darkcoin hálózaton.</translation>
+        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the Dash network.</source>
+        <translation>Egy opcionális üzenet, melyet a fizetési bekérőhöz csatolhat, és ami a bekérő megnyitásakor megjelenik. Figyelem: Az üzenet NEM kerül elküldésre a Dash hálózaton.</translation>
     </message>
     <message>
         <location filename="../forms/receivecoinsdialog.ui" line="54"/>
@@ -2815,8 +2815,8 @@ A pénztárca fájl is ebben a könyvtárban kerül letárolásra.</translation>
     </message>
     <message>
         <location filename="../sendcoinsdialog.cpp" line="626"/>
-        <source>Warning: Invalid Darkcoin address</source>
-        <translation>Figyelem: Ismeretlen Darkcoin cím</translation>
+        <source>Warning: Invalid Dash address</source>
+        <translation>Figyelem: Ismeretlen Dash cím</translation>
     </message>
     <message>
         <location filename="../sendcoinsdialog.cpp" line="635"/>
@@ -2897,8 +2897,8 @@ A pénztárca fájl is ebben a könyvtárban kerül letárolásra.</translation>
     </message>
     <message>
         <location filename="../forms/sendcoinsentry.ui" line="157"/>
-        <source>A message that was attached to the darkcoin: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the Darkcoin network.</source>
-        <translation>Egy üzenet ami a Darkcoin URI-hoz volt kapcsolva, és a tranzakcióval együtt tárolva lesz jövőbeli tájékoztatás céljából. Megjegyzés: Az üzenet NEM kerül elküldésre a darkcoin hálózaton.</translation>
+        <source>A message that was attached to the dash: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the Dash network.</source>
+        <translation>Egy üzenet ami a Dash URI-hoz volt kapcsolva, és a tranzakcióval együtt tárolva lesz jövőbeli tájékoztatás céljából. Megjegyzés: Az üzenet NEM kerül elküldésre a dash hálózaton.</translation>
     </message>
     <message>
         <location filename="../forms/sendcoinsentry.ui" line="583"/>
@@ -2933,8 +2933,8 @@ A pénztárca fájl is ebben a könyvtárban kerül letárolásra.</translation>
     <name>ShutdownWindow</name>
     <message>
         <location filename="../utilitydialog.cpp" line="129"/>
-        <source>Darkcoin Core is shutting down...</source>
-        <translation>A Darkcoin Core leáll...</translation>
+        <source>Dash Core is shutting down...</source>
+        <translation>A Dash Core leáll...</translation>
     </message>
     <message>
         <location filename="../utilitydialog.cpp" line="130"/>
@@ -3003,8 +3003,8 @@ A pénztárca fájl is ebben a könyvtárban kerül letárolásra.</translation>
     </message>
     <message>
         <location filename="../forms/signverifymessagedialog.ui" line="152"/>
-        <source>Sign the message to prove you own this Darkcoin address</source>
-        <translation>Üzenet aláírása annak bizonyítására, hogy ez a Darkcoin cím a tulajdonában van</translation>
+        <source>Sign the message to prove you own this Dash address</source>
+        <translation>Üzenet aláírása annak bizonyítására, hogy ez a Dash cím a tulajdonában van</translation>
     </message>
     <message>
         <location filename="../forms/signverifymessagedialog.ui" line="155"/>
@@ -3039,8 +3039,8 @@ A pénztárca fájl is ebben a könyvtárban kerül letárolásra.</translation>
     </message>
     <message>
         <location filename="../forms/signverifymessagedialog.ui" line="295"/>
-        <source>Verify the message to ensure it was signed with the specified Darkcoin address</source>
-        <translation>Üzenet hitelesítése annak érdekében, hogy meggyőződjünk arról, hogy a megadott Darkcoin címmel lett aláírva</translation>
+        <source>Verify the message to ensure it was signed with the specified Dash address</source>
+        <translation>Üzenet hitelesítése annak érdekében, hogy meggyőződjünk arról, hogy a megadott Dash címmel lett aláírva</translation>
     </message>
     <message>
         <location filename="../forms/signverifymessagedialog.ui" line="298"/>
@@ -3059,7 +3059,7 @@ A pénztárca fájl is ebben a könyvtárban kerül letárolásra.</translation>
     </message>
     <message>
         <location filename="../signverifymessagedialog.cpp" line="31"/>
-        <source>Enter a Darkcoin address (e.g. XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg)</source>
+        <source>Enter a Dash address (e.g. XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg)</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -3133,8 +3133,8 @@ A pénztárca fájl is ebben a könyvtárban kerül letárolásra.</translation>
     <name>SplashScreen</name>
     <message>
         <location filename="../splashscreen.cpp" line="33"/>
-        <source>Darkcoin Core</source>
-        <translation>Darkcoin Core</translation>
+        <source>Dash Core</source>
+        <translation>Dash Core</translation>
     </message>
     <message>
         <location filename="../splashscreen.cpp" line="34"/>
@@ -3148,8 +3148,8 @@ A pénztárca fájl is ebben a könyvtárban kerül letárolásra.</translation>
     </message>
     <message>
         <location filename="../splashscreen.cpp" line="36"/>
-        <source>The Darkcoin Core developers</source>
-        <translation>A Darkcoin Core fejlesztők</translation>
+        <source>The Dash Core developers</source>
+        <translation>A Dash Core fejlesztők</translation>
     </message>
     <message>
         <location filename="../splashscreen.cpp" line="37"/>
@@ -3829,19 +3829,19 @@ A pénztárca fájl is ebben a könyvtárban kerül letárolásra.</translation>
     </message>
 </context>
 <context>
-    <name>darkcoin-core</name>
+    <name>dash-core</name>
     <message>
         <location filename="../bitcoinstrings.cpp" line="16"/>
         <source>%s, you must set a rpcpassword in the configuration file:
 %s
 It is recommended you use the following random password:
-rpcuser=darkcoinrpc
+rpcuser=dashrpc
 rpcpassword=%s
 (you do not need to remember this password)
 The username and password MUST NOT be the same.
 If the file does not exist, create it with owner-readable-only file permissions.
 It is also recommended to set alertnotify so you are notified of problems;
-for example: alertnotify=echo %%s | mail -s &quot;Darkcoin Alert&quot; admin@foo.com
+for example: alertnotify=echo %%s | mail -s &quot;Dash Alert&quot; admin@foo.com
 </source>
         <translation type="unfinished"/>
     </message>
@@ -3867,7 +3867,7 @@ for example: alertnotify=echo %%s | mail -s &quot;Darkcoin Alert&quot; admin@foo
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="40"/>
-        <source>Cannot obtain a lock on data directory %s. Darkcoin Core is probably already running.</source>
+        <source>Cannot obtain a lock on data directory %s. Dash Core is probably already running.</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -4032,7 +4032,7 @@ for example: alertnotify=echo %%s | mail -s &quot;Darkcoin Alert&quot; admin@foo
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="133"/>
-        <source>Unable to bind to %s on this computer. Darkcoin Core is probably already running.</source>
+        <source>Unable to bind to %s on this computer. Dash Core is probably already running.</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -4042,7 +4042,7 @@ for example: alertnotify=echo %%s | mail -s &quot;Darkcoin Alert&quot; admin@foo
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="138"/>
-        <source>Unable to locate enough Darksend non-denominated funds for this transaction that are not equal 1000 DRK.</source>
+        <source>Unable to locate enough Darksend non-denominated funds for this transaction that are not equal 1000 DASH.</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -4062,7 +4062,7 @@ for example: alertnotify=echo %%s | mail -s &quot;Darkcoin Alert&quot; admin@foo
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="149"/>
-        <source>Warning: Please check that your computer&apos;s date and time are correct! If your clock is wrong Darkcoin will not work properly.</source>
+        <source>Warning: Please check that your computer&apos;s date and time are correct! If your clock is wrong Dash will not work properly.</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -4234,12 +4234,12 @@ If the file does not exist, create it with owner-readable-only file permissions.
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="200"/>
-        <source>Darkcoin Core Daemon</source>
+        <source>Dash Core Daemon</source>
         <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="201"/>
-        <source>Darkcoin Core RPC client version</source>
+        <source>Dash Core RPC client version</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -4324,7 +4324,7 @@ If the file does not exist, create it with owner-readable-only file permissions.
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="218"/>
-        <source>Error loading wallet.dat: Wallet requires newer version of Darkcoin</source>
+        <source>Error loading wallet.dat: Wallet requires newer version of Dash</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -4494,7 +4494,7 @@ If the file does not exist, create it with owner-readable-only file permissions.
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="252"/>
-        <source>Initialization sanity check failed. Darkcoin Core is shutting down.</source>
+        <source>Initialization sanity check failed. Dash Core is shutting down.</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -4574,7 +4574,7 @@ If the file does not exist, create it with owner-readable-only file permissions.
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="268"/>
-        <source>Keep N darkcoin anonymized (default: 0)</source>
+        <source>Keep N dash anonymized (default: 0)</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -4814,7 +4814,7 @@ If the file does not exist, create it with owner-readable-only file permissions.
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="316"/>
-        <source>Send command to Darkcoin Core</source>
+        <source>Send command to Dash Core</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -4914,7 +4914,7 @@ If the file does not exist, create it with owner-readable-only file permissions.
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="336"/>
-        <source>Specify configuration file (default: darkcoin.conf)</source>
+        <source>Specify configuration file (default: dash.conf)</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -4934,7 +4934,7 @@ If the file does not exist, create it with owner-readable-only file permissions.
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="340"/>
-        <source>Specify pid file (default: darkcoind.pid)</source>
+        <source>Specify pid file (default: dashd.pid)</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -4954,7 +4954,7 @@ If the file does not exist, create it with owner-readable-only file permissions.
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="344"/>
-        <source>Start Darkcoin Core Daemon</source>
+        <source>Start Dash Core Daemon</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -5049,7 +5049,7 @@ If the file does not exist, create it with owner-readable-only file permissions.
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="363"/>
-        <source>Usage (deprecated, use darkcoin-cli):</source>
+        <source>Usage (deprecated, use dash-cli):</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -5124,7 +5124,7 @@ If the file does not exist, create it with owner-readable-only file permissions.
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="378"/>
-        <source>Wallet needed to be rewritten: restart Darkcoin to complete</source>
+        <source>Wallet needed to be rewritten: restart Dash to complete</source>
         <translation type="unfinished"/>
     </message>
     <message>

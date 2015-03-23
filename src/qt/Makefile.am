@@ -5,39 +5,39 @@ AM_CPPFLAGS += -I$(top_srcdir)/src \
   -I$(top_builddir)/src/qt/forms \
   $(PROTOBUF_CFLAGS) \
   $(QR_CFLAGS)
-bin_PROGRAMS = darkcoin-qt
-noinst_LIBRARIES = libdarkcoinqt.a
+bin_PROGRAMS = dash-qt
+noinst_LIBRARIES = libdashqt.a
 SUBDIRS = . $(BUILD_TEST_QT)
 DIST_SUBDIRS = . test
 
-# darkcoin qt core #
+# dash qt core #
 QT_TS = \
-  locale/darkcoin_bar.ts \
-  locale/darkcoin_ca.ts \
-  locale/darkcoin_cmn.ts \
-  locale/darkcoin_cs.ts \
-  locale/darkcoin_da.ts \
-  locale/darkcoin_de.ts \
-  locale/darkcoin_el.ts \
-  locale/darkcoin_en.ts \
-  locale/darkcoin_eo.ts \
-  locale/darkcoin_es.ts \
-  locale/darkcoin_fi.ts \
-  locale/darkcoin_fr.ts \
-  locale/darkcoin_hu_HU.ts \
-  locale/darkcoin_it.ts \
-  locale/darkcoin_lv_LV.ts \
-  locale/darkcoin_nl.ts \
-  locale/darkcoin_pl.ts \
-  locale/darkcoin_pt.ts \
-  locale/darkcoin_pt_BR.ts \
-  locale/darkcoin_ru.ts \
-  locale/darkcoin_sk.ts \
-  locale/darkcoin_sv.ts \
-  locale/darkcoin_tr.ts \
-  locale/darkcoin_vi.ts \
-  locale/darkcoin_zh_CN.ts \
-  locale/darkcoin_zh_HK.ts
+  locale/dash_bar.ts \
+  locale/dash_ca.ts \
+  locale/dash_cmn.ts \
+  locale/dash_cs.ts \
+  locale/dash_da.ts \
+  locale/dash_de.ts \
+  locale/dash_el.ts \
+  locale/dash_en.ts \
+  locale/dash_eo.ts \
+  locale/dash_es.ts \
+  locale/dash_fi.ts \
+  locale/dash_fr.ts \
+  locale/dash_hu_HU.ts \
+  locale/dash_it.ts \
+  locale/dash_lv_LV.ts \
+  locale/dash_nl.ts \
+  locale/dash_pl.ts \
+  locale/dash_pt.ts \
+  locale/dash_pt_BR.ts \
+  locale/dash_ru.ts \
+  locale/dash_sk.ts \
+  locale/dash_sv.ts \
+  locale/dash_tr.ts \
+  locale/dash_vi.ts \
+  locale/dash_zh_CN.ts \
+  locale/dash_zh_HK.ts
 
 QT_FORMS_UI = \
   forms/aboutdialog.ui \
@@ -110,7 +110,7 @@ BITCOIN_MM = \
   macnotificationhandler.mm
 
 QT_MOC = \
-  darkcoin.moc \
+  dash.moc \
   intro.moc \
   overviewpage.moc \
   rpcconsole.moc
@@ -219,7 +219,7 @@ RES_ICONS = \
   res/icons/tx_mined.png
 
 BITCOIN_QT_CPP = \
-  darkcoin.cpp \
+  dash.cpp \
   bitcoinaddressvalidator.cpp \
   bitcoinamountfield.cpp \
   bitcoingui.cpp \
@@ -281,38 +281,38 @@ RES_MOVIES = $(wildcard res/movies/spinner-*.png)
 
 BITCOIN_RC = res/bitcoin-qt-res.rc
 
-libdarkcoinqt_a_CPPFLAGS = $(AM_CPPFLAGS) $(QT_INCLUDES) \
+libdashqt_a_CPPFLAGS = $(AM_CPPFLAGS) $(QT_INCLUDES) \
   -I$(top_srcdir)/src/qt/forms $(QT_DBUS_INCLUDES)
-libdarkcoinqt_a_SOURCES = $(BITCOIN_QT_CPP) $(BITCOIN_QT_H) $(QT_FORMS_UI) \
+libdashqt_a_SOURCES = $(BITCOIN_QT_CPP) $(BITCOIN_QT_H) $(QT_FORMS_UI) \
   $(QT_QRC) $(QT_TS) $(PROTOBUF_PROTO) $(RES_ICONS) $(RES_IMAGES) $(RES_MOVIES)
 
-nodist_libdarkcoinqt_a_SOURCES = $(QT_MOC_CPP) $(QT_MOC) $(PROTOBUF_CC) \
+nodist_libdashqt_a_SOURCES = $(QT_MOC_CPP) $(QT_MOC) $(PROTOBUF_CC) \
   $(PROTOBUF_H) $(QT_QRC_CPP)
 
-BUILT_SOURCES = $(nodist_libdarkcoinqt_a_SOURCES)
+BUILT_SOURCES = $(nodist_libdashqt_a_SOURCES)
 
 #Generating these with a half-written protobuf header leads to wacky results.
 #This makes sure it's done.
 $(QT_MOC): $(PROTOBUF_H)
 $(QT_MOC_CPP): $(PROTOBUF_H)
 
-# darkcoin-qt binary #
-darkcoin_qt_CPPFLAGS = $(AM_CPPFLAGS) $(QT_INCLUDES) \
+# dash-qt binary #
+dash_qt_CPPFLAGS = $(AM_CPPFLAGS) $(QT_INCLUDES) \
   -I$(top_srcdir)/src/qt/forms
-darkcoin_qt_SOURCES = darkcoin.cpp
+dash_qt_SOURCES = dash.cpp
 if TARGET_DARWIN
-  darkcoin_qt_SOURCES += $(BITCOIN_MM)
+  dash_qt_SOURCES += $(BITCOIN_MM)
 endif
 if TARGET_WINDOWS
-  darkcoin_qt_SOURCES += $(BITCOIN_RC)
+  dash_qt_SOURCES += $(BITCOIN_RC)
 endif
-darkcoin_qt_LDADD = libdarkcoinqt.a $(LIBBITCOIN_SERVER)
+dash_qt_LDADD = libdashqt.a $(LIBBITCOIN_SERVER)
 if ENABLE_WALLET
-darkcoin_qt_LDADD += $(LIBBITCOIN_WALLET)
+dash_qt_LDADD += $(LIBBITCOIN_WALLET)
 endif
-darkcoin_qt_LDADD += $(LIBBITCOIN_CLI) $(LIBBITCOIN_COMMON) $(LIBLEVELDB) $(LIBMEMENV) \
+dash_qt_LDADD += $(LIBBITCOIN_CLI) $(LIBBITCOIN_COMMON) $(LIBLEVELDB) $(LIBMEMENV) \
   $(BOOST_LIBS) $(QT_LIBS) $(QT_DBUS_LIBS) $(QR_LIBS) $(PROTOBUF_LIBS) $(BDB_LIBS)
-darkcoin_qt_LDFLAGS = $(QT_LDFLAGS)
+dash_qt_LDFLAGS = $(QT_LDFLAGS)
 
 # forms/foo.h -> forms/ui_foo.h
 QT_FORMS_H=$(join $(dir $(QT_FORMS_UI)),$(addprefix ui_, $(notdir $(QT_FORMS_UI:.ui=.h))))
@@ -328,10 +328,10 @@ bitcoinstrings.cpp: FORCE
 
 translate: bitcoinstrings.cpp $(QT_FORMS_UI) $(QT_FORMS_UI) $(BITCOIN_QT_CPP) $(BITCOIN_QT_H) $(BITCOIN_MM)
 	@test -n $(LUPDATE) || echo "lupdate is required for updating translations"
-	@QT_SELECT=$(QT_SELECT) $(LUPDATE) $^ -locations relative -no-obsolete -ts locale/darkcoin_en.ts
+	@QT_SELECT=$(QT_SELECT) $(LUPDATE) $^ -locations relative -no-obsolete -ts locale/dash_en.ts
 
 $(QT_QRC_CPP): $(QT_QRC) $(QT_QM) $(QT_FORMS_H) $(RES_ICONS) $(RES_IMAGES) $(RES_MOVIES) $(PROTOBUF_H)
-	@cd $(abs_srcdir); test -f $(RCC) && QT_SELECT=$(QT_SELECT) $(RCC) -name darkcoin -o $(abs_builddir)/$@ $< || \
+	@cd $(abs_srcdir); test -f $(RCC) && QT_SELECT=$(QT_SELECT) $(RCC) -name dash -o $(abs_builddir)/$@ $< || \
 	  echo error: could not build $@
 	$(SED) -e '/^\*\*.*Created:/d' $@ > $@.n && mv $@{.n,}
 	$(SED) -e '/^\*\*.*by:/d' $@  > $@.n && mv $@{.n,}
