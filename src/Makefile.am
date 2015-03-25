@@ -203,7 +203,7 @@ dashd_SOURCES = dashd.cpp
 #
 
 if TARGET_WINDOWS
-dashd_SOURCES += bitcoind-res.rc
+dashd_SOURCES += dashd-res.rc
 endif
 
 AM_CPPFLAGS += $(BDB_CPPFLAGS)
@@ -218,7 +218,7 @@ dash_cli_SOURCES = dash-cli.cpp
 #
 
 if TARGET_WINDOWS
-dash_cli_SOURCES += bitcoin-cli-res.rc
+dash_cli_SOURCES += dash-cli-res.rc
 endif
 
 # NOTE: This dependency is not strictly necessary, but without it make may try to build both in parallel, which breaks the LevelDB build system in a race
