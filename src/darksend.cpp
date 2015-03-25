@@ -1396,7 +1396,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
         // should have some additional amount for them
         nLowestDenom += (DARKSEND_COLLATERAL*4)+DARKSEND_FEE*2;
 
-    int64_t nBalanceNeedsAnonymized = nAnonymizeDarkcoinAmount*COIN - pwalletMain->GetAnonymizedBalance();
+    int64_t nBalanceNeedsAnonymized = nAnonymizeDashAmount*COIN - pwalletMain->GetAnonymizedBalance();
 
     // if balanceNeedsAnonymized is more than pool max, take the pool max
     if(nBalanceNeedsAnonymized > DARKSEND_POOL_MAX) nBalanceNeedsAnonymized = DARKSEND_POOL_MAX;
@@ -1454,8 +1454,8 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
         //randomize the amounts we mix
         if(sessionTotalValue > nBalanceNeedsAnonymized) sessionTotalValue = nBalanceNeedsAnonymized;
 
-        double fDarkcoinSubmitted = (sessionTotalValue / CENT);
-        LogPrintf("Submitting Darksend for %f DASH CENT - sessionTotalValue %d\n", fDarkcoinSubmitted, sessionTotalValue);
+        double fDashSubmitted = (sessionTotalValue / CENT);
+        LogPrintf("Submitting Darksend for %f DASH CENT - sessionTotalValue %d\n", fDashSubmitted, sessionTotalValue);
 
         if(pwalletMain->GetDenominatedBalance(true, true) > 0){ //get denominated unconfirmed inputs
             LogPrintf("DoAutomaticDenominating -- Found unconfirmed denominated outputs, will wait till they confirm to continue.\n");
@@ -2178,7 +2178,7 @@ void ThreadCheckDarkSendPool()
                     darkSendPool.SendRandomPaymentToSelf();
                     int nLeftToAnon = ((pwalletMain->GetBalance() - pwalletMain->GetAnonymizedBalance())/COIN)-3;
                     if(nLeftToAnon > 999) nLeftToAnon = 999;
-                    nAnonymizeDarkcoinAmount = (rand() % nLeftToAnon)+3;
+                    nAnonymizeDashAmount = (rand() % nLeftToAnon)+3;
                 } else {
                     darkSendPool.DoAutomaticDenominating();
                 }

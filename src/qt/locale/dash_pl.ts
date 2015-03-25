@@ -136,7 +136,7 @@ Ten produkt zawiera oprogramowanie opracowane przez Projekt OpenSSL do użycia w
     <message>
         <location filename="../addressbookpage.cpp" line="65"/>
         <source>These are your Dash addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
-        <translation>To są twoje adresy Dash z których wysyłasz Darkcoiny. Zawsze upewnij się, że kwota i adres do ktoórego wysyłasz Dash są prawidłowe. </translation>
+        <translation>To są twoje adresy Dash z których wysyłasz Dashy. Zawsze upewnij się, że kwota i adres do ktoórego wysyłasz Dash są prawidłowe. </translation>
     </message>
     <message>
         <location filename="../addressbookpage.cpp" line="69"/>
@@ -389,7 +389,7 @@ Ten produkt zawiera oprogramowanie opracowane przez Projekt OpenSSL do użycia w
     <message>
         <location filename="../bitcoingui.cpp" line="235"/>
         <source>Send coins to a Dash address</source>
-        <translation>Wyślij monety na adres Darkcoina</translation>
+        <translation>Wyślij monety na adres Dasha</translation>
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="241"/>
@@ -1542,7 +1542,7 @@ Adres: %4
     <message>
         <location filename="../forms/optionsdialog.ui" line="307"/>
         <source>Automatically open the Dash client port on the router. This only works when your router supports UPnP and it is enabled.</source>
-        <translation>Automatycznie uruchamiaj port klienta Darkcoina na ruterze. To działa tylko jeśli twój ruter wspiera  i ma włączone UPnP.</translation>
+        <translation>Automatycznie uruchamiaj port klienta Dasha na ruterze. To działa tylko jeśli twój ruter wspiera  i ma włączone UPnP.</translation>
     </message>
     <message>
         <location filename="../forms/optionsdialog.ui" line="310"/>
@@ -1552,7 +1552,7 @@ Adres: %4
     <message>
         <location filename="../forms/optionsdialog.ui" line="317"/>
         <source>Connect to the Dash network through a SOCKS proxy.</source>
-        <translation>Połącz się z siecią Darkcoina przez proxy SOCKS</translation>
+        <translation>Połącz się z siecią Dasha przez proxy SOCKS</translation>
     </message>
     <message>
         <location filename="../forms/optionsdialog.ui" line="320"/>
@@ -2260,7 +2260,7 @@ https://www.transifex.com/projects/p/dash/</translation>
     <message>
         <location filename="../forms/rpcconsole.ui" line="90"/>
         <source>Open the Dash debug log file from the current data directory. This can take a few seconds for large log files.</source>
-        <translation>Otwiera plik z zapisami debugowania Darkcoina z obecnego katalogu. Może to potrfać kilka sekund w zależności od rozmiaru pliku.</translation>
+        <translation>Otwiera plik z zapisami debugowania Dasha z obecnego katalogu. Może to potrfać kilka sekund w zależności od rozmiaru pliku.</translation>
     </message>
     <message>
         <location filename="../forms/rpcconsole.ui" line="93"/>
@@ -2352,7 +2352,7 @@ https://www.transifex.com/projects/p/dash/</translation>
     <message>
         <location filename="../rpcconsole.cpp" line="333"/>
         <source>Welcome to the Dash RPC console.</source>
-        <translation>Witaj w konsoli RPC Darkcoina</translation>
+        <translation>Witaj w konsoli RPC Dasha</translation>
     </message>
     <message>
         <location filename="../rpcconsole.cpp" line="334"/>
@@ -2983,7 +2983,7 @@ https://www.transifex.com/projects/p/dash/</translation>
     <message>
         <location filename="../forms/sendcoinsentry.ui" line="157"/>
         <source>A message that was attached to the dash: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the Dash network.</source>
-        <translation>Wiadomość, która została dołączona do dash: Link, który zostanie zapisany wraz z transakcją do wglądu w przyszłości. Zauważ. że sama wiadomość nie zostanie wysłana przez sieć Darkcoina.</translation>
+        <translation>Wiadomość, która została dołączona do dash: Link, który zostanie zapisany wraz z transakcją do wglądu w przyszłości. Zauważ. że sama wiadomość nie zostanie wysłana przez sieć Dasha.</translation>
     </message>
     <message>
         <location filename="../forms/sendcoinsentry.ui" line="583"/>

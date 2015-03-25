@@ -1,4 +1,4 @@
-# lupdate-qt4 ./darkcoin-qt.pro -ts ../src/qt/locale/darkcoin_en.ts
+# lupdate-qt4 ./dash-qt.pro -ts ../src/qt/locale/dash_en.ts
 
 HEADERS += \
     ../src/activemasternode.h \
@@ -135,8 +135,8 @@ SOURCES += \
     ../src/core.cpp \
     ../src/crypter.cpp \
     ../src/cubehash.c \
-    ../src/darkcoin-cli.cpp \
-    ../src/darkcoind.cpp \
+    ../src/dash-cli.cpp \
+    ../src/dashd.cpp \
     ../src/darksend.cpp \
     ../src/db.cpp \
     ../src/echo.c \
@@ -213,7 +213,7 @@ SOURCES += \
     ../src/test/serialize_tests.cpp \
     ../src/test/sighash_tests.cpp \
     ../src/test/sigopcount_tests.cpp \
-    ../src/test/test_darkcoin.cpp \
+    ../src/test/test_dash.cpp \
     ../src/test/transaction_tests.cpp \
     ../src/test/uint256_tests.cpp \
     ../src/test/util_tests.cpp \
@@ -230,7 +230,7 @@ SOURCES += \
     ../src/qt/coincontroldialog.cpp \
     ../src/qt/coincontroltreewidget.cpp \
     ../src/qt/csvmodelwriter.cpp \
-    ../src/qt/darkcoin.cpp \
+    ../src/qt/dash.cpp \
     ../src/qt/darksendconfig.cpp \
     ../src/qt/editaddressdialog.cpp \
     ../src/qt/guiutil.cpp \

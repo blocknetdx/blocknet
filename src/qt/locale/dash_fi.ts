@@ -295,7 +295,7 @@ Tämä ohjelma sisältää OpenSSL projektin OpenSSL työkalupakin (http://www.o
     <message>
         <location filename="../askpassphrasedialog.cpp" line="124"/>
         <source>Dash will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your dashs from being stolen by malware infecting your computer.</source>
-        <translation>Dash sulkeutuu nyt salauksen viimeistelyä varten. Muista että salaus pelkästään ei voi estää Darkcoiniesi varastamista jos koneesi saastuu haittaohjelmilla tai viruksilla.</translation>
+        <translation>Dash sulkeutuu nyt salauksen viimeistelyä varten. Muista että salaus pelkästään ei voi estää Dashiesi varastamista jos koneesi saastuu haittaohjelmilla tai viruksilla.</translation>
     </message>
     <message>
         <location filename="../askpassphrasedialog.cpp" line="128"/>
@@ -2066,7 +2066,7 @@ https://www.transifex.com/projects/p/dash/</translation>
     <message>
         <location filename="../paymentserver.cpp" line="294"/>
         <source>Cannot start dash: click-to-pay handler</source>
-        <translation>Ei voi käynnistää Darkcoinia: click-to-pay handler</translation>
+        <translation>Ei voi käynnistää Dashia: click-to-pay handler</translation>
     </message>
     <message>
         <location filename="../paymentserver.cpp" line="352"/>
@@ -2623,7 +2623,7 @@ https://www.transifex.com/projects/p/dash/</translation>
         <location filename="../sendcoinsdialog.cpp" line="521"/>
         <location filename="../sendcoinsdialog.cpp" line="531"/>
         <source>Send Coins</source>
-        <translation>Lähetä Darkcoineja</translation>
+        <translation>Lähetä Dasheja</translation>
     </message>
     <message>
         <location filename="../forms/sendcoinsdialog.ui" line="90"/>
@@ -2849,7 +2849,7 @@ https://www.transifex.com/projects/p/dash/</translation>
     <message>
         <location filename="../sendcoinsdialog.cpp" line="280"/>
         <source>Confirm send coins</source>
-        <translation>Hyväksy Darkcoinien lähettäminen</translation>
+        <translation>Hyväksy Dashien lähettäminen</translation>
     </message>
     <message>
         <location filename="../sendcoinsdialog.cpp" line="435"/>
@@ -3870,7 +3870,7 @@ https://www.transifex.com/projects/p/dash/</translation>
         <location filename="../walletmodel.cpp" line="271"/>
         <location filename="../walletmodel.cpp" line="285"/>
         <source>Send Coins</source>
-        <translation>Lähetä Darkcoineja</translation>
+        <translation>Lähetä Dasheja</translation>
     </message>
     <message numerus="yes">
         <location filename="../walletmodel.cpp" line="271"/>
@@ -4435,7 +4435,7 @@ Jos tiedostoa ei ole, niin luo se ainoastaan omistajan kirjoitusoikeuksin.</tran
     <message>
         <location filename="../dashstrings.cpp" line="219"/>
         <source>Error loading wallet.dat: Wallet requires newer version of Dash</source>
-        <translation>Virhe ladattaessa wallet.dat lompakkotiedostoa: Tarvitset uudemman version Darkcoinista</translation>
+        <translation>Virhe ladattaessa wallet.dat lompakkotiedostoa: Tarvitset uudemman version Dashista</translation>
     </message>
     <message>
         <location filename="../dashstrings.cpp" line="220"/>

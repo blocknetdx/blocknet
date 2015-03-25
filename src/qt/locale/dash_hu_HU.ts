@@ -292,7 +292,7 @@ Ez a termék az OpenSSL Project által lett kifejlesztve az OpenSSL Toolkit (htt
     <message>
         <location filename="../askpassphrasedialog.cpp" line="124"/>
         <source>Dash will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your dashs from being stolen by malware infecting your computer.</source>
-        <translation>A Dash kliens most befejezi a kódolási folyamatot. Ne felejtsd, hogy egy kódolt pénztárca önmagában nem elegendő a Darkcoinjaid teljes mértékű védelméhez egy fertőzött számítógép esetén.</translation>
+        <translation>A Dash kliens most befejezi a kódolási folyamatot. Ne felejtsd, hogy egy kódolt pénztárca önmagában nem elegendő a Dashjaid teljes mértékű védelméhez egy fertőzött számítógép esetén.</translation>
     </message>
     <message>
         <location filename="../askpassphrasedialog.cpp" line="128"/>
