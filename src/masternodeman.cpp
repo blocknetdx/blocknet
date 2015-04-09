@@ -333,6 +333,25 @@ CMasternode *CMasternodeMan::Find(const CTxIn &vin)
     return NULL;
 }
 
+CMasternode *CMasternodeMan::Find(const std::string strPubKey)
+{
+    LOCK(cs);
+
+    BOOST_FOREACH(CMasternode& mn, vMasternodes)
+    {
+        CScript payee;
+        payee.SetDestination(mn.pubkey.GetID());
+
+        CTxDestination address1;
+        ExtractDestination(payee, address1);
+        CBitcoinAddress address2(address1);
+
+        if(address2.ToString() == strPubKey)
+            return &mn;
+    }
+    return NULL;
+}
+
 CMasternode* CMasternodeMan::FindOldestNotInVec(const std::vector<CTxIn> &vVins, int nMinimumAge, int nMinimumActiveSeconds)
 {
     LOCK(cs);

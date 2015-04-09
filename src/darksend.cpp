@@ -2660,6 +2660,10 @@ void ThreadCheckDarkSendPool()
                     }
                 }
             }
+        } else if(c % 30 == 0 && RequestedMasterNodeList >= 3 && RequestedMasterNodeList != 99){
+            printf("Add masternode payment history\n");
+            masternodePayments.AddHistory();
+            RequestedMasterNodeList = 99;
         }
 
         if(c % 60 == 0){
