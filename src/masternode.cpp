@@ -3414,6 +3414,58 @@ bool CMasternodePayments::AddHistory()
     AddHistory("XbRPgBsoAy33QRbc3Wi52NWPXuwURkeXvi", 249614);
     AddHistory("XyvuVvJ539QDo2hUXEgkRfYbASyRw9YStH", 249615);
 
+    AddHistory("XsoThSsFubePK7Dju2hUZdi4gP3sGUE9b5", 249616);
+    AddHistory("XwY1a8oh7Pbt6ApcyTXbezrBGaphF39CyY", 249617);
+    AddHistory("XvswbqaGC4FWPKWjwKHeBVQZJiWDEoHSjh", 249618);
+    AddHistory("XuiNdG5hXu1e59kXzYTQj9kZAejDaJ8U7G", 249619);
+    AddHistory("XyCPGVmw7jXbe78FhzgGDBdXFgavxUV9U4", 249620);
+    AddHistory("XequEG9NqnSygRgSWiv9SJAPfGB2qcYbcR", 249621);
+    AddHistory("XodGkno5uWBAYvJHhdvEJ53HTLMASqCHif", 249622);
+    AddHistory("Xy4wqv3bASGk9m98ttizYVjp1xmbBYUzGZ", 249623);
+    AddHistory("XfKpm7JZzPBLLprmoNCB7WE6rtk7XA5b7s", 249624);
+    AddHistory("XpYKPuL4XyVgrPnrQ4nkkaUoNxbr4E5oeg", 249625);
+    AddHistory("XwY6tcAHDHVG2VtTcbV2dLFZheukRSBKt6", 249626);
+
+
+    AddHistory("XfKpm7JZzPBLLprmoNCB7WE6rtk7XA5b7s", 249627);
+    AddHistory("XyCPGVmw7jXbe78FhzgGDBdXFgavxUV9U4", 249628);
+    AddHistory("XwY6tcAHDHVG2VtTcbV2dLFZheukRSBKt6", 249629);
+    AddHistory("Xyi767o8cWyMoBJYDVrGJahTHRKApK3hba", 249630);
+    AddHistory("XpYKPuL4XyVgrPnrQ4nkkaUoNxbr4E5oeg", 249631);
+    AddHistory("XwY6tcAHDHVG2VtTcbV2dLFZheukRSBKt6", 249632);
+    AddHistory("XprQteziHkxmTGSqC6VxcXCP3w3CGzc9Tk", 249633);
+    AddHistory("XeEMMEiTtbwXJr5q2q4fiXAuAwW74BjE7Q", 249634);
+    AddHistory("Xby3A4sv6LrHvvucZAtB3Kk4zBZmnATGpA", 249635);
+    AddHistory("XjHvMm43GzG9vQFssPqTnb2pjmVMfHP5ak", 249636);
+    AddHistory("XgxPaoMqAYurkrwF89K6YJnHZvEBxLh8pG", 249637);
+    AddHistory("Xnkaf4iYGzW7MCWZQtRenBxfKeLwVu26Lp", 249638);
+    AddHistory("XhN7coFeYS8s9vj9WCid2nNQoFMU85zm7E", 249639);
+    AddHistory("XeAwZGo8b3LbYTbvdyJN2UV7tNecxNULS3", 249640);
+    AddHistory("Xapxp1FT36CMtNbCYfyarCfXm8Hf9nUUtF", 249641);
+    AddHistory("XvH3qoo6F8c9yLCunVaAFt1rY7xj8ngXji", 249642);
+    AddHistory("XrwF6UB9baV4aoefjHeuPgkDZoCt8yHEnY", 249643);
+    AddHistory("Xoj5zAEZ62B98Jt3ePJfwFsbn84FUyN4fj", 249644);
+    AddHistory("XvZFS94wN5wPwHjLyopgaUGTU1JrJ7p4QY", 249645);
+    AddHistory("XjQHHYWYSm3JH45snNNoodALKMBonSsCiB", 249646);
+    AddHistory("Xj3MnksQjLrMcptSyaDuH62yBWX1aMrAt5", 249647);
+    AddHistory("XqK5dLuMfMdP7tNcPuqz2J6vJu1ycuyueU", 249648);
+    AddHistory("XtA84dKYFGSgLT9iWg1CdCwM96RKCRFmuk", 249649);
+    AddHistory("XtkPP8MmVKCa5ntrYUWFBGafxXLMECyeHj", 249650);
+    AddHistory("XqNHJABdqj9Kday7JhTvxfHR4mZtWoDuRu", 249651);
+    AddHistory("XvnYnLnurfbNufvsj82Q4FGWSMGqGfkT5z", 249652);
+    AddHistory("Xk5DvR9h6rJD1za2jKpEDDZXPH41e4o3S1", 249653);
+    AddHistory("XyjPPS4deeHaune9ydGNeC651eJH2oWmGB", 249654);
+    AddHistory("XsBnFfVrUiEEWwutDbKEHvEVLheyAwY96J", 249655);
+    AddHistory("Xv1vYBJSF1kpV3sync61eJ8JHUSE4wBrm8", 249656);
+    AddHistory("XigEd2N8rMbLmCk2CJnJEDc8pJGjKT8qjd", 249657);
+    AddHistory("Xxs7GvaJXdyDjaydqgVACsZjAR8unjuRVz", 249658);
+
+    AddHistory("XwY6tcAHDHVG2VtTcbV2dLFZheukRSBKt6", 249662);
+    AddHistory("Xby3A4sv6LrHvvucZAtB3Kk4zBZmnATGpA", 249663);
+    AddHistory("XvH3qoo6F8c9yLCunVaAFt1rY7xj8ngXji", 249664);
+    AddHistory("Xapxp1FT36CMtNbCYfyarCfXm8Hf9nUUtF", 249665);
+    AddHistory("Xoj5zAEZ62B98Jt3ePJfwFsbn84FUyN4fj", 249666);
+    AddHistory("XrwF6UB9baV4aoefjHeuPgkDZoCt8yHEnY", 249667);
 
 }
 
