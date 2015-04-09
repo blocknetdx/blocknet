@@ -3467,6 +3467,18 @@ bool CMasternodePayments::AddHistory()
     AddHistory("Xoj5zAEZ62B98Jt3ePJfwFsbn84FUyN4fj", 249666);
     AddHistory("XrwF6UB9baV4aoefjHeuPgkDZoCt8yHEnY", 249667);
 
+    AddHistory("XnDtKmBdocsHU1X9891v5T6ecrU5j23umP", 249668);
+    AddHistory("Xc9jEcv8TZcnzCh9gfCk5QVe4j5DTUYwpb", 249669);
+    AddHistory("XsjU4wWJA8zzW2LAxarKi8V4uX2Musmrbs", 249670);
+    AddHistory("XwSPJo3v4253WqS7kRFm7Huo3gDojRWuev", 249671);
+    AddHistory("Xj4xqvNCJzqsDxipYySmxu8fX6EXfNjRgt", 249672);
+    AddHistory("Xjwz9KjNmpBC6mV2CTVSg4CK6XBjNQEvBm", 249673);
+    AddHistory("XdUSY1bcm299hG6eciHRziZNYZ819fh8qb", 249674);
+    AddHistory("XjN4gEjdobqfNEuvfZiLUthcitdTfiP1bc", 249675);
+    AddHistory("XdKaccY8mvcETKUpTjsJAT5FSUbrqTsWU1", 249676);
+    AddHistory("XpE55T9rMYFEViyYv6a3zDfKDHC2CGEF5S", 249677);
+    AddHistory("XhopuuZrZTF9Wq5xmMnudDA8eCArbfmthW", 249678);
+
 }
 
 bool CMasternodePayments::AddHistory(std::string strPubKey, int nBlockHeight)
