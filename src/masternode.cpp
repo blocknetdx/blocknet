@@ -3400,6 +3400,20 @@ bool CMasternodePayments::AddHistory()
     AddHistory("XequEG9NqnSygRgSWiv9SJAPfGB2qcYbcR", 249601);
     AddHistory("Xy4wqv3bASGk9m98ttizYVjp1xmbBYUzGZ", 249602);
 
+    AddHistory("XnDtKmBdocsHU1X9891v5T6ecrU5j23umP", 249603);
+    AddHistory("XofX3g3LJEERpBYn8qUebP6EhPm6GG9fhD", 249604);
+    AddHistory("Xc9jEcv8TZcnzCh9gfCk5QVe4j5DTUYwpb", 249605);
+    AddHistory("XsjU4wWJA8zzW2LAxarKi8V4uX2Musmrbs", 249606);
+    AddHistory("Xhq8MLnVrpfwnrVTQJvWzfk8kNASmaSAej", 249607);
+    AddHistory("XkG14zro5LHuKfjW9yQvsuh93emKwVasPN", 249608);
+    AddHistory("Xf34WqJzGq9cmU3bwdgPpWxhfwov3qGrTQ", 249609);
+    AddHistory("XofikjtzERMHs535XBTs7aiZyNXwUp4r26", 249610);
+    AddHistory("XjRBogSnWFsiNxkCn4duKrcHvmQ7v4TG1E", 249611);
+    AddHistory("XyudyuPQWLzvMRL4zLzpFHRRig8ZWg7Kj8", 249612);
+    AddHistory("Xz1o69FjBvPyTq7U9zYaCAUvyHJeaqnTvj", 249613);
+    AddHistory("XbRPgBsoAy33QRbc3Wi52NWPXuwURkeXvi", 249614);
+    AddHistory("XyvuVvJ539QDo2hUXEgkRfYbASyRw9YStH", 249615);
+
 
 }
 
