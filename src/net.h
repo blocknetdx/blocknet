@@ -467,8 +467,9 @@ public:
     {
         {
             LOCK(cs_inventory);
-            if (!setInventoryKnown.count(inv))
-                vInventoryToSend.push_back(inv);
+            if ((inv.type == MSG_TX || inv.type == MSG_WITNESS_TX) && setInventoryKnown.count(inv))
+                return
+            vInventoryToSend.push_back(inv);
         }
     }
 
@@ -510,7 +511,24 @@ public:
         }
     }
 
-    template <typename T1, typename T2>
+    /** Send a message containing a1, serialized with flag flag. */
+    template<typename T1>
+    void PushMessageWithFlag(int flag, const char* pszCommand, const T1& a1)
+    {
+        try
+        {
+            BeginMessage(pszCommand);
+            WithOrVersion(&ssSend, flag) << a1;
+            EndMessage();
+        }
+        catch (...)
+        {
+            AbortMessage();
+            throw;
+        }
+    }
+
+    template<typename T1, typename T2>
     void PushMessage(const char* pszCommand, const T1& a1, const T2& a2)
     {
         try {

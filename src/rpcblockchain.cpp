@@ -389,7 +389,7 @@ UniValue getblockheader(const UniValue& params, bool fHelp)
     CBlockIndex* pblockindex = mapBlockIndex[hash];
 
     if (!fVerbose) {
-        CDataStream ssBlock(SER_NETWORK, PROTOCOL_VERSION);
+        CDataStream ssBlock(SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_WITNESS);
         ssBlock << pblockindex->GetBlockHeader();
         std::string strHex = HexStr(ssBlock.begin(), ssBlock.end());
         return strHex;
