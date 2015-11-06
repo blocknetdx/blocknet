@@ -70,6 +70,9 @@ const char *GETBLOCKTXN="getblocktxn";
 const char *BLOCKTXN="blocktxn";
 } // namespace NetMsgType
 
+/** All known message types. Keep this in the same order as the list of
+ * messages above and in protocol.h.
+ */
 const static std::string allNetMessageTypes[] = {
     NetMsgType::VERSION,
     NetMsgType::VERACK,
@@ -133,6 +136,8 @@ static const char* ppszTypeName[] =
         "tx",
         "block",
         "filtered block",
+        "witness block",
+        "witness tx",
         "tx lock request",
         "tx lock vote",
         "spork",
@@ -247,7 +252,8 @@ bool operator<(const CInv& a, const CInv& b)
 
 bool CInv::IsKnownType() const
 {
-    return (type >= 1 && type < (int)ARRAYLEN(ppszTypeName));
+    int masked = type & (MSG_TYPE_MASK | MSG_WITNESS_FLAG);
+    return (masked >= 1 && masked <= MSG_TYPE_MAX);
 }
 
 bool CInv::IsMasterNodeType() const{

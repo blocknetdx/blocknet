@@ -695,8 +695,8 @@ DBErrors CWalletDB::LoadWallet(CWallet* pwallet)
 
         while (true) {
             // Read next record
-            CDataStream ssKey(SER_DISK, CLIENT_VERSION);
-            CDataStream ssValue(SER_DISK, CLIENT_VERSION);
+            CDataStream ssKey(SER_DISK, nSerVersion);
+            CDataStream ssValue(SER_DISK, nSerVersion);
             int ret = ReadAtCursor(pcursor, ssKey, ssValue);
             if (ret == DB_NOTFOUND)
                 break;
@@ -793,8 +793,8 @@ DBErrors CWalletDB::FindWalletTx(CWallet* pwallet, vector<uint256>& vTxHash, vec
 
         while (true) {
             // Read next record
-            CDataStream ssKey(SER_DISK, CLIENT_VERSION);
-            CDataStream ssValue(SER_DISK, CLIENT_VERSION);
+            CDataStream ssKey(SER_DISK, nSerVersion);
+            CDataStream ssValue(SER_DISK, nSerVersion);
             int ret = ReadAtCursor(pcursor, ssKey, ssValue);
             if (ret == DB_NOTFOUND)
                 break;
