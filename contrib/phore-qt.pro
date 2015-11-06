@@ -10,6 +10,7 @@ DEPENDPATH += . \
               src \
               src/compat \
               src/config \
+              src/consensus \
               src/crypto \
               src/json \
               src/obj \
@@ -47,6 +48,7 @@ INCLUDEPATH += . \
                src/qt \
                src/qt/forms \
                src/compat \
+               src/consensus \
                src/secp256k1/include \
                src/leveldb/helpers/memenv \
                src/test/data \
@@ -132,6 +134,7 @@ HEADERS += src/activemasternode.h \
            src/walletdb.h \
            src/validationinterface.h \
            src/compat/sanity.h \
+           src/consensus/merkle.h
            src/config/phore-config.h \
            src/crypto/common.h \
            src/crypto/hmac_sha256.h \
@@ -432,6 +435,7 @@ SOURCES += src/activemasternode.cpp \
            src/wallet_ismine.cpp \
            src/walletdb.cpp \
            src/validationinterface.cpp \
+           src/consensus/merkle.cpp \
            src/compat/glibc_compat.cpp \
            src/compat/glibc_sanity.cpp \
            src/compat/glibcxx_compat.cpp \

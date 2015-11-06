@@ -530,6 +530,14 @@ bool TestBlockValidity(CValidationState& state, const CBlock& block, CBlockIndex
 bool AcceptBlock(CBlock& block, CValidationState& state, CBlockIndex** pindex, CDiskBlockPos* dbp = NULL, bool fAlreadyCheckedBlock = false);
 bool AcceptBlockHeader(const CBlockHeader& block, CValidationState& state, CBlockIndex** ppindex = NULL);
 
+void UpdateUncommitedBlockStructures(CBlock& block, const CBlockIndex* pindexPrev);
+
+/** Update uncommitted block structures (currently: only the witness nonce). This is safe for submitted blocks. */
+void UpdateUncommitedBlockStructures(CBlock& block, const CBlockIndex* pindexPrev);
+
+/** Produce the necessary coinbase commitment for a block (modifies the hash, don't call for mined blocks). */
+std::vector<unsigned char> GenerateCoinbaseCommitment(CBlock& block, const CBlockIndex* pindexPrev);
+
 
 class CBlockFileInfo
 {
@@ -699,6 +707,7 @@ struct CBlockTemplate {
     CBlock block;
     std::vector<CAmount> vTxFees;
     std::vector<int64_t> vTxSigOps;
+    std::vector<unsigned char> vchCoinbaseCommitment;
 };
 
 #endif // BITCOIN_MAIN_H
