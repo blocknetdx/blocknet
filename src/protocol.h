@@ -311,6 +311,9 @@ enum {
     // Bitcoin Core nodes used to support this by default, without advertising this bit,
     // but no longer do as of protocol version 70011 (= NO_BLOOM_VERSION)
     NODE_BLOOM = (1 << 2),
+    // Indicates that a node can be asked for blocks and transactions including
+    // witness data.
+    NODE_WITNESS = (1 << 3),
 
 	// NODE_BLOOM_WITHOUT_MN means the node has the same features as NODE_BLOOM with the only difference
 	// that the node doens't want to receive master nodes messages. (the 1<<3 was not picked as constant because on bitcoin 0.14 is witness and we want that update here )
@@ -412,9 +415,6 @@ enum GetDataMsg {
     MSG_MASTERNODE_ANNOUNCE,
     MSG_MASTERNODE_PING,
     MSG_DSTX,
-};
-
-enum GetDataMsgWithFlags {
     MSG_WITNESS_BLOCK = MSG_BLOCK | MSG_WITNESS_FLAG,
     MSG_WITNESS_TX = MSG_TX | MSG_WITNESS_FLAG,
     MSG_FILTERED_WITNESS_BLOCK = MSG_FILTERED_BLOCK | MSG_WITNESS_FLAG,
