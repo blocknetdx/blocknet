@@ -238,6 +238,8 @@ struct CNodeState {
     int nBlocksInFlight;
     //! Whether we consider this a preferred download peer.
     bool fPreferredDownload;
+    //! Whether this peer can give us witnesses
+    bool fHaveWitness;
 
     CNodeState()
     {
@@ -251,6 +253,7 @@ struct CNodeState {
         nStallingSince = 0;
         nBlocksInFlight = 0;
         fPreferredDownload = false;
+        fHaveWitness = false;
     }
 };
 
@@ -5469,6 +5472,12 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
 
         pfrom->fClient = !(pfrom->nServices & NODE_NETWORK);
 
+        if((pfrom->nServices & NODE_WITNESS))
+        {
+            LOCK(cs_main);
+            State(pfrom->GetId())->fHaveWitness = true;
+        }
+
         // Potentially mark this peer as a preferred download peer.
         UpdatePreferredDownload(pfrom, State(pfrom->GetId()));
 
@@ -5635,8 +5644,9 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
 
         std::vector<CInv> vToFetch;
 
-        for (unsigned int nInv = 0; nInv < vInv.size(); nInv++) {
-            const CInv& inv = vInv[nInv];
+        for (unsigned int nInv = 0; nInv < vInv.size(); nInv++)
+        {
+            CInv &inv = vInv[nInv];
 
             boost::this_thread::interruption_point();
             pfrom->AddInventoryKnown(inv);
@@ -5647,11 +5657,24 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
             if (!fAlreadyHave && !fImporting && !fReindex && inv.type != MSG_BLOCK)
                 pfrom->AskFor(inv);
 
+            if (inv.type == MSG_TX && State(pfrom->GetId())->fHaveWitness) {
+                inv.type = MSG_WITNESS_TX;
+            }
 
             if (inv.type == MSG_BLOCK) {
                 UpdateBlockAvailability(pfrom->GetId(), inv.hash);
                 if (!fAlreadyHave && !fImporting && !fReindex && !mapBlocksInFlight.count(inv.hash)) {
-                    // Add this to the list of blocks to request
+                    // First request the headers preceding the announced block. In the normal fully-synced
+                    // case where a new block is announced that succeeds the current tip (no reorganization),
+                    // there are no such headers.
+                    // Secondly, and only when we are close to being synced, we request the announced block directly,
+                    // to avoid an extra round-trip. Note that we must *first* ask for the headers, so by the
+                    // time the block arrives, the header chain leading up to it is already validated. Not
+                    // doing this will result in the received block being rejected as an orphan in case it is
+                    // not a direct successor.
+                    if (State(pfrom->GetId())->fHaveWitness) {
+                        inv.type = MSG_WITNESS_BLOCK;
+                    }
                     vToFetch.push_back(inv);
                     LogPrint("net", "getblocks (%d) %s to peer=%d\n", pindexBestHeader->nHeight, inv.hash.ToString(), pfrom->id);
                 }
@@ -6570,10 +6593,10 @@ bool SendMessages(CNode* pto, bool fSendTrickle)
             vector<CBlockIndex*> vToDownload;
             NodeId staller = -1;
             FindNextBlocksToDownload(pto->GetId(), MAX_BLOCKS_IN_TRANSIT_PER_PEER - state.nBlocksInFlight, vToDownload, staller);
-            BOOST_FOREACH (CBlockIndex* pindex, vToDownload) {
-                vGetData.push_back(CInv(MSG_BLOCK, pindex->GetBlockHash()));
+            BOOST_FOREACH(CBlockIndex *pindex, vToDownload) {
+                vGetData.push_back(CInv(State(staller)->fHaveWitness ? MSG_WITNESS_BLOCK : MSG_BLOCK, pindex->GetBlockHash()));
                 MarkBlockAsInFlight(pto->GetId(), pindex->GetBlockHash(), pindex);
-                LogPrintf("Requesting block %s (%d) peer=%d\n", pindex->GetBlockHash().ToString(),
+                LogPrint("net", "Requesting block %s (%d) peer=%d\n", pindex->GetBlockHash().ToString(),
                     pindex->nHeight, pto->id);
             }
             if (state.nBlocksInFlight == 0 && staller != -1) {

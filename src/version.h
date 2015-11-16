@@ -38,4 +38,7 @@ static const int MEMPOOL_GD_VERSION = 60002;
 static const int NO_BLOOM_VERSION = 70000;
 
 
+//! Version after which witness support potentially exists
+static const int WITNESS_VERSION = 70013;
+
 #endif // BITCOIN_VERSION_H
