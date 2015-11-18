@@ -9,6 +9,7 @@
 #include "primitives/transaction.h"
 #include "addressbookpage.h"
 #include "utilstrencodings.h"
+#include "consensus/validation.h"
 #include "core_io.h"
 #include "script/script.h"
 #include "base58.h"

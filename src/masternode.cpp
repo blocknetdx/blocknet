@@ -5,6 +5,7 @@
 
 #include "masternode.h"
 #include "addrman.h"
+#include "consensus/validation.h"
 #include "masternodeman.h"
 #include "obfuscation.h"
 #include "sync.h"
