@@ -18,6 +18,7 @@
 #include "amount.h"
 #include "checkpoints.h"
 #include "compat/sanity.h"
+#include "consensus/validation.h"
 #include "httpserver.h"
 #include "httprpc.h"
 #include "key.h"

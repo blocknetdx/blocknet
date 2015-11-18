@@ -11,6 +11,7 @@
 #include "base58.h"
 #include "checkpoints.h"
 #include "coincontrol.h"
+#include "consensus/validation.h"
 #include "kernel.h"
 #include "masternode-budget.h"
 #include "net.h"

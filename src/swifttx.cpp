@@ -7,6 +7,7 @@
 
 #include "activemasternode.h"
 #include "base58.h"
+#include "consensus/validation.h"
 #include "key.h"
 #include "masternodeman.h"
 #include "net.h"

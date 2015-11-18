@@ -5,6 +5,7 @@
 
 #include "spork.h"
 #include "base58.h"
+#include "consensus/validation.h"
 #include "key.h"
 #include "main.h"
 #include "masternode-budget.h"

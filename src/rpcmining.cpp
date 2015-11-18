@@ -8,6 +8,7 @@
 #include "amount.h"
 #include "base58.h"
 #include "chainparams.h"
+#include "consensus/validation.h"
 #include "core_io.h"
 #include "init.h"
 #include "main.h"

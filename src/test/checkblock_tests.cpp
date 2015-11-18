@@ -9,6 +9,7 @@
 
 
 #include "clientversion.h"
+#include "consensus/validation.h"
 #include "main.h"
 #include "utiltime.h"
 

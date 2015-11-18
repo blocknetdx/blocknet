@@ -6,6 +6,7 @@
 #include "masternodeman.h"
 #include "activemasternode.h"
 #include "addrman.h"
+#include "consensus/validation.h"
 #include "masternode.h"
 #include "obfuscation.h"
 #include "spork.h"

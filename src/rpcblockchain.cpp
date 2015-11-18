@@ -8,6 +8,7 @@
 #include "base58.h"
 #include "checkpoints.h"
 #include "clientversion.h"
+#include "consensus/validation.h"
 #include "main.h"
 #include "rpcserver.h"
 #include "sync.h"
