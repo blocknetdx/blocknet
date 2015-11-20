@@ -20,6 +20,10 @@ typedef std::vector<unsigned char> valtype;
 
 static const unsigned int MAX_SCRIPT_ELEMENT_SIZE = 520; // bytes
 
+static const unsigned int MAX_OPS_PER_SCRIPT = 201;
+
+static const unsigned int MAX_PUBKEYS_PER_MULTISIG = 20;
+
 template <typename T>
 std::vector<unsigned char> ToByteVector(const T& in)
 {
