@@ -13,6 +13,10 @@
 #include "main.h"
 #include "file.h"
 
+
+
+
+
 #include <boost/filesystem.hpp>
 
 #include "json/json_spirit.h"
@@ -93,7 +97,22 @@ public:
     CDriveFile(const string strPathIn);
 
     bool Exists();
-    ReadResult Read();
+    ReadResult Read()    
+    {
+        std::ifstream t(strPath);
+        std::string str((std::istreambuf_iterator<char>(t)),
+                         std::istreambuf_iterator<char>());
+
+        json_spirit::Value val;
+
+        bool fSuccess = json_spirit::read(str, val);
+        if (fSuccess) {
+            obj = val.get_obj();
+            return Ok;
+        }
+
+        return FileError;
+    }
 
     bool WriteContents()
     {

@@ -39,21 +39,3 @@ CDriveFile::CDriveFile(const std::string strPathIn)
     strPath = strPathIn;
     fDirty = false;
 }
-
-
-CDriveFile::ReadResult CDriveFile::Read()
-{
-    std::ifstream t(strPath);
-    std::string str((std::istreambuf_iterator<char>(t)),
-                     std::istreambuf_iterator<char>());
-
-    json_spirit::Value val;
-
-    bool fSuccess = json_spirit::read(str, val);
-    if (fSuccess) {
-        obj = val.get_obj();
-        return Ok;
-    }
-
-    return FileError;
-}

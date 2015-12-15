@@ -26,6 +26,12 @@
 using namespace std;
 using namespace json_spirit;
 
+std::string GetProfileFile(std::string strUID)
+{
+    boost::filesystem::path filename = GetDataDirectory() / strUID;
+    return filename.c_str();
+}
+
 class CDAPI
 {
 private:
@@ -37,8 +43,8 @@ public:
     static bool ValidateSignature(Object& obj);
     static bool GetProfile(Object& obj);
     static bool SetProfile(Object& obj);
-    static bool GetProfileData(Object& obj);
-    static bool SetProfileData(Object& obj);
+    static bool GetPrivateData(Object& obj);
+    static bool SetPrivateData(Object& obj);
     static bool SendMessage(Object& obj);
     static bool SendBroadcast(Object& obj);
 

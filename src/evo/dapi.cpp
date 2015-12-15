@@ -32,6 +32,9 @@
 }
 */
 
+
+
+
 bool CDAPI::Execute(Object& obj)
 {
     std::string strObject = json_spirit::find_value(obj, "object").get_str();
@@ -65,66 +68,95 @@ bool CDAPI::ValidateSignature(Object& obj)
 bool CDAPI::GetProfile(Object& obj)
 {
     /*
-        {
-            "command" : "get-profile",
-            "my_uid" : 0,
-            "target_uid" : 0,
-            "signature" : "SIGNATURE",
+        {   
+            "object" : "dapi_command",
+            "data" : {
+                “command” : ”get-profile”,
+                “my_uid” : INT64,
+                “target_uid” : INT64, 
+                “signature” : ‘’,
+                “fields” : [“fname”, “lname”]
+            }
         }
     */
 
-    CDriveFile file("/Users/evan/Desktop/dash/src/test/data/dapi-get-profile.js");
-    file.obj = obj;
-    file.WriteContents();
+    std::string strObject = json_spirit::find_value(obj, "object").get_str();
+    if(strObject != "dapi_command") return false;
 
-    EventNotify("{\"name\":\"value\"}");
+    Object objData = json_spirit::find_value(obj, "data").get_obj();
+    string strUID = json_spirit::find_value(objData, "target_uid").get_str();
+
+    CDriveFile file(GetProfileFile(strUID));
+    //if(!file.Exists()) return false;
+    file.Read();
+
+    // Object ret;
+    // ret.PushKV("object", "dapi_result");
+    // ret.PushKV("data", "result");
+
+    // string sret;
+    // json_spirit::write( obj, sret );
+
+    // EventNotify(sret);
     return true;
 }
 
 bool CDAPI::SetProfile(Object& obj)
 {
     /*
-        {
-            "command" : "set-profile",
-            "my_uid" : 0,
-            "target_uid" : 0,
-            "signature" : "SIGNATURE",
-            "fields" : ["fname", "lname"]
+    { 
+        "object" : "dapi_command",
+        "data" : {
+            "command" = "set-profile",
+            "my_uid" = INT64,
+            "target_uid" = INT64, 
+            "signature" = ""
         }
+    }
+
+    */
+
+
+    CDriveFile file("/Users/evan/Desktop/dash/src/test/data/dapi-get-profile.js");
+    file.obj = obj;
+    file.WriteContents();
+
+
+    return true;
+}
+
+bool CDAPI::GetPrivateData(Object& obj)
+{
+    /*
+    {
+        "object" : "dapi_command",
+        "data" : {
+            "command" = "get-private-data",
+            "my_uid" = UID,
+            "target_uid" = UID, 
+            "signature" = ‘’,
+            "slot" = 1
+        }
+    }
     */
 
     return true;
 }
 
-bool CDAPI::GetProfileData(Object& obj)
+bool CDAPI::SetPrivateData(Object& obj)
 {
     /*
-        REQUIRED JSON
-        {
-            "command" : "get-private-data",
-            "my_uid" : 0,
-            "target_uid" : 0,
+    {
+        "object" : "dapi_command",
+        "data" : {
+            "command" : "set-private-data",
+            "my_uid" : INT64,
+            "target_uid" : INT64, 
             "signature" : "SIGNATURE",
-            "slot" : 1
+            "slot" : 1,
+            "payload" : JSON_WEB_ENCRYPTION
         }
-    */
-
-    return true;
-}
-
-bool CDAPI::SetProfileData(Object& obj)
-{
-    /*
-        REQUIRED JSON
-        {
-            "command" : "set-profile-data",
-            "my_uid" : 0,
-            "target_uid" : 0,
-            "signature" : "SIGNATURE"
-            "update" : {
-                "email" : "evan@dash.org"
-            }
-        }
+    }
     */
 
     return true;
@@ -135,16 +167,17 @@ bool CDAPI::SetProfileData(Object& obj)
 bool CDAPI::SendMessage(Object& obj)
 {
     /*
-        REQUIRED JSON
-        {
-            "command" : "send-message",
-            "my_uid" : 0,
-            "target_uid" : 0,
-            "signature" : "SIGNATURE"
-            "update" : {
-                "email" : "evan@dash.org"
-            }
+    { 
+        "object" : "dapi_command",
+        "data" : {
+            "command" = "message",
+            "subcommand" = "(available subcommands)",
+            "my_uid" = UID,
+            "target_uid" = UID, 
+            "signature" = ‘’,
+            "payload" = ENCRYPTED
         }
+    }
     */
 
     return true;
@@ -154,16 +187,17 @@ bool CDAPI::SendMessage(Object& obj)
 bool CDAPI::SendBroadcast(Object& obj)
 {
     /*
-        REQUIRED JSON
-        {
-            'command' : 'set-profile-data',
-            'my_uid' : 0,
-            'target_uid' : 0,
-            'signature' : "SIGNATURE"
-            'update' : {
-                "email" : "evan@dash.org"
-            }
+    { 
+        "object" : "dapi_command",
+        "data" : {
+            "command" = "broadcast",
+            "subcommand" = "tx", //can support multiple message commands
+            "my_uid" = UID,
+            "target_uid" = UID, 
+            "signature" = ‘’,
+            "payload" = SERIALIZED_BASE64_ENCODED
         }
+    }
     */
 
     return true;
