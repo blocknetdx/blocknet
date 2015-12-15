@@ -97,6 +97,8 @@ BITCOIN_CORE_H = \
   db.h \
   eccryptoverify.h \
   ecwrapper.h \
+  evo/file.h \
+  evo/dapi.h \
   hash.h \
   init.h \
   instantx.h \
@@ -178,6 +180,8 @@ libbitcoin_server_a_SOURCES = \
   bloom.cpp \
   chain.cpp \
   checkpoints.cpp \
+  evo/file.cpp \
+  evo/dapi.cpp \
   init.cpp \
   leveldbwrapper.cpp \
   main.cpp \
@@ -188,6 +192,7 @@ libbitcoin_server_a_SOURCES = \
   pow.cpp \
   rest.cpp \
   rpcblockchain.cpp \
+  rpcdapi.cpp \
   rpcmasternode.cpp \
   rpcmasternode-budget.cpp \
   rpcmining.cpp \
@@ -207,10 +212,12 @@ libbitcoin_server_a_SOURCES = \
 libbitcoin_wallet_a_CPPFLAGS = $(BITCOIN_INCLUDES)
 libbitcoin_wallet_a_SOURCES = \
   activemasternode.cpp \
-  darksend.cpp \
-  darksend-relay.cpp \
   db.cpp \
   crypter.cpp \
+  darksend.cpp \
+  darksend-relay.cpp \
+  evo/file.cpp \
+  evo/dapi.cpp \
   instantx.cpp \
   masternode.cpp \
   masternode-budget.cpp \

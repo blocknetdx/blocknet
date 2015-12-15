@@ -22,6 +22,7 @@ bool ShutdownRequested();
 void Shutdown();
 void PrepareShutdown();
 bool AppInit2(boost::thread_group& threadGroup);
+void EventNotify(const std::string& strEvent);
 
 /** The help message mode determines what help message to show */
 enum HelpMessageMode {

@@ -409,7 +409,9 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += "  -testnet               " + _("Use the test network") + "\n";
     strUsage += "  -litemode=<n>          " + strprintf(_("Disable all Dash specific functionality (Masternodes, Darksend, InstantX, Budgeting) (0-1, default: %u)"), 0) + "\n";
 
-    strUsage += "\n" + _("Masternode options:") + "\n";
+    strUsage += "\n" + _("Masternode options:") + "\n";    
+
+    strUsage += "  -eventnotify=<cmd>     " + _("Send event to dash-2t to allow propagation to endusers (%s in cmd is replaced by event data)") + "\n";
     strUsage += "  -masternode=<n>            " + strprintf(_("Enable the client to act as a masternode (0-1, default: %u)"), 0) + "\n";
     strUsage += "  -mnconf=<file>             " + strprintf(_("Specify masternode configuration file (default: %s)"), "masternode.conf") + "\n";
     strUsage += "  -mnconflock=<n>            " + strprintf(_("Lock masternodes from masternode configuration file (default: %u)"), 1) + "\n";
@@ -477,6 +479,15 @@ static void BlockNotifyCallback(const uint256& hashNewTip)
     boost::replace_all(strCmd, "%s", hashNewTip.GetHex());
     boost::thread t(runCommand, strCmd); // thread runs free
 }
+
+void EventNotify(const std::string& strEvent)
+{
+    std::string strCmd = GetArg("-eventnotify", "");
+
+    boost::replace_all(strCmd, "%s", strEvent);
+    boost::thread t(runCommand, strCmd); // thread runs free
+}
+
 
 struct CImportingNow
 {

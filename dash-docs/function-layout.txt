@@ -1,0 +1,22 @@
+
+Dash2T
+    -- Websockets / ZeroMQ daemon
+
+    Listens on port 10014 for websocks
+    Listens for ZeroMQ commands (relays them locally to DashD.rpcdapi)
+
+DashD
+    --
+
+    rpcdapi
+        dapi: Execute json command on behalf of a user (delivered locally from Dash2T)
+
+    CDapi
+        ValidateCommand
+        ExecuteCommand
+
+    EndUser
+        Load
+        Save
+        UpdateField
+
