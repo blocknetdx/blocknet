@@ -11,6 +11,8 @@
 #include "init.h"
 #include "dapi.h"
 #include "file.h"
+#include "json/json_spirit.h"
+#include "json/json_spirit_value.h"
 
 /*
 
@@ -71,6 +73,9 @@ bool CDAPI::GetProfile(Object& obj)
         }
     */
 
+    CDriveFile file("/Users/evan/Desktop/dash/src/test/data/dapi-get-profile.js");
+    file.obj = obj;
+    file.WriteContents();
 
     EventNotify("{\"name\":\"value\"}");
     return true;

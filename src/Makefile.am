@@ -182,6 +182,7 @@ libbitcoin_server_a_SOURCES = \
   checkpoints.cpp \
   evo/file.cpp \
   evo/dapi.cpp \
+  json/json_spirit_writer.cpp \
   init.cpp \
   leveldbwrapper.cpp \
   main.cpp \
@@ -294,6 +295,8 @@ libbitcoin_common_a_SOURCES = \
   chainparams.cpp \
   coins.cpp \
   compressor.cpp \
+  evo/file.cpp \
+  evo/dapi.cpp \
   primitives/block.cpp \
   primitives/transaction.cpp \
   core_read.cpp \

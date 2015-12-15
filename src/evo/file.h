@@ -4,7 +4,7 @@
 #define DASHDRIVE_FILE_H
 
 #include "init.h"
-
+#include "base58.h"
 #include "addrman.h"
 #include "amount.h"
 #include "checkpoints.h"
@@ -13,25 +13,20 @@
 #include "main.h"
 #include "file.h"
 
+#include <boost/filesystem.hpp>
+
+#include "json/json_spirit.h"
+#include "json/json_spirit_value.h"
+#include "json/json_spirit_writer.h"
+
+#include "univalue/univalue.h"
+
 #include <stdint.h>
 #include <stdio.h>
+#include <fstream>
+#include <string>
+#include <streambuf>
 
-
-#include "sync.h"
-#include "net.h"
-#include "util.h"
-#include "base58.h"
-
-
-#include <boost/algorithm/string/predicate.hpp>
-#include <boost/algorithm/string/replace.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/interprocess/sync/file_lock.hpp>
-#include <boost/thread.hpp>
-#include <openssl/crypto.h>
-
-#include "json/json_spirit_value.h"
-#include "univalue/univalue.h"
 
 using namespace json_spirit;
 using namespace std;
@@ -79,10 +74,10 @@ private:
     mutable CCriticalSection cs;
     string strMagicMessage;
     string strPath;
-    Object obj;
     bool fDirty;
 
 public:
+    Object obj;
 
     enum ReadResult {
         Ok,
@@ -97,11 +92,21 @@ public:
     CDriveFile();
     CDriveFile(const string strPathIn);
 
-    static CDriveFile GetNextIncrementalFileInFolder(const string strFolderIn);
-
     bool Exists();
     ReadResult Read();
-    bool Write();
+
+    bool WriteContents()
+    {
+        LOCK(cs);
+
+        ofstream os( strPath );
+        json_spirit::write( obj, os );
+        os.close();
+       
+
+        return false;
+    }
+
 
 };
 

@@ -54,14 +54,17 @@ Value dapi(const Array& params, bool fHelp)
 
     std::string strCommand = params[0].get_str();
     json_spirit::Value val;
-    
+
+    printf("%s\n", strCommand.c_str());
+
     bool fSuccess = json_spirit::read_string(strCommand, val);
     if (fSuccess) {
         Object obj = val.get_obj();
         CDAPI::Execute(obj);
+        return "ok";
     }
 
-    return "ok";
+    return "error";
 }
 
 Value dapif(const Array& params, bool fHelp)
@@ -87,13 +90,16 @@ Value dapif(const Array& params, bool fHelp)
     std::string str((std::istreambuf_iterator<char>(t)),
                      std::istreambuf_iterator<char>());
 
+    printf("%s\n", str.c_str());
+
     json_spirit::Value val;
     
     bool fSuccess = json_spirit::read_string(str, val);
     if (fSuccess) {
         Object obj = val.get_obj();
         CDAPI::Execute(obj);
+        return "ok";
     }
 
-    return "ok";
+    return "error";
 }

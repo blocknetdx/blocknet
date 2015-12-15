@@ -15,6 +15,8 @@
 #include "rpcserver.h"
 
 #include "util.h"
+#include "file.h"
+#include "json/json_spirit.h"
 
 #include <stdint.h>
 
