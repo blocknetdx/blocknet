@@ -63,3 +63,37 @@ Value dapi(const Array& params, bool fHelp)
 
     return "ok";
 }
+
+Value dapif(const Array& params, bool fHelp)
+{
+
+    if (fHelp || params.size() < 1)
+        throw runtime_error(
+                "dapif \"json_file\"\n"
+                "Execute a command via DAPI\n"
+                );
+
+    /*
+        Executing web events:
+
+        dashd --datadir=example --eventnotify="/Users/evan/Desktop/dash-2t/serve/event.py --event=%" --daemon
+        dash-cli dapi "{\"txid\":\"myid\",\"aeou\":\"123\",\"vout\":\"0\"}" "{\"address\":0.01}"
+
+        dash_t2 --eventnotify="/Users/evan/Desktop/dash-2t/serve/event.py --event=%
+    */
+
+    std::string strPath = params[0].get_str();
+    std::ifstream t(strPath);
+    std::string str((std::istreambuf_iterator<char>(t)),
+                     std::istreambuf_iterator<char>());
+
+    json_spirit::Value val;
+    
+    bool fSuccess = json_spirit::read_string(str, val);
+    if (fSuccess) {
+        Object obj = val.get_obj();
+        CDAPI::Execute(obj);
+    }
+
+    return "ok";
+}

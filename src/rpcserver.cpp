@@ -317,6 +317,7 @@ static const CRPCCommand vRPCCommands[] =
     { "dash",               "mnsync",                 &mnsync,                 true,      true,       false },
     { "dash",               "spork",                  &spork,                  true,      true,       false },
     { "dash",               "dapi",                   &dapi,                   true,      true,       false },
+    { "dash",               "dapif",                  &dapif,                  true,      true,       false },
 
 #ifdef ENABLE_WALLET
     { "dash",               "darksend",               &darksend,               false,     false,      true  }, /* not threadSafe because of SendMoney */
