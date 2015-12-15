@@ -64,7 +64,8 @@ Value dapi(const Array& params, bool fHelp)
         return "ok";
     }
 
-    return "error";
+    //TODO: add better errors
+    return "parse error";
 }
 
 Value dapif(const Array& params, bool fHelp)
@@ -101,5 +102,6 @@ Value dapif(const Array& params, bool fHelp)
         return "ok";
     }
 
-    return "error";
+    //TODO: add better errors
+    return "parse error";
 }
