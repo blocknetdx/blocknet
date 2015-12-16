@@ -25,6 +25,8 @@
 #include <string>
 #include <sstream>
 
+#include <boost/lexical_cast.hpp>
+
 using namespace std;
 using namespace json_spirit;
 
@@ -33,6 +35,14 @@ std::string GetProfileFile(std::string strUID)
     boost::filesystem::path filename = GetDataDirectory() / "users" / strUID;
     return filename.c_str();
 }
+
+std::string GetPrivateDataFile(std::string strUID, int nSlot)
+{
+    std::string strFilename = strUID + "." + boost::lexical_cast<std::string>(nSlot);
+    boost::filesystem::path filename = GetDataDirectory() / "users" / strFilename;
+    return filename.c_str();
+}
+
 
 std::string escapeJsonString(const std::string& input) {
     std::ostringstream ss;
