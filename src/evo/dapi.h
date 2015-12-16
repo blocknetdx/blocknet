@@ -70,7 +70,6 @@ private:
     CDAPI();
 
 public:
-
     static bool Execute(Object& obj);
     static bool ValidateSignature(Object& obj);
     static bool GetProfile(Object& obj);
@@ -78,7 +77,7 @@ public:
     static bool GetPrivateData(Object& obj);
     static bool SetPrivateData(Object& obj);
     static bool SendMessage(Object& obj);
-    static bool SendBroadcast(Object& obj);
+    static bool BroadcastMessage(Object& obj);
 
 };
 

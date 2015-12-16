@@ -7,6 +7,7 @@
 
 
 #include "main.h"
+#include "core_io.h"
 #include "db.h"
 #include "init.h"
 #include "dapi.h"
@@ -14,13 +15,21 @@
 #include "json/json_spirit.h"
 #include "json/json_spirit_value.h"
 
+
+int nError;
+std::string strErrorMessage;
+// error reporting
+
+void ResetErrorStatus() {nError = 0; strErrorMessage = "";}
+void SetError(int nErrorIn, std::string strMessageIn) {nError = nErrorIn; strErrorMessage = strMessageIn;}
+
 /*
 
 { 
   "object" : "dash_budget_items",
   "data" : [
     {  "object" : "dash_budget",
-    "name" : "ds-liquidity",
+    "name" : "ds_liquidity",
     ...
   },
     {  "object" : "dash_budget",
@@ -32,16 +41,35 @@
 }
 */
 
-Object GetResultObject(int nCommandID, std::string strCommand, Object& objFile, bool fSuccess)
+Object GetResultObject(int nCommandID, std::string strCommand, Object& objFile)
 {
     Object retData;
     retData.push_back(Pair("id", nCommandID));
     retData.push_back(Pair("command", strCommand));
-    retData.push_back(Pair("success", fSuccess));
+    retData.push_back(Pair("error-id", nError));
+    retData.push_back(Pair("error-message", strErrorMessage));
     retData.push_back(Pair("data", objFile));
 
     Object ret;
     ret.push_back(Pair("object", "dapi_result"));
+    ret.push_back(Pair("data", retData));
+
+    return ret;
+}
+
+Object GetMessageObject(int nCommandID, std::string strUserID, std::string strSubCommand, std::string strMessage)
+{
+    Object retData;
+    retData.push_back(Pair("id", nCommandID));
+    retData.push_back(Pair("command", "send_message"));
+    retData.push_back(Pair("error-id", nError));
+    retData.push_back(Pair("error-message", strErrorMessage));
+    retData.push_back(Pair("target_uid", strUserID));
+    retData.push_back(Pair("sub_command", strSubCommand));
+    retData.push_back(Pair("payload", strMessage));
+
+    Object ret;
+    ret.push_back(Pair("object", "dapi_message"));
     ret.push_back(Pair("data", retData));
 
     return ret;
@@ -62,6 +90,8 @@ std::string SerializeJsonFromObject(Object objToSerialize)
 
 bool CDAPI::Execute(Object& obj)
 {
+    ResetErrorStatus();
+
     std::string strObject = json_spirit::find_value(obj, "object").get_str();
     if(strObject != "dapi_command") return false;
 
@@ -70,25 +100,29 @@ bool CDAPI::Execute(Object& obj)
 
     printf("1 %s\n", strCommand.c_str());
 
-    if(strCommand == "get-profile") {
-        GetProfile(obj);
-        return true;
-    } else if (strCommand == "set-profile") {
-        SetProfile(obj);
-        return true;
-    } else if (strCommand == "set-private-data") {
-        SetPrivateData(obj);
-        return true;
-    } else if (strCommand == "get-private-data") {
-        GetPrivateData(obj);
-        return true;
-    } else if (strCommand == "send-message") {
-        SendMessage(obj);
-        return true;
-    } else if (strCommand == "send-broadcast") {
-        SendBroadcast(obj);
-        return true;
+    if(strCommand == "get_profile") {
+        if(GetProfile(obj)) return true;
+    } else if (strCommand == "set_profile") {
+        if(SetProfile(obj)) return true;
+    } else if (strCommand == "set_private_data") {
+        if(SetPrivateData(obj)) return true;
+    } else if (strCommand == "get_private_data") {
+        if(GetPrivateData(obj)) return true;
+    } else if (strCommand == "send_message") {
+        if(SendMessage(obj)) return true;
+    } else if (strCommand == "broadcast_message") {
+        if(BroadcastMessage(obj)) return true;
     }
+
+    // unknown command
+
+    // send the user back the results of the query
+    if(nError == 0) SetError(1000, "Unknown Command : " + strCommand);
+    Object result;
+    Object ret = GetResultObject(1000, strCommand, result);
+    std::string strJson = SerializeJsonFromObject(ret);
+
+    EventNotify(strJson);
 
     return false;
 }
@@ -111,7 +145,7 @@ bool CDAPI::GetProfile(Object& obj)
         {   
             "object" : "dapi_command",
             "data" : {
-                “command” : ”get-profile”,
+                “command” : ”get_profile”,
                 “my_uid” : INT64,
                 “target_uid” : INT64, 
                 “signature” : ‘’,
@@ -121,7 +155,6 @@ bool CDAPI::GetProfile(Object& obj)
     */
 
     std::string strObject = json_spirit::find_value(obj, "object").get_str();
-    if(strObject != "dapi_command") return false;
 
     printf("3 %s\n", strObject.c_str());
 
@@ -136,13 +169,17 @@ bool CDAPI::GetProfile(Object& obj)
     CDriveFile file(GetProfileFile(strUID));
     printf("5 %s\n", GetProfileFile(strUID).c_str());
 
-    if(!file.Exists()) return false;
+    if(!file.Exists()) 
+    {
+        SetError(1001, "File doesn't exist : " + strUID);
+        return false;
+    }
     file.Read();
 
     printf("6 %s\n", GetProfileFile(strUID).c_str());
 
     // send the user back the results of the query
-    Object ret = GetResultObject(1000, "get-profile", file.obj, true);
+    Object ret = GetResultObject(1000, "get_profile", file.obj);
     std::string strJson = SerializeJsonFromObject(ret);
 
     printf("7 %s\n", strJson.c_str());
@@ -157,7 +194,7 @@ bool CDAPI::SetProfile(Object& obj)
     { 
         "object" : "dapi_command",
         "data" : {
-            "command": "set-profile",
+            "command": "set_profile",
             "my_uid": INT64,
             "target_uid": INT64, 
             "signature": "",
@@ -170,7 +207,6 @@ bool CDAPI::SetProfile(Object& obj)
     */
 
     std::string strObject = json_spirit::find_value(obj, "object").get_str();
-    if(strObject != "dapi_command") return false;
 
     printf("2 %s\n", strObject.c_str());
     // get the user we want to open
@@ -182,7 +218,11 @@ bool CDAPI::SetProfile(Object& obj)
 
     // open the file and read it
     CDriveFile file(GetProfileFile(strUID));
-    if(!file.Exists()) return false;
+    if(!file.Exists())
+    {
+        SetError(1002, "File doesn't exist : " + strUID);
+        return false;
+    }
     file.Read();
 
     std::map<std::string, Value> mapObj;
@@ -209,7 +249,7 @@ bool CDAPI::SetProfile(Object& obj)
     json_spirit::map_to_obj(mapObj, file.obj);
     file.Write();
 
-    Object ret = GetResultObject(1000, "set-profile", file.obj, true);
+    Object ret = GetResultObject(1000, "set_profile", file.obj);
     std::string strJson = SerializeJsonFromObject(ret);
 
     printf("7 %s\n", strJson.c_str());
@@ -225,7 +265,7 @@ bool CDAPI::GetPrivateData(Object& obj)
     {
         "object" : "dapi_command",
         "data" : {
-            "command" = "get-private-data",
+            "command" = "get_private_data",
             "my_uid" = UID,
             "target_uid" = UID, 
             "signature" = ‘’,
@@ -235,7 +275,6 @@ bool CDAPI::GetPrivateData(Object& obj)
     */
 
     std::string strObject = json_spirit::find_value(obj, "object").get_str();
-    if(strObject != "dapi_command") return false;
 
     printf("3 %s\n", strObject.c_str());
 
@@ -243,7 +282,11 @@ bool CDAPI::GetPrivateData(Object& obj)
     Object objData = json_spirit::find_value(obj, "data").get_obj();
     string strUID = json_spirit::find_value(objData, "target_uid").get_str();
     int nSlot = json_spirit::find_value(objData, "slot").get_int();
-    if(nSlot < 1 || nSlot > 10) return false;
+    if(nSlot < 1 || nSlot > 10)
+    {
+        SetError(1002, "Slot out of range");
+        return false;
+    }
 
     printf("4 %s\n", strUID.c_str());
 
@@ -255,7 +298,7 @@ bool CDAPI::GetPrivateData(Object& obj)
     file.Read();
 
     // send the user back the results of the query
-    Object ret = GetResultObject(1000, "get-private-data", file.obj, true);
+    Object ret = GetResultObject(1000, "get_private_data", file.obj);
     std::string strJson = SerializeJsonFromObject(ret);
 
     printf("7 %s\n", strJson.c_str());
@@ -271,7 +314,7 @@ bool CDAPI::SetPrivateData(Object& obj)
     {
         "object" : "dapi_command",
         "data" : {
-            "command" : "set-private-data",
+            "command" : "set_private_data",
             "my_uid" : INT64,
             "target_uid" : INT64, 
             "signature" : "SIGNATURE",
@@ -282,7 +325,6 @@ bool CDAPI::SetPrivateData(Object& obj)
     */
 
     std::string strObject = json_spirit::find_value(obj, "object").get_str();
-    if(strObject != "dapi_command") return false;
 
     printf("3 %s\n", strObject.c_str());
 
@@ -290,7 +332,11 @@ bool CDAPI::SetPrivateData(Object& obj)
     Object objData = json_spirit::find_value(obj, "data").get_obj();
     string strUID = json_spirit::find_value(objData, "target_uid").get_str();
     int nSlot = json_spirit::find_value(objData, "slot").get_int();
-    if(nSlot < 1 || nSlot > 10) return false;
+    if(nSlot < 1 || nSlot > 10) 
+    {
+        SetError(1002, "Slot out of range");
+        return false;
+    }
 
     printf("4 %s\n", strUID.c_str());
 
@@ -300,7 +346,6 @@ bool CDAPI::SetPrivateData(Object& obj)
 
     if(!file.Exists())
     {
-        printf("new %s\n");
         Object newObj;
         newObj.push_back(Pair("access_times", 0));
         newObj.push_back(Pair("last_access", 0));
@@ -323,7 +368,7 @@ bool CDAPI::SetPrivateData(Object& obj)
     printf("6 %s\n", GetPrivateDataFile(strUID, nSlot).c_str());
 
     // send the user back the results of the query
-    Object ret = GetResultObject(1000, "set-private-data", file.obj, true);
+    Object ret = GetResultObject(1000, "set_private_data", file.obj);
     std::string strJson = SerializeJsonFromObject(ret);
 
     printf("7 %s\n", strJson.c_str());
@@ -351,11 +396,26 @@ bool CDAPI::SendMessage(Object& obj)
     }
     */
 
+    std::string strObject = json_spirit::find_value(obj, "object").get_str();
+
+    printf("3 %s\n", strObject.c_str());
+
+    // get the user we want to open
+    Object objData = json_spirit::find_value(obj, "data").get_obj();
+    string strUID = json_spirit::find_value(objData, "target_uid").get_str();
+    string strSubCommand = json_spirit::find_value(objData, "sub_command").get_str();
+    string strPayload = json_spirit::find_value(objData, "payload").get_str();
+
+    //TODO: this is presently sending the message to all users on the server
+    Object ret = GetMessageObject(1000, strUID, strSubCommand, strPayload);
+    std::string strJson = SerializeJsonFromObject(ret);
+    EventNotify(strJson);
+
     return true;
 }
 
 // broadcast any message on the network from T3
-bool CDAPI::SendBroadcast(Object& obj)
+bool CDAPI::BroadcastMessage(Object& obj)
 {
     /*
     { 
@@ -371,6 +431,38 @@ bool CDAPI::SendBroadcast(Object& obj)
     }
     */
 
-    return true;
+
+    std::string strObject = json_spirit::find_value(obj, "object").get_str();
+
+    printf("3 %s\n", strObject.c_str());
+
+    // get the user we want to open
+    Object objData = json_spirit::find_value(obj, "data").get_obj();
+    string strSubCommand = json_spirit::find_value(objData, "subcommand").get_str();
+    string strPayload = json_spirit::find_value(objData, "payload").get_str();
+
+    if(strSubCommand == "tx")
+    {
+        CTransaction tx;
+        if (!DecodeHexTx(tx, strPayload))
+        {
+            SetError(1003, "TX Decoding Failed");
+            return false;
+        }
+        RelayTransaction(tx);
+
+        Object retTx;
+        retTx.push_back(Pair("tx-id", tx.GetHash().ToString()));
+        //should probably figure out if it was broadcasted successfully
+
+        // send the user back the results of the query
+        Object ret = GetResultObject(1000, "broadcast_message", retTx);
+        std::string strJson = SerializeJsonFromObject(ret);
+
+    } else {
+        return false;
+    }
+
+    return false;
 }
 
