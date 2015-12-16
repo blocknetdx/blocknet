@@ -13,23 +13,18 @@
 #include "main.h"
 #include "file.h"
 
-
-
-
-
-#include <boost/filesystem.hpp>
-
-#include "json/json_spirit.h"
-#include "json/json_spirit_value.h"
-#include "json/json_spirit_writer.h"
-
-#include "univalue/univalue.h"
-
 #include <stdint.h>
 #include <stdio.h>
 #include <fstream>
 #include <string>
 #include <streambuf>
+
+#include "json/json_spirit.h"
+#include "json/json_spirit_value.h"
+#include "json/json_spirit_writer.h"
+
+#include <boost/filesystem.hpp>
+#include "univalue/univalue.h"
 
 
 using namespace json_spirit;
@@ -96,7 +91,16 @@ public:
     CDriveFile();
     CDriveFile(const string strPathIn);
 
-    bool Exists();
+    bool Exists()
+    {
+        if ( boost::filesystem::exists( strPath ) )
+        {
+            return true;
+        }
+
+        return false;
+    }
+
     ReadResult Read()    
     {
         std::ifstream t(strPath);
@@ -114,7 +118,7 @@ public:
         return FileError;
     }
 
-    bool WriteContents()
+    bool Write()
     {
         LOCK(cs);
 

@@ -43,14 +43,21 @@ bool CDAPI::Execute(Object& obj)
     Object objData = json_spirit::find_value(obj, "data").get_obj();
     string strCommand = json_spirit::find_value(objData, "command").get_str();
 
-    printf("%s\n", strCommand.c_str());
+    printf("1 %s\n", strCommand.c_str());
 
     if(strCommand == "get-profile") {
         GetProfile(obj);
         return true;
     }
 
-    return true;
+    printf("2 %d\n", strCommand == "set-profile");
+    if (strCommand == "set-profile") {
+        printf("here\n");
+        SetProfile(obj);
+        return true;
+    }
+
+    return false;
 }
 
 bool CDAPI::ValidateSignature(Object& obj)
@@ -83,21 +90,39 @@ bool CDAPI::GetProfile(Object& obj)
     std::string strObject = json_spirit::find_value(obj, "object").get_str();
     if(strObject != "dapi_command") return false;
 
+    printf("3 %s\n", strObject.c_str());
+
+    // get the user we want to open
     Object objData = json_spirit::find_value(obj, "data").get_obj();
     string strUID = json_spirit::find_value(objData, "target_uid").get_str();
 
+
+    printf("4 %s\n", strUID.c_str());
+
+    // open the file and read it
     CDriveFile file(GetProfileFile(strUID));
-    //if(!file.Exists()) return false;
+    printf("5 %s\n", GetProfileFile(strUID).c_str());
+
+    if(!file.Exists()) return false;
     file.Read();
 
-    // Object ret;
-    // ret.PushKV("object", "dapi_result");
-    // ret.PushKV("data", "result");
+    printf("6 %s\n", GetProfileFile(strUID).c_str());
 
-    // string sret;
-    // json_spirit::write( obj, sret );
+    // send the user back the results of the query
+    Object ret;
+    ret.push_back(Pair("object", "dapi_result"));
+    ret.push_back(Pair("data", file.obj));
 
-    // EventNotify(sret);
+    //TODO: this is terrible, we need to correctly clean and escape the json :) 
+    std::stringstream ss;
+    json_spirit::write( ret, ss );
+    std::string strJson = escapeJsonString("'" + ss.str() + "'");
+    strJson.replace(0,1,"\"");
+    strJson.replace(strJson.size()-1,1,"\"");
+
+    printf("7 %s\n", strJson.c_str());
+
+    EventNotify(strJson);
     return true;
 }
 
@@ -107,20 +132,67 @@ bool CDAPI::SetProfile(Object& obj)
     { 
         "object" : "dapi_command",
         "data" : {
-            "command" = "set-profile",
-            "my_uid" = INT64,
-            "target_uid" = INT64, 
-            "signature" = ""
+            "command": "set-profile",
+            "my_uid": INT64,
+            "target_uid": INT64, 
+            "signature": "",
+            "update" : [
+                {"field":"name","value":"newvalue"}
+            ]
         }
     }
 
     */
 
+    std::string strObject = json_spirit::find_value(obj, "object").get_str();
+    if(strObject != "dapi_command") return false;
 
-    CDriveFile file("/Users/evan/Desktop/dash/src/test/data/dapi-get-profile.js");
-    file.obj = obj;
-    file.WriteContents();
+    printf("2 %s\n", strObject.c_str());
+    // get the user we want to open
+    Object objData = json_spirit::find_value(obj, "data").get_obj();
+    const Array& arrDataUpdate = json_spirit::find_value(objData, "update").get_array();
+    string strUID = json_spirit::find_value(objData, "target_uid").get_str();
 
+    printf("3 %s\n", strUID.c_str());
+
+    // open the file and read it
+    CDriveFile file(GetProfileFile(strUID));
+    if(!file.Exists()) return false;
+    file.Read();
+
+    std::map<std::string, Value> mapObj;
+    json_spirit::obj_to_map(file.obj, mapObj);
+
+    printf("4 %s\n", GetProfileFile(strUID).c_str());
+
+    for( unsigned int i = 0; i < arrDataUpdate.size(); ++i )
+    {
+        Object tmp = arrDataUpdate[i].get_obj();
+        string strField = json_spirit::find_value(tmp, "field").get_str();
+        string strValue = json_spirit::find_value(tmp, "value").get_str();
+
+        printf("5 %s %s\n", strField.c_str(), strValue.c_str());
+
+        // string& strUpdate = json_spirit::find_value(obj, strField).get_str();
+        // strUpdate = strValue;
+
+        //update the users file, NOTE: this is completely insecure for the prototype (see the paper for security model!)
+        //file.obj[strField] = strValue;
+        mapObj[strField] = strValue;
+    }
+
+    json_spirit::map_to_obj(mapObj, file.obj);
+    file.Write();
+
+    // send the user back the results of the query
+    Object ret;
+    ret.push_back(Pair("object", "dapi_result"));
+    ret.push_back(Pair("data", file.obj));
+
+    std::stringstream ss;
+    json_spirit::write( obj, ss );
+
+    EventNotify(ss.str());
 
     return true;
 }
