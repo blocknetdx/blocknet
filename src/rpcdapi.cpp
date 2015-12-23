@@ -49,7 +49,7 @@ Value dapi(const Array& params, bool fHelp)
         dashd --datadir=example --eventnotify="/Users/evan/Desktop/dash-2t/serve/event.py --event=%" --daemon
         dash-cli dapi "{\"txid\":\"myid\",\"aeou\":\"123\",\"vout\":\"0\"}" "{\"address\":0.01}"
 
-        dash_t2 --eventnotify="/Users/evan/Desktop/dash-2t/serve/event.py --event=%
+        dash_t2 --eventnotify="/Users/evan/Desktop/dash-2t/serve/event.py --event=%"
     */
 
     std::string strCommand = params[0].get_str();

@@ -386,8 +386,8 @@ bool CDAPI::SendMessage(Object& obj)
     { 
         "object" : "dapi_command",
         "data" : {
-            "command" = "message",
-            "subcommand" = "(available subcommands)",
+            "command" = "send_message",
+            "subcommand" = "(addr,cmd2,cmd3)",
             "my_uid" = UID,
             "target_uid" = UID, 
             "signature" = ‘’,
@@ -403,12 +403,14 @@ bool CDAPI::SendMessage(Object& obj)
     // get the user we want to open
     Object objData = json_spirit::find_value(obj, "data").get_obj();
     string strUID = json_spirit::find_value(objData, "target_uid").get_str();
-    string strSubCommand = json_spirit::find_value(objData, "sub_command").get_str();
+    string strSubCommand = json_spirit::find_value(objData, "subcommand").get_str();
     string strPayload = json_spirit::find_value(objData, "payload").get_str();
 
     //TODO: this is presently sending the message to all users on the server
     Object ret = GetMessageObject(1000, strUID, strSubCommand, strPayload);
     std::string strJson = SerializeJsonFromObject(ret);
+
+    printf("4 %s\n", strJson.c_str());
     EventNotify(strJson);
 
     return true;
