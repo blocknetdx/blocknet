@@ -38,19 +38,12 @@ class TransactionSignatureCreator : public BaseSignatureCreator {
     const CTransaction* txTo;
     unsigned int nIn;
     int nHashType;
+    CAmount amount;
     const TransactionSignatureChecker checker;
 
 public:
-    TransactionSignatureCreator(const CKeyStore* keystoreIn, const CTransaction* txToIn, unsigned int nInIn, int nHashTypeIn=SIGHASH_ALL);
+    TransactionSignatureCreator(const CKeyStore* keystoreIn, const CTransaction* txToIn, unsigned int nInIn, const CAmount& amountIn, int nHashTypeIn=SIGHASH_ALL);
     const BaseSignatureChecker& Checker() const { return checker; }
-    bool CreateSig(std::vector<unsigned char>& vchSig, const CKeyID& keyid, const CScript& scriptCode) const;
-};
-
-/** A signature creator that just produces 72-byte empty signatyres. */
-class DummySignatureCreator : public BaseSignatureCreator {
-public:
-    DummySignatureCreator(const CKeyStore* keystoreIn) : BaseSignatureCreator(keystoreIn) {}
-    const BaseSignatureChecker& Checker() const;
     bool CreateSig(std::vector<unsigned char>& vchSig, const CKeyID& keyid, const CScript& scriptCode) const;
 };
 
@@ -61,10 +54,10 @@ bool Sign1(const CKeyID& address, const CKeyStore& keystore, uint256 hash, int n
 bool SignSignature(const CKeyStore& keystore, const CScript& fromPubKey, CMutableTransaction& txTo, unsigned int nIn, int nHashType=SIGHASH_ALL);
 bool SignSignature(const CKeyStore& keystore, const CTransaction& txFrom, CMutableTransaction& txTo, unsigned int nIn, int nHashType=SIGHASH_ALL);
 
-/**
- * Given two sets of signatures for scriptPubKey, possibly with OP_0 placeholders,
- * combine them intelligently and return the result.
- */
-CScript CombineSignatures(const CScript& scriptPubKey, const CTransaction& txTo, unsigned int nIn, const CScript& scriptSig1, const CScript& scriptSig2);
+/** Combine two script signatures using a generic signature checker, intelligently, possibly with OP_0 placeholders. */
+CScript CombineSignatures(const CScript& scriptPubKey, const BaseSignatureChecker& checker, const CScript& scriptSig1, const CScript& scriptSig2);
+
+/** Combine two script signatures on transactions. */
+CScript CombineSignatures(const CScript& scriptPubKey, const CTransaction& txTo, unsigned int nIn, const CAmount& amount, const CScript& scriptSig1, const CScript& scriptSig2);
 
 #endif // BITCOIN_SCRIPT_SIGN_H
