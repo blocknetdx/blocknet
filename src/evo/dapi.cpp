@@ -57,14 +57,15 @@ Object GetResultObject(int nCommandID, std::string strCommand, Object& objFile)
     return ret;
 }
 
-Object GetMessageObject(int nCommandID, std::string strUserID, std::string strSubCommand, std::string strMessage)
+Object GetMessageObject(int nCommandID, std::string strFromUserID, std::string strToUserID, std::string strSubCommand, std::string strMessage)
 {
     Object retData;
     retData.push_back(Pair("id", nCommandID));
     retData.push_back(Pair("command", "send_message"));
     retData.push_back(Pair("error-id", nError));
     retData.push_back(Pair("error-message", strErrorMessage));
-    retData.push_back(Pair("target_uid", strUserID));
+    retData.push_back(Pair("from_uid", strFromUserID));
+    retData.push_back(Pair("to_uid", strToUserID));
     retData.push_back(Pair("sub_command", strSubCommand));
     retData.push_back(Pair("payload", strMessage));
 
@@ -180,9 +181,14 @@ bool CDAPI::GetProfile(Object& obj)
 
     // send the user back the results of the query
     Object ret = GetResultObject(1000, "get_profile", file.obj);
+
+    std::string strJson2 = SerializeJsonFromObject(file.obj);
+
+    printf("7 %s\n", strJson2.c_str());
+    
     std::string strJson = SerializeJsonFromObject(ret);
 
-    printf("7 %s\n", strJson.c_str());
+    printf("8 %s\n", strJson.c_str());
 
     EventNotify(strJson);
     return true;
@@ -402,12 +408,13 @@ bool CDAPI::SendMessage(Object& obj)
 
     // get the user we want to open
     Object objData = json_spirit::find_value(obj, "data").get_obj();
-    string strUID = json_spirit::find_value(objData, "target_uid").get_str();
+    string strUID1 = json_spirit::find_value(objData, "my_uid").get_str();
+    string strUID2 = json_spirit::find_value(objData, "target_uid").get_str();
     string strSubCommand = json_spirit::find_value(objData, "subcommand").get_str();
     string strPayload = json_spirit::find_value(objData, "payload").get_str();
 
     //TODO: this is presently sending the message to all users on the server
-    Object ret = GetMessageObject(1000, strUID, strSubCommand, strPayload);
+    Object ret = GetMessageObject(1000, strUID1, strUID2, strSubCommand, strPayload);
     std::string strJson = SerializeJsonFromObject(ret);
 
     printf("4 %s\n", strJson.c_str());
