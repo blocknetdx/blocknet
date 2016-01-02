@@ -11,6 +11,7 @@
 #include "consensus/validation.h"
 #include "protocol.h"
 #include "serialize.h"
+#include "spork.h"
 #include "sync.h"
 #include "util.h"
 #include "utiltime.h"
@@ -439,7 +440,7 @@ bool ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue, CW
             ssValue >> wtx;
             CValidationState state;
             // false because there is no reason to go through the zerocoin checks for our own wallet
-            if (!(CheckTransaction(wtx, false, false, state) && (wtx.GetHash() == hash) && state.IsValid()))
+            if (!(CheckTransaction(wtx, false, false, state, IsSporkActive(SPORK_17_SEGWIT_ACTIVATION)) && (wtx.GetHash() == hash) && state.IsValid()))
                 return false;
 
             // Undo serialize changes in 31600
