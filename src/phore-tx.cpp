@@ -191,8 +191,7 @@ static void MutateTxAddInput(CMutableTransaction& tx, const string& strInput)
     uint256 txid(strTxid);
 
     static const unsigned int minTxOutSz = 9;
-    unsigned int nMaxSize = MAX_BLOCK_SIZE_LEGACY;
-    static const unsigned int maxVout = nMaxSize / minTxOutSz;
+    static const unsigned int maxVout = MAX_BLOCK_SIZE_LEGACY / minTxOutSz;
 
     // extract and validate vout
     string strVout = strInput.substr(pos + 1, string::npos);
