@@ -1,0 +1,13 @@
+Setting up the prototype (using mainnet atm):
+
+
+1. Download and install dash (https://github.com/dashpay/dash)
+2. Setup a data directory in ~/.dash-data
+3. Create your user files. For example to create the user evan, write this file to ~/.dash-data/users/evan
+file contents: {"name":"Evan Duffield","username":"evan","stars":5}
+4. Download dash-2t, the tier-2 websockets proxy
+5. Run the client with a command like this:
+dash_t2 --datadir2="/Users/evan/.dash-data" --eventnotify="/Users/evan/Desktop/dash-2t/serve/event.py --event=%s"
+6. Start dash-2t, "python app.py"
+7. Download and run the electrum client at: https://github.com/evan82/electrum-dash
+8. Start 2x versions of client with 2 different users : ./electrum-dash -w ~/.test-electrum2 --electrum_path=~/.electrum-test-2
