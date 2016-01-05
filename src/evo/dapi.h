@@ -78,7 +78,7 @@ public:
     static bool SetPrivateData(Object& obj);
     static bool SendMessage(Object& obj);
     static bool BroadcastMessage(Object& obj);
-
+    static bool InviteUser(Object& obj);]
 };
 
 #endif

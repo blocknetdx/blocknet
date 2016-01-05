@@ -147,8 +147,8 @@ bool CDAPI::GetProfile(Object& obj)
             "object" : "dapi_command",
             "data" : {
                 “command” : ”get_profile”,
-                “my_uid” : INT64,
-                “target_uid” : INT64, 
+                “from_uid” : INT64,
+                “to_uid” : INT64, 
                 “signature” : ‘’,
                 “fields” : [“fname”, “lname”]
             }
@@ -161,8 +161,7 @@ bool CDAPI::GetProfile(Object& obj)
 
     // get the user we want to open
     Object objData = json_spirit::find_value(obj, "data").get_obj();
-    string strUID = json_spirit::find_value(objData, "target_uid").get_str();
-
+    string strUID = json_spirit::find_value(objData, "to_uid").get_str();
 
     printf("4 %s\n", strUID.c_str());
 
@@ -201,8 +200,8 @@ bool CDAPI::SetProfile(Object& obj)
         "object" : "dapi_command",
         "data" : {
             "command": "set_profile",
-            "my_uid": INT64,
-            "target_uid": INT64, 
+            "from_uid": INT64,
+            "to_uid": INT64, 
             "signature": "",
             "update" : [
                 {"field":"name","value":"newvalue"}
@@ -218,7 +217,7 @@ bool CDAPI::SetProfile(Object& obj)
     // get the user we want to open
     Object objData = json_spirit::find_value(obj, "data").get_obj();
     const Array& arrDataUpdate = json_spirit::find_value(objData, "update").get_array();
-    string strUID = json_spirit::find_value(objData, "target_uid").get_str();
+    string strUID = json_spirit::find_value(objData, "to_uid").get_str();
 
     printf("3 %s\n", strUID.c_str());
 
@@ -272,8 +271,8 @@ bool CDAPI::GetPrivateData(Object& obj)
         "object" : "dapi_command",
         "data" : {
             "command" = "get_private_data",
-            "my_uid" = UID,
-            "target_uid" = UID, 
+            "from_uid" = UID,
+            "to_uid" = UID, 
             "signature" = ‘’,
             "slot" = 1
         }
@@ -286,7 +285,7 @@ bool CDAPI::GetPrivateData(Object& obj)
 
     // get the user we want to open
     Object objData = json_spirit::find_value(obj, "data").get_obj();
-    string strUID = json_spirit::find_value(objData, "target_uid").get_str();
+    string strUID = json_spirit::find_value(objData, "to_uid").get_str();
     int nSlot = json_spirit::find_value(objData, "slot").get_int();
     if(nSlot < 1 || nSlot > 10)
     {
@@ -321,8 +320,8 @@ bool CDAPI::SetPrivateData(Object& obj)
         "object" : "dapi_command",
         "data" : {
             "command" : "set_private_data",
-            "my_uid" : INT64,
-            "target_uid" : INT64, 
+            "from_uid" : INT64,
+            "to_uid" : INT64, 
             "signature" : "SIGNATURE",
             "slot" : 1,
             "payload" : JSON_WEB_ENCRYPTION
@@ -336,7 +335,7 @@ bool CDAPI::SetPrivateData(Object& obj)
 
     // get the user we want to open
     Object objData = json_spirit::find_value(obj, "data").get_obj();
-    string strUID = json_spirit::find_value(objData, "target_uid").get_str();
+    string strUID = json_spirit::find_value(objData, "to_uid").get_str();
     int nSlot = json_spirit::find_value(objData, "slot").get_int();
     if(nSlot < 1 || nSlot > 10) 
     {
@@ -393,9 +392,9 @@ bool CDAPI::SendMessage(Object& obj)
         "object" : "dapi_command",
         "data" : {
             "command" = "send_message",
-            "subcommand" = "(addr,cmd2,cmd3)",
-            "my_uid" = UID,
-            "target_uid" = UID, 
+            "sub_command" = "(addr,cmd2,cmd3)",
+            "from_uid" = UID,
+            "to_uid" = UID, 
             "signature" = ‘’,
             "payload" = ENCRYPTED
         }
@@ -408,9 +407,9 @@ bool CDAPI::SendMessage(Object& obj)
 
     // get the user we want to open
     Object objData = json_spirit::find_value(obj, "data").get_obj();
-    string strUID1 = json_spirit::find_value(objData, "my_uid").get_str();
-    string strUID2 = json_spirit::find_value(objData, "target_uid").get_str();
-    string strSubCommand = json_spirit::find_value(objData, "subcommand").get_str();
+    string strUID1 = json_spirit::find_value(objData, "from_uid").get_str();
+    string strUID2 = json_spirit::find_value(objData, "to_uid").get_str();
+    string strSubCommand = json_spirit::find_value(objData, "sub_command").get_str();
     string strPayload = json_spirit::find_value(objData, "payload").get_str();
 
     //TODO: this is presently sending the message to all users on the server
@@ -431,9 +430,9 @@ bool CDAPI::BroadcastMessage(Object& obj)
         "object" : "dapi_command",
         "data" : {
             "command" = "broadcast",
-            "subcommand" = "tx", //can support multiple message commands
-            "my_uid" = UID,
-            "target_uid" = UID, 
+            "sub_command" = "tx", //can support multiple message commands
+            "from_uid" = UID,
+            "to_uid" = UID, 
             "signature" = ‘’,
             "payload" = SERIALIZED_BASE64_ENCODED
         }
@@ -447,7 +446,7 @@ bool CDAPI::BroadcastMessage(Object& obj)
 
     // get the user we want to open
     Object objData = json_spirit::find_value(obj, "data").get_obj();
-    string strSubCommand = json_spirit::find_value(objData, "subcommand").get_str();
+    string strSubCommand = json_spirit::find_value(objData, "sub_command").get_str();
     string strPayload = json_spirit::find_value(objData, "payload").get_str();
 
     if(strSubCommand == "tx")
@@ -473,5 +472,169 @@ bool CDAPI::BroadcastMessage(Object& obj)
     }
 
     return false;
+}
+
+// Create new user account
+bool CDAPI::InviteUser(Object& obj)
+{
+    // //SEND FRIEND REQUEST
+    // {
+    //     "object" : "dapi_command",
+    //     "data" : {
+    //         "command" : “invite_user”,
+    //         "from_uid" : UID,
+    //         "to_uid" : ENTERED_USERNAME,
+    //         "to_email" : ENTERED_EMAIL, 
+    //         "to_pubkey" : ENTERED_PUBKEY, 
+    //         "signature" = “”
+    //     }
+    // }
+
+    std::string strObject = json_spirit::find_value(obj, "object").get_str();
+
+    printf("3 %s\n", strObject.c_str());
+
+    // get the user we want to open
+    Object objData = json_spirit::find_value(obj, "data").get_obj();
+    string strUID = json_spirit::find_value(objData, "to_uid").get_str();
+
+    printf("4 %s\n", strUID.c_str());
+
+    // open the file and read it
+    CDriveFile file(GetProfileFile(strUID));
+    printf("5 %s\n", GetProfileFile(strUID).c_str());
+
+    if(file.Exists()) 
+    {
+        SetError(1004, "User already exists : " + strUID);
+        return false;
+    }
+
+    string strName = json_spirit::find_value(objData, "to_name").get_str();
+    string strEmail = json_spirit::find_value(objData, "to_email").get_str();
+    string strPubkey = json_spirit::find_value(objData, "to_pubkey").get_str();
+
+    CBitcoinAddress address(strPubkey);
+    bool isValid = address.IsValid();
+
+    if(!isValid)
+    {
+        SetError(1005, "Invalid pubkey: " + strPubkey);
+        return false;   
+    }
+
+    Object newObj;
+    newObj.push_back(Pair("status", 1));
+    newObj.push_back(Pair("name", strName));
+    newObj.push_back(Pair("email", strEmail));
+    newObj.push_back(Pair("pubkey", strPubkey));
+    newObj.push_back(Pair("challenge_code", GetRand(999999)));
+    file.obj = newObj;   
+
+    file.Write();
+
+    // //RESULTING JSON
+    // {
+    //     "object" : "dapi_result",
+    //     "data" : {
+    //         "command" : “invite_user”,
+    //         "from_uid" : UID,
+    //         "to_uid" : ENTERED_USERNAME,
+    //         "to_email" : ENTERED_EMAIL, 
+    //         "to_pubkey" : ENTERED_PUBKEY, 
+    //         "to_challenge_code" : RANDOMLY_GENERATED, 
+    //         "signature" : “”
+    //     }
+    // }
+
+    // send the user back the results of the query
+    Object ret = GetResultObject(1000, "invite_user", file.obj);
+    std::string strJson = SerializeJsonFromObject(ret);
+
+    printf("7 %s\n", strJson.c_str());
+
+    EventNotify(strJson);
+}
+
+bool CDAPI::ValidateAccount(Object& obj)
+{
+    /*
+        //VALIDATE ACCOUNT
+        {
+            "object" : "dapi_command",
+            "data" : {
+                "command" : “validate_account”,
+                "from_uid" : UID,
+                "to_uid" : ENTERED_USERNAME,
+                "to_challenge_code" : RANDOMLY_GENERATED, 
+                "signature" : “”
+            }
+        }
+    */
+
+    std::string strObject = json_spirit::find_value(obj, "object").get_str();
+
+    printf("3 %s\n", strObject.c_str());
+
+    // get the user we want to open
+    Object objData = json_spirit::find_value(obj, "data").get_obj();
+    string strUID = json_spirit::find_value(objData, "to_uid").get_str();
+    string strChallengeCode = json_spirit::find_value(objData, "to_challenge_code").get_str();
+
+    printf("4 %s\n", strUID.c_str());
+
+    // open the file and read it
+    CDriveFile file(GetProfileFile(strUID));
+    printf("5 %s\n", GetProfileFile(strUID).c_str());
+
+    // open the file and read it
+    CDriveFile file(GetProfileFile(strUID));
+    printf("5 %s\n", GetProfileFile(strUID).c_str());
+
+    if(!file.Exists()) 
+    {
+        SetError(1001, "File doesn't exist : " + strUID);
+        return false;
+    }
+    file.Read();
+
+    std::map<std::string, Value> mapObj;
+    json_spirit::obj_to_map(file.obj, mapObj);
+
+    string strUID = json_spirit::find_value(objData, "to_uid").get_str();
+    if(mapObj["challenge_code"] == strChallengeCode)
+    {
+        mapObj["challenge_code"] = "";
+        mapObj["status"] = 2;
+    } else {
+        SetError(1006, "Invalid challenge_code : " + strChallengeCode);
+        return false;
+    }
+    
+    json_spirit::map_to_obj(mapObj, file.obj);
+    file.Write();
+
+    /*
+        //RESULTING JSON
+        {
+            "object" : "dapi_result",
+            "data" : {
+                "command" : “validate_account”,
+                "from_uid" : UID,
+                "to_uid" : ENTERED_USERNAME, 
+                "signature" : “”,
+                “error_id” : 1000,
+                “error_description” : “none” 
+            }
+        }
+    */
+
+    // send the user back the results of the query
+    Object ret = GetResultObject(1000, "“validate_account”", file.obj);
+    std::string strJson = SerializeJsonFromObject(ret);
+
+    printf("7 %s\n", strJson.c_str());
+
+    EventNotify(strJson);
 }
 
