@@ -474,6 +474,7 @@ bool CDAPI::BroadcastMessage(Object& obj)
     return false;
 }
 
+
 // Create new user account
 bool CDAPI::InviteUser(Object& obj)
 {
@@ -587,10 +588,6 @@ bool CDAPI::ValidateAccount(Object& obj)
     CDriveFile file(GetProfileFile(strUID));
     printf("5 %s\n", GetProfileFile(strUID).c_str());
 
-    // open the file and read it
-    CDriveFile file(GetProfileFile(strUID));
-    printf("5 %s\n", GetProfileFile(strUID).c_str());
-
     if(!file.Exists()) 
     {
         SetError(1001, "File doesn't exist : " + strUID);
@@ -601,7 +598,6 @@ bool CDAPI::ValidateAccount(Object& obj)
     std::map<std::string, Value> mapObj;
     json_spirit::obj_to_map(file.obj, mapObj);
 
-    string strUID = json_spirit::find_value(objData, "to_uid").get_str();
     if(mapObj["challenge_code"] == strChallengeCode)
     {
         mapObj["challenge_code"] = "";
