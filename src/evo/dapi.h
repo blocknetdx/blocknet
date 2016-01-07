@@ -30,6 +30,12 @@
 using namespace std;
 using namespace json_spirit;
 
+std::string GetIndexFile(std::string strFilename)
+{
+    boost::filesystem::path filename = GetDataDirectory() / "index" / strFilename;
+    return filename.c_str();
+}
+
 std::string GetProfileFile(std::string strUID)
 {
     boost::filesystem::path filename = GetDataDirectory() / "users" / strUID;
@@ -45,6 +51,8 @@ std::string GetPrivateDataFile(std::string strUID, int nSlot)
 
 
 std::string escapeJsonString(const std::string& input) {
+    // NOTE: Any ideas on replacing this with something more portable? 
+
     std::ostringstream ss;
     for (auto iter = input.cbegin(); iter != input.cend(); iter++) {
     //C++98/03:
@@ -80,6 +88,7 @@ public:
     static bool BroadcastMessage(Object& obj);
     static bool InviteUser(Object& obj);
     static bool ValidateAccount(Object& obj);
+    static bool SearchUsers(Object& obj);
 };
 
 #endif

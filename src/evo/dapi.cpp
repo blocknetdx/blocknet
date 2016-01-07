@@ -87,38 +87,119 @@ std::string SerializeJsonFromObject(Object objToSerialize)
     return strJson;
 }
 
+// GET OBJECT AND CONVERT TO VARIABLE
 
+bool FindValueAsString(Object obj, std::string strName, std::string& strOut)
+{
+    const Value& result = json_spirit::find_value(obj, strName);
+    if (result.type() == null_type)
+    {
+        SetError(1008, "Missing required field : " + strName);
+        return false;
+    }
+
+    strOut = result.get_str();
+    return true;
+}
+
+bool FindValueAsObject(Object obj, std::string strName, Object& objOut)
+{
+    const Value& result = json_spirit::find_value(obj, strName);
+    if (result.type() == null_type)
+    {
+        SetError(1008, "Missing required field : " + strName);
+        return false;
+    }
+
+    objOut = result.get_obj();
+    return true;
+}
+
+bool FindValueAsArray(Object obj, std::string strName, Array& arrOut)
+{
+    const Value& result = json_spirit::find_value(obj, strName);
+    if (result.type() == null_type)
+    {
+        SetError(1008, "Missing required field : " + strName);
+        return false;
+    }
+
+    arrOut = result.get_array();
+    return true;
+}
+
+bool FindValueAsInt(Object obj, std::string strName, int& nOut)
+{
+    const Value& result = json_spirit::find_value(obj, strName);
+    if (result.type() == null_type)
+    {
+        SetError(1008, "Missing required field : " + strName);
+        return false;
+    }
+
+    nOut = result.get_int();
+    return true;
+}
+
+// DAPI FUNCTIONALITY
 
 bool CDAPI::Execute(Object& obj)
 {
     ResetErrorStatus();
 
-    std::string strObject = json_spirit::find_value(obj, "object").get_str();
-    if(strObject != "dapi_command") return false;
-
-    Object objData = json_spirit::find_value(obj, "data").get_obj();
-    string strCommand = json_spirit::find_value(objData, "command").get_str();
-
-    printf("1 %s\n", strCommand.c_str());
-
-    if(strCommand == "get_profile") {
-        if(GetProfile(obj)) return true;
-    } else if (strCommand == "set_profile") {
-        if(SetProfile(obj)) return true;
-    } else if (strCommand == "set_private_data") {
-        if(SetPrivateData(obj)) return true;
-    } else if (strCommand == "get_private_data") {
-        if(GetPrivateData(obj)) return true;
-    } else if (strCommand == "send_message") {
-        if(SendMessage(obj)) return true;
-    } else if (strCommand == "broadcast_message") {
-        if(BroadcastMessage(obj)) return true;
+    // dapi command only
+    std::string strObject;
+    if(!FindValueAsString(obj, "object", strObject))
+    {
+        SetError(1009, "[\"object\"] is required in data structure");
     }
 
-    // unknown command
+    if(strObject != "dapi_command")
+    {
+        SetError(1010, "[\"object\"] type of \"dapi_command\" is only supported in data structure");
+    }
+
+    // required for all DAPI messages
+    Object objData;
+    string strCommand = "";
+    if(!FindValueAsObject(obj, "data", objData))
+    {
+        SetError(1011, "[\"data\"] is required in data structure");
+    }
+    if(!FindValueAsString(objData, "command", strCommand))
+    {
+        SetError(1012, "[\"data\"][\"command\"] is required in data structure");
+    }
+
+    // SUPPORTED COMMANDS
+
+    if(nError == 0)
+    {
+        if(strCommand == "get_profile") {
+            if(GetProfile(obj)) return true;
+        } else if (strCommand == "set_profile") {
+            if(SetProfile(obj)) return true;
+        } else if (strCommand == "set_private_data") {
+            if(SetPrivateData(obj)) return true;
+        } else if (strCommand == "get_private_data") {
+            if(GetPrivateData(obj)) return true;
+        } else if (strCommand == "send_message") {
+            if(SendMessage(obj)) return true;
+        } else if (strCommand == "broadcast_message") {
+            if(BroadcastMessage(obj)) return true;
+        } else if (strCommand == "invite_user") {
+            if(InviteUser(obj)) return true;
+        } else if (strCommand == "validate_account") {
+            if(ValidateAccount(obj)) return true;
+        } else if (strCommand == "search_users") {
+            if(SearchUsers(obj)) return true;
+        }
+    }
+
+    // UNKNOWN COMMANDS
 
     // send the user back the results of the query
-    if(nError == 0) SetError(1000, "Unknown Command : " + strCommand);
+    if(nError == 0) SetError(1007, "Unknown Command : " + strCommand);
     Object result;
     Object ret = GetResultObject(1000, strCommand, result);
     std::string strJson = SerializeJsonFromObject(ret);
@@ -155,20 +236,14 @@ bool CDAPI::GetProfile(Object& obj)
         }
     */
 
-    std::string strObject = json_spirit::find_value(obj, "object").get_str();
-
-    printf("3 %s\n", strObject.c_str());
-
     // get the user we want to open
-    Object objData = json_spirit::find_value(obj, "data").get_obj();
-    string strUID = json_spirit::find_value(objData, "to_uid").get_str();
-
-    printf("4 %s\n", strUID.c_str());
+    Object objData;
+    string strUID = "";
+    if(!FindValueAsObject(obj, "data", objData)) return false;
+    if(!FindValueAsString(obj, "to_uid", strUID)) return false;
 
     // open the file and read it
     CDriveFile file(GetProfileFile(strUID));
-    printf("5 %s\n", GetProfileFile(strUID).c_str());
-
     if(!file.Exists()) 
     {
         SetError(1001, "File doesn't exist : " + strUID);
@@ -176,20 +251,12 @@ bool CDAPI::GetProfile(Object& obj)
     }
     file.Read();
 
-    printf("6 %s\n", GetProfileFile(strUID).c_str());
-
     // send the user back the results of the query
     Object ret = GetResultObject(1000, "get_profile", file.obj);
-
-    std::string strJson2 = SerializeJsonFromObject(file.obj);
-
-    printf("7 %s\n", strJson2.c_str());
-    
+    std::string strJson2 = SerializeJsonFromObject(file.obj);    
     std::string strJson = SerializeJsonFromObject(ret);
-
-    printf("8 %s\n", strJson.c_str());
-
     EventNotify(strJson);
+
     return true;
 }
 
@@ -211,15 +278,16 @@ bool CDAPI::SetProfile(Object& obj)
 
     */
 
-    std::string strObject = json_spirit::find_value(obj, "object").get_str();
+    std::string strObject = "";
+    if(!FindValueAsString(obj, "object", strObject)) return false;
 
-    printf("2 %s\n", strObject.c_str());
     // get the user we want to open
-    Object objData = json_spirit::find_value(obj, "data").get_obj();
-    const Array& arrDataUpdate = json_spirit::find_value(objData, "update").get_array();
-    string strUID = json_spirit::find_value(objData, "to_uid").get_str();
-
-    printf("3 %s\n", strUID.c_str());
+    Object objData;
+    Array arrDataUpdate;
+    string strUID = "";
+    if(!FindValueAsObject(obj, "data", objData)) return false;
+    if(!FindValueAsArray(objData, "update", arrDataUpdate)) return false;
+    if(!FindValueAsString(objData, "to_uid", strUID)) return false;
 
     // open the file and read it
     CDriveFile file(GetProfileFile(strUID));
@@ -233,15 +301,11 @@ bool CDAPI::SetProfile(Object& obj)
     std::map<std::string, Value> mapObj;
     json_spirit::obj_to_map(file.obj, mapObj);
 
-    printf("4 %s\n", GetProfileFile(strUID).c_str());
-
     for( unsigned int i = 0; i < arrDataUpdate.size(); ++i )
     {
         Object tmp = arrDataUpdate[i].get_obj();
-        string strField = json_spirit::find_value(tmp, "field").get_str();
-        string strValue = json_spirit::find_value(tmp, "value").get_str();
-
-        printf("5 %s %s\n", strField.c_str(), strValue.c_str());
+        string strField = ""; if(!FindValueAsString(tmp, "field", strField)) return false;
+        string strValue = ""; if(!FindValueAsString(tmp, "value", strValue)) return false;
 
         // string& strUpdate = json_spirit::find_value(obj, strField).get_str();
         // strUpdate = strValue;
@@ -256,8 +320,6 @@ bool CDAPI::SetProfile(Object& obj)
 
     Object ret = GetResultObject(1000, "set_profile", file.obj);
     std::string strJson = SerializeJsonFromObject(ret);
-
-    printf("7 %s\n", strJson.c_str());
 
     EventNotify(strJson);
 
@@ -279,35 +341,27 @@ bool CDAPI::GetPrivateData(Object& obj)
     }
     */
 
-    std::string strObject = json_spirit::find_value(obj, "object").get_str();
-
-    printf("3 %s\n", strObject.c_str());
-
     // get the user we want to open
-    Object objData = json_spirit::find_value(obj, "data").get_obj();
-    string strUID = json_spirit::find_value(objData, "to_uid").get_str();
-    int nSlot = json_spirit::find_value(objData, "slot").get_int();
+    Object objData;
+    string strUID = "";
+    int nSlot = -1;
+    if(!FindValueAsObject(obj, "data", objData)) return false;
+    if(!FindValueAsString(objData, "to_uid", strUID)) return false;
+    if(!FindValueAsInt(objData, "slot", nSlot)) return false;
     if(nSlot < 1 || nSlot > 10)
     {
         SetError(1002, "Slot out of range");
         return false;
     }
 
-    printf("4 %s\n", strUID.c_str());
-
     // open the file and read it
     CDriveFile file(GetPrivateDataFile(strUID, nSlot));
-    printf("5 %s\n", GetPrivateDataFile(strUID, nSlot).c_str());
-
     if(!file.Exists()) return false;
     file.Read();
 
     // send the user back the results of the query
     Object ret = GetResultObject(1000, "get_private_data", file.obj);
     std::string strJson = SerializeJsonFromObject(ret);
-
-    printf("7 %s\n", strJson.c_str());
-
     EventNotify(strJson);
 
     return true;
@@ -329,26 +383,21 @@ bool CDAPI::SetPrivateData(Object& obj)
     }
     */
 
-    std::string strObject = json_spirit::find_value(obj, "object").get_str();
-
-    printf("3 %s\n", strObject.c_str());
-
     // get the user we want to open
-    Object objData = json_spirit::find_value(obj, "data").get_obj();
-    string strUID = json_spirit::find_value(objData, "to_uid").get_str();
-    int nSlot = json_spirit::find_value(objData, "slot").get_int();
+    Object objData;
+    string strUID = "";
+    int nSlot = -1;
+    if(!FindValueAsObject(obj, "data", objData)) return false;
+    if(!FindValueAsString(objData, "to_uid", strUID)) return false;
+    if(!FindValueAsInt(objData, "slot", nSlot)) return false;
     if(nSlot < 1 || nSlot > 10) 
     {
         SetError(1002, "Slot out of range");
         return false;
     }
 
-    printf("4 %s\n", strUID.c_str());
-
     // open the file and read it
     CDriveFile file(GetPrivateDataFile(strUID, nSlot));
-    printf("5 %s\n", GetPrivateDataFile(strUID, nSlot).c_str());
-
     if(!file.Exists())
     {
         Object newObj;
@@ -363,20 +412,16 @@ bool CDAPI::SetPrivateData(Object& obj)
     std::map<std::string, Value> mapObj;
     json_spirit::obj_to_map(file.obj, mapObj);
 
-    string strPayload = json_spirit::find_value(objData, "payload").get_str();
+    string strPayload = "";
+    if(!FindValueAsString(objData, "payload", strPayload)) return false;
     mapObj["payload"] = strPayload;
 
     json_spirit::map_to_obj(mapObj, file.obj);
     file.Write();
 
-
-    printf("6 %s\n", GetPrivateDataFile(strUID, nSlot).c_str());
-
     // send the user back the results of the query
     Object ret = GetResultObject(1000, "set_private_data", file.obj);
     std::string strJson = SerializeJsonFromObject(ret);
-
-    printf("7 %s\n", strJson.c_str());
 
     EventNotify(strJson);
 
@@ -401,24 +446,23 @@ bool CDAPI::SendMessage(Object& obj)
     }
     */
 
-    std::string strObject = json_spirit::find_value(obj, "object").get_str();
-
-    printf("3 %s\n", strObject.c_str());
-
     // get the user we want to open
-    Object objData = json_spirit::find_value(obj, "data").get_obj();
-    string strUID1 = json_spirit::find_value(objData, "from_uid").get_str();
-    string strUID2 = json_spirit::find_value(objData, "to_uid").get_str();
-    string strSubCommand = json_spirit::find_value(objData, "sub_command").get_str();
-    string strPayload = json_spirit::find_value(objData, "payload").get_str();
+    Object objData;
+    string strUID1 = "";
+    string strUID2 = "";
+    string strSubCommand = "";
+    string strPayload = "";
+    if(!FindValueAsObject(obj, "data", objData)) return false;
+    if(!FindValueAsString(objData, "from_uid", strUID1)) return false;
+    if(!FindValueAsString(objData, "to_uid", strUID2)) return false;
+    if(!FindValueAsString(objData, "sub_command", strSubCommand)) return false;
+    if(!FindValueAsString(objData, "payload", strPayload)) return false;
 
     //TODO: this is presently sending the message to all users on the server
     Object ret = GetMessageObject(1000, strUID1, strUID2, strSubCommand, strPayload);
     std::string strJson = SerializeJsonFromObject(ret);
 
-    printf("4 %s\n", strJson.c_str());
     EventNotify(strJson);
-
     return true;
 }
 
@@ -439,15 +483,13 @@ bool CDAPI::BroadcastMessage(Object& obj)
     }
     */
 
-
-    std::string strObject = json_spirit::find_value(obj, "object").get_str();
-
-    printf("3 %s\n", strObject.c_str());
-
     // get the user we want to open
-    Object objData = json_spirit::find_value(obj, "data").get_obj();
-    string strSubCommand = json_spirit::find_value(objData, "sub_command").get_str();
-    string strPayload = json_spirit::find_value(objData, "payload").get_str();
+    Object objData;
+    string strSubCommand = "";
+    string strPayload = "";
+    if(!FindValueAsObject(obj, "data", objData)) return false;
+    if(!FindValueAsString(objData, "sub_command", strSubCommand)) return false;
+    if(!FindValueAsString(objData, "payload", strPayload)) return false;
 
     if(strSubCommand == "tx")
     {
@@ -467,6 +509,8 @@ bool CDAPI::BroadcastMessage(Object& obj)
         Object ret = GetResultObject(1000, "broadcast_message", retTx);
         std::string strJson = SerializeJsonFromObject(ret);
 
+        return true;
+
     } else {
         return false;
     }
@@ -485,35 +529,33 @@ bool CDAPI::InviteUser(Object& obj)
     //         "command" : “invite_user”,
     //         "from_uid" : UID,
     //         "to_uid" : ENTERED_USERNAME,
+    //         "to_name" : ENTERED_NAME,
     //         "to_email" : ENTERED_EMAIL, 
     //         "to_pubkey" : ENTERED_PUBKEY, 
     //         "signature" = “”
     //     }
     // }
 
-    std::string strObject = json_spirit::find_value(obj, "object").get_str();
-
-    printf("3 %s\n", strObject.c_str());
-
     // get the user we want to open
-    Object objData = json_spirit::find_value(obj, "data").get_obj();
-    string strUID = json_spirit::find_value(objData, "to_uid").get_str();
-
-    printf("4 %s\n", strUID.c_str());
+    Object objData;
+    string strUID = "";
+    if(!FindValueAsObject(obj, "data", objData)) return false;
+    if(!FindValueAsString(objData, "to_uid", strUID)) return false;
 
     // open the file and read it
     CDriveFile file(GetProfileFile(strUID));
-    printf("5 %s\n", GetProfileFile(strUID).c_str());
-
     if(file.Exists()) 
     {
         SetError(1004, "User already exists : " + strUID);
         return false;
     }
 
-    string strName = json_spirit::find_value(objData, "to_name").get_str();
-    string strEmail = json_spirit::find_value(objData, "to_email").get_str();
-    string strPubkey = json_spirit::find_value(objData, "to_pubkey").get_str();
+    string strName = "";
+    string strEmail = "";
+    string strPubkey = "";
+    if(!FindValueAsString(objData, "to_name", strName)) return false;
+    if(!FindValueAsString(objData, "to_email", strEmail)) return false;
+    if(!FindValueAsString(objData, "to_pubkey", strPubkey)) return false;
 
     CBitcoinAddress address(strPubkey);
     bool isValid = address.IsValid();
@@ -526,10 +568,11 @@ bool CDAPI::InviteUser(Object& obj)
 
     Object newObj;
     newObj.push_back(Pair("status", 1));
+    newObj.push_back(Pair("username", strUID));
     newObj.push_back(Pair("name", strName));
     newObj.push_back(Pair("email", strEmail));
     newObj.push_back(Pair("pubkey", strPubkey));
-    newObj.push_back(Pair("challenge_code", GetRand(999999)));
+    newObj.push_back(Pair("challenge_code", std::to_string(GetRand(999999))));
     file.obj = newObj;   
 
     file.Write();
@@ -551,10 +594,9 @@ bool CDAPI::InviteUser(Object& obj)
     // send the user back the results of the query
     Object ret = GetResultObject(1000, "invite_user", file.obj);
     std::string strJson = SerializeJsonFromObject(ret);
-
-    printf("7 %s\n", strJson.c_str());
-
     EventNotify(strJson);
+
+    return true;
 }
 
 bool CDAPI::ValidateAccount(Object& obj)
@@ -573,21 +615,19 @@ bool CDAPI::ValidateAccount(Object& obj)
         }
     */
 
-    std::string strObject = json_spirit::find_value(obj, "object").get_str();
-
-    printf("3 %s\n", strObject.c_str());
+    std::string strObject = "";
+    Object objData;
+    string strUID = "";
+    string strChallengeCode = "";
+    if(!FindValueAsString(obj, "object", strObject)) return false;
 
     // get the user we want to open
-    Object objData = json_spirit::find_value(obj, "data").get_obj();
-    string strUID = json_spirit::find_value(objData, "to_uid").get_str();
-    string strChallengeCode = json_spirit::find_value(objData, "to_challenge_code").get_str();
-
-    printf("4 %s\n", strUID.c_str());
+    if(!FindValueAsObject(obj, "data", objData)) return false;
+    if(!FindValueAsString(objData, "to_uid", strUID)) return false;
+    if(!FindValueAsString(objData, "to_challenge_code", strChallengeCode)) return false;
 
     // open the file and read it
     CDriveFile file(GetProfileFile(strUID));
-    printf("5 %s\n", GetProfileFile(strUID).c_str());
-
     if(!file.Exists()) 
     {
         SetError(1001, "File doesn't exist : " + strUID);
@@ -598,7 +638,13 @@ bool CDAPI::ValidateAccount(Object& obj)
     std::map<std::string, Value> mapObj;
     json_spirit::obj_to_map(file.obj, mapObj);
 
-    if(mapObj["challenge_code"] == strChallengeCode)
+    if(mapObj["status"].get_int() != 1)
+    {
+        SetError(1008, "Account in wrong state to be validated");
+        return false;
+    }
+
+    if(mapObj["challenge_code"].get_str() == strChallengeCode)
     {
         mapObj["challenge_code"] = "";
         mapObj["status"] = 2;
@@ -611,7 +657,7 @@ bool CDAPI::ValidateAccount(Object& obj)
     file.Write();
 
     /*
-        //RESULTING JSON
+        //VALIDATE_ACCOUNT
         {
             "object" : "dapi_result",
             "data" : {
@@ -628,9 +674,43 @@ bool CDAPI::ValidateAccount(Object& obj)
     // send the user back the results of the query
     Object ret = GetResultObject(1000, "“validate_account”", file.obj);
     std::string strJson = SerializeJsonFromObject(ret);
+    EventNotify(strJson);
 
-    printf("7 %s\n", strJson.c_str());
+    return true;
+}
+
+
+bool CDAPI::SearchUsers(Object& obj)
+{
+    /*
+        //SEARCH USERS
+        {
+            "object" : "dapi_command",
+            "data" : {
+                "command" : "search_users",
+                "match_fields" : ["fiat_converter" : 1],
+                "start" : 0,
+                "limit" : 10
+            }
+        }
+    */
+
+    // open the file and read it
+    CDriveFile file(GetIndexFile("fiat_converters.js"));
+
+    if(!file.Exists()) 
+    {
+        SetError(1003, "File doesn't exist : " + GetIndexFile("fiat_converters.js"));
+        return false;
+    }
+    file.Read();
+
+    // send the user back the results of the query
+    Object ret = GetResultObject(1000, "search_users", file.obj);
+    std::string strJson = SerializeJsonFromObject(ret);
 
     EventNotify(strJson);
+
+    return true;
 }
 
