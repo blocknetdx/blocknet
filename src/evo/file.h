@@ -122,7 +122,7 @@ public:
     {
         LOCK(cs);
 
-        ofstream os( strPath );
+        ofstream os( strPath.c_str() );
         json_spirit::write( obj, os );
         os.close();
        
