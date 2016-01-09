@@ -103,7 +103,7 @@ public:
 
     ReadResult Read()    
     {
-        std::ifstream t(strPath);
+        std::ifstream t(strPath.c_str());
         std::string str((std::istreambuf_iterator<char>(t)),
                          std::istreambuf_iterator<char>());
 
