@@ -46,8 +46,8 @@ Object GetResultObject(int nCommandID, std::string strCommand, Object& objFile)
     Object retData;
     retData.push_back(Pair("id", nCommandID));
     retData.push_back(Pair("command", strCommand));
-    retData.push_back(Pair("error-id", nError));
-    retData.push_back(Pair("error-message", strErrorMessage));
+    retData.push_back(Pair("error_id", nError));
+    retData.push_back(Pair("error_message", strErrorMessage));
     retData.push_back(Pair("data", objFile));
 
     Object ret;
@@ -62,8 +62,8 @@ Object GetMessageObject(int nCommandID, std::string strFromUserID, std::string s
     Object retData;
     retData.push_back(Pair("id", nCommandID));
     retData.push_back(Pair("command", "send_message"));
-    retData.push_back(Pair("error-id", nError));
-    retData.push_back(Pair("error-message", strErrorMessage));
+    retData.push_back(Pair("error_id", nError));
+    retData.push_back(Pair("error_message", strErrorMessage));
     retData.push_back(Pair("from_uid", strFromUserID));
     retData.push_back(Pair("to_uid", strToUserID));
     retData.push_back(Pair("sub_command", strSubCommand));
