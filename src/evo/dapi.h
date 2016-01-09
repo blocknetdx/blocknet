@@ -30,45 +30,10 @@
 using namespace std;
 using namespace json_spirit;
 
-std::string GetIndexFile(std::string strFilename)
-{
-    boost::filesystem::path filename = GetDataDirectory() / "index" / strFilename;
-    return filename.c_str();
-}
-
-std::string GetProfileFile(std::string strUID)
-{
-    boost::filesystem::path filename = GetDataDirectory() / "users" / strUID;
-    return filename.c_str();
-}
-
-std::string GetPrivateDataFile(std::string strUID, int nSlot)
-{
-    std::string strFilename = strUID + "." + boost::lexical_cast<std::string>(nSlot);
-    boost::filesystem::path filename = GetDataDirectory() / "users" / strFilename;
-    return filename.c_str();
-}
-
-
-std::string escapeJsonString(const std::string& input) {
-    // NOTE: Any ideas on replacing this with something more portable? 
-
-    std::ostringstream ss;
-    for (std::string::const_iterator iter = input.begin(); iter != input.end(); iter++) {
-        switch (*iter) {
-            case '\\': ss << "\\\\"; break;
-            case '"': ss << "\\\""; break;
-            case '/': ss << "\\/"; break;
-            case '\b': ss << "\\b"; break;
-            case '\f': ss << "\\f"; break;
-            case '\n': ss << "\\n"; break;
-            case '\r': ss << "\\r"; break;
-            case '\t': ss << "\\t"; break;
-            default: ss << *iter; break;
-        }
-    }
-    return ss.str();
-}
+std::string GetIndexFile(std::string strFilename);
+std::string GetProfileFile(std::string strUID);
+std::string GetPrivateDataFile(std::string strUID, int nSlot);
+std::string escapeJsonString(const std::string& input);
 
 class CDAPI
 {

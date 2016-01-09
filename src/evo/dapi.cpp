@@ -21,6 +21,47 @@ int nError;
 std::string strErrorMessage;
 // error reporting
 
+std::string GetIndexFile(std::string strFilename)
+{
+    boost::filesystem::path filename = GetDataDirectory() / "index" / strFilename;
+    return filename.c_str();
+}
+
+std::string GetProfileFile(std::string strUID)
+{
+    boost::filesystem::path filename = GetDataDirectory() / "users" / strUID;
+    return filename.c_str();
+}
+
+std::string GetPrivateDataFile(std::string strUID, int nSlot)
+{
+    std::string strFilename = strUID + "." + boost::lexical_cast<std::string>(nSlot);
+    boost::filesystem::path filename = GetDataDirectory() / "users" / strFilename;
+    return filename.c_str();
+}
+
+
+std::string escapeJsonString(const std::string& input) {
+    // NOTE: Any ideas on replacing this with something more portable? 
+
+    std::ostringstream ss;
+    for (std::string::const_iterator iter = input.begin(); iter != input.end(); iter++) {
+        switch (*iter) {
+            case '\\': ss << "\\\\"; break;
+            case '"': ss << "\\\""; break;
+            case '/': ss << "\\/"; break;
+            case '\b': ss << "\\b"; break;
+            case '\f': ss << "\\f"; break;
+            case '\n': ss << "\\n"; break;
+            case '\r': ss << "\\r"; break;
+            case '\t': ss << "\\t"; break;
+            default: ss << *iter; break;
+        }
+    }
+    return ss.str();
+}
+
+
 void ResetErrorStatus() {nError = 0; strErrorMessage = "";}
 void SetError(int nErrorIn, std::string strMessageIn) {nError = nErrorIn; strErrorMessage = strMessageIn;}
 
