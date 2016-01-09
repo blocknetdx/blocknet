@@ -54,9 +54,7 @@ std::string escapeJsonString(const std::string& input) {
     // NOTE: Any ideas on replacing this with something more portable? 
 
     std::ostringstream ss;
-    for (auto iter = input.cbegin(); iter != input.cend(); iter++) {
-    //C++98/03:
-    //for (std::string::const_iterator iter = input.begin(); iter != input.end(); iter++) {
+    for (std::string::const_iterator iter = input.begin(); iter != input.end(); iter++) {
         switch (*iter) {
             case '\\': ss << "\\\\"; break;
             case '"': ss << "\\\""; break;
