@@ -14,6 +14,7 @@
 #include "file.h"
 #include "json/json_spirit.h"
 #include "json/json_spirit_value.h"
+#include <boost/lexical_cast.hpp>
 
 
 int nError;
@@ -572,7 +573,7 @@ bool CDAPI::InviteUser(Object& obj)
     newObj.push_back(Pair("name", strName));
     newObj.push_back(Pair("email", strEmail));
     newObj.push_back(Pair("pubkey", strPubkey));
-    newObj.push_back(Pair("challenge_code", std::to_string(GetRand(999999))));
+    newObj.push_back(Pair("challenge_code", boost::lexical_cast<std::string>(GetRand(999999))));
     file.obj = newObj;   
 
     file.Write();
