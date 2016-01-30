@@ -80,11 +80,11 @@ public:
         RecvWithAddress,
         RecvFromOther,
         SendToSelf,
-        RecvWithDarksend,
-        DarksendDenominate,
-        DarksendCollateralPayment,
-        DarksendMakeCollaterals,
-        DarksendCreateDenominations,
+        RecvWithObfuscate,
+        ObfuscateDenominate,
+        ObfuscateCollateralPayment,
+        ObfuscateMakeCollaterals,
+        ObfuscateCreateDenominations,
         Darksent
     };
 

@@ -1,6 +1,6 @@
 Mac OS X Build Instructions and Notes
 ====================================
-This guide will show you how to build dashd (headless client) for OSX.
+This guide will show you how to build darknetd (headless client) for OSX.
 
 Notes
 -----
@@ -58,19 +58,19 @@ The rest of these commands are run inside brew interactive mode:
 /private/tmp/berkeley-db4-UGpd0O $ exit
 ```
 
-After exiting, you'll get a warning that the install is keg-only, which means it wasn't symlinked to `/usr/local`.  You don't need it to link it to build dash, but if you want to, here's how:
+After exiting, you'll get a warning that the install is keg-only, which means it wasn't symlinked to `/usr/local`.  You don't need it to link it to build darknet, but if you want to, here's how:
 
     $ brew link --force berkeley-db4
 
 
-### Building `dashd`
+### Building `darknetd`
 
 1. Clone the github tree to get the source code and go into the directory.
 
-        git clone https://github.com/dashpay/dash.git
-        cd dash
+        git clone https://github.com/darknetpay/darknet.git
+        cd darknet
 
-2.  Build dashd:
+2.  Build darknetd:
 
         ./autogen.sh
         ./configure
@@ -80,7 +80,7 @@ After exiting, you'll get a warning that the install is keg-only, which means it
 
         make check
 
-4.  (Optional) You can also install dashd to your path:
+4.  (Optional) You can also install darknetd to your path:
 
         make install
 
@@ -92,7 +92,7 @@ Download Qt Creator from http://www.qt.io/download/. Download the "community edi
 1. Make sure you installed everything through homebrew mentioned above 
 2. Do a proper ./configure --with-gui=qt5 --enable-debug
 3. In Qt Creator do "New Project" -> Import Project -> Import Existing Project
-4. Enter "dash-qt" as project name, enter src/qt as location
+4. Enter "darknet-qt" as project name, enter src/qt as location
 5. Leave the file selection as it is
 6. Confirm the "summary page"
 7. In the "Projects" tab select "Manage Kits..."
@@ -102,11 +102,11 @@ Download Qt Creator from http://www.qt.io/download/. Download the "community edi
 
 Creating a release build
 ------------------------
-You can ignore this section if you are building `dashd` for your own use.
+You can ignore this section if you are building `darknetd` for your own use.
 
-dashd/dash-cli binaries are not included in the Dash-Qt.app bundle.
+darknetd/darknet-cli binaries are not included in the Dash-Qt.app bundle.
 
-If you are building `dashd` or `Dash-Qt` for others, your build machine should be set up
+If you are building `darknetd` or `Dash-Qt` for others, your build machine should be set up
 as follows for maximum compatibility:
 
 All dependencies should be compiled with these flags:
@@ -121,14 +121,14 @@ bundle is packaged and signed to create the .dmg disk image that is distributed.
 Running
 -------
 
-It's now available at `./dashd`, provided that you are still in the `src`
+It's now available at `./darknetd`, provided that you are still in the `src`
 directory. We have to first create the RPC configuration file, though.
 
-Run `./dashd` to get the filename where it should be put, or just try these
+Run `./darknetd` to get the filename where it should be put, or just try these
 commands:
 
-    echo -e "rpcuser=dashrpc\nrpcpassword=$(xxd -l 16 -p /dev/urandom)" > "/Users/${USER}/Library/Application Support/Dash/dash.conf"
-    chmod 600 "/Users/${USER}/Library/Application Support/Dash/dash.conf"
+    echo -e "rpcuser=darknetrpc\nrpcpassword=$(xxd -l 16 -p /dev/urandom)" > "/Users/${USER}/Library/Application Support/Dash/darknet.conf"
+    chmod 600 "/Users/${USER}/Library/Application Support/Dash/darknet.conf"
 
 The next time you run it, it will start downloading the blockchain, but it won't
 output anything while it's doing this. This process may take several hours;
@@ -139,6 +139,6 @@ you can monitor its process by looking at the debug.log file, like this:
 Other commands:
 -------
 
-    ./dashd -daemon # to start the dash daemon.
-    ./dash-cli --help  # for a list of command-line options.
-    ./dash-cli help    # When the daemon is running, to get a list of RPC commands
+    ./darknetd -daemon # to start the darknet daemon.
+    ./darknet-cli --help  # for a list of command-line options.
+    ./darknet-cli help    # When the daemon is running, to get a list of RPC commands

@@ -1,6 +1,6 @@
 all:
-	$(MAKE) -C .. dash_test
+	$(MAKE) -C .. darknet_test
 clean:
-	$(MAKE) -C .. dash_test_clean
+	$(MAKE) -C .. darknet_test_clean
 check:
-	$(MAKE) -C .. dash_test_check
+	$(MAKE) -C .. darknet_test_check

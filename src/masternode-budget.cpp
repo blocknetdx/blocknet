@@ -7,7 +7,7 @@
 
 #include "masternode-budget.h"
 #include "masternode.h"
-#include "darksend.h"
+#include "obfuscate.h"
 #include "masternodeman.h"
 #include "masternode-sync.h"
 #include "util.h"
@@ -25,11 +25,11 @@ std::vector<CFinalizedBudgetBroadcast> vecImmatureFinalizedBudgets;
 int nSubmittedFinalBudget;
 
 int GetBudgetPaymentCycleBlocks(){
-    // Amount of blocks in a months period of time (using 2.6 minutes per) = (60*24*30)/2.6
-    if(Params().NetworkID() == CBaseChainParams::MAIN) return 16616;
+    // Amount of blocks in a months period of time (using 1 minutes per) = (60*24*30)
+    if(Params().NetworkID() == CBaseChainParams::MAIN) return 43200;
     //for testing purposes
 
-    return 50; //ten times per day
+    return 146; //ten times per day
 }
 
 bool IsBudgetCollateralValid(uint256 nTxCollateralHash, uint256 nExpectedHash, std::string& strError, int64_t& nTime, int& nConf)
@@ -78,7 +78,7 @@ bool IsBudgetCollateralValid(uint256 nTxCollateralHash, uint256 nExpectedHash, s
 
     nConf = conf;
 
-    //if we're syncing we won't have instantX information, so accept 1 confirmation 
+    //if we're syncing we won't have swiftTX information, so accept 1 confirmation 
     if(conf >= BUDGET_FEE_CONFIRMATIONS){
         return true;
     } else {
@@ -753,20 +753,13 @@ CAmount CBudgetManager::GetTotalBudget(int nHeight)
     if(chainActive.Tip() == NULL) return 0;
 
     //get min block value and calculate from that
-    CAmount nSubsidy = 5 * COIN;
+    CAmount nSubsidy = 250 * COIN;
 
-    if(Params().NetworkID() == CBaseChainParams::TESTNET){
-        for(int i = 46200; i <= nHeight; i += 210240) nSubsidy -= nSubsidy/14;
-    } else {
-        // yearly decline of production by 7.1% per year, projected 21.3M coins max by year 2050.
-        for(int i = 210240; i <= nHeight; i += 210240) nSubsidy -= nSubsidy/14;
-    }
-
-    // Amount of blocks in a months period of time (using 2.6 minutes per) = (60*24*30)/2.6
-    if(Params().NetworkID() == CBaseChainParams::MAIN) return ((nSubsidy/100)*10)*576*30;
+    // Amount of blocks in a months period of time (using 1 minutes per) = (60*24*30)
+    if(Params().NetworkID() == CBaseChainParams::MAIN) return ((nSubsidy/100)*10)*1440*30;
 
     //for testing purposes
-    return ((nSubsidy/100)*10)*50;
+    return ((nSubsidy/100)*10)*146;
 }
 
 void CBudgetManager::NewBlock()
@@ -780,13 +773,13 @@ void CBudgetManager::NewBlock()
         SubmitFinalBudget();
     }
 
-    //this function should be called 1/6 blocks, allowing up to 100 votes per day on all proposals
-    if(chainActive.Height() % 6 != 0) return;
+    //this function should be called 1/14 blocks, allowing up to 100 votes per day on all proposals
+    if(chainActive.Height() % 14 != 0) return;
 
     // incremental sync with our peers
     if(masternodeSync.IsSynced()){
         LogPrintf("CBudgetManager::NewBlock - incremental sync started\n");
-        if(chainActive.Height() % 600 == rand() % 600) {
+        if(chainActive.Height() % 1440 == rand() % 1440) {
             ClearSeen();
             ResetSync();
         }
@@ -956,7 +949,7 @@ void CBudgetManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CData
         mapSeenMasternodeBudgetVotes.insert(make_pair(vote.GetHash(), vote));
         if(!vote.SignatureValid(true)){
             LogPrintf("mvote - signature invalid\n");
-            if(masternodeSync.IsSynced()) Misbehaving(pfrom->GetId(), 20);
+            Misbehaving(pfrom->GetId(), 20);
             // it could just be a non-synced masternode
             mnodeman.AskForMN(pfrom, vote.vin);
             return;
@@ -1026,7 +1019,7 @@ void CBudgetManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CData
         mapSeenFinalizedBudgetVotes.insert(make_pair(vote.GetHash(), vote));
         if(!vote.SignatureValid(true)){
             LogPrintf("fbvote - signature invalid\n");
-            if(masternodeSync.IsSynced()) Misbehaving(pfrom->GetId(), 20);
+            Misbehaving(pfrom->GetId(), 20);
             // it could just be a non-synced masternode
             mnodeman.AskForMN(pfrom, vote.vin);
             return;
@@ -1308,7 +1301,7 @@ bool CBudgetProposal::IsValid(std::string& strError, bool fCheckCollateral)
         return false;
     }
 
-    if(nAmount < 1*COIN) {
+    if(nAmount < 10*COIN) {
         strError = "Invalid nAmount";
         return false;
     }
@@ -1651,7 +1644,7 @@ void CFinalizedBudget::AutoCheck()
     if(!fMasterNode || fAutoChecked) return;
 
     //do this 1 in 4 blocks -- spread out the voting activity on mainnet
-    // -- this function is only called every sixth block, so this is really 1 in 24 blocks
+    // -- this function is only called every fourteenth block, so this is really 1 in 56 blocks
     if(Params().NetworkID() == CBaseChainParams::MAIN && rand() % 4 != 0) {
         LogPrintf("CFinalizedBudget::AutoCheck - waiting\n");
         return;

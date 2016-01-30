@@ -60,15 +60,15 @@ bin_PROGRAMS =
 TESTS =
 
 if BUILD_BITCOIND
-  bin_PROGRAMS += dashd
+  bin_PROGRAMS += darknetd
 endif
 
 if BUILD_BITCOIN_UTILS
-  bin_PROGRAMS += dash-cli dash-tx
+  bin_PROGRAMS += darknet-cli darknet-tx
 endif
 
 .PHONY: FORCE
-# dash core #
+# darknet core #
 BITCOIN_CORE_H = \
   activemasternode.h \
   addrman.h \
@@ -92,14 +92,14 @@ BITCOIN_CORE_H = \
   primitives/transaction.h \
   core_io.h \
   crypter.h \
-  darksend.h \
-  darksend-relay.h \
+  obfuscate.h \
+  obfuscate-relay.h \
   db.h \
   eccryptoverify.h \
   ecwrapper.h \
   hash.h \
   init.h \
-  instantx.h \
+  swifttx.h \
   key.h \
   keepass.h \
   keystore.h \
@@ -170,7 +170,7 @@ obj/build.h: FORCE
 	  $(abs_top_srcdir)
 libbitcoin_util_a-clientversion.$(OBJEXT): obj/build.h
 
-# server: shared between dashd and dash-qt
+# server: shared between darknetd and darknet-qt
 libbitcoin_server_a_CPPFLAGS = $(BITCOIN_INCLUDES) $(MINIUPNPC_CPPFLAGS)
 libbitcoin_server_a_SOURCES = \
   addrman.cpp \
@@ -202,16 +202,16 @@ libbitcoin_server_a_SOURCES = \
   $(JSON_H) \
   $(BITCOIN_CORE_H)
 
-# wallet: shared between dashd and dash-qt, but only linked
+# wallet: shared between darknetd and darknet-qt, but only linked
 # when wallet enabled
 libbitcoin_wallet_a_CPPFLAGS = $(BITCOIN_INCLUDES)
 libbitcoin_wallet_a_SOURCES = \
   activemasternode.cpp \
-  darksend.cpp \
-  darksend-relay.cpp \
+  obfuscate.cpp \
+  obfuscate-relay.cpp \
   db.cpp \
   crypter.cpp \
-  instantx.cpp \
+  swifttx.cpp \
   masternode.cpp \
   masternode-budget.cpp \
   masternode-payments.cpp \
@@ -240,14 +240,9 @@ crypto_libbitcoin_crypto_a_SOURCES = \
   crypto/aes_helper.c \
   crypto/blake.c \
   crypto/bmw.c \
-  crypto/cubehash.c \
-  crypto/echo.c \
   crypto/groestl.c \
   crypto/jh.c \
   crypto/keccak.c \
-  crypto/luffa.c \
-  crypto/shavite.c \
-  crypto/simd.c \
   crypto/skein.c \
   crypto/common.h \
   crypto/sha256.h \
@@ -259,14 +254,9 @@ crypto_libbitcoin_crypto_a_SOURCES = \
   crypto/ripemd160.h \
   crypto/sph_blake.h \
   crypto/sph_bmw.h \
-  crypto/sph_cubehash.h \
-  crypto/sph_echo.h \
   crypto/sph_groestl.h \
   crypto/sph_jh.h \
   crypto/sph_keccak.h \
-  crypto/sph_luffa.h \
-  crypto/sph_shavite.h \
-  crypto/sph_simd.h \
   crypto/sph_skein.h \
   crypto/sph_types.h
 
@@ -278,7 +268,7 @@ univalue_libbitcoin_univalue_a_SOURCES = \
   univalue/univalue_escapes.h \
   univalue/univalue.h
 
-# common: shared between dashd, and dash-qt and non-server tools
+# common: shared between darknetd, and darknet-qt and non-server tools
 libbitcoin_common_a_CPPFLAGS = $(BITCOIN_INCLUDES)
 libbitcoin_common_a_SOURCES = \
   allocators.cpp \
@@ -333,7 +323,7 @@ libbitcoin_util_a_SOURCES += compat/glibc_compat.cpp
 libbitcoin_util_a_SOURCES += compat/glibcxx_compat.cpp
 endif
 
-# cli: shared between dash-cli and dash-qt
+# cli: shared between darknet-cli and darknet-qt
 libbitcoin_cli_a_CPPFLAGS = $(BITCOIN_INCLUDES)
 libbitcoin_cli_a_SOURCES = \
   rpcclient.cpp \
@@ -343,7 +333,7 @@ nodist_libbitcoin_util_a_SOURCES = $(srcdir)/obj/build.h
 #
 
 # bitcoind binary #
-dashd_LDADD = \
+darknetd_LDADD = \
   $(LIBBITCOIN_SERVER) \
   $(LIBBITCOIN_COMMON) \
   $(LIBBITCOIN_UNIVALUE) \
@@ -354,35 +344,36 @@ dashd_LDADD = \
   $(LIBSECP256K1)
 
 if ENABLE_WALLET
-dashd_LDADD += libbitcoin_wallet.a
+darknetd_LDADD += libbitcoin_wallet.a
 endif
-dashd_SOURCES = dashd.cpp
+darknetd_SOURCES = darknetd.cpp
 #
 
 if TARGET_WINDOWS
-dashd_SOURCES += dashd-res.rc
+darknetd_SOURCES += darknetd-res.rc
 endif
 
-dashd_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS)
-dashd_CPPFLAGS = $(BITCOIN_INCLUDES)
-dashd_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+darknetd_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS)
+darknetd_CPPFLAGS = $(BITCOIN_INCLUDES)
+darknetd_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
-# dash-cli binary #
-dash_cli_LDADD = \
+
+# darknet-cli binary #
+darknet_cli_LDADD = \
   $(LIBBITCOIN_CLI) \
   $(LIBBITCOIN_UTIL) \
   $(BOOST_LIBS) \
   $(SSL_LIBS) \
   $(CRYPTO_LIBS)
 
-dash_cli_SOURCES = \
-  dash-cli.cpp
+darknet_cli_SOURCES = \
+  darknet-cli.cpp
 
-dash_cli_CPPFLAGS = $(BITCOIN_INCLUDES)
+darknet_cli_CPPFLAGS = $(BITCOIN_INCLUDES)
 #
 
-# dash-tx binary #
-dash_tx_LDADD = \
+# darknet-tx binary #
+darknet_tx_LDADD = \
   $(LIBBITCOIN_UNIVALUE) \
   $(LIBBITCOIN_COMMON) \
   $(LIBBITCOIN_UTIL) \
@@ -391,15 +382,15 @@ dash_tx_LDADD = \
   $(BOOST_LIBS) \
   $(CRYPTO_LIBS)
 
-dash_tx_SOURCES = dash-tx.cpp
-dash_tx_CPPFLAGS = $(BITCOIN_INCLUDES)
+darknet_tx_SOURCES = darknet-tx.cpp
+darknet_tx_CPPFLAGS = $(BITCOIN_INCLUDES)
 #
-dash_tx_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+darknet_tx_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
 if TARGET_WINDOWS
-dash_cli_SOURCES += dash-cli-res.rc
+darknet_cli_SOURCES += darknet-cli-res.rc
 endif
-dash_cli_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+darknet_cli_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
 if BUILD_BITCOIN_LIBS
 include_HEADERS = script/bitcoinconsensus.h

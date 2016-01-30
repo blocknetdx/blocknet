@@ -1,11 +1,12 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2014 The Bitcoin developers
 // Copyright (c) 2014-2015 The Dash developers
+// Copyright (c) 2015-2016 The DarkNet developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #if defined(HAVE_CONFIG_H)
-#include "config/dash-config.h"
+#include "config/darknet-config.h"
 #endif
 
 #include "net.h"
@@ -15,7 +16,7 @@
 #include "clientversion.h"
 #include "primitives/transaction.h"
 #include "ui_interface.h"
-#include "darksend.h"
+#include "obfuscate.h"
 #include "wallet.h"
 
 #ifdef WIN32
@@ -400,7 +401,7 @@ CNode* ConnectNode(CAddress addrConnect, const char *pszDest, bool darkSendMaste
         CNode* pnode = FindNode((CService)addrConnect);
         if (pnode)
         {
-            pnode->fDarkSendMaster = darkSendMaster;
+            pnode->fObfuscateMaster = darkSendMaster;
 
             pnode->AddRef();
             return pnode;
@@ -436,7 +437,7 @@ CNode* ConnectNode(CAddress addrConnect, const char *pszDest, bool darkSendMaste
         }
 
         pnode->nTimeConnected = GetTime();
-        if(darkSendMaster) pnode->fDarkSendMaster = true;
+        if(darkSendMaster) pnode->fObfuscateMaster = true;
 
         return pnode;
     } else if (!proxyConnectionFailed) {
@@ -565,7 +566,7 @@ void CNode::copyStats(CNodeStats &stats)
         nPingUsecWait = GetTimeMicros() - nPingUsecStart;
     }
 
-    // Raw ping time is in microseconds, but show it to user as whole seconds (Dash users should be well used to small numbers with many decimal places by now :)
+    // Raw ping time is in microseconds, but show it to user as whole seconds (DarkNet users should be well used to small numbers with many decimal places by now :)
     stats.dPingTime = (((double)nPingUsecTime) / 1e6);
     stats.dPingWait = (((double)nPingUsecWait) / 1e6);
 
@@ -1080,7 +1081,7 @@ void ThreadMapPort()
             }
         }
 
-        string strDesc = "Dash " + FormatFullVersion();
+        string strDesc = "DarkNet " + FormatFullVersion();
 
         try {
             while (true) {
@@ -1577,7 +1578,7 @@ bool BindListenPort(const CService &addrBind, string& strError, bool fWhiteliste
     {
         int nErr = WSAGetLastError();
         if (nErr == WSAEADDRINUSE)
-            strError = strprintf(_("Unable to bind to %s on this computer. Dash Core is probably already running."), addrBind.ToString());
+            strError = strprintf(_("Unable to bind to %s on this computer. DarkNet Core is probably already running."), addrBind.ToString());
         else
             strError = strprintf(_("Unable to bind to %s on this computer (bind returned error %s)"), addrBind.ToString(), NetworkErrorString(nErr));
         LogPrintf("%s\n", strError);
@@ -2024,7 +2025,7 @@ CNode::CNode(SOCKET hSocketIn, CAddress addrIn, std::string addrNameIn, bool fIn
     nPingUsecStart = 0;
     nPingUsecTime = 0;
     fPingQueued = false;
-    fDarkSendMaster = false;
+    fObfuscateMaster = false;
 
     {
         LOCK(cs_nLastNodeId);

@@ -12,8 +12,8 @@ class CCoinControl
 {
 public:
     CTxDestination destChange;
-    bool useDarkSend;
-    bool useInstantX;
+    bool useObfuscate;
+    bool useSwiftTX;
 
     CCoinControl()
     {
@@ -24,8 +24,8 @@ public:
     {
         destChange = CNoDestination();
         setSelected.clear();
-        useInstantX = false;
-        useDarkSend = true;
+        useSwiftTX = false;
+        useObfuscate = true;
     }
 
     bool HasSelected() const

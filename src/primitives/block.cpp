@@ -8,10 +8,11 @@
 #include "hash.h"
 #include "tinyformat.h"
 #include "utilstrencodings.h"
+#include "util.h"
 
 uint256 CBlockHeader::GetHash() const
 {
-    return HashX11(BEGIN(nVersion), END(nNonce));
+    return HashQuark(BEGIN(nVersion), END(nNonce));
 }
 
 uint256 CBlock::BuildMerkleTree(bool* fMutated) const
@@ -128,3 +129,9 @@ std::string CBlock::ToString() const
     s << "\n";
     return s.str();
 }
+
+void CBlock::print() const
+{
+    LogPrintf("%s", ToString());
+}
+

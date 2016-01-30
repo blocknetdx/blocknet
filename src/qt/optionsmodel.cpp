@@ -1,10 +1,11 @@
 // Copyright (c) 2011-2014 The Bitcoin developers
 // Copyright (c) 2014-2015 The Dash developers
+// Copyright (c) 2015-2016 The DarkNet developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #if defined(HAVE_CONFIG_H)
-#include "config/dash-config.h"
+#include "config/darknet-config.h"
 #endif
 
 #include "optionsmodel.h"
@@ -60,7 +61,7 @@ void OptionsModel::Init()
 
     // Display
     if (!settings.contains("nDisplayUnit"))
-        settings.setValue("nDisplayUnit", BitcoinUnits::DASH);
+        settings.setValue("nDisplayUnit", BitcoinUnits::DNET);
     nDisplayUnit = settings.value("nDisplayUnit").toInt();
 
     if (!settings.contains("strThirdPartyTxUrls"))
@@ -71,13 +72,13 @@ void OptionsModel::Init()
         settings.setValue("fCoinControlFeatures", false);
     fCoinControlFeatures = settings.value("fCoinControlFeatures", false).toBool();
 
-    if (!settings.contains("nDarksendRounds"))
-        settings.setValue("nDarksendRounds", 2);
+    if (!settings.contains("nObfuscateRounds"))
+        settings.setValue("nObfuscateRounds", 2);
 
     if (!settings.contains("nAnonymizeDarkcoinAmount"))
         settings.setValue("nAnonymizeDarkcoinAmount", 1000);
 
-    nDarksendRounds = settings.value("nDarksendRounds").toLongLong();
+    nObfuscateRounds = settings.value("nObfuscateRounds").toLongLong();
     nAnonymizeDarkcoinAmount = settings.value("nAnonymizeDarkcoinAmount").toLongLong();
 
     // These are shared with the core or have a command-line parameter
@@ -138,10 +139,10 @@ void OptionsModel::Init()
     if (!SoftSetArg("-lang", settings.value("language").toString().toStdString()))
         addOverriddenOption("-lang");
 
-    if (settings.contains("nDarksendRounds"))
-        SoftSetArg("-darksendrounds", settings.value("nDarksendRounds").toString().toStdString());
-    if (settings.contains("nAnonymizeDarkcoinAmount"))
-        SoftSetArg("-anonymizedashamount", settings.value("nAnonymizeDarkcoinAmount").toString().toStdString());
+    if (settings.contains("nObfuscateRounds"))
+        SoftSetArg("-obfuscaterounds", settings.value("nObfuscateRounds").toString().toStdString());
+    if (settings.contains("nAnonymizeDarkNetAmount"))
+        SoftSetArg("-anonymizedarknetamount", settings.value("nAnonymizeDarkNetAmount").toString().toStdString());
 
     language = settings.value("language").toString();
 }
@@ -152,7 +153,7 @@ void OptionsModel::Reset()
 
     // Remove all entries from our QSettings object
     settings.clear();
-    resetSettings = true; // Needed in dash.cpp during shotdown to also remove the window positions
+    resetSettings = true; // Needed in darknet.cpp during shotdown to also remove the window positions
 
     // default setting for OptionsModel::StartAtStartup - disabled
     if (GUIUtil::GetStartOnSystemStartup())
@@ -219,8 +220,8 @@ QVariant OptionsModel::data(const QModelIndex & index, int role) const
             return settings.value("nDatabaseCache");
         case ThreadsScriptVerif:
             return settings.value("nThreadsScriptVerif");
-        case DarksendRounds:
-            return QVariant(nDarksendRounds);
+        case ObfuscateRounds:
+            return QVariant(nObfuscateRounds);
         case AnonymizeDarkcoinAmount:
             return QVariant(nAnonymizeDarkcoinAmount);
         case Listen:
@@ -324,10 +325,10 @@ bool OptionsModel::setData(const QModelIndex & index, const QVariant & value, in
                 setRestartRequired(true);
             }
             break;
-        case DarksendRounds:
-            nDarksendRounds = value.toInt();
-            settings.setValue("nDarksendRounds", nDarksendRounds);
-            emit darksendRoundsChanged(nDarksendRounds);
+        case ObfuscateRounds:
+            nObfuscateRounds = value.toInt();
+            settings.setValue("nObfuscateRounds", nObfuscateRounds);
+            emit obfuscateRoundsChanged(nObfuscateRounds);
             break;
         case AnonymizeDarkcoinAmount:
             nAnonymizeDarkcoinAmount = value.toInt();

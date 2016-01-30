@@ -448,11 +448,11 @@ However, there are some known issues:
 
 Testing commands, you can start multiple wallets up and all denominate
 on the same masternode for testing purposes:
-/darkcoin-qt -datadir=/home/user/.darkcoin -listen=0 -darksendrounds=8 -usemasternode="192.168.56.102:19999"
-/darkcoin-qt -datadir=/home/user/.darkcoin2 -listen=0 -darksendrounds=8 -usemasternode="192.168.56.102:19999"
+/darkcoin-qt -datadir=/home/user/.darkcoin -listen=0 -darksendrounds=8 -usemasternode="192.168.56.102:51474"
+/darkcoin-qt -datadir=/home/user/.darkcoin2 -listen=0 -darksendrounds=8 -usemasternode="192.168.56.102:51474"
 
 and even disable darksend auto-denom if wanted:
-/darkcoin-qt -datadir=/home/user/.darkcoin -listen=0 -darksendrounds=8 -usemasternode="192.168.56.102:19999" -disabledarksend=1
+/darkcoin-qt -datadir=/home/user/.darkcoin -listen=0 -darksendrounds=8 -usemasternode="192.168.56.102:51474" -disabledarksend=1
 
 
 0.9.12.7 Release notes
@@ -483,7 +483,7 @@ and even disable darksend auto-denom if wanted:
 
 - Masternodes should change every block now
 - DoAutomaticDenomination should happen every block now
-- DarkSendRounds had a bug that I fixed, should calculate correctly now
+- DarksendRounds had a bug that I fixed, should calculate correctly now
 
 
 0.9.12.4 Release notes

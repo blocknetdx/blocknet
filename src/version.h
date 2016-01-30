@@ -21,7 +21,7 @@ static const int GETHEADERS_VERSION = 70077;
 //! disconnect from peers older than this proto version
 static const int MIN_PEER_PROTO_VERSION = 70066;
 
-//! minimum peer version accepted by DarksendPool
+//! minimum peer version accepted by ObfuscatePool
 static const int MIN_POOL_PEER_PROTO_VERSION = 70103;
 
 //! minimum peer version for masternode budgets

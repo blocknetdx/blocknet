@@ -32,7 +32,7 @@
   <string>Dash-Qt</string>
 
   <key>CFBundleIdentifier</key>
-  <string>io.dashpay.Dash-Qt</string>
+  <string>io.darknetpay.Dash-Qt</string>
 
   <key>CFBundleURLTypes</key>
   <array>
@@ -40,10 +40,10 @@
       <key>CFBundleTypeRole</key>
       <string>Editor</string>
       <key>CFBundleURLName</key>
-      <string>io.dash.DashPayment</string>
+      <string>io.darknet.DashPayment</string>
       <key>CFBundleURLSchemes</key>
       <array>
-        <string>dash</string>
+        <string>darknet</string>
       </array>
     </dict>
   </array>
@@ -52,7 +52,7 @@
   <array>
     <dict>
       <key>UTTypeIdentifier</key>
-      <string>io.dash.paymentrequest</string>
+      <string>io.darknet.paymentrequest</string>
       <key>UTTypeDescription</key>
       <string>Dash payment request</string>
       <key>UTTypeConformsTo</key>
@@ -62,10 +62,10 @@
       <key>UTTypeTagSpecification</key>
       <dict>
         <key>public.mime-type</key>
-        <string>application/x-dash-payment-request</string>
+        <string>application/x-darknet-payment-request</string>
         <key>public.filename-extension</key>
         <array>
-          <string>dashpaymentrequest</string>
+          <string>darknetpaymentrequest</string>
         </array>
       </dict>
     </dict>
@@ -78,7 +78,7 @@
       <string>Editor</string>
       <key>LSItemContentTypes</key>
       <array>
-        <string>io.dash.paymentrequest</string>
+        <string>io.darknet.paymentrequest</string>
       </array>
       <key>LSHandlerRank</key>
       <string>Owner</string>

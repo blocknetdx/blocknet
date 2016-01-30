@@ -70,7 +70,7 @@
                <cursorShape>WhatsThisCursor</cursorShape>
               </property>
               <property name="toolTip">
-               <string>The displayed information may be out of date. Your wallet automatically synchronizes with the Dash network after a connection is established, but this process has not completed yet.</string>
+               <string>The displayed information may be out of date. Your wallet automatically synchronizes with the DarkNet network after a connection is established, but this process has not completed yet.</string>
               </property>
               <property name="styleSheet">
                <string notr="true">QLabel { color: red; }</string>
@@ -396,7 +396,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QFrame" name="frameDarksend">
+        <widget class="QFrame" name="frameObfuscate">
          <property name="minimumSize">
           <size>
            <width>0</width>
@@ -446,7 +446,7 @@
             </widget>
            </item>
            <item row="1" column="1">
-            <widget class="QProgressBar" name="darksendProgress">
+            <widget class="QProgressBar" name="obfuscateProgress">
              <property name="maximumSize">
               <size>
                <width>154</width>
@@ -461,7 +461,7 @@
            <item row="2" column="0">
             <widget class="QLabel" name="labelAnonymizedText">
              <property name="text">
-              <string>Darksend Balance:</string>
+              <string>Obfuscate Balance:</string>
              </property>
             </widget>
            </item>
@@ -474,7 +474,7 @@
               </font>
              </property>
              <property name="text">
-              <string notr="true">0 DASH</string>
+              <string notr="true">0 DNET</string>
              </property>
             </widget>
            </item>
@@ -488,7 +488,7 @@
            <item row="3" column="1">
             <widget class="QLabel" name="labelAmountRounds">
              <property name="text">
-              <string>0 DASH / 0 Rounds</string>
+              <string>0 DNET / 0 Rounds</string>
              </property>
             </widget>
            </item>
@@ -510,7 +510,7 @@
             </widget>
            </item>
            <item row="0" column="1">
-            <widget class="QLabel" name="darksendEnabled">
+            <widget class="QLabel" name="obfuscateEnabled">
              <property name="text">
               <string>Enabled/Disabled</string>
              </property>
@@ -955,7 +955,7 @@
            <bool>true</bool>
           </property>
          </widget>
-         <widget class="QPushButton" name="toggleDarksend">
+         <widget class="QPushButton" name="toggleObfuscate">
           <property name="geometry">
            <rect>
             <x>10</x>
@@ -987,7 +987,7 @@
            <enum>Qt::Horizontal</enum>
           </property>
          </widget>
-         <widget class="QLabel" name="darksendStatus">
+         <widget class="QLabel" name="obfuscateStatus">
           <property name="geometry">
            <rect>
             <x>10</x>
@@ -1012,7 +1012,7 @@
            <bool>true</bool>
           </property>
          </widget>
-         <widget class="QPushButton" name="darksendAuto">
+         <widget class="QPushButton" name="obfuscateAuto">
           <property name="geometry">
            <rect>
             <x>230</x>
@@ -1028,13 +1028,13 @@
            </sizepolicy>
           </property>
           <property name="toolTip">
-           <string>Try to manually submit a Darksend request.</string>
+           <string>Try to manually submit a Obfuscate request.</string>
           </property>
           <property name="text">
            <string>Try Mix</string>
           </property>
          </widget>
-         <widget class="QPushButton" name="darksendReset">
+         <widget class="QPushButton" name="obfuscateReset">
           <property name="geometry">
            <rect>
             <x>230</x>
@@ -1050,7 +1050,7 @@
            </sizepolicy>
           </property>
           <property name="toolTip">
-           <string>Reset the current status of Darksend (can interrupt Darksend if it's in the process of Mixing, which can cost you money!)</string>
+           <string>Reset the current status of Obfuscate (can interrupt Obfuscate if it's in the process of Mixing, which can cost you money!)</string>
           </property>
           <property name="autoFillBackground">
            <bool>false</bool>
@@ -1078,14 +1078,14 @@
               </font>
              </property>
              <property name="text">
-              <string>Darksend</string>
+              <string>Obfuscate</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="labelDarksendSyncStatus">
+            <widget class="QLabel" name="labelObfuscateSyncStatus">
              <property name="toolTip">
-              <string>The displayed information may be out of date. Your wallet automatically synchronizes with the Dash network after a connection is established, but this process has not completed yet.</string>
+              <string>The displayed information may be out of date. Your wallet automatically synchronizes with the DarkNet network after a connection is established, but this process has not completed yet.</string>
              </property>
              <property name="styleSheet">
               <string notr="true">QLabel { color: red; }</string>
@@ -1162,7 +1162,7 @@
                <cursorShape>WhatsThisCursor</cursorShape>
               </property>
               <property name="toolTip">
-               <string>The displayed information may be out of date. Your wallet automatically synchronizes with the Dash network after a connection is established, but this process has not completed yet.</string>
+               <string>The displayed information may be out of date. Your wallet automatically synchronizes with the DarkNet network after a connection is established, but this process has not completed yet.</string>
               </property>
               <property name="styleSheet">
                <string notr="true">QLabel { color: red; }</string>

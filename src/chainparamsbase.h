@@ -9,7 +9,7 @@
 #include <vector>
 
 /**
- * CBaseChainParams defines the base parameters (shared between dash-cli and dashd)
+ * CBaseChainParams defines the base parameters (shared between darknet-cli and darknetd)
  * of a given instance of the Dash system.
  */
 class CBaseChainParams

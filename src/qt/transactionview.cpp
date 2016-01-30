@@ -90,10 +90,10 @@ TransactionView::TransactionView(QWidget *parent) :
     typeWidget->addItem(tr("Sent to"), TransactionFilterProxy::TYPE(TransactionRecord::SendToAddress) |
                                   TransactionFilterProxy::TYPE(TransactionRecord::SendToOther));
     typeWidget->addItem(tr("Darksent"), TransactionFilterProxy::TYPE(TransactionRecord::Darksent));
-    typeWidget->addItem(tr("Darksend Make Collateral Inputs"), TransactionFilterProxy::TYPE(TransactionRecord::DarksendMakeCollaterals));
-    typeWidget->addItem(tr("Darksend Create Denominations"), TransactionFilterProxy::TYPE(TransactionRecord::DarksendCreateDenominations));
-    typeWidget->addItem(tr("Darksend Denominate"), TransactionFilterProxy::TYPE(TransactionRecord::DarksendDenominate));
-    typeWidget->addItem(tr("Darksend Collateral Payment"), TransactionFilterProxy::TYPE(TransactionRecord::DarksendCollateralPayment));
+    typeWidget->addItem(tr("Obfuscate Make Collateral Inputs"), TransactionFilterProxy::TYPE(TransactionRecord::ObfuscateMakeCollaterals));
+    typeWidget->addItem(tr("Obfuscate Create Denominations"), TransactionFilterProxy::TYPE(TransactionRecord::ObfuscateCreateDenominations));
+    typeWidget->addItem(tr("Obfuscate Denominate"), TransactionFilterProxy::TYPE(TransactionRecord::ObfuscateDenominate));
+    typeWidget->addItem(tr("Obfuscate Collateral Payment"), TransactionFilterProxy::TYPE(TransactionRecord::ObfuscateCollateralPayment));
     typeWidget->addItem(tr("To yourself"), TransactionFilterProxy::TYPE(TransactionRecord::SendToSelf));
     typeWidget->addItem(tr("Mined"), TransactionFilterProxy::TYPE(TransactionRecord::Generated));
     typeWidget->addItem(tr("Other"), TransactionFilterProxy::TYPE(TransactionRecord::Other));
@@ -280,16 +280,9 @@ void TransactionView::chooseDate(int idx)
                 TransactionFilterProxy::MAX_DATE);
         break;
     case LastMonth:
-        if (current.month() == 1){
-            transactionProxyModel->setDateRange(
-                QDateTime(QDate(current.year()-1, 12, 1)),
-                QDateTime(QDate(current.year(), current.month(), 1)));
-        }
-        else {
-            transactionProxyModel->setDateRange(
+        transactionProxyModel->setDateRange(
                 QDateTime(QDate(current.year(), current.month()-1, 1)),
                 QDateTime(QDate(current.year(), current.month(), 1)));
-        }
         break;
     case ThisYear:
         transactionProxyModel->setDateRange(

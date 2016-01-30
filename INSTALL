@@ -1,4 +1,4 @@
-Building Dash
+Building DarkNet
 
 Use the autogen script to prepare the build environment.
 
@@ -6,11 +6,8 @@ Use the autogen script to prepare the build environment.
     ./configure
     make
 
-Precompiled binaries are available at github, see
-https://github.com/dashproject/dash-binaries
-
 Always verify the signatures and checksums.
 
-See doc/build-*.md for instructions on building dashd,
+See doc/build-*.md for instructions on building darknetd,
 the intended-for-services, no-graphical-interface, reference
-implementation of Dash.
+implementation of DarkNet.

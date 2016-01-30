@@ -32,7 +32,7 @@ class CTxBudgetPayment;
 #define VOTE_YES      1
 #define VOTE_NO       2
 
-static const CAmount BUDGET_FEE_TX = (5*COIN);
+static const CAmount BUDGET_FEE_TX = (50*COIN);
 static const int64_t BUDGET_FEE_CONFIRMATIONS = 6;
 static const int64_t BUDGET_VOTE_UPDATE_MIN = 60*60;
 
@@ -261,7 +261,7 @@ public:
 
     //check to see if we should vote on this
     void AutoCheck();
-    //total dash paid out by this budget
+    //total darknet paid out by this budget
     CAmount GetTotalPayout();
     //vote on this finalized budget as a masternode
     void SubmitVote();

@@ -4,7 +4,7 @@ Some notes on how to build Dash in Unix.
 
 Note
 ---------------------
-Always use absolute paths to configure and compile dash and the dependencies,
+Always use absolute paths to configure and compile darknet and the dependencies,
 for example, when specifying the the path of the dependency:
 
 	../dist/configure --enable-cxx --disable-shared --with-pic --prefix=$BDB_PREFIX
@@ -22,7 +22,7 @@ make
 make install # optional
 ```
 
-This will build dash-qt as well if the dependencies are met.
+This will build darknet-qt as well if the dependencies are met.
 
 Dependencies
 ---------------------
@@ -111,12 +111,12 @@ libqrencode (optional) can be installed with:
 
     sudo apt-get install libqrencode-dev
 
-Once these are installed, they will be found by configure and a dash-qt executable will be
+Once these are installed, they will be found by configure and a darknet-qt executable will be
 built by default.
 
 Notes
 -----
-The release is built with GCC and then "strip dashd" to strip the debug
+The release is built with GCC and then "strip darknetd" to strip the debug
 symbols, which reduces the executable size by about 90%.
 
 
@@ -145,10 +145,10 @@ Berkeley DB
 It is recommended to use Berkeley DB 4.8. If you have to build it yourself:
 
 ```bash
-DASH_ROOT=$(pwd)
+DNET_ROOT=$(pwd)
 
-# Pick some path to install BDB to, here we create a directory within the dash directory
-BDB_PREFIX="${DASH_ROOT}/db4"
+# Pick some path to install BDB to, here we create a directory within the darknet directory
+BDB_PREFIX="${DNET_ROOT}/db4"
 mkdir -p $BDB_PREFIX
 
 # Fetch the source and verify that it is not tampered with
@@ -164,7 +164,7 @@ cd db-4.8.30.NC/build_unix/
 make install
 
 # Configure Dash Core to use our own-built instance of BDB
-cd $DASH_ROOT
+cd $DNET_ROOT
 ./configure (other args...) LDFLAGS="-L${BDB_PREFIX}/lib/" CPPFLAGS="-I${BDB_PREFIX}/include/"
 ```
 
@@ -205,7 +205,7 @@ Hardening enables the following features:
 
     To test that you have built PIE executable, install scanelf, part of paxutils, and use:
 
-    	scanelf -e ./dashd
+    	scanelf -e ./darknetd
 
     The output should contain:
      TYPE
@@ -213,13 +213,13 @@ Hardening enables the following features:
 
 * Non-executable Stack
     If the stack is executable then trivial stack based buffer overflow exploits are possible if
-    vulnerable buffers are found. By default, dash should be built with a non-executable stack
+    vulnerable buffers are found. By default, darknet should be built with a non-executable stack
     but if one of the libraries it uses asks for an executable stack or someone makes a mistake
     and uses a compiler extension which requires an executable stack, it will silently build an
     executable without the non-executable stack protection.
 
     To verify that the stack is non-executable after compiling use:
-    `scanelf -e ./dashd`
+    `scanelf -e ./darknetd`
 
     the output should contain:
 	STK/REL/PTL
@@ -229,7 +229,7 @@ Hardening enables the following features:
 
 Disable-wallet mode
 --------------------
-When the intention is to run only a P2P node without a wallet, dash may be compiled in
+When the intention is to run only a P2P node without a wallet, darknet may be compiled in
 disable-wallet mode with:
 
     ./configure --disable-wallet

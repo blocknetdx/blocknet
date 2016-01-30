@@ -6,7 +6,7 @@
 #include "masternode-budget.h"
 #include "masternode-sync.h"
 #include "masternodeman.h"
-#include "darksend.h"
+#include "obfuscate.h"
 #include "util.h"
 #include "sync.h"
 #include "spork.h"
@@ -339,11 +339,11 @@ void CMasternodePayments::ProcessMessageMasternodePayments(CNode* pfrom, std::st
 {
     if(!masternodeSync.IsBlockchainSynced()) return;
 
-    if(fLiteMode) return; //disable all Darksend/Masternode related functionality
+    if(fLiteMode) return; //disable all Obfuscate/Masternode related functionality
 
 
     if (strCommand == "mnget") { //Masternode Payments Request Sync
-        if(fLiteMode) return; //disable all Darksend/Masternode related functionality
+        if(fLiteMode) return; //disable all Obfuscate/Masternode related functionality
 
         int nCountNeeded;
         vRecv >> nCountNeeded;
@@ -394,7 +394,7 @@ void CMasternodePayments::ProcessMessageMasternodePayments(CNode* pfrom, std::st
 
         if(!winner.SignatureValid()){
             LogPrintf("mnw - invalid signature\n");
-            if(masternodeSync.IsSynced()) Misbehaving(pfrom->GetId(), 20);
+            Misbehaving(pfrom->GetId(), 20);
             // it could just be a non-synced masternode
             mnodeman.AskForMN(pfrom, winner.vinMasternode);
             return;
@@ -656,7 +656,7 @@ bool CMasternodePaymentWinner::IsValid(CNode* pnode, std::string& strError)
         {
             strError = strprintf("Masternode not in the top %d (%d)", MNPAYMENTS_SIGNATURES_TOTAL, n);
             LogPrintf("CMasternodePaymentWinner::IsValid - %s\n", strError);
-            if(masternodeSync.IsSynced()) Misbehaving(pnode->GetId(), 20);
+            Misbehaving(pnode->GetId(), 20);            
         }
         return false;
     }

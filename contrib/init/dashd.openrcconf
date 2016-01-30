@@ -1,25 +1,25 @@
-# /etc/conf.d/dashd: config file for /etc/init.d/dashd
+# /etc/conf.d/darknetd: config file for /etc/init.d/darknetd
 
 # Config file location
-#BITCOIND_CONFIGFILE="/etc/dash/dash.conf"
+#BITCOIND_CONFIGFILE="/etc/darknet/darknet.conf"
 
 # What directory to write pidfile to?  (created and owned by $BITCOIND_USER)
-#BITCOIND_PIDDIR="/var/run/dashd"
+#BITCOIND_PIDDIR="/var/run/darknetd"
 
 # What filename to give the pidfile
-#BITCOIND_PIDFILE="${BITCOIND_PIDDIR}/dashd.pid"
+#BITCOIND_PIDFILE="${BITCOIND_PIDDIR}/darknetd.pid"
 
-# Where to write dashd data (be mindful that the blockchain is large)
-#BITCOIND_DATADIR="/var/lib/dashd"
+# Where to write darknetd data (be mindful that the blockchain is large)
+#BITCOIND_DATADIR="/var/lib/darknetd"
 
-# User and group to own dashd process
-#BITCOIND_USER="dash"
-#BITCOIND_GROUP="dash"
+# User and group to own darknetd process
+#BITCOIND_USER="darknet"
+#BITCOIND_GROUP="darknet"
 
-# Path to dashd executable
-#BITCOIND_BIN="/usr/bin/dashd"
+# Path to darknetd executable
+#BITCOIND_BIN="/usr/bin/darknetd"
 
-# Nice value to run dashd under
+# Nice value to run darknetd under
 #BITCOIND_NICE=0
 
 # Additional options (avoid -conf and -datadir, use flags above)

@@ -3,13 +3,13 @@ Description=Dash's distributed currency daemon
 After=network.target
 
 [Service]
-User=dash
-Group=dash
+User=darknet
+Group=darknet
 
 Type=forking
-PIDFile=/var/lib/dashd/dashd.pid
-ExecStart=/usr/bin/dashd -daemon -pid=/var/lib/dashd/dashd.pid \
--conf=/etc/dash/dash.conf -datadir=/var/lib/dashd -disablewallet
+PIDFile=/var/lib/darknetd/darknetd.pid
+ExecStart=/usr/bin/darknetd -daemon -pid=/var/lib/darknetd/darknetd.pid \
+-conf=/etc/darknet/darknet.conf -datadir=/var/lib/darknetd -disablewallet
 
 Restart=always
 PrivateTmp=true

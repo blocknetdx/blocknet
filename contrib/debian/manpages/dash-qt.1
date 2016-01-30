@@ -1,20 +1,20 @@
-.TH DASH-QT "1" "March 2015" "dash-qt 1"
+.TH DNET-QT "1" "March 2015" "darknet-qt 1"
 .SH NAME
-dash-qt \- peer-to-peer network based digital currency
+darknet-qt \- peer-to-peer network based digital currency
 .SH DESCRIPTION
 .SS "Usage:"
 .IP
-dash\-qt [command\-line options]
+darknet\-qt [command\-line options]
 .SH OPTIONS
 .TP
 \-?
 This help message
 .TP
 \fB\-conf=\fR<file>
-Specify configuration file (default: dash.conf)
+Specify configuration file (default: darknet.conf)
 .TP
 \fB\-pid=\fR<file>
-Specify pid file (default: dashd.pid)
+Specify pid file (default: darknetd.pid)
 .TP
 \fB\-gen\fR
 Generate coins
@@ -41,7 +41,7 @@ Use proxy to reach tor hidden services (default: same as \fB\-proxy\fR)
 Allow DNS lookups for \fB\-addnode\fR, \fB\-seednode\fR and \fB\-connect\fR
 .TP
 \fB\-port=\fR<port>
-Listen for connections on <port> (default: 9999 or testnet: 19999)
+Listen for connections on <port> (default: 51472 or testnet: 51474)
 .TP
 \fB\-maxconnections=\fR<n>
 Maintain at most <n> connections to peers (default: 125)
@@ -122,7 +122,7 @@ Username for JSON\-RPC connections
 Password for JSON\-RPC connections
 .TP
 \fB\-rpcport=\fR<port>
-Listen for JSON\-RPC connections on <port> (default: 9998 or testnet: 19998)
+Listen for JSON\-RPC connections on <port> (default: 51473 or testnet: 51475)
 .TP
 \fB\-rpcallowip=\fR<ip>
 Allow JSON\-RPC connections from specified IP address

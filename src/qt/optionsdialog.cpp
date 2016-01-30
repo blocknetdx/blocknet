@@ -3,7 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #if defined(HAVE_CONFIG_H)
-#include "config/dash-config.h"
+#include "config/darknet-config.h"
 #endif
 
 #include "optionsdialog.h"
@@ -12,7 +12,7 @@
 #include "bitcoinunits.h"
 #include "guiutil.h"
 #include "optionsmodel.h"
-#include "darksend.h"
+#include "obfuscate.h"
 
 #include "main.h" // for MAX_SCRIPTCHECK_THREADS
 #include "netbase.h"
@@ -82,8 +82,10 @@ OptionsDialog::OptionsDialog(QWidget *parent, bool enableWallet) :
     }
     
     /* Theme selector */
-    ui->theme->addItem(QString("DASH-blue"), QVariant("drkblue"));
-    ui->theme->addItem(QString("DASH-traditional"), QVariant("trad"));
+    ui->theme->addItem(QString("DNET-dark"), QVariant("drk"));
+    ui->theme->addItem(QString("DNET-dark-1"), QVariant("drk-1"));
+    ui->theme->addItem(QString("DNET-blue"), QVariant("drkblue"));
+    ui->theme->addItem(QString("DNET-traditional"), QVariant("trad"));
 
     
     /* Language selector */
@@ -207,8 +209,8 @@ void OptionsDialog::setMapper()
     mapper->addMapping(ui->thirdPartyTxUrls, OptionsModel::ThirdPartyTxUrls);
 
 
-    /* Darksend Rounds */
-    mapper->addMapping(ui->darksendRounds, OptionsModel::DarksendRounds);
+    /* Obfuscate Rounds */
+    mapper->addMapping(ui->obfuscateRounds, OptionsModel::ObfuscateRounds);
     mapper->addMapping(ui->anonymizeDarkcoin, OptionsModel::AnonymizeDarkcoinAmount);
 
 }
