@@ -14,7 +14,7 @@ Blocks 2-259200 Approx. 180 DAYS
 
 PoW Rewards Breakdown: 
 Blocks 2-43200 20% MNODE (50 DNET) / 80% MINER (200 DNET)
-Blocks 43201-259201 Min of 20% MNODE (50 DNET) / 70% MINER (200 DNET) / Max 10% PROPOSALS
+Blocks 43201-259201 Min of 20% MNODE (50 DNET) Max of 30% MNODE (75 DNET)/ 70% MINER (175 DNET) / Max 10% (25 DNET) PROPOSALS
 Rewards for blocks after the switch to PoS will be split in proportions to be determined at a later date. 
 
 PoS Staking Rewards:
