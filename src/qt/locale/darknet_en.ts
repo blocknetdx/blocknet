@@ -78,13 +78,13 @@
     </message>
     <message>
         <location line="+7"/>
-        <source>These are your Dash addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
-        <translation>These are your Dash addresses for sending payments. Always check the amount and the receiving address before sending coins.</translation>
+        <source>These are your DarkNet addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <translation>These are your DarkNet addresses for sending payments. Always check the amount and the receiving address before sending coins.</translation>
     </message>
     <message>
         <location line="+4"/>
-        <source>These are your Dash addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
-        <translation>These are your Dash addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</translation>
+        <source>These are your DarkNet addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
+        <translation>These are your DarkNet addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</translation>
     </message>
     <message>
         <location line="+6"/>
@@ -235,8 +235,8 @@
     </message>
     <message>
         <location line="-57"/>
-        <source>Dash will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your darknets from being stolen by malware infecting your computer.</source>
-        <translation>Dash will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your darknets from being stolen by malware infecting your computer.</translation>
+        <source>DarkNet will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your darknets from being stolen by malware infecting your computer.</source>
+        <translation>DarkNet will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your darknets from being stolen by malware infecting your computer.</translation>
     </message>
     <message>
         <location line="+4"/>
@@ -296,8 +296,8 @@
     <message>
         <location filename="../bitcoingui.cpp" line="+108"/>
         <location line="+752"/>
-        <source>Dash Core</source>
-        <translation>Dash Core</translation>
+        <source>DarkNet Core</source>
+        <translation>DarkNet Core</translation>
     </message>
     <message>
         <location line="-743"/>
@@ -326,8 +326,8 @@
     </message>
     <message>
         <location line="+1"/>
-        <source>Send coins to a Dash address</source>
-        <translation>Send coins to a Dash address</translation>
+        <source>Send coins to a DarkNet address</source>
+        <translation>Send coins to a DarkNet address</translation>
     </message>
     <message>
         <location line="+10"/>
@@ -361,13 +361,13 @@
     </message>
     <message>
         <location line="+3"/>
-        <source>&amp;About Dash Core</source>
-        <translation>&amp;About Dash Core</translation>
+        <source>&amp;About DarkNet Core</source>
+        <translation>&amp;About DarkNet Core</translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Show information about Dash Core</source>
-        <translation>Show information about Dash Core</translation>
+        <source>Show information about DarkNet Core</source>
+        <translation>Show information about DarkNet Core</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -387,8 +387,8 @@
     </message>
     <message>
         <location line="+1"/>
-        <source>Modify configuration options for Dash</source>
-        <translation>Modify configuration options for Dash</translation>
+        <source>Modify configuration options for DarkNet</source>
+        <translation>Modify configuration options for DarkNet</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -452,8 +452,8 @@
     </message>
     <message>
         <location line="+1"/>
-        <source>Sign messages with your Dash addresses to prove you own them</source>
-        <translation>Sign messages with your Dash addresses to prove you own them</translation>
+        <source>Sign messages with your DarkNet addresses to prove you own them</source>
+        <translation>Sign messages with your DarkNet addresses to prove you own them</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -462,8 +462,8 @@
     </message>
     <message>
         <location line="+1"/>
-        <source>Verify messages to ensure they were signed with specified Dash addresses</source>
-        <translation>Verify messages to ensure they were signed with specified Dash addresses</translation>
+        <source>Verify messages to ensure they were signed with specified DarkNet addresses</source>
+        <translation>Verify messages to ensure they were signed with specified DarkNet addresses</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -572,8 +572,8 @@
     </message>
     <message>
         <location line="+196"/>
-        <source>Dash Core client</source>
-        <translation>Dash Core client</translation>
+        <source>DarkNet Core client</source>
+        <translation>DarkNet Core client</translation>
     </message>
     <message numerus="yes">
         <location line="+182"/>
@@ -587,8 +587,8 @@
     </message>
     <message>
         <location line="-407"/>
-        <source>Show the Dash Core help message to get a list with possible Dash command-line options</source>
-        <translation>Show the Dash Core help message to get a list with possible Dash command-line options</translation>
+        <source>Show the DarkNet Core help message to get a list with possible DarkNet command-line options</source>
+        <translation>Show the DarkNet Core help message to get a list with possible DarkNet command-line options</translation>
     </message>
     <message>
         <location line="+36"/>
@@ -617,8 +617,8 @@
     </message>
     <message numerus="yes">
         <location line="+256"/>
-        <source>%n active connection(s) to Dash network</source>
-        <translation><numerusform>%n active connection to Dash network</numerusform><numerusform>%n active connections to Dash network</numerusform></translation>
+        <source>%n active connection(s) to DarkNet network</source>
+        <translation><numerusform>%n active connection to DarkNet network</numerusform><numerusform>%n active connections to DarkNet network</numerusform></translation>
     </message>
     <message>
         <location line="+15"/>
@@ -1132,18 +1132,18 @@ Address: %4
     </message>
     <message>
         <location line="-29"/>
-        <source>Obfuscate was successfully set to basic (%1 and 2 rounds). You can change this at any time by opening Dash&apos;s configuration screen.</source>
-        <translation>Obfuscate was successfully set to basic (%1 and 2 rounds). You can change this at any time by opening Dash&apos;s configuration screen.</translation>
+        <source>Obfuscate was successfully set to basic (%1 and 2 rounds). You can change this at any time by opening DarkNet&apos;s configuration screen.</source>
+        <translation>Obfuscate was successfully set to basic (%1 and 2 rounds). You can change this at any time by opening DarkNet&apos;s configuration screen.</translation>
     </message>
     <message>
         <location line="+15"/>
-        <source>Obfuscate was successfully set to high (%1 and 8 rounds). You can change this at any time by opening Dash&apos;s configuration screen.</source>
-        <translation>Obfuscate was successfully set to high (%1 and 8 rounds). You can change this at any time by opening Dash&apos;s configuration screen.</translation>
+        <source>Obfuscate was successfully set to high (%1 and 8 rounds). You can change this at any time by opening DarkNet&apos;s configuration screen.</source>
+        <translation>Obfuscate was successfully set to high (%1 and 8 rounds). You can change this at any time by opening DarkNet&apos;s configuration screen.</translation>
     </message>
     <message>
         <location line="+15"/>
-        <source>Obfuscate was successfully set to maximum (%1 and 16 rounds). You can change this at any time by opening Dash&apos;s configuration screen.</source>
-        <translation>Obfuscate was successfully set to maximum (%1 and 16 rounds). You can change this at any time by opening Dash&apos;s configuration screen.</translation>
+        <source>Obfuscate was successfully set to maximum (%1 and 16 rounds). You can change this at any time by opening DarkNet&apos;s configuration screen.</source>
+        <translation>Obfuscate was successfully set to maximum (%1 and 16 rounds). You can change this at any time by opening DarkNet&apos;s configuration screen.</translation>
     </message>
 </context>
 <context>
@@ -1195,8 +1195,8 @@ Address: %4
     </message>
     <message>
         <location line="+71"/>
-        <source>The entered address &quot;%1&quot; is not a valid Dash address.</source>
-        <translation>The entered address &quot;%1&quot; is not a valid Dash address.</translation>
+        <source>The entered address &quot;%1&quot; is not a valid DarkNet address.</source>
+        <translation>The entered address &quot;%1&quot; is not a valid DarkNet address.</translation>
     </message>
     <message>
         <location line="+5"/>
@@ -1246,8 +1246,8 @@ Address: %4
     <name>HelpMessageDialog</name>
     <message>
         <location filename="../utilitydialog.cpp" line="+32"/>
-        <source>Dash Core</source>
-        <translation>Dash Core</translation>
+        <source>DarkNet Core</source>
+        <translation>DarkNet Core</translation>
     </message>
     <message>
         <location line="+0"/>
@@ -1262,8 +1262,8 @@ Address: %4
     </message>
     <message>
         <location line="+5"/>
-        <source>About Dash Core</source>
-        <translation>About Dash Core</translation>
+        <source>About DarkNet Core</source>
+        <translation>About DarkNet Core</translation>
     </message>
     <message>
         <location line="+19"/>
@@ -1320,18 +1320,18 @@ Address: %4
     </message>
     <message>
         <location line="+9"/>
-        <source>Welcome to Dash Core.</source>
-        <translation>Welcome to Dash Core.</translation>
+        <source>Welcome to DarkNet Core.</source>
+        <translation>Welcome to DarkNet Core.</translation>
     </message>
     <message>
         <location line="+26"/>
-        <source>As this is the first time the program is launched, you can choose where Dash Core will store its data.</source>
-        <translation>As this is the first time the program is launched, you can choose where Dash Core will store its data.</translation>
+        <source>As this is the first time the program is launched, you can choose where DarkNet Core will store its data.</source>
+        <translation>As this is the first time the program is launched, you can choose where DarkNet Core will store its data.</translation>
     </message>
     <message>
         <location line="+10"/>
-        <source>Dash Core will download and store a copy of the Dash block chain. At least %1GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</source>
-        <translation>Dash Core will download and store a copy of the Dash block chain. At least %1GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</translation>
+        <source>DarkNet Core will download and store a copy of the DarkNet block chain. At least %1GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</source>
+        <translation>DarkNet Core will download and store a copy of the DarkNet block chain. At least %1GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</translation>
     </message>
     <message>
         <location line="+10"/>
@@ -1345,8 +1345,8 @@ Address: %4
     </message>
     <message>
         <location filename="../intro.cpp" line="+82"/>
-        <source>Dash Core</source>
-        <translation>Dash Core</translation>
+        <source>DarkNet Core</source>
+        <translation>DarkNet Core</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -1411,13 +1411,13 @@ Address: %4
     </message>
     <message>
         <location line="+6"/>
-        <source>Automatically start Dash after logging in to the system.</source>
-        <translation>Automatically start Dash after logging in to the system.</translation>
+        <source>Automatically start DarkNet after logging in to the system.</source>
+        <translation>Automatically start DarkNet after logging in to the system.</translation>
     </message>
     <message>
         <location line="+3"/>
-        <source>&amp;Start Dash on system login</source>
-        <translation>&amp;Start Dash on system login</translation>
+        <source>&amp;Start DarkNet on system login</source>
+        <translation>&amp;Start DarkNet on system login</translation>
     </message>
     <message>
         <location line="+9"/>
@@ -1451,8 +1451,8 @@ Address: %4
     </message>
     <message>
         <location line="+15"/>
-        <source>Amount of Dash to keep anonymized</source>
-        <translation>Amount of Dash to keep anonymized</translation>
+        <source>Amount of DarkNet to keep anonymized</source>
+        <translation>Amount of DarkNet to keep anonymized</translation>
     </message>
     <message>
         <location line="+26"/>
@@ -1476,8 +1476,8 @@ Address: %4
     </message>
     <message>
         <location line="+7"/>
-        <source>Connect to the Dash network through a SOCKS5 proxy.</source>
-        <translation>Connect to the Dash network through a SOCKS5 proxy.</translation>
+        <source>Connect to the DarkNet network through a SOCKS5 proxy.</source>
+        <translation>Connect to the DarkNet network through a SOCKS5 proxy.</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -1516,8 +1516,8 @@ Address: %4
     </message>
     <message>
         <location line="+6"/>
-        <source>Automatically open the Dash client port on the router. This only works when your router supports UPnP and it is enabled.</source>
-        <translation>Automatically open the Dash client port on the router. This only works when your router supports UPnP and it is enabled.</translation>
+        <source>Automatically open the DarkNet client port on the router. This only works when your router supports UPnP and it is enabled.</source>
+        <translation>Automatically open the DarkNet client port on the router. This only works when your router supports UPnP and it is enabled.</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -1581,8 +1581,8 @@ Address: %4
     </message>
     <message>
         <location line="+13"/>
-        <source>The user interface language can be set here. This setting will take effect after restarting Dash.</source>
-        <translation>The user interface language can be set here. This setting will take effect after restarting Dash.</translation>
+        <source>The user interface language can be set here. This setting will take effect after restarting DarkNet.</source>
+        <translation>The user interface language can be set here. This setting will take effect after restarting DarkNet.</translation>
     </message>
     <message>
         <location line="+21"/>
@@ -1695,8 +1695,8 @@ https://www.transifex.com/projects/p/darknet/</translation>
         <location line="+53"/>
         <location line="+1015"/>
         <location line="+77"/>
-        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Dash network after a connection is established, but this process has not completed yet.</source>
-        <translation>The displayed information may be out of date. Your wallet automatically synchronizes with the Dash network after a connection is established, but this process has not completed yet.</translation>
+        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the DarkNet network after a connection is established, but this process has not completed yet.</source>
+        <translation>The displayed information may be out of date. Your wallet automatically synchronizes with the DarkNet network after a connection is established, but this process has not completed yet.</translation>
     </message>
     <message>
         <location line="-843"/>
@@ -2017,8 +2017,8 @@ https://www.transifex.com/projects/p/darknet/</translation>
     </message>
     <message>
         <location line="+8"/>
-        <source>URI cannot be parsed! This can be caused by an invalid Dash address or malformed URI parameters.</source>
-        <translation>URI cannot be parsed! This can be caused by an invalid Dash address or malformed URI parameters.</translation>
+        <source>URI cannot be parsed! This can be caused by an invalid DarkNet address or malformed URI parameters.</source>
+        <translation>URI cannot be parsed! This can be caused by an invalid DarkNet address or malformed URI parameters.</translation>
     </message>
     <message>
         <location line="+14"/>
@@ -2125,8 +2125,8 @@ https://www.transifex.com/projects/p/darknet/</translation>
     </message>
     <message>
         <location filename="../guiutil.cpp" line="+110"/>
-        <source>Enter a Dash address (e.g. %1)</source>
-        <translation>Enter a Dash address (e.g. %1)</translation>
+        <source>Enter a DarkNet address (e.g. %1)</source>
+        <translation>Enter a DarkNet address (e.g. %1)</translation>
     </message>
     <message>
         <location line="+760"/>
@@ -2259,8 +2259,8 @@ https://www.transifex.com/projects/p/darknet/</translation>
     </message>
     <message>
         <location line="+76"/>
-        <source>Open the Dash debug log file from the current data directory. This can take a few seconds for large log files.</source>
-        <translation>Open the Dash debug log file from the current data directory. This can take a few seconds for large log files.</translation>
+        <source>Open the DarkNet debug log file from the current data directory. This can take a few seconds for large log files.</source>
+        <translation>Open the DarkNet debug log file from the current data directory. This can take a few seconds for large log files.</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -2521,8 +2521,8 @@ https://www.transifex.com/projects/p/darknet/</translation>
     </message>
     <message>
         <location line="-35"/>
-        <source>Welcome to the Dash RPC console.</source>
-        <translation>Welcome to the Dash RPC console.</translation>
+        <source>Welcome to the DarkNet RPC console.</source>
+        <translation>Welcome to the DarkNet RPC console.</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -2601,8 +2601,8 @@ https://www.transifex.com/projects/p/darknet/</translation>
     </message>
     <message>
         <location line="+14"/>
-        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the Dash network.</source>
-        <translation>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the Dash network.</translation>
+        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the DarkNet network.</source>
+        <translation>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the DarkNet network.</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -2617,8 +2617,8 @@ https://www.transifex.com/projects/p/darknet/</translation>
     </message>
     <message>
         <location line="-14"/>
-        <source>An optional message to attach to the payment request, which will be displayed when the request is opened.&lt;br&gt;Note: The message will not be sent with the payment over the Dash network.</source>
-        <translation>An optional message to attach to the payment request, which will be displayed when the request is opened.&lt;br&gt;Note: The message will not be sent with the payment over the Dash network.</translation>
+        <source>An optional message to attach to the payment request, which will be displayed when the request is opened.&lt;br&gt;Note: The message will not be sent with the payment over the DarkNet network.</source>
+        <translation>An optional message to attach to the payment request, which will be displayed when the request is opened.&lt;br&gt;Note: The message will not be sent with the payment over the DarkNet network.</translation>
     </message>
     <message>
         <location line="+7"/>
@@ -3186,8 +3186,8 @@ https://www.transifex.com/projects/p/darknet/</translation>
     </message>
     <message>
         <location line="+129"/>
-        <source>Warning: Invalid Dash address</source>
-        <translation>Warning: Invalid Dash address</translation>
+        <source>Warning: Invalid DarkNet address</source>
+        <translation>Warning: Invalid DarkNet address</translation>
     </message>
     <message>
         <location line="+9"/>
@@ -3214,8 +3214,8 @@ https://www.transifex.com/projects/p/darknet/</translation>
     </message>
     <message>
         <location line="+18"/>
-        <source>The Dash address to send the payment to</source>
-        <translation>The Dash address to send the payment to</translation>
+        <source>The DarkNet address to send the payment to</source>
+        <translation>The DarkNet address to send the payment to</translation>
     </message>
     <message>
         <location line="+7"/>
@@ -3268,8 +3268,8 @@ https://www.transifex.com/projects/p/darknet/</translation>
     </message>
     <message>
         <location line="+10"/>
-        <source>A message that was attached to the darknet: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the Dash network.</source>
-        <translation>A message that was attached to the darknet: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the Dash network.</translation>
+        <source>A message that was attached to the darknet: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the DarkNet network.</source>
+        <translation>A message that was attached to the darknet: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the DarkNet network.</translation>
     </message>
     <message>
         <location line="+426"/>
@@ -3303,8 +3303,8 @@ https://www.transifex.com/projects/p/darknet/</translation>
     <name>ShutdownWindow</name>
     <message>
         <location filename="../utilitydialog.cpp" line="+43"/>
-        <source>Dash Core is shutting down...</source>
-        <translation>Dash Core is shutting down...</translation>
+        <source>DarkNet Core is shutting down...</source>
+        <translation>DarkNet Core is shutting down...</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -3331,8 +3331,8 @@ https://www.transifex.com/projects/p/darknet/</translation>
     </message>
     <message>
         <location line="+18"/>
-        <source>The Dash address to sign the message with</source>
-        <translation>The Dash address to sign the message with</translation>
+        <source>The DarkNet address to sign the message with</source>
+        <translation>The DarkNet address to sign the message with</translation>
     </message>
     <message>
         <location line="+7"/>
@@ -3373,8 +3373,8 @@ https://www.transifex.com/projects/p/darknet/</translation>
     </message>
     <message>
         <location line="+21"/>
-        <source>Sign the message to prove you own this Dash address</source>
-        <translation>Sign the message to prove you own this Dash address</translation>
+        <source>Sign the message to prove you own this DarkNet address</source>
+        <translation>Sign the message to prove you own this DarkNet address</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -3404,13 +3404,13 @@ https://www.transifex.com/projects/p/darknet/</translation>
     </message>
     <message>
         <location line="+21"/>
-        <source>The Dash address the message was signed with</source>
-        <translation>The Dash address the message was signed with</translation>
+        <source>The DarkNet address the message was signed with</source>
+        <translation>The DarkNet address the message was signed with</translation>
     </message>
     <message>
         <location line="+37"/>
-        <source>Verify the message to ensure it was signed with the specified Dash address</source>
-        <translation>Verify the message to ensure it was signed with the specified Dash address</translation>
+        <source>Verify the message to ensure it was signed with the specified DarkNet address</source>
+        <translation>Verify the message to ensure it was signed with the specified DarkNet address</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -3498,8 +3498,8 @@ https://www.transifex.com/projects/p/darknet/</translation>
     <name>SplashScreen</name>
     <message>
         <location filename="../splashscreen.cpp" line="+36"/>
-        <source>Dash Core</source>
-        <translation>Dash Core</translation>
+        <source>DarkNet Core</source>
+        <translation>DarkNet Core</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -3513,8 +3513,8 @@ https://www.transifex.com/projects/p/darknet/</translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>The Dash Core developers</source>
-        <translation>The Dash Core developers</translation>
+        <source>The DarkNet Core developers</source>
+        <translation>The DarkNet Core developers</translation>
     </message>
     <message>
         <location filename="../networkstyle.cpp" line="+19"/>
@@ -4250,8 +4250,8 @@ https://www.transifex.com/projects/p/darknet/</translation>
     </message>
     <message>
         <location line="+10"/>
-        <source>Cannot obtain a lock on data directory %s. Dash Core is probably already running.</source>
-        <translation>Cannot obtain a lock on data directory %s. Dash Core is probably already running.</translation>
+        <source>Cannot obtain a lock on data directory %s. DarkNet Core is probably already running.</source>
+        <translation>Cannot obtain a lock on data directory %s. DarkNet Core is probably already running.</translation>
     </message>
     <message>
         <location line="+12"/>
@@ -4320,8 +4320,8 @@ https://www.transifex.com/projects/p/darknet/</translation>
     </message>
     <message>
         <location line="+20"/>
-        <source>Unable to bind to %s on this computer. Dash Core is probably already running.</source>
-        <translation>Unable to bind to %s on this computer. Dash Core is probably already running.</translation>
+        <source>Unable to bind to %s on this computer. DarkNet Core is probably already running.</source>
+        <translation>Unable to bind to %s on this computer. DarkNet Core is probably already running.</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -4610,8 +4610,8 @@ https://www.transifex.com/projects/p/darknet/</translation>
     </message>
     <message>
         <location line="+3"/>
-        <source>Disable all Dash specific functionality (Masternodes, Obfuscate, SwiftTX, Budgeting) (0-1, default: %u)</source>
-        <translation>Disable all Dash specific functionality (Masternodes, Obfuscate, SwiftTX, Budgeting) (0-1, default: %u)</translation>
+        <source>Disable all DarkNet specific functionality (Masternodes, Obfuscate, SwiftTX, Budgeting) (0-1, default: %u)</source>
+        <translation>Disable all DarkNet specific functionality (Masternodes, Obfuscate, SwiftTX, Budgeting) (0-1, default: %u)</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -4739,7 +4739,7 @@ rpcpassword=%s
 The username and password MUST NOT be the same.
 If the file does not exist, create it with owner-readable-only file permissions.
 It is also recommended to set alertnotify so you are notified of problems;
-for example: alertnotify=echo %%s | mail -s &quot;Dash Alert&quot; admin@foo.com
+for example: alertnotify=echo %%s | mail -s &quot;DarkNet Alert&quot; admin@foo.com
 </source>
         <translation>To use darknetd, or the -server option to darknet-qt, you must set an rpcpassword in the configuration file:
 %s
@@ -4750,7 +4750,7 @@ rpcpassword=%s
 The username and password MUST NOT be the same.
 If the file does not exist, create it with owner-readable-only file permissions.
 It is also recommended to set alertnotify so you are notified of problems;
-for example: alertnotify=echo %%s | mail -s &quot;Dash Alert&quot; admin@foo.com
+for example: alertnotify=echo %%s | mail -s &quot;DarkNet Alert&quot; admin@foo.com
 </translation>
     </message>
     <message>
@@ -4770,8 +4770,8 @@ for example: alertnotify=echo %%s | mail -s &quot;Dash Alert&quot; admin@foo.com
     </message>
     <message>
         <location line="+6"/>
-        <source>Warning: Please check that your computer&apos;s date and time are correct! If your clock is wrong Dash Core will not work properly.</source>
-        <translation>Warning: Please check that your computer&apos;s date and time are correct! If your clock is wrong Dash Core will not work properly.</translation>
+        <source>Warning: Please check that your computer&apos;s date and time are correct! If your clock is wrong DarkNet Core will not work properly.</source>
+        <translation>Warning: Please check that your computer&apos;s date and time are correct! If your clock is wrong DarkNet Core will not work properly.</translation>
     </message>
     <message>
         <location line="+16"/>
@@ -4837,8 +4837,8 @@ for example: alertnotify=echo %%s | mail -s &quot;Dash Alert&quot; admin@foo.com
     </message>
     <message>
         <location line="+1"/>
-        <source>Copyright (C) 2014-%i The Dash Core Developers</source>
-        <translation>Copyright (C) 2014-%i The Dash Core Developers</translation>
+        <source>Copyright (C) 2014-%i The DarkNet Core Developers</source>
+        <translation>Copyright (C) 2014-%i The DarkNet Core Developers</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -4877,8 +4877,8 @@ for example: alertnotify=echo %%s | mail -s &quot;Dash Alert&quot; admin@foo.com
     </message>
     <message>
         <location line="+6"/>
-        <source>Error loading wallet.dat: Wallet requires newer version of Dash Core</source>
-        <translation>Error loading wallet.dat: Wallet requires newer version of Dash Core</translation>
+        <source>Error loading wallet.dat: Wallet requires newer version of DarkNet Core</source>
+        <translation>Error loading wallet.dat: Wallet requires newer version of DarkNet Core</translation>
     </message>
     <message>
         <location line="+5"/>
@@ -4967,8 +4967,8 @@ for example: alertnotify=echo %%s | mail -s &quot;Dash Alert&quot; admin@foo.com
     </message>
     <message>
         <location line="+1"/>
-        <source>Initialization sanity check failed. Dash Core is shutting down.</source>
-        <translation>Initialization sanity check failed. Dash Core is shutting down.</translation>
+        <source>Initialization sanity check failed. DarkNet Core is shutting down.</source>
+        <translation>Initialization sanity check failed. DarkNet Core is shutting down.</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -5282,8 +5282,8 @@ for example: alertnotify=echo %%s | mail -s &quot;Dash Alert&quot; admin@foo.com
     </message>
     <message>
         <location line="+9"/>
-        <source>Wallet needed to be rewritten: restart Dash Core to complete</source>
-        <translation>Wallet needed to be rewritten: restart Dash Core to complete</translation>
+        <source>Wallet needed to be rewritten: restart DarkNet Core to complete</source>
+        <translation>Wallet needed to be rewritten: restart DarkNet Core to complete</translation>
     </message>
     <message>
         <location line="+5"/>

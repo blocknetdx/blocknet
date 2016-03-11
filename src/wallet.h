@@ -1116,7 +1116,7 @@ public:
     {
         BOOST_FOREACH(int64_t d, obfuscateDenominations)
             if(tx->vout[i].nValue == d) return 100000;
-        if(tx->vout[i].nValue < 10*COIN) return 200000;
+        if(tx->vout[i].nValue < 1*COIN) return 200000;
 
         //nondenom return largest first
         return -(tx->vout[i].nValue/COIN);
