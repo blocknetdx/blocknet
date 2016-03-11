@@ -139,11 +139,11 @@ public:
         assert(genesis.hashMerkleRoot == uint256("0x1b2ef6e2f28be914103a277377ae7729dcd125dfeb8bf97bd5964ba72b6dc39b"));
 
         vSeeds.push_back(CDNSSeedData("173.245.158.8", ""));
+        vSeeds.push_back(CDNSSeedData("68.227.29.22", ""));
+        vSeeds.push_back(CDNSSeedData("74.118.192.18", ""));
         vSeeds.push_back(CDNSSeedData("dnsseed.darknet-crypto.com", ""));
         vSeeds.push_back(CDNSSeedData("darknetexporer.coin-server.com", ""));
         vSeeds.push_back(CDNSSeedData("darknet.coin-server.com", "")); 
-        vSeeds.push_back(CDNSSeedData("68.227.29.22", ""));
-        vSeeds.push_back(CDNSSeedData("151.80.206.104", ""));
 
         base58Prefixes[PUBKEY_ADDRESS] = list_of( 30);                    
         base58Prefixes[SCRIPT_ADDRESS] = list_of( 13);                    
