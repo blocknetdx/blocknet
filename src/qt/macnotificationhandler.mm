@@ -13,7 +13,7 @@
 - (NSString *)__bundleIdentifier
 {
     if (self == [NSBundle mainBundle]) {
-        return @"io.darknetpay.Dash-Qt";
+        return @"com.darknet-crypto.Darknet-Qt";
     } else {
         return [self __bundleIdentifier];
     }

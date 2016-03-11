@@ -34,7 +34,7 @@ void SendMoney(const CTxDestination &address, CAmount nValue, CWalletTx& wtxNew,
         throw JSONRPCError(RPC_WALLET_ERROR, strError);
     }
 
-    // Parse Dash address
+    // Parse Darknet address
     CScript scriptPubKey = GetScriptForDestination(address);
 
     // Create and send the transaction
@@ -51,11 +51,11 @@ void SendMoney(const CTxDestination &address, CAmount nValue, CWalletTx& wtxNew,
         throw JSONRPCError(RPC_WALLET_ERROR, "Error: The transaction was rejected! This might happen if some of the coins in your wallet were already spent, such as if you used a copy of wallet.dat and coins were spent in the copy but not marked as spent here.");
 }
 
-Value obfuscate(const Array& params, bool fHelp)
+Value obfuscation(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() == 0)
         throw runtime_error(
-            "obfuscate <darknetaddress> <amount>\n"
+            "Obfuscation <darknetaddress> <amount>\n"
             "darknetaddress, reset, or auto (AutoDenominate)"
             "<amount> is a real and will be rounded to the next 0.1"
             + HelpRequiringPassphrase());
@@ -65,26 +65,26 @@ Value obfuscate(const Array& params, bool fHelp)
 
     if(params[0].get_str() == "auto"){
         if(fMasterNode)
-            return "Obfuscate is not supported from masternodes";
+            return "Obfuscation is not supported from masternodes";
 
         return "DoAutomaticDenominating " + (darkSendPool.DoAutomaticDenominating() ? "successful" : ("failed: " + darkSendPool.GetStatus()));
     }
 
     if(params[0].get_str() == "reset"){
         darkSendPool.Reset();
-        return "successfully reset obfuscate";
+        return "successfully reset Obfuscation";
     }
 
     if (params.size() != 2)
         throw runtime_error(
-            "obfuscate <darknetaddress> <amount>\n"
+            "Obfuscation <darknetaddress> <amount>\n"
             "darknetaddress, denominate, or auto (AutoDenominate)"
             "<amount> is a real and will be rounded to the next 0.1"
             + HelpRequiringPassphrase());
 
     CBitcoinAddress address(params[0].get_str());
     if (!address.IsValid())
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Dash address");
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Darknet address");
 
     // Amount
     CAmount nAmount = AmountFromValue(params[1]);
@@ -191,10 +191,10 @@ Value masternode(const Array& params, bool fHelp)
             if(chainActive.Tip())
                 mnodeman.GetNextMasternodeInQueueForPayment(chainActive.Tip()->nHeight, true, nCount);
 
-            if(params[1] == "ds") return mnodeman.CountEnabled(MIN_POOL_PEER_PROTO_VERSION);
+            if(params[1] == "obf") return mnodeman.CountEnabled(MIN_POOL_PEER_PROTO_VERSION);
             if(params[1] == "enabled") return mnodeman.CountEnabled();
             if(params[1] == "qualify") return nCount;
-            if(params[1] == "all") return strprintf("Total: %d (DS Compatible: %d / Enabled: %d / Qualify: %d)",
+            if(params[1] == "all") return strprintf("Total: %d (OBF Compatible: %d / Enabled: %d / Qualify: %d)",
                                                     mnodeman.size(),
                                                     mnodeman.CountEnabled(MIN_POOL_PEER_PROTO_VERSION),
                                                     mnodeman.CountEnabled(),

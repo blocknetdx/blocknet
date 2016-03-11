@@ -1,7 +1,7 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2014 The Bitcoin developers
 // Copyright (c) 2014-2015 The Dash developers
-// Copyright (c) 2014-2015 The DarkNet developers
+// Copyright (c) 2015-2016 The DarkNet developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -379,7 +379,7 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += "                         " + _("If <category> is not supplied, output all debugging information.") + "\n";
     strUsage += "                         " + _("<category> can be:\n");
     strUsage += "                           addrman, alert, bench, coindb, db, lock, rand, rpc, selectcoins, mempool, net,\n"; // Don't translate these and qt below
-    strUsage += "                           darknet (or specifically: obfuscate, swifttx, masternode, keepass, mnpayments, mnbudget)"; // Don't translate these and qt below
+    strUsage += "                           darknet (or specifically: obfuscation, swifttx, masternode, keepass, mnpayments, mnbudget)"; // Don't translate these and qt below
     if (mode == HMM_BITCOIN_QT)
         strUsage += ", qt";
     strUsage += ".\n";
@@ -408,7 +408,7 @@ std::string HelpMessage(HelpMessageMode mode)
     }
     strUsage += "  -shrinkdebugfile       " + _("Shrink debug.log file on client startup (default: 1 when no -debug)") + "\n";
     strUsage += "  -testnet               " + _("Use the test network") + "\n";
-    strUsage += "  -litemode=<n>          " + strprintf(_("Disable all DarkNet specific functionality (Masternodes, Obfuscate, SwiftTX, Budgeting) (0-1, default: %u)"), 0) + "\n";
+    strUsage += "  -litemode=<n>          " + strprintf(_("Disable all DarkNet specific functionality (Masternodes, Obfuscation, SwiftTX, Budgeting) (0-1, default: %u)"), 0) + "\n";
 
     strUsage += "\n" + _("Masternode options:") + "\n";
     strUsage += "  -masternode=<n>            " + strprintf(_("Enable the client to act as a masternode (0-1, default: %u)"), 0) + "\n";
@@ -418,11 +418,11 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += "  -masternodeaddr=<n>        " + strprintf(_("Set external address:port to get to this masternode (example: %s)"), "128.127.106.235:51472") + "\n";
     strUsage += "  -budgetvotemode=<mode>     " + _("Change automatic finalized budget voting behavior. mode=auto: Vote for only exact finalized budget match to my generated budget. (string, default: auto)") + "\n";
 
-    strUsage += "\n" + _("Obfuscate options:") + "\n";
-    strUsage += "  -enableobfuscate=<n>          " + strprintf(_("Enable use of automated obfuscate for funds stored in this wallet (0-1, default: %u)"), 0) + "\n";
+    strUsage += "\n" + _("Obfuscation options:") + "\n";
+    strUsage += "  -enableobfuscate=<n>          " + strprintf(_("Enable use of automated obfuscation for funds stored in this wallet (0-1, default: %u)"), 0) + "\n";
     strUsage += "  -obfuscaterounds=<n>          " + strprintf(_("Use N separate masternodes to anonymize funds  (2-8, default: %u)"), 2) + "\n";
     strUsage += "  -anonymizedarknetamount=<n>     " + strprintf(_("Keep N DNET anonymized (default: %u)"), 0) + "\n";
-    strUsage += "  -liquidityprovider=<n>       " + strprintf(_("Provide liquidity to Obfuscate by infrequently mixing coins on a continual basis (0-100, default: %u, 1=very frequent, high fees, 100=very infrequent, low fees)"), 0) + "\n";
+    strUsage += "  -liquidityprovider=<n>       " + strprintf(_("Provide liquidity to Obfuscation by infrequently mixing coins on a continual basis (0-100, default: %u, 1=very frequent, high fees, 100=very infrequent, low fees)"), 0) + "\n";
 
     strUsage += "\n" + _("SwiftTX options:") + "\n";
     strUsage += "  -enableswifttx=<n>    " + strprintf(_("Enable swifttx, show confirmations for locked transactions (bool, default: %s)"), "true") + "\n";
@@ -1415,7 +1415,7 @@ bool AppInit2(boost::thread_group& threadGroup)
             MilliSleep(10);
     }
 
-    // ********************************************************* Step 10: setup Obfuscate
+    // ********************************************************* Step 10: setup Obfuscation
 
     uiInterface.InitMessage(_("Loading masternode cache..."));
 
@@ -1544,7 +1544,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     nSwiftTXDepth = GetArg("-swifttxdepth", nSwiftTXDepth);
     nSwiftTXDepth = std::min(std::max(nSwiftTXDepth, 0), 60);
 
-    //lite mode disables all Masternode and Obfuscate related functionality
+    //lite mode disables all Masternode and Obfuscation related functionality
     fLiteMode = GetBoolArg("-litemode", false);
     if(fMasterNode && fLiteMode){
         return InitError("You can not start a masternode in litemode");
@@ -1552,18 +1552,18 @@ bool AppInit2(boost::thread_group& threadGroup)
 
     LogPrintf("fLiteMode %d\n", fLiteMode);
     LogPrintf("nSwiftTXDepth %d\n", nSwiftTXDepth);
-    LogPrintf("Obfuscate rounds %d\n", nObfuscateRounds);
+    LogPrintf("Obfuscation rounds %d\n", nObfuscateRounds);
     LogPrintf("Anonymize DarkNet Amount %d\n", nAnonymizeDarkcoinAmount);
     LogPrintf("Budget Mode %s\n", strBudgetMode.c_str());
 
     /* Denominations
 
-       A note about convertability. Within Obfuscate pools, each denomination
+       A note about convertability. Within Obfuscation pools, each denomination
        is convertable to another.
 
        For example:
-       1DRK+1000 == (.1DRK+100)*10
-       10DRK+10000 == (1DRK+1000)*10
+       1DNET+1000 == (.1DNET+100)*10
+       10DNET+10000 == (1DNET+1000)*10
     */
     darkSendDenominations.push_back( (1000      * COIN)+1000000 );
     darkSendDenominations.push_back( (100      * COIN)+100000 );

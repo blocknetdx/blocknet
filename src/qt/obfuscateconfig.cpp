@@ -40,9 +40,9 @@ void ObfuscateConfig::clickBasic()
 
     QString strAmount(BitcoinUnits::formatWithUnit(
         model->getOptionsModel()->getDisplayUnit(), 10000 * COIN));
-    QMessageBox::information(this, tr("Obfuscate Configuration"),
+    QMessageBox::information(this, tr("Obfuscation Configuration"),
         tr(
-            "Obfuscate was successfully set to basic (%1 and 2 rounds). You can change this at any time by opening DarkNet's configuration screen."
+            "Obfuscation was successfully set to basic (%1 and 2 rounds). You can change this at any time by opening DarkNet's configuration screen."
         ).arg(strAmount)
     );
 
@@ -55,9 +55,9 @@ void ObfuscateConfig::clickHigh()
 
     QString strAmount(BitcoinUnits::formatWithUnit(
         model->getOptionsModel()->getDisplayUnit(), 10000 * COIN));
-    QMessageBox::information(this, tr("Obfuscate Configuration"),
+    QMessageBox::information(this, tr("Obfuscation Configuration"),
         tr(
-            "Obfuscate was successfully set to high (%1 and 8 rounds). You can change this at any time by opening DarkNet's configuration screen."
+            "Obfuscation was successfully set to high (%1 and 8 rounds). You can change this at any time by opening DarkNet's configuration screen."
         ).arg(strAmount)
     );
 
@@ -70,9 +70,9 @@ void ObfuscateConfig::clickMax()
 
     QString strAmount(BitcoinUnits::formatWithUnit(
         model->getOptionsModel()->getDisplayUnit(), 10000 * COIN));
-    QMessageBox::information(this, tr("Obfuscate Configuration"),
+    QMessageBox::information(this, tr("Obfuscation Configuration"),
         tr(
-            "Obfuscate was successfully set to maximum (%1 and 16 rounds). You can change this at any time by opening DarkNet's configuration screen."
+            "Obfuscation was successfully set to maximum (%1 and 16 rounds). You can change this at any time by opening DarkNet's configuration screen."
         ).arg(strAmount)
     );
 

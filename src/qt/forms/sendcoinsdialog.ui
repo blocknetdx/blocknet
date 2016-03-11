@@ -1350,7 +1350,7 @@
           </size>
          </property>
          <property name="text">
-          <string>Obfuscate</string>
+          <string>Obfuscation</string>
          </property>
          <property name="checked">
           <bool>false</bool>

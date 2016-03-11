@@ -354,7 +354,7 @@ QString TransactionTableModel::formatTxType(const TransactionRecord *wtx) const
     case TransactionRecord::RecvFromOther:
         return tr("Received from");
     case TransactionRecord::RecvWithObfuscate:
-        return tr("Received via Obfuscate");
+        return tr("Received via Obfuscation");
     case TransactionRecord::SendToAddress:
     case TransactionRecord::SendToOther:
         return tr("Sent to");
@@ -364,13 +364,13 @@ QString TransactionTableModel::formatTxType(const TransactionRecord *wtx) const
         return tr("Mined");
 
     case TransactionRecord::ObfuscateDenominate:
-        return tr("Obfuscate Denominate");
+        return tr("Obfuscation Denominate");
     case TransactionRecord::ObfuscateCollateralPayment:
-        return tr("Obfuscate Collateral Payment");
+        return tr("Obfuscation Collateral Payment");
     case TransactionRecord::ObfuscateMakeCollaterals:
-        return tr("Obfuscate Make Collateral Inputs");
+        return tr("Obfuscation Make Collateral Inputs");
     case TransactionRecord::ObfuscateCreateDenominations:
-        return tr("Obfuscate Create Denominations");
+        return tr("Obfuscation Create Denominations");
     case TransactionRecord::Darksent:
         return tr("Darksent");
 

@@ -254,7 +254,7 @@ void SendCoinsDialog::on_sendButton_clicked()
             BitcoinUnits::formatWithUnit(
                 model->getOptionsModel()->getDisplayUnit(), 1 * COIN));
         strFee = QString(tr(
-            "(obfuscate requires this amount to be rounded up to the nearest %1)."
+            "(Obfuscation requires this amount to be rounded up to the nearest %1)."
         ).arg(strNearestAmount));
     } else {
         recipients[0].inputType = ALL_COINS;

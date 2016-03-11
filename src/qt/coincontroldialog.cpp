@@ -17,7 +17,7 @@
 #include "coincontrol.h"
 #include "main.h"
 #include "wallet.h"
-#include "obfuscate.h"
+#include "obfuscation.h"
 
 #include <boost/assign/list_of.hpp> // for 'map_list_of()'
 
@@ -447,7 +447,7 @@ void CoinControlDialog::viewItemChanged(QTreeWidgetItem* item, int column)
             int rounds = pwalletMain->GetInputObfuscateRounds(vin);
             if(coinControl->useObfuscate && rounds < nObfuscateRounds) {
                 QMessageBox::warning(this, windowTitle(),
-                    tr("Non-anonymized input selected. <b>Obfuscate will be disabled.</b><br><br>If you still want to use Obfuscate, please deselect all non-nonymized inputs first and then check Obfuscate checkbox again."),
+                    tr("Non-anonymized input selected. <b>Obfuscation will be disabled.</b><br><br>If you still want to use Obfuscation, please deselect all non-nonymized inputs first and then check Obfuscation checkbox again."),
                     QMessageBox::Ok, QMessageBox::Ok);
                 coinControl->useObfuscate = false;
             }
@@ -612,7 +612,7 @@ void CoinControlDialog::updateLabels(WalletModel *model, QDialog* dialog)
         {
             nChange = nAmount - nPayFee - nPayAmount;
 
-            // DS Fee = overpay
+            // OBF Fee = overpay
             if(coinControl->useObfuscate && nChange > 0)
             {
                 nPayFee += nChange;

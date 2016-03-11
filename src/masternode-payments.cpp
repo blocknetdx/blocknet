@@ -1,4 +1,5 @@
 // Copyright (c) 2014-2015 The Dash developers
+// Copyright (c) 2015-2016 The DarkNet developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -6,7 +7,7 @@
 #include "masternode-budget.h"
 #include "masternode-sync.h"
 #include "masternodeman.h"
-#include "obfuscate.h"
+#include "obfuscation.h"
 #include "util.h"
 #include "sync.h"
 #include "spork.h"
@@ -339,11 +340,11 @@ void CMasternodePayments::ProcessMessageMasternodePayments(CNode* pfrom, std::st
 {
     if(!masternodeSync.IsBlockchainSynced()) return;
 
-    if(fLiteMode) return; //disable all Obfuscate/Masternode related functionality
+    if(fLiteMode) return; //disable all Obfuscation/Masternode related functionality
 
 
     if (strCommand == "mnget") { //Masternode Payments Request Sync
-        if(fLiteMode) return; //disable all Obfuscate/Masternode related functionality
+        if(fLiteMode) return; //disable all Obfuscation/Masternode related functionality
 
         int nCountNeeded;
         vRecv >> nCountNeeded;

@@ -16,7 +16,7 @@
 #include "clientversion.h"
 #include "primitives/transaction.h"
 #include "ui_interface.h"
-#include "obfuscate.h"
+#include "obfuscation.h"
 #include "wallet.h"
 
 #ifdef WIN32

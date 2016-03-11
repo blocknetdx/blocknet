@@ -10,7 +10,7 @@
 #include "swifttx.h"
 #include "activemasternode.h"
 #include "masternodeman.h"
-#include "obfuscate.h"
+#include "obfuscation.h"
 #include "spork.h"
 #include <boost/lexical_cast.hpp>
 
@@ -34,7 +34,7 @@ int nCompleteTXLocks;
 
 void ProcessMessageSwiftTX(CNode* pfrom, std::string& strCommand, CDataStream& vRecv)
 {
-    if(fLiteMode) return; //disable all obfuscate/masternode related functionality
+    if(fLiteMode) return; //disable all Obfuscation/masternode related functionality
     if(!IsSporkActive(SPORK_2_INSTANTX)) return;
     if(!masternodeSync.IsBlockchainSynced()) return;
 
@@ -57,7 +57,7 @@ void ProcessMessageSwiftTX(CNode* pfrom, std::string& strCommand, CDataStream& v
         }
 
         BOOST_FOREACH(const CTxOut o, tx.vout){
-            // IX supports normal scripts and unspendable scripts (used in DS collateral and Budget collateral).
+            // IX supports normal scripts and unspendable scripts (used in OBF collateral and Budget collateral).
             // TODO: Look into other script types that are normal and can be included
             if(!o.scriptPubKey.IsNormalPaymentScript() && !o.scriptPubKey.IsUnspendable()){
                 LogPrintf("ProcessMessageSwiftTX::ix - Invalid Script %s\n", tx.ToString().c_str());

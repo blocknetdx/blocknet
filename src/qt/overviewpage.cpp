@@ -1,5 +1,6 @@
 // Copyright (c) 2011-2014 The Bitcoin developers
 // Copyright (c) 2014-2015 The Dash developers
+// Copyright (c) 2015-2016 The DarkNet developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -8,7 +9,7 @@
 
 #include "bitcoinunits.h"
 #include "clientmodel.h"
-#include "obfuscate.h"
+#include "obfuscation.h"
 #include "obfuscateconfig.h"
 #include "guiconstants.h"
 #include "guiutil.h"
@@ -151,9 +152,9 @@ OverviewPage::OverviewPage(QWidget *parent) :
             ui->frameObfuscate->setEnabled(false);
         } else {
             if(!fEnableObfuscate){
-                ui->toggleObfuscate->setText(tr("Start Obfuscate Mixing"));
+                ui->toggleObfuscate->setText(tr("Start Obfuscating"));
             } else {
-                ui->toggleObfuscate->setText(tr("Stop Obfuscate Mixing"));
+                ui->toggleObfuscate->setText(tr("Stop Obfuscating"));
             }
             timer = new QTimer(this);
             connect(timer, SIGNAL(timeout()), this, SLOT(darkSendStatus()));
@@ -441,13 +442,13 @@ void OverviewPage::darkSendStatus()
 
             ui->obfuscateEnabled->setText(tr("Disabled"));
             ui->obfuscateStatus->setText("");
-            ui->toggleObfuscate->setText(tr("Start Obfuscate Mixing"));
+            ui->toggleObfuscate->setText(tr("Start Obfuscating"));
         }
 
         return;
     }
 
-    // check obfuscate status and unlock if needed
+    // check Obfuscation status and unlock if needed
     if(nBestHeight != darkSendPool.cachedNumBlocks)
     {
         // Balance and number of transactions might have changed
@@ -459,10 +460,10 @@ void OverviewPage::darkSendStatus()
 
     QString strStatus = QString(darkSendPool.GetStatus().c_str());
 
-    QString s = tr("Last Obfuscate message:\n") + strStatus;
+    QString s = tr("Last Obfuscation message:\n") + strStatus;
 
     if(s != ui->obfuscateStatus->text())
-        LogPrintf("Last Obfuscate message: %s\n", strStatus.toStdString());
+        LogPrintf("Last Obfuscation message: %s\n", strStatus.toStdString());
 
     ui->obfuscateStatus->setText(s);
 
@@ -484,8 +485,8 @@ void OverviewPage::obfuscateAuto(){
 void OverviewPage::obfuscateReset(){
     darkSendPool.Reset();
 
-    QMessageBox::warning(this, tr("Obfuscate"),
-        tr("Obfuscate was successfully reset."),
+    QMessageBox::warning(this, tr("Obfuscation"),
+        tr("Obfuscation was successfully reset."),
         QMessageBox::Ok, QMessageBox::Ok);
 }
 
@@ -494,8 +495,8 @@ void OverviewPage::toggleObfuscate(){
     // Popup some information on first mixing
     QString hasMixed = settings.value("hasMixed").toString();
     if(hasMixed.isEmpty()){
-        QMessageBox::information(this, tr("Obfuscate"),
-                tr("If you don't want to see internal Obfuscate fees/transactions select \"Most Common\" as Type on the \"Transactions\" tab."),
+        QMessageBox::information(this, tr("Obfuscation"),
+                tr("If you don't want to see internal Obfuscation fees/transactions select \"Most Common\" as Type on the \"Transactions\" tab."),
                 QMessageBox::Ok, QMessageBox::Ok);
         settings.setValue("hasMixed", "hasMixed");
     }
@@ -504,8 +505,8 @@ void OverviewPage::toggleObfuscate(){
         float minAmount = 14.90 * COIN;
         if(balance < minAmount){
             QString strMinAmount(BitcoinUnits::formatWithUnit(nDisplayUnit, minAmount));
-            QMessageBox::warning(this, tr("Obfuscate"),
-                tr("Obfuscate requires at least %1 to use.").arg(strMinAmount),
+            QMessageBox::warning(this, tr("Obfuscation"),
+                tr("Obfuscation requires at least %1 to use.").arg(strMinAmount),
                 QMessageBox::Ok, QMessageBox::Ok);
             return;
         }
@@ -518,10 +519,10 @@ void OverviewPage::toggleObfuscate(){
             {
                 //unlock was cancelled
                 darkSendPool.cachedNumBlocks = std::numeric_limits<int>::max();
-                QMessageBox::warning(this, tr("Obfuscate"),
-                    tr("Wallet is locked and user declined to unlock. Disabling Obfuscate."),
+                QMessageBox::warning(this, tr("Obfuscation"),
+                    tr("Wallet is locked and user declined to unlock. Disabling Obfuscation."),
                     QMessageBox::Ok, QMessageBox::Ok);
-                if (fDebug) LogPrintf("Wallet is locked and user declined to unlock. Disabling Obfuscate.\n");
+                if (fDebug) LogPrintf("Wallet is locked and user declined to unlock. Disabling Obfuscation.\n");
                 return;
             }
         }
@@ -532,12 +533,12 @@ void OverviewPage::toggleObfuscate(){
     darkSendPool.cachedNumBlocks = std::numeric_limits<int>::max();
 
     if(!fEnableObfuscate){
-        ui->toggleObfuscate->setText(tr("Start Obfuscate Mixing"));
+        ui->toggleObfuscate->setText(tr("Start Obfuscating"));
         darkSendPool.UnlockCoins();
     } else {
-        ui->toggleObfuscate->setText(tr("Stop Obfuscate Mixing"));
+        ui->toggleObfuscate->setText(tr("Stop Obfuscating"));
 
-        /* show obfuscate configuration if client has defaults set */
+        /* show Obfuscation configuration if client has defaults set */
 
         if(nAnonymizeDarkcoinAmount == 0){
             ObfuscateConfig dlg(this);

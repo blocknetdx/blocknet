@@ -17,7 +17,7 @@ BEGIN
         BLOCK "040904E4" // U.S. English - multilingual (hex)
         BEGIN
             VALUE "CompanyName",        "DarkNet"
-            VALUE "FileDescription",    "DarkNetd (OSS daemon/client for Dash)"
+            VALUE "FileDescription",    "DarkNetd (OSS daemon/client for Darknet)"
             VALUE "FileVersion",        VER_FILEVERSION_STR
             VALUE "InternalName",       "darknetd"
             VALUE "LegalCopyright",     COPYRIGHT_STR

@@ -347,7 +347,7 @@ public:
     bool GetBudgetSystemCollateralTX(CTransaction& tx, uint256 hash, bool useIX);
     bool GetBudgetSystemCollateralTX(CWalletTx& tx, uint256 hash, bool useIX);
 
-    // get the Obfuscate chain depth for a given input
+    // get the Obfuscation chain depth for a given input
     int GetRealInputObfuscateRounds(CTxIn in, int rounds) const;
     // respect current settings
     int GetInputObfuscateRounds(CTxIn in) const;
@@ -1111,7 +1111,7 @@ public:
         tx = txIn; i = iIn; nDepth = nDepthIn; fSpendable = fSpendableIn;
     }
 
-    //Used with Obfuscate. Will return largest nondenom, then denominations, then very small inputs
+    //Used with Obfuscation. Will return largest nondenom, then denominations, then very small inputs
     int Priority() const
     {
         BOOST_FOREACH(int64_t d, darkSendDenominations)

@@ -14,7 +14,7 @@
 #include "checkqueue.h"
 #include "init.h"
 #include "swifttx.h"
-#include "obfuscate.h"
+#include "obfuscation.h"
 #include "masternodeman.h"
 #include "masternode-payments.h"
 #include "masternode-budget.h"

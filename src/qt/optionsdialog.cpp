@@ -12,7 +12,7 @@
 #include "bitcoinunits.h"
 #include "guiutil.h"
 #include "optionsmodel.h"
-#include "obfuscate.h"
+#include "obfuscation.h"
 
 #include "main.h" // for MAX_SCRIPTCHECK_THREADS
 #include "netbase.h"
@@ -209,7 +209,7 @@ void OptionsDialog::setMapper()
     mapper->addMapping(ui->thirdPartyTxUrls, OptionsModel::ThirdPartyTxUrls);
 
 
-    /* Obfuscate Rounds */
+    /* Obfuscation Rounds */
     mapper->addMapping(ui->obfuscateRounds, OptionsModel::ObfuscateRounds);
     mapper->addMapping(ui->anonymizeDarkcoin, OptionsModel::AnonymizeDarkcoinAmount);
 

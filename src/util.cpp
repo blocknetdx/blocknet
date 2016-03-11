@@ -118,7 +118,7 @@ int nLiquidityProvider = 0;
 int64_t enforceMasternodePaymentsTime = 4085657524;
 bool fSucessfullyLoaded = false;
 bool fEnableObfuscate = false;
-/** All denominations used by obfuscate */
+/** All denominations used by Obfuscation */
 std::vector<int64_t> darkSendDenominations;
 string strBudgetMode = "";
 
@@ -235,7 +235,7 @@ bool LogAcceptCategory(const char* category)
             // thread_specific_ptr automatically deletes the set when the thread ends.
             // "darknet" is a composite category enabling all DarkNet-related debug output
             if(ptrCategory->count(string("darknet"))) {
-                ptrCategory->insert(string("obfuscate"));
+                ptrCategory->insert(string("obfuscation"));
                 ptrCategory->insert(string("swifttx"));
                 ptrCategory->insert(string("masternode"));
                 ptrCategory->insert(string("keepass"));

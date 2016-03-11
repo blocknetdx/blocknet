@@ -8,8 +8,9 @@
 #include "spork.h"
 
 //
-// Bootup the Masternode, look for a 1000DRK input and register on the network
+// Bootup the Masternode, look for a 10000 DNET input and register on the network
 //
+
 void CActiveMasternode::ManageStatus()
 {    
     std::string errorMessage;
@@ -225,7 +226,7 @@ bool CActiveMasternode::SendMasternodePing(std::string& errorMessage) {
     else
     {
         // Seems like we are trying to send a ping while the Masternode is not registered in the network
-        errorMessage = "Obfuscate Masternode List doesn't include our Masternode, shutting down Masternode pinging service! " + vin.ToString();
+        errorMessage = "Obfuscation Masternode List doesn't include our Masternode, shutting down Masternode pinging service! " + vin.ToString();
         status = ACTIVE_MASTERNODE_NOT_CAPABLE;
         notCapableReason = errorMessage;
         return false;

@@ -1,11 +1,12 @@
 // Copyright (c) 2014-2015 The Dash developers
+// Copyright (c) 2015-2016 The DarkNet developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "masternodeman.h"
 #include "masternode.h"
 #include "activemasternode.h"
-#include "obfuscate.h"
+#include "obfuscation.h"
 #include "util.h"
 #include "addrman.h"
 #include "spork.h"
@@ -673,7 +674,7 @@ void CMasternodeMan::ProcessMasternodeConnections()
 void CMasternodeMan::ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv)
 {
 
-    if(fLiteMode) return; //disable all Obfuscate/Masternode related functionality
+    if(fLiteMode) return; //disable all Obfuscation/Masternode related functionality
     if(!masternodeSync.IsBlockchainSynced()) return;
 
     LOCK(cs_process_message);
@@ -805,7 +806,7 @@ void CMasternodeMan::ProcessMessage(CNode* pfrom, std::string& strCommand, CData
      */
 
     // Light version for OLD MASSTERNODES - fake pings, no self-activation
-    else if (strCommand == "dsee") { //Obfuscate Election Entry
+    else if (strCommand == "dsee") { //Obfuscation Election Entry
 
         if(IsSporkActive(SPORK_10_MASTERNODE_PAY_UPDATED_NODES)) return;
 
@@ -1013,7 +1014,7 @@ void CMasternodeMan::ProcessMessage(CNode* pfrom, std::string& strCommand, CData
         }
     }
 
-    else if (strCommand == "dseep") { //Obfuscate Election Entry Ping
+    else if (strCommand == "dseep") { //Obfuscation Election Entry Ping
 
         if(IsSporkActive(SPORK_10_MASTERNODE_PAY_UPDATED_NODES)) return;
 
