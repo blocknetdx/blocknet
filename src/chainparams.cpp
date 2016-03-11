@@ -54,13 +54,13 @@ static void convertSeed6(std::vector<CAddress> &vSeedsOut, const SeedSpec6 *data
 // + Contains no strange transactions
 static Checkpoints::MapCheckpoints mapCheckpoints =
         boost::assign::map_list_of
-	( 0, uint256("0x001"));
+	( 54900, uint256("00000000018b925d0328dddfa47a5296569d3679face0c04b71d8ee1056daf17"));
 static const Checkpoints::CCheckpointData data = {
         &mapCheckpoints,
-        1454124731, // * UNIX timestamp of last checkpoint block
-        0,     // * total number of transactions between genesis and last checkpoint
+        1457660559, // * UNIX timestamp of last checkpoint block
+        79717,     // * total number of transactions between genesis and last checkpoint
                     //   (the tx=... number in the SetBestChain debug.log lines)
-        500        // * estimated number of transactions per day after checkpoint
+        2000        // * estimated number of transactions per day after checkpoint
     };
 
 static Checkpoints::MapCheckpoints mapCheckpointsTestnet =
@@ -138,11 +138,11 @@ public:
         assert(hashGenesisBlock == uint256("0x0000041e482b9b9691d98eefb48473405c0b8ec31b76df3797c74a78680ef818"));
         assert(genesis.hashMerkleRoot == uint256("0x1b2ef6e2f28be914103a277377ae7729dcd125dfeb8bf97bd5964ba72b6dc39b"));
 
+        vSeeds.push_back(CDNSSeedData("173.245.158.8", ""));
         vSeeds.push_back(CDNSSeedData("dnsseed.darknet-crypto.com", ""));
         vSeeds.push_back(CDNSSeedData("darknetexporer.coin-server.com", ""));
         vSeeds.push_back(CDNSSeedData("darknet.coin-server.com", "")); 
-        vSeeds.push_back(CDNSSeedData("162.213.154.31", ""));
-        vSeeds.push_back(CDNSSeedData("173.245.148.70", ""));
+        vSeeds.push_back(CDNSSeedData("68.227.29.22", ""));
         vSeeds.push_back(CDNSSeedData("151.80.206.104", ""));
 
         base58Prefixes[PUBKEY_ADDRESS] = list_of( 30);                    
@@ -166,7 +166,7 @@ public:
         nPoolMaxTransactions = 3;
         strSporkKey = "0484698d3ba6ba6e7423fa5cbd6a89e0a9a5348f88d332b44a5cb1a8b7ed2c1eaa335fc8dc4f012cb8241cc0bdafd6ca70c5f5448916e4e6f511bcd746ed57dc50";
         strMasternodePaymentsPubKey = "0484698d3ba6ba6e7423fa5cbd6a89e0a9a5348f88d332b44a5cb1a8b7ed2c1eaa335fc8dc4f012cb8241cc0bdafd6ca70c5f5448916e4e6f511bcd746ed57dc50";
-        strObfuscatePoolDummyAddress = "Xq19GqFvajRrEdDHYRKGYjTsQfpV5jyipF";
+        strObfuscatePoolDummyAddress = "D5tgqghG3FFHt2qPFR2BCHbBEUAsyTmHNS";
         nStartMasternodePayments = 1403728576; //Wed, 25 Jun 2014 20:36:16 GMT
     }
 
