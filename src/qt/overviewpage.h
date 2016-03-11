@@ -37,7 +37,7 @@ public:
     void updateObfuscateProgress();
 
 public slots:
-    void darkSendStatus();
+    void obfuscateStatus();
     void setBalance(const CAmount& balance, const CAmount& unconfirmedBalance, const CAmount& immatureBalance, const CAmount& anonymizedBalance,
                     const CAmount& watchOnlyBalance, const CAmount& watchUnconfBalance, const CAmount& watchImmatureBalance);
 

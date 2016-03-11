@@ -749,8 +749,8 @@ Address: %4
     <name>ClientModel</name>
     <message>
         <location filename="../clientmodel.cpp" line="+73"/>
-        <source>Total: %1 (DS compatible: %2 / Enabled: %3)</source>
-        <translation>Total: %1 (DS compatible: %2 / Enabled: %3)</translation>
+        <source>Total: %1 (OBF compatible: %2 / Enabled: %3)</source>
+        <translation>Total: %1 (OBF compatible: %2 / Enabled: %3)</translation>
     </message>
     <message>
         <location line="+107"/>
@@ -842,8 +842,8 @@ Address: %4
     </message>
     <message>
         <location line="+5"/>
-        <source>DS Rounds</source>
-        <translation>DS Rounds</translation>
+        <source>OBF Rounds</source>
+        <translation>OBF Rounds</translation>
     </message>
     <message>
         <location line="+5"/>

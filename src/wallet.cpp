@@ -957,7 +957,7 @@ bool CWallet::IsDenominated(const CTransaction& tx) const
 
 bool CWallet::IsDenominatedAmount(int64_t nInputAmount) const
 {
-    BOOST_FOREACH(int64_t d, darkSendDenominations)
+    BOOST_FOREACH(int64_t d, obfuscateDenominations)
         if(nInputAmount == d)
             return true;
     return false;
@@ -1593,7 +1593,7 @@ bool less_then_denom (const COutput& out1, const COutput& out2)
 
     bool found1 = false;
     bool found2 = false;
-    BOOST_FOREACH(int64_t d, darkSendDenominations) // loop through predefined denoms
+    BOOST_FOREACH(int64_t d, obfuscateDenominations) // loop through predefined denoms
     {
         if(pcoin1->vout[out1.i].nValue == d) found1 = true;
         if(pcoin2->vout[out2.i].nValue == d) found2 = true;
@@ -1726,7 +1726,7 @@ bool CWallet::SelectCoinsMinConf(const CAmount& nTargetValue, int nConfMine, int
 
 bool CWallet::SelectCoins(const CAmount& nTargetValue, set<pair<const CWalletTx*,unsigned int> >& setCoinsRet, CAmount& nValueRet, const CCoinControl* coinControl, AvailableCoinsType coin_type, bool useIX) const
 {
-    // Note: this function should never be used for "always free" tx types like dstx
+    // Note: this function should never be used for "always free" tx types like obftx
 
     vector<COutput> vCoins;
     AvailableCoins(vCoins, true, coinControl, coin_type, useIX);
@@ -1755,7 +1755,7 @@ bool CWallet::SelectCoins(const CAmount& nTargetValue, set<pair<const CWalletTx*
     //if we're doing only denominated, we need to round up to the nearest .1DRK
     if(coin_type == ONLY_DENOMINATED) {
         // Make outputs by looping through denominations, from large to small
-        BOOST_FOREACH(int64_t v, darkSendDenominations)
+        BOOST_FOREACH(int64_t v, obfuscateDenominations)
         {
             BOOST_FOREACH(const COutput& out, vCoins)
             {
@@ -1983,7 +1983,7 @@ bool CWallet::HasCollateralInputs(bool fOnlyConfirmed) const
 
 bool CWallet::IsCollateralAmount(int64_t nInputAmount) const
 {
-    return  nInputAmount != 0 && nInputAmount % DARKSEND_COLLATERAL == 0 && nInputAmount < DARKSEND_COLLATERAL * 5 && nInputAmount > DARKSEND_COLLATERAL;
+    return  nInputAmount != 0 && nInputAmount % OBFUSCATE_COLLATERAL == 0 && nInputAmount < OBFUSCATE_COLLATERAL * 5 && nInputAmount > OBFUSCATE_COLLATERAL;
 }
 
 bool CWallet::CreateCollateralTransaction(CMutableTransaction& txCollateral, std::string& strReason)
@@ -2017,9 +2017,9 @@ bool CWallet::CreateCollateralTransaction(CMutableTransaction& txCollateral, std
     BOOST_FOREACH(CTxIn v, vCoinsCollateral)
         txCollateral.vin.push_back(v);
 
-    if(nValueIn2 - DARKSEND_COLLATERAL - nFeeRet > 0) {
+    if(nValueIn2 - OBFUSCATE_COLLATERAL - nFeeRet > 0) {
         //pay collateral charge in fees
-        CTxOut vout3 = CTxOut(nValueIn2 - DARKSEND_COLLATERAL, scriptChange);
+        CTxOut vout3 = CTxOut(nValueIn2 - OBFUSCATE_COLLATERAL, scriptChange);
         txCollateral.vout.push_back(vout3);
     }
 
@@ -2402,8 +2402,8 @@ string CWallet::PrepareObfuscateDenominate(int minRounds, int maxRounds)
     if (IsLocked())
         return _("Error: Wallet locked, unable to create transaction!");
 
-    if(darkSendPool.GetState() != POOL_STATUS_ERROR && darkSendPool.GetState() != POOL_STATUS_SUCCESS)
-        if(darkSendPool.GetEntriesCount() > 0)
+    if(obfuscatePool.GetState() != POOL_STATUS_ERROR && obfuscatePool.GetState() != POOL_STATUS_SUCCESS)
+        if(obfuscatePool.GetEntriesCount() > 0)
             return _("Error: You already have pending entries in the Obfuscation pool");
 
     // ** find the coins we'll use
@@ -2419,7 +2419,7 @@ string CWallet::PrepareObfuscateDenominate(int minRounds, int maxRounds)
         if minRounds >= 0 it means only denominated inputs are going in and coming out
     */
     if(minRounds >= 0){
-        if (!SelectCoinsByDenominations(darkSendPool.sessionDenom, 1*COIN, DARKSEND_POOL_MAX, vCoins, vCoins2, nValueIn, minRounds, maxRounds))
+        if (!SelectCoinsByDenominations(obfuscatePool.sessionDenom, 1*COIN, OBFUSCATE_POOL_MAX, vCoins, vCoins2, nValueIn, minRounds, maxRounds))
             return _("Error: Can't select current denominated inputs");
     }
 
@@ -2446,14 +2446,14 @@ string CWallet::PrepareObfuscateDenominate(int minRounds, int maxRounds)
     int nStepsMax = 5 + GetRandInt(5);
     while(nStep < nStepsMax) {
 
-        BOOST_FOREACH(int64_t v, darkSendDenominations){
+        BOOST_FOREACH(int64_t v, obfuscateDenominations){
             // only use the ones that are approved
             bool fAccepted = false;
-            if((darkSendPool.sessionDenom & (1 << 0))      && v == ((100*COIN) +1000000)) {fAccepted = true;}
-            else if((darkSendPool.sessionDenom & (1 << 1)) && v == ((10*COIN)  +100000)) {fAccepted = true;}
-            else if((darkSendPool.sessionDenom & (1 << 2)) && v == ((10*COIN)  +10000)) {fAccepted = true;}
-            else if((darkSendPool.sessionDenom & (1 << 3)) && v == ((1*COIN)   +1000)) {fAccepted = true;}
-            else if((darkSendPool.sessionDenom & (1 << 4)) && v == ((.1*COIN)  +100)) {fAccepted = true;}
+            if((obfuscatePool.sessionDenom & (1 << 0))      && v == ((100*COIN) +1000000)) {fAccepted = true;}
+            else if((obfuscatePool.sessionDenom & (1 << 1)) && v == ((10*COIN)  +100000)) {fAccepted = true;}
+            else if((obfuscatePool.sessionDenom & (1 << 2)) && v == ((10*COIN)  +10000)) {fAccepted = true;}
+            else if((obfuscatePool.sessionDenom & (1 << 3)) && v == ((1*COIN)   +1000)) {fAccepted = true;}
+            else if((obfuscatePool.sessionDenom & (1 << 4)) && v == ((.1*COIN)  +100)) {fAccepted = true;}
             if(!fAccepted) continue;
 
             // try to add it
@@ -2504,7 +2504,7 @@ string CWallet::PrepareObfuscateDenominate(int minRounds, int maxRounds)
                 UnlockCoin(v.prevout);
     }
 
-    if(darkSendPool.GetDenominations(vOut) != darkSendPool.sessionDenom) {
+    if(obfuscatePool.GetDenominations(vOut) != obfuscatePool.sessionDenom) {
         // unlock used coins on failure
         LOCK(cs_wallet);
         BOOST_FOREACH(CTxIn v, vCoinsResult)
@@ -2516,7 +2516,7 @@ string CWallet::PrepareObfuscateDenominate(int minRounds, int maxRounds)
     std::random_shuffle (vOut.begin(), vOut.end());
 
     // We also do not care about full amount as long as we have right denominations, just pass what we found
-    darkSendPool.SendObfuscateDenominate(vCoinsResult, vOut, nValueIn - nValueLeft);
+    obfuscatePool.SendObfuscateDenominate(vCoinsResult, vOut, nValueIn - nValueLeft);
 
     return "";
 }

@@ -1114,7 +1114,7 @@ public:
     //Used with Obfuscation. Will return largest nondenom, then denominations, then very small inputs
     int Priority() const
     {
-        BOOST_FOREACH(int64_t d, darkSendDenominations)
+        BOOST_FOREACH(int64_t d, obfuscateDenominations)
             if(tx->vout[i].nValue == d) return 100000;
         if(tx->vout[i].nValue < 10*COIN) return 200000;
 

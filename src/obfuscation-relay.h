@@ -4,8 +4,8 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef DARKSEND_RELAY_H
-#define DARKSEND_RELAY_H
+#ifndef OBFUSCATE_RELAY_H
+#define OBFUSCATE_RELAY_H
 
 #include "main.h"
 #include "activemasternode.h"

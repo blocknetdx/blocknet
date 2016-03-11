@@ -389,19 +389,19 @@ CNode* FindNode(const CService& addr)
     return NULL;
 }
 
-CNode* ConnectNode(CAddress addrConnect, const char *pszDest, bool darkSendMaster)
+CNode* ConnectNode(CAddress addrConnect, const char *pszDest, bool obfuscateMaster)
 {
     if (pszDest == NULL) {
         // we clean masternode connections in CMasternodeMan::ProcessMasternodeConnections()
         // so should be safe to skip this and connect to local Hot MN on CActiveMasternode::ManageStatus()
-        if (IsLocal(addrConnect) && !darkSendMaster)
+        if (IsLocal(addrConnect) && !obfuscateMaster)
             return NULL;
 
         // Look for an existing connection
         CNode* pnode = FindNode((CService)addrConnect);
         if (pnode)
         {
-            pnode->fObfuscateMaster = darkSendMaster;
+            pnode->fObfuscateMaster = obfuscateMaster;
 
             pnode->AddRef();
             return pnode;
@@ -437,7 +437,7 @@ CNode* ConnectNode(CAddress addrConnect, const char *pszDest, bool darkSendMaste
         }
 
         pnode->nTimeConnected = GetTime();
-        if(darkSendMaster) pnode->fObfuscateMaster = true;
+        if(obfuscateMaster) pnode->fObfuscateMaster = true;
 
         return pnode;
     } else if (!proxyConnectionFailed) {

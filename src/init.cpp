@@ -1477,7 +1477,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     }
 
     if(fMasterNode) {
-        LogPrintf("IS DARKSEND MASTER NODE\n");
+        LogPrintf("IS OBFUSCATE MASTER NODE\n");
         strMasterNodeAddr = GetArg("-masternodeaddr", "");
 
         LogPrintf(" addr %s\n", strMasterNodeAddr.c_str());
@@ -1496,7 +1496,7 @@ bool AppInit2(boost::thread_group& threadGroup)
             CKey key;
             CPubKey pubkey;
 
-            if(!darkSendSigner.SetKey(strMasterNodePrivKey, errorMessage, key, pubkey))
+            if(!obfuscateSigner.SetKey(strMasterNodePrivKey, errorMessage, key, pubkey))
             {
                 return InitError(_("Invalid masternodeprivkey. Please see documenation."));
             }
@@ -1531,14 +1531,14 @@ bool AppInit2(boost::thread_group& threadGroup)
 
     nLiquidityProvider = GetArg("-liquidityprovider", 0); //0-100
     if(nLiquidityProvider != 0) {
-        darkSendPool.SetMinBlockSpacing(std::min(nLiquidityProvider,100)*15);
+        obfuscatePool.SetMinBlockSpacing(std::min(nLiquidityProvider,100)*15);
         fEnableObfuscate = true;
         nObfuscateRounds = 99999;
     }
 
-    nAnonymizeDarkcoinAmount = GetArg("-anonymizedarknetamount", 0);
-    if(nAnonymizeDarkcoinAmount > 999999) nAnonymizeDarkcoinAmount = 999999;
-    if(nAnonymizeDarkcoinAmount < 2) nAnonymizeDarkcoinAmount = 2;
+    nAnonymizeDarknetAmount = GetArg("-anonymizedarknetamount", 0);
+    if(nAnonymizeDarknetAmount > 999999) nAnonymizeDarknetAmount = 999999;
+    if(nAnonymizeDarknetAmount < 2) nAnonymizeDarknetAmount = 2;
 
     fEnableSwiftTX = GetBoolArg("-enableswifttx", fEnableSwiftTX);
     nSwiftTXDepth = GetArg("-swifttxdepth", nSwiftTXDepth);
@@ -1553,7 +1553,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     LogPrintf("fLiteMode %d\n", fLiteMode);
     LogPrintf("nSwiftTXDepth %d\n", nSwiftTXDepth);
     LogPrintf("Obfuscation rounds %d\n", nObfuscateRounds);
-    LogPrintf("Anonymize DarkNet Amount %d\n", nAnonymizeDarkcoinAmount);
+    LogPrintf("Anonymize DarkNet Amount %d\n", nAnonymizeDarknetAmount);
     LogPrintf("Budget Mode %s\n", strBudgetMode.c_str());
 
     /* Denominations
@@ -1565,17 +1565,17 @@ bool AppInit2(boost::thread_group& threadGroup)
        1DNET+1000 == (.1DNET+100)*10
        10DNET+10000 == (1DNET+1000)*10
     */
-    darkSendDenominations.push_back( (1000      * COIN)+1000000 );
-    darkSendDenominations.push_back( (100      * COIN)+100000 );
-    darkSendDenominations.push_back( (10       * COIN)+10000 );
-    darkSendDenominations.push_back( (1        * COIN)+1000 );
-    darkSendDenominations.push_back( (.1       * COIN)+100 );
+    obfuscateDenominations.push_back( (1000      * COIN)+1000000 );
+    obfuscateDenominations.push_back( (100      * COIN)+100000 );
+    obfuscateDenominations.push_back( (10       * COIN)+10000 );
+    obfuscateDenominations.push_back( (1        * COIN)+1000 );
+    obfuscateDenominations.push_back( (.1       * COIN)+100 );
     /* Disabled till we need them
-    darkSendDenominations.push_back( (.01      * COIN)+10 );
-    darkSendDenominations.push_back( (.001     * COIN)+1 );
+    obfuscateDenominations.push_back( (.01      * COIN)+10 );
+    obfuscateDenominations.push_back( (.001     * COIN)+1 );
     */
 
-    darkSendPool.InitCollateralAddress();
+    obfuscatePool.InitCollateralAddress();
 
     threadGroup.create_thread(boost::bind(&ThreadCheckObfuscatePool));
 

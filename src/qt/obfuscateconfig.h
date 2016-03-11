@@ -1,5 +1,5 @@
-#ifndef DARKSENDCONFIG_H
-#define DARKSENDCONFIG_H
+#ifndef OBFUSCATECONFIG_H
+#define OBFUSCATECONFIG_H
 
 #include <QDialog>
 
@@ -34,4 +34,4 @@ private slots:
     void clickMax();
 };
 
-#endif // DARKSENDCONFIG_H
+#endif // OBFUSCATECONFIG_H

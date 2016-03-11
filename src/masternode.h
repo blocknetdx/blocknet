@@ -131,7 +131,7 @@ public:
     bool unitTest;
     bool allowFreeTx;
     int protocolVersion;
-    int64_t nLastDsq; //the dsq count from the last dsq broadcast of this node
+    int64_t nLastObfq; //the obfq count from the last obfq broadcast of this node
     int nScanningErrorCount;
     int nLastScanningErrorBlockHeight;
     CMasternodePing lastPing;
@@ -164,7 +164,7 @@ public:
         swap(first.unitTest, second.unitTest);
         swap(first.allowFreeTx, second.allowFreeTx);
         swap(first.protocolVersion, second.protocolVersion);
-        swap(first.nLastDsq, second.nLastDsq);
+        swap(first.nLastObfq, second.nLastObfq);
         swap(first.nScanningErrorCount, second.nScanningErrorCount);
         swap(first.nLastScanningErrorBlockHeight, second.nLastScanningErrorBlockHeight);
     }
@@ -204,7 +204,7 @@ public:
             READWRITE(cacheInputAgeBlock);
             READWRITE(unitTest);
             READWRITE(allowFreeTx);
-            READWRITE(nLastDsq);
+            READWRITE(nLastObfq);
             READWRITE(nScanningErrorCount);
             READWRITE(nLastScanningErrorBlockHeight);
     }
@@ -304,7 +304,7 @@ public:
         READWRITE(sigTime);
         READWRITE(protocolVersion);
         READWRITE(lastPing);
-        READWRITE(nLastDsq);
+        READWRITE(nLastObfq);
     }
 
     uint256 GetHash(){

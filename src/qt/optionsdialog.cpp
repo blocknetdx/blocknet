@@ -211,7 +211,7 @@ void OptionsDialog::setMapper()
 
     /* Obfuscation Rounds */
     mapper->addMapping(ui->obfuscateRounds, OptionsModel::ObfuscateRounds);
-    mapper->addMapping(ui->anonymizeDarkcoin, OptionsModel::AnonymizeDarkcoinAmount);
+    mapper->addMapping(ui->anonymizeDarknet, OptionsModel::AnonymizeDarknetAmount);
 
 }
 
@@ -253,7 +253,7 @@ void OptionsDialog::on_resetButton_clicked()
 void OptionsDialog::on_okButton_clicked()
 {
     mapper->submit();
-    darkSendPool.cachedNumBlocks = std::numeric_limits<int>::max();
+    obfuscatePool.cachedNumBlocks = std::numeric_limits<int>::max();
     pwalletMain->MarkDirty();
     accept();
 }

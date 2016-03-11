@@ -148,7 +148,7 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
 
                     if(wallet->IsCollateralAmount(txout.nValue)) sub.type = TransactionRecord::ObfuscateMakeCollaterals;
                     if(wallet->IsDenominatedAmount(txout.nValue)) sub.type = TransactionRecord::ObfuscateCreateDenominations;
-                    if(nDebit - wtx.GetValueOut() == DARKSEND_COLLATERAL) sub.type = TransactionRecord::ObfuscateCollateralPayment;
+                    if(nDebit - wtx.GetValueOut() == OBFUSCATE_COLLATERAL) sub.type = TransactionRecord::ObfuscateCollateralPayment;
                 }
             }
 

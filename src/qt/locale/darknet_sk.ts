@@ -593,8 +593,8 @@ Adresa: %4</translation>
 <context>
     <name>ClientModel</name>
     <message>
-        <source>Total: %1 (DS compatible: %2 / Enabled: %3)</source>
-        <translation>Celkovo: %1 (Kompatibilné z DS: %2 / Zapnuté: %3)</translation>
+        <source>Total: %1 (OBF compatible: %2 / Enabled: %3)</source>
+        <translation>Celkovo: %1 (Kompatibilné z OBF: %2 / Zapnuté: %3)</translation>
     </message>
     <message>
         <source>Network Alert</source>
@@ -668,8 +668,8 @@ Adresa: %4</translation>
         <translation>Prijaté s adresou</translation>
     </message>
     <message>
-        <source>DS Rounds</source>
-        <translation>Kôl DS</translation>
+        <source>OBF Rounds</source>
+        <translation>Kôl OBF</translation>
     </message>
     <message>
         <source>Date</source>

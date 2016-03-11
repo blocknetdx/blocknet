@@ -594,7 +594,7 @@ Address: %4
 <context>
     <name>ClientModel</name>
     <message>
-        <source>Total: %1 (DS compatible: %2 / Enabled: %3)</source>
+        <source>Total: %1 (OBF compatible: %2 / Enabled: %3)</source>
         <translation>总量:%1 (匿名发送兼容: %2 / 可用: %3)</translation>
     </message>
     <message>
@@ -669,7 +669,7 @@ Address: %4
         <translation>收款地址</translation>
     </message>
     <message>
-        <source>DS Rounds</source>
+        <source>OBF Rounds</source>
         <translation>匿名发送循环</translation>
     </message>
     <message>

@@ -853,7 +853,7 @@ font-size:12px;
 margin-left:16px;
 }
 
-/* DARKSEND WIDGET */
+/* OBFUSCATE WIDGET */
 
 QWidget .QFrame#frameObfuscate { /* Obfuscation Widget */
 background-color:transparent;
@@ -894,7 +894,7 @@ min-height:25px;
 QWidget .QFrame#frameObfuscate #formLayoutWidget .QLabel#label_6 { /* Obfuscation Status Label */
 qproperty-alignment: 'AlignVCenter | AlignRight';
 min-width:160px;
-background-color:transparent; /*  DARKSEND STATUS BOX COLOR   */
+background-color:transparent; /*  OBFUSCATE STATUS BOX COLOR   */
 margin-right:5px;
 padding-right:5px;
 }
@@ -906,7 +906,7 @@ QWidget .QFrame#frameObfuscate #formLayoutWidget .QLabel#obfuscateEnabled { /* O
 QWidget .QFrame#frameObfuscate #formLayoutWidget .QLabel#label_7 { /* Obfuscation Completion Label */
 qproperty-alignment: 'AlignVCenter | AlignRight';
 min-width:160px;
-background-color:transparent; /*  DARKSEND COMPLETION BOX COLOR   */
+background-color:transparent; /*  OBFUSCATE COMPLETION BOX COLOR   */
 margin-right:5px;
 padding-right:5px;
 
@@ -928,7 +928,7 @@ width:1px;
 QWidget .QFrame#frameObfuscate #formLayoutWidget .QLabel#labelAnonymizedText { /* Obfuscation Balance Label */
 qproperty-alignment: 'AlignVCenter | AlignRight';
 min-width:160px;
-background-color:transparent; /*  DARKSEND BALANCE BOX COLOR   */
+background-color:transparent; /*  OBFUSCATE BALANCE BOX COLOR   */
 margin-right:5px;
 padding-right:5px;
 }
@@ -940,7 +940,7 @@ QWidget .QFrame#frameObfuscate #formLayoutWidget .QLabel#labelAnonymized { /* Ob
 QWidget .QFrame#frameObfuscate #formLayoutWidget .QLabel#label_8 { /* Obfuscation Amount and Rounds Label */
 qproperty-alignment: 'AlignVCenter | AlignRight';
 min-width:160px;
-background-color:transparent; /*  DARKSEND AMOUNT AND ROUNDS BOX COLOR   */
+background-color:transparent; /*  OBFUSCATE AMOUNT AND ROUNDS BOX COLOR   */
 margin-right:5px;
 padding-right:5px;
 }
@@ -952,7 +952,7 @@ QWidget .QFrame#frameObfuscate #formLayoutWidget .QLabel#labelAmountRounds { /* 
 QWidget .QFrame#frameObfuscate #formLayoutWidget .QLabel#label_9 { /* Obfuscation Submitted Denom Label */
 qproperty-alignment: 'AlignVCenter | AlignRight';
 min-width:160px;
-background-color:transparent; /*  DARKSEND SUBMITTED AND DENOM BOX COLOR   */
+background-color:transparent; /*  OBFUSCATE SUBMITTED AND DENOM BOX COLOR   */
 margin-right:5px;
 padding-right:5px;
 }
@@ -968,7 +968,7 @@ font-size:11px;
 color:#818181;
 }
 
-/* DARKSEND BUTTONS */
+/* OBFUSCATE BUTTONS */
 
 QWidget .QFrame#frameObfuscate .QPushButton { /* Obfuscation Buttons - General Attributes */
 border:0px solid #ffffff;

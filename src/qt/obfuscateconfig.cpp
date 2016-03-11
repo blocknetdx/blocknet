@@ -84,8 +84,8 @@ void ObfuscateConfig::configure(bool enabled, int coins, int rounds) {
     QSettings settings;
 
     settings.setValue("nObfuscateRounds", rounds);
-    settings.setValue("nAnonymizeDarkcoinAmount", coins);
+    settings.setValue("nAnonymizeDarknetAmount", coins);
 
     nObfuscateRounds = rounds;
-    nAnonymizeDarkcoinAmount = coins;
+    nAnonymizeDarknetAmount = coins;
 }

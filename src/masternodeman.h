@@ -71,8 +71,8 @@ public:
     // Keep track of all pings I've seen
     map<uint256, CMasternodePing> mapSeenMasternodePing;
     
-    // keep track of dsq count to prevent masternodes from gaming obfuscation queue
-    int64_t nDsqCount;
+    // keep track of obfq count to prevent masternodes from gaming obfuscation queue
+    int64_t nObfqCount;
 
     ADD_SERIALIZE_METHODS;
 
@@ -83,7 +83,7 @@ public:
         READWRITE(mAskedUsForMasternodeList);
         READWRITE(mWeAskedForMasternodeList);
         READWRITE(mWeAskedForMasternodeListEntry);
-        READWRITE(nDsqCount);
+        READWRITE(nObfqCount);
 
         READWRITE(mapSeenMasternodeBroadcast);
         READWRITE(mapSeenMasternodePing);

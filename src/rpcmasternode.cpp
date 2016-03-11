@@ -67,11 +67,11 @@ Value obfuscation(const Array& params, bool fHelp)
         if(fMasterNode)
             return "Obfuscation is not supported from masternodes";
 
-        return "DoAutomaticDenominating " + (darkSendPool.DoAutomaticDenominating() ? "successful" : ("failed: " + darkSendPool.GetStatus()));
+        return "DoAutomaticDenominating " + (obfuscatePool.DoAutomaticDenominating() ? "successful" : ("failed: " + obfuscatePool.GetStatus()));
     }
 
     if(params[0].get_str() == "reset"){
-        darkSendPool.Reset();
+        obfuscatePool.Reset();
         return "successfully reset Obfuscation";
     }
 
@@ -109,9 +109,9 @@ Value getpoolinfo(const Array& params, bool fHelp)
 
     Object obj;
     obj.push_back(Pair("current_masternode",        mnodeman.GetCurrentMasterNode()->addr.ToString()));
-    obj.push_back(Pair("state",        darkSendPool.GetState()));
-    obj.push_back(Pair("entries",      darkSendPool.GetEntriesCount()));
-    obj.push_back(Pair("entries_accepted",      darkSendPool.GetCountEntriesAccepted()));
+    obj.push_back(Pair("state",        obfuscatePool.GetState()));
+    obj.push_back(Pair("entries",      obfuscatePool.GetEntriesCount()));
+    obj.push_back(Pair("entries_accepted",      obfuscatePool.GetCountEntriesAccepted()));
     return obj;
 }
 
@@ -134,7 +134,7 @@ Value masternode(const Array& params, bool fHelp)
                 "1. \"command\"        (string or set of strings, required) The command to execute\n"
                 "2. \"passphrase\"     (string, optional) The wallet passphrase\n"
                 "\nAvailable commands:\n"
-                "  count        - Print number of all known masternodes (optional: 'ds', 'enabled', 'all', 'qualify')\n"
+                "  count        - Print number of all known masternodes (optional: 'obf', 'enabled', 'all', 'qualify')\n"
                 "  current      - Print info on current masternode winner\n"
                 "  debug        - Print masternode status\n"
                 "  genkey       - Generate new masternodeprivkey\n"

@@ -594,8 +594,8 @@ Kiểu: %3
 <context>
     <name>ClientModel</name>
     <message>
-        <source>Total: %1 (DS compatible: %2 / Enabled: %3)</source>
-        <translation>Tổng số: %1 (Tương thích với DS: %2 / Sẵn sàng: %3)</translation>
+        <source>Total: %1 (OBF compatible: %2 / Enabled: %3)</source>
+        <translation>Tổng số: %1 (Tương thích với OBF: %2 / Sẵn sàng: %3)</translation>
     </message>
     <message>
         <source>Network Alert</source>
@@ -669,8 +669,8 @@ Kiểu: %3
         <translation>Nhận được với địa chỉ</translation>
     </message>
     <message>
-        <source>DS Rounds</source>
-        <translation>Số vòng DS</translation>
+        <source>OBF Rounds</source>
+        <translation>Số vòng OBF</translation>
     </message>
     <message>
         <source>Date</source>

@@ -594,8 +594,8 @@ Osoite: %4
 <context>
     <name>ClientModel</name>
     <message>
-        <source>Total: %1 (DS compatible: %2 / Enabled: %3)</source>
-        <translation>Yhteensä: %1 (DS yht.sopivia: %2 / Käytössä: %3)</translation>
+        <source>Total: %1 (OBF compatible: %2 / Enabled: %3)</source>
+        <translation>Yhteensä: %1 (OBF yht.sopivia: %2 / Käytössä: %3)</translation>
     </message>
     <message>
         <source>Network Alert</source>
@@ -669,8 +669,8 @@ Osoite: %4
         <translation>Vastaanotettu osoitteeseen</translation>
     </message>
     <message>
-        <source>DS Rounds</source>
-        <translation>DS Kierrokset</translation>
+        <source>OBF Rounds</source>
+        <translation>OBF Kierrokset</translation>
     </message>
     <message>
         <source>Date</source>

@@ -593,8 +593,8 @@ Adresse: %4</translation>
 <context>
     <name>ClientModel</name>
     <message>
-        <source>Total: %1 (DS compatible: %2 / Enabled: %3)</source>
-        <translation>Gesamt: %1 (DS kompatibel: %2 / Aktiviert: %3)</translation>
+        <source>Total: %1 (OBF compatible: %2 / Enabled: %3)</source>
+        <translation>Gesamt: %1 (OBF kompatibel: %2 / Aktiviert: %3)</translation>
     </message>
     <message>
         <source>Network Alert</source>
@@ -668,8 +668,8 @@ Adresse: %4</translation>
         <translation>Empfangen über Adresse</translation>
     </message>
     <message>
-        <source>DS Rounds</source>
-        <translation>DS Runden</translation>
+        <source>OBF Rounds</source>
+        <translation>OBF Runden</translation>
     </message>
     <message>
         <source>Date</source>

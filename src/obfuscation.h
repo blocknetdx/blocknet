@@ -3,8 +3,8 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef DARKSEND_H
-#define DARKSEND_H
+#ifndef OBFUSCATE_H
+#define OBFUSCATE_H
 
 #include "main.h"
 #include "sync.h"
@@ -39,19 +39,19 @@ class CActiveMasternode;
 #define MASTERNODE_REJECTED                    0
 #define MASTERNODE_RESET                       -1
 
-#define DARKSEND_QUEUE_TIMEOUT                 30
-#define DARKSEND_SIGNING_TIMEOUT               15
+#define OBFUSCATE_QUEUE_TIMEOUT                 30
+#define OBFUSCATE_SIGNING_TIMEOUT               15
 
 // used for anonymous relaying of inputs/outputs/sigs
-#define DARKSEND_RELAY_IN                 1
-#define DARKSEND_RELAY_OUT                2
-#define DARKSEND_RELAY_SIG                3
+#define OBFUSCATE_RELAY_IN                 1
+#define OBFUSCATE_RELAY_OUT                2
+#define OBFUSCATE_RELAY_SIG                3
 
-static const int64_t DARKSEND_COLLATERAL = (0.1*COIN);
-static const int64_t DARKSEND_POOL_MAX = (9999.99*COIN);
+static const int64_t OBFUSCATE_COLLATERAL = (0.1*COIN);
+static const int64_t OBFUSCATE_POOL_MAX = (9999.99*COIN);
 
-extern CObfuscatePool darkSendPool;
-extern CObfuscateSigner darkSendSigner;
+extern CObfuscatePool obfuscatePool;
+extern CObfuscateSigner obfuscateSigner;
 extern std::vector<CObfuscateQueue> vecObfuscateQueue;
 extern std::string strMasterNodePrivKey;
 extern map<uint256, CObfuscateBroadcastTx> mapObfuscateBroadcastTxes;
@@ -59,13 +59,13 @@ extern CActiveMasternode activeMasternode;
 
 /** Holds an Obfuscation input
  */
-class CTxDSIn : public CTxIn
+class CTxOBFIn : public CTxIn
 {
 public:
     bool fHasSig; // flag to indicate if signed
     int nSentTimes; //times we've sent this anonymously
 
-    CTxDSIn(const CTxIn& in)
+    CTxOBFIn(const CTxIn& in)
     {
         prevout = in.prevout;
         scriptSig = in.scriptSig;
@@ -78,12 +78,12 @@ public:
 
 /** Holds an Obfuscation output
  */
-class CTxDSOut : public CTxOut
+class CTxOBFOut : public CTxOut
 {
 public:
     int nSentTimes; //times we've sent this anonymously
 
-    CTxDSOut(const CTxOut& out)
+    CTxOBFOut(const CTxOut& out)
     {
         nValue = out.nValue;
         nRounds = out.nRounds;
@@ -97,8 +97,8 @@ class CObfuscateEntry
 {
 public:
     bool isSet;
-    std::vector<CTxDSIn> sev;
-    std::vector<CTxDSOut> vout;
+    std::vector<CTxOBFIn> sev;
+    std::vector<CTxOBFOut> vout;
     int64_t amount;
     CTransaction collateral;
     CTransaction txSupporting;
@@ -132,7 +132,7 @@ public:
 
     bool AddSig(const CTxIn& vin)
     {
-        BOOST_FOREACH(CTxDSIn& s, sev) {
+        BOOST_FOREACH(CTxOBFIn& s, sev) {
             if(s.prevout == vin.prevout && s.nSequence == vin.nSequence){
                 if(s.fHasSig){return false;}
                 s.scriptSig = vin.scriptSig;
@@ -148,7 +148,7 @@ public:
 
     bool IsExpired()
     {
-        return (GetTime() - addedTime) > DARKSEND_QUEUE_TIMEOUT;// 120 seconds
+        return (GetTime() - addedTime) > OBFUSCATE_QUEUE_TIMEOUT;// 120 seconds
     }
 };
 
@@ -222,7 +222,7 @@ public:
     /// Is this Obfuscation expired?
     bool IsExpired()
     {
-        return (GetTime() - time) > DARKSEND_QUEUE_TIMEOUT;// 120 seconds
+        return (GetTime() - time) > OBFUSCATE_QUEUE_TIMEOUT;// 120 seconds
     }
 
     /// Check if we have a valid Masternode address
@@ -347,14 +347,14 @@ public:
      * \param strCommand lower case command string; valid values are:
      *        Command  | Description
      *        -------- | -----------------
-     *        dsa      | Obfuscation Acceptable
-     *        dsc      | Obfuscation Complete
-     *        dsf      | Obfuscation Final tx
-     *        dsi      | Obfuscation vIn
-     *        dsq      | Obfuscation Queue
-     *        dss      | Obfuscation Signal Final Tx
-     *        dssu     | Obfuscation status update
-     *        dssub    | Obfuscation Subscribe To
+     *        obfa      | Obfuscation Acceptable
+     *        obfc      | Obfuscation Complete
+     *        obff      | Obfuscation Final tx
+     *        obfi      | Obfuscation vIn
+     *        obfq      | Obfuscation Queue
+     *        obfs      | Obfuscation Signal Final Tx
+     *        obfsu     | Obfuscation status update
+     *        obfsub    | Obfuscation Subscribe To
      * \param vRecv
      */
     void ProcessMessageObfuscate(CNode* pfrom, std::string& strCommand, CDataStream& vRecv);
@@ -414,7 +414,7 @@ public:
         if(state != newState){
             lastTimeChanged = GetTimeMillis();
             if(fMasterNode) {
-                RelayStatus(darkSendPool.sessionID, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), MASTERNODE_RESET);
+                RelayStatus(obfuscatePool.sessionID, obfuscatePool.GetState(), obfuscatePool.GetEntriesCount(), MASTERNODE_RESET);
             }
         }
         state = newState;
@@ -483,7 +483,7 @@ public:
 
     /// Get the denominations for a list of outputs (returns a bitshifted integer)
     int GetDenominations(const std::vector<CTxOut>& vout, bool fSingleRandomDenom = false);
-    int GetDenominations(const std::vector<CTxDSOut>& vout);
+    int GetDenominations(const std::vector<CTxOBFOut>& vout);
 
     void GetDenominationsToString(int nDenom, std::string& strDenom);
 
@@ -500,7 +500,7 @@ public:
     void RelayFinalTransaction(const int sessionID, const CTransaction& txNew);
     void RelaySignaturesAnon(std::vector<CTxIn>& vin);
     void RelayInAnon(std::vector<CTxIn>& vin, std::vector<CTxOut>& vout);
-    void RelayIn(const std::vector<CTxDSIn>& vin, const int64_t& nAmount, const CTransaction& txCollateral, const std::vector<CTxDSOut>& vout);
+    void RelayIn(const std::vector<CTxOBFIn>& vin, const int64_t& nAmount, const CTransaction& txCollateral, const std::vector<CTxOBFOut>& vout);
     void RelayStatus(const int sessionID, const int newState, const int newEntriesCount, const int newAccepted, const int errorID=MSG_NOERR);
     void RelayCompletedTransaction(const int sessionID, const bool error, const int errorID);
 };

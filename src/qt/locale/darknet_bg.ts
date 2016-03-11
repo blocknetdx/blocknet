@@ -594,8 +594,8 @@ Address: %4
 <context>
     <name>ClientModel</name>
     <message>
-        <source>Total: %1 (DS compatible: %2 / Enabled: %3)</source>
-        <translation>Общо: %1 (DS съвместими: %2 / Позволени: %3)</translation>
+        <source>Total: %1 (OBF compatible: %2 / Enabled: %3)</source>
+        <translation>Общо: %1 (OBF съвместими: %2 / Позволени: %3)</translation>
     </message>
     <message>
         <source>Network Alert</source>
@@ -669,8 +669,8 @@ Address: %4
         <translation>Получени с адрес</translation>
     </message>
     <message>
-        <source>DS Rounds</source>
-        <translation>DS цикли</translation>
+        <source>OBF Rounds</source>
+        <translation>OBF цикли</translation>
     </message>
     <message>
         <source>Date</source>
