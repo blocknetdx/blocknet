@@ -1523,9 +1523,9 @@ bool AppInit2(boost::thread_group& threadGroup)
         }
     }
 
-    fEnableObfuscate = GetBoolArg("-enableobfuscate", false);
+    fEnableObfuscate = GetBoolArg("-enableobfuscate", true);
 
-    nObfuscateRounds = GetArg("-obfuscaterounds", 2);
+    nObfuscateRounds = GetArg("-obfuscaterounds", 8);
     if(nObfuscateRounds > 16) nObfuscateRounds = 16;
     if(nObfuscateRounds < 1) nObfuscateRounds = 1;
 
@@ -1536,7 +1536,7 @@ bool AppInit2(boost::thread_group& threadGroup)
         nObfuscateRounds = 99999;
     }
 
-    nAnonymizeDarknetAmount = GetArg("-anonymizedarknetamount", 0);
+    nAnonymizeDarknetAmount = GetArg("-anonymizedarknetamount", 1000);
     if(nAnonymizeDarknetAmount > 999999) nAnonymizeDarknetAmount = 999999;
     if(nAnonymizeDarknetAmount < 2) nAnonymizeDarknetAmount = 2;
 
