@@ -16,8 +16,8 @@ BITCOIND_USER=${BITCOIND_USER:-darknet}
 BITCOIND_GROUP=${BITCOIND_GROUP:-darknet}
 BITCOIND_BIN=${BITCOIND_BIN:-/usr/bin/darknetd}
 
-name="Dash Core Daemon"
-description="Dash crypto-currency p2p network daemon"
+name="Darknet Core Daemon"
+description="Darknet crypto-currency p2p network daemon"
 
 command="/usr/bin/darknetd"
 command_args="-pid=\"${BITCOIND_PIDFILE}\" \
@@ -78,7 +78,7 @@ checkconfig()
 		eerror "It is also recommended that you also set alertnotify so you are "
 		eerror "notified of problems:"
 		eerror ""
-		eerror "ie: alertnotify=echo %%s | mail -s \"Dash Alert\"" \
+		eerror "ie: alertnotify=echo %%s | mail -s \"Darknet Alert\"" \
 			"admin@foo.com"
 		eerror ""
 		return 1

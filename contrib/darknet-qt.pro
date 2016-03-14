@@ -76,8 +76,8 @@ HEADERS += src/activemasternode.h \
            src/compressor.h \
            src/core_io.h \
            src/crypter.h \
-           src/obfuscate-relay.h \
-           src/obfuscate.h \
+           src/obfuscation-relay.h \
+           src/obfuscation.h \
            src/darknet-config.h \
            src/db.h \
            src/eccryptoverify.h \
@@ -372,8 +372,8 @@ SOURCES += src/activemasternode.cpp \
            src/core_read.cpp \
            src/core_write.cpp \
            src/crypter.cpp \
-           src/obfuscate-relay.cpp \
-           src/obfuscate.cpp \
+           src/obfuscation-relay.cpp \
+           src/obfuscation.cpp \
            src/darknet-cli.cpp \
            src/darknet-tx.cpp \
            src/darknetd.cpp \
