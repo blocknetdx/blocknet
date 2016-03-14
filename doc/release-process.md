@@ -2,7 +2,7 @@ Release Process
 ====================
 
 * update translations (ping wumpus, Diapolo or tcatm on IRC)
-* see https://github.com/darknetpay/darknet/blob/master/doc/translation_process.md#syncing-with-transifex
+* see https://github.com/dark-crypto/darknet/blob/master/doc/translation_process.md#syncing-with-transifex
 
 * * *
 
@@ -15,11 +15,11 @@ Release Process
 
 ###tag version in git
 
-	git tag -s v(new version, e.g. 0.8.0)
+	git tag -s v(new version, e.g. 1.0.2.0)
 
 ###write release notes. git shortlog helps a lot, for example:
 
-	git shortlog --no-merges v(current version, e.g. 0.7.2)..v(new version, e.g. 0.8.0)
+	git shortlog --no-merges v(current version, e.g. 1.0.1.0)..v(new version, e.g. 1.0.2.0)
 
 * * *
 
@@ -32,7 +32,7 @@ Release Process
  From a directory containing the bitcoin source, gitian-builder and gitian.sigs
 
 	export SIGNER=(your gitian key, ie bluematt, sipa, etc)
-	export VERSION=(new version, e.g. 0.8.0)
+	export VERSION=(new version, e.g. 1.0.2.0)
 	pushd ./darknet
 	git checkout v${VERSION}
 	popd
@@ -92,7 +92,7 @@ Commit your signature to gitian.sigs:
 	popd
 
   Wait for OSX detached signature:
-	Once the OSX build has 3 matching signatures, Evan(?) ***TODO*** will sign it with the apple App-Store key.
+	Once the OSX build has 3 matching signatures ***TODO*** will sign it with the apple App-Store key.
 	He will then upload a detached signature to be combined with the unsigned app to create a signed binary.
 
   Create the signed OSX binary:
@@ -120,8 +120,6 @@ Commit your signature for the signed OSX binary:
 - Perform code-signing.
 
     - Code-sign Windows -setup.exe (in a Windows virtual machine using signtool)
-
-  Note: only Evan has the code-signing keys currently.
 
 - Create `SHA256SUMS.asc` for the builds, and GPG-sign it:
 ```bash

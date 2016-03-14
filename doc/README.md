@@ -1,4 +1,4 @@
-Dash Core 0.12.0
+DarkNet Core 1.0.2.0
 =====================
 
 Setup
@@ -7,11 +7,11 @@ Setup
 
 Running
 ---------------------
-The following are some helpful notes on how to run Dash on your native platform.
+The following are some helpful notes on how to run DarkNet on your native platform.
 
 ### Unix
 
-You need the Qt4 run-time libraries to run Dash-Qt. On Debian or Ubuntu:
+You need the Qt4 run-time libraries to run DarkNet-Qt. On Debian or Ubuntu:
 
 	sudo apt-get install libqtgui4
 
@@ -28,25 +28,25 @@ Unpack the files into a directory, and then run darknet-qt.exe.
 
 ### OSX
 
-Drag Dash-Qt to your applications folder, and then run Dash-Qt.
+Drag DarkNet-Qt to your applications folder, and then run DarkNet-Qt.
 
 ### Need Help?
 
-* See the documentation at the [Dash Wiki](https://en.bitcoin.it/wiki/Main_Page) ***TODO***
+* See the documentation at the [DarkNet Wiki](https://en.bitcoin.it/wiki/Main_Page) ***TODO***
 for help and more information.
-* Ask for help on [#darknetpay](http://webchat.freenode.net?channels=darknetpay) on Freenode. If you don't have an IRC client use [webchat here](http://webchat.freenode.net?channels=darknetpay).
-* Ask for help on the [DashTalk](https://darknettalk.org/) forums.
+* Ask for help on https://bitcointalk.org/index.php?topic=1262920.0
+* A new forum will be available soon on darknet-crypto.com
 
 Building
 ---------------------
-The following are developer notes on how to build Dash on your native platform. They are not complete guides, but include notes on the necessary libraries, compile flags, etc.
+The following are developer notes on how to build DarkNet on your native platform. They are not complete guides, but include notes on the necessary libraries, compile flags, etc.
 
 - [OSX Build Notes](build-osx.md)
 - [Unix Build Notes](build-unix.md)
 
 Development
 ---------------------
-The Dash repo's [root README](https://github.com/darknetpay/darknet/blob/master/README.md) contains relevant information on the development process and automated testing.
+The DarkNet repo's [root README](https://github.com/darknetpay/darknet/blob/master/README.md) contains relevant information on the development process and automated testing.
 
 - [Coding Guidelines](coding.md)
 - [Multiwallet Qt Development](multiwallet-qt.md)
@@ -55,10 +55,6 @@ The Dash repo's [root README](https://github.com/darknetpay/darknet/blob/master/
 - [Source Code Documentation (External Link)](https://dev.visucore.com/bitcoin/doxygen/) ***TODO***
 - [Translation Process](translation_process.md)
 - [Unit Tests](unit-tests.md)
-
-### Resources
-* Discuss on the [DashTalk](https://darknettalk.org/) forums, in the Development & Technical Discussion board.
-* Discuss on [#darknetpay](http://webchat.freenode.net/?channels=darknetpay) on Freenode. If you don't have an IRC client use [webchat here](http://webchat.freenode.net/?channels=darknetpay).
 
 ### Miscellaneous
 - [Assets Attribution](assets-attribution.md)

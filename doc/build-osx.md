@@ -67,7 +67,7 @@ After exiting, you'll get a warning that the install is keg-only, which means it
 
 1. Clone the github tree to get the source code and go into the directory.
 
-        git clone https://github.com/darknetpay/darknet.git
+        git clone https://github.com/darknet-crypto/darknet.git
         cd darknet
 
 2.  Build darknetd:
@@ -104,9 +104,9 @@ Creating a release build
 ------------------------
 You can ignore this section if you are building `darknetd` for your own use.
 
-darknetd/darknet-cli binaries are not included in the Dash-Qt.app bundle.
+darknetd/darknet-cli binaries are not included in the darknet-Qt.app bundle.
 
-If you are building `darknetd` or `Dash-Qt` for others, your build machine should be set up
+If you are building `darknetd` or `darknet-Qt` for others, your build machine should be set up
 as follows for maximum compatibility:
 
 All dependencies should be compiled with these flags:
@@ -115,7 +115,7 @@ All dependencies should be compiled with these flags:
  -arch x86_64
  -isysroot $(xcode-select --print-path)/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk
 
-Once dependencies are compiled, see release-process.md for how the Dash-Qt.app
+Once dependencies are compiled, see release-process.md for how the darknet-Qt.app
 bundle is packaged and signed to create the .dmg disk image that is distributed.
 
 Running
@@ -127,14 +127,14 @@ directory. We have to first create the RPC configuration file, though.
 Run `./darknetd` to get the filename where it should be put, or just try these
 commands:
 
-    echo -e "rpcuser=darknetrpc\nrpcpassword=$(xxd -l 16 -p /dev/urandom)" > "/Users/${USER}/Library/Application Support/Dash/darknet.conf"
-    chmod 600 "/Users/${USER}/Library/Application Support/Dash/darknet.conf"
+    echo -e "rpcuser=darknetrpc\nrpcpassword=$(xxd -l 16 -p /dev/urandom)" > "/Users/${USER}/Library/Application Support/DarkNet/darknet.conf"
+    chmod 600 "/Users/${USER}/Library/Application Support/DarkNet/darknet.conf"
 
 The next time you run it, it will start downloading the blockchain, but it won't
 output anything while it's doing this. This process may take several hours;
 you can monitor its process by looking at the debug.log file, like this:
 
-    tail -f $HOME/Library/Application\ Support/Dash/debug.log
+    tail -f $HOME/Library/Application\ Support/DarkNet/debug.log
 
 Other commands:
 -------
