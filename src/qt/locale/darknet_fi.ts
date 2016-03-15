@@ -1264,9 +1264,9 @@ Varoitus: Jos käytät käyttöjärjestelmää (Live os) suoraan usb, dvd tai cd
     </message>
     <message>
         <source>Language missing or translation incomplete? Help contributing translations here:
-https://www.transifex.com/projects/p/darknet/</source>
+https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</source>
         <translation>Puuttuuko sopiva kieli tai käännös on kesken? Auta käännöstyössä täällä:
-https://www.transifex.com/projects/p/darknet/</translation>
+https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translation>
     </message>
     <message>
         <source>User Interface Theme:</source>

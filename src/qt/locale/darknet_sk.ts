@@ -1262,9 +1262,9 @@ Adresa: %4</translation>
     </message>
     <message>
         <source>Language missing or translation incomplete? Help contributing translations here:
-https://www.transifex.com/projects/p/darknet/</source>
+https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</source>
         <translation>Chýbajúci alebo nekompletný preklad? Pomôžte nám tu:
-https://www.transifex.com/projects/p/darknet/</translation>
+https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translation>
     </message>
     <message>
         <source>User Interface Theme:</source>

@@ -466,7 +466,7 @@
          </property>
          <property name="text">
           <string>Language missing or translation incomplete? Help contributing translations here:
-https://www.transifex.com/projects/p/darknet/</string>
+https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</string>
          </property>
          <property name="wordWrap">
           <bool>true</bool>
