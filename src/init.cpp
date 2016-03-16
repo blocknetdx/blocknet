@@ -419,9 +419,9 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += "  -budgetvotemode=<mode>     " + _("Change automatic finalized budget voting behavior. mode=auto: Vote for only exact finalized budget match to my generated budget. (string, default: auto)") + "\n";
 
     strUsage += "\n" + _("Obfuscation options:") + "\n";
-    strUsage += "  -enableobfuscate=<n>          " + strprintf(_("Enable use of automated obfuscation for funds stored in this wallet (0-1, default: %u)"), 0) + "\n";
-    strUsage += "  -obfuscaterounds=<n>          " + strprintf(_("Use N separate masternodes to anonymize funds  (2-8, default: %u)"), 2) + "\n";
-    strUsage += "  -anonymizedarknetamount=<n>     " + strprintf(_("Keep N DNET anonymized (default: %u)"), 0) + "\n";
+    strUsage += "  -enableobfuscate=<n>          " + strprintf(_("Enable use of automated obfuscation for funds stored in this wallet (0-1, default: %u)"), 1) + "\n";
+    strUsage += "  -obfuscaterounds=<n>          " + strprintf(_("Use N separate masternodes to anonymize funds  (2-8, default: %u)"), 8) + "\n";
+    strUsage += "  -anonymizedarknetamount=<n>     " + strprintf(_("Keep N DNET anonymized (default: %u)"), 1000) + "\n";
     strUsage += "  -liquidityprovider=<n>       " + strprintf(_("Provide liquidity to Obfuscation by infrequently mixing coins on a continual basis (0-100, default: %u, 1=very frequent, high fees, 100=very infrequent, low fees)"), 0) + "\n";
 
     strUsage += "\n" + _("SwiftTX options:") + "\n";
