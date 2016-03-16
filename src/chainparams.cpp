@@ -138,12 +138,15 @@ public:
         assert(hashGenesisBlock == uint256("0x0000041e482b9b9691d98eefb48473405c0b8ec31b76df3797c74a78680ef818"));
         assert(genesis.hashMerkleRoot == uint256("0x1b2ef6e2f28be914103a277377ae7729dcd125dfeb8bf97bd5964ba72b6dc39b"));
 
-        vSeeds.push_back(CDNSSeedData("173.245.158.8", ""));
-        vSeeds.push_back(CDNSSeedData("68.227.29.22", ""));
-        vSeeds.push_back(CDNSSeedData("74.118.192.18", ""));
-        vSeeds.push_back(CDNSSeedData("dnsseed.darknet-crypto.com", ""));
-        vSeeds.push_back(CDNSSeedData("darknetexporer.coin-server.com", ""));
-        vSeeds.push_back(CDNSSeedData("darknet.coin-server.com", "")); 
+        vSeeds.push_back(CDNSSeedData("173.245.158.8", "173.245.158.8"));
+        vSeeds.push_back(CDNSSeedData("173.242.158.8", "173.242.158.8"));
+        vSeeds.push_back(CDNSSeedData("173.245.158.215", "173.245.158.215"));
+        vSeeds.push_back(CDNSSeedData("68.227.29.22", "68.227.29.22"));
+        vSeeds.push_back(CDNSSeedData("74.118.192.18", "74.118.192.18"));
+        vSeeds.push_back(CDNSSeedData("108.61.151.69", "108.61.151.69"));
+        vSeeds.push_back(CDNSSeedData("darknet-crypto.com", "dnsseed.darknet-crypto.com"));
+        vSeeds.push_back(CDNSSeedData("coin-server.com", "darknetexporer.coin-server.com"));
+        vSeeds.push_back(CDNSSeedData("coin-server.com", "darknet.coin-server.com")); 
 
         base58Prefixes[PUBKEY_ADDRESS] = list_of( 30);                    
         base58Prefixes[SCRIPT_ADDRESS] = list_of( 13);                    
