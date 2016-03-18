@@ -530,6 +530,8 @@ bool TestBlockValidity(CValidationState& state, const CBlock& block, CBlockIndex
 bool AcceptBlock(CBlock& block, CValidationState& state, CBlockIndex** pindex, CDiskBlockPos* dbp = NULL, bool fAlreadyCheckedBlock = false);
 bool AcceptBlockHeader(const CBlockHeader& block, CValidationState& state, CBlockIndex** ppindex = NULL);
 
+bool RewindBlockIndex(const CChainParams& params);
+
 void UpdateUncommitedBlockStructures(CBlock& block, const CBlockIndex* pindexPrev);
 
 /** Update uncommitted block structures (currently: only the witness nonce). This is safe for submitted blocks. */
