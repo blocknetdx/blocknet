@@ -8,9 +8,8 @@
 #include "spork.h"
 
 //
-// Bootup the Masternode, look for a 10000 DNET input and register on the network
+// Bootup the Masternode, look for a 1000DRK input and register on the network
 //
-
 void CActiveMasternode::ManageStatus()
 {    
     std::string errorMessage;
@@ -105,7 +104,7 @@ void CActiveMasternode::ManageStatus()
             CPubKey pubKeyMasternode;
             CKey keyMasternode;
 
-            if(!obfuscateSigner.SetKey(strMasterNodePrivKey, errorMessage, keyMasternode, pubKeyMasternode))
+            if(!darkSendSigner.SetKey(strMasterNodePrivKey, errorMessage, keyMasternode, pubKeyMasternode))
             {
                 notCapableReason = "Error upon calling SetKey: " + errorMessage;
                 LogPrintf("Register::ManageStatus() - %s\n", notCapableReason);
@@ -155,7 +154,7 @@ bool CActiveMasternode::SendMasternodePing(std::string& errorMessage) {
     CPubKey pubKeyMasternode;
     CKey keyMasternode;
 
-    if(!obfuscateSigner.SetKey(strMasterNodePrivKey, errorMessage, keyMasternode, pubKeyMasternode))
+    if(!darkSendSigner.SetKey(strMasterNodePrivKey, errorMessage, keyMasternode, pubKeyMasternode))
     {
         errorMessage = strprintf("Error upon calling SetKey: %s\n", errorMessage);
         return false;
@@ -202,12 +201,12 @@ bool CActiveMasternode::SendMasternodePing(std::string& errorMessage) {
 
         std::string strMessage = service.ToString() + boost::lexical_cast<std::string>(masterNodeSignatureTime) + boost::lexical_cast<std::string>(false);
 
-        if(!obfuscateSigner.SignMessage(strMessage, retErrorMessage, vchMasterNodeSignature, keyMasternode)) {
+        if(!darkSendSigner.SignMessage(strMessage, retErrorMessage, vchMasterNodeSignature, keyMasternode)) {
             errorMessage = "dseep sign message failed: " + retErrorMessage;
             return false;
         }
 
-        if(!obfuscateSigner.VerifyMessage(pubKeyMasternode, vchMasterNodeSignature, strMessage, retErrorMessage)) {
+        if(!darkSendSigner.VerifyMessage(pubKeyMasternode, vchMasterNodeSignature, strMessage, retErrorMessage)) {
             errorMessage = "dseep verify message failed: " + retErrorMessage;
             return false;
         }
@@ -226,7 +225,7 @@ bool CActiveMasternode::SendMasternodePing(std::string& errorMessage) {
     else
     {
         // Seems like we are trying to send a ping while the Masternode is not registered in the network
-        errorMessage = "Obfuscation Masternode List doesn't include our Masternode, shutting down Masternode pinging service! " + vin.ToString();
+        errorMessage = "Obfuscate Masternode List doesn't include our Masternode, shutting down Masternode pinging service! " + vin.ToString();
         status = ACTIVE_MASTERNODE_NOT_CAPABLE;
         notCapableReason = errorMessage;
         return false;
@@ -248,7 +247,7 @@ bool CActiveMasternode::Register(std::string strService, std::string strKeyMaste
         return false;
     }
 
-    if(!obfuscateSigner.SetKey(strKeyMasternode, errorMessage, keyMasternode, pubKeyMasternode))
+    if(!darkSendSigner.SetKey(strKeyMasternode, errorMessage, keyMasternode, pubKeyMasternode))
     {
         errorMessage = strprintf("Can't find keys for masternode %s - %s", strService, errorMessage);
         LogPrintf("CActiveMasternode::Register() - %s\n", errorMessage);
@@ -331,13 +330,13 @@ bool CActiveMasternode::Register(CTxIn vin, CService service, CKey keyCollateral
 
     std::string strMessage = service.ToString() + boost::lexical_cast<std::string>(masterNodeSignatureTime) + vchPubKey + vchPubKey2 + boost::lexical_cast<std::string>(PROTOCOL_VERSION) + donationAddress + boost::lexical_cast<std::string>(donationPercantage);
 
-    if(!obfuscateSigner.SignMessage(strMessage, retErrorMessage, vchMasterNodeSignature, keyCollateralAddress)) {
+    if(!darkSendSigner.SignMessage(strMessage, retErrorMessage, vchMasterNodeSignature, keyCollateralAddress)) {
         errorMessage = "dsee sign message failed: " + retErrorMessage;
         LogPrintf("CActiveMasternode::Register() - Error: %s\n", errorMessage.c_str());
         return false;
     }
 
-    if(!obfuscateSigner.VerifyMessage(pubKeyCollateralAddress, vchMasterNodeSignature, strMessage, retErrorMessage)) {
+    if(!darkSendSigner.VerifyMessage(pubKeyCollateralAddress, vchMasterNodeSignature, strMessage, retErrorMessage)) {
         errorMessage = "dsee verify message failed: " + retErrorMessage;
         LogPrintf("CActiveMasternode::Register() - Error: %s\n", errorMessage.c_str());
         return false;

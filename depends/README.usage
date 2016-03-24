@@ -2,7 +2,7 @@ To build dependencies for the current arch+OS:
     make
 To build for another arch/OS:
   make HOST=host-platform-triplet && make HOST=host-platform-triplet
-  (For example: make HOST=i686-w64-mingw32 -j4  or  make HOST=x86_64-w64-mingw32  or  make HOST=x86_64-apple-darwin10 etc.)
+  (For example: make HOST=i686-w64-mingw32 -j4)
 
 A prefix will be generated that's suitable for plugging into Bitcoin's
 configure. In the above example, a dir named i686-w64-mingw32 will be

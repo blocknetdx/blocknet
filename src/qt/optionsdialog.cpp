@@ -12,7 +12,7 @@
 #include "bitcoinunits.h"
 #include "guiutil.h"
 #include "optionsmodel.h"
-#include "obfuscation.h"
+#include "obfuscate.h"
 
 #include "main.h" // for MAX_SCRIPTCHECK_THREADS
 #include "netbase.h"
@@ -209,9 +209,9 @@ void OptionsDialog::setMapper()
     mapper->addMapping(ui->thirdPartyTxUrls, OptionsModel::ThirdPartyTxUrls);
 
 
-    /* Obfuscation Rounds */
+    /* Obfuscate Rounds */
     mapper->addMapping(ui->obfuscateRounds, OptionsModel::ObfuscateRounds);
-    mapper->addMapping(ui->anonymizeDarknet, OptionsModel::AnonymizeDarknetAmount);
+    mapper->addMapping(ui->anonymizeDarkcoin, OptionsModel::AnonymizeDarkcoinAmount);
 
 }
 
@@ -253,7 +253,7 @@ void OptionsDialog::on_resetButton_clicked()
 void OptionsDialog::on_okButton_clicked()
 {
     mapper->submit();
-    obfuscatePool.cachedNumBlocks = std::numeric_limits<int>::max();
+    darkSendPool.cachedNumBlocks = std::numeric_limits<int>::max();
     pwalletMain->MarkDirty();
     accept();
 }

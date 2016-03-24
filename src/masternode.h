@@ -1,6 +1,5 @@
 
 // Copyright (c) 2014-2015 The Dash developers
-// Copyright (c) 2015-2016 The DarkNet developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #ifndef MASTERNODE_H
@@ -101,7 +100,7 @@ public:
 
 
 //
-// The Masternode Class. For managing the Obfuscation process. It contains the input of the 10000DNET, signature to prove
+// The Masternode Class. For managing the Obfuscate process. It contains the input of the 10000DNET, signature to prove
 // it's the one who own that ip address and code for calculating the payment election.
 //
 class CMasternode
@@ -131,7 +130,7 @@ public:
     bool unitTest;
     bool allowFreeTx;
     int protocolVersion;
-    int64_t nLastObfq; //the obfq count from the last obfq broadcast of this node
+    int64_t nLastDsq; //the dsq count from the last dsq broadcast of this node
     int nScanningErrorCount;
     int nLastScanningErrorBlockHeight;
     CMasternodePing lastPing;
@@ -164,7 +163,7 @@ public:
         swap(first.unitTest, second.unitTest);
         swap(first.allowFreeTx, second.allowFreeTx);
         swap(first.protocolVersion, second.protocolVersion);
-        swap(first.nLastObfq, second.nLastObfq);
+        swap(first.nLastDsq, second.nLastDsq);
         swap(first.nScanningErrorCount, second.nScanningErrorCount);
         swap(first.nLastScanningErrorBlockHeight, second.nLastScanningErrorBlockHeight);
     }
@@ -204,7 +203,7 @@ public:
             READWRITE(cacheInputAgeBlock);
             READWRITE(unitTest);
             READWRITE(allowFreeTx);
-            READWRITE(nLastObfq);
+            READWRITE(nLastDsq);
             READWRITE(nScanningErrorCount);
             READWRITE(nLastScanningErrorBlockHeight);
     }
@@ -304,7 +303,7 @@ public:
         READWRITE(sigTime);
         READWRITE(protocolVersion);
         READWRITE(lastPing);
-        READWRITE(nLastObfq);
+        READWRITE(nLastDsq);
     }
 
     uint256 GetHash(){

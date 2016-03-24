@@ -477,7 +477,7 @@
      </column>
      <column>
       <property name="text">
-       <string>OBF Rounds</string>
+       <string>DS Rounds</string>
       </property>
      </column>
      <column>

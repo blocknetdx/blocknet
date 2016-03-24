@@ -9,7 +9,7 @@
 #include "base58.h"
 #include "timedata.h"
 #include "wallet.h"
-#include "obfuscation.h"
+#include "obfuscate.h"
 #include "swifttx.h"
 
 #include <stdint.h>
@@ -124,7 +124,7 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
             sub.type = TransactionRecord::SendToSelf;
             sub.address = "";
 
-            if(mapValue["OBF"] == "1")
+            if(mapValue["DS"] == "1")
             {
                 sub.type = TransactionRecord::Darksent;
                 CTxDestination address;
@@ -148,7 +148,7 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
 
                     if(wallet->IsCollateralAmount(txout.nValue)) sub.type = TransactionRecord::ObfuscateMakeCollaterals;
                     if(wallet->IsDenominatedAmount(txout.nValue)) sub.type = TransactionRecord::ObfuscateCreateDenominations;
-                    if(nDebit - wtx.GetValueOut() == OBFUSCATE_COLLATERAL) sub.type = TransactionRecord::ObfuscateCollateralPayment;
+                    if(nDebit - wtx.GetValueOut() == DARKSEND_COLLATERAL) sub.type = TransactionRecord::ObfuscateCollateralPayment;
                 }
             }
 
@@ -194,7 +194,7 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
                     sub.address = mapValue["to"];
                 }
 
-                if(mapValue["OBF"] == "1")
+                if(mapValue["DS"] == "1")
                 {
                     sub.type = TransactionRecord::Darksent;
                 }

@@ -10,7 +10,7 @@
 
 /**
  * CBaseChainParams defines the base parameters (shared between darknet-cli and darknetd)
- * of a given instance of the DarkNet System.
+ * of a given instance of the Dash system.
  */
 class CBaseChainParams
 {

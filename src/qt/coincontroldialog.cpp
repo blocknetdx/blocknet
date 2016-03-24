@@ -17,7 +17,7 @@
 #include "coincontrol.h"
 #include "main.h"
 #include "wallet.h"
-#include "obfuscation.h"
+#include "obfuscate.h"
 
 #include <boost/assign/list_of.hpp> // for 'map_list_of()'
 
@@ -133,7 +133,7 @@ CoinControlDialog::CoinControlDialog(QWidget *parent) :
     ui->treeWidget->setColumnWidth(COLUMN_AMOUNT, 100);
     ui->treeWidget->setColumnWidth(COLUMN_LABEL, 170);
     ui->treeWidget->setColumnWidth(COLUMN_ADDRESS, 190);
-    ui->treeWidget->setColumnWidth(COLUMN_OBFUSCATE_ROUNDS, 88);
+    ui->treeWidget->setColumnWidth(COLUMN_DARKSEND_ROUNDS, 88);
     ui->treeWidget->setColumnWidth(COLUMN_DATE, 80);
     ui->treeWidget->setColumnWidth(COLUMN_CONFIRMATIONS, 100);
     ui->treeWidget->setColumnWidth(COLUMN_PRIORITY, 100);
@@ -447,7 +447,7 @@ void CoinControlDialog::viewItemChanged(QTreeWidgetItem* item, int column)
             int rounds = pwalletMain->GetInputObfuscateRounds(vin);
             if(coinControl->useObfuscate && rounds < nObfuscateRounds) {
                 QMessageBox::warning(this, windowTitle(),
-                    tr("Non-anonymized input selected. <b>Obfuscation will be disabled.</b><br><br>If you still want to use Obfuscation, please deselect all non-nonymized inputs first and then check Obfuscation checkbox again."),
+                    tr("Non-anonymized input selected. <b>Obfuscate will be disabled.</b><br><br>If you still want to use Obfuscate, please deselect all non-nonymized inputs first and then check Obfuscate checkbox again."),
                     QMessageBox::Ok, QMessageBox::Ok);
                 coinControl->useObfuscate = false;
             }
@@ -612,7 +612,7 @@ void CoinControlDialog::updateLabels(WalletModel *model, QDialog* dialog)
         {
             nChange = nAmount - nPayFee - nPayAmount;
 
-            // OBF Fee = overpay
+            // DS Fee = overpay
             if(coinControl->useObfuscate && nChange > 0)
             {
                 nPayFee += nChange;
@@ -829,8 +829,8 @@ void CoinControlDialog::updateView()
             CTxIn vin = CTxIn(out.tx->GetHash(), out.i);
             int rounds = pwalletMain->GetInputObfuscateRounds(vin);
 
-            if(rounds >= 0) itemOutput->setText(COLUMN_OBFUSCATE_ROUNDS, strPad(QString::number(rounds), 11, " "));
-            else itemOutput->setText(COLUMN_OBFUSCATE_ROUNDS, strPad(QString(tr("n/a")), 11, " "));
+            if(rounds >= 0) itemOutput->setText(COLUMN_DARKSEND_ROUNDS, strPad(QString::number(rounds), 11, " "));
+            else itemOutput->setText(COLUMN_DARKSEND_ROUNDS, strPad(QString(tr("n/a")), 11, " "));
 
 
             // confirmations

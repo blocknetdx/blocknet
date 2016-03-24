@@ -1,7 +1,6 @@
 // Copyright (c) 2010 Satoshi Nakamoto
 // Copyright (c) 2009-2014 The Bitcoin developers
 // Copyright (c) 2014-2015 The Dash developers
-// Copyright (c) 2015-2016 The DarkNet developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -138,15 +137,12 @@ public:
         assert(hashGenesisBlock == uint256("0x0000041e482b9b9691d98eefb48473405c0b8ec31b76df3797c74a78680ef818"));
         assert(genesis.hashMerkleRoot == uint256("0x1b2ef6e2f28be914103a277377ae7729dcd125dfeb8bf97bd5964ba72b6dc39b"));
 
-        vSeeds.push_back(CDNSSeedData("173.245.158.8", "173.245.158.8"));
-        vSeeds.push_back(CDNSSeedData("173.242.158.8", "173.242.158.8"));
-        vSeeds.push_back(CDNSSeedData("173.245.158.215", "173.245.158.215"));
-        vSeeds.push_back(CDNSSeedData("68.227.29.22", "68.227.29.22"));
-        vSeeds.push_back(CDNSSeedData("74.118.192.18", "74.118.192.18"));
-        vSeeds.push_back(CDNSSeedData("108.61.151.69", "108.61.151.69"));
-        vSeeds.push_back(CDNSSeedData("darknet-crypto.com", "dnsseed.darknet-crypto.com"));
-        vSeeds.push_back(CDNSSeedData("coin-server.com", "darknetexporer.coin-server.com"));
-        vSeeds.push_back(CDNSSeedData("coin-server.com", "darknet.coin-server.com")); 
+        vSeeds.push_back(CDNSSeedData("dnsseed.darknet-crypto.com", ""));
+        vSeeds.push_back(CDNSSeedData("darknetexporer.coin-server.com", ""));
+        vSeeds.push_back(CDNSSeedData("darknet.coin-server.com", "")); 
+        vSeeds.push_back(CDNSSeedData("162.213.154.31", ""));
+        vSeeds.push_back(CDNSSeedData("173.245.148.70", ""));
+        vSeeds.push_back(CDNSSeedData("151.80.206.104", ""));
 
         base58Prefixes[PUBKEY_ADDRESS] = list_of( 30);                    
         base58Prefixes[SCRIPT_ADDRESS] = list_of( 13);                    
@@ -169,7 +165,7 @@ public:
         nPoolMaxTransactions = 3;
         strSporkKey = "0484698d3ba6ba6e7423fa5cbd6a89e0a9a5348f88d332b44a5cb1a8b7ed2c1eaa335fc8dc4f012cb8241cc0bdafd6ca70c5f5448916e4e6f511bcd746ed57dc50";
         strMasternodePaymentsPubKey = "0484698d3ba6ba6e7423fa5cbd6a89e0a9a5348f88d332b44a5cb1a8b7ed2c1eaa335fc8dc4f012cb8241cc0bdafd6ca70c5f5448916e4e6f511bcd746ed57dc50";
-        strObfuscatePoolDummyAddress = "D5tgqghG3FFHt2qPFR2BCHbBEUAsyTmHNS";
+        strObfuscatePoolDummyAddress = "Xq19GqFvajRrEdDHYRKGYjTsQfpV5jyipF";
         nStartMasternodePayments = 1403728576; //Wed, 25 Jun 2014 20:36:16 GMT
     }
 
@@ -211,12 +207,12 @@ public:
         vFixedSeeds.clear();
         vSeeds.clear();
 
-        base58Prefixes[PUBKEY_ADDRESS] = list_of(139);                    // Testnet DarkNet addresses start with 'x' or 'y'
-        base58Prefixes[SCRIPT_ADDRESS] = list_of( 19);                    // Testnet DarkNet script addresses start with '8' or '9'
+        base58Prefixes[PUBKEY_ADDRESS] = list_of(139);                    // Testnet dash addresses start with 'x' or 'y'
+        base58Prefixes[SCRIPT_ADDRESS] = list_of( 19);                    // Testnet dash script addresses start with '8' or '9'
         base58Prefixes[SECRET_KEY]     = list_of(239);                    // Testnet private keys start with '9' or 'c' (Bitcoin defaults)
-        base58Prefixes[EXT_PUBLIC_KEY] = list_of(0x3a)(0x80)(0x61)(0xa0); // Testnet DarkNet BIP32 pubkeys start with 'DNETV'
-        base58Prefixes[EXT_SECRET_KEY] = list_of(0x3a)(0x80)(0x58)(0x37); // Testnet DarkNet BIP32 prvkeys start with 'DNETP'
-        base58Prefixes[EXT_COIN_TYPE]  = list_of(0x80000001);             // Testnet DarkNet BIP44 coin type is '5' (All coin's testnet default)
+        base58Prefixes[EXT_PUBLIC_KEY] = list_of(0x3a)(0x80)(0x61)(0xa0); // Testnet dash BIP32 pubkeys start with 'DRKV'
+        base58Prefixes[EXT_SECRET_KEY] = list_of(0x3a)(0x80)(0x58)(0x37); // Testnet dash BIP32 prvkeys start with 'DRKP'
+        base58Prefixes[EXT_COIN_TYPE]  = list_of(0x80000001);             // Testnet dash BIP44 coin type is '5' (All coin's testnet default)
 
         convertSeed6(vFixedSeeds, pnSeed6_test, ARRAYLEN(pnSeed6_test));
 

@@ -112,14 +112,14 @@ bool fLiteMode = false;
 bool fEnableSwiftTX = true;
 int nSwiftTXDepth = 5;
 int nObfuscateRounds = 2;
-int nAnonymizeDarknetAmount = 1000;
+int nAnonymizeDarkcoinAmount = 1000;
 int nLiquidityProvider = 0;
 /** Spork enforcement enabled time */
 int64_t enforceMasternodePaymentsTime = 4085657524;
 bool fSucessfullyLoaded = false;
 bool fEnableObfuscate = false;
-/** All denominations used by Obfuscation */
-std::vector<int64_t> obfuscateDenominations;
+/** All denominations used by obfuscate */
+std::vector<int64_t> darkSendDenominations;
 string strBudgetMode = "";
 
 map<string, string> mapArgs;
@@ -235,7 +235,7 @@ bool LogAcceptCategory(const char* category)
             // thread_specific_ptr automatically deletes the set when the thread ends.
             // "darknet" is a composite category enabling all DarkNet-related debug output
             if(ptrCategory->count(string("darknet"))) {
-                ptrCategory->insert(string("obfuscation"));
+                ptrCategory->insert(string("obfuscate"));
                 ptrCategory->insert(string("swifttx"));
                 ptrCategory->insert(string("masternode"));
                 ptrCategory->insert(string("keepass"));

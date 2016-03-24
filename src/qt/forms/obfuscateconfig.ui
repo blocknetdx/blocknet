@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Configure Obfuscation</string>
+   <string>Configure Obfuscate</string>
   </property>
   <widget class="QPushButton" name="buttonBasic">
    <property name="geometry">

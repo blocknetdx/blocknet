@@ -75,11 +75,11 @@ void OptionsModel::Init()
     if (!settings.contains("nObfuscateRounds"))
         settings.setValue("nObfuscateRounds", 2);
 
-    if (!settings.contains("nAnonymizeDarknetAmount"))
-        settings.setValue("nAnonymizeDarknetAmount", 1000);
+    if (!settings.contains("nAnonymizeDarkcoinAmount"))
+        settings.setValue("nAnonymizeDarkcoinAmount", 1000);
 
     nObfuscateRounds = settings.value("nObfuscateRounds").toLongLong();
-    nAnonymizeDarknetAmount = settings.value("nAnonymizeDarknetAmount").toLongLong();
+    nAnonymizeDarkcoinAmount = settings.value("nAnonymizeDarkcoinAmount").toLongLong();
 
     // These are shared with the core or have a command-line parameter
     // and we want command-line parameters to overwrite the GUI settings.
@@ -222,8 +222,8 @@ QVariant OptionsModel::data(const QModelIndex & index, int role) const
             return settings.value("nThreadsScriptVerif");
         case ObfuscateRounds:
             return QVariant(nObfuscateRounds);
-        case AnonymizeDarknetAmount:
-            return QVariant(nAnonymizeDarknetAmount);
+        case AnonymizeDarkcoinAmount:
+            return QVariant(nAnonymizeDarkcoinAmount);
         case Listen:
             return settings.value("fListen");
         default:
@@ -330,10 +330,10 @@ bool OptionsModel::setData(const QModelIndex & index, const QVariant & value, in
             settings.setValue("nObfuscateRounds", nObfuscateRounds);
             emit obfuscateRoundsChanged(nObfuscateRounds);
             break;
-        case AnonymizeDarknetAmount:
-            nAnonymizeDarknetAmount = value.toInt();
-            settings.setValue("nAnonymizeDarknetAmount", nAnonymizeDarknetAmount);
-            emit anonymizeDarknetAmountChanged(nAnonymizeDarknetAmount);
+        case AnonymizeDarkcoinAmount:
+            nAnonymizeDarkcoinAmount = value.toInt();
+            settings.setValue("nAnonymizeDarkcoinAmount", nAnonymizeDarkcoinAmount);
+            emit anonymizeDarkcoinAmountChanged(nAnonymizeDarkcoinAmount);
             break;
         case CoinControlFeatures:
             fCoinControlFeatures = value.toBool();

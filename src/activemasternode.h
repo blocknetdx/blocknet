@@ -10,7 +10,7 @@
 #include "key.h"
 #include "init.h"
 #include "wallet.h"
-#include "obfuscation.h"
+#include "obfuscate.h"
 #include "masternode.h"
 
 #define ACTIVE_MASTERNODE_INITIAL                     0 // initial state

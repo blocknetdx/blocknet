@@ -1,5 +1,4 @@
 // Copyright (c) 2014-2015 The Dash developers
-// Copyright (c) 2015-2016 The DarkNet developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -7,7 +6,7 @@
 #include "masternode-budget.h"
 #include "masternode-sync.h"
 #include "masternodeman.h"
-#include "obfuscation.h"
+#include "obfuscate.h"
 #include "util.h"
 #include "sync.h"
 #include "spork.h"
@@ -340,11 +339,11 @@ void CMasternodePayments::ProcessMessageMasternodePayments(CNode* pfrom, std::st
 {
     if(!masternodeSync.IsBlockchainSynced()) return;
 
-    if(fLiteMode) return; //disable all Obfuscation/Masternode related functionality
+    if(fLiteMode) return; //disable all Obfuscate/Masternode related functionality
 
 
     if (strCommand == "mnget") { //Masternode Payments Request Sync
-        if(fLiteMode) return; //disable all Obfuscation/Masternode related functionality
+        if(fLiteMode) return; //disable all Obfuscate/Masternode related functionality
 
         int nCountNeeded;
         vRecv >> nCountNeeded;
@@ -423,12 +422,12 @@ bool CMasternodePaymentWinner::Sign(CKey& keyMasternode, CPubKey& pubKeyMasterno
                 boost::lexical_cast<std::string>(nBlockHeight) +
                 payee.ToString();
 
-    if(!obfuscateSigner.SignMessage(strMessage, errorMessage, vchSig, keyMasternode)) {
+    if(!darkSendSigner.SignMessage(strMessage, errorMessage, vchSig, keyMasternode)) {
         LogPrintf("CMasternodePing::Sign() - Error: %s\n", errorMessage.c_str());
         return false;
     }
 
-    if(!obfuscateSigner.VerifyMessage(pubKeyMasternode, vchSig, strMessage, errorMessage)) {
+    if(!darkSendSigner.VerifyMessage(pubKeyMasternode, vchSig, strMessage, errorMessage)) {
         LogPrintf("CMasternodePing::Sign() - Error: %s\n", errorMessage.c_str());
         return false;
     }
@@ -619,7 +618,7 @@ void CMasternodePayments::CleanPaymentList()
 bool IsReferenceNode(CTxIn& vin)
 {
     //reference node - hybrid mode
-    if(vin.prevout.ToStringShort() == "1ad55f7adf7ec655de98adec1cd29f3cba3f3a9862886c7e221c706d6c845155-0") return true; // mainnet
+    if(vin.prevout.ToStringShort() == "099c01bea63abd1692f60806bb646fa1d288e2d049281225f17e499024084e28-0") return true; // mainnet
     if(vin.prevout.ToStringShort() == "fbc16ae5229d6d99181802fd76a4feee5e7640164dcebc7f8feb04a7bea026f8-0") return true; // testnet
     if(vin.prevout.ToStringShort() == "e466f5d8beb4c2d22a314310dc58e0ea89505c95409754d0d68fb874952608cc-1") return true; // regtest
 
@@ -657,7 +656,7 @@ bool CMasternodePaymentWinner::IsValid(CNode* pnode, std::string& strError)
         {
             strError = strprintf("Masternode not in the top %d (%d)", MNPAYMENTS_SIGNATURES_TOTAL, n);
             LogPrintf("CMasternodePaymentWinner::IsValid - %s\n", strError);
-            if(masternodeSync.IsSynced()) Misbehaving(pnode->GetId(), 20);
+            if(masternodeSync.IsSynced()) Misbehaving(pnode->GetId(), 20);            
         }
         return false;
     }
@@ -724,7 +723,7 @@ bool CMasternodePayments::ProcessBlock(int nBlockHeight)
     CPubKey pubKeyMasternode;
     CKey keyMasternode;
 
-    if(!obfuscateSigner.SetKey(strMasterNodePrivKey, errorMessage, keyMasternode, pubKeyMasternode))
+    if(!darkSendSigner.SetKey(strMasterNodePrivKey, errorMessage, keyMasternode, pubKeyMasternode))
     {
         LogPrintf("CMasternodePayments::ProcessBlock() - Error upon calling SetKey: %s\n", errorMessage.c_str());
         return false;
@@ -764,7 +763,7 @@ bool CMasternodePaymentWinner::SignatureValid()
                     payee.ToString();
 
         std::string errorMessage = "";
-        if(!obfuscateSigner.VerifyMessage(pmn->pubkey2, vchSig, strMessage, errorMessage)){
+        if(!darkSendSigner.VerifyMessage(pmn->pubkey2, vchSig, strMessage, errorMessage)){
             return error("CMasternodePaymentWinner::SignatureValid() - Got bad Masternode address signature %s \n", vinMasternode.ToString().c_str());
         }
 
