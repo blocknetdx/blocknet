@@ -612,7 +612,6 @@ bool MultisigDialog::signMultisigTx(CMutableTransaction& tx, string& errorOut, Q
     try{
 
         //copy of vin for reference before vin is mutated
-        vector<CTxIn> oldVin(tx.vin);
         CBasicKeyStore privKeystore;
 
         //if keys were given, attempt to collect redeem and scriptpubkey
@@ -686,11 +685,13 @@ bool MultisigDialog::signMultisigTx(CMutableTransaction& tx, string& errorOut, Q
             txin.scriptSig.clear();
             CScript prevPubKey = txVin.vout[txin.prevout.n].scriptPubKey;
 
+            SignatureData sigdata;
+
             //sign what we can
-            SignSignature(keystore, prevPubKey, tx, nIn);
+            ProduceSignature(MutableTransactionSignatureCreator(&keystore, &tx, nIn, txVin.vout[nIn].nValue, SIGHASH_ALL), prevPubKey, sigdata);
 
             //merge in any previous signatures
-            txin.scriptSig = CombineSignatures(prevPubKey, tx, nIn, amount, txin.scriptSig, oldVin[nIn].scriptSig);
+            sigdata = CombineSignatures(prevPubKey, MutableTransactionSignatureChecker(&tx, nIn, amount), sigdata, DataFromTransaction(tx, nIn));
 
             const CScriptWitness *witness = (nIn < tx.wit.vtxinwit.size()) ? &tx.wit.vtxinwit[nIn].scriptWitness : NULL;
 

@@ -768,7 +768,7 @@ bool AreInputsStandard(const CTransaction& tx, const CCoinsViewCache& mapInputs)
         // and this method isn't called.
         vector<vector<unsigned char> > stack;
         if (!EvalScript(stack, tx.vin[i].scriptSig, false, BaseSignatureChecker(), 0))
-            return false;
+                return false;
 
         if (whichType == TX_SCRIPTHASH) {
             if (stack.empty())
@@ -788,10 +788,10 @@ bool AreInputsStandard(const CTransaction& tx, const CCoinsViewCache& mapInputs)
                 return (sigops <= MAX_P2SH_SIGOPS);
             }
         }
-
+        
         if (stack.size() != (unsigned int)nArgsExpected)
             return false;
-    }
+            }
 
     return true;
 }

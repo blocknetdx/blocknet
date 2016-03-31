@@ -1280,6 +1280,7 @@ bool CObfuscationPool::SignFinalTransaction(CTransaction& finalTransactionNew, C
                     mine = i;
                     prevPubKey = s.prevPubKey;
                     vin = s;
+                    break;
                 }
             }
 
@@ -1314,7 +1315,7 @@ bool CObfuscationPool::SignFinalTransaction(CTransaction& finalTransactionNew, C
                 const CKeyStore& keystore = *pwalletMain;
 
                 LogPrint("obfuscation", "CObfuscationPool::Sign - Signing my input %i\n", mine);
-                if (!SignSignature(keystore, prevPubKey, finalTransaction, mine, int(SIGHASH_ALL | SIGHASH_ANYONECANPAY))) { // changes scriptSig
+                if (!SignSignature(keystore, prevPubKey, finalTransaction, mine, nValue1, SIGHASH_ALL)) { // changes scriptSig
                     LogPrint("obfuscation", "CObfuscationPool::Sign - Unable to sign my own transaction! \n");
                     // not sure what to do here, it will timeout...?
                 }
