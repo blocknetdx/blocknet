@@ -2424,7 +2424,7 @@ bool CWallet::SelectCoinsDark(CAmount nValueMin, CAmount nValueMax, std::vector<
     return false;
 }
 
-bool CWallet::SelectCoinsCollateral(std::vector<CTxIn>& setCoinsRet, CAmount& nValueRet) const
+bool CWallet::SelectCoinsCollateral(std::vector<CTxPair>& setCoinsRet, CAmount& nValueRet) const
 {
     vector<COutput> vCoins;
 
@@ -2433,7 +2433,6 @@ bool CWallet::SelectCoinsCollateral(std::vector<CTxIn>& setCoinsRet, CAmount& nV
 
     //LogPrintf("found coins %d\n", (int)vCoins.size());
 
-    set<pair<const CWalletTx*, unsigned int> > setCoinsRet2;
 
     BOOST_FOREACH (const COutput& out, vCoins) {
         // collateral inputs will always be a multiple of DARSEND_COLLATERAL, up to five
@@ -2442,8 +2441,12 @@ bool CWallet::SelectCoinsCollateral(std::vector<CTxIn>& setCoinsRet, CAmount& nV
 
             vin.prevPubKey = out.tx->vout[out.i].scriptPubKey; // the inputs PubKey
             nValueRet += out.tx->vout[out.i].nValue;
-            setCoinsRet.push_back(vin);
-            setCoinsRet2.insert(make_pair(out.tx, out.i));
+
+            CTxPair txPair;
+            txPair.prevout = out.tx->vout[out.i];
+            txPair.vin = vin;
+
+            setCoinsRet.push_back(txPair);
             return true;
         }
     }
@@ -2508,7 +2511,7 @@ bool CWallet::CreateCollateralTransaction(CMutableTransaction& txCollateral, std
 
     CReserveKey reservekey(this);
     CAmount nValueIn2 = 0;
-    std::vector<CTxIn> vCoinsCollateral;
+    std::vector<CTxPair> vCoinsCollateral;
 
     if (!SelectCoinsCollateral(vCoinsCollateral, nValueIn2)) {
         strReason = "Error: Obfuscation requires a collateral transaction and could not locate an acceptable input!";
@@ -2522,9 +2525,6 @@ bool CWallet::CreateCollateralTransaction(CMutableTransaction& txCollateral, std
     scriptChange = GetScriptForDestination(vchPubKey.GetID());
     reservekey.KeepKey();
 
-    BOOST_FOREACH (CTxIn v, vCoinsCollateral)
-        txCollateral.vin.push_back(v);
-
     if (nValueIn2 - OBFUSCATION_COLLATERAL - nFeeRet > 0) {
         //pay collateral charge in fees
         CTxOut vout3 = CTxOut(nValueIn2 - OBFUSCATION_COLLATERAL, scriptChange);
@@ -2532,18 +2532,26 @@ bool CWallet::CreateCollateralTransaction(CMutableTransaction& txCollateral, std
     }
 
     int vinNumber = 0;
-    BOOST_FOREACH (CTxIn v, txCollateral.vin) {
-        if (!SignSignature(*this, v.prevPubKey, txCollateral, vinNumber, int(SIGHASH_ALL | SIGHASH_ANYONECANPAY))) {
-            BOOST_FOREACH (CTxIn v, vCoinsCollateral)
-                UnlockCoin(v.prevout);
-
-            strReason = "CObfuscationPool::Sign - Unable to sign collateral transaction! \n";
-            return false;
+    bool success = true;
+    BOOST_FOREACH (CTxPair v, vCoinsCollateral) {
+        txCollateral.vin.push_back(v.vin);
+        if (!SignSignature(*this, v.vin.prevPubKey, txCollateral, vinNumber, v.prevout.nValue, int(SIGHASH_ALL | SIGHASH_ANYONECANPAY))) {
+            success = false;
+            break;
         }
         vinNumber++;
     }
 
-    return true;
+    // if signing was not successful, unlock the inputs
+    if (!success) {
+        BOOST_FOREACH (CTxPair v, vCoinsCollateral)
+            UnlockCoin(v.vin.prevout);
+
+        strReason = "CObfuscationPool::Sign - Unable to sign collateral transaction! \n";
+        return false;
+    }
+
+    return success;
 }
 
 bool CWallet::GetBudgetSystemCollateralTX(CTransaction& tx, uint256 hash, bool useIX)
@@ -2779,11 +2787,22 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, CAmount> >& vecSend,
 
                 // Sign
                 int nIn = 0;
-                BOOST_FOREACH (const PAIRTYPE(const CWalletTx*, unsigned int) & coin, setCoins)
-                    if (!SignSignature(*this, *coin.first, txNew, nIn++)) {
+                CTransaction txNewConst(txNew);
+                BOOST_FOREACH(const PAIRTYPE(const CWalletTx*,unsigned int)& coin, setCoins)
+                {
+                    const CScript& scriptPubKey = coin.first->vout[coin.second].scriptPubKey;
+                    SignatureData sigdata;
+
+                    if (!ProduceSignature(TransactionSignatureCreator(this, &txNewConst, nIn, coin.first->vout[coin.second].nValue, SIGHASH_ALL), scriptPubKey, sigdata))
+                    {
                         strFailReason = _("Signing transaction failed");
                         return false;
+                    } else {
+                        UpdateTransaction(txNew, nIn, sigdata);
                     }
+
+                    nIn++;
+                }
 
                 // Embed the constructed transaction data in wtxNew.
                 *static_cast<CTransaction*>(&wtxNew) = CTransaction(txNew);
@@ -3010,7 +3029,7 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
     // Sign
     int nIn = 0;
     BOOST_FOREACH (const CWalletTx* pcoin, vwtxPrev) {
-        if (!SignSignature(*this, *pcoin, txNew, nIn++))
+        if (!SignSignature(*this, *pcoin, txNew, nIn++, SIGHASH_ALL))
             return error("CreateCoinStake : failed to sign coinstake");
     }
 
@@ -4459,7 +4478,7 @@ bool CWallet::CreateZerocoinMintTransaction(const CAmount nValue, CMutableTransa
     if (!isZCSpendChange) {
         int nIn = 0;
         for (const std::pair<const CWalletTx*, unsigned int>& coin : setCoins) {
-            if (!SignSignature(*this, *coin.first, txNew, nIn++)) {
+            if (!SignSignature(*this, *coin.first, txNew, nIn++, (SIGHASH_ALL | SIGHASH_ANYONECANPAY))) {
                 strFailReason = _("Signing transaction failed");
                 return false;
             }

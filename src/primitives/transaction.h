@@ -251,6 +251,11 @@ public:
     }
 };
 
+struct CTxPair {
+    CTxOut prevout;
+    CTxIn vin;
+};
+
 struct CMutableTransaction;
 
 /**
