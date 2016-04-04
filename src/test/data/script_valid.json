@@ -1,5 +1,5 @@
 [
-["Format is: [scriptPubKey, scriptSig, flags, ... comments]"],
+["Format is: [[wit...]?, scriptPubKey, scriptSig, flags, ... comments]"],
 ["It is evaluated as if there was a crediting coinbase transaction with two 0"],
 ["pushes as scriptSig, and one output of 0 satoshi and given scriptPubKey,"],
 ["followed by a spending transaction which spends this output as only input (and"],
@@ -741,6 +741,10 @@
     "DERSIG",
     "BIP66 example 12, with DERSIG"
 ],
+
+["Some basic segwit checks"],
+[["00"], "", "0 0x206e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d", "", "Invalid witness script without WITNESS"],
+[["51"], "", "0 0x206e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d", "", "Witness script hash mismatch without WITNESS"],
 
 ["Automatically generated test cases"],
 [
