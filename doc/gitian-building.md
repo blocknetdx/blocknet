@@ -226,7 +226,7 @@ First we need to log in as `root` to set up dependencies and make sure that our
 user can use the sudo command. Type/paste the following in the terminal:
 
 ```bash
-apt-get install git ruby sudo apt-cacher-ng qemu-utils debootstrap lxc python-cheetah parted kpartx bridge-utils
+apt-get install make git ruby sudo apt-cacher-ng qemu-utils debootstrap lxc python-cheetah parted kpartx bridge-utils
 adduser debian sudo
 ```
 
@@ -281,7 +281,7 @@ Clone the git repositories for darknet and gitian and then checkout the darknet 
 
 ```bash
 git clone https://github.com/devrandom/gitian-builder.git
-git clone https://github.com/darknetpay/darknet.git
+git clone https://github.com/darknet-crypto/darknet.git
 cd darknet
 git checkout v${VERSION}
 cd ..
@@ -408,6 +408,6 @@ Uploading signatures (not yet implemented)
 ---------------------
 
 In the future it will be possible to push your signatures (both the `.assert` and `.assert.sig` files) to the
-[darknet/gitian.sigs](https://github.com/darknetpay/gitian.sigs/) repository, or if that's not possible to create a pull
+[darknet/gitian.sigs](https://github.com/darknet-crypto/gitian.sigs/) repository, or if that's not possible to create a pull
 request.
 There will be an official announcement when this repository is online.
