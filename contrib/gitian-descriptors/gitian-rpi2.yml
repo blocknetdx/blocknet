@@ -1,5 +1,5 @@
 ---
-name: "darknet-raspberry-1.0.2.1"
+name: "darknet-rpi2-1.0.2.1"
 enable_cache: true
 suites:
 - "precise"
@@ -17,7 +17,7 @@ packages:
 - "binutils-gold"
 reference_datetime: "2014-01-10 00:00:00"
 remotes:
-- "url": "https://github.com/darknetpay/darknet.git"
+- "url": "https://github.com/darknet-crypto/darknet.git"
   "dir": "darknet"
 files:
 - "raspberrypi-tools.tar.gz"
