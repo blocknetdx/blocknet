@@ -20,7 +20,7 @@ packages:
 - "zip"
 reference_datetime: "2014-01-10 00:00:00"
 remotes:
-- "url": "https://github.com/darknetpay/darknet.git"
+- "url": "https://github.com/darknet-crypto/darknet.git"
   "dir": "darknet"
 files: []
 script: |
