@@ -2,7 +2,7 @@ Release Process
 ====================
 
 * update translations (ping wumpus, Diapolo or tcatm on IRC)
-* see https://github.com/dark-crypto/darknet/blob/master/doc/translation_process.md#syncing-with-transifex
+* see https://github.com/darknet-crypto/darknet/blob/master/doc/translation_process.md#syncing-with-transifex
 
 * * *
 
@@ -15,11 +15,11 @@ Release Process
 
 ###tag version in git
 
-	git tag -s v(new version, e.g. 1.0.2.0)
+	git tag -s v(new version, e.g. 1.0.2.1)
 
 ###write release notes. git shortlog helps a lot, for example:
 
-	git shortlog --no-merges v(current version, e.g. 1.0.1.0)..v(new version, e.g. 1.0.2.0)
+	git shortlog --no-merges v(current version, e.g. 1.0.1.1)..v(new version, e.g. 1.0.2.1)
 
 * * *
 
@@ -50,6 +50,10 @@ Release Process
  
 	tar -C /Volumes/Xcode/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/ -czf MacOSX10.7.sdk.tar.gz MacOSX10.7.sdk
 
+ Or you can download it from our website;
+ 
+ 	http://darknet-crypto.com/files/sdk/MacOSX10.7.sdk.tar.gz
+ 	
 ###Optional: Seed the Gitian sources cache
 
   By default, gitian will fetch source files as needed. For offline builds, they can be fetched ahead of time:
