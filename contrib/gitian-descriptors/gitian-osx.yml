@@ -20,7 +20,7 @@ packages:
 - "libbz2-dev"
 reference_datetime: "2013-06-01 00:00:00"
 remotes:
-- "url": "https://github.com/darknetpay/darknet.git"
+- "url": "https://github.com/darknet-crypto/darknet.git"
   "dir": "darknet"
 files:
 - "MacOSX10.7.sdk.tar.gz"
