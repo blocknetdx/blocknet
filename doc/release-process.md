@@ -54,6 +54,10 @@ Release Process
  
  	http://darknet-crypto.com/files/sdk/MacOSX10.7.sdk.tar.gz
  	
+ If you will be building the RPi2 binary as well, you will need this file in 'gitian-builder/inputs' folder
+ 
+ 	http://darknet-crypto.com/files/sdk/raspberrypi-tools.tar.gz
+ 	
 ###Optional: Seed the Gitian sources cache
 
   By default, gitian will fetch source files as needed. For offline builds, they can be fetched ahead of time:
