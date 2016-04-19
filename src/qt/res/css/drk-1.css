@@ -118,11 +118,10 @@ background-color:#f2f2f2;
 
 QPushButton {
 background-color:transparent;
-border:1px solid #d2d2d2;
+border:1px solid #ffffff;
 border-radius:3px;
 color:#ffffff;
 font-size:12px;
-font-weight:bold;
 padding-left:25px;
 padding-right:25px;
 padding-top:5px;
@@ -130,17 +129,24 @@ padding-bottom:5px;
 }
 
 QPushButton:hover {
-background-color:transperent;
-/* background-color:qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: .01 #9e0a0a, stop: .1 #9e0a0a, stop: .95 #9e0a0a, stop: 1 #9e0a0a); */
+background-color:transparent;
+border:1px solid #ffffff;
+border-radius:3px;
+color:#ffffff;
 }
 
 QPushButton:focus {
-border:none;
-outline:none;
+background-color:transparent;
+border:1px solid #ffffff;
+border-radius:3px;
+color:#ffffff;
 }
 
 QPushButton:pressed {
-border:1px solid #333;
+background-color:transparent;
+border:1px solid #ffffff;
+border-radius:3px;
+color:#ffffff;
 }
 
 /*******************************/
@@ -276,7 +282,7 @@ padding-bottom:2px;
 }
 
 QHeaderView::section:last {
-border-right: 0px solid #d7d7d7; /*     */
+border-right: 0px solid #d7d7d7;
 }
 
 .QScrollArea {
@@ -855,6 +861,23 @@ max-width:60px;
 }
 
 /*******************************/
+/* DEBUG FILE BUTTON           */
+/*******************************/
+
+QDialog#RPCConsole QPushButton#openDebugLogfileButton {
+background-color:transparent;
+border:1px solid #ad1b25;
+max-width:60px;
+color:#ad1b25;
+font-size:12px;
+font-weight:bold;
+padding-left:25px;
+padding-right:25px;
+padding-top:5px;
+padding-bottom:5px;
+}
+
+/*******************************/
 /* CONSOLE MESSAGE WINDOW      */
 /*******************************/
 
@@ -894,6 +917,250 @@ background-color:#00ff00;
 
 QDialog#RPCConsole .QGroupBox #line_2 {
 background:#ff0000;
+}
+
+/*******************************/
+/* REPAIR WALLET BUTTONS       */
+/*******************************/
+
+/*******************************/
+/* SALVAGE WALLET BUTTON       */
+/*******************************/
+
+QDialog#RPCConsole QPushButton#btn_salvagewallet {
+background-color:transparent;
+border:1px solid #ad1b25;
+color:#ad1b25;
+font-size:12px;
+padding-left:25px;
+padding-right:25px;
+padding-top:5px;
+padding-bottom:5px;
+}
+
+QDialog#RPCConsole QPushButton#btn_salvagewallet:hover {
+background-color:transparent;
+border:1px solid #ad1b25;
+color:#ad1b25;
+font-size:12px;
+font-weight:bold;
+padding-left:25px;
+padding-right:25px;
+padding-top:5px;
+padding-bottom:5px;
+font-weight:bold;
+}
+
+QDialog#RPCConsole QPushButton#btn_salvagewallet:pressed {
+background-color:transparent;
+border:1px solid #ad1b25;
+color:#ad1b25;
+font-size:12px;
+font-weight:bold;
+padding-left:25px;
+padding-right:25px;
+padding-top:5px;
+padding-bottom:5px;
+}
+
+/*******************************/
+/* RESCAN WALLET BUTTON        */
+/*******************************/
+
+QDialog#RPCConsole QPushButton#btn_rescan {
+background-color:transparent;
+border:1px solid #ad1b25;
+color:#ad1b25;
+font-size:12px;
+padding-left:25px;
+padding-right:25px;
+padding-top:5px;
+padding-bottom:5px;
+}
+
+QDialog#RPCConsole QPushButton#btn_rescan:hover {
+background-color:transparent;
+border:1px solid #ad1b25;
+color:#ad1b25;
+font-size:12px;
+font-weight:bold;
+padding-left:25px;
+padding-right:25px;
+padding-top:5px;
+padding-bottom:5px;
+font-weight:bold;
+}
+
+QDialog#RPCConsole QPushButton#btn_rescan:pressed {
+background-color:transparent;
+border:1px solid #ad1b25;
+color:#ad1b25;
+font-size:12px;
+font-weight:bold;
+padding-left:25px;
+padding-right:25px;
+padding-top:5px;
+padding-bottom:5px;
+}
+
+/*******************************/
+/* RECOVER TRANSACTIONS BUTTON1*/
+/*******************************/
+
+QDialog#RPCConsole QPushButton#btn_zapwallettxes1 {
+background-color:transparent;
+border:1px solid #ad1b25;
+color:#ad1b25;
+font-size:12px;
+padding-left:25px;
+padding-right:25px;
+padding-top:5px;
+padding-bottom:5px;
+}
+
+QDialog#RPCConsole QPushButton#btn_zapwallettxes1:hover {
+background-color:transparent;
+border:1px solid #ad1b25;
+color:#ad1b25;
+font-size:12px;
+font-weight:bold;
+padding-left:25px;
+padding-right:25px;
+padding-top:5px;
+padding-bottom:5px;
+font-weight:bold;
+}
+
+QDialog#RPCConsole QPushButton#btn_zapwallettxes1:pressed {
+background-color:transparent;
+border:1px solid #ad1b25;
+color:#ad1b25;
+font-size:12px;
+font-weight:bold;
+padding-left:25px;
+padding-right:25px;
+padding-top:5px;
+padding-bottom:5px;
+}
+
+/*******************************/
+/* RECOVER TRANSACTIONS BUTTON2*/
+/*******************************/
+
+QDialog#RPCConsole QPushButton#btn_zapwallettxes2 {
+background-color:transparent;
+border:1px solid #ad1b25;
+color:#ad1b25;
+font-size:12px;
+padding-left:25px;
+padding-right:25px;
+padding-top:5px;
+padding-bottom:5px;
+}
+
+QDialog#RPCConsole QPushButton#btn_zapwallettxes2:hover {
+background-color:transparent;
+border:1px solid #ad1b25;
+color:#ad1b25;
+font-size:12px;
+font-weight:bold;
+padding-left:25px;
+padding-right:25px;
+padding-top:5px;
+padding-bottom:5px;
+font-weight:bold;
+}
+
+QDialog#RPCConsole QPushButton#btn_zapwallettxes2:pressed {
+background-color:transparent;
+border:1px solid #ad1b25;
+color:#ad1b25;
+font-size:12px;
+font-weight:bold;
+padding-left:25px;
+padding-right:25px;
+padding-top:5px;
+padding-bottom:5px;
+}
+
+/*******************************/
+/* UPGRADE WALLET BUTTON       */
+/*******************************/
+
+QDialog#RPCConsole QPushButton#btn_upgradewallet {
+background-color:transparent;
+border:1px solid #ad1b25;
+color:#ad1b25;
+font-size:12px;
+padding-left:25px;
+padding-right:25px;
+padding-top:5px;
+padding-bottom:5px;
+}
+
+QDialog#RPCConsole QPushButton#btn_upgradewallet:hover {
+background-color:transparent;
+border:1px solid #ad1b25;
+color:#ad1b25;
+font-size:12px;
+font-weight:bold;
+padding-left:25px;
+padding-right:25px;
+padding-top:5px;
+padding-bottom:5px;
+font-weight:bold;
+}
+
+QDialog#RPCConsole QPushButton#btn_upgradewallet:pressed {
+background-color:transparent;
+border:1px solid #ad1b25;
+color:#ad1b25;
+font-size:12px;
+font-weight:bold;
+padding-left:25px;
+padding-right:25px;
+padding-top:5px;
+padding-bottom:5px;
+}
+
+/*******************************/
+/* REINDEX WALLET BUTTON       */
+/*******************************/
+
+QDialog#RPCConsole QPushButton#btn_reindex {
+background-color:transparent;
+border:1px solid #ad1b25;
+color:#ad1b25;
+font-size:12px;
+padding-left:25px;
+padding-right:25px;
+padding-top:5px;
+padding-bottom:5px;
+}
+
+QDialog#RPCConsole QPushButton#btn_reindex:hover {
+background-color:transparent;
+border:1px solid #ad1b25;
+color:#ad1b25;
+font-size:12px;
+font-weight:bold;
+padding-left:25px;
+padding-right:25px;
+padding-top:5px;
+padding-bottom:5px;
+font-weight:bold;
+}
+
+QDialog#RPCConsole QPushButton#btn_reindex:pressed {
+background-color:transparent;
+border:1px solid #ad1b25;
+color:#ad1b25;
+font-size:12px;
+font-weight:bold;
+padding-left:25px;
+padding-right:25px;
+padding-top:5px;
+padding-bottom:5px;
 }
 
 /*******************************/
@@ -1166,12 +1433,12 @@ margin-left:16px;
 /* OBFUSCATION WIDGET          */
 /*******************************/
 
-QWidget .QFrame#frameObfuscate {
+QWidget .QFrame#frameObfuscation {
 background-color:transparent;
 qproperty-minimumSize: 451px 343px;
 }
 
-QWidget .QFrame#frameObfuscate QWidget {
+QWidget .QFrame#frameObfuscation QWidget {
 qproperty-geometry: rect(10 0 431 35);
 }
 
@@ -1179,7 +1446,7 @@ qproperty-geometry: rect(10 0 431 35);
 /* OBFUSCATION HEADER          */
 /*******************************/
 
-QWidget .QFrame#frameObfuscate .QLabel#label_2 {
+QWidget .QFrame#frameObfuscation .QLabel#label_2 {
 qproperty-alignment: 'AlignVCenter | AlignRight';
 min-width:160px;
 background-color:transparent;
@@ -1195,16 +1462,16 @@ min-height:35px;
 /* OBFUSCATION SYNC STATUS     */
 /*******************************/
 
-QWidget .QFrame#frameObfuscate .QLabel#labelObfuscateSyncStatus {
+QWidget .QFrame#frameObfuscation .QLabel#labelObfuscationSyncStatus {
 qproperty-alignment: 'AlignVCenter | AlignLeft';
 margin-left:2px;
 }
 
-QWidget .QFrame#frameObfuscate #formLayoutWidget {
+QWidget .QFrame#frameObfuscation #formLayoutWidget {
 qproperty-geometry: rect(10 51 451 175);
 }
 
-QWidget .QFrame#frameObfuscate #formLayoutWidget > .QLabel {
+QWidget .QFrame#frameObfuscation #formLayoutWidget > .QLabel {
 min-width:175px;
 font-weight:normal;
 min-height:25px;
@@ -1214,7 +1481,7 @@ min-height:25px;
 /* OBFUSCATION STATUS LABEL    */
 /*******************************/
 
-QWidget .QFrame#frameObfuscate #formLayoutWidget .QLabel#label_6 {
+QWidget .QFrame#frameObfuscation #formLayoutWidget .QLabel#label_6 {
 qproperty-alignment: 'AlignVCenter | AlignRight';
 min-width:160px;
 background-color:transparent;
@@ -1228,7 +1495,7 @@ padding-right:5px;
 /* OBFUSCATION STATUS          */
 /*******************************/
 
-QWidget .QFrame#frameObfuscate #formLayoutWidget .QLabel#obfuscateEnabled {
+QWidget .QFrame#frameObfuscation #formLayoutWidget .QLabel#obfuscationEnabled {
 color:#ffffff;
 }
 
@@ -1236,7 +1503,7 @@ color:#ffffff;
 /* OBFUSCATION PROGRESS LABEL  */
 /*******************************/
 
-QWidget .QFrame#frameObfuscate #formLayoutWidget .QLabel#label_7 {
+QWidget .QFrame#frameObfuscation #formLayoutWidget .QLabel#label_7 {
 qproperty-alignment: 'AlignVCenter | AlignRight';
 min-width:160px;
 background-color:transparent;
@@ -1251,7 +1518,7 @@ padding-right:5px;
 /* OBFUSCATION PROGRESS        */
 /*******************************/
 
-QWidget .QFrame#frameObfuscate #formLayoutWidget .QProgressBar#obfuscateProgress {
+QWidget .QFrame#frameObfuscation #formLayoutWidget .QProgressBar#obfuscationProgress {
 border: 1px solid #999999;
 border-radius: 1px;
 margin-right:43px;
@@ -1259,7 +1526,7 @@ text-align: right;
 color:#ffffff;
 }
 
-QWidget .QFrame#frameObfuscate #formLayoutWidget .QProgressBar#obfuscateProgress::chunk {
+QWidget .QFrame#frameObfuscation #formLayoutWidget .QProgressBar#obfuscationProgress::chunk {
 background-color: #9e0a0a; /* PROGRESS BAR */
 width:1px;
 }
@@ -1268,7 +1535,7 @@ width:1px;
 /* OBFUSCATION BALANCE LABEL   */
 /*******************************/
 
-QWidget .QFrame#frameObfuscate #formLayoutWidget .QLabel#labelAnonymizedText {
+QWidget .QFrame#frameObfuscation #formLayoutWidget .QLabel#labelAnonymizedText {
 qproperty-alignment: 'AlignVCenter | AlignRight';
 min-width:160px;
 background-color:transparent;
@@ -1282,7 +1549,7 @@ padding-right:5px;
 /* OBFUSCATION BALANCE         */
 /*******************************/
 
-QWidget .QFrame#frameObfuscate #formLayoutWidget .QLabel#labelAnonymized {
+QWidget .QFrame#frameObfuscation #formLayoutWidget .QLabel#labelAnonymized {
 color:#ffffff; /*  BALANCE TEXT   */
 }
 
@@ -1291,7 +1558,7 @@ color:#ffffff; /*  BALANCE TEXT   */
 /* AMOUNT AND ROUNDS           */
 /*******************************/
 
-QWidget .QFrame#frameObfuscate #formLayoutWidget .QLabel#label_8 {
+QWidget .QFrame#frameObfuscation #formLayoutWidget .QLabel#label_8 {
 qproperty-alignment: 'AlignVCenter | AlignRight';
 min-width:160px;
 background-color:transparent;
@@ -1301,7 +1568,7 @@ margin-right:5px;
 padding-right:5px;
 }
 
-QWidget .QFrame#frameObfuscate #formLayoutWidget .QLabel#labelAmountRounds {
+QWidget .QFrame#frameObfuscation #formLayoutWidget .QLabel#labelAmountRounds {
 color:#ffffff; /*  AMOUNTS AND ROUNDS TEXT  */
 }
 
@@ -1310,7 +1577,7 @@ color:#ffffff; /*  AMOUNTS AND ROUNDS TEXT  */
 /* SUBMITTED DENOM LABEL       */
 /*******************************/
 
-QWidget .QFrame#frameObfuscate #formLayoutWidget .QLabel#label_9 {
+QWidget .QFrame#frameObfuscation #formLayoutWidget .QLabel#label_9 {
 qproperty-alignment: 'AlignVCenter | AlignRight';
 min-width:160px;
 background-color:transparent;
@@ -1325,7 +1592,7 @@ padding-right:5px;
 /* SUBMITTED DENOM             */
 /*******************************/
 
-QWidget .QFrame#frameObfuscate #formLayoutWidget .QLabel#labelSubmittedDenom {
+QWidget .QFrame#frameObfuscation #formLayoutWidget .QLabel#labelSubmittedDenom {
 color:#ffffff; /*  SUBMITTED AND DENOM TEXT   */
 }
 
@@ -1334,7 +1601,7 @@ color:#ffffff; /*  SUBMITTED AND DENOM TEXT   */
 /* STATUS NOTIFICATIONS        */
 /*******************************/
 
-QWidget .QFrame#frameObfuscate .QLabel#obfuscateStatus {
+QWidget .QFrame#frameObfuscation .QLabel#obfuscationStatus {
 qproperty-alignment: 'AlignVCenter | AlignCenter';
 qproperty-geometry: rect(70 226 395 34);
 font-size:11px;
@@ -1345,16 +1612,16 @@ color:#818181;
 /* OBFUSCATION BUTTONS         */
 /*******************************/
 
-QWidget .QFrame#frameObfuscate .QPushButton {
+QWidget .QFrame#frameObfuscation .QPushButton {
 border:0px solid #ffffff;
 }
 
-QWidget .QFrame#frameObfuscate QPushButton:focus {
+QWidget .QFrame#frameObfuscation QPushButton:focus {
 border:none;
 outline:none;
 }
 
-QWidget .QFrame#frameObfuscate .QPushButton#runAutoDenom { /* No idea why this button is in the .UI file... */
+QWidget .QFrame#frameObfuscation .QPushButton#runAutoDenom { /* No idea why this button is in the .UI file... */
 qproperty-geometry: rect(0 0 0 0);
 }
 
@@ -1362,7 +1629,7 @@ qproperty-geometry: rect(0 0 0 0);
 /* START OBFUSCATING BUTTON    */
 /*******************************/
 
-QWidget .QFrame#frameObfuscate .QPushButton#toggleObfuscate {
+QWidget .QFrame#frameObfuscation .QPushButton#toggleObfuscation {
 qproperty-geometry: rect(115 268 295 40);
 font-size:15px;
 background-color:transparent;
@@ -1374,7 +1641,7 @@ padding-top:5px;
 padding-bottom:6px;
 }
 
-QWidget .QFrame#frameObfuscate .QPushButton#toggleObfuscate:hover {
+QWidget .QFrame#frameObfuscation .QPushButton#toggleObfuscation:hover {
 
 }
 
@@ -1382,7 +1649,7 @@ QWidget .QFrame#frameObfuscate .QPushButton#toggleObfuscate:hover {
 /* TRY MIXING BUTTON           */
 /*******************************/
 
-QWidget .QFrame#frameObfuscate .QPushButton#obfuscateAuto {
+QWidget .QFrame#frameObfuscation .QPushButton#obfuscationAuto {
 qproperty-geometry: rect(120 314 140 25);
 background-color:transparent;
 border:1px solid #d2d2d2;
@@ -1392,14 +1659,14 @@ font-size:9px;
 padding:0px;
 }
 
-QWidget .QFrame#frameObfuscate .QPushButton#obfuscateAuto:hover {
+QWidget .QFrame#frameObfuscation .QPushButton#obfuscationAuto:hover {
 background-color:transparent;
 border:1px solid #d2d2d2;
 color:#ffffff;
 font-weight:bold;
 }
 
-QWidget .QFrame#frameObfuscate .QPushButton#obfuscateAuto:pressed {
+QWidget .QFrame#frameObfuscation .QPushButton#obfuscationAuto:pressed {
 border:1px solid #9e9e9e;
 }
 
@@ -1407,7 +1674,7 @@ border:1px solid #9e9e9e;
 /* RESET BUTTON                */
 /*******************************/
 
-QWidget .QFrame#frameObfuscate .QPushButton#obfuscateReset {
+QWidget .QFrame#frameObfuscation .QPushButton#obfuscationReset {
 qproperty-geometry: rect(265 314 140 25);
 background-color:transparent;
 border:1px solid #d2d2d2;
@@ -1417,14 +1684,14 @@ font-size:9px;
 padding:0px;
 }
 
-QWidget .QFrame#frameObfuscate .QPushButton#obfuscateReset:hover {
+QWidget .QFrame#frameObfuscation .QPushButton#obfuscationReset:hover {
 background-color:transparent;
 border:1px solid #d2d2d2;
 color:#ffffff;
 font-weight:bold;
 }
 
-QWidget .QFrame#frameObfuscate .QPushButton#obfuscateReset:pressed {
+QWidget .QFrame#frameObfuscation .QPushButton#obfuscationReset:pressed {
 border:1px solid #9e9e9e;
 }
 
@@ -1665,7 +1932,7 @@ border:1px solid #9e9e9e;
 /* OBFUSCATION CHECK BOX       */
 /*******************************/
 
-QDialog#SendCoinsDialog .QCheckBox#checkUseObfuscate {
+QDialog#SendCoinsDialog .QCheckBox#checkUseObfuscation {
 color:#999999; /*  TEXT   */
 font-weight:bold;
 background: transparent;
@@ -2433,5 +2700,3 @@ background-color:#F8F6F6;
 QDialog#TransactionDescDialog QTextEdit {
 color:#9e0a0a; /*     */
 border:1px solid #d7d7d7;
-
-
