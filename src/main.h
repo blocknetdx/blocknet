@@ -532,8 +532,6 @@ bool AcceptBlockHeader(const CBlockHeader& block, CValidationState& state, CBloc
 
 bool RewindBlockIndex(const CChainParams& params);
 
-void UpdateUncommitedBlockStructures(CBlock& block, const CBlockIndex* pindexPrev);
-
 /** Update uncommitted block structures (currently: only the witness nonce). This is safe for submitted blocks. */
 void UpdateUncommitedBlockStructures(CBlock& block, const CBlockIndex* pindexPrev);
 
