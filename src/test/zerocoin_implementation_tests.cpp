@@ -14,7 +14,7 @@
 
 using namespace libzerocoin;
 
-extern bool DecodeHexTx(CTransaction& tx, const std::string& strHexTx);
+extern bool DecodeHexTx(CTransaction& tx, const std::string& strHexTx, bool fTryNoWitness = false);
 
 BOOST_AUTO_TEST_SUITE(zerocoin_implementation_tests)
 
@@ -66,7 +66,7 @@ BOOST_AUTO_TEST_CASE(checkzerocoinmint_test)
 {
     cout << "Running check_zerocoinmint_test...\n";
     CTransaction tx;
-    BOOST_CHECK(DecodeHexTx(tx, rawTx1));
+    BOOST_CHECK(DecodeHexTx(tx, rawTx1, true));
 
     CValidationState state;
     bool fFoundMint = false;
@@ -190,7 +190,7 @@ BOOST_AUTO_TEST_CASE(checkzerocoinspend_test)
     CValidationState state;
     for(pair<string, string> raw : vecRawMints) {
         CTransaction tx;
-        BOOST_CHECK_MESSAGE(DecodeHexTx(tx, raw.first), "Failed to deserialize hex transaction");
+        BOOST_CHECK_MESSAGE(DecodeHexTx(tx, raw.first, true), "Failed to deserialize hex transaction");
 
         for(const CTxOut out : tx.vout){
             if(!out.scriptPubKey.empty() && out.scriptPubKey.IsZerocoinMint()) {
@@ -245,7 +245,7 @@ BOOST_AUTO_TEST_CASE(checkzerocoinspend_test)
     txNew.vout.push_back(txOut);
 
     CTransaction txMintFrom;
-    BOOST_CHECK_MESSAGE(DecodeHexTx(txMintFrom, rawTx1), "Failed to deserialize hex transaction");
+    BOOST_CHECK_MESSAGE(DecodeHexTx(txMintFrom, rawTx1, true), "Failed to deserialize hex transaction");
 
     string strError = "";
     if (!CheckZerocoinSpendNoDB(txNew, strError)) {
