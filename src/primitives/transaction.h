@@ -348,7 +348,7 @@ public:
     const int32_t nVersion;
     std::vector<CTxIn> vin;
     std::vector<CTxOut> vout;
-    CTxWitness wit;
+    CTxWitness wit; // Not const: can change without invalidating the txid cache
     const uint32_t nLockTime;
     //const unsigned int nTime;
 
