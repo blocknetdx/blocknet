@@ -158,18 +158,18 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
     }
 
     // Largest block you're willing to create:
-    unsigned int nBlockMaxCost = GetArg("-blockmaxsize", DEFAULT_BLOCK_MAX_SIZE) * WITNESS_SCALE_FACTOR;
+    int64_t nBlockMaxCost = GetArg("-blockmaxsize", DEFAULT_BLOCK_MAX_SIZE) * WITNESS_SCALE_FACTOR;
     // Limit to between 1K and MAX_BLOCK_SIZE-1K for sanity:
-    nBlockMaxCost = std::max((unsigned int)4000, std::min((unsigned int)(MAX_BLOCK_SIZE_CURRENT-4000), nBlockMaxCost));
+    nBlockMaxCost = std::max((int64_t)4000, std::min((int64_t)(MAX_BLOCK_SIZE_CURRENT-4000), nBlockMaxCost));
 
     // How much of the block should be dedicated to high-priority transactions,
     // included regardless of the fees they pay
-    unsigned int nBlockPriorityCost = GetArg("-blockprioritysize", DEFAULT_BLOCK_PRIORITY_SIZE) * WITNESS_SCALE_FACTOR;
+    int64_t nBlockPriorityCost = GetArg("-blockprioritysize", DEFAULT_BLOCK_PRIORITY_SIZE) * WITNESS_SCALE_FACTOR;
     nBlockPriorityCost = std::min(nBlockMaxCost, nBlockPriorityCost);
 
     // Minimum block size you want to create; block will be filled with free transactions
     // until there are no more or the block reaches this size:
-    unsigned int nBlockMinCost = GetArg("-blockminsize", DEFAULT_BLOCK_MIN_SIZE) * WITNESS_SCALE_FACTOR;
+    int64_t nBlockMinCost = GetArg("-blockminsize", DEFAULT_BLOCK_MIN_SIZE) * WITNESS_SCALE_FACTOR;
     nBlockMinCost = std::min(nBlockMaxCost, nBlockMinCost);
 
     // Collect memory pool transactions into the block
@@ -187,7 +187,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
         map<uint256, vector<COrphan*> > mapDependers;
         bool fPrintPriority = GetBoolArg("-printpriority", false);
 
-        int nBlockSigOpsCost = 400;
+        int64_t nBlockSigOpsCost = 400;
 
         // This vector will be sorted into a priority queue:
         vector<TxPriority> vecPriority;
@@ -209,7 +209,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
             uint256 txid = tx.GetHash();
 
             // Legacy limits on sigOps:
-            unsigned int nTxSigOpsCost = mi->second.GetSigOpCost();
+            int64_t nTxSigOpsCost = mi->second.GetSigOpCost();
             if (nBlockSigOpsCost + nTxSigOpsCost >= MAX_BLOCK_SIGOPS_COST)
                 continue;
             
@@ -286,7 +286,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
 
             // Priority is sum(valuein * age) / modified_txsize
             unsigned int nTxSize = ::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION);
-            unsigned int nTxCost = nTxSize * WITNESS_SCALE_FACTOR;
+            int64_t nTxCost = nTxSize * WITNESS_SCALE_FACTOR;
             dPriority = tx.ComputePriority(dPriority, nTxCost);
 
             uint256 hash = tx.GetHash();
@@ -325,7 +325,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
 
             // Size limits
             unsigned int nTxSize = ::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION);
-            unsigned int nTxCost = nTxSize * WITNESS_SCALE_FACTOR;
+            int64_t nTxCost = nTxSize * WITNESS_SCALE_FACTOR;
             if (nBlockCost + nTxCost >= nBlockMaxCost)
                 continue;
 
