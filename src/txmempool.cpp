@@ -21,7 +21,7 @@ using namespace std;
 
 CTxMemPoolEntry::CTxMemPoolEntry(const CTransaction& _tx, const CAmount& _nFee,
                                  int64_t _nTime, double _dPriority, unsigned int _nHeight,
-                                 unsigned int _sigOpsCost):
+                                 int64_t _sigOpsCost):
     tx(_tx), nFee(_nFee), nTime(_nTime), dPriority(_dPriority), nHeight(_nHeight),
     sigOpCost(_sigOpsCost)
 {
