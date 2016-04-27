@@ -280,6 +280,9 @@ inline void SerializeTransaction(TxType& tx, Stream& s, Operation ser_action, in
     READWRITE(*const_cast<int32_t*>(&tx.nVersion));
     unsigned char flags = 0;
     if (ser_action.ForRead()) {
+        const_cast<std::vector<CTxIn>*>(&tx.vin)->clear();
+        const_cast<std::vector<CTxOut>*>(&tx.vout)->clear();
+        const_cast<CTxWitness*>(&tx.wit)->SetNull();
         /* Try to read the vin. In case the dummy is there, this will be read as an empty vector. */
         READWRITE(*const_cast<std::vector<CTxIn>*>(&tx.vin));
         if (tx.vin.size() == 0 && (nVersion & SERIALIZE_TRANSACTION_WITNESS)) {
@@ -305,6 +308,7 @@ inline void SerializeTransaction(TxType& tx, Stream& s, Operation ser_action, in
             throw std::ios_base::failure("Unknown transaction optional data");
         }
     } else {
+        assert(tx.wit.vtxinwit.size() <= tx.vin.size());
         if (nVersion & SERIALIZE_TRANSACTION_WITNESS) {
             /* Check whether witnesses need to be serialized. */
             if (!tx.wit.IsNull()) {
