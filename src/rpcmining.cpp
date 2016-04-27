@@ -171,7 +171,7 @@ UniValue setgenerate(const UniValue& params, bool fHelp)
             CBlock* pblock = &pblocktemplate->block;
             {
                 LOCK(cs_main);
-                IncrementExtraNonce(pblock, chainActive.Tip(), nExtraNonce, pblocktemplate->vchCoinbaseCommitment);
+                IncrementExtraNonce(pblock, chainActive.Tip(), nExtraNonce);
             }
             while (!CheckProofOfWork(pblock->GetHash(), pblock->nBits)) {
                 // Yes, there is a chance every nonce could fail to satisfy the -regtest
