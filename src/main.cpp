@@ -767,7 +767,7 @@ bool AreInputsStandard(const CTransaction& tx, const CCoinsViewCache& mapInputs)
         // IsStandard() will have already returned false
         // and this method isn't called.
         vector<vector<unsigned char> > stack;
-        if (!EvalScript(stack, tx.vin[i].scriptSig, false, BaseSignatureChecker(), 0))
+        if (!EvalScript(stack, tx.vin[i].scriptSig, false, BaseSignatureChecker(), SIGVERSION_BASE))
                 return false;
 
         if (whichType == TX_SCRIPTHASH) {
