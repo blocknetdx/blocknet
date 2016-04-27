@@ -321,7 +321,6 @@ UniValue getblock(const UniValue& params, bool fHelp)
             "     \"5000\" : n,         (numeric) supply of 5000 zPHR denomination\n"
             "     \"total\" : n,        (numeric) The total supply of all zPHR denominations\n"
             "  }\n"
-            "  \"nextblockhash\" : \"hash\"       (string) The hash of the next block\n"
             "}\n"
             "\nResult (for verbose=false):\n"
             "\"data\"             (string) A string that is serialized, hex-encoded data for block 'hash'.\n"
