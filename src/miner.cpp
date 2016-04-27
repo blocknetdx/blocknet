@@ -163,9 +163,9 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
     }
 
     // Largest block you're willing to create:
-    unsigned int nBlockMaxCost = GetArg("-blockmaxsize", DEFAULT_BLOCK_MAX_SIZE) * WITNESS_SCALE_FACTOR;
+    int64_t nBlockMaxCost = GetArg("-blockmaxsize", DEFAULT_BLOCK_MAX_SIZE) * WITNESS_SCALE_FACTOR;
     // Limit cost to between 4K and MAX_BLOCK_COST-4K for sanity:
-    nBlockMaxCost = std::max((unsigned int)4000, std::min((unsigned int)(MAX_BLOCK_COST-4000), nBlockMaxCost));
+    nBlockMaxCost = std::max((int64_t)4000, std::min((int64_t)(MAX_BLOCK_COST-4000), nBlockMaxCost));
 
     // How much of the block should be dedicated to high-priority transactions,
     // included regardless of the fees they pay
