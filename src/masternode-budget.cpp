@@ -757,8 +757,12 @@ CAmount CBudgetManager::GetTotalBudget(int nHeight)
     CAmount nSubsidy = 250 * COIN;
 
     // Amount of blocks in a months period of time (using 1 minutes per) = (60*24*30)
-    if(Params().NetworkID() == CBaseChainParams::MAIN) return ((nSubsidy/100)*10)*1440*30;
-
+    if(Params().NetworkID() == CBaseChainParams::MAIN && nHeight <= 172800) {
+        return 648000 * COIN;
+    }
+    else if(Params().NetworkID() == CBaseChainParams::MAIN && nHeight > 172800) {
+        return ((nSubsidy/100)*10)*1440*30;
+    }
     //for testing purposes
     return ((nSubsidy/100)*10)*146;
 }
