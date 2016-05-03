@@ -1,4 +1,4 @@
-DarkNet Core 1.0.2.0
+DarkNet Core 1.0.2.1
 =====================
 
 Setup
@@ -46,7 +46,7 @@ The following are developer notes on how to build DarkNet on your native platfor
 
 Development
 ---------------------
-The DarkNet repo's [root README](https://github.com/darknetpay/darknet/blob/master/README.md) contains relevant information on the development process and automated testing.
+The Darknet repo's [root README](https://github.com/darknet-crypto/darknet/blob/master/README.md) contains relevant information on the development process and automated testing.
 
 - [Coding Guidelines](coding.md)
 - [Multiwallet Qt Development](multiwallet-qt.md)

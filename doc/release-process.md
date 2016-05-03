@@ -29,10 +29,10 @@ Release Process
 
 ###perform gitian builds
 
- From a directory containing the bitcoin source, gitian-builder and gitian.sigs
+ From a directory containing the darknet source, gitian-builder and gitian.sigs
 
-	export SIGNER=(your gitian key, ie bluematt, sipa, etc)
-	export VERSION=(new version, e.g. 1.0.2.0)
+	export SIGNER=(your gitian key)
+	export VERSION=(new version, e.g. 1.0.2.1)
 	pushd ./darknet
 	git checkout v${VERSION}
 	popd
@@ -74,7 +74,7 @@ Release Process
 	./bin/gbuild --commit darknet=v${VERSION} ../darknet/contrib/gitian-descriptors/gitian-win.yml
 	./bin/gsign --signer $SIGNER --release ${VERSION}-win --destination ../gitian.sigs/ ../darknet/contrib/gitian-descriptors/gitian-win.yml
 	mv build/out/darknet-*.zip build/out/darknet-*.exe ../
-	./bin/gbuild --commit bitcoin=v${VERSION} ../darknet/contrib/gitian-descriptors/gitian-osx.yml
+	./bin/gbuild --commit darknet=v${VERSION} ../darknet/contrib/gitian-descriptors/gitian-osx.yml
 	./bin/gsign --signer $SIGNER --release ${VERSION}-osx-unsigned --destination ../gitian.sigs/ ../darknet/contrib/gitian-descriptors/gitian-osx.yml
 	mv build/out/darknet-*-unsigned.tar.gz inputs/darknet-osx-unsigned.tar.gz
 	mv build/out/darknet-*.tar.gz build/out/darknet-*.dmg ../

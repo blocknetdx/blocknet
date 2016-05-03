@@ -1,4 +1,4 @@
-.TH DNETD "1" "January 2011" "darknetd 3.19"
+.TH DNETD "1" "January 2016" "darknetd 1.0.2.1"
 .SH NAME
 Darknet \- peer-to-peer network based digital currency
 .SH SYNOPSIS
@@ -148,7 +148,7 @@ List commands, or get help for a command.
 .TP
 \fBlistaccounts ['minconf=1']\fR
 List accounts and their current balances.
-     *note: requires darknet 0.3.20 or later.
+     *note: requires darknet 1.0.2.1 or later.
 .TP
 \fBlistreceivedbyaccount ['minconf=1'] ['includeempty=false']\fR
 ['minconf'] is the minimum number of confirmations before payments are included. ['includeempty'] whether to include addresses that haven't received any payments. Returns an array of objects containing:
@@ -177,7 +177,7 @@ Returns a list of the last ['count'] transactions for 'account' \- for all accou
     "message"       : message associated with transaction (only for send).
     "to"            : message-to associated with transaction (only for send).
 
-    *note: requires darknet 0.3.20 or later.
+    *note: requires darknet 1.0.2.1 or later.
 .TP
 \fBmove <'fromaccount'> <'toaccount'> <'amount'> ['minconf=1'] ['comment']\fR
 Moves funds between accounts.
