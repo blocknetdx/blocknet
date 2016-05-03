@@ -15,11 +15,11 @@ Release Process
 
 ###tag version in git
 
-	git tag -s v(new version, e.g. 1.0.2.1)
+	git tag -s v(new version, e.g. 1.1.0.0)
 
 ###write release notes. git shortlog helps a lot, for example:
 
-	git shortlog --no-merges v(current version, e.g. 1.0.1.1)..v(new version, e.g. 1.0.2.1)
+	git shortlog --no-merges v(current version, e.g. 1.0.1.1)..v(new version, e.g. 1.1.0.0)
 
 * * *
 
@@ -32,7 +32,7 @@ Release Process
  From a directory containing the darknet source, gitian-builder and gitian.sigs
 
 	export SIGNER=(your gitian key)
-	export VERSION=(new version, e.g. 1.0.2.1)
+	export VERSION=(new version, e.g. 1.1.0.0)
 	pushd ./darknet
 	git checkout v${VERSION}
 	popd

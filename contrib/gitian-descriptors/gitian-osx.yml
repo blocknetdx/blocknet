@@ -1,5 +1,5 @@
 ---
-name: "darknet-osx-1.0.2.1"
+name: "darknet-osx-1.1.0.0"
 enable_cache: true
 suites:
 - "precise"
