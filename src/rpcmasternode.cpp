@@ -1,5 +1,6 @@
 // Copyright (c) 2010 Satoshi Nakamoto
 // Copyright (c) 2009-2012 The Bitcoin developers
+// Copyright (c) 2015-2016 The Darknet developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -34,7 +35,7 @@ void SendMoney(const CTxDestination &address, CAmount nValue, CWalletTx& wtxNew,
         throw JSONRPCError(RPC_WALLET_ERROR, strError);
     }
 
-    // Parse Dash address
+    // Parse Darknet address
     CScript scriptPubKey = GetScriptForDestination(address);
 
     // Create and send the transaction
@@ -51,11 +52,11 @@ void SendMoney(const CTxDestination &address, CAmount nValue, CWalletTx& wtxNew,
         throw JSONRPCError(RPC_WALLET_ERROR, "Error: The transaction was rejected! This might happen if some of the coins in your wallet were already spent, such as if you used a copy of wallet.dat and coins were spent in the copy but not marked as spent here.");
 }
 
-Value obfuscate(const Array& params, bool fHelp)
+Value obfuscation(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() == 0)
         throw runtime_error(
-            "obfuscate <darknetaddress> <amount>\n"
+            "obfuscation <darknetaddress> <amount>\n"
             "darknetaddress, reset, or auto (AutoDenominate)"
             "<amount> is a real and will be rounded to the next 0.1"
             + HelpRequiringPassphrase());
@@ -65,26 +66,26 @@ Value obfuscate(const Array& params, bool fHelp)
 
     if(params[0].get_str() == "auto"){
         if(fMasterNode)
-            return "Obfuscate is not supported from masternodes";
+            return "Obfuscation is not supported from masternodes";
 
-        return "DoAutomaticDenominating " + (darkSendPool.DoAutomaticDenominating() ? "successful" : ("failed: " + darkSendPool.GetStatus()));
+        return "DoAutomaticDenominating " + (obfuScationPool.DoAutomaticDenominating() ? "successful" : ("failed: " + obfuScationPool.GetStatus()));
     }
 
     if(params[0].get_str() == "reset"){
-        darkSendPool.Reset();
-        return "successfully reset obfuscate";
+        obfuScationPool.Reset();
+        return "successfully reset obfuscation";
     }
 
     if (params.size() != 2)
         throw runtime_error(
-            "obfuscate <darknetaddress> <amount>\n"
+            "obfuscation <darknetaddress> <amount>\n"
             "darknetaddress, denominate, or auto (AutoDenominate)"
             "<amount> is a real and will be rounded to the next 0.1"
             + HelpRequiringPassphrase());
 
     CBitcoinAddress address(params[0].get_str());
     if (!address.IsValid())
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Dash address");
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Darknet address");
 
     // Amount
     CAmount nAmount = AmountFromValue(params[1]);
@@ -109,9 +110,9 @@ Value getpoolinfo(const Array& params, bool fHelp)
 
     Object obj;
     obj.push_back(Pair("current_masternode",        mnodeman.GetCurrentMasterNode()->addr.ToString()));
-    obj.push_back(Pair("state",        darkSendPool.GetState()));
-    obj.push_back(Pair("entries",      darkSendPool.GetEntriesCount()));
-    obj.push_back(Pair("entries_accepted",      darkSendPool.GetCountEntriesAccepted()));
+    obj.push_back(Pair("state",        obfuScationPool.GetState()));
+    obj.push_back(Pair("entries",      obfuScationPool.GetEntriesCount()));
+    obj.push_back(Pair("entries_accepted",      obfuScationPool.GetCountEntriesAccepted()));
     return obj;
 }
 

@@ -56,28 +56,28 @@ SendCoinsDialog::SendCoinsDialog(QWidget *parent) :
 
     // DarkNet specific
     QSettings settings;
-    if (!settings.contains("bUseObfuscate"))
-        settings.setValue("bUseObfuscate", false);
+    if (!settings.contains("bUseObfuscation"))
+        settings.setValue("bUseObfuscation", false);
     if (!settings.contains("bUseSwiftTX"))
         settings.setValue("bUseSwiftTX", false);
         
-    bool useObfuscate = settings.value("bUseObfuscate").toBool();
+    bool useObfuscation = settings.value("bUseObfuscation").toBool();
     bool useSwiftTX = settings.value("bUseSwiftTX").toBool();
     if(fLiteMode) {
-        ui->checkUseObfuscate->setChecked(false);
-        ui->checkUseObfuscate->setVisible(false);
+        ui->checkUseObfuscation->setChecked(false);
+        ui->checkUseObfuscation->setVisible(false);
         ui->checkSwiftTX->setVisible(false);
-        CoinControlDialog::coinControl->useObfuscate = false;
+        CoinControlDialog::coinControl->useObfuscation = false;
         CoinControlDialog::coinControl->useSwiftTX = false;
     }
     else{
-        ui->checkUseObfuscate->setChecked(useObfuscate);
+        ui->checkUseObfuscation->setChecked(useObfuscation);
         ui->checkSwiftTX->setChecked(useSwiftTX);
-        CoinControlDialog::coinControl->useObfuscate = useObfuscate;
+        CoinControlDialog::coinControl->useObfuscation = useObfuscation;
         CoinControlDialog::coinControl->useSwiftTX = useSwiftTX;
     }
     
-    connect(ui->checkUseObfuscate, SIGNAL(stateChanged ( int )), this, SLOT(updateDisplayUnit()));
+    connect(ui->checkUseObfuscation, SIGNAL(stateChanged ( int )), this, SLOT(updateDisplayUnit()));
     connect(ui->checkSwiftTX, SIGNAL(stateChanged ( int )), this, SLOT(updateSwiftTX()));
 
     // Coin Control: clipboard actions
@@ -247,14 +247,14 @@ void SendCoinsDialog::on_sendButton_clicked()
     QString strFee = "";
     recipients[0].inputType = ONLY_DENOMINATED;
 
-    if(ui->checkUseObfuscate->isChecked()) {
+    if(ui->checkUseObfuscation->isChecked()) {
         recipients[0].inputType = ONLY_DENOMINATED;
         strFunds = tr("using") + " <b>" + tr("anonymous funds") + "</b>";
         QString strNearestAmount(
             BitcoinUnits::formatWithUnit(
                 model->getOptionsModel()->getDisplayUnit(), 1 * COIN));
         strFee = QString(tr(
-            "(obfuscate requires this amount to be rounded up to the nearest %1)."
+            "(obfuscation requires this amount to be rounded up to the nearest %1)."
         ).arg(strNearestAmount));
     } else {
         recipients[0].inputType = ALL_COINS;
@@ -568,8 +568,8 @@ void SendCoinsDialog::setBalance(const CAmount& balance, const CAmount& unconfir
     {
 	    uint64_t bal = 0;
         QSettings settings;
-        settings.setValue("bUseObfuscate", ui->checkUseObfuscate->isChecked());
-	    if(ui->checkUseObfuscate->isChecked()) {
+        settings.setValue("bUseObfuscation", ui->checkUseObfuscation->isChecked());
+	    if(ui->checkUseObfuscation->isChecked()) {
 		    bal = anonymizedBalance;
 	    } else {
 		    bal = balance;
@@ -586,7 +586,7 @@ void SendCoinsDialog::updateDisplayUnit()
 
     setBalance(model->getBalance(), model->getUnconfirmedBalance(), model->getImmatureBalance(), model->getAnonymizedBalance(),
                    model->getWatchBalance(), model->getWatchUnconfirmedBalance(), model->getWatchImmatureBalance());
-    CoinControlDialog::coinControl->useObfuscate = ui->checkUseObfuscate->isChecked();
+    CoinControlDialog::coinControl->useObfuscation = ui->checkUseObfuscation->isChecked();
     coinControlUpdateLabels();
     ui->customFee->setDisplayUnit(model->getOptionsModel()->getDisplayUnit());
     updateMinFeeLabel();
@@ -899,7 +899,7 @@ void SendCoinsDialog::coinControlUpdateLabels()
             CoinControlDialog::payAmounts.append(entry->getValue().amount);
     }
 
-    ui->checkUseObfuscate->setChecked(CoinControlDialog::coinControl->useObfuscate);
+    ui->checkUseObfuscation->setChecked(CoinControlDialog::coinControl->useObfuscation);
 
     if (CoinControlDialog::coinControl->HasSelected())
     {

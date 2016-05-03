@@ -1,4 +1,5 @@
 // Copyright (c) 2014-2015 The Dash developers
+// Copyright (c) 2015-2016 The Darknet developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -6,7 +7,7 @@
 #include "masternode-budget.h"
 #include "masternode-sync.h"
 #include "masternodeman.h"
-#include "obfuscate.h"
+#include "obfuscation.h"
 #include "util.h"
 #include "sync.h"
 #include "spork.h"
@@ -339,11 +340,11 @@ void CMasternodePayments::ProcessMessageMasternodePayments(CNode* pfrom, std::st
 {
     if(!masternodeSync.IsBlockchainSynced()) return;
 
-    if(fLiteMode) return; //disable all Obfuscate/Masternode related functionality
+    if(fLiteMode) return; //disable all Obfuscation/Masternode related functionality
 
 
     if (strCommand == "mnget") { //Masternode Payments Request Sync
-        if(fLiteMode) return; //disable all Obfuscate/Masternode related functionality
+        if(fLiteMode) return; //disable all Obfuscation/Masternode related functionality
 
         int nCountNeeded;
         vRecv >> nCountNeeded;
@@ -422,12 +423,12 @@ bool CMasternodePaymentWinner::Sign(CKey& keyMasternode, CPubKey& pubKeyMasterno
                 boost::lexical_cast<std::string>(nBlockHeight) +
                 payee.ToString();
 
-    if(!darkSendSigner.SignMessage(strMessage, errorMessage, vchSig, keyMasternode)) {
+    if(!obfuScationSigner.SignMessage(strMessage, errorMessage, vchSig, keyMasternode)) {
         LogPrintf("CMasternodePing::Sign() - Error: %s\n", errorMessage.c_str());
         return false;
     }
 
-    if(!darkSendSigner.VerifyMessage(pubKeyMasternode, vchSig, strMessage, errorMessage)) {
+    if(!obfuScationSigner.VerifyMessage(pubKeyMasternode, vchSig, strMessage, errorMessage)) {
         LogPrintf("CMasternodePing::Sign() - Error: %s\n", errorMessage.c_str());
         return false;
     }
@@ -723,7 +724,7 @@ bool CMasternodePayments::ProcessBlock(int nBlockHeight)
     CPubKey pubKeyMasternode;
     CKey keyMasternode;
 
-    if(!darkSendSigner.SetKey(strMasterNodePrivKey, errorMessage, keyMasternode, pubKeyMasternode))
+    if(!obfuScationSigner.SetKey(strMasterNodePrivKey, errorMessage, keyMasternode, pubKeyMasternode))
     {
         LogPrintf("CMasternodePayments::ProcessBlock() - Error upon calling SetKey: %s\n", errorMessage.c_str());
         return false;
@@ -763,7 +764,7 @@ bool CMasternodePaymentWinner::SignatureValid()
                     payee.ToString();
 
         std::string errorMessage = "";
-        if(!darkSendSigner.VerifyMessage(pmn->pubkey2, vchSig, strMessage, errorMessage)){
+        if(!obfuScationSigner.VerifyMessage(pmn->pubkey2, vchSig, strMessage, errorMessage)){
             return error("CMasternodePaymentWinner::SignatureValid() - Got bad Masternode address signature %s \n", vinMasternode.ToString().c_str());
         }
 

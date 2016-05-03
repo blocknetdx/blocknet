@@ -90,10 +90,10 @@ TransactionView::TransactionView(QWidget *parent) :
     typeWidget->addItem(tr("Sent to"), TransactionFilterProxy::TYPE(TransactionRecord::SendToAddress) |
                                   TransactionFilterProxy::TYPE(TransactionRecord::SendToOther));
     typeWidget->addItem(tr("Darksent"), TransactionFilterProxy::TYPE(TransactionRecord::Darksent));
-    typeWidget->addItem(tr("Obfuscate Make Collateral Inputs"), TransactionFilterProxy::TYPE(TransactionRecord::ObfuscateMakeCollaterals));
-    typeWidget->addItem(tr("Obfuscate Create Denominations"), TransactionFilterProxy::TYPE(TransactionRecord::ObfuscateCreateDenominations));
-    typeWidget->addItem(tr("Obfuscate Denominate"), TransactionFilterProxy::TYPE(TransactionRecord::ObfuscateDenominate));
-    typeWidget->addItem(tr("Obfuscate Collateral Payment"), TransactionFilterProxy::TYPE(TransactionRecord::ObfuscateCollateralPayment));
+    typeWidget->addItem(tr("Obfuscation Make Collateral Inputs"), TransactionFilterProxy::TYPE(TransactionRecord::ObfuscationMakeCollaterals));
+    typeWidget->addItem(tr("Obfuscation Create Denominations"), TransactionFilterProxy::TYPE(TransactionRecord::ObfuscationCreateDenominations));
+    typeWidget->addItem(tr("Obfuscation Denominate"), TransactionFilterProxy::TYPE(TransactionRecord::ObfuscationDenominate));
+    typeWidget->addItem(tr("Obfuscation Collateral Payment"), TransactionFilterProxy::TYPE(TransactionRecord::ObfuscationCollateralPayment));
     typeWidget->addItem(tr("To yourself"), TransactionFilterProxy::TYPE(TransactionRecord::SendToSelf));
     typeWidget->addItem(tr("Mined"), TransactionFilterProxy::TYPE(TransactionRecord::Generated));
     typeWidget->addItem(tr("Other"), TransactionFilterProxy::TYPE(TransactionRecord::Other));

@@ -43,8 +43,8 @@ public:
         ThreadsScriptVerif,     // int
         DatabaseCache,          // int
         SpendZeroConfChange,    // bool
-        ObfuscateRounds,    // int
-        AnonymizeDarkcoinAmount, //int
+        ObfuscationRounds,    // int
+        AnonymizeDarknetAmount, //int
         Listen,                 // bool
         OptionIDRowCount,
     };
@@ -88,8 +88,8 @@ private:
 
 signals:
     void displayUnitChanged(int unit);
-    void obfuscateRoundsChanged(int);
-    void anonymizeDarkcoinAmountChanged(int);
+    void obfuscationRoundsChanged(int);
+    void anonymizeDarknetAmountChanged(int);
     void coinControlFeaturesChanged(bool);
 };
 

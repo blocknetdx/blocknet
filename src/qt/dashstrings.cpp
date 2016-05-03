@@ -42,13 +42,13 @@ QT_TRANSLATE_NOOP("darknet-core", ""
 "Create new files with system default permissions, instead of umask 077 (only "
 "effective with disabled wallet functionality)"),
 QT_TRANSLATE_NOOP("darknet-core", ""
-"Obfuscate uses exact denominated amounts to send funds, you might simply need "
+"Obfuscation uses exact denominated amounts to send funds, you might simply need "
 "to anonymize some more coins."),
 QT_TRANSLATE_NOOP("darknet-core", ""
 "Delete all wallet transactions and only recover those parts of the "
 "blockchain through -rescan on startup"),
 QT_TRANSLATE_NOOP("darknet-core", ""
-"Disable all DarkNet specific functionality (Masternodes, Obfuscate, SwiftTX, "
+"Disable all DarkNet specific functionality (Masternodes, Obfuscation, SwiftTX, "
 "Budgeting) (0-1, default: %u)"),
 QT_TRANSLATE_NOOP("darknet-core", ""
 "Distributed under the MIT software license, see the accompanying file "
@@ -57,7 +57,7 @@ QT_TRANSLATE_NOOP("darknet-core", ""
 "Enable swifttx, show confirmations for locked transactions (bool, default: "
 "%s)"),
 QT_TRANSLATE_NOOP("darknet-core", ""
-"Enable use of automated obfuscate for funds stored in this wallet (0-1, "
+"Enable use of automated obfuscation for funds stored in this wallet (0-1, "
 "default: %u)"),
 QT_TRANSLATE_NOOP("darknet-core", ""
 "Enter regression test mode, which uses a special chain in which blocks can "
@@ -120,7 +120,7 @@ QT_TRANSLATE_NOOP("darknet-core", ""
 QT_TRANSLATE_NOOP("darknet-core", ""
 "Output debugging information (default: %u, supplying <category> is optional)"),
 QT_TRANSLATE_NOOP("darknet-core", ""
-"Provide liquidity to Obfuscate by infrequently mixing coins on a continual "
+"Provide liquidity to Obfuscation by infrequently mixing coins on a continual "
 "basis (0-100, default: %u, 1=very frequent, high fees, 100=very infrequent, "
 "low fees)"),
 QT_TRANSLATE_NOOP("darknet-core", ""
@@ -164,9 +164,9 @@ QT_TRANSLATE_NOOP("darknet-core", ""
 QT_TRANSLATE_NOOP("darknet-core", ""
 "Unable to bind to %s on this computer. DarkNet Core is probably already running."),
 QT_TRANSLATE_NOOP("darknet-core", ""
-"Unable to locate enough Obfuscate denominated funds for this transaction."),
+"Unable to locate enough Obfuscation denominated funds for this transaction."),
 QT_TRANSLATE_NOOP("darknet-core", ""
-"Unable to locate enough Obfuscate non-denominated funds for this transaction "
+"Unable to locate enough Obfuscation non-denominated funds for this transaction "
 "that are not equal 1000 DNET."),
 QT_TRANSLATE_NOOP("darknet-core", ""
 "Unable to locate enough funds for this transaction that are not equal 1000 "
@@ -239,10 +239,10 @@ QT_TRANSLATE_NOOP("darknet-core", "Copyright (C) 2014-%i The DarkNet Core Develo
 QT_TRANSLATE_NOOP("darknet-core", "Corrupted block database detected"),
 QT_TRANSLATE_NOOP("darknet-core", "Could not parse -rpcbind value %s as network address"),
 QT_TRANSLATE_NOOP("darknet-core", "Could not parse masternode.conf"),
-QT_TRANSLATE_NOOP("darknet-core", "Obfuscate is idle."),
-QT_TRANSLATE_NOOP("darknet-core", "Obfuscate options:"),
-QT_TRANSLATE_NOOP("darknet-core", "Obfuscate request complete:"),
-QT_TRANSLATE_NOOP("darknet-core", "Obfuscate request incomplete:"),
+QT_TRANSLATE_NOOP("darknet-core", "Obfuscation is idle."),
+QT_TRANSLATE_NOOP("darknet-core", "Obfuscation options:"),
+QT_TRANSLATE_NOOP("darknet-core", "Obfuscation request complete:"),
+QT_TRANSLATE_NOOP("darknet-core", "Obfuscation request incomplete:"),
 QT_TRANSLATE_NOOP("darknet-core", "Debugging/Testing options:"),
 QT_TRANSLATE_NOOP("darknet-core", "Disable safemode, override a real safe mode event (default: %u)"),
 QT_TRANSLATE_NOOP("darknet-core", "Discover own IP address (default: 1 when listening and no -externalip)"),
@@ -267,7 +267,7 @@ QT_TRANSLATE_NOOP("darknet-core", "Error: Can't select current denominated input
 QT_TRANSLATE_NOOP("darknet-core", "Error: Disk space is low!"),
 QT_TRANSLATE_NOOP("darknet-core", "Error: Unsupported argument -tor found, use -onion."),
 QT_TRANSLATE_NOOP("darknet-core", "Error: Wallet locked, unable to create transaction!"),
-QT_TRANSLATE_NOOP("darknet-core", "Error: You already have pending entries in the Obfuscate pool"),
+QT_TRANSLATE_NOOP("darknet-core", "Error: You already have pending entries in the Obfuscation pool"),
 QT_TRANSLATE_NOOP("darknet-core", "Failed to listen on any port. Use -listen=0 if you want this."),
 QT_TRANSLATE_NOOP("darknet-core", "Failed to read block"),
 QT_TRANSLATE_NOOP("darknet-core", "Fee (in DNET/kB) to add to transactions you send (default: %s)"),
@@ -305,8 +305,8 @@ QT_TRANSLATE_NOOP("darknet-core", "KeePassHttp id for the established associatio
 QT_TRANSLATE_NOOP("darknet-core", "KeePassHttp key for AES encrypted communication with KeePass"),
 QT_TRANSLATE_NOOP("darknet-core", "Keep N DNET anonymized (default: %u)"),
 QT_TRANSLATE_NOOP("darknet-core", "Keep at most <n> unconnectable transactions in memory (default: %u)"),
-QT_TRANSLATE_NOOP("darknet-core", "Last Obfuscate was too recent."),
-QT_TRANSLATE_NOOP("darknet-core", "Last successful Obfuscate action was too recent."),
+QT_TRANSLATE_NOOP("darknet-core", "Last Obfuscation was too recent."),
+QT_TRANSLATE_NOOP("darknet-core", "Last successful Obfuscation action was too recent."),
 QT_TRANSLATE_NOOP("darknet-core", "Limit size of signature cache to <n> entries (default: %u)"),
 QT_TRANSLATE_NOOP("darknet-core", "Line: %d"),
 QT_TRANSLATE_NOOP("darknet-core", "Listen for JSON-RPC connections on <port> (default: %u or testnet: %u)"),
@@ -420,7 +420,7 @@ QT_TRANSLATE_NOOP("darknet-core", "Use UPnP to map the listening port (default: 
 QT_TRANSLATE_NOOP("darknet-core", "Use UPnP to map the listening port (default: 1 when listening)"),
 QT_TRANSLATE_NOOP("darknet-core", "Use the test network"),
 QT_TRANSLATE_NOOP("darknet-core", "Username for JSON-RPC connections"),
-QT_TRANSLATE_NOOP("darknet-core", "Value more than Obfuscate pool maximum allows."),
+QT_TRANSLATE_NOOP("darknet-core", "Value more than Obfuscation pool maximum allows."),
 QT_TRANSLATE_NOOP("darknet-core", "Verifying blocks..."),
 QT_TRANSLATE_NOOP("darknet-core", "Verifying wallet..."),
 QT_TRANSLATE_NOOP("darknet-core", "Wallet %s resides outside data directory %s"),

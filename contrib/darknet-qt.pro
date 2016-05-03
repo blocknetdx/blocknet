@@ -175,7 +175,7 @@ HEADERS += src/activemasternode.h \
            src/qt/coincontroldialog.h \
            src/qt/coincontroltreewidget.h \
            src/qt/csvmodelwriter.h \
-           src/qt/obfuscateconfig.h \
+           src/qt/obfuscationconfig.h \
            src/qt/editaddressdialog.h \
            src/qt/guiconstants.h \
            src/qt/guiutil.h \
@@ -341,7 +341,7 @@ HEADERS += src/activemasternode.h \
 FORMS += src/qt/forms/addressbookpage.ui \
          src/qt/forms/askpassphrasedialog.ui \
          src/qt/forms/coincontroldialog.ui \
-         src/qt/forms/obfuscateconfig.ui \
+         src/qt/forms/obfuscationconfig.ui \
          src/qt/forms/editaddressdialog.ui \
          src/qt/forms/helpmessagedialog.ui \
          src/qt/forms/intro.ui \
@@ -470,7 +470,7 @@ SOURCES += src/activemasternode.cpp \
            src/qt/coincontroldialog.cpp \
            src/qt/coincontroltreewidget.cpp \
            src/qt/csvmodelwriter.cpp \
-           src/qt/obfuscateconfig.cpp \
+           src/qt/obfuscationconfig.cpp \
            src/qt/darknet.cpp \
            src/qt/darknetstrings.cpp \
            src/qt/editaddressdialog.cpp \

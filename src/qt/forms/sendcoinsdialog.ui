@@ -1347,7 +1347,7 @@
         <number>3</number>
        </property>
        <item>
-        <widget class="QCheckBox" name="checkUseObfuscate">
+        <widget class="QCheckBox" name="checkUseObfuscation">
          <property name="minimumSize">
           <size>
            <width>95</width>
@@ -1355,7 +1355,7 @@
           </size>
          </property>
          <property name="text">
-          <string>Obfuscate</string>
+          <string>Obfuscation</string>
          </property>
          <property name="checked">
           <bool>false</bool>

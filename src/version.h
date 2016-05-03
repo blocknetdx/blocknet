@@ -1,5 +1,6 @@
 // Copyright (c) 2012-2014 The Bitcoin developers
 // Copyright (c) 2014-2015 The Dash developers
+// Copyright (c) 2015-2016 The Darknet developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -21,7 +22,7 @@ static const int GETHEADERS_VERSION = 70077;
 //! disconnect from peers older than this proto version
 static const int MIN_PEER_PROTO_VERSION = 70066;
 
-//! minimum peer version accepted by ObfuscatePool
+//! minimum peer version accepted by ObfuscationPool
 static const int MIN_POOL_PEER_PROTO_VERSION = 70106;
 
 //! minimum peer version for masternode budgets

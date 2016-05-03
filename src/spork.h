@@ -14,7 +14,7 @@
 #include "main.h"
 
 #include "protocol.h"
-#include "obfuscate.h"
+#include "obfuscation.h"
 #include <boost/lexical_cast.hpp>
 
 using namespace std;

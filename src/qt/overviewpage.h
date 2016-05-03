@@ -34,10 +34,10 @@ public:
     void setClientModel(ClientModel *clientModel);
     void setWalletModel(WalletModel *walletModel);
     void showOutOfSyncWarning(bool fShow);
-    void updateObfuscateProgress();
+    void updateObfuscationProgress();
 
 public slots:
-    void darkSendStatus();
+    void obfuScationStatus();
     void setBalance(const CAmount& balance, const CAmount& unconfirmedBalance, const CAmount& immatureBalance, const CAmount& anonymizedBalance,
                     const CAmount& watchOnlyBalance, const CAmount& watchUnconfBalance, const CAmount& watchImmatureBalance);
 
@@ -62,9 +62,9 @@ private:
     TransactionFilterProxy *filter;
 
 private slots:
-    void toggleObfuscate();
-    void obfuscateAuto();
-    void obfuscateReset();
+    void toggleObfuscation();
+    void obfuscationAuto();
+    void obfuscationReset();
     void updateDisplayUnit();
     void handleTransactionClicked(const QModelIndex &index);
     void updateAlerts(const QString &warnings);

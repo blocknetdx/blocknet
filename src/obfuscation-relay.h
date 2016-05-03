@@ -1,17 +1,18 @@
 
 // Copyright (c) 2014-2015 The Dash developers
+// Copyright (c) 2015-2016 The Darknet developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef DARKSEND_RELAY_H
-#define DARKSEND_RELAY_H
+#ifndef OBFUSCATION_RELAY_H
+#define OBFUSCATION_RELAY_H
 
 #include "main.h"
 #include "activemasternode.h"
 #include "masternodeman.h"
 
 
-class CObfuscateRelay
+class CObfuscationRelay
 {
 public:
     CTxIn vinMasternode;
@@ -22,8 +23,8 @@ public:
     CTxIn in;
     CTxOut out;
 
-    CObfuscateRelay();
-    CObfuscateRelay(CTxIn& vinMasternodeIn, vector<unsigned char>& vchSigIn, int nBlockHeightIn, int nRelayTypeIn, CTxIn& in2, CTxOut& out2);
+    CObfuscationRelay();
+    CObfuscationRelay(CTxIn& vinMasternodeIn, vector<unsigned char>& vchSigIn, int nBlockHeightIn, int nRelayTypeIn, CTxIn& in2, CTxOut& out2);
     
     ADD_SERIALIZE_METHODS;
 

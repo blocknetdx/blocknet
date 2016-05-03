@@ -72,14 +72,14 @@ void OptionsModel::Init()
         settings.setValue("fCoinControlFeatures", false);
     fCoinControlFeatures = settings.value("fCoinControlFeatures", false).toBool();
 
-    if (!settings.contains("nObfuscateRounds"))
-        settings.setValue("nObfuscateRounds", 2);
+    if (!settings.contains("nObfuscationRounds"))
+        settings.setValue("nObfuscationRounds", 2);
 
-    if (!settings.contains("nAnonymizeDarkcoinAmount"))
-        settings.setValue("nAnonymizeDarkcoinAmount", 1000);
+    if (!settings.contains("nAnonymizeDarknetAmount"))
+        settings.setValue("nAnonymizeDarknetAmount", 1000);
 
-    nObfuscateRounds = settings.value("nObfuscateRounds").toLongLong();
-    nAnonymizeDarkcoinAmount = settings.value("nAnonymizeDarkcoinAmount").toLongLong();
+    nObfuscationRounds = settings.value("nObfuscationRounds").toLongLong();
+    nAnonymizeDarknetAmount = settings.value("nAnonymizeDarknetAmount").toLongLong();
 
     // These are shared with the core or have a command-line parameter
     // and we want command-line parameters to overwrite the GUI settings.
@@ -139,8 +139,8 @@ void OptionsModel::Init()
     if (!SoftSetArg("-lang", settings.value("language").toString().toStdString()))
         addOverriddenOption("-lang");
 
-    if (settings.contains("nObfuscateRounds"))
-        SoftSetArg("-obfuscaterounds", settings.value("nObfuscateRounds").toString().toStdString());
+    if (settings.contains("nObfuscationRounds"))
+        SoftSetArg("-obfuscationrounds", settings.value("nObfuscationRounds").toString().toStdString());
     if (settings.contains("nAnonymizeDarkNetAmount"))
         SoftSetArg("-anonymizedarknetamount", settings.value("nAnonymizeDarkNetAmount").toString().toStdString());
 
@@ -220,10 +220,10 @@ QVariant OptionsModel::data(const QModelIndex & index, int role) const
             return settings.value("nDatabaseCache");
         case ThreadsScriptVerif:
             return settings.value("nThreadsScriptVerif");
-        case ObfuscateRounds:
-            return QVariant(nObfuscateRounds);
-        case AnonymizeDarkcoinAmount:
-            return QVariant(nAnonymizeDarkcoinAmount);
+        case ObfuscationRounds:
+            return QVariant(nObfuscationRounds);
+        case AnonymizeDarknetAmount:
+            return QVariant(nAnonymizeDarknetAmount);
         case Listen:
             return settings.value("fListen");
         default:
@@ -325,15 +325,15 @@ bool OptionsModel::setData(const QModelIndex & index, const QVariant & value, in
                 setRestartRequired(true);
             }
             break;
-        case ObfuscateRounds:
-            nObfuscateRounds = value.toInt();
-            settings.setValue("nObfuscateRounds", nObfuscateRounds);
-            emit obfuscateRoundsChanged(nObfuscateRounds);
+        case ObfuscationRounds:
+            nObfuscationRounds = value.toInt();
+            settings.setValue("nObfuscationRounds", nObfuscationRounds);
+            emit obfuscationRoundsChanged(nObfuscationRounds);
             break;
-        case AnonymizeDarkcoinAmount:
-            nAnonymizeDarkcoinAmount = value.toInt();
-            settings.setValue("nAnonymizeDarkcoinAmount", nAnonymizeDarkcoinAmount);
-            emit anonymizeDarkcoinAmountChanged(nAnonymizeDarkcoinAmount);
+        case AnonymizeDarknetAmount:
+            nAnonymizeDarknetAmount = value.toInt();
+            settings.setValue("nAnonymizeDarknetAmount", nAnonymizeDarknetAmount);
+            emit anonymizeDarknetAmountChanged(nAnonymizeDarknetAmount);
             break;
         case CoinControlFeatures:
             fCoinControlFeatures = value.toBool();

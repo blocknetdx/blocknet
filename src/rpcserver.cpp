@@ -309,7 +309,7 @@ static const CRPCCommand vRPCCommands[] =
     { "hidden",             "reconsiderblock",        &reconsiderblock,        true,      true,       false },
     { "hidden",             "setmocktime",            &setmocktime,            true,      false,      false },
 
-    /* Dash features */
+    /* Darknet features */
     { "darknet",               "masternode",             &masternode,             true,      true,       false },
     { "darknet",               "masternodelist",         &masternodelist,         true,      true,       false },
     { "darknet",               "mnbudget",               &mnbudget,               true,      true,       false },
@@ -318,7 +318,7 @@ static const CRPCCommand vRPCCommands[] =
     { "darknet",               "mnsync",                 &mnsync,                 true,      true,       false },
     { "darknet",               "spork",                  &spork,                  true,      true,       false },
 #ifdef ENABLE_WALLET
-    { "darknet",               "obfuscate",               &obfuscate,               false,     false,      true  }, /* not threadSafe because of SendMoney */
+    { "darknet",               "obfuscation",               &obfuscation,               false,     false,      true  }, /* not threadSafe because of SendMoney */
 
     /* Wallet */
     { "wallet",             "addmultisigaddress",     &addmultisigaddress,     true,      false,      true },
