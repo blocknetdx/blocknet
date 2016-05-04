@@ -116,12 +116,14 @@ background-color:#f2f2f2;
 /* GLOBAL BUTTON STYLE         */
 /*******************************/
 
-QPushButton {
-background-color:transparent;
-border:1px solid #ffffff;
+QPushButton { /* Global Button Style */
+/* background-color:qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: .01 #9e0a0a, stop: .1 #9e0a0a, stop: .95 #9e0a0a, stop: 1 #9e0a0a); */
+background-color:#9e0a0a;
+border:1px solid #d2d2d2;
 border-radius:3px;
 color:#ffffff;
 font-size:12px;
+font-weight:bold;
 padding-left:25px;
 padding-right:25px;
 padding-top:5px;
@@ -129,25 +131,18 @@ padding-bottom:5px;
 }
 
 QPushButton:hover {
-background-color:transparent;
-border:1px solid #ffffff;
-border-radius:3px;
-color:#ffffff;
+background-color:qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: .01 #9e0a0a, stop: .1 #9e0a0a, stop: .95 #9e0a0a, stop: 1 #9e0a0a);
 }
 
 QPushButton:focus {
-background-color:transparent;
-border:1px solid #ffffff;
-border-radius:3px;
-color:#ffffff;
+border:none;
+outline:none;
 }
 
 QPushButton:pressed {
-background-color:transparent;
-border:1px solid #ffffff;
-border-radius:3px;
-color:#ffffff;
+border:1px solid #333;
 }
+
 
 /*******************************/
 /* DROP DOWN MENUS             */
