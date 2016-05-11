@@ -4941,7 +4941,7 @@ bool RewindBlockIndex(const CChainParams& params)
             pindexIter->nSequenceId = 0;
             // Make sure it gets written.
             setDirtyBlockIndex.insert(pindexIter);
-            // Update setBlockIndexCandidates
+            // Update indexes
             setBlockIndexCandidates.erase(pindexIter);
             std::pair<std::multimap<CBlockIndex*, CBlockIndex*>::iterator, std::multimap<CBlockIndex*, CBlockIndex*>::iterator> ret = mapBlocksUnlinked.equal_range(pindexIter->pprev);
             while (ret.first != ret.second) {
