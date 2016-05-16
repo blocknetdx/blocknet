@@ -307,8 +307,8 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
         }
 
         // Collect transactions into block
-        uint64_t nBlockCost = 4000;
-        uint64_t nBlockTx = 0;
+        int64_t nBlockCost = 4000;
+        int64_t nBlockTx = 0;
         bool fSortedByFee = (nBlockPriorityCost <= 0);
 
         TxPriorityCompare comparer(fSortedByFee);
