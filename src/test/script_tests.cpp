@@ -13,6 +13,8 @@
 #include "script/script_error.h"
 #include "script/sign.h"
 #include "util.h"
+#include "utilstrencodings.h"
+#include "rpcserver.h"
 
 #if defined(HAVE_CONSENSUS_LIB)
 #include "script/bitcoinconsensus.h"
@@ -60,7 +62,7 @@ read_json(const std::string& jsondata)
 
 BOOST_AUTO_TEST_SUITE(script_tests)
 
-CMutableTransaction BuildCreditingTransaction(const CScript& scriptPubKey)
+CMutableTransaction BuildCreditingTransaction(const CScript& scriptPubKey, int nValue = 0)
 {
     CMutableTransaction txCredit;
     txCredit.nVersion = 1;
@@ -71,7 +73,7 @@ CMutableTransaction BuildCreditingTransaction(const CScript& scriptPubKey)
     txCredit.vin[0].scriptSig = CScript() << CScriptNum(0) << CScriptNum(0);
     txCredit.vin[0].nSequence = std::numeric_limits<unsigned int>::max();
     txCredit.vout[0].scriptPubKey = scriptPubKey;
-    txCredit.vout[0].nValue = 0;
+    txCredit.vout[0].nValue = nValue;
 
     return txCredit;
 }
@@ -90,19 +92,19 @@ CMutableTransaction BuildSpendingTransaction(const CScript& scriptSig, const CSc
     txSpend.vin[0].scriptSig = scriptSig;
     txSpend.vin[0].nSequence = std::numeric_limits<unsigned int>::max();
     txSpend.vout[0].scriptPubKey = CScript();
-    txSpend.vout[0].nValue = 0;
+    txSpend.vout[0].nValue = txCredit.vout[0].nValue;
 
     return txSpend;
 }
 
-void DoTest(const CScript& scriptPubKey, const CScript& scriptSig, const CScriptWitness& scriptWitness, int flags, bool expect, const std::string& message)
+void DoTest(const CScript& scriptPubKey, const CScript& scriptSig, const CScriptWitness& scriptWitness, int flags, bool expect, const std::string& message, CAmount nValue = 0)
 {
     if (flags & SCRIPT_VERIFY_CLEANSTACK) {
         flags |= SCRIPT_VERIFY_P2SH;
         flags |= SCRIPT_VERIFY_WITNESS;
     }
     ScriptError err;
-    CMutableTransaction txCredit = BuildCreditingTransaction(scriptPubKey);
+    CMutableTransaction txCredit = BuildCreditingTransaction(scriptPubKey, nValue);
     CMutableTransaction tx = BuildSpendingTransaction(scriptSig, scriptWitness, txCredit);
     CMutableTransaction tx2 = tx;
     BOOST_CHECK_MESSAGE(VerifyScript(scriptSig, scriptPubKey, &scriptWitness, flags, MutableTransactionSignatureChecker(&tx, 0, txCredit.vout[0].nValue), &err) == expect, message);
@@ -218,6 +220,7 @@ private:
     std::vector<unsigned char> push;
     std::string comment;
     int flags;
+    CAmount nValue;
 
     void DoPush()
     {
@@ -235,7 +238,7 @@ private:
     }
 
 public:
-    TestBuilder(const CScript& script_, const std::string& comment_, int flags_, bool P2SH = false, WitnessMode wm = WITNESS_NONE) : script(script_), havePush(false), comment(comment_), flags(flags_)
+    TestBuilder(const CScript& script_, const std::string& comment_, int flags_, bool P2SH = false, WitnessMode wm = WITNESS_NONE, int witnessversion = 0, CAmount nValue_ = 0) : script(script_), havePush(false), comment(comment_), flags(flags_), nValue(nValue_)
     {
         CScript scriptPubKey = script;
         if (wm == WITNESS_PKH) {
@@ -253,7 +256,7 @@ public:
             redeemscript = scriptPubKey;
             scriptPubKey = CScript() << OP_HASH160 << ToByteVector(CScriptID(redeemscript)) << OP_EQUAL;
         }
-        creditTx = BuildCreditingTransaction(scriptPubKey);
+        creditTx = BuildCreditingTransaction(scriptPubKey, nValue);
         spendTx = BuildSpendingTransaction(CScript(), CScriptWitness(), creditTx);
     }
 
@@ -277,9 +280,13 @@ public:
         return *this;
     }
 
-    TestBuilder& PushSig(const CKey& key, int nHashType = SIGHASH_ALL, unsigned int lenR = 32, unsigned int lenS = 32, SigVersion sigversion = SIGVERSION_BASE)
+    TestBuilder& Push(const CScript& script) {
+         DoPush(std::vector<unsigned char>(script.begin(), script.end()));
+        return *this;
+    }
+    TestBuilder& PushSig(const CKey& key, int nHashType = SIGHASH_ALL, unsigned int lenR = 32, unsigned int lenS = 32, SigVersion sigversion = SIGVERSION_BASE, CAmount amount = 0)
     {
-        uint256 hash = SignatureHash(script, spendTx, 0, nHashType, 0, sigversion);
+        uint256 hash = SignatureHash(script, spendTx, 0, nHashType, amount, sigversion);
         std::vector<unsigned char> vchSig, r, s;
         uint32_t iter = 0;
         do {
@@ -295,9 +302,11 @@ public:
         return *this;
     }
 
-    TestBuilder& PushWitSig(const CKey& key, int nHashType = SIGHASH_ALL, unsigned int lenR = 32, unsigned int lenS = 32, SigVersion sigversion = SIGVERSION_WITNESS_V0)
+    TestBuilder& PushWitSig(const CKey& key, CAmount amount = -1, int nHashType = SIGHASH_ALL, unsigned int lenR = 32, unsigned int lenS = 32, SigVersion sigversion = SIGVERSION_WITNESS_V0)
     {
-        return PushSig(key, nHashType, lenR, lenS, sigversion).AsWit();
+        if (amount == -1)
+            amount = nValue;
+        return PushSig(key, nHashType, lenR, lenS, sigversion, amount).AsWit();
     }
 
     TestBuilder& Push(const CPubKey& pubkey)
@@ -342,7 +351,7 @@ public:
     {
         TestBuilder copy = *this; // Make a copy so we can rollback the push.
         DoPush();
-        DoTest(creditTx.vout[0].scriptPubKey, spendTx.vin[0].scriptSig, scriptWitness, flags, expect, comment);
+        DoTest(creditTx.vout[0].scriptPubKey, spendTx.vin[0].scriptSig, scriptWitness, flags, expect, comment, nValue);
         *this = copy;
         return *this;
     }
@@ -364,6 +373,7 @@ public:
             for (unsigned i = 0; i < scriptWitness.stack.size(); i++) {
                 wit.push_back(HexStr(scriptWitness.stack[i]));
             }
+            wit.push_back(ValueFromAmount(nValue));
             array.push_back(wit);
         }
         array.push_back(FormatScript(spendTx.vin[0].scriptSig));
@@ -383,6 +393,18 @@ public:
         return creditTx.vout[0].scriptPubKey;
     }
 };
+
+std::string JSONPrettyPrint(const UniValue& univalue)
+{
+    std::string ret = univalue.write(4);
+    // Workaround for libunivalue pretty printer, which puts a space between comma's and newlines
+    size_t pos = 0;
+    while ((pos = ret.find(" \n", pos)) != std::string::npos) {
+        ret.replace(pos, 2, "\n");
+        pos++;
+    }
+    return ret;
+}
 }
 
 BOOST_AUTO_TEST_CASE(script_build)
@@ -624,15 +646,18 @@ BOOST_AUTO_TEST_CASE(script_build)
     good.push_back(TestBuilder(CScript() << ToByteVector(keys.pubkey0) << OP_CHECKSIG,
                                 "Basic P2WSH", SCRIPT_VERIFY_WITNESS | SCRIPT_VERIFY_P2SH, false, WITNESS_SH
                                ).PushWitSig(keys.key0).PushWitRedeem());
-    good.push_back(TestBuilder(CScript() << ToByteVector(keys.pubkey0),
-                                "Basic P2WPKH", SCRIPT_VERIFY_WITNESS | SCRIPT_VERIFY_P2SH, false, WITNESS_PKH
-                               ).PushWitSig(keys.key0).Push(keys.pubkey0).AsWit());
     good.push_back(TestBuilder(CScript() << ToByteVector(keys.pubkey0) << OP_CHECKSIG,
-                                "Basic P2SH(P2WSH)", SCRIPT_VERIFY_WITNESS | SCRIPT_VERIFY_P2SH, true, WITNESS_SH
-                               ).PushWitSig(keys.key0).PushWitRedeem().PushRedeem());
+                                "Basic P2WSH", SCRIPT_VERIFY_WITNESS | SCRIPT_VERIFY_P2SH, false, WITNESS_SH,
+                                0, 1).PushWitSig(keys.key0).PushWitRedeem());
     good.push_back(TestBuilder(CScript() << ToByteVector(keys.pubkey0),
-                                "Basic P2SH(P2WPKH)", SCRIPT_VERIFY_WITNESS | SCRIPT_VERIFY_P2SH, true, WITNESS_PKH
-                               ).PushWitSig(keys.key0).Push(keys.pubkey0).AsWit().PushRedeem());
+                                "Basic P2WPKH", SCRIPT_VERIFY_WITNESS | SCRIPT_VERIFY_P2SH, false, WITNESS_PKH,
+                                0, 1).PushWitSig(keys.key0).Push(keys.pubkey0).AsWit());
+    good.push_back(TestBuilder(CScript() << ToByteVector(keys.pubkey0) << OP_CHECKSIG,
+                                "Basic P2SH(P2WSH)", SCRIPT_VERIFY_WITNESS | SCRIPT_VERIFY_P2SH, true, WITNESS_SH,
+                                0, 1).PushWitSig(keys.key0).PushWitRedeem().PushRedeem());
+    good.push_back(TestBuilder(CScript() << ToByteVector(keys.pubkey0),
+                                "Basic P2SH(P2WPKH)", SCRIPT_VERIFY_WITNESS | SCRIPT_VERIFY_P2SH, true, WITNESS_PKH,
+                                0, 1).PushWitSig(keys.key0).Push(keys.pubkey0).AsWit().PushRedeem());
     bad.push_back(TestBuilder(CScript() << ToByteVector(keys.pubkey1) << OP_CHECKSIG,
                                 "Basic P2WSH with the wrong key", SCRIPT_VERIFY_WITNESS | SCRIPT_VERIFY_P2SH, false, WITNESS_SH
                                ).PushWitSig(keys.key0).PushWitRedeem());
@@ -657,6 +682,18 @@ BOOST_AUTO_TEST_CASE(script_build)
     good.push_back(TestBuilder(CScript() << ToByteVector(keys.pubkey1),
                                 "Basic P2SH(P2WPKH) with the wrong key but no WITNESS", SCRIPT_VERIFY_P2SH, true, WITNESS_PKH
                                ).PushWitSig(keys.key0).Push(keys.pubkey1).AsWit().PushRedeem());
+    bad.push_back(TestBuilder(CScript() << ToByteVector(keys.pubkey0) << OP_CHECKSIG,
+                                "Basic P2WSH with wrong value", SCRIPT_VERIFY_WITNESS | SCRIPT_VERIFY_P2SH, false, WITNESS_SH,
+                                0, 0).PushWitSig(keys.key0, 1).PushWitRedeem());
+    bad.push_back(TestBuilder(CScript() << ToByteVector(keys.pubkey0),
+                                "Basic P2WPKH with wrong value", SCRIPT_VERIFY_WITNESS | SCRIPT_VERIFY_P2SH, false, WITNESS_PKH,
+                                0, 0).PushWitSig(keys.key0, 1).Push(keys.pubkey0).AsWit());
+    bad.push_back(TestBuilder(CScript() << ToByteVector(keys.pubkey0) << OP_CHECKSIG,
+                                "Basic P2SH(P2WSH) with wrong value", SCRIPT_VERIFY_WITNESS | SCRIPT_VERIFY_P2SH, true, WITNESS_SH,
+                                0, 0).PushWitSig(keys.key0, 1).PushWitRedeem().PushRedeem());
+    bad.push_back(TestBuilder(CScript() << ToByteVector(keys.pubkey0),
+                                "Basic P2SH(P2WPKH) with wrong value", SCRIPT_VERIFY_WITNESS | SCRIPT_VERIFY_P2SH, true, WITNESS_PKH,
+                                0, 0).PushWitSig(keys.key0, 1).Push(keys.pubkey0).AsWit().PushRedeem());
 
 
     std::set<std::string> tests_good;
@@ -668,11 +705,11 @@ BOOST_AUTO_TEST_CASE(script_build)
 
         for (unsigned int idx = 0; idx < json_good.size(); idx++) {
             const UniValue& tv = json_good[idx];
-            tests_good.insert(tv.get_array().write());
+            tests_good.insert(JSONPrettyPrint(tv.get_array()));
         }
         for (unsigned int idx = 0; idx < json_bad.size(); idx++) {
             const UniValue& tv = json_bad[idx];
-            tests_bad.insert(tv.get_array().write());
+            tests_bad.insert(JSONPrettyPrint(tv.get_array()));
         }
     }
 
@@ -681,7 +718,7 @@ BOOST_AUTO_TEST_CASE(script_build)
 
     BOOST_FOREACH(TestBuilder& test, good) {
         test.Test(true);
-        std::string str = test.GetJSON().write();
+        std::string str = JSONPrettyPrint(test.GetJSON());
 #ifndef UPDATE_JSON_TESTS
         if (tests_good.count(str) == 0) {
             BOOST_CHECK_MESSAGE(false, "Missing auto script_valid test: " + test.GetComment());
@@ -691,7 +728,7 @@ BOOST_AUTO_TEST_CASE(script_build)
     }
     BOOST_FOREACH(TestBuilder& test, bad) {
         test.Test(false);
-        std::string str = test.GetJSON().write();
+        std::string str = JSONPrettyPrint(test.GetJSON());
 #ifndef UPDATE_JSON_TESTS
         if (tests_bad.count(str) == 0) {
             BOOST_CHECK_MESSAGE(false, "Missing auto script_invalid test: " + test.GetComment());
@@ -723,11 +760,14 @@ BOOST_AUTO_TEST_CASE(script_valid)
         UniValue test = tests[idx];
         string strTest = test.write();
         CScriptWitness witness;
+        CAmount nValue = 0;
         unsigned int pos = 0;
         if (test.size() > 0 && test[pos].isArray()) {
-            for (unsigned int i = 0; i < test[pos].size(); i++) {
+            unsigned int i = 0;
+            for (i = 0; i < test[pos].size()-1; i++) {
                 witness.stack.push_back(ParseHex(test[pos][i].get_str()));
             }
+            nValue = AmountFromValue(test[pos][i]);
             pos++;
         }
         if (test.size() < 3 + pos) // Allow size > 3; extra stuff ignored (useful for comments)
@@ -743,7 +783,7 @@ BOOST_AUTO_TEST_CASE(script_valid)
         CScript scriptPubKey = ParseScript(scriptPubKeyString);
         unsigned int scriptflags = ParseScriptFlags(test[pos++].get_str());
 
-        DoTest(scriptPubKey, scriptSig, witness, scriptflags, true, strTest);
+        DoTest(scriptPubKey, scriptSig, witness, scriptflags, true, strTest, nValue);
     }
 }
 
@@ -756,11 +796,14 @@ BOOST_AUTO_TEST_CASE(script_invalid)
         UniValue test = tests[idx];
         string strTest = test.write();
         CScriptWitness witness;
+        CAmount nValue = 0;
         unsigned int pos = 0;
         if (test.size() > 0 && test[pos].isArray()) {
-            for (unsigned int i = 0; i < test[pos].size(); i++) {
+            unsigned int i=0;
+            for (i = 0; i < test[pos].size()-1; i++) {
                 witness.stack.push_back(ParseHex(test[pos][i].get_str()));
             }
+            nValue = AmountFromValue(test[pos][i]);
             pos++;
         }
         if (test.size() < 3 + pos) // Allow size > 3; extra stuff ignored (useful for comments)
@@ -776,7 +819,7 @@ BOOST_AUTO_TEST_CASE(script_invalid)
         CScript scriptPubKey = ParseScript(scriptPubKeyString);
         unsigned int scriptflags = ParseScriptFlags(test[pos++].get_str());
 
-        DoTest(scriptPubKey, scriptSig, witness, scriptflags, false, strTest);
+        DoTest(scriptPubKey, scriptSig, witness, scriptflags, false, strTest, nValue);
     }
 }
 
