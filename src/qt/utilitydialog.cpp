@@ -7,20 +7,49 @@
 #include "utilitydialog.h"
 
 #include "ui_helpmessagedialog.h"
+#include "bitcoinunits.h"
 
+#include "optionsmodel.h"
 #include "bitcoingui.h"
 #include "clientmodel.h"
 #include "guiutil.h"
 
 #include "clientversion.h"
 #include "init.h"
+#include "util.h"
+#include "net.h"
 
 #include <stdio.h>
 
 #include <QCloseEvent>
+//#include <QFont>
 #include <QLabel>
 #include <QRegExp>
 #include <QVBoxLayout>
+//#include <QFile>
+#include <QTextStream>
+#include <QTextTable>
+#include <QTextCursor>
+#include <QInputDialog>
+
+/** our implemenation is handling these elsewhere
+#ifdef USE_QRCODE
+#include <qrencode.h>
+#endif  **/
+
+// Maintain Qt linking compatibility through 4/5
+#if QT_VERSION < 0x050000
+#include <QPrinter>
+#include <QPrintDialog>
+#include <QPrintPreviewDialog>
+#else
+// Use QT5's new modular classes
+#include <QtPrintSupport/QPrinter>
+#include <QtPrintSupport/QPrintDialog>
+#include <QtPrintSupport/QPrintPreviewDialog>
+#endif
+#include <QPainter>
+#include "walletmodel.h"
 
 /** "Help message" or "About" dialog box */
 HelpMessageDialog::HelpMessageDialog(QWidget *parent, bool about) :
