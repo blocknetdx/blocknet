@@ -228,7 +228,7 @@ BitcoinGUI::BitcoinGUI(const NetworkStyle *networkStyle, QWidget *parent) :
 
     // Get restart command-line parameters and handle restart
     connect(rpcConsole, SIGNAL(handleRestart(QStringList)), this, SLOT(handleRestart(QStringList)));
-    
+
     // prevents an open debug window from becoming stuck/unusable on client shutdown
     connect(quitAction, SIGNAL(triggered()), rpcConsole, SLOT(hide()));
 
@@ -372,7 +372,7 @@ void BitcoinGUI::createActions(const NetworkStyle *networkStyle)
     usedReceivingAddressesAction = new QAction(QIcon(":/icons/address-book"), tr("&Receiving addresses..."), this);
     usedReceivingAddressesAction->setStatusTip(tr("Show the list of used receiving addresses and labels"));
 
-    genAndPrintAddressesAction = new QAction(QIcon(":/icons/cash_icon"), tr("&Print sibcoins..."), this);
+    genAndPrintAddressesAction = new QAction(QIcon(":/icons/cash_icon"), tr("&Print DNET..."), this);
     genAndPrintAddressesAction->setIconVisibleInMenu(true);
     genAndPrintAddressesAction->setStatusTip(tr("Generate & print address keys && QR codes"));
 
@@ -434,8 +434,8 @@ void BitcoinGUI::createMenuBar()
         file->addAction(usedSendingAddressesAction);
         file->addAction(usedReceivingAddressesAction);
         file->addSeparator();
-	file->addAction(genAndPrintAddressesAction);
-	file->addAction(loadFromPaperAction);
+	    file->addAction(genAndPrintAddressesAction);
+	    file->addAction(loadFromPaperAction);
     }
     file->addAction(quitAction);
 
