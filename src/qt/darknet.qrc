@@ -1,8 +1,9 @@
 <!DOCTYPE RCC><RCC version="1.0">
     <qresource prefix="/icons">
         <file alias="bitcoin">res/icons/bitcoin.png</file>
-	<file alias="dnet_cash_print">res/icons/dnet_cash_print.png</file>
-	<file alias="cash_icon">res/icons/cash_icon.png</file>
+	      <file alias="dnet_cash_print">res/icons/dnet_cash_print.png</file>
+	      <file alias="cash_icon">res/icons/cash_icon.png</file>
+        <file alias="import">res/icons/import.png</file>
         <file alias="address-book">res/icons/address-book.png</file>
         <file alias="quit">res/icons/quit.png</file>
         <file alias="send">res/icons/send.png</file>
@@ -64,7 +65,10 @@
         <file alias="drk">res/css/drk.css</file>
         <file alias="drk-1">res/css/drk-1.css</file>
         <file alias="drkblue">res/css/drkblue.css</file>
-    </qresource>	    
+    </qresource>
+    <qresource prefix="/html" lang="en">
+        <file alias="paperwallet">res/html/paperwallet_en.html</file>
+    </qresource>
     <qresource prefix="/images">
         <file alias="about">res/images/about.png</file>
         <file alias="darknet_logo_horizontal">res/images/darknet_logo_horizontal.png</file>
