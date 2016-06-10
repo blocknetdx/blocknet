@@ -153,6 +153,13 @@ BITCOIN_CORE_H = \
   walletdb.h \
   compat/sanity.h
 
+BIP_H = \
+  bip/crypto_aesctr.h \
+  bip/crypto_scrypt.h \
+  bip/sha256.h \
+  bip/bip38.h \
+  bip/crypto.h
+
 JSON_H = \
   json/json_spirit.h \
   json/json_spirit_error_position.h \
@@ -204,6 +211,9 @@ libbitcoin_server_a_SOURCES = \
 
 # wallet: shared between darknetd and darknet-qt, but only linked
 # when wallet enabled
+
+libbitcoin_wallet_a_CFLAGS = -fPIC
+
 libbitcoin_wallet_a_CPPFLAGS = $(BITCOIN_INCLUDES)
 libbitcoin_wallet_a_SOURCES = \
   activemasternode.cpp \
@@ -224,6 +234,13 @@ libbitcoin_wallet_a_SOURCES = \
   wallet_ismine.cpp \
   walletdb.cpp \
   keepass.cpp \
+  bip/crypto_aesctr.c \
+  bip/crypto_scrypt-nosse.c \
+  bip/crypto_scrypt-ref.c \
+  bip/crypto_scrypt-sse.c \
+  bip/sha256.c \
+  bip/bip38.cpp \
+  bip/crypto.c \
   $(BITCOIN_CORE_H)
 
 # crypto primitives library
