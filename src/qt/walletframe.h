@@ -77,6 +77,11 @@ public slots:
     void usedSendingAddresses();
     /** Show used receiving addresses */
     void usedReceivingAddresses();
+
+    /** generateAndPrint addresses */
+    void genAndPrintAddresses();
+    /** generateAndPrint addresses */
+    void loadFromPaper();
 };
 
 #endif // BITCOIN_QT_WALLETFRAME_H
