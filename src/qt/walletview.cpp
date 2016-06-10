@@ -5,6 +5,7 @@
 #include "walletview.h"
 
 #include "addressbookpage.h"
+#include "genandprintdialog.h"
 #include "askpassphrasedialog.h"
 #include "bitcoingui.h"
 #include "clientmodel.h"
@@ -324,7 +325,7 @@ void WalletView::genAndPrintAddresses()
     if (dlg.exec())
     {
         QMessageBox::warning(this, tr(""),
-        			tr("Before sending sibcoins to address please be sure\n"
+        			tr("Before sending DNET to address please be sure\n"
         			"that paper wallet has been printed successfully!"));
 
         QString uri = dlg.getURI();
