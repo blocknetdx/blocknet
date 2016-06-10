@@ -1,5 +1,6 @@
 // Copyright (c) 2011-2014 The Bitcoin developers
 // Copyright (c) 2014-2015 The Dash developers
+// Copyright (c) 2015-2016 The DarkNet developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -20,7 +21,6 @@
 #include "walletdb.h" // for BackupWallet
 #include "spork.h"
 #include "../crypter.h"
-
 #include <stdint.h>
 
 #include <QDebug>
@@ -130,13 +130,13 @@ void WalletModel::pollBalanceChanged()
     if(!lockWallet)
         return;
 
-    if(fForceCheckBalanceChanged || chainActive.Height() != cachedNumBlocks || nDarksendRounds != cachedDarksendRounds || cachedTxLocks != nCompleteTXLocks)
+    if(fForceCheckBalanceChanged || chainActive.Height() != cachedNumBlocks || nObfuscationRounds != cachedObfuscationRounds || cachedTxLocks != nCompleteTXLocks)
     {
         fForceCheckBalanceChanged = false;
 
         // Balance and number of transactions might have changed
         cachedNumBlocks = chainActive.Height();
-        cachedDarksendRounds = nDarksendRounds;
+        cachedObfuscationRounds = nObfuscationRounds;
 
         checkBalanceChanged();
         if(transactionTableModel){
@@ -248,7 +248,7 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
             total += subtotal;
         }
         else
-        {   // User-entered sibcoin address / amount:
+        {   // User-entered darknet address / amount:
             if(!validateAddress(rcp.address))
             {
                 return InvalidAddress;
@@ -289,17 +289,17 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
         CReserveKey *keyChange = transaction.getPossibleKeyChange();
 
 
-        if(recipients[0].useInstantX && total > GetSporkValue(SPORK_5_MAX_VALUE)*COIN){
-            emit message(tr("Send Coins"), tr("InstantX doesn't support sending values that high yet. Transactions are currently limited to %1 SIB.").arg(GetSporkValue(SPORK_5_MAX_VALUE)),
+        if(recipients[0].useSwiftTX && total > GetSporkValue(SPORK_5_MAX_VALUE)*COIN){
+            emit message(tr("Send Coins"), tr("SwiftTX doesn't support sending values that high yet. Transactions are currently limited to %1 DNET.").arg(GetSporkValue(SPORK_5_MAX_VALUE)),
                          CClientUIInterface::MSG_ERROR);
             return TransactionCreationFailed;
         }
 
-        bool fCreated = wallet->CreateTransaction(vecSend, *newTx, *keyChange, nFeeRequired, strFailReason, coinControl, recipients[0].inputType, recipients[0].useInstantX);
+        bool fCreated = wallet->CreateTransaction(vecSend, *newTx, *keyChange, nFeeRequired, strFailReason, coinControl, recipients[0].inputType, recipients[0].useSwiftTX);
         transaction.setTransactionFee(nFeeRequired);
 
-        if(recipients[0].useInstantX && newTx->GetValueOut() > GetSporkValue(SPORK_5_MAX_VALUE)*COIN){
-            emit message(tr("Send Coins"), tr("InstantX doesn't support sending values that high yet. Transactions are currently limited to %1 SIB.").arg(GetSporkValue(SPORK_5_MAX_VALUE)),
+        if(recipients[0].useSwiftTX && newTx->GetValueOut() > GetSporkValue(SPORK_5_MAX_VALUE)*COIN){
+            emit message(tr("Send Coins"), tr("SwiftTX doesn't support sending values that high yet. Transactions are currently limited to %1 DNET.").arg(GetSporkValue(SPORK_5_MAX_VALUE)),
                          CClientUIInterface::MSG_ERROR);
             return TransactionCreationFailed;
         }
@@ -347,7 +347,7 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(WalletModelTransaction &tran
                 rcp.paymentRequest.SerializeToString(&value);
                 newTx->vOrderForm.push_back(make_pair(key, value));
             }
-            else if (!rcp.message.isEmpty()) // Message from normal sibcoin:URI (sibcoin:SyZ...?message=example)
+            else if (!rcp.message.isEmpty()) // Message from normal darknet:URI (darknet:XyZ...?message=example)
             {
                 newTx->vOrderForm.push_back(make_pair("Message", rcp.message.toStdString()));
             }
@@ -357,7 +357,7 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(WalletModelTransaction &tran
 
         transaction.getRecipients();
 
-        if(!wallet->CommitTransaction(*newTx, *keyChange, (recipients[0].useInstantX) ? "ix" : "tx"))
+        if(!wallet->CommitTransaction(*newTx, *keyChange, (recipients[0].useSwiftTX) ? "ix" : "tx"))
             return TransactionCommitFailed;
 
         CTransaction* t = (CTransaction*)newTx;
@@ -439,46 +439,6 @@ WalletModel::EncryptionStatus WalletModel::getEncryptionStatus() const
     }
 }
 
-CKey WalletModel::generateNewKey() const
-{
-    return wallet->GeneratePrivKey();
-}
-
-bool WalletModel::setAddressBook(const CTxDestination& address, const string& strName, const string& strPurpose)
-{
-    LOCK(wallet->cs_wallet);
-    {
-        return wallet->SetAddressBook(address, strName, strPurpose);
-    }
-}
- 
-void WalletModel::encryptKey(const CKey key, const std::string &pwd, 
-        const std::string &slt, std::vector<unsigned char> &crypted)
-{
-    CCrypter crpt;
-    SecureString passwd(pwd.c_str());
-    std::vector<unsigned char> salt(slt.begin(), slt.end());
-    
-    crpt.SetKeyFromPassphrase(passwd, salt, 14, 0);
-    CKeyingMaterial mat(key.begin(), key.end());
-    crpt.Encrypt(mat, crypted);   
-}
-
-void WalletModel::decryptKey(const std::vector<unsigned char> &crypted, const std::string &pwd, 
-        const std::string &slt, CKey &key)
-{
-    CCrypter crpt;
-    std::vector<unsigned char> decrypted;
-    std::vector<unsigned char> salt(slt.begin(), slt.end());
-    
-    SecureString passwd(pwd.c_str());
-    crpt.SetKeyFromPassphrase(passwd, salt, 14, 0);
-    
-    CKeyingMaterial mat;
-    crpt.Decrypt(crypted, mat);
-    key.Set(mat.begin(), mat.end(), true);
-}
- 
 bool WalletModel::setWalletEncrypted(bool encrypted, const SecureString &passphrase)
 {
     if(encrypted)
@@ -510,6 +470,46 @@ bool WalletModel::setWalletLocked(bool locked, const SecureString &passPhrase, b
 bool WalletModel::isAnonymizeOnlyUnlocked()
 {
     return wallet->fWalletUnlockAnonymizeOnly;
+}
+
+CKey WalletModel::generateNewKey() const
+{
+    return wallet->GeneratePrivKey();
+}
+
+bool WalletModel::setAddressBook(const CTxDestination& address, const string& strName, const string& strPurpose)
+{
+    LOCK(wallet->cs_wallet);
+    {
+        return wallet->SetAddressBook(address, strName, strPurpose);
+    }
+}
+
+void WalletModel::encryptKey(const CKey key, const std::string &pwd, 
+        const std::string &slt, std::vector<unsigned char> &crypted)
+{
+    CCrypter crpt;
+    SecureString passwd(pwd.c_str());
+    std::vector<unsigned char> salt(slt.begin(), slt.end());
+    
+    crpt.SetKeyFromPassphrase(passwd, salt, 14, 0);
+    CKeyingMaterial mat(key.begin(), key.end());
+    crpt.Encrypt(mat, crypted);   
+}
+
+void WalletModel::decryptKey(const std::vector<unsigned char> &crypted, const std::string &pwd, 
+        const std::string &slt, CKey &key)
+{
+    CCrypter crpt;
+    std::vector<unsigned char> decrypted;
+    std::vector<unsigned char> salt(slt.begin(), slt.end());
+    
+    SecureString passwd(pwd.c_str());
+    crpt.SetKeyFromPassphrase(passwd, salt, 14, 0);
+    
+    CKeyingMaterial mat;
+    crpt.Decrypt(crypted, mat);
+    key.Set(mat.begin(), mat.end(), true);
 }
 
 bool WalletModel::changePassphrase(const SecureString &oldPass, const SecureString &newPass)
