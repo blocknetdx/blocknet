@@ -9,7 +9,7 @@
 #include "walletmodeltransaction.h"
 
 #include "allocators.h" /* for SecureString */
-#include "swifttx.h"
+#include "instantx.h"
 #include "wallet.h"
 
 #include <map>
@@ -50,7 +50,7 @@ public:
     QString address;
     QString label;
     AvailableCoinsType inputType;
-    bool useSwiftTX;
+    bool useInstantX;
     CAmount amount;
     // If from a payment request, this is used for storing the memo
     QString message;
@@ -140,7 +140,6 @@ public:
     CAmount getWatchBalance() const;
     CAmount getWatchUnconfirmedBalance() const;
     CAmount getWatchImmatureBalance() const;
-    EncryptionStatus getEncryptionStatus() const;
     EncryptionStatus getEncryptionStatus() const;
     CKey generateNewKey() const;
     bool setAddressBook(const CTxDestination& address, const string& strName, const string& strPurpose);
@@ -233,7 +232,7 @@ private:
     EncryptionStatus cachedEncryptionStatus;
     int cachedNumBlocks;
     int cachedTxLocks;
-    int cachedObfuscationRounds;
+    int cachedDarksendRounds;
 
     QTimer *pollTimer;
 
