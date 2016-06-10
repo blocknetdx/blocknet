@@ -7,14 +7,12 @@
 
 #include <QDialog>
 #include <QObject>
-#include "walletmodel.h"
 
 class BitcoinGUI;
 class ClientModel;
 
 namespace Ui {
     class HelpMessageDialog;
-    class PaperWalletDialog;
 }
 
 /** "Help message" dialog box */
@@ -34,8 +32,6 @@ private:
     QString text;
 
 private slots:
-    void on_getNewAddress_clicked();
-    void on_printButton_clicked();
     void on_okButton_accepted();
 };
 
