@@ -1026,6 +1026,7 @@ UniValue addwitnessaddress(const UniValue& params, bool fHelp)
 
     if (!IsSporkActive(SPORK_17_SEGWIT_ACTIVATION)) {
         throw JSONRPCError(RPC_WALLET_ERROR, "Segregated witness not enabled on network");
+    }
 
     CBitcoinAddress address(params[0].get_str());
     if (!address.IsValid())
