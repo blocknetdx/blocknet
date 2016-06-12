@@ -799,10 +799,13 @@ bool AreInputsStandard(const CTransaction& tx, const CCoinsViewCache& mapInputs)
     return true;
 }
 
+int64_t GetVirtualTransactionSize(int64_t nCost) {
+    return (nCost + WITNESS_SCALE_FACTOR - 1) / WITNESS_SCALE_FACTOR;
+}
 
 int64_t GetVirtualTransactionSize(const CTransaction& tx)
 {
-    return (GetTransactionCost(tx) + WITNESS_SCALE_FACTOR - 1) / WITNESS_SCALE_FACTOR;
+    return GetVirtualTransactionSize(GetTransactionCost(tx));
 }
 
 unsigned int GetLegacySigOpCount(const CTransaction& tx)

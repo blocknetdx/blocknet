@@ -29,7 +29,7 @@ CTxMemPoolEntry::CTxMemPoolEntry(const CTransaction& _tx, const CAmount& _nFee,
 
 CTxMemPoolEntry::CTxMemPoolEntry(const CTransaction& _tx, const CAmount& _nFee, int64_t _nTime, double _dPriority, unsigned int _nHeight) : tx(_tx), nFee(_nFee), nTime(_nTime), dPriority(_dPriority), nHeight(_nHeight)
 {
-    nTxSize = ::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION);
+    nTxCost = GetTransactionCost(_tx);
 }
 
 CTxMemPoolEntry::CTxMemPoolEntry(const CTxMemPoolEntry& other)
@@ -37,12 +37,15 @@ CTxMemPoolEntry::CTxMemPoolEntry(const CTxMemPoolEntry& other)
     *this = other;
 }
 
-CTxMemPoolEntry::CTxMemPoolEntry(): nFee(0), nTxSize(0), nModSize(0), nTime(0), dPriority(0.0)
+CTxMemPoolEntry::CTxMemPoolEntry(): nFee(0), nTxCost(0), nModSize(0), nTime(0), dPriority(0.0)
 {
 }
 
-double
-CTxMemPoolEntry::GetPriority(unsigned int currentHeight) const
+size_t CTxMemPoolEntry::GetTxSize() const {
+    return GetVirtualTransactionSize(nTxCost);
+}
+
+double CTxMemPoolEntry::GetPriority(unsigned int currentHeight) const
 {
     CAmount nValueIn = tx.GetValueOut() + nFee;
     double deltaPriority = ((double)(currentHeight - nHeight) * nValueIn) / nModSize;
