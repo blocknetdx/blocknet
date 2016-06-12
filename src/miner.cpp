@@ -166,8 +166,8 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
     // If neither -blockmaxsize or -blockmaxcost is given, limit to DEFAULT_BLOCK_MAX_*
     // If only one is given, only restrict the specified resource.
     // If both are given, restrict both.
-    int64_t nBlockMaxCost = DEFAULT_BLOCK_MAX_COST;
-    int64_t nBlockMaxSize = DEFAULT_BLOCK_MAX_SIZE;
+    unsigned int nBlockMaxCost = DEFAULT_BLOCK_MAX_COST;
+    unsigned int nBlockMaxSize = DEFAULT_BLOCK_MAX_SIZE;
     bool fCostSet = false;
     if (mapArgs.count("-blockmaxcost")) {
         nBlockMaxCost = GetArg("-blockmaxcost", DEFAULT_BLOCK_MAX_COST);
@@ -181,18 +181,18 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
         }
     }
     // Limit cost to between 4K and MAX_BLOCK_COST-4K for sanity:
-    nBlockMaxCost = std::max((int64_t)4000, std::min((int64_t)(MAX_BLOCK_COST-4000), nBlockMaxCost));
+    nBlockMaxCost = std::max((unsigned int)4000, std::min((unsigned int)(MAX_BLOCK_COST-4000), nBlockMaxCost));
     // Limit size to between 1K and MAX_BLOCK_SERIALIZED_SIZE-1K for sanity:
-    nBlockMaxSize = std::max((int64_t)1000, std::min((int64_t)(MAX_BLOCK_SERIALIZED_SIZE-1000), nBlockMaxSize));
+    nBlockMaxSize = std::max((unsigned int)1000, std::min((unsigned int)(MAX_BLOCK_SERIALIZED_SIZE-1000), nBlockMaxSize));
 
     // How much of the block should be dedicated to high-priority transactions,
     // included regardless of the fees they pay
-    int64_t nBlockPrioritySize = GetArg("-blockprioritysize", DEFAULT_BLOCK_PRIORITY_SIZE);
+    unsigned int nBlockPrioritySize = GetArg("-blockprioritysize", DEFAULT_BLOCK_PRIORITY_SIZE);
     nBlockPrioritySize = std::min(nBlockMaxSize, nBlockPrioritySize);
 
     // Minimum block size you want to create; block will be filled with free transactions
     // until there are no more or the block reaches this size:
-    int64_t nBlockMinSize = GetArg("-blockminsize", DEFAULT_BLOCK_MIN_SIZE);
+    unsigned int nBlockMinSize = GetArg("-blockminsize", DEFAULT_BLOCK_MIN_SIZE);
     nBlockMinSize = std::min(nBlockMaxSize, nBlockMinSize);
     // Whether we need to account for byte usage (in addition to cost usage)
     bool fNeedSizeAccounting = (nBlockMaxSize < MAX_BLOCK_SERIALIZED_SIZE-1000) || (nBlockPrioritySize > 0) || (nBlockMinSize > 0);
@@ -311,7 +311,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
 
             // Priority is sum(valuein * age) / modified_txsize
             unsigned int nTxSize = fNeedSizeAccounting ? ::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION) : 0;
-            int64_t nTxCost = nTxSize * WITNESS_SCALE_FACTOR;
+            int64_t nTxCost = mi->second.GetTxCost();
             dPriority = tx.ComputePriority(dPriority, nTxCost);
 
             uint256 hash = tx.GetHash();

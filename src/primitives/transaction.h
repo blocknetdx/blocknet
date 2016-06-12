@@ -15,7 +15,7 @@
 #include <list>
 
 static const int SERIALIZE_TRANSACTION_WITNESS = 0x40000000;
-static const int WITNESS_SCALE_FACTOR = 4;
+static const unsigned int WITNESS_SCALE_FACTOR = 4;
 
 
 class CTransaction;

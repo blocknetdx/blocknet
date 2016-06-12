@@ -41,7 +41,7 @@ class CTxMemPoolEntry
 private:
     CTransaction tx;
     CAmount nFee;              //!< Cached to avoid expensive parent-transaction lookups
-    size_t nTxSize;            //!< ... and avoid recomputing tx size
+    size_t nTxCost;            //!< ... and avoid recomputing tx cost (also used for GetTxSize())
     size_t nModSize;           //!< ... and modified size for priority
     int64_t nTime;             //!< Local time when entering the mempool
     double dPriority;          //!< Priority when entering the mempool
@@ -58,8 +58,9 @@ public:
 
     const CTransaction& GetTx() const { return this->tx; }
     double GetPriority(unsigned int currentHeight) const;
-    CAmount GetFee() const { return nFee; }
-    size_t GetTxSize() const { return nTxSize; }
+    const CAmount& GetFee() const { return nFee; }
+    size_t GetTxSize() const;
+    size_t GetTxCost() const { return nTxCost; }
     int64_t GetTime() const { return nTime; }
     unsigned int GetHeight() const { return nHeight; }
     int64_t GetSigOpCost() const { return sigOpCost; }
