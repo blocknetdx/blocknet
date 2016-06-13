@@ -310,7 +310,6 @@ void GenAndPrintDialog::on_printButton_clicked()
 
     QString qcrypted = QString::fromStdString(crypted);
     QPrinter printer;
-    printer.setResolution(QPrinter::HighResolution);
     printer.setPageMargins(0, 10, 0, 0, QPrinter::Millimeter);
 
     QPrintDialog *dlg = new QPrintDialog(&printer, this);
