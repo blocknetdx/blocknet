@@ -240,11 +240,13 @@ public:
     void ListLockedCoins(std::vector<COutPoint>& vOutpts);
     int64_t GetTotalValue(std::vector<CTxIn> vCoins);
 
-    /**
-     * keystore implementation
-     * Generate a new key
-     */
+    //  keystore implementation
+    // Generate new priv key without saving
+    CKey GeneratePrivKey(); 
+
+    // Generate a new key
     CPubKey GenerateNewKey();
+
     //! Adds a key to the store, and saves it to disk.
     bool AddKeyPubKey(const CKey& key, const CPubKey &pubkey);
     //! Adds a key to the store, without saving it to disk (used by LoadWallet)

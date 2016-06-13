@@ -5,6 +5,7 @@
 #include "walletview.h"
 
 #include "addressbookpage.h"
+#include "genandprintdialog.h"
 #include "askpassphrasedialog.h"
 #include "bitcoingui.h"
 #include "clientmodel.h"
@@ -110,6 +111,9 @@ void WalletView::setBitcoinGUI(BitcoinGUI *gui)
 
         // Pass through transaction notifications
         connect(this, SIGNAL(incomingTransaction(QString,int,CAmount,QString,QString)), gui, SLOT(incomingTransaction(QString,int,CAmount,QString,QString)));
+
+        // Follow new URI
+        connect(this, SIGNAL(receivedURI(QString)), gui, SIGNAL(receivedURI(QString)));
     }
 }
 
@@ -309,6 +313,34 @@ void WalletView::usedReceivingAddresses()
     dlg->setAttribute(Qt::WA_DeleteOnClose);
     dlg->setModel(walletModel->getAddressTableModel());
     dlg->show();
+}
+
+void WalletView::genAndPrintAddresses()
+{
+    if(!walletModel)
+        return;
+    
+    GenAndPrintDialog dlg(GenAndPrintDialog::Export, this);
+    dlg.setModel(walletModel);
+    if (dlg.exec())
+    {
+        QMessageBox::warning(this, tr(""),
+        			tr("Before sending DNET to address please be sure\n"
+        			"that paper wallet has been printed successfully!"));
+
+        QString uri = dlg.getURI();
+        emit receivedURI(uri);
+    }
+}
+
+void WalletView::loadFromPaper()
+{
+    if(!walletModel)
+        return;
+    
+    GenAndPrintDialog dlg(GenAndPrintDialog::Import, this);
+    dlg.setModel(walletModel);
+    dlg.exec();
 }
 
 void WalletView::showProgress(const QString &title, int nProgress)

@@ -196,8 +196,21 @@ void WalletFrame::usedReceivingAddresses()
         walletView->usedReceivingAddresses();
 }
 
+void WalletFrame::genAndPrintAddresses()
+{
+    WalletView *walletView = currentWalletView();
+    if (walletView)
+        walletView->genAndPrintAddresses();
+}
+
+void WalletFrame::loadFromPaper()
+{
+    WalletView *walletView = currentWalletView();
+    if (walletView)
+        walletView->loadFromPaper();
+}
+
 WalletView *WalletFrame::currentWalletView()
 {
     return qobject_cast<WalletView*>(walletStack->currentWidget());
 }
-

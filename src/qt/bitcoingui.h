@@ -100,6 +100,8 @@ private:
     QAction *optionsAction;
     QAction *toggleHideAction;
     QAction *encryptWalletAction;
+    QAction *genAndPrintAddressesAction;
+    QAction *loadFromPaperAction;
     QAction *backupWalletAction;
     QAction *changePassphraseAction;
     QAction *unlockWalletAction;
