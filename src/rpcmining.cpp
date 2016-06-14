@@ -667,7 +667,7 @@ UniValue submitblock(const UniValue& params, bool fHelp)
         LOCK(cs_main);
         BlockMap::iterator mi = mapBlockIndex.find(block.hashPrevBlock);
         if (mi != mapBlockIndex.end()) {
-            UpdateUncommitedBlockStructures(block, mi->second);
+            UpdateUncommittedBlockStructures(block, mi->second);
         }
     }
 
