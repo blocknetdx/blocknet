@@ -2,7 +2,7 @@
 #include "obfuscation-relay.h"
 
 
-CObfuscationRelay::CObfuscationRelay()
+CObfuScationRelay::CObfuScationRelay()
 {
     vinMasternode = CTxIn();
     nBlockHeight = 0;
@@ -11,7 +11,7 @@ CObfuscationRelay::CObfuscationRelay()
     out = CTxOut();
 }
 
-CObfuscationRelay::CObfuscationRelay(CTxIn& vinMasternodeIn, vector<unsigned char>& vchSigIn, int nBlockHeightIn, int nRelayTypeIn, CTxIn& in2, CTxOut& out2)
+CObfuScationRelay::CObfuScationRelay(CTxIn& vinMasternodeIn, vector<unsigned char>& vchSigIn, int nBlockHeightIn, int nRelayTypeIn, CTxIn& in2, CTxOut& out2)
 {
     vinMasternode = vinMasternodeIn;
     vchSig = vchSigIn;
@@ -21,7 +21,7 @@ CObfuscationRelay::CObfuscationRelay(CTxIn& vinMasternodeIn, vector<unsigned cha
     out = out2;
 }
 
-std::string CObfuscationRelay::ToString()
+std::string CObfuScationRelay::ToString()
 {
     std::ostringstream info;
 
@@ -34,7 +34,7 @@ std::string CObfuscationRelay::ToString()
     return info.str();   
 }
 
-bool CObfuscationRelay::Sign(std::string strSharedKey)
+bool CObfuScationRelay::Sign(std::string strSharedKey)
 {
     std::string strMessage = in.ToString() + out.ToString();
 
@@ -44,24 +44,24 @@ bool CObfuscationRelay::Sign(std::string strSharedKey)
 
     if(!obfuScationSigner.SetKey(strSharedKey, errorMessage, key2, pubkey2))
     {
-        LogPrintf("CObfuscationRelay():Sign - ERROR: Invalid shared key: '%s'\n", errorMessage.c_str());
+        LogPrintf("CObfuScationRelay():Sign - ERROR: Invalid shared key: '%s'\n", errorMessage.c_str());
         return false;
     }
 
     if(!obfuScationSigner.SignMessage(strMessage, errorMessage, vchSig2, key2)) {
-        LogPrintf("CObfuscationRelay():Sign - Sign message failed\n");
+        LogPrintf("CObfuScationRelay():Sign - Sign message failed\n");
         return false;
     }
 
     if(!obfuScationSigner.VerifyMessage(pubkey2, vchSig2, strMessage, errorMessage)) {
-        LogPrintf("CObfuscationRelay():Sign - Verify message failed\n");
+        LogPrintf("CObfuScationRelay():Sign - Verify message failed\n");
         return false;
     }
 
     return true;
 }
 
-bool CObfuscationRelay::VerifyMessage(std::string strSharedKey)
+bool CObfuScationRelay::VerifyMessage(std::string strSharedKey)
 {
     std::string strMessage = in.ToString() + out.ToString();
 
@@ -71,19 +71,19 @@ bool CObfuscationRelay::VerifyMessage(std::string strSharedKey)
 
     if(!obfuScationSigner.SetKey(strSharedKey, errorMessage, key2, pubkey2))
     {
-        LogPrintf("CObfuscationRelay()::VerifyMessage - ERROR: Invalid shared key: '%s'\n", errorMessage.c_str());
+        LogPrintf("CObfuScationRelay()::VerifyMessage - ERROR: Invalid shared key: '%s'\n", errorMessage.c_str());
         return false;
     }
 
     if(!obfuScationSigner.VerifyMessage(pubkey2, vchSig2, strMessage, errorMessage)) {
-        LogPrintf("CObfuscationRelay()::VerifyMessage - Verify message failed\n");
+        LogPrintf("CObfuScationRelay()::VerifyMessage - Verify message failed\n");
         return false;
     }
 
     return true;
 }
 
-void CObfuscationRelay::Relay()
+void CObfuScationRelay::Relay()
 {
     int nCount = std::min(mnodeman.CountEnabled(MIN_POOL_PEER_PROTO_VERSION), 20);
     int nRank1 = (rand() % nCount)+1; 
@@ -99,7 +99,7 @@ void CObfuscationRelay::Relay()
     RelayThroughNode(nRank2);
 }
 
-void CObfuscationRelay::RelayThroughNode(int nRank)
+void CObfuScationRelay::RelayThroughNode(int nRank)
 {
     CMasternode* pmn = mnodeman.GetMasternodeByRank(nRank, nBlockHeight, MIN_POOL_PEER_PROTO_VERSION);
 

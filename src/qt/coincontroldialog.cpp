@@ -445,11 +445,11 @@ void CoinControlDialog::viewItemChanged(QTreeWidgetItem* item, int column)
             coinControl->Select(outpt);
             CTxIn vin(outpt);
             int rounds = pwalletMain->GetInputObfuscationRounds(vin);
-            if(coinControl->useObfuscation && rounds < nObfuscationRounds) {
+            if(coinControl->useObfuScation && rounds < nObfuscationRounds) {
                 QMessageBox::warning(this, windowTitle(),
                     tr("Non-anonymized input selected. <b>Obfuscation will be disabled.</b><br><br>If you still want to use Obfuscation, please deselect all non-nonymized inputs first and then check Obfuscation checkbox again."),
                     QMessageBox::Ok, QMessageBox::Ok);
-                coinControl->useObfuscation = false;
+                coinControl->useObfuScation = false;
             }
         }
 
@@ -613,7 +613,7 @@ void CoinControlDialog::updateLabels(WalletModel *model, QDialog* dialog)
             nChange = nAmount - nPayFee - nPayAmount;
 
             // DS Fee = overpay
-            if(coinControl->useObfuscation && nChange > 0)
+            if(coinControl->useObfuScation && nChange > 0)
             {
                 nPayFee += nChange;
                 nChange = 0;

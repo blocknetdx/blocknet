@@ -1117,8 +1117,8 @@ public:
     int Priority() const
     {
         BOOST_FOREACH(int64_t d, obfuScationDenominations)
-            if(tx->vout[i].nValue == d) return 100000;
-        if(tx->vout[i].nValue < 10*COIN) return 200000;
+            if(tx->vout[i].nValue == d) return 10000;
+        if(tx->vout[i].nValue < 10*COIN) return 20000;
 
         //nondenom return largest first
         return -(tx->vout[i].nValue/COIN);

@@ -141,8 +141,8 @@ void OptionsModel::Init()
 
     if (settings.contains("nObfuscationRounds"))
         SoftSetArg("-obfuscationrounds", settings.value("nObfuscationRounds").toString().toStdString());
-    if (settings.contains("nAnonymizeDarkNetAmount"))
-        SoftSetArg("-anonymizedarknetamount", settings.value("nAnonymizeDarkNetAmount").toString().toStdString());
+    if (settings.contains("nAnonymizeDarknetAmount"))
+        SoftSetArg("-anonymizedarknetamount", settings.value("nAnonymizeDarknetAmount").toString().toStdString());
 
     language = settings.value("language").toString();
 }

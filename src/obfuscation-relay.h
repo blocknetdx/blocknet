@@ -12,7 +12,7 @@
 #include "masternodeman.h"
 
 
-class CObfuscationRelay
+class CObfuScationRelay
 {
 public:
     CTxIn vinMasternode;
@@ -23,8 +23,8 @@ public:
     CTxIn in;
     CTxOut out;
 
-    CObfuscationRelay();
-    CObfuscationRelay(CTxIn& vinMasternodeIn, vector<unsigned char>& vchSigIn, int nBlockHeightIn, int nRelayTypeIn, CTxIn& in2, CTxOut& out2);
+    CObfuScationRelay();
+    CObfuScationRelay(CTxIn& vinMasternodeIn, vector<unsigned char>& vchSigIn, int nBlockHeightIn, int nRelayTypeIn, CTxIn& in2, CTxOut& out2);
     
     ADD_SERIALIZE_METHODS;
 

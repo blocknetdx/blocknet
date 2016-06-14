@@ -657,7 +657,7 @@ bool CMasternodePaymentWinner::IsValid(CNode* pnode, std::string& strError)
         {
             strError = strprintf("Masternode not in the top %d (%d)", MNPAYMENTS_SIGNATURES_TOTAL, n);
             LogPrintf("CMasternodePaymentWinner::IsValid - %s\n", strError);
-            if(masternodeSync.IsSynced()) Misbehaving(pnode->GetId(), 20);            
+            if(masternodeSync.IsSynced()) Misbehaving(pnode->GetId(), 20);
         }
         return false;
     }

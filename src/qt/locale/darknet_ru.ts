@@ -3391,7 +3391,7 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
     </message>
     <message>
         <source>Unable to locate enough Obfuscate non-denominated funds for this transaction that are not equal 1000 DNET.</source>
-        <translation>Не удалось обнаружить достаточных для выполнения этой транзакции неденоминированных средств, отличающихся от 1000DRK.</translation>
+        <translation>Не удалось обнаружить достаточных для выполнения этой транзакции неденоминированных средств, отличающихся от 1000DNET.</translation>
     </message>
     <message>
         <source>Warning: -paytxfee is set very high! This is the transaction fee you will pay if you send a transaction.</source>
@@ -3735,7 +3735,7 @@ rpcpassword=%s
     </message>
     <message>
         <source>Unable to locate enough funds for this transaction that are not equal 1000 DNET.</source>
-        <translation>Не удалось обнаружить достаточных для выполнения этой транзакции средств, отличающихся от 1000DRK.</translation>
+        <translation>Не удалось обнаружить достаточных для выполнения этой транзакции средств, отличающихся от 1000DNET.</translation>
     </message>
     <message>
         <source>Use separate SOCKS5 proxy to reach peers via Tor hidden services (default: %s)</source>

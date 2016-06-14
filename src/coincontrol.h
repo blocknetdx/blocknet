@@ -12,7 +12,7 @@ class CCoinControl
 {
 public:
     CTxDestination destChange;
-    bool useObfuscation;
+    bool useObfuScation;
     bool useSwiftTX;
 
     CCoinControl()
@@ -25,7 +25,7 @@ public:
         destChange = CNoDestination();
         setSelected.clear();
         useSwiftTX = false;
-        useObfuscation = true;
+        useObfuScation = true;
     }
 
     bool HasSelected() const

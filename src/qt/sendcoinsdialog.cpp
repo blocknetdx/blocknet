@@ -56,24 +56,24 @@ SendCoinsDialog::SendCoinsDialog(QWidget *parent) :
 
     // DarkNet specific
     QSettings settings;
-    if (!settings.contains("bUseObfuscation"))
-        settings.setValue("bUseObfuscation", false);
+    if (!settings.contains("bUseObfuScation"))
+        settings.setValue("bUseObfuScation", false);
     if (!settings.contains("bUseSwiftTX"))
         settings.setValue("bUseSwiftTX", false);
         
-    bool useObfuscation = settings.value("bUseObfuscation").toBool();
+    bool useObfuScation = settings.value("bUseObfuScation").toBool();
     bool useSwiftTX = settings.value("bUseSwiftTX").toBool();
     if(fLiteMode) {
         ui->checkUseObfuscation->setChecked(false);
         ui->checkUseObfuscation->setVisible(false);
         ui->checkSwiftTX->setVisible(false);
-        CoinControlDialog::coinControl->useObfuscation = false;
+        CoinControlDialog::coinControl->useObfuScation = false;
         CoinControlDialog::coinControl->useSwiftTX = false;
     }
     else{
-        ui->checkUseObfuscation->setChecked(useObfuscation);
+        ui->checkUseObfuscation->setChecked(useObfuScation);
         ui->checkSwiftTX->setChecked(useSwiftTX);
-        CoinControlDialog::coinControl->useObfuscation = useObfuscation;
+        CoinControlDialog::coinControl->useObfuScation = useObfuScation;
         CoinControlDialog::coinControl->useSwiftTX = useSwiftTX;
     }
     
@@ -252,7 +252,7 @@ void SendCoinsDialog::on_sendButton_clicked()
         strFunds = tr("using") + " <b>" + tr("anonymous funds") + "</b>";
         QString strNearestAmount(
             BitcoinUnits::formatWithUnit(
-                model->getOptionsModel()->getDisplayUnit(), 1 * COIN));
+                model->getOptionsModel()->getDisplayUnit(), 0.1 * COIN));
         strFee = QString(tr(
             "(obfuscation requires this amount to be rounded up to the nearest %1)."
         ).arg(strNearestAmount));
@@ -568,7 +568,7 @@ void SendCoinsDialog::setBalance(const CAmount& balance, const CAmount& unconfir
     {
 	    uint64_t bal = 0;
         QSettings settings;
-        settings.setValue("bUseObfuscation", ui->checkUseObfuscation->isChecked());
+        settings.setValue("bUseObfuScation", ui->checkUseObfuscation->isChecked());
 	    if(ui->checkUseObfuscation->isChecked()) {
 		    bal = anonymizedBalance;
 	    } else {
@@ -586,7 +586,7 @@ void SendCoinsDialog::updateDisplayUnit()
 
     setBalance(model->getBalance(), model->getUnconfirmedBalance(), model->getImmatureBalance(), model->getAnonymizedBalance(),
                    model->getWatchBalance(), model->getWatchUnconfirmedBalance(), model->getWatchImmatureBalance());
-    CoinControlDialog::coinControl->useObfuscation = ui->checkUseObfuscation->isChecked();
+    CoinControlDialog::coinControl->useObfuScation = ui->checkUseObfuscation->isChecked();
     coinControlUpdateLabels();
     ui->customFee->setDisplayUnit(model->getOptionsModel()->getDisplayUnit());
     updateMinFeeLabel();
@@ -899,7 +899,7 @@ void SendCoinsDialog::coinControlUpdateLabels()
             CoinControlDialog::payAmounts.append(entry->getValue().amount);
     }
 
-    ui->checkUseObfuscation->setChecked(CoinControlDialog::coinControl->useObfuscation);
+    ui->checkUseObfuscation->setChecked(CoinControlDialog::coinControl->useObfuScation);
 
     if (CoinControlDialog::coinControl->HasSelected())
     {

@@ -754,7 +754,7 @@ CAmount CBudgetManager::GetTotalBudget(int nHeight)
     if(chainActive.Tip() == NULL) return 0;
 
     //get min block value and calculate from that
-    CAmount nSubsidy = 250 * COIN;
+    CAmount nSubsidy = 50 * COIN;
 
     // Amount of blocks in a months period of time (using 1 minutes per) = (60*24*30)
     if(Params().NetworkID() == CBaseChainParams::MAIN && nHeight <= 172800) {

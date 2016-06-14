@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>576</width>
-    <height>402</height>
+    <height>417</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -184,13 +184,13 @@
          <item>
           <widget class="QSpinBox" name="anonymizeDarknet">
            <property name="minimum">
-            <number>2</number>
+            <number>100</number>
            </property>
            <property name="maximum">
-            <number>2000</number>
+            <number>100000</number>
            </property>
            <property name="singleStep">
-            <number>10</number>
+            <number>100</number>
            </property>
            <property name="value">
             <number>1000</number>

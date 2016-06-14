@@ -16,7 +16,7 @@
 
 class CTxIn;
 class CObfuscationPool;
-class CObfuscationSigner;
+class CObfuScationSigner;
 class CMasterNodeVote;
 class CBitcoinAddress;
 class CObfuscationQueue;
@@ -47,11 +47,11 @@ class CActiveMasternode;
 #define OBFUSCATION_RELAY_OUT                2
 #define OBFUSCATION_RELAY_SIG                3
 
-static const int64_t OBFUSCATION_COLLATERAL = (0.1*COIN);
-static const int64_t OBFUSCATION_POOL_MAX = (9999.99*COIN);
+static const int64_t OBFUSCATION_COLLATERAL = (10*COIN);
+static const int64_t OBFUSCATION_POOL_MAX = (99999.99*COIN);
 
 extern CObfuscationPool obfuScationPool;
-extern CObfuscationSigner obfuScationSigner;
+extern CObfuScationSigner obfuScationSigner;
 extern std::vector<CObfuscationQueue> vecObfuscationQueue;
 extern std::string strMasterNodePrivKey;
 extern map<uint256, CObfuscationBroadcastTx> mapObfuscationBroadcastTxes;
@@ -93,7 +93,7 @@ public:
 };
 
 // A clients transaction in the obfuscation pool
-class CObfuscationEntry
+class CObfuScationEntry
 {
 public:
     bool isSet;
@@ -104,7 +104,7 @@ public:
     CTransaction txSupporting;
     int64_t addedTime; // time in UTC milliseconds
 
-    CObfuscationEntry()
+    CObfuScationEntry()
     {
         isSet = false;
         collateral = CTransaction();
@@ -243,7 +243,7 @@ public:
 
 /** Helper object for signing and checking signatures
  */
-class CObfuscationSigner
+class CObfuScationSigner
 {
 public:
     /// Is the inputs associated with this public key? (and there is 1000 DNET - checking if valid masternode)
@@ -263,7 +263,7 @@ class CObfuscationPool
 private:
     mutable CCriticalSection cs_obfuscation;
 
-    std::vector<CObfuscationEntry> entries; // Masternode/clients entries
+    std::vector<CObfuScationEntry> entries; // Masternode/clients entries
     CMutableTransaction finalTransaction; // the finalized transaction ready for signing
 
     int64_t lastTimeChanged; // last time the 'state' changed, in UTC milliseconds
@@ -505,6 +505,6 @@ public:
     void RelayCompletedTransaction(const int sessionID, const bool error, const int errorID);
 };
 
-void ThreadCheckObfuscationPool();
+void ThreadCheckObfuScationPool();
 
 #endif

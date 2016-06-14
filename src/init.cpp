@@ -917,11 +917,13 @@ bool AppInit2(boost::thread_group& threadGroup)
                 boost::filesystem::path backupFile = backupPathStr + dateTimeStr;
                 sourceFile.make_preferred();
                 backupFile.make_preferred();
-                try {
-                    boost::filesystem::copy_file(sourceFile, backupFile);
-                    LogPrintf("Creating backup of %s -> %s\n", sourceFile, backupFile);
-                } catch(boost::filesystem::filesystem_error &error) {
-                    LogPrintf("Failed to create backup %s\n", error.what());
+                if(boost::filesystem::exists(sourceFile)) {
+                    try {
+                        boost::filesystem::copy_file(sourceFile, backupFile);
+                        LogPrintf("Creating backup of %s -> %s\n", sourceFile, backupFile);
+                    } catch(boost::filesystem::filesystem_error &error) {
+                        LogPrintf("Failed to create backup %s\n", error.what());
+                    }
                 }
                 // Keep only the last 10 backups, including the new one of course
                 typedef std::multimap<std::time_t, boost::filesystem::path> folder_set_t;
@@ -1415,7 +1417,7 @@ bool AppInit2(boost::thread_group& threadGroup)
             MilliSleep(10);
     }
 
-    // ********************************************************* Step 10: setup Obfuscation
+    // ********************************************************* Step 10: setup ObfuScation
 
     uiInterface.InitMessage(_("Loading masternode cache..."));
 
@@ -1562,9 +1564,10 @@ bool AppInit2(boost::thread_group& threadGroup)
        is convertable to another.
 
        For example:
-       1DRK+1000 == (.1DRK+100)*10
-       10DRK+10000 == (1DRK+1000)*10
+       1DNET+1000 == (.1DNET+100)*10
+       10DNET+10000 == (1DNET+1000)*10
     */
+    obfuScationDenominations.push_back( (10000      * COIN)+10000000 );
     obfuScationDenominations.push_back( (1000      * COIN)+1000000 );
     obfuScationDenominations.push_back( (100      * COIN)+100000 );
     obfuScationDenominations.push_back( (10       * COIN)+10000 );
@@ -1577,7 +1580,7 @@ bool AppInit2(boost::thread_group& threadGroup)
 
     obfuScationPool.InitCollateralAddress();
 
-    threadGroup.create_thread(boost::bind(&ThreadCheckObfuscationPool));
+    threadGroup.create_thread(boost::bind(&ThreadCheckObfuScationPool));
 
     // ********************************************************* Step 11: start node
 

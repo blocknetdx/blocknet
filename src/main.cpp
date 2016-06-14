@@ -886,7 +886,7 @@ int GetInputAgeIX(uint256 nTXHash, CTxIn& vin)
         if (i != mapTxLocks.end()){
             sigs = (*i).second.CountSignatures();
         }
-        if(sigs >= INSTANTX_SIGNATURES_REQUIRED){
+        if(sigs >= SWIFTTX_SIGNATURES_REQUIRED){
             return nSwiftTXDepth+nResult;
         }
     }
@@ -902,7 +902,7 @@ int GetIXConfirmations(uint256 nTXHash)
     if (i != mapTxLocks.end()){
         sigs = (*i).second.CountSignatures();
     }
-    if(sigs >= INSTANTX_SIGNATURES_REQUIRED){
+    if(sigs >= SWIFTTX_SIGNATURES_REQUIRED){
         return nSwiftTXDepth;
     }
 
@@ -1117,7 +1117,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
         // Don't accept it if it can't get into a block
         // but prioritise dstx and don't check fees for it
         if(mapObfuscationBroadcastTxes.count(hash)) {
-            mempool.PrioritiseTransaction(hash, hash.ToString(), 1000, 1*COIN);
+            mempool.PrioritiseTransaction(hash, hash.ToString(), 1000, 0.1*COIN);
         } else if(!ignoreFees){
             CAmount txMinFee = GetMinRelayFee(tx, nSize, true);
             if (fLimitFree && nFees < txMinFee)
@@ -1312,7 +1312,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState &state, const CTransact
         // Don't accept it if it can't get into a block
         // but prioritise dstx and don't check fees for it
         if(isDSTX) {
-            mempool.PrioritiseTransaction(hash, hash.ToString(), 1000, 1*COIN);
+            mempool.PrioritiseTransaction(hash, hash.ToString(), 1000, 0.1*COIN);
         } else { // same as !ignoreFees for AcceptToMemoryPool
             CAmount txMinFee = GetMinRelayFee(tx, nSize, true);
             if (fLimitFree && nFees < txMinFee)
@@ -2927,7 +2927,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
 
     // ----------- swiftTX transaction scanning -----------
 
-    if(IsSporkActive(SPORK_3_INSTANTX_BLOCK_FILTERING)){
+    if(IsSporkActive(SPORK_3_SWIFTTX_BLOCK_FILTERING)){
         BOOST_FOREACH(const CTransaction& tx, block.vtx){
             if (!tx.IsCoinBase()){
                 //only reject blocks when it's based on complete consensus

@@ -355,6 +355,8 @@ void CMasternodeMan::Clear()
     mAskedUsForMasternodeList.clear();
     mWeAskedForMasternodeList.clear();
     mWeAskedForMasternodeListEntry.clear();
+    mapSeenMasternodeBroadcast.clear();
+    mapSeenMasternodePing.clear();
     nDsqCount = 0;
 }
 
@@ -663,7 +665,7 @@ void CMasternodeMan::ProcessMasternodeConnections()
 
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes) {
-        if(pnode->fObfuscationMaster){
+        if(pnode->fObfuScationMaster){
             if(obfuScationPool.pSubmittedToMasternode != NULL && pnode->addr == obfuScationPool.pSubmittedToMasternode->addr) continue;
             LogPrintf("Closing Masternode connection %s \n", pnode->addr.ToString());
             pnode->fDisconnect = true;
@@ -708,7 +710,7 @@ void CMasternodeMan::ProcessMessage(CNode* pfrom, std::string& strCommand, CData
         }
 
         // make sure it's still unspent
-        //  - this is checked later by .check() in many places and by ThreadCheckObfuscationPool()
+        //  - this is checked later by .check() in many places and by ThreadCheckObfuScationPool()
         if(mnb.CheckInputsAndAdd(nDoS)) {
             // use this as a peer
             addrman.Add(CAddress(mnb.addr), pfrom->addr, 2*60*60);
@@ -806,7 +808,7 @@ void CMasternodeMan::ProcessMessage(CNode* pfrom, std::string& strCommand, CData
      */
 
     // Light version for OLD MASSTERNODES - fake pings, no self-activation
-    else if (strCommand == "dsee") { //Obfuscation Election Entry
+    else if (strCommand == "dsee") { //ObfuScation Election Entry
 
         if(IsSporkActive(SPORK_10_MASTERNODE_PAY_UPDATED_NODES)) return;
 
@@ -933,7 +935,7 @@ void CMasternodeMan::ProcessMessage(CNode* pfrom, std::string& strCommand, CData
         LogPrint("masternode", "dsee - Got NEW OLD Masternode entry %s\n", addr.ToString().c_str());
 
         // make sure it's still unspent
-        //  - this is checked later by .check() in many places and by ThreadCheckObfuscationPool()
+        //  - this is checked later by .check() in many places and by ThreadCheckObfuScationPool()
 
         CValidationState state;
         CMutableTransaction tx = CMutableTransaction();
@@ -1014,7 +1016,7 @@ void CMasternodeMan::ProcessMessage(CNode* pfrom, std::string& strCommand, CData
         }
     }
 
-    else if (strCommand == "dseep") { //Obfuscation Election Entry Ping
+    else if (strCommand == "dseep") { //ObfuScation Election Entry Ping
 
         if(IsSporkActive(SPORK_10_MASTERNODE_PAY_UPDATED_NODES)) return;
 

@@ -401,7 +401,7 @@ CNode* ConnectNode(CAddress addrConnect, const char *pszDest, bool obfuScationMa
         CNode* pnode = FindNode((CService)addrConnect);
         if (pnode)
         {
-            pnode->fObfuscationMaster = obfuScationMaster;
+            pnode->fObfuScationMaster = obfuScationMaster;
 
             pnode->AddRef();
             return pnode;
@@ -437,7 +437,7 @@ CNode* ConnectNode(CAddress addrConnect, const char *pszDest, bool obfuScationMa
         }
 
         pnode->nTimeConnected = GetTime();
-        if(obfuScationMaster) pnode->fObfuscationMaster = true;
+        if(obfuScationMaster) pnode->fObfuScationMaster = true;
 
         return pnode;
     } else if (!proxyConnectionFailed) {
@@ -2025,7 +2025,7 @@ CNode::CNode(SOCKET hSocketIn, CAddress addrIn, std::string addrNameIn, bool fIn
     nPingUsecStart = 0;
     nPingUsecTime = 0;
     fPingQueued = false;
-    fObfuscationMaster = false;
+    fObfuScationMaster = false;
 
     {
         LOCK(cs_nLastNodeId);

@@ -188,7 +188,7 @@ bool parseBitcoinURI(QString uri, SendCoinsRecipient *out)
 {
     // Convert darknet:// to darknet:
     //
-    //    Cannot handle this later, because darkent:// will cause Qt to see the part after // as host,
+    //    Cannot handle this later, because darknet:// will cause Qt to see the part after // as host,
     //    which will lower-case it (and thus invalidate the address).
     if(uri.startsWith("darknet://", Qt::CaseInsensitive))
     {

@@ -28,14 +28,14 @@ int nCompleteTXLocks;
 //txlock - Locks transaction
 //
 //step 1.) Broadcast intention to lock transaction inputs, "txlreg", CTransaction
-//step 2.) Top INSTANTX_SIGNATURES_TOTAL masternodes, open connect to top 1 masternode.
+//step 2.) Top SWIFTTX_SIGNATURES_TOTAL masternodes, open connect to top 1 masternode.
 //         Send "txvote", CTransaction, Signature, Approve
-//step 3.) Top 1 masternode, waits for INSTANTX_SIGNATURES_REQUIRED messages. Upon success, sends "txlock'
+//step 3.) Top 1 masternode, waits for SWIFTTX_SIGNATURES_REQUIRED messages. Upon success, sends "txlock'
 
 void ProcessMessageSwiftTX(CNode* pfrom, std::string& strCommand, CDataStream& vRecv)
 {
     if(fLiteMode) return; //disable all obfuscation/masternode related functionality
-    if(!IsSporkActive(SPORK_2_INSTANTX)) return;
+    if(!IsSporkActive(SPORK_2_SWIFTTX)) return;
     if(!masternodeSync.IsBlockchainSynced()) return;
 
     if (strCommand == "ix")
@@ -110,7 +110,7 @@ void ProcessMessageSwiftTX(CNode* pfrom, std::string& strCommand, CDataStream& v
             std::map<uint256, CTransactionLock>::iterator i = mapTxLocks.find(tx.GetHash());
             if (i != mapTxLocks.end()){
                 //we only care if we have a complete tx lock
-                if((*i).second.CountSignatures() >= INSTANTX_SIGNATURES_REQUIRED){
+                if((*i).second.CountSignatures() >= SWIFTTX_SIGNATURES_REQUIRED){
                     if(!CheckForConflictingLocks(tx)){
                         LogPrintf("ProcessMessageSwiftTX::ix - Found Existing Complete IX Lock\n");
 
@@ -258,7 +258,7 @@ void DoConsensusVote(CTransaction& tx, int64_t nBlockHeight)
 {
     if(!fMasterNode) return;
 
-    int n = mnodeman.GetMasternodeRank(activeMasternode.vin, nBlockHeight, MIN_INSTANTX_PROTO_VERSION);
+    int n = mnodeman.GetMasternodeRank(activeMasternode.vin, nBlockHeight, MIN_SWIFTTX_PROTO_VERSION);
 
     if(n == -1)
     {
@@ -266,16 +266,16 @@ void DoConsensusVote(CTransaction& tx, int64_t nBlockHeight)
         return;
     }
 
-    if(n > INSTANTX_SIGNATURES_TOTAL)
+    if(n > SWIFTTX_SIGNATURES_TOTAL)
     {
-        LogPrint("swifttx", "SwiftTX::DoConsensusVote - Masternode not in the top %d (%d)\n", INSTANTX_SIGNATURES_TOTAL, n);
+        LogPrint("swifttx", "SwiftTX::DoConsensusVote - Masternode not in the top %d (%d)\n", SWIFTTX_SIGNATURES_TOTAL, n);
         return;
     }
     /*
         nBlockHeight calculated from the transaction is the authoritive source
     */
 
-    LogPrint("swifttx", "SwiftTX::DoConsensusVote - In the top %d (%d)\n", INSTANTX_SIGNATURES_TOTAL, n);
+    LogPrint("swifttx", "SwiftTX::DoConsensusVote - In the top %d (%d)\n", SWIFTTX_SIGNATURES_TOTAL, n);
 
     CConsensusVote ctx;
     ctx.vinMasternode = activeMasternode.vin;
@@ -299,7 +299,7 @@ void DoConsensusVote(CTransaction& tx, int64_t nBlockHeight)
 //received a consensus vote
 bool ProcessConsensusVote(CNode* pnode, CConsensusVote& ctx)
 {
-    int n = mnodeman.GetMasternodeRank(ctx.vinMasternode, ctx.nBlockHeight, MIN_INSTANTX_PROTO_VERSION);
+    int n = mnodeman.GetMasternodeRank(ctx.vinMasternode, ctx.nBlockHeight, MIN_SWIFTTX_PROTO_VERSION);
 
     CMasternode* pmn = mnodeman.Find(ctx.vinMasternode);
     if(pmn != NULL)
@@ -313,9 +313,9 @@ bool ProcessConsensusVote(CNode* pnode, CConsensusVote& ctx)
         return false;
     }
 
-    if(n > INSTANTX_SIGNATURES_TOTAL)
+    if(n > SWIFTTX_SIGNATURES_TOTAL)
     {
-        LogPrint("swifttx", "SwiftTX::ProcessConsensusVote - Masternode not in the top %d (%d) - %s\n", INSTANTX_SIGNATURES_TOTAL, n, ctx.GetHash().ToString().c_str());
+        LogPrint("swifttx", "SwiftTX::ProcessConsensusVote - Masternode not in the top %d (%d) - %s\n", SWIFTTX_SIGNATURES_TOTAL, n, ctx.GetHash().ToString().c_str());
         return false;
     }
 
@@ -353,7 +353,7 @@ bool ProcessConsensusVote(CNode* pnode, CConsensusVote& ctx)
 
         LogPrint("swifttx", "SwiftTX::ProcessConsensusVote - Transaction Lock Votes %d - %s !\n", (*i).second.CountSignatures(), ctx.GetHash().ToString().c_str());
 
-        if((*i).second.CountSignatures() >= INSTANTX_SIGNATURES_REQUIRED){
+        if((*i).second.CountSignatures() >= SWIFTTX_SIGNATURES_REQUIRED){
             LogPrint("swifttx", "SwiftTX::ProcessConsensusVote - Transaction Lock Is Complete %s !\n", (*i).second.GetHash().ToString().c_str());
 
             CTransaction& tx = mapTxLockReq[ctx.txHash];
@@ -523,7 +523,7 @@ bool CTransactionLock::SignaturesValid()
 
     BOOST_FOREACH(CConsensusVote vote, vecConsensusVotes)
     {
-        int n = mnodeman.GetMasternodeRank(vote.vinMasternode, vote.nBlockHeight, MIN_INSTANTX_PROTO_VERSION);
+        int n = mnodeman.GetMasternodeRank(vote.vinMasternode, vote.nBlockHeight, MIN_SWIFTTX_PROTO_VERSION);
 
         if(n == -1)
         {
@@ -531,9 +531,9 @@ bool CTransactionLock::SignaturesValid()
             return false;
         }
 
-        if(n > INSTANTX_SIGNATURES_TOTAL)
+        if(n > SWIFTTX_SIGNATURES_TOTAL)
         {
-            LogPrintf("CTransactionLock::SignaturesValid() - Masternode not in the top %s\n", INSTANTX_SIGNATURES_TOTAL);
+            LogPrintf("CTransactionLock::SignaturesValid() - Masternode not in the top %s\n", SWIFTTX_SIGNATURES_TOTAL);
             return false;
         }
 
