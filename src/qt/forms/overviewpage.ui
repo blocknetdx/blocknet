@@ -1213,9 +1213,11 @@
         </widget>
        </item>
        <item>
-        <spacer name="verticalSpacer_2">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
+        <widget class="QWebView" name="webView">
+         <property name="url">
+          <url>
+           <string>http://173.245.158.8/announcements</string>
+          </url>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -1223,7 +1225,7 @@
            <height>40</height>
           </size>
          </property>
-        </spacer>
+        </widget>
        </item>
       </layout>
      </item>
