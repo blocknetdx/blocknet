@@ -60,7 +60,7 @@ PoS Phase 9: PoS [604800-647999] 30 DAYS
 PoS Rewards Breakdown:  10 DNET (90% distributed between the MN/Staker based upon the amount of coins held in the                                  masternodes to how many coins are being staked / up to 10% of the block is available to the                                proposal system)
 
 
-PoS Phase X: PoS [604800-forever] 
+PoS Phase X: PoS [648000-forever] 
 PoS Rewards Breakdown:  5 DNET (90% distributed between the MN/Staker based upon the amount of coins held in the                                   masternodes to how many coins are being staked / up to 10% of the block is available to the                                proposal system)
 
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

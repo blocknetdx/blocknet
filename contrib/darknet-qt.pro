@@ -26,7 +26,6 @@ DEPENDPATH += . \
               src/qt/forms \
               src/qt/locale \
               src/qt/test \
-	      src/qt/forms/html \
               src/secp256k1/include \
               src/secp256k1/src \
               src/test/data \
@@ -178,7 +177,6 @@ HEADERS += src/activemasternode.h \
            src/qt/csvmodelwriter.h \
            src/qt/obfuscationconfig.h \
            src/qt/editaddressdialog.h \
-	   src/qt/genandprintdialog.h \
            src/qt/guiconstants.h \
            src/qt/guiutil.h \
            src/qt/intro.h \
@@ -345,7 +343,6 @@ FORMS += src/qt/forms/addressbookpage.ui \
          src/qt/forms/coincontroldialog.ui \
          src/qt/forms/obfuscationconfig.ui \
          src/qt/forms/editaddressdialog.ui \
-         src/qt/forms/genandprintdialog.ui \
          src/qt/forms/helpmessagedialog.ui \
          src/qt/forms/intro.ui \
          src/qt/forms/openuridialog.ui \
@@ -477,7 +474,6 @@ SOURCES += src/activemasternode.cpp \
            src/qt/darknet.cpp \
            src/qt/darknetstrings.cpp \
            src/qt/editaddressdialog.cpp \
-           src/qt/genandprintdialog.cpp \
            src/qt/guiutil.cpp \
            src/qt/intro.cpp \
            src/qt/networkstyle.cpp \
@@ -646,8 +642,7 @@ SOURCES += src/activemasternode.cpp \
            src/leveldb/helpers/memenv/memenv_test.cc \
            src/secp256k1/src/java/org_bitcoin_NativeSecp256k1.c
 RESOURCES += src/qt/darknet.qrc src/qt/darknet_locale.qrc
-QT += \
-   printsupport
+
 TRANSLATIONS += src/qt/locale/darknet_bg.ts \
                 src/qt/locale/darknet_de.ts \
                 src/qt/locale/darknet_en.ts \

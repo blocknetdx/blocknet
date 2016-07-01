@@ -26,7 +26,6 @@ QT_FORMS_UI = \
   qt/forms/coincontroldialog.ui \
   qt/forms/obfuscationconfig.ui \
   qt/forms/editaddressdialog.ui \
-  qt/forms/genandprintdialog.ui \
   qt/forms/helpmessagedialog.ui \
   qt/forms/intro.ui \
   qt/forms/openuridialog.ui \
@@ -54,7 +53,6 @@ QT_MOC_CPP = \
   qt/moc_csvmodelwriter.cpp \
   qt/moc_obfuscationconfig.cpp \
   qt/moc_editaddressdialog.cpp \
-  qt/moc_genandprintdialog.cpp \
   qt/moc_guiutil.cpp \
   qt/moc_intro.cpp \
   qt/moc_macdockiconhandler.cpp \
@@ -121,7 +119,6 @@ BITCOIN_QT_H = \
   qt/csvmodelwriter.h \
   qt/obfuscationconfig.h \
   qt/editaddressdialog.h \
-  qt/genandprintdialog.h \
   qt/guiconstants.h \
   qt/guiutil.h \
   qt/intro.h \
@@ -168,7 +165,6 @@ RES_ICONS = \
   qt/res/icons/bitcoin_testnet.ico \
   qt/res/icons/bitcoin_testnet.png \
   qt/res/icons/browse.png \
-  qt/res/icons/cash_icon.png \
   qt/res/icons/clock1.png \
   qt/res/icons/clock2.png \
   qt/res/icons/clock3.png \
@@ -181,7 +177,6 @@ RES_ICONS = \
   qt/res/icons/connect3_16.png \
   qt/res/icons/connect4_16.png \
   qt/res/icons/debugwindow.png \
-  qt/res/icons/dnet_cash_print.png \
   qt/res/icons/drk_editpaste.png \
   qt/res/icons/drk_address-book.png \
   qt/res/icons/drk_editcopy.png \
@@ -203,7 +198,6 @@ RES_ICONS = \
   qt/res/icons/eye_plus.png \
   qt/res/icons/filesave.png \
   qt/res/icons/history.png \
-  qt/res/icons/import.png \
   qt/res/icons/key.png \
   qt/res/icons/lock_closed.png \
   qt/res/icons/lock_open.png \
@@ -259,7 +253,6 @@ BITCOIN_QT_CPP += \
   qt/coincontroltreewidget.cpp \
   qt/obfuscationconfig.cpp \
   qt/editaddressdialog.cpp \
-  qt/genandprintdialog.cpp \
   qt/openuridialog.cpp \
   qt/overviewpage.cpp \
   qt/paymentrequestplus.cpp \

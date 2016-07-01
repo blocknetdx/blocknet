@@ -38,7 +38,8 @@ CActiveMasternode activeMasternode;
 
 /* *** BEGIN OBFUSCATION MAGIC - DNET **********
     Copyright (c) 2014-2015, Dash Developers
-    Copyright (c) 2015-2016, DarkNet Developers
+        eduffield - evan@dashpay.io
+        udjinm6   - udjinm6@dashpay.io
 */
 
 void CObfuscationPool::ProcessMessageObfuscation(CNode* pfrom, std::string& strCommand, CDataStream& vRecv)

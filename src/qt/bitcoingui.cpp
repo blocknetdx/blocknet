@@ -372,14 +372,6 @@ void BitcoinGUI::createActions(const NetworkStyle *networkStyle)
     usedReceivingAddressesAction = new QAction(QIcon(":/icons/address-book"), tr("&Receiving addresses..."), this);
     usedReceivingAddressesAction->setStatusTip(tr("Show the list of used receiving addresses and labels"));
 
-    genAndPrintAddressesAction = new QAction(QIcon(":/icons/cash_icon"), tr("&Print DNET..."), this);
-    genAndPrintAddressesAction->setIconVisibleInMenu(true);
-    genAndPrintAddressesAction->setStatusTip(tr("Generate & print address keys && QR codes"));
-
-    loadFromPaperAction = new QAction(QIcon(":/icons/import"), tr("&Import DNET..."), this);
-    loadFromPaperAction->setIconVisibleInMenu(true);
-    loadFromPaperAction->setStatusTip(tr("Load addresses from paper wallet"));
-
     openAction = new QAction(QApplication::style()->standardIcon(QStyle::SP_FileIcon), tr("Open &URI..."), this);
     openAction->setStatusTip(tr("Open a DarkNet: URI or payment request"));
 
@@ -405,8 +397,6 @@ void BitcoinGUI::createActions(const NetworkStyle *networkStyle)
         connect(verifyMessageAction, SIGNAL(triggered()), this, SLOT(gotoVerifyMessageTab()));
         connect(usedSendingAddressesAction, SIGNAL(triggered()), walletFrame, SLOT(usedSendingAddresses()));
         connect(usedReceivingAddressesAction, SIGNAL(triggered()), walletFrame, SLOT(usedReceivingAddresses()));
-	connect(genAndPrintAddressesAction, SIGNAL(triggered()), walletFrame, SLOT(genAndPrintAddresses()));
-        connect(loadFromPaperAction, SIGNAL(triggered()), walletFrame, SLOT(loadFromPaper()));
         connect(openAction, SIGNAL(triggered()), this, SLOT(openClicked()));
     }
 #endif // ENABLE_WALLET
@@ -434,8 +424,6 @@ void BitcoinGUI::createMenuBar()
         file->addAction(usedSendingAddressesAction);
         file->addAction(usedReceivingAddressesAction);
         file->addSeparator();
-	    file->addAction(genAndPrintAddressesAction);
-	    file->addAction(loadFromPaperAction);
     }
     file->addAction(quitAction);
 
@@ -576,8 +564,6 @@ void BitcoinGUI::setWalletActionsEnabled(bool enabled)
     verifyMessageAction->setEnabled(enabled);
     usedSendingAddressesAction->setEnabled(enabled);
     usedReceivingAddressesAction->setEnabled(enabled);
-    genAndPrintAddressesAction->setEnabled(enabled);
-    loadFromPaperAction->setEnabled(enabled);
     openAction->setEnabled(enabled);
 }
 

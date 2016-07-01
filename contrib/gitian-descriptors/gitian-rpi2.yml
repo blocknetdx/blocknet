@@ -2,10 +2,11 @@
 name: "darknet-rpi2-1.1.0.1"
 enable_cache: true
 suites:
-- "precise"
+- "trusty"
 architectures:
 - "amd64"
 packages:
+- "curl"
 - "g++-multilib"
 - "git-core"
 - "pkg-config"
@@ -15,10 +16,12 @@ packages:
 - "faketime"
 - "bsdmainutils"
 - "binutils-gold"
-reference_datetime: "2014-01-10 00:00:00"
+- "ca-certificates"
+- "python"
+reference_datetime: "2015-06-01 00:00:00"
 remotes:
-- "url": "https://github.com/darknet-crypto/darknet.git"
-  "dir": "darknet"
+- "url": "https://github.com/darknet-crypto/darknet-stakebox.git"
+  "dir": "darknet-stakebox"
 files:
 - "raspberrypi-tools.tar.gz"
 script: |
@@ -67,7 +70,7 @@ script: |
   done
   export PATH=${WRAP_DIR}:${PATH}
 
-  cd darknet
+  cd darknet-stakebox
   BASEPREFIX=`pwd`/depends
   # Build dependencies for each host
   for i in $HOSTS; do
@@ -98,8 +101,8 @@ script: |
     tar --strip-components=1 -xf ../$SOURCEDIST
 
     ./configure --prefix=${BASEPREFIX}/${i} --bindir=${INSTALLPATH}/bin --includedir=${INSTALLPATH}/include --libdir=${INSTALLPATH}/lib --disable-ccache --disable-maintainer-mode --disable-dependency-tracking ${CONFIGFLAGS}
-    make ${MAKEOPTS} NO_QT=1
-    make NO_QT=1 install-strip
+    make ${MAKEOPTS}
+    make install-strip
     cd installed
     find . -name "lib*.la" -delete
     find . -name "lib*.a" -delete

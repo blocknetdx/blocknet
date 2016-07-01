@@ -7,30 +7,20 @@
 #include "utilitydialog.h"
 
 #include "ui_helpmessagedialog.h"
-#include "bitcoinunits.h"
 
-#include "optionsmodel.h"
 #include "bitcoingui.h"
 #include "clientmodel.h"
 #include "guiutil.h"
 
 #include "clientversion.h"
 #include "init.h"
-#include "util.h"
-#include "net.h"
 
 #include <stdio.h>
 
 #include <QCloseEvent>
-//#include <QFont>
 #include <QLabel>
 #include <QRegExp>
 #include <QVBoxLayout>
-#include <QFile>
-#include <QTextStream>
-#include <QTextTable>
-#include <QTextCursor>
-#include <QInputDialog>
 
 /** "Help message" or "About" dialog box */
 HelpMessageDialog::HelpMessageDialog(QWidget *parent, bool about) :
