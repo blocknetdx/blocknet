@@ -20,8 +20,8 @@ packages:
 - "python"
 reference_datetime: "2015-06-01 00:00:00"
 remotes:
-- "url": "https://github.com/darknet-crypto/darknet-stakebox.git"
-  "dir": "darknet-stakebox"
+- "url": "https://github.com/darknet-crypto/darknet.git"
+  "dir": "darknet"
 files:
 - "raspberrypi-tools.tar.gz"
 script: |
@@ -70,7 +70,7 @@ script: |
   done
   export PATH=${WRAP_DIR}:${PATH}
 
-  cd darknet-stakebox
+  cd darknet
   BASEPREFIX=`pwd`/depends
   # Build dependencies for each host
   for i in $HOSTS; do
