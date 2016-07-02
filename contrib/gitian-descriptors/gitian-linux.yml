@@ -1,5 +1,5 @@
 ---
-name: "darknet-linux-1.1.0.1"
+name: "darknet-linux-1.1.0.2"
 enable_cache: true
 suites:
 - "trusty"
@@ -29,8 +29,8 @@ packages:
 - "python"
 reference_datetime: "2015-06-01 00:00:00"
 remotes:
-- "url": "https://github.com/darknet-crypto/darknet-stakebox.git"
-  "dir": "darknet-stakebox"
+- "url": "https://github.com/darknet-crypto/darknet.git"
+  "dir": "darknet"
 files: []
 script: |
 
@@ -91,7 +91,7 @@ script: |
   create_per-host_faketime_wrappers "2000-01-01 12:00:00"
   export PATH=${WRAP_DIR}:${PATH}
 
-  cd darknet-stakebox
+  cd darknet
   BASEPREFIX=`pwd`/depends
   # Build dependencies for each host
   for i in $HOSTS; do
