@@ -1,5 +1,5 @@
 ---
-name: "darknet-rpi2-1.1.0.1"
+name: "darknet-rpi2-1.1.0.2"
 enable_cache: true
 suites:
 - "trusty"
