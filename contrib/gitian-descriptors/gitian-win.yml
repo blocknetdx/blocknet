@@ -22,8 +22,8 @@ packages:
 - "ca-certificates"
 - "python"
 remotes:
-- "url": "https://github.com/darknet-crypto/darknet-stakebox.git"
-  "dir": "darknet-stakebox"
+- "url": "https://github.com/darknet-crypto/darknet.git"
+  "dir": "darknet"
 files: []
 script: |
   WRAP_DIR=$HOME/wrapped
@@ -77,7 +77,7 @@ script: |
   create_per-host_linker_wrapper "2000-01-01 12:00:00"
   export PATH=${WRAP_DIR}:${PATH}
 
-  cd darknet-stakebox
+  cd darknet
   BASEPREFIX=`pwd`/depends
   # Build dependencies for each host
   for i in $HOSTS; do
