@@ -99,6 +99,7 @@ BITCOIN_CORE_H = \
   ecwrapper.h \
   hash.h \
   init.h \
+  kernel.h \
   swifttx.h \
   key.h \
   keepass.h \
@@ -222,6 +223,7 @@ libbitcoin_wallet_a_SOURCES = \
   masternodeman.cpp \
   rpcdump.cpp \
   rpcwallet.cpp \
+  kernel.cpp \
   wallet.cpp \
   wallet_ismine.cpp \
   walletdb.cpp \

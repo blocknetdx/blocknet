@@ -360,9 +360,10 @@ QString TransactionTableModel::formatTxType(const TransactionRecord *wtx) const
         return tr("Sent to");
     case TransactionRecord::SendToSelf:
         return tr("Payment to yourself");
+    case TransactionRecord::StakeMint:
+        return tr("Minted");
     case TransactionRecord::Generated:
         return tr("Mined");
-
     case TransactionRecord::ObfuscationDenominate:
         return tr("Obfuscation Denominate");
     case TransactionRecord::ObfuscationCollateralPayment:
@@ -384,6 +385,7 @@ QVariant TransactionTableModel::txAddressDecoration(const TransactionRecord *wtx
     switch(wtx->type)
     {
     case TransactionRecord::Generated:
+    case TransactionRecord::StakeMint:
         return QIcon(":/icons/tx_mined");
     case TransactionRecord::RecvWithObfuscation:
     case TransactionRecord::RecvWithAddress:
@@ -413,6 +415,8 @@ QString TransactionTableModel::formatTxToAddress(const TransactionRecord *wtx, b
     case TransactionRecord::RecvWithObfuscation:
     case TransactionRecord::SendToAddress:
     case TransactionRecord::Generated:
+    case TransactionRecord::StakeMint:
+        return lookupAddress(wtx->address, tooltip);
     case TransactionRecord::Darksent:
         return lookupAddress(wtx->address, tooltip) + watchAddress;
     case TransactionRecord::SendToOther:

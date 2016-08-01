@@ -57,6 +57,8 @@
         <file alias="drkblue_editcopy">res/icons/drkblue_editcopy.png</file>
         <file alias="drkblue_remove">res/icons/drkblue_remove.png</file>
         <file alias="browse">res/icons/browse.png</file>
+        <file alias="staking_active">res/icons/staking_active.png</file>
+        <file alias="staking_inactive">res/icons/staking_inactive.png</file>
     </qresource>
     <qresource prefix="/css">
         <file alias="drk">res/css/drk.css</file>

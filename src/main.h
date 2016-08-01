@@ -109,6 +109,8 @@ static const unsigned char REJECT_DUST = 0x41;
 static const unsigned char REJECT_INSUFFICIENTFEE = 0x42;
 static const unsigned char REJECT_CHECKPOINT = 0x43;
 
+static const int LAST_POW_BLOCK = 259200;
+
 struct BlockHasher
 {
     size_t operator()(const uint256& hash) const { return hash.GetLow64(); }
@@ -138,7 +140,14 @@ extern bool fAlerts;
 extern bool fLargeWorkForkFound;
 extern bool fLargeWorkInvalidChainFound;
 
+extern unsigned int nStakeMinAge;
+extern int64_t nLastCoinStakeSearchInterval;
+extern int64_t nLastCoinStakeSearchTime;
+extern int64_t nReserveBalance;
+
 extern std::map<uint256, int64_t> mapRejectedBlocks;
+extern std::map<unsigned int, unsigned int> mapHashedBlocks;
+extern std::set<std::pair<COutPoint, unsigned int> > setStakeSeen;
 
 /** Best header we've seen so far (used for getheaders queries' starting points). */
 extern CBlockIndex *pindexBestHeader;
@@ -217,7 +226,7 @@ bool DisconnectBlocksAndReprocess(int blocks);
 // ***TODO***
 double ConvertBitsToDouble(unsigned int nBits);
 int64_t GetMasternodePayment(int nHeight, int64_t blockValue);
-unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHeader *pblock);
+unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHeader *pblock, bool fProofOfStake);
 
 bool ActivateBestChain(CValidationState &state, CBlock *pblock = NULL);
 CAmount GetBlockValue(int nBits, int nHeight, const CAmount& nFees);
@@ -243,6 +252,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState &state, const CTransact
 
 int GetInputAge(CTxIn& vin);
 int GetInputAgeIX(uint256 nTXHash, CTxIn& vin);
+bool GetCoinAge(const CTransaction &tx, unsigned int nTxTime, uint64_t& nCoinAge);
 int GetIXConfirmations(uint256 nTXHash);
 
 struct CNodeStateStats {
@@ -412,7 +422,8 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
 
 /** Context-independent validity checks */
 bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, bool fCheckPOW = true);
-bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW = true, bool fCheckMerkleRoot = true);
+bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW = true, bool fCheckMerkleRoot = true, bool fCheckSig = true);
+bool CheckWork(const CBlock block, CBlockIndex * const pindexPrev);
 
 /** Context-dependent validity checks */
 bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationState& state, CBlockIndex *pindexPrev);

@@ -102,6 +102,7 @@ public:
         nDefaultPort = 51472;
         bnProofOfWorkLimit = ~uint256(0) >> 20;  // DarkNet starting difficulty is 1 / 2^12
         nSubsidyHalvingInterval = 210000;
+        nMaxReorganizationDepth = 12;
         nEnforceBlockUpgradeMajority = 750;
         nRejectBlockOutdatedMajority = 950;
         nToCheckBlockUpgradeMajority = 1000;

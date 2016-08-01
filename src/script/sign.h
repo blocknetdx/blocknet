@@ -7,6 +7,9 @@
 #define BITCOIN_SCRIPT_SIGN_H
 
 #include "script/interpreter.h"
+#include "key.h"
+#include "keystore.h"
+#include "script/standard.h"
 
 class CKeyStore;
 class CScript;
@@ -14,6 +17,7 @@ class CTransaction;
 
 struct CMutableTransaction;
 
+bool Sign1(const CKeyID& address, const CKeyStore& keystore, uint256 hash, int nHashType, CScript& scriptSigRet);
 bool SignSignature(const CKeyStore& keystore, const CScript& fromPubKey, CMutableTransaction& txTo, unsigned int nIn, int nHashType=SIGHASH_ALL);
 bool SignSignature(const CKeyStore& keystore, const CTransaction& txFrom, CMutableTransaction& txTo, unsigned int nIn, int nHashType=SIGHASH_ALL);
 

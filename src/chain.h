@@ -10,10 +10,12 @@
 #include "pow.h"
 #include "tinyformat.h"
 #include "uint256.h"
+#include "util.h"
 
 #include <vector>
 
 #include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
 
 struct CDiskBlockPos
 {
@@ -101,8 +103,14 @@ public:
     //! pointer to the index of the predecessor of this block
     CBlockIndex* pprev;
 
+    //! pointer to the index of the next block
+    CBlockIndex* pnext;
+
     //! pointer to the index of some further predecessor of this block
     CBlockIndex* pskip;
+
+    //ppcoin: trust score of block chain
+    uint256 bnChainTrust;
 
     //! height of the entry in the chain. The genesis block has height 0
     int nHeight;
@@ -131,6 +139,24 @@ public:
     //! Verification status of this block. See enum BlockStatus
     unsigned int nStatus;
 
+    unsigned int nFlags;  // ppcoin: block index flags
+    enum
+    {
+        BLOCK_PROOF_OF_STAKE = (1 << 0), // is proof-of-stake block
+        BLOCK_STAKE_ENTROPY  = (1 << 1), // entropy bit for stake modifier
+        BLOCK_STAKE_MODIFIER = (1 << 2), // regenerated stake modifier
+    };
+
+    // proof-of-stake specific fields
+    uint256 GetBlockTrust() const;
+    uint64_t nStakeModifier; // hash modifier for proof-of-stake
+    unsigned int nStakeModifierChecksum; // checksum of index; in-memeory only
+    COutPoint prevoutStake;
+    unsigned int nStakeTime;
+    uint256 hashProofOfStake;
+    int64_t nMint;
+    int64_t nMoneySupply;
+
     //! block header
     int nVersion;
     uint256 hashMerkleRoot;
@@ -156,6 +182,14 @@ public:
         nStatus = 0;
         nSequenceId = 0;
 
+        nMint = 0;
+        nMoneySupply = 0;
+        nFlags = 0;
+        nStakeModifier = 0;
+        nStakeModifierChecksum = 0;
+        prevoutStake.SetNull();
+        nStakeTime = 0;
+
         nVersion       = 0;
         hashMerkleRoot = 0;
         nTime          = 0;
@@ -177,6 +211,27 @@ public:
         nTime          = block.nTime;
         nBits          = block.nBits;
         nNonce         = block.nNonce;
+
+        //Proof of Stake
+        bnChainTrust = 0;
+        nMint = 0;
+        nMoneySupply = 0;
+        nFlags = 0;
+        nStakeModifier = 0;
+        nStakeModifierChecksum = 0;
+        hashProofOfStake = 0;
+        CBlock block2(block);
+        if (block2.IsProofOfStake())
+        {
+            SetProofOfStake();
+            prevoutStake = block2.vtx[1].vin[0].prevout;
+            nStakeTime = block2.nTime;
+        }
+        else
+        {
+            prevoutStake.SetNull();
+            nStakeTime = 0;
+        }
     }
 
     CDiskBlockPos GetBlockPos() const {
@@ -236,6 +291,50 @@ public:
         return pbegin[(pend - pbegin)/2];
     }
 
+    bool IsProofOfWork() const
+    {
+        return !(nFlags & BLOCK_PROOF_OF_STAKE);
+    }
+
+    bool IsProofOfStake() const
+    {
+        return (nFlags & BLOCK_PROOF_OF_STAKE);
+    }
+
+    void SetProofOfStake()
+    {
+        nFlags |= BLOCK_PROOF_OF_STAKE;
+    }
+
+    unsigned int GetStakeEntropyBit() const
+    {
+        unsigned int nEntropyBit = ((GetBlockHash().Get64()) & 1);
+        if (fDebug || GetBoolArg("-printstakemodifier", false))
+            LogPrintf("GetStakeEntropyBit: nHeight=%u hashBlock=%s nEntropyBit=%u\n", nHeight, GetBlockHash().ToString().c_str(), nEntropyBit);
+
+        return nEntropyBit;
+    }
+
+    bool SetStakeEntropyBit(unsigned int nEntropyBit)
+    {
+        if (nEntropyBit > 1)
+            return false;
+        nFlags |= (nEntropyBit? BLOCK_STAKE_ENTROPY : 0);
+        return true;
+    }
+
+    bool GeneratedStakeModifier() const
+    {
+        return (nFlags & BLOCK_STAKE_MODIFIER);
+    }
+
+    void SetStakeModifier(uint64_t nModifier, bool fGeneratedStakeModifier)
+    {
+        nStakeModifier = nModifier;
+        if (fGeneratedStakeModifier)
+           nFlags |= BLOCK_STAKE_MODIFIER;
+    }
+
     /**
      * Returns true if there are nRequired or more blocks of minVersion or above
      * in the last Params().ToCheckBlockUpgradeMajority() blocks, starting at pstart 
@@ -288,9 +387,11 @@ class CDiskBlockIndex : public CBlockIndex
 {
 public:
     uint256 hashPrev;
+    uint256 hashNext;
 
     CDiskBlockIndex() {
         hashPrev = 0;
+        hashNext = 0;
     }
 
     explicit CDiskBlockIndex(CBlockIndex* pindex) : CBlockIndex(*pindex) {
@@ -314,9 +415,27 @@ public:
         if (nStatus & BLOCK_HAVE_UNDO)
             READWRITE(VARINT(nUndoPos));
 
+
+        READWRITE(nMint);
+        READWRITE(nMoneySupply);
+        READWRITE(nFlags);
+        READWRITE(nStakeModifier);
+        if (IsProofOfStake())
+        {
+            READWRITE(prevoutStake);
+            READWRITE(nStakeTime);
+        }
+        else
+        {
+            const_cast<CDiskBlockIndex*>(this)->prevoutStake.SetNull();
+            const_cast<CDiskBlockIndex*>(this)->nStakeTime = 0;
+            const_cast<CDiskBlockIndex*>(this)->hashProofOfStake = 0;
+        }
+
         // block header
         READWRITE(this->nVersion);
         READWRITE(hashPrev);
+        READWRITE(hashNext);
         READWRITE(hashMerkleRoot);
         READWRITE(nTime);
         READWRITE(nBits);
@@ -359,8 +478,17 @@ public:
     }
 
     /** Returns the index entry for the tip of this chain, or NULL if none. */
-    CBlockIndex *Tip() const {
-        return vChain.size() > 0 ? vChain[vChain.size() - 1] : NULL;
+    CBlockIndex *Tip(bool fProofOfStake = false) const {
+        if(vChain.size() < 1)
+            return NULL;
+
+        CBlockIndex *pindex = vChain[vChain.size() - 1];
+
+        if(fProofOfStake){
+            while (pindex && pindex->pprev && !pindex->IsProofOfStake())
+                pindex = pindex->pprev;    
+        }
+        return pindex;
     }
 
     /** Returns the index entry at a particular height in this chain, or NULL if no such height exists. */

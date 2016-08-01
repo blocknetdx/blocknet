@@ -42,7 +42,53 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
     uint256 hash = wtx.GetHash();
     std::map<std::string, std::string> mapValue = wtx.mapValue;
 
-    if (nNet > 0 || wtx.IsCoinBase())
+    if (wtx.IsCoinStake())
+    {
+        CTxDestination address;
+        if (!ExtractDestination(wtx.vout[1].scriptPubKey, address))
+            return parts;
+        
+        if(!IsMine(*wallet, address)) //if the address is not yours then it means you have a tx sent to you in someone elses coinstake tx
+        {
+            for(unsigned int i = 0; i < wtx.vout.size(); i++)
+            {
+                if(i == 0)
+                    continue; // first tx is blank
+                CTxDestination outAddress;
+                if(ExtractDestination(wtx.vout[i].scriptPubKey, outAddress))
+                {
+                    if(IsMine(*wallet, outAddress))
+                    {
+                        TransactionRecord txrMultiSendRec = TransactionRecord(hash, nTime, TransactionRecord::RecvWithAddress, CBitcoinAddress(outAddress).ToString(), wtx.vout[i].nValue, 0);
+                        parts.append(txrMultiSendRec);
+                    }
+                }
+            }
+        }
+        else
+        {
+            TransactionRecord txrCoinStake = TransactionRecord(hash, nTime, TransactionRecord::StakeMint, CBitcoinAddress(address).ToString(), -nDebit, wtx.GetValueOut());
+            // Stake generation
+            parts.append(txrCoinStake);
+            
+            //if some of your outputs went to another address we will make them as a sendtoaddress tx
+            for(unsigned int i = 0; i < wtx.vout.size(); i++)
+            {
+                if(i == 0)
+                    continue; //first tx is blank
+                CTxDestination outAddress;
+                if(ExtractDestination(wtx.vout[i].scriptPubKey, outAddress))
+                {
+                    if(CBitcoinAddress(outAddress).ToString() != CBitcoinAddress(address).ToString())
+                    {
+                        TransactionRecord txrCoinStakeMultiSend = TransactionRecord(hash, nTime, TransactionRecord::SendToAddress, CBitcoinAddress(outAddress).ToString(), wtx.vout[i].nValue * -1, 0);
+                        parts.append(txrCoinStakeMultiSend);
+                    }
+                }
+            }
+        }
+    }
+    else if (nNet > 0 || wtx.IsCoinBase())
     {
         //
         // Credit
@@ -260,7 +306,7 @@ void TransactionRecord::updateStatus(const CWalletTx &wtx)
         }
     }
     // For generated transactions, determine maturity
-    else if(type == TransactionRecord::Generated)
+    else if(type == TransactionRecord::Generated || type == TransactionRecord::StakeMint)
     {
         if (wtx.GetBlocksToMaturity() > 0)
         {
