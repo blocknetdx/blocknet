@@ -226,12 +226,14 @@ bool IsBlockValueValid(const CBlock& block, int64_t nExpectedValue){
     return true;
 }
 
-bool IsBlockPayeeValid(const CTransaction& txNew, int nBlockHeight)
+bool IsBlockPayeeValid(const CBlock& block, int nBlockHeight)
 {
     if(!masternodeSync.IsSynced()) { //there is no budget data to use to check anything -- find the longest chain
         LogPrint("mnpayments", "Client not synced, skipping block payee checks\n");
         return true;
     }
+
+    const CTransaction& txNew = (nBlockHeight > LAST_POW_BLOCK ? block.vtx[1] : block.vtx[0]);
 
     //check if it's a budget block
     if(IsSporkActive(SPORK_13_ENABLE_SUPERBLOCKS)){
