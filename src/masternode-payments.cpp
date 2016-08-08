@@ -396,17 +396,17 @@ void CMasternodePayments::ProcessMessageMasternodePayments(CNode* pfrom, std::st
 
         std::string strError = "";
         if(!winner.IsValid(pfrom, strError)){
-            if(strError != "") LogPrintf("mnw - invalid message - %s\n", strError);
+           // if(strError != "") LogPrintf("mnw - invalid message - %s\n", strError);
             return;
         }
 
         if(!masternodePayments.CanVote(winner.vinMasternode.prevout, winner.nBlockHeight)){
-            LogPrintf("mnw - masternode already voted - %s\n", winner.vinMasternode.prevout.ToStringShort());
+          //  LogPrintf("mnw - masternode already voted - %s\n", winner.vinMasternode.prevout.ToStringShort());
             return;
         }
 
         if(!winner.SignatureValid()){
-            LogPrintf("mnw - invalid signature\n");
+           // LogPrintf("mnw - invalid signature\n");
             if(masternodeSync.IsSynced()) Misbehaving(pfrom->GetId(), 20);
             // it could just be a non-synced masternode
             mnodeman.AskForMN(pfrom, winner.vinMasternode);
@@ -417,7 +417,7 @@ void CMasternodePayments::ProcessMessageMasternodePayments(CNode* pfrom, std::st
         ExtractDestination(winner.payee, address1);
         CBitcoinAddress address2(address1);
 
-        LogPrint("mnpayments", "mnw - winning vote - Addr %s Height %d bestHeight %d - %s\n", address2.ToString().c_str(), winner.nBlockHeight, chainActive.Tip()->nHeight, winner.vinMasternode.prevout.ToStringShort());
+      //  LogPrint("mnpayments", "mnw - winning vote - Addr %s Height %d bestHeight %d - %s\n", address2.ToString().c_str(), winner.nBlockHeight, chainActive.Tip()->nHeight, winner.vinMasternode.prevout.ToStringShort());
 
         if(masternodePayments.AddWinningMasternode(winner)){
             winner.Relay();
