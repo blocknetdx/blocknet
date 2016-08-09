@@ -769,8 +769,43 @@ CAmount CBudgetManager::GetTotalBudget(int nHeight)
 {
     if(chainActive.Tip() == NULL) return 0;
 
-    //get min block value and calculate from that
-    CAmount nSubsidy = 50 * COIN;
+    //get block value and calculate from that
+    if(nHeight <= LAST_POW_BLOCK && nHeight >= 151200) {
+        CAmount nSubsidy = 50 * COIN;
+    }
+    else if(nHeight < 302399 && nHeight > LAST_POW_BLOCK) {
+        CAmount nSubsidy = 50 * COIN;
+    }
+    else if(nHeight < 345599 && nHeight > 302400) {
+        CAmount nSubsidy = 45 * COIN;
+    }
+    else if(nHeight < 388799 && nHeight > 345600) {
+        CAmount nSubsidy = 40 * COIN;
+    }
+    else if(nHeight < 431999 && nHeight > 388800) {
+        CAmount nSubsidy = 35 * COIN;
+    }
+    else if(nHeight < 475199 && nHeight > 432000) {
+        CAmount nSubsidy = 30 * COIN;
+    }
+    else if(nHeight < 518399 && nHeight > 475200) {
+        CAmount nSubsidy = 25 * COIN;
+    }
+    else if(nHeight < 561599 && nHeight > 518400) {
+        CAmount nSubsidy = 20 * COIN;
+    }
+    else if(nHeight < 604799 && nHeight > 561600) {
+        CAmount nSubsidy = 15 * COIN;
+    }
+    else if(nHeight < 647999 && nHeight > 604800) {
+        CAmount nSubsidy = 10 * COIN;
+    }
+    else if(nHeight > 648000) {
+        CAmount nSubsidy = 5 * COIN;
+    }
+    else {
+        CAmount nSubsidy = 0 * COIN; 
+    }
 
     // Amount of blocks in a months period of time (using 1 minutes per) = (60*24*30)
     if(Params().NetworkID() == CBaseChainParams::MAIN && nHeight <= 172800) {
