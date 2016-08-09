@@ -494,7 +494,7 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake)
         }
 
 
-        while (vNodes.empty() || IsInitialBlockDownload() || pwallet->IsLocked() ||  !fMintableCoins || nReserveBalance >= pwallet->GetBalance() || !masternodeSync.IsSynced())
+        while (vNodes.empty() || pwallet->IsLocked() ||  !fMintableCoins || nReserveBalance >= pwallet->GetBalance() || !masternodeSync.IsSynced())
         {
             nLastCoinStakeSearchInterval = 0;
             MilliSleep(5000);
