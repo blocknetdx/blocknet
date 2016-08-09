@@ -1,5 +1,5 @@
 ---
-name: "darknet-win-2.0.0.0"
+name: "darknet-win-2.0.1.0"
 enable_cache: true
 suites:
 - "trusty"
