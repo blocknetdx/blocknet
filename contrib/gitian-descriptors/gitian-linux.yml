@@ -1,5 +1,5 @@
 ---
-name: "darknet-linux-2.0.1.0"
+name: "darknet-linux-2.0.2.0"
 enable_cache: true
 suites:
 - "trusty"

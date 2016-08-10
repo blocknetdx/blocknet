@@ -1,4 +1,4 @@
-DarkNet Core 2.0.1.0
+DarkNet Core 2.0.2.0
 =====================
 
 Intro
