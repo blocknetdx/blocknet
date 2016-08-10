@@ -3252,7 +3252,7 @@ bool CheckWork(const CBlock block, CBlockIndex * const pindexPrev)
     {
         uint256 hashProofOfStake;
         uint256 hash = block.GetHash();
-        if (!CheckProofOfStake(block.vtx[1], block.nTime, block.nBits, hashProofOfStake))
+        if(!CheckProofOfStake(block, hashProofOfStake))
         {
             LogPrintf("WARNING: ProcessBlock(): check proof-of-stake failed for block %s\n", hash.ToString().c_str());
             return false;

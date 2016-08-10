@@ -368,8 +368,9 @@ bool CheckStakeKernelHash(unsigned int nBits, const CBlock blockFrom, const CTra
 }
 
 // Check kernel hash target and coinstake signature
-bool CheckProofOfStake(const CTransaction& tx, unsigned int nTxTime, unsigned int nBits, uint256& hashProofOfStake)
+bool CheckProofOfStake(const CBlock block, uint256& hashProofOfStake)
 {
+    const CTransaction tx = block.vtx[1];
     if (!tx.IsCoinStake())
         return error("CheckProofOfStake() : called on non-coinstake %s", tx.GetHash().ToString().c_str());
 
@@ -394,11 +395,14 @@ bool CheckProofOfStake(const CTransaction& tx, unsigned int nTxTime, unsigned in
     	return error("CheckProofOfStake() : read block failed");
 
     // Read block header
-    CBlockHeader block = pindex->GetBlockHeader();
+    CBlock blockprev;
+    if (!ReadBlockFromDisk(blockprev, pindex->GetBlockPos()))
+        return error("CheckProofOfStake(): INFO: failed to find block");
 
 	unsigned int nInterval = 0;
-    if (!CheckStakeKernelHash(nBits, block, txPrev, txin.prevout, nTxTime, nInterval, true, hashProofOfStake, fDebug))
-        return error("CheckProofOfStake() : INFO: check kernel failed on coinstake %s, hashProof=%s", tx.GetHash().ToString().c_str(), hashProofOfStake.ToString().c_str()); // may occur during initial download or if behind on block chain sync
+    unsigned int nTime = block.nTime;
+    if (!CheckStakeKernelHash(blockprev.nBits, blockprev, txPrev, txin.prevout, nTime, nInterval, true, hashProofOfStake, fDebug))
+        return error("CheckProofOfStake() : INFO: check kernel failed on coinstake %s, hashProof=%s \n", tx.GetHash().ToString().c_str(), hashProofOfStake.ToString().c_str()); // may occur during initial download or if behind on block chain sync
 
     return true;
 }
