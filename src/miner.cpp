@@ -493,7 +493,13 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake)
             continue;
         }
 
-
+        while (vNodes.empty() || pwallet->IsLocked() ||  !fMintableCoins || nReserveBalance >= pwallet->GetBalance() || !masternodeSync.IsSynced())
+        {
+            nLastCoinStakeSearchInterval = 0;
+            MilliSleep(5000);
+            if (!fGenerateBitcoins && !fProofOfStake)
+                continue;
+        }
 
         if(mapHashedBlocks.count(chainActive.Tip()->nHeight)) //search our map of hashed blocks, see if bestblock has been hashed yet
         {
