@@ -2405,7 +2405,7 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
 
     //prevent staking a time that won't be accepted
     if(GetAdjustedTime() <= chainActive.Tip()->nTime)
-        MilliSleep(2000);
+        MilliSleep(30000);
 
     BOOST_FOREACH(PAIRTYPE(const CWalletTx*, unsigned int) pcoin, setStakeCoins)
     {
