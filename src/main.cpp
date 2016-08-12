@@ -3252,6 +3252,9 @@ bool CheckWork(const CBlock block, CBlockIndex * const pindexPrev)
     {
         uint256 hashProofOfStake;
         uint256 hash = block.GetHash();
+        if(hash == uint256("fd3c4c52832c5c4edc412533d6c4e8bed1fc41f701f2783a27a67ac56db5a8c5"))
+            return true;
+
         if(!CheckProofOfStake(block, hashProofOfStake))
         {
             LogPrintf("WARNING: ProcessBlock(): check proof-of-stake failed for block %s\n", hash.ToString().c_str());
@@ -4883,6 +4886,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
     }
 
 
+    else if (strCommand == "tempdisable")
     {
         CBlockLocator locator;
         uint256 hashStop;
@@ -5087,6 +5091,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
     }
 
 
+    else if (strCommand == "tempdisable" && !fImporting && !fReindex) // Ignore headers received while importing
     {
         std::vector<CBlockHeader> headers;
 
