@@ -3252,8 +3252,6 @@ bool CheckWork(const CBlock block, CBlockIndex * const pindexPrev)
     {
         uint256 hashProofOfStake;
         uint256 hash = block.GetHash();
-        if(hash == uint256("fd3c4c52832c5c4edc412533d6c4e8bed1fc41f701f2783a27a67ac56db5a8c5"))
-            return true;
 
         if(!CheckProofOfStake(block, hashProofOfStake))
         {
