@@ -136,7 +136,7 @@
         <translation>Serve a disabilitare </translation>
     </message>
     <message>
-        <source>For anonymization only</source>
+        <source>For anonymization and staking only</source>
         <translation>Per la sola anomizzazione</translation>
     </message>
     <message>

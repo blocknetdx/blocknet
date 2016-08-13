@@ -136,7 +136,7 @@
         <translation>Służy do zablokowania funkcji wysyłania monet gdy konto użytkownika systemu operacyjnego zostało przejęte przez kogoś innego. Nie gwarantuje prawdziwego bezpieczeństwa.</translation>
     </message>
     <message>
-        <source>For anonymization only</source>
+        <source>For anonymization and staking only</source>
         <translation>Tylko dla anonimizacji</translation>
     </message>
     <message>

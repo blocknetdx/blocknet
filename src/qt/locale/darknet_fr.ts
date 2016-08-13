@@ -136,7 +136,7 @@
         <translation>Utiliser pour désactiver le mode d'envoi trivial de paiement lorsque le compte système est compromis. N'assure pas une sécurité efficace.</translation>
     </message>
     <message>
-        <source>For anonymization only</source>
+        <source>For anonymization and staking only</source>
         <translation>Pour anonymisation uniquement</translation>
     </message>
     <message>

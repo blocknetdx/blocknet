@@ -136,7 +136,7 @@
         <translation>Slúži na vypnutie triviálneho posielania peňazí v prípade napadnutého účtu operačného systému. Neposkytuje skutočnú bezpečnosť. </translation>
     </message>
     <message>
-        <source>For anonymization only</source>
+        <source>For anonymization and staking only</source>
         <translation>Iba pre anonimizáciu</translation>
     </message>
     <message>

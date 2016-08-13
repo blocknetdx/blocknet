@@ -128,7 +128,7 @@
         <translation>Arbetar för att inaktivera de triviala sändpengarna när OS-kontot är komprometterat. Ger ingen reell säkerhet.</translation>
     </message>
     <message>
-        <source>For anonymization only</source>
+        <source>For anonymization and staking only</source>
         <translation>Endast för anonymisering</translation>
     </message>
     <message>

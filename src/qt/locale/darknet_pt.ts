@@ -136,7 +136,7 @@
         <translation>Serve para desactivar o envio de dinheiro quando a conta do SO for comprometida. Não oferece segurança real.</translation>
     </message>
     <message>
-        <source>For anonymization only</source>
+        <source>For anonymization and staking only</source>
         <translation>Apenas para anonimização</translation>
     </message>
     <message>
