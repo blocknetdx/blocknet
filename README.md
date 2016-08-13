@@ -1,4 +1,4 @@
-DarkNet Repository (Version 2.0.3.0)
+DarkNet Repository (Version 2.0.4.0)
 More information at darknet-crypto.com
 Visit our ANN thread at bitcointalk.org/index.php?topic=1262920
 
