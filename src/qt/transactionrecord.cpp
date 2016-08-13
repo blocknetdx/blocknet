@@ -59,33 +59,18 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
                 {
                     if(IsMine(*wallet, outAddress))
                     {
-                        TransactionRecord txrMultiSendRec = TransactionRecord(hash, nTime, TransactionRecord::RecvWithAddress, CBitcoinAddress(outAddress).ToString(), wtx.vout[i].nValue, 0);
-                        parts.append(txrMultiSendRec);
+                        TransactionRecord txrMasternodeRec = TransactionRecord(hash, nTime, TransactionRecord::RecvWithAddress, CBitcoinAddress(outAddress).ToString(), wtx.vout[i].nValue, 0);
+                        parts.append(txrMasternodeRec);
                     }
                 }
             }
         }
         else
         {
-            TransactionRecord txrCoinStake = TransactionRecord(hash, nTime, TransactionRecord::StakeMint, CBitcoinAddress(address).ToString(), -nDebit, wtx.GetValueOut());
-            // Stake generation
+            //stake reward
+            TransactionRecord txrCoinStake = TransactionRecord(hash, nTime, TransactionRecord::StakeMint, CBitcoinAddress(address).ToString(), nNet, 0);
             parts.append(txrCoinStake);
-            
-            //if some of your outputs went to another address we will make them as a sendtoaddress tx
-            for(unsigned int i = 0; i < wtx.vout.size(); i++)
-            {
-                if(i == 0)
-                    continue; //first tx is blank
-                CTxDestination outAddress;
-                if(ExtractDestination(wtx.vout[i].scriptPubKey, outAddress))
-                {
-                    if(CBitcoinAddress(outAddress).ToString() != CBitcoinAddress(address).ToString())
-                    {
-                        TransactionRecord txrCoinStakeMultiSend = TransactionRecord(hash, nTime, TransactionRecord::SendToAddress, CBitcoinAddress(outAddress).ToString(), wtx.vout[i].nValue * -1, 0);
-                        parts.append(txrCoinStakeMultiSend);
-                    }
-                }
-            }
+
         }
     }
     else if (nNet > 0 || wtx.IsCoinBase())
