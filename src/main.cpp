@@ -5141,15 +5141,28 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
     {
         CBlock block;
         vRecv >> block;
+        uint256 hashBlock = block.GetHash();
+        CInv inv(MSG_BLOCK, hashBlock);
+        LogPrint("net", "received block %s peer=%d\n", inv.hash.ToString(), pfrom->id);
 
         //sometimes we will be sent their most recent block and its not the one we want, in that case tell where we are
-        if(block.hashPrevBlock != chainActive.Tip()->GetBlockHash())
-            pfrom->PushMessage("getblocks", chainActive.GetLocator(), uint256(0));
+        if(!mapBlockIndex.count(block.hashPrevBlock))
+        {
+            if(find(pfrom->vBlockRequested.begin(), pfrom->vBlockRequested.end(), hashBlock) != pfrom->vBlockRequested.end())
+            {
+                //we already asked for this block, so lets work backwards and ask for the previous block
+                pfrom->PushMessage("getblocks", chainActive.GetLocator(), block.hashPrevBlock);
+                pfrom->vBlockRequested.push_back(block.hashPrevBlock);
+            }
+            else
+            {
+                //ask to sync to this block
+                pfrom->PushMessage("getblocks", chainActive.GetLocator(), hashBlock);
+                pfrom->vBlockRequested.push_back(hashBlock);                                                                                                                 
+            }
+        }
         else
         {
-            CInv inv(MSG_BLOCK, block.GetHash());
-            LogPrint("net", "received block %s peer=%d\n", inv.hash.ToString(), pfrom->id);
-
             pfrom->AddInventoryKnown(inv);
 
             CValidationState state;
