@@ -5148,10 +5148,15 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         //sometimes we will be sent their most recent block and its not the one we want, in that case tell where we are
         if(!mapBlockIndex.count(block.hashPrevBlock) && (!pfrom->fAskedReorg || pfrom->fAbleToReorg))
         {
-            //since our last block hash does not match, we will initiate reorg communications with this node
-            CBlockIndex* pindexMaxReorg = chainActive[chainActive.Tip()->nHeight - Params().MaxReorganizationDepth() + 1];
-            pfrom->PushMessage("abletoreorg", pindexMaxReorg->GetBlockHash(), pindexMaxReorg->nHeight);
-            pfrom->fAskedReorg = true;
+            if(IsInitialBlockDownload())
+                pfrom->PushMessage("getblocks", chainActive.GetLocator(), uint256(0));
+            else
+            {
+                //since our last block hash does not match, we will initiate reorg communications with this node
+                CBlockIndex* pindexMaxReorg = chainActive[chainActive.Tip()->nHeight - Params().MaxReorganizationDepth() + 1];
+                pfrom->PushMessage("abletoreorg", pindexMaxReorg->GetBlockHash(), pindexMaxReorg->nHeight);
+                pfrom->fAskedReorg = true;
+            }
         }
         else
         {
