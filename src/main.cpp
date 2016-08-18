@@ -1677,7 +1677,10 @@ int64_t GetMasternodePayment(int nHeight, int64_t blockValue)
             LogPrintf("GetMasternodePayment(): moneysupply=%s, nodecoins=%s \n", FormatMoney(nMoneySupply).c_str(), 
                 FormatMoney(mNodeCoins).c_str());
 
-        if (mNodeCoins <= (nMoneySupply * .05) && mNodeCoins > 0) {
+        if (mNodeCoins == 0) {
+            ret = 0;
+        }
+        else if (mNodeCoins <= (nMoneySupply * .05) && mNodeCoins > 0) {
             ret = blockValue * .85;
         }
         else if (mNodeCoins <= (nMoneySupply * .1) && mNodeCoins >= (nMoneySupply * .05)) {
