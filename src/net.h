@@ -296,9 +296,7 @@ public:
     std::vector<CInv> vInventoryToSend;
     CCriticalSection cs_inventory;
     std::multimap<int64_t, CInv> mapAskFor;
-    std::map<uint256, unsigned int> mapBlockRequested; //block hash and time it was requested
-    bool fAskedReorg;
-    bool fAbleToReorg;
+    std::vector<uint256> vBlockRequested;
 
     // Ping time measurement:
     // The pong reply we're expecting, or 0 if no pong expected.

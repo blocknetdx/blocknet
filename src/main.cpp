@@ -5149,22 +5149,23 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         LogPrint("net", "received block %s peer=%d\n", inv.hash.ToString(), pfrom->id);
 
         //sometimes we will be sent their most recent block and its not the one we want, in that case tell where we are
-        if(!mapBlockIndex.count(block.hashPrevBlock) && (!pfrom->fAskedReorg || pfrom->fAbleToReorg))
+        if(!mapBlockIndex.count(block.hashPrevBlock))
         {
-            if(IsInitialBlockDownload())
-                pfrom->PushMessage("getblocks", chainActive.GetLocator(), uint256(0));
+            if(find(pfrom->vBlockRequested.begin(), pfrom->vBlockRequested.end(), hashBlock) != pfrom->vBlockRequested.end())
+            {
+                //we already asked for this block, so lets work backwards and ask for the previous block
+                pfrom->PushMessage("getblocks", chainActive.GetLocator(), block.hashPrevBlock);
+                pfrom->vBlockRequested.push_back(block.hashPrevBlock);
+            }
             else
             {
-                //since our last block hash does not match, we will initiate reorg communications with this node
-                CBlockIndex* pindexMaxReorg = chainActive[chainActive.Tip()->nHeight - Params().MaxReorganizationDepth() + 1];
-                pfrom->PushMessage("abletoreorg", pindexMaxReorg->GetBlockHash(), pindexMaxReorg->nHeight);
-                pfrom->fAskedReorg = true;
+                //ask to sync to this block
+                pfrom->PushMessage("getblocks", chainActive.GetLocator(), hashBlock);
+                pfrom->vBlockRequested.push_back(hashBlock);                                                                                                                 
             }
         }
         else
         {
-            pfrom->fAskedReorg = false;
-            pfrom->fAbleToReorg = true;
             pfrom->AddInventoryKnown(inv);
 
             CValidationState state;
@@ -5179,34 +5180,6 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
                 }
             }
         }
-
-    }
-
-    //the peer is sending us their block height and hash of the block furthest in their chain that is able to be reorganized
-    else if (strCommand == "abletoreorg" && !fImporting && !fReindex)
-    {
-        uint256 hashBlock;
-        unsigned int nHeight;
-        vRecv >> hashBlock >> nHeight;
-
-        //if our hashes match, we can reorg with this peer
-        bool fAbleToReorg = (chainActive[nHeight]->GetBlockHash() == hashBlock ? true : false);
-        pfrom->fAbleToReorg = fAbleToReorg;
-        pfrom->PushMessage("reorgresponse", hashBlock, nHeight, fAbleToReorg);
-    }
-
-    else if (strCommand == "reorgresponse" && !fImporting && !fReindex)
-    {
-        uint256 hashBlock;
-        unsigned int nHeight;
-        bool fAbleToReorg;
-        vRecv >> hashBlock >> nHeight >> fAbleToReorg;
-
-        //if we can reorg, then request all blocks since the max reorg block we sent earlier
-        if(fAbleToReorg)
-            pfrom->PushMessage("getblocks", chainActive.GetLocator(chainActive[nHeight]), uint256(0));
-        
-        pfrom->fAbleToReorg = fAbleToReorg;
 
     }
 
