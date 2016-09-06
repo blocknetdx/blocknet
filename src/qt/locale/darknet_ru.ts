@@ -1659,8 +1659,8 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Адрес/Имя хоста</translation>
     </message>
     <message>
-        <source>User Agent</source>
-        <translation>User Agent</translation>
+        <source>Version</source>
+        <translation>Version</translation>
     </message>
     <message>
         <source>Ping Time</source>
@@ -1860,8 +1860,8 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Версия</translation>
     </message>
     <message>
-        <source>User Agent</source>
-        <translation>User Agent</translation>
+        <source>Version</source>
+        <translation>Version</translation>
     </message>
     <message>
         <source>Services</source>

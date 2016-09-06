@@ -1658,7 +1658,7 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Adresse/Rechnername</translation>
     </message>
     <message>
-        <source>User Agent</source>
+        <source>Version</source>
         <translation>Benutzerprogramm</translation>
     </message>
     <message>
@@ -1859,7 +1859,7 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Version</translation>
     </message>
     <message>
-        <source>User Agent</source>
+        <source>Version</source>
         <translation>Benutzerprogramm</translation>
     </message>
     <message>

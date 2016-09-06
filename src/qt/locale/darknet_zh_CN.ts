@@ -1652,7 +1652,7 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>地址/主机名</translation>
     </message>
     <message>
-        <source>User Agent</source>
+        <source>Version</source>
         <translation>用户代理</translation>
     </message>
     <message>
@@ -1853,7 +1853,7 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>版本</translation>
     </message>
     <message>
-        <source>User Agent</source>
+        <source>Version</source>
         <translation>用户代理</translation>
     </message>
     <message>

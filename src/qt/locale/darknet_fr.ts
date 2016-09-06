@@ -1659,7 +1659,7 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Adresse/Nom d'hôte</translation>
     </message>
     <message>
-        <source>User Agent</source>
+        <source>Version</source>
         <translation>Agent de l'utilisateur</translation>
     </message>
     <message>
@@ -1860,7 +1860,7 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Version</translation>
     </message>
     <message>
-        <source>User Agent</source>
+        <source>Version</source>
         <translation>Agent de l'utilisateur</translation>
     </message>
     <message>

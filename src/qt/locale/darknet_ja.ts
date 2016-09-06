@@ -1148,7 +1148,7 @@
         <translation>アドレス / ホスト名</translation>
     </message>
     <message>
-        <source>User Agent</source>
+        <source>Version</source>
         <translation>ユーザエージェント</translation>
     </message>
     <message>
@@ -1325,7 +1325,7 @@
         <translation>バージョン</translation>
     </message>
     <message>
-        <source>User Agent</source>
+        <source>Version</source>
         <translation>ユーザエージェント</translation>
     </message>
     <message>

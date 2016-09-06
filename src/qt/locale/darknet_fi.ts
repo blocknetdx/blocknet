@@ -1660,7 +1660,7 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Osoite/Isäntänimi</translation>
     </message>
     <message>
-        <source>User Agent</source>
+        <source>Version</source>
         <translation>Käyttäjäohjelma</translation>
     </message>
     <message>
@@ -1861,7 +1861,7 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Versio</translation>
     </message>
     <message>
-        <source>User Agent</source>
+        <source>Version</source>
         <translation>Käyttäjäohjelma</translation>
     </message>
     <message>

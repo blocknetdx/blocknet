@@ -17,7 +17,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>0</number>
+      <number>3</number>
      </property>
      <widget class="QWidget" name="tab_info">
       <attribute name="title">
@@ -773,7 +773,7 @@
           <item row="1" column="0">
            <widget class="QLabel" name="label_21">
             <property name="text">
-             <string>Version</string>
+             <string>Protocol</string>
             </property>
            </widget>
           </item>
@@ -796,7 +796,7 @@
           <item row="2" column="0">
            <widget class="QLabel" name="label_28">
             <property name="text">
-             <string>User Agent</string>
+             <string>Version</string>
             </property>
            </widget>
           </item>
