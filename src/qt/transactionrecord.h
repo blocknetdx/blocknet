@@ -79,6 +79,7 @@ public:
         SendToAddress,
         SendToOther,
         RecvWithAddress,
+        MNReward,
         RecvFromOther,
         SendToSelf,
         RecvWithObfuscation,

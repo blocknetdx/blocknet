@@ -59,7 +59,7 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
                 {
                     if(IsMine(*wallet, outAddress))
                     {
-                        TransactionRecord txrMasternodeRec = TransactionRecord(hash, nTime, TransactionRecord::RecvWithAddress, CBitcoinAddress(outAddress).ToString(), wtx.vout[i].nValue, 0);
+                        TransactionRecord txrMasternodeRec = TransactionRecord(hash, nTime, TransactionRecord::MNReward, CBitcoinAddress(outAddress).ToString(), wtx.vout[i].nValue, 0);
                         parts.append(txrMasternodeRec);
                     }
                 }
