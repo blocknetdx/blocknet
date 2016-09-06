@@ -3057,7 +3057,7 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <translation>Obfuscate denominointien luonti</translation>
     </message>
     <message>
-        <source>Darksent</source>
+        <source>Obfuscated</source>
         <translation>Obfuscate lähetetty</translation>
     </message>
     <message>
@@ -3136,7 +3136,7 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <translation>Lähetetty</translation>
     </message>
     <message>
-        <source>Darksent</source>
+        <source>Obfuscated</source>
         <translation>Obfuscate lähetetty</translation>
     </message>
     <message>

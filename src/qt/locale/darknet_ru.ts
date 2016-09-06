@@ -3052,7 +3052,7 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Создание номиналов для Obfuscate</translation>
     </message>
     <message>
-        <source>Darksent</source>
+        <source>Obfuscated</source>
         <translation>Отправлено через Obfuscate</translation>
     </message>
     <message>
@@ -3131,7 +3131,7 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Отправлено на</translation>
     </message>
     <message>
-        <source>Darksent</source>
+        <source>Obfuscated</source>
         <translation>Отправлено через Obfuscate</translation>
     </message>
     <message>

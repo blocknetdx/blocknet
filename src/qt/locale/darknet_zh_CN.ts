@@ -3041,7 +3041,7 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>匿名发送会生成面值额度</translation>
     </message>
     <message>
-        <source>Darksent</source>
+        <source>Obfuscated</source>
         <translation>匿名发送</translation>
     </message>
     <message>
@@ -3116,7 +3116,7 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>发送给</translation>
     </message>
     <message>
-        <source>Darksent</source>
+        <source>Obfuscated</source>
         <translation>匿名发送</translation>
     </message>
     <message>

@@ -86,7 +86,7 @@ public:
         ObfuscationCollateralPayment,
         ObfuscationMakeCollaterals,
         ObfuscationCreateDenominations,
-        Darksent
+        Obfuscated
     };
 
     /** Number of confirmation recommended for accepting a transaction */

@@ -3908,8 +3908,8 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
     </message>
     <message>
         <location line="+2"/>
-        <source>Darksent</source>
-        <translation>Darksent</translation>
+        <source>Obfuscated</source>
+        <translation>Obfuscated</translation>
     </message>
     <message>
         <location line="+30"/>
@@ -4007,8 +4007,8 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
     </message>
     <message>
         <location line="+2"/>
-        <source>Darksent</source>
-        <translation>Darksent</translation>
+        <source>Obfuscated</source>
+        <translation>Obfuscated</translation>
     </message>
     <message>
         <location line="+1"/>

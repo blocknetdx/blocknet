@@ -3052,7 +3052,7 @@ Dies kann passieren, wenn einige DarkNet aus ihrer Wallet bereits ausgegeben wur
         <translation>Obfuscate Stückelungs-Gebühr</translation>
     </message>
     <message>
-        <source>Darksent</source>
+        <source>Obfuscated</source>
         <translation>Obfuscate</translation>
     </message>
     <message>
@@ -3131,7 +3131,7 @@ Dies kann passieren, wenn einige DarkNet aus ihrer Wallet bereits ausgegeben wur
         <translation>Überwiesen an</translation>
     </message>
     <message>
-        <source>Darksent</source>
+        <source>Obfuscated</source>
         <translation>Obfuscate</translation>
     </message>
     <message>

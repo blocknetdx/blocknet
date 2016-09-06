@@ -2976,7 +2976,7 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>開採所得</translation>
     </message>
     <message>
-        <source>Darksent</source>
+        <source>Obfuscated</source>
         <translation>匿名發送</translation>
     </message>
     <message>
@@ -3051,7 +3051,7 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>付款給</translation>
     </message>
     <message>
-        <source>Darksent</source>
+        <source>Obfuscated</source>
         <translation>匿名發送</translation>
     </message>
     <message>

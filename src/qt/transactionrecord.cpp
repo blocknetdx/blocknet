@@ -157,7 +157,7 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
 
             if(mapValue["DS"] == "1")
             {
-                sub.type = TransactionRecord::Darksent;
+                sub.type = TransactionRecord::Obfuscated;
                 CTxDestination address;
                 if (ExtractDestination(wtx.vout[0].scriptPubKey, address))
                 {
@@ -227,7 +227,7 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
 
                 if(mapValue["DS"] == "1")
                 {
-                    sub.type = TransactionRecord::Darksent;
+                    sub.type = TransactionRecord::Obfuscated;
                 }
 
                 CAmount nValue = txout.nValue;

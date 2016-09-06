@@ -2894,8 +2894,8 @@ Più URL vengono separati da una barra verticale |.</translation>
         <translation>Obfuscate Crea Denominazioni</translation>
     </message>
     <message>
-        <source>Darksent</source>
-        <translation>Darksent</translation>
+        <source>Obfuscated</source>
+        <translation>Obfuscated</translation>
     </message>
     <message>
         <source>watch-only</source>
@@ -2973,8 +2973,8 @@ Più URL vengono separati da una barra verticale |.</translation>
         <translation>Inviato a</translation>
     </message>
     <message>
-        <source>Darksent</source>
-        <translation>Darksent</translation>
+        <source>Obfuscated</source>
+        <translation>Obfuscated</translation>
     </message>
     <message>
         <source>Obfuscate Make Collateral Inputs</source>

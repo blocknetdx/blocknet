@@ -3052,8 +3052,8 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Obfuscate Création de Dénominations</translation>
     </message>
     <message>
-        <source>Darksent</source>
-        <translation>Darksent</translation>
+        <source>Obfuscated</source>
+        <translation>Obfuscated</translation>
     </message>
     <message>
         <source>watch-only</source>
@@ -3131,8 +3131,8 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Envoyée à</translation>
     </message>
     <message>
-        <source>Darksent</source>
-        <translation>Darksent</translation>
+        <source>Obfuscated</source>
+        <translation>Obfuscated</translation>
     </message>
     <message>
         <source>Obfuscate Make Collateral Inputs</source>

@@ -2416,8 +2416,8 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Obfuscate-skapa denominationer</translation>
     </message>
     <message>
-        <source>Darksent</source>
-        <translation>Darksent-(skickat)</translation>
+        <source>Obfuscated</source>
+        <translation>Obfuscated-(skickat)</translation>
     </message>
     <message>
         <source>(n/a)</source>
@@ -2483,8 +2483,8 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Skickad till</translation>
     </message>
     <message>
-        <source>Darksent</source>
-        <translation>Darksent-(skickat)</translation>
+        <source>Obfuscated</source>
+        <translation>Obfuscated-(skickat)</translation>
     </message>
     <message>
         <source>Obfuscate Make Collateral Inputs</source>

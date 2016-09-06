@@ -372,8 +372,8 @@ QString TransactionTableModel::formatTxType(const TransactionRecord *wtx) const
         return tr("Obfuscation Make Collateral Inputs");
     case TransactionRecord::ObfuscationCreateDenominations:
         return tr("Obfuscation Create Denominations");
-    case TransactionRecord::Darksent:
-        return tr("Darksent");
+    case TransactionRecord::Obfuscated:
+        return tr("Obfuscated");
 
     default:
         return QString();
@@ -417,7 +417,7 @@ QString TransactionTableModel::formatTxToAddress(const TransactionRecord *wtx, b
     case TransactionRecord::Generated:
     case TransactionRecord::StakeMint:
         return lookupAddress(wtx->address, tooltip);
-    case TransactionRecord::Darksent:
+    case TransactionRecord::Obfuscated:
         return lookupAddress(wtx->address, tooltip) + watchAddress;
     case TransactionRecord::SendToOther:
         return QString::fromStdString(wtx->address) + watchAddress;
