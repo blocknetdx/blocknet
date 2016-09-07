@@ -1,5 +1,5 @@
 ---
-name: "darknet-osx-2.1.2.1"
+name: "darknet-osx-2.1.2.2"
 enable_cache: true
 suites:
 - "trusty"
