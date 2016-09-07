@@ -855,7 +855,7 @@ public:
 
     CAmount GetImmatureCredit(bool fUseCache=true) const
     {
-        if (IsCoinBase() && GetBlocksToMaturity() > 0 && IsInMainChain())
+        if ((IsCoinBase() || IsCoinStake()) && GetBlocksToMaturity() > 0 && IsInMainChain())
         {
             if (fUseCache && fImmatureCreditCached)
                 return nImmatureCreditCached;
