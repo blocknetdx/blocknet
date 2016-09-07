@@ -774,34 +774,34 @@ CAmount CBudgetManager::GetTotalBudget(int nHeight)
     if(nHeight <= LAST_POW_BLOCK && nHeight >= 151200) {
         nSubsidy = 50 * COIN;
     }
-    else if(nHeight < 302399 && nHeight > LAST_POW_BLOCK) {
+    else if(nHeight <= 302399 && nHeight > LAST_POW_BLOCK) {
         nSubsidy = 50 * COIN;
     }
-    else if(nHeight < 345599 && nHeight > 302400) {
+    else if(nHeight <= 345599 && nHeight >= 302400) {
         nSubsidy = 45 * COIN;
     }
-    else if(nHeight < 388799 && nHeight > 345600) {
+    else if(nHeight <= 388799 && nHeight >= 345600) {
         nSubsidy = 40 * COIN;
     }
-    else if(nHeight < 431999 && nHeight > 388800) {
+    else if(nHeight <= 431999 && nHeight >= 388800) {
         nSubsidy = 35 * COIN;
     }
-    else if(nHeight < 475199 && nHeight > 432000) {
+    else if(nHeight <= 475199 && nHeight >= 432000) {
         nSubsidy = 30 * COIN;
     }
-    else if(nHeight < 518399 && nHeight > 475200) {
+    else if(nHeight <= 518399 && nHeight >= 475200) {
         nSubsidy = 25 * COIN;
     }
-    else if(nHeight < 561599 && nHeight > 518400) {
+    else if(nHeight <= 561599 && nHeight >= 518400) {
         nSubsidy = 20 * COIN;
     }
-    else if(nHeight < 604799 && nHeight > 561600) {
+    else if(nHeight <= 604799 && nHeight >= 561600) {
         nSubsidy = 15 * COIN;
     }
-    else if(nHeight < 647999 && nHeight > 604800) {
+    else if(nHeight <= 647999 && nHeight >= 604800) {
         nSubsidy = 10 * COIN;
     }
-    else if(nHeight > 648000) {
+    else if(nHeight >= 648000) {
         nSubsidy = 5 * COIN;
     }
     else {
