@@ -1371,7 +1371,7 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Chưa chín muồi:</translation>
     </message>
     <message>
-        <source>Mined balance that has not yet matured</source>
+        <source>Staked or masternode rewards that has not yet matured</source>
         <translation>Số dư khai thác được chưa được xác nhận đủ</translation>
     </message>
     <message>
@@ -1383,7 +1383,7 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Các giao dịch chưa được xác nhận cho các địa chỉ chỉ để theo dõi</translation>
     </message>
     <message>
-        <source>Mined balance in watch-only addresses that has not yet matured</source>
+        <source>Staked or masternode rewards in watch-only addresses that has not yet matured</source>
         <translation>Số dư đào được trong các địa chỉ chỉ theo dõi nhưng chưa sẵn sàng để tiêu được</translation>
     </message>
     <message>

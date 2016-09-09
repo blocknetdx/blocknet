@@ -1206,7 +1206,7 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Omogen:</translation>
     </message>
     <message>
-        <source>Mined balance that has not yet matured</source>
+        <source>Staked or masternode rewards that has not yet matured</source>
         <translation>Det utvunna saldot som ännu inte har mognat</translation>
     </message>
     <message>

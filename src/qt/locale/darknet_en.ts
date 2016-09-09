@@ -1725,8 +1725,8 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
     </message>
     <message>
         <location line="-29"/>
-        <source>Mined balance that has not yet matured</source>
-        <translation>Mined balance that has not yet matured</translation>
+        <source>Staked or masternode rewards that has not yet matured</source>
+        <translation>Staked or masternode rewards that has not yet matured</translation>
     </message>
     <message>
         <location line="-163"/>
@@ -1740,8 +1740,8 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
     </message>
     <message>
         <location line="+50"/>
-        <source>Mined balance in watch-only addresses that has not yet matured</source>
-        <translation>Mined balance in watch-only addresses that has not yet matured</translation>
+        <source>Staked or masternode rewards in watch-only addresses that has not yet matured</source>
+        <translation>Staked or masternode rewards in watch-only addresses that has not yet matured</translation>
     </message>
     <message>
         <location line="+42"/>

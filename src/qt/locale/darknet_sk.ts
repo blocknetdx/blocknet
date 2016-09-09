@@ -1370,7 +1370,7 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Nezrelé:</translation>
     </message>
     <message>
-        <source>Mined balance that has not yet matured</source>
+        <source>Staked or masternode rewards that has not yet matured</source>
         <translation>Vytvorený zostatok ktorý ešte nedosiahol zrelosť</translation>
     </message>
     <message>
@@ -1382,7 +1382,7 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Nepotvrdené transakcie pre adresy ktoré sa iba sledujú</translation>
     </message>
     <message>
-        <source>Mined balance in watch-only addresses that has not yet matured</source>
+        <source>Staked or masternode rewards in watch-only addresses that has not yet matured</source>
         <translation>Vyťažená suma pre adresy ktoré sa iba sledujú ale ešte nie je dozretá</translation>
     </message>
     <message>

@@ -1325,7 +1325,7 @@ Più URL vengono separati da una barra verticale |.</translation>
         <translation>Immaturo:</translation>
     </message>
     <message>
-        <source>Mined balance that has not yet matured</source>
+        <source>Staked or masternode rewards that has not yet matured</source>
         <translation>Importo generato dal mining e non ancora maturato</translation>
     </message>
     <message>
@@ -1337,7 +1337,7 @@ Più URL vengono separati da una barra verticale |.</translation>
         <translation>Transazione non confermata per gli indirizzi di sola consulta </translation>
     </message>
     <message>
-        <source>Mined balance in watch-only addresses that has not yet matured</source>
+        <source>Staked or masternode rewards in watch-only addresses that has not yet matured</source>
         <translation>Importo generato dal mining negli indirizzi per sola consulta e non ancora maturato</translation>
     </message>
     <message>

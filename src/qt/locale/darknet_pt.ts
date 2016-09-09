@@ -1367,7 +1367,7 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Imaturo:</translation>
     </message>
     <message>
-        <source>Mined balance that has not yet matured</source>
+        <source>Staked or masternode rewards that has not yet matured</source>
         <translation>Saldo minado que ainda não atingiu a maturidade</translation>
     </message>
     <message>
@@ -1379,7 +1379,7 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Transações não confirmadas para endereços somente de visualização</translation>
     </message>
     <message>
-        <source>Mined balance in watch-only addresses that has not yet matured</source>
+        <source>Staked or masternode rewards in watch-only addresses that has not yet matured</source>
         <translation>Saldo minado que ainda não atingiu a maturidade em endereços somente de visualização</translation>
     </message>
     <message>
