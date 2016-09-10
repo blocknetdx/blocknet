@@ -1,4 +1,4 @@
-DarkNet Core 2.1.2.2
+DarkNet Core 2.1.2.3
 =====================
 
 Setup
