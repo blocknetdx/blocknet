@@ -105,10 +105,11 @@ void CObfuScationRelay::RelayThroughNode(int nRank)
 
     if(pmn != NULL){
         //printf("RelayThroughNode %s\n", pmn->addr.ToString().c_str());
-        CNode* pnode = ConnectNode((CAddress)pmn->addr, NULL, true);
+        CNode* pnode = ConnectNode((CAddress)pmn->addr, NULL, false);
         if(pnode){
             //printf("Connected\n");
             pnode->PushMessage("dsr", (*this));
+            pnode->Release();
             return;
         }
     } else {
