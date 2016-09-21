@@ -124,7 +124,7 @@ void CBudgetManager::SubmitFinalBudget()
     if(nSubmittedFinalBudget >= nBlockStart) return;
     if(nBlockStart - pindexPrev->nHeight > 1440*2) return; //submit final budget 2 days before payment
 
-    if(Params().NetworkID() == CBaseChainParams::TESTNET && nBlockStart - pindexPrev->nHeight > 50)
+    if(Params().NetworkID() == CBaseChainParams::TESTNET && nBlockStart - pindexPrev->nHeight > 50) return;
 
     std::vector<CBudgetProposal*> vBudgetProposals = budget.GetBudget();
     std::string strBudgetName = "main";
