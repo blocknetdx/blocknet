@@ -30,7 +30,7 @@ int GetBudgetPaymentCycleBlocks(){
     if(Params().NetworkID() == CBaseChainParams::MAIN) return 43200;
     //for testing purposes
 
-    return 146; //ten times per day
+    return 144; //ten times per day
 }
 
 bool IsBudgetCollateralValid(uint256 nTxCollateralHash, uint256 nExpectedHash, std::string& strError, int64_t& nTime, int& nConf)
@@ -123,6 +123,8 @@ void CBudgetManager::SubmitFinalBudget()
     int nBlockStart = pindexPrev->nHeight - pindexPrev->nHeight % GetBudgetPaymentCycleBlocks() + GetBudgetPaymentCycleBlocks();
     if(nSubmittedFinalBudget >= nBlockStart) return;
     if(nBlockStart - pindexPrev->nHeight > 1440*2) return; //submit final budget 2 days before payment
+
+    if(Params().NetworkID() == CBaseChainParams::TESTNET && nBlockStart - pindexPrev->nHeight > 50)
 
     std::vector<CBudgetProposal*> vBudgetProposals = budget.GetBudget();
     std::string strBudgetName = "main";
@@ -806,6 +808,9 @@ CAmount CBudgetManager::GetTotalBudget(int nHeight)
     }
     else {
         nSubsidy = 0 * COIN; 
+    }
+    if(Params().NetworkID() == CBaseChainParams::TESTNET){
+        nSubsidy = 500 * COIN; 
     }
 
     // Amount of blocks in a months period of time (using 1 minutes per) = (60*24*30)

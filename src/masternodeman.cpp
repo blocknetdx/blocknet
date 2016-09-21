@@ -668,7 +668,7 @@ void CMasternodeMan::ProcessMasternodeConnections()
         if(pnode->fObfuScationMaster){
             if(obfuScationPool.pSubmittedToMasternode != NULL && pnode->addr == obfuScationPool.pSubmittedToMasternode->addr) continue;
             LogPrintf("Closing Masternode connection %s \n", pnode->addr.ToString());
-            pnode->fDarkSendMaster = false;
+           pnode->fObfuScationMaster = false;
             pnode->Release();
         }
     }
