@@ -832,6 +832,10 @@ bool AppInit2(boost::thread_group& threadGroup)
 
     fAlerts = GetBoolArg("-alerts", DEFAULT_ALERTS);
 
+ 
+    if (GetBoolArg("-peerbloomfilters", false))
+        nLocalServices |= NODE_BLOOM;
+
     // ********************************************************* Step 4: application initialization: dir lock, daemonize, pidfile, debug log
 
     // Sanity check

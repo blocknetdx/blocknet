@@ -3172,6 +3172,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
                              REJECT_INVALID, "bad-header", true);
 
     // Check timestamp
+    LogPrintf("block time=%d adjusted time=%d is proof of stake=%d\n", block.GetBlockTime(), GetAdjustedTime(), block.IsProofOfStake());
     if (block.GetBlockTime() > GetAdjustedTime() + (block.IsProofOfStake() ? 180 : 7200)) // 3 minute future drift for PoS
         return state.Invalid(error("CheckBlock() : block timestamp too far in the future"),
                              REJECT_INVALID, "time-too-new");
@@ -5400,6 +5401,14 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         }
     }
 
+    else if (!(nLocalServices & NODE_BLOOM) &&
+              (strCommand == "filterload" ||
+               strCommand == "filteradd" ||
+               strCommand == "filterclear"))
+    {
+        LogPrintf("bloom message=%s\n", strCommand);
+        Misbehaving(pfrom->GetId(), 100);
+    }
 
     else if (strCommand == "filterload")
     {
