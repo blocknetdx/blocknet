@@ -487,7 +487,7 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake)
 
     while (fGenerateBitcoins || fProofOfStake) 
     {
-        if(chainActive.Tip()->nHeight < LAST_POW_BLOCK)
+        if(chainActive.Tip()->nHeight < Params().LAST_POW_BLOCK())
         {
             MilliSleep(5000);
             continue;

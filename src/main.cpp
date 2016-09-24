@@ -1613,10 +1613,10 @@ int64_t GetBlockValue(int nHeight)
     else if(nHeight < 151200 && nHeight >= 86400) {
         nSubsidy = 225 * COIN;
     }
-    else if(nHeight <= LAST_POW_BLOCK && nHeight >= 151200) {
+    else if(nHeight <= Params().LAST_POW_BLOCK() && nHeight >= 151200) {
         nSubsidy = 45 * COIN;
     }
-    else if(nHeight <= 302399 && nHeight > LAST_POW_BLOCK) {
+    else if(nHeight <= 302399 && nHeight > Params().LAST_POW_BLOCK()) {
         nSubsidy = 45 * COIN;
     }
     else if(nHeight <= 345599 && nHeight >= 302400) {
@@ -1673,10 +1673,10 @@ int64_t GetMasternodePayment(int nHeight, int64_t blockValue)
     else if(nHeight < 151200 && nHeight >= 86400) {
         ret = 50 * COIN;
     }
-    else if(nHeight <= LAST_POW_BLOCK && nHeight >= 151200) {
+    else if(nHeight <= Params().LAST_POW_BLOCK() && nHeight >= 151200) {
         ret = blockValue / 2;
     }
-    else if(nHeight > LAST_POW_BLOCK) 
+    else if(nHeight > Params().LAST_POW_BLOCK()) 
     {
         int64_t nMoneySupply = chainActive.Tip()->nMoneySupply;
         int64_t mNodeCoins = mnodeman.size() * 10000 * COIN;
@@ -2002,7 +2002,7 @@ bool CheckInputs(const CTransaction& tx, CValidationState &state, const CCoinsVi
 
             // If prev is coinbase, check that it's matured
             if (coins->IsCoinBase() || coins->IsCoinStake()) {
-                if (nSpendHeight - coins->nHeight < COINBASE_MATURITY)
+                if (nSpendHeight - coins->nHeight < Params().COINBASE_MATURITY())
                     return state.Invalid(
                         error("CheckInputs() : tried to spend coinbase at depth %d, coinstake=%d", nSpendHeight - coins->nHeight, coins->IsCoinStake()),
                         REJECT_INVALID, "bad-txns-premature-spend-of-coinbase");
@@ -2223,11 +2223,11 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
         return true;
     }
 
-    if(pindex->nHeight <= LAST_POW_BLOCK && block.IsProofOfStake())
+    if(pindex->nHeight <= Params().LAST_POW_BLOCK() && block.IsProofOfStake())
         return state.DoS(100, error("ConnectBlock() : PoS period not active"),
                                  REJECT_INVALID, "PoS-early");
 
-    if(pindex->nHeight > LAST_POW_BLOCK && block.IsProofOfWork())
+    if(pindex->nHeight > Params().LAST_POW_BLOCK() && block.IsProofOfWork())
         return state.DoS(100, error("ConnectBlock() : PoW period ended"),
                                  REJECT_INVALID, "PoW-ended");
 
@@ -4650,7 +4650,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         uint64_t nNonce = 1;
         vRecv >> pfrom->nVersion >> pfrom->nServices >> nTime >> addrMe;
         if (pfrom->nVersion < MIN_PEER_PROTO_VERSION || 
-        	(chainActive.Tip()->nHeight >= LAST_POW_BLOCK && pfrom->nVersion < MIN_PEER_PROTO_VERSION_POS))
+        	(chainActive.Tip()->nHeight >= Params().LAST_POW_BLOCK() && pfrom->nVersion < MIN_PEER_PROTO_VERSION_POS))
         {
             // disconnect from peers older than this proto version
             LogPrintf("peer=%d using obsolete version %i; disconnecting\n", pfrom->id, pfrom->nVersion);

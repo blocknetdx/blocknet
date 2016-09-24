@@ -109,8 +109,6 @@ static const unsigned char REJECT_DUST = 0x41;
 static const unsigned char REJECT_INSUFFICIENTFEE = 0x42;
 static const unsigned char REJECT_CHECKPOINT = 0x43;
 
-static const int LAST_POW_BLOCK = 259200;
-
 struct BlockHasher
 {
     size_t operator()(const uint256& hash) const { return hash.GetLow64(); }
