@@ -920,7 +920,7 @@ void CMasternodeMan::ProcessMessage(CNode* pfrom, std::string& strCommand, CData
 
         static std::map<COutPoint, CPubKey> mapSeenDsee;
         if(mapSeenDsee.count(vin.prevout) && mapSeenDsee[vin.prevout] == pubkey) {
-            LogPrint("mastenrode", "dsee - already seen this vin %s\n", vin.prevout.ToString());
+            LogPrint("masternode", "dsee - already seen this vin %s\n", vin.prevout.ToString());
             return;
         }
         mapSeenDsee.insert(make_pair(vin.prevout, pubkey));
