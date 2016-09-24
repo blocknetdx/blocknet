@@ -449,39 +449,38 @@ void CBudgetManager::FillBlockPayee(CMutableTransaction& txNew, CAmount nFees, b
 
     CAmount blockValue = GetBlockValue(pindexPrev->nHeight);
 
-    
-
-    if(nHighestCount > 0)
-    {
-        if(fProofOfStake)
-        {
+    if(fProofOfStake) {
+        if(nHighestCount > 0) {
             unsigned int i = txNew.vout.size();
             txNew.vout.resize(i + 1);
             txNew.vout[i].scriptPubKey = payee;
             txNew.vout[i].nValue = nAmount;
-            txNew.vout[i - 1].nValue -= nAmount;
+
+            //stakers get the full amount on these blocks
+            txNew.vout[i - 1].nValue = blockValue;
+
+            CTxDestination address1;
+            ExtractDestination(payee, address1);
+            CBitcoinAddress address2(address1);
         }
-        else
-        {
-            //miners get the full amount on these blocks
-            txNew.vout[0].nValue = blockValue;
+    } else {
+        //miners get the full amount on these blocks
+        txNew.vout[0].nValue = blockValue;
+
+        if(nHighestCount > 0){
             txNew.vout.resize(2);
 
             //these are super blocks, so their value can be much larger than normal
             txNew.vout[1].scriptPubKey = payee;
             txNew.vout[1].nValue = nAmount;
+
+            CTxDestination address1;
+            ExtractDestination(payee, address1);
+            CBitcoinAddress address2(address1);
+
+            LogPrintf("CBudgetManager::FillBlockPayee - Budget payment to %s for %lld\n", address2.ToString(), nAmount);
         }
-
-        CTxDestination address1;
-        ExtractDestination(payee, address1);
-        CBitcoinAddress address2(address1);
-
-        LogPrintf("CBudgetManager::FillBlockPayee - Budget payment to %s for %lld\n", address2.ToString(), nAmount);
     }
-    else
-        LogPrintf("CBudgetManager::FillBlockPayee - No payment \n");
-
-
 }
 
 CFinalizedBudget *CBudgetManager::FindFinalizedBudget(uint256 nHash)
