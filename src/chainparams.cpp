@@ -198,7 +198,7 @@ public:
         nMinerThreads = 0;
         nTargetTimespan = 1 * 60; // DarkNet: 1 day
         nTargetSpacing = 1 * 60; // DarkNet: 1 minute
-        nLastPOWBlock = 50;
+        nLastPOWBlock = 200;
         nMaturity = 15;
 
         //! Modify the testnet genesis block so the timestamp is valid for a later start.
