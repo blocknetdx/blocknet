@@ -1,5 +1,6 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2014 The Bitcoin developers
+// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2018 The Phore Developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -94,6 +95,19 @@ enum
     // Making v1-v16 witness program non-standard
     //
     SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_WITNESS_PROGRAM = (1U << 12),
+
+    // Public keys in segregated witness scripts must be compressed
+    //
+    SCRIPT_VERIFY_WITNESS_PUBKEYTYPE = (1U << 15),
+};
+
+bool CheckSignatureEncoding(const std::vector<unsigned char> &vchSig, unsigned int flags, ScriptError* serror);
+
+struct PrecomputedTransactionData
+{
+    uint256 hashPrevouts, hashSequence, hashOutputs;
+
+    PrecomputedTransactionData(const CTransaction& tx);
 };
 
 enum SigVersion

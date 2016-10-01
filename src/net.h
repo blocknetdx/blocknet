@@ -30,16 +30,12 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/foreach.hpp>
 #include <boost/signals2/signal.hpp>
+#include <boost/thread/thread.hpp>
 
 class CAddrMan;
 class CBlockIndex;
 class CScheduler;
 class CNode;
-
-namespace boost
-{
-class thread_group;
-} // namespace boost
 
 /** Time between pings automatically sent out for latency probing and keepalive (in seconds). */
 static const int PING_INTERVAL = 2 * 60;
