@@ -79,6 +79,8 @@ const char* ScriptErrorString(const ScriptError serror)
             return "Witness provided for non-witness script";
         case SCRIPT_ERR_CLEANSTACK:
             return "Extra items left on stack after execution";
+        case SCRIPT_ERR_WITNESS_PUBKEYTYPE:
+            return "Using non-compressed keys in segwit";
         case SCRIPT_ERR_UNKNOWN_ERROR:
         case SCRIPT_ERR_ERROR_COUNT:
         default: break;
