@@ -2527,7 +2527,7 @@
       <string/>
      </property>
      <property name="pixmap">
-      <pixmap>:/images/bleutrade</pixmap>
+      <pixmap>:/images/bittrex</pixmap>
      </property>
     </widget>
    </widget>
@@ -2865,7 +2865,7 @@
       <string/>
      </property>
      <property name="pixmap">
-      <pixmap>:/images/bleutrade</pixmap>
+      <pixmap>:/images/bittrex</pixmap>
      </property>
     </widget>
     <widget class="QWidget" name="widgetConversion" native="true">
@@ -3036,7 +3036,7 @@
     <attribute name="title">
      <string>Settings</string>
     </attribute>
-    <widget class="QLabel" name="bleutrade">
+    <widget class="QLabel" name="bittrex">
      <property name="geometry">
       <rect>
        <x>460</x>
@@ -3052,7 +3052,7 @@
       <string/>
      </property>
      <property name="pixmap">
-      <pixmap>:/images/bleutrade</pixmap>
+      <pixmap>:/images/bittrex</pixmap>
      </property>
     </widget>
     <widget class="QPushButton" name="UpdateKeys">

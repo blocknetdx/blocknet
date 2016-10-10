@@ -395,7 +395,7 @@ void BitcoinGUI::createActions(const NetworkStyle *networkStyle)
     openAction->setStatusTip(tr("Open a DarkNet: URI or payment request"));
 
     openTradingwindowAction = new QAction(QIcon(":/icons/trade"), tr("&Trading window"), this);
-    openTradingwindowAction->setStatusTip(tr("Bleutrade trading window"));
+    openTradingwindowAction->setStatusTip(tr("Bittrex trading window"));
 
     showHelpMessageAction = new QAction(QApplication::style()->standardIcon(QStyle::SP_MessageBoxInformation), tr("&Command-line options"), this);
     showHelpMessageAction->setMenuRole(QAction::NoRole);
