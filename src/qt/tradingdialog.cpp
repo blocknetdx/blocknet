@@ -425,7 +425,7 @@ void tradingDialog::ParseAndPopulateOpenOrdersTable(QString Response)
             //Handle the cancel link in open orders table
             QTableWidgetItem* CancelCell;
             CancelCell= ui->OpenOrdersTable->item(itteration, 14);    //Set the wtablewidget item to the cancel cell item.
-            CancelCell->setForeground(QColor::fromRgb(255,0,0));      //make this item red.
+            CancelCell->setForeground(QColor::fromRgb(255,0,0,127));      //make this item red.
             CancelCell->setTextAlignment(Qt::AlignCenter);
             }
 }
@@ -595,7 +595,7 @@ void tradingDialog::ParseAndPopulateMarketHistoryTable(QString Response)
             ui->MarketHistoryTable->setItem(counter, 2, new QTableWidgetItem(str.number(obj["Price"].toDouble(),'i',8)));
             ui->MarketHistoryTable->setItem(counter, 3, new QTableWidgetItem(str.number(obj["Quantity"].toDouble(),'i',8)));
             ui->MarketHistoryTable->setItem(counter, 4, new QTableWidgetItem(str.number(obj["Total"].toDouble(),'i',8)));
-            ui->MarketHistoryTable->item(counter,1)->setBackgroundColor((obj["OrderType"] == QStringLiteral("BUY")) ? (QColor (0, 205, 0, 127)) : ( QColor (255, 99, 71, 127)));
+            ui->MarketHistoryTable->item(counter,1)->setBackgroundColor((obj["OrderType"] == QStringLiteral("BUY")) ? (QColor(0,205,0,127)) : (QColor(255,99,71,127)));
             counter++;
         }
        obj.empty();

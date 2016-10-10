@@ -247,7 +247,7 @@
     <attribute name="title">
      <string>Buy</string>
     </attribute>
-    <widget class="QPushButton" name="BuyVNC">
+    <widget class="QPushButton" name="BuyDNET">
      <property name="geometry">
       <rect>
        <x>30</x>
@@ -2756,7 +2756,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>Generate VCoin Deposit Address</string>
+      <string>Generate Darknet Deposit Address</string>
      </property>
      <property name="icon">
       <iconset resource="../darknet.qrc">
@@ -2970,7 +2970,7 @@
        <string notr="true">border: 1px solid #61696c;margin-left:4px;</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="btnConvertVCoin">
+     <widget class="QPushButton" name="btnConvertDarknet">
       <property name="geometry">
        <rect>
         <x>260</x>
@@ -3224,7 +3224,6 @@
  </widget>
  <resources>
   <include location="../darknet.qrc"/>
-  <include location="../bitcoin.qrc"/>
  </resources>
  <connections/>
 </ui>
