@@ -1,7 +1,8 @@
 // Copyright (c) 2010 Satoshi Nakamoto
-// Copyright (c) 2009-2014 The Bitcoin developers
+// Copyright (c) 2009-2016 The Bitcoin developers
 // Copyright (c) 2014-2015 The Dash developers
 // Copyright (c) 2015-2017 The PIVX developers
+// Copyright (c) 2018 The Phore developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -977,9 +978,12 @@ public:
 
     bool operator()(const CKeyID &keyID) {
         CPubKey pubkey;
-        if (pwalletMain && pwalletMain->GetPubKey(keyID, pubkey)) {
-            CScript basescript;
-            basescript << ToByteVector(pubkey) << OP_CHECKSIG;
+        if (pwalletMain) {
+            CScript basescript = GetScriptForDestination(keyID);
+            isminetype typ;
+            typ = IsMine(*pwalletMain, basescript, SIGVERSION_WITNESS_V0);
+            if (typ != ISMINE_SPENDABLE && typ != ISMINE_WATCH_SOLVABLE)
+                return false;
             CScript witscript = GetScriptForWitness(basescript);
             pwalletMain->AddCScript(witscript);
             result = CScriptID(witscript);
@@ -997,6 +1001,10 @@ public:
                 result = scriptID;
                 return true;
             }
+            isminetype typ;
+            typ = IsMine(*pwalletMain, subscript, SIGVERSION_WITNESS_V0);
+            if (typ != ISMINE_SPENDABLE && typ != ISMINE_WATCH_SOLVABLE)
+                return false;
             CScript witscript = GetScriptForWitness(subscript);
             pwalletMain->AddCScript(witscript);
             result = CScriptID(witscript);
@@ -1036,7 +1044,7 @@ UniValue addwitnessaddress(const UniValue& params, bool fHelp)
     CTxDestination dest = address.Get();
     bool ret = boost::apply_visitor(w, dest);
     if (!ret) {
-        throw JSONRPCError(RPC_WALLET_ERROR, "Public key or redeemscript not known to wallet");
+        throw JSONRPCError(RPC_WALLET_ERROR, "Public key or redeemscript not known to wallet, or the key is uncompressed");
     }
 
     return CBitcoinAddress(w.result).ToString();
