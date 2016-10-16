@@ -117,6 +117,12 @@ static const unsigned int DATABASE_WRITE_INTERVAL = 3600;
 static const unsigned int MAX_REJECT_MESSAGE_LENGTH = 111;
 /** Default for -bytespersigop */
 static const unsigned int DEFAULT_BYTES_PER_SIGOP = 20;
+/** The maximum number of witness stack items in a standard P2WSH script */
+static const unsigned int MAX_STANDARD_P2WSH_STACK_ITEMS = 100;
+/** The maximum size of each witness stack item in a standard P2WSH script */
+static const unsigned int MAX_STANDARD_P2WSH_STACK_ITEM_SIZE = 80;
+/** The maximum size of a standard witnessScript */
+static const unsigned int MAX_STANDARD_P2WSH_SCRIPT_SIZE = 3600;
 
 /** Enable bloom filter */
  static const bool DEFAULT_PEERBLOOMFILTERS = true;
