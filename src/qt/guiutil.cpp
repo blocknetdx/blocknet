@@ -806,6 +806,11 @@ void restoreWindowGeometry(const QString& strSetting, const QSize& defaultSize, 
     parent->move(pos);
 }
 
+// Check whether a theme is not build-in
+bool isExternal(QString theme){
+    return (theme.operator !=("drk")) && (theme.operator !=("drk-1")) && (theme.operator !=("drkblue")) && (theme.operator !=("trad"));
+}
+
 // Open CSS when configured
 QString loadStyleSheet()
 {
@@ -814,19 +819,29 @@ QString loadStyleSheet()
     QString cssName;
     QString theme = settings.value("theme", "").toString();
 
-    if(!theme.isEmpty()){
-        cssName = QString(":/css/") + theme; 
+    if(isExternal(theme)){
+        // External CSS
+        settings.setValue("fCSSexternal", true);
+        boost::filesystem::path pathAddr = GetDataDir() / "themes/";
+        cssName = pathAddr.c_str() + theme + "/css/theme.css";
     }
-    else {
-        cssName = QString(":/css/drk-1");  
-        settings.setValue("theme", "drk-1");
+    else{
+        // Build-in CSS
+        settings.setValue("fCSSexternal", false);
+        if(!theme.isEmpty()){
+            cssName = QString(":/css/") + theme;
+        }
+        else {
+            cssName = QString(":/css/drk-1");  
+            settings.setValue("theme", "drk-1");
+        }
     }
-    
+
     QFile qFile(cssName);      
     if (qFile.open(QFile::ReadOnly)) {
         styleSheet = QLatin1String(qFile.readAll());
     }
-        
+
     return styleSheet;
 }
 

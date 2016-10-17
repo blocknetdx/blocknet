@@ -182,7 +182,10 @@ namespace GUIUtil
 
     /** Load global CSS theme */
     QString loadStyleSheet();
-    
+
+    /** Check whether a theme is not build-in */
+    bool isExternal(QString theme);
+
     /* Convert QString to OS specific boost path through UTF-8 */
     boost::filesystem::path qstringToBoostPath(const QString &path);
 
