@@ -118,3 +118,4 @@ qa/pull-tester/test.*/*
 .cproject
 .project
 /doc/doxygen/
+/nbproject/

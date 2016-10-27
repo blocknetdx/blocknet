@@ -173,6 +173,7 @@ void OptionsDialog::setModel(OptionsModel *model)
     connect(ui->theme, SIGNAL(valueChanged()), this, SLOT(showRestartWarning()));
     connect(ui->lang, SIGNAL(valueChanged()), this, SLOT(showRestartWarning()));
     connect(ui->thirdPartyTxUrls, SIGNAL(textChanged(const QString &)), this, SLOT(showRestartWarning()));
+    connect(ui->showMasternodesTab, SIGNAL(clicked(bool)), this, SLOT(showRestartWarning()));
 }
 
 void OptionsDialog::setMapper()
@@ -212,6 +213,7 @@ void OptionsDialog::setMapper()
     /* Obfuscation Rounds */
     mapper->addMapping(ui->obfuscationRounds, OptionsModel::ObfuscationRounds);
     mapper->addMapping(ui->anonymizeDarknet, OptionsModel::AnonymizeDarknetAmount);
+    mapper->addMapping(ui->showMasternodesTab, OptionsModel::ShowMasternodesTab);
 
 }
 

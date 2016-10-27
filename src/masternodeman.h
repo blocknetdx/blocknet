@@ -141,6 +141,9 @@ public:
     std::string ToString() const;
 
     void Remove(CTxIn vin);
+    
+    /// Update masternode list and maps using provided CMasternodeBroadcast
+    void UpdateMasternodeList(CMasternodeBroadcast mnb);
 
 };
 
