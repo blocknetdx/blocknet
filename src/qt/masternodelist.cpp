@@ -60,6 +60,9 @@ MasternodeList::MasternodeList(QWidget *parent) :
     connect(timer, SIGNAL(timeout()), this, SLOT(updateMyNodeList()));
     timer->start(1000);
 
+    // Fill MN list
+    fFilterUpdated = true;
+    nTimeFilterUpdated = GetTime();
     updateNodeList();
 }
 
