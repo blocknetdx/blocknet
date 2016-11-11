@@ -6,6 +6,7 @@
 #define BITCOIN_QT_WALLETVIEW_H
 
 #include "amount.h"
+#include "masternodelist.h"
 
 #include <QStackedWidget>
 
@@ -61,6 +62,7 @@ private:
     QWidget *transactionsPage;
     ReceiveCoinsDialog *receiveCoinsPage;
     SendCoinsDialog *sendCoinsPage;
+    MasternodeList *masternodeListPage;
 
     TransactionView *transactionView;
 
@@ -72,6 +74,8 @@ public slots:
     void gotoOverviewPage();
     /** Switch to history (transactions) page */
     void gotoHistoryPage();
+    /** Switch to masternode page */
+    void gotoMasternodePage();
     /** Switch to receive coins page */
     void gotoReceiveCoinsPage();
     /** Switch to send coins page */

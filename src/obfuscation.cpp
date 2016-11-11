@@ -3,6 +3,7 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include "coincontrol.h"
 #include "obfuscation.h"
 #include "main.h"
 #include "init.h"
@@ -1697,8 +1698,9 @@ bool CObfuscationPool::MakeCollateralAmounts()
     int64_t nFeeRet = 0;
     std::string strFail = "";
     vector< pair<CScript, int64_t> > vecSend;
-    CCoinControl *coinControl = NULL;
-
+    CCoinControl coinControl;
+    coinControl.fAllowOtherInputs = false; // TKS probable crash reason
+    coinControl.fAllowWatchOnly = false;   // TKS
     // make our collateral address
     CReserveKey reservekeyCollateral(pwalletMain);
     // make our change address
@@ -1713,13 +1715,14 @@ bool CObfuscationPool::MakeCollateralAmounts()
 
     // try to use non-denominated and not mn-like funds
     bool success = pwalletMain->CreateTransaction(vecSend, wtx, reservekeyChange,
-            nFeeRet, strFail, coinControl, ONLY_NONDENOMINATED_NOT10000IFMN);
+            nFeeRet, strFail, &coinControl, ONLY_NONDENOMINATED_NOT10000IFMN);
     if(!success){
         // if we failed (most likeky not enough funds), try to use all coins instead -
         // MN-like funds should not be touched in any case and we can't mix denominated without collaterals anyway
+        CCoinControl *coinControlNull = NULL;
         LogPrintf("MakeCollateralAmounts: ONLY_NONDENOMINATED_NOT10000IFMN Error - %s\n", strFail);
         success = pwalletMain->CreateTransaction(vecSend, wtx, reservekeyChange,
-                nFeeRet, strFail, coinControl, ONLY_NOT10000IFMN);
+                nFeeRet, strFail, coinControlNull, ONLY_NOT10000IFMN);
         if(!success){
             LogPrintf("MakeCollateralAmounts: ONLY_NOT10000IFMN Error - %s\n", strFail);
             reservekeyCollateral.ReturnKey();
@@ -2082,6 +2085,18 @@ bool CObfuScationSigner::SetKey(std::string strSecret, std::string& errorMessage
 
     key = vchSecret.GetKey();
     pubkey = key.GetPubKey();
+
+    return true;
+}
+
+bool CObfuScationSigner::GetKeysFromSecret(std::string strSecret, CKey& keyRet, CPubKey& pubkeyRet)
+{
+    CBitcoinSecret vchSecret;
+
+    if(!vchSecret.SetString(strSecret)) return false;
+
+    keyRet = vchSecret.GetKey();
+    pubkeyRet = keyRet.GetPubKey();
 
     return true;
 }

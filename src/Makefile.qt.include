@@ -28,6 +28,7 @@ QT_FORMS_UI = \
   qt/forms/editaddressdialog.ui \
   qt/forms/helpmessagedialog.ui \
   qt/forms/intro.ui \
+  qt/forms/masternodelist.ui \
   qt/forms/openuridialog.ui \
   qt/forms/optionsdialog.ui \
   qt/forms/overviewpage.ui \
@@ -57,6 +58,7 @@ QT_MOC_CPP = \
   qt/moc_intro.cpp \
   qt/moc_macdockiconhandler.cpp \
   qt/moc_macnotificationhandler.cpp \
+  qt/moc_masternodelist.cpp \
   qt/moc_notificator.cpp \
   qt/moc_openuridialog.cpp \
   qt/moc_optionsdialog.cpp \
@@ -124,6 +126,7 @@ BITCOIN_QT_H = \
   qt/intro.h \
   qt/macdockiconhandler.h \
   qt/macnotificationhandler.h \
+  qt/masternodelist.h \
   qt/networkstyle.h \
   qt/notificator.h \
   qt/openuridialog.h \
@@ -133,6 +136,7 @@ BITCOIN_QT_H = \
   qt/paymentrequestplus.h \
   qt/paymentserver.h \
   qt/peertablemodel.h \
+  qt/platformstyle.h \
   qt/qvalidatedlineedit.h \
   qt/qvaluecombobox.h \
   qt/receivecoinsdialog.h \
@@ -201,6 +205,7 @@ RES_ICONS = \
   qt/res/icons/key.png \
   qt/res/icons/lock_closed.png \
   qt/res/icons/lock_open.png \
+  qt/res/icons/masternodes.png \
   qt/res/icons/overview.png \
   qt/res/icons/qrcode.png \
   qt/res/icons/quit.png \
@@ -236,6 +241,7 @@ BITCOIN_QT_CPP = \
   qt/optionsdialog.cpp \
   qt/optionsmodel.cpp \
   qt/peertablemodel.cpp \
+  qt/platformstyle.cpp \
   qt/qvalidatedlineedit.cpp \
   qt/qvaluecombobox.cpp \
   qt/rpcconsole.cpp \
@@ -253,6 +259,7 @@ BITCOIN_QT_CPP += \
   qt/coincontroltreewidget.cpp \
   qt/obfuscationconfig.cpp \
   qt/editaddressdialog.cpp \
+  qt/masternodelist.cpp \
   qt/openuridialog.cpp \
   qt/overviewpage.cpp \
   qt/paymentrequestplus.cpp \

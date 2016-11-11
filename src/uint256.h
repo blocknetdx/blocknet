@@ -339,6 +339,27 @@ public:
     uint64_t GetHash(const uint256& salt) const;
 };
 
+/* uint256 from const char *.
+ * This is a separate function because the constructor uint256(const char*) can result
+ * in dangerously catching uint256(0).
+ */
+inline uint256 uint256S(const char *str)
+{
+    uint256 rv;
+    rv.SetHex(str);
+    return rv;
+}
+/* uint256 from std::string.
+ * This is a separate function because the constructor uint256(const std::string &str) can result
+ * in dangerously catching uint256(0) via std::string(const char*).
+ */
+inline uint256 uint256S(const std::string& str)
+{
+    uint256 rv;
+    rv.SetHex(str);
+    return rv;
+}
+
 /** 512-bit unsigned big integer. */
 class uint512 : public base_uint<512> {
 public:

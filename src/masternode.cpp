@@ -69,6 +69,7 @@ CMasternode::CMasternode()
     cacheInputAgeBlock = 0;
     unitTest = false;
     allowFreeTx = true;
+    nActiveState = MASTERNODE_ENABLED,
     protocolVersion = PROTOCOL_VERSION;
     nLastDsq = 0;
     nScanningErrorCount = 0;
@@ -93,6 +94,7 @@ CMasternode::CMasternode(const CMasternode& other)
     cacheInputAgeBlock = other.cacheInputAgeBlock;
     unitTest = other.unitTest;
     allowFreeTx = other.allowFreeTx;
+    nActiveState = MASTERNODE_ENABLED,
     protocolVersion = other.protocolVersion;
     nLastDsq = other.nLastDsq;
     nScanningErrorCount = other.nScanningErrorCount;
@@ -117,6 +119,7 @@ CMasternode::CMasternode(const CMasternodeBroadcast& mnb)
     cacheInputAgeBlock = 0;
     unitTest = false;
     allowFreeTx = true;
+    nActiveState = MASTERNODE_ENABLED,
     protocolVersion = mnb.protocolVersion;
     nLastDsq = mnb.nLastDsq;
     nScanningErrorCount = 0;
@@ -284,6 +287,28 @@ int64_t CMasternode::GetLastPaid() {
     return 0;
 }
 
+std::string CMasternode::GetStatus()
+{
+    switch(nActiveState) {
+        case CMasternode::MASTERNODE_PRE_ENABLED:       return "PRE_ENABLED";
+        case CMasternode::MASTERNODE_ENABLED:           return "ENABLED";
+        case CMasternode::MASTERNODE_EXPIRED:           return "EXPIRED";
+        case CMasternode::MASTERNODE_OUTPOINT_SPENT:    return "OUTPOINT_SPENT";
+        case CMasternode::MASTERNODE_REMOVE:            return "REMOVE";
+        case CMasternode::MASTERNODE_WATCHDOG_EXPIRED:  return "WATCHDOG_EXPIRED";
+        case CMasternode::MASTERNODE_POSE_BAN:          return "POSE_BAN";
+        default:                                        return "UNKNOWN";
+    }
+}
+
+bool CMasternode::IsValidNetAddr()
+{
+    // TODO: regtest is fine with any addresses for now,
+    // should probably be a bit smarter if one day we start to implement tests for this
+    return Params().NetworkID() == CBaseChainParams::REGTEST ||
+            (IsReachable(addr) && addr.IsRoutable());
+}
+
 CMasternodeBroadcast::CMasternodeBroadcast()
 {
     vin = CTxIn();
@@ -342,6 +367,88 @@ CMasternodeBroadcast::CMasternodeBroadcast(const CMasternode& mn)
     nLastDsq = mn.nLastDsq;
     nScanningErrorCount = mn.nScanningErrorCount;
     nLastScanningErrorBlockHeight = mn.nLastScanningErrorBlockHeight;
+}
+
+bool CMasternodeBroadcast::Create(std::string strService, std::string strKeyMasternode, std::string strTxHash, std::string strOutputIndex, std::string& strErrorRet, CMasternodeBroadcast &mnbRet, bool fOffline)
+{
+    CTxIn txin;
+    CPubKey pubKeyCollateralAddressNew;
+    CKey keyCollateralAddressNew;
+    CPubKey pubKeyMasternodeNew;
+    CKey keyMasternodeNew;
+
+    //need correct blocks to send ping
+    if(!fOffline && !masternodeSync.IsBlockchainSynced()) {
+        strErrorRet = "Sync in progress. Must wait until sync is complete to start Masternode";
+        LogPrintf("CMasternodeBroadcast::Create -- %s\n", strErrorRet);
+        return false;
+    }
+
+    if(!obfuScationSigner.GetKeysFromSecret(strKeyMasternode, keyMasternodeNew, pubKeyMasternodeNew)) {
+        strErrorRet = strprintf("Invalid masternode key %s", strKeyMasternode);
+        LogPrintf("CMasternodeBroadcast::Create -- %s\n", strErrorRet);
+        return false;
+    }
+
+    if(!pwalletMain->GetMasternodeVinAndKeys(txin, pubKeyCollateralAddressNew, keyCollateralAddressNew, strTxHash, strOutputIndex)) {
+        strErrorRet = strprintf("Could not allocate txin %s:%s for masternode %s", strTxHash, strOutputIndex, strService);
+        LogPrintf("CMasternodeBroadcast::Create -- %s\n", strErrorRet);
+        return false;
+    }
+
+    CService service = CService(strService);
+    int mainnetDefaultPort = Params(CBaseChainParams::MAIN).GetDefaultPort();
+    if(Params().NetworkID() == CBaseChainParams::MAIN) {
+        if(service.GetPort() != mainnetDefaultPort) {
+            strErrorRet = strprintf("Invalid port %u for masternode %s, only %d is supported on mainnet.", service.GetPort(), strService, mainnetDefaultPort);
+            LogPrintf("CMasternodeBroadcast::Create -- %s\n", strErrorRet);
+            return false;
+        }
+    } else if (service.GetPort() == mainnetDefaultPort) {
+        strErrorRet = strprintf("Invalid port %u for masternode %s, %d is the only supported on mainnet.", service.GetPort(), strService, mainnetDefaultPort);
+        LogPrintf("CMasternodeBroadcast::Create -- %s\n", strErrorRet);
+        return false;
+    }
+
+    return Create(txin, CService(strService), keyCollateralAddressNew, pubKeyCollateralAddressNew, keyMasternodeNew, pubKeyMasternodeNew, strErrorRet, mnbRet);
+}
+
+bool CMasternodeBroadcast::Create(CTxIn txin, CService service, CKey keyCollateralAddressNew, CPubKey pubKeyCollateralAddressNew, CKey keyMasternodeNew, CPubKey pubKeyMasternodeNew, std::string &strErrorRet, CMasternodeBroadcast &mnbRet)
+{
+    // wait for reindex and/or import to finish
+    if (fImporting || fReindex) return false;
+
+    LogPrint("masternode", "CMasternodeBroadcast::Create -- pubKeyCollateralAddressNew = %s, pubKeyMasternodeNew.GetID() = %s\n",
+             CBitcoinAddress(pubKeyCollateralAddressNew.GetID()).ToString(),
+             pubKeyMasternodeNew.GetID().ToString());
+
+
+    CMasternodePing mnp(txin);
+    if(!mnp.Sign(keyMasternodeNew, pubKeyMasternodeNew)) {
+        strErrorRet = strprintf("Failed to sign ping, masternode=%s", txin.prevout.ToStringShort());
+        LogPrintf("CMasternodeBroadcast::Create -- %s\n", strErrorRet);
+        mnbRet = CMasternodeBroadcast();
+        return false;
+    }
+
+    mnbRet = CMasternodeBroadcast(service, txin, pubKeyCollateralAddressNew, pubKeyMasternodeNew, PROTOCOL_VERSION);
+
+    if(!mnbRet.IsValidNetAddr()) {
+        strErrorRet = strprintf("Invalid IP address, masternode=%s", txin.prevout.ToStringShort());
+        LogPrintf("CMasternodeBroadcast::Create -- %s\n", strErrorRet);
+        mnbRet = CMasternodeBroadcast();
+        return false;
+    }
+
+    mnbRet.lastPing = mnp;
+    if(!mnbRet.Sign(keyCollateralAddressNew)) {
+        strErrorRet = strprintf("Failed to sign broadcast, masternode=%s", txin.prevout.ToStringShort());
+        LogPrintf("CMasternodeBroadcast::Create -- %s\n", strErrorRet);
+        mnbRet = CMasternodeBroadcast();
+        return false;
+    }
+
+    return true;
 }
 
 bool CMasternodeBroadcast::CheckAndUpdate(int& nDos)

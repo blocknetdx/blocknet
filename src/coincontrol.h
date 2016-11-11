@@ -5,6 +5,7 @@
 #ifndef BITCOIN_COINCONTROL_H
 #define BITCOIN_COINCONTROL_H
 
+#include "script/standard.h"
 #include "primitives/transaction.h"
 
 /** Coin Control Features. */
@@ -14,6 +15,12 @@ public:
     CTxDestination destChange;
     bool useObfuScation;
     bool useSwiftTX;
+    //! If false, allows unselected inputs, but requires all selected inputs be used
+    bool fAllowOtherInputs;
+    //! Includes watch only addresses which match the ISMINE_WATCH_SOLVABLE criteria
+    bool fAllowWatchOnly;
+    //! Minimum absolute fee (not per kilobyte)
+    CAmount nMinimumTotalFee;
 
     CCoinControl()
     {
@@ -26,6 +33,9 @@ public:
         setSelected.clear();
         useSwiftTX = false;
         useObfuScation = true;
+        fAllowOtherInputs = false;
+        fAllowWatchOnly = false;
+        nMinimumTotalFee = 0;
     }
 
     bool HasSelected() const

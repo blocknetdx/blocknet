@@ -193,7 +193,7 @@ public:
         void CopyFrom(const UnlockContext& rhs);
     };
 
-    UnlockContext requestUnlock(bool relock);
+    UnlockContext requestUnlock(bool relock=false);
 
     bool getPubKey(const CKeyID &address, CPubKey& vchPubKeyOut) const;
     void getOutputs(const std::vector<COutPoint>& vOutpoints, std::vector<COutput>& vOutputs);
