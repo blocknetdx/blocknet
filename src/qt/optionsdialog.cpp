@@ -81,12 +81,22 @@ OptionsDialog::OptionsDialog(QWidget *parent, bool enableWallet) :
         ui->digits->addItem(digits, digits);
     }
     
-    /* Theme selector */
+    /* Theme selector static themes */
     ui->theme->addItem(QString("DNET-dark"), QVariant("drk"));
     ui->theme->addItem(QString("DNET-dark-1"), QVariant("drk-1"));
     ui->theme->addItem(QString("DNET-blue"), QVariant("drkblue"));
     ui->theme->addItem(QString("DNET-traditional"), QVariant("trad"));
 
+    /* Theme selector external themes */
+    boost::filesystem::path pathAddr = GetDataDir() / "themes";
+    QDir dir(pathAddr.c_str());
+    dir.setFilter(QDir::Dirs | QDir::NoSymLinks | QDir::NoDotAndDotDot);
+    QFileInfoList list = dir.entryInfoList();
+
+    for (int i = 0; i < list.size(); ++i){
+         QFileInfo fileInfo = list.at(i);
+         ui->theme->addItem(fileInfo.fileName(), QVariant(fileInfo.fileName()));
+    }
     
     /* Language selector */
     QDir translations(":translations");

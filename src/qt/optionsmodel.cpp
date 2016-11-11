@@ -134,6 +134,8 @@ void OptionsModel::Init()
         settings.setValue("digits", "2");
     if (!settings.contains("theme"))
         settings.setValue("theme", "");
+    if (!settings.contains("fCSSexternal"))
+        settings.setValue("fCSSexternal", false);
     if (!settings.contains("language"))
         settings.setValue("language", "");
     if (!SoftSetArg("-lang", settings.value("language").toString().toStdString()))
