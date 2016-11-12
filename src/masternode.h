@@ -161,6 +161,8 @@ public:
         swap(first.addr, second.addr);
         swap(first.pubkey, second.pubkey);
         swap(first.pubkey2, second.pubkey2);
+        swap(first.pubKeyCollateralAddress, second.pubKeyCollateralAddress);
+        swap(first.pubKeyMasternode, second.pubKeyMasternode);
         swap(first.sig, second.sig);
         swap(first.activeState, second.activeState);
         swap(first.sigTime, second.sigTime);

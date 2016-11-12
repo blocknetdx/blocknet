@@ -1699,8 +1699,8 @@ bool CObfuscationPool::MakeCollateralAmounts()
     std::string strFail = "";
     vector< pair<CScript, int64_t> > vecSend;
     CCoinControl coinControl;
-    coinControl.fAllowOtherInputs = false; // TKS probable crash reason
-    coinControl.fAllowWatchOnly = false;   // TKS
+    coinControl.fAllowOtherInputs = false;
+    coinControl.fAllowWatchOnly = false;
     // make our collateral address
     CReserveKey reservekeyCollateral(pwalletMain);
     // make our change address

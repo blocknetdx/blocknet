@@ -61,6 +61,8 @@ CMasternode::CMasternode()
     addr = CService();
     pubkey = CPubKey();
     pubkey2 = CPubKey();
+    pubKeyCollateralAddress = CPubKey();
+    pubKeyMasternode = CPubKey();
     sig = std::vector<unsigned char>();
     activeState = MASTERNODE_ENABLED;
     sigTime = GetAdjustedTime();
@@ -86,6 +88,8 @@ CMasternode::CMasternode(const CMasternode& other)
     addr = other.addr;
     pubkey = other.pubkey;
     pubkey2 = other.pubkey2;
+    pubKeyCollateralAddress = CPubKey();
+    pubKeyMasternode = CPubKey();
     sig = other.sig;
     activeState = other.activeState;
     sigTime = other.sigTime;
@@ -111,6 +115,8 @@ CMasternode::CMasternode(const CMasternodeBroadcast& mnb)
     addr = mnb.addr;
     pubkey = mnb.pubkey;
     pubkey2 = mnb.pubkey2;
+    pubKeyCollateralAddress = CPubKey();
+    pubKeyMasternode = CPubKey();
     sig = mnb.sig;
     activeState = MASTERNODE_ENABLED;
     sigTime = mnb.sigTime;
@@ -136,6 +142,8 @@ bool CMasternode::UpdateFromNewBroadcast(CMasternodeBroadcast& mnb)
 {
     if(mnb.sigTime > sigTime) {    
         pubkey2 = mnb.pubkey2;
+        pubKeyMasternode = mnb.pubKeyMasternode;
+        pubKeyCollateralAddress = mnb.pubKeyCollateralAddress;
         sigTime = mnb.sigTime;
         sig = mnb.sig;
         protocolVersion = mnb.protocolVersion;
@@ -315,6 +323,8 @@ CMasternodeBroadcast::CMasternodeBroadcast()
     addr = CService();
     pubkey = CPubKey();
     pubkey2 = CPubKey();
+    pubKeyCollateralAddress = CPubKey();
+    pubKeyMasternode = CPubKey();
     sig = std::vector<unsigned char>();
     activeState = MASTERNODE_ENABLED;
     sigTime = GetAdjustedTime();
@@ -329,12 +339,12 @@ CMasternodeBroadcast::CMasternodeBroadcast()
     nLastScanningErrorBlockHeight = 0;
 }
 
-CMasternodeBroadcast::CMasternodeBroadcast(CService newAddr, CTxIn newVin, CPubKey newPubkey, CPubKey newPubkey2, int protocolVersionIn)
+CMasternodeBroadcast::CMasternodeBroadcast(CService newAddr, CTxIn newVin, CPubKey pubKeyCollateralAddressNew, CPubKey pubKeyMasternodeNew, int protocolVersionIn)
 {
     vin = newVin;
     addr = newAddr;
-    pubkey = newPubkey;
-    pubkey2 = newPubkey2;
+    pubKeyCollateralAddress = pubKeyCollateralAddressNew;
+    pubKeyMasternode = pubKeyMasternodeNew;
     sig = std::vector<unsigned char>();
     activeState = MASTERNODE_ENABLED;
     sigTime = GetAdjustedTime();
@@ -355,6 +365,8 @@ CMasternodeBroadcast::CMasternodeBroadcast(const CMasternode& mn)
     addr = mn.addr;
     pubkey = mn.pubkey;
     pubkey2 = mn.pubkey2;
+    pubKeyCollateralAddress = mn.pubKeyCollateralAddress;
+    pubKeyMasternode = mn.pubKeyMasternode;
     sig = mn.sig;
     activeState = mn.activeState;
     sigTime = mn.sigTime;
