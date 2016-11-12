@@ -2183,7 +2183,7 @@ bool CObfuscationQueue::CheckSignature()
         std::string strMessage = vin.ToString() + boost::lexical_cast<std::string>(nDenom) + boost::lexical_cast<std::string>(time) + boost::lexical_cast<std::string>(ready);
 
         std::string errorMessage = "";
-        if(!obfuScationSigner.VerifyMessage(pmn->pubkey2, vchSig, strMessage, errorMessage)){
+        if(!obfuScationSigner.VerifyMessage(pmn->pubKeyMasternode, vchSig, strMessage, errorMessage)){
             return error("CObfuscationQueue::CheckSignature() - Got bad Masternode address signature %s \n", vin.ToString().c_str());
         }
 

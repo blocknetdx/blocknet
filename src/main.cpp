@@ -5316,7 +5316,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
                 std::string strMessage = tx.GetHash().ToString() + boost::lexical_cast<std::string>(sigTime);
 
                 std::string errorMessage = "";
-                if(!obfuScationSigner.VerifyMessage(pmn->pubkey2, vchSig, strMessage, errorMessage)){
+                if(!obfuScationSigner.VerifyMessage(pmn->pubKeyMasternode, vchSig, strMessage, errorMessage)){
                     LogPrintf("dstx: Got bad masternode address signature %s \n", vin.ToString());
                     //pfrom->Misbehaving(20);
                     return false;

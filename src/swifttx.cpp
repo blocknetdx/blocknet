@@ -480,7 +480,7 @@ bool CConsensusVote::SignatureValid()
         return false;
     }
 
-    if(!obfuScationSigner.VerifyMessage(pmn->pubkey2, vchMasterNodeSignature, strMessage, errorMessage)) {
+    if(!obfuScationSigner.VerifyMessage(pmn->pubKeyMasternode, vchMasterNodeSignature, strMessage, errorMessage)) {
         LogPrintf("SwiftTX::CConsensusVote::SignatureValid() - Verify message failed\n");
         return false;
     }
