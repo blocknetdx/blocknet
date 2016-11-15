@@ -124,10 +124,10 @@ public:
 
     CTxIn vin;
     CService addr;
-    CPubKey pubkey;
-    CPubKey pubkey2;
     CPubKey pubKeyCollateralAddress;
     CPubKey pubKeyMasternode;
+    CPubKey pubKeyCollateralAddress1;
+    CPubKey pubKeyMasternode1;
     std::vector<unsigned char> sig;
     int activeState;
     int64_t sigTime; //mnb message time
@@ -159,8 +159,8 @@ public:
         // the two classes are effectively swapped
         swap(first.vin, second.vin);
         swap(first.addr, second.addr);
-        swap(first.pubkey, second.pubkey);
-        swap(first.pubkey2, second.pubkey2);
+        swap(first.pubKeyCollateralAddress, second.pubKeyCollateralAddress);
+        swap(first.pubKeyMasternode, second.pubKeyMasternode);
         swap(first.sig, second.sig);
         swap(first.activeState, second.activeState);
         swap(first.sigTime, second.sigTime);
@@ -199,8 +199,8 @@ public:
 
             READWRITE(vin);
             READWRITE(addr);
-            READWRITE(pubkey);
-            READWRITE(pubkey2);
+            READWRITE(pubKeyCollateralAddress);
+            READWRITE(pubKeyMasternode);
             READWRITE(sig);
             READWRITE(sigTime);
             READWRITE(protocolVersion);
@@ -307,8 +307,8 @@ public:
     inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
         READWRITE(vin);
         READWRITE(addr);
-        READWRITE(pubkey);
-        READWRITE(pubkey2);
+        READWRITE(pubKeyCollateralAddress);
+        READWRITE(pubKeyMasternode);
         READWRITE(sig);
         READWRITE(sigTime);
         READWRITE(protocolVersion);
@@ -319,7 +319,7 @@ public:
     uint256 GetHash(){
         CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
         ss << sigTime;
-        ss << pubkey;
+        ss << pubKeyCollateralAddress;
         return ss.GetHash();
     }
 

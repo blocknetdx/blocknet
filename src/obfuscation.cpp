@@ -1699,8 +1699,8 @@ bool CObfuscationPool::MakeCollateralAmounts()
     std::string strFail = "";
     vector< pair<CScript, int64_t> > vecSend;
     CCoinControl coinControl;
-    coinControl.fAllowOtherInputs = false; // TKS probable crash reason
-    coinControl.fAllowWatchOnly = false;   // TKS
+    coinControl.fAllowOtherInputs = false;
+    coinControl.fAllowWatchOnly = false;
     // make our collateral address
     CReserveKey reservekeyCollateral(pwalletMain);
     // make our change address
@@ -2183,7 +2183,7 @@ bool CObfuscationQueue::CheckSignature()
         std::string strMessage = vin.ToString() + boost::lexical_cast<std::string>(nDenom) + boost::lexical_cast<std::string>(time) + boost::lexical_cast<std::string>(ready);
 
         std::string errorMessage = "";
-        if(!obfuScationSigner.VerifyMessage(pmn->pubkey2, vchSig, strMessage, errorMessage)){
+        if(!obfuScationSigner.VerifyMessage(pmn->pubKeyMasternode, vchSig, strMessage, errorMessage)){
             return error("CObfuscationQueue::CheckSignature() - Got bad Masternode address signature %s \n", vin.ToString().c_str());
         }
 
