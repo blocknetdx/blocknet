@@ -229,7 +229,7 @@ QString tradingDialog::GetOpenOrders()
             URL += this->ApiKey;
             URL += "&nonce=",
             URL += tradingDialog::GetNonce(),
-            URL += "&market=DNET_BTC";
+            URL += "&market=btc-dnet";
 
     QString Response = sendRequest(URL);
     return dequote(Response);
@@ -245,7 +245,7 @@ QString tradingDialog::BuyDNET(QString OrderType, double Quantity, double Rate)
             URL += this->ApiKey;
             URL += "&nonce=",
             URL += tradingDialog::GetNonce(),
-            URL += "&market=DNET&quantity=";
+            URL += "&market=btc-dnet&quantity=";
             URL += str.number(Quantity,'i',8);
             URL += "&rate=";
             URL += str.number(Rate,'i',8);
@@ -264,7 +264,7 @@ QString tradingDialog::SellDNET(QString OrderType, double Quantity, double Rate)
             URL += this->ApiKey;
             URL += "&nonce=",
             URL += tradingDialog::GetNonce(),
-            URL += "&market=DNET&quantity=";
+            URL += "&market=btc-dnet&quantity=";
             URL += str.number(Quantity,'i',8);
             URL += "&rate=";
             URL += str.number(Rate,'i',8);
@@ -306,7 +306,7 @@ QString tradingDialog::GetAccountHistory()
             URL += this->ApiKey;
             URL += "&nonce=",
             URL += tradingDialog::GetNonce(),
-            URL += "&market=DNET_BTC";
+            URL += "&market=btc-dnet";
 
     QString Response = sendRequest(URL);
     return dequote(Response);
