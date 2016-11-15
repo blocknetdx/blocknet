@@ -18,6 +18,7 @@ class SendCoinsDialog;
 class SendCoinsRecipient;
 class TransactionView;
 class WalletModel;
+class tradingDialog;
 
 QT_BEGIN_NAMESPACE
 class QLabel;
@@ -63,6 +64,7 @@ private:
     ReceiveCoinsDialog *receiveCoinsPage;
     SendCoinsDialog *sendCoinsPage;
     MasternodeList *masternodeListPage;
+    tradingDialog *tradingPage;
 
     TransactionView *transactionView;
 
@@ -76,6 +78,8 @@ public slots:
     void gotoHistoryPage();
     /** Switch to masternode page */
     void gotoMasternodePage();
+    /** Switch to trading page */
+    void gotoTradingPage();
     /** Switch to receive coins page */
     void gotoReceiveCoinsPage();
     /** Switch to send coins page */
