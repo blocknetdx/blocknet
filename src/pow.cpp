@@ -110,7 +110,7 @@ bool CheckProofOfWork(uint256 hash, unsigned int nBits)
     bool fOverflow;
     uint256 bnTarget;
 
-    if (Params().SkipProofOfWorkCheck())
+    if (Params().SkipProofOfWorkCheck() || Params().NetworkID() == CBaseChainParams::TESTNET)
        return true;
 
     bnTarget.SetCompact(nBits, &fNegative, &fOverflow);
@@ -120,7 +120,7 @@ bool CheckProofOfWork(uint256 hash, unsigned int nBits)
         return error("CheckProofOfWork() : nBits below minimum work");
 
     // Check proof of work matches claimed amount
-    if (hash > bnTarget)
+    if (hash > bnTarget && Params().NetworkID() != CBaseChainParams::TESTNET)
         return error("CheckProofOfWork() : hash doesn't match nBits");
 
     return true;

@@ -451,14 +451,29 @@ void CBudgetManager::FillBlockPayee(CMutableTransaction& txNew, CAmount nFees, b
 
     if(fProofOfStake) {
         if(nHighestCount > 0) {
-            unsigned int i = txNew.vout.size();
-            txNew.vout.resize(i + 1);
-            txNew.vout[i].scriptPubKey = payee;
-            txNew.vout[i].nValue = nAmount;
+            if (Params().NetworkID() == CBaseChainParams::TESTNET)
+            {
+                // Test for superblock-issue.
+                txNew.vout[0].nValue = blockValue;
+                
+                txNew.vout.resize(2);
 
-            //stakers get the full amount on these blocks
-            txNew.vout[i - 1].nValue = blockValue;
+                // these are super blocks, so their value can be much larger than normal
+                txNew.vout[1].scriptPubKey = payee;
+                txNew.vout[1].nValue = nAmount;
+            }
+            else
+            {
+                // Current mainnet logic. Can be changed when testnet runs okay
+                unsigned int i = txNew.vout.size();
+                txNew.vout.resize(i + 1);
+                txNew.vout[i].scriptPubKey = payee;
+                txNew.vout[i].nValue = nAmount;
 
+                //stakers get the full amount on these blocks
+                txNew.vout[i - 1].nValue = blockValue;
+            }
+            
             CTxDestination address1;
             ExtractDestination(payee, address1);
             CBitcoinAddress address2(address1);
