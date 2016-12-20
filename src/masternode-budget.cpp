@@ -454,8 +454,10 @@ void CBudgetManager::FillBlockPayee(CMutableTransaction& txNew, CAmount nFees, b
             if (Params().NetworkID() == CBaseChainParams::TESTNET)
             {
                 // Test for superblock-issue.
+                LogPrintf("CBudgetManager::FillBlockPayee - txNew.vout.size() = %d\n", txNew.vout.size());
+
                 txNew.vout[0].nValue = blockValue;
-                
+
                 txNew.vout.resize(2);
 
                 // these are super blocks, so their value can be much larger than normal
