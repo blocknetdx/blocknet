@@ -145,6 +145,7 @@ BitcoinGUI::BitcoinGUI(const NetworkStyle *networkStyle, QWidget *parent) :
     {
         /** Create wallet frame*/
         walletFrame = new WalletFrame(this);
+        tradingWindow = new tradingDialog(this); // Bittrex trading
     } else
 #endif // ENABLE_WALLET
     {
