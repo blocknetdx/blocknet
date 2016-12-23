@@ -127,6 +127,7 @@ void WalletFrame::gotoMasternodePage() // Masternode list
 }
 
 void WalletFrame::gotoTradingPage()   // Bittrex trading
+
 {
     QMap<QString, WalletView*>::const_iterator i;
     for (i = mapWalletViews.constBegin(); i != mapWalletViews.constEnd(); ++i)

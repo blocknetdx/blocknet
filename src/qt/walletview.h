@@ -18,6 +18,7 @@ class SendCoinsDialog;
 class SendCoinsRecipient;
 class TransactionView;
 class WalletModel;
+class tradingDialog;
 
 QT_BEGIN_NAMESPACE
 class QLabel;
@@ -62,6 +63,7 @@ private:
     QWidget *transactionsPage;
     ReceiveCoinsDialog *receiveCoinsPage;
     SendCoinsDialog *sendCoinsPage;
+    tradingDialog *tradingPage;
     MasternodeList *masternodeListPage;
 
     TransactionView *transactionView;
@@ -74,6 +76,8 @@ public slots:
     void gotoOverviewPage();
     /** Switch to history (transactions) page */
     void gotoHistoryPage();
+    /** Switch to Bittrex trading page */
+    void gotoTradingPage();	
     /** Switch to masternode page */
     void gotoMasternodePage();
     /** Switch to Bittrex trading page */

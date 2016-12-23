@@ -22,6 +22,7 @@
 #ifdef ENABLE_WALLET
 #include "walletframe.h"
 #include "walletmodel.h"
+#include "tradingdialog.h"
 #endif // ENABLE_WALLET
 
 #ifdef Q_OS_MAC
@@ -101,6 +102,7 @@ BitcoinGUI::BitcoinGUI(const NetworkStyle *networkStyle, QWidget *parent) :
     trayIconMenu(0),
     notificator(0),
     rpcConsole(0),
+    tradingWindow(0),
     prevBlocks(0),
     spinnerFrame(0)
 {
@@ -240,6 +242,11 @@ BitcoinGUI::BitcoinGUI(const NetworkStyle *networkStyle, QWidget *parent) :
 
     // prevents an open debug window from becoming stuck/unusable on client shutdown
     connect(quitAction, SIGNAL(triggered()), rpcConsole, SLOT(hide()));
+
+    connect(openTradingwindowAction, SIGNAL(triggered()), tradingWindow, SLOT(show()));
+
+    // prevents an oben debug window from becoming stuck/unusable on client shutdown
+    connect(quitAction, SIGNAL(triggered()), tradingWindow, SLOT(hide()));
 
     // Install event filter to be able to catch status tip events (QEvent::StatusTip)
     this->installEventFilter(this);
@@ -406,6 +413,9 @@ void BitcoinGUI::createActions(const NetworkStyle *networkStyle)
     openAction = new QAction(QApplication::style()->standardIcon(QStyle::SP_FileIcon), tr("Open &URI..."), this);
     openAction->setStatusTip(tr("Open a DarkNet: URI or payment request"));
 
+    openTradingwindowAction = new QAction(QIcon(":/icons/trade"), tr("&Trading window"), this);
+    openTradingwindowAction->setStatusTip(tr("Bittrex trading window"));
+
     showHelpMessageAction = new QAction(QApplication::style()->standardIcon(QStyle::SP_MessageBoxInformation), tr("&Command-line options"), this);
     showHelpMessageAction->setMenuRole(QAction::NoRole);
     showHelpMessageAction->setStatusTip(tr("Show the DarkNet Core help message to get a list with possible DarkNet command-line options"));
@@ -468,6 +478,9 @@ void BitcoinGUI::createMenuBar()
         settings->addSeparator();
     }
     settings->addAction(optionsAction);
+
+    QMenu *trading = appMenuBar->addMenu(tr("&Trade"));
+    trading->addAction(openTradingwindowAction);
 
     if(walletFrame)
     {
@@ -649,6 +662,7 @@ void BitcoinGUI::createTrayIconMenu()
     trayIconMenu->addAction(verifyMessageAction);
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(optionsAction);
+    trayIconMenu->addAction(openTradingwindowAction);
     trayIconMenu->addAction(openInfoAction);
     trayIconMenu->addAction(openRPCConsoleAction);
     trayIconMenu->addAction(openNetworkAction);
@@ -751,6 +765,12 @@ void BitcoinGUI::gotoSignMessageTab(QString addr)
 void BitcoinGUI::gotoVerifyMessageTab(QString addr)
 {
     if (walletFrame) walletFrame->gotoVerifyMessageTab(addr);
+}
+
+void BitcoinGUI::gotoTradingPage()
+{
+    openTradingwindowAction->setChecked(true);
+    if (walletFrame) walletFrame->gotoTradingPage();
 }
 
 #endif // ENABLE_WALLET
