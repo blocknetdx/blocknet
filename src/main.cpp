@@ -1704,7 +1704,7 @@ int64_t GetMasternodePayment(int nHeight, int64_t blockValue)
         if(nHeight < 200)
             return 0;
 
-        // Add TESTNET_OFFSET to nheight because that is the current height at time of writing this code
+        // Add TESTNET_OFFSET to nheight because that is the current height at the time of writing this code
         // This will allow the testnet simulation to catch up to current main net conditions
         nHeight += TESTNET_OFFSET;
     }

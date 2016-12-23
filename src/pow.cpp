@@ -32,8 +32,6 @@ unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHead
         return Params().ProofOfWorkLimit().GetCompact();
     }
 
-    
-
     if(chainActive.Tip()->nHeight > Params().LAST_POW_BLOCK())
     {
         const CBlockIndex* pindexPrev = chainActive.Tip();

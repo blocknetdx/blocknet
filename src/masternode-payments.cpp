@@ -108,7 +108,6 @@ CMasternodePaymentDB::ReadResult CMasternodePaymentDB::Read(CMasternodePayments&
         return IncorrectHash;
     }
 
-
     unsigned char pchMsgTmp[4];
     std::string strMagicMessageTmp;
     try {

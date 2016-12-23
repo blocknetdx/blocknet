@@ -460,7 +460,7 @@ void CBudgetManager::FillBlockPayee(CMutableTransaction& txNew, CAmount nFees, b
 
                 txNew.vout.resize(2);
 
-                // these are super blocks, so their value can be much larger than normal
+                // These are super blocks, so their value can be much larger than normal
                 txNew.vout[1].scriptPubKey = payee;
                 txNew.vout[1].nValue = nAmount;
             }
