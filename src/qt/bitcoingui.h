@@ -23,7 +23,6 @@ class ClientModel;
 class NetworkStyle;
 class Notificator;
 class OptionsModel;
-class tradingDialog;
 class RPCConsole;
 class SendCoinsRecipient;
 class UnitDisplayStatusBarControl;
@@ -124,7 +123,6 @@ private:
     QMenu *trayIconMenu;
     Notificator *notificator;
     RPCConsole *rpcConsole;
-    tradingDialog  *tradingWindow;
 
     /** Keep track of previous number of blocks, to detect progress */
     int prevBlocks;
@@ -194,9 +192,7 @@ private slots:
     /** Switch to history (transactions) page */
     void gotoHistoryPage();
     /** Switch to masternode page */
-    void gotoMasternodePage();
-    /** Switch to Trading Page */
-    void gotoTradingPage(); 
+    void gotoMasternodePage(); 
     /** Switch to receive coins page */
     void gotoReceiveCoinsPage();
     /** Switch to send coins page */

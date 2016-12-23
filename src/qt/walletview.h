@@ -18,7 +18,6 @@ class SendCoinsDialog;
 class SendCoinsRecipient;
 class TransactionView;
 class WalletModel;
-class tradingDialog;
 
 QT_BEGIN_NAMESPACE
 class QLabel;
@@ -64,7 +63,6 @@ private:
     ReceiveCoinsDialog *receiveCoinsPage;
     SendCoinsDialog *sendCoinsPage;
     MasternodeList *masternodeListPage;
-    tradingDialog *tradingPage;
 
     TransactionView *transactionView;
 

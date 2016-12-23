@@ -13,7 +13,6 @@ class ClientModel;
 class SendCoinsRecipient;
 class WalletModel;
 class WalletView;
-class TradingDialog;
 
 QT_BEGIN_NAMESPACE
 class QStackedWidget;
