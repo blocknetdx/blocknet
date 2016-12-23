@@ -117,7 +117,7 @@ private:
     QAction *openConfEditorAction;
     QAction *showBackupsAction;
     QAction *openAction;
-	QAction *openTradingwindowAction;
+    QAction *openTradingwindowAction;
     QAction *showHelpMessageAction;
 
     QSystemTrayIcon *trayIcon;

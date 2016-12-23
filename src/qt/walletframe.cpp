@@ -119,14 +119,14 @@ void WalletFrame::gotoHistoryPage()
         i.value()->gotoHistoryPage();
 }
 
-void WalletFrame::gotoMasternodePage()
+void WalletFrame::gotoMasternodePage() // Masternode list
 {
     QMap<QString, WalletView*>::const_iterator i;
     for (i = mapWalletViews.constBegin(); i != mapWalletViews.constEnd(); ++i)
         i.value()->gotoMasternodePage();
 }
 
-void WalletFrame::gotoTradingPage()
+void WalletFrame::gotoTradingPage()   // Bittrex trading
 {
     QMap<QString, WalletView*>::const_iterator i;
     for (i = mapWalletViews.constBegin(); i != mapWalletViews.constEnd(); ++i)

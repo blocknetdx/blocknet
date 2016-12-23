@@ -78,7 +78,7 @@ public slots:
     void gotoHistoryPage();
     /** Switch to masternode page */
     void gotoMasternodePage();
-    /** Switch to trading page */
+    /** Switch to Bittrex trading page */
     void gotoTradingPage();
     /** Switch to receive coins page */
     void gotoReceiveCoinsPage();
