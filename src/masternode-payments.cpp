@@ -108,7 +108,6 @@ CMasternodePaymentDB::ReadResult CMasternodePaymentDB::Read(CMasternodePayments&
         return IncorrectHash;
     }
 
-
     unsigned char pchMsgTmp[4];
     std::string strMagicMessageTmp;
     try {
@@ -304,7 +303,7 @@ void CMasternodePayments::FillBlockPayee(CMutableTransaction& txNew, int64_t nFe
         //no masternode detected
         CMasternode* winningNode = mnodeman.GetCurrentMasterNode(1);
         if(winningNode){
-            payee = GetScriptForDestination(winningNode->pubkey.GetID());
+            payee = GetScriptForDestination(winningNode->pubKeyCollateralAddress.GetID());
         } else {
             LogPrintf("CreateNewBlock: Failed to detect masternode to pay\n");
             hasPayment = false;
@@ -314,7 +313,7 @@ void CMasternodePayments::FillBlockPayee(CMutableTransaction& txNew, int64_t nFe
     CAmount blockValue = GetBlockValue(pindexPrev->nHeight);
     CAmount masternodePayment = GetMasternodePayment(pindexPrev->nHeight, blockValue);
 
-    
+    txNew.vout[0].nValue = blockValue;
 
     if(hasPayment)
     {
@@ -331,7 +330,7 @@ void CMasternodePayments::FillBlockPayee(CMutableTransaction& txNew, int64_t nFe
             txNew.vout.resize(2);
             txNew.vout[1].scriptPubKey = payee;
             txNew.vout[1].nValue = masternodePayment;
-            txNew.vout[0].nValue = blockValue - masternodePayment;
+            txNew.vout[0].nValue -= masternodePayment;
         }
 
         CTxDestination address1;
@@ -467,7 +466,7 @@ bool CMasternodePayments::IsScheduled(CMasternode& mn, int nNotBlockHeight)
     if(pindexPrev == NULL) return false;
 
     CScript mnpayee;
-    mnpayee = GetScriptForDestination(mn.pubkey.GetID());
+    mnpayee = GetScriptForDestination(mn.pubKeyCollateralAddress.GetID());
 
     CScript payee;
     for(int64_t h = pindexPrev->nHeight; h <= pindexPrev->nHeight+8; h++){
@@ -722,7 +721,7 @@ bool CMasternodePayments::ProcessBlock(int nBlockHeight)
 
             newWinner.nBlockHeight = nBlockHeight;
 
-            CScript payee = GetScriptForDestination(pmn->pubkey.GetID());
+            CScript payee = GetScriptForDestination(pmn->pubKeyCollateralAddress.GetID());
             newWinner.AddPayee(payee);
 
             CTxDestination address1;
@@ -780,7 +779,7 @@ bool CMasternodePaymentWinner::SignatureValid()
                     payee.ToString();
 
         std::string errorMessage = "";
-        if(!obfuScationSigner.VerifyMessage(pmn->pubkey2, vchSig, strMessage, errorMessage)){
+        if(!obfuScationSigner.VerifyMessage(pmn->pubKeyMasternode, vchSig, strMessage, errorMessage)){
             return error("CMasternodePaymentWinner::SignatureValid() - Got bad Masternode address signature %s \n", vinMasternode.ToString().c_str());
         }
 

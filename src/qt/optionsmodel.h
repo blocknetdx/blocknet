@@ -45,6 +45,7 @@ public:
         SpendZeroConfChange,    // bool
         ObfuscationRounds,    // int
         AnonymizeDarknetAmount, //int
+        ShowMasternodesTab,     // bool
         Listen,                 // bool
         OptionIDRowCount,
     };

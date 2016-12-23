@@ -99,7 +99,6 @@ public:
 
 };
 
-
 //
 // The Masternode Class. For managing the Obfuscation process. It contains the input of the 10000DNET, signature to prove
 // it's the one who own that ip address and code for calculating the payment election.
@@ -112,17 +111,23 @@ private:
     int64_t lastTimeChecked;
 public:
     enum state {
-        MASTERNODE_ENABLED = 1,
-        MASTERNODE_EXPIRED = 2,
-        MASTERNODE_VIN_SPENT = 3,
-        MASTERNODE_REMOVE = 4,
-        MASTERNODE_POS_ERROR = 5
+        MASTERNODE_PRE_ENABLED,
+        MASTERNODE_ENABLED,
+        MASTERNODE_EXPIRED,
+        MASTERNODE_OUTPOINT_SPENT,
+        MASTERNODE_REMOVE,
+        MASTERNODE_WATCHDOG_EXPIRED,
+        MASTERNODE_POSE_BAN,
+        MASTERNODE_VIN_SPENT,
+        MASTERNODE_POS_ERROR
     };
 
     CTxIn vin;
     CService addr;
-    CPubKey pubkey;
-    CPubKey pubkey2;
+    CPubKey pubKeyCollateralAddress;
+    CPubKey pubKeyMasternode;
+    CPubKey pubKeyCollateralAddress1;
+    CPubKey pubKeyMasternode1;
     std::vector<unsigned char> sig;
     int activeState;
     int64_t sigTime; //mnb message time
@@ -131,6 +136,7 @@ public:
     bool unitTest;
     bool allowFreeTx;
     int protocolVersion;
+    int nActiveState;
     int64_t nLastDsq; //the dsq count from the last dsq broadcast of this node
     int nScanningErrorCount;
     int nLastScanningErrorBlockHeight;
@@ -153,8 +159,8 @@ public:
         // the two classes are effectively swapped
         swap(first.vin, second.vin);
         swap(first.addr, second.addr);
-        swap(first.pubkey, second.pubkey);
-        swap(first.pubkey2, second.pubkey2);
+        swap(first.pubKeyCollateralAddress, second.pubKeyCollateralAddress);
+        swap(first.pubKeyMasternode, second.pubKeyMasternode);
         swap(first.sig, second.sig);
         swap(first.activeState, second.activeState);
         swap(first.sigTime, second.sigTime);
@@ -193,8 +199,8 @@ public:
 
             READWRITE(vin);
             READWRITE(addr);
-            READWRITE(pubkey);
-            READWRITE(pubkey2);
+            READWRITE(pubKeyCollateralAddress);
+            READWRITE(pubKeyMasternode);
             READWRITE(sig);
             READWRITE(sigTime);
             READWRITE(protocolVersion);
@@ -259,6 +265,8 @@ public:
         return cacheInputAge+(chainActive.Tip()->nHeight-cacheInputAgeBlock);
     }
 
+    std::string GetStatus();
+    
     std::string Status() {
         std::string strStatus = "ACTIVE";
 
@@ -272,6 +280,7 @@ public:
     }
 
     int64_t GetLastPaid();
+    bool IsValidNetAddr();
 
 };
 
@@ -298,8 +307,8 @@ public:
     inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
         READWRITE(vin);
         READWRITE(addr);
-        READWRITE(pubkey);
-        READWRITE(pubkey2);
+        READWRITE(pubKeyCollateralAddress);
+        READWRITE(pubKeyMasternode);
         READWRITE(sig);
         READWRITE(sigTime);
         READWRITE(protocolVersion);
@@ -310,10 +319,13 @@ public:
     uint256 GetHash(){
         CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
         ss << sigTime;
-        ss << pubkey;
+        ss << pubKeyCollateralAddress;
         return ss.GetHash();
     }
 
+/// Create Masternode broadcast, needs to be relayed manually after that
+    static bool Create(CTxIn vin, CService service, CKey keyCollateralAddressNew, CPubKey pubKeyCollateralAddressNew, CKey keyMasternodeNew, CPubKey pubKeyMasternodeNew, std::string &strErrorRet, CMasternodeBroadcast &mnbRet);
+    static bool Create(std::string strService, std::string strKey, std::string strTxHash, std::string strOutputIndex, std::string& strErrorRet, CMasternodeBroadcast &mnbRet, bool fOffline = false);
 };
 
 #endif

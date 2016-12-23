@@ -50,7 +50,9 @@ class CValidationState;
 
 struct CBlockTemplate;
 struct CNodeStateStats;
-
+ 
+/** Allow testnet to catch up to mainnet */
+static const int TESTNET_OFFSET = 439777;
 /** Default for -blockmaxsize and -blockminsize, which control the range of sizes the mining code will create **/
 static const unsigned int DEFAULT_BLOCK_MAX_SIZE = 750000;
 static const unsigned int DEFAULT_BLOCK_MIN_SIZE = 0;
@@ -337,6 +339,15 @@ void UpdateCoins(const CTransaction& tx, CValidationState &state, CCoinsViewCach
 
 /** Context-independent validity checks */
 bool CheckTransaction(const CTransaction& tx, CValidationState& state);
+
+/**
+ * Check if transaction will be final in the next block to be created.
+ *
+ * Calls IsFinalTx() with current block height and appropriate block time.
+ *
+ * See consensus/consensus.h for flag definitions.
+ */
+bool CheckFinalTx(const CTransaction &tx, int flags = -1);
 
 /** Check for standard transaction types
  * @return True if all outputs (scriptPubKeys) use only standard transaction forms

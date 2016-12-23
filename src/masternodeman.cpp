@@ -403,7 +403,7 @@ CMasternode *CMasternodeMan::Find(const CScript &payee)
 
     BOOST_FOREACH(CMasternode& mn, vMasternodes)
     {
-        payee2 = GetScriptForDestination(mn.pubkey.GetID());
+        payee2 = GetScriptForDestination(mn.pubKeyCollateralAddress.GetID());
         if(payee2 == payee)
             return &mn;
     }
@@ -429,7 +429,7 @@ CMasternode *CMasternodeMan::Find(const CPubKey &pubKeyMasternode)
 
     BOOST_FOREACH(CMasternode& mn, vMasternodes)
     {
-        if(mn.pubkey2 == pubKeyMasternode)
+        if(mn.pubKeyMasternode == pubKeyMasternode)
             return &mn;
     }
     return NULL;
@@ -704,7 +704,7 @@ void CMasternodeMan::ProcessMessage(CNode* pfrom, std::string& strCommand, CData
 
         // make sure the vout that was signed is related to the transaction that spawned the Masternode
         //  - this is expensive, so it's only done once per Masternode
-        if(!obfuScationSigner.IsVinAssociatedWithPubkey(mnb.vin, mnb.pubkey)) {
+        if(!obfuScationSigner.IsVinAssociatedWithPubkey(mnb.vin, mnb.pubKeyCollateralAddress)) {
             LogPrintf("mnb - Got mismatched pubkey and vin\n");
             Misbehaving(pfrom->GetId(), 33);
             return;
@@ -890,12 +890,12 @@ void CMasternodeMan::ProcessMessage(CNode* pfrom, std::string& strCommand, CData
             //   e.g. We don't want the entry relayed/time updated when we're syncing the list
             // mn.pubkey = pubkey, IsVinAssociatedWithPubkey is validated once below,
             //   after that they just need to match
-            if(count == -1 && pmn->pubkey == pubkey && (GetAdjustedTime() - pmn->nLastDsee > MASTERNODE_MIN_MNB_SECONDS)){
+            if(count == -1 && pmn->pubKeyCollateralAddress == pubkey && (GetAdjustedTime() - pmn->nLastDsee > MASTERNODE_MIN_MNB_SECONDS)){
                 if(pmn->protocolVersion > GETHEADERS_VERSION && sigTime - pmn->lastPing.sigTime < MASTERNODE_MIN_MNB_SECONDS) return;
                 if(pmn->nLastDsee < sigTime){ //take the newest entry
                     LogPrintf("dsee - Got updated entry for %s\n", addr.ToString().c_str());
                     if(pmn->protocolVersion < GETHEADERS_VERSION) {
-                        pmn->pubkey2 = pubkey2;
+                        pmn->pubKeyMasternode = pubkey2;
                         pmn->sigTime = sigTime;
                         pmn->sig = vchSig;
                         pmn->protocolVersion = protocolVersion;
@@ -983,10 +983,10 @@ void CMasternodeMan::ProcessMessage(CNode* pfrom, std::string& strCommand, CData
             CMasternode mn = CMasternode();
             mn.addr = addr;
             mn.vin = vin;
-            mn.pubkey = pubkey;
+            mn.pubKeyCollateralAddress = pubkey;
             mn.sig = vchSig;
             mn.sigTime = sigTime;
-            mn.pubkey2 = pubkey2;
+            mn.pubKeyMasternode = pubkey2;
             mn.protocolVersion = protocolVersion;
             // fake ping
             mn.lastPing = CMasternodePing(vin);
@@ -1059,7 +1059,7 @@ void CMasternodeMan::ProcessMessage(CNode* pfrom, std::string& strCommand, CData
                 std::string strMessage = pmn->addr.ToString() + boost::lexical_cast<std::string>(sigTime) + boost::lexical_cast<std::string>(stop);
 
                 std::string errorMessage = "";
-                if(!obfuScationSigner.VerifyMessage(pmn->pubkey2, vchSig, strMessage, errorMessage))
+                if(!obfuScationSigner.VerifyMessage(pmn->pubKeyMasternode, vchSig, strMessage, errorMessage))
                 {
                     LogPrintf("dseep - Got bad Masternode address signature %s \n", vin.ToString().c_str());
                     //Misbehaving(pfrom->GetId(), 100);
@@ -1105,6 +1105,25 @@ void CMasternodeMan::Remove(CTxIn vin)
             break;
         }
         ++it;
+    }
+}
+
+void CMasternodeMan::UpdateMasternodeList(CMasternodeBroadcast mnb)
+{
+    LOCK(cs);
+    mapSeenMasternodePing.insert(std::make_pair(mnb.lastPing.GetHash(), mnb.lastPing));
+    mapSeenMasternodeBroadcast.insert(std::make_pair(mnb.GetHash(), mnb));
+
+    LogPrintf("CMasternodeMan::UpdateMasternodeList -- masternode=%s  addr=%s\n", mnb.vin.prevout.ToStringShort(), mnb.addr.ToString());
+
+    CMasternode* pmn = Find(mnb.vin);
+    if(pmn == NULL) {
+        CMasternode mn(mnb);
+        if(Add(mn)) {
+            masternodeSync.AddedMasternodeList(mnb.GetHash());
+        }
+    } else if(pmn->UpdateFromNewBroadcast(mnb)) {
+        masternodeSync.AddedMasternodeList(mnb.GetHash());
     }
 }
 

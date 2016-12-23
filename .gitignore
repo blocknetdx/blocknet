@@ -1,3 +1,4 @@
+.gitignore
 *.sublime-project
 *.sublime-workspace
 todo.txt
@@ -118,3 +119,4 @@ qa/pull-tester/test.*/*
 .cproject
 .project
 /doc/doxygen/
+/nbproject/
