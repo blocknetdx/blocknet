@@ -54,6 +54,10 @@ SendCoinsDialog::SendCoinsDialog(QWidget *parent) :
     connect(ui->checkBoxCoinControlChange, SIGNAL(stateChanged(int)), this, SLOT(coinControlChangeChecked(int)));
     connect(ui->lineEditCoinControlChange, SIGNAL(textEdited(const QString &)), this, SLOT(coinControlChangeEdited(const QString &)));
 
+    // UTXO Splitter
+    connect(ui->splitBlockCheckBox, SIGNAL(stateChanged(int)), this, SLOT(splitBlockChecked(int)));
+    connect(ui->splitBlockLineEdit, SIGNAL(textChanged(const QString &)), this, SLOT(splitBlockLineEditChanged(const QString &)));
+
     // DarkNet specific
     QSettings settings;
     if (!settings.contains("bUseObfuScation"))
@@ -225,6 +229,19 @@ void SendCoinsDialog::on_sendButton_clicked()
     for(int i = 0; i < ui->entries->count(); ++i)
     {
         SendCoinsEntry *entry = qobject_cast<SendCoinsEntry*>(ui->entries->itemAt(i)->widget());
+
+        //UTXO splitter - address should be our own
+        CBitcoinAddress address = entry->getValue().address.toStdString();
+        if(!model->isMine(address) && ui->splitBlockCheckBox->checkState() == Qt::Checked)
+        {
+            CoinControlDialog::coinControl->fSplitBlock = false;
+            ui->splitBlockCheckBox->setCheckState(Qt::Unchecked);
+            QMessageBox::warning(this, tr("Send Coins"),
+                tr("The split block tool does not work when sending to outside addresses. Try again."),
+                QMessageBox::Ok, QMessageBox::Ok);
+            return;
+        }
+
         if(entry)
         {
             if(entry->validate())
@@ -242,6 +259,22 @@ void SendCoinsDialog::on_sendButton_clicked()
     {
         return;
     }
+
+    //set split block in model
+    CoinControlDialog::coinControl->fSplitBlock = ui->splitBlockCheckBox->checkState() == Qt::Checked;
+
+    if (ui->entries->count() > 1 && ui->splitBlockCheckBox->checkState() == Qt::Checked)
+    {
+        CoinControlDialog::coinControl->fSplitBlock = false;
+        ui->splitBlockCheckBox->setCheckState(Qt::Unchecked);
+        QMessageBox::warning(this, tr("Send Coins"),
+            tr("The split block tool does not work with multiple addresses. Try again."),
+            QMessageBox::Ok, QMessageBox::Ok);
+        return;
+    }
+
+    if (CoinControlDialog::coinControl->fSplitBlock)
+        CoinControlDialog::coinControl->nSplitBlock = int(ui->splitBlockLineEdit->text().toInt());
 
     QString strFunds = tr("using") + " <b>" + tr("anonymous funds") + "</b>";
     QString strFee = "";
@@ -303,6 +336,11 @@ void SendCoinsDialog::on_sendButton_clicked()
         else // insecure payment request
         {
             recipientElement = tr("%1 to %2").arg(amount, address);
+        }
+
+        if(fSplitBlock)
+        {
+            recipientElement.append(tr(" split into %1 outputs using the UTXO splitter.").arg(CoinControlDialog::coinControl->nSplitBlock));
         }
 
         formatted.append(recipientElement);
@@ -753,6 +791,32 @@ void SendCoinsDialog::updateSmartFeeLabel()
     }
 
     updateFeeMinimizedLabel();
+}
+
+// UTXO splitter
+void SendCoinsDialog::splitBlockChecked(int state)
+{
+    if (model)
+    {
+        CoinControlDialog::coinControl->fSplitBlock = (state == Qt::Checked);
+        fSplitBlock = (state == Qt::Checked);
+        ui->splitBlockLineEdit->setEnabled((state == Qt::Checked));
+        ui->labelBlockSizeText->setEnabled((state == Qt::Checked));
+        ui->labelBlockSize->setEnabled((state == Qt::Checked));
+        coinControlUpdateLabels();
+    }
+}
+
+//UTXO splitter
+void SendCoinsDialog::splitBlockLineEditChanged(const QString & text)
+{
+    double nAfterFee = ui->labelCoinControlAfterFee->text().left(ui->labelCoinControlAfterFee->text().indexOf(" ")).replace("~", "").toDouble();
+    double nSize = nAfterFee;
+    if (nAfterFee > 0 && text.toDouble() > 0)
+        nSize = nAfterFee / text.toDouble();
+    ui->labelBlockSize->setText(QString::number(nSize));
+    CoinControlDialog::nSplitBlockDummy = text.toInt();
+    coinControlUpdateLabels();
 }
 
 // Coin Control: copy label "Quantity" to clipboard
