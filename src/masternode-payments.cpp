@@ -518,14 +518,10 @@ bool CMasternodeBlockPayees::IsTransactionValid(const CTransaction& txNew)
     int nMaxSignatures = 0;
     std::string strPayeesPossible = "";
 
-    CAmount nReward;
-    CAmount masternodePayment;
-
-    nReward = GetBlockValue(nBlockHeight);
-    masternodePayment = GetMasternodePayment(nBlockHeight, nReward);
+    CAmount nReward = GetBlockValue(nBlockHeight);
+    CAmount requiredMasternodePayment = GetMasternodePayment(nBlockHeight, nReward);
 
     //require at least 6 signatures
-
     BOOST_FOREACH(CMasternodePayee& payee, vecPayments)
         if(payee.nVotes >= nMaxSignatures && payee.nVotes >= MNPAYMENTS_SIGNATURES_REQUIRED)
             nMaxSignatures = payee.nVotes;
@@ -538,7 +534,7 @@ bool CMasternodeBlockPayees::IsTransactionValid(const CTransaction& txNew)
         bool found = false;
         BOOST_FOREACH(CTxOut out, txNew.vout)
         {
-            if(payee.scriptPubKey == out.scriptPubKey && masternodePayment >= out.nValue){
+            if(payee.scriptPubKey == out.scriptPubKey && out.nValue >= requiredMasternodePayment){
                 found = true;
             }
         }
@@ -559,7 +555,7 @@ bool CMasternodeBlockPayees::IsTransactionValid(const CTransaction& txNew)
     }
 
 
-    LogPrintf("CMasternodePayments::IsTransactionValid - Missing required payment of %s to %s\n", FormatMoney(masternodePayment).c_str(),strPayeesPossible.c_str());
+    LogPrintf("CMasternodePayments::IsTransactionValid - Missing required payment of %s to %s\n", FormatMoney(requiredMasternodePayment).c_str(),strPayeesPossible.c_str());
     return false;
 }
 
