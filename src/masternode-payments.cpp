@@ -538,7 +538,7 @@ bool CMasternodeBlockPayees::IsTransactionValid(const CTransaction& txNew)
         bool found = false;
         BOOST_FOREACH(CTxOut out, txNew.vout)
         {
-            if(payee.scriptPubKey == out.scriptPubKey && masternodePayment == out.nValue){
+            if(payee.scriptPubKey == out.scriptPubKey && masternodePayment >= out.nValue){
                 found = true;
             }
         }
