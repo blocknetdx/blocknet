@@ -12,6 +12,7 @@
 #include "sync.h"
 #include "spork.h"
 #include "addrman.h"
+#include "utilmoneystr.h"
 #include <boost/lexical_cast.hpp>
 #include <boost/filesystem.hpp>
 
@@ -517,8 +518,8 @@ bool CMasternodeBlockPayees::IsTransactionValid(const CTransaction& txNew)
     int nMaxSignatures = 0;
     std::string strPayeesPossible = "";
 
-    uint64_t nReward;
-    uint64_t masternodePayment;
+    CAmount nReward;
+    CAmount masternodePayment;
 
     nReward = GetBlockValue(nBlockHeight);
     masternodePayment = GetMasternodePayment(nBlockHeight, nReward);
@@ -535,7 +536,8 @@ bool CMasternodeBlockPayees::IsTransactionValid(const CTransaction& txNew)
     BOOST_FOREACH(CMasternodePayee& payee, vecPayments)
     {
         bool found = false;
-        BOOST_FOREACH(CTxOut out, txNew.vout){
+        BOOST_FOREACH(CTxOut out, txNew.vout)
+        {
             if(payee.scriptPubKey == out.scriptPubKey && masternodePayment == out.nValue){
                 found = true;
             }
@@ -557,7 +559,7 @@ bool CMasternodeBlockPayees::IsTransactionValid(const CTransaction& txNew)
     }
 
 
-    LogPrintf("CMasternodePayments::IsTransactionValid - Missing required payment - %s\n", strPayeesPossible.c_str());
+    LogPrintf("CMasternodePayments::IsTransactionValid - Missing required payment of %s to %s\n", FormatMoney(masternodePayment).c_str(),strPayeesPossible.c_str());
     return false;
 }
 
