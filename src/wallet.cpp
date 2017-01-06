@@ -2256,16 +2256,40 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, CAmount> >& vecSend,
 
                 CAmount nTotalValue = nValue + nFeeRet;
                 double dPriority = 0;
+
                 // vouts to the payees
-                BOOST_FOREACH (const PAIRTYPE(CScript, CAmount)& s, vecSend)
+                if(coinControl && !coinControl->fSplitBlock)
                 {
-                    CTxOut txout(s.second, s.first);
-                    if (txout.IsDust(::minRelayTxFee))
+                    BOOST_FOREACH (const PAIRTYPE(CScript, CAmount)& s, vecSend)
                     {
-                        strFailReason = _("Transaction amount too small");
-                        return false;
+                        CTxOut txout(s.second, s.first);
+                        if (txout.IsDust(::minRelayTxFee))
+                        {
+                            strFailReason = _("Transaction amount too small");
+                            return false;
+                        }
+                        txNew.vout.push_back(txout);
                     }
-                    txNew.vout.push_back(txout);
+                }
+                else //UTXO Splitter Transaction
+                {
+                    int nSplitBlock = coinControl->nSplitBlock;
+                    if(nSplitBlock < 1)
+                        nSplitBlock = 1;
+
+                    BOOST_FOREACH (const PAIRTYPE(CScript, CAmount)& s, vecSend)
+                    {
+                        for(int i = 0; i < nSplitBlock; i++)
+                        {
+                            if(i == nSplitBlock - 1)
+                            {
+                                uint64_t nRemainder = s.second % nSplitBlock;
+                                txNew.vout.push_back(CTxOut((s.second / nSplitBlock) + nRemainder, s.first));
+                            }
+                            else
+                                txNew.vout.push_back(CTxOut(s.second / nSplitBlock, s.first));
+                        }
+                    }
                 }
 
                 // Choose coins to use

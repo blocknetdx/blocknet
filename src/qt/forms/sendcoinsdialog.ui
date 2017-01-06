@@ -528,7 +528,7 @@
          </widget>
         </item>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayoutCoinControl4" stretch="0,0,0">
+         <layout class="QHBoxLayout" name="horizontalLayoutCoinControl4" stretch="0,0,0,0,0,0,0">
           <property name="spacing">
            <number>12</number>
           </property>
@@ -561,6 +561,40 @@
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="splitBlockCheckBox">
+            <property name="text">
+             <string>Split UTXO</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="splitBlockLineEdit">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>50</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="placeholderText">
+             <string># of outputs</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="labelBlockSizeText">
+            <property name="text">
+             <string>UTXO Size:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="labelBlockSize">
+            <property name="text">
+             <string>0 DNET</string>
             </property>
            </widget>
           </item>
@@ -617,7 +651,7 @@
         <x>0</x>
         <y>0</y>
         <width>830</width>
-        <height>91</height>
+        <height>95</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,1">
@@ -1151,7 +1185,7 @@
                 <string>Custom:</string>
                </property>
                <property name="alignment">
-                <set>Qt::AlignRight|Qt::AlignTop</set>
+                <set>Qt::AlignRight|Qt::AlignTop|Qt::AlignTrailing</set>
                </property>
               </widget>
              </item>
@@ -1165,7 +1199,8 @@
                </property>
               </widget>
              </item>
-              <item><widget class="QLabel" name="labelSmartFee2">
+             <item row="0" column="0">
+              <widget class="QLabel" name="labelSmartFee2">
                <property name="text">
                 <string>(Smart fee not initialized yet. This usually takes a few blocks...)</string>
                </property>

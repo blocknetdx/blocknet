@@ -1838,6 +1838,14 @@ color:#ffffff;
 }
 
 /*******************************/
+/* SPLIT BLOCK CHECK BOX       */
+/*******************************/
+
+QDialog#SendCoinsDialog .QFrame#frameCoinControl .QCheckBox#splitBlockCheckBox {
+color:#ffffff;
+}
+
+/*******************************/
 /* CUSTOM CHANGE ADDRESS       */
 /*******************************/
 
