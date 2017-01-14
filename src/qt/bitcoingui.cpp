@@ -98,6 +98,7 @@ BitcoinGUI::BitcoinGUI(const NetworkStyle *networkStyle, QWidget *parent) :
     openRPCConsoleAction(0),
     openAction(0),
     showHelpMessageAction(0),
+    multiSendAction(0),
     trayIcon(0),
     trayIconMenu(0),
     notificator(0),
@@ -389,6 +390,9 @@ void BitcoinGUI::createActions(const NetworkStyle *networkStyle)
     signMessageAction->setStatusTip(tr("Sign messages with your DarkNet addresses to prove you own them"));
     verifyMessageAction = new QAction(QIcon(":/icons/transaction_0"), tr("&Verify message..."), this);
     verifyMessageAction->setStatusTip(tr("Verify messages to ensure they were signed with specified DarkNet addresses"));
+    multiSendAction = new QAction(QIcon(":/icons/edit"), tr("&MultiSend"), this);
+    multiSendAction->setToolTip(tr("MultiSend Settings"));
+    multiSendAction->setCheckable(true);
 
     openInfoAction = new QAction(QApplication::style()->standardIcon(QStyle::SP_MessageBoxInformation), tr("&Information"), this);
     openInfoAction->setStatusTip(tr("Show diagnostic information"));
@@ -439,6 +443,7 @@ void BitcoinGUI::createActions(const NetworkStyle *networkStyle)
         connect(usedSendingAddressesAction, SIGNAL(triggered()), walletFrame, SLOT(usedSendingAddresses()));
         connect(usedReceivingAddressesAction, SIGNAL(triggered()), walletFrame, SLOT(usedReceivingAddresses()));
         connect(openAction, SIGNAL(triggered()), this, SLOT(openClicked()));
+        connect(multiSendAction, SIGNAL(triggered()), this, SLOT(gotoMultiSendDialog()));
     }
 #endif // ENABLE_WALLET
 }
@@ -475,6 +480,7 @@ void BitcoinGUI::createMenuBar()
         settings->addAction(changePassphraseAction);
         settings->addAction(unlockWalletAction);
         settings->addAction(lockWalletAction);
+        settings->addAction(multiSendAction);
         settings->addSeparator();
     }
     settings->addAction(optionsAction);
@@ -773,6 +779,13 @@ void BitcoinGUI::gotoTradingPage()
     if (walletFrame) walletFrame->gotoTradingPage();
 }
 
+void BitcoinGUI::gotoMultiSendDialog()
+{
+    multiSendAction->setChecked(true);
+    if(walletFrame)
+        walletFrame->gotoMultiSendDialog();
+}
+
 #endif // ENABLE_WALLET
 
 void BitcoinGUI::setNumConnections(int count)
@@ -1021,7 +1034,7 @@ void BitcoinGUI::closeEvent(QCloseEvent *event)
 void BitcoinGUI::incomingTransaction(const QString& date, int unit, const CAmount& amount, const QString& type, const QString& address)
 {
     // On new transaction, make an info balloon
-    message((amount)<0 ? tr("Sent transaction") : tr("Incoming transaction"),
+    message((amount)<0 ? (fMultiSendNotify == true ? tr("Sent MultiSend transaction") : tr("Sent transaction") ) : tr("Incoming transaction"),
              tr("Date: %1\n"
                 "Amount: %2\n"
                 "Type: %3\n"
@@ -1030,6 +1043,8 @@ void BitcoinGUI::incomingTransaction(const QString& date, int unit, const CAmoun
                   .arg(BitcoinUnits::formatWithUnit(unit, amount, true))
                   .arg(type)
                   .arg(address), CClientUIInterface::MSG_INFORMATION);
+
+    pwalletMain->fMultiSendNotify = false;
 }
 #endif // ENABLE_WALLET
 
@@ -1066,17 +1081,20 @@ bool BitcoinGUI::eventFilter(QObject *object, QEvent *event)
 
 void BitcoinGUI::setStakingStatus()
 {
+    if(pwalletMain)
+        fMultiSend = pwalletMain->fMultiSend;
+
     if(nLastCoinStakeSearchInterval)
     {
         labelStakingIcon->show();
         labelStakingIcon->setPixmap(QIcon(":/icons/staking_active").pixmap(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE));
-        labelStakingIcon->setToolTip(tr("Staking is active"));
+        labelStakingIcon->setToolTip(tr("Staking is active\n MultiSend: %1").arg(fMultiSend ? tr("Active") : tr("Not Active")));
     }
     else
     {
         labelStakingIcon->show();
         labelStakingIcon->setPixmap(QIcon(":/icons/staking_inactive").pixmap(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE));
-        labelStakingIcon->setToolTip(tr("Staking is not active"));
+        labelStakingIcon->setToolTip(tr("Staking is not active\n MultiSend: %1").arg(fMultiSend ? tr("Active") : tr("Not Active")));
     }
 }
 

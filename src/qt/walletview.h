@@ -89,6 +89,8 @@ public slots:
     void gotoSignMessageTab(QString addr = "");
     /** Show Sign/Verify Message dialog and switch to verify message tab */
     void gotoVerifyMessageTab(QString addr = "");
+    /** Show MultiSend Dialog */
+    void gotoMultiSendDialog();
 
     /** Show incoming transaction notification for new transactions.
 

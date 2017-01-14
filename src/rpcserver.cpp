@@ -365,6 +365,7 @@ static const CRPCCommand vRPCCommands[] =
     { "wallet",             "walletpassphrase",       &walletpassphrase,       true,      false,      true },
     { "wallet",             "setstakesplitthreshold", &setstakesplitthreshold, false,     false,      true },
     { "wallet",             "getstakesplitthreshold", &getstakesplitthreshold, false,     false,      true },
+    { "wallet",             "multisend",              &multisend,              false,     false,      true },
 #endif // ENABLE_WALLET
 };
 

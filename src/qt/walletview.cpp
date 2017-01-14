@@ -10,6 +10,7 @@
 #include "clientmodel.h"
 #include "guiutil.h"
 #include "masternodeconfig.h"
+#include "multisenddialog.h"
 #include "optionsmodel.h"
 #include "overviewpage.h"
 #include "receivecoinsdialog.h"
@@ -247,6 +248,13 @@ void WalletView::gotoVerifyMessageTab(QString addr)
 
     if (!addr.isEmpty())
         signVerifyMessageDialog->setAddress_VM(addr);
+}
+
+void WalletView::gotoMultiSendDialog()
+{
+    MultiSendDialog *multiSendDialog = new MultiSendDialog(this);
+    multiSendDialog->setModel(walletModel);
+    multiSendDialog->show();
 }
 
 bool WalletView::handlePaymentRequest(const SendCoinsRecipient& recipient)
