@@ -68,6 +68,9 @@ public slots:
     /** Show MultiSend Dialog **/
     void gotoMultiSendDialog();
 
+    /** Show BIP 38 tool - default to Encryption tab */
+    void gotoBip38Tool();
+
     /** Encrypt the wallet */
     void encryptWallet(bool status);
     /** Backup the wallet */

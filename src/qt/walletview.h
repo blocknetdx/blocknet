@@ -92,6 +92,9 @@ public slots:
     /** Show MultiSend Dialog */
     void gotoMultiSendDialog();
 
+    /** Show BIP 38 tool - default to Encryption tab */
+    void gotoBip38Tool();
+
     /** Show incoming transaction notification for new transactions.
 
         The new items are those between start and end inclusive, under the given parent item.
