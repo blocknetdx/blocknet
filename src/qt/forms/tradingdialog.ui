@@ -107,7 +107,7 @@
       <string>Asks</string>
      </property>
     </widget>
-    <widget class="QLabel" name="PIVXSupply">
+    <widget class="QLabel" name="PIVSupply">
      <property name="geometry">
       <rect>
        <x>540</x>
@@ -123,7 +123,7 @@
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
-    <widget class="QLabel" name="PIVXDemand">
+    <widget class="QLabel" name="PIVDemand">
      <property name="geometry">
       <rect>
        <x>160</x>
@@ -247,7 +247,7 @@
     <attribute name="title">
      <string>Buy</string>
     </attribute>
-    <widget class="QPushButton" name="BuyPIVX">
+    <widget class="QPushButton" name="BuyPIV">
      <property name="geometry">
       <rect>
        <x>30</x>
@@ -257,7 +257,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>Buy PIVX</string>
+      <string>Buy PIV</string>
      </property>
      <property name="icon">
       <iconset resource="../darknet.qrc">
@@ -327,7 +327,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>PIVX</string>
+      <string>PIV</string>
      </property>
     </widget>
     <widget class="QLabel" name="label_5">
@@ -1519,10 +1519,10 @@
       </rect>
      </property>
      <property name="text">
-      <string>PIVX</string>
+      <string>PIV</string>
      </property>
     </widget>
-    <widget class="QLineEdit" name="UnitsInputPIVX">
+    <widget class="QLineEdit" name="UnitsInputPIV">
      <property name="geometry">
       <rect>
        <x>310</x>
@@ -1556,7 +1556,7 @@
       </font>
      </property>
     </widget>
-    <widget class="QPushButton" name="SellPIVXBTN">
+    <widget class="QPushButton" name="SellPIVBTN">
      <property name="geometry">
       <rect>
        <x>30</x>
@@ -1566,7 +1566,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>Sell PIVX</string>
+      <string>Sell PIV</string>
      </property>
      <property name="icon">
       <iconset resource="../darknet.qrc">
@@ -1592,12 +1592,12 @@
          </font>
         </property>
         <property name="text">
-         <string>PIVX Available:</string>
+         <string>PIV Available:</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="PIVXAvailableLabel">
+       <widget class="QLabel" name="PIVAvailableLabel">
         <property name="palette">
          <palette>
           <active>
@@ -2028,7 +2028,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="labelPIVX">
+       <widget class="QLabel" name="labelPIV">
         <property name="font">
          <font>
           <weight>75</weight>
@@ -2036,7 +2036,7 @@
          </font>
         </property>
         <property name="text">
-         <string>PIVX</string>
+         <string>PIV</string>
         </property>
        </widget>
       </item>
@@ -2548,7 +2548,7 @@
       <string>TextLabel</string>
      </property>
     </widget>
-    <widget class="QLabel" name="PIVXBalanceLabel">
+    <widget class="QLabel" name="PIVBalanceLabel">
      <property name="geometry">
       <rect>
        <x>150</x>
@@ -2577,7 +2577,7 @@
       </font>
      </property>
      <property name="text">
-      <string>PIVX Balance:</string>
+      <string>PIV Balance:</string>
      </property>
     </widget>
     <widget class="QLabel" name="label_12">
@@ -2599,7 +2599,7 @@
       <string>BTC Balance:</string>
      </property>
     </widget>
-    <widget class="QLabel" name="PIVXAvailableLabel_2">
+    <widget class="QLabel" name="PIVAvailableLabel_2">
      <property name="geometry">
       <rect>
        <x>150</x>
@@ -2628,7 +2628,7 @@
       </font>
      </property>
      <property name="text">
-      <string>PIVX Available:</string>
+      <string>PIV Available:</string>
      </property>
     </widget>
     <widget class="QLabel" name="label_14">
@@ -2647,10 +2647,10 @@
       </font>
      </property>
      <property name="text">
-      <string>PIVX Pending:</string>
+      <string>PIV Pending:</string>
      </property>
     </widget>
-    <widget class="QLabel" name="PIVXPendingLabel">
+    <widget class="QLabel" name="PIVPendingLabel">
      <property name="geometry">
       <rect>
        <x>150</x>
@@ -2743,7 +2743,7 @@
       </font>
      </property>
      <property name="text">
-      <string>Bittrex PIVX Deposit Address:</string>
+      <string>Bittrex PIV Deposit Address:</string>
      </property>
     </widget>
     <widget class="QPushButton" name="GenDepositBTN">

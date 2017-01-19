@@ -176,8 +176,8 @@
         <translation>Xác nhận mã hoá ví</translation>
     </message>
     <message>
-        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR PIVX&lt;/b&gt;!</source>
-        <translation>Chú ý: Nếu bạn mã hoá ví và mất mật khẩu, bạn sẽ &lt;b&gt;MẤT TẤT CẢ PIVX CỦA BẠN&lt;/b&gt;!</translation>
+        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR PIV&lt;/b&gt;!</source>
+        <translation>Chú ý: Nếu bạn mã hoá ví và mất mật khẩu, bạn sẽ &lt;b&gt;MẤT TẤT CẢ PIV CỦA BẠN&lt;/b&gt;!</translation>
     </message>
     <message>
         <source>Are you sure you wish to encrypt your wallet?</source>
@@ -864,28 +864,28 @@ Kiểu: %3
         <translation>Hãy chọn mức độ riêng tư.</translation>
     </message>
     <message>
-        <source>Use 2 separate masternodes to mix funds up to 1000 PIVX</source>
-        <translation>Sử dụng 2 masternode khác nhau để trộn số tiền lên đến 1000 PIVX</translation>
+        <source>Use 2 separate masternodes to mix funds up to 1000 PIV</source>
+        <translation>Sử dụng 2 masternode khác nhau để trộn số tiền lên đến 1000 PIV</translation>
     </message>
     <message>
-        <source>Use 8 separate masternodes to mix funds up to 1000 PIVX</source>
-        <translation>Sử dụng 8 masternode khác nhau để trộn số tiền lên đến 1000 PIVX</translation>
+        <source>Use 8 separate masternodes to mix funds up to 1000 PIV</source>
+        <translation>Sử dụng 8 masternode khác nhau để trộn số tiền lên đến 1000 PIV</translation>
     </message>
     <message>
         <source>Use 16 separate masternodes</source>
         <translation>Sử dụng 16 masternode khác nhau</translation>
     </message>
     <message>
-        <source>This option is the quickest and will cost about ~0.025 PIVX to anonymize 1000 PIVX</source>
-        <translation>Tuỳ chọn này là nhanh nhất và sẽ mất chi phí khoảng ~0.025 PIVX để ẩn danh 1000 PIVX</translation>
+        <source>This option is the quickest and will cost about ~0.025 PIV to anonymize 1000 PIV</source>
+        <translation>Tuỳ chọn này là nhanh nhất và sẽ mất chi phí khoảng ~0.025 PIV để ẩn danh 1000 PIV</translation>
     </message>
     <message>
-        <source>This option is moderately fast and will cost about 0.05 PIVX to anonymize 1000 PIVX</source>
-        <translation>Tuỳ chọn này là tương đối nhanh và sẽ mất chi phí khoảng ~0.05 PIVX để ẩn danh 1000 PIVX</translation>
+        <source>This option is moderately fast and will cost about 0.05 PIV to anonymize 1000 PIV</source>
+        <translation>Tuỳ chọn này là tương đối nhanh và sẽ mất chi phí khoảng ~0.05 PIV để ẩn danh 1000 PIV</translation>
     </message>
     <message>
-        <source>0.1 PIVX per 1000 PIVX you anonymize.</source>
-        <translation>0.1 PIVX cho mỗi 1000 PIVX bạn muốn ẩn danh.</translation>
+        <source>0.1 PIV per 1000 PIV you anonymize.</source>
+        <translation>0.1 PIV cho mỗi 1000 PIV bạn muốn ẩn danh.</translation>
     </message>
     <message>
         <source>This is the slowest and most secure option. Using maximum anonymity will cost</source>
@@ -1431,8 +1431,8 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Số tiền và số vòng:</translation>
     </message>
     <message>
-        <source>0 PIVX / 0 Rounds</source>
-        <translation>0 PIVX / 0 Vòng</translation>
+        <source>0 PIV / 0 Rounds</source>
+        <translation>0 PIV / 0 Vòng</translation>
     </message>
     <message>
         <source>Submitted Denom:</source>
@@ -3276,8 +3276,8 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Gửi tiền</translation>
     </message>
     <message>
-        <source>SwiftTX doesn't support sending values that high yet. Transactions are currently limited to %1 PIVX.</source>
-        <translation>SwiftTX không hỗ trợ để gửi giá trị lớn đến như vậy. Giới hạn giao dịch hiện tại đến %1 PIVX.</translation>
+        <source>SwiftTX doesn't support sending values that high yet. Transactions are currently limited to %1 PIV.</source>
+        <translation>SwiftTX không hỗ trợ để gửi giá trị lớn đến như vậy. Giới hạn giao dịch hiện tại đến %1 PIV.</translation>
     </message>
 </context>
 <context>
@@ -3390,8 +3390,8 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Không tìm đủ ngân sách Obfuscate denominated cho giao dịch này.</translation>
     </message>
     <message>
-        <source>Unable to locate enough Obfuscate non-denominated funds for this transaction that are not equal 1000 PIVX.</source>
-        <translation>Không tìm đủ ngân sách Obfuscate denominated cho giao dịch mà nó không bằng 1000 PIVX</translation>
+        <source>Unable to locate enough Obfuscate non-denominated funds for this transaction that are not equal 1000 PIV.</source>
+        <translation>Không tìm đủ ngân sách Obfuscate denominated cho giao dịch mà nó không bằng 1000 PIV</translation>
     </message>
     <message>
         <source>Warning: -paytxfee is set very high! This is the transaction fee you will pay if you send a transaction.</source>
@@ -3634,12 +3634,12 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Lỗi: Thấy tham số không được hỗ trợ -socks. Thiết lập phiên bản SOCKS là không thể được nữa, chỉ hỗ trợ proxy SOCKS5.</translation>
     </message>
     <message>
-        <source>Fees (in PIVX/Kb) smaller than this are considered zero fee for relaying (default: %s)</source>
-        <translation>Phí (tính theo PIVX/Kb) nhỏ hơn số này được coi là không mất phí cho việc chuyển tiền (ngầm định: %s)</translation>
+        <source>Fees (in PIV/Kb) smaller than this are considered zero fee for relaying (default: %s)</source>
+        <translation>Phí (tính theo PIV/Kb) nhỏ hơn số này được coi là không mất phí cho việc chuyển tiền (ngầm định: %s)</translation>
     </message>
     <message>
-        <source>Fees (in PIVX/Kb) smaller than this are considered zero fee for transaction creation (default: %s)</source>
-        <translation>Phí (theo PIVX/Kb) nhỏ hơn số này được coi không mất phí cho việc khởi tạo giao dịch (ngầm định: %s)</translation>
+        <source>Fees (in PIV/Kb) smaller than this are considered zero fee for transaction creation (default: %s)</source>
+        <translation>Phí (theo PIV/Kb) nhỏ hơn số này được coi không mất phí cho việc khởi tạo giao dịch (ngầm định: %s)</translation>
     </message>
     <message>
         <source>Flush database activity from memory pool to disk log every &lt;n&gt; megabytes (default: %u)</source>
@@ -3734,8 +3734,8 @@ ví dụ: alertnotify=echo %%s | mail -s "DarkNet Alert" admin@foo.com
 </translation>
     </message>
     <message>
-        <source>Unable to locate enough funds for this transaction that are not equal 1000 PIVX.</source>
-        <translation>Không tìm được đủ ngân sách cho giao dịch mà nó không đủ 1000 PIVX.</translation>
+        <source>Unable to locate enough funds for this transaction that are not equal 1000 PIV.</source>
+        <translation>Không tìm được đủ ngân sách cho giao dịch mà nó không đủ 1000 PIV.</translation>
     </message>
     <message>
         <source>Use separate SOCKS5 proxy to reach peers via Tor hidden services (default: %s)</source>
@@ -3847,8 +3847,8 @@ ví dụ: alertnotify=echo %%s | mail -s "DarkNet Alert" admin@foo.com
         <translation>Lỗi: Tìm thấy tham số không được hỗ trợ -tor, thay vào đó hãy sử dụng -onion</translation>
     </message>
     <message>
-        <source>Fee (in PIVX/kB) to add to transactions you send (default: %s)</source>
-        <translation>Phí (theo PIVX/Kb) sẽ thêm vào các giao dịch mà bạn gửi (ngầm định: %s)</translation>
+        <source>Fee (in PIV/kB) to add to transactions you send (default: %s)</source>
+        <translation>Phí (theo PIV/Kb) sẽ thêm vào các giao dịch mà bạn gửi (ngầm định: %s)</translation>
     </message>
     <message>
         <source>Finalizing transaction.</source>
@@ -4215,8 +4215,8 @@ ví dụ: alertnotify=echo %%s | mail -s "DarkNet Alert" admin@foo.com
         <translation>Khoá KeePassHttp cho liên lạc mã hoá AES với KeePass</translation>
     </message>
     <message>
-        <source>Keep N PIVX anonymized (default: %u)</source>
-        <translation>Giữ N PIVX đã được ẩn danh (ngầm định: %u)</translation>
+        <source>Keep N PIV anonymized (default: %u)</source>
+        <translation>Giữ N PIV đã được ẩn danh (ngầm định: %u)</translation>
     </message>
     <message>
         <source>Keep at most &lt;n&gt; unconnectable transactions in memory (default: %u)</source>

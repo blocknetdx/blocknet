@@ -57,7 +57,7 @@ color:#fff;
 
 QToolBar > QToolButton:checked {
 background-color:#fff;
-color:#999999; /* TEXT TOTAL AVAILABLE PIVX  */
+color:#999999; /* TEXT TOTAL AVAILABLE PIV  */
 font-weight:bold;
 }
 
@@ -1115,7 +1115,7 @@ color:#ffffff; /*  TEXT "TRANSACTION FEE"   */
 }
 
 QDialog#SendCoinsDialog QLabel#labelFeeMinimized {
-color:#ffffff; /*  TEXT "0.00010000 PIVX/kB"   */
+color:#ffffff; /*  TEXT "0.00010000 PIV/kB"   */
 }
 
 QDialog#SendCoinsDialog .QFrame#frameCoinControl { /* Coin Control Section */
@@ -1302,7 +1302,7 @@ color:#ffffff; /*  "00010000" TEXT   */
 }
 
 QDialog#SendCoinsDialog QLabel#labelFeeEstimation {
-color:#ffffff; /*  "PIVX/kB" TEXT   */
+color:#ffffff; /*  "PIV/kB" TEXT   */
 }
 
 QDialog#SendCoinsDialog QLabel#labelSmartFee2 {

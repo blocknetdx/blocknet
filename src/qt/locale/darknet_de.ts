@@ -176,7 +176,7 @@
         <translation>Wallet-Verschlüsselung bestätigen</translation>
     </message>
     <message>
-        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR PIVX&lt;/b&gt;!</source>
+        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR PIV&lt;/b&gt;!</source>
         <translation>Warnung: Wenn Sie ihre Wallet verschlüsseln und ihre Passphrase verlieren werden Sie &lt;b&gt;alle ihre DarkNet verlieren&lt;/b&gt;!</translation>
     </message>
     <message>
@@ -863,28 +863,28 @@ Adresse: %4</translation>
         <translation>Bitten wählen Sie eine Datenschutz-Stufe.</translation>
     </message>
     <message>
-        <source>Use 2 separate masternodes to mix funds up to 1000 PIVX</source>
-        <translation>Benutze 2 separate Masternodes um bis zu 1000 PIVX zu mixen</translation>
+        <source>Use 2 separate masternodes to mix funds up to 1000 PIV</source>
+        <translation>Benutze 2 separate Masternodes um bis zu 1000 PIV zu mixen</translation>
     </message>
     <message>
-        <source>Use 8 separate masternodes to mix funds up to 1000 PIVX</source>
-        <translation>Benutze 8 separate Masternodes um bis zu 1000 PIVX zu mixen</translation>
+        <source>Use 8 separate masternodes to mix funds up to 1000 PIV</source>
+        <translation>Benutze 8 separate Masternodes um bis zu 1000 PIV zu mixen</translation>
     </message>
     <message>
         <source>Use 16 separate masternodes</source>
         <translation>Benutze 16 separate Masternodes</translation>
     </message>
     <message>
-        <source>This option is the quickest and will cost about ~0.025 PIVX to anonymize 1000 PIVX</source>
-        <translation>Diese Option ist am Schnellsten und kostet ungefähr 0,025 PIVX, um 1000 PIVX zu anonymisieren</translation>
+        <source>This option is the quickest and will cost about ~0.025 PIV to anonymize 1000 PIV</source>
+        <translation>Diese Option ist am Schnellsten und kostet ungefähr 0,025 PIV, um 1000 PIV zu anonymisieren</translation>
     </message>
     <message>
-        <source>This option is moderately fast and will cost about 0.05 PIVX to anonymize 1000 PIVX</source>
-        <translation>Diese Option ist einigermaßen schnell und kostet ungefähr 0,05 PIVX, um 1000 PIVX zu anonymisieren</translation>
+        <source>This option is moderately fast and will cost about 0.05 PIV to anonymize 1000 PIV</source>
+        <translation>Diese Option ist einigermaßen schnell und kostet ungefähr 0,05 PIV, um 1000 PIV zu anonymisieren</translation>
     </message>
     <message>
-        <source>0.1 PIVX per 1000 PIVX you anonymize.</source>
-        <translation>0,1 PIVX pro 1000 zu anonymisierende DarkNet.</translation>
+        <source>0.1 PIV per 1000 PIV you anonymize.</source>
+        <translation>0,1 PIV pro 1000 zu anonymisierende DarkNet.</translation>
     </message>
     <message>
         <source>This is the slowest and most secure option. Using maximum anonymity will cost</source>
@@ -1430,8 +1430,8 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Betrag und Runden:</translation>
     </message>
     <message>
-        <source>0 PIVX / 0 Rounds</source>
-        <translation>0 PIVX / 0 Runden</translation>
+        <source>0 PIV / 0 Rounds</source>
+        <translation>0 PIV / 0 Runden</translation>
     </message>
     <message>
         <source>Submitted Denom:</source>
@@ -3276,8 +3276,8 @@ Dies kann passieren, wenn einige DarkNet aus ihrer Wallet bereits ausgegeben wur
         <translation>DarkNet überweisen</translation>
     </message>
     <message>
-        <source>SwiftTX doesn't support sending values that high yet. Transactions are currently limited to %1 PIVX.</source>
-        <translation>SwiftTX unterstützt das Versenden von Beträgen dieser Höhe noch nicht. Transaktionen sind zur Zeit auf maximal %1 PIVX begrenzt.</translation>
+        <source>SwiftTX doesn't support sending values that high yet. Transactions are currently limited to %1 PIV.</source>
+        <translation>SwiftTX unterstützt das Versenden von Beträgen dieser Höhe noch nicht. Transaktionen sind zur Zeit auf maximal %1 PIV begrenzt.</translation>
     </message>
 </context>
 <context>
@@ -3390,8 +3390,8 @@ Dies kann passieren, wenn einige DarkNet aus ihrer Wallet bereits ausgegeben wur
         <translation>Für diese Transaktion konnten nicht genug mit Obfuscate gestückelte Beträge gefunden werden.</translation>
     </message>
     <message>
-        <source>Unable to locate enough Obfuscate non-denominated funds for this transaction that are not equal 1000 PIVX.</source>
-        <translation>Für diese Transaktion konnten nicht genug nicht mit Obfuscate gestückelte Beträge gefunden werden, die ungleich 1000 PIVX sind.</translation>
+        <source>Unable to locate enough Obfuscate non-denominated funds for this transaction that are not equal 1000 PIV.</source>
+        <translation>Für diese Transaktion konnten nicht genug nicht mit Obfuscate gestückelte Beträge gefunden werden, die ungleich 1000 PIV sind.</translation>
     </message>
     <message>
         <source>Warning: -paytxfee is set very high! This is the transaction fee you will pay if you send a transaction.</source>
@@ -3634,12 +3634,12 @@ Dies kann passieren, wenn einige DarkNet aus ihrer Wallet bereits ausgegeben wur
         <translation>Fehler: Parameter -socks wird nicht mehr unterstützt. Setzen der SOCKS-Version ist nicht mehr möglich, es werden nur noch SOCKS5 Proxies unterstützt.</translation>
     </message>
     <message>
-        <source>Fees (in PIVX/Kb) smaller than this are considered zero fee for relaying (default: %s)</source>
-        <translation>Niedrigere Gebühren (in PIVX pro Kb) als diese werden bei der Vermittlung als gebührenfrei angesehen (Standard: %s)</translation>
+        <source>Fees (in PIV/Kb) smaller than this are considered zero fee for relaying (default: %s)</source>
+        <translation>Niedrigere Gebühren (in PIV pro Kb) als diese werden bei der Vermittlung als gebührenfrei angesehen (Standard: %s)</translation>
     </message>
     <message>
-        <source>Fees (in PIVX/Kb) smaller than this are considered zero fee for transaction creation (default: %s)</source>
-        <translation>Niedrigere Gebühren (in PIVX pro Kb) als diese werden bei der Transaktionserzeugung als gebührenfrei angesehen (Standard: %s)</translation>
+        <source>Fees (in PIV/Kb) smaller than this are considered zero fee for transaction creation (default: %s)</source>
+        <translation>Niedrigere Gebühren (in PIV pro Kb) als diese werden bei der Transaktionserzeugung als gebührenfrei angesehen (Standard: %s)</translation>
     </message>
     <message>
         <source>Flush database activity from memory pool to disk log every &lt;n&gt; megabytes (default: %u)</source>
@@ -3733,8 +3733,8 @@ Es wird ebenfalls empfohlen alertnotify anzugeben, um im Problemfall benachricht
 zum Beispiel: alertnotify=echo %%s | mail -s \"DarkNet Alert\" admin@foo.com</translation>
     </message>
     <message>
-        <source>Unable to locate enough funds for this transaction that are not equal 1000 PIVX.</source>
-        <translation>Für diese Transaktion konnten nicht genug Beträge gefunden werden, die ungleich 1000 PIVX sind.</translation>
+        <source>Unable to locate enough funds for this transaction that are not equal 1000 PIV.</source>
+        <translation>Für diese Transaktion konnten nicht genug Beträge gefunden werden, die ungleich 1000 PIV sind.</translation>
     </message>
     <message>
         <source>Use separate SOCKS5 proxy to reach peers via Tor hidden services (default: %s)</source>
@@ -3847,8 +3847,8 @@ zum Beispiel: alertnotify=echo %%s | mail -s \"DarkNet Alert\" admin@foo.com</tr
         <translation>Fehler: Paramter -tor wird nicht unterstützt, bitte -onion benutzen.</translation>
     </message>
     <message>
-        <source>Fee (in PIVX/kB) to add to transactions you send (default: %s)</source>
-        <translation>Gebühren (in PIVX pro Kb), die gesendeten Transaktionen hinzugefügt werden (Standard: %s)</translation>
+        <source>Fee (in PIV/kB) to add to transactions you send (default: %s)</source>
+        <translation>Gebühren (in PIV pro Kb), die gesendeten Transaktionen hinzugefügt werden (Standard: %s)</translation>
     </message>
     <message>
         <source>Finalizing transaction.</source>
@@ -4216,7 +4216,7 @@ DarkNet Core wird heruntergefahren.</translation>
         <translation>"KeePassHttp key" für die  AES-verschlüsselte Kommunikation mit "KeePass"</translation>
     </message>
     <message>
-        <source>Keep N PIVX anonymized (default: %u)</source>
+        <source>Keep N PIV anonymized (default: %u)</source>
         <translation>Betrag welcher anonymisiert vorgehalten wird. (Voreinstellung: %u)</translation>
     </message>
     <message>
