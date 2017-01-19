@@ -107,7 +107,7 @@
       <string>Asks</string>
      </property>
     </widget>
-    <widget class="QLabel" name="DNETSupply">
+    <widget class="QLabel" name="PIVXSupply">
      <property name="geometry">
       <rect>
        <x>540</x>
@@ -123,7 +123,7 @@
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
-    <widget class="QLabel" name="DNETDemand">
+    <widget class="QLabel" name="PIVXDemand">
      <property name="geometry">
       <rect>
        <x>160</x>
@@ -247,7 +247,7 @@
     <attribute name="title">
      <string>Buy</string>
     </attribute>
-    <widget class="QPushButton" name="BuyDNET">
+    <widget class="QPushButton" name="BuyPIVX">
      <property name="geometry">
       <rect>
        <x>30</x>
@@ -257,7 +257,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>Buy DNET</string>
+      <string>Buy PIVX</string>
      </property>
      <property name="icon">
       <iconset resource="../darknet.qrc">
@@ -327,7 +327,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>DNET</string>
+      <string>PIVX</string>
      </property>
     </widget>
     <widget class="QLabel" name="label_5">
@@ -1519,10 +1519,10 @@
       </rect>
      </property>
      <property name="text">
-      <string>DNET</string>
+      <string>PIVX</string>
      </property>
     </widget>
-    <widget class="QLineEdit" name="UnitsInputDNET">
+    <widget class="QLineEdit" name="UnitsInputPIVX">
      <property name="geometry">
       <rect>
        <x>310</x>
@@ -1556,7 +1556,7 @@
       </font>
      </property>
     </widget>
-    <widget class="QPushButton" name="SellDNETBTN">
+    <widget class="QPushButton" name="SellPIVXBTN">
      <property name="geometry">
       <rect>
        <x>30</x>
@@ -1566,7 +1566,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>Sell DNET</string>
+      <string>Sell PIVX</string>
      </property>
      <property name="icon">
       <iconset resource="../darknet.qrc">
@@ -1592,12 +1592,12 @@
          </font>
         </property>
         <property name="text">
-         <string>DNET Available:</string>
+         <string>PIVX Available:</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="DNETAvailableLabel">
+       <widget class="QLabel" name="PIVXAvailableLabel">
         <property name="palette">
          <palette>
           <active>
@@ -2028,7 +2028,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="labelDNET">
+       <widget class="QLabel" name="labelPIVX">
         <property name="font">
          <font>
           <weight>75</weight>
@@ -2036,7 +2036,7 @@
          </font>
         </property>
         <property name="text">
-         <string>DNET</string>
+         <string>PIVX</string>
         </property>
        </widget>
       </item>
@@ -2548,7 +2548,7 @@
       <string>TextLabel</string>
      </property>
     </widget>
-    <widget class="QLabel" name="DNETBalanceLabel">
+    <widget class="QLabel" name="PIVXBalanceLabel">
      <property name="geometry">
       <rect>
        <x>150</x>
@@ -2577,7 +2577,7 @@
       </font>
      </property>
      <property name="text">
-      <string>DNET Balance:</string>
+      <string>PIVX Balance:</string>
      </property>
     </widget>
     <widget class="QLabel" name="label_12">
@@ -2599,7 +2599,7 @@
       <string>BTC Balance:</string>
      </property>
     </widget>
-    <widget class="QLabel" name="DNETAvailableLabel_2">
+    <widget class="QLabel" name="PIVXAvailableLabel_2">
      <property name="geometry">
       <rect>
        <x>150</x>
@@ -2628,7 +2628,7 @@
       </font>
      </property>
      <property name="text">
-      <string>DNET Available:</string>
+      <string>PIVX Available:</string>
      </property>
     </widget>
     <widget class="QLabel" name="label_14">
@@ -2647,10 +2647,10 @@
       </font>
      </property>
      <property name="text">
-      <string>DNET Pending:</string>
+      <string>PIVX Pending:</string>
      </property>
     </widget>
-    <widget class="QLabel" name="DNETPendingLabel">
+    <widget class="QLabel" name="PIVXPendingLabel">
      <property name="geometry">
       <rect>
        <x>150</x>
@@ -2743,7 +2743,7 @@
       </font>
      </property>
      <property name="text">
-      <string>Bittrex DNET Deposit Address:</string>
+      <string>Bittrex PIVX Deposit Address:</string>
      </property>
     </widget>
     <widget class="QPushButton" name="GenDepositBTN">

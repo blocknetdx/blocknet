@@ -20,9 +20,9 @@ BitcoinUnits::BitcoinUnits(QObject *parent):
 QList<BitcoinUnits::Unit> BitcoinUnits::availableUnits()
 {
     QList<BitcoinUnits::Unit> unitlist;
-    unitlist.append(DNET);
-    unitlist.append(mDNET);
-    unitlist.append(uDNET);
+    unitlist.append(PIVX);
+    unitlist.append(mPIVX);
+    unitlist.append(uPIVX);
     return unitlist;
 }
 
@@ -30,9 +30,9 @@ bool BitcoinUnits::valid(int unit)
 {
     switch(unit)
     {
-    case DNET:
-    case mDNET:
-    case uDNET:
+    case PIVX:
+    case mPIVX:
+    case uPIVX:
         return true;
     default:
         return false;
@@ -43,9 +43,9 @@ QString BitcoinUnits::id(int unit)
 {
     switch(unit)
     {
-        case DNET: return QString("darknet");
-        case mDNET: return QString("mdarknet");
-        case uDNET: return QString::fromUtf8("udarknet");
+        case PIVX: return QString("darknet");
+        case mPIVX: return QString("mdarknet");
+        case uPIVX: return QString::fromUtf8("udarknet");
         default: return QString("???");
     }
 }
@@ -56,9 +56,9 @@ QString BitcoinUnits::name(int unit)
     {
         switch(unit)
         {
-            case DNET: return QString("DNET");
-            case mDNET: return QString("mDNET");
-            case uDNET: return QString::fromUtf8("μDNET");
+            case PIVX: return QString("PIVX");
+            case mPIVX: return QString("mPIVX");
+            case uPIVX: return QString::fromUtf8("μPIVX");
             default: return QString("???");
         }
     }
@@ -66,9 +66,9 @@ QString BitcoinUnits::name(int unit)
     {
         switch(unit)
         {
-            case DNET: return QString("tDNET");
-            case mDNET: return QString("mtDNET");
-            case uDNET: return QString::fromUtf8("μtDNET");
+            case PIVX: return QString("tPIVX");
+            case mPIVX: return QString("mtPIVX");
+            case uPIVX: return QString::fromUtf8("μtPIVX");
             default: return QString("???");
         }
     }
@@ -80,9 +80,9 @@ QString BitcoinUnits::description(int unit)
     {
         switch(unit)
         {
-            case DNET: return QString("DNET");
-            case mDNET: return QString("Milli-DNET (1 / 1" THIN_SP_UTF8 "000)");
-            case uDNET: return QString("Micro-DNET (1 / 1" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
+            case PIVX: return QString("PIVX");
+            case mPIVX: return QString("Milli-PIVX (1 / 1" THIN_SP_UTF8 "000)");
+            case uPIVX: return QString("Micro-PIVX (1 / 1" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
             default: return QString("???");
         }
     }
@@ -90,9 +90,9 @@ QString BitcoinUnits::description(int unit)
     {
         switch(unit)
         {
-            case DNET: return QString("TestDNETs");
-            case mDNET: return QString("Milli-TestDNET (1 / 1" THIN_SP_UTF8 "000)");
-            case uDNET: return QString("Micro-TestDNET (1 / 1" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
+            case PIVX: return QString("TestPIVXs");
+            case mPIVX: return QString("Milli-TestPIVX (1 / 1" THIN_SP_UTF8 "000)");
+            case uPIVX: return QString("Micro-TestPIVX (1 / 1" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
             default: return QString("???");
         }
     }
@@ -102,9 +102,9 @@ qint64 BitcoinUnits::factor(int unit)
 {
     switch(unit)
     {
-    case DNET:  return 100000000;
-    case mDNET: return 100000;
-    case uDNET: return 100;
+    case PIVX:  return 100000000;
+    case mPIVX: return 100000;
+    case uPIVX: return 100;
     default:   return 100000000;
     }
 }
@@ -113,9 +113,9 @@ int BitcoinUnits::decimals(int unit)
 {
     switch(unit)
     {
-    case DNET: return 8;
-    case mDNET: return 5;
-    case uDNET: return 2;
+    case PIVX: return 8;
+    case mPIVX: return 5;
+    case uPIVX: return 2;
     default: return 0;
     }
 }

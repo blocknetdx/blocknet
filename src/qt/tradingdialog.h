@@ -52,11 +52,11 @@ private Q_SLOTS:
     void on_BuyBidcomboBox_currentIndexChanged(const QString &arg1);
     void on_UnitsInput_textChanged(const QString &arg1);
     void on_BuyBidPriceEdit_textChanged(const QString &arg1);
-    void on_BuyDNET_clicked();
-    void on_SellDNETBTN_clicked();
+    void on_BuyPIVX_clicked();
+    void on_SellPIVXBTN_clicked();
     void on_SellBidcomboBox_currentIndexChanged(const QString &arg1);
     void on_Sell_Max_Amount_clicked();
-    void on_UnitsInputDNET_textChanged(const QString &arg1);
+    void on_UnitsInputPIVX_textChanged(const QString &arg1);
     void on_SellBidPriceEdit_textChanged(const QString &arg1);
     void on_AdvancedView_stateChanged(int arg1);
 
@@ -64,8 +64,8 @@ private Q_SLOTS:
     QString BittrexTimeStampToReadable(QString DateTime);
     qint64 BittrexTimeStampToSeconds(QString DateTime);
     QString CancelOrder(QString Orderid);
-    QString BuyDNET(QString OrderType, double Quantity, double Rate);
-    QString SellDNET(QString OrderType, double Quantity, double Rate);
+    QString BuyPIVX(QString OrderType, double Quantity, double Rate);
+    QString SellPIVX(QString OrderType, double Quantity, double Rate);
     QString GetMarketHistory();
     QString GetMarketSummary();
     QString GetOrderBook();

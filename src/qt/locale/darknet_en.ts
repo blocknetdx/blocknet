@@ -219,8 +219,8 @@
     </message>
     <message>
         <location line="+1"/>
-        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR DNET&lt;/b&gt;!</source>
-        <translation>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR DNET&lt;/b&gt;!</translation>
+        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR PIVX&lt;/b&gt;!</source>
+        <translation>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR PIVX&lt;/b&gt;!</translation>
     </message>
     <message>
         <location line="+0"/>
@@ -1090,13 +1090,13 @@ Address: %4
     </message>
     <message>
         <location line="+13"/>
-        <source>Use 2 separate masternodes to mix funds up to 1000 DNET</source>
-        <translation>Use 2 separate masternodes to mix funds up to 1000 DNET</translation>
+        <source>Use 2 separate masternodes to mix funds up to 1000 PIVX</source>
+        <translation>Use 2 separate masternodes to mix funds up to 1000 PIVX</translation>
     </message>
     <message>
         <location line="+13"/>
-        <source>Use 8 separate masternodes to mix funds up to 1000 DNET</source>
-        <translation>Use 8 separate masternodes to mix funds up to 1000 DNET</translation>
+        <source>Use 8 separate masternodes to mix funds up to 1000 PIVX</source>
+        <translation>Use 8 separate masternodes to mix funds up to 1000 PIVX</translation>
     </message>
     <message>
         <location line="+13"/>
@@ -1105,18 +1105,18 @@ Address: %4
     </message>
     <message>
         <location line="+13"/>
-        <source>This option is the quickest and will cost about ~0.025 DNET to anonymize 1000 DNET</source>
-        <translation>This option is the quickest and will cost about ~0.025 DNET to anonymize 1000 DNET</translation>
+        <source>This option is the quickest and will cost about ~0.025 PIVX to anonymize 1000 PIVX</source>
+        <translation>This option is the quickest and will cost about ~0.025 PIVX to anonymize 1000 PIVX</translation>
     </message>
     <message>
         <location line="+13"/>
-        <source>This option is moderately fast and will cost about 0.05 DNET to anonymize 1000 DNET</source>
-        <translation>This option is moderately fast and will cost about 0.05 DNET to anonymize 1000 DNET</translation>
+        <source>This option is moderately fast and will cost about 0.05 PIVX to anonymize 1000 PIVX</source>
+        <translation>This option is moderately fast and will cost about 0.05 PIVX to anonymize 1000 PIVX</translation>
     </message>
     <message>
         <location line="+26"/>
-        <source>0.1 DNET per 1000 DNET you anonymize.</source>
-        <translation>0.1 DNET per 1000 DNET you anonymize.</translation>
+        <source>0.1 PIVX per 1000 PIVX you anonymize.</source>
+        <translation>0.1 PIVX per 1000 PIVX you anonymize.</translation>
     </message>
     <message>
         <location line="-13"/>
@@ -1800,8 +1800,8 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
     </message>
     <message>
         <location line="+7"/>
-        <source>0 DNET / 0 Rounds</source>
-        <translation>0 DNET / 0 Rounds</translation>
+        <source>0 PIVX / 0 Rounds</source>
+        <translation>0 PIVX / 0 Rounds</translation>
     </message>
     <message>
         <location line="+7"/>
@@ -4189,8 +4189,8 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
     <message>
         <location line="-20"/>
         <location line="+9"/>
-        <source>SwiftTX doesn&apos;t support sending values that high yet. Transactions are currently limited to %1 DNET.</source>
-        <translation>SwiftTX doesn&apos;t support sending values that high yet. Transactions are currently limited to %1 DNET.</translation>
+        <source>SwiftTX doesn&apos;t support sending values that high yet. Transactions are currently limited to %1 PIVX.</source>
+        <translation>SwiftTX doesn&apos;t support sending values that high yet. Transactions are currently limited to %1 PIVX.</translation>
     </message>
 </context>
 <context>
@@ -4330,8 +4330,8 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
     </message>
     <message>
         <location line="+2"/>
-        <source>Unable to locate enough Obfuscate non-denominated funds for this transaction that are not equal 1000 DNET.</source>
-        <translation>Unable to locate enough Obfuscate non-denominated funds for this transaction that are not equal 1000 DNET.</translation>
+        <source>Unable to locate enough Obfuscate non-denominated funds for this transaction that are not equal 1000 PIVX.</source>
+        <translation>Unable to locate enough Obfuscate non-denominated funds for this transaction that are not equal 1000 PIVX.</translation>
     </message>
     <message>
         <location line="+12"/>
@@ -4635,13 +4635,13 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
     </message>
     <message>
         <location line="+12"/>
-        <source>Fees (in DNET/Kb) smaller than this are considered zero fee for relaying (default: %s)</source>
-        <translation>Fees (in DNET/Kb) smaller than this are considered zero fee for relaying (default: %s)</translation>
+        <source>Fees (in PIVX/Kb) smaller than this are considered zero fee for relaying (default: %s)</source>
+        <translation>Fees (in PIVX/Kb) smaller than this are considered zero fee for relaying (default: %s)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <source>Fees (in DNET/Kb) smaller than this are considered zero fee for transaction creation (default: %s)</source>
-        <translation>Fees (in DNET/Kb) smaller than this are considered zero fee for transaction creation (default: %s)</translation>
+        <source>Fees (in PIVX/Kb) smaller than this are considered zero fee for transaction creation (default: %s)</source>
+        <translation>Fees (in PIVX/Kb) smaller than this are considered zero fee for transaction creation (default: %s)</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -4755,8 +4755,8 @@ for example: alertnotify=echo %%s | mail -s &quot;DarkNet Alert&quot; admin@foo.
     </message>
     <message>
         <location line="+20"/>
-        <source>Unable to locate enough funds for this transaction that are not equal 1000 DNET.</source>
-        <translation>Unable to locate enough funds for this transaction that are not equal 1000 DNET.</translation>
+        <source>Unable to locate enough funds for this transaction that are not equal 1000 PIVX.</source>
+        <translation>Unable to locate enough funds for this transaction that are not equal 1000 PIVX.</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -4897,8 +4897,8 @@ for example: alertnotify=echo %%s | mail -s &quot;DarkNet Alert&quot; admin@foo.
     </message>
     <message>
         <location line="+5"/>
-        <source>Fee (in DNET/kB) to add to transactions you send (default: %s)</source>
-        <translation>Fee (in DNET/kB) to add to transactions you send (default: %s)</translation>
+        <source>Fee (in PIVX/kB) to add to transactions you send (default: %s)</source>
+        <translation>Fee (in PIVX/kB) to add to transactions you send (default: %s)</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -5357,8 +5357,8 @@ for example: alertnotify=echo %%s | mail -s &quot;DarkNet Alert&quot; admin@foo.
     </message>
     <message>
         <location line="+1"/>
-        <source>Keep N DNET anonymized (default: %u)</source>
-        <translation>Keep N DNET anonymized (default: %u)</translation>
+        <source>Keep N PIVX anonymized (default: %u)</source>
+        <translation>Keep N PIVX anonymized (default: %u)</translation>
     </message>
     <message>
         <location line="+1"/>

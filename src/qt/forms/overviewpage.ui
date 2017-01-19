@@ -474,7 +474,7 @@
               </font>
              </property>
              <property name="text">
-              <string notr="true">0 DNET</string>
+              <string notr="true">0 PIVX</string>
              </property>
             </widget>
            </item>
@@ -488,7 +488,7 @@
            <item row="3" column="1">
             <widget class="QLabel" name="labelAmountRounds">
              <property name="text">
-              <string>0 DNET / 0 Rounds</string>
+              <string>0 PIVX / 0 Rounds</string>
              </property>
             </widget>
            </item>
