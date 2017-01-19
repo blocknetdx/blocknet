@@ -5,7 +5,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #if defined(HAVE_CONFIG_H)
-#include "config/darknet-config.h"
+#include "config/pivx-config.h"
 #endif
 
 #include "optionsmodel.h"
