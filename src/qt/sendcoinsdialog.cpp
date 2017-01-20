@@ -19,6 +19,7 @@
 #include "base58.h"
 #include "coincontrol.h"
 #include "ui_interface.h"
+#include "utilmoneystr.h"
 #include "wallet.h"
 
 #include <QMessageBox>
@@ -810,12 +811,25 @@ void SendCoinsDialog::splitBlockChecked(int state)
 //UTXO splitter
 void SendCoinsDialog::splitBlockLineEditChanged(const QString & text)
 {
-    double nAfterFee = ui->labelCoinControlAfterFee->text().left(ui->labelCoinControlAfterFee->text().indexOf(" ")).replace("~", "").toDouble();
-    double nSize = nAfterFee;
-    if (nAfterFee > 0 && text.toDouble() > 0)
-        nSize = nAfterFee / text.toDouble();
-    ui->labelBlockSize->setText(QString::number(nSize));
-    CoinControlDialog::nSplitBlockDummy = text.toInt();
+    //grab the amount in Coin Control AFter Fee field
+    QString qAfterFee = ui->labelCoinControlAfterFee->text().left(ui->labelCoinControlAfterFee->text().indexOf(" "))
+            .replace("~", "").simplified().replace(" ", "");
+
+    //convert to CAmount
+    CAmount nAfterFee;
+    ParseMoney(qAfterFee.toStdString().c_str(), nAfterFee);
+
+    //if greater than 0 then divide after fee by the amount of blocks
+    CAmount nSize = nAfterFee;
+    int nBlocks = text.toInt();
+    if (nAfterFee && nBlocks)
+        nSize = nAfterFee / nBlocks;
+
+    //assign to split block dummy, which is used to recalculate the fee amount more outputs
+    CoinControlDialog::nSplitBlockDummy = nBlocks;
+
+    //update labels
+    ui->labelBlockSize->setText(QString::fromStdString(FormatMoney(nSize)));
     coinControlUpdateLabels();
 }
 
