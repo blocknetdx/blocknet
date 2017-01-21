@@ -93,7 +93,7 @@ public:
 };
 
 /**
- * DarkNet RPC command dispatcher.
+ * PIVX RPC command dispatcher.
  */
 class CRPCTable
 {

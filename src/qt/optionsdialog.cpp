@@ -82,10 +82,7 @@ OptionsDialog::OptionsDialog(QWidget *parent, bool enableWallet) :
     }
     
     /* Theme selector static themes */
-    ui->theme->addItem(QString("PIV-dark"), QVariant("drk"));
-    ui->theme->addItem(QString("PIV-dark-1"), QVariant("drk-1"));
-    ui->theme->addItem(QString("PIV-blue"), QVariant("drkblue"));
-    ui->theme->addItem(QString("PIV-traditional"), QVariant("trad"));
+    ui->theme->addItem(QString("Default"), QVariant("default"));
 
     /* Theme selector external themes */
     boost::filesystem::path pathAddr = GetDataDir() / "themes";
@@ -222,7 +219,7 @@ void OptionsDialog::setMapper()
 
     /* Obfuscation Rounds */
     mapper->addMapping(ui->obfuscationRounds, OptionsModel::ObfuscationRounds);
-    mapper->addMapping(ui->anonymizeDarknet, OptionsModel::AnonymizeDarknetAmount);
+    mapper->addMapping(ui->anonymizePivx, OptionsModel::AnonymizePivxAmount);
     mapper->addMapping(ui->showMasternodesTab, OptionsModel::ShowMasternodesTab);
 
 }

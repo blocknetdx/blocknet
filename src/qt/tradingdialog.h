@@ -15,7 +15,7 @@ namespace Ui {
 class tradingDialog;
 }
 
-extern double _dDnetPriceLast;
+extern double _dPivPriceLast;
 extern double _dBtcPriceCurrent;
 extern double _dBtcPriceLast;
 
