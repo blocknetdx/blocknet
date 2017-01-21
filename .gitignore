@@ -35,8 +35,8 @@ config.log
 config.status
 configure
 libtool
-src/config/darknet-config.h
-src/config/darknet-config.h.in
+src/config/pivx-config.h
+src/config/pivx-config.h.in
 src/config/stamp-h1
 share/setup.nsi
 share/qt/Info.plist

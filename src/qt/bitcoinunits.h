@@ -58,9 +58,9 @@ public:
      */
     enum Unit
     {
-        DNET,
-        mDNET,
-	uDNET
+        PIV,
+        mPIV,
+	uPIV
     };
 
     enum SeparatorStyle

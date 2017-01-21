@@ -176,8 +176,8 @@
         <translation>Confirme cifra da carteira</translation>
     </message>
     <message>
-        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR DNET&lt;/b&gt;!</source>
-        <translation>Atenção: Se cifrar a carteira e perder a palavra-passe, irá &lt;b&gt;PERDER TODAS AS SUAS MOEDAS DNET&lt;/b&gt;!</translation>
+        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR PIV&lt;/b&gt;!</source>
+        <translation>Atenção: Se cifrar a carteira e perder a palavra-passe, irá &lt;b&gt;PERDER TODAS AS SUAS MOEDAS PIV&lt;/b&gt;!</translation>
     </message>
     <message>
         <source>Are you sure you wish to encrypt your wallet?</source>
@@ -860,28 +860,28 @@ Endereço: %4
         <translation>Por favor seleccione um nível de privacidade.</translation>
     </message>
     <message>
-        <source>Use 2 separate masternodes to mix funds up to 1000 DNET</source>
-        <translation>Usar 2 masternodes distintos para misturar os fundos até 1000DNET</translation>
+        <source>Use 2 separate masternodes to mix funds up to 1000 PIV</source>
+        <translation>Usar 2 masternodes distintos para misturar os fundos até 1000PIV</translation>
     </message>
     <message>
-        <source>Use 8 separate masternodes to mix funds up to 1000 DNET</source>
-        <translation>Usar 8 masternodes distintos para misturar os fundos até 1000DNET</translation>
+        <source>Use 8 separate masternodes to mix funds up to 1000 PIV</source>
+        <translation>Usar 8 masternodes distintos para misturar os fundos até 1000PIV</translation>
     </message>
     <message>
         <source>Use 16 separate masternodes</source>
         <translation>Usar 16 masternodes</translation>
     </message>
     <message>
-        <source>This option is the quickest and will cost about ~0.025 DNET to anonymize 1000 DNET</source>
-        <translation>Esta opção é a mais rápida e irá custar cerca de ~0.025 DNET para anonimizar 1000 DNET</translation>
+        <source>This option is the quickest and will cost about ~0.025 PIV to anonymize 1000 PIV</source>
+        <translation>Esta opção é a mais rápida e irá custar cerca de ~0.025 PIV para anonimizar 1000 PIV</translation>
     </message>
     <message>
-        <source>This option is moderately fast and will cost about 0.05 DNET to anonymize 1000 DNET</source>
-        <translation>Esta opção é relativamente rápida e irá custar cerca de ~0.05 DNET para anonimizar 1000 DNET</translation>
+        <source>This option is moderately fast and will cost about 0.05 PIV to anonymize 1000 PIV</source>
+        <translation>Esta opção é relativamente rápida e irá custar cerca de ~0.05 PIV para anonimizar 1000 PIV</translation>
     </message>
     <message>
-        <source>0.1 DNET per 1000 DNET you anonymize.</source>
-        <translation>0.1 DNET por cada 1000 DNET a anonimizar.</translation>
+        <source>0.1 PIV per 1000 PIV you anonymize.</source>
+        <translation>0.1 PIV por cada 1000 PIV a anonimizar.</translation>
     </message>
     <message>
         <source>This is the slowest and most secure option. Using maximum anonymity will cost</source>
@@ -1427,8 +1427,8 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Quantia e Voltas:</translation>
     </message>
     <message>
-        <source>0 DNET / 0 Rounds</source>
-        <translation>0 DNET / 0 Voltas</translation>
+        <source>0 PIV / 0 Rounds</source>
+        <translation>0 PIV / 0 Voltas</translation>
     </message>
     <message>
         <source>Submitted Denom:</source>
@@ -3260,8 +3260,8 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Enviar Moedas</translation>
     </message>
     <message>
-        <source>SwiftTX doesn't support sending values that high yet. Transactions are currently limited to %1 DNET.</source>
-        <translation>O SwiftTX não suporta valores tão elevados neste momento. As transacções estão limitadas a %1 DNET.</translation>
+        <source>SwiftTX doesn't support sending values that high yet. Transactions are currently limited to %1 PIV.</source>
+        <translation>O SwiftTX não suporta valores tão elevados neste momento. As transacções estão limitadas a %1 PIV.</translation>
     </message>
 </context>
 <context>
@@ -3374,8 +3374,8 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Não foi possível localizar fundos Obfuscate denominados suficientes para esta transacção.</translation>
     </message>
     <message>
-        <source>Unable to locate enough Obfuscate non-denominated funds for this transaction that are not equal 1000 DNET.</source>
-        <translation>Não foi possível localizar fundos Obfuscate não denominados suficientes para esta transacção que não sejam igual a 1000DNET.</translation>
+        <source>Unable to locate enough Obfuscate non-denominated funds for this transaction that are not equal 1000 PIV.</source>
+        <translation>Não foi possível localizar fundos Obfuscate não denominados suficientes para esta transacção que não sejam igual a 1000PIV.</translation>
     </message>
     <message>
         <source>Warning: -paytxfee is set very high! This is the transaction fee you will pay if you send a transaction.</source>
@@ -3590,8 +3590,8 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Activar o uso de obfuscate automatizado para os fundos guardados nesta carteira (0-1, default: %u)</translation>
     </message>
     <message>
-        <source>Fees (in DNET/Kb) smaller than this are considered zero fee for relaying (default: %s)</source>
-        <translation>Taxas (em DNET/Kb) inferiores a esta serão consideradas zero para retransmissão (default: %s)</translation>
+        <source>Fees (in PIV/Kb) smaller than this are considered zero fee for relaying (default: %s)</source>
+        <translation>Taxas (em PIV/Kb) inferiores a esta serão consideradas zero para retransmissão (default: %s)</translation>
     </message>
     <message>
         <source>Flush database activity from memory pool to disk log every &lt;n&gt; megabytes (default: %u)</source>
@@ -3638,8 +3638,8 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Este produto inclui software desenvolvido pelo Projecto OpenSSL para uso no OpenSSL Toolkit &lt;https://www.openssl.org/&gt;, software criptográfico escrito por Eric Young e software UPnP escrito por Thomas Bernard.</translation>
     </message>
     <message>
-        <source>Unable to locate enough funds for this transaction that are not equal 1000 DNET.</source>
-        <translation>Não foi possível localizar fundos suficientes para esta transacção que não sejam igual a 1000DNET.</translation>
+        <source>Unable to locate enough funds for this transaction that are not equal 1000 PIV.</source>
+        <translation>Não foi possível localizar fundos suficientes para esta transacção que não sejam igual a 1000PIV.</translation>
     </message>
     <message>
         <source>Use separate SOCKS5 proxy to reach peers via Tor hidden services (default: %s)</source>
@@ -3744,8 +3744,8 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Erro: Argument não suportado -tor encontrado, utilize -onion</translation>
     </message>
     <message>
-        <source>Fee (in DNET/kB) to add to transactions you send (default: %s)</source>
-        <translation>Taxas (em DNET/Kb) a adicionar às transacções que envia (omissão: %s)</translation>
+        <source>Fee (in PIV/kB) to add to transactions you send (default: %s)</source>
+        <translation>Taxas (em PIV/Kb) a adicionar às transacções que envia (omissão: %s)</translation>
     </message>
     <message>
         <source>Finalizing transaction.</source>
@@ -4104,8 +4104,8 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Chave KeePassHttp para usar na comunicação cifrada AES com o KeePass</translation>
     </message>
     <message>
-        <source>Keep N DNET anonymized (default: %u)</source>
-        <translation>Manter N DNET anonimizados (default: %u)</translation>
+        <source>Keep N PIV anonymized (default: %u)</source>
+        <translation>Manter N PIV anonimizados (default: %u)</translation>
     </message>
     <message>
         <source>Keep at most &lt;n&gt; unconnectable transactions in memory (default: %u)</source>
