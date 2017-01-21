@@ -1,4 +1,4 @@
-PIVX Repository (Version 2.1.3.4)
+PIVX Repository (Version 2.1.4.0)
 More information at pivx.org
 Visit our ANN thread at bitcointalk.org/index.php?topic=1262920
 
