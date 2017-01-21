@@ -56,7 +56,7 @@ color:#fff;
 }
 
 /*******************************/
-/* TEXT:  TOTAL AVAILABLE DNET */
+/* TEXT:  TOTAL AVAILABLE PIV */
 /*******************************/
 
 QToolBar > QToolButton:checked {
@@ -1765,7 +1765,7 @@ color:#ffffff;
 }
 
 /*******************************/
-/* TEXT - 0.00010000 DNET/KB   */
+/* TEXT - 0.00010000 PIV/KB   */
 /*******************************/
 
 QDialog#SendCoinsDialog QLabel#labelFeeMinimized {
@@ -2050,7 +2050,7 @@ color:#ffffff;
 }
 
 /*******************************/
-/* TEXT - DNET/KB              */
+/* TEXT - PIV/KB              */
 /*******************************/
 
 QDialog#SendCoinsDialog QLabel#labelFeeEstimation {
