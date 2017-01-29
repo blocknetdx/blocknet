@@ -96,14 +96,20 @@ void Bip38ToolDialog::on_pasteButton_ENC_clicked()
     setAddress_ENC(QApplication::clipboard()->text());
 }
 
-QString specialChar = "!#$%&'()*+,-./:;<=>?`{|}~";
-QString validChar = "123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" + specialChar;
-bool isValidPassphrase(QString strPassphrase)
+QString specialChar = "\"@!#$%&'()*+,-./:;<=>?`{|}~^_[]\\";
+QString validChar = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" + specialChar;
+bool isValidPassphrase(QString strPassphrase, QString& strInvalid)
 {
     for(int i = 0; i < strPassphrase.size(); i++)
     {
         if (!validChar.contains(strPassphrase[i], Qt::CaseSensitive))
+        {
+            if(QString("\"'").contains(strPassphrase[i]))
+                continue;
+
+            strInvalid = strPassphrase[i];
             return false;
+        }
     }
 
     return true;
@@ -115,10 +121,11 @@ void Bip38ToolDialog::on_encryptKeyButton_ENC_clicked()
         return;
 
     QString qstrPassphrase = ui->passphraseIn_ENC->text();
-    if(!isValidPassphrase(qstrPassphrase))
+    QString strInvalid;
+    if(!isValidPassphrase(qstrPassphrase, strInvalid))
     {
         ui->statusLabel_ENC->setStyleSheet("QLabel { color: red; }");
-        ui->statusLabel_ENC->setText(tr("The entered passphrase is invalid.") + QString(" ") + tr("Allowed: 0-9,a-z,A-Z,") + specialChar);
+        ui->statusLabel_ENC->setText(tr("The entered passphrase is invalid. ") + strInvalid + QString(" is not valid") + QString(" ") + tr("Allowed: 0-9,a-z,A-Z,") + specialChar);
         return;
     }
 
