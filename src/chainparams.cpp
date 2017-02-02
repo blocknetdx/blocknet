@@ -142,9 +142,8 @@ public:
         assert(genesis.hashMerkleRoot == uint256("0x1b2ef6e2f28be914103a277377ae7729dcd125dfeb8bf97bd5964ba72b6dc39b"));
 
         vSeeds.push_back(CDNSSeedData("coin-server.com", ""));
-        vSeeds.push_back(CDNSSeedData("173.245.158.8", ""));
-        vSeeds.push_back(CDNSSeedData("162.213.154.31", ""));
-        vSeeds.push_back(CDNSSeedData("151.80.206.104", ""));
+        vSeeds.push_back(CDNSSeedData("s3v3nh4cks.ddns.net", ""));
+        vSeeds.push_back(CDNSSeedData("178.254.23.111", ""));
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,30);                    
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,13);                    
@@ -300,7 +299,7 @@ public:
     CUnitTestParams() {
         networkID = CBaseChainParams::UNITTEST;
         strNetworkID = "unittest";
-        nDefaultPort = 18445;
+        nDefaultPort = 51478;
         vFixedSeeds.clear(); //! Unit test mode doesn't have any fixed seeds.
         vSeeds.clear();  //! Unit test mode doesn't have any DNS seeds.
 
