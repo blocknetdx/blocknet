@@ -3504,24 +3504,32 @@ bool CWallet::GetDestData(const CTxDestination &dest, const std::string &key, st
 bool CWallet::MultiSend()
 {
     if ( IsInitialBlockDownload() || IsLocked() )
+    {
+        LogPrintf("Multisend: islocked or initial download\n");
         return false;
+    }
 
-    int64_t nAmount = 0;
+    if (chainActive.Tip()->nHeight <= nLastMultiSendHeight)
+    {
+        LogPrintf("Multisend: lastmultisendheight is higher than current best height\n");
+        return false;
+    }
+
     {
         LOCK(cs_wallet);
         std::vector<COutput> vCoins;
         AvailableCoins(vCoins);
         BOOST_FOREACH(const COutput& out, vCoins)
         {
-            CTxDestination address;
-            if(!ExtractDestination(out.tx->vout[out.i].scriptPubKey, address))
+            if (!(out.tx->IsCoinStake() && out.tx->GetBlocksToMaturity() == 0 && out.tx->GetDepthInMainChain() == COINBASE_MATURITY + 1))
                 continue;
 
-            if (chainActive.Tip()->nHeight <= nLastMultiSendHeight )
-                return false;
-
-            if (!(out.tx->IsCoinStake() && out.tx->GetBlocksToMaturity() == 0 && out.tx->GetDepthInMainChain() == COINBASE_MATURITY + 1))
-                return false;
+            CTxDestination address;
+            if(!ExtractDestination(out.tx->vout[out.i].scriptPubKey, address))
+            {
+                LogPrintf("Multisend: failed to extract destination\n");
+                continue;
+            }
 
             //Disabled Addresses won't send MultiSend transactions
             if(vDisabledAddresses.size() > 0)
@@ -3530,6 +3538,7 @@ bool CWallet::MultiSend()
                 {
                     if(vDisabledAddresses[i] == CBitcoinAddress(address).ToString())
                     {
+                        LogPrintf("Multisend: disabled address preventing multisend\n");
                         return false;
                     }
                 }
@@ -3547,6 +3556,7 @@ bool CWallet::MultiSend()
 
             // loop through multisend vector and add amounts and addresses to the sending vector
             const isminefilter filter = ISMINE_SPENDABLE;
+            int64_t nAmount = 0;
             for(unsigned int i = 0; i < vMultiSend.size(); i++)
             {
                 // MultiSend vector is a pair of 1)Address as a std::string 2) Percent of stake to send as an int
@@ -3560,12 +3570,19 @@ bool CWallet::MultiSend()
             // Create the transaction and commit it to the network
             string strErr;
             if (!CreateTransaction(vecSend, wtx, keyChange, nFeeRet, strErr, cControl, ALL_COINS, false, CAmount(0)))
+            {
                 LogPrintf("MultiSend createtransaction failed\n");
+                return false;
+            }
 
             if(!CommitTransaction(wtx, keyChange))
+            {
                 LogPrintf("MultiSend transaction commit failed\n");
+                return false;
+            }
             else
                 fMultiSendNotify = true;
+
             delete cControl;
 
             //write nLastMultiSendHeight to DB
@@ -3573,6 +3590,9 @@ bool CWallet::MultiSend()
             nLastMultiSendHeight = chainActive.Tip()->nHeight;
             if(!walletdb.WriteMSettings(fMultiSend, nLastMultiSendHeight))
                 LogPrintf("Failed to write MultiSend setting to DB\n");
+
+            LogPrintf("MultiSend successfully sent\n");
+            return true;
         }
     }
     return true;
