@@ -2248,7 +2248,6 @@ Value autocombinerewards(const Array & params, bool fHelp)
     return "Auto Combine Rewards Threshold Set";
 }
 
-//presstab
 Array printMultiSend()
 {
     Array ret;
@@ -2280,7 +2279,6 @@ Array printMultiSend()
     return ret;
 }
 
-//presstab HyperStake
 Array printAddresses()
 {
     std::vector<COutput> vCoins;
@@ -2312,7 +2310,6 @@ Array printAddresses()
     return ret;
 }
 
-//presstab HyperStake
 unsigned int sumMultiSend()
 {
     unsigned int sum = 0;
@@ -2342,59 +2339,77 @@ Value multisend(const Array &params, bool fHelp)
         {
             LOCK(pwalletMain->cs_wallet);
             {
-                fFileBacked = pwalletMain->fFileBacked;
-                string strRet;
-                if(fFileBacked)
+                bool erased = false;
+                if(pwalletMain->fFileBacked)
                 {
                     if(walletdb.EraseMultiSend(pwalletMain->vMultiSend))
-                        strRet += "erased MultiSend vector from database & ";
+                        erased = true;
                 }
+
                 pwalletMain->vMultiSend.clear();
                 pwalletMain->setMultiSendDisabled();
-                strRet += "cleared MultiSend vector from RAM";
-                return strRet;
+
+                Object obj;
+                obj.push_back(Pair("Erased from database", erased));
+                obj.push_back(Pair("Erased from RAM", true));
+
+                return obj;
             }
         }
         else if (strCommand == "enablestake" || strCommand == "activatestake" )
         {
             if(pwalletMain->vMultiSend.size() < 1)
-                return "Unable to activate MultiSend, check MultiSend vector";
+                throw JSONRPCError(RPC_INVALID_REQUEST, "Unable to activate MultiSend, check MultiSend vector");
+
             if(CBitcoinAddress(pwalletMain->vMultiSend[0].first).IsValid())
             {
                 pwalletMain->fMultiSendStake = true;
-
                 if(!walletdb.WriteMSettings(true, pwalletMain->fMultiSendMasternodeReward, pwalletMain->nLastMultiSendHeight))
-                    return "MultiSend activated but writing settings to DB failed";
+                {
+                    Object obj;
+                    obj.push_back(Pair("error", "MultiSend activated but writing settings to DB failed"));
+                    Array arr;
+                    arr.push_back(obj);
+                    arr.push_back(printMultiSend());
+                    return arr;
+                }
                 else
-                    return "MultiSend activated";
+                    return printMultiSend();
             }
-            else
-                return "Unable to activate MultiSend, check MultiSend vector";
+
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Unable to activate MultiSend, check MultiSend vector");
         }
         else if(strCommand == "enablemasternode" || strCommand == "activatemasternode")
         {
             if(pwalletMain->vMultiSend.size() < 1)
-                return "Unable to activate MultiSend, check MultiSend vector";
+                throw JSONRPCError(RPC_INVALID_REQUEST, "Unable to activate MultiSend, check MultiSend vector");
 
             if(CBitcoinAddress(pwalletMain->vMultiSend[0].first).IsValid())
             {
                 pwalletMain->fMultiSendMasternodeReward = true;
 
                 if(!walletdb.WriteMSettings(pwalletMain->fMultiSendStake, true, pwalletMain->nLastMultiSendHeight))
-                    return "MultiSend activated but writing settings to DB failed";
+                {
+                    Object obj;
+                    obj.push_back(Pair("error", "MultiSend activated but writing settings to DB failed"));
+                    Array arr;
+                    arr.push_back(obj);
+                    arr.push_back(printMultiSend());
+                    return arr;
+                }
                 else
-                    return "MultiSend activated";
+                    return printMultiSend();
             }
-            else
-                return "Unable to activate MultiSend, check MultiSend vector";
+
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Unable to activate MultiSend, check MultiSend vector");
         }
         else if (strCommand == "disable" || strCommand == "deactivate" )
         {
             pwalletMain->setMultiSendDisabled();
             if(!walletdb.WriteMSettings(false, false, pwalletMain->nLastMultiSendHeight))
-                return "MultiSend deactivated but writing settings to DB failed";
+                throw JSONRPCError(RPC_DATABASE_ERROR, "MultiSend deactivated but writing settings to DB failed");
 
-            return "MultiSend deactivated";
+            return printMultiSend();
         }
         else if(strCommand == "enableall")
         {
@@ -2403,7 +2418,7 @@ Value multisend(const Array &params, bool fHelp)
             else
             {
                 pwalletMain->vDisabledAddresses.clear();
-                return "all addresses will now send MultiSend transactions";
+                return printMultiSend();
             }
         }
     }
@@ -2411,10 +2426,11 @@ Value multisend(const Array &params, bool fHelp)
     {
         int del = boost::lexical_cast<int>(params[1].get_str());
         if(!walletdb.EraseMultiSend(pwalletMain->vMultiSend))
-            return "failed to delete old MultiSend vector from database";
+            throw JSONRPCError(RPC_DATABASE_ERROR, "failed to delete old MultiSend vector from database");
+
         pwalletMain->vMultiSend.erase(pwalletMain->vMultiSend.begin() + del);
         if(!walletdb.WriteMultiSend(pwalletMain->vMultiSend))
-            return "walletdb WriteMultiSend failed!";
+            throw JSONRPCError(RPC_DATABASE_ERROR, "walletdb WriteMultiSend failed!");
 
         return printMultiSend();
     }
@@ -2422,17 +2438,17 @@ Value multisend(const Array &params, bool fHelp)
     {
         std::string disAddress = params[1].get_str();
         if(!CBitcoinAddress(disAddress).IsValid())
-            return "address you want to disable is not valid";
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "address you want to disable is not valid");
         else
         {
             pwalletMain->vDisabledAddresses.push_back(disAddress);
             if(!walletdb.EraseMSDisabledAddresses(pwalletMain->vDisabledAddresses))
-                return "disabled address from sending, but failed to clear old vector from walletDB";
+                throw JSONRPCError(RPC_DATABASE_ERROR, "disabled address from sending, but failed to clear old vector from walletDB");
 
             if(!walletdb.WriteMSDisabledAddresses(pwalletMain->vDisabledAddresses))
-                return "disabled address from sending, but failed to store it to walletDB";
+                throw JSONRPCError(RPC_DATABASE_ERROR,  "disabled address from sending, but failed to store it to walletDB");
             else
-                return "disabled address from sending MultiSend transactions";
+                return printMultiSend();
         }
     }
 
@@ -2480,17 +2496,17 @@ Value multisend(const Array &params, bool fHelp)
         //Error if 0 is entered
         if(nPercent == 0)
         {
-            return "Sending 0% of stake is not valid";
+            throw JSONRPCError(RPC_INVALID_PARAMETER, "Sending 0% of stake is not valid");
         }
 
         //MultiSend can only send 100% of your stake
         if (nPercent + sumMultiSend() > 100)
-            return "Failed to add to MultiSend vector, the sum of your MultiSend is greater than 100%";
+            throw JSONRPCError(RPC_INVALID_PARAMETER, "Failed to add to MultiSend vector, the sum of your MultiSend is greater than 100%");
 
         for(unsigned int i = 0; i < pwalletMain->vMultiSend.size(); i++)
         {
             if(pwalletMain->vMultiSend[i].first == strAddress)
-                return "Failed to add to MultiSend vector, cannot use the same address twice";
+                throw JSONRPCError(RPC_INVALID_PARAMETER, "Failed to add to MultiSend vector, cannot use the same address twice");
         }
 
         if(fFileBacked)
@@ -2503,7 +2519,7 @@ Value multisend(const Array &params, bool fHelp)
         if(fFileBacked)
         {
             if(!walletdb.WriteMultiSend(pwalletMain->vMultiSend))
-                return "walletdb WriteMultiSend failed!";
+                throw JSONRPCError(RPC_DATABASE_ERROR, "walletdb WriteMultiSend failed!");
         }
     }
     return printMultiSend();
