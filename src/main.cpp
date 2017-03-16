@@ -5205,7 +5205,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
     }
 
 
-    else if (strCommand == "tempdisable")
+    else if (strCommand == "headers" && Params().HeadersFirstSyncingActive())
     {
         CBlockLocator locator;
         uint256 hashStop;
@@ -5213,8 +5213,8 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
 
         LOCK(cs_main);
 
- //       if (IsInitialBlockDownload())
-   //         return true;
+        if (IsInitialBlockDownload())
+            return true;
 
         CBlockIndex* pindex = NULL;
         if (locator.IsNull())
@@ -5410,60 +5410,63 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
     }
 
 
-//    else if (strCommand == "tempdisable" && !fImporting && !fReindex) // Ignore headers received while importing
-//    {
-//        std::vector<CBlockHeader> headers;
-//
-//        // Bypass the normal CBlock deserialization, as we don't want to risk deserializing 2000 full blocks.
-//        unsigned int nCount = ReadCompactSize(vRecv);
-//        if (nCount > MAX_HEADERS_RESULTS) {
-//            Misbehaving(pfrom->GetId(), 20);
-//            return error("headers message size = %u", nCount);
-//        }
-//        headers.resize(nCount);
-//        for (unsigned int n = 0; n < nCount; n++) {
-//            vRecv >> headers[n];
-//            ReadCompactSize(vRecv); // ignore tx count; assume it is 0.
-//        }
-//
-//        LOCK(cs_main);
-//
-//        if (nCount == 0) {
-//            // Nothing interesting. Stop asking this peers for more headers.
-//            return true;
-//        }
-//        CBlockIndex *pindexLast = NULL;
-//        BOOST_FOREACH(const CBlockHeader& header, headers) {
-//            CValidationState state;
-//            if (pindexLast != NULL && header.hashPrevBlock != pindexLast->GetBlockHash()) {
-//                Misbehaving(pfrom->GetId(), 20);
-//                return error("non-continuous headers sequence");
-//            }
-//
-//            if (!AcceptBlockHeader(header, state, &pindexLast)) {
-//                int nDoS;
-//                if (state.IsInvalid(nDoS)) {
-//                    if (nDoS > 0)
-//                        Misbehaving(pfrom->GetId(), nDoS);
-//                    std::string strError = "invalid header received " + header.GetHash().ToString();
-//                    return error(strError.c_str());
-//                }
-//            }
-//        }
-//
-//        if (pindexLast)
-//            UpdateBlockAvailability(pfrom->GetId(), pindexLast->GetBlockHash());
-//
-//        if (nCount == MAX_HEADERS_RESULTS && pindexLast) {
-//            // Headers message had its maximum size; the peer may have more headers.
-//            // TODO: optimize: if pindexLast is an ancestor of chainActive.Tip or pindexBestHeader, continue
-//            // from there instead.
-//            LogPrintf("more getheaders (%d) to end to peer=%d (startheight:%d)\n", pindexLast->nHeight, pfrom->id, pfrom->nStartingHeight);
-//            pfrom->PushMessage("getheaders", chainActive.GetLocator(pindexLast), uint256(0));
-//        }
-//
-//        CheckBlockIndex();
-//    }
+    else if (strCommand == "headers" && Params().HeadersFirstSyncingActive() && !fImporting && !fReindex) // Ignore headers received while importing
+    {
+        std::vector<CBlockHeader> headers;
+
+        // Bypass the normal CBlock deserialization, as we don't want to risk deserializing 2000 full blocks.
+        unsigned int nCount = ReadCompactSize(vRecv);
+        if (nCount > MAX_HEADERS_RESULTS) {
+            Misbehaving(pfrom->GetId(), 20);
+            return error("headers message size = %u", nCount);
+        }
+        headers.resize(nCount);
+        for (unsigned int n = 0; n < nCount; n++) {
+            vRecv >> headers[n];
+            ReadCompactSize(vRecv); // ignore tx count; assume it is 0.
+        }
+
+        LOCK(cs_main);
+
+        if (nCount == 0) {
+            // Nothing interesting. Stop asking this peers for more headers.
+            return true;
+        }
+        CBlockIndex *pindexLast = NULL;
+        BOOST_FOREACH(const CBlockHeader& header, headers){
+            CValidationState state;
+            if (pindexLast != NULL && header.hashPrevBlock != pindexLast->GetBlockHash()) {
+                Misbehaving(pfrom->GetId(), 20);
+                return error("non-continuous headers sequence");
+            }
+
+            /*TODO: this has a CBlock cast on it so that it will compile. There should be a solution for this
+             * before headers are reimplemented on mainnet
+             */
+            if (!AcceptBlockHeader((CBlock)header, state, &pindexLast)) {
+                int nDoS;
+                if (state.IsInvalid(nDoS)) {
+                    if (nDoS > 0)
+                        Misbehaving(pfrom->GetId(), nDoS);
+                    std::string strError = "invalid header received " + header.GetHash().ToString();
+                    return error(strError.c_str());
+                }
+            }
+        }
+
+        if (pindexLast)
+            UpdateBlockAvailability(pfrom->GetId(), pindexLast->GetBlockHash());
+
+        if (nCount == MAX_HEADERS_RESULTS && pindexLast) {
+            // Headers message had its maximum size; the peer may have more headers.
+            // TODO: optimize: if pindexLast is an ancestor of chainActive.Tip or pindexBestHeader, continue
+            // from there instead.
+            LogPrintf("more getheaders (%d) to end to peer=%d (startheight:%d)\n", pindexLast->nHeight, pfrom->id, pfrom->nStartingHeight);
+            pfrom->PushMessage("getheaders", chainActive.GetLocator(pindexLast), uint256(0));
+        }
+
+        CheckBlockIndex();
+    }
 
     else if (strCommand == "block" && !fImporting && !fReindex) // Ignore blocks received while importing
     {
