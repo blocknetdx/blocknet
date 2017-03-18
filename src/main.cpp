@@ -3552,7 +3552,7 @@ bool CheckWork(const CBlock block, CBlockIndex * const pindexPrev)
     else if (block.IsProofOfWork())
     {
         // Check proof of work (Here for the architecture issues with DGW v1 and v2)
-        if(pindexPrev->nHeight + 1 <= 68589)
+        if(pindexPrev == NULL || pindexPrev->nHeight + 1 <= 68589)
         {
             unsigned int nBitsNext = GetNextWorkRequired(pindexPrev, &block, false);
             double n1 = ConvertBitsToDouble(block.nBits);
