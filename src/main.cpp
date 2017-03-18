@@ -3847,12 +3847,15 @@ bool ProcessNewBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDis
     if (!pblock->CheckBlockSignature())
         return error("ProcessNewBlock() : bad proof-of-stake block signature");
 
-    //if we get this far, check if the prev block is our prev block, if not then request sync and return false
-    BlockMap::iterator mi = mapBlockIndex.find(pblock->hashPrevBlock);
-    if (mi == mapBlockIndex.end())
+    if (pblock->GetHash() != Params().HashGenesisBlock() && pfrom != NULL)
     {
-        pfrom->PushMessage("getblocks", chainActive.GetLocator(), uint256(0));
-        return false;
+        //if we get this far, check if the prev block is our prev block, if not then request sync and return false
+        BlockMap::iterator mi = mapBlockIndex.find(pblock->hashPrevBlock);
+        if (mi == mapBlockIndex.end())
+        {
+            pfrom->PushMessage("getblocks", chainActive.GetLocator(), uint256(0));
+            return false;
+        }
     }
 
     while(true) {
