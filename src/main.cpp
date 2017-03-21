@@ -3552,7 +3552,7 @@ bool CheckWork(const CBlock block, CBlockIndex * const pindexPrev)
     else if (block.IsProofOfWork())
     {
         // Check proof of work (Here for the architecture issues with DGW v1 and v2)
-        if(pindexPrev->nHeight + 1 <= 68589)
+        if(pindexPrev == NULL || pindexPrev->nHeight + 1 <= 68589)
         {
             unsigned int nBitsNext = GetNextWorkRequired(pindexPrev, &block, false);
             double n1 = ConvertBitsToDouble(block.nBits);
@@ -3847,12 +3847,15 @@ bool ProcessNewBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDis
     if (!pblock->CheckBlockSignature())
         return error("ProcessNewBlock() : bad proof-of-stake block signature");
 
-    //if we get this far, check if the prev block is our prev block, if not then request sync and return false
-    BlockMap::iterator mi = mapBlockIndex.find(pblock->hashPrevBlock);
-    if (mi == mapBlockIndex.end())
+    if (pblock->GetHash() != Params().HashGenesisBlock() && pfrom != NULL)
     {
-        pfrom->PushMessage("getblocks", chainActive.GetLocator(), uint256(0));
-        return false;
+        //if we get this far, check if the prev block is our prev block, if not then request sync and return false
+        BlockMap::iterator mi = mapBlockIndex.find(pblock->hashPrevBlock);
+        if (mi == mapBlockIndex.end())
+        {
+            pfrom->PushMessage("getblocks", chainActive.GetLocator(), uint256(0));
+            return false;
+        }
     }
 
     while(true) {
