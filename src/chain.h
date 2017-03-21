@@ -202,7 +202,7 @@ public:
         SetNull();
     }
 
-    CBlockIndex(const CBlockHeader& block)
+    CBlockIndex(const CBlock& block)
     {
         SetNull();
 
@@ -220,12 +220,12 @@ public:
         nStakeModifier = 0;
         nStakeModifierChecksum = 0;
         hashProofOfStake = 0;
-        CBlock block2(block);
-        if (block2.IsProofOfStake())
+
+        if (block.IsProofOfStake())
         {
             SetProofOfStake();
-            prevoutStake = block2.vtx[1].vin[0].prevout;
-            nStakeTime = block2.nTime;
+            prevoutStake = block.vtx[1].vin[0].prevout;
+            nStakeTime = block.nTime;
         }
         else
         {
