@@ -810,6 +810,9 @@ void restoreWindowGeometry(const QString& strSetting, const QSize& defaultSize, 
 
 // Check whether a theme is not build-in
 bool isExternal(QString theme){
+    if(theme.isEmpty())
+       return false;
+
     return (theme.operator !=("default"));
 }
 
@@ -820,7 +823,7 @@ QString loadStyleSheet()
     QSettings settings;
     QString cssName;
     QString theme = settings.value("theme", "").toString();
-
+    
     if(isExternal(theme)){
         // External CSS
         settings.setValue("fCSSexternal", true);
