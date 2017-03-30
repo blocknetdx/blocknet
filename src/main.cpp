@@ -4094,13 +4094,13 @@ bool static LoadBlockIndexDB()
     }
 
     //Check for inconsistency with block file info and internal state
-    if(vSortedByHeight.size() != vinfoBlockFile[nLastBlockFile].nBlocks && vinfoBlockFile[nLastBlockFile].nBlocks != 0)
+    if(vSortedByHeight.size() != vinfoBlockFile[nLastBlockFile].nHeightLast + 1 && vinfoBlockFile[nLastBlockFile].nHeightLast != 0)
     {
         //The database is in a state where a block has been accepted and written to disk, but not
         //all of the block has perculated through the code. The block and the index should both be
         //intact (although assertions are added if they are not), and the block will be reprocessed
         //to ensure all data will be accounted for.
-        LogPrintf("%s: Inconsistent State Detected mapBlockIndex.size()=%d blockFileBlocks=%d\n", __func__, vSortedByHeight.size(), vinfoBlockFile[nLastBlockFile].nBlocks);
+        LogPrintf("%s: Inconsistent State Detected mapBlockIndex.size()=%d blockFileBlocks=%d\n", __func__, vSortedByHeight.size(), vinfoBlockFile[nLastBlockFile].nHeightLast + 1);
         LogPrintf("%s: lastIndexPos=%d blockFileSize=%d\n", __func__, vSortedByHeight[vSortedByHeight.size() - 1].second->GetBlockPos().nPos,
                   vinfoBlockFile[nLastBlockFile].nSize);
 
@@ -4143,7 +4143,7 @@ bool static LoadBlockIndexDB()
         }
         LogPrintf("%s: last block file info: %s\n", __func__, vinfoBlockFile[nLastBlockFile].ToString());
     }
-    assert(mapBlockIndex.size() == vinfoBlockFile[nLastBlockFile].nBlocks);
+    assert(mapBlockIndex.size() == vinfoBlockFile[nLastBlockFile].nHeightLast + 1);
     
     // Check whether we need to continue reindexing
     bool fReindexing = false;
