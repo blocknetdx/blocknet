@@ -88,7 +88,6 @@ public:
     int PoolMaxTransactions() const { return nPoolMaxTransactions; }
     std::string SporkKey() const { return strSporkKey; }
     std::string ObfuscationPoolDummyAddress() const { return strObfuscationPoolDummyAddress; }
-    std::string MasternodePaymentPubKey() const { return strMasternodePaymentsPubKey; }
     int64_t StartMasternodePayments() const { return nStartMasternodePayments; }
     CBaseChainParams::Network NetworkID() const { return networkID; }
 protected:
@@ -127,7 +126,6 @@ protected:
     bool fHeadersFirstSyncingActive;
     int nPoolMaxTransactions;
     std::string strSporkKey;
-    std::string strMasternodePaymentsPubKey;
     std::string strObfuscationPoolDummyAddress;
     int64_t nStartMasternodePayments;
 };
