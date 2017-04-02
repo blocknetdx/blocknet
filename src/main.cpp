@@ -2464,6 +2464,8 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
 
     // verify that the view's current state corresponds to the previous block
     uint256 hashPrevBlock = pindex->pprev == NULL ? uint256(0) : pindex->pprev->GetBlockHash();
+    if(hashPrevBlock != view.GetBestBlock())
+        LogPrintf("%s: hashPrev=%s view=%s\n", __func__, hashPrevBlock.ToString().c_str(), view.GetBestBlock().ToString().c_str());
     assert(hashPrevBlock == view.GetBestBlock());
 
     // Special case for the genesis block, skipping connection of its transactions
@@ -4093,8 +4095,17 @@ bool static LoadBlockIndexDB()
         }
     }
 
+    //Check if the shutdown procedure was followed on last client exit
+    bool fLastShutdownWasPrepared = true;
+    pblocktree->ReadFlag("shutdown", fLastShutdownWasPrepared);
+    LogPrintf("%s: Last shutdown was prepared: %s\n", __func__, fLastShutdownWasPrepared);
+
+    //assert(mapBlockIndex.size() == vinfoBlockFile[nLastBlockFile].nHeightLast + 1);
     //Check for inconsistency with block file info and internal state
-    if(vSortedByHeight.size() != vinfoBlockFile[nLastBlockFile].nHeightLast + 1 && vinfoBlockFile[nLastBlockFile].nHeightLast != 0)
+    if(!fLastShutdownWasPrepared
+       && !GetBoolArg("-forcestart", false)
+       && (vSortedByHeight.size() != vinfoBlockFile[nLastBlockFile].nHeightLast + 1)
+       && (vinfoBlockFile[nLastBlockFile].nHeightLast != 0))
     {
         //The database is in a state where a block has been accepted and written to disk, but not
         //all of the block has perculated through the code. The block and the index should both be
@@ -4106,16 +4117,18 @@ bool static LoadBlockIndexDB()
 
         //try reading the block from the last index we have
         LogPrintf("%s: Attempting to re-add last block that was recorded to disk\n", __func__);
+        bool isFixed = true;
+        string strError = "";
         CBlockIndex * pindexBestKnown = vSortedByHeight[vSortedByHeight.size() - 1].second;
         CBlock checkBlock;
-        assert(ReadBlockFromDisk(checkBlock, pindexBestKnown));
-        assert(checkBlock.GetHash() == pindexBestKnown->GetBlockHash());
+        if(!ReadBlockFromDisk(checkBlock, pindexBestKnown))
+        {
+            isFixed = false;
+            strError = strprintf("failed to read block %d from disk", pindexBestKnown->nHeight);
+        }
 
         LogPrintf("%s: bestBlock=%s prev=%s\n", __func__, pindexBestKnown->GetBlockHash().ToString().c_str(),
                   pindexBestKnown->pprev->GetBlockHash().ToString().c_str());
-
-        //Double check that the new index does not contain the previous block's hash
-        assert(pindexBestKnown->GetBlockHash() != pindexBestKnown->pprev->GetBlockHash());
 
         //set the chain to the previous block that has been completely accepted
         chainActive.SetTip(pindexBestKnown->pprev);
@@ -4126,7 +4139,11 @@ bool static LoadBlockIndexDB()
         ProcessNewBlock(state, NULL, &checkBlock, &blockPos);
 
         //ensure that everything is as it should be
-        assert(pcoinsTip->GetBestBlock() == checkBlock.GetHash());
+        if(pcoinsTip->GetBestBlock() != checkBlock.GetHash())
+        {
+            isFixed = false;
+            strError = "pcoinsTip best block is not correct";
+        }
 
         //force the block file to update or else the bestBlock will be overwritten by the next block
         vinfoBlockFile[nLastBlockFile].AddBlock(pindexBestKnown->nHeight, pindexBestKnown->nTime);
@@ -4142,9 +4159,22 @@ bool static LoadBlockIndexDB()
             pblocktree->ReadBlockFileInfo(nFile, vinfoBlockFile[nFile]);
         }
         LogPrintf("%s: last block file info: %s\n", __func__, vinfoBlockFile[nLastBlockFile].ToString());
+
+        if(mapBlockIndex.size() != vinfoBlockFile[nLastBlockFile].nHeightLast + 1)
+        {
+            isFixed = false;
+            strError = "mapBlockIndex does not equal the meta data's last height";
+        }
+
+        if(!isFixed)
+        {
+            strError = "Failed reading from database. " + strError + ". The block database is in an inconsistent state and may cause issues in the future."
+                    "To force start use -forcestart";
+            uiInterface.ThreadSafeMessageBox(strError, "", CClientUIInterface::MSG_ERROR);
+            abort();
+        }
     }
-    assert(mapBlockIndex.size() == vinfoBlockFile[nLastBlockFile].nHeightLast + 1);
-    
+
     // Check whether we need to continue reindexing
     bool fReindexing = false;
     pblocktree->ReadReindexing(fReindexing);
@@ -4153,6 +4183,9 @@ bool static LoadBlockIndexDB()
     // Check whether we have a transaction index
     pblocktree->ReadFlag("txindex", fTxIndex);
     LogPrintf("LoadBlockIndexDB(): transaction index %s\n", fTxIndex ? "enabled" : "disabled");
+
+    // If this is written true before the next client init, then we know the shutdown process failed
+    pblocktree->WriteFlag("shutdown", false);
 
     // Load pointer to end of best chain
     BlockMap::iterator it = mapBlockIndex.find(pcoinsTip->GetBestBlock());
