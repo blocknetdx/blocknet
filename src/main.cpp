@@ -4099,11 +4099,11 @@ bool static LoadBlockIndexDB()
     bool fLastShutdownWasPrepared = true;
     pblocktree->ReadFlag("shutdown", fLastShutdownWasPrepared);
     LogPrintf("%s: Last shutdown was prepared: %s\n", __func__, fLastShutdownWasPrepared);
-
-    //assert(mapBlockIndex.size() == vinfoBlockFile[nLastBlockFile].nHeightLast + 1);
+    
     //Check for inconsistency with block file info and internal state
     if(!fLastShutdownWasPrepared
        && !GetBoolArg("-forcestart", false)
+       && !GetBoolArg("-reindex", false)
        && (vSortedByHeight.size() != vinfoBlockFile[nLastBlockFile].nHeightLast + 1)
        && (vinfoBlockFile[nLastBlockFile].nHeightLast != 0))
     {
