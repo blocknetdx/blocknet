@@ -1,145 +1,265 @@
 Release Process
 ====================
 
-* update translations (ping wumpus, Diapolo or tcatm on IRC)
-* see https://github.com/pivx-project/pivx/blob/master/doc/translation_process.md#syncing-with-transifex
+Before every release candidate:
 
-* * *
+* Update translations (ping Fuzzbawls on Slack) see [translation_process.md](https://github.com/PIVX-Project/PIVX/blob/master/doc/translation_process.md#synchronising-translations).
 
-###update (commit) version in sources
+Before every minor and major release:
 
-	contrib/verifysfbinaries/verify.sh
-	doc/README*
-	share/setup.nsi
-	src/clientversion.h (change CLIENT_VERSION_IS_RELEASE to true)
+* Update version in `configure.ac` (don't forget to set `CLIENT_VERSION_IS_RELEASE` to `true`)
+* Write release notes (see below)
 
-###tag version in git
+Before every major release:
 
-	git tag -s v(new version, e.g. 2.1.3.4)
+* Update hardcoded [seeds](/contrib/seeds/README.md), see [this pull request](https://github.com/bitcoin/bitcoin/pull/7415) for an example.
+* Update [`BLOCK_CHAIN_SIZE`](/src/qt/intro.cpp) to the current size plus some overhead.
+* Update `src/chainparams.cpp` with statistics about the transaction count and rate.
+* Update version of `contrib/gitian-descriptors/*.yml`: usually one'd want to do this on master after branching off the release - but be sure to at least do it before a new major release
 
-###write release notes. git shortlog helps a lot, for example:
+### First time / New builders
 
-	git shortlog --no-merges v(current version, e.g. 2.1.3.0)..v(new version, e.g. 2.1.4.0)
+If you're using the automated script (found in [contrib/gitian-build.sh](/contrib/gitian-build.sh)), then at this point you should run it with the "--setup" command. Otherwise ignore this.
 
-* * *
+Check out the source code in the following directory hierarchy.
 
-###update gitian
+    cd /path/to/your/toplevel/build
+    git clone https://github.com/PIVX-Project/gitian.sigs.git
+    git clone https://github.com/PIVX-Project/pivx-detached-sigs.git
+    git clone https://github.com/devrandom/gitian-builder.git
+    git clone https://github.com/PIVX-Project/PIVX.git
 
- In order to take advantage of the new caching features in gitian, be sure to update to a recent version (e9741525c or higher is recommended)
+### PIVX maintainers/release engineers, suggestion for writing release notes
 
-###perform gitian builds
+Write release notes. git shortlog helps a lot, for example:
 
- From a directory containing the pivx source, gitian-builder and gitian.sigs
+    git shortlog --no-merges v(current version, e.g. 0.7.2)..v(new version, e.g. 0.8.0)
 
-	export SIGNER=(your gitian key)
-	export VERSION=(new version, e.g. 2.1.4.0)
-	pushd ./pivx
-	git checkout v${VERSION}
-	popd
-	pushd ./gitian-builder
 
-###fetch and build inputs: (first time, or when dependency versions change)
- 
-	mkdir -p inputs
+Generate list of authors:
 
- Register and download the Apple SDK: (see OSX Readme for details)
- 
- https://developer.apple.com/downloads/download.action?path=Developer_Tools/xcode_4.6.3/xcode4630916281a.dmg
- 
- Using a Mac, create a tarball for the 10.7 SDK and copy it to the inputs directory:
- 
-	tar -C /Volumes/Xcode/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/ -czf MacOSX10.7.sdk.tar.gz MacOSX10.7.sdk
+    git log --format='%aN' "$*" | sort -ui | sed -e 's/^/- /'
 
- Or you can download it from our website;
- 
- 	http://pivx-crypto.com/files/sdk/MacOSX10.7.sdk.tar.gz
- 	
- If you will be building the RPi2 binary as well, you will need this file in 'gitian-builder/inputs' folder
- 
- 	http://pivx-crypto.com/files/sdk/raspberrypi-tools.tar.gz
- 	
-###Optional: Seed the Gitian sources cache
+Tag version (or release candidate) in git
 
-  By default, gitian will fetch source files as needed. For offline builds, they can be fetched ahead of time:
+    git tag -s v(new version, e.g. 0.8.0)
 
-	make -C ../pivx/depends download SOURCES_PATH=`pwd`/cache/common
+### Setup and perform Gitian builds
 
-  Only missing files will be fetched, so this is safe to re-run for each build.
+If you're using the automated script (found in [contrib/gitian-build.sh](/contrib/gitian-build.sh)), then at this point you should run it with the "--build" command. Otherwise ignore this.
 
-###Build PIVX Core for Linux, Windows, and OS X:
+Setup Gitian descriptors:
 
-	./bin/gbuild --commit pivx=v${VERSION} ../pivx/contrib/gitian-descriptors/gitian-linux.yml
-	./bin/gsign --signer $SIGNER --release ${VERSION}-linux --destination ../gitian.sigs/ ../pivx/contrib/gitian-descriptors/gitian-linux.yml
-	mv build/out/pivx-*.tar.gz build/out/src/pivx-*.tar.gz ../
-	./bin/gbuild --commit pivx=v${VERSION} ../pivx/contrib/gitian-descriptors/gitian-win.yml
-	./bin/gsign --signer $SIGNER --release ${VERSION}-win --destination ../gitian.sigs/ ../pivx/contrib/gitian-descriptors/gitian-win.yml
-	mv build/out/pivx-*.zip build/out/pivx-*.exe ../
-	./bin/gbuild --commit pivx=v${VERSION} ../pivx/contrib/gitian-descriptors/gitian-osx.yml
-	./bin/gsign --signer $SIGNER --release ${VERSION}-osx-unsigned --destination ../gitian.sigs/ ../pivx/contrib/gitian-descriptors/gitian-osx.yml
-	mv build/out/pivx-*-unsigned.tar.gz inputs/pivx-osx-unsigned.tar.gz
-	mv build/out/pivx-*.tar.gz build/out/pivx-*.dmg ../
-	popd
-  Build output expected:
+    pushd ./PIVX
+    export SIGNER=(your Gitian key, ie bluematt, sipa, etc)
+    export VERSION=(new version, e.g. 0.8.0)
+    git fetch
+    git checkout v${VERSION}
+    popd
 
-  1. source tarball (pivx-${VERSION}.tar.gz)
-  2. linux 32-bit and 64-bit binaries dist tarballs (pivx-${VERSION}-linux[32|64].tar.gz)
-  3. windows 32-bit and 64-bit installers and dist zips (pivx-${VERSION}-win[32|64]-setup.exe, pivx-${VERSION}-win[32|64].zip)
-  4. OSX unsigned installer (pivx-${VERSION}-osx-unsigned.dmg)
-  5. Gitian signatures (in gitian.sigs/${VERSION}-<linux|win|osx-unsigned>/(your gitian key)/
+Ensure your gitian.sigs are up-to-date if you wish to gverify your builds against other Gitian signatures.
 
-###Next steps:
+    pushd ./gitian.sigs
+    git pull
+    popd
+
+Ensure gitian-builder is up-to-date:
+
+    pushd ./gitian-builder
+    git pull
+    popd
+
+### Fetch and create inputs: (first time, or when dependency versions change)
+
+    pushd ./gitian-builder
+    mkdir -p inputs
+    wget -P inputs https://bitcoincore.org/cfields/osslsigncode-Backports-to-1.7.1.patch
+    wget -P inputs http://downloads.sourceforge.net/project/osslsigncode/osslsigncode/osslsigncode-1.7.1.tar.gz
+    popd
+
+Create the OS X SDK tarball, see the [OS X readme](README_osx.md) for details, and copy it into the inputs directory.
+
+### Optional: Seed the Gitian sources cache and offline git repositories
+
+By default, Gitian will fetch source files as needed. To cache them ahead of time:
+
+    pushd ./gitian-builder
+    make -C ../PIVX/depends download SOURCES_PATH=`pwd`/cache/common
+    popd
+
+Only missing files will be fetched, so this is safe to re-run for each build.
+
+NOTE: Offline builds must use the --url flag to ensure Gitian fetches only from local URLs. For example:
+
+    pushd ./gitian-builder
+    ./bin/gbuild --url pivx=/path/to/PIVX,signature=/path/to/sigs {rest of arguments}
+    popd
+
+The gbuild invocations below <b>DO NOT DO THIS</b> by default.
+
+### Build and sign PIVX Core for Linux, Windows, and OS X:
+
+    pushd ./gitian-builder
+    ./bin/gbuild --memory 3000 --commit pivx=v${VERSION} ../PIVX/contrib/gitian-descriptors/gitian-linux.yml
+    ./bin/gsign --signer $SIGNER --release ${VERSION}-linux --destination ../gitian.sigs/ ../PIVX/contrib/gitian-descriptors/gitian-linux.yml
+    mv build/out/pivx-*.tar.gz build/out/src/pivx-*.tar.gz ../
+
+    ./bin/gbuild --memory 3000 --commit pivx=v${VERSION} ../PIVX/contrib/gitian-descriptors/gitian-win.yml
+    ./bin/gsign --signer $SIGNER --release ${VERSION}-win-unsigned --destination ../gitian.sigs/ ../PIVX/contrib/gitian-descriptors/gitian-win.yml
+    mv build/out/pivx-*-win-unsigned.tar.gz inputs/pivx-win-unsigned.tar.gz
+    mv build/out/pivx-*.zip build/out/pivx-*.exe ../
+
+    ./bin/gbuild --memory 3000 --commit pivx=v${VERSION} ../PIVX/contrib/gitian-descriptors/gitian-osx.yml
+    ./bin/gsign --signer $SIGNER --release ${VERSION}-osx-unsigned --destination ../gitian.sigs/ ../PIVX/contrib/gitian-descriptors/gitian-osx.yml
+    mv build/out/pivx-*-osx-unsigned.tar.gz inputs/pivx-osx-unsigned.tar.gz
+    mv build/out/pivx-*.tar.gz build/out/pivx-*.dmg ../
+    popd
+
+Build output expected:
+
+  1. source tarball (`pivx-${VERSION}.tar.gz`)
+  2. linux 32-bit and 64-bit dist tarballs (`pivx-${VERSION}-linux[32|64].tar.gz`)
+  3. windows 32-bit and 64-bit unsigned installers and dist zips (`pivx-${VERSION}-win[32|64]-setup-unsigned.exe`, `pivx-${VERSION}-win[32|64].zip`)
+  4. OS X unsigned installer and dist tarball (`pivx-${VERSION}-osx-unsigned.dmg`, `pivx-${VERSION}-osx64.tar.gz`)
+  5. Gitian signatures (in `gitian.sigs/${VERSION}-<linux|{win,osx}-unsigned>/(your Gitian key)/`)
+
+### Verify other gitian builders signatures to your own. (Optional)
+
+Add other gitian builders keys to your gpg keyring, and/or refresh keys.
+
+    gpg --import PIVX/contrib/gitian-keys/*.pgp
+    gpg --refresh-keys
+
+Verify the signatures
+
+    pushd ./gitian-builder
+    ./bin/gverify -v -d ../gitian.sigs/ -r ${VERSION}-linux ../PIVX/contrib/gitian-descriptors/gitian-linux.yml
+    ./bin/gverify -v -d ../gitian.sigs/ -r ${VERSION}-win-unsigned ../PIVX/contrib/gitian-descriptors/gitian-win.yml
+    ./bin/gverify -v -d ../gitian.sigs/ -r ${VERSION}-osx-unsigned ../PIVX/contrib/gitian-descriptors/gitian-osx.yml
+    popd
+
+### Next steps:
 
 Commit your signature to gitian.sigs:
 
-	pushd gitian.sigs
-	git add ${VERSION}-linux/${SIGNER}
-	git add ${VERSION}-win/${SIGNER}
-	git add ${VERSION}-osx-unsigned/${SIGNER}
-	git commit -a
-	git push  # Assuming you can push to the gitian.sigs tree
-	popd
+    pushd gitian.sigs
+    git add ${VERSION}-linux/${SIGNER}
+    git add ${VERSION}-win-unsigned/${SIGNER}
+    git add ${VERSION}-osx-unsigned/${SIGNER}
+    git commit -a
+    git push  # Assuming you can push to the gitian.sigs tree
+    popd
 
-  Wait for OSX detached signature:
-	Once the OSX build has 3 matching signatures ***TODO*** will sign it with the apple App-Store key.
-	He will then upload a detached signature to be combined with the unsigned app to create a signed binary.
+Codesigner only: Create Windows/OS X detached signatures:
+- Only one person handles codesigning. Everyone else should skip to the next step.
+- Only once the Windows/OS X builds each have 3 matching signatures may they be signed with their respective release keys.
 
-  Create the signed OSX binary:
+Codesigner only: Sign the osx binary:
 
-	pushd ./gitian-builder
-	# Fetch the signature as instructed by Evan
-	cp signature.tar.gz inputs/
-	./bin/gbuild -i ../pivx/contrib/gitian-descriptors/gitian-osx-signer.yml
-	./bin/gsign --signer $SIGNER --release ${VERSION}-osx-signed --destination ../gitian.sigs/ ../pivx/contrib/gitian-descriptors/gitian-osx-signer.yml
-	mv build/out/pivx-osx-signed.dmg ../pivx-${VERSION}-osx.dmg
-	popd
+    transfer pivx-osx-unsigned.tar.gz to osx for signing
+    tar xf pivx-osx-unsigned.tar.gz
+    ./detached-sig-create.sh -s "Key ID"
+    Enter the keychain password and authorize the signature
+    Move signature-osx.tar.gz back to the gitian host
 
-Commit your signature for the signed OSX binary:
+Codesigner only: Sign the windows binaries:
 
-	pushd gitian.sigs
-	git add ${VERSION}-osx-signed/${SIGNER}
-	git commit -a
-	git push  # Assuming you can push to the gitian.sigs tree
-	popd
+    tar xf pivx-win-unsigned.tar.gz
+    ./detached-sig-create.sh -key /path/to/codesign.key
+    Enter the passphrase for the key when prompted
+    signature-win.tar.gz will be created
 
--------------------------------------------------------------------------
+Codesigner only: Commit the detached codesign payloads:
+
+    cd ~/pivx-detached-sigs
+    checkout the appropriate branch for this release series
+    rm -rf *
+    tar xf signature-osx.tar.gz
+    tar xf signature-win.tar.gz
+    git add -a
+    git commit -m "point to ${VERSION}"
+    git tag -s v${VERSION} HEAD
+    git push the current branch and new tag
+
+Non-codesigners: wait for Windows/OS X detached signatures:
+
+- Once the Windows/OS X builds each have 3 matching signatures, they will be signed with their respective release keys.
+- Detached signatures will then be committed to the [pivx-detached-sigs](https://github.com/PIVX-Project/pivx-detached-sigs) repository, which can be combined with the unsigned apps to create signed binaries.
+
+Create (and optionally verify) the signed OS X binary:
+
+    pushd ./gitian-builder
+    ./bin/gbuild -i --commit signature=v${VERSION} ../PIVX/contrib/gitian-descriptors/gitian-osx-signer.yml
+    ./bin/gsign --signer $SIGNER --release ${VERSION}-osx-signed --destination ../gitian.sigs/ ../PIVX/contrib/gitian-descriptors/gitian-osx-signer.yml
+    ./bin/gverify -v -d ../gitian.sigs/ -r ${VERSION}-osx-signed ../PIVX/contrib/gitian-descriptors/gitian-osx-signer.yml
+    mv build/out/pivx-osx-signed.dmg ../pivx-${VERSION}-osx.dmg
+    popd
+
+Create (and optionally verify) the signed Windows binaries:
+
+    pushd ./gitian-builder
+    ./bin/gbuild -i --commit signature=v${VERSION} ../PIVX/contrib/gitian-descriptors/gitian-win-signer.yml
+    ./bin/gsign --signer $SIGNER --release ${VERSION}-win-signed --destination ../gitian.sigs/ ../PIVX/contrib/gitian-descriptors/gitian-win-signer.yml
+    ./bin/gverify -v -d ../gitian.sigs/ -r ${VERSION}-win-signed ../PIVX/contrib/gitian-descriptors/gitian-win-signer.yml
+    mv build/out/pivx-*win64-setup.exe ../pivx-${VERSION}-win64-setup.exe
+    mv build/out/pivx-*win32-setup.exe ../pivx-${VERSION}-win32-setup.exe
+    popd
+
+Commit your signature for the signed OS X/Windows binaries:
+
+    pushd gitian.sigs
+    git add ${VERSION}-osx-signed/${SIGNER}
+    git add ${VERSION}-win-signed/${SIGNER}
+    git commit -a
+    git push  # Assuming you can push to the gitian.sigs tree
+    popd
 
 ### After 3 or more people have gitian-built and their results match:
 
-- Perform code-signing.
-
-    - Code-sign Windows -setup.exe (in a Windows virtual machine using signtool)
-
 - Create `SHA256SUMS.asc` for the builds, and GPG-sign it:
+
 ```bash
 sha256sum * > SHA256SUMS
+```
+
+The list of files should be:
+```
+pivx-${VERSION}-aarch64-linux-gnu.tar.gz
+pivx-${VERSION}-arm-linux-gnueabihf.tar.gz
+pivx-${VERSION}-i686-pc-linux-gnu.tar.gz
+pivx-${VERSION}-x86_64-linux-gnu.tar.gz
+pivx-${VERSION}-osx64.tar.gz
+pivx-${VERSION}-osx.dmg
+pivx-${VERSION}.tar.gz
+pivx-${VERSION}-win32-setup.exe
+pivx-${VERSION}-win32.zip
+pivx-${VERSION}-win64-setup.exe
+pivx-${VERSION}-win64.zip
+```
+The `*-debug*` files generated by the gitian build contain debug symbols
+for troubleshooting by developers. It is assumed that anyone that is interested
+in debugging can run gitian to generate the files for themselves. To avoid
+end-user confusion about which file to pick, as well as save storage
+space *do not upload these to the pivx.org server*.
+
+- GPG-sign it, delete the unsigned file:
+```
 gpg --digest-algo sha256 --clearsign SHA256SUMS # outputs SHA256SUMS.asc
 rm SHA256SUMS
 ```
 (the digest algorithm is forced to sha256 to avoid confusion of the `Hash:` header that GPG adds with the SHA256 used for the files)
+Note: check that SHA256SUMS itself doesn't end up in SHA256SUMS, which is a spurious/nonsensical entry.
 
-- Upload zips and installers, as well as `SHA256SUMS.asc` from last step, to the bitcoin.org server
-  into `/var/www/bin/bitcoin-core-${VERSION}`
+- Upload zips and installers, as well as `SHA256SUMS.asc` from last step, to the GitHub release (see below)
 
-- Add release notes for the new version to the directory `doc/release-notes` in git master
+- Announce the release:
 
-- Celebrate
+  - bitcointalk announcement thread
+
+  - Optionally twitter, reddit /r/pivx, ... but this will usually sort out itself
+
+  - Archive release notes for the new version to `doc/release-notes/` (branch `master` and branch of the release)
+
+  - Create a [new GitHub release](https://github.com/PIVX-Project/PIVX/releases/new) with a link to the archived release notes.
+
+  - Celebrate

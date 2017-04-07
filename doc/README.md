@@ -1,9 +1,9 @@
-PIVX Core 2.1.6
+PIVX Core
 =====================
 
 Setup
 ---------------------
-[Bitcoin Core](http://bitcoin.org/en/download) is the original Bitcoin client and it builds the backbone of the network. However, it downloads and stores the entire history of Bitcoin transactions (which is currently several GBs); depending on the speed of your computer and network connection, the synchronization process can take anywhere from a few hours to a day or more. Thankfully you only have to do this once. If you would like the process to go faster you can [download the blockchain directly](bootstrap.md).
+[PIVX Core](http://pivx.org/wallet) is the original PIVX client and it builds the backbone of the network. However, it downloads and stores the entire history of PIVX transactions; depending on the speed of your computer and network connection, the synchronization process can take anywhere from a few hours to a day or more. Thankfully you only have to do this once.
 
 Running
 ---------------------
@@ -11,16 +11,10 @@ The following are some helpful notes on how to run PIVX on your native platform.
 
 ### Unix
 
-You need the Qt4 run-time libraries to run PIVX-Qt. On Debian or Ubuntu:
-
-	sudo apt-get install libqtgui4
-
 Unpack the files into a directory and run:
 
 - bin/32/pivx-qt (GUI, 32-bit) or bin/32/pivxd (headless, 32-bit)
 - bin/64/pivx-qt (GUI, 64-bit) or bin/64/pivxd (headless, 64-bit)
-
-
 
 ### Windows
 
@@ -34,8 +28,8 @@ Drag PIVX-Qt to your applications folder, and then run PIVX-Qt.
 
 * See the documentation at the [PIVX Wiki](https://en.bitcoin.it/wiki/Main_Page) ***TODO***
 for help and more information.
-* Ask for help on https://bitcointalk.org/index.php?topic=1262920.0
-* A new forum will be available soon on pivx-crypto.com
+* Ask for help on [BitcoinTalk](https://bitcointalk.org/index.php?topic=1262920.0) or on the [PIVX Forum](http://forum.pivx.org/).
+* Join one of our Slack groups [PIVX Slack Groups](https://pivx.org/slack-logins/).
 
 Building
 ---------------------
@@ -43,18 +37,26 @@ The following are developer notes on how to build PIVX on your native platform. 
 
 - [OSX Build Notes](build-osx.md)
 - [Unix Build Notes](build-unix.md)
+- [Gitian Building Guide](gitian-building.md)
 
 Development
 ---------------------
-The Pivx repo's [root README](https://github.com/pivx-crypto/pivx/blob/master/README.md) contains relevant information on the development process and automated testing.
+The Pivx repo's [root README](https://github.com/PIVX-Project/PIVX/blob/master/README.md) contains relevant information on the development process and automated testing.
 
-- [Coding Guidelines](coding.md)
+- [Developer Notes](developer-notes.md)
 - [Multiwallet Qt Development](multiwallet-qt.md)
 - [Release Notes](release-notes.md)
 - [Release Process](release-process.md)
 - [Source Code Documentation (External Link)](https://dev.visucore.com/bitcoin/doxygen/) ***TODO***
 - [Translation Process](translation_process.md)
 - [Unit Tests](unit-tests.md)
+- [Unauthenticated REST Interface](REST-interface.md)
+- [Dnsseed Policy](dnsseed-policy.md)
+
+### Resources
+
+* Discuss on the [BitcoinTalk](https://bitcointalk.org/index.php?topic=1262920.0) or the [PIVX](http://forum.pivx.org/) forum.
+* Join the [PIVX-Dev](https://pivx-dev.slack.com/) Slack group ([Sign-Up](https://pivx-dev.herokuapp.com/)).
 
 ### Miscellaneous
 - [Assets Attribution](assets-attribution.md)
