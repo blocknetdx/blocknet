@@ -1,5 +1,5 @@
 [Unit]
-Description=Pivx's distributed currency daemon
+Description=PIVX's distributed currency daemon
 After=network.target
 
 [Service]
@@ -9,7 +9,7 @@ Group=pivx
 Type=forking
 PIDFile=/var/lib/pivxd/pivxd.pid
 ExecStart=/usr/bin/pivxd -daemon -pid=/var/lib/pivxd/pivxd.pid \
--conf=/etc/pivx/pivx.conf -datadir=/var/lib/pivxd -disablewallet
+-conf=/etc/pivx/pivx.conf -datadir=/var/lib/pivxd
 
 Restart=always
 PrivateTmp=true

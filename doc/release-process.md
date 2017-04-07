@@ -24,10 +24,10 @@ If you're using the automated script (found in [contrib/gitian-build.sh](/contri
 Check out the source code in the following directory hierarchy.
 
     cd /path/to/your/toplevel/build
-    git clone https://github.com/PIVX-Project/gitian.sigs.git
-    git clone https://github.com/PIVX-Project/pivx-detached-sigs.git
+    git clone https://github.com/pivx-project/gitian.sigs.git
+    git clone https://github.com/pivx-project/pivx-detached-sigs.git
     git clone https://github.com/devrandom/gitian-builder.git
-    git clone https://github.com/PIVX-Project/PIVX.git
+    git clone https://github.com/pivx-project/pivx.git
 
 ### PIVX maintainers/release engineers, suggestion for writing release notes
 
@@ -50,7 +50,7 @@ If you're using the automated script (found in [contrib/gitian-build.sh](/contri
 
 Setup Gitian descriptors:
 
-    pushd ./PIVX
+    pushd ./pivx
     export SIGNER=(your Gitian key, ie bluematt, sipa, etc)
     export VERSION=(new version, e.g. 0.8.0)
     git fetch
@@ -84,7 +84,7 @@ Create the OS X SDK tarball, see the [OS X readme](README_osx.md) for details, a
 By default, Gitian will fetch source files as needed. To cache them ahead of time:
 
     pushd ./gitian-builder
-    make -C ../PIVX/depends download SOURCES_PATH=`pwd`/cache/common
+    make -C ../pivx/depends download SOURCES_PATH=`pwd`/cache/common
     popd
 
 Only missing files will be fetched, so this is safe to re-run for each build.
@@ -92,7 +92,7 @@ Only missing files will be fetched, so this is safe to re-run for each build.
 NOTE: Offline builds must use the --url flag to ensure Gitian fetches only from local URLs. For example:
 
     pushd ./gitian-builder
-    ./bin/gbuild --url pivx=/path/to/PIVX,signature=/path/to/sigs {rest of arguments}
+    ./bin/gbuild --url pivx=/path/to/pivx,signature=/path/to/sigs {rest of arguments}
     popd
 
 The gbuild invocations below <b>DO NOT DO THIS</b> by default.
@@ -100,17 +100,17 @@ The gbuild invocations below <b>DO NOT DO THIS</b> by default.
 ### Build and sign PIVX Core for Linux, Windows, and OS X:
 
     pushd ./gitian-builder
-    ./bin/gbuild --memory 3000 --commit pivx=v${VERSION} ../PIVX/contrib/gitian-descriptors/gitian-linux.yml
-    ./bin/gsign --signer $SIGNER --release ${VERSION}-linux --destination ../gitian.sigs/ ../PIVX/contrib/gitian-descriptors/gitian-linux.yml
+    ./bin/gbuild --memory 3000 --commit pivx=v${VERSION} ../pivx/contrib/gitian-descriptors/gitian-linux.yml
+    ./bin/gsign --signer $SIGNER --release ${VERSION}-linux --destination ../gitian.sigs/ ../pivx/contrib/gitian-descriptors/gitian-linux.yml
     mv build/out/pivx-*.tar.gz build/out/src/pivx-*.tar.gz ../
 
-    ./bin/gbuild --memory 3000 --commit pivx=v${VERSION} ../PIVX/contrib/gitian-descriptors/gitian-win.yml
-    ./bin/gsign --signer $SIGNER --release ${VERSION}-win-unsigned --destination ../gitian.sigs/ ../PIVX/contrib/gitian-descriptors/gitian-win.yml
+    ./bin/gbuild --memory 3000 --commit pivx=v${VERSION} ../pivx/contrib/gitian-descriptors/gitian-win.yml
+    ./bin/gsign --signer $SIGNER --release ${VERSION}-win-unsigned --destination ../gitian.sigs/ ../pivx/contrib/gitian-descriptors/gitian-win.yml
     mv build/out/pivx-*-win-unsigned.tar.gz inputs/pivx-win-unsigned.tar.gz
     mv build/out/pivx-*.zip build/out/pivx-*.exe ../
 
-    ./bin/gbuild --memory 3000 --commit pivx=v${VERSION} ../PIVX/contrib/gitian-descriptors/gitian-osx.yml
-    ./bin/gsign --signer $SIGNER --release ${VERSION}-osx-unsigned --destination ../gitian.sigs/ ../PIVX/contrib/gitian-descriptors/gitian-osx.yml
+    ./bin/gbuild --memory 3000 --commit pivx=v${VERSION} ../pivx/contrib/gitian-descriptors/gitian-osx.yml
+    ./bin/gsign --signer $SIGNER --release ${VERSION}-osx-unsigned --destination ../gitian.sigs/ ../pivx/contrib/gitian-descriptors/gitian-osx.yml
     mv build/out/pivx-*-osx-unsigned.tar.gz inputs/pivx-osx-unsigned.tar.gz
     mv build/out/pivx-*.tar.gz build/out/pivx-*.dmg ../
     popd
@@ -127,15 +127,15 @@ Build output expected:
 
 Add other gitian builders keys to your gpg keyring, and/or refresh keys.
 
-    gpg --import PIVX/contrib/gitian-keys/*.pgp
+    gpg --import pivx/contrib/gitian-keys/*.pgp
     gpg --refresh-keys
 
 Verify the signatures
 
     pushd ./gitian-builder
-    ./bin/gverify -v -d ../gitian.sigs/ -r ${VERSION}-linux ../PIVX/contrib/gitian-descriptors/gitian-linux.yml
-    ./bin/gverify -v -d ../gitian.sigs/ -r ${VERSION}-win-unsigned ../PIVX/contrib/gitian-descriptors/gitian-win.yml
-    ./bin/gverify -v -d ../gitian.sigs/ -r ${VERSION}-osx-unsigned ../PIVX/contrib/gitian-descriptors/gitian-osx.yml
+    ./bin/gverify -v -d ../gitian.sigs/ -r ${VERSION}-linux ../pivx/contrib/gitian-descriptors/gitian-linux.yml
+    ./bin/gverify -v -d ../gitian.sigs/ -r ${VERSION}-win-unsigned ../pivx/contrib/gitian-descriptors/gitian-win.yml
+    ./bin/gverify -v -d ../gitian.sigs/ -r ${VERSION}-osx-unsigned ../pivx/contrib/gitian-descriptors/gitian-osx.yml
     popd
 
 ### Next steps:
@@ -189,18 +189,18 @@ Non-codesigners: wait for Windows/OS X detached signatures:
 Create (and optionally verify) the signed OS X binary:
 
     pushd ./gitian-builder
-    ./bin/gbuild -i --commit signature=v${VERSION} ../PIVX/contrib/gitian-descriptors/gitian-osx-signer.yml
-    ./bin/gsign --signer $SIGNER --release ${VERSION}-osx-signed --destination ../gitian.sigs/ ../PIVX/contrib/gitian-descriptors/gitian-osx-signer.yml
-    ./bin/gverify -v -d ../gitian.sigs/ -r ${VERSION}-osx-signed ../PIVX/contrib/gitian-descriptors/gitian-osx-signer.yml
+    ./bin/gbuild -i --commit signature=v${VERSION} ../pivx/contrib/gitian-descriptors/gitian-osx-signer.yml
+    ./bin/gsign --signer $SIGNER --release ${VERSION}-osx-signed --destination ../gitian.sigs/ ../pivx/contrib/gitian-descriptors/gitian-osx-signer.yml
+    ./bin/gverify -v -d ../gitian.sigs/ -r ${VERSION}-osx-signed ../pivx/contrib/gitian-descriptors/gitian-osx-signer.yml
     mv build/out/pivx-osx-signed.dmg ../pivx-${VERSION}-osx.dmg
     popd
 
 Create (and optionally verify) the signed Windows binaries:
 
     pushd ./gitian-builder
-    ./bin/gbuild -i --commit signature=v${VERSION} ../PIVX/contrib/gitian-descriptors/gitian-win-signer.yml
-    ./bin/gsign --signer $SIGNER --release ${VERSION}-win-signed --destination ../gitian.sigs/ ../PIVX/contrib/gitian-descriptors/gitian-win-signer.yml
-    ./bin/gverify -v -d ../gitian.sigs/ -r ${VERSION}-win-signed ../PIVX/contrib/gitian-descriptors/gitian-win-signer.yml
+    ./bin/gbuild -i --commit signature=v${VERSION} ../pivx/contrib/gitian-descriptors/gitian-win-signer.yml
+    ./bin/gsign --signer $SIGNER --release ${VERSION}-win-signed --destination ../gitian.sigs/ ../pivx/contrib/gitian-descriptors/gitian-win-signer.yml
+    ./bin/gverify -v -d ../gitian.sigs/ -r ${VERSION}-win-signed ../pivx/contrib/gitian-descriptors/gitian-win-signer.yml
     mv build/out/pivx-*win64-setup.exe ../pivx-${VERSION}-win64-setup.exe
     mv build/out/pivx-*win32-setup.exe ../pivx-${VERSION}-win32-setup.exe
     popd

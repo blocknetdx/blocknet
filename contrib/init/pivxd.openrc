@@ -1,6 +1,6 @@
 #!/sbin/runscript
 
-# backward compatibility for existing gentoo layout 
+# backward compatibility for existing gentoo layout
 #
 if [ -d "/var/lib/pivx/.pivx" ]; then
 	BITCOIND_DEFAULT_DATADIR="/var/lib/pivx/.pivx"
@@ -16,8 +16,8 @@ BITCOIND_USER=${BITCOIND_USER:-pivx}
 BITCOIND_GROUP=${BITCOIND_GROUP:-pivx}
 BITCOIND_BIN=${BITCOIND_BIN:-/usr/bin/pivxd}
 
-name="Pivx Core Daemon"
-description="Pivx crypto-currency p2p network daemon"
+name="PIVX Core Daemon"
+description="PIVX crypto-currency p2p network daemon"
 
 command="/usr/bin/pivxd"
 command_args="-pid=\"${BITCOIND_PIDFILE}\" \
