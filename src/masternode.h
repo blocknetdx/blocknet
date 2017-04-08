@@ -18,8 +18,8 @@
 #define MASTERNODE_MIN_MNP_SECONDS             (10*60)
 #define MASTERNODE_MIN_MNB_SECONDS             (5*60)
 #define MASTERNODE_PING_SECONDS                (5*60)
-#define MASTERNODE_EXPIRATION_SECONDS          (65*60)
-#define MASTERNODE_REMOVAL_SECONDS             (75*60)
+#define MASTERNODE_EXPIRATION_SECONDS          (120*60)
+#define MASTERNODE_REMOVAL_SECONDS             (130*60)
 #define MASTERNODE_CHECK_SECONDS               5
 
 using namespace std;
