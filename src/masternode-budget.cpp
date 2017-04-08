@@ -56,7 +56,7 @@ bool IsBudgetCollateralValid(uint256 nTxCollateralHash, uint256 nExpectedHash, s
             LogPrintf ("CBudgetProposalBroadcast::IsBudgetCollateralValid - %s\n", strError);
             return false;
         }
-        if(o.scriptPubKey == findScript && o.nValue >= BUDGET_FEE_TX) foundOpReturn = true;
+        if(o.scriptPubKey == findScript && o.nValue >= PROPOSAL_FEE_TX) foundOpReturn = true;
 
     }
     if(!foundOpReturn){
@@ -135,7 +135,8 @@ void CBudgetManager::SubmitFinalBudget()
 
     int nBlockStart = nCurrentHeight - nCurrentHeight % GetBudgetPaymentCycleBlocks() + GetBudgetPaymentCycleBlocks();
     if(nSubmittedHeight >= nBlockStart) return;
-    if(nBlockStart - nCurrentHeight > 1440*2) return; //submit final budget 2 days before payment
+    //submit final budget 2 days before payment for Mainnet, about 9 minutes for Testnet
+    if(nBlockStart - nCurrentHeight > ((GetBudgetPaymentCycleBlocks()/30)*2)) return;
 
     std::vector<CBudgetProposal*> vBudgetProposals = budget.GetBudget();
     std::string strBudgetName = "main";
@@ -486,31 +487,11 @@ void CBudgetManager::FillBlockPayee(CMutableTransaction& txNew, CAmount nFees, b
 
     if(fProofOfStake) {
         if(nHighestCount > 0) {
-            if (Params().NetworkID() == CBaseChainParams::TESTNET)
-            {
-                // Test for superblock-issue.
-                LogPrintf("CBudgetManager::FillBlockPayee - txNew.vout.size() = %d\n", txNew.vout.size());
-
-                txNew.vout[0].nValue = blockValue;
-
-                txNew.vout.resize(2);
-
-                // These are super blocks, so their value can be much larger than normal
-                txNew.vout[1].scriptPubKey = payee;
-                txNew.vout[1].nValue = nAmount;
-            }
-            else
-            {
-                // Current mainnet logic. Can be changed when testnet runs okay
-                unsigned int i = txNew.vout.size();
-                txNew.vout.resize(i + 1);
-                txNew.vout[i].scriptPubKey = payee;
-                txNew.vout[i].nValue = nAmount;
-
-                //stakers get the full amount on these blocks
-                txNew.vout[i - 1].nValue = blockValue;
-            }
-            
+            unsigned int i = txNew.vout.size();
+            txNew.vout.resize(i + 1);
+            txNew.vout[i].scriptPubKey = payee;
+            txNew.vout[i].nValue = nAmount;
+  
             CTxDestination address1;
             ExtractDestination(payee, address1);
             CBitcoinAddress address2(address1);
@@ -822,6 +803,11 @@ CAmount CBudgetManager::GetTotalBudget(int nHeight)
 {
     if(chainActive.Tip() == NULL) return 0;
 
+    if(Params().NetworkID() == CBaseChainParams::TESTNET) {
+        CAmount nSubsidy = 500 * COIN; 
+        return ((nSubsidy/100)*10)*146;
+    }
+    
     //get block value and calculate from that
     CAmount nSubsidy = 0;
     if(nHeight <= Params().LAST_POW_BLOCK() && nHeight >= 151200) {
@@ -860,19 +846,13 @@ CAmount CBudgetManager::GetTotalBudget(int nHeight)
     else {
         nSubsidy = 0 * COIN; 
     }
-    if(Params().NetworkID() == CBaseChainParams::TESTNET){
-        nSubsidy = 500 * COIN; 
-    }
 
     // Amount of blocks in a months period of time (using 1 minutes per) = (60*24*30)
-    if(Params().NetworkID() == CBaseChainParams::MAIN && nHeight <= 172800) {
+    if(nHeight <= 172800) {
         return 648000 * COIN;
-    }
-    else if(Params().NetworkID() == CBaseChainParams::MAIN && nHeight > 172800) {
+    } else {
         return ((nSubsidy/100)*10)*1440*30;
     }
-    //for testing purposes
-    return ((nSubsidy/100)*10)*146;
 }
 
 void CBudgetManager::NewBlock()
