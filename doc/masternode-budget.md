@@ -1,7 +1,7 @@
 Masternode Budget API
 =======================
 
-Pivx now supports full decentralized budgets that are paid directly from the blockchain via superblocks once per month. 
+Pivx now supports full decentralized budgets that are paid directly from the blockchain via superblocks once per month.
 
 Budgets go through a series of stages before being paid:
 * prepare - create a special transaction that destroys coins in order to make a proposal
@@ -13,31 +13,46 @@ Budgets go through a series of stages before being paid:
 * payment - the winning finalized budget is paid
 
 
-1. Prepare collateral transaction
---
+Prepare collateral transaction
+------------------------
 
-mnbudget prepare proposal-name url payment_count block_start pivx_address monthly_payment_pivx [use_ix(true|false)]
+mnbudget prepare \<proposal-name\> \<url\> \<payment_count\> \<block_start\> \<pivx_address\> \<monthly_payment_pivx\> [use_ix(true|false)]
 
-Example: ```mnbudget prepare cool-project http://www.cool-project/one.json 12 100000 y6R9oN12KnB9zydzTLc3LikD9cCjjQzYG7 1200 true```
+Example:
+```
+mnbudget prepare cool-project http://www.cool-project/one.json 12 100000 y6R9oN12KnB9zydzTLc3LikD9cCjjQzYG7 1200 true
+```
 
-Output: ```464a0eb70ea91c94295214df48c47baa72b3876cfb658744aaf863c7b5bf1ff0``` - This is the collateral hash, copy this output for the next step
+Output: `464a0eb70ea91c94295214df48c47baa72b3876cfb658744aaf863c7b5bf1ff0` - This is the collateral hash, copy this output for the next step
 
-In this transaction we prepare collateral for "_cool-project_". This proposal will pay _1200_ PIVX, _12_ times over the course of a year totaling _24000_ PIVX. 
+In this transaction we prepare collateral for "_cool-project_". This proposal will pay _1200_ PIVX, _12_ times over the course of a year totaling _24000_ PIVX.
 
-**Warning -- if you change any fields within this command, the collateral transaction will become invalid.** 
+**Warning -- if you change any fields within this command, the collateral transaction will become invalid.**
 
-2 Submit proposal to network
---
+Submit proposal to network
+------------------------
 
-```mnbudget submit cool-project http://www.cool-project/one.json 12 100000 y6R9oN12KnB9zydzTLc3LikD9cCjjQzYG7 1200 464a0eb70ea91c94295214df48c47baa72b3876cfb658744aaf863c7b5bf1ff0```
+mnbudget submit \<proposal-name\> \<url\> \<payment_count\> \<block_start\> \<pivx_address\> \<monthly_payment_pivx\> \<collateral_hash\>
 
-Output : ```a2b29778ae82e45a973a94309ffa6aa2e2388b8f95b39ab3739f0078835f0491``` - This is your proposal hash, which other nodes will use to vote on it
+Example:
+```
+mnbudget submit cool-project http://www.cool-project/one.json 12 100000 y6R9oN12KnB9zydzTLc3LikD9cCjjQzYG7 1200 464a0eb70ea91c94295214df48c47baa72b3876cfb658744aaf863c7b5bf1ff0
+```
 
-3. Lobby for votes
---
+Output: `a2b29778ae82e45a973a94309ffa6aa2e2388b8f95b39ab3739f0078835f0491` - This is your proposal hash, which other nodes will use to vote on it
 
-Double check your information: ```mnbudget getinfo cool-project```
-￼
+Lobby for votes
+------------------------
+
+Double check your information:
+
+mnbudget getinfo \<proposal-name\>
+
+Example:
+```
+mnbudget getinfo cool-project
+```
+Output:
 ```
 {
     "Name" : "cool-project",
@@ -60,16 +75,28 @@ Double check your information: ```mnbudget getinfo cool-project```
 }
 ```
 
-If everything looks correct, you can ask for votes from other masternodes. To vote on a proposal, load a wallet with _masternode.conf_ file. You do not need to access your cold wallet to vote for proposals. 
+If everything looks correct, you can ask for votes from other masternodes. To vote on a proposal, load a wallet with _masternode.conf_ file. You do not need to access your cold wallet to vote for proposals.
 
-```mnbudget vote a2b29778ae82e45a973a94309ffa6aa2e2388b8f95b39ab3739f0078835f0491 yes```
+mnbudget vote \<proposal_hash\> [yes|no]
 
-4.  Make it into the budget
---
+Example:
+```
+mnbudget vote a2b29778ae82e45a973a94309ffa6aa2e2388b8f95b39ab3739f0078835f0491 yes
+```
 
-After you get enough votes, execute ```mnbudget projection``` to see if you made it into the budget. If you the budget was finalized at this moment which proposals would be in it. Note: Proposals must be active at least 1 day on the network and receive 10% of the masternode network in yes votes in order to qualify (E.g. if there is 2500 masternodes, you will need 250 yes votes.)
+Output: `Voted successfully` - Your vote has been submitted and accepted.
 
-```mnbudget projection```:￼
+Make it into the budget
+------------------------
+
+After you get enough votes, execute `mnbudget projection` to see if you made it into the budget. If you the budget was finalized at this moment which proposals would be in it. Note: Proposals must be active at least 1 day on the network and receive 10% of the masternode network in yes votes in order to qualify (E.g. if there is 2500 masternodes, you will need 250 yes votes.)
+
+Example:
+```
+mnbudget projection
+```
+
+Output:
 ```
 {
     "cool-project" : {
@@ -93,8 +120,8 @@ After you get enough votes, execute ```mnbudget projection``` to see if you made
 }
 ```
 
-5. Finalized budget
---
+Finalized budget
+------------------------
 
 ```
 "main" : {
@@ -108,26 +135,29 @@ After you get enough votes, execute ```mnbudget projection``` to see if you made
     },
 ```
 
-6. Get paid
---
+Get paid
+------------------------
 
-When block ```1000000``` is reached you'll receive a payment for ```1200``` PIVX. 
+When block `1000000` is reached you'll receive a payment for `1200` PIVX.
+
+
+RPC Commands
+------------------------
 
 The following new RPC commands are supported:
 - mnbudget "command"... ( "passphrase" )
- - prepare            - Prepare proposal for network by signing and creating tx
- - submit             - Submit proposal for network
- - vote-many          - Vote on a Pivx initiative
- - vote-alias         - Vote on a Pivx initiative
- - vote               - Vote on a Pivx initiative/budget
- - getvotes           - Show current masternode budgets
- - getinfo            - Show current masternode budgets
- - show               - Show all budgets
- - projection         - Show the projection of which proposals will be paid the next cycle
- - check              - Scan proposals and remove invalid
-￼
-- mnfinalbudget "command"... ( "passphrase" )
- - vote-many   - Vote on a finalized budget
- - vote        - Vote on a finalized budget
- - show        - Show existing finalized budgets
+ * prepare            - Prepare proposal for network by signing and creating tx
+ * submit             - Submit proposal for network
+ * vote-many          - Vote on a Pivx initiative
+ * vote-alias         - Vote on a Pivx initiative
+ * vote               - Vote on a Pivx initiative/budget
+ * getvotes           - Show current masternode budgets
+ * getinfo            - Show current masternode budgets
+ * show               - Show all budgets
+ * projection         - Show the projection of which proposals will be paid the next cycle
+ * check              - Scan proposals and remove invalid
 
+- mnfinalbudget "command"... ( "passphrase" )
+ * vote-many   - Vote on a finalized budget
+ * vote        - Vote on a finalized budget
+ * show        - Show existing finalized budgets

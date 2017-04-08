@@ -38,42 +38,19 @@ Instructions: Homebrew
 
 #### Install dependencies using Homebrew
 
-        brew install autoconf automake libtool boost miniupnpc openssl pkg-config protobuf qt
-
-#### Installing berkeley-db4 using Homebrew
-
-The homebrew package for berkeley-db4 has been broken for some time.  It will install without Java though.
-
-Running this command takes you into brew's interactive mode, which allows you to configure, make, and install by hand:
-```
-$ brew install https://raw.github.com/mxcl/homebrew/master/Library/Formula/berkeley-db4.rb -–without-java 
-```
-
-The rest of these commands are run inside brew interactive mode:
-```
-/private/tmp/berkeley-db4-UGpd0O/db-4.8.30 $ cd ..
-/private/tmp/berkeley-db4-UGpd0O $ db-4.8.30/dist/configure --prefix=/usr/local/Cellar/berkeley-db4/4.8.30 --mandir=/usr/local/Cellar/berkeley-db4/4.8.30/share/man --enable-cxx
-/private/tmp/berkeley-db4-UGpd0O $ make
-/private/tmp/berkeley-db4-UGpd0O $ make install
-/private/tmp/berkeley-db4-UGpd0O $ exit
-```
-
-After exiting, you'll get a warning that the install is keg-only, which means it wasn't symlinked to `/usr/local`.  You don't need it to link it to build pivx, but if you want to, here's how:
-
-    $ brew link --force berkeley-db4
-
+        brew install autoconf automake berkeley-db4 libtool boost miniupnpc openssl pkg-config protobuf qt5
 
 ### Building `pivxd`
 
 1. Clone the github tree to get the source code and go into the directory.
 
-        git clone https://github.com/pivx-crypto/pivx.git
-        cd pivx
+        git clone https://github.com/PIVX-Project/PIVX.git
+        cd PIVX
 
 2.  Build pivxd:
 
         ./autogen.sh
-        ./configure
+        ./configure --with-gui=qt5
         make
 
 3.  It is also a good idea to build and run the unit tests:
@@ -89,7 +66,7 @@ Use Qt Creator as IDE
 You can use Qt Creator as IDE, for debugging and for manipulating forms, etc.
 Download Qt Creator from http://www.qt.io/download/. Download the "community edition" and only install Qt Creator (uncheck the rest during the installation process).
 
-1. Make sure you installed everything through homebrew mentioned above 
+1. Make sure you installed everything through homebrew mentioned above
 2. Do a proper ./configure --with-gui=qt5 --enable-debug
 3. In Qt Creator do "New Project" -> Import Project -> Import Existing Project
 4. Enter "pivx-qt" as project name, enter src/qt as location
@@ -106,7 +83,7 @@ You can ignore this section if you are building `pivxd` for your own use.
 
 pivxd/pivx-cli binaries are not included in the pivx-Qt.app bundle.
 
-If you are building `pivxd` or `pivx-Qt` for others, your build machine should be set up
+If you are building `pivxd` or `pivx-qt` for others, your build machine should be set up
 as follows for maximum compatibility:
 
 All dependencies should be compiled with these flags:
@@ -115,7 +92,7 @@ All dependencies should be compiled with these flags:
  -arch x86_64
  -isysroot $(xcode-select --print-path)/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk
 
-Once dependencies are compiled, see release-process.md for how the pivx-Qt.app
+Once dependencies are compiled, see release-process.md for how the PIVX-Qt.app
 bundle is packaged and signed to create the .dmg disk image that is distributed.
 
 Running

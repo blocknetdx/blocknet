@@ -1,4 +1,4 @@
-PIVX Core 2.1.6
+PIVX Core
 =====================
 
 Intro
@@ -17,7 +17,3 @@ PIVX Core is the original PIVX client and it builds the backbone of the network.
 However, it downloads and stores the entire history of PIVX transactions;
 depending on the speed of your computer and network connection, the synchronization
 process can take anywhere from a few hours to a day or more.
-
-See the pivx wiki at:
-  https://en.bitcoin.it/wiki/Main_Page ***TODO***
-for more help and information.

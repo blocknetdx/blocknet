@@ -4,6 +4,7 @@ SystemD: pivxd.service
 Upstart: pivxd.conf
 OpenRC:  pivxd.openrc
          pivxd.openrcconf
+CentOS:  pivxd.init
 
 have been made available to assist packagers in creating node packages here.
 
