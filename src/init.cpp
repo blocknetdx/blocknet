@@ -467,7 +467,7 @@ std::string LicenseInfo()
            "\n" +
            FormatParagraph(strprintf(_("Copyright (C) 2014-%i The Dash Core Developers"), COPYRIGHT_YEAR)) + "\n" +
            "\n" +
-           FormatParagraph(strprintf(_("Copyright (C) 2015-%i The Pivx Core Developers"), COPYRIGHT_YEAR)) + "\n" +
+           FormatParagraph(strprintf(_("Copyright (C) 2015-%i The PIVX Core Developers"), COPYRIGHT_YEAR)) + "\n" +
            "\n" +
            FormatParagraph(_("This is experimental software.")) + "\n" +
            "\n" +
@@ -836,7 +836,7 @@ bool AppInit2(boost::thread_group& threadGroup)
 
     fAlerts = GetBoolArg("-alerts", DEFAULT_ALERTS);
 
- 
+
     if (GetBoolArg("-peerbloomfilters", false))
         nLocalServices |= NODE_BLOOM;
 
@@ -909,7 +909,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     // ********************************************************* Step 5: Backup wallet and verify wallet database integrity
 #ifdef ENABLE_WALLET
     if (!fDisableWallet) {
-    
+
         filesystem::path backupDir = GetDataDir() / "backups";
         if (!filesystem::exists(backupDir))
         {
@@ -1459,7 +1459,7 @@ bool AppInit2(boost::thread_group& threadGroup)
 
     CBudgetDB budgetdb;
     CBudgetDB::ReadResult readResult2 = budgetdb.Read(budget);
-    
+
     if (readResult2 == CBudgetDB::FileError)
         LogPrintf("Missing budget cache - budget.dat, will try to recreate\n");
     else if (readResult2 != CBudgetDB::Ok)
@@ -1480,7 +1480,7 @@ bool AppInit2(boost::thread_group& threadGroup)
 
     CMasternodePaymentDB mnpayments;
     CMasternodePaymentDB::ReadResult readResult3 = mnpayments.Read(masternodePayments);
-    
+
     if (readResult3 == CMasternodePaymentDB::FileError)
         LogPrintf("Missing masternode payment cache - mnpayments.dat, will try to recreate\n");
     else if (readResult3 != CMasternodePaymentDB::Ok)
@@ -1530,7 +1530,7 @@ bool AppInit2(boost::thread_group& threadGroup)
             return InitError(_("You must specify a masternodeprivkey in the configuration. Please see documentation for help."));
         }
     }
-    
+
     //get the mode of budget voting for this masternode
     strBudgetMode = GetArg("-budgetvotemode", "auto");
 
