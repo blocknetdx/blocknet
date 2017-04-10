@@ -14,6 +14,7 @@
 #include <QProgressBar>
 #include <QString>
 #include <QTableView>
+#include <QTableWidget>
 
 #include <boost/filesystem.hpp>
 
@@ -105,10 +106,10 @@ namespace GUIUtil
 
     // Open debug.log
     void openDebugLogfile();
-	
+
     // Open pivx.conf
-    void openConfigfile();	
-    
+    void openConfigfile();
+
     // Browse backup folder
     void showBackups();
 
@@ -172,6 +173,21 @@ namespace GUIUtil
             void on_geometriesChanged();
     };
 
+    /**
+     * Extension to QTableWidgetItem that facilitates proper ordering for "DHMS"
+     * strings (primarily used in the masternode's "active" listing).
+     */
+    class DHMSTableWidgetItem : public QTableWidgetItem
+    {
+    public:
+        DHMSTableWidgetItem(const int64_t seconds);
+        virtual bool operator <(QTableWidgetItem const &item) const;
+
+    private:
+        // Private backing value for DHMS string, used for sorting.
+        int64_t value;
+    };
+
     bool GetStartOnSystemStartup();
     bool SetStartOnSystemStartup(bool fAutoStart);
 
@@ -200,7 +216,7 @@ namespace GUIUtil
 
     /* Format a CNodeCombinedStats.dPingTime into a user-readable string or display N/A, if 0*/
     QString formatPingTime(double dPingTime);
-    
+
 #if defined(Q_OS_MAC) && QT_VERSION >= 0x050000
     // workaround for Qt OSX Bug:
     // https://bugreports.qt-project.org/browse/QTBUG-15631
@@ -214,7 +230,7 @@ namespace GUIUtil
 #else
     typedef QProgressBar ProgressBar;
 #endif
-    
+
 } // namespace GUIUtil
 
 #endif // BITCOIN_QT_GUIUTIL_H
