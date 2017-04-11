@@ -7,8 +7,8 @@
 #ifndef OBFUSCATION_RELAY_H
 #define OBFUSCATION_RELAY_H
 
-#include "main.h"
 #include "activemasternode.h"
+#include "main.h"
 #include "masternodeman.h"
 
 
@@ -25,11 +25,12 @@ public:
 
     CObfuScationRelay();
     CObfuScationRelay(CTxIn& vinMasternodeIn, vector<unsigned char>& vchSigIn, int nBlockHeightIn, int nRelayTypeIn, CTxIn& in2, CTxOut& out2);
-    
+
     ADD_SERIALIZE_METHODS;
 
     template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
+    {
         READWRITE(vinMasternode);
         READWRITE(vchSig);
         READWRITE(vchSig2);
@@ -46,7 +47,6 @@ public:
     void Relay();
     void RelayThroughNode(int nRank);
 };
-
 
 
 #endif

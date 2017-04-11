@@ -3,11 +3,12 @@
 
 #include <QMainWindow>
 
-#include "uint256.h"
 #include "base58.h"
+#include "uint256.h"
 #undef loop
 
-namespace Ui {
+namespace Ui
+{
 class BlockExplorer;
 }
 
@@ -19,18 +20,18 @@ class CBlockTreeDB;
 std::string getexplorerBlockHash(int64_t);
 const CBlockIndex* getexplorerBlockIndex(int64_t);
 CTxOut getPrevOut(const COutPoint& out);
-void getNextIn(const COutPoint *Out, uint256 *Hash, unsigned int n);
+void getNextIn(const COutPoint* Out, uint256* Hash, unsigned int n);
 
 class BlockExplorer : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    explicit BlockExplorer(QWidget *parent = 0);
+    explicit BlockExplorer(QWidget* parent = 0);
     ~BlockExplorer();
 
 protected:
-    void keyPressEvent(QKeyEvent *event);
+    void keyPressEvent(QKeyEvent* event);
     void showEvent(QShowEvent*);
 
 private Q_SLOTS:
@@ -40,14 +41,14 @@ private Q_SLOTS:
     void forward();
 
 private:
-    Ui::BlockExplorer *ui;
+    Ui::BlockExplorer* ui;
     bool m_NeverShown;
     int m_HistoryIndex;
     QStringList m_History;
 
     void setBlock(CBlockIndex* pBlock);
     bool switchTo(const QString& query);
-    void setContent(const std::string &content);
+    void setContent(const std::string& content);
     void updateNavButtons();
 };
 

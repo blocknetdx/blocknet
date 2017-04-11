@@ -25,8 +25,7 @@ double GetDifficulty(const CBlockIndex* blockindex)
 {
     // Floating point number that is a multiple of the minimum difficulty,
     // minimum difficulty = 1.0.
-    if (blockindex == NULL)
-    {
+    if (blockindex == NULL) {
         if (chainActive.Tip() == NULL)
             return 1.0;
         else
@@ -38,13 +37,11 @@ double GetDifficulty(const CBlockIndex* blockindex)
     double dDiff =
         (double)0x0000ffff / (double)(blockindex->nBits & 0x00ffffff);
 
-    while (nShift < 29)
-    {
+    while (nShift < 29) {
         dDiff *= 256.0;
         nShift++;
     }
-    while (nShift > 29)
-    {
+    while (nShift > 29) {
         dDiff /= 256.0;
         nShift--;
     }
@@ -67,15 +64,12 @@ Object blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool txDe
     result.push_back(Pair("version", block.nVersion));
     result.push_back(Pair("merkleroot", block.hashMerkleRoot.GetHex()));
     Array txs;
-    BOOST_FOREACH(const CTransaction&tx, block.vtx)
-    {
-        if(txDetails)
-        {
+    BOOST_FOREACH (const CTransaction& tx, block.vtx) {
+        if (txDetails) {
             Object objTx;
             TxToJSON(tx, uint256(0), objTx);
             txs.push_back(objTx);
-        }
-        else
+        } else
             txs.push_back(tx.GetHash().GetHex());
     }
     result.push_back(Pair("tx", txs));
@@ -87,7 +81,7 @@ Object blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool txDe
 
     if (blockindex->pprev)
         result.push_back(Pair("previousblockhash", blockindex->pprev->GetBlockHash().GetHex()));
-    CBlockIndex *pnext = chainActive.Next(blockindex);
+    CBlockIndex* pnext = chainActive.Next(blockindex);
     if (pnext)
         result.push_back(Pair("nextblockhash", pnext->GetBlockHash().GetHex()));
     return result;
@@ -116,10 +110,8 @@ Value getblockcount(const Array& params, bool fHelp)
             "\nReturns the number of blocks in the longest block chain.\n"
             "\nResult:\n"
             "n    (numeric) The current block count\n"
-            "\nExamples:\n"
-            + HelpExampleCli("getblockcount", "")
-            + HelpExampleRpc("getblockcount", "")
-        );
+            "\nExamples:\n" +
+            HelpExampleCli("getblockcount", "") + HelpExampleRpc("getblockcount", ""));
 
     return chainActive.Height();
 }
@@ -132,10 +124,8 @@ Value getbestblockhash(const Array& params, bool fHelp)
             "\nReturns the hash of the best (tip) block in the longest block chain.\n"
             "\nResult\n"
             "\"hex\"      (string) the block hash hex encoded\n"
-            "\nExamples\n"
-            + HelpExampleCli("getbestblockhash", "")
-            + HelpExampleRpc("getbestblockhash", "")
-        );
+            "\nExamples\n" +
+            HelpExampleCli("getbestblockhash", "") + HelpExampleRpc("getbestblockhash", ""));
 
     return chainActive.Tip()->GetBlockHash().GetHex();
 }
@@ -148,10 +138,8 @@ Value getdifficulty(const Array& params, bool fHelp)
             "\nReturns the proof-of-work difficulty as a multiple of the minimum difficulty.\n"
             "\nResult:\n"
             "n.nnn       (numeric) the proof-of-work difficulty as a multiple of the minimum difficulty.\n"
-            "\nExamples:\n"
-            + HelpExampleCli("getdifficulty", "")
-            + HelpExampleRpc("getdifficulty", "")
-        );
+            "\nExamples:\n" +
+            HelpExampleCli("getdifficulty", "") + HelpExampleRpc("getdifficulty", ""));
 
     return GetDifficulty();
 }
@@ -184,21 +172,17 @@ Value getrawmempool(const Array& params, bool fHelp)
             "       ... ]\n"
             "  }, ...\n"
             "]\n"
-            "\nExamples\n"
-            + HelpExampleCli("getrawmempool", "true")
-            + HelpExampleRpc("getrawmempool", "true")
-        );
+            "\nExamples\n" +
+            HelpExampleCli("getrawmempool", "true") + HelpExampleRpc("getrawmempool", "true"));
 
     bool fVerbose = false;
     if (params.size() > 0)
         fVerbose = params[0].get_bool();
 
-    if (fVerbose)
-    {
+    if (fVerbose) {
         LOCK(mempool.cs);
         Object o;
-        BOOST_FOREACH(const PAIRTYPE(uint256, CTxMemPoolEntry)& entry, mempool.mapTx)
-        {
+        BOOST_FOREACH (const PAIRTYPE(uint256, CTxMemPoolEntry) & entry, mempool.mapTx) {
             const uint256& hash = entry.first;
             const CTxMemPoolEntry& e = entry.second;
             Object info;
@@ -210,8 +194,7 @@ Value getrawmempool(const Array& params, bool fHelp)
             info.push_back(Pair("currentpriority", e.GetPriority(chainActive.Height())));
             const CTransaction& tx = e.GetTx();
             set<string> setDepends;
-            BOOST_FOREACH(const CTxIn& txin, tx.vin)
-            {
+            BOOST_FOREACH (const CTxIn& txin, tx.vin) {
                 if (mempool.exists(txin.prevout.hash))
                     setDepends.insert(txin.prevout.hash.ToString());
             }
@@ -220,14 +203,12 @@ Value getrawmempool(const Array& params, bool fHelp)
             o.push_back(Pair(hash.ToString(), info));
         }
         return o;
-    }
-    else
-    {
+    } else {
         vector<uint256> vtxid;
         mempool.queryHashes(vtxid);
 
         Array a;
-        BOOST_FOREACH(const uint256& hash, vtxid)
+        BOOST_FOREACH (const uint256& hash, vtxid)
             a.push_back(hash.ToString());
 
         return a;
@@ -244,10 +225,8 @@ Value getblockhash(const Array& params, bool fHelp)
             "1. index         (numeric, required) The block index\n"
             "\nResult:\n"
             "\"hash\"         (string) The block hash\n"
-            "\nExamples:\n"
-            + HelpExampleCli("getblockhash", "1000")
-            + HelpExampleRpc("getblockhash", "1000")
-        );
+            "\nExamples:\n" +
+            HelpExampleCli("getblockhash", "1000") + HelpExampleRpc("getblockhash", "1000"));
 
     int nHeight = params[0].get_int();
     if (nHeight < 0 || nHeight > chainActive.Height())
@@ -288,10 +267,8 @@ Value getblock(const Array& params, bool fHelp)
             "}\n"
             "\nResult (for verbose=false):\n"
             "\"data\"             (string) A string that is serialized, hex-encoded data for block 'hash'.\n"
-            "\nExamples:\n"
-            + HelpExampleCli("getblock", "\"00000000000fd08c2fb661d2fcb0d49abb3a91e5f27082ce64feed3b4dede2e2\"")
-            + HelpExampleRpc("getblock", "\"00000000000fd08c2fb661d2fcb0d49abb3a91e5f27082ce64feed3b4dede2e2\"")
-        );
+            "\nExamples:\n" +
+            HelpExampleCli("getblock", "\"00000000000fd08c2fb661d2fcb0d49abb3a91e5f27082ce64feed3b4dede2e2\"") + HelpExampleRpc("getblock", "\"00000000000fd08c2fb661d2fcb0d49abb3a91e5f27082ce64feed3b4dede2e2\""));
 
     std::string strHash = params[0].get_str();
     uint256 hash(strHash);
@@ -306,11 +283,10 @@ Value getblock(const Array& params, bool fHelp)
     CBlock block;
     CBlockIndex* pblockindex = mapBlockIndex[hash];
 
-    if(!ReadBlockFromDisk(block, pblockindex))
+    if (!ReadBlockFromDisk(block, pblockindex))
         throw JSONRPCError(RPC_INTERNAL_ERROR, "Can't read block from disk");
 
-    if (!fVerbose)
-    {
+    if (!fVerbose) {
         CDataStream ssBlock(SER_NETWORK, PROTOCOL_VERSION);
         ssBlock << block;
         std::string strHex = HexStr(ssBlock.begin(), ssBlock.end());
@@ -324,27 +300,25 @@ Value getblockheader(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() < 1 || params.size() > 2)
         throw runtime_error(
-                "getblockheader \"hash\" ( verbose )\n"
-                "\nIf verbose is false, returns a string that is serialized, hex-encoded data for block 'hash' header.\n"
-                "If verbose is true, returns an Object with information about block <hash> header.\n"
-                "\nArguments:\n"
-                "1. \"hash\"          (string, required) The block hash\n"
-                "2. verbose           (boolean, optional, default=true) true for a json object, false for the hex encoded data\n"
-                "\nResult (for verbose = true):\n"
-                "{\n"
-                "  \"version\" : n,         (numeric) The block version\n"
-                "  \"previousblockhash\" : \"hash\",  (string) The hash of the previous block\n"
-                "  \"merkleroot\" : \"xxxx\", (string) The merkle root\n"
-                "  \"time\" : ttt,          (numeric) The block time in seconds since epoch (Jan 1 1970 GMT)\n"
-                "  \"bits\" : \"1d00ffff\", (string) The bits\n"
-                "  \"nonce\" : n,           (numeric) The nonce\n"
-                "}\n"
-                "\nResult (for verbose=false):\n"
-                "\"data\"             (string) A string that is serialized, hex-encoded data for block 'hash' header.\n"
-                "\nExamples:\n"
-                + HelpExampleCli("getblockheader", "\"00000000000fd08c2fb661d2fcb0d49abb3a91e5f27082ce64feed3b4dede2e2\"")
-                + HelpExampleRpc("getblockheader", "\"00000000000fd08c2fb661d2fcb0d49abb3a91e5f27082ce64feed3b4dede2e2\"")
-                );
+            "getblockheader \"hash\" ( verbose )\n"
+            "\nIf verbose is false, returns a string that is serialized, hex-encoded data for block 'hash' header.\n"
+            "If verbose is true, returns an Object with information about block <hash> header.\n"
+            "\nArguments:\n"
+            "1. \"hash\"          (string, required) The block hash\n"
+            "2. verbose           (boolean, optional, default=true) true for a json object, false for the hex encoded data\n"
+            "\nResult (for verbose = true):\n"
+            "{\n"
+            "  \"version\" : n,         (numeric) The block version\n"
+            "  \"previousblockhash\" : \"hash\",  (string) The hash of the previous block\n"
+            "  \"merkleroot\" : \"xxxx\", (string) The merkle root\n"
+            "  \"time\" : ttt,          (numeric) The block time in seconds since epoch (Jan 1 1970 GMT)\n"
+            "  \"bits\" : \"1d00ffff\", (string) The bits\n"
+            "  \"nonce\" : n,           (numeric) The nonce\n"
+            "}\n"
+            "\nResult (for verbose=false):\n"
+            "\"data\"             (string) A string that is serialized, hex-encoded data for block 'hash' header.\n"
+            "\nExamples:\n" +
+            HelpExampleCli("getblockheader", "\"00000000000fd08c2fb661d2fcb0d49abb3a91e5f27082ce64feed3b4dede2e2\"") + HelpExampleRpc("getblockheader", "\"00000000000fd08c2fb661d2fcb0d49abb3a91e5f27082ce64feed3b4dede2e2\""));
 
     std::string strHash = params[0].get_str();
     uint256 hash(strHash);
@@ -359,11 +333,10 @@ Value getblockheader(const Array& params, bool fHelp)
     CBlock block;
     CBlockIndex* pblockindex = mapBlockIndex[hash];
 
-    if(!ReadBlockFromDisk(block, pblockindex))
+    if (!ReadBlockFromDisk(block, pblockindex))
         throw JSONRPCError(RPC_INTERNAL_ERROR, "Can't read block from disk");
 
-    if (!fVerbose)
-    {
+    if (!fVerbose) {
         CDataStream ssBlock(SER_NETWORK, PROTOCOL_VERSION);
         ssBlock << block.GetBlockHeader();
         std::string strHex = HexStr(ssBlock.begin(), ssBlock.end());
@@ -390,10 +363,8 @@ Value gettxoutsetinfo(const Array& params, bool fHelp)
             "  \"hash_serialized\": \"hash\",   (string) The serialized hash\n"
             "  \"total_amount\": x.xxx          (numeric) The total amount\n"
             "}\n"
-            "\nExamples:\n"
-            + HelpExampleCli("gettxoutsetinfo", "")
-            + HelpExampleRpc("gettxoutsetinfo", "")
-        );
+            "\nExamples:\n" +
+            HelpExampleCli("gettxoutsetinfo", "") + HelpExampleRpc("gettxoutsetinfo", ""));
 
     Object ret;
 
@@ -441,13 +412,10 @@ Value gettxout(const Array& params, bool fHelp)
             "}\n"
 
             "\nExamples:\n"
-            "\nGet unspent transactions\n"
-            + HelpExampleCli("listunspent", "") +
-            "\nView the details\n"
-            + HelpExampleCli("gettxout", "\"txid\" 1") +
-            "\nAs a json rpc call\n"
-            + HelpExampleRpc("gettxout", "\"txid\", 1")
-        );
+            "\nGet unspent transactions\n" +
+            HelpExampleCli("listunspent", "") +
+            "\nView the details\n" + HelpExampleCli("gettxout", "\"txid\" 1") +
+            "\nAs a json rpc call\n" + HelpExampleRpc("gettxout", "\"txid\", 1"));
 
     Object ret;
 
@@ -469,11 +437,11 @@ Value gettxout(const Array& params, bool fHelp)
         if (!pcoinsTip->GetCoins(hash, coins))
             return Value::null;
     }
-    if (n<0 || (unsigned int)n>=coins.vout.size() || coins.vout[n].IsNull())
+    if (n < 0 || (unsigned int)n >= coins.vout.size() || coins.vout[n].IsNull())
         return Value::null;
 
     BlockMap::iterator it = mapBlockIndex.find(pcoinsTip->GetBestBlock());
-    CBlockIndex *pindex = it->second;
+    CBlockIndex* pindex = it->second;
     ret.push_back(Pair("bestblock", pindex->GetBlockHash().GetHex()));
     if ((unsigned int)coins.nHeight == MEMPOOL_HEIGHT)
         ret.push_back(Pair("confirmations", 0));
@@ -500,10 +468,8 @@ Value verifychain(const Array& params, bool fHelp)
             "2. numblocks    (numeric, optional, default=288, 0=all) The number of blocks to check.\n"
             "\nResult:\n"
             "true|false       (boolean) Verified or not\n"
-            "\nExamples:\n"
-            + HelpExampleCli("verifychain", "")
-            + HelpExampleRpc("verifychain", "")
-        );
+            "\nExamples:\n" +
+            HelpExampleCli("verifychain", "") + HelpExampleRpc("verifychain", ""));
 
     int nCheckLevel = GetArg("-checklevel", 3);
     int nCheckDepth = GetArg("-checkblocks", 288);
@@ -531,32 +497,29 @@ Value getblockchaininfo(const Array& params, bool fHelp)
             "  \"verificationprogress\": xxxx, (numeric) estimate of verification progress [0..1]\n"
             "  \"chainwork\": \"xxxx\"     (string) total amount of work in active chain, in hexadecimal\n"
             "}\n"
-            "\nExamples:\n"
-            + HelpExampleCli("getblockchaininfo", "")
-            + HelpExampleRpc("getblockchaininfo", "")
-        );
+            "\nExamples:\n" +
+            HelpExampleCli("getblockchaininfo", "") + HelpExampleRpc("getblockchaininfo", ""));
 
     Object obj;
-    obj.push_back(Pair("chain",                 Params().NetworkIDString()));
-    obj.push_back(Pair("blocks",                (int)chainActive.Height()));
-    obj.push_back(Pair("headers",               pindexBestHeader ? pindexBestHeader->nHeight : -1));
-    obj.push_back(Pair("bestblockhash",         chainActive.Tip()->GetBlockHash().GetHex()));
-    obj.push_back(Pair("difficulty",            (double)GetDifficulty()));
-    obj.push_back(Pair("verificationprogress",  Checkpoints::GuessVerificationProgress(chainActive.Tip())));
-    obj.push_back(Pair("chainwork",             chainActive.Tip()->nChainWork.GetHex()));
+    obj.push_back(Pair("chain", Params().NetworkIDString()));
+    obj.push_back(Pair("blocks", (int)chainActive.Height()));
+    obj.push_back(Pair("headers", pindexBestHeader ? pindexBestHeader->nHeight : -1));
+    obj.push_back(Pair("bestblockhash", chainActive.Tip()->GetBlockHash().GetHex()));
+    obj.push_back(Pair("difficulty", (double)GetDifficulty()));
+    obj.push_back(Pair("verificationprogress", Checkpoints::GuessVerificationProgress(chainActive.Tip())));
+    obj.push_back(Pair("chainwork", chainActive.Tip()->nChainWork.GetHex()));
     return obj;
 }
 
 /** Comparison function for sorting the getchaintips heads.  */
-struct CompareBlocksByHeight
-{
+struct CompareBlocksByHeight {
     bool operator()(const CBlockIndex* a, const CBlockIndex* b) const
     {
         /* Make sure that unequal blocks with the same height do not compare
            equal. Use the pointers themselves to make a distinction. */
 
         if (a->nHeight != b->nHeight)
-          return (a->nHeight > b->nHeight);
+            return (a->nHeight > b->nHeight);
 
         return a < b;
     }
@@ -590,19 +553,16 @@ Value getchaintips(const Array& params, bool fHelp)
             "3.  \"valid-headers\"         All blocks are available for this branch, but they were never fully validated\n"
             "4.  \"valid-fork\"            This branch is not part of the active chain, but is fully validated\n"
             "5.  \"active\"                This is the tip of the active main chain, which is certainly valid\n"
-            "\nExamples:\n"
-            + HelpExampleCli("getchaintips", "")
-            + HelpExampleRpc("getchaintips", "")
-        );
+            "\nExamples:\n" +
+            HelpExampleCli("getchaintips", "") + HelpExampleRpc("getchaintips", ""));
 
     /* Build up a list of chain tips.  We start with the list of all
        known blocks, and successively remove blocks that appear as pprev
        of another block.  */
     std::set<const CBlockIndex*, CompareBlocksByHeight> setTips;
-    BOOST_FOREACH(const PAIRTYPE(const uint256, CBlockIndex*)& item, mapBlockIndex)
+    BOOST_FOREACH (const PAIRTYPE(const uint256, CBlockIndex*) & item, mapBlockIndex)
         setTips.insert(item.second);
-    BOOST_FOREACH(const PAIRTYPE(const uint256, CBlockIndex*)& item, mapBlockIndex)
-    {
+    BOOST_FOREACH (const PAIRTYPE(const uint256, CBlockIndex*) & item, mapBlockIndex) {
         const CBlockIndex* pprev = item.second->pprev;
         if (pprev)
             setTips.erase(pprev);
@@ -613,8 +573,7 @@ Value getchaintips(const Array& params, bool fHelp)
 
     /* Construct the output array.  */
     Array res;
-    BOOST_FOREACH(const CBlockIndex* block, setTips)
-    {
+    BOOST_FOREACH (const CBlockIndex* block, setTips) {
         Object obj;
         obj.push_back(Pair("height", block->nHeight));
         obj.push_back(Pair("hash", block->phashBlock->GetHex()));
@@ -661,14 +620,12 @@ Value getmempoolinfo(const Array& params, bool fHelp)
             "  \"size\": xxxxx                (numeric) Current tx count\n"
             "  \"bytes\": xxxxx               (numeric) Sum of all tx sizes\n"
             "}\n"
-            "\nExamples:\n"
-            + HelpExampleCli("getmempoolinfo", "")
-            + HelpExampleRpc("getmempoolinfo", "")
-        );
+            "\nExamples:\n" +
+            HelpExampleCli("getmempoolinfo", "") + HelpExampleRpc("getmempoolinfo", ""));
 
     Object ret;
-    ret.push_back(Pair("size", (int64_t) mempool.size()));
-    ret.push_back(Pair("bytes", (int64_t) mempool.GetTotalTxSize()));
+    ret.push_back(Pair("size", (int64_t)mempool.size()));
+    ret.push_back(Pair("bytes", (int64_t)mempool.GetTotalTxSize()));
 
     return ret;
 }
@@ -682,10 +639,8 @@ Value invalidateblock(const Array& params, bool fHelp)
             "\nArguments:\n"
             "1. hash   (string, required) the hash of the block to mark as invalid\n"
             "\nResult:\n"
-            "\nExamples:\n"
-            + HelpExampleCli("invalidateblock", "\"blockhash\"")
-            + HelpExampleRpc("invalidateblock", "\"blockhash\"")
-        );
+            "\nExamples:\n" +
+            HelpExampleCli("invalidateblock", "\"blockhash\"") + HelpExampleRpc("invalidateblock", "\"blockhash\""));
 
     std::string strHash = params[0].get_str();
     uint256 hash(strHash);
@@ -721,10 +676,8 @@ Value reconsiderblock(const Array& params, bool fHelp)
             "\nArguments:\n"
             "1. hash   (string, required) the hash of the block to reconsider\n"
             "\nResult:\n"
-            "\nExamples:\n"
-            + HelpExampleCli("reconsiderblock", "\"blockhash\"")
-            + HelpExampleRpc("reconsiderblock", "\"blockhash\"")
-        );
+            "\nExamples:\n" +
+            HelpExampleCli("reconsiderblock", "\"blockhash\"") + HelpExampleRpc("reconsiderblock", "\"blockhash\""));
 
     std::string strHash = params[0].get_str();
     uint256 hash(strHash);

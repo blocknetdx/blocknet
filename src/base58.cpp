@@ -8,13 +8,13 @@
 #include "uint256.h"
 
 #include <assert.h>
-#include <stdint.h>
-#include <string.h>
-#include <vector>
-#include <string>
-#include <sstream>
 #include <boost/variant/apply_visitor.hpp>
 #include <boost/variant/static_visitor.hpp>
+#include <sstream>
+#include <stdint.h>
+#include <string.h>
+#include <string>
+#include <vector>
 
 /** All alphanumeric characters except for "0", "I", "O", and "l" */
 static const char* pszBase58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
@@ -65,17 +65,16 @@ bool DecodeBase58(const char* psz, std::vector<unsigned char>& vch)
     return true;
 }
 
-std::string DecodeBase58(const char *psz)
+std::string DecodeBase58(const char* psz)
 {
     std::vector<unsigned char> vch;
     DecodeBase58(psz, vch);
     std::stringstream ss;
     ss << std::hex;
 
-    for(unsigned int i = 0; i < vch.size(); i++)
-    {
+    for (unsigned int i = 0; i < vch.size(); i++) {
         unsigned char* c = &vch[i];
-        ss  << setw(2) << setfill('0') << (int)c[0];
+        ss << setw(2) << setfill('0') << (int)c[0];
     }
 
     return ss.str();

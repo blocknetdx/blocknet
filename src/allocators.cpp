@@ -19,8 +19,8 @@
 // but, in practice, memory that has been VirtualLock'd almost never gets written to
 // the pagefile except in rare circumstances where memory is extremely low.
 #else
-#include <sys/mman.h>
 #include <limits.h> // for PAGESIZE
+#include <sys/mman.h>
 #include <unistd.h> // for sysconf
 #endif
 

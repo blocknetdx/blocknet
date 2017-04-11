@@ -11,9 +11,9 @@
 #include "qvalidatedlineedit.h"
 #include "walletmodel.h"
 
-#include "primitives/transaction.h"
 #include "init.h"
 #include "main.h"
+#include "primitives/transaction.h"
 #include "protocol.h"
 #include "script/script.h"
 #include "script/standard.h"
@@ -79,9 +79,9 @@ extern double NSAppKitVersionNumber;
 
 #define URI_SCHEME "pivx"
 
-namespace GUIUtil {
-
-QString dateTimeStr(const QDateTime &date)
+namespace GUIUtil
+{
+QString dateTimeStr(const QDateTime& date)
 {
     return date.date().toString(Qt::SystemLocaleShortDate) + QString(" ") + date.toString("hh:mm");
 }
@@ -102,7 +102,7 @@ QFont bitcoinAddressFont()
     return font;
 }
 
-void setupAddressWidget(QValidatedLineEdit *widget, QWidget *parent)
+void setupAddressWidget(QValidatedLineEdit* widget, QWidget* parent)
 {
     parent->setFocusProxy(widget);
 
@@ -116,19 +116,19 @@ void setupAddressWidget(QValidatedLineEdit *widget, QWidget *parent)
     widget->setCheckValidator(new BitcoinAddressCheckValidator(parent));
 }
 
-void setupAmountWidget(QLineEdit *widget, QWidget *parent)
+void setupAmountWidget(QLineEdit* widget, QWidget* parent)
 {
-    QDoubleValidator *amountValidator = new QDoubleValidator(parent);
+    QDoubleValidator* amountValidator = new QDoubleValidator(parent);
     amountValidator->setDecimals(8);
     amountValidator->setBottom(0.0);
     widget->setValidator(amountValidator);
-    widget->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+    widget->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
 }
 
-bool parseBitcoinURI(const QUrl &uri, SendCoinsRecipient *out)
+bool parseBitcoinURI(const QUrl& uri, SendCoinsRecipient* out)
 {
     // return if URI is not valid or is no PIVX: URI
-    if(!uri.isValid() || uri.scheme() != QString(URI_SCHEME))
+    if (!uri.isValid() || uri.scheme() != QString(URI_SCHEME))
         return false;
 
     SendCoinsRecipient rv;
@@ -145,31 +145,23 @@ bool parseBitcoinURI(const QUrl &uri, SendCoinsRecipient *out)
     QUrlQuery uriQuery(uri);
     QList<QPair<QString, QString> > items = uriQuery.queryItems();
 #endif
-    for (QList<QPair<QString, QString> >::iterator i = items.begin(); i != items.end(); i++)
-    {
+    for (QList<QPair<QString, QString> >::iterator i = items.begin(); i != items.end(); i++) {
         bool fShouldReturnFalse = false;
-        if (i->first.startsWith("req-"))
-        {
+        if (i->first.startsWith("req-")) {
             i->first.remove(0, 4);
             fShouldReturnFalse = true;
         }
 
-        if (i->first == "label")
-        {
+        if (i->first == "label") {
             rv.label = i->second;
             fShouldReturnFalse = false;
         }
-        if (i->first == "message")
-        {
+        if (i->first == "message") {
             rv.message = i->second;
             fShouldReturnFalse = false;
-        }
-        else if (i->first == "amount")
-        {
-            if(!i->second.isEmpty())
-            {
-                if(!BitcoinUnits::parse(BitcoinUnits::PIV, i->second, &rv.amount))
-                {
+        } else if (i->first == "amount") {
+            if (!i->second.isEmpty()) {
+                if (!BitcoinUnits::parse(BitcoinUnits::PIV, i->second, &rv.amount)) {
                     return false;
                 }
             }
@@ -179,47 +171,42 @@ bool parseBitcoinURI(const QUrl &uri, SendCoinsRecipient *out)
         if (fShouldReturnFalse)
             return false;
     }
-    if(out)
-    {
+    if (out) {
         *out = rv;
     }
     return true;
 }
 
-bool parseBitcoinURI(QString uri, SendCoinsRecipient *out)
+bool parseBitcoinURI(QString uri, SendCoinsRecipient* out)
 {
     // Convert pivx:// to pivx:
     //
     //    Cannot handle this later, because pivx:// will cause Qt to see the part after // as host,
     //    which will lower-case it (and thus invalidate the address).
-    if(uri.startsWith(URI_SCHEME "://", Qt::CaseInsensitive))
-    {
+    if (uri.startsWith(URI_SCHEME "://", Qt::CaseInsensitive)) {
         uri.replace(0, std::strlen(URI_SCHEME) + 3, URI_SCHEME ":");
     }
     QUrl uriInstance(uri);
     return parseBitcoinURI(uriInstance, out);
 }
 
-QString formatBitcoinURI(const SendCoinsRecipient &info)
+QString formatBitcoinURI(const SendCoinsRecipient& info)
 {
     QString ret = QString(URI_SCHEME ":%1").arg(info.address);
     int paramCount = 0;
 
-    if (info.amount)
-    {
+    if (info.amount) {
         ret += QString("?amount=%1").arg(BitcoinUnits::format(BitcoinUnits::PIV, info.amount, false, BitcoinUnits::separatorNever));
         paramCount++;
     }
 
-    if (!info.label.isEmpty())
-    {
+    if (!info.label.isEmpty()) {
         QString lbl(QUrl::toPercentEncoding(info.label));
         ret += QString("%1label=%2").arg(paramCount == 0 ? "?" : "&").arg(lbl);
         paramCount++;
     }
 
-    if (!info.message.isEmpty())
-    {
+    if (!info.message.isEmpty()) {
         QString msg(QUrl::toPercentEncoding(info.message));
         ret += QString("%1message=%2").arg(paramCount == 0 ? "?" : "&").arg(msg);
         paramCount++;
@@ -244,8 +231,7 @@ QString HtmlEscape(const QString& str, bool fMultiLine)
     QString escaped = str.toHtmlEscaped();
 #endif
     escaped = escaped.replace(" ", "&nbsp;");
-    if(fMultiLine)
-    {
+    if (fMultiLine) {
         escaped = escaped.replace("\n", "<br>\n");
     }
     return escaped;
@@ -256,35 +242,30 @@ QString HtmlEscape(const std::string& str, bool fMultiLine)
     return HtmlEscape(QString::fromStdString(str), fMultiLine);
 }
 
-void copyEntryData(QAbstractItemView *view, int column, int role)
+void copyEntryData(QAbstractItemView* view, int column, int role)
 {
-    if(!view || !view->selectionModel())
+    if (!view || !view->selectionModel())
         return;
     QModelIndexList selection = view->selectionModel()->selectedRows(column);
 
-    if(!selection.isEmpty())
-    {
+    if (!selection.isEmpty()) {
         // Copy first item
         setClipboard(selection.at(0).data(role).toString());
     }
 }
 
-QString getSaveFileName(QWidget *parent, const QString &caption, const QString &dir,
-    const QString &filter,
-    QString *selectedSuffixOut)
+QString getSaveFileName(QWidget* parent, const QString& caption, const QString& dir, const QString& filter, QString* selectedSuffixOut)
 {
     QString selectedFilter;
     QString myDir;
-    if(dir.isEmpty()) // Default to user documents location
+    if (dir.isEmpty()) // Default to user documents location
     {
 #if QT_VERSION < 0x050000
         myDir = QDesktopServices::storageLocation(QDesktopServices::DocumentsLocation);
 #else
         myDir = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
 #endif
-    }
-    else
-    {
+    } else {
         myDir = dir;
     }
     /* Directly convert path to native OS path separators */
@@ -293,60 +274,50 @@ QString getSaveFileName(QWidget *parent, const QString &caption, const QString &
     /* Extract first suffix from filter pattern "Description (*.foo)" or "Description (*.foo *.bar ...) */
     QRegExp filter_re(".* \\(\\*\\.(.*)[ \\)]");
     QString selectedSuffix;
-    if(filter_re.exactMatch(selectedFilter))
-    {
+    if (filter_re.exactMatch(selectedFilter)) {
         selectedSuffix = filter_re.cap(1);
     }
 
     /* Add suffix if needed */
     QFileInfo info(result);
-    if(!result.isEmpty())
-    {
-        if(info.suffix().isEmpty() && !selectedSuffix.isEmpty())
-        {
+    if (!result.isEmpty()) {
+        if (info.suffix().isEmpty() && !selectedSuffix.isEmpty()) {
             /* No suffix specified, add selected suffix */
-            if(!result.endsWith("."))
+            if (!result.endsWith("."))
                 result.append(".");
             result.append(selectedSuffix);
         }
     }
 
     /* Return selected suffix if asked to */
-    if(selectedSuffixOut)
-    {
+    if (selectedSuffixOut) {
         *selectedSuffixOut = selectedSuffix;
     }
     return result;
 }
 
-QString getOpenFileName(QWidget *parent, const QString &caption, const QString &dir,
-    const QString &filter,
-    QString *selectedSuffixOut)
+QString getOpenFileName(QWidget* parent, const QString& caption, const QString& dir, const QString& filter, QString* selectedSuffixOut)
 {
     QString selectedFilter;
     QString myDir;
-    if(dir.isEmpty()) // Default to user documents location
+    if (dir.isEmpty()) // Default to user documents location
     {
 #if QT_VERSION < 0x050000
         myDir = QDesktopServices::storageLocation(QDesktopServices::DocumentsLocation);
 #else
         myDir = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
 #endif
-    }
-    else
-    {
+    } else {
         myDir = dir;
     }
     /* Directly convert path to native OS path separators */
     QString result = QDir::toNativeSeparators(QFileDialog::getOpenFileName(parent, caption, myDir, filter, &selectedFilter));
 
-    if(selectedSuffixOut)
-    {
+    if (selectedSuffixOut) {
         /* Extract first suffix from filter pattern "Description (*.foo)" or "Description (*.foo *.bar ...) */
         QRegExp filter_re(".* \\(\\*\\.(.*)[ \\)]");
         QString selectedSuffix;
-        if(filter_re.exactMatch(selectedFilter))
-        {
+        if (filter_re.exactMatch(selectedFilter)) {
             selectedSuffix = filter_re.cap(1);
         }
         *selectedSuffixOut = selectedSuffix;
@@ -356,30 +327,23 @@ QString getOpenFileName(QWidget *parent, const QString &caption, const QString &
 
 Qt::ConnectionType blockingGUIThreadConnection()
 {
-    if(QThread::currentThread() != qApp->thread())
-    {
+    if (QThread::currentThread() != qApp->thread()) {
         return Qt::BlockingQueuedConnection;
-    }
-    else
-    {
+    } else {
         return Qt::DirectConnection;
     }
 }
 
-bool checkPoint(const QPoint &p, const QWidget *w)
+bool checkPoint(const QPoint& p, const QWidget* w)
 {
-    QWidget *atW = QApplication::widgetAt(w->mapToGlobal(p));
+    QWidget* atW = QApplication::widgetAt(w->mapToGlobal(p));
     if (!atW) return false;
     return atW->topLevelWidget() == w;
 }
 
-bool isObscured(QWidget *w)
+bool isObscured(QWidget* w)
 {
-    return !(checkPoint(QPoint(0, 0), w)
-        && checkPoint(QPoint(w->width() - 1, 0), w)
-        && checkPoint(QPoint(0, w->height() - 1), w)
-        && checkPoint(QPoint(w->width() - 1, w->height() - 1), w)
-        && checkPoint(QPoint(w->width() / 2, w->height() / 2), w));
+    return !(checkPoint(QPoint(0, 0), w) && checkPoint(QPoint(w->width() - 1, 0), w) && checkPoint(QPoint(0, w->height() - 1), w) && checkPoint(QPoint(w->width() - 1, w->height() - 1), w) && checkPoint(QPoint(w->width() / 2, w->height() / 2), w));
 }
 
 void openDebugLogfile()
@@ -425,43 +389,37 @@ void SubstituteFonts(const QString& language)
 // is 10.9 or higher at runtime, substitute the correct font. This needs to
 // happen before the QApplication is created.
 #if defined(MAC_OS_X_VERSION_MAX_ALLOWED) && MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_8
-    if (floor(NSAppKitVersionNumber) > NSAppKitVersionNumber10_8)
-    {
+    if (floor(NSAppKitVersionNumber) > NSAppKitVersionNumber10_8) {
         if (floor(NSAppKitVersionNumber) <= NSAppKitVersionNumber10_9)
             /* On a 10.9 - 10.9.x system */
             QFont::insertSubstitution(".Lucida Grande UI", "Lucida Grande");
-        else
-        {
+        else {
             /* 10.10 or later system */
             if (language == "zh_CN" || language == "zh_TW" || language == "zh_HK") // traditional or simplified Chinese
-              QFont::insertSubstitution(".Helvetica Neue DeskInterface", "Heiti SC");
+                QFont::insertSubstitution(".Helvetica Neue DeskInterface", "Heiti SC");
             else if (language == "ja") // Japanesee
-              QFont::insertSubstitution(".Helvetica Neue DeskInterface", "Songti SC");
+                QFont::insertSubstitution(".Helvetica Neue DeskInterface", "Songti SC");
             else
-              QFont::insertSubstitution(".Helvetica Neue DeskInterface", "Lucida Grande");
+                QFont::insertSubstitution(".Helvetica Neue DeskInterface", "Lucida Grande");
         }
     }
 #endif
 #endif
 }
 
-ToolTipToRichTextFilter::ToolTipToRichTextFilter(int size_threshold, QObject *parent) :
-    QObject(parent),
-    size_threshold(size_threshold)
+ToolTipToRichTextFilter::ToolTipToRichTextFilter(int size_threshold, QObject* parent) : QObject(parent),
+                                                                                        size_threshold(size_threshold)
 {
-
 }
 
-bool ToolTipToRichTextFilter::eventFilter(QObject *obj, QEvent *evt)
+bool ToolTipToRichTextFilter::eventFilter(QObject* obj, QEvent* evt)
 {
-    if(evt->type() == QEvent::ToolTipChange)
-    {
-        QWidget *widget = static_cast<QWidget*>(obj);
+    if (evt->type() == QEvent::ToolTipChange) {
+        QWidget* widget = static_cast<QWidget*>(obj);
         QString tooltip = widget->toolTip();
-        if(tooltip.size() > size_threshold && !tooltip.startsWith("<qt"))
-        {
+        if (tooltip.size() > size_threshold && !tooltip.startsWith("<qt")) {
             // Escape the current message as HTML and replace \n by <br> if it's not rich text
-            if(!Qt::mightBeRichText(tooltip))
+            if (!Qt::mightBeRichText(tooltip))
                 tooltip = HtmlEscape(tooltip, true);
             // Envelop with <qt></qt> to make sure Qt detects every tooltip as rich text
             // and style='white-space:pre' to preserve line composition
@@ -475,14 +433,14 @@ bool ToolTipToRichTextFilter::eventFilter(QObject *obj, QEvent *evt)
 
 void TableViewLastColumnResizingFixer::connectViewHeadersSignals()
 {
-    connect(tableView->horizontalHeader(), SIGNAL(sectionResized(int,int,int)), this, SLOT(on_sectionResized(int,int,int)));
+    connect(tableView->horizontalHeader(), SIGNAL(sectionResized(int, int, int)), this, SLOT(on_sectionResized(int, int, int)));
     connect(tableView->horizontalHeader(), SIGNAL(geometriesChanged()), this, SLOT(on_geometriesChanged()));
 }
 
 // We need to disconnect these while handling the resize events, otherwise we can enter infinite loops.
 void TableViewLastColumnResizingFixer::disconnectViewHeadersSignals()
 {
-    disconnect(tableView->horizontalHeader(), SIGNAL(sectionResized(int,int,int)), this, SLOT(on_sectionResized(int,int,int)));
+    disconnect(tableView->horizontalHeader(), SIGNAL(sectionResized(int, int, int)), this, SLOT(on_sectionResized(int, int, int)));
     disconnect(tableView->horizontalHeader(), SIGNAL(geometriesChanged()), this, SLOT(on_geometriesChanged()));
 }
 
@@ -506,8 +464,7 @@ void TableViewLastColumnResizingFixer::resizeColumn(int nColumnIndex, int width)
 int TableViewLastColumnResizingFixer::getColumnsWidth()
 {
     int nColumnsWidthSum = 0;
-    for (int i = 0; i < columnCount; i++)
-    {
+    for (int i = 0; i < columnCount; i++) {
         nColumnsWidthSum += tableView->horizontalHeader()->sectionSize(i);
     }
     return nColumnsWidthSum;
@@ -518,8 +475,7 @@ int TableViewLastColumnResizingFixer::getAvailableWidthForColumn(int column)
     int nResult = lastColumnMinimumWidth;
     int nTableWidth = tableView->horizontalHeader()->width();
 
-    if (nTableWidth > 0)
-    {
+    if (nTableWidth > 0) {
         int nOtherColsWidth = getColumnsWidth() - tableView->horizontalHeader()->sectionSize(column);
         nResult = std::max(nResult, nTableWidth - nOtherColsWidth);
     }
@@ -536,9 +492,8 @@ void TableViewLastColumnResizingFixer::adjustTableColumnsWidth()
 
     int nTableWidth = tableView->horizontalHeader()->width();
     int nColsWidth = getColumnsWidth();
-    if (nColsWidth > nTableWidth)
-    {
-        resizeColumn(secondToLastColumnIndex,getAvailableWidthForColumn(secondToLastColumnIndex));
+    if (nColsWidth > nTableWidth) {
+        resizeColumn(secondToLastColumnIndex, getAvailableWidthForColumn(secondToLastColumnIndex));
     }
 }
 
@@ -555,9 +510,8 @@ void TableViewLastColumnResizingFixer::on_sectionResized(int logicalIndex, int o
 {
     adjustTableColumnsWidth();
     int remainingWidth = getAvailableWidthForColumn(logicalIndex);
-    if (newSize > remainingWidth)
-    {
-       resizeColumn(logicalIndex, remainingWidth);
+    if (newSize > remainingWidth) {
+        resizeColumn(logicalIndex, remainingWidth);
     }
 }
 
@@ -565,8 +519,7 @@ void TableViewLastColumnResizingFixer::on_sectionResized(int logicalIndex, int o
 // as the "Stretch" resize mode does not allow for interactive resizing.
 void TableViewLastColumnResizingFixer::on_geometriesChanged()
 {
-    if ((getColumnsWidth() - this->tableView->horizontalHeader()->width()) != 0)
-    {
+    if ((getColumnsWidth() - this->tableView->horizontalHeader()->width()) != 0) {
         disconnectViewHeadersSignals();
         resizeColumn(secondToLastColumnIndex, getAvailableWidthForColumn(secondToLastColumnIndex));
         connectViewHeadersSignals();
@@ -577,10 +530,9 @@ void TableViewLastColumnResizingFixer::on_geometriesChanged()
  * Initializes all internal variables and prepares the
  * the resize modes of the last 2 columns of the table and
  */
-TableViewLastColumnResizingFixer::TableViewLastColumnResizingFixer(QTableView* table, int lastColMinimumWidth, int allColsMinimumWidth) :
-    tableView(table),
-    lastColumnMinimumWidth(lastColMinimumWidth),
-    allColumnsMinimumWidth(allColsMinimumWidth)
+TableViewLastColumnResizingFixer::TableViewLastColumnResizingFixer(QTableView* table, int lastColMinimumWidth, int allColsMinimumWidth) : tableView(table),
+                                                                                                                                          lastColumnMinimumWidth(lastColMinimumWidth),
+                                                                                                                                          allColumnsMinimumWidth(allColsMinimumWidth)
 {
     columnCount = tableView->horizontalHeader()->count();
     lastColumnIndex = columnCount - 1;
@@ -594,9 +546,8 @@ TableViewLastColumnResizingFixer::TableViewLastColumnResizingFixer(QTableView* t
  * Class constructor.
  * @param[in] seconds   Number of seconds to convert to a DHMS string
  */
-DHMSTableWidgetItem::DHMSTableWidgetItem(const int64_t seconds) :
-    QTableWidgetItem(),
-    value(seconds)
+DHMSTableWidgetItem::DHMSTableWidgetItem(const int64_t seconds) : QTableWidgetItem(),
+                                                                  value(seconds)
 {
     this->setText(QString::fromStdString(DurationToDHMS(seconds)));
 }
@@ -607,10 +558,10 @@ DHMSTableWidgetItem::DHMSTableWidgetItem(const int64_t seconds) :
  * duration (versus the string value being sorted).
  * @param[in] item      Right hand side of the less than operator
  */
-bool DHMSTableWidgetItem::operator <(QTableWidgetItem const &item) const
+bool DHMSTableWidgetItem::operator<(QTableWidgetItem const& item) const
 {
-    DHMSTableWidgetItem const *rhs =
-        dynamic_cast<DHMSTableWidgetItem const *>(&item);
+    DHMSTableWidgetItem const* rhs =
+        dynamic_cast<DHMSTableWidgetItem const*>(&item);
 
     if (!rhs)
         return QTableWidgetItem::operator<(item);
@@ -635,18 +586,16 @@ bool SetStartOnSystemStartup(bool fAutoStart)
     // If the shortcut exists already, remove it for updating
     boost::filesystem::remove(StartupShortcutPath());
 
-    if (fAutoStart)
-    {
+    if (fAutoStart) {
         CoInitialize(NULL);
 
         // Get a pointer to the IShellLink interface.
         IShellLink* psl = NULL;
         HRESULT hres = CoCreateInstance(CLSID_ShellLink, NULL,
-                                CLSCTX_INPROC_SERVER, IID_IShellLink,
-                                reinterpret_cast<void**>(&psl));
+            CLSCTX_INPROC_SERVER, IID_IShellLink,
+            reinterpret_cast<void**>(&psl));
 
-        if (SUCCEEDED(hres))
-        {
+        if (SUCCEEDED(hres)) {
             // Get the current executable path
             TCHAR pszExePath[MAX_PATH];
             GetModuleFileName(NULL, pszExePath, sizeof(pszExePath));
@@ -664,9 +613,8 @@ bool SetStartOnSystemStartup(bool fAutoStart)
             // saving the shortcut in persistent storage.
             IPersistFile* ppf = NULL;
             hres = psl->QueryInterface(IID_IPersistFile,
-                                       reinterpret_cast<void**>(&ppf));
-            if (SUCCEEDED(hres))
-            {
+                reinterpret_cast<void**>(&ppf));
+            if (SUCCEEDED(hres)) {
                 WCHAR pwsz[MAX_PATH];
                 // Ensure that the string is ANSI.
                 MultiByteToWideChar(CP_ACP, 0, StartupShortcutPath().string().c_str(), -1, pwsz, MAX_PATH);
@@ -713,8 +661,7 @@ bool GetStartOnSystemStartup()
         return false;
     // Scan through file for "Hidden=true":
     std::string line;
-    while (!optionFile.eof())
-    {
+    while (!optionFile.eof()) {
         getline(optionFile, line);
         if (line.find("Hidden") != std::string::npos &&
             line.find("true") != std::string::npos)
@@ -729,16 +676,15 @@ bool SetStartOnSystemStartup(bool fAutoStart)
 {
     if (!fAutoStart)
         boost::filesystem::remove(GetAutostartFilePath());
-    else
-    {
-        char pszExePath[MAX_PATH+1];
+    else {
+        char pszExePath[MAX_PATH + 1];
         memset(pszExePath, 0, sizeof(pszExePath));
-        if (readlink("/proc/self/exe", pszExePath, sizeof(pszExePath)-1) == -1)
+        if (readlink("/proc/self/exe", pszExePath, sizeof(pszExePath) - 1) == -1)
             return false;
 
         boost::filesystem::create_directories(GetAutostartDir());
 
-        boost::filesystem::ofstream optionFile(GetAutostartFilePath(), std::ios_base::out|std::ios_base::trunc);
+        boost::filesystem::ofstream optionFile(GetAutostartFilePath(), std::ios_base::out | std::ios_base::trunc);
         if (!optionFile.good())
             return false;
         // Write a pivx.desktop file to the autostart directory:
@@ -765,17 +711,17 @@ LSSharedFileListItemRef findStartupItemInList(LSSharedFileListRef list, CFURLRef
 {
     // loop through the list of startup items and try to find the pivx app
     CFArrayRef listSnapshot = LSSharedFileListCopySnapshot(list, NULL);
-    for(int i = 0; i < CFArrayGetCount(listSnapshot); i++) {
+    for (int i = 0; i < CFArrayGetCount(listSnapshot); i++) {
         LSSharedFileListItemRef item = (LSSharedFileListItemRef)CFArrayGetValueAtIndex(listSnapshot, i);
         UInt32 resolutionFlags = kLSSharedFileListNoUserInteraction | kLSSharedFileListDoNotMountVolumes;
         CFURLRef currentItemURL = NULL;
         LSSharedFileListItemResolve(item, resolutionFlags, &currentItemURL, NULL);
-        if(currentItemURL && CFEqual(currentItemURL, findUrl)) {
+        if (currentItemURL && CFEqual(currentItemURL, findUrl)) {
             // found
             CFRelease(currentItemURL);
             return item;
         }
-        if(currentItemURL) {
+        if (currentItemURL) {
             CFRelease(currentItemURL);
         }
     }
@@ -796,11 +742,10 @@ bool SetStartOnSystemStartup(bool fAutoStart)
     LSSharedFileListRef loginItems = LSSharedFileListCreate(NULL, kLSSharedFileListSessionLoginItems, NULL);
     LSSharedFileListItemRef foundItem = findStartupItemInList(loginItems, bitcoinAppUrl);
 
-    if(fAutoStart && !foundItem) {
+    if (fAutoStart && !foundItem) {
         // add pivx app to startup item list
         LSSharedFileListInsertItemURL(loginItems, kLSSharedFileListItemBeforeFirst, NULL, NULL, bitcoinAppUrl, NULL, NULL);
-    }
-    else if(!fAutoStart && foundItem) {
+    } else if (!fAutoStart && foundItem) {
         // remove item
         LSSharedFileListItemRemove(loginItems, foundItem);
     }
@@ -808,19 +753,22 @@ bool SetStartOnSystemStartup(bool fAutoStart)
 }
 #else
 
-bool GetStartOnSystemStartup() { return false; }
+bool GetStartOnSystemStartup()
+{
+    return false;
+}
 bool SetStartOnSystemStartup(bool fAutoStart) { return false; }
 
 #endif
 
-void saveWindowGeometry(const QString& strSetting, QWidget *parent)
+void saveWindowGeometry(const QString& strSetting, QWidget* parent)
 {
     QSettings settings;
     settings.setValue(strSetting + "Pos", parent->pos());
     settings.setValue(strSetting + "Size", parent->size());
 }
 
-void restoreWindowGeometry(const QString& strSetting, const QSize& defaultSize, QWidget *parent)
+void restoreWindowGeometry(const QString& strSetting, const QSize& defaultSize, QWidget* parent)
 {
     QSettings settings;
     QPoint pos = settings.value(strSetting + "Pos").toPoint();
@@ -837,11 +785,12 @@ void restoreWindowGeometry(const QString& strSetting, const QSize& defaultSize, 
 }
 
 // Check whether a theme is not build-in
-bool isExternal(QString theme){
-    if(theme.isEmpty())
-       return false;
+bool isExternal(QString theme)
+{
+    if (theme.isEmpty())
+        return false;
 
-    return (theme.operator !=("default"));
+    return (theme.operator!=("default"));
 }
 
 // Open CSS when configured
@@ -852,19 +801,17 @@ QString loadStyleSheet()
     QString cssName;
     QString theme = settings.value("theme", "").toString();
 
-    if(isExternal(theme)){
+    if (isExternal(theme)) {
         // External CSS
         settings.setValue("fCSSexternal", true);
         boost::filesystem::path pathAddr = GetDataDir() / "themes/";
         cssName = pathAddr.string().c_str() + theme + "/css/theme.css";
-    }
-    else{
+    } else {
         // Build-in CSS
         settings.setValue("fCSSexternal", false);
-        if(!theme.isEmpty()){
+        if (!theme.isEmpty()) {
             cssName = QString(":/css/") + theme;
-        }
-        else {
+        } else {
             cssName = QString(":/css/default");
             settings.setValue("theme", "default");
         }
@@ -885,23 +832,23 @@ void setClipboard(const QString& str)
 }
 
 #if BOOST_FILESYSTEM_VERSION >= 3
-boost::filesystem::path qstringToBoostPath(const QString &path)
+boost::filesystem::path qstringToBoostPath(const QString& path)
 {
     return boost::filesystem::path(path.toStdString(), utf8);
 }
 
-QString boostPathToQString(const boost::filesystem::path &path)
+QString boostPathToQString(const boost::filesystem::path& path)
 {
     return QString::fromStdString(path.string(utf8));
 }
 #else
 #warning Conversion between boost path and QString can use invalid character encoding with boost_filesystem v2 and older
-boost::filesystem::path qstringToBoostPath(const QString &path)
+boost::filesystem::path qstringToBoostPath(const QString& path)
 {
     return boost::filesystem::path(path.toStdString());
 }
 
-QString boostPathToQString(const boost::filesystem::path &path)
+QString boostPathToQString(const boost::filesystem::path& path)
 {
     return QString::fromStdString(path.string());
 }
@@ -934,10 +881,8 @@ QString formatServicesStr(quint64 mask)
     // Just scan the last 8 bits for now.
     for (int i = 0; i < 8; i++) {
         uint64_t check = 1 << i;
-        if (mask & check)
-        {
-            switch (check)
-            {
+        if (mask & check) {
+            switch (check) {
             case NODE_NETWORK:
                 strList.append(QObject::tr("NETWORK"));
                 break;

@@ -12,8 +12,7 @@
 
 #include <boost/foreach.hpp>
 
-RecentRequestsTableModel::RecentRequestsTableModel(CWallet *wallet, WalletModel *parent) :
-    walletModel(parent)
+RecentRequestsTableModel::RecentRequestsTableModel(CWallet* wallet, WalletModel* parent) : walletModel(parent)
 {
     Q_UNUSED(wallet);
     nReceiveRequestsMaxId = 0;
@@ -21,7 +20,7 @@ RecentRequestsTableModel::RecentRequestsTableModel(CWallet *wallet, WalletModel 
     // Load entries from wallet
     std::vector<std::string> vReceiveRequests;
     parent->loadReceiveRequests(vReceiveRequests);
-    BOOST_FOREACH(const std::string& request, vReceiveRequests)
+    BOOST_FOREACH (const std::string& request, vReceiveRequests)
         addNewRequest(request);
 
     /* These columns must match the indices in the ColumnIndex enumeration */
@@ -35,49 +34,41 @@ RecentRequestsTableModel::~RecentRequestsTableModel()
     /* Intentionally left empty */
 }
 
-int RecentRequestsTableModel::rowCount(const QModelIndex &parent) const
+int RecentRequestsTableModel::rowCount(const QModelIndex& parent) const
 {
     Q_UNUSED(parent);
 
     return list.length();
 }
 
-int RecentRequestsTableModel::columnCount(const QModelIndex &parent) const
+int RecentRequestsTableModel::columnCount(const QModelIndex& parent) const
 {
     Q_UNUSED(parent);
 
     return columns.length();
 }
 
-QVariant RecentRequestsTableModel::data(const QModelIndex &index, int role) const
+QVariant RecentRequestsTableModel::data(const QModelIndex& index, int role) const
 {
-    if(!index.isValid() || index.row() >= list.length())
+    if (!index.isValid() || index.row() >= list.length())
         return QVariant();
 
-    const RecentRequestEntry *rec = &list[index.row()];
+    const RecentRequestEntry* rec = &list[index.row()];
 
-    if(role == Qt::DisplayRole || role == Qt::EditRole)
-    {
-        switch(index.column())
-        {
+    if (role == Qt::DisplayRole || role == Qt::EditRole) {
+        switch (index.column()) {
         case Date:
             return GUIUtil::dateTimeStr(rec->date);
         case Label:
-            if(rec->recipient.label.isEmpty() && role == Qt::DisplayRole)
-            {
+            if (rec->recipient.label.isEmpty() && role == Qt::DisplayRole) {
                 return tr("(no label)");
-            }
-            else
-            {
+            } else {
                 return rec->recipient.label;
             }
         case Message:
-            if(rec->recipient.message.isEmpty() && role == Qt::DisplayRole)
-            {
+            if (rec->recipient.message.isEmpty() && role == Qt::DisplayRole) {
                 return tr("(no message)");
-            }
-            else
-            {
+            } else {
                 return rec->recipient.message;
             }
         case Amount:
@@ -88,26 +79,22 @@ QVariant RecentRequestsTableModel::data(const QModelIndex &index, int role) cons
             else
                 return BitcoinUnits::format(walletModel->getOptionsModel()->getDisplayUnit(), rec->recipient.amount);
         }
-    }
-    else if (role == Qt::TextAlignmentRole)
-    {
+    } else if (role == Qt::TextAlignmentRole) {
         if (index.column() == Amount)
-            return (int)(Qt::AlignRight|Qt::AlignVCenter);
+            return (int)(Qt::AlignRight | Qt::AlignVCenter);
     }
     return QVariant();
 }
 
-bool RecentRequestsTableModel::setData(const QModelIndex &index, const QVariant &value, int role)
+bool RecentRequestsTableModel::setData(const QModelIndex& index, const QVariant& value, int role)
 {
     return true;
 }
 
 QVariant RecentRequestsTableModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
-    if(orientation == Qt::Horizontal)
-    {
-        if(role == Qt::DisplayRole && section < columns.size())
-        {
+    if (orientation == Qt::Horizontal) {
+        if (role == Qt::DisplayRole && section < columns.size()) {
             return columns[section];
         }
     }
@@ -118,37 +105,34 @@ QVariant RecentRequestsTableModel::headerData(int section, Qt::Orientation orien
 void RecentRequestsTableModel::updateAmountColumnTitle()
 {
     columns[Amount] = getAmountTitle();
-    emit headerDataChanged(Qt::Horizontal,Amount,Amount);
+    emit headerDataChanged(Qt::Horizontal, Amount, Amount);
 }
 
 /** Gets title for amount column including current display unit if optionsModel reference available. */
 QString RecentRequestsTableModel::getAmountTitle()
 {
     QString amountTitle = tr("Amount");
-    if (this->walletModel->getOptionsModel() != NULL)
-    {
-        amountTitle += " ("+BitcoinUnits::name(this->walletModel->getOptionsModel()->getDisplayUnit()) + ")";
+    if (this->walletModel->getOptionsModel() != NULL) {
+        amountTitle += " (" + BitcoinUnits::name(this->walletModel->getOptionsModel()->getDisplayUnit()) + ")";
     }
     return amountTitle;
 }
 
-QModelIndex RecentRequestsTableModel::index(int row, int column, const QModelIndex &parent) const
+QModelIndex RecentRequestsTableModel::index(int row, int column, const QModelIndex& parent) const
 {
     Q_UNUSED(parent);
 
     return createIndex(row, column);
 }
 
-bool RecentRequestsTableModel::removeRows(int row, int count, const QModelIndex &parent)
+bool RecentRequestsTableModel::removeRows(int row, int count, const QModelIndex& parent)
 {
     Q_UNUSED(parent);
 
-    if(count > 0 && row >= 0 && (row+count) <= list.size())
-    {
-        const RecentRequestEntry *rec;
-        for (int i = 0; i < count; ++i)
-        {
-            rec = &list[row+i];
+    if (count > 0 && row >= 0 && (row + count) <= list.size()) {
+        const RecentRequestEntry* rec;
+        for (int i = 0; i < count; ++i) {
+            rec = &list[row + i];
             if (!walletModel->saveReceiveRequest(rec->recipient.address.toStdString(), rec->id, ""))
                 return false;
         }
@@ -162,13 +146,13 @@ bool RecentRequestsTableModel::removeRows(int row, int count, const QModelIndex 
     }
 }
 
-Qt::ItemFlags RecentRequestsTableModel::flags(const QModelIndex &index) const
+Qt::ItemFlags RecentRequestsTableModel::flags(const QModelIndex& index) const
 {
     return Qt::ItemIsSelectable | Qt::ItemIsEnabled;
 }
 
 // called when adding a request from the GUI
-void RecentRequestsTableModel::addNewRequest(const SendCoinsRecipient &recipient)
+void RecentRequestsTableModel::addNewRequest(const SendCoinsRecipient& recipient)
 {
     RecentRequestEntry newEntry;
     newEntry.id = ++nReceiveRequestsMaxId;
@@ -185,7 +169,7 @@ void RecentRequestsTableModel::addNewRequest(const SendCoinsRecipient &recipient
 }
 
 // called from ctor when loading from wallet
-void RecentRequestsTableModel::addNewRequest(const std::string &recipient)
+void RecentRequestsTableModel::addNewRequest(const std::string& recipient)
 {
     std::vector<char> data(recipient.begin(), recipient.end());
     CDataStream ss(data, SER_DISK, CLIENT_VERSION);
@@ -203,7 +187,7 @@ void RecentRequestsTableModel::addNewRequest(const std::string &recipient)
 }
 
 // actually add to table in GUI
-void RecentRequestsTableModel::addNewRequest(RecentRequestEntry &recipient)
+void RecentRequestsTableModel::addNewRequest(RecentRequestEntry& recipient)
 {
     beginInsertRows(QModelIndex(), 0, 0);
     list.prepend(recipient);
@@ -221,15 +205,14 @@ void RecentRequestsTableModel::updateDisplayUnit()
     updateAmountColumnTitle();
 }
 
-bool RecentRequestEntryLessThan::operator()(RecentRequestEntry &left, RecentRequestEntry &right) const
+bool RecentRequestEntryLessThan::operator()(RecentRequestEntry& left, RecentRequestEntry& right) const
 {
-    RecentRequestEntry *pLeft = &left;
-    RecentRequestEntry *pRight = &right;
+    RecentRequestEntry* pLeft = &left;
+    RecentRequestEntry* pRight = &right;
     if (order == Qt::DescendingOrder)
         std::swap(pLeft, pRight);
 
-    switch(column)
-    {
+    switch (column) {
     case RecentRequestsTableModel::Date:
         return pLeft->date.toTime_t() < pRight->date.toTime_t();
     case RecentRequestsTableModel::Label:

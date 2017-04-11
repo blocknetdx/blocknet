@@ -6,13 +6,13 @@
 #ifndef OBFUSCATION_H
 #define OBFUSCATION_H
 
-#include "main.h"
-#include "sync.h"
 #include "activemasternode.h"
-#include "masternodeman.h"
+#include "main.h"
 #include "masternode-payments.h"
-#include "obfuscation-relay.h"
 #include "masternode-sync.h"
+#include "masternodeman.h"
+#include "obfuscation-relay.h"
+#include "sync.h"
 
 class CTxIn;
 class CObfuscationPool;
@@ -24,31 +24,31 @@ class CObfuscationBroadcastTx;
 class CActiveMasternode;
 
 // pool states for mixing
-#define POOL_STATUS_UNKNOWN                    0 // waiting for update
-#define POOL_STATUS_IDLE                       1 // waiting for update
-#define POOL_STATUS_QUEUE                      2 // waiting in a queue
-#define POOL_STATUS_ACCEPTING_ENTRIES          3 // accepting entries
-#define POOL_STATUS_FINALIZE_TRANSACTION       4 // master node will broadcast what it accepted
-#define POOL_STATUS_SIGNING                    5 // check inputs/outputs, sign final tx
-#define POOL_STATUS_TRANSMISSION               6 // transmit transaction
-#define POOL_STATUS_ERROR                      7 // error
-#define POOL_STATUS_SUCCESS                    8 // success
+#define POOL_STATUS_UNKNOWN 0              // waiting for update
+#define POOL_STATUS_IDLE 1                 // waiting for update
+#define POOL_STATUS_QUEUE 2                // waiting in a queue
+#define POOL_STATUS_ACCEPTING_ENTRIES 3    // accepting entries
+#define POOL_STATUS_FINALIZE_TRANSACTION 4 // master node will broadcast what it accepted
+#define POOL_STATUS_SIGNING 5              // check inputs/outputs, sign final tx
+#define POOL_STATUS_TRANSMISSION 6         // transmit transaction
+#define POOL_STATUS_ERROR 7                // error
+#define POOL_STATUS_SUCCESS 8              // success
 
 // status update message constants
-#define MASTERNODE_ACCEPTED                    1
-#define MASTERNODE_REJECTED                    0
-#define MASTERNODE_RESET                       -1
+#define MASTERNODE_ACCEPTED 1
+#define MASTERNODE_REJECTED 0
+#define MASTERNODE_RESET -1
 
-#define OBFUSCATION_QUEUE_TIMEOUT                 30
-#define OBFUSCATION_SIGNING_TIMEOUT               15
+#define OBFUSCATION_QUEUE_TIMEOUT 30
+#define OBFUSCATION_SIGNING_TIMEOUT 15
 
 // used for anonymous relaying of inputs/outputs/sigs
-#define OBFUSCATION_RELAY_IN                 1
-#define OBFUSCATION_RELAY_OUT                2
-#define OBFUSCATION_RELAY_SIG                3
+#define OBFUSCATION_RELAY_IN 1
+#define OBFUSCATION_RELAY_OUT 2
+#define OBFUSCATION_RELAY_SIG 3
 
-static const int64_t OBFUSCATION_COLLATERAL = (10*COIN);
-static const int64_t OBFUSCATION_POOL_MAX = (99999.99*COIN);
+static const int64_t OBFUSCATION_COLLATERAL = (10 * COIN);
+static const int64_t OBFUSCATION_POOL_MAX = (99999.99 * COIN);
 
 extern CObfuscationPool obfuScationPool;
 extern CObfuScationSigner obfuScationSigner;
@@ -62,7 +62,7 @@ extern CActiveMasternode activeMasternode;
 class CTxDSIn : public CTxIn
 {
 public:
-    bool fHasSig; // flag to indicate if signed
+    bool fHasSig;   // flag to indicate if signed
     int nSentTimes; //times we've sent this anonymously
 
     CTxDSIn(const CTxIn& in)
@@ -114,12 +114,14 @@ public:
     /// Add entries to use for Obfuscation
     bool Add(const std::vector<CTxIn> vinIn, int64_t amountIn, const CTransaction collateralIn, const std::vector<CTxOut> voutIn)
     {
-        if(isSet){return false;}
+        if (isSet) {
+            return false;
+        }
 
-        BOOST_FOREACH(const CTxIn& in, vinIn)
+        BOOST_FOREACH (const CTxIn& in, vinIn)
             sev.push_back(in);
 
-        BOOST_FOREACH(const CTxOut& out, voutIn)
+        BOOST_FOREACH (const CTxOut& out, voutIn)
             vout.push_back(out);
 
         amount = amountIn;
@@ -132,9 +134,11 @@ public:
 
     bool AddSig(const CTxIn& vin)
     {
-        BOOST_FOREACH(CTxDSIn& s, sev) {
-            if(s.prevout == vin.prevout && s.nSequence == vin.nSequence){
-                if(s.fHasSig){return false;}
+        BOOST_FOREACH (CTxDSIn& s, sev) {
+            if (s.prevout == vin.prevout && s.nSequence == vin.nSequence) {
+                if (s.fHasSig) {
+                    return false;
+                }
                 s.scriptSig = vin.scriptSig;
                 s.prevPubKey = vin.prevPubKey;
                 s.fHasSig = true;
@@ -148,7 +152,7 @@ public:
 
     bool IsExpired()
     {
-        return (GetTime() - addedTime) > OBFUSCATION_QUEUE_TIMEOUT;// 120 seconds
+        return (GetTime() - addedTime) > OBFUSCATION_QUEUE_TIMEOUT; // 120 seconds
     }
 };
 
@@ -177,7 +181,8 @@ public:
     ADD_SERIALIZE_METHODS;
 
     template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
+    {
         READWRITE(nDenom);
         READWRITE(vin);
         READWRITE(time);
@@ -185,11 +190,10 @@ public:
         READWRITE(vchSig);
     }
 
-    bool GetAddress(CService &addr)
+    bool GetAddress(CService& addr)
     {
         CMasternode* pmn = mnodeman.Find(vin);
-        if(pmn != NULL)
-        {
+        if (pmn != NULL) {
             addr = pmn->addr;
             return true;
         }
@@ -197,11 +201,10 @@ public:
     }
 
     /// Get the protocol version
-    bool GetProtocolVersion(int &protocolVersion)
+    bool GetProtocolVersion(int& protocolVersion)
     {
         CMasternode* pmn = mnodeman.Find(vin);
-        if(pmn != NULL)
-        {
+        if (pmn != NULL) {
             protocolVersion = pmn->protocolVersion;
             return true;
         }
@@ -222,12 +225,11 @@ public:
     /// Is this Obfuscation expired?
     bool IsExpired()
     {
-        return (GetTime() - time) > OBFUSCATION_QUEUE_TIMEOUT;// 120 seconds
+        return (GetTime() - time) > OBFUSCATION_QUEUE_TIMEOUT; // 120 seconds
     }
 
     /// Check if we have a valid Masternode address
     bool CheckSignature();
-
 };
 
 /** Helper class to store Obfuscation transaction (tx) information.
@@ -266,7 +268,7 @@ private:
     mutable CCriticalSection cs_obfuscation;
 
     std::vector<CObfuScationEntry> entries; // Masternode/clients entries
-    CMutableTransaction finalTransaction; // the finalized transaction ready for signing
+    CMutableTransaction finalTransaction;   // the finalized transaction ready for signing
 
     int64_t lastTimeChanged; // last time the 'state' changed, in UTC milliseconds
 
@@ -282,7 +284,7 @@ private:
 
     int sessionID;
 
-    int sessionUsers; //N Users have said they'll join
+    int sessionUsers;            //N Users have said they'll join
     bool sessionFoundMasternode; //If we've found a compatible Masternode
     std::vector<CTransaction> vecSessionCollateral;
 
@@ -326,7 +328,7 @@ public:
     CScript collateralPubKey;
 
     CMasternode* pSubmittedToMasternode;
-    int sessionDenom; //Users must submit an denom matching this
+    int sessionDenom;    //Users must submit an denom matching this
     int cachedNumBlocks; //used for the overview screen
 
     CObfuscationPool()
@@ -361,11 +363,13 @@ public:
      */
     void ProcessMessageObfuscation(CNode* pfrom, std::string& strCommand, CDataStream& vRecv);
 
-    void InitCollateralAddress(){
+    void InitCollateralAddress()
+    {
         SetCollateralAddress(Params().ObfuscationPoolDummyAddress());
     }
 
-    void SetMinBlockSpacing(int minBlockSpacingIn){
+    void SetMinBlockSpacing(int minBlockSpacingIn)
+    {
         minBlockSpacing = minBlockSpacingIn;
     }
 
@@ -407,15 +411,15 @@ public:
     // Set the 'state' value, with some logging and capturing when the state changed
     void UpdateState(unsigned int newState)
     {
-        if (fMasterNode && (newState == POOL_STATUS_ERROR || newState == POOL_STATUS_SUCCESS)){
+        if (fMasterNode && (newState == POOL_STATUS_ERROR || newState == POOL_STATUS_SUCCESS)) {
             LogPrint("obfuscation", "CObfuscationPool::UpdateState() - Can't set state to ERROR or SUCCESS as a Masternode. \n");
             return;
         }
 
         LogPrintf("CObfuscationPool::UpdateState() == %d | %d \n", state, newState);
-        if(state != newState){
+        if (state != newState) {
             lastTimeChanged = GetTimeMillis();
-            if(fMasterNode) {
+            if (fMasterNode) {
                 RelayStatus(obfuScationPool.sessionID, obfuScationPool.GetState(), obfuScationPool.GetEntriesCount(), MASTERNODE_RESET);
             }
         }
@@ -429,7 +433,8 @@ public:
     }
 
     /// Do we have enough users to take entries?
-    bool IsSessionReady(){
+    bool IsSessionReady()
+    {
         return sessionUsers >= GetMaxPoolTransactions();
     }
 
@@ -437,10 +442,10 @@ public:
     bool IsCompatibleWithEntries(std::vector<CTxOut>& vout);
 
     /// Is this amount compatible with other client in the pool?
-    bool IsCompatibleWithSession(int64_t nAmount, CTransaction txCollateral, int &errorID);
+    bool IsCompatibleWithSession(int64_t nAmount, CTransaction txCollateral, int& errorID);
 
     /// Passively run Obfuscation in the background according to the configuration in settings (only for QT)
-    bool DoAutomaticDenominating(bool fDryRun=false);
+    bool DoAutomaticDenominating(bool fDryRun = false);
     bool PrepareObfuscationDenominate();
 
     /// Check for process in Obfuscation
@@ -465,13 +470,13 @@ public:
     /// As a client, send a transaction to a Masternode to start the denomination process
     void SendObfuscationDenominate(std::vector<CTxIn>& vin, std::vector<CTxOut>& vout, int64_t amount);
     /// Get Masternode updates about the progress of Obfuscation
-    bool StatusUpdate(int newState, int newEntriesCount, int newAccepted, int &errorID, int newSessionID=0);
+    bool StatusUpdate(int newState, int newEntriesCount, int newAccepted, int& errorID, int newSessionID = 0);
 
     /// As a client, check and sign the final transaction
     bool SignFinalTransaction(CTransaction& finalTransactionNew, CNode* node);
 
     /// Get the last valid block hash for a given modulus
-    bool GetLastValidBlockHash(uint256& hash, int mod=1, int nBlockHeight=0);
+    bool GetLastValidBlockHash(uint256& hash, int mod = 1, int nBlockHeight = 0);
     /// Process a new block
     void NewBlock();
     void CompletedTransaction(bool error, int errorID);
@@ -490,7 +495,7 @@ public:
     void GetDenominationsToString(int nDenom, std::string& strDenom);
 
     /// Get the denominations for a specific amount of pivx.
-    int GetDenominationsByAmount(int64_t nAmount, int nDenomTarget=0); // is not used anymore?
+    int GetDenominationsByAmount(int64_t nAmount, int nDenomTarget = 0); // is not used anymore?
     int GetDenominationsByAmounts(std::vector<int64_t>& vecAmount);
 
     std::string GetMessageByID(int messageID);
@@ -503,7 +508,7 @@ public:
     void RelaySignaturesAnon(std::vector<CTxIn>& vin);
     void RelayInAnon(std::vector<CTxIn>& vin, std::vector<CTxOut>& vout);
     void RelayIn(const std::vector<CTxDSIn>& vin, const int64_t& nAmount, const CTransaction& txCollateral, const std::vector<CTxDSOut>& vout);
-    void RelayStatus(const int sessionID, const int newState, const int newEntriesCount, const int newAccepted, const int errorID=MSG_NOERR);
+    void RelayStatus(const int sessionID, const int newState, const int newEntriesCount, const int newAccepted, const int errorID = MSG_NOERR);
     void RelayCompletedTransaction(const int sessionID, const bool error, const int errorID);
 };
 

@@ -5,25 +5,25 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "bip38.h"
-#include "rpcserver.h"
 #include "init.h"
 #include "main.h"
+#include "rpcserver.h"
 #include "script/script.h"
 #include "script/standard.h"
 #include "sync.h"
 #include "util.h"
+#include "utilstrencodings.h"
 #include "utiltime.h"
 #include "wallet.h"
-#include "utilstrencodings.h"
 
 #include <fstream>
-#include <stdint.h>
 #include <secp256k1.h>
+#include <stdint.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include <openssl/sha.h>
 #include <openssl/aes.h>
+#include <openssl/sha.h>
 
 #include "json/json_spirit_value.h"
 
@@ -32,11 +32,13 @@ using namespace std;
 
 void EnsureWalletIsUnlocked();
 
-std::string static EncodeDumpTime(int64_t nTime) {
+std::string static EncodeDumpTime(int64_t nTime)
+{
     return DateTimeStrFormat("%Y-%m-%dT%H:%M:%SZ", nTime);
 }
 
-int64_t static DecodeDumpTime(const std::string &str) {
+int64_t static DecodeDumpTime(const std::string& str)
+{
     static const boost::posix_time::ptime epoch = boost::posix_time::from_time_t(0);
     static const std::locale loc(std::locale::classic(),
         new boost::posix_time::time_input_facet("%Y-%m-%dT%H:%M:%SZ"));
@@ -49,9 +51,10 @@ int64_t static DecodeDumpTime(const std::string &str) {
     return (ptime - epoch).total_seconds();
 }
 
-std::string static EncodeDumpString(const std::string &str) {
+std::string static EncodeDumpString(const std::string& str)
+{
     std::stringstream ret;
-    BOOST_FOREACH(unsigned char c, str) {
+    BOOST_FOREACH (unsigned char c, str) {
         if (c <= 32 || c >= 128 || c == '%') {
             ret << '%' << HexStr(&c, &c + 1);
         } else {
@@ -61,13 +64,14 @@ std::string static EncodeDumpString(const std::string &str) {
     return ret.str();
 }
 
-std::string DecodeDumpString(const std::string &str) {
+std::string DecodeDumpString(const std::string& str)
+{
     std::stringstream ret;
     for (unsigned int pos = 0; pos < str.length(); pos++) {
         unsigned char c = str[pos];
-        if (c == '%' && pos+2 < str.length()) {
-            c = (((str[pos+1]>>6)*9+((str[pos+1]-'0')&15)) << 4) |
-                ((str[pos+2]>>6)*9+((str[pos+2]-'0')&15));
+        if (c == '%' && pos + 2 < str.length()) {
+            c = (((str[pos + 1] >> 6) * 9 + ((str[pos + 1] - '0') & 15)) << 4) |
+                ((str[pos + 2] >> 6) * 9 + ((str[pos + 2] - '0') & 15));
             pos += 2;
         }
         ret << c;
@@ -87,15 +91,11 @@ Value importprivkey(const Array& params, bool fHelp)
             "3. rescan               (boolean, optional, default=true) Rescan the wallet for transactions\n"
             "\nNote: This call can take minutes to complete if rescan is true.\n"
             "\nExamples:\n"
-            "\nDump a private key\n"
-            + HelpExampleCli("dumpprivkey", "\"myaddress\"") +
-            "\nImport the private key with rescan\n"
-            + HelpExampleCli("importprivkey", "\"mykey\"") +
-            "\nImport using a label and without rescan\n"
-            + HelpExampleCli("importprivkey", "\"mykey\" \"testing\" false") +
-            "\nAs a JSON-RPC call\n"
-            + HelpExampleRpc("importprivkey", "\"mykey\", \"testing\", false")
-        );
+            "\nDump a private key\n" +
+            HelpExampleCli("dumpprivkey", "\"myaddress\"") +
+            "\nImport the private key with rescan\n" + HelpExampleCli("importprivkey", "\"mykey\"") +
+            "\nImport using a label and without rescan\n" + HelpExampleCli("importprivkey", "\"mykey\" \"testing\" false") +
+            "\nAs a JSON-RPC call\n" + HelpExampleRpc("importprivkey", "\"mykey\", \"testing\", false"));
 
     EnsureWalletIsUnlocked();
 
@@ -156,13 +156,10 @@ Value importaddress(const Array& params, bool fHelp)
             "3. rescan               (boolean, optional, default=true) Rescan the wallet for transactions\n"
             "\nNote: This call can take minutes to complete if rescan is true.\n"
             "\nExamples:\n"
-            "\nImport an address with rescan\n"
-            + HelpExampleCli("importaddress", "\"myaddress\"") +
-            "\nImport using a label without rescan\n"
-            + HelpExampleCli("importaddress", "\"myaddress\" \"testing\" false") +
-            "\nAs a JSON-RPC call\n"
-            + HelpExampleRpc("importaddress", "\"myaddress\", \"testing\", false")
-        );
+            "\nImport an address with rescan\n" +
+            HelpExampleCli("importaddress", "\"myaddress\"") +
+            "\nImport using a label without rescan\n" + HelpExampleCli("importaddress", "\"myaddress\" \"testing\" false") +
+            "\nAs a JSON-RPC call\n" + HelpExampleRpc("importaddress", "\"myaddress\", \"testing\", false"));
 
     CScript script;
 
@@ -202,8 +199,7 @@ Value importaddress(const Array& params, bool fHelp)
         if (!pwalletMain->AddWatchOnly(script))
             throw JSONRPCError(RPC_WALLET_ERROR, "Error adding address to wallet");
 
-        if (fRescan)
-        {
+        if (fRescan) {
             pwalletMain->ScanForWalletTransactions(chainActive.Genesis(), true);
             pwalletMain->ReacceptWalletTransactions();
         }
@@ -221,13 +217,10 @@ Value importwallet(const Array& params, bool fHelp)
             "\nArguments:\n"
             "1. \"filename\"    (string, required) The wallet file\n"
             "\nExamples:\n"
-            "\nDump the wallet\n"
-            + HelpExampleCli("dumpwallet", "\"test\"") +
-            "\nImport the wallet\n"
-            + HelpExampleCli("importwallet", "\"test\"") +
-            "\nImport using the json rpc call\n"
-            + HelpExampleRpc("importwallet", "\"test\"")
-        );
+            "\nDump the wallet\n" +
+            HelpExampleCli("dumpwallet", "\"test\"") +
+            "\nImport the wallet\n" + HelpExampleCli("importwallet", "\"test\"") +
+            "\nImport using the json rpc call\n" + HelpExampleRpc("importwallet", "\"test\""));
 
     EnsureWalletIsUnlocked();
 
@@ -294,7 +287,7 @@ Value importwallet(const Array& params, bool fHelp)
     file.close();
     pwalletMain->ShowProgress("", 100); // hide progress dialog in GUI
 
-    CBlockIndex *pindex = chainActive.Tip();
+    CBlockIndex* pindex = chainActive.Tip();
     while (pindex && pindex->pprev && pindex->GetBlockTime() > nTimeBegin - 7200)
         pindex = pindex->pprev;
 
@@ -322,11 +315,8 @@ Value dumpprivkey(const Array& params, bool fHelp)
             "1. \"pivxaddress\"   (string, required) The pivx address for the private key\n"
             "\nResult:\n"
             "\"key\"                (string) The private key\n"
-            "\nExamples:\n"
-            + HelpExampleCli("dumpprivkey", "\"myaddress\"")
-            + HelpExampleCli("importprivkey", "\"mykey\"")
-            + HelpExampleRpc("dumpprivkey", "\"myaddress\"")
-        );
+            "\nExamples:\n" +
+            HelpExampleCli("dumpprivkey", "\"myaddress\"") + HelpExampleCli("importprivkey", "\"mykey\"") + HelpExampleRpc("dumpprivkey", "\"myaddress\""));
 
     EnsureWalletIsUnlocked();
 
@@ -352,10 +342,8 @@ Value dumpwallet(const Array& params, bool fHelp)
             "\nDumps all wallet keys in a human-readable format.\n"
             "\nArguments:\n"
             "1. \"filename\"    (string, required) The filename\n"
-            "\nExamples:\n"
-            + HelpExampleCli("dumpwallet", "\"test\"")
-            + HelpExampleRpc("dumpwallet", "\"test\"")
-        );
+            "\nExamples:\n" +
+            HelpExampleCli("dumpwallet", "\"test\"") + HelpExampleRpc("dumpwallet", "\"test\""));
 
     EnsureWalletIsUnlocked();
 
@@ -384,7 +372,7 @@ Value dumpwallet(const Array& params, bool fHelp)
     file << strprintf("#   mined on %s\n", EncodeDumpTime(chainActive.Tip()->GetBlockTime()));
     file << "\n";
     for (std::vector<std::pair<int64_t, CKeyID> >::const_iterator it = vKeyBirth.begin(); it != vKeyBirth.end(); it++) {
-        const CKeyID &keyid = it->second;
+        const CKeyID& keyid = it->second;
         std::string strTime = EncodeDumpTime(it->first);
         std::string strAddr = CBitcoinAddress(keyid).ToString();
         CKey key;
@@ -415,8 +403,7 @@ Value bip38encrypt(const Array& params, bool fHelp)
             "2. \"passphrase\"   (string, required) The passphrase you want the private key to be encrypted with - Valid special chars: !#$%&'()*+,-./:;<=>?`{|}~ \n"
             "\nResult:\n"
             "\"key\"                (string) The encrypted private key\n"
-            "\nExamples:\n"
-        );
+            "\nExamples:\n");
 
     EnsureWalletIsUnlocked();
 
@@ -455,8 +442,7 @@ Value bip38decrypt(const Array& params, bool fHelp)
 
             "\nResult:\n"
             "\"key\"                (string) The decrypted private key\n"
-            "\nExamples:\n"
-        );
+            "\nExamples:\n");
 
     EnsureWalletIsUnlocked();
 
@@ -466,7 +452,7 @@ Value bip38decrypt(const Array& params, bool fHelp)
 
     uint256 privKey;
     bool fCompressed;
-    if(!BIP38_Decrypt(strPassphrase, strKey, privKey, fCompressed))
+    if (!BIP38_Decrypt(strPassphrase, strKey, privKey, fCompressed))
         throw JSONRPCError(RPC_WALLET_ERROR, "Failed To Decrypt");
 
     Object result;
@@ -475,7 +461,7 @@ Value bip38decrypt(const Array& params, bool fHelp)
     CKey key;
     key.Set(privKey.begin(), privKey.end(), fCompressed);
 
-    if(!key.IsValid())
+    if (!key.IsValid())
         throw JSONRPCError(RPC_WALLET_ERROR, "Private Key Not Valid");
 
     CPubKey pubkey = key.GetPubKey();
@@ -503,5 +489,3 @@ Value bip38decrypt(const Array& params, bool fHelp)
 
     return result;
 }
-
-

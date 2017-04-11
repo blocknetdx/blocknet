@@ -25,14 +25,14 @@ class WalletFrame : public QFrame
     Q_OBJECT
 
 public:
-    explicit WalletFrame(BitcoinGUI *_gui = 0);
+    explicit WalletFrame(BitcoinGUI* _gui = 0);
     ~WalletFrame();
 
-    void setClientModel(ClientModel *clientModel);
+    void setClientModel(ClientModel* clientModel);
 
-    bool addWallet(const QString& name, WalletModel *walletModel);
+    bool addWallet(const QString& name, WalletModel* walletModel);
     bool setCurrentWallet(const QString& name);
-    bool removeWallet(const QString &name);
+    bool removeWallet(const QString& name);
     void removeAllWallets();
 
     bool handlePaymentRequest(const SendCoinsRecipient& recipient);
@@ -40,14 +40,14 @@ public:
     void showOutOfSyncWarning(bool fShow);
 
 private:
-    QStackedWidget *walletStack;
-    BitcoinGUI *gui;
-    ClientModel *clientModel;
+    QStackedWidget* walletStack;
+    BitcoinGUI* gui;
+    ClientModel* clientModel;
     QMap<QString, WalletView*> mapWalletViews;
 
     bool bOutOfSync;
 
-    WalletView *currentWalletView();
+    WalletView* currentWalletView();
 
 public slots:
     /** Switch to overview (home) page */
@@ -61,9 +61,9 @@ public slots:
     /** Switch to send coins page */
     void gotoSendCoinsPage(QString addr = "");
     /** Switch to Bittrex trading page */
-    void gotoTradingPage();	
-	/** Switch to explorer page */
-    void gotoBlockExplorerPage();	
+    void gotoTradingPage();
+    /** Switch to explorer page */
+    void gotoBlockExplorerPage();
     /** Show Sign/Verify Message dialog and switch to sign message tab */
     void gotoSignMessageTab(QString addr = "");
     /** Show Sign/Verify Message dialog and switch to verify message tab */

@@ -7,8 +7,8 @@
 #define BITCOIN_ALLOCATORS_H
 
 #include <map>
-#include <string>
 #include <string.h>
+#include <string>
 #include <vector>
 
 #include <boost/thread/mutex.hpp>

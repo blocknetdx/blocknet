@@ -6,10 +6,10 @@
 #include "util.h"
 #include "utilstrencodings.h"
 
-#include <string>
-#include <secp256k1.h>
-#include <openssl/sha.h>
 #include <openssl/aes.h>
+#include <openssl/sha.h>
+#include <secp256k1.h>
+#include <string>
 
 
 /** 39 bytes - 78 characters
@@ -32,7 +32,7 @@ void ComputePreFactor(std::string strPassphrase, std::string strSalt, uint256& p
 {
     //passfactor is the scrypt hash of passphrase and ownersalt (NOTE this needs to handle alt cases too in the future)
     uint64_t s = uint256(ReverseEndianString(strSalt)).Get64();
-    scrypt_hash(strPassphrase.c_str(), strPassphrase.size(), BEGIN(s), strSalt.size()/2, BEGIN(prefactor), 16384, 8, 8, 32);
+    scrypt_hash(strPassphrase.c_str(), strPassphrase.size(), BEGIN(s), strSalt.size() / 2, BEGIN(prefactor), 16384, 8, 8, 32);
 }
 
 void ComputePassfactor(std::string ownersalt, uint256 prefactor, uint256& passfactor)
@@ -55,7 +55,7 @@ void ComputeSeedBPass(CPubKey passpoint, std::string strAddressHash, std::string
     // Derive decryption key for seedb using scrypt with passpoint, addresshash, and ownerentropy
     string salt = ReverseEndianString(strAddressHash + strOwnerSalt);
     uint256 s2(salt);
-    scrypt_hash(BEGIN(passpoint), HexStr(passpoint).size()/2, BEGIN(s2), salt.size()/2, BEGIN(seedBPass), 1024, 1, 1, 64);
+    scrypt_hash(BEGIN(passpoint), HexStr(passpoint).size() / 2, BEGIN(s2), salt.size() / 2, BEGIN(seedBPass), 1024, 1, 1, 64);
 }
 
 void ComputeFactorB(uint256 seedB, uint256& factorB)
@@ -68,7 +68,7 @@ void ComputeFactorB(uint256 seedB, uint256& factorB)
 std::string AddressToBip38Hash(std::string address)
 {
     uint256 addrCheck;
-    Hash((void *)address.c_str(), address.size(), addrCheck.begin());
+    Hash((void*)address.c_str(), address.size(), addrCheck.begin());
     Hash(addrCheck.begin(), 32, addrCheck.begin());
 
     return HexStr(addrCheck).substr(0, 8);
@@ -80,7 +80,7 @@ std::string BIP38_Encrypt(std::string strAddress, std::string strPassphrase, uin
 
     uint512 hashed;
     uint64_t salt = uint256(ReverseEndianString(strAddressHash)).Get64();
-    scrypt_hash(strPassphrase.c_str(), strPassphrase.size(), BEGIN(salt), strAddressHash.size()/2, BEGIN(hashed), 16384, 8, 8, 64);
+    scrypt_hash(strPassphrase.c_str(), strPassphrase.size(), BEGIN(salt), strAddressHash.size() / 2, BEGIN(hashed), 16384, 8, 8, 64);
 
     uint256 derivedHalf1(hashed.ToString().substr(64, 64));
     uint256 derivedHalf2(hashed.ToString().substr(0, 64));
@@ -120,11 +120,11 @@ bool BIP38_Decrypt(std::string strPassphrase, std::string strEncryptedKey, uint2
     std::string strKey = DecodeBase58(strEncryptedKey.c_str());
 
     //incorrect encoding of key, it must be 39 bytes - and another 4 bytes for base58 checksum
-    if(strKey.size() != (78 + 8))
+    if (strKey.size() != (78 + 8))
         return false;
 
     //invalid prefix
-    if(uint256(ReverseEndianString(strKey.substr(0, 2))) != uint256(0x01))
+    if (uint256(ReverseEndianString(strKey.substr(0, 2))) != uint256(0x01))
         return false;
 
     uint256 type(ReverseEndianString(strKey.substr(2, 2)));
@@ -137,12 +137,11 @@ bool BIP38_Decrypt(std::string strPassphrase, std::string strEncryptedKey, uint2
     fCompressed = (flag & uint256(0x20)) != 0;
 
     //not ec multiplied
-    if(type == uint256(0x42))
-    {
+    if (type == uint256(0x42)) {
         uint512 hashed;
         encryptedPart1 = uint256(ReverseEndianString(strKey.substr(14, 32)));
         uint64_t salt = uint256(ReverseEndianString(strAddressHash)).Get64();
-        scrypt_hash(strPassphrase.c_str(), strPassphrase.size(), BEGIN(salt), strAddressHash.size()/2, BEGIN(hashed), 16384, 8, 8, 64);
+        scrypt_hash(strPassphrase.c_str(), strPassphrase.size(), BEGIN(salt), strAddressHash.size() / 2, BEGIN(hashed), 16384, 8, 8, 64);
 
         uint256 derivedHalf1(hashed.ToString().substr(64, 64));
         uint256 derivedHalf2(hashed.ToString().substr(0, 64));
@@ -161,27 +160,26 @@ bool BIP38_Decrypt(std::string strPassphrase, std::string strEncryptedKey, uint2
         privKey = temp1 ^ derivedHalf1;
 
         return true;
-    }
-    else if(type != uint256(0x43)) //invalid type
+    } else if (type != uint256(0x43)) //invalid type
         return false;
 
     bool fLotSequence = (flag & 0x04) != 0;
 
     std::string prefactorSalt = ownersalt;
-    if(fLotSequence)
+    if (fLotSequence)
         prefactorSalt = ownersalt.substr(0, 8);
 
     uint256 prefactor;
     ComputePreFactor(strPassphrase, prefactorSalt, prefactor);
 
     uint256 passfactor;
-    if(fLotSequence)
+    if (fLotSequence)
         ComputePassfactor(ownersalt, prefactor, passfactor);
     else
         passfactor = prefactor;
 
     CPubKey passpoint;
-    if(!ComputePasspoint(passfactor, passpoint))
+    if (!ComputePasspoint(passfactor, passpoint))
         return false;
 
     uint512 seedBPass;
@@ -203,8 +201,8 @@ bool BIP38_Decrypt(std::string strPassphrase, std::string strEncryptedKey, uint2
     /** Decrypt encryptedpart1 to yield the remainder of seedb. **/
     uint256 decryptedPart1;
     uint256 x2 = x1 & uint256("0xffffffffffffffff"); // set x2 to seedbPart1 (still encrypted)
-    x2 = x2 << 64; //make room to add encryptedPart1 to the front
-    x2 = encryptedPart1 | x2; //combine with encryptedPart1
+    x2 = x2 << 64;                                   //make room to add encryptedPart1 to the front
+    x2 = encryptedPart1 | x2;                        //combine with encryptedPart1
     DecryptAES(x2, derivedHalf2, decryptedPart1);
 
     //decrypted part 1: seedb[0..15] xor derivedhalf1[0..15]
@@ -217,7 +215,7 @@ bool BIP38_Decrypt(std::string strPassphrase, std::string strEncryptedKey, uint2
 
     //multiply passfactor by factorb mod N to yield the priv key
     privKey = factorB;
-    if(!secp256k1_ec_privkey_tweak_mul(privKey.begin(), passfactor.begin()))
+    if (!secp256k1_ec_privkey_tweak_mul(privKey.begin(), passfactor.begin()))
         return false;
 
     //double check that the address hash matches our final privkey

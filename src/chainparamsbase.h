@@ -15,7 +15,6 @@
 class CBaseChainParams
 {
 public:
-
     enum Network {
         MAIN,
         TESTNET,

@@ -18,7 +18,7 @@ typedef unsigned char MessageStartChars[MESSAGE_START_SIZE];
 
 struct CDNSSeedData {
     std::string name, host;
-    CDNSSeedData(const std::string &strName, const std::string &strHost) : name(strName), host(strHost) {}
+    CDNSSeedData(const std::string& strName, const std::string& strHost) : name(strName), host(strHost) {}
 };
 
 /**
@@ -90,6 +90,7 @@ public:
     std::string ObfuscationPoolDummyAddress() const { return strObfuscationPoolDummyAddress; }
     int64_t StartMasternodePayments() const { return nStartMasternodePayments; }
     CBaseChainParams::Network NetworkID() const { return networkID; }
+
 protected:
     CChainParams() {}
 
@@ -136,16 +137,17 @@ protected:
  * values after finalization.
  */
 
-class CModifiableParams {
+class CModifiableParams
+{
 public:
     //! Published setters to allow changing values in unit test cases
-    virtual void setSubsidyHalvingInterval(int anSubsidyHalvingInterval) =0;
-    virtual void setEnforceBlockUpgradeMajority(int anEnforceBlockUpgradeMajority)=0;
-    virtual void setRejectBlockOutdatedMajority(int anRejectBlockOutdatedMajority)=0;
-    virtual void setToCheckBlockUpgradeMajority(int anToCheckBlockUpgradeMajority)=0;
-    virtual void setDefaultConsistencyChecks(bool aDefaultConsistencyChecks)=0;
-    virtual void setAllowMinDifficultyBlocks(bool aAllowMinDifficultyBlocks)=0;
-    virtual void setSkipProofOfWorkCheck(bool aSkipProofOfWorkCheck)=0;
+    virtual void setSubsidyHalvingInterval(int anSubsidyHalvingInterval) = 0;
+    virtual void setEnforceBlockUpgradeMajority(int anEnforceBlockUpgradeMajority) = 0;
+    virtual void setRejectBlockOutdatedMajority(int anRejectBlockOutdatedMajority) = 0;
+    virtual void setToCheckBlockUpgradeMajority(int anToCheckBlockUpgradeMajority) = 0;
+    virtual void setDefaultConsistencyChecks(bool aDefaultConsistencyChecks) = 0;
+    virtual void setAllowMinDifficultyBlocks(bool aAllowMinDifficultyBlocks) = 0;
+    virtual void setSkipProofOfWorkCheck(bool aSkipProofOfWorkCheck) = 0;
 };
 
 
@@ -153,13 +155,13 @@ public:
  * Return the currently selected parameters. This won't change after app startup
  * outside of the unit tests.
  */
-const CChainParams &Params();
+const CChainParams& Params();
 
 /** Return parameters for the given network. */
-CChainParams &Params(CBaseChainParams::Network network);
+CChainParams& Params(CBaseChainParams::Network network);
 
 /** Get modifiable network parameters (UNITTEST only) */
-CModifiableParams *ModifiableParams();
+CModifiableParams* ModifiableParams();
 
 /** Sets the params returned by Params() to those for the given network. */
 void SelectParams(CBaseChainParams::Network network);

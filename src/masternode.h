@@ -6,21 +6,21 @@
 #ifndef MASTERNODE_H
 #define MASTERNODE_H
 
-#include "sync.h"
-#include "net.h"
-#include "key.h"
-#include "util.h"
 #include "base58.h"
+#include "key.h"
 #include "main.h"
+#include "net.h"
+#include "sync.h"
 #include "timedata.h"
+#include "util.h"
 
-#define MASTERNODE_MIN_CONFIRMATIONS           15
-#define MASTERNODE_MIN_MNP_SECONDS             (10*60)
-#define MASTERNODE_MIN_MNB_SECONDS             (5*60)
-#define MASTERNODE_PING_SECONDS                (5*60)
-#define MASTERNODE_EXPIRATION_SECONDS          (120*60)
-#define MASTERNODE_REMOVAL_SECONDS             (130*60)
-#define MASTERNODE_CHECK_SECONDS               5
+#define MASTERNODE_MIN_CONFIRMATIONS 15
+#define MASTERNODE_MIN_MNP_SECONDS (10 * 60)
+#define MASTERNODE_MIN_MNB_SECONDS (5 * 60)
+#define MASTERNODE_PING_SECONDS (5 * 60)
+#define MASTERNODE_EXPIRATION_SECONDS (120 * 60)
+#define MASTERNODE_REMOVAL_SECONDS (130 * 60)
+#define MASTERNODE_CHECK_SECONDS 5
 
 using namespace std;
 
@@ -39,7 +39,6 @@ bool GetBlockHash(uint256& hash, int nBlockHeight);
 class CMasternodePing
 {
 public:
-
     CTxIn vin;
     uint256 blockHash;
     int64_t sigTime; //mnb message times
@@ -52,7 +51,8 @@ public:
     ADD_SERIALIZE_METHODS;
 
     template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
+    {
         READWRITE(vin);
         READWRITE(blockHash);
         READWRITE(sigTime);
@@ -63,7 +63,8 @@ public:
     bool Sign(CKey& keyMasternode, CPubKey& pubKeyMasternode);
     void Relay();
 
-    uint256 GetHash(){
+    uint256 GetHash()
+    {
         CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
         ss << vin;
         ss << sigTime;
@@ -96,7 +97,6 @@ public:
     {
         return !(a == b);
     }
-
 };
 
 //
@@ -109,6 +109,7 @@ private:
     // critical section to protect the inner data structures
     mutable CCriticalSection cs;
     int64_t lastTimeChecked;
+
 public:
     enum state {
         MASTERNODE_PRE_ENABLED,
@@ -142,8 +143,8 @@ public:
     int nLastScanningErrorBlockHeight;
     CMasternodePing lastPing;
 
-    int64_t nLastDsee;// temporary, do not save. Remove after migration to v12
-    int64_t nLastDseep;// temporary, do not save. Remove after migration to v12
+    int64_t nLastDsee;  // temporary, do not save. Remove after migration to v12
+    int64_t nLastDseep; // temporary, do not save. Remove after migration to v12
 
     CMasternode();
     CMasternode(const CMasternode& other);
@@ -189,30 +190,31 @@ public:
         return !(a.vin == b.vin);
     }
 
-    uint256 CalculateScore(int mod=1, int64_t nBlockHeight=0);
+    uint256 CalculateScore(int mod = 1, int64_t nBlockHeight = 0);
 
     ADD_SERIALIZE_METHODS;
 
     template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
-            LOCK(cs);
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
+    {
+        LOCK(cs);
 
-            READWRITE(vin);
-            READWRITE(addr);
-            READWRITE(pubKeyCollateralAddress);
-            READWRITE(pubKeyMasternode);
-            READWRITE(sig);
-            READWRITE(sigTime);
-            READWRITE(protocolVersion);
-            READWRITE(activeState);
-            READWRITE(lastPing);
-            READWRITE(cacheInputAge);
-            READWRITE(cacheInputAgeBlock);
-            READWRITE(unitTest);
-            READWRITE(allowFreeTx);
-            READWRITE(nLastDsq);
-            READWRITE(nScanningErrorCount);
-            READWRITE(nLastScanningErrorBlockHeight);
+        READWRITE(vin);
+        READWRITE(addr);
+        READWRITE(pubKeyCollateralAddress);
+        READWRITE(pubKeyMasternode);
+        READWRITE(sig);
+        READWRITE(sigTime);
+        READWRITE(protocolVersion);
+        READWRITE(activeState);
+        READWRITE(lastPing);
+        READWRITE(cacheInputAge);
+        READWRITE(cacheInputAgeBlock);
+        READWRITE(unitTest);
+        READWRITE(allowFreeTx);
+        READWRITE(nLastDsq);
+        READWRITE(nScanningErrorCount);
+        READWRITE(nLastScanningErrorBlockHeight);
     }
 
     int64_t SecondsSincePayment();
@@ -222,7 +224,7 @@ public:
     inline uint64_t SliceHash(uint256& hash, int slice)
     {
         uint64_t n = 0;
-        memcpy(&n, &hash+slice*64, 64);
+        memcpy(&n, &hash + slice * 64, 64);
         return n;
     }
 
@@ -237,9 +239,7 @@ public:
     {
         now == -1 ? now = GetAdjustedTime() : now;
 
-        return (lastPing == CMasternodePing())
-                ? false
-                : now - lastPing.sigTime < seconds;
+        return (lastPing == CMasternodePing()) ? false : now - lastPing.sigTime < seconds;
     }
 
     void Disable()
@@ -255,33 +255,33 @@ public:
 
     int GetMasternodeInputAge()
     {
-        if(chainActive.Tip() == NULL) return 0;
+        if (chainActive.Tip() == NULL) return 0;
 
-        if(cacheInputAge == 0){
+        if (cacheInputAge == 0) {
             cacheInputAge = GetInputAge(vin);
             cacheInputAgeBlock = chainActive.Tip()->nHeight;
         }
 
-        return cacheInputAge+(chainActive.Tip()->nHeight-cacheInputAgeBlock);
+        return cacheInputAge + (chainActive.Tip()->nHeight - cacheInputAgeBlock);
     }
 
     std::string GetStatus();
-    
-    std::string Status() {
+
+    std::string Status()
+    {
         std::string strStatus = "ACTIVE";
 
-        if(activeState == CMasternode::MASTERNODE_ENABLED) strStatus   = "ENABLED";
-        if(activeState == CMasternode::MASTERNODE_EXPIRED) strStatus   = "EXPIRED";
-        if(activeState == CMasternode::MASTERNODE_VIN_SPENT) strStatus = "VIN_SPENT";
-        if(activeState == CMasternode::MASTERNODE_REMOVE) strStatus    = "REMOVE";
-        if(activeState == CMasternode::MASTERNODE_POS_ERROR) strStatus = "POS_ERROR";
+        if (activeState == CMasternode::MASTERNODE_ENABLED) strStatus = "ENABLED";
+        if (activeState == CMasternode::MASTERNODE_EXPIRED) strStatus = "EXPIRED";
+        if (activeState == CMasternode::MASTERNODE_VIN_SPENT) strStatus = "VIN_SPENT";
+        if (activeState == CMasternode::MASTERNODE_REMOVE) strStatus = "REMOVE";
+        if (activeState == CMasternode::MASTERNODE_POS_ERROR) strStatus = "POS_ERROR";
 
         return strStatus;
     }
 
     int64_t GetLastPaid();
     bool IsValidNetAddr();
-
 };
 
 
@@ -304,7 +304,8 @@ public:
     ADD_SERIALIZE_METHODS;
 
     template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
+    {
         READWRITE(vin);
         READWRITE(addr);
         READWRITE(pubKeyCollateralAddress);
@@ -316,16 +317,17 @@ public:
         READWRITE(nLastDsq);
     }
 
-    uint256 GetHash(){
+    uint256 GetHash()
+    {
         CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
         ss << sigTime;
         ss << pubKeyCollateralAddress;
         return ss.GetHash();
     }
 
-/// Create Masternode broadcast, needs to be relayed manually after that
-    static bool Create(CTxIn vin, CService service, CKey keyCollateralAddressNew, CPubKey pubKeyCollateralAddressNew, CKey keyMasternodeNew, CPubKey pubKeyMasternodeNew, std::string &strErrorRet, CMasternodeBroadcast &mnbRet);
-    static bool Create(std::string strService, std::string strKey, std::string strTxHash, std::string strOutputIndex, std::string& strErrorRet, CMasternodeBroadcast &mnbRet, bool fOffline = false);
+    /// Create Masternode broadcast, needs to be relayed manually after that
+    static bool Create(CTxIn vin, CService service, CKey keyCollateralAddressNew, CPubKey pubKeyCollateralAddressNew, CKey keyMasternodeNew, CPubKey pubKeyMasternodeNew, std::string& strErrorRet, CMasternodeBroadcast& mnbRet);
+    static bool Create(std::string strService, std::string strKey, std::string strTxHash, std::string strOutputIndex, std::string& strErrorRet, CMasternodeBroadcast& mnbRet, bool fOffline = false);
 };
 
 #endif
