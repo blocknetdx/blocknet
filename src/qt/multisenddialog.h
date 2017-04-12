@@ -3,7 +3,8 @@
 
 #include <QDialog>
 
-namespace Ui {
+namespace Ui
+{
 class MultiSendDialog;
 }
 
@@ -13,12 +14,13 @@ class MultiSendDialog : public QDialog
 {
     Q_OBJECT
     void updateCheckBoxes();
+
 public:
-    explicit MultiSendDialog(QWidget *parent = 0);
+    explicit MultiSendDialog(QWidget* parent = 0);
     ~MultiSendDialog();
-    void setModel(WalletModel *model);
-    void setAddress(const QString &address);
-    void setAddress(const QString &address, QLineEdit *addrEdit);
+    void setModel(WalletModel* model);
+    void setAddress(const QString& address);
+    void setAddress(const QString& address, QLineEdit* addrEdit);
 private slots:
     void on_viewButton_clicked();
     void on_addButton_clicked();
@@ -26,9 +28,10 @@ private slots:
     void on_activateButton_clicked();
     void on_disableButton_clicked();
     void on_addressBookButton_clicked();
+
 private:
-    Ui::MultiSendDialog *ui;
-    WalletModel *model;
+    Ui::MultiSendDialog* ui;
+    WalletModel* model;
 };
 
 #endif // MULTISENDDIALOG_H

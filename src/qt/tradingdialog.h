@@ -2,16 +2,17 @@
 #ifndef TRADINGDIALOG_H
 #define TRADINGDIALOG_H
 
+#include "ui_tradingdialog.h"
 #include <QDialog>
 #include <QObject>
 #include <stdint.h>
-#include "ui_tradingdialog.h"
 
-#include <QJsonObject>
-#include <QJsonArray>
 #include "walletmodel.h"
+#include <QJsonArray>
+#include <QJsonObject>
 
-namespace Ui {
+namespace Ui
+{
 class tradingDialog;
 }
 
@@ -25,10 +26,10 @@ class tradingDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit tradingDialog(QWidget *parent = 0);
+    explicit tradingDialog(QWidget* parent = 0);
     ~tradingDialog();
 
-    void setModel(WalletModel *model);
+    void setModel(WalletModel* model);
 
 private Q_SLOTS:
 
@@ -39,25 +40,25 @@ private Q_SLOTS:
     void ParseAndPopulateAccountHistoryTable(QString Response);
     void ParseAndPopulateOpenOrdersTable(QString Response);
     void UpdaterFunction();
-    void CreateOrderBookTables(QTableWidget& Table,QStringList TableHeader);
+    void CreateOrderBookTables(QTableWidget& Table, QStringList TableHeader);
     void CalculateBuyCostLabel();
     void CalculateSellCostLabel();
-    void DisplayBalance(QLabel &BalanceLabel,QLabel &Available, QLabel &Pending, QString Currency,QString Response);
+    void DisplayBalance(QLabel& BalanceLabel, QLabel& Available, QLabel& Pending, QString Currency, QString Response);
     void ActionsOnSwitch(int index);
     void CancelOrderSlot(int row, int col);
     void on_UpdateKeys_clicked();
     void on_GenDepositBTN_clicked();
     void on_Buy_Max_Amount_clicked();
-    void on_buyOrdertypeCombo_activated(const QString &arg1);
-    void on_BuyBidcomboBox_currentIndexChanged(const QString &arg1);
-    void on_UnitsInput_textChanged(const QString &arg1);
-    void on_BuyBidPriceEdit_textChanged(const QString &arg1);
+    void on_buyOrdertypeCombo_activated(const QString& arg1);
+    void on_BuyBidcomboBox_currentIndexChanged(const QString& arg1);
+    void on_UnitsInput_textChanged(const QString& arg1);
+    void on_BuyBidPriceEdit_textChanged(const QString& arg1);
     void on_BuyPIV_clicked();
     void on_SellPIVBTN_clicked();
-    void on_SellBidcomboBox_currentIndexChanged(const QString &arg1);
+    void on_SellBidcomboBox_currentIndexChanged(const QString& arg1);
     void on_Sell_Max_Amount_clicked();
-    void on_UnitsInputPIV_textChanged(const QString &arg1);
-    void on_SellBidPriceEdit_textChanged(const QString &arg1);
+    void on_UnitsInputPIV_textChanged(const QString& arg1);
+    void on_SellBidPriceEdit_textChanged(const QString& arg1);
     void on_AdvancedView_stateChanged(int arg1);
 
     int SetExchangeInfoTextLabels();
@@ -74,26 +75,24 @@ private Q_SLOTS:
     QString GetBalance(QString Currency);
     QString GetDepositAddress();
     QString GetNonce();
-    QString HMAC_SHA512_SIGNER(QString UrlToSign,QString Secretkey);
+    QString HMAC_SHA512_SIGNER(QString UrlToSign, QString Secretkey);
     QString sendRequest(QString url);
     QJsonObject GetResultObjectFromJSONObject(QString response);
     QJsonObject GetResultObjectFromJSONArray(QString response);
-    QJsonArray  GetResultArrayFromJSONObject(QString response);
+    QJsonArray GetResultArrayFromJSONObject(QString response);
 
 public Q_SLOTS:
 
 
 private:
-    Ui::tradingDialog *ui;
+    Ui::tradingDialog* ui;
     //Socket *socket;
     int timerid;
-    QTimer *timer;
+    QTimer* timer;
     QString ApiKey;
     QString SecretKey;
     QString Currency;
-    WalletModel *model;
-
-
+    WalletModel* model;
 };
 
 #endif // TRADINGDIALOG_H

@@ -14,8 +14,8 @@
 #include <boost/filesystem.hpp>
 
 #include <QFileDialog>
-#include <QSettings>
 #include <QMessageBox>
+#include <QSettings>
 
 /* Minimum free space (in bytes) needed for data directory */
 static const uint64_t GB_BYTES = 1000000000LL;
@@ -36,7 +36,7 @@ class FreespaceChecker : public QObject
     Q_OBJECT
 
 public:
-    FreespaceChecker(Intro *intro);
+    FreespaceChecker(Intro* intro);
 
     enum Status {
         ST_OK,
@@ -47,15 +47,15 @@ public slots:
     void check();
 
 signals:
-    void reply(int status, const QString &message, quint64 available);
+    void reply(int status, const QString& message, quint64 available);
 
 private:
-    Intro *intro;
+    Intro* intro;
 };
 
 #include "intro.moc"
 
-FreespaceChecker::FreespaceChecker(Intro *intro)
+FreespaceChecker::FreespaceChecker(Intro* intro)
 {
     this->intro = intro;
 }
@@ -72,8 +72,7 @@ void FreespaceChecker::check()
     /* Find first parent that exists, so that fs::space does not fail */
     fs::path parentDir = dataDir;
     fs::path parentDirOld = fs::path();
-    while(parentDir.has_parent_path() && !fs::exists(parentDir))
-    {
+    while (parentDir.has_parent_path() && !fs::exists(parentDir)) {
         parentDir = parentDir.parent_path();
 
         /* Check if we make any progress, break if not to prevent an infinite loop here */
@@ -85,10 +84,8 @@ void FreespaceChecker::check()
 
     try {
         freeBytesAvailable = fs::space(parentDir).available;
-        if(fs::exists(dataDir))
-        {
-            if(fs::is_directory(dataDir))
-            {
+        if (fs::exists(dataDir)) {
+            if (fs::is_directory(dataDir)) {
                 QString separator = "<code>" + QDir::toNativeSeparators("/") + tr("name") + "</code>";
                 replyStatus = ST_OK;
                 replyMessage = tr("Directory already exists. Add %1 if you intend to create a new directory here.").arg(separator);
@@ -97,8 +94,7 @@ void FreespaceChecker::check()
                 replyMessage = tr("Path already exists, and is not a directory.");
             }
         }
-    } catch(fs::filesystem_error &e)
-    {
+    } catch (fs::filesystem_error& e) {
         /* Parent directory does not exist or is not accessible */
         replyStatus = ST_ERROR;
         replyMessage = tr("Cannot create data directory here.");
@@ -107,14 +103,13 @@ void FreespaceChecker::check()
 }
 
 
-Intro::Intro(QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::Intro),
-    thread(0),
-    signalled(false)
+Intro::Intro(QWidget* parent) : QDialog(parent),
+                                ui(new Ui::Intro),
+                                thread(0),
+                                signalled(false)
 {
     ui->setupUi(this);
-    ui->sizeWarningLabel->setText(ui->sizeWarningLabel->text().arg(BLOCK_CHAIN_SIZE/GB_BYTES));
+    ui->sizeWarningLabel->setText(ui->sizeWarningLabel->text().arg(BLOCK_CHAIN_SIZE / GB_BYTES));
     startThread();
 }
 
@@ -131,11 +126,10 @@ QString Intro::getDataDirectory()
     return ui->dataDirectory->text();
 }
 
-void Intro::setDataDirectory(const QString &dataDir)
+void Intro::setDataDirectory(const QString& dataDir)
 {
     ui->dataDirectory->setText(dataDir);
-    if(dataDir == getDefaultDataDirectory())
-    {
+    if (dataDir == getDefaultDataDirectory()) {
         ui->dataDirDefault->setChecked(true);
         ui->dataDirectory->setEnabled(false);
         ui->ellipsisButton->setEnabled(false);
@@ -157,24 +151,21 @@ void Intro::pickDataDirectory()
     QSettings settings;
     /* If data directory provided on command line, no need to look at settings
        or show a picking dialog */
-    if(!GetArg("-datadir", "").empty())
+    if (!GetArg("-datadir", "").empty())
         return;
     /* 1) Default data directory for operating system */
     QString dataDir = getDefaultDataDirectory();
     /* 2) Allow QSettings to override default dir */
     dataDir = settings.value("strDataDir", dataDir).toString();
 
-    if(!fs::exists(GUIUtil::qstringToBoostPath(dataDir)) || GetBoolArg("-choosedatadir", false))
-    {
+    if (!fs::exists(GUIUtil::qstringToBoostPath(dataDir)) || GetBoolArg("-choosedatadir", false)) {
         /* If current default data directory does not exist, let the user choose one */
         Intro intro;
         intro.setDataDirectory(dataDir);
         intro.setWindowIcon(QIcon(":icons/bitcoin"));
 
-        while(true)
-        {
-            if(!intro.exec())
-            {
+        while (true) {
+            if (!intro.exec()) {
                 /* Cancel clicked */
                 exit(0);
             }
@@ -182,7 +173,7 @@ void Intro::pickDataDirectory()
             try {
                 TryCreateDirectory(GUIUtil::qstringToBoostPath(dataDir));
                 break;
-            } catch(fs::filesystem_error &e) {
+            } catch (fs::filesystem_error& e) {
                 QMessageBox::critical(0, tr("PIVX Core"),
                     tr("Error: Specified data directory \"%1\" cannot be created.").arg(dataDir));
                 /* fall through, back to choosing screen */
@@ -195,14 +186,13 @@ void Intro::pickDataDirectory()
      * override -datadir in the pivx.conf file in the default data directory
      * (to be consistent with pivxd behavior)
      */
-    if(dataDir != getDefaultDataDirectory())
+    if (dataDir != getDefaultDataDirectory())
         SoftSetArg("-datadir", GUIUtil::qstringToBoostPath(dataDir).string()); // use OS locale for path setting
 }
 
-void Intro::setStatus(int status, const QString &message, quint64 bytesAvailable)
+void Intro::setStatus(int status, const QString& message, quint64 bytesAvailable)
 {
-    switch(status)
-    {
+    switch (status) {
     case FreespaceChecker::ST_OK:
         ui->errorMessage->setText(message);
         ui->errorMessage->setStyleSheet("");
@@ -213,14 +203,12 @@ void Intro::setStatus(int status, const QString &message, quint64 bytesAvailable
         break;
     }
     /* Indicate number of bytes available */
-    if(status == FreespaceChecker::ST_ERROR)
-    {
+    if (status == FreespaceChecker::ST_ERROR) {
         ui->freeSpace->setText("");
     } else {
-        QString freeString = tr("%1 GB of free space available").arg(bytesAvailable/GB_BYTES);
-        if(bytesAvailable < BLOCK_CHAIN_SIZE)
-        {
-            freeString += " " + tr("(of %1 GB needed)").arg(BLOCK_CHAIN_SIZE/GB_BYTES);
+        QString freeString = tr("%1 GB of free space available").arg(bytesAvailable / GB_BYTES);
+        if (bytesAvailable < BLOCK_CHAIN_SIZE) {
+            freeString += " " + tr("(of %1 GB needed)").arg(BLOCK_CHAIN_SIZE / GB_BYTES);
             ui->freeSpace->setStyleSheet("QLabel { color: #800000 }");
         } else {
             ui->freeSpace->setStyleSheet("");
@@ -231,7 +219,7 @@ void Intro::setStatus(int status, const QString &message, quint64 bytesAvailable
     ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(status != FreespaceChecker::ST_ERROR);
 }
 
-void Intro::on_dataDirectory_textChanged(const QString &dataDirStr)
+void Intro::on_dataDirectory_textChanged(const QString& dataDirStr)
 {
     /* Disable OK button until check result comes in */
     ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
@@ -241,7 +229,7 @@ void Intro::on_dataDirectory_textChanged(const QString &dataDirStr)
 void Intro::on_ellipsisButton_clicked()
 {
     QString dir = QDir::toNativeSeparators(QFileDialog::getExistingDirectory(0, "Choose data directory", ui->dataDirectory->text()));
-    if(!dir.isEmpty())
+    if (!dir.isEmpty())
         ui->dataDirectory->setText(dir);
 }
 
@@ -259,10 +247,10 @@ void Intro::on_dataDirCustom_clicked()
 void Intro::startThread()
 {
     thread = new QThread(this);
-    FreespaceChecker *executor = new FreespaceChecker(this);
+    FreespaceChecker* executor = new FreespaceChecker(this);
     executor->moveToThread(thread);
 
-    connect(executor, SIGNAL(reply(int,QString,quint64)), this, SLOT(setStatus(int,QString,quint64)));
+    connect(executor, SIGNAL(reply(int, QString, quint64)), this, SLOT(setStatus(int, QString, quint64)));
     connect(this, SIGNAL(requestCheck()), executor, SLOT(check()));
     /*  make sure executor object is deleted in its own thread */
     connect(this, SIGNAL(stopThread()), executor, SLOT(deleteLater()));
@@ -271,12 +259,11 @@ void Intro::startThread()
     thread->start();
 }
 
-void Intro::checkPath(const QString &dataDir)
+void Intro::checkPath(const QString& dataDir)
 {
     mutex.lock();
     pathToCheck = dataDir;
-    if(!signalled)
-    {
+    if (!signalled) {
         signalled = true;
         emit requestCheck();
     }

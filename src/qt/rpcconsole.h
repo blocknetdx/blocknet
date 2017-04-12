@@ -14,8 +14,9 @@
 
 class ClientModel;
 
-namespace Ui {
-    class RPCConsole;
+namespace Ui
+{
+class RPCConsole;
 }
 
 QT_BEGIN_NAMESPACE
@@ -23,15 +24,15 @@ class QItemSelection;
 QT_END_NAMESPACE
 
 /** Local Bitcoin RPC console. */
-class RPCConsole: public QDialog
+class RPCConsole : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit RPCConsole(QWidget *parent);
+    explicit RPCConsole(QWidget* parent);
     ~RPCConsole();
 
-    void setClientModel(ClientModel *model);
+    void setClientModel(ClientModel* model);
 
     enum MessageClass {
         MC_ERROR,
@@ -42,7 +43,7 @@ public:
     };
 
 protected:
-    virtual bool eventFilter(QObject* obj, QEvent *event);
+    virtual bool eventFilter(QObject* obj, QEvent* event);
 
 private slots:
     void on_lineEdit_returnPressed();
@@ -53,13 +54,13 @@ private slots:
     void on_sldGraphRange_valueChanged(int value);
     /** update traffic statistics */
     void updateTrafficStats(quint64 totalBytesIn, quint64 totalBytesOut);
-    void resizeEvent(QResizeEvent *event);
-    void showEvent(QShowEvent *event);
-    void hideEvent(QHideEvent *event);
+    void resizeEvent(QResizeEvent* event);
+    void showEvent(QShowEvent* event);
+    void hideEvent(QHideEvent* event);
 
 public slots:
     void clear();
-    
+
     /** Wallet repair options */
     void walletSalvage();
     void walletRescan();
@@ -67,15 +68,15 @@ public slots:
     void walletZaptxes2();
     void walletUpgrade();
     void walletReindex();
-    
+
     void reject();
-    void message(int category, const QString &message, bool html = false);
+    void message(int category, const QString& message, bool html = false);
     /** Set number of connections shown in the UI */
     void setNumConnections(int count);
     /** Set number of blocks shown in the UI */
     void setNumBlocks(int count);
     /** Set number of masternodes shown in the UI */
-    void setMasternodeCount(const QString &strMasternodes);
+    void setMasternodeCount(const QString& strMasternodes);
     /** Go forward or back in history */
     void browseHistory(int offset);
     /** Scroll console view to end */
@@ -91,9 +92,9 @@ public slots:
     /** Switch to wallet-repair tab and show */
     void showRepair();
     /** Open external (default) editor with pivx.conf */
-    void showConfEditor();	
+    void showConfEditor();
     /** Handle selection of peer in peers list */
-    void peerSelected(const QItemSelection &selected, const QItemSelection &deselected);
+    void peerSelected(const QItemSelection& selected, const QItemSelection& deselected);
     /** Handle updated peer information */
     void peerLayoutChanged();
     /** Show folder with wallet backups in default browser */
@@ -102,7 +103,7 @@ public slots:
 signals:
     // For RPC command executor
     void stopExecutor();
-    void cmdRequest(const QString &command);
+    void cmdRequest(const QString& command);
     /** Get restart command-line parameters and handle restart */
     void handleRestart(QStringList args);
 
@@ -113,17 +114,16 @@ private:
     /** Build parameter list for restart */
     void buildParameterlist(QString arg);
     /** show detailed information on ui about selected node */
-    void updateNodeDetail(const CNodeCombinedStats *stats);
+    void updateNodeDetail(const CNodeCombinedStats* stats);
 
-    enum ColumnWidths
-    {
+    enum ColumnWidths {
         ADDRESS_COLUMN_WIDTH = 170,
         SUBVERSION_COLUMN_WIDTH = 140,
         PING_COLUMN_WIDTH = 80
     };
 
-    Ui::RPCConsole *ui;
-    ClientModel *clientModel;
+    Ui::RPCConsole* ui;
+    ClientModel* clientModel;
     QStringList history;
     int historyPtr;
     NodeId cachedNodeid;

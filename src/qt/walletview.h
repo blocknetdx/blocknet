@@ -38,40 +38,40 @@ class WalletView : public QStackedWidget
     Q_OBJECT
 
 public:
-    explicit WalletView(QWidget *parent);
+    explicit WalletView(QWidget* parent);
     ~WalletView();
 
-    void setBitcoinGUI(BitcoinGUI *gui);
+    void setBitcoinGUI(BitcoinGUI* gui);
     /** Set the client model.
         The client model represents the part of the core that communicates with the P2P network, and is wallet-agnostic.
     */
-    void setClientModel(ClientModel *clientModel);
+    void setClientModel(ClientModel* clientModel);
     /** Set the wallet model.
         The wallet model represents a bitcoin wallet, and offers access to the list of transactions, address book and sending
         functionality.
     */
-    void setWalletModel(WalletModel *walletModel);
+    void setWalletModel(WalletModel* walletModel);
 
     bool handlePaymentRequest(const SendCoinsRecipient& recipient);
 
     void showOutOfSyncWarning(bool fShow);
 
 private:
-    ClientModel *clientModel;
-    WalletModel *walletModel;
+    ClientModel* clientModel;
+    WalletModel* walletModel;
 
-    OverviewPage *overviewPage;
-    QWidget *transactionsPage;
-    ReceiveCoinsDialog *receiveCoinsPage;
-    SendCoinsDialog *sendCoinsPage;
-    tradingDialog *tradingPage;
-    BlockExplorer *explorerWindow;
-    MasternodeList *masternodeListPage;
+    OverviewPage* overviewPage;
+    QWidget* transactionsPage;
+    ReceiveCoinsDialog* receiveCoinsPage;
+    SendCoinsDialog* sendCoinsPage;
+    tradingDialog* tradingPage;
+    BlockExplorer* explorerWindow;
+    MasternodeList* masternodeListPage;
 
-    TransactionView *transactionView;
+    TransactionView* transactionView;
 
-    QProgressDialog *progressDialog;
-    QLabel *transactionSum;
+    QProgressDialog* progressDialog;
+    QLabel* transactionSum;
 
 public slots:
     /** Switch to overview (home) page */
@@ -83,7 +83,7 @@ public slots:
     /** Switch to Bittrex trading page */
     void gotoTradingPage();
     /** Switch to explorer page */
-    void gotoBlockExplorerPage();	
+    void gotoBlockExplorerPage();
     /** Switch to receive coins page */
     void gotoReceiveCoinsPage();
     /** Switch to send coins page */
@@ -124,7 +124,7 @@ public slots:
     void updateEncryptionStatus();
 
     /** Show progress dialog e.g. for rescan */
-    void showProgress(const QString &title, int nProgress);
+    void showProgress(const QString& title, int nProgress);
 
     /** Update selected PIV amount from transactionview */
     void trxAmount(QString amount);
@@ -133,7 +133,7 @@ signals:
     /** Signal that we want to show the main window */
     void showNormalIfMinimized();
     /**  Fired when a message should be reported to the user */
-    void message(const QString &title, const QString &message, unsigned int style);
+    void message(const QString& title, const QString& message, unsigned int style);
     /** Encryption status of wallet changed */
     void encryptionStatusChanged(int status);
     /** Notify that a new transaction appeared */

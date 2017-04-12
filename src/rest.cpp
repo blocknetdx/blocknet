@@ -3,9 +3,9 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include "main.h"
 #include "primitives/block.h"
 #include "primitives/transaction.h"
-#include "main.h"
 #include "rpcserver.h"
 #include "streams.h"
 #include "sync.h"
@@ -28,10 +28,10 @@ static const struct {
     enum RetFormat rf;
     const char* name;
 } rf_names[] = {
-      {RF_UNDEF, ""},
-      {RF_BINARY, "bin"},
-      {RF_HEX, "hex"},
-      {RF_JSON, "json"},
+    {RF_UNDEF, ""},
+    {RF_BINARY, "bin"},
+    {RF_HEX, "hex"},
+    {RF_JSON, "json"},
 };
 
 class RestErr
@@ -90,10 +90,10 @@ static bool ParseHashStr(const string& strReq, uint256& v)
 }
 
 static bool rest_block(AcceptedConnection* conn,
-                       string& strReq,
-                       map<string, string>& mapHeaders,
-                       bool fRun,
-                       bool showTxDetails)
+    string& strReq,
+    map<string, string>& mapHeaders,
+    bool fRun,
+    bool showTxDetails)
 {
     vector<string> params;
     enum RetFormat rf = ParseDataFormat(params, strReq);
@@ -148,25 +148,25 @@ static bool rest_block(AcceptedConnection* conn,
 }
 
 static bool rest_block_extended(AcceptedConnection* conn,
-                       string& strReq,
-                       map<string, string>& mapHeaders,
-                       bool fRun)
+    string& strReq,
+    map<string, string>& mapHeaders,
+    bool fRun)
 {
     return rest_block(conn, strReq, mapHeaders, fRun, true);
 }
 
 static bool rest_block_notxdetails(AcceptedConnection* conn,
-                       string& strReq,
-                       map<string, string>& mapHeaders,
-                       bool fRun)
+    string& strReq,
+    map<string, string>& mapHeaders,
+    bool fRun)
 {
     return rest_block(conn, strReq, mapHeaders, fRun, false);
 }
 
 static bool rest_tx(AcceptedConnection* conn,
-                    string& strReq,
-                    map<string, string>& mapHeaders,
-                    bool fRun)
+    string& strReq,
+    map<string, string>& mapHeaders,
+    bool fRun)
 {
     vector<string> params;
     enum RetFormat rf = ParseDataFormat(params, strReq);
@@ -217,19 +217,19 @@ static bool rest_tx(AcceptedConnection* conn,
 static const struct {
     const char* prefix;
     bool (*handler)(AcceptedConnection* conn,
-                    string& strURI,
-                    map<string, string>& mapHeaders,
-                    bool fRun);
+        string& strURI,
+        map<string, string>& mapHeaders,
+        bool fRun);
 } uri_prefixes[] = {
-      {"/rest/tx/", rest_tx},
-      {"/rest/block/notxdetails/", rest_block_notxdetails},
-      {"/rest/block/", rest_block_extended},
+    {"/rest/tx/", rest_tx},
+    {"/rest/block/notxdetails/", rest_block_notxdetails},
+    {"/rest/block/", rest_block_extended},
 };
 
 bool HTTPReq_REST(AcceptedConnection* conn,
-                  string& strURI,
-                  map<string, string>& mapHeaders,
-                  bool fRun)
+    string& strURI,
+    map<string, string>& mapHeaders,
+    bool fRun)
 {
     try {
         std::string statusmessage;

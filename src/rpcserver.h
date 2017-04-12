@@ -54,7 +54,7 @@ void SetRPCWarmupStatus(const std::string& newStatus);
 void SetRPCWarmupFinished();
 
 /* returns the current warmup state.  */
-bool RPCIsInWarmup(std::string *statusOut);
+bool RPCIsInWarmup(std::string* statusOut);
 
 /**
  * Type-check arguments; throws JSONRPCError if wrong type given. Does not check that
@@ -62,13 +62,15 @@ bool RPCIsInWarmup(std::string *statusOut);
  * Use like:  RPCTypeCheck(params, boost::assign::list_of(str_type)(int_type)(obj_type));
  */
 void RPCTypeCheck(const json_spirit::Array& params,
-                  const std::list<json_spirit::Value_type>& typesExpected, bool fAllowNull=false);
+    const std::list<json_spirit::Value_type>& typesExpected,
+    bool fAllowNull = false);
 /**
  * Check for expected keys/value types in an Object.
  * Use like: RPCTypeCheck(object, boost::assign::map_list_of("name", str_type)("value", int_type));
  */
 void RPCTypeCheck(const json_spirit::Object& o,
-                  const std::map<std::string, json_spirit::Value_type>& typesExpected, bool fAllowNull=false);
+    const std::map<std::string, json_spirit::Value_type>& typesExpected,
+    bool fAllowNull = false);
 
 /**
  * Run func nSeconds from now. Uses boost deadline timers.
@@ -79,7 +81,7 @@ void RPCRunLater(const std::string& name, boost::function<void(void)> func, int6
 //! Convert boost::asio address to CNetAddr
 extern CNetAddr BoostAsioToCNetAddr(boost::asio::ip::address address);
 
-typedef json_spirit::Value(*rpcfn_type)(const json_spirit::Array& params, bool fHelp);
+typedef json_spirit::Value (*rpcfn_type)(const json_spirit::Array& params, bool fHelp);
 
 class CRPCCommand
 {
@@ -99,6 +101,7 @@ class CRPCTable
 {
 private:
     std::map<std::string, const CRPCCommand*> mapCommands;
+
 public:
     CRPCTable();
     const CRPCCommand* operator[](std::string name) const;
@@ -111,7 +114,7 @@ public:
      * @returns Result of the call.
      * @throws an exception (json_spirit::Value) when an error happens.
      */
-    json_spirit::Value execute(const std::string &method, const json_spirit::Array &params) const;
+    json_spirit::Value execute(const std::string& method, const json_spirit::Array& params) const;
 };
 
 extern const CRPCTable tableRPC;
@@ -244,9 +247,9 @@ extern json_spirit::Value mnfinalbudget(const json_spirit::Array& params, bool f
 extern json_spirit::Value mnsync(const json_spirit::Array& params, bool fHelp);
 
 // in rest.cpp
-extern bool HTTPReq_REST(AcceptedConnection *conn,
-                  std::string& strURI,
-                  std::map<std::string, std::string>& mapHeaders,
-                  bool fRun);
+extern bool HTTPReq_REST(AcceptedConnection* conn,
+    std::string& strURI,
+    std::map<std::string, std::string>& mapHeaders,
+    bool fRun);
 
 #endif // BITCOIN_RPCSERVER_H

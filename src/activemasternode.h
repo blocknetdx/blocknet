@@ -6,19 +6,19 @@
 #ifndef ACTIVEMASTERNODE_H
 #define ACTIVEMASTERNODE_H
 
-#include "sync.h"
-#include "net.h"
-#include "key.h"
 #include "init.h"
-#include "wallet.h"
-#include "obfuscation.h"
+#include "key.h"
 #include "masternode.h"
+#include "net.h"
+#include "obfuscation.h"
+#include "sync.h"
+#include "wallet.h"
 
-#define ACTIVE_MASTERNODE_INITIAL                     0 // initial state
-#define ACTIVE_MASTERNODE_SYNC_IN_PROCESS             1
-#define ACTIVE_MASTERNODE_INPUT_TOO_NEW               2
-#define ACTIVE_MASTERNODE_NOT_CAPABLE                 3
-#define ACTIVE_MASTERNODE_STARTED                     4
+#define ACTIVE_MASTERNODE_INITIAL 0 // initial state
+#define ACTIVE_MASTERNODE_SYNC_IN_PROCESS 1
+#define ACTIVE_MASTERNODE_INPUT_TOO_NEW 2
+#define ACTIVE_MASTERNODE_NOT_CAPABLE 3
+#define ACTIVE_MASTERNODE_STARTED 4
 
 // Responsible for activating the Masternode and pinging the network
 class CActiveMasternode
@@ -31,31 +31,31 @@ private:
     bool SendMasternodePing(std::string& errorMessage);
 
     /// Register any Masternode
-    bool Register(CTxIn vin, CService service, CKey key, CPubKey pubKey, CKey keyMasternode, CPubKey pubKeyMasternode, std::string &errorMessage);
+    bool Register(CTxIn vin, CService service, CKey key, CPubKey pubKey, CKey keyMasternode, CPubKey pubKeyMasternode, std::string& errorMessage);
 
     /// Get 10000 PIV input that can be used for the Masternode
     bool GetMasterNodeVin(CTxIn& vin, CPubKey& pubkey, CKey& secretKey, std::string strTxHash, std::string strOutputIndex);
     bool GetVinFromOutput(COutput out, CTxIn& vin, CPubKey& pubkey, CKey& secretKey);
 
 public:
-	// Initialized by init.cpp
-	// Keys for the main Masternode
-	CPubKey pubKeyMasternode;
+    // Initialized by init.cpp
+    // Keys for the main Masternode
+    CPubKey pubKeyMasternode;
 
-	// Initialized while registering Masternode
-	CTxIn vin;
+    // Initialized while registering Masternode
+    CTxIn vin;
     CService service;
 
     int status;
     std::string notCapableReason;
 
     CActiveMasternode()
-    {        
+    {
         status = ACTIVE_MASTERNODE_INITIAL;
     }
 
     /// Manage status of main Masternode
-    void ManageStatus(); 
+    void ManageStatus();
     std::string GetStatus();
 
     /// Register remote Masternode

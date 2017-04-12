@@ -7,7 +7,6 @@
 #include <string>
 
 
-
 /** 39 bytes - 78 characters
  * 1) Prefix - 2 bytes - 4 chars - strKey[0..3]
  * 2) Flagbyte - 1 byte - 2 chars - strKey[4..5]

@@ -21,10 +21,9 @@
 
 #include <QClipboard>
 
-Bip38ToolDialog::Bip38ToolDialog(QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::Bip38ToolDialog),
-    model(0)
+Bip38ToolDialog::Bip38ToolDialog(QWidget* parent) : QDialog(parent),
+                                                    ui(new Ui::Bip38ToolDialog),
+                                                    model(0)
 {
     ui->setupUi(this);
 
@@ -39,7 +38,6 @@ Bip38ToolDialog::Bip38ToolDialog(QWidget *parent) :
     ui->encryptedKeyIn_DEC->installEventFilter(this);
     ui->passphraseIn_DEC->installEventFilter(this);
     ui->decryptedKeyOut_DEC->installEventFilter(this);
-
 }
 
 Bip38ToolDialog::~Bip38ToolDialog()
@@ -47,18 +45,18 @@ Bip38ToolDialog::~Bip38ToolDialog()
     delete ui;
 }
 
-void Bip38ToolDialog::setModel(WalletModel *model)
+void Bip38ToolDialog::setModel(WalletModel* model)
 {
     this->model = model;
 }
 
-void Bip38ToolDialog::setAddress_ENC(const QString &address)
+void Bip38ToolDialog::setAddress_ENC(const QString& address)
 {
     ui->addressIn_ENC->setText(address);
     ui->passphraseIn_ENC->setFocus();
 }
 
-void Bip38ToolDialog::setAddress_DEC(const QString &address)
+void Bip38ToolDialog::setAddress_DEC(const QString& address)
 {
     ui->encryptedKeyIn_DEC->setText(address);
     ui->passphraseIn_DEC->setFocus();
@@ -80,12 +78,10 @@ void Bip38ToolDialog::showTab_DEC(bool fShow)
 
 void Bip38ToolDialog::on_addressBookButton_ENC_clicked()
 {
-    if (model && model->getAddressTableModel())
-    {
+    if (model && model->getAddressTableModel()) {
         AddressBookPage dlg(AddressBookPage::ForSelection, AddressBookPage::ReceivingTab, this);
         dlg.setModel(model->getAddressTableModel());
-        if (dlg.exec())
-        {
+        if (dlg.exec()) {
             setAddress_ENC(dlg.getReturnValue());
         }
     }
@@ -100,11 +96,9 @@ QString specialChar = "\"@!#$%&'()*+,-./:;<=>?`{|}~^_[]\\";
 QString validChar = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" + specialChar;
 bool isValidPassphrase(QString strPassphrase, QString& strInvalid)
 {
-    for(int i = 0; i < strPassphrase.size(); i++)
-    {
-        if (!validChar.contains(strPassphrase[i], Qt::CaseSensitive))
-        {
-            if(QString("\"'").contains(strPassphrase[i]))
+    for (int i = 0; i < strPassphrase.size(); i++) {
+        if (!validChar.contains(strPassphrase[i], Qt::CaseSensitive)) {
+            if (QString("\"'").contains(strPassphrase[i]))
                 continue;
 
             strInvalid = strPassphrase[i];
@@ -122,24 +116,21 @@ void Bip38ToolDialog::on_encryptKeyButton_ENC_clicked()
 
     QString qstrPassphrase = ui->passphraseIn_ENC->text();
     QString strInvalid;
-    if(!isValidPassphrase(qstrPassphrase, strInvalid))
-    {
+    if (!isValidPassphrase(qstrPassphrase, strInvalid)) {
         ui->statusLabel_ENC->setStyleSheet("QLabel { color: red; }");
         ui->statusLabel_ENC->setText(tr("The entered passphrase is invalid. ") + strInvalid + QString(" is not valid") + QString(" ") + tr("Allowed: 0-9,a-z,A-Z,") + specialChar);
         return;
     }
 
     CBitcoinAddress addr(ui->addressIn_ENC->text().toStdString());
-    if (!addr.IsValid())
-    {
+    if (!addr.IsValid()) {
         ui->statusLabel_ENC->setStyleSheet("QLabel { color: red; }");
         ui->statusLabel_ENC->setText(tr("The entered address is invalid.") + QString(" ") + tr("Please check the address and try again."));
         return;
     }
 
     CKeyID keyID;
-    if (!addr.GetKeyID(keyID))
-    {
+    if (!addr.GetKeyID(keyID)) {
         ui->addressIn_ENC->setValid(false);
         ui->statusLabel_ENC->setStyleSheet("QLabel { color: red; }");
         ui->statusLabel_ENC->setText(tr("The entered address does not refer to a key.") + QString(" ") + tr("Please check the address and try again."));
@@ -147,16 +138,14 @@ void Bip38ToolDialog::on_encryptKeyButton_ENC_clicked()
     }
 
     WalletModel::UnlockContext ctx(model->requestUnlock(true));
-    if (!ctx.isValid())
-    {
+    if (!ctx.isValid()) {
         ui->statusLabel_ENC->setStyleSheet("QLabel { color: red; }");
         ui->statusLabel_ENC->setText(tr("Wallet unlock was cancelled."));
         return;
     }
 
     CKey key;
-    if (!pwalletMain->GetKey(keyID, key))
-    {
+    if (!pwalletMain->GetKey(keyID, key)) {
         ui->statusLabel_ENC->setStyleSheet("QLabel { color: red; }");
         ui->statusLabel_ENC->setText(tr("Private key for the entered address is not available."));
         return;
@@ -189,8 +178,7 @@ void Bip38ToolDialog::on_decryptKeyButton_DEC_clicked()
 
     uint256 privKey;
     bool fCompressed;
-    if(!BIP38_Decrypt(strPassphrase, strKey, privKey, fCompressed))
-    {
+    if (!BIP38_Decrypt(strPassphrase, strKey, privKey, fCompressed)) {
         ui->statusLabel_DEC->setStyleSheet("QLabel { color: red; }");
         ui->statusLabel_DEC->setText(tr("Failed to decrypt.") + QString(" ") + tr("Please check the key and passphrase and try again."));
         return;
@@ -207,8 +195,7 @@ void Bip38ToolDialog::on_decryptKeyButton_DEC_clicked()
 void Bip38ToolDialog::on_importAddressButton_DEC_clicked()
 {
     WalletModel::UnlockContext ctx(model->requestUnlock(true));
-    if (!ctx.isValid())
-    {
+    if (!ctx.isValid()) {
         ui->statusLabel_DEC->setStyleSheet("QLabel { color: red; }");
         ui->statusLabel_DEC->setText(tr("Wallet unlock was cancelled."));
         return;
@@ -217,8 +204,7 @@ void Bip38ToolDialog::on_importAddressButton_DEC_clicked()
     CBitcoinAddress address(ui->addressOut_DEC->text().toStdString());
     CPubKey pubkey = key.GetPubKey();
 
-    if(!address.IsValid() || !key.IsValid() || CBitcoinAddress(pubkey.GetID()).ToString() != address.ToString())
-    {
+    if (!address.IsValid() || !key.IsValid() || CBitcoinAddress(pubkey.GetID()).ToString() != address.ToString()) {
         ui->statusLabel_DEC->setStyleSheet("QLabel { color: red; }");
         ui->statusLabel_DEC->setText(tr("Data Not Valid.") + QString(" ") + tr("Please try again."));
         return;
@@ -233,8 +219,7 @@ void Bip38ToolDialog::on_importAddressButton_DEC_clicked()
         pwalletMain->SetAddressBook(vchAddress, "", "receive");
 
         // Don't throw error in case a key is already there
-        if (pwalletMain->HaveKey(vchAddress))
-        {
+        if (pwalletMain->HaveKey(vchAddress)) {
             ui->statusLabel_DEC->setStyleSheet("QLabel { color: red; }");
             ui->statusLabel_DEC->setText(tr("Key Already Held By Wallet"));
             return;
@@ -242,8 +227,7 @@ void Bip38ToolDialog::on_importAddressButton_DEC_clicked()
 
         pwalletMain->mapKeyMetadata[vchAddress].nCreateTime = 1;
 
-        if (!pwalletMain->AddKeyPubKey(key, pubkey))
-        {
+        if (!pwalletMain->AddKeyPubKey(key, pubkey)) {
             ui->statusLabel_DEC->setStyleSheet("QLabel { color: red; }");
             ui->statusLabel_DEC->setText(tr("Error Adding Key To Wallet"));
             return;
@@ -268,24 +252,19 @@ void Bip38ToolDialog::on_clearButton_DEC_clicked()
     ui->encryptedKeyIn_DEC->setFocus();
 }
 
-bool Bip38ToolDialog::eventFilter(QObject *object, QEvent *event)
+bool Bip38ToolDialog::eventFilter(QObject* object, QEvent* event)
 {
-    if (event->type() == QEvent::MouseButtonPress || event->type() == QEvent::FocusIn)
-    {
-        if (ui->tabWidget->currentIndex() == 0)
-        {
+    if (event->type() == QEvent::MouseButtonPress || event->type() == QEvent::FocusIn) {
+        if (ui->tabWidget->currentIndex() == 0) {
             /* Clear status message on focus change */
             ui->statusLabel_ENC->clear();
 
             /* Select generated signature */
-            if (object == ui->encryptedKeyOut_ENC)
-            {
+            if (object == ui->encryptedKeyOut_ENC) {
                 ui->encryptedKeyOut_ENC->selectAll();
                 return true;
             }
-        }
-        else if (ui->tabWidget->currentIndex() == 1)
-        {
+        } else if (ui->tabWidget->currentIndex() == 1) {
             /* Clear status message on focus change */
             ui->statusLabel_DEC->clear();
         }

@@ -23,25 +23,23 @@
 #include <QVBoxLayout>
 
 /** "Help message" or "About" dialog box */
-HelpMessageDialog::HelpMessageDialog(QWidget *parent, bool about) :
-    QDialog(parent),
-    ui(new Ui::HelpMessageDialog)
+HelpMessageDialog::HelpMessageDialog(QWidget* parent, bool about) : QDialog(parent),
+                                                                    ui(new Ui::HelpMessageDialog)
 {
     ui->setupUi(this);
     GUIUtil::restoreWindowGeometry("nHelpMessageDialogWindow", this->size(), this);
 
     QString version = tr("PIVX Core") + " " + tr("version") + " " + QString::fromStdString(FormatFullVersion());
-    /* On x86 add a bit specifier to the version so that users can distinguish between
+/* On x86 add a bit specifier to the version so that users can distinguish between
      * 32 and 64 bit builds. On other architectures, 32/64 bit may be more ambigious.
      */
 #if defined(__x86_64__)
     version += " " + tr("(%1-bit)").arg(64);
-#elif defined(__i386__ )
+#elif defined(__i386__)
     version += " " + tr("(%1-bit)").arg(32);
 #endif
 
-    if (about)
-    {
+    if (about) {
         setWindowTitle(tr("About PIVX Core"));
 
         /// HTML-format the license message from the core
@@ -63,16 +61,16 @@ HelpMessageDialog::HelpMessageDialog(QWidget *parent, bool about) :
     } else {
         setWindowTitle(tr("Command-line options"));
         QString header = tr("Usage:") + "\n" +
-            "  pivx-qt [" + tr("command-line options") + "]                     " + "\n";
+                         "  pivx-qt [" + tr("command-line options") + "]                     " + "\n";
 
         QString coreOptions = QString::fromStdString(HelpMessage(HMM_BITCOIN_QT));
 
         QString uiOptions = tr("UI options") + ":\n" +
-            "  -choosedatadir            " + tr("Choose data directory on startup (default: 0)") + "\n" +
-            "  -lang=<lang>              " + tr("Set language, for example \"de_DE\" (default: system locale)") + "\n" +
-            "  -min                      " + tr("Start minimized") + "\n" +
-            "  -rootcertificates=<file>  " + tr("Set SSL root certificates for payment request (default: -system-)") + "\n" +
-            "  -splash                   " + tr("Show splash screen on startup (default: 1)");
+                            "  -choosedatadir            " + tr("Choose data directory on startup (default: 0)") + "\n" +
+                            "  -lang=<lang>              " + tr("Set language, for example \"de_DE\" (default: system locale)") + "\n" +
+                            "  -min                      " + tr("Start minimized") + "\n" +
+                            "  -rootcertificates=<file>  " + tr("Set SSL root certificates for payment request (default: -system-)") + "\n" +
+                            "  -splash                   " + tr("Show splash screen on startup (default: 1)");
 
         ui->helpMessageLabel->setFont(GUIUtil::bitcoinAddressFont());
         text = version + "\n" + header + "\n" + coreOptions + "\n" + uiOptions;
@@ -110,23 +108,22 @@ void HelpMessageDialog::on_okButton_accepted()
 
 
 /** "Shutdown" window */
-ShutdownWindow::ShutdownWindow(QWidget *parent, Qt::WindowFlags f):
-    QWidget(parent, f)
+ShutdownWindow::ShutdownWindow(QWidget* parent, Qt::WindowFlags f) : QWidget(parent, f)
 {
-    QVBoxLayout *layout = new QVBoxLayout();
+    QVBoxLayout* layout = new QVBoxLayout();
     layout->addWidget(new QLabel(
         tr("PIVX Core is shutting down...") + "<br /><br />" +
         tr("Do not shut down the computer until this window disappears.")));
     setLayout(layout);
 }
 
-void ShutdownWindow::showShutdownWindow(BitcoinGUI *window)
+void ShutdownWindow::showShutdownWindow(BitcoinGUI* window)
 {
     if (!window)
         return;
 
     // Show a simple window indicating shutdown status
-    QWidget *shutdownWindow = new ShutdownWindow();
+    QWidget* shutdownWindow = new ShutdownWindow();
     // We don't hold a direct pointer to the shutdown window after creation, so use
     // Qt::WA_DeleteOnClose to make sure that the window will be deleted eventually.
     shutdownWindow->setAttribute(Qt::WA_DeleteOnClose);
@@ -138,7 +135,7 @@ void ShutdownWindow::showShutdownWindow(BitcoinGUI *window)
     shutdownWindow->show();
 }
 
-void ShutdownWindow::closeEvent(QCloseEvent *event)
+void ShutdownWindow::closeEvent(QCloseEvent* event)
 {
     event->ignore();
 }
