@@ -1648,7 +1648,7 @@ int64_t GetBlockValue(int nHeight)
     return nSubsidy;
 }
 
-int64_t GetMasternodePayment(int nHeight, int64_t blockValue)
+int64_t GetMasternodePayment(int nHeight, int64_t blockValue, int nMasternodeCount)
 {
     int64_t ret = 0;
 
@@ -1668,6 +1668,10 @@ int64_t GetMasternodePayment(int nHeight, int64_t blockValue)
     } else if (nHeight > Params().LAST_POW_BLOCK()) {
         int64_t nMoneySupply = chainActive.Tip()->nMoneySupply;
         int64_t mNodeCoins = mnodeman.size() * 10000 * COIN;
+
+        //if a mn count is inserted into the function we are looking for a specific result for a masternode count
+        if(nMasternodeCount)
+            mNodeCoins = nMasternodeCount * 10000 * COIN;
 
         if (fDebug)
             LogPrintf("GetMasternodePayment(): moneysupply=%s, nodecoins=%s \n", FormatMoney(nMoneySupply).c_str(),
@@ -3386,32 +3390,30 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
 
 bool CheckWork(const CBlock block, CBlockIndex* const pindexPrev)
 {
-    if (block.IsProofOfWork()) {
-        // Check proof of work (Here for the architecture issues with DGW v1 and v2)
-        if (pindexPrev == NULL || pindexPrev->nHeight + 1 <= 68589) {
-            unsigned int nBitsNext = GetNextWorkRequired(pindexPrev, &block, false);
-            double n1 = ConvertBitsToDouble(block.nBits);
-            double n2 = ConvertBitsToDouble(nBitsNext);
+    unsigned int nBitsRequired = GetNextWorkRequired(pindexPrev, &block);
 
-            if (abs(n1 - n2) > n1 * 0.5)
-                return error("%s : incorrect proof of work (DGW pre-fork) - %f %f %f at %d", __func__, abs(n1 - n2), n1, n2, pindexPrev->nHeight + 1);
-        } else {
-            if (block.nBits != GetNextWorkRequired(pindexPrev, &block, false))
-                return error("%s : incorrect proof of work at %d", __func__, pindexPrev->nHeight + 1);
-        }
-    } else if (block.IsProofOfStake()) {
+    if (block.IsProofOfWork() && (pindexPrev == NULL || pindexPrev->nHeight + 1 <= 68589)) {
+        double n1 = ConvertBitsToDouble(block.nBits);
+        double n2 = ConvertBitsToDouble(nBitsRequired);
+
+        if (abs(n1 - n2) > n1 * 0.5)
+            return error("%s : incorrect proof of work (DGW pre-fork) - %f %f %f at %d", __func__, abs(n1 - n2), n1, n2, pindexPrev->nHeight + 1);
+    }
+
+    if (block.nBits != nBitsRequired)
+        return error("%s : incorrect proof of work at %d", __func__, pindexPrev->nHeight + 1);
+
+    if (block.IsProofOfStake()) {
         uint256 hashProofOfStake;
         uint256 hash = block.GetHash();
 
-        if (!CheckProofOfStake(block, hashProofOfStake)) {
+        if(!CheckProofOfStake(block, hashProofOfStake)) {
             LogPrintf("WARNING: ProcessBlock(): check proof-of-stake failed for block %s\n", hash.ToString().c_str());
             return false;
         }
-        if (!mapProofOfStake.count(hash)) // add to mapProofOfStake
+        if(!mapProofOfStake.count(hash)) // add to mapProofOfStake
             mapProofOfStake.insert(make_pair(hash, hashProofOfStake));
-    } else
-        return error("CheckWork(): block height %d is neither PoS or PoW \n", pindexPrev->nHeight);
-
+    }
 
     return true;
 }
@@ -4774,12 +4776,11 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         CAddress addrFrom;
         uint64_t nNonce = 1;
         vRecv >> pfrom->nVersion >> pfrom->nServices >> nTime >> addrMe;
-        if (pfrom->nVersion < MIN_PEER_PROTO_VERSION ||
-            (chainActive.Tip()->nHeight >= Params().LAST_POW_BLOCK() && pfrom->nVersion < MIN_PEER_PROTO_VERSION_POS)) {
+        if (pfrom->nVersion < ActiveProtocol()) {
             // disconnect from peers older than this proto version
             LogPrintf("peer=%d using obsolete version %i; disconnecting\n", pfrom->id, pfrom->nVersion);
             pfrom->PushMessage("reject", strCommand, REJECT_OBSOLETE,
-                strprintf("Version must be %d or greater", MIN_PEER_PROTO_VERSION));
+                strprintf("Version must be %d or greater", ActiveProtocol()));
             pfrom->fDisconnect = true;
             return false;
         }
@@ -5559,6 +5560,16 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
 
 
     return true;
+}
+
+int ActiveProtocol()
+{
+    if (IsSporkActive(SPORK_14_NEW_PROTOCOL_ENFORCEMENT)) {
+        if (chainActive.Tip()->nHeight >= Params().ModifierUpgradeBlock())
+            return MIN_PEER_PROTO_VERSION_AFTER_ENFORCEMENT;
+    }
+
+    return MIN_PEER_PROTO_VERSION_BEFORE_ENFORCEMENT;
 }
 
 // requires LOCK(cs_vRecvMsg)

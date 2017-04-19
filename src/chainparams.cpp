@@ -108,6 +108,8 @@ public:
         nTargetSpacing = 1 * 60;  // PIVX: 1 minute
         nLastPOWBlock = 259200;
         nMaturity = 100;
+        nMasternodeCountDrift = 20;
+        nModifierUpdateBlock = 615800;
 
         /**
          * Build the genesis block. Note that the output of the genesis coinbase cannot
@@ -202,6 +204,7 @@ public:
         nTargetSpacing = 1 * 60;  // PIVX: 1 minute
         nLastPOWBlock = 200;
         nMaturity = 15;
+        nModifierUpdateBlock = 51197; //approx Mon, 17 Apr 2017 04:00:00 GMT
 
         //! Modify the testnet genesis block so the timestamp is valid for a later start.
         genesis.nTime = 1454124731;
