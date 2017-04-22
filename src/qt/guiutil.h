@@ -106,6 +106,9 @@ void openDebugLogfile();
 // Open pivx.conf
 void openConfigfile();
 
+// Open masternode.conf
+void openMNConfigfile();
+
 // Browse backup folder
 void showBackups();
 
