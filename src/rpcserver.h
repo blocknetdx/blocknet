@@ -211,6 +211,7 @@ extern json_spirit::Value setmocktime(const json_spirit::Array& params, bool fHe
 extern json_spirit::Value reservebalance(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value multisend(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value autocombinerewards(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value getstakingstatus(const json_spirit::Array& params, bool fHelp);
 
 extern json_spirit::Value getrawtransaction(const json_spirit::Array& params, bool fHelp); // in rcprawtransaction.cpp
 extern json_spirit::Value listunspent(const json_spirit::Array& params, bool fHelp);
