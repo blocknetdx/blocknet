@@ -18,9 +18,6 @@
 #include "receivecoinsdialog.h"
 #include "sendcoinsdialog.h"
 #include "signverifymessagedialog.h"
-#ifdef HAVE_QT5_TRADING
-#include "tradingdialog.h"
-#endif // HAVE_QT5
 #include "transactiontablemodel.h"
 #include "transactionview.h"
 #include "walletmodel.h"
@@ -43,9 +40,6 @@ WalletView::WalletView(QWidget* parent) : QStackedWidget(parent),
 {
     // Create tabs
     overviewPage = new OverviewPage();
-#ifdef HAVE_QT5_TRADING
-    tradingPage = new tradingDialog(this);
-#endif // HAVE_QT5
     explorerWindow = new BlockExplorer(this);
     transactionsPage = new QWidget(this);
     QVBoxLayout* vbox = new QVBoxLayout();
@@ -82,9 +76,6 @@ WalletView::WalletView(QWidget* parent) : QStackedWidget(parent),
     addWidget(transactionsPage);
     addWidget(receiveCoinsPage);
     addWidget(sendCoinsPage);
-#ifdef HAVE_QT5_TRADING
-    addWidget(tradingPage);
-#endif // HAVE_QT5
     addWidget(explorerWindow);
 
     QSettings settings;
@@ -207,12 +198,6 @@ void WalletView::gotoHistoryPage()
     setCurrentWidget(transactionsPage);
 }
 
-#ifdef HAVE_QT5_TRADING
-void WalletView::gotoTradingPage()
-{
-    setCurrentWidget(tradingPage);
-}
-#endif // HAVE_QT5
 
 void WalletView::gotoBlockExplorerPage()
 {
