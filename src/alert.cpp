@@ -48,7 +48,7 @@ void CUnsignedAlert::SetNull()
 std::string CUnsignedAlert::ToString() const
 {
     std::string strSetCancel;
-    BOOST_FOREACH (int n, setCancel)
+    for (auto& n: setCancel)
         strSetCancel += strprintf("%d ", n);
     std::string strSetSubVer;
     BOOST_FOREACH (std::string str, setSubVer)

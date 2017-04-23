@@ -59,7 +59,7 @@ SplashScreen::SplashScreen(Qt::WindowFlags f, const NetworkStyle* networkStyle) 
 
     pixPaint.setFont(QFont(font, 28 * fontFactor));
     fm = pixPaint.fontMetrics();
-    titleTextWidth = fm.width(titleText);
+    //titleTextWidth = fm.width(titleText);
     pixPaint.drawText(paddingLeft, paddingTop, titleText);
 
     pixPaint.setFont(QFont(font, 15 * fontFactor));

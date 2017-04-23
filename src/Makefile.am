@@ -103,7 +103,6 @@ BITCOIN_CORE_H = \
   kernel.h \
   swifttx.h \
   key.h \
-  keepass.h \
   keystore.h \
   leveldbwrapper.h \
   limitedmap.h \
@@ -229,7 +228,6 @@ libbitcoin_wallet_a_SOURCES = \
   wallet.cpp \
   wallet_ismine.cpp \
   walletdb.cpp \
-  keepass.cpp \
   $(BITCOIN_CORE_H)
 
 # crypto primitives library
