@@ -119,6 +119,7 @@ private:
     QAction* openPeersAction;
     QAction* openRepairAction;
     QAction* openConfEditorAction;
+    QAction* openMNConfEditorAction;
     QAction* showBackupsAction;
     QAction* openAction;
     QAction* openTradingwindowAction;
