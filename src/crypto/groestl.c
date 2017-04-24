@@ -2952,13 +2952,13 @@ groestl_big_close(sph_groestl_big_context *sc,
 {
 	unsigned char *buf;
 	unsigned char pad[136];
-	size_t ptr, pad_len, u;
+	size_t ptr=0, pad_len=0, u=0;
 #if SPH_64
-	sph_u64 count;
+	sph_u64 count=0;
 #else
-	sph_u32 count_high, count_low;
+	sph_u32 count_high=0, count_low=0;
 #endif
-	unsigned z;
+	unsigned z=0;
 	DECL_STATE_BIG
 
 	buf = sc->buf;
