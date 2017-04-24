@@ -21,9 +21,6 @@
 
 #ifdef ENABLE_WALLET
 #include "blockexplorer.h"
-#ifdef HAVE_QT5
-#include "tradingdialog.h"
-#endif // HAVE_QT5
 #include "walletframe.h"
 #include "walletmodel.h"
 #endif // ENABLE_WALLET
@@ -106,7 +103,6 @@ BitcoinGUI::BitcoinGUI(const NetworkStyle* networkStyle, QWidget* parent) : QMai
                                                                             trayIconMenu(0),
                                                                             notificator(0),
                                                                             rpcConsole(0),
-                                                                            tradingWindow(0),
                                                                             explorerWindow(0),
                                                                             prevBlocks(0),
                                                                             spinnerFrame(0)
@@ -150,9 +146,6 @@ BitcoinGUI::BitcoinGUI(const NetworkStyle* networkStyle, QWidget* parent) : QMai
     if (enableWallet) {
         /** Create wallet frame*/
         walletFrame = new WalletFrame(this);
-#ifdef HAVE_QT5
-        tradingWindow = new tradingDialog(this); // Bittrex trading
-#endif // HAVE_QT5
         explorerWindow = new BlockExplorer(this);
     } else
 #endif // ENABLE_WALLET
@@ -247,13 +240,6 @@ BitcoinGUI::BitcoinGUI(const NetworkStyle* networkStyle, QWidget* parent) : QMai
 
     // prevents an open debug window from becoming stuck/unusable on client shutdown
     connect(quitAction, SIGNAL(triggered()), rpcConsole, SLOT(hide()));
-
-#ifdef HAVE_QT5
-    connect(openTradingwindowAction, SIGNAL(triggered()), tradingWindow, SLOT(show()));
-
-    // prevents an open trading window from becoming stuck/unusable on client shutdown
-    connect(quitAction, SIGNAL(triggered()), tradingWindow, SLOT(hide()));
-#endif // HAVE_QT5
 
     connect(openBlockExplorerAction, SIGNAL(triggered()), explorerWindow, SLOT(show()));
 
@@ -431,9 +417,6 @@ void BitcoinGUI::createActions(const NetworkStyle* networkStyle)
 
     openAction = new QAction(QApplication::style()->standardIcon(QStyle::SP_FileIcon), tr("Open &URI..."), this);
     openAction->setStatusTip(tr("Open a PIVX: URI or payment request"));
-
-    openTradingwindowAction = new QAction(QIcon(":/icons/trade"), tr("&Trading window"), this);
-    openTradingwindowAction->setStatusTip(tr("Bittrex trading window"));
     openBlockExplorerAction = new QAction(QIcon(":/icons/explorer"), tr("&Blockchain explorer"), this);
     openBlockExplorerAction->setStatusTip(tr("Block explorer window"));
 
@@ -500,11 +483,6 @@ void BitcoinGUI::createMenuBar()
         settings->addSeparator();
     }
     settings->addAction(optionsAction);
-
-#ifdef HAVE_QT5
-    QMenu* trading = appMenuBar->addMenu(tr("&Trade"));
-    trading->addAction(openTradingwindowAction);
-#endif // HAVE_QT5
 
     if (walletFrame) {
         QMenu* tools = appMenuBar->addMenu(tr("&Tools"));
@@ -684,9 +662,6 @@ void BitcoinGUI::createTrayIconMenu()
     trayIconMenu->addAction(bip38ToolAction);
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(optionsAction);
-#ifdef HAVE_QT5
-    trayIconMenu->addAction(openTradingwindowAction);
-#endif // HAVE_QT5
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(openInfoAction);
     trayIconMenu->addAction(openRPCConsoleAction);
@@ -796,13 +771,6 @@ void BitcoinGUI::gotoBip38Tool()
 {
     if (walletFrame) walletFrame->gotoBip38Tool();
 }
-
-#ifdef HAVE_QT5
-void BitcoinGUI::gotoTradingPage()
-{
-    if (walletFrame) walletFrame->gotoTradingPage();
-}
-#endif // HAVE_QT5
 
 void BitcoinGUI::gotoMultiSendDialog()
 {
