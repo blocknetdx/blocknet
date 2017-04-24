@@ -68,8 +68,7 @@ public:
     void removeAllWallets();
 #endif // ENABLE_WALLET
     bool enableWallet;
-    bool fMultiSend;
-    bool fMultiSendNotify;
+    bool fMultiSend = false;
 
 protected:
     void changeEvent(QEvent* e);
