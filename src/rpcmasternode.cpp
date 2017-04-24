@@ -344,8 +344,10 @@ Value masternode(const Array& params, bool fHelp)
 
         BOOST_FOREACH (CMasternodeConfig::CMasternodeEntry mne, masternodeConfig.getEntries()) {
             std::string errorMessage;
-
-            CTxIn vin = CTxIn(uint256(mne.getTxHash()), uint32_t(atoi(mne.getOutputIndex().c_str())));
+            int nIndex;
+            if(!mne.castOutputIndex(nIndex))
+                continue;
+            CTxIn vin = CTxIn(uint256(mne.getTxHash()), uint32_t(nIndex));
             CMasternode* pmn = mnodeman.Find(vin);
 
             if (strCommand == "start-missing" && pmn) continue;
@@ -393,7 +395,10 @@ Value masternode(const Array& params, bool fHelp)
         Object resultObj;
 
         BOOST_FOREACH (CMasternodeConfig::CMasternodeEntry mne, masternodeConfig.getEntries()) {
-            CTxIn vin = CTxIn(uint256(mne.getTxHash()), uint32_t(atoi(mne.getOutputIndex().c_str())));
+            int nIndex;
+            if(!mne.castOutputIndex(nIndex))
+                continue;
+            CTxIn vin = CTxIn(uint256(mne.getTxHash()), uint32_t(nIndex));
             CMasternode* pmn = mnodeman.Find(vin);
 
             std::string strStatus = pmn ? pmn->Status() : "MISSING";
@@ -440,7 +445,11 @@ Value masternode(const Array& params, bool fHelp)
         int nLast = 10;
 
         if (params.size() >= 2) {
-            nLast = atoi(params[1].get_str());
+            try {
+                nLast = std::stoi(params[1].get_str());
+            } catch (const std::exception& e) {
+                throw runtime_error("Exception on param 2");
+            }
         }
 
         Object obj;
@@ -459,7 +468,11 @@ Value masternode(const Array& params, bool fHelp)
         int nLast = 10;
 
         if (params.size() >= 2) {
-            nLast = atoi(params[1].get_str());
+            try {
+                nLast = std::stoi(params[1].get_str());
+            } catch (const boost::bad_lexical_cast &) {
+                throw runtime_error("Exception on param 2");
+            }
         }
         Object obj;
 

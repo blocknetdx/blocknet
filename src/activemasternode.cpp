@@ -372,7 +372,14 @@ bool CActiveMasternode::GetMasterNodeVin(CTxIn& vin, CPubKey& pubkey, CKey& secr
     if (!strTxHash.empty()) {
         // Let's find it
         uint256 txHash(strTxHash);
-        int outputIndex = atoi(strOutputIndex.c_str());
+        int outputIndex;
+        try {
+            outputIndex = std::stoi(strOutputIndex.c_str());
+        } catch (const std::exception& e) {
+            LogPrintf("%s: %s on strOutputIndex\n", __func__, e.what());
+            return false;
+        }
+
         bool found = false;
         BOOST_FOREACH (COutput& out, possibleCoins) {
             if (out.tx->GetHash() == txHash && out.i == outputIndex) {
@@ -439,7 +446,12 @@ vector<COutput> CActiveMasternode::SelectCoinsMasternode()
         uint256 mnTxHash;
         BOOST_FOREACH (CMasternodeConfig::CMasternodeEntry mne, masternodeConfig.getEntries()) {
             mnTxHash.SetHex(mne.getTxHash());
-            COutPoint outpoint = COutPoint(mnTxHash, atoi(mne.getOutputIndex().c_str()));
+
+            int nIndex;
+            if(!mne.castOutputIndex(nIndex))
+                continue;
+
+            COutPoint outpoint = COutPoint(mnTxHash, nIndex);
             confLockedCoins.push_back(outpoint);
             pwalletMain->UnlockCoin(outpoint);
         }
