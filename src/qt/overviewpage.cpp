@@ -114,6 +114,7 @@ OverviewPage::OverviewPage(QWidget* parent) : QWidget(parent),
                                               txdelegate(new TxViewDelegate()),
                                               filter(0)
 {
+    nDisplayUnit = 0; // just make sure it's not unitialized
     ui->setupUi(this);
 
     // Recent transactions

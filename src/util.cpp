@@ -236,7 +236,6 @@ bool LogAcceptCategory(const char* category)
                 ptrCategory->insert(string("obfuscation"));
                 ptrCategory->insert(string("swifttx"));
                 ptrCategory->insert(string("masternode"));
-                ptrCategory->insert(string("keepass"));
                 ptrCategory->insert(string("mnpayments"));
                 ptrCategory->insert(string("mnbudget"));
             }
