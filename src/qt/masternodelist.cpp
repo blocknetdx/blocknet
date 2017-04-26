@@ -131,7 +131,11 @@ void MasternodeList::StartAll(std::string strCommand)
         std::string strError;
         CMasternodeBroadcast mnb;
 
-        CTxIn txin = CTxIn(uint256S(mne.getTxHash()), uint32_t(atoi(mne.getOutputIndex().c_str())));
+        int nIndex;
+        if(!mne.castOutputIndex(nIndex))
+            continue;
+
+        CTxIn txin = CTxIn(uint256S(mne.getTxHash()), uint32_t(nIndex));
         CMasternode* pmn = mnodeman.Find(txin);
 
         if (strCommand == "start-missing" && pmn) continue;
@@ -212,7 +216,11 @@ void MasternodeList::updateMyNodeList(bool fForce)
 
     ui->tableWidgetMasternodes->setSortingEnabled(false);
     BOOST_FOREACH (CMasternodeConfig::CMasternodeEntry mne, masternodeConfig.getEntries()) {
-        CTxIn txin = CTxIn(uint256S(mne.getTxHash()), uint32_t(atoi(mne.getOutputIndex().c_str())));
+        int nIndex;
+        if(!mne.castOutputIndex(nIndex))
+            continue;
+
+        CTxIn txin = CTxIn(uint256S(mne.getTxHash()), uint32_t(nIndex));
         CMasternode* pmn = mnodeman.Find(txin);
 
         updateMyMasternodeInfo(QString::fromStdString(mne.getAlias()), QString::fromStdString(mne.getIp()), pmn);
