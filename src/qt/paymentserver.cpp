@@ -63,13 +63,20 @@ const char* BIP71_MIMETYPE_PAYMENTREQUEST = "application/pivx-paymentrequest";
 // BIP70 max payment request size in bytes (DoS protection)
 const qint64 BIP70_MAX_PAYMENTREQUEST_SIZE = 50000;
 
-X509_STORE* PaymentServer::certStore = NULL;
-void PaymentServer::freeCertStore()
+struct X509StoreDeleter {
+      void operator()(X509_STORE* b) {
+          X509_STORE_free(b);
+      }
+};
+
+struct X509Deleter {
+      void operator()(X509* b) { X509_free(b); }
+};
+
+namespace // Anon namespace
 {
-    if (PaymentServer::certStore != NULL) {
-        X509_STORE_free(PaymentServer::certStore);
-        PaymentServer::certStore = NULL;
-    }
+
+    std::unique_ptr<X509_STORE, X509StoreDeleter> certStore;
 }
 
 //
@@ -107,19 +114,14 @@ static void ReportInvalidCertificate(const QSslCertificate& cert)
 //
 void PaymentServer::LoadRootCAs(X509_STORE* _store)
 {
-    if (PaymentServer::certStore == NULL)
-        atexit(PaymentServer::freeCertStore);
-    else
-        freeCertStore();
-
     // Unit tests mostly use this, to pass in fake root CAs:
     if (_store) {
-        PaymentServer::certStore = _store;
+        certStore.reset(_store);
         return;
     }
 
     // Normal execution, use either -rootcertificates or system certs:
-    PaymentServer::certStore = X509_STORE_new();
+    certStore.reset(X509_STORE_new());
 
     // Note: use "-system-" default here so that users can pass -rootcertificates=""
     // and get 'I don't like X.509 certificates, don't trust anybody' behavior:
@@ -153,10 +155,10 @@ void PaymentServer::LoadRootCAs(X509_STORE* _store)
         QByteArray certData = cert.toDer();
         const unsigned char* data = (const unsigned char*)certData.data();
 
-        X509* x509 = d2i_X509(0, &data, certData.size());
-        if (x509 && X509_STORE_add_cert(PaymentServer::certStore, x509)) {
-            // Note: X509_STORE_free will free the X509* objects when
-            // the PaymentServer is destroyed
+        std::unique_ptr<X509, X509Deleter> x509(d2i_X509(0, &data, certData.size()));
+        if (x509 && X509_STORE_add_cert(certStore.get(), x509.get())) {
+            // Note: X509_STORE increases the reference count to the X509 object,
+            // we still have to release our reference to it.
             ++nRootCerts;
         } else {
             ReportInvalidCertificate(cert);
@@ -510,7 +512,7 @@ bool PaymentServer::processPaymentRequest(PaymentRequestPlus& request, SendCoins
     recipient.paymentRequest = request;
     recipient.message = GUIUtil::HtmlEscape(request.getDetails().memo());
 
-    request.getMerchant(PaymentServer::certStore, recipient.authenticatedMerchant);
+    request.getMerchant(certStore.get(), recipient.authenticatedMerchant);
 
     QList<std::pair<CScript, CAmount> > sendingTos = request.getPayTo();
     QStringList addresses;
@@ -692,4 +694,9 @@ void PaymentServer::handlePaymentACK(const QString& paymentACKMsg)
 {
     // currently we don't futher process or store the paymentACK message
     emit message(tr("Payment acknowledged"), paymentACKMsg, CClientUIInterface::ICON_INFORMATION | CClientUIInterface::MODAL);
+}
+
+X509_STORE* PaymentServer::getCertStore()
+{
+    return certStore.get();
 }
