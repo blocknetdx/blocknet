@@ -416,11 +416,11 @@ bool CBudgetManager::AddProposal(CBudgetProposal& budgetProposal)
 
 void CBudgetManager::CheckAndRemove()
 {
-    LogPrintf("CBudgetManager::CheckAndRemove\n");
+    LogPrint("mnbudget", "CBudgetManager::CheckAndRemove\n");
 
     std::string strError = "";
 
-    LogPrintf("CBudgetManager::CheckAndRemove - mapFinalizedBudgets cleanup - size: %d\n", mapFinalizedBudgets.size());
+    LogPrint("mnbudget", "CBudgetManager::CheckAndRemove - mapFinalizedBudgets cleanup - size: %d\n", mapFinalizedBudgets.size());
     std::map<uint256, CFinalizedBudget>::iterator it = mapFinalizedBudgets.begin();
     while (it != mapFinalizedBudgets.end()) {
         CFinalizedBudget* pfinalizedBudget = &((*it).second);
@@ -434,7 +434,7 @@ void CBudgetManager::CheckAndRemove()
         ++it;
     }
 
-    LogPrintf("CBudgetManager::CheckAndRemove - mapProposals cleanup - size: %d\n", mapProposals.size());
+    LogPrint("mnbudget", "CBudgetManager::CheckAndRemove - mapProposals cleanup - size: %d\n", mapProposals.size());
     std::map<uint256, CBudgetProposal>::iterator it2 = mapProposals.begin();
     while (it2 != mapProposals.end()) {
         CBudgetProposal* pbudgetProposal = &((*it2).second);
@@ -1232,7 +1232,7 @@ void CBudgetManager::Sync(CNode* pfrom, uint256 nProp, bool fPartial)
 
     pfrom->PushMessage("ssc", MASTERNODE_SYNC_BUDGET_PROP, nInvCount);
 
-    LogPrintf("CBudgetManager::Sync - sent %d items\n", nInvCount);
+    LogPrint("mnbudget", "CBudgetManager::Sync - sent %d items\n", nInvCount);
 
     nInvCount = 0;
 
@@ -1259,7 +1259,7 @@ void CBudgetManager::Sync(CNode* pfrom, uint256 nProp, bool fPartial)
     }
 
     pfrom->PushMessage("ssc", MASTERNODE_SYNC_BUDGET_FIN, nInvCount);
-    LogPrintf("CBudgetManager::Sync - sent %d items\n", nInvCount);
+    LogPrint("mnbudget", "CBudgetManager::Sync - sent %d items\n", nInvCount);
 }
 
 bool CBudgetManager::UpdateProposal(CBudgetVote& vote, CNode* pfrom, std::string& strError)
