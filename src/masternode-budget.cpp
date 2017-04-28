@@ -439,6 +439,10 @@ void CBudgetManager::CheckAndRemove()
     while (it2 != mapProposals.end()) {
         CBudgetProposal* pbudgetProposal = &((*it2).second);
         pbudgetProposal->fValid = pbudgetProposal->IsValid(strError);
+        if (!strError.empty ()) {
+            LogPrintf("CBudgetManager::CheckAndRemove - invalid budget proposal - %s\n", strError);
+            strError = "";
+        }
         ++it2;
     }
 
@@ -1364,7 +1368,7 @@ bool CBudgetProposal::IsValid(std::string& strError, bool fCheckCollateral)
     }
 
     if (nBlockEnd < nBlockStart) {
-        strError = "Invalid nBlockEnd";
+        strError = "Invalid nBlockEnd (end before start)";
         return false;
     }
 
@@ -1381,6 +1385,7 @@ bool CBudgetProposal::IsValid(std::string& strError, bool fCheckCollateral)
     if (fCheckCollateral) {
         int nConf = 0;
         if (!IsBudgetCollateralValid(nFeeTXHash, GetHash(), strError, nTime, nConf)) {
+            strError = "Invalid collateral";
             return false;
         }
     }
@@ -1415,8 +1420,10 @@ bool CBudgetProposal::IsValid(std::string& strError, bool fCheckCollateral)
         return true;
     }
 
-    if (GetBlockEnd() < pindexPrev->nHeight - GetBudgetPaymentCycleBlocks() / 2) return false;
-
+    if (GetBlockEnd() < pindexPrev->nHeight - GetBudgetPaymentCycleBlocks() / 2) {
+        strError = "Invalid nBlockEnd (end too early)";
+        return false;
+    }
 
     return true;
 }
