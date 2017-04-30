@@ -1,60 +1,64 @@
-<TS language="zh_TW" version="2.1">
+<TS language="ro_RO" version="2.1">
 <context>
     <name>AddressBookPage</name>
     <message>
         <source>Right-click to edit address or label</source>
-        <translation>點右鍵來修改位址或標記</translation>
+        <translation>Faceți click dreapta pentru a edita adresa sau eticheta</translation>
     </message>
     <message>
         <source>Create a new address</source>
-        <translation>產生新位址</translation>
+        <translation>Creează o nouă adresă</translation>
+    </message>
+    <message>
+        <source>&amp;New</source>
+        <translation>&amp;Nou/Nouă</translation>
     </message>
     <message>
         <source>Copy the currently selected address to the system clipboard</source>
-        <translation>複製目前選取的位址到系統剪貼簿</translation>
+        <translation>Copiază adresa selectată în clipboard</translation>
+    </message>
+    <message>
+        <source>&amp;Copy</source>
+        <translation>&amp;Copiază</translation>
+    </message>
+    <message>
+        <source>Delete the currently selected address from the list</source>
+        <translation>Șterge adresa selectată din listă</translation>
     </message>
     <message>
         <source>&amp;Delete</source>
-        <translation>&amp;刪除</translation>
+        <translation>&amp;Șterge</translation>
     </message>
     <message>
-        <source>Copy &amp;Label</source>
-        <translation>複製標記</translation>
+        <source>Export the data in the current tab to a file</source>
+        <translation>Exportă datele din fila curentă într-un fișier</translation>
     </message>
     <message>
-        <source>Comma separated file (*.csv)</source>
-        <translation>逗號區隔資料檔 (*.csv)</translation>
+        <source>&amp;Export</source>
+        <translation>&amp;Exportă</translation>
     </message>
     <message>
-        <source>Exporting Failed</source>
-        <translation>資料匯出有誤</translation>
+        <source>C&amp;lose</source>
+        <translation>&amp;Închide </translation>
+    </message>
+    <message>
+        <source>Choose the address to send coins to</source>
+        <translation>Alege adresa la care vrei să trimiți monedele</translation>
+    </message>
+    <message>
+        <source>Choose the address to receive coins with</source>
+        <translation>Alege adresa la care vrei să primești monedele</translation>
+    </message>
+    <message>
+        <source>C&amp;hoose</source>
+        <translation>&amp;Alege</translation>
     </message>
     </context>
 <context>
     <name>AddressTableModel</name>
-    <message>
-        <source>Label</source>
-        <translation>標記</translation>
-    </message>
-    <message>
-        <source>(no label)</source>
-        <translation>(沒有標記)</translation>
-    </message>
-</context>
+    </context>
 <context>
     <name>AskPassphraseDialog</name>
-    <message>
-        <source>Enter passphrase</source>
-        <translation>輸入密碼</translation>
-    </message>
-    <message>
-        <source>New passphrase</source>
-        <translation>新的密碼</translation>
-    </message>
-    <message>
-        <source>Repeat new passphrase</source>
-        <translation>重複新密碼</translation>
-    </message>
     </context>
 <context>
     <name>Bip38ToolDialog</name>
@@ -64,20 +68,12 @@
     </context>
 <context>
     <name>BlockExplorer</name>
-    <message>
-        <source>TextLabel</source>
-        <translation>文字標籤</translation>
-    </message>
     </context>
 <context>
     <name>ClientModel</name>
     </context>
 <context>
     <name>CoinControlDialog</name>
-    <message>
-        <source>(no label)</source>
-        <translation>(沒有標記)</translation>
-    </message>
     </context>
 <context>
     <name>EditAddressDialog</name>
@@ -129,29 +125,13 @@
     </context>
 <context>
     <name>ReceiveRequestDialog</name>
-    <message>
-        <source>Label</source>
-        <translation>標記</translation>
-    </message>
     </context>
 <context>
     <name>RecentRequestsTableModel</name>
-    <message>
-        <source>Label</source>
-        <translation>標記</translation>
-    </message>
-    <message>
-        <source>(no label)</source>
-        <translation>(沒有標記)</translation>
-    </message>
     </context>
 <context>
     <name>SendCoinsDialog</name>
-    <message>
-        <source>(no label)</source>
-        <translation>(沒有標記)</translation>
-    </message>
-</context>
+    </context>
 <context>
     <name>SendCoinsEntry</name>
     </context>
@@ -178,22 +158,6 @@
     </context>
 <context>
     <name>TransactionView</name>
-    <message>
-        <source>Comma separated file (*.csv)</source>
-        <translation>逗號區隔資料檔 (*.csv)</translation>
-    </message>
-    <message>
-        <source>Label</source>
-        <translation>標記</translation>
-    </message>
-    <message>
-        <source>Exporting Failed</source>
-        <translation>資料匯出有誤</translation>
-    </message>
-    <message>
-        <source>Exporting Successful</source>
-        <translation>資料匯出成功</translation>
-    </message>
     </context>
 <context>
     <name>UnitDisplayStatusBarControl</name>
@@ -206,15 +170,19 @@
     </context>
 <context>
     <name>WalletView</name>
+    <message>
+        <source>&amp;Export</source>
+        <translation>&amp;Exportă</translation>
+    </message>
+    <message>
+        <source>Export the data in the current tab to a file</source>
+        <translation>Exportă datele din fila curentă într-un fișier</translation>
+    </message>
     </context>
 <context>
     <name>pivx-core</name>
     </context>
 <context>
     <name>tradingDialog</name>
-    <message>
-        <source>TextLabel</source>
-        <translation>文字標籤</translation>
-    </message>
     </context>
 </TS>
