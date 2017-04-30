@@ -25,6 +25,7 @@
 #include <db_cxx.h>
 #endif
 
+#include <QDir>
 #include <QKeyEvent>
 #include <QScrollBar>
 #include <QThread>
@@ -247,6 +248,9 @@ RPCConsole::RPCConsole(QWidget* parent) : QDialog(parent),
     ui->openSSLVersion->setText(SSLeay_version(SSLEAY_VERSION));
 #ifdef ENABLE_WALLET
     ui->berkeleyDBVersion->setText(DbEnv::version(0, 0, 0));
+    std::string walletPath = QString(tr("Wallet in use: ")).toStdString() + GetDataDir().string();
+    walletPath += QDir::separator().toLatin1() + GetArg("-wallet", "wallet.dat");
+    ui->wallet_path->setText(QString::fromStdString(walletPath));
 #else
     ui->label_berkeleyDBVersion->hide();
     ui->berkeleyDBVersion->hide();
@@ -648,6 +652,12 @@ void RPCConsole::showConfEditor()
 {
     GUIUtil::openConfigfile();
 }
+
+void RPCConsole::showMNConfEditor()
+{
+    GUIUtil::openMNConfigfile();
+}
+
 void RPCConsole::peerSelected(const QItemSelection& selected, const QItemSelection& deselected)
 {
     Q_UNUSED(deselected);

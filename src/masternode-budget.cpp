@@ -416,11 +416,11 @@ bool CBudgetManager::AddProposal(CBudgetProposal& budgetProposal)
 
 void CBudgetManager::CheckAndRemove()
 {
-    LogPrintf("CBudgetManager::CheckAndRemove\n");
+    LogPrint("mnbudget", "CBudgetManager::CheckAndRemove\n");
 
     std::string strError = "";
 
-    LogPrintf("CBudgetManager::CheckAndRemove - mapFinalizedBudgets cleanup - size: %d\n", mapFinalizedBudgets.size());
+    LogPrint("mnbudget", "CBudgetManager::CheckAndRemove - mapFinalizedBudgets cleanup - size: %d\n", mapFinalizedBudgets.size());
     std::map<uint256, CFinalizedBudget>::iterator it = mapFinalizedBudgets.begin();
     while (it != mapFinalizedBudgets.end()) {
         CFinalizedBudget* pfinalizedBudget = &((*it).second);
@@ -434,11 +434,15 @@ void CBudgetManager::CheckAndRemove()
         ++it;
     }
 
-    LogPrintf("CBudgetManager::CheckAndRemove - mapProposals cleanup - size: %d\n", mapProposals.size());
+    LogPrint("mnbudget", "CBudgetManager::CheckAndRemove - mapProposals cleanup - size: %d\n", mapProposals.size());
     std::map<uint256, CBudgetProposal>::iterator it2 = mapProposals.begin();
     while (it2 != mapProposals.end()) {
         CBudgetProposal* pbudgetProposal = &((*it2).second);
         pbudgetProposal->fValid = pbudgetProposal->IsValid(strError);
+        if (!strError.empty ()) {
+            LogPrintf("CBudgetManager::CheckAndRemove - invalid budget proposal - %s\n", strError);
+            strError = "";
+        }
         ++it2;
     }
 
@@ -1232,7 +1236,7 @@ void CBudgetManager::Sync(CNode* pfrom, uint256 nProp, bool fPartial)
 
     pfrom->PushMessage("ssc", MASTERNODE_SYNC_BUDGET_PROP, nInvCount);
 
-    LogPrintf("CBudgetManager::Sync - sent %d items\n", nInvCount);
+    LogPrint("mnbudget", "CBudgetManager::Sync - sent %d items\n", nInvCount);
 
     nInvCount = 0;
 
@@ -1259,7 +1263,7 @@ void CBudgetManager::Sync(CNode* pfrom, uint256 nProp, bool fPartial)
     }
 
     pfrom->PushMessage("ssc", MASTERNODE_SYNC_BUDGET_FIN, nInvCount);
-    LogPrintf("CBudgetManager::Sync - sent %d items\n", nInvCount);
+    LogPrint("mnbudget", "CBudgetManager::Sync - sent %d items\n", nInvCount);
 }
 
 bool CBudgetManager::UpdateProposal(CBudgetVote& vote, CNode* pfrom, std::string& strError)
@@ -1364,7 +1368,7 @@ bool CBudgetProposal::IsValid(std::string& strError, bool fCheckCollateral)
     }
 
     if (nBlockEnd < nBlockStart) {
-        strError = "Invalid nBlockEnd";
+        strError = "Invalid nBlockEnd (end before start)";
         return false;
     }
 
@@ -1381,6 +1385,7 @@ bool CBudgetProposal::IsValid(std::string& strError, bool fCheckCollateral)
     if (fCheckCollateral) {
         int nConf = 0;
         if (!IsBudgetCollateralValid(nFeeTXHash, GetHash(), strError, nTime, nConf)) {
+            strError = "Invalid collateral";
             return false;
         }
     }
@@ -1415,8 +1420,10 @@ bool CBudgetProposal::IsValid(std::string& strError, bool fCheckCollateral)
         return true;
     }
 
-    if (GetBlockEnd() < pindexPrev->nHeight - GetBudgetPaymentCycleBlocks() / 2) return false;
-
+    if (GetBlockEnd() < pindexPrev->nHeight - GetBudgetPaymentCycleBlocks() / 2) {
+        strError = "Invalid nBlockEnd (end too early)";
+        return false;
+    }
 
     return true;
 }

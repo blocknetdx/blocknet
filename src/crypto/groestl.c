@@ -2738,7 +2738,7 @@ static void
 groestl_small_init(sph_groestl_small_context *sc, unsigned out_size)
 {
 	size_t u;
-
+	for (u = 0; u < 64; u ++) sc->buf[u] = 0;
 	sc->ptr = 0;
 #if SPH_GROESTL_64
 	for (u = 0; u < 7; u ++)
@@ -2815,13 +2815,13 @@ groestl_small_close(sph_groestl_small_context *sc,
 {
 	unsigned char *buf;
 	unsigned char pad[72];
-	size_t u, ptr, pad_len;
+	size_t u=0, ptr=0, pad_len=0;
 #if SPH_64
-	sph_u64 count;
+	sph_u64 count=0;
 #else
-	sph_u32 count_high, count_low;
+	sph_u32 count_high=0, count_low=0;
 #endif
-	unsigned z;
+	unsigned z=0;
 	DECL_STATE_SMALL
 
 	buf = sc->buf;
@@ -2875,6 +2875,7 @@ groestl_big_init(sph_groestl_big_context *sc, unsigned out_size)
 {
 	size_t u;
 
+	for (u = 0; u < 128; u ++) sc->buf[u] = 0;
 	sc->ptr = 0;
 #if SPH_GROESTL_64
 	for (u = 0; u < 15; u ++)
@@ -2951,13 +2952,13 @@ groestl_big_close(sph_groestl_big_context *sc,
 {
 	unsigned char *buf;
 	unsigned char pad[136];
-	size_t ptr, pad_len, u;
+	size_t ptr=0, pad_len=0, u=0;
 #if SPH_64
-	sph_u64 count;
+	sph_u64 count=0;
 #else
-	sph_u32 count_high, count_low;
+	sph_u32 count_high=0, count_low=0;
 #endif
-	unsigned z;
+	unsigned z=0;
 	DECL_STATE_BIG
 
 	buf = sc->buf;

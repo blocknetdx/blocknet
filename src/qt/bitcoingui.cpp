@@ -21,9 +21,6 @@
 
 #ifdef ENABLE_WALLET
 #include "blockexplorer.h"
-#ifdef HAVE_QT5
-#include "tradingdialog.h"
-#endif // HAVE_QT5
 #include "walletframe.h"
 #include "walletmodel.h"
 #endif // ENABLE_WALLET
@@ -106,7 +103,6 @@ BitcoinGUI::BitcoinGUI(const NetworkStyle* networkStyle, QWidget* parent) : QMai
                                                                             trayIconMenu(0),
                                                                             notificator(0),
                                                                             rpcConsole(0),
-                                                                            tradingWindow(0),
                                                                             explorerWindow(0),
                                                                             prevBlocks(0),
                                                                             spinnerFrame(0)
@@ -150,9 +146,6 @@ BitcoinGUI::BitcoinGUI(const NetworkStyle* networkStyle, QWidget* parent) : QMai
     if (enableWallet) {
         /** Create wallet frame*/
         walletFrame = new WalletFrame(this);
-#ifdef HAVE_QT5
-        tradingWindow = new tradingDialog(this); // Bittrex trading
-#endif // HAVE_QT5
         explorerWindow = new BlockExplorer(this);
     } else
 #endif // ENABLE_WALLET
@@ -238,6 +231,7 @@ BitcoinGUI::BitcoinGUI(const NetworkStyle* networkStyle, QWidget* parent) : QMai
     connect(openPeersAction, SIGNAL(triggered()), rpcConsole, SLOT(showPeers()));
     connect(openRepairAction, SIGNAL(triggered()), rpcConsole, SLOT(showRepair()));
     connect(openConfEditorAction, SIGNAL(triggered()), rpcConsole, SLOT(showConfEditor()));
+    connect(openMNConfEditorAction, SIGNAL(triggered()), rpcConsole, SLOT(showMNConfEditor()));
     connect(showBackupsAction, SIGNAL(triggered()), rpcConsole, SLOT(showBackups()));
     connect(labelConnectionsIcon, SIGNAL(clicked()), rpcConsole, SLOT(showPeers()));
 
@@ -246,13 +240,6 @@ BitcoinGUI::BitcoinGUI(const NetworkStyle* networkStyle, QWidget* parent) : QMai
 
     // prevents an open debug window from becoming stuck/unusable on client shutdown
     connect(quitAction, SIGNAL(triggered()), rpcConsole, SLOT(hide()));
-
-#ifdef HAVE_QT5
-    connect(openTradingwindowAction, SIGNAL(triggered()), tradingWindow, SLOT(show()));
-
-    // prevents an open trading window from becoming stuck/unusable on client shutdown
-    connect(quitAction, SIGNAL(triggered()), tradingWindow, SLOT(hide()));
-#endif // HAVE_QT5
 
     connect(openBlockExplorerAction, SIGNAL(triggered()), explorerWindow, SLOT(show()));
 
@@ -416,8 +403,10 @@ void BitcoinGUI::createActions(const NetworkStyle* networkStyle)
     openPeersAction->setStatusTip(tr("Show peers info"));
     openRepairAction = new QAction(QIcon(":/icons/options"), tr("Wallet &Repair"), this);
     openRepairAction->setStatusTip(tr("Show wallet repair options"));
-    openConfEditorAction = new QAction(QIcon(":/icons/edit"), tr("Open &Configuration File"), this);
+    openConfEditorAction = new QAction(QIcon(":/icons/edit"), tr("Open Wallet &Configuration File"), this);
     openConfEditorAction->setStatusTip(tr("Open configuration file"));
+    openMNConfEditorAction = new QAction(QIcon(":/icons/edit"), tr("Open &Masternode Configuration File"), this);
+    openMNConfEditorAction->setStatusTip(tr("Open Masternode configuration file"));
     showBackupsAction = new QAction(QIcon(":/icons/browse"), tr("Show Automatic &Backups"), this);
     showBackupsAction->setStatusTip(tr("Show automatically created wallet backups"));
 
@@ -428,9 +417,6 @@ void BitcoinGUI::createActions(const NetworkStyle* networkStyle)
 
     openAction = new QAction(QApplication::style()->standardIcon(QStyle::SP_FileIcon), tr("Open &URI..."), this);
     openAction->setStatusTip(tr("Open a PIVX: URI or payment request"));
-
-    openTradingwindowAction = new QAction(QIcon(":/icons/trade"), tr("&Trading window"), this);
-    openTradingwindowAction->setStatusTip(tr("Bittrex trading window"));
     openBlockExplorerAction = new QAction(QIcon(":/icons/explorer"), tr("&Blockchain explorer"), this);
     openBlockExplorerAction->setStatusTip(tr("Block explorer window"));
 
@@ -498,11 +484,6 @@ void BitcoinGUI::createMenuBar()
     }
     settings->addAction(optionsAction);
 
-#ifdef HAVE_QT5
-    QMenu* trading = appMenuBar->addMenu(tr("&Trade"));
-    trading->addAction(openTradingwindowAction);
-#endif // HAVE_QT5
-
     if (walletFrame) {
         QMenu* tools = appMenuBar->addMenu(tr("&Tools"));
         tools->addAction(openInfoAction);
@@ -512,6 +493,7 @@ void BitcoinGUI::createMenuBar()
         tools->addAction(openRepairAction);
         tools->addSeparator();
         tools->addAction(openConfEditorAction);
+        tools->addAction(openMNConfEditorAction);
         tools->addAction(showBackupsAction);
         tools->addAction(openBlockExplorerAction);
     }
@@ -680,9 +662,6 @@ void BitcoinGUI::createTrayIconMenu()
     trayIconMenu->addAction(bip38ToolAction);
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(optionsAction);
-#ifdef HAVE_QT5
-    trayIconMenu->addAction(openTradingwindowAction);
-#endif // HAVE_QT5
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(openInfoAction);
     trayIconMenu->addAction(openRPCConsoleAction);
@@ -691,6 +670,7 @@ void BitcoinGUI::createTrayIconMenu()
     trayIconMenu->addAction(openRepairAction);
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(openConfEditorAction);
+    trayIconMenu->addAction(openMNConfEditorAction);
     trayIconMenu->addAction(showBackupsAction);
     trayIconMenu->addAction(openBlockExplorerAction);
 #ifndef Q_OS_MAC // This is built-in on Mac
@@ -791,13 +771,6 @@ void BitcoinGUI::gotoBip38Tool()
 {
     if (walletFrame) walletFrame->gotoBip38Tool();
 }
-
-#ifdef HAVE_QT5
-void BitcoinGUI::gotoTradingPage()
-{
-    if (walletFrame) walletFrame->gotoTradingPage();
-}
-#endif // HAVE_QT5
 
 void BitcoinGUI::gotoMultiSendDialog()
 {
@@ -1056,7 +1029,7 @@ void BitcoinGUI::closeEvent(QCloseEvent* event)
 void BitcoinGUI::incomingTransaction(const QString& date, int unit, const CAmount& amount, const QString& type, const QString& address)
 {
     // On new transaction, make an info balloon
-    message((amount) < 0 ? (fMultiSendNotify == true ? tr("Sent MultiSend transaction") : tr("Sent transaction")) : tr("Incoming transaction"),
+    message((amount) < 0 ? (pwalletMain->fMultiSendNotify == true ? tr("Sent MultiSend transaction") : tr("Sent transaction")) : tr("Incoming transaction"),
         tr("Date: %1\n"
            "Amount: %2\n"
            "Type: %3\n"
