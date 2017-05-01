@@ -8,8 +8,12 @@ Group=pivx
 
 Type=forking
 PIDFile=/var/lib/pivxd/pivxd.pid
+
 ExecStart=/usr/bin/pivxd -daemon -pid=/var/lib/pivxd/pivxd.pid \
--conf=/etc/pivx/pivx.conf -datadir=/var/lib/pivxd
+          -conf=/etc/pivx/pivx.conf -datadir=/var/lib/pivxd
+
+ExecStop=-/usr/bin/pivx-cli -conf=/etc/pivx/pivx.conf \
+         -datadir=/var/lib/pivxd stop
 
 Restart=always
 PrivateTmp=true
