@@ -42,6 +42,21 @@ public:
             pn[i] = b.pn[i];
     }
 
+
+    bool IsNull() const
+    {
+        for (int i = 0; i < WIDTH; i++)
+            if (pn[i] != 0)
+                return false;
+        return true;
+    }
+
+    void SetNull()
+    {
+        memset(pn, 0, sizeof(pn));
+    }
+
+
     base_uint& operator=(const base_uint& b)
     {
         for (int i = 0; i < WIDTH; i++)
