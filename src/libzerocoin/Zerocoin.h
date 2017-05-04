@@ -45,9 +45,9 @@ public:
 	explicit ZerocoinException(const std::string& str) : std::runtime_error(str) {}
 };
 
-#include "serialize.h"
+#include "../serialize.h"
 #include "bignum.h"
-#include "hash.h"
+#include "../hash.h"
 #include "Params.h"
 #include "Coin.h"
 #include "Commitment.h"
