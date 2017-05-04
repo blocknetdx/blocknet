@@ -1,65 +1,63 @@
-<h2><strong>PIVX Repository (Version 2.1.7)</strong></h2>
-<p>More information at pivx.org Visit our ANN thread at bitcointalk.org/index.php?topic=1262920</p>
-<h3><strong>Coin specs:</strong></h3>
-<p><strong><span style="color: #800080;"><em>Algo:</em></span></strong></p>
-<ul>
-<li>Quark</li>
-</ul>
-<p><strong><span style="color: #800080;"><em>PoW Block Reward:</em></span></strong></p>
-<ul>
-<li>[block# 2-151200] 250 PIV [block# 151201-259200] 50 PIV</li>
-</ul>
-<p><strong><span style="color: #800080;"><em>PoS Block Reward:</em></span></strong></p>
-<ul>
-<li>[block# 259201-Infinite] Variable based on SeeSaw Reward Mechanism</li>
-</ul>
-<p><strong><span style="color: #800080;"><em>Block Time:</em></span></strong></p>
-<ul>
-<li>60 Seconds with Retargeting every Block</li>
-</ul>
-<p><strong><span style="color: #800080;"><em>Max Coin Supply:</em></span></strong></p>
-<ul>
-<li>PoW Phase: 43,199,500</li>
-</ul>
-<p><strong><span style="color: #800080;"><em>Max Coin Supply:</em></span></strong></p>
-<ul>
-<li>PoS Phase: Infinte</li>
-</ul>
-<p><strong><span style="color: #800080;"><em>PoW Phase 1:</em></span></strong></p>
-<ul>
-<li>[block# 1] 60k Premine for creation of 6 Masternodes for the functioning of the network.</li>
-</ul>
-<p><strong><span style="color: #800080;"><em>Pre-mine:</em></span></strong></p>
-<ul>
-<li>[block# 1] 60k Premine was burned at block 279917</li>
-</ul>
-<p><strong><span style="color: #800080;"><em>PoW Phase 2:</em></span></strong></p>
-<ul>
-<li>[block#&rsquo;s 2-259200] Approx 180 Days</li>
-</ul>
-<p><strong><span style="color: #800080;"><em>PoW Rewards Breakdown:</em></span></strong></p>
-<ul>
-<li>[block&rsquo;s &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;2-432000] 20% MN (50 PIV) &nbsp; &nbsp;/ 80% MINER (200 PIV)</li>
-<li>[block&rsquo;s &nbsp; 43201-151200] 20% MN (50 PIV) &nbsp; &nbsp;/ 70% MINER (200 PIV) &nbsp;/ 10% Available to the budget system (25 PIV)</li>
-<li>[block&rsquo;s 151201-259200] 45% MN (22.5 PIV) / 45% MINER (22.5 PIV) / 10% Available to the budget system ( &nbsp;5 PIV)</li>
-</ul>
-<p><strong><span style="color: #800080;"><em>PoS Rewards Breakdown:</em></span></strong></p>
-<ul>
-<li>PoS Phase 1: [blocks 259201-302399] 50 PIV (90% distributed to staker and masternode - 10% available to budget system)</li>
-<li>PoS Phase 2: [blocks 302400-345599] 45 PIV (90% distributed to staker and masternode - 10% available to budget system)</li>
-<li>PoS Phase 3: [blocks 345600-388799] 40 PIV (90% distributed to staker and masternode - 10% available to budget system)</li>
-<li>PoS Phase 4: [blocks 388800-431999] 35 PIV (90% distributed to staker and masternode - 10% available to budget system)</li>
-<li>PoS Phase 5: [blocks 432000-475199] 30 PIV (90% distributed to staker and masternode - 10% available to budget system)</li>
-<li>PoS Phase 6: [blocks 475200-518399] 25 PIV (90% distributed to staker and masternode - 10% available to budget system)</li>
-<li>PoS Phase 7: [blocks 518400-561599] 20 PIV (90% distributed to staker and masternode - 10% available to budget system)</li>
-<li>PoS Phase 8: [blocks 561600-604799] 15 PIV (90% distributed to staker and masternode - 10% available to budget system)</li>
-<li>PoS Phase 9: [blocks 604800-647999] 10 PIV (90% distributed to staker and masternode - 10% available to budget system)</li>
-<li>PoS Phase X: [blocks 648000-Infinite] &nbsp; 5 PIV (90% distributed to staker and masternode - 10% available to budget system)</li>
-</ul>
-<p>&nbsp;</p>
-<p>+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</p>
-<p>&nbsp;</p>
-<p>PIVX is a cutting edge cryptocurrency, with many features not available in most other cryptocurrencies.</p>
-<p>Anonymized transactions using coin mixing technology, we call it <em>Obfuscation</em>.</p>
-<p>Fast transactions featuring guaranteed zero confirmation transactions, we call it <em>SwiftTX</em>.</p>
-<p>Decentralized blockchain voting providing for consensus based advancement of the current Masternode technology used to secure the network and provide the above features, each Masternode is secured with collateral of 10K PIV</p>
+PIVX Core integration/staging repository
+=====================================
+
+[![Build Status](https://travis-ci.org/PIVX-Project/PIVX.svg?branch=master)](https://travis-ci.org/PIVX-Project/PIVX) [![GitHub version](https://badge.fury.io/gh/PIVX-Project%2FPIVX.svg)](https://badge.fury.io/gh/PIVX-Project%2FPIVX)
+
+PIVX is a cutting edge cryptocurrency, with many features not available in most other cryptocurrencies.
+- Anonymized transactions using coin mixing technology, we call it _Obfuscation_.
+- Fast transactions featuring guaranteed zero confirmation transactions, we call it _SwiftTX_.
+- Decentralized blockchain voting providing for consensus based advancement of the current Masternode
+  technology used to secure the network and provide the above features, each Masternode is secured
+  with collateral of 10K PIV
+
+More information at [pivx.org](http://www.pivx.org) Visit our ANN thread at [BitcoinTalk](http://www.bitcointalk.org/index.php?topic=1262920)
+
+### Coin Specs
+<table>
+<tr><td>Algo</td><td>Quark</td></tr>
+<tr><td>Block Time</td><td>60 Seconds</td></tr>
+<tr><td>Difficulty Retargeting</td><td>Every Block</td></tr>
+<tr><td>Max Coin Supply (PoW Phase)</td><td>43,199,500 PIV</td></tr>
+<tr><td>Max Coin Supply (PoS Phase)</td><td>Infinite</td></tr>
+<tr><td>Premine</td><td>60,000 PIV*</td></tr>
+</table>
+
+*60,000 PIV Premine was burned in block [279917](http://www.presstab.pw/phpexplorer/PIVX/block.php?blockhash=206d9cfe859798a0b0898ab00d7300be94de0f5469bb446cecb41c3e173a57e0)
+
+### Reward Distribution
+
+<table>
+<th colspan=4>PoW Phase</th>
+<tr><th>Block Height</th><th>Reward Amount</th><th>Notes</th><th>Duration (Days)</th></tr>
+<tr><td>1</td><td>60,000 PIV</td><td>Initial Premine</td><td>0 Days</td></tr>
+<tr><td>2-151200</td><td>250 PIV</td><td rowspan=2>Open Mining</td><td rowspan=2> Approx 180 Days</td></tr>
+<tr><td>151201-259200</td><td>50 PIV</td></tr>
+<tr><th colspan=4>PoS Phase</th></tr>
+<tr><th>Block Height</th><th colspan=3>Reward Amount</th></tr>
+<tr><td>259201-Infinite</td><td colspan=3>Variable based on SeeSaw Reward Mechanism</td></tr>
+</table>
+
+### PoW Rewards Breakdown
+
+<table>
+<th>Block Height</th><th>Masternodes</th><th>Miner</th><th>Budget</th>
+<tr><td>2-432000</td><td>20% (50 PIV)</td><td>80% (200 PIV)</td><td>N/A</td></tr>
+<tr><td>43201-151200</td><td>20% (50 PIV)</td><td>70% (200 PIV)</td><td>10% (25 PIV)</td></tr>
+<tr><td>151201-259200</td><td>45% (22.5 PIV)</td><td>45% (22.5 PIV)</td><td>10% (5 PIV)</td></tr>
+</table>
+
+### PoS Rewards Breakdown
+
+<table>
+<th>Phase</th><th>Block Height</th><th>Reward</th><th>Masternodes & Stakers</th><th>Budget</th>
+<tr><td>Phase 1</td><td>259201-302399</td><td>50 PIV</td><td>90% (45 PIV)</td><td>10% (5 PIV)</td></tr>
+<tr><td>Phase 2</td><td>302400-345599</td><td>45 PIV</td><td>90% (40.5 PIV)</td><td>10% (4.5 PIV)</td></tr>
+<tr><td>Phase 3</td><td>345600-388799</td><td>40 PIV</td><td>90% (36 PIV)</td><td>10% (4 PIV)</td></tr>
+<tr><td>Phase 4</td><td>388800-431999</td><td>35 PIV</td><td>90% (31.5 PIV)</td><td>10% (3.5 PIV)</td></tr>
+<tr><td>Phase 5</td><td>432000-475199</td><td>30 PIV</td><td>90% (27 PIV)</td><td>10% (3 PIV)</td></tr>
+<tr><td>Phase 6</td><td>475200-518399</td><td>25 PIV</td><td>90% (22.5 PIV)</td><td>10% (2.5 PIV)</td></tr>
+<tr><td>Phase 7</td><td>518400-561599</td><td>20 PIV</td><td>90% (18 PIV)</td><td>10% (2 PIV)</td></tr>
+<tr><td>Phase 8</td><td>561600-604799</td><td>15 PIV</td><td>90% (13.5 PIV)</td><td>10% (1.5 PIV)</td></tr>
+<tr><td>Phase 9</td><td>604800-647999</td><td>10 PIV</td><td>90% (9 PIV)</td><td>10% (1 PIV)</td></tr>
+<tr><td>Phase X</td><td>648000-Infinite</td><td>5 PIV</td><td>90% (4.5 PIV)</td><td>10% (0.5 PIV)</td></tr>
+</table>
