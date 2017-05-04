@@ -538,10 +538,6 @@
         <translation>Show wallet repair options</translation>
     </message>
     <message>
-        <source>Open &amp;Configuration File</source>
-        <translation>Open &amp;Configuration File</translation>
-    </message>
-    <message>
         <source>Open configuration file</source>
         <translation>Open configuration file</translation>
     </message>
@@ -662,16 +658,20 @@
         <translation>MultiSend Settings</translation>
     </message>
     <message>
+        <source>Open Wallet &amp;Configuration File</source>
+        <translation>Open Wallet &amp;Configuration File</translation>
+    </message>
+    <message>
+        <source>Open &amp;Masternode Configuration File</source>
+        <translation>Open &amp;Masternode Configuration File</translation>
+    </message>
+    <message>
+        <source>Open Masternode configuration file</source>
+        <translation>Open Masternode configuration file</translation>
+    </message>
+    <message>
         <source>Open a PIVX: URI or payment request</source>
         <translation>Open a PIVX: URI or payment request</translation>
-    </message>
-    <message>
-        <source>&amp;Trading window</source>
-        <translation>&amp;Trading window</translation>
-    </message>
-    <message>
-        <source>Bittrex trading window</source>
-        <translation>Bittrex trading window</translation>
     </message>
     <message>
         <source>&amp;Blockchain explorer</source>
@@ -684,10 +684,6 @@
     <message>
         <source>Show the PIVX Core help message to get a list with possible PIVX command-line options</source>
         <translation>Show the PIVX Core help message to get a list with possible PIVX command-line options</translation>
-    </message>
-    <message>
-        <source>&amp;Trade</source>
-        <translation>&amp;Trade</translation>
     </message>
     <message>
         <source>PIVX Core client</source>
@@ -2492,6 +2488,10 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>-reindex: Rebuild block chain index from current blk000??.dat files.</translation>
     </message>
     <message>
+        <source>Wallet Path</source>
+        <translation>Wallet Path</translation>
+    </message>
+    <message>
         <source>In:</source>
         <translation>In:</translation>
     </message>
@@ -2502,6 +2502,10 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <message>
         <source>Welcome to the PIVX RPC console.</source>
         <translation>Welcome to the PIVX RPC console.</translation>
+    </message>
+    <message>
+        <source>Wallet in use: </source>
+        <translation>Wallet in use: </translation>
     </message>
     <message>
         <source>Use up and down arrows to navigate history, and &lt;b&gt;Ctrl-L&lt;/b&gt; to clear screen.</source>
@@ -3474,6 +3478,10 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>Transaction ID</translation>
     </message>
     <message>
+        <source>Output index</source>
+        <translation>Output index</translation>
+    </message>
+    <message>
         <source>Merchant</source>
         <translation>Merchant</translation>
     </message>
@@ -3568,10 +3576,6 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>This block was not received by any other nodes and will probably not be accepted!</translation>
     </message>
     <message>
-        <source>Generated but not accepted</source>
-        <translation>Generated but not accepted</translation>
-    </message>
-    <message>
         <source>Received with</source>
         <translation>Received with</translation>
     </message>
@@ -3606,6 +3610,10 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <message>
         <source>Sent to</source>
         <translation>Sent to</translation>
+    </message>
+    <message>
+        <source>Orphan Block - Generated but not accepted. This does not impact your holdings.</source>
+        <translation>Orphan Block - Generated but not accepted. This does not impact your holdings.</translation>
     </message>
     <message>
         <source>Payment to yourself</source>
@@ -4030,10 +4038,6 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>Maximum total fees to use in a single wallet transaction, setting too low may abort large transactions (default: %s)</translation>
     </message>
     <message>
-        <source>Name to construct url for KeePass entry that stores the wallet passphrase</source>
-        <translation>Name to construct url for KeePass entry that stores the wallet passphrase</translation>
-    </message>
-    <message>
         <source>Number of seconds to keep misbehaving peers from reconnecting (default: %u)</source>
         <translation>Number of seconds to keep misbehaving peers from reconnecting (default: %u)</translation>
     </message>
@@ -4278,10 +4282,6 @@ for example: alertnotify=echo %%s | mail -s "PIVX Alert" admin@foo.com
     <message>
         <source>Connect through SOCKS5 proxy</source>
         <translation>Connect through SOCKS5 proxy</translation>
-    </message>
-    <message>
-        <source>Connect to KeePassHttp on port &lt;port&gt; (default: %u)</source>
-        <translation>Connect to KeePassHttp on port &lt;port&gt; (default: %u)</translation>
     </message>
     <message>
         <source>Connect to a node to retrieve peer addresses, and disconnect</source>
@@ -4546,14 +4546,6 @@ for example: alertnotify=echo %%s | mail -s "PIVX Alert" admin@foo.com
     <message>
         <source>Invalid script detected.</source>
         <translation>Invalid script detected.</translation>
-    </message>
-    <message>
-        <source>KeePassHttp id for the established association</source>
-        <translation>KeePassHttp id for the established association</translation>
-    </message>
-    <message>
-        <source>KeePassHttp key for AES encrypted communication with KeePass</source>
-        <translation>KeePassHttp key for AES encrypted communication with KeePass</translation>
     </message>
     <message>
         <source>Keep N PIV anonymized (default: %u)</source>
@@ -5012,10 +5004,6 @@ for example: alertnotify=echo %%s | mail -s "PIVX Alert" admin@foo.com
         <translation>Upgrade wallet to latest format</translation>
     </message>
     <message>
-        <source>Use KeePass 2 integration using KeePassHttp plugin (default: %u)</source>
-        <translation>Use KeePass 2 integration using KeePassHttp plugin (default: %u)</translation>
-    </message>
-    <message>
         <source>Use N separate masternodes to anonymize funds  (2-8, default: %u)</source>
         <translation>Use N separate masternodes to anonymize funds  (2-8, default: %u)</translation>
     </message>
@@ -5114,189 +5102,6 @@ for example: alertnotify=echo %%s | mail -s "PIVX Alert" admin@foo.com
     <message>
         <source>wallet.dat corrupt, salvage failed</source>
         <translation>wallet.dat corrupt, salvage failed</translation>
-    </message>
-</context>
-<context>
-    <name>tradingDialog</name>
-    <message>
-        <source>Bittrex API</source>
-        <translation>Bittrex API</translation>
-    </message>
-    <message>
-        <source>Order Book</source>
-        <translation>Order Book</translation>
-    </message>
-    <message>
-        <source>Bids</source>
-        <translation>Bids</translation>
-    </message>
-    <message>
-        <source>Asks</source>
-        <translation>Asks</translation>
-    </message>
-    <message>
-        <source>label</source>
-        <translation>label</translation>
-    </message>
-    <message>
-        <source>TextLabel</source>
-        <translation>TextLabel</translation>
-    </message>
-    <message>
-        <source>Market History</source>
-        <translation>Market History</translation>
-    </message>
-    <message>
-        <source>Open Orders</source>
-        <translation>Open Orders</translation>
-    </message>
-    <message>
-        <source>Advanced View</source>
-        <translation>Advanced View</translation>
-    </message>
-    <message>
-        <source>Trade history</source>
-        <translation>Trade history</translation>
-    </message>
-    <message>
-        <source>Buy</source>
-        <translation>Buy</translation>
-    </message>
-    <message>
-        <source>Buy PIV</source>
-        <translation>Buy PIV</translation>
-    </message>
-    <message>
-        <source>Units</source>
-        <translation>Units</translation>
-    </message>
-    <message>
-        <source>PIV</source>
-        <translation>PIV</translation>
-    </message>
-    <message>
-        <source>BTC</source>
-        <translation>BTC</translation>
-    </message>
-    <message>
-        <source>Bid</source>
-        <translation>Bid</translation>
-    </message>
-    <message>
-        <source>Order Type</source>
-        <translation>Order Type</translation>
-    </message>
-    <message>
-        <source>Max</source>
-        <translation>Max</translation>
-    </message>
-    <message>
-        <source>BTC Available:</source>
-        <translation>BTC Available:</translation>
-    </message>
-    <message>
-        <source>0.00000000</source>
-        <translation>0.00000000</translation>
-    </message>
-    <message>
-        <source>Total w/ 0.25% Fee</source>
-        <translation>Total w/ 0.25% Fee</translation>
-    </message>
-    <message>
-        <source>Sell</source>
-        <translation>Sell</translation>
-    </message>
-    <message>
-        <source>Sell PIV</source>
-        <translation>Sell PIV</translation>
-    </message>
-    <message>
-        <source>PIV Available:</source>
-        <translation>PIV Available:</translation>
-    </message>
-    <message>
-        <source> 0.00000000 </source>
-        <translation> 0.00000000 </translation>
-    </message>
-    <message>
-        <source>Total w/ 0.25% Fee </source>
-        <translation>Total w/ 0.25% Fee </translation>
-    </message>
-    <message>
-        <source> 0.00000000</source>
-        <translation> 0.00000000</translation>
-    </message>
-    <message>
-        <source> BTC</source>
-        <translation> BTC</translation>
-    </message>
-    <message>
-        <source>Balance</source>
-        <translation>Balance</translation>
-    </message>
-    <message>
-        <source>PIV Balance:</source>
-        <translation>PIV Balance:</translation>
-    </message>
-    <message>
-        <source>BTC Balance:</source>
-        <translation>BTC Balance:</translation>
-    </message>
-    <message>
-        <source>PIV Pending:</source>
-        <translation>PIV Pending:</translation>
-    </message>
-    <message>
-        <source>BTC Pending:</source>
-        <translation>BTC Pending:</translation>
-    </message>
-    <message>
-        <source>Bittrex PIV Deposit Address:</source>
-        <translation>Bittrex PIV Deposit Address:</translation>
-    </message>
-    <message>
-        <source>Generate Pivx Deposit Address</source>
-        <translation>Generate Pivx Deposit Address</translation>
-    </message>
-    <message>
-        <source>Update</source>
-        <translation>Update</translation>
-    </message>
-    <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=" font-weight:600;"&gt;Convert VCoin:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=" font-weight:600;"&gt;Convert VCoin:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
-    </message>
-    <message>
-        <source>=</source>
-        <translation>=</translation>
-    </message>
-    <message>
-        <source>$0.0000 / B0.00000000</source>
-        <translation>$0.0000 / B0.00000000</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>Settings</translation>
-    </message>
-    <message>
-        <source>Update API Keys</source>
-        <translation>Update API Keys</translation>
-    </message>
-    <message>
-        <source>API Key</source>
-        <translation>API Key</translation>
-    </message>
-    <message>
-        <source>Secret Key</source>
-        <translation>Secret Key</translation>
-    </message>
-    <message>
-        <source>0.000000000</source>
-        <translation>0.000000000</translation>
-    </message>
-    <message>
-        <source>Cancel Order</source>
-        <translation>Cancel Order</translation>
     </message>
 </context>
 </TS>

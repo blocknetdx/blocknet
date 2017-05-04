@@ -182,7 +182,4 @@
 <context>
     <name>pivx-core</name>
     </context>
-<context>
-    <name>tradingDialog</name>
-    </context>
 </TS>

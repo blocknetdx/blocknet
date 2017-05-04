@@ -1074,15 +1074,4 @@
         <translation>Atenció</translation>
     </message>
     </context>
-<context>
-    <name>tradingDialog</name>
-    <message>
-        <source>BTC Available:</source>
-        <translation>BTC Disponible:</translation>
-    </message>
-    <message>
-        <source>PIV Available:</source>
-        <translation>PIV Disponible:</translation>
-    </message>
-    </context>
 </TS>

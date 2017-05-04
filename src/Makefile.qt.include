@@ -4,6 +4,7 @@ EXTRA_LIBRARIES += qt/libbitcoinqt.a
 # pivx qt core #
 QT_TS = \
   qt/locale/pivx_ca.ts \
+  qt/locale/pivx_da.ts \
   qt/locale/pivx_de.ts \
   qt/locale/pivx_en.ts \
   qt/locale/pivx_en_US.ts \
