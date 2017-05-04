@@ -496,9 +496,7 @@ bool CMasternodePayments::AddWinningMasternode(CMasternodePaymentWinner& winnerI
         }
     }
 
-    int n = 1;
-    if (IsReferenceNode(winnerIn.vinMasternode)) n = 100;
-    mapMasternodeBlocks[winnerIn.nBlockHeight].AddPayee(winnerIn.payee, n);
+    mapMasternodeBlocks[winnerIn.nBlockHeight].AddPayee(winnerIn.payee, 1);
 
     return true;
 }
@@ -627,20 +625,8 @@ void CMasternodePayments::CleanPaymentList()
     }
 }
 
-bool IsReferenceNode(CTxIn& vin)
-{
-    //reference node - hybrid mode
-    if (vin.prevout.ToStringShort() == "099c01bea63abd1692f60806bb646fa1d288e2d049281225f17e499024084e28-0") return true; // mainnet
-    if (vin.prevout.ToStringShort() == "fbc16ae5229d6d99181802fd76a4feee5e7640164dcebc7f8feb04a7bea026f8-0") return true; // testnet
-    if (vin.prevout.ToStringShort() == "e466f5d8beb4c2d22a314310dc58e0ea89505c95409754d0d68fb874952608cc-1") return true; // regtest
-
-    return false;
-}
-
 bool CMasternodePaymentWinner::IsValid(CNode* pnode, std::string& strError)
 {
-    if (IsReferenceNode(vinMasternode)) return true;
-
     CMasternode* pmn = mnodeman.Find(vinMasternode);
 
     if (!pmn) {
@@ -678,18 +664,16 @@ bool CMasternodePayments::ProcessBlock(int nBlockHeight)
 
     //reference node - hybrid mode
 
-    if (!IsReferenceNode(activeMasternode.vin)) {
-        int n = mnodeman.GetMasternodeRank(activeMasternode.vin, nBlockHeight - 100, ActiveProtocol());
+    int n = mnodeman.GetMasternodeRank(activeMasternode.vin, nBlockHeight - 100, ActiveProtocol());
 
-        if (n == -1) {
-            LogPrint("mnpayments", "CMasternodePayments::ProcessBlock - Unknown Masternode\n");
-            return false;
-        }
+    if (n == -1) {
+        LogPrint("mnpayments", "CMasternodePayments::ProcessBlock - Unknown Masternode\n");
+        return false;
+    }
 
-        if (n > MNPAYMENTS_SIGNATURES_TOTAL) {
-            LogPrint("mnpayments", "CMasternodePayments::ProcessBlock - Masternode not in the top %d (%d)\n", MNPAYMENTS_SIGNATURES_TOTAL, n);
-            return false;
-        }
+    if (n > MNPAYMENTS_SIGNATURES_TOTAL) {
+        LogPrint("mnpayments", "CMasternodePayments::ProcessBlock - Masternode not in the top %d (%d)\n", MNPAYMENTS_SIGNATURES_TOTAL, n);
+        return false;
     }
 
     if (nBlockHeight <= nLastBlockHeight) return false;
