@@ -9,6 +9,7 @@
 
 #include "addrman.h"
 #include "alert.h"
+#include "bignum.h"
 #include "chainparams.h"
 #include "checkpoints.h"
 #include "checkqueue.h"
@@ -968,6 +969,233 @@ bool MoneyRange(CAmount nValueOut)
     return nValueOut >= 0 && nValueOut <= Params().MaxMoneyOut();
 }
 
+vector<uint256> vZerocoinValues = {libzerocoin::ZQ_LOVELACE, libzerocoin::ZQ_GOLDWASSER,
+                                       libzerocoin::ZQ_RACKOFF, libzerocoin::ZQ_PEDERSEN,
+                                       libzerocoin::ZQ_WILLIAMSON};
+
+bool CheckZerocoinMint(const CTxOut txout, CValidationState& state)
+{
+    vector<unsigned char> vchZeroMint;
+    vchZeroMint.insert(vchZeroMint.end(), txout.scriptPubKey.begin() + 6, txout.scriptPubKey.begin() + txout.scriptPubKey.size());
+
+    CBigNum pubCoin;
+    pubCoin.setvch(vchZeroMint);
+
+    if(std::find(vZerocoinValues.begin(), vZerocoinValues.end(), txout.nValue / COIN) == vZerocoinValues.end())
+        return state.DoS(100, error("CTransaction::CheckTransaction() : txout.nValue is not correct"));
+
+    libzerocoin::CoinDenomination denomination = txout.nValue / COIN;
+
+    libzerocoin::PublicCoin checkPubCoin(ZCParams, pubCoin, denomination);
+    if (!checkPubCoin.validate())
+        return state.DoS(100, error("CTransaction::CheckTransaction() : PubCoin is not validate"));
+
+    if (!isVerifyDB) {
+        // Check the pubCoinValue didn't already store in the wallet
+        CZerocoinEntry pubCoinTx;
+        list <CZerocoinEntry> listPubCoin = list<CZerocoinEntry>();
+
+        CWalletDB walletdb(pwalletMain->strWalletFile);
+        walletdb.ListPubCoin(listPubCoin);
+        bool isAlreadyStored = false;
+
+        // CHECKING PROCESS
+        BOOST_FOREACH(const CZerocoinEntry &pubCoinItem, listPubCoin) {
+            if(pubCoinItem.value == pubCoin && pubCoinItem.denomination == denomination)
+                isAlreadyStored = true;
+        }
+
+        // INSERT PROCESS
+        if(!isAlreadyStored) {
+            // TX DOES NOT INCLUDE IN DB
+            printf("INSERTING\n");
+            pubCoinTx.id = -1;
+            pubCoinTx.denomination = denomination;
+            pubCoinTx.value = pubCoin;
+            pubCoinTx.randomness = 0;
+            pubCoinTx.serialNumber = 0;
+            pubCoinTx.nHeight = -1;
+            printf("INSERT PUBCOIN ID: %d\n", pubCoinTx.id);
+            walletdb.WriteZerocoinEntry(pubCoinTx);
+        }
+    }
+}
+
+bool CheckZerocoinSpend(uint256 hashTx, int nHeight, const CTxOut txout, CValidationState& state)
+{
+    CZerocoinEntry pubCoinTx;
+    list<CZerocoinEntry> listPubCoin;
+    listPubCoin.clear();
+
+    if (isVerifyDB)
+        continue;
+
+    CWalletDB walletdb(pwalletMain->strWalletFile);
+    walletdb.ListPubCoin(listPubCoin);
+
+    listPubCoin.sort(CompHeight);
+
+    if (txout.nValue == libzerocoin::ZQ_LOVELACE * COIN)
+    {
+        // Check vIn
+        BOOST_FOREACH(const CTxIn& txin, vin) {
+
+            if (!txin.scriptSig.IsZerocoinSpend()) {
+                //PRESSTAB - Is this a redundant check? Shouldn't this have been checked
+                //before even entering CheckZerocoinSpend?
+                LogPrintf("%s: scriptSig is not a zerocoin spend\n", __func__);
+                continue;
+            }
+
+            // Deserialize the CoinSpend intro a fresh object
+            std::vector<char, zero_after_free_allocator<char> > dataTxIn;
+            dataTxIn.insert(dataTxIn.end(), txin.scriptSig.begin() + 4, txin.scriptSig.end());
+
+            CDataStream serializedCoinSpend(SER_NETWORK, PROTOCOL_VERSION);
+            serializedCoinSpend.vch = dataTxIn;
+
+            libzerocoin::CoinSpend newSpend(ZCParams, serializedCoinSpend);
+
+            // Create a new metadata object to contain the hash of the received
+            // ZEROCOIN_SPEND transaction. If we were a real client we'd actually
+            // compute the hash of the received transaction here.
+            //libzerocoin::SpendMetaData newMetadata(0, 0);
+            libzerocoin::SpendMetaData newMetadata(nHeight, 0); //PRESSTAB: get tx hash from vin
+            libzerocoin::Accumulator accumulator(ZCParams, libzerocoin::ZQ_LOVELACE);
+            libzerocoin::Accumulator accumulatorRev(ZCParams, libzerocoin::ZQ_LOVELACE);
+
+            // CHECK PUBCOIN ID
+            int pubcoinId = txin.nSequence;
+            if (pubcoinId < 1 || pubcoinId >= INT_MAX) { // IT BEGINS WITH 1
+                return state.DoS(100, error("CTransaction::CheckTransaction() : Error: nSequence is not correct format"));
+            }
+
+            // VERIFY COINSPEND TX
+            int countPubcoin = 0;
+            bool passVerify = false;
+            BOOST_FOREACH(const CZerocoinEntry& pubCoinItem, listPubCoin) {
+                if (pubCoinItem.denomination == libzerocoin::ZQ_LOVELACE && pubCoinItem.id == pubcoinId && pubCoinItem.nHeight != -1) {
+                    LogPrintf("checking accumulator for zerocoin denomination = %d, id = %d, pubcoinId = %d height = %d\n", pubCoinItem.denomination, pubCoinItem.id, pubcoinId, pubCoinItem.nHeight);
+                    libzerocoin::PublicCoin pubCoinTemp(ZCParams, pubCoinItem.value, libzerocoin::ZQ_LOVELACE);
+                    if (!pubCoinTemp.validate())
+                        return state.DoS(100, error("CTransaction::CheckTransaction() : Error: Public Coin for Accumulator is not valid !!!"));
+
+                    countPubcoin++;
+                    accumulator += pubCoinTemp;
+                    if (countPubcoin >= 2) { // MINIMUM REQUIREMENT IS 2 PUBCOINS
+                        if (newSpend.Verify(accumulator, newMetadata)) {
+                            printf("COIN SPEND TX DID VERIFY!\n");
+                            passVerify = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // It does not have this mint coins id, still sync
+            if(countPubcoin == 0)
+                return state.DoS(0, error("CTransaction::CheckTransaction() : Error: Node does not have mint zerocoin to verify, please wait until "));
+
+
+            if(!passVerify){
+                int countPubcoin = 0;
+                LogPrintf("PROCESS REVERSE\n");
+                BOOST_REVERSE_FOREACH(const CZerocoinEntry& pubCoinItem, listPubCoin) {
+                    if (pubCoinItem.denomination == libzerocoin::ZQ_LOVELACE && pubCoinItem.id == pubcoinId && pubCoinItem.nHeight != -1) {
+                        LogPrintf(" lovlace did not pass checking accumulator denomination = %d, id = %d, pubcoinId = %d height = %d\n", pubCoinItem.denomination, pubCoinItem.id, pubcoinId, pubCoinItem.nHeight);
+                        libzerocoin::PublicCoin pubCoinTemp(ZCParams, pubCoinItem.value, libzerocoin::ZQ_LOVELACE);
+                        if (!pubCoinTemp.validate())
+                            return state.DoS(100, error("CTransaction::CheckTransaction() : Error: Public Coin for Accumulator is not valid !!!"));
+
+                        countPubcoin++;
+                        accumulatorRev += pubCoinTemp;
+                        if (countPubcoin >= 2) { // MINIMUM REQUIREMENT IS 2 PUBCOINS
+                            if (newSpend.Verify(accumulatorRev, newMetadata)) {
+                                printf("COIN SPEND TX DID VERIFY!\n");
+                                passVerify = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // It does not have this mint coins id, still sync
+                if(countPubcoin == 0)
+                    return state.DoS(0, error("CTransaction::CheckTransaction() : Error: Node does not have mint zerocoin to verify, please wait until "));
+            }
+
+            if (passVerify) {
+                // Pull the serial number out of the CoinSpend object. If we
+                // were a real Zerocoin client we would now check that the serial number
+                // has not been spent before (in another ZEROCOIN_SPEND) transaction.
+                // The serial number is stored as a Bignum.
+
+                // chceck already store
+                bool isAlreadyStored = false;
+
+                CBigNum serialNumber = newSpend.getCoinSerialNumber();
+                CWalletDB walletdb(pwalletMain->strWalletFile);
+
+                std::list<CZerocoinSpendEntry> listCoinSpendSerial;
+                walletdb.ListCoinSpendSerial(listCoinSpendSerial);
+                BOOST_FOREACH(const CZerocoinSpendEntry& item, listCoinSpendSerial)
+                {
+                    if (item.coinSerial == serialNumber && item.denomination == libzerocoin::ZQ_LOVELACE && item.id == pubcoinId){
+                        if(item.hashTx != hashTx)
+                            return state.DoS(100, error("CTransaction::CheckTransaction() : The CoinSpend serial has been used"));
+
+                        if(item.pubCoin != 0){
+                            BOOST_FOREACH(const CZerocoinEntry& pubCoinItem, listPubCoin)
+                            {
+                                if (pubCoinItem.value == item.pubCoin) {
+                                    pubCoinTx.nHeight = pubCoinItem.nHeight;
+                                    pubCoinTx.denomination = pubCoinItem.denomination;
+                                    // UPDATE FOR INDICATE IT HAS BEEN USED
+                                    pubCoinTx.IsUsed = true;
+                                    // REMOVE RANDOMNESS FOR PREVENT FUTURE USE
+                                    // pubCoinTx.randomness = 0;
+                                    // pubCoinTx.serialNumber = 0;
+
+                                    pubCoinTx.value = pubCoinItem.value;
+                                    pubCoinTx.id = pubCoinItem.id;
+                                    walletdb.WriteZerocoinEntry(pubCoinTx);
+                                    // Update UI wallet
+                                    pwalletMain->NotifyZerocoinChanged(pwalletMain, pubCoinItem.value.GetHex(), "Used", CT_UPDATED);
+                                    break;
+                                }
+                            }
+                        }
+                        isAlreadyStored = true;
+                        break;
+                    }
+                }
+
+                if (!isAlreadyStored) {
+                    // INSERTING COINSPEND TO DB
+                    CZerocoinSpendEntry zccoinSpend;
+                    zccoinSpend.coinSerial = serialNumber;
+                    zccoinSpend.hashTx = hashTx;
+                    zccoinSpend.pubCoin = 0;
+                    zccoinSpend.id = pubcoinId;
+                    if(nHeight < INT_MAX){
+                        zccoinSpend.denomination = libzerocoin::ZQ_LOVELACE;
+                    }
+                    walletdb.WriteCoinSpendSerialEntry(zccoinSpend);
+                }
+            }
+            else {
+                //printf("isVerifyDB = %d\n", isVerifyDB);
+                return state.DoS(100, error("CTransaction::CheckTransaction() : COINSPEND TX IN ZQ_LOVELACE DID NOT VERIFY!"));
+            }
+                /////////////////////////////////////////////////////////////////////////////////////////////////
+        }
+
+    }
+    else {
+        return state.DoS(100, error("CTransaction::CheckTransaction() : Your spending txout value does not match"));
+    }
+}
+
 bool CheckTransaction(const CTransaction& tx, CValidationState& state)
 {
     // Basic checks that don't depend on any context
@@ -998,6 +1226,11 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
         if (!MoneyRange(nValueOut))
             return state.DoS(100, error("CheckTransaction() : txout total out of range"),
                 REJECT_INVALID, "bad-txns-txouttotal-toolarge");
+
+        if(!txout.scriptPubKey.empty() && txout.scriptPubKey.IsZerocoinMint())
+            if(!CheckZerocoinMint(txout, state))
+                return state.DoS(100, error("CheckTransaction() : invalid zerocoin mint"));
+
     }
 
     // Check for duplicate inputs
@@ -1685,7 +1918,7 @@ int64_t GetMasternodePayment(int nHeight, int64_t blockValue, int nMasternodeCou
 
         // Use this log to compare the masternode count for different clients
         LogPrintf("Adjusting seesaw at height %d with %d masternodes (without drift: %d) at %ld\n", nHeight, nMasternodeCount, nMasternodeCount - Params().MasternodeCountDrift(), GetTime());
-        
+
         if (fDebug)
             LogPrintf("GetMasternodePayment(): moneysupply=%s, nodecoins=%s \n", FormatMoney(nMoneySupply).c_str(),
                 FormatMoney(mNodeCoins).c_str());
@@ -5611,7 +5844,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
 }
 
 // Note: whenever a protocol update is needed toggle between both implementations (comment out the formerly active one)
-//       so we can leave the existing clients untouched (old SPORK will stay on so they don't see even older clients). 
+//       so we can leave the existing clients untouched (old SPORK will stay on so they don't see even older clients).
 //       Those old clients won't react to the changes of the other (new) SPORK because at the time of their implementation
 //       it was the one which was commented out
 int ActiveProtocol()
@@ -5629,9 +5862,9 @@ int ActiveProtocol()
 */
 
 
-    // SPORK_15 is used for 70910. Nodes < 70910 don't see it and still get their protocol version via SPORK_14 and their 
+    // SPORK_15 is used for 70910. Nodes < 70910 don't see it and still get their protocol version via SPORK_14 and their
     // own ModifierUpgradeBlock()
- 
+
     if (IsSporkActive(SPORK_15_NEW_PROTOCOL_ENFORCEMENT_2))
             return MIN_PEER_PROTO_VERSION_AFTER_ENFORCEMENT;
 
