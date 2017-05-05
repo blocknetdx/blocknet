@@ -1187,7 +1187,7 @@ bool CheckZerocoinSpend(uint256 hashTx, int nHeight, const CTxOut txout, vector<
     return true;
 }
 
-bool CheckTransaction(const CTransaction& tx, const int nHeight, CValidationState& state)
+bool CheckTransaction(const CTransaction& tx, CValidationState& state)
 {
     // Basic checks that don't depend on any context
     if (tx.vin.empty())
