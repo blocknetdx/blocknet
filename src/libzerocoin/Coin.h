@@ -14,8 +14,11 @@
 #define COIN_H_
 #include "bignum.h"
 #include "Params.h"
+#include "../util.h"
+
 namespace libzerocoin {
 
+//PRESSTAB: should we add an invalid representation for CoinDenomination?
 enum  CoinDenomination {
     ZQ_LOVELACE = 1,
     ZQ_GOLDWASSER = 10,
@@ -25,6 +28,27 @@ enum  CoinDenomination {
                     // the scientist who actually invented
                     // Public key cryptography
 };
+
+bool AmountToZerocoinDenomination(uint256 amount, CoinDenomination& denomination)
+{
+	if(amount == CoinDenomination::ZQ_LOVELACE * COIN)
+		denomination = CoinDenomination::ZQ_LOVELACE;
+	else if(amount == CoinDenomination::ZQ_GOLDWASSER * COIN)
+		denomination = CoinDenomination ::ZQ_GOLDWASSER;
+	else if(amount == CoinDenomination::ZQ_RACKOFF * COIN)
+		denomination = CoinDenomination::ZQ_RACKOFF;
+	else if(amount == CoinDenomination::ZQ_PEDERSEN * COIN)
+		denomination = CoinDenomination::ZQ_PEDERSEN;
+	else if(amount == CoinDenomination::ZQ_WILLIAMSON * COIN)
+		denomination = CoinDenomination::ZQ_WILLIAMSON;
+	else
+	{
+		//not a valid denomination mark to minimal and return false
+		//should mark invalid if we add that denom to the enum
+		denomination = CoinDenomination::ZQ_LOVELACE;
+		return false;
+	}
+}
 
 /** A Public coin is the part of a coin that
  * is published to the network and what is handled

@@ -983,10 +983,9 @@ bool CheckZerocoinMint(const CTxOut txout, CValidationState& state)
     CBigNum pubCoin;
     pubCoin.setvch(vchZeroMint);
 
-    if(std::find(vZerocoinValues.begin(), vZerocoinValues.end(), txout.nValue / COIN) == vZerocoinValues.end())
+    libzerocoin::CoinDenomination denomination;
+    if(libzerocoin::AmountToZerocoinDenomination(txout.nValue, denomination))
         return state.DoS(100, error("CTransaction::CheckTransaction() : txout.nValue is not correct"));
-
-    libzerocoin::CoinDenomination denomination = txout.nValue / COIN;
 
     libzerocoin::PublicCoin checkPubCoin(ZCParams, pubCoin, denomination);
     if (!checkPubCoin.validate())
