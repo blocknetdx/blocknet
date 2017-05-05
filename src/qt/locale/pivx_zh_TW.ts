@@ -210,11 +210,4 @@
 <context>
     <name>pivx-core</name>
     </context>
-<context>
-    <name>tradingDialog</name>
-    <message>
-        <source>TextLabel</source>
-        <translation>文字標籤</translation>
-    </message>
-    </context>
 </TS>

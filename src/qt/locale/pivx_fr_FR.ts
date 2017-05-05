@@ -466,10 +466,6 @@
         <translation>Montrer les options de réparation du portefeuille </translation>
     </message>
     <message>
-        <source>Open &amp;Configuration File</source>
-        <translation>Ouvrir le ficher de configuration</translation>
-    </message>
-    <message>
         <source>Open configuration file</source>
         <translation>Ouvrir le fichier de configuration</translation>
     </message>
@@ -540,14 +536,6 @@
     <message>
         <source>Encrypt and decrypt private keys using a passphrase</source>
         <translation>Crypter et décrypter les clés privées en utilisant une phrase secrète</translation>
-    </message>
-    <message>
-        <source>Bittrex trading window</source>
-        <translation>Fenêtre de trading Bittrex</translation>
-    </message>
-    <message>
-        <source>&amp;Trade</source>
-        <translation>Trader</translation>
     </message>
     <message numerus="yes">
         <source>%n active connection(s) to PIVX network</source>
@@ -1719,8 +1707,5 @@ Veuillez vérifier l'adresse et réessayer.</translation>
         <source>Warning</source>
         <translation>Attention</translation>
     </message>
-    </context>
-<context>
-    <name>tradingDialog</name>
     </context>
 </TS>

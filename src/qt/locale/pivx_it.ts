@@ -534,10 +534,6 @@
         <translation>Mostra opzioni di riparazione del portafoglio</translation>
     </message>
     <message>
-        <source>Open &amp;Configuration File</source>
-        <translation>&amp;Apri file di configurazione</translation>
-    </message>
-    <message>
         <source>Open configuration file</source>
         <translation>Apri il file di configurazione</translation>
     </message>
@@ -612,10 +608,6 @@
     <message>
         <source>Open a PIVX: URI or payment request</source>
         <translation>Apri un PIVX: URI o richiesta di pagamento</translation>
-    </message>
-    <message>
-        <source>Bittrex trading window</source>
-        <translation>Finestra di trading Bittrex</translation>
     </message>
     <message>
         <source>Block explorer window</source>
@@ -997,8 +989,5 @@ MultiSend: %1</translation>
         <source>Warning</source>
         <translation>Avvertimento</translation>
     </message>
-    </context>
-<context>
-    <name>tradingDialog</name>
     </context>
 </TS>

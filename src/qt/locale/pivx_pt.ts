@@ -410,15 +410,8 @@
         <translation>Conectar usando proxy SOCKS5</translation>
     </message>
     <message>
-        <source>Connect to KeePassHttp on port &lt;port&gt; (default: %u)</source>
-        <translation>Conectar ao KeePassHttp na porta &lt;port&gt; (padrão: %u)</translation>
-    </message>
-    <message>
         <source>Connection options:</source>
         <translation>Opções de conexão:</translation>
     </message>
-    </context>
-<context>
-    <name>tradingDialog</name>
     </context>
 </TS>

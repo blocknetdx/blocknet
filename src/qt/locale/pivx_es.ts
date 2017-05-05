@@ -538,10 +538,6 @@
         <translation>Mostrar opciónes de reparación de la wallet</translation>
     </message>
     <message>
-        <source>Open &amp;Configuration File</source>
-        <translation>Abrir &amp;Archivo Configuración</translation>
-    </message>
-    <message>
         <source>Open configuration file</source>
         <translation>Abrir archivo configuración</translation>
     </message>
@@ -662,16 +658,20 @@
         <translation>Configuración de MultiEnvío</translation>
     </message>
     <message>
+        <source>Open Wallet &amp;Configuration File</source>
+        <translation>Abrir Fichero de &amp;Configuración del Monedero</translation>
+    </message>
+    <message>
+        <source>Open &amp;Masternode Configuration File</source>
+        <translation>Abrir Fichero de Configuración de Nodos &amp;Maestros</translation>
+    </message>
+    <message>
+        <source>Open Masternode configuration file</source>
+        <translation>Abrir Fichero de Configuración de Nodos Maestros</translation>
+    </message>
+    <message>
         <source>Open a PIVX: URI or payment request</source>
         <translation>Abrir un PIVX: URI o solicitud de pago</translation>
-    </message>
-    <message>
-        <source>&amp;Trading window</source>
-        <translation>Ventana de &amp;Negociación</translation>
-    </message>
-    <message>
-        <source>Bittrex trading window</source>
-        <translation>Ventana de negociación Bittrex</translation>
     </message>
     <message>
         <source>&amp;Blockchain explorer</source>
@@ -684,10 +684,6 @@
     <message>
         <source>Show the PIVX Core help message to get a list with possible PIVX command-line options</source>
         <translation>Mostrar la ayuda de PIVX Core para obtener una lista de posibles opciones en línea de comandos</translation>
-    </message>
-    <message>
-        <source>&amp;Trade</source>
-        <translation>&amp;Negociar</translation>
     </message>
     <message>
         <source>PIVX Core client</source>
@@ -2489,6 +2485,10 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>-reindex: Reconstruir el índice de la cadena de bloques desde los ficheros blk000??.dat actuales.</translation>
     </message>
     <message>
+        <source>Wallet Path</source>
+        <translation>Ruta al Monedero</translation>
+    </message>
+    <message>
         <source>In:</source>
         <translation>Dentro:</translation>
     </message>
@@ -2499,6 +2499,10 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <message>
         <source>Welcome to the PIVX RPC console.</source>
         <translation>Bienvenido a la consola RPC de PIVX.</translation>
+    </message>
+    <message>
+        <source>Wallet in use: </source>
+        <translation>Monedero en uso:</translation>
     </message>
     <message>
         <source>Use up and down arrows to navigate history, and &lt;b&gt;Ctrl-L&lt;/b&gt; to clear screen.</source>
@@ -2953,6 +2957,10 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>La herramienta de separación de bloques no funciona cuando se envía a direcciones exteriores. Inténtelo otra vez.</translation>
     </message>
     <message>
+        <source>using</source>
+        <translation>usando</translation>
+    </message>
+    <message>
         <source>anonymous funds</source>
         <translation>fondos anónimos</translation>
     </message>
@@ -2979,6 +2987,26 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <message>
         <source>are added as transaction fee</source>
         <translation>son añadidos como comisión de transacción</translation>
+    </message>
+    <message>
+        <source>Total Amount = &lt;b&gt;%1&lt;/b&gt;&lt;br /&gt;= %2</source>
+        <translation>Cantidad total = &lt;b&gt;%1&lt;/b&gt;&lt;br /&gt;= %2</translation>
+    </message>
+    <message>
+        <source>Confirm send coins</source>
+        <translation>Confirmar enviar monedas</translation>
+    </message>
+    <message>
+        <source>A fee %1 times higher than %2 per kB is considered an insanely high fee.</source>
+        <translation>Una comisión %1 veces más alta que %2 por kB se considera exageradamente alta.</translation>
+    </message>
+    <message>
+        <source>The recipient address is not valid, please recheck.</source>
+        <translation>La dirección de destino no es válida, por favor compruébelo de nuevo.</translation>
+    </message>
+    <message>
+        <source>(obfuscation requires this amount to be rounded up to the nearest %1).</source>
+        <translation>(la ofuscación requiere redondear hacia arriba esta cantidad al %1 más cercano).</translation>
     </message>
     <message>
         <source>(no label)</source>
@@ -3205,13 +3233,6 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <message>
         <source>Warning</source>
         <translation>Advertencia</translation>
-    </message>
-    </context>
-<context>
-    <name>tradingDialog</name>
-    <message>
-        <source>TextLabel</source>
-        <translation>EtiquetaDeTexto</translation>
     </message>
     </context>
 </TS>
