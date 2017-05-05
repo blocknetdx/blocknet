@@ -29,7 +29,7 @@
 #include "util.h"
 #include "utilmoneystr.h"
 
-#include "libzerocoin/bignum.h"
+#include "primitives/zerocoin.h"
 #include "libzerocoin/Zerocoin.h"
 
 #include <sstream>
@@ -997,41 +997,40 @@ bool CheckZerocoinMint(const CTxOut txout, CValidationState& state)
     if (!checkPubCoin.validate())
         return state.DoS(100, error("CTransaction::CheckTransaction() : PubCoin is not validate"));
 
-    if (!isVerifyDB) {
-        // Check the pubCoinValue didn't already store in the wallet
-        CZerocoinEntry pubCoinTx;
-        list <CZerocoinEntry> listPubCoin = list<CZerocoinEntry>();
 
-        CWalletDB walletdb(pwalletMain->strWalletFile);
-        walletdb.ListPubCoin(listPubCoin);
-        bool isAlreadyStored = false;
+    // Check the pubCoinValue didn't already store in the wallet
+    CZerocoinMint pubCoinTx;
+    list <CZerocoinMint> listPubCoin = list<CZerocoinMint>();
 
-        // CHECKING PROCESS
-        BOOST_FOREACH(const CZerocoinEntry &pubCoinItem, listPubCoin) {
-            if(pubCoinItem.value == pubCoin && pubCoinItem.denomination == denomination)
-                isAlreadyStored = true;
-        }
+    CWalletDB walletdb(pwalletMain->strWalletFile);
+    walletdb.ListPubCoin(listPubCoin);
+    bool isAlreadyStored = false;
 
-        // INSERT PROCESS
-        if(!isAlreadyStored) {
-            // TX DOES NOT INCLUDE IN DB
-            printf("INSERTING\n");
-            pubCoinTx.id = -1;
-            pubCoinTx.denomination = denomination;
-            pubCoinTx.value = pubCoin;
-            pubCoinTx.randomness = 0;
-            pubCoinTx.serialNumber = 0;
-            pubCoinTx.nHeight = -1;
-            printf("INSERT PUBCOIN ID: %d\n", pubCoinTx.id);
-            walletdb.WriteZerocoinEntry(pubCoinTx);
-        }
+    // CHECKING PROCESS
+    BOOST_FOREACH(const CZerocoinMint &pubCoinItem, listPubCoin) {
+        if(pubCoinItem.GetValue() == pubCoin && pubCoinItem.GetDenomination() == denomination)
+            isAlreadyStored = true;
+    }
+
+    // INSERT PROCESS
+    if(!isAlreadyStored) {
+        // TX DOES NOT INCLUDE IN DB
+        printf("INSERTING\n");
+        pubCoinTx.SetId(-1);
+        pubCoinTx.SetDenomination(denomination);
+        pubCoinTx.SetValue(pubCoin);
+        pubCoinTx.SetRandomness(0);
+        pubCoinTx.SetSerialNumber(0);
+        pubCoinTx.SetHeight(-1);
+        printf("INSERT PUBCOIN ID: %d\n", pubCoinTx.GetId());
+        walletdb.WriteZerocoinEntry(pubCoinTx);
     }
 }
 
 bool CheckZerocoinSpend(uint256 hashTx, int nHeight, const CTxOut txout, CValidationState& state)
 {
-    CZerocoinEntry pubCoinTx;
-    list<CZerocoinEntry> listPubCoin;
+    CZerocoinMint pubCoinTx;
+    list<CZerocoinMint> listPubCoin;
     listPubCoin.clear();
 
     if (isVerifyDB)
@@ -1080,10 +1079,10 @@ bool CheckZerocoinSpend(uint256 hashTx, int nHeight, const CTxOut txout, CValida
             // VERIFY COINSPEND TX
             int countPubcoin = 0;
             bool passVerify = false;
-            BOOST_FOREACH(const CZerocoinEntry& pubCoinItem, listPubCoin) {
-                if (pubCoinItem.denomination == libzerocoin::ZQ_LOVELACE && pubCoinItem.id == pubcoinId && pubCoinItem.nHeight != -1) {
-                    LogPrintf("checking accumulator for zerocoin denomination = %d, id = %d, pubcoinId = %d height = %d\n", pubCoinItem.denomination, pubCoinItem.id, pubcoinId, pubCoinItem.nHeight);
-                    libzerocoin::PublicCoin pubCoinTemp(ZCParams, pubCoinItem.value, libzerocoin::ZQ_LOVELACE);
+            BOOST_FOREACH(const CZerocoinMint& pubCoinItem, listPubCoin) {
+                if (pubCoinItem.GetDenomination() == libzerocoin::ZQ_LOVELACE && pubCoinItem.GetId() == pubcoinId && pubCoinItem.GetHeight() != -1) {
+                    LogPrintf("checking accumulator for zerocoin denomination = %d, id = %d, pubcoinId = %d height = %d\n", pubCoinItem.GetDenomination(), pubCoinItem.GetId(), pubcoinId, pubCoinItem.GetHeight());
+                    libzerocoin::PublicCoin pubCoinTemp(ZCParams, pubCoinItem.GetValue(), libzerocoin::ZQ_LOVELACE);
                     if (!pubCoinTemp.validate())
                         return state.DoS(100, error("CTransaction::CheckTransaction() : Error: Public Coin for Accumulator is not valid !!!"));
 
@@ -1107,10 +1106,10 @@ bool CheckZerocoinSpend(uint256 hashTx, int nHeight, const CTxOut txout, CValida
             if(!passVerify){
                 int countPubcoin = 0;
                 LogPrintf("PROCESS REVERSE\n");
-                BOOST_REVERSE_FOREACH(const CZerocoinEntry& pubCoinItem, listPubCoin) {
-                    if (pubCoinItem.denomination == libzerocoin::ZQ_LOVELACE && pubCoinItem.id == pubcoinId && pubCoinItem.nHeight != -1) {
-                        LogPrintf(" lovlace did not pass checking accumulator denomination = %d, id = %d, pubcoinId = %d height = %d\n", pubCoinItem.denomination, pubCoinItem.id, pubcoinId, pubCoinItem.nHeight);
-                        libzerocoin::PublicCoin pubCoinTemp(ZCParams, pubCoinItem.value, libzerocoin::ZQ_LOVELACE);
+                BOOST_REVERSE_FOREACH(const CZerocoinMint& pubCoinItem, listPubCoin) {
+                    if (pubCoinItem.GetDenomination() == libzerocoin::ZQ_LOVELACE && pubCoinItem.GetId() == pubcoinId && pubCoinItem.GetHeight() != -1) {
+                        LogPrintf(" lovlace did not pass checking accumulator denomination = %d, id = %d, pubcoinId = %d height = %d\n", pubCoinItem.GetDenomination(), pubCoinItem.GetId(), pubcoinId, pubCoinItem.GetHeight());
+                        libzerocoin::PublicCoin pubCoinTemp(ZCParams, pubCoinItem.GetValue(), libzerocoin::ZQ_LOVELACE);
                         if (!pubCoinTemp.validate())
                             return state.DoS(100, error("CTransaction::CheckTransaction() : Error: Public Coin for Accumulator is not valid !!!"));
 
@@ -1152,22 +1151,22 @@ bool CheckZerocoinSpend(uint256 hashTx, int nHeight, const CTxOut txout, CValida
                             return state.DoS(100, error("CTransaction::CheckTransaction() : The CoinSpend serial has been used"));
 
                         if(item.pubCoin != 0){
-                            BOOST_FOREACH(const CZerocoinEntry& pubCoinItem, listPubCoin)
+                            BOOST_FOREACH(const CZerocoinMint& pubCoinItem, listPubCoin)
                             {
-                                if (pubCoinItem.value == item.pubCoin) {
-                                    pubCoinTx.nHeight = pubCoinItem.nHeight;
-                                    pubCoinTx.denomination = pubCoinItem.denomination;
+                                if (pubCoinItem.GetValue() == item.pubCoin) {
+                                    pubCoinTx.SetHeight(pubCoinItem.GetHeight());
+                                    pubCoinTx.SetDenomination(pubCoinItem.GetDenomination());
                                     // UPDATE FOR INDICATE IT HAS BEEN USED
-                                    pubCoinTx.IsUsed = true;
+                                    pubCoinTx.SetUsed(true);
                                     // REMOVE RANDOMNESS FOR PREVENT FUTURE USE
                                     // pubCoinTx.randomness = 0;
                                     // pubCoinTx.serialNumber = 0;
 
-                                    pubCoinTx.value = pubCoinItem.value;
-                                    pubCoinTx.id = pubCoinItem.id;
+                                    pubCoinTx.SetValue(pubCoinItem.GetValue());
+                                    pubCoinTx.SetId(pubCoinItem.GetId());
                                     walletdb.WriteZerocoinEntry(pubCoinTx);
                                     // Update UI wallet
-                                    pwalletMain->NotifyZerocoinChanged(pwalletMain, pubCoinItem.value.GetHex(), "Used", CT_UPDATED);
+                                    pwalletMain->NotifyZerocoinChanged(pwalletMain, pubCoinItem.GetValue().GetHex(), "Used", CT_UPDATED);
                                     break;
                                 }
                             }
