@@ -9,7 +9,6 @@
 
 #include "addrman.h"
 #include "alert.h"
-#include "bignum.h"
 #include "chainparams.h"
 #include "checkpoints.h"
 #include "checkqueue.h"
@@ -30,6 +29,7 @@
 #include "util.h"
 #include "utilmoneystr.h"
 
+#include "libzerocoin/bignum.h"
 #include "libzerocoin/Zerocoin.h"
 
 #include <sstream>
@@ -73,6 +73,12 @@ bool fAlerts = DEFAULT_ALERTS;
 
 unsigned int nStakeMinAge = 60 * 60;
 int64_t nReserveBalance = 0;
+
+// Set up the Zerocoin Params object
+#define ZEROCOIN_MODULUS   "25195908475657893494027183240048398571429282126204032027777137836043662020707595556264018525880784406918290641249515082189298559149176184502808489120072844992687392807287776735971418347270261896375014971824691165077613379859095700097330459748808428401797429100642458691817195118746121515172654632282216869987549182422433637259085141865462043576798423387184774447920739934236584823824281198163815010674810451660377306056201619676256133844143603833904414952634432190114657544454178424020924616515723350778707749817125772467962926386356373289912154831438167899885040445364023527381951378636564391212010397122822120720357"
+static CBigNum bnTrustedModulus;
+bool setParams = bnTrustedModulus.SetHexBool(ZEROCOIN_MODULUS);
+static libzerocoin::Params *ZCParams = new libzerocoin::Params(bnTrustedModulus);
 
 /** Fees smaller than this (in duffs) are considered zero fee (for relaying and mining)
  * We are ~100 times smaller then bitcoin now (2015-06-23), set minRelayTxFee only 10 times higher
