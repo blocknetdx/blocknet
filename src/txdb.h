@@ -8,6 +8,7 @@
 
 #include "leveldbwrapper.h"
 #include "main.h"
+#include "primitives/zerocoin.h"
 
 #include <map>
 #include <string>
@@ -63,6 +64,22 @@ public:
     bool WriteFlag(const std::string& name, bool fValue);
     bool ReadFlag(const std::string& name, bool& fValue);
     bool LoadBlockIndexGuts();
+};
+
+class CZerocoinDB : public CLevelDBWrapper
+{
+public:
+    CZerocoinDB(size_t nCacheSize, bool fMemory = false, bool fWipe = false);
+
+private:
+    CZerocoinDB(const CZerocoinDB&);
+    void operator=(const CZerocoinDB&);
+
+public:
+    bool WriteCoinMint(CZerocoinMint zerocoinMint);
+    bool ReadCoinMint(int denomination, int id, CZerocoinMint& zerocoinMint);
+    bool WriteCoinSpend(CZerocoinSpend zerocoinSpend);
+    bool ReadCoinSpend(std::string strSerial, CZerocoinSpend& zerocoinSpend);
 };
 
 #endif // BITCOIN_TXDB_H

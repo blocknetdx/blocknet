@@ -42,6 +42,7 @@
 
 class CBlockIndex;
 class CBlockTreeDB;
+class CZerocoinDB;
 class CBloomFilter;
 class CInv;
 class CScriptCheck;
@@ -607,6 +608,9 @@ extern CCoinsViewCache* pcoinsTip;
 
 /** Global variable that points to the active block tree (protected by cs_main) */
 extern CBlockTreeDB* pblocktree;
+
+/** Global variable that points to the zerocoin database (protected by cs_main) */
+extern CZerocoinDB* zerocoinDB;
 
 struct CBlockTemplate {
     CBlock block;

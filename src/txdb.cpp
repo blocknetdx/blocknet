@@ -261,3 +261,28 @@ bool CBlockTreeDB::LoadBlockIndexGuts()
 
     return true;
 }
+
+CZerocoinDB::CZerocoinDB(size_t nCacheSize, bool fMemory, bool fWipe) : CLevelDBWrapper(GetDataDir() / "zerocoin", nCacheSize, fMemory, fWipe)
+{
+}
+
+bool CZerocoinDB::WriteCoinMint(CZerocoinMint zerocoinMint)
+{
+    return Write(zerocoinMint.ToUniqueString(), zerocoinMint, true);
+}
+
+bool CZerocoinDB::ReadCoinMint(int denomination, int id, CZerocoinMint& zerocoinMint)
+{
+    std::string uniqueCoinString = to_string(denomination) + ":" + to_string(id);
+    return Read(uniqueCoinString, zerocoinMint);
+}
+
+bool CZerocoinDB::WriteCoinSpend(CZerocoinSpend zerocoinSpend)
+{
+    return Write(zerocoinSpend.GetSerial().ToString(), zerocoinSpend, true);
+}
+
+bool CZerocoinDB::ReadCoinSpend(std::string strSerial, CZerocoinSpend &zerocoinSpend)
+{
+    return Read(strSerial, zerocoinSpend);
+}

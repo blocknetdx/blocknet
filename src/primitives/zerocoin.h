@@ -5,13 +5,13 @@
 class CZerocoinMint
 {
 private:
-    CBigNum value;
     int denomination;
+    int nHeight;
+    int id;
+    CBigNum value;
     CBigNum randomness;
     CBigNum serialNumber;
     bool isUsed;
-    int nHeight;
-    int id;
 
 public:
     CZerocoinMint()
@@ -27,6 +27,12 @@ public:
         denomination = -1;
         nHeight = -1;
         id = -1;
+    }
+
+    //the ZCoin code assumes (denomination, id) is a unique tupple
+    std::string ToUniqueString()
+    {
+        return std::to_string(denomination) + ":" + std::to_string(id);
     }
 
     CBigNum GetValue() const { return value; }
