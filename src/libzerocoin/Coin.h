@@ -48,6 +48,8 @@ bool AmountToZerocoinDenomination(uint256 amount, CoinDenomination& denomination
 		denomination = CoinDenomination::ZQ_LOVELACE;
 		return false;
 	}
+
+    return true;
 }
 
 /** A Public coin is the part of a coin that

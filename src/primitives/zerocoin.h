@@ -56,4 +56,54 @@ public:
     };
 
 };
+
+class CZerocoinSpend
+{
+private:
+    CBigNum coinSerial;
+    uint256 hashTx;
+    CBigNum pubCoin;
+    int denomination;
+    int id;
+
+public:
+    CZerocoinSpend()
+    {
+        SetNull();
+    }
+
+    CZerocoinSpend(CBigNum coinSerial, uint256 hashTx, CBigNum pubCoin, int denomination, int id)
+    {
+        this->coinSerial = coinSerial;
+        this->hashTx = hashTx;
+        this->pubCoin = pubCoin;
+        this->denomination = denomination;
+        this->id = id;
+    }
+
+    void SetNull()
+    {
+        coinSerial = 0;
+        hashTx = 0;
+        pubCoin = 0;
+        denomination = -1;
+        id = 0;
+    }
+
+    CBigNum GetSerial() const { return coinSerial; }
+    uint256 GetTxHash() const { return hashTx; }
+    CBigNum GetPubCoin() const { return pubCoin; }
+    int GetDenomination() const { return denomination; }
+    int GetId() const { return id; }
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+        READWRITE(coinSerial);
+        READWRITE(hashTx);
+        READWRITE(pubCoin);
+        READWRITE(denomination);
+        READWRITE(id);
+    };
+};
+
 #endif //PIVX_ZEROCOIN_H

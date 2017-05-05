@@ -1025,6 +1025,8 @@ bool CheckZerocoinMint(const CTxOut txout, CValidationState& state)
         printf("INSERT PUBCOIN ID: %d\n", pubCoinTx.GetId());
         walletdb.WriteZerocoinEntry(pubCoinTx);
     }
+
+    return true;
 }
 
 bool CheckZerocoinSpend(uint256 hashTx, int nHeight, const CTxOut txout, CValidationState& state)
@@ -1032,9 +1034,6 @@ bool CheckZerocoinSpend(uint256 hashTx, int nHeight, const CTxOut txout, CValida
     CZerocoinMint pubCoinTx;
     list<CZerocoinMint> listPubCoin;
     listPubCoin.clear();
-
-    if (isVerifyDB)
-        continue;
 
     CWalletDB walletdb(pwalletMain->strWalletFile);
     walletdb.ListPubCoin(listPubCoin);
@@ -1142,18 +1141,18 @@ bool CheckZerocoinSpend(uint256 hashTx, int nHeight, const CTxOut txout, CValida
                 CBigNum serialNumber = newSpend.getCoinSerialNumber();
                 CWalletDB walletdb(pwalletMain->strWalletFile);
 
-                std::list<CZerocoinSpendEntry> listCoinSpendSerial;
+                std::list<CZerocoinSpend> listCoinSpendSerial;
                 walletdb.ListCoinSpendSerial(listCoinSpendSerial);
-                BOOST_FOREACH(const CZerocoinSpendEntry& item, listCoinSpendSerial)
+                BOOST_FOREACH(const CZerocoinSpend& spend, listCoinSpendSerial)
                 {
-                    if (item.coinSerial == serialNumber && item.denomination == libzerocoin::ZQ_LOVELACE && item.id == pubcoinId){
-                        if(item.hashTx != hashTx)
+                    if (spend.GetSerial() == serialNumber && spend.GetDenomination() == libzerocoin::ZQ_LOVELACE && spend.GetId() == pubcoinId){
+                        if(spend.GetTxHash() != hashTx)
                             return state.DoS(100, error("CTransaction::CheckTransaction() : The CoinSpend serial has been used"));
 
-                        if(item.pubCoin != 0){
+                        if(spend.GetPubCoin() != 0){
                             BOOST_FOREACH(const CZerocoinMint& pubCoinItem, listPubCoin)
                             {
-                                if (pubCoinItem.GetValue() == item.pubCoin) {
+                                if (pubCoinItem.GetValue() == spend.GetPubCoin()) {
                                     pubCoinTx.SetHeight(pubCoinItem.GetHeight());
                                     pubCoinTx.SetDenomination(pubCoinItem.GetDenomination());
                                     // UPDATE FOR INDICATE IT HAS BEEN USED
@@ -1178,14 +1177,9 @@ bool CheckZerocoinSpend(uint256 hashTx, int nHeight, const CTxOut txout, CValida
 
                 if (!isAlreadyStored) {
                     // INSERTING COINSPEND TO DB
-                    CZerocoinSpendEntry zccoinSpend;
-                    zccoinSpend.coinSerial = serialNumber;
-                    zccoinSpend.hashTx = hashTx;
-                    zccoinSpend.pubCoin = 0;
-                    zccoinSpend.id = pubcoinId;
-                    if(nHeight < INT_MAX){
-                        zccoinSpend.denomination = libzerocoin::ZQ_LOVELACE;
-                    }
+                    int denomination = (nHeight < INT_MAX ? libzerocoin::ZQ_LOVELACE : -1);
+
+                    CZerocoinSpend zccoinSpend(serialNumber, hashTx, 0, denomination, pubcoinId);
                     walletdb.WriteCoinSpendSerialEntry(zccoinSpend);
                 }
             }
@@ -1200,6 +1194,8 @@ bool CheckZerocoinSpend(uint256 hashTx, int nHeight, const CTxOut txout, CValida
     else {
         return state.DoS(100, error("CTransaction::CheckTransaction() : Your spending txout value does not match"));
     }
+
+    return true;
 }
 
 bool CheckTransaction(const CTransaction& tx, CValidationState& state)
@@ -1236,6 +1232,10 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
         if(!txout.scriptPubKey.empty() && txout.scriptPubKey.IsZerocoinMint())
             if(!CheckZerocoinMint(txout, state))
                 return state.DoS(100, error("CheckTransaction() : invalid zerocoin mint"));
+    }
+
+    if(tx.IsZerocoinSpend())
+    {
 
     }
 
