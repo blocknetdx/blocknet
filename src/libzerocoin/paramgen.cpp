@@ -14,7 +14,7 @@
 #include <string>
 #include <iostream>
 #include <fstream>
-#include <curses.h>
+//#include <curses.h>
 #include <exception>
 #include "Zerocoin.h"
 

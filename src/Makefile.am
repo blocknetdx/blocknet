@@ -158,10 +158,18 @@ BITCOIN_CORE_H = \
   wallet.h \
   wallet_ismine.h \
   walletdb.h \
-  zmq/zmqabstractnotifier.h \
-  zmq/zmqconfig.h \
-  zmq/zmqnotificationinterface.h \
-  zmq/zmqpublishnotifier.h
+  libzerocoin/Accumulator.h \
+  libzerocoin/AccumulatorProofOfKnowledge.h \
+  libzerocoin/bignum.h \
+  libzerocoin/Coin.h \
+  libzerocoin/CoinSpend.h \
+  libzerocoin/Commitment.h \
+  libzerocoin/ParamGeneration.h \
+  libzerocoin/Params.h \
+  libzerocoin/SerialNumberSignature.h \
+  libzerocoin/SpendMetaData.h \
+  libzerocoin/Zerocoin.h \
+  compat/sanity.h
 
 JSON_H = \
   json/json_spirit.h \

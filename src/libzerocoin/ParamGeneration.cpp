@@ -11,7 +11,7 @@
 
 #include <string>
 #include <cmath>
-#include "uint256.h"
+#include "../uint256.h"
 #include "Zerocoin.h"
 
 using namespace std;

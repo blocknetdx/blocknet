@@ -30,6 +30,8 @@
 #include "util.h"
 #include "utilmoneystr.h"
 
+#include "libzerocoin/Zerocoin.h"
+
 #include <sstream>
 
 #include <boost/algorithm/string/replace.hpp>

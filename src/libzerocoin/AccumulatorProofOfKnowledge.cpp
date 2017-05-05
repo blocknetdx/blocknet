@@ -29,7 +29,7 @@ AccumulatorProofOfKnowledge::AccumulatorProofOfKnowledge(const AccumulatorAndPro
 	CBigNum e = commitmentToCoin.getContents();
 	CBigNum r = commitmentToCoin.getRandomness();
 
-	CBigNum aM_4 = params->accumulatorModulus/CBigNum((long long)4);
+	CBigNum aM_4 = params->accumulatorModulus/CBigNum((int64_t)4);
 	
 	CBigNum r_1 = CBigNum::randBignum(params->accumulatorModulus/4);
 	CBigNum r_2 = CBigNum::randBignum(params->accumulatorModulus/4);
