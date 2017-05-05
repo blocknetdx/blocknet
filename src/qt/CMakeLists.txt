@@ -56,7 +56,6 @@ set(GUI_FORMS
   ${CMAKE_CURRENT_SOURCE_DIR}/forms/sendcoinsdialog.ui
   ${CMAKE_CURRENT_SOURCE_DIR}/forms/sendcoinsentry.ui
   ${CMAKE_CURRENT_SOURCE_DIR}/forms/signverifymessagedialog.ui
-  ${CMAKE_CURRENT_SOURCE_DIR}/forms/tradingdialog.ui
   ${CMAKE_CURRENT_SOURCE_DIR}/forms/transactiondescdialog.ui
   )
   
@@ -94,7 +93,6 @@ SET(QT_FILES
 	qvaluecombobox.cpp
 	rpcconsole.cpp
 	splashscreen.cpp
-	tradingdialog.cpp
 	trafficgraphwidget.cpp
 	utilitydialog.cpp
 	winshutdownmonitor.cpp
@@ -116,7 +114,6 @@ SET(QT_FILES
 	sendcoinsdialog.cpp
 	sendcoinsentry.cpp
 	signverifymessagedialog.cpp
-	tradingdialog.cpp
 	transactiondesc.cpp
 	transactiondescdialog.cpp
 	transactionfilterproxy.cpp

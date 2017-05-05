@@ -14,10 +14,32 @@ if(CMAKE_CXX_FLAGS_RELEASE MATCHES DNDEBUG)
   string(REPLACE "-DNDEBUG" "" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
 endif()
 
+if(CMAKE_CXX_FLAGS_RELWITHDEBINFO MATCHES DNDEBUG)
+  string(REPLACE "-DNDEBUG" "" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELEASE}")
+  string(REPLACE "-DNDEBUG" "" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELEASE}")
+endif()
+
 project(pivx)
 
 set(OPENSSL_VER "1.0.2k")
 set(BDB_VER "4.8.30")
+
+#---------------------------------------------------------------------------------------------------------
+# Code coverage
+#---------------------------------------------------------------------------------------------------------
+if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+    set(CMAKE_XCODE_ATTRIBUTE_GCC_VERSION "com.apple.compilers.llvm.clang.1_0")
+    # Setup Code Coverage for XCode when requested
+    if ($ENV{COVERAGE})
+        message(STATUS "********* Setting up Xcode compile for Code coverage **********")
+        set(CMAKE_XCODE_ATTRIBUTE_GCC_INSTRUMENT_PROGRAM_FLOW_ARCS "YES")
+        set(CMAKE_XCODE_ATTRIBUTE_GCC_GENERATE_TEST_COVERAGE_FILES "YES")
+        # Works for Clang->
+				#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -coverage")
+    endif()
+endif()
+
+
 
 IF (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	add_compile_options(-Wno-potentially-evaluated-expression -Wno-unused-const-variable -Wno-unused-function -Wno-deprecated-declarations -Wno-inaccessible-base -Wno-unused-local-typedefs -Wno-logical-op-parentheses -Wno-shift-negative-value -Wno-array-bounds)
@@ -160,7 +182,6 @@ SET(SOURCES
 	./src/json/json_spirit_reader.cpp
 	./src/json/json_spirit_value.cpp
 	./src/json/json_spirit_writer.cpp
-	./src/keepass.cpp
 	./src/kernel.cpp
 	./src/leveldbwrapper.cpp
 	./src/masternode-budget.cpp
@@ -222,7 +243,16 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/src/qt/forms
   )
 
-add_library(coin ${SOURCES} ${COMMON_A} ${UTIL_A} ${SERVER_A} ${CONSENSUS} ${CONSENSUS_CRYPTO})
+#file(GLOB_RECURSE HEADERS *.h)
+file(GLOB HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/src/*.h)
+
+file(GLOB CRYPTO_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/src/crypto/*.h)
+source_group("CryptoHeaders" FILES ${CRYPTO_HEADERS})
+
+file(GLOB PRIMITIVE_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/src/primitives/*.h)
+source_group("PrimHeaders" FILES ${PRIMITIVE_HEADERS})
+
+add_library(coin ${HEADERS} ${CRYPTO_HEADERS} ${PRIMITIVE_HEADERS} ${SOURCES} ${COMMON_A} ${UTIL_A} ${SERVER_A} ${CONSENSUS} ${CONSENSUS_CRYPTO})
 set_property(TARGET coin PROPERTY CXX_STANDARD 11)
 
 add_subdirectory(src/libzerocoin)
@@ -268,4 +298,11 @@ endif()
 
 add_subdirectory(src/qt)
 
-#add_subdirectory(src/test)
+#---------------------------------------------------------------------------------------------------------
+# Create a target in Xcode to setup coverage script
+#---------------------------------------------------------------------------------------------------------
+if ($ENV{COVERAGE})
+    add_custom_target(xcov COMMAND ./XcodeCoverage/exportenv.sh )
+endif()
+
+
