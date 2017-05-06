@@ -32,7 +32,7 @@ public:
     //the ZCoin code assumes (denomination, id) is a unique tupple
     std::string ToUniqueString()
     {
-        return std::to_string(denomination) + ":" + std::to_string(id);
+        return value.GetHex();
     }
 
     CBigNum GetValue() const { return value; }

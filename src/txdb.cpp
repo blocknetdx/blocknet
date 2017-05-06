@@ -271,10 +271,9 @@ bool CZerocoinDB::WriteCoinMint(CZerocoinMint zerocoinMint)
     return Write(zerocoinMint.ToUniqueString(), zerocoinMint, true);
 }
 
-bool CZerocoinDB::ReadCoinMint(int denomination, int id, CZerocoinMint& zerocoinMint)
+bool CZerocoinDB::ReadCoinMint(string pubcoinValue, CZerocoinMint& zerocoinMint)
 {
-    std::string uniqueCoinString = to_string(denomination) + ":" + to_string(id);
-    return Read(uniqueCoinString, zerocoinMint);
+    return Read(pubcoinValue, zerocoinMint);
 }
 
 bool CZerocoinDB::WriteCoinSpend(CZerocoinSpend zerocoinSpend)

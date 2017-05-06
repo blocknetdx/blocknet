@@ -77,7 +77,7 @@ private:
 
 public:
     bool WriteCoinMint(CZerocoinMint zerocoinMint);
-    bool ReadCoinMint(int denomination, int id, CZerocoinMint& zerocoinMint);
+    bool ReadCoinMint(std::string pubcoinValue, CZerocoinMint& zerocoinMint);
     bool WriteCoinSpend(CZerocoinSpend zerocoinSpend);
     bool ReadCoinSpend(std::string strSerial, CZerocoinSpend& zerocoinSpend);
 };
