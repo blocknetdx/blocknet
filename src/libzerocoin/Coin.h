@@ -30,7 +30,7 @@ enum  CoinDenomination {
                     // Public key cryptography
 };
 
-bool AmountToZerocoinDenomination(uint256 amount, CoinDenomination& denomination)
+inline bool AmountToZerocoinDenomination(uint256 amount, CoinDenomination& denomination)
 {
 	if(amount == CoinDenomination::ZQ_LOVELACE * COIN)
 		denomination = CoinDenomination::ZQ_LOVELACE;

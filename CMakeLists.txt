@@ -286,13 +286,13 @@ add_executable(pivx-cli ${CMAKE_CURRENT_SOURCE_DIR}/src/pivx-cli.cpp)
 ###add_executable(pivx-tx ${CMAKE_CURRENT_SOURCE_DIR}/src/pivx-tx.cpp)
 add_executable(pivxd ${CMAKE_CURRENT_SOURCE_DIR}/src/pivxd.cpp)
 
-target_link_libraries(pivx-cli coin leveldb ${OPENSSL_LIBRARIES} ${Boost_LIBRARIES} pthread)
+target_link_libraries(pivx-cli coin zerocoin leveldb ${OPENSSL_LIBRARIES} ${Boost_LIBRARIES} pthread)
 ###target_link_libraries(pivx-tx coin secp256k1 bitcoin_crypto leveldb ${OPENSSL_LIBRARIES} ${Boost_LIBRARIES} ${ANL} pthread)
 
 IF (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-	target_link_libraries(pivxd coin db_cxx db secp256k1 gmp bitcoin_crypto leveldb ${OPENSSL_LIBRARIES} ${Boost_LIBRARIES} ${ANL} pthread)
+	target_link_libraries(pivxd coin db_cxx db secp256k1 gmp bitcoin_crypto zerocoin leveldb ${OPENSSL_LIBRARIES} ${Boost_LIBRARIES} ${ANL} pthread )
 else()
-	target_link_libraries(pivxd coin db_cxx db secp256k1 bitcoin_crypto leveldb ${OPENSSL_LIBRARIES} ${Boost_LIBRARIES} ${ANL} pthread)
+	target_link_libraries(pivxd coin db_cxx db secp256k1 bitcoin_crypto zerocoin leveldb ${OPENSSL_LIBRARIES} ${Boost_LIBRARIES} ${ANL} pthread)
 endif()
 
 #	miniupnpc pthread)
