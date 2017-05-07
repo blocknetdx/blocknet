@@ -83,7 +83,9 @@ public:
     CBigNum(short n)            { BN_init(this); if (n >= 0) setulong(n); else setint64(n); }
     CBigNum(int n)              { BN_init(this); if (n >= 0) setulong(n); else setint64(n); }
     CBigNum(long n)             { BN_init(this); if (n >= 0) setulong(n); else setint64(n); }
-   // CBigNum(int64_t n)            { BN_init(this); setint64(n); }
+#ifdef __APPLE__	
+    CBigNum(int64_t n)            { BN_init(this); setint64(n); }
+#endif
     CBigNum(unsigned char n)    { BN_init(this); setulong(n); }
     CBigNum(unsigned short n)   { BN_init(this); setulong(n); }
     CBigNum(unsigned int n)     { BN_init(this); setulong(n); }

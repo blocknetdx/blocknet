@@ -5,6 +5,8 @@
 cmake_minimum_required(VERSION 2.8)
 project(zerocoin)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 ")
+
 # Project-wide directory settings
 set(BITCOIN_BIGNUM_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/bitcoin_bignum)
 set(ZEROCOIN_INCLUDE_DIR include/zerocoin)
@@ -62,5 +64,5 @@ target_link_libraries(zerocoin ${zerocoin_libs})
 # Executable files
 ########################################################################
 
-add_executable(paramgen paramgen.cpp)
-target_link_libraries(paramgen zerocoin ${zerocoin_libs})
+#add_executable(paramgen paramgen.cpp)
+#target_link_libraries(paramgen zerocoin ${zerocoin_libs})
