@@ -25,9 +25,10 @@ enum  CoinDenomination {
     ZQ_GOLDWASSER = 10,
     ZQ_RACKOFF = 25,
     ZQ_PEDERSEN = 50,
-    ZQ_WILLIAMSON = 100 // Malcolm J. Williamson,
+    ZQ_WILLIAMSON = 100, // Malcolm J. Williamson,
                     // the scientist who actually invented
                     // Public key cryptography
+    ZQ_ERROR = 0
 };
 
 inline bool AmountToZerocoinDenomination(uint256 amount, CoinDenomination& denomination)
@@ -120,6 +121,19 @@ public:
 	const PublicCoin& getPublicCoin() const;
 	const CBigNum& getSerialNumber() const;
 	const CBigNum& getRandomness() const;
+    
+  void setPublicCoin(PublicCoin p){
+      publicCoin = p;
+  }
+
+  void setRandomness(Bignum n){
+      randomness = n;
+  }
+
+  void setSerialNumber(Bignum n){
+      serialNumber = n;
+  }
+
 	ADD_SERIALIZE_METHODS;
   template <typename Stream, typename Operation>  inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
 	    READWRITE(publicCoin);
