@@ -1,6 +1,10 @@
+// Copyright (c) 2017 The PIVX developers
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #ifndef PIVX_ZEROCOIN_H
 #define PIVX_ZEROCOIN_H
 #include "../libzerocoin/bignum.h"
+#include "serialize.h"
 
 class CZerocoinMint
 {
@@ -29,7 +33,6 @@ public:
         id = -1;
     }
 
-    //the ZCoin code assumes (denomination, id) is a unique tupple
     std::string ToUniqueString()
     {
         return value.GetHex();
@@ -50,6 +53,8 @@ public:
     CBigNum GetSerialNumber() const { return serialNumber; }
     void SetSerialNumber(CBigNum serial){ this->serialNumber = serial; }
 
+    ADD_SERIALIZE_METHODS;
+
     template <typename Stream, typename Operation>
     inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
         READWRITE(isUsed);
@@ -60,7 +65,6 @@ public:
         READWRITE(nHeight);
         READWRITE(id);
     };
-
 };
 
 class CZerocoinSpend
@@ -101,6 +105,8 @@ public:
     CBigNum GetPubCoin() const { return pubCoin; }
     int GetDenomination() const { return denomination; }
     int GetId() const { return id; }
+
+    ADD_SERIALIZE_METHODS;
 
     template <typename Stream, typename Operation>
     inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
