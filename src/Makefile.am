@@ -170,6 +170,7 @@ BITCOIN_CORE_H = \
   libzerocoin/SerialNumberSignature.h \
   libzerocoin/SpendMetaData.h \
   libzerocoin/Zerocoin.h \
+  accumulators.h \
   compat/sanity.h
 
 JSON_H = \
@@ -341,6 +342,7 @@ libbitcoin_common_a_SOURCES = \
   libzerocoin/Params.cpp \
   libzerocoin/SerialNumberSignatureOfKnowledge.cpp \
   libzerocoin/SpendMetaData.cpp \
+  accumulators.cpp \
   $(BITCOIN_CORE_H)
 
 # util: shared between all executables.
