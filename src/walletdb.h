@@ -10,6 +10,8 @@
 #include "db.h"
 #include "key.h"
 #include "keystore.h"
+#include "primitives/zerocoin.h"
+#include "libzerocoin/Zerocoin.h"
 
 #include <list>
 #include <stdint.h>
@@ -25,6 +27,8 @@ class CMasterKey;
 class CScript;
 class CWallet;
 class CWalletTx;
+class CZerocoinMint;
+class CZerocoinSpend;
 class uint160;
 class uint256;
 
@@ -138,6 +142,16 @@ public:
     DBErrors ZapWalletTx(CWallet* pwallet, std::vector<CWalletTx>& vWtx);
     static bool Recover(CDBEnv& dbenv, std::string filename, bool fOnlyKeys);
     static bool Recover(CDBEnv& dbenv, std::string filename);
+
+    // Dummy Functions for Now HACK(SPOCK)
+    bool WriteZerocoinEntry(const CZerocoinMint& zerocoin) { return false; }
+    bool EarseZerocoinEntry(const CZerocoinMint& zerocoin) { return false; }
+    void ListPubCoin(std::list<CZerocoinMint>& listPubCoin) { ; } 
+    void ListCoinSpendSerial(std::list<CZerocoinSpend>& listCoinSpendSerial) { ; }
+    bool WriteCoinSpendSerialEntry(const CZerocoinSpend& zerocoinSpend) { return false; }
+    bool EraseCoinSpendSerialEntry(const CZerocoinSpend& zerocoinSpend) { return false; }
+    bool WriteZerocoinAccumulator(libzerocoin::Accumulator accumulator) { return false; }
+    bool ReadZerocoinAccumulator(libzerocoin::Accumulator& accumulator) { return false; }
 
 private:
     CWalletDB(const CWalletDB&);
