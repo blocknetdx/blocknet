@@ -45,7 +45,7 @@ public:
 	 **/
 	Accumulator(const AccumulatorAndProofParams* p, const CoinDenomination d = ZQ_LOVELACE);
 
-	Accumulator(const Params* p, const CoinDenomination d = ZQ_LOVELACE);
+	Accumulator(const Params* p, const CoinDenomination d = ZQ_LOVELACE, Bignum bnValue = 0);
 
 	/**
 	 * Accumulate a coin into the accumulator. Validates

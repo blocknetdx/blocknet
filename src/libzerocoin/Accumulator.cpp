@@ -24,7 +24,7 @@ Accumulator::Accumulator(const AccumulatorAndProofParams* p, const CoinDenominat
 	this->value = this->params->accumulatorBase;
 }
 
-Accumulator::Accumulator(const Params* p, const CoinDenomination d) {
+Accumulator::Accumulator(const Params* p, const CoinDenomination d, const Bignum bnValue) {
 	this->params = &(p->accumulatorParams);
 	this->denomination = d;
 
@@ -32,7 +32,10 @@ Accumulator::Accumulator(const Params* p, const CoinDenomination d) {
 		throw ZerocoinException("Invalid parameters for accumulator");
 	}
 
-	this->value = this->params->accumulatorBase;
+	if(bnValue != 0)
+		this->value = bnValue;
+	else
+		this->value = this->params->accumulatorBase;
 }
 
 void Accumulator::accumulate(const PublicCoin& coin) {
