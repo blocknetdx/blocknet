@@ -5,10 +5,6 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-// HACK(SPOCK) MOVE LATER
-#define ZEROCOIN_MODULUS "25195908475657893494027183240048398571429282126204032027777137836043662020707595556264018525880784406918290641249515082189298559149176184502808489120072844992687392807287776735971418347270261896375014971824691165077613379859095700097330459748808428401797429100642458691817195118746121515172654632282216869987549182422433637259085141865462043576798423387184774447920739934236584823824281198163815010674810451660377306056201619676256133844143603833904414952634432190114657544454178424020924616515723350778707749817125772467962926386356373289912154831438167899885040445364023527381951378636564391212010397122822120720357"
-
-
 #include "wallet.h"
 
 #include "base58.h"
@@ -31,12 +27,13 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/thread.hpp>
 
-bool CompHeight(const CZerocoinMint& a, const CZerocoinMint& b) { return a.GetHeight() < b.GetHeight(); }
+// HACK(SPOCK) MOVE LATER
+#define ZEROCOIN_MODULUS "25195908475657893494027183240048398571429282126204032027777137836043662020707595556264018525880784406918290641249515082189298559149176184502808489120072844992687392807287776735971418347270261896375014971824691165077613379859095700097330459748808428401797429100642458691817195118746121515172654632282216869987549182422433637259085141865462043576798423387184774447920739934236584823824281198163815010674810451660377306056201619676256133844143603833904414952634432190114657544454178424020924616515723350778707749817125772467962926386356373289912154831438167899885040445364023527381951378636564391212010397122822120720357"
+static CBigNum bnTrustedModulus;
+bool zc_params = bnTrustedModulus.SetHexBool(ZEROCOIN_MODULUS);
+static libzerocoin::Params *ZCParams = new libzerocoin::Params(bnTrustedModulus);
 
-inline int64_t roundint64(double d)
-{
-    return (int64_t)(d > 0 ? d + 0.5 : d - 0.5);
-}
+bool CompHeight(const CZerocoinMint& a, const CZerocoinMint& b) { return a.GetHeight() < b.GetHeight(); }
 
 using namespace std;
 
@@ -3660,38 +3657,8 @@ bool CWallet::CreateZerocoinMintModel(string& stringError, string denomAmount)
     if (!fFileBacked)
         return false;
 
-    int64_t nAmount = 0;
-    libzerocoin::CoinDenomination denomination;
-    // Amount
-    if (denomAmount == "1") {
-        denomination = libzerocoin::ZQ_LOVELACE;
-        nAmount = roundint64(1 * COIN);
-    } else if (denomAmount == "10") {
-        denomination = libzerocoin::ZQ_GOLDWASSER;
-        nAmount = roundint64(10 * COIN);
-    } else if (denomAmount == "25") {
-        denomination = libzerocoin::ZQ_RACKOFF;
-        nAmount = roundint64(25 * COIN);
-    } else if (denomAmount == "50") {
-        denomination = libzerocoin::ZQ_PEDERSEN;
-        nAmount = roundint64(50 * COIN);
-    } else if (denomAmount == "100") {
-        denomination = libzerocoin::ZQ_WILLIAMSON;
-        nAmount = roundint64(100 * COIN);
-    } else {
-        // SHOULD WE THROW EXCEPTION or Something?
-        denomination = libzerocoin::ZQ_ERROR; // ERROR HACK(SPOCK)???
-        nAmount = 0;
-    }
-
-    // zerocoin init
-    CBigNum bnTrustedModulus;
-
-    // Loads a trusted Zerocoin modulus "N"
-    bnTrustedModulus.SetHex(ZEROCOIN_MODULUS);
-
-    // Set up the Zerocoin Params object
-    libzerocoin::Params* ZCParams = new libzerocoin::Params(bnTrustedModulus);
+    int64_t nAmount = libzerocoin::get_amount(denomAmount);
+    libzerocoin::CoinDenomination denomination = libzerocoin::get_denomination(denomAmount);
 
     // The following constructor does all the work of minting a brand
     // new zerocoin. It stores all the private values inside the
@@ -3716,7 +3683,6 @@ bool CWallet::CreateZerocoinMintModel(string& stringError, string denomAmount)
         if (stringError != "")
             return false;
 
-
         CZerocoinMint zerocoinTx;
         zerocoinTx.SetUsed(false);
         zerocoinTx.SetDenomination(denomination);
@@ -3738,29 +3704,8 @@ bool CWallet::CreateZerocoinSpendModel(string& stringError, string denomAmount)
     if (!fFileBacked)
         return false;
 
-    int64_t nAmount = 0;
-    libzerocoin::CoinDenomination denomination;
-    // Amount
-    if (denomAmount == "1") {
-        denomination = libzerocoin::ZQ_LOVELACE;
-        nAmount = roundint64(1 * COIN);
-    } else if (denomAmount == "10") {
-        denomination = libzerocoin::ZQ_GOLDWASSER;
-        nAmount = roundint64(10 * COIN);
-    } else if (denomAmount == "25") {
-        denomination = libzerocoin::ZQ_RACKOFF;
-        nAmount = roundint64(25 * COIN);
-    } else if (denomAmount == "50") {
-        denomination = libzerocoin::ZQ_PEDERSEN;
-        nAmount = roundint64(50 * COIN);
-    } else if (denomAmount == "100") {
-        denomination = libzerocoin::ZQ_WILLIAMSON;
-        nAmount = roundint64(100 * COIN);
-    } else {
-        // SHOULD WE THROW EXCEPTION or Something?
-        denomination = libzerocoin::ZQ_ERROR; // ERROR HACK(SPOCK)???
-        nAmount = 0;
-    }
+    int64_t nAmount = libzerocoin::get_amount(denomAmount);
+    libzerocoin::CoinDenomination denomination = libzerocoin::get_denomination(denomAmount);
 
     // Wallet comments
     CWalletTx wtx;
@@ -3791,7 +3736,7 @@ bool CWallet::CreateZerocoinMintTransaction(const vector<pair<CScript, int64_t> 
     }
     
     int64_t nValue = 0;
-    for (const PAIRTYPE(CScript, int64_t) & s : vecSend) {
+    for (const std::pair<CScript, int64_t> & s : vecSend) {
         nValue += s.second;
         if (nValue < 0) {
             strFailReason = _("Transaction amounts must be positive");
@@ -3800,26 +3745,27 @@ bool CWallet::CreateZerocoinMintTransaction(const vector<pair<CScript, int64_t> 
     }
 
     wtxNew.BindWallet(this);
+    CMutableTransaction txNew;
 
     {
         LOCK2(cs_main, cs_wallet);
         {
             for (;;)
             {
-                wtxNew.vin.clear();
-                wtxNew.vout.clear();
+                txNew.vin.clear();
+                txNew.vout.clear();
                 wtxNew.fFromMe = true;
 
                 int64_t nTotalValue = nValue; // Assume 0 fee
                 double dPriority = 0;
                 // vouts to the payees
-                for (const PAIRTYPE(CScript, int64_t) & s : vecSend) {
+                for (const std::pair<CScript, int64_t> & s : vecSend) {
                     CTxOut txout(s.second, s.first);
                     if (txout.IsDust(::minRelayTxFee)) {
                         strFailReason = _("Transaction amount too small");
                         return false;
                     }
-                    wtxNew.vout.push_back(txout);
+                    txNew.vout.push_back(txout);
                 }
 
                 // Choose coins to use
@@ -3832,7 +3778,7 @@ bool CWallet::CreateZerocoinMintTransaction(const vector<pair<CScript, int64_t> 
 
                 // Is this really needed (SPOCK) ?
                 
-                for (PAIRTYPE(const CWalletTx*, unsigned int) pcoin : setCoins) {
+                for (std::pair<const CWalletTx*, unsigned int> pcoin : setCoins) {
                     int64_t nCredit = pcoin.first->vout[pcoin.second].nValue;
                     //The priority after the next block (depth+1) is used instead of the current,
                     //reflecting an assumption the user would accept a bit more delay for
@@ -3889,34 +3835,34 @@ bool CWallet::CreateZerocoinMintTransaction(const vector<pair<CScript, int64_t> 
                         reservekey.ReturnKey();
                     } else {
                         // Insert change txn at random position:
-                        vector<CTxOut>::iterator position = wtxNew.vout.begin() + GetRandInt(wtxNew.vout.size() + 1);
-                        wtxNew.vout.insert(position, newTxOut);
+                        vector<CTxOut>::iterator position = txNew.vout.begin() + GetRandInt(txNew.vout.size() + 1);
+                        txNew.vout.insert(position, newTxOut);
                     }
                 } else
                     reservekey.ReturnKey();
 
                 // Fill vin
-                for (const PAIRTYPE(const CWalletTx*, unsigned int) & coin: setCoins)
-                    wtxNew.vin.push_back(CTxIn(coin.first->GetHash(), coin.second));
+                for (const std::pair<const CWalletTx*, unsigned int>& coin: setCoins)
+                    txNew.vin.push_back(CTxIn(coin.first->GetHash(), coin.second));
 
                 // Sign
-                /* REVISIT THIS HACK(SPOCK)
                 int nIn = 0;
-                for (const PAIRTYPE(const CWalletTx*, unsigned int) & coin : setCoins)
-                    if (!SignSignature(*this, *coin.first,
-                                       wtxNew, nIn++)) {
+                for (const std::pair<const CWalletTx*, unsigned int>& coin : setCoins)
+                    if (!SignSignature(*this, *coin.first, txNew, nIn++)) {
                         strFailReason = _("Signing transaction failed");
                         return false;
                     }
-                */
-                
+
+                // Embed the constructed transaction data in wtxNew.
+                *static_cast<CTransaction*>(&wtxNew) = CTransaction(txNew);
+
                 // Limit size
                 unsigned int nBytes = ::GetSerializeSize(*(CTransaction*)&wtxNew, SER_NETWORK, PROTOCOL_VERSION);
                 if (nBytes >= MAX_STANDARD_TX_SIZE) {
                     strFailReason = _("Transaction too large");
                     return false;
                 }
-                dPriority /= nBytes;
+                dPriority = wtxNew.ComputePriority(dPriority, nBytes);
 
                 // Fill vtxPrev by copying from previous transactions vtxPrev
                 wtxNew.AddSupportingTransactions();
@@ -3960,18 +3906,7 @@ bool CWallet::CreateZerocoinSpendTransaction(int64_t nValue, libzerocoin::CoinDe
 
             // Fill vin
 
-            // Zerocoin
-
-            // zerocoin init
-            static CBigNum bnTrustedModulus;
-
-            /// HACK(SPOCK) bool setParams = bnTrustedModulus.SetHexBool(ZEROCOIN_MODULUS);
-
-            // Set up the Zerocoin Params object
-            static libzerocoin::Params* ZCParams = new libzerocoin::Params(bnTrustedModulus);
-
             libzerocoin::Accumulator accumulator(ZCParams, denomination);
-
             // TODO: Create Zercoin spending transaction part
             // 1. Selection a private coin that doesn't use in wallet
             // 2. Get pubcoin from the private coin

@@ -54,6 +54,55 @@ inline bool AmountToZerocoinDenomination(uint256 amount, CoinDenomination& denom
     return true;
 }
 
+    
+inline int64_t roundint64(double d)
+{
+    return (int64_t)(d > 0 ? d + 0.5 : d - 0.5);
+}
+
+    
+inline CoinDenomination get_denomination(string denomAmount) {
+    CoinDenomination denomination;
+    // Amount
+    if (denomAmount == "1") {
+        denomination = ZQ_LOVELACE;
+    } else if (denomAmount == "10") {
+        denomination = ZQ_GOLDWASSER;
+    } else if (denomAmount == "25") {
+        denomination = ZQ_RACKOFF;
+    } else if (denomAmount == "50") {
+        denomination = ZQ_PEDERSEN;
+    } else if (denomAmount == "100") {
+        denomination = ZQ_WILLIAMSON;
+    } else {
+        // SHOULD WE THROW EXCEPTION or Something?
+        denomination = ZQ_ERROR; // ERROR HACK(SPOCK)???
+    }
+    return denomination;
+}
+
+
+int64_t get_amount(string denomAmount) {
+    int64_t nAmount = 0;
+    // Amount
+    if (denomAmount == "1") {
+        nAmount = roundint64(1 * COIN);
+    } else if (denomAmount == "10") {
+        nAmount = roundint64(10 * COIN);
+    } else if (denomAmount == "25") {
+        nAmount = roundint64(25 * COIN);
+    } else if (denomAmount == "50") {
+        nAmount = roundint64(50 * COIN);
+    } else if (denomAmount == "100") {
+        nAmount = roundint64(100 * COIN);
+    } else {
+        // SHOULD WE THROW EXCEPTION or Something?
+        nAmount = 0;
+    }
+    return nAmount;
+}
+
+
 /** A Public coin is the part of a coin that
  * is published to the network and what is handled
  * by other clients. It contains only the value
