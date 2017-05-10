@@ -18,7 +18,6 @@ private:
 
     CAccumulators() { Setup(); }
     void Setup();
-    bool HaveCoin(libzerocoin::PublicCoin publicCoin);
 
 public:
     CAccumulators(CAccumulators const&) = delete;

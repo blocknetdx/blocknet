@@ -1001,6 +1001,9 @@ bool CheckZerocoinMint(const CTxOut txout, CValidationState& state)
         pubCoinTx.SetSerialNumber(0);
         pubCoinTx.SetHeight(-1);
         zerocoinDB->WriteCoinMint(pubCoinTx);
+
+        //add this coin to accumulator because we have not seen it yet
+        CAccumulators::getInstance().AddPubCoinToAccumulator(denomination, checkPubCoin);
     }
 
     return true;
