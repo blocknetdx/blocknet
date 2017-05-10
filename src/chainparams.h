@@ -12,6 +12,7 @@
 #include "protocol.h"
 #include "uint256.h"
 
+#include "libzerocoin/Zerocoin.h"
 #include <vector>
 
 typedef unsigned char MessageStartChars[MESSAGE_START_SIZE];
@@ -95,6 +96,10 @@ public:
     int64_t StartMasternodePayments() const { return nStartMasternodePayments; }
     CBaseChainParams::Network NetworkID() const { return networkID; }
 
+    /** Zerocoin **/
+    std::string Zerocoin_Modulus() const { return zerocoinModulus; }
+    libzerocoin::Params* Zerocoin_Params() const;
+
 protected:
     CChainParams() {}
 
@@ -136,6 +141,7 @@ protected:
     std::string strSporkKey;
     std::string strObfuscationPoolDummyAddress;
     int64_t nStartMasternodePayments;
+    std::string zerocoinModulus;
 };
 
 /** 
