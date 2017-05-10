@@ -82,7 +82,7 @@ inline CoinDenomination get_denomination(string denomAmount) {
 }
 
 
-int64_t get_amount(string denomAmount) {
+inline int64_t get_amount(string denomAmount) {
     int64_t nAmount = 0;
     // Amount
     if (denomAmount == "1") {
