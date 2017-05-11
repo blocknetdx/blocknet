@@ -3691,7 +3691,7 @@ bool CWallet::CreateZerocoinMintModel(string& stringError, string denomAmount)
         zerocoinTx.SetSerialNumber(newCoin.getSerialNumber());
 
         NotifyZerocoinChanged(this, zerocoinTx.GetValue().GetHex(), zerocoinTx.IsUsed() ? "Used" : "New", CT_NEW);
-        if (!CWalletDB(strWalletFile).WriteZerocoinEntry(zerocoinTx))
+        if (!CWalletDB(strWalletFile).WriteZerocoinMint(zerocoinTx))
             return false;
         return true;
     } else {
@@ -4091,7 +4091,7 @@ bool CWallet::CreateZerocoinSpendTransaction(int64_t nValue, libzerocoin::CoinDe
             /*zerocoinSelected.IsUsed()= true;
             zerocoinSelected.GetRandomness() = 0;
             zerocoinSelected.serialNumber = 0;
-            CWalletDB(strWalletFile).WriteZerocoinEntry(zerocoinSelected);*/
+            CWalletDB(strWalletFile).WriteZerocoinMint(zerocoinSelected);*/
 
             std::list<CZerocoinSpend> listCoinSpendSerial;
             CWalletDB(strWalletFile).ListCoinSpendSerial(listCoinSpendSerial);
@@ -4106,7 +4106,7 @@ bool CWallet::CreateZerocoinSpendTransaction(int64_t nValue, libzerocoin::CoinDe
                     pubCoinTx.SetRandomness(zerocoinSelected.GetRandomness());
                     pubCoinTx.SetSerialNumber(zerocoinSelected.GetSerialNumber());
                     pubCoinTx.SetValue(zerocoinSelected.GetValue());
-                    CWalletDB(strWalletFile).WriteZerocoinEntry(pubCoinTx);
+                    CWalletDB(strWalletFile).WriteZerocoinMint(pubCoinTx);
                     pwalletMain->NotifyZerocoinChanged(pwalletMain, zerocoinSelected.GetValue().GetHex(), "Used", CT_UPDATED);
                     strFailReason = _("the coin spend has been used");
                     return false;
@@ -4300,7 +4300,7 @@ string CWallet::SpendZerocoin(int64_t nValue, libzerocoin::CoinDenomination deno
                 pubCoinTx.SetRandomness(pubCoinItem.GetRandomness());
                 pubCoinTx.SetSerialNumber(pubCoinItem.GetSerialNumber());
                 pubCoinTx.SetDenomination(pubCoinItem.GetDenomination());
-                CWalletDB(strWalletFile).WriteZerocoinEntry(pubCoinTx);
+                CWalletDB(strWalletFile).WriteZerocoinMint(pubCoinTx);
                 pwalletMain->NotifyZerocoinChanged(pwalletMain, pubCoinItem.GetValue().GetHex(), "New", CT_UPDATED);
             }
         }

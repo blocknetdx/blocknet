@@ -143,15 +143,16 @@ public:
     static bool Recover(CDBEnv& dbenv, std::string filename, bool fOnlyKeys);
     static bool Recover(CDBEnv& dbenv, std::string filename);
 
-    // Dummy Functions for Now HACK(SPOCK)
-    bool WriteZerocoinEntry(const CZerocoinMint& zerocoin) { return false; }
-    bool EarseZerocoinEntry(const CZerocoinMint& zerocoin) { return false; }
-    void ListPubCoin(std::list<CZerocoinMint>& listPubCoin) { ; } 
-    void ListCoinSpendSerial(std::list<CZerocoinSpend>& listCoinSpendSerial) { ; }
-    bool WriteCoinSpendSerialEntry(const CZerocoinSpend& zerocoinSpend) { return false; }
-    bool EraseCoinSpendSerialEntry(const CZerocoinSpend& zerocoinSpend) { return false; }
-    bool WriteZerocoinAccumulator(libzerocoin::Accumulator accumulator) { return false; }
-    bool ReadZerocoinAccumulator(libzerocoin::Accumulator& accumulator) { return false; }
+    bool WriteZerocoinMint(const CZerocoinMint& zerocoin);
+    bool EraseZerocoinMint(const CZerocoinMint& zerocoin);
+    void ListPubCoin(std::list<CZerocoinMint>& listPubCoin);
+    void ListCoinSpendSerial(std::list<CZerocoinSpend>& listCoinSpendSerial);
+    bool WriteCoinSpendSerialEntry(const CZerocoinSpend& zerocoinSpend);
+    bool EraseCoinSpendSerialEntry(const CZerocoinSpend& zerocoinSpend);
+    bool WriteZerocoinAccumulator(libzerocoin::Accumulator accumulator, libzerocoin::CoinDenomination denomination);
+    bool ReadZerocoinAccumulator(libzerocoin::Accumulator& accumulator, libzerocoin::CoinDenomination denomination);
+    bool ReadCalculatedZCBlock(int& height);
+    bool WriteCalculatedZCBlock(int height);
 
 private:
     CWalletDB(const CWalletDB&);
