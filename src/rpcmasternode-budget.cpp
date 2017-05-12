@@ -196,9 +196,11 @@ Value mnbudget(const Array& params, bool fHelp)
 
         budget.mapSeenMasternodeBudgetProposals.insert(make_pair(budgetProposalBroadcast.GetHash(), budgetProposalBroadcast));
         budgetProposalBroadcast.Relay();
-        budget.AddProposal(budgetProposalBroadcast);
-
-        return budgetProposalBroadcast.GetHash().ToString();
+        if(budget.AddProposal(budgetProposalBroadcast)) {
+            return budgetProposalBroadcast.GetHash().ToString();
+        }
+        return "Invalid proposal, see debug.log for details.";
+        
     }
 
     if (strCommand == "vote-many") {
