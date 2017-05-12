@@ -242,6 +242,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
         // Collect transactions into block
         uint64_t nBlockSize = 1000;
         uint64_t nBlockTx = 0;
+        int nZerocoinSpendInBlock = 0;
         int nBlockSigOps = 100;
         bool fSortedByFee = (nBlockPrioritySize <= 0);
 
@@ -256,6 +257,11 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
 
             std::pop_heap(vecPriority.begin(), vecPriority.end(), comparer);
             vecPriority.pop_back();
+
+            // Zerocoin - If we want a limit of Zerocoin transactions per block?
+            bool fZerocoinSpend = tx.IsZerocoinSpend();
+            if (fZerocoinSpend && nZerocoinSpendInBlock >= Params().Zerocoin_MaxSpendsPerBlock())
+                continue;
 
             // Size limits
             unsigned int nTxSize = ::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION);
@@ -311,6 +317,8 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
             ++nBlockTx;
             nBlockSigOps += nTxSigOps;
             nFees += nTxFees;
+            if(fZerocoinSpend)
+                ++nZerocoinSpendInBlock;
 
             if (fPrintPriority) {
                 LogPrintf("priority %.1f fee %s txid %s\n",
