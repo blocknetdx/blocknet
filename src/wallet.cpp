@@ -3673,7 +3673,8 @@ bool CWallet::CreateZerocoinMintModel(string& stringError, string denomAmount)
 
     // Validate
     if (pubCoin.validate()) {
-        CScript scriptSerializedCoin; ///HACK(SPOCK) = CScript() << OP_ZEROCOINMINT << pubCoin.getValue().getvch().size() << pubCoin.getValue();
+        CScript scriptSerializedCoin 
+            = CScript() << OP_ZEROCOINMINT << pubCoin.getValue().getvch().size() << pubCoin.getValue().getvch();
 
         // Wallet comments
         CWalletTx wtx;
@@ -4119,7 +4120,7 @@ bool CWallet::CreateZerocoinSpendTransaction(int64_t nValue, libzerocoin::CoinDe
             zcSelectedIsUsed = zerocoinSelected.IsUsed();
 
             CZerocoinSpend entry(coinSerial, txHash, zcSelectedValue, zerocoinSelected.GetDenomination(), zerocoinSelected.GetId());
-            if (!CWalletDB(strWalletFile).WriteCoinSpendSerialEntry(entry)) {
+            if (!CWalletDB(strWalletFile).WriteZerocoinSpendSerialEntry(entry)) {
                 strFailReason = _("it cannot write coin serial number into wallet");
             }
         }
@@ -4308,7 +4309,7 @@ string CWallet::SpendZerocoin(int64_t nValue, libzerocoin::CoinDenomination deno
 
         CZerocoinSpend entry(coinSerial,txHash, zcSelectedValue, 0,0); /// HACK(SPOCK) 0,0 ????
         
-        if (!CWalletDB(strWalletFile).EraseCoinSpendSerialEntry(entry)) {
+        if (!CWalletDB(strWalletFile).EraseZerocoinSpendSerialEntry(entry)) {
             return _("Error: It cannot delete coin serial number in wallet");
         }
 

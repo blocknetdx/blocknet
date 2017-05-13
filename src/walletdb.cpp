@@ -1002,12 +1002,12 @@ bool CWalletDB::EraseDestData(const std::string& address, const std::string& key
     return Erase(std::make_pair(std::string("destdata"), std::make_pair(address, key)));
 }
 
-bool CWalletDB::WriteCoinSpendSerialEntry(const CZerocoinSpend& zerocoinSpend)
+bool CWalletDB::WriteZerocoinSpendSerialEntry(const CZerocoinSpend& zerocoinSpend)
 {
     return Write(make_pair(string("zcserial"), zerocoinSpend.GetSerial()), zerocoinSpend, true);
 }
 
-bool CWalletDB::EraseCoinSpendSerialEntry(const CZerocoinSpend& zerocoinSpend)
+bool CWalletDB::EraseZerocoinSpendSerialEntry(const CZerocoinSpend& zerocoinSpend)
 {
     return Erase(make_pair(string("zcserial"), zerocoinSpend.GetSerial()));
 }

@@ -87,6 +87,7 @@ endif()
 
 SET(COMMON_A
 	./src/spork.cpp
+	./src/accumulators.cpp
 	./src/protocol.cpp
 	./src/pubkey.cpp
 	./src/netbase.cpp
