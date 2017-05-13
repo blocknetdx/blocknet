@@ -6,6 +6,7 @@
 #include "amount.h"
 #include "chainparams.h"
 #include "main.h"
+#include "txdb.h"
 #include <boost/test/unit_test.hpp>
 #include <iostream>
 
@@ -40,14 +41,12 @@ std::string rawTx = "01000000015bee015f9e26c5668995755f0706ace701a142aa278111f05
 BOOST_AUTO_TEST_CASE(create_zerocoin_mint_test)
 {
     CTransaction tx;
-    CValidationState state;
     BOOST_CHECK(DecodeHexTx(tx, rawTx));
-    cout << tx.ToString().c_str() << "\n";
-    cout << "decoded total vout " << tx.vout.size() << "\n";
+
+    CValidationState state;
     for(unsigned int i = 0; i < tx.vout.size(); i++){
-        cout << i << "\n";
         if(!tx.vout[i].scriptPubKey.empty() && tx.vout[i].scriptPubKey.IsZerocoinMint())
-            BOOST_CHECK(CheckZerocoinMint(tx.vout[i], state));
+            BOOST_CHECK(CheckZerocoinMint(tx.vout[i], state, true));
     }
 }
 

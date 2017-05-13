@@ -973,7 +973,31 @@ bool MoneyRange(CAmount nValueOut)
     return nValueOut >= 0 && nValueOut <= Params().MaxMoneyOut();
 }
 
-bool CheckZerocoinMint(const CTxOut txout, CValidationState& state)
+bool SetZerocoinMintKnown(libzerocoin::PublicCoin publicZerocoin)
+{
+    // Check the pubCoinValue didn't already store in the wallet
+    //write the zerocoinmint to db if we don't already have it
+    //note that many of the parameters are not set here
+    CZerocoinMint pubCoinTx;
+    if(!zerocoinDB->ReadCoinMint(publicZerocoin.getValue().GetHex(), pubCoinTx)){
+        pubCoinTx.SetId(-1);
+        pubCoinTx.SetDenomination(publicZerocoin.getDenomination());
+        pubCoinTx.SetValue(publicZerocoin.getValue());
+        pubCoinTx.SetRandomness(0);
+        pubCoinTx.SetSerialNumber(0);
+        pubCoinTx.SetHeight(-1);
+
+        if(!zerocoinDB->WriteCoinMint(pubCoinTx))
+            return false;
+
+        //add this coin to accumulator because we have not seen it yet
+        CAccumulators::getInstance().AddPubCoinToAccumulator(publicZerocoin.getDenomination(), publicZerocoin);
+    }
+
+    return true;
+}
+
+bool CheckZerocoinMint(const CTxOut txout, CValidationState& state, bool fCheckOnly)
 {
     LogPrintf("ZCPRINT %s\n", __func__);
     vector<unsigned char> vchZeroMint;
@@ -990,22 +1014,8 @@ bool CheckZerocoinMint(const CTxOut txout, CValidationState& state)
     if (!checkPubCoin.validate())
         return state.DoS(100, error("CTransaction::CheckTransaction() : PubCoin is not validate"));
 
-    // Check the pubCoinValue didn't already store in the wallet
-    //write the zerocoinmint to db if we don't already have it
-    //note that many of the parameters are not set here
-    CZerocoinMint pubCoinTx;
-    if(!zerocoinDB->ReadCoinMint(publicZerocoin.GetHex(), pubCoinTx)){
-        pubCoinTx.SetId(-1);
-        pubCoinTx.SetDenomination(denomination);
-        pubCoinTx.SetValue(publicZerocoin);
-        pubCoinTx.SetRandomness(0);
-        pubCoinTx.SetSerialNumber(0);
-        pubCoinTx.SetHeight(-1);
-        zerocoinDB->WriteCoinMint(pubCoinTx);
-
-        //add this coin to accumulator because we have not seen it yet
-        CAccumulators::getInstance().AddPubCoinToAccumulator(denomination, checkPubCoin);
-    }
+    if(!fCheckOnly && !SetZerocoinMintKnown(checkPubCoin))
+        return state.DoS(100, error("CheckZerocoinMint(): SetZerocoinKnown() failed"));
 
     return true;
 }
@@ -1132,9 +1142,10 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
             return state.DoS(100, error("CheckTransaction() : txout total out of range"),
                 REJECT_INVALID, "bad-txns-txouttotal-toolarge");
 
-        if(!txout.scriptPubKey.empty() && txout.scriptPubKey.IsZerocoinMint())
-            if(!CheckZerocoinMint(txout, state))
+        if(!txout.scriptPubKey.empty() && txout.scriptPubKey.IsZerocoinMint()) {
+            if(!CheckZerocoinMint(txout, state, false))
                 return state.DoS(100, error("CheckTransaction() : invalid zerocoin mint"));
+        }
     }
 
     if(tx.IsZerocoinSpend())
