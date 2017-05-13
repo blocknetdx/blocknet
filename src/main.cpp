@@ -975,6 +975,7 @@ bool MoneyRange(CAmount nValueOut)
 
 bool CheckZerocoinMint(const CTxOut txout, CValidationState& state)
 {
+    LogPrintf("ZCPRINT %s\n", __func__);
     vector<unsigned char> vchZeroMint;
     vchZeroMint.insert(vchZeroMint.end(), txout.scriptPubKey.begin() + 6, txout.scriptPubKey.begin() + txout.scriptPubKey.size());
 
@@ -982,7 +983,7 @@ bool CheckZerocoinMint(const CTxOut txout, CValidationState& state)
     publicZerocoin.setvch(vchZeroMint);
 
     libzerocoin::CoinDenomination denomination;
-    if(libzerocoin::AmountToZerocoinDenomination(txout.nValue, denomination))
+    if(!libzerocoin::AmountToZerocoinDenomination(txout.nValue, denomination))
         return state.DoS(100, error("CTransaction::CheckTransaction() : txout.nValue is not correct"));
 
     libzerocoin::PublicCoin checkPubCoin(Params().Zerocoin_Params(), publicZerocoin, denomination);
@@ -1011,6 +1012,7 @@ bool CheckZerocoinMint(const CTxOut txout, CValidationState& state)
 
 bool CheckZerocoinSpend(uint256 hashTx, const CTxOut txout, vector<CTxIn> vin, CValidationState& state)
 {
+    LogPrintf("ZCPRINT %s\n", __func__);
     CZerocoinMint pubCoinTx;
     libzerocoin::CoinDenomination denomination;
     if(!libzerocoin::AmountToZerocoinDenomination(txout.nValue, denomination))
@@ -1137,6 +1139,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
 
     if(tx.IsZerocoinSpend())
     {
+        LogPrintf("ZCPRINT %s: tx is a zerocoinspend \n", __func__);
         for(const CTxOut& txout : tx.vout) {
             if(!CheckZerocoinSpend(tx.GetHash(), txout, tx.vin, state))
                 return state.DoS(100, error("CheckTransaction() : invalid zerocoin spend"));
@@ -1269,6 +1272,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
     }
 
     // Check for conflicts with in-memory transactions
+    if(!tx.IsZerocoinSpend())
     {
         LOCK(pool.cs); // protect pool.mapNextTx
         for (unsigned int i = 0; i < tx.vin.size(); i++) {
@@ -1457,6 +1461,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState& state, const CTransact
     }
 
     // Check for conflicts with in-memory transactions
+    if(!tx.IsZerocoinSpend())
     {
         LOCK(pool.cs); // protect pool.mapNextTx
         for (unsigned int i = 0; i < tx.vin.size(); i++) {

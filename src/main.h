@@ -343,6 +343,8 @@ void UpdateCoins(const CTransaction& tx, CValidationState& state, CCoinsViewCach
 
 /** Context-independent validity checks */
 bool CheckTransaction(const CTransaction& tx, CValidationState& state);
+bool CheckZerocoinMint(const CTxOut txout, CValidationState& state);
+bool CheckZerocoinSpend(uint256 hashTx, const CTxOut txout, vector<CTxIn> vin, CValidationState& state);
 
 /**
  * Check if transaction will be final in the next block to be created.
