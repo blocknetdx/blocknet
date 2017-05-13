@@ -307,4 +307,7 @@ if ($ENV{COVERAGE})
     add_custom_target(xcov COMMAND ./XcodeCoverage/exportenv.sh )
 endif()
 
+add_subdirectory(src/test)
+  
+
 

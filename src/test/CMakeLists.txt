@@ -11,7 +11,7 @@ Checkpoints_tests
 accounting_tests
 #alert_tests
 allocator_tests
-arith_uint256_tests
+###arith_uint256_tests
 base32_tests
 #base58_tests
 base64_tests
@@ -51,6 +51,7 @@ tutorial_zerocoin
 univalue_tests
 util_tests
 wallet_tests
+zerocoin_implementation_tests
 )
 
 include_directories(

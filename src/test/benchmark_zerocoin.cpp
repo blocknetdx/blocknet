@@ -18,7 +18,7 @@
 #include <exception>
 #include <cstdlib>
 #include <sys/time.h>
-#include "CDataStream.h"
+#include "streams.h"
 #include "Zerocoin.h"
 
 using namespace std;
@@ -330,9 +330,7 @@ Test_MintAndSpend()
 		cout << "\tWITNESS ELAPSED TIME: \n\t\tTotal: " << timer.duration() << " ms\t" << timer.duration()*0.001 << " s\n\t\tPer Element: " << timer.duration()/TESTS_COINS_TO_ACCUMULATE << " ms\t" << (timer.duration()/TESTS_COINS_TO_ACCUMULATE)*0.001 << " s" << endl;
 
 		// Now spend the coin
-		arith_uint256 one(1);
-		uint256 uOne = ArithToUint256(one);
-		SpendMetaData m(uOne,uOne);
+		SpendMetaData m(1,1);
 
 		timer.start();
 		CoinSpend spend(g_Params, *(gCoins[0]), acc, wAcc, m);

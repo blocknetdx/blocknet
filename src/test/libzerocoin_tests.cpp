@@ -17,7 +17,7 @@
 #include <cmath>
 #include <curses.h>
 #include <exception>
-#include "CDataStream.h"
+#include "streams.h"
 #include "Zerocoin.h"
 
 using namespace std;
@@ -409,9 +409,7 @@ Test_MintAndSpend()
 		}
 
 		// Now spend the coin
-		arith_uint256 one(1);
-		uint256 uOne = ArithToUint256(one);
-		SpendMetaData m(uOne,uOne);
+		SpendMetaData m(1,1);
 		CDataStream cc(SER_NETWORK, PROTOCOL_VERSION);
 		cc << *gCoins[0];
 		PrivateCoin myCoin(g_Params,cc);
