@@ -28,10 +28,10 @@
 #include <boost/thread.hpp>
 
 // HACK(SPOCK) MOVE LATER
-#define ZEROCOIN_MODULUS "25195908475657893494027183240048398571429282126204032027777137836043662020707595556264018525880784406918290641249515082189298559149176184502808489120072844992687392807287776735971418347270261896375014971824691165077613379859095700097330459748808428401797429100642458691817195118746121515172654632282216869987549182422433637259085141865462043576798423387184774447920739934236584823824281198163815010674810451660377306056201619676256133844143603833904414952634432190114657544454178424020924616515723350778707749817125772467962926386356373289912154831438167899885040445364023527381951378636564391212010397122822120720357"
-static CBigNum bnTrustedModulus;
-bool zc_params = bnTrustedModulus.SetHexBool(ZEROCOIN_MODULUS);
-static libzerocoin::Params *ZCParams = new libzerocoin::Params(bnTrustedModulus);
+//#define ZEROCOIN_MODULUS "25195908475657893494027183240048398571429282126204032027777137836043662020707595556264018525880784406918290641249515082189298559149176184502808489120072844992687392807287776735971418347270261896375014971824691165077613379859095700097330459748808428401797429100642458691817195118746121515172654632282216869987549182422433637259085141865462043576798423387184774447920739934236584823824281198163815010674810451660377306056201619676256133844143603833904414952634432190114657544454178424020924616515723350778707749817125772467962926386356373289912154831438167899885040445364023527381951378636564391212010397122822120720357"
+//static CBigNum bnTrustedModulus;
+//bool zc_params = bnTrustedModulus.SetHexBool(ZEROCOIN_MODULUS);
+//static libzerocoin::Params *ZCParams = new libzerocoin::Params(bnTrustedModulus);
 
 bool CompHeight(const CZerocoinMint& a, const CZerocoinMint& b) { return a.GetHeight() < b.GetHeight(); }
 
@@ -3664,7 +3664,7 @@ bool CWallet::CreateZerocoinMintModel(string& stringError, string denomAmount)
     // new zerocoin. It stores all the private values inside the
     // PrivateCoin object. This includes the coin secrets, which must be
     // stored in a secure location (wallet) at the client.
-    libzerocoin::PrivateCoin newCoin(ZCParams, denomination);
+    libzerocoin::PrivateCoin newCoin(Params().Zerocoin_Params(), denomination);
 
     // Get a copy of the 'public' portion of the coin. You should
     // embed this into a Zerocoin 'MINT' transaction along with a series
@@ -3906,7 +3906,7 @@ bool CWallet::CreateZerocoinSpendTransaction(int64_t nValue, libzerocoin::CoinDe
 
             // Fill vin
 
-            libzerocoin::Accumulator accumulator(ZCParams, denomination);
+            libzerocoin::Accumulator accumulator(Params().Zerocoin_Params(), denomination);
             // TODO: Create Zercoin spending transaction part
             // 1. Selection a private coin that doesn't use in wallet
             // 2. Get pubcoin from the private coin
@@ -3945,7 +3945,7 @@ bool CWallet::CreateZerocoinSpendTransaction(int64_t nValue, libzerocoin::CoinDe
             }
 
             // 2. Get pubcoin from the private coin
-            libzerocoin::PublicCoin pubCoinSelected(ZCParams, zerocoinSelected.GetValue(), denomination);
+            libzerocoin::PublicCoin pubCoinSelected(Params().Zerocoin_Params(), zerocoinSelected.GetValue(), denomination);
 
             // Now make sure the coin is valid.
             if (!pubCoinSelected.validate()) {
@@ -3962,7 +3962,7 @@ bool CWallet::CreateZerocoinSpendTransaction(int64_t nValue, libzerocoin::CoinDe
             BOOST_FOREACH (const CZerocoinMint& zerocoinItem, listPubCoin) {
                 // Count pubcoins in same block
                 if (zerocoinItem.GetValue() != zerocoinSelected.GetValue() && zerocoinItem.GetId() == zerocoinSelected.GetId() && zerocoinItem.GetHeight() + 6 < chainActive.Height() && zerocoinItem.GetHeight() >= 1 && zerocoinItem.GetHeight() != INT_MAX && zerocoinItem.GetDenomination() == denomination && zerocoinItem.GetHeight() != -1) {
-                    libzerocoin::PublicCoin pubCoinTemp(ZCParams, zerocoinItem.GetValue(), denomination);
+                    libzerocoin::PublicCoin pubCoinTemp(Params().Zerocoin_Params(), zerocoinItem.GetValue(), denomination);
                     if (pubCoinTemp.validate()) {
                         countUseablePubcoin++;
                         //if(countUseablePubcoin == 9) break;
@@ -3983,7 +3983,7 @@ bool CWallet::CreateZerocoinSpendTransaction(int64_t nValue, libzerocoin::CoinDe
             // libzerocoin::AccumulatorWitness witness(params, accumulator, newCoin.getPublicCoin());
             // Add the public half of "newCoin" to the Accumulator itself.
             // accumulator += newCoin.getPublicCoin();
-            libzerocoin::AccumulatorWitness witness(ZCParams, accumulator, pubCoinSelected);
+            libzerocoin::AccumulatorWitness witness(Params().Zerocoin_Params(), accumulator, pubCoinSelected);
             accumulator += pubCoinSelected;
 
             /*
@@ -4004,11 +4004,11 @@ bool CWallet::CreateZerocoinSpendTransaction(int64_t nValue, libzerocoin::CoinDe
 
             // Construct the CoinSpend object. This acts like a signature on the
             // transaction.
-            libzerocoin::PrivateCoin privateCoin(ZCParams, denomination);
+            libzerocoin::PrivateCoin privateCoin(Params().Zerocoin_Params(), denomination);
             privateCoin.setPublicCoin(pubCoinSelected);
             privateCoin.setRandomness(zerocoinSelected.GetRandomness());
             privateCoin.setSerialNumber(zerocoinSelected.GetSerialNumber());
-            libzerocoin::CoinSpend spend(ZCParams, privateCoin, accumulator, witness, metaData);
+            libzerocoin::CoinSpend spend(Params().Zerocoin_Params(), privateCoin, accumulator, witness, metaData);
 
             // This is a sanity check. The CoinSpend object should always verify,
             // but why not check before we put it onto the wire?
@@ -4037,7 +4037,7 @@ bool CWallet::CreateZerocoinSpendTransaction(int64_t nValue, libzerocoin::CoinDe
             /********************************************************************/
 
             // Deserialize the CoinSpend intro a fresh object
-            libzerocoin::CoinSpend newSpend(ZCParams, serializedCoinSpend);
+            libzerocoin::CoinSpend newSpend(Params().Zerocoin_Params(), serializedCoinSpend);
 
             // Create a new metadata object to contain the hash of the received
             // ZEROCOIN_SPEND transaction. If we were a real client we'd actually
@@ -4074,7 +4074,7 @@ bool CWallet::CreateZerocoinSpendTransaction(int64_t nValue, libzerocoin::CoinDe
             serializedCoinSpendChecking << dataTxIn;
 
             // Deserialize the CoinSpend intro a fresh object
-            libzerocoin::CoinSpend newSpendChecking(ZCParams, serializedCoinSpendChecking);
+            libzerocoin::CoinSpend newSpendChecking(Params().Zerocoin_Params(), serializedCoinSpendChecking);
             if (!newSpendChecking.Verify(accumulator, newMetadata)) {
                 strFailReason = _("the transaction did not verify");
                 return false;
