@@ -47,7 +47,7 @@ inline bool AmountToZerocoinDenomination(uint256 amount, CoinDenomination& denom
 	{
 		//not a valid denomination mark to minimal and return false
 		//should mark invalid if we add that denom to the enum
-		denomination = CoinDenomination::ZQ_LOVELACE;
+		denomination = CoinDenomination::ZQ_ERROR;
 		return false;
 	}
 
