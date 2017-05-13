@@ -16,7 +16,7 @@
 #include <fstream>
 #include <curses.h>
 #include <exception>
-#include "CDataStream.h"
+#include "streams.h"
 #include "Zerocoin.h"
 
 using namespace std;
@@ -205,8 +205,8 @@ ZerocoinTutorial()
 		// assume you've formatted this transaction and placed the hash into
 		// "transactionHash". We'll also assume "accumulatorHash" contains the
 		// hash of the last block whose transactions are in the accumulator.
-		uint256 transactionHash = ArithToUint256(arith_uint256(DUMMY_TRANSACTION_HASH));
-		uint256 accumulatorID = ArithToUint256(arith_uint256(DUMMY_ACCUMULATOR_ID));
+		uint256 transactionHash = DUMMY_TRANSACTION_HASH;
+		uint256 accumulatorID = DUMMY_ACCUMULATOR_ID;
 
 		// Place "transactionHash" and "accumulatorBlockHash" into a new
 		// SpendMetaData object.
