@@ -83,7 +83,7 @@ CalculateParams(Params &params, CBigNum N, string aux, uint32_t securityLevel)
 
 	// Calculate the parameters for the accumulator QRN commitment generators. This isn't really
 	// a whole group, just a pair of random generators in QR_N.
-	uint64_t resultCtr;
+	uint32_t resultCtr;
 	params.accumulatorParams.accumulatorQRNCommitmentGroup.g = generateIntegerFromSeed(NLen - 1,
 	        calculateSeed(N, aux, securityLevel, STRING_QRNCOMMIT_GROUPG),
 											 &resultCtr).pow_mod(CBigNum(2),N);
@@ -162,7 +162,6 @@ calculateSeed(CBigNum modulus, string auxString, uint32_t securityLevel, string 
 
 	// Compute the hash of:
 	// <modulus>||<securitylevel>||<auxString>||groupName
-	/*
 	hasher << modulus;
 	hasher << string("||");
 	hasher << securityLevel;
@@ -170,7 +169,7 @@ calculateSeed(CBigNum modulus, string auxString, uint32_t securityLevel, string 
 	hasher << auxString;
 	hasher << string("||");
 	hasher << groupName;
-	*/
+
 	return hasher.GetHash();
 }
 
@@ -385,11 +384,9 @@ calculateGroupModulusAndOrder(uint256 seed, uint32_t pLen, uint32_t qLen,
 	uint32_t    old_counter = pgen_counter;
 
 	// Generate a random integer "x" of pLen bits
-	uint64_t iterations;
+	uint32_t iterations;
 	CBigNum x = generateIntegerFromSeed(pLen, pseed, &iterations);
-	uint256 pseed_arith = (pseed);
-	pseed_arith += (iterations + 1);
-	pseed = (pseed_arith);
+	pseed += (iterations + 1);
 
 	// Set x = 2^{pLen−1} + (x mod 2^{pLen–1}).
 	CBigNum powerOfTwo = CBigNum(2).pow(pLen-1);
@@ -416,7 +413,7 @@ calculateGroupModulusAndOrder(uint256 seed, uint32_t pLen, uint32_t qLen,
 
 		// Verify that resultModulus is prime. First generate a pseudorandom integer "a".
 		CBigNum a = generateIntegerFromSeed(pLen, pseed, &iterations);
-		pseed_arith += iterations + 1;
+		pseed += iterations + 1;
 
 		// Set a = 2 + (a mod (resultModulus–3)).
 		a = CBigNum(2) + (a % ((*resultModulus) - CBigNum(3)));
@@ -429,7 +426,7 @@ calculateGroupModulusAndOrder(uint256 seed, uint32_t pLen, uint32_t qLen,
 		if ((resultModulus->gcd(z - CBigNum(1))).isOne() &&
 		        (z.pow_mod(p0, (*resultModulus))).isOne()) {
 			// Success! Return the seeds and primes.
-			*resultPseed = (pseed_arith);
+			*resultPseed = pseed;
 			*resultQseed = qseed;
 			return;
 		}
@@ -514,15 +511,15 @@ generateRandomPrime(uint32_t primeBitLen, uint256 in_seed, uint256 *out_seed,
 		CBigNum result(0);
 
 		// Set prime_seed = in_seed, prime_gen_counter = 0.
-		uint256     prime_seed = (in_seed);
+		uint256     prime_seed = in_seed;
 		(*prime_gen_counter) = 0;
 
 		// Loop up to "4 * primeBitLen" iterations.
 		while ((*prime_gen_counter) < (4 * primeBitLen)) {
 
 			// Generate a pseudorandom integer "c" of length primeBitLength bits
-			uint64_t iteration_count;
-			CBigNum c = generateIntegerFromSeed(primeBitLen, in_seed, &iteration_count);
+			uint32_t iteration_count;
+			CBigNum c = generateIntegerFromSeed(primeBitLen, prime_seed, &iteration_count);
 #ifdef ZEROCOIN_DEBUG
 			cout << "generateRandomPrime: primeBitLen = " << primeBitLen << endl;
 			cout << "Generated c = " << c << endl;
@@ -545,7 +542,7 @@ generateRandomPrime(uint32_t primeBitLen, uint256 in_seed, uint256 *out_seed,
 				// Return "intc" converted back into a CBigNum and "prime_seed". We also updated
 				// the variable "prime_gen_counter" in previous statements.
 				result = intc;
-				*out_seed = (prime_seed);
+				*out_seed = prime_seed;
 
 				// Success
 				return result;
@@ -566,11 +563,9 @@ generateRandomPrime(uint32_t primeBitLen, uint256 in_seed, uint256 *out_seed,
 
 		// Generate a random integer "x" of primeBitLen bits using the output
 		// of the previous call.
-		uint64_t numIterations;
+		uint32_t numIterations;
 		CBigNum x = generateIntegerFromSeed(primeBitLen, *out_seed, &numIterations);
-		uint256 o_seed = (*out_seed);
-		o_seed += numIterations + 1;
-		*out_seed = (o_seed);
+		(*out_seed) += numIterations + 1;
 
 		// Compute "t" = ⎡x / (2 * c0⎤
 		// TODO no Ceiling call
@@ -595,8 +590,7 @@ generateRandomPrime(uint32_t primeBitLen, uint256 in_seed, uint256 *out_seed,
 			// 1. First pick an integer "a" in between 2 and (c - 2)
 			CBigNum a = generateIntegerFromSeed(c.bitSize(), (*out_seed), &numIterations);
 			a = CBigNum(2) + (a % (c - CBigNum(3)));
-			o_seed += (numIterations + 1);
-			*out_seed = (o_seed);
+			(*out_seed) += (numIterations + 1);
 
 			// 2. Compute "z" = a^{2*t} mod c
 			CBigNum z = a.pow_mod(CBigNum(2) * t, c);
@@ -621,7 +615,7 @@ generateRandomPrime(uint32_t primeBitLen, uint256 in_seed, uint256 *out_seed,
 }
 
 CBigNum
-generateIntegerFromSeed(uint32_t numBits, uint256 seed, uint64_t *numIterations)
+generateIntegerFromSeed(uint32_t numBits, uint256 seed, uint32_t *numIterations)
 {
 	CBigNum      result(0);
 	uint32_t    iterations = ceil((double)numBits / (double)HASH_OUTPUT_BITS);
@@ -631,12 +625,10 @@ generateIntegerFromSeed(uint32_t numBits, uint256 seed, uint64_t *numIterations)
 	cout << "iterations = " << iterations << endl;
 #endif
 
-	uint256 arith_seed = (seed);
 	// Loop "iterations" times filling up the value "result" with random bits
 	for (uint32_t count = 0; count < iterations; count++) {
 		// result += ( H(pseed + count) * 2^{count * p0len} )
-		uint256 sum = (arith_seed + count);
-		result += CBigNum(calculateHash(sum)) * CBigNum(2).pow(count * HASH_OUTPUT_BITS);
+		result += CBigNum(calculateHash(seed + count)) * CBigNum(2).pow(count * HASH_OUTPUT_BITS);
 	}
 
 	result = CBigNum(2).pow(numBits - 1) + (result % (CBigNum(2).pow(numBits - 1)));
