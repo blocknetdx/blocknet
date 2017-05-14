@@ -11,6 +11,7 @@
 **/
 
 
+#include <boost/test/unit_test.hpp>
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -279,9 +280,11 @@ ZerocoinTutorial()
 	return false;
 }
 
-int main(int argc, char **argv)
+BOOST_AUTO_TEST_SUITE(tutorial_libzerocoin)
+BOOST_AUTO_TEST_CASE(tutorial_libzerocoin_tests)
 {
 	cout << "libzerocoin v" << ZEROCOIN_VERSION_STRING << " tutorial." << endl << endl;
 
 	ZerocoinTutorial();
 }
+BOOST_AUTO_TEST_SUITE_END()

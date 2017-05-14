@@ -10,7 +10,7 @@
 * @license    This project is released under the MIT license.
 **/
 
-
+#include <boost/test/unit_test.hpp>
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -478,9 +478,11 @@ Test_RunAllTests()
 	delete g_Params;
 }
 
-int main(int argc, char **argv)
+BOOST_AUTO_TEST_SUITE(libzerocoin)
+BOOST_AUTO_TEST_CASE(libzerocoin_tests)
 {
 	cout << "libzerocoin v" << ZEROCOIN_VERSION_STRING << " test utility." << endl << endl;
 	
 	Test_RunAllTests();
 }
+BOOST_AUTO_TEST_SUITE_END()

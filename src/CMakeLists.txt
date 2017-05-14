@@ -13,7 +13,7 @@ endif()
 set(LDB_SOURCES
 	${CMAKE_CURRENT_SOURCE_DIR}/leveldb/db/builder.cc
 	${CMAKE_CURRENT_SOURCE_DIR}/leveldb/db/c.cc
-	${CMAKE_CURRENT_SOURCE_DIR}/leveldb/db/db_bench.cc
+##	${CMAKE_CURRENT_SOURCE_DIR}/leveldb/db/db_bench.cc
 	${CMAKE_CURRENT_SOURCE_DIR}/leveldb/db/db_impl.cc
 	${CMAKE_CURRENT_SOURCE_DIR}/leveldb/db/db_iter.cc
 	${CMAKE_CURRENT_SOURCE_DIR}/leveldb/db/dbformat.cc

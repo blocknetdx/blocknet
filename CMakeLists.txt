@@ -208,7 +208,7 @@ SET(SOURCES
 	./src/timedata.cpp
 	./src/txdb.cpp
 	./src/txmempool.cpp
-	./src/univalue/gen.cpp
+###	./src/univalue/gen.cpp
 	./src/univalue/univalue.cpp
 	./src/univalue/univalue_read.cpp
 	./src/wallet.cpp
