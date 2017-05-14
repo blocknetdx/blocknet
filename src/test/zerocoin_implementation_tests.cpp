@@ -19,7 +19,9 @@ BOOST_AUTO_TEST_CASE(zcparams_test)
 {
     bool fPassed = true;
     try{
+        SelectParams(CBaseChainParams::MAIN);
         libzerocoin::Params *ZCParams = Params().Zerocoin_Params();
+        (void)ZCParams;
     } catch(std::exception& e) {
         fPassed = false;
         std::cout << e.what() << "\n";

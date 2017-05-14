@@ -86,6 +86,7 @@ static const Checkpoints::CCheckpointData dataRegtest = {
 
 libzerocoin::Params* CChainParams::Zerocoin_Params() const
 {
+    assert(this);
     static CBigNum bnTrustedModulus(zerocoinModulus);
     static libzerocoin::Params ZCParams = libzerocoin::Params(bnTrustedModulus);
 
