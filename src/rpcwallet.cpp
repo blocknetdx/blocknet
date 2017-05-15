@@ -20,6 +20,7 @@
 
 #include <stdint.h>
 
+#include "libzerocoin/Coin.h"
 #include "json/json_spirit_utils.h"
 #include "json/json_spirit_value.h"
 #include <boost/assign/list_of.hpp>
@@ -2302,4 +2303,110 @@ Value multisend(const Array& params, bool fHelp)
         }
     }
     return printMultiSend();
+}
+
+Value mintzerocoin(const Array& params, bool fHelp)
+{
+
+    if (fHelp || params.size() != 1)
+        throw runtime_error(
+            "mintzerocoin <amount>(1,10,25,50,100)\n"
+            + HelpRequiringPassphrase());
+
+    if (pwalletMain->IsLocked())
+        throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
+
+    CAmount nAmount = params[0].get_int() * COIN;
+    libzerocoin::CoinDenomination denomination;
+    if(!libzerocoin::AmountToZerocoinDenomination(nAmount, denomination))
+        return JSONRPCError(RPC_INVALID_PARAMETER, "mintzerocoin must be exact. Amount options: (1,10,25,50,100)\n");
+
+    // The following constructor does all the work of minting a brand
+    // new zerocoin. It stores all the private values inside the
+    // PrivateCoin object. This includes the coin secrets, which must be
+    // stored in a secure location (wallet) at the client.
+    libzerocoin::PrivateCoin newCoin(Params().Zerocoin_Params(), denomination);
+
+
+    // Get a copy of the 'public' portion of the coin. You should
+    // embed this into a Zerocoin 'MINT' transaction along with a series
+    // of currency inputs totaling the assigned value of one zerocoin.
+    libzerocoin::PublicCoin pubCoin = newCoin.getPublicCoin();
+
+    // Validate
+    if(!pubCoin.validate())
+        return JSONRPCError(RPC_WALLET_ERROR, "failed to validate zerocoin");
+
+    CScript scriptSerializedCoin = CScript() << OP_ZEROCOINMINT << pubCoin.getValue().getvch().size() << pubCoin.getValue().getvch();
+
+    CWalletTx wtx;
+    string strError = pwalletMain->MintZerocoin(scriptSerializedCoin, nAmount, wtx);
+
+    if (strError != "")
+        throw JSONRPCError(RPC_WALLET_ERROR, strError);
+
+    CWalletDB walletdb(pwalletMain->strWalletFile);
+    CZerocoinMint zerocoinTx(denomination, pubCoin.getValue(), newCoin.getRandomness(), newCoin.getSerialNumber(), false);
+
+    //zerocoinMint's contain private information that should not be public. Convert to public coin.
+    libzerocoin::PublicCoin checkPubCoin(Params().Zerocoin_Params(), zerocoinTx.GetValue(), denomination);
+    if(!checkPubCoin.validate())
+        return false;
+
+    walletdb.WriteZerocoinMint(zerocoinTx);
+
+    //return EncodeHexTx(wtx);
+    return pubCoin.getValue().GetHex();
+}
+
+Value spendzerocoin(const Array& params, bool fHelp)
+{
+
+    if (fHelp || params.size() != 1)
+        throw runtime_error(
+            "spendzerocoin <amount>(1,10,25,50,100)\n"
+            + HelpRequiringPassphrase());
+
+    if (pwalletMain->IsLocked())
+        throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
+
+    CAmount nAmount = params[0].get_int() * COIN;
+    libzerocoin::CoinDenomination denomination;
+    if(!libzerocoin::AmountToZerocoinDenomination(nAmount, denomination))
+        return JSONRPCError(RPC_INVALID_PARAMETER, "mintzerocoin must be exact. Amount options: (1,10,25,50,100)\n");
+
+    CWalletTx wtx;
+    CBigNum coinSerial;
+    uint256 txHash;
+    CBigNum zcSelectedValue;
+    bool zcSelectedIsUsed;
+
+    string strError = pwalletMain->SpendZerocoin(nAmount, denomination, wtx, coinSerial, txHash, zcSelectedValue, zcSelectedIsUsed);
+
+    if (strError != "")
+        throw JSONRPCError(RPC_WALLET_ERROR, strError);
+
+    return wtx.GetHash().GetHex();
+}
+
+Value resetmintzerocoin(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() != 0)
+        throw runtime_error(
+            "resetmintzerocoin"
+            + HelpRequiringPassphrase());
+
+    list<CZerocoinMint> listPubcoin;
+    CWalletDB walletdb(pwalletMain->strWalletFile);
+    walletdb.ListPubCoin(listPubcoin);
+
+    BOOST_FOREACH(const CZerocoinMint& zerocoinItem, listPubcoin){
+        if(zerocoinItem.GetRandomness() != 0 && zerocoinItem.GetSerialNumber() != 0){
+            CZerocoinMint zerocoinTx(zerocoinItem.GetDenomination(), zerocoinItem.GetValue(), zerocoinItem.GetRandomness(), zerocoinItem.GetSerialNumber(), false);
+            zerocoinTx.SetHeight(-1);
+            walletdb.WriteZerocoinMint(zerocoinTx);
+        }
+    }
+
+    return Value::null;
 }

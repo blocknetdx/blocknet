@@ -23,6 +23,15 @@ public:
         SetNull();
     }
 
+    CZerocoinMint(int denomination, CBigNum value, CBigNum randomness, CBigNum serialNumber, bool isUsed)
+    {
+        this->denomination = denomination;
+        this->value = value;
+        this->randomness = randomness;
+        this->serialNumber = serialNumber;
+        this->isUsed = isUsed;
+    }
+
     void SetNull()
     {
         isUsed = false;
