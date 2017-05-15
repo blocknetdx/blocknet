@@ -18,7 +18,7 @@
 #include <curses.h>
 #include <exception>
 #include "streams.h"
-#include "Zerocoin.h"
+#include "libzerocoin/Zerocoin.h"
 
 using namespace std;
 

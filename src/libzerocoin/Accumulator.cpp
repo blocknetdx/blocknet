@@ -40,7 +40,7 @@ Accumulator::Accumulator(const Params* p, const CoinDenomination d, const Bignum
 
 void Accumulator::accumulate(const PublicCoin& coin) {
 	// Make sure we're initialized
-	if(this->value != 0) {
+	if(!(this->value)) {
 		throw ZerocoinException("Accumulator is not initialized");
 	}
 

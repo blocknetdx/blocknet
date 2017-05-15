@@ -35,7 +35,7 @@ SerialNumberSignatureOfKnowledge::SerialNumberSignatureOfKnowledge(const
 	CBigNum h = params->serialNumberSoKCommitmentGroup.h;
 
 	CHashWriter hasher(0,0);
-	///	hasher << *params << commitmentToCoin.getCommitmentValue() << coin.getSerialNumber();
+	hasher << *params << commitmentToCoin.getCommitmentValue() << coin.getSerialNumber();
 
 	vector<CBigNum> r(params->zkp_iterations);
 	vector<CBigNum> v(params->zkp_iterations);
@@ -65,7 +65,7 @@ SerialNumberSignatureOfKnowledge::SerialNumberSignatureOfKnowledge(const
 	// because OPENMP cannot not guarantee loops
 	// execute in order.
 	for(uint32_t i=0; i < params->zkp_iterations; i++) {
-		//		hasher << c[i];
+		hasher << c[i];
 	}
 	this->hash = hasher.GetHash();
 	unsigned char *hashbytes =  (unsigned char*) &hash;
@@ -110,7 +110,7 @@ bool SerialNumberSignatureOfKnowledge::Verify(const CBigNum& coinSerialNumber, c
 	CBigNum g = params->serialNumberSoKCommitmentGroup.g;
 	CBigNum h = params->serialNumberSoKCommitmentGroup.h;
 	CHashWriter hasher(0,0);
-	///	hasher << *params << valueOfCommitmentToCoin <<coinSerialNumber;
+	hasher << *params << valueOfCommitmentToCoin << coinSerialNumber;
 
 	vector<CBigNum> tprime(params->zkp_iterations);
 	unsigned char *hashbytes = (unsigned char*) &this->hash;

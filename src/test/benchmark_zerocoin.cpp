@@ -20,7 +20,7 @@
 #include <cstdlib>
 #include <sys/time.h>
 #include "streams.h"
-#include "Zerocoin.h"
+#include "libzerocoin/Zerocoin.h"
 
 using namespace std;
 using namespace libzerocoin;
@@ -269,7 +269,8 @@ Testb_Accumulator()
 		}
 
 	} catch (runtime_error e) {
-		return false;
+		cout << e.what() << endl;
+        return false;
 	}
 
 	return true;
