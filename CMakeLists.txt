@@ -39,17 +39,16 @@ if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
     endif()
 endif()
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 ")
 
 
 IF (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 ")
 	add_compile_options(-Wno-potentially-evaluated-expression -Wno-unused-const-variable -Wno-unused-function -Wno-deprecated-declarations -Wno-inaccessible-base -Wno-unused-local-typedefs -Wno-logical-op-parentheses -Wno-shift-negative-value -Wno-array-bounds)
 	add_definitions("-DOS_MACOSX -DLEVELDB_PLATFORM_POSIX")
 	add_definitions("-DENABLE_WALLET")
 	add_definitions("-DUSE_DBUS")
 #	add_definitions("-Werror")
 else()
-	#  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 ")
 	add_definitions("-Wno-cpp -Wno-unused-function")
 	set(ANL anl)
 endif()

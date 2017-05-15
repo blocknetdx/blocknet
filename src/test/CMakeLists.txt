@@ -73,7 +73,7 @@ include_directories(
 	)
 
 add_executable(zerocoin_unit_tests test_zerocoin.cpp ${ZERO_SOURCES})
-target_link_libraries(zerocoin_unit_tests coin db_cxx db secp256k1 gmp bitcoin_crypto leveldb zerocoin ${OPENSSL_LIBRARIES} ${Boost_LIBRARIES} ${ANL} pthread)
+target_link_libraries(zerocoin_unit_tests zerocoin coin db_cxx db secp256k1 gmp bitcoin_crypto leveldb ${OPENSSL_LIBRARIES} ${Boost_LIBRARIES} ${ANL} pthread)
   
 
 
