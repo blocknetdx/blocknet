@@ -2353,10 +2353,8 @@ Value mintzerocoin(const Array& params, bool fHelp)
     if(!checkPubCoin.validate())
         return false;
 
-    walletdb.WriteZerocoinMint(zerocoinTx);
-
-    //return EncodeHexTx(wtx);
-    return pubCoin.getValue().GetHex();
+    //walletdb.WriteZerocoinMint(zerocoinTx);
+    return EncodeHexTx(wtx) + " : " + pubCoin.getValue().GetHex() + " : "+ zerocoinTx.GetRandomness().GetHex() + " : " + zerocoinTx.GetSerialNumber().GetHex();
 }
 
 Value spendzerocoin(const Array& params, bool fHelp)

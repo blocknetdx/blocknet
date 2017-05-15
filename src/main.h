@@ -345,6 +345,7 @@ void UpdateCoins(const CTransaction& tx, CValidationState& state, CCoinsViewCach
 bool CheckTransaction(const CTransaction& tx, CValidationState& state);
 bool CheckZerocoinMint(const CTxOut txout, CValidationState& state, bool fCheckOnly = false);
 bool CheckZerocoinSpend(uint256 hashTx, const CTxOut txout, vector<CTxIn> vin, CValidationState& state);
+bool TxOutToPublicCoin(const CTxOut txout, libzerocoin::PublicCoin& pubCoin, CValidationState& state);
 
 /**
  * Check if transaction will be final in the next block to be created.

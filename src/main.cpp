@@ -975,16 +975,13 @@ bool MoneyRange(CAmount nValueOut)
 
 bool SetZerocoinMintKnown(libzerocoin::PublicCoin publicZerocoin)
 {
-    // Check the pubCoinValue didn't already store in the wallet
+    //Check the pubCoinValue didn't already store in the zerocoin database
     //write the zerocoinmint to db if we don't already have it
     //note that many of the parameters are not set here
     CZerocoinMint pubCoinTx;
     if(!zerocoinDB->ReadCoinMint(publicZerocoin.getValue().GetHex(), pubCoinTx)){
+        pubCoinTx = CZerocoinMint(publicZerocoin.getDenomination(), publicZerocoin.getValue(), 0, 0, false);
         pubCoinTx.SetId(-1);
-        pubCoinTx.SetDenomination(publicZerocoin.getDenomination());
-        pubCoinTx.SetValue(publicZerocoin.getValue());
-        pubCoinTx.SetRandomness(0);
-        pubCoinTx.SetSerialNumber(0);
         pubCoinTx.SetHeight(-1);
 
         if(!zerocoinDB->WriteCoinMint(pubCoinTx))
@@ -997,7 +994,7 @@ bool SetZerocoinMintKnown(libzerocoin::PublicCoin publicZerocoin)
     return true;
 }
 
-bool CheckZerocoinMint(const CTxOut txout, CValidationState& state, bool fCheckOnly)
+bool TxOutToPublicCoin(const CTxOut txout, libzerocoin::PublicCoin& pubCoin, CValidationState& state)
 {
     LogPrintf("ZCPRINT %s\n", __func__);
     vector<unsigned char> vchZeroMint;
@@ -1008,13 +1005,24 @@ bool CheckZerocoinMint(const CTxOut txout, CValidationState& state, bool fCheckO
 
     libzerocoin::CoinDenomination denomination;
     if(!libzerocoin::AmountToZerocoinDenomination(txout.nValue, denomination))
-        return state.DoS(100, error("CTransaction::CheckTransaction() : txout.nValue is not correct"));
+        return state.DoS(100, error("TxOutToPublicCoin : txout.nValue is not correct"));
 
     libzerocoin::PublicCoin checkPubCoin(Params().Zerocoin_Params(), publicZerocoin, denomination);
     if (!checkPubCoin.validate())
-        return state.DoS(100, error("CTransaction::CheckTransaction() : PubCoin is not validate"));
+        return state.DoS(100, error("TxOutToPublicCoin : PubCoin is not validate"));
 
-    if(!fCheckOnly && !SetZerocoinMintKnown(checkPubCoin))
+    pubCoin = checkPubCoin;
+    return true;
+}
+
+bool CheckZerocoinMint(const CTxOut txout, CValidationState& state, bool fCheckOnly)
+{
+    LogPrintf("ZCPRINT %s\n", __func__);
+    libzerocoin::PublicCoin pubCoin(Params().Zerocoin_Params());
+    if(!TxOutToPublicCoin(txout, pubCoin, state))
+        return state.DoS(100, error("CheckZerocoinMint(): SetZerocoinKnown() failed"));
+
+    if(!fCheckOnly && !SetZerocoinMintKnown(pubCoin))
         return state.DoS(100, error("CheckZerocoinMint(): SetZerocoinKnown() failed"));
 
     return true;
@@ -1142,10 +1150,10 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
             return state.DoS(100, error("CheckTransaction() : txout total out of range"),
                 REJECT_INVALID, "bad-txns-txouttotal-toolarge");
 
-        if(!txout.scriptPubKey.empty() && txout.scriptPubKey.IsZerocoinMint()) {
-            if(!CheckZerocoinMint(txout, state, false))
-                return state.DoS(100, error("CheckTransaction() : invalid zerocoin mint"));
-        }
+//        if(!txout.scriptPubKey.empty() && txout.scriptPubKey.IsZerocoinMint()) {
+//            if(!CheckZerocoinMint(txout, state, false))
+//                return state.DoS(100, error("CheckTransaction() : invalid zerocoin mint"));
+//        }
     }
 
     if(tx.IsZerocoinSpend())
