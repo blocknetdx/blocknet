@@ -148,9 +148,9 @@ BOOST_AUTO_TEST_CASE(checkzerocoinspend_test)
     serializedCoinSpend2 << coinSpend;
     std::vector<unsigned char> data(serializedCoinSpend2.begin(), serializedCoinSpend2.end());
 
-    //contruct TxIn, TxOut, and Tx
+    /** Check valid spend */
     CTxIn newTxIn;
-    newTxIn.nSequence = 0;
+    newTxIn.nSequence = 1;
     newTxIn.scriptSig = CScript() << OP_ZEROCOINSPEND << data.size();
     newTxIn.scriptSig.insert(newTxIn.scriptSig.end(), data.begin(), data.end());
     newTxIn.prevout.SetNull();
@@ -162,8 +162,30 @@ BOOST_AUTO_TEST_CASE(checkzerocoinspend_test)
     txNew.vin.push_back(newTxIn);
     txNew.vout.push_back(txOut);
 
-    for(const CTxOut& txout : txNew.vout)
-        BOOST_CHECK(!CheckZerocoinSpend(txNew.GetHash(), txout, txNew.vin, state));
+    bool passedTest = true;
+    for(const CTxOut& txout : txNew.vout) {
+        if (!CheckZerocoinSpend(txNew.GetHash(), txout, txNew.vin, state)) {
+            passedTest = false;
+            cout << state.GetRejectReason() << endl;
+        }
+
+    }
+    BOOST_CHECK(passedTest);
+    
+    /**check an overspend*/
+    CTxOut txOutOverSpend(100 * COIN, script);
+    CTransaction txOverSpend;
+    txOverSpend.vin.push_back(newTxIn);
+    txOverSpend.vout.push_back(txOutOverSpend);
+    bool detectedOverSpend = false;
+
+    for(const CTxOut& txout : txOverSpend.vout) {
+        if(!CheckZerocoinSpend(txOverSpend.GetHash(), txout, txOverSpend.vin, state))
+            detectedOverSpend = true;
+    }
+
+    BOOST_CHECK(detectedOverSpend);
+
 }
 
 
