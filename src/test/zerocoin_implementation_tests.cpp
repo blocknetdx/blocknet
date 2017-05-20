@@ -99,15 +99,39 @@ BOOST_AUTO_TEST_CASE(checkzerocoinmint_test)
     BOOST_CHECK(fFoundMint);
 }
 
+bool CheckZerocoinSpendNoDB(uint256 hashTx, const CTxOut txout, vector<CTxIn> vin, const libzerocoin::Accumulator &accumulator,CValidationState& state)
+{
+    libzerocoin::CoinDenomination denomination;
+    if(!libzerocoin::AmountToZerocoinDenomination(txout.nValue, denomination))
+        return state.DoS(100, error("CheckZerocoinSpend(): Zerocoin spend does not have valid denomination"));
+
+    // Check vIn
+    bool fValidated = false;
+    BOOST_FOREACH(const CTxIn& txin, vin) {
+
+        //only check txin that is a zcspend
+        if (!txin.scriptSig.IsZerocoinSpend())
+            continue;
+
+        libzerocoin::CoinSpend newSpend = TxInToZerocoinSpend(txin);
+        if(!CheckZerocoinSpendProperties(txin, newSpend, accumulator, state))
+            return state.DoS(100, error("Zerocoinspend properties are not valid"));
+
+        fValidated = true;
+    }
+
+    return fValidated;
+}
+
 BOOST_AUTO_TEST_CASE(checkzerocoinspend_test)
 {
     cout << "Running check_zerocoinspend_test...\n";
 
     //load our serialized pubcoin
     CBigNum bnpubcoin;
-    BOOST_CHECK(bnpubcoin.SetHexBool(rawTxpub1));
+    BOOST_CHECK_MESSAGE(bnpubcoin.SetHexBool(rawTxpub1), "Failed to set CBigNum from hex string");
     libzerocoin::PublicCoin pubCoin(Params().Zerocoin_Params(), bnpubcoin, libzerocoin::CoinDenomination::ZQ_LOVELACE);
-    BOOST_CHECK(pubCoin.validate());
+    BOOST_CHECK_MESSAGE(pubCoin.validate(), "Failed to validate pubCoin created from hex string");
 
     //initialize and Accumulator and AccumulatorWitness
     libzerocoin::Accumulator accumulator(Params().Zerocoin_Params(), libzerocoin::CoinDenomination::ZQ_LOVELACE);
@@ -117,12 +141,12 @@ BOOST_AUTO_TEST_CASE(checkzerocoinspend_test)
     CValidationState state;
     for(pair<string, string> raw : vecRawMints) {
         CTransaction tx;
-        BOOST_CHECK(DecodeHexTx(tx, raw.first));
+        BOOST_CHECK_MESSAGE(DecodeHexTx(tx, raw.first), "Failed to deserialize hex transaction");
 
         for(const CTxOut out : tx.vout){
             if(!out.scriptPubKey.empty() && out.scriptPubKey.IsZerocoinMint()) {
                 libzerocoin::PublicCoin publicCoin(Params().Zerocoin_Params());
-                BOOST_CHECK(TxOutToPublicCoin(out, publicCoin, state));
+                BOOST_CHECK_MESSAGE(TxOutToPublicCoin(out, publicCoin, state), "Failed to convert CTxOut " << out.ToString() << " to PublicCoin");
 
                 accumulator += publicCoin;
                 witness += publicCoin;
@@ -141,7 +165,7 @@ BOOST_AUTO_TEST_CASE(checkzerocoinspend_test)
     privateCoin.setSerialNumber(zerocoinMint.GetSerialNumber());
     libzerocoin::CoinSpend coinSpend(Params().Zerocoin_Params(), privateCoin, accumulator, witness, metaData);
 
-    BOOST_CHECK(coinSpend.Verify(accumulator, metaData));
+    BOOST_CHECK_MESSAGE(coinSpend.Verify(accumulator, metaData), "CoinSpend object failed to validate");
 
     //serialize the spend
     CDataStream serializedCoinSpend2(SER_NETWORK, PROTOCOL_VERSION);
@@ -164,13 +188,13 @@ BOOST_AUTO_TEST_CASE(checkzerocoinspend_test)
 
     bool passedTest = true;
     for(const CTxOut& txout : txNew.vout) {
-        if (!CheckZerocoinSpend(txNew.GetHash(), txout, txNew.vin, state)) {
+        if (!CheckZerocoinSpendNoDB(txNew.GetHash(), txout, txNew.vin, accumulator, state)) {
             passedTest = false;
             cout << state.GetRejectReason() << endl;
         }
 
     }
-    BOOST_CHECK(passedTest);
+    BOOST_CHECK_MESSAGE(passedTest, "Valid zerocoinspend transaction did not pass checks");
     
     /**check an overspend*/
     CTxOut txOutOverSpend(100 * COIN, script);
@@ -180,11 +204,11 @@ BOOST_AUTO_TEST_CASE(checkzerocoinspend_test)
     bool detectedOverSpend = false;
 
     for(const CTxOut& txout : txOverSpend.vout) {
-        if(!CheckZerocoinSpend(txOverSpend.GetHash(), txout, txOverSpend.vin, state))
+        if(!CheckZerocoinSpendNoDB(txOverSpend.GetHash(), txout, txOverSpend.vin, accumulator, state))
             detectedOverSpend = true;
     }
 
-    BOOST_CHECK(detectedOverSpend);
+    BOOST_CHECK_MESSAGE(detectedOverSpend, "Zerocoinspend checks did not detect overspend");
 
 }
 

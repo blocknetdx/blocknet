@@ -345,6 +345,8 @@ void UpdateCoins(const CTransaction& tx, CValidationState& state, CCoinsViewCach
 bool CheckTransaction(const CTransaction& tx, CValidationState& state);
 bool CheckZerocoinMint(const CTxOut txout, CValidationState& state, bool fCheckOnly = false);
 bool CheckZerocoinSpend(uint256 hashTx, const CTxOut txout, vector<CTxIn> vin, CValidationState& state);
+bool CheckZerocoinSpendProperties(const CTxIn& txin, libzerocoin::CoinSpend coinSpend, const libzerocoin::Accumulator &accumulator,CValidationState& state);
+libzerocoin::CoinSpend TxInToZerocoinSpend(const CTxIn& txin);
 bool TxOutToPublicCoin(const CTxOut txout, libzerocoin::PublicCoin& pubCoin, CValidationState& state);
 
 /**
