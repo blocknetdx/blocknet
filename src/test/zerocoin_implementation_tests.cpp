@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE(checkzerocoinmint_test)
     BOOST_CHECK(fFoundMint);
 }
 
-bool CheckZerocoinSpendNoDB(uint256 hashTx, const CTxOut txout, vector<CTxIn> vin, const libzerocoin::Accumulator &accumulator,CValidationState& state)
+bool CheckZerocoinSpendNoDB(uint256 hashTx, const CTxOut txout, vector<CTxIn> vin, const libzerocoin::Accumulator &accumulator, const CTransaction &txContainingMint, CValidationState& state)
 {
     libzerocoin::CoinDenomination denomination;
     if(!libzerocoin::AmountToZerocoinDenomination(txout.nValue, denomination))
@@ -112,6 +112,9 @@ bool CheckZerocoinSpendNoDB(uint256 hashTx, const CTxOut txout, vector<CTxIn> vi
         //only check txin that is a zcspend
         if (!txin.scriptSig.IsZerocoinSpend())
             continue;
+
+        if(!CheckZerocoinOverSpend(txout.nValue, txContainingMint, state))
+            return state.DoS(100, error("CheckZerocoinSpend(): Zerocoinspend redeems different value than the mint it uses"));
 
         libzerocoin::CoinSpend newSpend = TxInToZerocoinSpend(txin);
         if(!CheckZerocoinSpendProperties(txin, newSpend, accumulator, state))
@@ -194,9 +197,12 @@ BOOST_AUTO_TEST_CASE(checkzerocoinspend_test)
     txNew.vin.push_back(newTxIn);
     txNew.vout.push_back(txOut);
 
+    CTransaction txMintFrom;
+    BOOST_CHECK_MESSAGE(DecodeHexTx(txMintFrom, rawTx1), "Failed to deserialize hex transaction");
+
     bool passedTest = true;
     for(const CTxOut& txout : txNew.vout) {
-        if (!CheckZerocoinSpendNoDB(txNew.GetHash(), txout, txNew.vin, accumulator, state)) {
+        if (!CheckZerocoinSpendNoDB(txNew.GetHash(), txout, txNew.vin, accumulator, txMintFrom,state)) {
             passedTest = false;
             cout << state.GetRejectReason() << endl;
         }
@@ -212,7 +218,7 @@ BOOST_AUTO_TEST_CASE(checkzerocoinspend_test)
     bool detectedOverSpend = false;
 
     for(const CTxOut& txout : txOverSpend.vout) {
-        if(!CheckZerocoinSpendNoDB(txOverSpend.GetHash(), txout, txOverSpend.vin, accumulator, state))
+        if(!CheckZerocoinSpendNoDB(txOverSpend.GetHash(), txout, txOverSpend.vin, accumulator, txMintFrom, state))
             detectedOverSpend = true;
     }
 

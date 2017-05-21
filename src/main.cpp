@@ -1095,6 +1095,19 @@ bool IsZerocoinSpendUnknown(libzerocoin::CoinSpend coinSpend, uint256 hashTx, CZ
     return true;
 }
 
+bool CheckZerocoinOverSpend(const CAmount nAmountRedeemed, const CTransaction &txContainingMint, CValidationState& state)
+{
+    CAmount nPreviousMintValue = txContainingMint.GetZerocoinMinted();
+    libzerocoin::CoinDenomination testDenomination;
+    if(!libzerocoin::AmountToZerocoinDenomination(nPreviousMintValue, testDenomination))
+        return state.DoS(100, error("CheckZerocoinSpend(): Zerocoin mint does not have valid denomination"));
+
+    if(nAmountRedeemed != nPreviousMintValue)
+        return state.DoS(100, error("CheckZerocoinSpend(): Zerocoinspend redeems different value than the mint it uses"));
+
+    return true;
+}
+
 bool CheckZerocoinSpend(uint256 hashTx, const CTxOut txout, vector<CTxIn> vin, CValidationState& state)
 {
     LogPrintf("ZCPRINT %s\n", __func__);
@@ -1102,13 +1115,20 @@ bool CheckZerocoinSpend(uint256 hashTx, const CTxOut txout, vector<CTxIn> vin, C
     if(!libzerocoin::AmountToZerocoinDenomination(txout.nValue, denomination))
         return state.DoS(100, error("CheckZerocoinSpend(): Zerocoin spend does not have valid denomination"));
 
-    // Check vIn
     bool fValidated = false;
     BOOST_FOREACH(const CTxIn& txin, vin) {
 
         //only check txin that is a zcspend
         if (!txin.scriptSig.IsZerocoinSpend())
             continue;
+
+        CTransaction txContainingMint;
+        uint256 hashBlock;
+        if(!GetTransaction(txin.prevout.hash, txContainingMint, hashBlock))
+            return state.DoS(100, error("CheckZerocoinSpend(): Unable to find transaction containing mint"));
+
+        if(!CheckZerocoinOverSpend(txout.nValue, txContainingMint, state))
+            return state.DoS(100, error("CheckZerocoinSpend(): Zerocoinspend redeems different value than the mint it uses"));
 
         libzerocoin::CoinSpend newSpend = TxInToZerocoinSpend(txin);
         //todo accumulator scheme

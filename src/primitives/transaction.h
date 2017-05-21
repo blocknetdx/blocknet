@@ -265,14 +265,16 @@ public:
         return (vin.size() == 1 && vin[0].prevout.IsNull() && (vin[0].scriptSig[0] == OP_ZEROCOINSPEND) && (vout.size() == 1) );
     }
 
-    bool IsZerocoinMint(const CTransaction& tx) const
+    bool IsZerocoinMint() const
     {
-        for(const CTxOut& txout : tx.vout) {
+        for(const CTxOut& txout : vout) {
             if (txout.scriptPubKey.IsZerocoinMint())
                 return true;
         }
         return false;
     }
+
+    CAmount GetZerocoinMinted() const;
 
     friend bool operator==(const CTransaction& a, const CTransaction& b)
     {
