@@ -64,6 +64,28 @@ public:
 
     inline bool operator <(const CZerocoinMint& a) const { return GetHeight() < a.GetHeight(); }
 
+    CZerocoinMint(const CZerocoinMint& other) {
+        denomination = other.GetDenomination();
+        nHeight = other.GetHeight();
+        id = other.GetId();
+        value = other.GetValue();
+        randomness = other.GetRandomness();
+        serialNumber = other.GetSerialNumber();
+        isUsed = other.IsUsed();
+    }
+    
+    // Copy another CZerocoinMint
+    inline CZerocoinMint& operator=(const CZerocoinMint& other) {
+        denomination = other.GetDenomination();
+        nHeight = other.GetHeight();
+        id = other.GetId();
+        value = other.GetValue();
+        randomness = other.GetRandomness();
+        serialNumber = other.GetSerialNumber();
+        isUsed = other.IsUsed();
+        return *this;
+    }
+
     // why 6 below (SPOCK)
     inline int getMinId(int currentId, int denom, int Height) const {
         int minId = currentId;
