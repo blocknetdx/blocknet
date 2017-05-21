@@ -62,6 +62,35 @@ public:
     CBigNum GetSerialNumber() const { return serialNumber; }
     void SetSerialNumber(CBigNum serial){ this->serialNumber = serial; }
 
+    inline bool operator <(const CZerocoinMint& a) const { return GetHeight() < a.GetHeight(); }
+
+    // why 6 below (SPOCK)
+    inline int getMinId(int currentId, int denom, int Height) const {
+        int minId = currentId;
+        if (GetId() < currentId && GetDenomination() == denom && IsUsed() == false && GetRandomness() != 0 && GetSerialNumber() != 0 && GetId() != -1 && GetHeight() != -1 && GetHeight() != INT_MAX && GetHeight() >= 1 && (GetHeight() + 6 <= Height)) {
+            minId = GetId();
+        }
+        return minId;
+    }
+    
+    // why 6 below (SPOCK)
+    inline bool checkUnused(int currentId, int denom, int Height) const {
+        if (IsUsed() == false && GetDenomination() == denomination && GetRandomness() != 0 && GetSerialNumber() != 0 && GetId() == currentId && GetHeight() != -1 && GetHeight() != INT_MAX && GetHeight() >= 1 && (GetHeight() + 6 <= Height)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+     // why 6 below (SPOCK)
+    inline bool checkInSameBlock(CBigNum value, int currentId, int denom, int Height) const {
+        if (GetValue() != value && GetId() == currentId && (GetHeight() + 6 < Height) && GetHeight() >= 1 && GetHeight() != INT_MAX && GetDenomination() == denom && GetHeight() != -1) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+ 
     ADD_SERIALIZE_METHODS;
 
     template <typename Stream, typename Operation>

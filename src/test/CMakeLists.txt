@@ -60,6 +60,7 @@ set(ZERO_SOURCES
   benchmark_zerocoin.cpp
   libzerocoin_tests.cpp
   tutorial_zerocoin.cpp
+  zerocoin_transactions_tests.cpp
   zerocoin_implementation_tests.cpp)
 
 find_package(Boost COMPONENTS system filesystem thread program_options unit_test_framework REQUIRED)

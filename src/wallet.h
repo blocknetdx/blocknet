@@ -173,6 +173,8 @@ public:
     bool SelectCoinsCollateral(std::vector<CTxIn>& setCoinsRet, CAmount& nValueRet) const;
 
     // Zerocoin additions
+    bool selectPrivateCoin(list<CZerocoinMint>& listPubCoin,libzerocoin::CoinDenomination denomination,
+                           CZerocoinMint& zerocoinSelected);
     void ComputeAccumulatorZerocoin(const uint256& hash, const CTransaction& tx, const CBlock* pblock, bool fUpdate = false, bool fFindBlock = false);
     bool CreateZerocoinMintTransaction(const std::vector<std::pair<CScript, int64_t> >& vecSend,
         CWalletTx& wtxNew,

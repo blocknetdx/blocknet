@@ -27,14 +27,6 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/thread.hpp>
 
-// HACK(SPOCK) MOVE LATER
-//#define ZEROCOIN_MODULUS "25195908475657893494027183240048398571429282126204032027777137836043662020707595556264018525880784406918290641249515082189298559149176184502808489120072844992687392807287776735971418347270261896375014971824691165077613379859095700097330459748808428401797429100642458691817195118746121515172654632282216869987549182422433637259085141865462043576798423387184774447920739934236584823824281198163815010674810451660377306056201619676256133844143603833904414952634432190114657544454178424020924616515723350778707749817125772467962926386356373289912154831438167899885040445364023527381951378636564391212010397122822120720357"
-//static CBigNum bnTrustedModulus;
-//bool zc_params = bnTrustedModulus.SetHexBool(ZEROCOIN_MODULUS);
-//static libzerocoin::Params *ZCParams = new libzerocoin::Params(bnTrustedModulus);
-
-bool CompHeight(const CZerocoinMint& a, const CZerocoinMint& b) { return a.GetHeight() < b.GetHeight(); }
-
 using namespace std;
 
 /**
@@ -3724,6 +3716,29 @@ bool CWallet::CreateZerocoinSpendModel(string& stringError, string denomAmount)
     return true;
 }
 
+// Select a private coin that isn't used in wallet
+bool CWallet::selectPrivateCoin(list<CZerocoinMint>& listPubCoin,libzerocoin::CoinDenomination denomination,
+                       CZerocoinMint& zerocoinSelected) {
+
+    bool selectedPubcoin = false;
+    
+    // GET MIN ID
+    int currentId = INT_MAX;
+    for (const CZerocoinMint& minIdPubcoin : listPubCoin) {
+        currentId = minIdPubcoin.getMinId(currentId, denomination, chainActive.Height());
+    }
+
+    // (SPOCK) Why iterate through the list here, shouldn't only currentId match be sufficient?
+    for (const CZerocoinMint& zerocoinItem : listPubCoin) {
+        if (zerocoinItem.checkUnused(currentId, denomination, chainActive.Height())) {
+            zerocoinSelected = zerocoinItem;
+            selectedPubcoin = true;
+            break;
+        }
+    }
+    return selectedPubcoin;
+}
+
 bool CWallet::CreateZerocoinMintTransaction(const vector<pair<CScript, int64_t> >& vecSend,
                                             CWalletTx& wtxNew,
     CReserveKey& reservekey,
@@ -3917,29 +3932,13 @@ bool CWallet::CreateZerocoinSpendTransaction(int64_t nValue, libzerocoin::CoinDe
             // Add the public half of "newCoin" to the Accumulator itself.
             // accumulator += newCoin.getPublicCoin();
 
-            // 1. Selection a private coin that doesn't be used in wallet
             list<CZerocoinMint> listPubCoin;
             CWalletDB(strWalletFile).ListPubCoin(listPubCoin);
-            listPubCoin.sort(CompHeight);
+            listPubCoin.sort();
+            
+            // 1. Select a private coin not used in wallet
             CZerocoinMint zerocoinSelected;
-            bool selectedPubcoin = false;
-
-            // GET MIN ID
-            int currentId = INT_MAX;
-            BOOST_FOREACH (const CZerocoinMint& minIdPubcoin, listPubCoin) {
-                if (minIdPubcoin.GetId() < currentId && minIdPubcoin.GetDenomination() == denomination && minIdPubcoin.IsUsed() == false && minIdPubcoin.GetRandomness() != 0 && minIdPubcoin.GetSerialNumber() != 0 && minIdPubcoin.GetId() != -1 && minIdPubcoin.GetHeight() != -1 && minIdPubcoin.GetHeight() != INT_MAX && minIdPubcoin.GetHeight() >= 1 && minIdPubcoin.GetHeight() + 6 <= chainActive.Height()) {
-                    currentId = minIdPubcoin.GetId();
-                }
-            }
-
-            BOOST_FOREACH (const CZerocoinMint& zerocoinItem, listPubCoin) {
-                if (zerocoinItem.IsUsed() == false && zerocoinItem.GetDenomination() == denomination && zerocoinItem.GetRandomness() != 0 && zerocoinItem.GetSerialNumber() != 0 && zerocoinItem.GetId() == currentId && zerocoinItem.GetHeight() != -1 && zerocoinItem.GetHeight() != INT_MAX && zerocoinItem.GetHeight() >= 1 && zerocoinItem.GetHeight() + 6 <= chainActive.Height()) {
-                    zerocoinSelected = zerocoinItem;
-                    selectedPubcoin = true;
-                    break;
-                }
-            }
-
+            bool selectedPubcoin = selectPrivateCoin(listPubCoin, denomination, zerocoinSelected);
             if (!selectedPubcoin) {
                 strFailReason = _("it has to have at least two mint coins with at least 7 confirmation in order to spend a coin");
                 return false;
@@ -3960,9 +3959,9 @@ bool CWallet::CreateZerocoinSpendTransaction(int64_t nValue, libzerocoin::CoinDe
 
             // 3. Compute Accomulator by yourself by getting at least 9 pubcoins from wallet, but it must not include the public coin of the selected private coin
             int countUseablePubcoin = 0;
-            BOOST_FOREACH (const CZerocoinMint& zerocoinItem, listPubCoin) {
+            for (const CZerocoinMint& zerocoinItem : listPubCoin) {
                 // Count pubcoins in same block
-                if (zerocoinItem.GetValue() != zerocoinSelected.GetValue() && zerocoinItem.GetId() == zerocoinSelected.GetId() && zerocoinItem.GetHeight() + 6 < chainActive.Height() && zerocoinItem.GetHeight() >= 1 && zerocoinItem.GetHeight() != INT_MAX && zerocoinItem.GetDenomination() == denomination && zerocoinItem.GetHeight() != -1) {
+                if (zerocoinItem.checkInSameBlock(zerocoinSelected.GetValue(),zerocoinSelected.GetId(), denomination, chainActive.Height())) {
                     libzerocoin::PublicCoin pubCoinTemp(Params().Zerocoin_Params(), zerocoinItem.GetValue(), denomination);
                     if (pubCoinTemp.validate()) {
                         countUseablePubcoin++;
@@ -4096,7 +4095,7 @@ bool CWallet::CreateZerocoinSpendTransaction(int64_t nValue, libzerocoin::CoinDe
 
             std::list<CZerocoinSpend> listCoinSpendSerial;
             CWalletDB(strWalletFile).ListCoinSpendSerial(listCoinSpendSerial);
-            BOOST_FOREACH (const CZerocoinSpend& item, listCoinSpendSerial) {
+            for (const CZerocoinSpend& item : listCoinSpendSerial) {
                 if (spend.getCoinSerialNumber() == item.GetSerial()) {
                     // THIS SELECEDTED COIN HAS BEEN USED, SO UPDATE ITS STATUS
                     CZerocoinMint pubCoinTx;
