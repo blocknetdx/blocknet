@@ -15,6 +15,7 @@ public:
 private:
     std::map<int, std::unique_ptr<libzerocoin::Accumulator> > mapAccumulators;
     std::map<uint256, int> mapPubCoins;
+    std::map<unsigned int, CBigNum> mapAccumulatorValues;
 
     CAccumulators() { Setup(); }
     void Setup();
@@ -25,6 +26,8 @@ public:
 
     libzerocoin::Accumulator Get(libzerocoin::CoinDenomination denomination);
     void AddPubCoinToAccumulator(libzerocoin::CoinDenomination denomination, libzerocoin::PublicCoin publicCoin);
+    void AddAccumulatorChecksum(const CBigNum &bnValue);
+    CBigNum GetAccumulatorValueFromChecksum(const unsigned int nChecksum);
     //CBigNum GetAccumulatorValueFromBlock(CoinDenomination denomination, int nBlockHeight);
     //bool VerifyWitness(CoinDenomination denomination, int nBlockHeight, CBigNum witness);
 };

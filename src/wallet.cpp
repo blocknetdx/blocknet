@@ -4099,7 +4099,7 @@ bool CWallet::CreateZerocoinSpendTransaction(int64_t nValue, libzerocoin::CoinDe
             zcSelectedValue = zerocoinSelected.GetValue();
             zcSelectedIsUsed = zerocoinSelected.IsUsed();
 
-            CZerocoinSpend entry(coinSerial, txHash, zcSelectedValue, zerocoinSelected.GetDenomination(), zerocoinSelected.GetId());
+            CZerocoinSpend entry(coinSerial, txHash, zcSelectedValue, zerocoinSelected.GetDenomination(), zerocoinSelected.GetId(), 0); //presstab accumulator checksum todo
             if (!CWalletDB(strWalletFile).WriteZerocoinSpendSerialEntry(entry)) {
                 strFailReason = _("it cannot write coin serial number into wallet");
             }
@@ -4281,8 +4281,8 @@ string CWallet::SpendZerocoin(int64_t nValue, libzerocoin::CoinDenomination deno
             }
         }
 
-
-        CZerocoinSpend entry(coinSerial,txHash, zcSelectedValue, 0,0); /// HACK(SPOCK) 0,0 ????
+        /// HACK(SPOCK) 0,0 ???? presstab - added extra 0, should represent accumulator checksum which will allow other nodes to know which accumulator we used.
+        CZerocoinSpend entry(coinSerial,txHash, zcSelectedValue, 0,0,0);
         
         if (!CWalletDB(strWalletFile).EraseZerocoinSpendSerialEntry(entry)) {
             return _("Error: It cannot delete coin serial number in wallet");

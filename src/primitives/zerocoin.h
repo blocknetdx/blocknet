@@ -14,7 +14,7 @@ private:
     int id;
     CBigNum value;
     CBigNum randomness;
-    CBigNum serialNumber;
+    CBigNum serialNumber;;
     bool isUsed;
 
 public:
@@ -135,6 +135,7 @@ private:
     CBigNum pubCoin;
     int denomination;
     int id;
+    unsigned int nAccumulatorChecksum;
 
 public:
     CZerocoinSpend()
@@ -142,13 +143,14 @@ public:
         SetNull();
     }
 
-    CZerocoinSpend(CBigNum coinSerial, uint256 hashTx, CBigNum pubCoin, int denomination, int id)
+    CZerocoinSpend(CBigNum coinSerial, uint256 hashTx, CBigNum pubCoin, int denomination, int id, unsigned int nAccumulatorChecksum)
     {
         this->coinSerial = coinSerial;
         this->hashTx = hashTx;
         this->pubCoin = pubCoin;
         this->denomination = denomination;
         this->id = id;
+        this->nAccumulatorChecksum = nAccumulatorChecksum;
     }
 
     void SetNull()
@@ -164,6 +166,7 @@ public:
     uint256 GetTxHash() const { return hashTx; }
     CBigNum GetPubCoin() const { return pubCoin; }
     int GetDenomination() const { return denomination; }
+    unsigned int GetAccumulatorChecksum() const { return this->GetAccumulatorChecksum(); }
     int GetId() const { return id; }
 
     ADD_SERIALIZE_METHODS;
@@ -175,6 +178,7 @@ public:
         READWRITE(pubCoin);
         READWRITE(denomination);
         READWRITE(id);
+        READWRITE(nAccumulatorChecksum);
     };
 };
 
