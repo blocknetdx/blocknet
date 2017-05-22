@@ -25,7 +25,7 @@ Value mnbudget(const Array& params, bool fHelp)
         strCommand = params[0].get_str();
 
     if (fHelp ||
-        (strCommand != "vote-many" && strCommand != "prepare" && strCommand != "submit" && strCommand != "vote" && strCommand != "getvotes" && strCommand != "getinfo" && strCommand != "show" && strCommand != "projection" && strCommand != "check" && strCommand != "nextblock"))
+        (strCommand != "vote-alias" && strCommand != "vote-many" && strCommand != "prepare" && strCommand != "submit" && strCommand != "vote" && strCommand != "getvotes" && strCommand != "getinfo" && strCommand != "show" && strCommand != "projection" && strCommand != "check" && strCommand != "nextblock"))
         throw runtime_error(
             "mnbudget \"command\"... ( \"passphrase\" )\n"
             "Vote or show current budgets\n"
@@ -53,9 +53,6 @@ Value mnbudget(const Array& params, bool fHelp)
     if (strCommand == "prepare") {
         int nBlockMin = 0;
         CBlockIndex* pindexPrev = chainActive.Tip();
-
-        std::vector<CMasternodeConfig::CMasternodeEntry> mnEntries;
-        mnEntries = masternodeConfig.getEntries();
 
         if (params.size() != 7)
             throw runtime_error("Correct usage is 'mnbudget prepare proposal-name url payment_count block_start pivx_address monthly_payment_pivx'");
@@ -130,9 +127,6 @@ Value mnbudget(const Array& params, bool fHelp)
         int nBlockMin = 0;
         CBlockIndex* pindexPrev = chainActive.Tip();
 
-        std::vector<CMasternodeConfig::CMasternodeEntry> mnEntries;
-        mnEntries = masternodeConfig.getEntries();
-
         if (params.size() != 8)
             throw runtime_error("Correct usage is 'mnbudget submit proposal-name url payment_count block_start pivx_address monthly_payment_pivx fee_tx'");
 
@@ -204,9 +198,6 @@ Value mnbudget(const Array& params, bool fHelp)
     }
 
     if (strCommand == "vote-many") {
-        std::vector<CMasternodeConfig::CMasternodeEntry> mnEntries;
-        mnEntries = masternodeConfig.getEntries();
-
         if (params.size() != 3)
             throw runtime_error("Correct usage is 'mnbudget vote-many proposal-hash yes|no'");
 
@@ -283,10 +274,96 @@ Value mnbudget(const Array& params, bool fHelp)
         return returnObj;
     }
 
-    if (strCommand == "vote") {
+if(strCommand == "vote-alias")
+    {
+        if(params.size() != 4)
+            throw runtime_error("Correct usage is 'mnbudget vote-alias <proposal-hash> <yes|no> <alias-name>'");
+
+        uint256 hash;
+        std::string strVote;
+
+        hash = ParseHashV(params[1], "Proposal hash");
+        strVote = params[2].get_str();
+        std::string strAlias = params[3].get_str();
+
+        if(strVote != "yes" && strVote != "no") return "You can only vote 'yes' or 'no'";
+        int nVote = VOTE_ABSTAIN;
+        if(strVote == "yes") nVote = VOTE_YES;
+        if(strVote == "no") nVote = VOTE_NO;
+
+        int success = 0;
+        int failed = 0;
+
         std::vector<CMasternodeConfig::CMasternodeEntry> mnEntries;
         mnEntries = masternodeConfig.getEntries();
 
+        Object resultsObj;
+
+        BOOST_FOREACH(CMasternodeConfig::CMasternodeEntry mne, masternodeConfig.getEntries()) {
+
+            if( strAlias != mne.getAlias()) continue;
+
+            std::string errorMessage;
+            std::vector<unsigned char> vchMasterNodeSignature;
+            std::string strMasterNodeSignMessage;
+
+            CPubKey pubKeyCollateralAddress;
+            CKey keyCollateralAddress;
+            CPubKey pubKeyMasternode;
+            CKey keyMasternode;
+
+            Object statusObj;
+
+            if(!obfuScationSigner.SetKey(mne.getPrivKey(), errorMessage, keyMasternode, pubKeyMasternode)){
+                failed++;
+                statusObj.push_back(Pair("result", "failed"));
+                statusObj.push_back(Pair("errorMessage", "Masternode signing error, could not set key correctly: " + errorMessage));
+                resultsObj.push_back(Pair(mne.getAlias(), statusObj));
+                continue;
+            }
+
+            CMasternode* pmn = mnodeman.Find(pubKeyMasternode);
+            if(pmn == NULL)
+            {
+                failed++;
+                statusObj.push_back(Pair("result", "failed"));
+                statusObj.push_back(Pair("errorMessage", "Can't find masternode by pubkey"));
+                resultsObj.push_back(Pair(mne.getAlias(), statusObj));
+                continue;
+            }
+
+            CBudgetVote vote(pmn->vin, hash, nVote);
+            if(!vote.Sign(keyMasternode, pubKeyMasternode)){
+                failed++;
+                statusObj.push_back(Pair("result", "failed"));
+                statusObj.push_back(Pair("errorMessage", "Failure to sign."));
+                resultsObj.push_back(Pair(mne.getAlias(), statusObj));
+                continue;
+            }
+
+
+            std::string strError = "";
+            if(budget.UpdateProposal(vote, NULL, strError)) {
+                budget.mapSeenMasternodeBudgetVotes.insert(make_pair(vote.GetHash(), vote));
+                vote.Relay();
+                success++;
+                statusObj.push_back(Pair("result", "success"));
+            } else {
+                failed++;
+                statusObj.push_back(Pair("result", strError.c_str()));
+            }
+
+            resultsObj.push_back(Pair(mne.getAlias(), statusObj));
+        }
+
+        Object returnObj;
+        returnObj.push_back(Pair("overall", strprintf("Voted successfully %d time(s) and failed %d time(s).", success, failed)));
+        returnObj.push_back(Pair("detail", resultsObj));
+
+        return returnObj;
+}
+
+    if (strCommand == "vote") {
         if (params.size() != 3)
             throw runtime_error("Correct usage is 'mnbudget vote proposal-hash yes|no'");
 
@@ -560,9 +637,6 @@ Value mnfinalbudget(const Array& params, bool fHelp)
             "  getvotes     - Get vote information for each finalized budget\n");
 
     if (strCommand == "vote-many") {
-        std::vector<CMasternodeConfig::CMasternodeEntry> mnEntries;
-        mnEntries = masternodeConfig.getEntries();
-
         if (params.size() != 2)
             throw runtime_error("Correct usage is 'mnfinalbudget vote-many BUDGET_HASH'");
 
@@ -635,9 +709,6 @@ Value mnfinalbudget(const Array& params, bool fHelp)
     }
 
     if (strCommand == "vote") {
-        std::vector<CMasternodeConfig::CMasternodeEntry> mnEntries;
-        mnEntries = masternodeConfig.getEntries();
-
         if (params.size() != 2)
             throw runtime_error("Correct usage is 'mnfinalbudget vote BUDGET_HASH'");
 
