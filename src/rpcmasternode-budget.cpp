@@ -277,7 +277,7 @@ Value mnbudget(const Array& params, bool fHelp)
 if(strCommand == "vote-alias")
     {
         if(params.size() != 4)
-            throw runtime_error("Correct usage is 'mnbudget vote-alias <proposal-hash> <yes|no> <alias-name>'");
+            throw runtime_error("Correct usage is 'mnbudget vote-alias proposal-hash yes|no alias-name'");
 
         uint256 hash;
         std::string strVote;
