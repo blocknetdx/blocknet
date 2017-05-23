@@ -14,7 +14,7 @@
 #define COMMITMENT_H_
 
 #include "Params.h"
-#include "../serialize.h"
+#include "serialize.h"
 
 // We use a SHA256 hash for our PoK challenges. Update the following
 // if we ever change hash functions.

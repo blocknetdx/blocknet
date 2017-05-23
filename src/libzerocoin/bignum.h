@@ -8,8 +8,8 @@
 #include <stdexcept>
 #include <vector>
 #include <openssl/bn.h>
-#include "../uint256.h"
-#include "../version.h"
+#include "uint256.h"
+#include "version.h"
 
 /** Errors thrown by the bignum class */
 class bignum_error : public std::runtime_error

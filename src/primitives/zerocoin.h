@@ -3,7 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #ifndef PIVX_ZEROCOIN_H
 #define PIVX_ZEROCOIN_H
-#include "../libzerocoin/bignum.h"
+#include "libzerocoin/bignum.h"
 #include "serialize.h"
 
 class CZerocoinMint

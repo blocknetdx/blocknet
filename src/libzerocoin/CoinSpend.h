@@ -21,7 +21,7 @@
 #include "AccumulatorProofOfKnowledge.h"
 #include "SerialNumberSignatureOfKnowledge.h"
 #include "SpendMetaData.h"
-#include "../serialize.h"
+#include "serialize.h"
 
 namespace libzerocoin {
 

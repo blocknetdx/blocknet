@@ -3677,12 +3677,8 @@ bool CWallet::CreateZerocoinMintModel(string& stringError, string denomAmount)
         if (stringError != "")
             return false;
 
-        CZerocoinMint zerocoinTx;
-        zerocoinTx.SetUsed(false);
-        zerocoinTx.SetDenomination(denomination);
-        zerocoinTx.SetValue(pubCoin.getValue());
-        zerocoinTx.SetRandomness(newCoin.getRandomness());
-        zerocoinTx.SetSerialNumber(newCoin.getSerialNumber());
+        CZerocoinMint zerocoinTx(denomination, pubCoin.getValue(), newCoin.getRandomness(),
+                                 newCoin.getSerialNumber(), false);
 
         NotifyZerocoinChanged(this, zerocoinTx.GetValue().GetHex(), zerocoinTx.IsUsed() ? "Used" : "New", CT_NEW);
         if (!CWalletDB(strWalletFile).WriteZerocoinMint(zerocoinTx))
