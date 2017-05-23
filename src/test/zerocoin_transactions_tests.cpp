@@ -14,13 +14,21 @@
 
 using namespace libzerocoin;
 
+
 BOOST_AUTO_TEST_SUITE(zerocoin_transactions_tests)
+
+static CWallet cWallet("unlocked.dat");
 
 BOOST_AUTO_TEST_CASE(zerocoin_spend_test)
 {
+    SelectParams(CBaseChainParams::MAIN);
+    ZerocoinParams *ZCParams = Params().Zerocoin_Params();
+    (void)ZCParams;
 
-    CWallet cWallet;
-    CWalletTx cWalletTx;
+    bool fFirstRun;
+    cWallet.LoadWallet(fFirstRun);
+    CMutableTransaction tx;
+    CWalletTx* wtx = new CWalletTx(&cWallet, tx);
     CBigNum coinSerial;
     uint256 txHash;
     CBigNum selectedValue;
@@ -29,17 +37,27 @@ BOOST_AUTO_TEST_CASE(zerocoin_spend_test)
     int64_t nValue=0;
     CoinDenomination denom = ZQ_LOVELACE;
 
-    std::string vString = cWallet.SpendZerocoin(nValue, denom, cWalletTx, coinSerial, txHash, selectedValue,
+    std::string vString = cWallet.SpendZerocoin(nValue, denom, *wtx, coinSerial, txHash, selectedValue,
                                    selectedUsed);
     
-    BOOST_CHECK_MESSAGE(vString == "","Problem with Create SpendZerocoin");
+    BOOST_CHECK_MESSAGE(vString == "Invalid amount","Failed Invalid Amount Check");
+    
+    
+    nValue=1;
+    vString = cWallet.SpendZerocoin(nValue, denom, *wtx, coinSerial, txHash, selectedValue,
+                                                selectedUsed);
+    
+    // if using "wallet.dat", instead of "unlocked.dat" need this
+    /// BOOST_CHECK_MESSAGE(vString == "Error: Wallet locked, unable to create transaction!"," Locked Wallet Check Failed");
+ 
+    BOOST_CHECK_MESSAGE(vString == "it has to have at least two mint coins with at least 7 confirmation in order to spend a coin", "Failed not enough mint coins");
+    
     
 }
 
 BOOST_AUTO_TEST_CASE(create_zerocoin_spend_transaction_test)
 {
 
-    CWallet cWallet;
     CWalletTx cWalletTx;
     CReserveKey reservekey(&cWallet);
     CBigNum coinSerial;
