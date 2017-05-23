@@ -39,7 +39,7 @@ uint32_t    ggSuccessfulTests = 0;
 PrivateCoin    *ggCoins[TESTS_COINS_TO_ACCUMULATE];
 
 // Global params
-Params *gg_Params;
+ZerocoinParams *gg_Params;
 
 //////////
 // Utility routines
@@ -213,7 +213,7 @@ Testb_ParamGen()
 	try {
 		timer.start();
 		// Instantiating testParams runs the parameter generation code
-		Params testParams(gGetTestModulus(),ZEROCOIN_DEFAULT_SECURITYLEVEL);
+		ZerocoinParams testParams(gGetTestModulus(),ZEROCOIN_DEFAULT_SECURITYLEVEL);
 		timer.stop();
 
 		cout << "\tPARAMGEN ELAPSED TIME: " << timer.duration() << " ms\t" << timer.duration()*0.001 << " s" << endl;
@@ -371,7 +371,7 @@ void
 Testb_RunAllTests()
 {
 	// Make a new set of parameters from a random RSA modulus
-	gg_Params = new Params(gGetTestModulus());
+	gg_Params = new ZerocoinParams(gGetTestModulus());
 
 	ggNumTests = ggSuccessfulTests = 0;
 	for (uint32_t i = 0; i < TESTS_COINS_TO_ACCUMULATE; i++) {

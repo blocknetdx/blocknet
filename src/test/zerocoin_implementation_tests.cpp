@@ -21,7 +21,7 @@ BOOST_AUTO_TEST_CASE(zcparams_test)
     bool fPassed = true;
     try{
         SelectParams(CBaseChainParams::MAIN);
-        libzerocoin::Params *ZCParams = Params().Zerocoin_Params();
+        libzerocoin::ZerocoinParams *ZCParams = Params().Zerocoin_Params();
         (void)ZCParams;
     } catch(std::exception& e) {
         fPassed = false;
@@ -236,7 +236,7 @@ BOOST_AUTO_TEST_CASE(setup_exceptions_test)
 
     // Check Modulus > 1023 Exception
     try {
-        libzerocoin::Params ZCParams(bnpubcoin);
+        libzerocoin::ZerocoinParams ZCParams(bnpubcoin);
         BOOST_CHECK_MESSAGE(false, "Didn't catch exception:  ZerocoinException: Modulus must be at least 1023 bit");
     }
     catch (...) {
@@ -245,7 +245,7 @@ BOOST_AUTO_TEST_CASE(setup_exceptions_test)
 
     // Check Security Level < 80 Exception
     try {
-        libzerocoin::Params ZCParams(bnpubcoin,1);
+        libzerocoin::ZerocoinParams ZCParams(bnpubcoin,1);
         BOOST_CHECK_MESSAGE(false, "Didn't catch exception:  Security Level >= 80");
     }
     catch (...) {
@@ -255,7 +255,7 @@ BOOST_AUTO_TEST_CASE(setup_exceptions_test)
     // Check unitialized params Exception for PublicCoin
     try {
         SelectParams(CBaseChainParams::MAIN);
-        libzerocoin::Params* ZCParams = Params().Zerocoin_Params();
+        libzerocoin::ZerocoinParams* ZCParams = Params().Zerocoin_Params();
         ZCParams->initialized = false;
         libzerocoin::PublicCoin pubCoin(ZCParams, libzerocoin::CoinDenomination::ZQ_LOVELACE);
         BOOST_CHECK_MESSAGE(false, "Didn't catch exception checking for uninitialized Params");
@@ -267,7 +267,7 @@ BOOST_AUTO_TEST_CASE(setup_exceptions_test)
     // Check unitialized params Exception for PublicCoin (alternate constructor)
     try {
         SelectParams(CBaseChainParams::MAIN);
-        libzerocoin::Params* ZCParams = Params().Zerocoin_Params();
+        libzerocoin::ZerocoinParams* ZCParams = Params().Zerocoin_Params();
         ZCParams->initialized = false;
         libzerocoin::PublicCoin pubCoin(ZCParams);
         BOOST_CHECK_MESSAGE(false, "Didn't catch exception checking for uninitialized Params");
@@ -279,7 +279,7 @@ BOOST_AUTO_TEST_CASE(setup_exceptions_test)
     // Check unitialized params Exception for PrivateCoin
     try {
         SelectParams(CBaseChainParams::MAIN);
-        libzerocoin::Params* ZCParams = Params().Zerocoin_Params();
+        libzerocoin::ZerocoinParams* ZCParams = Params().Zerocoin_Params();
         ZCParams->initialized = false;
         libzerocoin::PrivateCoin privCoin(ZCParams, libzerocoin::CoinDenomination::ZQ_LOVELACE);
         BOOST_CHECK_MESSAGE(false, "Didn't catch exception checking for uninitialized Params");

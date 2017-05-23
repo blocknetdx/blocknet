@@ -43,7 +43,7 @@ uint32_t	gSerialNumberSize	= 0;
 PrivateCoin    *gCoins[TESTS_COINS_TO_ACCUMULATE];
 
 // Global params
-Params *g_Params;
+ZerocoinParams *g_Params;
 
 //////////
 // Utility routines
@@ -183,7 +183,7 @@ Test_ParamGen()
 
 	try {
 		// Instantiating testParams runs the parameter generation code
-		Params testParams(GetTestModulus(),ZEROCOIN_DEFAULT_SECURITYLEVEL);
+		ZerocoinParams testParams(GetTestModulus(),ZEROCOIN_DEFAULT_SECURITYLEVEL);
 	} catch (runtime_error e) {
 		cout << e.what() << endl;
 		result = false;
@@ -442,7 +442,7 @@ void
 Test_RunAllTests()
 {
 	// Make a new set of parameters from a random RSA modulus
-	g_Params = new Params(GetTestModulus());
+	g_Params = new ZerocoinParams(GetTestModulus());
 
 	gNumTests = gSuccessfulTests = gProofSize = 0;
 	for (uint32_t i = 0; i < TESTS_COINS_TO_ACCUMULATE; i++) {

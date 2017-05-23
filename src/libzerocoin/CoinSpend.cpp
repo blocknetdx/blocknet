@@ -14,7 +14,7 @@
 
 namespace libzerocoin {
 
-CoinSpend::CoinSpend(const Params* p, const PrivateCoin& coin,
+CoinSpend::CoinSpend(const ZerocoinParams* p, const PrivateCoin& coin,
                      Accumulator& a, const AccumulatorWitness& witness, const SpendMetaData& m):
 	denomination(coin.getPublicCoin().getDenomination()),
 	coinSerialNumber((coin.getSerialNumber())),

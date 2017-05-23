@@ -68,7 +68,7 @@ ZerocoinTutorial()
 		testModulus.SetHex(std::string(TUTORIAL_TEST_MODULUS));
 
 		// Set up the Zerocoin Params object
-		libzerocoin::Params* params = new libzerocoin::Params(testModulus);
+		libzerocoin::ZerocoinParams* params = new libzerocoin::ZerocoinParams(testModulus);
 
 		cout << "Successfully loaded parameters." << endl;
 

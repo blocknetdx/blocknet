@@ -84,11 +84,11 @@ static const Checkpoints::CCheckpointData dataRegtest = {
     0,
     100};
 
-libzerocoin::Params* CChainParams::Zerocoin_Params() const
+libzerocoin::ZerocoinParams* CChainParams::Zerocoin_Params() const
 {
     assert(this);
     static CBigNum bnTrustedModulus(zerocoinModulus);
-    static libzerocoin::Params ZCParams = libzerocoin::Params(bnTrustedModulus);
+    static libzerocoin::ZerocoinParams ZCParams = libzerocoin::ZerocoinParams(bnTrustedModulus);
 
     return &ZCParams;
 }

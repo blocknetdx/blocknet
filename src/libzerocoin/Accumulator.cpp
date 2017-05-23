@@ -24,7 +24,7 @@ Accumulator::Accumulator(const AccumulatorAndProofParams* p, const CoinDenominat
 	this->value = this->params->accumulatorBase;
 }
 
-Accumulator::Accumulator(const Params* p, const CoinDenomination d, const Bignum bnValue) {
+Accumulator::Accumulator(const ZerocoinParams* p, const CoinDenomination d, const Bignum bnValue) {
 	this->params = &(p->accumulatorParams);
 	this->denomination = d;
 
@@ -80,7 +80,7 @@ bool Accumulator::operator == (const Accumulator rhs) const {
 }
 
 //AccumulatorWitness class
-AccumulatorWitness::AccumulatorWitness(const Params* p,
+AccumulatorWitness::AccumulatorWitness(const ZerocoinParams* p,
                                        const Accumulator& checkpoint, const PublicCoin coin): witness(checkpoint), element(coin) {
 }
 

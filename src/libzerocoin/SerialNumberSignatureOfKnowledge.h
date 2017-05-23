@@ -33,7 +33,7 @@ namespace libzerocoin {
  */
 class SerialNumberSignatureOfKnowledge {
 public:
-	SerialNumberSignatureOfKnowledge(const Params* p);
+	SerialNumberSignatureOfKnowledge(const ZerocoinParams* p);
 	/** Creates a Signature of knowledge object that a commitment to a coin contains a coin with serial number x
 	 *
 	 * @param p params
@@ -41,7 +41,7 @@ public:
 	 * @param commitmentToCoin the commitment to the coin
 	 * @param msghash hash of meta data to create a signature of knowledge on.
 	 */
-	SerialNumberSignatureOfKnowledge(const Params* p, const PrivateCoin& coin, const Commitment& commitmentToCoin, uint256 msghash);
+	SerialNumberSignatureOfKnowledge(const ZerocoinParams* p, const PrivateCoin& coin, const Commitment& commitmentToCoin, uint256 msghash);
 
 	/** Verifies the Signature of knowledge.
 	 *
@@ -56,7 +56,7 @@ public:
 	    READWRITE(hash);
 	}
 private:
-	const Params* params;
+	const ZerocoinParams* params;
 	// challenge hash
 	uint256 hash; //TODO For efficiency, should this be a bitset where Templates define params?
 

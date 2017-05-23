@@ -37,7 +37,7 @@ namespace libzerocoin {
 ///
 
 void
-CalculateParams(Params &params, CBigNum N, string aux, uint32_t securityLevel)
+CalculateParams(ZerocoinParams &params, CBigNum N, string aux, uint32_t securityLevel)
 {
 	params.initialized = false;
 	params.accumulatorParams.initialized = false;

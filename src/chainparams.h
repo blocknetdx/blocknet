@@ -98,7 +98,7 @@ public:
 
     /** Zerocoin **/
     std::string Zerocoin_Modulus() const { return zerocoinModulus; }
-    libzerocoin::Params* Zerocoin_Params() const;
+    libzerocoin::ZerocoinParams* Zerocoin_Params() const;
     int Zerocoin_MaxSpendsPerBlock() const { return nMaxZerocoinSpendsPerBlock; };
 
 protected:

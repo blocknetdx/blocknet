@@ -14,10 +14,10 @@
 
 namespace libzerocoin {
 
-SerialNumberSignatureOfKnowledge::SerialNumberSignatureOfKnowledge(const Params* p): params(p) { }
+SerialNumberSignatureOfKnowledge::SerialNumberSignatureOfKnowledge(const ZerocoinParams* p): params(p) { }
 
 SerialNumberSignatureOfKnowledge::SerialNumberSignatureOfKnowledge(const
-        Params* p, const PrivateCoin& coin, const Commitment& commitmentToCoin,
+        ZerocoinParams* p, const PrivateCoin& coin, const Commitment& commitmentToCoin,
         uint256 msghash):params(p),
 	s_notprime(p->zkp_iterations),
 	sprime(p->zkp_iterations) {

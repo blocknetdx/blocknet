@@ -16,14 +16,14 @@
 namespace libzerocoin {
 
 //PublicCoin class
-PublicCoin::PublicCoin(const Params* p):
+PublicCoin::PublicCoin(const ZerocoinParams* p):
 	params(p), denomination(ZQ_LOVELACE) {
 	if (this->params->initialized == false) {
 		throw ZerocoinException("Params are not initialized");
 	}
 };
 
-PublicCoin::PublicCoin(const Params* p, const CBigNum& coin, const CoinDenomination d):
+PublicCoin::PublicCoin(const ZerocoinParams* p, const CBigNum& coin, const CoinDenomination d):
 	params(p), value(coin), denomination(d) {
 	if (this->params->initialized == false) {
 		throw ZerocoinException("Params are not initialized");
@@ -51,7 +51,7 @@ bool PublicCoin::validate() const{
 }
 
 //PrivateCoin class
-PrivateCoin::PrivateCoin(const Params* p, const CoinDenomination denomination): params(p), publicCoin(p) {
+PrivateCoin::PrivateCoin(const ZerocoinParams* p, const CoinDenomination denomination): params(p), publicCoin(p) {
 	// Verify that the parameters are valid
 	if(this->params->initialized == false) {
 		throw ZerocoinException("Params are not initialized");

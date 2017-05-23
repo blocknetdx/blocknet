@@ -112,11 +112,11 @@ inline int64_t get_amount(string denomAmount) {
 class PublicCoin {
 public:
 	template<typename Stream>
-	PublicCoin(const Params* p, Stream& strm): params(p) {
+	PublicCoin(const ZerocoinParams* p, Stream& strm): params(p) {
 		strm >> *this;
 	}
 
-	PublicCoin( const Params* p);
+	PublicCoin( const ZerocoinParams* p);
 
 	/**Generates a public coin
 	 *
@@ -124,7 +124,7 @@ public:
 	 * @param coin the value of the commitment.
 	 * @param denomination The denomination of the coin. Defaults to ZQ_LOVELACE
 	 */
-	PublicCoin( const Params* p, const CBigNum& coin, const CoinDenomination d = ZQ_LOVELACE);
+	PublicCoin( const ZerocoinParams* p, const CBigNum& coin, const CoinDenomination d = ZQ_LOVELACE);
 	const CBigNum& getValue() const;
 	CoinDenomination getDenomination() const;
 	bool operator==(const PublicCoin& rhs) const;
@@ -142,7 +142,7 @@ public:
 	    READWRITE(denomination);
 	}	
 private:
-	const Params* params;
+	const ZerocoinParams* params;
 	CBigNum value;
 	// Denomination is stored as an INT because storing
 	// and enum raises amigiuities in the serialize code //FIXME if possible
@@ -163,10 +163,10 @@ private:
 class PrivateCoin {
 public:
 	template<typename Stream>
-	PrivateCoin(const Params* p, Stream& strm): params(p),publicCoin(p) {
+	PrivateCoin(const ZerocoinParams* p, Stream& strm): params(p),publicCoin(p) {
 		strm >> *this;
 	}
-	PrivateCoin(const Params* p,const CoinDenomination denomination = ZQ_LOVELACE);
+	PrivateCoin(const ZerocoinParams* p,const CoinDenomination denomination = ZQ_LOVELACE);
 	const PublicCoin& getPublicCoin() const;
 	const CBigNum& getSerialNumber() const;
 	const CBigNum& getRandomness() const;
@@ -190,7 +190,7 @@ public:
 	    READWRITE(serialNumber);
 	}
 private:
-	const Params* params;
+	const ZerocoinParams* params;
 	PublicCoin publicCoin;
 	CBigNum randomness;
 	CBigNum serialNumber;

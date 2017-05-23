@@ -32,7 +32,7 @@ public:
 	}
 
 	template<typename Stream>
-	Accumulator(const Params* p, Stream& strm) {
+	Accumulator(const ZerocoinParams* p, Stream& strm) {
 		strm >> *this;
 		this->params = &(p->accumulatorParams);
 	}
@@ -45,7 +45,7 @@ public:
 	 **/
 	Accumulator(const AccumulatorAndProofParams* p, const CoinDenomination d = ZQ_LOVELACE);
 
-	Accumulator(const Params* p, const CoinDenomination d = ZQ_LOVELACE, Bignum bnValue = 0);
+	Accumulator(const ZerocoinParams* p, const CoinDenomination d = ZQ_LOVELACE, Bignum bnValue = 0);
 
 	/**
 	 * Accumulate a coin into the accumulator. Validates
@@ -101,7 +101,7 @@ private:
 class AccumulatorWitness {
 public:
 	template<typename Stream>
-	AccumulatorWitness(const Params* p, Stream& strm) {
+	AccumulatorWitness(const ZerocoinParams* p, Stream& strm) {
 		strm >> *this;
 	}
 
@@ -110,7 +110,7 @@ public:
 	 * @param checkpoint the last known accumulator value before the element was added
 	 * @param coin the coin we want a witness to
 	 */
-	AccumulatorWitness(const Params* p, const Accumulator& checkpoint, const PublicCoin coin);
+	AccumulatorWitness(const ZerocoinParams* p, const Accumulator& checkpoint, const PublicCoin coin);
 
 	/** Adds element to the set whose's accumulation we are proving coin is a member of
 	 *
