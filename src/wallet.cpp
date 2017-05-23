@@ -8,6 +8,7 @@
 #include "wallet.h"
 
 #include "base58.h"
+#include "accumulators.h"
 #include "checkpoints.h"
 #include "coincontrol.h"
 #include "kernel.h"
@@ -3922,7 +3923,6 @@ bool CWallet::CreateZerocoinSpendTransaction(int64_t nValue, libzerocoin::CoinDe
 
             // Fill vin
 
-            libzerocoin::Accumulator accumulator(Params().Zerocoin_Params(), denomination);
             // TODO: Create Zercoin spending transaction part
             // 1. Selection a private coin that doesn't use in wallet
             // 2. Get pubcoin from the private coin
@@ -3957,33 +3957,65 @@ bool CWallet::CreateZerocoinSpendTransaction(int64_t nValue, libzerocoin::CoinDe
             }
 
 
-            // 3. Compute Accomulator by yourself by getting at least 9 pubcoins from wallet,
-            // but it must not include the public coin of the selected private coin
-            int countUseablePubcoin = 0;
-            for (const CZerocoinMint& zerocoinItem : listPubCoin) {
-                // Count pubcoins in same block
-                if (zerocoinItem.checkInSameBlock(zerocoinSelected.GetValue(),zerocoinSelected.GetId(), denomination, chainActive.Height())) {
-                    libzerocoin::PublicCoin pubCoinTemp(Params().Zerocoin_Params(), zerocoinItem.GetValue(), denomination);
-                    if (pubCoinTemp.validate()) {
-                        countUseablePubcoin++;
-                        //if(countUseablePubcoin == 9) break;
-                        LogPrintf("COIN NO: %d PUBCOIN ID: %d HEIGHT: %d\n", countUseablePubcoin, zerocoinItem.GetId(), zerocoinItem.GetHeight());
-                        accumulator += pubCoinTemp;
-                    }
+//            // 3. Compute Accomulator by yourself by getting at least 9 pubcoins from wallet,
+//            // but it must not include the public coin of the selected private coin
+//            int countUseablePubcoin = 0;
+//            for (const CZerocoinMint& zerocoinItem : listPubCoin) {
+//                // Count pubcoins in same block
+//                if (zerocoinItem.checkInSameBlock(zerocoinSelected.GetValue(),zerocoinSelected.GetId(), denomination, chainActive.Height())) {
+//                    libzerocoin::PublicCoin pubCoinTemp(Params().Zerocoin_Params(), zerocoinItem.GetValue(), denomination);
+//                    if (pubCoinTemp.validate()) {
+//                        countUseablePubcoin++;
+//                        //if(countUseablePubcoin == 9) break;
+//                        LogPrintf("COIN NO: %d PUBCOIN ID: %d HEIGHT: %d\n", countUseablePubcoin, zerocoinItem.GetId(), zerocoinItem.GetHeight());
+//                        accumulator += pubCoinTemp;
+//                    }
+//                }
+//            }
+
+            //grab the checkpointed accumulator before the zerocoinmint was added to the pool of coins and instantiate a witness
+            //from the value, then add many coins after that to the witnessaccumulator, up to a specific checkpointed accumulator value
+            //that will be able to be reference by all peers on the network
+            int nHeightMintAddedToBlockchain = zerocoinSelected.GetHeight();
+
+            //find the checksum when this was added to the accumulator officially
+            unsigned int nChecksumBeforeMint = 0;
+            unsigned int nChecksumContainingMint = 0;
+            CBlockIndex* pindex = chainActive[nHeightMintAddedToBlockchain];
+            while (pindex->nHeight < chainActive.Tip()->nHeight) {
+                CBlock block;
+                ReadBlockFromDisk(block, pindex);
+                if(pindex->nHeight == nHeightMintAddedToBlockchain) {
+                    nChecksumBeforeMint = block.nAccumulatorChecksum;
+                    nChecksumContainingMint = block.nAccumulatorChecksum;
+                    continue;
+                }
+
+                //check if the next checksum was generated
+                if(block.nAccumulatorChecksum != nChecksumContainingMint) {
+                    nChecksumContainingMint = block.nAccumulatorChecksum;
+                    break;
                 }
             }
 
-            LogPrintf("USEABLE PUBCOINS: %d\n", countUseablePubcoin);
-
-            if (countUseablePubcoin < 1) { // You have to have at least two mint zerocoins.
-                strFailReason = _("at least two mint coins are using calculating accumulator");
+            //get the accumulator before the mint was added into the accumulators
+            CBigNum bnAccValue = CAccumulators::getInstance().GetAccumulatorValueFromChecksum(nChecksumBeforeMint);
+            if(bnAccValue == 0)
                 return false;
+            libzerocoin::Accumulator accumulator(Params().Zerocoin_Params(), pubCoinSelected.getDenomination(), bnAccValue);
+            libzerocoin::AccumulatorWitness witness(Params().Zerocoin_Params(), accumulator, pubCoinSelected);
+
+            //add the pubcoins up to the next checksum
+            list<CZerocoinMint> listUnaddedCoins;
+            CWalletDB(strWalletFile).ListPubCoin(listUnaddedCoins); //note this is just a hack, need to figure out a way to get a list of coins added between acc checkpoints
+            for(const CZerocoinMint mint : listUnaddedCoins) {
+                libzerocoin::PublicCoin pubCoin(Params().Zerocoin_Params(), mint.GetValue(), (libzerocoin::CoinDenomination)mint.GetDenomination());
+                witness += pubCoin;
+
+                //presstab: should we also calculate the accumulator incrementally here instead of simply grabbing the precomputed one?
+                //benefit would be that we could double check that the checksum equals the appropriate value
             }
 
-            // 4. Generate witness with follwing statement
-            // Add the public half of "newCoin" to the Accumulator itself.
-            libzerocoin::AccumulatorWitness witness(Params().Zerocoin_Params(), accumulator, pubCoinSelected);
-            accumulator += pubCoinSelected;
 
             // At this point we should generate a ZEROCOIN_SPEND transaction to
             // send to the network. This network should include a set of outputs

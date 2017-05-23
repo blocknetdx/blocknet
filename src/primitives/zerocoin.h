@@ -166,7 +166,7 @@ public:
     uint256 GetTxHash() const { return hashTx; }
     CBigNum GetPubCoin() const { return pubCoin; }
     int GetDenomination() const { return denomination; }
-    unsigned int GetAccumulatorChecksum() const { return this->GetAccumulatorChecksum(); }
+    unsigned int GetAccumulatorChecksum() const { return this->nAccumulatorChecksum; }
     int GetId() const { return id; }
 
     ADD_SERIALIZE_METHODS;

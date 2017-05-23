@@ -38,17 +38,22 @@ void CAccumulators::AddPubCoinToAccumulator(libzerocoin::CoinDenomination denomi
     *(mapAccumulators.at(denomination)) += publicCoin;
 }
 
-void CAccumulators::AddAccumulatorChecksum(const CBigNum &bnValue)
+uint32_t CAccumulators::GetChecksum(const CBigNum &bnValue)
 {
     CDataStream ss(SER_GETHASH, 0);
     ss << bnValue;
     uint256 hash = Hash(ss.begin(), ss.end());
-    unsigned int checksum;
-    checksum = (unsigned int)hash.Get64();
-    mapAccumulatorValues.insert(make_pair(checksum, bnValue));
+    uint32_t checksum = (unsigned int)hash.Get64();
+
+    return checksum;
 }
 
-CBigNum CAccumulators::GetAccumulatorValueFromChecksum(const unsigned int nChecksum)
+void CAccumulators::AddAccumulatorChecksum(const CBigNum &bnValue)
+{
+    mapAccumulatorValues.insert(make_pair(GetChecksum(bnValue), bnValue));
+}
+
+CBigNum CAccumulators::GetAccumulatorValueFromChecksum(const uint32_t nChecksum)
 {
     if(!mapAccumulatorValues.count(nChecksum))
         return CBigNum(0);

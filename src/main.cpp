@@ -1018,6 +1018,10 @@ bool TxOutToPublicCoin(const CTxOut txout, libzerocoin::PublicCoin& pubCoin, CVa
 bool CheckZerocoinMint(const CTxOut txout, CValidationState& state, bool fCheckOnly)
 {
     LogPrintf("ZCPRINT %s\n", __func__);
+
+    if(GetAdjustedTime() < Params().Zerocoin_ProtocolActivationTime())
+        return state.DoS(100, error("CheckZerocoinMint(): Zerocoin transactions are not allowed yet"));
+
     libzerocoin::PublicCoin pubCoin(Params().Zerocoin_Params());
     if(!TxOutToPublicCoin(txout, pubCoin, state))
         return state.DoS(100, error("CheckZerocoinMint(): SetZerocoinKnown() failed"));
@@ -1111,6 +1115,10 @@ bool CheckZerocoinOverSpend(const CAmount nAmountRedeemed, const CTransaction &t
 bool CheckZerocoinSpend(uint256 hashTx, const CTxOut txout, vector<CTxIn> vin, CValidationState& state)
 {
     LogPrintf("ZCPRINT %s\n", __func__);
+
+    if(GetAdjustedTime() < Params().Zerocoin_ProtocolActivationTime())
+        return state.DoS(100, error("CheckZerocoinSpend(): Zerocoin transactions are not allowed yet"));
+
     libzerocoin::CoinDenomination denomination;
     if(!libzerocoin::AmountToZerocoinDenomination(txout.nValue, denomination))
         return state.DoS(100, error("CheckZerocoinSpend(): Zerocoin spend does not have valid denomination"));

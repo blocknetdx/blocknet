@@ -99,7 +99,8 @@ public:
     /** Zerocoin **/
     std::string Zerocoin_Modulus() const { return zerocoinModulus; }
     libzerocoin::ZerocoinParams* Zerocoin_Params() const;
-    int Zerocoin_MaxSpendsPerBlock() const { return nMaxZerocoinSpendsPerBlock; };
+    int Zerocoin_MaxSpendsPerBlock() const { return nMaxZerocoinSpendsPerBlock; }
+    unsigned int Zerocoin_ProtocolActivationTime() const { return nZerocoinProtocolActivationTime; }
 
 protected:
     CChainParams() {}
@@ -144,6 +145,7 @@ protected:
     int64_t nStartMasternodePayments;
     std::string zerocoinModulus;
     int nMaxZerocoinSpendsPerBlock;
+    unsigned int nZerocoinProtocolActivationTime;
 };
 
 /** 
