@@ -3897,7 +3897,6 @@ bool CWallet::CreateZerocoinSpendTransaction(int64_t nValue, libzerocoin::CoinDe
     }
 
     wtxNew.BindWallet(this);
-
     {
         LOCK2(cs_main, cs_wallet);
         {
@@ -3924,9 +3923,6 @@ bool CWallet::CreateZerocoinSpendTransaction(int64_t nValue, libzerocoin::CoinDe
             // 2. Get pubcoin from the private coin
             // 3. Compute Accomulator by you self by getting pubcoins value from wallet, but it must not include the public coin of the private that we select
             // 4. Generate withness with follwing stmt
-            // libzerocoin::AccumulatorWitness witness(params, accumulator, newCoin.getPublicCoin());
-            // Add the public half of "newCoin" to the Accumulator itself.
-            // accumulator += newCoin.getPublicCoin();
 
             list<CZerocoinMint> listPubCoin;
             CWalletDB(strWalletFile).ListPubCoin(listPubCoin);
@@ -3934,25 +3930,19 @@ bool CWallet::CreateZerocoinSpendTransaction(int64_t nValue, libzerocoin::CoinDe
             
             // 1. Select a private coin not used in wallet
             CZerocoinMint zerocoinSelected;
-            bool selectedPubcoin = selectPrivateCoin(listPubCoin, denomination, zerocoinSelected);
-            if (!selectedPubcoin) {
+            if (!selectPrivateCoin(listPubCoin, denomination, zerocoinSelected)) {
                 strFailReason = _("it has to have at least two mint coins with at least 7 confirmation in order to spend a coin");
                 return false;
             }
 
             // 2. Get pubcoin from the private coin
             libzerocoin::PublicCoin pubCoinSelected(Params().Zerocoin_Params(), zerocoinSelected.GetValue(), denomination);
-
-            // Now make sure the coin is valid.
             if (!pubCoinSelected.validate()) {
-                // If this returns false, don't accept the coin for any purpose!
-                // Any ZEROCOIN_MINT with an invalid coin should NOT be
-                // accepted as a valid transaction in the block chain.
                 strFailReason = _("the selected mint coin is an invalid coin");
                 return false;
             }
 
-            // 3. Compute Accomulator and Witness
+            // 3. Compute Accumulator and Witness
             libzerocoin::Accumulator accumulator(Params().Zerocoin_Params(), pubCoinSelected.getDenomination());
             libzerocoin::AccumulatorWitness witness(Params().Zerocoin_Params(), accumulator, pubCoinSelected);
             if(!CAccumulators::getInstance().IntializeWitnessAndAccumulator(zerocoinSelected, pubCoinSelected, accumulator, witness)) {
@@ -3960,18 +3950,9 @@ bool CWallet::CreateZerocoinSpendTransaction(int64_t nValue, libzerocoin::CoinDe
                 return false;
             }
 
-            // At this point we should generate a ZEROCOIN_SPEND transaction to
-            // send to the network. This network should include a set of outputs
-            // totalling to the value of one zerocoin (minus transaction fees).
-            //
-            // The format of this transaction is up to the implementer. Here we'll
-            // assume you've formatted this transaction and placed the hash into
-            // "transactionHash". We'll also assume "accumulatorHash" contains the
-            // hash of the last block whose transactions are in the accumulator.
+            // Place "transactionHash" and "accumulatorBlockHash" into a new SpendMetaData object.
             uint256 transactionHash = 0;
             uint256 accumulatorID = 0;
-
-            // Place "transactionHash" and "accumulatorBlockHash" into a new SpendMetaData object.
             libzerocoin::SpendMetaData metaData(accumulatorID, transactionHash);
 
             // Construct the CoinSpend object. This acts like a signature on the transaction.
@@ -3988,14 +3969,6 @@ bool CWallet::CreateZerocoinSpendTransaction(int64_t nValue, libzerocoin::CoinDe
                 return false;
             }
 
-            // Serialize the CoinSpend object into a buffer.
-            CDataStream serializedCoinSpend(SER_NETWORK, PROTOCOL_VERSION);
-            serializedCoinSpend << spend;
-
-            CDataStream serializedCoinSpend2(SER_NETWORK, PROTOCOL_VERSION);
-            serializedCoinSpend2 << spend;
-
-
             /********************************************************************/
             // What is it:      Coin spend verification
             // Who does it:     ALL PARTIES
@@ -4008,40 +3981,28 @@ bool CWallet::CreateZerocoinSpendTransaction(int64_t nValue, libzerocoin::CoinDe
             /********************************************************************/
 
             // Deserialize the CoinSpend intro a fresh object
+            CDataStream serializedCoinSpend(SER_NETWORK, PROTOCOL_VERSION);
+            serializedCoinSpend << spend;
             libzerocoin::CoinSpend newSpend(Params().Zerocoin_Params(), serializedCoinSpend);
 
-            // Create a new metadata object to contain the hash of the received
-            // ZEROCOIN_SPEND transaction. If we were a real client we'd actually
-            // compute the hash of the received transaction here.
+            //Presstab: as far as I can see SpendMetaData is never used in libzerocoin
             libzerocoin::SpendMetaData newMetadata(accumulatorID, transactionHash);
+            std::vector<unsigned char> data(serializedCoinSpend.begin(), serializedCoinSpend.end());
 
-            // If we were a real client we would now re-compute the Accumulator
-            // from the information given in the ZEROCOIN_SPEND transaction.
-            // For our purposes we'll just use the one we calculated above.
-            //
-            // Verify that the spend is valid with respect to the Accumulator and the Metadata
-            if (!newSpend.Verify(accumulator, newMetadata)) {
-                strFailReason = _("the new spend coin transaction did not verify");
-                return false;
-            }
-
-            std::vector<unsigned char> data(serializedCoinSpend2.begin(), serializedCoinSpend2.end());
-
+            //Add the coin spend into a PIVX transaction
             CTxIn newTxIn;
             newTxIn.nSequence = zerocoinSelected.GetId();
             newTxIn.scriptSig = CScript() << OP_ZEROCOINSPEND << data.size();
             newTxIn.scriptSig.insert(newTxIn.scriptSig.end(), data.begin(), data.end());
-
             newTxIn.prevout.SetNull();
             wtxNew.vin.push_back(newTxIn);
 
+            // Deserialize the CoinSpend intro a fresh object and check that it verifies
             std::vector<char, zero_after_free_allocator<char> > dataTxIn;
             dataTxIn.insert(dataTxIn.end(), newTxIn.scriptSig.begin() + 4, newTxIn.scriptSig.end());
-
             CDataStream serializedCoinSpendChecking(SER_NETWORK, PROTOCOL_VERSION);
             serializedCoinSpendChecking << dataTxIn;
 
-            // Deserialize the CoinSpend intro a fresh object
             libzerocoin::CoinSpend newSpendChecking(Params().Zerocoin_Params(), serializedCoinSpendChecking);
             if (!newSpendChecking.Verify(accumulator, newMetadata)) {
                 strFailReason = _("the transaction did not verify");
