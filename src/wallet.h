@@ -183,18 +183,10 @@ public:
         std::string& strFailReason,
         const CCoinControl* coinControl = NULL);
     bool CreateZerocoinMintTransaction(CScript pubCoin, int64_t nValue, CWalletTx& wtxNew, CReserveKey& reservekey, int64_t& nFeeRet, std::string& strFailReason, const CCoinControl* coinControl = NULL);
-    bool CreateZerocoinSpendTransaction(int64_t nValue,
-        libzerocoin::CoinDenomination denomination,
-        CWalletTx& wtxNew,
-        CReserveKey& reservekey,
-        CBigNum& coinSerial,
-        uint256& txHash,
-        CBigNum& zcSelectedValue,
-        bool& zcSelectedIsUsed,
-        std::string& strFailReason);
+    bool CreateZerocoinSpendTransaction(int64_t nValue, libzerocoin::CoinDenomination denomination, CWalletTx& wtxNew, CReserveKey& reservekey, CZerocoinSpend& zerocoinSpend, CZerocoinMint& zerocoinSelected, std::string& strFailReason);
     bool CommitZerocoinSpendTransaction(CWalletTx& wtxNew, CReserveKey& reservekey);
     std::string MintZerocoin(CScript pubCoin, int64_t nValue, CWalletTx& wtxNew, bool fAskFee = false);
-    std::string SpendZerocoin(int64_t nValue, libzerocoin::CoinDenomination denomination, CWalletTx& wtxNew, CBigNum& coinSerial, uint256& txHash, CBigNum& zcSelectedValue, bool& zcSelectedIsUsed);
+    std::string SpendZerocoin(int64_t nValue, libzerocoin::CoinDenomination denomination, CWalletTx& wtxNew, CZerocoinSpend& zerocoinSpend, CZerocoinMint& zerocoinSelected);
     bool CreateZerocoinMintModel(string& stringError, string denomAmount);
     bool CreateZerocoinSpendModel(string& stringError, string denomAmount);
     std::string SendMoney(CScript scriptPubKey, int64_t nValue, CWalletTx& wtxNew, bool fAskFee=false);

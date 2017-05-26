@@ -49,6 +49,11 @@ uint32_t CAccumulators::GetChecksum(const CBigNum &bnValue)
     return checksum;
 }
 
+uint32_t CAccumulators::GetChecksum(const libzerocoin::Accumulator &accumulator)
+{
+    return GetChecksum(accumulator.getValue());
+}
+
 void CAccumulators::AddAccumulatorChecksum(const CBigNum &bnValue)
 {
     mapAccumulatorValues.insert(make_pair(GetChecksum(bnValue), bnValue));

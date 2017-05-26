@@ -2374,12 +2374,9 @@ Value spendzerocoin(const Array& params, bool fHelp)
         return JSONRPCError(RPC_INVALID_PARAMETER, "mintzerocoin must be exact. Amount options: (1,10,25,50,100)\n");
 
     CWalletTx wtx;
-    CBigNum coinSerial;
-    uint256 txHash;
-    CBigNum zcSelectedValue;
-    bool zcSelectedIsUsed;
-
-    string strError = pwalletMain->SpendZerocoin(nAmount, denomination, wtx, coinSerial, txHash, zcSelectedValue, zcSelectedIsUsed);
+    CZerocoinMint zerocoinSelected;
+    CZerocoinSpend zerocoinSpend;
+    string strError = pwalletMain->SpendZerocoin(nAmount, denomination, wtx, zerocoinSpend, zerocoinSelected);
 
     if (strError != "")
         throw JSONRPCError(RPC_WALLET_ERROR, strError);
