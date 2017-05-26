@@ -11,7 +11,6 @@ class CZerocoinMint
 private:
     int denomination;
     int nHeight;
-    int id;
     CBigNum value;
     CBigNum randomness;
     CBigNum serialNumber;;
@@ -39,7 +38,6 @@ public:
         value = 0;
         denomination = -1;
         nHeight = -1;
-        id = -1;
     }
 
     std::string ToUniqueString()
@@ -55,8 +53,6 @@ public:
     void SetHeight(int nHeight){ this->nHeight = nHeight; }
     bool IsUsed() const { return this->isUsed; }
     void SetUsed(bool isUsed){ this->isUsed = isUsed; }
-    int GetId() const { return id; }
-    void SetId(int id){ this->id = id; }
     CBigNum GetRandomness() const{ return randomness; }
     void SetRandomness(CBigNum rand){ this->randomness = rand; }
     CBigNum GetSerialNumber() const { return serialNumber; }
@@ -67,7 +63,6 @@ public:
     CZerocoinMint(const CZerocoinMint& other) {
         denomination = other.GetDenomination();
         nHeight = other.GetHeight();
-        id = other.GetId();
         value = other.GetValue();
         randomness = other.GetRandomness();
         serialNumber = other.GetSerialNumber();
@@ -78,41 +73,22 @@ public:
     inline CZerocoinMint& operator=(const CZerocoinMint& other) {
         denomination = other.GetDenomination();
         nHeight = other.GetHeight();
-        id = other.GetId();
         value = other.GetValue();
         randomness = other.GetRandomness();
         serialNumber = other.GetSerialNumber();
         isUsed = other.IsUsed();
         return *this;
     }
-
-    // why 6 below (SPOCK)
-    inline int getMinId(int currentId, int denom, int Height) const {
-        int minId = currentId;
-        if (GetId() < currentId && GetDenomination() == denom && IsUsed() == false && GetRandomness() != 0 && GetSerialNumber() != 0 && GetId() != -1 && GetHeight() != -1 && GetHeight() != INT_MAX && GetHeight() >= 1 && (GetHeight() + 6 <= Height)) {
-            minId = GetId();
-        }
-        return minId;
-    }
     
     // why 6 below (SPOCK)
-    inline bool checkUnused(int currentId, int denom, int Height) const {
-        if (IsUsed() == false && GetDenomination() == denomination && GetRandomness() != 0 && GetSerialNumber() != 0 && GetId() == currentId && GetHeight() != -1 && GetHeight() != INT_MAX && GetHeight() >= 1 && (GetHeight() + 6 <= Height)) {
+    inline bool checkUnused(int denom, int Height) const {
+        if (IsUsed() == false && GetDenomination() == denomination && GetRandomness() != 0 && GetSerialNumber() != 0 && GetHeight() != -1 && GetHeight() != INT_MAX && GetHeight() >= 1 && (GetHeight() + 6 <= Height)) {
             return true;
         } else {
             return false;
         }
     }
 
-     // why 6 below (SPOCK)
-    inline bool checkInSameBlock(CBigNum value, int currentId, int denom, int Height) const {
-        if (GetValue() != value && GetId() == currentId && (GetHeight() + 6 < Height) && GetHeight() >= 1 && GetHeight() != INT_MAX && GetDenomination() == denom && GetHeight() != -1) {
-            return true;
-        } else {
-            return false;
-        }
-    }
- 
     ADD_SERIALIZE_METHODS;
 
     template <typename Stream, typename Operation>
@@ -123,7 +99,6 @@ public:
         READWRITE(value);
         READWRITE(denomination);
         READWRITE(nHeight);
-        READWRITE(id);
     };
 };
 
@@ -134,7 +109,6 @@ private:
     uint256 hashTx;
     CBigNum pubCoin;
     int denomination;
-    int id;
     unsigned int nAccumulatorChecksum;
 
 public:
@@ -143,13 +117,12 @@ public:
         SetNull();
     }
 
-    CZerocoinSpend(CBigNum coinSerial, uint256 hashTx, CBigNum pubCoin, int denomination, int id, unsigned int nAccumulatorChecksum)
+    CZerocoinSpend(CBigNum coinSerial, uint256 hashTx, CBigNum pubCoin, int denomination, unsigned int nAccumulatorChecksum)
     {
         this->coinSerial = coinSerial;
         this->hashTx = hashTx;
         this->pubCoin = pubCoin;
         this->denomination = denomination;
-        this->id = id;
         this->nAccumulatorChecksum = nAccumulatorChecksum;
     }
 
@@ -159,7 +132,6 @@ public:
         hashTx = 0;
         pubCoin = 0;
         denomination = -1;
-        id = 0;
     }
 
     CBigNum GetSerial() const { return coinSerial; }
@@ -167,8 +139,7 @@ public:
     CBigNum GetPubCoin() const { return pubCoin; }
     int GetDenomination() const { return denomination; }
     unsigned int GetAccumulatorChecksum() const { return this->nAccumulatorChecksum; }
-    int GetId() const { return id; }
-
+ 
     ADD_SERIALIZE_METHODS;
 
     template <typename Stream, typename Operation>
@@ -177,7 +148,6 @@ public:
         READWRITE(hashTx);
         READWRITE(pubCoin);
         READWRITE(denomination);
-        READWRITE(id);
         READWRITE(nAccumulatorChecksum);
     };
 };

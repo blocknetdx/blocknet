@@ -3719,15 +3719,9 @@ bool CWallet::selectPrivateCoin(list<CZerocoinMint>& listPubCoin,libzerocoin::Co
 
     bool selectedPubcoin = false;
     
-    // GET MIN ID
-    int currentId = INT_MAX;
-    for (const CZerocoinMint& minIdPubcoin : listPubCoin) {
-        currentId = minIdPubcoin.getMinId(currentId, denomination, chainActive.Height());
-    }
-
     // (SPOCK) Why iterate through the list here, shouldn't only currentId match be sufficient?
     for (const CZerocoinMint& zerocoinItem : listPubCoin) {
-        if (zerocoinItem.checkUnused(currentId, denomination, chainActive.Height())) {
+        if (zerocoinItem.checkUnused(denomination, chainActive.Height())) {
             zerocoinSelected = zerocoinItem;
             selectedPubcoin = true;
             break;
@@ -3991,7 +3985,7 @@ bool CWallet::CreateZerocoinSpendTransaction(int64_t nValue, libzerocoin::CoinDe
 
             //Add the coin spend into a PIVX transaction
             CTxIn newTxIn;
-            newTxIn.nSequence = zerocoinSelected.GetId();
+            //newTxIn.nSequence = zerocoinSelected.GetId();
             newTxIn.scriptSig = CScript() << OP_ZEROCOINSPEND << data.size();
             newTxIn.scriptSig.insert(newTxIn.scriptSig.end(), data.begin(), data.end());
             newTxIn.prevout.SetNull();
@@ -4035,7 +4029,7 @@ bool CWallet::CreateZerocoinSpendTransaction(int64_t nValue, libzerocoin::CoinDe
             zcSelectedValue = zerocoinSelected.GetValue();
             zcSelectedIsUsed = zerocoinSelected.IsUsed();
 
-            CZerocoinSpend entry(coinSerial, txHash, zcSelectedValue, zerocoinSelected.GetDenomination(), zerocoinSelected.GetId(), 0); //presstab accumulator checksum todo
+            CZerocoinSpend entry(coinSerial, txHash, zcSelectedValue, zerocoinSelected.GetDenomination(), 0); //presstab accumulator checksum todo
             if (!CWalletDB(strWalletFile).WriteZerocoinSpendSerialEntry(entry)) {
                 strFailReason = _("it cannot write coin serial number into wallet");
             }
@@ -4217,8 +4211,8 @@ string CWallet::SpendZerocoin(int64_t nValue, libzerocoin::CoinDenomination deno
             }
         }
 
-        /// HACK(SPOCK) 0,0 ???? presstab - added extra 0, should represent accumulator checksum which will allow other nodes to know which accumulator we used.
-        CZerocoinSpend entry(coinSerial,txHash, zcSelectedValue, 0,0,0);
+        /// HACK(SPOCK) 0 ???? presstab - added extra 0, should represent accumulator checksum which will allow other nodes to know which accumulator we used.
+        CZerocoinSpend entry(coinSerial,txHash, zcSelectedValue, 0,0);
         
         if (!CWalletDB(strWalletFile).EraseZerocoinSpendSerialEntry(entry)) {
             return _("Error: It cannot delete coin serial number in wallet");

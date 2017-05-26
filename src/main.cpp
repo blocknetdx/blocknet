@@ -981,7 +981,6 @@ bool SetZerocoinMintKnown(libzerocoin::PublicCoin publicZerocoin)
     CZerocoinMint pubCoinTx;
     if(!zerocoinDB->ReadCoinMint(publicZerocoin.getValue().GetHex(), pubCoinTx)){
         pubCoinTx = CZerocoinMint(publicZerocoin.getDenomination(), publicZerocoin.getValue(), 0, 0, false);
-        pubCoinTx.SetId(-1);
         pubCoinTx.SetHeight(-1);
 
         if(!zerocoinDB->WriteCoinMint(pubCoinTx))
@@ -1107,7 +1106,7 @@ bool SetZerocoinMintSpent(CZerocoinSpend zerocoinSpend)
 bool IsZerocoinSpendUnknown(libzerocoin::CoinSpend coinSpend, uint256 hashTx, CZerocoinSpend& spendFromDB, CValidationState& state)
 {
     if(!zerocoinDB->ReadCoinSpend(coinSpend.getCoinSerialNumber().ToString(), spendFromDB)){
-        CZerocoinSpend newSpend(coinSpend.getCoinSerialNumber(), hashTx, 0, coinSpend.getDenomination(), 1, 0); //Presstab: 1 is hacky, not sure if we will eliminate pubcoinid or need to fix this
+        CZerocoinSpend newSpend(coinSpend.getCoinSerialNumber(), hashTx, 0, coinSpend.getDenomination(), 0); 
         if(!zerocoinDB->WriteCoinSpend(newSpend))
             return state.DoS(100, error("CheckZerocoinSpend(): Failed to write zerocoin mint to database"));
 
