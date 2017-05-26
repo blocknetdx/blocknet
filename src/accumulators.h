@@ -2,6 +2,7 @@
 #define PIVX_ACCUMULATORS_H
 
 #include "libzerocoin/Zerocoin.h"
+#include "primitives/zerocoin.h"
 #include "uint256.h"
 
 class CAccumulators
@@ -29,6 +30,7 @@ public:
     void AddAccumulatorChecksum(const CBigNum &bnValue);
     uint32_t GetChecksum(const CBigNum &bnValue);
     CBigNum GetAccumulatorValueFromChecksum(const uint32_t nChecksum);
+    bool IntializeWitnessAndAccumulator(const CZerocoinMint &zerocoinSelected, const libzerocoin::PublicCoin &pubcoinSelected, libzerocoin::Accumulator& accumulator, libzerocoin::AccumulatorWitness& witness);
     //CBigNum GetAccumulatorValueFromBlock(CoinDenomination denomination, int nBlockHeight);
     //bool VerifyWitness(CoinDenomination denomination, int nBlockHeight, CBigNum witness);
 };

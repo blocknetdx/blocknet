@@ -137,6 +137,8 @@ public:
 	 * @return
 	 */
 	AccumulatorWitness& operator +=(const PublicCoin& rhs);
+
+    AccumulatorWitness& operator =(AccumulatorWitness rhs);
 private:
 	Accumulator witness;
 	const PublicCoin element;

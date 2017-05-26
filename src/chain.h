@@ -171,6 +171,7 @@ public:
     unsigned int nTime;
     unsigned int nBits;
     unsigned int nNonce;
+    uint32_t nAccumulatorChecksum;
 
     //! (memory only) Sequential id assigned to distinguish order in which blocks are received.
     uint32_t nSequenceId;
@@ -203,6 +204,7 @@ public:
         nTime = 0;
         nBits = 0;
         nNonce = 0;
+        nAccumulatorChecksum = 0;
     }
 
     CBlockIndex()
@@ -219,6 +221,8 @@ public:
         nTime = block.nTime;
         nBits = block.nBits;
         nNonce = block.nNonce;
+        if(block.nVersion > 3)
+            nAccumulatorChecksum = block.nAccumulatorChecksum;
 
         //Proof of Stake
         bnChainTrust = uint256();
@@ -269,6 +273,7 @@ public:
         block.nTime = nTime;
         block.nBits = nBits;
         block.nNonce = nNonce;
+        block.nAccumulatorChecksum = nAccumulatorChecksum;
         return block;
     }
 

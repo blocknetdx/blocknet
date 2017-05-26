@@ -106,4 +106,9 @@ AccumulatorWitness& AccumulatorWitness::operator +=(
 	return *this;
 }
 
+AccumulatorWitness& AccumulatorWitness::operator =(AccumulatorWitness rhs) {
+	swap(*this, rhs);
+	return *this;
+}
+
 } /* namespace libzerocoin */

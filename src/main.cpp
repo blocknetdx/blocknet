@@ -1015,6 +1015,28 @@ bool TxOutToPublicCoin(const CTxOut txout, libzerocoin::PublicCoin& pubCoin, CVa
     return true;
 }
 
+//return a list of zerocoin mints contained in a specific block
+bool BlockToZerocoinMintList(const CBlock& block, std::list<CZerocoinMint> vMints)
+{
+    for(const CTransaction tx : block.vtx) {
+        if(!tx.IsZerocoinMint())
+            continue;
+
+        for(const CTxOut txOut : tx.vout) {
+            if(!txOut.scriptPubKey.IsZerocoinMint())
+                continue;
+
+            CValidationState state;
+            libzerocoin::PublicCoin pubCoin(Params().Zerocoin_Params());
+            if(!TxOutToPublicCoin(txOut, pubCoin, state))
+                return false;
+
+            vMints.push_back(CZerocoinMint(pubCoin.getDenomination(), pubCoin.getValue(), 0, 0, false));
+        }
+    }
+    return true;
+}
+
 bool CheckZerocoinMint(const CTxOut txout, CValidationState& state, bool fCheckOnly)
 {
     LogPrintf("ZCPRINT %s\n", __func__);
