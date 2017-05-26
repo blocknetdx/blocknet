@@ -409,12 +409,12 @@ Test_MintAndSpend()
 		}
 
 		// Now spend the coin
-		SpendMetaData m(1,1);
+		//SpendMetaData m(1,1);
 		CDataStream cc(SER_NETWORK, PROTOCOL_VERSION);
 		cc << *gCoins[0];
 		PrivateCoin myCoin(g_Params,cc);
 
-		CoinSpend spend(g_Params, myCoin, acc, wAcc, m);
+		CoinSpend spend(g_Params, myCoin, acc, wAcc);
 
 		// Serialize the proof and deserialize into newSpend
 		CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
@@ -423,7 +423,7 @@ Test_MintAndSpend()
 		CoinSpend newSpend(g_Params, ss);
 
 		// See if we can verify the deserialized proof (return our result)
-		bool ret =  newSpend.Verify(acc, m);
+		bool ret =  newSpend.Verify(acc);
 		
 		// Extract the serial number
 		CBigNum serialNumber = newSpend.getCoinSerialNumber();

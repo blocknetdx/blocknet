@@ -42,7 +42,6 @@ set(ZEROCOIN_HEADERS
   ParamGeneration.h
   Params.h
   SerialNumberSignatureOfKnowledge.h
-  SpendMetaData.h
   Zerocoin.h
 )
 
@@ -58,7 +57,6 @@ list(APPEND zerocoin_sources
   ParamGeneration.cpp
   Params.cpp
   SerialNumberSignatureOfKnowledge.cpp
-  SpendMetaData.cpp
 )
 
 #

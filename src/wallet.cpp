@@ -3944,21 +3944,16 @@ bool CWallet::CreateZerocoinSpendTransaction(int64_t nValue, libzerocoin::CoinDe
                 return false;
             }
 
-            // Place "transactionHash" and "accumulatorBlockHash" into a new SpendMetaData object.
-            uint256 transactionHash = 0;
-            uint256 accumulatorID = 0;
-            libzerocoin::SpendMetaData metaData(accumulatorID, transactionHash);
-
             // Construct the CoinSpend object. This acts like a signature on the transaction.
             libzerocoin::PrivateCoin privateCoin(Params().Zerocoin_Params(), denomination);
             privateCoin.setPublicCoin(pubCoinSelected);
             privateCoin.setRandomness(zerocoinSelected.GetRandomness());
             privateCoin.setSerialNumber(zerocoinSelected.GetSerialNumber());
-            libzerocoin::CoinSpend spend(Params().Zerocoin_Params(), privateCoin, accumulator, witness, metaData);
+            libzerocoin::CoinSpend spend(Params().Zerocoin_Params(), privateCoin, accumulator, witness);
 
             // This is a sanity check. The CoinSpend object should always verify,
             // but why not check before we put it onto the wire?
-            if (!spend.Verify(accumulator, metaData)) {
+            if (!spend.Verify(accumulator)) {
                 strFailReason = _("the new spend coin transaction did not verify");
                 return false;
             }
@@ -3980,7 +3975,6 @@ bool CWallet::CreateZerocoinSpendTransaction(int64_t nValue, libzerocoin::CoinDe
             libzerocoin::CoinSpend newSpend(Params().Zerocoin_Params(), serializedCoinSpend);
 
             //Presstab: as far as I can see SpendMetaData is never used in libzerocoin
-            libzerocoin::SpendMetaData newMetadata(accumulatorID, transactionHash);
             std::vector<unsigned char> data(serializedCoinSpend.begin(), serializedCoinSpend.end());
 
             //Add the coin spend into a PIVX transaction
@@ -3998,7 +3992,7 @@ bool CWallet::CreateZerocoinSpendTransaction(int64_t nValue, libzerocoin::CoinDe
             serializedCoinSpendChecking << dataTxIn;
 
             libzerocoin::CoinSpend newSpendChecking(Params().Zerocoin_Params(), serializedCoinSpendChecking);
-            if (!newSpendChecking.Verify(accumulator, newMetadata)) {
+            if (!newSpendChecking.Verify(accumulator)) {
                 strFailReason = _("the transaction did not verify");
                 return false;
             }

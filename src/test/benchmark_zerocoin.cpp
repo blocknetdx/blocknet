@@ -332,10 +332,8 @@ Testb_MintAndSpend()
 		cout << "\tWITNESS ELAPSED TIME: \n\t\tTotal: " << timer.duration() << " ms\t" << timer.duration()*0.001 << " s\n\t\tPer Element: " << timer.duration()/TESTS_COINS_TO_ACCUMULATE << " ms\t" << (timer.duration()/TESTS_COINS_TO_ACCUMULATE)*0.001 << " s" << endl;
 
 		// Now spend the coin
-		SpendMetaData m(1,1);
-
 		timer.start();
-		CoinSpend spend(gg_Params, *(ggCoins[0]), acc, wAcc, m);
+		CoinSpend spend(gg_Params, *(ggCoins[0]), acc, wAcc);
 		timer.stop();
 
 		cout << "\tSPEND ELAPSED TIME: " << timer.duration() << " ms\t" << timer.duration()*0.001 << " s" << endl;
@@ -353,7 +351,7 @@ Testb_MintAndSpend()
 
 		// Finally, see if we can verify the deserialized proof (return our result)
 		timer.start();
-		bool ret = newSpend.Verify(acc, m);
+		bool ret = newSpend.Verify(acc);
 		timer.stop();
 
 		cout << "\tSPEND VERIFY ELAPSED TIME: " << timer.duration() << " ms\t" << timer.duration()*0.001 << " s" << endl;

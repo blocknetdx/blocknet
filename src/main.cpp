@@ -1065,8 +1065,6 @@ libzerocoin::CoinSpend TxInToZerocoinSpend(const CTxIn& txin)
 
 bool CheckZerocoinSpendProperties(const CTxIn& txin, libzerocoin::CoinSpend coinSpend, const libzerocoin::Accumulator &accumulator,CValidationState& state)
 {
-    libzerocoin::SpendMetaData newMetadata(0,0); //PRESSTAB: get tx hash and height ?
-
     // CHECK PUBCOIN ID
     int pubcoinId = txin.nSequence;
     if (pubcoinId < 1 || pubcoinId >= INT_MAX) { // IT BEGINS WITH 1
@@ -1074,7 +1072,7 @@ bool CheckZerocoinSpendProperties(const CTxIn& txin, libzerocoin::CoinSpend coin
     }
 
     //Check that the coin is on the accumulator
-    if (!coinSpend.Verify(accumulator, newMetadata))
+    if (!coinSpend.Verify(accumulator))
         return state.DoS(100, error("CheckZerocoinSpend(): zerocoin spend did not verify"));
 
     return true;

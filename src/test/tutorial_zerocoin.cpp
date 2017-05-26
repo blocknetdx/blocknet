@@ -201,25 +201,14 @@ ZerocoinTutorial()
 		// At this point we should generate a ZEROCOIN_SPEND transaction to
 		// send to the network. This network should include a set of outputs
 		// totalling to the value of one zerocoin (minus transaction fees).
-		//
-		// The format of this transaction is up to the implementer. Here we'll
-		// assume you've formatted this transaction and placed the hash into
-		// "transactionHash". We'll also assume "accumulatorHash" contains the
-		// hash of the last block whose transactions are in the accumulator.
-		uint256 transactionHash = DUMMY_TRANSACTION_HASH;
-		uint256 accumulatorID = DUMMY_ACCUMULATOR_ID;
-
-		// Place "transactionHash" and "accumulatorBlockHash" into a new
-		// SpendMetaData object.
-		libzerocoin::SpendMetaData metaData(accumulatorID, transactionHash);
 
 		// Construct the CoinSpend object. This acts like a signature on the
 		// transaction.
-		libzerocoin::CoinSpend spend(params, newCoin, accumulator, witness, metaData);
+        libzerocoin::CoinSpend spend(params, newCoin, accumulator, witness);
 
 		// This is a sanity check. The CoinSpend object should always verify,
 		// but why not check before we put it onto the wire?
-		if (!spend.Verify(accumulator, metaData)) {
+		if (!spend.Verify(accumulator)) {
 			cout << "ERROR: Our new CoinSpend transaction did not verify!" << endl;
 			return false;
 		}
@@ -247,7 +236,6 @@ ZerocoinTutorial()
 		// Create a new metadata object to contain the hash of the received
 		// ZEROCOIN_SPEND transaction. If we were a real client we'd actually
 		// compute the hash of the received transaction here.
-		libzerocoin::SpendMetaData newMetadata(accumulatorID, transactionHash);
 		
 		// If we were a real client we would now re-compute the Accumulator
 		// from the information given in the ZEROCOIN_SPEND transaction.
@@ -255,7 +243,7 @@ ZerocoinTutorial()
 		//
 		// Verify that the spend is valid with respect to the Accumulator
 		// and the Metadata
-		if (!newSpend.Verify(accumulator, newMetadata)) {
+		if (!newSpend.Verify(accumulator)) {
 			cout << "ERROR: The CoinSpend transaction did not verify!" << endl;
 			return false;
 		}

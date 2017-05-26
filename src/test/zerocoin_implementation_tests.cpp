@@ -161,13 +161,12 @@ BOOST_AUTO_TEST_CASE(checkzerocoinspend_test)
     CZerocoinMint zerocoinMint;
     zerocoinMint.SetRandomness(CBigNum(rawTxRand1));
     zerocoinMint.SetSerialNumber(CBigNum(rawTxSerial1));
-    libzerocoin::SpendMetaData metaData(0, 0);
     // Create a New Zerocoin with specific denomination given by pubCoin
     libzerocoin::PrivateCoin privateCoin(Params().Zerocoin_Params(), pubCoin.getDenomination());
     privateCoin.setPublicCoin(pubCoin);
     privateCoin.setRandomness(zerocoinMint.GetRandomness());
     privateCoin.setSerialNumber(zerocoinMint.GetSerialNumber());
-    libzerocoin::CoinSpend coinSpend(Params().Zerocoin_Params(), privateCoin, accumulator, witness, metaData);
+    libzerocoin::CoinSpend coinSpend(Params().Zerocoin_Params(), privateCoin, accumulator, witness);
 
     CBigNum serial = coinSpend.getCoinSerialNumber();
     BOOST_CHECK_MESSAGE(serial, "Serial Number can't be 0");
@@ -176,7 +175,7 @@ BOOST_AUTO_TEST_CASE(checkzerocoinspend_test)
     BOOST_CHECK_MESSAGE(denom == pubCoin.getDenomination(), "Spend denomination must match original pubCoin");
 
     
-    BOOST_CHECK_MESSAGE(coinSpend.Verify(accumulator, metaData), "CoinSpend object failed to validate");
+    BOOST_CHECK_MESSAGE(coinSpend.Verify(accumulator), "CoinSpend object failed to validate");
 
     //serialize the spend
     CDataStream serializedCoinSpend2(SER_NETWORK, PROTOCOL_VERSION);

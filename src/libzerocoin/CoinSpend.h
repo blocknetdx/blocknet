@@ -20,7 +20,6 @@
 #include "Accumulator.h"
 #include "AccumulatorProofOfKnowledge.h"
 #include "SerialNumberSignatureOfKnowledge.h"
-#include "SpendMetaData.h"
 #include "serialize.h"
 
 namespace libzerocoin {
@@ -58,11 +57,9 @@ public:
 	 * @param coin The coin to be spend
 	 * @param a The current accumulator containing the coin
 	 * @param witness The witness showing that the accumulator contains the coin
-	 * @param m arbitrary meta data related to the spend that might be needed by Bitcoin
-	 * 			(i.e. the transaction hash)
 	 * @throw ZerocoinException if the process fails
 	 */
-	CoinSpend(const ZerocoinParams* p, const PrivateCoin& coin, Accumulator& a, const AccumulatorWitness& witness, const SpendMetaData& m);
+	CoinSpend(const ZerocoinParams* p, const PrivateCoin& coin, Accumulator& a, const AccumulatorWitness& witness);
 
 	/** Returns the serial number of the coin spend by this proof.
 	 *
@@ -76,7 +73,7 @@ public:
 	 */
 	CoinDenomination getDenomination();
 
-	bool Verify(const Accumulator& a, const SpendMetaData &metaData) const;
+	bool Verify(const Accumulator& a) const;
 	ADD_SERIALIZE_METHODS;
   template <typename Stream, typename Operation>  inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
 	    READWRITE(denomination);
@@ -89,7 +86,7 @@ public:
 	}
 
 private:
-	const uint256 signatureHash(const SpendMetaData &m) const;
+	const uint256 signatureHash() const;
 	// Denomination is stored as an INT because storing
 	// and enum raises amigiuities in the serialize code //FIXME if possible
 	int denomination;
