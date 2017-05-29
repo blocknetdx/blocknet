@@ -1006,10 +1006,9 @@ bool CWalletDB::WriteZerocoinSpendSerialEntry(const CZerocoinSpend& zerocoinSpen
 {
     return Write(make_pair(string("zcserial"), zerocoinSpend.GetSerial()), zerocoinSpend, true);
 }
-
-bool CWalletDB::EraseZerocoinSpendSerialEntry(const CZerocoinSpend& zerocoinSpend)
+bool CWalletDB::EraseZerocoinSpendSerialEntry(const CBigNum& serialEntry)
 {
-    return Erase(make_pair(string("zcserial"), zerocoinSpend.GetSerial()));
+    return Erase(make_pair(string("zcserial"), serialEntry));
 }
 
 bool CWalletDB::WriteZerocoinAccumulator(libzerocoin::Accumulator accumulator, libzerocoin::CoinDenomination denomination)

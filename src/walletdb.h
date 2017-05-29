@@ -148,7 +148,7 @@ public:
     void ListPubCoin(std::list<CZerocoinMint>& listPubCoin);
     void ListCoinSpendSerial(std::list<CZerocoinSpend>& listCoinSpendSerial);
     bool WriteZerocoinSpendSerialEntry(const CZerocoinSpend& zerocoinSpend);
-    bool EraseZerocoinSpendSerialEntry(const CZerocoinSpend& zerocoinSpend);
+    bool EraseZerocoinSpendSerialEntry(const CBigNum& serialEntry);
     bool WriteZerocoinAccumulator(libzerocoin::Accumulator accumulator, libzerocoin::CoinDenomination denomination);
     bool ReadZerocoinAccumulator(libzerocoin::Accumulator& accumulator, libzerocoin::CoinDenomination denomination);
     bool ReadCalculatedZCBlock(int& height);

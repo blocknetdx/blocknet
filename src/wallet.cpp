@@ -4197,10 +4197,7 @@ string CWallet::SpendZerocoin(int64_t nValue, libzerocoin::CoinDenomination deno
             }
         }
 
-        /// HACK(SPOCK) 0 ???? 
-        CZerocoinSpend entry(zerocoinSpend.GetSerial(), zerocoinSpend.GetTxHash(), zerocoinSelected.GetValue(),0, zerocoinSpend.GetAccumulatorChecksum());
-        
-        if (!CWalletDB(strWalletFile).EraseZerocoinSpendSerialEntry(entry)) {
+        if (!CWalletDB(strWalletFile).EraseZerocoinSpendSerialEntry(zerocoinSpend.GetSerial())) {
             return _("Error: It cannot delete coin serial number in wallet");
         }
 
