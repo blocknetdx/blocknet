@@ -144,7 +144,6 @@ public:
     static bool Recover(CDBEnv& dbenv, std::string filename);
 
     bool WriteZerocoinMint(const CZerocoinMint& zerocoin);
-    bool EraseZerocoinMint(const CZerocoinMint& zerocoin);
     void ListPubCoin(std::list<CZerocoinMint>& listPubCoin);
     void ListCoinSpendSerial(std::list<CZerocoinSpend>& listCoinSpendSerial);
     bool WriteZerocoinSpendSerialEntry(const CZerocoinSpend& zerocoinSpend);

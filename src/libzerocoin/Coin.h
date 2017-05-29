@@ -54,6 +54,22 @@ inline bool AmountToZerocoinDenomination(uint256 amount, CoinDenomination& denom
     return true;
 }
 
+inline uint64_t ZerocoinDenominationToValue(const CoinDenomination& denomination)
+{
+    uint64_t Value=0;
+    switch (denomination) {
+    case CoinDenomination::ZQ_LOVELACE: Value = 1; break;
+    case CoinDenomination ::ZQ_GOLDWASSER: Value = 10; break;
+    case CoinDenomination::ZQ_RACKOFF: Value = 25; break;
+    case CoinDenomination::ZQ_PEDERSEN : Value = 50; break;
+    case CoinDenomination::ZQ_WILLIAMSON: Value = 100; break;
+    default:
+        // Error Case
+        Value = 0; break;
+    }
+    return Value;
+}
+
     
 inline int64_t roundint64(double d)
 {

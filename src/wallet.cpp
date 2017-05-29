@@ -3694,7 +3694,6 @@ bool CWallet::CreateZerocoinSpendModel(string& stringError, string denomAmount)
     if (!fFileBacked)
         return false;
 
-    int64_t nAmount = libzerocoin::get_amount(denomAmount);
     libzerocoin::CoinDenomination denomination = libzerocoin::get_denomination(denomAmount);
 
     // Wallet comments
@@ -3702,7 +3701,7 @@ bool CWallet::CreateZerocoinSpendModel(string& stringError, string denomAmount)
     CZerocoinMint zerocoinSelected;
     CZerocoinSpend zerocoinSpend;
 
-    stringError = SpendZerocoin(nAmount, denomination, wtx, zerocoinSpend, zerocoinSelected);
+    stringError = SpendZerocoin(denomination, wtx, zerocoinSpend, zerocoinSelected);
 
     if (stringError != "")
         return false;
@@ -3880,8 +3879,9 @@ bool CWallet::CreateZerocoinMintTransaction(const vector<pair<CScript, int64_t> 
 }
 
 
-bool CWallet::CreateZerocoinSpendTransaction(int64_t nValue, libzerocoin::CoinDenomination denomination, CWalletTx& wtxNew, CReserveKey& reservekey, CZerocoinSpend& zerocoinSpend, CZerocoinMint& zerocoinSelected, std::string& strFailReason)
+bool CWallet::CreateZerocoinSpendTransaction(libzerocoin::CoinDenomination denomination, CWalletTx& wtxNew, CReserveKey& reservekey, CZerocoinSpend& zerocoinSpend, CZerocoinMint& zerocoinSelected, std::string& strFailReason)
 {
+    int64_t nValue = ZerocoinDenominationToValue(denomination);
     if (nValue < 0) {
         strFailReason = _("Transaction amounts must be positive");
         return false;
@@ -4161,10 +4161,10 @@ string CWallet::MintZerocoin(CScript pubCoin, int64_t nValue, CWalletTx& wtxNew,
     return "";
 }
 
-string CWallet::SpendZerocoin(int64_t nValue, libzerocoin::CoinDenomination denomination, CWalletTx& wtxNew, CZerocoinSpend& zerocoinSpend, CZerocoinMint& zerocoinSelected)
+string CWallet::SpendZerocoin(libzerocoin::CoinDenomination denomination, CWalletTx& wtxNew, CZerocoinSpend& zerocoinSpend, CZerocoinMint& zerocoinSelected)
 {
-    // Check amount
-    if (nValue <= 0)
+    // Check denominations
+    if (denomination == libzerocoin::ZQ_ERROR)
         return _("Invalid amount");
 
     CReserveKey reservekey(this);
@@ -4176,7 +4176,7 @@ string CWallet::SpendZerocoin(int64_t nValue, libzerocoin::CoinDenomination deno
     }
 
     string strError;
-    if (!CreateZerocoinSpendTransaction(nValue, denomination, wtxNew, reservekey, zerocoinSpend, zerocoinSelected, strError)) {
+    if (!CreateZerocoinSpendTransaction(denomination, wtxNew, reservekey, zerocoinSpend, zerocoinSelected, strError)) {
         printf("SpendZerocoin() : %s\n", strError.c_str());
         return strError;
     }
@@ -4188,7 +4188,7 @@ string CWallet::SpendZerocoin(int64_t nValue, libzerocoin::CoinDenomination deno
 
         CWalletDB walletdb(pwalletMain->strWalletFile);
         walletdb.ListPubCoin(listPubCoin);
-        BOOST_FOREACH (const CZerocoinMint& pubCoinItem, listPubCoin) {
+        for (const CZerocoinMint& pubCoinItem : listPubCoin) {
             if (zerocoinSelected.GetValue() == pubCoinItem.GetValue()) {
                 pubCoinTx = pubCoinItem;
                 pubCoinTx.SetUsed(false); // having error, so set to false, to be able to use again

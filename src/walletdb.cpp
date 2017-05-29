@@ -1026,11 +1026,6 @@ bool CWalletDB::WriteZerocoinMint(const CZerocoinMint& zerocoin)
     return Write(make_pair(string("zerocoin"), zerocoin.GetValue()), zerocoin, true);
 }
 
-bool CWalletDB::EraseZerocoinMint(const CZerocoinMint& zerocoin)
-{
-    return Erase(make_pair(string("zerocoin"), zerocoin.GetValue()));
-}
-
 
 // Check Calculated Blocked for Zerocoin
 bool CWalletDB::ReadCalculatedZCBlock(int& height)

@@ -2376,7 +2376,7 @@ Value spendzerocoin(const Array& params, bool fHelp)
     CWalletTx wtx;
     CZerocoinMint zerocoinSelected;
     CZerocoinSpend zerocoinSpend;
-    string strError = pwalletMain->SpendZerocoin(nAmount, denomination, wtx, zerocoinSpend, zerocoinSelected);
+    string strError = pwalletMain->SpendZerocoin(denomination, wtx, zerocoinSpend, zerocoinSelected);
 
     if (strError != "")
         throw JSONRPCError(RPC_WALLET_ERROR, strError);
@@ -2395,7 +2395,7 @@ Value resetmintzerocoin(const Array& params, bool fHelp)
     CWalletDB walletdb(pwalletMain->strWalletFile);
     walletdb.ListPubCoin(listPubcoin);
 
-    BOOST_FOREACH(const CZerocoinMint& zerocoinItem, listPubcoin){
+    for (const CZerocoinMint& zerocoinItem : listPubcoin){
         if(zerocoinItem.GetRandomness() != 0 && zerocoinItem.GetSerialNumber() != 0){
             CZerocoinMint zerocoinTx(zerocoinItem.GetDenomination(), zerocoinItem.GetValue(), zerocoinItem.GetRandomness(), zerocoinItem.GetSerialNumber(), false);
             zerocoinTx.SetHeight(-1);
