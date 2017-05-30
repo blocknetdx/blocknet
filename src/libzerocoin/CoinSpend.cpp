@@ -17,7 +17,7 @@ namespace libzerocoin {
 CoinSpend::CoinSpend(const ZerocoinParams* p, const PrivateCoin& coin,
                      Accumulator& a, const uint32_t checksum, const AccumulatorWitness& witness):
 	denomination(coin.getPublicCoin().getDenomination()),
-	accChecksum(accChecksum),
+	accChecksum(checksum),
 	coinSerialNumber((coin.getSerialNumber())),
 	accumulatorPoK(&p->accumulatorParams),
 	serialNumberSoK(p),

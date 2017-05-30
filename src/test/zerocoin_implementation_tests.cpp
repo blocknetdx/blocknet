@@ -133,7 +133,7 @@ BOOST_AUTO_TEST_CASE(checkzerocoinmint_test)
     BOOST_CHECK(fFoundMint);
 }
 
-bool CheckZerocoinSpendNoDB(uint256 hashTx, const CTxOut txout, vector<CTxIn> vin, const Accumulator &accumulator, const CTransaction &txContainingMint, CValidationState& state)
+bool CheckZerocoinSpendNoDB(uint256 hashTx, const CTxOut txout, vector<CTxIn> vin, const CTransaction &txContainingMint, CValidationState& state)
 {
     CoinDenomination denomination;
     if(!AmountToZerocoinDenomination(txout.nValue, denomination))
@@ -151,6 +151,13 @@ bool CheckZerocoinSpendNoDB(uint256 hashTx, const CTxOut txout, vector<CTxIn> vi
             return state.DoS(100, error("CheckZerocoinSpend(): Zerocoinspend redeems different value than the mint it uses"));
 
         CoinSpend newSpend = TxInToZerocoinSpend(txin);
+
+        //see if we have record of the accumulator used in the spend tx
+        CBigNum bnAccumulatorValue = CAccumulators::getInstance().GetAccumulatorValueFromChecksum(newSpend.getAccumulatorChecksum());
+        if(bnAccumulatorValue == 0)
+            return state.DoS(100, error("Zerocoinspend could not find accumulator associated with checksum"));
+
+        Accumulator accumulator(Params().Zerocoin_Params(), newSpend.getDenomination(), bnAccumulatorValue);
         if(!CheckZerocoinSpendProperties(txin, newSpend, accumulator, state))
             return state.DoS(100, error("Zerocoinspend properties are not valid"));
 
@@ -200,8 +207,11 @@ BOOST_AUTO_TEST_CASE(checkzerocoinspend_test)
     privateCoin.setPublicCoin(pubCoin);
     privateCoin.setRandomness(zerocoinMint.GetRandomness());
     privateCoin.setSerialNumber(zerocoinMint.GetSerialNumber());
+
+    //Get the checksum of the accumulator we use for the spend and also add it to our checksum map
     uint32_t nChecksum = CAccumulators::getInstance().GetChecksum(accumulator);
     CAccumulators::getInstance().AddAccumulatorChecksum(nChecksum, accumulator.getValue());
+
     CoinSpend coinSpend(Params().Zerocoin_Params(), privateCoin, accumulator, nChecksum, witness);
 
     CBigNum serial = coinSpend.getCoinSerialNumber();
@@ -235,7 +245,7 @@ BOOST_AUTO_TEST_CASE(checkzerocoinspend_test)
 
     bool passedTest = true;
     for(const CTxOut& txout : txNew.vout) {
-        if (!CheckZerocoinSpendNoDB(txNew.GetHash(), txout, txNew.vin, accumulator, txMintFrom,state)) {
+        if (!CheckZerocoinSpendNoDB(txNew.GetHash(), txout, txNew.vin, txMintFrom,state)) {
             passedTest = false;
             cout << state.GetRejectReason() << endl;
         }
@@ -251,7 +261,7 @@ BOOST_AUTO_TEST_CASE(checkzerocoinspend_test)
     bool detectedOverSpend = false;
 
     for(const CTxOut& txout : txOverSpend.vout) {
-        if(!CheckZerocoinSpendNoDB(txOverSpend.GetHash(), txout, txOverSpend.vin, accumulator, txMintFrom, state))
+        if(!CheckZerocoinSpendNoDB(txOverSpend.GetHash(), txout, txOverSpend.vin, txMintFrom, state))
             detectedOverSpend = true;
     }
 

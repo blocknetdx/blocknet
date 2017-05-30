@@ -3945,7 +3945,8 @@ bool CWallet::CreateZerocoinSpendTransaction(libzerocoin::CoinDenomination denom
             privateCoin.setPublicCoin(pubCoinSelected);
             privateCoin.setRandomness(zerocoinSelected.GetRandomness());
             privateCoin.setSerialNumber(zerocoinSelected.GetSerialNumber());
-            libzerocoin::CoinSpend spend(Params().Zerocoin_Params(), privateCoin, accumulator, witness);
+            uint32_t nChecksum = CAccumulators::getInstance().GetChecksum(accumulator);
+            libzerocoin::CoinSpend spend(Params().Zerocoin_Params(), privateCoin, accumulator, nChecksum, witness);
 
             // This is a sanity check. The CoinSpend object should always verify,
             // but why not check before we put it onto the wire?
@@ -3975,7 +3976,6 @@ bool CWallet::CreateZerocoinSpendTransaction(libzerocoin::CoinDenomination denom
 
             //Add the coin spend into a PIVX transaction
             CTxIn newTxIn;
-            //newTxIn.nSequence = zerocoinSelected.GetId();
             newTxIn.scriptSig = CScript() << OP_ZEROCOINSPEND << data.size();
             newTxIn.scriptSig.insert(newTxIn.scriptSig.end(), data.begin(), data.end());
             newTxIn.prevout.SetNull();
