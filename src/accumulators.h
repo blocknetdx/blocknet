@@ -30,11 +30,13 @@ public:
     void AddAccumulatorChecksum(const CBigNum &bnValue);
     uint32_t GetChecksum(const CBigNum &bnValue);
     uint32_t GetChecksum(const libzerocoin::Accumulator &accumulator);
-    CBigNum GetAccumulatorValueFromChecksum(const uint32_t nChecksum);
+    CBigNum GetAccumulatorValueFromChecksum(const uint256 nChecksum, libzerocoin::CoinDenomination denomination);
     bool IntializeWitnessAndAccumulator(const CZerocoinMint &zerocoinSelected, const libzerocoin::PublicCoin &pubcoinSelected, libzerocoin::Accumulator& accumulator, libzerocoin::AccumulatorWitness& witness);
     //CBigNum GetAccumulatorValueFromBlock(CoinDenomination denomination, int nBlockHeight);
     //bool VerifyWitness(CoinDenomination denomination, int nBlockHeight, CBigNum witness);
 };
+
+uint32_t ParseChecksum(uint256 nChecksum, libzerocoin::CoinDenomination denomination);
 
 
 #endif //PIVX_ACCUMULATORS_H

@@ -9,6 +9,7 @@
 #include "txdb.h"
 #include <boost/test/unit_test.hpp>
 #include <iostream>
+#include <accumulators.h>
 
 using namespace libzerocoin;
 
@@ -321,5 +322,31 @@ BOOST_AUTO_TEST_CASE(setup_exceptions_test)
     }
 
 }
+
+BOOST_AUTO_TEST_CASE(checksum_tests)
+{
+    cout << "Running checksum_tests\n";
+
+    uint256 checksum;
+    uint32_t c1 = 0xa3219ef1;
+    uint32_t c2 = 0xabcdef00;
+    uint32_t c3 = 0x101029f3;
+    uint32_t c4 = 0xaaaaaeee;
+    uint32_t c5 = 0xffffffff;
+    uint32_t c6 = 0xbbbbbbbb;
+    uint32_t c7 = 0x11111111;
+    uint32_t c8 = 0xeeeeeeee;
+    vector<uint32_t> vChecksums {c1,c2,c3,c4,c5,c6,c7,c8};
+    for(uint32_t c : vChecksums)
+        checksum = checksum << 32 | c;
+
+    BOOST_CHECK_MESSAGE(checksum == uint256("a3219ef1abcdef00101029f3aaaaaeeeffffffffbbbbbbbb11111111eeeeeeee"), "checksum not properly concatenated");
+
+    for(unsigned int i = 0; i < vChecksums.size(); i++){
+        uint32_t checksumParsed = ParseChecksum(checksum, (libzerocoin::CoinDenomination)(i));
+        BOOST_CHECK_MESSAGE(checksumParsed == vChecksums[i], "checksum parse failed");
+    }
+}
+
 
 BOOST_AUTO_TEST_SUITE_END()
