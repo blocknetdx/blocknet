@@ -10,6 +10,8 @@
 #include <boost/test/unit_test.hpp>
 #include <iostream>
 
+using namespace libzerocoin;
+
 extern bool DecodeHexTx(CTransaction& tx, const std::string& strHexTx);
 
 BOOST_AUTO_TEST_SUITE(zerocoin_implementation_tests)
@@ -21,7 +23,7 @@ BOOST_AUTO_TEST_CASE(zcparams_test)
     bool fPassed = true;
     try{
         SelectParams(CBaseChainParams::MAIN);
-        libzerocoin::ZerocoinParams *ZCParams = Params().Zerocoin_Params();
+        ZerocoinParams *ZCParams = Params().Zerocoin_Params();
         (void)ZCParams;
     } catch(std::exception& e) {
         fPassed = false;
@@ -37,29 +39,60 @@ BOOST_AUTO_TEST_CASE(amount_to_denomination_test)
 
     //valid amount (min edge)
     CAmount amount = 1 * COIN;
-    libzerocoin::CoinDenomination denomination;
-    BOOST_CHECK(libzerocoin::AmountToZerocoinDenomination(amount, denomination));
-    BOOST_CHECK(denomination == libzerocoin::ZQ_LOVELACE);
+    CoinDenomination denomination;
+    BOOST_CHECK(AmountToZerocoinDenomination(amount, denomination));
+    BOOST_CHECK(denomination == ZQ_LOVELACE);
 
     //valid amount (max edge)
     CAmount amount1 = 100 * COIN;
-    libzerocoin::CoinDenomination denomination1;
-    BOOST_CHECK(libzerocoin::AmountToZerocoinDenomination(amount1, denomination1));
-    BOOST_CHECK(denomination1 == libzerocoin::ZQ_WILLIAMSON);
+    CoinDenomination denomination1;
+    BOOST_CHECK(AmountToZerocoinDenomination(amount1, denomination1));
+    BOOST_CHECK(denomination1 == ZQ_WILLIAMSON);
 
     //invalid amount (too much)
     CAmount amount2 = 5000 * COIN;
-    libzerocoin::CoinDenomination denomination2;
-    BOOST_CHECK(!libzerocoin::AmountToZerocoinDenomination(amount2, denomination2));
-    BOOST_CHECK(denomination2 == libzerocoin::ZQ_ERROR);
+    CoinDenomination denomination2;
+    BOOST_CHECK(!AmountToZerocoinDenomination(amount2, denomination2));
+    BOOST_CHECK(denomination2 == ZQ_ERROR);
 
     //invalid amount (not enough)
     CAmount amount3 = 1;
-    libzerocoin::CoinDenomination denomination3;
-    BOOST_CHECK(!libzerocoin::AmountToZerocoinDenomination(amount3, denomination3));
-    BOOST_CHECK(denomination3 == libzerocoin::ZQ_ERROR);
+    CoinDenomination denomination3;
+    BOOST_CHECK(!AmountToZerocoinDenomination(amount3, denomination3));
+    BOOST_CHECK(denomination3 == ZQ_ERROR);
 
 }
+
+BOOST_AUTO_TEST_CASE(denomination_to_value_test)
+{
+    cout << "Running ZerocoinDenominationToValue_test...\n";
+
+    uint64_t Value = 1;
+    CoinDenomination denomination = ZQ_LOVELACE;
+    BOOST_CHECK_MESSAGE(ZerocoinDenominationToValue(denomination) ==  Value, "Wrong Value - should be 1");
+
+    Value = 10;
+    denomination = ZQ_GOLDWASSER;
+    BOOST_CHECK_MESSAGE(ZerocoinDenominationToValue(denomination) ==  Value, "Wrong Value - should be 10");
+
+    Value = 25;
+    denomination = ZQ_RACKOFF;
+    BOOST_CHECK_MESSAGE(ZerocoinDenominationToValue(denomination) ==  Value, "Wrong Value - should be 25");
+
+    Value = 50;
+    denomination = ZQ_PEDERSEN;
+    BOOST_CHECK_MESSAGE(ZerocoinDenominationToValue(denomination) ==  Value, "Wrong Value - should be 50");
+    
+    Value = 100;
+    denomination = ZQ_WILLIAMSON;
+    BOOST_CHECK_MESSAGE(ZerocoinDenominationToValue(denomination) ==  Value, "Wrong Value - should be 100");
+
+    Value = 0;
+    denomination = ZQ_ERROR;
+    BOOST_CHECK_MESSAGE(ZerocoinDenominationToValue(denomination) ==  Value, "Wrong Value - should be 0");
+
+}
+
 
 //ZQ_LOVELACE mints
 std::string rawTx1 = "0100000001983d5fd91685bb726c0ebc3676f89101b16e663fd896fea53e19972b95054c49000000006a473044022010fbec3e78f9c46e58193d481caff715ceb984df44671d30a2c0bde95c54055f0220446a97d9340da690eaf2658e5b2bf6a0add06f1ae3f1b40f37614c7079ce450d012103cb666bd0f32b71cbf4f32e95fa58e05cd83869ac101435fcb8acee99123ccd1dffffffff0200e1f5050000000086c10280004c80c3a01f94e71662f2ae8bfcd88dfc5b5e717136facd6538829db0c7f01e5fd793cccae7aa1958564518e0223d6d9ce15b1e38e757583546e3b9a3f85bd14408120cd5192a901bb52152e8759fdd194df230d78477706d0e412a66398f330be38a23540d12ab147e9fb19224913f3fe552ae6a587fb30a68743e52577150ff73042c0f0d8f000000001976a914d6042025bd1fff4da5da5c432d85d82b3f26a01688ac00000000";
@@ -99,10 +132,10 @@ BOOST_AUTO_TEST_CASE(checkzerocoinmint_test)
     BOOST_CHECK(fFoundMint);
 }
 
-bool CheckZerocoinSpendNoDB(uint256 hashTx, const CTxOut txout, vector<CTxIn> vin, const libzerocoin::Accumulator &accumulator, const CTransaction &txContainingMint, CValidationState& state)
+bool CheckZerocoinSpendNoDB(uint256 hashTx, const CTxOut txout, vector<CTxIn> vin, const Accumulator &accumulator, const CTransaction &txContainingMint, CValidationState& state)
 {
-    libzerocoin::CoinDenomination denomination;
-    if(!libzerocoin::AmountToZerocoinDenomination(txout.nValue, denomination))
+    CoinDenomination denomination;
+    if(!AmountToZerocoinDenomination(txout.nValue, denomination))
         return state.DoS(100, error("CheckZerocoinSpend(): Zerocoin spend does not have valid denomination"));
 
     // Check vIn
@@ -116,7 +149,7 @@ bool CheckZerocoinSpendNoDB(uint256 hashTx, const CTxOut txout, vector<CTxIn> vi
         if(!CheckZerocoinOverSpend(txout.nValue, txContainingMint, state))
             return state.DoS(100, error("CheckZerocoinSpend(): Zerocoinspend redeems different value than the mint it uses"));
 
-        libzerocoin::CoinSpend newSpend = TxInToZerocoinSpend(txin);
+        CoinSpend newSpend = TxInToZerocoinSpend(txin);
         if(!CheckZerocoinSpendProperties(txin, newSpend, accumulator, state))
             return state.DoS(100, error("Zerocoinspend properties are not valid"));
 
@@ -133,12 +166,12 @@ BOOST_AUTO_TEST_CASE(checkzerocoinspend_test)
     //load our serialized pubcoin
     CBigNum bnpubcoin;
     BOOST_CHECK_MESSAGE(bnpubcoin.SetHexBool(rawTxpub1), "Failed to set CBigNum from hex string");
-    libzerocoin::PublicCoin pubCoin(Params().Zerocoin_Params(), bnpubcoin, libzerocoin::CoinDenomination::ZQ_LOVELACE);
+    PublicCoin pubCoin(Params().Zerocoin_Params(), bnpubcoin, CoinDenomination::ZQ_LOVELACE);
     BOOST_CHECK_MESSAGE(pubCoin.validate(), "Failed to validate pubCoin created from hex string");
 
     //initialize and Accumulator and AccumulatorWitness
-    libzerocoin::Accumulator accumulator(Params().Zerocoin_Params(), libzerocoin::CoinDenomination::ZQ_LOVELACE);
-    libzerocoin::AccumulatorWitness witness(Params().Zerocoin_Params(), accumulator, pubCoin);
+    Accumulator accumulator(Params().Zerocoin_Params(), CoinDenomination::ZQ_LOVELACE);
+    AccumulatorWitness witness(Params().Zerocoin_Params(), accumulator, pubCoin);
 
     //populate the witness and accumulators
     CValidationState state;
@@ -148,7 +181,7 @@ BOOST_AUTO_TEST_CASE(checkzerocoinspend_test)
 
         for(const CTxOut out : tx.vout){
             if(!out.scriptPubKey.empty() && out.scriptPubKey.IsZerocoinMint()) {
-                libzerocoin::PublicCoin publicCoin(Params().Zerocoin_Params());
+                PublicCoin publicCoin(Params().Zerocoin_Params());
                 BOOST_CHECK_MESSAGE(TxOutToPublicCoin(out, publicCoin, state), "Failed to convert CTxOut " << out.ToString() << " to PublicCoin");
 
                 accumulator += publicCoin;
@@ -162,16 +195,16 @@ BOOST_AUTO_TEST_CASE(checkzerocoinspend_test)
     zerocoinMint.SetRandomness(CBigNum(rawTxRand1));
     zerocoinMint.SetSerialNumber(CBigNum(rawTxSerial1));
     // Create a New Zerocoin with specific denomination given by pubCoin
-    libzerocoin::PrivateCoin privateCoin(Params().Zerocoin_Params(), pubCoin.getDenomination());
+    PrivateCoin privateCoin(Params().Zerocoin_Params(), pubCoin.getDenomination());
     privateCoin.setPublicCoin(pubCoin);
     privateCoin.setRandomness(zerocoinMint.GetRandomness());
     privateCoin.setSerialNumber(zerocoinMint.GetSerialNumber());
-    libzerocoin::CoinSpend coinSpend(Params().Zerocoin_Params(), privateCoin, accumulator, witness);
+    CoinSpend coinSpend(Params().Zerocoin_Params(), privateCoin, accumulator, witness);
 
     CBigNum serial = coinSpend.getCoinSerialNumber();
     BOOST_CHECK_MESSAGE(serial, "Serial Number can't be 0");
 
-    libzerocoin::CoinDenomination denom = coinSpend.getDenomination();
+    CoinDenomination denom = coinSpend.getDenomination();
     BOOST_CHECK_MESSAGE(denom == pubCoin.getDenomination(), "Spend denomination must match original pubCoin");
 
     
@@ -235,7 +268,7 @@ BOOST_AUTO_TEST_CASE(setup_exceptions_test)
 
     // Check Modulus > 1023 Exception
     try {
-        libzerocoin::ZerocoinParams ZCParams(bnpubcoin);
+        ZerocoinParams ZCParams(bnpubcoin);
         BOOST_CHECK_MESSAGE(false, "Didn't catch exception:  ZerocoinException: Modulus must be at least 1023 bit");
     }
     catch (...) {
@@ -244,7 +277,7 @@ BOOST_AUTO_TEST_CASE(setup_exceptions_test)
 
     // Check Security Level < 80 Exception
     try {
-        libzerocoin::ZerocoinParams ZCParams(bnpubcoin,1);
+        ZerocoinParams ZCParams(bnpubcoin,1);
         BOOST_CHECK_MESSAGE(false, "Didn't catch exception:  Security Level >= 80");
     }
     catch (...) {
@@ -254,9 +287,9 @@ BOOST_AUTO_TEST_CASE(setup_exceptions_test)
     // Check unitialized params Exception for PublicCoin
     try {
         SelectParams(CBaseChainParams::MAIN);
-        libzerocoin::ZerocoinParams* ZCParams = Params().Zerocoin_Params();
+        ZerocoinParams* ZCParams = Params().Zerocoin_Params();
         ZCParams->initialized = false;
-        libzerocoin::PublicCoin pubCoin(ZCParams, libzerocoin::CoinDenomination::ZQ_LOVELACE);
+        PublicCoin pubCoin(ZCParams, CoinDenomination::ZQ_LOVELACE);
         BOOST_CHECK_MESSAGE(false, "Didn't catch exception checking for uninitialized Params");
     }
     catch (...) {
@@ -266,9 +299,9 @@ BOOST_AUTO_TEST_CASE(setup_exceptions_test)
     // Check unitialized params Exception for PublicCoin (alternate constructor)
     try {
         SelectParams(CBaseChainParams::MAIN);
-        libzerocoin::ZerocoinParams* ZCParams = Params().Zerocoin_Params();
+        ZerocoinParams* ZCParams = Params().Zerocoin_Params();
         ZCParams->initialized = false;
-        libzerocoin::PublicCoin pubCoin(ZCParams);
+        PublicCoin pubCoin(ZCParams);
         BOOST_CHECK_MESSAGE(false, "Didn't catch exception checking for uninitialized Params");
     }
     catch (...) {
@@ -278,9 +311,9 @@ BOOST_AUTO_TEST_CASE(setup_exceptions_test)
     // Check unitialized params Exception for PrivateCoin
     try {
         SelectParams(CBaseChainParams::MAIN);
-        libzerocoin::ZerocoinParams* ZCParams = Params().Zerocoin_Params();
+        ZerocoinParams* ZCParams = Params().Zerocoin_Params();
         ZCParams->initialized = false;
-        libzerocoin::PrivateCoin privCoin(ZCParams, libzerocoin::CoinDenomination::ZQ_LOVELACE);
+        PrivateCoin privCoin(ZCParams, CoinDenomination::ZQ_LOVELACE);
         BOOST_CHECK_MESSAGE(false, "Didn't catch exception checking for uninitialized Params");
     }
     catch (...) {
