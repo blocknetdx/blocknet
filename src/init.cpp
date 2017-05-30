@@ -31,6 +31,7 @@
 #include "ui_interface.h"
 #include "util.h"
 #include "utilmoneystr.h"
+#include "validationinterface.h"
 #ifdef ENABLE_WALLET
 #include "db.h"
 #include "wallet.h"
@@ -52,6 +53,10 @@
 #include <boost/thread.hpp>
 #include <openssl/crypto.h>
 
+#if ENABLE_ZMQ
+#include "zmq/zmqnotificationinterface.h"
+#endif
+
 using namespace boost;
 using namespace std;
 
@@ -61,6 +66,10 @@ int nWalletBackups = 10;
 #endif
 bool fFeeEstimatesInitialized = false;
 bool fRestartRequested = false; // true: restart false: shutdown
+
+#if ENABLE_ZMQ
+static CZMQNotificationInterface* pzmqNotificationInterface = NULL;
+#endif
 
 #ifdef WIN32
 // Win32 LevelDB doesn't use filedescriptors, and the ones used for
@@ -207,6 +216,15 @@ void PrepareShutdown()
     if (pwalletMain)
         bitdb.Flush(true);
 #endif
+
+#if ENABLE_ZMQ
+    if (pzmqNotificationInterface) {
+        UnregisterValidationInterface(pzmqNotificationInterface);
+        delete pzmqNotificationInterface;
+        pzmqNotificationInterface = NULL;
+    }
+#endif
+
 #ifndef WIN32
     boost::filesystem::remove(GetPidFile());
 #endif
@@ -366,6 +384,16 @@ std::string HelpMessage(HelpMessageMode mode)
         strUsage += HelpMessageOpt("-windowtitle=<name>", _("Wallet window title"));
     strUsage += HelpMessageOpt("-zapwallettxes=<mode>", _("Delete all wallet transactions and only recover those parts of the blockchain through -rescan on startup") +
         " " + _("(1 = keep tx meta data e.g. account owner and payment request information, 2 = drop tx meta data)"));
+#endif
+
+#if ENABLE_ZMQ
+    strUsage += "\n" + _("ZeroMQ notification options:") + "\n";
+    strUsage += "  -zmqpubhashblock=<address>  " + _("Enable publish hash block in <address>") + "\n";
+    strUsage += "  -zmqpubhashtx=<address>     " + _("Enable publish hash transaction in <address>") + "\n";
+    strUsage += "  -zmqpubhashtxlock=<address> " + _("Enable publish hash transaction (locked via SwiftTX) in <address>") + "\n";
+    strUsage += "  -zmqpubrawblock=<address>   " + _("Enable publish raw block in <address>") + "\n";
+    strUsage += "  -zmqpubrawtx=<address>      " + _("Enable publish raw transaction in <address>") + "\n";
+    strUsage += "  -zmqpubrawtxlock=<address>  " + _("Enable publish raw transaction (locked via SwiftTX) in <address>") + "\n";
 #endif
 
     strUsage += HelpMessageGroup(_("Debugging/Testing options:"));
@@ -1132,6 +1160,14 @@ bool AppInit2(boost::thread_group& threadGroup)
 
     BOOST_FOREACH (string strDest, mapMultiArgs["-seednode"])
         AddOneShot(strDest);
+
+#if ENABLE_ZMQ
+    pzmqNotificationInterface = CZMQNotificationInterface::CreateWithArguments(mapArgs);
+
+    if (pzmqNotificationInterface) {
+        RegisterValidationInterface(pzmqNotificationInterface);
+    }
+#endif
 
     // ********************************************************* Step 7: load block chain
 

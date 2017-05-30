@@ -610,7 +610,7 @@ struct CBlockTemplate {
     std::vector<int64_t> vTxSigOps;
 };
 
-
+/*
 class CValidationInterface
 {
 protected:
@@ -625,5 +625,5 @@ protected:
     friend void ::UnregisterValidationInterface(CValidationInterface*);
     friend void ::UnregisterAllValidationInterfaces();
 };
-
+*/
 #endif // BITCOIN_MAIN_H
