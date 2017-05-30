@@ -171,7 +171,7 @@ public:
     unsigned int nTime;
     unsigned int nBits;
     unsigned int nNonce;
-    uint256 nAccumulatorChecksum;
+    uint256 nAccumulatorCheckpoint;
 
     //! (memory only) Sequential id assigned to distinguish order in which blocks are received.
     uint32_t nSequenceId;
@@ -204,7 +204,7 @@ public:
         nTime = 0;
         nBits = 0;
         nNonce = 0;
-        nAccumulatorChecksum = 0;
+        nAccumulatorCheckpoint = 0;
     }
 
     CBlockIndex()
@@ -222,7 +222,7 @@ public:
         nBits = block.nBits;
         nNonce = block.nNonce;
         if(block.nVersion > 3)
-            nAccumulatorChecksum = block.nAccumulatorChecksum;
+            nAccumulatorCheckpoint = block.nAccumulatorCheckpoint;
 
         //Proof of Stake
         bnChainTrust = uint256();
@@ -273,7 +273,7 @@ public:
         block.nTime = nTime;
         block.nBits = nBits;
         block.nNonce = nNonce;
-        block.nAccumulatorChecksum = nAccumulatorChecksum;
+        block.nAccumulatorCheckpoint = nAccumulatorCheckpoint;
         return block;
     }
 
@@ -451,6 +451,8 @@ public:
         READWRITE(nTime);
         READWRITE(nBits);
         READWRITE(nNonce);
+        if(this->nVersion > 3)
+            READWRITE(nAccumulatorCheckpoint);
     }
 
     uint256 GetBlockHash() const
@@ -462,6 +464,7 @@ public:
         block.nTime = nTime;
         block.nBits = nBits;
         block.nNonce = nNonce;
+        block.nAccumulatorCheckpoint = nAccumulatorCheckpoint;
         return block.GetHash();
     }
 

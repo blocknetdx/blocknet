@@ -985,9 +985,6 @@ bool SetZerocoinMintKnown(libzerocoin::PublicCoin publicZerocoin)
 
         if(!zerocoinDB->WriteCoinMint(pubCoinTx))
             return false;
-
-        //add this coin to accumulator because we have not seen it yet
-        CAccumulators::getInstance().AddPubCoinToAccumulator(publicZerocoin.getDenomination(), publicZerocoin);
     }
 
     return true;

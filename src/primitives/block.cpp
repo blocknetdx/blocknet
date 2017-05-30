@@ -17,7 +17,7 @@ uint256 CBlockHeader::GetHash() const
     if(nVersion <= 3 || nTime < HEADER_SWITCH_TIME)
         return HashQuark(BEGIN(nVersion), END(nNonce));
 
-    return Hash(BEGIN(nVersion), END(nAccumulatorChecksum));
+    return Hash(BEGIN(nVersion), END(nAccumulatorCheckpoint));
 }
 
 uint256 CBlock::BuildMerkleTree(bool* fMutated) const

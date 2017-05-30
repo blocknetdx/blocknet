@@ -65,6 +65,8 @@ public:
 	 */
 	const CBigNum& getValue() const;
 
+	void setValue(CBigNum bnValue);
+
 
 	// /**
 	//  * Used to set the accumulator value

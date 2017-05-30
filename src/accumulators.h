@@ -26,11 +26,14 @@ public:
     void operator=(CAccumulators const&) = delete;
 
     libzerocoin::Accumulator Get(libzerocoin::CoinDenomination denomination);
-    void AddPubCoinToAccumulator(libzerocoin::CoinDenomination denomination, libzerocoin::PublicCoin publicCoin);
-    void AddAccumulatorChecksum(const CBigNum &bnValue);
+    bool AddPubCoinToAccumulator(libzerocoin::PublicCoin publicCoin);
+    void AddAccumulatorChecksum(const uint32_t nChecksum, const CBigNum &bnValue);
     uint32_t GetChecksum(const CBigNum &bnValue);
     uint32_t GetChecksum(const libzerocoin::Accumulator &accumulator);
-    CBigNum GetAccumulatorValueFromChecksum(const uint256 nChecksum, libzerocoin::CoinDenomination denomination);
+    uint256 GetCheckpoint();
+    uint256 GetCheckpoint(int nHeight);
+    CBigNum GetAccumulatorValueFromCheckpoint(const uint256 nCheckpoint, libzerocoin::CoinDenomination denomination);
+    bool ResetToCheckpoint(uint256 nCheckpoint);
     bool IntializeWitnessAndAccumulator(const CZerocoinMint &zerocoinSelected, const libzerocoin::PublicCoin &pubcoinSelected, libzerocoin::Accumulator& accumulator, libzerocoin::AccumulatorWitness& witness);
     //CBigNum GetAccumulatorValueFromBlock(CoinDenomination denomination, int nBlockHeight);
     //bool VerifyWitness(CoinDenomination denomination, int nBlockHeight, CBigNum witness);

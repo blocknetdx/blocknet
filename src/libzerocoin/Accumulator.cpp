@@ -70,6 +70,11 @@ const CBigNum& Accumulator::getValue() const {
 	return this->value;
 }
 
+//Manually set accumulator value
+void Accumulator::setValue(CBigNum bnValue) {
+	this->value = bnValue;
+}
+
 Accumulator& Accumulator::operator += (const PublicCoin& c) {
 	this->accumulate(c);
 	return *this;
