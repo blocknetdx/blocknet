@@ -200,15 +200,15 @@ BOOST_AUTO_TEST_CASE(checkzerocoinspend_test)
     privateCoin.setPublicCoin(pubCoin);
     privateCoin.setRandomness(zerocoinMint.GetRandomness());
     privateCoin.setSerialNumber(zerocoinMint.GetSerialNumber());
-    CoinSpend coinSpend(Params().Zerocoin_Params(), privateCoin, accumulator, witness);
+    uint32_t nChecksum = CAccumulators::getInstance().GetChecksum(accumulator);
+    CAccumulators::getInstance().AddAccumulatorChecksum(nChecksum, accumulator.getValue());
+    CoinSpend coinSpend(Params().Zerocoin_Params(), privateCoin, accumulator, nChecksum, witness);
 
     CBigNum serial = coinSpend.getCoinSerialNumber();
     BOOST_CHECK_MESSAGE(serial, "Serial Number can't be 0");
 
     CoinDenomination denom = coinSpend.getDenomination();
     BOOST_CHECK_MESSAGE(denom == pubCoin.getDenomination(), "Spend denomination must match original pubCoin");
-
-    
     BOOST_CHECK_MESSAGE(coinSpend.Verify(accumulator), "CoinSpend object failed to validate");
 
     //serialize the spend

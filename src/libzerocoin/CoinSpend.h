@@ -59,7 +59,7 @@ public:
 	 * @param witness The witness showing that the accumulator contains the coin
 	 * @throw ZerocoinException if the process fails
 	 */
-	CoinSpend(const ZerocoinParams* p, const PrivateCoin& coin, Accumulator& a, const AccumulatorWitness& witness);
+	CoinSpend(const ZerocoinParams* p, const PrivateCoin& coin, Accumulator& a, const uint32_t checksum, const AccumulatorWitness& witness);
 
 	/** Returns the serial number of the coin spend by this proof.
 	 *
@@ -73,10 +73,17 @@ public:
 	 */
 	CoinDenomination getDenomination();
 
+	/**Gets the checksum of the accumulator used in this proof.
+	 *
+	 * @return the denomination
+	 */
+	uint32_t getAccumulatorChecksum();
+
 	bool Verify(const Accumulator& a) const;
 	ADD_SERIALIZE_METHODS;
   template <typename Stream, typename Operation>  inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
 	    READWRITE(denomination);
+	  	READWRITE(accChecksum);
 	    READWRITE(accCommitmentToCoinValue);
 	    READWRITE(serialCommitmentToCoinValue);
 	    READWRITE(coinSerialNumber);
@@ -90,6 +97,7 @@ private:
 	// Denomination is stored as an INT because storing
 	// and enum raises amigiuities in the serialize code //FIXME if possible
 	int denomination;
+	uint32_t accChecksum;
 	CBigNum accCommitmentToCoinValue;
 	CBigNum serialCommitmentToCoinValue;
 	CBigNum coinSerialNumber;

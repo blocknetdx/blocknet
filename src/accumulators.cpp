@@ -14,9 +14,9 @@ void CAccumulators::Setup()
     }
 }
 
-libzerocoin::Accumulator CAccumulators::Get(libzerocoin::CoinDenomination denomination)
+Accumulator CAccumulators::Get(libzerocoin::CoinDenomination denomination)
 {
-    return libzerocoin::Accumulator(Params().Zerocoin_Params(), denomination, mapAccumulators.at(denomination)->getValue());
+    return Accumulator(Params().Zerocoin_Params(), denomination, mapAccumulators.at(denomination)->getValue());
 }
 
 //Public Coins have large 'values' that are not ideal to store in lists.
@@ -70,10 +70,15 @@ CBigNum CAccumulators::GetAccumulatorValueFromCheckpoint(const uint256 nCheckpoi
 {
     uint32_t nDenominationChecksum = ParseChecksum(nCheckpoint, denomination);
 
-    if(!mapAccumulatorValues.count(nDenominationChecksum))
+    return GetAccumulatorValueFromChecksum(nDenominationChecksum);
+}
+
+CBigNum CAccumulators::GetAccumulatorValueFromChecksum(uint32_t nChecksum)
+{
+    if(!mapAccumulatorValues.count(nChecksum))
         return CBigNum(0);
 
-    return mapAccumulatorValues[nDenominationChecksum];
+    return mapAccumulatorValues[nChecksum];
 }
 
 //set all of the accumulators held by mapAccumulators to a certain checkpoint

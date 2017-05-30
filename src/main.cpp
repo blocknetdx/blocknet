@@ -1155,8 +1155,12 @@ bool CheckZerocoinSpend(uint256 hashTx, const CTxOut txout, vector<CTxIn> vin, C
             return state.DoS(100, error("CheckZerocoinSpend(): Zerocoinspend redeems different value than the mint it uses"));
 
         libzerocoin::CoinSpend newSpend = TxInToZerocoinSpend(txin);
-        //todo accumulator scheme
-        libzerocoin::Accumulator accumulator = CAccumulators::getInstance().Get(newSpend.getDenomination());
+        //see if we have record of the accumulator used in the spend tx
+        CBigNum bnAccumulatorValue = CAccumulators::getInstance().GetAccumulatorValueFromChecksum(newSpend.getAccumulatorChecksum());
+        if(bnAccumulatorValue == 0)
+            return state.DoS(100, error("Zerocoinspend could not find accumulator associated with checksum"));
+
+        libzerocoin::Accumulator accumulator(Params().Zerocoin_Params(), newSpend.getDenomination(), bnAccumulatorValue);
 
         if(!CheckZerocoinSpendProperties(txin, newSpend, accumulator, state))
             return state.DoS(100, error("Zerocoinspend properties are not valid"));

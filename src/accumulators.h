@@ -28,6 +28,7 @@ public:
     libzerocoin::Accumulator Get(libzerocoin::CoinDenomination denomination);
     bool AddPubCoinToAccumulator(libzerocoin::PublicCoin publicCoin);
     void AddAccumulatorChecksum(const uint32_t nChecksum, const CBigNum &bnValue);
+    CBigNum GetAccumulatorValueFromChecksum(uint32_t nChecksum);
     uint32_t GetChecksum(const CBigNum &bnValue);
     uint32_t GetChecksum(const libzerocoin::Accumulator &accumulator);
     uint256 GetCheckpoint();
