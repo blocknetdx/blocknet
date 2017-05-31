@@ -387,13 +387,13 @@ std::string HelpMessage(HelpMessageMode mode)
 #endif
 
 #if ENABLE_ZMQ
-    strUsage += "\n" + _("ZeroMQ notification options:") + "\n";
-    strUsage += "  -zmqpubhashblock=<address>  " + _("Enable publish hash block in <address>") + "\n";
-    strUsage += "  -zmqpubhashtx=<address>     " + _("Enable publish hash transaction in <address>") + "\n";
-    strUsage += "  -zmqpubhashtxlock=<address> " + _("Enable publish hash transaction (locked via SwiftTX) in <address>") + "\n";
-    strUsage += "  -zmqpubrawblock=<address>   " + _("Enable publish raw block in <address>") + "\n";
-    strUsage += "  -zmqpubrawtx=<address>      " + _("Enable publish raw transaction in <address>") + "\n";
-    strUsage += "  -zmqpubrawtxlock=<address>  " + _("Enable publish raw transaction (locked via SwiftTX) in <address>") + "\n";
+    strUsage += HelpMessageGroup(_("ZeroMQ notification options:"));
+    strUsage += HelpMessageOpt("-zmqpubhashblock=<address>", _("Enable publish hash block in <address>"));
+    strUsage += HelpMessageOpt("-zmqpubhashtx=<address>", _("Enable publish hash transaction in <address>"));
+    strUsage += HelpMessageOpt("-zmqpubhashtxlock=<address>", _("Enable publish hash transaction (locked via SwiftTX) in <address>"));
+    strUsage += HelpMessageOpt("-zmqpubrawblock=<address>", _("Enable publish raw block in <address>"));
+    strUsage += HelpMessageOpt("-zmqpubrawtx=<address>", _("Enable publish raw transaction in <address>"));
+    strUsage += HelpMessageOpt("-zmqpubrawtxlock=<address>", _("Enable publish raw transaction (locked via SwiftTX) in <address>"));
 #endif
 
     strUsage += HelpMessageGroup(_("Debugging/Testing options:"));
