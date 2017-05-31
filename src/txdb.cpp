@@ -8,6 +8,7 @@
 #include "main.h"
 #include "pow.h"
 #include "uint256.h"
+#include "accumulators.h"
 
 #include <stdint.h>
 
@@ -204,6 +205,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts()
     pcursor->Seek(ssKeySet.str());
 
     // Load mapBlockIndex
+    uint256 nPreviousCheckpoint;
     while (pcursor->Valid()) {
         boost::this_thread::interruption_point();
         try {
@@ -226,6 +228,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts()
                 pindexNew->nDataPos = diskindex.nDataPos;
                 pindexNew->nUndoPos = diskindex.nUndoPos;
                 pindexNew->nVersion = diskindex.nVersion;
+                pindexNew->nAccumulatorCheckpoint = diskindex.nAccumulatorCheckpoint;
                 pindexNew->hashMerkleRoot = diskindex.hashMerkleRoot;
                 pindexNew->nTime = diskindex.nTime;
                 pindexNew->nBits = diskindex.nBits;
@@ -249,6 +252,12 @@ bool CBlockTreeDB::LoadBlockIndexGuts()
                 // ppcoin: build setStakeSeen
                 if (pindexNew->IsProofOfStake())
                     setStakeSeen.insert(make_pair(pindexNew->prevoutStake, pindexNew->nStakeTime));
+
+                //populate accumulator checksum map in memory
+                if(pindexNew->nAccumulatorCheckpoint != 0 && pindexNew->nAccumulatorCheckpoint != nPreviousCheckpoint) {
+                    CAccumulators::getInstance().AddAccumulatorCheckpoint(pindexNew->nAccumulatorCheckpoint);
+                    nPreviousCheckpoint = pindexNew->nAccumulatorCheckpoint;
+                }
 
                 pcursor->Next();
             } else {

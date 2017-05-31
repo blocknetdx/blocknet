@@ -27,7 +27,11 @@ public:
 
     libzerocoin::Accumulator Get(libzerocoin::CoinDenomination denomination);
     bool AddPubCoinToAccumulator(libzerocoin::PublicCoin publicCoin);
+    bool IntializeWitnessAndAccumulator(const CZerocoinMint &zerocoinSelected, const libzerocoin::PublicCoin &pubcoinSelected, libzerocoin::Accumulator& accumulator, libzerocoin::AccumulatorWitness& witness);
+
+    //checksum/checkpoint
     void AddAccumulatorChecksum(const uint32_t nChecksum, const CBigNum &bnValue);
+    void AddAccumulatorCheckpoint(const uint256 nCheckpoint);
     CBigNum GetAccumulatorValueFromChecksum(uint32_t nChecksum);
     uint32_t GetChecksum(const CBigNum &bnValue);
     uint32_t GetChecksum(const libzerocoin::Accumulator &accumulator);
@@ -35,9 +39,6 @@ public:
     uint256 GetCheckpoint(int nHeight);
     CBigNum GetAccumulatorValueFromCheckpoint(const uint256 nCheckpoint, libzerocoin::CoinDenomination denomination);
     bool ResetToCheckpoint(uint256 nCheckpoint);
-    bool IntializeWitnessAndAccumulator(const CZerocoinMint &zerocoinSelected, const libzerocoin::PublicCoin &pubcoinSelected, libzerocoin::Accumulator& accumulator, libzerocoin::AccumulatorWitness& witness);
-    //CBigNum GetAccumulatorValueFromBlock(CoinDenomination denomination, int nBlockHeight);
-    //bool VerifyWitness(CoinDenomination denomination, int nBlockHeight, CBigNum witness);
 };
 
 uint32_t ParseChecksum(uint256 nChecksum, libzerocoin::CoinDenomination denomination);
