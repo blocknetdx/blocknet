@@ -255,7 +255,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts()
 
                 //populate accumulator checksum map in memory
                 if(pindexNew->nAccumulatorCheckpoint != 0 && pindexNew->nAccumulatorCheckpoint != nPreviousCheckpoint) {
-                    CAccumulators::getInstance().AddAccumulatorCheckpoint(pindexNew->nAccumulatorCheckpoint);
+                    CAccumulators::getInstance().LoadAccumulatorValuesFromDB(pindexNew->nAccumulatorCheckpoint);
                     nPreviousCheckpoint = pindexNew->nAccumulatorCheckpoint;
                 }
 
@@ -293,4 +293,13 @@ bool CZerocoinDB::WriteCoinSpend(CZerocoinSpend zerocoinSpend)
 bool CZerocoinDB::ReadCoinSpend(std::string strSerial, CZerocoinSpend &zerocoinSpend)
 {
     return Read(strSerial, zerocoinSpend);
+}
+
+bool CZerocoinDB::WriteAccumulatorValue(const uint32_t& nChecksum, const CBigNum& bnValue)
+{
+    return Write(nChecksum, bnValue);
+}
+bool CZerocoinDB::ReadAccumulatorValue(const uint32_t& nChecksum, CBigNum& bnValue)
+{
+    return Read(nChecksum, bnValue);
 }

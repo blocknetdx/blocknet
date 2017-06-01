@@ -31,7 +31,7 @@ public:
 
     //checksum/checkpoint
     void AddAccumulatorChecksum(const uint32_t nChecksum, const CBigNum &bnValue);
-    void AddAccumulatorCheckpoint(const uint256 nCheckpoint);
+    void LoadAccumulatorValuesFromDB(const uint256 nCheckpoint);
     CBigNum GetAccumulatorValueFromChecksum(uint32_t nChecksum);
     uint32_t GetChecksum(const CBigNum &bnValue);
     uint32_t GetChecksum(const libzerocoin::Accumulator &accumulator);

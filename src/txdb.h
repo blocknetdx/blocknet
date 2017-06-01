@@ -80,6 +80,8 @@ public:
     bool ReadCoinMint(std::string pubcoinValue, CZerocoinMint& zerocoinMint);
     bool WriteCoinSpend(CZerocoinSpend zerocoinSpend);
     bool ReadCoinSpend(std::string strSerial, CZerocoinSpend& zerocoinSpend);
+    bool WriteAccumulatorValue(const uint32_t& nChecksum, const CBigNum& bnValue);
+    bool ReadAccumulatorValue(const uint32_t& nChecksum, CBigNum& bnValue);
 };
 
 #endif // BITCOIN_TXDB_H

@@ -1,6 +1,7 @@
 #include "accumulators.h"
 #include "chainparams.h"
 #include "main.h"
+#include "txdb.h"
 
 using namespace libzerocoin;
 
@@ -58,16 +59,20 @@ uint32_t CAccumulators::GetChecksum(const libzerocoin::Accumulator &accumulator)
 
 void CAccumulators::AddAccumulatorChecksum(const uint32_t nChecksum, const CBigNum &bnValue)
 {
+    zerocoinDB->WriteAccumulatorValue(nChecksum, bnValue);
     mapAccumulatorValues.insert(make_pair(nChecksum, bnValue));
 }
 
-void CAccumulators::AddAccumulatorCheckpoint(const uint256 nCheckpoint)
+void CAccumulators::LoadAccumulatorValuesFromDB(const uint256 nCheckpoint)
 {
     //todo fix loop once additional denoms added
     for (int i = 0; i < libzerocoin::CoinDenomination::ZQ_WILLIAMSON; i++) {
         CoinDenomination denomination = static_cast<CoinDenomination>(i);
-        CBigNum bnValue = GetAccumulatorValueFromCheckpoint(nCheckpoint, denomination);
-        mapAccumulators.at(denomination)->setValue(bnValue);
+        uint32_t nChecksum = ParseChecksum(nCheckpoint, denomination);
+        //if read is not successful then we are not in a state to verify zerocoin transactions
+        CBigNum bnValue;
+        assert(zerocoinDB->ReadAccumulatorValue(nChecksum, bnValue));
+        mapAccumulatorValues.insert(make_pair(nChecksum, bnValue));
     }
 }
 
