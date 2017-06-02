@@ -137,7 +137,7 @@ bool CheckZerocoinSpendNoDB(uint256 hashTx, const CTxOut txout, vector<CTxIn> vi
 {
     CoinDenomination denomination;
     if(!AmountToZerocoinDenomination(txout.nValue, denomination))
-        return state.DoS(100, error("CheckZerocoinSpend(): Zerocoin spend does not have valid denomination"));
+        return false;
 
     // Check vIn
     bool fValidated = false;
@@ -351,9 +351,11 @@ BOOST_AUTO_TEST_CASE(checksum_tests)
 
     BOOST_CHECK_MESSAGE(checksum == uint256("a3219ef1abcdef00101029f3aaaaaeeeffffffffbbbbbbbb11111111eeeeeeee"), "checksum not properly concatenated");
 
-    for(unsigned int i = 0; i < vChecksums.size(); i++){
-        uint32_t checksumParsed = ParseChecksum(checksum, (libzerocoin::CoinDenomination)(i));
+    int i = 0;
+    for(CoinDenomination denomination : zerocoinDenomList){
+        uint32_t checksumParsed = ParseChecksum(checksum, denomination);
         BOOST_CHECK_MESSAGE(checksumParsed == vChecksums[i], "checksum parse failed");
+        i++;
     }
 }
 

@@ -25,13 +25,14 @@ enum  CoinDenomination {
     ZQ_GOLDWASSER = 10,
     ZQ_RACKOFF = 25,
     ZQ_PEDERSEN = 50,
-    ZQ_WILLIAMSON = 100, // Malcolm J. Williamson,
-                    // the scientist who actually invented
-                    // Public key cryptography
+    ZQ_WILLIAMSON = 100,
+	ZQ_6 = 101, //placeholders
+	ZQ_7 = 102,
+	ZQ_8 = 103,
     ZQ_ERROR = 0
 };
 
-const std::vector<CoinDenomination> zerocoinDenomList = {ZQ_LOVELACE, ZQ_GOLDWASSER, ZQ_RACKOFF, ZQ_PEDERSEN, ZQ_WILLIAMSON};    
+const std::vector<CoinDenomination> zerocoinDenomList = {ZQ_LOVELACE, ZQ_GOLDWASSER, ZQ_RACKOFF, ZQ_PEDERSEN, ZQ_WILLIAMSON, ZQ_6, ZQ_7, ZQ_8};
 
 inline bool AmountToZerocoinDenomination(uint256 amount, CoinDenomination& denomination)
 {

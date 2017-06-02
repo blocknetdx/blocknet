@@ -8,19 +8,19 @@ using namespace libzerocoin;
 void CAccumulators::Setup()
 {
     //construct accumulators for all denominations
-    for (auto& denom : libzerocoin::zerocoinDenomList) {
-        unique_ptr<libzerocoin::Accumulator> uptr(new libzerocoin::Accumulator(Params().Zerocoin_Params(), denom));
+    for (auto& denom : zerocoinDenomList) {
+        unique_ptr<Accumulator> uptr(new Accumulator(Params().Zerocoin_Params(), denom));
         mapAccumulators.insert(make_pair(ZerocoinDenominationToValue(denom), move(uptr)));
     }
 }
 
-Accumulator CAccumulators::Get(libzerocoin::CoinDenomination denomination)
+Accumulator CAccumulators::Get(CoinDenomination denomination)
 {
     return Accumulator(Params().Zerocoin_Params(), denomination, mapAccumulators.at(denomination)->getValue());
 }
 
 //Public Coins have large 'values' that are not ideal to store in lists.
-uint256 HashPublicCoin(libzerocoin::PublicCoin publicCoin)
+uint256 HashPublicCoin(PublicCoin publicCoin)
 {
     CDataStream ss(SER_GETHASH, 0);
     ss << publicCoin.getValue() << ZerocoinDenominationToValue(publicCoin.getDenomination());
@@ -28,7 +28,7 @@ uint256 HashPublicCoin(libzerocoin::PublicCoin publicCoin)
     return Hash(ss.begin(), ss.end());
 }
 
-bool CAccumulators::AddPubCoinToAccumulator(libzerocoin::PublicCoin publicCoin)
+bool CAccumulators::AddPubCoinToAccumulator(PublicCoin publicCoin)
 {
     //see if we have already stored this coin - todo: how to handle reset to a certain block with this
     uint256 hash = HashPublicCoin(publicCoin);
@@ -50,7 +50,7 @@ uint32_t CAccumulators::GetChecksum(const CBigNum &bnValue)
     return hash.Get32();
 }
 
-uint32_t CAccumulators::GetChecksum(const libzerocoin::Accumulator &accumulator)
+uint32_t CAccumulators::GetChecksum(const Accumulator &accumulator)
 {
     return GetChecksum(accumulator.getValue());
 }
@@ -65,8 +65,7 @@ void CAccumulators::AddAccumulatorChecksum(const uint32_t nChecksum, const CBigN
 
 void CAccumulators::LoadAccumulatorValuesFromDB(const uint256 nCheckpoint)
 {
-    //todo fix loop once additional denoms added
-    for (auto& denomination : libzerocoin::zerocoinDenomList) {
+    for (auto& denomination : zerocoinDenomList) {
         uint32_t nChecksum = ParseChecksum(nCheckpoint, denomination);
         //if read is not successful then we are not in a state to verify zerocoin transactions
         CBigNum bnValue;
@@ -75,13 +74,15 @@ void CAccumulators::LoadAccumulatorValuesFromDB(const uint256 nCheckpoint)
     }
 }
 
-uint32_t ParseChecksum(uint256 nChecksum, libzerocoin::CoinDenomination denomination)
+uint32_t ParseChecksum(uint256 nChecksum, CoinDenomination denomination)
 {
-    nChecksum >>= (32*(7-denomination)); //7 because 8 denominations
+    //shift to the beginning bit of this denomimnation and trim any remaining bits by returning 32 bits only
+    int pos = distance(zerocoinDenomList.begin(), find(zerocoinDenomList.begin(), zerocoinDenomList.end(), denomination));
+    nChecksum >>= (32*((zerocoinDenomList.size() - 1) - pos));
     return nChecksum.Get32();
 }
 
-CBigNum CAccumulators::GetAccumulatorValueFromCheckpoint(const uint256 nCheckpoint, libzerocoin::CoinDenomination denomination)
+CBigNum CAccumulators::GetAccumulatorValueFromCheckpoint(const uint256 nCheckpoint, CoinDenomination denomination)
 {
     uint32_t nDenominationChecksum = ParseChecksum(nCheckpoint, denomination);
 
@@ -99,7 +100,7 @@ CBigNum CAccumulators::GetAccumulatorValueFromChecksum(uint32_t nChecksum)
 //set all of the accumulators held by mapAccumulators to a certain checkpoint
 bool CAccumulators::ResetToCheckpoint(uint256 nCheckpoint)
 {
-    for (auto& denom : libzerocoin::zerocoinDenomList) {
+    for (auto& denom : zerocoinDenomList) {
         CBigNum bnValue = GetAccumulatorValueFromCheckpoint(nCheckpoint, denom);
         if (bnValue == 0)
             return false;
@@ -114,9 +115,10 @@ bool CAccumulators::ResetToCheckpoint(uint256 nCheckpoint)
 uint256 CAccumulators::GetCheckpoint()
 {
     uint256 nCheckpoint; //todo: this will not work properly until we have 8 denominations (it won't consume all bits)
-    for (auto& denom : libzerocoin::zerocoinDenomList) {
-        uint32_t nCheckSum = GetChecksum(mapAccumulators.at(denom)->getValue());
-        AddAccumulatorChecksum(nCheckSum, mapAccumulators.at(denom)->getValue());
+    for (auto& denom : zerocoinDenomList) {
+        CBigNum bnValue = mapAccumulators.at(denom)->getValue();
+        uint32_t nCheckSum = GetChecksum(bnValue);
+        AddAccumulatorChecksum(nCheckSum, bnValue);
 
         nCheckpoint <<= 32 | nCheckSum;
     }
@@ -156,8 +158,8 @@ uint256 CAccumulators::GetCheckpoint(int nHeight)
 
         //add the pubcoins to accumulator
         for(const CZerocoinMint mint : listMints) {
-            CoinDenomination denomination = static_cast<libzerocoin::CoinDenomination>(mint.GetDenomination());
-            libzerocoin::PublicCoin pubCoin(Params().Zerocoin_Params(), mint.GetValue(), denomination);
+            CoinDenomination denomination = AmountToZerocoinDenomination(mint.GetDenomination());
+            PublicCoin pubCoin(Params().Zerocoin_Params(), mint.GetValue(), denomination);
             if(!AddPubCoinToAccumulator(pubCoin)) {
                 LogPrintf("%s: failed to add pubcoin to accumulator at height %n\n", __func__, pindex->nHeight);
                 return false;
@@ -169,7 +171,7 @@ uint256 CAccumulators::GetCheckpoint(int nHeight)
     return GetCheckpoint();
 }
 
-bool CAccumulators::IntializeWitnessAndAccumulator(const CZerocoinMint &zerocoinSelected, const libzerocoin::PublicCoin &pubcoinSelected, libzerocoin::Accumulator& accumulator, libzerocoin::AccumulatorWitness& witness)
+bool CAccumulators::IntializeWitnessAndAccumulator(const CZerocoinMint &zerocoinSelected, const PublicCoin &pubcoinSelected, Accumulator& accumulator, AccumulatorWitness& witness)
 {
     int nHeightMintAddedToBlockchain = zerocoinSelected.GetHeight();
 
@@ -216,8 +218,8 @@ bool CAccumulators::IntializeWitnessAndAccumulator(const CZerocoinMint &zerocoin
     if(bnAccValue == 0)
         return false;
 
-    accumulator = libzerocoin::Accumulator(Params().Zerocoin_Params(), pubcoinSelected.getDenomination(), bnAccValue);
-    witness = libzerocoin::AccumulatorWitness(Params().Zerocoin_Params(), accumulator, pubcoinSelected);
+    accumulator = Accumulator(Params().Zerocoin_Params(), pubcoinSelected.getDenomination(), bnAccValue);
+    witness = AccumulatorWitness(Params().Zerocoin_Params(), accumulator, pubcoinSelected);
 
     //add the pubcoins up to the next checksum starting from the block
     pindex = chainActive[nChecksumBeforeMintHeight];
@@ -249,7 +251,7 @@ bool CAccumulators::IntializeWitnessAndAccumulator(const CZerocoinMint &zerocoin
 
         //add the mints to the witness
         for(const CZerocoinMint mint : listMints) {
-            libzerocoin::PublicCoin pubCoin(Params().Zerocoin_Params(), mint.GetValue(), static_cast<libzerocoin::CoinDenomination>(mint.GetDenomination()));
+            PublicCoin pubCoin(Params().Zerocoin_Params(), mint.GetValue(), AmountToZerocoinDenomination(mint.GetDenomination()));
             witness += pubCoin;
         }
 

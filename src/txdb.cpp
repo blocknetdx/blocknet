@@ -287,18 +287,22 @@ bool CZerocoinDB::ReadCoinMint(string pubcoinValue, CZerocoinMint& zerocoinMint)
 
 bool CZerocoinDB::WriteCoinSpend(CZerocoinSpend zerocoinSpend)
 {
-    return Write(zerocoinSpend.GetSerial().ToString(), zerocoinSpend, true);
+    CBigNum serial = zerocoinSpend.GetSerial();
+    uint256 hash = Hash(BEGIN(serial), END(serial));
+    return Write(hash, zerocoinSpend, true);
 }
 
-bool CZerocoinDB::ReadCoinSpend(std::string strSerial, CZerocoinSpend &zerocoinSpend)
+bool CZerocoinDB::ReadCoinSpend(const CBigNum& bnSerial, CZerocoinSpend &zerocoinSpend)
 {
-    return Read(strSerial, zerocoinSpend);
+    uint256 hash = Hash(BEGIN(bnSerial), END(bnSerial));
+    return Read(hash, zerocoinSpend);
 }
 
 bool CZerocoinDB::WriteAccumulatorValue(const uint32_t& nChecksum, const CBigNum& bnValue)
 {
     return Write(nChecksum, bnValue);
 }
+
 bool CZerocoinDB::ReadAccumulatorValue(const uint32_t& nChecksum, CBigNum& bnValue)
 {
     return Read(nChecksum, bnValue);

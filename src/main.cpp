@@ -1062,11 +1062,8 @@ libzerocoin::CoinSpend TxInToZerocoinSpend(const CTxIn& txin)
 
 bool CheckZerocoinSpendProperties(const CTxIn& txin, libzerocoin::CoinSpend coinSpend, const libzerocoin::Accumulator &accumulator,CValidationState& state)
 {
-    // CHECK PUBCOIN ID
-    int pubcoinId = txin.nSequence;
-    if (pubcoinId < 1 || pubcoinId >= INT_MAX) { // IT BEGINS WITH 1
-        return state.DoS(100, error("CheckZerocoinSpend(): Error: nSequence is not correct format"));
-    }
+    //if (txin.nSequence != 0)
+      //  return state.DoS(100, error("CheckZerocoinSpend(): Error: nSequence is must be 0"));
 
     //Check that the coin is on the accumulator
     if (!coinSpend.Verify(accumulator))
