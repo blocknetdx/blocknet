@@ -210,8 +210,7 @@ BOOST_AUTO_TEST_CASE(checkzerocoinspend_test)
 
     //Get the checksum of the accumulator we use for the spend and also add it to our checksum map
     uint32_t nChecksum = CAccumulators::getInstance().GetChecksum(accumulator);
-    CAccumulators::getInstance().AddAccumulatorChecksum(nChecksum, accumulator.getValue());
-
+    CAccumulators::getInstance().AddAccumulatorChecksum(nChecksum, accumulator.getValue(), true);
     CoinSpend coinSpend(Params().Zerocoin_Params(), privateCoin, accumulator, nChecksum, witness);
 
     CBigNum serial = coinSpend.getCoinSerialNumber();

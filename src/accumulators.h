@@ -30,7 +30,7 @@ public:
     bool IntializeWitnessAndAccumulator(const CZerocoinMint &zerocoinSelected, const libzerocoin::PublicCoin &pubcoinSelected, libzerocoin::Accumulator& accumulator, libzerocoin::AccumulatorWitness& witness);
 
     //checksum/checkpoint
-    void AddAccumulatorChecksum(const uint32_t nChecksum, const CBigNum &bnValue);
+    void AddAccumulatorChecksum(const uint32_t nChecksum, const CBigNum &bnValue, bool fMemoryOnly = false);
     void LoadAccumulatorValuesFromDB(const uint256 nCheckpoint);
     CBigNum GetAccumulatorValueFromChecksum(uint32_t nChecksum);
     uint32_t GetChecksum(const CBigNum &bnValue);

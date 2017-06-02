@@ -57,9 +57,11 @@ uint32_t CAccumulators::GetChecksum(const libzerocoin::Accumulator &accumulator)
     return GetChecksum(accumulator.getValue());
 }
 
-void CAccumulators::AddAccumulatorChecksum(const uint32_t nChecksum, const CBigNum &bnValue)
+void CAccumulators::AddAccumulatorChecksum(const uint32_t nChecksum, const CBigNum &bnValue, bool fMemoryOnly)
 {
-    zerocoinDB->WriteAccumulatorValue(nChecksum, bnValue);
+    if(!fMemoryOnly)
+        zerocoinDB->WriteAccumulatorValue(nChecksum, bnValue);
+
     mapAccumulatorValues.insert(make_pair(nChecksum, bnValue));
 }
 
