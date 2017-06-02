@@ -31,6 +31,8 @@ enum  CoinDenomination {
     ZQ_ERROR = 0
 };
 
+const std::vector<CoinDenomination> zerocoinDenomList = {ZQ_LOVELACE, ZQ_GOLDWASSER, ZQ_RACKOFF, ZQ_PEDERSEN, ZQ_WILLIAMSON};    
+
 inline bool AmountToZerocoinDenomination(uint256 amount, CoinDenomination& denomination)
 {
 	if(amount == CoinDenomination::ZQ_LOVELACE * COIN)
@@ -52,6 +54,28 @@ inline bool AmountToZerocoinDenomination(uint256 amount, CoinDenomination& denom
 	}
 
     return true;
+}
+inline CoinDenomination AmountToZerocoinDenomination(int amount)
+{
+    CoinDenomination denomination;
+	if(amount == CoinDenomination::ZQ_LOVELACE)
+		denomination = CoinDenomination::ZQ_LOVELACE;
+	else if(amount == CoinDenomination::ZQ_GOLDWASSER)
+		denomination = CoinDenomination ::ZQ_GOLDWASSER;
+	else if(amount == CoinDenomination::ZQ_RACKOFF)
+		denomination = CoinDenomination::ZQ_RACKOFF;
+	else if(amount == CoinDenomination::ZQ_PEDERSEN)
+		denomination = CoinDenomination::ZQ_PEDERSEN;
+	else if(amount == CoinDenomination::ZQ_WILLIAMSON)
+		denomination = CoinDenomination::ZQ_WILLIAMSON;
+	else
+	{
+		//not a valid denomination mark to minimal and return false
+		//should mark invalid if we add that denom to the enum
+		denomination = CoinDenomination::ZQ_ERROR;
+	}
+
+    return denomination;
 }
 
 inline uint64_t ZerocoinDenominationToValue(const CoinDenomination& denomination)

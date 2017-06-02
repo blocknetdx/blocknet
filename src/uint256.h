@@ -280,7 +280,7 @@ public:
 
     uint32_t Get32(int n = 0) const
     {
-        return static_cast<uint32_t>(Get64());
+        return pn[2 * n];
     }
     /**
      * Returns the position of the highest bit set plus one, or zero if the

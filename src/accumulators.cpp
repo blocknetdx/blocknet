@@ -8,11 +8,9 @@ using namespace libzerocoin;
 void CAccumulators::Setup()
 {
     //construct accumulators for all denominations
-    //todo fix loop once additional denoms added
-    for(int i = 0; i < libzerocoin::CoinDenomination::ZQ_WILLIAMSON; i++) {
-        libzerocoin::CoinDenomination denomination = static_cast<libzerocoin::CoinDenomination>(i);
-        unique_ptr<libzerocoin::Accumulator> uptr(new libzerocoin::Accumulator(Params().Zerocoin_Params(), denomination));
-        mapAccumulators.insert(make_pair((int)denomination, move(uptr)));
+    for (auto& denom : libzerocoin::zerocoinDenomList) {
+        unique_ptr<libzerocoin::Accumulator> uptr(new libzerocoin::Accumulator(Params().Zerocoin_Params(), denom));
+        mapAccumulators.insert(make_pair(ZerocoinDenominationToValue(denom), move(uptr)));
     }
 }
 
@@ -25,7 +23,7 @@ Accumulator CAccumulators::Get(libzerocoin::CoinDenomination denomination)
 uint256 HashPublicCoin(libzerocoin::PublicCoin publicCoin)
 {
     CDataStream ss(SER_GETHASH, 0);
-    ss << publicCoin.getValue() << static_cast<unsigned int>(publicCoin.getDenomination());
+    ss << publicCoin.getValue() << ZerocoinDenominationToValue(publicCoin.getDenomination());
 
     return Hash(ss.begin(), ss.end());
 }
@@ -37,7 +35,7 @@ bool CAccumulators::AddPubCoinToAccumulator(libzerocoin::PublicCoin publicCoin)
     if(mapPubCoins.find(hash) != mapPubCoins.end())
         return false;
 
-    mapPubCoins.insert(make_pair(hash, static_cast<int>(publicCoin.getDenomination())));
+    mapPubCoins.insert(make_pair(hash, ZerocoinDenominationToValue(publicCoin.getDenomination())));
     *(mapAccumulators.at(publicCoin.getDenomination())) += publicCoin;
 
     return true;
@@ -68,8 +66,7 @@ void CAccumulators::AddAccumulatorChecksum(const uint32_t nChecksum, const CBigN
 void CAccumulators::LoadAccumulatorValuesFromDB(const uint256 nCheckpoint)
 {
     //todo fix loop once additional denoms added
-    for (int i = 0; i < libzerocoin::CoinDenomination::ZQ_WILLIAMSON; i++) {
-        CoinDenomination denomination = static_cast<CoinDenomination>(i);
+    for (auto& denomination : libzerocoin::zerocoinDenomList) {
         uint32_t nChecksum = ParseChecksum(nCheckpoint, denomination);
         //if read is not successful then we are not in a state to verify zerocoin transactions
         CBigNum bnValue;
@@ -102,15 +99,12 @@ CBigNum CAccumulators::GetAccumulatorValueFromChecksum(uint32_t nChecksum)
 //set all of the accumulators held by mapAccumulators to a certain checkpoint
 bool CAccumulators::ResetToCheckpoint(uint256 nCheckpoint)
 {
-    //todo fix loop once additional denoms added
-    for (int i = 0; i < libzerocoin::CoinDenomination::ZQ_WILLIAMSON; i++) {
-        CoinDenomination denomination = static_cast<CoinDenomination>(i);
-
-        CBigNum bnValue = GetAccumulatorValueFromCheckpoint(nCheckpoint, denomination);
+    for (auto& denom : libzerocoin::zerocoinDenomList) {
+        CBigNum bnValue = GetAccumulatorValueFromCheckpoint(nCheckpoint, denom);
         if (bnValue == 0)
             return false;
 
-        mapAccumulators.at(denomination)->setValue(bnValue);
+        mapAccumulators.at(denom)->setValue(bnValue);
     }
 
     return true;
@@ -120,11 +114,9 @@ bool CAccumulators::ResetToCheckpoint(uint256 nCheckpoint)
 uint256 CAccumulators::GetCheckpoint()
 {
     uint256 nCheckpoint; //todo: this will not work properly until we have 8 denominations (it won't consume all bits)
-    for (int i = 0; i < libzerocoin::CoinDenomination::ZQ_WILLIAMSON; i++) {
-        CoinDenomination denomination = static_cast<CoinDenomination>(i);
-
-        uint32_t nCheckSum = GetChecksum(mapAccumulators.at(denomination)->getValue());
-        AddAccumulatorChecksum(nCheckSum, mapAccumulators.at(denomination)->getValue());
+    for (auto& denom : libzerocoin::zerocoinDenomList) {
+        uint32_t nCheckSum = GetChecksum(mapAccumulators.at(denom)->getValue());
+        AddAccumulatorChecksum(nCheckSum, mapAccumulators.at(denom)->getValue());
 
         nCheckpoint <<= 32 | nCheckSum;
     }

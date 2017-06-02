@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <vector>
 #include <openssl/bn.h>
+#include "serialize.h"
 #include "uint256.h"
 #include "version.h"
 

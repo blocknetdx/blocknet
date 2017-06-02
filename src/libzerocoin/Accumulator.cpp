@@ -63,7 +63,7 @@ void Accumulator::accumulate(const PublicCoin& coin) {
 }
 
 CoinDenomination Accumulator::getDenomination() const {
-	return static_cast<CoinDenomination> (this->denomination);
+	return AmountToZerocoinDenomination(this->denomination);
 }
 
 const CBigNum& Accumulator::getValue() const {
