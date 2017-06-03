@@ -40,28 +40,20 @@ BOOST_AUTO_TEST_CASE(amount_to_denomination_test)
 
     //valid amount (min edge)
     CAmount amount = 1 * COIN;
-    CoinDenomination denomination;
-    BOOST_CHECK(AmountToZerocoinDenomination(amount, denomination));
-    BOOST_CHECK(denomination == ZQ_LOVELACE);
+    BOOST_CHECK_MESSAGE(AmountToZerocoinDenomination(amount/COIN) == ZQ_LOVELACE,"....");    
 
     //valid amount (max edge)
     CAmount amount1 = 100 * COIN;
-    CoinDenomination denomination1;
-    BOOST_CHECK(AmountToZerocoinDenomination(amount1, denomination1));
-    BOOST_CHECK(denomination1 == ZQ_WILLIAMSON);
-
+    BOOST_CHECK_MESSAGE(AmountToZerocoinDenomination(amount1/COIN) == ZQ_WILLIAMSON,"....");
+    
     //invalid amount (too much)
     CAmount amount2 = 5000 * COIN;
-    CoinDenomination denomination2;
-    BOOST_CHECK(!AmountToZerocoinDenomination(amount2, denomination2));
-    BOOST_CHECK(denomination2 == ZQ_ERROR);
-
+    BOOST_CHECK_MESSAGE(AmountToZerocoinDenomination(amount2/COIN) == ZQ_ERROR,"....");
+    
     //invalid amount (not enough)
     CAmount amount3 = 1;
-    CoinDenomination denomination3;
-    BOOST_CHECK(!AmountToZerocoinDenomination(amount3, denomination3));
-    BOOST_CHECK(denomination3 == ZQ_ERROR);
-
+    BOOST_CHECK_MESSAGE(AmountToZerocoinDenomination(amount3/COIN) == ZQ_ERROR,"....");
+    
 }
 
 BOOST_AUTO_TEST_CASE(denomination_to_value_test)
@@ -135,8 +127,8 @@ BOOST_AUTO_TEST_CASE(checkzerocoinmint_test)
 
 bool CheckZerocoinSpendNoDB(uint256 hashTx, const CTxOut txout, vector<CTxIn> vin, const CTransaction &txContainingMint, CValidationState& state)
 {
-    CoinDenomination denomination;
-    if(!AmountToZerocoinDenomination(txout.nValue, denomination))
+    CoinDenomination denomination = AmountToZerocoinDenomination(txout.nValue/COIN);
+    if (denomination = ZQ_ERROR)
         return false;
 
     // Check vIn

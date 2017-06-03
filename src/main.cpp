@@ -999,8 +999,8 @@ bool TxOutToPublicCoin(const CTxOut txout, libzerocoin::PublicCoin& pubCoin, CVa
     CBigNum publicZerocoin;
     publicZerocoin.setvch(vchZeroMint);
 
-    libzerocoin::CoinDenomination denomination;
-    if(!libzerocoin::AmountToZerocoinDenomination(txout.nValue, denomination))
+    libzerocoin::CoinDenomination denomination = libzerocoin::AmountToZerocoinDenomination(txout.nValue/COIN);
+    if (denomination == libzerocoin::ZQ_ERROR)
         return state.DoS(100, error("TxOutToPublicCoin : txout.nValue is not correct"));
 
     libzerocoin::PublicCoin checkPubCoin(Params().Zerocoin_Params(), publicZerocoin, denomination);
@@ -1115,9 +1115,9 @@ bool IsZerocoinSpendUnknown(libzerocoin::CoinSpend coinSpend, uint256 hashTx, CZ
 bool CheckZerocoinOverSpend(const CAmount nAmountRedeemed, const CTransaction &txContainingMint, CValidationState& state)
 {
     CAmount nPreviousMintValue = txContainingMint.GetZerocoinMinted();
-    libzerocoin::CoinDenomination testDenomination;
-    if(!libzerocoin::AmountToZerocoinDenomination(nPreviousMintValue, testDenomination))
-        return state.DoS(100, error("CheckZerocoinSpend(): Zerocoin mint does not have valid denomination"));
+    libzerocoin::CoinDenomination testDenomination = libzerocoin::AmountToZerocoinDenomination(nPreviousMintValue/COIN);
+    if (testDenomination == libzerocoin::ZQ_ERROR)
+         return state.DoS(100, error("CheckZerocoinSpend(): Zerocoin mint does not have valid denomination"));
 
     if(nAmountRedeemed != nPreviousMintValue)
         return state.DoS(100, error("CheckZerocoinSpend(): Zerocoinspend redeems different value than the mint it uses"));
@@ -1132,8 +1132,8 @@ bool CheckZerocoinSpend(uint256 hashTx, const CTxOut txout, vector<CTxIn> vin, C
     if(GetAdjustedTime() < Params().Zerocoin_ProtocolActivationTime())
         return state.DoS(100, error("CheckZerocoinSpend(): Zerocoin transactions are not allowed yet"));
 
-    libzerocoin::CoinDenomination denomination;
-    if(!libzerocoin::AmountToZerocoinDenomination(txout.nValue, denomination))
+    libzerocoin::CoinDenomination denomination = libzerocoin::AmountToZerocoinDenomination(txout.nValue/COIN);
+    if (denomination == libzerocoin::ZQ_ERROR)
         return state.DoS(100, error("CheckZerocoinSpend(): Zerocoin spend does not have valid denomination"));
 
     bool fValidated = false;

@@ -16,13 +16,13 @@ namespace libzerocoin {
 
 CoinSpend::CoinSpend(const ZerocoinParams* p, const PrivateCoin& coin,
                      Accumulator& a, const uint32_t checksum, const AccumulatorWitness& witness):
-	denomination(coin.getPublicCoin().getDenomination()),
 	accChecksum(checksum),
 	coinSerialNumber((coin.getSerialNumber())),
 	accumulatorPoK(&p->accumulatorParams),
 	serialNumberSoK(p),
 	commitmentPoK(&p->serialNumberSoKCommitmentGroup, &p->accumulatorParams.accumulatorPoKCommitmentGroup) {
 
+  denomination = ZerocoinDenominationToValue(coin.getPublicCoin().getDenomination());
 	// Sanity check: let's verify that the Witness is valid with respect to
 	// the coin and Accumulator provided.
 	if (!(witness.VerifyWitness(a, coin.getPublicCoin()))) {
@@ -61,7 +61,7 @@ CoinSpend::getCoinSerialNumber() {
 
 CoinDenomination
 CoinSpend::getDenomination() {
-	return static_cast<CoinDenomination>(this->denomination);
+	return AmountToZerocoinDenomination(this->denomination);
 }
 
 uint32_t CoinSpend::getAccumulatorChecksum() {
@@ -71,7 +71,7 @@ uint32_t CoinSpend::getAccumulatorChecksum() {
 bool
 CoinSpend::Verify(const Accumulator& a) const {
 	// Verify both of the sub-proofs using the given meta-data
-	return  (a.getDenomination() == this->denomination)
+  return  (a.getDenomination() == AmountToZerocoinDenomination(this->denomination))
 	        && commitmentPoK.Verify(serialCommitmentToCoinValue, accCommitmentToCoinValue)
 	        && accumulatorPoK.Verify(a, accCommitmentToCoinValue)
 	        && serialNumberSoK.Verify(coinSerialNumber, serialCommitmentToCoinValue, signatureHash());

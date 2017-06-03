@@ -31,12 +31,13 @@ namespace libzerocoin {
 class CoinSpend {
 public:
 	template<typename Stream>
-	CoinSpend(const ZerocoinParams* p,  Stream& strm):denomination(ZQ_LOVELACE),
+	CoinSpend(const ZerocoinParams* p,  Stream& strm) : 
 		accumulatorPoK(&p->accumulatorParams),
 		serialNumberSoK(p),
 		commitmentPoK(&p->serialNumberSoKCommitmentGroup, &p->accumulatorParams.accumulatorPoKCommitmentGroup) {
-		strm >> *this;
-	}
+      denomination = ZerocoinDenominationToValue(ZQ_LOVELACE);
+      strm >> *this;
+    }
 	/**Generates a proof spending a zerocoin.
 	 *
 	 * To use this, provide an unspent PrivateCoin, the latest Accumulator

@@ -16,17 +16,17 @@
 namespace libzerocoin {
 
 //Accumulator class
-Accumulator::Accumulator(const AccumulatorAndProofParams* p, const CoinDenomination d): params(p), denomination(d) {
+Accumulator::Accumulator(const AccumulatorAndProofParams* p, const CoinDenomination d): params(p) {
 	if (!(params->initialized)) {
 		throw ZerocoinException("Invalid parameters for accumulator");
 	}
-
+  denomination = ZerocoinDenominationToValue(d);
 	this->value = this->params->accumulatorBase;
 }
 
 Accumulator::Accumulator(const ZerocoinParams* p, const CoinDenomination d, const Bignum bnValue) {
 	this->params = &(p->accumulatorParams);
-	this->denomination = d;
+  denomination = ZerocoinDenominationToValue(d);
 
 	if (!(params->initialized)) {
 		throw ZerocoinException("Invalid parameters for accumulator");

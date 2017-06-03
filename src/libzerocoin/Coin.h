@@ -21,127 +21,23 @@ namespace libzerocoin {
 
 //PRESSTAB: should we add an invalid representation for CoinDenomination?
 enum  CoinDenomination {
-    ZQ_LOVELACE = 1,
-    ZQ_GOLDWASSER = 10,
-    ZQ_RACKOFF = 25,
-    ZQ_PEDERSEN = 50,
-    ZQ_WILLIAMSON = 100,
-	ZQ_6 = 101, //placeholders
-	ZQ_7 = 102,
-	ZQ_8 = 103,
-    ZQ_ERROR = 0
+    ZQ_ERROR = 0,
+    ZQ_LOVELACE,
+    ZQ_GOLDWASSER,
+    ZQ_RACKOFF,
+    ZQ_PEDERSEN,
+    ZQ_WILLIAMSON,
+    ZQ_6, //placeholders
+    ZQ_7,
+    ZQ_8,
 };
 
 const std::vector<CoinDenomination> zerocoinDenomList = {ZQ_LOVELACE, ZQ_GOLDWASSER, ZQ_RACKOFF, ZQ_PEDERSEN, ZQ_WILLIAMSON, ZQ_6, ZQ_7, ZQ_8};
 
-inline bool AmountToZerocoinDenomination(uint256 amount, CoinDenomination& denomination)
-{
-	if(amount == CoinDenomination::ZQ_LOVELACE * COIN)
-		denomination = CoinDenomination::ZQ_LOVELACE;
-	else if(amount == CoinDenomination::ZQ_GOLDWASSER * COIN)
-		denomination = CoinDenomination ::ZQ_GOLDWASSER;
-	else if(amount == CoinDenomination::ZQ_RACKOFF * COIN)
-		denomination = CoinDenomination::ZQ_RACKOFF;
-	else if(amount == CoinDenomination::ZQ_PEDERSEN * COIN)
-		denomination = CoinDenomination::ZQ_PEDERSEN;
-	else if(amount == CoinDenomination::ZQ_WILLIAMSON * COIN)
-		denomination = CoinDenomination::ZQ_WILLIAMSON;
-	else
-	{
-		//not a valid denomination mark to minimal and return false
-		//should mark invalid if we add that denom to the enum
-		denomination = CoinDenomination::ZQ_ERROR;
-		return false;
-	}
-
-    return true;
-}
-inline CoinDenomination AmountToZerocoinDenomination(int amount)
-{
-    CoinDenomination denomination;
-	if(amount == CoinDenomination::ZQ_LOVELACE)
-		denomination = CoinDenomination::ZQ_LOVELACE;
-	else if(amount == CoinDenomination::ZQ_GOLDWASSER)
-		denomination = CoinDenomination ::ZQ_GOLDWASSER;
-	else if(amount == CoinDenomination::ZQ_RACKOFF)
-		denomination = CoinDenomination::ZQ_RACKOFF;
-	else if(amount == CoinDenomination::ZQ_PEDERSEN)
-		denomination = CoinDenomination::ZQ_PEDERSEN;
-	else if(amount == CoinDenomination::ZQ_WILLIAMSON)
-		denomination = CoinDenomination::ZQ_WILLIAMSON;
-	else
-	{
-		//not a valid denomination mark to minimal and return false
-		//should mark invalid if we add that denom to the enum
-		denomination = CoinDenomination::ZQ_ERROR;
-	}
-
-    return denomination;
-}
-
-inline uint64_t ZerocoinDenominationToValue(const CoinDenomination& denomination)
-{
-    uint64_t Value=0;
-    switch (denomination) {
-    case CoinDenomination::ZQ_LOVELACE: Value = 1; break;
-    case CoinDenomination ::ZQ_GOLDWASSER: Value = 10; break;
-    case CoinDenomination::ZQ_RACKOFF: Value = 25; break;
-    case CoinDenomination::ZQ_PEDERSEN : Value = 50; break;
-    case CoinDenomination::ZQ_WILLIAMSON: Value = 100; break;
-    default:
-        // Error Case
-        Value = 0; break;
-    }
-    return Value;
-}
-
-    
-inline int64_t roundint64(double d)
-{
-    return (int64_t)(d > 0 ? d + 0.5 : d - 0.5);
-}
-
-    
-inline CoinDenomination get_denomination(string denomAmount) {
-    CoinDenomination denomination;
-    // Amount
-    if (denomAmount == "1") {
-        denomination = ZQ_LOVELACE;
-    } else if (denomAmount == "10") {
-        denomination = ZQ_GOLDWASSER;
-    } else if (denomAmount == "25") {
-        denomination = ZQ_RACKOFF;
-    } else if (denomAmount == "50") {
-        denomination = ZQ_PEDERSEN;
-    } else if (denomAmount == "100") {
-        denomination = ZQ_WILLIAMSON;
-    } else {
-        // SHOULD WE THROW EXCEPTION or Something?
-        denomination = ZQ_ERROR; // ERROR HACK(SPOCK)???
-    }
-    return denomination;
-}
-
-
-inline int64_t get_amount(string denomAmount) {
-    int64_t nAmount = 0;
-    // Amount
-    if (denomAmount == "1") {
-        nAmount = roundint64(1 * COIN);
-    } else if (denomAmount == "10") {
-        nAmount = roundint64(10 * COIN);
-    } else if (denomAmount == "25") {
-        nAmount = roundint64(25 * COIN);
-    } else if (denomAmount == "50") {
-        nAmount = roundint64(50 * COIN);
-    } else if (denomAmount == "100") {
-        nAmount = roundint64(100 * COIN);
-    } else {
-        // SHOULD WE THROW EXCEPTION or Something?
-        nAmount = 0;
-    }
-    return nAmount;
-}
+ CoinDenomination AmountToZerocoinDenomination(int64_t amount);
+ int64_t ZerocoinDenominationToValue(const CoinDenomination& denomination);
+ CoinDenomination get_denomination(string denomAmount);
+ int64_t get_amount(string denomAmount);
 
 
 /** A Public coin is the part of a coin that
