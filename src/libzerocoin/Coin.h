@@ -16,29 +16,8 @@
 #include "amount.h"
 #include "Params.h"
 #include "util.h"
-
+#include "Denominations.h"
 namespace libzerocoin {
-
-//PRESSTAB: should we add an invalid representation for CoinDenomination?
-enum  CoinDenomination {
-    ZQ_ERROR = 0,
-    ZQ_LOVELACE,
-    ZQ_GOLDWASSER,
-    ZQ_RACKOFF,
-    ZQ_PEDERSEN,
-    ZQ_WILLIAMSON,
-    ZQ_6, //placeholders
-    ZQ_7,
-    ZQ_8,
-};
-
-const std::vector<CoinDenomination> zerocoinDenomList = {ZQ_LOVELACE, ZQ_GOLDWASSER, ZQ_RACKOFF, ZQ_PEDERSEN, ZQ_WILLIAMSON, ZQ_6, ZQ_7, ZQ_8};
-
- CoinDenomination AmountToZerocoinDenomination(int64_t amount);
- int64_t ZerocoinDenominationToValue(const CoinDenomination& denomination);
- CoinDenomination get_denomination(string denomAmount);
- int64_t get_amount(string denomAmount);
-
 
 /** A Public coin is the part of a coin that
  * is published to the network and what is handled

@@ -304,6 +304,7 @@ libzerocoin_libbitcoin_zerocoin_a_SOURCES = \
   libzerocoin/Coin.h \
   libzerocoin/CoinSpend.h \
   libzerocoin/Commitment.h \
+  libzerocoin/Denominations.h \
   libzerocoin/ParamGeneration.h \
   libzerocoin/Params.h \
   libzerocoin/SerialNumberSignature.h \
@@ -311,6 +312,7 @@ libzerocoin_libbitcoin_zerocoin_a_SOURCES = \
   libzerocoin/Accumulator.cpp \
   libzerocoin/AccumulatorProofOfKnowledge.cpp \
   libzerocoin/Coin.cpp \
+  libzerocoin/Denominations.cpp \
   libzerocoin/CoinSpend.cpp \
   libzerocoin/Commitment.cpp \
   libzerocoin/ParamGeneration.cpp \

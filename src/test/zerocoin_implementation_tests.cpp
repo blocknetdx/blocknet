@@ -60,7 +60,7 @@ BOOST_AUTO_TEST_CASE(denomination_to_value_test)
 {
     cout << "Running ZerocoinDenominationToValue_test...\n";
 
-    uint64_t Value = 1;
+    int64_t Value = 1;
     CoinDenomination denomination = ZQ_LOVELACE;
     BOOST_CHECK_MESSAGE(ZerocoinDenominationToValue(denomination) ==  Value, "Wrong Value - should be 1");
 
@@ -128,7 +128,7 @@ BOOST_AUTO_TEST_CASE(checkzerocoinmint_test)
 bool CheckZerocoinSpendNoDB(uint256 hashTx, const CTxOut txout, vector<CTxIn> vin, const CTransaction &txContainingMint, CValidationState& state)
 {
     CoinDenomination denomination = AmountToZerocoinDenomination(txout.nValue/COIN);
-    if (denomination = ZQ_ERROR)
+    if (denomination == ZQ_ERROR)
         return false;
 
     // Check vIn

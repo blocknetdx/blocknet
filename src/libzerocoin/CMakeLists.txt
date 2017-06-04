@@ -39,6 +39,7 @@ set(ZEROCOIN_HEADERS
   Coin.h
   CoinSpend.h
   Commitment.h
+  Denominations.h
   ParamGeneration.h
   Params.h
   SerialNumberSignatureOfKnowledge.h
@@ -52,6 +53,7 @@ list(APPEND zerocoin_sources
   Accumulator.cpp
   AccumulatorProofOfKnowledge.cpp
   Coin.cpp
+  Denominations.cpp
   CoinSpend.cpp
   Commitment.cpp
   ParamGeneration.cpp
