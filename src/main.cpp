@@ -1094,7 +1094,7 @@ bool SetZerocoinMintSpent(const CZerocoinSpend& zerocoinSpend)
 
 bool IsZerocoinSpendUnknown(libzerocoin::CoinSpend coinSpend, uint256 hashTx, CZerocoinSpend& spendFromDB, CValidationState& state)
 {
-    if(!zerocoinDB->ReadCoinSpend(coinSpend.getCoinSerialNumber().ToString(), spendFromDB)){
+    if(!zerocoinDB->ReadCoinSpend(coinSpend.getCoinSerialNumber(), spendFromDB)){
         CZerocoinSpend newSpend(coinSpend.getCoinSerialNumber(), hashTx, 0, coinSpend.getDenomination(), 0); 
         if(!zerocoinDB->WriteCoinSpend(newSpend))
             return state.DoS(100, error("CheckZerocoinSpend(): Failed to write zerocoin mint to database"));
@@ -2416,6 +2416,38 @@ bool DisconnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex
     // undo transactions in reverse order
     for (int i = block.vtx.size() - 1; i >= 0; i--) {
         const CTransaction& tx = block.vtx[i];
+
+        /** UNDO ZEROCOIN DATABASING
+         * note we only undo zerocoin databasing in the following condition, value to and from PIVX
+         * addresses should still be handled by the typical bitcoin based undo code
+         * */
+        if (tx.ContainsZerocoins()) {
+            if (tx.IsZerocoinSpend()) {
+                //erase all zerocoinspends in this transaction
+                for(const CTxIn txin : tx.vin){
+                    if (txin.scriptSig.IsZerocoinSpend()) {
+                        libzerocoin::CoinSpend spend = TxInToZerocoinSpend(txin);
+                        if(!zerocoinDB->EraseCoinSpend(spend.getCoinSerialNumber()))
+                            return error("failed to erase spent coin in block");
+                    }
+                }
+            }
+            else if(tx.IsZerocoinMint()) {
+                //erase all zerocoinmints in this transaction
+                for (const CTxOut txout : tx.vout) {
+                    if (txout.scriptPubKey.empty() || !txout.scriptPubKey.IsZerocoinMint())
+                        continue;
+
+                    libzerocoin::PublicCoin pubCoin(Params().Zerocoin_Params());
+                    if (!TxOutToPublicCoin(txout, pubCoin, state))
+                        return error("DisconnectBlock(): TxOutToPublicCoin() failed");
+
+                    if(!zerocoinDB->EraseCoinMint(pubCoin.getValue()))
+                        return error("DisconnectBlock(): Failed to erase coin mint");
+                }
+            }
+        }
+
         uint256 hash = tx.GetHash();
 
         // Check that all outputs are available and match the outputs in the block itself
@@ -2441,7 +2473,7 @@ bool DisconnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex
         }
 
         // restore inputs
-        if (!tx.IsCoinBase() && !tx.IsZerocoinSpend()) { // not coinbases
+        if (!tx.IsCoinBase()) { // not coinbases
             const CTxUndo& txundo = blockUndo.vtxundo[i - 1];
             if (txundo.vprevout.size() != tx.vin.size())
                 return error("DisconnectBlock() : transaction and undo data inconsistent - txundo.vprevout.siz=%d tx.vin.siz=%d", txundo.vprevout.size(), tx.vin.size());
@@ -2472,6 +2504,13 @@ bool DisconnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex
 
     // move best block pointer to prevout block
     view.SetBestBlock(pindex->pprev->GetBlockHash());
+
+    //if block is an accumulator checkpoint block, remove checkpoint and checksums from db
+    uint256 nCheckpoint = pindex->nAccumulatorCheckpoint;
+    if(nCheckpoint != pindex->pprev->nAccumulatorCheckpoint) {
+        if(!CAccumulators::getInstance().EraseAccumulatorValuesInDB(nCheckpoint))
+            return error("DisconnectBlock(): failed to erase checkpoint");
+    }
 
     if (pfClean) {
         *pfClean = fClean;

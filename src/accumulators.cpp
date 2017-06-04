@@ -76,6 +76,18 @@ void CAccumulators::LoadAccumulatorValuesFromDB(const uint256 nCheckpoint)
     }
 }
 
+bool CAccumulators::EraseAccumulatorValuesInDB(const uint256& nCheckpoint)
+{
+    for (auto& denomination : zerocoinDenomList) {
+        uint32_t nChecksum = ParseChecksum(nCheckpoint, denomination);
+
+        if(!zerocoinDB->EraseAccumulatorValue(nChecksum))
+            return false;
+    }
+
+    return true;
+}
+
 uint32_t ParseChecksum(uint256 nChecksum, CoinDenomination denomination)
 {
     //shift to the beginning bit of this denomimnation and trim any remaining bits by returning 32 bits only

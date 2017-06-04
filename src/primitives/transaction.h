@@ -274,6 +274,11 @@ public:
         return false;
     }
 
+    bool ContainsZerocoins() const
+    {
+        return IsZerocoinSpend() || IsZerocoinMint();
+    }
+
     CAmount GetZerocoinMinted() const;
 
     friend bool operator==(const CTransaction& a, const CTransaction& b)

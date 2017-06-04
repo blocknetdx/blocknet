@@ -80,8 +80,11 @@ public:
     bool ReadCoinMint(const CBigNum& bnPubcoin,  CZerocoinMint& zerocoinMint);
     bool WriteCoinSpend(const CZerocoinSpend& zerocoinSpend);
     bool ReadCoinSpend(const CBigNum& bnSerial, CZerocoinSpend& zerocoinSpend);
+    bool EraseCoinMint(const CBigNum& bnPubcoin);
+    bool EraseCoinSpend(const CBigNum& bnSerial);
     bool WriteAccumulatorValue(const uint32_t& nChecksum, const CBigNum& bnValue);
     bool ReadAccumulatorValue(const uint32_t& nChecksum, CBigNum& bnValue);
+    bool EraseAccumulatorValue(const uint32_t& nChecksum);
 };
 
 #endif // BITCOIN_TXDB_H

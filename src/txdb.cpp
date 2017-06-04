@@ -286,6 +286,12 @@ bool CZerocoinDB::ReadCoinMint(const CBigNum& bnPubcoin, CZerocoinMint& zerocoin
     return Read(make_pair('m', hash), zerocoinMint);
 }
 
+bool CZerocoinDB::EraseCoinMint(const CBigNum& bnPubcoin)
+{
+    uint256 hash = Hash(BEGIN(bnPubcoin), END(bnPubcoin));
+    return Erase(make_pair('m', hash));
+}
+
 bool CZerocoinDB::WriteCoinSpend(const CZerocoinSpend& zerocoinSpend)
 {
     return Write(make_pair('s', zerocoinSpend.GetHash()), zerocoinSpend, true);
@@ -294,7 +300,13 @@ bool CZerocoinDB::WriteCoinSpend(const CZerocoinSpend& zerocoinSpend)
 bool CZerocoinDB::ReadCoinSpend(const CBigNum& bnSerial, CZerocoinSpend &zerocoinSpend)
 {
     uint256 hash = Hash(BEGIN(bnSerial), END(bnSerial));
-    return Read(make_pair('m', hash), zerocoinSpend);
+    return Read(make_pair('s', hash), zerocoinSpend);
+}
+
+bool CZerocoinDB::EraseCoinSpend(const CBigNum& bnSerial)
+{
+    uint256 hash = Hash(BEGIN(bnSerial), END(bnSerial));
+    return Erase(make_pair('s', hash));
 }
 
 bool CZerocoinDB::WriteAccumulatorValue(const uint32_t& nChecksum, const CBigNum& bnValue)
@@ -305,4 +317,9 @@ bool CZerocoinDB::WriteAccumulatorValue(const uint32_t& nChecksum, const CBigNum
 bool CZerocoinDB::ReadAccumulatorValue(const uint32_t& nChecksum, CBigNum& bnValue)
 {
     return Read(make_pair('a', nChecksum), bnValue);
+}
+
+bool CZerocoinDB::EraseAccumulatorValue(const uint32_t& nChecksum)
+{
+    return Erase(make_pair('a', nChecksum));
 }
