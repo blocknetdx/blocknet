@@ -367,7 +367,12 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
             UpdateTime(pblock, pindexPrev);
         pblock->nBits = GetNextWorkRequired(pindexPrev, pblock);
         pblock->nNonce = 0;
-        pblock->nAccumulatorCheckpoint = CAccumulators::getInstance().GetCheckpoint(nHeight);
+        uint256 nCheckpoint;
+        if(!CAccumulators::getInstance().GetCheckpoint(nHeight, nCheckpoint)){
+            LogPrintf("%s: failed to get accumulator checkpoint\n", __func__);
+            return NULL;
+        }
+        pblock->nAccumulatorCheckpoint = nCheckpoint;
         pblocktemplate->vTxSigOps[0] = GetLegacySigOpCount(pblock->vtx[0]);
 
         CValidationState state;

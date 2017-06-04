@@ -275,35 +275,34 @@ CZerocoinDB::CZerocoinDB(size_t nCacheSize, bool fMemory, bool fWipe) : CLevelDB
 {
 }
 
-bool CZerocoinDB::WriteCoinMint(CZerocoinMint zerocoinMint)
+bool CZerocoinDB::WriteCoinMint(const CZerocoinMint& zerocoinMint)
 {
-    return Write(zerocoinMint.ToUniqueString(), zerocoinMint, true);
+    return Write(make_pair('m', zerocoinMint.GetHash()), zerocoinMint, true);
 }
 
-bool CZerocoinDB::ReadCoinMint(string pubcoinValue, CZerocoinMint& zerocoinMint)
+bool CZerocoinDB::ReadCoinMint(const CBigNum& bnPubcoin, CZerocoinMint& zerocoinMint)
 {
-    return Read(pubcoinValue, zerocoinMint);
+    uint256 hash = Hash(BEGIN(bnPubcoin), END(bnPubcoin));
+    return Read(make_pair('m', hash), zerocoinMint);
 }
 
-bool CZerocoinDB::WriteCoinSpend(CZerocoinSpend zerocoinSpend)
+bool CZerocoinDB::WriteCoinSpend(const CZerocoinSpend& zerocoinSpend)
 {
-    CBigNum serial = zerocoinSpend.GetSerial();
-    uint256 hash = Hash(BEGIN(serial), END(serial));
-    return Write(hash, zerocoinSpend, true);
+    return Write(make_pair('s', zerocoinSpend.GetHash()), zerocoinSpend, true);
 }
 
 bool CZerocoinDB::ReadCoinSpend(const CBigNum& bnSerial, CZerocoinSpend &zerocoinSpend)
 {
     uint256 hash = Hash(BEGIN(bnSerial), END(bnSerial));
-    return Read(hash, zerocoinSpend);
+    return Read(make_pair('m', hash), zerocoinSpend);
 }
 
 bool CZerocoinDB::WriteAccumulatorValue(const uint32_t& nChecksum, const CBigNum& bnValue)
 {
-    return Write(nChecksum, bnValue);
+    return Write(make_pair('a', nChecksum), bnValue);
 }
 
 bool CZerocoinDB::ReadAccumulatorValue(const uint32_t& nChecksum, CBigNum& bnValue)
 {
-    return Read(nChecksum, bnValue);
+    return Read(make_pair('a', nChecksum), bnValue);
 }

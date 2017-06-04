@@ -1042,7 +1042,7 @@ bool CheckZerocoinMint(const CTxOut txout, CValidationState& state, bool fCheckO
 
     libzerocoin::PublicCoin pubCoin(Params().Zerocoin_Params());
     if(!TxOutToPublicCoin(txout, pubCoin, state))
-        return state.DoS(100, error("CheckZerocoinMint(): SetZerocoinKnown() failed"));
+        return state.DoS(100, error("CheckZerocoinMint(): TxOutToPublicCoin() failed"));
 
     if(!fCheckOnly && !SetZerocoinMintKnown(pubCoin))
         return state.DoS(100, error("CheckZerocoinMint(): SetZerocoinKnown() failed"));
@@ -1072,25 +1072,22 @@ bool CheckZerocoinSpendProperties(const CTxIn& txin, libzerocoin::CoinSpend coin
     return true;
 }
 
-bool SetZerocoinMintSpent(CZerocoinSpend zerocoinSpend)
+bool SetZerocoinMintSpent(const CZerocoinSpend& zerocoinSpend)
 {
     //find the corresponding publicZerocoinMint and set it as spent
+    if(zerocoinSpend.GetPubCoin() != 0)
+        return false;
+
     CZerocoinMint mintFromDB;
-    if(zerocoinSpend.GetPubCoin() != 0 && zerocoinDB->ReadCoinMint(zerocoinSpend.GetPubCoin().GetHex(), mintFromDB)){
-        if (mintFromDB.GetValue() == zerocoinSpend.GetPubCoin()) {
-            mintFromDB.SetUsed(true);
+    if(!zerocoinDB->ReadCoinMint(zerocoinSpend.GetPubCoin(), mintFromDB))
+        return false;
 
-            // REMOVE RANDOMNESS FOR PREVENT FUTURE USE
-            // pubCoinTx.randomness = 0;
-            // pubCoinTx.serialNumber = 0;
+    mintFromDB.SetUsed(true);
 
-            if(!zerocoinDB->WriteCoinMint(mintFromDB))
-                return false;
+    if(!zerocoinDB->WriteCoinMint(mintFromDB))
+        return false;
 
-            // Update UI wallet
-            //pwalletMain->NotifyZerocoinChanged(pwalletMain, pubCoinItem.GetValue().GetHex(), "Used", CT_UPDATED);
-        }
-    }
+    //todo notify wallet if this is ours?
 
     return true;
 }

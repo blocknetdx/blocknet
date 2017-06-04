@@ -40,10 +40,7 @@ public:
         nHeight = -1;
     }
 
-    std::string ToUniqueString()
-    {
-        return value.GetHex();
-    }
+    uint256 GetHash() const;
 
     CBigNum GetValue() const { return value; }
     void SetValue(CBigNum value){ this->value = value; }
@@ -139,6 +136,7 @@ public:
     CBigNum GetPubCoin() const { return pubCoin; }
     int GetDenomination() const { return denomination; }
     unsigned int GetAccumulatorChecksum() const { return this->nAccumulatorChecksum; }
+    uint256 GetHash() const;
  
     ADD_SERIALIZE_METHODS;
 

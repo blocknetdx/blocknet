@@ -28,15 +28,17 @@ uint256 HashPublicCoin(PublicCoin publicCoin)
     return Hash(ss.begin(), ss.end());
 }
 
-bool CAccumulators::AddPubCoinToAccumulator(PublicCoin publicCoin)
+bool CAccumulators::AddPubCoinToAccumulator(const PublicCoin& publicCoin)
 {
-    //see if we have already stored this coin - todo: how to handle reset to a certain block with this
-    uint256 hash = HashPublicCoin(publicCoin);
-    if(mapPubCoins.find(hash) != mapPubCoins.end())
-        return false;
+    //see if we have already added this coin to the accumulator
+    //todo: note sure if we need to check this
+//    uint256 hash = HashPublicCoin(publicCoin);
+//    if(mapPubCoins.find(hash) != mapPubCoins.end())
+//        return false;
 
-    mapPubCoins.insert(make_pair(hash, ZerocoinDenominationToValue(publicCoin.getDenomination())));
-    *(mapAccumulators.at(publicCoin.getDenomination())) += publicCoin;
+//    mapPubCoins.insert(make_pair(hash, ZerocoinDenominationToValue(publicCoin.getDenomination())));
+    CoinDenomination denomination = publicCoin.getDenomination();
+    mapAccumulators.at(denomination)->accumulate(publicCoin);
 
     return true;
 }
@@ -82,14 +84,14 @@ uint32_t ParseChecksum(uint256 nChecksum, CoinDenomination denomination)
     return nChecksum.Get32();
 }
 
-CBigNum CAccumulators::GetAccumulatorValueFromCheckpoint(const uint256 nCheckpoint, CoinDenomination denomination)
+CBigNum CAccumulators::GetAccumulatorValueFromCheckpoint(const uint256& nCheckpoint, CoinDenomination denomination)
 {
     uint32_t nDenominationChecksum = ParseChecksum(nCheckpoint, denomination);
 
     return GetAccumulatorValueFromChecksum(nDenominationChecksum);
 }
 
-CBigNum CAccumulators::GetAccumulatorValueFromChecksum(uint32_t nChecksum)
+CBigNum CAccumulators::GetAccumulatorValueFromChecksum(const uint32_t& nChecksum)
 {
     if(!mapAccumulatorValues.count(nChecksum))
         return CBigNum(0);
@@ -98,7 +100,7 @@ CBigNum CAccumulators::GetAccumulatorValueFromChecksum(uint32_t nChecksum)
 }
 
 //set all of the accumulators held by mapAccumulators to a certain checkpoint
-bool CAccumulators::ResetToCheckpoint(uint256 nCheckpoint)
+bool CAccumulators::ResetToCheckpoint(const uint256& nCheckpoint)
 {
     for (auto& denom : zerocoinDenomList) {
         CBigNum bnValue = GetAccumulatorValueFromCheckpoint(nCheckpoint, denom);
@@ -114,7 +116,7 @@ bool CAccumulators::ResetToCheckpoint(uint256 nCheckpoint)
 //Get checkpoint value from the current state of our accumulator map
 uint256 CAccumulators::GetCheckpoint()
 {
-    uint256 nCheckpoint; //todo: this will not work properly until we have 8 denominations (it won't consume all bits)
+    uint256 nCheckpoint;
     for (auto& denom : zerocoinDenomList) {
         CBigNum bnValue = mapAccumulators.at(denom)->getValue();
         uint32_t nCheckSum = GetChecksum(bnValue);
@@ -127,18 +129,20 @@ uint256 CAccumulators::GetCheckpoint()
 }
 
 //Get checkpoint value for a specific block height
-uint256 CAccumulators::GetCheckpoint(int nHeight)
+bool CAccumulators::GetCheckpoint(int nHeight, uint256& nCheckpoint)
 {
     if(nHeight < 11)
         return 0;
 
     //the checkpoint is updated every ten blocks, return current active checkpoint if not update block
-    if (nHeight % 10 != 0)
-        return chainActive[nHeight - 1]->nAccumulatorCheckpoint;
+    if (nHeight % 10 != 0) {
+        nCheckpoint = chainActive[nHeight - 1]->nAccumulatorCheckpoint;
+        return true;
+    }
 
     //set the accumulators to last checkpoint value
     if(!ResetToCheckpoint(chainActive[nHeight - 1]->nAccumulatorCheckpoint))
-        return 0;
+        return false;
 
     //Accumulate all coins over the last ten blocks that havent been accumulated (height-20 through height-11)
     CBlockIndex *pindex = chainActive[nHeight - 20];
@@ -168,7 +172,8 @@ uint256 CAccumulators::GetCheckpoint(int nHeight)
         pindex = chainActive[pindex->nHeight + 1];
     }
 
-    return GetCheckpoint();
+    nCheckpoint = GetCheckpoint();
+    return true;
 }
 
 bool CAccumulators::IntializeWitnessAndAccumulator(const CZerocoinMint &zerocoinSelected, const PublicCoin &pubcoinSelected, Accumulator& accumulator, AccumulatorWitness& witness)
