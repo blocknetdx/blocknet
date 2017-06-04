@@ -40,19 +40,19 @@ BOOST_AUTO_TEST_CASE(amount_to_denomination_test)
 
     //valid amount (min edge)
     CAmount amount = 1 * COIN;
-    BOOST_CHECK_MESSAGE(AmountToZerocoinDenomination(amount/COIN) == ZQ_LOVELACE,"....");    
+    BOOST_CHECK_MESSAGE(AmountToZerocoinDenomination(amount/COIN) == ZQ_LOVELACE,"For COIN denomination should be ZQ_LOVELACE");    
 
     //valid amount (max edge)
     CAmount amount1 = 100 * COIN;
-    BOOST_CHECK_MESSAGE(AmountToZerocoinDenomination(amount1/COIN) == ZQ_WILLIAMSON,"....");
+    BOOST_CHECK_MESSAGE(AmountToZerocoinDenomination(amount1/COIN) == ZQ_WILLIAMSON,"For 100*COIN denomination should be ZQ_LOVELACE");    
     
     //invalid amount (too much)
     CAmount amount2 = 5000 * COIN;
-    BOOST_CHECK_MESSAGE(AmountToZerocoinDenomination(amount2/COIN) == ZQ_ERROR,"....");
+    BOOST_CHECK_MESSAGE(AmountToZerocoinDenomination(amount2/COIN) == ZQ_ERROR,"For 5000*COIN denomination should be Invalid -> ZQ_ERROR");
     
     //invalid amount (not enough)
     CAmount amount3 = 1;
-    BOOST_CHECK_MESSAGE(AmountToZerocoinDenomination(amount3/COIN) == ZQ_ERROR,"....");
+    BOOST_CHECK_MESSAGE(AmountToZerocoinDenomination(amount3/COIN) == ZQ_ERROR,"For 1 denomination should be Invalid -> ZQ_ERROR");
     
 }
 
