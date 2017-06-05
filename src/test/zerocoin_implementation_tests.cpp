@@ -291,7 +291,7 @@ BOOST_AUTO_TEST_CASE(setup_exceptions_test)
         SelectParams(CBaseChainParams::MAIN);
         ZerocoinParams* ZCParams = Params().Zerocoin_Params();
         ZCParams->initialized = false;
-        PublicCoin pubCoin(ZCParams, CoinDenomination::ZQ_LOVELACE);
+        PublicCoin pubCoin(ZCParams);
         BOOST_CHECK_MESSAGE(false, "Didn't catch exception checking for uninitialized Params");
     }
     catch (...) {

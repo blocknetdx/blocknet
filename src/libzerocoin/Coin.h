@@ -40,7 +40,7 @@ public:
 	 * @param coin the value of the commitment.
 	 * @param denomination The denomination of the coin. Defaults to ZQ_LOVELACE
 	 */
-	PublicCoin( const ZerocoinParams* p, const CBigNum& coin, const CoinDenomination d = ZQ_LOVELACE);
+	PublicCoin( const ZerocoinParams* p, const CBigNum& coin, const CoinDenomination d);
 	const CBigNum& getValue() const;
 	CoinDenomination getDenomination() const;
 	bool operator==(const PublicCoin& rhs) const;
@@ -82,7 +82,7 @@ public:
 	PrivateCoin(const ZerocoinParams* p, Stream& strm): params(p),publicCoin(p) {
 		strm >> *this;
 	}
-	PrivateCoin(const ZerocoinParams* p,const CoinDenomination denomination = ZQ_LOVELACE);
+	PrivateCoin(const ZerocoinParams* p,const CoinDenomination denomination);
 	const PublicCoin& getPublicCoin() const;
 	const CBigNum& getSerialNumber() const;
 	const CBigNum& getRandomness() const;

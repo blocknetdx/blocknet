@@ -45,9 +45,9 @@ public:
 	 * @param d the denomination of coins we are accumulating
 	 * @throw     Zerocoin exception in case of invalid parameters
 	 **/
-	Accumulator(const AccumulatorAndProofParams* p, const CoinDenomination d = ZQ_LOVELACE);
+	Accumulator(const AccumulatorAndProofParams* p, const CoinDenomination d);
 
-	Accumulator(const ZerocoinParams* p, const CoinDenomination d = ZQ_LOVELACE, Bignum bnValue = 0);
+	Accumulator(const ZerocoinParams* p, const CoinDenomination d, Bignum bnValue = 0);
 
 	/**
 	 * Accumulate a coin into the accumulator. Validates
