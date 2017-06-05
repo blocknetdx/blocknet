@@ -3740,6 +3740,19 @@ bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationState& sta
             REJECT_OBSOLETE, "bad-version");
     }
 
+    // zerocoin: if a new accumulator checkpoint is generated, check that it is valid
+    if (block.GetBlockTime() >= Params().Zerocoin_ProtocolActivationTime() && block.nAccumulatorCheckpoint != pindexPrev->nAccumulatorCheckpoint) {
+        if (nHeight % 10)
+            return state.Invalid(error("%s : new accumulator checkpoint added on block that is not a multiple of 10 (height %d)", __func__, REJECT_INVALID, nHeight));
+
+        uint256 nCheckpointCalculated;
+        if (!CAccumulators::getInstance().GetCheckpoint(nHeight, nCheckpointCalculated))
+            return state.Invalid(error("%s : failed to calculate accumulator checkpoint (height %d)", __func__, REJECT_INVALID, nHeight));
+
+        if (nCheckpointCalculated != block.nAccumulatorCheckpoint)
+            return state.Invalid(error("%s : accumulator does not match calculated value (height %d)", __func__, REJECT_INVALID, nHeight));
+    }
+
     return true;
 }
 
