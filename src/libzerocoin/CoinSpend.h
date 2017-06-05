@@ -35,8 +35,7 @@ public:
 		accumulatorPoK(&p->accumulatorParams),
 		serialNumberSoK(p),
 		commitmentPoK(&p->serialNumberSoKCommitmentGroup, &p->accumulatorParams.accumulatorPoKCommitmentGroup) {
-      denomination = ZerocoinDenominationToValue(ZQ_LOVELACE);
-      strm >> *this;
+            strm >> *this;
     }
 	/**Generates a proof spending a zerocoin.
 	 *

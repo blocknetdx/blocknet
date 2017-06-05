@@ -21,8 +21,7 @@ CoinSpend::CoinSpend(const ZerocoinParams* p, const PrivateCoin& coin,
 	accumulatorPoK(&p->accumulatorParams),
 	serialNumberSoK(p),
 	commitmentPoK(&p->serialNumberSoKCommitmentGroup, &p->accumulatorParams.accumulatorPoKCommitmentGroup) {
-
-  denomination = ZerocoinDenominationToValue(coin.getPublicCoin().getDenomination());
+    denomination = ZerocoinDenominationToValue(coin.getPublicCoin().getDenomination());
 	// Sanity check: let's verify that the Witness is valid with respect to
 	// the coin and Accumulator provided.
 	if (!(witness.VerifyWitness(a, coin.getPublicCoin()))) {

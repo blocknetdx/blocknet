@@ -21,7 +21,8 @@ PublicCoin::PublicCoin(const ZerocoinParams* p):
 	if (this->params->initialized == false) {
 		throw ZerocoinException("Params are not initialized");
 	}
-  denomination = ZerocoinDenominationToValue(ZQ_LOVELACE);
+    // Assume this will get set by another method later
+    denomination = ZerocoinDenominationToValue(ZQ_ERROR);
 };
 
 PublicCoin::PublicCoin(const ZerocoinParams* p, const CBigNum& coin, const CoinDenomination d):
@@ -29,7 +30,7 @@ PublicCoin::PublicCoin(const ZerocoinParams* p, const CBigNum& coin, const CoinD
 	if (this->params->initialized == false) {
 		throw ZerocoinException("Params are not initialized");
 	}
-  denomination = ZerocoinDenominationToValue(d);
+    denomination = ZerocoinDenominationToValue(d);
 };
 
 bool PublicCoin::operator==(const PublicCoin& rhs) const {
