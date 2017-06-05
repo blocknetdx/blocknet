@@ -2317,7 +2317,7 @@ Value mintzerocoin(const Array& params, bool fHelp)
         throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
 
     CAmount nAmount = params[0].get_int() * COIN;
-    libzerocoin::CoinDenomination denomination = libzerocoin::AmountToZerocoinDenomination(nAmount/COIN);
+    libzerocoin::CoinDenomination denomination = libzerocoin::TransactionAmountToZerocoinDenomination(nAmount);
     if (denomination == libzerocoin::ZQ_ERROR)
         return JSONRPCError(RPC_INVALID_PARAMETER, "mintzerocoin must be exact. Amount options: (1,10,25,50,100)\n");
 
@@ -2369,7 +2369,7 @@ Value spendzerocoin(const Array& params, bool fHelp)
         throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
 
     CAmount nAmount = params[0].get_int() * COIN;
-    libzerocoin::CoinDenomination denomination = libzerocoin::AmountToZerocoinDenomination(nAmount/COIN);
+    libzerocoin::CoinDenomination denomination = libzerocoin::TransactionAmountToZerocoinDenomination(nAmount);
     if (denomination == libzerocoin::ZQ_ERROR)
         return JSONRPCError(RPC_INVALID_PARAMETER, "mintzerocoin must be exact. Amount options: (1,10,25,50,100)\n");
 

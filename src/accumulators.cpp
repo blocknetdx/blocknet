@@ -174,7 +174,7 @@ bool CAccumulators::GetCheckpoint(int nHeight, uint256& nCheckpoint)
 
         //add the pubcoins to accumulator
         for(const CZerocoinMint mint : listMints) {
-            CoinDenomination denomination = AmountToZerocoinDenomination(mint.GetDenomination());
+            CoinDenomination denomination = PivAmountToZerocoinDenomination(mint.GetDenomination());
             PublicCoin pubCoin(Params().Zerocoin_Params(), mint.GetValue(), denomination);
             if(!AddPubCoinToAccumulator(pubCoin)) {
                 LogPrintf("%s: failed to add pubcoin to accumulator at height %n\n", __func__, pindex->nHeight);
@@ -268,7 +268,7 @@ bool CAccumulators::IntializeWitnessAndAccumulator(const CZerocoinMint &zerocoin
 
         //add the mints to the witness
         for(const CZerocoinMint mint : listMints) {
-            PublicCoin pubCoin(Params().Zerocoin_Params(), mint.GetValue(), AmountToZerocoinDenomination(mint.GetDenomination()));
+            PublicCoin pubCoin(Params().Zerocoin_Params(), mint.GetValue(), PivAmountToZerocoinDenomination(mint.GetDenomination()));
             witness += pubCoin;
         }
 

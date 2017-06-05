@@ -195,6 +195,7 @@ SET(SOURCES
 	./src/obfuscation.cpp
 	./src/primitives/block.cpp
 	./src/primitives/transaction.cpp
+	./src/primitives/zerocoin.cpp
 	./src/script/bitcoinconsensus.cpp
 	./src/script/interpreter.cpp
 	./src/script/script.cpp

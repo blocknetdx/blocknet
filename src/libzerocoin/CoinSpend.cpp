@@ -61,7 +61,7 @@ CoinSpend::getCoinSerialNumber() {
 
 CoinDenomination
 CoinSpend::getDenomination() {
-	return AmountToZerocoinDenomination(this->denomination);
+	return PivAmountToZerocoinDenomination(this->denomination);
 }
 
 uint32_t CoinSpend::getAccumulatorChecksum() {
@@ -71,7 +71,7 @@ uint32_t CoinSpend::getAccumulatorChecksum() {
 bool
 CoinSpend::Verify(const Accumulator& a) const {
 	// Verify both of the sub-proofs using the given meta-data
-  return  (a.getDenomination() == AmountToZerocoinDenomination(this->denomination))
+  return  (a.getDenomination() == PivAmountToZerocoinDenomination(this->denomination))
 	        && commitmentPoK.Verify(serialCommitmentToCoinValue, accCommitmentToCoinValue)
 	        && accumulatorPoK.Verify(a, accCommitmentToCoinValue)
 	        && serialNumberSoK.Verify(coinSerialNumber, serialCommitmentToCoinValue, signatureHash());

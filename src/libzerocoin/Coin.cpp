@@ -45,7 +45,7 @@ const CBigNum& PublicCoin::getValue() const {
 }
 
 CoinDenomination PublicCoin::getDenomination() const {
-	return AmountToZerocoinDenomination(this->denomination);
+	return PivAmountToZerocoinDenomination(this->denomination);
 }
 
 bool PublicCoin::validate() const{

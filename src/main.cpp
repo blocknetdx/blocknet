@@ -999,7 +999,7 @@ bool TxOutToPublicCoin(const CTxOut txout, libzerocoin::PublicCoin& pubCoin, CVa
     CBigNum publicZerocoin;
     publicZerocoin.setvch(vchZeroMint);
 
-    libzerocoin::CoinDenomination denomination = libzerocoin::AmountToZerocoinDenomination(txout.nValue/COIN);
+    libzerocoin::CoinDenomination denomination = libzerocoin::TransactionAmountToZerocoinDenomination(txout.nValue);
     if (denomination == libzerocoin::ZQ_ERROR)
         return state.DoS(100, error("TxOutToPublicCoin : txout.nValue is not correct"));
 
@@ -1112,7 +1112,7 @@ bool IsZerocoinSpendUnknown(libzerocoin::CoinSpend coinSpend, uint256 hashTx, CZ
 bool CheckZerocoinOverSpend(const CAmount nAmountRedeemed, const CTransaction &txContainingMint, CValidationState& state)
 {
     CAmount nPreviousMintValue = txContainingMint.GetZerocoinMinted();
-    libzerocoin::CoinDenomination testDenomination = libzerocoin::AmountToZerocoinDenomination(nPreviousMintValue/COIN);
+    libzerocoin::CoinDenomination testDenomination = libzerocoin::TransactionAmountToZerocoinDenomination(nPreviousMintValue);
     if (testDenomination == libzerocoin::ZQ_ERROR)
          return state.DoS(100, error("CheckZerocoinSpend(): Zerocoin mint does not have valid denomination"));
 
@@ -1129,7 +1129,7 @@ bool CheckZerocoinSpend(uint256 hashTx, const CTxOut txout, vector<CTxIn> vin, C
     if(GetAdjustedTime() < Params().Zerocoin_ProtocolActivationTime())
         return state.DoS(100, error("CheckZerocoinSpend(): Zerocoin transactions are not allowed yet"));
 
-    libzerocoin::CoinDenomination denomination = libzerocoin::AmountToZerocoinDenomination(txout.nValue/COIN);
+    libzerocoin::CoinDenomination denomination = libzerocoin::TransactionAmountToZerocoinDenomination(txout.nValue);
     if (denomination == libzerocoin::ZQ_ERROR)
         return state.DoS(100, error("CheckZerocoinSpend(): Zerocoin spend does not have valid denomination"));
 

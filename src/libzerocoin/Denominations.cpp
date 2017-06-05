@@ -14,7 +14,7 @@ namespace libzerocoin {
 
 // All denomination values should only exist in these routines for consistency.
 // For serialization/unserialization enums are converted to int
-CoinDenomination AmountToZerocoinDenomination(int64_t amount)
+CoinDenomination PivAmountToZerocoinDenomination(int64_t amount)
 {
     CoinDenomination denomination;
     switch (amount) {
@@ -47,10 +47,21 @@ int64_t ZerocoinDenominationToValue(const CoinDenomination& denomination)
     return Value;
 }
 
+CoinDenomination TransactionAmountToZerocoinDenomination(int64_t amount)
+{
+    // Check to make sure amount is an exact integer number of COINS
+    int64_t residual_amount = amount - COIN*(amount/COIN);
+    if (residual_amount == 0) {
+        return PivAmountToZerocoinDenomination(amount/COIN);
+    } else {
+        return CoinDenomination::ZQ_ERROR;
+    }
+}
+
     
 CoinDenomination get_denomination(std::string denomAmount) {
     int64_t val = std::stoi(denomAmount);
-    return AmountToZerocoinDenomination(val);
+    return PivAmountToZerocoinDenomination(val);
 }
 
 

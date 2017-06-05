@@ -10,7 +10,7 @@
 #ifndef DENOMINATIONS_H_
 #define DENOMINATIONS_H_
 
-#include <stdint.h>
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -31,7 +31,8 @@ enum  CoinDenomination {
 
 const std::vector<CoinDenomination> zerocoinDenomList = {ZQ_LOVELACE, ZQ_GOLDWASSER, ZQ_RACKOFF, ZQ_PEDERSEN, ZQ_WILLIAMSON, ZQ_6, ZQ_7, ZQ_8};
 
-CoinDenomination AmountToZerocoinDenomination(int64_t amount);
+CoinDenomination TransactionAmountToZerocoinDenomination(int64_t amount);
+CoinDenomination PivAmountToZerocoinDenomination(int64_t amount);
 int64_t ZerocoinDenominationToValue(const CoinDenomination& denomination);
 CoinDenomination get_denomination(std::string denomAmount);
 int64_t get_amount(std::string denomAmount);
