@@ -973,18 +973,21 @@ bool MoneyRange(CAmount nValueOut)
     return nValueOut >= 0 && nValueOut <= Params().MaxMoneyOut();
 }
 
-bool SetZerocoinMintKnown(libzerocoin::PublicCoin publicZerocoin)
+bool RecordMintToDB(libzerocoin::PublicCoin publicZerocoin)
 {
     //Check the pubCoinValue didn't already store in the zerocoin database
     //write the zerocoinmint to db if we don't already have it
     //note that many of the parameters are not set here
     CZerocoinMint pubCoinTx;
-    if(!zerocoinDB->ReadCoinMint(publicZerocoin.getValue().GetHex(), pubCoinTx)){
-        pubCoinTx = CZerocoinMint(publicZerocoin.getDenomination(), publicZerocoin.getValue(), 0, 0, false);
-        pubCoinTx.SetHeight(-1);
+    int64_t nDenomination;
+    if (zerocoinDB->ReadCoinMint(publicZerocoin.getValue(), nDenomination)) {
+        LogPrintf("RecordMintToDB: failed, we already have this public coin recorded\n");
+        return false;
+    }
 
-        if(!zerocoinDB->WriteCoinMint(pubCoinTx))
-            return false;
+    if (!zerocoinDB->WriteCoinMint(publicZerocoin)) {
+        LogPrintf("RecordMintToDB: failed to record public coin to DB\n");
+        return false;
     }
 
     return true;
@@ -1044,7 +1047,7 @@ bool CheckZerocoinMint(const CTxOut txout, CValidationState& state, bool fCheckO
     if(!TxOutToPublicCoin(txout, pubCoin, state))
         return state.DoS(100, error("CheckZerocoinMint(): TxOutToPublicCoin() failed"));
 
-    if(!fCheckOnly && !SetZerocoinMintKnown(pubCoin))
+    if(!fCheckOnly && !RecordMintToDB(pubCoin))
         return state.DoS(100, error("CheckZerocoinMint(): SetZerocoinKnown() failed"));
 
     return true;
@@ -1072,39 +1075,15 @@ bool CheckZerocoinSpendProperties(const CTxIn& txin, libzerocoin::CoinSpend coin
     return true;
 }
 
-bool SetZerocoinMintSpent(const CZerocoinSpend& zerocoinSpend)
+bool IsZerocoinSpendUnknown(libzerocoin::CoinSpend coinSpend, uint256 hashTx, CValidationState& state)
 {
-    //find the corresponding publicZerocoinMint and set it as spent
-    if(zerocoinSpend.GetPubCoin() != 0)
-        return false;
-
-    CZerocoinMint mintFromDB;
-    if(!zerocoinDB->ReadCoinMint(zerocoinSpend.GetPubCoin(), mintFromDB))
-        return false;
-
-    mintFromDB.SetUsed(true);
-
-    if(!zerocoinDB->WriteCoinMint(mintFromDB))
-        return false;
-
-    //todo notify wallet if this is ours?
-
-    return true;
-}
-
-bool IsZerocoinSpendUnknown(libzerocoin::CoinSpend coinSpend, uint256 hashTx, CZerocoinSpend& spendFromDB, CValidationState& state)
-{
-    if(!zerocoinDB->ReadCoinSpend(coinSpend.getCoinSerialNumber(), spendFromDB)){
-        CZerocoinSpend newSpend(coinSpend.getCoinSerialNumber(), hashTx, 0, coinSpend.getDenomination(), 0); 
-        if(!zerocoinDB->WriteCoinSpend(newSpend))
-            return state.DoS(100, error("CheckZerocoinSpend(): Failed to write zerocoin mint to database"));
-
-        return true;
-    }
-
-    //already recorded to database, make sure tx hashes are the same to prevent reuse
-    if(spendFromDB.GetTxHash() != hashTx)
+    CZerocoinSpend spendFromDB;
+    if(zerocoinDB->ReadCoinSpend(coinSpend.getCoinSerialNumber(), spendFromDB))
         return state.DoS(100, error("CheckZerocoinSpend(): The CoinSpend serial has been used"));
+
+    CZerocoinSpend newSpend(coinSpend.getCoinSerialNumber(), hashTx, 0, coinSpend.getDenomination(), 0);
+    if(!zerocoinDB->WriteCoinSpend(newSpend))
+        return state.DoS(100, error("CheckZerocoinSpend(): Failed to write zerocoin mint to database"));
 
     return true;
 }
@@ -1159,15 +1138,16 @@ bool CheckZerocoinSpend(uint256 hashTx, const CTxOut txout, vector<CTxIn> vin, C
         if(!CheckZerocoinSpendProperties(txin, newSpend, accumulator, state))
             return state.DoS(100, error("Zerocoinspend properties are not valid"));
 
-        CZerocoinSpend spendFromDB;
-        if(!IsZerocoinSpendUnknown(newSpend, hashTx, spendFromDB, state))
+        if(!IsZerocoinSpendUnknown(newSpend, hashTx, state))
             return state.DoS(100, error("Zerocoinspend is already known"));
-
-        //todo is there any reason that this would be valid and not be in the CoinMint database below?
         fValidated = true;
 
-        if(!SetZerocoinMintSpent(spendFromDB))
-            return state.DoS(100, error("Failed to write zerocoin mint to database"));
+        //todo send signla to wallet if this is ours?
+        if (pwalletMain) {
+//            if(!SetZerocoinMintSpent(spendFromDB))
+//                return state.DoS(100, error("Failed to write zerocoin mint to database"));
+        }
+
     }
 
     return fValidated;

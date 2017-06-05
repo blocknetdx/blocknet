@@ -76,8 +76,8 @@ private:
     void operator=(const CZerocoinDB&);
 
 public:
-    bool WriteCoinMint(const CZerocoinMint& zerocoinMint);
-    bool ReadCoinMint(const CBigNum& bnPubcoin,  CZerocoinMint& zerocoinMint);
+    bool WriteCoinMint(const libzerocoin::PublicCoin& pubCoin);
+    bool ReadCoinMint(const CBigNum& bnPubcoin, int64_t& nDenomination);
     bool WriteCoinSpend(const CZerocoinSpend& zerocoinSpend);
     bool ReadCoinSpend(const CBigNum& bnSerial, CZerocoinSpend& zerocoinSpend);
     bool EraseCoinMint(const CBigNum& bnPubcoin);
