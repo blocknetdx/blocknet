@@ -26,7 +26,7 @@ SerialNumberSignatureOfKnowledge::SerialNumberSignatureOfKnowledge(const
 	// equal to the modulus of "coinCommitmentGroup". Otherwise we will produce invalid
 	// proofs.
 	if (params->coinCommitmentGroup.modulus != params->serialNumberSoKCommitmentGroup.groupOrder) {
-		throw ZerocoinException("Groups are not structured correctly.");
+		throw std::runtime_error("Groups are not structured correctly.");
 	}
 
 	CBigNum a = params->coinCommitmentGroup.g;

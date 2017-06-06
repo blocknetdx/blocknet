@@ -19,7 +19,7 @@ namespace libzerocoin {
 PublicCoin::PublicCoin(const ZerocoinParams* p):
 	params(p) {
 	if (this->params->initialized == false) {
-		throw ZerocoinException("Params are not initialized");
+		throw std::runtime_error("Params are not initialized");
 	}
     // Assume this will get set by another method later
     denomination = ZerocoinDenominationToValue(ZQ_ERROR);
@@ -28,7 +28,7 @@ PublicCoin::PublicCoin(const ZerocoinParams* p):
 PublicCoin::PublicCoin(const ZerocoinParams* p, const CBigNum& coin, const CoinDenomination d):
 	params(p), value(coin) {
 	if (this->params->initialized == false) {
-		throw ZerocoinException("Params are not initialized");
+		throw std::runtime_error("Params are not initialized");
 	}
     denomination = ZerocoinDenominationToValue(d);
 };
@@ -37,7 +37,7 @@ PublicCoin::PublicCoin(const ZerocoinParams* p, const CBigNum& coin, const CoinD
 PrivateCoin::PrivateCoin(const ZerocoinParams* p, const CoinDenomination denomination): params(p), publicCoin(p) {
 	// Verify that the parameters are valid
 	if(this->params->initialized == false) {
-		throw ZerocoinException("Params are not initialized");
+		throw std::runtime_error("Params are not initialized");
 	}
 
 #ifdef ZEROCOIN_FAST_MINT
@@ -82,7 +82,7 @@ void PrivateCoin::mintCoin(const CoinDenomination denomination) {
 
 	// We only get here if we did not find a coin within
 	// MAX_COINMINT_ATTEMPTS. Throw an exception.
-	throw ZerocoinException("Unable to mint a new Zerocoin (too many attempts)");
+	throw std::runtime_error("Unable to mint a new Zerocoin (too many attempts)");
 }
 
 void PrivateCoin::mintCoinFast(const CoinDenomination denomination) {
@@ -128,7 +128,7 @@ void PrivateCoin::mintCoinFast(const CoinDenomination denomination) {
 		
 	// We only get here if we did not find a coin within
 	// MAX_COINMINT_ATTEMPTS. Throw an exception.
-	throw ZerocoinException("Unable to mint a new Zerocoin (too many attempts)");
+	throw std::runtime_error("Unable to mint a new Zerocoin (too many attempts)");
 }
 	
 } /* namespace libzerocoin */

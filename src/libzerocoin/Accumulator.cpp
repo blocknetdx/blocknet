@@ -18,7 +18,7 @@ namespace libzerocoin {
 //Accumulator class
 Accumulator::Accumulator(const AccumulatorAndProofParams* p, const CoinDenomination d): params(p) {
 	if (!(params->initialized)) {
-		throw ZerocoinException("Invalid parameters for accumulator");
+		throw std::runtime_error("Invalid parameters for accumulator");
 	}
   denomination = ZerocoinDenominationToValue(d);
 	this->value = this->params->accumulatorBase;
@@ -29,7 +29,7 @@ Accumulator::Accumulator(const ZerocoinParams* p, const CoinDenomination d, cons
   denomination = ZerocoinDenominationToValue(d);
 
 	if (!(params->initialized)) {
-		throw ZerocoinException("Invalid parameters for accumulator");
+		throw std::runtime_error("Invalid parameters for accumulator");
 	}
 
 	if(bnValue != 0)
@@ -41,7 +41,7 @@ Accumulator::Accumulator(const ZerocoinParams* p, const CoinDenomination d, cons
 void Accumulator::accumulate(const PublicCoin& coin) {
 	// Make sure we're initialized
 	if(!(this->value)) {
-		throw ZerocoinException("Accumulator is not initialized");
+		throw std::runtime_error("Accumulator is not initialized");
 	}
 
 	if(this->denomination != coin.getDenomination()) {
@@ -51,14 +51,14 @@ void Accumulator::accumulate(const PublicCoin& coin) {
 		msg += this->denomination;
 		msg += ". Instead, got a coin of denomination: ";
 		msg += coin.getDenomination();
-		throw ZerocoinException(msg);
+		throw std::runtime_error(msg);
 	}
 
 	if(coin.validate()) {
 		// Compute new accumulator = "old accumulator"^{element} mod N
 		this->value = this->value.pow_mod(coin.getValue(), this->params->accumulatorModulus);
 	} else {
-		throw ZerocoinException("Coin is not valid");
+		throw std::runtime_error("Coin is not valid");
 	}
 }
 

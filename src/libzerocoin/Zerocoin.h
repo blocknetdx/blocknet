@@ -37,17 +37,6 @@
 // to timing attacks. Turn off if an attacker can measure coin minting time.
 #define	ZEROCOIN_FAST_MINT 1
 
-// Errors thrown by the Zerocoin library
-
-class ZerocoinException : public std::runtime_error
-{
-public:
-	explicit ZerocoinException(const std::string& str) : std::runtime_error(str) {}
-};
-
-#include "serialize.h"
-#include "bignum.h"
-#include "hash.h"
 #include "Params.h"
 #include "Coin.h"
 #include "Commitment.h"

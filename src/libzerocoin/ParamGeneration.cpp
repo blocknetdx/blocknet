@@ -23,7 +23,7 @@ namespace libzerocoin {
 /// \param aux              An optional auxiliary string used in derivation
 /// \param securityLevel    A security level
 ///
-/// \throws         ZerocoinException if the process fails
+/// \throws         std::runtime_error if the process fails
 ///
 /// Fills in a ZC_Params data structure deterministically from
 /// a trustworthy RSA modulus "N", which is provided as a CBigNum.
@@ -45,12 +45,12 @@ CalculateParams(ZerocoinParams &params, CBigNum N, string aux, uint32_t security
 	// Verify that |N| is > 1023 bits.
 	uint32_t NLen = N.bitSize();
 	if (NLen < 1023) {
-		throw ZerocoinException("Modulus must be at least 1023 bits");
+		throw std::runtime_error("Modulus must be at least 1023 bits");
 	}
 
 	// Verify that "securityLevel" is  at least 80 bits (minimum).
 	if (securityLevel < 80) {
-		throw ZerocoinException("Security level must be at least 80 bits.");
+		throw std::runtime_error("Security level must be at least 80 bits.");
 	}
 
 	// Set the accumulator modulus to "N".
@@ -118,7 +118,7 @@ CalculateParams(ZerocoinParams &params, CBigNum N, string aux, uint32_t security
 /// \param aux              An auxiliary string
 /// \param securityLevel    The security level in bits
 /// \param groupName        A group description string
-/// \throws         ZerocoinException if the process fails
+/// \throws         std::runtime_error if the process fails
 ///
 /// Returns the hash of the value.
 
@@ -150,7 +150,7 @@ calculateGeneratorSeed(uint256 seed, uint256 pSeed, uint256 qSeed, string label,
 /// \param aux              An auxiliary string
 /// \param securityLevel    The security level in bits
 /// \param groupName        A group description string
-/// \throws         ZerocoinException if the process fails
+/// \throws         std::runtime_error if the process fails
 ///
 /// Returns the hash of the value.
 
@@ -189,7 +189,7 @@ calculateHash(uint256 input)
 /// \param securityLevel    Required security level in bits (at least 80)
 /// \param pLen             Result: length of "p" in bits
 /// \param qLen             Result: length of "q" in bits
-/// \throws                 ZerocoinException if the process fails
+/// \throws                 std::runtime_error if the process fails
 ///
 /// Calculates the appropriate sizes of "p" and "q" for a prime-order
 /// subgroup of order "q" embedded within a field "F_p". The sizes
@@ -210,7 +210,7 @@ calculateGroupParamLengths(uint32_t maxPLen, uint32_t securityLevel,
 	*pLen = *qLen = 0;
 
 	if (securityLevel < 80) {
-		throw ZerocoinException("Security level must be at least 80 bits.");
+		throw std::runtime_error("Security level must be at least 80 bits.");
 	} else if (securityLevel == 80) {
 		*qLen = 256;
 		*pLen = 1024;
@@ -221,11 +221,11 @@ calculateGroupParamLengths(uint32_t maxPLen, uint32_t securityLevel,
 		*qLen = 320;
 		*pLen = 3072;
 	} else {
-		throw ZerocoinException("Security level not supported.");
+		throw std::runtime_error("Security level not supported.");
 	}
 
 	if (*pLen > maxPLen) {
-		throw ZerocoinException("Modulus size is too small for this security level.");
+		throw std::runtime_error("Modulus size is too small for this security level.");
 	}
 }
 
@@ -274,7 +274,7 @@ deriveIntegerGroupParams(uint256 seed, uint32_t pLen, uint32_t qLen)
 	        result.g == result.h ||                                 // g != h
 	        result.g.isOne()) {                                     // g != 1
 		// If any of the above tests fail, throw an exception
-		throw ZerocoinException("Group parameters are not valid");
+		throw std::runtime_error("Group parameters are not valid");
 	}
 
 	return result;
@@ -327,7 +327,7 @@ deriveIntegerGroupFromOrder(CBigNum &groupOrder)
 			        result.g == result.h ||                                 // g != h
 			        result.g.isOne()) {                                     // g != 1
 				// If any of the above tests fail, throw an exception
-				throw ZerocoinException("Group parameters are not valid");
+				throw std::runtime_error("Group parameters are not valid");
 			}
 
 			return result;
@@ -335,7 +335,7 @@ deriveIntegerGroupFromOrder(CBigNum &groupOrder)
 	}
 
 	// If we reached this point group generation has failed. Throw an exception.
-	throw ZerocoinException("Too many attempts to generate Schnorr group.");
+	throw std::runtime_error("Too many attempts to generate Schnorr group.");
 }
 
 /// \brief Deterministically compute a group description using NIST procedures.
@@ -359,7 +359,7 @@ calculateGroupModulusAndOrder(uint256 seed, uint32_t pLen, uint32_t qLen,
 	// Verify that the seed length is >= qLen
 	if (qLen > (sizeof(seed)) * 8) {
 		// TODO: The use of 256-bit seeds limits us to 256-bit group orders. We should probably change this.
-		// throw ZerocoinException("Seed is too short to support the required security level.");
+		// throw std::runtime_error("Seed is too short to support the required security level.");
 	}
 
 #ifdef ZEROCOIN_DEBUG
@@ -437,7 +437,7 @@ calculateGroupModulusAndOrder(uint256 seed, uint32_t pLen, uint32_t qLen,
 
 	// We reach this point only if we exceeded our maximum iteration count.
 	// Throw an exception.
-	throw ZerocoinException("Unable to generate a prime modulus for the group");
+	throw std::runtime_error("Unable to generate a prime modulus for the group");
 }
 
 /// \brief Deterministically compute a generator for a given group.
@@ -448,7 +448,7 @@ calculateGroupModulusAndOrder(uint256 seed, uint32_t pLen, uint32_t qLen,
 /// \param groupOrder                   Proposed order of the group.
 /// \param index                        Index value, selects which generator you're building.
 /// \return                             The resulting generator.
-/// \throws                             A ZerocoinException if error.
+/// \throws                             A std::runtime_error if error.
 ///
 /// Generates a random group generator deterministically as a function of (seed,pSeed,qSeed)
 /// Uses the algorithm described in FIPS 186-3 Appendix A.2.3.
@@ -460,7 +460,7 @@ calculateGroupGenerator(uint256 seed, uint256 pSeed, uint256 qSeed, CBigNum modu
 
 	// Verify that 0 <= index < 256
 	if (index > 255) {
-		throw ZerocoinException("Invalid index for group generation");
+		throw std::runtime_error("Invalid index for group generation");
 	}
 
 	// Compute e = (modulus - 1) / groupOrder
@@ -482,7 +482,7 @@ calculateGroupGenerator(uint256 seed, uint256 pSeed, uint256 qSeed, CBigNum modu
 	}
 
 	// We only get here if we failed to find a generator
-	throw ZerocoinException("Unable to find a generator, too many attempts");
+	throw std::runtime_error("Unable to find a generator, too many attempts");
 }
 
 /// \brief Deterministically compute a random prime number.
@@ -491,7 +491,7 @@ calculateGroupGenerator(uint256 seed, uint256 pSeed, uint256 qSeed, CBigNum modu
 /// \param out_seed                     Result: output seed from the process.
 /// \param prime_gen_counter            Result: number of iterations required.
 /// \return                             The resulting prime number.
-/// \throws                             A ZerocoinException if error.
+/// \throws                             A std::runtime_error if error.
 ///
 /// Generates a random prime number of primeBitLen bits from a given input
 /// seed. Uses the Shawe-Taylor algorithm as described in FIPS 186-3
@@ -503,7 +503,7 @@ generateRandomPrime(uint32_t primeBitLen, uint256 in_seed, uint256 *out_seed,
 {
 	// Verify that primeBitLen is not too small
 	if (primeBitLen < 2) {
-		throw ZerocoinException("Prime length is too short");
+		throw std::runtime_error("Prime length is too short");
 	}
 
 	// If primeBitLen < 33 bits, perform the base case.
@@ -551,7 +551,7 @@ generateRandomPrime(uint32_t primeBitLen, uint256 in_seed, uint256 *out_seed,
 
 		// If we reached this point there was an error finding a candidate prime
 		// so throw an exception.
-		throw ZerocoinException("Unable to find prime in Shawe-Taylor algorithm");
+		throw std::runtime_error("Unable to find prime in Shawe-Taylor algorithm");
 
 		// END OF BASE CASE
 	}
@@ -611,7 +611,7 @@ generateRandomPrime(uint32_t primeBitLen, uint256 in_seed, uint256 *out_seed,
 
 	// We only reach this point if the test loop has iterated MAX_PRIMEGEN_ATTEMPTS
 	// and failed to identify a valid prime. Throw an exception.
-	throw ZerocoinException("Unable to generate random prime (too many tests)");
+	throw std::runtime_error("Unable to generate random prime (too many tests)");
 }
 
 CBigNum

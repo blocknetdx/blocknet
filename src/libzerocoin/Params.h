@@ -12,6 +12,8 @@
 #ifndef PARAMS_H_
 #define PARAMS_H_
 
+#include "bignum.h"
+
 namespace libzerocoin {
 
 class IntegerGroupParams {

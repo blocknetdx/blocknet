@@ -48,7 +48,7 @@ CommitmentProofOfKnowledge::CommitmentProofOfKnowledge(const IntegerGroupParams*
 	// First: make sure that the two commitments have the
 	// same contents.
 	if (a.getContents() != b.getContents()) {
-		throw ZerocoinException("Both commitments must contain the same value");
+		throw std::runtime_error("Both commitments must contain the same value");
 	}
 
 	// Select three random values "r1, r2, r3" in the range 0 to (2^l)-1 where l is:
