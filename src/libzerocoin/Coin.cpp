@@ -33,26 +33,6 @@ PublicCoin::PublicCoin(const ZerocoinParams* p, const CBigNum& coin, const CoinD
     denomination = ZerocoinDenominationToValue(d);
 };
 
-bool PublicCoin::operator==(const PublicCoin& rhs) const {
-	return this->value == rhs.value; // FIXME check param equality
-}
-
-bool PublicCoin::operator!=(const PublicCoin& rhs) const {
-	return !(*this == rhs);
-}
-
-const CBigNum& PublicCoin::getValue() const {
-	return this->value;
-}
-
-CoinDenomination PublicCoin::getDenomination() const {
-	return PivAmountToZerocoinDenomination(this->denomination);
-}
-
-bool PublicCoin::validate() const{
-    return (this->params->accumulatorParams.minCoinValue < value) && (value < this->params->accumulatorParams.maxCoinValue) && value.isPrime(params->zkp_iterations);
-}
-
 //PrivateCoin class
 PrivateCoin::PrivateCoin(const ZerocoinParams* p, const CoinDenomination denomination): params(p), publicCoin(p) {
 	// Verify that the parameters are valid
@@ -70,18 +50,6 @@ PrivateCoin::PrivateCoin(const ZerocoinParams* p, const CoinDenomination denomin
 	this->mintCoin(denomination);
 #endif
 	
-}
-
-/**
- *
- * @return the coins serial number
- */
-const CBigNum& PrivateCoin::getSerialNumber() const {
-	return this->serialNumber;
-}
-
-const CBigNum& PrivateCoin::getRandomness() const {
-	return this->randomness;
 }
 
 void PrivateCoin::mintCoin(const CoinDenomination denomination) {
@@ -163,8 +131,4 @@ void PrivateCoin::mintCoinFast(const CoinDenomination denomination) {
 	throw ZerocoinException("Unable to mint a new Zerocoin (too many attempts)");
 }
 	
-const PublicCoin& PrivateCoin::getPublicCoin() const {
-	return this->publicCoin;
-}
-
 } /* namespace libzerocoin */
