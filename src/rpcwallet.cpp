@@ -2376,7 +2376,8 @@ Value spendzerocoin(const Array& params, bool fHelp)
     CWalletTx wtx;
     CZerocoinMint zerocoinSelected;
     CZerocoinSpend zerocoinSpend;
-    string strError = pwalletMain->SpendZerocoin(denomination, wtx, zerocoinSpend, zerocoinSelected);
+    string strError = pwalletMain->SpendZerocoin(denomination, wtx,
+                                                 NULL,zerocoinSpend, zerocoinSelected);
 
     if (strError != "")
         throw JSONRPCError(RPC_WALLET_ERROR, strError);

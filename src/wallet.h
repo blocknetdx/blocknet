@@ -173,26 +173,24 @@ public:
     bool SelectCoinsCollateral(std::vector<CTxIn>& setCoinsRet, CAmount& nValueRet) const;
 
     // Zerocoin additions
-    bool selectPrivateCoin(list<CZerocoinMint>& listPubCoin,libzerocoin::CoinDenomination denomination,
-                           CZerocoinMint& zerocoinSelected);
+    bool selectPrivateCoin(list<CZerocoinMint>& listPubCoin, libzerocoin::CoinDenomination denomination, CZerocoinMint& zerocoinSelected);
     void ComputeAccumulatorZerocoin(const uint256& hash, const CTransaction& tx, const CBlock* pblock, bool fUpdate = false, bool fFindBlock = false);
-    bool CreateZerocoinMintTransaction(const std::vector<std::pair<CScript, int64_t> >& vecSend,
+    bool CreateZerocoinLockTransaction(const std::vector<std::pair<CScript, int64_t> >& vecSend,
         CWalletTx& wtxNew,
         CReserveKey& reservekey,
         int64_t& nFeeRet,
         std::string& strFailReason,
         const CCoinControl* coinControl = NULL);
-    bool CreateZerocoinMintTransaction(CScript pubCoin, int64_t nValue, CWalletTx& wtxNew, CReserveKey& reservekey, int64_t& nFeeRet, std::string& strFailReason, const CCoinControl* coinControl = NULL);
-    bool CreateZerocoinSpendTransaction(libzerocoin::CoinDenomination denomination, CWalletTx& wtxNew, CReserveKey& reservekey, CZerocoinSpend& zerocoinSpend, CZerocoinMint& zerocoinSelected, std::string& strFailReason);
+    bool CreateZerocoinLockTransaction(CScript pubCoin, int64_t nValue, CWalletTx& wtxNew, CReserveKey& reservekey, int64_t& nFeeRet, std::string& strFailReason, const CCoinControl* coinControl = NULL);
+    bool CreateZerocoinSpendTransaction(libzerocoin::CoinDenomination denomination, CWalletTx& wtxNew, CReserveKey& reservekey, const CCoinControl* coinControl, CZerocoinSpend& zerocoinSpend, CZerocoinMint& zerocoinSelected, std::string& strFailReason);
     bool CommitZerocoinSpendTransaction(CWalletTx& wtxNew, CReserveKey& reservekey);
     std::string MintZerocoin(CScript pubCoin, int64_t nValue, CWalletTx& wtxNew, bool fAskFee = false);
-    std::string SpendZerocoin(libzerocoin::CoinDenomination denomination, CWalletTx& wtxNew, CZerocoinSpend& zerocoinSpend, CZerocoinMint& zerocoinSelected);
+    std::string SpendZerocoin(libzerocoin::CoinDenomination denomination, CWalletTx& wtxNew, const CCoinControl* coinControl, CZerocoinSpend& zerocoinSpend, CZerocoinMint& zerocoinSelected);
     bool CreateZerocoinMintModel(string& stringError, string denomAmount);
     bool CreateZerocoinSpendModel(string& stringError, string denomAmount);
-    std::string SendMoney(CScript scriptPubKey, int64_t nValue, CWalletTx& wtxNew, bool fAskFee=false);
-    std::string SendMoneyToDestination(const CTxDestination &address, int64_t nValue, CWalletTx& wtxNew, bool fAskFee=false);
+    std::string SendMoney(CScript scriptPubKey, int64_t nValue, CWalletTx& wtxNew, bool fAskFee = false);
+    std::string SendMoneyToDestination(const CTxDestination& address, int64_t nValue, CWalletTx& wtxNew, bool fAskFee = false);
 
-    
 
     bool SetZerocoinBook(const CZerocoinMint& zerocoinEntry);
     bool DelAddressBookName(const CTxDestination& address);
@@ -1199,7 +1197,7 @@ public:
     int64_t GetTxTime() const;
     int GetRequestCount() const;
 
-    void AddSupportingTransactions() { ;} //// HACK(SPOCK)
+    void AddSupportingTransactions() { ; } //// HACK(SPOCK)
     void RelayWalletTransaction(std::string strCommand = "tx");
 
     std::set<uint256> GetConflicts() const;

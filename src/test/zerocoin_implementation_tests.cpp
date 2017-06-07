@@ -117,7 +117,7 @@ BOOST_AUTO_TEST_CASE(checkzerocoinmint_test)
     bool fFoundMint = false;
     for(unsigned int i = 0; i < tx.vout.size(); i++){
         if(!tx.vout[i].scriptPubKey.empty() && tx.vout[i].scriptPubKey.IsZerocoinMint()) {
-            BOOST_CHECK(CheckZerocoinMint(tx.vout[i], state, true));
+            BOOST_CHECK(CheckZerocoinLock(tx.vout[i], state, true));
             fFoundMint = true;
         }
     }

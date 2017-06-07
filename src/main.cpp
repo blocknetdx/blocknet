@@ -1036,19 +1036,19 @@ bool BlockToZerocoinMintList(const CBlock& block, std::list<CZerocoinMint> vMint
     return true;
 }
 
-bool CheckZerocoinMint(const CTxOut txout, CValidationState& state, bool fCheckOnly)
+bool CheckZerocoinLock(const CTxOut txout, CValidationState& state, bool fCheckOnly)
 {
     LogPrintf("ZCPRINT %s\n", __func__);
 
     if(GetAdjustedTime() < Params().Zerocoin_ProtocolActivationTime())
-        return state.DoS(100, error("CheckZerocoinMint(): Zerocoin transactions are not allowed yet"));
+        return state.DoS(100, error("CheckZerocoinLock(): Zerocoin transactions are not allowed yet"));
 
     libzerocoin::PublicCoin pubCoin(Params().Zerocoin_Params());
     if(!TxOutToPublicCoin(txout, pubCoin, state))
-        return state.DoS(100, error("CheckZerocoinMint(): TxOutToPublicCoin() failed"));
+        return state.DoS(100, error("CheckZerocoinLock(): TxOutToPublicCoin() failed"));
 
     if(!fCheckOnly && !RecordMintToDB(pubCoin))
-        return state.DoS(100, error("CheckZerocoinMint(): SetZerocoinKnown() failed"));
+        return state.DoS(100, error("CheckZerocoinLock(): SetZerocoinKnown() failed"));
 
     return true;
 }
@@ -1185,7 +1185,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
                 REJECT_INVALID, "bad-txns-txouttotal-toolarge");
 
         if(!txout.scriptPubKey.empty() && txout.scriptPubKey.IsZerocoinMint()) {
-            if(!CheckZerocoinMint(txout, state, false))
+            if(!CheckZerocoinLock(txout, state, false))
                 return state.DoS(100, error("CheckTransaction() : invalid zerocoin mint"));
         }
     }

@@ -5,6 +5,7 @@
 #include "libzerocoin/Zerocoin.h"
 #include "amount.h"
 #include "chainparams.h"
+#include "coincontrol.h"
 #include "main.h"
 #include "wallet.h"
 #include "walletdb.h"
@@ -34,12 +35,12 @@ BOOST_AUTO_TEST_CASE(zerocoin_spend_test)
     
     CoinDenomination denom = ZQ_ERROR;
 
-    std::string vString = cWallet.SpendZerocoin(denom, *wtx, zerocoinSpend, zerocoinSelected);
+    std::string vString = cWallet.SpendZerocoin(denom, *wtx, NULL, zerocoinSpend, zerocoinSelected);
     
     BOOST_CHECK_MESSAGE(vString == "Invalid amount","Failed Invalid Amount Check");
     
     denom = ZQ_LOVELACE;
-    vString = cWallet.SpendZerocoin(denom, *wtx, zerocoinSpend, zerocoinSelected);
+    vString = cWallet.SpendZerocoin(denom, *wtx, NULL, zerocoinSpend, zerocoinSelected);
     
     // if using "wallet.dat", instead of "unlocked.dat" need this
     /// BOOST_CHECK_MESSAGE(vString == "Error: Wallet locked, unable to create transaction!"," Locked Wallet Check Failed");
@@ -57,10 +58,12 @@ BOOST_AUTO_TEST_CASE(create_zerocoin_spend_transaction_test)
     std::string strFailReason;
     CZerocoinSpend zerocoinSpend;
     CZerocoinMint zerocoinSelected;
+    CCoinControl* coinControl = NULL;
    
     CoinDenomination denom = ZQ_ERROR;
 
-    bool v = cWallet.CreateZerocoinSpendTransaction(denom, cWalletTx, reservekey, zerocoinSpend, zerocoinSelected,
+    bool v = cWallet.CreateZerocoinSpendTransaction(denom, cWalletTx, reservekey, coinControl,
+                                                    zerocoinSpend, zerocoinSelected,
                                                     strFailReason);
     
     BOOST_CHECK_MESSAGE(v,"Problem with Create ZerocoinSpendTransaction");
