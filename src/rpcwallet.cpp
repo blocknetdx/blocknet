@@ -2305,6 +2305,45 @@ Value multisend(const Array& params, bool fHelp)
     return printMultiSend();
 }
 
+Value listlockedzerocoins(const Array& params, bool fHelp)
+{
+
+    if (fHelp || params.size() != 0)
+        throw runtime_error(
+            "listlockedzerocoins\n"
+            + HelpRequiringPassphrase());
+
+    if (pwalletMain->IsLocked())
+        throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
+
+    CWalletDB walletdb(pwalletMain->strWalletFile);
+    list<CBigNum> listPubCoin = walletdb.ListLockedCoinsSerial();
+    std::string pList;
+    for (const CBigNum& pubCoinItem : listPubCoin) {
+        pList += pubCoinItem.GetHex() + "\n";
+    }
+    return pList;
+}
+Value listunlockedzerocoins(const Array& params, bool fHelp)
+{
+
+    if (fHelp || params.size() != 0)
+        throw runtime_error(
+            "listlockedzerocoins\n"
+            + HelpRequiringPassphrase());
+
+    if (pwalletMain->IsLocked())
+        throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
+
+    CWalletDB walletdb(pwalletMain->strWalletFile);
+    list<CBigNum> listPubCoin = walletdb.ListUnlockedCoinsSerial();
+    std::string pList;
+    for (const CBigNum& pubCoinItem : listPubCoin) {
+        pList += pubCoinItem.GetHex() + "\n";
+    }
+    return pList;
+}
+
 Value mintzerocoin(const Array& params, bool fHelp)
 {
 
@@ -2392,9 +2431,8 @@ Value resetmintzerocoin(const Array& params, bool fHelp)
             "resetmintzerocoin"
             + HelpRequiringPassphrase());
 
-    list<CZerocoinMint> listPubcoin;
     CWalletDB walletdb(pwalletMain->strWalletFile);
-    walletdb.ListPubCoin(listPubcoin);
+    list<CZerocoinMint> listPubcoin = walletdb.ListLockedCoins();
 
     for (const CZerocoinMint& zerocoinItem : listPubcoin){
         if(zerocoinItem.GetRandomness() != 0 && zerocoinItem.GetSerialNumber() != 0){

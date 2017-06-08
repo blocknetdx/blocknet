@@ -1040,11 +1040,12 @@ bool CWalletDB::WriteCalculatedZCBlock(int height)
 }
 
 
-void CWalletDB::ListPubCoin(std::list<CZerocoinMint>& listPubCoin)
+std::list<CZerocoinMint> CWalletDB::ListLockedCoins()
 {
+    std::list<CZerocoinMint> listPubCoin;
     Dbc* pcursor = GetCursor();
     if (!pcursor)
-        throw runtime_error("CWalletDB::ListPubCoin() : cannot create DB cursor");
+        throw runtime_error(std::string(__func__)+" : cannot create DB cursor");
     unsigned int fFlags = DB_SET_RANGE;
     for (;;)
     {
@@ -1060,7 +1061,7 @@ void CWalletDB::ListPubCoin(std::list<CZerocoinMint>& listPubCoin)
         else if (ret != 0)
         {
             pcursor->close();
-            throw runtime_error("CWalletDB::ListPubCoin() : error scanning DB");
+            throw runtime_error(std::string(__func__)+" : error scanning DB");
         }
 
         // Unserialize
@@ -1072,22 +1073,34 @@ void CWalletDB::ListPubCoin(std::list<CZerocoinMint>& listPubCoin)
         CBigNum value;
         ssKey >> value;
 
-
         CZerocoinMint zerocoinItem;
         ssValue >> zerocoinItem;
-
 
         listPubCoin.push_back(zerocoinItem);
     }
 
     pcursor->close();
+    return listPubCoin;
+}
+// Just get the Serial Numbers
+std::list<CBigNum> CWalletDB::ListLockedCoinsSerial()
+{
+    std::list<CBigNum> listPubCoin;
+    std::list<CZerocoinMint> listCoins = ListLockedCoins();
+    
+    for ( auto& coin : listCoins) {
+        listPubCoin.push_back(coin.GetSerialNumber());
+    }
+    return listPubCoin;
 }
 
-void CWalletDB::ListCoinSpendSerial(std::list<CZerocoinSpend>& listCoinSpendSerial)
+
+std::list<CZerocoinSpend> CWalletDB::ListUnlockedCoins()
 {
+    std::list<CZerocoinSpend> listCoinSpend;
     Dbc* pcursor = GetCursor();
     if (!pcursor)
-        throw runtime_error("CWalletDB::ListCoinSpendSerial() : cannot create DB cursor");
+        throw runtime_error(std::string(__func__)+" : cannot create DB cursor");
     unsigned int fFlags = DB_SET_RANGE;
     for (;;)
     {
@@ -1103,7 +1116,7 @@ void CWalletDB::ListCoinSpendSerial(std::list<CZerocoinSpend>& listCoinSpendSeri
         else if (ret != 0)
         {
             pcursor->close();
-            throw runtime_error("CWalletDB::ListCoinSpendSerial() : error scanning DB");
+            throw runtime_error(std::string(__func__)+" : error scanning DB");
         }
 
         // Unserialize
@@ -1118,8 +1131,21 @@ void CWalletDB::ListCoinSpendSerial(std::list<CZerocoinSpend>& listCoinSpendSeri
         CZerocoinSpend zerocoinSpendItem;
         ssValue >> zerocoinSpendItem;
 
-        listCoinSpendSerial.push_back(zerocoinSpendItem);
+        listCoinSpend.push_back(zerocoinSpendItem);
     }
 
     pcursor->close();
+    return listCoinSpend;
+}
+
+// Just get the Serial Numbers
+std::list<CBigNum> CWalletDB::ListUnlockedCoinsSerial()
+{
+    std::list<CBigNum> listPubCoin;
+    std::list<CZerocoinSpend> listCoins = ListUnlockedCoins();
+    
+    for ( auto& coin : listCoins) {
+        listPubCoin.push_back(coin.GetSerial());
+    }
+    return listPubCoin;
 }

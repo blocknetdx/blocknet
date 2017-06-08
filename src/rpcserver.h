@@ -211,6 +211,8 @@ extern json_spirit::Value setstakesplitthreshold(const json_spirit::Array& param
 extern json_spirit::Value getstakesplitthreshold(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value multisend(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value autocombinerewards(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value listlockedzerocoins(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value listunlockedzerocoins(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value mintzerocoin(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value spendzerocoin(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value resetmintzerocoin(const json_spirit::Array& params, bool fHelp);

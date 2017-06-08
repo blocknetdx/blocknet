@@ -144,8 +144,10 @@ public:
     static bool Recover(CDBEnv& dbenv, std::string filename);
 
     bool WriteZerocoinMint(const CZerocoinMint& zerocoin);
-    void ListPubCoin(std::list<CZerocoinMint>& listPubCoin);
-    void ListCoinSpendSerial(std::list<CZerocoinSpend>& listCoinSpendSerial);
+    std::list<CZerocoinMint> ListLockedCoins();
+    std::list<CZerocoinSpend> ListUnlockedCoins();
+    std::list<CBigNum> ListLockedCoinsSerial();
+    std::list<CBigNum> ListUnlockedCoinsSerial();
     bool WriteZerocoinSpendSerialEntry(const CZerocoinSpend& zerocoinSpend);
     bool EraseZerocoinSpendSerialEntry(const CBigNum& serialEntry);
     bool WriteZerocoinAccumulator(libzerocoin::Accumulator accumulator, libzerocoin::CoinDenomination denomination);

@@ -3929,8 +3929,7 @@ bool CWallet::CreateZerocoinSpendTransaction(libzerocoin::CoinDenomination denom
             // 3. Compute Accomulator by you self by getting pubcoins value from wallet, but it must not include the public coin of the private that we select
             // 4. Generate withness with follwing stmt
 
-            list<CZerocoinMint> listPubCoin;
-            CWalletDB(strWalletFile).ListPubCoin(listPubCoin);
+            list<CZerocoinMint> listPubCoin = CWalletDB(strWalletFile).ListLockedCoins();
             listPubCoin.sort();
 
             // 1. Select a private coin not used in wallet
@@ -4014,10 +4013,9 @@ bool CWallet::CreateZerocoinSpendTransaction(libzerocoin::CoinDenomination denom
                 return false;
             }
 
-            std::list<CZerocoinSpend> listCoinSpendSerial;
-            CWalletDB(strWalletFile).ListCoinSpendSerial(listCoinSpendSerial);
-            for (const CZerocoinSpend& item : listCoinSpendSerial) {
-                if (spend.getCoinSerialNumber() == item.GetSerial()) {
+            std::list<CBigNum> listCoinSpendSerial = CWalletDB(strWalletFile).ListUnlockedCoinsSerial();
+            for (const CBigNum& item : listCoinSpendSerial) {
+                if (spend.getCoinSerialNumber() == item) {
                     // THIS SELECEDTED COIN HAS BEEN USED, SO UPDATE ITS STATUS
                     CZerocoinMint pubCoinTx(zerocoinSelected);
                     pubCoinTx.SetUsed(true);
@@ -4197,11 +4195,9 @@ string CWallet::SpendZerocoin(libzerocoin::CoinDenomination denomination, CWalle
 
     if (!CommitZerocoinSpendTransaction(wtxNew, reservekey)) {
         CZerocoinMint pubCoinTx;
-        list<CZerocoinMint> listPubCoin;
-        listPubCoin.clear();
 
         CWalletDB walletdb(pwalletMain->strWalletFile);
-        walletdb.ListPubCoin(listPubCoin);
+        list<CZerocoinMint> listPubCoin = walletdb.ListLockedCoins();
         for (const CZerocoinMint& pubCoinItem : listPubCoin) {
             if (zerocoinSelected.GetValue() == pubCoinItem.GetValue()) {
                 pubCoinTx = pubCoinItem;
