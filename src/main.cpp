@@ -43,6 +43,7 @@
 
 using namespace boost;
 using namespace std;
+using namespace libzerocoin;
 
 #if defined(NDEBUG)
 #error "PIVX cannot be compiled without assertions."
@@ -973,7 +974,7 @@ bool MoneyRange(CAmount nValueOut)
     return nValueOut >= 0 && nValueOut <= Params().MaxMoneyOut();
 }
 
-bool RecordMintToDB(libzerocoin::PublicCoin publicZerocoin)
+bool RecordMintToDB(PublicCoin publicZerocoin)
 {
     //Check the pubCoinValue didn't already store in the zerocoin database
     //write the zerocoinmint to db if we don't already have it
@@ -993,22 +994,26 @@ bool RecordMintToDB(libzerocoin::PublicCoin publicZerocoin)
     return true;
 }
 
-bool TxOutToPublicCoin(const CTxOut txout, libzerocoin::PublicCoin& pubCoin, CValidationState& state)
+bool TxOutToPublicCoin(const CTxOut txout, PublicCoin& pubCoin, CValidationState& state)
 {
     LogPrintf("ZCPRINT %s\n", __func__);
-    vector<unsigned char> vchZeroMint;
-    vchZeroMint.insert(vchZeroMint.end(), txout.scriptPubKey.begin() + 6, txout.scriptPubKey.begin() + txout.scriptPubKey.size());
-
     CBigNum publicZerocoin;
-    publicZerocoin.setvch(vchZeroMint);
+    {
+        vector<unsigned char> vchZeroMint;
+        // Still not sure why 6 is explicitly used below (SPOCK)
+        vchZeroMint.insert(vchZeroMint.end(), txout.scriptPubKey.begin() + 6,
+                           txout.scriptPubKey.begin() + txout.scriptPubKey.size());
 
-    libzerocoin::CoinDenomination denomination = libzerocoin::TransactionAmountToZerocoinDenomination(txout.nValue);
-    if (denomination == libzerocoin::ZQ_ERROR)
+        publicZerocoin.setvch(vchZeroMint);
+    }
+
+    CoinDenomination denomination = TransactionAmountToZerocoinDenomination(txout.nValue);
+    if (denomination == ZQ_ERROR)
         return state.DoS(100, error("TxOutToPublicCoin : txout.nValue is not correct"));
 
-    libzerocoin::PublicCoin checkPubCoin(Params().Zerocoin_Params(), publicZerocoin, denomination);
+    PublicCoin checkPubCoin(Params().Zerocoin_Params(), publicZerocoin, denomination);
     if (!checkPubCoin.validate())
-        return state.DoS(100, error("TxOutToPublicCoin : PubCoin is not validate"));
+        return state.DoS(100, error("TxOutToPublicCoin : PubCoin does not validate"));
 
     pubCoin = checkPubCoin;
     return true;
@@ -1026,7 +1031,7 @@ bool BlockToZerocoinMintList(const CBlock& block, std::list<CZerocoinMint> vMint
                 continue;
 
             CValidationState state;
-            libzerocoin::PublicCoin pubCoin(Params().Zerocoin_Params());
+            PublicCoin pubCoin(Params().Zerocoin_Params());
             if(!TxOutToPublicCoin(txOut, pubCoin, state))
                 return false;
 
@@ -1043,7 +1048,7 @@ bool CheckZerocoinLock(const CTxOut txout, CValidationState& state, bool fCheckO
     if(GetAdjustedTime() < Params().Zerocoin_ProtocolActivationTime())
         return state.DoS(100, error("CheckZerocoinLock(): Zerocoin transactions are not allowed yet"));
 
-    libzerocoin::PublicCoin pubCoin(Params().Zerocoin_Params());
+    PublicCoin pubCoin(Params().Zerocoin_Params());
     if(!TxOutToPublicCoin(txout, pubCoin, state))
         return state.DoS(100, error("CheckZerocoinLock(): TxOutToPublicCoin() failed"));
 
@@ -1053,17 +1058,17 @@ bool CheckZerocoinLock(const CTxOut txout, CValidationState& state, bool fCheckO
     return true;
 }
 
-libzerocoin::CoinSpend TxInToZerocoinSpend(const CTxIn& txin)
+CoinSpend TxInToZerocoinSpend(const CTxIn& txin)
 {
     // Deserialize the CoinSpend intro a fresh object
     std::vector<char, zero_after_free_allocator<char> > dataTxIn;
     dataTxIn.insert(dataTxIn.end(), txin.scriptSig.begin() + 4, txin.scriptSig.end());
 
     CDataStream serializedCoinSpend(dataTxIn, SER_NETWORK, PROTOCOL_VERSION);
-    return libzerocoin::CoinSpend(Params().Zerocoin_Params(), serializedCoinSpend);
+    return CoinSpend(Params().Zerocoin_Params(), serializedCoinSpend);
 }
 
-bool CheckZerocoinSpendProperties(const CTxIn& txin, libzerocoin::CoinSpend coinSpend, const libzerocoin::Accumulator &accumulator,CValidationState& state)
+bool CheckZerocoinSpendProperties(const CTxIn& txin, CoinSpend coinSpend, const Accumulator &accumulator,CValidationState& state)
 {
     //if (txin.nSequence != 0)
       //  return state.DoS(100, error("CheckZerocoinSpend(): Error: nSequence is must be 0"));
@@ -1075,7 +1080,7 @@ bool CheckZerocoinSpendProperties(const CTxIn& txin, libzerocoin::CoinSpend coin
     return true;
 }
 
-bool IsZerocoinSpendUnknown(libzerocoin::CoinSpend coinSpend, uint256 hashTx, CValidationState& state)
+bool IsZerocoinSpendUnknown(CoinSpend coinSpend, uint256 hashTx, CValidationState& state)
 {
     CZerocoinSpend spendFromDB;
     if(zerocoinDB->ReadCoinSpend(coinSpend.getCoinSerialNumber(), spendFromDB))
@@ -1091,8 +1096,8 @@ bool IsZerocoinSpendUnknown(libzerocoin::CoinSpend coinSpend, uint256 hashTx, CV
 bool CheckZerocoinOverSpend(const CAmount nAmountRedeemed, const CTransaction &txContainingMint, CValidationState& state)
 {
     CAmount nPreviousMintValue = txContainingMint.GetZerocoinMinted();
-    libzerocoin::CoinDenomination testDenomination = libzerocoin::TransactionAmountToZerocoinDenomination(nPreviousMintValue);
-    if (testDenomination == libzerocoin::ZQ_ERROR)
+    CoinDenomination testDenomination = TransactionAmountToZerocoinDenomination(nPreviousMintValue);
+    if (testDenomination == ZQ_ERROR)
          return state.DoS(100, error("CheckZerocoinSpend(): Zerocoin mint does not have valid denomination"));
 
     if(nAmountRedeemed != nPreviousMintValue)
@@ -1108,8 +1113,8 @@ bool CheckZerocoinSpend(uint256 hashTx, const CTxOut txout, vector<CTxIn> vin, C
     if(GetAdjustedTime() < Params().Zerocoin_ProtocolActivationTime())
         return state.DoS(100, error("CheckZerocoinSpend(): Zerocoin transactions are not allowed yet"));
 
-    libzerocoin::CoinDenomination denomination = libzerocoin::TransactionAmountToZerocoinDenomination(txout.nValue);
-    if (denomination == libzerocoin::ZQ_ERROR)
+    CoinDenomination denomination = TransactionAmountToZerocoinDenomination(txout.nValue);
+    if (denomination == ZQ_ERROR)
         return state.DoS(100, error("CheckZerocoinSpend(): Zerocoin spend does not have valid denomination"));
 
     bool fValidated = false;
@@ -1127,13 +1132,13 @@ bool CheckZerocoinSpend(uint256 hashTx, const CTxOut txout, vector<CTxIn> vin, C
         if(!CheckZerocoinOverSpend(txout.nValue, txContainingMint, state))
             return state.DoS(100, error("CheckZerocoinSpend(): Zerocoinspend redeems different value than the mint it uses"));
 
-        libzerocoin::CoinSpend newSpend = TxInToZerocoinSpend(txin);
+        CoinSpend newSpend = TxInToZerocoinSpend(txin);
         //see if we have record of the accumulator used in the spend tx
         CBigNum bnAccumulatorValue = CAccumulators::getInstance().GetAccumulatorValueFromChecksum(newSpend.getAccumulatorChecksum());
         if(bnAccumulatorValue == 0)
             return state.DoS(100, error("Zerocoinspend could not find accumulator associated with checksum"));
 
-        libzerocoin::Accumulator accumulator(Params().Zerocoin_Params(), newSpend.getDenomination(), bnAccumulatorValue);
+        Accumulator accumulator(Params().Zerocoin_Params(), newSpend.getDenomination(), bnAccumulatorValue);
 
         if(!CheckZerocoinSpendProperties(txin, newSpend, accumulator, state))
             return state.DoS(100, error("Zerocoinspend properties are not valid"));
@@ -2406,7 +2411,7 @@ bool DisconnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex
                 //erase all zerocoinspends in this transaction
                 for(const CTxIn txin : tx.vin){
                     if (txin.scriptSig.IsZerocoinSpend()) {
-                        libzerocoin::CoinSpend spend = TxInToZerocoinSpend(txin);
+                        CoinSpend spend = TxInToZerocoinSpend(txin);
                         if(!zerocoinDB->EraseCoinSpend(spend.getCoinSerialNumber()))
                             return error("failed to erase spent coin in block");
                     }
@@ -2418,7 +2423,7 @@ bool DisconnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex
                     if (txout.scriptPubKey.empty() || !txout.scriptPubKey.IsZerocoinMint())
                         continue;
 
-                    libzerocoin::PublicCoin pubCoin(Params().Zerocoin_Params());
+                    PublicCoin pubCoin(Params().Zerocoin_Params());
                     if (!TxOutToPublicCoin(txout, pubCoin, state))
                         return error("DisconnectBlock(): TxOutToPublicCoin() failed");
 
