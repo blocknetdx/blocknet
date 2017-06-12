@@ -974,19 +974,22 @@ bool MoneyRange(CAmount nValueOut)
     return nValueOut >= 0 && nValueOut <= Params().MaxMoneyOut();
 }
 
-bool RecordMintToDB(PublicCoin publicZerocoin)
+bool RecordMintToDB(PublicCoin publicZerocoin, const uint256& txHash)
 {
     //Check the pubCoinValue didn't already store in the zerocoin database
     //write the zerocoinmint to db if we don't already have it
     //note that many of the parameters are not set here
     CZerocoinMint pubCoinTx;
-    int64_t nDenomination;
-    if (zerocoinDB->ReadCoinMint(publicZerocoin.getValue(), nDenomination)) {
+    uint256 hashFromDB;
+    if (zerocoinDB->ReadCoinMint(publicZerocoin.getValue(), hashFromDB)) {
+        if(hashFromDB == txHash)
+            return true;
+
         LogPrintf("RecordMintToDB: failed, we already have this public coin recorded\n");
         return false;
     }
 
-    if (!zerocoinDB->WriteCoinMint(publicZerocoin)) {
+    if (!zerocoinDB->WriteCoinMint(publicZerocoin, txHash)) {
         LogPrintf("RecordMintToDB: failed to record public coin to DB\n");
         return false;
     }
@@ -1052,8 +1055,8 @@ bool CheckZerocoinLock(const CTxOut txout, CValidationState& state, bool fCheckO
     if(!TxOutToPublicCoin(txout, pubCoin, state))
         return state.DoS(100, error("CheckZerocoinLock(): TxOutToPublicCoin() failed"));
 
-    if(!fCheckOnly && !RecordMintToDB(pubCoin))
-        return state.DoS(100, error("CheckZerocoinLock(): SetZerocoinKnown() failed"));
+    if(!fCheckOnly && !RecordMintToDB(pubCoin, txout.GetHash()))
+        return state.DoS(100, error("CheckZerocoinLock(): RecordMintToDB() failed"));
 
     return true;
 }
@@ -1082,12 +1085,15 @@ bool CheckZerocoinSpendProperties(const CTxIn& txin, CoinSpend coinSpend, const 
 
 bool IsZerocoinSpendUnknown(CoinSpend coinSpend, uint256 hashTx, CValidationState& state)
 {
-    CZerocoinSpend spendFromDB;
-    if(zerocoinDB->ReadCoinSpend(coinSpend.getCoinSerialNumber(), spendFromDB))
-        return state.DoS(100, error("CheckZerocoinSpend(): The CoinSpend serial has been used"));
+    uint256 hashTxFromDB;
+    if(zerocoinDB->ReadCoinSpend(coinSpend.getCoinSerialNumber(), hashTxFromDB)) {
+        if(hashTx == hashTxFromDB)
+            return true;
 
-    CZerocoinSpend newSpend(coinSpend.getCoinSerialNumber(), hashTx, 0, coinSpend.getDenomination(), 0);
-    if(!zerocoinDB->WriteCoinSpend(newSpend))
+        return state.DoS(100, error("CheckZerocoinSpend(): The CoinSpend serial has been used"));
+    }
+
+    if(!zerocoinDB->WriteCoinSpend(coinSpend.getCoinSerialNumber(), hashTx))
         return state.DoS(100, error("CheckZerocoinSpend(): Failed to write zerocoin mint to database"));
 
     return true;

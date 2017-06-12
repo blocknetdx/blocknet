@@ -276,18 +276,18 @@ CZerocoinDB::CZerocoinDB(size_t nCacheSize, bool fMemory, bool fWipe) : CLevelDB
 {
 }
 
-bool CZerocoinDB::WriteCoinMint(const PublicCoin& pubCoin)
+bool CZerocoinDB::WriteCoinMint(const PublicCoin& pubCoin, const uint256& hashTx)
 {
     CBigNum bnValue = pubCoin.getValue();
     uint256 hash = Hash(BEGIN(bnValue), END(bnValue));
     int64_t denomination = ZerocoinDenominationToValue(pubCoin.getDenomination());
-    return Write(make_pair('m', hash), denomination, true);
+    return Write(make_pair('m', hash), hashTx, true);
 }
 
-bool CZerocoinDB::ReadCoinMint(const CBigNum& bnPubcoin, int64_t& nDenomination)
+bool CZerocoinDB::ReadCoinMint(const CBigNum& bnPubcoin, uint256& hashTx)
 {
     uint256 hash = Hash(BEGIN(bnPubcoin), END(bnPubcoin));
-    return Read(make_pair('m', hash), nDenomination);
+    return Read(make_pair('m', hash), hashTx);
 }
 
 bool CZerocoinDB::EraseCoinMint(const CBigNum& bnPubcoin)
@@ -296,15 +296,16 @@ bool CZerocoinDB::EraseCoinMint(const CBigNum& bnPubcoin)
     return Erase(make_pair('m', hash));
 }
 
-bool CZerocoinDB::WriteCoinSpend(const CZerocoinSpend& zerocoinSpend)
-{
-    return Write(make_pair('s', zerocoinSpend.GetHash()), zerocoinSpend, true);
-}
-
-bool CZerocoinDB::ReadCoinSpend(const CBigNum& bnSerial, CZerocoinSpend &zerocoinSpend)
+bool CZerocoinDB::WriteCoinSpend(const CBigNum& bnSerial, const uint256& txHash)
 {
     uint256 hash = Hash(BEGIN(bnSerial), END(bnSerial));
-    return Read(make_pair('s', hash), zerocoinSpend);
+    return Write(make_pair('s', hash), txHash, true);
+}
+
+bool CZerocoinDB::ReadCoinSpend(const CBigNum& bnSerial, uint256& txHash)
+{
+    uint256 hash = Hash(BEGIN(bnSerial), END(bnSerial));
+    return Read(make_pair('s', hash), txHash);
 }
 
 bool CZerocoinDB::EraseCoinSpend(const CBigNum& bnSerial)

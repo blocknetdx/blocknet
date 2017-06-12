@@ -76,10 +76,10 @@ private:
     void operator=(const CZerocoinDB&);
 
 public:
-    bool WriteCoinMint(const libzerocoin::PublicCoin& pubCoin);
-    bool ReadCoinMint(const CBigNum& bnPubcoin, int64_t& nDenomination);
-    bool WriteCoinSpend(const CZerocoinSpend& zerocoinSpend);
-    bool ReadCoinSpend(const CBigNum& bnSerial, CZerocoinSpend& zerocoinSpend);
+    bool WriteCoinMint(const libzerocoin::PublicCoin& pubCoin, const uint256& txHash);
+    bool ReadCoinMint(const CBigNum& bnPubcoin, uint256& txHash);
+    bool WriteCoinSpend(const CBigNum& bnSerial, const uint256& txHash);
+    bool ReadCoinSpend(const CBigNum& bnSerial, uint256& txHash);
     bool EraseCoinMint(const CBigNum& bnPubcoin);
     bool EraseCoinSpend(const CBigNum& bnSerial);
     bool WriteAccumulatorValue(const uint32_t& nChecksum, const CBigNum& bnValue);
