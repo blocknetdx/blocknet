@@ -2318,11 +2318,13 @@ Value listlockedzerocoins(const Array& params, bool fHelp)
 
     CWalletDB walletdb(pwalletMain->strWalletFile);
     list<CBigNum> listPubCoin = walletdb.ListLockedCoinsSerial();
-    std::string pList;
+
+    Array jsonList;
     for (const CBigNum& pubCoinItem : listPubCoin) {
-        pList += pubCoinItem.GetHex() + "\n";
+        jsonList.push_back(pubCoinItem.GetHex());
     }
-    return pList;
+
+    return jsonList;
 }
 Value listunlockedzerocoins(const Array& params, bool fHelp)
 {
@@ -2337,11 +2339,13 @@ Value listunlockedzerocoins(const Array& params, bool fHelp)
 
     CWalletDB walletdb(pwalletMain->strWalletFile);
     list<CBigNum> listPubCoin = walletdb.ListUnlockedCoinsSerial();
-    std::string pList;
+
+    Array jsonList;
     for (const CBigNum& pubCoinItem : listPubCoin) {
-        pList += pubCoinItem.GetHex() + "\n";
+        jsonList.push_back(pubCoinItem.GetHex());
     }
-    return pList;
+
+    return jsonList;
 }
 
 Value mintzerocoin(const Array& params, bool fHelp)
@@ -2390,10 +2394,17 @@ Value mintzerocoin(const Array& params, bool fHelp)
     //zerocoinMint's contain private information that should not be public. Convert to public coin.
     libzerocoin::PublicCoin checkPubCoin(Params().Zerocoin_Params(), zerocoinTx.GetValue(), denomination);
     if(!checkPubCoin.validate())
-        return false;
+        throw JSONRPCError(RPC_WALLET_ERROR, "pubcoin failed to validate");
 
-    //walletdb.WriteZerocoinMint(zerocoinTx);
-    return EncodeHexTx(wtx) + " : " + pubCoin.getValue().GetHex() + " : "+ zerocoinTx.GetRandomness().GetHex() + " : " + zerocoinTx.GetSerialNumber().GetHex();
+    walletdb.WriteZerocoinMint(zerocoinTx);
+
+    Object ret;
+    ret.push_back(Pair("txid", wtx.GetHash().ToString()));
+    ret.push_back(Pair("pubcoin", pubCoin.getValue().GetHex()));
+    ret.push_back(Pair("randomness", zerocoinTx.GetRandomness().GetHex()));
+    ret.push_back(Pair("serial", zerocoinTx.GetSerialNumber().GetHex()));
+
+    return ret;
 }
 
 Value spendzerocoin(const Array& params, bool fHelp)
@@ -2421,7 +2432,14 @@ Value spendzerocoin(const Array& params, bool fHelp)
     if (strError != "")
         throw JSONRPCError(RPC_WALLET_ERROR, strError);
 
-    return wtx.GetHash().GetHex();
+    Object ret;
+    ret.push_back(Pair("txid", wtx.GetHash().ToString()));
+    ret.push_back(Pair("pubcoin", zerocoinSpend.GetPubCoin().GetHex()));
+    ret.push_back(Pair("serial", zerocoinSpend.GetSerial().GetHex()));
+    uint32_t nChecksum = zerocoinSpend.GetAccumulatorChecksum();
+    ret.push_back(Pair("acc_checksum", HexStr(BEGIN(nChecksum), END(nChecksum))));
+
+    return ret;
 }
 
 Value resetmintzerocoin(const Array& params, bool fHelp)
@@ -2442,5 +2460,8 @@ Value resetmintzerocoin(const Array& params, bool fHelp)
         }
     }
 
-    return Value::null;
+    Object ret;
+    ret.push_back(Pair("reset", true));
+
+    return ret;
 }
