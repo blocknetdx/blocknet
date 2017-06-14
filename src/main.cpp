@@ -1023,7 +1023,7 @@ bool TxOutToPublicCoin(const CTxOut txout, PublicCoin& pubCoin, CValidationState
 }
 
 //return a list of zerocoin mints contained in a specific block
-bool BlockToZerocoinMintList(const CBlock& block, std::list<CZerocoinMint> vMints)
+bool BlockToZerocoinMintList(const CBlock& block, std::list<CZerocoinMint>& vMints)
 {
     for(const CTransaction tx : block.vtx) {
         if(!tx.IsZerocoinMint())
