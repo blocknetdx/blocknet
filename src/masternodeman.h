@@ -144,6 +144,9 @@ public:
     /// Return the number of (unique) Masternodes
     int size() { return vMasternodes.size(); }
 
+    /// Return the number of Masternodes older than (default) 8000 seconds
+    int stable_size ();
+
     std::string ToString() const;
 
     void Remove(CTxIn vin);
