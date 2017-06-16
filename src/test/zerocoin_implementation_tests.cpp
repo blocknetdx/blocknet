@@ -117,7 +117,7 @@ BOOST_AUTO_TEST_CASE(checkzerocoinmint_test)
     bool fFoundMint = false;
     for(unsigned int i = 0; i < tx.vout.size(); i++){
         if(!tx.vout[i].scriptPubKey.empty() && tx.vout[i].scriptPubKey.IsZerocoinMint()) {
-            BOOST_CHECK(CheckZerocoinLock(tx.vout[i], state, true));
+            BOOST_CHECK(CheckZerocoinLock(tx.GetHash(), tx.vout[i], state, true));
             fFoundMint = true;
         }
     }
@@ -344,8 +344,8 @@ BOOST_AUTO_TEST_CASE(checksum_tests)
     BOOST_CHECK_MESSAGE(checksum == uint256("a3219ef1abcdef00101029f3aaaaaeeeffffffffbbbbbbbb11111111eeeeeeee"), "checksum not properly concatenated");
 
     int i = 0;
-    for(CoinDenomination denomination : zerocoinDenomList){
-        uint32_t checksumParsed = ParseChecksum(checksum, denomination);
+    for (auto& denom : zerocoinDenomList){
+        uint32_t checksumParsed = ParseChecksum(checksum, denom);
         BOOST_CHECK_MESSAGE(checksumParsed == vChecksums[i], "checksum parse failed");
         i++;
     }

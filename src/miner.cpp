@@ -367,10 +367,10 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
             UpdateTime(pblock, pindexPrev);
         pblock->nBits = GetNextWorkRequired(pindexPrev, pblock);
         pblock->nNonce = 0;
-        uint256 nCheckpoint;
+        uint256 nCheckpoint = 0;
         if(!CAccumulators::getInstance().GetCheckpoint(nHeight, nCheckpoint)){
             LogPrintf("%s: failed to get accumulator checkpoint\n", __func__);
-            return NULL;
+            //return NULL;
         }
         pblock->nAccumulatorCheckpoint = nCheckpoint;
         pblocktemplate->vTxSigOps[0] = GetLegacySigOpCount(pblock->vtx[0]);
@@ -481,7 +481,7 @@ void BitcoinMiner(CWallet* pwallet, bool fProofOfStake)
                 continue;
             }
 
-            while (chainActive.Tip()->nTime < 1471482000 || vNodes.empty() || pwallet->IsLocked() || !fMintableCoins || nReserveBalance >= pwallet->GetBalance() || !masternodeSync.IsSynced()) {
+            while (chainActive.Tip()->nTime < 1471482000 /*|| vNodes.empty()*/ || pwallet->IsLocked() || !fMintableCoins || nReserveBalance >= pwallet->GetBalance() /*|| !masternodeSync.IsSynced()*/) {
                 nLastCoinStakeSearchInterval = 0;
                 MilliSleep(5000);
                 if (!fGenerateBitcoins && !fProofOfStake)

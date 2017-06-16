@@ -2390,6 +2390,7 @@ Value mintzerocoin(const Array& params, bool fHelp)
 
     CWalletDB walletdb(pwalletMain->strWalletFile);
     CZerocoinMint zerocoinTx(denomination, pubCoin.getValue(), newCoin.getRandomness(), newCoin.getSerialNumber(), false);
+    zerocoinTx.SetTxHash(wtx.GetHash());
 
     //zerocoinMint's contain private information that should not be public. Convert to public coin.
     libzerocoin::PublicCoin checkPubCoin(Params().Zerocoin_Params(), zerocoinTx.GetValue(), denomination);
@@ -2415,6 +2416,7 @@ Value spendzerocoin(const Array& params, bool fHelp)
             "spendzerocoin <amount>(1,10,25,50,100)\n"
             + HelpRequiringPassphrase());
 
+    LogPrintf("***ZCPRINT RPC spendzerocoin\n");
     if (pwalletMain->IsLocked())
         throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
 

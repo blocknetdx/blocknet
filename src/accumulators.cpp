@@ -2,6 +2,7 @@
 #include "chainparams.h"
 #include "main.h"
 #include "txdb.h"
+#include "init.h"
 
 using namespace libzerocoin;
 
@@ -45,6 +46,7 @@ bool CAccumulators::AddPubCoinToAccumulator(const PublicCoin& publicCoin)
 
 uint32_t CAccumulators::GetChecksum(const CBigNum &bnValue)
 {
+    LogPrintf("GetChecksum()\n");
     CDataStream ss(SER_GETHASH, 0);
     ss << bnValue;
     uint256 hash = Hash(ss.begin(), ss.end());
@@ -54,6 +56,7 @@ uint32_t CAccumulators::GetChecksum(const CBigNum &bnValue)
 
 uint32_t CAccumulators::GetChecksum(const Accumulator &accumulator)
 {
+    LogPrintf("GetChecksum()\n");
     return GetChecksum(accumulator.getValue());
 }
 
@@ -61,8 +64,9 @@ void CAccumulators::AddAccumulatorChecksum(const uint32_t nChecksum, const CBigN
 {
     if(!fMemoryOnly)
         zerocoinDB->WriteAccumulatorValue(nChecksum, bnValue);
-
+    LogPrintf("*** %s checksum %d val %s\n", __func__, nChecksum, bnValue.GetHex());
     mapAccumulatorValues.insert(make_pair(nChecksum, bnValue));
+    LogPrintf("*** %s map val %s\n", __func__, mapAccumulatorValues[nChecksum].GetHex());
 }
 
 void CAccumulators::LoadAccumulatorValuesFromDB(const uint256 nCheckpoint)
@@ -92,19 +96,22 @@ uint32_t ParseChecksum(uint256 nChecksum, CoinDenomination denomination)
 {
     //shift to the beginning bit of this denomimnation and trim any remaining bits by returning 32 bits only
     int pos = distance(zerocoinDenomList.begin(), find(zerocoinDenomList.begin(), zerocoinDenomList.end(), denomination));
-    nChecksum >>= (32*((zerocoinDenomList.size() - 1) - pos));
+    nChecksum = nChecksum >> (32*((zerocoinDenomList.size() - 1) - pos));
     return nChecksum.Get32();
 }
 
 CBigNum CAccumulators::GetAccumulatorValueFromCheckpoint(const uint256& nCheckpoint, CoinDenomination denomination)
 {
+    LogPrintf("%s checkpoint:%d\n", __func__, nCheckpoint.GetHex());
     uint32_t nDenominationChecksum = ParseChecksum(nCheckpoint, denomination);
+    LogPrintf("%s checksum:%d\n", __func__, nDenominationChecksum);
 
     return GetAccumulatorValueFromChecksum(nDenominationChecksum);
 }
 
 CBigNum CAccumulators::GetAccumulatorValueFromChecksum(const uint32_t& nChecksum)
 {
+    LogPrintf("%s\n", __func__);
     if(!mapAccumulatorValues.count(nChecksum))
         return CBigNum(0);
 
@@ -198,60 +205,78 @@ bool CAccumulators::GetCheckpoint(int nHeight, uint256& nCheckpoint)
 
 bool CAccumulators::IntializeWitnessAndAccumulator(const CZerocoinMint &zerocoinSelected, const PublicCoin &pubcoinSelected, Accumulator& accumulator, AccumulatorWitness& witness)
 {
-    int nHeightMintAddedToBlockchain = zerocoinSelected.GetHeight();
+    LogPrintf("ZCPRINT %s\n", __func__);
+    uint256 txMintedHash;
+    if(!zerocoinDB->ReadCoinMint(zerocoinSelected.GetValue(), txMintedHash)) {
+        LogPrintf("ZCPRINT %s failed to read mint from db\n", __func__);
+        return false;
+    }
+    CTransaction txMinted;
+    uint256 blockHash;
+    if(!GetTransaction(txMintedHash, txMinted, blockHash))
+    {
+        LogPrintf("ZCPRINT %s failed to read tx\n", __func__);
+        return false;
+    }
+
+
+    int nHeightMintAddedToBlockchain = mapBlockIndex[blockHash]->nHeight;
 
     list<CZerocoinMint> vMintsToAddToWitness;
     uint256 nChecksumBeforeMint = 0, nChecksumAfterMint = 0, nChecksumContainingMint = 0;
+    int nChecksumBeforeMintHeight = 0;
     CBlockIndex* pindex = chainActive[nHeightMintAddedToBlockchain];
     int nChanges = 0;
 
     //find the checksum when this was added to the accumulator officially, which will be two checksum changes later
-    while (pindex->nHeight < chainActive.Tip()->nHeight) {
+    LogPrintf("ZCPRINT %s before while\n", __func__);
+    while (pindex->nHeight < chainActive.Tip()->nHeight - 1) {
         if(pindex->nHeight == nHeightMintAddedToBlockchain) {
-            nChecksumBeforeMint = pindex->nAccumulatorCheckpoint;
-            nChecksumContainingMint = pindex->nAccumulatorCheckpoint;
+            LogPrintf("ZCPRINT %s height added to chain %d\n", __func__, pindex->nHeight);
+            pindex = chainActive[pindex->nHeight + 1];
             continue;
         }
 
         //check if the next checksum was generated
-        if(pindex->nAccumulatorCheckpoint != nChecksumContainingMint) {
+        if(pindex->nHeight % 10 == 0) {
             nChecksumContainingMint = pindex->nAccumulatorCheckpoint;
-            nChanges ++;
+            nChanges++;
 
-            if(nChanges == 1)
-                nChecksumAfterMint = pindex->nAccumulatorCheckpoint; // this is where we will init the witness and start adding pubcoins to
-            else if(nChanges == 2)
+            if(nChanges == 1) {
+                nChecksumBeforeMintHeight = pindex->nHeight;
+                nChecksumBeforeMint = pindex->nAccumulatorCheckpoint;
+            }
+
+            LogPrintf("ZCPRINT %s using checkpoint %s from block %d\n", __func__, pindex->nAccumulatorCheckpoint.GetHex(), pindex->nHeight);
+
+            if(nChanges == 2)
                 break;
         }
+        LogPrintf("ZCPRINT %s height=%d\n", __func__, pindex->nHeight);
+        pindex = chainActive[pindex->nHeight + 1];
     }
+    LogPrintf("ZCPRINT %s get checksum before mint\n", __func__);
 
-    //get block height that nChecksumBeforeMint was generated on
-    pindex = chainActive[nHeightMintAddedToBlockchain];
-    int nChecksumBeforeMintHeight = 0;
-    while(pindex->nHeight > 2) {
-        //if the previous block has a different checksum, it means this is the height to begin adding pubcoins to
-        if(pindex->pprev->nAccumulatorCheckpoint != nChecksumBeforeMint) {
-            nChecksumBeforeMintHeight = pindex->nHeight;
-            break;
-        }
-
-        pindex = pindex->pprev;
-    }
 
     //Get the accumulator that is right before the cluster of blocks containing our mint was added to the accumulator
-    CBigNum bnAccValue = GetAccumulatorValueFromCheckpoint(nChecksumAfterMint, pubcoinSelected.getDenomination());
-    if(bnAccValue == 0)
-        return false;
-
-    accumulator = Accumulator(Params().Zerocoin_Params(), pubcoinSelected.getDenomination(), bnAccValue);
-    witness = AccumulatorWitness(Params().Zerocoin_Params(), accumulator, pubcoinSelected);
+    if(nChecksumBeforeMint != 2301755253) { //this is a zero value and wont initialize the accumulator. use existing.
+        LogPrintf("ZCPRINT %s get acc val from checkpoint\n", __func__);
+        CBigNum bnAccValue = GetAccumulatorValueFromCheckpoint(nChecksumBeforeMint, pubcoinSelected.getDenomination());
+        if(bnAccValue == 0)
+            return false;
+        LogPrintf("ZCPRINT %s acc val %s\n", __func__, bnAccValue.GetHex());
+        LogPrintf("netx\n");
+        accumulator = Accumulator(Params().Zerocoin_Params(), pubcoinSelected.getDenomination(), bnAccValue);
+        witness = AccumulatorWitness(Params().Zerocoin_Params(), accumulator, pubcoinSelected);
+    }
 
     //add the pubcoins up to the next checksum starting from the block
+    LogPrintf("ZCPRINT %s add pubcoins\n", __func__);
     pindex = chainActive[nChecksumBeforeMintHeight];
     int nSecurityLevel = 10; //todo: this will be user defined, the more pubcoins that are added to the accumulator that is used, the more secure and untraceable it will be
     int nAccumulatorsCheckpointsAdded = 0;
     uint256 nPreviousChecksum = 0;
-    while(pindex->nHeight < chainActive.Height()) {
+    while(pindex->nHeight < chainActive.Height() - 1) {
 
         if(nPreviousChecksum != 0 && nPreviousChecksum != pindex->nAccumulatorCheckpoint)
             ++nAccumulatorsCheckpointsAdded;

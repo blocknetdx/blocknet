@@ -344,7 +344,7 @@ void UpdateCoins(const CTransaction& tx, CValidationState& state, CCoinsViewCach
 
 /** Context-independent validity checks */
 bool CheckTransaction(const CTransaction& tx, CValidationState& state);
-bool CheckZerocoinLock(const CTxOut txout, CValidationState& state, bool fCheckOnly = false);
+bool CheckZerocoinLock(const uint256& txHash, const CTxOut& txout, CValidationState& state, bool fCheckOnly = false);
 bool CheckZerocoinSpend(uint256 hashTx, const CTxOut txout, vector<CTxIn> vin, CValidationState& state);
 bool CheckZerocoinSpendProperties(const CTxIn& txin, libzerocoin::CoinSpend coinSpend, const libzerocoin::Accumulator &accumulator,CValidationState& state);
 bool CheckZerocoinOverSpend(const CAmount nAmountRedeemed, const CTransaction &txContainingMint, CValidationState& state);

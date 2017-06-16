@@ -13,7 +13,8 @@ private:
     int nHeight;
     CBigNum value;
     CBigNum randomness;
-    CBigNum serialNumber;;
+    CBigNum serialNumber;
+    uint256 txid;
     bool isUsed;
 
 public:
@@ -38,6 +39,7 @@ public:
         value = 0;
         denomination = -1;
         nHeight = -1;
+        txid = 0;
     }
 
     uint256 GetHash() const;
@@ -54,6 +56,8 @@ public:
     void SetRandomness(CBigNum rand){ this->randomness = rand; }
     CBigNum GetSerialNumber() const { return serialNumber; }
     void SetSerialNumber(CBigNum serial){ this->serialNumber = serial; }
+    uint256 GetTxHash() const { return this->txid; }
+    void SetTxHash(uint256 txid) { this->txid = txid; }
 
     inline bool operator <(const CZerocoinMint& a) const { return GetHeight() < a.GetHeight(); }
 
@@ -63,6 +67,7 @@ public:
         value = other.GetValue();
         randomness = other.GetRandomness();
         serialNumber = other.GetSerialNumber();
+        txid = other.GetTxHash();
         isUsed = other.IsUsed();
     }
     
@@ -73,6 +78,7 @@ public:
         value = other.GetValue();
         randomness = other.GetRandomness();
         serialNumber = other.GetSerialNumber();
+        txid = other.GetTxHash();
         isUsed = other.IsUsed();
         return *this;
     }
@@ -96,6 +102,7 @@ public:
         READWRITE(value);
         READWRITE(denomination);
         READWRITE(nHeight);
+        READWRITE(txid);
     };
 };
 
