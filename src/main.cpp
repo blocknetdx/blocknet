@@ -1130,13 +1130,15 @@ bool CheckZerocoinSpend(uint256 hashTx, const CTxOut txout, vector<CTxIn> vin, C
         if (!txin.scriptSig.IsZerocoinSpend())
             continue;
 
-        CTransaction txContainingMint;
-        uint256 hashBlock;
-        if(!GetTransaction(txin.prevout.hash, txContainingMint, hashBlock))
-            return state.DoS(100, error("CheckZerocoinSpend(): Unable to find transaction containing mint"));
-
-        if(!CheckZerocoinOverSpend(txout.nValue, txContainingMint, state))
-            return state.DoS(100, error("CheckZerocoinSpend(): Zerocoinspend redeems different value than the mint it uses"));
+                    //todo not checkable because we don't know the actual mint tx
+//        CTransaction txContainingMint;
+//        uint256 hashBlock;
+//                    LogPrintf("ZCPRINT %s txhash=%s\n", __func__, txin.prevout.hash.GetHex());
+//        if(!GetTransaction(txin.prevout.hash, txContainingMint, hashBlock))
+//            return state.DoS(100, error("CheckZerocoinSpend(): Unable to find transaction containing mint"));
+//
+//        if(!CheckZerocoinOverSpend(txout.nValue, txContainingMint, state))
+//            return state.DoS(100, error("CheckZerocoinSpend(): Zerocoinspend redeems different value than the mint it uses"));
 
         CoinSpend newSpend = TxInToZerocoinSpend(txin);
         //see if we have record of the accumulator used in the spend tx
@@ -1219,10 +1221,14 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
         vInOutPoints.insert(txin.prevout);
     }
 
+    //todo double check this is robust enough for checks
     if (tx.IsCoinBase()) {
         if (tx.vin[0].scriptSig.size() < 2 || tx.vin[0].scriptSig.size() > 150)
             return state.DoS(100, error("CheckTransaction() : coinbase script size=%d", tx.vin[0].scriptSig.size()),
                 REJECT_INVALID, "bad-cb-length");
+    } else if(tx.IsZerocoinSpend()) {
+        if(tx.vin.size() != 1)
+            return state.DoS(10, error("CheckTransaction() : Zerocoin Spend has more than 1 txin"), REJECT_INVALID, "bad-zerocoinspend");
     } else {
         BOOST_FOREACH (const CTxIn& txin, tx.vin)
             if (txin.prevout.IsNull())
@@ -1299,7 +1305,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
         *pfMissingInputs = false;
 
     if (!CheckTransaction(tx, state))
-        return error("AcceptToMemoryPool: : CheckTransaction failed");
+        return state.DoS(100, error("AcceptToMemoryPool: : CheckTransaction failed"), REJECT_INVALID, "bad-tx");
 
     // Coinbase is only valid in a block, not as a loose transaction
     if (tx.IsCoinBase())
@@ -1310,6 +1316,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
     if (tx.IsCoinStake())
         return state.DoS(100, error("AcceptToMemoryPool: coinstake as individual tx"),
             REJECT_INVALID, "coinstake");
+    LogPrintf("%s after coinstake\n", __func__);
 
     // Rather not work on nonstandard transactions (unless -testnet/-regtest)
     string reason;
@@ -1317,11 +1324,13 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
         return state.DoS(0,
             error("AcceptToMemoryPool : nonstandard transaction: %s", reason),
             REJECT_NONSTANDARD, reason);
-
+    LogPrintf("%s after nonstandard\n", __func__);
     // is it already in the memory pool?
     uint256 hash = tx.GetHash();
-    if (pool.exists(hash))
+    if (pool.exists(hash)) {
+        LogPrintf("%s tx already in mempool\n", __func__);
         return false;
+    }
 
     // ----------- swiftTX transaction scanning -----------
 
@@ -1334,6 +1343,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
             }
         }
     }
+    LogPrintf("%s after swift\n", __func__);
 
     // Check for conflicts with in-memory transactions
     if(!tx.IsZerocoinSpend())
@@ -1353,8 +1363,11 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
         CCoinsView dummy;
         CCoinsViewCache view(&dummy);
 
+        //todo ensure that the pivx is properly accounted for in CCoinsView database
         CAmount nValueIn = 0;
-        {
+        if(tx.IsZerocoinSpend()){
+            nValueIn = tx.GetZerocoinSpent();
+        } else {
             LOCK(pool.cs);
             CCoinsViewMemPool viewMemPool(pcoinsTip, pool);
             view.SetBackend(viewMemPool);
@@ -1387,10 +1400,12 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
             // we have all inputs cached now, so switch back to dummy, so we don't need to keep lock on mempool
             view.SetBackend(dummy);
         }
+        LogPrintf("%s after valuein\n", __func__);
 
         // Check for non-standard pay-to-script-hash in inputs
         if (Params().RequireStandard() && !AreInputsStandard(tx, view))
             return error("AcceptToMemoryPool: : nonstandard transaction input");
+        LogPrintf("%s after nonstandard\n", __func__);
 
         // Check that the transaction doesn't have an excessive number of
         // sigops, making it impossible to mine. Since the coinbase transaction
@@ -1456,12 +1471,14 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
             return error("AcceptToMemoryPool: : insane fees %s, %d > %d",
                 hash.ToString(),
                 nFees, ::minRelayTxFee.GetFee(nSize) * 10000);
+        LogPrintf("%s after reject fee\n", __func__);
 
         // Check against previous transactions
         // This is done last to help prevent CPU exhaustion denial-of-service attacks.
         if (!CheckInputs(tx, state, view, true, STANDARD_SCRIPT_VERIFY_FLAGS, true)) {
             return error("AcceptToMemoryPool: : ConnectInputs failed %s", hash.ToString());
         }
+        LogPrintf("%s after check inputs\n", __func__);
 
         // Check again against just the consensus-critical mandatory script
         // verification flags, in case of bugs in the standard flags that cause

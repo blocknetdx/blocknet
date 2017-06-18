@@ -111,7 +111,7 @@ CBigNum CAccumulators::GetAccumulatorValueFromCheckpoint(const uint256& nCheckpo
 
 CBigNum CAccumulators::GetAccumulatorValueFromChecksum(const uint32_t& nChecksum)
 {
-    LogPrintf("%s\n", __func__);
+    LogPrintf("%s %d\n", __func__, nChecksum);
     if(!mapAccumulatorValues.count(nChecksum))
         return CBigNum(0);
 
@@ -257,6 +257,9 @@ bool CAccumulators::IntializeWitnessAndAccumulator(const CZerocoinMint &zerocoin
     }
     LogPrintf("ZCPRINT %s get checksum before mint\n", __func__);
 
+    //the height to start accumulating coins to add to witness
+    int nStartAccumulationHeight = nHeightMintAddedToBlockchain - (nHeightMintAddedToBlockchain % 10);
+
 
     //Get the accumulator that is right before the cluster of blocks containing our mint was added to the accumulator
     if(nChecksumBeforeMint != 2301755253) { //this is a zero value and wont initialize the accumulator. use existing.
@@ -266,14 +269,14 @@ bool CAccumulators::IntializeWitnessAndAccumulator(const CZerocoinMint &zerocoin
             return false;
         LogPrintf("ZCPRINT %s acc val %s\n", __func__, bnAccValue.GetHex());
         LogPrintf("netx\n");
-        accumulator = Accumulator(Params().Zerocoin_Params(), pubcoinSelected.getDenomination(), bnAccValue);
-        witness = AccumulatorWitness(Params().Zerocoin_Params(), accumulator, pubcoinSelected);
+        //accumulator = Accumulator(Params().Zerocoin_Params(), pubcoinSelected.getDenomination(), bnAccValue);
+        //witness = AccumulatorWitness(Params().Zerocoin_Params(), accumulator, pubcoinSelected);
     }
 
     //add the pubcoins up to the next checksum starting from the block
     LogPrintf("ZCPRINT %s add pubcoins\n", __func__);
-    pindex = chainActive[nChecksumBeforeMintHeight];
-    int nSecurityLevel = 10; //todo: this will be user defined, the more pubcoins that are added to the accumulator that is used, the more secure and untraceable it will be
+    pindex = chainActive[nStartAccumulationHeight];
+    int nSecurityLevel = 1; //todo: this will be user defined, the more pubcoins that are added to the accumulator that is used, the more secure and untraceable it will be
     int nAccumulatorsCheckpointsAdded = 0;
     uint256 nPreviousChecksum = 0;
     while(pindex->nHeight < chainActive.Height() - 1) {
@@ -303,11 +306,12 @@ bool CAccumulators::IntializeWitnessAndAccumulator(const CZerocoinMint &zerocoin
         for(const CZerocoinMint mint : listMints) {
             PublicCoin pubCoin(Params().Zerocoin_Params(), mint.GetValue(), PivAmountToZerocoinDenomination(mint.GetDenomination()));
             witness += pubCoin;
+            accumulator += pubCoin;
         }
 
         pindex = chainActive[pindex->nHeight + 1];
         nPreviousChecksum = block.nAccumulatorCheckpoint;
     }
-
+    LogPrintf("%s done\n", __func__);
     return true;
 }

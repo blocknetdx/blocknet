@@ -157,6 +157,23 @@ CAmount CTransaction::GetZerocoinMinted() const
     return  CAmount(0);
 }
 
+CAmount CTransaction::GetZerocoinSpent() const
+{
+    if(!IsZerocoinSpend() && vin.size() != 1)
+        return 0;
+
+    const CTxIn txin = vin[1];
+
+    // Deserialize the CoinSpend intro a fresh object
+    std::vector<char, zero_after_free_allocator<char> > dataTxIn;
+    dataTxIn.insert(dataTxIn.end(), txin.scriptSig.begin() + 4, txin.scriptSig.end());
+
+    CDataStream serializedCoinSpend(dataTxIn, SER_NETWORK, PROTOCOL_VERSION);
+    libzerocoin::CoinSpend spend(Params().Zerocoin_Params(), serializedCoinSpend);
+
+    return libzerocoin::ZerocoinDenominationToValue(spend.getDenomination()) * COIN;
+}
+
 double CTransaction::ComputePriority(double dPriorityInputs, unsigned int nTxSize) const
 {
     nTxSize = CalculateModifiedSize(nTxSize);
