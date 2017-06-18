@@ -8,11 +8,11 @@
 ///
 /// \copyright  Copyright 2013 Ian Miers, Christina Garman and Matthew Green
 /// \license    This project is released under the MIT license.
-
+#include "ParamGeneration.h"
 #include <string>
 #include <cmath>
+#include "hash.h"
 #include "uint256.h"
-#include "Zerocoin.h"
 
 using namespace std;
 

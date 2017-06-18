@@ -11,7 +11,8 @@
  **/
 
 #include <stdlib.h>
-#include "Zerocoin.h"
+#include "Commitment.h"
+#include "hash.h"
 
 namespace libzerocoin {
 

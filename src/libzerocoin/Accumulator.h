@@ -85,12 +85,12 @@ public:
 	 * @return a refrence to the updated accumulator.
 	 */
 	Accumulator& operator +=(const PublicCoin& c);
-    Accumulator& operator =(Accumulator rhs);
+  Accumulator& operator =(Accumulator rhs);
 	bool operator==(const Accumulator rhs) const;
 	ADD_SERIALIZE_METHODS;
   template <typename Stream, typename Operation>  inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
 	    READWRITE(value);
-        READWRITE(denomination);
+      READWRITE(denomination);
 	}
 private:
 	const AccumulatorAndProofParams* params;
@@ -143,10 +143,10 @@ public:
 	 */
 	AccumulatorWitness& operator +=(const PublicCoin& rhs);
 
-    AccumulatorWitness& operator =(AccumulatorWitness rhs);
+  AccumulatorWitness& operator =(AccumulatorWitness rhs);
 private:
 	Accumulator witness;
-	const PublicCoin element;
+  PublicCoin element; // was const but changed to use setting in assignment
 };
 
 } /* namespace libzerocoin */

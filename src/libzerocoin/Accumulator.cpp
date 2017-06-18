@@ -11,7 +11,8 @@
  **/
 
 #include <sstream>
-#include "Zerocoin.h"
+#include "Accumulator.h"
+#include "ZerocoinDefines.h"
 
 namespace libzerocoin {
 
@@ -81,7 +82,7 @@ Accumulator& Accumulator::operator += (const PublicCoin& c) {
 }
 
 Accumulator& Accumulator::operator = (Accumulator rhs) {
-    swap(*this, rhs);
+    if (this != &rhs) std::swap(*this, rhs);
     return *this;
 }
 
@@ -117,7 +118,9 @@ AccumulatorWitness& AccumulatorWitness::operator +=(
 }
 
 AccumulatorWitness& AccumulatorWitness::operator =(AccumulatorWitness rhs) {
-	swap(*this, rhs);
+    // Not pretty, but seems to work (SPOCK)
+    if (&witness != &rhs.witness) this->witness = rhs.witness;
+    if (&element != &rhs.element) std::swap(element, rhs.element);
 	return *this;
 }
 

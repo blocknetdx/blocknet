@@ -12,7 +12,6 @@
 #include "checkpoints.h"
 #include "coincontrol.h"
 #include "kernel.h"
-#include "libzerocoin/Zerocoin.h"
 #include "masternode-budget.h"
 #include "net.h"
 #include "script/script.h"
@@ -22,6 +21,8 @@
 #include "timedata.h"
 #include "util.h"
 #include "utilmoneystr.h"
+
+#include "libzerocoin/Denominations.h"
 
 #include <assert.h>
 
@@ -3880,9 +3881,8 @@ bool CWallet::CreateZerocoinLockTransaction(const vector<pair<CScript, int64_t> 
 
 bool CWallet::CreateZerocoinSpendTransaction(libzerocoin::CoinDenomination denomination, CWalletTx& wtxNew, CReserveKey& reservekey, const CCoinControl* coinControl, CZerocoinSpend& zerocoinSpend, CZerocoinMint& zerocoinSelected, std::string& strFailReason)
 {
-    LogPrintf("ZCPRINT %s\n", __func__);
-    int64_t nValue = ZerocoinDenominationToValue(denomination) * COIN;
-    if (nValue < 0) {
+    int64_t nValue = ZerocoinDenominationToTransactionAmount(denomination);
+    if (nValue <= 0) {
         strFailReason = _("Transaction amounts must be positive");
         return false;
     }

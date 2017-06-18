@@ -2,7 +2,7 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "libzerocoin/Zerocoin.h"
+#include "libzerocoin/Denominations.h"
 #include "amount.h"
 #include "chainparams.h"
 #include "main.h"
@@ -40,15 +40,15 @@ BOOST_AUTO_TEST_CASE(amount_to_denomination_test)
 
     //valid amount (min edge)
     CAmount amount = 1 * COIN;
-    BOOST_CHECK_MESSAGE(PivAmountToZerocoinDenomination(amount/COIN) == ZQ_LOVELACE,"For COIN denomination should be ZQ_LOVELACE");
+    BOOST_CHECK_MESSAGE(PivAmountToZerocoinDenomination(amount/COIN) == ZQ_ONE,"For COIN denomination should be ZQ_ONE");
 
     //valid amount (max edge)
     CAmount amount1 = 100 * COIN;
-    BOOST_CHECK_MESSAGE(PivAmountToZerocoinDenomination(amount1/COIN) == ZQ_WILLIAMSON,"For 100*COIN denomination should be ZQ_LOVELACE");
+    BOOST_CHECK_MESSAGE(PivAmountToZerocoinDenomination(amount1/COIN) == ZQ_ONE_HUNDRED,"For 100*COIN denomination should be ZQ_ONE");
     
     //invalid amount (too much)
-    CAmount amount2 = 5000 * COIN;
-    BOOST_CHECK_MESSAGE(PivAmountToZerocoinDenomination(amount2/COIN) == ZQ_ERROR,"For 5000*COIN denomination should be Invalid -> ZQ_ERROR");
+    CAmount amount2 = 7000 * COIN;
+    BOOST_CHECK_MESSAGE(PivAmountToZerocoinDenomination(amount2/COIN) == ZQ_ERROR,"For 50000*COIN denomination should be Invalid -> ZQ_ERROR");
     
     //invalid amount (not enough)
     CAmount amount3 = 1;
@@ -61,23 +61,23 @@ BOOST_AUTO_TEST_CASE(denomination_to_value_test)
     cout << "Running ZerocoinDenominationToValue_test...\n";
 
     int64_t Value = 1;
-    CoinDenomination denomination = ZQ_LOVELACE;
+    CoinDenomination denomination = ZQ_ONE;
     BOOST_CHECK_MESSAGE(ZerocoinDenominationToValue(denomination) ==  Value, "Wrong Value - should be 1");
 
     Value = 10;
-    denomination = ZQ_GOLDWASSER;
+    denomination = ZQ_TEN;
     BOOST_CHECK_MESSAGE(ZerocoinDenominationToValue(denomination) ==  Value, "Wrong Value - should be 10");
 
-    Value = 25;
-    denomination = ZQ_RACKOFF;
-    BOOST_CHECK_MESSAGE(ZerocoinDenominationToValue(denomination) ==  Value, "Wrong Value - should be 25");
-
     Value = 50;
-    denomination = ZQ_PEDERSEN;
+    denomination = ZQ_FIFTY;
     BOOST_CHECK_MESSAGE(ZerocoinDenominationToValue(denomination) ==  Value, "Wrong Value - should be 50");
+
+    Value = 500;
+    denomination = ZQ_FIVE_HUNDRED;
+    BOOST_CHECK_MESSAGE(ZerocoinDenominationToValue(denomination) ==  Value, "Wrong Value - should be 500");
     
     Value = 100;
-    denomination = ZQ_WILLIAMSON;
+    denomination = ZQ_ONE_HUNDRED;
     BOOST_CHECK_MESSAGE(ZerocoinDenominationToValue(denomination) ==  Value, "Wrong Value - should be 100");
 
     Value = 0;
@@ -87,7 +87,7 @@ BOOST_AUTO_TEST_CASE(denomination_to_value_test)
 }
 
 
-//ZQ_LOVELACE mints
+//ZQ_ONE mints
 std::string rawTx1 = "0100000001983d5fd91685bb726c0ebc3676f89101b16e663fd896fea53e19972b95054c49000000006a473044022010fbec3e78f9c46e58193d481caff715ceb984df44671d30a2c0bde95c54055f0220446a97d9340da690eaf2658e5b2bf6a0add06f1ae3f1b40f37614c7079ce450d012103cb666bd0f32b71cbf4f32e95fa58e05cd83869ac101435fcb8acee99123ccd1dffffffff0200e1f5050000000086c10280004c80c3a01f94e71662f2ae8bfcd88dfc5b5e717136facd6538829db0c7f01e5fd793cccae7aa1958564518e0223d6d9ce15b1e38e757583546e3b9a3f85bd14408120cd5192a901bb52152e8759fdd194df230d78477706d0e412a66398f330be38a23540d12ab147e9fb19224913f3fe552ae6a587fb30a68743e52577150ff73042c0f0d8f000000001976a914d6042025bd1fff4da5da5c432d85d82b3f26a01688ac00000000";
 std::string rawTxpub1 = "473ff507157523e74680ab37f586aae52e53f3f912492b19f7e14ab120d54238ae30b338f39662a410e6d707784d730f24d19dd9f75e85221b51b902a19d50c120844d15bf8a3b9e346355857e7381e5be19c6d3d22e01845565819aae7cacc93d75f1ef0c7b09d823865cdfa3671715e5bfc8dd8fc8baef26216e7941fa0c3";
     std::string rawTxRand1 = "9fc222b16be09eb88affbdfbcc02d1c8b28f5e843c72eb06c89dd7aff0c60838";
@@ -166,11 +166,11 @@ BOOST_AUTO_TEST_CASE(checkzerocoinspend_test)
     //load our serialized pubcoin
     CBigNum bnpubcoin;
     BOOST_CHECK_MESSAGE(bnpubcoin.SetHexBool(rawTxpub1), "Failed to set CBigNum from hex string");
-    PublicCoin pubCoin(Params().Zerocoin_Params(), bnpubcoin, CoinDenomination::ZQ_LOVELACE);
+    PublicCoin pubCoin(Params().Zerocoin_Params(), bnpubcoin, CoinDenomination::ZQ_ONE);
     BOOST_CHECK_MESSAGE(pubCoin.validate(), "Failed to validate pubCoin created from hex string");
 
     //initialize and Accumulator and AccumulatorWitness
-    Accumulator accumulator(Params().Zerocoin_Params(), CoinDenomination::ZQ_LOVELACE);
+    Accumulator accumulator(Params().Zerocoin_Params(), CoinDenomination::ZQ_ONE);
     AccumulatorWitness witness(Params().Zerocoin_Params(), accumulator, pubCoin);
 
     //populate the witness and accumulators
@@ -315,7 +315,7 @@ BOOST_AUTO_TEST_CASE(setup_exceptions_test)
         SelectParams(CBaseChainParams::MAIN);
         ZerocoinParams* ZCParams = Params().Zerocoin_Params();
         ZCParams->initialized = false;
-        PrivateCoin privCoin(ZCParams, CoinDenomination::ZQ_LOVELACE);
+        PrivateCoin privCoin(ZCParams, CoinDenomination::ZQ_ONE);
         BOOST_CHECK_MESSAGE(false, "Didn't catch exception checking for uninitialized Params");
     }
     catch (...) {

@@ -18,7 +18,11 @@
 #include <curses.h>
 #include <exception>
 #include "streams.h"
-#include "libzerocoin/Zerocoin.h"
+#include "libzerocoin/ParamGeneration.h"
+#include "libzerocoin/Denominations.h"
+#include "libzerocoin/Coin.h"
+#include "libzerocoin/CoinSpend.h"
+#include "libzerocoin/Accumulator.h"
 
 using namespace std;
 using namespace libzerocoin;
@@ -202,10 +206,10 @@ Test_Accumulator()
 	}
 	try {
 		// Accumulate the coin list from first to last into one accumulator
-            Accumulator accOne(&g_Params->accumulatorParams, CoinDenomination::ZQ_LOVELACE);
-            Accumulator accTwo(&g_Params->accumulatorParams,CoinDenomination::ZQ_LOVELACE);
-            Accumulator accThree(&g_Params->accumulatorParams,CoinDenomination::ZQ_LOVELACE);
-            Accumulator accFour(&g_Params->accumulatorParams,CoinDenomination::ZQ_LOVELACE);
+            Accumulator accOne(&g_Params->accumulatorParams, CoinDenomination::ZQ_ONE);
+            Accumulator accTwo(&g_Params->accumulatorParams,CoinDenomination::ZQ_ONE);
+            Accumulator accThree(&g_Params->accumulatorParams,CoinDenomination::ZQ_ONE);
+            Accumulator accFour(&g_Params->accumulatorParams,CoinDenomination::ZQ_ONE);
 		AccumulatorWitness wThree(g_Params, accThree, gCoins[0]->getPublicCoin());
 
 		for (uint32_t i = 0; i < TESTS_COINS_TO_ACCUMULATE; i++) {
@@ -319,7 +323,7 @@ Test_MintCoin()
 	try {
 		// Generate a list of coins
 		for (uint32_t i = 0; i < TESTS_COINS_TO_ACCUMULATE; i++) {
-            gCoins[i] = new PrivateCoin(g_Params,libzerocoin::CoinDenomination::ZQ_LOVELACE);
+            gCoins[i] = new PrivateCoin(g_Params,libzerocoin::CoinDenomination::ZQ_ONE);
 
 			PublicCoin pc = gCoins[i]->getPublicCoin();
 			CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
@@ -354,7 +358,7 @@ bool Test_InvalidCoin()
 			return false;
 		}		
 		
-		PublicCoin pubCoin2(g_Params, coinValue, ZQ_LOVELACE);
+		PublicCoin pubCoin2(g_Params, coinValue, ZQ_ONE);
 		if (pubCoin2.validate()) {
 			// A non-prime coin should not be valid!
 			return false;
@@ -400,7 +404,7 @@ Test_MintAndSpend()
 		// Accumulate the list of generated coins into a fresh accumulator.
 		// The first one gets marked as accumulated for a witness, the
 		// others just get accumulated normally.
-        Accumulator acc(&g_Params->accumulatorParams,CoinDenomination::ZQ_LOVELACE);
+        Accumulator acc(&g_Params->accumulatorParams,CoinDenomination::ZQ_ONE);
 		AccumulatorWitness wAcc(g_Params, acc, gCoins[0]->getPublicCoin());
 
 		for (uint32_t i = 0; i < TESTS_COINS_TO_ACCUMULATE; i++) {

@@ -10,8 +10,8 @@
 * @license    This project is released under the MIT license.
 **/
 
-#ifndef ZEROCOIN_H_
-#define ZEROCOIN_H_
+#ifndef ZEROCOIN_DEFINES_H_
+#define ZEROCOIN_DEFINES_H_
 
 #include <stdexcept>
 
@@ -36,14 +36,5 @@
 // Uses a fast technique for coin generation. Could be more vulnerable
 // to timing attacks. Turn off if an attacker can measure coin minting time.
 #define	ZEROCOIN_FAST_MINT 1
-
-#include "Params.h"
-#include "Coin.h"
-#include "Commitment.h"
-#include "Accumulator.h"
-#include "AccumulatorProofOfKnowledge.h"
-#include "CoinSpend.h"
-#include "SerialNumberSignatureOfKnowledge.h"
-#include "ParamGeneration.h"
 
 #endif /* ZEROCOIN_H_ */

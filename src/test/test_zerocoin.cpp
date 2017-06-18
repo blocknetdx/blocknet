@@ -4,7 +4,7 @@
 #define BOOST_TEST_MODULE Zerocoin Test Suite
 #define BOOST_TEST_MAIN
 
-#include "libzerocoin/Zerocoin.h"
+#include "libzerocoin/Denominations.h"
 #include "amount.h"
 #include "chainparams.h"
 #include "main.h"

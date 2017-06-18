@@ -43,7 +43,7 @@ set(ZEROCOIN_HEADERS
   ParamGeneration.h
   Params.h
   SerialNumberSignatureOfKnowledge.h
-  Zerocoin.h
+  ZerocoinDefines.h
 )
 
 #

@@ -223,7 +223,7 @@ bool CAccumulators::IntializeWitnessAndAccumulator(const CZerocoinMint &zerocoin
     int nHeightMintAddedToBlockchain = mapBlockIndex[blockHash]->nHeight;
 
     list<CZerocoinMint> vMintsToAddToWitness;
-    uint256 nChecksumBeforeMint = 0, nChecksumAfterMint = 0, nChecksumContainingMint = 0;
+    uint256 nChecksumBeforeMint = 0, nChecksumContainingMint = 0;
     int nChecksumBeforeMintHeight = 0;
     CBlockIndex* pindex = chainActive[nHeightMintAddedToBlockchain];
     int nChanges = 0;

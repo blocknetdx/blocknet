@@ -20,7 +20,11 @@
 #include <cstdlib>
 #include <sys/time.h>
 #include "streams.h"
-#include "libzerocoin/Zerocoin.h"
+#include "libzerocoin/ParamGeneration.h"
+#include "libzerocoin/Denominations.h"
+#include "libzerocoin/Coin.h"
+#include "libzerocoin/CoinSpend.h"
+#include "libzerocoin/Accumulator.h"
 
 using namespace std;
 using namespace libzerocoin;
@@ -235,10 +239,10 @@ Testb_Accumulator()
 	}
 	try {
 		// Accumulate the coin list from first to last into one accumulator
-            Accumulator accOne(&gg_Params->accumulatorParams,libzerocoin::CoinDenomination::ZQ_LOVELACE);
-            Accumulator accTwo(&gg_Params->accumulatorParams,libzerocoin::CoinDenomination::ZQ_LOVELACE);
-            Accumulator accThree(&gg_Params->accumulatorParams,libzerocoin::CoinDenomination::ZQ_LOVELACE);
-            Accumulator accFour(&gg_Params->accumulatorParams,libzerocoin::CoinDenomination::ZQ_LOVELACE);
+            Accumulator accOne(&gg_Params->accumulatorParams,libzerocoin::CoinDenomination::ZQ_ONE);
+            Accumulator accTwo(&gg_Params->accumulatorParams,libzerocoin::CoinDenomination::ZQ_ONE);
+            Accumulator accThree(&gg_Params->accumulatorParams,libzerocoin::CoinDenomination::ZQ_ONE);
+            Accumulator accFour(&gg_Params->accumulatorParams,libzerocoin::CoinDenomination::ZQ_ONE);
 		AccumulatorWitness wThree(gg_Params, accThree, ggCoins[0]->getPublicCoin());
 
 		for (uint32_t i = 0; i < TESTS_COINS_TO_ACCUMULATE; i++) {
@@ -283,7 +287,7 @@ Testb_MintCoin()
 		// Generate a list of coins
 		timer.start();
 		for (uint32_t i = 0; i < TESTS_COINS_TO_ACCUMULATE; i++) {
-            ggCoins[i] = new PrivateCoin(gg_Params,CoinDenomination::ZQ_LOVELACE);
+            ggCoins[i] = new PrivateCoin(gg_Params,CoinDenomination::ZQ_ONE);
 		}
 		timer.stop();
 	} catch (exception &e) {
@@ -312,7 +316,7 @@ Testb_MintAndSpend()
 		// Accumulate the list of generated coins into a fresh accumulator.
 		// The first one gets marked as accumulated for a witness, the
 		// others just get accumulated normally.
-        Accumulator acc(&gg_Params->accumulatorParams,CoinDenomination::ZQ_LOVELACE);
+        Accumulator acc(&gg_Params->accumulatorParams,CoinDenomination::ZQ_ONE);
 		AccumulatorWitness wAcc(gg_Params, acc, ggCoins[0]->getPublicCoin());
 
 		timer.start();

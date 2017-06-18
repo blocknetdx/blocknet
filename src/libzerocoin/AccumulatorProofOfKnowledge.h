@@ -13,6 +13,9 @@
 #ifndef ACCUMULATEPROOF_H_
 #define ACCUMULATEPROOF_H_
 
+#include "Accumulator.h"
+#include "Commitment.h"
+
 namespace libzerocoin {
 
 /**A prove that a value insde the commitment commitmentToCoin is in an accumulator a.

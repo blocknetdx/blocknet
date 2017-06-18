@@ -13,6 +13,7 @@
 #define PARAMS_H_
 
 #include "bignum.h"
+#include "ZerocoinDefines.h"
 
 namespace libzerocoin {
 

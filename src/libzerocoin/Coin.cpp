@@ -11,7 +11,8 @@
  **/
 
 #include <stdexcept>
-#include "Zerocoin.h"
+#include "Coin.h"
+#include "Commitment.h"
 
 namespace libzerocoin {
 

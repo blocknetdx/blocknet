@@ -12,7 +12,7 @@
 #include "protocol.h"
 #include "uint256.h"
 
-#include "libzerocoin/Zerocoin.h"
+#include "libzerocoin/Params.h"
 #include <vector>
 
 typedef unsigned char MessageStartChars[MESSAGE_START_SIZE];

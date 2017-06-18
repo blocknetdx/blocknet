@@ -39,6 +39,8 @@
 #include <utility>
 #include <vector>
 
+#include "libzerocoin/CoinSpend.h"
+
 #include <boost/unordered_map.hpp>
 
 class CBlockIndex;

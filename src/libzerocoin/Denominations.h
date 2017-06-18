@@ -19,19 +19,20 @@ namespace libzerocoin {
 //PRESSTAB: should we add an invalid representation for CoinDenomination?
 enum  CoinDenomination {
     ZQ_ERROR = 0,
-    ZQ_LOVELACE,
-    ZQ_GOLDWASSER,
-    ZQ_RACKOFF,
-    ZQ_PEDERSEN,
-    ZQ_WILLIAMSON,
-    ZQ_6, //placeholders
-    ZQ_7,
-    ZQ_8,
+    ZQ_ONE,
+    ZQ_FIVE,
+    ZQ_TEN,
+    ZQ_FIFTY,
+    ZQ_ONE_HUNDRED,
+    ZQ_FIVE_HUNDRED,
+    ZQ_ONE_THOUSAND,
+    ZQ_FIVE_THOUSAND,
 };
 
-const std::vector<CoinDenomination> zerocoinDenomList = {ZQ_LOVELACE, ZQ_GOLDWASSER, ZQ_RACKOFF, ZQ_PEDERSEN, ZQ_WILLIAMSON, ZQ_6, ZQ_7, ZQ_8};
+const std::vector<CoinDenomination> zerocoinDenomList = {ZQ_ONE, ZQ_FIVE, ZQ_TEN, ZQ_FIFTY, ZQ_ONE_HUNDRED, ZQ_FIVE_HUNDRED, ZQ_ONE_THOUSAND, ZQ_FIVE_THOUSAND};
 
 CoinDenomination TransactionAmountToZerocoinDenomination(int64_t amount);
+int64_t ZerocoinDenominationToTransactionAmount(const CoinDenomination& denomination);
 CoinDenomination PivAmountToZerocoinDenomination(int64_t amount);
 int64_t ZerocoinDenominationToValue(const CoinDenomination& denomination);
 CoinDenomination get_denomination(std::string denomAmount);

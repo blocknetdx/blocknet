@@ -2,7 +2,7 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "libzerocoin/Zerocoin.h"
+#include "libzerocoin/Denominations.h"
 #include "amount.h"
 #include "chainparams.h"
 #include "coincontrol.h"
@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(zerocoin_spend_test)
     
     BOOST_CHECK_MESSAGE(vString == "Invalid amount","Failed Invalid Amount Check");
     
-    denom = ZQ_LOVELACE;
+    denom = ZQ_ONE;
     vString = cWallet.SpendZerocoin(denom, *wtx, NULL, zerocoinSpend, zerocoinSelected);
     
     // if using "wallet.dat", instead of "unlocked.dat" need this

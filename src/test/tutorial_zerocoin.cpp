@@ -18,7 +18,12 @@
 #include <curses.h>
 #include <exception>
 #include "streams.h"
-#include "libzerocoin/Zerocoin.h"
+#include "libzerocoin/bignum.h"
+#include "libzerocoin/ParamGeneration.h"
+#include "libzerocoin/Denominations.h"
+#include "libzerocoin/Coin.h"
+#include "libzerocoin/CoinSpend.h"
+#include "libzerocoin/Accumulator.h"
 
 using namespace std;
 
@@ -87,7 +92,7 @@ ZerocoinTutorial()
 		// new zerocoin. It stores all the private values inside the
 		// PrivateCoin object. This includes the coin secrets, which must be
 		// stored in a secure location (wallet) at the client.
-        libzerocoin::PrivateCoin newCoin(params, libzerocoin::CoinDenomination::ZQ_LOVELACE);
+        libzerocoin::PrivateCoin newCoin(params, libzerocoin::CoinDenomination::ZQ_ONE);
 
 		// Get a copy of the 'public' portion of the coin. You should
 		// embed this into a Zerocoin 'MINT' transaction along with a series
@@ -141,11 +146,11 @@ ZerocoinTutorial()
 		/********************************************************************/
 
 		// Create an empty accumulator object
-        libzerocoin::Accumulator accumulator(params,libzerocoin::CoinDenomination::ZQ_LOVELACE);
+        libzerocoin::Accumulator accumulator(params,libzerocoin::CoinDenomination::ZQ_ONE);
 
 		// Add several coins to it (we'll generate them here on the fly).
 		for (uint32_t i = 0; i < COINS_TO_ACCUMULATE; i++) {
-            libzerocoin::PrivateCoin testCoin(params, libzerocoin::CoinDenomination::ZQ_LOVELACE);
+            libzerocoin::PrivateCoin testCoin(params, libzerocoin::CoinDenomination::ZQ_ONE);
 			accumulator += testCoin.getPublicCoin();
 		}
 
