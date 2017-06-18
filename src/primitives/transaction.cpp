@@ -162,9 +162,10 @@ CAmount CTransaction::GetZerocoinSpent() const
     if(!IsZerocoinSpend() && vin.size() != 1)
         return 0;
 
-    const CTxIn txin = vin[1];
+    const CTxIn txin = vin[0];
+    if(!txin.scriptSig.IsZerocoinSpend())
+        LogPrintf("%s is not zcspend\n", __func__);
 
-    // Deserialize the CoinSpend intro a fresh object
     std::vector<char, zero_after_free_allocator<char> > dataTxIn;
     dataTxIn.insert(dataTxIn.end(), txin.scriptSig.begin() + 4, txin.scriptSig.end());
 
