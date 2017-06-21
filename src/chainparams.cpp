@@ -196,6 +196,7 @@ public:
             "31438167899885040445364023527381951378636564391212010397122822120720357";
         nMaxZerocoinSpendsPerBlock = 5; // Presstab - arbitrary number, needs testing to come up with actual
         nZerocoinProtocolActivationTime = 9;
+        nStartCheckpointHeight = 66510;
 
     }
 

@@ -2441,7 +2441,7 @@ bool DisconnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex
                 for(const CTxIn txin : tx.vin){
                     if (txin.scriptSig.IsZerocoinSpend()) {
                         CoinSpend spend = TxInToZerocoinSpend(txin);
-                        if(!zerocoinDB->EraseCoinSpend(spend.getCoinSerialNumber()))
+                        if(!CAccumulators::getInstance().EraseCoinSpend(spend.getCoinSerialNumber()))
                             return error("failed to erase spent coin in block");
                     }
                 }
@@ -2456,7 +2456,7 @@ bool DisconnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex
                     if (!TxOutToPublicCoin(txout, pubCoin, state))
                         return error("DisconnectBlock(): TxOutToPublicCoin() failed");
 
-                    if(!zerocoinDB->EraseCoinMint(pubCoin.getValue()))
+                    if(!CAccumulators::getInstance().EraseCoinMint(pubCoin.getValue()))
                         return error("DisconnectBlock(): Failed to erase coin mint");
                 }
             }
@@ -2522,7 +2522,7 @@ bool DisconnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex
     //if block is an accumulator checkpoint block, remove checkpoint and checksums from db
     uint256 nCheckpoint = pindex->nAccumulatorCheckpoint;
     if(nCheckpoint != pindex->pprev->nAccumulatorCheckpoint) {
-        if(!CAccumulators::getInstance().EraseAccumulatorValuesInDB(nCheckpoint))
+        if(!CAccumulators::getInstance().EraseAccumulatorValues(nCheckpoint, pindex->pprev->nAccumulatorCheckpoint))
             return error("DisconnectBlock(): failed to erase checkpoint");
     }
 
@@ -3645,11 +3645,10 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
     }
 
 
-    // ----------- masternode payments / budgets -----------
-
+    // masternode payments / budgets
     CBlockIndex* pindexPrev = chainActive.Tip();
+    int nHeight = 0;
     if (pindexPrev != NULL) {
-        int nHeight = 0;
         if (pindexPrev->GetBlockHash() == block.hashPrevBlock) {
             nHeight = pindexPrev->nHeight + 1;
         } else { //out of order
@@ -3676,7 +3675,32 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
         }
     }
 
-    // -------------------------------------------
+    //find the block height. Note that in this part of the code we are not always in line with chainActive.Tip
+    //and also that payment code above seemed to return the wrong height
+    if(mapBlockIndex.find(block.GetHash()) != mapBlockIndex.end())
+        nHeight = mapBlockIndex[block.GetHash()]->nHeight;
+    else
+        nHeight = chainActive.Height() + 1;
+
+    // zerocoin: if a new accumulator checkpoint is generated, check that it is valid
+    if (nHeight >= Params().Zerocoin_StartCheckpointHeight() && nHeight % 10 == 0) {
+        uint256 nCheckpointCalculated = 0;
+        LogPrintf("%s ZCPRINT get checkpoint for %d\n", __func__, nHeight);
+        if (!CAccumulators::getInstance().GetCheckpoint(nHeight, nCheckpointCalculated))
+            return state.DoS(100, error("CheckBlock() : failed to calculate accumulator checkpoint"));
+
+        if (nCheckpointCalculated != block.nAccumulatorCheckpoint) {
+            LogPrintf("calculated: %s\n block: %s\n", nCheckpointCalculated.GetHex(), block.nAccumulatorCheckpoint.GetHex());
+            return state.DoS(100, error("CheckBlock() : accumulator does not match calculated value"));
+        }
+    } else {
+        if(mapBlockIndex.find(block.hashPrevBlock) == mapBlockIndex.end())
+            return state.DoS(100, error("CheckBlock() : could not find previous block"));
+
+        if (block.nAccumulatorCheckpoint != mapBlockIndex[block.hashPrevBlock]->nAccumulatorCheckpoint) {
+            return state.DoS(100, error("CheckBlock() : new accumulator checkpoint generated on a block that is not multiple of 10"));
+        }
+    }
 
     // Check transactions
     BOOST_FOREACH (const CTransaction& tx, block.vtx)
@@ -3772,19 +3796,6 @@ bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationState& sta
     if (block.nVersion < 3 && CBlockIndex::IsSuperMajority(3, pindexPrev, Params().RejectBlockOutdatedMajority())) {
         return state.Invalid(error("%s : rejected nVersion=2 block", __func__),
             REJECT_OBSOLETE, "bad-version");
-    }
-
-    // zerocoin: if a new accumulator checkpoint is generated, check that it is valid
-    if (block.GetBlockTime() >= Params().Zerocoin_ProtocolActivationTime() && block.nAccumulatorCheckpoint != pindexPrev->nAccumulatorCheckpoint) {
-        if (nHeight % 10)
-            return state.Invalid(error("%s : new accumulator checkpoint added on block that is not a multiple of 10 (height %d)", __func__, REJECT_INVALID, nHeight));
-
-        uint256 nCheckpointCalculated;
-        if (!CAccumulators::getInstance().GetCheckpoint(nHeight, nCheckpointCalculated))
-            return state.Invalid(error("%s : failed to calculate accumulator checkpoint (height %d)", __func__, REJECT_INVALID, nHeight));
-
-        if (nCheckpointCalculated != block.nAccumulatorCheckpoint)
-            return state.Invalid(error("%s : accumulator does not match calculated value (height %d)", __func__, REJECT_INVALID, nHeight));
     }
 
     return true;

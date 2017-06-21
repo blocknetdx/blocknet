@@ -101,6 +101,7 @@ public:
     libzerocoin::ZerocoinParams* Zerocoin_Params() const;
     int Zerocoin_MaxSpendsPerBlock() const { return nMaxZerocoinSpendsPerBlock; }
     unsigned int Zerocoin_ProtocolActivationTime() const { return nZerocoinProtocolActivationTime; }
+    int Zerocoin_StartCheckpointHeight() const { return nStartCheckpointHeight; }
 
 protected:
     CChainParams() {}
@@ -146,6 +147,7 @@ protected:
     std::string zerocoinModulus;
     int nMaxZerocoinSpendsPerBlock;
     unsigned int nZerocoinProtocolActivationTime;
+    int nStartCheckpointHeight;
 };
 
 /** 

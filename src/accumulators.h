@@ -17,7 +17,8 @@ public:
     }
 private:
     std::map<int64_t, std::unique_ptr<libzerocoin::Accumulator> > mapAccumulators;
-    std::map<uint256, int> mapPubCoins;
+    std::map<CBigNum, uint256> mapPubCoins;
+    std::map<CBigNum, uint256> mapSerials;
     std::map<uint32_t, CBigNum> mapAccumulatorValues;
 
     CAccumulators() { Setup(); }
@@ -30,11 +31,13 @@ public:
     libzerocoin::Accumulator Get(libzerocoin::CoinDenomination denomination);
     bool AddPubCoinToAccumulator(const libzerocoin::PublicCoin& publicCoin);
     bool IntializeWitnessAndAccumulator(const CZerocoinMint &zerocoinSelected, const libzerocoin::PublicCoin &pubcoinSelected, libzerocoin::Accumulator& accumulator, libzerocoin::AccumulatorWitness& witness);
+    bool EraseCoinSpend(const CBigNum& bnSerial);
+    bool EraseCoinMint(const CBigNum& bnPubCoin);
 
     //checksum/checkpoint
     void AddAccumulatorChecksum(const uint32_t nChecksum, const CBigNum &bnValue, bool fMemoryOnly = false);
     void LoadAccumulatorValuesFromDB(const uint256 nCheckpoint);
-    bool EraseAccumulatorValuesInDB(const uint256& nCheckpoint);
+    bool EraseAccumulatorValues(const uint256& nCheckpointErase, const uint256& nCheckpointPrevious);
     uint32_t GetChecksum(const CBigNum &bnValue);
     uint32_t GetChecksum(const libzerocoin::Accumulator &accumulator);
     uint256 GetCheckpoint();

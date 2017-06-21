@@ -80,21 +80,40 @@ void CAccumulators::LoadAccumulatorValuesFromDB(const uint256 nCheckpoint)
     }
 }
 
-bool CAccumulators::EraseAccumulatorValuesInDB(const uint256& nCheckpoint)
+bool CAccumulators::EraseAccumulatorValues(const uint256& nCheckpointErase, const uint256& nCheckpointPrevious)
 {
     for (auto& denomination : zerocoinDenomList) {
-        uint32_t nChecksum = ParseChecksum(nCheckpoint, denomination);
+        uint32_t nChecksumErase = ParseChecksum(nCheckpointErase, denomination);
+        uint32_t nChecksumPrevious = ParseChecksum(nCheckpointPrevious, denomination);
 
-        if(!zerocoinDB->EraseAccumulatorValue(nChecksum))
+        //if the previous checksum is the same, then it should remain in the database and map
+        if(nChecksumErase == nChecksumPrevious)
+            continue;
+
+        mapAccumulatorValues.erase(nChecksumErase);
+
+        if(!zerocoinDB->EraseAccumulatorValue(nChecksumErase))
             return false;
     }
 
     return true;
 }
 
+bool CAccumulators::EraseCoinMint(const CBigNum& bnPubCoin)
+{
+    mapPubCoins.erase(bnPubCoin);
+    return zerocoinDB->EraseCoinMint(bnPubCoin);
+}
+
+bool CAccumulators::EraseCoinSpend(const CBigNum& bnSerial)
+{
+    mapSerials.erase(bnSerial);
+    return zerocoinDB->EraseCoinSpend(bnSerial);
+}
+
 uint32_t ParseChecksum(uint256 nChecksum, CoinDenomination denomination)
 {
-    //shift to the beginning bit of this denomimnation and trim any remaining bits by returning 32 bits only
+    //shift to the beginning bit of this denomination and trim any remaining bits by returning 32 bits only
     int pos = distance(zerocoinDenomList.begin(), find(zerocoinDenomList.begin(), zerocoinDenomList.end(), denomination));
     nChecksum = nChecksum >> (32*((zerocoinDenomList.size() - 1) - pos));
     return nChecksum.Get32();
@@ -124,8 +143,10 @@ bool CAccumulators::ResetToCheckpoint(const uint256& nCheckpoint)
     for (auto& denom : zerocoinDenomList) {
         CBigNum bnValue = GetAccumulatorValueFromCheckpoint(nCheckpoint, denom);
         if (bnValue == 0) {
-            LogPrintf("%s: checkpoint is empty\n", __func__);
-            continue; //note temporary hack ?
+            //if the value is zero, then this is an unused accumulator and must be reinitialized
+            unique_ptr<Accumulator> uptr(new Accumulator(Params().Zerocoin_Params(), denom));
+            mapAccumulators.at(ZerocoinDenominationToValue(denom)) = move(uptr);
+            continue;
         }
 
         mapAccumulators.at(ZerocoinDenominationToValue(denom))->setValue(bnValue);
@@ -155,8 +176,11 @@ uint256 CAccumulators::GetCheckpoint()
 //Get checkpoint value for a specific block height
 bool CAccumulators::GetCheckpoint(int nHeight, uint256& nCheckpoint)
 {
-    if(nHeight < 11)
-        return 0;
+    LogPrintf("%s\n", __func__);
+    if (nHeight < Params().Zerocoin_StartCheckpointHeight()) {
+        nCheckpoint = 0;
+        return true;
+    }
 
     //the checkpoint is updated every ten blocks, return current active checkpoint if not update block
     if (nHeight % 10 != 0) {
@@ -170,7 +194,8 @@ bool CAccumulators::GetCheckpoint(int nHeight, uint256& nCheckpoint)
         return false;
     }
 
-    //Accumulate all coins over the last ten blocks that havent been accumulated (height-20 through height-11)
+    //Accumulate all coins over the last ten blocks that havent been accumulated (height - 20 through height - 11)
+    int nTotalMintsFound = 0;
     CBlockIndex *pindex = chainActive[nHeight - 20];
     while (pindex->nHeight < nHeight - 10) {
         //grab mints from this block
@@ -185,7 +210,10 @@ bool CAccumulators::GetCheckpoint(int nHeight, uint256& nCheckpoint)
             LogPrintf("%s: failed to get zerocoin mintlist from block %n\n", __func__, pindex->nHeight);
             return false;
         }
+
+        nTotalMintsFound += listMints.size();
         LogPrintf("%s ZCPRINT found %d mints\n", __func__, listMints.size());
+
         //add the pubcoins to accumulator
         for(const CZerocoinMint mint : listMints) {
             CoinDenomination denomination = PivAmountToZerocoinDenomination(mint.GetDenomination());
@@ -198,7 +226,12 @@ bool CAccumulators::GetCheckpoint(int nHeight, uint256& nCheckpoint)
         pindex = chainActive[pindex->nHeight + 1];
     }
 
-    nCheckpoint = GetCheckpoint();
+    // if there were no new mints found, the accumulator checkpoint will be the same as the last checkpoint
+    if(nTotalMintsFound == 0)
+        nCheckpoint = chainActive[nHeight - 1]->nAccumulatorCheckpoint;
+    else
+        nCheckpoint = GetCheckpoint();
+
     LogPrintf("%s ZCPRINT checkpoint=%s\n", __func__, nCheckpoint.GetHex());
     return true;
 }
@@ -218,7 +251,6 @@ bool CAccumulators::IntializeWitnessAndAccumulator(const CZerocoinMint &zerocoin
         LogPrintf("ZCPRINT %s failed to read tx\n", __func__);
         return false;
     }
-
 
     int nHeightMintAddedToBlockchain = mapBlockIndex[blockHash]->nHeight;
 
@@ -265,12 +297,11 @@ bool CAccumulators::IntializeWitnessAndAccumulator(const CZerocoinMint &zerocoin
     if(nChecksumBeforeMint != 2301755253) { //this is a zero value and wont initialize the accumulator. use existing.
         LogPrintf("ZCPRINT %s get acc val from checkpoint\n", __func__);
         CBigNum bnAccValue = GetAccumulatorValueFromCheckpoint(nChecksumBeforeMint, pubcoinSelected.getDenomination());
-        if(bnAccValue == 0)
-            return false;
+        if (bnAccValue != 0) {
+            accumulator = Accumulator(Params().Zerocoin_Params(), pubcoinSelected.getDenomination(), bnAccValue);
+            witness = AccumulatorWitness(Params().Zerocoin_Params(), accumulator, pubcoinSelected);
+        }
         LogPrintf("ZCPRINT %s acc val %s\n", __func__, bnAccValue.GetHex());
-        LogPrintf("netx\n");
-        //accumulator = Accumulator(Params().Zerocoin_Params(), pubcoinSelected.getDenomination(), bnAccValue);
-        //witness = AccumulatorWitness(Params().Zerocoin_Params(), accumulator, pubcoinSelected);
     }
 
     //add the pubcoins up to the next checksum starting from the block

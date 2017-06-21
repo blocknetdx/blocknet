@@ -327,6 +327,7 @@ bool CZerocoinDB::WriteAccumulatorValue(const uint32_t& nChecksum, const CBigNum
 
 bool CZerocoinDB::ReadAccumulatorValue(const uint32_t& nChecksum, CBigNum& bnValue)
 {
+    LogPrintf("*** %s checksum:%d\n", __func__, nChecksum);
     if(!Read(make_pair('a', nChecksum), bnValue))
         return false;
     LogPrintf("*** %s checksum:%d val:%s\n", __func__, nChecksum, bnValue.GetHex());
@@ -335,5 +336,6 @@ bool CZerocoinDB::ReadAccumulatorValue(const uint32_t& nChecksum, CBigNum& bnVal
 
 bool CZerocoinDB::EraseAccumulatorValue(const uint32_t& nChecksum)
 {
+    LogPrintf("*** %s checksum:%d\n", __func__, nChecksum);
     return Erase(make_pair('a', nChecksum));
 }
