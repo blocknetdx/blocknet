@@ -187,6 +187,13 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
             CAmount nTotalIn = 0;
             bool fMissingInputs = false;
             BOOST_FOREACH (const CTxIn& txin, tx.vin) {
+                //zerocoinspend has special vin
+                //todo should there be more checks here instead of relying on checktransaction?
+                if (tx.IsZerocoinSpend()) {
+                    nTotalIn = tx.GetZerocoinSpent();
+                    break;
+                }
+
                 // Read prev transaction
                 if (!view.HaveCoins(txin.prevout.hash)) {
                     // This should never happen; all transactions in the memory
