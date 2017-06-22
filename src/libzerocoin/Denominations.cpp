@@ -14,7 +14,7 @@ namespace libzerocoin {
 
 // All denomination values should only exist in these routines for consistency.
 // For serialization/unserialization enums are converted to int
-CoinDenomination PivAmountToZerocoinDenomination(int64_t amount)
+CoinDenomination IntToZerocoinDenomination(int64_t amount)
 {
     CoinDenomination denomination;
     switch (amount) {
@@ -34,9 +34,9 @@ CoinDenomination PivAmountToZerocoinDenomination(int64_t amount)
     return denomination;
 }
 
-int64_t ZerocoinDenominationToValue(const CoinDenomination& denomination)
+int64_t ZerocoinDenominationToInt(const CoinDenomination& denomination)
 {
-    int64_t Value=0;
+    int64_t Value = 0;
     switch (denomination) {
     case CoinDenomination::ZQ_ONE: Value = 1; break;
     case CoinDenomination::ZQ_FIVE: Value = 5; break;
@@ -53,26 +53,27 @@ int64_t ZerocoinDenominationToValue(const CoinDenomination& denomination)
     return Value;
 }
 
-CoinDenomination TransactionAmountToZerocoinDenomination(int64_t amount)
+CoinDenomination AmountToZerocoinDenomination(CAmount amount)
 {
     // Check to make sure amount is an exact integer number of COINS
-    int64_t residual_amount = amount - COIN*(amount/COIN);
+    CAmount residual_amount = amount - COIN * (amount / COIN);
     if (residual_amount == 0) {
-        return PivAmountToZerocoinDenomination(amount/COIN);
+        return IntToZerocoinDenomination(amount/COIN);
     } else {
         return CoinDenomination::ZQ_ERROR;
     }
 }
-int64_t ZerocoinDenominationToTransactionAmount(const CoinDenomination& denomination)
+
+CAmount ZerocoinDenominationToAmount(const CoinDenomination& denomination)
 {
-    int64_t transaction_amount = COIN*ZerocoinDenominationToValue(denomination);
-    return transaction_amount;
+    CAmount nValue = COIN * ZerocoinDenominationToInt(denomination);
+    return nValue;
 }
 
     
 CoinDenomination get_denomination(std::string denomAmount) {
     int64_t val = std::stoi(denomAmount);
-    return PivAmountToZerocoinDenomination(val);
+    return IntToZerocoinDenomination(val);
 }
 
 
@@ -83,7 +84,7 @@ int64_t get_amount(std::string denomAmount) {
         // SHOULD WE THROW EXCEPTION or Something?
         nAmount = 0;
     } else {
-        nAmount = ZerocoinDenominationToValue(denom) * COIN;
+        nAmount = ZerocoinDenominationToAmount(denom);
     }
     return nAmount;
 }

@@ -2360,7 +2360,7 @@ Value mintzerocoin(const Array& params, bool fHelp)
         throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
 
     CAmount nAmount = params[0].get_int() * COIN;
-    libzerocoin::CoinDenomination denomination = libzerocoin::TransactionAmountToZerocoinDenomination(nAmount);
+    libzerocoin::CoinDenomination denomination = libzerocoin::AmountToZerocoinDenomination(nAmount);
     if (denomination == libzerocoin::ZQ_ERROR)
         return JSONRPCError(RPC_INVALID_PARAMETER, "mintzerocoin must be exact. Amount options: (1,10,25,50,100)\n");
 
@@ -2421,7 +2421,7 @@ Value spendzerocoin(const Array& params, bool fHelp)
         throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
 
     CAmount nAmount = params[0].get_int() * COIN;
-    libzerocoin::CoinDenomination denomination = libzerocoin::TransactionAmountToZerocoinDenomination(nAmount);
+    libzerocoin::CoinDenomination denomination = libzerocoin::AmountToZerocoinDenomination(nAmount);
     if (denomination == libzerocoin::ZQ_ERROR)
         return JSONRPCError(RPC_INVALID_PARAMETER, "mintzerocoin must be exact. Amount options: (1,10,25,50,100)\n");
 
@@ -2456,7 +2456,7 @@ Value resetmintzerocoin(const Array& params, bool fHelp)
 
     for (const CZerocoinMint& zerocoinItem : listPubcoin){
         if(zerocoinItem.GetRandomness() != 0 && zerocoinItem.GetSerialNumber() != 0){
-            CZerocoinMint zerocoinTx(zerocoinItem.GetDenomination(), zerocoinItem.GetValue(), zerocoinItem.GetRandomness(), zerocoinItem.GetSerialNumber(), false);
+            CZerocoinMint zerocoinTx(zerocoinItem.GetDenominationAsInt(), zerocoinItem.GetValue(), zerocoinItem.GetRandomness(), zerocoinItem.GetSerialNumber(), false);
             zerocoinTx.SetHeight(-1);
             walletdb.WriteZerocoinMint(zerocoinTx);
         }

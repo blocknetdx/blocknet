@@ -21,13 +21,13 @@ Accumulator::Accumulator(const AccumulatorAndProofParams* p, const CoinDenominat
 	if (!(params->initialized)) {
 		throw std::runtime_error("Invalid parameters for accumulator");
 	}
-  denomination = ZerocoinDenominationToValue(d);
+  denomination = ZerocoinDenominationToInt(d);
 	this->value = this->params->accumulatorBase;
 }
 
 Accumulator::Accumulator(const ZerocoinParams* p, const CoinDenomination d, const Bignum bnValue) {
 	this->params = &(p->accumulatorParams);
-  denomination = ZerocoinDenominationToValue(d);
+  denomination = ZerocoinDenominationToInt(d);
 
 	if (!(params->initialized)) {
 		throw std::runtime_error("Invalid parameters for accumulator");
@@ -64,7 +64,7 @@ void Accumulator::accumulate(const PublicCoin& coin) {
 }
 
 CoinDenomination Accumulator::getDenomination() const {
-	return PivAmountToZerocoinDenomination(this->denomination);
+	return IntToZerocoinDenomination(this->denomination);
 }
 
 const CBigNum& Accumulator::getValue() const {

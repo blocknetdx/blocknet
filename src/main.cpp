@@ -1011,7 +1011,7 @@ bool TxOutToPublicCoin(const CTxOut txout, PublicCoin& pubCoin, CValidationState
         publicZerocoin.setvch(vchZeroMint);
     }
 
-    CoinDenomination denomination = TransactionAmountToZerocoinDenomination(txout.nValue);
+    CoinDenomination denomination = AmountToZerocoinDenomination(txout.nValue);
     if (denomination == ZQ_ERROR)
         return state.DoS(100, error("TxOutToPublicCoin : txout.nValue is not correct"));
 
@@ -1039,7 +1039,10 @@ bool BlockToZerocoinMintList(const CBlock& block, std::list<CZerocoinMint>& vMin
             if(!TxOutToPublicCoin(txOut, pubCoin, state))
                 return false;
 
-            vMints.push_back(CZerocoinMint(pubCoin.getDenomination(), pubCoin.getValue(), 0, 0, false));
+            int64_t nDenominationAsInt = pubCoin.getDenomination();
+            CZerocoinMint mint = CZerocoinMint(nDenominationAsInt, pubCoin.getValue(), 0, 0, false);
+            mint.SetTxHash(tx.GetHash());
+            vMints.push_back(mint);
         }
     }
     return true;
@@ -1104,7 +1107,7 @@ bool IsZerocoinSpendUnknown(CoinSpend coinSpend, uint256 hashTx, CValidationStat
 bool CheckZerocoinOverSpend(const CAmount nAmountRedeemed, const CTransaction &txContainingMint, CValidationState& state)
 {
     CAmount nPreviousMintValue = txContainingMint.GetZerocoinMinted();
-    CoinDenomination testDenomination = TransactionAmountToZerocoinDenomination(nPreviousMintValue);
+    CoinDenomination testDenomination = AmountToZerocoinDenomination(nPreviousMintValue);
     if (testDenomination == ZQ_ERROR)
          return state.DoS(100, error("CheckZerocoinSpend(): Zerocoin mint does not have valid denomination"));
 
@@ -1121,7 +1124,7 @@ bool CheckZerocoinSpend(uint256 hashTx, const CTxOut txout, vector<CTxIn> vin, C
     if(GetAdjustedTime() < Params().Zerocoin_ProtocolActivationTime())
         return state.DoS(100, error("CheckZerocoinSpend(): Zerocoin transactions are not allowed yet"));
 
-    CoinDenomination denomination = TransactionAmountToZerocoinDenomination(txout.nValue);
+    CoinDenomination denomination = AmountToZerocoinDenomination(txout.nValue);
     if (denomination == ZQ_ERROR)
         return state.DoS(100, error("CheckZerocoinSpend(): Zerocoin spend does not have valid denomination"));
 

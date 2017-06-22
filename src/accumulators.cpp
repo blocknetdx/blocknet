@@ -11,20 +11,20 @@ void CAccumulators::Setup()
     //construct accumulators for all denominations
     for (auto& denom : zerocoinDenomList) {
         unique_ptr<Accumulator> uptr(new Accumulator(Params().Zerocoin_Params(), denom));
-        mapAccumulators.insert(make_pair(ZerocoinDenominationToValue(denom), move(uptr)));
+        mapAccumulators.insert(make_pair(ZerocoinDenominationToInt(denom), move(uptr)));
     }
 }
 
 Accumulator CAccumulators::Get(CoinDenomination denomination)
 {
-    return Accumulator(Params().Zerocoin_Params(), denomination, mapAccumulators.at(ZerocoinDenominationToValue(denomination))->getValue());
+    return Accumulator(Params().Zerocoin_Params(), denomination, mapAccumulators.at(ZerocoinDenominationToInt(denomination))->getValue());
 }
 
 //Public Coins have large 'values' that are not ideal to store in lists.
 uint256 HashPublicCoin(PublicCoin publicCoin)
 {
     CDataStream ss(SER_GETHASH, 0);
-    ss << publicCoin.getValue() << ZerocoinDenominationToValue(publicCoin.getDenomination());
+    ss << publicCoin.getValue() << ZerocoinDenominationToInt(publicCoin.getDenomination());
 
     return Hash(ss.begin(), ss.end());
 }
@@ -39,7 +39,7 @@ bool CAccumulators::AddPubCoinToAccumulator(const PublicCoin& publicCoin)
 
 //    mapPubCoins.insert(make_pair(hash, ZerocoinDenominationToValue(publicCoin.getDenomination())));
     CoinDenomination denomination = publicCoin.getDenomination();
-    mapAccumulators.at(ZerocoinDenominationToValue(denomination))->accumulate(publicCoin);
+    mapAccumulators.at(ZerocoinDenominationToInt(denomination))->accumulate(publicCoin);
 
     return true;
 }
@@ -145,11 +145,11 @@ bool CAccumulators::ResetToCheckpoint(const uint256& nCheckpoint)
         if (bnValue == 0) {
             //if the value is zero, then this is an unused accumulator and must be reinitialized
             unique_ptr<Accumulator> uptr(new Accumulator(Params().Zerocoin_Params(), denom));
-            mapAccumulators.at(ZerocoinDenominationToValue(denom)) = move(uptr);
+            mapAccumulators.at(ZerocoinDenominationToInt(denom)) = move(uptr);
             continue;
         }
 
-        mapAccumulators.at(ZerocoinDenominationToValue(denom))->setValue(bnValue);
+        mapAccumulators.at(ZerocoinDenominationToInt(denom))->setValue(bnValue);
     }
 
     return true;
@@ -160,7 +160,7 @@ uint256 CAccumulators::GetCheckpoint()
 {
     uint256 nCheckpoint;
     for (auto& denom : zerocoinDenomList) {
-        CBigNum bnValue = mapAccumulators.at(ZerocoinDenominationToValue(denom))->getValue();
+        CBigNum bnValue = mapAccumulators.at(ZerocoinDenominationToInt(denom))->getValue();
         LogPrintf("%s: ZCPRINT acc value:%s\n", __func__, bnValue.GetHex());
         uint32_t nCheckSum = GetChecksum(bnValue);
 
@@ -216,7 +216,7 @@ bool CAccumulators::GetCheckpoint(int nHeight, uint256& nCheckpoint)
 
         //add the pubcoins to accumulator
         for(const CZerocoinMint mint : listMints) {
-            CoinDenomination denomination = PivAmountToZerocoinDenomination(mint.GetDenomination());
+            CoinDenomination denomination = IntToZerocoinDenomination(mint.GetDenominationAsInt());
             PublicCoin pubCoin(Params().Zerocoin_Params(), mint.GetValue(), denomination);
             if(!AddPubCoinToAccumulator(pubCoin)) {
                 LogPrintf("%s: failed to add pubcoin to accumulator at height %n\n", __func__, pindex->nHeight);
@@ -335,7 +335,7 @@ bool CAccumulators::IntializeWitnessAndAccumulator(const CZerocoinMint &zerocoin
 
         //add the mints to the witness
         for(const CZerocoinMint mint : listMints) {
-            PublicCoin pubCoin(Params().Zerocoin_Params(), mint.GetValue(), PivAmountToZerocoinDenomination(mint.GetDenomination()));
+            PublicCoin pubCoin(Params().Zerocoin_Params(), mint.GetValue(), IntToZerocoinDenomination(mint.GetDenominationAsInt()));
             witness += pubCoin;
             accumulator += pubCoin;
         }

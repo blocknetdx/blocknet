@@ -45,7 +45,7 @@ public:
     PublicCoin(const ZerocoinParams* p, const CBigNum& coin, const CoinDenomination d);
     const CBigNum& getValue() const { return this->value; }
 
-    CoinDenomination getDenomination() const { return PivAmountToZerocoinDenomination(this->denomination); }
+    CoinDenomination getDenomination() const { return IntToZerocoinDenomination(this->denomination); }
     bool operator==(const PublicCoin& rhs) const
     {
         return ((this->value == rhs.value) && (this->params == rhs.params) && (this->denomination == rhs.denomination));

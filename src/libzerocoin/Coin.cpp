@@ -23,7 +23,7 @@ PublicCoin::PublicCoin(const ZerocoinParams* p):
 		throw std::runtime_error("Params are not initialized");
 	}
     // Assume this will get set by another method later
-    denomination = ZerocoinDenominationToValue(ZQ_ERROR);
+    denomination = ZerocoinDenominationToInt(ZQ_ERROR);
 };
 
 PublicCoin::PublicCoin(const ZerocoinParams* p, const CBigNum& coin, const CoinDenomination d):
@@ -31,7 +31,7 @@ PublicCoin::PublicCoin(const ZerocoinParams* p, const CBigNum& coin, const CoinD
 	if (this->params->initialized == false) {
 		throw std::runtime_error("Params are not initialized");
 	}
-    denomination = ZerocoinDenominationToValue(d);
+    denomination = ZerocoinDenominationToInt(d);
 };
 
 //PrivateCoin class

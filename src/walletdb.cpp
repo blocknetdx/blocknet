@@ -1013,12 +1013,12 @@ bool CWalletDB::EraseZerocoinSpendSerialEntry(const CBigNum& serialEntry)
 
 bool CWalletDB::WriteZerocoinAccumulator(libzerocoin::Accumulator accumulator, libzerocoin::CoinDenomination denomination)
 {
-    return Write(make_pair(std::string("zcaccumulator"), ZerocoinDenominationToValue(denomination)), accumulator);
+    return Write(make_pair(std::string("zcaccumulator"), ZerocoinDenominationToInt(denomination)), accumulator);
 }
 
 bool CWalletDB::ReadZerocoinAccumulator(libzerocoin::Accumulator& accumulator, libzerocoin::CoinDenomination denomination)
 {
-    return Read(make_pair(std::string("zcaccumulator"), ZerocoinDenominationToValue(denomination)), accumulator);
+    return Read(make_pair(std::string("zcaccumulator"), ZerocoinDenominationToInt(denomination)), accumulator);
 }
 
 bool CWalletDB::WriteZerocoinMint(const CZerocoinMint& zerocoin)

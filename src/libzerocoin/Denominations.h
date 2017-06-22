@@ -31,10 +31,10 @@ enum  CoinDenomination {
 
 const std::vector<CoinDenomination> zerocoinDenomList = {ZQ_ONE, ZQ_FIVE, ZQ_TEN, ZQ_FIFTY, ZQ_ONE_HUNDRED, ZQ_FIVE_HUNDRED, ZQ_ONE_THOUSAND, ZQ_FIVE_THOUSAND};
 
-CoinDenomination TransactionAmountToZerocoinDenomination(int64_t amount);
-int64_t ZerocoinDenominationToTransactionAmount(const CoinDenomination& denomination);
-CoinDenomination PivAmountToZerocoinDenomination(int64_t amount);
-int64_t ZerocoinDenominationToValue(const CoinDenomination& denomination);
+CoinDenomination IntToZerocoinDenomination(int64_t amount);
+int64_t ZerocoinDenominationToAmount(const CoinDenomination& denomination);
+CoinDenomination AmountToZerocoinDenomination(int64_t amount);
+int64_t ZerocoinDenominationToInt(const CoinDenomination& denomination);
 CoinDenomination get_denomination(std::string denomAmount);
 int64_t get_amount(std::string denomAmount);
 

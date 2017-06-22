@@ -172,7 +172,7 @@ CAmount CTransaction::GetZerocoinSpent() const
     CDataStream serializedCoinSpend(dataTxIn, SER_NETWORK, PROTOCOL_VERSION);
     libzerocoin::CoinSpend spend(Params().Zerocoin_Params(), serializedCoinSpend);
 
-    return libzerocoin::ZerocoinDenominationToValue(spend.getDenomination()) * COIN;
+    return libzerocoin::ZerocoinDenominationToAmount(spend.getDenomination());
 }
 
 double CTransaction::ComputePriority(double dPriorityInputs, unsigned int nTxSize) const

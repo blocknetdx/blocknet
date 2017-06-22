@@ -3871,7 +3871,7 @@ bool CWallet::CreateZerocoinLockTransaction(const vector<pair<CScript, int64_t> 
 
 bool CWallet::CreateZerocoinSpendTransaction(libzerocoin::CoinDenomination denomination, CWalletTx& wtxNew, CReserveKey& reservekey, const CCoinControl* coinControl, CZerocoinSpend& zerocoinSpend, CZerocoinMint& zerocoinSelected, std::string& strFailReason)
 {
-    int64_t nValue = ZerocoinDenominationToTransactionAmount(denomination);
+    CAmount nValue = ZerocoinDenominationToAmount(denomination);
     if (nValue <= 0) {
         strFailReason = _("Transaction amounts must be positive");
         return false;
@@ -4042,7 +4042,7 @@ bool CWallet::CreateZerocoinSpendTransaction(libzerocoin::CoinDenomination denom
             wtxNew = CWalletTx(this, txNew);
             LogPrintf("ZCPRINT %s txhash wallet %s\n", __func__, wtxNew.GetHash().GetHex());
 
-            zerocoinSpend = CZerocoinSpend(spend.getCoinSerialNumber(), txNew.GetHash(), zerocoinSelected.GetValue(), zerocoinSelected.GetDenomination(), nAccumulatorChecksum);
+            zerocoinSpend = CZerocoinSpend(spend.getCoinSerialNumber(), txNew.GetHash(), zerocoinSelected.GetValue(), zerocoinSelected.GetDenominationAsInt(), nAccumulatorChecksum);
             if (!CWalletDB(strWalletFile).WriteZerocoinSpendSerialEntry(zerocoinSpend)) {
                 strFailReason = _("it cannot write coin serial number into wallet");
             }

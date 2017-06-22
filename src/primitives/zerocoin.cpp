@@ -3,12 +3,18 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "zerocoin.h"
+#include "amount.h"
 #include "hash.h"
 #include "utilstrencodings.h"
 
 uint256 CZerocoinMint::GetHash() const
 {
     return Hash(BEGIN(value), END(value));
+}
+
+CAmount CZerocoinMint::GetDenominationAsAmount() const
+{
+    return denominationAsInt * COIN;
 }
 
 uint256 CZerocoinSpend::GetHash() const
