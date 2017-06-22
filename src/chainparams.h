@@ -102,6 +102,7 @@ public:
     int Zerocoin_MaxSpendsPerBlock() const { return nMaxZerocoinSpendsPerBlock; }
     unsigned int Zerocoin_ProtocolActivationTime() const { return nZerocoinProtocolActivationTime; }
     int Zerocoin_StartCheckpointHeight() const { return nStartCheckpointHeight; }
+    CAmount Zerocoin_MintFee() const { return nMinZerocoinMintFee; }
 
 protected:
     CChainParams() {}
@@ -148,6 +149,7 @@ protected:
     int nMaxZerocoinSpendsPerBlock;
     unsigned int nZerocoinProtocolActivationTime;
     int nStartCheckpointHeight;
+    CAmount nMinZerocoinMintFee;
 };
 
 /** 

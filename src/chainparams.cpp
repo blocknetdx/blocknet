@@ -197,6 +197,7 @@ public:
         nMaxZerocoinSpendsPerBlock = 5; // Presstab - arbitrary number, needs testing to come up with actual
         nZerocoinProtocolActivationTime = 9;
         nStartCheckpointHeight = 66510;
+        nMinZerocoinMintFee = 1 * CENT; //high fee required for zerocoin mints
 
     }
 

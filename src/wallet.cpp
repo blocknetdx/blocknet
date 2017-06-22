@@ -3759,8 +3759,9 @@ bool CWallet::CreateZerocoinLockTransaction(const vector<pair<CScript, int64_t> 
                 txNew.vout.clear();
                 wtxNew.fFromMe = true;
 
-                int64_t nTotalValue = nValue; // Assume 0 fee
-                double dPriority = 0;
+                CAmount nFee = Params().Zerocoin_MintFee();
+                CAmount nTotalValue = nValue + nFee; // Assume 0 fee
+
                 // vouts to the payees
                 for (const std::pair<CScript, int64_t>& s : vecSend) {
                     CTxOut txout(s.second, s.first);
@@ -3773,23 +3774,13 @@ bool CWallet::CreateZerocoinLockTransaction(const vector<pair<CScript, int64_t> 
 
                 // Choose coins to use
                 set<pair<const CWalletTx*, unsigned int> > setCoins;
-                int64_t nValueIn = 0;
+                CAmount nValueIn = 0;
                 if (!SelectCoins(nTotalValue, setCoins, nValueIn, coinControl)) {
                     strFailReason = _("Insufficient funds");
                     return false;
                 }
 
-                // Is this really needed (SPOCK) ?
-
-                for (std::pair<const CWalletTx*, unsigned int> pcoin : setCoins) {
-                    int64_t nCredit = pcoin.first->vout[pcoin.second].nValue;
-                    //The priority after the next block (depth+1) is used instead of the current,
-                    //reflecting an assumption the user would accept a bit more delay for
-                    //a chance at a free transaction.
-                    dPriority += (double)nCredit * (pcoin.first->GetDepthInMainChain() + 1);
-                }
-
-                int64_t nChange = nValueIn - nValue;
+                CAmount nChange = nValueIn - nTotalValue;
                 // if sub-cent change is required, the fee must be raised to at least nMinTxFee
                 // or until nChange becomes zero
 
@@ -3865,7 +3856,6 @@ bool CWallet::CreateZerocoinLockTransaction(const vector<pair<CScript, int64_t> 
                     strFailReason = _("Transaction too large");
                     return false;
                 }
-                dPriority = wtxNew.ComputePriority(dPriority, nBytes);
 
                 // Fill vtxPrev by copying from previous transactions vtxPrev
                 wtxNew.AddSupportingTransactions();
@@ -4165,8 +4155,8 @@ string CWallet::MintZerocoin(CScript pubCoin, int64_t nValue, CWalletTx& wtxNew,
     // Check amount
     if (nValue <= 0)
         return _("Invalid amount");
-    // HACK(SPOCK)   if (nValue + nTransactionFee > GetBalance())
-    if (nValue > GetBalance())
+
+    if (nValue + Params().Zerocoin_MintFee() > GetBalance())
         return _("Insufficient funds");
 
     CReserveKey reservekey(this);
