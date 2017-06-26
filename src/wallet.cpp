@@ -3930,9 +3930,10 @@ bool CWallet::CreateZerocoinSpendTransaction(libzerocoin::CoinDenomination denom
 
             // 1. Select a private coin not used in wallet
             LogPrintf("ZCPRINT %s step 1\n", __func__);
+            //todo add some sort of coin control style way to select which zerocoinmint to spend
             bool fSelected = false;
             for(const CZerocoinMint mint : listPubCoin) {
-                if(mint.GetDenominationAsInt() == denomination) {
+                if(mint.GetDenominationAsInt() == denomination && !mint.IsUsed()) {
                     zerocoinSelected = mint;
                     fSelected = true;
                 }
