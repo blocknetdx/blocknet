@@ -13,6 +13,7 @@
 #include <stdexcept>
 #include "Coin.h"
 #include "Commitment.h"
+#include "Denominations.h"
 
 namespace libzerocoin {
 
@@ -23,7 +24,7 @@ PublicCoin::PublicCoin(const ZerocoinParams* p):
 		throw std::runtime_error("Params are not initialized");
 	}
     // Assume this will get set by another method later
-    denomination = ZerocoinDenominationToInt(ZQ_ERROR);
+    denomination = ZQ_ERROR;
 };
 
 PublicCoin::PublicCoin(const ZerocoinParams* p, const CBigNum& coin, const CoinDenomination d):
@@ -31,7 +32,16 @@ PublicCoin::PublicCoin(const ZerocoinParams* p, const CBigNum& coin, const CoinD
 	if (this->params->initialized == false) {
 		throw std::runtime_error("Params are not initialized");
 	}
-    denomination = ZerocoinDenominationToInt(d);
+
+	denomination = d;
+	for(const CoinDenomination denom : zerocoinDenomList) {
+		if(denom == d)
+			denomination = d;
+	}
+    if(denomination == 0){
+		std::cout << "denom does not exist\n";
+		throw std::runtime_error("Denomination does not exist");
+	}
 };
 
 //PrivateCoin class

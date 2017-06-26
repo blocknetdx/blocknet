@@ -1012,6 +1012,7 @@ bool TxOutToPublicCoin(const CTxOut txout, PublicCoin& pubCoin, CValidationState
     }
 
     CoinDenomination denomination = AmountToZerocoinDenomination(txout.nValue);
+    LogPrintf("%s ZCPRINT denomination %d pubcoin %s\n", __func__, denomination, publicZerocoin.GetHex());
     if (denomination == ZQ_ERROR)
         return state.DoS(100, error("TxOutToPublicCoin : txout.nValue is not correct"));
 

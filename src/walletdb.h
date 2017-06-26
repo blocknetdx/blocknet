@@ -151,8 +151,6 @@ public:
     std::list<CBigNum> ListUnlockedCoinsSerial();
     bool WriteZerocoinSpendSerialEntry(const CZerocoinSpend& zerocoinSpend);
     bool EraseZerocoinSpendSerialEntry(const CBigNum& serialEntry);
-    bool WriteZerocoinAccumulator(libzerocoin::Accumulator accumulator, libzerocoin::CoinDenomination denomination);
-    bool ReadZerocoinAccumulator(libzerocoin::Accumulator& accumulator, libzerocoin::CoinDenomination denomination);
     bool ReadCalculatedZCBlock(int& height);
     bool WriteCalculatedZCBlock(int height);
 

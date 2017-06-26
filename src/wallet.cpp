@@ -3930,11 +3930,22 @@ bool CWallet::CreateZerocoinSpendTransaction(libzerocoin::CoinDenomination denom
 
             // 1. Select a private coin not used in wallet
             LogPrintf("ZCPRINT %s step 1\n", __func__);
-            zerocoinSelected = listPubCoin.front(); //presstab temp hack
+            bool fSelected = false;
+            for(const CZerocoinMint mint : listPubCoin) {
+                if(mint.GetDenominationAsInt() == denomination) {
+                    zerocoinSelected = mint;
+                    fSelected = true;
+                }
+            }
+            if(!fSelected) {
+                strFailReason = _("failed to select a zerocoin");
+                return false;
+            }
 
             // 2. Get pubcoin from the private coin
             LogPrintf("ZCPRINT %s step 2\n", __func__);
             libzerocoin::PublicCoin pubCoinSelected(Params().Zerocoin_Params(), zerocoinSelected.GetValue(), denomination);
+            LogPrintf("%s ZCPRINT pubCoinSelected denom=%d\n", __func__, denomination);
             if (!pubCoinSelected.validate()) {
                 strFailReason = _("the selected mint coin is an invalid coin");
                 return false;
@@ -3957,12 +3968,13 @@ bool CWallet::CreateZerocoinSpendTransaction(libzerocoin::CoinDenomination denom
             privateCoin.setSerialNumber(zerocoinSelected.GetSerialNumber());
             LogPrintf("ZCPRINT %s before get checksum\n", __func__);
             uint32_t nChecksum = CAccumulators::getInstance().GetChecksum(accumulator);
-            LogPrintf("ZCPRINT %s after get checksum\n", __func__);
+            LogPrintf("ZCPRINT %s checksum is %d\n", __func__, nChecksum);
             libzerocoin::CoinSpend spend(Params().Zerocoin_Params(), privateCoin, accumulator, nChecksum, witness);
 
             // This is a sanity check. The CoinSpend object should always verify,
             // but why not check before we put it onto the wire?
             if (!spend.Verify(accumulator)) {
+                LogPrintf("%s : the new spend coin transaction did not verify\n", __func__);
                 strFailReason = _("the new spend coin transaction did not verify");
                 return false;
             }

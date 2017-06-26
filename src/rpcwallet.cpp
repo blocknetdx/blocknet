@@ -2356,6 +2356,8 @@ Value mintzerocoin(const Array& params, bool fHelp)
             "mintzerocoin <amount>(1,10,25,50,100)\n"
             + HelpRequiringPassphrase());
 
+    int64_t nTime = GetTimeMillis();
+
     if (pwalletMain->IsLocked())
         throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
 
@@ -2404,6 +2406,7 @@ Value mintzerocoin(const Array& params, bool fHelp)
     ret.push_back(Pair("pubcoin", pubCoin.getValue().GetHex()));
     ret.push_back(Pair("randomness", zerocoinTx.GetRandomness().GetHex()));
     ret.push_back(Pair("serial", zerocoinTx.GetSerialNumber().GetHex()));
+    ret.push_back(Pair("time", GetTimeMillis() - nTime));
 
     return ret;
 }
@@ -2424,6 +2427,8 @@ Value spendzerocoin(const Array& params, bool fHelp)
     libzerocoin::CoinDenomination denomination = libzerocoin::AmountToZerocoinDenomination(nAmount);
     if (denomination == libzerocoin::ZQ_ERROR)
         return JSONRPCError(RPC_INVALID_PARAMETER, "mintzerocoin must be exact. Amount options: (1,10,25,50,100)\n");
+
+    LogPrintf("%s denomination %d\n", __func__, denomination);
 
     CWalletTx wtx;
     CZerocoinMint zerocoinSelected;

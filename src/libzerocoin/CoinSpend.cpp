@@ -20,10 +20,11 @@ CoinSpend::CoinSpend(const ZerocoinParams* p, const PrivateCoin& coin,
 	accumulatorPoK(&p->accumulatorParams),
 	serialNumberSoK(p),
 	commitmentPoK(&p->serialNumberSoKCommitmentGroup, &p->accumulatorParams.accumulatorPoKCommitmentGroup) {
-    denomination = ZerocoinDenominationToInt(coin.getPublicCoin().getDenomination());
+    denomination = coin.getPublicCoin().getDenomination();
 	// Sanity check: let's verify that the Witness is valid with respect to
 	// the coin and Accumulator provided.
 	if (!(witness.VerifyWitness(a, coin.getPublicCoin()))) {
+        std::cout << "CoinSpend: Accumulator witness does not verify\n";
 		throw std::runtime_error("Accumulator witness does not verify");
 	}
 
@@ -59,7 +60,7 @@ CoinSpend::getCoinSerialNumber() {
 
 CoinDenomination
 CoinSpend::getDenomination() {
-	return IntToZerocoinDenomination(this->denomination);
+	return EnumValueToZerocoinDenomination(this->denomination);
 }
 
 uint32_t CoinSpend::getAccumulatorChecksum() {
@@ -69,7 +70,7 @@ uint32_t CoinSpend::getAccumulatorChecksum() {
 bool
 CoinSpend::Verify(const Accumulator& a) const {
 	// Verify both of the sub-proofs using the given meta-data
-  return  (a.getDenomination() == IntToZerocoinDenomination(this->denomination))
+  return  (a.getDenomination() == EnumValueToZerocoinDenomination(this->denomination))
 	        && commitmentPoK.Verify(serialCommitmentToCoinValue, accCommitmentToCoinValue)
 	        && accumulatorPoK.Verify(a, accCommitmentToCoinValue)
 	        && serialNumberSoK.Verify(coinSerialNumber, serialCommitmentToCoinValue, signatureHash());

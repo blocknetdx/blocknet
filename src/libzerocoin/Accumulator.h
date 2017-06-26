@@ -128,6 +128,7 @@ public:
 	 * @return the value of the witness
 	 */
 	const CBigNum& getValue() const;
+    void resetValue(const Accumulator& checkpoint, const PublicCoin coin);
 
 	/** Checks that this is a witness to the accumulation of coin
 	 * @param a             the accumulator we are checking against.

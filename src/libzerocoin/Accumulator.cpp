@@ -11,6 +11,7 @@
  **/
 
 #include <sstream>
+#include <iostream>
 #include "Accumulator.h"
 #include "ZerocoinDefines.h"
 
@@ -21,13 +22,13 @@ Accumulator::Accumulator(const AccumulatorAndProofParams* p, const CoinDenominat
 	if (!(params->initialized)) {
 		throw std::runtime_error("Invalid parameters for accumulator");
 	}
-  denomination = ZerocoinDenominationToInt(d);
+    denomination = d;
 	this->value = this->params->accumulatorBase;
 }
 
 Accumulator::Accumulator(const ZerocoinParams* p, const CoinDenomination d, const Bignum bnValue) {
 	this->params = &(p->accumulatorParams);
-  denomination = ZerocoinDenominationToInt(d);
+    denomination = d;
 
 	if (!(params->initialized)) {
 		throw std::runtime_error("Invalid parameters for accumulator");
@@ -42,29 +43,30 @@ Accumulator::Accumulator(const ZerocoinParams* p, const CoinDenomination d, cons
 void Accumulator::accumulate(const PublicCoin& coin) {
 	// Make sure we're initialized
 	if(!(this->value)) {
+        std::cout << "Accumulator is not initialized" << "\n";
 		throw std::runtime_error("Accumulator is not initialized");
 	}
 
 	if(this->denomination != coin.getDenomination()) {
-		//std::stringstream msg;
-		std::string msg;
-		msg = "Wrong denomination for coin. Expected coins of denomination: ";
-		msg += this->denomination;
-		msg += ". Instead, got a coin of denomination: ";
-		msg += coin.getDenomination();
-		throw std::runtime_error(msg);
+		std::cout << "Wrong denomination for coin. Expected coins of denomination: ";
+        std::cout << this->denomination;
+        std::cout << ". Instead, got a coin of denomination: ";
+        std::cout << coin.getDenomination();
+        std::cout << "\n";
+		throw std::runtime_error("Wrong denomination for coin");
 	}
 
 	if(coin.validate()) {
 		// Compute new accumulator = "old accumulator"^{element} mod N
 		this->value = this->value.pow_mod(coin.getValue(), this->params->accumulatorModulus);
 	} else {
-		throw std::runtime_error("Coin is not valid");
+		std::cout << "Coin not valid\n";
+        throw std::runtime_error("Coin is not valid");
 	}
 }
 
 CoinDenomination Accumulator::getDenomination() const {
-	return IntToZerocoinDenomination(this->denomination);
+	return EnumValueToZerocoinDenomination(this->denomination);
 }
 
 const CBigNum& Accumulator::getValue() const {
@@ -93,6 +95,11 @@ bool Accumulator::operator == (const Accumulator rhs) const {
 //AccumulatorWitness class
 AccumulatorWitness::AccumulatorWitness(const ZerocoinParams* p,
                                        const Accumulator& checkpoint, const PublicCoin coin): witness(checkpoint), element(coin) {
+}
+
+void AccumulatorWitness::resetValue(const Accumulator& checkpoint, const PublicCoin coin) {
+    this->witness.setValue(checkpoint.getValue());
+    this->element = coin;
 }
 
 void AccumulatorWitness::AddElement(const PublicCoin& c) {

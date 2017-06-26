@@ -11,20 +11,20 @@ void CAccumulators::Setup()
     //construct accumulators for all denominations
     for (auto& denom : zerocoinDenomList) {
         unique_ptr<Accumulator> uptr(new Accumulator(Params().Zerocoin_Params(), denom));
-        mapAccumulators.insert(make_pair(ZerocoinDenominationToInt(denom), move(uptr)));
+        mapAccumulators.insert(make_pair(DenominationToEnumValue(denom), move(uptr)));
     }
 }
 
 Accumulator CAccumulators::Get(CoinDenomination denomination)
 {
-    return Accumulator(Params().Zerocoin_Params(), denomination, mapAccumulators.at(ZerocoinDenominationToInt(denomination))->getValue());
+    return Accumulator(Params().Zerocoin_Params(), denomination, mapAccumulators.at(denomination)->getValue());
 }
 
 //Public Coins have large 'values' that are not ideal to store in lists.
 uint256 HashPublicCoin(PublicCoin publicCoin)
 {
     CDataStream ss(SER_GETHASH, 0);
-    ss << publicCoin.getValue() << ZerocoinDenominationToInt(publicCoin.getDenomination());
+    ss << publicCoin.getValue() << publicCoin.getDenomination();
 
     return Hash(ss.begin(), ss.end());
 }
@@ -38,9 +38,15 @@ bool CAccumulators::AddPubCoinToAccumulator(const PublicCoin& publicCoin)
 //        return false;
 
 //    mapPubCoins.insert(make_pair(hash, ZerocoinDenominationToValue(publicCoin.getDenomination())));
-    CoinDenomination denomination = publicCoin.getDenomination();
-    mapAccumulators.at(ZerocoinDenominationToInt(denomination))->accumulate(publicCoin);
 
+    CoinDenomination denomination = publicCoin.getDenomination();
+    LogPrintf("%s ZCPRINT denom %d\n", __func__, denomination);
+    if(mapAccumulators.find(denomination) == mapAccumulators.end()) {
+        LogPrintf("%s: failed to find accumulator for %d\n", __func__, denomination);
+        return false;
+    }
+    mapAccumulators.at(denomination)->accumulate(publicCoin);
+    LogPrintf("%s: ZCPRINT accumulated %d\n", __func__, denomination);
     return true;
 }
 
@@ -141,15 +147,16 @@ CBigNum CAccumulators::GetAccumulatorValueFromChecksum(const uint32_t& nChecksum
 bool CAccumulators::ResetToCheckpoint(const uint256& nCheckpoint)
 {
     for (auto& denom : zerocoinDenomList) {
+        int64_t denomValue = DenominationToEnumValue(denom);
         CBigNum bnValue = GetAccumulatorValueFromCheckpoint(nCheckpoint, denom);
         if (bnValue == 0) {
             //if the value is zero, then this is an unused accumulator and must be reinitialized
             unique_ptr<Accumulator> uptr(new Accumulator(Params().Zerocoin_Params(), denom));
-            mapAccumulators.at(ZerocoinDenominationToInt(denom)) = move(uptr);
+            mapAccumulators.at(denomValue) = move(uptr);
             continue;
         }
 
-        mapAccumulators.at(ZerocoinDenominationToInt(denom))->setValue(bnValue);
+        mapAccumulators.at(denomValue)->setValue(bnValue);
     }
 
     return true;
@@ -160,7 +167,7 @@ uint256 CAccumulators::GetCheckpoint()
 {
     uint256 nCheckpoint;
     for (auto& denom : zerocoinDenomList) {
-        CBigNum bnValue = mapAccumulators.at(ZerocoinDenominationToInt(denom))->getValue();
+        CBigNum bnValue = mapAccumulators.at(DenominationToEnumValue(denom))->getValue();
         LogPrintf("%s: ZCPRINT acc value:%s\n", __func__, bnValue.GetHex());
         uint32_t nCheckSum = GetChecksum(bnValue);
 
@@ -216,8 +223,10 @@ bool CAccumulators::GetCheckpoint(int nHeight, uint256& nCheckpoint)
 
         //add the pubcoins to accumulator
         for(const CZerocoinMint mint : listMints) {
-            CoinDenomination denomination = IntToZerocoinDenomination(mint.GetDenominationAsInt());
+            CoinDenomination denomination = EnumValueToZerocoinDenomination(mint.GetDenominationAsInt());
+            LogPrintf("%s: ZCPRINT denomint: %d denom: %d\n", __func__, mint.GetDenominationAsInt(), denomination);
             PublicCoin pubCoin(Params().Zerocoin_Params(), mint.GetValue(), denomination);
+            LogPrintf("%s: ZCPRINT pubCoin denom %d\n", __func__, pubCoin.getDenomination());
             if(!AddPubCoinToAccumulator(pubCoin)) {
                 LogPrintf("%s: failed to add pubcoin to accumulator at height %n\n", __func__, pindex->nHeight);
                 return false;
@@ -297,14 +306,17 @@ bool CAccumulators::IntializeWitnessAndAccumulator(const CZerocoinMint &zerocoin
     if(nChecksumBeforeMint != 2301755253) { //this is a zero value and wont initialize the accumulator. use existing.
         LogPrintf("ZCPRINT %s get acc val from checkpoint\n", __func__);
         CBigNum bnAccValue = GetAccumulatorValueFromCheckpoint(nChecksumBeforeMint, pubcoinSelected.getDenomination());
-        if (bnAccValue != 0) {
-            accumulator = Accumulator(Params().Zerocoin_Params(), pubcoinSelected.getDenomination(), bnAccValue);
-            witness = AccumulatorWitness(Params().Zerocoin_Params(), accumulator, pubcoinSelected);
-        }
         LogPrintf("ZCPRINT %s acc val %s\n", __func__, bnAccValue.GetHex());
+        if (bnAccValue != 0) {
+            LogPrintf("ZCPRINT %s assigning\n", __func__);
+            accumulator.setValue(bnAccValue);
+            LogPrintf("ZCPRINT %s assigning\n", __func__);
+            witness.resetValue(accumulator, pubcoinSelected);
+        }
     }
 
     //add the pubcoins up to the next checksum starting from the block
+    LogPrintf("ZCPRINT %s selected pubcoin %s\n", __func__, pubcoinSelected.getValue().GetHex());
     LogPrintf("ZCPRINT %s add pubcoins\n", __func__);
     pindex = chainActive[nStartAccumulationHeight];
     int nSecurityLevel = 1; //todo: this will be user defined, the more pubcoins that are added to the accumulator that is used, the more secure and untraceable it will be
@@ -335,9 +347,15 @@ bool CAccumulators::IntializeWitnessAndAccumulator(const CZerocoinMint &zerocoin
 
         //add the mints to the witness
         for(const CZerocoinMint mint : listMints) {
-            PublicCoin pubCoin(Params().Zerocoin_Params(), mint.GetValue(), IntToZerocoinDenomination(mint.GetDenominationAsInt()));
+            if(mint.GetDenominationAsInt() != pubcoinSelected.getDenomination())
+                continue;
+
+            PublicCoin pubCoin(Params().Zerocoin_Params(), mint.GetValue(), EnumValueToZerocoinDenomination(mint.GetDenominationAsInt()));
             witness += pubCoin;
             accumulator += pubCoin;
+            LogPrintf("%s : adding mint %s\n", __func__, pubCoin.getValue().GetHex());
+            LogPrintf("%s ZCPRINT witness:%s\n", __func__, witness.getValue().GetHex());
+            LogPrintf("%s ZCPRINT acc:%s\n", __func__, accumulator.getValue().GetHex());
         }
 
         pindex = chainActive[pindex->nHeight + 1];
