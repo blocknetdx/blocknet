@@ -3936,6 +3936,7 @@ bool CWallet::CreateZerocoinSpendTransaction(libzerocoin::CoinDenomination denom
                 if(mint.GetDenominationAsInt() == denomination && !mint.IsUsed()) {
                     zerocoinSelected = mint;
                     fSelected = true;
+                    break;
                 }
             }
             if(!fSelected) {
@@ -3946,7 +3947,7 @@ bool CWallet::CreateZerocoinSpendTransaction(libzerocoin::CoinDenomination denom
             // 2. Get pubcoin from the private coin
             LogPrintf("ZCPRINT %s step 2\n", __func__);
             libzerocoin::PublicCoin pubCoinSelected(Params().Zerocoin_Params(), zerocoinSelected.GetValue(), denomination);
-            LogPrintf("%s ZCPRINT pubCoinSelected denom=%d\n", __func__, denomination);
+            LogPrintf("%s ZCPRINT pubCoinSelected:\n denom=%d\n value%s\n", __func__, denomination, pubCoinSelected.getValue().GetHex());
             if (!pubCoinSelected.validate()) {
                 strFailReason = _("the selected mint coin is an invalid coin");
                 return false;
@@ -4038,10 +4039,10 @@ bool CWallet::CreateZerocoinSpendTransaction(libzerocoin::CoinDenomination denom
             for (const CBigNum& item : listCoinSpendSerial) {
                 if (spend.getCoinSerialNumber() == item) {
                     // THIS SELECEDTED COIN HAS BEEN USED, SO UPDATE ITS STATUS
-                    CZerocoinMint pubCoinTx(zerocoinSelected);
-                    pubCoinTx.SetUsed(true);
-                    pubCoinTx.SetTxHash(txNew.GetHash());
-                    CWalletDB(strWalletFile).WriteZerocoinMint(pubCoinTx);
+                    zerocoinSelected.SetUsed(true);
+                    if(!CWalletDB(strWalletFile).WriteZerocoinMint(zerocoinSelected))
+                        LogPrintf("%s failed to write zerocoinmint\n", __func__);
+
                     pwalletMain->NotifyZerocoinChanged(pwalletMain, zerocoinSelected.GetValue().GetHex(), "Used", CT_UPDATED);
                     strFailReason = _("the coin spend has been used");
                     return false;
@@ -4059,8 +4060,6 @@ bool CWallet::CreateZerocoinSpendTransaction(libzerocoin::CoinDenomination denom
             if (!CWalletDB(strWalletFile).WriteZerocoinSpendSerialEntry(zerocoinSpend)) {
                 strFailReason = _("it cannot write coin serial number into wallet");
             }
-
-
         }
     }
 
@@ -4225,20 +4224,13 @@ string CWallet::SpendZerocoin(libzerocoin::CoinDenomination denomination, CWalle
     }
     LogPrintf("%s: ZCPRINT tx created\n", __func__);
 
+    CWalletDB walletdb(pwalletMain->strWalletFile);
     if (!CommitZerocoinSpendTransaction(wtxNew, reservekey)) {
         LogPrintf("%s: ZCPRINT failed to commit\n", __func__);
-        CZerocoinMint pubCoinTx;
 
-        CWalletDB walletdb(pwalletMain->strWalletFile);
-        list<CZerocoinMint> listPubCoin = walletdb.ListLockedCoins();
-        for (const CZerocoinMint& pubCoinItem : listPubCoin) {
-            if (zerocoinSelected.GetValue() == pubCoinItem.GetValue()) {
-                pubCoinTx = pubCoinItem;
-                pubCoinTx.SetUsed(false); // having error, so set to false, to be able to use again
-                CWalletDB(strWalletFile).WriteZerocoinMint(pubCoinTx);
-                pwalletMain->NotifyZerocoinChanged(pwalletMain, pubCoinItem.GetValue().GetHex(), "New", CT_UPDATED);
-            }
-        }
+        zerocoinSelected.SetUsed(false); // having error, so set to false, to be able to use again
+        CWalletDB(strWalletFile).WriteZerocoinMint(zerocoinSelected);
+        pwalletMain->NotifyZerocoinChanged(pwalletMain, zerocoinSelected.GetValue().GetHex(), "New", CT_UPDATED);
 
         if (!CWalletDB(strWalletFile).EraseZerocoinSpendSerialEntry(zerocoinSpend.GetSerial())) {
             return _("Error: It cannot delete coin serial number in wallet");
@@ -4247,6 +4239,17 @@ string CWallet::SpendZerocoin(libzerocoin::CoinDenomination denomination, CWalle
         return _("Error: The transaction was rejected! This might happen if some of the coins in your wallet were already spent, such as if you used a copy of wallet.dat and coins were spent in the copy but not marked as spent here.");
     }
     LogPrintf("%s: ZCPRINT commit successful\n", __func__);
+
+    zerocoinSelected.SetUsed(true);
+    if(!CWalletDB(strWalletFile).WriteZerocoinMint(zerocoinSelected))
+        return _("Failed to write mint to db");
+
+    CZerocoinMint mintCheck;
+    if(!CWalletDB(strWalletFile).ReadZerocoinMint(zerocoinSelected.GetSerialNumber(), mintCheck))
+        return _("failed to read mintcheck");
+
+    if(!mintCheck.IsUsed())
+        return _("Error, the mint did not get marked as used");
 
     return "";
 }

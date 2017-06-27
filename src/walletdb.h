@@ -144,15 +144,14 @@ public:
     static bool Recover(CDBEnv& dbenv, std::string filename, bool fOnlyKeys);
     static bool Recover(CDBEnv& dbenv, std::string filename);
 
-    bool WriteZerocoinMint(const CZerocoinMint& zerocoin);
+    bool WriteZerocoinMint(const CZerocoinMint& zerocoinMint);
+    bool ReadZerocoinMint(const CBigNum &bnSerial, CZerocoinMint& zerocoinMint);
     std::list<CZerocoinMint> ListLockedCoins();
     std::list<CZerocoinSpend> ListUnlockedCoins();
     std::list<CBigNum> ListLockedCoinsSerial();
     std::list<CBigNum> ListUnlockedCoinsSerial();
     bool WriteZerocoinSpendSerialEntry(const CZerocoinSpend& zerocoinSpend);
     bool EraseZerocoinSpendSerialEntry(const CBigNum& serialEntry);
-    bool ReadCalculatedZCBlock(int& height);
-    bool WriteCalculatedZCBlock(int height);
 
 private:
     CWalletDB(const CWalletDB&);

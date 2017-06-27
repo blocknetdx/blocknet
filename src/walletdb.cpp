@@ -1011,24 +1011,16 @@ bool CWalletDB::EraseZerocoinSpendSerialEntry(const CBigNum& serialEntry)
     return Erase(make_pair(string("zcserial"), serialEntry));
 }
 
-bool CWalletDB::WriteZerocoinMint(const CZerocoinMint& zerocoin)
+bool CWalletDB::WriteZerocoinMint(const CZerocoinMint& zerocoinMint)
 {
-    return Write(make_pair(string("zerocoin"), zerocoin.GetValue()), zerocoin, true);
+    Erase(make_pair(string("zerocoin"), zerocoinMint.GetSerialNumber()));
+    return Write(make_pair(string("zerocoin"), zerocoinMint.GetSerialNumber()), zerocoinMint, true);
 }
 
-
-// Check Calculated Blocked for Zerocoin
-bool CWalletDB::ReadCalculatedZCBlock(int& height)
+bool CWalletDB::ReadZerocoinMint(const CBigNum &bnSerial, CZerocoinMint& zerocoinMint)
 {
-    height = 0;
-    return Read(std::string("calculatedzcblock"), height);
+    return Read(make_pair(string("zerocoin"), bnSerial), zerocoinMint);
 }
-
-bool CWalletDB::WriteCalculatedZCBlock(int height)
-{
-    return Write(std::string("calculatedzcblock"), height);
-}
-
 
 std::list<CZerocoinMint> CWalletDB::ListLockedCoins()
 {
@@ -1042,7 +1034,7 @@ std::list<CZerocoinMint> CWalletDB::ListLockedCoins()
         // Read next record
         CDataStream ssKey(SER_DISK, CLIENT_VERSION);
         if (fFlags == DB_SET_RANGE)
-            ssKey << make_pair(string("zerocoin"), CBigNum(0));
+            ssKey << make_pair(string("zerocoin"), uint256(0));
         CDataStream ssValue(SER_DISK, CLIENT_VERSION);
         int ret = ReadAtCursor(pcursor, ssKey, ssValue, fFlags);
         fFlags = DB_NEXT;
@@ -1060,7 +1052,7 @@ std::list<CZerocoinMint> CWalletDB::ListLockedCoins()
         if (strType != "zerocoin")
             break;
 
-        CBigNum value;
+        uint256 value;
         ssKey >> value;
 
         CZerocoinMint zerocoinItem;
