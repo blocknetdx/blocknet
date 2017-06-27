@@ -1040,8 +1040,7 @@ bool BlockToZerocoinMintList(const CBlock& block, std::list<CZerocoinMint>& vMin
             if(!TxOutToPublicCoin(txOut, pubCoin, state))
                 return false;
 
-            int64_t nDenominationAsInt = pubCoin.getDenomination();
-            CZerocoinMint mint = CZerocoinMint(nDenominationAsInt, pubCoin.getValue(), 0, 0, false);
+            CZerocoinMint mint = CZerocoinMint(pubCoin.getDenomination(), pubCoin.getValue(), 0, 0, false);
             mint.SetTxHash(tx.GetHash());
             vMints.push_back(mint);
         }

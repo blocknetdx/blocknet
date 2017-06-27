@@ -66,7 +66,7 @@ void Accumulator::accumulate(const PublicCoin& coin) {
 }
 
 CoinDenomination Accumulator::getDenomination() const {
-	return EnumValueToZerocoinDenomination(this->denomination);
+	return this->denomination;
 }
 
 const CBigNum& Accumulator::getValue() const {

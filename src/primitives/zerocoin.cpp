@@ -14,7 +14,7 @@ uint256 CZerocoinMint::GetHash() const
 
 CAmount CZerocoinMint::GetDenominationAsAmount() const
 {
-    return denominationAsInt * COIN;
+    return ZerocoinDenominationToAmount(denomination);
 }
 
 uint256 CZerocoinSpend::GetHash() const

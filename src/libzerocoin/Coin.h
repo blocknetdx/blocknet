@@ -45,7 +45,7 @@ public:
     PublicCoin(const ZerocoinParams* p, const CBigNum& coin, const CoinDenomination d);
     const CBigNum& getValue() const { return this->value; }
 
-    CoinDenomination getDenomination() const { return EnumValueToZerocoinDenomination(this->denomination); }
+    CoinDenomination getDenomination() const { return this->denomination; }
     bool operator==(const PublicCoin& rhs) const
     {
         return ((this->value == rhs.value) && (this->params == rhs.params) && (this->denomination == rhs.denomination));
@@ -69,9 +69,7 @@ public:
 private:
     const ZerocoinParams* params;
     CBigNum value;
-    // Denomination is stored as an INT because storing
-    // and enum raises amigiuities in the serialize code //FIXME if possible
-    int denomination;
+    CoinDenomination denomination;
 };
 
 /**

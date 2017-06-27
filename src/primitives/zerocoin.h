@@ -4,12 +4,13 @@
 #ifndef PIVX_ZEROCOIN_H
 #define PIVX_ZEROCOIN_H
 #include "libzerocoin/bignum.h"
+#include "libzerocoin/Denominations.h"
 #include "serialize.h"
 
 class CZerocoinMint
 {
 private:
-    int64_t denominationAsInt;
+    libzerocoin::CoinDenomination denomination;
     int nHeight;
     CBigNum value;
     CBigNum randomness;
@@ -23,9 +24,9 @@ public:
         SetNull();
     }
 
-    CZerocoinMint(int denomination, CBigNum value, CBigNum randomness, CBigNum serialNumber, bool isUsed)
+    CZerocoinMint(libzerocoin::CoinDenomination denom, CBigNum value, CBigNum randomness, CBigNum serialNumber, bool isUsed)
     {
-        this->denominationAsInt = denomination;
+        this->denomination = denom;
         this->value = value;
         this->randomness = randomness;
         this->serialNumber = serialNumber;
@@ -37,7 +38,7 @@ public:
         isUsed = false;
         randomness = 0;
         value = 0;
-        denominationAsInt = -1;
+        denomination = libzerocoin::ZQ_ERROR;
         nHeight = -1;
         txid = 0;
     }
@@ -46,9 +47,9 @@ public:
 
     CBigNum GetValue() const { return value; }
     void SetValue(CBigNum value){ this->value = value; }
-    int64_t GetDenominationAsInt() const { return denominationAsInt; }
+    libzerocoin::CoinDenomination GetDenomination() const { return denomination; }
     int64_t GetDenominationAsAmount() const;
-    void SetDenomination(int denomination){ this->denominationAsInt = denomination; }
+    void SetDenomination(libzerocoin::CoinDenomination denom){ this->denomination = denom; }
     int GetHeight() const { return nHeight; }
     void SetHeight(int nHeight){ this->nHeight = nHeight; }
     bool IsUsed() const { return this->isUsed; }
@@ -63,7 +64,7 @@ public:
     inline bool operator <(const CZerocoinMint& a) const { return GetHeight() < a.GetHeight(); }
 
     CZerocoinMint(const CZerocoinMint& other) {
-        denominationAsInt = other.GetDenominationAsInt();
+        denomination = other.GetDenomination();
         nHeight = other.GetHeight();
         value = other.GetValue();
         randomness = other.GetRandomness();
@@ -74,7 +75,7 @@ public:
     
     // Copy another CZerocoinMint
     inline CZerocoinMint& operator=(const CZerocoinMint& other) {
-        denominationAsInt = other.GetDenominationAsInt();
+        denomination = other.GetDenomination();
         nHeight = other.GetHeight();
         value = other.GetValue();
         randomness = other.GetRandomness();
@@ -86,7 +87,7 @@ public:
     
     // why 6 below (SPOCK)
     inline bool checkUnused(int denom, int Height) const {
-        if (IsUsed() == false && GetDenominationAsInt() == denominationAsInt && GetRandomness() != 0 && GetSerialNumber() != 0 && GetHeight() != -1 && GetHeight() != INT_MAX && GetHeight() >= 1 && (GetHeight() + 6 <= Height)) {
+        if (IsUsed() == false && GetDenomination() == denomination && GetRandomness() != 0 && GetSerialNumber() != 0 && GetHeight() != -1 && GetHeight() != INT_MAX && GetHeight() >= 1 && (GetHeight() + 6 <= Height)) {
             return true;
         } else {
             return false;
@@ -101,7 +102,7 @@ public:
         READWRITE(randomness);
         READWRITE(serialNumber);
         READWRITE(value);
-        READWRITE(denominationAsInt);
+        READWRITE(denomination);
         READWRITE(nHeight);
         READWRITE(txid);
     };
@@ -113,7 +114,7 @@ private:
     CBigNum coinSerial;
     uint256 hashTx;
     CBigNum pubCoin;
-    int denomination;
+    libzerocoin::CoinDenomination denomination;
     unsigned int nAccumulatorChecksum;
 
 public:
@@ -122,7 +123,7 @@ public:
         SetNull();
     }
 
-    CZerocoinSpend(CBigNum coinSerial, uint256 hashTx, CBigNum pubCoin, int denomination, unsigned int nAccumulatorChecksum)
+    CZerocoinSpend(CBigNum coinSerial, uint256 hashTx, CBigNum pubCoin, libzerocoin::CoinDenomination denomination, unsigned int nAccumulatorChecksum)
     {
         this->coinSerial = coinSerial;
         this->hashTx = hashTx;
@@ -136,13 +137,13 @@ public:
         coinSerial = 0;
         hashTx = 0;
         pubCoin = 0;
-        denomination = -1;
+        denomination = libzerocoin::ZQ_ERROR;
     }
 
     CBigNum GetSerial() const { return coinSerial; }
     uint256 GetTxHash() const { return hashTx; }
     CBigNum GetPubCoin() const { return pubCoin; }
-    int GetDenomination() const { return denomination; }
+    libzerocoin::CoinDenomination GetDenomination() const { return denomination; }
     unsigned int GetAccumulatorChecksum() const { return this->nAccumulatorChecksum; }
     uint256 GetHash() const;
  

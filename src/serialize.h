@@ -17,6 +17,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include "libzerocoin/Denominations.h"
 
 class CScript;
 
@@ -273,6 +274,8 @@ inline void Serialize(Stream& s, bool a, int, int = 0)
     char f = a;
     WRITEDATA(s, f);
 }
+
+
 template <typename Stream>
 inline void Unserialize(Stream& s, bool& a, int, int = 0)
 {
@@ -280,6 +283,23 @@ inline void Unserialize(Stream& s, bool& a, int, int = 0)
     READDATA(s, f);
     a = f;
 }
+// Serializatin for libzerocoin::CoinDenomination
+inline unsigned int GetSerializeSize(libzerocoin::CoinDenomination a, int, int = 0) { return sizeof(libzerocoin::CoinDenomination); }
+template <typename Stream>
+inline void Serialize(Stream& s, libzerocoin::CoinDenomination a, int, int = 0)
+{
+    int f = libzerocoin::ZerocoinDenominationToInt(a);
+    WRITEDATA(s, f);
+}
+
+template <typename Stream>
+inline void Unserialize(Stream& s, libzerocoin::CoinDenomination& a, int, int = 0)
+{
+    int f=0;
+    READDATA(s, f);
+    a = libzerocoin::IntToZerocoinDenomination(f);
+}
+
 
 
 /**

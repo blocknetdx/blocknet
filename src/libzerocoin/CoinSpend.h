@@ -94,9 +94,7 @@ public:
 
 private:
 	const uint256 signatureHash() const;
-	// Denomination is stored as an INT because storing
-	// and enum raises amigiuities in the serialize code //FIXME if possible
-	int denomination;
+	CoinDenomination denomination;
 	uint32_t accChecksum;
 	CBigNum accCommitmentToCoinValue;
 	CBigNum serialCommitmentToCoinValue;

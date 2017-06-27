@@ -95,9 +95,7 @@ public:
 private:
 	const AccumulatorAndProofParams* params;
 	CBigNum value;
-	// Denomination is stored as an INT because storing
-	// and enum raises amigiuities in the serialize code //FIXME if possible
-	int denomination;
+  CoinDenomination denomination;
 };
 
 /**A witness that a PublicCoin is in the accumulation of a set of coins

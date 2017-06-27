@@ -11,46 +11,8 @@
 #include "amount.h"
 
 namespace libzerocoin {
-
 // All denomination values should only exist in these routines for consistency.
 // For serialization/unserialization enums are converted to int (denoted enumvalue in function name)
-int64_t DenominationToEnumValue(const CoinDenomination denomination)
-{
-    int64_t Value = 0;
-    switch (denomination) {
-    case CoinDenomination::ZQ_ONE: Value = 1; break;
-    case CoinDenomination::ZQ_FIVE: Value = 2; break;
-    case CoinDenomination::ZQ_TEN: Value = 3; break;
-    case CoinDenomination::ZQ_FIFTY : Value = 4; break;
-    case CoinDenomination::ZQ_ONE_HUNDRED: Value = 5; break;
-    case CoinDenomination::ZQ_FIVE_HUNDRED: Value = 6; break;
-    case CoinDenomination::ZQ_ONE_THOUSAND: Value = 7; break;
-    case CoinDenomination::ZQ_FIVE_THOUSAND: Value = 8; break;
-    }
-
-    return Value;
-}
-
-CoinDenomination EnumValueToZerocoinDenomination(int64_t amount)
-{
-    CoinDenomination denomination;
-    switch (amount) {
-        case 1: denomination = CoinDenomination::ZQ_ONE; break;
-        case 2:	denomination = CoinDenomination::ZQ_FIVE; break;
-        case 3: denomination = CoinDenomination::ZQ_TEN; break;
-        case 4: denomination = CoinDenomination::ZQ_FIFTY; break;
-        case 5: denomination = CoinDenomination::ZQ_ONE_HUNDRED; break;
-        case 6: denomination = CoinDenomination::ZQ_FIVE_HUNDRED; break;
-        case 7: denomination = CoinDenomination::ZQ_ONE_THOUSAND; break;
-        case 8: denomination = CoinDenomination::ZQ_FIVE_THOUSAND; break;
-        default:
-            //not a valid denomination
-            denomination = CoinDenomination::ZQ_ERROR; break;
-    }
-
-    return denomination;
-}
-
 
 CoinDenomination IntToZerocoinDenomination(int64_t amount)
 {

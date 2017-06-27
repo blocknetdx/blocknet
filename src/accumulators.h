@@ -16,7 +16,7 @@ public:
         return instance;
     }
 private:
-    std::map<int64_t, std::unique_ptr<libzerocoin::Accumulator> > mapAccumulators;
+    std::map<libzerocoin::CoinDenomination, std::unique_ptr<libzerocoin::Accumulator> > mapAccumulators;
     std::map<CBigNum, uint256> mapPubCoins;
     std::map<CBigNum, uint256> mapSerials;
     std::map<uint32_t, CBigNum> mapAccumulatorValues;

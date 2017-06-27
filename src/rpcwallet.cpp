@@ -2353,7 +2353,7 @@ Value mintzerocoin(const Array& params, bool fHelp)
 
     if (fHelp || params.size() != 1)
         throw runtime_error(
-            "mintzerocoin <amount>(1,10,25,50,100)\n"
+            "mintzerocoin <amount>(1,5,10,50,100,500,1000,5000)\n"
             + HelpRequiringPassphrase());
 
     int64_t nTime = GetTimeMillis();
@@ -2364,7 +2364,7 @@ Value mintzerocoin(const Array& params, bool fHelp)
     CAmount nAmount = params[0].get_int() * COIN;
     libzerocoin::CoinDenomination denomination = libzerocoin::AmountToZerocoinDenomination(nAmount);
     if (denomination == libzerocoin::ZQ_ERROR)
-        return JSONRPCError(RPC_INVALID_PARAMETER, "mintzerocoin must be exact. Amount options: (1,10,25,50,100)\n");
+        return JSONRPCError(RPC_INVALID_PARAMETER, "mintzerocoin must be exact. Amount options: (1,5,10,50,100,500,1000,5000)\n");
 
     // The following constructor does all the work of minting a brand
     // new zerocoin. It stores all the private values inside the
@@ -2461,7 +2461,7 @@ Value resetmintzerocoin(const Array& params, bool fHelp)
 
     for (const CZerocoinMint& zerocoinItem : listPubcoin){
         if(zerocoinItem.GetRandomness() != 0 && zerocoinItem.GetSerialNumber() != 0){
-            CZerocoinMint zerocoinTx(zerocoinItem.GetDenominationAsInt(), zerocoinItem.GetValue(), zerocoinItem.GetRandomness(), zerocoinItem.GetSerialNumber(), false);
+            CZerocoinMint zerocoinTx(zerocoinItem.GetDenomination(), zerocoinItem.GetValue(), zerocoinItem.GetRandomness(), zerocoinItem.GetSerialNumber(), false);
             zerocoinTx.SetHeight(-1);
             walletdb.WriteZerocoinMint(zerocoinTx);
         }

@@ -3933,7 +3933,7 @@ bool CWallet::CreateZerocoinSpendTransaction(libzerocoin::CoinDenomination denom
             //todo add some sort of coin control style way to select which zerocoinmint to spend
             bool fSelected = false;
             for(const CZerocoinMint mint : listPubCoin) {
-                if(mint.GetDenominationAsInt() == denomination && !mint.IsUsed()) {
+                if(mint.GetDenomination() == denomination && !mint.IsUsed()) {
                     zerocoinSelected = mint;
                     fSelected = true;
                     break;
@@ -4056,7 +4056,7 @@ bool CWallet::CreateZerocoinSpendTransaction(libzerocoin::CoinDenomination denom
             wtxNew = CWalletTx(this, txNew);
             LogPrintf("ZCPRINT %s txhash wallet %s\n", __func__, wtxNew.GetHash().GetHex());
 
-            zerocoinSpend = CZerocoinSpend(spend.getCoinSerialNumber(), txNew.GetHash(), zerocoinSelected.GetValue(), zerocoinSelected.GetDenominationAsInt(), nAccumulatorChecksum);
+            zerocoinSpend = CZerocoinSpend(spend.getCoinSerialNumber(), txNew.GetHash(), zerocoinSelected.GetValue(), zerocoinSelected.GetDenomination(), nAccumulatorChecksum);
             if (!CWalletDB(strWalletFile).WriteZerocoinSpendSerialEntry(zerocoinSpend)) {
                 strFailReason = _("it cannot write coin serial number into wallet");
             }

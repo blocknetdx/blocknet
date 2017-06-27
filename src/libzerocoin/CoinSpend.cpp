@@ -58,10 +58,7 @@ CoinSpend::getCoinSerialNumber() {
 	return this->coinSerialNumber;
 }
 
-CoinDenomination
-CoinSpend::getDenomination() {
-	return EnumValueToZerocoinDenomination(this->denomination);
-}
+CoinDenomination CoinSpend::getDenomination() { return this->denomination; }
 
 uint32_t CoinSpend::getAccumulatorChecksum() {
 	return this->accChecksum;
@@ -70,7 +67,7 @@ uint32_t CoinSpend::getAccumulatorChecksum() {
 bool
 CoinSpend::Verify(const Accumulator& a) const {
 	// Verify both of the sub-proofs using the given meta-data
-  return  (a.getDenomination() == EnumValueToZerocoinDenomination(this->denomination))
+  return  (a.getDenomination() == this->denomination)
 	        && commitmentPoK.Verify(serialCommitmentToCoinValue, accCommitmentToCoinValue)
 	        && accumulatorPoK.Verify(a, accCommitmentToCoinValue)
 	        && serialNumberSoK.Verify(coinSerialNumber, serialCommitmentToCoinValue, signatureHash());
