@@ -3650,86 +3650,6 @@ bool CMerkleTx::IsTransactionLockTimedOut() const
 //////////------------------
 //////////------------------
 
-
-bool CWallet::CreateZerocoinMintModel(string& stringError, string denomAmount)
-{
-    if (!fFileBacked)
-        return false;
-
-    int64_t nAmount = libzerocoin::get_amount(denomAmount);
-    libzerocoin::CoinDenomination denomination = libzerocoin::get_denomination(denomAmount);
-
-    // The following constructor does all the work of minting a brand
-    // new zerocoin. It stores all the private values inside the
-    // PrivateCoin object. This includes the coin secrets, which must be
-    // stored in a secure location (wallet) at the client.
-    libzerocoin::PrivateCoin newCoin(Params().Zerocoin_Params(), denomination);
-
-    // Get a copy of the 'public' portion of the coin. You should
-    // embed this into a Zerocoin 'MINT' transaction along with a series
-    // of currency inputs totaling the assigned value of one zerocoin.
-    libzerocoin::PublicCoin pubCoin = newCoin.getPublicCoin();
-
-    // Validate
-    if (pubCoin.validate()) {
-        CScript scriptSerializedCoin = CScript() << OP_ZEROCOINMINT << pubCoin.getValue().getvch().size() << pubCoin.getValue().getvch();
-
-        // Wallet comments
-        CWalletTx wtx;
-
-        stringError = MintZerocoin(scriptSerializedCoin, nAmount, wtx);
-
-        if (stringError != "")
-            return false;
-
-        CZerocoinMint zerocoinTx(denomination, pubCoin.getValue(), newCoin.getRandomness(),
-            newCoin.getSerialNumber(), false);
-
-        NotifyZerocoinChanged(this, zerocoinTx.GetValue().GetHex(), zerocoinTx.IsUsed() ? "Used" : "New", CT_NEW);
-        if (!CWalletDB(strWalletFile).WriteZerocoinMint(zerocoinTx))
-            return false;
-        return true;
-    } else {
-        return false;
-    }
-}
-
-bool CWallet::CreateZerocoinSpendModel(string& stringError, string denomAmount)
-{
-    if (!fFileBacked)
-        return false;
-
-    libzerocoin::CoinDenomination denomination = libzerocoin::get_denomination(denomAmount);
-
-    // Wallet comments
-    CWalletTx wtx;
-    CZerocoinMint zerocoinSelected;
-    CZerocoinSpend zerocoinSpend;
-
-    stringError = SpendZerocoin(denomination, wtx, NULL, zerocoinSpend, zerocoinSelected);
-
-    if (stringError != "")
-        return false;
-
-    return true;
-}
-
-// Select a private coin that isn't used in wallet
-bool CWallet::selectPrivateCoin(list<CZerocoinMint>& listPubCoin, libzerocoin::CoinDenomination denomination, CZerocoinMint& zerocoinSelected)
-{
-    bool selectedPubcoin = false;
-
-    // (SPOCK) Why iterate through the list here, shouldn't only currentId match be sufficient?
-    for (const CZerocoinMint& zerocoinItem : listPubCoin) {
-        if (zerocoinItem.checkUnused(denomination, chainActive.Height())) {
-            zerocoinSelected = zerocoinItem;
-            selectedPubcoin = true;
-            break;
-        }
-    }
-    return selectedPubcoin;
-}
-
 bool CWallet::CreateZerocoinLockTransaction(const vector<pair<CScript, int64_t> >& vecSend,
     CWalletTx& wtxNew,
     CReserveKey& reservekey,
@@ -3872,7 +3792,7 @@ bool CWallet::CreateZerocoinLockTransaction(const vector<pair<CScript, int64_t> 
 }
 
 
-bool CWallet::CreateZerocoinSpendTransaction(libzerocoin::CoinDenomination denomination, CWalletTx& wtxNew, CReserveKey reserveKey, const CCoinControl* coinControl, CZerocoinSpend& zerocoinSpend,
+bool CWallet::CreateZerocoinSpendTransaction(libzerocoin::CoinDenomination denomination, CWalletTx& wtxNew, CReserveKey& reserveKey, const CCoinControl* coinControl, CZerocoinSpend& zerocoinSpend,
                                              CZerocoinMint& zerocoinSelected, std::string& strFailReason, CBitcoinAddress* address)
 {
     CAmount nValue = ZerocoinDenominationToAmount(denomination);
@@ -4051,62 +3971,12 @@ bool CWallet::CreateZerocoinSpendTransaction(libzerocoin::CoinDenomination denom
     return true;
 }
 
-bool CWallet::CreateTransaction(CScript scriptPubKey, int64_t nValue, CWalletTx& wtxNew, CReserveKey& reservekey, int64_t& nFeeRet, std::string& strFailReason, const CCoinControl* coinControl)
-{
-    vector<pair<CScript, int64_t> > vecSend;
-    vecSend.push_back(make_pair(scriptPubKey, nValue));
-    return CreateTransaction(vecSend, wtxNew, reservekey, nFeeRet, strFailReason, coinControl);
-}
-
 bool CWallet::CreateZerocoinLockTransaction(CScript pubCoin, int64_t nValue, CWalletTx& wtxNew, CReserveKey& reservekey, int64_t& nFeeRet, std::string& strFailReason, const CCoinControl* coinControl)
 {
     vector<pair<CScript, int64_t> > vecSend;
     vecSend.push_back(make_pair(pubCoin, nValue));
     return CreateZerocoinLockTransaction(vecSend, wtxNew, reservekey, nFeeRet, strFailReason, coinControl);
 }
-
-string CWallet::SendMoney(CScript scriptPubKey, int64_t nValue, CWalletTx& wtxNew, bool fAskFee)
-{
-    CReserveKey reservekey(this);
-    int64_t nFeeRequired;
-
-    if (IsLocked()) {
-        string strError = _("Error: Wallet locked, unable to create transaction!");
-        printf("SendMoney() : %s", strError.c_str());
-        return strError;
-    }
-    string strError;
-    if (!CreateTransaction(scriptPubKey, nValue, wtxNew, reservekey, nFeeRequired, strError)) {
-        if (nValue + nFeeRequired > GetBalance())
-            strError = strprintf(_("Error: This transaction requires a transaction fee of at least %s because of its amount, complexity, or use of recently received funds!"), FormatMoney(nFeeRequired).c_str());
-        printf("SendMoney() : %s\n", strError.c_str());
-        return strError;
-    }
-
-    /// HACK(SPOCK)
-    ///if (fAskFee && !uiInterface.ThreadSafeAskFee(nFeeRequired))         return "ABORTED";
-
-    if (!CommitTransaction(wtxNew, reservekey))
-        return _("Error: The transaction was rejected! This might happen if some of the coins in your wallet were already spent, such as if you used a copy of wallet.dat and coins were spent in the copy but not marked as spent here.");
-
-    return "";
-}
-
-
-string CWallet::SendMoneyToDestination(const CTxDestination& address, int64_t nValue, CWalletTx& wtxNew, bool fAskFee)
-{
-    // Check amount
-    if (nValue <= 0)
-        return _("Invalid amount");
-    // HACK(SPOCK)   if (nValue + nTransactionFee > GetBalance())
-    if (nValue > GetBalance())
-        return _("Insufficient funds");
-
-    // Parse Bitcoin address
-    CScript scriptPubKey = GetScriptForDestination(address);
-    return SendMoney(scriptPubKey, nValue, wtxNew, fAskFee);
-}
-
 
 string CWallet::MintZerocoin(CScript pubCoin, int64_t nValue, CWalletTx& wtxNew, bool fAskFee)
 {
