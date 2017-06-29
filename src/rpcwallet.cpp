@@ -2414,9 +2414,9 @@ Value mintzerocoin(const Array& params, bool fHelp)
 Value spendzerocoin(const Array& params, bool fHelp)
 {
 
-    if (fHelp || params.size() != 1)
+    if (fHelp || params.size() > 2)
         throw runtime_error(
-            "spendzerocoin <amount>(1,10,25,50,100)\n"
+            "spendzerocoin <amount(1,5,10,50,100,500,1000,5000)> <addressTo(optional)>\n"
             + HelpRequiringPassphrase());
 
     LogPrintf("***ZCPRINT RPC spendzerocoin\n");
@@ -2428,13 +2428,23 @@ Value spendzerocoin(const Array& params, bool fHelp)
     if (denomination == libzerocoin::ZQ_ERROR)
         return JSONRPCError(RPC_INVALID_PARAMETER, "mintzerocoin must be exact. Amount options: (1,10,25,50,100)\n");
 
+    CBitcoinAddress address;
+    if (params.size() == 2) {
+        address = CBitcoinAddress(params[1].get_str());
+        if(!address.IsValid())
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid PIVX address");
+    }
+
     LogPrintf("%s denomination %d\n", __func__, denomination);
 
     CWalletTx wtx;
     CZerocoinMint zerocoinSelected;
     CZerocoinSpend zerocoinSpend;
-    string strError = pwalletMain->SpendZerocoin(denomination, wtx,
-                                                 NULL,zerocoinSpend, zerocoinSelected);
+    string strError;
+    if(address.IsValid())
+        strError = pwalletMain->SpendZerocoin(denomination, wtx, NULL, zerocoinSpend, zerocoinSelected, &address);
+    else
+        strError = pwalletMain->SpendZerocoin(denomination, wtx, NULL, zerocoinSpend, zerocoinSelected);
 
     if (strError != "")
         throw JSONRPCError(RPC_WALLET_ERROR, strError);

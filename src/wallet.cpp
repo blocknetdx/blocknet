@@ -2518,16 +2518,19 @@ bool CWallet::CommitTransaction(CWalletTx& wtxNew, CReserveKey& reservekey, std:
             AddToWallet(wtxNew);
 
             // Notify that old coins are spent
-            set<uint256> updated_hahes;
-            BOOST_FOREACH (const CTxIn& txin, wtxNew.vin) {
-                // notify only once
-                if (updated_hahes.find(txin.prevout.hash) != updated_hahes.end()) continue;
+            if (!wtxNew.IsZerocoinSpend()) {
+                set<uint256> updated_hahes;
+                BOOST_FOREACH (const CTxIn& txin, wtxNew.vin) {
+                    // notify only once
+                    if (updated_hahes.find(txin.prevout.hash) != updated_hahes.end()) continue;
 
-                CWalletTx& coin = mapWallet[txin.prevout.hash];
-                coin.BindWallet(this);
-                NotifyTransactionChanged(this, txin.prevout.hash, CT_UPDATED);
-                updated_hahes.insert(txin.prevout.hash);
+                    CWalletTx& coin = mapWallet[txin.prevout.hash];
+                    coin.BindWallet(this);
+                    NotifyTransactionChanged(this, txin.prevout.hash, CT_UPDATED);
+                    updated_hahes.insert(txin.prevout.hash);
+                }
             }
+
             if (fFileBacked)
                 delete pwalletdb;
         }
@@ -3869,7 +3872,8 @@ bool CWallet::CreateZerocoinLockTransaction(const vector<pair<CScript, int64_t> 
 }
 
 
-bool CWallet::CreateZerocoinSpendTransaction(libzerocoin::CoinDenomination denomination, CWalletTx& wtxNew, CReserveKey& reservekey, const CCoinControl* coinControl, CZerocoinSpend& zerocoinSpend, CZerocoinMint& zerocoinSelected, std::string& strFailReason)
+bool CWallet::CreateZerocoinSpendTransaction(libzerocoin::CoinDenomination denomination, CWalletTx& wtxNew, CReserveKey reserveKey, const CCoinControl* coinControl, CZerocoinSpend& zerocoinSpend,
+                                             CZerocoinMint& zerocoinSelected, std::string& strFailReason, CBitcoinAddress* address)
 {
     CAmount nValue = ZerocoinDenominationToAmount(denomination);
     if (nValue <= 0) {
@@ -3887,43 +3891,27 @@ bool CWallet::CreateZerocoinSpendTransaction(libzerocoin::CoinDenomination denom
             txNew.vout.clear();
             //wtxNew.fFromMe = true;
 
-            CScript scriptChange;
-
-            // coin control: send change to custom address
-            if (coinControl && !boost::get<CNoDestination>(&coinControl->destChange))
-                scriptChange = GetScriptForDestination(coinControl->destChange);
-
-            // no coin control: send change to newly generated address
-            else {
-                // Note: We use a new key here to keep it from being obvious which side is the change.
-                //  The drawback is that by not reusing a previous key, the change may be lost if a
-                //  backup is restored, if the backup doesn't have the new private key for the change.
-                //  If we reused the old key, it would be possible to add code to look for and
-                //  rediscover unknown transactions that were written with keys of ours to recover
-                //  post-backup change.
-
+            //if there is an address to send to then use it, if not generate a new address to send to
+            CScript scriptZerocoinSpend;
+            if (address) {
+                scriptZerocoinSpend = GetScriptForDestination(address->Get());
+            } else {
                 // Reserve a new key pair from key pool
                 CPubKey vchPubKey;
-                bool ret = reservekey.GetReservedKey(vchPubKey);
-                assert(ret); // should never fail, as we just unlocked
-
-                scriptChange = GetScriptForDestination(vchPubKey.GetID());
+                bool ret = reserveKey.GetReservedKey(vchPubKey);
+                assert(ret); // should never fail
+                scriptZerocoinSpend = GetScriptForDestination(vchPubKey.GetID());
             }
 
-
-            CTxOut newTxOut(nValue, scriptChange);
-
-            // Insert change txn at random position:
-            vector<CTxOut>::iterator position = txNew.vout.begin() + GetRandInt(txNew.vout.size() + 1);
-            txNew.vout.insert(position, newTxOut);
+            //add output to pivx address to the transaction
+            CTxOut txOutZerocoinSpend(nValue, scriptZerocoinSpend);
+            txNew.vout.push_back(txOutZerocoinSpend);
 
             // Fill vin
-
-            // TODO: Create Zercoin spending transaction part
-            // 1. Selection a private coin that doesn't use in wallet
+            // 1. Select an unused private coin from the wallet
             // 2. Get pubcoin from the private coin
-            // 3. Compute Accomulator by you self by getting pubcoins value from wallet, but it must not include the public coin of the private that we select
-            // 4. Generate withness with follwing stmt
+            // 3. Compute Accumulator
+            // 4. Generate witness
 
             list<CZerocoinMint> listPubCoin = CWalletDB(strWalletFile).ListLockedCoins();
             listPubCoin.sort();
@@ -3995,8 +3983,6 @@ bool CWallet::CreateZerocoinSpendTransaction(libzerocoin::CoinDenomination denom
             // Deserialize the CoinSpend intro a fresh object
             CDataStream serializedCoinSpend(SER_NETWORK, PROTOCOL_VERSION);
             serializedCoinSpend << spend;
-
-            //Presstab: as far as I can see SpendMetaData is never used in libzerocoin
             std::vector<unsigned char> data(serializedCoinSpend.begin(), serializedCoinSpend.end());
 
             LogPrintf("ZCPRINT %s add to tx\n", __func__);
@@ -4018,7 +4004,6 @@ bool CWallet::CreateZerocoinSpendTransaction(libzerocoin::CoinDenomination denom
             } catch (...){
                 LogPrintf("ZCPRINT %s failed to deserialize\n", __func__);
             }
-
 
             LogPrintf("ZCPRINT %s verify spend\n", __func__);
             libzerocoin::CoinSpend newSpendChecking(Params().Zerocoin_Params(), serializedCoinSpendChecking);
@@ -4079,45 +4064,6 @@ bool CWallet::CreateZerocoinLockTransaction(CScript pubCoin, int64_t nValue, CWa
     vecSend.push_back(make_pair(pubCoin, nValue));
     return CreateZerocoinLockTransaction(vecSend, wtxNew, reservekey, nFeeRet, strFailReason, coinControl);
 }
-
-// Call after CreateZerocoinSpendTransaction unless you want to abort
-bool CWallet::CommitZerocoinSpendTransaction(CWalletTx& wtxNew, CReserveKey& reservekey)
-{
-    {
-        LOCK2(cs_main, cs_wallet);
-        LogPrintf("CommitZerocoinSpendTransaction:\n%s", wtxNew.ToString().c_str());
-        {
-            // This is only to keep the database open to defeat the auto-flush for the
-            // duration of this scope.  This is the only place where this optimization
-            // maybe makes sense; please don't do it anywhere else.
-            CWalletDB* pwalletdb = fFileBacked ? new CWalletDB(strWalletFile, "r") : NULL;
-
-            // Take key pair from key pool so it won't be used again
-            reservekey.KeepKey();
-
-            // Add tx to wallet, because if it has change it's also ours,
-            // otherwise just for transaction history.
-            AddToWallet(wtxNew);
-
-            if (fFileBacked)
-                delete pwalletdb;
-        }
-
-        // Track how many getdata requests our transaction gets
-        mapRequestCount[wtxNew.GetHash()] = 0;
-
-        // Broadcast
-        if (!wtxNew.AcceptToMemoryPool(false, false)) {
-            // This must not fail. The transaction has already been signed and recorded.
-            LogPrintf("CommitZerocoinSpendTransaction() : Error: Transaction not valid, failed to accept to mempool");
-            return false;
-        }
-
-        wtxNew.RelayWalletTransaction();
-    }
-    return true;
-}
-
 
 string CWallet::SendMoney(CScript scriptPubKey, int64_t nValue, CWalletTx& wtxNew, bool fAskFee)
 {
@@ -4202,14 +4148,12 @@ string CWallet::MintZerocoin(CScript pubCoin, int64_t nValue, CWalletTx& wtxNew,
     return "";
 }
 
-string CWallet::SpendZerocoin(libzerocoin::CoinDenomination denomination, CWalletTx& wtxNew, const CCoinControl* coinControl, CZerocoinSpend& zerocoinSpend, CZerocoinMint& zerocoinSelected)
+string CWallet::SpendZerocoin(libzerocoin::CoinDenomination denomination, CWalletTx& wtxNew, const CCoinControl* coinControl, CZerocoinSpend& zerocoinSpend, CZerocoinMint& zerocoinSelected, CBitcoinAddress* addressTo)
 {
     LogPrintf("%s: ZCPRINT\n", __func__);
     // Check denominations
     if (denomination == libzerocoin::ZQ_ERROR)
         return _("Invalid amount");
-
-    CReserveKey reservekey(this);
 
     if (IsLocked()) {
         string strError = _("Error: Wallet locked, unable to create transaction!");
@@ -4218,14 +4162,15 @@ string CWallet::SpendZerocoin(libzerocoin::CoinDenomination denomination, CWalle
     }
 
     string strError;
-    if (!CreateZerocoinSpendTransaction(denomination, wtxNew, reservekey, coinControl, zerocoinSpend, zerocoinSelected, strError)) {
+    CReserveKey reserveKey(this);
+    if (!CreateZerocoinSpendTransaction(denomination, wtxNew, reserveKey, coinControl, zerocoinSpend, zerocoinSelected, strError, addressTo)) {
         printf("SpendZerocoin() : %s\n", strError.c_str());
         return strError;
     }
     LogPrintf("%s: ZCPRINT tx created\n", __func__);
 
     CWalletDB walletdb(pwalletMain->strWalletFile);
-    if (!CommitZerocoinSpendTransaction(wtxNew, reservekey)) {
+    if (!CommitTransaction(wtxNew, reserveKey)) {
         LogPrintf("%s: ZCPRINT failed to commit\n", __func__);
 
         zerocoinSelected.SetUsed(false); // having error, so set to false, to be able to use again
