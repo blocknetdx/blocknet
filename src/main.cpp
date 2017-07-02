@@ -1048,6 +1048,52 @@ bool BlockToZerocoinMintList(const CBlock& block, std::list<CZerocoinMint>& vMin
     return true;
 }
 
+//return a list of zerocoin mints contained in a specific block
+std::list<CZerocoinMint> ZerocoinMintListFromBlock(const CBlock& block)
+{
+    std::list<CZerocoinMint> vMints;
+    for(const CTransaction tx : block.vtx) {
+        if(!tx.IsZerocoinMint())
+            continue;
+
+        for(const CTxOut txOut : tx.vout) {
+            if(!txOut.scriptPubKey.IsZerocoinMint())
+                continue;
+
+            CValidationState state;
+            PublicCoin pubCoin(Params().Zerocoin_Params());
+            if(!TxOutToPublicCoin(txOut, pubCoin, state))
+                return vMints;
+
+            CZerocoinMint mint = CZerocoinMint(pubCoin.getDenomination(), pubCoin.getValue(), 0, 0, false);
+            mint.SetTxHash(tx.GetHash());
+            vMints.push_back(mint);
+        }
+    }
+    return vMints;
+}
+
+//return a list of zerocoin spends contained in a specific block, list will have different denominations
+std::list<libzerocoin::CoinDenomination> ZerocoinSpendListFromBlock(const CBlock& block)
+{
+    std::list<libzerocoin::CoinDenomination> vSpends;
+    for(const CTransaction tx : block.vtx) {
+        if(!tx.IsZerocoinSpend())
+            continue;
+
+        for(const CTxIn txin : tx.vin) {
+            if(!txin.scriptSig.IsZerocoinSpend())
+                continue;
+
+            CAmount amount = tx.GetZerocoinSpent();
+            libzerocoin::CoinDenomination c = libzerocoin::AmountToZerocoinDenomination(amount);
+            vSpends.push_back(c);
+        }
+    }
+    return vSpends;
+}
+
+
 bool CheckZerocoinLock(const uint256& txHash, const CTxOut& txout, CValidationState& state, bool fCheckOnly)
 {
     LogPrintf("ZCPRINT %s\n", __func__);
@@ -2707,6 +2753,37 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
     CAmount nMoneySupplyPrev = pindex->pprev ? pindex->pprev->nMoneySupply : 0;
     pindex->nMoneySupply = nMoneySupplyPrev + nValueOut - nValueIn;
     pindex->nMint = pindex->nMoneySupply - nMoneySupplyPrev;
+
+    std::list<CZerocoinMint> vMints = ZerocoinMintListFromBlock(block);
+    std::list<libzerocoin::CoinDenomination> vSpends = ZerocoinSpendListFromBlock(block);
+
+    // Update from previous block
+    if (pindex->pprev) {
+        for (auto& denom : zerocoinDenomList) {
+            pindex->nZerocoinSupply.at(denom) = pindex->pprev->nZerocoinSupply.at(denom);
+        }
+    }
+    /*
+    for (auto& denom : zerocoinDenomList) {
+        LogPrintf("zero: %s BEFORE Update coins for denomination %d pubcoin %s\n", __func__,pindex->nZerocoinSupply.at(denom), denom);
+    }
+     */
+    if (pindex->pprev) {
+        for (auto& m : vMints) {
+            libzerocoin::CoinDenomination denom = m.GetDenomination();
+            pindex->nZerocoinSupply.at(denom) =  pindex->nZerocoinSupply.at(denom) + 1;
+        }
+        for (auto& denom : vSpends) {
+            pindex->nZerocoinSupply.at(denom) =  pindex->nZerocoinSupply.at(denom) - 1;
+        }
+    }
+
+
+    for (auto& denom : zerocoinDenomList) {
+        LogPrintf("zero: %s coins for denomination %d pubcoin %s\n", __func__,pindex->nZerocoinSupply.at(denom), denom);
+    }
+
+
 
     if (!pblocktree->WriteBlockIndex(CDiskBlockIndex(pindex)))
         return error("Connect() : WriteBlockIndex for pindex failed");

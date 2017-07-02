@@ -11,6 +11,7 @@
 #include "tinyformat.h"
 #include "uint256.h"
 #include "util.h"
+#include "libzerocoin/Denominations.h"
 
 #include <vector>
 
@@ -175,7 +176,11 @@ public:
 
     //! (memory only) Sequential id assigned to distinguish order in which blocks are received.
     uint32_t nSequenceId;
-
+    
+    //! zerocoin specific fields
+    std::map<libzerocoin::CoinDenomination, unsigned int> nZerocoinSupply;
+    std::map<libzerocoin::CoinDenomination, unsigned int> myZerocoinSupply;
+    
     void SetNull()
     {
         phashBlock = NULL;
@@ -205,6 +210,12 @@ public:
         nBits = 0;
         nNonce = 0;
         nAccumulatorCheckpoint = 0;
+        // Start supply of each denomination with 0s
+        for (auto& denom : libzerocoin::zerocoinDenomList) {
+            nZerocoinSupply.insert(make_pair(denom, 0));
+            myZerocoinSupply.insert(make_pair(denom, 0));
+        }
+
     }
 
     CBlockIndex()

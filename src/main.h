@@ -353,6 +353,9 @@ bool CheckZerocoinOverSpend(const CAmount nAmountRedeemed, const CTransaction &t
 libzerocoin::CoinSpend TxInToZerocoinSpend(const CTxIn& txin);
 bool TxOutToPublicCoin(const CTxOut txout, libzerocoin::PublicCoin& pubCoin, CValidationState& state);
 bool BlockToZerocoinMintList(const CBlock& block, std::list<CZerocoinMint>& vMints);
+std::list<CZerocoinMint> ZerocoinMintListFromBlock(const CBlock& block);
+std::list<libzerocoin::CoinDenomination> ZerocoinSpendListFromBlock(const CBlock& block);
+
 
 /**
  * Check if transaction will be final in the next block to be created.
