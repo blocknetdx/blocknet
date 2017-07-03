@@ -168,6 +168,11 @@ public:
         return (nValue < 3*minRelayTxFee.GetFee(nSize));
     }
 
+    bool IsZerocoinMint() const
+    {
+        return !scriptPubKey.empty() && scriptPubKey.IsZerocoinMint();
+    }
+
     friend bool operator==(const CTxOut& a, const CTxOut& b)
     {
         return (a.nValue       == b.nValue &&

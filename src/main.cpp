@@ -1210,8 +1210,13 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
         return state.DoS(100, error("CheckTransaction() : size limits failed"),
             REJECT_INVALID, "bad-txns-oversize");
 
+    // Only one zerocoin exchange per transaction
+    if (tx.IsZerocoinMint() && tx.IsZerocoinSpend())
+        return state.DoS(100, error("CheckTransaction() : zerocoin mint and spend in the same transaction"));
+
     // Check for negative or overflow output values
     CAmount nValueOut = 0;
+    unsigned int nMintCount = 0;
     BOOST_FOREACH (const CTxOut& txout, tx.vout) {
         if (txout.IsEmpty() && !tx.IsCoinBase() && !tx.IsCoinStake())
             return state.DoS(100, error("CheckTransaction(): txout empty for user transaction"));
@@ -1227,15 +1232,22 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
             return state.DoS(100, error("CheckTransaction() : txout total out of range"),
                 REJECT_INVALID, "bad-txns-txouttotal-toolarge");
 
-        if(!txout.scriptPubKey.empty() && txout.scriptPubKey.IsZerocoinMint()) {
+        if (txout.IsZerocoinMint()) {
             if(!CheckZerocoinLock(tx.GetHash(), txout, state, false))
                 return state.DoS(100, error("CheckTransaction() : invalid zerocoin mint"));
+
+            nMintCount++;
+            if(nMintCount > 1)
+                return state.DoS(100, error("CheckTransaction() : multiple zerocoin mints in one transaction"));
         }
     }
 
-    if(tx.IsZerocoinSpend())
-    {
+    if (tx.IsZerocoinSpend()) {
         LogPrintf("ZCPRINT %s: tx is a zerocoinspend \n", __func__);
+
+        if(tx.vin.size() != 1)
+            return state.DoS(100, error("CheckTransaction() : more than 1 inputs in a zerocoinspend"));
+
         for(const CTxOut& txout : tx.vout) {
             if(!CheckZerocoinSpend(tx.GetHash(), txout, tx.vin, state))
                 return state.DoS(100, error("CheckTransaction() : invalid zerocoin spend"));
