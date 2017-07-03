@@ -147,9 +147,9 @@ public:
     bool WriteZerocoinMint(const CZerocoinMint& zerocoinMint);
     bool ReadZerocoinMint(const CBigNum &bnSerial, CZerocoinMint& zerocoinMint);
     std::list<CZerocoinMint> ListMintedCoins();
-    std::list<CZerocoinSpend> ListUnlockedCoins();
+    std::list<CZerocoinSpend> ListSpentCoins();
     std::list<CBigNum> ListMintedCoinsSerial();
-    std::list<CBigNum> ListUnlockedCoinsSerial();
+    std::list<CBigNum> ListSpentCoinsSerial();
     bool WriteZerocoinSpendSerialEntry(const CZerocoinSpend& zerocoinSpend);
     bool EraseZerocoinSpendSerialEntry(const CBigNum& serialEntry);
 

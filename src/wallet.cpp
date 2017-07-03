@@ -1242,7 +1242,7 @@ CAmount CWallet::GetZerocoinBalance() const
     {
         LOCK2(cs_main, cs_wallet);
         list<CZerocoinMint> listPubCoin = CWalletDB(strWalletFile).ListMintedCoins();
-        list<CZerocoinSpend> listSpentCoins = CWalletDB(strWalletFile).ListUnlockedCoins();
+        list<CZerocoinSpend> listSpentCoins = CWalletDB(strWalletFile).ListSpentCoins();
         for(auto& mint : listPubCoin) {
             if (mint.IsUsed()) {
                 libzerocoin::CoinDenomination denom = mint.GetDenomination();
@@ -3956,7 +3956,7 @@ bool CWallet::CreateZerocoinSpendTransaction(libzerocoin::CoinDenomination denom
 //                return false;
 //            }
             LogPrintf("ZCPRINT %s listspend serial\n", __func__);
-            std::list<CBigNum> listCoinSpendSerial = CWalletDB(strWalletFile).ListUnlockedCoinsSerial();
+            std::list<CBigNum> listCoinSpendSerial = CWalletDB(strWalletFile).ListSpentCoinsSerial();
             for (const CBigNum& item : listCoinSpendSerial) {
                 if (spend.getCoinSerialNumber() == item) {
                     // THIS SELECEDTED COIN HAS BEEN USED, SO UPDATE ITS STATUS

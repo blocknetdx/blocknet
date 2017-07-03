@@ -1077,7 +1077,7 @@ std::list<CBigNum> CWalletDB::ListMintedCoinsSerial()
 }
 
 
-std::list<CZerocoinSpend> CWalletDB::ListUnlockedCoins()
+std::list<CZerocoinSpend> CWalletDB::ListSpentCoins()
 {
     std::list<CZerocoinSpend> listCoinSpend;
     Dbc* pcursor = GetCursor();
@@ -1121,10 +1121,10 @@ std::list<CZerocoinSpend> CWalletDB::ListUnlockedCoins()
 }
 
 // Just get the Serial Numbers
-std::list<CBigNum> CWalletDB::ListUnlockedCoinsSerial()
+std::list<CBigNum> CWalletDB::ListSpentCoinsSerial()
 {
     std::list<CBigNum> listPubCoin;
-    std::list<CZerocoinSpend> listCoins = ListUnlockedCoins();
+    std::list<CZerocoinSpend> listCoins = ListSpentCoins();
     
     for ( auto& coin : listCoins) {
         listPubCoin.push_back(coin.GetSerial());

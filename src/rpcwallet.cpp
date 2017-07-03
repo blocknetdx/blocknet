@@ -2338,7 +2338,7 @@ Value listunlockedzerocoins(const Array& params, bool fHelp)
         throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
 
     CWalletDB walletdb(pwalletMain->strWalletFile);
-    list<CBigNum> listPubCoin = walletdb.ListUnlockedCoinsSerial();
+    list<CBigNum> listPubCoin = walletdb.ListSpentCoinsSerial();
 
     Array jsonList;
     for (const CBigNum& pubCoinItem : listPubCoin) {
