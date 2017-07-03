@@ -1048,30 +1048,6 @@ bool BlockToZerocoinMintList(const CBlock& block, std::list<CZerocoinMint>& vMin
     return true;
 }
 
-//return a list of zerocoin mints contained in a specific block
-std::list<CZerocoinMint> ZerocoinMintListFromBlock(const CBlock& block)
-{
-    std::list<CZerocoinMint> vMints;
-    for(const CTransaction tx : block.vtx) {
-        if(!tx.IsZerocoinMint())
-            continue;
-
-        for(const CTxOut txOut : tx.vout) {
-            if(!txOut.scriptPubKey.IsZerocoinMint())
-                continue;
-
-            CValidationState state;
-            PublicCoin pubCoin(Params().Zerocoin_Params());
-            if(!TxOutToPublicCoin(txOut, pubCoin, state))
-                return vMints;
-
-            CZerocoinMint mint = CZerocoinMint(pubCoin.getDenomination(), pubCoin.getValue(), 0, 0, false);
-            mint.SetTxHash(tx.GetHash());
-            vMints.push_back(mint);
-        }
-    }
-    return vMints;
-}
 
 //return a list of zerocoin spends contained in a specific block, list will have different denominations
 std::list<libzerocoin::CoinDenomination> ZerocoinSpendListFromBlock(const CBlock& block)
@@ -2754,7 +2730,8 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
     pindex->nMoneySupply = nMoneySupplyPrev + nValueOut - nValueIn;
     pindex->nMint = pindex->nMoneySupply - nMoneySupplyPrev;
 
-    std::list<CZerocoinMint> vMints = ZerocoinMintListFromBlock(block);
+    std::list<CZerocoinMint> vMints;
+    BlockToZerocoinMintList(block, vMints);
     std::list<libzerocoin::CoinDenomination> vSpends = ZerocoinSpendListFromBlock(block);
 
     // Update from previous block
