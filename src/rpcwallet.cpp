@@ -2317,7 +2317,7 @@ Value listlockedzerocoins(const Array& params, bool fHelp)
         throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
 
     CWalletDB walletdb(pwalletMain->strWalletFile);
-    list<CBigNum> listPubCoin = walletdb.ListLockedCoinsSerial();
+    list<CBigNum> listPubCoin = walletdb.ListMintedCoinsSerial();
 
     Array jsonList;
     for (const CBigNum& pubCoinItem : listPubCoin) {
@@ -2467,7 +2467,7 @@ Value resetmintzerocoin(const Array& params, bool fHelp)
             + HelpRequiringPassphrase());
 
     CWalletDB walletdb(pwalletMain->strWalletFile);
-    list<CZerocoinMint> listPubcoin = walletdb.ListLockedCoins();
+    list<CZerocoinMint> listPubcoin = walletdb.ListMintedCoins();
 
     for (const CZerocoinMint& zerocoinItem : listPubcoin){
         if(zerocoinItem.GetRandomness() != 0 && zerocoinItem.GetSerialNumber() != 0){

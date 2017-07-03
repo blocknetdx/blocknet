@@ -49,6 +49,10 @@ using namespace libzerocoin;
 #error "PIVX cannot be compiled without assertions."
 #endif
 
+// 6 comes from OPCODE (1) + vch.size() (1) + BIGNUM size (4)
+#define SCRIPT_OFFSET 6
+// For Script size (BIGNUM/Uint256 size)
+#define BIGNUM_SIZE   4
 /**
  * Global state
  */
@@ -1004,8 +1008,7 @@ bool TxOutToPublicCoin(const CTxOut txout, PublicCoin& pubCoin, CValidationState
     CBigNum publicZerocoin;
     {
         vector<unsigned char> vchZeroMint;
-        // Still not sure why 6 is explicitly used below (SPOCK)
-        vchZeroMint.insert(vchZeroMint.end(), txout.scriptPubKey.begin() + 6,
+        vchZeroMint.insert(vchZeroMint.end(), txout.scriptPubKey.begin() + SCRIPT_OFFSET,
                            txout.scriptPubKey.begin() + txout.scriptPubKey.size());
 
         publicZerocoin.setvch(vchZeroMint);
@@ -1092,7 +1095,7 @@ CoinSpend TxInToZerocoinSpend(const CTxIn& txin)
     LogPrintf("ZCPRINT %s\n", __func__);
     // Deserialize the CoinSpend intro a fresh object
     std::vector<char, zero_after_free_allocator<char> > dataTxIn;
-    dataTxIn.insert(dataTxIn.end(), txin.scriptSig.begin() + 4, txin.scriptSig.end());
+    dataTxIn.insert(dataTxIn.end(), txin.scriptSig.begin() + BIGNUM_SIZE, txin.scriptSig.end());
 
     CDataStream serializedCoinSpend(dataTxIn, SER_NETWORK, PROTOCOL_VERSION);
     return CoinSpend(Params().Zerocoin_Params(), serializedCoinSpend);

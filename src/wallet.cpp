@@ -1236,6 +1236,27 @@ CAmount CWallet::GetBalance() const
     return nTotal;
 }
 
+CAmount CWallet::GetZerocoinBalance() const
+{
+    CAmount nTotal = 0;
+    {
+        LOCK2(cs_main, cs_wallet);
+        list<CZerocoinMint> listPubCoin = CWalletDB(strWalletFile).ListMintedCoins();
+        list<CZerocoinSpend> listSpentCoins = CWalletDB(strWalletFile).ListUnlockedCoins();
+        for(auto& mint : listPubCoin) {
+            if (mint.IsUsed()) {
+                libzerocoin::CoinDenomination denom = mint.GetDenomination();
+                nTotal += libzerocoin::ZerocoinDenominationToAmount(denom);
+            }
+        }
+        for(auto& spent : listSpentCoins) {
+            libzerocoin::CoinDenomination denom = spent.GetDenomination();
+            nTotal -= libzerocoin::ZerocoinDenominationToAmount(denom);
+        }
+    }
+    return nTotal;
+}
+
 CAmount CWallet::GetAnonymizableBalance() const
 {
     if (fLiteMode) return 0;
@@ -3645,11 +3666,6 @@ bool CMerkleTx::IsTransactionLockTimedOut() const
 
     return false;
 }
-//////////------------------
-//////////------------------
-//////////------------------
-//////////------------------
-
 bool CWallet::CreateZerocoinLockTransaction(const vector<pair<CScript, int64_t> >& vecSend,
     CWalletTx& wtxNew,
     CReserveKey& reservekey,
@@ -3833,7 +3849,7 @@ bool CWallet::CreateZerocoinSpendTransaction(libzerocoin::CoinDenomination denom
             // 3. Compute Accumulator
             // 4. Generate witness
 
-            list<CZerocoinMint> listPubCoin = CWalletDB(strWalletFile).ListLockedCoins();
+            list<CZerocoinMint> listPubCoin = CWalletDB(strWalletFile).ListMintedCoins();
             listPubCoin.sort();
 
             // 1. Select a private coin not used in wallet
@@ -4002,9 +4018,6 @@ string CWallet::MintZerocoin(CScript pubCoin, int64_t nValue, CWalletTx& wtxNew,
             return strprintf(_("Error: This transaction requires a transaction fee of at least %s because of its amount, complexity, or use of recently received funds!"), FormatMoney(nFeeRequired).c_str());
         return strError;
     }
-
-    ////
-    /// HACK(SPOCK) if (fAskFee && !uiInterface.ThreadSafeAskFee(nFeeRequired))        return "ABORTED";
 
     if (!CommitTransaction(wtxNew, reservekey)) {
         return _("Error: The transaction was rejected! This might happen if some of the coins in your wallet were already spent, such as if you used a copy of wallet.dat and coins were spent in the copy but not marked as spent here.");

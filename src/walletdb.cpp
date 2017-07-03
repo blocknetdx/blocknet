@@ -1022,7 +1022,7 @@ bool CWalletDB::ReadZerocoinMint(const CBigNum &bnSerial, CZerocoinMint& zerocoi
     return Read(make_pair(string("zerocoin"), bnSerial), zerocoinMint);
 }
 
-std::list<CZerocoinMint> CWalletDB::ListLockedCoins()
+std::list<CZerocoinMint> CWalletDB::ListMintedCoins()
 {
     std::list<CZerocoinMint> listPubCoin;
     Dbc* pcursor = GetCursor();
@@ -1065,10 +1065,10 @@ std::list<CZerocoinMint> CWalletDB::ListLockedCoins()
     return listPubCoin;
 }
 // Just get the Serial Numbers
-std::list<CBigNum> CWalletDB::ListLockedCoinsSerial()
+std::list<CBigNum> CWalletDB::ListMintedCoinsSerial()
 {
     std::list<CBigNum> listPubCoin;
-    std::list<CZerocoinMint> listCoins = ListLockedCoins();
+    std::list<CZerocoinMint> listCoins = ListMintedCoins();
     
     for ( auto& coin : listCoins) {
         listPubCoin.push_back(coin.GetSerialNumber());
