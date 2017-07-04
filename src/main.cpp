@@ -1185,10 +1185,17 @@ bool CheckZerocoinSpend(uint256 hashTx, const CTxOut txout, vector<CTxIn> vin, C
             return state.DoS(100, error("Zerocoinspend is already known"));
         fValidated = true;
 
-        //todo send signla to wallet if this is ours?
+
+        // Send signal to wallet if this is ours
         if (pwalletMain) {
-//            if(!SetZerocoinMintSpent(spendFromDB))
-//                return state.DoS(100, error("Failed to write zerocoin mint to database"));
+            CWalletDB walletdb(pwalletMain->strWalletFile);
+            list<CZerocoinMint> listPubCoin = walletdb.ListMintedCoins();
+            for (auto& pub : listPubCoin) {
+                if (pub.GetSerialNumber() == newSpend.getCoinSerialNumber()) {
+                    LogPrintf("ZCPRINT %s: %s is one of my Minted zerocoins \n", __func__, pub.GetSerialNumber().GetHex());
+                    pwalletMain->NotifyZerocoinChanged(pwalletMain, pub.GetValue().GetHex(), "Used", CT_UPDATED);
+                }
+            }
         }
 
     }
