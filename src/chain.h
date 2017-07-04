@@ -179,7 +179,6 @@ public:
     
     //! zerocoin specific fields
     std::map<libzerocoin::CoinDenomination, unsigned int> nZerocoinSupply;
-    std::map<libzerocoin::CoinDenomination, unsigned int> myZerocoinSupply;
     
     void SetNull()
     {
@@ -213,7 +212,6 @@ public:
         // Start supply of each denomination with 0s
         for (auto& denom : libzerocoin::zerocoinDenomList) {
             nZerocoinSupply.insert(make_pair(denom, 0));
-            myZerocoinSupply.insert(make_pair(denom, 0));
         }
 
     }
@@ -253,6 +251,7 @@ public:
             nStakeTime = 0;
         }
     }
+    
 
     CDiskBlockPos GetBlockPos() const
     {
@@ -287,6 +286,18 @@ public:
         block.nAccumulatorCheckpoint = nAccumulatorCheckpoint;
         return block;
     }
+
+    int64_t getZerocoinSupply() const
+    {
+        int64_t nTotal = 0;
+        for (auto& denom : libzerocoin::zerocoinDenomList) {
+            nTotal += libzerocoin::ZerocoinDenominationToAmount(denom) * nZerocoinSupply.at(denom);
+        }
+        return nTotal;
+    }
+
+
+
 
     uint256 GetBlockHash() const
     {

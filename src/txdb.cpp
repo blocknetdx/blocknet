@@ -237,9 +237,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts()
                 pindexNew->nStatus = diskindex.nStatus;
                 pindexNew->nTx = diskindex.nTx;
                 
-                pindexNew->nZerocoinSupply = diskindex.nZerocoinSupply;
-                pindexNew->myZerocoinSupply = diskindex.myZerocoinSupply;
-                
+                pindexNew->nZerocoinSupply = diskindex.nZerocoinSupply;                
 
                 //Proof Of Stake
                 pindexNew->nMint = diskindex.nMint;
