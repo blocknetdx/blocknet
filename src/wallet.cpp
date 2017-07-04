@@ -3666,7 +3666,7 @@ bool CMerkleTx::IsTransactionLockTimedOut() const
 
     return false;
 }
-bool CWallet::CreateZerocoinLockTransaction(const vector<pair<CScript, int64_t> >& vecSend,
+bool CWallet::CreateZerocoinMintTransaction(const vector<pair<CScript, int64_t> >& vecSend,
     CWalletTx& wtxNew,
     CReserveKey& reservekey,
     int64_t& nFeeRet,
@@ -3987,11 +3987,11 @@ bool CWallet::CreateZerocoinSpendTransaction(libzerocoin::CoinDenomination denom
     return true;
 }
 
-bool CWallet::CreateZerocoinLockTransaction(CScript pubCoin, int64_t nValue, CWalletTx& wtxNew, CReserveKey& reservekey, int64_t& nFeeRet, std::string& strFailReason, const CCoinControl* coinControl)
+bool CWallet::CreateZerocoinMintTransaction(CScript pubCoin, int64_t nValue, CWalletTx& wtxNew, CReserveKey& reservekey, int64_t& nFeeRet, std::string& strFailReason, const CCoinControl* coinControl)
 {
     vector<pair<CScript, int64_t> > vecSend;
     vecSend.push_back(make_pair(pubCoin, nValue));
-    return CreateZerocoinLockTransaction(vecSend, wtxNew, reservekey, nFeeRet, strFailReason, coinControl);
+    return CreateZerocoinMintTransaction(vecSend, wtxNew, reservekey, nFeeRet, strFailReason, coinControl);
 }
 
 string CWallet::MintZerocoin(CScript pubCoin, int64_t nValue, CWalletTx& wtxNew, bool fAskFee)
@@ -4013,7 +4013,7 @@ string CWallet::MintZerocoin(CScript pubCoin, int64_t nValue, CWalletTx& wtxNew,
     }
 
     string strError;
-    if (!CreateZerocoinLockTransaction(pubCoin, nValue, wtxNew, reservekey, nFeeRequired, strError)) {
+    if (!CreateZerocoinMintTransaction(pubCoin, nValue, wtxNew, reservekey, nFeeRequired, strError)) {
         if (nValue + nFeeRequired > GetBalance())
             return strprintf(_("Error: This transaction requires a transaction fee of at least %s because of its amount, complexity, or use of recently received funds!"), FormatMoney(nFeeRequired).c_str());
         return strError;

@@ -2305,12 +2305,12 @@ Value multisend(const Array& params, bool fHelp)
     return printMultiSend();
 }
 
-Value listlockedzerocoins(const Array& params, bool fHelp)
+Value listmintedzerocoins(const Array& params, bool fHelp)
 {
 
     if (fHelp || params.size() != 0)
         throw runtime_error(
-            "listlockedzerocoins\n"
+            "listmintedzerocoins\n"
             + HelpRequiringPassphrase());
 
     if (pwalletMain->IsLocked())
@@ -2326,12 +2326,12 @@ Value listlockedzerocoins(const Array& params, bool fHelp)
 
     return jsonList;
 }
-Value listunlockedzerocoins(const Array& params, bool fHelp)
+Value listspentzerocoins(const Array& params, bool fHelp)
 {
 
     if (fHelp || params.size() != 0)
         throw runtime_error(
-            "listlockedzerocoins\n"
+            "listspentzerocoins\n"
             + HelpRequiringPassphrase());
 
     if (pwalletMain->IsLocked())
@@ -2400,6 +2400,8 @@ Value mintzerocoin(const Array& params, bool fHelp)
         throw JSONRPCError(RPC_WALLET_ERROR, "pubcoin failed to validate");
 
     walletdb.WriteZerocoinMint(zerocoinTx);
+    pwalletMain->NotifyZerocoinChanged(pwalletMain, zerocoinTx.GetValue().GetHex(), "Used", CT_UPDATED);
+
 
     Object ret;
     ret.push_back(Pair("txid", wtx.GetHash().ToString()));
