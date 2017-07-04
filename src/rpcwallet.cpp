@@ -622,7 +622,7 @@ Value getbalance(const Array& params, bool fHelp)
     if (fHelp || params.size() > 3)
         throw runtime_error(
             "getbalance ( \"account\" minconf includeWatchonly )\n"
-            "\nIf account is not specified, returns the server's total available balance.\n"
+            "\nIf account is not specified, returns the server's total available balance (excluding zerocoins).\n"
             "If account is specified, returns the balance in the account.\n"
             "Note that the account \"\" is not the same as leaving the parameter out.\n"
             "The server total may be different to the balance in the default \"\" account.\n"
@@ -2303,6 +2303,20 @@ Value multisend(const Array& params, bool fHelp)
         }
     }
     return printMultiSend();
+}
+Value getzerocoinbalance(const Array& params, bool fHelp)
+{
+    
+    if (fHelp || params.size() != 0)
+        throw runtime_error(
+                            "getzerocoinbalance\n"
+                            + HelpRequiringPassphrase());
+    
+    if (pwalletMain->IsLocked())
+        throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
+    
+    return ValueFromAmount(pwalletMain->GetZerocoinBalance());
+
 }
 
 Value listmintedzerocoins(const Array& params, bool fHelp)

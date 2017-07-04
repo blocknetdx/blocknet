@@ -1244,10 +1244,10 @@ CAmount CWallet::GetZerocoinBalance() const
         list<CZerocoinMint> listPubCoin = CWalletDB(strWalletFile).ListMintedCoins();
         list<CZerocoinSpend> listSpentCoins = CWalletDB(strWalletFile).ListSpentCoins();
         for(auto& mint : listPubCoin) {
-            if (mint.IsUsed()) {
+            //if (mint.IsUsed()) {
                 libzerocoin::CoinDenomination denom = mint.GetDenomination();
                 nTotal += libzerocoin::ZerocoinDenominationToAmount(denom);
-            }
+            //}
         }
         for(auto& spent : listSpentCoins) {
             libzerocoin::CoinDenomination denom = spent.GetDenomination();
