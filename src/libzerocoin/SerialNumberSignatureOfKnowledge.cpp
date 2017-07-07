@@ -9,6 +9,7 @@
 * @copyright  Copyright 2013 Ian Miers, Christina Garman and Matthew Green
 * @license    This project is released under the MIT license.
 **/
+#include <streams.h>
 #include "SerialNumberSignatureOfKnowledge.h"
 
 namespace libzerocoin {
@@ -34,7 +35,7 @@ SerialNumberSignatureOfKnowledge::SerialNumberSignatureOfKnowledge(const
 	CBigNum h = params->serialNumberSoKCommitmentGroup.h;
 
 	CHashWriter hasher(0,0);
-	hasher << *params << commitmentToCoin.getCommitmentValue() << coin.getSerialNumber();
+	hasher << *params << commitmentToCoin.getCommitmentValue() << coin.getSerialNumber() << msghash;
 
 	vector<CBigNum> r(params->zkp_iterations);
 	vector<CBigNum> v(params->zkp_iterations);
@@ -42,19 +43,10 @@ SerialNumberSignatureOfKnowledge::SerialNumberSignatureOfKnowledge(const
 
 
 	for(uint32_t i=0; i < params->zkp_iterations; i++) {
-		//FIXME we really ought to use one BN_CTX for all of these
-		// operations for performance reasons, not the one that
-		// is created individually  by the wrapper
 		r[i] = CBigNum::randBignum(params->coinCommitmentGroup.groupOrder);
 		v[i] = CBigNum::randBignum(params->serialNumberSoKCommitmentGroup.groupOrder);
 	}
 
-	// Openssl's rng is not thread safe, so we don't call it in a parallel loop,
-	// instead we generate the random values beforehand and run the calculations
-	// based on those values in parallel.
-#ifdef ZEROCOIN_THREADING
-	#pragma omp parallel for
-#endif
 	for(uint32_t i=0; i < params->zkp_iterations; i++) {
 		// compute g^{ {a^x b^r} h^v} mod p2
 		c[i] = challengeCalculation(coin.getSerialNumber(), r[i], v[i]);
@@ -69,9 +61,6 @@ SerialNumberSignatureOfKnowledge::SerialNumberSignatureOfKnowledge(const
 	this->hash = hasher.GetHash();
 	unsigned char *hashbytes =  (unsigned char*) &hash;
 
-#ifdef ZEROCOIN_THREADING
-	#pragma omp parallel for
-#endif
 	for(uint32_t i = 0; i < params->zkp_iterations; i++) {
 		int bit = i % 8;
 		int byte = i / 8;
@@ -109,13 +98,11 @@ bool SerialNumberSignatureOfKnowledge::Verify(const CBigNum& coinSerialNumber, c
 	CBigNum g = params->serialNumberSoKCommitmentGroup.g;
 	CBigNum h = params->serialNumberSoKCommitmentGroup.h;
 	CHashWriter hasher(0,0);
-	hasher << *params << valueOfCommitmentToCoin << coinSerialNumber;
+	hasher << *params << valueOfCommitmentToCoin << coinSerialNumber << msghash;
 
 	vector<CBigNum> tprime(params->zkp_iterations);
 	unsigned char *hashbytes = (unsigned char*) &this->hash;
-#ifdef ZEROCOIN_THREADING
-	#pragma omp parallel for
-#endif
+
 	for(uint32_t i = 0; i < params->zkp_iterations; i++) {
 		int bit = i % 8;
 		int byte = i / 8;

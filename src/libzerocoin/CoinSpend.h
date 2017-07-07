@@ -57,9 +57,10 @@ public:
 	 * @param coin The coin to be spend
 	 * @param a The current accumulator containing the coin
 	 * @param witness The witness showing that the accumulator contains the coin
+	 * @param a hash of the partial transaction that contains this coin spend
 	 * @throw ZerocoinException if the process fails
 	 */
-	CoinSpend(const ZerocoinParams* p, const PrivateCoin& coin, Accumulator& a, const uint32_t checksum, const AccumulatorWitness& witness);
+	CoinSpend(const ZerocoinParams* p, const PrivateCoin& coin, Accumulator& a, const uint32_t checksum, const AccumulatorWitness& witness, const uint256& ptxHash);
 
 	/** Returns the serial number of the coin spend by this proof.
 	 *
@@ -75,14 +76,21 @@ public:
 
 	/**Gets the checksum of the accumulator used in this proof.
 	 *
-	 * @return the denomination
+	 * @return the checksum
 	 */
 	uint32_t getAccumulatorChecksum();
+
+    /**Gets the txout hash used in this proof.
+	 *
+	 * @return the txout hash
+	 */
+    uint256 getTxOutHash() const;
 
 	bool Verify(const Accumulator& a) const;
 	ADD_SERIALIZE_METHODS;
   template <typename Stream, typename Operation>  inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
 	    READWRITE(denomination);
+	    READWRITE(ptxHash);
 	  	READWRITE(accChecksum);
 	    READWRITE(accCommitmentToCoinValue);
 	    READWRITE(serialCommitmentToCoinValue);
@@ -96,6 +104,7 @@ private:
 	const uint256 signatureHash() const;
 	CoinDenomination denomination;
 	uint32_t accChecksum;
+	uint256 ptxHash;
 	CBigNum accCommitmentToCoinValue;
 	CBigNum serialCommitmentToCoinValue;
 	CBigNum coinSerialNumber;

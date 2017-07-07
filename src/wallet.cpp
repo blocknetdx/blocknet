@@ -3895,7 +3895,7 @@ bool CWallet::CreateZerocoinSpendTransaction(libzerocoin::CoinDenomination denom
             LogPrintf("ZCPRINT %s before get checksum\n", __func__);
             uint32_t nChecksum = CAccumulators::getInstance().GetChecksum(accumulator);
             LogPrintf("ZCPRINT %s checksum is %d\n", __func__, nChecksum);
-            libzerocoin::CoinSpend spend(Params().Zerocoin_Params(), privateCoin, accumulator, nChecksum, witness);
+            libzerocoin::CoinSpend spend(Params().Zerocoin_Params(), privateCoin, accumulator, nChecksum, witness, txOutZerocoinSpend.GetHash());
 
             // This is a sanity check. The CoinSpend object should always verify,
             // but why not check before we put it onto the wire?

@@ -14,8 +14,9 @@
 namespace libzerocoin {
 
 CoinSpend::CoinSpend(const ZerocoinParams* p, const PrivateCoin& coin,
-                     Accumulator& a, const uint32_t checksum, const AccumulatorWitness& witness):
+                     Accumulator& a, const uint32_t checksum, const AccumulatorWitness& witness, const uint256& ptxHash):
 	accChecksum(checksum),
+    ptxHash(ptxHash),
 	coinSerialNumber((coin.getSerialNumber())),
 	accumulatorPoK(&p->accumulatorParams),
 	serialNumberSoK(p),
@@ -64,6 +65,10 @@ uint32_t CoinSpend::getAccumulatorChecksum() {
 	return this->accChecksum;
 }
 
+uint256 CoinSpend::getTxOutHash() const {
+    return ptxHash;
+}
+
 bool
 CoinSpend::Verify(const Accumulator& a) const {
 	// Verify both of the sub-proofs using the given meta-data
@@ -75,7 +80,8 @@ CoinSpend::Verify(const Accumulator& a) const {
 
 const uint256 CoinSpend::signatureHash() const {
 	CHashWriter h(0,0);
-  h << serialCommitmentToCoinValue << accCommitmentToCoinValue << commitmentPoK << accumulatorPoK;
+    h << serialCommitmentToCoinValue << accCommitmentToCoinValue << commitmentPoK << accumulatorPoK << ptxHash
+            << coinSerialNumber << accChecksum << denomination;
 	return h.GetHash();
 }
 

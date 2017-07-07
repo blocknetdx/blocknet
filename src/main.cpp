@@ -1101,7 +1101,7 @@ CoinSpend TxInToZerocoinSpend(const CTxIn& txin)
     return CoinSpend(Params().Zerocoin_Params(), serializedCoinSpend);
 }
 
-bool CheckZerocoinSpendProperties(const CTxIn& txin, CoinSpend coinSpend, const Accumulator &accumulator,CValidationState& state)
+bool CheckZerocoinSpendProperties(const CTxIn& txin, CoinSpend coinSpend, const Accumulator &accumulator, CValidationState& state)
 {
     //if (txin.nSequence != 0)
       //  return state.DoS(100, error("CheckZerocoinSpend(): Error: nSequence is must be 0"));
@@ -1109,6 +1109,8 @@ bool CheckZerocoinSpendProperties(const CTxIn& txin, CoinSpend coinSpend, const 
     //Check that the coin is on the accumulator
     if (!coinSpend.Verify(accumulator))
         return state.DoS(100, error("CheckZerocoinSpend(): zerocoin spend did not verify"));
+
+
 
     return true;
 }
@@ -1160,17 +1162,16 @@ bool CheckZerocoinSpend(uint256 hashTx, const CTxOut txout, vector<CTxIn> vin, C
         if (!txin.scriptSig.IsZerocoinSpend())
             continue;
 
-                    //todo not checkable because we don't know the actual mint tx
-//        CTransaction txContainingMint;
-//        uint256 hashBlock;
-//                    LogPrintf("ZCPRINT %s txhash=%s\n", __func__, txin.prevout.hash.GetHex());
-//        if(!GetTransaction(txin.prevout.hash, txContainingMint, hashBlock))
-//            return state.DoS(100, error("CheckZerocoinSpend(): Unable to find transaction containing mint"));
-//
-//        if(!CheckZerocoinOverSpend(txout.nValue, txContainingMint, state))
-//            return state.DoS(100, error("CheckZerocoinSpend(): Zerocoinspend redeems different value than the mint it uses"));
-
         CoinSpend newSpend = TxInToZerocoinSpend(txin);
+
+        //double check the serialized denomination against the txout value
+        if (newSpend.getDenomination() != denomination)
+            return state.DoS(100, error("Zerocoinspend does not have the correct denomination"));
+
+        //make sure the txout has not changed
+        if (newSpend.getTxOutHash() != txout.GetHash())
+            return state.DoS(100, error("Zerocoinspend does not use the same txout that was used in the SoK"));
+
         //see if we have record of the accumulator used in the spend tx
         CBigNum bnAccumulatorValue = CAccumulators::getInstance().GetAccumulatorValueFromChecksum(newSpend.getAccumulatorChecksum());
         if(bnAccumulatorValue == 0)
