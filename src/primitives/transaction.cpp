@@ -51,7 +51,10 @@ std::string CTxIn::ToString() const
     str += "CTxIn(";
     str += prevout.ToString();
     if (prevout.IsNull())
-        str += strprintf(", coinbase %s", HexStr(scriptSig));
+        if(scriptSig.IsZerocoinSpend())
+            str += strprintf(", zerocoinspend %s", HexStr(scriptSig));
+        else
+            str += strprintf(", coinbase %s", HexStr(scriptSig));
     else
         str += strprintf(", scriptSig=%s", scriptSig.ToString().substr(0,24));
     if (nSequence != std::numeric_limits<unsigned int>::max())

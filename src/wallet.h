@@ -175,10 +175,12 @@ public:
     // Zerocoin additions
     bool CreateZerocoinMintTransaction(const std::vector<std::pair<CScript, int64_t> >& vecSend, CWalletTx& wtxNew, CReserveKey& reservekey, int64_t& nFeeRet, std::string& strFailReason, const CCoinControl* coinControl = NULL);
     bool CreateZerocoinMintTransaction(CScript pubCoin, int64_t nValue, CWalletTx& wtxNew, CReserveKey& reservekey, int64_t& nFeeRet, std::string& strFailReason, const CCoinControl* coinControl = NULL);
-    bool CreateZerocoinSpendTransaction(libzerocoin::CoinDenomination denomination, CWalletTx& wtxNew, CReserveKey& reserveKey, const CCoinControl* coinControl, CZerocoinSpend& zerocoinSpend,
-                                        CZerocoinMint& zerocoinSelected, std::string& strFailReason, CBitcoinAddress* address = NULL);
+    bool CreateZerocoinSpendTransaction(CWalletTx& wtxNew, CReserveKey& reserveKey, vector<CZerocoinSpend>& vSpends,
+                                                 vector<CZerocoinMint>& vSelectedMints, std::string& strFailReason, CBitcoinAddress* address = NULL, CAmount nValueMultipleSpends = 0);
+    void SelectMintsFromList(const CAmount nValueTarget, CAmount& nSelectedValue, vector<CZerocoinMint>& vSelectedMints);
+    bool MintToTxIn(CZerocoinMint zerocoinSelected, const uint256& hashTxOut, CTxIn& newTxIn, CZerocoinSpend& zerocoinSpend, string strFailReason);
     std::string MintZerocoin(CScript pubCoin, int64_t nValue, CWalletTx& wtxNew, bool fAskFee = false);
-    std::string SpendZerocoin(libzerocoin::CoinDenomination denomination, CWalletTx& wtxNew, const CCoinControl* coinControl, CZerocoinSpend& zerocoinSpend, CZerocoinMint& zerocoinSelected, CBitcoinAddress* addressTo = NULL);
+    std::string SpendZerocoin(CWalletTx& wtxNew, vector<CZerocoinSpend>& vSpends, vector<CZerocoinMint>& vMintsSelected, CBitcoinAddress* addressTo = NULL, CAmount nValueMultipleSpends = 0);
 
     /** Zerocin entry changed.
     * @note called with lock cs_wallet held.

@@ -3,6 +3,8 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #ifndef PIVX_ZEROCOIN_H
 #define PIVX_ZEROCOIN_H
+
+#include <amount.h>
 #include "libzerocoin/bignum.h"
 #include "libzerocoin/Denominations.h"
 #include "serialize.h"
@@ -48,7 +50,7 @@ public:
     CBigNum GetValue() const { return value; }
     void SetValue(CBigNum value){ this->value = value; }
     libzerocoin::CoinDenomination GetDenomination() const { return denomination; }
-    int64_t GetDenominationAsAmount() const;
+    int64_t GetDenominationAsAmount() const { return denomination * COIN; }
     void SetDenomination(libzerocoin::CoinDenomination denom){ this->denomination = denom; }
     int GetHeight() const { return nHeight; }
     void SetHeight(int nHeight){ this->nHeight = nHeight; }
@@ -142,6 +144,7 @@ public:
 
     CBigNum GetSerial() const { return coinSerial; }
     uint256 GetTxHash() const { return hashTx; }
+    void SetTxHash(uint256 hash) { this->hashTx = hash; }
     CBigNum GetPubCoin() const { return pubCoin; }
     libzerocoin::CoinDenomination GetDenomination() const { return denomination; }
     unsigned int GetAccumulatorChecksum() const { return this->nAccumulatorChecksum; }

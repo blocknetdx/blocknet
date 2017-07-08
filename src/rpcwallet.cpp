@@ -2432,17 +2432,16 @@ Value spendzerocoin(const Array& params, bool fHelp)
 
     if (fHelp || params.size() > 2)
         throw runtime_error(
-            "spendzerocoin <amount(1,5,10,50,100,500,1000,5000)> <addressTo(optional)>\n"
+            "spendzerocoin <amount> <address(optional)>\n"
+            "Convert zPiv into Piv. Send straight to an address or leave the address blank and the wallet will send to a change address.\n"
             + HelpRequiringPassphrase());
 
     LogPrintf("***ZCPRINT RPC spendzerocoin\n");
+    int64_t nTimeStart = GetTimeMillis();
     if (pwalletMain->IsLocked())
         throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
 
     CAmount nAmount = params[0].get_int() * COIN;
-    libzerocoin::CoinDenomination denomination = libzerocoin::AmountToZerocoinDenomination(nAmount);
-    if (denomination == libzerocoin::ZQ_ERROR)
-        return JSONRPCError(RPC_INVALID_PARAMETER, "mintzerocoin must be exact. Amount options: (1,10,25,50,100)\n");
 
     CBitcoinAddress address;
     if (params.size() == 2) {
@@ -2451,26 +2450,45 @@ Value spendzerocoin(const Array& params, bool fHelp)
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid PIVX address");
     }
 
-    LogPrintf("%s denomination %d\n", __func__, denomination);
-
     CWalletTx wtx;
-    CZerocoinMint zerocoinSelected;
-    CZerocoinSpend zerocoinSpend;
+    vector<CZerocoinMint> vMintsSelected;
+    vector<CZerocoinSpend> vSpends;
     string strError;
     if(address.IsValid())
-        strError = pwalletMain->SpendZerocoin(denomination, wtx, NULL, zerocoinSpend, zerocoinSelected, &address);
+        strError = pwalletMain->SpendZerocoin(wtx, vSpends, vMintsSelected, &address, nAmount);
     else
-        strError = pwalletMain->SpendZerocoin(denomination, wtx, NULL, zerocoinSpend, zerocoinSelected);
+        strError = pwalletMain->SpendZerocoin(wtx, vSpends, vMintsSelected, NULL, nAmount);
 
     if (strError != "")
         throw JSONRPCError(RPC_WALLET_ERROR, strError);
 
     Object ret;
     ret.push_back(Pair("txid", wtx.GetHash().ToString()));
-    ret.push_back(Pair("pubcoin", zerocoinSpend.GetPubCoin().GetHex()));
-    ret.push_back(Pair("serial", zerocoinSpend.GetSerial().GetHex()));
-    uint32_t nChecksum = zerocoinSpend.GetAccumulatorChecksum();
-    ret.push_back(Pair("acc_checksum", HexStr(BEGIN(nChecksum), END(nChecksum))));
+    ret.push_back(Pair("bytes", wtx.GetSerializeSize(SER_NETWORK, CTransaction::CURRENT_VERSION)));
+    ret.push_back(Pair("duration_millis", (GetTimeMillis() - nTimeStart)));
+    Array arrSpends;
+    for (CZerocoinSpend spend : vSpends) {
+        Object obj;
+        obj.push_back(Pair("denomination", spend.GetDenomination()));
+        obj.push_back(Pair("pubcoin", spend.GetPubCoin().GetHex()));
+        obj.push_back(Pair("serial", spend.GetSerial().GetHex()));
+        uint32_t nChecksum = spend.GetAccumulatorChecksum();
+        obj.push_back(Pair("acc_checksum", HexStr(BEGIN(nChecksum), END(nChecksum))));
+        arrSpends.push_back(obj);
+    }
+    ret.push_back(Pair("spends", arrSpends));
+
+    Array vout;
+    for (unsigned int i = 0; i < wtx.vout.size(); i++) {
+        const CTxOut& txout = wtx.vout[i];
+        Object out;
+        out.push_back(Pair("value", ValueFromAmount(txout.nValue)));
+        CTxDestination dest;
+        if(ExtractDestination(txout.scriptPubKey, dest))
+            out.push_back(Pair("address", CBitcoinAddress(dest).ToString()));
+        vout.push_back(out);
+    }
+    ret.push_back(Pair("outputs", vout));
 
     return ret;
 }

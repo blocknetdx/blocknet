@@ -256,7 +256,7 @@ public:
 
     bool IsZerocoinSpend() const
     {
-        return (vin.size() == 1 && vin[0].prevout.IsNull() && (vin[0].scriptSig[0] == OP_ZEROCOINSPEND) && (vout.size() == 1) );
+        return (vin[0].prevout.IsNull() && vin[0].scriptSig[0] == OP_ZEROCOINSPEND);
     }
 
     bool IsZerocoinMint() const

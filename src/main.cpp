@@ -1144,32 +1144,43 @@ bool CheckZerocoinOverSpend(const CAmount nAmountRedeemed, const CTransaction &t
     return true;
 }
 
-bool CheckZerocoinSpend(uint256 hashTx, const CTxOut txout, vector<CTxIn> vin, CValidationState& state)
+bool CheckZerocoinSpend(const CTransaction tx, CValidationState& state)
 {
     LogPrintf("ZCPRINT %s\n", __func__);
 
     if(GetAdjustedTime() < Params().Zerocoin_ProtocolActivationTime())
         return state.DoS(100, error("CheckZerocoinSpend(): Zerocoin transactions are not allowed yet"));
 
-    CoinDenomination denomination = AmountToZerocoinDenomination(txout.nValue);
-    if (denomination == ZQ_ERROR)
-        return state.DoS(100, error("CheckZerocoinSpend(): Zerocoin spend does not have valid denomination"));
+    //max needed outputs should be 2 - one for redemption address and a possible 2nd for change
+    if (tx.vout.size() > 2)
+        return state.DoS(100, error("CheckZerocoinSpend(): over two outputs in a zerocoinspend transaction"));
+
+    //compute the txout hash that is used for the zerocoinspend signatures
+    CMutableTransaction txTemp;
+    for (const CTxOut out : tx.vout) {
+        txTemp.vout.push_back(out);
+    }
+    uint256 hashTxOut = txTemp.GetHash();
 
     bool fValidated = false;
-    BOOST_FOREACH(const CTxIn& txin, vin) {
+    set<CBigNum> serials;
+    vector<CoinSpend> vSpends;
+    CAmount nTotalRedeemed = 0;
+    BOOST_FOREACH(const CTxIn& txin, tx.vin) {
 
         //only check txin that is a zcspend
         if (!txin.scriptSig.IsZerocoinSpend())
             continue;
 
         CoinSpend newSpend = TxInToZerocoinSpend(txin);
+        vSpends.push_back(newSpend);
 
         //double check the serialized denomination against the txout value
-        if (newSpend.getDenomination() != denomination)
+        if (newSpend.getDenomination() == ZQ_ERROR)
             return state.DoS(100, error("Zerocoinspend does not have the correct denomination"));
 
         //make sure the txout has not changed
-        if (newSpend.getTxOutHash() != txout.GetHash())
+        if (newSpend.getTxOutHash() != hashTxOut)
             return state.DoS(100, error("Zerocoinspend does not use the same txout that was used in the SoK"));
 
         //see if we have record of the accumulator used in the spend tx
@@ -1182,23 +1193,36 @@ bool CheckZerocoinSpend(uint256 hashTx, const CTxOut txout, vector<CTxIn> vin, C
         if(!CheckZerocoinSpendProperties(txin, newSpend, accumulator, state))
             return state.DoS(100, error("Zerocoinspend properties are not valid"));
 
-        if(!IsZerocoinSpendUnknown(newSpend, hashTx, state))
+        if (serials.count(newSpend.getCoinSerialNumber()))
+            return state.DoS(100, error("Zerocoinspend serial is used twice in the same tx"));
+        serials.insert(newSpend.getCoinSerialNumber());
+
+        if(!IsZerocoinSpendUnknown(newSpend, tx.GetHash(), state))
             return state.DoS(100, error("Zerocoinspend is already known"));
+
+        //make sure that there is no over redemption of coins
+        nTotalRedeemed += ZerocoinDenominationToAmount(newSpend.getDenomination());
         fValidated = true;
+    }
 
+    if (nTotalRedeemed < tx.GetValueOut()) {
+        LogPrintf("redeemed = %s , spend = %s \n", FormatMoney(nTotalRedeemed), FormatMoney(tx.GetValueOut()));
+        return state.DoS(100, error("Transaction spend more than was redeemed in zerocoins"));
+    }
 
-        // Send signal to wallet if this is ours
-        if (pwalletMain) {
+    // Send signal to wallet if this is ours
+    if (pwalletMain) {
+        for (CoinSpend newSpend : vSpends) {
             CWalletDB walletdb(pwalletMain->strWalletFile);
-            list<CZerocoinMint> listPubCoin = walletdb.ListMintedCoins();
-            for (auto& pub : listPubCoin) {
-                if (pub.GetSerialNumber() == newSpend.getCoinSerialNumber()) {
-                    LogPrintf("ZCPRINT %s: %s is one of my Minted zerocoins \n", __func__, pub.GetSerialNumber().GetHex());
+            list <CZerocoinMint> listPubCoin = walletdb.ListMintedCoins();
+            for(auto &pub : listPubCoin) {
+                if(pub.GetSerialNumber() == newSpend.getCoinSerialNumber()) {
+                    LogPrintf("ZCPRINT %s: %s is one of my Minted zerocoins \n", __func__,
+                              pub.GetSerialNumber().GetHex());
                     pwalletMain->NotifyZerocoinChanged(pwalletMain, pub.GetValue().GetHex(), "Used", CT_UPDATED);
                 }
             }
         }
-
     }
 
     return fValidated;
@@ -1253,22 +1277,29 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
     if (tx.IsZerocoinSpend()) {
         LogPrintf("ZCPRINT %s: tx is a zerocoinspend \n", __func__);
 
-        if(tx.vin.size() != 1)
-            return state.DoS(100, error("CheckTransaction() : more than 1 inputs in a zerocoinspend"));
-
-        for(const CTxOut& txout : tx.vout) {
-            if(!CheckZerocoinSpend(tx.GetHash(), txout, tx.vin, state))
-                return state.DoS(100, error("CheckTransaction() : invalid zerocoin spend"));
+        //require that a zerocoinspend only has inputs that are zerocoins
+        for (const CTxIn in : tx.vin) {
+            if (!in.scriptSig.IsZerocoinSpend())
+                return state.DoS(100, error("CheckTransaction() : zerocoinspend contains inputs that are not zerocoins"));
         }
+
+
+        if(!CheckZerocoinSpend(tx, state))
+            return state.DoS(100, error("CheckTransaction() : invalid zerocoin spend"));
+
     }
 
     // Check for duplicate inputs
     set<COutPoint> vInOutPoints;
+    set<CBigNum> vZerocoinSpendSerials;
     BOOST_FOREACH (const CTxIn& txin, tx.vin) {
         if (vInOutPoints.count(txin.prevout))
             return state.DoS(100, error("CheckTransaction() : duplicate inputs"),
                 REJECT_INVALID, "bad-txns-inputs-duplicate");
-        vInOutPoints.insert(txin.prevout);
+
+        //duplicate zcspend serials are checked in CheckZerocoinSpend()
+        if (!txin.scriptSig.IsZerocoinSpend())
+            vInOutPoints.insert(txin.prevout);
     }
 
     //todo double check this is robust enough for checks
@@ -1277,11 +1308,11 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
             return state.DoS(100, error("CheckTransaction() : coinbase script size=%d", tx.vin[0].scriptSig.size()),
                 REJECT_INVALID, "bad-cb-length");
     } else if(tx.IsZerocoinSpend()) {
-        if(tx.vin.size() != 1)
-            return state.DoS(10, error("CheckTransaction() : Zerocoin Spend has more than 1 txin"), REJECT_INVALID, "bad-zerocoinspend");
+        //if(tx.vin.size() != 1)
+          //  return state.DoS(10, error("CheckTransaction() : Zerocoin Spend has more than 1 txin"), REJECT_INVALID, "bad-zerocoinspend");
     } else {
         BOOST_FOREACH (const CTxIn& txin, tx.vin)
-            if (txin.prevout.IsNull())
+            if (txin.prevout.IsNull() && !txin.scriptSig.IsZerocoinSpend())
                 return state.DoS(10, error("CheckTransaction() : prevout is null"),
                     REJECT_INVALID, "bad-txns-prevout-null");
     }

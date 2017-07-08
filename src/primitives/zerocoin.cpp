@@ -12,10 +12,10 @@ uint256 CZerocoinMint::GetHash() const
     return Hash(BEGIN(value), END(value));
 }
 
-CAmount CZerocoinMint::GetDenominationAsAmount() const
-{
-    return ZerocoinDenominationToAmount(denomination);
-}
+//CAmount CZerocoinMint::GetDenominationAsAmount() const
+//{
+//    return ZerocoinDenominationToAmount(denomination);
+//}
 
 uint256 CZerocoinSpend::GetHash() const
 {
