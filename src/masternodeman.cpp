@@ -372,7 +372,7 @@ int CMasternodeMan::stable_size ()
 
     return nStable_size;
 }
-    
+
 int CMasternodeMan::CountEnabled(int protocolVersion)
 {
     int i = 0;

@@ -1972,6 +1972,9 @@ int64_t GetMasternodePayment(int nHeight, int64_t blockValue, int nMasternodeCou
         // Use this log to compare the masternode count for different clients
         LogPrintf("Adjusting seesaw at height %d with %d masternodes (without drift: %d) at %ld\n", nHeight, nMasternodeCount, nMasternodeCount - Params().MasternodeCountDrift(), GetTime());
 
+        // Use this log to compare the masternode count for different clients
+        LogPrintf("Adjusting seesaw at height %d with %d masternodes (without drift: %d) at %ld\n", nHeight, nMasternodeCount, nMasternodeCount - Params().MasternodeCountDrift(), GetTime());
+
         if (fDebug)
             LogPrintf("GetMasternodePayment(): moneysupply=%s, nodecoins=%s \n", FormatMoney(nMoneySupply).c_str(),
                 FormatMoney(mNodeCoins).c_str());
@@ -2777,7 +2780,6 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
             pindex->nZerocoinSupply.at(denom) =  pindex->nZerocoinSupply.at(denom) - 1;
         }
     }
-
 
     for (auto& denom : zerocoinDenomList) {
         LogPrintf("zero: %s coins for denomination %d pubcoin %s\n", __func__,pindex->nZerocoinSupply.at(denom), denom);
