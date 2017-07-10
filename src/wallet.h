@@ -175,8 +175,7 @@ public:
     // Zerocoin additions
     bool CreateZerocoinMintTransaction(const std::vector<std::pair<CScript, int64_t> >& vecSend, CWalletTx& wtxNew, CReserveKey& reservekey, int64_t& nFeeRet, std::string& strFailReason, const CCoinControl* coinControl = NULL);
     bool CreateZerocoinMintTransaction(CScript pubCoin, int64_t nValue, CWalletTx& wtxNew, CReserveKey& reservekey, int64_t& nFeeRet, std::string& strFailReason, const CCoinControl* coinControl = NULL);
-    bool CreateZerocoinSpendTransaction(CWalletTx& wtxNew, CReserveKey& reserveKey, vector<CZerocoinSpend>& vSpends,
-                                                 vector<CZerocoinMint>& vSelectedMints, std::string& strFailReason, CBitcoinAddress* address = NULL, CAmount nValueMultipleSpends = 0);
+    bool CreateZerocoinSpendTransaction(CWalletTx& wtxNew, CReserveKey& reserveKey, vector<CZerocoinSpend>& vSpends, vector<CZerocoinMint>& vSelectedMints, std::string& strFailReason, CBitcoinAddress* address = NULL, CAmount nValueMultipleSpends = 0);
     void SelectMintsFromList(const CAmount nValueTarget, CAmount& nSelectedValue, vector<CZerocoinMint>& vSelectedMints);
     bool MintToTxIn(CZerocoinMint zerocoinSelected, const uint256& hashTxOut, CTxIn& newTxIn, CZerocoinSpend& zerocoinSpend, string strFailReason);
     std::string MintZerocoin(CScript pubCoin, int64_t nValue, CWalletTx& wtxNew, bool fAskFee = false);
@@ -400,6 +399,8 @@ public:
     void ResendWalletTransactions();
     CAmount GetBalance() const;
     CAmount GetZerocoinBalance() const;
+    std::map<libzerocoin::CoinDenomination, unsigned int> GetZerocoinDenomAmounts() const;
+    std::map<libzerocoin::CoinDenomination, CAmount> GetMyZerocoinDistribution() const;
     CAmount GetUnconfirmedBalance() const;
     CAmount GetImmatureBalance() const;
     CAmount GetAnonymizableBalance() const;

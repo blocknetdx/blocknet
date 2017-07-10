@@ -1256,6 +1256,37 @@ CAmount CWallet::GetZerocoinBalance() const
     }
     return nTotal;
 }
+// Get a Map pairing the Denominations with the amount of Zerocoin for each Denomination
+std::map<libzerocoin::CoinDenomination, unsigned int> CWallet::GetZerocoinDenomAmounts() const
+{
+    std::map<libzerocoin::CoinDenomination, unsigned int> spread;
+    for(const auto& denom : libzerocoin::zerocoinDenomList) spread.at(denom) = 0;
+    {
+        LOCK2(cs_main, cs_wallet);
+        list<CZerocoinMint> listPubCoin = CWalletDB(strWalletFile).ListMintedCoins();
+        list<CZerocoinSpend> listSpentCoins = CWalletDB(strWalletFile).ListSpentCoins();
+        for(auto& mint : listPubCoin) spread.at(mint.GetDenomination())++;
+        for(auto& spent : listSpentCoins) spread.at(spent.GetDenomination())--;
+    }
+    return spread;
+}
+// Get a Map pairing the Denominations with the amount of Zerocoin for each Denomination with Value in CAmount instead of
+// zerocoins
+std::map<libzerocoin::CoinDenomination, CAmount> CWallet::GetMyZerocoinDistribution() const
+{
+    std::map<libzerocoin::CoinDenomination, CAmount> spread;
+    for(const auto& denom : libzerocoin::zerocoinDenomList) spread.insert(std::pair<libzerocoin::CoinDenomination,CAmount>(denom,0));
+    {
+        LOCK2(cs_main, cs_wallet);
+        list<CZerocoinMint> listPubCoin = CWalletDB(strWalletFile).ListMintedCoins();
+        list<CZerocoinSpend> listSpentCoins = CWalletDB(strWalletFile).ListSpentCoins();
+        for(auto& mint : listPubCoin) spread.at(mint.GetDenomination()) +=
+                                          libzerocoin::ZerocoinDenominationToAmount(mint.GetDenomination());
+        for(auto& spent : listSpentCoins) spread.at(spent.GetDenomination()) -=
+                                          libzerocoin::ZerocoinDenominationToAmount(spent.GetDenomination());
+    }
+    return spread;
+}
 
 CAmount CWallet::GetAnonymizableBalance() const
 {
@@ -3919,31 +3950,81 @@ bool CWallet::MintToTxIn(CZerocoinMint zerocoinSelected, const uint256& hashTxOu
 void CWallet::SelectMintsFromList(const CAmount nValueTarget, CAmount& nSelectedValue, vector<CZerocoinMint>& vSelectedMints)
 {
     list<CZerocoinMint> listMints = CWalletDB(strWalletFile).ListMintedCoins();
-    listMints.sort();
+    CAmount RemainingValue = nValueTarget;
+    
+    std::map<libzerocoin::CoinDenomination, CAmount> DenomMap = GetMyZerocoinDistribution();
+    std::map<libzerocoin::CoinDenomination, CAmount> UsedDenomMap;
+    for(const auto& denom : libzerocoin::zerocoinDenomList) UsedDenomMap.insert(std::pair<libzerocoin::CoinDenomination,CAmount>(denom,0));
 
-    libzerocoin::CoinDenomination targetDenomination = libzerocoin::AmountToZerocoinDenomination(nValueTarget);
-    if (targetDenomination != libzerocoin::CoinDenomination::ZQ_ERROR) {
+    if (nValueTarget > GetZerocoinBalance()) {
+        LogPrintf("%s: You don't have enough Zerocoins in your wallet: Balance %d, Desired Amount %d\n", __func__, nValueTarget, GetZerocoinBalance());
+        return;
+    }
+    
+    // Start with the Highest Denomination coin and grab coins as long as the remaining amount is greater than the
+    // current denomination value
+    for (const auto& coin : libzerocoin::zerocoinDenomList) {
         for (const CZerocoinMint mint : listMints) {
-            if (mint.IsUsed())
-                continue;
-            if (mint.GetDenomination() == targetDenomination) {
+            if (mint.IsUsed())            continue;
+            if (RemainingValue >= ZerocoinDenominationToAmount(coin) && coin == mint.GetDenomination()) {
                 vSelectedMints.push_back(mint);
-                nSelectedValue += mint.GetDenominationAsAmount();
-                return;
+                UsedDenomMap.at(coin) += mint.GetDenominationAsAmount();
+                RemainingValue -= mint.GetDenominationAsAmount();
+                LogPrintf("%s : Using %d : Remaining zerocoins %d\n",__func__,ZerocoinDenominationToInt(coin), RemainingValue/COIN);
             }
+            if (RemainingValue < ZerocoinDenominationToAmount(coin)) break;
         }
     }
-
-    for (const CZerocoinMint mint : listMints) {
-        if (mint.IsUsed())
-            continue;
-
-        vSelectedMints.push_back(mint);
-        nSelectedValue += mint.GetDenominationAsAmount();
-
-        if(nSelectedValue >= nValueTarget)
-            return;
+    nSelectedValue = nValueTarget - RemainingValue;
+    
+    // This partially fixes the amount by possibly adding 1 more zerocoin at a higher denomination,
+    // should check if we need to add more than 1 of that denomination
+    
+    // Also should max # zerocoin spends to 4
+    
+    if (RemainingValue > 0) {
+        LogPrintf("%s : RemainingAmount %d (in Zerocoins)\n",__func__,RemainingValue/COIN);
+        // Not possible to meet exact, but we have enough zerocoins, therefore retry. Find nearest zerocoin denom to difference
+        libzerocoin::CoinDenomination BiggerOrEqualToRemainingAmountDenom = libzerocoin::ZQ_ERROR;
+        for (const auto& coin : libzerocoin::zerocoinDenomList) {
+            if (ZerocoinDenominationToAmount(coin) > RemainingValue) {
+                // Check we have enough coins at the denomination
+                if (UsedDenomMap.at(coin) < DenomMap.at(coin)) {
+                    BiggerOrEqualToRemainingAmountDenom = coin;
+                }
+            }
+        }
+        LogPrintf("%s : Will add %d zerocoins and retry\n",__func__,libzerocoin::ZerocoinDenominationToInt(BiggerOrEqualToRemainingAmountDenom));
+        
+        RemainingValue = nValueTarget;
+        vSelectedMints.clear();
+        
+        for (const auto& coin : libzerocoin::zerocoinDenomList) {
+            for (const CZerocoinMint mint : listMints) {
+                if (mint.IsUsed())            continue;
+                if (RemainingValue >= ZerocoinDenominationToAmount(coin) && coin == mint.GetDenomination()) {
+                    vSelectedMints.push_back(mint);
+                    UsedDenomMap.at(coin) += mint.GetDenominationAsAmount();
+                    RemainingValue -= mint.GetDenominationAsAmount();
+                    LogPrintf("%s : Using %d : Remaining %d zerocoins\n",__func__,libzerocoin::ZerocoinDenominationToInt(coin), RemainingValue/COIN);
+                }
+                if (RemainingValue < ZerocoinDenominationToAmount(coin)) break;
+            }
+            // Add the extra Denom here so we will have a positive RemainingValue now
+            for (const CZerocoinMint mint : listMints) {
+                if (mint.IsUsed())            continue;
+                if ((coin == BiggerOrEqualToRemainingAmountDenom) && (coin == mint.GetDenomination()) &&
+                    (BiggerOrEqualToRemainingAmountDenom != libzerocoin::ZQ_ERROR)) {
+                    vSelectedMints.push_back(mint);
+                    RemainingValue -= mint.GetDenominationAsAmount();
+                    LogPrintf("%s : Using %d : Remaining %d zerocoins\n",__func__,libzerocoin::ZerocoinDenominationToInt(coin), RemainingValue/COIN);
+                    break;
+                }
+            }
+        }
+        nSelectedValue = nValueTarget - RemainingValue;
     }
+    LogPrintf("%s: Remaining %d, Fulfilled %d, Desired Amount %d\n", __func__, RemainingValue, nSelectedValue, nValueTarget);
 }
 
 bool CWallet::CreateZerocoinSpendTransaction(CWalletTx& wtxNew, CReserveKey& reserveKey, vector<CZerocoinSpend>& vSpends,

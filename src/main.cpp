@@ -1164,7 +1164,7 @@ bool CheckZerocoinSpend(const CTransaction tx, CValidationState& state)
 
     bool fValidated = false;
     set<CBigNum> serials;
-    vector<CoinSpend> vSpends;
+    list<CoinSpend> vSpends;
     CAmount nTotalRedeemed = 0;
     BOOST_FOREACH(const CTxIn& txin, tx.vin) {
 
@@ -1212,14 +1212,15 @@ bool CheckZerocoinSpend(const CTransaction tx, CValidationState& state)
 
     // Send signal to wallet if this is ours
     if (pwalletMain) {
-        for (CoinSpend newSpend : vSpends) {
-            CWalletDB walletdb(pwalletMain->strWalletFile);
-            list <CZerocoinMint> listPubCoin = walletdb.ListMintedCoins();
-            for(auto &pub : listPubCoin) {
+        CWalletDB walletdb(pwalletMain->strWalletFile);
+        list <CZerocoinMint> listPubCoin = walletdb.ListMintedCoins();
+        for (const auto& newSpend : vSpends) {
+            for (const auto& pub : listPubCoin) {
                 if(pub.GetSerialNumber() == newSpend.getCoinSerialNumber()) {
                     LogPrintf("ZCPRINT %s: %s is one of my Minted zerocoins \n", __func__,
                               pub.GetSerialNumber().GetHex());
                     pwalletMain->NotifyZerocoinChanged(pwalletMain, pub.GetValue().GetHex(), "Used", CT_UPDATED);
+                    continue; // go to next spend
                 }
             }
         }
@@ -2805,7 +2806,8 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
     if (pindex->pprev) {
         for (auto& m : vMints) {
             libzerocoin::CoinDenomination denom = m.GetDenomination();
-            pindex->nZerocoinSupply.at(denom) =  pindex->nZerocoinSupply.at(denom) + 1;
+            if (!m.IsUsed())
+                pindex->nZerocoinSupply.at(denom) =  pindex->nZerocoinSupply.at(denom) + 1;
         }
         for (auto& denom : vSpends) {
             pindex->nZerocoinSupply.at(denom) =  pindex->nZerocoinSupply.at(denom) - 1;
