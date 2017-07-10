@@ -162,20 +162,24 @@ CAmount CTransaction::GetZerocoinMinted() const
 
 CAmount CTransaction::GetZerocoinSpent() const
 {
-    if(!IsZerocoinSpend() && vin.size() != 1)
+    if(!IsZerocoinSpend())
         return 0;
 
-    const CTxIn txin = vin[0];
-    if(!txin.scriptSig.IsZerocoinSpend())
-        LogPrintf("%s is not zcspend\n", __func__);
+    CAmount nValueOut = 0;
+    for (const CTxIn txin : vin) {
+        if(!txin.scriptSig.IsZerocoinSpend())
+            LogPrintf("%s is not zcspend\n", __func__);
 
-    std::vector<char, zero_after_free_allocator<char> > dataTxIn;
-    dataTxIn.insert(dataTxIn.end(), txin.scriptSig.begin() + 4, txin.scriptSig.end());
+        std::vector<char, zero_after_free_allocator<char> > dataTxIn;
+        dataTxIn.insert(dataTxIn.end(), txin.scriptSig.begin() + 4, txin.scriptSig.end());
 
-    CDataStream serializedCoinSpend(dataTxIn, SER_NETWORK, PROTOCOL_VERSION);
-    libzerocoin::CoinSpend spend(Params().Zerocoin_Params(), serializedCoinSpend);
+        CDataStream serializedCoinSpend(dataTxIn, SER_NETWORK, PROTOCOL_VERSION);
+        libzerocoin::CoinSpend spend(Params().Zerocoin_Params(), serializedCoinSpend);
+        nValueOut += libzerocoin::ZerocoinDenominationToAmount(spend.getDenomination());
+    }
 
-    return libzerocoin::ZerocoinDenominationToAmount(spend.getDenomination());
+
+    return nValueOut;
 }
 
 double CTransaction::ComputePriority(double dPriorityInputs, unsigned int nTxSize) const

@@ -118,7 +118,8 @@ static const CRPCConvertParam vRPCConvertParams[] =
         {"listmintedzerocoins", 0},
         {"listspentzerocoins", 0},
         {"mintzerocoin", 0},
-        {"spendzerocoin", 0}
+        {"spendzerocoin", 0},
+        {"spendzerocoin", 1}
     };
 
 class CRPCConvertTable

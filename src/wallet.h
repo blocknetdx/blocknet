@@ -127,7 +127,7 @@ public:
     StringMap destdata;
 };
 
-/** 
+/**
  * A CWallet is an extension of a keystore, which also maintains a set of transactions and balances,
  * and provides the ability to create new transactions.
  */
@@ -173,13 +173,14 @@ public:
     bool SelectCoinsCollateral(std::vector<CTxIn>& setCoinsRet, CAmount& nValueRet) const;
 
     // Zerocoin additions
-    bool CreateZerocoinMintTransaction(const std::vector<std::pair<CScript, int64_t> >& vecSend, CWalletTx& wtxNew, CReserveKey& reservekey, int64_t& nFeeRet, std::string& strFailReason, const CCoinControl* coinControl = NULL);
-    bool CreateZerocoinMintTransaction(CScript pubCoin, int64_t nValue, CWalletTx& wtxNew, CReserveKey& reservekey, int64_t& nFeeRet, std::string& strFailReason, const CCoinControl* coinControl = NULL);
-    bool CreateZerocoinSpendTransaction(CWalletTx& wtxNew, CReserveKey& reserveKey, vector<CZerocoinSpend>& vSpends, vector<CZerocoinMint>& vSelectedMints, std::string& strFailReason, CBitcoinAddress* address = NULL, CAmount nValueMultipleSpends = 0);
+    bool CreateZerocoinMintTransaction(const CAmount nValue, CMutableTransaction& txNew, CReserveKey* reservekey,
+                                        int64_t& nFeeRet, std::string& strFailReason, const CCoinControl* coinControl = NULL, const bool isZCSpendChange = false);
+    bool CreateZerocoinSpendTransaction(CAmount nValue, CWalletTx& wtxNew, CReserveKey& reserveKey, vector<CZerocoinSpend>& vSpends,
+                                                 vector<CZerocoinMint>& vSelectedMints, std::string& strFailReason, bool fMintChange, CBitcoinAddress* address = NULL);
     void SelectMintsFromList(const CAmount nValueTarget, CAmount& nSelectedValue, vector<CZerocoinMint>& vSelectedMints);
     bool MintToTxIn(CZerocoinMint zerocoinSelected, const uint256& hashTxOut, CTxIn& newTxIn, CZerocoinSpend& zerocoinSpend, string strFailReason);
     std::string MintZerocoin(CScript pubCoin, int64_t nValue, CWalletTx& wtxNew, bool fAskFee = false);
-    std::string SpendZerocoin(CWalletTx& wtxNew, vector<CZerocoinSpend>& vSpends, vector<CZerocoinMint>& vMintsSelected, CBitcoinAddress* addressTo = NULL, CAmount nValueMultipleSpends = 0);
+    std::string SpendZerocoin(CAmount nValue, CWalletTx& wtxNew, vector<CZerocoinSpend>& vSpends, vector<CZerocoinMint>& vMintsSelected, bool fMintChange, CBitcoinAddress* addressTo = NULL);
 
     /** Zerocin entry changed.
     * @note called with lock cs_wallet held.
@@ -373,7 +374,7 @@ public:
 
     void GetKeyBirthTimes(std::map<CKeyID, int64_t>& mapKeyBirth) const;
 
-    /** 
+    /**
      * Increment the next transaction order id
      * @return next transaction order id
      */
@@ -567,13 +568,13 @@ public:
     //! Get wallet transactions that conflict with given transaction (spend same outputs)
     std::set<uint256> GetConflicts(const uint256& txid) const;
 
-    /** 
+    /**
      * Address book entry changed.
      * @note called with lock cs_wallet held.
      */
     boost::signals2::signal<void(CWallet* wallet, const CTxDestination& address, const std::string& label, bool isMine, const std::string& purpose, ChangeType status)> NotifyAddressBookChanged;
 
-    /** 
+    /**
      * Wallet transaction added, removed or updated.
      * @note called with lock cs_wallet held.
      */
@@ -709,7 +710,7 @@ public:
     bool IsTransactionLockTimedOut() const;
 };
 
-/** 
+/**
  * A transaction with a bunch of additional info that only the owner cares about.
  * It includes any unrecorded transactions needed to link it back to the block chain.
  */
@@ -1256,7 +1257,7 @@ public:
 };
 
 
-/** 
+/**
  * Account information.
  * Stored in wallet with key "acc"+string account name.
  */
@@ -1287,7 +1288,7 @@ public:
 };
 
 
-/** 
+/**
  * Internal transfers.
  * Database key is acentry<account><counter>.
  */

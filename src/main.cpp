@@ -1152,8 +1152,8 @@ bool CheckZerocoinSpend(const CTransaction tx, CValidationState& state)
         return state.DoS(100, error("CheckZerocoinSpend(): Zerocoin transactions are not allowed yet"));
 
     //max needed outputs should be 2 - one for redemption address and a possible 2nd for change
-    if (tx.vout.size() > 2)
-        return state.DoS(100, error("CheckZerocoinSpend(): over two outputs in a zerocoinspend transaction"));
+    //if (tx.vout.size() > 2)
+    //    return state.DoS(100, error("CheckZerocoinSpend(): over two outputs in a zerocoinspend transaction"));
 
     //compute the txout hash that is used for the zerocoinspend signatures
     CMutableTransaction txTemp;
@@ -1244,8 +1244,8 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
             REJECT_INVALID, "bad-txns-oversize");
 
     // Only one zerocoin exchange per transaction
-    if (tx.IsZerocoinMint() && tx.IsZerocoinSpend())
-        return state.DoS(100, error("CheckTransaction() : zerocoin mint and spend in the same transaction"));
+    //if (tx.IsZerocoinMint() && tx.IsZerocoinSpend())
+      //  return state.DoS(100, error("CheckTransaction() : zerocoin mint and spend in the same transaction"));
 
     // Check for negative or overflow output values
     CAmount nValueOut = 0;
@@ -1270,8 +1270,8 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
                 return state.DoS(100, error("CheckTransaction() : invalid zerocoin mint"));
 
             nMintCount++;
-            if(nMintCount > 1)
-                return state.DoS(100, error("CheckTransaction() : multiple zerocoin mints in one transaction"));
+            //if(nMintCount > 1)
+            //    return state.DoS(100, error("CheckTransaction() : multiple zerocoin mints in one transaction"));
         }
     }
 
@@ -1506,6 +1506,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
 
         CAmount nValueOut = tx.GetValueOut();
         CAmount nFees = nValueIn - nValueOut;
+        LogPrintf("%s in:%s out:%s fee:%s\n", __func__, FormatMoney(nValueIn), FormatMoney(nValueOut), FormatMoney(nFees));
         double dPriority = 0;
         if (!tx.IsZerocoinSpend())
             view.GetPriority(tx, chainActive.Height());
