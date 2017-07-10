@@ -31,6 +31,39 @@
 
 using namespace std;
 
+
+/*
+    Template used for reverse iteration in C++11 range-based for loops.
+    std::vector<int> v = {1, 2, 3, 4, 5};
+    for (auto x : reverse_iterate(v))
+        std::cout << x << " ";
+ */
+
+template <typename T>
+class reverse_range
+{
+    T &x;
+    
+public:
+    reverse_range(T &x) : x(x) {}
+    
+    auto begin() const -> decltype(this->x.rbegin())
+    {
+        return x.rbegin();
+    }
+    
+    auto end() const -> decltype(this->x.rend())
+    {
+        return x.rend();
+    }
+};
+ 
+template <typename T>
+reverse_range<T> reverse_iterate(T &x)
+{
+    return reverse_range<T>(x);
+}
+
 /**
  * Settings
  */
@@ -3963,7 +3996,7 @@ void CWallet::SelectMintsFromList(const CAmount nValueTarget, CAmount& nSelected
     
     // Start with the Highest Denomination coin and grab coins as long as the remaining amount is greater than the
     // current denomination value
-    for (const auto& coin : libzerocoin::zerocoinDenomList) {
+    for (auto& coin : reverse_iterate(libzerocoin::zerocoinDenomList)) {
         for (const CZerocoinMint mint : listMints) {
             if (mint.IsUsed())            continue;
             if (RemainingValue >= ZerocoinDenominationToAmount(coin) && coin == mint.GetDenomination()) {
@@ -3986,7 +4019,7 @@ void CWallet::SelectMintsFromList(const CAmount nValueTarget, CAmount& nSelected
         LogPrintf("%s : RemainingAmount %d (in Zerocoins)\n",__func__,RemainingValue/COIN);
         // Not possible to meet exact, but we have enough zerocoins, therefore retry. Find nearest zerocoin denom to difference
         libzerocoin::CoinDenomination BiggerOrEqualToRemainingAmountDenom = libzerocoin::ZQ_ERROR;
-        for (const auto& coin : libzerocoin::zerocoinDenomList) {
+        for (auto& coin : reverse_iterate(libzerocoin::zerocoinDenomList)) {
             if (ZerocoinDenominationToAmount(coin) > RemainingValue) {
                 // Check we have enough coins at the denomination
                 if (UsedDenomMap.at(coin) < DenomMap.at(coin)) {
@@ -3999,7 +4032,7 @@ void CWallet::SelectMintsFromList(const CAmount nValueTarget, CAmount& nSelected
         RemainingValue = nValueTarget;
         vSelectedMints.clear();
         
-        for (const auto& coin : libzerocoin::zerocoinDenomList) {
+        for (auto& coin : reverse_iterate(libzerocoin::zerocoinDenomList)) {
             for (const CZerocoinMint mint : listMints) {
                 if (mint.IsUsed())            continue;
                 if (RemainingValue >= ZerocoinDenominationToAmount(coin) && coin == mint.GetDenomination()) {

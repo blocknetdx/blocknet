@@ -29,8 +29,8 @@ enum CoinDenomination {
     ZQ_FIVE_THOUSAND = 5000
 };
 
-// Order is with the Largest Denomination first and is important for a particular routine that this order is maintained
-const std::vector<CoinDenomination> zerocoinDenomList = {ZQ_FIVE_THOUSAND, ZQ_ONE_THOUSAND, ZQ_FIVE_HUNDRED, ZQ_ONE_HUNDRED, ZQ_FIFTY, ZQ_TEN, ZQ_FIVE, ZQ_ONE};
+// Order is with the Smallest Denomination first and is important for a particular routine that this order is maintained
+const std::vector<CoinDenomination> zerocoinDenomList = {ZQ_ONE, ZQ_FIVE, ZQ_TEN, ZQ_FIFTY, ZQ_ONE_HUNDRED, ZQ_FIVE_HUNDRED, ZQ_ONE_THOUSAND, ZQ_FIVE_THOUSAND};
 
 int64_t ZerocoinDenominationToInt(const CoinDenomination& denomination);
 int64_t ZerocoinDenominationToAmount(const CoinDenomination& denomination);
