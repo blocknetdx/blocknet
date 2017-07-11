@@ -30,43 +30,23 @@ BOOST_AUTO_TEST_CASE(zerocoin_spend_test)
     cWallet.LoadWallet(fFirstRun);
     CMutableTransaction tx;
     CWalletTx* wtx = new CWalletTx(&cWallet, tx);
-    CZerocoinSpend zerocoinSpend;
-    CZerocoinMint zerocoinSelected;
-    
-    CoinDenomination denom = ZQ_ERROR;
+    bool fMintChange=true;
+    std::vector<CZerocoinSpend> vSpends;
+    std::vector<CZerocoinMint> vMints;
+    CAmount nAmount = COIN;
 
-    std::string vString = cWallet.SpendZerocoin(denom, *wtx, NULL, zerocoinSpend, zerocoinSelected);
+    std::string vString = cWallet.SpendZerocoin(nAmount, *wtx, vSpends, vMints, fMintChange);
     
     BOOST_CHECK_MESSAGE(vString == "Invalid amount","Failed Invalid Amount Check");
     
-    denom = ZQ_ONE;
-    vString = cWallet.SpendZerocoin(denom, *wtx, NULL, zerocoinSpend, zerocoinSelected);
+    nAmount = 1;
+    vString = cWallet.SpendZerocoin(nAmount, *wtx, vSpends, vMints, fMintChange);
     
     // if using "wallet.dat", instead of "unlocked.dat" need this
     /// BOOST_CHECK_MESSAGE(vString == "Error: Wallet locked, unable to create transaction!"," Locked Wallet Check Failed");
  
     BOOST_CHECK_MESSAGE(vString == "it has to have at least two mint coins with at least 7 confirmation in order to spend a coin", "Failed not enough mint coins");
     
-    
-}
-
-BOOST_AUTO_TEST_CASE(create_zerocoin_spend_transaction_test)
-{
-
-    CWalletTx cWalletTx;
-    CReserveKey reservekey(&cWallet);
-    std::string strFailReason;
-    CZerocoinSpend zerocoinSpend;
-    CZerocoinMint zerocoinSelected;
-    CCoinControl* coinControl = NULL;
-   
-    CoinDenomination denom = ZQ_ERROR;
-
-    bool v = cWallet.CreateZerocoinSpendTransaction(denom, cWalletTx, reservekey, coinControl,
-                                                    zerocoinSpend, zerocoinSelected,
-                                                    strFailReason);
-    
-    BOOST_CHECK_MESSAGE(v,"Problem with Create ZerocoinSpendTransaction");
     
 }
 
