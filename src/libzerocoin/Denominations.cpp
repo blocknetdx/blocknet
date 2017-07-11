@@ -72,8 +72,9 @@ CoinDenomination AmountToClosestDenomination(CAmount nAmount, CAmount& nRemainin
         return ZQ_ERROR;
 
     CAmount nConvert = nAmount / COIN;
+    CoinDenomination denomination = ZQ_ERROR;
     for (unsigned int i = 0; i < zerocoinDenomList.size(); i++) {
-        CoinDenomination denomination = zerocoinDenomList[i];
+        denomination = zerocoinDenomList[i];
 
         //exact match
         if (nConvert == denomination) {
@@ -94,6 +95,7 @@ CoinDenomination AmountToClosestDenomination(CAmount nAmount, CAmount& nRemainin
             return denomination;
         }
     }
+    return denomination;
 }
 
 CAmount ZerocoinDenominationToAmount(const CoinDenomination& denomination)
@@ -102,7 +104,7 @@ CAmount ZerocoinDenominationToAmount(const CoinDenomination& denomination)
     return nValue;
 }
 
-    
+
 CoinDenomination get_denomination(std::string denomAmount) {
     int64_t val = std::stoi(denomAmount);
     return IntToZerocoinDenomination(val);
