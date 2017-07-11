@@ -1073,19 +1073,19 @@ std::list<libzerocoin::CoinDenomination> ZerocoinSpendListFromBlock(const CBlock
 }
 
 
-bool CheckZerocoinLock(const uint256& txHash, const CTxOut& txout, CValidationState& state, bool fCheckOnly)
+bool CheckZerocoinMint(const uint256& txHash, const CTxOut& txout, CValidationState& state, bool fCheckOnly)
 {
     LogPrintf("ZCPRINT %s\n", __func__);
 
     if(GetAdjustedTime() < Params().Zerocoin_ProtocolActivationTime())
-        return state.DoS(100, error("CheckZerocoinLock(): Zerocoin transactions are not allowed yet"));
+        return state.DoS(100, error("CheckZerocoinMint(): Zerocoin transactions are not allowed yet"));
 
     PublicCoin pubCoin(Params().Zerocoin_Params());
     if(!TxOutToPublicCoin(txout, pubCoin, state))
-        return state.DoS(100, error("CheckZerocoinLock(): TxOutToPublicCoin() failed"));
+        return state.DoS(100, error("CheckZerocoinMint(): TxOutToPublicCoin() failed"));
 
     if(!fCheckOnly && !RecordMintToDB(pubCoin, txHash))
-        return state.DoS(100, error("CheckZerocoinLock(): RecordMintToDB() failed"));
+        return state.DoS(100, error("CheckZerocoinMint(): RecordMintToDB() failed"));
 
     return true;
 }
@@ -1099,20 +1099,6 @@ CoinSpend TxInToZerocoinSpend(const CTxIn& txin)
 
     CDataStream serializedCoinSpend(dataTxIn, SER_NETWORK, PROTOCOL_VERSION);
     return CoinSpend(Params().Zerocoin_Params(), serializedCoinSpend);
-}
-
-bool CheckZerocoinSpendProperties(const CTxIn& txin, CoinSpend coinSpend, const Accumulator &accumulator, CValidationState& state)
-{
-    //if (txin.nSequence != 0)
-      //  return state.DoS(100, error("CheckZerocoinSpend(): Error: nSequence is must be 0"));
-
-    //Check that the coin is on the accumulator
-    if (!coinSpend.Verify(accumulator))
-        return state.DoS(100, error("CheckZerocoinSpend(): zerocoin spend did not verify"));
-
-
-
-    return true;
 }
 
 bool IsZerocoinSpendUnknown(CoinSpend coinSpend, uint256 hashTx, CValidationState& state)
@@ -1151,9 +1137,17 @@ bool CheckZerocoinSpend(const CTransaction tx, CValidationState& state)
     if(GetAdjustedTime() < Params().Zerocoin_ProtocolActivationTime())
         return state.DoS(100, error("CheckZerocoinSpend(): Zerocoin transactions are not allowed yet"));
 
-    //max needed outputs should be 2 - one for redemption address and a possible 2nd for change
-    //if (tx.vout.size() > 2)
-    //    return state.DoS(100, error("CheckZerocoinSpend(): over two outputs in a zerocoinspend transaction"));
+    //max needed non-mint outputs should be 2 - one for redemption address and a possible 2nd for change
+    if (tx.vout.size() > 2){
+        int outs = 0;
+        for (const CTxOut out : tx.vout) {
+            if (out.IsZerocoinMint())
+                continue;
+            outs++;
+        }
+        if (outs > 2)
+            return state.DoS(100, error("CheckZerocoinSpend(): over two non-mint outputs in a zerocoinspend transaction"));
+    }
 
     //compute the txout hash that is used for the zerocoinspend signatures
     CMutableTransaction txTemp;
@@ -1179,6 +1173,10 @@ bool CheckZerocoinSpend(const CTransaction tx, CValidationState& state)
         if (newSpend.getDenomination() == ZQ_ERROR)
             return state.DoS(100, error("Zerocoinspend does not have the correct denomination"));
 
+        //check that denomination is what it claims to be in nSequence
+        if (newSpend.getDenomination() != txin.nSequence)
+            return state.DoS(100, error("Zerocoinspend nSequence denomination does not match CoinSpend"));
+
         //make sure the txout has not changed
         if (newSpend.getTxOutHash() != hashTxOut)
             return state.DoS(100, error("Zerocoinspend does not use the same txout that was used in the SoK"));
@@ -1190,8 +1188,9 @@ bool CheckZerocoinSpend(const CTransaction tx, CValidationState& state)
 
         Accumulator accumulator(Params().Zerocoin_Params(), newSpend.getDenomination(), bnAccumulatorValue);
 
-        if(!CheckZerocoinSpendProperties(txin, newSpend, accumulator, state))
-            return state.DoS(100, error("Zerocoinspend properties are not valid"));
+        //Check that the coin is on the accumulator
+        if (!newSpend.Verify(accumulator))
+            return state.DoS(100, error("CheckZerocoinSpend(): zerocoin spend did not verify"));
 
         if (serials.count(newSpend.getCoinSerialNumber()))
             return state.DoS(100, error("Zerocoinspend serial is used twice in the same tx"));
@@ -1243,13 +1242,8 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
         return state.DoS(100, error("CheckTransaction() : size limits failed"),
             REJECT_INVALID, "bad-txns-oversize");
 
-    // Only one zerocoin exchange per transaction
-    //if (tx.IsZerocoinMint() && tx.IsZerocoinSpend())
-      //  return state.DoS(100, error("CheckTransaction() : zerocoin mint and spend in the same transaction"));
-
     // Check for negative or overflow output values
     CAmount nValueOut = 0;
-    unsigned int nMintCount = 0;
     BOOST_FOREACH (const CTxOut& txout, tx.vout) {
         if (txout.IsEmpty() && !tx.IsCoinBase() && !tx.IsCoinStake())
             return state.DoS(100, error("CheckTransaction(): txout empty for user transaction"));
@@ -1264,14 +1258,9 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
         if (!MoneyRange(nValueOut))
             return state.DoS(100, error("CheckTransaction() : txout total out of range"),
                 REJECT_INVALID, "bad-txns-txouttotal-toolarge");
-
         if (txout.IsZerocoinMint()) {
-            if(!CheckZerocoinLock(tx.GetHash(), txout, state, false))
+            if(!CheckZerocoinMint(tx.GetHash(), txout, state, false))
                 return state.DoS(100, error("CheckTransaction() : invalid zerocoin mint"));
-
-            nMintCount++;
-            //if(nMintCount > 1)
-            //    return state.DoS(100, error("CheckTransaction() : multiple zerocoin mints in one transaction"));
         }
     }
 
@@ -1428,8 +1417,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
     LogPrintf("%s after swift\n", __func__);
 
     // Check for conflicts with in-memory transactions
-    if(!tx.IsZerocoinSpend())
-    {
+    if (!tx.IsZerocoinSpend()) {
         LOCK(pool.cs); // protect pool.mapNextTx
         for (unsigned int i = 0; i < tx.vin.size(); i++) {
             COutPoint outpoint = tx.vin[i].prevout;
@@ -1482,12 +1470,10 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
             // we have all inputs cached now, so switch back to dummy, so we don't need to keep lock on mempool
             view.SetBackend(dummy);
         }
-        LogPrintf("%s after valuein, value is %s\n", __func__, FormatMoney(nValueIn).c_str());
 
         // Check for non-standard pay-to-script-hash in inputs
         if (Params().RequireStandard() && !AreInputsStandard(tx, view))
             return error("AcceptToMemoryPool: : nonstandard transaction input");
-        LogPrintf("%s after nonstandard\n", __func__);
 
         // Check that the transaction doesn't have an excessive number of
         // sigops, making it impossible to mine. Since the coinbase transaction
@@ -1506,7 +1492,6 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
 
         CAmount nValueOut = tx.GetValueOut();
         CAmount nFees = nValueIn - nValueOut;
-        LogPrintf("%s in:%s out:%s fee:%s\n", __func__, FormatMoney(nValueIn), FormatMoney(nValueOut), FormatMoney(nFees));
         double dPriority = 0;
         if (!tx.IsZerocoinSpend())
             view.GetPriority(tx, chainActive.Height());
@@ -1527,7 +1512,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
 
             // Require that free transactions have sufficient priority to be mined in the next block.
             if (tx.IsZerocoinMint()) {
-                if(nFees < Params().Zerocoin_MintFee())
+                if(nFees < Params().Zerocoin_MintFee() * tx.GetZerocoinMintCount())
                     return state.DoS(0, false, REJECT_INSUFFICIENTFEE, "insufficient fee for zerocoinmint");
             } else if (!tx.IsZerocoinSpend() && GetBoolArg("-relaypriority", true) && nFees < ::minRelayTxFee.GetFee(nSize) && !AllowFree(view.GetPriority(tx, chainActive.Height() + 1))) {
                 return state.DoS(0, false, REJECT_INSUFFICIENTFEE, "insufficient priority");

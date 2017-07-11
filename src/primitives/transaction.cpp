@@ -182,6 +182,16 @@ CAmount CTransaction::GetZerocoinSpent() const
     return nValueOut;
 }
 
+int CTransaction::GetZerocoinMintCount() const
+{
+    int nCount;
+    for (const CTxOut out : vout) {
+        if (out.scriptPubKey.IsZerocoinMint())
+            nCount++;
+    }
+    return nCount;
+}
+
 double CTransaction::ComputePriority(double dPriorityInputs, unsigned int nTxSize) const
 {
     nTxSize = CalculateModifiedSize(nTxSize);

@@ -275,6 +275,7 @@ public:
 
     CAmount GetZerocoinMinted() const;
     CAmount GetZerocoinSpent() const;
+    int GetZerocoinMintCount() const;
 
     bool IsCoinBase() const
     {

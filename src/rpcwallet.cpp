@@ -2364,10 +2364,10 @@ Value listspentzerocoins(const Array& params, bool fHelp)
 
 Value mintzerocoin(const Array& params, bool fHelp)
 {
-
     if (fHelp || params.size() != 1)
         throw runtime_error(
-            "mintzerocoin <amount>(1,5,10,50,100,500,1000,5000)\n"
+            "mintzerocoin <amount>\n"
+            "Usage: Enter an amount of Piv to convert to zPiv"
             + HelpRequiringPassphrase());
 
     int64_t nTime = GetTimeMillis();
@@ -2376,55 +2376,27 @@ Value mintzerocoin(const Array& params, bool fHelp)
         throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
 
     CAmount nAmount = params[0].get_int() * COIN;
-    libzerocoin::CoinDenomination denomination = libzerocoin::AmountToZerocoinDenomination(nAmount);
-    if (denomination == libzerocoin::ZQ_ERROR)
-        return JSONRPCError(RPC_INVALID_PARAMETER, "mintzerocoin must be exact. Amount options: (1,5,10,50,100,500,1000,5000)\n");
-
-    // The following constructor does all the work of minting a brand
-    // new zerocoin. It stores all the private values inside the
-    // PrivateCoin object. This includes the coin secrets, which must be
-    // stored in a secure location (wallet) at the client.
-    libzerocoin::PrivateCoin newCoin(Params().Zerocoin_Params(), denomination);
-
-
-    // Get a copy of the 'public' portion of the coin. You should
-    // embed this into a Zerocoin 'MINT' transaction along with a series
-    // of currency inputs totaling the assigned value of one zerocoin.
-    libzerocoin::PublicCoin pubCoin = newCoin.getPublicCoin();
-
-    // Validate
-    if(!pubCoin.validate())
-        return JSONRPCError(RPC_WALLET_ERROR, "failed to validate zerocoin");
-
-    CScript scriptSerializedCoin = CScript() << OP_ZEROCOINMINT << pubCoin.getValue().getvch().size() << pubCoin.getValue().getvch();
 
     CWalletTx wtx;
-    string strError = pwalletMain->MintZerocoin(scriptSerializedCoin, nAmount, wtx);
+    vector<CZerocoinMint> vMints;
+    string strError = pwalletMain->MintZerocoin(nAmount, wtx, vMints);
 
     if (strError != "")
         throw JSONRPCError(RPC_WALLET_ERROR, strError);
 
-    CWalletDB walletdb(pwalletMain->strWalletFile);
-    CZerocoinMint zerocoinTx(denomination, pubCoin.getValue(), newCoin.getRandomness(), newCoin.getSerialNumber(), false);
-    zerocoinTx.SetTxHash(wtx.GetHash());
+    Array arrMints;
+    for (CZerocoinMint mint : vMints) {
+        Object m;
+        m.push_back(Pair("txid", wtx.GetHash().ToString()));
+        m.push_back(Pair("value", ValueFromAmount(libzerocoin::ZerocoinDenominationToAmount(mint.GetDenomination()))));
+        m.push_back(Pair("pubcoin", mint.GetValue().GetHex()));
+        m.push_back(Pair("randomness", mint.GetRandomness().GetHex()));
+        m.push_back(Pair("serial", mint.GetSerialNumber().GetHex()));
+        m.push_back(Pair("time", GetTimeMillis() - nTime));
+        arrMints.push_back(m);
+    }
 
-    //zerocoinMint's contain private information that should not be public. Convert to public coin.
-    libzerocoin::PublicCoin checkPubCoin(Params().Zerocoin_Params(), zerocoinTx.GetValue(), denomination);
-    if(!checkPubCoin.validate())
-        throw JSONRPCError(RPC_WALLET_ERROR, "pubcoin failed to validate");
-
-    walletdb.WriteZerocoinMint(zerocoinTx);
-    pwalletMain->NotifyZerocoinChanged(pwalletMain, zerocoinTx.GetValue().GetHex(), "Used", CT_UPDATED);
-
-
-    Object ret;
-    ret.push_back(Pair("txid", wtx.GetHash().ToString()));
-    ret.push_back(Pair("pubcoin", pubCoin.getValue().GetHex()));
-    ret.push_back(Pair("randomness", zerocoinTx.GetRandomness().GetHex()));
-    ret.push_back(Pair("serial", zerocoinTx.GetSerialNumber().GetHex()));
-    ret.push_back(Pair("time", GetTimeMillis() - nTime));
-
-    return ret;
+    return arrMints;
 }
 
 Value spendzerocoin(const Array& params, bool fHelp)
