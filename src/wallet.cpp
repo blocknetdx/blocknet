@@ -23,46 +23,13 @@
 #include "utilmoneystr.h"
 
 #include "libzerocoin/Denominations.h"
-
+#include "reverse_iterate.h"
 #include <assert.h>
 
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/thread.hpp>
 
 using namespace std;
-
-
-/*
-    Template used for reverse iteration in C++11 range-based for loops.
-    std::vector<int> v = {1, 2, 3, 4, 5};
-    for (auto x : reverse_iterate(v))
-        std::cout << x << " ";
- */
-
-template <typename T>
-class reverse_range
-{
-    T &x;
-    
-public:
-    reverse_range(T &x) : x(x) {}
-    
-    auto begin() const -> decltype(this->x.rbegin())
-    {
-        return x.rbegin();
-    }
-    
-    auto end() const -> decltype(this->x.rend())
-    {
-        return x.rend();
-    }
-};
- 
-template <typename T>
-reverse_range<T> reverse_iterate(T &x)
-{
-    return reverse_range<T>(x);
-}
 
 /**
  * Settings
@@ -74,7 +41,7 @@ bool bSpendZeroConfChange = true;
 bool fSendFreeTransactions = false;
 bool fPayAtLeastCustomFee = true;
 
-/** 
+/**
  * Fees smaller than this (in duffs) are considered zero fee (for transaction creation)
  * We are ~100 times smaller then bitcoin now (2015-06-23), set minTxFee 10 times higher
  * so it's still 10 times lower comparing to bitcoin.
@@ -1289,6 +1256,7 @@ CAmount CWallet::GetZerocoinBalance() const
     }
     return nTotal;
 }
+
 // Get a Map pairing the Denominations with the amount of Zerocoin for each Denomination
 std::map<libzerocoin::CoinDenomination, unsigned int> CWallet::GetZerocoinDenomAmounts() const
 {
@@ -1320,6 +1288,7 @@ std::map<libzerocoin::CoinDenomination, CAmount> CWallet::GetMyZerocoinDistribut
     }
     return spread;
 }
+
 
 CAmount CWallet::GetAnonymizableBalance() const
 {
@@ -2908,7 +2877,7 @@ bool CWallet::SetDefaultKey(const CPubKey& vchPubKey)
 
 /**
  * Mark old keypool keys as used,
- * and generate all new keys 
+ * and generate all new keys
  */
 bool CWallet::NewKeyPool()
 {
@@ -3963,7 +3932,7 @@ void CWallet::SelectMintsFromList(const CAmount nValueTarget, CAmount& nSelected
 {
     list<CZerocoinMint> listMints = CWalletDB(strWalletFile).ListMintedCoins();
     CAmount RemainingValue = nValueTarget;
-    
+
     std::map<libzerocoin::CoinDenomination, CAmount> DenomMap = GetMyZerocoinDistribution();
     std::map<libzerocoin::CoinDenomination, CAmount> UsedDenomMap;
     for(const auto& denom : libzerocoin::zerocoinDenomList) UsedDenomMap.insert(std::pair<libzerocoin::CoinDenomination,CAmount>(denom,0));
@@ -3972,7 +3941,7 @@ void CWallet::SelectMintsFromList(const CAmount nValueTarget, CAmount& nSelected
         LogPrintf("%s: You don't have enough Zerocoins in your wallet: Balance %d, Desired Amount %d\n", __func__, nValueTarget, GetZerocoinBalance());
         return;
     }
-    
+
     // Start with the Highest Denomination coin and grab coins as long as the remaining amount is greater than the
     // current denomination value
     for (auto& coin : reverse_iterate(libzerocoin::zerocoinDenomList)) {
@@ -3988,12 +3957,12 @@ void CWallet::SelectMintsFromList(const CAmount nValueTarget, CAmount& nSelected
         }
     }
     nSelectedValue = nValueTarget - RemainingValue;
-    
+
     // This partially fixes the amount by possibly adding 1 more zerocoin at a higher denomination,
     // should check if we need to add more than 1 of that denomination
-    
+
     // Also should max # zerocoin spends to 4
-    
+
     if (RemainingValue > 0) {
         LogPrintf("%s : RemainingAmount %d (in Zerocoins)\n",__func__,RemainingValue/COIN);
         // Not possible to meet exact, but we have enough zerocoins, therefore retry. Find nearest zerocoin denom to difference
@@ -4007,10 +3976,10 @@ void CWallet::SelectMintsFromList(const CAmount nValueTarget, CAmount& nSelected
             }
         }
         LogPrintf("%s : Will add %d zerocoins and retry\n",__func__,libzerocoin::ZerocoinDenominationToInt(BiggerOrEqualToRemainingAmountDenom));
-        
+
         RemainingValue = nValueTarget;
         vSelectedMints.clear();
-        
+
         for (auto& coin : reverse_iterate(libzerocoin::zerocoinDenomList)) {
             for (const CZerocoinMint mint : listMints) {
                 if (mint.IsUsed())            continue;
@@ -4038,6 +4007,7 @@ void CWallet::SelectMintsFromList(const CAmount nValueTarget, CAmount& nSelected
     }
     LogPrintf("%s: Remaining %d, Fulfilled %d, Desired Amount %d\n", __func__, RemainingValue, nSelectedValue, nValueTarget);
 }
+
 
 bool CWallet::CreateZerocoinSpendTransaction(CAmount nValue, CWalletTx& wtxNew, CReserveKey& reserveKey, vector<CZerocoinSpend>& vSpends,
                                              vector<CZerocoinMint>& vSelectedMints, std::string& strFailReason, bool fMintChange, CBitcoinAddress* address)
@@ -4147,7 +4117,7 @@ string CWallet::MintZerocoin(CScript pubCoin, int64_t nValue, CWalletTx& wtxNew,
         return _("Insufficient funds");
 
     CReserveKey reservekey(this);
-    int64_t nFeeRequired;
+    //int64_t nFeeRequired;
 
     if (IsLocked()) {
         string strError = _("Error: Wallet locked, unable to create transaction!");
