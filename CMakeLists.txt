@@ -213,6 +213,7 @@ SET(SOURCES
 	./src/wallet.cpp
 	./src/wallet_ismine.cpp
 	./src/walletdb.cpp
+	./src/denomination_functions.cpp
 	)
 
 

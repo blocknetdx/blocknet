@@ -101,6 +101,7 @@ BITCOIN_CORE_H = \
   primitives/zerocoin.h \
   core_io.h \
   crypter.h \
+  denomination_functions.h \
   obfuscation.h \
   obfuscation-relay.h \
   db.h \
@@ -233,6 +234,7 @@ libbitcoin_wallet_a_CPPFLAGS = $(BITCOIN_INCLUDES)
 libbitcoin_wallet_a_SOURCES = \
   activemasternode.cpp \
   bip38.cpp \
+  denomination_functions.cpp \
   obfuscation.cpp \
   obfuscation-relay.cpp \
   db.cpp \
