@@ -184,7 +184,7 @@ CAmount CTransaction::GetZerocoinSpent() const
 
 int CTransaction::GetZerocoinMintCount() const
 {
-    int nCount;
+    int nCount = 0;
     for (const CTxOut out : vout) {
         if (out.scriptPubKey.IsZerocoinMint())
             nCount++;

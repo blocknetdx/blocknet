@@ -3956,17 +3956,27 @@ void CWallet::SelectMintsFromList(const CAmount nValueTarget, CAmount& nSelected
 bool CWallet::CreateZerocoinSpendTransaction(CAmount nValue, CWalletTx& wtxNew, CReserveKey& reserveKey, vector<CZerocoinSpend>& vSpends,
                                              vector<CZerocoinMint>& vSelectedMints, std::string& strFailReason, bool fMintChange, CBitcoinAddress* address)
 {
-    CAmount nValueSelected = 0;
-    CAmount zerocoinBalance = GetZerocoinBalance();
-    list<CZerocoinMint> listMints = CWalletDB(strWalletFile).ListMintedCoins();
-    std::map<libzerocoin::CoinDenomination, CAmount> DenomMap = GetMyZerocoinDistribution();
-    vSelectedMints = SelectMintsFromList(nValue, nValueSelected, zerocoinBalance, listMints, DenomMap);
-
+    if (nValue > GetZerocoinBalance()) {
+        strFailReason = _("You don't have enough Zerocoins in your wallet");
+        return false;
+    }
+    
     if (nValue <= 0) {
         strFailReason = _("Transaction amounts must be positive");
         return false;
     }
 
+    const int maxNumberOfSpends = 4; // Take from chainparams later
+    CAmount nValueSelected = 0;
+    list<CZerocoinMint> listMints = CWalletDB(strWalletFile).ListMintedCoins();
+    std::map<libzerocoin::CoinDenomination, CAmount> DenomMap = GetMyZerocoinDistribution();
+    vSelectedMints = SelectMintsFromList(nValue, nValueSelected, maxNumberOfSpends, listMints, DenomMap);
+
+    if ((vSelectedMints.size() > maxNumberOfSpends) || (vSelectedMints.size() == 0)) {
+        strFailReason = _("Failed to find coin set amongst held coins with less than maxNumber of Spends");
+        return false;
+    }
+    
     CMutableTransaction txNew;
     wtxNew.BindWallet(this);
     {

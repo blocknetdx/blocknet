@@ -88,13 +88,9 @@ CoinDenomination AmountToClosestDenomination(CAmount nAmount, CAmount& nRemainin
             nRemaining = nConvert - d;
             return d;
         }
-
-        //last denomination, the highest value possible
-        if (denomination == ZQ_FIVE_THOUSAND) {
-            nRemaining = nConvert - denomination;
-            return denomination;
-        }
     }
+    //last denomination, the highest value possible
+    nRemaining = nConvert - denomination;
     return denomination;
 }
 
