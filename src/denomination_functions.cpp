@@ -4,9 +4,29 @@
 
 using namespace libzerocoin;
 
+
+std::vector<CZerocoinMint> getSpends(
+    const std::list<CZerocoinMint>& listMints,
+    std::map<CoinDenomination, CAmount>& UsedDenomMap)
+{
+    std::vector<CZerocoinMint> vSelectedMints;
+    for (auto& coin : reverse_iterate(zerocoinDenomList)) {
+        do {
+            for (const CZerocoinMint mint : listMints) {
+                if (mint.IsUsed()) continue;
+                if (coin == mint.GetDenomination() && UsedDenomMap.at(coin)) {
+                    vSelectedMints.push_back(mint);
+                    UsedDenomMap.at(coin)--;
+                }
+            }
+        } while (UsedDenomMap.at(coin));
+    }
+    return vSelectedMints;
+}
+
 // Find the CoinDenomination with the most number for a given amount
 CoinDenomination getDenomWithMostCoins(
-    std::map<CoinDenomination, CAmount>& UsedDenomMap)
+    const std::map<CoinDenomination, CAmount>& UsedDenomMap)
 {
     CoinDenomination maxCoins = ZQ_ERROR;
     CAmount maxNumber = 0;
@@ -123,6 +143,7 @@ std::vector<CZerocoinMint> SelectMintsFromList(const CAmount nValueTarget, CAmou
             } else {
                 LogPrintf("%s : Failed to find coin set\n", __func__);
             }
+            vSelectedMints = getSpends(listMints, UsedDenomMap);
             return vSelectedMints;
         }
     } else {

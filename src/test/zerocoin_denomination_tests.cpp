@@ -54,6 +54,9 @@ BOOST_AUTO_TEST_CASE(zerocoin_spend_test)
     
     CAmount OneCoinAmount = ZerocoinDenominationToAmount(ZQ_ONE);
     CAmount nValueTarget = OneCoinAmount;
+    
+    nValueTarget += 32*OneCoinAmount;
+    
     for (int i=0;i<CoinsHeld;i++) {
         std::vector<CZerocoinMint> vSpends = SelectMintsFromList(nValueTarget, nSelectedValue,
                                                                  maxNumberOfSpends,
@@ -63,6 +66,7 @@ BOOST_AUTO_TEST_CASE(zerocoin_spend_test)
 
         std::cout << "Coins = " << i+1 << " spends = " << vSpends.size() << " Selected = " << nSelectedValue/COIN << "\n";
         BOOST_CHECK_MESSAGE(vSpends.size() < 5,"Too many spends");
+        BOOST_CHECK_MESSAGE(vSpends.size() > 0,"No spends");
         //BOOST_CHECK_MESSAGE(nSelectedValue == nValueTarget,"An exact amount expected");
         nValueTarget += OneCoinAmount;
     }
