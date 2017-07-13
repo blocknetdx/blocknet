@@ -139,9 +139,6 @@ bool CheckZerocoinSpendNoDB(uint256 hashTx, const CTxOut txout, vector<CTxIn> vi
         if (!txin.scriptSig.IsZerocoinSpend())
             continue;
 
-        if(!CheckZerocoinOverSpend(txout.nValue, txContainingMint, state))
-            return state.DoS(100, error("CheckZerocoinSpend(): Zerocoinspend redeems different value than the mint it uses"));
-
         CoinSpend newSpend = TxInToZerocoinSpend(txin);
 
         //see if we have record of the accumulator used in the spend tx

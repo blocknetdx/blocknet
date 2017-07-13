@@ -1013,22 +1013,31 @@ bool CWalletDB::EraseZerocoinSpendSerialEntry(const CBigNum& serialEntry)
 
 bool CWalletDB::WriteZerocoinMint(const CZerocoinMint& zerocoinMint)
 {
-    Erase(make_pair(string("zerocoin"), zerocoinMint.GetSerialNumber()));
-    return Write(make_pair(string("zerocoin"), zerocoinMint.GetSerialNumber()), zerocoinMint, true);
+    CDataStream ss(SER_GETHASH, 0);
+    ss << zerocoinMint.GetValue();
+    uint256 hash = Hash(ss.begin(), ss.end());
+
+    Erase(make_pair(string("zerocoin"), hash));
+    return Write(make_pair(string("zerocoin"), hash), zerocoinMint, true);
 }
 
-bool CWalletDB::ReadZerocoinMint(const CBigNum &bnSerial, CZerocoinMint& zerocoinMint)
+bool CWalletDB::ReadZerocoinMint(const CBigNum &bnPubCoinValue, CZerocoinMint& zerocoinMint)
 {
-    return Read(make_pair(string("zerocoin"), bnSerial), zerocoinMint);
+    CDataStream ss(SER_GETHASH, 0);
+    ss << bnPubCoinValue;
+    uint256 hash = Hash(ss.begin(), ss.end());
+
+    return Read(make_pair(string("zerocoin"), hash), zerocoinMint);
 }
 
-std::list<CZerocoinMint> CWalletDB::ListMintedCoins()
+std::list<CZerocoinMint> CWalletDB::ListMintedCoins(bool fUnusedOnly, bool fMaturedOnly)
 {
     std::list<CZerocoinMint> listPubCoin;
     Dbc* pcursor = GetCursor();
     if (!pcursor)
         throw runtime_error(std::string(__func__)+" : cannot create DB cursor");
     unsigned int fFlags = DB_SET_RANGE;
+    vector<CZerocoinMint> vOverWrite;
     for (;;)
     {
         // Read next record
@@ -1055,13 +1064,47 @@ std::list<CZerocoinMint> CWalletDB::ListMintedCoins()
         uint256 value;
         ssKey >> value;
 
-        CZerocoinMint zerocoinItem;
-        ssValue >> zerocoinItem;
+        CZerocoinMint mint;
+        ssValue >> mint;
 
-        listPubCoin.push_back(zerocoinItem);
+        if (fUnusedOnly && mint.IsUsed())
+            continue;
+
+        if (fMaturedOnly) {
+            LogPrintf("%s mint height %d\n", __func__, mint.GetHeight());
+
+            //if there is not a record of the block height, then look it up and assign it
+            if (!mint.GetHeight()) {
+                CTransaction tx;
+                uint256 hashBlock;
+                if(!GetTransaction(mint.GetTxHash(), tx, hashBlock, true)) {
+                    LogPrintf("%s failed to find tx for mint\n", __func__);
+                    continue;
+                }
+
+                //set the updated block height
+                try {
+                    mint.SetHeight(mapBlockIndex.at(hashBlock)->nHeight);
+                    vOverWrite.push_back(mint);
+                } catch (...) {
+                    continue;
+                }
+            }
+
+            //not mature
+            if (mint.GetHeight() > chainActive.Height() - Params().Zerocoin_MintRequiredConfirmations())
+                continue;
+        }
+        listPubCoin.push_back(mint);
     }
 
     pcursor->close();
+
+    //overwrite any updates
+    for (CZerocoinMint mint : vOverWrite) {
+        this->WriteZerocoinMint(mint);
+    }
+
     return listPubCoin;
 }
 // Just get the Serial Numbers

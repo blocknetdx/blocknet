@@ -28,6 +28,7 @@ public:
 
     CZerocoinMint(libzerocoin::CoinDenomination denom, CBigNum value, CBigNum randomness, CBigNum serialNumber, bool isUsed)
     {
+        SetNull();
         this->denomination = denom;
         this->value = value;
         this->randomness = randomness;
@@ -41,7 +42,7 @@ public:
         randomness = 0;
         value = 0;
         denomination = libzerocoin::ZQ_ERROR;
-        nHeight = -1;
+        nHeight = 0;
         txid = 0;
     }
 

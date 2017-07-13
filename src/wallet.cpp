@@ -3705,10 +3705,10 @@ bool CMerkleTx::IsTransactionLockTimedOut() const
 
     return false;
 }
+
 bool CWallet::CreateZerocoinMintTransaction(const CAmount nValue, CMutableTransaction& txNew, vector<CZerocoinMint>& vMints, CReserveKey* reservekey,
     int64_t& nFeeRet, std::string& strFailReason, const CCoinControl* coinControl, const bool isZCSpendChange)
 {
-    LogPrintf("ZCPRINT %s after lock\n", __func__);
     if (IsLocked()) {
         strFailReason = _("Error: Wallet locked, unable to create transaction!");
         LogPrintf("SpendZerocoin() : %s", strFailReason.c_str());
@@ -3817,7 +3817,6 @@ bool CWallet::CreateZerocoinMintTransaction(const CAmount nValue, CMutableTransa
 
     return true;
 }
-
 
 bool CWallet::MintToTxIn(CZerocoinMint zerocoinSelected, const uint256& hashTxOut, CTxIn& newTxIn, CZerocoinSpend& zerocoinSpend, string strFailReason)
 {
@@ -3960,23 +3959,28 @@ bool CWallet::CreateZerocoinSpendTransaction(CAmount nValue, CWalletTx& wtxNew, 
         strFailReason = _("You don't have enough Zerocoins in your wallet");
         return false;
     }
-    
-    if (nValue <= 0) {
-        strFailReason = _("Transaction amounts must be positive");
+
+    if (nValue < 1) {
+        strFailReason = _("1 is the smallest denomination of zPiv available");
         return false;
     }
 
-    const int maxNumberOfSpends = 4; // Take from chainparams later
+    const int nMaxSpends = Params().Zerocoin_MaxSpendsPerTransaction();
     CAmount nValueSelected = 0;
-    list<CZerocoinMint> listMints = CWalletDB(strWalletFile).ListMintedCoins();
+    list<CZerocoinMint> listMints = CWalletDB(strWalletFile).ListMintedCoins(true, true);
     std::map<libzerocoin::CoinDenomination, CAmount> DenomMap = GetMyZerocoinDistribution();
-    vSelectedMints = SelectMintsFromList(nValue, nValueSelected, maxNumberOfSpends, listMints, DenomMap);
+    vSelectedMints = SelectMintsFromList(nValue, nValueSelected, nMaxSpends, listMints, DenomMap);
 
-    if ((vSelectedMints.size() > maxNumberOfSpends) || (vSelectedMints.size() == 0)) {
+    if (vSelectedMints.empty()) {
+        strFailReason = _("failed to select a zerocoin");
+        return false;
+    }
+
+    if ((static_cast<int>(vSelectedMints.size()) > nMaxSpends)) {
         strFailReason = _("Failed to find coin set amongst held coins with less than maxNumber of Spends");
         return false;
     }
-    
+
     CMutableTransaction txNew;
     wtxNew.BindWallet(this);
     {
@@ -4028,11 +4032,6 @@ bool CWallet::CreateZerocoinSpendTransaction(CAmount nValue, CWalletTx& wtxNew, 
             //add output to pivx address to the transaction (the actual primary spend taking place)
             CTxOut txOutZerocoinSpend(nValue, scriptZerocoinSpend);
             txNew.vout.push_back(txOutZerocoinSpend);
-
-            if (vSelectedMints.empty()) {
-                strFailReason = _("failed to select a zerocoin");
-                return false;
-            }
 
             //hash with only the output info in it to be used in Signature of Knowledge
             uint256 hashTxOut = txNew.GetHash();
@@ -4160,7 +4159,7 @@ string CWallet::SpendZerocoin(CAmount nAmount, CWalletTx& wtxNew, vector<CZeroco
             return _("Failed to write mint to db");
 
         CZerocoinMint mintCheck;
-        if (!CWalletDB(strWalletFile).ReadZerocoinMint(mint.GetSerialNumber(), mintCheck))
+        if (!CWalletDB(strWalletFile).ReadZerocoinMint(mint.GetValue(), mintCheck))
             return _("failed to read mintcheck");
 
         if (!mintCheck.IsUsed())

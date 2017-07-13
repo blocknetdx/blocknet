@@ -178,7 +178,6 @@ CAmount CTransaction::GetZerocoinSpent() const
         nValueOut += libzerocoin::ZerocoinDenominationToAmount(spend.getDenomination());
     }
 
-
     return nValueOut;
 }
 

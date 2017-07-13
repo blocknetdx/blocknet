@@ -1117,19 +1117,6 @@ bool IsZerocoinSpendUnknown(CoinSpend coinSpend, uint256 hashTx, CValidationStat
     return true;
 }
 
-bool CheckZerocoinOverSpend(const CAmount nAmountRedeemed, const CTransaction &txContainingMint, CValidationState& state)
-{
-    CAmount nPreviousMintValue = txContainingMint.GetZerocoinMinted();
-    CoinDenomination testDenomination = AmountToZerocoinDenomination(nPreviousMintValue);
-    if (testDenomination == ZQ_ERROR)
-         return state.DoS(100, error("CheckZerocoinSpend(): Zerocoin mint does not have valid denomination"));
-
-    if(nAmountRedeemed != nPreviousMintValue)
-        return state.DoS(100, error("CheckZerocoinSpend(): Zerocoinspend redeems different value than the mint it uses"));
-
-    return true;
-}
-
 bool CheckZerocoinSpend(const CTransaction tx, CValidationState& state)
 {
     LogPrintf("ZCPRINT %s\n", __func__);
@@ -1212,15 +1199,12 @@ bool CheckZerocoinSpend(const CTransaction tx, CValidationState& state)
     // Send signal to wallet if this is ours
     if (pwalletMain) {
         CWalletDB walletdb(pwalletMain->strWalletFile);
-        list <CZerocoinMint> listPubCoin = walletdb.ListMintedCoins();
+        list <CBigNum> listMySerials = walletdb.ListMintedCoinsSerial();
         for (const auto& newSpend : vSpends) {
-            for (const auto& pub : listPubCoin) {
-                if(pub.GetSerialNumber() == newSpend.getCoinSerialNumber()) {
-                    LogPrintf("ZCPRINT %s: %s is one of my Minted zerocoins \n", __func__,
-                              pub.GetSerialNumber().GetHex());
-                    pwalletMain->NotifyZerocoinChanged(pwalletMain, pub.GetValue().GetHex(), "Used", CT_UPDATED);
-                    continue; // go to next spend
-                }
+            list<CBigNum>::iterator it = find(listMySerials.begin(), listMySerials.end(), newSpend.getCoinSerialNumber());
+            if (it != listMySerials.end()) {
+                LogPrintf("ZCPRINT %s: %s detected spent zerocoin mint in transaction %s \n", __func__, it->GetHex(), tx.GetHash().GetHex());
+                pwalletMain->NotifyZerocoinChanged(pwalletMain, it->GetHex(), "Used", CT_UPDATED);
             }
         }
     }
@@ -1244,6 +1228,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
 
     // Check for negative or overflow output values
     CAmount nValueOut = 0;
+    int nZCSpendCount = 0;
     BOOST_FOREACH (const CTxOut& txout, tx.vout) {
         if (txout.IsEmpty() && !tx.IsCoinBase() && !tx.IsCoinStake())
             return state.DoS(100, error("CheckTransaction(): txout empty for user transaction"));
@@ -1262,17 +1247,19 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
             if(!CheckZerocoinMint(tx.GetHash(), txout, state, false))
                 return state.DoS(100, error("CheckTransaction() : invalid zerocoin mint"));
         }
+        if (txout.scriptPubKey.IsZerocoinSpend())
+            nZCSpendCount++;
     }
 
-    if (tx.IsZerocoinSpend()) {
-        LogPrintf("ZCPRINT %s: tx is a zerocoinspend \n", __func__);
+    if (nZCSpendCount > Params().Zerocoin_MaxSpendsPerTransaction())
+        return state.DoS(100, error("CheckTransaction() : there are more zerocoin spends than are allowed in one transaction"));
 
+    if (tx.IsZerocoinSpend()) {
         //require that a zerocoinspend only has inputs that are zerocoins
         for (const CTxIn in : tx.vin) {
             if (!in.scriptSig.IsZerocoinSpend())
                 return state.DoS(100, error("CheckTransaction() : zerocoinspend contains inputs that are not zerocoins"));
         }
-
 
         if(!CheckZerocoinSpend(tx, state))
             return state.DoS(100, error("CheckTransaction() : invalid zerocoin spend"));
