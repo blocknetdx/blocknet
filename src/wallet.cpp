@@ -3818,7 +3818,7 @@ bool CWallet::CreateZerocoinMintTransaction(const CAmount nValue, CMutableTransa
     return true;
 }
 
-bool CWallet::MintToTxIn(CZerocoinMint zerocoinSelected, const uint256& hashTxOut, CTxIn& newTxIn, CZerocoinSpend& zerocoinSpend, string strFailReason)
+bool CWallet::MintToTxIn(CZerocoinMint zerocoinSelected, int nSecurityLevel, const uint256& hashTxOut, CTxIn& newTxIn, CZerocoinSpend& zerocoinSpend, string strFailReason)
 {
     libzerocoin::CoinDenomination denomination = zerocoinSelected.GetDenomination();
     // 2. Get pubcoin from the private coin
@@ -3834,7 +3834,7 @@ bool CWallet::MintToTxIn(CZerocoinMint zerocoinSelected, const uint256& hashTxOu
     LogPrintf("ZCPRINT %s step 3\n", __func__);
     libzerocoin::Accumulator accumulator(Params().Zerocoin_Params(), pubCoinSelected.getDenomination());
     libzerocoin::AccumulatorWitness witness(Params().Zerocoin_Params(), accumulator, pubCoinSelected);
-    if (!CAccumulators::getInstance().IntializeWitnessAndAccumulator(zerocoinSelected, pubCoinSelected, accumulator, witness)) {
+    if (!CAccumulators::getInstance().IntializeWitnessAndAccumulator(zerocoinSelected, pubCoinSelected, accumulator, witness, nSecurityLevel)) {
         LogPrintf("%s failed to initialize witness\n", __func__);
         return false;
     }
@@ -3920,39 +3920,7 @@ bool CWallet::MintToTxIn(CZerocoinMint zerocoinSelected, const uint256& hashTxOu
     return true;
 }
 
-void CWallet::SelectMintsFromList(const CAmount nValueTarget, CAmount& nSelectedValue, vector<CZerocoinMint>& vSelectedMints)
-{
-    list<CZerocoinMint> listMints = CWalletDB(strWalletFile).ListMintedCoins();
-    listMints.sort();
-    listMints.reverse();
-
-    libzerocoin::CoinDenomination targetDenomination = libzerocoin::AmountToZerocoinDenomination(nValueTarget);
-    if (targetDenomination != libzerocoin::CoinDenomination::ZQ_ERROR) {
-        for (const CZerocoinMint mint : listMints) {
-            if (mint.IsUsed())
-                continue;
-
-            if (mint.GetDenomination() == targetDenomination) {
-                vSelectedMints.push_back(mint);
-                nSelectedValue += mint.GetDenominationAsAmount();
-                return;
-            }
-        }
-    }
-
-    for (const CZerocoinMint mint : listMints) {
-        if (mint.IsUsed())
-            continue;
-
-        vSelectedMints.push_back(mint);
-        nSelectedValue += mint.GetDenominationAsAmount();
-
-        if(nSelectedValue >= nValueTarget)
-            return;
-    }
-}
-
-bool CWallet::CreateZerocoinSpendTransaction(CAmount nValue, CWalletTx& wtxNew, CReserveKey& reserveKey, vector<CZerocoinSpend>& vSpends,
+bool CWallet::CreateZerocoinSpendTransaction(CAmount nValue, int nSecurityLevel, CWalletTx& wtxNew, CReserveKey& reserveKey, vector<CZerocoinSpend>& vSpends,
                                              vector<CZerocoinMint>& vSelectedMints, std::string& strFailReason, bool fMintChange, CBitcoinAddress* address)
 {
     if (nValue > GetZerocoinBalance()) {
@@ -4040,7 +4008,7 @@ bool CWallet::CreateZerocoinSpendTransaction(CAmount nValue, CWalletTx& wtxNew, 
             for (CZerocoinMint mint : vSelectedMints) {
                 CTxIn newTxIn;
                 CZerocoinSpend newSpend;
-                if (!MintToTxIn(mint, hashTxOut, newTxIn, newSpend, strFailReason)) {
+                if (!MintToTxIn(mint, nSecurityLevel, hashTxOut, newTxIn, newSpend, strFailReason)) {
                     return false;
                 }
                 txNew.vin.push_back(newTxIn);
@@ -4112,7 +4080,7 @@ string CWallet::MintZerocoin(CAmount nValue, CWalletTx& wtxNew, vector<CZerocoin
     return "";
 }
 
-string CWallet::SpendZerocoin(CAmount nAmount, CWalletTx& wtxNew, vector<CZerocoinSpend>& vSpends, vector<CZerocoinMint>& vMintsSelected, bool fMintChange, CBitcoinAddress* addressTo)
+string CWallet::SpendZerocoin(CAmount nAmount, int nSecurityLevel, CWalletTx& wtxNew, vector<CZerocoinSpend>& vSpends, vector<CZerocoinMint>& vMintsSelected, bool fMintChange, CBitcoinAddress* addressTo)
 {
     LogPrintf("%s: ZCPRINT\n", __func__);
 
@@ -4125,7 +4093,7 @@ string CWallet::SpendZerocoin(CAmount nAmount, CWalletTx& wtxNew, vector<CZeroco
     string strError;
     CReserveKey reserveKey(this);
 
-    if (!CreateZerocoinSpendTransaction(nAmount, wtxNew, reserveKey, vSpends, vMintsSelected, strError, fMintChange, addressTo)) {
+    if (!CreateZerocoinSpendTransaction(nAmount, nSecurityLevel, wtxNew, reserveKey, vSpends, vMintsSelected, strError, fMintChange, addressTo)) {
         LogPrintf("SpendZerocoin() : %s\n", strError.c_str());
         return strError;
     }

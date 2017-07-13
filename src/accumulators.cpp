@@ -244,7 +244,7 @@ bool CAccumulators::GetCheckpoint(int nHeight, uint256& nCheckpoint)
     return true;
 }
 
-bool CAccumulators::IntializeWitnessAndAccumulator(const CZerocoinMint &zerocoinSelected, const PublicCoin &pubcoinSelected, Accumulator& accumulator, AccumulatorWitness& witness)
+bool CAccumulators::IntializeWitnessAndAccumulator(const CZerocoinMint &zerocoinSelected, const PublicCoin &pubcoinSelected, Accumulator& accumulator, AccumulatorWitness& witness, int nSecurityLevel)
 {
     LogPrintf("ZCPRINT %s\n", __func__);
     uint256 txMintedHash;
@@ -314,11 +314,20 @@ bool CAccumulators::IntializeWitnessAndAccumulator(const CZerocoinMint &zerocoin
         }
     }
 
+    //security level: this is an important prevention of tracing the coins via timing. Security level represents how many checkpoints
+    //of accumulated coins are added *beyond* the checkpoint that the mint being spent was added too. If each spend added the exact same
+    //amounts of checkpoints after the mint was accumulated, then you could know the range of blocks that the mint originated from.
+    if (nSecurityLevel < 100) {
+        //add some randomness to the user's selection so that it is not always the same
+        nSecurityLevel += CBigNum::randBignum(10).getint();
+
+        //security level 100 represents adding all available coins that have been accumulated - user did not select this
+        if (nSecurityLevel >= 100)
+            nSecurityLevel = 99;
+    }
+
     //add the pubcoins up to the next checksum starting from the block
-    LogPrintf("ZCPRINT %s selected pubcoin %s\n", __func__, pubcoinSelected.getValue().GetHex());
-    LogPrintf("ZCPRINT %s add pubcoins\n", __func__);
     pindex = chainActive[nStartAccumulationHeight];
-    int nSecurityLevel = 1; //todo: this will be user defined, the more pubcoins that are added to the accumulator that is used, the more secure and untraceable it will be
     int nAccumulatorsCheckpointsAdded = 0;
     uint256 nPreviousChecksum = 0;
     while(pindex->nHeight < chainActive.Height() - 1) {
@@ -328,7 +337,7 @@ bool CAccumulators::IntializeWitnessAndAccumulator(const CZerocoinMint &zerocoin
 
         //if a new checkpoint was generated on this block, and we have added the specified amount of checkpointed accumulators,
         //then break here
-        if(nAccumulatorsCheckpointsAdded >= nSecurityLevel)
+        if(nSecurityLevel > 100 && nAccumulatorsCheckpointsAdded >= nSecurityLevel)
             break;
 
         //grab mints from this block

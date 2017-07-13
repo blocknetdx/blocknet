@@ -199,6 +199,7 @@ public:
         nStartCheckpointHeight = 66510; // todo
         nMinZerocoinMintFee = 1 * CENT; //high fee required for zerocoin mints
         nMintRequiredConfirmations = 20; //the maximum amount of confirmations until accumulated in 19
+        nDefaultSecurityLevel = 100; //full security level for accumulators //todo how heavy?
 
     }
 

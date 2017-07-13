@@ -104,6 +104,7 @@ public:
     int Zerocoin_StartCheckpointHeight() const { return nStartCheckpointHeight; }
     CAmount Zerocoin_MintFee() const { return nMinZerocoinMintFee; }
     int Zerocoin_MintRequiredConfirmations() const { return nMintRequiredConfirmations; }
+    int Zerocoin_DefaultSpendSecurity() const { return nDefaultSecurityLevel; }
 
 protected:
     CChainParams() {}
@@ -152,6 +153,7 @@ protected:
     int nStartCheckpointHeight;
     CAmount nMinZerocoinMintFee;
     int nMintRequiredConfirmations;
+    int nDefaultSecurityLevel;
 };
 
 /** 

@@ -2401,14 +2401,16 @@ Value mintzerocoin(const Array& params, bool fHelp)
 
 Value spendzerocoin(const Array& params, bool fHelp)
 {
-
-    if (fHelp || params.size() > 3 || params.size() < 2)
+    if (fHelp || params.size() > 4 || params.size() < 3)
         throw runtime_error(
-            "spendzerocoin <amount> <mintchange [true|false]> <address(optional)>\n"
+            "spendzerocoin <amount> <address> <mintchange [true|false]> <securitylevel [1-100 default:100]>\n"
             "Overview: Convert zPiv (zerocoins) into Piv. \n"
             "mintchange: if there is left over Pivx (change), the wallet can convert it automatically back to zerocoins [true]\n"
             "address: Send straight to an address or leave the address blank and the wallet will send to a change address. If there is change then"
                     "an address is required\n"
+            "security level: the amount of checkpoints to add to the accumulator. A checkpoint contains 10 blocks worth of zerocoinmints."
+                    "The more checkpoints that are added, the more untraceable the transaction will be. Use [100] to add the maximum amount"
+                    "of checkpoints available. Tip: adding more checkpoints makes the minting process take longer."
             + HelpRequiringPassphrase());
 
     LogPrintf("***ZCPRINT RPC spendzerocoin\n");
@@ -2417,13 +2419,16 @@ Value spendzerocoin(const Array& params, bool fHelp)
         throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
 
     CAmount nAmount = params[0].get_int() * COIN;
-    bool fMintChange = params[1].get_bool();
 
-    CBitcoinAddress address;
-    if (params.size() == 3) {
-        address = CBitcoinAddress(params[2].get_str());
-        if(!address.IsValid())
-            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid PIVX address");
+    CBitcoinAddress address = CBitcoinAddress(params[1].get_str());
+    if(!address.IsValid())
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid PIVX address");
+
+    bool fMintChange = params[2].get_bool();
+
+    int nSecurityLevel = Params().Zerocoin_DefaultSpendSecurity();
+    if (params.size() == 4) {
+        nSecurityLevel = params[3].get_int();
     }
 
     CWalletTx wtx;
@@ -2431,9 +2436,9 @@ Value spendzerocoin(const Array& params, bool fHelp)
     vector<CZerocoinSpend> vSpends;
     string strError;
     if(address.IsValid())
-        strError = pwalletMain->SpendZerocoin(nAmount, wtx, vSpends, vMintsSelected, fMintChange, &address);
+        strError = pwalletMain->SpendZerocoin(nAmount, nSecurityLevel, wtx, vSpends, vMintsSelected, fMintChange, &address);
     else
-        strError = pwalletMain->SpendZerocoin(nAmount, wtx, vSpends, vMintsSelected, fMintChange);
+        strError = pwalletMain->SpendZerocoin(nAmount, nSecurityLevel, wtx, vSpends, vMintsSelected, fMintChange);
 
     if (strError != "")
         throw JSONRPCError(RPC_WALLET_ERROR, strError);
