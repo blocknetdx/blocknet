@@ -134,6 +134,7 @@ std::vector<CZerocoinMint> SelectMintsFromList(const CAmount nValueTarget, CAmou
         for (auto& coin : reverse_iterate(zerocoinDenomList)) {
             if (ZerocoinDenominationToAmount(coin) > RemainingValue) {
                 // Check we have enough coins at the denomination
+                //std::cout << "For " << ZerocoinDenominationToAmount(coin)/COIN << " used = " << UsedDenomMap.at(coin)  << " have = " << DenomMap.at(coin) << "\n";
                 if (UsedDenomMap.at(coin) < DenomMap.at(coin)) {
                     BiggerOrEqualToRemainingAmountDenom = coin;
                 }
