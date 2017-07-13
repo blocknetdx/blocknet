@@ -135,7 +135,7 @@ Value masternode(const Array& params, bool fHelp)
             "1. \"command\"        (string or set of strings, required) The command to execute\n"
             "2. \"passphrase\"     (string, optional) The wallet passphrase\n"
             "\nAvailable commands:\n"
-            "  count        - Print number of all known masternodes (optional: 'obf', 'enabled', 'all', 'qualify')\n"
+            "  count        - Print count information of all known masternodes\n"
             "  current      - Print info on current masternode winner\n"
             "  debug        - Print masternode status\n"
             "  genkey       - Generate new masternodeprivkey\n"
