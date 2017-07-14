@@ -33,59 +33,6 @@ BOOST_AUTO_TEST_CASE(zcparams_test)
     BOOST_CHECK(fPassed);
 }
 
-//translation from pivx quantity to zerocoin denomination
-BOOST_AUTO_TEST_CASE(amount_to_denomination_test)
-{
-    cout << "Running amount_to_denomination_test...\n";
-
-    //valid amount (min edge)
-    CAmount amount = 1 * COIN;
-    BOOST_CHECK_MESSAGE(AmountToZerocoinDenomination(amount) == ZQ_ONE,"For COIN denomination should be ZQ_ONE");
-
-    //valid amount (max edge)
-    CAmount amount1 = 5000 * COIN;
-    BOOST_CHECK_MESSAGE(AmountToZerocoinDenomination(amount1) == ZQ_FIVE_THOUSAND,"For 5000*COIN denomination should be ZQ_ONE");
-    
-    //invalid amount (too much)
-    CAmount amount2 = 7000 * COIN;
-    BOOST_CHECK_MESSAGE(AmountToZerocoinDenomination(amount2) == ZQ_ERROR,"For 7000*COIN denomination should be Invalid -> ZQ_ERROR");
-    
-    //invalid amount (not enough)
-    CAmount amount3 = 1;
-    BOOST_CHECK_MESSAGE(AmountToZerocoinDenomination(amount3) == ZQ_ERROR,"For 1 denomination should be Invalid -> ZQ_ERROR");
-    
-}
-
-BOOST_AUTO_TEST_CASE(denomination_to_value_test)
-{
-    cout << "Running ZerocoinDenominationToValue_test...\n";
-
-    int64_t Value = 1 * COIN;
-    CoinDenomination denomination = ZQ_ONE;
-    BOOST_CHECK_MESSAGE(ZerocoinDenominationToAmount(denomination) ==  Value, "Wrong Value - should be 1");
-
-    Value = 10 * COIN;
-    denomination = ZQ_TEN;
-    BOOST_CHECK_MESSAGE(ZerocoinDenominationToAmount(denomination) ==  Value, "Wrong Value - should be 10");
-
-    Value = 50 * COIN;
-    denomination = ZQ_FIFTY;
-    BOOST_CHECK_MESSAGE(ZerocoinDenominationToAmount(denomination) ==  Value, "Wrong Value - should be 50");
-
-    Value = 500 * COIN;
-    denomination = ZQ_FIVE_HUNDRED;
-    BOOST_CHECK_MESSAGE(ZerocoinDenominationToAmount(denomination) ==  Value, "Wrong Value - should be 500");
-    
-    Value = 100 * COIN;
-    denomination = ZQ_ONE_HUNDRED;
-    BOOST_CHECK_MESSAGE(ZerocoinDenominationToAmount(denomination) ==  Value, "Wrong Value - should be 100");
-
-    Value = 0 * COIN;
-    denomination = ZQ_ERROR;
-    BOOST_CHECK_MESSAGE(ZerocoinDenominationToAmount(denomination) ==  Value, "Wrong Value - should be 0");
-
-}
-
 
 //ZQ_ONE mints
 std::string rawTx1 = "0100000001983d5fd91685bb726c0ebc3676f89101b16e663fd896fea53e19972b95054c49000000006a473044022010fbec3e78f9c46e58193d481caff715ceb984df44671d30a2c0bde95c54055f0220446a97d9340da690eaf2658e5b2bf6a0add06f1ae3f1b40f37614c7079ce450d012103cb666bd0f32b71cbf4f32e95fa58e05cd83869ac101435fcb8acee99123ccd1dffffffff0200e1f5050000000086c10280004c80c3a01f94e71662f2ae8bfcd88dfc5b5e717136facd6538829db0c7f01e5fd793cccae7aa1958564518e0223d6d9ce15b1e38e757583546e3b9a3f85bd14408120cd5192a901bb52152e8759fdd194df230d78477706d0e412a66398f330be38a23540d12ab147e9fb19224913f3fe552ae6a587fb30a68743e52577150ff73042c0f0d8f000000001976a914d6042025bd1fff4da5da5c432d85d82b3f26a01688ac00000000";
