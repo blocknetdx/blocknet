@@ -178,7 +178,7 @@ std::vector<CZerocoinMint> SelectMintsFromList(const CAmount nValueTarget, CAmou
                 vSelectedMints.push_back(mint);
                 mapUsedDenom.at(coin)++;
                 RemainingValue -= mint.GetDenominationAsAmount();
-                LogPrintf("%s : Using %d : Remaining zerocoins %d\n", __func__, ZerocoinDenominationToInt(coin), RemainingValue / COIN);
+                LogPrint("zero","%s : Using %d : Remaining zerocoins %d\n", __func__, ZerocoinDenominationToInt(coin), RemainingValue / COIN);
             }
             if (RemainingValue < ZerocoinDenominationToAmount(coin)) break;
         }
@@ -197,14 +197,14 @@ std::vector<CZerocoinMint> SelectMintsFromList(const CAmount nValueTarget, CAmou
             // Now need to selectMints based on mapUsedDenom (SPOCK) TBD
             //.....
             if (fCountOK) {
-                LogPrintf("%s : Redistributing use of coins (TBD)\n", __func__);
+                LogPrint("zero","%s : Redistributing use of coins (TBD)\n", __func__);
                 vSelectedMints = getSpends(listMints, mapUsedDenom, nSelectedValue);
             } else {
                 // retry
                 fCountOK = rebalanceCoinsSelect(nMaxNumberOfSpends, true, mapOfDenomsHeld, mapSavedDenoms);
                 mapUsedDenom = mapSavedDenoms;
                 if (!fCountOK) {
-                    LogPrintf("%s : Failed to find coin set\n", __func__);
+                    LogPrint("zero","%s : Failed to find coin set\n", __func__);
                 } else {
                     vSelectedMints = getSpends(listMints, mapUsedDenom, nSelectedValue);
                 }
@@ -224,6 +224,6 @@ std::vector<CZerocoinMint> SelectMintsFromList(const CAmount nValueTarget, CAmou
             vSelectedMints.clear();
         }
     }
-    LogPrintf("%s: Remaining %d, Fulfilled %d, Desired Amount %d\n", __func__, RemainingValue, nSelectedValue, nValueTarget);
+    LogPrintf("zero","%s: Remaining %d, Fulfilled %d, Desired Amount %d\n", __func__, RemainingValue, nSelectedValue, nValueTarget);
     return vSelectedMints;
 }
