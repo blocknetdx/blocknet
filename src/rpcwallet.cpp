@@ -2361,16 +2361,15 @@ Value listzerocoinamounts(const Array& params, bool fHelp)
 
 
     Array jsonList;
+    Object val;
     for (const auto& m : libzerocoin::zerocoinDenomList) {
         stringstream s1;
-        s1 << libzerocoin::ZerocoinDenominationToInt(m);
+        s1 << "Denomination Value " << libzerocoin::ZerocoinDenominationToInt(m);
         stringstream s2;
-        s2 << spread.at(m);
-        Object val;
+        s2 << spread.at(m) << " coins";
         val.push_back(Pair(s1.str(),s2.str()));
-        jsonList.push_back(val);
     }
-
+    jsonList.push_back(val);
     return jsonList;
 }
 Value listspentzerocoins(const Array& params, bool fHelp)
