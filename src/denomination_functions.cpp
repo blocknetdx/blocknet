@@ -58,6 +58,24 @@ std::vector<CZerocoinMint> getSpends(
     return vSelectedMints;
 }
 
+void listSpends(const std::vector<CZerocoinMint>& vSelectedMints) {
+
+    std::map<libzerocoin::CoinDenomination, unsigned int> myZerocoinSupply;
+    for (auto& denom : libzerocoin::zerocoinDenomList) myZerocoinSupply.insert(std::make_pair(denom, 0));
+
+    for (const CZerocoinMint mint : vSelectedMints) {
+        libzerocoin::CoinDenomination denom = mint.GetDenomination();
+        myZerocoinSupply.at(denom)++;
+    }
+
+    CAmount nTotal=0;
+    for (auto& denom : libzerocoin::zerocoinDenomList) {
+        LogPrintf("%s %d coins for denomination %d used\n", __func__,myZerocoinSupply.at(denom),denom);
+        nTotal += libzerocoin::ZerocoinDenominationToAmount(denom);
+    }
+    LogPrintf("Total value of coins %d\n",nTotal);
+}
+
 // -------------------------------------------------------------------------------------------------------
 // Find the CoinDenomination with the most number for a given amount
 // -------------------------------------------------------------------------------------------------------
@@ -224,6 +242,7 @@ std::vector<CZerocoinMint> SelectMintsFromList(const CAmount nValueTarget, CAmou
             vSelectedMints.clear();
         }
     }
-    LogPrintf("zero","%s: Remaining %d, Fulfilled %d, Desired Amount %d\n", __func__, RemainingValue, nSelectedValue, nValueTarget);
+    LogPrint("zero","%s: Remaining %d, Fulfilled %d, Desired Amount %d\n", __func__, RemainingValue, nSelectedValue, nValueTarget);
+    
     return vSelectedMints;
 }

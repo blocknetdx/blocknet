@@ -7,3 +7,4 @@ std::vector<CZerocoinMint> SelectMintsFromList(const CAmount nValueTarget, CAmou
                                                const std::list<CZerocoinMint>& listMints,
                                                const std::map<libzerocoin::CoinDenomination, CAmount> DenomMap
                                                );
+void listSpends(const std::vector<CZerocoinMint>& vSelectedMints);

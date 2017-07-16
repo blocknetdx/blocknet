@@ -214,6 +214,7 @@ extern json_spirit::Value autocombinerewards(const json_spirit::Array& params, b
 extern json_spirit::Value getzerocoinbalance(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value listmintedzerocoins(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value listspentzerocoins(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value listzerocoinamounts(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value mintzerocoin(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value spendzerocoin(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value resetmintzerocoin(const json_spirit::Array& params, bool fHelp);

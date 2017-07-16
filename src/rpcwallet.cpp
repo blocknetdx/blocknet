@@ -2318,24 +2318,57 @@ Value getzerocoinbalance(const Array& params, bool fHelp)
     return ValueFromAmount(pwalletMain->GetZerocoinBalance());
 
 }
-
 Value listmintedzerocoins(const Array& params, bool fHelp)
+{
+    
+    if (fHelp || params.size() != 0)
+        throw runtime_error(
+                            "listmintedzerocoins\n"
+                            + HelpRequiringPassphrase());
+    
+    if (pwalletMain->IsLocked())
+        throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
+    
+    CWalletDB walletdb(pwalletMain->strWalletFile);
+    list<CBigNum> listPubCoin = walletdb.ListMintedCoinsSerial();
+    
+    Array jsonList;
+    for (const CBigNum& pubCoinItem : listPubCoin) {
+        jsonList.push_back(pubCoinItem.GetHex());
+    }
+    
+    return jsonList;
+}
+
+Value listzerocoinamounts(const Array& params, bool fHelp)
 {
 
     if (fHelp || params.size() != 0)
         throw runtime_error(
-            "listmintedzerocoins\n"
+            "listzerocoinamounts\n"
             + HelpRequiringPassphrase());
 
     if (pwalletMain->IsLocked())
         throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
 
     CWalletDB walletdb(pwalletMain->strWalletFile);
-    list<CBigNum> listPubCoin = walletdb.ListMintedCoinsSerial();
+    list<CZerocoinMint> listPubCoin = walletdb.ListMintedCoins(true);
+ 
+    std::map<libzerocoin::CoinDenomination, CAmount> spread;
+    for (const auto& denom : libzerocoin::zerocoinDenomList)
+        spread.insert(std::pair<libzerocoin::CoinDenomination, CAmount>(denom, 0));
+    for (auto& mint : listPubCoin) spread.at(mint.GetDenomination())++;
+
 
     Array jsonList;
-    for (const CBigNum& pubCoinItem : listPubCoin) {
-        jsonList.push_back(pubCoinItem.GetHex());
+    for (const auto& m : libzerocoin::zerocoinDenomList) {
+        stringstream s1;
+        s1 << libzerocoin::ZerocoinDenominationToInt(m);
+        stringstream s2;
+        s2 << spread.at(m);
+        Object val;
+        val.push_back(Pair(s1.str(),s2.str()));
+        jsonList.push_back(val);
     }
 
     return jsonList;

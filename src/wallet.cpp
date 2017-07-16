@@ -1239,21 +1239,29 @@ CAmount CWallet::GetBalance() const
 CAmount CWallet::GetZerocoinBalance() const
 {
     CAmount nTotal = 0;
+    //! zerocoin specific fields
+    std::map<libzerocoin::CoinDenomination, unsigned int> myZerocoinSupply;
+    for (auto& denom : libzerocoin::zerocoinDenomList) {
+        myZerocoinSupply.insert(make_pair(denom, 0));
+    }
+
     {
         LOCK2(cs_main, cs_wallet);
-        list<CZerocoinMint> listPubCoin = CWalletDB(strWalletFile).ListMintedCoins();
-        list<CZerocoinSpend> listSpentCoins = CWalletDB(strWalletFile).ListSpentCoins();
+        // Get Unused coins
+        list<CZerocoinMint> listPubCoin = CWalletDB(strWalletFile).ListMintedCoins(true);
         for (auto& mint : listPubCoin) {
-            //if (mint.IsUsed()) {
             libzerocoin::CoinDenomination denom = mint.GetDenomination();
             nTotal += libzerocoin::ZerocoinDenominationToAmount(denom);
-            //}
-        }
-        for (auto& spent : listSpentCoins) {
-            libzerocoin::CoinDenomination denom = spent.GetDenomination();
-            nTotal -= libzerocoin::ZerocoinDenominationToAmount(denom);
+            myZerocoinSupply.at(denom)++;
         }
     }
+    for (auto& denom : libzerocoin::zerocoinDenomList) {
+        LogPrintf("%s My coins for denomination %d pubcoin %s\n", __func__,myZerocoinSupply.at(denom), denom);
+    }
+    LogPrintf("Total value of coins %d\n",nTotal);
+    
+
+    
     return nTotal;
 }
 
@@ -1265,12 +1273,10 @@ std::map<libzerocoin::CoinDenomination, unsigned int> CWallet::GetZerocoinDenomA
         spread.at(denom) = 0;
     {
         LOCK2(cs_main, cs_wallet);
-        list<CZerocoinMint> listPubCoin = CWalletDB(strWalletFile).ListMintedCoins();
-        list<CZerocoinSpend> listSpentCoins = CWalletDB(strWalletFile).ListSpentCoins();
-        for (auto& mint : listPubCoin)
+        list<CZerocoinMint> listPubCoin = CWalletDB(strWalletFile).ListMintedCoins(true);
+        for (auto& mint : listPubCoin) {
             spread.at(mint.GetDenomination())++;
-        for (auto& spent : listSpentCoins)
-            spread.at(spent.GetDenomination())--;
+        }
     }
     return spread;
 }
@@ -1283,14 +1289,9 @@ std::map<libzerocoin::CoinDenomination, CAmount> CWallet::GetMyZerocoinDistribut
         spread.insert(std::pair<libzerocoin::CoinDenomination, CAmount>(denom, 0));
     {
         LOCK2(cs_main, cs_wallet);
-        list<CZerocoinMint> listPubCoin = CWalletDB(strWalletFile).ListMintedCoins();
-        list<CZerocoinSpend> listSpentCoins = CWalletDB(strWalletFile).ListSpentCoins();
+        list<CZerocoinMint> listPubCoin = CWalletDB(strWalletFile).ListMintedCoins(true);
         for (auto& mint : listPubCoin)
-            spread.at(mint.GetDenomination()) +=
-                libzerocoin::ZerocoinDenominationToAmount(mint.GetDenomination());
-        for (auto& spent : listSpentCoins)
-            spread.at(spent.GetDenomination()) -=
-                libzerocoin::ZerocoinDenominationToAmount(spent.GetDenomination());
+            spread.at(mint.GetDenomination())++;
     }
     return spread;
 }
@@ -3938,6 +3939,8 @@ bool CWallet::CreateZerocoinSpendTransaction(CAmount nValue, int nSecurityLevel,
     list<CZerocoinMint> listMints = CWalletDB(strWalletFile).ListMintedCoins(true, true);
     std::map<libzerocoin::CoinDenomination, CAmount> DenomMap = GetMyZerocoinDistribution();
     vSelectedMints = SelectMintsFromList(nValue, nValueSelected, nMaxSpends, listMints, DenomMap);
+    // for Debug
+    listSpends(vSelectedMints);
 
     if (vSelectedMints.empty()) {
         strFailReason = _("failed to select a zerocoin");

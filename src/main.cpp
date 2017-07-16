@@ -2771,27 +2771,19 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
             pindex->nZerocoinSupply.at(denom) = pindex->pprev->nZerocoinSupply.at(denom);
         }
     }
-    /*
-    for (auto& denom : zerocoinDenomList) {
-        LogPrintf("zero: %s BEFORE Update coins for denomination %d pubcoin %s\n", __func__,pindex->nZerocoinSupply.at(denom), denom);
-    }
-     */
     if (pindex->pprev) {
         for (auto& m : vMints) {
             libzerocoin::CoinDenomination denom = m.GetDenomination();
-            if (!m.IsUsed())
-                pindex->nZerocoinSupply.at(denom) =  pindex->nZerocoinSupply.at(denom) + 1;
+            pindex->nZerocoinSupply.at(denom)++;
         }
         for (auto& denom : vSpends) {
-            pindex->nZerocoinSupply.at(denom) =  pindex->nZerocoinSupply.at(denom) - 1;
+            pindex->nZerocoinSupply.at(denom)--;
         }
     }
 
     for (auto& denom : zerocoinDenomList) {
         LogPrintf("zero: %s coins for denomination %d pubcoin %s\n", __func__,pindex->nZerocoinSupply.at(denom), denom);
     }
-
-
 
     if (!pblocktree->WriteBlockIndex(CDiskBlockIndex(pindex)))
         return error("Connect() : WriteBlockIndex for pindex failed");
