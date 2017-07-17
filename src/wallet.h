@@ -399,7 +399,6 @@ public:
     void ResendWalletTransactions();
     CAmount GetBalance() const;
     CAmount GetZerocoinBalance() const;
-    std::map<libzerocoin::CoinDenomination, unsigned int> GetZerocoinDenomAmounts() const;
     std::map<libzerocoin::CoinDenomination, CAmount> GetMyZerocoinDistribution() const;
     CAmount GetUnconfirmedBalance() const;
     CAmount GetImmatureBalance() const;
