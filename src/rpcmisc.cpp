@@ -98,7 +98,7 @@ Value getinfo(const Array& params, bool fHelp)
     obj.push_back(Pair("difficulty", (double)GetDifficulty()));
     obj.push_back(Pair("testnet", Params().TestnetToBeDeprecatedFieldRPC()));
     obj.push_back(Pair("moneysupply",ValueFromAmount(chainActive.Tip()->nMoneySupply)));
-    obj.push_back(Pair("zerocoinsupply",ValueFromAmount(chainActive.Tip()->getZerocoinSupply())));
+    obj.push_back(Pair("zerocoinsupply",ValueFromAmount(chainActive.Tip()->GetZerocoinSupply())));
     
 #ifdef ENABLE_WALLET
     if (pwalletMain) {

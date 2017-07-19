@@ -1065,8 +1065,7 @@ std::list<libzerocoin::CoinDenomination> ZerocoinSpendListFromBlock(const CBlock
             if(!txin.scriptSig.IsZerocoinSpend())
                 continue;
 
-            CAmount amount = tx.GetZerocoinSpent();
-            libzerocoin::CoinDenomination c = libzerocoin::AmountToZerocoinDenomination(amount);
+            libzerocoin::CoinDenomination c = libzerocoin::IntToZerocoinDenomination(txin.nSequence);
             vSpends.push_back(c);
         }
     }
@@ -1223,7 +1222,8 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
         return state.DoS(10, error("CheckTransaction() : vout empty"),
             REJECT_INVALID, "bad-txns-vout-empty");
     // Size limits
-    if (::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION) > MAX_BLOCK_SIZE)
+    unsigned int nMaxSize = GetAdjustedTime() < Params().Zerocoin_ProtocolActivationTime() ? MAX_BLOCK_SIZE_LEGACY : MAX_ZEROCOIN_TX_SIZE;
+    if (::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION) > nMaxSize)
         return state.DoS(100, error("CheckTransaction() : size limits failed"),
             REJECT_INVALID, "bad-txns-oversize");
 
@@ -1470,11 +1470,12 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
         // merely non-standard transaction.
         if (!tx.IsZerocoinSpend()) {
             unsigned int nSigOps = GetLegacySigOpCount(tx);
+            unsigned int nMaxSigOps = GetAdjustedTime() > Params().Zerocoin_ProtocolActivationTime() ? MAX_TX_SIGOPS_CURRENT : MAX_TX_SIGOPS_LEGACY;
             nSigOps += GetP2SHSigOpCount(tx, view);
-            if(nSigOps > MAX_TX_SIGOPS)
+            if(nSigOps > nMaxSigOps)
                 return state.DoS(0,
                                  error("AcceptToMemoryPool : too many sigops %s, %d > %d",
-                                       hash.ToString(), nSigOps, MAX_TX_SIGOPS),
+                                       hash.ToString(), nSigOps, nMaxSigOps),
                                  REJECT_NONSTANDARD, "bad-txns-too-many-sigops");
         }
 
@@ -1668,11 +1669,12 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState& state, const CTransact
         // MAX_BLOCK_SIGOPS; we still consider this an invalid rather than
         // merely non-standard transaction.
         unsigned int nSigOps = GetLegacySigOpCount(tx);
+        unsigned int nMaxSigOps = GetAdjustedTime() > Params().Zerocoin_ProtocolActivationTime() ? MAX_TX_SIGOPS_CURRENT : MAX_TX_SIGOPS_LEGACY;
         nSigOps += GetP2SHSigOpCount(tx, view);
-        if (nSigOps > MAX_TX_SIGOPS)
+        if (nSigOps > nMaxSigOps)
             return state.DoS(0,
                 error("AcceptableInputs : too many sigops %s, %d > %d",
-                    hash.ToString(), nSigOps, MAX_TX_SIGOPS),
+                    hash.ToString(), nSigOps, nMaxSigOps),
                 REJECT_NONSTANDARD, "bad-txns-too-many-sigops");
 
         CAmount nValueOut = tx.GetValueOut();
@@ -2712,12 +2714,13 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
     blockundo.vtxundo.reserve(block.vtx.size() - 1);
     CAmount nValueOut = 0;
     CAmount nValueIn = 0;
+    unsigned int nMaxBlockSigOps = block.nTime > Params().Zerocoin_ProtocolActivationTime() ? MAX_BLOCK_SIGOPS_CURRENT : MAX_BLOCK_SIGOPS_LEGACY;
     for (unsigned int i = 0; i < block.vtx.size(); i++) {
         const CTransaction& tx = block.vtx[i];
 
         nInputs += tx.vin.size();
         nSigOps += GetLegacySigOpCount(tx);
-        if (nSigOps > MAX_BLOCK_SIGOPS)
+        if (nSigOps > nMaxBlockSigOps)
             return state.DoS(100, error("ConnectBlock() : too many sigops"),
                 REJECT_INVALID, "bad-blk-sigops");
 
@@ -2731,7 +2734,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                 // this is to prevent a "rogue miner" from creating
                 // an incredibly-expensive-to-validate block.
                 nSigOps += GetP2SHSigOpCount(tx, view);
-                if (nSigOps > MAX_BLOCK_SIGOPS)
+                if (nSigOps > nMaxBlockSigOps)
                     return state.DoS(100, error("ConnectBlock() : too many sigops"),
                         REJECT_INVALID, "bad-blk-sigops");
             }
@@ -2757,34 +2760,42 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
         pos.nTxOffset += ::GetSerializeSize(tx, SER_DISK, CLIENT_VERSION);
     }
 
-    // ppcoin: track money supply and mint amount info
-    CAmount nMoneySupplyPrev = pindex->pprev ? pindex->pprev->nMoneySupply : 0;
-    pindex->nMoneySupply = nMoneySupplyPrev + nValueOut - nValueIn;
-    pindex->nMint = pindex->nMoneySupply - nMoneySupplyPrev;
+    std::list<CZerocoinMint> listMints;
+    BlockToZerocoinMintList(block, listMints);
+    std::list<libzerocoin::CoinDenomination> listSpends = ZerocoinSpendListFromBlock(block);
 
-    std::list<CZerocoinMint> vMints;
-    BlockToZerocoinMintList(block, vMints);
-    std::list<libzerocoin::CoinDenomination> vSpends = ZerocoinSpendListFromBlock(block);
-
-    // Update from previous block
-    if (pindex->pprev) {
+    // Initialize zerocoin supply to the supply from previous block
+    if (pindex->pprev && pindex->pprev->GetBlockHeader().nVersion > 3) {
         for (auto& denom : zerocoinDenomList) {
-            pindex->nZerocoinSupply.at(denom) = pindex->pprev->nZerocoinSupply.at(denom);
+            pindex->mapZerocoinSupply.at(denom) = pindex->pprev->mapZerocoinSupply.at(denom);
         }
     }
+
+    // Track zerocoin money supply
+    CAmount nAmountZerocoinSpent = 0;
     if (pindex->pprev) {
-        for (auto& m : vMints) {
+        for (auto& m : listMints) {
             libzerocoin::CoinDenomination denom = m.GetDenomination();
-            pindex->nZerocoinSupply.at(denom)++;
+            pindex->mapZerocoinSupply.at(denom)++;
         }
-        for (auto& denom : vSpends) {
-            pindex->nZerocoinSupply.at(denom)--;
+
+        for (auto& denom : listSpends) {
+            pindex->mapZerocoinSupply.at(denom)--;
+            nAmountZerocoinSpent += libzerocoin::ZerocoinDenominationToAmount(denom);
         }
     }
 
     for (auto& denom : zerocoinDenomList) {
-        LogPrintf("zero: %s coins for denomination %d pubcoin %s\n", __func__,pindex->nZerocoinSupply.at(denom), denom);
+        LogPrintf("zero: %s coins for denomination %d pubcoin %s\n", __func__,pindex->mapZerocoinSupply.at(denom), denom);
     }
+
+    // ppcoin: track money supply and mint amount info
+    CAmount nMoneySupplyPrev = pindex->pprev ? pindex->pprev->nMoneySupply : 0;
+    pindex->nMoneySupply = nMoneySupplyPrev + nValueOut - nValueIn;
+    pindex->nMint = nValueOut - nValueIn + nFees - nAmountZerocoinSpent;
+    LogPrintf("XX69----------> ConnectBlock(): nValueOut: %d, nValueIn: %d, nFees: %d, nMint: %d\n",
+              FormatMoney(nValueOut), FormatMoney(nValueIn),
+              FormatMoney(nFees), FormatMoney(pindex->nMint));
 
     if (!pblocktree->WriteBlockIndex(CDiskBlockIndex(pindex)))
         return error("Connect() : WriteBlockIndex for pindex failed");
@@ -3680,7 +3691,8 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
     // because we receive the wrong transactions for it.
 
     // Size limits
-    if (block.vtx.empty() || block.vtx.size() > MAX_BLOCK_SIZE || ::GetSerializeSize(block, SER_NETWORK, PROTOCOL_VERSION) > MAX_BLOCK_SIZE)
+    unsigned int nMaxBlockSize = GetAdjustedTime() > Params().Zerocoin_ProtocolActivationTime() ? MAX_BLOCK_SIZE_CURRENT : MAX_BLOCK_SIZE_LEGACY;
+    if (block.vtx.empty() || block.vtx.size() > nMaxBlockSize || ::GetSerializeSize(block, SER_NETWORK, PROTOCOL_VERSION) > nMaxBlockSize)
         return state.DoS(100, error("CheckBlock() : size limits failed"),
             REJECT_INVALID, "bad-blk-length");
 
@@ -3795,7 +3807,8 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
     BOOST_FOREACH (const CTransaction& tx, block.vtx) {
         nSigOps += GetLegacySigOpCount(tx);
     }
-    if (nSigOps > MAX_BLOCK_SIGOPS)
+    unsigned int nMaxBlockSigOps = block.nTime > Params().Zerocoin_ProtocolActivationTime() ? MAX_BLOCK_SIGOPS_CURRENT : MAX_BLOCK_SIGOPS_LEGACY;
+    if (nSigOps > nMaxBlockSigOps)
         return state.DoS(100, error("CheckBlock() : out-of-bounds SigOpCount"),
             REJECT_INVALID, "bad-blk-sigops", true);
 
@@ -4599,7 +4612,7 @@ bool LoadExternalBlockFile(FILE* fileIn, CDiskBlockPos* dbp)
     int nLoaded = 0;
     try {
         // This takes over fileIn and calls fclose() on it in the CBufferedFile destructor
-        CBufferedFile blkdat(fileIn, 2 * MAX_BLOCK_SIZE, MAX_BLOCK_SIZE + 8, SER_DISK, CLIENT_VERSION);
+        CBufferedFile blkdat(fileIn, 2 * MAX_BLOCK_SIZE_CURRENT, MAX_BLOCK_SIZE_CURRENT + 8, SER_DISK, CLIENT_VERSION);
         uint64_t nRewind = blkdat.GetPos();
         while (!blkdat.eof()) {
             boost::this_thread::interruption_point();
@@ -4618,7 +4631,7 @@ bool LoadExternalBlockFile(FILE* fileIn, CDiskBlockPos* dbp)
                     continue;
                 // read size
                 blkdat >> nSize;
-                if (nSize < 80 || nSize > MAX_BLOCK_SIZE)
+                if (nSize < 80 || nSize > MAX_BLOCK_SIZE_CURRENT)
                     continue;
             } catch (const std::exception&) {
                 // no valid block header found; don't complain

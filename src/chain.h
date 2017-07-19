@@ -178,7 +178,7 @@ public:
     uint32_t nSequenceId;
     
     //! zerocoin specific fields
-    std::map<libzerocoin::CoinDenomination, unsigned int> nZerocoinSupply;
+    std::map<libzerocoin::CoinDenomination, unsigned int> mapZerocoinSupply;
     
     void SetNull()
     {
@@ -211,7 +211,7 @@ public:
         nAccumulatorCheckpoint = 0;
         // Start supply of each denomination with 0s
         for (auto& denom : libzerocoin::zerocoinDenomList) {
-            nZerocoinSupply.insert(make_pair(denom, 0));
+            mapZerocoinSupply.insert(make_pair(denom, 0));
         }
 
     }
@@ -287,17 +287,14 @@ public:
         return block;
     }
 
-    int64_t getZerocoinSupply() const
+    int64_t GetZerocoinSupply() const
     {
         int64_t nTotal = 0;
         for (auto& denom : libzerocoin::zerocoinDenomList) {
-            nTotal += libzerocoin::ZerocoinDenominationToAmount(denom) * nZerocoinSupply.at(denom);
+            nTotal += libzerocoin::ZerocoinDenominationToAmount(denom) * mapZerocoinSupply.at(denom);
         }
         return nTotal;
     }
-
-
-
 
     uint256 GetBlockHash() const
     {
@@ -473,8 +470,11 @@ public:
         READWRITE(nTime);
         READWRITE(nBits);
         READWRITE(nNonce);
-        if(this->nVersion > 3)
+        if(this->nVersion > 3) {
             READWRITE(nAccumulatorCheckpoint);
+            READWRITE(mapZerocoinSupply);
+        }
+
     }
 
     uint256 GetBlockHash() const

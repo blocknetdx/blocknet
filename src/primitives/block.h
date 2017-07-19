@@ -12,7 +12,8 @@
 #include "uint256.h"
 
 /** The maximum allowed size for a serialized block, in bytes (network rule) */
-static const unsigned int MAX_BLOCK_SIZE = 1000000;
+static const unsigned int MAX_BLOCK_SIZE_CURRENT = 2000000;
+static const unsigned int MAX_BLOCK_SIZE_LEGACY = 1000000;
 
 /** Block switch header time */
 static const unsigned int HEADER_SWITCH_TIME = 999999999;

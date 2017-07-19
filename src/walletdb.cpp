@@ -1071,8 +1071,6 @@ std::list<CZerocoinMint> CWalletDB::ListMintedCoins(bool fUnusedOnly, bool fMatu
             continue;
 
         if (fMaturedOnly) {
-            LogPrintf("%s mint height %d\n", __func__, mint.GetHeight());
-
             //if there is not a record of the block height, then look it up and assign it
             if (!mint.GetHeight()) {
                 CTransaction tx;
