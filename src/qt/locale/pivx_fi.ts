@@ -864,16 +864,16 @@ Osoite: %4
         <translation>Valitse yksityisyyden taso.</translation>
     </message>
     <message>
-        <source>Use 2 separate masternodes to mix funds up to 1000 DNET</source>
-        <translation>Käytä 2 erillistä masternodea sekoittaaksesi varoja</translation>
+        <source>Use 2 separate servicenodes to mix funds up to 1000 DNET</source>
+        <translation>Käytä 2 erillistä servicenodea sekoittaaksesi varoja</translation>
     </message>
     <message>
-        <source>Use 8 separate masternodes to mix funds up to 1000 DNET</source>
-        <translation>Käytä 8 erillistä masternodea sekoittaaksesi varoja</translation>
+        <source>Use 8 separate servicenodes to mix funds up to 1000 DNET</source>
+        <translation>Käytä 8 erillistä servicenodea sekoittaaksesi varoja</translation>
     </message>
     <message>
-        <source>Use 16 separate masternodes</source>
-        <translation>Käytä 16 erillistä masternodea</translation>
+        <source>Use 16 separate servicenodes</source>
+        <translation>Käytä 16 erillistä servicenodea</translation>
     </message>
     <message>
         <source>This option is the quickest and will cost about ~0.025 DNET to anonymize 1000 DNET</source>
@@ -1187,8 +1187,8 @@ Varoitus: Jos käytät käyttöjärjestelmää (Live os) suoraan usb, dvd tai cd
         <translation>Expertti</translation>
     </message>
     <message>
-        <source>This setting determines the amount of individual masternodes that an input will be anonymized through.&lt;br/&gt;More rounds of anonymization gives a higher degree of privacy, but also costs more in fees.</source>
-        <translation>Tämä asetus määrittää kuinka monen erillisen masternoden kautta syötteen anonymisointi tehdään.&lt;br/&gt;Mitä enemmän anonymisoinnin kierroksia, sen parempi yksityisyys, mutta se myös maksaa enemmän siirtomaksuina.</translation>
+        <source>This setting determines the amount of individual servicenodes that an input will be anonymized through.&lt;br/&gt;More rounds of anonymization gives a higher degree of privacy, but also costs more in fees.</source>
+        <translation>Tämä asetus määrittää kuinka monen erillisen servicenoden kautta syötteen anonymisointi tehdään.&lt;br/&gt;Mitä enemmän anonymisoinnin kierroksia, sen parempi yksityisyys, mutta se myös maksaa enemmän siirtomaksuina.</translation>
     </message>
     <message>
         <source>Whether to show coin control features or not.</source>
@@ -1372,7 +1372,7 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Kypsymättä:</translation>
     </message>
     <message>
-        <source>Staked or masternode rewards that has not yet matured</source>
+        <source>Staked or servicenode rewards that has not yet matured</source>
         <translation>Louhittu saldo, joka ei ole vielä kypsynyt</translation>
     </message>
     <message>
@@ -1384,7 +1384,7 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Vahvistamattomat tapahtumat vain-luku osoitteisiin</translation>
     </message>
     <message>
-        <source>Staked or masternode rewards in watch-only addresses that has not yet matured</source>
+        <source>Staked or servicenode rewards in watch-only addresses that has not yet matured</source>
         <translation>Louhittu saldo vain-luku osoitteisiin, joka ei ole vielä kypsynyt</translation>
     </message>
     <message>
@@ -1456,8 +1456,8 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Käynnistä/Lopeta Sekoitus</translation>
     </message>
     <message>
-        <source>The denominations you submitted to the Masternode.&lt;br&gt;To mix, other users must submit the exact same denominations.</source>
-        <translation>Masternodelle lähetetyt denominoinnit.&lt;br&gt;Jotta sekoitus onnistuisi, täytyy muiden käyttäjien käyttää saman arvoisia denominointeja.</translation>
+        <source>The denominations you submitted to the Servicenode.&lt;br&gt;To mix, other users must submit the exact same denominations.</source>
+        <translation>Servicenodelle lähetetyt denominoinnit.&lt;br&gt;Jotta sekoitus onnistuisi, täytyy muiden käyttäjien käyttää saman arvoisia denominointeja.</translation>
     </message>
     <message>
         <source>(Last Message)</source>
@@ -1813,8 +1813,8 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Lohkoketju</translation>
     </message>
     <message>
-        <source>Number of Masternodes</source>
-        <translation>Masternodet määrä</translation>
+        <source>Number of Servicenodes</source>
+        <translation>Servicenodet määrä</translation>
     </message>
     <message>
         <source>&amp;Console</source>
@@ -3419,8 +3419,8 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <translation>Varoitus: Wallet.dat lompakkotiedosto on vioittunut, tiedot pelastettu. Alkuperäinen wallet.dat lompakkotiedosto on tallennettu wallet.{timestamp}.bak kansioon %s, jos saldosi tai siirtohistoria on virheellinen, sinun tulisi palauttaa lompakkotiedosto varmuuskopiosta.</translation>
     </message>
     <message>
-        <source>You must specify a masternodeprivkey in the configuration. Please see documentation for help.</source>
-        <translation>Sinun täytyy määritellä masternodeprivkey asetustiedostoon. Katso lisätietoja dokumentaatiosta.</translation>
+        <source>You must specify a servicenodeprivkey in the configuration. Please see documentation for help.</source>
+        <translation>Sinun täytyy määritellä servicenodeprivkey asetustiedostoon. Katso lisätietoja dokumentaatiosta.</translation>
     </message>
     <message>
         <source>(default: 1)</source>
@@ -3619,8 +3619,8 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <translation>Poista kaikki lompakon siirtotapahtumat ja palauta vain nuo osat lohkoketjusta -rescan valinnan avulla käynnistyksessä</translation>
     </message>
     <message>
-        <source>Disable all DarkNet specific functionality (Masternodes, Obfuscate, SwiftTX, Budgeting) (0-1, default: %u)</source>
-        <translation>Kytke pois käytöstä kaikki DarkNet:in erityistoiminnot (Masternodet, Obfuscate, SwiftTX, Budjetointi) (0-1, oletus: %u)</translation>
+        <source>Disable all DarkNet specific functionality (Servicenodes, Obfuscate, SwiftTX, Budgeting) (0-1, default: %u)</source>
+        <translation>Kytke pois käytöstä kaikki DarkNet:in erityistoiminnot (Servicenodet, Obfuscate, SwiftTX, Budjetointi) (0-1, oletus: %u)</translation>
     </message>
     <message>
         <source>Distributed under the MIT software license, see the accompanying file COPYING or &lt;http://www.opensource.org/licenses/mit-license.php&gt;.</source>
@@ -3831,12 +3831,12 @@ esimerkiksi: alertnotify=echo %%s | mail -s "DarkNet Hälytys" admin@foo.com
         <translation>Poista turvatila käytöstä, ohita todellinen turvatila tapahtuma (oletus: %u)</translation>
     </message>
     <message>
-        <source>Enable the client to act as a masternode (0-1, default: %u)</source>
-        <translation>Aktivoi asiakasohjelman käyttö masternode:na (0-1, oletus: %u)</translation>
+        <source>Enable the client to act as a servicenode (0-1, default: %u)</source>
+        <translation>Aktivoi asiakasohjelman käyttö servicenode:na (0-1, oletus: %u)</translation>
     </message>
     <message>
-        <source>Error connecting to Masternode.</source>
-        <translation>Virhe masternode:en kytkeytymisessä.</translation>
+        <source>Error connecting to Servicenode.</source>
+        <translation>Virhe servicenode:en kytkeytymisessä.</translation>
     </message>
     <message>
         <source>Error loading wallet.dat: Wallet requires newer version of DarkNet Core</source>
@@ -3975,20 +3975,20 @@ esimerkiksi: alertnotify=echo %%s | mail -s "DarkNet Hälytys" admin@foo.com
         <translation>Ladataan budjetti välimuistia...</translation>
     </message>
     <message>
-        <source>Loading masternode cache...</source>
-        <translation>Ladataan masternode välimuistia...</translation>
+        <source>Loading servicenode cache...</source>
+        <translation>Ladataan servicenode välimuistia...</translation>
     </message>
     <message>
-        <source>Loading masternode payment cache...</source>
-        <translation>Ladataan masternode maksuvälimuistia...</translation>
+        <source>Loading servicenode payment cache...</source>
+        <translation>Ladataan servicenode maksuvälimuistia...</translation>
     </message>
     <message>
         <source>Lock is already in place.</source>
         <translation>On jo lukittu.</translation>
     </message>
     <message>
-        <source>Lock masternodes from masternode configuration file (default: %u)</source>
-        <translation>Lukitse masternodet niiden asetustiedoston kautta (oletus: %u)</translation>
+        <source>Lock servicenodes from servicenode configuration file (default: %u)</source>
+        <translation>Lukitse servicenodet niiden asetustiedoston kautta (oletus: %u)</translation>
     </message>
     <message>
         <source>Maintain at most &lt;n&gt; connections to peers (default: %u)</source>
@@ -4011,16 +4011,16 @@ esimerkiksi: alertnotify=echo %%s | mail -s "DarkNet Hälytys" admin@foo.com
         <translation>Tarvitaan määritellä portti -whitebind: '%s'</translation>
     </message>
     <message>
-        <source>No Masternodes detected.</source>
-        <translation>Masternodeja ei havaittu.</translation>
+        <source>No Servicenodes detected.</source>
+        <translation>Servicenodeja ei havaittu.</translation>
     </message>
     <message>
-        <source>No compatible Masternode found.</source>
-        <translation>Yhteensopivaa Masternodea ei löytynyt.</translation>
+        <source>No compatible Servicenode found.</source>
+        <translation>Yhteensopivaa Servicenodea ei löytynyt.</translation>
     </message>
     <message>
-        <source>Not in the Masternode list.</source>
-        <translation>Ei ole Masternode listassa.</translation>
+        <source>Not in the Servicenode list.</source>
+        <translation>Ei ole Servicenode listassa.</translation>
     </message>
     <message>
         <source>Number of automatic wallet backups (default: 10)</source>
@@ -4059,8 +4059,8 @@ esimerkiksi: alertnotify=echo %%s | mail -s "DarkNet Hälytys" admin@foo.com
         <translation>Serverin yksityisavain (oletus: %s)</translation>
     </message>
     <message>
-        <source>Set external address:port to get to this masternode (example: %s)</source>
-        <translation>Aseta ulkoinen osoite:portti tälle masternodelle (esim: %s)</translation>
+        <source>Set external address:port to get to this servicenode (example: %s)</source>
+        <translation>Aseta ulkoinen osoite:portti tälle servicenodelle (esim: %s)</translation>
     </message>
     <message>
         <source>Set key pool size to &lt;n&gt; (default: %u)</source>
@@ -4091,8 +4091,8 @@ esimerkiksi: alertnotify=echo %%s | mail -s "DarkNet Hälytys" admin@foo.com
         <translation>Määritä yhteyden aikakatkaisu millisekunneissa (minimi: 1, oletus: %d)</translation>
     </message>
     <message>
-        <source>Specify masternode configuration file (default: %s)</source>
-        <translation>Määritä masternoden asetustiedosto (oletus: %s)</translation>
+        <source>Specify servicenode configuration file (default: %s)</source>
+        <translation>Määritä servicenoden asetustiedosto (oletus: %s)</translation>
     </message>
     <message>
         <source>Specify pid file (default: %s)</source>
@@ -4107,16 +4107,16 @@ esimerkiksi: alertnotify=echo %%s | mail -s "DarkNet Hälytys" admin@foo.com
         <translation>Keskeytä kun kaikki lohkot tuotu levyltä (oletus: %u)</translation>
     </message>
     <message>
-        <source>Submitted following entries to masternode: %u / %d</source>
-        <translation>Esitetty seuraavat merkinnät masternodelle: %u / %d</translation>
+        <source>Submitted following entries to servicenode: %u / %d</source>
+        <translation>Esitetty seuraavat merkinnät servicenodelle: %u / %d</translation>
     </message>
     <message>
-        <source>Submitted to masternode, waiting for more entries ( %u / %d ) %s</source>
-        <translation>Esitetty masternodelle, odotetaan lisää merkintöjä ( %u / %d ) %s</translation>
+        <source>Submitted to servicenode, waiting for more entries ( %u / %d ) %s</source>
+        <translation>Esitetty servicenodelle, odotetaan lisää merkintöjä ( %u / %d ) %s</translation>
     </message>
     <message>
-        <source>Submitted to masternode, waiting in queue %s</source>
-        <translation>Esitetty masternodelle, odotetaan jonossa %s</translation>
+        <source>Submitted to servicenode, waiting in queue %s</source>
+        <translation>Esitetty servicenodelle, odotetaan jonossa %s</translation>
     </message>
     <message>
         <source>Synchronization failed</source>
@@ -4131,20 +4131,20 @@ esimerkiksi: alertnotify=echo %%s | mail -s "DarkNet Hälytys" admin@foo.com
         <translation>Synkronoidaan budjetit...</translation>
     </message>
     <message>
-        <source>Synchronizing masternode winners...</source>
-        <translation>Synkronoidaan masternode voittajat...</translation>
+        <source>Synchronizing servicenode winners...</source>
+        <translation>Synkronoidaan servicenode voittajat...</translation>
     </message>
     <message>
-        <source>Synchronizing masternodes...</source>
-        <translation>Synkronoidaan masternodet...</translation>
+        <source>Synchronizing servicenodes...</source>
+        <translation>Synkronoidaan servicenodet...</translation>
     </message>
     <message>
         <source>Synchronizing sporks...</source>
         <translation>Synkronoidaan sporkit...</translation>
     </message>
     <message>
-        <source>This is not a Masternode.</source>
-        <translation>Tämä ei ole Masternode.</translation>
+        <source>This is not a Servicenode.</source>
+        <translation>Tämä ei ole Servicenode.</translation>
     </message>
     <message>
         <source>Threshold for disconnecting misbehaving peers (default: %u)</source>
@@ -4155,8 +4155,8 @@ esimerkiksi: alertnotify=echo %%s | mail -s "DarkNet Hälytys" admin@foo.com
         <translation>Käytä KeePass 2 integraatiota käyttäen KeePassHttp liitännäistä (oletus: %u)</translation>
     </message>
     <message>
-        <source>Use N separate masternodes to anonymize funds  (2-8, default: %u)</source>
-        <translation>Käytä N erillistä masternodea varojen anonymisointiin (2-8, oletus: %u)</translation>
+        <source>Use N separate servicenodes to anonymize funds  (2-8, default: %u)</source>
+        <translation>Käytä N erillistä servicenodea varojen anonymisointiin (2-8, oletus: %u)</translation>
     </message>
     <message>
         <source>Use UPnP to map the listening port (default: %u)</source>
@@ -4179,32 +4179,32 @@ esimerkiksi: alertnotify=echo %%s | mail -s "DarkNet Hälytys" admin@foo.com
         <translation>Yritetään uudelleen...</translation>
     </message>
     <message>
-        <source>Invalid masternodeprivkey. Please see documenation.</source>
-        <translation>Virheellinen masternoden yksityisavain (masternodeprivkey). Katso lisätietoja dokumentaatiosta.</translation>
+        <source>Invalid servicenodeprivkey. Please see documenation.</source>
+        <translation>Virheellinen servicenoden yksityisavain (servicenodeprivkey). Katso lisätietoja dokumentaatiosta.</translation>
     </message>
     <message>
         <source>(must be51472 for mainnet)</source>
         <translation>(oltava51472 pääverkossa)</translation>
     </message>
     <message>
-        <source>Can't find random Masternode.</source>
-        <translation>Satunnaista Masternodea ei löydy.</translation>
+        <source>Can't find random Servicenode.</source>
+        <translation>Satunnaista Servicenodea ei löydy.</translation>
     </message>
     <message>
         <source>Can't mix while sync in progress.</source>
         <translation>Ei voida sekoittaa synkronoinnin aikana.</translation>
     </message>
     <message>
-        <source>Could not parse masternode.conf</source>
-        <translation> Ei voitu jäsentää masternode.conf</translation>
+        <source>Could not parse servicenode.conf</source>
+        <translation> Ei voitu jäsentää servicenode.conf</translation>
     </message>
     <message>
         <source>Invalid netmask specified in -whitelist: '%s'</source>
         <translation>Virheellinen verkkomaski määritelty -whitelist: '%s'</translation>
     </message>
     <message>
-        <source>Invalid port detected in masternode.conf</source>
-        <translation>Virheellinen portti löytyi masternode.conf :sta</translation>
+        <source>Invalid port detected in servicenode.conf</source>
+        <translation>Virheellinen portti löytyi servicenode.conf :sta</translation>
     </message>
     <message>
         <source>Invalid private key.</source>
@@ -4255,16 +4255,16 @@ esimerkiksi: alertnotify=echo %%s | mail -s "DarkNet Hälytys" admin@foo.com
         <translation>Ladataan lompakkoa...</translation>
     </message>
     <message>
-        <source>Masternode options:</source>
-        <translation>Masternode valinnat:</translation>
+        <source>Servicenode options:</source>
+        <translation>Servicenode valinnat:</translation>
     </message>
     <message>
-        <source>Masternode queue is full.</source>
-        <translation>Masternode jono on täysi.</translation>
+        <source>Servicenode queue is full.</source>
+        <translation>Servicenode jono on täysi.</translation>
     </message>
     <message>
-        <source>Masternode:</source>
-        <translation>Masternode:</translation>
+        <source>Servicenode:</source>
+        <translation>Servicenode:</translation>
     </message>
     <message>
         <source>Missing input transaction information.</source>
@@ -4367,8 +4367,8 @@ esimerkiksi: alertnotify=echo %%s | mail -s "DarkNet Hälytys" admin@foo.com
         <translation>Aseta lohkon maksimikoko tavuissa (oletus: %d)</translation>
     </message>
     <message>
-        <source>Set the masternode private key</source>
-        <translation>Aseta masternoden yksityisavain.</translation>
+        <source>Set the servicenode private key</source>
+        <translation>Aseta servicenoden yksityisavain.</translation>
     </message>
     <message>
         <source>Show all debugging options (usage: --help -help-debug)</source>

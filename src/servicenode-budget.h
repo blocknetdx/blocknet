@@ -1,16 +1,16 @@
 // Copyright (c) 2014-2015 The Dash developers
-// Copyright (c) 2015-2017 The PIVX developers
+// Copyright (c) 2015-2017 The BlocknetDX developers
 
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-#ifndef MASTERNODE_BUDGET_H
-#define MASTERNODE_BUDGET_H
+#ifndef SERVICENODE_BUDGET_H
+#define SERVICENODE_BUDGET_H
 
 #include "base58.h"
 #include "init.h"
 #include "key.h"
 #include "main.h"
-#include "masternode.h"
+#include "servicenode.h"
 #include "net.h"
 #include "sync.h"
 #include "util.h"
@@ -49,7 +49,7 @@ int GetBudgetPaymentCycleBlocks();
 bool IsBudgetCollateralValid(uint256 nTxCollateralHash, uint256 nExpectedHash, std::string& strError, int64_t& nTime, int& nConf);
 
 //
-// CBudgetVote - Allow a masternode node to vote and broadcast throughout the network
+// CBudgetVote - Allow a servicenode node to vote and broadcast throughout the network
 //
 
 class CBudgetVote
@@ -66,7 +66,7 @@ public:
     CBudgetVote();
     CBudgetVote(CTxIn vin, uint256 nProposalHash, int nVoteIn);
 
-    bool Sign(CKey& keyMasternode, CPubKey& pubKeyMasternode);
+    bool Sign(CKey& keyServicenode, CPubKey& pubKeyServicenode);
     bool SignatureValid(bool fSignatureCheck);
     void Relay();
 
@@ -102,7 +102,7 @@ public:
 };
 
 //
-// CFinalizedBudgetVote - Allow a masternode node to vote and broadcast throughout the network
+// CFinalizedBudgetVote - Allow a servicenode node to vote and broadcast throughout the network
 //
 
 class CFinalizedBudgetVote
@@ -118,7 +118,7 @@ public:
     CFinalizedBudgetVote();
     CFinalizedBudgetVote(CTxIn vinIn, uint256 nBudgetHashIn);
 
-    bool Sign(CKey& keyMasternode, CPubKey& pubKeyMasternode);
+    bool Sign(CKey& keyServicenode, CPubKey& pubKeyServicenode);
     bool SignatureValid(bool fSignatureCheck);
     void Relay();
 
@@ -186,9 +186,9 @@ public:
     map<uint256, CBudgetProposal> mapProposals;
     map<uint256, CFinalizedBudget> mapFinalizedBudgets;
 
-    std::map<uint256, CBudgetProposalBroadcast> mapSeenMasternodeBudgetProposals;
-    std::map<uint256, CBudgetVote> mapSeenMasternodeBudgetVotes;
-    std::map<uint256, CBudgetVote> mapOrphanMasternodeBudgetVotes;
+    std::map<uint256, CBudgetProposalBroadcast> mapSeenServicenodeBudgetProposals;
+    std::map<uint256, CBudgetVote> mapSeenServicenodeBudgetVotes;
+    std::map<uint256, CBudgetVote> mapOrphanServicenodeBudgetVotes;
     std::map<uint256, CFinalizedBudgetBroadcast> mapSeenFinalizedBudgets;
     std::map<uint256, CFinalizedBudgetVote> mapSeenFinalizedBudgetVotes;
     std::map<uint256, CFinalizedBudgetVote> mapOrphanFinalizedBudgetVotes;
@@ -201,8 +201,8 @@ public:
 
     void ClearSeen()
     {
-        mapSeenMasternodeBudgetProposals.clear();
-        mapSeenMasternodeBudgetVotes.clear();
+        mapSeenServicenodeBudgetProposals.clear();
+        mapSeenServicenodeBudgetVotes.clear();
         mapSeenFinalizedBudgets.clear();
         mapSeenFinalizedBudgetVotes.clear();
     }
@@ -247,11 +247,11 @@ public:
         LogPrintf("Budget object cleared\n");
         mapProposals.clear();
         mapFinalizedBudgets.clear();
-        mapSeenMasternodeBudgetProposals.clear();
-        mapSeenMasternodeBudgetVotes.clear();
+        mapSeenServicenodeBudgetProposals.clear();
+        mapSeenServicenodeBudgetVotes.clear();
         mapSeenFinalizedBudgets.clear();
         mapSeenFinalizedBudgetVotes.clear();
-        mapOrphanMasternodeBudgetVotes.clear();
+        mapOrphanServicenodeBudgetVotes.clear();
         mapOrphanFinalizedBudgetVotes.clear();
     }
     void CheckAndRemove();
@@ -263,11 +263,11 @@ public:
     template <typename Stream, typename Operation>
     inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
     {
-        READWRITE(mapSeenMasternodeBudgetProposals);
-        READWRITE(mapSeenMasternodeBudgetVotes);
+        READWRITE(mapSeenServicenodeBudgetProposals);
+        READWRITE(mapSeenServicenodeBudgetVotes);
         READWRITE(mapSeenFinalizedBudgets);
         READWRITE(mapSeenFinalizedBudgetVotes);
-        READWRITE(mapOrphanMasternodeBudgetVotes);
+        READWRITE(mapOrphanServicenodeBudgetVotes);
         READWRITE(mapOrphanFinalizedBudgetVotes);
 
         READWRITE(mapProposals);
@@ -311,7 +311,7 @@ class CFinalizedBudget
 private:
     // critical section to protect the inner data structures
     mutable CCriticalSection cs;
-    bool fAutoChecked; //If it matches what we see, we'll auto vote for it (masternode only)
+    bool fAutoChecked; //If it matches what we see, we'll auto vote for it (servicenode only)
 
 public:
     bool fValid;
@@ -362,9 +362,9 @@ public:
 
     //check to see if we should vote on this
     void AutoCheck();
-    //total pivx paid out by this budget
+    //total blocknetdx paid out by this budget
     CAmount GetTotalPayout();
-    //vote on this finalized budget as a masternode
+    //vote on this finalized budget as a servicenode
     void SubmitVote();
 
     //checks the hashes to make sure we know about them
@@ -448,7 +448,7 @@ public:
 
 
 //
-// Budget Proposal : Contains the masternode votes for each budget
+// Budget Proposal : Contains the servicenode votes for each budget
 //
 
 class CBudgetProposal

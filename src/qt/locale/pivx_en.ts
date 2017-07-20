@@ -80,12 +80,12 @@
     </message>
     <message>
         <location line="+7"/>
-        <source>These are your PIVX addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <source>These are your BlocknetDX addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+4"/>
-        <source>These are your PIVX addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
+        <source>These are your BlocknetDX addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -221,7 +221,7 @@
     </message>
     <message>
         <location line="+12"/>
-        <source>PIVX will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your PIVs from being stolen by malware infecting your computer.</source>
+        <source>BlocknetDX will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your PIVs from being stolen by malware infecting your computer.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -307,7 +307,7 @@
     </message>
     <message>
         <location line="+6"/>
-        <source>Enter a Pivx Address that you would like to encrypt using BIP 38. Enter a passphrase in the middle box. Press encrypt to compute the encrypted private key.</source>
+        <source>Enter a Blocknetdx Address that you would like to encrypt using BIP 38. Enter a passphrase in the middle box. Press encrypt to compute the encrypted private key.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -318,7 +318,7 @@
     </message>
     <message>
         <location line="-355"/>
-        <source>The PIVX address to sign the message with</source>
+        <source>The BlocknetDX address to sign the message with</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -360,7 +360,7 @@
     </message>
     <message>
         <location line="+21"/>
-        <source>Sign the message to prove you own this PIVX address</source>
+        <source>Sign the message to prove you own this BlocknetDX address</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -391,12 +391,12 @@
     </message>
     <message>
         <location line="+25"/>
-        <source>The PIVX address the message was signed with</source>
+        <source>The BlocknetDX address the message was signed with</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+29"/>
-        <source>Verify the message to ensure it was signed with the specified PIVX address</source>
+        <source>Verify the message to ensure it was signed with the specified BlocknetDX address</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -776,52 +776,52 @@
     <message>
         <location line="-413"/>
         <location line="+853"/>
-        <source>PIVX Core</source>
+        <source>BlocknetDX Core</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="-665"/>
-        <source>Send coins to a PIVX address</source>
+        <source>Send coins to a BlocknetDX address</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+11"/>
-        <source>Request payments (generates QR codes and pivx: URIs)</source>
+        <source>Request payments (generates QR codes and blocknetdx: URIs)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+25"/>
-        <source>&amp;Masternodes</source>
+        <source>&amp;Servicenodes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Browse masternodes</source>
+        <source>Browse servicenodes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+29"/>
-        <source>&amp;About PIVX Core</source>
+        <source>&amp;About BlocknetDX Core</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Show information about PIVX Core</source>
+        <source>Show information about BlocknetDX Core</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+10"/>
-        <source>Modify configuration options for PIVX</source>
+        <source>Modify configuration options for BlocknetDX</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+16"/>
-        <source>Sign messages with your PIVX addresses to prove you own them</source>
+        <source>Sign messages with your BlocknetDX addresses to prove you own them</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+2"/>
-        <source>Verify messages to ensure they were signed with specified PIVX addresses</source>
+        <source>Verify messages to ensure they were signed with specified BlocknetDX addresses</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -846,7 +846,7 @@
     </message>
     <message>
         <location line="+24"/>
-        <source>Open a PIVX: URI or payment request</source>
+        <source>Open a BlocknetDX: URI or payment request</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -871,7 +871,7 @@
     </message>
     <message>
         <location line="+4"/>
-        <source>Show the PIVX Core help message to get a list with possible PIVX command-line options</source>
+        <source>Show the BlocknetDX Core help message to get a list with possible BlocknetDX command-line options</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -881,12 +881,12 @@
     </message>
     <message>
         <location line="+147"/>
-        <source>PIVX Core client</source>
+        <source>BlocknetDX Core client</source>
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
         <location line="+182"/>
-        <source>%n active connection(s) to PIVX network</source>
+        <source>%n active connection(s) to BlocknetDX network</source>
         <translation type="unfinished">
             <numerusform></numerusform>
             <numerusform></numerusform>
@@ -1082,7 +1082,7 @@ Address: %4
     </message>
     <message>
         <location filename="../blockexplorer.cpp" line="+498"/>
-        <source>Not all transactions will be shown. To view all transactions you need to set txindex=1 in the configuration file (pivx.conf).</source>
+        <source>Not all transactions will be shown. To view all transactions you need to set txindex=1 in the configuration file (blocknetdx.conf).</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1461,7 +1461,7 @@ Address: %4
     </message>
     <message>
         <location line="+71"/>
-        <source>The entered address &quot;%1&quot; is not a valid PIVX address.</source>
+        <source>The entered address &quot;%1&quot; is not a valid BlocknetDX address.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1517,7 +1517,7 @@ Address: %4
     </message>
     <message>
         <location line="+0"/>
-        <source>PIVX Core</source>
+        <source>BlocknetDX Core</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1528,7 +1528,7 @@ Address: %4
     </message>
     <message>
         <location line="+5"/>
-        <source>About PIVX Core</source>
+        <source>About BlocknetDX Core</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1586,17 +1586,17 @@ Address: %4
     </message>
     <message>
         <location line="+9"/>
-        <source>Welcome to PIVX Core.</source>
+        <source>Welcome to BlocknetDX Core.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+26"/>
-        <source>As this is the first time the program is launched, you can choose where PIVX Core will store its data.</source>
+        <source>As this is the first time the program is launched, you can choose where BlocknetDX Core will store its data.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+10"/>
-        <source>PIVX Core will download and store a copy of the PIVX block chain. At least %1GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</source>
+        <source>BlocknetDX Core will download and store a copy of the BlocknetDX block chain. At least %1GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1611,7 +1611,7 @@ Address: %4
     </message>
     <message>
         <location filename="../intro.cpp" line="+82"/>
-        <source>PIVX Core</source>
+        <source>BlocknetDX Core</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1636,20 +1636,20 @@ Address: %4
     </message>
 </context>
 <context>
-    <name>MasternodeList</name>
+    <name>ServicenodeList</name>
     <message>
-        <location filename="../forms/masternodelist.ui" line="+14"/>
+        <location filename="../forms/servicenodelist.ui" line="+14"/>
         <source>Form</source>
         <translation type="unfinished">Form</translation>
     </message>
     <message>
         <location line="+40"/>
-        <source>My Masternodes</source>
+        <source>My Servicenodes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+16"/>
-        <source>Note: Status of your masternodes in local wallet can potentially be slightly incorrect.&lt;br /&gt;Always wait for wallet to sync additional data and then double check from another node&lt;br /&gt;if your node should be running but you still see &quot;MISSING&quot; in &quot;Status&quot; field.</source>
+        <source>Note: Status of your servicenodes in local wallet can potentially be slightly incorrect.&lt;br /&gt;Always wait for wallet to sync additional data and then double check from another node&lt;br /&gt;if your node should be running but you still see &quot;MISSING&quot; in &quot;Status&quot; field.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1726,7 +1726,7 @@ Address: %4
     </message>
     <message>
         <location line="-97"/>
-        <source>All Masternodes</source>
+        <source>All Servicenodes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1736,7 +1736,7 @@ Address: %4
     </message>
     <message>
         <location line="+7"/>
-        <source>Filter masternode list</source>
+        <source>Filter servicenode list</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1745,28 +1745,28 @@ Address: %4
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../masternodelist.cpp" line="+52"/>
+        <location filename="../servicenodelist.cpp" line="+52"/>
         <source>Start alias</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+257"/>
-        <source>Confirm masternode start</source>
+        <source>Confirm servicenode start</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Are you sure you want to start masternode %1?</source>
+        <source>Are you sure you want to start servicenode %1?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+23"/>
-        <source>Confirm all masternodes start</source>
+        <source>Confirm all servicenodes start</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Are you sure you want to start ALL masternodes?</source>
+        <source>Are you sure you want to start ALL servicenodes?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1776,17 +1776,17 @@ Address: %4
     </message>
     <message>
         <location line="+1"/>
-        <source>You can&apos;t use this command until masternode list is synced</source>
+        <source>You can&apos;t use this command until servicenode list is synced</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+6"/>
-        <source>Confirm missing masternodes start</source>
+        <source>Confirm missing servicenodes start</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Are you sure you want to start MISSING masternodes?</source>
+        <source>Are you sure you want to start MISSING servicenodes?</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1814,8 +1814,8 @@ Address: %4
     </message>
     <message>
         <location line="+16"/>
-        <source>MultiSend allows you to automatically send up to 100% of your stake or masternode reward to a list of other PIVX addresses after it matures.
-To Add: enter percentage to give and PIVX address to add to the MultiSend vector.
+        <source>MultiSend allows you to automatically send up to 100% of your stake or servicenode reward to a list of other BlocknetDX addresses after it matures.
+To Add: enter percentage to give and BlocknetDX address to add to the MultiSend vector.
 To Delete: Enter address to delete and press delete.
 MultiSend will not be activated unless you have clicked Activate</source>
         <translation type="unfinished"></translation>
@@ -1907,7 +1907,7 @@ MultiSend will not be activated unless you have clicked Activate</source>
     </message>
     <message>
         <location line="+7"/>
-        <source>Send For Masternode Rewards</source>
+        <source>Send For Servicenode Rewards</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1980,18 +1980,18 @@ Please check the address and try again.</source>
     </message>
     <message>
         <location line="+13"/>
-        <source>Use 2 separate masternodes to mix funds up to 10000 PIV</source>
+        <source>Use 2 separate servicenodes to mix funds up to 10000 PIV</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+13"/>
-        <source>Use 8 separate masternodes to mix funds up to 10000 PIV</source>
+        <source>Use 8 separate servicenodes to mix funds up to 10000 PIV</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+13"/>
-        <source>Use 16 separate masternodes</source>
-        <translation type="unfinished">Use 16 separate masternodes</translation>
+        <source>Use 16 separate servicenodes</source>
+        <translation type="unfinished">Use 16 separate servicenodes</translation>
     </message>
     <message>
         <location line="+13"/>
@@ -2022,17 +2022,17 @@ Please check the address and try again.</source>
     </message>
     <message>
         <location line="-29"/>
-        <source>Obfuscation was successfully set to basic (%1 and 2 rounds). You can change this at any time by opening PIVX&apos;s configuration screen.</source>
+        <source>Obfuscation was successfully set to basic (%1 and 2 rounds). You can change this at any time by opening BlocknetDX&apos;s configuration screen.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+15"/>
-        <source>Obfuscation was successfully set to high (%1 and 8 rounds). You can change this at any time by opening PIVX&apos;s configuration screen.</source>
+        <source>Obfuscation was successfully set to high (%1 and 8 rounds). You can change this at any time by opening BlocknetDX&apos;s configuration screen.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+15"/>
-        <source>Obfuscation was successfully set to maximum (%1 and 16 rounds). You can change this at any time by opening PIVX&apos;s configuration screen.</source>
+        <source>Obfuscation was successfully set to maximum (%1 and 16 rounds). You can change this at any time by opening BlocknetDX&apos;s configuration screen.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -2108,7 +2108,7 @@ Please check the address and try again.</source>
     </message>
     <message>
         <location line="+33"/>
-        <source>Automatically open the PIVX client port on the router. This only works when your router supports UPnP and it is enabled.</source>
+        <source>Automatically open the BlocknetDX client port on the router. This only works when your router supports UPnP and it is enabled.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2133,18 +2133,18 @@ Please check the address and try again.</source>
     </message>
     <message>
         <location line="-179"/>
-        <source>Automatically start PIVX after logging in to the system.</source>
+        <source>Automatically start BlocknetDX after logging in to the system.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+3"/>
-        <source>&amp;Start PIVX on system login</source>
+        <source>&amp;Start BlocknetDX on system login</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+102"/>
-        <source>This setting determines the amount of individual masternodes that an input will be anonymized through.&lt;br/&gt;More rounds of anonymization gives a higher degree of privacy, but also costs more in fees.</source>
-        <translation>This setting determines the amount of individual masternodes that an input will be anonymized through.&lt;br/&gt;More rounds of anonymization gives a higher degree of privacy, but also costs more in fees.</translation>
+        <source>This setting determines the amount of individual servicenodes that an input will be anonymized through.&lt;br/&gt;More rounds of anonymization gives a higher degree of privacy, but also costs more in fees.</source>
+        <translation>This setting determines the amount of individual servicenodes that an input will be anonymized through.&lt;br/&gt;More rounds of anonymization gives a higher degree of privacy, but also costs more in fees.</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -2158,7 +2158,7 @@ Please check the address and try again.</source>
     </message>
     <message>
         <location line="+15"/>
-        <source>Amount of PIVX to keep anonymized</source>
+        <source>Amount of BlocknetDX to keep anonymized</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2173,12 +2173,12 @@ Please check the address and try again.</source>
     </message>
     <message>
         <location line="+7"/>
-        <source>Show additional tab listing all your masternodes in first sub-tab&lt;br/&gt;and all masternodes on the network in second sub-tab.</source>
+        <source>Show additional tab listing all your servicenodes in first sub-tab&lt;br/&gt;and all servicenodes on the network in second sub-tab.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+3"/>
-        <source>Show Masternodes Tab</source>
+        <source>Show Servicenodes Tab</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2193,13 +2193,13 @@ Please check the address and try again.</source>
     </message>
     <message>
         <location line="+192"/>
-        <source>The user interface language can be set here. This setting will take effect after restarting PIVX.</source>
+        <source>The user interface language can be set here. This setting will take effect after restarting BlocknetDX.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+21"/>
         <source>Language missing or translation incomplete? Help contributing translations here:
-https://www.transifex.com/pivx-project/pivx-project-translations</source>
+https://www.transifex.com/blocknetdx-project/blocknetdx-project-translations</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2209,7 +2209,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
     </message>
     <message>
         <location line="+17"/>
-        <source>Connect to the PIVX network through a SOCKS5 proxy.</source>
+        <source>Connect to the BlocknetDX network through a SOCKS5 proxy.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2394,8 +2394,8 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
     </message>
     <message>
         <location line="-29"/>
-        <source>Staked or masternode rewards that has not yet matured</source>
-        <translation>Staked or masternode rewards that has not yet matured</translation>
+        <source>Staked or servicenode rewards that has not yet matured</source>
+        <translation>Staked or servicenode rewards that has not yet matured</translation>
     </message>
     <message>
         <location line="-163"/>
@@ -2406,7 +2406,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
         <location line="+10"/>
         <location line="+1015"/>
         <location line="+93"/>
-        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the PIVX network after a connection is established, but this process has not completed yet.</source>
+        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the BlocknetDX network after a connection is established, but this process has not completed yet.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2416,8 +2416,8 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
     </message>
     <message>
         <location line="+50"/>
-        <source>Staked or masternode rewards in watch-only addresses that has not yet matured</source>
-        <translation>Staked or masternode rewards in watch-only addresses that has not yet matured</translation>
+        <source>Staked or servicenode rewards in watch-only addresses that has not yet matured</source>
+        <translation>Staked or servicenode rewards in watch-only addresses that has not yet matured</translation>
     </message>
     <message>
         <location line="+42"/>
@@ -2520,8 +2520,8 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
     </message>
     <message>
         <location line="-469"/>
-        <source>The denominations you submitted to the Masternode.&lt;br&gt;To mix, other users must submit the exact same denominations.</source>
-        <translation>The denominations you submitted to the Masternode.&lt;br&gt;To mix, other users must submit the exact same denominations.</translation>
+        <source>The denominations you submitted to the Servicenode.&lt;br&gt;To mix, other users must submit the exact same denominations.</source>
+        <translation>The denominations you submitted to the Servicenode.&lt;br&gt;To mix, other users must submit the exact same denominations.</translation>
     </message>
     <message>
         <location line="+501"/>
@@ -2693,12 +2693,12 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
     </message>
     <message>
         <location line="-118"/>
-        <source>Cannot start pivx: click-to-pay handler</source>
+        <source>Cannot start blocknetdx: click-to-pay handler</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+126"/>
-        <source>URI cannot be parsed! This can be caused by an invalid PIVX address or malformed URI parameters.</source>
+        <source>URI cannot be parsed! This can be caused by an invalid BlocknetDX address or malformed URI parameters.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2806,7 +2806,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
     </message>
     <message>
         <location filename="../guiutil.cpp" line="+113"/>
-        <source>Enter a PIVX address (e.g. %1)</source>
+        <source>Enter a BlocknetDX address (e.g. %1)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2995,13 +2995,13 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
     </message>
     <message>
         <location line="+149"/>
-        <source>Open the PIVX debug log file from the current data directory. This can take a few seconds for large log files.</source>
+        <source>Open the BlocknetDX debug log file from the current data directory. This can take a few seconds for large log files.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+140"/>
-        <source>Number of Masternodes</source>
-        <translation>Number of Masternodes</translation>
+        <source>Number of Servicenodes</source>
+        <translation>Number of Servicenodes</translation>
     </message>
     <message>
         <location line="+34"/>
@@ -3202,7 +3202,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
     </message>
     <message>
         <location line="-35"/>
-        <source>Welcome to the PIVX RPC console.</source>
+        <source>Welcome to the BlocknetDX RPC console.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3293,12 +3293,12 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
     </message>
     <message>
         <location line="-37"/>
-        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the PIVX network.</source>
+        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the BlocknetDX network.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+23"/>
-        <source>An optional message to attach to the payment request, which will be displayed when the request is opened.&lt;br&gt;Note: The message will not be sent with the payment over the PIVX network.</source>
+        <source>An optional message to attach to the payment request, which will be displayed when the request is opened.&lt;br&gt;Note: The message will not be sent with the payment over the BlocknetDX network.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3663,7 +3663,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
     <message>
         <location line="+33"/>
         <location line="+13"/>
-        <source>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks.&lt;br /&gt;But be aware that this can end up in a never confirming transaction once there is more demand for PIVX transactions than the network can process.</source>
+        <source>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks.&lt;br /&gt;But be aware that this can end up in a never confirming transaction once there is more demand for BlocknetDX transactions than the network can process.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3796,7 +3796,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
     </message>
     <message>
         <location line="+651"/>
-        <source>Warning: Invalid PIVX address</source>
+        <source>Warning: Invalid BlocknetDX address</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3935,7 +3935,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
     </message>
     <message>
         <location line="+18"/>
-        <source>The PIVX address to send the payment to</source>
+        <source>The BlocknetDX address to send the payment to</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3989,7 +3989,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
     </message>
     <message>
         <location line="+10"/>
-        <source>A message that was attached to the PIVX: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the PIVX network.</source>
+        <source>A message that was attached to the BlocknetDX: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the BlocknetDX network.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4024,7 +4024,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
     <name>ShutdownWindow</name>
     <message>
         <location filename="../utilitydialog.cpp" line="+43"/>
-        <source>PIVX Core is shutting down...</source>
+        <source>BlocknetDX Core is shutting down...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4052,7 +4052,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
     </message>
     <message>
         <location line="+18"/>
-        <source>The PIVX address to sign the message with</source>
+        <source>The BlocknetDX address to sign the message with</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4094,17 +4094,17 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
     </message>
     <message>
         <location line="+21"/>
-        <source>Sign the message to prove you own this PIVX address</source>
+        <source>Sign the message to prove you own this BlocknetDX address</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+106"/>
-        <source>The PIVX address the message was signed with</source>
+        <source>The BlocknetDX address the message was signed with</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+37"/>
-        <source>Verify the message to ensure it was signed with the specified PIVX address</source>
+        <source>Verify the message to ensure it was signed with the specified BlocknetDX address</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4219,7 +4219,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
     <name>SplashScreen</name>
     <message>
         <location filename="../splashscreen.cpp" line="+37"/>
-        <source>PIVX Core</source>
+        <source>BlocknetDX Core</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4239,7 +4239,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
     </message>
     <message>
         <location line="+1"/>
-        <source>The PIVX Core developers</source>
+        <source>The BlocknetDX Core developers</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4601,7 +4601,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
     </message>
     <message>
         <location line="+2"/>
-        <source>Masternode Reward</source>
+        <source>Servicenode Reward</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4795,7 +4795,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
     </message>
     <message>
         <location line="+1"/>
-        <source>Masternode Reward</source>
+        <source>Servicenode Reward</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5000,9 +5000,9 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
     </message>
 </context>
 <context>
-    <name>pivx-core</name>
+    <name>blocknetdx-core</name>
     <message>
-        <location filename="../pivxstrings.cpp" line="+12"/>
+        <location filename="../blocknetdxstrings.cpp" line="+12"/>
         <source>(1 = keep tx meta data e.g. account owner and payment request information, 2 = drop tx meta data)</source>
         <translation type="unfinished">(1 = keep tx meta data e.g. account owner and payment request information, 2 = drop tx meta data)</translation>
     </message>
@@ -5033,7 +5033,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
     </message>
     <message>
         <location line="+4"/>
-        <source>Cannot obtain a lock on data directory %s. PIVX Core is probably already running.</source>
+        <source>Cannot obtain a lock on data directory %s. BlocknetDX Core is probably already running.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5058,7 +5058,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
     </message>
     <message>
         <location line="+3"/>
-        <source>Disable all PIVX specific functionality (Masternodes, Obfuscation, SwiftTX, Budgeting) (0-1, default: %u)</source>
+        <source>Disable all BlocknetDX specific functionality (Servicenodes, Obfuscation, SwiftTX, Budgeting) (0-1, default: %u)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5243,22 +5243,22 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
     </message>
     <message>
         <location line="+4"/>
-        <source>To use pivxd, or the -server option to pivx-qt, you must set an rpcpassword in the configuration file:
+        <source>To use blocknetdxd, or the -server option to blocknetdx-qt, you must set an rpcpassword in the configuration file:
 %s
 It is recommended you use the following random password:
-rpcuser=pivxrpc
+rpcuser=blocknetdxrpc
 rpcpassword=%s
 (you do not need to remember this password)
 The username and password MUST NOT be the same.
 If the file does not exist, create it with owner-readable-only file permissions.
 It is also recommended to set alertnotify so you are notified of problems;
-for example: alertnotify=echo %%s | mail -s &quot;PIVX Alert&quot; admin@foo.com
+for example: alertnotify=echo %%s | mail -s &quot;BlocknetDX Alert&quot; admin@foo.com
 </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+13"/>
-        <source>Unable to bind to %s on this computer. PIVX Core is probably already running.</source>
+        <source>Unable to bind to %s on this computer. BlocknetDX Core is probably already running.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5293,7 +5293,7 @@ for example: alertnotify=echo %%s | mail -s &quot;PIVX Alert&quot; admin@foo.com
     </message>
     <message>
         <location line="+3"/>
-        <source>Warning: Please check that your computer&apos;s date and time are correct! If your clock is wrong PIVX Core will not work properly.</source>
+        <source>Warning: Please check that your computer&apos;s date and time are correct! If your clock is wrong BlocknetDX Core will not work properly.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5328,8 +5328,8 @@ for example: alertnotify=echo %%s | mail -s &quot;PIVX Alert&quot; admin@foo.com
     </message>
     <message>
         <location line="+3"/>
-        <source>You must specify a masternodeprivkey in the configuration. Please see documentation for help.</source>
-        <translation type="unfinished">You must specify a masternodeprivkey in the configuration. Please see documentation for help.</translation>
+        <source>You must specify a servicenodeprivkey in the configuration. Please see documentation for help.</source>
+        <translation type="unfinished">You must specify a servicenodeprivkey in the configuration. Please see documentation for help.</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -5415,8 +5415,8 @@ for example: alertnotify=echo %%s | mail -s &quot;PIVX Alert&quot; admin@foo.com
     </message>
     <message>
         <location line="+1"/>
-        <source>Can&apos;t find random Masternode.</source>
-        <translation type="unfinished">Can&apos;t find random Masternode.</translation>
+        <source>Can&apos;t find random Servicenode.</source>
+        <translation type="unfinished">Can&apos;t find random Servicenode.</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -5490,7 +5490,7 @@ for example: alertnotify=echo %%s | mail -s &quot;PIVX Alert&quot; admin@foo.com
     </message>
     <message>
         <location line="+1"/>
-        <source>Copyright (C) 2015-%i The PIVX Core Developers</source>
+        <source>Copyright (C) 2015-%i The BlocknetDX Core Developers</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5505,8 +5505,8 @@ for example: alertnotify=echo %%s | mail -s &quot;PIVX Alert&quot; admin@foo.com
     </message>
     <message>
         <location line="+1"/>
-        <source>Could not parse masternode.conf</source>
-        <translation type="unfinished">Could not parse masternode.conf</translation>
+        <source>Could not parse servicenode.conf</source>
+        <translation type="unfinished">Could not parse servicenode.conf</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -5540,8 +5540,8 @@ for example: alertnotify=echo %%s | mail -s &quot;PIVX Alert&quot; admin@foo.com
     </message>
     <message>
         <location line="+1"/>
-        <source>Enable the client to act as a masternode (0-1, default: %u)</source>
-        <translation type="unfinished">Enable the client to act as a masternode (0-1, default: %u)</translation>
+        <source>Enable the client to act as a servicenode (0-1, default: %u)</source>
+        <translation type="unfinished">Enable the client to act as a servicenode (0-1, default: %u)</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -5550,8 +5550,8 @@ for example: alertnotify=echo %%s | mail -s &quot;PIVX Alert&quot; admin@foo.com
     </message>
     <message>
         <location line="+1"/>
-        <source>Error connecting to Masternode.</source>
-        <translation type="unfinished">Error connecting to Masternode.</translation>
+        <source>Error connecting to Servicenode.</source>
+        <translation type="unfinished">Error connecting to Servicenode.</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -5580,7 +5580,7 @@ for example: alertnotify=echo %%s | mail -s &quot;PIVX Alert&quot; admin@foo.com
     </message>
     <message>
         <location line="+1"/>
-        <source>Error loading wallet.dat: Wallet requires newer version of PIVX Core</source>
+        <source>Error loading wallet.dat: Wallet requires newer version of BlocknetDX Core</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5720,7 +5720,7 @@ for example: alertnotify=echo %%s | mail -s &quot;PIVX Alert&quot; admin@foo.com
     </message>
     <message>
         <location line="+1"/>
-        <source>Initialization sanity check failed. PIVX Core is shutting down.</source>
+        <source>Initialization sanity check failed. BlocknetDX Core is shutting down.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5775,8 +5775,8 @@ for example: alertnotify=echo %%s | mail -s &quot;PIVX Alert&quot; admin@foo.com
     </message>
     <message>
         <location line="+1"/>
-        <source>Invalid masternodeprivkey. Please see documenation.</source>
-        <translation type="unfinished">Invalid masternodeprivkey. Please see documenation.</translation>
+        <source>Invalid servicenodeprivkey. Please see documenation.</source>
+        <translation type="unfinished">Invalid servicenodeprivkey. Please see documenation.</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -5785,8 +5785,8 @@ for example: alertnotify=echo %%s | mail -s &quot;PIVX Alert&quot; admin@foo.com
     </message>
     <message>
         <location line="+1"/>
-        <source>Invalid port detected in masternode.conf</source>
-        <translation type="unfinished">Invalid port detected in masternode.conf</translation>
+        <source>Invalid port detected in servicenode.conf</source>
+        <translation type="unfinished">Invalid port detected in servicenode.conf</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -5865,13 +5865,13 @@ for example: alertnotify=echo %%s | mail -s &quot;PIVX Alert&quot; admin@foo.com
     </message>
     <message>
         <location line="+1"/>
-        <source>Loading masternode cache...</source>
-        <translation type="unfinished">Loading masternode cache...</translation>
+        <source>Loading servicenode cache...</source>
+        <translation type="unfinished">Loading servicenode cache...</translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Loading masternode payment cache...</source>
-        <translation type="unfinished">Loading masternode payment cache...</translation>
+        <source>Loading servicenode payment cache...</source>
+        <translation type="unfinished">Loading servicenode payment cache...</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -5890,8 +5890,8 @@ for example: alertnotify=echo %%s | mail -s &quot;PIVX Alert&quot; admin@foo.com
     </message>
     <message>
         <location line="+1"/>
-        <source>Lock masternodes from masternode configuration file (default: %u)</source>
-        <translation type="unfinished">Lock masternodes from masternode configuration file (default: %u)</translation>
+        <source>Lock servicenodes from servicenode configuration file (default: %u)</source>
+        <translation type="unfinished">Lock servicenodes from servicenode configuration file (default: %u)</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -5900,18 +5900,18 @@ for example: alertnotify=echo %%s | mail -s &quot;PIVX Alert&quot; admin@foo.com
     </message>
     <message>
         <location line="+1"/>
-        <source>Masternode options:</source>
-        <translation type="unfinished">Masternode options:</translation>
+        <source>Servicenode options:</source>
+        <translation type="unfinished">Servicenode options:</translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Masternode queue is full.</source>
-        <translation type="unfinished">Masternode queue is full.</translation>
+        <source>Servicenode queue is full.</source>
+        <translation type="unfinished">Servicenode queue is full.</translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Masternode:</source>
-        <translation type="unfinished">Masternode:</translation>
+        <source>Servicenode:</source>
+        <translation type="unfinished">Servicenode:</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -5940,13 +5940,13 @@ for example: alertnotify=echo %%s | mail -s &quot;PIVX Alert&quot; admin@foo.com
     </message>
     <message>
         <location line="+1"/>
-        <source>No Masternodes detected.</source>
-        <translation type="unfinished">No Masternodes detected.</translation>
+        <source>No Servicenodes detected.</source>
+        <translation type="unfinished">No Servicenodes detected.</translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>No compatible Masternode found.</source>
-        <translation type="unfinished">No compatible Masternode found.</translation>
+        <source>No compatible Servicenode found.</source>
+        <translation type="unfinished">No compatible Servicenode found.</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -5980,8 +5980,8 @@ for example: alertnotify=echo %%s | mail -s &quot;PIVX Alert&quot; admin@foo.com
     </message>
     <message>
         <location line="+1"/>
-        <source>Not in the Masternode list.</source>
-        <translation type="unfinished">Not in the Masternode list.</translation>
+        <source>Not in the Servicenode list.</source>
+        <translation type="unfinished">Not in the Servicenode list.</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -6130,8 +6130,8 @@ for example: alertnotify=echo %%s | mail -s &quot;PIVX Alert&quot; admin@foo.com
     </message>
     <message>
         <location line="+1"/>
-        <source>Set external address:port to get to this masternode (example: %s)</source>
-        <translation type="unfinished">Set external address:port to get to this masternode (example: %s)</translation>
+        <source>Set external address:port to get to this servicenode (example: %s)</source>
+        <translation type="unfinished">Set external address:port to get to this servicenode (example: %s)</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -6150,8 +6150,8 @@ for example: alertnotify=echo %%s | mail -s &quot;PIVX Alert&quot; admin@foo.com
     </message>
     <message>
         <location line="+1"/>
-        <source>Set the masternode private key</source>
-        <translation type="unfinished">Set the masternode private key</translation>
+        <source>Set the servicenode private key</source>
+        <translation type="unfinished">Set the servicenode private key</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -6205,8 +6205,8 @@ for example: alertnotify=echo %%s | mail -s &quot;PIVX Alert&quot; admin@foo.com
     </message>
     <message>
         <location line="+1"/>
-        <source>Specify masternode configuration file (default: %s)</source>
-        <translation type="unfinished">Specify masternode configuration file (default: %s)</translation>
+        <source>Specify servicenode configuration file (default: %s)</source>
+        <translation type="unfinished">Specify servicenode configuration file (default: %s)</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -6235,18 +6235,18 @@ for example: alertnotify=echo %%s | mail -s &quot;PIVX Alert&quot; admin@foo.com
     </message>
     <message>
         <location line="+1"/>
-        <source>Submitted following entries to masternode: %u / %d</source>
-        <translation type="unfinished">Submitted following entries to masternode: %u / %d</translation>
+        <source>Submitted following entries to servicenode: %u / %d</source>
+        <translation type="unfinished">Submitted following entries to servicenode: %u / %d</translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Submitted to masternode, waiting for more entries ( %u / %d ) %s</source>
-        <translation type="unfinished">Submitted to masternode, waiting for more entries ( %u / %d ) %s</translation>
+        <source>Submitted to servicenode, waiting for more entries ( %u / %d ) %s</source>
+        <translation type="unfinished">Submitted to servicenode, waiting for more entries ( %u / %d ) %s</translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Submitted to masternode, waiting in queue %s</source>
-        <translation type="unfinished">Submitted to masternode, waiting in queue %s</translation>
+        <source>Submitted to servicenode, waiting in queue %s</source>
+        <translation type="unfinished">Submitted to servicenode, waiting in queue %s</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -6275,13 +6275,13 @@ for example: alertnotify=echo %%s | mail -s &quot;PIVX Alert&quot; admin@foo.com
     </message>
     <message>
         <location line="+1"/>
-        <source>Synchronizing masternode winners...</source>
-        <translation type="unfinished">Synchronizing masternode winners...</translation>
+        <source>Synchronizing servicenode winners...</source>
+        <translation type="unfinished">Synchronizing servicenode winners...</translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Synchronizing masternodes...</source>
-        <translation type="unfinished">Synchronizing masternodes...</translation>
+        <source>Synchronizing servicenodes...</source>
+        <translation type="unfinished">Synchronizing servicenodes...</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -6305,8 +6305,8 @@ for example: alertnotify=echo %%s | mail -s &quot;PIVX Alert&quot; admin@foo.com
     </message>
     <message>
         <location line="+1"/>
-        <source>This is not a Masternode.</source>
-        <translation type="unfinished">This is not a Masternode.</translation>
+        <source>This is not a Servicenode.</source>
+        <translation type="unfinished">This is not a Servicenode.</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -6385,8 +6385,8 @@ for example: alertnotify=echo %%s | mail -s &quot;PIVX Alert&quot; admin@foo.com
     </message>
     <message>
         <location line="+1"/>
-        <source>Use N separate masternodes to anonymize funds  (2-8, default: %u)</source>
-        <translation type="unfinished">Use N separate masternodes to anonymize funds  (2-8, default: %u)</translation>
+        <source>Use N separate servicenodes to anonymize funds  (2-8, default: %u)</source>
+        <translation type="unfinished">Use N separate servicenodes to anonymize funds  (2-8, default: %u)</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -6440,7 +6440,7 @@ for example: alertnotify=echo %%s | mail -s &quot;PIVX Alert&quot; admin@foo.com
     </message>
     <message>
         <location line="+1"/>
-        <source>Wallet needed to be rewritten: restart PIVX Core to complete</source>
+        <source>Wallet needed to be rewritten: restart BlocknetDX Core to complete</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6706,7 +6706,7 @@ for example: alertnotify=echo %%s | mail -s &quot;PIVX Alert&quot; admin@foo.com
     </message>
     <message>
         <location line="+13"/>
-        <source>Generate Pivx Deposit Address</source>
+        <source>Generate Blocknetdx Deposit Address</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

@@ -1,5 +1,5 @@
 // Copyright (c) 2014-2015 The Dash developers
-// Copyright (c) 2015-2017 The PIVX developers
+// Copyright (c) 2015-2017 The BlocknetDX developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -7,20 +7,20 @@
 #define OBFUSCATION_H
 
 #include "main.h"
-#include "masternode-payments.h"
-#include "masternode-sync.h"
-#include "masternodeman.h"
+#include "servicenode-payments.h"
+#include "servicenode-sync.h"
+#include "servicenodeman.h"
 #include "obfuscation-relay.h"
 #include "sync.h"
 
 class CTxIn;
 class CObfuscationPool;
 class CObfuScationSigner;
-class CMasterNodeVote;
+class CServiceNodeVote;
 class CBitcoinAddress;
 class CObfuscationQueue;
 class CObfuscationBroadcastTx;
-class CActiveMasternode;
+class CActiveServicenode;
 
 // pool states for mixing
 #define POOL_STATUS_UNKNOWN 0              // waiting for update
@@ -34,9 +34,9 @@ class CActiveMasternode;
 #define POOL_STATUS_SUCCESS 8              // success
 
 // status update message constants
-#define MASTERNODE_ACCEPTED 1
-#define MASTERNODE_REJECTED 0
-#define MASTERNODE_RESET -1
+#define SERVICENODE_ACCEPTED 1
+#define SERVICENODE_REJECTED 0
+#define SERVICENODE_RESET -1
 
 #define OBFUSCATION_QUEUE_TIMEOUT 30
 #define OBFUSCATION_SIGNING_TIMEOUT 15
@@ -52,9 +52,9 @@ static const int64_t OBFUSCATION_POOL_MAX = (99999.99 * COIN);
 extern CObfuscationPool obfuScationPool;
 extern CObfuScationSigner obfuScationSigner;
 extern std::vector<CObfuscationQueue> vecObfuscationQueue;
-extern std::string strMasterNodePrivKey;
+extern std::string strServiceNodePrivKey;
 extern map<uint256, CObfuscationBroadcastTx> mapObfuscationBroadcastTxes;
-extern CActiveMasternode activeMasternode;
+extern CActiveServicenode activeServicenode;
 
 /** Holds an Obfuscation input
  */
@@ -191,7 +191,7 @@ public:
 
     bool GetAddress(CService& addr)
     {
-        CMasternode* pmn = mnodeman.Find(vin);
+        CServicenode* pmn = mnodeman.Find(vin);
         if (pmn != NULL) {
             addr = pmn->addr;
             return true;
@@ -202,7 +202,7 @@ public:
     /// Get the protocol version
     bool GetProtocolVersion(int& protocolVersion)
     {
-        CMasternode* pmn = mnodeman.Find(vin);
+        CServicenode* pmn = mnodeman.Find(vin);
         if (pmn != NULL) {
             protocolVersion = pmn->protocolVersion;
             return true;
@@ -212,8 +212,8 @@ public:
 
     /** Sign this Obfuscation transaction
      *  \return true if all conditions are met:
-     *     1) we have an active Masternode,
-     *     2) we have a valid Masternode private key,
+     *     1) we have an active Servicenode,
+     *     2) we have a valid Servicenode private key,
      *     3) we signed the message successfully, and
      *     4) we verified the message successfully
      */
@@ -227,7 +227,7 @@ public:
         return (GetTime() - time) > OBFUSCATION_QUEUE_TIMEOUT; // 120 seconds
     }
 
-    /// Check if we have a valid Masternode address
+    /// Check if we have a valid Servicenode address
     bool CheckSignature();
 };
 
@@ -247,7 +247,7 @@ public:
 class CObfuScationSigner
 {
 public:
-    /// Is the inputs associated with this public key? (and there is 10000 PIV - checking if valid masternode)
+    /// Is the inputs associated with this public key? (and there is 10000 PIV - checking if valid servicenode)
     bool IsVinAssociatedWithPubkey(CTxIn& vin, CPubKey& pubkey);
     /// Set the private/public key values, returns true if successful
     bool GetKeysFromSecret(std::string strSecret, CKey& keyRet, CPubKey& pubkeyRet);
@@ -266,7 +266,7 @@ class CObfuscationPool
 private:
     mutable CCriticalSection cs_obfuscation;
 
-    std::vector<CObfuScationEntry> entries; // Masternode/clients entries
+    std::vector<CObfuScationEntry> entries; // Servicenode/clients entries
     CMutableTransaction finalTransaction;   // the finalized transaction ready for signing
 
     int64_t lastTimeChanged; // last time the 'state' changed, in UTC milliseconds
@@ -284,7 +284,7 @@ private:
     int sessionID;
 
     int sessionUsers;            //N Users have said they'll join
-    bool sessionFoundMasternode; //If we've found a compatible Masternode
+    bool sessionFoundServicenode; //If we've found a compatible Servicenode
     std::vector<CTransaction> vecSessionCollateral;
 
     int cachedLastSuccess;
@@ -326,7 +326,7 @@ public:
     // where collateral should be made out to
     CScript collateralPubKey;
 
-    CMasternode* pSubmittedToMasternode;
+    CServicenode* pSubmittedToServicenode;
     int sessionDenom;    //Users must submit an denom matching this
     int cachedNumBlocks; //used for the overview screen
 
@@ -410,16 +410,16 @@ public:
     // Set the 'state' value, with some logging and capturing when the state changed
     void UpdateState(unsigned int newState)
     {
-        if (fMasterNode && (newState == POOL_STATUS_ERROR || newState == POOL_STATUS_SUCCESS)) {
-            LogPrint("obfuscation", "CObfuscationPool::UpdateState() - Can't set state to ERROR or SUCCESS as a Masternode. \n");
+        if (fServiceNode && (newState == POOL_STATUS_ERROR || newState == POOL_STATUS_SUCCESS)) {
+            LogPrint("obfuscation", "CObfuscationPool::UpdateState() - Can't set state to ERROR or SUCCESS as a Servicenode. \n");
             return;
         }
 
         LogPrintf("CObfuscationPool::UpdateState() == %d | %d \n", state, newState);
         if (state != newState) {
             lastTimeChanged = GetTimeMillis();
-            if (fMasterNode) {
-                RelayStatus(obfuScationPool.sessionID, obfuScationPool.GetState(), obfuScationPool.GetEntriesCount(), MASTERNODE_RESET);
+            if (fServiceNode) {
+                RelayStatus(obfuScationPool.sessionID, obfuScationPool.GetState(), obfuScationPool.GetEntriesCount(), SERVICENODE_RESET);
             }
         }
         state = newState;
@@ -466,9 +466,9 @@ public:
     bool AddScriptSig(const CTxIn& newVin);
     /// Check that all inputs are signed. (Are all inputs signed?)
     bool SignaturesComplete();
-    /// As a client, send a transaction to a Masternode to start the denomination process
+    /// As a client, send a transaction to a Servicenode to start the denomination process
     void SendObfuscationDenominate(std::vector<CTxIn>& vin, std::vector<CTxOut>& vout, int64_t amount);
-    /// Get Masternode updates about the progress of Obfuscation
+    /// Get Servicenode updates about the progress of Obfuscation
     bool StatusUpdate(int newState, int newEntriesCount, int newAccepted, int& errorID, int newSessionID = 0);
 
     /// As a client, check and sign the final transaction
@@ -493,7 +493,7 @@ public:
 
     void GetDenominationsToString(int nDenom, std::string& strDenom);
 
-    /// Get the denominations for a specific amount of pivx.
+    /// Get the denominations for a specific amount of blocknetdx.
     int GetDenominationsByAmount(int64_t nAmount, int nDenomTarget = 0); // is not used anymore?
     int GetDenominationsByAmounts(std::vector<int64_t>& vecAmount);
 

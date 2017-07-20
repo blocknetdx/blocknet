@@ -864,15 +864,15 @@ Address: %4
         <translation>Пожалуйста, выберите уровень приватности.</translation>
     </message>
     <message>
-        <source>Use 2 separate masternodes to mix funds up to 1000 DNET</source>
+        <source>Use 2 separate servicenodes to mix funds up to 1000 DNET</source>
         <translation>Использовать 2 отдельные мастерноды для перемешивания до 1000 DNET</translation>
     </message>
     <message>
-        <source>Use 8 separate masternodes to mix funds up to 1000 DNET</source>
+        <source>Use 8 separate servicenodes to mix funds up to 1000 DNET</source>
         <translation>Использовать 8 отдельных мастернод для перемешивания до 1000 DNET</translation>
     </message>
     <message>
-        <source>Use 16 separate masternodes</source>
+        <source>Use 16 separate servicenodes</source>
         <translation>Использовать 16 отдельных мастернод</translation>
     </message>
     <message>
@@ -1186,7 +1186,7 @@ Address: %4
         <translation>Настройки для опытных пользователей</translation>
     </message>
     <message>
-        <source>This setting determines the amount of individual masternodes that an input will be anonymized through.&lt;br/&gt;More rounds of anonymization gives a higher degree of privacy, but also costs more in fees.</source>
+        <source>This setting determines the amount of individual servicenodes that an input will be anonymized through.&lt;br/&gt;More rounds of anonymization gives a higher degree of privacy, but also costs more in fees.</source>
         <translation>Эта настройка определяет количество отдельных мастернод, через которые пройдет анонимизация.&lt;br/&gt;Чем больше раундов, тем выше степень конфиденциальности, но также выше и суммарная стоимость комиссий.</translation>
     </message>
     <message>
@@ -1371,7 +1371,7 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Незрелые:</translation>
     </message>
     <message>
-        <source>Staked or masternode rewards that has not yet matured</source>
+        <source>Staked or servicenode rewards that has not yet matured</source>
         <translation>Баланс добытых монет, который ещё не созрел</translation>
     </message>
     <message>
@@ -1383,7 +1383,7 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Неподтвержденные транзакции на адреса для просмотра</translation>
     </message>
     <message>
-        <source>Staked or masternode rewards in watch-only addresses that has not yet matured</source>
+        <source>Staked or servicenode rewards in watch-only addresses that has not yet matured</source>
         <translation>Баланс добытых монет на адресах для просмотра, который ещё не созрел</translation>
     </message>
     <message>
@@ -1455,7 +1455,7 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Начать/остановить автоматическое перемешивание</translation>
     </message>
     <message>
-        <source>The denominations you submitted to the Masternode.&lt;br&gt;To mix, other users must submit the exact same denominations.</source>
+        <source>The denominations you submitted to the Servicenode.&lt;br&gt;To mix, other users must submit the exact same denominations.</source>
         <translation>Номиналы, предоставленные Вами мастерноде.&lt;br&gt;Для перемешивания другие пользователи должны предоставить точно такой же набор номиналов.</translation>
     </message>
     <message>
@@ -1812,7 +1812,7 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Цепочка блоков</translation>
     </message>
     <message>
-        <source>Number of Masternodes</source>
+        <source>Number of Servicenodes</source>
         <translation>Количество Мастернод</translation>
     </message>
     <message>
@@ -3414,8 +3414,8 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Внимание: wallet.dat повреждён, данные спасены! Оригинальный wallet.dat сохранён как wallet.{timestamp}.bak в %s. Если Ваш баланс или транзакции некорректны, Вы должны восстановить файл из резервной копии.</translation>
     </message>
     <message>
-        <source>You must specify a masternodeprivkey in the configuration. Please see documentation for help.</source>
-        <translation>Необходимо указать masternodeprivkey в файле конфигурации. Пожалуйста, ознакомьтесь с документацией.</translation>
+        <source>You must specify a servicenodeprivkey in the configuration. Please see documentation for help.</source>
+        <translation>Необходимо указать servicenodeprivkey в файле конфигурации. Пожалуйста, ознакомьтесь с документацией.</translation>
     </message>
     <message>
         <source>(default: 1)</source>
@@ -3614,7 +3614,7 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Удалить все трансакции из кошелька и при рестарте с помощью -rescan восстановить только те, которые есть в цепочке блоков</translation>
     </message>
     <message>
-        <source>Disable all DarkNet specific functionality (Masternodes, Obfuscate, SwiftTX, Budgeting) (0-1, default: %u)</source>
+        <source>Disable all DarkNet specific functionality (Servicenodes, Obfuscate, SwiftTX, Budgeting) (0-1, default: %u)</source>
         <translation>Отключить всю функциональность, относящуюся к  DarkNet (Мастерноды, Obfuscate, SwiftTX, бюджеты) (0-1, по умолчанию: %u)</translation>
     </message>
     <message>
@@ -3824,11 +3824,11 @@ rpcpassword=%s
         <translation>Отменить безопасный режим, перекрывает реальные события о переходе в безопасный режим (по умолчанию: %u)</translation>
     </message>
     <message>
-        <source>Enable the client to act as a masternode (0-1, default: %u)</source>
+        <source>Enable the client to act as a servicenode (0-1, default: %u)</source>
         <translation>Разрешить этому клиенту работать в качестве мастерноды (0-1, по умолчанию: %u)</translation>
     </message>
     <message>
-        <source>Error connecting to Masternode.</source>
+        <source>Error connecting to Servicenode.</source>
         <translation>Ошибка соединения с мастернодой.</translation>
     </message>
     <message>
@@ -3968,11 +3968,11 @@ rpcpassword=%s
         <translation>Загрузка кэша бюджетов...</translation>
     </message>
     <message>
-        <source>Loading masternode cache...</source>
+        <source>Loading servicenode cache...</source>
         <translation>Загрузка кэша мастернод...</translation>
     </message>
     <message>
-        <source>Loading masternode payment cache...</source>
+        <source>Loading servicenode payment cache...</source>
         <translation>Загрузка кэша выплат Мастернодам...</translation>
     </message>
     <message>
@@ -3980,7 +3980,7 @@ rpcpassword=%s
         <translation>Установлена блокировка.</translation>
     </message>
     <message>
-        <source>Lock masternodes from masternode configuration file (default: %u)</source>
+        <source>Lock servicenodes from servicenode configuration file (default: %u)</source>
         <translation>Заблокировать средства мастернод, указанных в настроечном файле (по умолчанию: %u)</translation>
     </message>
     <message>
@@ -4004,15 +4004,15 @@ rpcpassword=%s
         <translation>Для параметра -whitebind нужно указать порт: '%s'</translation>
     </message>
     <message>
-        <source>No Masternodes detected.</source>
+        <source>No Servicenodes detected.</source>
         <translation>Мастерноды не найдены.</translation>
     </message>
     <message>
-        <source>No compatible Masternode found.</source>
+        <source>No compatible Servicenode found.</source>
         <translation>Отсутствуют совместимые мастерноды.</translation>
     </message>
     <message>
-        <source>Not in the Masternode list.</source>
+        <source>Not in the Servicenode list.</source>
         <translation>Отсутствует в списке мастернод.</translation>
     </message>
     <message>
@@ -4052,7 +4052,7 @@ rpcpassword=%s
         <translation>Закрытый ключ сервера (по умолчанию: %s)</translation>
     </message>
     <message>
-        <source>Set external address:port to get to this masternode (example: %s)</source>
+        <source>Set external address:port to get to this servicenode (example: %s)</source>
         <translation>Указать внешний адрес:порт для доступа к этой мастерноде (например: %s)</translation>
     </message>
     <message>
@@ -4084,7 +4084,7 @@ rpcpassword=%s
         <translation>Указать тайм-аут соединения в миллисекундах (минимально: 1, по умолчанию: %d)</translation>
     </message>
     <message>
-        <source>Specify masternode configuration file (default: %s)</source>
+        <source>Specify servicenode configuration file (default: %s)</source>
         <translation>Указать конфигурационный файл для мастернод (по умолчанию: %s)</translation>
     </message>
     <message>
@@ -4100,15 +4100,15 @@ rpcpassword=%s
         <translation>Закрыть приложение после завершения импорта блоков с диска (по умолчанию: %u)</translation>
     </message>
     <message>
-        <source>Submitted following entries to masternode: %u / %d</source>
+        <source>Submitted following entries to servicenode: %u / %d</source>
         <translation>Мастерноде отправлены следующие записи: %u / %d</translation>
     </message>
     <message>
-        <source>Submitted to masternode, waiting for more entries ( %u / %d ) %s</source>
+        <source>Submitted to servicenode, waiting for more entries ( %u / %d ) %s</source>
         <translation>Отправлено мастерноде, ожидаем больше записей ( %u / %d ) %s</translation>
     </message>
     <message>
-        <source>Submitted to masternode, waiting in queue %s</source>
+        <source>Submitted to servicenode, waiting in queue %s</source>
         <translation>Отправлено на мастерноду, ожидаем в очереди %s</translation>
     </message>
     <message>
@@ -4124,11 +4124,11 @@ rpcpassword=%s
         <translation>Синхронизация бюджетов...</translation>
     </message>
     <message>
-        <source>Synchronizing masternode winners...</source>
+        <source>Synchronizing servicenode winners...</source>
         <translation>Синхронизация списка мастернод-победителей...</translation>
     </message>
     <message>
-        <source>Synchronizing masternodes...</source>
+        <source>Synchronizing servicenodes...</source>
         <translation>Синхронизация списка мастернод...</translation>
     </message>
     <message>
@@ -4136,7 +4136,7 @@ rpcpassword=%s
         <translation>Синхронизация спорков...</translation>
     </message>
     <message>
-        <source>This is not a Masternode.</source>
+        <source>This is not a Servicenode.</source>
         <translation>Это не мастернода.</translation>
     </message>
     <message>
@@ -4148,7 +4148,7 @@ rpcpassword=%s
         <translation>Использовать интеграцию с KeePass 2 через плагин KeePassHttp (по умолчанию: %u)</translation>
     </message>
     <message>
-        <source>Use N separate masternodes to anonymize funds  (2-8, default: %u)</source>
+        <source>Use N separate servicenodes to anonymize funds  (2-8, default: %u)</source>
         <translation>Использовать N отдельных мастернод для анонимизации средств (2-8, по умолчанию: %u)</translation>
     </message>
     <message>
@@ -4172,15 +4172,15 @@ rpcpassword=%s
         <translation>Попробуем еще раз...</translation>
     </message>
     <message>
-        <source>Invalid masternodeprivkey. Please see documenation.</source>
-        <translation>Неправильное значение masternodeprivkey. Пожалуйста, ознакомьтесь с документацией.</translation>
+        <source>Invalid servicenodeprivkey. Please see documenation.</source>
+        <translation>Неправильное значение servicenodeprivkey. Пожалуйста, ознакомьтесь с документацией.</translation>
     </message>
     <message>
         <source>(must be51472 for mainnet)</source>
         <translation>(должно быть51472 в главной сети)</translation>
     </message>
     <message>
-        <source>Can't find random Masternode.</source>
+        <source>Can't find random Servicenode.</source>
         <translation>Не получилось выбрать случайную Мастерноду.</translation>
     </message>
     <message>
@@ -4188,16 +4188,16 @@ rpcpassword=%s
         <translation>Перемешивание до завершения синхронизации невозможно.</translation>
     </message>
     <message>
-        <source>Could not parse masternode.conf</source>
-        <translation>Не могу разобрать masternode.conf</translation>
+        <source>Could not parse servicenode.conf</source>
+        <translation>Не могу разобрать servicenode.conf</translation>
     </message>
     <message>
         <source>Invalid netmask specified in -whitelist: '%s'</source>
         <translation>В параметре -whitelist указана некорректная маска: '%s'</translation>
     </message>
     <message>
-        <source>Invalid port detected in masternode.conf</source>
-        <translation>Обнаружен некорректный порт в masternode.conf</translation>
+        <source>Invalid port detected in servicenode.conf</source>
+        <translation>Обнаружен некорректный порт в servicenode.conf</translation>
     </message>
     <message>
         <source>Invalid private key.</source>
@@ -4248,15 +4248,15 @@ rpcpassword=%s
         <translation>Загрузка кошелька...</translation>
     </message>
     <message>
-        <source>Masternode options:</source>
+        <source>Servicenode options:</source>
         <translation>Параметры мастерноды:</translation>
     </message>
     <message>
-        <source>Masternode queue is full.</source>
+        <source>Servicenode queue is full.</source>
         <translation>Очередь на мастерноде переполнена.</translation>
     </message>
     <message>
-        <source>Masternode:</source>
+        <source>Servicenode:</source>
         <translation>Мастернода:</translation>
     </message>
     <message>
@@ -4360,7 +4360,7 @@ rpcpassword=%s
         <translation>Установить максимальный размер блока в байтах (по умолчанию: %d)</translation>
     </message>
     <message>
-        <source>Set the masternode private key</source>
+        <source>Set the servicenode private key</source>
         <translation>Установить закрытый ключ мастерноды</translation>
     </message>
     <message>

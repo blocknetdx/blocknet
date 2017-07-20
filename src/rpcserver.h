@@ -95,7 +95,7 @@ public:
 };
 
 /**
- * PIVX RPC command dispatcher.
+ * BlocknetDX RPC command dispatcher.
  */
 class CRPCTable
 {
@@ -239,8 +239,8 @@ extern json_spirit::Value invalidateblock(const json_spirit::Array& params, bool
 extern json_spirit::Value reconsiderblock(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value obfuscation(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value spork(const json_spirit::Array& params, bool fHelp);
-extern json_spirit::Value masternode(const json_spirit::Array& params, bool fHelp);
-extern json_spirit::Value masternodelist(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value servicenode(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value servicenodelist(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value mnbudget(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value mnbudgetvoteraw(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value mnfinalbudget(const json_spirit::Array& params, bool fHelp);

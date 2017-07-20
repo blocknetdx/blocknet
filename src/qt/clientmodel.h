@@ -1,6 +1,6 @@
 // Copyright (c) 2011-2014 The Bitcoin developers
 // Copyright (c) 2014-2015 The Dash developers
-// Copyright (c) 2015-2017 The PIVX developers
+// Copyright (c) 2015-2017 The BlocknetDX developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -35,7 +35,7 @@ enum NumConnections {
     CONNECTIONS_ALL = (CONNECTIONS_IN | CONNECTIONS_OUT),
 };
 
-/** Model for PIVX network client. */
+/** Model for BlocknetDX network client. */
 class ClientModel : public QObject
 {
     Q_OBJECT
@@ -49,7 +49,7 @@ public:
 
     //! Return number of connections, default is in- and outbound (total)
     int getNumConnections(unsigned int flags = CONNECTIONS_ALL) const;
-    QString getMasternodeCountString() const;
+    QString getServicenodeCountString() const;
     int getNumBlocks() const;
     int getNumBlocksAtStartup();
 
@@ -77,7 +77,7 @@ private:
     PeerTableModel* peerTableModel;
 
     int cachedNumBlocks;
-    QString cachedMasternodeCountString;
+    QString cachedServicenodeCountString;
     bool cachedReindexing;
     bool cachedImporting;
 
@@ -92,7 +92,7 @@ private:
 signals:
     void numConnectionsChanged(int count);
     void numBlocksChanged(int count);
-    void strMasternodesChanged(const QString& strMasternodes);
+    void strServicenodesChanged(const QString& strServicenodes);
     void alertsChanged(const QString& warnings);
     void bytesChanged(quint64 totalBytesIn, quint64 totalBytesOut);
 

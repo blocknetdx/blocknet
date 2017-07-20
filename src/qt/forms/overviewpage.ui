@@ -70,7 +70,7 @@
                <cursorShape>WhatsThisCursor</cursorShape>
               </property>
               <property name="toolTip">
-               <string>The displayed information may be out of date. Your wallet automatically synchronizes with the PIVX network after a connection is established, but this process has not completed yet.</string>
+               <string>The displayed information may be out of date. Your wallet automatically synchronizes with the BlocknetDX network after a connection is established, but this process has not completed yet.</string>
               </property>
               <property name="styleSheet">
                <string notr="true">QLabel { color: red; }</string>
@@ -165,7 +165,7 @@
                <cursorShape>IBeamCursor</cursorShape>
               </property>
               <property name="toolTip">
-               <string>Staked or masternode rewards in watch-only addresses that has not yet matured</string>
+               <string>Staked or servicenode rewards in watch-only addresses that has not yet matured</string>
               </property>
               <property name="text">
                <string notr="true">0.000 000 00 BTC</string>
@@ -223,7 +223,7 @@
                <cursorShape>IBeamCursor</cursorShape>
               </property>
               <property name="toolTip">
-               <string>Staked or masternode rewards that has not yet matured</string>
+               <string>Staked or servicenode rewards that has not yet matured</string>
               </property>
               <property name="text">
                <string notr="true">0.000 000 00 BTC</string>
@@ -502,7 +502,7 @@
            <item row="4" column="1">
             <widget class="QLabel" name="labelSubmittedDenom">
              <property name="toolTip">
-              <string>The denominations you submitted to the Masternode.&lt;br&gt;To mix, other users must submit the exact same denominations.</string>
+              <string>The denominations you submitted to the Servicenode.&lt;br&gt;To mix, other users must submit the exact same denominations.</string>
              </property>
              <property name="text">
               <string>n/a</string>
@@ -1085,7 +1085,7 @@
            <item>
             <widget class="QLabel" name="labelObfuscationSyncStatus">
              <property name="toolTip">
-              <string>The displayed information may be out of date. Your wallet automatically synchronizes with the PIVX network after a connection is established, but this process has not completed yet.</string>
+              <string>The displayed information may be out of date. Your wallet automatically synchronizes with the BlocknetDX network after a connection is established, but this process has not completed yet.</string>
              </property>
              <property name="styleSheet">
               <string notr="true">QLabel { color: red; }</string>
@@ -1178,7 +1178,7 @@
                <cursorShape>WhatsThisCursor</cursorShape>
               </property>
               <property name="toolTip">
-               <string>The displayed information may be out of date. Your wallet automatically synchronizes with the PIVX network after a connection is established, but this process has not completed yet.</string>
+               <string>The displayed information may be out of date. Your wallet automatically synchronizes with the BlocknetDX network after a connection is established, but this process has not completed yet.</string>
               </property>
               <property name="styleSheet">
                <string notr="true">QLabel { color: red; }</string>

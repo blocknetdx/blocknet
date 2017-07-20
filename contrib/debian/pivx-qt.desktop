@@ -1,12 +1,12 @@
 [Desktop Entry]
 Encoding=UTF-8
-Name=Pivx
-Comment=Pivx P2P Cryptocurrency
-Comment[fr]=Pivx, monnaie virtuelle cryptographique pair à pair
-Comment[tr]=Pivx, eşten eşe kriptografik sanal para birimi
-Exec=pivx-qt %u
+Name=Blocknetdx
+Comment=Blocknetdx P2P Cryptocurrency
+Comment[fr]=Blocknetdx, monnaie virtuelle cryptographique pair à pair
+Comment[tr]=Blocknetdx, eşten eşe kriptografik sanal para birimi
+Exec=blocknetdx-qt %u
 Terminal=false
 Type=Application
-Icon=pivx128
-MimeType=x-scheme-handler/pivx;
+Icon=blocknetdx128
+MimeType=x-scheme-handler/blocknetdx;
 Categories=Office;Finance;

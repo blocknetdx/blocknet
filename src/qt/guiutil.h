@@ -30,7 +30,7 @@ class QUrl;
 class QWidget;
 QT_END_NAMESPACE
 
-/** Utility functions used by the PIVX Qt UI.
+/** Utility functions used by the BlocknetDX Qt UI.
  */
 namespace GUIUtil
 {
@@ -38,14 +38,14 @@ namespace GUIUtil
 QString dateTimeStr(const QDateTime& datetime);
 QString dateTimeStr(qint64 nTime);
 
-// Render PIVX addresses in monospace font
+// Render BlocknetDX addresses in monospace font
 QFont bitcoinAddressFont();
 
 // Set up widgets for address and amounts
 void setupAddressWidget(QValidatedLineEdit* widget, QWidget* parent);
 void setupAmountWidget(QLineEdit* widget, QWidget* parent);
 
-// Parse "pivx:" URI into recipient object, return true on successful parsing
+// Parse "blocknetdx:" URI into recipient object, return true on successful parsing
 bool parseBitcoinURI(const QUrl& uri, SendCoinsRecipient* out);
 bool parseBitcoinURI(QString uri, SendCoinsRecipient* out);
 QString formatBitcoinURI(const SendCoinsRecipient& info);
@@ -103,10 +103,10 @@ bool isObscured(QWidget* w);
 // Open debug.log
 void openDebugLogfile();
 
-// Open pivx.conf
+// Open blocknetdx.conf
 void openConfigfile();
 
-// Open masternode.conf
+// Open servicenode.conf
 void openMNConfigfile();
 
 // Browse backup folder
@@ -174,7 +174,7 @@ private slots:
 
 /**
      * Extension to QTableWidgetItem that facilitates proper ordering for "DHMS"
-     * strings (primarily used in the masternode's "active" listing).
+     * strings (primarily used in the servicenode's "active" listing).
      */
 class DHMSTableWidgetItem : public QTableWidgetItem
 {

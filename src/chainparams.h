@@ -23,7 +23,7 @@ struct CDNSSeedData {
 
 /**
  * CChainParams defines various tweakable parameters of a given instance of the
- * PIVX system. There are three: the main network on which people trade goods
+ * BlocknetDX system. There are three: the main network on which people trade goods
  * and services, the public test network which gets reset from time to time and
  * a regression test mode which is intended for private networks only. It has
  * minimal difficulty to ensure that blocks can be found instantly.
@@ -76,8 +76,8 @@ public:
     int LAST_POW_BLOCK() const { return nLastPOWBlock; }
     int COINBASE_MATURITY() const { return nMaturity; }
     int ModifierUpgradeBlock() const { return nModifierUpdateBlock; }
-    /** The masternode count that we will allow the see-saw reward payments to be off by */
-    int MasternodeCountDrift() const { return nMasternodeCountDrift; }
+    /** The servicenode count that we will allow the see-saw reward payments to be off by */
+    int ServicenodeCountDrift() const { return nServicenodeCountDrift; }
     /** Make miner stop after a block is found. In RPC, don't return until nGenProcLimit blocks are generated */
     bool MineBlocksOnDemand() const { return fMineBlocksOnDemand; }
     /** In the future use NetworkIDString() for RPC fields */
@@ -91,7 +91,7 @@ public:
     int PoolMaxTransactions() const { return nPoolMaxTransactions; }
     std::string SporkKey() const { return strSporkKey; }
     std::string ObfuscationPoolDummyAddress() const { return strObfuscationPoolDummyAddress; }
-    int64_t StartMasternodePayments() const { return nStartMasternodePayments; }
+    int64_t StartServicenodePayments() const { return nStartServicenodePayments; }
     CBaseChainParams::Network NetworkID() const { return networkID; }
 
 protected:
@@ -111,7 +111,7 @@ protected:
     int64_t nTargetTimespan;
     int64_t nTargetSpacing;
     int nLastPOWBlock;
-    int nMasternodeCountDrift;
+    int nServicenodeCountDrift;
     int nMaturity;
     int nModifierUpdateBlock;
     int nMinerThreads;
@@ -133,7 +133,7 @@ protected:
     int nPoolMaxTransactions;
     std::string strSporkKey;
     std::string strObfuscationPoolDummyAddress;
-    int64_t nStartMasternodePayments;
+    int64_t nStartServicenodePayments;
 };
 
 /** 

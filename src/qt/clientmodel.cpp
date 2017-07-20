@@ -1,6 +1,6 @@
 // Copyright (c) 2011-2014 The Bitcoin developers
 // Copyright (c) 2014-2015 The Dash developers
-// Copyright (c) 2015-2017 The PIVX developers
+// Copyright (c) 2015-2017 The BlocknetDX developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -14,8 +14,8 @@
 #include "checkpoints.h"
 #include "clientversion.h"
 #include "main.h"
-#include "masternode-sync.h"
-#include "masternodeman.h"
+#include "servicenode-sync.h"
+#include "servicenodeman.h"
 #include "net.h"
 #include "ui_interface.h"
 #include "util.h"
@@ -32,7 +32,7 @@ ClientModel::ClientModel(OptionsModel* optionsModel, QObject* parent) : QObject(
                                                                         optionsModel(optionsModel),
                                                                         peerTableModel(0),
                                                                         cachedNumBlocks(0),
-                                                                        cachedMasternodeCountString(""),
+                                                                        cachedServicenodeCountString(""),
                                                                         cachedReindexing(0), cachedImporting(0),
                                                                         numBlocksAtStartup(-1), pollTimer(0)
 {
@@ -68,7 +68,7 @@ int ClientModel::getNumConnections(unsigned int flags) const
     return nNum;
 }
 
-QString ClientModel::getMasternodeCountString() const
+QString ClientModel::getServicenodeCountString() const
 {
     return tr("Total: %1 (OBF compatible: %2 / Enabled: %3)").arg(QString::number((int)mnodeman.size())).arg(QString::number((int)mnodeman.CountEnabled(ActiveProtocol()))).arg(QString::number((int)mnodeman.CountEnabled()));
 }
@@ -128,12 +128,12 @@ void ClientModel::updateTimer()
     // check for changed number of blocks we have, number of blocks peers claim to have, reindexing state and importing state
     if (cachedNumBlocks != newNumBlocks ||
         cachedReindexing != fReindex || cachedImporting != fImporting ||
-        masternodeSync.RequestedMasternodeAttempt != prevAttempt || masternodeSync.RequestedMasternodeAssets != prevAssets) {
+        servicenodeSync.RequestedServicenodeAttempt != prevAttempt || servicenodeSync.RequestedServicenodeAssets != prevAssets) {
         cachedNumBlocks = newNumBlocks;
         cachedReindexing = fReindex;
         cachedImporting = fImporting;
-        prevAttempt = masternodeSync.RequestedMasternodeAttempt;
-        prevAssets = masternodeSync.RequestedMasternodeAssets;
+        prevAttempt = servicenodeSync.RequestedServicenodeAttempt;
+        prevAssets = servicenodeSync.RequestedServicenodeAssets;
 
         emit numBlocksChanged(newNumBlocks);
     }
@@ -149,12 +149,12 @@ void ClientModel::updateMnTimer()
     TRY_LOCK(cs_main, lockMain);
     if (!lockMain)
         return;
-    QString newMasternodeCountString = getMasternodeCountString();
+    QString newServicenodeCountString = getServicenodeCountString();
 
-    if (cachedMasternodeCountString != newMasternodeCountString) {
-        cachedMasternodeCountString = newMasternodeCountString;
+    if (cachedServicenodeCountString != newServicenodeCountString) {
+        cachedServicenodeCountString = newServicenodeCountString;
 
-        emit strMasternodesChanged(cachedMasternodeCountString);
+        emit strServicenodesChanged(cachedServicenodeCountString);
     }
 }
 

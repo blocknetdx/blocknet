@@ -1,11 +1,11 @@
 
 // Copyright (c) 2014-2015 The Dash developers
-// Copyright (c) 2015-2017 The PIVX developers
+// Copyright (c) 2015-2017 The BlocknetDX developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef SRC_MASTERNODECONFIG_H_
-#define SRC_MASTERNODECONFIG_H_
+#ifndef SRC_SERVICENODECONFIG_H_
+#define SRC_SERVICENODECONFIG_H_
 
 #include <string>
 #include <vector>
@@ -13,13 +13,13 @@
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
 
-class CMasternodeConfig;
-extern CMasternodeConfig masternodeConfig;
+class CServicenodeConfig;
+extern CServicenodeConfig servicenodeConfig;
 
-class CMasternodeConfig
+class CServicenodeConfig
 {
 public:
-    class CMasternodeEntry
+    class CServicenodeEntry
     {
     private:
         std::string alias;
@@ -29,7 +29,7 @@ public:
         std::string outputIndex;
 
     public:
-        CMasternodeEntry(std::string alias, std::string ip, std::string privKey, std::string txHash, std::string outputIndex)
+        CServicenodeEntry(std::string alias, std::string ip, std::string privKey, std::string txHash, std::string outputIndex)
         {
             this->alias = alias;
             this->ip = ip;
@@ -91,16 +91,16 @@ public:
         }
     };
 
-    CMasternodeConfig()
+    CServicenodeConfig()
     {
-        entries = std::vector<CMasternodeEntry>();
+        entries = std::vector<CServicenodeEntry>();
     }
 
     void clear();
     bool read(std::string& strErr);
     void add(std::string alias, std::string ip, std::string privKey, std::string txHash, std::string outputIndex);
 
-    std::vector<CMasternodeEntry>& getEntries()
+    std::vector<CServicenodeEntry>& getEntries()
     {
         return entries;
     }
@@ -108,15 +108,15 @@ public:
     int getCount()
     {
         int c = -1;
-        BOOST_FOREACH (CMasternodeEntry e, entries) {
+        BOOST_FOREACH (CServicenodeEntry e, entries) {
             if (e.getAlias() != "") c++;
         }
         return c;
     }
 
 private:
-    std::vector<CMasternodeEntry> entries;
+    std::vector<CServicenodeEntry> entries;
 };
 
 
-#endif /* SRC_MASTERNODECONFIG_H_ */
+#endif /* SRC_SERVICENODECONFIG_H_ */

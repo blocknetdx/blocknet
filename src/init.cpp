@@ -1,27 +1,27 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2014 The Bitcoin developers
 // Copyright (c) 2014-2015 The Dash developers
-// Copyright (c) 2015-2017 The PIVX developers
+// Copyright (c) 2015-2017 The BlocknetDX developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #if defined(HAVE_CONFIG_H)
-#include "config/pivx-config.h"
+#include "config/blocknetdx-config.h"
 #endif
 
 #include "init.h"
 
-#include "activemasternode.h"
+#include "activeservicenode.h"
 #include "addrman.h"
 #include "amount.h"
 #include "checkpoints.h"
 #include "compat/sanity.h"
 #include "key.h"
 #include "main.h"
-#include "masternode-budget.h"
-#include "masternode-payments.h"
-#include "masternodeconfig.h"
-#include "masternodeman.h"
+#include "servicenode-budget.h"
+#include "servicenode-payments.h"
+#include "servicenodeconfig.h"
+#include "servicenodeman.h"
 #include "miner.h"
 #include "net.h"
 #include "rpcserver.h"
@@ -171,7 +171,7 @@ void PrepareShutdown()
     /// for example if the data directory was found to be locked.
     /// Be sure that anything that writes files or flushes caches only does this if the respective
     /// module was initialized.
-    RenameThread("pivx-shutoff");
+    RenameThread("blocknetdx-shutoff");
     mempool.AddTransactionsUpdated(1);
     StopRPCThreads();
 #ifdef ENABLE_WALLET
@@ -180,9 +180,9 @@ void PrepareShutdown()
     GenerateBitcoins(false, NULL, 0);
 #endif
     StopNode();
-    DumpMasternodes();
+    DumpServicenodes();
     DumpBudgets();
-    DumpMasternodePayments();
+    DumpServicenodePayments();
     UnregisterNodeSignals(GetNodeSignals());
 
     if (fFeeEstimatesInitialized) {
@@ -305,7 +305,7 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += HelpMessageOpt("-blocknotify=<cmd>", _("Execute command when the best block changes (%s in cmd is replaced by block hash)"));
     strUsage += HelpMessageOpt("-checkblocks=<n>", strprintf(_("How many blocks to check at startup (default: %u, 0 = all)"), 500));
     strUsage += HelpMessageOpt("-checklevel=<n>", strprintf(_("How thorough the block verification of -checkblocks is (0-4, default: %u)"), 3));
-    strUsage += HelpMessageOpt("-conf=<file>", strprintf(_("Specify configuration file (default: %s)"), "pivx.conf"));
+    strUsage += HelpMessageOpt("-conf=<file>", strprintf(_("Specify configuration file (default: %s)"), "blocknetdx.conf"));
     if (mode == HMM_BITCOIND) {
 #if !defined(WIN32)
         strUsage += HelpMessageOpt("-daemon", _("Run in the background as a daemon and accept commands"));
@@ -317,7 +317,7 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += HelpMessageOpt("-maxorphantx=<n>", strprintf(_("Keep at most <n> unconnectable transactions in memory (default: %u)"), DEFAULT_MAX_ORPHAN_TRANSACTIONS));
     strUsage += HelpMessageOpt("-par=<n>", strprintf(_("Set the number of script verification threads (%u to %d, 0 = auto, <0 = leave that many cores free, default: %d)"), -(int)boost::thread::hardware_concurrency(), MAX_SCRIPTCHECK_THREADS, DEFAULT_SCRIPTCHECK_THREADS));
 #ifndef WIN32
-    strUsage += HelpMessageOpt("-pid=<file>", strprintf(_("Specify pid file (default: %s)"), "pivxd.pid"));
+    strUsage += HelpMessageOpt("-pid=<file>", strprintf(_("Specify pid file (default: %s)"), "blocknetdxd.pid"));
 #endif
     strUsage += HelpMessageOpt("-reindex", _("Rebuild block chain index from current blk000??.dat files") + " " + _("on startup"));
 #if !defined(WIN32)
@@ -410,7 +410,7 @@ std::string HelpMessage(HelpMessageMode mode)
         strUsage += HelpMessageOpt("-stopafterblockimport", strprintf(_("Stop running after importing blocks from disk (default: %u)"), 0));
         strUsage += HelpMessageOpt("-sporkkey=<privkey>", _("Enable spork administration functionality with the appropriate private key."));
     }
-    string debugCategories = "addrman, alert, bench, coindb, db, lock, rand, rpc, selectcoins, mempool, net, pivx, (obfuscation, swifttx, masternode, mnpayments, mnbudget)"; // Don't translate these and qt below
+    string debugCategories = "addrman, alert, bench, coindb, db, lock, rand, rpc, selectcoins, mempool, net, blocknetdx, (obfuscation, swifttx, servicenode, mnpayments, mnbudget)"; // Don't translate these and qt below
     if (mode == HMM_BITCOIN_QT)
         debugCategories += ", qt";
     strUsage += HelpMessageOpt("-debug=<category>", strprintf(_("Output debugging information (default: %u, supplying <category> is optional)"), 0) + ". " +
@@ -440,7 +440,7 @@ std::string HelpMessage(HelpMessageMode mode)
     }
     strUsage += HelpMessageOpt("-shrinkdebugfile", _("Shrink debug.log file on client startup (default: 1 when no -debug)"));
     strUsage += HelpMessageOpt("-testnet", _("Use the test network"));
-    strUsage += HelpMessageOpt("-litemode=<n>", strprintf(_("Disable all PIVX specific functionality (Masternodes, Obfuscation, SwiftTX, Budgeting) (0-1, default: %u)"), 0));
+    strUsage += HelpMessageOpt("-litemode=<n>", strprintf(_("Disable all BlocknetDX specific functionality (Servicenodes, Obfuscation, SwiftTX, Budgeting) (0-1, default: %u)"), 0));
 
 #ifdef ENABLE_WALLET
     strUsage += HelpMessageGroup(_("Staking options:"));
@@ -452,18 +452,18 @@ std::string HelpMessage(HelpMessageMode mode)
     }
 #endif
 
-    strUsage += HelpMessageGroup(_("Masternode options:"));
-    strUsage += HelpMessageOpt("-masternode=<n>", strprintf(_("Enable the client to act as a masternode (0-1, default: %u)"), 0));
-    strUsage += HelpMessageOpt("-mnconf=<file>", strprintf(_("Specify masternode configuration file (default: %s)"), "masternode.conf"));
-    strUsage += HelpMessageOpt("-mnconflock=<n>", strprintf(_("Lock masternodes from masternode configuration file (default: %u)"), 1));
-    strUsage += HelpMessageOpt("-masternodeprivkey=<n>", _("Set the masternode private key"));
-    strUsage += HelpMessageOpt("-masternodeaddr=<n>", strprintf(_("Set external address:port to get to this masternode (example: %s)"), "128.127.106.235:51472"));
+    strUsage += HelpMessageGroup(_("Servicenode options:"));
+    strUsage += HelpMessageOpt("-servicenode=<n>", strprintf(_("Enable the client to act as a servicenode (0-1, default: %u)"), 0));
+    strUsage += HelpMessageOpt("-mnconf=<file>", strprintf(_("Specify servicenode configuration file (default: %s)"), "servicenode.conf"));
+    strUsage += HelpMessageOpt("-mnconflock=<n>", strprintf(_("Lock servicenodes from servicenode configuration file (default: %u)"), 1));
+    strUsage += HelpMessageOpt("-servicenodeprivkey=<n>", _("Set the servicenode private key"));
+    strUsage += HelpMessageOpt("-servicenodeaddr=<n>", strprintf(_("Set external address:port to get to this servicenode (example: %s)"), "128.127.106.235:51472"));
     strUsage += HelpMessageOpt("-budgetvotemode=<mode>", _("Change automatic finalized budget voting behavior. mode=auto: Vote for only exact finalized budget match to my generated budget. (string, default: auto)"));
 
     strUsage += HelpMessageGroup(_("Obfuscation options:"));
     strUsage += HelpMessageOpt("-enableobfuscation=<n>", strprintf(_("Enable use of automated obfuscation for funds stored in this wallet (0-1, default: %u)"), 0));
-    strUsage += HelpMessageOpt("-obfuscationrounds=<n>", strprintf(_("Use N separate masternodes to anonymize funds  (2-8, default: %u)"), 2));
-    strUsage += HelpMessageOpt("-anonymizepivxamount=<n>", strprintf(_("Keep N PIV anonymized (default: %u)"), 0));
+    strUsage += HelpMessageOpt("-obfuscationrounds=<n>", strprintf(_("Use N separate servicenodes to anonymize funds  (2-8, default: %u)"), 2));
+    strUsage += HelpMessageOpt("-anonymizeblocknetdxamount=<n>", strprintf(_("Keep N PIV anonymized (default: %u)"), 0));
     strUsage += HelpMessageOpt("-liquidityprovider=<n>", strprintf(_("Provide liquidity to Obfuscation by infrequently mixing coins on a continual basis (0-100, default: %u, 1=very frequent, high fees, 100=very infrequent, low fees)"), 0));
 
     strUsage += HelpMessageGroup(_("SwiftTX options:"));
@@ -508,7 +508,7 @@ std::string LicenseInfo()
            "\n" +
            FormatParagraph(strprintf(_("Copyright (C) 2014-%i The Dash Core Developers"), COPYRIGHT_YEAR)) + "\n" +
            "\n" +
-           FormatParagraph(strprintf(_("Copyright (C) 2015-%i The PIVX Core Developers"), COPYRIGHT_YEAR)) + "\n" +
+           FormatParagraph(strprintf(_("Copyright (C) 2015-%i The BlocknetDX Core Developers"), COPYRIGHT_YEAR)) + "\n" +
            "\n" +
            FormatParagraph(_("This is experimental software.")) + "\n" +
            "\n" +
@@ -542,7 +542,7 @@ struct CImportingNow {
 
 void ThreadImport(std::vector<boost::filesystem::path> vImportFiles)
 {
-    RenameThread("pivx-loadblk");
+    RenameThread("blocknetdx-loadblk");
 
     // -reindex
     if (fReindex) {
@@ -600,7 +600,7 @@ void ThreadImport(std::vector<boost::filesystem::path> vImportFiles)
 }
 
 /** Sanity checks
- *  Ensure that PIVX is running in a usable environment with all
+ *  Ensure that BlocknetDX is running in a usable environment with all
  *  necessary library support.
  */
 bool InitSanityCheck(void)
@@ -617,7 +617,7 @@ bool InitSanityCheck(void)
 }
 
 
-/** Initialize pivx.
+/** Initialize blocknetdx.
  *  @pre Parameters should be parsed and config file should be read.
  */
 bool AppInit2(boost::thread_group& threadGroup)
@@ -886,7 +886,7 @@ bool AppInit2(boost::thread_group& threadGroup)
 
     // Sanity check
     if (!InitSanityCheck())
-        return InitError(_("Initialization sanity check failed. PIVX Core is shutting down."));
+        return InitError(_("Initialization sanity check failed. BlocknetDX Core is shutting down."));
 
     std::string strDataDir = GetDataDir().string();
 #ifdef ENABLE_WALLET
@@ -894,7 +894,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     if (strWalletFile != boost::filesystem::basename(strWalletFile) + boost::filesystem::extension(strWalletFile))
         return InitError(strprintf(_("Wallet %s resides outside data directory %s"), strWalletFile, strDataDir));
 #endif
-    // Make sure only a single PIVX process is using the data directory.
+    // Make sure only a single BlocknetDX process is using the data directory.
     boost::filesystem::path pathLockFile = GetDataDir() / ".lock";
     FILE* file = fopen(pathLockFile.string().c_str(), "a"); // empty lock file; created if it doesn't exist.
     if (file) fclose(file);
@@ -902,7 +902,7 @@ bool AppInit2(boost::thread_group& threadGroup)
 
     // Wait maximum 10 seconds if an old wallet is still running. Avoids lockup during restart
     if (!lock.timed_lock(boost::get_system_time() + boost::posix_time::seconds(10)))
-        return InitError(strprintf(_("Cannot obtain a lock on data directory %s. PIVX Core is probably already running."), strDataDir));
+        return InitError(strprintf(_("Cannot obtain a lock on data directory %s. BlocknetDX Core is probably already running."), strDataDir));
 
 #ifndef WIN32
     CreatePidFile(GetPidFile(), getpid());
@@ -910,7 +910,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     if (GetBoolArg("-shrinkdebugfile", !fDebug))
         ShrinkDebugFile();
     LogPrintf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
-    LogPrintf("PIVX version %s (%s)\n", FormatFullVersion(), CLIENT_DATE);
+    LogPrintf("BlocknetDX version %s (%s)\n", FormatFullVersion(), CLIENT_DATE);
     LogPrintf("Using OpenSSL version %s\n", SSLeay_version(SSLEAY_VERSION));
 #ifdef ENABLE_WALLET
     LogPrintf("Using BerkeleyDB version %s\n", DbEnv::version(0, 0, 0));
@@ -1345,9 +1345,9 @@ bool AppInit2(boost::thread_group& threadGroup)
                              " or address book entries might be missing or incorrect."));
                 InitWarning(msg);
             } else if (nLoadWalletRet == DB_TOO_NEW)
-                strErrors << _("Error loading wallet.dat: Wallet requires newer version of PIVX Core") << "\n";
+                strErrors << _("Error loading wallet.dat: Wallet requires newer version of BlocknetDX Core") << "\n";
             else if (nLoadWalletRet == DB_NEED_REWRITE) {
-                strErrors << _("Wallet needed to be rewritten: restart PIVX Core to complete") << "\n";
+                strErrors << _("Wallet needed to be rewritten: restart BlocknetDX Core to complete") << "\n";
                 LogPrintf("%s", strErrors.str());
                 return InitError(strErrors.str());
             } else
@@ -1455,15 +1455,15 @@ bool AppInit2(boost::thread_group& threadGroup)
 
     // ********************************************************* Step 10: setup ObfuScation
 
-    uiInterface.InitMessage(_("Loading masternode cache..."));
+    uiInterface.InitMessage(_("Loading servicenode cache..."));
 
-    CMasternodeDB mndb;
-    CMasternodeDB::ReadResult readResult = mndb.Read(mnodeman);
-    if (readResult == CMasternodeDB::FileError)
-        LogPrintf("Missing masternode cache file - mncache.dat, will try to recreate\n");
-    else if (readResult != CMasternodeDB::Ok) {
+    CServicenodeDB mndb;
+    CServicenodeDB::ReadResult readResult = mndb.Read(mnodeman);
+    if (readResult == CServicenodeDB::FileError)
+        LogPrintf("Missing servicenode cache file - mncache.dat, will try to recreate\n");
+    else if (readResult != CServicenodeDB::Ok) {
         LogPrintf("Error reading mncache.dat: ");
-        if (readResult == CMasternodeDB::IncorrectFormat)
+        if (readResult == CServicenodeDB::IncorrectFormat)
             LogPrintf("magic is ok but data has invalid format, will try to recreate\n");
         else
             LogPrintf("file format is unknown or invalid, please fix it manually\n");
@@ -1489,67 +1489,67 @@ bool AppInit2(boost::thread_group& threadGroup)
     budget.ClearSeen();
 
 
-    uiInterface.InitMessage(_("Loading masternode payment cache..."));
+    uiInterface.InitMessage(_("Loading servicenode payment cache..."));
 
-    CMasternodePaymentDB mnpayments;
-    CMasternodePaymentDB::ReadResult readResult3 = mnpayments.Read(masternodePayments);
+    CServicenodePaymentDB mnpayments;
+    CServicenodePaymentDB::ReadResult readResult3 = mnpayments.Read(servicenodePayments);
 
-    if (readResult3 == CMasternodePaymentDB::FileError)
-        LogPrintf("Missing masternode payment cache - mnpayments.dat, will try to recreate\n");
-    else if (readResult3 != CMasternodePaymentDB::Ok) {
+    if (readResult3 == CServicenodePaymentDB::FileError)
+        LogPrintf("Missing servicenode payment cache - mnpayments.dat, will try to recreate\n");
+    else if (readResult3 != CServicenodePaymentDB::Ok) {
         LogPrintf("Error reading mnpayments.dat: ");
-        if (readResult3 == CMasternodePaymentDB::IncorrectFormat)
+        if (readResult3 == CServicenodePaymentDB::IncorrectFormat)
             LogPrintf("magic is ok but data has invalid format, will try to recreate\n");
         else
             LogPrintf("file format is unknown or invalid, please fix it manually\n");
     }
 
-    fMasterNode = GetBoolArg("-masternode", false);
+    fServiceNode = GetBoolArg("-servicenode", false);
 
-    if ((fMasterNode || masternodeConfig.getCount() > -1) && fTxIndex == false) {
-        return InitError("Enabling Masternode support requires turning on transaction indexing."
+    if ((fServiceNode || servicenodeConfig.getCount() > -1) && fTxIndex == false) {
+        return InitError("Enabling Servicenode support requires turning on transaction indexing."
                          "Please add txindex=1 to your configuration and start with -reindex");
     }
 
-    if (fMasterNode) {
+    if (fServiceNode) {
         LogPrintf("IS OBFUSCATION MASTER NODE\n");
-        strMasterNodeAddr = GetArg("-masternodeaddr", "");
+        strServiceNodeAddr = GetArg("-servicenodeaddr", "");
 
-        LogPrintf(" addr %s\n", strMasterNodeAddr.c_str());
+        LogPrintf(" addr %s\n", strServiceNodeAddr.c_str());
 
-        if (!strMasterNodeAddr.empty()) {
-            CService addrTest = CService(strMasterNodeAddr);
+        if (!strServiceNodeAddr.empty()) {
+            CService addrTest = CService(strServiceNodeAddr);
             if (!addrTest.IsValid()) {
-                return InitError("Invalid -masternodeaddr address: " + strMasterNodeAddr);
+                return InitError("Invalid -servicenodeaddr address: " + strServiceNodeAddr);
             }
         }
 
-        strMasterNodePrivKey = GetArg("-masternodeprivkey", "");
-        if (!strMasterNodePrivKey.empty()) {
+        strServiceNodePrivKey = GetArg("-servicenodeprivkey", "");
+        if (!strServiceNodePrivKey.empty()) {
             std::string errorMessage;
 
             CKey key;
             CPubKey pubkey;
 
-            if (!obfuScationSigner.SetKey(strMasterNodePrivKey, errorMessage, key, pubkey)) {
-                return InitError(_("Invalid masternodeprivkey. Please see documenation."));
+            if (!obfuScationSigner.SetKey(strServiceNodePrivKey, errorMessage, key, pubkey)) {
+                return InitError(_("Invalid servicenodeprivkey. Please see documenation."));
             }
 
-            activeMasternode.pubKeyMasternode = pubkey;
+            activeServicenode.pubKeyServicenode = pubkey;
 
         } else {
-            return InitError(_("You must specify a masternodeprivkey in the configuration. Please see documentation for help."));
+            return InitError(_("You must specify a servicenodeprivkey in the configuration. Please see documentation for help."));
         }
     }
 
-    //get the mode of budget voting for this masternode
+    //get the mode of budget voting for this servicenode
     strBudgetMode = GetArg("-budgetvotemode", "auto");
 
     if (GetBoolArg("-mnconflock", true) && pwalletMain) {
         LOCK(pwalletMain->cs_wallet);
-        LogPrintf("Locking Masternodes:\n");
+        LogPrintf("Locking Servicenodes:\n");
         uint256 mnTxHash;
-        BOOST_FOREACH (CMasternodeConfig::CMasternodeEntry mne, masternodeConfig.getEntries()) {
+        BOOST_FOREACH (CServicenodeConfig::CServicenodeEntry mne, servicenodeConfig.getEntries()) {
             LogPrintf("  %s %s\n", mne.getTxHash(), mne.getOutputIndex());
             mnTxHash.SetHex(mne.getTxHash());
             COutPoint outpoint = COutPoint(mnTxHash, boost::lexical_cast<unsigned int>(mne.getOutputIndex()));
@@ -1570,24 +1570,24 @@ bool AppInit2(boost::thread_group& threadGroup)
         nObfuscationRounds = 99999;
     }
 
-    nAnonymizePivxAmount = GetArg("-anonymizepivxamount", 0);
-    if (nAnonymizePivxAmount > 999999) nAnonymizePivxAmount = 999999;
-    if (nAnonymizePivxAmount < 2) nAnonymizePivxAmount = 2;
+    nAnonymizeBlocknetdxAmount = GetArg("-anonymizeblocknetdxamount", 0);
+    if (nAnonymizeBlocknetdxAmount > 999999) nAnonymizeBlocknetdxAmount = 999999;
+    if (nAnonymizeBlocknetdxAmount < 2) nAnonymizeBlocknetdxAmount = 2;
 
     fEnableSwiftTX = GetBoolArg("-enableswifttx", fEnableSwiftTX);
     nSwiftTXDepth = GetArg("-swifttxdepth", nSwiftTXDepth);
     nSwiftTXDepth = std::min(std::max(nSwiftTXDepth, 0), 60);
 
-    //lite mode disables all Masternode and Obfuscation related functionality
+    //lite mode disables all Servicenode and Obfuscation related functionality
     fLiteMode = GetBoolArg("-litemode", false);
-    if (fMasterNode && fLiteMode) {
-        return InitError("You can not start a masternode in litemode");
+    if (fServiceNode && fLiteMode) {
+        return InitError("You can not start a servicenode in litemode");
     }
 
     LogPrintf("fLiteMode %d\n", fLiteMode);
     LogPrintf("nSwiftTXDepth %d\n", nSwiftTXDepth);
     LogPrintf("Obfuscation rounds %d\n", nObfuscationRounds);
-    LogPrintf("Anonymize PIVX Amount %d\n", nAnonymizePivxAmount);
+    LogPrintf("Anonymize BlocknetDX Amount %d\n", nAnonymizeBlocknetdxAmount);
     LogPrintf("Budget Mode %s\n", strBudgetMode.c_str());
 
     /* Denominations

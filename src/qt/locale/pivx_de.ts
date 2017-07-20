@@ -863,16 +863,16 @@ Adresse: %4</translation>
         <translation>Bitten wählen Sie eine Datenschutz-Stufe.</translation>
     </message>
     <message>
-        <source>Use 2 separate masternodes to mix funds up to 1000 DNET</source>
-        <translation>Benutze 2 separate Masternodes um bis zu 1000 DNET zu mixen</translation>
+        <source>Use 2 separate servicenodes to mix funds up to 1000 DNET</source>
+        <translation>Benutze 2 separate Servicenodes um bis zu 1000 DNET zu mixen</translation>
     </message>
     <message>
-        <source>Use 8 separate masternodes to mix funds up to 1000 DNET</source>
-        <translation>Benutze 8 separate Masternodes um bis zu 1000 DNET zu mixen</translation>
+        <source>Use 8 separate servicenodes to mix funds up to 1000 DNET</source>
+        <translation>Benutze 8 separate Servicenodes um bis zu 1000 DNET zu mixen</translation>
     </message>
     <message>
-        <source>Use 16 separate masternodes</source>
-        <translation>Benutze 16 separate Masternodes</translation>
+        <source>Use 16 separate servicenodes</source>
+        <translation>Benutze 16 separate Servicenodes</translation>
     </message>
     <message>
         <source>This option is the quickest and will cost about ~0.025 DNET to anonymize 1000 DNET</source>
@@ -1185,8 +1185,8 @@ Adresse: %4</translation>
         <translation>Erweiterte Wallet-Optionen</translation>
     </message>
     <message>
-        <source>This setting determines the amount of individual masternodes that an input will be anonymized through.&lt;br/&gt;More rounds of anonymization gives a higher degree of privacy, but also costs more in fees.</source>
-        <translation>Diese Einstellung setzt fest, durch wie viele Masternodes ein Input anonymisiert wird. &lt;br/&gt; Eine höhere Anzahl bedeutet höhere Anonymität, verursacht allerdings auch höhere Gebühren.</translation>
+        <source>This setting determines the amount of individual servicenodes that an input will be anonymized through.&lt;br/&gt;More rounds of anonymization gives a higher degree of privacy, but also costs more in fees.</source>
+        <translation>Diese Einstellung setzt fest, durch wie viele Servicenodes ein Input anonymisiert wird. &lt;br/&gt; Eine höhere Anzahl bedeutet höhere Anonymität, verursacht allerdings auch höhere Gebühren.</translation>
     </message>
     <message>
         <source>Whether to show coin control features or not.</source>
@@ -1370,7 +1370,7 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Unreif:</translation>
     </message>
     <message>
-        <source>Staked or masternode rewards that has not yet matured</source>
+        <source>Staked or servicenode rewards that has not yet matured</source>
         <translation>Erarbeiteter Betrag der noch nicht gereift ist</translation>
     </message>
     <message>
@@ -1382,7 +1382,7 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Unbestätigte Transaktionen  zu beobachteten Adressen</translation>
     </message>
     <message>
-        <source>Staked or masternode rewards in watch-only addresses that has not yet matured</source>
+        <source>Staked or servicenode rewards in watch-only addresses that has not yet matured</source>
         <translation>Erarbeiteter Betrag der beobachteten Adressen der noch nicht gereift ist</translation>
     </message>
     <message>
@@ -1454,8 +1454,8 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Starte/Stoppe das Mixen</translation>
     </message>
     <message>
-        <source>The denominations you submitted to the Masternode.&lt;br&gt;To mix, other users must submit the exact same denominations.</source>
-        <translation>Die gestückelten Beträge, die Sie zu dem Masternode gesendet haben.&lt;br&gt; Zum Erfolgreichen Mixen müssen andere Benutzer exakt gleich gestückelte Beträge senden.</translation>
+        <source>The denominations you submitted to the Servicenode.&lt;br&gt;To mix, other users must submit the exact same denominations.</source>
+        <translation>Die gestückelten Beträge, die Sie zu dem Servicenode gesendet haben.&lt;br&gt; Zum Erfolgreichen Mixen müssen andere Benutzer exakt gleich gestückelte Beträge senden.</translation>
     </message>
     <message>
         <source>(Last Message)</source>
@@ -1811,8 +1811,8 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Blockkette</translation>
     </message>
     <message>
-        <source>Number of Masternodes</source>
-        <translation>Anzahl Masternodes</translation>
+        <source>Number of Servicenodes</source>
+        <translation>Anzahl Servicenodes</translation>
     </message>
     <message>
         <source>&amp;Console</source>
@@ -3414,8 +3414,8 @@ Dies kann passieren, wenn einige DarkNet aus ihrer Wallet bereits ausgegeben wur
         <translation>Warnung: wallet.dat beschädigt, Datenrettung erfolgreich! Original wallet.dat wurde als wallet.{Zeitstempel}.dat in %s gespeichert. Falls ihr Kontostand oder Transaktionen nicht korrekt sind, sollten Sie dem vorangegangenen Zustand durch die Datensicherung wiederherstellen.</translation>
     </message>
     <message>
-        <source>You must specify a masternodeprivkey in the configuration. Please see documentation for help.</source>
-        <translation>Es muss ein Masternode-Geheimschlüssel (masternodeprivkey) in der Konfiguration angegeben werden. Für weitere Informationen siehe Dokumentation.</translation>
+        <source>You must specify a servicenodeprivkey in the configuration. Please see documentation for help.</source>
+        <translation>Es muss ein Servicenode-Geheimschlüssel (servicenodeprivkey) in der Konfiguration angegeben werden. Für weitere Informationen siehe Dokumentation.</translation>
     </message>
     <message>
         <source>(default: 1)</source>
@@ -3614,8 +3614,8 @@ Dies kann passieren, wenn einige DarkNet aus ihrer Wallet bereits ausgegeben wur
         <translation>Lösche alle Wallet-Transaktionen stelle nur diese mittels -rescan beim nächsten Start des Wallets wieder her.</translation>
     </message>
     <message>
-        <source>Disable all DarkNet specific functionality (Masternodes, Obfuscate, SwiftTX, Budgeting) (0-1, default: %u)</source>
-        <translation>Deaktiviere all DarkNet-spezifischen Funktionen (Masternodes, Obfuscate, SwiftTX, Budgeting) (0-1, Standard: %u)</translation>
+        <source>Disable all DarkNet specific functionality (Servicenodes, Obfuscate, SwiftTX, Budgeting) (0-1, default: %u)</source>
+        <translation>Deaktiviere all DarkNet-spezifischen Funktionen (Servicenodes, Obfuscate, SwiftTX, Budgeting) (0-1, Standard: %u)</translation>
     </message>
     <message>
         <source>Distributed under the MIT software license, see the accompanying file COPYING or &lt;http://www.opensource.org/licenses/mit-license.php&gt;.</source>
@@ -3823,12 +3823,12 @@ zum Beispiel: alertnotify=echo %%s | mail -s \"DarkNet Alert\" admin@foo.com</tr
         <translation>Sicherheitsmodus deaktivieren, überschreibt ein echtes Sicherheitsmodusereignis (Standard: %u)</translation>
     </message>
     <message>
-        <source>Enable the client to act as a masternode (0-1, default: %u)</source>
-        <translation>Masternode-Modus aktivieren. (0=aus, 1=an; Voreinstellung: %u)</translation>
+        <source>Enable the client to act as a servicenode (0-1, default: %u)</source>
+        <translation>Servicenode-Modus aktivieren. (0=aus, 1=an; Voreinstellung: %u)</translation>
     </message>
     <message>
-        <source>Error connecting to Masternode.</source>
-        <translation>Fehler bei der Verbindung zum Masternode.</translation>
+        <source>Error connecting to Servicenode.</source>
+        <translation>Fehler bei der Verbindung zum Servicenode.</translation>
     </message>
     <message>
         <source>Error loading wallet.dat: Wallet requires newer version of DarkNet Core</source>
@@ -3968,20 +3968,20 @@ DarkNet Core wird heruntergefahren.</translation>
         <translation>Lade Budget-Cache...</translation>
     </message>
     <message>
-        <source>Loading masternode cache...</source>
-        <translation>Lade Masternode-Cache...</translation>
+        <source>Loading servicenode cache...</source>
+        <translation>Lade Servicenode-Cache...</translation>
     </message>
     <message>
-        <source>Loading masternode payment cache...</source>
-        <translation>Lade Masternode Zahlungs-Cache...</translation>
+        <source>Loading servicenode payment cache...</source>
+        <translation>Lade Servicenode Zahlungs-Cache...</translation>
     </message>
     <message>
         <source>Lock is already in place.</source>
         <translation>Schon gesperrt.</translation>
     </message>
     <message>
-        <source>Lock masternodes from masternode configuration file (default: %u)</source>
-        <translation>Masternodes über Masternode-Konfiguration sperren (Standard: %u)</translation>
+        <source>Lock servicenodes from servicenode configuration file (default: %u)</source>
+        <translation>Servicenodes über Servicenode-Konfiguration sperren (Standard: %u)</translation>
     </message>
     <message>
         <source>Maintain at most &lt;n&gt; connections to peers (default: %u)</source>
@@ -4004,16 +4004,16 @@ DarkNet Core wird heruntergefahren.</translation>
         <translation>Für -whitebind muss eine Portnummer angegeben werden: '%s'</translation>
     </message>
     <message>
-        <source>No Masternodes detected.</source>
-        <translation>Keine Masternodes gefunden.</translation>
+        <source>No Servicenodes detected.</source>
+        <translation>Keine Servicenodes gefunden.</translation>
     </message>
     <message>
-        <source>No compatible Masternode found.</source>
-        <translation>Kein kompatibler Masternode gefunden.</translation>
+        <source>No compatible Servicenode found.</source>
+        <translation>Kein kompatibler Servicenode gefunden.</translation>
     </message>
     <message>
-        <source>Not in the Masternode list.</source>
-        <translation>Nicht in der Masternode-Liste.</translation>
+        <source>Not in the Servicenode list.</source>
+        <translation>Nicht in der Servicenode-Liste.</translation>
     </message>
     <message>
         <source>Number of automatic wallet backups (default: 10)</source>
@@ -4052,8 +4052,8 @@ DarkNet Core wird heruntergefahren.</translation>
         <translation>Privater Serverschlüssel (Standard: %s)</translation>
     </message>
     <message>
-        <source>Set external address:port to get to this masternode (example: %s)</source>
-        <translation>Setze externe Adresse und Port, um diesen Masternode zu erreichen (Beispiel: %s)</translation>
+        <source>Set external address:port to get to this servicenode (example: %s)</source>
+        <translation>Setze externe Adresse und Port, um diesen Servicenode zu erreichen (Beispiel: %s)</translation>
     </message>
     <message>
         <source>Set key pool size to &lt;n&gt; (default: %u)</source>
@@ -4084,8 +4084,8 @@ DarkNet Core wird heruntergefahren.</translation>
         <translation>Verbindungzeitüberschreitung in Millisekunden festlegen (Minimum: 1, Standard: %d)</translation>
     </message>
     <message>
-        <source>Specify masternode configuration file (default: %s)</source>
-        <translation>Konfigurationsdatei der Masternode-Einstellungen angeben (Standard: %s)</translation>
+        <source>Specify servicenode configuration file (default: %s)</source>
+        <translation>Konfigurationsdatei der Servicenode-Einstellungen angeben (Standard: %s)</translation>
     </message>
     <message>
         <source>Specify pid file (default: %s)</source>
@@ -4100,16 +4100,16 @@ DarkNet Core wird heruntergefahren.</translation>
         <translation>Nach dem Import von Blöcken von der Festplatte Programm beenden (Standard: %u)</translation>
     </message>
     <message>
-        <source>Submitted following entries to masternode: %u / %d</source>
-        <translation>Folgende Einträge wurden an Masternode gesendet: %u / %d</translation>
+        <source>Submitted following entries to servicenode: %u / %d</source>
+        <translation>Folgende Einträge wurden an Servicenode gesendet: %u / %d</translation>
     </message>
     <message>
-        <source>Submitted to masternode, waiting for more entries ( %u / %d ) %s</source>
-        <translation>An Masternode gesendet, warte auf weitere Einträge ( %u / %d ) %s</translation>
+        <source>Submitted to servicenode, waiting for more entries ( %u / %d ) %s</source>
+        <translation>An Servicenode gesendet, warte auf weitere Einträge ( %u / %d ) %s</translation>
     </message>
     <message>
-        <source>Submitted to masternode, waiting in queue %s</source>
-        <translation>An Masternode übermittelt, wartet in Warteschlange %s</translation>
+        <source>Submitted to servicenode, waiting in queue %s</source>
+        <translation>An Servicenode übermittelt, wartet in Warteschlange %s</translation>
     </message>
     <message>
         <source>Synchronization failed</source>
@@ -4124,20 +4124,20 @@ DarkNet Core wird heruntergefahren.</translation>
         <translation>Synchronisiere Budgets...</translation>
     </message>
     <message>
-        <source>Synchronizing masternode winners...</source>
-        <translation>Synchronisiere Masternode Gewinner...</translation>
+        <source>Synchronizing servicenode winners...</source>
+        <translation>Synchronisiere Servicenode Gewinner...</translation>
     </message>
     <message>
-        <source>Synchronizing masternodes...</source>
-        <translation>Synchronisiere Masternodes...</translation>
+        <source>Synchronizing servicenodes...</source>
+        <translation>Synchronisiere Servicenodes...</translation>
     </message>
     <message>
         <source>Synchronizing sporks...</source>
         <translation>Synchronisiere Sporks...</translation>
     </message>
     <message>
-        <source>This is not a Masternode.</source>
-        <translation>Dies ist kein Masternode.</translation>
+        <source>This is not a Servicenode.</source>
+        <translation>Dies ist kein Servicenode.</translation>
     </message>
     <message>
         <source>Threshold for disconnecting misbehaving peers (default: %u)</source>
@@ -4148,8 +4148,8 @@ DarkNet Core wird heruntergefahren.</translation>
         <translation>"KeePass 2"-Integration mit KeePassHttp-plugin (Standard: %u)</translation>
     </message>
     <message>
-        <source>Use N separate masternodes to anonymize funds  (2-8, default: %u)</source>
-        <translation>N unterschiedliche Masternodes benutzen, um DarkNet zu anonymisieren (2-8, Standard: %u)</translation>
+        <source>Use N separate servicenodes to anonymize funds  (2-8, default: %u)</source>
+        <translation>N unterschiedliche Servicenodes benutzen, um DarkNet zu anonymisieren (2-8, Standard: %u)</translation>
     </message>
     <message>
         <source>Use UPnP to map the listening port (default: %u)</source>
@@ -4172,32 +4172,32 @@ DarkNet Core wird heruntergefahren.</translation>
         <translation>Versuche erneut...</translation>
     </message>
     <message>
-        <source>Invalid masternodeprivkey. Please see documenation.</source>
-        <translation>Masternode-Geheimschlüssel (masternodeprivkey) ist ungültig. Siehe Dokumentation. </translation>
+        <source>Invalid servicenodeprivkey. Please see documenation.</source>
+        <translation>Servicenode-Geheimschlüssel (servicenodeprivkey) ist ungültig. Siehe Dokumentation. </translation>
     </message>
     <message>
         <source>(must be51472 for mainnet)</source>
         <translation>(muss für Standardnetz51472 sein)</translation>
     </message>
     <message>
-        <source>Can't find random Masternode.</source>
-        <translation>Kann keinen zufällig ausgewählten Masternode finden</translation>
+        <source>Can't find random Servicenode.</source>
+        <translation>Kann keinen zufällig ausgewählten Servicenode finden</translation>
     </message>
     <message>
         <source>Can't mix while sync in progress.</source>
         <translation>Währen der Synchronisierung kann nicht gemixt werden.</translation>
     </message>
     <message>
-        <source>Could not parse masternode.conf</source>
-        <translation>masternode.conf konnte nicht analysiert werden</translation>
+        <source>Could not parse servicenode.conf</source>
+        <translation>servicenode.conf konnte nicht analysiert werden</translation>
     </message>
     <message>
         <source>Invalid netmask specified in -whitelist: '%s'</source>
         <translation>Ungültige Netzmaske für -whitelist angegeben: '%s'</translation>
     </message>
     <message>
-        <source>Invalid port detected in masternode.conf</source>
-        <translation>Ungültige Portnummer in masternode.conf</translation>
+        <source>Invalid port detected in servicenode.conf</source>
+        <translation>Ungültige Portnummer in servicenode.conf</translation>
     </message>
     <message>
         <source>Invalid private key.</source>
@@ -4248,16 +4248,16 @@ DarkNet Core wird heruntergefahren.</translation>
         <translation>Lade Wallet...</translation>
     </message>
     <message>
-        <source>Masternode options:</source>
-        <translation>Masternode Optionen:</translation>
+        <source>Servicenode options:</source>
+        <translation>Servicenode Optionen:</translation>
     </message>
     <message>
-        <source>Masternode queue is full.</source>
-        <translation>Warteschlange der Masternode ist voll.</translation>
+        <source>Servicenode queue is full.</source>
+        <translation>Warteschlange der Servicenode ist voll.</translation>
     </message>
     <message>
-        <source>Masternode:</source>
-        <translation>Masternode:</translation>
+        <source>Servicenode:</source>
+        <translation>Servicenode:</translation>
     </message>
     <message>
         <source>Missing input transaction information.</source>
@@ -4360,8 +4360,8 @@ DarkNet Core wird heruntergefahren.</translation>
         <translation>Maximale Blockgröße in Byte festlegen (Standard: %d)</translation>
     </message>
     <message>
-        <source>Set the masternode private key</source>
-        <translation>Privaten Masternode-Schlüssel setzen</translation>
+        <source>Set the servicenode private key</source>
+        <translation>Privaten Servicenode-Schlüssel setzen</translation>
     </message>
     <message>
         <source>Show all debugging options (usage: --help -help-debug)</source>

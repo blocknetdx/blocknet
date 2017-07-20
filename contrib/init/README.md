@@ -1,10 +1,10 @@
 Sample configuration files for:
 
-SystemD: pivxd.service
-Upstart: pivxd.conf
-OpenRC:  pivxd.openrc
-         pivxd.openrcconf
-CentOS:  pivxd.init
+SystemD: blocknetdxd.service
+Upstart: blocknetdxd.conf
+OpenRC:  blocknetdxd.openrc
+         blocknetdxd.openrcconf
+CentOS:  blocknetdxd.init
 
 have been made available to assist packagers in creating node packages here.
 

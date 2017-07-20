@@ -244,14 +244,14 @@
         </widget>
        </item>
        <item row="10" column="0">
-        <widget class="QLabel" name="masternodeCountLabel">
+        <widget class="QLabel" name="servicenodeCountLabel">
          <property name="text">
-          <string>Number of Masternodes</string>
+          <string>Number of Servicenodes</string>
          </property>
         </widget>
        </item>
        <item row="10" column="1">
-        <widget class="QLabel" name="masternodeCount">
+        <widget class="QLabel" name="servicenodeCount">
          <property name="text">
           <string>N/A</string>
          </property>
@@ -345,7 +345,7 @@
        <item row="16" column="0">
         <widget class="QPushButton" name="openDebugLogfileButton">
          <property name="toolTip">
-          <string>Open the PIVX debug log file from the current data directory. This can take a few seconds for large log files.</string>
+          <string>Open the BlocknetDX debug log file from the current data directory. This can take a few seconds for large log files.</string>
          </property>
          <property name="text">
           <string>&amp;Open</string>
@@ -414,7 +414,7 @@
             <string/>
            </property>
            <property name="icon">
-            <iconset resource="../pivx.qrc">
+            <iconset resource="../blocknetdx.qrc">
              <normaloff>:/icons/remove</normaloff>:/icons/remove</iconset>
            </property>
            <property name="shortcut">
@@ -1348,7 +1348,7 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="../pivx.qrc"/>
+  <include location="../blocknetdx.qrc"/>
  </resources>
  <connections/>
 </ui>

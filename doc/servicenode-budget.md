@@ -1,7 +1,7 @@
-Masternode Budget API
+Servicenode Budget API
 =======================
 
-Pivx now supports full decentralized budgets that are paid directly from the blockchain via superblocks once per month.
+Blocknetdx now supports full decentralized budgets that are paid directly from the blockchain via superblocks once per month.
 
 Budgets go through a series of stages before being paid:
 * prepare - create a special transaction that destroys coins in order to make a proposal
@@ -9,14 +9,14 @@ Budgets go through a series of stages before being paid:
 * voting - lobby for votes on your proposal
 * get enough votes - make it into the budget
 * finalization - at the end of each payment period, proposals are sorted then compiled into a finalized budget
-* finalized budget voting - masternodes that agree with the finalization will vote on that budget
+* finalized budget voting - servicenodes that agree with the finalization will vote on that budget
 * payment - the winning finalized budget is paid
 
 
 Prepare collateral transaction
 ------------------------
 
-mnbudget prepare \<proposal-name\> \<url\> \<payment_count\> \<block_start\> \<pivx_address\> \<monthly_payment_pivx\> [use_ix(true|false)]
+mnbudget prepare \<proposal-name\> \<url\> \<payment_count\> \<block_start\> \<blocknetdx_address\> \<monthly_payment_blocknetdx\> [use_ix(true|false)]
 
 Example:
 ```
@@ -25,14 +25,14 @@ mnbudget prepare cool-project http://www.cool-project/one.json 12 100000 y6R9oN1
 
 Output: `464a0eb70ea91c94295214df48c47baa72b3876cfb658744aaf863c7b5bf1ff0` - This is the collateral hash, copy this output for the next step
 
-In this transaction we prepare collateral for "_cool-project_". This proposal will pay _1200_ PIVX, _12_ times over the course of a year totaling _24000_ PIVX.
+In this transaction we prepare collateral for "_cool-project_". This proposal will pay _1200_ BlocknetDX, _12_ times over the course of a year totaling _24000_ BlocknetDX.
 
 **Warning -- if you change any fields within this command, the collateral transaction will become invalid.**
 
 Submit proposal to network
 ------------------------
 
-mnbudget submit \<proposal-name\> \<url\> \<payment_count\> \<block_start\> \<pivx_address\> \<monthly_payment_pivx\> \<collateral_hash\>
+mnbudget submit \<proposal-name\> \<url\> \<payment_count\> \<block_start\> \<blocknetdx_address\> \<monthly_payment_blocknetdx\> \<collateral_hash\>
 
 Example:
 ```
@@ -75,7 +75,7 @@ Output:
 }
 ```
 
-If everything looks correct, you can ask for votes from other masternodes. To vote on a proposal, load a wallet with _masternode.conf_ file. You do not need to access your cold wallet to vote for proposals.
+If everything looks correct, you can ask for votes from other servicenodes. To vote on a proposal, load a wallet with _servicenode.conf_ file. You do not need to access your cold wallet to vote for proposals.
 
 mnbudget vote \<proposal_hash\> [yes|no]
 
@@ -89,7 +89,7 @@ Output: `Voted successfully` - Your vote has been submitted and accepted.
 Make it into the budget
 ------------------------
 
-After you get enough votes, execute `mnbudget projection` to see if you made it into the budget. If you the budget was finalized at this moment which proposals would be in it. Note: Proposals must be active at least 1 day on the network and receive 10% of the masternode network in yes votes in order to qualify (E.g. if there is 2500 masternodes, you will need 250 yes votes.)
+After you get enough votes, execute `mnbudget projection` to see if you made it into the budget. If you the budget was finalized at this moment which proposals would be in it. Note: Proposals must be active at least 1 day on the network and receive 10% of the servicenode network in yes votes in order to qualify (E.g. if there is 2500 servicenodes, you will need 250 yes votes.)
 
 Example:
 ```
@@ -138,7 +138,7 @@ Finalized budget
 Get paid
 ------------------------
 
-When block `1000000` is reached you'll receive a payment for `1200` PIVX.
+When block `1000000` is reached you'll receive a payment for `1200` BlocknetDX.
 
 
 RPC Commands
@@ -148,11 +148,11 @@ The following new RPC commands are supported:
 - mnbudget "command"... ( "passphrase" )
  * prepare            - Prepare proposal for network by signing and creating tx
  * submit             - Submit proposal for network
- * vote-many          - Vote on a Pivx initiative
- * vote-alias         - Vote on a Pivx initiative
- * vote               - Vote on a Pivx initiative/budget
- * getvotes           - Show current masternode budgets
- * getinfo            - Show current masternode budgets
+ * vote-many          - Vote on a Blocknetdx initiative
+ * vote-alias         - Vote on a Blocknetdx initiative
+ * vote               - Vote on a Blocknetdx initiative/budget
+ * getvotes           - Show current servicenode budgets
+ * getinfo            - Show current servicenode budgets
  * show               - Show all budgets
  * projection         - Show the projection of which proposals will be paid the next cycle
  * check              - Scan proposals and remove invalid

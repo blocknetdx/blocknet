@@ -1,7 +1,7 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2014 The Bitcoin developers
 // Copyright (c) 2014-2015 The Dash developers
-// Copyright (c) 2015-2017 The PIVX developers
+// Copyright (c) 2015-2017 The BlocknetDX developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -180,10 +180,10 @@ bool CWalletDB::EraseMultiSend(std::vector<std::pair<std::string, int> > vMultiS
     return ret;
 }
 //presstab HyperStake
-bool CWalletDB::WriteMSettings(bool fMultiSendStake, bool fMultiSendMasternode, int nLastMultiSendHeight)
+bool CWalletDB::WriteMSettings(bool fMultiSendStake, bool fMultiSendServicenode, int nLastMultiSendHeight)
 {
     nWalletDBUpdated++;
-    std::pair<bool, bool> enabledMS(fMultiSendStake, fMultiSendMasternode);
+    std::pair<bool, bool> enabledMS(fMultiSendStake, fMultiSendServicenode);
     std::pair<std::pair<bool, bool>, int> pSettings(enabledMS, nLastMultiSendHeight);
 
     return Write(std::string("msettingsv2"), pSettings, true);
@@ -612,7 +612,7 @@ bool ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue, CW
             std::pair<std::pair<bool, bool>, int> pSettings;
             ssValue >> pSettings;
             pwallet->fMultiSendStake = pSettings.first.first;
-            pwallet->fMultiSendMasternodeReward = pSettings.first.second;
+            pwallet->fMultiSendServicenodeReward = pSettings.first.second;
             pwallet->nLastMultiSendHeight = pSettings.second;
         } else if (strType == "mdisabled") //presstab HyperStake
         {
@@ -819,7 +819,7 @@ DBErrors CWalletDB::ZapWalletTx(CWallet* pwallet, vector<CWalletTx>& vWtx)
 void ThreadFlushWalletDB(const string& strFile)
 {
     // Make this thread recognisable as the wallet flushing thread
-    RenameThread("pivx-wallet");
+    RenameThread("blocknetdx-wallet");
 
     static bool fOneThread;
     if (fOneThread)

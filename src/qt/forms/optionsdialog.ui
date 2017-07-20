@@ -30,10 +30,10 @@
        <item>
         <widget class="QCheckBox" name="bitcoinAtStartup">
          <property name="toolTip">
-          <string>Automatically start PIVX after logging in to the system.</string>
+          <string>Automatically start BlocknetDX after logging in to the system.</string>
          </property>
          <property name="text">
-          <string>&amp;Start PIVX on system login</string>
+          <string>&amp;Start BlocknetDX on system login</string>
          </property>
         </widget>
        </item>
@@ -135,7 +135,7 @@
          <item>
           <widget class="QLabel" name="label">
            <property name="toolTip">
-            <string>This setting determines the amount of individual masternodes that an input will be anonymized through.&lt;br/&gt;More rounds of anonymization gives a higher degree of privacy, but also costs more in fees.</string>
+            <string>This setting determines the amount of individual servicenodes that an input will be anonymized through.&lt;br/&gt;More rounds of anonymization gives a higher degree of privacy, but also costs more in fees.</string>
            </property>
            <property name="text">
             <string>Obfuscation rounds to use</string>
@@ -177,12 +177,12 @@
             <string notr="true"/>
            </property>
            <property name="text">
-            <string>Amount of PIVX to keep anonymized</string>
+            <string>Amount of BlocknetDX to keep anonymized</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QSpinBox" name="anonymizePivx">
+          <widget class="QSpinBox" name="anonymizeBlocknetdx">
            <property name="minimum">
             <number>100</number>
            </property>
@@ -223,12 +223,12 @@
            </widget>
           </item>
           <item>
-           <widget class="QCheckBox" name="showMasternodesTab">
+           <widget class="QCheckBox" name="showServicenodesTab">
             <property name="toolTip">
-             <string>Show additional tab listing all your masternodes in first sub-tab&lt;br/&gt;and all masternodes on the network in second sub-tab.</string>
+             <string>Show additional tab listing all your servicenodes in first sub-tab&lt;br/&gt;and all servicenodes on the network in second sub-tab.</string>
             </property>
             <property name="text">
-             <string>Show Masternodes Tab</string>
+             <string>Show Servicenodes Tab</string>
             </property>
            </widget>
           </item>
@@ -268,7 +268,7 @@
        <item>
         <widget class="QCheckBox" name="mapPortUpnp">
          <property name="toolTip">
-          <string>Automatically open the PIVX client port on the router. This only works when your router supports UPnP and it is enabled.</string>
+          <string>Automatically open the BlocknetDX client port on the router. This only works when your router supports UPnP and it is enabled.</string>
          </property>
          <property name="text">
           <string>Map port using &amp;UPnP</string>
@@ -288,7 +288,7 @@
        <item>
         <widget class="QCheckBox" name="connectSocks">
          <property name="toolTip">
-          <string>Connect to the PIVX network through a SOCKS5 proxy.</string>
+          <string>Connect to the BlocknetDX network through a SOCKS5 proxy.</string>
          </property>
          <property name="text">
           <string>&amp;Connect through SOCKS5 proxy (default proxy):</string>
@@ -454,7 +454,7 @@
          <item>
           <widget class="QValueComboBox" name="lang">
            <property name="toolTip">
-            <string>The user interface language can be set here. This setting will take effect after restarting PIVX.</string>
+            <string>The user interface language can be set here. This setting will take effect after restarting BlocknetDX.</string>
            </property>
           </widget>
          </item>
@@ -476,7 +476,7 @@
          </property>
          <property name="text">
           <string>Language missing or translation incomplete? Help contributing translations here:
-https://www.transifex.com/pivx-project/pivx-project-translations</string>
+https://www.transifex.com/blocknetdx-project/blocknetdx-project-translations</string>
          </property>
          <property name="wordWrap">
           <bool>true</bool>

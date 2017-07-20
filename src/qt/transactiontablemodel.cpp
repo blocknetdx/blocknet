@@ -331,7 +331,7 @@ QString TransactionTableModel::formatTxType(const TransactionRecord* wtx) const
     case TransactionRecord::RecvWithAddress:
         return tr("Received with");
     case TransactionRecord::MNReward:
-        return tr("Masternode Reward");
+        return tr("Servicenode Reward");
     case TransactionRecord::RecvFromOther:
         return tr("Received from");
     case TransactionRecord::RecvWithObfuscation:

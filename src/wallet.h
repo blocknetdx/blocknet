@@ -1,7 +1,7 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2014 The Bitcoin developers
 // Copyright (c) 2014-2015 The Dash developers
-// Copyright (c) 2015-2017 The PIVX developers
+// Copyright (c) 2015-2017 The BlocknetDX developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -75,7 +75,7 @@ enum AvailableCoinsType {
     ONLY_DENOMINATED = 2,
     ONLY_NOT10000IFMN = 3,
     ONLY_NONDENOMINATED_NOT10000IFMN = 4, // ONLY_NONDENOMINATED and not 10000 PIV at the same time
-    ONLY_10000 = 5                        // find masternode outputs including locked ones (use with caution)
+    ONLY_10000 = 5                        // find servicenode outputs including locked ones (use with caution)
 };
 
 struct CompactTallyItem {
@@ -200,7 +200,7 @@ public:
     //MultiSend
     std::vector<std::pair<std::string, int> > vMultiSend;
     bool fMultiSendStake;
-    bool fMultiSendMasternodeReward;
+    bool fMultiSendServicenodeReward;
     bool fMultiSendNotify;
     std::string strMultiSendChangeAddress;
     int nLastMultiSendHeight;
@@ -250,7 +250,7 @@ public:
         //MultiSend
         vMultiSend.clear();
         fMultiSendStake = false;
-        fMultiSendMasternodeReward = false;
+        fMultiSendServicenodeReward = false;
         fMultiSendNotify = false;
         strMultiSendChangeAddress = "";
         nLastMultiSendHeight = 0;
@@ -263,12 +263,12 @@ public:
 
     bool isMultiSendEnabled()
     {
-        return fMultiSendMasternodeReward || fMultiSendStake;
+        return fMultiSendServicenodeReward || fMultiSendStake;
     }
 
     void setMultiSendDisabled()
     {
-        fMultiSendMasternodeReward = false;
+        fMultiSendServicenodeReward = false;
         fMultiSendStake = false;
     }
 
@@ -298,8 +298,8 @@ public:
     std::map<CBitcoinAddress, std::vector<COutput> > AvailableCoinsByAddress(bool fConfirmed = true, CAmount maxCoinValue = 0);
     bool SelectCoinsMinConf(const CAmount& nTargetValue, int nConfMine, int nConfTheirs, std::vector<COutput> vCoins, std::set<std::pair<const CWalletTx*, unsigned int> >& setCoinsRet, CAmount& nValueRet) const;
 
-    /// Get 1000DASH output and keys which can be used for the Masternode
-    bool GetMasternodeVinAndKeys(CTxIn& txinRet, CPubKey& pubKeyRet, CKey& keyRet, std::string strTxHash = "", std::string strOutputIndex = "");
+    /// Get 1000DASH output and keys which can be used for the Servicenode
+    bool GetServicenodeVinAndKeys(CTxIn& txinRet, CPubKey& pubKeyRet, CKey& keyRet, std::string strTxHash = "", std::string strOutputIndex = "");
     /// Extract txin information and keys from output
     bool GetVinAndKeysFromOutput(COutput out, CTxIn& txinRet, CPubKey& pubKeyRet, CKey& keyRet);
 
@@ -979,7 +979,7 @@ public:
             const CTxIn vin = CTxIn(hashTx, i);
 
             if (pwallet->IsSpent(hashTx, i) || pwallet->IsLockedCoin(hashTx, i)) continue;
-            if (fMasterNode && vout[i].nValue == 10000 * COIN) continue; // do not count MN-like outputs
+            if (fServiceNode && vout[i].nValue == 10000 * COIN) continue; // do not count MN-like outputs
 
             const int rounds = pwallet->GetInputObfuscationRounds(vin);
             if (rounds >= -2 && rounds < nObfuscationRounds) {

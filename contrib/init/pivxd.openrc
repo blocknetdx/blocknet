@@ -2,24 +2,24 @@
 
 # backward compatibility for existing gentoo layout
 #
-if [ -d "/var/lib/pivx/.pivx" ]; then
-	BITCOIND_DEFAULT_DATADIR="/var/lib/pivx/.pivx"
+if [ -d "/var/lib/blocknetdx/.blocknetdx" ]; then
+	BITCOIND_DEFAULT_DATADIR="/var/lib/blocknetdx/.blocknetdx"
 else
-	BITCOIND_DEFAULT_DATADIR="/var/lib/pivxd"
+	BITCOIND_DEFAULT_DATADIR="/var/lib/blocknetdxd"
 fi
 
-BITCOIND_CONFIGFILE=${BITCOIND_CONFIGFILE:-/etc/pivx/pivx.conf}
-BITCOIND_PIDDIR=${BITCOIND_PIDDIR:-/var/run/pivxd}
-BITCOIND_PIDFILE=${BITCOIND_PIDFILE:-${BITCOIND_PIDDIR}/pivxd.pid}
+BITCOIND_CONFIGFILE=${BITCOIND_CONFIGFILE:-/etc/blocknetdx/blocknetdx.conf}
+BITCOIND_PIDDIR=${BITCOIND_PIDDIR:-/var/run/blocknetdxd}
+BITCOIND_PIDFILE=${BITCOIND_PIDFILE:-${BITCOIND_PIDDIR}/blocknetdxd.pid}
 BITCOIND_DATADIR=${BITCOIND_DATADIR:-${BITCOIND_DEFAULT_DATADIR}}
-BITCOIND_USER=${BITCOIND_USER:-pivx}
-BITCOIND_GROUP=${BITCOIND_GROUP:-pivx}
-BITCOIND_BIN=${BITCOIND_BIN:-/usr/bin/pivxd}
+BITCOIND_USER=${BITCOIND_USER:-blocknetdx}
+BITCOIND_GROUP=${BITCOIND_GROUP:-blocknetdx}
+BITCOIND_BIN=${BITCOIND_BIN:-/usr/bin/blocknetdxd}
 
-name="PIVX Core Daemon"
-description="PIVX crypto-currency p2p network daemon"
+name="BlocknetDX Core Daemon"
+description="BlocknetDX crypto-currency p2p network daemon"
 
-command="/usr/bin/pivxd"
+command="/usr/bin/blocknetdxd"
 command_args="-pid=\"${BITCOIND_PIDFILE}\" \
 		-conf=\"${BITCOIND_CONFIGFILE}\" \
 		-datadir=\"${BITCOIND_DATADIR}\" \
@@ -65,7 +65,7 @@ checkconfig()
 {
 	if ! grep -qs '^rpcpassword=' "${BITCOIND_CONFIGFILE}" ; then
 		eerror ""
-		eerror "ERROR: You must set a secure rpcpassword to run pivxd."
+		eerror "ERROR: You must set a secure rpcpassword to run blocknetdxd."
 		eerror "The setting must appear in ${BITCOIND_CONFIGFILE}"
 		eerror ""
 		eerror "This password is security critical to securing wallets "
@@ -78,7 +78,7 @@ checkconfig()
 		eerror "It is also recommended that you also set alertnotify so you are "
 		eerror "notified of problems:"
 		eerror ""
-		eerror "ie: alertnotify=echo %%s | mail -s \"Pivx Alert\"" \
+		eerror "ie: alertnotify=echo %%s | mail -s \"Blocknetdx Alert\"" \
 			"admin@foo.com"
 		eerror ""
 		return 1

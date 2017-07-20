@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>MasternodeList</class>
- <widget class="QWidget" name="MasternodeList">
+ <class>ServicenodeList</class>
+ <widget class="QWidget" name="ServicenodeList">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -27,9 +27,9 @@
     <number>10</number>
    </property>
     <item>
-     <widget class="QWidget" name="tabMyMasternodes">
+     <widget class="QWidget" name="tabMyServicenodes">
       <attribute name="title">
-       <string>My Masternodes</string>
+       <string>My Servicenodes</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_2">
        <item row="0" column="0">
@@ -45,14 +45,14 @@
            <item>
             <widget class="QLabel" name="updateNote">
              <property name="text">
-              <string>Note: Status of your masternodes in local wallet can potentially be slightly incorrect.&lt;br /&gt;Always wait for wallet to sync additional data and then double check from another node&lt;br /&gt;if your node should be running but you still see &quot;MISSING&quot; in &quot;Status&quot; field.</string>
+              <string>Note: Status of your servicenodes in local wallet can potentially be slightly incorrect.&lt;br /&gt;Always wait for wallet to sync additional data and then double check from another node&lt;br /&gt;if your node should be running but you still see &quot;MISSING&quot; in &quot;Status&quot; field.</string>
              </property>
             </widget>
            </item>
           </layout>
          </item>
          <item>
-          <widget class="QTableWidget" name="tableWidgetMyMasternodes">
+          <widget class="QTableWidget" name="tableWidgetMyServicenodes">
            <property name="minimumSize">
             <size>
              <width>695</width>

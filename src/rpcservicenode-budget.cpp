@@ -1,16 +1,16 @@
 // Copyright (c) 2014-2015 The Dash Developers
-// Copyright (c) 2015-2017 The PIVX developers
+// Copyright (c) 2015-2017 The BlocknetDX developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "activemasternode.h"
+#include "activeservicenode.h"
 #include "db.h"
 #include "init.h"
 #include "main.h"
-#include "masternode-budget.h"
-#include "masternode-payments.h"
-#include "masternodeconfig.h"
-#include "masternodeman.h"
+#include "servicenode-budget.h"
+#include "servicenode-payments.h"
+#include "servicenodeconfig.h"
+#include "servicenodeman.h"
 #include "rpcserver.h"
 #include "utilmoneystr.h"
 
@@ -32,11 +32,11 @@ Value mnbudget(const Array& params, bool fHelp)
             "\nAvailable commands:\n"
             "  prepare            - Prepare proposal for network by signing and creating tx\n"
             "  submit             - Submit proposal for network\n"
-            "  vote-many          - Vote on a Pivx initiative\n"
-            "  vote-alias         - Vote on a Pivx initiative\n"
-            "  vote               - Vote on a Pivx initiative/budget\n"
-            "  getvotes           - Show current masternode budgets\n"
-            "  getinfo            - Show current masternode budgets\n"
+            "  vote-many          - Vote on a Blocknetdx initiative\n"
+            "  vote-alias         - Vote on a Blocknetdx initiative\n"
+            "  vote               - Vote on a Blocknetdx initiative/budget\n"
+            "  getvotes           - Show current servicenode budgets\n"
+            "  getinfo            - Show current servicenode budgets\n"
             "  show               - Show all budgets\n"
             "  projection         - Show the projection of which proposals will be paid the next cycle\n"
             "  check              - Scan proposals and remove invalid\n"
@@ -55,7 +55,7 @@ Value mnbudget(const Array& params, bool fHelp)
         CBlockIndex* pindexPrev = chainActive.Tip();
 
         if (params.size() != 7)
-            throw runtime_error("Correct usage is 'mnbudget prepare proposal-name url payment_count block_start pivx_address monthly_payment_pivx'");
+            throw runtime_error("Correct usage is 'mnbudget prepare proposal-name url payment_count block_start blocknetdx_address monthly_payment_blocknetdx'");
 
         std::string strProposalName = params[1].get_str();
         if (strProposalName.size() > 20)
@@ -88,9 +88,9 @@ Value mnbudget(const Array& params, bool fHelp)
 
         CBitcoinAddress address(params[5].get_str());
         if (!address.IsValid())
-            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Pivx address");
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Blocknetdx address");
 
-        // Parse Pivx address
+        // Parse Blocknetdx address
         CScript scriptPubKey = GetScriptForDestination(address.Get());
         CAmount nAmount = AmountFromValue(params[6]);
 
@@ -128,7 +128,7 @@ Value mnbudget(const Array& params, bool fHelp)
         CBlockIndex* pindexPrev = chainActive.Tip();
 
         if (params.size() != 8)
-            throw runtime_error("Correct usage is 'mnbudget submit proposal-name url payment_count block_start pivx_address monthly_payment_pivx fee_tx'");
+            throw runtime_error("Correct usage is 'mnbudget submit proposal-name url payment_count block_start blocknetdx_address monthly_payment_blocknetdx fee_tx'");
 
         // Check these inputs the same way we check the vote commands:
         // **********************************************************
@@ -164,9 +164,9 @@ Value mnbudget(const Array& params, bool fHelp)
 
         CBitcoinAddress address(params[5].get_str());
         if (!address.IsValid())
-            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Pivx address");
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Blocknetdx address");
 
-        // Parse Pivx address
+        // Parse Blocknetdx address
         CScript scriptPubKey = GetScriptForDestination(address.Get());
         CAmount nAmount = AmountFromValue(params[6]);
         uint256 hash = ParseHashV(params[7], "parameter 1");
@@ -180,15 +180,15 @@ Value mnbudget(const Array& params, bool fHelp)
             return "Proposal FeeTX is not valid - " + hash.ToString() + " - " + strError;
         }
 
-        if (!masternodeSync.IsBlockchainSynced()) {
-            return "Must wait for client to sync with masternode network. Try again in a minute or so.";
+        if (!servicenodeSync.IsBlockchainSynced()) {
+            return "Must wait for client to sync with servicenode network. Try again in a minute or so.";
         }
 
         // if(!budgetProposalBroadcast.IsValid(strError)){
         //     return "Proposal is not valid - " + budgetProposalBroadcast.GetHash().ToString() + " - " + strError;
         // }
 
-        budget.mapSeenMasternodeBudgetProposals.insert(make_pair(budgetProposalBroadcast.GetHash(), budgetProposalBroadcast));
+        budget.mapSeenServicenodeBudgetProposals.insert(make_pair(budgetProposalBroadcast.GetHash(), budgetProposalBroadcast));
         budgetProposalBroadcast.Relay();
         if(budget.AddProposal(budgetProposalBroadcast)) {
             return budgetProposalBroadcast.GetHash().ToString();
@@ -214,37 +214,37 @@ Value mnbudget(const Array& params, bool fHelp)
 
         Object resultsObj;
 
-        BOOST_FOREACH (CMasternodeConfig::CMasternodeEntry mne, masternodeConfig.getEntries()) {
+        BOOST_FOREACH (CServicenodeConfig::CServicenodeEntry mne, servicenodeConfig.getEntries()) {
             std::string errorMessage;
-            std::vector<unsigned char> vchMasterNodeSignature;
-            std::string strMasterNodeSignMessage;
+            std::vector<unsigned char> vchServiceNodeSignature;
+            std::string strServiceNodeSignMessage;
 
             CPubKey pubKeyCollateralAddress;
             CKey keyCollateralAddress;
-            CPubKey pubKeyMasternode;
-            CKey keyMasternode;
+            CPubKey pubKeyServicenode;
+            CKey keyServicenode;
 
             Object statusObj;
 
-            if (!obfuScationSigner.SetKey(mne.getPrivKey(), errorMessage, keyMasternode, pubKeyMasternode)) {
+            if (!obfuScationSigner.SetKey(mne.getPrivKey(), errorMessage, keyServicenode, pubKeyServicenode)) {
                 failed++;
                 statusObj.push_back(Pair("result", "failed"));
-                statusObj.push_back(Pair("errorMessage", "Masternode signing error, could not set key correctly: " + errorMessage));
+                statusObj.push_back(Pair("errorMessage", "Servicenode signing error, could not set key correctly: " + errorMessage));
                 resultsObj.push_back(Pair(mne.getAlias(), statusObj));
                 continue;
             }
 
-            CMasternode* pmn = mnodeman.Find(pubKeyMasternode);
+            CServicenode* pmn = mnodeman.Find(pubKeyServicenode);
             if (pmn == NULL) {
                 failed++;
                 statusObj.push_back(Pair("result", "failed"));
-                statusObj.push_back(Pair("errorMessage", "Can't find masternode by pubkey"));
+                statusObj.push_back(Pair("errorMessage", "Can't find servicenode by pubkey"));
                 resultsObj.push_back(Pair(mne.getAlias(), statusObj));
                 continue;
             }
 
             CBudgetVote vote(pmn->vin, hash, nVote);
-            if (!vote.Sign(keyMasternode, pubKeyMasternode)) {
+            if (!vote.Sign(keyServicenode, pubKeyServicenode)) {
                 failed++;
                 statusObj.push_back(Pair("result", "failed"));
                 statusObj.push_back(Pair("errorMessage", "Failure to sign."));
@@ -255,7 +255,7 @@ Value mnbudget(const Array& params, bool fHelp)
 
             std::string strError = "";
             if (budget.UpdateProposal(vote, NULL, strError)) {
-                budget.mapSeenMasternodeBudgetVotes.insert(make_pair(vote.GetHash(), vote));
+                budget.mapSeenServicenodeBudgetVotes.insert(make_pair(vote.GetHash(), vote));
                 vote.Relay();
                 success++;
                 statusObj.push_back(Pair("result", "success"));
@@ -294,46 +294,46 @@ if(strCommand == "vote-alias")
         int success = 0;
         int failed = 0;
 
-        std::vector<CMasternodeConfig::CMasternodeEntry> mnEntries;
-        mnEntries = masternodeConfig.getEntries();
+        std::vector<CServicenodeConfig::CServicenodeEntry> mnEntries;
+        mnEntries = servicenodeConfig.getEntries();
 
         Object resultsObj;
 
-        BOOST_FOREACH(CMasternodeConfig::CMasternodeEntry mne, masternodeConfig.getEntries()) {
+        BOOST_FOREACH(CServicenodeConfig::CServicenodeEntry mne, servicenodeConfig.getEntries()) {
 
             if( strAlias != mne.getAlias()) continue;
 
             std::string errorMessage;
-            std::vector<unsigned char> vchMasterNodeSignature;
-            std::string strMasterNodeSignMessage;
+            std::vector<unsigned char> vchServiceNodeSignature;
+            std::string strServiceNodeSignMessage;
 
             CPubKey pubKeyCollateralAddress;
             CKey keyCollateralAddress;
-            CPubKey pubKeyMasternode;
-            CKey keyMasternode;
+            CPubKey pubKeyServicenode;
+            CKey keyServicenode;
 
             Object statusObj;
 
-            if(!obfuScationSigner.SetKey(mne.getPrivKey(), errorMessage, keyMasternode, pubKeyMasternode)){
+            if(!obfuScationSigner.SetKey(mne.getPrivKey(), errorMessage, keyServicenode, pubKeyServicenode)){
                 failed++;
                 statusObj.push_back(Pair("result", "failed"));
-                statusObj.push_back(Pair("errorMessage", "Masternode signing error, could not set key correctly: " + errorMessage));
+                statusObj.push_back(Pair("errorMessage", "Servicenode signing error, could not set key correctly: " + errorMessage));
                 resultsObj.push_back(Pair(mne.getAlias(), statusObj));
                 continue;
             }
 
-            CMasternode* pmn = mnodeman.Find(pubKeyMasternode);
+            CServicenode* pmn = mnodeman.Find(pubKeyServicenode);
             if(pmn == NULL)
             {
                 failed++;
                 statusObj.push_back(Pair("result", "failed"));
-                statusObj.push_back(Pair("errorMessage", "Can't find masternode by pubkey"));
+                statusObj.push_back(Pair("errorMessage", "Can't find servicenode by pubkey"));
                 resultsObj.push_back(Pair(mne.getAlias(), statusObj));
                 continue;
             }
 
             CBudgetVote vote(pmn->vin, hash, nVote);
-            if(!vote.Sign(keyMasternode, pubKeyMasternode)){
+            if(!vote.Sign(keyServicenode, pubKeyServicenode)){
                 failed++;
                 statusObj.push_back(Pair("result", "failed"));
                 statusObj.push_back(Pair("errorMessage", "Failure to sign."));
@@ -344,7 +344,7 @@ if(strCommand == "vote-alias")
 
             std::string strError = "";
             if(budget.UpdateProposal(vote, NULL, strError)) {
-                budget.mapSeenMasternodeBudgetVotes.insert(make_pair(vote.GetHash(), vote));
+                budget.mapSeenServicenodeBudgetVotes.insert(make_pair(vote.GetHash(), vote));
                 vote.Relay();
                 success++;
                 statusObj.push_back(Pair("result", "success"));
@@ -375,26 +375,26 @@ if(strCommand == "vote-alias")
         if (strVote == "yes") nVote = VOTE_YES;
         if (strVote == "no") nVote = VOTE_NO;
 
-        CPubKey pubKeyMasternode;
-        CKey keyMasternode;
+        CPubKey pubKeyServicenode;
+        CKey keyServicenode;
         std::string errorMessage;
 
-        if (!obfuScationSigner.SetKey(strMasterNodePrivKey, errorMessage, keyMasternode, pubKeyMasternode))
+        if (!obfuScationSigner.SetKey(strServiceNodePrivKey, errorMessage, keyServicenode, pubKeyServicenode))
             return "Error upon calling SetKey";
 
-        CMasternode* pmn = mnodeman.Find(activeMasternode.vin);
+        CServicenode* pmn = mnodeman.Find(activeServicenode.vin);
         if (pmn == NULL) {
-            return "Failure to find masternode in list : " + activeMasternode.vin.ToString();
+            return "Failure to find servicenode in list : " + activeServicenode.vin.ToString();
         }
 
-        CBudgetVote vote(activeMasternode.vin, hash, nVote);
-        if (!vote.Sign(keyMasternode, pubKeyMasternode)) {
+        CBudgetVote vote(activeServicenode.vin, hash, nVote);
+        if (!vote.Sign(keyServicenode, pubKeyServicenode)) {
             return "Failure to sign.";
         }
 
         std::string strError = "";
         if (budget.UpdateProposal(vote, NULL, strError)) {
-            budget.mapSeenMasternodeBudgetVotes.insert(make_pair(vote.GetHash(), vote));
+            budget.mapSeenServicenodeBudgetVotes.insert(make_pair(vote.GetHash(), vote));
             vote.Relay();
             return "Voted successfully";
         } else {
@@ -573,7 +573,7 @@ Value mnbudgetvoteraw(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 6)
         throw runtime_error(
-            "mnbudgetvoteraw <masternode-tx-hash> <masternode-tx-index> <proposal-hash> <yes|no> <time> <vote-sig>\n"
+            "mnbudgetvoteraw <servicenode-tx-hash> <servicenode-tx-index> <proposal-hash> <yes|no> <time> <vote-sig>\n"
             "Compile and relay a proposal vote with provided external signature instead of signing vote internally\n");
 
     uint256 hashMnTx = ParseHashV(params[0], "mn tx hash");
@@ -596,9 +596,9 @@ Value mnbudgetvoteraw(const Array& params, bool fHelp)
     if (fInvalid)
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Malformed base64 encoding");
 
-    CMasternode* pmn = mnodeman.Find(vin);
+    CServicenode* pmn = mnodeman.Find(vin);
     if (pmn == NULL) {
-        return "Failure to find masternode in list : " + vin.ToString();
+        return "Failure to find servicenode in list : " + vin.ToString();
     }
 
     CBudgetVote vote(vin, hashProposal, nVote);
@@ -611,7 +611,7 @@ Value mnbudgetvoteraw(const Array& params, bool fHelp)
 
     std::string strError = "";
     if (budget.UpdateProposal(vote, NULL, strError)) {
-        budget.mapSeenMasternodeBudgetVotes.insert(make_pair(vote.GetHash(), vote));
+        budget.mapSeenServicenodeBudgetVotes.insert(make_pair(vote.GetHash(), vote));
         vote.Relay();
         return "Voted successfully";
     } else {
@@ -648,38 +648,38 @@ Value mnfinalbudget(const Array& params, bool fHelp)
 
         Object resultsObj;
 
-        BOOST_FOREACH (CMasternodeConfig::CMasternodeEntry mne, masternodeConfig.getEntries()) {
+        BOOST_FOREACH (CServicenodeConfig::CServicenodeEntry mne, servicenodeConfig.getEntries()) {
             std::string errorMessage;
-            std::vector<unsigned char> vchMasterNodeSignature;
-            std::string strMasterNodeSignMessage;
+            std::vector<unsigned char> vchServiceNodeSignature;
+            std::string strServiceNodeSignMessage;
 
             CPubKey pubKeyCollateralAddress;
             CKey keyCollateralAddress;
-            CPubKey pubKeyMasternode;
-            CKey keyMasternode;
+            CPubKey pubKeyServicenode;
+            CKey keyServicenode;
 
             Object statusObj;
 
-            if (!obfuScationSigner.SetKey(mne.getPrivKey(), errorMessage, keyMasternode, pubKeyMasternode)) {
+            if (!obfuScationSigner.SetKey(mne.getPrivKey(), errorMessage, keyServicenode, pubKeyServicenode)) {
                 failed++;
                 statusObj.push_back(Pair("result", "failed"));
-                statusObj.push_back(Pair("errorMessage", "Masternode signing error, could not set key correctly: " + errorMessage));
+                statusObj.push_back(Pair("errorMessage", "Servicenode signing error, could not set key correctly: " + errorMessage));
                 resultsObj.push_back(Pair(mne.getAlias(), statusObj));
                 continue;
             }
 
-            CMasternode* pmn = mnodeman.Find(pubKeyMasternode);
+            CServicenode* pmn = mnodeman.Find(pubKeyServicenode);
             if (pmn == NULL) {
                 failed++;
                 statusObj.push_back(Pair("result", "failed"));
-                statusObj.push_back(Pair("errorMessage", "Can't find masternode by pubkey"));
+                statusObj.push_back(Pair("errorMessage", "Can't find servicenode by pubkey"));
                 resultsObj.push_back(Pair(mne.getAlias(), statusObj));
                 continue;
             }
 
 
             CFinalizedBudgetVote vote(pmn->vin, hash);
-            if (!vote.Sign(keyMasternode, pubKeyMasternode)) {
+            if (!vote.Sign(keyServicenode, pubKeyServicenode)) {
                 failed++;
                 statusObj.push_back(Pair("result", "failed"));
                 statusObj.push_back(Pair("errorMessage", "Failure to sign."));
@@ -715,20 +715,20 @@ Value mnfinalbudget(const Array& params, bool fHelp)
         std::string strHash = params[1].get_str();
         uint256 hash(strHash);
 
-        CPubKey pubKeyMasternode;
-        CKey keyMasternode;
+        CPubKey pubKeyServicenode;
+        CKey keyServicenode;
         std::string errorMessage;
 
-        if (!obfuScationSigner.SetKey(strMasterNodePrivKey, errorMessage, keyMasternode, pubKeyMasternode))
+        if (!obfuScationSigner.SetKey(strServiceNodePrivKey, errorMessage, keyServicenode, pubKeyServicenode))
             return "Error upon calling SetKey";
 
-        CMasternode* pmn = mnodeman.Find(activeMasternode.vin);
+        CServicenode* pmn = mnodeman.Find(activeServicenode.vin);
         if (pmn == NULL) {
-            return "Failure to find masternode in list : " + activeMasternode.vin.ToString();
+            return "Failure to find servicenode in list : " + activeServicenode.vin.ToString();
         }
 
-        CFinalizedBudgetVote vote(activeMasternode.vin, hash);
-        if (!vote.Sign(keyMasternode, pubKeyMasternode)) {
+        CFinalizedBudgetVote vote(activeServicenode.vin, hash);
+        if (!vote.Sign(keyServicenode, pubKeyServicenode)) {
             return "Failure to sign.";
         }
 

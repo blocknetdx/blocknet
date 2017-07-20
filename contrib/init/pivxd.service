@@ -1,19 +1,19 @@
 [Unit]
-Description=PIVX's distributed currency daemon
+Description=BlocknetDX's distributed currency daemon
 After=network.target
 
 [Service]
-User=pivx
-Group=pivx
+User=blocknetdx
+Group=blocknetdx
 
 Type=forking
-PIDFile=/var/lib/pivxd/pivxd.pid
+PIDFile=/var/lib/blocknetdxd/blocknetdxd.pid
 
-ExecStart=/usr/bin/pivxd -daemon -pid=/var/lib/pivxd/pivxd.pid \
-          -conf=/etc/pivx/pivx.conf -datadir=/var/lib/pivxd
+ExecStart=/usr/bin/blocknetdxd -daemon -pid=/var/lib/blocknetdxd/blocknetdxd.pid \
+          -conf=/etc/blocknetdx/blocknetdx.conf -datadir=/var/lib/blocknetdxd
 
-ExecStop=-/usr/bin/pivx-cli -conf=/etc/pivx/pivx.conf \
-         -datadir=/var/lib/pivxd stop
+ExecStop=-/usr/bin/blocknetdx-cli -conf=/etc/blocknetdx/blocknetdx.conf \
+         -datadir=/var/lib/blocknetdxd stop
 
 Restart=always
 PrivateTmp=true

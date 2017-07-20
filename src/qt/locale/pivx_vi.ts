@@ -864,16 +864,16 @@ Kiểu: %3
         <translation>Hãy chọn mức độ riêng tư.</translation>
     </message>
     <message>
-        <source>Use 2 separate masternodes to mix funds up to 1000 DNET</source>
-        <translation>Sử dụng 2 masternode khác nhau để trộn số tiền lên đến 1000 DNET</translation>
+        <source>Use 2 separate servicenodes to mix funds up to 1000 DNET</source>
+        <translation>Sử dụng 2 servicenode khác nhau để trộn số tiền lên đến 1000 DNET</translation>
     </message>
     <message>
-        <source>Use 8 separate masternodes to mix funds up to 1000 DNET</source>
-        <translation>Sử dụng 8 masternode khác nhau để trộn số tiền lên đến 1000 DNET</translation>
+        <source>Use 8 separate servicenodes to mix funds up to 1000 DNET</source>
+        <translation>Sử dụng 8 servicenode khác nhau để trộn số tiền lên đến 1000 DNET</translation>
     </message>
     <message>
-        <source>Use 16 separate masternodes</source>
-        <translation>Sử dụng 16 masternode khác nhau</translation>
+        <source>Use 16 separate servicenodes</source>
+        <translation>Sử dụng 16 servicenode khác nhau</translation>
     </message>
     <message>
         <source>This option is the quickest and will cost about ~0.025 DNET to anonymize 1000 DNET</source>
@@ -1186,7 +1186,7 @@ Kiểu: %3
         <translation>Chuyên gia</translation>
     </message>
     <message>
-        <source>This setting determines the amount of individual masternodes that an input will be anonymized through.&lt;br/&gt;More rounds of anonymization gives a higher degree of privacy, but also costs more in fees.</source>
+        <source>This setting determines the amount of individual servicenodes that an input will be anonymized through.&lt;br/&gt;More rounds of anonymization gives a higher degree of privacy, but also costs more in fees.</source>
         <translation>Thiết lập này xác định số tiền cho mỗi master nodes mà đầu vào thông qua đó được ẩn danh.&lt;br/&gt;Càng có nhiều vòng ẩn danh thì sẽ cho mức độ riêng tư càng cao, nhưng nó cũng tốn nhiều phí hơn.</translation>
     </message>
     <message>
@@ -1371,7 +1371,7 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Chưa chín muồi:</translation>
     </message>
     <message>
-        <source>Staked or masternode rewards that has not yet matured</source>
+        <source>Staked or servicenode rewards that has not yet matured</source>
         <translation>Số dư khai thác được chưa được xác nhận đủ</translation>
     </message>
     <message>
@@ -1383,7 +1383,7 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Các giao dịch chưa được xác nhận cho các địa chỉ chỉ để theo dõi</translation>
     </message>
     <message>
-        <source>Staked or masternode rewards in watch-only addresses that has not yet matured</source>
+        <source>Staked or servicenode rewards in watch-only addresses that has not yet matured</source>
         <translation>Số dư đào được trong các địa chỉ chỉ theo dõi nhưng chưa sẵn sàng để tiêu được</translation>
     </message>
     <message>
@@ -1455,8 +1455,8 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Bắt đầu/Tắt việc trộn</translation>
     </message>
     <message>
-        <source>The denominations you submitted to the Masternode.&lt;br&gt;To mix, other users must submit the exact same denominations.</source>
-        <translation>Mệnh giá mà bạn gửi cho Masternode. &lt;br&gt;Để trộn, những người dùng khác cũng cần gửi chính xác dùng loại mệnh giá đó.</translation>
+        <source>The denominations you submitted to the Servicenode.&lt;br&gt;To mix, other users must submit the exact same denominations.</source>
+        <translation>Mệnh giá mà bạn gửi cho Servicenode. &lt;br&gt;Để trộn, những người dùng khác cũng cần gửi chính xác dùng loại mệnh giá đó.</translation>
     </message>
     <message>
         <source>(Last Message)</source>
@@ -1812,8 +1812,8 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Block chain</translation>
     </message>
     <message>
-        <source>Number of Masternodes</source>
-        <translation>Số lượng Masternodes</translation>
+        <source>Number of Servicenodes</source>
+        <translation>Số lượng Servicenodes</translation>
     </message>
     <message>
         <source>&amp;Console</source>
@@ -3414,8 +3414,8 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Cảnh báo: wallet.dat đã bị hỏng, dữ liệu đã được cứu! Tệp gốc wallet.dat đã được lưu thành wallet.{timestamp}.bak trong %s; nếu số dư hoặc các giao dịch của bạn không chính xác, bạn có thể khôi phục từ bản sao lưu.</translation>
     </message>
     <message>
-        <source>You must specify a masternodeprivkey in the configuration. Please see documentation for help.</source>
-        <translation>Bạn cần chỉ rõ masternodeprivkey trong tệp cấu hình. Hãy xem tài liệu để có hướng dẫn.</translation>
+        <source>You must specify a servicenodeprivkey in the configuration. Please see documentation for help.</source>
+        <translation>Bạn cần chỉ rõ servicenodeprivkey trong tệp cấu hình. Hãy xem tài liệu để có hướng dẫn.</translation>
     </message>
     <message>
         <source>(default: 1)</source>
@@ -3614,8 +3614,8 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Xoá hết tất cả các giao dịch ví và chỉ phục hồi những phần đó của blockchain qua -rescan khi khởi động</translation>
     </message>
     <message>
-        <source>Disable all DarkNet specific functionality (Masternodes, Obfuscate, SwiftTX, Budgeting) (0-1, default: %u)</source>
-        <translation>Tắt tất cả các chức năng đặc trưng của DarkNet (Masternode, Obfuscate, SwiftTX, Lập ngân sách) (0-1, ngầm định: %u)</translation>
+        <source>Disable all DarkNet specific functionality (Servicenodes, Obfuscate, SwiftTX, Budgeting) (0-1, default: %u)</source>
+        <translation>Tắt tất cả các chức năng đặc trưng của DarkNet (Servicenode, Obfuscate, SwiftTX, Lập ngân sách) (0-1, ngầm định: %u)</translation>
     </message>
     <message>
         <source>Distributed under the MIT software license, see the accompanying file COPYING or &lt;http://www.opensource.org/licenses/mit-license.php&gt;.</source>
@@ -3823,12 +3823,12 @@ ví dụ: alertnotify=echo %%s | mail -s "DarkNet Alert" admin@foo.com
         <translation>Tắt chế độ an toàn, ghi đè lên một sự kiện của chế đọ an toàn (ngầm định: %u)</translation>
     </message>
     <message>
-        <source>Enable the client to act as a masternode (0-1, default: %u)</source>
-        <translation>Cho phép phần mềm hoạt động như là masternode (0-1, ngầm định: %u)</translation>
+        <source>Enable the client to act as a servicenode (0-1, default: %u)</source>
+        <translation>Cho phép phần mềm hoạt động như là servicenode (0-1, ngầm định: %u)</translation>
     </message>
     <message>
-        <source>Error connecting to Masternode.</source>
-        <translation>Lỗi kết nối tới Masternode.</translation>
+        <source>Error connecting to Servicenode.</source>
+        <translation>Lỗi kết nối tới Servicenode.</translation>
     </message>
     <message>
         <source>Error loading wallet.dat: Wallet requires newer version of DarkNet Core</source>
@@ -3967,20 +3967,20 @@ ví dụ: alertnotify=echo %%s | mail -s "DarkNet Alert" admin@foo.com
         <translation>Đang nạp bộ đệm ngân sách...</translation>
     </message>
     <message>
-        <source>Loading masternode cache...</source>
-        <translation>Đang tải cache cho masternode...</translation>
+        <source>Loading servicenode cache...</source>
+        <translation>Đang tải cache cho servicenode...</translation>
     </message>
     <message>
-        <source>Loading masternode payment cache...</source>
-        <translation>Đang tải bộ đệm thanh toán cho masternode...</translation>
+        <source>Loading servicenode payment cache...</source>
+        <translation>Đang tải bộ đệm thanh toán cho servicenode...</translation>
     </message>
     <message>
         <source>Lock is already in place.</source>
         <translation>Khoá đã sẵn sàng.</translation>
     </message>
     <message>
-        <source>Lock masternodes from masternode configuration file (default: %u)</source>
-        <translation>Khoá các masternode từ tệp cấu hình masternode (ngầm định: %u)</translation>
+        <source>Lock servicenodes from servicenode configuration file (default: %u)</source>
+        <translation>Khoá các servicenode từ tệp cấu hình servicenode (ngầm định: %u)</translation>
     </message>
     <message>
         <source>Maintain at most &lt;n&gt; connections to peers (default: %u)</source>
@@ -4003,16 +4003,16 @@ ví dụ: alertnotify=echo %%s | mail -s "DarkNet Alert" admin@foo.com
         <translation>Cần chỉ rõ một cổng với -whitebind: '%s'</translation>
     </message>
     <message>
-        <source>No Masternodes detected.</source>
+        <source>No Servicenodes detected.</source>
         <translation>Không tìm thấy các Master node.</translation>
     </message>
     <message>
-        <source>No compatible Masternode found.</source>
-        <translation>Không tìm thấy Masternode tương thích.</translation>
+        <source>No compatible Servicenode found.</source>
+        <translation>Không tìm thấy Servicenode tương thích.</translation>
     </message>
     <message>
-        <source>Not in the Masternode list.</source>
-        <translation>Không có trong danh sách Masternode.</translation>
+        <source>Not in the Servicenode list.</source>
+        <translation>Không có trong danh sách Servicenode.</translation>
     </message>
     <message>
         <source>Number of automatic wallet backups (default: 10)</source>
@@ -4051,8 +4051,8 @@ ví dụ: alertnotify=echo %%s | mail -s "DarkNet Alert" admin@foo.com
         <translation>Khoá riêng của máy chủ (ngầm định: %s)</translation>
     </message>
     <message>
-        <source>Set external address:port to get to this masternode (example: %s)</source>
-        <translation>Đặt external address:port cho masternode này (ví dụ: %s)</translation>
+        <source>Set external address:port to get to this servicenode (example: %s)</source>
+        <translation>Đặt external address:port cho servicenode này (ví dụ: %s)</translation>
     </message>
     <message>
         <source>Set key pool size to &lt;n&gt; (default: %u)</source>
@@ -4083,8 +4083,8 @@ ví dụ: alertnotify=echo %%s | mail -s "DarkNet Alert" admin@foo.com
         <translation>Hãy xác định thời gian hết hạn tính theo milli giây (tối thiểu: 1, ngầm định: %d)</translation>
     </message>
     <message>
-        <source>Specify masternode configuration file (default: %s)</source>
-        <translation>Hãy chỉ ra tệp cấu hình masternode (ngầm định: %s)</translation>
+        <source>Specify servicenode configuration file (default: %s)</source>
+        <translation>Hãy chỉ ra tệp cấu hình servicenode (ngầm định: %s)</translation>
     </message>
     <message>
         <source>Specify pid file (default: %s)</source>
@@ -4099,16 +4099,16 @@ ví dụ: alertnotify=echo %%s | mail -s "DarkNet Alert" admin@foo.com
         <translation>Dừng chạy sau khi nạp các khối từ đĩa (ngầm định: %u)</translation>
     </message>
     <message>
-        <source>Submitted following entries to masternode: %u / %d</source>
-        <translation>Đã gửi các những thành phần sau tới masternode: %u / %d</translation>
+        <source>Submitted following entries to servicenode: %u / %d</source>
+        <translation>Đã gửi các những thành phần sau tới servicenode: %u / %d</translation>
     </message>
     <message>
-        <source>Submitted to masternode, waiting for more entries ( %u / %d ) %s</source>
-        <translation>Đã gửi đến masternode, đang đợi các đầu vào khác nữa (%u / %d) %s</translation>
+        <source>Submitted to servicenode, waiting for more entries ( %u / %d ) %s</source>
+        <translation>Đã gửi đến servicenode, đang đợi các đầu vào khác nữa (%u / %d) %s</translation>
     </message>
     <message>
-        <source>Submitted to masternode, waiting in queue %s</source>
-        <translation>Đã được gửi cho masternode, đang đợi trong hàng đợi %s</translation>
+        <source>Submitted to servicenode, waiting in queue %s</source>
+        <translation>Đã được gửi cho servicenode, đang đợi trong hàng đợi %s</translation>
     </message>
     <message>
         <source>Synchronization failed</source>
@@ -4123,20 +4123,20 @@ ví dụ: alertnotify=echo %%s | mail -s "DarkNet Alert" admin@foo.com
         <translation>Đang đồng bộ ngân sách...</translation>
     </message>
     <message>
-        <source>Synchronizing masternode winners...</source>
-        <translation>Đồng bộ các masternode được chọn...</translation>
+        <source>Synchronizing servicenode winners...</source>
+        <translation>Đồng bộ các servicenode được chọn...</translation>
     </message>
     <message>
-        <source>Synchronizing masternodes...</source>
-        <translation>Đang đồng bộ các masternode...</translation>
+        <source>Synchronizing servicenodes...</source>
+        <translation>Đang đồng bộ các servicenode...</translation>
     </message>
     <message>
         <source>Synchronizing sporks...</source>
         <translation>Đang đồng bộ các sporks...</translation>
     </message>
     <message>
-        <source>This is not a Masternode.</source>
-        <translation>Đây không phải là một Masternode.</translation>
+        <source>This is not a Servicenode.</source>
+        <translation>Đây không phải là một Servicenode.</translation>
     </message>
     <message>
         <source>Threshold for disconnecting misbehaving peers (default: %u)</source>
@@ -4147,7 +4147,7 @@ ví dụ: alertnotify=echo %%s | mail -s "DarkNet Alert" admin@foo.com
         <translation>Sử dụng tích hợp KeePass 2 dùng KeePassHttp plugin (ngầm định: %u)</translation>
     </message>
     <message>
-        <source>Use N separate masternodes to anonymize funds  (2-8, default: %u)</source>
+        <source>Use N separate servicenodes to anonymize funds  (2-8, default: %u)</source>
         <translation>Sử dụng N masternods riêng biệt để ẩn danh khoản tiền (2-8, ngầm định: %u)</translation>
     </message>
     <message>
@@ -4171,32 +4171,32 @@ ví dụ: alertnotify=echo %%s | mail -s "DarkNet Alert" admin@foo.com
         <translation>Sẽ thử lại...</translation>
     </message>
     <message>
-        <source>Invalid masternodeprivkey. Please see documenation.</source>
-        <translation>Masternodeprivkey không hợp lệ. Hãy xem lại tài liệu.</translation>
+        <source>Invalid servicenodeprivkey. Please see documenation.</source>
+        <translation>Servicenodeprivkey không hợp lệ. Hãy xem lại tài liệu.</translation>
     </message>
     <message>
         <source>(must be51472 for mainnet)</source>
         <translation>(phải là51472 cho mạng chính thức)</translation>
     </message>
     <message>
-        <source>Can't find random Masternode.</source>
-        <translation>Không tìm thấy Masternode ngẫu nhiên.</translation>
+        <source>Can't find random Servicenode.</source>
+        <translation>Không tìm thấy Servicenode ngẫu nhiên.</translation>
     </message>
     <message>
         <source>Can't mix while sync in progress.</source>
         <translation>Không thể trộn trong quá trình đồng bộ.</translation>
     </message>
     <message>
-        <source>Could not parse masternode.conf</source>
-        <translation>Không hiểu được tệp masternode.conf</translation>
+        <source>Could not parse servicenode.conf</source>
+        <translation>Không hiểu được tệp servicenode.conf</translation>
     </message>
     <message>
         <source>Invalid netmask specified in -whitelist: '%s'</source>
         <translation>Lỗi netmask được chỉ ra trong -whitelist: '%s'</translation>
     </message>
     <message>
-        <source>Invalid port detected in masternode.conf</source>
-        <translation>Phát hiện thấy cổng không hợp lệ trong tệp masternode.conf</translation>
+        <source>Invalid port detected in servicenode.conf</source>
+        <translation>Phát hiện thấy cổng không hợp lệ trong tệp servicenode.conf</translation>
     </message>
     <message>
         <source>Invalid private key.</source>
@@ -4247,16 +4247,16 @@ ví dụ: alertnotify=echo %%s | mail -s "DarkNet Alert" admin@foo.com
         <translation>Đang tải ví...</translation>
     </message>
     <message>
-        <source>Masternode options:</source>
-        <translation>Tuỳ chọn Masternode:</translation>
+        <source>Servicenode options:</source>
+        <translation>Tuỳ chọn Servicenode:</translation>
     </message>
     <message>
-        <source>Masternode queue is full.</source>
-        <translation>Danh sách hàng đợi Masternode đã đầy.</translation>
+        <source>Servicenode queue is full.</source>
+        <translation>Danh sách hàng đợi Servicenode đã đầy.</translation>
     </message>
     <message>
-        <source>Masternode:</source>
-        <translation>Masternode:</translation>
+        <source>Servicenode:</source>
+        <translation>Servicenode:</translation>
     </message>
     <message>
         <source>Missing input transaction information.</source>
@@ -4359,8 +4359,8 @@ ví dụ: alertnotify=echo %%s | mail -s "DarkNet Alert" admin@foo.com
         <translation>Thiết lập kích thước khối tối đa theo bytes (ngầm định: %d)</translation>
     </message>
     <message>
-        <source>Set the masternode private key</source>
-        <translation>Đặt khoá riêng cho masternode</translation>
+        <source>Set the servicenode private key</source>
+        <translation>Đặt khoá riêng cho servicenode</translation>
     </message>
     <message>
         <source>Show all debugging options (usage: --help -help-debug)</source>

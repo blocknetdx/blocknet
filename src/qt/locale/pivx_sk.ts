@@ -863,16 +863,16 @@ Adresa: %4</translation>
         <translation>Prosím vyberte úroveň súkromia.</translation>
     </message>
     <message>
-        <source>Use 2 separate masternodes to mix funds up to 1000 DNET</source>
-        <translation>Použiť 2 rozdielne masternode pre fixovanie prostriedkov až do 1000 DNET</translation>
+        <source>Use 2 separate servicenodes to mix funds up to 1000 DNET</source>
+        <translation>Použiť 2 rozdielne servicenode pre fixovanie prostriedkov až do 1000 DNET</translation>
     </message>
     <message>
-        <source>Use 8 separate masternodes to mix funds up to 1000 DNET</source>
-        <translation>Použiť 8 rozdielnych masternode pre fixovanie prostriedkov až do 1000 DNET</translation>
+        <source>Use 8 separate servicenodes to mix funds up to 1000 DNET</source>
+        <translation>Použiť 8 rozdielnych servicenode pre fixovanie prostriedkov až do 1000 DNET</translation>
     </message>
     <message>
-        <source>Use 16 separate masternodes</source>
-        <translation>Použiť 16 rozdielnych masternode</translation>
+        <source>Use 16 separate servicenodes</source>
+        <translation>Použiť 16 rozdielnych servicenode</translation>
     </message>
     <message>
         <source>This option is the quickest and will cost about ~0.025 DNET to anonymize 1000 DNET</source>
@@ -1185,8 +1185,8 @@ Adresa: %4</translation>
         <translation>Expert</translation>
     </message>
     <message>
-        <source>This setting determines the amount of individual masternodes that an input will be anonymized through.&lt;br/&gt;More rounds of anonymization gives a higher degree of privacy, but also costs more in fees.</source>
-        <translation>Toto nastavenie určuje množstvo rozličných masternode cez ktoré sa bude anonymizovať vstup.&lt;br/&gt; Viac kôl anonymizácie dáva väčšiu úroveň súkromia, ale tiež stojí viac na poplatkoch.</translation>
+        <source>This setting determines the amount of individual servicenodes that an input will be anonymized through.&lt;br/&gt;More rounds of anonymization gives a higher degree of privacy, but also costs more in fees.</source>
+        <translation>Toto nastavenie určuje množstvo rozličných servicenode cez ktoré sa bude anonymizovať vstup.&lt;br/&gt; Viac kôl anonymizácie dáva väčšiu úroveň súkromia, ale tiež stojí viac na poplatkoch.</translation>
     </message>
     <message>
         <source>Whether to show coin control features or not.</source>
@@ -1370,7 +1370,7 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Nezrelé:</translation>
     </message>
     <message>
-        <source>Staked or masternode rewards that has not yet matured</source>
+        <source>Staked or servicenode rewards that has not yet matured</source>
         <translation>Vytvorený zostatok ktorý ešte nedosiahol zrelosť</translation>
     </message>
     <message>
@@ -1382,7 +1382,7 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Nepotvrdené transakcie pre adresy ktoré sa iba sledujú</translation>
     </message>
     <message>
-        <source>Staked or masternode rewards in watch-only addresses that has not yet matured</source>
+        <source>Staked or servicenode rewards in watch-only addresses that has not yet matured</source>
         <translation>Vyťažená suma pre adresy ktoré sa iba sledujú ale ešte nie je dozretá</translation>
     </message>
     <message>
@@ -1454,8 +1454,8 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Začať/Zastaviť miešanie</translation>
     </message>
     <message>
-        <source>The denominations you submitted to the Masternode.&lt;br&gt;To mix, other users must submit the exact same denominations.</source>
-        <translation>Denominácie ktoré ste odoslali na Masternode. &lt;br&gt;Pre miešanie, ostatný používatelia musia odoslať rovnakú sumu denominácií.</translation>
+        <source>The denominations you submitted to the Servicenode.&lt;br&gt;To mix, other users must submit the exact same denominations.</source>
+        <translation>Denominácie ktoré ste odoslali na Servicenode. &lt;br&gt;Pre miešanie, ostatný používatelia musia odoslať rovnakú sumu denominácií.</translation>
     </message>
     <message>
         <source>(Last Message)</source>
@@ -1811,7 +1811,7 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Reťazec blokov</translation>
     </message>
     <message>
-        <source>Number of Masternodes</source>
+        <source>Number of Servicenodes</source>
         <translation>Počet Mastenode</translation>
     </message>
     <message>
@@ -3413,8 +3413,8 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Upozornenie: wallet.dat poškodený, údaje zachránené! Pôvodný wallet.dat bol uložený ako wallet.{timestamp}.bak v %s; ak váš zostatok alebo transakcie nie sú správne, mali by ste obnoviť zo zálohy.</translation>
     </message>
     <message>
-        <source>You must specify a masternodeprivkey in the configuration. Please see documentation for help.</source>
-        <translation>V konfigurácii musíte špecifikovať masternodeprivkey. Pre pomoc sa prosím pozrite do dokumentácie.</translation>
+        <source>You must specify a servicenodeprivkey in the configuration. Please see documentation for help.</source>
+        <translation>V konfigurácii musíte špecifikovať servicenodeprivkey. Pre pomoc sa prosím pozrite do dokumentácie.</translation>
     </message>
     <message>
         <source>(default: 1)</source>
@@ -3613,8 +3613,8 @@ https://www.transifex.com/darknet-crypto/darknet-wallet-translations/</translati
         <translation>Vymazať všetky transakcie z peňaženky a pri spustení znova získať z reťazca blokov iba tie získané pomocou -rescan</translation>
     </message>
     <message>
-        <source>Disable all DarkNet specific functionality (Masternodes, Obfuscate, SwiftTX, Budgeting) (0-1, default: %u)</source>
-        <translation>Vypnúť všetky funkcie špecifické pre DarkNet (Masternode, Obfuscate, SwiftTX, Rozpočty) (0-1, predvolené: %u)</translation>
+        <source>Disable all DarkNet specific functionality (Servicenodes, Obfuscate, SwiftTX, Budgeting) (0-1, default: %u)</source>
+        <translation>Vypnúť všetky funkcie špecifické pre DarkNet (Servicenode, Obfuscate, SwiftTX, Rozpočty) (0-1, predvolené: %u)</translation>
     </message>
     <message>
         <source>Distributed under the MIT software license, see the accompanying file COPYING or &lt;http://www.opensource.org/licenses/mit-license.php&gt;.</source>
@@ -3823,12 +3823,12 @@ napríklad: alertnotify=echo %%s | mail -s "DarkNet Upozornenie" admin@foo.com
         <translation>Vypnúť núdzový režim, prepísať skutočnú udalosť núdzového režimu (predvolené: %u)</translation>
     </message>
     <message>
-        <source>Enable the client to act as a masternode (0-1, default: %u)</source>
-        <translation>Povoliť klientovi aby vystupoval ako masternode (0-1, predvolené: %u)</translation>
+        <source>Enable the client to act as a servicenode (0-1, default: %u)</source>
+        <translation>Povoliť klientovi aby vystupoval ako servicenode (0-1, predvolené: %u)</translation>
     </message>
     <message>
-        <source>Error connecting to Masternode.</source>
-        <translation>Chyba pripojenia k Masternode.</translation>
+        <source>Error connecting to Servicenode.</source>
+        <translation>Chyba pripojenia k Servicenode.</translation>
     </message>
     <message>
         <source>Error loading wallet.dat: Wallet requires newer version of DarkNet Core</source>
@@ -3967,20 +3967,20 @@ napríklad: alertnotify=echo %%s | mail -s "DarkNet Upozornenie" admin@foo.com
         <translation>Načíta sa vyrovnávacia pamäť rozpočtu...</translation>
     </message>
     <message>
-        <source>Loading masternode cache...</source>
-        <translation>Načíta sa vyrovnávacia pamäť masternode...</translation>
+        <source>Loading servicenode cache...</source>
+        <translation>Načíta sa vyrovnávacia pamäť servicenode...</translation>
     </message>
     <message>
-        <source>Loading masternode payment cache...</source>
-        <translation>Načíta sa vyrovnávacia pamäť platieb masternode...</translation>
+        <source>Loading servicenode payment cache...</source>
+        <translation>Načíta sa vyrovnávacia pamäť platieb servicenode...</translation>
     </message>
     <message>
         <source>Lock is already in place.</source>
         <translation>Zámok je už na mieste.</translation>
     </message>
     <message>
-        <source>Lock masternodes from masternode configuration file (default: %u)</source>
-        <translation>Zamknúť masternody z konfiguračného súboru masternode (predvolené: %u)</translation>
+        <source>Lock servicenodes from servicenode configuration file (default: %u)</source>
+        <translation>Zamknúť masternody z konfiguračného súboru servicenode (predvolené: %u)</translation>
     </message>
     <message>
         <source>Maintain at most &lt;n&gt; connections to peers (default: %u)</source>
@@ -4003,16 +4003,16 @@ napríklad: alertnotify=echo %%s | mail -s "DarkNet Upozornenie" admin@foo.com
         <translation>Je potrebné zadať port s -whitebind: '%s'</translation>
     </message>
     <message>
-        <source>No Masternodes detected.</source>
-        <translation>Nezistený žiadny Masternode.</translation>
+        <source>No Servicenodes detected.</source>
+        <translation>Nezistený žiadny Servicenode.</translation>
     </message>
     <message>
-        <source>No compatible Masternode found.</source>
-        <translation>Nekompatibilný Masternode zdroj.</translation>
+        <source>No compatible Servicenode found.</source>
+        <translation>Nekompatibilný Servicenode zdroj.</translation>
     </message>
     <message>
-        <source>Not in the Masternode list.</source>
-        <translation>Nie je v zozname Masternode.</translation>
+        <source>Not in the Servicenode list.</source>
+        <translation>Nie je v zozname Servicenode.</translation>
     </message>
     <message>
         <source>Number of automatic wallet backups (default: 10)</source>
@@ -4051,8 +4051,8 @@ napríklad: alertnotify=echo %%s | mail -s "DarkNet Upozornenie" admin@foo.com
         <translation>Privátny kľúč servera (predvolené: %s)</translation>
     </message>
     <message>
-        <source>Set external address:port to get to this masternode (example: %s)</source>
-        <translation>Nastaviť externú adresu:port ktorý sa dostane sa k tomuto masternode (príklad: %s)</translation>
+        <source>Set external address:port to get to this servicenode (example: %s)</source>
+        <translation>Nastaviť externú adresu:port ktorý sa dostane sa k tomuto servicenode (príklad: %s)</translation>
     </message>
     <message>
         <source>Set key pool size to &lt;n&gt; (default: %u)</source>
@@ -4083,8 +4083,8 @@ napríklad: alertnotify=echo %%s | mail -s "DarkNet Upozornenie" admin@foo.com
         <translation>Zadajte časový limit pripojenia v milisekundách (minimum: 1, predvolené: %d)</translation>
     </message>
     <message>
-        <source>Specify masternode configuration file (default: %s)</source>
-        <translation>Zadať konfiguračný súbor masternode (predvolené: %s)</translation>
+        <source>Specify servicenode configuration file (default: %s)</source>
+        <translation>Zadať konfiguračný súbor servicenode (predvolené: %s)</translation>
     </message>
     <message>
         <source>Specify pid file (default: %s)</source>
@@ -4099,16 +4099,16 @@ napríklad: alertnotify=echo %%s | mail -s "DarkNet Upozornenie" admin@foo.com
         <translation>Ukončiť činnosť po importovaní blokov z disku (predvolené: %u)</translation>
     </message>
     <message>
-        <source>Submitted following entries to masternode: %u / %d</source>
-        <translation>Položky odoslané na masternode: %u / %d</translation>
+        <source>Submitted following entries to servicenode: %u / %d</source>
+        <translation>Položky odoslané na servicenode: %u / %d</translation>
     </message>
     <message>
-        <source>Submitted to masternode, waiting for more entries ( %u / %d ) %s</source>
-        <translation>Odoslané na masternode, čaká na viac položiek ( %u / %d ) %s</translation>
+        <source>Submitted to servicenode, waiting for more entries ( %u / %d ) %s</source>
+        <translation>Odoslané na servicenode, čaká na viac položiek ( %u / %d ) %s</translation>
     </message>
     <message>
-        <source>Submitted to masternode, waiting in queue %s</source>
-        <translation>Odoslané na masternode, čaká vo fronte %s</translation>
+        <source>Submitted to servicenode, waiting in queue %s</source>
+        <translation>Odoslané na servicenode, čaká vo fronte %s</translation>
     </message>
     <message>
         <source>Synchronization failed</source>
@@ -4123,20 +4123,20 @@ napríklad: alertnotify=echo %%s | mail -s "DarkNet Upozornenie" admin@foo.com
         <translation>Synchronizujú sa rozpočty...</translation>
     </message>
     <message>
-        <source>Synchronizing masternode winners...</source>
-        <translation>Synchronizujú sa masternode víťazi...</translation>
+        <source>Synchronizing servicenode winners...</source>
+        <translation>Synchronizujú sa servicenode víťazi...</translation>
     </message>
     <message>
-        <source>Synchronizing masternodes...</source>
-        <translation>Synchronizujú sa masternode...</translation>
+        <source>Synchronizing servicenodes...</source>
+        <translation>Synchronizujú sa servicenode...</translation>
     </message>
     <message>
         <source>Synchronizing sporks...</source>
         <translation>Synchronizujú sa sporky...</translation>
     </message>
     <message>
-        <source>This is not a Masternode.</source>
-        <translation>Toto nie je Masternode.</translation>
+        <source>This is not a Servicenode.</source>
+        <translation>Toto nie je Servicenode.</translation>
     </message>
     <message>
         <source>Threshold for disconnecting misbehaving peers (default: %u)</source>
@@ -4147,8 +4147,8 @@ napríklad: alertnotify=echo %%s | mail -s "DarkNet Upozornenie" admin@foo.com
         <translation>Použiť integráciu KeePass 2 s využitím doplnku KeePassHttp (predvolené: %u)</translation>
     </message>
     <message>
-        <source>Use N separate masternodes to anonymize funds  (2-8, default: %u)</source>
-        <translation>Použiť N rozdielnych masternode na anonymizovanie zdrojov (2-8, predvolené: %u)</translation>
+        <source>Use N separate servicenodes to anonymize funds  (2-8, default: %u)</source>
+        <translation>Použiť N rozdielnych servicenode na anonymizovanie zdrojov (2-8, predvolené: %u)</translation>
     </message>
     <message>
         <source>Use UPnP to map the listening port (default: %u)</source>
@@ -4171,32 +4171,32 @@ napríklad: alertnotify=echo %%s | mail -s "DarkNet Upozornenie" admin@foo.com
         <translation>Skúsime znovu...</translation>
     </message>
     <message>
-        <source>Invalid masternodeprivkey. Please see documenation.</source>
-        <translation>Neplatný masternodeprivkey. Prosím pozrite do dokumentácie.</translation>
+        <source>Invalid servicenodeprivkey. Please see documenation.</source>
+        <translation>Neplatný servicenodeprivkey. Prosím pozrite do dokumentácie.</translation>
     </message>
     <message>
         <source>(must be51472 for mainnet)</source>
         <translation>(pre hlavnú sieť musí byť 9999)</translation>
     </message>
     <message>
-        <source>Can't find random Masternode.</source>
-        <translation>Nedá sa nájsť náhodný Masternode.</translation>
+        <source>Can't find random Servicenode.</source>
+        <translation>Nedá sa nájsť náhodný Servicenode.</translation>
     </message>
     <message>
         <source>Can't mix while sync in progress.</source>
         <translation>Miešanie nefunguje počas synchronizácie.</translation>
     </message>
     <message>
-        <source>Could not parse masternode.conf</source>
-        <translation>Nedá sa analyzovať masternode.conf</translation>
+        <source>Could not parse servicenode.conf</source>
+        <translation>Nedá sa analyzovať servicenode.conf</translation>
     </message>
     <message>
         <source>Invalid netmask specified in -whitelist: '%s'</source>
         <translation>Nadaná neplatná netmask vo -whitelist: '%s'</translation>
     </message>
     <message>
-        <source>Invalid port detected in masternode.conf</source>
-        <translation>Zistený neplatný port v masternode.conf</translation>
+        <source>Invalid port detected in servicenode.conf</source>
+        <translation>Zistený neplatný port v servicenode.conf</translation>
     </message>
     <message>
         <source>Invalid private key.</source>
@@ -4247,16 +4247,16 @@ napríklad: alertnotify=echo %%s | mail -s "DarkNet Upozornenie" admin@foo.com
         <translation>Načítavanie peňaženky...</translation>
     </message>
     <message>
-        <source>Masternode options:</source>
-        <translation>Možnosti Masternode:</translation>
+        <source>Servicenode options:</source>
+        <translation>Možnosti Servicenode:</translation>
     </message>
     <message>
-        <source>Masternode queue is full.</source>
-        <translation>Fronta Masternode je plná</translation>
+        <source>Servicenode queue is full.</source>
+        <translation>Fronta Servicenode je plná</translation>
     </message>
     <message>
-        <source>Masternode:</source>
-        <translation>Masternode:</translation>
+        <source>Servicenode:</source>
+        <translation>Servicenode:</translation>
     </message>
     <message>
         <source>Missing input transaction information.</source>
@@ -4359,8 +4359,8 @@ napríklad: alertnotify=echo %%s | mail -s "DarkNet Upozornenie" admin@foo.com
         <translation>Nastaviť maximálnu veľkosť v bajtoch (predvolené: %d)</translation>
     </message>
     <message>
-        <source>Set the masternode private key</source>
-        <translation>Nastaviť súkromný kľúč masternode</translation>
+        <source>Set the servicenode private key</source>
+        <translation>Nastaviť súkromný kľúč servicenode</translation>
     </message>
     <message>
         <source>Show all debugging options (usage: --help -help-debug)</source>

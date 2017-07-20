@@ -56,7 +56,7 @@ INCLUDEPATH += . \
                src/secp256k1/src/java
 
 # Input
-HEADERS += src/activemasternode.h \
+HEADERS += src/activeservicenode.h \
            src/addrman.h \
            src/alert.h \
            src/allocators.h \
@@ -78,7 +78,7 @@ HEADERS += src/activemasternode.h \
            src/crypter.h \
            src/obfuscation-relay.h \
            src/obfuscation.h \
-           src/pivx-config.h \
+           src/blocknetdx-config.h \
            src/db.h \
            src/eccryptoverify.h \
            src/ecwrapper.h \
@@ -91,12 +91,12 @@ HEADERS += src/activemasternode.h \
            src/leveldbwrapper.h \
            src/limitedmap.h \
            src/main.h \
-           src/masternode-budget.h \
-           src/masternode-payments.h \
-           src/masternode-sync.h \
-           src/masternode.h \
-           src/masternodeconfig.h \
-           src/masternodeman.h \
+           src/servicenode-budget.h \
+           src/servicenode-payments.h \
+           src/servicenode-sync.h \
+           src/servicenode.h \
+           src/servicenodeconfig.h \
+           src/servicenodeman.h \
            src/merkleblock.h \
            src/miner.h \
            src/mruset.h \
@@ -131,7 +131,7 @@ HEADERS += src/activemasternode.h \
            src/wallet_ismine.h \
            src/walletdb.h \
            src/compat/sanity.h \
-           src/config/pivx-config.h \
+           src/config/blocknetdx-config.h \
            src/crypto/common.h \
            src/crypto/hmac_sha256.h \
            src/crypto/hmac_sha512.h \
@@ -333,7 +333,7 @@ HEADERS += src/activemasternode.h \
            src/secp256k1/src/java/org_bitcoin_NativeSecp256k1.h \
            src/crypto/aes_helper.c \
            src/qt/bitcoinamountfield.moc \
-           src/qt/pivx.moc \
+           src/qt/blocknetdx.moc \
            src/qt/intro.moc \
            src/qt/overviewpage.moc \
            src/qt/rpcconsole.moc \
@@ -355,7 +355,7 @@ FORMS += src/qt/forms/addressbookpage.ui \
          src/qt/forms/sendcoinsentry.ui \
          src/qt/forms/signverifymessagedialog.ui \
          src/qt/forms/transactiondescdialog.ui
-SOURCES += src/activemasternode.cpp \
+SOURCES += src/activeservicenode.cpp \
            src/addrman.cpp \
            src/alert.cpp \
            src/allocators.cpp \
@@ -374,9 +374,9 @@ SOURCES += src/activemasternode.cpp \
            src/crypter.cpp \
            src/obfuscation-relay.cpp \
            src/obfuscation.cpp \
-           src/pivx-cli.cpp \
-           src/pivx-tx.cpp \
-           src/pivx.cpp \
+           src/blocknetdx-cli.cpp \
+           src/blocknetdx-tx.cpp \
+           src/blocknetdx.cpp \
            src/db.cpp \
            src/eccryptoverify.cpp \
            src/ecwrapper.cpp \
@@ -389,12 +389,12 @@ SOURCES += src/activemasternode.cpp \
            src/keystore.cpp \
            src/leveldbwrapper.cpp \
            src/main.cpp \
-           src/masternode-budget.cpp \
-           src/masternode-payments.cpp \
-           src/masternode-sync.cpp \
-           src/masternode.cpp \
-           src/masternodeconfig.cpp \
-           src/masternodeman.cpp \
+           src/servicenode-budget.cpp \
+           src/servicenode-payments.cpp \
+           src/servicenode-sync.cpp \
+           src/servicenode.cpp \
+           src/servicenodeconfig.cpp \
+           src/servicenodeman.cpp \
            src/merkleblock.cpp \
            src/miner.cpp \
            src/net.cpp \
@@ -408,8 +408,8 @@ SOURCES += src/activemasternode.cpp \
            src/rpcblockchain.cpp \
            src/rpcclient.cpp \
            src/rpcdump.cpp \
-           src/rpcmasternode-budget.cpp \
-           src/rpcmasternode.cpp \
+           src/rpcservicenode-budget.cpp \
+           src/rpcservicenode.cpp \
            src/rpcmining.cpp \
            src/rpcmisc.cpp \
            src/rpcnet.cpp \
@@ -471,8 +471,8 @@ SOURCES += src/activemasternode.cpp \
            src/qt/coincontroltreewidget.cpp \
            src/qt/csvmodelwriter.cpp \
            src/qt/obfuscationconfig.cpp \
-           src/qt/pivx.cpp \
-           src/qt/pivxstrings.cpp \
+           src/qt/blocknetdx.cpp \
+           src/qt/blocknetdxstrings.cpp \
            src/qt/editaddressdialog.cpp \
            src/qt/guiutil.cpp \
            src/qt/intro.cpp \
@@ -550,7 +550,7 @@ SOURCES += src/activemasternode.cpp \
            src/test/sighash_tests.cpp \
            src/test/sigopcount_tests.cpp \
            src/test/skiplist_tests.cpp \
-           src/test/test_pivx.cpp \
+           src/test/test_blocknetdx.cpp \
            src/test/timedata_tests.cpp \
            src/test/transaction_tests.cpp \
            src/test/uint256_tests.cpp \
@@ -641,21 +641,21 @@ SOURCES += src/activemasternode.cpp \
            src/leveldb/helpers/memenv/memenv.cc \
            src/leveldb/helpers/memenv/memenv_test.cc \
            src/secp256k1/src/java/org_bitcoin_NativeSecp256k1.c
-RESOURCES += src/qt/pivx.qrc src/qt/pivx_locale.qrc
+RESOURCES += src/qt/blocknetdx.qrc src/qt/blocknetdx_locale.qrc
 
-TRANSLATIONS += src/qt/locale/pivx_bg.ts \
-                src/qt/locale/pivx_de.ts \
-                src/qt/locale/pivx_en.ts \
-                src/qt/locale/pivx_es.ts \
-                src/qt/locale/pivx_fi.ts \
-                src/qt/locale/pivx_fr.ts \
-                src/qt/locale/pivx_it.ts \
-                src/qt/locale/pivx_ja.ts \
-                src/qt/locale/pivx_pl.ts \
-                src/qt/locale/pivx_pt.ts \
-                src/qt/locale/pivx_ru.ts \
-                src/qt/locale/pivx_sk.ts \
-                src/qt/locale/pivx_sv.ts \
-                src/qt/locale/pivx_vi.ts \
-                src/qt/locale/pivx_zh_CN.ts \
-                src/qt/locale/pivx_zh_TW.ts
+TRANSLATIONS += src/qt/locale/blocknetdx_bg.ts \
+                src/qt/locale/blocknetdx_de.ts \
+                src/qt/locale/blocknetdx_en.ts \
+                src/qt/locale/blocknetdx_es.ts \
+                src/qt/locale/blocknetdx_fi.ts \
+                src/qt/locale/blocknetdx_fr.ts \
+                src/qt/locale/blocknetdx_it.ts \
+                src/qt/locale/blocknetdx_ja.ts \
+                src/qt/locale/blocknetdx_pl.ts \
+                src/qt/locale/blocknetdx_pt.ts \
+                src/qt/locale/blocknetdx_ru.ts \
+                src/qt/locale/blocknetdx_sk.ts \
+                src/qt/locale/blocknetdx_sv.ts \
+                src/qt/locale/blocknetdx_vi.ts \
+                src/qt/locale/blocknetdx_zh_CN.ts \
+                src/qt/locale/blocknetdx_zh_TW.ts

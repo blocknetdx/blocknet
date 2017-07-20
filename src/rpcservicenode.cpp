@@ -1,17 +1,17 @@
 // Copyright (c) 2010 Satoshi Nakamoto
 // Copyright (c) 2009-2012 The Bitcoin developers
-// Copyright (c) 2015-2017 The PIVX developers
+// Copyright (c) 2015-2017 The BlocknetDX developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "activemasternode.h"
+#include "activeservicenode.h"
 #include "db.h"
 #include "init.h"
 #include "main.h"
-#include "masternode-budget.h"
-#include "masternode-payments.h"
-#include "masternodeconfig.h"
-#include "masternodeman.h"
+#include "servicenode-budget.h"
+#include "servicenode-payments.h"
+#include "servicenodeconfig.h"
+#include "servicenodeman.h"
 #include "rpcserver.h"
 #include "utilmoneystr.h"
 
@@ -36,7 +36,7 @@ void SendMoney(const CTxDestination& address, CAmount nValue, CWalletTx& wtxNew,
         throw JSONRPCError(RPC_WALLET_ERROR, strError);
     }
 
-    // Parse Pivx address
+    // Parse Blocknetdx address
     CScript scriptPubKey = GetScriptForDestination(address);
 
     // Create and send the transaction
@@ -56,8 +56,8 @@ Value obfuscation(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() == 0)
         throw runtime_error(
-            "obfuscation <pivxaddress> <amount>\n"
-            "pivxaddress, reset, or auto (AutoDenominate)"
+            "obfuscation <blocknetdxaddress> <amount>\n"
+            "blocknetdxaddress, reset, or auto (AutoDenominate)"
             "<amount> is a real and will be rounded to the next 0.1" +
             HelpRequiringPassphrase());
 
@@ -65,8 +65,8 @@ Value obfuscation(const Array& params, bool fHelp)
         throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
 
     if (params[0].get_str() == "auto") {
-        if (fMasterNode)
-            return "ObfuScation is not supported from masternodes";
+        if (fServiceNode)
+            return "ObfuScation is not supported from servicenodes";
 
         return "DoAutomaticDenominating " + (obfuScationPool.DoAutomaticDenominating() ? "successful" : ("failed: " + obfuScationPool.GetStatus()));
     }
@@ -78,14 +78,14 @@ Value obfuscation(const Array& params, bool fHelp)
 
     if (params.size() != 2)
         throw runtime_error(
-            "obfuscation <pivxaddress> <amount>\n"
-            "pivxaddress, denominate, or auto (AutoDenominate)"
+            "obfuscation <blocknetdxaddress> <amount>\n"
+            "blocknetdxaddress, denominate, or auto (AutoDenominate)"
             "<amount> is a real and will be rounded to the next 0.1" +
             HelpRequiringPassphrase());
 
     CBitcoinAddress address(params[0].get_str());
     if (!address.IsValid())
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Pivx address");
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Blocknetdx address");
 
     // Amount
     CAmount nAmount = AmountFromValue(params[1]);
@@ -109,7 +109,7 @@ Value getpoolinfo(const Array& params, bool fHelp)
             "Returns an object containing anonymous pool-related information.");
 
     Object obj;
-    obj.push_back(Pair("current_masternode", mnodeman.GetCurrentMasterNode()->addr.ToString()));
+    obj.push_back(Pair("current_servicenode", mnodeman.GetCurrentServiceNode()->addr.ToString()));
     obj.push_back(Pair("state", obfuScationPool.GetState()));
     obj.push_back(Pair("entries", obfuScationPool.GetEntriesCount()));
     obj.push_back(Pair("entries_accepted", obfuScationPool.GetCountEntriesAccepted()));
@@ -117,7 +117,7 @@ Value getpoolinfo(const Array& params, bool fHelp)
 }
 
 
-Value masternode(const Array& params, bool fHelp)
+Value servicenode(const Array& params, bool fHelp)
 {
     string strCommand;
     if (params.size() >= 1)
@@ -129,30 +129,30 @@ Value masternode(const Array& params, bool fHelp)
             strCommand != "debug" && strCommand != "current" && strCommand != "winners" && strCommand != "genkey" && strCommand != "connect" &&
             strCommand != "outputs" && strCommand != "status" && strCommand != "calcscore"))
         throw runtime_error(
-            "masternode \"command\"... ( \"passphrase\" )\n"
-            "Set of commands to execute masternode related actions\n"
+            "servicenode \"command\"... ( \"passphrase\" )\n"
+            "Set of commands to execute servicenode related actions\n"
             "\nArguments:\n"
             "1. \"command\"        (string or set of strings, required) The command to execute\n"
             "2. \"passphrase\"     (string, optional) The wallet passphrase\n"
             "\nAvailable commands:\n"
-            "  count        - Print count information of all known masternodes\n"
-            "  current      - Print info on current masternode winner\n"
-            "  debug        - Print masternode status\n"
-            "  genkey       - Generate new masternodeprivkey\n"
-            "  enforce      - Enforce masternode payments\n"
-            "  outputs      - Print masternode compatible outputs\n"
-            "  start        - Start masternode configured in pivx.conf\n"
-            "  start-alias  - Start single masternode by assigned alias configured in masternode.conf\n"
-            "  start-<mode> - Start masternodes configured in masternode.conf (<mode>: 'all', 'missing', 'disabled')\n"
-            "  status       - Print masternode status information\n"
-            "  list         - Print list of all known masternodes (see masternodelist for more info)\n"
-            "  list-conf    - Print masternode.conf in JSON format\n"
-            "  winners      - Print list of masternode winners\n");
+            "  count        - Print count information of all known servicenodes\n"
+            "  current      - Print info on current servicenode winner\n"
+            "  debug        - Print servicenode status\n"
+            "  genkey       - Generate new servicenodeprivkey\n"
+            "  enforce      - Enforce servicenode payments\n"
+            "  outputs      - Print servicenode compatible outputs\n"
+            "  start        - Start servicenode configured in blocknetdx.conf\n"
+            "  start-alias  - Start single servicenode by assigned alias configured in servicenode.conf\n"
+            "  start-<mode> - Start servicenodes configured in servicenode.conf (<mode>: 'all', 'missing', 'disabled')\n"
+            "  status       - Print servicenode status information\n"
+            "  list         - Print list of all known servicenodes (see servicenodelist for more info)\n"
+            "  list-conf    - Print servicenode.conf in JSON format\n"
+            "  winners      - Print list of servicenode winners\n");
 
     if (strCommand == "list") {
         Array newParams(params.size() - 1);
         std::copy(params.begin() + 1, params.end(), newParams.begin());
-        return masternodelist(newParams, fHelp);
+        return servicenodelist(newParams, fHelp);
     }
 
     if (strCommand == "connect") {
@@ -160,7 +160,7 @@ Value masternode(const Array& params, bool fHelp)
         if (params.size() == 2) {
             strAddress = params[1].get_str();
         } else {
-            throw runtime_error("Masternode address required\n");
+            throw runtime_error("Servicenode address required\n");
         }
 
         CService addr = CService(strAddress);
@@ -183,7 +183,7 @@ Value masternode(const Array& params, bool fHelp)
             int nCount = 0;
 
             if (chainActive.Tip())
-                mnodeman.GetNextMasternodeInQueueForPayment(chainActive.Tip()->nHeight, true, nCount);
+                mnodeman.GetNextServicenodeInQueueForPayment(chainActive.Tip()->nHeight, true, nCount);
 
             obj.push_back(Pair("total", mnodeman.size()));
             //obj.push_back(Pair("stable", mnodeman.stable_size()));
@@ -197,15 +197,15 @@ Value masternode(const Array& params, bool fHelp)
     }
 
     if (strCommand == "current") {
-        CMasternode* winner = mnodeman.GetCurrentMasterNode(1);
+        CServicenode* winner = mnodeman.GetCurrentServiceNode(1);
         if (winner) {
             Object obj;
 
             obj.push_back(Pair("protocol", (int64_t)winner->protocolVersion));
             obj.push_back(Pair("txhash", winner->vin.prevout.hash.ToString()));
             obj.push_back(Pair("pubkey", CBitcoinAddress(winner->pubKeyCollateralAddress.GetID()).ToString()));
-            obj.push_back(Pair("lastseen", (winner->lastPing == CMasternodePing()) ? winner->sigTime : (int64_t)winner->lastPing.sigTime));
-            obj.push_back(Pair("activeseconds", (winner->lastPing == CMasternodePing()) ? 0 : (int64_t)(winner->lastPing.sigTime - winner->sigTime)));
+            obj.push_back(Pair("lastseen", (winner->lastPing == CServicenodePing()) ? winner->sigTime : (int64_t)winner->lastPing.sigTime));
+            obj.push_back(Pair("activeseconds", (winner->lastPing == CServicenodePing()) ? 0 : (int64_t)(winner->lastPing.sigTime - winner->sigTime)));
             return obj;
         }
 
@@ -213,26 +213,26 @@ Value masternode(const Array& params, bool fHelp)
     }
 
     if (strCommand == "debug") {
-        if (activeMasternode.status != ACTIVE_MASTERNODE_INITIAL || !masternodeSync.IsSynced())
-            return activeMasternode.GetStatus();
+        if (activeServicenode.status != ACTIVE_SERVICENODE_INITIAL || !servicenodeSync.IsSynced())
+            return activeServicenode.GetStatus();
 
         CTxIn vin = CTxIn();
         CPubKey pubkey = CScript();
         CKey key;
-        bool found = activeMasternode.GetMasterNodeVin(vin, pubkey, key);
+        bool found = activeServicenode.GetServiceNodeVin(vin, pubkey, key);
         if (!found) {
-            throw runtime_error("Missing masternode input, please look at the documentation for instructions on masternode creation\n");
+            throw runtime_error("Missing servicenode input, please look at the documentation for instructions on servicenode creation\n");
         } else {
-            return activeMasternode.GetStatus();
+            return activeServicenode.GetStatus();
         }
     }
 
     if (strCommand == "enforce") {
-        return (uint64_t)enforceMasternodePaymentsTime;
+        return (uint64_t)enforceServicenodePaymentsTime;
     }
 
     if (strCommand == "start") {
-        if (!fMasterNode) throw runtime_error("you must set masternode=1 in the configuration\n");
+        if (!fServiceNode) throw runtime_error("you must set servicenode=1 in the configuration\n");
 
         if (pwalletMain->IsLocked()) {
             SecureString strWalletPass;
@@ -249,13 +249,13 @@ Value masternode(const Array& params, bool fHelp)
             }
         }
 
-        if (activeMasternode.status != ACTIVE_MASTERNODE_STARTED) {
-            activeMasternode.status = ACTIVE_MASTERNODE_INITIAL; // TODO: consider better way
-            activeMasternode.ManageStatus();
+        if (activeServicenode.status != ACTIVE_SERVICENODE_STARTED) {
+            activeServicenode.status = ACTIVE_SERVICENODE_INITIAL; // TODO: consider better way
+            activeServicenode.ManageStatus();
             pwalletMain->Lock();
         }
 
-        return activeMasternode.GetStatus();
+        return activeServicenode.GetStatus();
     }
 
     if (strCommand == "start-alias") {
@@ -285,12 +285,12 @@ Value masternode(const Array& params, bool fHelp)
         Object statusObj;
         statusObj.push_back(Pair("alias", alias));
 
-        BOOST_FOREACH (CMasternodeConfig::CMasternodeEntry mne, masternodeConfig.getEntries()) {
+        BOOST_FOREACH (CServicenodeConfig::CServicenodeEntry mne, servicenodeConfig.getEntries()) {
             if (mne.getAlias() == alias) {
                 found = true;
                 std::string errorMessage;
 
-                bool result = activeMasternode.Register(mne.getIp(), mne.getPrivKey(), mne.getTxHash(), mne.getOutputIndex(), errorMessage);
+                bool result = activeServicenode.Register(mne.getIp(), mne.getPrivKey(), mne.getTxHash(), mne.getOutputIndex(), errorMessage);
 
                 statusObj.push_back(Pair("result", result ? "successful" : "failed"));
                 if (!result) {
@@ -326,31 +326,31 @@ Value masternode(const Array& params, bool fHelp)
         }
 
         if ((strCommand == "start-missing" || strCommand == "start-disabled") &&
-            (masternodeSync.RequestedMasternodeAssets <= MASTERNODE_SYNC_LIST ||
-                masternodeSync.RequestedMasternodeAssets == MASTERNODE_SYNC_FAILED)) {
-            throw runtime_error("You can't use this command until masternode list is synced\n");
+            (servicenodeSync.RequestedServicenodeAssets <= SERVICENODE_SYNC_LIST ||
+                servicenodeSync.RequestedServicenodeAssets == SERVICENODE_SYNC_FAILED)) {
+            throw runtime_error("You can't use this command until servicenode list is synced\n");
         }
 
-        std::vector<CMasternodeConfig::CMasternodeEntry> mnEntries;
-        mnEntries = masternodeConfig.getEntries();
+        std::vector<CServicenodeConfig::CServicenodeEntry> mnEntries;
+        mnEntries = servicenodeConfig.getEntries();
 
         int successful = 0;
         int failed = 0;
 
         Object resultsObj;
 
-        BOOST_FOREACH (CMasternodeConfig::CMasternodeEntry mne, masternodeConfig.getEntries()) {
+        BOOST_FOREACH (CServicenodeConfig::CServicenodeEntry mne, servicenodeConfig.getEntries()) {
             std::string errorMessage;
             int nIndex;
             if(!mne.castOutputIndex(nIndex))
                 continue;
             CTxIn vin = CTxIn(uint256(mne.getTxHash()), uint32_t(nIndex));
-            CMasternode* pmn = mnodeman.Find(vin);
+            CServicenode* pmn = mnodeman.Find(vin);
 
             if (strCommand == "start-missing" && pmn) continue;
             if (strCommand == "start-disabled" && pmn && pmn->IsEnabled()) continue;
 
-            bool result = activeMasternode.Register(mne.getIp(), mne.getPrivKey(), mne.getTxHash(), mne.getOutputIndex(), errorMessage);
+            bool result = activeServicenode.Register(mne.getIp(), mne.getPrivKey(), mne.getTxHash(), mne.getOutputIndex(), errorMessage);
 
             Object statusObj;
             statusObj.push_back(Pair("alias", mne.getAlias()));
@@ -368,14 +368,14 @@ Value masternode(const Array& params, bool fHelp)
         pwalletMain->Lock();
 
         Object returnObj;
-        returnObj.push_back(Pair("overall", strprintf("Successfully started %d masternodes, failed to start %d, total %d", successful, failed, successful + failed)));
+        returnObj.push_back(Pair("overall", strprintf("Successfully started %d servicenodes, failed to start %d, total %d", successful, failed, successful + failed)));
         returnObj.push_back(Pair("detail", resultsObj));
 
         return returnObj;
     }
 
     if (strCommand == "create") {
-        throw runtime_error("Not implemented yet, please look at the documentation for instructions on masternode creation\n");
+        throw runtime_error("Not implemented yet, please look at the documentation for instructions on servicenode creation\n");
     }
 
     if (strCommand == "genkey") {
@@ -386,17 +386,17 @@ Value masternode(const Array& params, bool fHelp)
     }
 
     if (strCommand == "list-conf") {
-        std::vector<CMasternodeConfig::CMasternodeEntry> mnEntries;
-        mnEntries = masternodeConfig.getEntries();
+        std::vector<CServicenodeConfig::CServicenodeEntry> mnEntries;
+        mnEntries = servicenodeConfig.getEntries();
 
         Array ret;
 
-        BOOST_FOREACH (CMasternodeConfig::CMasternodeEntry mne, masternodeConfig.getEntries()) {
+        BOOST_FOREACH (CServicenodeConfig::CServicenodeEntry mne, servicenodeConfig.getEntries()) {
             int nIndex;
             if(!mne.castOutputIndex(nIndex))
                 continue;
             CTxIn vin = CTxIn(uint256(mne.getTxHash()), uint32_t(nIndex));
-            CMasternode* pmn = mnodeman.Find(vin);
+            CServicenode* pmn = mnodeman.Find(vin);
 
             std::string strStatus = pmn ? pmn->Status() : "MISSING";
 
@@ -415,7 +415,7 @@ Value masternode(const Array& params, bool fHelp)
 
     if (strCommand == "outputs") {
         // Find possible candidates
-        vector<COutput> possibleCoins = activeMasternode.SelectCoinsMasternode();
+        vector<COutput> possibleCoins = activeServicenode.SelectCoinsServicenode();
 
         Array ret;
         BOOST_FOREACH (COutput& out, possibleCoins) {
@@ -429,21 +429,21 @@ Value masternode(const Array& params, bool fHelp)
     }
 
     if (strCommand == "status") {
-        if (!fMasterNode) throw runtime_error("This is not a masternode\n");
+        if (!fServiceNode) throw runtime_error("This is not a servicenode\n");
 
-        CMasternode* pmn = mnodeman.Find(activeMasternode.vin);
+        CServicenode* pmn = mnodeman.Find(activeServicenode.vin);
 
         if (pmn) {
             Object mnObj;
-            mnObj.push_back(Pair("txhash", activeMasternode.vin.prevout.hash.ToString()));
-            mnObj.push_back(Pair("outputidx", (uint64_t)activeMasternode.vin.prevout.n));
-            mnObj.push_back(Pair("netaddr", activeMasternode.service.ToString()));
+            mnObj.push_back(Pair("txhash", activeServicenode.vin.prevout.hash.ToString()));
+            mnObj.push_back(Pair("outputidx", (uint64_t)activeServicenode.vin.prevout.n));
+            mnObj.push_back(Pair("netaddr", activeServicenode.service.ToString()));
             mnObj.push_back(Pair("addr", CBitcoinAddress(pmn->pubKeyCollateralAddress.GetID()).ToString()));
-            mnObj.push_back(Pair("status", activeMasternode.status));
-            mnObj.push_back(Pair("message", activeMasternode.GetStatus()));
+            mnObj.push_back(Pair("status", activeServicenode.status));
+            mnObj.push_back(Pair("message", activeServicenode.GetStatus()));
             return mnObj;
         }
-        throw runtime_error("Masternode not found\n");
+        throw runtime_error("Servicenode not found\n");
     }
 
     if (strCommand == "winners") {
@@ -512,7 +512,7 @@ Value masternode(const Array& params, bool fHelp)
     }
 
     /*
-        Shows which masternode wins by score each block
+        Shows which servicenode wins by score each block
     */
     if (strCommand == "calcscore") {
         int nLast = 10;
@@ -526,19 +526,19 @@ Value masternode(const Array& params, bool fHelp)
         }
         Object obj;
 
-        std::vector<CMasternode> vMasternodes = mnodeman.GetFullMasternodeVector();
+        std::vector<CServicenode> vServicenodes = mnodeman.GetFullServicenodeVector();
         for (int nHeight = chainActive.Tip()->nHeight - nLast; nHeight < chainActive.Tip()->nHeight + 20; nHeight++) {
             uint256 nHigh = 0;
-            CMasternode* pBestMasternode = NULL;
-            BOOST_FOREACH (CMasternode& mn, vMasternodes) {
+            CServicenode* pBestServicenode = NULL;
+            BOOST_FOREACH (CServicenode& mn, vServicenodes) {
                 uint256 n = mn.CalculateScore(1, nHeight - 100);
                 if (n > nHigh) {
                     nHigh = n;
-                    pBestMasternode = &mn;
+                    pBestServicenode = &mn;
                 }
             }
-            if (pBestMasternode)
-                obj.push_back(Pair(strprintf("%d", nHeight), pBestMasternode->vin.prevout.ToStringShort().c_str()));
+            if (pBestServicenode)
+                obj.push_back(Pair(strprintf("%d", nHeight), pBestServicenode->vin.prevout.ToStringShort().c_str()));
         }
 
         return obj;
@@ -547,7 +547,7 @@ Value masternode(const Array& params, bool fHelp)
     return Value::null;
 }
 
-Value masternodelist(const Array& params, bool fHelp)
+Value servicenodelist(const Array& params, bool fHelp)
 {
     std::string strFilter = "";
 
@@ -555,8 +555,8 @@ Value masternodelist(const Array& params, bool fHelp)
 
     if (fHelp || (params.size() > 1)) {
         throw runtime_error(
-            "masternodelist ( \"filter\" )\n"
-            "Get a ranked list of masternodes\n"
+            "servicenodelist ( \"filter\" )\n"
+            "Get a ranked list of servicenodes\n"
 
             "\nArguments:\n"
             "1. \"filter\"    (string, optional) Filter search text. Partial match by txhash, status, or addr.\n"
@@ -564,20 +564,20 @@ Value masternodelist(const Array& params, bool fHelp)
             "\nResult:\n"
             "[\n"
             "  {\n"
-            "    \"rank\": n,           (numeric) Masternode Rank (or 0 if not enabled)\n"
+            "    \"rank\": n,           (numeric) Servicenode Rank (or 0 if not enabled)\n"
             "    \"txhash\": \"hash\",    (string) Collateral transaction hash\n"
             "    \"outidx\": n,         (numeric) Collateral transaction output index\n"
             "    \"status\": s,         (string) Status (ENABLED/EXPIRED/REMOVE/etc)\n"
-            "    \"addr\": \"addr\",      (string) Masternode PIVX address\n"
-            "    \"version\": v,        (numeric) Masternode protocol version\n"
+            "    \"addr\": \"addr\",      (string) Servicenode BlocknetDX address\n"
+            "    \"version\": v,        (numeric) Servicenode protocol version\n"
             "    \"lastseen\": ttt,     (numeric) The time in seconds since epoch (Jan 1 1970 GMT) of the last seen\n"
-            "    \"activetime\": ttt,   (numeric) The time in seconds since epoch (Jan 1 1970 GMT) masternode has been active\n"
-            "    \"lastpaid\": ttt,     (numeric) The time in seconds since epoch (Jan 1 1970 GMT) masternode was last paid\n"
+            "    \"activetime\": ttt,   (numeric) The time in seconds since epoch (Jan 1 1970 GMT) servicenode has been active\n"
+            "    \"lastpaid\": ttt,     (numeric) The time in seconds since epoch (Jan 1 1970 GMT) servicenode was last paid\n"
             "  }\n"
             "  ,...\n"
             "]\n"
             "\nExamples:\n" +
-            HelpExampleCli("masternodelist", "") + HelpExampleRpc("masternodelist", ""));
+            HelpExampleCli("servicenodelist", "") + HelpExampleRpc("servicenodelist", ""));
     }
 
     Array ret;
@@ -588,14 +588,14 @@ Value masternodelist(const Array& params, bool fHelp)
         if(!pindex) return 0;
         nHeight = pindex->nHeight;
     }
-    std::vector<pair<int, CMasternode> > vMasternodeRanks = mnodeman.GetMasternodeRanks(nHeight);
-    BOOST_FOREACH (PAIRTYPE(int, CMasternode) & s, vMasternodeRanks) {
+    std::vector<pair<int, CServicenode> > vServicenodeRanks = mnodeman.GetServicenodeRanks(nHeight);
+    BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
         Object obj;
         std::string strVin = s.second.vin.prevout.ToStringShort();
         std::string strTxHash = s.second.vin.prevout.hash.ToString();
         uint32_t oIdx = s.second.vin.prevout.n;
 
-        CMasternode* mn = mnodeman.Find(s.second.vin);
+        CServicenode* mn = mnodeman.Find(s.second.vin);
 
         if (strFilter != "" && strTxHash.find(strFilter) == string::npos &&
             mn->Status().find(strFilter) == string::npos &&

@@ -6,7 +6,7 @@
 #define BITCOIN_QT_BITCOINGUI_H
 
 #if defined(HAVE_CONFIG_H)
-#include "config/pivx-config.h"
+#include "config/blocknetdx-config.h"
 #endif
 
 #include "amount.h"
@@ -29,7 +29,7 @@ class SendCoinsRecipient;
 class UnitDisplayStatusBarControl;
 class WalletFrame;
 class WalletModel;
-class MasternodeList;
+class ServicenodeList;
 
 class CWallet;
 
@@ -93,7 +93,7 @@ private:
     QMenuBar* appMenuBar;
     QAction* overviewAction;
     QAction* historyAction;
-    QAction* masternodeAction;
+    QAction* servicenodeAction;
     QAction* quitAction;
     QAction* sendCoinsAction;
     QAction* usedSendingAddressesAction;
@@ -199,8 +199,8 @@ private slots:
     void gotoHistoryPage();
     /** Switch to Explorer Page */
     void gotoBlockExplorerPage();
-    /** Switch to masternode page */
-    void gotoMasternodePage();
+    /** Switch to servicenode page */
+    void gotoServicenodePage();
     /** Switch to receive coins page */
     void gotoReceiveCoinsPage();
     /** Switch to send coins page */

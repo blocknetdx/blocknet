@@ -1,7 +1,7 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2014 The Bitcoin developers
 // Copyright (c) 2014-2015 The Dash developers
-// Copyright (c) 2015-2017 The PIVX developers
+// Copyright (c) 2015-2017 The BlocknetDX developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -13,7 +13,7 @@
 #define BITCOIN_UTIL_H
 
 #if defined(HAVE_CONFIG_H)
-#include "config/pivx-config.h"
+#include "config/blocknetdx-config.h"
 #endif
 
 #include "compat.h"
@@ -29,18 +29,18 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/thread/exceptions.hpp>
 
-//PIVX only features
+//BlocknetDX only features
 
-extern bool fMasterNode;
+extern bool fServiceNode;
 extern bool fLiteMode;
 extern bool fEnableSwiftTX;
 extern int nSwiftTXDepth;
 extern int nObfuscationRounds;
-extern int nAnonymizePivxAmount;
+extern int nAnonymizeBlocknetdxAmount;
 extern int nLiquidityProvider;
 extern bool fEnableObfuscation;
-extern int64_t enforceMasternodePaymentsTime;
-extern std::string strMasterNodeAddr;
+extern int64_t enforceServicenodePaymentsTime;
+extern std::string strServiceNodeAddr;
 extern int keysLoaded;
 extern bool fSucessfullyLoaded;
 extern std::vector<int64_t> obfuScationDenominations;
@@ -114,7 +114,7 @@ bool TryCreateDirectory(const boost::filesystem::path& p);
 boost::filesystem::path GetDefaultDataDir();
 const boost::filesystem::path& GetDataDir(bool fNetSpecific = true);
 boost::filesystem::path GetConfigFile();
-boost::filesystem::path GetMasternodeConfigFile();
+boost::filesystem::path GetServicenodeConfigFile();
 #ifndef WIN32
 boost::filesystem::path GetPidFile();
 void CreatePidFile(const boost::filesystem::path& path, pid_t pid);
@@ -213,7 +213,7 @@ void RenameThread(const char* name);
 template <typename Callable>
 void LoopForever(const char* name, Callable func, int64_t msecs)
 {
-    std::string s = strprintf("pivx-%s", name);
+    std::string s = strprintf("blocknetdx-%s", name);
     RenameThread(s.c_str());
     LogPrintf("%s thread start\n", name);
     try {
@@ -239,7 +239,7 @@ void LoopForever(const char* name, Callable func, int64_t msecs)
 template <typename Callable>
 void TraceThread(const char* name, Callable func)
 {
-    std::string s = strprintf("pivx-%s", name);
+    std::string s = strprintf("blocknetdx-%s", name);
     RenameThread(s.c_str());
     try {
         LogPrintf("%s thread start\n", name);

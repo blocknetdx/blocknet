@@ -1,13 +1,13 @@
-#include "masternodelist.h"
-#include "ui_masternodelist.h"
+#include "servicenodelist.h"
+#include "ui_servicenodelist.h"
 
-#include "activemasternode.h"
+#include "activeservicenode.h"
 #include "clientmodel.h"
 #include "guiutil.h"
 #include "init.h"
-#include "masternode-sync.h"
-#include "masternodeconfig.h"
-#include "masternodeman.h"
+#include "servicenode-sync.h"
+#include "servicenodeconfig.h"
+#include "servicenodeman.h"
 #include "sync.h"
 #include "wallet.h"
 #include "walletmodel.h"
@@ -15,10 +15,10 @@
 #include <QMessageBox>
 #include <QTimer>
 
-CCriticalSection cs_masternodes;
+CCriticalSection cs_servicenodes;
 
-MasternodeList::MasternodeList(QWidget* parent) : QWidget(parent),
-                                                  ui(new Ui::MasternodeList),
+ServicenodeList::ServicenodeList(QWidget* parent) : QWidget(parent),
+                                                  ui(new Ui::ServicenodeList),
                                                   clientModel(0),
                                                   walletModel(0)
 {
@@ -33,19 +33,19 @@ MasternodeList::MasternodeList(QWidget* parent) : QWidget(parent),
     int columnActiveWidth = 130;
     int columnLastSeenWidth = 130;
 
-    ui->tableWidgetMyMasternodes->setColumnWidth(0, columnAliasWidth);
-    ui->tableWidgetMyMasternodes->setColumnWidth(1, columnAddressWidth);
-    ui->tableWidgetMyMasternodes->setColumnWidth(2, columnProtocolWidth);
-    ui->tableWidgetMyMasternodes->setColumnWidth(3, columnStatusWidth);
-    ui->tableWidgetMyMasternodes->setColumnWidth(4, columnActiveWidth);
-    ui->tableWidgetMyMasternodes->setColumnWidth(5, columnLastSeenWidth);
+    ui->tableWidgetMyServicenodes->setColumnWidth(0, columnAliasWidth);
+    ui->tableWidgetMyServicenodes->setColumnWidth(1, columnAddressWidth);
+    ui->tableWidgetMyServicenodes->setColumnWidth(2, columnProtocolWidth);
+    ui->tableWidgetMyServicenodes->setColumnWidth(3, columnStatusWidth);
+    ui->tableWidgetMyServicenodes->setColumnWidth(4, columnActiveWidth);
+    ui->tableWidgetMyServicenodes->setColumnWidth(5, columnLastSeenWidth);
 
-    ui->tableWidgetMyMasternodes->setContextMenuPolicy(Qt::CustomContextMenu);
+    ui->tableWidgetMyServicenodes->setContextMenuPolicy(Qt::CustomContextMenu);
 
     QAction* startAliasAction = new QAction(tr("Start alias"), this);
     contextMenu = new QMenu();
     contextMenu->addAction(startAliasAction);
-    connect(ui->tableWidgetMyMasternodes, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
+    connect(ui->tableWidgetMyServicenodes, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
     connect(startAliasAction, SIGNAL(triggered()), this, SLOT(on_startButton_clicked()));
 
     timer = new QTimer(this);
@@ -57,45 +57,45 @@ MasternodeList::MasternodeList(QWidget* parent) : QWidget(parent),
     nTimeFilterUpdated = GetTime();
 }
 
-MasternodeList::~MasternodeList()
+ServicenodeList::~ServicenodeList()
 {
     delete ui;
 }
 
-void MasternodeList::setClientModel(ClientModel* model)
+void ServicenodeList::setClientModel(ClientModel* model)
 {
     this->clientModel = model;
 }
 
-void MasternodeList::setWalletModel(WalletModel* model)
+void ServicenodeList::setWalletModel(WalletModel* model)
 {
     this->walletModel = model;
 }
 
-void MasternodeList::showContextMenu(const QPoint& point)
+void ServicenodeList::showContextMenu(const QPoint& point)
 {
-    QTableWidgetItem* item = ui->tableWidgetMyMasternodes->itemAt(point);
+    QTableWidgetItem* item = ui->tableWidgetMyServicenodes->itemAt(point);
     if (item) contextMenu->exec(QCursor::pos());
 }
 
-void MasternodeList::StartAlias(std::string strAlias)
+void ServicenodeList::StartAlias(std::string strAlias)
 {
     std::string strStatusHtml;
     strStatusHtml += "<center>Alias: " + strAlias;
 
-    BOOST_FOREACH (CMasternodeConfig::CMasternodeEntry mne, masternodeConfig.getEntries()) {
+    BOOST_FOREACH (CServicenodeConfig::CServicenodeEntry mne, servicenodeConfig.getEntries()) {
         if (mne.getAlias() == strAlias) {
             std::string strError;
-            CMasternodeBroadcast mnb;
+            CServicenodeBroadcast mnb;
 
-            bool fSuccess = CMasternodeBroadcast::Create(mne.getIp(), mne.getPrivKey(), mne.getTxHash(), mne.getOutputIndex(), strError, mnb);
+            bool fSuccess = CServicenodeBroadcast::Create(mne.getIp(), mne.getPrivKey(), mne.getTxHash(), mne.getOutputIndex(), strError, mnb);
 
             if (fSuccess) {
-                strStatusHtml += "<br>Successfully started masternode.";
-                mnodeman.UpdateMasternodeList(mnb);
+                strStatusHtml += "<br>Successfully started servicenode.";
+                mnodeman.UpdateServicenodeList(mnb);
                 mnb.Relay();
             } else {
-                strStatusHtml += "<br>Failed to start masternode.<br>Error: " + strError;
+                strStatusHtml += "<br>Failed to start servicenode.<br>Error: " + strError;
             }
             break;
         }
@@ -109,30 +109,30 @@ void MasternodeList::StartAlias(std::string strAlias)
     updateMyNodeList(true);
 }
 
-void MasternodeList::StartAll(std::string strCommand)
+void ServicenodeList::StartAll(std::string strCommand)
 {
     int nCountSuccessful = 0;
     int nCountFailed = 0;
     std::string strFailedHtml;
 
-    BOOST_FOREACH (CMasternodeConfig::CMasternodeEntry mne, masternodeConfig.getEntries()) {
+    BOOST_FOREACH (CServicenodeConfig::CServicenodeEntry mne, servicenodeConfig.getEntries()) {
         std::string strError;
-        CMasternodeBroadcast mnb;
+        CServicenodeBroadcast mnb;
 
         int nIndex;
         if(!mne.castOutputIndex(nIndex))
             continue;
 
         CTxIn txin = CTxIn(uint256S(mne.getTxHash()), uint32_t(nIndex));
-        CMasternode* pmn = mnodeman.Find(txin);
+        CServicenode* pmn = mnodeman.Find(txin);
 
         if (strCommand == "start-missing" && pmn) continue;
 
-        bool fSuccess = CMasternodeBroadcast::Create(mne.getIp(), mne.getPrivKey(), mne.getTxHash(), mne.getOutputIndex(), strError, mnb);
+        bool fSuccess = CServicenodeBroadcast::Create(mne.getIp(), mne.getPrivKey(), mne.getTxHash(), mne.getOutputIndex(), strError, mnb);
 
         if (fSuccess) {
             nCountSuccessful++;
-            mnodeman.UpdateMasternodeList(mnb);
+            mnodeman.UpdateServicenodeList(mnb);
             mnb.Relay();
         } else {
             nCountFailed++;
@@ -142,7 +142,7 @@ void MasternodeList::StartAll(std::string strCommand)
     pwalletMain->Lock();
 
     std::string returnObj;
-    returnObj = strprintf("Successfully started %d masternodes, failed to start %d, total %d", nCountSuccessful, nCountFailed, nCountFailed + nCountSuccessful);
+    returnObj = strprintf("Successfully started %d servicenodes, failed to start %d, total %d", nCountSuccessful, nCountFailed, nCountFailed + nCountSuccessful);
     if (nCountFailed > 0) {
         returnObj += strFailedHtml;
     }
@@ -154,14 +154,14 @@ void MasternodeList::StartAll(std::string strCommand)
     updateMyNodeList(true);
 }
 
-void MasternodeList::updateMyMasternodeInfo(QString strAlias, QString strAddr, CMasternode* pmn)
+void ServicenodeList::updateMyServicenodeInfo(QString strAlias, QString strAddr, CServicenode* pmn)
 {
     LOCK(cs_mnlistupdate);
     bool fOldRowFound = false;
     int nNewRow = 0;
 
-    for (int i = 0; i < ui->tableWidgetMyMasternodes->rowCount(); i++) {
-        if (ui->tableWidgetMyMasternodes->item(i, 0)->text() == strAlias) {
+    for (int i = 0; i < ui->tableWidgetMyServicenodes->rowCount(); i++) {
+        if (ui->tableWidgetMyServicenodes->item(i, 0)->text() == strAlias) {
             fOldRowFound = true;
             nNewRow = i;
             break;
@@ -169,8 +169,8 @@ void MasternodeList::updateMyMasternodeInfo(QString strAlias, QString strAddr, C
     }
 
     if (nNewRow == 0 && !fOldRowFound) {
-        nNewRow = ui->tableWidgetMyMasternodes->rowCount();
-        ui->tableWidgetMyMasternodes->insertRow(nNewRow);
+        nNewRow = ui->tableWidgetMyServicenodes->rowCount();
+        ui->tableWidgetMyServicenodes->insertRow(nNewRow);
     }
 
     QTableWidgetItem* aliasItem = new QTableWidgetItem(strAlias);
@@ -181,59 +181,59 @@ void MasternodeList::updateMyMasternodeInfo(QString strAlias, QString strAddr, C
     QTableWidgetItem* lastSeenItem = new QTableWidgetItem(QString::fromStdString(DateTimeStrFormat("%Y-%m-%d %H:%M", pmn ? pmn->lastPing.sigTime : 0)));
     QTableWidgetItem* pubkeyItem = new QTableWidgetItem(QString::fromStdString(pmn ? CBitcoinAddress(pmn->pubKeyCollateralAddress.GetID()).ToString() : ""));
 
-    ui->tableWidgetMyMasternodes->setItem(nNewRow, 0, aliasItem);
-    ui->tableWidgetMyMasternodes->setItem(nNewRow, 1, addrItem);
-    ui->tableWidgetMyMasternodes->setItem(nNewRow, 2, protocolItem);
-    ui->tableWidgetMyMasternodes->setItem(nNewRow, 3, statusItem);
-    ui->tableWidgetMyMasternodes->setItem(nNewRow, 4, activeSecondsItem);
-    ui->tableWidgetMyMasternodes->setItem(nNewRow, 5, lastSeenItem);
-    ui->tableWidgetMyMasternodes->setItem(nNewRow, 6, pubkeyItem);
+    ui->tableWidgetMyServicenodes->setItem(nNewRow, 0, aliasItem);
+    ui->tableWidgetMyServicenodes->setItem(nNewRow, 1, addrItem);
+    ui->tableWidgetMyServicenodes->setItem(nNewRow, 2, protocolItem);
+    ui->tableWidgetMyServicenodes->setItem(nNewRow, 3, statusItem);
+    ui->tableWidgetMyServicenodes->setItem(nNewRow, 4, activeSecondsItem);
+    ui->tableWidgetMyServicenodes->setItem(nNewRow, 5, lastSeenItem);
+    ui->tableWidgetMyServicenodes->setItem(nNewRow, 6, pubkeyItem);
 }
 
-void MasternodeList::updateMyNodeList(bool fForce)
+void ServicenodeList::updateMyNodeList(bool fForce)
 {
     static int64_t nTimeMyListUpdated = 0;
 
-    // automatically update my masternode list only once in MY_MASTERNODELIST_UPDATE_SECONDS seconds,
+    // automatically update my servicenode list only once in MY_SERVICENODELIST_UPDATE_SECONDS seconds,
     // this update still can be triggered manually at any time via button click
-    int64_t nSecondsTillUpdate = nTimeMyListUpdated + MY_MASTERNODELIST_UPDATE_SECONDS - GetTime();
+    int64_t nSecondsTillUpdate = nTimeMyListUpdated + MY_SERVICENODELIST_UPDATE_SECONDS - GetTime();
     ui->secondsLabel->setText(QString::number(nSecondsTillUpdate));
 
     if (nSecondsTillUpdate > 0 && !fForce) return;
     nTimeMyListUpdated = GetTime();
 
-    ui->tableWidgetMyMasternodes->setSortingEnabled(false);
-    BOOST_FOREACH (CMasternodeConfig::CMasternodeEntry mne, masternodeConfig.getEntries()) {
+    ui->tableWidgetMyServicenodes->setSortingEnabled(false);
+    BOOST_FOREACH (CServicenodeConfig::CServicenodeEntry mne, servicenodeConfig.getEntries()) {
         int nIndex;
         if(!mne.castOutputIndex(nIndex))
             continue;
 
         CTxIn txin = CTxIn(uint256S(mne.getTxHash()), uint32_t(nIndex));
-        CMasternode* pmn = mnodeman.Find(txin);
+        CServicenode* pmn = mnodeman.Find(txin);
 
-        updateMyMasternodeInfo(QString::fromStdString(mne.getAlias()), QString::fromStdString(mne.getIp()), pmn);
+        updateMyServicenodeInfo(QString::fromStdString(mne.getAlias()), QString::fromStdString(mne.getIp()), pmn);
     }
-    ui->tableWidgetMyMasternodes->setSortingEnabled(true);
+    ui->tableWidgetMyServicenodes->setSortingEnabled(true);
 
     // reset "timer"
     ui->secondsLabel->setText("0");
 }
 
-void MasternodeList::on_startButton_clicked()
+void ServicenodeList::on_startButton_clicked()
 {
     // Find selected node alias
-    QItemSelectionModel* selectionModel = ui->tableWidgetMyMasternodes->selectionModel();
+    QItemSelectionModel* selectionModel = ui->tableWidgetMyServicenodes->selectionModel();
     QModelIndexList selected = selectionModel->selectedRows();
 
     if (selected.count() == 0) return;
 
     QModelIndex index = selected.at(0);
     int nSelectedRow = index.row();
-    std::string strAlias = ui->tableWidgetMyMasternodes->item(nSelectedRow, 0)->text().toStdString();
+    std::string strAlias = ui->tableWidgetMyServicenodes->item(nSelectedRow, 0)->text().toStdString();
 
     // Display message box
-    QMessageBox::StandardButton retval = QMessageBox::question(this, tr("Confirm masternode start"),
-        tr("Are you sure you want to start masternode %1?").arg(QString::fromStdString(strAlias)),
+    QMessageBox::StandardButton retval = QMessageBox::question(this, tr("Confirm servicenode start"),
+        tr("Are you sure you want to start servicenode %1?").arg(QString::fromStdString(strAlias)),
         QMessageBox::Yes | QMessageBox::Cancel,
         QMessageBox::Cancel);
 
@@ -253,11 +253,11 @@ void MasternodeList::on_startButton_clicked()
     StartAlias(strAlias);
 }
 
-void MasternodeList::on_startAllButton_clicked()
+void ServicenodeList::on_startAllButton_clicked()
 {
     // Display message box
-    QMessageBox::StandardButton retval = QMessageBox::question(this, tr("Confirm all masternodes start"),
-        tr("Are you sure you want to start ALL masternodes?"),
+    QMessageBox::StandardButton retval = QMessageBox::question(this, tr("Confirm all servicenodes start"),
+        tr("Are you sure you want to start ALL servicenodes?"),
         QMessageBox::Yes | QMessageBox::Cancel,
         QMessageBox::Cancel);
 
@@ -277,18 +277,18 @@ void MasternodeList::on_startAllButton_clicked()
     StartAll();
 }
 
-void MasternodeList::on_startMissingButton_clicked()
+void ServicenodeList::on_startMissingButton_clicked()
 {
-    if (!masternodeSync.IsMasternodeListSynced()) {
+    if (!servicenodeSync.IsServicenodeListSynced()) {
         QMessageBox::critical(this, tr("Command is not available right now"),
-            tr("You can't use this command until masternode list is synced"));
+            tr("You can't use this command until servicenode list is synced"));
         return;
     }
 
     // Display message box
     QMessageBox::StandardButton retval = QMessageBox::question(this,
-        tr("Confirm missing masternodes start"),
-        tr("Are you sure you want to start MISSING masternodes?"),
+        tr("Confirm missing servicenodes start"),
+        tr("Are you sure you want to start MISSING servicenodes?"),
         QMessageBox::Yes | QMessageBox::Cancel,
         QMessageBox::Cancel);
 
@@ -308,14 +308,14 @@ void MasternodeList::on_startMissingButton_clicked()
     StartAll("start-missing");
 }
 
-void MasternodeList::on_tableWidgetMyMasternodes_itemSelectionChanged()
+void ServicenodeList::on_tableWidgetMyServicenodes_itemSelectionChanged()
 {
-    if (ui->tableWidgetMyMasternodes->selectedItems().count() > 0) {
+    if (ui->tableWidgetMyServicenodes->selectedItems().count() > 0) {
         ui->startButton->setEnabled(true);
     }
 }
 
-void MasternodeList::on_UpdateButton_clicked()
+void ServicenodeList::on_UpdateButton_clicked()
 {
     updateMyNodeList(true);
 }

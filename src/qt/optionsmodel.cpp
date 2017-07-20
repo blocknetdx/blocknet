@@ -1,11 +1,11 @@
 // Copyright (c) 2011-2014 The Bitcoin developers
 // Copyright (c) 2014-2015 The Dash developers
-// Copyright (c) 2015-2017 The PIVX developers
+// Copyright (c) 2015-2017 The BlocknetDX developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #if defined(HAVE_CONFIG_H)
-#include "config/pivx-config.h"
+#include "config/blocknetdx-config.h"
 #endif
 
 #include "optionsmodel.h"
@@ -20,7 +20,7 @@
 #include "txdb.h" // for -dbcache defaults
 
 #ifdef ENABLE_WALLET
-#include "masternodeconfig.h"
+#include "servicenodeconfig.h"
 #include "wallet.h"
 #include "walletdb.h"
 #endif
@@ -75,14 +75,14 @@ void OptionsModel::Init()
     if (!settings.contains("nObfuscationRounds"))
         settings.setValue("nObfuscationRounds", 2);
 
-    if (!settings.contains("nAnonymizePivxAmount"))
-        settings.setValue("nAnonymizePivxAmount", 1000);
+    if (!settings.contains("nAnonymizeBlocknetdxAmount"))
+        settings.setValue("nAnonymizeBlocknetdxAmount", 1000);
 
     nObfuscationRounds = settings.value("nObfuscationRounds").toLongLong();
-    nAnonymizePivxAmount = settings.value("nAnonymizePivxAmount").toLongLong();
+    nAnonymizeBlocknetdxAmount = settings.value("nAnonymizeBlocknetdxAmount").toLongLong();
 
-    if (!settings.contains("fShowMasternodesTab"))
-        settings.setValue("fShowMasternodesTab", masternodeConfig.getCount());
+    if (!settings.contains("fShowServicenodesTab"))
+        settings.setValue("fShowServicenodesTab", servicenodeConfig.getCount());
 
     // These are shared with the core or have a command-line parameter
     // and we want command-line parameters to overwrite the GUI settings.
@@ -146,8 +146,8 @@ void OptionsModel::Init()
 
     if (settings.contains("nObfuscationRounds"))
         SoftSetArg("-obfuscationrounds", settings.value("nObfuscationRounds").toString().toStdString());
-    if (settings.contains("nAnonymizePivxAmount"))
-        SoftSetArg("-anonymizepivxamount", settings.value("nAnonymizePivxAmount").toString().toStdString());
+    if (settings.contains("nAnonymizeBlocknetdxAmount"))
+        SoftSetArg("-anonymizeblocknetdxamount", settings.value("nAnonymizeBlocknetdxAmount").toString().toStdString());
 
     language = settings.value("language").toString();
 }
@@ -158,7 +158,7 @@ void OptionsModel::Reset()
 
     // Remove all entries from our QSettings object
     settings.clear();
-    resetSettings = true; // Needed in pivx.cpp during shotdown to also remove the window positions
+    resetSettings = true; // Needed in blocknetdx.cpp during shotdown to also remove the window positions
 
     // default setting for OptionsModel::StartAtStartup - disabled
     if (GUIUtil::GetStartOnSystemStartup())
@@ -206,8 +206,8 @@ QVariant OptionsModel::data(const QModelIndex& index, int role) const
 #ifdef ENABLE_WALLET
         case SpendZeroConfChange:
             return settings.value("bSpendZeroConfChange");
-        case ShowMasternodesTab:
-            return settings.value("fShowMasternodesTab");
+        case ShowServicenodesTab:
+            return settings.value("fShowServicenodesTab");
 #endif
         case DisplayUnit:
             return nDisplayUnit;
@@ -227,8 +227,8 @@ QVariant OptionsModel::data(const QModelIndex& index, int role) const
             return settings.value("nThreadsScriptVerif");
         case ObfuscationRounds:
             return QVariant(nObfuscationRounds);
-        case AnonymizePivxAmount:
-            return QVariant(nAnonymizePivxAmount);
+        case AnonymizeBlocknetdxAmount:
+            return QVariant(nAnonymizeBlocknetdxAmount);
         case Listen:
             return settings.value("fListen");
         default:
@@ -297,9 +297,9 @@ bool OptionsModel::setData(const QModelIndex& index, const QVariant& value, int 
                 setRestartRequired(true);
             }
             break;
-        case ShowMasternodesTab:
-            if (settings.value("fShowMasternodesTab") != value) {
-                settings.setValue("fShowMasternodesTab", value);
+        case ShowServicenodesTab:
+            if (settings.value("fShowServicenodesTab") != value) {
+                settings.setValue("fShowServicenodesTab", value);
                 setRestartRequired(true);
             }
             break;
@@ -337,10 +337,10 @@ bool OptionsModel::setData(const QModelIndex& index, const QVariant& value, int 
             settings.setValue("nObfuscationRounds", nObfuscationRounds);
             emit obfuscationRoundsChanged(nObfuscationRounds);
             break;
-        case AnonymizePivxAmount:
-            nAnonymizePivxAmount = value.toInt();
-            settings.setValue("nAnonymizePivxAmount", nAnonymizePivxAmount);
-            emit anonymizePivxAmountChanged(nAnonymizePivxAmount);
+        case AnonymizeBlocknetdxAmount:
+            nAnonymizeBlocknetdxAmount = value.toInt();
+            settings.setValue("nAnonymizeBlocknetdxAmount", nAnonymizeBlocknetdxAmount);
+            emit anonymizeBlocknetdxAmountChanged(nAnonymizeBlocknetdxAmount);
             break;
         case CoinControlFeatures:
             fCoinControlFeatures = value.toBool();

@@ -75,8 +75,8 @@ public slots:
     void setNumConnections(int count);
     /** Set number of blocks shown in the UI */
     void setNumBlocks(int count);
-    /** Set number of masternodes shown in the UI */
-    void setMasternodeCount(const QString& strMasternodes);
+    /** Set number of servicenodes shown in the UI */
+    void setServicenodeCount(const QString& strServicenodes);
     /** Go forward or back in history */
     void browseHistory(int offset);
     /** Scroll console view to end */
@@ -91,9 +91,9 @@ public slots:
     void showPeers();
     /** Switch to wallet-repair tab and show */
     void showRepair();
-    /** Open external (default) editor with pivx.conf */
+    /** Open external (default) editor with blocknetdx.conf */
     void showConfEditor();
-    /** Open external (default) editor with masternode.conf */
+    /** Open external (default) editor with servicenode.conf */
     void showMNConfEditor();
     /** Handle selection of peer in peers list */
     void peerSelected(const QItemSelection& selected, const QItemSelection& deselected);

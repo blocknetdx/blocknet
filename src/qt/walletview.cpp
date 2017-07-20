@@ -11,7 +11,7 @@
 #include "blockexplorer.h"
 #include "clientmodel.h"
 #include "guiutil.h"
-#include "masternodeconfig.h"
+#include "servicenodeconfig.h"
 #include "multisenddialog.h"
 #include "optionsmodel.h"
 #include "overviewpage.h"
@@ -79,9 +79,9 @@ WalletView::WalletView(QWidget* parent) : QStackedWidget(parent),
     addWidget(explorerWindow);
 
     QSettings settings;
-    if (settings.value("fShowMasternodesTab").toBool()) {
-        masternodeListPage = new MasternodeList();
-        addWidget(masternodeListPage);
+    if (settings.value("fShowServicenodesTab").toBool()) {
+        servicenodeListPage = new ServicenodeList();
+        addWidget(servicenodeListPage);
     }
 
     // Clicking on a transaction on the overview pre-selects the transaction on the transaction history page
@@ -131,8 +131,8 @@ void WalletView::setClientModel(ClientModel* clientModel)
     overviewPage->setClientModel(clientModel);
     sendCoinsPage->setClientModel(clientModel);
     QSettings settings;
-    if (settings.value("fShowMasternodesTab").toBool()) {
-        masternodeListPage->setClientModel(clientModel);
+    if (settings.value("fShowServicenodesTab").toBool()) {
+        servicenodeListPage->setClientModel(clientModel);
     }
 }
 
@@ -144,8 +144,8 @@ void WalletView::setWalletModel(WalletModel* walletModel)
     transactionView->setModel(walletModel);
     overviewPage->setWalletModel(walletModel);
     QSettings settings;
-    if (settings.value("fShowMasternodesTab").toBool()) {
-        masternodeListPage->setWalletModel(walletModel);
+    if (settings.value("fShowServicenodesTab").toBool()) {
+        servicenodeListPage->setWalletModel(walletModel);
     }
     receiveCoinsPage->setModel(walletModel);
     sendCoinsPage->setModel(walletModel);
@@ -204,11 +204,11 @@ void WalletView::gotoBlockExplorerPage()
     setCurrentWidget(explorerWindow);
 }
 
-void WalletView::gotoMasternodePage()
+void WalletView::gotoServicenodePage()
 {
     QSettings settings;
-    if (settings.value("fShowMasternodesTab").toBool()) {
-        setCurrentWidget(masternodeListPage);
+    if (settings.value("fShowServicenodesTab").toBool()) {
+        setCurrentWidget(servicenodeListPage);
     }
 }
 

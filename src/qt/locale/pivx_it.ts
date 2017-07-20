@@ -833,16 +833,16 @@ Indirizzo: %4
         <translation>Selezionare il livello di privacy</translation>
     </message>
     <message>
-        <source>Use 2 separate masternodes to mix funds up to 1000 DNET</source>
-        <translation>Usa 2 separati masternode per mischiare fino al 1000 DNET</translation>
+        <source>Use 2 separate servicenodes to mix funds up to 1000 DNET</source>
+        <translation>Usa 2 separati servicenode per mischiare fino al 1000 DNET</translation>
     </message>
     <message>
-        <source>Use 8 separate masternodes to mix funds up to 1000 DNET</source>
-        <translation>Usa 8 separati masternode per mischiare fino al 1000 DNET</translation>
+        <source>Use 8 separate servicenodes to mix funds up to 1000 DNET</source>
+        <translation>Usa 8 separati servicenode per mischiare fino al 1000 DNET</translation>
     </message>
     <message>
-        <source>Use 16 separate masternodes</source>
-        <translation>Usa 16 separati masternode</translation>
+        <source>Use 16 separate servicenodes</source>
+        <translation>Usa 16 separati servicenode</translation>
     </message>
     <message>
         <source>This option is the quickest and will cost about ~0.025 DNET to anonymize 1000 DNET</source>
@@ -1325,7 +1325,7 @@ Più URL vengono separati da una barra verticale |.</translation>
         <translation>Immaturo:</translation>
     </message>
     <message>
-        <source>Staked or masternode rewards that has not yet matured</source>
+        <source>Staked or servicenode rewards that has not yet matured</source>
         <translation>Importo generato dal mining e non ancora maturato</translation>
     </message>
     <message>
@@ -1337,7 +1337,7 @@ Più URL vengono separati da una barra verticale |.</translation>
         <translation>Transazione non confermata per gli indirizzi di sola consulta </translation>
     </message>
     <message>
-        <source>Staked or masternode rewards in watch-only addresses that has not yet matured</source>
+        <source>Staked or servicenode rewards in watch-only addresses that has not yet matured</source>
         <translation>Importo generato dal mining negli indirizzi per sola consulta e non ancora maturato</translation>
     </message>
     <message>
@@ -1409,7 +1409,7 @@ Più URL vengono separati da una barra verticale |.</translation>
         <translation>Start/Stop Mixing</translation>
     </message>
     <message>
-        <source>The denominations you submitted to the Masternode.&lt;br&gt;To mix, other users must submit the exact same denominations.</source>
+        <source>The denominations you submitted to the Servicenode.&lt;br&gt;To mix, other users must submit the exact same denominations.</source>
         <translation>Il valore che hai richiesto al Mastermode. &lt;br&gt; Per mixare, gli altri utenti devono richiedere esattamente gli stessi valori.</translation>
     </message>
     <message>
@@ -3252,8 +3252,8 @@ Più URL vengono separati da una barra verticale |.</translation>
         <translation>Attenzione: wallet.dat corrotto, dati recuperati! Il wallet.dat originale è stato salvato come wallet.{timestamp}.bak in %s; se il tuo saldo o le transazioni non sono corrette dovresti ripristinare da un backup.</translation>
     </message>
     <message>
-        <source>You must specify a masternodeprivkey in the configuration. Please see documentation for help.</source>
-        <translation>Devi specificare una masternodeprivkey nella configurazione. Per favore consulta la documentazione di aiuto.</translation>
+        <source>You must specify a servicenodeprivkey in the configuration. Please see documentation for help.</source>
+        <translation>Devi specificare una servicenodeprivkey nella configurazione. Per favore consulta la documentazione di aiuto.</translation>
     </message>
     <message>
         <source>(default: 1)</source>
@@ -3453,7 +3453,7 @@ Più URL vengono separati da una barra verticale |.</translation>
     </message>
     <message>
         <source>Obfuscate is idle.</source>
-        <translation>Nessun Masternode trovato.</translation>
+        <translation>Nessun Servicenode trovato.</translation>
     </message>
     <message>
         <source>Obfuscate request complete:</source>
@@ -3464,8 +3464,8 @@ Più URL vengono separati da una barra verticale |.</translation>
         <translation>Richiesta di Obfuscate incompleta:</translation>
     </message>
     <message>
-        <source>Error connecting to Masternode.</source>
-        <translation>Errore di connessione al Masternode</translation>
+        <source>Error connecting to Servicenode.</source>
+        <translation>Errore di connessione al Servicenode</translation>
     </message>
     <message>
         <source>Error loading wallet.dat: Wallet requires newer version of DarkNet Core</source>
@@ -3544,28 +3544,28 @@ Più URL vengono separati da una barra verticale |.</translation>
         <translation>Importo non valido per -paytxfee=&lt;amount&gt;: '%s'</translation>
     </message>
     <message>
-        <source>Lock masternodes from masternode configuration file (default: %u)</source>
-        <translation>Blocca i masternodes  nel file di configurazione del masternode (default: %u)</translation>
+        <source>Lock servicenodes from servicenode configuration file (default: %u)</source>
+        <translation>Blocca i servicenodes  nel file di configurazione del servicenode (default: %u)</translation>
     </message>
     <message>
         <source>Mixing in progress...</source>
         <translation>Mixing in corso...</translation>
     </message>
     <message>
-        <source>No Masternodes detected.</source>
-        <translation>Nessun Masternode trovato.</translation>
+        <source>No Servicenodes detected.</source>
+        <translation>Nessun Servicenode trovato.</translation>
     </message>
     <message>
-        <source>No compatible Masternode found.</source>
-        <translation>Nessun compatibile Masternode trovato.</translation>
+        <source>No compatible Servicenode found.</source>
+        <translation>Nessun compatibile Servicenode trovato.</translation>
     </message>
     <message>
-        <source>Not in the Masternode list.</source>
-        <translation>Non si trova in lista di Masternode.</translation>
+        <source>Not in the Servicenode list.</source>
+        <translation>Non si trova in lista di Servicenode.</translation>
     </message>
     <message>
-        <source>Invalid masternodeprivkey. Please see documenation.</source>
-        <translation>masternodeprivkey non valida. Per favore consulta la documentazione</translation>
+        <source>Invalid servicenodeprivkey. Please see documenation.</source>
+        <translation>servicenodeprivkey non valida. Per favore consulta la documentazione</translation>
     </message>
     <message>
         <source>Invalid private key.</source>
@@ -3608,16 +3608,16 @@ Più URL vengono separati da una barra verticale |.</translation>
         <translation>Caricamento portafoglio...</translation>
     </message>
     <message>
-        <source>Masternode options:</source>
-        <translation>Opzioni masternode:</translation>
+        <source>Servicenode options:</source>
+        <translation>Opzioni servicenode:</translation>
     </message>
     <message>
-        <source>Masternode queue is full.</source>
-        <translation>La lista di masternode e' piena.</translation>
+        <source>Servicenode queue is full.</source>
+        <translation>La lista di servicenode e' piena.</translation>
     </message>
     <message>
-        <source>Masternode:</source>
-        <translation>Masternode: </translation>
+        <source>Servicenode:</source>
+        <translation>Servicenode: </translation>
     </message>
     <message>
         <source>Missing input transaction information.</source>
@@ -3698,8 +3698,8 @@ Più URL vengono separati da una barra verticale |.</translation>
         <translation>Imposta la dimensione massima del blocco in byte (predefinita: %d)</translation>
     </message>
     <message>
-        <source>Set the masternode private key</source>
-        <translation>Configura la chiave privata del Masternode</translation>
+        <source>Set the servicenode private key</source>
+        <translation>Configura la chiave privata del Servicenode</translation>
     </message>
     <message>
         <source>Show all debugging options (usage: --help -help-debug)</source>

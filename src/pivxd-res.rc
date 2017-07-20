@@ -16,14 +16,14 @@ BEGIN
     BEGIN
         BLOCK "040904E4" // U.S. English - multilingual (hex)
         BEGIN
-            VALUE "CompanyName",        "PIVX"
-            VALUE "FileDescription",    "pivxd (OSS daemon/client for Pivx)"
+            VALUE "CompanyName",        "BlocknetDX"
+            VALUE "FileDescription",    "blocknetdxd (OSS daemon/client for Blocknetdx)"
             VALUE "FileVersion",        VER_FILEVERSION_STR
-            VALUE "InternalName",       "pivxd"
+            VALUE "InternalName",       "blocknetdxd"
             VALUE "LegalCopyright",     COPYRIGHT_STR
             VALUE "LegalTrademarks1",   "Distributed under the MIT/X11 software license, see the accompanying file COPYING or http://www.opensource.org/licenses/mit-license.php."
-            VALUE "OriginalFilename",   "pivxd.exe"
-            VALUE "ProductName",        "pivxd"
+            VALUE "OriginalFilename",   "blocknetdxd.exe"
+            VALUE "ProductName",        "blocknetdxd"
             VALUE "ProductVersion",     VER_PRODUCTVERSION_STR
         END
     END
