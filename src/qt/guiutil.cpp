@@ -895,6 +895,10 @@ QString formatServicesStr(quint64 mask)
             case NODE_NETWORK:
                 strList.append(QObject::tr("NETWORK"));
                 break;
+            case NODE_BLOOM:
+            case NODE_BLOOM_WITHOUT_MN:
+                strList.append(QObject::tr("BLOOM"));
+                break;
             default:
                 strList.append(QString("%1[%2]").arg(QObject::tr("UNKNOWN")).arg(check));
             }
