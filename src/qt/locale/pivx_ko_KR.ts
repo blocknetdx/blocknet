@@ -1,777 +1,753 @@
-<TS language="es" version="2.1">
+<TS language="ko_KR" version="2.1">
 <context>
     <name>AddressBookPage</name>
     <message>
         <source>Right-click to edit address or label</source>
-        <translation>Click derecho para editar la dirección o etiqueta</translation>
+        <translation>주소 및 라벨을 수정하려면 마우스 오른쪽 버튼을 클릭해주세요.</translation>
     </message>
     <message>
         <source>Create a new address</source>
-        <translation>Crear una nueva dirección</translation>
+        <translation>새로운 주소 만들기</translation>
     </message>
     <message>
         <source>&amp;New</source>
-        <translation>&amp;Nuevo</translation>
+        <translation>&amp;생성</translation>
     </message>
     <message>
         <source>Copy the currently selected address to the system clipboard</source>
-        <translation>Copiar la dirección seleccionada al portapapeles</translation>
+        <translation>현재 선택된 주소를 복사합니다.</translation>
     </message>
     <message>
         <source>&amp;Copy</source>
-        <translation>&amp;Copiar</translation>
+        <translation>&amp;복사</translation>
     </message>
     <message>
         <source>Delete the currently selected address from the list</source>
-        <translation>Borrar la dirección seleccionada de la lista</translation>
+        <translation>현재 선택된 주소를 목록에서 삭제합니다.</translation>
     </message>
     <message>
         <source>&amp;Delete</source>
-        <translation>Borrar</translation>
+        <translation>&amp;삭제</translation>
     </message>
     <message>
         <source>Export the data in the current tab to a file</source>
-        <translation>Exportar los datos de la pestaña actual a un archivo</translation>
+        <translation>현재 선택된 탭의 데이터를 파일로 내보내기</translation>
     </message>
     <message>
         <source>&amp;Export</source>
-        <translation>&amp;Exportar</translation>
+        <translation>&amp;내보내기</translation>
     </message>
     <message>
         <source>C&amp;lose</source>
-        <translation>Cerrar</translation>
+        <translation>닫&amp;기</translation>
     </message>
     <message>
         <source>Choose the address to send coins to</source>
-        <translation>Escoja la dirección a la cual desee enviar las monedas</translation>
+        <translation>전송할 주소를 선택해주세요.</translation>
     </message>
     <message>
         <source>Choose the address to receive coins with</source>
-        <translation>Escoja la dirección con las cual recibirá las monedas</translation>
+        <translation>전송 받을 주소를 선택해주세요.</translation>
     </message>
     <message>
         <source>C&amp;hoose</source>
-        <translation>&amp;Escoger</translation>
+        <translation>선&amp;택</translation>
     </message>
     <message>
         <source>Sending addresses</source>
-        <translation>Enviando direcciones</translation>
+        <translation>보낼 주소</translation>
     </message>
     <message>
         <source>Receiving addresses</source>
-        <translation>Recibiendo direcciones</translation>
+        <translation>받는 주소</translation>
     </message>
     <message>
         <source>These are your PIVX addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
-        <translation>Estas son sus direcciones PIVX para realizar pagos. Siempre verifique la cantidad y la dirección de recepción antes de enviar monedas.</translation>
+        <translation>이 주소들은 전송할 PIVX 주소입니다. 송금하기 전 항상 금액과 전송할 주소를 확인해주세요.</translation>
     </message>
     <message>
         <source>These are your PIVX addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
-        <translation>Estas son sus direcciones PIVX para recibir pagos. Es recomendable usar una nueva dirección de recepción para cada transacción.</translation>
+        <translation>이 주소들은 전송 받을 PIVX 주소입니다. 각 트랜잭션별로 새로운 입금 주소를 사용하는 것이 좋습니다.</translation>
     </message>
     <message>
         <source>&amp;Copy Address</source>
-        <translation>Copiar dirección</translation>
+        <translation>&amp;주소 복사</translation>
     </message>
     <message>
         <source>Copy &amp;Label</source>
-        <translation>Copiar y Etiquetar</translation>
+        <translation>라벨 &amp;복사</translation>
     </message>
     <message>
         <source>&amp;Edit</source>
-        <translation>Editar</translation>
+        <translation>&amp;수정</translation>
     </message>
     <message>
         <source>Export Address List</source>
-        <translation>Exportar lista de direcciones</translation>
+        <translation>주소록 내보내기</translation>
     </message>
     <message>
         <source>Comma separated file (*.csv)</source>
-        <translation>Archivo separado por comas (*.csv)</translation>
+        <translation>콤마로 구분 된 파일 (*.csv)</translation>
     </message>
     <message>
         <source>Exporting Failed</source>
-        <translation>Exportación fallida</translation>
+        <translation>내보내기 실패</translation>
     </message>
     <message>
         <source>There was an error trying to save the address list to %1. Please try again.</source>
-        <translation>Hubo un error intentando guardar la lista de direcciones %1. Por favor intente nuevamente</translation>
+        <translation>%1 에 주소 목록을 저장하는 동안 오류가 발생하였습니다. 다시 시도해주세요.</translation>
     </message>
 </context>
 <context>
     <name>AddressTableModel</name>
     <message>
         <source>Label</source>
-        <translation>Etiqueta</translation>
+        <translation>라벨</translation>
     </message>
     <message>
         <source>Address</source>
-        <translation>Dirección</translation>
+        <translation>주소</translation>
     </message>
     <message>
         <source>(no label)</source>
-        <translation>(sin etiqueta)</translation>
+        <translation>(라벨 없음)</translation>
     </message>
 </context>
 <context>
     <name>AskPassphraseDialog</name>
     <message>
         <source>Passphrase Dialog</source>
-        <translation>Diálogo de contraseña</translation>
+        <translation>암호 대화상자</translation>
     </message>
     <message>
         <source>Enter passphrase</source>
-        <translation>Introduzca la contraseña</translation>
+        <translation>암호 입력</translation>
     </message>
     <message>
         <source>New passphrase</source>
-        <translation>Nueva contraseña</translation>
+        <translation>새로운 암호</translation>
     </message>
     <message>
         <source>Repeat new passphrase</source>
-        <translation>Repetir nueva contraseña</translation>
+        <translation>새로운 암호 확인</translation>
     </message>
     <message>
         <source>Serves to disable the trivial sendmoney when OS account compromised. Provides no real security.</source>
-        <translation>Sirve para desactivar el envío de dinero cuando la cuenta del SO está comprometida. No provee de una seguridad real</translation>
+        <translation>운영체제 계정이 손상되었을 때 일반적인 송금을 비활성화 합니다. 실질적인 보안을 제공하지 않습니다.</translation>
     </message>
     <message>
         <source>For anonymization and staking only</source>
-        <translation>Para anonimización y staking solamente</translation>
+        <translation>익명화 및 스테이킹 전용</translation>
     </message>
     <message>
         <source>Enter the new passphrase to the wallet.&lt;br/&gt;Please use a passphrase of &lt;b&gt;ten or more random characters&lt;/b&gt;, or &lt;b&gt;eight or more words&lt;/b&gt;.</source>
-        <translation>Escriba la nueva contraseña para la Wallet. &lt;br/&gt;Por favor utilice una contraseña de &lt;b&gt;10 o más caracteres aleatorios&lt;/b&gt;, u &lt;b&gt; ocho o más palabras&lt;/b&gt;</translation>
+        <translation>지갑에 새로운 암호를 입력해주세요. &lt;br/&gt;&lt;b&gt;10자리 이상의 임의의 문자&lt;/b&gt; 또는, &lt;b&gt;8개 이상의 단어&lt;/b&gt;로 구성된 암호를 입력해주세요.</translation>
     </message>
     <message>
         <source>Encrypt wallet</source>
-        <translation>Encriptar la Wallet</translation>
+        <translation>지갑 암호화</translation>
     </message>
     <message>
         <source>This operation needs your wallet passphrase to unlock the wallet.</source>
-        <translation>Esta operación requiere su contraseña para desbloquear la Wallet</translation>
+        <translation>이 작업은 지갑의 암호를 풀어 지갑을 잠금해제를 진행해야 합니다.</translation>
     </message>
     <message>
         <source>Unlock wallet</source>
-        <translation>Desbloquear wallet</translation>
+        <translation>지갑 잠금해제</translation>
     </message>
     <message>
         <source>This operation needs your wallet passphrase to decrypt the wallet.</source>
-        <translation>Esta operación requiere su contraseña para desbloquear la Wallet</translation>
+        <translation>이 작업은 지갑 암호화 해제를 위해 지갑 암호가 필요합니다.</translation>
     </message>
     <message>
         <source>Decrypt wallet</source>
-        <translation>Desencriptar Wallet</translation>
+        <translation>지갑 암호화 해제</translation>
     </message>
     <message>
         <source>Change passphrase</source>
-        <translation>Cambiar contraseña</translation>
+        <translation>암호 변경</translation>
     </message>
     <message>
         <source>Enter the old and new passphrase to the wallet.</source>
-        <translation>Ingrese la antigua y nueva contraseña para la Wallet</translation>
+        <translation>지갑에 사용할 이전 암호와 새로운 암호를 입력해주세요.</translation>
     </message>
     <message>
         <source>Confirm wallet encryption</source>
-        <translation>Confirmar la encriptación de la Wallet</translation>
+        <translation>지갑 암호화 확인</translation>
     </message>
     <message>
         <source>PIVX will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your PIVs from being stolen by malware infecting your computer.</source>
-        <translation>PIVX se cerrará ahora para finalizar el proceso de encriptación. Recuerde que encriptar su Wallet no previene completamente que tus PIVs sean robados mediante malware infectando su ordenador.</translation>
+        <translation>PIVX는 이제 암호화 프로세스를 마치기 위해 닫힐것입니다. 지갑을 암호화하더라도 맬웨어로 인한 PIVs 의 도난당하는 것을 완벽하게 보호 할 수는 없습니다.</translation>
     </message>
     <message>
         <source>Are you sure you wish to encrypt your wallet?</source>
-        <translation>¿Esta seguro de que desea encriptar tu Wallet?</translation>
+        <translation>지갑을 암호화 하시겠습니까?</translation>
     </message>
     <message>
         <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR PIV&lt;/b&gt;!</source>
-        <translation>Atención: Si encripta su Wallet y pierde su contraseña, perderá &lt;b&gt; TODOS SUS PIV&lt;/b&gt;!</translation>
+        <translation>경고: 지갑 암호화 후 암호를 분실하게 되면 &lt;b&gt;모든 PIV를 잃게 됩니다&lt;/b&gt;!</translation>
     </message>
     <message>
         <source>Wallet encrypted</source>
-        <translation>Wallet encriptada</translation>
+        <translation>지갑 암호화 완료</translation>
     </message>
     <message>
         <source>IMPORTANT: Any previous backups you have made of your wallet file should be replaced with the newly generated, encrypted wallet file. For security reasons, previous backups of the unencrypted wallet file will become useless as soon as you start using the new, encrypted wallet.</source>
-        <translation>IMPORTANTE: Cualquier backup anterior que haya realizado de su Wallet debe ser reemplazado por el nuevo archivo de Wallet encriptado. Por razones de seguridad, las copias anteriores de seguridad de la Wallet sin encriptar pasaran a ser obsoletas tan pronto empiece a utilizar la nueva Wallet encriptada.</translation>
+        <translation>중요: 이전에 지갑 파일로 백업 한 경우 지갑 파일을 암호화 된 지갑 파일로 대체해야 합니다. 보안상 문제로, 암호화되지 않은 지갑 파일의 이전 백업은 새롭게 암호화 된 지갑을 사용하게 되면 쓸모없게 될 것입니다.</translation>
     </message>
     <message>
         <source>Wallet encryption failed</source>
-        <translation>La encriptación de la Wallet ha fallado</translation>
+        <translation>지갑 암호화 실패</translation>
     </message>
     <message>
         <source>Wallet encryption failed due to an internal error. Your wallet was not encrypted.</source>
-        <translation>La encriptación de la wallet ha fallado debido a un error interno. Tu wallet no ha sido encriptada.</translation>
+        <translation>내부 오류로 인해 지갑 암호화에 실패했습니다. 지갑이 암호화되지 않았습니다.</translation>
     </message>
     <message>
         <source>The supplied passphrases do not match.</source>
-        <translation>Las contraseñas suministradas no coinciden.</translation>
+        <translation>암호가 일치하지 않습니다.</translation>
     </message>
     <message>
         <source>Wallet unlock failed</source>
-        <translation>Fallo en el desbloqueo de la wallet</translation>
+        <translation>지갑 잠금해제 실패</translation>
     </message>
     <message>
         <source>The passphrase entered for the wallet decryption was incorrect.</source>
-        <translation>La contraseña introducida para la desencriptación de la wallet es incorrecta.</translation>
+        <translation>지갑 암호화 해제를 위해 입력한 지갑 암호가 올바르지 않습니다.</translation>
     </message>
     <message>
         <source>Wallet decryption failed</source>
-        <translation>Fallo en la desencriptación de la wallet</translation>
+        <translation>지갑 암호화 해제 실패</translation>
     </message>
     <message>
         <source>Wallet passphrase was successfully changed.</source>
-        <translation>Se cambió la contraseña con éxito.</translation>
+        <translation>지갑 암호가 변경되었습니다.</translation>
     </message>
     <message>
         <source>Warning: The Caps Lock key is on!</source>
-        <translation>Atención: La tecla Mayúsculas está encendida!</translation>
+        <translation>경고: Caps Lock 키가 켜져있습니다!</translation>
     </message>
 </context>
 <context>
     <name>Bip38ToolDialog</name>
     <message>
         <source>BIP 38 Tool</source>
-        <translation>Herramienta BIP 38</translation>
+        <translation>BIP 38 Tool</translation>
     </message>
     <message>
         <source>&amp;BIP 38 Encrypt</source>
-        <translation>&amp;Encriptación BIP 38</translation>
+        <translation>&amp;BIP 38 암호화</translation>
     </message>
     <message>
         <source>Enter a Pivx Address that you would like to encrypt using BIP 38. Enter a passphrase in the middle box. Press encrypt to compute the encrypted private key.</source>
-        <translation>Introduzca la dirección PIVX que querría encriptar usando BIP 38. Introduzca una contraseña en la caja central. Clickee en encriptar para computar la clave privada encriptada.</translation>
+        <translation>BIP 38을 사용하여 암호화 할 Pivx 주소를 입력하십시오. 중간 입력창에 암호를 입력하십시오. 암호화를 누르면 암호화된 개인 키가 계산됩니다.</translation>
     </message>
     <message>
         <source>Address:</source>
-        <translation>Dirección:</translation>
+        <translation>주소:</translation>
     </message>
     <message>
         <source>The PIVX address to sign the message with</source>
-        <translation>La dirección PIVX con la que firmar el mensaje</translation>
+        <translation>메세지를 서명하기 위한 PIVX 주소</translation>
     </message>
     <message>
         <source>Choose previously used address</source>
-        <translation>Escoge una dirección usada previamente</translation>
+        <translation>이전에 사용한 주소 선택</translation>
     </message>
     <message>
         <source>Alt+A</source>
-        <translation>Alt + A</translation>
+        <translation>Alt+A</translation>
     </message>
     <message>
         <source>Paste address from clipboard</source>
-        <translation>Pegar dirección desde el clipboard</translation>
+        <translation>클립보드에서 주소 붙여 넣기</translation>
     </message>
     <message>
         <source>Alt+P</source>
-        <translation>Alt + P</translation>
+        <translation>Alt+P</translation>
     </message>
     <message>
         <source>Passphrase: </source>
-        <translation>Contraseña:</translation>
+        <translation>암호:</translation>
     </message>
     <message>
         <source>Encrypted Key:</source>
-        <translation>Clave Encriptada:</translation>
+        <translation>암호화된 키:</translation>
     </message>
     <message>
         <source>Copy the current signature to the system clipboard</source>
-        <translation>Copiar la firma actual al clipboard del sistema</translation>
+        <translation>현재 서명을 시스템 클립 보드에 복사</translation>
     </message>
     <message>
         <source>Sign the message to prove you own this PIVX address</source>
-        <translation>Firmar el mensaje para demostrar que eres el propietario de esta dirección PIVX</translation>
+        <translation>이 PIVX 주소를 소유하고 있다는 것을 증명하기 위해 메세지에 서명하십시오</translation>
     </message>
     <message>
         <source>Encrypt &amp;Key</source>
-        <translation>Encriptar &amp; Clave</translation>
+        <translation>암호화 &amp; 키</translation>
     </message>
     <message>
         <source>Reset all sign message fields</source>
-        <translation>Resetear todos los campos de firma de mensaje</translation>
+        <translation>모든 서명 메세지 입력 지우기</translation>
     </message>
     <message>
         <source>Clear &amp;All</source>
-        <translation>Limpiar &amp;Todo</translation>
+        <translation>전체 &amp;지우기</translation>
     </message>
     <message>
         <source>&amp;BIP 38 Decrypt</source>
-        <translation>&amp;Desencriptación BIP 38</translation>
+        <translation>&amp;BIP 38 암호화 해제</translation>
     </message>
     <message>
         <source>Enter the BIP 38 encrypted private key. Enter the passphrase in the middle box. Click Decrypt Key to compute the private key. After the key is decrypted, clicking 'Import Address' will add this private key to the wallet.</source>
-        <translation>Introducir la clave encriptada privada BIP 38. Introducir la contraseña en la caja central. Pulsar en Desencriptar Clave para computar la clave privada. Después de que la clave sea desencriptada, pulsando en 'Importar Dirección' añadirá esta clave privada a la wallet.</translation>
+        <translation>BIP 38 암호화 된 개인 키를 입력하십시오. 중간 입력창에 암호를 입력하십시오. 키를 암호해제 후 '주소 가져오기'를 클릭하면 개인 키가 지갑에 추가됩니다.</translation>
     </message>
     <message>
         <source>The PIVX address the message was signed with</source>
-        <translation>La dirección PIVX con la que el mensaje fue firmado</translation>
+        <translation>메세지에 서명된 PIVX 주소</translation>
     </message>
     <message>
         <source>Verify the message to ensure it was signed with the specified PIVX address</source>
-        <translation>Verificar el mensaje para asegurarse que fue firmado con la dirección PIVX especificada</translation>
+        <translation>메세지가 지정된 PIVX 주소로 서명되었는지 확인해주세요</translation>
     </message>
     <message>
         <source>Decrypt &amp;Key</source>
-        <translation>Desencriptar &amp; Clave</translation>
+        <translation>암호해제 &amp;키</translation>
     </message>
     <message>
         <source>Reset all verify message fields</source>
-        <translation>Resetear todos los campos de verificación de mensaje</translation>
+        <translation>모든 확인 메세지 영역 지우기</translation>
     </message>
     <message>
         <source>Decrypted Key:</source>
-        <translation>Clave desencriptada</translation>
+        <translation>암호해제된 키</translation>
     </message>
     <message>
         <source>Import Address</source>
-        <translation>Importar Dirección</translation>
+        <translation>주소 가져오기</translation>
     </message>
     <message>
         <source>Click "Decrypt Key" to compute key</source>
-        <translation>Clickar "Desencriptar Clave" para computar la clave</translation>
+        <translation>"키 암호해제"를 클릭하여 키를 입력해주세요.</translation>
     </message>
     <message>
         <source>The entered passphrase is invalid. </source>
-        <translation>La contraseña introducida es inválida</translation>
+        <translation>입력한 암호 문구가 잘못되었습니다.</translation>
     </message>
     <message>
         <source>Allowed: 0-9,a-z,A-Z,</source>
-        <translation>Permitido: 0-9,a.z,A-Z,</translation>
+        <translation>사용가능: 0-9,a-z,A-Z,</translation>
     </message>
     <message>
         <source>The entered address is invalid.</source>
-        <translation>La dirección introducida es inválida</translation>
+        <translation>입력한 주소가 올바르지 않습니다.</translation>
     </message>
     <message>
         <source>Please check the address and try again.</source>
-        <translation>Por favor comprobar la dirección y probar de nuevo.</translation>
+        <translation>주소를 다시 확인해주세요.</translation>
     </message>
     <message>
         <source>The entered address does not refer to a key.</source>
-        <translation>La dirección introducido no se refiere a ninguna clave.</translation>
+        <translation>입력한 주소가 키를 참조하지 않습니다.</translation>
     </message>
     <message>
         <source>Wallet unlock was cancelled.</source>
-        <translation>El desbloqueo de la wallet fue cancelado.</translation>
+        <translation>지갑 잠금 해제가 취소되었습니다.</translation>
     </message>
     <message>
         <source>Private key for the entered address is not available.</source>
-        <translation>La clave privada para la dirección introducida no está disponible.</translation>
+        <translation>입력한 주소의 개인 키를 사용할 수 없습니다.</translation>
     </message>
     <message>
         <source>Failed to decrypt.</source>
-        <translation>Fallo en la desencriptación</translation>
+        <translation>암호해제에 실패하였습니다.</translation>
     </message>
     <message>
         <source>Please check the key and passphrase and try again.</source>
-        <translation>Por favor comprobar la clave y la contraseña y probar de nuevo.</translation>
+        <translation>키와 암호를 확인하고 다시 시도해주세요.</translation>
     </message>
     <message>
         <source>Data Not Valid.</source>
-        <translation>Datos No Válidos.</translation>
+        <translation>데이터가 올바르지 않습니다.</translation>
     </message>
     <message>
         <source>Please try again.</source>
-        <translation>Por favor intentar de nuevo.</translation>
+        <translation>다시 시도해주세요.</translation>
     </message>
     <message>
         <source>Please wait while key is imported</source>
-        <translation>Por favor esperar mientras se importa la clave</translation>
+        <translation>키를 가져오는 동안 기다려주세요.</translation>
     </message>
     <message>
         <source>Key Already Held By Wallet</source>
-        <translation>Llave Ya Presente En El Monedero</translation>
+        <translation>이미 지갑에서 사용된 키</translation>
     </message>
     <message>
         <source>Error Adding Key To Wallet</source>
-        <translation>Error Añadiendo la Clave en la Wallet</translation>
+        <translation>지갑에 키를 추가하는 도중 에러가 발생했습니다</translation>
     </message>
     <message>
         <source>Successfully Added Private Key To Wallet</source>
-        <translation>Clave privada añadida a la wallet con éxito</translation>
+        <translation>지갑에 개인 키를 추가하였습니다.</translation>
     </message>
 </context>
 <context>
     <name>BitcoinGUI</name>
     <message>
         <source>Wallet</source>
-        <translation>Wallet</translation>
+        <translation>지갑</translation>
     </message>
     <message>
         <source>Node</source>
-        <translation>Nodo</translation>
+        <translation>노드</translation>
     </message>
     <message>
         <source>&amp;Overview</source>
-        <translation>&amp;Visión general</translation>
+        <translation>&amp;개요</translation>
     </message>
     <message>
         <source>Show general overview of wallet</source>
-        <translation>Mostrar visión general de la wallet</translation>
+        <translation>지갑의 일반적인 개요 표시</translation>
     </message>
     <message>
         <source>&amp;Send</source>
-        <translation>&amp;Enviar</translation>
+        <translation>&amp;전송</translation>
     </message>
     <message>
         <source>&amp;Receive</source>
-        <translation>&amp;Recibir</translation>
+        <translation>&amp;받기</translation>
     </message>
     <message>
         <source>&amp;Transactions</source>
-        <translation>&amp;Transacciones</translation>
+        <translation>&amp;트랜잭션</translation>
     </message>
     <message>
         <source>Browse transaction history</source>
-        <translation>Navegar por el historial de transacciones</translation>
+        <translation>트랜잭션 내역 보기</translation>
     </message>
     <message>
         <source>E&amp;xit</source>
-        <translation>S&amp;alir</translation>
+        <translation>종&amp;료</translation>
     </message>
     <message>
         <source>Quit application</source>
-        <translation>Cerrar aplicación</translation>
+        <translation>어플리케이션 종료</translation>
     </message>
     <message>
         <source>About &amp;Qt</source>
-        <translation>Sobre &amp;Qt</translation>
+        <translation>&amp;Qt 정보</translation>
     </message>
     <message>
         <source>Show information about Qt</source>
-        <translation>Mostrar información sobre Qt</translation>
+        <translation>Qt에 대한 정보 표시</translation>
     </message>
     <message>
         <source>&amp;Options...</source>
-        <translation>&amp;Opciones...</translation>
+        <translation>&amp;옵션...</translation>
     </message>
     <message>
         <source>&amp;Show / Hide</source>
-        <translation>&amp;Mostrar / Esconder</translation>
+        <translation>&amp;보이기 / 숨기기</translation>
     </message>
     <message>
         <source>Show or hide the main Window</source>
-        <translation>Mostrar o esconder la ventana principal</translation>
+        <translation>기본 창 보이기 또는 숨기기</translation>
     </message>
     <message>
         <source>&amp;Encrypt Wallet...</source>
-        <translation>&amp;Encriptar wallet...</translation>
+        <translation>&amp;지갑 암호화...</translation>
     </message>
     <message>
         <source>Encrypt the private keys that belong to your wallet</source>
-        <translation>Encriptar las claves privadas que pertenecen a tu wallet</translation>
+        <translation>지갑 개인 키 암호화</translation>
     </message>
     <message>
         <source>&amp;Backup Wallet...</source>
-        <translation>&amp;Copia de seguridad de la wallet...</translation>
+        <translation>&amp;지갑 백업</translation>
     </message>
     <message>
         <source>Backup wallet to another location</source>
-        <translation>Copia de seguridad de la wallet a otra ubicación</translation>
+        <translation>다른 위치에 지갑 백업</translation>
     </message>
     <message>
         <source>&amp;Change Passphrase...</source>
-        <translation>&amp;Cambiar contraseña...</translation>
+        <translation>&amp;암호 변경...</translation>
     </message>
     <message>
         <source>Change the passphrase used for wallet encryption</source>
-        <translation>Cambiar contraseña usada para la encriptación de la wallet</translation>
+        <translation>지갑 암호화에 사용되는 암호 변경</translation>
     </message>
     <message>
         <source>&amp;Unlock Wallet...</source>
-        <translation>&amp;Desbloquear wallet...</translation>
+        <translation>&amp;지갑 잠금해제...</translation>
     </message>
     <message>
         <source>Unlock wallet</source>
-        <translation>Desbloquear wallet</translation>
+        <translation>지갑 잠금해제</translation>
     </message>
     <message>
         <source>&amp;Lock Wallet</source>
-        <translation>&amp;Bloquear Wallet</translation>
+        <translation>&amp;지갑 잠금</translation>
     </message>
     <message>
         <source>Sign &amp;message...</source>
-        <translation>Firmar &amp;mensaje..</translation>
+        <translation>메세지 &amp;서명...</translation>
     </message>
     <message>
         <source>&amp;Verify message...</source>
-        <translation>&amp;Verificar mensaje...</translation>
+        <translation>&amp;메시지 확인...</translation>
     </message>
     <message>
         <source>&amp;Information</source>
-        <translation>&amp;Información</translation>
+        <translation>&amp;정보</translation>
     </message>
     <message>
         <source>Show diagnostic information</source>
-        <translation>Mostrar información de diagnóstico</translation>
+        <translation>진단 정보 표시</translation>
     </message>
     <message>
         <source>&amp;Debug console</source>
-        <translation>&amp;Consola de depuración</translation>
+        <translation>&amp;디버그 콘솔</translation>
     </message>
     <message>
         <source>Open debugging console</source>
-        <translation>Abrir consola de depuración</translation>
+        <translation>디버깅 콘솔 열기</translation>
     </message>
     <message>
         <source>&amp;Network Monitor</source>
-        <translation>&amp;Monitor de red</translation>
+        <translation>&amp;네트워크 모니터</translation>
     </message>
     <message>
         <source>Show network monitor</source>
-        <translation>Mostrar monitor de red</translation>
+        <translation>네트워크 모니터 표시</translation>
     </message>
     <message>
         <source>&amp;Peers list</source>
-        <translation>&amp;Lista de Peers</translation>
+        <translation>&amp;피어 목록</translation>
     </message>
     <message>
         <source>Show peers info</source>
-        <translation>Mostrar información de peers</translation>
+        <translation>피어 정보 표시</translation>
     </message>
     <message>
         <source>Wallet &amp;Repair</source>
-        <translation>&amp;Reparación de la wallet</translation>
+        <translation>지갑 &amp;복구</translation>
     </message>
     <message>
         <source>Show wallet repair options</source>
-        <translation>Mostrar opciones de reparación de la wallet</translation>
+        <translation>지갑 복구 옵션 표시</translation>
     </message>
     <message>
         <source>Open configuration file</source>
-        <translation>Abrir archivo configuración</translation>
+        <translation>구성 파일 열기</translation>
     </message>
     <message>
         <source>Show Automatic &amp;Backups</source>
-        <translation>Mostrar &amp;copias de seguridad automatizadas</translation>
+        <translation>자동 &amp;백업 표시</translation>
     </message>
     <message>
         <source>Show automatically created wallet backups</source>
-        <translation>Mostrar las copias de seguridad creadas automáticamente</translation>
+        <translation>자동 생성된 지갑 백업 표시</translation>
     </message>
     <message>
         <source>&amp;Sending addresses...</source>
-        <translation>&amp;Direcciones de envío...</translation>
+        <translation>&amp;주소 보내는중...</translation>
     </message>
     <message>
         <source>Show the list of used sending addresses and labels</source>
-        <translation>Mostrar la lista y etiquetas de direcciones de envío usadas</translation>
+        <translation>전송 된 주소 및 라벨 목록 표시</translation>
     </message>
     <message>
         <source>&amp;Receiving addresses...</source>
-        <translation>&amp;Dirección receptora</translation>
+        <translation>&amp;받는 주소...</translation>
     </message>
     <message>
         <source>Show the list of used receiving addresses and labels</source>
-        <translation>Mostrar la lista de las direcciones y etiquetas usadas</translation>
+        <translation>입금 된 주소 및 라벨 목록 표시</translation>
     </message>
     <message>
         <source>Open &amp;URI...</source>
-        <translation>Abrir &amp;URI...</translation>
+        <translation>&amp;URI 열기...</translation>
     </message>
     <message>
         <source>&amp;Command-line options</source>
-        <translation>&amp;Opciones de linea de comandos</translation>
-    </message>
-    <message numerus="yes">
-        <source>Processed %n blocks of transaction history.</source>
-        <translation><numerusform>Procesados %n bloque del histórico de transacciones.</numerusform><numerusform>Procesados %n bloques del histórico de transacciones.</numerusform></translation>
+        <translation>&amp;명령행 옵션</translation>
     </message>
     <message>
         <source>Synchronizing additional data: %p%</source>
-        <translation>Sincronizando datos adicionales: %p%</translation>
+        <translation>추가 데이터 동기화: %p%</translation>
     </message>
     <message>
         <source>&amp;File</source>
-        <translation>&amp;Archivo</translation>
+        <translation>&amp;파일</translation>
     </message>
     <message>
         <source>&amp;Settings</source>
-        <translation>&amp;Ajustes</translation>
+        <translation>&amp;설정</translation>
     </message>
     <message>
         <source>&amp;Tools</source>
-        <translation>&amp;Herramientas</translation>
+        <translation>&amp;도구</translation>
     </message>
     <message>
         <source>&amp;Help</source>
-        <translation>&amp;Ayuda</translation>
+        <translation>&amp;도움말</translation>
     </message>
     <message>
         <source>Tabs toolbar</source>
-        <translation>Herramienta de pestañas</translation>
+        <translation>탭 도구 모음</translation>
     </message>
     <message>
         <source>PIVX Core</source>
-        <translation>Núcleo PIVX</translation>
+        <translation>PIVX Core</translation>
     </message>
     <message>
         <source>Send coins to a PIVX address</source>
-        <translation>Enviar coins a una dirección PIVX</translation>
+        <translation>PIVX 주소로 전송하기</translation>
     </message>
     <message>
         <source>Request payments (generates QR codes and pivx: URIs)</source>
-        <translation>Solicitud de pago (genera un código QR y URIs)</translation>
+        <translation>결제 요청 (QR 코드 및 pivx: URI 생성)</translation>
     </message>
     <message>
         <source>&amp;Masternodes</source>
-        <translation>Nodos &amp;Maestros</translation>
+        <translation>&amp;마스터노드</translation>
     </message>
     <message>
         <source>Browse masternodes</source>
-        <translation>Explorar nodos maestros</translation>
+        <translation>마스터노드 검색</translation>
     </message>
     <message>
         <source>&amp;About PIVX Core</source>
-        <translation>&amp;Sobre el núcleo de PIVX</translation>
+        <translation>PIVX Core &amp;정보</translation>
     </message>
     <message>
         <source>Show information about PIVX Core</source>
-        <translation>Mostrar información sobre el núcleo de PIVX</translation>
+        <translation>PIVX Core에 대한 정보 표시</translation>
     </message>
     <message>
         <source>Modify configuration options for PIVX</source>
-        <translation>Modificar las opciones de configuración de PIVX</translation>
+        <translation>PIVX에 대한 구성 옵션 수정</translation>
     </message>
     <message>
         <source>Sign messages with your PIVX addresses to prove you own them</source>
-        <translation>Firmar mensajes con sus direcciones PIVX para demostrar que le pertenecen</translation>
+        <translation>PIVX 주소로 메시지에 서명하여 소유하고 있음을 증명하십시오.</translation>
     </message>
     <message>
         <source>Verify messages to ensure they were signed with specified PIVX addresses</source>
-        <translation>Verificar mensajes para asegurar que están firmados con la dirección PIVX especificada</translation>
+        <translation>메시지가 지정된 PIVX 주소로 서명되었는지 확인합니다.</translation>
     </message>
     <message>
         <source>&amp;BIP38 tool</source>
-        <translation>&amp;Herramienta BIP38</translation>
+        <translation>&amp;BIP38 도구</translation>
     </message>
     <message>
         <source>Encrypt and decrypt private keys using a passphrase</source>
-        <translation>Encriptar y desencriptar las llaves privadas usando una contraseña</translation>
+        <translation>암호를 사용하여 개인 키 암호화 및 암호해제</translation>
     </message>
     <message>
         <source>&amp;MultiSend</source>
-        <translation>&amp;MultiEnvío</translation>
+        <translation>&amp;다중전송</translation>
     </message>
     <message>
         <source>MultiSend Settings</source>
-        <translation>Configuración de MultiEnvío</translation>
+        <translation>다중전송 설정</translation>
     </message>
     <message>
         <source>Open Wallet &amp;Configuration File</source>
-        <translation>Abrir Fichero de &amp;Configuración del Monedero</translation>
+        <translation>지갑 &amp;구성 파일 열기</translation>
     </message>
     <message>
         <source>Open &amp;Masternode Configuration File</source>
-        <translation>Abrir Fichero de Configuración de Nodos &amp;Maestros</translation>
+        <translation>&amp;마스터노드 구성 파일 열기</translation>
     </message>
     <message>
         <source>Open Masternode configuration file</source>
-        <translation>Abrir Fichero de Configuración de Nodos Maestros</translation>
+        <translation>마스터노드 구성 파일 열기</translation>
     </message>
     <message>
         <source>Open a PIVX: URI or payment request</source>
-        <translation>Abrir un PIVX: URI o solicitud de pago</translation>
+        <translation>PIVX: URI 또는 ​​결제 요청 열기</translation>
     </message>
     <message>
         <source>&amp;Blockchain explorer</source>
-        <translation>Explorador de &amp;Bloques</translation>
+        <translation>&amp;블록체인 탐색기</translation>
     </message>
     <message>
         <source>Block explorer window</source>
-        <translation>Ventana del explorador de bloques</translation>
+        <translation>블록 탐색 창</translation>
     </message>
     <message>
         <source>Show the PIVX Core help message to get a list with possible PIVX command-line options</source>
-        <translation>Mostrar la ayuda de PIVX Core para obtener una lista de posibles opciones en línea de comandos</translation>
+        <translation>PIVX Core 도움말 메세지를 표시하여 사용 가능한 PIVX 명령행 옵션 목록 표시</translation>
     </message>
     <message>
         <source>PIVX Core client</source>
-        <translation>Cliente PIVX Core</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n active connection(s) to PIVX network</source>
-        <translation><numerusform>%n conexión(es) activa a la red PIVX</numerusform><numerusform>%n conexion(es) activas a la red PIVX</numerusform></translation>
+        <translation>PIVX Core 클라이언트</translation>
     </message>
     <message>
         <source>Synchronizing with network...</source>
-        <translation>Sincronizando con la red...</translation>
+        <translation>네트워크 동기화중...</translation>
     </message>
     <message>
         <source>Importing blocks from disk...</source>
-        <translation>Importando bloques de disco...</translation>
+        <translation>디스크에서 블록 가져오기...</translation>
     </message>
     <message>
         <source>Reindexing blocks on disk...</source>
-        <translation>Reindexando bloques en el disco...</translation>
+        <translation>디스크 블록 재색인...</translation>
     </message>
     <message>
         <source>No block source available...</source>
-        <translation>Fuente de bloques no disponible...</translation>
+        <translation>사용 가능한 블록 소스 없음...</translation>
     </message>
     <message>
         <source>Up to date</source>
-        <translation>Actualizado</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n hour(s)</source>
-        <translation><numerusform>%n hora</numerusform><numerusform>%n horas</numerusform></translation>
-    </message>
-    <message numerus="yes">
-        <source>%n day(s)</source>
-        <translation><numerusform>%n día</numerusform><numerusform>%n días</numerusform></translation>
-    </message>
-    <message numerus="yes">
-        <source>%n week(s)</source>
-        <translation><numerusform>%n semana</numerusform><numerusform>%n semanas</numerusform></translation>
+        <translation>최신</translation>
     </message>
     <message>
         <source>%1 and %2</source>
-        <translation>%1 y %2</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n year(s)</source>
-        <translation><numerusform>%n año</numerusform><numerusform>%n años</numerusform></translation>
+        <translation>%1 그리고 %2</translation>
     </message>
     <message>
         <source>%1 behind</source>
-        <translation>%1 detrás</translation>
+        <translation>%1 뒤</translation>
     </message>
     <message>
         <source>Catching up...</source>
-        <translation>Recogiendo...</translation>
+        <translation>동기화중...</translation>
     </message>
     <message>
         <source>Last received block was generated %1 ago.</source>
-        <translation>El último bloque recibido se generó hace %1.</translation>
+        <translation>마지막으로 받은 블록이 %1 전에 생성되었습니다.</translation>
     </message>
     <message>
         <source>Transactions after this will not yet be visible.</source>
-        <translation>Las transacciones posteriores todavía no son visibles.</translation>
+        <translation>이후의 트랜잭션은 아직 표시되지 않습니다.</translation>
     </message>
     <message>
         <source>Error</source>
-        <translation>Error</translation>
+        <translation>에러</translation>
     </message>
     <message>
         <source>Warning</source>
-        <translation>Advertencia</translation>
+        <translation>경고</translation>
     </message>
     <message>
         <source>Information</source>
-        <translation>Información</translation>
+        <translation>정보</translation>
     </message>
     <message>
         <source>Sent transaction</source>
-        <translation>Transacción enviada</translation>
+        <translation>트랜잭션 전송</translation>
     </message>
     <message>
         <source>Incoming transaction</source>
-        <translation>Transacción entrante</translation>
+        <translation>받은 트랜잭션</translation>
     </message>
     <message>
         <source>Sent MultiSend transaction</source>
-        <translation>Transacción MultiEnvío emitida</translation>
+        <translation>다중 트랜잭션 전송</translation>
     </message>
     <message>
         <source>Date: %1
@@ -779,248 +755,248 @@ Amount: %2
 Type: %3
 Address: %4
 </source>
-        <translation>Fecha: %1
-Cantidad: %2
-Tipo: %3
-Dirección: %4
+        <translation>날짜: %1
+금액: %2
+유형: %3
+주소: %4
 </translation>
     </message>
     <message>
         <source>Staking is active
  MultiSend: %1</source>
-        <translation>La recompensa de participación está activa
-MultiEnvío: %1</translation>
+        <translation>스테이킹 활성화
+다중전송: %1</translation>
     </message>
     <message>
         <source>Active</source>
-        <translation>Activo</translation>
+        <translation>활성</translation>
     </message>
     <message>
         <source>Not Active</source>
-        <translation>Inactivo</translation>
+        <translation>비활성</translation>
     </message>
     <message>
         <source>Staking is not active
  MultiSend: %1</source>
-        <translation>Staking inactiva
-MultiEnvío: %1</translation>
+        <translation>스테이킹이 활성화 되지 않음
+다중전송: %1</translation>
     </message>
     <message>
         <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;unlocked&lt;/b&gt;</source>
-        <translation>El monedero está &lt;b&gt;encriptado&lt;/b&gt; y actualmente &lt;b&gt;desbloqueado&lt;/b&gt;</translation>
+        <translation>지갑은 &lt;b&gt;암호화&lt;/ b&gt;되어 있으며 현재 &lt;b&gt;잠금해제&lt;/ b&gt;되었습니다.</translation>
     </message>
     <message>
         <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;unlocked&lt;/b&gt; for anonimization and staking only</source>
-        <translation>El monedero está &lt;b&gt;encriptado&lt;/b&gt; y actualmente &lt;b&gt;desbloqueado&lt;/b&gt; sólo para anonimato y prueba de participación.</translation>
+        <translation>지갑은 &lt;b&gt;암호화&lt;/b&gt;되어 있으며 현재 익명화 및 스테이킹만을 위해 &lt;b&gt;잠금해제&lt;/b&gt; 되었습니다.</translation>
     </message>
     <message>
         <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;locked&lt;/b&gt;</source>
-        <translation>El monedero está &lt;b&gt;encriptado&lt;/b&gt; y actualmente &lt;b&gt;bloqueado&lt;/b&gt;</translation>
+        <translation>지갑은 &lt;b&gt;암호화&lt;/ b&gt;되어 있으며 현재 &lt;b&gt;잠겨 있습니다&lt;/ b&gt;.</translation>
     </message>
 </context>
 <context>
     <name>BlockExplorer</name>
     <message>
         <source>Blockchain Explorer</source>
-        <translation>Explorador de Cadena de Bloques</translation>
+        <translation>블록체인 탐색기</translation>
     </message>
     <message>
         <source>Address / Block / Transaction</source>
-        <translation>Dirección / Bloque / Transacción</translation>
+        <translation>주소 / 블록 / 트랜잭션</translation>
     </message>
     <message>
         <source>Search</source>
-        <translation>Buscar</translation>
+        <translation>검색</translation>
     </message>
     <message>
         <source>TextLabel</source>
-        <translation>EtiquetaDeTexto</translation>
+        <translation>텍스트라벨</translation>
     </message>
     <message>
         <source>Not all transactions will be shown. To view all transactions you need to set txindex=1 in the configuration file (pivx.conf).</source>
-        <translation>No se muestran todas las transacciones. Para ver todas las transacciones introduzca la línea "txindex=1" en el archivo de configuración (pivx.conf).</translation>
+        <translation>모든 트랜잭션이 표시되지는 않습니다. 모든 트랜잭션을 보려면 구성 파일 (pivx.conf)에 txindex = 1을 설정해야합니다.</translation>
     </message>
 </context>
 <context>
     <name>ClientModel</name>
     <message>
         <source>Total: %1 (OBF compatible: %2 / Enabled: %3)</source>
-        <translation>Total: %1 (Ofuscación compatible: %2 / Activado: %3)</translation>
+        <translation>총: %1 (OBF 호환: %2 / 사용됨: %3)</translation>
     </message>
     <message>
         <source>Network Alert</source>
-        <translation>Alerta de Red</translation>
+        <translation>네트워크 알림</translation>
     </message>
 </context>
 <context>
     <name>CoinControlDialog</name>
     <message>
         <source>Quantity:</source>
-        <translation>Cantidad:</translation>
+        <translation>수량:</translation>
     </message>
     <message>
         <source>Bytes:</source>
-        <translation>Octetos:</translation>
+        <translation>Bytes:</translation>
     </message>
     <message>
         <source>Amount:</source>
-        <translation>Cantidad:</translation>
+        <translation>금액:</translation>
     </message>
     <message>
         <source>Priority:</source>
-        <translation>Prioridad:</translation>
+        <translation>우선 순위:</translation>
     </message>
     <message>
         <source>Fee:</source>
-        <translation>Comisión:</translation>
+        <translation>수수료:</translation>
     </message>
     <message>
         <source>Coin Selection</source>
-        <translation>Selección de Moneda</translation>
+        <translation>코인 선택</translation>
     </message>
     <message>
         <source>Dust:</source>
-        <translation>Calderilla:</translation>
+        <translation>현금:</translation>
     </message>
     <message>
         <source>After Fee:</source>
-        <translation>Con Comisión:</translation>
+        <translation>이후 수수료:</translation>
     </message>
     <message>
         <source>Change:</source>
-        <translation>Cambio:</translation>
+        <translation>변경:</translation>
     </message>
     <message>
         <source>(un)select all</source>
-        <translation>(de)seleccionar todos</translation>
+        <translation>모두 선택(해제)</translation>
     </message>
     <message>
         <source>toggle lock state</source>
-        <translation>cambiar estado de bloqueo</translation>
+        <translation>토글 잠금상태</translation>
     </message>
     <message>
         <source>Tree mode</source>
-        <translation>Modo de Árbol</translation>
+        <translation>트리 모드</translation>
     </message>
     <message>
         <source>List mode</source>
-        <translation>Modo de Lista</translation>
+        <translation>목록 모드</translation>
     </message>
     <message>
         <source>(1 locked)</source>
-        <translation>(1 bloqueado)</translation>
+        <translation>(1 잠김)</translation>
     </message>
     <message>
         <source>Amount</source>
-        <translation>Cantidad</translation>
+        <translation>금액</translation>
     </message>
     <message>
         <source>Received with label</source>
-        <translation>Recibido con etiqueta</translation>
+        <translation>수신 된 라벨</translation>
     </message>
     <message>
         <source>Received with address</source>
-        <translation>Recibido con dirección</translation>
+        <translation>수신 된 주소</translation>
     </message>
     <message>
         <source>DS Rounds</source>
-        <translation>Rondas DS:</translation>
+        <translation>DS 라운드</translation>
     </message>
     <message>
         <source>Date</source>
-        <translation>Fecha</translation>
+        <translation>날짜</translation>
     </message>
     <message>
         <source>Confirmations</source>
-        <translation>Confirmaciones</translation>
+        <translation>확인</translation>
     </message>
     <message>
         <source>Confirmed</source>
-        <translation>Confirmado</translation>
+        <translation>확정</translation>
     </message>
     <message>
         <source>Priority</source>
-        <translation>Prioridad</translation>
+        <translation>우선 사항</translation>
     </message>
     <message>
         <source>Copy address</source>
-        <translation>Copiar dirección</translation>
+        <translation>주소 복사</translation>
     </message>
     <message>
         <source>Copy label</source>
-        <translation>Copiar etiqueta</translation>
+        <translation>라벨 복사</translation>
     </message>
     <message>
         <source>Copy amount</source>
-        <translation>Copiar cantidad</translation>
+        <translation>금액 복사</translation>
     </message>
     <message>
         <source>Copy transaction ID</source>
-        <translation>Copiar código de transacción</translation>
+        <translation>트랜잭션 ID 복사</translation>
     </message>
     <message>
         <source>Lock unspent</source>
-        <translation>Bloquear no gastados</translation>
+        <translation>잠금되지 않음</translation>
     </message>
     <message>
         <source>Unlock unspent</source>
-        <translation>Desbloquear no gastados</translation>
+        <translation>잠금해제되지 않음</translation>
     </message>
     <message>
         <source>Copy quantity</source>
-        <translation>Copiar cantidad</translation>
+        <translation>수량 복사</translation>
     </message>
     <message>
         <source>Copy fee</source>
-        <translation>Copiar comisión</translation>
+        <translation>수수료 복사</translation>
     </message>
     <message>
         <source>Copy after fee</source>
-        <translation>Copiar después de comisión</translation>
+        <translation>이용 수수료 복사</translation>
     </message>
     <message>
         <source>Copy bytes</source>
-        <translation>Copiar octetos</translation>
+        <translation>bytes 복사</translation>
     </message>
     <message>
         <source>Copy priority</source>
-        <translation>Copiar prioridad</translation>
+        <translation>우선 사항 복사</translation>
     </message>
     <message>
         <source>Copy dust</source>
-        <translation>Copiar calderilla</translation>
+        <translation>현금 복사</translation>
     </message>
     <message>
         <source>Copy change</source>
-        <translation>Copiar cambio</translation>
+        <translation>변경 복사</translation>
     </message>
     <message>
         <source>Please switch to "List mode" to use this function.</source>
-        <translation>Por favor cambie a "Modo de Lista" para utilizar esta función.</translation>
+        <translation>이 기능을 사용하려면 "목록 모드"로 전환하십시오.</translation>
     </message>
     <message>
         <source>Non-anonymized input selected. &lt;b&gt;Obfuscation will be disabled.&lt;/b&gt;&lt;br&gt;&lt;br&gt;If you still want to use Obfuscation, please deselect all non-nonymized inputs first and then check Obfuscation checkbox again.</source>
-        <translation>Has seleccionado una entrada que no ha sido anonimizada. &lt;b&gt;La Ofuscación será deshabilitada.&lt;/b&gt;&lt;br&gt;&lt;br&gt;Si todavía quiere utilizar la Ofuscación, por favor primero deseleccione todas las entrada no anonimizadas y entonces marque la casilla de Ofuscación de nuevo.</translation>
+        <translation>익명화되지 않은 입력이 선택되었습니다. &lt;b&gt;난독화가 비활성화 되었습니다.&lt;b&gt;&lt;br&gt;&lt;br&gt;난독화를 계속 사용하려면 먼저 익명화 되지 않은 모든 입력을 먼저 선택 취소한 뒤 다시 선택해주세요.</translation>
     </message>
     <message>
         <source>highest</source>
-        <translation>la más alta</translation>
+        <translation>최고</translation>
     </message>
     <message>
         <source>higher</source>
-        <translation>más alta</translation>
+        <translation>매우 높음</translation>
     </message>
     <message>
         <source>high</source>
-        <translation>alta</translation>
+        <translation>높음</translation>
     </message>
     <message>
         <source>medium-high</source>
-        <translation>medio-alta</translation>
+        <translation>중간 높음</translation>
     </message>
     <message>
         <source>Can vary +/- %1 duff(s) per input.</source>
-        <translation>Puede variar +/- %1 duff(s) por entrada.</translation>
+        <translation>입력당 +/- %1 금액(s)을 변경할 수 있습니다.</translation>
     </message>
     <message>
         <source>n/a</source>
@@ -1028,164 +1004,164 @@ MultiEnvío: %1</translation>
     </message>
     <message>
         <source>medium</source>
-        <translation>media</translation>
+        <translation>중간</translation>
     </message>
     <message>
         <source>low-medium</source>
-        <translation>baja-media</translation>
+        <translation>중간 낮음</translation>
     </message>
     <message>
         <source>low</source>
-        <translation>baja</translation>
+        <translation>낮음</translation>
     </message>
     <message>
         <source>lower</source>
-        <translation>muy baja</translation>
+        <translation>매우 낮음</translation>
     </message>
     <message>
         <source>lowest</source>
-        <translation>la más baja</translation>
+        <translation>최저</translation>
     </message>
     <message>
         <source>(%1 locked)</source>
-        <translation>(%1 bloqueado)</translation>
+        <translation>(%1 잠김)</translation>
     </message>
     <message>
         <source>none</source>
-        <translation>ninguno</translation>
+        <translation>없음</translation>
     </message>
     <message>
         <source>yes</source>
-        <translation>sí</translation>
+        <translation>예</translation>
     </message>
     <message>
         <source>no</source>
-        <translation>no</translation>
+        <translation>아니오</translation>
     </message>
     <message>
         <source>This label turns red, if the transaction size is greater than 1000 bytes.</source>
-        <translation>Esta etiqueta se pone roja, si el tamaño de la transacción es mayor de 1000 bytes.</translation>
+        <translation>트랜잭션 크기가 1000 byte 보다 클 경우 라벨이 빨간색으로 변경됩니다.</translation>
     </message>
     <message>
         <source>This means a fee of at least %1 per kB is required.</source>
-        <translation>Esto significa que se requiere una comisión de al menos %1 por kB.</translation>
+        <translation>즉, KB 당 최소 %1 의 수수료가 필요합니다.</translation>
     </message>
     <message>
         <source>Can vary +/- 1 byte per input.</source>
-        <translation>Puede variar +/- 1 byte por entrada.</translation>
+        <translation>입력당 +/- 1 byte 조절 가능.</translation>
     </message>
     <message>
         <source>Transactions with higher priority are more likely to get included into a block.</source>
-        <translation>Las transacciones con alta prioridad tienen más probabilidades de ser incluidas en un bloque.</translation>
+        <translation>우선 순위가 높은 트랜잭션이 블록에 포함 될 확률이 높아집니다.</translation>
     </message>
     <message>
         <source>This label turns red, if the priority is smaller than "medium".</source>
-        <translation>Esta etiqueta se vuelve roja, si la prioridad es inferior a "media".</translation>
+        <translation>우선 순위가 "중간" 보다 낮으면 라벨이 빨간색으로 변경됩니다.</translation>
     </message>
     <message>
         <source>This label turns red, if any recipient receives an amount smaller than %1.</source>
-        <translation>Esta etiqueta se vuelve roja, si algún destinatario recibe una cantidad menor que %1.</translation>
+        <translation>받는 사람이 %1 보다 작은 금액을 받으면 라벨이 빨간색으로 변경됩니다.</translation>
     </message>
     <message>
         <source>(no label)</source>
-        <translation>(sin etiqueta)</translation>
+        <translation>(라벨 없음)</translation>
     </message>
     <message>
         <source>change from %1 (%2)</source>
-        <translation>cambio desde %1 (%2)</translation>
+        <translation>%1 (%2) 에서 변경</translation>
     </message>
     <message>
         <source>(change)</source>
-        <translation>(cambio)</translation>
+        <translation>(변경)</translation>
     </message>
 </context>
 <context>
     <name>EditAddressDialog</name>
     <message>
         <source>Edit Address</source>
-        <translation>Editar Dirección</translation>
+        <translation>주소 수정</translation>
     </message>
     <message>
         <source>&amp;Label</source>
-        <translation>&amp;Etiqueta</translation>
+        <translation>&amp;라벨</translation>
     </message>
     <message>
         <source>The label associated with this address list entry</source>
-        <translation>La etiqueta asociada con esta entrada de la libreta de direcciones</translation>
+        <translation>이 주소 목록과 관련된 라벨</translation>
     </message>
     <message>
         <source>&amp;Address</source>
-        <translation>&amp;Dirección</translation>
+        <translation>&amp;주소</translation>
     </message>
     <message>
         <source>The address associated with this address list entry. This can only be modified for sending addresses.</source>
-        <translation>La dirección asociada con esta entrada de la libreta de direcciones. Ésta sólo puede ser modificada en las direcciones de envío.</translation>
+        <translation>이 주소 목록과 관련된 주소입니다. 주소를 보낼때만 수정할 수 있습니다.</translation>
     </message>
     <message>
         <source>New receiving address</source>
-        <translation>Nueva dirección de cobro</translation>
+        <translation>새로운 받는 주소</translation>
     </message>
     <message>
         <source>New sending address</source>
-        <translation>Nueva dirección de envío</translation>
+        <translation>새로운 발신 주소</translation>
     </message>
     <message>
         <source>Edit receiving address</source>
-        <translation>Editar dirección de cobro</translation>
+        <translation>받는 주소 수정</translation>
     </message>
     <message>
         <source>Edit sending address</source>
-        <translation>Editar dirección de envío</translation>
+        <translation>보내는 주소 수정</translation>
     </message>
     <message>
         <source>The entered address "%1" is not a valid PIVX address.</source>
-        <translation>La dirección introducida "%1" no es una dirección PIVX válida.</translation>
+        <translation>입력된 주소 "%1"는 올바른 PIVX 주소가 아닙니다.</translation>
     </message>
     <message>
         <source>The entered address "%1" is already in the address book.</source>
-        <translation>La dirección introducida "%1" ya está en la libreta de direcciones.</translation>
+        <translation>입력한 주소 "%1"는 이미 주소록에 등록 되있습니다.</translation>
     </message>
     <message>
         <source>Could not unlock wallet.</source>
-        <translation>No se pudo desbloquear el monedero.</translation>
+        <translation>지갑의 잠금을 해제할 수 없습니다.</translation>
     </message>
     <message>
         <source>New key generation failed.</source>
-        <translation>La generación de llave nueva falló.</translation>
+        <translation>새로운 키 생성에 실패하였습니다.</translation>
     </message>
 </context>
 <context>
     <name>FreespaceChecker</name>
     <message>
         <source>A new data directory will be created.</source>
-        <translation>Se creará una nueva carpeta de datos.</translation>
+        <translation>새로운 데이터 디렉토리가 생성됩니다.</translation>
     </message>
     <message>
         <source>name</source>
-        <translation>nombre</translation>
+        <translation>이름</translation>
     </message>
     <message>
         <source>Directory already exists. Add %1 if you intend to create a new directory here.</source>
-        <translation>El directorio ya existe, Añada %1 si pretende crear una nueva carpeta aquí.</translation>
+        <translation>디렉토리가 이미 존재합니다. 여기에 새로운 디렉토리를 만들려면 %1을 추가해주세요.</translation>
     </message>
     <message>
         <source>Path already exists, and is not a directory.</source>
-        <translation>La ruta ya existe, y no es una carpeta.</translation>
+        <translation>경로가 이미 존재하며 디렉토리가 아닙니다.</translation>
     </message>
     <message>
         <source>Cannot create data directory here.</source>
-        <translation>No se puede crear un directorio de datos aquí.</translation>
+        <translation>여기에 디렉토리를 만들 수 없습니다.</translation>
     </message>
 </context>
 <context>
     <name>HelpMessageDialog</name>
     <message>
         <source>version</source>
-        <translation>versión</translation>
+        <translation>버전</translation>
     </message>
     <message>
         <source>PIVX Core</source>
-        <translation>Núcleo PIVX</translation>
+        <translation>PIVX Core</translation>
     </message>
     <message>
         <source>(%1-bit)</source>
@@ -1193,153 +1169,141 @@ MultiEnvío: %1</translation>
     </message>
     <message>
         <source>About PIVX Core</source>
-        <translation>Acerca de PIVX Core</translation>
+        <translation>PIVX Core 정보</translation>
     </message>
     <message>
         <source>Command-line options</source>
-        <translation>Opciones de línea de comandos</translation>
+        <translation>명령행 옵션</translation>
     </message>
     <message>
         <source>Usage:</source>
-        <translation>Uso:</translation>
+        <translation>사용:</translation>
     </message>
     <message>
         <source>command-line options</source>
-        <translation>opciones de línea de comandos</translation>
-    </message>
-    <message>
-        <source>UI Options:</source>
-        <translation>Opciones de interfaz de usuario:</translation>
-    </message>
-    <message>
-        <source>Choose data directory on startup (default: %u)</source>
-        <translation>Elija la carpeta de datos al arrancar (por defecto: %u)</translation>
-    </message>
-    <message>
-        <source>Show splash screen on startup (default: %u)</source>
-        <translation>Mostrar pantalla de bienvenida al arrancar (por defecto: %u)</translation>
+        <translation>명령행 옵션</translation>
     </message>
     <message>
         <source>Set language, for example "de_DE" (default: system locale)</source>
-        <translation>Seleccionar el idioma, por ejemplo "es_ES" (por defecto: idioma del sistema)</translation>
+        <translation>언어 설정 예시 "de_DE" (기본값: 시스템 언어)</translation>
     </message>
     <message>
         <source>Start minimized</source>
-        <translation>Arrancar minimizado</translation>
+        <translation>시작시 최소화</translation>
     </message>
     <message>
         <source>Set SSL root certificates for payment request (default: -system-)</source>
-        <translation>Elegir certificado raíz SSL para solicitud de pago (por defecto: -sistema-)</translation>
+        <translation>결제 요청에 대한 SSL 루트 인증서 설정 (기본값: -system-)</translation>
     </message>
 </context>
 <context>
     <name>Intro</name>
     <message>
         <source>Welcome</source>
-        <translation>Bienvenido/a</translation>
+        <translation>환영합니다</translation>
     </message>
     <message>
         <source>Welcome to PIVX Core.</source>
-        <translation>Bienvenido/a a PIVX Core.</translation>
+        <translation>PIVX Core 환영합니다.</translation>
     </message>
     <message>
         <source>As this is the first time the program is launched, you can choose where PIVX Core will store its data.</source>
-        <translation>Al ser la primera vez que se inicia el programa, usted puede elegir dónde guardará PIVX Core sus datos.</translation>
+        <translation>이 프로그램이 처음 실행되었으므로 PIVX Core가 데이터를 저장할 위치를 선택할 수 있습니다.</translation>
     </message>
     <message>
         <source>PIVX Core will download and store a copy of the PIVX block chain. At least %1GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</source>
-        <translation>PIVX Core descargará y guardará una copia de la cadena de bloques PIVX. Por lo menos %1GB de datos serán guardados en esta carpeta, y crecerá con el tiempo. El monedero también se guardará en esta carpeta.</translation>
+        <translation>PIVX Core는 PIVX 블록체인을 다운로드하여 저장합니다. 최소 %1GB의 데이터가 디렉토리에 저장되며 시간이 지날수록 증가합니다. 또한 지갑도 해당 디렉토리에 저장됩니다.</translation>
     </message>
     <message>
         <source>Use the default data directory</source>
-        <translation>Usar la carpeta de datos por defecto</translation>
+        <translation>기본 데이터 디렉토리 사용</translation>
     </message>
     <message>
         <source>Use a custom data directory:</source>
-        <translation>Usar una carpeta de datos personalizada:</translation>
+        <translation>사용자 지정 데이터 디렉토리 사용:</translation>
     </message>
     <message>
         <source>PIVX Core</source>
-        <translation>Núcleo PIVX</translation>
+        <translation>PIVX Core</translation>
     </message>
     <message>
         <source>Error: Specified data directory "%1" cannot be created.</source>
-        <translation>Error: La carpeta de datos especificada "%1" no pudo ser creada.</translation>
+        <translation>오류: 지정된 데이터 디렉토리 "%1"을 생성할 수 없습니다.</translation>
     </message>
     <message>
         <source>Error</source>
-        <translation>Error</translation>
+        <translation>에러</translation>
     </message>
     <message>
         <source>%1 GB of free space available</source>
-        <translation>%1 GB de espacio libre en disco</translation>
+        <translation>%1 GB의 사용 가능한 여유 공간</translation>
     </message>
     <message>
         <source>(of %1 GB needed)</source>
-        <translation>(de %1 GB necesarios)</translation>
+        <translation>(%1 GB 필요)</translation>
     </message>
 </context>
 <context>
     <name>MasternodeList</name>
     <message>
         <source>Form</source>
-        <translation>Formulario</translation>
+        <translation>Form</translation>
     </message>
     <message>
         <source>My Masternodes</source>
-        <translation>Mis Nodos Maestros</translation>
+        <translation>나의 마스터노드</translation>
     </message>
     <message>
         <source>Note: Status of your masternodes in local wallet can potentially be slightly incorrect.&lt;br /&gt;Always wait for wallet to sync additional data and then double check from another node&lt;br /&gt;if your node should be running but you still see "MISSING" in "Status" field.</source>
-        <translation>Nota: El estado de tus nodos maestros en el monedero local podría ser incorrecto.&lt;br /&gt;Siempre espere a que el monedero sincronice la información adicional y entonces compruébelo desde otro nodo&lt;br /&gt;si su nodo debería estar funcionando pero aún vee el mensaje "FALTA" en el campo "Estado".</translation>
+        <translation>참고: </translation>
     </message>
     <message>
         <source>Alias</source>
-        <translation>Apodo</translation>
+        <translation>별명</translation>
     </message>
     <message>
         <source>Address</source>
-        <translation>Dirección</translation>
+        <translation>주소</translation>
     </message>
     <message>
         <source>Protocol</source>
-        <translation>Protocolo</translation>
+        <translation>프로토콜</translation>
     </message>
     <message>
         <source>Status</source>
-        <translation>Estado</translation>
+        <translation>상태</translation>
     </message>
     <message>
         <source>Active</source>
-        <translation>Activo</translation>
+        <translation>활성</translation>
     </message>
     <message>
         <source>Last Seen (UTC)</source>
-        <translation>Visto por última vez (UTC)</translation>
+        <translation>최근 본 (UTC)</translation>
     </message>
     <message>
         <source>Pubkey</source>
-        <translation>Llave pública</translation>
+        <translation>공개키</translation>
     </message>
     <message>
         <source>S&amp;tart alias</source>
-        <translation>&amp;Iniciar apodo</translation>
+        <translation>별명 시&amp;작</translation>
     </message>
     <message>
         <source>Start &amp;all</source>
-        <translation>Iniciar &amp;todo</translation>
+        <translation>&amp;전체 시작</translation>
     </message>
     <message>
         <source>Start &amp;MISSING</source>
-        <translation>Iniciar &amp;FALTAN</translation>
+        <translation>시작 &amp;종료</translation>
     </message>
     <message>
         <source>&amp;Update status</source>
-        <translation>Estado de &amp;Actualización</translation>
+        <translation>&amp;업데이트 상태</translation>
     </message>
     <message>
         <source>Status will be updated automatically in (sec):</source>
-        <translation>El estado se actualizará automáticamente en (seg):</translation>
+        <translation>상태가 (초) 단위로 자동 업데이트됩니다:</translation>
     </message>
     <message>
         <source>0</source>
@@ -1347,177 +1311,177 @@ MultiEnvío: %1</translation>
     </message>
     <message>
         <source>Start alias</source>
-        <translation>Iniciar apodo</translation>
+        <translation>별명 시작</translation>
     </message>
     <message>
         <source>Confirm masternode start</source>
-        <translation>Confirmar inicio del nodo maestro</translation>
+        <translation>마스터노드 시작 확인</translation>
     </message>
     <message>
         <source>Are you sure you want to start masternode %1?</source>
-        <translation>¿Está seguro de que quiere arrancar el nodo maestro %1?</translation>
+        <translation>마스터노드 %1을 시작하시겠습니까?</translation>
     </message>
     <message>
         <source>Confirm all masternodes start</source>
-        <translation>Confirmar el arranque de todos los nodos maestros</translation>
+        <translation>모든 마스터노드 시작 확인</translation>
     </message>
     <message>
         <source>Are you sure you want to start ALL masternodes?</source>
-        <translation>¿Estás seguro de querer arrancar TODOS los nodos maestros?</translation>
+        <translation>모든 마스터노드를 시작하시겠습니까?</translation>
     </message>
     <message>
         <source>Command is not available right now</source>
-        <translation>El comando no está disponible en este momento</translation>
+        <translation>현재 명령을 사용할 수 없습니다.</translation>
     </message>
     <message>
         <source>You can't use this command until masternode list is synced</source>
-        <translation>No se puede utilizar este comando hasta que la lista de nodos maestros esté sincronizada</translation>
+        <translation>마스터노드 목록이 동기화 될 때까지이 명령을 사용할 수 없습니다.</translation>
     </message>
     <message>
         <source>Confirm missing masternodes start</source>
-        <translation>Confirmar arranque de nodos maestros no encontrados</translation>
+        <translation>누락된 마스터노드 확인 시작</translation>
     </message>
     <message>
         <source>Are you sure you want to start MISSING masternodes?</source>
-        <translation>¿Estás seguro de querer arrancar los nodos maestros NO ENCONTRADOS?</translation>
+        <translation>누락된 마스터노드를 시작하시겠습니까?</translation>
     </message>
 </context>
 <context>
     <name>MultiSendDialog</name>
     <message>
         <source>MultiSend</source>
-        <translation>MultiEnvío</translation>
+        <translation>다중전송</translation>
     </message>
     <message>
         <source>Enter whole numbers 1 - 100</source>
-        <translation>Introduzca números enteros 1 - 100</translation>
+        <translation>1 - 100의 정수 입력</translation>
     </message>
     <message>
         <source>Enter % to Give (1-100)</source>
-        <translation>Introduzca % a Dar (1-100)</translation>
+        <translation>부여할 % 입력 (1-100)</translation>
     </message>
     <message>
         <source>Enter Address to Send to</source>
-        <translation>Introduzca Dirección a la cual Enviar</translation>
+        <translation>보낼 주소 입력</translation>
     </message>
     <message>
         <source>MultiSend allows you to automatically send up to 100% of your stake or masternode reward to a list of other PIVX addresses after it matures.
 To Add: enter percentage to give and PIVX address to add to the MultiSend vector.
 To Delete: Enter address to delete and press delete.
 MultiSend will not be activated unless you have clicked Activate</source>
-        <translation>MultiEnvío le permite enviar automáticamente hasta el 100% de recompensa de participación o de nodo maestro a una lista de otras direcciones PIVX después de su maduración.
-Para Añadir: introduzca porcentaje a enviar y las direcciones PIVX a añadir al vector MultiEnvío.
-Para Eliminar: Introduzca la dirección a eliminar y pulse la tecla delete.
-MultiEnvío no se activará a menos que haga usted click en Activar</translation>
+        <translation>다중전송을 사용하면 성취 한 뒤 다른 PIVX 주소 목록에 최대 100% 스테이크 또는 마스터노드 보상을 자동으로 보낼 수 있습니다.
+추가하려면 : 부여 할 백분율과 다중전송 벡터에 추가 할 PIVX 주소를 입력하십시오.
+삭제하려면 삭제할 주소를 입력하고 삭제를 누릅니다.
+활성화를 클릭하지 않으면 다중전송이 활성화되지 않습니다.</translation>
     </message>
     <message>
         <source>Add to MultiSend Vector</source>
-        <translation>Añadir al vector MultiSend</translation>
+        <translation>다중전송 벡터 추가</translation>
     </message>
     <message>
         <source>Add</source>
-        <translation>Añadir</translation>
+        <translation>추가</translation>
     </message>
     <message>
         <source>Deactivate MultiSend</source>
-        <translation>Desactivar MultiEnvío</translation>
+        <translation>다중전송 비활성화</translation>
     </message>
     <message>
         <source>Deactivate</source>
-        <translation>Desactivar</translation>
+        <translation>비활성화</translation>
     </message>
     <message>
         <source>Choose an address from the address book</source>
-        <translation>Seleccione una dirección de la libreta de direcciones</translation>
+        <translation>주소록에서 주소 선택</translation>
     </message>
     <message>
         <source>Alt+A</source>
-        <translation>Alt + A</translation>
+        <translation>Alt+A</translation>
     </message>
     <message>
         <source>Percentage of stake to send</source>
-        <translation>Porcentaje de capital a enviar</translation>
+        <translation>전송할 스테이크 비율</translation>
     </message>
     <message>
         <source>Percentage:</source>
-        <translation>Porcentaje:</translation>
+        <translation>백분율:</translation>
     </message>
     <message>
         <source>Address to send portion of stake to</source>
-        <translation>Dirección a enviar porción de la recompensa</translation>
+        <translation>스테이크 일부를 보낼 주소</translation>
     </message>
     <message>
         <source>Address:</source>
-        <translation>Dirección:</translation>
+        <translation>주소:</translation>
     </message>
     <message>
         <source>Delete Address From MultiSend Vector</source>
-        <translation>Borrar Dirección De Vector MultiEnvío</translation>
+        <translation>다중전송 벡터에서 주소 삭제</translation>
     </message>
     <message>
         <source>Delete</source>
-        <translation>Borrar</translation>
+        <translation>삭제</translation>
     </message>
     <message>
         <source>Activate MultiSend</source>
-        <translation>Activar MultiEnvío</translation>
+        <translation>다중전송 활성화</translation>
     </message>
     <message>
         <source>Activate</source>
-        <translation>Activar</translation>
+        <translation>활성화</translation>
     </message>
     <message>
         <source>View MultiSend Vector</source>
-        <translation>Ver Vector MultiEnvío</translation>
+        <translation>다중전송 벡터 보기</translation>
     </message>
     <message>
         <source>View MultiSend</source>
-        <translation>Ver MultiEnvío</translation>
+        <translation>다중전송 보기</translation>
     </message>
     <message>
         <source>Send For Stakes</source>
-        <translation>Enviar Para Participaciones</translation>
+        <translation>스테이크를 위한 전송</translation>
     </message>
     <message>
         <source>Send For Masternode Rewards</source>
-        <translation>Enviar Para Recomensas De Nodos Maestros</translation>
+        <translation>마스터노드 보상 전송</translation>
     </message>
     <message>
         <source>The entered address:
 </source>
-        <translation>La dirección introducida:
+        <translation>입력된 주소:
 </translation>
     </message>
     <message>
         <source> is invalid.
 Please check the address and try again.</source>
-        <translation>es inválida.
-Por favor compruebe la dirección e inténtelo de nuevo.</translation>
+        <translation>올바르지 않습니다.
+주소를 확인하고 다시 시도해주세요.</translation>
     </message>
     <message>
         <source>The total amount of your MultiSend vector is over 100% of your stake reward
 </source>
-        <translation>La cantidad total de su vector MultiEnvío es superior al 100% de su recompensa
+        <translation>다중전송 벡터의 총 금액이 스테이크 보상 금액의 100 % 이상입니다
 </translation>
     </message>
     <message>
         <source>Please Enter 1 - 100 for percent.</source>
-        <translation>Por favor Introduzca 1 - 100 por ciento.</translation>
+        <translation>퍼센트로 1 - 100을 입력하십시오.</translation>
     </message>
     <message>
         <source>MultiSend Vector
 </source>
-        <translation>Vector MultiEnvío
+        <translation>다중전송 벡터
 </translation>
     </message>
     <message>
         <source>Removed </source>
-        <translation>Borrado</translation>
+        <translation>제거됨</translation>
     </message>
     <message>
         <source>Could not locate address
 </source>
-        <translation>No se pudo localizar la dirección
+        <translation>주소를 찾을 수 없습니다
 </translation>
     </message>
 </context>
@@ -1525,78 +1489,78 @@ Por favor compruebe la dirección e inténtelo de nuevo.</translation>
     <name>ObfuscationConfig</name>
     <message>
         <source>Configure Obfuscation</source>
-        <translation>Configurar Ofuscación</translation>
+        <translation>난독화 구성</translation>
     </message>
     <message>
         <source>Basic Privacy</source>
-        <translation>Privacidad Básica</translation>
+        <translation>기본 익명</translation>
     </message>
     <message>
         <source>High Privacy</source>
-        <translation>Alta Privacidad</translation>
+        <translation>높은 익명</translation>
     </message>
     <message>
         <source>Maximum Privacy</source>
-        <translation>Máxima Privacidad</translation>
+        <translation>최고 익명</translation>
     </message>
     <message>
         <source>Please select a privacy level.</source>
-        <translation>Por favor selecciones un nivel de privacidad.</translation>
+        <translation>익명화 레벨을 선택해주세요.</translation>
     </message>
     <message>
         <source>Use 2 separate masternodes to mix funds up to 10000 PIV</source>
-        <translation>Use 2 nodos maestros diferentes para mezclar los fondos hasta los 10000 PIV</translation>
+        <translation>2개의 개별 마스터노드를 이용하여 최대 10000 PIV 를 섞을 수 있습니다.</translation>
     </message>
     <message>
         <source>Use 8 separate masternodes to mix funds up to 10000 PIV</source>
-        <translation>Use 8 nodos maestros diferentes para mezclar fondos hasta los 10000 PIV</translation>
+        <translation>8개의 개별 마스터노드를 이용하여 최대 10000 PIV 를 섞을 수 있습니다.</translation>
     </message>
     <message>
         <source>Use 16 separate masternodes</source>
-        <translation>Use 16 nodos maestros diferentes</translation>
+        <translation>16개의 개별 마스터노드를 사용</translation>
     </message>
     <message>
         <source>This option is the quickest and will cost about ~0.025 PIV to anonymize 10000 PIV</source>
-        <translation>Esta opción es la más rápida y costará alrededor de ~0.025 PIV para anonimizar 10000 PIV</translation>
+        <translation>이 옵션은 가장 빠르게 전송되며 10000 PIV 익명화에 약 ~0.025 PIV의 비용이 들어갑니다.</translation>
     </message>
     <message>
         <source>This option is moderately fast and will cost about 0.05 PIV to anonymize 10000 PIV</source>
-        <translation>Esta opción es moderadamente rápida y costará cerca de 0.05 PIV para anonimizar 10000 PIV.</translation>
+        <translation>이 옵션은 중간 정도의 속도로 전송되며 10000 PIV 익명화에 약 0.05 PIV의 비용이 들어갑니다.</translation>
     </message>
     <message>
         <source>This is the slowest and most secure option. Using maximum anonymity will cost</source>
-        <translation>Esta es la opción más lenta pero más segura. Usar el máximo anonimato costará</translation>
+        <translation>이것은 가장 느리고 안전한 옵션입니다. 최고 익명성을 사용하면 비용이 발생합니다.</translation>
     </message>
     <message>
         <source>0.1 PIV per 10000 PIV you anonymize.</source>
-        <translation>0.1 PIV por 10000 PIV que anonimizas.</translation>
+        <translation>10000 PIV 익명화에 0.1 PIV 가 듭니다.</translation>
     </message>
     <message>
         <source>Obfuscation Configuration</source>
-        <translation>Configuración de Ofuscación</translation>
+        <translation>난독화 구성</translation>
     </message>
     <message>
         <source>Obfuscation was successfully set to basic (%1 and 2 rounds). You can change this at any time by opening PIVX's configuration screen.</source>
-        <translation>La Ofuscación se configuró correctamente en modo básico (%1 y 2 rondas). Puedes cambiar esto en cualquier momento accediendo a la ventana de configuración de PIVX.</translation>
+        <translation>난독화가 성공적으로 높게 설정되었습니다.(%1 및 2 rounds) PIVX의 설정 화면을 열어 언제든지 다시 변경할 수 있습니다.</translation>
     </message>
     <message>
         <source>Obfuscation was successfully set to high (%1 and 8 rounds). You can change this at any time by opening PIVX's configuration screen.</source>
-        <translation>La Ofuscación se activó correctamente en modo alto (%1 y 8 rondas). Usted puede cambiar esto en cualquier momento abriendo la ventana de configuración de PIVX.</translation>
+        <translation>난독화가 성공적으로 높게 설정되었습니다.(%1 및 8 rounds) PIVX의 설정 화면을 열어 언제든지 다시 변경할 수 있습니다.</translation>
     </message>
     <message>
         <source>Obfuscation was successfully set to maximum (%1 and 16 rounds). You can change this at any time by opening PIVX's configuration screen.</source>
-        <translation>La Ofuscación se activó correctamente en su grado máximo (%1 y 16 rondas). Usted puede cambiar ésto en cualquier momento en la ventana de configuración de PIVX.</translation>
+        <translation>난독화가 성공적으로 높게 설정되었습니다.(%1 및 16 rounds) PIVX의 설정 화면을 열어 언제든지 다시 변경할 수 있습니다.</translation>
     </message>
 </context>
 <context>
     <name>OpenURIDialog</name>
     <message>
         <source>Open URI</source>
-        <translation>Abrir URI</translation>
+        <translation>URI 열기</translation>
     </message>
     <message>
         <source>Open payment request from URI or file</source>
-        <translation>Abrir solicitud de pago de URI o archivo</translation>
+        <translation>URI 또는 파일에서 결제 요청 열기</translation>
     </message>
     <message>
         <source>URI:</source>
@@ -1604,26 +1568,26 @@ Por favor compruebe la dirección e inténtelo de nuevo.</translation>
     </message>
     <message>
         <source>Select payment request file</source>
-        <translation>Seleccione el fichero que contiene la solicitud de pago</translation>
+        <translation>결제 요청 파일 선택</translation>
     </message>
     <message>
         <source>Select payment request file to open</source>
-        <translation>Seleccione el fichero de solicitud de pago que desea abrir</translation>
+        <translation>열려고하는 결제 요청 파일을 선택해주세요</translation>
     </message>
 </context>
 <context>
     <name>OptionsDialog</name>
     <message>
         <source>Options</source>
-        <translation>Opciones</translation>
+        <translation>옵션</translation>
     </message>
     <message>
         <source>&amp;Main</source>
-        <translation>&amp;Principal</translation>
+        <translation>&amp;메인</translation>
     </message>
     <message>
         <source>Size of &amp;database cache</source>
-        <translation>Tamaño del caché de &amp;base de datos</translation>
+        <translation>&amp;데이터베이스 캐시 크기</translation>
     </message>
     <message>
         <source>MB</source>
@@ -1631,332 +1595,332 @@ Por favor compruebe la dirección e inténtelo de nuevo.</translation>
     </message>
     <message>
         <source>Number of script &amp;verification threads</source>
-        <translation>Número de procesos de &amp;verificación de scripts</translation>
+        <translation>스크립트 &amp;검증 스레드 개수</translation>
     </message>
     <message>
         <source>(0 = auto, &lt;0 = leave that many cores free)</source>
-        <translation>(0 = auto, &lt;0 = dejar libres tal número de cores)</translation>
+        <translation>(0 = 자동, &lt;0 = 많은 코어들을 여유롭게 두기)</translation>
     </message>
     <message>
         <source>W&amp;allet</source>
-        <translation>&amp;Monedero</translation>
+        <translation>지&amp;갑</translation>
     </message>
     <message>
         <source>If you disable the spending of unconfirmed change, the change from a transaction&lt;br/&gt;cannot be used until that transaction has at least one confirmation.&lt;br/&gt;This also affects how your balance is computed.</source>
-        <translation>Si deselecciona el gasto de cambio no confirmado, las entradas de una transacción&lt;br/&gt;no podrán ser usadas hasta que esa transacción tenga al menos una confirmación.&lt;br/&gt;Esto también afecta a cómo se calcula su balance actual.</translation>
+        <translation>확인되지 않은 변경사항을 사용하지 않도록 설정하면 해당 트랜잭션에 하나 이상의 컨펌이 진행되야&lt;br/&gt;트랜잭션에 변경사항을 적용할 수 있습니다.&lt;br/&gt;또한 이것은 잔액 계산 방식에도 영향을 줍니다.</translation>
     </message>
     <message>
         <source>Automatically open the PIVX client port on the router. This only works when your router supports UPnP and it is enabled.</source>
-        <translation>Abrir automáticamente el puerto del cliente PIVX en el enrutador. Ésto sólo funciona si su enrutador soporta UPnP y esta función está activada.</translation>
+        <translation>라우터에서 PIVX 클라이언트 포트를 자동으로 엽니다. 이 기능은 라우터가 UPnP를 지원하고 활성화 된 경우에만 사용할 수 있습니다.</translation>
     </message>
     <message>
         <source>Accept connections from outside</source>
-        <translation>Aceptar conexiones del exterior</translation>
+        <translation>외부에서의 연결 허용</translation>
     </message>
     <message>
         <source>Allow incoming connections</source>
-        <translation>Permitir conexiones entrantes</translation>
+        <translation>들어오는 연결 허용</translation>
     </message>
     <message>
         <source>&amp;Connect through SOCKS5 proxy (default proxy):</source>
-        <translation>&amp;Conectar a través de un proxy SOCKS5 (proxy por defecto):</translation>
+        <translation>&amp;SOCKS5 프록시를 통해 연결 (기본 프록시):</translation>
     </message>
     <message>
         <source>Expert</source>
-        <translation>Experto</translation>
+        <translation>전문적</translation>
     </message>
     <message>
         <source>Automatically start PIVX after logging in to the system.</source>
-        <translation>Arrancar PIVX automáticamente después de identificarse en Windows.</translation>
+        <translation>시스템 로그인 후 PIVX을 자동으로 시작합니다.</translation>
     </message>
     <message>
         <source>&amp;Start PIVX on system login</source>
-        <translation>&amp;Arrancar PIVX al inicio del sistema</translation>
+        <translation>&amp;시스템 로그인시 PIVX 시작</translation>
     </message>
     <message>
         <source>This setting determines the amount of individual masternodes that an input will be anonymized through.&lt;br/&gt;More rounds of anonymization gives a higher degree of privacy, but also costs more in fees.</source>
-        <translation>Esta configuración determina la cantidad máxima de nodos maestros individuales a través de los cuales una entrada se anonimizará.&lt;br/&gt;Más rondas de anonimización ofrecen un mayor grado de privacidad, pero también cuesta más en comisiones.</translation>
+        <translation>이 설정은 익명화 할 입력 값의 개별 마스터노드의 수량을 결정합니다.&lt;br/&gt;더 많은 익명화할 액수는 높은 수준의 익명성을 제공하지만 수수료가 많이 듭니다.</translation>
     </message>
     <message>
         <source>Obfuscation rounds to use</source>
-        <translation>Rondas de Ofuscación a utilizar</translation>
+        <translation>난독화를 사용할 영역</translation>
     </message>
     <message>
         <source>This amount acts as a threshold to turn off Obfuscation once it's reached.</source>
-        <translation>Esta cantidad actúa como un techo para desactivar la Ofuscación una vez alcanzado.</translation>
+        <translation>이 금액에 도달하면 난독화를 끌 수 있는 임계 값 역할을 합니다.</translation>
     </message>
     <message>
         <source>Amount of PIVX to keep anonymized</source>
-        <translation>Cantidad de PIVX a mantener anonimizados</translation>
+        <translation>익명화할 PIVX 수량</translation>
     </message>
     <message>
         <source>Whether to show coin control features or not.</source>
-        <translation>Mostrar las características de control de monedas individuales, o no</translation>
+        <translation>동전 제어 기능을 표시할지 여부를 나타냅니다.</translation>
     </message>
     <message>
         <source>Enable coin &amp;control features</source>
-        <translation>Activar funciones de control de &amp;monedas</translation>
+        <translation>코인 &amp;제어 기능 사용</translation>
     </message>
     <message>
         <source>Show additional tab listing all your masternodes in first sub-tab&lt;br/&gt;and all masternodes on the network in second sub-tab.</source>
-        <translation>Mostrar pestaña adicional listando todos sus nodos maestros en la primera sub-pestaña&lt;br/&gt;y todos los nodos maestros de la red en la segunda sub-pestaña.</translation>
+        <translation>첫 번째 하위 탭에서 모든 마스터 노드를 나열하는 추가 탭과&lt;br/&gt;두 번째 하위 탭에서 네트워크의 모든 마스터 노드를 표시하십시오.</translation>
     </message>
     <message>
         <source>Show Masternodes Tab</source>
-        <translation>Mostrar la pestaña de Nodos Maestros</translation>
+        <translation>마스터노드 탭 표시</translation>
     </message>
     <message>
         <source>&amp;Spend unconfirmed change</source>
-        <translation>&amp;Gastar cambio no confirmado</translation>
+        <translation>&amp;확인되지 않은 변경사항 전송</translation>
     </message>
     <message>
         <source>&amp;Network</source>
-        <translation>&amp;Red</translation>
+        <translation>&amp;네트워크</translation>
     </message>
     <message>
         <source>The user interface language can be set here. This setting will take effect after restarting PIVX.</source>
-        <translation>El idioma de interface de usuario puede seleccionarse aquí. Este ajuste tomará efecto después de reiniciar PIVX.</translation>
+        <translation>사용자 인터페이스 언어를 설정할 수 있습니다. 이 설정은 PIVX을 다시 시작한 후에 적용됩니다.</translation>
     </message>
     <message>
         <source>Language missing or translation incomplete? Help contributing translations here:
 https://www.transifex.com/pivx-project/pivx-project-translations</source>
-        <translation>¿Falta su lenguaje o la traducción está incompleta? Contribuya con las traducciones aquí:
+        <translation>지원 언어가 없거나 번역이 불완전한가요? 번역 기여 도움말:
 https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>Map port using &amp;UPnP</source>
-        <translation>Mapear un puerto utilizando &amp;UPnP</translation>
+        <translation>&amp;UPnp를 사용하여 포트 매핑</translation>
     </message>
     <message>
         <source>Connect to the PIVX network through a SOCKS5 proxy.</source>
-        <translation>Conectar a la red PIVX mediante un proxy SOCKS5.</translation>
+        <translation>SOCKS5 프록시를 통해 PIVX 네트워크에 연결해주세요.</translation>
     </message>
     <message>
         <source>Proxy &amp;IP:</source>
-        <translation>&amp;IP del proxy:</translation>
+        <translation>프록시 &amp;IP:</translation>
     </message>
     <message>
         <source>IP address of the proxy (e.g. IPv4: 127.0.0.1 / IPv6: ::1)</source>
-        <translation>Dirección IP del proxy (p.e. IPv4: 127.0.0.1 / IPv6: ::1)</translation>
+        <translation>프록시 IP 주소 (예: IPv4: 127.0.0.1 / IPv6: ::1)</translation>
     </message>
     <message>
         <source>&amp;Port:</source>
-        <translation>&amp;Puerto:</translation>
+        <translation>&amp;포트:</translation>
     </message>
     <message>
         <source>Port of the proxy (e.g. 9050)</source>
-        <translation>Puerto del proxy (p.e. 9050)</translation>
+        <translation>프록시 포트 (예: 9050)</translation>
     </message>
     <message>
         <source>&amp;Window</source>
-        <translation>&amp;Ventana</translation>
+        <translation>&amp;윈도우</translation>
     </message>
     <message>
         <source>Show only a tray icon after minimizing the window.</source>
-        <translation>Mostrar sólo un icono en la bandeja al minimizar la ventana.</translation>
+        <translation>창 최소화 후 트레이 아이콘으로만 표시.</translation>
     </message>
     <message>
         <source>&amp;Minimize to the tray instead of the taskbar</source>
-        <translation>&amp;Minimizar a la bandeja en lugar de a la barra de tareas</translation>
+        <translation>&amp;최소화시 작업표시줄이 아닌 트레이로 최소화</translation>
     </message>
     <message>
         <source>Minimize instead of exit the application when the window is closed. When this option is enabled, the application will be closed only after selecting Quit in the menu.</source>
-        <translation>Minimizar en lugar de cerrar la aplicación cuando se cierra la ventana. Cuando active esta opción, tendrá que cerrar la aplicación seleccionando Salir desde el menú.</translation>
+        <translation>창 닫기시 프로그램 종료하지 않고 최소화하기. 이 옵션을 사용하면 메뉴에서 종료를 선택해야 프로그램이 종료됩니다.</translation>
     </message>
     <message>
         <source>M&amp;inimize on close</source>
-        <translation>M&amp;inimizar al cerrar</translation>
+        <translation>닫&amp;기시 최소화</translation>
     </message>
     <message>
         <source>&amp;Display</source>
-        <translation>&amp;Mostrar</translation>
+        <translation>&amp;디스플레이</translation>
     </message>
     <message>
         <source>User Interface &amp;language:</source>
-        <translation>&amp;Idioma de la interface de usuario:</translation>
+        <translation>사용자 인터페이스 &amp;언어:</translation>
     </message>
     <message>
         <source>User Interface Theme:</source>
-        <translation>Tema de la Interface de Usuario:</translation>
+        <translation>사용자 인터페이스 테마:</translation>
     </message>
     <message>
         <source>&amp;Unit to show amounts in:</source>
-        <translation>&amp;Unidad para mostrar cantidades:</translation>
+        <translation>&amp;금액을 표시 할 단위:</translation>
     </message>
     <message>
         <source>Choose the default subdivision unit to show in the interface and when sending coins.</source>
-        <translation>Seleccionar la subdivisión a mostrar por defecto en la interface y al enviar monedas.</translation>
+        <translation>코인 전송시 인터페이스에 표시할 기본 세분화 단위를 선택해주세요.</translation>
     </message>
     <message>
         <source>Decimal digits</source>
-        <translation>Dígitos decimales</translation>
+        <translation>10진수</translation>
     </message>
     <message>
         <source>Third party URLs (e.g. a block explorer) that appear in the transactions tab as context menu items. %s in the URL is replaced by transaction hash. Multiple URLs are separated by vertical bar |.</source>
-        <translation>Direcciones web de terceras partes (p.e. un explorador de bloques) que aparecen en la pestaña de transacciones como objetos contextuales del menú. %s en la dirección web es reemplazada por el identificador de la transacción. Múltiples direcciones web están separadas por una barra vertical (|).</translation>
+        <translation>트랜잭션 탭에 컨텍스트 메뉴 항목으로 표시되는 서드파티 URL (예: 블록 탐색) URL의 %s 는 트랜잭션 해시로 대체됩니다. 여러 개의 URL은 세로 막대로 구분됩니다 |.</translation>
     </message>
     <message>
         <source>Third party transaction URLs</source>
-        <translation>Direcciones web de transacciones de terceras partes</translation>
+        <translation>서드파티 트랜잭션 URL</translation>
     </message>
     <message>
         <source>Active command-line options that override above options:</source>
-        <translation>Opciones de línea de comando activas que anulan las opciones anteriores:</translation>
+        <translation>위의 옵션을 무시하는 활성 명령행 옵션:</translation>
     </message>
     <message>
         <source>Reset all client options to default.</source>
-        <translation>Resetear todas las opciones de cliente a su valor por defecto.</translation>
+        <translation>모든 클라이언트 옵션을 기본값으로 재설정.</translation>
     </message>
     <message>
         <source>&amp;Reset Options</source>
-        <translation>Opciones de &amp;Reset</translation>
+        <translation>&amp;옵션 재설정</translation>
     </message>
     <message>
         <source>&amp;OK</source>
-        <translation>&amp;OK</translation>
+        <translation>&amp;예</translation>
     </message>
     <message>
         <source>&amp;Cancel</source>
-        <translation>&amp;Cancelar</translation>
+        <translation>&amp;취소</translation>
     </message>
     <message>
         <source>default</source>
-        <translation>por defecto</translation>
+        <translation>기본값</translation>
     </message>
     <message>
         <source>none</source>
-        <translation>ninguno</translation>
+        <translation>없음</translation>
     </message>
     <message>
         <source>Confirm options reset</source>
-        <translation>Confirmar reinicio de las opciones</translation>
+        <translation>옵션 재설정 확인</translation>
     </message>
     <message>
         <source>Client restart required to activate changes.</source>
-        <translation>Se requiere un reinicio del cliente para activar los cambios.</translation>
+        <translation>변경 사항을 적용하려면 클라이언트를 다시 시작해야합니다.</translation>
     </message>
     <message>
         <source>Client will be shutdown, do you want to proceed?</source>
-        <translation>El cliente se cerrará, ¿procedemos?</translation>
+        <translation>클라이언트가 종료됩니다. 계속 진행하시겠습니까?</translation>
     </message>
     <message>
         <source>This change would require a client restart.</source>
-        <translation>Este cambio requerirá un reinicio del cliente.</translation>
+        <translation>이 변경은 클라이언트가 재시작 되야 적용됩니다.</translation>
     </message>
     <message>
         <source>The supplied proxy address is invalid.</source>
-        <translation>La dirección proxy indicada es inválida.</translation>
+        <translation>프록시 주소가 잘못되었습니다.</translation>
     </message>
 </context>
 <context>
     <name>OverviewPage</name>
     <message>
         <source>Form</source>
-        <translation>Formulario</translation>
+        <translation>Form</translation>
     </message>
     <message>
         <source>Available:</source>
-        <translation>Disponible:</translation>
+        <translation>사용가능:</translation>
     </message>
     <message>
         <source>Your current spendable balance</source>
-        <translation>Tu balance actualmente disponible</translation>
+        <translation>현재 출금 가능한 잔액</translation>
     </message>
     <message>
         <source>Pending:</source>
-        <translation>Pendiente:</translation>
+        <translation>대기중:</translation>
     </message>
     <message>
         <source>Total of transactions that have yet to be confirmed, and do not yet count toward the spendable balance</source>
-        <translation>Total de transacciones que aún deben ser confirmadas, y todavía no cuentan en el balance disponible</translation>
+        <translation>아직 승인되지 않아 사용할 수 없으며, 잔고에 포함되지 않은 총 트랜잭션</translation>
     </message>
     <message>
         <source>Immature:</source>
-        <translation>Inmaduro:</translation>
+        <translation>미완료:</translation>
     </message>
     <message>
         <source>Staked or masternode rewards that has not yet matured</source>
-        <translation>Recompensa de participación o de nodo maestro que aún no ha madurado</translation>
+        <translation>아직 완료되지 않은 스테이크 및 마스터노드 보상</translation>
     </message>
     <message>
         <source>Balances</source>
-        <translation>Balances</translation>
+        <translation>잔액</translation>
     </message>
     <message>
         <source>The displayed information may be out of date. Your wallet automatically synchronizes with the PIVX network after a connection is established, but this process has not completed yet.</source>
-        <translation>La información mostrada puede estar desactualizada. Su monedero se sincroniza automáticamente con la red PIVX después de establecer una conexión, pero este proceso aún no se ha completado.</translation>
+        <translation>표시된 정보가 오래되었을 수 있습니다. 연결이 완료되면 지갑이 PIVX 네트워크와 자동으로 동기화될 예정이지만, 아직 해당 프로세스가 완료되지 않았습니다.</translation>
     </message>
     <message>
         <source>Unconfirmed transactions to watch-only addresses</source>
-        <translation>Transacciones no confirmadas a direcciones sólo de lectura</translation>
+        <translation>읽기 전용 주소의 미승인 트랜잭션</translation>
     </message>
     <message>
         <source>Staked or masternode rewards in watch-only addresses that has not yet matured</source>
-        <translation>Recompensa de participación o de nodo maestro en direcciones de sólo lectura que todavía no han madurado</translation>
+        <translation>완료되지 않은 읽기 전용 주소의 스테이크 및 마스터노드 보상</translation>
     </message>
     <message>
         <source>Total:</source>
-        <translation>Total:</translation>
+        <translation>총:</translation>
     </message>
     <message>
         <source>Your current total balance</source>
-        <translation>Su balance total actual</translation>
+        <translation>현재 소지하고 있는 총 잔액</translation>
     </message>
     <message>
         <source>Current total balance in watch-only addresses</source>
-        <translation>Balance total actual en direcciones de sólo lectura</translation>
+        <translation>현재 읽기 전용 주소의 총 잔액</translation>
     </message>
     <message>
         <source>Watch-only:</source>
-        <translation>Sólo-lectura:</translation>
+        <translation>읽기 전용:</translation>
     </message>
     <message>
         <source>Your current balance in watch-only addresses</source>
-        <translation>Su balance actual en direcciones de sólo lectura</translation>
+        <translation>읽기 전용 주소의 현재 잔액</translation>
     </message>
     <message>
         <source>Spendable:</source>
-        <translation>Disponible:</translation>
+        <translation>출금 가능 액수:</translation>
     </message>
     <message>
         <source>Status:</source>
-        <translation>Estado:</translation>
+        <translation>상태:</translation>
     </message>
     <message>
         <source>Obfuscation Balance:</source>
-        <translation>Balance de Ofuscación:</translation>
+        <translation>난독화 된 잔액:</translation>
     </message>
     <message>
         <source>0 PIV / 0 Rounds</source>
-        <translation>0 PIV / 0 Rondas</translation>
+        <translation>0 PIV / 0 수량</translation>
     </message>
     <message>
         <source>Enabled/Disabled</source>
-        <translation>Activado/Desactivado</translation>
+        <translation>활성화/비활성화</translation>
     </message>
     <message>
         <source>Try to manually submit a Obfuscation request.</source>
-        <translation>Intentar enviar manualmente una solicitud de Ofuscación.</translation>
+        <translation>난독화 요청을 수동으로 제출해주세요.</translation>
     </message>
     <message>
         <source>Reset the current status of Obfuscation (can interrupt Obfuscation if it's in the process of Mixing, which can cost you money!)</source>
-        <translation>Reiniciar el estado actual de Ofuscación (puede interrumpir la Ofuscación si está en el proceso de Mezcla, que puede costarle dinero!)</translation>
+        <translation>현재 난독화 상태를 초기화 합니다. (난독화가 믹스 중일 경우에 간섭으로 비용이 발생할 수 있습니다!)</translation>
     </message>
     <message>
         <source>Obfuscation</source>
-        <translation>Ofuscación</translation>
+        <translation>난독화</translation>
     </message>
     <message>
         <source>Completion:</source>
-        <translation>Completado:</translation>
+        <translation>완료:</translation>
     </message>
     <message>
         <source>Amount and Rounds:</source>
-        <translation>Cantidad y Rondas:</translation>
+        <translation>금액 및 수량:</translation>
     </message>
     <message>
         <source>Submitted Denom:</source>
-        <translation>Denominación Enviada:</translation>
+        <translation>제출된 단위:</translation>
     </message>
     <message>
         <source>n/a</source>
@@ -1964,102 +1928,97 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>Recent transactions</source>
-        <translation>Transacciones recientes</translation>
+        <translation>최근 트랜잭션</translation>
     </message>
     <message>
         <source>Start/Stop Mixing</source>
-        <translation>Empezar/Parar Mezcla</translation>
+        <translation>믹싱 시작/종료</translation>
     </message>
     <message>
         <source>The denominations you submitted to the Masternode.&lt;br&gt;To mix, other users must submit the exact same denominations.</source>
-        <translation>Las denominaciones que enviaste al Nodo Maestro.&lt;br&gt;Para mezclar, otros usuarios deben enviar exactamente las mismas denominaciones.</translation>
+        <translation>당신이 마스터노드에 제출한 단위.&lt;br&gt;믹스하려면 다른 유저들은 반드시 정확한 단위를 제출해야 합니다.</translation>
     </message>
     <message>
         <source>(Last Message)</source>
-        <translation>(Último Mensaje)</translation>
+        <translation>(최근 메시지)</translation>
     </message>
     <message>
         <source>Try Mix</source>
-        <translation>Intentar Mezclar</translation>
+        <translation>믹스 시도</translation>
     </message>
     <message>
         <source>Reset</source>
-        <translation>Reiniciar</translation>
+        <translation>초기화</translation>
     </message>
     <message>
         <source>out of sync</source>
-        <translation>desincronizado</translation>
+        <translation>동기화되지 않음</translation>
     </message>
     <message>
         <source>Disabled</source>
-        <translation>Desactivado</translation>
+        <translation>비활성됨</translation>
     </message>
     <message>
         <source>No inputs detected</source>
-        <translation>No se detectan entradas</translation>
+        <translation>값이 입력되지 않음</translation>
     </message>
     <message>
         <source>Not enough compatible inputs to anonymize &lt;span style='color:red;'&gt;%1&lt;/span&gt;,&lt;br&gt;will anonymize &lt;span style='color:red;'&gt;%2&lt;/span&gt; instead</source>
-        <translation>No hay suficientes entradas compatibles para anonimizar &lt;span style='color:red;'&gt;%1&lt;/span&gt;,&lt;br&gt;anonimizará &lt;span style='color:red;'&gt;%2&lt;/span&gt; en su lugar
-</translation>
+        <translation>익명화를 위한 값이 충분하지 않아 &lt;span style='color:red;'&gt;%1/span&gt;,&lt;br&gt;대신 &lt;span style='color:red;'&gt;%2&lt;/span&gt;가 익명화 됩니다.</translation>
     </message>
     <message>
         <source>Overall progress</source>
-        <translation>Progreso total</translation>
+        <translation>전체 내역</translation>
     </message>
     <message>
         <source>Denominated</source>
-        <translation>Nominadas</translation>
+        <translation>표기된</translation>
     </message>
     <message>
         <source>Anonymized</source>
-        <translation>Anonimizadas</translation>
-    </message>
-    <message numerus="yes">
-        <source>Denominated inputs have %5 of %n rounds on average</source>
-        <translation><numerusform>La entrada denominada tiene %5 de %n rondas de promedio</numerusform><numerusform>Las entradas seleccionadas tienen %5 de %n rondas de promedio</numerusform></translation>
+        <translation>익명화된</translation>
     </message>
     <message>
         <source>Last Obfuscation message:
 </source>
-        <translation>Último mensaje de Ofuscación:
+        <translation>최근 Obfuscate한 메시지:
 </translation>
     </message>
     <message>
         <source>Obfuscation was successfully reset.</source>
-        <translation>La Ofuscación fue reiniciada satisfactoriamente.</translation>
+        <translation>난독화가 성공적으로 초기화 되었습니다.</translation>
     </message>
     <message>
         <source>If you don't want to see internal Obfuscation fees/transactions select "Most Common" as Type on the "Transactions" tab.</source>
-        <translation>Si no quiere ver aquí las operaciones internas de Ofuscación seleccione "Las Más Comunes" como el Tipo en la pestaña de "Transacciones".</translation>
+        <translation>내부 난독화 수수료/트랜잭션를 보고 싶지 않으면 "트랜잭션" 탭에서 '기본적인'을 선택하십시오.</translation>
     </message>
     <message>
         <source>Obfuscation requires at least %1 to use.</source>
-        <translation>La Ofuscación requiere como mínimo %1 para usarse.</translation>
+        <translation>난독화를 사용하기 위해선 적어도 %1이 필요합니다.</translation>
     </message>
     <message>
         <source>Wallet is locked and user declined to unlock. Disabling Obfuscation.</source>
-        <translation>El Monedero está bloqueado y el usuario declinó su desbloqueo. Desactivando Ofuscación.</translation>
+        <translation>지갑이 잠겼으며 사용자가 잠금 해제를 거부했습니다. 난독화 중단.</translation>
     </message>
     <message>
         <source>Found enough compatible inputs to anonymize %1</source>
-        <translation>Se encontraron suficientes entradas compatibles para anonimizar %1</translation>
+        <translation>%1 익명화를 진행하기 위해서는 충분한 값이 필요합니다</translation>
     </message>
     <message>
         <source>Start Obfuscation</source>
-        <translation>Comenzar Ofuscación</translation>
+        <translation>난독화 시작</translation>
     </message>
     <message>
         <source>Stop Obfuscation</source>
-        <translation>Parar Ofuscación</translation>
+        <translation>난독화 중지</translation>
     </message>
     <message>
         <source>Mixed</source>
-        <translation>Mezcladas</translation>
+        <translation>믹스됨</translation>
     </message>
     <message>
         <source>Enabled</source>
-        <translation>Activado</translation>
+        <translation>활성화됨</translation>
     </message>
     <message>
         <source>N/A</source>
@@ -2070,145 +2029,145 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <name>PaymentServer</name>
     <message>
         <source>Payment request error</source>
-        <translation>Error en la solicitud de pago</translation>
+        <translation>결제 요청 오류</translation>
     </message>
     <message>
         <source>URI handling</source>
-        <translation>Manejo de URI</translation>
+        <translation>URI 처리</translation>
     </message>
     <message>
         <source>Payment request fetch URL is invalid: %1</source>
-        <translation>Solicitud de pago via web inválida: %1</translation>
+        <translation>결제 요청을 불러오기 위한 URL이 잘못 되었습니다: %1</translation>
     </message>
     <message>
         <source>Payment request file handling</source>
-        <translation>Manejo del fichero de solicitud de pago</translation>
+        <translation>결제 요청 파일 처리 중</translation>
     </message>
     <message>
         <source>Invalid payment address %1</source>
-        <translation>Dirección de pago inválida %1</translation>
+        <translation>잘못된 결제 주소 %1</translation>
     </message>
     <message>
         <source>Cannot start pivx: click-to-pay handler</source>
-        <translation>No se puede iniciar pivx: módulo click-to-pay</translation>
+        <translation>PIVX을 시작할 수 없습니다: 결제하기 위한 클릭 처리</translation>
     </message>
     <message>
         <source>URI cannot be parsed! This can be caused by an invalid PIVX address or malformed URI parameters.</source>
-        <translation>¡El identificador de la dirección no puede ser analizado! Esto puede ser causado por una dirección PIVX inválida o parámetros del identificador malformados.</translation>
+        <translation>URI를 분석할 수 없습니다! 이는 잘못된 PIVX 주소 또는 URI 매개변수 손상으로 인해 발생할 수 있습니다.</translation>
     </message>
     <message>
         <source>Payment request file cannot be read! This can be caused by an invalid payment request file.</source>
-        <translation>El fichero de solicitud de pago no se pudo leer! Esto puede estar causado por una solicitud de pago inválida.</translation>
+        <translation>결제 요청 파일을 읽어 올 수 없습니다! 이는 결제 요청 파일이 잘못되었을 때 발생할 수 있습니다.</translation>
     </message>
     <message>
         <source>Payment request rejected</source>
-        <translation>Solicitud de pago rechazada</translation>
+        <translation>결제 요청 거부</translation>
     </message>
     <message>
         <source>Payment request network doesn't match client network.</source>
-        <translation>La solicitud de pago no coincide con la red del cliente.</translation>
+        <translation>결제가 요청된 네트워크와 클라이언트의 네트워크가 일치하지 않습니다.</translation>
     </message>
     <message>
         <source>Payment request has expired.</source>
-        <translation>La solicitud de pago ha expirado.</translation>
+        <translation>결제 요청 기간이 만료되었습니다.</translation>
     </message>
     <message>
         <source>Payment request is not initialized.</source>
-        <translation>La solicitud de pago no está inicializada.</translation>
+        <translation>결제 요청 값이 초기화 되지 않았습니다.</translation>
     </message>
     <message>
         <source>Unverified payment requests to custom payment scripts are unsupported.</source>
-        <translation>Solicitudes de pago no verificadas a scripts de pago personalizado no están soportadas.</translation>
+        <translation>커스텀 결제 스크립트에 대한 확인되지 않은 결제 요청은 지원되지 않습니다.</translation>
     </message>
     <message>
         <source>Requested payment amount of %1 is too small (considered dust).</source>
-        <translation>La cantidad de pago solicitada de %1 es demasiado pequeña (se considera calderilla).</translation>
+        <translation>%1 이하의 결제 요청 금액은 너무 적습니다(현금으로 간주됨).</translation>
     </message>
     <message>
         <source>Refund from %1</source>
-        <translation>Reembolso desde %1</translation>
+        <translation>%1로 부터 환불 되었습니다.</translation>
     </message>
     <message>
         <source>Payment request %1 is too large (%2 bytes, allowed %3 bytes).</source>
-        <translation>La solicitud de pago %1 es demasiado larga (%2 bytes, permitidos %3 bytes).</translation>
+        <translation>결제 요청 금액 %1은 너무 큽니다 (%2 바이트, %3 바이트 허용).</translation>
     </message>
     <message>
         <source>Payment request DoS protection</source>
-        <translation>Protección de Denegación de Servicio para la solicitud de pago</translation>
+        <translation>결제 요청 DoS 보호</translation>
     </message>
     <message>
         <source>Error communicating with %1: %2</source>
-        <translation>Error de comunicación con %1: %2</translation>
+        <translation>%1 과 통신하는 중 오류 발생: %2</translation>
     </message>
     <message>
         <source>Payment request cannot be parsed!</source>
-        <translation>¡La solicitud de pago no se pudo procesar!</translation>
+        <translation>결제 요청을 확인할 수 없습니다!</translation>
     </message>
     <message>
         <source>Bad response from server %1</source>
-        <translation>Respuesta inadecuada del servidor %1</translation>
+        <translation>%1 서버로 부터 응답 없음</translation>
     </message>
     <message>
         <source>Network request error</source>
-        <translation>Error de Red</translation>
+        <translation>네트워크 요청 오류</translation>
     </message>
     <message>
         <source>Payment acknowledged</source>
-        <translation>Pago confirmado</translation>
+        <translation>결제 확인 됨</translation>
     </message>
 </context>
 <context>
     <name>PeerTableModel</name>
     <message>
         <source>Address/Hostname</source>
-        <translation>Dirección/Nombre Host</translation>
+        <translation>주소/사용자 이름</translation>
     </message>
     <message>
         <source>Version</source>
-        <translation>Versión</translation>
+        <translation>버전</translation>
     </message>
     <message>
         <source>Ping Time</source>
-        <translation>Intervalo de Ping</translation>
+        <translation>응답 시간</translation>
     </message>
 </context>
 <context>
     <name>QObject</name>
     <message>
         <source>Amount</source>
-        <translation>Cantidad</translation>
+        <translation>금액</translation>
     </message>
     <message>
         <source>Enter a PIVX address (e.g. %1)</source>
-        <translation>Introduzca una dirección PIVX (p.e. %1)</translation>
+        <translation>PIVX 주소를 입력하세요 (예 %1)</translation>
     </message>
     <message>
         <source>%1 d</source>
-        <translation>%1 d</translation>
+        <translation>%1 일</translation>
     </message>
     <message>
         <source>%1 h</source>
-        <translation>%1 h</translation>
+        <translation>%1 시간</translation>
     </message>
     <message>
         <source>%1 m</source>
-        <translation>%1 m</translation>
+        <translation>%1 분</translation>
     </message>
     <message>
         <source>%1 s</source>
-        <translation>%1 s</translation>
+        <translation>%1 초</translation>
     </message>
     <message>
         <source>NETWORK</source>
-        <translation>RED</translation>
+        <translation>네트워크</translation>
     </message>
     <message>
         <source>UNKNOWN</source>
-        <translation>DESCONOCIDO</translation>
+        <translation>UNKNOWN</translation>
     </message>
     <message>
         <source>None</source>
-        <translation>Ninguno</translation>
+        <translation>None</translation>
     </message>
     <message>
         <source>N/A</source>
@@ -2223,42 +2182,42 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <name>QRImageWidget</name>
     <message>
         <source>&amp;Save Image...</source>
-        <translation>&amp;Guardar Imagen...</translation>
+        <translation>이미지 &amp;저장...</translation>
     </message>
     <message>
         <source>&amp;Copy Image</source>
-        <translation>&amp;Copiar Imagen</translation>
+        <translation>&amp;이미지 복사</translation>
     </message>
     <message>
         <source>Save QR Code</source>
-        <translation>Guardar Código QR</translation>
+        <translation>QR 코드 저장</translation>
     </message>
     <message>
         <source>PNG Image (*.png)</source>
-        <translation>Imagen PNG (*.png)</translation>
+        <translation>PNG 형식 이미지 (*.png)</translation>
     </message>
 </context>
 <context>
     <name>RPCConsole</name>
     <message>
         <source>Tools window</source>
-        <translation>Ventana de herramientas</translation>
+        <translation>도구 창</translation>
     </message>
     <message>
         <source>&amp;Information</source>
-        <translation>&amp;Información</translation>
+        <translation>&amp;정보</translation>
     </message>
     <message>
         <source>General</source>
-        <translation>General</translation>
+        <translation>일반</translation>
     </message>
     <message>
         <source>Name</source>
-        <translation>Nombre</translation>
+        <translation>이름</translation>
     </message>
     <message>
         <source>Client name</source>
-        <translation>Nombre de cliente</translation>
+        <translation>클라이언트 이름</translation>
     </message>
     <message>
         <source>N/A</source>
@@ -2266,231 +2225,203 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>Number of connections</source>
-        <translation>Número de conexiones</translation>
+        <translation>연결된 수</translation>
     </message>
     <message>
         <source>&amp;Open</source>
-        <translation>&amp;Abrir</translation>
+        <translation>&amp;열기</translation>
     </message>
     <message>
         <source>Startup time</source>
-        <translation>Tiempo de funcionamiento</translation>
+        <translation>시작 시간</translation>
     </message>
     <message>
         <source>Network</source>
-        <translation>Red</translation>
+        <translation>네트워크</translation>
     </message>
     <message>
         <source>Last block time</source>
-        <translation>Momento del último bloque</translation>
+        <translation>최근 블록 시간</translation>
     </message>
     <message>
         <source>Debug log file</source>
-        <translation>Fichero de depuración</translation>
+        <translation>로그 파일 디버그</translation>
     </message>
     <message>
         <source>Using OpenSSL version</source>
-        <translation>Usando la versión OpenSSL</translation>
+        <translation>OpenSSL 버전 사용</translation>
     </message>
     <message>
         <source>Build date</source>
-        <translation>Fecha de compilación</translation>
+        <translation>빌드 날짜</translation>
     </message>
     <message>
         <source>Current number of blocks</source>
-        <translation>Número actual de bloques</translation>
+        <translation>현재 블록 개수</translation>
     </message>
     <message>
         <source>Client version</source>
-        <translation>Versión del cliente</translation>
+        <translation>클라이언트 버전</translation>
     </message>
     <message>
         <source>Using BerkeleyDB version</source>
-        <translation>Usando BerkeleyDB versión</translation>
+        <translation>사용중인 BerkeleyDB 버전</translation>
     </message>
     <message>
         <source>Block chain</source>
-        <translation>Cadena de bloques</translation>
+        <translation>블록체인</translation>
     </message>
     <message>
         <source>Open the PIVX debug log file from the current data directory. This can take a few seconds for large log files.</source>
-        <translation>Abrir el fichero de depuración PIVX en el directorio actual de datos. Esto puede llevar unos segundos para ficheros de depuración grandes.</translation>
+        <translation>현재 데이터 디렉토리에서 PIVX 디버그 로그 파일을 엽니다. 로그 파일이 클 경우, 약간의 시간이 걸릴 수 있습니다.</translation>
     </message>
     <message>
         <source>Number of Masternodes</source>
-        <translation>Número de Nodos Maestros</translation>
+        <translation>마스터노드 개수</translation>
     </message>
     <message>
         <source>&amp;Console</source>
-        <translation>&amp;Consola</translation>
+        <translation>&amp;콘솔</translation>
     </message>
     <message>
         <source>Clear console</source>
-        <translation>Limpiar consola</translation>
+        <translation>콘솔 초기화</translation>
     </message>
     <message>
         <source>&amp;Network Traffic</source>
-        <translation>&amp;Tráfico de Red</translation>
+        <translation>&amp;네트워크 트래픽</translation>
     </message>
     <message>
         <source>&amp;Clear</source>
-        <translation>&amp;Limpiar</translation>
+        <translation>&amp;초기화</translation>
     </message>
     <message>
         <source>Totals</source>
-        <translation>Totales</translation>
+        <translation>총</translation>
     </message>
     <message>
         <source>Received</source>
-        <translation>Recibidos</translation>
+        <translation>받음</translation>
     </message>
     <message>
         <source>Sent</source>
-        <translation>Enviados</translation>
+        <translation>보냄</translation>
     </message>
     <message>
         <source>&amp;Peers</source>
-        <translation>&amp;Nodos conectados</translation>
+        <translation>&amp;피어</translation>
     </message>
     <message>
         <source>Select a peer to view detailed information.</source>
-        <translation>Seleccione un nodo conectado para ver información detallada.</translation>
+        <translation>자세한 정보를 보기 위해 피어를 선택 하세요.</translation>
     </message>
     <message>
         <source>Direction</source>
-        <translation>Dirección</translation>
+        <translation>위치</translation>
     </message>
     <message>
         <source>Protocol</source>
-        <translation>Protocolo</translation>
+        <translation>프로토콜</translation>
     </message>
     <message>
         <source>Version</source>
-        <translation>Versión</translation>
+        <translation>버전</translation>
     </message>
     <message>
         <source>Services</source>
-        <translation>Servicios</translation>
+        <translation>서비스</translation>
     </message>
     <message>
         <source>Starting Height</source>
-        <translation>Altura de inicio</translation>
+        <translation>시작 위치</translation>
     </message>
     <message>
         <source>Sync Height</source>
-        <translation>Altura de sincronía</translation>
+        <translation>동기화 위치</translation>
     </message>
     <message>
         <source>Ban Score</source>
-        <translation>Puntuación de Baneo</translation>
+        <translation>밴 스코어</translation>
     </message>
     <message>
         <source>Connection Time</source>
-        <translation>Tiempo de Conexión</translation>
+        <translation>연결 시간</translation>
     </message>
     <message>
         <source>Last Send</source>
-        <translation>Último Envío</translation>
+        <translation>최근 보냄</translation>
     </message>
     <message>
         <source>Last Receive</source>
-        <translation>Última Recepción</translation>
+        <translation>최근 받음</translation>
     </message>
     <message>
         <source>Bytes Sent</source>
-        <translation>Bytes Enviados</translation>
+        <translation>보낸 바이트</translation>
     </message>
     <message>
         <source>Bytes Received</source>
-        <translation>Bytes Recibidos</translation>
+        <translation>받은 바이트</translation>
     </message>
     <message>
         <source>Ping Time</source>
-        <translation>Intervalo de Ping</translation>
+        <translation>응답 시간</translation>
     </message>
     <message>
         <source>&amp;Wallet Repair</source>
-        <translation>Reparar &amp;Monedero</translation>
-    </message>
-    <message>
-        <source>Wallet In Use:</source>
-        <translation>Monedero En Uso:</translation>
+        <translation>&amp;지갑 복구</translation>
     </message>
     <message>
         <source>Salvage wallet</source>
-        <translation>Salvar monedero</translation>
-    </message>
-    <message>
-        <source>Attempt to recover private keys from a corrupt wallet.dat.</source>
-        <translation>Intentar recuperar las llaves privadas de un archivo wallet.dat corrupto.</translation>
+        <translation>지갑 복구</translation>
     </message>
     <message>
         <source>Rescan blockchain files</source>
-        <translation>Reescanear ficheros de cadena de bloques</translation>
-    </message>
-    <message>
-        <source>Rescan the block chain for missing wallet transactions.</source>
-        <translation>Reescanear la cadena de bloques buscando transacciones que faltan en el monedero.</translation>
+        <translation>블록체인 파일 재스캔</translation>
     </message>
     <message>
         <source>Recover transactions 1</source>
-        <translation>Recuperar transacciones 1</translation>
-    </message>
-    <message>
-        <source>Recover transactions from blockchain (keep meta-data, e.g. account owner).</source>
-        <translation>Recuperar transacciones desde la cadena de bloques (mantener meta-datos, p.e. propietario de la cuenta,etc).</translation>
+        <translation>트랜잭션 복구 1</translation>
     </message>
     <message>
         <source>Recover transactions 2</source>
-        <translation>Recuperar transacciones 2</translation>
-    </message>
-    <message>
-        <source>Recover transactions from blockchain (drop meta-data).</source>
-        <translation>Recuperar transacciones desde la cadena de bloques (ignorar meta-datos).</translation>
+        <translation>트랜잭션 복구 2</translation>
     </message>
     <message>
         <source>Upgrade wallet format</source>
-        <translation>Actualizar formato del monedero</translation>
-    </message>
-    <message>
-        <source>Rebuild block chain index from current blk000??.dat files.</source>
-        <translation>Reconstruir el índice de la cadena de bloques desde los archivos blk000??.dat actuales.</translation>
+        <translation>지갑 구성 업그레이드</translation>
     </message>
     <message>
         <source>The buttons below will restart the wallet with command-line options to repair the wallet, fix issues with corrupt blockhain files or missing/obsolete transactions.</source>
-        <translation>Los botones de más abajo reiniciarán el programa con comandos especiales para reparar el monedero, solucionar problemas con cadenas de bloques corruptas o buscar transacciones obsoletas o perdidas</translation>
+        <translation>아래 버튼들은 지갑을 고치기 위한 명령어 옵션들로 실행시 지갑을 재시작합니다, 손상된 블록체인 파일 또는 누락되었거나 오래된 트랜잭션들에 대한 문제를 해결합니다.</translation>
     </message>
     <message>
         <source>Wallet repair options.</source>
-        <translation>Opciones de reparación de monedero.</translation>
-    </message>
-    <message>
-        <source>Upgrade wallet to latest format on startup. (Note: this is NOT an update of the wallet itself!)</source>
-        <translation>Actualizar el monedero al último formato en el arranque. (Nota: esto NO es una actualización del monedero como tal!)</translation>
+        <translation>지갑 복구 옵션.</translation>
     </message>
     <message>
         <source>Rebuild index</source>
-        <translation>Reconstruir índice</translation>
+        <translation>색인 재구축</translation>
     </message>
     <message>
         <source>In:</source>
-        <translation>Dentro:</translation>
+        <translation>입력:</translation>
     </message>
     <message>
         <source>Out:</source>
-        <translation>Fuera:</translation>
+        <translation>출력:</translation>
     </message>
     <message>
         <source>Welcome to the PIVX RPC console.</source>
-        <translation>Bienvenido a la consola RPC de PIVX.</translation>
+        <translation>PIVX RPC 콘솔에 오신 것을 환영합니다.</translation>
     </message>
     <message>
         <source>Use up and down arrows to navigate history, and &lt;b&gt;Ctrl-L&lt;/b&gt; to clear screen.</source>
-        <translation>Use las teclas arriba y abajo para navegar por la historia, y &lt;b&gt;Ctrl-L&lt;/b&gt; para limpiar la pantalla.</translation>
+        <translation>위 아래 화살표를 사용하여 기록을 탐색하고 &lt;b&gt;Ctrl-L&lt;/b&gt; 화면을 지웁니다.</translation>
     </message>
     <message>
         <source>Type &lt;b&gt;help&lt;/b&gt; for an overview of available commands.</source>
-        <translation>Escriba &lt;b&gt;help&lt;/b&gt; para ver una lista de posibles comandos.</translation>
+        <translation>사용가능한 명령을 보려면 &lt;b&gt;help&lt;/b&gt;를 입력하십시오.</translation>
     </message>
     <message>
         <source>%1 B</source>
@@ -2514,279 +2445,279 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>never</source>
-        <translation>nunca</translation>
+        <translation>never</translation>
     </message>
     <message>
         <source>Inbound</source>
-        <translation>Entrantes</translation>
+        <translation>인바운드</translation>
     </message>
     <message>
         <source>Outbound</source>
-        <translation>Salientes</translation>
+        <translation>아웃바운드</translation>
     </message>
     <message>
         <source>Unknown</source>
-        <translation>Desconocido</translation>
+        <translation>Unknown</translation>
     </message>
     <message>
         <source>Fetching...</source>
-        <translation>Descargando...</translation>
+        <translation>가져오는 중...</translation>
     </message>
 </context>
 <context>
     <name>ReceiveCoinsDialog</name>
     <message>
         <source>Reuse one of the previously used receiving addresses.&lt;br&gt;Reusing addresses has security and privacy issues.&lt;br&gt;Do not use this unless re-generating a payment request made before.</source>
-        <translation>Reutilizar una de las direcciones de recepción anteriores.&lt;br&gt;Reutilizar direcciones de recepción tiene implicaciones de seguridad y privacidad.&lt;br&gt;No la utilizar al menos que esté re-generando una solicitud de pago anterior.</translation>
+        <translation>이전에 사용한 수신 주소 중 하나를 다시 사용하십시오.&lt;br&gt;주소 재사용은 보안 및 개인정보보호 문제가 있습니다.&lt;br&gt;이전에 만든 결제 요청을 다시 생성하지 않는 한 이것을 사용하지 마십시오.</translation>
     </message>
     <message>
         <source>R&amp;euse an existing receiving address (not recommended)</source>
-        <translation>R&amp;eutilizar una dirección de recepción existente (no recomendado)</translation>
+        <translation>기&amp;존 수신 주소 재사용 (권장하지 않음)</translation>
     </message>
     <message>
         <source>&amp;Message:</source>
-        <translation>&amp;Mensaje:</translation>
+        <translation>&amp;메세지:</translation>
     </message>
     <message>
         <source>An optional label to associate with the new receiving address.</source>
-        <translation>Una etiqueta opcional a asociar con la nueva dirección de recepción.</translation>
+        <translation>새로운 수신 주소와 연결할 선택적 라벨.</translation>
     </message>
     <message>
         <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the PIVX network.</source>
-        <translation>Un mensaje opcional a adjuntar a la solicitud de pago, que será mostrado cuando se abra la solicitud. Nota: El mensaje no se envía junto al pago por la red PIVX.</translation>
+        <translation>요청이 열릴 때 표시되는 결제 요청에 첨부할 선택적 메세지 입니다. 참고: PIVX 네트워크를 통한 결제는 메세지가 전송되지 않습니다.</translation>
     </message>
     <message>
         <source>An optional message to attach to the payment request, which will be displayed when the request is opened.&lt;br&gt;Note: The message will not be sent with the payment over the PIVX network.</source>
-        <translation>Un mensaje opcional a adjuntar a la solicitud de pago, que será mostrado cuando se abra la solicitud. &lt;br&gt;Nota: El mensaje no se envía junto al pago por la red PIVX.</translation>
+        <translation>요청이 열릴 때 표시되는 결제 요청에 첨부할 선택적 메세지 입니다.&lt;br&gt;참고: PIVX 네트워크를 통한 결제는 메세지가 전송되지 않습니다.</translation>
     </message>
     <message>
         <source>Use this form to request payments. All fields are &lt;b&gt;optional&lt;/b&gt;.</source>
-        <translation>Use este formulario para solicitar pagos. Todos los campos &lt;b&gt;opcionales&lt;/b&gt;.</translation>
+        <translation>결제 요청을 진행하려면 해당 양식을 입력하세요. 모든 입력란은 &lt;b&gt;선택 사항&lt;/b&gt;입니다.</translation>
     </message>
     <message>
         <source>&amp;Label:</source>
-        <translation>&amp;Etiqueta:</translation>
+        <translation>&amp;라벨:</translation>
     </message>
     <message>
         <source>An optional amount to request. Leave this empty or zero to not request a specific amount.</source>
-        <translation>Una cantidad opcional a solicitar. Deje esto vacío o en cero para no pedir una cantidad específica.</translation>
+        <translation>요청할 선택적 금액. 이 금액을 비워두거나 특정 금액을 요청하지 않으려면 0으로 두세요.</translation>
     </message>
     <message>
         <source>&amp;Amount:</source>
-        <translation>&amp;Cantidad:</translation>
+        <translation>&amp;금액:</translation>
     </message>
     <message>
         <source>&amp;Request payment</source>
-        <translation>&amp;Solicitud de pago</translation>
+        <translation>&amp;결제 요청</translation>
     </message>
     <message>
         <source>Clear all fields of the form.</source>
-        <translation>Limpiar todos los campos del formulario.</translation>
+        <translation>모든 입력 양식 지우기.</translation>
     </message>
     <message>
         <source>Clear</source>
-        <translation>Limpiar</translation>
+        <translation>지우기</translation>
     </message>
     <message>
         <source>Requested payments history</source>
-        <translation>Historial de peticiones de pago</translation>
+        <translation>요청된 결제 내역</translation>
     </message>
     <message>
         <source>Show the selected request (does the same as double clicking an entry)</source>
-        <translation>Mostrar la solicitud seleccionada (lo mismo que hacer doble click en una entrada)</translation>
+        <translation>선택한 요청을 표시합니다 (항목을 두 번 클릭하는 것과 동일)</translation>
     </message>
     <message>
         <source>Show</source>
-        <translation>Mostrar</translation>
+        <translation>표시</translation>
     </message>
     <message>
         <source>Remove the selected entries from the list</source>
-        <translation>Quitar las entradas seleccionadas de la lista</translation>
+        <translation>선택한 항목을 목록에서 제거하십시오</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation>Quitar</translation>
+        <translation>제거</translation>
     </message>
     <message>
         <source>Copy label</source>
-        <translation>Copiar etiqueta</translation>
+        <translation>라벨 복사</translation>
     </message>
     <message>
         <source>Copy message</source>
-        <translation>Copiar mensaje</translation>
+        <translation>메세지 복사</translation>
     </message>
     <message>
         <source>Copy amount</source>
-        <translation>Copiar cantidad</translation>
+        <translation>금액 복사</translation>
     </message>
 </context>
 <context>
     <name>ReceiveRequestDialog</name>
     <message>
         <source>QR Code</source>
-        <translation>Código QR</translation>
+        <translation>QR 코드</translation>
     </message>
     <message>
         <source>Copy &amp;URI</source>
-        <translation>Copiar &amp;Identificador</translation>
+        <translation>&amp;URI 복사</translation>
     </message>
     <message>
         <source>Copy &amp;Address</source>
-        <translation>Copiar &amp;Dirección</translation>
+        <translation>&amp;주소 복사</translation>
     </message>
     <message>
         <source>&amp;Save Image...</source>
-        <translation>&amp;Guardar Imagen...</translation>
+        <translation>이미지 &amp;저장...</translation>
     </message>
     <message>
         <source>Request payment to %1</source>
-        <translation>Solicitar pago a %1</translation>
+        <translation>%1 결제 요청</translation>
     </message>
     <message>
         <source>Payment information</source>
-        <translation>Información de pago</translation>
+        <translation>결제 정보</translation>
     </message>
     <message>
         <source>URI</source>
-        <translation>URI (identificador de recurso)</translation>
+        <translation>URI</translation>
     </message>
     <message>
         <source>Address</source>
-        <translation>Dirección</translation>
+        <translation>주소</translation>
     </message>
     <message>
         <source>Amount</source>
-        <translation>Cantidad</translation>
+        <translation>금액</translation>
     </message>
     <message>
         <source>Label</source>
-        <translation>Etiqueta</translation>
+        <translation>라벨</translation>
     </message>
     <message>
         <source>Message</source>
-        <translation>Mensaje</translation>
+        <translation>메세지</translation>
     </message>
     <message>
         <source>Resulting URI too long, try to reduce the text for label / message.</source>
-        <translation>El identificador de recurso es demasiado largo, intente reducir el texto para la etiqueta / mensaje.</translation>
+        <translation>URI 결과가 너무 길면, 라벨 / 메세지의 텍스트를 줄입니다.</translation>
     </message>
     <message>
         <source>Error encoding URI into QR Code.</source>
-        <translation>Error codificando el identificador de recurso dentro del código QR.</translation>
+        <translation>URI를 QR 코드로 인코딩하는 도중 오류가 발생하였습니다.</translation>
     </message>
 </context>
 <context>
     <name>RecentRequestsTableModel</name>
     <message>
         <source>Date</source>
-        <translation>Fecha</translation>
+        <translation>날짜</translation>
     </message>
     <message>
         <source>Label</source>
-        <translation>Etiqueta</translation>
+        <translation>라벨</translation>
     </message>
     <message>
         <source>Message</source>
-        <translation>Mensaje</translation>
+        <translation>메세지</translation>
     </message>
     <message>
         <source>Amount</source>
-        <translation>Cantidad</translation>
+        <translation>금액</translation>
     </message>
     <message>
         <source>(no label)</source>
-        <translation>(sin etiqueta)</translation>
+        <translation>(라벨 없음)</translation>
     </message>
     <message>
         <source>(no message)</source>
-        <translation>(no hay mensajes)</translation>
+        <translation>(메세지 없음)</translation>
     </message>
     <message>
         <source>(no amount)</source>
-        <translation>(sin cantidad)</translation>
+        <translation>(금액 없음)</translation>
     </message>
 </context>
 <context>
     <name>SendCoinsDialog</name>
     <message>
         <source>Send Coins</source>
-        <translation>Enviar Monedas</translation>
+        <translation>코인 전송 </translation>
     </message>
     <message>
         <source>Coin Control Features</source>
-        <translation>Funciones de Control de Monedas</translation>
+        <translation>코인 제어 기능</translation>
     </message>
     <message>
         <source>Inputs...</source>
-        <translation>Entradas...</translation>
+        <translation>입력...</translation>
     </message>
     <message>
         <source>automatically selected</source>
-        <translation>seleccionadas automáticamente</translation>
+        <translation>자동 선택됨</translation>
     </message>
     <message>
         <source>Insufficient funds!</source>
-        <translation>¡Fondos insuficientes!</translation>
+        <translation>자금이 충분하지 않습니다!</translation>
     </message>
     <message>
         <source>Quantity:</source>
-        <translation>Cantidad:</translation>
+        <translation>수량:</translation>
     </message>
     <message>
         <source>Bytes:</source>
-        <translation>Octetos:</translation>
+        <translation>Bytes:</translation>
     </message>
     <message>
         <source>Amount:</source>
-        <translation>Cantidad:</translation>
+        <translation>금액:</translation>
     </message>
     <message>
         <source>Priority:</source>
-        <translation>Prioridad:</translation>
+        <translation>우선 순위:</translation>
     </message>
     <message>
         <source>medium</source>
-        <translation>media</translation>
+        <translation>중간</translation>
     </message>
     <message>
         <source>Fee:</source>
-        <translation>Comisión:</translation>
+        <translation>수수료:</translation>
     </message>
     <message>
         <source>Dust:</source>
-        <translation>Calderilla:</translation>
+        <translation>현금:</translation>
     </message>
     <message>
         <source>no</source>
-        <translation>no</translation>
+        <translation>아니오</translation>
     </message>
     <message>
         <source>After Fee:</source>
-        <translation>Con Comisión:</translation>
+        <translation>이후 수수료:</translation>
     </message>
     <message>
         <source>Change:</source>
-        <translation>Cambio:</translation>
+        <translation>변경:</translation>
     </message>
     <message>
         <source>If this is activated, but the change address is empty or invalid, change will be sent to a newly generated address.</source>
-        <translation>Si esto está activado, pero la dirección de cambio está vacía o es inválida, el cambio será mandado a una nueva dirección generada.</translation>
+        <translation>이 옵션이 활성화되었지만, 변경 주소가 비어있거나 유효하지 않은 경우 변경사항은 새로 생성된 주소로 전송됩니다.</translation>
     </message>
     <message>
         <source>Custom change address</source>
-        <translation>Dirección de cambio personalizada</translation>
+        <translation>커스텀 주소 변경</translation>
     </message>
     <message>
         <source>Split UTXO</source>
-        <translation>Partir UTXO</translation>
+        <translation>UTXO 분할</translation>
     </message>
     <message>
         <source># of outputs</source>
-        <translation># de salidas</translation>
+        <translation># 출력 수</translation>
     </message>
     <message>
         <source>UTXO Size:</source>
-        <translation>Tamaño de UTXO:</translation>
+        <translation>UTXO 크기:</translation>
     </message>
     <message>
         <source>0 PIV</source>
@@ -2794,103 +2725,103 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>Transaction Fee:</source>
-        <translation>Comisión de transacción:</translation>
+        <translation>트랜잭션 수수료:</translation>
     </message>
     <message>
         <source>Choose...</source>
-        <translation>Elegir...</translation>
+        <translation>선택...</translation>
     </message>
     <message>
         <source>collapse fee-settings</source>
-        <translation>minimizar los ajustes de comisión</translation>
+        <translation>간단한 수수료 설정</translation>
     </message>
     <message>
         <source>Minimize</source>
-        <translation>Minimizar</translation>
+        <translation>최소화</translation>
     </message>
     <message>
         <source>Obfuscation</source>
-        <translation>Ofuscación</translation>
+        <translation>난독화</translation>
     </message>
     <message>
         <source>per kilobyte</source>
-        <translation>por kilobyte</translation>
+        <translation>킬로바이트당</translation>
     </message>
     <message>
         <source>total at least</source>
-        <translation>total por lo menos</translation>
+        <translation>전체에서 최소</translation>
     </message>
     <message>
         <source>(read the tooltip)</source>
-        <translation>(leer el consejo)</translation>
+        <translation>(툴팁을 읽어주세요)</translation>
     </message>
     <message>
         <source>Custom:</source>
-        <translation>Personalizado:</translation>
+        <translation>커스텀:</translation>
     </message>
     <message>
         <source>(Smart fee not initialized yet. This usually takes a few blocks...)</source>
-        <translation>(La comisión automática no se ha inicializado todavía. Esto normalmente necesita unos cuantos bloques...)</translation>
+        <translation>(스마트 수수료가 아직 초기화 되지 않았습니다. 일반적으로 몇 블록이 지나야됩니다...)</translation>
     </message>
     <message>
         <source>Confirmation time:</source>
-        <translation>Tiempo de confirmación:</translation>
+        <translation>승인 시간:</translation>
     </message>
     <message>
         <source>If the custom fee is set to 1000 uPIVs and the transaction is only 250 bytes, then "per kilobyte" only pays 250 uPIVs in fee,&lt;br /&gt;while "at least" pays 1000 uPIVs. For transactions bigger than a kilobyte both pay by kilobyte.</source>
-        <translation>Si la comisión personalizada se fija en 1000 uPIVs y la transacción necesita sólo 250 bytes, entonces la opción "por kilobyte" sólo pagará 250 uPIVs de comisión,&lt;br/&gt;mientras "por lo menos" pagará 1000 uPIVs. Para transacciones que midan más de un kilobyte ambas pagan por kilobyte.</translation>
+        <translation>트랜잭션이 250바이트 인 경우 사용자 지정 수수료가 1000 uPIVs로 설정되고,&lt;br /&gt;1000 uPIVs 안에는 최소 "킬로바이트당" 250 uPIVs 만 지불합니다. 1 킬로바이트보다 큰 트랜잭션의 경우 모두 킬로바이트 단위로 지불합니다.</translation>
     </message>
     <message>
         <source>If the custom fee is set to 1000 uPIVs and the transaction is only 250 bytes, then "per kilobyte" only pays 250 uPIVs in fee,&lt;br /&gt;while "total at least" pays 1000 uPIVs. For transactions bigger than a kilobyte both pay by kilobyte.</source>
-        <translation>Si la comisión personalizada se fija en 1000 uPIVs y la transacción necesita sólo 250 bytes, entonces la opción "por kilobyte" sólo pagará 250 uPIVs de comisión,&lt;br/&gt;mientras "por lo menos" pagará 1000 uPIVs. Para transacciones que midan más de un kilobyte ambas pagan por kilobyte.</translation>
+        <translation>트랜잭션이 250바이트 인 경우 사용자 지정 수수료가 1000 uPIVs로 설정되고,&lt;br /&gt;1000 uPIVs 안에는 전체에서 최소 "킬로바이트당" 250 uPIVs 만 지불합니다. 1 킬로바이트보다 큰 트랜잭션의 경우 모두 킬로바이트 단위로 지불합니다.</translation>
     </message>
     <message>
         <source>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks.&lt;br /&gt;But be aware that this can end up in a never confirming transaction once there is more demand for PIVX transactions than the network can process.</source>
-        <translation>Pagar sólo la comisión mínima está bien mientras haya menos volumen de transacciones que espacio en los bloques.&lt;br/&gt;Pero tenga en cuenta que esto podría acabar en una transacción que nunca se confirme si hay más demanda de transacciones PIVX de las que la red puede procesar.</translation>
+        <translation>블록의 공간보다 트랜잭션량이 적으면 최소 수수료만 지불하면 됩니다.&lt;br /&gt;하지만 PIVX 트랜잭션 수가 많으면 미확인된 트랜잭션로 네트워크가 처리할 수도 있습니다.</translation>
     </message>
     <message>
         <source>normal</source>
-        <translation>normal</translation>
+        <translation>보통</translation>
     </message>
     <message>
         <source>fast</source>
-        <translation>rápido</translation>
+        <translation>빠른</translation>
     </message>
     <message>
         <source>Recommended</source>
-        <translation>Recomendada</translation>
+        <translation>권장</translation>
     </message>
     <message>
         <source>Send as zero-fee transaction if possible</source>
-        <translation>Enviar como transacción sin comisiones si es posible</translation>
+        <translation>가능하다면 제로 수수료 트랜잭션으로 전송하십시오</translation>
     </message>
     <message>
         <source>(confirmation may take longer)</source>
-        <translation>(la primera confirmación puede tardar más)</translation>
+        <translation>(승인이 오래걸릴 수 있습니다)</translation>
     </message>
     <message>
         <source>Confirm the send action</source>
-        <translation>Confirmar la acción de enviar</translation>
+        <translation>전송 작업 확인</translation>
     </message>
     <message>
         <source>S&amp;end</source>
-        <translation>&amp;Enviar</translation>
+        <translation>전&amp;송</translation>
     </message>
     <message>
         <source>Clear all fields of the form.</source>
-        <translation>Limpiar todos los campos del formulario.</translation>
+        <translation>모든 입력 양식 지우기.</translation>
     </message>
     <message>
         <source>Clear &amp;All</source>
-        <translation>Limpiar &amp;Todo</translation>
+        <translation>전체 &amp;지우기</translation>
     </message>
     <message>
         <source>Send to multiple recipients at once</source>
-        <translation>Enviar a varios destinatarios al mismo tiempo</translation>
+        <translation>한번에 여러 곳 전송</translation>
     </message>
     <message>
         <source>Add &amp;Recipient</source>
-        <translation>Añadir Destinata&amp;rio</translation>
+        <translation>&amp;받는 사람 추가</translation>
     </message>
     <message>
         <source>SwiftTX</source>
@@ -2898,403 +2829,399 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>Balance:</source>
-        <translation>Saldo:</translation>
+        <translation>잔액:</translation>
     </message>
     <message>
         <source>Copy quantity</source>
-        <translation>Copiar cantidad</translation>
+        <translation>수량 복사</translation>
     </message>
     <message>
         <source>Copy amount</source>
-        <translation>Copiar cantidad</translation>
+        <translation>금액 복사</translation>
     </message>
     <message>
         <source>Copy fee</source>
-        <translation>Copiar comisión</translation>
+        <translation>수수료 복사</translation>
     </message>
     <message>
         <source>Copy after fee</source>
-        <translation>Copiar después de comisión</translation>
+        <translation>이용 수수료 복사</translation>
     </message>
     <message>
         <source>Copy bytes</source>
-        <translation>Copiar octetos</translation>
+        <translation>bytes 복사</translation>
     </message>
     <message>
         <source>Copy priority</source>
-        <translation>Copiar prioridad</translation>
+        <translation>우선 사항 복사</translation>
     </message>
     <message>
         <source>Copy dust</source>
-        <translation>Copiar calderilla</translation>
+        <translation>현금 복사</translation>
     </message>
     <message>
         <source>Copy change</source>
-        <translation>Copiar cambio</translation>
+        <translation>변경 복사</translation>
     </message>
     <message>
         <source>The split block tool does not work when sending to outside addresses. Try again.</source>
-        <translation>La herramienta de separación de bloques no funciona cuando se envía a direcciones exteriores. Inténtelo otra vez.</translation>
+        <translation>분할 블록 도구는 외부 주소로 보낼 때 작동하지 않습니다. 다시 시도하십시오.</translation>
     </message>
     <message>
         <source>The split block tool does not work with multiple addresses. Try again.</source>
-        <translation>La herramienta de división de bloques no funciona con varias direcciones. Inténtelo otra vez.</translation>
+        <translation>분할 블록 도구는 여러 주소에서 작동하지 않습니다. 다시 시도하십시오.</translation>
     </message>
     <message>
         <source>using</source>
-        <translation>usando</translation>
+        <translation>사용</translation>
     </message>
     <message>
         <source>anonymous funds</source>
-        <translation>fondos anónimos</translation>
+        <translation>익명 자금</translation>
     </message>
     <message>
         <source>Warning: Invalid PIVX address</source>
-        <translation>Advertencia: Direcciones PIVX inválidas</translation>
+        <translation>경고: 잘못된 PIVX 주소</translation>
     </message>
     <message>
         <source>any available funds (not recommended)</source>
-        <translation>cualquier fondo disponible (no recomendado)</translation>
+        <translation>사용 가능한 자금 (권장하지 않음)</translation>
     </message>
     <message>
         <source>and SwiftTX</source>
-        <translation>y SwiftTX</translation>
+        <translation>그리고 SwiftTX</translation>
     </message>
     <message>
         <source>%1 to %2</source>
-        <translation>%1 a %2</translation>
+        <translation>%1 에서 %2</translation>
     </message>
     <message>
         <source>Are you sure you want to send?</source>
-        <translation>¿Está seguro de querer enviar?</translation>
+        <translation>정말 보내시겠습니까?</translation>
     </message>
     <message>
         <source>are added as transaction fee</source>
-        <translation>son añadidos como comisión de transacción</translation>
+        <translation>트랜잭션 수수료가 추가됩니다</translation>
     </message>
     <message>
         <source>Total Amount = &lt;b&gt;%1&lt;/b&gt;&lt;br /&gt;= %2</source>
-        <translation>Cantidad total = &lt;b&gt;%1&lt;/b&gt;&lt;br /&gt;= %2</translation>
+        <translation>총 금액 = &lt;b&gt;%1&lt;/b&gt;&lt;br /&gt;= %2</translation>
     </message>
     <message>
         <source>Confirm send coins</source>
-        <translation>Confirmar enviar monedas</translation>
+        <translation>코인 전송 확인</translation>
     </message>
     <message>
         <source>A fee %1 times higher than %2 per kB is considered an insanely high fee.</source>
-        <translation>Una comisión %1 veces más alta que %2 por kB se considera exageradamente alta.</translation>
-    </message>
-    <message numerus="yes">
-        <source>Estimated to begin confirmation within %n block(s).</source>
-        <translation><numerusform>Estimamos que empezará la confirmación en %n bloque.</numerusform><numerusform>Estimamos que empezará la confirmación en %n bloques.</numerusform></translation>
+        <translation>KB당 %1보다 %2배 많은 수수료는 너무 높은 수수료입니다.</translation>
     </message>
     <message>
         <source>The recipient address is not valid, please recheck.</source>
-        <translation>La dirección de destino no es válida, por favor compruébelo de nuevo.</translation>
+        <translation>수신자 주소가 유효하지 않습니다. 다시 확인해주세요.</translation>
     </message>
     <message>
         <source>(obfuscation requires this amount to be rounded up to the nearest %1).</source>
-        <translation>(la ofuscación requiere redondear hacia arriba esta cantidad al %1 más cercano).</translation>
+        <translation>(난독화로 이 금액을 가장 가까운 %1로 반올림 해야됩니다)</translation>
     </message>
     <message>
         <source> split into %1 outputs using the UTXO splitter.</source>
-        <translation>separado en %1 salidas usando el separador UTXO.</translation>
+        <translation>UTXO 스플리터를 사용하여 %1 출력으로 분할하십시오.</translation>
     </message>
     <message>
         <source>&lt;b&gt;(%1 of %2 entries displayed)&lt;/b&gt;</source>
-        <translation>&lt;b&gt;(%1 de %2 entradas mostradas)&lt;/b&gt;</translation>
+        <translation>&lt;b&gt;(표시된 %2개 항목중 %1개)&lt;/b&gt;</translation>
     </message>
     <message>
         <source>The amount to pay must be larger than 0.</source>
-        <translation>La cantidad a pagar debe ser mayor de 0.</translation>
+        <translation>지불 할 금액은 0보다 커야합니다.</translation>
     </message>
     <message>
         <source>The amount exceeds your balance.</source>
-        <translation>La cantidad excede su saldo.</translation>
+        <translation>입력한 금액이 잔액을 초과합니다.</translation>
     </message>
     <message>
         <source>The total exceeds your balance when the %1 transaction fee is included.</source>
-        <translation>El total excede su saldo si contamos la comisión de %1 .</translation>
+        <translation>%1 트랜잭션 수수료가 포함하면 현재 잔액을 초과합니다.</translation>
     </message>
     <message>
         <source>Duplicate address found, can only send to each address once per send operation.</source>
-        <translation>Hemos encontrado una dirección duplicada, sólo podemos enviar a cada dirección una vez por envío.</translation>
+        <translation>중복된 주소를 발견했습니다. 각 주소는 전송 작업당 한 번씩만 보낼 수 있습니다.</translation>
     </message>
     <message>
         <source>Transaction creation failed!</source>
-        <translation>¡Fallo al crear la transacción!</translation>
+        <translation>트랜잭션 생성 실패!</translation>
     </message>
     <message>
         <source>The transaction was rejected! This might happen if some of the coins in your wallet were already spent, such as if you used a copy of wallet.dat and coins were spent in the copy but not marked as spent here.</source>
-        <translation>¡La transacción fue rechazada! Esto puede ocurrir si alguna de sus monedas ya se gastó con anterioridad, por ejemplo, si estuvo usted usando una copia de su monedero wallet.dat y gastó allí monedas pero no las marcó como gastadas aquí.</translation>
+        <translation>트랜잭션이 거부되었습니다! 지갑에 있는 코인 중 일부가 이미 사용된 경우일 수 있습니다. wallet.dat 사본을 사용하고 코인을 이미 사용하고 현재 여기에 표시되지 않은 경우에 이런 현상이 발생할 수 있습니다.</translation>
     </message>
     <message>
         <source>Error: The wallet was unlocked only to anonymize coins.</source>
-        <translation>Error: El monedero se desbloqueó sólo para anonimizar monedas.</translation>
+        <translation>오류: 지갑이 코인 익명 처리를 위해 잠금해제 되었습니다.</translation>
     </message>
     <message>
         <source>Pay only the minimum fee of %1</source>
-        <translation>Pagar sólo la comisión mínima de %1</translation>
+        <translation>%1의 최소 수수료만 지불하십시오</translation>
     </message>
     <message>
         <source>Warning: Unknown change address</source>
-        <translation>Advertencia: Dirección de cambio desconocida</translation>
+        <translation>경고: 알 수 없는 변경 주소</translation>
     </message>
     <message>
         <source>(no label)</source>
-        <translation>(sin etiqueta)</translation>
+        <translation>(라벨 없음)</translation>
     </message>
 </context>
 <context>
     <name>SendCoinsEntry</name>
     <message>
         <source>This is a normal payment.</source>
-        <translation>Esto es un pago normal.</translation>
+        <translation>이것은 일반 결제입니다.</translation>
     </message>
     <message>
         <source>Pay &amp;To:</source>
-        <translation>Pagar &amp;A:</translation>
+        <translation>지불 &amp;대상:</translation>
     </message>
     <message>
         <source>The PIVX address to send the payment to</source>
-        <translation>La dirección PIVX a la cual enviar el pago</translation>
+        <translation>전송할 PIVX 주소</translation>
     </message>
     <message>
         <source>Choose previously used address</source>
-        <translation>Escoge una dirección usada previamente</translation>
+        <translation>이전에 사용한 주소 선택</translation>
     </message>
     <message>
         <source>Alt+A</source>
-        <translation>Alt + A</translation>
+        <translation>Alt+A</translation>
     </message>
     <message>
         <source>Paste address from clipboard</source>
-        <translation>Pegar dirección desde el clipboard</translation>
+        <translation>클립보드에서 주소 붙여 넣기</translation>
     </message>
     <message>
         <source>Alt+P</source>
-        <translation>Alt + P</translation>
+        <translation>Alt+P</translation>
     </message>
     <message>
         <source>Remove this entry</source>
-        <translation>Quitar esta entrada</translation>
+        <translation>이 항목 삭제</translation>
     </message>
     <message>
         <source>&amp;Label:</source>
-        <translation>&amp;Etiqueta:</translation>
+        <translation>&amp;라벨:</translation>
     </message>
     <message>
         <source>Enter a label for this address to add it to the list of used addresses</source>
-        <translation>Introduzca una etiqueta para esta dirección para añadirla a la lista de direcciones utilizadas</translation>
+        <translation>이 주소의 라벨을 입력하여 사용된 주소 목록에 추가하십시오</translation>
     </message>
     <message>
         <source>A&amp;mount:</source>
-        <translation>Ca&amp;ntidad:</translation>
+        <translation>금&amp;액:</translation>
     </message>
     <message>
         <source>Message:</source>
-        <translation>Mensaje:</translation>
+        <translation>메세지:</translation>
     </message>
     <message>
         <source>A message that was attached to the PIVX: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the PIVX network.</source>
-        <translation>Un mensaje adjunto al PIVX: En recurso web especificado será guardado junto a la transacción para su referencia. Nota: Este mensaje no se enviará por la red PIVX.</translation>
+        <translation>참조용으로 트랜잭션과 함께 기록되는 PIVX : URI에 첨부된 메세지입니다. 참고: 이 메세지는 PIVX 네트워크를 통해 전송되지 않습니다.</translation>
     </message>
     <message>
         <source>This is an unverified payment request.</source>
-        <translation>Esta es una solicitud de pago no verificada.</translation>
+        <translation>확인되지 않은 결제 요청입니다.</translation>
     </message>
     <message>
         <source>Pay To:</source>
-        <translation>Pagar A:</translation>
+        <translation>지불 대상:</translation>
     </message>
     <message>
         <source>Memo:</source>
-        <translation>Texto libre:</translation>
+        <translation>메모:</translation>
     </message>
     <message>
         <source>This is a verified payment request.</source>
-        <translation>Esta es una solicitud de pago verificada.</translation>
+        <translation>확인된 결제 요청입니다.</translation>
     </message>
     <message>
         <source>Enter a label for this address to add it to your address book</source>
-        <translation>Introduzca una etiqueta para esta dirección para añadirla a su libreta de direcciones</translation>
+        <translation>주소록에 추가하려면 이 주소의 라벨을 입력해주세요.</translation>
     </message>
 </context>
 <context>
     <name>ShutdownWindow</name>
     <message>
         <source>PIVX Core is shutting down...</source>
-        <translation>El programa PIVX se está cerrando...</translation>
+        <translation>PIVX Core가 종료됩니다...</translation>
     </message>
     <message>
         <source>Do not shut down the computer until this window disappears.</source>
-        <translation>No apague el equipo hasta que esta ventana desaparezca.</translation>
+        <translation>이 창이 사라질 때까지 컴퓨터를 종료하지 마십시오.</translation>
     </message>
 </context>
 <context>
     <name>SignVerifyMessageDialog</name>
     <message>
         <source>Signatures - Sign / Verify a Message</source>
-        <translation>Firmas - Firmar / Verificar un Mensaje</translation>
+        <translation>서명 - 서명 / 메세지 검증</translation>
     </message>
     <message>
         <source>&amp;Sign Message</source>
-        <translation>&amp;Firmar Mensaje</translation>
+        <translation>&amp;메세지 서명</translation>
     </message>
     <message>
         <source>You can sign messages with your addresses to prove you own them. Be careful not to sign anything vague, as phishing attacks may try to trick you into signing your identity over to them. Only sign fully-detailed statements you agree to.</source>
-        <translation>Usted puede firmar mensajes con su dirección para probar que son auténticos. Tenga cuidado con firmar algo corto o vago como "hola", pues los ataques de phising pueden engañarle para que firme su identidad para ellos. Sólo firme textos detallados con los que esté de acuerdo.</translation>
+        <translation>자신의 주소로 메세지에 서명할 수 있습니다. 피싱 공격으로 사용자를 속일 수 있으므로 서명에 주의해주세요. 동의하는 바에 한하여 서명하십시오.</translation>
     </message>
     <message>
         <source>The PIVX address to sign the message with</source>
-        <translation>La dirección PIVX con la que firmar el mensaje</translation>
+        <translation>메세지를 서명하기 위한 PIVX 주소</translation>
     </message>
     <message>
         <source>Choose previously used address</source>
-        <translation>Escoge una dirección usada previamente</translation>
+        <translation>이전에 사용한 주소 선택</translation>
     </message>
     <message>
         <source>Alt+A</source>
-        <translation>Alt + A</translation>
+        <translation>Alt+A</translation>
     </message>
     <message>
         <source>Paste address from clipboard</source>
-        <translation>Pegar dirección desde el clipboard</translation>
+        <translation>클립보드에서 주소 붙여 넣기</translation>
     </message>
     <message>
         <source>Alt+P</source>
-        <translation>Alt + P</translation>
+        <translation>Alt+P</translation>
     </message>
     <message>
         <source>Enter the message you want to sign here</source>
-        <translation>Introduzca el mensaje que quiere firmar aquí</translation>
+        <translation>서명할 메세지를 입력해주세요</translation>
     </message>
     <message>
         <source>Signature</source>
-        <translation>Firma</translation>
+        <translation>서명</translation>
     </message>
     <message>
         <source>Copy the current signature to the system clipboard</source>
-        <translation>Copiar la firma actual al clipboard del sistema</translation>
+        <translation>현재 서명을 시스템 클립 보드에 복사</translation>
     </message>
     <message>
         <source>Sign the message to prove you own this PIVX address</source>
-        <translation>Firmar el mensaje para demostrar que eres el propietario de esta dirección PIVX</translation>
+        <translation>이 PIVX 주소를 소유하고 있다는 것을 증명하기 위해 메세지에 서명하십시오</translation>
     </message>
     <message>
         <source>The PIVX address the message was signed with</source>
-        <translation>La dirección PIVX con la que el mensaje fue firmado</translation>
+        <translation>메세지에 서명된 PIVX 주소</translation>
     </message>
     <message>
         <source>Verify the message to ensure it was signed with the specified PIVX address</source>
-        <translation>Verificar el mensaje para asegurarse que fue firmado con la dirección PIVX especificada</translation>
+        <translation>메세지가 지정된 PIVX 주소로 서명되었는지 확인해주세요</translation>
     </message>
     <message>
         <source>Sign &amp;Message</source>
-        <translation>Firmar &amp;Mensaje</translation>
+        <translation>서명 &amp;메세지</translation>
     </message>
     <message>
         <source>Reset all sign message fields</source>
-        <translation>Resetear todos los campos de firma de mensaje</translation>
+        <translation>모든 서명 메세지 입력 지우기</translation>
     </message>
     <message>
         <source>Clear &amp;All</source>
-        <translation>Limpiar &amp;Todo</translation>
+        <translation>전체 &amp;지우기</translation>
     </message>
     <message>
         <source>&amp;Verify Message</source>
-        <translation>&amp;Verificar Mensaje</translation>
+        <translation>&amp;메세지 확인</translation>
     </message>
     <message>
         <source>Enter the signing address, message (ensure you copy line breaks, spaces, tabs, etc. exactly) and signature below to verify the message. Be careful not to read more into the signature than what is in the signed message itself, to avoid being tricked by a man-in-the-middle attack.</source>
-        <translation>Introduzca la dirección de firma, mensaje (asegúrese de que copia los puntos y aparte, espacios, tabuladores, etc. exactamente) y la firma debajo para verificar el mensaje. Vaya con cuidado de no leer más en la firma de loque está en el mensaje firmado propiamente dicho, para evitar ser engañado por un ataque "hombre en el medio".</translation>
+        <translation>메세지를 확인하기 위해 서명 주소, 메세지 (줄 바꿈, 공백, 탭 등을 정확하게 복사해주세요) 및 서명을 입력하십시오. 중간자 공격에 주의해서 서명을 입력해주세요.</translation>
     </message>
     <message>
         <source>Verify &amp;Message</source>
-        <translation>Verificar &amp;Mensaje</translation>
+        <translation>&amp;메세지 확인</translation>
     </message>
     <message>
         <source>Reset all verify message fields</source>
-        <translation>Resetear todos los campos de verificación de mensaje</translation>
+        <translation>모든 확인 메세지 영역 지우기</translation>
     </message>
     <message>
         <source>Click "Sign Message" to generate signature</source>
-        <translation>Haga click en "Firmar Mensaje" para generar la firma</translation>
+        <translation>"서명 메세지"를 클릭하여 서명 생성</translation>
     </message>
     <message>
         <source>The entered address is invalid.</source>
-        <translation>La dirección introducida es inválida</translation>
+        <translation>입력한 주소가 올바르지 않습니다.</translation>
     </message>
     <message>
         <source>Please check the address and try again.</source>
-        <translation>Por favor comprobar la dirección y probar de nuevo.</translation>
+        <translation>주소를 다시 확인해주세요.</translation>
     </message>
     <message>
         <source>The entered address does not refer to a key.</source>
-        <translation>La dirección introducido no se refiere a ninguna clave.</translation>
+        <translation>입력한 주소가 키를 참조하지 않습니다.</translation>
     </message>
     <message>
         <source>Wallet unlock was cancelled.</source>
-        <translation>El desbloqueo de la wallet fue cancelado.</translation>
+        <translation>지갑 잠금 해제가 취소되었습니다.</translation>
     </message>
     <message>
         <source>Private key for the entered address is not available.</source>
-        <translation>La clave privada para la dirección introducida no está disponible.</translation>
+        <translation>입력한 주소의 개인 키를 사용할 수 없습니다.</translation>
     </message>
     <message>
         <source>Message signing failed.</source>
-        <translation>La firma del mensaje falló.</translation>
+        <translation>메세지 서명 실패.</translation>
     </message>
     <message>
         <source>Message signed.</source>
-        <translation>Mensaje firmado.</translation>
+        <translation>서명된 메세지.</translation>
     </message>
     <message>
         <source>The signature could not be decoded.</source>
-        <translation>La firma no pudo ser decodificada.</translation>
+        <translation>서명을 디코딩 할 수 없습니다.</translation>
     </message>
     <message>
         <source>Please check the signature and try again.</source>
-        <translation>Por favor compruebe la firma e inténtelo otra vez.</translation>
+        <translation>서명을 확인하고 다시 시도해주세요.</translation>
     </message>
     <message>
         <source>The signature did not match the message digest.</source>
-        <translation>La firma no coincide con el resumen del mensaje.</translation>
+        <translation>서명이 메세지 요약과 일치하지 않습니다.</translation>
     </message>
     <message>
         <source>Message verification failed.</source>
-        <translation>Falló la verificación del mensaje.</translation>
+        <translation>메세지 확인에 실패하였습니다.</translation>
     </message>
     <message>
         <source>Message verified.</source>
-        <translation>Mensaje verificado.</translation>
+        <translation>메세지 확인 됨.</translation>
     </message>
 </context>
 <context>
     <name>SplashScreen</name>
     <message>
         <source>PIVX Core</source>
-        <translation>Núcleo PIVX</translation>
+        <translation>PIVX Core</translation>
     </message>
     <message>
         <source>Version %1</source>
-        <translation>Versión %1</translation>
+        <translation>버전 %1</translation>
     </message>
     <message>
         <source>The Bitcoin Core developers</source>
-        <translation>Los desarrolladores de Bitcoin Core</translation>
+        <translation>비트코인 Core 개발자</translation>
     </message>
     <message>
         <source>The Dash Core developers</source>
-        <translation>Los desarrolladores de Dash Core</translation>
+        <translation>Dash Core 개발자</translation>
     </message>
     <message>
         <source>The PIVX Core developers</source>
-        <translation>Los desarrolladores de PIVX Core</translation>
+        <translation>PIVX Core 개발자</translation>
     </message>
     <message>
         <source>[testnet]</source>
-        <translation>[testnet]</translation>
+        <translation>[테스트넷]</translation>
     </message>
 </context>
 <context>
@@ -3306,307 +3233,296 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
 </context>
 <context>
     <name>TransactionDesc</name>
-    <message numerus="yes">
-        <source>Open for %n more block(s)</source>
-        <translation><numerusform>Abierto para %n bloque más</numerusform><numerusform>Abierto para %n bloques más</numerusform></translation>
-    </message>
     <message>
         <source>Open until %1</source>
-        <translation>Abierto hasta %1</translation>
+        <translation>%1까지 열기</translation>
     </message>
     <message>
         <source>conflicted</source>
-        <translation>conflictivo (bloque huérfano?)</translation>
+        <translation>충돌됨</translation>
     </message>
     <message>
         <source>%1/offline (verified via swifttx)</source>
-        <translation>%1/offline (verificado via swifttx)</translation>
+        <translation>%1/오프라인 (swifttx를 통해 확인 됨)</translation>
     </message>
     <message>
         <source>%1/confirmed (verified via swifttx)</source>
-        <translation>%1/confirmado (verificado via swifttx)</translation>
+        <translation>%1/확인 됨 (swifttx를 통해 확인 됨)</translation>
     </message>
     <message>
         <source>%1 confirmations (verified via swifttx)</source>
-        <translation>%1 confirmaciones (verificado via swifttx)</translation>
+        <translation>%1 확인 (swifttx를 통해 확인 됨)</translation>
     </message>
     <message>
         <source>%1/offline</source>
-        <translation>%1/offline</translation>
+        <translation>%1/오프라인</translation>
     </message>
     <message>
         <source>%1/unconfirmed</source>
-        <translation>%1/sin confirmar</translation>
+        <translation>%1/미확인 됨</translation>
     </message>
     <message>
         <source>%1 confirmations</source>
-        <translation>%1 confirmaciones</translation>
+        <translation>%1 확인</translation>
     </message>
     <message>
         <source>%1/offline (SwiftTX verification in progress - %2 of %3 signatures)</source>
-        <translation>%1/offline (verificación SwiftTX en marcha - %2 de %3 firmas)</translation>
+        <translation>%1/오프라인 (SwiftTX 확인 진행 중 - %2 중 %3 서명)</translation>
     </message>
     <message>
         <source>%1/confirmed (SwiftTX verification in progress - %2 of %3 signatures )</source>
-        <translation>%1/confirmado (verificación SwiftTX en marcha - %2 de %3 firmas)</translation>
+        <translation>%1/확인 됨 (SwiftTX 확인 진행 중 - %2 중 %3 서명)</translation>
     </message>
     <message>
         <source>%1 confirmations (SwiftTX verification in progress - %2 of %3 signatures)</source>
-        <translation>%1 confirmaciones (verificación SwiftTX en marcha - %2 de %3 firmas)</translation>
+        <translation>%1 확인 (SwiftTX 확인 진행 중 - %2 중 %3 서명)</translation>
     </message>
     <message>
         <source>%1/offline (SwiftTX verification failed)</source>
-        <translation>%1/offline (falló la verificación SwiftTX)</translation>
+        <translation>%1/오프라인 (SwiftTX 확인 실패)
+</translation>
     </message>
     <message>
         <source>%1/confirmed (SwiftTX verification failed)</source>
-        <translation>%1/confirmado (falló la verificación SwiftTX)</translation>
+        <translation>%1/확인 됨 (SwiftTX 확인 실패)</translation>
     </message>
     <message>
         <source>Status</source>
-        <translation>Estado</translation>
+        <translation>상태</translation>
     </message>
     <message>
         <source>, has not been successfully broadcast yet</source>
-        <translation>, no ha sido correctamente transmitida todavía</translation>
-    </message>
-    <message numerus="yes">
-        <source>, broadcast through %n node(s)</source>
-        <translation><numerusform>, retransmitido a través de %n nodo</numerusform><numerusform>, retransmitido a través de %n nodos</numerusform></translation>
+        <translation>, 아직 성공적으로 브로드캐스트되지 않았습니다</translation>
     </message>
     <message>
         <source>Date</source>
-        <translation>Fecha</translation>
+        <translation>날짜</translation>
     </message>
     <message>
         <source>Source</source>
-        <translation>Fuente</translation>
+        <translation>원본</translation>
     </message>
     <message>
         <source>Generated</source>
-        <translation>Generado</translation>
+        <translation>생성 된</translation>
     </message>
     <message>
         <source>From</source>
-        <translation>De</translation>
+        <translation>From</translation>
     </message>
     <message>
         <source>unknown</source>
-        <translation>desconocido</translation>
+        <translation>unknown</translation>
     </message>
     <message>
         <source>To</source>
-        <translation>A</translation>
+        <translation>대상</translation>
     </message>
     <message>
         <source>own address</source>
-        <translation>dirección propia</translation>
+        <translation>내 주소</translation>
     </message>
     <message>
         <source>watch-only</source>
-        <translation>sólo-lectura</translation>
+        <translation>읽기 전용</translation>
     </message>
     <message>
         <source>label</source>
-        <translation>etiqueta</translation>
+        <translation>라벨</translation>
     </message>
     <message>
         <source>Credit</source>
-        <translation>Crédito</translation>
+        <translation>크레딧</translation>
     </message>
     <message>
         <source>not accepted</source>
-        <translation>rechazado</translation>
+        <translation>허용되지 않음</translation>
     </message>
     <message>
         <source>Debit</source>
-        <translation>Débito</translation>
+        <translation>인출액</translation>
     </message>
     <message>
         <source>Total debit</source>
-        <translation>Débito total</translation>
+        <translation>총 인출액</translation>
     </message>
     <message>
         <source>Total credit</source>
-        <translation>Abonos totales</translation>
+        <translation>총 크레딧</translation>
     </message>
     <message>
         <source>Transaction fee</source>
-        <translation>Comisión de transacción</translation>
+        <translation>트랜잭션 수수료</translation>
     </message>
     <message>
         <source>Net amount</source>
-        <translation>Cantidad neta</translation>
+        <translation>순수액</translation>
     </message>
     <message>
         <source>Message</source>
-        <translation>Mensaje</translation>
+        <translation>메세지</translation>
     </message>
     <message>
         <source>Comment</source>
-        <translation>Comentario</translation>
+        <translation>코멘트</translation>
     </message>
     <message>
         <source>Transaction ID</source>
-        <translation>ID de la transacción</translation>
+        <translation>트랜잭션 ID</translation>
     </message>
     <message>
         <source>Output index</source>
-        <translation>Índice de salida</translation>
+        <translation>출력 인덱스</translation>
     </message>
     <message>
         <source>Merchant</source>
-        <translation>Comerciante</translation>
+        <translation>상인</translation>
     </message>
     <message>
         <source>Generated coins must mature %1 blocks before they can be spent. When you generated this block, it was broadcast to the network to be added to the block chain. If it fails to get into the chain, its state will change to "not accepted" and it won't be spendable. This may occasionally happen if another node generates a block within a few seconds of yours.</source>
-        <translation>Las monedas generadas deben madurarse %1 bloques hasta que puedan ser gastadas de nuevo. Cuando generaste este bloque, se retransmitió a la red para añadirse a la cadena de bloques. Si falla en unirse a la cadena, su estado cambiará a "no aceptado" y no se podrá gastar de nuevo (bloque huérfano). Esto puede ocurrir ocasionalmente si otro nodo genera un bloque casi al mismo tiempo que el tuyo.</translation>
+        <translation>생성된 코인은 사용되기 전 %1 블록이 완료되야 합니다. 이 블록을 생성하면 네트워크에 브로드캐스팅되어 블록체인에 추가 됩니다. 체인이 실패한 경우 "승인되지 않음"으로 바뀌어 사용할 수 없습니다. 다른 노드가 당신과 겹쳐서 몇 초 이내 블록을 생성하면 때때로 이런 일이 발생할 수 있습니다.</translation>
     </message>
     <message>
         <source>Debug information</source>
-        <translation>Información de depuración</translation>
+        <translation>디버그 정보</translation>
     </message>
     <message>
         <source>Transaction</source>
-        <translation>Transacción</translation>
+        <translation>트랜잭션</translation>
     </message>
     <message>
         <source>Inputs</source>
-        <translation>Entradas</translation>
+        <translation>입력</translation>
     </message>
     <message>
         <source>Amount</source>
-        <translation>Cantidad</translation>
+        <translation>금액</translation>
     </message>
     <message>
         <source>true</source>
-        <translation>verdad</translation>
+        <translation>허용</translation>
     </message>
     <message>
         <source>false</source>
-        <translation>falso</translation>
+        <translation>거부</translation>
     </message>
 </context>
 <context>
     <name>TransactionDescDialog</name>
     <message>
         <source>Transaction details</source>
-        <translation>Detalles de transacción</translation>
+        <translation>트랜잭션 세부 정보</translation>
     </message>
     <message>
         <source>This pane shows a detailed description of the transaction</source>
-        <translation>Este panel muestra una descripción detallada de la transacción</translation>
+        <translation>이 창은 트랜잭션에 대한 자세한 설명을 보여줍니다.</translation>
     </message>
 </context>
 <context>
     <name>TransactionTableModel</name>
     <message>
         <source>Date</source>
-        <translation>Fecha</translation>
+        <translation>날짜</translation>
     </message>
     <message>
         <source>Type</source>
-        <translation>Tipo</translation>
+        <translation>분류</translation>
     </message>
     <message>
         <source>Address</source>
-        <translation>Dirección</translation>
-    </message>
-    <message numerus="yes">
-        <source>Open for %n more block(s)</source>
-        <translation><numerusform>Abierto para %n bloque más</numerusform><numerusform>Abierto para %n bloques más</numerusform></translation>
+        <translation>주소</translation>
     </message>
     <message>
         <source>Open until %1</source>
-        <translation>Abierto hasta %1</translation>
+        <translation>%1까지 열기</translation>
     </message>
     <message>
         <source>Offline</source>
-        <translation>Desconectado</translation>
+        <translation>오프라인</translation>
     </message>
     <message>
         <source>Unconfirmed</source>
-        <translation>Sin confirmar</translation>
+        <translation>미확인 됨</translation>
     </message>
     <message>
         <source>Confirming (%1 of %2 recommended confirmations)</source>
-        <translation>Confirmando (%1 de %2 confirmaciones recomendadas)</translation>
+        <translation>확인 중 (%2 중 %1 확인 중)</translation>
     </message>
     <message>
         <source>Confirmed (%1 confirmations)</source>
-        <translation>Confirmado (%1 confirmaciones)</translation>
+        <translation>확인 됨 (%1 확인)</translation>
     </message>
     <message>
         <source>Conflicted</source>
-        <translation>Huérfano</translation>
+        <translation>충돌 됨</translation>
     </message>
     <message>
         <source>Immature (%1 confirmations, will be available after %2)</source>
-        <translation>Prematuro (%1 confirmaciones, estará disponible después de %2)</translation>
+        <translation>완료되지 않음 (%1 확인이 %2 후에 가능합니다)</translation>
     </message>
     <message>
         <source>This block was not received by any other nodes and will probably not be accepted!</source>
-        <translation>¡Este bloque no fue recibido por los otros nodos y probablemente no será aceptado!</translation>
+        <translation>이 블록은 다른 노드에 의해 수신되지 않았으며 아마도 승인되지 않을 것입니다!</translation>
     </message>
     <message>
         <source>Received with</source>
-        <translation>Recibido con</translation>
+        <translation>수신 됨</translation>
     </message>
     <message>
         <source>Masternode Reward</source>
-        <translation>Recompensa de Nodo Maestro</translation>
+        <translation>마스터노드 보상 </translation>
     </message>
     <message>
         <source>Received from</source>
-        <translation>Recibido desde</translation>
+        <translation>발신원</translation>
     </message>
     <message>
         <source>Received via Obfuscation</source>
-        <translation>Recibido por medio de Ofuscación</translation>
+        <translation>난독화를 통해 수신 됨</translation>
     </message>
     <message>
         <source>Obfuscation Denominate</source>
-        <translation>Ofuscación Denominada</translation>
+        <translation>난독화 표시</translation>
     </message>
     <message>
         <source>Obfuscation Collateral Payment</source>
-        <translation>Pago Colateral de Ofuscación</translation>
+        <translation>난독화 보증 결제 </translation>
     </message>
     <message>
         <source>Obfuscation Make Collateral Inputs</source>
-        <translation>La Ofuscación Crea Entradas Colaterales</translation>
+        <translation>난독화로 보증 입력</translation>
     </message>
     <message>
         <source>Obfuscation Create Denominations</source>
-        <translation>Ofuscación Crea Denominaciones</translation>
+        <translation>난독화 표시 만들기</translation>
     </message>
     <message>
         <source>Sent to</source>
-        <translation>Enviado a</translation>
+        <translation>대상 전송</translation>
     </message>
     <message>
         <source>Orphan Block - Generated but not accepted. This does not impact your holdings.</source>
-        <translation>Bloque Huérfano - Generado pero no aceptado. Esto no afecta a su saldo.</translation>
+        <translation>고아 블록 - 생성되었지만 승인되지 않았습니다. 이것은 당신의 소유액에 영향을 주지 않습니다.</translation>
     </message>
     <message>
         <source>Payment to yourself</source>
-        <translation>Pago a usted mismo</translation>
+        <translation>자신에게 지불</translation>
     </message>
     <message>
         <source>Minted</source>
-        <translation>Creación de moneda</translation>
+        <translation>발행</translation>
     </message>
     <message>
         <source>Mined</source>
-        <translation>Minado</translation>
+        <translation>채굴</translation>
     </message>
     <message>
         <source>Obfuscated</source>
-        <translation>Ofuscado</translation>
+        <translation>난독화</translation>
     </message>
     <message>
         <source>watch-only</source>
-        <translation>sólo-lectura</translation>
+        <translation>읽기 전용</translation>
     </message>
     <message>
         <source>(n/a)</source>
@@ -3614,174 +3530,174 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>Transaction status. Hover over this field to show number of confirmations.</source>
-        <translation>Estado de la transacción. Pase el ratón sobre este campo para mostrar el número de confirmaciones.</translation>
+        <translation>트랜잭션 상태. 이 영역에 마우스를 올리면 승인 수가 표시됩니다.</translation>
     </message>
     <message>
         <source>Date and time that the transaction was received.</source>
-        <translation>Fecha y hora a la que se recibió la transacción.</translation>
+        <translation>트랜잭션이 수신 된 날짜와 시간.</translation>
     </message>
     <message>
         <source>Type of transaction.</source>
-        <translation>Tipo de transacción.</translation>
+        <translation>트랜잭션 유형.</translation>
     </message>
     <message>
         <source>Whether or not a watch-only address is involved in this transaction.</source>
-        <translation>Indica si hay o no una dirección de sólo lectura relacionada en esta transacción</translation>
+        <translation>읽기 전용 주소 트랜잭션 포함 여부.</translation>
     </message>
     <message>
         <source>Destination address of transaction.</source>
-        <translation>Dirección de destino de la transacción.</translation>
+        <translation>트랜잭션 목적지 주소.</translation>
     </message>
     <message>
         <source>Amount removed from or added to balance.</source>
-        <translation>Cantidad quitada o añadida al balance.</translation>
+        <translation>잔액에서 제거되거나 추가된 금액.</translation>
     </message>
 </context>
 <context>
     <name>TransactionView</name>
     <message>
         <source>All</source>
-        <translation>Todos</translation>
+        <translation>전체</translation>
     </message>
     <message>
         <source>Today</source>
-        <translation>Hoy</translation>
+        <translation>오늘</translation>
     </message>
     <message>
         <source>This week</source>
-        <translation>Esta semana</translation>
+        <translation>이번 주</translation>
     </message>
     <message>
         <source>This month</source>
-        <translation>Este mes</translation>
+        <translation>이번 달</translation>
     </message>
     <message>
         <source>Last month</source>
-        <translation>Último mes</translation>
+        <translation>지난 달</translation>
     </message>
     <message>
         <source>This year</source>
-        <translation>Este año</translation>
+        <translation>올해</translation>
     </message>
     <message>
         <source>Range...</source>
-        <translation>Intervalo...</translation>
+        <translation>범위...</translation>
     </message>
     <message>
         <source>Most Common</source>
-        <translation>Más Común</translation>
+        <translation>기본적인</translation>
     </message>
     <message>
         <source>Received with</source>
-        <translation>Recibido con</translation>
+        <translation>수신 됨</translation>
     </message>
     <message>
         <source>Sent to</source>
-        <translation>Enviado a</translation>
+        <translation>대상 전송</translation>
     </message>
     <message>
         <source>Obfuscated</source>
-        <translation>Ofuscado</translation>
+        <translation>난독화</translation>
     </message>
     <message>
         <source>Obfuscation Make Collateral Inputs</source>
-        <translation>La Ofuscación Crea Entradas Colaterales</translation>
+        <translation>난독화로 보증 입력</translation>
     </message>
     <message>
         <source>Obfuscation Create Denominations</source>
-        <translation>Ofuscación Crea Denominaciones</translation>
+        <translation>난독화 표시 만들기</translation>
     </message>
     <message>
         <source>Obfuscation Denominate</source>
-        <translation>Ofuscación Denominada</translation>
+        <translation>난독화 표시</translation>
     </message>
     <message>
         <source>Obfuscation Collateral Payment</source>
-        <translation>Pago Colateral de Ofuscación</translation>
+        <translation>난독화 보증 결제 </translation>
     </message>
     <message>
         <source>To yourself</source>
-        <translation>A usted mismo</translation>
+        <translation>자신에게</translation>
     </message>
     <message>
         <source>Mined</source>
-        <translation>Minado</translation>
+        <translation>채굴</translation>
     </message>
     <message>
         <source>Minted</source>
-        <translation>Creación de moneda</translation>
+        <translation>발행</translation>
     </message>
     <message>
         <source>Masternode Reward</source>
-        <translation>Recompensa de Nodo Maestro</translation>
+        <translation>마스터노드 보상 </translation>
     </message>
     <message>
         <source>Other</source>
-        <translation>Otro</translation>
+        <translation>기타</translation>
     </message>
     <message>
         <source>Enter address or label to search</source>
-        <translation>Introduzca dirección o etiqueta para buscar</translation>
+        <translation>검색 할 주소 또는 라벨 입력</translation>
     </message>
     <message>
         <source>Min amount</source>
-        <translation>Cantidad mínima</translation>
+        <translation>최소 금액</translation>
     </message>
     <message>
         <source>Copy address</source>
-        <translation>Copiar dirección</translation>
+        <translation>주소 복사</translation>
     </message>
     <message>
         <source>Copy label</source>
-        <translation>Copiar etiqueta</translation>
+        <translation>라벨 복사</translation>
     </message>
     <message>
         <source>Copy amount</source>
-        <translation>Copiar cantidad</translation>
+        <translation>금액 복사</translation>
     </message>
     <message>
         <source>Copy transaction ID</source>
-        <translation>Copiar código de transacción</translation>
+        <translation>트랜잭션 ID 복사</translation>
     </message>
     <message>
         <source>Edit label</source>
-        <translation>Editar etiqueta</translation>
+        <translation>라벨 수정</translation>
     </message>
     <message>
         <source>Show transaction details</source>
-        <translation>Mostrar detalles de transacción</translation>
+        <translation>트랜잭션 세부 정보 표시</translation>
     </message>
     <message>
         <source>Export Transaction History</source>
-        <translation>Exportar Histórico de Transacciones</translation>
+        <translation>트랜잭션 내역 내보내기</translation>
     </message>
     <message>
         <source>Comma separated file (*.csv)</source>
-        <translation>Archivo separado por comas (*.csv)</translation>
+        <translation>콤마로 구분 된 파일 (*.csv)</translation>
     </message>
     <message>
         <source>Confirmed</source>
-        <translation>Confirmado</translation>
+        <translation>확정</translation>
     </message>
     <message>
         <source>Watch-only</source>
-        <translation>Sólo-lectura</translation>
+        <translation>읽기 전용</translation>
     </message>
     <message>
         <source>Date</source>
-        <translation>Fecha</translation>
+        <translation>날짜</translation>
     </message>
     <message>
         <source>Type</source>
-        <translation>Tipo</translation>
+        <translation>분류</translation>
     </message>
     <message>
         <source>Label</source>
-        <translation>Etiqueta</translation>
+        <translation>라벨</translation>
     </message>
     <message>
         <source>Address</source>
-        <translation>Dirección</translation>
+        <translation>주소</translation>
     </message>
     <message>
         <source>ID</source>
@@ -3789,290 +3705,278 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>Exporting Failed</source>
-        <translation>Exportación fallida</translation>
+        <translation>내보내기 실패</translation>
     </message>
     <message>
         <source>There was an error trying to save the transaction history to %1.</source>
-        <translation>Hubo un error intentando guardar el historial de transacciones a %1.</translation>
+        <translation>트랜잭션 기록을 %1로 저장하는 동안 오류가 발생하였습니다.</translation>
     </message>
     <message>
         <source>Exporting Successful</source>
-        <translation>Exportación Correcta</translation>
+        <translation>내보내기 성공</translation>
     </message>
     <message>
         <source>The transaction history was successfully saved to %1.</source>
-        <translation>El historial de transacción fue guardado satisfactoriamente a %1.</translation>
+        <translation>트랜잭션 기록이 %1에 성공적으로 저장되었습니다.</translation>
     </message>
     <message>
         <source>Range:</source>
-        <translation>Rango:</translation>
+        <translation>범위:</translation>
     </message>
     <message>
         <source>to</source>
-        <translation>a</translation>
+        <translation>대상</translation>
     </message>
 </context>
 <context>
     <name>UnitDisplayStatusBarControl</name>
     <message>
         <source>Unit to show amounts in. Click to select another unit.</source>
-        <translation>Unidad en la que mostrar cantidades. Click para seleccionar otra unidad.</translation>
+        <translation>금액을 표시할 단위. 다른 단위를 선택하려면 클릭해주세요.</translation>
     </message>
 </context>
 <context>
     <name>WalletFrame</name>
     <message>
         <source>No wallet has been loaded.</source>
-        <translation>No se ha cargado ningún monedero.</translation>
+        <translation>지갑이 로드되지 않았습니다.</translation>
     </message>
 </context>
 <context>
     <name>WalletModel</name>
     <message>
         <source>Send Coins</source>
-        <translation>Enviar Monedas</translation>
+        <translation>코인 전송 </translation>
     </message>
     <message>
         <source>SwiftTX doesn't support sending values that high yet. Transactions are currently limited to %1 PIV.</source>
-        <translation>SwiftTX no soporta el envío de importes tan altos todavía. Las transacciones están actualmente limitadas a %1 PIV.</translation>
+        <translation>SwiftTX는 아직 높은 값을 전송하는 것을 지원하지 않습니다. 트랜잭션은 현재 %1 PIV로 제한됩니다.</translation>
     </message>
 </context>
 <context>
     <name>WalletView</name>
     <message>
         <source>&amp;Export</source>
-        <translation>&amp;Exportar</translation>
+        <translation>&amp;내보내기</translation>
     </message>
     <message>
         <source>Export the data in the current tab to a file</source>
-        <translation>Exportar los datos de la pestaña actual a un archivo</translation>
+        <translation>현재 선택된 탭의 데이터를 파일로 내보내기</translation>
     </message>
     <message>
         <source>Selected amount:</source>
-        <translation>Cantidad seleccionada:</translation>
+        <translation>선택한 금액:</translation>
     </message>
     <message>
         <source>Backup Wallet</source>
-        <translation>Copia del Monedero</translation>
+        <translation>지갑 백업</translation>
     </message>
     <message>
         <source>Wallet Data (*.dat)</source>
-        <translation>Datos del Monedero (*.dat)</translation>
+        <translation>지갑 데이터 (*.dat)</translation>
     </message>
     <message>
         <source>Backup Failed</source>
-        <translation>La copia de seguridad Falló</translation>
+        <translation>백업 실패하였습니다</translation>
     </message>
     <message>
         <source>There was an error trying to save the wallet data to %1.</source>
-        <translation>Hubo un error intentando guardar los datos del monedero a %1.</translation>
+        <translation>%1에 지갑 데이터를 저장하는 동안 오류가 발생하였습니다.</translation>
     </message>
     <message>
         <source>Backup Successful</source>
-        <translation>Copia de Seguridad Satisfactoria</translation>
+        <translation>백업 성공하였습니다</translation>
     </message>
     <message>
         <source>The wallet data was successfully saved to %1.</source>
-        <translation>Los datos del monedero se guardaron correctamente a %1.</translation>
+        <translation>지갑 데이터가 %1에 성공적으로 저장되었습니다.</translation>
     </message>
 </context>
 <context>
     <name>pivx-core</name>
     <message>
         <source>(1 = keep tx meta data e.g. account owner and payment request information, 2 = drop tx meta data)</source>
-        <translation>(1= mantener los metadatos tx p.e. dueño de la cuenta e información de la solicitud de pago, 2 = ignorar metadatos tx)</translation>
+        <translation>(1 = tx 메타 데이터 유지 예 : 계정 소유자 및 지불 요청 정보, 2 = tx 메타 데이터 삭제)</translation>
     </message>
     <message>
         <source>Allow JSON-RPC connections from specified source. Valid for &lt;ip&gt; are a single IP (e.g. 1.2.3.4), a network/netmask (e.g. 1.2.3.4/255.255.255.0) or a network/CIDR (e.g. 1.2.3.4/24). This option can be specified multiple times</source>
-        <translation>Permitir conexiones JSON-RPC  desde la fuente especificada. Valido para &lt;ip&gt; sea una única IP (ej: 1.2.3.4), una red/mascara de red (ej: 1.2.3.4/255.255.255.0) o una red/CIDR (ej: 1.2.3.4/24). Esta opción puede ser especificada múltiples veces.</translation>
+        <translation>지정된 소스에서 JSON-RPC 연결을 허용하십시오. 단일 IP (예 : 1.2.3.4), 네트워크/넷마스크 (예 : 1.2.3.4/255.255.255.0) 또는 네트워크 / CIDR (예 : 1.2.3.4/24)에 대해 &lt;ip&gt; 가 유효합니다. 이 옵션은 여러번 지정할 수 있습니다.</translation>
     </message>
     <message>
         <source>An error occurred while setting up the RPC address %s port %u for listening: %s</source>
-        <translation>Un error ocurrió mientras se ajustaba la dirección RPC %s puerto %u para escucha en: %s</translation>
+        <translation>수신을 위한 RPC 주소 %s 포트 %u설정 도중 오류가 발생했습니다: %s</translation>
     </message>
     <message>
         <source>Bind to given address and always listen on it. Use [host]:port notation for IPv6</source>
-        <translation>Conectarse a la IP seleccionada y siempre escuchar de ella. Usar la forma [host]:puerto para IPv6</translation>
+        <translation>주어진 주소를 지정하고 항상 수신하도록 하십시오. [host]:IPv6 포트 표기법 사용</translation>
     </message>
     <message>
         <source>Bind to given address and whitelist peers connecting to it. Use [host]:port notation for IPv6</source>
-        <translation>Escuchar únicamente a la dirección IP indicada y a nodos de la lista blanca. Use la notación [host]:puerto para IPv6</translation>
+        <translation>주어진 주소에 바인딩하고 피어 연결을 허용하십시오. IPv6 [host]:port 표기법 사용</translation>
     </message>
     <message>
         <source>Bind to given address to listen for JSON-RPC connections. Use [host]:port notation for IPv6. This option can be specified multiple times (default: bind to all interfaces)</source>
-        <translation>Escuchar únicamente a la tarjeta de red indicada para conexiones JSON-RPC. Use la notación [host]:puerto para IPv6. Esta opción puede ser especificada varias veces (por defecto: escuchar en todas las tarjetas de red)</translation>
+        <translation>JSON-RPC연결 수신을 위해 주어진 주소를 지정합니다. [host]: IPv6 포트 표기법 사용. 이 옵션은 여러번 지정할 수 있습니다. (기본값 : 모든 인터페이스에 지정)</translation>
     </message>
     <message>
         <source>Cannot obtain a lock on data directory %s. PIVX Core is probably already running.</source>
-        <translation>No se puede obtener un bloqueo sobre el directorio de datos %s. PIVX Core esta probablemente en ejecución.</translation>
+        <translation>        &lt;translation&gt;잠겨진 데이터 디렉토리 %s 를 가져올 수 없습니다. PIVX Core는 이미 실행 중입니다.</translation>
     </message>
     <message>
         <source>Change automatic finalized budget voting behavior. mode=auto: Vote for only exact finalized budget match to my generated budget. (string, default: auto)</source>
-        <translation>Cambiar el comportamiento automático de votación de presupuesto final. modo=auto: Votar sólo por coincidencia exacta de un presupuesto finalizado con el generado por mí. (cadena, por defecto: auto)</translation>
+        <translation>최종 budget 투표 자동 작동 값을 변경합니다. mode=auto: 오직 내가 생성한 budget과 최종 budget이 정확히 일치할때 투표합니다. (string, 기본값: 자동)</translation>
     </message>
     <message>
         <source>Continuously rate-limit free transactions to &lt;n&gt;*1000 bytes per minute (default:%u)</source>
-        <translation>Limite continuo de transacciones gratuitas &lt;n&gt;*1000 bytes por minuto (default:%u)</translation>
+        <translation>연속적인 무료 트랜잭션을 분당 &lt;n&gt;*1000 bytes로 제한합니다. (기본값:%u)</translation>
     </message>
     <message>
         <source>Create new files with system default permissions, instead of umask 077 (only effective with disabled wallet functionality)</source>
-        <translation>Crear nuevos archivos con el permiso predeterminado del sistema, en vez de umask 077 (solamente efectivo con la funcionalidad del monedero desabilitada)</translation>
+        <translation>umask 077대신 시스템 기본 권한으로 새로운 파일들을 만듭니다. (지갑 기능이 비활성화일 때만 효과가 발휘됩니다)</translation>
     </message>
     <message>
         <source>Delete all wallet transactions and only recover those parts of the blockchain through -rescan on startup</source>
-        <translation>Borrar todas las transacciones del monedero y solo recuperar partes de la cadena de bloque a traves de -rescan al inicio.</translation>
+        <translation>지갑의 모든 트랜잭션들을 삭제하고 오직 블록체인을 통한 트랜잭션 부분들만 복구합니다 -시작 시 다시 스캔</translation>
     </message>
     <message>
         <source>Disable all PIVX specific functionality (Masternodes, Obfuscation, SwiftTX, Budgeting) (0-1, default: %u)</source>
-        <translation>Desabilitar toda la funcionalidad especifica PIVX (Masternodes, Obfuscation, SwiftTX, Budgeting) (0-1, predeterminado: %u)</translation>
+        <translation>PIVX의 모든 특정 기능들을 비활성화합니다(마스터노드, 난독화, SwiftTX, Budgeting) (0-1, 기본값: %u)</translation>
     </message>
     <message>
         <source>Distributed under the MIT software license, see the accompanying file COPYING or &lt;http://www.opensource.org/licenses/mit-license.php&gt;.</source>
-        <translation>Distribuido bajo licencia MIT software license, ver el archivo adjunto COPYING or &lt;http://www.opensource.org/licenses/mit-license.php&gt;</translation>
-    </message>
-    <message>
-        <source>Enable spork administration functionality with the appropriate private key.</source>
-        <translation>Activar la función de administración de sporks con la llave privada apropiada.</translation>
+        <translation>MIT 소프트웨어 라이센스에 따라 배포, 첨부 파일 COPYING 또는 &lt;http://www.opensource.org/licenses/mit-license.php&gt; 를 참조하십시오.</translation>
     </message>
     <message>
         <source>Enable swifttx, show confirmations for locked transactions (bool, default: %s)</source>
-        <translation>Activar swifttx, mostrar confirmaciones para transacciones bloqueadas (bool, predeterminado: %s)</translation>
+        <translation>swiftTX 활성화, 잠긴 트랜잭션들에 대한 확인 표시 (bool, 기본값: %s)</translation>
     </message>
     <message>
         <source>Enable use of automated obfuscation for funds stored in this wallet (0-1, default: %u)</source>
-        <translation>Activar el uso de ofuscación automatica para fondos guardados en este monedero (0-1, predeterminado: %u)</translation>
+        <translation>이 지갑에 저장된 금액에 대해 자동 난독화 사용을 활성화 합니다 (0-1, 기본값: %u)</translation>
     </message>
     <message>
         <source>Enter regression test mode, which uses a special chain in which blocks can be solved instantly.</source>
-        <translation>Entrar en el modo prueba de regresión, el cual usa una cadena especial en el cual los bloques pueden ser resueltos instantaneamente.</translation>
+        <translation>리그레션 테스트에 들어갑니다. 특수 체인을 사용하며 블록들을 바로 푸는 것이 가능합니다.</translation>
     </message>
     <message>
         <source>Error: Listening for incoming connections failed (listen returned error %s)</source>
-        <translation>Error: La escucha para conexiones entrantes falló (la escucha retorno error %s)</translation>
+        <translation>오류: 오는 연결들을 수신하는데 실패했습니다.(수신 중 오류 반환됨 %s)</translation>
     </message>
     <message>
         <source>Error: Unsupported argument -socks found. Setting SOCKS version isn't possible anymore, only SOCKS5 proxies are supported.</source>
-        <translation>Error: Argumento -socks no soportado. No se permite utilizar la versión SOCKS, solo proxies de SOCKS5 están soportados.</translation>
+        <translation>오류 : 지원하지 않는 인수 -socks가 발견되었습니다. SOCKS 버전 설정은 더 이상 가능하지 않으며 SOCKS5 프록시만 지원합니다.</translation>
     </message>
     <message>
         <source>Execute command when a relevant alert is received or we see a really long fork (%s in cmd is replaced by message)</source>
-        <translation>Ejecutar un comando cuando una alerta relevante es recibida o estamos teniendo una realmente larga bifurcación (%s en cmd is reemplazado por el mensaje)</translation>
+        <translation>관련된 경고 또는 포크가 길어질 경우 명령을 실행하십시오. (명령 내 %s 는 메시지로 대체 되었습니다)</translation>
     </message>
     <message>
         <source>Execute command when a wallet transaction changes (%s in cmd is replaced by TxID)</source>
-        <translation>Ejecutar un comando cuando una transacción del monedero cambie (%s en cmd is reemplazado por TxID)</translation>
+        <translation>지갑 트랜잭션이 변경될 경우 명령을 실행하십시오.(명령 내 %s 는 TxID로 대체 되었습니다)</translation>
     </message>
     <message>
         <source>Execute command when the best block changes (%s in cmd is replaced by block hash)</source>
-        <translation>Ejecutar comando cuando el mejor bloque cambie (%s en cmd es reemplazado por el block hash)</translation>
+        <translation>최고 블록이 변경될 경우 명령을 실행하십시오 (명령 내 %s 는 블록 해시로 대체 되었습니다)</translation>
     </message>
     <message>
         <source>Fees (in PIV/Kb) smaller than this are considered zero fee for relaying (default: %s)</source>
-        <translation>Comisiones (en PIV/Kb) menores a esta son consideradas gratuitas para la propagación de la transacción (default: %s)</translation>
+        <translation>이것보다 작은 수수료 (PIV/Kb)는 중계 수수료가 없는 것으로 간주됩니다 (기본값: %s)</translation>
     </message>
     <message>
         <source>Fees (in PIV/Kb) smaller than this are considered zero fee for transaction creation (default: %s)</source>
-        <translation>Comisiones (en PIV/Kb) menores a esta son consideradas gratuitas para la creación de la transacción (default: %s)</translation>
+        <translation>이것보다 작은 수수료 (PIV/Kb)는 트랜잭션 생성 수수료가 없는 것으로 간주됩니다 (기본값: %s)</translation>
     </message>
     <message>
         <source>Flush database activity from memory pool to disk log every &lt;n&gt; megabytes (default: %u)</source>
-        <translation>Trasladar la actividad de la base de datos en el pool de memoria al log de disco cada &lt;n&gt; megabytes (default: %u)</translation>
+        <translation>메모리 풀에서 디스크로 매 &lt;n&gt; 메가바이트만큼 데이터베이스 활동 플러쉬를 기록합니다 (기본값: %u)</translation>
     </message>
     <message>
         <source>Found unconfirmed denominated outputs, will wait till they confirm to continue.</source>
-        <translation>Se encontró salidas denominadas sin confirmar, se esperará hasta que se confirmen para continuar.</translation>
+        <translation>미확인 표시된 출력들을 찾고 계속하기 위한 확인을 받기 전까지 기다립니다.</translation>
     </message>
     <message>
         <source>How thorough the block verification of -checkblocks is (0-4, default: %u)</source>
-        <translation>Cuán exhaustiva es la verificación de bloque de -checkblocks (0-4, predeterminado: %u)</translation>
+        <translation>-checkblocks의 블록 검증이 얼마나 철저한 정도 (0-4, 기본값: %u)</translation>
     </message>
     <message>
         <source>If paytxfee is not set, include enough fee so transactions begin confirmation on average within n blocks (default: %u)</source>
-        <translation>Si paytxfee no esta definido, incluir suficiente comisión de manera que la transacción se vuelva confirmada en promedio dentro de n bloques (predeterminado: %u)</translation>
+        <translation>paytxfee가 설정되어 있지 않는 경우 충분한 수수료를 넣어야만 평균이내 n블록들을 확인하고 트랜잭션를 시작합니다 (기본값: %u)</translation>
     </message>
     <message>
         <source>In this mode -genproclimit controls how many blocks are generated immediately.</source>
-        <translation>En este modo -genproclimit controla cuantos bloques son generados inmediatamente.</translation>
+        <translation>이 모드에서 -genproclimit는 즉시 생성되는 블록 수를 제어합니다.</translation>
     </message>
     <message>
         <source>Invalid amount for -maxtxfee=&lt;amount&gt;: '%s' (must be at least the minrelay fee of %s to prevent stuck transactions)</source>
-        <translation>Importe inválido para -maxtxfee=&lt;amount&gt;:'%s' (debe ser al menos la comisión minrelay de %s para prevenir transacciones atascadas)</translation>
-    </message>
-    <message>
-        <source>Keep the specified amount available for spending at all times (default: 0)</source>
-        <translation>Mantener la cantidad especificada disponible para gastar en todo momento (por defecto: 0)</translation>
+        <translation>-maxtxfee=&lt;amount&gt;에 대한 잘못된 금액: '%s' (트랜잭션 정지를 막을려면 적어도 %s의 minrelay 수수료가 있어야 합니다)</translation>
     </message>
     <message>
         <source>Log transaction priority and fee per kB when mining blocks (default: %u)</source>
-        <translation>Prioridad del registro de transacciones por kB cuando se esta minando bloques (predeterminado: %u)</translation>
+        <translation>블록을 채굴 할 때 트랜잭션 우선 순위 및 kB 당 수수료를 기록합니다 (기본값: %u)</translation>
     </message>
     <message>
         <source>Maintain a full transaction index, used by the getrawtransaction rpc call (default: %u)</source>
-        <translation>Mantener un indice de transacción completo, utilizado por la llamada rpc getrawtransaction (predeterminado: %u)</translation>
+        <translation>getrawtransaction rpc 호출에서 사용되는 전체 트랜잭션 색인를 유지보수합니다 (기본값: %u)</translation>
     </message>
     <message>
         <source>Maximum size of data in data carrier transactions we relay and mine (default: %u)</source>
-        <translation>Tamaño máximo de datos en transacciones de transmisiones de datos que pasamos y minamos (predeterminado: %u)</translation>
+        <translation>데이터 캐리어 내에서 우리가 중계하고 채굴하는 트랜잭션 데이터의 최대 사이즈 (기본값: %u)</translation>
     </message>
     <message>
         <source>Maximum total fees to use in a single wallet transaction, setting too low may abort large transactions (default: %s)</source>
-        <translation>Comisión máxima total para usar en una única transacción de billetera, definirlo muy bajo puede abortar transacciones largas (predeterminado: %s)</translation>
+        <translation>단일 지갑 트랜잭션에서 사용하기 위한 최대 전체 수수료, 너무 낮은 값이 설정되어 있으면 큰 트랜잭션이 유실될 수 있습니다 (기본값: %s)</translation>
     </message>
     <message>
         <source>Number of seconds to keep misbehaving peers from reconnecting (default: %u)</source>
-        <translation>Número de segundos a mantener pares con mal comportamiento de reconectarse (predeterminado: %u)</translation>
+        <translation>재연결로 인해 피어가 오작동을 유지하는 초 단위 시간 (기본값: %u)</translation>
     </message>
     <message>
         <source>Obfuscation uses exact denominated amounts to send funds, you might simply need to anonymize some more coins.</source>
-        <translation>La ofuscación utiliza importes en denominaciones exactas para enviar fondos, puedes simplemente necesitar anonimizar algunas monedas mas. </translation>
+        <translation>난독화는 정확한 금액을 사용하여 자금을 송금하기 때문에 더 많은 코인을 익명화해야 할 수도 있습니다.</translation>
     </message>
     <message>
         <source>Output debugging information (default: %u, supplying &lt;category&gt; is optional)</source>
-        <translation>Saluda de información de depuración (predeterminado: %u, proveyendo &lt;category&gt; es opcional)</translation>
+        <translation>디버깅 정보 출력 (기본값: %u, &lt;category&gt; 공급은 선택입니다)</translation>
     </message>
     <message>
         <source>Provide liquidity to Obfuscation by infrequently mixing coins on a continual basis (0-100, default: %u, 1=very frequent, high fees, 100=very infrequent, low fees)</source>
-        <translation>Proporcionar liquidez a la Ofuscación mezclando infrecuentemente las monedas continuamente (0-100, predeterminado: %u, 1=muy frecuente, altas comisiones, 100=muy infrecuente, bajas comisiones)</translation>
+        <translation>자주 사용하지 않는 코인을 믹싱하여 난독화에 유동성을 제공합니다 (0-100, 기본값: %u, 1=매우 잦음, 높은 수수료, 100=매운 드문, 낮은 수수료)</translation>
     </message>
     <message>
         <source>Query for peer addresses via DNS lookup, if low on addresses (default: 1 unless -connect)</source>
-        <translation>Consultar por direcciones de pares vía búsqueda en DNS, si cantidad de direcciones esta bajo (predeterminado: 1 a menos que se utilice -connect)</translation>
+        <translation>DNS 검색을 통한 피어 주소 쿼리, 주소가 부족할 경우 (-connect 아닌 이상 기본값:1)</translation>
     </message>
     <message>
         <source>Require high priority for relaying free or low-fee transactions (default:%u)</source>
-        <translation>Requerir alta prioridad para transmitir transacción de libre o baja comisión (predeterminado: %u)</translation>
+        <translation>무료 또는 낮은 수수료 트랜잭션를 중계하는데 높은 우선 순위가 필요합니다 (기본값: %u)</translation>
     </message>
     <message>
         <source>Send trace/debug info to console instead of debug.log file (default: %u)</source>
-        <translation>Enviar info de traza/debug a la consola en lugar del archivo debug.log (predeterminado: %u)</translation>
+        <translation>debug.log 파일 대신 추적/디버그 정보를 콘솔에 보냅니다 (기본값: %u)</translation>
     </message>
     <message>
         <source>Set maximum size of high-priority/low-fee transactions in bytes (default: %d)</source>
-        <translation>Define tamaño máximo de transacción alta prioridad/baja comisión en bytes (predeterminado: %d)</translation>
+        <translation>최우선/낮은 수수료 트랜잭션의 최대 크기를 바이트 단위로 설정합니다 (기본값: %d)</translation>
     </message>
     <message>
         <source>Set the number of script verification threads (%u to %d, 0 = auto, &lt;0 = leave that many cores free, default: %d)</source>
-        <translation>Define el número de hilos para el script de verificación (%u a %d, 0 = auto, &lt;0 = dejar esa cantidad de núcleos libres, predeterminado: %d)</translation>
+        <translation>스크립트 허용 스레드의 개수를 설정합니다. (%u 에서 %d, 0 = 자동, &lt;0 = 충분한 코어들을 남겨두세요, 기본값: %d)</translation>
     </message>
     <message>
         <source>Set the number of threads for coin generation if enabled (-1 = all cores, default: %d)</source>
-        <translation>Define el número de hilos para generación de moneda si esta habilitado (-1 = todos los núcleos, predeterminado: %d)</translation>
+        <translation>활성화 시에 코인 생성을 위한 스레드 숫자를 설정합니다 (-1= 모든 코어, 기본값: %d)</translation>
     </message>
     <message>
         <source>Show N confirmations for a successfully locked transaction (0-9999, default: %u)</source>
-        <translation>Mostrar N confirmaciones para una transacción cerrada exitosamente (0-9999, predefinido: %u)</translation>
-    </message>
-    <message>
-        <source>Support filtering of blocks and transaction with bloom filters (default: %u)</source>
-        <translation>Soportar filtrado de bloques y transacciones con filtros bloom (por defecto: %u)</translation>
+        <translation>성공적으로 잠긴 트랜잭션에 대한 확인을 N으로 나타냅니다 (0-9999, 기본값: %u)</translation>
     </message>
     <message>
         <source>SwiftTX requires inputs with at least 6 confirmations, you might need to wait a few minutes and try again.</source>
-        <translation>SwiftTX requiere entradas con hasta 6 confirmaciones, es posible que debas esperar unos minutos e intentar nuevamente.</translation>
+        <translation>SwiftTX는 최소 6회 확인이 필요한 입력으로 몇 분 후에 다시 시도해야 할 수 있습니다.</translation>
     </message>
     <message>
         <source>This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit &lt;https://www.openssl.org/&gt; and cryptographic software written by Eric Young and UPnP software written by Thomas Bernard.</source>
-        <translation>Este producto incluye software desarrollado por el Proyecto OpenSSL para uso en OpenSSL Toolkit &lt;https://www.openssl.org/&gt; y software de cifrado escrito por Eric Young y software de UPnP escrito por Thomas Bernard.</translation>
+        <translation>이 제품은 OpenSSL이 개발한 Open SSL 툴킷 &lt;https://www.openssl.org/&gt; 에서 사용하기 위한 프로젝트 소프트웨어, Eric Young이 개발한 암호화 소프트웨어, Thomas Bernard가 개발한 UPnP 소프트웨어가 포함되어 있습니다.</translation>
     </message>
     <message>
         <source>To use pivxd, or the -server option to pivx-qt, you must set an rpcpassword in the configuration file:
@@ -4086,1050 +3990,985 @@ If the file does not exist, create it with owner-readable-only file permissions.
 It is also recommended to set alertnotify so you are notified of problems;
 for example: alertnotify=echo %%s | mail -s "PIVX Alert" admin@foo.com
 </source>
-        <translation>Para usar pivxd, o la opción -server de pivx-qt, debes definir un rpcpassword en el archivo de configuración:
+        <translation>PIVXd 또는 PIVX-qt에 대한 -server 옵션 파일을 사용하려면 configuration 파일에서 rpcpassword를 설정해야 합니다:
 %s
-Es recomendado que uses la siguiente contraseña aleatoria:
-rpcuser=pivx
-rpcrpcpassword=%s
-(No necesitas recordar esta contraseña)
-El nombre de usuario y contraseña NO DEBEN ser los mismos.
-Si el archivo no existe, crearlo con permisos de solo lectura para el propietario.
-También es recomendado definir alertnotify de manera que seas notificado de problemas;
-por ejemplo: alertnotify=echo %%s | mail -s "PIVX Alert" admin@foo.com
+다음 무작위 암호를 사용하는 것을 추천합니다:
+rpcuser=PIVXpc
+rpcpassword=%s
+(이 비밀번호는 기억할 필요가 없습니다)
+유저 이름과 비밀번호는 반드시 달라야 합니다.
+파일이 존재하지 않는다면 작성자만 읽기 가능한 권한으로 파일을 생성하십시오.
+또한 문제 발생 알림을 받을려면 alertnotify를 설정하는 것을 추천합니다.
+예시: alertnotify=echo %%s | mail -s "PIVX Alert" admin@foo.com
 </translation>
     </message>
     <message>
         <source>Unable to bind to %s on this computer. PIVX Core is probably already running.</source>
-        <translation>Imposible conectar a %s en esta computadora. Es probable que PIVX Core ya este corriendo.</translation>
+        <translation>이 컴퓨터를 %s 로 지정하는것은 불가능합니다. PIVX Core는 이미 실행 중입니다.</translation>
     </message>
     <message>
         <source>Unable to locate enough Obfuscation denominated funds for this transaction.</source>
-        <translation>Imposible localizar suficientes fondos denominados de Ofuscación para esta transacción.</translation>
+        <translation>이 트랜잭션를 위해 난독화 표기된 충분한 금액을 찾을 수 없습니다.</translation>
     </message>
     <message>
         <source>Unable to locate enough Obfuscation non-denominated funds for this transaction that are not equal 10000 PIV.</source>
-        <translation>Imposible localizar suficientes fondos no-denominados de Ofuscación para esta transacción que no es igual a 10000 PIV.</translation>
+        <translation>이 트랜잭션를 위해 난독화 표기가 안된 충분한 금액을 찾을 수 없습니다. 10000 PIV과 일치하지 않음.</translation>
     </message>
     <message>
         <source>Unable to locate enough funds for this transaction that are not equal 10000 PIV.</source>
-        <translation>Imposible localizar fondos suficientes para esta transacción que no es igual a 10000 PIV.</translation>
+        <translation>트랜잭션에 대한 충분한 금액을 찾을 수 없습니다. 10000 PIV와 같지 않음</translation>
     </message>
     <message>
         <source>Use separate SOCKS5 proxy to reach peers via Tor hidden services (default: %s)</source>
-        <translation>Utilizar un proxy SOCKS5 diferente para alcanzar pares vía el servicio oculto Tor (predefinido: %s)</translation>
+        <translation>Tor hidden services를 통하여 피어에게 도달하기 위해 독립된 SOCKS5 프록시를 사용합니다(기본값: %s)</translation>
     </message>
     <message>
         <source>Warning: -maxtxfee is set very high! Fees this large could be paid on a single transaction.</source>
-        <translation>Advertencia: -maxtxfee esta muy alto! Comisiones así de altas pueden ser pagadas en una única transacción.</translation>
+        <translation>경고: -maxrtxfee가 매우 높게 설정 되었습니다! 이렇게 큰 수수료는 단 한번의 단일 트랜잭션에 지불될 수도 있습니다.</translation>
     </message>
     <message>
         <source>Warning: -paytxfee is set very high! This is the transaction fee you will pay if you send a transaction.</source>
-        <translation>Advertencia: -paytxfee esta muy alta! Esta es la comisión de transacción que pagarás si envías una transacción.</translation>
+        <translation>경고 : -paytxfee가 매우 높게 설정되었습니다! 이것은 전송할 경우 지불 할 트랜잭션 수수료입니다.</translation>
     </message>
     <message>
         <source>Warning: Please check that your computer's date and time are correct! If your clock is wrong PIVX Core will not work properly.</source>
-        <translation>Advertencia: Por favor verifique que la fecha y hora de su computadora sean correctas! Si su reloj esta fuera de hora PIVX Core no funcionará adecuadamente.</translation>
+        <translation>경고: 컴퓨터의 날짜와 시간이 올바르게 설정되어 있는지 확인해 주세요! 만일 시계가 잘못되어 있다면 PIVX 코어는 정상적으로 작동하지 않을 수 있습니다.</translation>
     </message>
     <message>
         <source>Warning: The network does not appear to fully agree! Some miners appear to be experiencing issues.</source>
-        <translation>Advertencia: La red parece no estar concordando totalmente! Algunos mineros parecen estar experimentando problemas.</translation>
+        <translation>경고: 네트워크가 완전히 동의하지 않는 것 같습니다! 일부 마이너에 문제가 발생한 것으로 보입니다.</translation>
     </message>
     <message>
         <source>Warning: We do not appear to fully agree with our peers! You may need to upgrade, or other nodes may need to upgrade.</source>
-        <translation>Advertencia: No estamos apareciendo totalmente en concordancia con nuestros pares! Podrías necesitar una actualización, o otros nodos pueden necesitar una actualización.</translation>
+        <translation>경고: 우리의 피어들과 완벽하게 일치하지 않습니다! 업그레이드 또는 다른 노드들의 업그레이드가 필요할 수 있습니다.</translation>
     </message>
     <message>
         <source>Warning: error reading wallet.dat! All keys read correctly, but transaction data or address book entries might be missing or incorrect.</source>
-        <translation>Advertencia: error leyendo wallet.dat! Todas las claves leídas correctamente, pero datos de transacción or entradas en el libro de direcciones podrían estar faltando o ser incorrectas.</translation>
+        <translation>경고 : wallet.dat을 읽는 중 오류가 발생했습니다! 모든 키가 올바르게 읽혀 지지만 트랜잭션 데이터 또는 주소록 항목이 누락되었거나 올바르지 않을 수 있습니다.</translation>
     </message>
     <message>
         <source>Warning: wallet.dat corrupt, data salvaged! Original wallet.dat saved as wallet.{timestamp}.bak in %s; if your balance or transactions are incorrect you should restore from a backup.</source>
-        <translation>Advertencia: wallet.dat esta dañado, datos salvados! El wallet.dat original esta grabado como wallet.{timestamp}.bak en %s; si tu saldo o transacciones son incorrectas deberías restaurar de un backup.</translation>
+        <translation>경고 : wallet.dat에 손상된 데이터가 복구되었습니다. 본래 wallet.dat은 wallet으로 저장되었습니다. {timestamp}.bak %s; 잔액 또는 트랜잭션가 올바르지 않은 경우 백업에서 복원해야합니다.</translation>
     </message>
     <message>
         <source>Whitelist peers connecting from the given netmask or IP address. Can be specified multiple times.</source>
-        <translation>Pares de la whitelist conectados desde la mascara de red o direcciones IP dada. Puede ser especificado múltiples veces.</translation>
+        <translation>주어진 넷마스크 또는 IP 주소로부터 화이트리스트 피어가 연결되고 있습니다. 여러 번 지정될 수 있습니다.</translation>
     </message>
     <message>
         <source>Whitelisted peers cannot be DoS banned and their transactions are always relayed, even if they are already in the mempool, useful e.g. for a gateway</source>
-        <translation>Pares de la Whitelist no pueden ser banneados por DoS y sus transacciones son siempre transmitidas, aún si ellas están ya en la mempool, util por ejemplo para un gateway.</translation>
+        <translation>화이트리스트 피어들은 DoS 밴 될 수 없으며 그들이 이미 메모리 풀에 있을지라도 그들의 트랜잭션는 항상 중계됩니다. 예를들면 게이트웨이 같은 것에 유용</translation>
     </message>
     <message>
         <source>You must specify a masternodeprivkey in the configuration. Please see documentation for help.</source>
-        <translation>Debes especificar un masternodeprivkey en la configuración. Por favor mira la documentación por ayuda.</translation>
+        <translation>환경설정에서 masternodeprivkey를 지정해야 합니다. 도움말을 참조하십시오.</translation>
     </message>
     <message>
         <source>(51472 could be used only on mainnet)</source>
-        <translation>(51472 puede ser utilizado solo en mainnet)</translation>
+        <translation>(51472 은 메인넷에서만 사용될 수 있습니다)</translation>
     </message>
     <message>
         <source>(default: %s)</source>
-        <translation>(predeterminado: %s)</translation>
+        <translation>(기본값: %s)</translation>
     </message>
     <message>
         <source>(default: 1)</source>
-        <translation>(predeterminado: 1)</translation>
+        <translation>(기본값: 1)</translation>
     </message>
     <message>
         <source>(must be 51472 for mainnet)</source>
-        <translation>(debe ser 51472 para un mainnet)</translation>
-    </message>
-    <message>
-        <source>Accept command line and JSON-RPC commands</source>
-        <translation>Aceptar linea de mandato y mandatos JSON-RPC</translation>
+        <translation>(메인넷 일경우 51472)</translation>
     </message>
     <message>
         <source>Accept connections from outside (default: 1 if no -proxy or -connect)</source>
-        <translation>Aceptar conexiones desde afuera (predeterminado: 1 sin opción -proxy o -connect)</translation>
+        <translation>외부에서의 접속을 허용 (1 -프록시 또는 -연결이 없을 경우 기본값)</translation>
     </message>
     <message>
         <source>Accept public REST requests (default: %u)</source>
-        <translation>Aceptar peticiones públicas REST (predeterminado: %u)</translation>
+        <translation>공개 REST 요청 수락(기본값: %u)</translation>
     </message>
     <message>
         <source>Acceptable ciphers (default: %s)</source>
-        <translation>Métodos de cifrado aceptables (predeterminado: %s)</translation>
+        <translation>허용되는 암호 (기본값: %s)</translation>
     </message>
     <message>
         <source>Add a node to connect to and attempt to keep the connection open</source>
-        <translation>Agregar un nodo a conectarse y intentar mantener abierta la conexión</translation>
+        <translation>연결할 노드를 추가하고 계속해서 연결을 유지하십시오.</translation>
     </message>
     <message>
         <source>Allow DNS lookups for -addnode, -seednode and -connect</source>
-        <translation>Permitir búsquedas DNS para -addnode, -seednode y -connect</translation>
+        <translation>-addnode, -seednode, -connect을 위해 DNS 조회를 허용하십시오.</translation>
     </message>
     <message>
         <source>Already have that input.</source>
-        <translation>Ya tiene esa entrada.</translation>
+        <translation>이미 연결 중입니다.</translation>
     </message>
     <message>
         <source>Always query for peer addresses via DNS lookup (default: %u)</source>
-        <translation>Siempre consultar por direcciones de pares vía búsqueda DNS (predeterminado: %u)</translation>
+        <translation>피어 주소에게 DNS 조회를 통한 지속적인 정보 수신 요청을 합니다 (기본값: %u)</translation>
     </message>
     <message>
         <source>Attempt to recover private keys from a corrupt wallet.dat</source>
-        <translation>Intentar recuperar claves privadas desde un wallet.dat dañado</translation>
+        <translation>손상된 wallet.dat으로 부터 개인 키 복구를 시도합니다.</translation>
     </message>
     <message>
         <source>Block creation options:</source>
-        <translation>Opciones de creación de bloque:</translation>
+        <translation>블록 생성 옵션:</translation>
     </message>
     <message>
         <source>Can't denominate: no compatible inputs left.</source>
-        <translation>No se puede denominar: quedaron entradas no compatibles.</translation>
+        <translation>표시할 수 없음: 남아있는 호환된 연결이 없습니다.</translation>
     </message>
     <message>
         <source>Can't find random Masternode.</source>
-        <translation>No se puede encontrar un Masternode al azar.</translation>
+        <translation>임의의 마스터노드를 찾을 수 없습니다.</translation>
     </message>
     <message>
         <source>Can't mix while sync in progress.</source>
-        <translation>No se puede mezclar mientras la sincronización esta en progreso.</translation>
+        <translation>동기화가 진행 중일 때에는 믹싱을 할 수 없습니다.</translation>
     </message>
     <message>
         <source>Cannot downgrade wallet</source>
-        <translation>No se puede volver a una versión anterior de la billetera</translation>
+        <translation>지갑을 다운그레이드 할 수 없습니다.</translation>
     </message>
     <message>
         <source>Cannot resolve -bind address: '%s'</source>
-        <translation>No se puede resolver la dirección -bind: '%s'</translation>
+        <translation>주소를 변환할 수 없습니다 주소 -bind: '%s'</translation>
     </message>
     <message>
         <source>Cannot resolve -externalip address: '%s'</source>
-        <translation>No se puede resolver la dirección -externalip: '%s'</translation>
+        <translation>주소를 변환할 수 없습니다 -externalip 주소: '%s'</translation>
     </message>
     <message>
         <source>Cannot resolve -whitebind address: '%s'</source>
-        <translation>No se puede resolver la dirección -whitebind: '%s'</translation>
+        <translation>해결할 수 없습니다 -whitebind 주소: '%s'</translation>
     </message>
     <message>
         <source>Cannot write default address</source>
-        <translation>No se puede escribir la dirección predeterminada</translation>
+        <translation>기본 주소를 사용할 수 없습니다.</translation>
     </message>
     <message>
         <source>Collateral not valid.</source>
-        <translation>Colateral no válido.</translation>
+        <translation>Collateral이 유효하지 않습니다.</translation>
     </message>
     <message>
         <source>Connect only to the specified node(s)</source>
-        <translation>Conectar solo a el/los nodo(s) especificados</translation>
+        <translation>지정된 노드(s)로만 연결이 가능합니다.</translation>
     </message>
     <message>
         <source>Connect through SOCKS5 proxy</source>
-        <translation>Conectar a través de proxy SOCKS5</translation>
+        <translation>SOCKS5 프록시를 통해 연결합니다</translation>
     </message>
     <message>
         <source>Connect to a node to retrieve peer addresses, and disconnect</source>
-        <translation>Conectar a un nodo para obtener direcciones de pares, y desconectar</translation>
+        <translation>노드에 연결하여 피어 주소를 검색하고 연결을 끊습니다</translation>
     </message>
     <message>
         <source>Connection options:</source>
-        <translation>Opciones de conexión:</translation>
+        <translation>연결 옵션:</translation>
     </message>
     <message>
         <source>Copyright (C) 2009-%i The Bitcoin Core Developers</source>
-        <translation>Copyright (C) 2009-%i The Bitcoin Core Developers</translation>
+        <translation>Copyright (C) 2009-%i 비트코인 Core 개발자들</translation>
     </message>
     <message>
         <source>Copyright (C) 2014-%i The Dash Core Developers</source>
-        <translation>Copyright (C) 2014-%i The Dash Core Developers</translation>
+        <translation>Copyright (C) 2014-%i The Dash Core 개발자들</translation>
     </message>
     <message>
         <source>Copyright (C) 2015-%i The PIVX Core Developers</source>
-        <translation>Copyright (C) 2015-%i The PIVX Core Developers</translation>
+        <translation>Copyright (C) 2015-%i The PIVX Core 개발자</translation>
     </message>
     <message>
         <source>Corrupted block database detected</source>
-        <translation>Se detectó base de datos de bloques dañado</translation>
+        <translation>손상된 블록 데이터베이스가 발견되었습니다</translation>
     </message>
     <message>
         <source>Could not parse -rpcbind value %s as network address</source>
-        <translation>El valor %s de -rpcbind no pudo ser leído como una dirección de red.</translation>
+        <translation>-rpcbind 값 %s 를 네트워크 주소로 분석할 수 없습니다</translation>
     </message>
     <message>
         <source>Could not parse masternode.conf</source>
-        <translation>No se pudo analizar el contenido de masternode.conf </translation>
+        <translation>masternode.conf 를 분석할 수 없습니다.</translation>
     </message>
     <message>
         <source>Debugging/Testing options:</source>
-        <translation>Opciones de Depuración/Pruebas:</translation>
+        <translation>디버깅/테스팅 옵션:</translation>
     </message>
     <message>
         <source>Disable safemode, override a real safe mode event (default: %u)</source>
-        <translation>Desactiva modo seguro, invalida un evento modo seguro real (predeterminado: %u)</translation>
+        <translation>안전모드 비활성화, 실시간 안전모드 이벤트 중단 (기본값: %u)</translation>
     </message>
     <message>
         <source>Discover own IP address (default: 1 when listening and no -externalip)</source>
-        <translation>Descubrir direcciones IP propia (predeterminado: 1 cuando se esta a la escucha y sin opción -externalip)</translation>
+        <translation>자신의 IP 주소를 찾습니다 (기본값: 1 수신중이거나 -외부아이피가 없을 경우)</translation>
     </message>
     <message>
         <source>Do not load the wallet and disable wallet RPC calls</source>
-        <translation>No cargar la billetera y desactivar las llamadas RPC de billetera</translation>
+        <translation>지갑 RPC 호출을 비활성화하고 지갑을 불러오지 마시오</translation>
     </message>
     <message>
         <source>Do you want to rebuild the block database now?</source>
-        <translation>¿Quieres reconstruir la base de datos de bloques ahora?</translation>
+        <translation>블록 데이터베이스를 다시 작성하시기를 원하십니까?</translation>
     </message>
     <message>
         <source>Done loading</source>
-        <translation>Realizando carga</translation>
+        <translation>로딩 완료</translation>
     </message>
     <message>
         <source>Enable the client to act as a masternode (0-1, default: %u)</source>
-        <translation>Habilitar al cliente para actuar como un nodo maestro (0-1. predeterminado: %u)</translation>
+        <translation>클라이언트가 마스터노드로 작동하는 것을 활성화 (0-1, 기본값: %u)</translation>
     </message>
     <message>
         <source>Entries are full.</source>
-        <translation>Las entradas están llenas.</translation>
+        <translation>항목이 가득 찼습니다.</translation>
     </message>
     <message>
         <source>Error connecting to Masternode.</source>
-        <translation>Error al conectar al Nodo Maestro</translation>
+        <translation>Masternode에 연결하는 중 오류가 발생했습니다.</translation>
     </message>
     <message>
         <source>Error initializing block database</source>
-        <translation>Error al inicializar base de datos de bloques</translation>
-    </message>
-    <message>
-        <source>Error initializing wallet database environment %s!</source>
-        <translation>Error al inicializar ambiente %s de base de datos de billetera!</translation>
+        <translation>블록 데이터베이스를 초기화하는 중 오류가 발생했습니다.</translation>
     </message>
     <message>
         <source>Error loading block database</source>
-        <translation>Error al cargar base de datos de bloques</translation>
+        <translation>블록 데이터베이스를 불러오는 중 오류가 발생했습니다.</translation>
     </message>
     <message>
         <source>Error loading wallet.dat</source>
-        <translation>Error al cargar wallet.dat</translation>
+        <translation>wallet.dat을 불러오는 중 오류가 발생했습니다.</translation>
     </message>
     <message>
         <source>Error loading wallet.dat: Wallet corrupted</source>
-        <translation>Error al cargar wallet.dat: Billetera dañada</translation>
+        <translation>wallet.dat을 불러오는 중 오류가 발생했습니다: 지갑 손상됨</translation>
     </message>
     <message>
         <source>Error loading wallet.dat: Wallet requires newer version of PIVX Core</source>
-        <translation>Error al cargar wallet.dat: La Billetera requiere una nueva versión del Núcleo PIVX</translation>
+        <translation>wallet.dat를 로드하는 중 오류가 발생했습니다. 지갑에 최신 버전의 PIVX 코어가 필요합니다.</translation>
     </message>
     <message>
         <source>Error opening block database</source>
-        <translation>Error al abrir la base de datos de bloques</translation>
+        <translation>블록 데이터베이스를 여는 중 오류가 발생했습니다.</translation>
     </message>
     <message>
         <source>Error reading from database, shutting down.</source>
-        <translation>Error al leer desde la base de datos, apagando.</translation>
+        <translation>데이터베이스에서서 읽어오는 중 오류가 발생했습니다. 종료합니다.</translation>
     </message>
     <message>
         <source>Error recovering public key.</source>
-        <translation>Error al recuperar clave pública.</translation>
+        <translation>공개 키를 복구하는 중 오류가 발생했습니다.</translation>
     </message>
     <message>
         <source>Error</source>
-        <translation>Error</translation>
+        <translation>에러</translation>
     </message>
     <message>
         <source>Error: A fatal internal error occured, see debug.log for details</source>
-        <translation>Error: Un error interno fatal a ocurrido, ver debug.log para mas detalles</translation>
+        <translation>오류 : 내부에서 치명적인 오류가 발생했습니다. 자세한 내용은 debug.log를 참조하십시오</translation>
     </message>
     <message>
         <source>Error: Can't select current denominated inputs</source>
-        <translation>Error: No se pudo seleccionar las entradas denominadas actuales</translation>
+        <translation>오류 : 현재 표시된 입력을 선택할 수 없습니다</translation>
     </message>
     <message>
         <source>Error: Disk space is low!</source>
-        <translation>Error: El espacio en disco esta bajo!</translation>
+        <translation>오류 : 디스크 공간이 부족합니다!</translation>
     </message>
     <message>
         <source>Error: Unsupported argument -tor found, use -onion.</source>
-        <translation>Error: Se encontró argumento no soportado -tor, utilizar -onion.</translation>
+        <translation>오류 : 지원하지 않는 인수 -tor가 발견되었습니다. -onion을 사용하십시오.</translation>
     </message>
     <message>
         <source>Error: Wallet locked, unable to create transaction!</source>
-        <translation>Error: Billetera bloqueada, imposible crear transacción!</translation>
+        <translation>오류 : 지갑이 잠겼습니다, 트랜잭션을 생성할 수 없습니다!</translation>
     </message>
     <message>
         <source>Error: You already have pending entries in the Obfuscation pool</source>
-        <translation>Error: Ya tienes entradas pendientes en el pool de Ofuscación</translation>
+        <translation>오류 : 이미 난독화 그룹에 보류중인 항목들이 있습니다.</translation>
     </message>
     <message>
         <source>Failed to listen on any port. Use -listen=0 if you want this.</source>
-        <translation>Falló la escucha en cualquiera de los puertos. Usar -listen=0 si quieres esto.</translation>
+        <translation>어떠한 포트에서도 수신하는 것에 실패했습니다. 원하신다면 -listen=0 을 사용하십시오.</translation>
     </message>
     <message>
         <source>Failed to read block</source>
-        <translation>Falló al leer el bloque</translation>
+        <translation>블록을 받아오는데 실패했습니다.</translation>
     </message>
     <message>
         <source>Fee (in PIV/kB) to add to transactions you send (default: %s)</source>
-        <translation>Comisión (en PIV/kB) para agregar a la transacción que envías (predeterminado: %s)</translation>
+        <translation>당신이 보내는 트랜잭션에 추가 할 수수료 (PIV/kB) (기본값: %s)</translation>
     </message>
     <message>
         <source>Finalizing transaction.</source>
-        <translation>Finalizando transacción.</translation>
+        <translation>트랜잭션 완료.</translation>
     </message>
     <message>
         <source>Force safe mode (default: %u)</source>
-        <translation>Forzar modo seguro (predeterminado: %u)</translation>
+        <translation>강제 안전 모드 (기본값: %u)</translation>
     </message>
     <message>
         <source>Found enough users, signing ( waiting %s )</source>
-        <translation>Se han encontrado suficientes usuarios, firmando ( esperando %s )</translation>
+        <translation>충분한 사용자를 찾았습니다, 서명 중 ( %s 기다리는 중 )</translation>
     </message>
     <message>
         <source>Found enough users, signing ...</source>
-        <translation>Se han encontrado suficientes usuarios, firmando ...</translation>
+        <translation>충분한 사용자를 찾았습니다, 서명 중 ...</translation>
     </message>
     <message>
         <source>Generate coins (default: %u)</source>
-        <translation>Generando monedas: (predeterminado: %u)</translation>
+        <translation>코인 생성 (기본값: %u)</translation>
     </message>
     <message>
         <source>How many blocks to check at startup (default: %u, 0 = all)</source>
-        <translation>Cuantos bloques a probar al iniciar (predeterminado: %u, 0 = todos)</translation>
+        <translation>시작할 때 검사할 블록의 수 (기본값: %u, 0=모두)</translation>
     </message>
     <message>
         <source>If &lt;category&gt; is not supplied, output all debugging information.</source>
-        <translation>Si &lt;category&gt; no es proveído, dar salida a toda la información de depuración.</translation>
+        <translation>&lt;category&gt;가 제공되지 않으면, 모든 디버깅 정보를 출력합니다.</translation>
     </message>
     <message>
         <source>Importing...</source>
-        <translation>Importando...</translation>
+        <translation>가져오는 중...</translation>
     </message>
     <message>
         <source>Imports blocks from external blk000??.dat file</source>
-        <translation>Importar bloques desde archivo externo blk000??.dat</translation>
+        <translation>내부에 blk000??.dat 파일로부터 블록들을 가져옴</translation>
     </message>
     <message>
         <source>Include IP addresses in debug output (default: %u)</source>
-        <translation>Incluir direcciones IP en salida de depuración (predeterminado: %u)</translation>
+        <translation>디버그 출력에 IP 주소를 포함합니다 (기본값: %u)</translation>
     </message>
     <message>
         <source>Incompatible mode.</source>
-        <translation>Modo incompatible.</translation>
+        <translation>호환되지 않는 모드.</translation>
     </message>
     <message>
         <source>Incompatible version.</source>
-        <translation>Versión imcompatible.</translation>
+        <translation>호환되지 않는 버전.</translation>
     </message>
     <message>
         <source>Incorrect or no genesis block found. Wrong datadir for network?</source>
-        <translation>Bloque de génesis incorrecto o no encontrado. datadir equivocado para red?</translation>
+        <translation>잘못되었거나 블록을 찾지 못하였습니다. 네트워크에 대한 잘못된 데이터 디렉토리 문제?</translation>
     </message>
     <message>
         <source>Information</source>
-        <translation>Información</translation>
+        <translation>정보</translation>
     </message>
     <message>
         <source>Initialization sanity check failed. PIVX Core is shutting down.</source>
-        <translation>La prueba de salud de inicialización ha fallado. PIVX Core se cerrará.</translation>
+        <translation>초기화 정확성 검사에 실패 했습니다. PIVX Core가 종료됩니다.</translation>
     </message>
     <message>
         <source>Input is not valid.</source>
-        <translation>La entrada no es válida.</translation>
+        <translation>입력이 올바르지 않습니다.</translation>
     </message>
     <message>
         <source>Insufficient funds.</source>
-        <translation>Fondos insuficientes.</translation>
+        <translation>충분하지 않은 금액.</translation>
     </message>
     <message>
         <source>Invalid -onion address: '%s'</source>
-        <translation>Dirección -onion inválida: '%s'</translation>
+        <translation>유효하지 않은 -onion 주소: '%s'</translation>
     </message>
     <message>
         <source>Invalid -proxy address: '%s'</source>
-        <translation>Dirección -proxy inválida: '%s'</translation>
+        <translation>유효하지 않은 -proxy 주소: '%s'</translation>
     </message>
     <message>
         <source>Invalid amount for -maxtxfee=&lt;amount&gt;: '%s'</source>
-        <translation>Importe inválido para -maxtxfee=&lt;amount&gt;: '%s'</translation>
+        <translation>-maxtxfee=&lt;amount&gt; 에 대한 유효하지 않은 값: '%s'</translation>
     </message>
     <message>
         <source>Invalid amount for -minrelaytxfee=&lt;amount&gt;: '%s'</source>
-        <translation>Importe inválido para -minrelaytxfee=&lt;amount&gt;: '%s'</translation>
+        <translation>-minrelaytxfee=&lt;amount&gt;; 에 대한 유효하지 않은 값: '%s'</translation>
     </message>
     <message>
         <source>Invalid amount for -mintxfee=&lt;amount&gt;: '%s'</source>
-        <translation>Importe inválido para -mintxfee=&lt;amount&gt;: '%s'</translation>
+        <translation>-mintxfee=&lt;amount&gt;; 에 대한 유효하지 않은 값: '%s'</translation>
     </message>
     <message>
         <source>Invalid amount for -paytxfee=&lt;amount&gt;: '%s' (must be at least %s)</source>
-        <translation>Importe inválido para -paytxfee=&lt;amount&gt;: '%s' (debe ser al menos %s)</translation>
+        <translation>-paytxfee=&lt;amount&gt; 에 대한 유효하지 않은 값: '%s' (적어도 %s 가 필요합니다)</translation>
     </message>
     <message>
         <source>Invalid amount for -paytxfee=&lt;amount&gt;: '%s'</source>
-        <translation>Importe inválido para -paytxfee=&lt;amount&gt;: '%s'</translation>
+        <translation>-paytxfee=&lt;amount&gt; 에 대한 유효하지 않은 값: '%s'</translation>
     </message>
     <message>
         <source>Invalid amount for -reservebalance=&lt;amount&gt;</source>
-        <translation>Importe inválido para -reservebalance=&lt;amount&gt;</translation>
+        <translation>-reservebalance=&lt;amount&gt;에 대한 금액이 유효하지 않은 값</translation>
     </message>
     <message>
         <source>Invalid masternodeprivkey. Please see documenation.</source>
-        <translation>Valor de masternodeprivkey es inválido. Por favor ver la documentación.</translation>
+        <translation>마스터노드 개인 키가 잘못되었습니다. 설명서를 참조하십시오.</translation>
     </message>
     <message>
         <source>Invalid netmask specified in -whitelist: '%s'</source>
-        <translation>Máscara de red inválida especificada en -whitelist: '%s'</translation>
+        <translation>-whitelist: '%s' 에 지정된 넷마스크가 유효하지 않습니다.</translation>
     </message>
     <message>
         <source>Invalid port detected in masternode.conf</source>
-        <translation>Puerto inválido ha sido detectado en masternode.conf</translation>
+        <translation>masternode.conf 에서 유효하지 않은 포트가 감지되었습니다</translation>
     </message>
     <message>
         <source>Invalid private key.</source>
-        <translation>Clave pública inválida.</translation>
+        <translation>유효하지 않은 개인 키입니다.</translation>
     </message>
     <message>
         <source>Invalid script detected.</source>
-        <translation>Script inválido detectado.</translation>
-    </message>
-    <message>
-        <source>This is a pre-release test build - use at your own risk - do not use for staking or merchant applications!</source>
-        <translation>Esto es una versión pre-release de prueba - use bajo su propia responsabilidad - ¡No lo utilice para recompensa de participación ni aplicaciones de comercio!</translation>
-    </message>
-    <message>
-        <source>&lt;category&gt; can be:</source>
-        <translation>&lt;category&gt;puede ser: 
-</translation>
-    </message>
-    <message>
-        <source>Attempt to force blockchain corruption recovery</source>
-        <translation>Intentar forzar la recuperación de la cadena de bloques corrupta</translation>
-    </message>
-    <message>
-        <source>Display the stake modifier calculations in the debug.log file.</source>
-        <translation>Incluir los cálculos de recompensa por participación en el fichero debug.log.</translation>
-    </message>
-    <message>
-        <source>Display verbose coin stake messages in the debug.log file.</source>
-        <translation>Incluir mensajes explícitos de recompensa por participación en el fichero debug.log.</translation>
-    </message>
-    <message>
-        <source>Enable publish hash block in &lt;address&gt;</source>
-        <translation>Activar inclusión del hash del bloque en &lt;address&gt;</translation>
-    </message>
-    <message>
-        <source>Enable publish hash transaction (locked via SwiftTX) in &lt;address&gt;</source>
-        <translation>Activar inclusión del hash de la transacción (fijada mediante SwiftTX) en &lt;address&gt;</translation>
-    </message>
-    <message>
-        <source>Enable publish hash transaction in &lt;address&gt;</source>
-        <translation>Activar inclusión del hash de la transacción en &lt;address&gt;</translation>
-    </message>
-    <message>
-        <source>Enable publish raw block in &lt;address&gt;</source>
-        <translation>Activar inclusión del bloque en bruto en &lt;address&gt;</translation>
-    </message>
-    <message>
-        <source>Enable publish raw transaction (locked via SwiftTX) in &lt;address&gt;</source>
-        <translation>Activar inclusión de la transacción en bruto (fijada mediante SwiftTX) en &lt;address&gt;</translation>
-    </message>
-    <message>
-        <source>Enable publish raw transaction in &lt;address&gt;</source>
-        <translation>Activar inclusión de la transacción en bruto en &lt;address&gt;</translation>
-    </message>
-    <message>
-        <source>Enable staking functionality (0-1, default: %u)</source>
-        <translation>Activar funcionalidad de recompensa por participación (0-1, por defecto: %u)</translation>
+        <translation>유효하지 않은 스크립트가 발견되었습니다.</translation>
     </message>
     <message>
         <source>Keep N PIV anonymized (default: %u)</source>
-        <translation>Mantener N PIV anonimizados (predeterminado: %u)</translation>
+        <translation>N PIV 익명으로 유지 (기본값: %u)</translation>
     </message>
     <message>
         <source>Keep at most &lt;n&gt; unconnectable transactions in memory (default: %u)</source>
-        <translation>Mantener como máximo &lt;n&gt; transacciones no conectables en memoria (predeterminado: %u)</translation>
+        <translation>메모리에서 연결 불가능한 트랜잭션을 &lt;n&gt;개까지 유지하십시오. (기본값: %u)</translation>
     </message>
     <message>
         <source>Last Obfuscation was too recent.</source>
-        <translation>La última Ofuscación fue demasiado reciente.</translation>
+        <translation>최근에 마지막으로 난독화를 진행했습니다.</translation>
     </message>
     <message>
         <source>Last successful Obfuscation action was too recent.</source>
-        <translation>La última acción de Ofuscación exitosa fue demasiado reciente.</translation>
+        <translation>최근에 마지막으로 성공한 난독화 작업이 있습니다.</translation>
     </message>
     <message>
         <source>Limit size of signature cache to &lt;n&gt; entries (default: %u)</source>
-        <translation>Tamaño límite del cache de firmas a &lt;n&gt; entradas (predeterminado: %u)</translation>
+        <translation>시그니처 캐시의 크기 제한을 &lt;n&gt; 항목으로 합니다 (기본값: %u)</translation>
     </message>
     <message>
         <source>Line: %d</source>
-        <translation>Linea: %d</translation>
+        <translation>Line: %d</translation>
     </message>
     <message>
         <source>Listen for JSON-RPC connections on &lt;port&gt; (default: %u or testnet: %u)</source>
-        <translation>Escuchar por conexiones JSON-RPC en &lt;port&gt; (predeterminado: %u o testnet: %u)</translation>
+        <translation>&lt;port&gt;에서 JSON-RPC 연결 대기 (기본값: %u 또는 테스트넷: %u)</translation>
     </message>
     <message>
         <source>Listen for connections on &lt;port&gt; (default: %u or testnet: %u)</source>
-        <translation>Escuchar por conexiones en &lt;port&gt; (predeterminado: %u o testnet: %u)</translation>
+        <translation>&lt;port&gt;에서 연결 대기 (기본값: %u 또는 테스트넷: %u)</translation>
     </message>
     <message>
         <source>Loading addresses...</source>
-        <translation>Cargando direcciones...</translation>
+        <translation>주소를 불러오는 중...</translation>
     </message>
     <message>
         <source>Loading block index...</source>
-        <translation>Cargando índice de bloque...</translation>
+        <translation>블록 인덱스를 불러오는 중...</translation>
     </message>
     <message>
         <source>Loading budget cache...</source>
-        <translation>Cargando cache de presupuestos...</translation>
+        <translation>budget 캐시를 불러오는 중...</translation>
     </message>
     <message>
         <source>Loading masternode cache...</source>
-        <translation>Cargando cache de nodos maestros...</translation>
+        <translation>마스터노드 캐시를 불러오는 중...</translation>
     </message>
     <message>
         <source>Loading masternode payment cache...</source>
-        <translation>Cargando cache de pagos de nodos maestros</translation>
+        <translation>마스터노드 결제 캐시를 불러오는 중...</translation>
     </message>
     <message>
         <source>Loading wallet... (%3.2f %%)</source>
-        <translation>Cargando monedero: (%3.2f %%)</translation>
+        <translation>지갑을 불러오는 중… (%3.2f %%)</translation>
     </message>
     <message>
         <source>Loading wallet...</source>
-        <translation>Cargando monedero...</translation>
+        <translation>지갑을 불러오는 중…</translation>
     </message>
     <message>
         <source>Lock is already in place.</source>
-        <translation>Bloqueo esta en su lugar.</translation>
+        <translation>이미 올바르게 잠겨있습니다.</translation>
     </message>
     <message>
         <source>Lock masternodes from masternode configuration file (default: %u)</source>
-        <translation>Bloquear nodos maestros desde el archivo de configuración de nodo maestro (predeterminado: %u)</translation>
+        <translation>마스터노드 구성 파일에서 마스터노드를 잠급니다. (기본값: %u)</translation>
     </message>
     <message>
         <source>Maintain at most &lt;n&gt; connections to peers (default: %u)</source>
-        <translation>Mantener como máximo &lt;n&gt; conexiones a pares (predeterminado: %u)</translation>
+        <translation>최대 &lt;n&gt; 연결을 피어들과 유지합니다. (기본값: %u)</translation>
     </message>
     <message>
         <source>Masternode options:</source>
-        <translation>Opciones de Masternode:</translation>
+        <translation>마스터노드 옵션:</translation>
     </message>
     <message>
         <source>Masternode queue is full.</source>
-        <translation>La cola del Nodo Maestro esta llena.</translation>
+        <translation>마스터노드 대기열이 가득 찼습니다.</translation>
     </message>
     <message>
         <source>Masternode:</source>
-        <translation>Nodo maestro:</translation>
+        <translation>마스터노드:</translation>
     </message>
     <message>
         <source>Maximum per-connection receive buffer, &lt;n&gt;*1000 bytes (default: %u)</source>
-        <translation>Buffer de recepción máximo por conexión, &lt;n&gt;*1000 bytes (predeterminado: %u)</translation>
+        <translation>연결 당 최대 수신 버퍼, &lt;n&gt;*1000 바이트 (기본값: %u)</translation>
     </message>
     <message>
         <source>Maximum per-connection send buffer, &lt;n&gt;*1000 bytes (default: %u)</source>
-        <translation>Máximo buffer de envío por conexión, &lt;n&gt;*1000 bytes (predeterminado: %u)</translation>
+        <translation>연결 당 최대 전송 버퍼, &lt;n&gt;*1000 바이트 (기본값: %u)</translation>
     </message>
     <message>
         <source>Missing input transaction information.</source>
-        <translation>Información de transacciones de entrada perdidas.</translation>
+        <translation>트랜잭션 정보 입력에 누락된 부분이 있습니다.</translation>
     </message>
     <message>
         <source>Mixing in progress...</source>
-        <translation>Mezcla en progreso...</translation>
+        <translation>믹싱이 진행 중입니다...</translation>
     </message>
     <message>
         <source>Need to specify a port with -whitebind: '%s'</source>
-        <translation>Necesita especificar un puerto con -whitebind: '%s'</translation>
+        <translation>-whitebind: '%s' 의 포트를 지정해야 합니다</translation>
     </message>
     <message>
         <source>No Masternodes detected.</source>
-        <translation>No se han detectado Masternodes.</translation>
+        <translation>마스터노드가 발견되지 않았습니다.</translation>
     </message>
     <message>
         <source>No compatible Masternode found.</source>
-        <translation>No hay un Masternode compatible encontrado.</translation>
+        <translation>호환되는 마스터노드가 발견되지 않았습니다.</translation>
     </message>
     <message>
         <source>No funds detected in need of denominating.</source>
-        <translation>No hay fondos detectados necesarios de denominación.</translation>
+        <translation>분류가 필요한 자금이 발견되지 않았습니다.</translation>
     </message>
     <message>
         <source>No matching denominations found for mixing.</source>
-        <translation>No hay denominaciones emparejadas encontradas para mezclado.</translation>
+        <translation>믹싱에 대한 일치하는 표기를 찾을 수 없습니다.</translation>
     </message>
     <message>
         <source>Node relay options:</source>
-        <translation>Opciones de transmisión del nodo:</translation>
+        <translation>노드 중계 옵션:</translation>
     </message>
     <message>
         <source>Non-standard public key detected.</source>
-        <translation>Clave pública no-estandar ha sido detectada.</translation>
+        <translation>비 표준 공개 키가 감지되었습니다.</translation>
     </message>
     <message>
         <source>Not compatible with existing transactions.</source>
-        <translation>No es compatible con las transacciones salientes.</translation>
+        <translation>기존 트랜잭션과 호환되지 않습니다.</translation>
     </message>
     <message>
         <source>Not enough file descriptors available.</source>
-        <translation>No hay suficientes descriptores de archivo disponibles.</translation>
+        <translation>사용 가능한 파일 디스크립터가 충분하지 않습니다.</translation>
     </message>
     <message>
         <source>Not in the Masternode list.</source>
-        <translation>No en la lista Masternode.</translation>
+        <translation>마스터노드 목록에 없습니다.</translation>
     </message>
     <message>
         <source>Number of automatic wallet backups (default: 10)</source>
-        <translation>Número de Copias de seguridad automáticas de monedero (predeterminado: 10)</translation>
+        <translation>자동 지갑 백업 횟수 (기본값: 10)</translation>
     </message>
     <message>
         <source>Obfuscation is idle.</source>
-        <translation>La Ofuscación está sin uso.</translation>
+        <translation>난독화는 유휴상태입니다.</translation>
     </message>
     <message>
         <source>Obfuscation options:</source>
-        <translation>Opciones de Ofuscacion:</translation>
+        <translation>난독화 옵션:</translation>
     </message>
     <message>
         <source>Obfuscation request complete:</source>
-        <translation>Pedido de Ofuscacion completado:</translation>
+        <translation>난독화 요청 완료:</translation>
     </message>
     <message>
         <source>Obfuscation request incomplete:</source>
-        <translation>Pedido de Ofuscación incompleto:</translation>
+        <translation>난독화 요청 미완료:</translation>
     </message>
     <message>
         <source>Only accept block chain matching built-in checkpoints (default: %u)</source>
-        <translation>Solo aceptar cadena de bloque emparejada con puntos de verificación construidos (predeterminado: %u)</translation>
+        <translation>내장된 체크 포인트와 일치하는 블록체인만 허용 (기본값: %u)</translation>
     </message>
     <message>
         <source>Only connect to nodes in network &lt;net&gt; (ipv4, ipv6 or onion)</source>
-        <translation>Solo conectar a nodos en la red &lt;net&gt; (ipv4, ipv6 o onion)</translation>
+        <translation>네트워크에 연결된 노드에만 연결 &lt;net&gt; (ipv4, ipv6 또는 onion)</translation>
     </message>
     <message>
         <source>Options:</source>
-        <translation>Opciones:</translation>
+        <translation>옵션:</translation>
     </message>
     <message>
         <source>Password for JSON-RPC connections</source>
-        <translation>Contraseña para conexiones JSON-RPC</translation>
+        <translation>JSON-RPC 연결 비밀번호</translation>
     </message>
     <message>
         <source>Prepend debug output with timestamp (default: %u)</source>
-        <translation>Agregar timestamp a la salida de depuración (predeterminado: %u)</translation>
-    </message>
-    <message>
-        <source>Print version and exit</source>
-        <translation>Mostrar versión y salir</translation>
+        <translation>디버그 출력 앞에 타임스탬프를 추가합니다. (기본값: %u)</translation>
     </message>
     <message>
         <source>RPC SSL options: (see the Bitcoin Wiki for SSL setup instructions)</source>
-        <translation>Opciones RPC SSL: (ver el Bitcoin Wiki para instrucciones de instalación SSL)</translation>
+        <translation>RPC SSL 옵션: (SSL 설치 안내는 비트코인 위키를 참조하십시오)</translation>
     </message>
     <message>
         <source>RPC server options:</source>
-        <translation>Opciones del servidor RPC:</translation>
+        <translation>RPC 서버 옵션:</translation>
     </message>
     <message>
         <source>RPC support for HTTP persistent connections (default: %d)</source>
-        <translation>Soporte RPC para conexiones persistentes HTTP (predeterminado %d)</translation>
+        <translation>HTTP 지속 연결에 관한 RPC 지원 (기본값: %d)</translation>
     </message>
     <message>
         <source>Randomly drop 1 of every &lt;n&gt; network messages</source>
-        <translation>Aleatoriamente dejar caer 1 de cada &lt;n&gt; mensajes de red</translation>
+        <translation>&lt;n&gt;개의 네트워크 메세지마다 무작위로 1개 삭제</translation>
     </message>
     <message>
         <source>Randomly fuzz 1 of every &lt;n&gt; network messages</source>
-        <translation>Aleatoriamente esfumar 1 de cada &lt;n&gt; mensajes de red</translation>
+        <translation>&lt;n&gt;개의 네트워크 메세지마다 무작위로 1 퍼즈</translation>
     </message>
     <message>
         <source>Rebuild block chain index from current blk000??.dat files</source>
-        <translation>Reconstruir el indice de la cadena de bloque desde el corriente archivo blk000??.dat</translation>
+        <translation>현재 blk000??.dat 파일의 블록체인 인덱스를 다시 구축합니다</translation>
     </message>
     <message>
         <source>Receive and display P2P network alerts (default: %u)</source>
-        <translation>Recibir y mostrar alertas de red P2P (predeterminado: %u)</translation>
+        <translation>P2P 네크워크로 부터 경고를 받고 보여줍니다 (기본값: %u)</translation>
     </message>
     <message>
         <source>Relay and mine data carrier transactions (default: %u)</source>
-        <translation>Transmitir y minar datos de transacciones enviadas (predeterminado: %u)</translation>
+        <translation>릴레이 및 채굴 데이터 이동매체 트랜잭션 (기본값: %u)</translation>
     </message>
     <message>
         <source>Relay non-P2SH multisig (default: %u)</source>
-        <translation>Transmitir no-P2SH multisig (predeterminado: %u)</translation>
+        <translation>non-P2SH multisig 중계 (기본값: %u)</translation>
     </message>
     <message>
         <source>Rescan the block chain for missing wallet transactions</source>
-        <translation>Reescanear la cadena de bloques en busca de transacciones perdidas del monedero</translation>
+        <translation>누락된 지갑 트랜잭션에 대해 블록체인을 다시 스캔합니다</translation>
     </message>
     <message>
         <source>Rescanning...</source>
-        <translation>Reescaneado...</translation>
+        <translation>다시 스캔하는 중...</translation>
     </message>
     <message>
         <source>Run a thread to flush wallet periodically (default: %u)</source>
-        <translation>Ejecutar un hilo de ejecución para nivelar el monedero periódicamente (predeterminado: %u)</translation>
+        <translation>주기적으로 지갑을 플러쉬하는 스레드를 실행합니다 (기본값: %u)</translation>
     </message>
     <message>
         <source>Run in the background as a daemon and accept commands</source>
-        <translation>Ejecutar en segundo plano como demonio y aceptar comandos</translation>
+        <translation>백그라운드에서 상주하며 실행하고 명령을 받습니다</translation>
+    </message>
+    <message>
+        <source>Send transactions as zero-fee transactions if possible (default: %u)</source>
+        <translation>무료 수수료 트랜잭션이 가능할 경우 무료 수수료로 트랜잭션을 전송합니다 (기본값: %u)</translation>
     </message>
     <message>
         <source>Server certificate file (default: %s)</source>
-        <translation>Archivo certificado del servidor (predeterminado: %s)</translation>
+        <translation>서버 인증서 파일 (기본값: %s)</translation>
     </message>
     <message>
         <source>Server private key (default: %s)</source>
-        <translation>Clave privada del servidor (predeterminado: %s)</translation>
+        <translation>서버 개인 키 (기본값: %s)</translation>
     </message>
     <message>
         <source>Session not complete!</source>
-        <translation>Sesión no completa!</translation>
+        <translation>세션이 완료되지 않았습니다!</translation>
     </message>
     <message>
         <source>Session timed out.</source>
-        <translation>La sesión expiró.</translation>
+        <translation>세션이 만료되었습니다.</translation>
     </message>
     <message>
         <source>Set database cache size in megabytes (%d to %d, default: %d)</source>
-        <translation>Definir tamaño de cache de base de datos en megabytes (%d a %d, predeterminado: %d)</translation>
+        <translation>데이터베이스 캐시 크기를 메가바이트 단위로 설정합니다 (%d 에서 %d, 기본값: %d)</translation>
     </message>
     <message>
         <source>Set external address:port to get to this masternode (example: %s)</source>
-        <translation>Definir dirección:puerto externo para alcanzar este nodo maestro (ejemplo: %s)</translation>
+        <translation>마스터노드에 접속하려면 외부 주소:포트를 설정하십시오 (예시: %s)</translation>
     </message>
     <message>
         <source>Set key pool size to &lt;n&gt; (default: %u)</source>
-        <translation>Definir el tamaño del pool de llaves a &lt;n&gt; (predeterminado: %u)</translation>
+        <translation>키 풀 크기를 &lt;n&gt; 로 설정합니다 (기본값: %u)</translation>
+    </message>
+    <message>
+        <source>Set maximum block size in bytes (default: %d)</source>
+        <translation>최대 블록 크기를 바이트 단위로 설정합니다 (기본값: %d)</translation>
     </message>
     <message>
         <source>Set minimum block size in bytes (default: %u)</source>
-        <translation>Ajustar el tamaño mínimo de bloque en bytes (predeterminado: %u)</translation>
+        <translation>최소 블록 크기를 바이트 단위로 설정합니다 (기본값: %u)</translation>
     </message>
     <message>
         <source>Set the masternode private key</source>
-        <translation>Ajustar la clave privada de masternode</translation>
+        <translation>마스터노드 개인 키를 설정합니다</translation>
     </message>
     <message>
         <source>Set the number of threads to service RPC calls (default: %d)</source>
-        <translation>Definir el número de hilos para llamadas al servicio RPC (predeterminado: %d)</translation>
+        <translation>RPC 호출 서비스 스레드의 갯수를 설정합니다 (기본값: %d)</translation>
     </message>
     <message>
         <source>Sets the DB_PRIVATE flag in the wallet db environment (default: %u)</source>
-        <translation>Definir la bandera DB_PRIVATE en la db de la billetera del ambiente (predeterminado: %u)</translation>
+        <translation>지갑 db 환경에서 DB_PRIVATE 플래그를 설정합니다 (기본값 : %u)</translation>
     </message>
     <message>
         <source>Show all debugging options (usage: --help -help-debug)</source>
-        <translation>Mostrar todas las opciones de depuración (uso: --help-debug)</translation>
+        <translation>모든 디버깅 옵션 표시 (사용 방법: --help -help-debug)</translation>
     </message>
     <message>
         <source>Shrink debug.log file on client startup (default: 1 when no -debug)</source>
-        <translation>Encojer el archivo debug.log en el cliente al inicio (predeterminado: 1 cuando no hay -debug)</translation>
+        <translation>클라이언트 시작시에 debug.log 파일을 축소시킵니다 (기본값:1 아닐경우 -debug)</translation>
     </message>
     <message>
         <source>Signing failed.</source>
-        <translation>La firma falló.</translation>
+        <translation>인증에 실패했습니다.</translation>
     </message>
     <message>
         <source>Signing timed out.</source>
-        <translation>Se agotó el tiempo para la firma.</translation>
+        <translation>인증 시간 초과.</translation>
     </message>
     <message>
         <source>Signing transaction failed</source>
-        <translation>La firma de la transacción falló</translation>
+        <translation>트랜잭션 인증 실패</translation>
     </message>
     <message>
         <source>Specify configuration file (default: %s)</source>
-        <translation>Especifique el archivo de configuración (predeterminado: %s)</translation>
+        <translation>구성 파일 지정 (기본값: %s)</translation>
     </message>
     <message>
         <source>Specify connection timeout in milliseconds (minimum: 1, default: %d)</source>
-        <translation>Especificar el timeout de conexión en mili segundos (mínimo: 1, predeterminado: %d) </translation>
+        <translation>연결 시간 초과 단위를 100분의 1초 단위로 지정 (최소값: 1, 기본값: %d)</translation>
     </message>
     <message>
         <source>Specify data directory</source>
-        <translation>Especifique el directorio de datos</translation>
+        <translation>데이터 디렉토리 지정</translation>
     </message>
     <message>
         <source>Specify masternode configuration file (default: %s)</source>
-        <translation>Especifique el archivo de configuración masternode (predeterminado: %s)</translation>
+        <translation>마스터노드 구성파일 지정 (기본값: %s)</translation>
     </message>
     <message>
         <source>Specify pid file (default: %s)</source>
-        <translation>Especifique el archivo pid (predeterminado: %s)</translation>
+        <translation>pid 파일 지정 (기본값: %s)</translation>
     </message>
     <message>
         <source>Specify wallet file (within data directory)</source>
-        <translation>Especifique el archivo monedero (dentro del directorio de datos)</translation>
+        <translation>지갑 파일 지정 (데이터 디렉토리 내에서만)</translation>
     </message>
     <message>
         <source>Specify your own public address</source>
-        <translation>Especifique su propia dirección pública</translation>
+        <translation>자신의 공용 주소를 지정</translation>
     </message>
     <message>
         <source>Spend unconfirmed change when sending transactions (default: %u)</source>
-        <translation>Gastar cambio no confirmado cuando se envían transacciones (predeterminado: %u)</translation>
-    </message>
-    <message>
-        <source>Staking options:</source>
-        <translation>Opciones de recompensa por participación:</translation>
+        <translation>트랜잭션 전송시 승인되지 않은 변경사항을 전송합니다 (기본값: %u)</translation>
     </message>
     <message>
         <source>Stop running after importing blocks from disk (default: %u)</source>
-        <translation>Parar la ejecución después de importar bloques desde el disco (predeterminado: %u)</translation>
+        <translation>디스크에서 블록을 가져오면 실행 중지 (기본값: %u)</translation>
     </message>
     <message>
         <source>Submitted following entries to masternode: %u / %d</source>
-        <translation>Se enviaron las siguientes entradas a masternode: %u / %d</translation>
+        <translation>마스터노드에 다음 항목들을 제출했습니다: %u / %d</translation>
     </message>
     <message>
         <source>Submitted to masternode, waiting for more entries ( %u / %d ) %s</source>
-        <translation>Enviado a masternode, esperando por mas entradas (%u / %d) %s</translation>
+        <translation>마스터노드에 제출했습니다, 남은 항목들 기다리는중 ( %u / %d ) %s</translation>
     </message>
     <message>
         <source>Submitted to masternode, waiting in queue %s</source>
-        <translation>Enviado a masternode, quedando en espera %s</translation>
+        <translation>마스터노드에 제출했습니다, 대기열을 기다리는 중 %s</translation>
     </message>
     <message>
         <source>SwiftTX options:</source>
-        <translation>Opciones SwiftTX:</translation>
+        <translation>SwiftTX 옵션:</translation>
     </message>
     <message>
         <source>Synchronization failed</source>
-        <translation>Falló la sincronización</translation>
+        <translation>동기화 실패</translation>
     </message>
     <message>
         <source>Synchronization finished</source>
-        <translation>Sincronización finalizada!</translation>
+        <translation>동기화 완료</translation>
     </message>
     <message>
         <source>Synchronization pending...</source>
-        <translation>Sincronización pendiente...</translation>
+        <translation>동기화 대기중...</translation>
     </message>
     <message>
         <source>Synchronizing budgets...</source>
-        <translation>Sincronizando presupuestos...</translation>
+        <translation>budgets 동기화 중입니다...</translation>
     </message>
     <message>
         <source>Synchronizing masternode winners...</source>
-        <translation>Sincronizando ganadores masternode...</translation>
+        <translation>마스터노드 승자를 동기화 중입니다...</translation>
     </message>
     <message>
         <source>Synchronizing masternodes...</source>
-        <translation>Sincronizando masternodes...</translation>
+        <translation>마스터노드와 동기화중입니다...</translation>
     </message>
     <message>
         <source>Synchronizing sporks...</source>
-        <translation>Sincronizando con la red... </translation>
+        <translation>sporks와 동기화 중입니다...</translation>
     </message>
     <message>
         <source>This help message</source>
-        <translation>Este mensaje de ayuda</translation>
+        <translation>도움말 메시지입니다</translation>
     </message>
     <message>
         <source>This is experimental software.</source>
-        <translation>Esto es software experimental.</translation>
+        <translation>이것은 실험용 소프트웨어입니다.</translation>
     </message>
     <message>
         <source>This is intended for regression testing tools and app development.</source>
-        <translation>Esto esta destinado para herramientas de prueba de regresión y desarrollo de aplicaciones.</translation>
+        <translation>이것은 리그레션 테스팅 및 앱 개발을 위해 만들어졌습니다.</translation>
     </message>
     <message>
         <source>This is not a Masternode.</source>
-        <translation>Este no es un nodo maestro.</translation>
+        <translation>마스터노드가 아닙니다.</translation>
     </message>
     <message>
         <source>Threshold for disconnecting misbehaving peers (default: %u)</source>
-        <translation>Limite para desconexión de peers de mal desempeño (predeterminado: %u)</translation>
+        <translation>제대로 동작하지 않는 피어와 연결을 끊을 임계값 (기본값: %u)</translation>
     </message>
     <message>
         <source>Transaction amount too small</source>
-        <translation>El monto de la transacción es demasiado pequeño</translation>
+        <translation>트랜잭션 금액이 너무 적습니다</translation>
     </message>
     <message>
         <source>Transaction amounts must be positive</source>
-        <translation>El monto de la transacción debe ser positivo</translation>
+        <translation>트랜잭션 금액에 반드시 양수값이 들어가야 합니다</translation>
     </message>
     <message>
         <source>Transaction created successfully.</source>
-        <translation>Transacción creada satisfactoriamente.</translation>
+        <translation>트랜잭션이 성공적으로 생성되었습니다.</translation>
     </message>
     <message>
         <source>Transaction fees are too high.</source>
-        <translation>La comision de transacción es demasiado alta.</translation>
+        <translation>트랜잭션 수수료가 너무 높습니다.</translation>
     </message>
     <message>
         <source>Transaction not valid.</source>
-        <translation>La transacción no es valida.</translation>
+        <translation>올바르지 않은 트랜잭션입니다.</translation>
     </message>
     <message>
         <source>Transaction too large for fee policy</source>
-        <translation>La transacción es demasiado grande para la política de comisión.</translation>
+        <translation>수수료 정책에 비해 트랜잭션이 너무 많습니다</translation>
     </message>
     <message>
         <source>Transaction too large</source>
-        <translation>La transacción es demasiado grande</translation>
+        <translation>트랜잭션이 너무 큽니다</translation>
     </message>
     <message>
         <source>Transmitting final transaction.</source>
-        <translation>Transmitiendo la transacción final.</translation>
+        <translation>최종 트랜잭션를 전송 중입니다.</translation>
     </message>
     <message>
         <source>Unable to bind to %s on this computer (bind returned error %s)</source>
-        <translation>Imposible enlazar %s en esta computadora (enlace retorna error %s)</translation>
+        <translation>이 컴퓨터에서 %s 로 바인드할 수 없습니다 (바인드 리턴 오류 %s)</translation>
     </message>
     <message>
         <source>Unable to sign spork message, wrong key?</source>
-        <translation>Imposible firmar el mensaje spork, ¿llave equivocada?</translation>
+        <translation>스포크 메시지를 인증할 수 없습니다, 키를 확인해주세요</translation>
     </message>
     <message>
         <source>Unknown network specified in -onlynet: '%s'</source>
-        <translation>Red especificada desconocida en -onlynet: '%s'</translation>
+        <translation>-onlynet: '%s' 에 알 수 없는 네트워크가 지정되었습니다</translation>
     </message>
     <message>
         <source>Unknown state: id = %u</source>
-        <translation>Estado desconocido: id = %u</translation>
+        <translation>알 수없는 상태: id = %u</translation>
     </message>
     <message>
         <source>Upgrade wallet to latest format</source>
-        <translation>Actualizar el monedero al formato ultimo</translation>
+        <translation>지갑을 최신 포맷으로 업그레이드합니다</translation>
     </message>
     <message>
         <source>Use N separate masternodes to anonymize funds  (2-8, default: %u)</source>
-        <translation>Utilizar N nodos maestros distintos para anonimizar fondos (2-8, predeterminado: %u)</translation>
+        <translation>N개의 각각의 마스터노드를 이용하여 자금 익명화 (2-8, 기본값: %u)</translation>
     </message>
     <message>
         <source>Use OpenSSL (https) for JSON-RPC connections</source>
-        <translation>Usar OpenSSL (https) para conexiones JSON-RPC</translation>
-    </message>
-    <message>
-        <source>Use UPnP to map the listening port (default: %u)</source>
-        <translation>Usar UPnP para mapear el puerto de escucha (predeterminado: %u)</translation>
+        <translation>JSON-RPC 연결에 OpenSSL (https)를 사용합니다</translation>
     </message>
     <message>
         <source>Use UPnP to map the listening port (default: 1 when listening)</source>
-        <translation>Usar UPnP para mapear el puerto de escucha (predeterminado: 1 cuando esta en escucha)</translation>
+        <translation>수신 포트를 매핑하려면 UPnP를 사용하십시오 (기본값: 1 수신 상태일 때)</translation>
     </message>
     <message>
         <source>Use the test network</source>
-        <translation>Usar la red de prueba</translation>
+        <translation>테스트 네트워크를 사용합니다</translation>
     </message>
     <message>
         <source>Username for JSON-RPC connections</source>
-        <translation>Nombre de usuario para conexiones JSON-RPC</translation>
+        <translation>JSON-RPC 연결 사용자 이름</translation>
     </message>
     <message>
         <source>Value more than Obfuscation pool maximum allows.</source>
-        <translation>Valor mayor al máximo pool de Ofuscación permitido.</translation>
+        <translation>난독화 풀의 최대 허용 값보다 높습니다.</translation>
     </message>
     <message>
         <source>Verifying blocks...</source>
-        <translation>Verificando bloques...</translation>
+        <translation>블록 인증 중...</translation>
     </message>
     <message>
         <source>Verifying wallet...</source>
-        <translation>Verificando el monedero...</translation>
+        <translation>지갑 인증 중...</translation>
     </message>
     <message>
         <source>Wallet %s resides outside data directory %s</source>
-        <translation>La billetera %s esta ubicada fuera del directorio de datos %s</translation>
+        <translation>지갑 %s 가 데이터 디렉토리 외부에 존재합니다 %s</translation>
     </message>
     <message>
         <source>Wallet is locked.</source>
-        <translation>Monedero bloqueado.</translation>
+        <translation>지갑이 잠겼습니다.</translation>
     </message>
     <message>
         <source>Wallet needed to be rewritten: restart PIVX Core to complete</source>
-        <translation>Monedero necesita ser reescrito: reinicie PIVX Core para completar</translation>
+        <translation>지갑을 다시 작성해야 합니다: 완료하려면 PIVX 코어를 재시작해야 합니다</translation>
     </message>
     <message>
         <source>Wallet options:</source>
-        <translation>Opciones del Monedero:</translation>
+        <translation>지갑 옵션:</translation>
     </message>
     <message>
         <source>Wallet window title</source>
-        <translation>Monedero titulo de ventana</translation>
+        <translation>지갑 창 제목</translation>
     </message>
     <message>
         <source>Warning</source>
-        <translation>Advertencia</translation>
+        <translation>경고</translation>
     </message>
     <message>
         <source>Warning: This version is obsolete, upgrade required!</source>
-        <translation>Advertencia: Esta versión es obsoleta, se requiere actualizar!</translation>
+        <translation>경고 : 현재 사용중인 버전은 더이상 사용되지 않으므로 업그레이드가 필요합니다!</translation>
     </message>
     <message>
         <source>Warning: Unsupported argument -benchmark ignored, use -debug=bench.</source>
-        <translation>Advertencia: Argumento no soportado -benchmark ignorado, use -debug=bench </translation>
+        <translation>경고 : 지원하지 않는 인수 -benchmark 무시됨 -debug = bench를 사용하십시오.</translation>
     </message>
     <message>
         <source>Warning: Unsupported argument -debugnet ignored, use -debug=net.</source>
-        <translation>Advertencia: Argumento no soportado -debugnet ignorado, use -debug=net.</translation>
+        <translation>경고 : 지원하지 않는 인수 -debugnet 무시됨 -debug=net를 사용하십시오.</translation>
     </message>
     <message>
         <source>Will retry...</source>
-        <translation>Probando...</translation>
+        <translation>다시 시도합니다...</translation>
     </message>
     <message>
         <source>You need to rebuild the database using -reindex to change -txindex</source>
-        <translation>Usted necesita reconstruir la base de datos usando -reindex para cambiar -txindex</translation>
+        <translation>-treindex를 변경하려면 -reindex를 사용하여 데이터베이스를 다시 빌드해야합니다.</translation>
     </message>
     <message>
         <source>Your entries added successfully.</source>
-        <translation>Su entrada a sido agregada satisfactoriamente.</translation>
+        <translation>항목이 성공적으로 추가되었습니다.</translation>
     </message>
     <message>
         <source>Your transaction was accepted into the pool!</source>
-        <translation>Su transacción ha sido aceptada en el pool!</translation>
+        <translation>트랜잭션이 풀로 접수되었습니다!</translation>
     </message>
     <message>
         <source>Zapping all transactions from wallet...</source>
-        <translation>Saltando todas las transacciones del monedero...</translation>
-    </message>
-    <message>
-        <source>ZeroMQ notification options:</source>
-        <translation>Opciones de notificación ZeroMQ:</translation>
+        <translation>지갑 내 모든 트랜잭션들을 재핑하는 중...</translation>
     </message>
     <message>
         <source>on startup</source>
-        <translation>al inicio</translation>
+        <translation>시작 시</translation>
     </message>
     <message>
         <source>wallet.dat corrupt, salvage failed</source>
-        <translation>wallet.dat esta corrupto, guardado falló</translation>
+        <translation>wallet.dat 파일이 손상되어 복구에 실패했습니다</translation>
     </message>
 </context>
 </TS>
