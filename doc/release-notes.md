@@ -28,11 +28,13 @@ frequently tested on them.
 Notable Changes
 ===============
 
-### RPC changes
+RPC changes
+--------------
+
+#### masternode command
 The `masternode` RPC command has been re-worked to ease
 it's usage and return valid JSON in it's results. The following is an overview of the changed command parameters:
 
-##### Command Overview
 | Command Parameter | Changes |
 | --- | --- |
 | `budget` | Removed (did nothing) |
@@ -44,9 +46,7 @@ it's usage and return valid JSON in it's results. The following is an overview o
 | `winners` | Result is now an array of objects instead of a list of *n* objects. See below |
 | `list` | Remove all optional "modes" and standardized the results. Note: `masternode list` is the same as `masternodelist`. See below |
 
-##### winners command
-
-For the `winners` command, the results are now in a standard JSON format as follows:
+For the `winners` parameter, the results are now in a standard JSON format as follows:
 
 ```
 [
@@ -79,9 +79,7 @@ In the case of multiple winners being associated with a single block, the result
 ]
 ```
 
-##### masternode list and masternodelist command(s)
-
-For the `list` (aka `masternodelist`) command, the vairous "modes" have been removed in favor of a unified and standardized result format. The result is now an array of objects instead of an object of objects. Further, the individual objects now have a standard JSON format. The result format is as follows:
+For the `list` (aka `masternodelist`) parameter, the vairous "modes" have been removed in favor of a unified and standardized result format. The result is now an array of objects instead of an object of objects. Further, the individual objects now have a standard JSON format. The result format is as follows:
 
 ```
 [
@@ -99,6 +97,34 @@ For the `list` (aka `masternodelist`) command, the vairous "modes" have been rem
   ...
 ]
 ```
+
+#### mnbudget command
+
+An additional parameter has been added to `mnbudget` to allow a controller wallet to issue per-MN votes. The new parameter is `vote-alias` and it's use format is as follows:
+
+`mnbudget vote-alias <proposal-hash> <yes|no> <alias>`
+
+All fields are required to successfully vote.
+
+#### walletpassphrase command
+
+CLI users that are staking their coins will now have the option of unlocking the wallet with no re-lock timeout. Similar to using `9999999` as the timeout, the `walletpassphrase` command now accepts `0` as a timeout to indicate that no re-locking should occur based on elapsed time.
+
+Usage: `walletpassphrase <passphrase> 0 <true|false>`
+
+The third parameter indicates if the wallet should be unlocked for staking and anonymization only (true), or to allow send operations (false, full unlock).
+
+ZeroMQ (ZMQ) Notifications
+--------------
+
+pivxd can now (optionally) asynchronously notify clients through a ZMQ-based PUB socket of the arrival of new transactions and blocks. This feature requires installation of the ZMQ C API library 4.x and configuring its use through the command line or configuration file. Please see [docs/zmq.md](/doc/zmq.md) for details of operation.
+
+**All** Masternodes List GUI Removal
+--------------
+
+With the standardization and reformatting of the `masternode list` (`masternodelist`) RPC command, there is no real use case to keep the full list of masternodes in the GUI. This GUI element causes a great deal of extra overhead, even when it is not being actively displayed. The removal of this list has also proven to resolve a number of linux-based errors
+
+Note that the GUI list of masternodes associated with a controller wallet remains intact.
 
 *version* Change log
 =================
