@@ -7,12 +7,12 @@ reset-files.bash
 *.tar.gz
 
 *.exe
-src/pivx
-src/pivxd
-src/pivx-cli
-src/pivx-tx
-src/test/test_pivx
-src/qt/test/test_pivx-qt
+src/blocknetdx
+src/blocknetdxd
+src/blocknetdx-cli
+src/blocknetdx-tx
+src/test/test_blocknetdx
+src/qt/test/test_blocknetdx-qt
 
 # autoreconf
 Makefile.in
@@ -35,8 +35,8 @@ config.log
 config.status
 configure
 libtool
-src/config/pivx-config.h
-src/config/pivx-config.h.in
+src/config/blocknetdx-config.h
+src/config/blocknetdx-config.h.in
 src/config/stamp-h1
 share/setup.nsi
 share/qt/Info.plist
@@ -62,7 +62,7 @@ src/qt/test/moc*.cpp
 *.o
 *.o-*
 *.patch
-.pivx
+.blocknetdx
 *.a
 *.pb.cc
 *.pb.h
@@ -81,12 +81,12 @@ src/qt/test/moc*.cpp
 # Compilation and Qt preprocessor part
 *.qm
 Makefile
-pivx-qt
-PIVX-Qt.app
+blocknetdx-qt
+BlocknetDX-Qt.app
 
 # Unit-tests
 Makefile.test
-pivx-qt_test
+blocknetdx-qt_test
 src/test/buildenv.py
 
 # Resources cpp
@@ -102,7 +102,7 @@ build
 #lcov
 *.gcno
 /*.info
-test_pivx.coverage/
+test_blocknetdx.coverage/
 total.coverage/
 coverage_percent.txt
 
