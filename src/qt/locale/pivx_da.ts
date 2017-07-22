@@ -1,777 +1,753 @@
-<TS language="es" version="2.1">
+<TS language="da" version="2.1">
 <context>
     <name>AddressBookPage</name>
     <message>
         <source>Right-click to edit address or label</source>
-        <translation>Click derecho para editar la dirección o etiqueta</translation>
+        <translation>Højreklik for at rette adressen eller teksten</translation>
     </message>
     <message>
         <source>Create a new address</source>
-        <translation>Crear una nueva dirección</translation>
+        <translation>Ny adresse</translation>
     </message>
     <message>
         <source>&amp;New</source>
-        <translation>&amp;Nuevo</translation>
+        <translation>&amp;Ny</translation>
     </message>
     <message>
         <source>Copy the currently selected address to the system clipboard</source>
-        <translation>Copiar la dirección seleccionada al portapapeles</translation>
+        <translation>Kopier til udklipsholder</translation>
     </message>
     <message>
         <source>&amp;Copy</source>
-        <translation>&amp;Copiar</translation>
+        <translation>&amp;Kopier</translation>
     </message>
     <message>
         <source>Delete the currently selected address from the list</source>
-        <translation>Borrar la dirección seleccionada de la lista</translation>
+        <translation>Slet den valgte adresse fra listen</translation>
     </message>
     <message>
         <source>&amp;Delete</source>
-        <translation>Borrar</translation>
+        <translation>&amp;Slet</translation>
     </message>
     <message>
         <source>Export the data in the current tab to a file</source>
-        <translation>Exportar los datos de la pestaña actual a un archivo</translation>
+        <translation>Eksporter aktuelle tekst til en fil</translation>
     </message>
     <message>
         <source>&amp;Export</source>
-        <translation>&amp;Exportar</translation>
+        <translation>E&amp;ksporter</translation>
     </message>
     <message>
         <source>C&amp;lose</source>
-        <translation>Cerrar</translation>
+        <translation>L&amp;uk</translation>
     </message>
     <message>
         <source>Choose the address to send coins to</source>
-        <translation>Escoja la dirección a la cual desee enviar las monedas</translation>
+        <translation>Vælg modtageradresse at sende til</translation>
     </message>
     <message>
         <source>Choose the address to receive coins with</source>
-        <translation>Escoja la dirección con las cual recibirá las monedas</translation>
+        <translation>Vælg egen modtageradresse </translation>
     </message>
     <message>
         <source>C&amp;hoose</source>
-        <translation>&amp;Escoger</translation>
+        <translation>V&amp;ælg</translation>
     </message>
     <message>
         <source>Sending addresses</source>
-        <translation>Enviando direcciones</translation>
+        <translation>Afsenderadresse</translation>
     </message>
     <message>
         <source>Receiving addresses</source>
-        <translation>Recibiendo direcciones</translation>
+        <translation>Modtageradresse</translation>
     </message>
     <message>
         <source>These are your PIVX addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
-        <translation>Estas son sus direcciones PIVX para realizar pagos. Siempre verifique la cantidad y la dirección de recepción antes de enviar monedas.</translation>
+        <translation>Dine adresser til at sende betalinger med. Kontroller altid både beløb og modtageradresse før afsendelse.</translation>
     </message>
     <message>
         <source>These are your PIVX addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
-        <translation>Estas son sus direcciones PIVX para recibir pagos. Es recomendable usar una nueva dirección de recepción para cada transacción.</translation>
+        <translation>Dette er dine modtager adresser. Det anbefales at anvende en ny adresse til hver transaktion</translation>
     </message>
     <message>
         <source>&amp;Copy Address</source>
-        <translation>Copiar dirección</translation>
+        <translation>Kopier adresse</translation>
     </message>
     <message>
         <source>Copy &amp;Label</source>
-        <translation>Copiar y Etiquetar</translation>
+        <translation>Kopier tekst</translation>
     </message>
     <message>
         <source>&amp;Edit</source>
-        <translation>Editar</translation>
+        <translation>Ret</translation>
     </message>
     <message>
         <source>Export Address List</source>
-        <translation>Exportar lista de direcciones</translation>
+        <translation>Eksporter adresseliste</translation>
     </message>
     <message>
         <source>Comma separated file (*.csv)</source>
-        <translation>Archivo separado por comas (*.csv)</translation>
+        <translation>Kommasepareret fil (*.csv)</translation>
     </message>
     <message>
         <source>Exporting Failed</source>
-        <translation>Exportación fallida</translation>
+        <translation>Eksporten fejlede</translation>
     </message>
     <message>
         <source>There was an error trying to save the address list to %1. Please try again.</source>
-        <translation>Hubo un error intentando guardar la lista de direcciones %1. Por favor intente nuevamente</translation>
+        <translation>Der opstod en fejl under forsøget på at gemme adressen i liste %1. Prøv igen</translation>
     </message>
 </context>
 <context>
     <name>AddressTableModel</name>
     <message>
         <source>Label</source>
-        <translation>Etiqueta</translation>
+        <translation>Mærke</translation>
     </message>
     <message>
         <source>Address</source>
-        <translation>Dirección</translation>
+        <translation>Adresse</translation>
     </message>
     <message>
         <source>(no label)</source>
-        <translation>(sin etiqueta)</translation>
+        <translation>(ingen opmærknig)</translation>
     </message>
 </context>
 <context>
     <name>AskPassphraseDialog</name>
     <message>
         <source>Passphrase Dialog</source>
-        <translation>Diálogo de contraseña</translation>
+        <translation>Password dialog</translation>
     </message>
     <message>
         <source>Enter passphrase</source>
-        <translation>Introduzca la contraseña</translation>
+        <translation>Indtast Password</translation>
     </message>
     <message>
         <source>New passphrase</source>
-        <translation>Nueva contraseña</translation>
+        <translation>Nyt password</translation>
     </message>
     <message>
         <source>Repeat new passphrase</source>
-        <translation>Repetir nueva contraseña</translation>
+        <translation>Gentag password</translation>
     </message>
     <message>
         <source>Serves to disable the trivial sendmoney when OS account compromised. Provides no real security.</source>
-        <translation>Sirve para desactivar el envío de dinero cuando la cuenta del SO está comprometida. No provee de una seguridad real</translation>
+        <translation>Slår ligegyldige afsendelser fra, når operativsystemets konto er kompromitteret. Denne funktion giver ikke ægte sikkerhed</translation>
     </message>
     <message>
         <source>For anonymization and staking only</source>
-        <translation>Para anonimización y staking solamente</translation>
+        <translation>Kun til staking og anononymisering</translation>
     </message>
     <message>
         <source>Enter the new passphrase to the wallet.&lt;br/&gt;Please use a passphrase of &lt;b&gt;ten or more random characters&lt;/b&gt;, or &lt;b&gt;eight or more words&lt;/b&gt;.</source>
-        <translation>Escriba la nueva contraseña para la Wallet. &lt;br/&gt;Por favor utilice una contraseña de &lt;b&gt;10 o más caracteres aleatorios&lt;/b&gt;, u &lt;b&gt; ocho o más palabras&lt;/b&gt;</translation>
+        <translation>Indtast et password til tegnebogen. &lt;br/&gt; Brug mindst 10 karakterer&lt;b&gt;eller&lt;b&gt; mindst 8 ord&lt;b&gt;.</translation>
     </message>
     <message>
         <source>Encrypt wallet</source>
-        <translation>Encriptar la Wallet</translation>
+        <translation>Kryptografér tegnebogen</translation>
     </message>
     <message>
         <source>This operation needs your wallet passphrase to unlock the wallet.</source>
-        <translation>Esta operación requiere su contraseña para desbloquear la Wallet</translation>
+        <translation>Dette kræver dit password for at låse tegnebogen op</translation>
     </message>
     <message>
         <source>Unlock wallet</source>
-        <translation>Desbloquear wallet</translation>
+        <translation>Lås tegnebogen op</translation>
     </message>
     <message>
         <source>This operation needs your wallet passphrase to decrypt the wallet.</source>
-        <translation>Esta operación requiere su contraseña para desbloquear la Wallet</translation>
+        <translation>Dette kræver dit password for at dekryptere tegnebogen</translation>
     </message>
     <message>
         <source>Decrypt wallet</source>
-        <translation>Desencriptar Wallet</translation>
+        <translation>Dekrypter tegnebogen</translation>
     </message>
     <message>
         <source>Change passphrase</source>
-        <translation>Cambiar contraseña</translation>
+        <translation>Skift password</translation>
     </message>
     <message>
         <source>Enter the old and new passphrase to the wallet.</source>
-        <translation>Ingrese la antigua y nueva contraseña para la Wallet</translation>
+        <translation>Indtast det gamle og det nye password til tegnebogen</translation>
     </message>
     <message>
         <source>Confirm wallet encryption</source>
-        <translation>Confirmar la encriptación de la Wallet</translation>
+        <translation>Bekræft, og tegnebogen krypteres.</translation>
     </message>
     <message>
         <source>PIVX will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your PIVs from being stolen by malware infecting your computer.</source>
-        <translation>PIVX se cerrará ahora para finalizar el proceso de encriptación. Recuerde que encriptar su Wallet no previene completamente que tus PIVs sean robados mediante malware infectando su ordenador.</translation>
+        <translation>PIVX vil lukke ned for at færdiggøre kryptograferingsprocesserne. Husk at kryptering alene ikke sikrer mod tyveri af mønterne fra malware eller virus på computeren.</translation>
     </message>
     <message>
         <source>Are you sure you wish to encrypt your wallet?</source>
-        <translation>¿Esta seguro de que desea encriptar tu Wallet?</translation>
+        <translation>Er du sikker på, at du vil kryptere din tegnebog?</translation>
     </message>
     <message>
         <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR PIV&lt;/b&gt;!</source>
-        <translation>Atención: Si encripta su Wallet y pierde su contraseña, perderá &lt;b&gt; TODOS SUS PIV&lt;/b&gt;!</translation>
+        <translation>Advarsel! Hvis du krypterer din tegnebog og mister dit password vil du &lt;b&gt;MISTE ALLE DINE PIV&lt;/b&gt;. Passworded kan ikke genskabes.</translation>
     </message>
     <message>
         <source>Wallet encrypted</source>
-        <translation>Wallet encriptada</translation>
+        <translation>Tegnebogen er nu krypteret</translation>
     </message>
     <message>
         <source>IMPORTANT: Any previous backups you have made of your wallet file should be replaced with the newly generated, encrypted wallet file. For security reasons, previous backups of the unencrypted wallet file will become useless as soon as you start using the new, encrypted wallet.</source>
-        <translation>IMPORTANTE: Cualquier backup anterior que haya realizado de su Wallet debe ser reemplazado por el nuevo archivo de Wallet encriptado. Por razones de seguridad, las copias anteriores de seguridad de la Wallet sin encriptar pasaran a ser obsoletas tan pronto empiece a utilizar la nueva Wallet encriptada.</translation>
+        <translation>Vigtigt! Alle sikkerhedskopier er er lavet af tegnebogen bør fjernes og erstattes med den nye kryptograferede tegnebogsfil. Af sikkerhedsmæssige årsager vil alle tidligere sikkerhedskopier, som har været taget af den ukrypterede tegnebog være uanvendelige så snart De tager den nye, krypterede tegnebog i brug.</translation>
     </message>
     <message>
         <source>Wallet encryption failed</source>
-        <translation>La encriptación de la Wallet ha fallado</translation>
+        <translation>Kryptografering af tegnebogen fejlede</translation>
     </message>
     <message>
         <source>Wallet encryption failed due to an internal error. Your wallet was not encrypted.</source>
-        <translation>La encriptación de la wallet ha fallado debido a un error interno. Tu wallet no ha sido encriptada.</translation>
+        <translation>Kryptografering af tegnebogen fejlede på grund af en intern fejl. Tegnebogen er ikke kryptograferet.</translation>
     </message>
     <message>
         <source>The supplied passphrases do not match.</source>
-        <translation>Las contraseñas suministradas no coinciden.</translation>
+        <translation>De indtastede passwords er ikke ens.</translation>
     </message>
     <message>
         <source>Wallet unlock failed</source>
-        <translation>Fallo en el desbloqueo de la wallet</translation>
+        <translation>Tegnebogen kunne ikke låses op</translation>
     </message>
     <message>
         <source>The passphrase entered for the wallet decryption was incorrect.</source>
-        <translation>La contraseña introducida para la desencriptación de la wallet es incorrecta.</translation>
+        <translation>Det indtastede password er forkert og kan ikke dekryptere tegnebogen</translation>
     </message>
     <message>
         <source>Wallet decryption failed</source>
-        <translation>Fallo en la desencriptación de la wallet</translation>
+        <translation>Dekryptering fejlede.</translation>
     </message>
     <message>
         <source>Wallet passphrase was successfully changed.</source>
-        <translation>Se cambió la contraseña con éxito.</translation>
+        <translation>Kodeordet blev udskiftet.</translation>
     </message>
     <message>
         <source>Warning: The Caps Lock key is on!</source>
-        <translation>Atención: La tecla Mayúsculas está encendida!</translation>
+        <translation>Advarsel! Caps-Lock er aktiveret</translation>
     </message>
 </context>
 <context>
     <name>Bip38ToolDialog</name>
     <message>
         <source>BIP 38 Tool</source>
-        <translation>Herramienta BIP 38</translation>
+        <translation>BIP 38 værktøj</translation>
     </message>
     <message>
         <source>&amp;BIP 38 Encrypt</source>
-        <translation>&amp;Encriptación BIP 38</translation>
+        <translation>BIP 38 kryptografering</translation>
     </message>
     <message>
         <source>Enter a Pivx Address that you would like to encrypt using BIP 38. Enter a passphrase in the middle box. Press encrypt to compute the encrypted private key.</source>
-        <translation>Introduzca la dirección PIVX que querría encriptar usando BIP 38. Introduzca una contraseña en la caja central. Clickee en encriptar para computar la clave privada encriptada.</translation>
+        <translation>Indtast den PIVX adresse De ønsker at kryptografere ved hjælp af BIP 38. Indtast et kodeord i den midterste boks. Klik på krypter for at generere den kryptograferede private nøgle.</translation>
     </message>
     <message>
         <source>Address:</source>
-        <translation>Dirección:</translation>
+        <translation>Adresse</translation>
     </message>
     <message>
         <source>The PIVX address to sign the message with</source>
-        <translation>La dirección PIVX con la que firmar el mensaje</translation>
+        <translation>Den PIVX adresse, der skal bruges til at underskrive beskeden med.</translation>
     </message>
     <message>
         <source>Choose previously used address</source>
-        <translation>Escoge una dirección usada previamente</translation>
+        <translation>Benyt en tidligere anvendt adresse.</translation>
     </message>
     <message>
         <source>Alt+A</source>
-        <translation>Alt + A</translation>
+        <translation>Alt+A</translation>
     </message>
     <message>
         <source>Paste address from clipboard</source>
-        <translation>Pegar dirección desde el clipboard</translation>
+        <translation>Indsæt adresse fra udklipsholderen.</translation>
     </message>
     <message>
         <source>Alt+P</source>
-        <translation>Alt + P</translation>
+        <translation>Alt+P</translation>
     </message>
     <message>
         <source>Passphrase: </source>
-        <translation>Contraseña:</translation>
+        <translation>Kodeord</translation>
     </message>
     <message>
         <source>Encrypted Key:</source>
-        <translation>Clave Encriptada:</translation>
+        <translation>Kryptograferet nøgle</translation>
     </message>
     <message>
         <source>Copy the current signature to the system clipboard</source>
-        <translation>Copiar la firma actual al clipboard del sistema</translation>
+        <translation>Kopier den aktuelle underskrift til udklipsholderen.</translation>
     </message>
     <message>
         <source>Sign the message to prove you own this PIVX address</source>
-        <translation>Firmar el mensaje para demostrar que eres el propietario de esta dirección PIVX</translation>
+        <translation>Underskriv beskeden for at bevise, at De ejer denne PIVX adresse.</translation>
     </message>
     <message>
         <source>Encrypt &amp;Key</source>
-        <translation>Encriptar &amp; Clave</translation>
+        <translation>Krypter og underskriv</translation>
     </message>
     <message>
         <source>Reset all sign message fields</source>
-        <translation>Resetear todos los campos de firma de mensaje</translation>
+        <translation>Nulstil alle underskriftsfelter</translation>
     </message>
     <message>
         <source>Clear &amp;All</source>
-        <translation>Limpiar &amp;Todo</translation>
+        <translation>Nulstil alt</translation>
     </message>
     <message>
         <source>&amp;BIP 38 Decrypt</source>
-        <translation>&amp;Desencriptación BIP 38</translation>
+        <translation>BIP 38 dekryptér.</translation>
     </message>
     <message>
         <source>Enter the BIP 38 encrypted private key. Enter the passphrase in the middle box. Click Decrypt Key to compute the private key. After the key is decrypted, clicking 'Import Address' will add this private key to the wallet.</source>
-        <translation>Introducir la clave encriptada privada BIP 38. Introducir la contraseña en la caja central. Pulsar en Desencriptar Clave para computar la clave privada. Después de que la clave sea desencriptada, pulsando en 'Importar Dirección' añadirá esta clave privada a la wallet.</translation>
+        <translation>Indtast den krypterede BIP 38 nøgle. Indtast kodeordet i den midterste boks. Klik på dekryptér for at generere den private nøgle. Når nøglen er dekrypteret vil klip på "importér adresse" overføre den private nøgle til tegnebogen.</translation>
     </message>
     <message>
         <source>The PIVX address the message was signed with</source>
-        <translation>La dirección PIVX con la que el mensaje fue firmado</translation>
+        <translation>Beskeden er underskrevet med denne PIVX adresse</translation>
     </message>
     <message>
         <source>Verify the message to ensure it was signed with the specified PIVX address</source>
-        <translation>Verificar el mensaje para asegurarse que fue firmado con la dirección PIVX especificada</translation>
+        <translation>verificer beskeden for at sikre, at den blev underskrevet med den rigtige PIVX adresse.</translation>
     </message>
     <message>
         <source>Decrypt &amp;Key</source>
-        <translation>Desencriptar &amp; Clave</translation>
+        <translation>Dekrypteringsnøgle</translation>
     </message>
     <message>
         <source>Reset all verify message fields</source>
-        <translation>Resetear todos los campos de verificación de mensaje</translation>
+        <translation>Nulstil alle verificeringsfelter for beskeder.</translation>
     </message>
     <message>
         <source>Decrypted Key:</source>
-        <translation>Clave desencriptada</translation>
+        <translation>Dekrypteret nøgle.</translation>
     </message>
     <message>
         <source>Import Address</source>
-        <translation>Importar Dirección</translation>
+        <translation>Importér adresse</translation>
     </message>
     <message>
         <source>Click "Decrypt Key" to compute key</source>
-        <translation>Clickar "Desencriptar Clave" para computar la clave</translation>
+        <translation>Klik på "Dekrypter" for at generere nøgle</translation>
     </message>
     <message>
         <source>The entered passphrase is invalid. </source>
-        <translation>La contraseña introducida es inválida</translation>
+        <translation>Det indtastede kodeord er ugyldigt</translation>
     </message>
     <message>
         <source>Allowed: 0-9,a-z,A-Z,</source>
-        <translation>Permitido: 0-9,a.z,A-Z,</translation>
+        <translation>Tilladte tegn: 0-9, a-z, A-Z</translation>
     </message>
     <message>
         <source>The entered address is invalid.</source>
-        <translation>La dirección introducida es inválida</translation>
+        <translation>Den indtastede adresse er ugyldig</translation>
     </message>
     <message>
         <source>Please check the address and try again.</source>
-        <translation>Por favor comprobar la dirección y probar de nuevo.</translation>
+        <translation>Kontroller adressen og prøv igen.</translation>
     </message>
     <message>
         <source>The entered address does not refer to a key.</source>
-        <translation>La dirección introducido no se refiere a ninguna clave.</translation>
+        <translation>Den indtastede adresse har ikke nogen tilknyttet nøgle.</translation>
     </message>
     <message>
         <source>Wallet unlock was cancelled.</source>
-        <translation>El desbloqueo de la wallet fue cancelado.</translation>
+        <translation>Oplåsning af tegnebogen mislykkedes</translation>
     </message>
     <message>
         <source>Private key for the entered address is not available.</source>
-        <translation>La clave privada para la dirección introducida no está disponible.</translation>
+        <translation>Den private nøgler der hører til den indtastede adresse er ikke tilgængelig.</translation>
     </message>
     <message>
         <source>Failed to decrypt.</source>
-        <translation>Fallo en la desencriptación</translation>
+        <translation>Dekryptering mislykkedes</translation>
     </message>
     <message>
         <source>Please check the key and passphrase and try again.</source>
-        <translation>Por favor comprobar la clave y la contraseña y probar de nuevo.</translation>
+        <translation>Kontroller nøgle og kodeord - og prøv igen.</translation>
     </message>
     <message>
         <source>Data Not Valid.</source>
-        <translation>Datos No Válidos.</translation>
+        <translation>Ugyldig data</translation>
     </message>
     <message>
         <source>Please try again.</source>
-        <translation>Por favor intentar de nuevo.</translation>
+        <translation>Prøv igen</translation>
     </message>
     <message>
         <source>Please wait while key is imported</source>
-        <translation>Por favor esperar mientras se importa la clave</translation>
+        <translation>Vent mens nøglen bliver importeret.</translation>
     </message>
     <message>
         <source>Key Already Held By Wallet</source>
-        <translation>Llave Ya Presente En El Monedero</translation>
+        <translation>Nøglen findes allerede i tegnebogen.</translation>
     </message>
     <message>
         <source>Error Adding Key To Wallet</source>
-        <translation>Error Añadiendo la Clave en la Wallet</translation>
+        <translation>Fejl ved tilføjelse af nøgle</translation>
     </message>
     <message>
         <source>Successfully Added Private Key To Wallet</source>
-        <translation>Clave privada añadida a la wallet con éxito</translation>
+        <translation>Den private nøgle blev tilføjet tegnebogen.</translation>
     </message>
 </context>
 <context>
     <name>BitcoinGUI</name>
     <message>
         <source>Wallet</source>
-        <translation>Wallet</translation>
+        <translation>Tegnebog</translation>
     </message>
     <message>
         <source>Node</source>
-        <translation>Nodo</translation>
+        <translation>Node</translation>
     </message>
     <message>
         <source>&amp;Overview</source>
-        <translation>&amp;Visión general</translation>
+        <translation>Overblik</translation>
     </message>
     <message>
         <source>Show general overview of wallet</source>
-        <translation>Mostrar visión general de la wallet</translation>
+        <translation>Vis et generelt overblik over tegnebogen</translation>
     </message>
     <message>
         <source>&amp;Send</source>
-        <translation>&amp;Enviar</translation>
+        <translation>&amp;Send</translation>
     </message>
     <message>
         <source>&amp;Receive</source>
-        <translation>&amp;Recibir</translation>
+        <translation>&amp;Modtag</translation>
     </message>
     <message>
         <source>&amp;Transactions</source>
-        <translation>&amp;Transacciones</translation>
+        <translation>&amp;Transaktioner</translation>
     </message>
     <message>
         <source>Browse transaction history</source>
-        <translation>Navegar por el historial de transacciones</translation>
+        <translation>Vis transaktionshistorik</translation>
     </message>
     <message>
         <source>E&amp;xit</source>
-        <translation>S&amp;alir</translation>
+        <translation>E&amp;xit</translation>
     </message>
     <message>
         <source>Quit application</source>
-        <translation>Cerrar aplicación</translation>
+        <translation>Afslut applikationen</translation>
     </message>
     <message>
         <source>About &amp;Qt</source>
-        <translation>Sobre &amp;Qt</translation>
+        <translation>Om&amp;Qt</translation>
     </message>
     <message>
         <source>Show information about Qt</source>
-        <translation>Mostrar información sobre Qt</translation>
+        <translation>Information om Qt</translation>
     </message>
     <message>
         <source>&amp;Options...</source>
-        <translation>&amp;Opciones...</translation>
+        <translation>&amp;Indstillinger</translation>
     </message>
     <message>
         <source>&amp;Show / Hide</source>
-        <translation>&amp;Mostrar / Esconder</translation>
+        <translation>&amp;Vis / skjul</translation>
     </message>
     <message>
         <source>Show or hide the main Window</source>
-        <translation>Mostrar o esconder la ventana principal</translation>
+        <translation>Vis eller skjul hovedvinduet.</translation>
     </message>
     <message>
         <source>&amp;Encrypt Wallet...</source>
-        <translation>&amp;Encriptar wallet...</translation>
+        <translation>&amp;Kryptografer tegnebog</translation>
     </message>
     <message>
         <source>Encrypt the private keys that belong to your wallet</source>
-        <translation>Encriptar las claves privadas que pertenecen a tu wallet</translation>
+        <translation>Krypter den private nøgle som hører til tegnebogen.</translation>
     </message>
     <message>
         <source>&amp;Backup Wallet...</source>
-        <translation>&amp;Copia de seguridad de la wallet...</translation>
+        <translation>&amp;Sikkerhedskopier tegnebog</translation>
     </message>
     <message>
         <source>Backup wallet to another location</source>
-        <translation>Copia de seguridad de la wallet a otra ubicación</translation>
+        <translation>Sikkerhedskopier og gem et andet sted</translation>
     </message>
     <message>
         <source>&amp;Change Passphrase...</source>
-        <translation>&amp;Cambiar contraseña...</translation>
+        <translation>&amp;Skift kodeord</translation>
     </message>
     <message>
         <source>Change the passphrase used for wallet encryption</source>
-        <translation>Cambiar contraseña usada para la encriptación de la wallet</translation>
+        <translation>Skift kodeordet til kryptografering af tegnebog</translation>
     </message>
     <message>
         <source>&amp;Unlock Wallet...</source>
-        <translation>&amp;Desbloquear wallet...</translation>
+        <translation>&amp;Lås tegnebogen op</translation>
     </message>
     <message>
         <source>Unlock wallet</source>
-        <translation>Desbloquear wallet</translation>
+        <translation>Lås tegnebogen op</translation>
     </message>
     <message>
         <source>&amp;Lock Wallet</source>
-        <translation>&amp;Bloquear Wallet</translation>
+        <translation>&amp;Lås tegnebogen</translation>
     </message>
     <message>
         <source>Sign &amp;message...</source>
-        <translation>Firmar &amp;mensaje..</translation>
+        <translation>Underskriv &amp; besked</translation>
     </message>
     <message>
         <source>&amp;Verify message...</source>
-        <translation>&amp;Verificar mensaje...</translation>
+        <translation>&amp;verificer besked</translation>
     </message>
     <message>
         <source>&amp;Information</source>
-        <translation>&amp;Información</translation>
+        <translation>&amp;information</translation>
     </message>
     <message>
         <source>Show diagnostic information</source>
-        <translation>Mostrar información de diagnóstico</translation>
+        <translation>Vis diagnosticeringsinformation</translation>
     </message>
     <message>
         <source>&amp;Debug console</source>
-        <translation>&amp;Consola de depuración</translation>
+        <translation>&amp;Debugpanel</translation>
     </message>
     <message>
         <source>Open debugging console</source>
-        <translation>Abrir consola de depuración</translation>
+        <translation>Åben debugpanel</translation>
     </message>
     <message>
         <source>&amp;Network Monitor</source>
-        <translation>&amp;Monitor de red</translation>
+        <translation>&amp;Netværksmonitering</translation>
     </message>
     <message>
         <source>Show network monitor</source>
-        <translation>Mostrar monitor de red</translation>
+        <translation>Vis netværksmonitor</translation>
     </message>
     <message>
         <source>&amp;Peers list</source>
-        <translation>&amp;Lista de Peers</translation>
+        <translation>&amp;Peersliste</translation>
     </message>
     <message>
         <source>Show peers info</source>
-        <translation>Mostrar información de peers</translation>
+        <translation>Vis information om PEERS</translation>
     </message>
     <message>
         <source>Wallet &amp;Repair</source>
-        <translation>&amp;Reparación de la wallet</translation>
+        <translation>Tegnebog &amp;Reparer</translation>
     </message>
     <message>
         <source>Show wallet repair options</source>
-        <translation>Mostrar opciones de reparación de la wallet</translation>
+        <translation>Vis indstillinger for reparation af tegnebog</translation>
     </message>
     <message>
         <source>Open configuration file</source>
-        <translation>Abrir archivo configuración</translation>
+        <translation>Åbn konfigurationsfil</translation>
     </message>
     <message>
         <source>Show Automatic &amp;Backups</source>
-        <translation>Mostrar &amp;copias de seguridad automatizadas</translation>
+        <translation>Vis &amp;sikkerhedskopier, der er taget automatisk</translation>
     </message>
     <message>
         <source>Show automatically created wallet backups</source>
-        <translation>Mostrar las copias de seguridad creadas automáticamente</translation>
+        <translation>Vis sikkerhedskopier, der er taget automatisk</translation>
     </message>
     <message>
         <source>&amp;Sending addresses...</source>
-        <translation>&amp;Direcciones de envío...</translation>
+        <translation>&amp;Afsenderadresser</translation>
     </message>
     <message>
         <source>Show the list of used sending addresses and labels</source>
-        <translation>Mostrar la lista y etiquetas de direcciones de envío usadas</translation>
+        <translation>Vis listen over brugte afsenderadresse med tilhørende tekst.</translation>
     </message>
     <message>
         <source>&amp;Receiving addresses...</source>
-        <translation>&amp;Dirección receptora</translation>
+        <translation>&amp;Modtageradresse</translation>
     </message>
     <message>
         <source>Show the list of used receiving addresses and labels</source>
-        <translation>Mostrar la lista de las direcciones y etiquetas usadas</translation>
+        <translation>Vis listen over brugte modtageradresser og tekst</translation>
     </message>
     <message>
         <source>Open &amp;URI...</source>
-        <translation>Abrir &amp;URI...</translation>
+        <translation>Åbn &amp;URL</translation>
     </message>
     <message>
         <source>&amp;Command-line options</source>
-        <translation>&amp;Opciones de linea de comandos</translation>
-    </message>
-    <message numerus="yes">
-        <source>Processed %n blocks of transaction history.</source>
-        <translation><numerusform>Procesados %n bloque del histórico de transacciones.</numerusform><numerusform>Procesados %n bloques del histórico de transacciones.</numerusform></translation>
+        <translation>&amp;Kommandolinieparametre</translation>
     </message>
     <message>
         <source>Synchronizing additional data: %p%</source>
-        <translation>Sincronizando datos adicionales: %p%</translation>
+        <translation>Synkroniserer yderligere data %p%</translation>
     </message>
     <message>
         <source>&amp;File</source>
-        <translation>&amp;Archivo</translation>
+        <translation>&amp;Fil</translation>
     </message>
     <message>
         <source>&amp;Settings</source>
-        <translation>&amp;Ajustes</translation>
+        <translation>&amp;indstillinger</translation>
     </message>
     <message>
         <source>&amp;Tools</source>
-        <translation>&amp;Herramientas</translation>
+        <translation>&amp;værktøj</translation>
     </message>
     <message>
         <source>&amp;Help</source>
-        <translation>&amp;Ayuda</translation>
+        <translation>&amp;hjælp</translation>
     </message>
     <message>
         <source>Tabs toolbar</source>
-        <translation>Herramienta de pestañas</translation>
+        <translation>Værktøjslinier</translation>
     </message>
     <message>
         <source>PIVX Core</source>
-        <translation>Núcleo PIVX</translation>
+        <translation>PIVX kerne</translation>
     </message>
     <message>
         <source>Send coins to a PIVX address</source>
-        <translation>Enviar coins a una dirección PIVX</translation>
+        <translation>Send mønter til en PIVX adresse</translation>
     </message>
     <message>
         <source>Request payments (generates QR codes and pivx: URIs)</source>
-        <translation>Solicitud de pago (genera un código QR y URIs)</translation>
+        <translation>Anmod om betaling (genrerer QR kode og PIVX URL)</translation>
     </message>
     <message>
         <source>&amp;Masternodes</source>
-        <translation>Nodos &amp;Maestros</translation>
+        <translation>&amp;Masternoder</translation>
     </message>
     <message>
         <source>Browse masternodes</source>
-        <translation>Explorar nodos maestros</translation>
+        <translation>Vis masternoder</translation>
     </message>
     <message>
         <source>&amp;About PIVX Core</source>
-        <translation>&amp;Sobre el núcleo de PIVX</translation>
+        <translation>&amp;Om PIVX kerne</translation>
     </message>
     <message>
         <source>Show information about PIVX Core</source>
-        <translation>Mostrar información sobre el núcleo de PIVX</translation>
+        <translation>Vis information om PIVX kerne</translation>
     </message>
     <message>
         <source>Modify configuration options for PIVX</source>
-        <translation>Modificar las opciones de configuración de PIVX</translation>
+        <translation>Ret konfigurationsindstillinger for PIVX</translation>
     </message>
     <message>
         <source>Sign messages with your PIVX addresses to prove you own them</source>
-        <translation>Firmar mensajes con sus direcciones PIVX para demostrar que le pertenecen</translation>
+        <translation>Underskriv beskeder med Deres PIVX adresser for at bekræfte at De ejer dem.</translation>
     </message>
     <message>
         <source>Verify messages to ensure they were signed with specified PIVX addresses</source>
-        <translation>Verificar mensajes para asegurar que están firmados con la dirección PIVX especificada</translation>
+        <translation>Verificer besked for at sikre, at den er underskrevet med den opgivne PIVX adresse</translation>
     </message>
     <message>
         <source>&amp;BIP38 tool</source>
-        <translation>&amp;Herramienta BIP38</translation>
+        <translation>&amp;BIP 38 værktøj</translation>
     </message>
     <message>
         <source>Encrypt and decrypt private keys using a passphrase</source>
-        <translation>Encriptar y desencriptar las llaves privadas usando una contraseña</translation>
+        <translation>Krypter og dekrypter private nøgler ved hjælp af et kodeord</translation>
     </message>
     <message>
         <source>&amp;MultiSend</source>
-        <translation>&amp;MultiEnvío</translation>
+        <translation>&amp;Massesending</translation>
     </message>
     <message>
         <source>MultiSend Settings</source>
-        <translation>Configuración de MultiEnvío</translation>
+        <translation>Massesending, indstillinger</translation>
     </message>
     <message>
         <source>Open Wallet &amp;Configuration File</source>
-        <translation>Abrir Fichero de &amp;Configuración del Monedero</translation>
+        <translation>Åbn tegnebog &amp;konfigurationsfil</translation>
     </message>
     <message>
         <source>Open &amp;Masternode Configuration File</source>
-        <translation>Abrir Fichero de Configuración de Nodos &amp;Maestros</translation>
+        <translation>Åbn &amp;Masternode konfigurationsfil</translation>
     </message>
     <message>
         <source>Open Masternode configuration file</source>
-        <translation>Abrir Fichero de Configuración de Nodos Maestros</translation>
+        <translation>ÅbnMasternode konfigurationsfil</translation>
     </message>
     <message>
         <source>Open a PIVX: URI or payment request</source>
-        <translation>Abrir un PIVX: URI o solicitud de pago</translation>
+        <translation>Åbn en PIVX URl eller betalingsanmodning</translation>
     </message>
     <message>
         <source>&amp;Blockchain explorer</source>
-        <translation>Explorador de &amp;Bloques</translation>
+        <translation>&amp;blockchain explorer</translation>
     </message>
     <message>
         <source>Block explorer window</source>
-        <translation>Ventana del explorador de bloques</translation>
+        <translation>Blockexplorer vindue</translation>
     </message>
     <message>
         <source>Show the PIVX Core help message to get a list with possible PIVX command-line options</source>
-        <translation>Mostrar la ayuda de PIVX Core para obtener una lista de posibles opciones en línea de comandos</translation>
+        <translation>Vis hjelpetekster fra PIVX kernen for at få en liste med mulige PIVX kommandolinie-startparametre</translation>
     </message>
     <message>
         <source>PIVX Core client</source>
-        <translation>Cliente PIVX Core</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n active connection(s) to PIVX network</source>
-        <translation><numerusform>%n conexión(es) activa a la red PIVX</numerusform><numerusform>%n conexion(es) activas a la red PIVX</numerusform></translation>
+        <translation>PIVX kerneklient</translation>
     </message>
     <message>
         <source>Synchronizing with network...</source>
-        <translation>Sincronizando con la red...</translation>
+        <translation>Synkroniserer med netværket</translation>
     </message>
     <message>
         <source>Importing blocks from disk...</source>
-        <translation>Importando bloques de disco...</translation>
+        <translation>Importerer blokke fra disken</translation>
     </message>
     <message>
         <source>Reindexing blocks on disk...</source>
-        <translation>Reindexando bloques en el disco...</translation>
+        <translation>Indekserer blokke på disken</translation>
     </message>
     <message>
         <source>No block source available...</source>
-        <translation>Fuente de bloques no disponible...</translation>
+        <translation>Der er ingen blokkilde tilgængelig</translation>
     </message>
     <message>
         <source>Up to date</source>
-        <translation>Actualizado</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n hour(s)</source>
-        <translation><numerusform>%n hora</numerusform><numerusform>%n horas</numerusform></translation>
-    </message>
-    <message numerus="yes">
-        <source>%n day(s)</source>
-        <translation><numerusform>%n día</numerusform><numerusform>%n días</numerusform></translation>
-    </message>
-    <message numerus="yes">
-        <source>%n week(s)</source>
-        <translation><numerusform>%n semana</numerusform><numerusform>%n semanas</numerusform></translation>
+        <translation>Opdateret!</translation>
     </message>
     <message>
         <source>%1 and %2</source>
-        <translation>%1 y %2</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n year(s)</source>
-        <translation><numerusform>%n año</numerusform><numerusform>%n años</numerusform></translation>
+        <translation>%1 og %2</translation>
     </message>
     <message>
         <source>%1 behind</source>
-        <translation>%1 detrás</translation>
+        <translation>%1 bagud</translation>
     </message>
     <message>
         <source>Catching up...</source>
-        <translation>Recogiendo...</translation>
+        <translation>Samler op</translation>
     </message>
     <message>
         <source>Last received block was generated %1 ago.</source>
-        <translation>El último bloque recibido se generó hace %1.</translation>
+        <translation>Den sidst modtagne blok  blev genereret %1 ago</translation>
     </message>
     <message>
         <source>Transactions after this will not yet be visible.</source>
-        <translation>Las transacciones posteriores todavía no son visibles.</translation>
+        <translation>Transaktioner efter dette tidspunkt er endnu ikke synlige</translation>
     </message>
     <message>
         <source>Error</source>
-        <translation>Error</translation>
+        <translation>Fejl!</translation>
     </message>
     <message>
         <source>Warning</source>
-        <translation>Advertencia</translation>
+        <translation>Advarsel!</translation>
     </message>
     <message>
         <source>Information</source>
-        <translation>Información</translation>
+        <translation>Info:</translation>
     </message>
     <message>
         <source>Sent transaction</source>
-        <translation>Transacción enviada</translation>
+        <translation>Afsendt transaktion</translation>
     </message>
     <message>
         <source>Incoming transaction</source>
-        <translation>Transacción entrante</translation>
+        <translation>Indkommende transaktion</translation>
     </message>
     <message>
         <source>Sent MultiSend transaction</source>
-        <translation>Transacción MultiEnvío emitida</translation>
+        <translation>Transaktion til flere adresser afsendt via "multisend" funktionen</translation>
     </message>
     <message>
         <source>Date: %1
@@ -779,413 +755,413 @@ Amount: %2
 Type: %3
 Address: %4
 </source>
-        <translation>Fecha: %1
-Cantidad: %2
-Tipo: %3
-Dirección: %4
+        <translation>Dato: %1
+Beløb: %2
+Type: %3
+Adresse: %4
 </translation>
     </message>
     <message>
         <source>Staking is active
  MultiSend: %1</source>
-        <translation>La recompensa de participación está activa
-MultiEnvío: %1</translation>
+        <translation>"Indskydning af saldo" aktiveret
+"Multisend": %1</translation>
     </message>
     <message>
         <source>Active</source>
-        <translation>Activo</translation>
+        <translation>Aktiv!</translation>
     </message>
     <message>
         <source>Not Active</source>
-        <translation>Inactivo</translation>
+        <translation>Ikke aktiv!</translation>
     </message>
     <message>
         <source>Staking is not active
  MultiSend: %1</source>
-        <translation>Staking inactiva
-MultiEnvío: %1</translation>
+        <translation>"Indskydning af saldo" ikke aktiveret
+"Multisend": %1</translation>
     </message>
     <message>
         <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;unlocked&lt;/b&gt;</source>
-        <translation>El monedero está &lt;b&gt;encriptado&lt;/b&gt; y actualmente &lt;b&gt;desbloqueado&lt;/b&gt;</translation>
+        <translation>Tegnebogen &lt;b&gt;er krypteret&lt;/b&gt;men i øjeblikket&lt;b&gt;låst op&lt;/b&gt;</translation>
     </message>
     <message>
         <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;unlocked&lt;/b&gt; for anonimization and staking only</source>
-        <translation>El monedero está &lt;b&gt;encriptado&lt;/b&gt; y actualmente &lt;b&gt;desbloqueado&lt;/b&gt; sólo para anonimato y prueba de participación.</translation>
+        <translation>Tegnebogen &lt;b&gt;er krypteret,&lt;/b&gt;er i øjeblikket&lt;b&gt;låst op,&lt;/b&gt;men kun for anonymisering og indskydning.</translation>
     </message>
     <message>
         <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;locked&lt;/b&gt;</source>
-        <translation>El monedero está &lt;b&gt;encriptado&lt;/b&gt; y actualmente &lt;b&gt;bloqueado&lt;/b&gt;</translation>
+        <translation>Tegnebogen er &lt;b&gt;krypteret og låst&lt;/b&gt;</translation>
     </message>
 </context>
 <context>
     <name>BlockExplorer</name>
     <message>
         <source>Blockchain Explorer</source>
-        <translation>Explorador de Cadena de Bloques</translation>
+        <translation>Blockcain eksplorer</translation>
     </message>
     <message>
         <source>Address / Block / Transaction</source>
-        <translation>Dirección / Bloque / Transacción</translation>
+        <translation>Adresse / Blok / Transaktion</translation>
     </message>
     <message>
         <source>Search</source>
-        <translation>Buscar</translation>
+        <translation>Søg</translation>
     </message>
     <message>
         <source>TextLabel</source>
-        <translation>EtiquetaDeTexto</translation>
+        <translation>Tekstmærke</translation>
     </message>
     <message>
         <source>Not all transactions will be shown. To view all transactions you need to set txindex=1 in the configuration file (pivx.conf).</source>
-        <translation>No se muestran todas las transacciones. Para ver todas las transacciones introduzca la línea "txindex=1" en el archivo de configuración (pivx.conf).</translation>
+        <translation>Ikke alle transaktioner vil blive vist. For at vise alle transaktioner må De sætte "txindex=1" i konfigurationsfilen (pivx.conf).</translation>
     </message>
 </context>
 <context>
     <name>ClientModel</name>
     <message>
         <source>Total: %1 (OBF compatible: %2 / Enabled: %3)</source>
-        <translation>Total: %1 (Ofuscación compatible: %2 / Activado: %3)</translation>
+        <translation>I alt: %1 (OBF kompatible: %2 / Aktiverede: %3)</translation>
     </message>
     <message>
         <source>Network Alert</source>
-        <translation>Alerta de Red</translation>
+        <translation>Netværksalarm!</translation>
     </message>
 </context>
 <context>
     <name>CoinControlDialog</name>
     <message>
         <source>Quantity:</source>
-        <translation>Cantidad:</translation>
+        <translation>Antal:</translation>
     </message>
     <message>
         <source>Bytes:</source>
-        <translation>Octetos:</translation>
+        <translation>Bytes:</translation>
     </message>
     <message>
         <source>Amount:</source>
-        <translation>Cantidad:</translation>
+        <translation>Beløb</translation>
     </message>
     <message>
         <source>Priority:</source>
-        <translation>Prioridad:</translation>
+        <translation>Prioritet:</translation>
     </message>
     <message>
         <source>Fee:</source>
-        <translation>Comisión:</translation>
+        <translation>Gebyr:</translation>
     </message>
     <message>
         <source>Coin Selection</source>
-        <translation>Selección de Moneda</translation>
+        <translation>Møntvalg</translation>
     </message>
     <message>
         <source>Dust:</source>
-        <translation>Calderilla:</translation>
+        <translation>Affald:</translation>
     </message>
     <message>
         <source>After Fee:</source>
-        <translation>Con Comisión:</translation>
+        <translation>Efterbetaling</translation>
     </message>
     <message>
         <source>Change:</source>
-        <translation>Cambio:</translation>
+        <translation>Penge tilbage:</translation>
     </message>
     <message>
         <source>(un)select all</source>
-        <translation>(de)seleccionar todos</translation>
+        <translation>Vælg/fravælg alt</translation>
     </message>
     <message>
         <source>toggle lock state</source>
-        <translation>cambiar estado de bloqueo</translation>
+        <translation>Skift låsestatus</translation>
     </message>
     <message>
         <source>Tree mode</source>
-        <translation>Modo de Árbol</translation>
+        <translation>Visning i træstruktur</translation>
     </message>
     <message>
         <source>List mode</source>
-        <translation>Modo de Lista</translation>
+        <translation>Visning som liste</translation>
     </message>
     <message>
         <source>(1 locked)</source>
-        <translation>(1 bloqueado)</translation>
+        <translation>(1 låst)</translation>
     </message>
     <message>
         <source>Amount</source>
-        <translation>Cantidad</translation>
+        <translation>Beløb</translation>
     </message>
     <message>
         <source>Received with label</source>
-        <translation>Recibido con etiqueta</translation>
+        <translation>Modtaget med tekstmærke</translation>
     </message>
     <message>
         <source>Received with address</source>
-        <translation>Recibido con dirección</translation>
+        <translation>Modtaget med adresse</translation>
     </message>
     <message>
         <source>DS Rounds</source>
-        <translation>Rondas DS:</translation>
+        <translation>DS gennemløb</translation>
     </message>
     <message>
         <source>Date</source>
-        <translation>Fecha</translation>
+        <translation>Dato</translation>
     </message>
     <message>
         <source>Confirmations</source>
-        <translation>Confirmaciones</translation>
+        <translation>Bekræftelser</translation>
     </message>
     <message>
         <source>Confirmed</source>
-        <translation>Confirmado</translation>
+        <translation>Bekræftet</translation>
     </message>
     <message>
         <source>Priority</source>
-        <translation>Prioridad</translation>
+        <translation>Prioritet</translation>
     </message>
     <message>
         <source>Copy address</source>
-        <translation>Copiar dirección</translation>
+        <translation>Kopiér adresse</translation>
     </message>
     <message>
         <source>Copy label</source>
-        <translation>Copiar etiqueta</translation>
+        <translation>Kopiér tekstmærke</translation>
     </message>
     <message>
         <source>Copy amount</source>
-        <translation>Copiar cantidad</translation>
+        <translation>Kopiér beløb</translation>
     </message>
     <message>
         <source>Copy transaction ID</source>
-        <translation>Copiar código de transacción</translation>
+        <translation>Kopiér transaktionsID</translation>
     </message>
     <message>
         <source>Lock unspent</source>
-        <translation>Bloquear no gastados</translation>
+        <translation>Lås ubrugte</translation>
     </message>
     <message>
         <source>Unlock unspent</source>
-        <translation>Desbloquear no gastados</translation>
+        <translation>Lås ubrugte op</translation>
     </message>
     <message>
         <source>Copy quantity</source>
-        <translation>Copiar cantidad</translation>
+        <translation>Kopiér antal</translation>
     </message>
     <message>
         <source>Copy fee</source>
-        <translation>Copiar comisión</translation>
+        <translation>Kopiér gebyr</translation>
     </message>
     <message>
         <source>Copy after fee</source>
-        <translation>Copiar después de comisión</translation>
+        <translation>Kopiér efterbetaling</translation>
     </message>
     <message>
         <source>Copy bytes</source>
-        <translation>Copiar octetos</translation>
+        <translation>Kopiér bytes</translation>
     </message>
     <message>
         <source>Copy priority</source>
-        <translation>Copiar prioridad</translation>
+        <translation>Kopiér prioritet</translation>
     </message>
     <message>
         <source>Copy dust</source>
-        <translation>Copiar calderilla</translation>
+        <translation>Kopiér affald</translation>
     </message>
     <message>
         <source>Copy change</source>
-        <translation>Copiar cambio</translation>
+        <translation>Kopiér "penge tilbage"</translation>
     </message>
     <message>
         <source>Please switch to "List mode" to use this function.</source>
-        <translation>Por favor cambie a "Modo de Lista" para utilizar esta función.</translation>
+        <translation>Skift til "listeformat" for at benytte denne funktion</translation>
     </message>
     <message>
         <source>Non-anonymized input selected. &lt;b&gt;Obfuscation will be disabled.&lt;/b&gt;&lt;br&gt;&lt;br&gt;If you still want to use Obfuscation, please deselect all non-nonymized inputs first and then check Obfuscation checkbox again.</source>
-        <translation>Has seleccionado una entrada que no ha sido anonimizada. &lt;b&gt;La Ofuscación será deshabilitada.&lt;/b&gt;&lt;br&gt;&lt;br&gt;Si todavía quiere utilizar la Ofuscación, por favor primero deseleccione todas las entrada no anonimizadas y entonces marque la casilla de Ofuscación de nuevo.</translation>
+        <translation>Ikke anonymiseret indhold valgt.&lt;b&gt;tilsløring vil være slået fra.&lt;/b&gt;&lt;br&gt;&lt;br&gt;Hvis De ønsker at anvende tilsløring skal De fravælge alt ikke anonymiseret indhold først, derefter afmærke boksen for tilsløring igen.</translation>
     </message>
     <message>
         <source>highest</source>
-        <translation>la más alta</translation>
+        <translation>højeste</translation>
     </message>
     <message>
         <source>higher</source>
-        <translation>más alta</translation>
+        <translation>Højere</translation>
     </message>
     <message>
         <source>high</source>
-        <translation>alta</translation>
+        <translation>høj</translation>
     </message>
     <message>
         <source>medium-high</source>
-        <translation>medio-alta</translation>
+        <translation>middelhøj</translation>
     </message>
     <message>
         <source>Can vary +/- %1 duff(s) per input.</source>
-        <translation>Puede variar +/- %1 duff(s) por entrada.</translation>
+        <translation>kan variere +/- %1 duff(s) pr. input</translation>
     </message>
     <message>
         <source>n/a</source>
-        <translation>n/a</translation>
+        <translation>Ikke tilgængelig</translation>
     </message>
     <message>
         <source>medium</source>
-        <translation>media</translation>
+        <translation>Middel</translation>
     </message>
     <message>
         <source>low-medium</source>
-        <translation>baja-media</translation>
+        <translation>middellav</translation>
     </message>
     <message>
         <source>low</source>
-        <translation>baja</translation>
+        <translation>lav</translation>
     </message>
     <message>
         <source>lower</source>
-        <translation>muy baja</translation>
+        <translation>lavere</translation>
     </message>
     <message>
         <source>lowest</source>
-        <translation>la más baja</translation>
+        <translation>lavest</translation>
     </message>
     <message>
         <source>(%1 locked)</source>
-        <translation>(%1 bloqueado)</translation>
+        <translation>(%1 låst)</translation>
     </message>
     <message>
         <source>none</source>
-        <translation>ninguno</translation>
+        <translation>ingen</translation>
     </message>
     <message>
         <source>yes</source>
-        <translation>sí</translation>
+        <translation>ja</translation>
     </message>
     <message>
         <source>no</source>
-        <translation>no</translation>
+        <translation>nej</translation>
     </message>
     <message>
         <source>This label turns red, if the transaction size is greater than 1000 bytes.</source>
-        <translation>Esta etiqueta se pone roja, si el tamaño de la transacción es mayor de 1000 bytes.</translation>
+        <translation>Denne tekstmarkør bliver rød, hvis transaktionens størrelse overstiger 1000 bytes.</translation>
     </message>
     <message>
         <source>This means a fee of at least %1 per kB is required.</source>
-        <translation>Esto significa que se requiere una comisión de al menos %1 por kB.</translation>
+        <translation>Dette resulterer i et nødvendigt gebyr på mindst %1 pr. kB </translation>
     </message>
     <message>
         <source>Can vary +/- 1 byte per input.</source>
-        <translation>Puede variar +/- 1 byte por entrada.</translation>
+        <translation>Kan variere +/- 1 byte pr. input</translation>
     </message>
     <message>
         <source>Transactions with higher priority are more likely to get included into a block.</source>
-        <translation>Las transacciones con alta prioridad tienen más probabilidades de ser incluidas en un bloque.</translation>
+        <translation>Transaktionerne med højere prioritet vil sandsynligvis blive inkluderet i en blok</translation>
     </message>
     <message>
         <source>This label turns red, if the priority is smaller than "medium".</source>
-        <translation>Esta etiqueta se vuelve roja, si la prioridad es inferior a "media".</translation>
+        <translation>Denne tekstmrkør bliver rød, hvis prioriteten er mindre end middel.</translation>
     </message>
     <message>
         <source>This label turns red, if any recipient receives an amount smaller than %1.</source>
-        <translation>Esta etiqueta se vuelve roja, si algún destinatario recibe una cantidad menor que %1.</translation>
+        <translation>Denne tekstmarkør bliver rød, hvis en modtageradresse modtager et beløb mindre end %1.</translation>
     </message>
     <message>
         <source>(no label)</source>
-        <translation>(sin etiqueta)</translation>
+        <translation>(ingen opmærknig)</translation>
     </message>
     <message>
         <source>change from %1 (%2)</source>
-        <translation>cambio desde %1 (%2)</translation>
+        <translation>tilbage fra %1 (%2)</translation>
     </message>
     <message>
         <source>(change)</source>
-        <translation>(cambio)</translation>
+        <translation>(Retur)</translation>
     </message>
 </context>
 <context>
     <name>EditAddressDialog</name>
     <message>
         <source>Edit Address</source>
-        <translation>Editar Dirección</translation>
+        <translation>Ret adresse</translation>
     </message>
     <message>
         <source>&amp;Label</source>
-        <translation>&amp;Etiqueta</translation>
+        <translation>&amp;tekstmarkør</translation>
     </message>
     <message>
         <source>The label associated with this address list entry</source>
-        <translation>La etiqueta asociada con esta entrada de la libreta de direcciones</translation>
+        <translation>Denne tekstmarkør e forbundet med denne adresse i listen.</translation>
     </message>
     <message>
         <source>&amp;Address</source>
-        <translation>&amp;Dirección</translation>
+        <translation>&amp;adresse</translation>
     </message>
     <message>
         <source>The address associated with this address list entry. This can only be modified for sending addresses.</source>
-        <translation>La dirección asociada con esta entrada de la libreta de direcciones. Ésta sólo puede ser modificada en las direcciones de envío.</translation>
+        <translation>Adressen forbundet med denne adresse i listen kan kun rettes for afsenderadresser.</translation>
     </message>
     <message>
         <source>New receiving address</source>
-        <translation>Nueva dirección de cobro</translation>
+        <translation>Ny modtageradresse</translation>
     </message>
     <message>
         <source>New sending address</source>
-        <translation>Nueva dirección de envío</translation>
+        <translation>Ny afsenderadresse</translation>
     </message>
     <message>
         <source>Edit receiving address</source>
-        <translation>Editar dirección de cobro</translation>
+        <translation>Ret modtageradresse</translation>
     </message>
     <message>
         <source>Edit sending address</source>
-        <translation>Editar dirección de envío</translation>
+        <translation>Ret afsenderadresse</translation>
     </message>
     <message>
         <source>The entered address "%1" is not a valid PIVX address.</source>
-        <translation>La dirección introducida "%1" no es una dirección PIVX válida.</translation>
+        <translation>Den indtastede adresse %1 er ikke en gyldig PIVX adresse</translation>
     </message>
     <message>
         <source>The entered address "%1" is already in the address book.</source>
-        <translation>La dirección introducida "%1" ya está en la libreta de direcciones.</translation>
+        <translation>Den indtastede adresse %1 findes allerede i adressebogen.</translation>
     </message>
     <message>
         <source>Could not unlock wallet.</source>
-        <translation>No se pudo desbloquear el monedero.</translation>
+        <translation>Kunne ikke låse tegnebogen op.</translation>
     </message>
     <message>
         <source>New key generation failed.</source>
-        <translation>La generación de llave nueva falló.</translation>
+        <translation>Ny generering af nøgle fejlede.</translation>
     </message>
 </context>
 <context>
     <name>FreespaceChecker</name>
     <message>
         <source>A new data directory will be created.</source>
-        <translation>Se creará una nueva carpeta de datos.</translation>
+        <translation>En ny mappe vil blive oprettet.</translation>
     </message>
     <message>
         <source>name</source>
-        <translation>nombre</translation>
+        <translation>navn</translation>
     </message>
     <message>
         <source>Directory already exists. Add %1 if you intend to create a new directory here.</source>
-        <translation>El directorio ya existe, Añada %1 si pretende crear una nueva carpeta aquí.</translation>
+        <translation>Mappen eksisterer allerede. Tilføj%1 hvis De ønsker at oprette en ny mappe her.</translation>
     </message>
     <message>
         <source>Path already exists, and is not a directory.</source>
-        <translation>La ruta ya existe, y no es una carpeta.</translation>
+        <translation>Stien eksisterer allerede men er ikke en mappe</translation>
     </message>
     <message>
         <source>Cannot create data directory here.</source>
-        <translation>No se puede crear un directorio de datos aquí.</translation>
+        <translation>Kan ikke oprette en mappe hr</translation>
     </message>
 </context>
 <context>
     <name>HelpMessageDialog</name>
     <message>
         <source>version</source>
-        <translation>versión</translation>
+        <translation>version</translation>
     </message>
     <message>
         <source>PIVX Core</source>
-        <translation>Núcleo PIVX</translation>
+        <translation>PIVX kerne</translation>
     </message>
     <message>
         <source>(%1-bit)</source>
@@ -1193,153 +1169,145 @@ MultiEnvío: %1</translation>
     </message>
     <message>
         <source>About PIVX Core</source>
-        <translation>Acerca de PIVX Core</translation>
+        <translation>om PIVX kerne</translation>
     </message>
     <message>
         <source>Command-line options</source>
-        <translation>Opciones de línea de comandos</translation>
+        <translation>Kommandolinieparametre</translation>
     </message>
     <message>
         <source>Usage:</source>
-        <translation>Uso:</translation>
+        <translation>Anvendelse:</translation>
     </message>
     <message>
         <source>command-line options</source>
-        <translation>opciones de línea de comandos</translation>
+        <translation>kommandolinieparametre</translation>
     </message>
     <message>
         <source>UI Options:</source>
-        <translation>Opciones de interfaz de usuario:</translation>
-    </message>
-    <message>
-        <source>Choose data directory on startup (default: %u)</source>
-        <translation>Elija la carpeta de datos al arrancar (por defecto: %u)</translation>
-    </message>
-    <message>
-        <source>Show splash screen on startup (default: %u)</source>
-        <translation>Mostrar pantalla de bienvenida al arrancar (por defecto: %u)</translation>
+        <translation>UI valgmuligheder</translation>
     </message>
     <message>
         <source>Set language, for example "de_DE" (default: system locale)</source>
-        <translation>Seleccionar el idioma, por ejemplo "es_ES" (por defecto: idioma del sistema)</translation>
+        <translation>Vælg sprog. For eksempel "de_DE" (standard: Systemsprog)</translation>
     </message>
     <message>
         <source>Start minimized</source>
-        <translation>Arrancar minimizado</translation>
+        <translation>Start minimeret.</translation>
     </message>
     <message>
         <source>Set SSL root certificates for payment request (default: -system-)</source>
-        <translation>Elegir certificado raíz SSL para solicitud de pago (por defecto: -sistema-)</translation>
+        <translation>Indstil SSL rodcertifikater til betalingsanmodninger (standard -system-)</translation>
     </message>
 </context>
 <context>
     <name>Intro</name>
     <message>
         <source>Welcome</source>
-        <translation>Bienvenido/a</translation>
+        <translation>Velkommen</translation>
     </message>
     <message>
         <source>Welcome to PIVX Core.</source>
-        <translation>Bienvenido/a a PIVX Core.</translation>
+        <translation>Velkommen til PIVX kerne</translation>
     </message>
     <message>
         <source>As this is the first time the program is launched, you can choose where PIVX Core will store its data.</source>
-        <translation>Al ser la primera vez que se inicia el programa, usted puede elegir dónde guardará PIVX Core sus datos.</translation>
+        <translation>Da det er første gang programmet startes, kan De vælge hvor PIVX kernen skal lagre sine data</translation>
     </message>
     <message>
         <source>PIVX Core will download and store a copy of the PIVX block chain. At least %1GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</source>
-        <translation>PIVX Core descargará y guardará una copia de la cadena de bloques PIVX. Por lo menos %1GB de datos serán guardados en esta carpeta, y crecerá con el tiempo. El monedero también se guardará en esta carpeta.</translation>
+        <translation>PIVX kernen vil nu hente og gemme en kopi af PIVX blockchain. Der skal være mindst %1GB ledigt på lagermediet, og behovet vil stige efterhånden som tiden går. Selve tegnebogen vil også blive gemt her.</translation>
     </message>
     <message>
         <source>Use the default data directory</source>
-        <translation>Usar la carpeta de datos por defecto</translation>
+        <translation>Anvend standardmappen til data.</translation>
     </message>
     <message>
         <source>Use a custom data directory:</source>
-        <translation>Usar una carpeta de datos personalizada:</translation>
+        <translation>Anvend en mappe valgt af brugeren</translation>
     </message>
     <message>
         <source>PIVX Core</source>
-        <translation>Núcleo PIVX</translation>
+        <translation>PIVX kerne</translation>
     </message>
     <message>
         <source>Error: Specified data directory "%1" cannot be created.</source>
-        <translation>Error: La carpeta de datos especificada "%1" no pudo ser creada.</translation>
+        <translation>Fejl! Mappen %1% kan ikke oprettes</translation>
     </message>
     <message>
         <source>Error</source>
-        <translation>Error</translation>
+        <translation>Fejl!</translation>
     </message>
     <message>
         <source>%1 GB of free space available</source>
-        <translation>%1 GB de espacio libre en disco</translation>
+        <translation>%1GB fri dataplads tilgængelig</translation>
     </message>
     <message>
         <source>(of %1 GB needed)</source>
-        <translation>(de %1 GB necesarios)</translation>
+        <translation>(af %1 GB brugt)</translation>
     </message>
 </context>
 <context>
     <name>MasternodeList</name>
     <message>
         <source>Form</source>
-        <translation>Formulario</translation>
+        <translation>Formular</translation>
     </message>
     <message>
         <source>My Masternodes</source>
-        <translation>Mis Nodos Maestros</translation>
+        <translation>Mine masternoder</translation>
     </message>
     <message>
         <source>Note: Status of your masternodes in local wallet can potentially be slightly incorrect.&lt;br /&gt;Always wait for wallet to sync additional data and then double check from another node&lt;br /&gt;if your node should be running but you still see "MISSING" in "Status" field.</source>
-        <translation>Nota: El estado de tus nodos maestros en el monedero local podría ser incorrecto.&lt;br /&gt;Siempre espere a que el monedero sincronice la información adicional y entonces compruébelo desde otro nodo&lt;br /&gt;si su nodo debería estar funcionando pero aún vee el mensaje "FALTA" en el campo "Estado".</translation>
+        <translation>Note: Status over Deres masternoder i den lokale tegnebog kan være let afvigende. &lt;br/&gt;De bør altid vente på at tegnebogen for synkroniseret nye data, hvorefter De bør dobbeltkontrollere fra en anden node&lt;br/ hvis Deres node burde køre men stadig viser "mangler" i statusfeltet.</translation>
     </message>
     <message>
         <source>Alias</source>
-        <translation>Apodo</translation>
+        <translation>Alias</translation>
     </message>
     <message>
         <source>Address</source>
-        <translation>Dirección</translation>
+        <translation>Adresse</translation>
     </message>
     <message>
         <source>Protocol</source>
-        <translation>Protocolo</translation>
+        <translation>Protokol</translation>
     </message>
     <message>
         <source>Status</source>
-        <translation>Estado</translation>
+        <translation>Status</translation>
     </message>
     <message>
         <source>Active</source>
-        <translation>Activo</translation>
+        <translation>Aktiv!</translation>
     </message>
     <message>
         <source>Last Seen (UTC)</source>
-        <translation>Visto por última vez (UTC)</translation>
+        <translation>Sidst set (UTC)</translation>
     </message>
     <message>
         <source>Pubkey</source>
-        <translation>Llave pública</translation>
+        <translation>Offentlig nøgle</translation>
     </message>
     <message>
         <source>S&amp;tart alias</source>
-        <translation>&amp;Iniciar apodo</translation>
+        <translation>S&amp;tart alias</translation>
     </message>
     <message>
         <source>Start &amp;all</source>
-        <translation>Iniciar &amp;todo</translation>
+        <translation>Start &amp;all</translation>
     </message>
     <message>
         <source>Start &amp;MISSING</source>
-        <translation>Iniciar &amp;FALTAN</translation>
+        <translation>Start &amp;MANGLER</translation>
     </message>
     <message>
         <source>&amp;Update status</source>
-        <translation>Estado de &amp;Actualización</translation>
+        <translation>&amp;opdateringsstatus</translation>
     </message>
     <message>
         <source>Status will be updated automatically in (sec):</source>
-        <translation>El estado se actualizará automáticamente en (seg):</translation>
+        <translation>Status opdateres automatisk om (sek):</translation>
     </message>
     <message>
         <source>0</source>
@@ -1347,177 +1315,177 @@ MultiEnvío: %1</translation>
     </message>
     <message>
         <source>Start alias</source>
-        <translation>Iniciar apodo</translation>
+        <translation>Startalias</translation>
     </message>
     <message>
         <source>Confirm masternode start</source>
-        <translation>Confirmar inicio del nodo maestro</translation>
+        <translation>Bekræft at masternoden skal startes</translation>
     </message>
     <message>
         <source>Are you sure you want to start masternode %1?</source>
-        <translation>¿Está seguro de que quiere arrancar el nodo maestro %1?</translation>
+        <translation>Er De sikker på at De vil starte masternoden %1?</translation>
     </message>
     <message>
         <source>Confirm all masternodes start</source>
-        <translation>Confirmar el arranque de todos los nodos maestros</translation>
+        <translation>Bekræft at alle masternoder skal startes</translation>
     </message>
     <message>
         <source>Are you sure you want to start ALL masternodes?</source>
-        <translation>¿Estás seguro de querer arrancar TODOS los nodos maestros?</translation>
+        <translation>Er De sikker på at de vil starte ALLE masternoderne?</translation>
     </message>
     <message>
         <source>Command is not available right now</source>
-        <translation>El comando no está disponible en este momento</translation>
+        <translation>Denne kommando er ikke tilgængelig lige nu</translation>
     </message>
     <message>
         <source>You can't use this command until masternode list is synced</source>
-        <translation>No se puede utilizar este comando hasta que la lista de nodos maestros esté sincronizada</translation>
+        <translation>De kan ikke bruge denne kommando før masternodelisten er synkroniseret</translation>
     </message>
     <message>
         <source>Confirm missing masternodes start</source>
-        <translation>Confirmar arranque de nodos maestros no encontrados</translation>
+        <translation>Bekræft at manglende masternoder skal startes</translation>
     </message>
     <message>
         <source>Are you sure you want to start MISSING masternodes?</source>
-        <translation>¿Estás seguro de querer arrancar los nodos maestros NO ENCONTRADOS?</translation>
+        <translation>Er De sikker på at De vil starte alle de manglende masternoder?</translation>
     </message>
 </context>
 <context>
     <name>MultiSendDialog</name>
     <message>
         <source>MultiSend</source>
-        <translation>MultiEnvío</translation>
+        <translation>Multisend</translation>
     </message>
     <message>
         <source>Enter whole numbers 1 - 100</source>
-        <translation>Introduzca números enteros 1 - 100</translation>
+        <translation>Indtast hele tal 1-100</translation>
     </message>
     <message>
         <source>Enter % to Give (1-100)</source>
-        <translation>Introduzca % a Dar (1-100)</translation>
+        <translation>Forær % væk 1-100</translation>
     </message>
     <message>
         <source>Enter Address to Send to</source>
-        <translation>Introduzca Dirección a la cual Enviar</translation>
+        <translation>Indtast modtageradresse</translation>
     </message>
     <message>
         <source>MultiSend allows you to automatically send up to 100% of your stake or masternode reward to a list of other PIVX addresses after it matures.
 To Add: enter percentage to give and PIVX address to add to the MultiSend vector.
 To Delete: Enter address to delete and press delete.
 MultiSend will not be activated unless you have clicked Activate</source>
-        <translation>MultiEnvío le permite enviar automáticamente hasta el 100% de recompensa de participación o de nodo maestro a una lista de otras direcciones PIVX después de su maduración.
-Para Añadir: introduzca porcentaje a enviar y las direcciones PIVX a añadir al vector MultiEnvío.
-Para Eliminar: Introduzca la dirección a eliminar y pulse la tecla delete.
-MultiEnvío no se activará a menos que haga usted click en Activar</translation>
+        <translation>Multisend tillader at De automatisk kan sende op til 100% af Deres belønninger fra såvel indskud som masternodebelønninger til en liste over andre PIVX adressater når den er tilstrækkelig stor. 
+For at tilføje: Indtast procentsatsen De ønsker at overføre samt den PIVX adresse som skal modtage via Multisendsystemet. 
+For at fjerne: Indtast adressen som skal slettes og klik på slet. 
+Multisend vil ikke fungere med mindre systemet er aktiveret.</translation>
     </message>
     <message>
         <source>Add to MultiSend Vector</source>
-        <translation>Añadir al vector MultiSend</translation>
+        <translation>Tilføj multisendgrupp</translation>
     </message>
     <message>
         <source>Add</source>
-        <translation>Añadir</translation>
+        <translation>Tilføj</translation>
     </message>
     <message>
         <source>Deactivate MultiSend</source>
-        <translation>Desactivar MultiEnvío</translation>
+        <translation>Déaktiver Multisend</translation>
     </message>
     <message>
         <source>Deactivate</source>
-        <translation>Desactivar</translation>
+        <translation>Deaktiver</translation>
     </message>
     <message>
         <source>Choose an address from the address book</source>
-        <translation>Seleccione una dirección de la libreta de direcciones</translation>
+        <translation>Vælg en adresse fra adressebogen</translation>
     </message>
     <message>
         <source>Alt+A</source>
-        <translation>Alt + A</translation>
+        <translation>Alt+A</translation>
     </message>
     <message>
         <source>Percentage of stake to send</source>
-        <translation>Porcentaje de capital a enviar</translation>
+        <translation>Send følgendepProcentsats af indskuddet</translation>
     </message>
     <message>
         <source>Percentage:</source>
-        <translation>Porcentaje:</translation>
+        <translation>Procentsats:</translation>
     </message>
     <message>
         <source>Address to send portion of stake to</source>
-        <translation>Dirección a enviar porción de la recompensa</translation>
+        <translation>Den modtager adresse som skal modtage en del af indskuddet</translation>
     </message>
     <message>
         <source>Address:</source>
-        <translation>Dirección:</translation>
+        <translation>Adresse</translation>
     </message>
     <message>
         <source>Delete Address From MultiSend Vector</source>
-        <translation>Borrar Dirección De Vector MultiEnvío</translation>
+        <translation>Slet adresse fra Multisendgruppen</translation>
     </message>
     <message>
         <source>Delete</source>
-        <translation>Borrar</translation>
+        <translation>Slet</translation>
     </message>
     <message>
         <source>Activate MultiSend</source>
-        <translation>Activar MultiEnvío</translation>
+        <translation>Aktiver Multisend</translation>
     </message>
     <message>
         <source>Activate</source>
-        <translation>Activar</translation>
+        <translation>Aktiver</translation>
     </message>
     <message>
         <source>View MultiSend Vector</source>
-        <translation>Ver Vector MultiEnvío</translation>
+        <translation>Vis Multisendgruppe</translation>
     </message>
     <message>
         <source>View MultiSend</source>
-        <translation>Ver MultiEnvío</translation>
+        <translation>Vis Multisend</translation>
     </message>
     <message>
         <source>Send For Stakes</source>
-        <translation>Enviar Para Participaciones</translation>
+        <translation>Send til indskud</translation>
     </message>
     <message>
         <source>Send For Masternode Rewards</source>
-        <translation>Enviar Para Recomensas De Nodos Maestros</translation>
+        <translation>Send til Masternodebelønning</translation>
     </message>
     <message>
         <source>The entered address:
 </source>
-        <translation>La dirección introducida:
+        <translation>Den indtastede adresse:
 </translation>
     </message>
     <message>
         <source> is invalid.
 Please check the address and try again.</source>
-        <translation>es inválida.
-Por favor compruebe la dirección e inténtelo de nuevo.</translation>
+        <translation>er ikke gyldig. 
+Kontroller adressen og prøv igen.</translation>
     </message>
     <message>
         <source>The total amount of your MultiSend vector is over 100% of your stake reward
 </source>
-        <translation>La cantidad total de su vector MultiEnvío es superior al 100% de su recompensa
+        <translation>Den totale sum af Deres Multisendgruppe er over 100% af Deres indskudsbelønning
 </translation>
     </message>
     <message>
         <source>Please Enter 1 - 100 for percent.</source>
-        <translation>Por favor Introduzca 1 - 100 por ciento.</translation>
+        <translation>Indtast en procentsats 1-100 </translation>
     </message>
     <message>
         <source>MultiSend Vector
 </source>
-        <translation>Vector MultiEnvío
+        <translation>Multisendgruppe
 </translation>
     </message>
     <message>
         <source>Removed </source>
-        <translation>Borrado</translation>
+        <translation>Fjernet</translation>
     </message>
     <message>
         <source>Could not locate address
 </source>
-        <translation>No se pudo localizar la dirección
+        <translation>Kunne ikke finde adresse
 </translation>
     </message>
 </context>
@@ -1525,105 +1493,101 @@ Por favor compruebe la dirección e inténtelo de nuevo.</translation>
     <name>ObfuscationConfig</name>
     <message>
         <source>Configure Obfuscation</source>
-        <translation>Configurar Ofuscación</translation>
+        <translation>Konfigurer tilslørin</translation>
     </message>
     <message>
         <source>Basic Privacy</source>
-        <translation>Privacidad Básica</translation>
+        <translation>Grundlæggende tilsløret </translation>
     </message>
     <message>
         <source>High Privacy</source>
-        <translation>Alta Privacidad</translation>
+        <translation>Grundigt tilsløret</translation>
     </message>
     <message>
         <source>Maximum Privacy</source>
-        <translation>Máxima Privacidad</translation>
+        <translation>Meget grundigt tilsløret</translation>
     </message>
     <message>
         <source>Please select a privacy level.</source>
-        <translation>Por favor selecciones un nivel de privacidad.</translation>
+        <translation>Vælg tilsløringsniveau</translation>
     </message>
     <message>
         <source>Use 2 separate masternodes to mix funds up to 10000 PIV</source>
-        <translation>Use 2 nodos maestros diferentes para mezclar los fondos hasta los 10000 PIV</translation>
+        <translation>Brug 2 separate masternoder for at tilsløre beløb op til 10000 PIV</translation>
     </message>
     <message>
         <source>Use 8 separate masternodes to mix funds up to 10000 PIV</source>
-        <translation>Use 8 nodos maestros diferentes para mezclar fondos hasta los 10000 PIV</translation>
+        <translation>Brug 8 separate masternoder for at tilsløre op til 10000 PIV</translation>
     </message>
     <message>
         <source>Use 16 separate masternodes</source>
-        <translation>Use 16 nodos maestros diferentes</translation>
+        <translation>Brug 16 separate masternoder</translation>
     </message>
     <message>
         <source>This option is the quickest and will cost about ~0.025 PIV to anonymize 10000 PIV</source>
-        <translation>Esta opción es la más rápida y costará alrededor de ~0.025 PIV para anonimizar 10000 PIV</translation>
+        <translation>Dette valg er det hurtigste og vil koste i omegnen af 0.025 PIV for at anonymiser 10000 PIV</translation>
     </message>
     <message>
         <source>This option is moderately fast and will cost about 0.05 PIV to anonymize 10000 PIV</source>
-        <translation>Esta opción es moderadamente rápida y costará cerca de 0.05 PIV para anonimizar 10000 PIV.</translation>
+        <translation>Dette valg er relativt hurtigt og vil koste i omegnen af 0.05 PIV for at anonymiser 10000 PIV</translation>
     </message>
     <message>
         <source>This is the slowest and most secure option. Using maximum anonymity will cost</source>
-        <translation>Esta es la opción más lenta pero más segura. Usar el máximo anonimato costará</translation>
+        <translation>Denne mulighed er den langsomste og det mest sikre valg. Valg af maksimal tilsløring vil koste</translation>
     </message>
     <message>
         <source>0.1 PIV per 10000 PIV you anonymize.</source>
-        <translation>0.1 PIV por 10000 PIV que anonimizas.</translation>
+        <translation>0.1 pr 10000 PIV for at tilsløre.</translation>
     </message>
     <message>
         <source>Obfuscation Configuration</source>
-        <translation>Configuración de Ofuscación</translation>
-    </message>
-    <message>
-        <source>Obfuscation was successfully set to basic (%1 and 2 rounds). You can change this at any time by opening PIVX's configuration screen.</source>
-        <translation>La Ofuscación se configuró correctamente en modo básico (%1 y 2 rondas). Puedes cambiar esto en cualquier momento accediendo a la ventana de configuración de PIVX.</translation>
+        <translation>Tilsløringskonfiguration</translation>
     </message>
     <message>
         <source>Obfuscation was successfully set to high (%1 and 8 rounds). You can change this at any time by opening PIVX's configuration screen.</source>
-        <translation>La Ofuscación se activó correctamente en modo alto (%1 y 8 rondas). Usted puede cambiar esto en cualquier momento abriendo la ventana de configuración de PIVX.</translation>
+        <translation>Tilsløring blev sat til høj (%1 og 8 gennemløb) De kan ændre dette hvornår De vil ved at åbne PIVX konfigurationsbillede.</translation>
     </message>
     <message>
         <source>Obfuscation was successfully set to maximum (%1 and 16 rounds). You can change this at any time by opening PIVX's configuration screen.</source>
-        <translation>La Ofuscación se activó correctamente en su grado máximo (%1 y 16 rondas). Usted puede cambiar ésto en cualquier momento en la ventana de configuración de PIVX.</translation>
+        <translation>Tilsløring blev sat til maksimum (%1 og 16 gennemløb) De kan ændre dette hvornår De vil ved at åbne PIVX konfigurationsbillede.</translation>
     </message>
 </context>
 <context>
     <name>OpenURIDialog</name>
     <message>
         <source>Open URI</source>
-        <translation>Abrir URI</translation>
+        <translation>Åbn URl</translation>
     </message>
     <message>
         <source>Open payment request from URI or file</source>
-        <translation>Abrir solicitud de pago de URI o archivo</translation>
+        <translation>Åbn betalingsforespørgsel fra URl eller fil</translation>
     </message>
     <message>
         <source>URI:</source>
-        <translation>URI:</translation>
+        <translation>URl:</translation>
     </message>
     <message>
         <source>Select payment request file</source>
-        <translation>Seleccione el fichero que contiene la solicitud de pago</translation>
+        <translation>Vælg fil med betalingsforespørgsel</translation>
     </message>
     <message>
         <source>Select payment request file to open</source>
-        <translation>Seleccione el fichero de solicitud de pago que desea abrir</translation>
+        <translation>Vælg hvilken betalingsforespørgsel der skal åbnes</translation>
     </message>
 </context>
 <context>
     <name>OptionsDialog</name>
     <message>
         <source>Options</source>
-        <translation>Opciones</translation>
+        <translation>Muligheder</translation>
     </message>
     <message>
         <source>&amp;Main</source>
-        <translation>&amp;Principal</translation>
+        <translation>&amp;hoved</translation>
     </message>
     <message>
         <source>Size of &amp;database cache</source>
-        <translation>Tamaño del caché de &amp;base de datos</translation>
+        <translation>Størrelse på &amp;databasecache</translation>
     </message>
     <message>
         <source>MB</source>
@@ -1631,556 +1595,550 @@ Por favor compruebe la dirección e inténtelo de nuevo.</translation>
     </message>
     <message>
         <source>Number of script &amp;verification threads</source>
-        <translation>Número de procesos de &amp;verificación de scripts</translation>
+        <translation>antal af script &amp;verifikationstråde</translation>
     </message>
     <message>
         <source>(0 = auto, &lt;0 = leave that many cores free)</source>
-        <translation>(0 = auto, &lt;0 = dejar libres tal número de cores)</translation>
+        <translation>(0=auto, &gt;0 efterlad så mange tråde fri)</translation>
     </message>
     <message>
         <source>W&amp;allet</source>
-        <translation>&amp;Monedero</translation>
+        <translation>T&amp;egnebog</translation>
     </message>
     <message>
         <source>If you disable the spending of unconfirmed change, the change from a transaction&lt;br/&gt;cannot be used until that transaction has at least one confirmation.&lt;br/&gt;This also affects how your balance is computed.</source>
-        <translation>Si deselecciona el gasto de cambio no confirmado, las entradas de una transacción&lt;br/&gt;no podrán ser usadas hasta que esa transacción tenga al menos una confirmación.&lt;br/&gt;Esto también afecta a cómo se calcula su balance actual.</translation>
+        <translation>Hvis De slår "brug af ubekræftede penge tilbage" vil penge tilbage &lt;br/&gt; ikke kunne benyttes før transaktionen er bekræftet mindst en gang. &lt;br/&gt;Dette har også indflydelse på opgørelsen af saldoen.</translation>
     </message>
     <message>
         <source>Automatically open the PIVX client port on the router. This only works when your router supports UPnP and it is enabled.</source>
-        <translation>Abrir automáticamente el puerto del cliente PIVX en el enrutador. Ésto sólo funciona si su enrutador soporta UPnP y esta función está activada.</translation>
+        <translation>Åbn PIVX klientporten på ruteren automatisk. Virker kun hvis UPnP er slået til i ruteren. </translation>
     </message>
     <message>
         <source>Accept connections from outside</source>
-        <translation>Aceptar conexiones del exterior</translation>
+        <translation>Accepter forbindelser udefra</translation>
     </message>
     <message>
         <source>Allow incoming connections</source>
-        <translation>Permitir conexiones entrantes</translation>
+        <translation>Tillad indkomne forbindelser</translation>
     </message>
     <message>
         <source>&amp;Connect through SOCKS5 proxy (default proxy):</source>
-        <translation>&amp;Conectar a través de un proxy SOCKS5 (proxy por defecto):</translation>
+        <translation>&amp;forbind gennem SOCJS5 proxy (standardproxy):</translation>
     </message>
     <message>
         <source>Expert</source>
-        <translation>Experto</translation>
+        <translation>Ekspert</translation>
     </message>
     <message>
         <source>Automatically start PIVX after logging in to the system.</source>
-        <translation>Arrancar PIVX automáticamente después de identificarse en Windows.</translation>
+        <translation>Start PIVX automatisk, når der logges på systemet</translation>
     </message>
     <message>
         <source>&amp;Start PIVX on system login</source>
-        <translation>&amp;Arrancar PIVX al inicio del sistema</translation>
+        <translation>&amp;start PIVX når der logges på systemet</translation>
     </message>
     <message>
         <source>This setting determines the amount of individual masternodes that an input will be anonymized through.&lt;br/&gt;More rounds of anonymization gives a higher degree of privacy, but also costs more in fees.</source>
-        <translation>Esta configuración determina la cantidad máxima de nodos maestros individuales a través de los cuales una entrada se anonimizará.&lt;br/&gt;Más rondas de anonimización ofrecen un mayor grado de privacidad, pero también cuesta más en comisiones.</translation>
+        <translation>Denne indstilling bestemmer antallet af individuelle masternoder hvorgennem der tilsløres et input. &lt;br/&gt;Jo flere gennemløb der udføres, jo højere grad af tilsløring, og jo højere gebyrer.</translation>
     </message>
     <message>
         <source>Obfuscation rounds to use</source>
-        <translation>Rondas de Ofuscación a utilizar</translation>
+        <translation>Antal gennemløb der skal benyttes </translation>
     </message>
     <message>
         <source>This amount acts as a threshold to turn off Obfuscation once it's reached.</source>
-        <translation>Esta cantidad actúa como un techo para desactivar la Ofuscación una vez alcanzado.</translation>
+        <translation>når dette antal er nået slås tilsløringsfunktonen fra. </translation>
     </message>
     <message>
         <source>Amount of PIVX to keep anonymized</source>
-        <translation>Cantidad de PIVX a mantener anonimizados</translation>
+        <translation>Antallet af PIVX som skal holdes tilslørede</translation>
     </message>
     <message>
         <source>Whether to show coin control features or not.</source>
-        <translation>Mostrar las características de control de monedas individuales, o no</translation>
+        <translation>Vis eller skjul møntkontrolfeatures</translation>
     </message>
     <message>
         <source>Enable coin &amp;control features</source>
-        <translation>Activar funciones de control de &amp;monedas</translation>
+        <translation>Aktiver mønt &amp;kontrolfeatures</translation>
     </message>
     <message>
         <source>Show additional tab listing all your masternodes in first sub-tab&lt;br/&gt;and all masternodes on the network in second sub-tab.</source>
-        <translation>Mostrar pestaña adicional listando todos sus nodos maestros en la primera sub-pestaña&lt;br/&gt;y todos los nodos maestros de la red en la segunda sub-pestaña.</translation>
+        <translation>Vis en liste over alle Deres masternoder i første underfane &lt;br/&gt; og vis en liste over  alle masternoder på netværket i anden underfane</translation>
     </message>
     <message>
         <source>Show Masternodes Tab</source>
-        <translation>Mostrar la pestaña de Nodos Maestros</translation>
+        <translation>Vis fane med masternoder</translation>
     </message>
     <message>
         <source>&amp;Spend unconfirmed change</source>
-        <translation>&amp;Gastar cambio no confirmado</translation>
+        <translation>&amp;brug ikke bekræftede "penge tilbage"</translation>
     </message>
     <message>
         <source>&amp;Network</source>
-        <translation>&amp;Red</translation>
+        <translation>&amp;netværk</translation>
     </message>
     <message>
         <source>The user interface language can be set here. This setting will take effect after restarting PIVX.</source>
-        <translation>El idioma de interface de usuario puede seleccionarse aquí. Este ajuste tomará efecto después de reiniciar PIVX.</translation>
+        <translation>Vælg sprog her. Ændringerne træder i kraft næste gang PIVX klienten startes</translation>
     </message>
     <message>
         <source>Language missing or translation incomplete? Help contributing translations here:
 https://www.transifex.com/pivx-project/pivx-project-translations</source>
-        <translation>¿Falta su lenguaje o la traducción está incompleta? Contribuya con las traducciones aquí:
+        <translation>Det valgte sprog mangler, eller oversættelsen er mangelfuld. Hjælp ved at bidrage med oversættelser her:
 https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>Map port using &amp;UPnP</source>
-        <translation>Mapear un puerto utilizando &amp;UPnP</translation>
+        <translation>MAP port ved hjælp af UPnP</translation>
     </message>
     <message>
         <source>Connect to the PIVX network through a SOCKS5 proxy.</source>
-        <translation>Conectar a la red PIVX mediante un proxy SOCKS5.</translation>
+        <translation>Tilslut PIVX netværket gennem en SOCKS5 PROXY</translation>
     </message>
     <message>
         <source>Proxy &amp;IP:</source>
-        <translation>&amp;IP del proxy:</translation>
+        <translation>Proxy &amp;IP</translation>
     </message>
     <message>
         <source>IP address of the proxy (e.g. IPv4: 127.0.0.1 / IPv6: ::1)</source>
-        <translation>Dirección IP del proxy (p.e. IPv4: 127.0.0.1 / IPv6: ::1)</translation>
+        <translation>IP adresse til proxyserveren (For eksempel IPV4: 127.0.0.1/IPv6: ::1)</translation>
     </message>
     <message>
         <source>&amp;Port:</source>
-        <translation>&amp;Puerto:</translation>
+        <translation>&amp;port</translation>
     </message>
     <message>
         <source>Port of the proxy (e.g. 9050)</source>
-        <translation>Puerto del proxy (p.e. 9050)</translation>
+        <translation>Proxyport (f.eks 9050)</translation>
     </message>
     <message>
         <source>&amp;Window</source>
-        <translation>&amp;Ventana</translation>
+        <translation>&amp;vindue</translation>
     </message>
     <message>
         <source>Show only a tray icon after minimizing the window.</source>
-        <translation>Mostrar sólo un icono en la bandeja al minimizar la ventana.</translation>
+        <translation>Vis kun ikonet efter minimering af vinduet</translation>
     </message>
     <message>
         <source>&amp;Minimize to the tray instead of the taskbar</source>
-        <translation>&amp;Minimizar a la bandeja en lugar de a la barra de tareas</translation>
+        <translation>&amp;Minimer til bakken i stedet for til proceslinien</translation>
     </message>
     <message>
         <source>Minimize instead of exit the application when the window is closed. When this option is enabled, the application will be closed only after selecting Quit in the menu.</source>
-        <translation>Minimizar en lugar de cerrar la aplicación cuando se cierra la ventana. Cuando active esta opción, tendrá que cerrar la aplicación seleccionando Salir desde el menú.</translation>
+        <translation>Minimer i stedet for at afslutte applikationen når vinduet lukkes. Når dette er valgt er det kun muligt at lukke ned via filmenuen og afslut</translation>
     </message>
     <message>
         <source>M&amp;inimize on close</source>
-        <translation>M&amp;inimizar al cerrar</translation>
+        <translation>M&amp;inimer og luk</translation>
     </message>
     <message>
         <source>&amp;Display</source>
-        <translation>&amp;Mostrar</translation>
+        <translation>&amp;Vis</translation>
     </message>
     <message>
         <source>User Interface &amp;language:</source>
-        <translation>&amp;Idioma de la interface de usuario:</translation>
+        <translation>Brugerinterface &amp;sprog:</translation>
     </message>
     <message>
         <source>User Interface Theme:</source>
-        <translation>Tema de la Interface de Usuario:</translation>
+        <translation>Brugers tema:</translation>
     </message>
     <message>
         <source>&amp;Unit to show amounts in:</source>
-        <translation>&amp;Unidad para mostrar cantidades:</translation>
+        <translation>&amp;Enhed som beløb vises i</translation>
     </message>
     <message>
         <source>Choose the default subdivision unit to show in the interface and when sending coins.</source>
-        <translation>Seleccionar la subdivisión a mostrar por defecto en la interface y al enviar monedas.</translation>
+        <translation>Vælg standard inddelingsenhed der vises når der afsendes mønter</translation>
     </message>
     <message>
         <source>Decimal digits</source>
-        <translation>Dígitos decimales</translation>
+        <translation>Decimaler</translation>
     </message>
     <message>
         <source>Third party URLs (e.g. a block explorer) that appear in the transactions tab as context menu items. %s in the URL is replaced by transaction hash. Multiple URLs are separated by vertical bar |.</source>
-        <translation>Direcciones web de terceras partes (p.e. un explorador de bloques) que aparecen en la pestaña de transacciones como objetos contextuales del menú. %s en la dirección web es reemplazada por el identificador de la transacción. Múltiples direcciones web están separadas por una barra vertical (|).</translation>
+        <translation>Tredjeparts URLs (F.eks. en block eksplorer) som fremkommer i transaktionsvisningen som kontekstmenuer. %s i URL bliver erstattet af transaktionens hashværdi. Flere URL separeres med vertikabar I.</translation>
     </message>
     <message>
         <source>Third party transaction URLs</source>
-        <translation>Direcciones web de transacciones de terceras partes</translation>
+        <translation>Tredjepartis transaktions URLs</translation>
     </message>
     <message>
         <source>Active command-line options that override above options:</source>
-        <translation>Opciones de línea de comando activas que anulan las opciones anteriores:</translation>
+        <translation>Aktive kommandolinieparametre der trumfer ovenstående muligheder.</translation>
     </message>
     <message>
         <source>Reset all client options to default.</source>
-        <translation>Resetear todas las opciones de cliente a su valor por defecto.</translation>
+        <translation>Nulstil alle klientoptioner til standard</translation>
     </message>
     <message>
         <source>&amp;Reset Options</source>
-        <translation>Opciones de &amp;Reset</translation>
+        <translation>&amp;nulstil optioner</translation>
     </message>
     <message>
         <source>&amp;OK</source>
-        <translation>&amp;OK</translation>
+        <translation>&amp;Ok</translation>
     </message>
     <message>
         <source>&amp;Cancel</source>
-        <translation>&amp;Cancelar</translation>
+        <translation>&amp;Annuller</translation>
     </message>
     <message>
         <source>default</source>
-        <translation>por defecto</translation>
+        <translation>standard</translation>
     </message>
     <message>
         <source>none</source>
-        <translation>ninguno</translation>
+        <translation>ingen</translation>
     </message>
     <message>
         <source>Confirm options reset</source>
-        <translation>Confirmar reinicio de las opciones</translation>
+        <translation>Bekræft nulstilling af optioner</translation>
     </message>
     <message>
         <source>Client restart required to activate changes.</source>
-        <translation>Se requiere un reinicio del cliente para activar los cambios.</translation>
+        <translation>Klienten skal genstartes for at aktivere ændringerne.</translation>
     </message>
     <message>
         <source>Client will be shutdown, do you want to proceed?</source>
-        <translation>El cliente se cerrará, ¿procedemos?</translation>
+        <translation>Klienten lukkes ned. Vil De fortsætte</translation>
     </message>
     <message>
         <source>This change would require a client restart.</source>
-        <translation>Este cambio requerirá un reinicio del cliente.</translation>
+        <translation>Denne ændring vil kræve en genstart af klienten</translation>
     </message>
     <message>
         <source>The supplied proxy address is invalid.</source>
-        <translation>La dirección proxy indicada es inválida.</translation>
+        <translation>Den oplyste proxyadresse er ugyldig.</translation>
     </message>
 </context>
 <context>
     <name>OverviewPage</name>
     <message>
         <source>Form</source>
-        <translation>Formulario</translation>
+        <translation>Formular</translation>
     </message>
     <message>
         <source>Available:</source>
-        <translation>Disponible:</translation>
+        <translation>Tilgængelig</translation>
     </message>
     <message>
         <source>Your current spendable balance</source>
-        <translation>Tu balance actualmente disponible</translation>
+        <translation>Deres nuværende og brugbare indestående.</translation>
     </message>
     <message>
         <source>Pending:</source>
-        <translation>Pendiente:</translation>
+        <translation>Afventer:</translation>
     </message>
     <message>
         <source>Total of transactions that have yet to be confirmed, and do not yet count toward the spendable balance</source>
-        <translation>Total de transacciones que aún deben ser confirmadas, y todavía no cuentan en el balance disponible</translation>
+        <translation>Alle transaktioner der mangler bekræftelse, og som fortsat ikke tæller med i den brugbare saldo.</translation>
     </message>
     <message>
         <source>Immature:</source>
-        <translation>Inmaduro:</translation>
+        <translation>ikke færdigbehandlet</translation>
     </message>
     <message>
         <source>Staked or masternode rewards that has not yet matured</source>
-        <translation>Recompensa de participación o de nodo maestro que aún no ha madurado</translation>
+        <translation>Indskyder- eller masternodebelønning er stadig under behandling</translation>
     </message>
     <message>
         <source>Balances</source>
-        <translation>Balances</translation>
+        <translation>Saldi</translation>
     </message>
     <message>
         <source>The displayed information may be out of date. Your wallet automatically synchronizes with the PIVX network after a connection is established, but this process has not completed yet.</source>
-        <translation>La información mostrada puede estar desactualizada. Su monedero se sincroniza automáticamente con la red PIVX después de establecer una conexión, pero este proceso aún no se ha completado.</translation>
+        <translation>De viste informationer kan være uddaterede. Deres tegnebog synkronisere automatism med PIVX netværket så snart en forbindelse er etalbleret, men denne proces er ikke færdiggjort endnu. </translation>
     </message>
     <message>
         <source>Unconfirmed transactions to watch-only addresses</source>
-        <translation>Transacciones no confirmadas a direcciones sólo de lectura</translation>
+        <translation>Ubekræftede transaktioner til "vis kun" adresser</translation>
     </message>
     <message>
         <source>Staked or masternode rewards in watch-only addresses that has not yet matured</source>
-        <translation>Recompensa de participación o de nodo maestro en direcciones de sólo lectura que todavía no han madurado</translation>
+        <translation>Indskyder- eller masternodebelønning for "vis kun" adresser er stadig under behandling</translation>
     </message>
     <message>
         <source>Total:</source>
-        <translation>Total:</translation>
+        <translation>I alt:</translation>
     </message>
     <message>
         <source>Your current total balance</source>
-        <translation>Su balance total actual</translation>
+        <translation>Nuværende saldo</translation>
     </message>
     <message>
         <source>Current total balance in watch-only addresses</source>
-        <translation>Balance total actual en direcciones de sólo lectura</translation>
+        <translation>Aktuelle saldi for "vis kun" adresser</translation>
     </message>
     <message>
         <source>Watch-only:</source>
-        <translation>Sólo-lectura:</translation>
+        <translation>Vis kun</translation>
     </message>
     <message>
         <source>Your current balance in watch-only addresses</source>
-        <translation>Su balance actual en direcciones de sólo lectura</translation>
+        <translation>Deres aktuelle saldi for "vis kun" adresser</translation>
     </message>
     <message>
         <source>Spendable:</source>
-        <translation>Disponible:</translation>
+        <translation>Brugbare:</translation>
     </message>
     <message>
         <source>Status:</source>
-        <translation>Estado:</translation>
+        <translation>Status</translation>
     </message>
     <message>
         <source>Obfuscation Balance:</source>
-        <translation>Balance de Ofuscación:</translation>
+        <translation>Sløret beløb</translation>
     </message>
     <message>
         <source>0 PIV / 0 Rounds</source>
-        <translation>0 PIV / 0 Rondas</translation>
+        <translation>0 PIV / 0 gennemløb</translation>
     </message>
     <message>
         <source>Enabled/Disabled</source>
-        <translation>Activado/Desactivado</translation>
+        <translation>Startet/Stoppet</translation>
     </message>
     <message>
         <source>Try to manually submit a Obfuscation request.</source>
-        <translation>Intentar enviar manualmente una solicitud de Ofuscación.</translation>
+        <translation>Prøv at send en manuel tilsløringsanmodning.</translation>
     </message>
     <message>
         <source>Reset the current status of Obfuscation (can interrupt Obfuscation if it's in the process of Mixing, which can cost you money!)</source>
-        <translation>Reiniciar el estado actual de Ofuscación (puede interrumpir la Ofuscación si está en el proceso de Mezcla, que puede costarle dinero!)</translation>
+        <translation>Nulstil den aktuelle status for tilsløringsfunktionen. (Kan forstyrre processen, hvilket kan koste mønter).</translation>
     </message>
     <message>
         <source>Obfuscation</source>
-        <translation>Ofuscación</translation>
+        <translation>Tilsløring</translation>
     </message>
     <message>
         <source>Completion:</source>
-        <translation>Completado:</translation>
+        <translation>Færdiggørelse:</translation>
     </message>
     <message>
         <source>Amount and Rounds:</source>
-        <translation>Cantidad y Rondas:</translation>
+        <translation>Beløb og gennemløb</translation>
     </message>
     <message>
         <source>Submitted Denom:</source>
-        <translation>Denominación Enviada:</translation>
+        <translation>Afsendte midler</translation>
     </message>
     <message>
         <source>n/a</source>
-        <translation>n/a</translation>
+        <translation>Ikke tilgængelig</translation>
     </message>
     <message>
         <source>Recent transactions</source>
-        <translation>Transacciones recientes</translation>
+        <translation>Nylige transaktioner</translation>
     </message>
     <message>
         <source>Start/Stop Mixing</source>
-        <translation>Empezar/Parar Mezcla</translation>
+        <translation>Start/Stop tilsløring</translation>
     </message>
     <message>
         <source>The denominations you submitted to the Masternode.&lt;br&gt;To mix, other users must submit the exact same denominations.</source>
-        <translation>Las denominaciones que enviaste al Nodo Maestro.&lt;br&gt;Para mezclar, otros usuarios deben enviar exactamente las mismas denominaciones.</translation>
+        <translation>Designerede midler afsendt til masternoden. &lt;br&gt;For at gennemføre tilsløringen må andre brugere afsende tilsvarende designerede midler.</translation>
     </message>
     <message>
         <source>(Last Message)</source>
-        <translation>(Último Mensaje)</translation>
+        <translation>(seneste besked)</translation>
     </message>
     <message>
         <source>Try Mix</source>
-        <translation>Intentar Mezclar</translation>
+        <translation>Prøv at usynliggøre</translation>
     </message>
     <message>
         <source>Reset</source>
-        <translation>Reiniciar</translation>
+        <translation>Nulstil</translation>
     </message>
     <message>
         <source>out of sync</source>
-        <translation>desincronizado</translation>
+        <translation>Ude af synk</translation>
     </message>
     <message>
         <source>Disabled</source>
-        <translation>Desactivado</translation>
+        <translation>slået fra</translation>
     </message>
     <message>
         <source>No inputs detected</source>
-        <translation>No se detectan entradas</translation>
+        <translation>Ingen inputs valgt</translation>
     </message>
     <message>
         <source>Not enough compatible inputs to anonymize &lt;span style='color:red;'&gt;%1&lt;/span&gt;,&lt;br&gt;will anonymize &lt;span style='color:red;'&gt;%2&lt;/span&gt; instead</source>
-        <translation>No hay suficientes entradas compatibles para anonimizar &lt;span style='color:red;'&gt;%1&lt;/span&gt;,&lt;br&gt;anonimizará &lt;span style='color:red;'&gt;%2&lt;/span&gt; en su lugar
-</translation>
+        <translation>Der er ikke tilstrækkelige kompatible inputs tilgængelige for tilsløring &lt;span style='color:red;'&gt;%1&lt;/span&gt;,&lt;br&gt;vil tilsløre &lt;span style='color:red;'&gt;%2&lt;/span&gt; i stedet</translation>
     </message>
     <message>
         <source>Overall progress</source>
-        <translation>Progreso total</translation>
+        <translation>Samlet status</translation>
     </message>
     <message>
         <source>Denominated</source>
-        <translation>Nominadas</translation>
+        <translation>Designerede</translation>
     </message>
     <message>
         <source>Anonymized</source>
-        <translation>Anonimizadas</translation>
-    </message>
-    <message numerus="yes">
-        <source>Denominated inputs have %5 of %n rounds on average</source>
-        <translation><numerusform>La entrada denominada tiene %5 de %n rondas de promedio</numerusform><numerusform>Las entradas seleccionadas tienen %5 de %n rondas de promedio</numerusform></translation>
+        <translation>Tilsløret</translation>
     </message>
     <message>
         <source>Last Obfuscation message:
 </source>
-        <translation>Último mensaje de Ofuscación:
-</translation>
+        <translation>Seneste besked fra tilsløringsprocessen</translation>
     </message>
     <message>
         <source>Obfuscation was successfully reset.</source>
-        <translation>La Ofuscación fue reiniciada satisfactoriamente.</translation>
+        <translation>Tilsløringsfunktionen blev nulstillet </translation>
     </message>
     <message>
         <source>If you don't want to see internal Obfuscation fees/transactions select "Most Common" as Type on the "Transactions" tab.</source>
-        <translation>Si no quiere ver aquí las operaciones internas de Ofuscación seleccione "Las Más Comunes" como el Tipo en la pestaña de "Transacciones".</translation>
+        <translation>Hvis de ikke ønsker at se de interne tilsløringsgebyrer og transaktioner, skal De vælge "Mest fremherskende" som type i transaktionsmenuen.</translation>
     </message>
     <message>
         <source>Obfuscation requires at least %1 to use.</source>
-        <translation>La Ofuscación requiere como mínimo %1 para usarse.</translation>
+        <translation>Tilsløring kræver mindst %1 for at kunne anvendes </translation>
     </message>
     <message>
         <source>Wallet is locked and user declined to unlock. Disabling Obfuscation.</source>
-        <translation>El Monedero está bloqueado y el usuario declinó su desbloqueo. Desactivando Ofuscación.</translation>
+        <translation>Tegnebogen er låst, brugeren har afvist at låse den op. Tilsløring slås fra.</translation>
     </message>
     <message>
         <source>Found enough compatible inputs to anonymize %1</source>
-        <translation>Se encontraron suficientes entradas compatibles para anonimizar %1</translation>
+        <translation>Der er fundet nok kompatible inputs for tilsløring af %1</translation>
     </message>
     <message>
         <source>Start Obfuscation</source>
-        <translation>Comenzar Ofuscación</translation>
+        <translation>Start tilsløring</translation>
     </message>
     <message>
         <source>Stop Obfuscation</source>
-        <translation>Parar Ofuscación</translation>
+        <translation>stop tilsløring</translation>
     </message>
     <message>
         <source>Mixed</source>
-        <translation>Mezcladas</translation>
+        <translation>Tilsløret</translation>
     </message>
     <message>
         <source>Enabled</source>
-        <translation>Activado</translation>
+        <translation>Slået til</translation>
     </message>
     <message>
         <source>N/A</source>
-        <translation>N/A</translation>
+        <translation>Ikke tilgængelig</translation>
     </message>
 </context>
 <context>
     <name>PaymentServer</name>
     <message>
         <source>Payment request error</source>
-        <translation>Error en la solicitud de pago</translation>
+        <translation>Fejl i betalingsanmodning</translation>
     </message>
     <message>
         <source>URI handling</source>
-        <translation>Manejo de URI</translation>
+        <translation>URL handling</translation>
     </message>
     <message>
         <source>Payment request fetch URL is invalid: %1</source>
-        <translation>Solicitud de pago via web inválida: %1</translation>
+        <translation>BetalingsanmodningsURL er ugyldig: %1</translation>
     </message>
     <message>
         <source>Payment request file handling</source>
-        <translation>Manejo del fichero de solicitud de pago</translation>
+        <translation>Filen med betalingsanmodningen behandles</translation>
     </message>
     <message>
         <source>Invalid payment address %1</source>
-        <translation>Dirección de pago inválida %1</translation>
+        <translation>Ugyldig betalingsadresse: %1</translation>
     </message>
     <message>
         <source>Cannot start pivx: click-to-pay handler</source>
-        <translation>No se puede iniciar pivx: módulo click-to-pay</translation>
+        <translation>Kan ikke starte PIVX "klik for at betale" systemet</translation>
     </message>
     <message>
         <source>URI cannot be parsed! This can be caused by an invalid PIVX address or malformed URI parameters.</source>
-        <translation>¡El identificador de la dirección no puede ser analizado! Esto puede ser causado por una dirección PIVX inválida o parámetros del identificador malformados.</translation>
+        <translation>URl kan ikke fortolkes! Det kan skyldes en ugyldig adresse, eller forkerte URl parametre.</translation>
     </message>
     <message>
         <source>Payment request file cannot be read! This can be caused by an invalid payment request file.</source>
-        <translation>El fichero de solicitud de pago no se pudo leer! Esto puede estar causado por una solicitud de pago inválida.</translation>
+        <translation>Betalingsanmodningsfil kan ikke læses! Det kan forårsages af en ugyldig fil. </translation>
     </message>
     <message>
         <source>Payment request rejected</source>
-        <translation>Solicitud de pago rechazada</translation>
+        <translation>Betalingsanmodning afvist</translation>
     </message>
     <message>
         <source>Payment request network doesn't match client network.</source>
-        <translation>La solicitud de pago no coincide con la red del cliente.</translation>
+        <translation>Betalingsanmodningsnetværket passer ikke sammen med klientens netværk</translation>
     </message>
     <message>
         <source>Payment request has expired.</source>
-        <translation>La solicitud de pago ha expirado.</translation>
+        <translation>Betalingsanmodning er udløbet</translation>
     </message>
     <message>
         <source>Payment request is not initialized.</source>
-        <translation>La solicitud de pago no está inicializada.</translation>
+        <translation>Betalingsanmodning blev ikke initialiseret</translation>
     </message>
     <message>
         <source>Unverified payment requests to custom payment scripts are unsupported.</source>
-        <translation>Solicitudes de pago no verificadas a scripts de pago personalizado no están soportadas.</translation>
+        <translation>Ikke verificerede betalingsanmodninger til brugerdefinerede betalingsscripts understøttes ikke.</translation>
     </message>
     <message>
         <source>Requested payment amount of %1 is too small (considered dust).</source>
-        <translation>La cantidad de pago solicitada de %1 es demasiado pequeña (se considera calderilla).</translation>
+        <translation>Anmodningen om betaling af %1 er for lille. (Systemet vil behandle anmodningen som støj). </translation>
     </message>
     <message>
         <source>Refund from %1</source>
-        <translation>Reembolso desde %1</translation>
+        <translation>Tilbagebetaling fra %1</translation>
     </message>
     <message>
         <source>Payment request %1 is too large (%2 bytes, allowed %3 bytes).</source>
-        <translation>La solicitud de pago %1 es demasiado larga (%2 bytes, permitidos %3 bytes).</translation>
+        <translation>Betalingsanmodning %1 er for stor (%2 bytes, højeste tilladte er %3 bytes)</translation>
     </message>
     <message>
         <source>Payment request DoS protection</source>
-        <translation>Protección de Denegación de Servicio para la solicitud de pago</translation>
+        <translation>Beskyttelse af Betalingsanmodning mod DoS</translation>
     </message>
     <message>
         <source>Error communicating with %1: %2</source>
-        <translation>Error de comunicación con %1: %2</translation>
+        <translation>Fejl i kommunikationen med %1: %2</translation>
     </message>
     <message>
         <source>Payment request cannot be parsed!</source>
-        <translation>¡La solicitud de pago no se pudo procesar!</translation>
+        <translation>Betalingsanmodning kan ikke fortolkes</translation>
     </message>
     <message>
         <source>Bad response from server %1</source>
-        <translation>Respuesta inadecuada del servidor %1</translation>
+        <translation>Svaret fra server %1 kan ikke bruges</translation>
     </message>
     <message>
         <source>Network request error</source>
-        <translation>Error de Red</translation>
+        <translation>Netværksfejl!</translation>
     </message>
     <message>
         <source>Payment acknowledged</source>
-        <translation>Pago confirmado</translation>
+        <translation>Betaling modtaget og accepteret</translation>
     </message>
 </context>
 <context>
     <name>PeerTableModel</name>
     <message>
         <source>Address/Hostname</source>
-        <translation>Dirección/Nombre Host</translation>
+        <translation>Adresse/Hostnavn</translation>
     </message>
     <message>
         <source>Version</source>
-        <translation>Versión</translation>
+        <translation>Version</translation>
     </message>
     <message>
         <source>Ping Time</source>
-        <translation>Intervalo de Ping</translation>
+        <translation>PingtidPingtid</translation>
     </message>
 </context>
 <context>
     <name>QObject</name>
     <message>
         <source>Amount</source>
-        <translation>Cantidad</translation>
+        <translation>Beløb</translation>
     </message>
     <message>
         <source>Enter a PIVX address (e.g. %1)</source>
-        <translation>Introduzca una dirección PIVX (p.e. %1)</translation>
+        <translation>Indtast en PIVX adresse (F.eks. %1)</translation>
     </message>
     <message>
         <source>%1 d</source>
@@ -2200,297 +2158,289 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>NETWORK</source>
-        <translation>RED</translation>
+        <translation>NETVÆRK</translation>
     </message>
     <message>
         <source>UNKNOWN</source>
-        <translation>DESCONOCIDO</translation>
+        <translation>UENDT</translation>
     </message>
     <message>
         <source>None</source>
-        <translation>Ninguno</translation>
+        <translation>Ingen</translation>
     </message>
     <message>
         <source>N/A</source>
-        <translation>N/A</translation>
+        <translation>Ikke tilgængelig</translation>
     </message>
-    <message>
-        <source>%1 ms</source>
-        <translation>%1 ms</translation>
-    </message>
-</context>
+    </context>
 <context>
     <name>QRImageWidget</name>
     <message>
         <source>&amp;Save Image...</source>
-        <translation>&amp;Guardar Imagen...</translation>
+        <translation>&amp;Gem billede</translation>
     </message>
     <message>
         <source>&amp;Copy Image</source>
-        <translation>&amp;Copiar Imagen</translation>
+        <translation>&amp;Kopier billede</translation>
     </message>
     <message>
         <source>Save QR Code</source>
-        <translation>Guardar Código QR</translation>
+        <translation>Gem QR kode</translation>
     </message>
     <message>
         <source>PNG Image (*.png)</source>
-        <translation>Imagen PNG (*.png)</translation>
+        <translation>PNG billede (*.png)</translation>
     </message>
 </context>
 <context>
     <name>RPCConsole</name>
     <message>
         <source>Tools window</source>
-        <translation>Ventana de herramientas</translation>
+        <translation>Værktøjskasse</translation>
     </message>
     <message>
         <source>&amp;Information</source>
-        <translation>&amp;Información</translation>
+        <translation>&amp;information</translation>
     </message>
     <message>
         <source>General</source>
-        <translation>General</translation>
+        <translation>Generelt</translation>
     </message>
     <message>
         <source>Name</source>
-        <translation>Nombre</translation>
+        <translation>Navn</translation>
     </message>
     <message>
         <source>Client name</source>
-        <translation>Nombre de cliente</translation>
+        <translation>Klientnavn</translation>
     </message>
     <message>
         <source>N/A</source>
-        <translation>N/A</translation>
+        <translation>Ikke tilgængelig</translation>
     </message>
     <message>
         <source>Number of connections</source>
-        <translation>Número de conexiones</translation>
-    </message>
-    <message>
-        <source>&amp;Open</source>
-        <translation>&amp;Abrir</translation>
+        <translation>Antal forbindelser</translation>
     </message>
     <message>
         <source>Startup time</source>
-        <translation>Tiempo de funcionamiento</translation>
+        <translation>Opstartstid</translation>
     </message>
     <message>
         <source>Network</source>
-        <translation>Red</translation>
+        <translation>Netværk</translation>
     </message>
     <message>
         <source>Last block time</source>
-        <translation>Momento del último bloque</translation>
+        <translation>Seneste bloktid</translation>
     </message>
     <message>
         <source>Debug log file</source>
-        <translation>Fichero de depuración</translation>
+        <translation>Debug logfil</translation>
     </message>
     <message>
         <source>Using OpenSSL version</source>
-        <translation>Usando la versión OpenSSL</translation>
+        <translation>Anvender OpenSSL version</translation>
     </message>
     <message>
         <source>Build date</source>
-        <translation>Fecha de compilación</translation>
+        <translation>Versionsdato</translation>
     </message>
     <message>
         <source>Current number of blocks</source>
-        <translation>Número actual de bloques</translation>
+        <translation>Aktuelt blokantal</translation>
     </message>
     <message>
         <source>Client version</source>
-        <translation>Versión del cliente</translation>
+        <translation>Klientversion</translation>
     </message>
     <message>
         <source>Using BerkeleyDB version</source>
-        <translation>Usando BerkeleyDB versión</translation>
+        <translation>Anvender BerkeleyDB version</translation>
     </message>
     <message>
         <source>Block chain</source>
-        <translation>Cadena de bloques</translation>
+        <translation>Block chain</translation>
     </message>
     <message>
         <source>Open the PIVX debug log file from the current data directory. This can take a few seconds for large log files.</source>
-        <translation>Abrir el fichero de depuración PIVX en el directorio actual de datos. Esto puede llevar unos segundos para ficheros de depuración grandes.</translation>
+        <translation>Åbn PIVX debug logfilen fra den aktuelle datamappe. Det kan godt tage lidt tid hvis filen er meget stor.</translation>
     </message>
     <message>
         <source>Number of Masternodes</source>
-        <translation>Número de Nodos Maestros</translation>
+        <translation>Antal masternoder</translation>
     </message>
     <message>
         <source>&amp;Console</source>
-        <translation>&amp;Consola</translation>
+        <translation>&amp;konsol</translation>
     </message>
     <message>
         <source>Clear console</source>
-        <translation>Limpiar consola</translation>
+        <translation>Clear konsollet</translation>
     </message>
     <message>
         <source>&amp;Network Traffic</source>
-        <translation>&amp;Tráfico de Red</translation>
+        <translation>&amp;Netværkstrafik</translation>
     </message>
     <message>
         <source>&amp;Clear</source>
-        <translation>&amp;Limpiar</translation>
+        <translation>&amp;clear</translation>
     </message>
     <message>
         <source>Totals</source>
-        <translation>Totales</translation>
+        <translation>Totaler</translation>
     </message>
     <message>
         <source>Received</source>
-        <translation>Recibidos</translation>
+        <translation>Modtaget</translation>
     </message>
     <message>
         <source>Sent</source>
-        <translation>Enviados</translation>
+        <translation>Sendt</translation>
     </message>
     <message>
         <source>&amp;Peers</source>
-        <translation>&amp;Nodos conectados</translation>
+        <translation>&amp;Peers</translation>
     </message>
     <message>
         <source>Select a peer to view detailed information.</source>
-        <translation>Seleccione un nodo conectado para ver información detallada.</translation>
+        <translation>Vælg en peer for at få vist deltaljerede informationer</translation>
     </message>
     <message>
         <source>Direction</source>
-        <translation>Dirección</translation>
+        <translation>Retning </translation>
     </message>
     <message>
         <source>Protocol</source>
-        <translation>Protocolo</translation>
+        <translation>Protokol</translation>
     </message>
     <message>
         <source>Version</source>
-        <translation>Versión</translation>
+        <translation>Version</translation>
     </message>
     <message>
         <source>Services</source>
-        <translation>Servicios</translation>
+        <translation>Tjenester</translation>
     </message>
     <message>
         <source>Starting Height</source>
-        <translation>Altura de inicio</translation>
+        <translation>Starthøjde</translation>
     </message>
     <message>
         <source>Sync Height</source>
-        <translation>Altura de sincronía</translation>
+        <translation>Synkroniseringshøjde</translation>
     </message>
     <message>
         <source>Ban Score</source>
-        <translation>Puntuación de Baneo</translation>
+        <translation>Forbyd Score</translation>
     </message>
     <message>
         <source>Connection Time</source>
-        <translation>Tiempo de Conexión</translation>
+        <translation>Forbindelsesti</translation>
     </message>
     <message>
         <source>Last Send</source>
-        <translation>Último Envío</translation>
+        <translation>Seneste sendte </translation>
     </message>
     <message>
         <source>Last Receive</source>
-        <translation>Última Recepción</translation>
+        <translation>Senest modtagne</translation>
     </message>
     <message>
         <source>Bytes Sent</source>
-        <translation>Bytes Enviados</translation>
+        <translation>Bytes sendt</translation>
     </message>
     <message>
         <source>Bytes Received</source>
-        <translation>Bytes Recibidos</translation>
+        <translation>Bytes modtaget</translation>
     </message>
     <message>
         <source>Ping Time</source>
-        <translation>Intervalo de Ping</translation>
+        <translation>PingtidPingtid</translation>
     </message>
     <message>
         <source>&amp;Wallet Repair</source>
-        <translation>Reparar &amp;Monedero</translation>
+        <translation>&amp;Tegnebog Reparer</translation>
     </message>
     <message>
         <source>Wallet In Use:</source>
-        <translation>Monedero En Uso:</translation>
+        <translation>Tegnebog i brug</translation>
     </message>
     <message>
         <source>Salvage wallet</source>
-        <translation>Salvar monedero</translation>
+        <translation>Opsumer tegnebog</translation>
     </message>
     <message>
         <source>Attempt to recover private keys from a corrupt wallet.dat.</source>
-        <translation>Intentar recuperar las llaves privadas de un archivo wallet.dat corrupto.</translation>
+        <translation>Forsøg at genskabe de private nøgler fra en beskadiget wallet.dat fil</translation>
     </message>
     <message>
         <source>Rescan blockchain files</source>
-        <translation>Reescanear ficheros de cadena de bloques</translation>
+        <translation>Gennemsøg blokkædens filer</translation>
     </message>
     <message>
         <source>Rescan the block chain for missing wallet transactions.</source>
-        <translation>Reescanear la cadena de bloques buscando transacciones que faltan en el monedero.</translation>
+        <translation>Genskan blokkæden for manglende transaktioner i tegnebogen</translation>
     </message>
     <message>
         <source>Recover transactions 1</source>
-        <translation>Recuperar transacciones 1</translation>
+        <translation>Genskab transaktioner 1</translation>
     </message>
     <message>
         <source>Recover transactions from blockchain (keep meta-data, e.g. account owner).</source>
-        <translation>Recuperar transacciones desde la cadena de bloques (mantener meta-datos, p.e. propietario de la cuenta,etc).</translation>
+        <translation>Genskab transaktioner fra blokkæden (behold meta-data såsom kontohaver).</translation>
     </message>
     <message>
         <source>Recover transactions 2</source>
-        <translation>Recuperar transacciones 2</translation>
+        <translation>Genskab transaktioner 2</translation>
     </message>
     <message>
         <source>Recover transactions from blockchain (drop meta-data).</source>
-        <translation>Recuperar transacciones desde la cadena de bloques (ignorar meta-datos).</translation>
+        <translation>Genskab transaktioner fra blokkæden (skip metadata).</translation>
     </message>
     <message>
         <source>Upgrade wallet format</source>
-        <translation>Actualizar formato del monedero</translation>
+        <translation>Opdater formatet for tegnebogen</translation>
     </message>
     <message>
         <source>Rebuild block chain index from current blk000??.dat files.</source>
-        <translation>Reconstruir el índice de la cadena de bloques desde los archivos blk000??.dat actuales.</translation>
+        <translation>Genopbyg blokkædens indeks fra de aktuelle blk000??.dat filer</translation>
     </message>
     <message>
         <source>The buttons below will restart the wallet with command-line options to repair the wallet, fix issues with corrupt blockhain files or missing/obsolete transactions.</source>
-        <translation>Los botones de más abajo reiniciarán el programa con comandos especiales para reparar el monedero, solucionar problemas con cadenas de bloques corruptas o buscar transacciones obsoletas o perdidas</translation>
+        <translation>Nedenstående knapper vil genstarte tegnebogen med kommandolinieparametre fr at reparere den, korrigere fejl og mangler i block-chain filerne, herunder også undersøge for manglende eller fejlagtige transaktioner</translation>
     </message>
     <message>
         <source>Wallet repair options.</source>
-        <translation>Opciones de reparación de monedero.</translation>
+        <translation>Reparation af tegnebog - valgmuligheder</translation>
     </message>
     <message>
         <source>Upgrade wallet to latest format on startup. (Note: this is NOT an update of the wallet itself!)</source>
-        <translation>Actualizar el monedero al último formato en el arranque. (Nota: esto NO es una actualización del monedero como tal!)</translation>
+        <translation>Opdater tegnebogen til det seneste format ved opstart. (Note: Dette er IKKE en opdatering af tegnebogen i sig selv!)</translation>
     </message>
     <message>
         <source>Rebuild index</source>
-        <translation>Reconstruir índice</translation>
+        <translation>Genopbyg index</translation>
     </message>
     <message>
         <source>In:</source>
-        <translation>Dentro:</translation>
+        <translation>Ind:</translation>
     </message>
     <message>
         <source>Out:</source>
-        <translation>Fuera:</translation>
+        <translation>Ud:</translation>
     </message>
     <message>
         <source>Welcome to the PIVX RPC console.</source>
-        <translation>Bienvenido a la consola RPC de PIVX.</translation>
+        <translation>Velkommen til PIVX RPC konsollet</translation>
     </message>
     <message>
         <source>Use up and down arrows to navigate history, and &lt;b&gt;Ctrl-L&lt;/b&gt; to clear screen.</source>
-        <translation>Use las teclas arriba y abajo para navegar por la historia, y &lt;b&gt;Ctrl-L&lt;/b&gt; para limpiar la pantalla.</translation>
+        <translation>Brug piltasterne for at navigere rundt i historiedata, og &lt;b&gt;Ctrl-L&lt;/b&gt; for at tømme skærmen.</translation>
     </message>
     <message>
         <source>Type &lt;b&gt;help&lt;/b&gt; for an overview of available commands.</source>
-        <translation>Escriba &lt;b&gt;help&lt;/b&gt; para ver una lista de posibles comandos.</translation>
+        <translation>Tast &lt;b&gt;help&gt; for at få en oversigt over tilgængelige kommandoer</translation>
     </message>
     <message>
         <source>%1 B</source>
@@ -2510,283 +2460,283 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>via %1</source>
-        <translation>via %1</translation>
+        <translation>Via %1</translation>
     </message>
     <message>
         <source>never</source>
-        <translation>nunca</translation>
+        <translation>Aldrig</translation>
     </message>
     <message>
         <source>Inbound</source>
-        <translation>Entrantes</translation>
+        <translation>Indgående</translation>
     </message>
     <message>
         <source>Outbound</source>
-        <translation>Salientes</translation>
+        <translation>Udgående</translation>
     </message>
     <message>
         <source>Unknown</source>
-        <translation>Desconocido</translation>
+        <translation>Ukendt</translation>
     </message>
     <message>
         <source>Fetching...</source>
-        <translation>Descargando...</translation>
+        <translation>Henter</translation>
     </message>
 </context>
 <context>
     <name>ReceiveCoinsDialog</name>
     <message>
         <source>Reuse one of the previously used receiving addresses.&lt;br&gt;Reusing addresses has security and privacy issues.&lt;br&gt;Do not use this unless re-generating a payment request made before.</source>
-        <translation>Reutilizar una de las direcciones de recepción anteriores.&lt;br&gt;Reutilizar direcciones de recepción tiene implicaciones de seguridad y privacidad.&lt;br&gt;No la utilizar al menos que esté re-generando una solicitud de pago anterior.</translation>
+        <translation>Genbrug en af de tidligere benyttede modtageradresser. &lt;br&gt; Genbrug af adresser kan kompromittere anonymiteten og sikkerheden. &lt;br&gt; Anbefales ikke, med mindre der blot er tale om genudsendelse af en tidligere genereret adresse.</translation>
     </message>
     <message>
         <source>R&amp;euse an existing receiving address (not recommended)</source>
-        <translation>R&amp;eutilizar una dirección de recepción existente (no recomendado)</translation>
+        <translation>G&amp;enbrug en eksisterendemodageradresse (ikke anbefalet)</translation>
     </message>
     <message>
         <source>&amp;Message:</source>
-        <translation>&amp;Mensaje:</translation>
+        <translation>&amp;Besked</translation>
     </message>
     <message>
         <source>An optional label to associate with the new receiving address.</source>
-        <translation>Una etiqueta opcional a asociar con la nueva dirección de recepción.</translation>
+        <translation>Valgfri opmærkning som tilknyttes den nye modtageradresse.</translation>
     </message>
     <message>
         <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the PIVX network.</source>
-        <translation>Un mensaje opcional a adjuntar a la solicitud de pago, que será mostrado cuando se abra la solicitud. Nota: El mensaje no se envía junto al pago por la red PIVX.</translation>
+        <translation>Valgfri besked som vedhæftes betalingsanmodnigen, og som bliver vist når anmodningen åbnes. Note: Beskeden fremsendes ikke sammen med betalingen, når denne sendes ud på PIVX netværket.</translation>
     </message>
     <message>
         <source>An optional message to attach to the payment request, which will be displayed when the request is opened.&lt;br&gt;Note: The message will not be sent with the payment over the PIVX network.</source>
-        <translation>Un mensaje opcional a adjuntar a la solicitud de pago, que será mostrado cuando se abra la solicitud. &lt;br&gt;Nota: El mensaje no se envía junto al pago por la red PIVX.</translation>
+        <translation>Valgfri besked som vedhæftes betalingsanmodnigen, og som bliver vist når anmodningen åbnes. &lt;br&gt;Note: Beskeden fremsendes ikke sammen med betalingen, når denne sendes ud på PIVX netværket.</translation>
     </message>
     <message>
         <source>Use this form to request payments. All fields are &lt;b&gt;optional&lt;/b&gt;.</source>
-        <translation>Use este formulario para solicitar pagos. Todos los campos &lt;b&gt;opcionales&lt;/b&gt;.</translation>
+        <translation>Anvend denne formular for at anmode om betalinger. Alle felter er &lt;b&gt;valgfri&lt;/b&gt;</translation>
     </message>
     <message>
         <source>&amp;Label:</source>
-        <translation>&amp;Etiqueta:</translation>
+        <translation>&amp;Mærkning</translation>
     </message>
     <message>
         <source>An optional amount to request. Leave this empty or zero to not request a specific amount.</source>
-        <translation>Una cantidad opcional a solicitar. Deje esto vacío o en cero para no pedir una cantidad específica.</translation>
+        <translation>Beløbsfeltet er valgfrit. Efterlad det tomt, eller med værdien 0 for at anmode om et beløb, som afsenderen bestemmer.</translation>
     </message>
     <message>
         <source>&amp;Amount:</source>
-        <translation>&amp;Cantidad:</translation>
+        <translation>&amp;Beløb</translation>
     </message>
     <message>
         <source>&amp;Request payment</source>
-        <translation>&amp;Solicitud de pago</translation>
+        <translation>&amp;Anmod om betaling</translation>
     </message>
     <message>
         <source>Clear all fields of the form.</source>
-        <translation>Limpiar todos los campos del formulario.</translation>
+        <translation>Tøm alle felter i formularen</translation>
     </message>
     <message>
         <source>Clear</source>
-        <translation>Limpiar</translation>
+        <translation>&amp;clear</translation>
     </message>
     <message>
         <source>Requested payments history</source>
-        <translation>Historial de peticiones de pago</translation>
+        <translation>Forespurgte bevægelser</translation>
     </message>
     <message>
         <source>Show the selected request (does the same as double clicking an entry)</source>
-        <translation>Mostrar la solicitud seleccionada (lo mismo que hacer doble click en una entrada)</translation>
+        <translation>vis den valgte forespørgsel. (Virker som ved dobbeltklik på en postering)</translation>
     </message>
     <message>
         <source>Show</source>
-        <translation>Mostrar</translation>
+        <translation>Vis</translation>
     </message>
     <message>
         <source>Remove the selected entries from the list</source>
-        <translation>Quitar las entradas seleccionadas de la lista</translation>
+        <translation>Fjern de valgte posteringer</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation>Quitar</translation>
+        <translation>Fjern</translation>
     </message>
     <message>
         <source>Copy label</source>
-        <translation>Copiar etiqueta</translation>
+        <translation>Kopiér tekstmærke</translation>
     </message>
     <message>
         <source>Copy message</source>
-        <translation>Copiar mensaje</translation>
+        <translation>Kopier besked</translation>
     </message>
     <message>
         <source>Copy amount</source>
-        <translation>Copiar cantidad</translation>
+        <translation>Kopiér beløb</translation>
     </message>
 </context>
 <context>
     <name>ReceiveRequestDialog</name>
     <message>
         <source>QR Code</source>
-        <translation>Código QR</translation>
+        <translation>QR kode</translation>
     </message>
     <message>
         <source>Copy &amp;URI</source>
-        <translation>Copiar &amp;Identificador</translation>
+        <translation>Kopier &amp;URl</translation>
     </message>
     <message>
         <source>Copy &amp;Address</source>
-        <translation>Copiar &amp;Dirección</translation>
+        <translation>Kopier &amp;Adresse</translation>
     </message>
     <message>
         <source>&amp;Save Image...</source>
-        <translation>&amp;Guardar Imagen...</translation>
+        <translation>&amp;Gem billede</translation>
     </message>
     <message>
         <source>Request payment to %1</source>
-        <translation>Solicitar pago a %1</translation>
+        <translation>Anmod om betaling til %1</translation>
     </message>
     <message>
         <source>Payment information</source>
-        <translation>Información de pago</translation>
+        <translation>Betalingsinformation</translation>
     </message>
     <message>
         <source>URI</source>
-        <translation>URI (identificador de recurso)</translation>
+        <translation>Url</translation>
     </message>
     <message>
         <source>Address</source>
-        <translation>Dirección</translation>
+        <translation>Adresse</translation>
     </message>
     <message>
         <source>Amount</source>
-        <translation>Cantidad</translation>
+        <translation>Beløb</translation>
     </message>
     <message>
         <source>Label</source>
-        <translation>Etiqueta</translation>
+        <translation>Mærke</translation>
     </message>
     <message>
         <source>Message</source>
-        <translation>Mensaje</translation>
+        <translation>Besked</translation>
     </message>
     <message>
         <source>Resulting URI too long, try to reduce the text for label / message.</source>
-        <translation>El identificador de recurso es demasiado largo, intente reducir el texto para la etiqueta / mensaje.</translation>
+        <translation>URl for lang. Prøv at reducere længen af teksten i opmærkningen, eller i beskedfeltet.</translation>
     </message>
     <message>
         <source>Error encoding URI into QR Code.</source>
-        <translation>Error codificando el identificador de recurso dentro del código QR.</translation>
+        <translation>Fejl under kodning af URl til QR kode</translation>
     </message>
 </context>
 <context>
     <name>RecentRequestsTableModel</name>
     <message>
         <source>Date</source>
-        <translation>Fecha</translation>
+        <translation>Dato</translation>
     </message>
     <message>
         <source>Label</source>
-        <translation>Etiqueta</translation>
+        <translation>Mærke</translation>
     </message>
     <message>
         <source>Message</source>
-        <translation>Mensaje</translation>
+        <translation>Besked</translation>
     </message>
     <message>
         <source>Amount</source>
-        <translation>Cantidad</translation>
+        <translation>Beløb</translation>
     </message>
     <message>
         <source>(no label)</source>
-        <translation>(sin etiqueta)</translation>
+        <translation>(ingen opmærknig)</translation>
     </message>
     <message>
         <source>(no message)</source>
-        <translation>(no hay mensajes)</translation>
+        <translation>(Inge besked)</translation>
     </message>
     <message>
         <source>(no amount)</source>
-        <translation>(sin cantidad)</translation>
+        <translation>(intet beløb)</translation>
     </message>
 </context>
 <context>
     <name>SendCoinsDialog</name>
     <message>
         <source>Send Coins</source>
-        <translation>Enviar Monedas</translation>
+        <translation>Send mønter</translation>
     </message>
     <message>
         <source>Coin Control Features</source>
-        <translation>Funciones de Control de Monedas</translation>
+        <translation>Møntkontrol, features</translation>
     </message>
     <message>
         <source>Inputs...</source>
-        <translation>Entradas...</translation>
+        <translation>Inputs...</translation>
     </message>
     <message>
         <source>automatically selected</source>
-        <translation>seleccionadas automáticamente</translation>
+        <translation>Automatisk valgte</translation>
     </message>
     <message>
         <source>Insufficient funds!</source>
-        <translation>¡Fondos insuficientes!</translation>
+        <translation>Saldo for lille!</translation>
     </message>
     <message>
         <source>Quantity:</source>
-        <translation>Cantidad:</translation>
+        <translation>Antal:</translation>
     </message>
     <message>
         <source>Bytes:</source>
-        <translation>Octetos:</translation>
+        <translation>Bytes:</translation>
     </message>
     <message>
         <source>Amount:</source>
-        <translation>Cantidad:</translation>
+        <translation>Beløb</translation>
     </message>
     <message>
         <source>Priority:</source>
-        <translation>Prioridad:</translation>
+        <translation>Prioritet:</translation>
     </message>
     <message>
         <source>medium</source>
-        <translation>media</translation>
+        <translation>Middel</translation>
     </message>
     <message>
         <source>Fee:</source>
-        <translation>Comisión:</translation>
+        <translation>Gebyr:</translation>
     </message>
     <message>
         <source>Dust:</source>
-        <translation>Calderilla:</translation>
+        <translation>Affald:</translation>
     </message>
     <message>
         <source>no</source>
-        <translation>no</translation>
+        <translation>nej</translation>
     </message>
     <message>
         <source>After Fee:</source>
-        <translation>Con Comisión:</translation>
+        <translation>Efterbetaling</translation>
     </message>
     <message>
         <source>Change:</source>
-        <translation>Cambio:</translation>
+        <translation>Penge tilbage:</translation>
     </message>
     <message>
         <source>If this is activated, but the change address is empty or invalid, change will be sent to a newly generated address.</source>
-        <translation>Si esto está activado, pero la dirección de cambio está vacía o es inválida, el cambio será mandado a una nueva dirección generada.</translation>
+        <translation>Hvis denne er aktiveret, men tilbagebetalingsadressen er tom, eller ugyldig, overskydende beløb vil blive fremsendt til en nyoprettet adresse</translation>
     </message>
     <message>
         <source>Custom change address</source>
-        <translation>Dirección de cambio personalizada</translation>
+        <translation>Brugerdefineret tilbagebetalingsadresse</translation>
     </message>
     <message>
         <source>Split UTXO</source>
-        <translation>Partir UTXO</translation>
+        <translation>Split UTXO</translation>
     </message>
     <message>
         <source># of outputs</source>
-        <translation># de salidas</translation>
+        <translation># af outputs</translation>
     </message>
     <message>
         <source>UTXO Size:</source>
-        <translation>Tamaño de UTXO:</translation>
+        <translation>UTXO størrelse:</translation>
     </message>
     <message>
         <source>0 PIV</source>
@@ -2794,103 +2744,103 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>Transaction Fee:</source>
-        <translation>Comisión de transacción:</translation>
+        <translation>Transaktionsgebyr:</translation>
     </message>
     <message>
         <source>Choose...</source>
-        <translation>Elegir...</translation>
+        <translation>Vælg</translation>
     </message>
     <message>
         <source>collapse fee-settings</source>
-        <translation>minimizar los ajustes de comisión</translation>
+        <translation>luk gebyropsætning</translation>
     </message>
     <message>
         <source>Minimize</source>
-        <translation>Minimizar</translation>
+        <translation>Minimer</translation>
     </message>
     <message>
         <source>Obfuscation</source>
-        <translation>Ofuscación</translation>
+        <translation>Tilsløring</translation>
     </message>
     <message>
         <source>per kilobyte</source>
-        <translation>por kilobyte</translation>
+        <translation>pr. kilobyte</translation>
     </message>
     <message>
         <source>total at least</source>
-        <translation>total por lo menos</translation>
+        <translation>Mindste total</translation>
     </message>
     <message>
         <source>(read the tooltip)</source>
-        <translation>(leer el consejo)</translation>
+        <translation>(læs tippet for anvendelse af værktøj)</translation>
     </message>
     <message>
         <source>Custom:</source>
-        <translation>Personalizado:</translation>
+        <translation>Brugertilpasset</translation>
     </message>
     <message>
         <source>(Smart fee not initialized yet. This usually takes a few blocks...)</source>
-        <translation>(La comisión automática no se ha inicializado todavía. Esto normalmente necesita unos cuantos bloques...)</translation>
+        <translation>(Smartgebyr endnu ikke initialiseret. Det tager som regel nogle få blokke...)</translation>
     </message>
     <message>
         <source>Confirmation time:</source>
-        <translation>Tiempo de confirmación:</translation>
+        <translation>Bekræftelsestid</translation>
     </message>
     <message>
         <source>If the custom fee is set to 1000 uPIVs and the transaction is only 250 bytes, then "per kilobyte" only pays 250 uPIVs in fee,&lt;br /&gt;while "at least" pays 1000 uPIVs. For transactions bigger than a kilobyte both pay by kilobyte.</source>
-        <translation>Si la comisión personalizada se fija en 1000 uPIVs y la transacción necesita sólo 250 bytes, entonces la opción "por kilobyte" sólo pagará 250 uPIVs de comisión,&lt;br/&gt;mientras "por lo menos" pagará 1000 uPIVs. Para transacciones que midan más de un kilobyte ambas pagan por kilobyte.</translation>
+        <translation>Hvis den brugerfastsatte gebyrbetaling er sat til 1000 uPIVs og transaktionen kun fylder 250 bytes, så vil "pr. kilobyte" kun udbetale 250 uPIV i gebyr, &lt;br /&gt; mens "mindst" udbetaler 1000 uPIVs. For transaktioner større end en kilobyte betales i begge tilfælde i forhold til antallet af kilobytes </translation>
     </message>
     <message>
         <source>If the custom fee is set to 1000 uPIVs and the transaction is only 250 bytes, then "per kilobyte" only pays 250 uPIVs in fee,&lt;br /&gt;while "total at least" pays 1000 uPIVs. For transactions bigger than a kilobyte both pay by kilobyte.</source>
-        <translation>Si la comisión personalizada se fija en 1000 uPIVs y la transacción necesita sólo 250 bytes, entonces la opción "por kilobyte" sólo pagará 250 uPIVs de comisión,&lt;br/&gt;mientras "por lo menos" pagará 1000 uPIVs. Para transacciones que midan más de un kilobyte ambas pagan por kilobyte.</translation>
+        <translation>Hvis den brugerfastsatte gebyrbetaling er sat til 1000 uPIVs og transaktionen kun fylder 250 bytes, så vil "pr. kilobyte" kun udbetale 250 uPIV i gebyr, &lt;br /&gt; mens "Total-mindst" udbetaler 1000 uPIVs. For transaktioner større end en kilobyte betales i begge tilfælde i forhold til antallet af kilobytes </translation>
     </message>
     <message>
         <source>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks.&lt;br /&gt;But be aware that this can end up in a never confirming transaction once there is more demand for PIVX transactions than the network can process.</source>
-        <translation>Pagar sólo la comisión mínima está bien mientras haya menos volumen de transacciones que espacio en los bloques.&lt;br/&gt;Pero tenga en cuenta que esto podría acabar en una transacción que nunca se confirme si hay más demanda de transacciones PIVX de las que la red puede procesar.</translation>
+        <translation>Betaling af mindste transaktionsgebyr vil være fint så længe der er færre transaktioner end der er plads til i blokkene. &lt;br /&gt; Men opmærksomheden henledes på, at det kan resultere i en transaktion der aldrig bliver bekræftet i det øjeblik der er større behov for transaktioner end netværket har plads til. </translation>
     </message>
     <message>
         <source>normal</source>
-        <translation>normal</translation>
+        <translation>Normal</translation>
     </message>
     <message>
         <source>fast</source>
-        <translation>rápido</translation>
+        <translation>Hurtig</translation>
     </message>
     <message>
         <source>Recommended</source>
-        <translation>Recomendada</translation>
+        <translation>Anbefalet</translation>
     </message>
     <message>
         <source>Send as zero-fee transaction if possible</source>
-        <translation>Enviar como transacción sin comisiones si es posible</translation>
+        <translation>send som nul-gebyrstransaktion hvis muligt</translation>
     </message>
     <message>
         <source>(confirmation may take longer)</source>
-        <translation>(la primera confirmación puede tardar más)</translation>
+        <translation>(bekræftelse kan tage længere tid)</translation>
     </message>
     <message>
         <source>Confirm the send action</source>
-        <translation>Confirmar la acción de enviar</translation>
+        <translation>Bekræft  og send</translation>
     </message>
     <message>
         <source>S&amp;end</source>
-        <translation>&amp;Enviar</translation>
+        <translation>S&amp;end</translation>
     </message>
     <message>
         <source>Clear all fields of the form.</source>
-        <translation>Limpiar todos los campos del formulario.</translation>
+        <translation>Tøm alle felter i formularen</translation>
     </message>
     <message>
         <source>Clear &amp;All</source>
-        <translation>Limpiar &amp;Todo</translation>
+        <translation>Nulstil alt</translation>
     </message>
     <message>
         <source>Send to multiple recipients at once</source>
-        <translation>Enviar a varios destinatarios al mismo tiempo</translation>
+        <translation>Send til flere modtagere på én gang</translation>
     </message>
     <message>
         <source>Add &amp;Recipient</source>
-        <translation>Añadir Destinata&amp;rio</translation>
+        <translation>Tilføj &amp;Modtager</translation>
     </message>
     <message>
         <source>SwiftTX</source>
@@ -2898,403 +2848,403 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>Balance:</source>
-        <translation>Saldo:</translation>
+        <translation>Saldo</translation>
     </message>
     <message>
         <source>Copy quantity</source>
-        <translation>Copiar cantidad</translation>
+        <translation>Kopiér antal</translation>
     </message>
     <message>
         <source>Copy amount</source>
-        <translation>Copiar cantidad</translation>
+        <translation>Kopiér beløb</translation>
     </message>
     <message>
         <source>Copy fee</source>
-        <translation>Copiar comisión</translation>
+        <translation>Kopiér gebyr</translation>
     </message>
     <message>
         <source>Copy after fee</source>
-        <translation>Copiar después de comisión</translation>
+        <translation>Kopiér efterbetaling</translation>
     </message>
     <message>
         <source>Copy bytes</source>
-        <translation>Copiar octetos</translation>
+        <translation>Kopiér bytes</translation>
     </message>
     <message>
         <source>Copy priority</source>
-        <translation>Copiar prioridad</translation>
+        <translation>Kopiér prioritet</translation>
     </message>
     <message>
         <source>Copy dust</source>
-        <translation>Copiar calderilla</translation>
+        <translation>Kopiér affald</translation>
     </message>
     <message>
         <source>Copy change</source>
-        <translation>Copiar cambio</translation>
+        <translation>Kopiér "penge tilbage"</translation>
     </message>
     <message>
         <source>The split block tool does not work when sending to outside addresses. Try again.</source>
-        <translation>La herramienta de separación de bloques no funciona cuando se envía a direcciones exteriores. Inténtelo otra vez.</translation>
+        <translation>Split blok værktøjet virker ikke når der sendes til eksterne adresser. Prøv igen</translation>
     </message>
     <message>
         <source>The split block tool does not work with multiple addresses. Try again.</source>
-        <translation>La herramienta de división de bloques no funciona con varias direcciones. Inténtelo otra vez.</translation>
+        <translation>Split blok værktøjet virker ikke med flere adresser. Prøv igen</translation>
     </message>
     <message>
         <source>using</source>
-        <translation>usando</translation>
+        <translation>Anvender</translation>
     </message>
     <message>
         <source>anonymous funds</source>
-        <translation>fondos anónimos</translation>
+        <translation>Anonyme saldi</translation>
     </message>
     <message>
         <source>Warning: Invalid PIVX address</source>
-        <translation>Advertencia: Direcciones PIVX inválidas</translation>
+        <translation>Advarsel! Ugyldig PIVX adresse</translation>
     </message>
     <message>
         <source>any available funds (not recommended)</source>
-        <translation>cualquier fondo disponible (no recomendado)</translation>
+        <translation>Alle tilgængelige saldi (anbefales ikke)</translation>
     </message>
     <message>
         <source>and SwiftTX</source>
-        <translation>y SwiftTX</translation>
+        <translation>og SwiftTX</translation>
     </message>
     <message>
         <source>%1 to %2</source>
-        <translation>%1 a %2</translation>
+        <translation>%1 til %2</translation>
     </message>
     <message>
         <source>Are you sure you want to send?</source>
-        <translation>¿Está seguro de querer enviar?</translation>
+        <translation>Er De sikker på at De vil sende?</translation>
     </message>
     <message>
         <source>are added as transaction fee</source>
-        <translation>son añadidos como comisión de transacción</translation>
+        <translation>er tilføjet som transaktionsgebyr</translation>
     </message>
     <message>
         <source>Total Amount = &lt;b&gt;%1&lt;/b&gt;&lt;br /&gt;= %2</source>
-        <translation>Cantidad total = &lt;b&gt;%1&lt;/b&gt;&lt;br /&gt;= %2</translation>
+        <translation>Total saldo = &lt;b&gt; %1 &lt;/b&gt; &lt;br /&gt; = %2 </translation>
     </message>
     <message>
         <source>Confirm send coins</source>
-        <translation>Confirmar enviar monedas</translation>
+        <translation>Bekræft at De vil sende mønter</translation>
     </message>
     <message>
         <source>A fee %1 times higher than %2 per kB is considered an insanely high fee.</source>
-        <translation>Una comisión %1 veces más alta que %2 por kB se considera exageradamente alta.</translation>
+        <translation>Et gebyr %1 gange højere end %2 pr. kilobyte er vanvittigt højt.</translation>
     </message>
     <message numerus="yes">
         <source>Estimated to begin confirmation within %n block(s).</source>
-        <translation><numerusform>Estimamos que empezará la confirmación en %n bloque.</numerusform><numerusform>Estimamos que empezará la confirmación en %n bloques.</numerusform></translation>
+        <translation><numerusform>Forventer bekræftelse indenfor %n blokke</numerusform><numerusform>Forventer bekræftelse indenfor %n blokke</numerusform></translation>
     </message>
     <message>
         <source>The recipient address is not valid, please recheck.</source>
-        <translation>La dirección de destino no es válida, por favor compruébelo de nuevo.</translation>
+        <translation>Modtageradressen er ikke gyldig. Kontroller igen</translation>
     </message>
     <message>
         <source>(obfuscation requires this amount to be rounded up to the nearest %1).</source>
-        <translation>(la ofuscación requiere redondear hacia arriba esta cantidad al %1 más cercano).</translation>
+        <translation>(Tilsløring kræver at dette beløb rundes op til nærmeste %1)</translation>
     </message>
     <message>
         <source> split into %1 outputs using the UTXO splitter.</source>
-        <translation>separado en %1 salidas usando el separador UTXO.</translation>
+        <translation>Split i %1 outputs ved hjælp af UTXO splitteren.</translation>
     </message>
     <message>
         <source>&lt;b&gt;(%1 of %2 entries displayed)&lt;/b&gt;</source>
-        <translation>&lt;b&gt;(%1 de %2 entradas mostradas)&lt;/b&gt;</translation>
+        <translation>&lt;b&gt;(%1 af %2 poster vist)&lt;/b&gt;</translation>
     </message>
     <message>
         <source>The amount to pay must be larger than 0.</source>
-        <translation>La cantidad a pagar debe ser mayor de 0.</translation>
+        <translation>Beløbet skal være større end 0</translation>
     </message>
     <message>
         <source>The amount exceeds your balance.</source>
-        <translation>La cantidad excede su saldo.</translation>
+        <translation>Beløbet overstiger saldoen</translation>
     </message>
     <message>
         <source>The total exceeds your balance when the %1 transaction fee is included.</source>
-        <translation>El total excede su saldo si contamos la comisión de %1 .</translation>
+        <translation>Totalbeløbet overstiger saldoen når transaktionsgebyret %1 medregnes</translation>
     </message>
     <message>
         <source>Duplicate address found, can only send to each address once per send operation.</source>
-        <translation>Hemos encontrado una dirección duplicada, sólo podemos enviar a cada dirección una vez por envío.</translation>
+        <translation>Den samme adresse er anvendt flere gange. Der kan kun sendes til den samme adresse en gang pr. afsendelse</translation>
     </message>
     <message>
         <source>Transaction creation failed!</source>
-        <translation>¡Fallo al crear la transacción!</translation>
+        <translation>Oprettelse af transaktionen mislykkedes</translation>
     </message>
     <message>
         <source>The transaction was rejected! This might happen if some of the coins in your wallet were already spent, such as if you used a copy of wallet.dat and coins were spent in the copy but not marked as spent here.</source>
-        <translation>¡La transacción fue rechazada! Esto puede ocurrir si alguna de sus monedas ya se gastó con anterioridad, por ejemplo, si estuvo usted usando una copia de su monedero wallet.dat y gastó allí monedas pero no las marcó como gastadas aquí.</translation>
+        <translation>Transaktionen blev afvist! Dette kan ske, hvis nogle af mønterne i tegnebogen allerede er brugt. For eksempel hvis De har brugt en kopi af Wallet.dat filen, og mønterne har været brugt, men ikke markerede som brugte i den. </translation>
     </message>
     <message>
         <source>Error: The wallet was unlocked only to anonymize coins.</source>
-        <translation>Error: El monedero se desbloqueó sólo para anonimizar monedas.</translation>
+        <translation>Fejl! Tegnebogen blev kun låst op for at anonymisere mønterne. </translation>
     </message>
     <message>
         <source>Pay only the minimum fee of %1</source>
-        <translation>Pagar sólo la comisión mínima de %1</translation>
+        <translation>Betal kun minimums transaktionsgebyret på %1</translation>
     </message>
     <message>
         <source>Warning: Unknown change address</source>
-        <translation>Advertencia: Dirección de cambio desconocida</translation>
+        <translation>Advarsel! Ukendt returadresse</translation>
     </message>
     <message>
         <source>(no label)</source>
-        <translation>(sin etiqueta)</translation>
+        <translation>(ingen opmærknig)</translation>
     </message>
 </context>
 <context>
     <name>SendCoinsEntry</name>
     <message>
         <source>This is a normal payment.</source>
-        <translation>Esto es un pago normal.</translation>
+        <translation>Dette er en almindelig betaling</translation>
     </message>
     <message>
         <source>Pay &amp;To:</source>
-        <translation>Pagar &amp;A:</translation>
+        <translation>Betal &amp;Til</translation>
     </message>
     <message>
         <source>The PIVX address to send the payment to</source>
-        <translation>La dirección PIVX a la cual enviar el pago</translation>
+        <translation>PIVX adressen, som betalingen skal sendes til</translation>
     </message>
     <message>
         <source>Choose previously used address</source>
-        <translation>Escoge una dirección usada previamente</translation>
+        <translation>Benyt en tidligere anvendt adresse.</translation>
     </message>
     <message>
         <source>Alt+A</source>
-        <translation>Alt + A</translation>
+        <translation>Alt+A</translation>
     </message>
     <message>
         <source>Paste address from clipboard</source>
-        <translation>Pegar dirección desde el clipboard</translation>
+        <translation>Indsæt adresse fra udklipsholderen.</translation>
     </message>
     <message>
         <source>Alt+P</source>
-        <translation>Alt + P</translation>
+        <translation>Alt+P</translation>
     </message>
     <message>
         <source>Remove this entry</source>
-        <translation>Quitar esta entrada</translation>
+        <translation>Fjern denne postering</translation>
     </message>
     <message>
         <source>&amp;Label:</source>
-        <translation>&amp;Etiqueta:</translation>
+        <translation>&amp;Mærkning</translation>
     </message>
     <message>
         <source>Enter a label for this address to add it to the list of used addresses</source>
-        <translation>Introduzca una etiqueta para esta dirección para añadirla a la lista de direcciones utilizadas</translation>
+        <translation>Indtast et mærke til denne adresse for at tilføje den til listen over brugte adresser</translation>
     </message>
     <message>
         <source>A&amp;mount:</source>
-        <translation>Ca&amp;ntidad:</translation>
+        <translation>A&amp;mount</translation>
     </message>
     <message>
         <source>Message:</source>
-        <translation>Mensaje:</translation>
+        <translation>Besked</translation>
     </message>
     <message>
         <source>A message that was attached to the PIVX: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the PIVX network.</source>
-        <translation>Un mensaje adjunto al PIVX: En recurso web especificado será guardado junto a la transacción para su referencia. Nota: Este mensaje no se enviará por la red PIVX.</translation>
+        <translation>En besked, der var vedhæftet til PIVX: URl wil blive gemt sammen med transaktionen som reference. Note: Beskeden bliver medsendt transaktionen over netværket.</translation>
     </message>
     <message>
         <source>This is an unverified payment request.</source>
-        <translation>Esta es una solicitud de pago no verificada.</translation>
+        <translation>Denne betalingsanmodning er ikke verificeret</translation>
     </message>
     <message>
         <source>Pay To:</source>
-        <translation>Pagar A:</translation>
+        <translation>Betal til:</translation>
     </message>
     <message>
         <source>Memo:</source>
-        <translation>Texto libre:</translation>
+        <translation>Memo:</translation>
     </message>
     <message>
         <source>This is a verified payment request.</source>
-        <translation>Esta es una solicitud de pago verificada.</translation>
+        <translation>Denne betalingsanmodning er verificeret</translation>
     </message>
     <message>
         <source>Enter a label for this address to add it to your address book</source>
-        <translation>Introduzca una etiqueta para esta dirección para añadirla a su libreta de direcciones</translation>
+        <translation>Indtast et mærke til denne adresse for at tilføje den til adressebogen.</translation>
     </message>
 </context>
 <context>
     <name>ShutdownWindow</name>
     <message>
         <source>PIVX Core is shutting down...</source>
-        <translation>El programa PIVX se está cerrando...</translation>
+        <translation>PIVX kernen lukker ned</translation>
     </message>
     <message>
         <source>Do not shut down the computer until this window disappears.</source>
-        <translation>No apague el equipo hasta que esta ventana desaparezca.</translation>
+        <translation>Undlad at logge af, eller slukke for computeren før dette vindue er forsvundet.</translation>
     </message>
 </context>
 <context>
     <name>SignVerifyMessageDialog</name>
     <message>
         <source>Signatures - Sign / Verify a Message</source>
-        <translation>Firmas - Firmar / Verificar un Mensaje</translation>
+        <translation>Underskrifter - Underskriv / verificer en besked</translation>
     </message>
     <message>
         <source>&amp;Sign Message</source>
-        <translation>&amp;Firmar Mensaje</translation>
+        <translation>&amp;Underskriv besked</translation>
     </message>
     <message>
         <source>You can sign messages with your addresses to prove you own them. Be careful not to sign anything vague, as phishing attacks may try to trick you into signing your identity over to them. Only sign fully-detailed statements you agree to.</source>
-        <translation>Usted puede firmar mensajes con su dirección para probar que son auténticos. Tenga cuidado con firmar algo corto o vago como "hola", pues los ataques de phising pueden engañarle para que firme su identidad para ellos. Sólo firme textos detallados con los que esté de acuerdo.</translation>
+        <translation>De kan underskrive beskeder med Deres adresser or at bevise ejerskab. Vær forsigtig med at underskrive noget De er usikker på såsom forsøg op at narre Dem til at oplyse Deres identitet. Skriv kun under på noget De kan stå inde for, og som De er enig i. </translation>
     </message>
     <message>
         <source>The PIVX address to sign the message with</source>
-        <translation>La dirección PIVX con la que firmar el mensaje</translation>
+        <translation>Den PIVX adresse, der skal bruges til at underskrive beskeden med.</translation>
     </message>
     <message>
         <source>Choose previously used address</source>
-        <translation>Escoge una dirección usada previamente</translation>
+        <translation>Benyt en tidligere anvendt adresse.</translation>
     </message>
     <message>
         <source>Alt+A</source>
-        <translation>Alt + A</translation>
+        <translation>Alt+A</translation>
     </message>
     <message>
         <source>Paste address from clipboard</source>
-        <translation>Pegar dirección desde el clipboard</translation>
+        <translation>Indsæt adresse fra udklipsholderen.</translation>
     </message>
     <message>
         <source>Alt+P</source>
-        <translation>Alt + P</translation>
+        <translation>Alt+P</translation>
     </message>
     <message>
         <source>Enter the message you want to sign here</source>
-        <translation>Introduzca el mensaje que quiere firmar aquí</translation>
+        <translation>Skriv den besked De ønsker at underskrive her.</translation>
     </message>
     <message>
         <source>Signature</source>
-        <translation>Firma</translation>
+        <translation>Underskrift</translation>
     </message>
     <message>
         <source>Copy the current signature to the system clipboard</source>
-        <translation>Copiar la firma actual al clipboard del sistema</translation>
+        <translation>Kopier den aktuelle underskrift til udklipsholderen.</translation>
     </message>
     <message>
         <source>Sign the message to prove you own this PIVX address</source>
-        <translation>Firmar el mensaje para demostrar que eres el propietario de esta dirección PIVX</translation>
+        <translation>Underskriv beskeden for at bevise, at De ejer denne PIVX adresse.</translation>
     </message>
     <message>
         <source>The PIVX address the message was signed with</source>
-        <translation>La dirección PIVX con la que el mensaje fue firmado</translation>
+        <translation>Beskeden er underskrevet med denne PIVX adresse</translation>
     </message>
     <message>
         <source>Verify the message to ensure it was signed with the specified PIVX address</source>
-        <translation>Verificar el mensaje para asegurarse que fue firmado con la dirección PIVX especificada</translation>
+        <translation>verificer beskeden for at sikre, at den blev underskrevet med den rigtige PIVX adresse.</translation>
     </message>
     <message>
         <source>Sign &amp;Message</source>
-        <translation>Firmar &amp;Mensaje</translation>
+        <translation>Underskriv &amp;Besked</translation>
     </message>
     <message>
         <source>Reset all sign message fields</source>
-        <translation>Resetear todos los campos de firma de mensaje</translation>
+        <translation>Nulstil alle underskriftsfelter</translation>
     </message>
     <message>
         <source>Clear &amp;All</source>
-        <translation>Limpiar &amp;Todo</translation>
+        <translation>Nulstil alt</translation>
     </message>
     <message>
         <source>&amp;Verify Message</source>
-        <translation>&amp;Verificar Mensaje</translation>
+        <translation>&amp;verificer besked</translation>
     </message>
     <message>
         <source>Enter the signing address, message (ensure you copy line breaks, spaces, tabs, etc. exactly) and signature below to verify the message. Be careful not to read more into the signature than what is in the signed message itself, to avoid being tricked by a man-in-the-middle attack.</source>
-        <translation>Introduzca la dirección de firma, mensaje (asegúrese de que copia los puntos y aparte, espacios, tabuladores, etc. exactamente) y la firma debajo para verificar el mensaje. Vaya con cuidado de no leer más en la firma de loque está en el mensaje firmado propiamente dicho, para evitar ser engañado por un ataque "hombre en el medio".</translation>
+        <translation>Skriv den adresse der skal bruges til at underskrive med. (Vær sikker på at få det hele med, herunder alle linjerne, mellemrum, tabuleringer o.l. præcist) og signer nedenfor for at verificere beskeden. Vær forsigtig med ikke at læse mere ind i underskriften end den underskrevne besked for at undgå snyd fra et "man-in-the-middle" angreb.</translation>
     </message>
     <message>
         <source>Verify &amp;Message</source>
-        <translation>Verificar &amp;Mensaje</translation>
+        <translation>Verificer &amp;Beske</translation>
     </message>
     <message>
         <source>Reset all verify message fields</source>
-        <translation>Resetear todos los campos de verificación de mensaje</translation>
+        <translation>Nulstil alle verificeringsfelter for beskeder.</translation>
     </message>
     <message>
         <source>Click "Sign Message" to generate signature</source>
-        <translation>Haga click en "Firmar Mensaje" para generar la firma</translation>
+        <translation>Klik "Underskriv besked" for at generere en underskrift</translation>
     </message>
     <message>
         <source>The entered address is invalid.</source>
-        <translation>La dirección introducida es inválida</translation>
+        <translation>Den indtastede adresse er ugyldig</translation>
     </message>
     <message>
         <source>Please check the address and try again.</source>
-        <translation>Por favor comprobar la dirección y probar de nuevo.</translation>
+        <translation>Kontroller adressen og prøv igen.</translation>
     </message>
     <message>
         <source>The entered address does not refer to a key.</source>
-        <translation>La dirección introducido no se refiere a ninguna clave.</translation>
+        <translation>Den indtastede adresse har ikke nogen tilknyttet nøgle.</translation>
     </message>
     <message>
         <source>Wallet unlock was cancelled.</source>
-        <translation>El desbloqueo de la wallet fue cancelado.</translation>
+        <translation>Oplåsning af tegnebogen mislykkedes</translation>
     </message>
     <message>
         <source>Private key for the entered address is not available.</source>
-        <translation>La clave privada para la dirección introducida no está disponible.</translation>
+        <translation>Den private nøgler der hører til den indtastede adresse er ikke tilgængelig.</translation>
     </message>
     <message>
         <source>Message signing failed.</source>
-        <translation>La firma del mensaje falló.</translation>
+        <translation>Beskeden kunne ikke underskrives</translation>
     </message>
     <message>
         <source>Message signed.</source>
-        <translation>Mensaje firmado.</translation>
+        <translation>Beskeden er underskrevet</translation>
     </message>
     <message>
         <source>The signature could not be decoded.</source>
-        <translation>La firma no pudo ser decodificada.</translation>
+        <translation>Signaturen kunne ikke afkodes</translation>
     </message>
     <message>
         <source>Please check the signature and try again.</source>
-        <translation>Por favor compruebe la firma e inténtelo otra vez.</translation>
+        <translation>Kontroller signaturen og prøv igen</translation>
     </message>
     <message>
         <source>The signature did not match the message digest.</source>
-        <translation>La firma no coincide con el resumen del mensaje.</translation>
+        <translation>Signaturen passer ikke sammen med beskeden</translation>
     </message>
     <message>
         <source>Message verification failed.</source>
-        <translation>Falló la verificación del mensaje.</translation>
+        <translation>Verificering af beskeden mislykkedes.</translation>
     </message>
     <message>
         <source>Message verified.</source>
-        <translation>Mensaje verificado.</translation>
+        <translation>Beskeden er verificeret.</translation>
     </message>
 </context>
 <context>
     <name>SplashScreen</name>
     <message>
         <source>PIVX Core</source>
-        <translation>Núcleo PIVX</translation>
+        <translation>PIVX kerne</translation>
     </message>
     <message>
         <source>Version %1</source>
-        <translation>Versión %1</translation>
+        <translation>Version %1</translation>
     </message>
     <message>
         <source>The Bitcoin Core developers</source>
-        <translation>Los desarrolladores de Bitcoin Core</translation>
+        <translation>Bitcoin "core" udviklerne</translation>
     </message>
     <message>
         <source>The Dash Core developers</source>
-        <translation>Los desarrolladores de Dash Core</translation>
+        <translation>DASH "core" udviklerne</translation>
     </message>
     <message>
         <source>The PIVX Core developers</source>
-        <translation>Los desarrolladores de PIVX Core</translation>
+        <translation>PIVX "core" udviklerne</translation>
     </message>
     <message>
         <source>[testnet]</source>
-        <translation>[testnet]</translation>
+        <translation>[Testnet]</translation>
     </message>
 </context>
 <context>
@@ -3306,307 +3256,295 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
 </context>
 <context>
     <name>TransactionDesc</name>
-    <message numerus="yes">
-        <source>Open for %n more block(s)</source>
-        <translation><numerusform>Abierto para %n bloque más</numerusform><numerusform>Abierto para %n bloques más</numerusform></translation>
-    </message>
     <message>
         <source>Open until %1</source>
-        <translation>Abierto hasta %1</translation>
+        <translation>Åbn frem til %1</translation>
     </message>
     <message>
         <source>conflicted</source>
-        <translation>conflictivo (bloque huérfano?)</translation>
+        <translation>Konflikt!</translation>
     </message>
     <message>
         <source>%1/offline (verified via swifttx)</source>
-        <translation>%1/offline (verificado via swifttx)</translation>
+        <translation>%1/offline (verified via svifttx)</translation>
     </message>
     <message>
         <source>%1/confirmed (verified via swifttx)</source>
-        <translation>%1/confirmado (verificado via swifttx)</translation>
+        <translation>%1/bekræftet (verified via svifttx)</translation>
     </message>
     <message>
         <source>%1 confirmations (verified via swifttx)</source>
-        <translation>%1 confirmaciones (verificado via swifttx)</translation>
+        <translation>%1/bekræftelser (verified via svifttx)</translation>
     </message>
     <message>
         <source>%1/offline</source>
-        <translation>%1/offline</translation>
+        <translation>%1/ofline</translation>
     </message>
     <message>
         <source>%1/unconfirmed</source>
-        <translation>%1/sin confirmar</translation>
+        <translation>%1/ej bekræftet</translation>
     </message>
     <message>
         <source>%1 confirmations</source>
-        <translation>%1 confirmaciones</translation>
+        <translation>%1/bekræftelser</translation>
     </message>
     <message>
         <source>%1/offline (SwiftTX verification in progress - %2 of %3 signatures)</source>
-        <translation>%1/offline (verificación SwiftTX en marcha - %2 de %3 firmas)</translation>
+        <translation>%1/offline (SwifTX verificering i gang - %2 af %3 signaturer)</translation>
     </message>
     <message>
         <source>%1/confirmed (SwiftTX verification in progress - %2 of %3 signatures )</source>
-        <translation>%1/confirmado (verificación SwiftTX en marcha - %2 de %3 firmas)</translation>
+        <translation>%1/bekræftet(SwifTX verificering i gang - %2 af %3 signaturer)</translation>
     </message>
     <message>
         <source>%1 confirmations (SwiftTX verification in progress - %2 of %3 signatures)</source>
-        <translation>%1 confirmaciones (verificación SwiftTX en marcha - %2 de %3 firmas)</translation>
+        <translation>%1/bekræftelser (SwifTX verificering i gang - %2 af %3 signaturer)</translation>
     </message>
     <message>
         <source>%1/offline (SwiftTX verification failed)</source>
-        <translation>%1/offline (falló la verificación SwiftTX)</translation>
+        <translation>%1/offline (SwifTX verificering mislykkedes)</translation>
     </message>
     <message>
         <source>%1/confirmed (SwiftTX verification failed)</source>
-        <translation>%1/confirmado (falló la verificación SwiftTX)</translation>
+        <translation>%1/bekræftet (SwifTX verificering mislykkedes)</translation>
     </message>
     <message>
         <source>Status</source>
-        <translation>Estado</translation>
+        <translation>Status</translation>
     </message>
     <message>
         <source>, has not been successfully broadcast yet</source>
-        <translation>, no ha sido correctamente transmitida todavía</translation>
-    </message>
-    <message numerus="yes">
-        <source>, broadcast through %n node(s)</source>
-        <translation><numerusform>, retransmitido a través de %n nodo</numerusform><numerusform>, retransmitido a través de %n nodos</numerusform></translation>
+        <translation>, er ikke udsendt endnu</translation>
     </message>
     <message>
         <source>Date</source>
-        <translation>Fecha</translation>
+        <translation>Dato</translation>
     </message>
     <message>
         <source>Source</source>
-        <translation>Fuente</translation>
+        <translation>Kilde</translation>
     </message>
     <message>
         <source>Generated</source>
-        <translation>Generado</translation>
+        <translation>Genereret</translation>
     </message>
     <message>
         <source>From</source>
-        <translation>De</translation>
+        <translation>Fra</translation>
     </message>
     <message>
         <source>unknown</source>
-        <translation>desconocido</translation>
+        <translation>Ukendt</translation>
     </message>
     <message>
         <source>To</source>
-        <translation>A</translation>
+        <translation>Til</translation>
     </message>
     <message>
         <source>own address</source>
-        <translation>dirección propia</translation>
+        <translation>Egen adresse</translation>
     </message>
     <message>
         <source>watch-only</source>
-        <translation>sólo-lectura</translation>
+        <translation>Vis-kun</translation>
     </message>
     <message>
         <source>label</source>
-        <translation>etiqueta</translation>
+        <translation>Mærke</translation>
     </message>
     <message>
         <source>Credit</source>
-        <translation>Crédito</translation>
+        <translation>Kredit</translation>
     </message>
     <message>
         <source>not accepted</source>
-        <translation>rechazado</translation>
+        <translation>Afvist!</translation>
     </message>
     <message>
         <source>Debit</source>
-        <translation>Débito</translation>
+        <translation>Debet</translation>
     </message>
     <message>
         <source>Total debit</source>
-        <translation>Débito total</translation>
+        <translation>Total debet</translation>
     </message>
     <message>
         <source>Total credit</source>
-        <translation>Abonos totales</translation>
+        <translation>Total kredit</translation>
     </message>
     <message>
         <source>Transaction fee</source>
-        <translation>Comisión de transacción</translation>
+        <translation>Transaktionsgebyr</translation>
     </message>
     <message>
         <source>Net amount</source>
-        <translation>Cantidad neta</translation>
+        <translation>Nettobeløb</translation>
     </message>
     <message>
         <source>Message</source>
-        <translation>Mensaje</translation>
+        <translation>Besked</translation>
     </message>
     <message>
         <source>Comment</source>
-        <translation>Comentario</translation>
+        <translation>Kommentar</translation>
     </message>
     <message>
         <source>Transaction ID</source>
-        <translation>ID de la transacción</translation>
+        <translation>Transaktions ID</translation>
     </message>
     <message>
         <source>Output index</source>
-        <translation>Índice de salida</translation>
+        <translation>Output indeks</translation>
     </message>
     <message>
         <source>Merchant</source>
-        <translation>Comerciante</translation>
+        <translation>Forhandler</translation>
     </message>
     <message>
         <source>Generated coins must mature %1 blocks before they can be spent. When you generated this block, it was broadcast to the network to be added to the block chain. If it fails to get into the chain, its state will change to "not accepted" and it won't be spendable. This may occasionally happen if another node generates a block within a few seconds of yours.</source>
-        <translation>Las monedas generadas deben madurarse %1 bloques hasta que puedan ser gastadas de nuevo. Cuando generaste este bloque, se retransmitió a la red para añadirse a la cadena de bloques. Si falla en unirse a la cadena, su estado cambiará a "no aceptado" y no se podrá gastar de nuevo (bloque huérfano). Esto puede ocurrir ocasionalmente si otro nodo genera un bloque casi al mismo tiempo que el tuyo.</translation>
+        <translation>Genererede mønter skal modnes i %1 blokke førend de kan anvendes. Da denne blok blev genereret, blev den udsendt til netværket for at blive tilføjet til blokkæden. Hvis det skulle mislykkes, vil status skifte til "afvist!" og den vil derefter ikke være brugbar. Dette sker ind i mellem, når en anden node genererer en blok nærligt samtidigt.</translation>
     </message>
     <message>
         <source>Debug information</source>
-        <translation>Información de depuración</translation>
+        <translation>Debug information</translation>
     </message>
     <message>
         <source>Transaction</source>
-        <translation>Transacción</translation>
+        <translation>transaktion</translation>
     </message>
     <message>
         <source>Inputs</source>
-        <translation>Entradas</translation>
+        <translation>inputs</translation>
     </message>
     <message>
         <source>Amount</source>
-        <translation>Cantidad</translation>
+        <translation>Beløb</translation>
     </message>
     <message>
         <source>true</source>
-        <translation>verdad</translation>
+        <translation>Sand</translation>
     </message>
     <message>
         <source>false</source>
-        <translation>falso</translation>
+        <translation>Falsk</translation>
     </message>
 </context>
 <context>
     <name>TransactionDescDialog</name>
     <message>
         <source>Transaction details</source>
-        <translation>Detalles de transacción</translation>
+        <translation>Detaljer om transaktionen</translation>
     </message>
     <message>
         <source>This pane shows a detailed description of the transaction</source>
-        <translation>Este panel muestra una descripción detallada de la transacción</translation>
+        <translation>Denne tavle viser en detaljeret beskrivelse af transaktionen</translation>
     </message>
 </context>
 <context>
     <name>TransactionTableModel</name>
     <message>
         <source>Date</source>
-        <translation>Fecha</translation>
+        <translation>Dato</translation>
     </message>
     <message>
         <source>Type</source>
-        <translation>Tipo</translation>
+        <translation>Type</translation>
     </message>
     <message>
         <source>Address</source>
-        <translation>Dirección</translation>
-    </message>
-    <message numerus="yes">
-        <source>Open for %n more block(s)</source>
-        <translation><numerusform>Abierto para %n bloque más</numerusform><numerusform>Abierto para %n bloques más</numerusform></translation>
+        <translation>Adresse</translation>
     </message>
     <message>
         <source>Open until %1</source>
-        <translation>Abierto hasta %1</translation>
+        <translation>Åbn frem til %1</translation>
     </message>
     <message>
         <source>Offline</source>
-        <translation>Desconectado</translation>
+        <translation>Offline</translation>
     </message>
     <message>
         <source>Unconfirmed</source>
-        <translation>Sin confirmar</translation>
+        <translation>Ubekræftet</translation>
     </message>
     <message>
         <source>Confirming (%1 of %2 recommended confirmations)</source>
-        <translation>Confirmando (%1 de %2 confirmaciones recomendadas)</translation>
+        <translation>Bekræfter (%1 af %2 bekræftelser anbefalet)</translation>
     </message>
     <message>
         <source>Confirmed (%1 confirmations)</source>
-        <translation>Confirmado (%1 confirmaciones)</translation>
+        <translation>Bekræftet (%1 bekræftelser)</translation>
     </message>
     <message>
         <source>Conflicted</source>
-        <translation>Huérfano</translation>
+        <translation>I konflikt</translation>
     </message>
     <message>
         <source>Immature (%1 confirmations, will be available after %2)</source>
-        <translation>Prematuro (%1 confirmaciones, estará disponible después de %2)</translation>
+        <translation>Umoden (%1 bekræftelser. Vil være tilgængelig efter %2)</translation>
     </message>
     <message>
         <source>This block was not received by any other nodes and will probably not be accepted!</source>
-        <translation>¡Este bloque no fue recibido por los otros nodos y probablemente no será aceptado!</translation>
+        <translation>Denne blok var ikke modtaget af andre noder og vil sandsynligvis ikke blive godkendt.</translation>
     </message>
     <message>
         <source>Received with</source>
-        <translation>Recibido con</translation>
+        <translation>Modtaget med</translation>
     </message>
     <message>
         <source>Masternode Reward</source>
-        <translation>Recompensa de Nodo Maestro</translation>
+        <translation>Masternodebelønning</translation>
     </message>
     <message>
         <source>Received from</source>
-        <translation>Recibido desde</translation>
+        <translation>Modtaget fra</translation>
     </message>
     <message>
         <source>Received via Obfuscation</source>
-        <translation>Recibido por medio de Ofuscación</translation>
+        <translation>Modtaget via tilsløring</translation>
     </message>
     <message>
         <source>Obfuscation Denominate</source>
-        <translation>Ofuscación Denominada</translation>
+        <translation>Tilslør designerede</translation>
     </message>
     <message>
         <source>Obfuscation Collateral Payment</source>
-        <translation>Pago Colateral de Ofuscación</translation>
+        <translation>Samlet tilsløret betaling</translation>
     </message>
     <message>
         <source>Obfuscation Make Collateral Inputs</source>
-        <translation>La Ofuscación Crea Entradas Colaterales</translation>
+        <translation>Tilslørede samlede tilføjelser</translation>
     </message>
     <message>
         <source>Obfuscation Create Denominations</source>
-        <translation>Ofuscación Crea Denominaciones</translation>
+        <translation>Opret tilsløret designering</translation>
     </message>
     <message>
         <source>Sent to</source>
-        <translation>Enviado a</translation>
+        <translation>Sendt til</translation>
     </message>
     <message>
         <source>Orphan Block - Generated but not accepted. This does not impact your holdings.</source>
-        <translation>Bloque Huérfano - Generado pero no aceptado. Esto no afecta a su saldo.</translation>
+        <translation>Orphan blok - genereret, men ikke godkent. Dette har ikke indflydelse på saldoen</translation>
     </message>
     <message>
         <source>Payment to yourself</source>
-        <translation>Pago a usted mismo</translation>
+        <translation>Betaling til Dem selv</translation>
     </message>
     <message>
         <source>Minted</source>
-        <translation>Creación de moneda</translation>
+        <translation>Mintet</translation>
     </message>
     <message>
         <source>Mined</source>
-        <translation>Minado</translation>
+        <translation>Mineret</translation>
     </message>
     <message>
         <source>Obfuscated</source>
-        <translation>Ofuscado</translation>
+        <translation>skjult</translation>
     </message>
     <message>
         <source>watch-only</source>
-        <translation>sólo-lectura</translation>
+        <translation>Vis-kun</translation>
     </message>
     <message>
         <source>(n/a)</source>
@@ -3614,174 +3552,174 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>Transaction status. Hover over this field to show number of confirmations.</source>
-        <translation>Estado de la transacción. Pase el ratón sobre este campo para mostrar el número de confirmaciones.</translation>
+        <translation>Tansaktionsstatus. Før musen hen over dette felt for at få vist antallet af bekræftelser</translation>
     </message>
     <message>
         <source>Date and time that the transaction was received.</source>
-        <translation>Fecha y hora a la que se recibió la transacción.</translation>
+        <translation>Dato og tid da transaktionen blev modtaget</translation>
     </message>
     <message>
         <source>Type of transaction.</source>
-        <translation>Tipo de transacción.</translation>
+        <translation>Transaktionstype</translation>
     </message>
     <message>
         <source>Whether or not a watch-only address is involved in this transaction.</source>
-        <translation>Indica si hay o no una dirección de sólo lectura relacionada en esta transacción</translation>
+        <translation>Om der er en vis-kun adresse indeholdt i dennne transaktion eller ej.</translation>
     </message>
     <message>
         <source>Destination address of transaction.</source>
-        <translation>Dirección de destino de la transacción.</translation>
+        <translation>Destinationsadresse for denne transaktion</translation>
     </message>
     <message>
         <source>Amount removed from or added to balance.</source>
-        <translation>Cantidad quitada o añadida al balance.</translation>
+        <translation>Beløb fjernet eller tilføjet til saldoen</translation>
     </message>
 </context>
 <context>
     <name>TransactionView</name>
     <message>
         <source>All</source>
-        <translation>Todos</translation>
+        <translation>Alt</translation>
     </message>
     <message>
         <source>Today</source>
-        <translation>Hoy</translation>
+        <translation>I dag</translation>
     </message>
     <message>
         <source>This week</source>
-        <translation>Esta semana</translation>
+        <translation>Denne uge</translation>
     </message>
     <message>
         <source>This month</source>
-        <translation>Este mes</translation>
+        <translation>Denne måned</translation>
     </message>
     <message>
         <source>Last month</source>
-        <translation>Último mes</translation>
+        <translation>Sidste måned</translation>
     </message>
     <message>
         <source>This year</source>
-        <translation>Este año</translation>
+        <translation>Dette år </translation>
     </message>
     <message>
         <source>Range...</source>
-        <translation>Intervalo...</translation>
+        <translation>Område</translation>
     </message>
     <message>
         <source>Most Common</source>
-        <translation>Más Común</translation>
+        <translation>Mest almindelige</translation>
     </message>
     <message>
         <source>Received with</source>
-        <translation>Recibido con</translation>
+        <translation>Modtaget med</translation>
     </message>
     <message>
         <source>Sent to</source>
-        <translation>Enviado a</translation>
+        <translation>Sendt til</translation>
     </message>
     <message>
         <source>Obfuscated</source>
-        <translation>Ofuscado</translation>
+        <translation>skjult</translation>
     </message>
     <message>
         <source>Obfuscation Make Collateral Inputs</source>
-        <translation>La Ofuscación Crea Entradas Colaterales</translation>
+        <translation>Tilslørede samlede tilføjelser</translation>
     </message>
     <message>
         <source>Obfuscation Create Denominations</source>
-        <translation>Ofuscación Crea Denominaciones</translation>
+        <translation>Opret tilsløret designering</translation>
     </message>
     <message>
         <source>Obfuscation Denominate</source>
-        <translation>Ofuscación Denominada</translation>
+        <translation>Tilslør designerede</translation>
     </message>
     <message>
         <source>Obfuscation Collateral Payment</source>
-        <translation>Pago Colateral de Ofuscación</translation>
+        <translation>Samlet tilsløret betaling</translation>
     </message>
     <message>
         <source>To yourself</source>
-        <translation>A usted mismo</translation>
+        <translation>Til Dem selv</translation>
     </message>
     <message>
         <source>Mined</source>
-        <translation>Minado</translation>
+        <translation>Mineret</translation>
     </message>
     <message>
         <source>Minted</source>
-        <translation>Creación de moneda</translation>
+        <translation>Mintet</translation>
     </message>
     <message>
         <source>Masternode Reward</source>
-        <translation>Recompensa de Nodo Maestro</translation>
+        <translation>Masternodebelønning</translation>
     </message>
     <message>
         <source>Other</source>
-        <translation>Otro</translation>
+        <translation>Anden</translation>
     </message>
     <message>
         <source>Enter address or label to search</source>
-        <translation>Introduzca dirección o etiqueta para buscar</translation>
+        <translation>Indtast adresse eller mærk for at søge</translation>
     </message>
     <message>
         <source>Min amount</source>
-        <translation>Cantidad mínima</translation>
+        <translation>minimumsbeløb</translation>
     </message>
     <message>
         <source>Copy address</source>
-        <translation>Copiar dirección</translation>
+        <translation>Kopiér adresse</translation>
     </message>
     <message>
         <source>Copy label</source>
-        <translation>Copiar etiqueta</translation>
+        <translation>Kopiér tekstmærke</translation>
     </message>
     <message>
         <source>Copy amount</source>
-        <translation>Copiar cantidad</translation>
+        <translation>Kopiér beløb</translation>
     </message>
     <message>
         <source>Copy transaction ID</source>
-        <translation>Copiar código de transacción</translation>
+        <translation>Kopiér transaktionsID</translation>
     </message>
     <message>
         <source>Edit label</source>
-        <translation>Editar etiqueta</translation>
+        <translation>Ret mærke</translation>
     </message>
     <message>
         <source>Show transaction details</source>
-        <translation>Mostrar detalles de transacción</translation>
+        <translation>Vis transaktionsdetaljer</translation>
     </message>
     <message>
         <source>Export Transaction History</source>
-        <translation>Exportar Histórico de Transacciones</translation>
+        <translation>Eksporter transaktionshistorik</translation>
     </message>
     <message>
         <source>Comma separated file (*.csv)</source>
-        <translation>Archivo separado por comas (*.csv)</translation>
+        <translation>Kommasepareret fil (*.csv)</translation>
     </message>
     <message>
         <source>Confirmed</source>
-        <translation>Confirmado</translation>
+        <translation>Bekræftet</translation>
     </message>
     <message>
         <source>Watch-only</source>
-        <translation>Sólo-lectura</translation>
+        <translation>Vis-kun</translation>
     </message>
     <message>
         <source>Date</source>
-        <translation>Fecha</translation>
+        <translation>Dato</translation>
     </message>
     <message>
         <source>Type</source>
-        <translation>Tipo</translation>
+        <translation>Type</translation>
     </message>
     <message>
         <source>Label</source>
-        <translation>Etiqueta</translation>
+        <translation>Mærke</translation>
     </message>
     <message>
         <source>Address</source>
-        <translation>Dirección</translation>
+        <translation>Adresse</translation>
     </message>
     <message>
         <source>ID</source>
@@ -3789,290 +3727,275 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>Exporting Failed</source>
-        <translation>Exportación fallida</translation>
+        <translation>Eksporten fejlede</translation>
     </message>
     <message>
         <source>There was an error trying to save the transaction history to %1.</source>
-        <translation>Hubo un error intentando guardar el historial de transacciones a %1.</translation>
+        <translation>Der opstod en fejl under forsøget på at gemme transaktionshistorikken til %1.</translation>
     </message>
     <message>
         <source>Exporting Successful</source>
-        <translation>Exportación Correcta</translation>
+        <translation>Eksporteret!</translation>
     </message>
     <message>
         <source>The transaction history was successfully saved to %1.</source>
-        <translation>El historial de transacción fue guardado satisfactoriamente a %1.</translation>
+        <translation>Transaktionshistorikken blev gemt i %1</translation>
     </message>
     <message>
         <source>Range:</source>
-        <translation>Rango:</translation>
+        <translation>Område:</translation>
     </message>
     <message>
         <source>to</source>
-        <translation>a</translation>
+        <translation>Til</translation>
     </message>
 </context>
 <context>
     <name>UnitDisplayStatusBarControl</name>
     <message>
         <source>Unit to show amounts in. Click to select another unit.</source>
-        <translation>Unidad en la que mostrar cantidades. Click para seleccionar otra unidad.</translation>
+        <translation>Enheden som beløb og saldi vises i. Klik for at vælge en anden enhed.</translation>
     </message>
 </context>
 <context>
     <name>WalletFrame</name>
     <message>
         <source>No wallet has been loaded.</source>
-        <translation>No se ha cargado ningún monedero.</translation>
+        <translation>Ingen tegnebog indlæst</translation>
     </message>
 </context>
 <context>
     <name>WalletModel</name>
     <message>
         <source>Send Coins</source>
-        <translation>Enviar Monedas</translation>
+        <translation>Send mønter</translation>
     </message>
     <message>
         <source>SwiftTX doesn't support sending values that high yet. Transactions are currently limited to %1 PIV.</source>
-        <translation>SwiftTX no soporta el envío de importes tan altos todavía. Las transacciones están actualmente limitadas a %1 PIV.</translation>
+        <translation>SwiftTx understøtter ikke afsendelse af så store beløb endnu. Transaktioner er for tiden begrænsede til %1PIV.</translation>
     </message>
 </context>
 <context>
     <name>WalletView</name>
     <message>
         <source>&amp;Export</source>
-        <translation>&amp;Exportar</translation>
+        <translation>E&amp;ksporter</translation>
     </message>
     <message>
         <source>Export the data in the current tab to a file</source>
-        <translation>Exportar los datos de la pestaña actual a un archivo</translation>
+        <translation>Eksporter aktuelle tekst til en fil</translation>
     </message>
     <message>
         <source>Selected amount:</source>
-        <translation>Cantidad seleccionada:</translation>
+        <translation>Valgte beløb</translation>
     </message>
     <message>
         <source>Backup Wallet</source>
-        <translation>Copia del Monedero</translation>
+        <translation>Tag sikkerhedskopi af tegnebogen.</translation>
     </message>
     <message>
         <source>Wallet Data (*.dat)</source>
-        <translation>Datos del Monedero (*.dat)</translation>
+        <translation>Datafil til tegnebog (*.dat)</translation>
     </message>
     <message>
         <source>Backup Failed</source>
-        <translation>La copia de seguridad Falló</translation>
+        <translation>Sikkerhedskopiering mislykkedes.</translation>
     </message>
     <message>
         <source>There was an error trying to save the wallet data to %1.</source>
-        <translation>Hubo un error intentando guardar los datos del monedero a %1.</translation>
+        <translation>Der opstod en fejl i forsøget på at gemme tegnebogens data til %1</translation>
     </message>
     <message>
         <source>Backup Successful</source>
-        <translation>Copia de Seguridad Satisfactoria</translation>
+        <translation>Sikkerhedskopiering fuldført</translation>
     </message>
     <message>
         <source>The wallet data was successfully saved to %1.</source>
-        <translation>Los datos del monedero se guardaron correctamente a %1.</translation>
+        <translation>Tegnebogens data blev gemt i %1</translation>
     </message>
 </context>
 <context>
     <name>pivx-core</name>
     <message>
         <source>(1 = keep tx meta data e.g. account owner and payment request information, 2 = drop tx meta data)</source>
-        <translation>(1= mantener los metadatos tx p.e. dueño de la cuenta e información de la solicitud de pago, 2 = ignorar metadatos tx)</translation>
+        <translation>(1 = beholdtx metadata. For eksempel information om kontoejer og betalngsanmodninger, 2 = drop TX metadata)</translation>
     </message>
     <message>
         <source>Allow JSON-RPC connections from specified source. Valid for &lt;ip&gt; are a single IP (e.g. 1.2.3.4), a network/netmask (e.g. 1.2.3.4/255.255.255.0) or a network/CIDR (e.g. 1.2.3.4/24). This option can be specified multiple times</source>
-        <translation>Permitir conexiones JSON-RPC  desde la fuente especificada. Valido para &lt;ip&gt; sea una única IP (ej: 1.2.3.4), una red/mascara de red (ej: 1.2.3.4/255.255.255.0) o una red/CIDR (ej: 1.2.3.4/24). Esta opción puede ser especificada múltiples veces.</translation>
+        <translation>Tillad JSON-RPC forbindelser fra bestemte kilder. Gyldig &lt;ip&gt; er enkeltadresse (1.2.3.4), a Network/netmask (1.2.3.4/255.255.255.0) eller et netværk/CCIDR (1.2.3.4/24). Der kan indsættes flere linier.</translation>
     </message>
     <message>
         <source>An error occurred while setting up the RPC address %s port %u for listening: %s</source>
-        <translation>Un error ocurrió mientras se ajustaba la dirección RPC %s puerto %u para escucha en: %s</translation>
+        <translation>Der opstod en fejl under opsætningen af RPC adressen %s port %u for monitering: %s</translation>
     </message>
     <message>
         <source>Bind to given address and always listen on it. Use [host]:port notation for IPv6</source>
-        <translation>Conectarse a la IP seleccionada y siempre escuchar de ella. Usar la forma [host]:puerto para IPv6</translation>
+        <translation>Forbind til den opgivne adresse og lyt på den kontinuerligt. Brug [host]:port notation for IPv6</translation>
     </message>
     <message>
         <source>Bind to given address and whitelist peers connecting to it. Use [host]:port notation for IPv6</source>
-        <translation>Escuchar únicamente a la dirección IP indicada y a nodos de la lista blanca. Use la notación [host]:puerto para IPv6</translation>
+        <translation>Forbind til den opgivne adresse og put peers på listen over godkendte adresser.  Brug [host]:port notation for IPv6</translation>
     </message>
     <message>
         <source>Bind to given address to listen for JSON-RPC connections. Use [host]:port notation for IPv6. This option can be specified multiple times (default: bind to all interfaces)</source>
-        <translation>Escuchar únicamente a la tarjeta de red indicada para conexiones JSON-RPC. Use la notación [host]:puerto para IPv6. Esta opción puede ser especificada varias veces (por defecto: escuchar en todas las tarjetas de red)</translation>
+        <translation>Forbind til den opgivne adresse og lyt efter JSON-.RPC forbindelser. Brug [host]:port notation for IPv6. Der kan indsættes flere linier (standard: Forbind til alle interfaces)</translation>
     </message>
     <message>
         <source>Cannot obtain a lock on data directory %s. PIVX Core is probably already running.</source>
-        <translation>No se puede obtener un bloqueo sobre el directorio de datos %s. PIVX Core esta probablemente en ejecución.</translation>
+        <translation>Kan ikke låse datamappen %s. PIVX core kører sandsynligvis allerede.</translation>
     </message>
     <message>
         <source>Change automatic finalized budget voting behavior. mode=auto: Vote for only exact finalized budget match to my generated budget. (string, default: auto)</source>
-        <translation>Cambiar el comportamiento automático de votación de presupuesto final. modo=auto: Votar sólo por coincidencia exacta de un presupuesto finalizado con el generado por mí. (cadena, por defecto: auto)</translation>
+        <translation>Skift automatisk afstemningsmetode, mode=auto: Stem kun for fuldstændigt match mod det generered budget (Strng, Default: auto)</translation>
     </message>
     <message>
         <source>Continuously rate-limit free transactions to &lt;n&gt;*1000 bytes per minute (default:%u)</source>
-        <translation>Limite continuo de transacciones gratuitas &lt;n&gt;*1000 bytes por minuto (default:%u)</translation>
+        <translation>Bedøm ubegrænsede transaktioner til &lt;n&gt;*1000 bytes pr. minut kontinuerligt (default:%u)</translation>
     </message>
     <message>
         <source>Create new files with system default permissions, instead of umask 077 (only effective with disabled wallet functionality)</source>
-        <translation>Crear nuevos archivos con el permiso predeterminado del sistema, en vez de umask 077 (solamente efectivo con la funcionalidad del monedero desabilitada)</translation>
+        <translation>Opret nye filer med systemets default tilladelser i stedet for umask 077 (virker kun med tegnebogsfunktionen slået fra)</translation>
     </message>
     <message>
         <source>Delete all wallet transactions and only recover those parts of the blockchain through -rescan on startup</source>
-        <translation>Borrar todas las transacciones del monedero y solo recuperar partes de la cadena de bloque a traves de -rescan al inicio.</translation>
+        <translation>Slet alle tegnebogens transaktioner og genskab kun fra blokkæden ved at tilføje -rescan i forbindes med opstart.</translation>
     </message>
     <message>
         <source>Disable all PIVX specific functionality (Masternodes, Obfuscation, SwiftTX, Budgeting) (0-1, default: %u)</source>
-        <translation>Desabilitar toda la funcionalidad especifica PIVX (Masternodes, Obfuscation, SwiftTX, Budgeting) (0-1, predeterminado: %u)</translation>
+        <translation>Slå alle PIVX funktioner fra (Masternoder, Tilsløring, SwiftTX, Budgetting)(0-1,default:%u)</translation>
     </message>
     <message>
         <source>Distributed under the MIT software license, see the accompanying file COPYING or &lt;http://www.opensource.org/licenses/mit-license.php&gt;.</source>
-        <translation>Distribuido bajo licencia MIT software license, ver el archivo adjunto COPYING or &lt;http://www.opensource.org/licenses/mit-license.php&gt;</translation>
+        <translation>Distribueret under MIT software licensen. Se den vedlaget fil COPYING eller 
+&lt;http://www.opensource.org/licenses/mit-license.php&gt;. </translation>
     </message>
     <message>
         <source>Enable spork administration functionality with the appropriate private key.</source>
-        <translation>Activar la función de administración de sporks con la llave privada apropiada.</translation>
+        <translation>Slå spork administrationsfunktionen til med den rette private nøgle</translation>
     </message>
     <message>
         <source>Enable swifttx, show confirmations for locked transactions (bool, default: %s)</source>
-        <translation>Activar swifttx, mostrar confirmaciones para transacciones bloqueadas (bool, predeterminado: %s)</translation>
-    </message>
-    <message>
-        <source>Enable use of automated obfuscation for funds stored in this wallet (0-1, default: %u)</source>
-        <translation>Activar el uso de ofuscación automatica para fondos guardados en este monedero (0-1, predeterminado: %u)</translation>
+        <translation>Aktiver swifttx, vis bekræftelser for låste transaktioner (bool, default: %s)</translation>
     </message>
     <message>
         <source>Enter regression test mode, which uses a special chain in which blocks can be solved instantly.</source>
-        <translation>Entrar en el modo prueba de regresión, el cual usa una cadena especial en el cual los bloques pueden ser resueltos instantaneamente.</translation>
-    </message>
-    <message>
-        <source>Error: Listening for incoming connections failed (listen returned error %s)</source>
-        <translation>Error: La escucha para conexiones entrantes falló (la escucha retorno error %s)</translation>
+        <translation>Opgiv regression test mode, der bruger en særlig kæde, hvor blokke kan løses med det samme</translation>
     </message>
     <message>
         <source>Error: Unsupported argument -socks found. Setting SOCKS version isn't possible anymore, only SOCKS5 proxies are supported.</source>
-        <translation>Error: Argumento -socks no soportado. No se permite utilizar la versión SOCKS, solo proxies de SOCKS5 están soportados.</translation>
+        <translation>Fejl! Argumentet er ikke understøttet -socks found. Det er ikke muligt at bestemme hvilken SOCKS version længere. Kun SOCKS5 proxies understøttes.</translation>
     </message>
     <message>
         <source>Execute command when a relevant alert is received or we see a really long fork (%s in cmd is replaced by message)</source>
-        <translation>Ejecutar un comando cuando una alerta relevante es recibida o estamos teniendo una realmente larga bifurcación (%s en cmd is reemplazado por el mensaje)</translation>
+        <translation>Udfør en kommando når der modtages en alarm, eller der opdages en meget lang fork (%s in cmd erstattet af en besked)</translation>
     </message>
     <message>
         <source>Execute command when a wallet transaction changes (%s in cmd is replaced by TxID)</source>
-        <translation>Ejecutar un comando cuando una transacción del monedero cambie (%s en cmd is reemplazado por TxID)</translation>
+        <translation>Udfør en kommando når en transaktion i tegnebogen ændres (%s in cmd erstattet af TxID)</translation>
     </message>
     <message>
         <source>Execute command when the best block changes (%s in cmd is replaced by block hash)</source>
-        <translation>Ejecutar comando cuando el mejor bloque cambie (%s en cmd es reemplazado por el block hash)</translation>
+        <translation>Udfør en kommando når den bedste blok ændres (%s in cmd erstattes med blok hashen)</translation>
     </message>
     <message>
         <source>Fees (in PIV/Kb) smaller than this are considered zero fee for relaying (default: %s)</source>
-        <translation>Comisiones (en PIV/Kb) menores a esta son consideradas gratuitas para la propagación de la transacción (default: %s)</translation>
+        <translation>Gebyrer (in PIV/kb) lavere end dette betragtes som et nul-gebyr for at videresende (default:%s)</translation>
     </message>
     <message>
         <source>Fees (in PIV/Kb) smaller than this are considered zero fee for transaction creation (default: %s)</source>
-        <translation>Comisiones (en PIV/Kb) menores a esta son consideradas gratuitas para la creación de la transacción (default: %s)</translation>
+        <translation>Gebyrer (in PIV/kb) lavere end dette betragtes som et nul-gebyr for at oprette en transaktion (default:%s)</translation>
     </message>
     <message>
         <source>Flush database activity from memory pool to disk log every &lt;n&gt; megabytes (default: %u)</source>
-        <translation>Trasladar la actividad de la base de datos en el pool de memoria al log de disco cada &lt;n&gt; megabytes (default: %u)</translation>
+        <translation>Opsaml databaseaktiviteterne fra hukommelsespool og gem dem i loggen på disken for hver &lt;n&gt; megabytes (default: %u)</translation>
     </message>
     <message>
         <source>Found unconfirmed denominated outputs, will wait till they confirm to continue.</source>
-        <translation>Se encontró salidas denominadas sin confirmar, se esperará hasta que se confirmen para continuar.</translation>
+        <translation>Der er fundet ubekræftede designerede outputs. Vent indtil de bekræftes for at fortsætte.</translation>
     </message>
     <message>
         <source>How thorough the block verification of -checkblocks is (0-4, default: %u)</source>
-        <translation>Cuán exhaustiva es la verificación de bloque de -checkblocks (0-4, predeterminado: %u)</translation>
+        <translation>Hvor grundig er blokkens verificeringer af -checkblocks er (0-4, default %u)</translation>
     </message>
     <message>
         <source>If paytxfee is not set, include enough fee so transactions begin confirmation on average within n blocks (default: %u)</source>
-        <translation>Si paytxfee no esta definido, incluir suficiente comisión de manera que la transacción se vuelva confirmada en promedio dentro de n bloques (predeterminado: %u)</translation>
+        <translation>Hvis der ikke fastsættes et betalingsTxgebyr, skal der inkluderes tilstrækkelige midler til gebyret så transaktionens bekræftelsesproces vil begynde indenfor n blokke (default %u)</translation>
     </message>
     <message>
         <source>In this mode -genproclimit controls how many blocks are generated immediately.</source>
-        <translation>En este modo -genproclimit controla cuantos bloques son generados inmediatamente.</translation>
+        <translation>Denne indstilling -genproclimit kontrollerer hvor mange blokke der bliver genereret med det samme.</translation>
     </message>
     <message>
         <source>Invalid amount for -maxtxfee=&lt;amount&gt;: '%s' (must be at least the minrelay fee of %s to prevent stuck transactions)</source>
-        <translation>Importe inválido para -maxtxfee=&lt;amount&gt;:'%s' (debe ser al menos la comisión minrelay de %s para prevenir transacciones atascadas)</translation>
+        <translation>Ugyldigt beløb for -maxtxfee=&lt;amount&gt;: '%s' (skal være mindst det samme som minimumsgebyret på %s for at forhindre at transaktionen blokeres).</translation>
     </message>
     <message>
         <source>Keep the specified amount available for spending at all times (default: 0)</source>
-        <translation>Mantener la cantidad especificada disponible para gastar en todo momento (por defecto: 0)</translation>
+        <translation>Fasthold altid den aktuelle saldo klar til brug (default: 0)</translation>
     </message>
     <message>
         <source>Log transaction priority and fee per kB when mining blocks (default: %u)</source>
-        <translation>Prioridad del registro de transacciones por kB cuando se esta minando bloques (predeterminado: %u)</translation>
+        <translation>Indskriv transaktionsprioritet og gebyr pr kB i loggen når der mineres (default:%u)</translation>
     </message>
     <message>
         <source>Maintain a full transaction index, used by the getrawtransaction rpc call (default: %u)</source>
-        <translation>Mantener un indice de transacción completo, utilizado por la llamada rpc getrawtransaction (predeterminado: %u)</translation>
+        <translation>Vedligehold et fuldgyldigt transaktionsindeks fra getrawtransaktion fra rpc kald (default %u)</translation>
     </message>
     <message>
         <source>Maximum size of data in data carrier transactions we relay and mine (default: %u)</source>
-        <translation>Tamaño máximo de datos en transacciones de transmisiones de datos que pasamos y minamos (predeterminado: %u)</translation>
-    </message>
-    <message>
-        <source>Maximum total fees to use in a single wallet transaction, setting too low may abort large transactions (default: %s)</source>
-        <translation>Comisión máxima total para usar en una única transacción de billetera, definirlo muy bajo puede abortar transacciones largas (predeterminado: %s)</translation>
+        <translation>Maksimal størrelse på data hos databærerens transaktioner der videresendes og mineres (default %u)</translation>
     </message>
     <message>
         <source>Number of seconds to keep misbehaving peers from reconnecting (default: %u)</source>
-        <translation>Número de segundos a mantener pares con mal comportamiento de reconectarse (predeterminado: %u)</translation>
+        <translation>Det antal sekunder, som peers, der ikke handler korrekt skal afholdes fra at genforbinde (default: %u)</translation>
     </message>
     <message>
         <source>Obfuscation uses exact denominated amounts to send funds, you might simply need to anonymize some more coins.</source>
-        <translation>La ofuscación utiliza importes en denominaciones exactas para enviar fondos, puedes simplemente necesitar anonimizar algunas monedas mas. </translation>
+        <translation>Tilsløring bruger hele det tilslørede designerede beløb til at sende betalinger. De kan blot tilsløre yderligere PIVX</translation>
     </message>
     <message>
         <source>Output debugging information (default: %u, supplying &lt;category&gt; is optional)</source>
-        <translation>Saluda de información de depuración (predeterminado: %u, proveyendo &lt;category&gt; es opcional)</translation>
-    </message>
-    <message>
-        <source>Provide liquidity to Obfuscation by infrequently mixing coins on a continual basis (0-100, default: %u, 1=very frequent, high fees, 100=very infrequent, low fees)</source>
-        <translation>Proporcionar liquidez a la Ofuscación mezclando infrecuentemente las monedas continuamente (0-100, predeterminado: %u, 1=muy frecuente, altas comisiones, 100=muy infrecuente, bajas comisiones)</translation>
+        <translation>Output debug information (default: %u, supplying &lt;category&gt; er valgfri)</translation>
     </message>
     <message>
         <source>Query for peer addresses via DNS lookup, if low on addresses (default: 1 unless -connect)</source>
-        <translation>Consultar por direcciones de pares vía búsqueda en DNS, si cantidad de direcciones esta bajo (predeterminado: 1 a menos que se utilice -connect)</translation>
+        <translation>Forespørg peer adresser via DNS opslag, hvis antallet af adresser er laft (default: 1 med mindre -connect)</translation>
     </message>
     <message>
         <source>Require high priority for relaying free or low-fee transactions (default:%u)</source>
-        <translation>Requerir alta prioridad para transmitir transacción de libre o baja comisión (predeterminado: %u)</translation>
+        <translation>anmod om høj prioritet for videresendelse af gratis transaktioner eller transaktioner med lavt gebyr (default: %u)</translation>
     </message>
     <message>
         <source>Send trace/debug info to console instead of debug.log file (default: %u)</source>
-        <translation>Enviar info de traza/debug a la consola en lugar del archivo debug.log (predeterminado: %u)</translation>
+        <translation>Send sporings/debug info til konsollet i stedet for at sende det til debug.log filen. (default: %u)</translation>
     </message>
     <message>
         <source>Set maximum size of high-priority/low-fee transactions in bytes (default: %d)</source>
-        <translation>Define tamaño máximo de transacción alta prioridad/baja comisión en bytes (predeterminado: %d)</translation>
+        <translation>Angiv maksimumstørrelsen på højprioritets/lavgebyrstransaktioner i bytes (default: %d)</translation>
     </message>
     <message>
         <source>Set the number of script verification threads (%u to %d, 0 = auto, &lt;0 = leave that many cores free, default: %d)</source>
-        <translation>Define el número de hilos para el script de verificación (%u a %d, 0 = auto, &lt;0 = dejar esa cantidad de núcleos libres, predeterminado: %d)</translation>
+        <translation>Angiv antallet af script verifikationstråde (%u til %d, 0 = auto, &lt; = efterlad så mange tråde ledige, default: %d)</translation>
     </message>
     <message>
         <source>Set the number of threads for coin generation if enabled (-1 = all cores, default: %d)</source>
-        <translation>Define el número de hilos para generación de moneda si esta habilitado (-1 = todos los núcleos, predeterminado: %d)</translation>
+        <translation>Angiv antallet af tråde til møntgenerering hvis aktiveret (-1 = alle cores, default: %d)</translation>
     </message>
     <message>
         <source>Show N confirmations for a successfully locked transaction (0-9999, default: %u)</source>
-        <translation>Mostrar N confirmaciones para una transacción cerrada exitosamente (0-9999, predefinido: %u)</translation>
+        <translation>Vis N bekræftelser for en gennemført låst transaktion (0-9999, default: %u)</translation>
     </message>
     <message>
         <source>Support filtering of blocks and transaction with bloom filters (default: %u)</source>
-        <translation>Soportar filtrado de bloques y transacciones con filtros bloom (por defecto: %u)</translation>
+        <translation>Understøt filtrering af blokke og transaktioner med bloom filters (default: %u)</translation>
     </message>
     <message>
         <source>SwiftTX requires inputs with at least 6 confirmations, you might need to wait a few minutes and try again.</source>
-        <translation>SwiftTX requiere entradas con hasta 6 confirmaciones, es posible que debas esperar unos minutos e intentar nuevamente.</translation>
+        <translation>SwiftTX kræver mindst 6 bekræftelser. Vent nogle minutter og prøv igen.</translation>
     </message>
     <message>
         <source>This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit &lt;https://www.openssl.org/&gt; and cryptographic software written by Eric Young and UPnP software written by Thomas Bernard.</source>
-        <translation>Este producto incluye software desarrollado por el Proyecto OpenSSL para uso en OpenSSL Toolkit &lt;https://www.openssl.org/&gt; y software de cifrado escrito por Eric Young y software de UPnP escrito por Thomas Bernard.</translation>
+        <translation>Dette produkt anvender software udviklet i OpenSSL projektet til brug i OpenSSL værktøjssættet &lt;https://www.openssl.org/&gt; og kryptosoftware skrevet afEric Young og UPnP software skrevet af Thomas Bernard.</translation>
     </message>
     <message>
         <source>To use pivxd, or the -server option to pivx-qt, you must set an rpcpassword in the configuration file:
@@ -4086,193 +4009,193 @@ If the file does not exist, create it with owner-readable-only file permissions.
 It is also recommended to set alertnotify so you are notified of problems;
 for example: alertnotify=echo %%s | mail -s "PIVX Alert" admin@foo.com
 </source>
-        <translation>Para usar pivxd, o la opción -server de pivx-qt, debes definir un rpcpassword en el archivo de configuración:
+        <translation>For at bruge pivxd eller -server muligheden sammen med pivx-qt skal der angives et rpc kodeord i konfigurationsfilen:
 %s
-Es recomendado que uses la siguiente contraseña aleatoria:
-rpcuser=pivx
-rpcrpcpassword=%s
-(No necesitas recordar esta contraseña)
-El nombre de usuario y contraseña NO DEBEN ser los mismos.
-Si el archivo no existe, crearlo con permisos de solo lectura para el propietario.
-También es recomendado definir alertnotify de manera que seas notificado de problemas;
-por ejemplo: alertnotify=echo %%s | mail -s "PIVX Alert" admin@foo.com
+De anbefales at benytte følgende tilfældige kodeord
+Rpcuser=pivxrpc
+rpcpasswrd=%s
+(Det er ikke nødvendigt at huske dette kodeord)
+Brugernavn og kodeord MÅ IKKE VÆRE ENS!
+Hvis filen ikke eksisterer, opret den med sikkerhedsindstillingen - ejer kun læserettigheder tilladelsen.
+Det anbefales tillige at vælge alertnotify til for at blive orienteret om eventuelle problemer.
+For eksempel: alertnotify=Echo %% | mail - s "PIVX ALARM!" e-mail@administrator.dk
 </translation>
     </message>
     <message>
         <source>Unable to bind to %s on this computer. PIVX Core is probably already running.</source>
-        <translation>Imposible conectar a %s en esta computadora. Es probable que PIVX Core ya este corriendo.</translation>
+        <translation>Det var ikke muligt at forbinde %s på denne computer. PIVX kører sandsynligvis allerede.</translation>
     </message>
     <message>
         <source>Unable to locate enough Obfuscation denominated funds for this transaction.</source>
-        <translation>Imposible localizar suficientes fondos denominados de Ofuscación para esta transacción.</translation>
+        <translation>Det er ikke muligt at allokere tilstrækkeligt med tilsløret designeret indestående for at gennemføre denne transaktion.</translation>
     </message>
     <message>
         <source>Unable to locate enough Obfuscation non-denominated funds for this transaction that are not equal 10000 PIV.</source>
-        <translation>Imposible localizar suficientes fondos no-denominados de Ofuscación para esta transacción que no es igual a 10000 PIV.</translation>
+        <translation>Det er ikke muligt at allokere tilstrækkeligt med tilsløret  ikke-designeret indestående for at gennemføre denne transaktion, der ikke ækvivalerer 10000 PIV.</translation>
     </message>
     <message>
         <source>Unable to locate enough funds for this transaction that are not equal 10000 PIV.</source>
-        <translation>Imposible localizar fondos suficientes para esta transacción que no es igual a 10000 PIV.</translation>
+        <translation>Det var ikke muligt at allokere tilstrækkelige midler til denne transaktion som er forskellig fra 10000 PIV.</translation>
     </message>
     <message>
         <source>Use separate SOCKS5 proxy to reach peers via Tor hidden services (default: %s)</source>
-        <translation>Utilizar un proxy SOCKS5 diferente para alcanzar pares vía el servicio oculto Tor (predefinido: %s)</translation>
+        <translation>Brug separat SOCKS5 proxy for at nå ud til peers via Tor skjulte tjenester (default: %s)</translation>
     </message>
     <message>
         <source>Warning: -maxtxfee is set very high! Fees this large could be paid on a single transaction.</source>
-        <translation>Advertencia: -maxtxfee esta muy alto! Comisiones así de altas pueden ser pagadas en una única transacción.</translation>
+        <translation>Advarsel! -maxtxfee er sat meget højt. Gebyrer så store bør betales i en selvstændig transaktion.</translation>
     </message>
     <message>
         <source>Warning: -paytxfee is set very high! This is the transaction fee you will pay if you send a transaction.</source>
-        <translation>Advertencia: -paytxfee esta muy alta! Esta es la comisión de transacción que pagarás si envías una transacción.</translation>
+        <translation>Advarsel! -paytxfee er sat meget højt. Det er dette gebyr De kommer til at betale for transaktionen, hvis De gennemfører. </translation>
     </message>
     <message>
         <source>Warning: Please check that your computer's date and time are correct! If your clock is wrong PIVX Core will not work properly.</source>
-        <translation>Advertencia: Por favor verifique que la fecha y hora de su computadora sean correctas! Si su reloj esta fuera de hora PIVX Core no funcionará adecuadamente.</translation>
+        <translation>Advarsel! Kontroller at computerens dato og tid er korrekt indstillet. Hvis tiden ikke er rigtig, vil PIVX core ikke fungere ordentligt.</translation>
     </message>
     <message>
         <source>Warning: The network does not appear to fully agree! Some miners appear to be experiencing issues.</source>
-        <translation>Advertencia: La red parece no estar concordando totalmente! Algunos mineros parecen estar experimentando problemas.</translation>
+        <translation>Advarsel! Netværket ser ikke ud til at samtýgge. Nogle af minerne har tilsyneladende problemer.</translation>
     </message>
     <message>
         <source>Warning: We do not appear to fully agree with our peers! You may need to upgrade, or other nodes may need to upgrade.</source>
-        <translation>Advertencia: No estamos apareciendo totalmente en concordancia con nuestros pares! Podrías necesitar una actualización, o otros nodos pueden necesitar una actualización.</translation>
+        <translation>Advarsel! Der er ikke fuld enighed mellem Deres og de øvrige peers. Det er muligt, at De skal opdatere tegnebogen, eller at andre noder mangler at opdatere.</translation>
     </message>
     <message>
         <source>Warning: error reading wallet.dat! All keys read correctly, but transaction data or address book entries might be missing or incorrect.</source>
-        <translation>Advertencia: error leyendo wallet.dat! Todas las claves leídas correctamente, pero datos de transacción or entradas en el libro de direcciones podrían estar faltando o ser incorrectas.</translation>
+        <translation>Advarsel! Fejl ved læsning af wallet.dat. Alle nøgler blev indlæst korrekt, men transaktions- eller adressebogens er fejlbehæftede, eller mangler helt. </translation>
     </message>
     <message>
         <source>Warning: wallet.dat corrupt, data salvaged! Original wallet.dat saved as wallet.{timestamp}.bak in %s; if your balance or transactions are incorrect you should restore from a backup.</source>
-        <translation>Advertencia: wallet.dat esta dañado, datos salvados! El wallet.dat original esta grabado como wallet.{timestamp}.bak en %s; si tu saldo o transacciones son incorrectas deberías restaurar de un backup.</translation>
+        <translation>Advarsel! wallet.dat filen er beskadiget. Data genskabt. Den originale wallet.dat fll blev gemt som tegnebog. {temestap}.bak i %s; Hvis transaktioner eller saldo er forkert, bør De genskabe tegnebogen fra en sikkerhedskopi.</translation>
     </message>
     <message>
         <source>Whitelist peers connecting from the given netmask or IP address. Can be specified multiple times.</source>
-        <translation>Pares de la whitelist conectados desde la mascara de red o direcciones IP dada. Puede ser especificado múltiples veces.</translation>
+        <translation>Sæt peers, der forbinder fra denne netmaske eller IP adresse på listen over godkendte peers. Der kan indføjes flere linier.</translation>
     </message>
     <message>
         <source>Whitelisted peers cannot be DoS banned and their transactions are always relayed, even if they are already in the mempool, useful e.g. for a gateway</source>
-        <translation>Pares de la Whitelist no pueden ser banneados por DoS y sus transacciones son siempre transmitidas, aún si ellas están ya en la mempool, util por ejemplo para un gateway.</translation>
+        <translation>Peers, der optræder i listen over godkendte peers kan ikke blokeres på baggrund af DoS, og deres transaktioner vil altid blive videresendt - også selvom de allerede findes i mempoolen - anvendes til f.eks. gateways.</translation>
     </message>
     <message>
         <source>You must specify a masternodeprivkey in the configuration. Please see documentation for help.</source>
-        <translation>Debes especificar un masternodeprivkey en la configuración. Por favor mira la documentación por ayuda.</translation>
+        <translation>Der skal angives en masternodeprivkey i konfigurationen. For mere information, se i dokumentationen.</translation>
     </message>
     <message>
         <source>(51472 could be used only on mainnet)</source>
-        <translation>(51472 puede ser utilizado solo en mainnet)</translation>
+        <translation>(51472 kunne kun bruges på hovednettet)</translation>
     </message>
     <message>
         <source>(default: %s)</source>
-        <translation>(predeterminado: %s)</translation>
+        <translation>(default: %s)</translation>
     </message>
     <message>
         <source>(default: 1)</source>
-        <translation>(predeterminado: 1)</translation>
+        <translation>(default: 1)</translation>
     </message>
     <message>
         <source>(must be 51472 for mainnet)</source>
-        <translation>(debe ser 51472 para un mainnet)</translation>
+        <translation>(skal være 51472 for hovednettet)</translation>
     </message>
     <message>
         <source>Accept command line and JSON-RPC commands</source>
-        <translation>Aceptar linea de mandato y mandatos JSON-RPC</translation>
+        <translation>Accepter kommandolinie og JSON-RPC kommandoer</translation>
     </message>
     <message>
         <source>Accept connections from outside (default: 1 if no -proxy or -connect)</source>
-        <translation>Aceptar conexiones desde afuera (predeterminado: 1 sin opción -proxy o -connect)</translation>
+        <translation>Accepter forbindelser udefra (default: 1 hvis ingen -proxy eller -connect)</translation>
     </message>
     <message>
         <source>Accept public REST requests (default: %u)</source>
-        <translation>Aceptar peticiones públicas REST (predeterminado: %u)</translation>
+        <translation>Accepter public REST anmodninger (default: %u)</translation>
     </message>
     <message>
         <source>Acceptable ciphers (default: %s)</source>
-        <translation>Métodos de cifrado aceptables (predeterminado: %s)</translation>
+        <translation>Acceptabel krypto (default: %s)</translation>
     </message>
     <message>
         <source>Add a node to connect to and attempt to keep the connection open</source>
-        <translation>Agregar un nodo a conectarse y intentar mantener abierta la conexión</translation>
+        <translation>Tilføj en node at forbinde til, og forsøg at holde forbindelsen åben.</translation>
     </message>
     <message>
         <source>Allow DNS lookups for -addnode, -seednode and -connect</source>
-        <translation>Permitir búsquedas DNS para -addnode, -seednode y -connect</translation>
+        <translation>Tillad DNS opslag for -addnode, -seednode og -connect</translation>
     </message>
     <message>
         <source>Already have that input.</source>
-        <translation>Ya tiene esa entrada.</translation>
+        <translation>Dette er allerede angivet</translation>
     </message>
     <message>
         <source>Always query for peer addresses via DNS lookup (default: %u)</source>
-        <translation>Siempre consultar por direcciones de pares vía búsqueda DNS (predeterminado: %u)</translation>
+        <translation>Forespørg altid peer adresser via DNS opslag (default: %u)</translation>
     </message>
     <message>
         <source>Attempt to recover private keys from a corrupt wallet.dat</source>
-        <translation>Intentar recuperar claves privadas desde un wallet.dat dañado</translation>
+        <translation>Forsøger at genskabe de private nøgler fra en beskadiget wallet.dat fil</translation>
     </message>
     <message>
         <source>Block creation options:</source>
-        <translation>Opciones de creación de bloque:</translation>
+        <translation>Bloker optioner for oprettelse:</translation>
     </message>
     <message>
         <source>Can't denominate: no compatible inputs left.</source>
-        <translation>No se puede denominar: quedaron entradas no compatibles.</translation>
+        <translation>Kan ikke designere: Ingen kompatible inputs tilbage.</translation>
     </message>
     <message>
         <source>Can't find random Masternode.</source>
-        <translation>No se puede encontrar un Masternode al azar.</translation>
+        <translation>Kan ikke finde en tilfældig masternode.</translation>
     </message>
     <message>
         <source>Can't mix while sync in progress.</source>
-        <translation>No se puede mezclar mientras la sincronización esta en progreso.</translation>
+        <translation>Kan ikke usynliggøre så længe der synkroniseres.</translation>
     </message>
     <message>
         <source>Cannot downgrade wallet</source>
-        <translation>No se puede volver a una versión anterior de la billetera</translation>
+        <translation>Kan ikke nedgradere tegnebogen</translation>
     </message>
     <message>
         <source>Cannot resolve -bind address: '%s'</source>
-        <translation>No se puede resolver la dirección -bind: '%s'</translation>
+        <translation>Kan ikke opløse -bind adresse: %s'</translation>
     </message>
     <message>
         <source>Cannot resolve -externalip address: '%s'</source>
-        <translation>No se puede resolver la dirección -externalip: '%s'</translation>
+        <translation>Kan ikke opløse -externalip adresse: %s'</translation>
     </message>
     <message>
         <source>Cannot resolve -whitebind address: '%s'</source>
-        <translation>No se puede resolver la dirección -whitebind: '%s'</translation>
+        <translation>Kan ikke opløse -whitebind adresse: %s'</translation>
     </message>
     <message>
         <source>Cannot write default address</source>
-        <translation>No se puede escribir la dirección predeterminada</translation>
+        <translation>Kan ikke skrive standardadressen</translation>
     </message>
     <message>
         <source>Collateral not valid.</source>
-        <translation>Colateral no válido.</translation>
+        <translation>Sikkerhed ikke gyldig</translation>
     </message>
     <message>
         <source>Connect only to the specified node(s)</source>
-        <translation>Conectar solo a el/los nodo(s) especificados</translation>
+        <translation>Forbind kun til de angivne node(r)</translation>
     </message>
     <message>
         <source>Connect through SOCKS5 proxy</source>
-        <translation>Conectar a través de proxy SOCKS5</translation>
+        <translation>Forbind gennem SOCKS5 proxy</translation>
     </message>
     <message>
         <source>Connect to a node to retrieve peer addresses, and disconnect</source>
-        <translation>Conectar a un nodo para obtener direcciones de pares, y desconectar</translation>
+        <translation>Forbind til en node for at hente peeradresser og afbryd derefter forbindelsen</translation>
     </message>
     <message>
         <source>Connection options:</source>
-        <translation>Opciones de conexión:</translation>
+        <translation>Forbindelsesoptioner</translation>
     </message>
     <message>
         <source>Copyright (C) 2009-%i The Bitcoin Core Developers</source>
-        <translation>Copyright (C) 2009-%i The Bitcoin Core Developers</translation>
+        <translation>Copyright (C) 2009-%i The Bitcoin Core Developers </translation>
     </message>
     <message>
         <source>Copyright (C) 2014-%i The Dash Core Developers</source>
-        <translation>Copyright (C) 2014-%i The Dash Core Developers</translation>
+        <translation>Copyright (C) 2014-%i The Dash Core Developers </translation>
     </message>
     <message>
         <source>Copyright (C) 2015-%i The PIVX Core Developers</source>
@@ -4280,856 +4203,799 @@ por ejemplo: alertnotify=echo %%s | mail -s "PIVX Alert" admin@foo.com
     </message>
     <message>
         <source>Corrupted block database detected</source>
-        <translation>Se detectó base de datos de bloques dañado</translation>
+        <translation>Blokdatabasen er beskadiget</translation>
     </message>
     <message>
         <source>Could not parse -rpcbind value %s as network address</source>
-        <translation>El valor %s de -rpcbind no pudo ser leído como una dirección de red.</translation>
+        <translation>Kunne ikke fortolke -rpcbind værdien %s som netværksadresse</translation>
     </message>
     <message>
         <source>Could not parse masternode.conf</source>
-        <translation>No se pudo analizar el contenido de masternode.conf </translation>
+        <translation>Kunne ikke fortolke masternode.conf</translation>
     </message>
     <message>
         <source>Debugging/Testing options:</source>
-        <translation>Opciones de Depuración/Pruebas:</translation>
+        <translation>Debug/testoptioner:</translation>
     </message>
     <message>
         <source>Disable safemode, override a real safe mode event (default: %u)</source>
-        <translation>Desactiva modo seguro, invalida un evento modo seguro real (predeterminado: %u)</translation>
+        <translation>Slå beskyttet tilstand fra og ignorer en ægte "beskyttet tilstands" hændelse (default: %u)</translation>
     </message>
     <message>
         <source>Discover own IP address (default: 1 when listening and no -externalip)</source>
-        <translation>Descubrir direcciones IP propia (predeterminado: 1 cuando se esta a la escucha y sin opción -externalip)</translation>
+        <translation>Find egen IP adresse (default: 1 når der lyttes, og inge -externalip)</translation>
     </message>
     <message>
         <source>Do not load the wallet and disable wallet RPC calls</source>
-        <translation>No cargar la billetera y desactivar las llamadas RPC de billetera</translation>
+        <translation>Indlæs ikke tegnebogen og slå tegnebogens RPC kald fra</translation>
     </message>
     <message>
         <source>Do you want to rebuild the block database now?</source>
-        <translation>¿Quieres reconstruir la base de datos de bloques ahora?</translation>
+        <translation>Vil De genopbygge blokdatabasen nu?</translation>
     </message>
     <message>
         <source>Done loading</source>
-        <translation>Realizando carga</translation>
+        <translation>Indlæst!</translation>
     </message>
     <message>
         <source>Enable the client to act as a masternode (0-1, default: %u)</source>
-        <translation>Habilitar al cliente para actuar como un nodo maestro (0-1. predeterminado: %u)</translation>
+        <translation>Slå tilstanden "masternode" til (0-1 default: %u)</translation>
     </message>
     <message>
         <source>Entries are full.</source>
-        <translation>Las entradas están llenas.</translation>
+        <translation>Der er ikke plads til flere poster</translation>
     </message>
     <message>
         <source>Error connecting to Masternode.</source>
-        <translation>Error al conectar al Nodo Maestro</translation>
+        <translation>Fejl ved oprettelse af forbindelse til masternode.</translation>
     </message>
     <message>
         <source>Error initializing block database</source>
-        <translation>Error al inicializar base de datos de bloques</translation>
+        <translation>Fejl ved initialisering af blokdatabasen</translation>
     </message>
     <message>
         <source>Error initializing wallet database environment %s!</source>
-        <translation>Error al inicializar ambiente %s de base de datos de billetera!</translation>
+        <translation>Fejl ved initialisering af tegnebogens databasemilljø %s!</translation>
     </message>
     <message>
         <source>Error loading block database</source>
-        <translation>Error al cargar base de datos de bloques</translation>
+        <translation>Fejl ved indlæsning af blokdatabasen</translation>
     </message>
     <message>
         <source>Error loading wallet.dat</source>
-        <translation>Error al cargar wallet.dat</translation>
+        <translation>Fejl ved indlæsning af wallet.dat</translation>
     </message>
     <message>
         <source>Error loading wallet.dat: Wallet corrupted</source>
-        <translation>Error al cargar wallet.dat: Billetera dañada</translation>
+        <translation>Fejl ved indlæsning af wallet.dat: Tegnebogen er beskadiget</translation>
     </message>
     <message>
         <source>Error loading wallet.dat: Wallet requires newer version of PIVX Core</source>
-        <translation>Error al cargar wallet.dat: La Billetera requiere una nueva versión del Núcleo PIVX</translation>
+        <translation>Fejl ved indlæsning af wallet.dat: Tegnebogen kræver en nyere version af PIVX core</translation>
     </message>
     <message>
         <source>Error opening block database</source>
-        <translation>Error al abrir la base de datos de bloques</translation>
+        <translation>Fejl ved åbning af blokdatabasen</translation>
     </message>
     <message>
         <source>Error reading from database, shutting down.</source>
-        <translation>Error al leer desde la base de datos, apagando.</translation>
+        <translation>Fejl ved læsning fra database, programmet lukker ned.</translation>
     </message>
     <message>
         <source>Error recovering public key.</source>
-        <translation>Error al recuperar clave pública.</translation>
+        <translation>Fejl ved genskabelse af den offentlige nøgle</translation>
     </message>
     <message>
         <source>Error</source>
-        <translation>Error</translation>
+        <translation>Fejl!</translation>
     </message>
     <message>
         <source>Error: A fatal internal error occured, see debug.log for details</source>
-        <translation>Error: Un error interno fatal a ocurrido, ver debug.log para mas detalles</translation>
+        <translation>Fejl! En fatal intern fejl opstod. Se debug.log for nærmere detaljer</translation>
     </message>
     <message>
         <source>Error: Can't select current denominated inputs</source>
-        <translation>Error: No se pudo seleccionar las entradas denominadas actuales</translation>
+        <translation>Fejl! Kan ikke vælge de aktuelt designerede inputs</translation>
     </message>
     <message>
         <source>Error: Disk space is low!</source>
-        <translation>Error: El espacio en disco esta bajo!</translation>
+        <translation>Fejl! Der er ikke nok plads på disken.</translation>
     </message>
     <message>
         <source>Error: Unsupported argument -tor found, use -onion.</source>
-        <translation>Error: Se encontró argumento no soportado -tor, utilizar -onion.</translation>
+        <translation>Fejl! Argumentet er ikke understøttet - tor fundet, brug -onion</translation>
     </message>
     <message>
         <source>Error: Wallet locked, unable to create transaction!</source>
-        <translation>Error: Billetera bloqueada, imposible crear transacción!</translation>
+        <translation>Fejl! Tegnebogen er låst. Det er ikke muligt at oprette transaktionen.</translation>
     </message>
     <message>
         <source>Error: You already have pending entries in the Obfuscation pool</source>
-        <translation>Error: Ya tienes entradas pendientes en el pool de Ofuscación</translation>
+        <translation>Fejl! De har allerede ventende transaktioner i tilsløringsgruppen</translation>
     </message>
     <message>
         <source>Failed to listen on any port. Use -listen=0 if you want this.</source>
-        <translation>Falló la escucha en cualquiera de los puertos. Usar -listen=0 si quieres esto.</translation>
+        <translation>Lytning på uspecificerede porte mislykkedes. Brug -listen=0 hvis De ønsker denne funktion.</translation>
     </message>
     <message>
         <source>Failed to read block</source>
-        <translation>Falló al leer el bloque</translation>
+        <translation>Læsning af blokken mislykkedes</translation>
     </message>
     <message>
         <source>Fee (in PIV/kB) to add to transactions you send (default: %s)</source>
-        <translation>Comisión (en PIV/kB) para agregar a la transacción que envías (predeterminado: %s)</translation>
+        <translation>Gebyr (i PIV/kB) som skal tilføjes transaktionen der sendes (default %s)</translation>
     </message>
     <message>
         <source>Finalizing transaction.</source>
-        <translation>Finalizando transacción.</translation>
+        <translation>Færdiggør transaktionen.</translation>
     </message>
     <message>
         <source>Force safe mode (default: %u)</source>
-        <translation>Forzar modo seguro (predeterminado: %u)</translation>
+        <translation>Gennemtving beskyttet tilstand (default: %u)</translation>
     </message>
     <message>
         <source>Found enough users, signing ( waiting %s )</source>
-        <translation>Se han encontrado suficientes usuarios, firmando ( esperando %s )</translation>
+        <translation>Der er fundet tilstrækkeligt med brugere der underskriver (venter %s)</translation>
     </message>
     <message>
         <source>Found enough users, signing ...</source>
-        <translation>Se han encontrado suficientes usuarios, firmando ...</translation>
+        <translation>Der er fundet tilstrækkeligt med brugere der underskriver...</translation>
     </message>
     <message>
         <source>Generate coins (default: %u)</source>
-        <translation>Generando monedas: (predeterminado: %u)</translation>
+        <translation>Generer mønter (default: %u)</translation>
     </message>
     <message>
         <source>How many blocks to check at startup (default: %u, 0 = all)</source>
-        <translation>Cuantos bloques a probar al iniciar (predeterminado: %u, 0 = todos)</translation>
+        <translation>Antal blokke der kontrolleres ved opstart (default: %u, 0 = all)</translation>
     </message>
     <message>
         <source>If &lt;category&gt; is not supplied, output all debugging information.</source>
-        <translation>Si &lt;category&gt; no es proveído, dar salida a toda la información de depuración.</translation>
+        <translation>Hvis &lt;category&gt; ikke findes, sendes al debug information som output.</translation>
     </message>
     <message>
         <source>Importing...</source>
-        <translation>Importando...</translation>
+        <translation>Importerer</translation>
     </message>
     <message>
         <source>Imports blocks from external blk000??.dat file</source>
-        <translation>Importar bloques desde archivo externo blk000??.dat</translation>
+        <translation>Importer blokke fra ekstern kilde - blk000??.dat fil</translation>
     </message>
     <message>
         <source>Include IP addresses in debug output (default: %u)</source>
-        <translation>Incluir direcciones IP en salida de depuración (predeterminado: %u)</translation>
+        <translation>Inkluder IP adressen i debug output (default: %u)</translation>
     </message>
     <message>
         <source>Incompatible mode.</source>
-        <translation>Modo incompatible.</translation>
+        <translation>Ikke kompatibel i denne tilstand</translation>
     </message>
     <message>
         <source>Incompatible version.</source>
-        <translation>Versión imcompatible.</translation>
+        <translation>Ikke kompatibel version</translation>
     </message>
     <message>
         <source>Incorrect or no genesis block found. Wrong datadir for network?</source>
-        <translation>Bloque de génesis incorrecto o no encontrado. datadir equivocado para red?</translation>
+        <translation>Forkert, eller ikke genesis blok fundet. Er De sikker på, at det er den rigtige datadir der benyttes til netværket?</translation>
     </message>
     <message>
         <source>Information</source>
-        <translation>Información</translation>
+        <translation>Info:</translation>
     </message>
     <message>
         <source>Initialization sanity check failed. PIVX Core is shutting down.</source>
-        <translation>La prueba de salud de inicialización ha fallado. PIVX Core se cerrará.</translation>
+        <translation>Initiering af sanitetskontrollen fejlede. PIVX core lukker ned. </translation>
     </message>
     <message>
         <source>Input is not valid.</source>
-        <translation>La entrada no es válida.</translation>
+        <translation>Ugyldigt input</translation>
     </message>
     <message>
         <source>Insufficient funds.</source>
-        <translation>Fondos insuficientes.</translation>
+        <translation>Utilstrækkelige midler</translation>
     </message>
     <message>
         <source>Invalid -onion address: '%s'</source>
-        <translation>Dirección -onion inválida: '%s'</translation>
+        <translation>Ugyldig -onion adresse: '%s'</translation>
     </message>
     <message>
         <source>Invalid -proxy address: '%s'</source>
-        <translation>Dirección -proxy inválida: '%s'</translation>
+        <translation>Ugyldig -proxy adresse: '%s'</translation>
     </message>
     <message>
         <source>Invalid amount for -maxtxfee=&lt;amount&gt;: '%s'</source>
-        <translation>Importe inválido para -maxtxfee=&lt;amount&gt;: '%s'</translation>
+        <translation>Ugyldigt beløb til -maxtxfee=&lt;beløb&gt;: '%s'</translation>
     </message>
     <message>
         <source>Invalid amount for -minrelaytxfee=&lt;amount&gt;: '%s'</source>
-        <translation>Importe inválido para -minrelaytxfee=&lt;amount&gt;: '%s'</translation>
+        <translation>Ugyldigt beløb til -minrelaytxfee=&lt;beløb&gt;: '%s'</translation>
     </message>
     <message>
         <source>Invalid amount for -mintxfee=&lt;amount&gt;: '%s'</source>
-        <translation>Importe inválido para -mintxfee=&lt;amount&gt;: '%s'</translation>
+        <translation>Ugyldigt beløb til -mintxfee=&lt;beløb&gt;: '%s'</translation>
     </message>
     <message>
         <source>Invalid amount for -paytxfee=&lt;amount&gt;: '%s' (must be at least %s)</source>
-        <translation>Importe inválido para -paytxfee=&lt;amount&gt;: '%s' (debe ser al menos %s)</translation>
+        <translation>Ugyldigt beløb til -paytxfee=&lt;beløb&gt;: '%s' (skal mindst være %s)</translation>
     </message>
     <message>
         <source>Invalid amount for -paytxfee=&lt;amount&gt;: '%s'</source>
-        <translation>Importe inválido para -paytxfee=&lt;amount&gt;: '%s'</translation>
+        <translation>Ugyldigt beløb til -paytxfee=&lt;beløb&gt;: '%s'</translation>
     </message>
     <message>
         <source>Invalid amount for -reservebalance=&lt;amount&gt;</source>
-        <translation>Importe inválido para -reservebalance=&lt;amount&gt;</translation>
+        <translation>Ugyldigt beløb til -reservebalance=&lt;beløb&gt;:</translation>
     </message>
     <message>
         <source>Invalid masternodeprivkey. Please see documenation.</source>
-        <translation>Valor de masternodeprivkey es inválido. Por favor ver la documentación.</translation>
+        <translation> Ugyldig masternodeprivkey. Se dokumentationen</translation>
     </message>
     <message>
         <source>Invalid netmask specified in -whitelist: '%s'</source>
-        <translation>Máscara de red inválida especificada en -whitelist: '%s'</translation>
+        <translation>Ugyldig netmask specificeret i -whitelist: '%s'</translation>
     </message>
     <message>
         <source>Invalid port detected in masternode.conf</source>
-        <translation>Puerto inválido ha sido detectado en masternode.conf</translation>
+        <translation>Ugyldig port fundet i masternode.conf</translation>
     </message>
     <message>
         <source>Invalid private key.</source>
-        <translation>Clave pública inválida.</translation>
+        <translation>Ugyldig privat nøgle</translation>
     </message>
     <message>
         <source>Invalid script detected.</source>
-        <translation>Script inválido detectado.</translation>
+        <translation>Ugyldigt script fundet.</translation>
     </message>
     <message>
         <source>This is a pre-release test build - use at your own risk - do not use for staking or merchant applications!</source>
-        <translation>Esto es una versión pre-release de prueba - use bajo su propia responsabilidad - ¡No lo utilice para recompensa de participación ni aplicaciones de comercio!</translation>
+        <translation>Denne release er en testrelease. Anvendelse på eget ansvar - bør ikke anvendes til staking eller handelsapplikationer!</translation>
     </message>
     <message>
         <source>&lt;category&gt; can be:</source>
-        <translation>&lt;category&gt;puede ser: 
-</translation>
+        <translation>&lt;category&gt; can be:</translation>
     </message>
     <message>
         <source>Attempt to force blockchain corruption recovery</source>
-        <translation>Intentar forzar la recuperación de la cadena de bloques corrupta</translation>
-    </message>
-    <message>
-        <source>Display the stake modifier calculations in the debug.log file.</source>
-        <translation>Incluir los cálculos de recompensa por participación en el fichero debug.log.</translation>
-    </message>
-    <message>
-        <source>Display verbose coin stake messages in the debug.log file.</source>
-        <translation>Incluir mensajes explícitos de recompensa por participación en el fichero debug.log.</translation>
-    </message>
-    <message>
-        <source>Enable publish hash block in &lt;address&gt;</source>
-        <translation>Activar inclusión del hash del bloque en &lt;address&gt;</translation>
-    </message>
-    <message>
-        <source>Enable publish hash transaction (locked via SwiftTX) in &lt;address&gt;</source>
-        <translation>Activar inclusión del hash de la transacción (fijada mediante SwiftTX) en &lt;address&gt;</translation>
-    </message>
-    <message>
-        <source>Enable publish hash transaction in &lt;address&gt;</source>
-        <translation>Activar inclusión del hash de la transacción en &lt;address&gt;</translation>
-    </message>
-    <message>
-        <source>Enable publish raw block in &lt;address&gt;</source>
-        <translation>Activar inclusión del bloque en bruto en &lt;address&gt;</translation>
-    </message>
-    <message>
-        <source>Enable publish raw transaction (locked via SwiftTX) in &lt;address&gt;</source>
-        <translation>Activar inclusión de la transacción en bruto (fijada mediante SwiftTX) en &lt;address&gt;</translation>
-    </message>
-    <message>
-        <source>Enable publish raw transaction in &lt;address&gt;</source>
-        <translation>Activar inclusión de la transacción en bruto en &lt;address&gt;</translation>
-    </message>
-    <message>
-        <source>Enable staking functionality (0-1, default: %u)</source>
-        <translation>Activar funcionalidad de recompensa por participación (0-1, por defecto: %u)</translation>
+        <translation>Forsøg at gennemtvinge reparation af korrumperet blokkæde</translation>
     </message>
     <message>
         <source>Keep N PIV anonymized (default: %u)</source>
-        <translation>Mantener N PIV anonimizados (predeterminado: %u)</translation>
+        <translation>Behold N PIV anonymiserede (default: %u)</translation>
     </message>
     <message>
         <source>Keep at most &lt;n&gt; unconnectable transactions in memory (default: %u)</source>
-        <translation>Mantener como máximo &lt;n&gt; transacciones no conectables en memoria (predeterminado: %u)</translation>
+        <translation>Behold højest &lt;n&gt; transaktioner i hukommelsen, der ikke kan forbindes (default: %u)</translation>
     </message>
     <message>
         <source>Last Obfuscation was too recent.</source>
-        <translation>La última Ofuscación fue demasiado reciente.</translation>
+        <translation>Seneste tilsløring var for ny</translation>
     </message>
     <message>
         <source>Last successful Obfuscation action was too recent.</source>
-        <translation>La última acción de Ofuscación exitosa fue demasiado reciente.</translation>
+        <translation>Seneste succesfulde tilsløring var for ny</translation>
     </message>
     <message>
         <source>Limit size of signature cache to &lt;n&gt; entries (default: %u)</source>
-        <translation>Tamaño límite del cache de firmas a &lt;n&gt; entradas (predeterminado: %u)</translation>
+        <translation>Begræns størrelsen på signatur cachen til &lt;n&gt; poster (default: %u)</translation>
     </message>
     <message>
         <source>Line: %d</source>
-        <translation>Linea: %d</translation>
+        <translation>Linje: %d</translation>
     </message>
     <message>
         <source>Listen for JSON-RPC connections on &lt;port&gt; (default: %u or testnet: %u)</source>
-        <translation>Escuchar por conexiones JSON-RPC en &lt;port&gt; (predeterminado: %u o testnet: %u)</translation>
+        <translation>Lyt efter JSON-RPC forbindelser på &lt;port&gt; (default: %u or testnet: %u)</translation>
     </message>
     <message>
         <source>Listen for connections on &lt;port&gt; (default: %u or testnet: %u)</source>
-        <translation>Escuchar por conexiones en &lt;port&gt; (predeterminado: %u o testnet: %u)</translation>
+        <translation>Lyt efter forbindelser på port &lt;port&gt; (default: %u or tesntet: %u)</translation>
     </message>
     <message>
         <source>Loading addresses...</source>
-        <translation>Cargando direcciones...</translation>
+        <translation>Indlæser adresser</translation>
     </message>
     <message>
         <source>Loading block index...</source>
-        <translation>Cargando índice de bloque...</translation>
+        <translation>Indlæser blokindeks</translation>
     </message>
     <message>
         <source>Loading budget cache...</source>
-        <translation>Cargando cache de presupuestos...</translation>
+        <translation>Indlæser budgetcache...</translation>
     </message>
     <message>
         <source>Loading masternode cache...</source>
-        <translation>Cargando cache de nodos maestros...</translation>
+        <translation>Indlæser masternodecache...</translation>
     </message>
     <message>
         <source>Loading masternode payment cache...</source>
-        <translation>Cargando cache de pagos de nodos maestros</translation>
+        <translation>Indlæser masternode betalingscache...</translation>
     </message>
     <message>
         <source>Loading wallet... (%3.2f %%)</source>
-        <translation>Cargando monedero: (%3.2f %%)</translation>
+        <translation>Indlæser tegnebog... (%3.2f%%)</translation>
     </message>
     <message>
         <source>Loading wallet...</source>
-        <translation>Cargando monedero...</translation>
+        <translation>Indlæser tegnebog</translation>
     </message>
     <message>
         <source>Lock is already in place.</source>
-        <translation>Bloqueo esta en su lugar.</translation>
+        <translation>Er allerede låst</translation>
     </message>
     <message>
         <source>Lock masternodes from masternode configuration file (default: %u)</source>
-        <translation>Bloquear nodos maestros desde el archivo de configuración de nodo maestro (predeterminado: %u)</translation>
+        <translation>Lås masternoder fra masternode konfiguratinsfilen (default: %u)</translation>
     </message>
     <message>
         <source>Maintain at most &lt;n&gt; connections to peers (default: %u)</source>
-        <translation>Mantener como máximo &lt;n&gt; conexiones a pares (predeterminado: %u)</translation>
+        <translation>Vedligehold maksimalt &lt;n&gt; forbindelser til peers (default: %u)</translation>
     </message>
     <message>
         <source>Masternode options:</source>
-        <translation>Opciones de Masternode:</translation>
+        <translation>Masternodeoptioner</translation>
     </message>
     <message>
         <source>Masternode queue is full.</source>
-        <translation>La cola del Nodo Maestro esta llena.</translation>
+        <translation>Masternodens kø er fyldt op.</translation>
     </message>
     <message>
         <source>Masternode:</source>
-        <translation>Nodo maestro:</translation>
+        <translation>Masternode:</translation>
     </message>
     <message>
         <source>Maximum per-connection receive buffer, &lt;n&gt;*1000 bytes (default: %u)</source>
-        <translation>Buffer de recepción máximo por conexión, &lt;n&gt;*1000 bytes (predeterminado: %u)</translation>
+        <translation>Maksimal størrelse på per-connection receive buffer, &lt;n&gt;*1000 bytes (default: %u)</translation>
     </message>
     <message>
         <source>Maximum per-connection send buffer, &lt;n&gt;*1000 bytes (default: %u)</source>
-        <translation>Máximo buffer de envío por conexión, &lt;n&gt;*1000 bytes (predeterminado: %u)</translation>
+        <translation>Maksimal størrelse på per-connection send buffer, &lt;n&gt; *1000 bytes (default: %u)</translation>
     </message>
     <message>
         <source>Missing input transaction information.</source>
-        <translation>Información de transacciones de entrada perdidas.</translation>
+        <translation>Manglende transaktionsinformationsinput</translation>
     </message>
     <message>
         <source>Mixing in progress...</source>
-        <translation>Mezcla en progreso...</translation>
+        <translation>Usynliggørelse i gang</translation>
     </message>
     <message>
         <source>Need to specify a port with -whitebind: '%s'</source>
-        <translation>Necesita especificar un puerto con -whitebind: '%s'</translation>
+        <translation>Der skal specificeres en port med -whitebind: '%s'</translation>
     </message>
     <message>
         <source>No Masternodes detected.</source>
-        <translation>No se han detectado Masternodes.</translation>
+        <translation>Ingen masternoder fundet.</translation>
     </message>
     <message>
         <source>No compatible Masternode found.</source>
-        <translation>No hay un Masternode compatible encontrado.</translation>
+        <translation>Ingen kompatible masternoder fundet.</translation>
     </message>
     <message>
         <source>No funds detected in need of denominating.</source>
-        <translation>No hay fondos detectados necesarios de denominación.</translation>
+        <translation>Ingen midler fundet til eventuel designering</translation>
     </message>
     <message>
         <source>No matching denominations found for mixing.</source>
-        <translation>No hay denominaciones emparejadas encontradas para mezclado.</translation>
+        <translation>ingen matchende designerede midler til usynliggørelse.</translation>
     </message>
     <message>
         <source>Node relay options:</source>
-        <translation>Opciones de transmisión del nodo:</translation>
+        <translation>Node videresendelsesoptioner:</translation>
     </message>
     <message>
         <source>Non-standard public key detected.</source>
-        <translation>Clave pública no-estandar ha sido detectada.</translation>
+        <translation>Ikke standard offentlig nøgle fundet</translation>
     </message>
     <message>
         <source>Not compatible with existing transactions.</source>
-        <translation>No es compatible con las transacciones salientes.</translation>
+        <translation>Ikke kompatibel med eksisterende transaktioner</translation>
     </message>
     <message>
         <source>Not enough file descriptors available.</source>
-        <translation>No hay suficientes descriptores de archivo disponibles.</translation>
+        <translation>Ikke nok fildescriptors tilgængelige</translation>
     </message>
     <message>
         <source>Not in the Masternode list.</source>
-        <translation>No en la lista Masternode.</translation>
+        <translation>Findes ikke i masternodelisten</translation>
     </message>
     <message>
         <source>Number of automatic wallet backups (default: 10)</source>
-        <translation>Número de Copias de seguridad automáticas de monedero (predeterminado: 10)</translation>
+        <translation>Antal automatiske sikkerhedskopier af tegnebogen (default: 10)</translation>
     </message>
     <message>
         <source>Obfuscation is idle.</source>
-        <translation>La Ofuscación está sin uso.</translation>
+        <translation>Tilsløringssystem ledigt</translation>
     </message>
     <message>
         <source>Obfuscation options:</source>
-        <translation>Opciones de Ofuscacion:</translation>
+        <translation>Tilsløringsmuligheder</translation>
     </message>
     <message>
         <source>Obfuscation request complete:</source>
-        <translation>Pedido de Ofuscacion completado:</translation>
+        <translation>Tilsløring færdig.</translation>
     </message>
     <message>
         <source>Obfuscation request incomplete:</source>
-        <translation>Pedido de Ofuscación incompleto:</translation>
+        <translation>Tilsløringsanmodning ikke færdiggjort</translation>
     </message>
     <message>
         <source>Only accept block chain matching built-in checkpoints (default: %u)</source>
-        <translation>Solo aceptar cadena de bloque emparejada con puntos de verificación construidos (predeterminado: %u)</translation>
+        <translation>Accepter kun blokkæde matchende indbyggede kontrolpunkter (defaut %u)</translation>
     </message>
     <message>
         <source>Only connect to nodes in network &lt;net&gt; (ipv4, ipv6 or onion)</source>
-        <translation>Solo conectar a nodos en la red &lt;net&gt; (ipv4, ipv6 o onion)</translation>
+        <translation>Forbind udelukkende til noder i netværket &lt;net&gt; (ipv4, ipv6 eller onion)</translation>
     </message>
     <message>
         <source>Options:</source>
-        <translation>Opciones:</translation>
+        <translation>Optioner:</translation>
     </message>
     <message>
         <source>Password for JSON-RPC connections</source>
-        <translation>Contraseña para conexiones JSON-RPC</translation>
+        <translation>Kodeord for JSON-RPC forbindelser</translation>
     </message>
     <message>
         <source>Prepend debug output with timestamp (default: %u)</source>
-        <translation>Agregar timestamp a la salida de depuración (predeterminado: %u)</translation>
-    </message>
-    <message>
-        <source>Print version and exit</source>
-        <translation>Mostrar versión y salir</translation>
+        <translation>Forbered debug output med tidsstempel (default %u)</translation>
     </message>
     <message>
         <source>RPC SSL options: (see the Bitcoin Wiki for SSL setup instructions)</source>
-        <translation>Opciones RPC SSL: (ver el Bitcoin Wiki para instrucciones de instalación SSL)</translation>
+        <translation>RPC SSL optioner: (se "the bitcoin Wiki" for opsætningsinstruktioner - på engelsk)</translation>
     </message>
     <message>
         <source>RPC server options:</source>
-        <translation>Opciones del servidor RPC:</translation>
+        <translation>RPC server optioner:</translation>
     </message>
     <message>
         <source>RPC support for HTTP persistent connections (default: %d)</source>
-        <translation>Soporte RPC para conexiones persistentes HTTP (predeterminado %d)</translation>
+        <translation>RPC understøttelse for HTTP stående forbindelser (default: %d)</translation>
     </message>
     <message>
         <source>Randomly drop 1 of every &lt;n&gt; network messages</source>
-        <translation>Aleatoriamente dejar caer 1 de cada &lt;n&gt; mensajes de red</translation>
+        <translation>Drop 1 af hver &lt;n&gt; netværksmeddelelser efter tilfældighedsprincippet</translation>
     </message>
     <message>
         <source>Randomly fuzz 1 of every &lt;n&gt; network messages</source>
-        <translation>Aleatoriamente esfumar 1 de cada &lt;n&gt; mensajes de red</translation>
+        <translation>Gør 1 af hver &lt;n&gt; netværksmeddelelser uklar efter tilfældighedsprincippet</translation>
     </message>
     <message>
         <source>Rebuild block chain index from current blk000??.dat files</source>
-        <translation>Reconstruir el indice de la cadena de bloque desde el corriente archivo blk000??.dat</translation>
+        <translation>Genopbyg blokkædens indeks fra de aktuelle blk000??.dat filer</translation>
     </message>
     <message>
         <source>Receive and display P2P network alerts (default: %u)</source>
-        <translation>Recibir y mostrar alertas de red P2P (predeterminado: %u)</translation>
-    </message>
-    <message>
-        <source>Relay and mine data carrier transactions (default: %u)</source>
-        <translation>Transmitir y minar datos de transacciones enviadas (predeterminado: %u)</translation>
+        <translation>Modtag og vis P2P netværksalarmer (default: %u)</translation>
     </message>
     <message>
         <source>Relay non-P2SH multisig (default: %u)</source>
-        <translation>Transmitir no-P2SH multisig (predeterminado: %u)</translation>
+        <translation>Videresend ikke-P2SH mulisig (default %u)</translation>
     </message>
     <message>
         <source>Rescan the block chain for missing wallet transactions</source>
-        <translation>Reescanear la cadena de bloques en busca de transacciones perdidas del monedero</translation>
+        <translation>Genskan blokkæden for manglende transaktioner i tegnebogen</translation>
     </message>
     <message>
         <source>Rescanning...</source>
-        <translation>Reescaneado...</translation>
+        <translation>Genskanner...</translation>
     </message>
     <message>
         <source>Run a thread to flush wallet periodically (default: %u)</source>
-        <translation>Ejecutar un hilo de ejecución para nivelar el monedero periódicamente (predeterminado: %u)</translation>
+        <translation>Kør en tråd periodevist for at rense tegnebogen ud (default %u)</translation>
     </message>
     <message>
         <source>Run in the background as a daemon and accept commands</source>
-        <translation>Ejecutar en segundo plano como demonio y aceptar comandos</translation>
+        <translation>Kør en tråd i baggrunden som en særlig service og tag imod kommandoer </translation>
+    </message>
+    <message>
+        <source>Send transactions as zero-fee transactions if possible (default: %u)</source>
+        <translation>Send transaktioner som nugebyrstransaktioner hvis muligt (default: %u)</translation>
     </message>
     <message>
         <source>Server certificate file (default: %s)</source>
-        <translation>Archivo certificado del servidor (predeterminado: %s)</translation>
-    </message>
-    <message>
-        <source>Server private key (default: %s)</source>
-        <translation>Clave privada del servidor (predeterminado: %s)</translation>
+        <translation>Servercertfikatfil (default %s)</translation>
     </message>
     <message>
         <source>Session not complete!</source>
-        <translation>Sesión no completa!</translation>
+        <translation>Sessionen blev ikke færdiggjort!</translation>
     </message>
     <message>
         <source>Session timed out.</source>
-        <translation>La sesión expiró.</translation>
+        <translation>Sessionen brugte for meget tid.</translation>
     </message>
     <message>
         <source>Set database cache size in megabytes (%d to %d, default: %d)</source>
-        <translation>Definir tamaño de cache de base de datos en megabytes (%d a %d, predeterminado: %d)</translation>
+        <translation>Angiv databasecachens størrelse i megabytes (%d til  %d, default: %d)</translation>
     </message>
     <message>
         <source>Set external address:port to get to this masternode (example: %s)</source>
-        <translation>Definir dirección:puerto externo para alcanzar este nodo maestro (ejemplo: %s)</translation>
+        <translation>Angiv den eksterne adresse:port for at komme til denne masternode (eksempel: %s)</translation>
     </message>
     <message>
         <source>Set key pool size to &lt;n&gt; (default: %u)</source>
-        <translation>Definir el tamaño del pool de llaves a &lt;n&gt; (predeterminado: %u)</translation>
+        <translation>Angiv hoved poolstørrelse til &lt;n&gt; (default %u)</translation>
     </message>
     <message>
         <source>Set minimum block size in bytes (default: %u)</source>
-        <translation>Ajustar el tamaño mínimo de bloque en bytes (predeterminado: %u)</translation>
+        <translation>Angiv minimums blokstørrelse i bytes (default: %u)</translation>
     </message>
     <message>
         <source>Set the masternode private key</source>
-        <translation>Ajustar la clave privada de masternode</translation>
+        <translation>angiv masternodens private nøgle</translation>
     </message>
     <message>
         <source>Set the number of threads to service RPC calls (default: %d)</source>
-        <translation>Definir el número de hilos para llamadas al servicio RPC (predeterminado: %d)</translation>
+        <translation>Angiv antallet af tråde der anvendes til at servicere RPC opkald (default: %d)</translation>
     </message>
     <message>
         <source>Sets the DB_PRIVATE flag in the wallet db environment (default: %u)</source>
-        <translation>Definir la bandera DB_PRIVATE en la db de la billetera del ambiente (predeterminado: %u)</translation>
+        <translation>Sætter DB_PRIVATE flag i tegnebogens databasemiljø (default:%u)</translation>
     </message>
     <message>
         <source>Show all debugging options (usage: --help -help-debug)</source>
-        <translation>Mostrar todas las opciones de depuración (uso: --help-debug)</translation>
+        <translation>Vis alle debugoptioner (brug: --help -help-debug)</translation>
     </message>
     <message>
         <source>Shrink debug.log file on client startup (default: 1 when no -debug)</source>
-        <translation>Encojer el archivo debug.log en el cliente al inicio (predeterminado: 1 cuando no hay -debug)</translation>
+        <translation>Formindsk debug.logfilen ved opstart af klienten (default: 1 når der ikke er angivet -debug)</translation>
     </message>
     <message>
         <source>Signing failed.</source>
-        <translation>La firma falló.</translation>
+        <translation>Signering mislykkedes</translation>
     </message>
     <message>
         <source>Signing timed out.</source>
-        <translation>Se agotó el tiempo para la firma.</translation>
+        <translation>Signering brugte for meget tid.</translation>
     </message>
     <message>
         <source>Signing transaction failed</source>
-        <translation>La firma de la transacción falló</translation>
+        <translation>Signering af transaktionen mislykkedes</translation>
     </message>
     <message>
         <source>Specify configuration file (default: %s)</source>
-        <translation>Especifique el archivo de configuración (predeterminado: %s)</translation>
+        <translation>Specificer konfigurationsfil (default: %s)</translation>
     </message>
     <message>
         <source>Specify connection timeout in milliseconds (minimum: 1, default: %d)</source>
-        <translation>Especificar el timeout de conexión en mili segundos (mínimo: 1, predeterminado: %d) </translation>
+        <translation>Specificer forbindelsens timeout i millisekunder (minimum: 1, default : %d)</translation>
     </message>
     <message>
         <source>Specify data directory</source>
-        <translation>Especifique el directorio de datos</translation>
+        <translation>angiv datamappe</translation>
     </message>
     <message>
         <source>Specify masternode configuration file (default: %s)</source>
-        <translation>Especifique el archivo de configuración masternode (predeterminado: %s)</translation>
+        <translation>Specificer masternode konfigurationsfilen (default: %s)</translation>
     </message>
     <message>
         <source>Specify pid file (default: %s)</source>
-        <translation>Especifique el archivo pid (predeterminado: %s)</translation>
+        <translation>Angiv pid filen (default: %s)</translation>
     </message>
     <message>
         <source>Specify wallet file (within data directory)</source>
-        <translation>Especifique el archivo monedero (dentro del directorio de datos)</translation>
+        <translation>angiv tegnebogens wallet fil (indenfor datamappen)</translation>
     </message>
     <message>
         <source>Specify your own public address</source>
-        <translation>Especifique su propia dirección pública</translation>
+        <translation>Angiv Deres offentlige adresse</translation>
     </message>
     <message>
         <source>Spend unconfirmed change when sending transactions (default: %u)</source>
-        <translation>Gastar cambio no confirmado cuando se envían transacciones (predeterminado: %u)</translation>
-    </message>
-    <message>
-        <source>Staking options:</source>
-        <translation>Opciones de recompensa por participación:</translation>
+        <translation>Brug ubekræftede returpenge når der sendes transaktioner (default: %u)</translation>
     </message>
     <message>
         <source>Stop running after importing blocks from disk (default: %u)</source>
-        <translation>Parar la ejecución después de importar bloques desde el disco (predeterminado: %u)</translation>
+        <translation>Stop kørsel efter import af blokke fra disken (default: %u)</translation>
     </message>
     <message>
         <source>Submitted following entries to masternode: %u / %d</source>
-        <translation>Se enviaron las siguientes entradas a masternode: %u / %d</translation>
+        <translation>Afsendt følgende posteringer til masternode %u / %d</translation>
     </message>
     <message>
         <source>Submitted to masternode, waiting for more entries ( %u / %d ) %s</source>
-        <translation>Enviado a masternode, esperando por mas entradas (%u / %d) %s</translation>
+        <translation>Afsendt til masternode. Afventer flere posteringer (%u /%d) %s</translation>
     </message>
     <message>
         <source>Submitted to masternode, waiting in queue %s</source>
-        <translation>Enviado a masternode, quedando en espera %s</translation>
+        <translation>Afsendt til masternode, venter i kø %s</translation>
     </message>
     <message>
         <source>SwiftTX options:</source>
-        <translation>Opciones SwiftTX:</translation>
+        <translation>SwiftTX optioner:</translation>
     </message>
     <message>
         <source>Synchronization failed</source>
-        <translation>Falló la sincronización</translation>
+        <translation>Synkronisering mislykkedes.</translation>
     </message>
     <message>
         <source>Synchronization finished</source>
-        <translation>Sincronización finalizada!</translation>
+        <translation>Synkronisering færdig</translation>
     </message>
     <message>
         <source>Synchronization pending...</source>
-        <translation>Sincronización pendiente...</translation>
+        <translation>Synkronisering venter</translation>
     </message>
     <message>
         <source>Synchronizing budgets...</source>
-        <translation>Sincronizando presupuestos...</translation>
+        <translation>Synkronisere budgetter</translation>
     </message>
     <message>
         <source>Synchronizing masternode winners...</source>
-        <translation>Sincronizando ganadores masternode...</translation>
+        <translation>Synkroniserer masternodevinnere</translation>
     </message>
     <message>
         <source>Synchronizing masternodes...</source>
-        <translation>Sincronizando masternodes...</translation>
+        <translation>Synkroniserer masternoder...</translation>
     </message>
     <message>
         <source>Synchronizing sporks...</source>
-        <translation>Sincronizando con la red... </translation>
+        <translation>Synkroniserer sporks...</translation>
     </message>
     <message>
         <source>This help message</source>
-        <translation>Este mensaje de ayuda</translation>
+        <translation>Denne hjælpemeddelelse</translation>
     </message>
     <message>
         <source>This is experimental software.</source>
-        <translation>Esto es software experimental.</translation>
+        <translation>Denne software er eksperimentiel</translation>
     </message>
     <message>
         <source>This is intended for regression testing tools and app development.</source>
-        <translation>Esto esta destinado para herramientas de prueba de regresión y desarrollo de aplicaciones.</translation>
+        <translation>Dette er ment som et tilbagekørings test- og appudviklingsværktøj.</translation>
     </message>
     <message>
         <source>This is not a Masternode.</source>
-        <translation>Este no es un nodo maestro.</translation>
+        <translation>Dette er ikke en masternode</translation>
     </message>
     <message>
         <source>Threshold for disconnecting misbehaving peers (default: %u)</source>
-        <translation>Limite para desconexión de peers de mal desempeño (predeterminado: %u)</translation>
+        <translation>Terskel for frakoblíng af peers der udfører upassende handlinger (default: %u)</translation>
     </message>
     <message>
         <source>Transaction amount too small</source>
-        <translation>El monto de la transacción es demasiado pequeño</translation>
+        <translation>Transaktionsbeløbet er for lille</translation>
     </message>
     <message>
         <source>Transaction amounts must be positive</source>
-        <translation>El monto de la transacción debe ser positivo</translation>
+        <translation>Transaktionsbeløbet skal være positivt</translation>
     </message>
     <message>
         <source>Transaction created successfully.</source>
-        <translation>Transacción creada satisfactoriamente.</translation>
+        <translation>Transaktionen blev oprettet.</translation>
     </message>
     <message>
         <source>Transaction fees are too high.</source>
-        <translation>La comision de transacción es demasiado alta.</translation>
+        <translation>Transaktionsgebyrerne er for høje</translation>
     </message>
     <message>
         <source>Transaction not valid.</source>
-        <translation>La transacción no es valida.</translation>
+        <translation>Transaktionen er ugyldig</translation>
     </message>
     <message>
         <source>Transaction too large for fee policy</source>
-        <translation>La transacción es demasiado grande para la política de comisión.</translation>
+        <translation>Transaktionen er for stor til at opfylde gebyrpolitikken</translation>
     </message>
     <message>
         <source>Transaction too large</source>
-        <translation>La transacción es demasiado grande</translation>
+        <translation>Transaktionen er for stor</translation>
     </message>
     <message>
         <source>Transmitting final transaction.</source>
-        <translation>Transmitiendo la transacción final.</translation>
+        <translation>Afsender sluttransaktionen.</translation>
     </message>
     <message>
         <source>Unable to bind to %s on this computer (bind returned error %s)</source>
-        <translation>Imposible enlazar %s en esta computadora (enlace retorna error %s)</translation>
+        <translation>Det er ikke muligt at forbide til %s på denne computer (bind returnerede fejl %s)</translation>
     </message>
     <message>
         <source>Unable to sign spork message, wrong key?</source>
-        <translation>Imposible firmar el mensaje spork, ¿llave equivocada?</translation>
+        <translation>Det var ikke muligt at signere spork meddelelsen. Er De sikker på De anvender den rigtige nøgle?</translation>
     </message>
     <message>
         <source>Unknown network specified in -onlynet: '%s'</source>
-        <translation>Red especificada desconocida en -onlynet: '%s'</translation>
+        <translation>Ukendt netværk specificeret i -onlynet: '%s'</translation>
     </message>
     <message>
         <source>Unknown state: id = %u</source>
-        <translation>Estado desconocido: id = %u</translation>
+        <translation>Ukendt stade: id = %u</translation>
     </message>
     <message>
         <source>Upgrade wallet to latest format</source>
-        <translation>Actualizar el monedero al formato ultimo</translation>
+        <translation>Opdater tegnebogen til det nyeste format</translation>
     </message>
     <message>
         <source>Use N separate masternodes to anonymize funds  (2-8, default: %u)</source>
-        <translation>Utilizar N nodos maestros distintos para anonimizar fondos (2-8, predeterminado: %u)</translation>
+        <translation>Brug N forskellige masternoder for at anonymisere saldi (2-8, default: %u)</translation>
     </message>
     <message>
         <source>Use OpenSSL (https) for JSON-RPC connections</source>
-        <translation>Usar OpenSSL (https) para conexiones JSON-RPC</translation>
+        <translation>Brug OpenSSL (https) til JSON-RPC forbindelser</translation>
     </message>
     <message>
         <source>Use UPnP to map the listening port (default: %u)</source>
-        <translation>Usar UPnP para mapear el puerto de escucha (predeterminado: %u)</translation>
+        <translation>Anvend UPnP til at kortlægge den lyttende port (default: %u)</translation>
     </message>
     <message>
         <source>Use UPnP to map the listening port (default: 1 when listening)</source>
-        <translation>Usar UPnP para mapear el puerto de escucha (predeterminado: 1 cuando esta en escucha)</translation>
+        <translation>Anvend UPnP for at kortlægge lytteporten (default: 1 når der lyttes)</translation>
     </message>
     <message>
         <source>Use the test network</source>
-        <translation>Usar la red de prueba</translation>
+        <translation>Anvend testnetværket</translation>
     </message>
     <message>
         <source>Username for JSON-RPC connections</source>
-        <translation>Nombre de usuario para conexiones JSON-RPC</translation>
+        <translation>Brugernavn til JSON-RPC forbindelser</translation>
     </message>
     <message>
         <source>Value more than Obfuscation pool maximum allows.</source>
-        <translation>Valor mayor al máximo pool de Ofuscación permitido.</translation>
+        <translation>Værdien er højere end tilsløringsgruppen tillader</translation>
     </message>
     <message>
         <source>Verifying blocks...</source>
-        <translation>Verificando bloques...</translation>
+        <translation>Verificerer blokke</translation>
     </message>
     <message>
         <source>Verifying wallet...</source>
-        <translation>Verificando el monedero...</translation>
-    </message>
-    <message>
-        <source>Wallet %s resides outside data directory %s</source>
-        <translation>La billetera %s esta ubicada fuera del directorio de datos %s</translation>
+        <translation>Verificerer  tegnebog</translation>
     </message>
     <message>
         <source>Wallet is locked.</source>
-        <translation>Monedero bloqueado.</translation>
+        <translation>Tegnebogen er låst</translation>
     </message>
     <message>
         <source>Wallet needed to be rewritten: restart PIVX Core to complete</source>
-        <translation>Monedero necesita ser reescrito: reinicie PIVX Core para completar</translation>
+        <translation>Tegnebogen måtte genskrives. Genstart PIVX core for at gøre færdig</translation>
     </message>
     <message>
         <source>Wallet options:</source>
-        <translation>Opciones del Monedero:</translation>
+        <translation>Optioner for tegnebogen</translation>
     </message>
     <message>
         <source>Wallet window title</source>
-        <translation>Monedero titulo de ventana</translation>
+        <translation>Tegnebogens vinduestitel</translation>
     </message>
     <message>
         <source>Warning</source>
-        <translation>Advertencia</translation>
+        <translation>Advarsel!</translation>
     </message>
     <message>
         <source>Warning: This version is obsolete, upgrade required!</source>
-        <translation>Advertencia: Esta versión es obsoleta, se requiere actualizar!</translation>
+        <translation>Advarsel! Denne version er forældet. Opgradering krævet.</translation>
     </message>
     <message>
         <source>Warning: Unsupported argument -benchmark ignored, use -debug=bench.</source>
-        <translation>Advertencia: Argumento no soportado -benchmark ignorado, use -debug=bench </translation>
+        <translation>Advarsel! Argumentet -benchmark understøttes ikke og blev ignoreret. Anvend -debug=bench.</translation>
     </message>
     <message>
         <source>Warning: Unsupported argument -debugnet ignored, use -debug=net.</source>
-        <translation>Advertencia: Argumento no soportado -debugnet ignorado, use -debug=net.</translation>
+        <translation>Advarsel! Argumentet -debugnet understøttes ikke og blev ignoret. Brug -debug=net.</translation>
     </message>
     <message>
         <source>Will retry...</source>
-        <translation>Probando...</translation>
+        <translation>Prøver igen</translation>
     </message>
     <message>
         <source>You need to rebuild the database using -reindex to change -txindex</source>
-        <translation>Usted necesita reconstruir la base de datos usando -reindex para cambiar -txindex</translation>
+        <translation>Databasen skal genopbygges ved hjælp af -reindex for at ændre -txindex</translation>
     </message>
     <message>
         <source>Your entries added successfully.</source>
-        <translation>Su entrada a sido agregada satisfactoriamente.</translation>
+        <translation>Posterne blev tilføjet.</translation>
     </message>
     <message>
         <source>Your transaction was accepted into the pool!</source>
-        <translation>Su transacción ha sido aceptada en el pool!</translation>
+        <translation>Transaktionen blev accepteret af POOL!</translation>
     </message>
     <message>
         <source>Zapping all transactions from wallet...</source>
-        <translation>Saltando todas las transacciones del monedero...</translation>
-    </message>
-    <message>
-        <source>ZeroMQ notification options:</source>
-        <translation>Opciones de notificación ZeroMQ:</translation>
+        <translation>Skifter alle transaktioner i tegnebogen.</translation>
     </message>
     <message>
         <source>on startup</source>
-        <translation>al inicio</translation>
+        <translation>Ved opstart</translation>
     </message>
     <message>
         <source>wallet.dat corrupt, salvage failed</source>
-        <translation>wallet.dat esta corrupto, guardado falló</translation>
+        <translation>Tegnebogsfilen wallet.dat er beskadiget. Opbygning mislykkedes.</translation>
     </message>
 </context>
 </TS>
