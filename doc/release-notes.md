@@ -28,7 +28,77 @@ frequently tested on them.
 Notable Changes
 ===============
 
+### RPC changes
+The `masternode` RPC command has been re-worked to ease
+it's usage and return valid JSON in it's results. The following is an overview of the changed command parameters:
 
+##### Command Overview
+| Command Parameter | Changes |
+| --- | --- |
+| `budget` | Removed (did nothing) |
+| `count` | The optional "mode" paramater has been removed. Command now always outputs full details in JSON format. |
+| `current` | Result fields changed: IP:Port removed, vin renamed to txhash |
+| `list-conf` | Result is now an array of objects, instead of an object of objects |
+| `outputs` | Result is now an array of objects instead of a list of *n* objects |
+| `status` | Added additional fields for txhash, outputidx, netaddr, and message |
+| `winners` | Result is now an array of objects instead of a list of *n* objects. See below |
+| `list` | Remove all optional "modes" and standardized the results. Note: `masternode list` is the same as `masternodelist`. See below |
+
+##### winners command
+
+For the `winners` command, the results are now in a standard JSON format as follows:
+
+```
+[
+  {
+    nHeight: n,           (int) block height
+    winner: {
+        address: addr,    (string) PIVX MN Address,
+        nVotes: n,        (int) Number of votes for winner,
+    }
+  },
+  ...
+]
+```
+
+In the case of multiple winners being associated with a single block, the results are in the following format (the `winner` object becomes an array of objects):
+
+```
+[
+  {
+    nHeight: n,           (int) block height,
+    winner: [
+      {
+        address: addr,    (string) PIVX MN Address,
+        nVotes: n,        (int) Number of votes for winner,
+      },
+      ...
+    ]
+  },
+  ...
+]
+```
+
+##### masternode list and masternodelist command(s)
+
+For the `list` (aka `masternodelist`) command, the vairous "modes" have been removed in favor of a unified and standardized result format. The result is now an array of objects instead of an object of objects. Further, the individual objects now have a standard JSON format. The result format is as follows:
+
+```
+[
+  {
+    "rank": n,         (numeric) Masternode rank (or 0 if not enabled)
+    "txhash": hash,    (string) Collateral transaction hash
+    "outidx": n,       (numeric) Collateral transaction output index
+    "status": s,       (string) Status (ENABLED/EXPIRED/REMOVE/etc)
+    "addr": addr,      (string) Masternode PIVX address
+    "version": v,      (numeric) Masternode Protocol version
+    "lastseen": ttt,   (numeric) The time in seconds since epoch (Jan 1 1970 GMT) the masternode was last seen
+    "activetime": ttt, (numeric) The time in seconds since epoch (Jan 1 1970 GMT) masternode has been active
+    "lastpaid": ttt,   (numeric) The time in seconds since epoch (Jan 1 1970 GMT) masternode was last paid
+  },
+  ...
+]
+```
 
 *version* Change log
 =================
