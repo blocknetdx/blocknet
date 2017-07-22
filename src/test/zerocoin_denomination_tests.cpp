@@ -71,8 +71,7 @@ BOOST_AUTO_TEST_CASE(denomination_to_value_test)
 
 }
 
-
-BOOST_AUTO_TEST_CASE(zerocoin_spend_test)
+BOOST_AUTO_TEST_CASE(zerocoin_spend_test241)
 {
     const int maxNumberOfSpends = 4;
     const int DenomAmounts[] = {1,2,3,4,0,0,0,0};
@@ -144,6 +143,68 @@ BOOST_AUTO_TEST_CASE(zerocoin_spend_test)
         }
         nValueTarget += OneCoinAmount;
     }
+
+}
+BOOST_AUTO_TEST_CASE(zerocoin_spend_test115)
+{
+    const int maxNumberOfSpends = 4;
+    const int DenomAmounts[] = {0,1,1,2,0,0,0,0};
+    CAmount nSelectedValue;
+    std::list<CZerocoinMint> listMints;
+    std::map<CoinDenomination, CAmount> mapDenom;
+
+    int j=0;
+    CAmount nTotalAmount = 0;
+    int CoinsHeld = 0;
+
+    // Create a set of Minted coins that fits profile given by DenomAmounts
+    // Also setup Map array corresponding to DenomAmount which is the current set of coins available
+    for (const auto& denom : zerocoinDenomList) {
+        bool set = false;
+        for (int i=0;i<DenomAmounts[j];i++) {
+            CAmount currentAmount = ZerocoinDenominationToAmount(denom);
+            nTotalAmount += currentAmount;
+            CBigNum value;
+            CBigNum rand;
+            CBigNum serial;
+            bool isUsed = false;
+            CZerocoinMint mint(denom, value, rand, serial, isUsed);
+            listMints.push_back(mint);
+            set = true;
+        }
+        mapDenom.insert(std::pair<CoinDenomination, CAmount>(denom, DenomAmounts[j]));
+        j++;
+    }
+    CoinsHeld = nTotalAmount/COIN;
+    std::cout << "Curremt Amount held = " << CoinsHeld << ": ";
+
+    // Show what we have
+    j=0;
+    for (const auto& denom : zerocoinDenomList) std::cout << DenomAmounts[j++] << "*" << ZerocoinDenominationToAmount(denom)/COIN << " + ";
+    std::cout << "\n";
+
+    CAmount OneCoinAmount = ZerocoinDenominationToAmount(ZQ_ONE);
+    CAmount nValueTarget = 66*OneCoinAmount;
+
+    bool fDebug = 1;
+    
+    std::vector<CZerocoinMint> vSpends = SelectMintsFromList(nValueTarget, nSelectedValue,
+                                                             maxNumberOfSpends,
+                                                             listMints,
+                                                             mapDenom);
+    
+    if (fDebug) {
+        if (vSpends.size() > 0) {
+            std::cout << "SUCCESS : Coins = " << nValueTarget/COIN << " # spends used = " << vSpends.size()
+                      << " Spend Amount = " << nSelectedValue/COIN << " Held = " << CoinsHeld << "\n";
+        } else {
+            std::cout << "FAILED : Coins = " << nValueTarget/COIN << " Held = " << CoinsHeld << "\n";
+        }
+    }
+        
+    BOOST_CHECK_MESSAGE(vSpends.size() < 5,"Too many spends");
+    BOOST_CHECK_MESSAGE(vSpends.size() > 0,"No spends");
+    nValueTarget += OneCoinAmount;
 
 }
 

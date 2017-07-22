@@ -3,42 +3,97 @@
 #include "util.h"
 
 using namespace libzerocoin;
+
 // -------------------------------------------------------------------------------------------------------
-// Attempt to use coins held to exactly reach nValueTarget, return mapUsedDenom with the coin set used
+// Number of coins used for either change or a spend given a map of coins used
+// -------------------------------------------------------------------------------------------------------
+int getNumberOfCoinsUsed(
+    const std::map<CoinDenomination, CAmount>& mapChange)
+{
+    int nChangeCount = 0;
+    for (const auto& denom : zerocoinDenomList) {
+        nChangeCount += mapChange.at(denom);
+    }
+    return nChangeCount;
+}
+
+// -------------------------------------------------------------------------------------------------------
+// Find the max CoinDenomination amongst held coins
+// -------------------------------------------------------------------------------------------------------
+CoinDenomination getMaxDenomHeld(
+    const std::map<CoinDenomination, CAmount>& mapCoinsHeld)
+{
+    CoinDenomination maxDenom = ZQ_ERROR;
+    for (auto& coin : reverse_iterate(zerocoinDenomList)) {
+        if (mapCoinsHeld.at(coin)) {
+            maxDenom = coin;
+            break;
+        }
+    }
+    return maxDenom;
+}
+
+// -------------------------------------------------------------------------------------------------------
+// Get change (no limits)
+// -------------------------------------------------------------------------------------------------------
+std::map<CoinDenomination, CAmount> getChange(const CAmount nValueTarget)
+{
+    std::map<CoinDenomination, CAmount> mapChange;
+    CAmount nRemainingValue = nValueTarget;
+    // Initialize
+    for (const auto& denom : zerocoinDenomList)
+        mapChange.insert(std::pair<CoinDenomination, CAmount>(denom, 0));
+
+    // Start with the Highest Denomination coin and grab coins as long as the remaining amount is greater than the
+    // current denomination value
+    for (auto& coin : reverse_iterate(zerocoinDenomList)) {
+        CAmount nValue = ZerocoinDenominationToAmount(coin);
+        do {
+            if (nRemainingValue >= nValue) {
+                mapChange.at(coin)++;
+                nRemainingValue -= nValue;
+            }
+        } while (nRemainingValue >= nValue);
+    }
+    return mapChange;
+}
+
+// -------------------------------------------------------------------------------------------------------
+// Attempt to use coins held to exactly reach nValueTarget, return mapOfDenomsUsed with the coin set used
 // Return false if exact match is not possible
 // -------------------------------------------------------------------------------------------------------
 bool getIdealSpends(
     const CAmount nValueTarget,
     const std::list<CZerocoinMint>& listMints,
     const std::map<CoinDenomination, CAmount> mapOfDenomsHeld,
-    std::map<CoinDenomination, CAmount>& mapUsedDenom)
+    std::map<CoinDenomination, CAmount>& mapOfDenomsUsed)
 {
-    CAmount RemainingValue = nValueTarget;
+    CAmount nRemainingValue = nValueTarget;
     // Initialize
     for (const auto& denom : zerocoinDenomList)
-        mapUsedDenom.insert(std::pair<CoinDenomination, CAmount>(denom, 0));
+        mapOfDenomsUsed.insert(std::pair<CoinDenomination, CAmount>(denom, 0));
 
     // Start with the Highest Denomination coin and grab coins as long as the remaining amount is greater than the
     // current denomination value
     for (auto& coin : reverse_iterate(zerocoinDenomList)) {
         for (const CZerocoinMint mint : listMints) {
             if (mint.IsUsed()) continue;
-            if (RemainingValue >= ZerocoinDenominationToAmount(coin) && coin == mint.GetDenomination()) {
-                mapUsedDenom.at(coin)++;
-                RemainingValue -= mint.GetDenominationAsAmount();
+            if (nRemainingValue >= ZerocoinDenominationToAmount(coin) && coin == mint.GetDenomination()) {
+                mapOfDenomsUsed.at(coin)++;
+                nRemainingValue -= mint.GetDenominationAsAmount();
             }
-            if (RemainingValue < ZerocoinDenominationToAmount(coin)) break;
+            if (nRemainingValue < ZerocoinDenominationToAmount(coin)) break;
         }
     }
-    return (RemainingValue == 0);
+    return (nRemainingValue == 0);
 }
 
 // -------------------------------------------------------------------------------------------------------
-// Return a list of Mint coins based on mapUsedDenom and the overall value in nCoinsSpentValue
+// Return a list of Mint coins based on mapOfDenomsUsed and the overall value in nCoinsSpentValue
 // -------------------------------------------------------------------------------------------------------
 std::vector<CZerocoinMint> getSpends(
     const std::list<CZerocoinMint>& listMints,
-    std::map<CoinDenomination, CAmount>& mapUsedDenom,
+    std::map<CoinDenomination, CAmount>& mapOfDenomsUsed,
     CAmount& nCoinsSpentValue)
 {
     std::vector<CZerocoinMint> vSelectedMints;
@@ -47,47 +102,50 @@ std::vector<CZerocoinMint> getSpends(
         do {
             for (const CZerocoinMint mint : listMints) {
                 if (mint.IsUsed()) continue;
-                if (coin == mint.GetDenomination() && mapUsedDenom.at(coin)) {
+                if (coin == mint.GetDenomination() && mapOfDenomsUsed.at(coin)) {
                     vSelectedMints.push_back(mint);
                     nCoinsSpentValue += ZerocoinDenominationToAmount(coin);
-                    mapUsedDenom.at(coin)--;
+                    mapOfDenomsUsed.at(coin)--;
                 }
             }
-        } while (mapUsedDenom.at(coin));
+        } while (mapOfDenomsUsed.at(coin));
     }
     return vSelectedMints;
 }
-
-void listSpends(const std::vector<CZerocoinMint>& vSelectedMints) {
-
-    std::map<libzerocoin::CoinDenomination, unsigned int> myZerocoinSupply;
-    for (auto& denom : libzerocoin::zerocoinDenomList) myZerocoinSupply.insert(std::make_pair(denom, 0));
+// -------------------------------------------------------------------------------------------------------
+// Just for printing/debuggin
+// -------------------------------------------------------------------------------------------------------
+void listSpends(const std::vector<CZerocoinMint>& vSelectedMints)
+{
+    std::map<libzerocoin::CoinDenomination, unsigned int> mapZerocoinSupply;
+    for (auto& denom : libzerocoin::zerocoinDenomList)
+        mapZerocoinSupply.insert(std::make_pair(denom, 0));
 
     for (const CZerocoinMint mint : vSelectedMints) {
         libzerocoin::CoinDenomination denom = mint.GetDenomination();
-        myZerocoinSupply.at(denom)++;
+        mapZerocoinSupply.at(denom)++;
     }
 
-    CAmount nTotal=0;
+    CAmount nTotal = 0;
     for (auto& denom : libzerocoin::zerocoinDenomList) {
-        LogPrintf("%s %d coins for denomination %d used\n", __func__,myZerocoinSupply.at(denom),denom);
+        LogPrintf("%s %d coins for denomination %d used\n", __func__, mapZerocoinSupply.at(denom), denom);
         nTotal += libzerocoin::ZerocoinDenominationToAmount(denom);
     }
-    LogPrintf("Total value of coins %d\n",nTotal);
+    LogPrintf("Total value of coins %d\n", nTotal);
 }
 
 // -------------------------------------------------------------------------------------------------------
 // Find the CoinDenomination with the most number for a given amount
 // -------------------------------------------------------------------------------------------------------
 CoinDenomination getDenomWithMostCoins(
-    const std::map<CoinDenomination, CAmount>& mapUsedDenom)
+    const std::map<CoinDenomination, CAmount>& mapOfDenomsUsed)
 {
     CoinDenomination maxCoins = ZQ_ERROR;
-    CAmount maxNumber = 0;
+    CAmount nMaxNumber = 0;
     for (const auto& denom : zerocoinDenomList) {
-        CAmount amount = mapUsedDenom.at(denom);
-        if (amount > maxNumber) {
-            maxNumber = amount;
+        CAmount amount = mapOfDenomsUsed.at(denom);
+        if (amount > nMaxNumber) {
+            nMaxNumber = amount;
             maxCoins = denom;
         }
     }
@@ -98,16 +156,14 @@ CoinDenomination getDenomWithMostCoins(
 // -------------------------------------------------------------------------------------------------------
 CoinDenomination getNextHighestDenom(const CoinDenomination& this_denom)
 {
-    {
-        CoinDenomination nextValue = ZQ_ERROR;
-        for (const auto& denom : zerocoinDenomList) {
-            if (ZerocoinDenominationToAmount(denom) > ZerocoinDenominationToAmount(this_denom)) {
-                nextValue = denom;
-                break;
-            }
+    CoinDenomination nextValue = ZQ_ERROR;
+    for (const auto& denom : zerocoinDenomList) {
+        if (ZerocoinDenominationToAmount(denom) > ZerocoinDenominationToAmount(this_denom)) {
+            nextValue = denom;
+            break;
         }
-        return nextValue;
     }
+    return nextValue;
 }
 
 // -------------------------------------------------------------------------------------------------------
@@ -118,43 +174,43 @@ bool rebalanceCoinsSelect(
     int nMaxNumberOfSpends,
     bool fUseHigherDenom,
     const std::map<CoinDenomination, CAmount>& mapOfDenomsHeld,
-    std::map<CoinDenomination, CAmount>& mapUsedDenom)
+    std::map<CoinDenomination, CAmount>& mapOfDenomsUsed)
 {
     bool fCountOK = true;
-    CoinDenomination maxCoin = getDenomWithMostCoins(mapUsedDenom);
+    CoinDenomination maxCoin = getDenomWithMostCoins(mapOfDenomsUsed);
     CoinDenomination nextCoin = getNextHighestDenom(maxCoin);
 
     if (fUseHigherDenom) {
         for (const auto& denom : zerocoinDenomList) {
             if (ZerocoinDenominationToAmount(denom) < ZerocoinDenominationToAmount(nextCoin)) {
-                mapUsedDenom.at(denom) = 0;
+                mapOfDenomsUsed.at(denom) = 0;
             } else if (ZerocoinDenominationToAmount(denom) == ZerocoinDenominationToAmount(nextCoin)) {
-                mapUsedDenom.at(denom)++;
+                mapOfDenomsUsed.at(denom)++;
             }
         }
     } else {
         for (const auto& denom : zerocoinDenomList) {
             if (ZerocoinDenominationToAmount(denom) < ZerocoinDenominationToAmount(maxCoin)) {
-                mapUsedDenom.at(denom) = 0;
+                mapOfDenomsUsed.at(denom) = 0;
             } else if (ZerocoinDenominationToAmount(denom) == ZerocoinDenominationToAmount(maxCoin)) {
-                mapUsedDenom.at(denom)++;
+                mapOfDenomsUsed.at(denom)++;
             }
         }
     }
 
     for (const auto& denom : zerocoinDenomList) {
-        if ((mapUsedDenom.at(denom) > nMaxNumberOfSpends) || (mapUsedDenom.at(denom) > mapOfDenomsHeld.at(denom))) {
-            mapUsedDenom.at(denom) = 0;
+        if ((mapOfDenomsUsed.at(denom) > nMaxNumberOfSpends) || (mapOfDenomsUsed.at(denom) > mapOfDenomsHeld.at(denom))) {
+            mapOfDenomsUsed.at(denom) = 0;
             CoinDenomination nextCoin = getNextHighestDenom(denom);
             if (nextCoin != ZQ_ERROR) {
-                if (mapUsedDenom.at(nextCoin) < mapOfDenomsHeld.at(nextCoin))
-                    mapUsedDenom.at(nextCoin)++;
+                if (mapOfDenomsUsed.at(nextCoin) < mapOfDenomsHeld.at(nextCoin))
+                    mapOfDenomsUsed.at(nextCoin)++;
                 else {
                     do {
                         nextCoin = getNextHighestDenom(nextCoin);
-                    } while ((nextCoin != ZQ_ERROR) && (mapUsedDenom.at(nextCoin) >= mapOfDenomsHeld.at(nextCoin)));
+                    } while ((nextCoin != ZQ_ERROR) && (mapOfDenomsUsed.at(nextCoin) >= mapOfDenomsHeld.at(nextCoin)));
                     if (nextCoin != ZQ_ERROR) {
-                        mapUsedDenom.at(nextCoin)++;
+                        mapOfDenomsUsed.at(nextCoin)++;
                     } else {
                         fCountOK = false;
                     }
@@ -164,14 +220,83 @@ bool rebalanceCoinsSelect(
             }
         }
     }
-    int coin_count = 0;
+    int nCoinCount = 0;
     for (const auto& denom : zerocoinDenomList) {
-        coin_count += mapUsedDenom.at(denom);
+        nCoinCount += mapOfDenomsUsed.at(denom);
     }
-    if (coin_count > nMaxNumberOfSpends) fCountOK = false;
+    if (nCoinCount > nMaxNumberOfSpends) fCountOK = false;
     return fCountOK;
 }
 
+// -------------------------------------------------------------------------------------------------------
+// Couldn't meet amount exactly, will need to generate change
+// returning with a 0 means either too many spends or no change
+// Latter should never happen since we should only get here if exact is not possible
+// -------------------------------------------------------------------------------------------------------
+int calculateChange(
+    int nMaxNumberOfSpends,
+    const CAmount nValueTarget,
+    const std::map<CoinDenomination, CAmount>& mapOfDenomsHeld,
+    std::map<CoinDenomination, CAmount>& mapOfDenomsUsed)
+{
+    CoinDenomination minDenomOverTarget = ZQ_ERROR;
+    // Initialize
+    mapOfDenomsUsed.clear();
+    for (const auto& denom : zerocoinDenomList)
+        mapOfDenomsUsed.insert(std::pair<CoinDenomination, CAmount>(denom, 0));
+
+    for (const auto& denom : zerocoinDenomList) {
+        if (nValueTarget < ZerocoinDenominationToAmount(denom) && mapOfDenomsHeld.at(denom)) {
+            minDenomOverTarget = denom;
+            break;
+        }
+    }
+    // OK so if != ZQ_ERROR we have a solution using 1 coin
+    if (minDenomOverTarget != ZQ_ERROR) {
+        mapOfDenomsUsed.at(minDenomOverTarget) = 1;
+
+        // Now find out # of coins in change
+        CAmount nChangeAmount = ZerocoinDenominationToAmount(minDenomOverTarget) - nValueTarget;
+        std::map<CoinDenomination, CAmount> mapChange = getChange(nChangeAmount);
+
+        int nChangeCount = getNumberOfCoinsUsed(mapChange);
+        return nChangeCount;
+
+    } else {
+        CoinDenomination maxDenom = getMaxDenomHeld(mapOfDenomsHeld);
+        CAmount nRemainingValue = nValueTarget;
+        CAmount AmountUsed = 0;
+        int nCoinCount = 0;
+        for (const auto& denom : reverse_iterate(zerocoinDenomList)) {
+            if (denom <= maxDenom) {
+                CAmount nValue = ZerocoinDenominationToAmount(denom);
+                do {
+                    if ((nRemainingValue > 0) && (mapOfDenomsUsed.at(denom) < mapOfDenomsHeld.at(denom))) {
+                        mapOfDenomsUsed.at(denom)++;
+                        nRemainingValue -= nValue;
+                        AmountUsed += nValue;
+                        nCoinCount++;
+                    }
+                } while ((nRemainingValue > 0) && (mapOfDenomsUsed.at(denom) < mapOfDenomsHeld.at(denom)));
+                if (nRemainingValue < 0) break;
+            }
+        }
+        if (nCoinCount > nMaxNumberOfSpends) return 0;
+
+        if (nRemainingValue > 0) {
+            // Can't do it
+            LogPrint("zero", "%s : Error for %d\n", __func__, nValueTarget);
+            throw std::runtime_error("Hmm....");
+        } else {
+            // Now find out # of coins in change
+            CAmount nChangeAmount = AmountUsed - nValueTarget;
+            std::map<CoinDenomination, CAmount> mapChange = getChange(nChangeAmount);
+
+            int nChangeCount = getNumberOfCoinsUsed(mapChange);
+            return nChangeCount;
+        }
+    }
+}
 
 // -------------------------------------------------------------------------------------------------------
 // Given a Target Spend Amount, attempt to meet it with a set of coins where less than nMaxNumberOfSpends
@@ -180,69 +305,51 @@ bool rebalanceCoinsSelect(
 
 std::vector<CZerocoinMint> SelectMintsFromList(const CAmount nValueTarget, CAmount& nSelectedValue, int nMaxNumberOfSpends, const std::list<CZerocoinMint>& listMints, const std::map<CoinDenomination, CAmount> mapOfDenomsHeld)
 {
-    nSelectedValue = 0;
     std::vector<CZerocoinMint> vSelectedMints;
-    CAmount RemainingValue = nValueTarget;
-    std::map<CoinDenomination, CAmount> mapUsedDenom;
-    for (const auto& denom : zerocoinDenomList)
-        mapUsedDenom.insert(std::pair<CoinDenomination, CAmount>(denom, 0));
+    std::map<CoinDenomination, CAmount> mapOfDenomsUsed;
 
-    // Start with the Highest Denomination coin and grab coins as long as the remaining amount is greater than the
-    // current denomination value
-    for (auto& coin : reverse_iterate(zerocoinDenomList)) {
-        for (const CZerocoinMint mint : listMints) {
-            if (mint.IsUsed()) continue;
-            if (RemainingValue >= ZerocoinDenominationToAmount(coin) && coin == mint.GetDenomination()) {
-                vSelectedMints.push_back(mint);
-                mapUsedDenom.at(coin)++;
-                RemainingValue -= mint.GetDenominationAsAmount();
-                LogPrint("zero","%s : Using %d : Remaining zerocoins %d\n", __func__, ZerocoinDenominationToInt(coin), RemainingValue / COIN);
-            }
-            if (RemainingValue < ZerocoinDenominationToAmount(coin)) break;
-        }
-    }
-    nSelectedValue = nValueTarget - RemainingValue;
-
-    if (RemainingValue == 0) {
+    bool fCanMeetExactly = getIdealSpends(nValueTarget, listMints, mapOfDenomsHeld, mapOfDenomsUsed);
+    if (fCanMeetExactly) {
+        nSelectedValue = nValueTarget;
+        std::map<CoinDenomination, CAmount> mapSavedDenoms = mapOfDenomsUsed;
+        vSelectedMints = getSpends(listMints, mapOfDenomsUsed, nSelectedValue);
         // If true, we are good and done!
         if (vSelectedMints.size() <= (size_t)nMaxNumberOfSpends) {
             return vSelectedMints;
         } else {
             vSelectedMints.clear();
             // Need to figure out alternative thing to do with too much potential spends here
-            std::map<CoinDenomination, CAmount> mapSavedDenoms = mapUsedDenom;
-            bool fCountOK = rebalanceCoinsSelect(nMaxNumberOfSpends, false, mapOfDenomsHeld, mapUsedDenom);
-            // Now need to selectMints based on mapUsedDenom (SPOCK) TBD
+            std::map<CoinDenomination, CAmount> mapOfDenomsUseds = mapSavedDenoms;
+            bool fCountOK = rebalanceCoinsSelect(nMaxNumberOfSpends, false, mapOfDenomsHeld, mapOfDenomsUseds);
+            // Now need to selectMints based on mapOfDenomsUsed (SPOCK) TBD
             //.....
             if (fCountOK) {
-                LogPrint("zero","%s : Redistributing use of coins (TBD)\n", __func__);
-                vSelectedMints = getSpends(listMints, mapUsedDenom, nSelectedValue);
+                LogPrint("zero", "%s : Redistributing use of coins (TBD)\n", __func__);
+                vSelectedMints = getSpends(listMints, mapOfDenomsUseds, nSelectedValue);
             } else {
                 // retry
                 fCountOK = rebalanceCoinsSelect(nMaxNumberOfSpends, true, mapOfDenomsHeld, mapSavedDenoms);
-                mapUsedDenom = mapSavedDenoms;
+                mapOfDenomsUsed.clear();
+                mapOfDenomsUsed = mapSavedDenoms;
                 if (!fCountOK) {
-                    LogPrint("zero","%s : Failed to find coin set\n", __func__);
+                    LogPrint("zero", "%s : Failed to find coin set\n", __func__);
                 } else {
-                    vSelectedMints = getSpends(listMints, mapUsedDenom, nSelectedValue);
+                    vSelectedMints = getSpends(listMints, mapOfDenomsUsed, nSelectedValue);
                 }
             }
             return vSelectedMints;
         }
     } else {
-        std::map<CoinDenomination, CAmount> mapSavedDenoms = mapUsedDenom;
-        bool fCountOK = rebalanceCoinsSelect(nMaxNumberOfSpends, false, mapOfDenomsHeld, mapUsedDenom);
-        if (!fCountOK) {
-            fCountOK = rebalanceCoinsSelect(nMaxNumberOfSpends, true, mapOfDenomsHeld, mapSavedDenoms);
-            mapUsedDenom = mapSavedDenoms;
-        }
-        if (fCountOK) {
-            vSelectedMints = getSpends(listMints, mapUsedDenom, nSelectedValue);
-        } else {
+        int nCoinsReturned = calculateChange(nMaxNumberOfSpends, nValueTarget, mapOfDenomsHeld, mapOfDenomsUsed);
+        if (nCoinsReturned == 0) {
+            LogPrint("zero", "%s: Problem getting change (TBD) or Too many spends %d\n", __func__, nValueTarget);
             vSelectedMints.clear();
+        } else {
+            vSelectedMints = getSpends(listMints, mapOfDenomsUsed, nSelectedValue);
+            LogPrint("zero", "%s: %d coins in change for %d\n", __func__, nCoinsReturned, nValueTarget);
         }
     }
-    LogPrint("zero","%s: Remaining %d, Fulfilled %d, Desired Amount %d\n", __func__, RemainingValue, nSelectedValue, nValueTarget);
-    
+    LogPrint("zero", "%s: Fulfilled %d, Desired Amount %d\n", __func__, nSelectedValue, nValueTarget);
+
     return vSelectedMints;
 }
