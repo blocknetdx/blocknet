@@ -302,7 +302,6 @@ int calculateChange(
 // Given a Target Spend Amount, attempt to meet it with a set of coins where less than nMaxNumberOfSpends
 // 'spends' are required
 // -------------------------------------------------------------------------------------------------------
-
 std::vector<CZerocoinMint> SelectMintsFromList(const CAmount nValueTarget, CAmount& nSelectedValue, int nMaxNumberOfSpends, const std::list<CZerocoinMint>& listMints, const std::map<CoinDenomination, CAmount> mapOfDenomsHeld)
 {
     std::vector<CZerocoinMint> vSelectedMints;
@@ -311,45 +310,22 @@ std::vector<CZerocoinMint> SelectMintsFromList(const CAmount nValueTarget, CAmou
     bool fCanMeetExactly = getIdealSpends(nValueTarget, listMints, mapOfDenomsHeld, mapOfDenomsUsed);
     if (fCanMeetExactly) {
         nSelectedValue = nValueTarget;
-        std::map<CoinDenomination, CAmount> mapSavedDenoms = mapOfDenomsUsed;
         vSelectedMints = getSpends(listMints, mapOfDenomsUsed, nSelectedValue);
         // If true, we are good and done!
         if (vSelectedMints.size() <= (size_t)nMaxNumberOfSpends) {
             return vSelectedMints;
-        } else {
-            vSelectedMints.clear();
-            // Need to figure out alternative thing to do with too much potential spends here
-            std::map<CoinDenomination, CAmount> mapOfDenomsUseds = mapSavedDenoms;
-            bool fCountOK = rebalanceCoinsSelect(nMaxNumberOfSpends, false, mapOfDenomsHeld, mapOfDenomsUseds);
-            // Now need to selectMints based on mapOfDenomsUsed (SPOCK) TBD
-            //.....
-            if (fCountOK) {
-                LogPrint("zero", "%s : Redistributing use of coins (TBD)\n", __func__);
-                vSelectedMints = getSpends(listMints, mapOfDenomsUseds, nSelectedValue);
-            } else {
-                // retry
-                fCountOK = rebalanceCoinsSelect(nMaxNumberOfSpends, true, mapOfDenomsHeld, mapSavedDenoms);
-                mapOfDenomsUsed.clear();
-                mapOfDenomsUsed = mapSavedDenoms;
-                if (!fCountOK) {
-                    LogPrint("zero", "%s : Failed to find coin set\n", __func__);
-                } else {
-                    vSelectedMints = getSpends(listMints, mapOfDenomsUsed, nSelectedValue);
-                }
-            }
-            return vSelectedMints;
-        }
-    } else {
-        int nCoinsReturned = calculateChange(nMaxNumberOfSpends, nValueTarget, mapOfDenomsHeld, mapOfDenomsUsed);
-        if (nCoinsReturned == 0) {
-            LogPrint("zero", "%s: Problem getting change (TBD) or Too many spends %d\n", __func__, nValueTarget);
-            vSelectedMints.clear();
-        } else {
-            vSelectedMints = getSpends(listMints, mapOfDenomsUsed, nSelectedValue);
-            LogPrint("zero", "%s: %d coins in change for %d\n", __func__, nCoinsReturned, nValueTarget);
         }
     }
+    // Since either too many spends needed or can not spend the exact amount,
+    // calculate the change needed and the map of coins used
+    int nCoinsReturned = calculateChange(nMaxNumberOfSpends, nValueTarget, mapOfDenomsHeld, mapOfDenomsUsed);
+    if (nCoinsReturned == 0) {
+        LogPrint("zero", "%s: Problem getting change (TBD) or Too many spends %d\n", __func__, nValueTarget);
+        vSelectedMints.clear();
+    } else {
+        vSelectedMints = getSpends(listMints, mapOfDenomsUsed, nSelectedValue);
+        LogPrint("zero", "%s: %d coins in change for %d\n", __func__, nCoinsReturned, nValueTarget);
+    }
     LogPrint("zero", "%s: Fulfilled %d, Desired Amount %d\n", __func__, nSelectedValue, nValueTarget);
-
     return vSelectedMints;
 }
