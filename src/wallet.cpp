@@ -1259,9 +1259,9 @@ CAmount CWallet::GetZerocoinBalance() const
         LogPrintf("%s My coins for denomination %d pubcoin %s\n", __func__,myZerocoinSupply.at(denom), denom);
     }
     LogPrintf("Total value of coins %d\n",nTotal);
-    
 
-    
+
+
     return nTotal;
 }
 
@@ -3691,8 +3691,7 @@ bool CMerkleTx::IsTransactionLockTimedOut() const
     return false;
 }
 
-bool CWallet::CreateZerocoinMintTransaction(const CAmount nValue, CMutableTransaction& txNew, vector<CZerocoinMint>& vMints, CReserveKey* reservekey,
-    int64_t& nFeeRet, std::string& strFailReason, const CCoinControl* coinControl, const bool isZCSpendChange)
+bool CWallet::CreateZerocoinMintTransaction(const CAmount nValue, CMutableTransaction& txNew, vector<CZerocoinMint>& vMints, CReserveKey* reservekey, int64_t& nFeeRet, std::string& strFailReason, const CCoinControl* coinControl, const bool isZCSpendChange)
 {
     if (IsLocked()) {
         strFailReason = _("Error: Wallet locked, unable to create transaction!");
@@ -3905,8 +3904,7 @@ bool CWallet::MintToTxIn(CZerocoinMint zerocoinSelected, int nSecurityLevel, con
     return true;
 }
 
-bool CWallet::CreateZerocoinSpendTransaction(CAmount nValue, int nSecurityLevel, CWalletTx& wtxNew, CReserveKey& reserveKey, vector<CZerocoinSpend>& vSpends,
-                                             vector<CZerocoinMint>& vSelectedMints, std::string& strFailReason, bool fMintChange, CBitcoinAddress* address)
+bool CWallet::CreateZerocoinSpendTransaction(CAmount nValue, int nSecurityLevel, CWalletTx& wtxNew, CReserveKey& reserveKey, vector<CZerocoinSpend>& vSpends, vector<CZerocoinMint>& vSelectedMints, vector<CZerocoinMint>& vNewMints, std::string& strFailReason, bool fMintChange, CBitcoinAddress* address)
 {
     if (nValue > GetZerocoinBalance()) {
         strFailReason = _("You don't have enough Zerocoins in your wallet");
@@ -3973,11 +3971,19 @@ bool CWallet::CreateZerocoinSpendTransaction(CAmount nValue, int nSecurityLevel,
                 //mint change as zerocoins
                 if (fMintChange) {
                     CAmount nFeeRet = 0;
-                    //todo properly track and database the mints created here
-                    vector<CZerocoinMint> vMints;
-                    if(!CreateZerocoinMintTransaction(nChange, txNew, vMints, &reserveKey, nFeeRet, strFailReason, NULL, true)) {
+                    if (!CreateZerocoinMintTransaction(nChange, txNew, vNewMints, &reserveKey, nFeeRet, strFailReason, NULL, true)) {
                         return false;
                     }
+
+                    // write new Mints to db
+                    CWalletDB walletdb(pwalletMain->strWalletFile);
+                    for (CZerocoinMint mint : vNewMints) {
+                        mint.SetTxHash(txNew.GetHash());
+                        walletdb.WriteZerocoinMint(mint);
+                        // need this ??? (SPOCK)
+                        //pwalletMain->NotifyZerocoinChanged(pwalletMain, mint.GetValue().GetHex(), "Used", CT_UPDATED);
+                    }
+
                 } else {
                     CTxOut txOutChange(nValueSelected - nValue, scriptChange);
                     txNew.vout.push_back(txOutChange);
@@ -4080,7 +4086,9 @@ string CWallet::SpendZerocoin(CAmount nAmount, int nSecurityLevel, CWalletTx& wt
     string strError;
     CReserveKey reserveKey(this);
 
-    if (!CreateZerocoinSpendTransaction(nAmount, nSecurityLevel, wtxNew, reserveKey, vSpends, vMintsSelected, strError, fMintChange, addressTo)) {
+    vector<CZerocoinMint> vNewMints;
+
+    if (!CreateZerocoinSpendTransaction(nAmount, nSecurityLevel, wtxNew, reserveKey, vSpends, vMintsSelected, vNewMints, strError, fMintChange, addressTo)) {
         LogPrintf("SpendZerocoin() : %s\n", strError.c_str());
         return strError;
     }
@@ -4103,6 +4111,9 @@ string CWallet::SpendZerocoin(CAmount nAmount, int nSecurityLevel, CWalletTx& wt
                 return _("Error: It cannot delete coin serial number in wallet");
             }
         }
+
+        // erase writeToDb for new mints TODO (SPOCK) ???
+        // need eraseZerocoinMint for db
 
         return _("Error: The transaction was rejected! This might happen if some of the coins in your wallet were already spent, such as if you used a copy of wallet.dat and coins were spent in the copy but not marked as spent here.");
     }
