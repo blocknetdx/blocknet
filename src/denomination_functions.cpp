@@ -1,3 +1,11 @@
+/**
+ * @file       denominations_functions.cpp
+ *
+ * @brief      Denomination functions for the Zerocoin library.
+ *
+ * @copyright  Copyright 2017 PIVX Developers
+ * @license    This project is released under the MIT license.
+ **/
 #include "denomination_functions.h"
 #include "reverse_iterate.h"
 #include "util.h"
@@ -128,10 +136,10 @@ void listSpends(const std::vector<CZerocoinMint>& vSelectedMints)
 
     CAmount nTotal = 0;
     for (auto& denom : libzerocoin::zerocoinDenomList) {
-        LogPrintf("%s %d coins for denomination %d used\n", __func__, mapZerocoinSupply.at(denom), denom);
+        LogPrint("zero","%s %d coins for denomination %d used\n", __func__, mapZerocoinSupply.at(denom), denom);
         nTotal += libzerocoin::ZerocoinDenominationToAmount(denom);
     }
-    LogPrintf("Total value of coins %d\n", nTotal);
+    LogPrint("zero","Total value of coins %d\n", nTotal);
 }
 
 // -------------------------------------------------------------------------------------------------------
@@ -286,7 +294,7 @@ int calculateChange(
         if (nRemainingValue > 0) {
             // Can't do it
             LogPrint("zero", "%s : Error for %d\n", __func__, nValueTarget);
-            throw std::runtime_error("Hmm....");
+            return 0;
         } else {
             // Now find out # of coins in change
             CAmount nChangeAmount = AmountUsed - nValueTarget;
@@ -326,6 +334,5 @@ std::vector<CZerocoinMint> SelectMintsFromList(const CAmount nValueTarget, CAmou
         vSelectedMints = getSpends(listMints, mapOfDenomsUsed, nSelectedValue);
         LogPrint("zero", "%s: %d coins in change for %d\n", __func__, nCoinsReturned, nValueTarget);
     }
-    LogPrint("zero", "%s: Fulfilled %d, Desired Amount %d\n", __func__, nSelectedValue, nValueTarget);
     return vSelectedMints;
 }

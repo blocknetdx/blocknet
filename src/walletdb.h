@@ -145,6 +145,7 @@ public:
     static bool Recover(CDBEnv& dbenv, std::string filename);
 
     bool WriteZerocoinMint(const CZerocoinMint& zerocoinMint);
+    bool EraseZerocoinMint(const CZerocoinMint& zerocoinMint);
     bool ReadZerocoinMint(const CBigNum &bnSerial, CZerocoinMint& zerocoinMint);
     std::list<CZerocoinMint> ListMintedCoins(bool fUnusedOnly = false, bool fMaturedOnly = false);
     std::list<CZerocoinSpend> ListSpentCoins();

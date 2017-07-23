@@ -1030,6 +1030,15 @@ bool CWalletDB::ReadZerocoinMint(const CBigNum &bnPubCoinValue, CZerocoinMint& z
     return Read(make_pair(string("zerocoin"), hash), zerocoinMint);
 }
 
+bool CWalletDB::EraseZerocoinMint(const CZerocoinMint& zerocoinMint)
+{
+    CDataStream ss(SER_GETHASH, 0);
+    ss << zerocoinMint.GetValue();
+    uint256 hash = Hash(ss.begin(), ss.end());
+
+    return Erase(make_pair(string("zerocoin"), hash));
+}
+
 std::list<CZerocoinMint> CWalletDB::ListMintedCoins(bool fUnusedOnly, bool fMaturedOnly)
 {
     std::list<CZerocoinMint> listPubCoin;

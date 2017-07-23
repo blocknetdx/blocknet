@@ -4112,8 +4112,12 @@ string CWallet::SpendZerocoin(CAmount nAmount, int nSecurityLevel, CWalletTx& wt
             }
         }
 
-        // erase writeToDb for new mints TODO (SPOCK) ???
-        // need eraseZerocoinMint for db
+        // erase new mints
+        for (auto& mint : vNewMints) {
+            if (!CWalletDB(strWalletFile).EraseZerocoinMint(mint)) {
+                return _("Error: Unable to cannot delete zerocoin mint in wallet");
+            }
+        }
 
         return _("Error: The transaction was rejected! This might happen if some of the coins in your wallet were already spent, such as if you used a copy of wallet.dat and coins were spent in the copy but not marked as spent here.");
     }
