@@ -516,8 +516,8 @@ bool CServicenodeBroadcast::CheckAndUpdate(int& nDos)
     }
 
     if (Params().NetworkID() == CBaseChainParams::MAIN) {
-        if (addr.GetPort() != 51472) return false;
-    } else if (addr.GetPort() == 51472)
+        if (addr.GetPort() != 41412) return false;
+    } else if (addr.GetPort() == 41412)
         return false;
 
     //search existing Servicenode list, this is where we update existing Servicenodes with new mnb broadcasts

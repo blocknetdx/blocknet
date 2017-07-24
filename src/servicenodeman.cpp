@@ -858,8 +858,8 @@ void CServicenodeMan::ProcessMessage(CNode* pfrom, std::string& strCommand, CDat
         }
 
         if (Params().NetworkID() == CBaseChainParams::MAIN) {
-            if (addr.GetPort() != 51472) return;
-        } else if (addr.GetPort() == 51472)
+            if (addr.GetPort() != 41412) return;
+        } else if (addr.GetPort() == 41412)
             return;
 
         //search existing Servicenode list, this is where we update existing Servicenodes with new dsee broadcasts
