@@ -20,7 +20,13 @@ config.status
 libtool
 .deps/
 .dirstamp
-build-aux/
+build-aux/*.*
+build-aux/depcomp
+build-aux/install-sh
+build-aux/missing
+
+
+build-aux/m4/*.m4
 *.lo
 *.o
 *~
