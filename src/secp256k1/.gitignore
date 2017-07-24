@@ -32,6 +32,7 @@ build-aux/m4/*.m4
 *~
 src/libsecp256k1-config.h
 src/libsecp256k1-config.h.in
+src/secp256k1/build-aux/
 m4/libtool.m4
 m4/ltoptions.m4
 m4/ltsugar.m4
