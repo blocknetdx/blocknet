@@ -79,7 +79,7 @@ In the case of multiple winners being associated with a single block, the result
 ]
 ```
 
-For the `list` (aka `masternodelist`) parameter, the vairous "modes" have been removed in favor of a unified and standardized result format. The result is now an array of objects instead of an object of objects. Further, the individual objects now have a standard JSON format. The result format is as follows:
+For the `list` (aka `masternodelist`) parameter, the various "modes" have been removed in favor of a unified and standardized result format. The result is now an array of objects instead of an object of objects. Further, the individual objects now have a standard JSON format. The result format is as follows:
 
 ```
 [
@@ -125,6 +125,11 @@ pivxd can now (optionally) asynchronously notify clients through a ZMQ-based PUB
 With the standardization and reformatting of the `masternode list` (`masternodelist`) RPC command, there is no real use case to keep the full list of masternodes in the GUI. This GUI element causes a great deal of extra overhead, even when it is not being actively displayed. The removal of this list has also proven to resolve a number of linux-based errors
 
 Note that the GUI list of masternodes associated with a controller wallet remains intact.
+
+SPV Client Support
+--------------
+
+PIVX Core now enables bloom filters by default to support SPV clients like mobile wallets. This feature can be disabled by using the `-peerbloomfilters` option on startup.
 
 *version* Change log
 =================
