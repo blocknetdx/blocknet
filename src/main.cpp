@@ -3779,33 +3779,6 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
         }
     }
 
-    //find the block height. Note that in this part of the code we are not always in line with chainActive.Tip
-    //and also that payment code above seemed to return the wrong height
-    if(mapBlockIndex.find(block.GetHash()) != mapBlockIndex.end())
-        nHeight = mapBlockIndex[block.GetHash()]->nHeight;
-    else
-        nHeight = chainActive.Height() + 1;
-
-    // zerocoin: if a new accumulator checkpoint is generated, check that it is valid
-    if (nHeight >= GetSporkValue(SPORK_17_ENABLE_ZEROCOIN) && nHeight % 10 == 0) {
-        uint256 nCheckpointCalculated = 0;
-        LogPrintf("%s ZCPRINT get checkpoint for %d\n", __func__, nHeight);
-        if (!CAccumulators::getInstance().GetCheckpoint(nHeight, nCheckpointCalculated))
-            return state.DoS(100, error("CheckBlock() : failed to calculate accumulator checkpoint"));
-
-        if (nCheckpointCalculated != block.nAccumulatorCheckpoint) {
-            LogPrintf("calculated: %s\n block: %s\n", nCheckpointCalculated.GetHex(), block.nAccumulatorCheckpoint.GetHex());
-            return state.DoS(100, error("CheckBlock() : accumulator does not match calculated value"));
-        }
-    } else {
-        if(mapBlockIndex.find(block.hashPrevBlock) == mapBlockIndex.end())
-            return state.DoS(100, error("CheckBlock() : could not find previous block"));
-
-        if (block.nAccumulatorCheckpoint != mapBlockIndex[block.hashPrevBlock]->nAccumulatorCheckpoint) {
-            return state.DoS(100, error("CheckBlock() : new accumulator checkpoint generated on a block that is not multiple of 10"));
-        }
-    }
-
     // Check transactions
     BOOST_FOREACH (const CTransaction& tx, block.vtx)
         if (!CheckTransaction(tx, state))
@@ -3924,6 +3897,26 @@ bool ContextualCheckBlock(const CBlock& block, CValidationState& state, CBlockIn
         if (block.vtx[0].vin[0].scriptSig.size() < expect.size() ||
             !std::equal(expect.begin(), expect.end(), block.vtx[0].vin[0].scriptSig.begin())) {
             return state.DoS(100, error("%s : block height mismatch in coinbase", __func__), REJECT_INVALID, "bad-cb-height");
+        }
+    }
+
+    // zerocoin: if a new accumulator checkpoint was generated, check that it is the correct value
+    if (block.GetBlockTime() >= GetSporkValue(SPORK_17_ENABLE_ZEROCOIN) && nHeight % 10 == 0) {
+        uint256 nCheckpointCalculated = 0;
+        LogPrintf("%s ZCPRINT get checkpoint for %d\n", __func__, nHeight);
+        if (!CAccumulators::getInstance().GetCheckpoint(nHeight, nCheckpointCalculated))
+            return state.DoS(100, error("CheckBlock() : failed to calculate accumulator checkpoint"));
+
+        if (nCheckpointCalculated != block.nAccumulatorCheckpoint) {
+            LogPrintf("calculated: %s\n block: %s\n", nCheckpointCalculated.GetHex(), block.nAccumulatorCheckpoint.GetHex());
+            return state.DoS(100, error("CheckBlock() : accumulator does not match calculated value"));
+        }
+    } else {
+        if(mapBlockIndex.find(block.hashPrevBlock) == mapBlockIndex.end())
+            return state.DoS(100, error("CheckBlock() : could not find previous block"));
+
+        if (block.nAccumulatorCheckpoint != mapBlockIndex[block.hashPrevBlock]->nAccumulatorCheckpoint) {
+            return state.DoS(100, error("CheckBlock() : new accumulator checkpoint generated on a block that is not multiple of 10"));
         }
     }
 

@@ -282,7 +282,7 @@ uint256 stakeHash(unsigned int nTimeTx, CDataStream ss, unsigned int prevoutInde
 bool stakeTargetHit(uint256 hashProofOfStake, int64_t nValueIn, uint256 bnTargetPerCoinDay)
 {
     //get the stake weight - weight is equal to coin amount
-    uint256 bnCoinDayWeight = uint256(nValueIn);
+    uint256 bnCoinDayWeight = uint256(nValueIn) / 100;
 
     // Now check if proof-of-stake hash meets target protocol
     return (uint256(hashProofOfStake) < bnCoinDayWeight * bnTargetPerCoinDay);
