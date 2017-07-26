@@ -2782,6 +2782,10 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
         for (auto& denom : listSpends) {
             pindex->mapZerocoinSupply.at(denom)--;
             nAmountZerocoinSpent += libzerocoin::ZerocoinDenominationToAmount(denom);
+
+            // zerocoin failsafe
+            if (pindex->mapZerocoinSupply.at(denom) < 0)
+                return state.DoS(100, error("Block contains zerocoins that spend more than are in the available supply to spend"));
         }
     }
 
