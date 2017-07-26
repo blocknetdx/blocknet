@@ -100,8 +100,6 @@ public:
     std::string Zerocoin_Modulus() const { return zerocoinModulus; }
     libzerocoin::ZerocoinParams* Zerocoin_Params() const;
     int Zerocoin_MaxSpendsPerTransaction() const { return nMaxZerocoinSpendsPerTransaction; }
-    unsigned int Zerocoin_ProtocolActivationTime() const { return nZerocoinProtocolActivationTime; }
-    int Zerocoin_StartCheckpointHeight() const { return nStartCheckpointHeight; }
     CAmount Zerocoin_MintFee() const { return nMinZerocoinMintFee; }
     int Zerocoin_MintRequiredConfirmations() const { return nMintRequiredConfirmations; }
     int Zerocoin_DefaultSpendSecurity() const { return nDefaultSecurityLevel; }
@@ -149,8 +147,6 @@ protected:
     int64_t nStartMasternodePayments;
     std::string zerocoinModulus;
     int nMaxZerocoinSpendsPerTransaction;
-    unsigned int nZerocoinProtocolActivationTime;
-    int nStartCheckpointHeight;
     CAmount nMinZerocoinMintFee;
     int nMintRequiredConfirmations;
     int nDefaultSecurityLevel;

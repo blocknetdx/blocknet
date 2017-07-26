@@ -3,6 +3,7 @@
 #include "main.h"
 #include "txdb.h"
 #include "init.h"
+#include "spork.h"
 
 using namespace libzerocoin;
 
@@ -11,7 +12,7 @@ void CAccumulators::Setup()
     //construct accumulators for all denominations
     for (auto& denom : zerocoinDenomList) {
         unique_ptr<Accumulator> uptr(new Accumulator(Params().Zerocoin_Params(), denom));
-        mapAccumulators.insert(make_pair(denom, move(uptr)));
+        mapAccumulators.insert(make_pair(denom, std::move(uptr)));
     }
 }
 
@@ -151,7 +152,7 @@ bool CAccumulators::ResetToCheckpoint(const uint256& nCheckpoint)
         if (bnValue == 0) {
             //if the value is zero, then this is an unused accumulator and must be reinitialized
             unique_ptr<Accumulator> uptr(new Accumulator(Params().Zerocoin_Params(), denom));
-            mapAccumulators.at(denom) = move(uptr);
+            mapAccumulators.at(denom) = std::move(uptr);
             continue;
         }
 
@@ -183,7 +184,7 @@ uint256 CAccumulators::GetCheckpoint()
 bool CAccumulators::GetCheckpoint(int nHeight, uint256& nCheckpoint)
 {
     LogPrintf("%s\n", __func__);
-    if (nHeight < Params().Zerocoin_StartCheckpointHeight()) {
+    if (nHeight <= chainActive.Height() && chainActive[nHeight]->nTime < GetSporkValue(SPORK_17_ENABLE_ZEROCOIN)) {
         nCheckpoint = 0;
         return true;
     }
@@ -264,7 +265,6 @@ bool CAccumulators::IntializeWitnessAndAccumulator(const CZerocoinMint &zerocoin
 
     list<CZerocoinMint> vMintsToAddToWitness;
     uint256 nChecksumBeforeMint = 0, nChecksumContainingMint = 0;
-    int nChecksumBeforeMintHeight = 0;
     CBlockIndex* pindex = chainActive[nHeightMintAddedToBlockchain];
     int nChanges = 0;
 
@@ -283,7 +283,6 @@ bool CAccumulators::IntializeWitnessAndAccumulator(const CZerocoinMint &zerocoin
             nChanges++;
 
             if(nChanges == 1) {
-                nChecksumBeforeMintHeight = pindex->nHeight;
                 nChecksumBeforeMint = pindex->nAccumulatorCheckpoint;
             }
 

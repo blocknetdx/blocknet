@@ -1077,7 +1077,7 @@ bool CheckZerocoinMint(const uint256& txHash, const CTxOut& txout, CValidationSt
 {
     LogPrintf("ZCPRINT %s\n", __func__);
 
-    if(GetAdjustedTime() < Params().Zerocoin_ProtocolActivationTime())
+    if(GetAdjustedTime() < GetSporkValue(SPORK_17_ENABLE_ZEROCOIN))
         return state.DoS(100, error("CheckZerocoinMint(): Zerocoin transactions are not allowed yet"));
 
     PublicCoin pubCoin(Params().Zerocoin_Params());
@@ -1121,7 +1121,7 @@ bool CheckZerocoinSpend(const CTransaction tx, CValidationState& state)
 {
     LogPrintf("ZCPRINT %s\n", __func__);
 
-    if(GetAdjustedTime() < Params().Zerocoin_ProtocolActivationTime())
+    if(GetAdjustedTime() < GetSporkValue(SPORK_17_ENABLE_ZEROCOIN))
         return state.DoS(100, error("CheckZerocoinSpend(): Zerocoin transactions are not allowed yet"));
 
     //max needed non-mint outputs should be 2 - one for redemption address and a possible 2nd for change
@@ -1221,8 +1221,12 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
     if (tx.vout.empty())
         return state.DoS(10, error("CheckTransaction() : vout empty"),
             REJECT_INVALID, "bad-txns-vout-empty");
+
     // Size limits
-    unsigned int nMaxSize = GetAdjustedTime() < Params().Zerocoin_ProtocolActivationTime() ? MAX_BLOCK_SIZE_LEGACY : MAX_ZEROCOIN_TX_SIZE;
+    unsigned int nMaxSize = MAX_BLOCK_SIZE_LEGACY;
+    if(GetAdjustedTime() > GetSporkValue(SPORK_17_ENABLE_ZEROCOIN))
+        nMaxSize = MAX_ZEROCOIN_TX_SIZE;
+
     if (::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION) > nMaxSize)
         return state.DoS(100, error("CheckTransaction() : size limits failed"),
             REJECT_INVALID, "bad-txns-oversize");
@@ -1470,7 +1474,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
         // merely non-standard transaction.
         if (!tx.IsZerocoinSpend()) {
             unsigned int nSigOps = GetLegacySigOpCount(tx);
-            unsigned int nMaxSigOps = GetAdjustedTime() > Params().Zerocoin_ProtocolActivationTime() ? MAX_TX_SIGOPS_CURRENT : MAX_TX_SIGOPS_LEGACY;
+            unsigned int nMaxSigOps = GetAdjustedTime() > GetSporkValue(SPORK_17_ENABLE_ZEROCOIN) ? MAX_TX_SIGOPS_CURRENT : MAX_TX_SIGOPS_LEGACY;
             nSigOps += GetP2SHSigOpCount(tx, view);
             if(nSigOps > nMaxSigOps)
                 return state.DoS(0,
@@ -1669,7 +1673,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState& state, const CTransact
         // MAX_BLOCK_SIGOPS; we still consider this an invalid rather than
         // merely non-standard transaction.
         unsigned int nSigOps = GetLegacySigOpCount(tx);
-        unsigned int nMaxSigOps = GetAdjustedTime() > Params().Zerocoin_ProtocolActivationTime() ? MAX_TX_SIGOPS_CURRENT : MAX_TX_SIGOPS_LEGACY;
+        unsigned int nMaxSigOps = GetAdjustedTime() > GetSporkValue(SPORK_17_ENABLE_ZEROCOIN) ? MAX_TX_SIGOPS_CURRENT : MAX_TX_SIGOPS_LEGACY;
         nSigOps += GetP2SHSigOpCount(tx, view);
         if (nSigOps > nMaxSigOps)
             return state.DoS(0,
@@ -2714,7 +2718,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
     blockundo.vtxundo.reserve(block.vtx.size() - 1);
     CAmount nValueOut = 0;
     CAmount nValueIn = 0;
-    unsigned int nMaxBlockSigOps = block.nTime > Params().Zerocoin_ProtocolActivationTime() ? MAX_BLOCK_SIGOPS_CURRENT : MAX_BLOCK_SIGOPS_LEGACY;
+    unsigned int nMaxBlockSigOps = block.nTime > GetSporkValue(SPORK_17_ENABLE_ZEROCOIN) ? MAX_BLOCK_SIGOPS_CURRENT : MAX_BLOCK_SIGOPS_LEGACY;
     for (unsigned int i = 0; i < block.vtx.size(); i++) {
         const CTransaction& tx = block.vtx[i];
 
@@ -3695,7 +3699,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
     // because we receive the wrong transactions for it.
 
     // Size limits
-    unsigned int nMaxBlockSize = GetAdjustedTime() > Params().Zerocoin_ProtocolActivationTime() ? MAX_BLOCK_SIZE_CURRENT : MAX_BLOCK_SIZE_LEGACY;
+    unsigned int nMaxBlockSize = GetAdjustedTime() > GetSporkValue(SPORK_17_ENABLE_ZEROCOIN) ? MAX_BLOCK_SIZE_CURRENT : MAX_BLOCK_SIZE_LEGACY;
     if (block.vtx.empty() || block.vtx.size() > nMaxBlockSize || ::GetSerializeSize(block, SER_NETWORK, PROTOCOL_VERSION) > nMaxBlockSize)
         return state.DoS(100, error("CheckBlock() : size limits failed"),
             REJECT_INVALID, "bad-blk-length");
@@ -3783,7 +3787,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
         nHeight = chainActive.Height() + 1;
 
     // zerocoin: if a new accumulator checkpoint is generated, check that it is valid
-    if (nHeight >= Params().Zerocoin_StartCheckpointHeight() && nHeight % 10 == 0) {
+    if (nHeight >= GetSporkValue(SPORK_17_ENABLE_ZEROCOIN) && nHeight % 10 == 0) {
         uint256 nCheckpointCalculated = 0;
         LogPrintf("%s ZCPRINT get checkpoint for %d\n", __func__, nHeight);
         if (!CAccumulators::getInstance().GetCheckpoint(nHeight, nCheckpointCalculated))
@@ -3811,7 +3815,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
     BOOST_FOREACH (const CTransaction& tx, block.vtx) {
         nSigOps += GetLegacySigOpCount(tx);
     }
-    unsigned int nMaxBlockSigOps = block.nTime > Params().Zerocoin_ProtocolActivationTime() ? MAX_BLOCK_SIGOPS_CURRENT : MAX_BLOCK_SIGOPS_LEGACY;
+    unsigned int nMaxBlockSigOps = block.nTime > GetSporkValue(SPORK_17_ENABLE_ZEROCOIN) ? MAX_BLOCK_SIGOPS_CURRENT : MAX_BLOCK_SIGOPS_LEGACY;
     if (nSigOps > nMaxBlockSigOps)
         return state.DoS(100, error("CheckBlock() : out-of-bounds SigOpCount"),
             REJECT_INVALID, "bad-blk-sigops", true);
