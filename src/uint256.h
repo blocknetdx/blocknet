@@ -42,7 +42,6 @@ public:
             pn[i] = b.pn[i];
     }
 
-
     bool IsNull() const
     {
         for (int i = 0; i < WIDTH; i++)

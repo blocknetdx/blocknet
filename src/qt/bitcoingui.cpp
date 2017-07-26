@@ -18,6 +18,8 @@
 #include "optionsmodel.h"
 #include "rpcconsole.h"
 #include "utilitydialog.h"
+#include "servicenode-sync.h"
+#include "wallet.h"
 
 #ifdef ENABLE_WALLET
 #include "blockexplorer.h"
@@ -241,10 +243,10 @@ BitcoinGUI::BitcoinGUI(const NetworkStyle* networkStyle, QWidget* parent) : QMai
     // prevents an open debug window from becoming stuck/unusable on client shutdown
     connect(quitAction, SIGNAL(triggered()), rpcConsole, SLOT(hide()));
 
-    connect(openBlockExplorerAction, SIGNAL(triggered()), explorerWindow, SLOT(show()));
+    // connect(openBlockExplorerAction, SIGNAL(triggered()), explorerWindow, SLOT(show()));
 
     // prevents an open debug window from becoming stuck/unusable on client shutdown
-    connect(quitAction, SIGNAL(triggered()), explorerWindow, SLOT(hide()));
+    // connect(quitAction, SIGNAL(triggered()), explorerWindow, SLOT(hide()));
 
     // Install event filter to be able to catch status tip events (QEvent::StatusTip)
     this->installEventFilter(this);

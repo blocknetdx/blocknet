@@ -7,37 +7,37 @@
 
 #include "crypto/common.h"
 #include "uint256.h"
-#include "uint512.h"
+// #include "uint512.h"
 #include "utilstrencodings.h"
 
 #include <stdio.h>
 #include <string.h>
 
 
-template <>
-std::string base_uint<256>::GetHex() const
-{
-    return ArithToUint256(*this).GetHex();
-}
+//template <>
+//std::string base_uint<256>::GetHex() const
+//{
+//    return ArithToUint256(*this).GetHex();
+//}
 
-template <>
-void base_uint<256>::SetHex(const char* psz)
-{
-    *this = UintToArith256(uint256S(psz));
-}
+//template <>
+//void base_uint<256>::SetHex(const char* psz)
+//{
+//    *this = UintToArith256(uint256S(psz));
+//}
 
-template <>
-std::string base_uint<512>::GetHex() const
-{
-    return ArithToUint512(*this).GetHex();
-}
+//template <>
+//std::string base_uint<512>::GetHex() const
+//{
+//    return ArithToUint512(*this).GetHex();
+//}
 
 
-template <>
-void base_uint<512>::SetHex(const char* psz)
-{
-    *this = UintToArith512(uint512S(psz));
-}
+//template <>
+//void base_uint<512>::SetHex(const char* psz)
+//{
+//    *this = UintToArith512(uint512S(psz));
+//}
 
 
 template <unsigned int BITS>
