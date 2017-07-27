@@ -32,7 +32,7 @@ class TxViewDelegate : public QAbstractItemDelegate
 {
     Q_OBJECT
 public:
-    TxViewDelegate() : QAbstractItemDelegate(), unit(BitcoinUnits::PIV)
+    TxViewDelegate() : QAbstractItemDelegate(), unit(BitcoinUnits::BLOCK)
     {
     }
 
@@ -270,7 +270,7 @@ void OverviewPage::setWalletModel(WalletModel* model)
         connect(model, SIGNAL(notifyWatchonlyChanged(bool)), this, SLOT(updateWatchOnlyLabels(bool)));
     }
 
-    // update the display unit, to not use the default ("PIV")
+    // update the display unit, to not use the default ("BLOCK")
     updateDisplayUnit();
 }
 

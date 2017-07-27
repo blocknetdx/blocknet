@@ -367,9 +367,9 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += HelpMessageOpt("-disablewallet", _("Do not load the wallet and disable wallet RPC calls"));
     strUsage += HelpMessageOpt("-keypool=<n>", strprintf(_("Set key pool size to <n> (default: %u)"), 100));
     if (GetBoolArg("-help-debug", false))
-        strUsage += HelpMessageOpt("-mintxfee=<amt>", strprintf(_("Fees (in PIV/Kb) smaller than this are considered zero fee for transaction creation (default: %s)"),
+        strUsage += HelpMessageOpt("-mintxfee=<amt>", strprintf(_("Fees (in BLOCK/Kb) smaller than this are considered zero fee for transaction creation (default: %s)"),
             FormatMoney(CWallet::minTxFee.GetFeePerK())));
-    strUsage += HelpMessageOpt("-paytxfee=<amt>", strprintf(_("Fee (in PIV/kB) to add to transactions you send (default: %s)"), FormatMoney(payTxFee.GetFeePerK())));
+    strUsage += HelpMessageOpt("-paytxfee=<amt>", strprintf(_("Fee (in BLOCK/kB) to add to transactions you send (default: %s)"), FormatMoney(payTxFee.GetFeePerK())));
     strUsage += HelpMessageOpt("-rescan", _("Rescan the block chain for missing wallet transactions") + " " + _("on startup"));
     strUsage += HelpMessageOpt("-salvagewallet", _("Attempt to recover private keys from a corrupt wallet.dat") + " " + _("on startup"));
     strUsage += HelpMessageOpt("-sendfreetransactions", strprintf(_("Send transactions as zero-fee transactions if possible (default: %u)"), 0));
@@ -429,7 +429,7 @@ std::string HelpMessage(HelpMessageMode mode)
         strUsage += HelpMessageOpt("-relaypriority", strprintf(_("Require high priority for relaying free or low-fee transactions (default:%u)"), 1));
         strUsage += HelpMessageOpt("-maxsigcachesize=<n>", strprintf(_("Limit size of signature cache to <n> entries (default: %u)"), 50000));
     }
-    strUsage += HelpMessageOpt("-minrelaytxfee=<amt>", strprintf(_("Fees (in PIV/Kb) smaller than this are considered zero fee for relaying (default: %s)"), FormatMoney(::minRelayTxFee.GetFeePerK())));
+    strUsage += HelpMessageOpt("-minrelaytxfee=<amt>", strprintf(_("Fees (in BLOCK/Kb) smaller than this are considered zero fee for relaying (default: %s)"), FormatMoney(::minRelayTxFee.GetFeePerK())));
     strUsage += HelpMessageOpt("-printtoconsole", strprintf(_("Send trace/debug info to console instead of debug.log file (default: %u)"), 0));
     if (GetBoolArg("-help-debug", false)) {
         strUsage += HelpMessageOpt("-printpriority", strprintf(_("Log transaction priority and fee per kB when mining blocks (default: %u)"), 0));
@@ -463,7 +463,7 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += HelpMessageGroup(_("Obfuscation options:"));
     strUsage += HelpMessageOpt("-enableobfuscation=<n>", strprintf(_("Enable use of automated obfuscation for funds stored in this wallet (0-1, default: %u)"), 0));
     strUsage += HelpMessageOpt("-obfuscationrounds=<n>", strprintf(_("Use N separate servicenodes to anonymize funds  (2-8, default: %u)"), 2));
-    strUsage += HelpMessageOpt("-anonymizeblocknetdxamount=<n>", strprintf(_("Keep N PIV anonymized (default: %u)"), 0));
+    strUsage += HelpMessageOpt("-anonymizeblocknetdxamount=<n>", strprintf(_("Keep N BLOCK anonymized (default: %u)"), 0));
     strUsage += HelpMessageOpt("-liquidityprovider=<n>", strprintf(_("Provide liquidity to Obfuscation by infrequently mixing coins on a continual basis (0-100, default: %u, 1=very frequent, high fees, 100=very infrequent, low fees)"), 0));
 
     strUsage += HelpMessageGroup(_("SwiftTX options:"));
@@ -1596,8 +1596,8 @@ bool AppInit2(boost::thread_group& threadGroup)
        is convertable to another.
 
        For example:
-       1PIV+1000 == (.1PIV+100)*10
-       10PIV+10000 == (1PIV+1000)*10
+       1BLOCK+1000 == (.1BLOCK+100)*10
+       10BLOCK+10000 == (1BLOCK+1000)*10
     */
     obfuScationDenominations.push_back((10000 * COIN) + 10000000);
     obfuScationDenominations.push_back((1000 * COIN) + 1000000);
