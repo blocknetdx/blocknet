@@ -1212,7 +1212,7 @@ bool CheckZerocoinSpend(const CTransaction tx, CValidationState& state)
     return fValidated;
 }
 
-bool CheckTransaction(const CTransaction& tx, CValidationState& state)
+bool CheckTransaction(const CTransaction& tx, bool fZerocoinActive, CValidationState& state)
 {
     // Basic checks that don't depend on any context
     if (tx.vin.empty())
@@ -1248,27 +1248,33 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
         if (!MoneyRange(nValueOut))
             return state.DoS(100, error("CheckTransaction() : txout total out of range"),
                 REJECT_INVALID, "bad-txns-txouttotal-toolarge");
-        if (txout.IsZerocoinMint()) {
+        if (fZerocoinActive && txout.IsZerocoinMint()) {
             if(!CheckZerocoinMint(tx.GetHash(), txout, state, false))
                 return state.DoS(100, error("CheckTransaction() : invalid zerocoin mint"));
         }
-        if (txout.scriptPubKey.IsZerocoinSpend())
+        if (fZerocoinActive && txout.scriptPubKey.IsZerocoinSpend())
             nZCSpendCount++;
     }
 
-    if (nZCSpendCount > Params().Zerocoin_MaxSpendsPerTransaction())
-        return state.DoS(100, error("CheckTransaction() : there are more zerocoin spends than are allowed in one transaction"));
+    if (fZerocoinActive) {
+        if (nZCSpendCount > Params().Zerocoin_MaxSpendsPerTransaction())
+            return state.DoS(100,
+                             error("CheckTransaction() : there are more zerocoin spends than are allowed in one transaction"));
 
-    if (tx.IsZerocoinSpend()) {
-        //require that a zerocoinspend only has inputs that are zerocoins
-        for (const CTxIn in : tx.vin) {
-            if (!in.scriptSig.IsZerocoinSpend())
-                return state.DoS(100, error("CheckTransaction() : zerocoinspend contains inputs that are not zerocoins"));
+        if (tx.IsZerocoinSpend())
+        {
+            //require that a zerocoinspend only has inputs that are zerocoins
+            for (const CTxIn in : tx.vin)
+            {
+                if (!in.scriptSig.IsZerocoinSpend())
+                    return state.DoS(100,
+                                     error("CheckTransaction() : zerocoinspend contains inputs that are not zerocoins"));
+            }
+
+            if (!CheckZerocoinSpend(tx, state))
+                return state.DoS(100, error("CheckTransaction() : invalid zerocoin spend"));
+
         }
-
-        if(!CheckZerocoinSpend(tx, state))
-            return state.DoS(100, error("CheckTransaction() : invalid zerocoin spend"));
-
     }
 
     // Check for duplicate inputs
@@ -1294,7 +1300,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
           //  return state.DoS(10, error("CheckTransaction() : Zerocoin Spend has more than 1 txin"), REJECT_INVALID, "bad-zerocoinspend");
     } else {
         BOOST_FOREACH (const CTxIn& txin, tx.vin)
-            if (txin.prevout.IsNull() && !txin.scriptSig.IsZerocoinSpend())
+            if (txin.prevout.IsNull() && (fZerocoinActive && !txin.scriptSig.IsZerocoinSpend()))
                 return state.DoS(10, error("CheckTransaction() : prevout is null"),
                     REJECT_INVALID, "bad-txns-prevout-null");
     }
@@ -1367,7 +1373,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
     if (pfMissingInputs)
         *pfMissingInputs = false;
 
-    if (!CheckTransaction(tx, state))
+    if (!CheckTransaction(tx, GetAdjustedTime() > GetSporkValue(SPORK_17_ENABLE_ZEROCOIN), state))
         return state.DoS(100, error("AcceptToMemoryPool: : CheckTransaction failed"), REJECT_INVALID, "bad-tx");
 
     // Coinbase is only valid in a block, not as a loose transaction
@@ -1576,7 +1582,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState& state, const CTransact
     if (pfMissingInputs)
         *pfMissingInputs = false;
 
-    if (!CheckTransaction(tx, state))
+    if (!CheckTransaction(tx, GetAdjustedTime() > GetSporkValue(SPORK_17_ENABLE_ZEROCOIN), state))
         return error("AcceptableInputs: : CheckTransaction failed");
 
     // Coinbase is only valid in a block, not as a loose transaction
@@ -3796,8 +3802,9 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
     }
 
     // Check transactions
+    bool isZerocoinActive = block.nTime > GetSporkValue(SPORK_17_ENABLE_ZEROCOIN);
     BOOST_FOREACH (const CTransaction& tx, block.vtx)
-        if (!CheckTransaction(tx, state))
+        if (!CheckTransaction(tx, isZerocoinActive, state))
             return error("CheckBlock() : CheckTransaction failed");
 
     unsigned int nSigOps = 0;
