@@ -178,7 +178,7 @@ public:
     uint32_t nSequenceId;
     
     //! zerocoin specific fields
-    std::map<libzerocoin::CoinDenomination, unsigned int> mapZerocoinSupply;
+    std::map<libzerocoin::CoinDenomination, int64_t> mapZerocoinSupply;
     
     void SetNull()
     {
