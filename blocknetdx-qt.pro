@@ -20,40 +20,6 @@ CONFIG(release, debug|release): DEFINES += NDEBUG
    error(Failed to include config.pri)
  }
 
-INCLUDEPATH += src src/json src/qt
-
-LIBS += \
-    $$join(BOOST_LIB_PATH,,-L,) \
-    $$join(BDB_LIB_PATH,,-L,) \
-    $$join(OPENSSL_LIB_PATH,,-L,) \
-    $$join(QRENCODE_LIB_PATH,,-L,)
-
-LIBS += \
-    -lcrypt32 \
-    -lssl \
-    -lcrypto \
-    -ldb_cxx$$BDB_LIB_SUFFIX \
-    -lpthread
-
-windows {
-    LIBS += \
-        -lshlwapi \
-        -lws2_32 \
-        -lole32 \
-        -loleaut32 \
-        -luuid \
-        -lgdi32
-}
-
-unix:!macx {
-    LIBS += \
-        -lboost_system \
-        -lboost_filesystem \
-        -lboost_program_options \
-        -lboost_thread \
-        -lboost_date_time
-}
-
 OBJECTS_DIR = build
 MOC_DIR = build
 UI_DIR = build
@@ -137,13 +103,54 @@ contains(BITCOIN_NEED_QT_PLUGINS, 1) {
     QTPLUGIN += qcncodecs qjpcodecs qtwcodecs qkrcodecs qtaccessiblewidgets
 }
 
-INCLUDEPATH += src/leveldb/include src/leveldb/helpers
-unix: LIBS += $$PWD/src/leveldb/libleveldb.a $$PWD/src/leveldb/libmemenv.a
+INCLUDEPATH += \
+    src \
+    src/json \
+    src/qt \
+    $$BOOST_INCLUDE_PATH \
+    $$BDB_INCLUDE_PATH \
+    $$OPENSSL_INCLUDE_PATH \
+    $$QRENCODE_INCLUDE_PATH \
+    src/leveldb/include \
+    src/leveldb/helpers
+
 LIBS += \
-    -L$$PWD/src/leveldb \
+    $$join(BOOST_LIB_PATH,,-L,) \
+    $$join(BDB_LIB_PATH,,-L,) \
+    $$join(OPENSSL_LIB_PATH,,-L,) \
+    $$join(QRENCODE_LIB_PATH,,-L,) \
+    -L$$PWD/src/leveldb
+
+
+LIBS += \
     -lleveldb \
+    -lmemenv \
     -lsecp256k1 \
-    -lprotobuf
+    -lprotobuf \
+    -lcrypt32 \
+    -lssl \
+    -lcrypto \
+    -ldb_cxx$$BDB_LIB_SUFFIX \
+    -lpthread
+
+windows {
+    LIBS += \
+        -lshlwapi \
+        -lws2_32 \
+        -lole32 \
+        -loleaut32 \
+        -luuid \
+        -lgdi32
+}
+
+unix:!macx {
+    LIBS += \
+        -lboost_system \
+        -lboost_filesystem \
+        -lboost_program_options \
+        -lboost_thread \
+        -lboost_date_time
+}
 
 SOURCES += \
     src/bloom.cpp \
@@ -255,7 +262,6 @@ SOURCES += \
     src/script/sigcache.cpp \
     src/script/sign.cpp \
     src/script/standard.cpp \
-    src/univalue/gen.cpp \
     src/univalue/univalue.cpp \
     src/univalue/univalue_read.cpp \
     src/univalue/univalue_write.cpp \
@@ -535,7 +541,8 @@ HEADERS += \
     src/script/sign.h \
     src/script/standard.h \
     src/univalue/univalue.h \
-    src/univalue/univalue_escapes.h
+    src/univalue/univalue_escapes.h \
+    src/clientversioncore.h
 
 #ENABLE_ZMQ
 #    src/zmq/zmqabstractnotifier.h \
@@ -684,7 +691,7 @@ isEmpty(BOOST_INCLUDE_PATH) {
 }
 
 windows:DEFINES += WIN32
-#windows:RC_FILE = src/qt/res/blocknetdx-qt-res.rc
+windows:RC_FILE = src/qt/res/blocknetdx-qt-res.rc
 
 windows:!contains(MINGW_THREAD_BUGFIX, 0) {
     # At least qmake's win32-g++-cross profile is missing the -lmingwthrd
@@ -713,9 +720,7 @@ macx:QMAKE_LFLAGS_THREAD += -pthread
 macx:QMAKE_CXXFLAGS_THREAD += -pthread
 
 # Set libraries and includes at end, to use platform-defined defaults if not overridden
-INCLUDEPATH += $$BOOST_INCLUDE_PATH $$BDB_INCLUDE_PATH $$OPENSSL_INCLUDE_PATH $$QRENCODE_INCLUDE_PATH
-LIBS += $$join(BOOST_LIB_PATH,,-L,) $$join(BDB_LIB_PATH,,-L,) $$join(OPENSSL_LIB_PATH,,-L,) $$join(QRENCODE_LIB_PATH,,-L,)
-LIBS += -lssl -lcrypto -ldb_cxx$$BDB_LIB_SUFFIX
+
 # -lgdi32 has to happen after -lcrypto (see  #681)
 windows:LIBS += -lws2_32 -lshlwapi -lmswsock -lole32 -loleaut32 -luuid -lgdi32
 LIBS += \
