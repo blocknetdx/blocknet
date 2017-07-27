@@ -2824,6 +2824,22 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
             REJECT_INVALID, "bad-cb-amount");
     }
 
+    // zerocoin: if a new accumulator checkpoint was generated, check that it is the correct value
+    if (block.GetBlockTime() >= GetSporkValue(SPORK_17_ENABLE_ZEROCOIN) && pindex->nHeight % 10 == 0) {
+        uint256 nCheckpointCalculated = 0;
+        if (!CAccumulators::getInstance().GetCheckpoint(pindex->nHeight, nCheckpointCalculated))
+            return state.DoS(100, error("CheckBlock() : failed to calculate accumulator checkpoint"));
+
+        if (nCheckpointCalculated != block.nAccumulatorCheckpoint) {
+            LogPrintf("calculated: %s\n block: %s\n", nCheckpointCalculated.GetHex(), block.nAccumulatorCheckpoint.GetHex());
+            return state.DoS(100, error("CheckBlock() : accumulator does not match calculated value"));
+        }
+    } else {
+        if (block.nAccumulatorCheckpoint != pindex->pprev->nAccumulatorCheckpoint) {
+            return state.DoS(100, error("CheckBlock() : new accumulator checkpoint generated on a block that is not multiple of 10"));
+        }
+    }
+
     if (!control.Wait())
         return state.DoS(100, false);
     int64_t nTime2 = GetTimeMicros();
