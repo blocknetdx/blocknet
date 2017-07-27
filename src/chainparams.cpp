@@ -131,12 +131,12 @@ public:
         genesis.hashPrevBlock = 0;
         genesis.hashMerkleRoot = genesis.BuildMerkleTree();
         genesis.nVersion = 1;
-        genesis.nTime = 1501028414;
+        genesis.nTime = 1501183223;
         genesis.nBits = bnProofOfWorkLimit.GetCompact();
-        genesis.nNonce = 2244299;
+        genesis.nNonce = 3789283;
 
         hashGenesisBlock = genesis.GetHash();
-	assert(hashGenesisBlock == uint256("0x00000eed6f2f91203829a968e203316662562928d441fdeb14d664163491eae7"));
+	assert(hashGenesisBlock == uint256("0x00000cf1de5ce7513cb2d386bcf976e0cd88f431c9a725aa5a6f6aeb533b5482"));
         assert(genesis.hashMerkleRoot == uint256("0xb1f0e93f6df55af4c23a0719ab33be2b8115e2b6127fc1d926a06c60a8b56bf2"));
 
 	/*

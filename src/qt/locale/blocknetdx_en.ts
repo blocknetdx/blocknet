@@ -221,7 +221,7 @@
     </message>
     <message>
         <location line="+12"/>
-        <source>BlocknetDX will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your PIVs from being stolen by malware infecting your computer.</source>
+        <source>BlocknetDX will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your BLOCKs from being stolen by malware infecting your computer.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -231,7 +231,7 @@
     </message>
     <message>
         <location line="+0"/>
-        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR PIV&lt;/b&gt;!</source>
+        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR BLOCK&lt;/b&gt;!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1980,12 +1980,12 @@ Please check the address and try again.</source>
     </message>
     <message>
         <location line="+13"/>
-        <source>Use 2 separate servicenodes to mix funds up to 10000 PIV</source>
+        <source>Use 2 separate servicenodes to mix funds up to 10000 BLOCK</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+13"/>
-        <source>Use 8 separate servicenodes to mix funds up to 10000 PIV</source>
+        <source>Use 8 separate servicenodes to mix funds up to 10000 BLOCK</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1995,12 +1995,12 @@ Please check the address and try again.</source>
     </message>
     <message>
         <location line="+13"/>
-        <source>This option is the quickest and will cost about ~0.025 PIV to anonymize 10000 PIV</source>
+        <source>This option is the quickest and will cost about ~0.025 BLOCK to anonymize 10000 BLOCK</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+13"/>
-        <source>This option is moderately fast and will cost about 0.05 PIV to anonymize 10000 PIV</source>
+        <source>This option is moderately fast and will cost about 0.05 BLOCK to anonymize 10000 BLOCK</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2010,7 +2010,7 @@ Please check the address and try again.</source>
     </message>
     <message>
         <location line="+13"/>
-        <source>0.1 PIV per 10000 PIV you anonymize.</source>
+        <source>0.1 BLOCK per 10000 BLOCK you anonymize.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2461,7 +2461,7 @@ https://www.transifex.com/blocknetdx-project/blocknetdx-project-translations</so
     </message>
     <message>
         <location line="+27"/>
-        <source>0 PIV / 0 Rounds</source>
+        <source>0 BLOCK / 0 Rounds</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3592,7 +3592,7 @@ https://www.transifex.com/blocknetdx-project/blocknetdx-project-translations</so
     </message>
     <message>
         <location line="+7"/>
-        <source>0 PIV</source>
+        <source>0 BLOCK</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3652,12 +3652,12 @@ https://www.transifex.com/blocknetdx-project/blocknetdx-project-translations</so
     </message>
     <message>
         <location line="-165"/>
-        <source>If the custom fee is set to 1000 uPIVs and the transaction is only 250 bytes, then &quot;per kilobyte&quot; only pays 250 uPIVs in fee,&lt;br /&gt;while &quot;at least&quot; pays 1000 uPIVs. For transactions bigger than a kilobyte both pay by kilobyte.</source>
+        <source>If the custom fee is set to 1000 uBLOCKs and the transaction is only 250 bytes, then &quot;per kilobyte&quot; only pays 250 uBLOCKs in fee,&lt;br /&gt;while &quot;at least&quot; pays 1000 uBLOCKs. For transactions bigger than a kilobyte both pay by kilobyte.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+16"/>
-        <source>If the custom fee is set to 1000 uPIVs and the transaction is only 250 bytes, then &quot;per kilobyte&quot; only pays 250 uPIVs in fee,&lt;br /&gt;while &quot;total at least&quot; pays 1000 uPIVs. For transactions bigger than a kilobyte both pay by kilobyte.</source>
+        <source>If the custom fee is set to 1000 uBLOCKs and the transaction is only 250 bytes, then &quot;per kilobyte&quot; only pays 250 uBLOCKs in fee,&lt;br /&gt;while &quot;total at least&quot; pays 1000 uBLOCKs. For transactions bigger than a kilobyte both pay by kilobyte.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4947,7 +4947,7 @@ https://www.transifex.com/blocknetdx-project/blocknetdx-project-translations</so
     <message>
         <location line="-20"/>
         <location line="+9"/>
-        <source>SwiftTX doesn&apos;t support sending values that high yet. Transactions are currently limited to %1 PIV.</source>
+        <source>SwiftTX doesn&apos;t support sending values that high yet. Transactions are currently limited to %1 BLOCK.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -5108,12 +5108,12 @@ https://www.transifex.com/blocknetdx-project/blocknetdx-project-translations</so
     </message>
     <message>
         <location line="+3"/>
-        <source>Fees (in PIV/Kb) smaller than this are considered zero fee for relaying (default: %s)</source>
+        <source>Fees (in BLOCK/Kb) smaller than this are considered zero fee for relaying (default: %s)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+3"/>
-        <source>Fees (in PIV/Kb) smaller than this are considered zero fee for transaction creation (default: %s)</source>
+        <source>Fees (in BLOCK/Kb) smaller than this are considered zero fee for transaction creation (default: %s)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5268,12 +5268,12 @@ for example: alertnotify=echo %%s | mail -s &quot;BlocknetDX Alert&quot; admin@f
     </message>
     <message>
         <location line="+2"/>
-        <source>Unable to locate enough Obfuscation non-denominated funds for this transaction that are not equal 10000 PIV.</source>
+        <source>Unable to locate enough Obfuscation non-denominated funds for this transaction that are not equal 10000 BLOCK.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+3"/>
-        <source>Unable to locate enough funds for this transaction that are not equal 10000 PIV.</source>
+        <source>Unable to locate enough funds for this transaction that are not equal 10000 BLOCK.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5645,7 +5645,7 @@ for example: alertnotify=echo %%s | mail -s &quot;BlocknetDX Alert&quot; admin@f
     </message>
     <message>
         <location line="+1"/>
-        <source>Fee (in PIV/kB) to add to transactions you send (default: %s)</source>
+        <source>Fee (in BLOCK/kB) to add to transactions you send (default: %s)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5810,7 +5810,7 @@ for example: alertnotify=echo %%s | mail -s &quot;BlocknetDX Alert&quot; admin@f
     </message>
     <message>
         <location line="+1"/>
-        <source>Keep N PIV anonymized (default: %u)</source>
+        <source>Keep N BLOCK anonymized (default: %u)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6576,7 +6576,7 @@ for example: alertnotify=echo %%s | mail -s &quot;BlocknetDX Alert&quot; admin@f
     </message>
     <message>
         <location line="+12"/>
-        <source>Buy PIV</source>
+        <source>Buy BLOCK</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6589,7 +6589,7 @@ for example: alertnotify=echo %%s | mail -s &quot;BlocknetDX Alert&quot; admin@f
         <location line="-1108"/>
         <location line="+1192"/>
         <location line="+517"/>
-        <source>PIV</source>
+        <source>BLOCK</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6645,13 +6645,13 @@ for example: alertnotify=echo %%s | mail -s &quot;BlocknetDX Alert&quot; admin@f
     </message>
     <message>
         <location line="+177"/>
-        <source>Sell PIV</source>
+        <source>Sell BLOCK</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+26"/>
         <location line="+1036"/>
-        <source>PIV Available:</source>
+        <source>BLOCK Available:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6681,7 +6681,7 @@ for example: alertnotify=echo %%s | mail -s &quot;BlocknetDX Alert&quot; admin@f
     </message>
     <message>
         <location line="+44"/>
-        <source>PIV Balance:</source>
+        <source>BLOCK Balance:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6691,7 +6691,7 @@ for example: alertnotify=echo %%s | mail -s &quot;BlocknetDX Alert&quot; admin@f
     </message>
     <message>
         <location line="+51"/>
-        <source>PIV Pending:</source>
+        <source>BLOCK Pending:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6701,7 +6701,7 @@ for example: alertnotify=echo %%s | mail -s &quot;BlocknetDX Alert&quot; admin@f
     </message>
     <message>
         <location line="+32"/>
-        <source>Bittrex PIV Deposit Address:</source>
+        <source>Bittrex BLOCK Deposit Address:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
