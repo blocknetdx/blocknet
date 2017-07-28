@@ -1,3 +1,7 @@
+// Copyright (c) 2017 The PIVX developers
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
 #include "accumulators.h"
 #include "chainparams.h"
 #include "main.h"
@@ -21,39 +25,21 @@ Accumulator CAccumulators::Get(CoinDenomination denomination)
     return Accumulator(Params().Zerocoin_Params(), denomination, mapAccumulators.at(denomination)->getValue());
 }
 
-//Public Coins have large 'values' that are not ideal to store in lists.
-uint256 HashPublicCoin(PublicCoin publicCoin)
-{
-    CDataStream ss(SER_GETHASH, 0);
-    ss << publicCoin.getValue() << publicCoin.getDenomination();
-
-    return Hash(ss.begin(), ss.end());
-}
-
 bool CAccumulators::AddPubCoinToAccumulator(const PublicCoin& publicCoin)
 {
-    //see if we have already added this coin to the accumulator
-    //todo: note sure if we need to check this
-//    uint256 hash = HashPublicCoin(publicCoin);
-//    if(mapPubCoins.find(hash) != mapPubCoins.end())
-//        return false;
-
-//    mapPubCoins.insert(make_pair(hash, publicCoin.getDenomination()));
-
     CoinDenomination denomination = publicCoin.getDenomination();
-    LogPrintf("%s ZCPRINT denom %d\n", __func__, denomination);
     if(mapAccumulators.find(denomination) == mapAccumulators.end()) {
         LogPrintf("%s: failed to find accumulator for %d\n", __func__, denomination);
         return false;
     }
+
     mapAccumulators.at(denomination)->accumulate(publicCoin);
-    LogPrintf("%s: ZCPRINT accumulated %d\n", __func__, denomination);
+    LogPrint("zero", "%s: Accumulated %d\n", __func__, denomination);
     return true;
 }
 
 uint32_t CAccumulators::GetChecksum(const CBigNum &bnValue)
 {
-    LogPrintf("GetChecksum()\n");
     CDataStream ss(SER_GETHASH, 0);
     ss << bnValue;
     uint256 hash = Hash(ss.begin(), ss.end());
@@ -63,7 +49,6 @@ uint32_t CAccumulators::GetChecksum(const CBigNum &bnValue)
 
 uint32_t CAccumulators::GetChecksum(const Accumulator &accumulator)
 {
-    LogPrintf("GetChecksum()\n");
     return GetChecksum(accumulator.getValue());
 }
 
@@ -71,15 +56,17 @@ void CAccumulators::AddAccumulatorChecksum(const uint32_t nChecksum, const CBigN
 {
     if(!fMemoryOnly)
         zerocoinDB->WriteAccumulatorValue(nChecksum, bnValue);
-    LogPrintf("*** %s checksum %d val %s\n", __func__, nChecksum, bnValue.GetHex());
     mapAccumulatorValues.insert(make_pair(nChecksum, bnValue));
-    LogPrintf("*** %s map val %s\n", __func__, mapAccumulatorValues[nChecksum].GetHex());
+
+    LogPrint("zero", "%s checksum %d val %s\n", __func__, nChecksum, bnValue.GetHex());
+    LogPrint("zero", "%s map val %s\n", __func__, mapAccumulatorValues[nChecksum].GetHex());
 }
 
 void CAccumulators::LoadAccumulatorValuesFromDB(const uint256 nCheckpoint)
 {
     for (auto& denomination : zerocoinDenomList) {
         uint32_t nChecksum = ParseChecksum(nCheckpoint, denomination);
+
         //if read is not successful then we are not in a state to verify zerocoin transactions
         CBigNum bnValue;
         assert(zerocoinDB->ReadAccumulatorValue(nChecksum, bnValue));
@@ -97,8 +84,8 @@ bool CAccumulators::EraseAccumulatorValues(const uint256& nCheckpointErase, cons
         if(nChecksumErase == nChecksumPrevious)
             continue;
 
+        //erase from both memory and database
         mapAccumulatorValues.erase(nChecksumErase);
-
         if(!zerocoinDB->EraseAccumulatorValue(nChecksumErase))
             return false;
     }
@@ -108,7 +95,6 @@ bool CAccumulators::EraseAccumulatorValues(const uint256& nCheckpointErase, cons
 
 bool CAccumulators::EraseCoinMint(const CBigNum& bnPubCoin)
 {
-    mapPubCoins.erase(bnPubCoin);
     return zerocoinDB->EraseCoinMint(bnPubCoin);
 }
 
@@ -128,16 +114,15 @@ uint32_t ParseChecksum(uint256 nChecksum, CoinDenomination denomination)
 
 CBigNum CAccumulators::GetAccumulatorValueFromCheckpoint(const uint256& nCheckpoint, CoinDenomination denomination)
 {
-    LogPrintf("%s checkpoint:%d\n", __func__, nCheckpoint.GetHex());
     uint32_t nDenominationChecksum = ParseChecksum(nCheckpoint, denomination);
-    LogPrintf("%s checksum:%d\n", __func__, nDenominationChecksum);
+    LogPrint("zero", "%s checkpoint:%d\n", __func__, nCheckpoint.GetHex());
+    LogPrint("zero", "%s checksum:%d\n", __func__, nDenominationChecksum);
 
     return GetAccumulatorValueFromChecksum(nDenominationChecksum);
 }
 
 CBigNum CAccumulators::GetAccumulatorValueFromChecksum(const uint32_t& nChecksum)
 {
-    LogPrintf("%s %d\n", __func__, nChecksum);
     if(!mapAccumulatorValues.count(nChecksum))
         return CBigNum(0);
 
@@ -168,13 +153,13 @@ uint256 CAccumulators::GetCheckpoint()
     uint256 nCheckpoint;
     for (auto& denom : zerocoinDenomList) {
         CBigNum bnValue = mapAccumulators.at(denom)->getValue();
-        LogPrintf("%s: ZCPRINT acc value:%s\n", __func__, bnValue.GetHex());
         uint32_t nCheckSum = GetChecksum(bnValue);
-
         AddAccumulatorChecksum(nCheckSum, bnValue);
-        LogPrintf("%s: ZCPRINT checksum value:%d\n", __func__, nCheckSum);
         nCheckpoint = nCheckpoint << 32 | nCheckSum;
-        LogPrintf("%s: ZCPRINT checkpoint %s\n", __func__, nCheckpoint.GetHex());
+
+        LogPrint("zero", "%s: Acc value:%s\n", __func__, bnValue.GetHex());
+        LogPrint("zero", "%s: checksum value:%d\n", __func__, nCheckSum);
+        LogPrint("zero", "%s: checkpoint %s\n", __func__, nCheckpoint.GetHex());
     }
 
     return nCheckpoint;
@@ -183,7 +168,6 @@ uint256 CAccumulators::GetCheckpoint()
 //Get checkpoint value for a specific block height
 bool CAccumulators::GetCheckpoint(int nHeight, uint256& nCheckpoint)
 {
-    LogPrintf("%s\n", __func__);
     if (nHeight <= chainActive.Height() && chainActive[nHeight]->nTime < GetSporkValue(SPORK_17_ENABLE_ZEROCOIN)) {
         nCheckpoint = 0;
         return true;
@@ -224,14 +208,12 @@ bool CAccumulators::GetCheckpoint(int nHeight, uint256& nCheckpoint)
         }
 
         nTotalMintsFound += listMints.size();
-        LogPrintf("%s ZCPRINT found %d mints\n", __func__, listMints.size());
+        LogPrint("zero", "%s found %d mints\n", __func__, listMints.size());
 
         //add the pubcoins to accumulator
         for(const CZerocoinMint mint : listMints) {
             CoinDenomination denomination = mint.GetDenomination();
-            LogPrintf("%s: ZCPRINT denomint: %d denom: %d\n", __func__, mint.GetDenomination(), denomination);
             PublicCoin pubCoin(Params().Zerocoin_Params(), mint.GetValue(), denomination);
-            LogPrintf("%s: ZCPRINT pubCoin denom %d\n", __func__, pubCoin.getDenomination());
             if(!AddPubCoinToAccumulator(pubCoin)) {
                 LogPrintf("%s: failed to add pubcoin to accumulator at height %n\n", __func__, pindex->nHeight);
                 return false;
@@ -241,28 +223,27 @@ bool CAccumulators::GetCheckpoint(int nHeight, uint256& nCheckpoint)
     }
 
     // if there were no new mints found, the accumulator checkpoint will be the same as the last checkpoint
-    if(nTotalMintsFound == 0)
+    if (nTotalMintsFound == 0)
         nCheckpoint = chainActive[nHeight - 1]->nAccumulatorCheckpoint;
     else
         nCheckpoint = GetCheckpoint();
 
-    LogPrintf("%s ZCPRINT checkpoint=%s\n", __func__, nCheckpoint.GetHex());
+    LogPrint("zero", "%s checkpoint=%s\n", __func__, nCheckpoint.GetHex());
     return true;
 }
 
 bool CAccumulators::IntializeWitnessAndAccumulator(const CZerocoinMint &zerocoinSelected, const PublicCoin &pubcoinSelected, Accumulator& accumulator, AccumulatorWitness& witness, int nSecurityLevel)
 {
-    LogPrintf("ZCPRINT %s\n", __func__);
     uint256 txMintedHash;
-    if(!zerocoinDB->ReadCoinMint(zerocoinSelected.GetValue(), txMintedHash)) {
-        LogPrintf("ZCPRINT %s failed to read mint from db\n", __func__);
+    if (!zerocoinDB->ReadCoinMint(zerocoinSelected.GetValue(), txMintedHash)) {
+        LogPrintf("%s failed to read mint from db\n", __func__);
         return false;
     }
+
     CTransaction txMinted;
     uint256 blockHash;
-    if(!GetTransaction(txMintedHash, txMinted, blockHash))
-    {
-        LogPrintf("ZCPRINT %s failed to read tx\n", __func__);
+    if (!GetTransaction(txMintedHash, txMinted, blockHash)) {
+        LogPrintf("%s failed to read tx\n", __func__);
         return false;
     }
 
@@ -274,22 +255,21 @@ bool CAccumulators::IntializeWitnessAndAccumulator(const CZerocoinMint &zerocoin
     int nChanges = 0;
 
     //find the checksum when this was added to the accumulator officially, which will be two checksum changes later
+    //reminder that checksums are generated when the block height is a multiple of 10
     while (pindex->nHeight < chainActive.Tip()->nHeight - 1) {
-        if(pindex->nHeight == nHeightMintAddedToBlockchain) {
+        if (pindex->nHeight == nHeightMintAddedToBlockchain) {
             pindex = chainActive[pindex->nHeight + 1];
             continue;
         }
 
         //check if the next checksum was generated
-        if(pindex->nHeight % 10 == 0) {
+        if (pindex->nHeight % 10 == 0) {
             nChecksumContainingMint = pindex->nAccumulatorCheckpoint;
             nChanges++;
 
-            if(nChanges == 1) {
+            if (nChanges == 1)
                 nChecksumBeforeMint = pindex->nAccumulatorCheckpoint;
-            }
-
-            if(nChanges == 2)
+            else if (nChanges == 2)
                 break;
         }
         pindex = chainActive[pindex->nHeight + 1];
@@ -299,7 +279,7 @@ bool CAccumulators::IntializeWitnessAndAccumulator(const CZerocoinMint &zerocoin
     int nStartAccumulationHeight = nHeightMintAddedToBlockchain - (nHeightMintAddedToBlockchain % 10);
 
     //Get the accumulator that is right before the cluster of blocks containing our mint was added to the accumulator
-    if(nChecksumBeforeMint != 2301755253) { //this is a zero value and wont initialize the accumulator. use existing.
+    if (nChecksumBeforeMint != 2301755253) { //this is a zero value and wont initialize the accumulator. use existing.
         CBigNum bnAccValue = GetAccumulatorValueFromCheckpoint(nChecksumBeforeMint, pubcoinSelected.getDenomination());
         if (bnAccValue != 0) {
             accumulator.setValue(bnAccValue);
@@ -319,36 +299,36 @@ bool CAccumulators::IntializeWitnessAndAccumulator(const CZerocoinMint &zerocoin
             nSecurityLevel = 99;
     }
 
-    //add the pubcoins up to the next checksum starting from the block
+    //add the pubcoins (zerocoinmints that have been published to the chain) up to the next checksum starting from the block
     pindex = chainActive[nStartAccumulationHeight];
     int nAccumulatorsCheckpointsAdded = 0;
     uint256 nPreviousChecksum = 0;
     while(pindex->nHeight < chainActive.Height() - 1) {
 
-        if(nPreviousChecksum != 0 && nPreviousChecksum != pindex->nAccumulatorCheckpoint)
+        if (nPreviousChecksum != 0 && nPreviousChecksum != pindex->nAccumulatorCheckpoint)
             ++nAccumulatorsCheckpointsAdded;
 
         //if a new checkpoint was generated on this block, and we have added the specified amount of checkpointed accumulators,
         //then break here
-        if(nSecurityLevel > 100 && nAccumulatorsCheckpointsAdded >= nSecurityLevel)
+        if (nSecurityLevel > 100 && nAccumulatorsCheckpointsAdded >= nSecurityLevel)
             break;
 
         //grab mints from this block
         CBlock block;
-        if(!ReadBlockFromDisk(block, pindex)) {
+        if (!ReadBlockFromDisk(block, pindex)) {
             LogPrintf("%s: failed to read block from disk while adding pubcoins to witness\n", __func__);
             return false;
         }
 
         std::list<CZerocoinMint> listMints;
-        if(!BlockToZerocoinMintList(block, listMints)) {
+        if (!BlockToZerocoinMintList(block, listMints)) {
             LogPrintf("%s: failed to get zerocoin mintlist from block %n\n", __func__, pindex->nHeight);
             return false;
         }
 
         //add the mints to the witness
-        for(const CZerocoinMint mint : listMints) {
-            if(mint.GetDenomination() != pubcoinSelected.getDenomination())
+        for (const CZerocoinMint mint : listMints) {
+            if (mint.GetDenomination() != pubcoinSelected.getDenomination())
                 continue;
 
             PublicCoin pubCoin(Params().Zerocoin_Params(), mint.GetValue(), mint.GetDenomination());

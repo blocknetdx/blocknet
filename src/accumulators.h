@@ -1,3 +1,7 @@
+// Copyright (c) 2017 The PIVX developers
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
 #ifndef PIVX_ACCUMULATORS_H
 #define PIVX_ACCUMULATORS_H
 
@@ -17,7 +21,6 @@ public:
     }
 private:
     std::map<libzerocoin::CoinDenomination, std::unique_ptr<libzerocoin::Accumulator> > mapAccumulators;
-    std::map<CBigNum, uint256> mapPubCoins;
     std::map<CBigNum, uint256> mapSerials;
     std::map<uint32_t, CBigNum> mapAccumulatorValues;
 
