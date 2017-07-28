@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>576</width>
-    <height>417</height>
+    <height>442</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -118,7 +118,7 @@
         </layout>
        </item>
        <item>
-        <spacer name="verticalSpacer_Main">
+        <spacer name="verticalSpacer_2">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
          </property>
@@ -194,6 +194,30 @@
            </property>
            <property name="value">
             <number>1000</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <item>
+          <widget class="QLabel" name="percentage_label">
+           <property name="toolTip">
+            <string>Percentage of incoming PIV which get automatically converted to zPIV via Zerocoin Protocol (min: 10%)</string>
+           </property>
+           <property name="text">
+            <string>Percentage of autominted zPIV</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="zPIV_Percentage">
+           <property name="minimum">
+            <number>10</number>
+           </property>
+           <property name="maximum">
+            <number>100</number>
            </property>
           </widget>
          </item>

@@ -674,6 +674,82 @@ QWidget#AddressBookPage QHeaderView::section { /* Min width for Windows fix */
 min-width:260px;
 }
 
+/**************************** Privacy Dialog ********************************************/
+
+QWidget#PrivacyDialog QFrame {
+background-color:transparent;
+border:1px solid #000;
+}
+
+QWidget#PrivacyDialog QLabel {
+border:0px solid #000;
+}
+
+QWidget#PrivacyDialog QLabel#zPIVLabel {
+font-size:14px;
+color:#ffffff;
+background-color:#5B4C7C;
+}
+
+QWidget#PrivacyDialog QLabel#oPIVLabel {
+font-size:14px;
+color:#ffffff;
+background-color:#5B4C7C;
+}
+
+QWidget#PrivacyDialog QPushButton {
+background-color:qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: .01 #64ACD2, stop: .1 #382f44, stop: .95 #382f44, stop: 1 #1D80B5);
+border:0;
+border-radius:3px;
+color:#ffffff;
+font-size:12px;
+font-weight:normal;
+// padding-left:25px;
+// padding-right:25px;
+// padding-top:5px;
+// padding-bottom:5px;
+}
+
+QWidget#PrivacyDialog QPushButton:hover {
+background-color:qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: .01 #5B4C9A, stop: .1 #5B4C86, stop: .95 #5B4C86, stop: 1 #5B4C7C);
+}
+
+QWidget#PrivacyDialog QPushButton:focus {
+border:none;
+outline:none;
+}
+
+QWidget#PrivacyDialog QPushButton:pressed {
+border:1px solid #333;
+}
+
+QWidget#PrivacyDialog QProgressBar#obfuscationProgress { /* Obfuscation Completion */
+border: 1px solid #818181;
+border-radius: 1px;
+margin-right:43px;
+text-align: right;
+color:#818181;
+}
+
+QWidget#PrivacyDialog QProgressBar#obfuscationProgress::chunk {
+background-color: #382f44;
+width:1px;
+}
+
+/* For one frame only:
+QWidget#PrivacyDialog QFrame#zFrame {
+background-color:transparent;
+border:1px solid #000;
+}
+*/
+
+
+// XX42 General info:
+
+// PIVX-color #5B4C7C */
+//
+// Qlabel inherits from QFrame -> we have borders here
+
 /**************************** SETTINGS MENU *********************************************/
 
 /* Encrypt Wallet and Change Passphrase Dialog */

@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>PrivacyDialog</class>
+ <widget class="QWidget" name="PrivacyDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>920</width>
+    <height>620</height>
+   </rect>
+  </property>
+  <widget class="QWidget" name="horizontalLayoutWidget">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>10</y>
+     <width>901</width>
+     <height>601</height>
+    </rect>
+   </property>
+   <layout class="QHBoxLayout" name="mainLayout">
+    <property name="sizeConstraint">
+     <enum>QLayout::SetMaximumSize</enum>
+    </property>
+    <item>
+     <layout class="QVBoxLayout" name="zPIVLayout">
+      <item>
+       <widget class="QLabel" name="zPIVLabel">
+        <property name="maximumSize">
+         <size>
+          <width>448</width>
+          <height>48</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>30</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="toolTip">
+         <string>PIV which were anonymized via Zerocin Protocol</string>
+        </property>
+        <property name="text">
+         <string>Zerocoin PIV (zPIV)</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QVBoxLayout" name="oPIVLayout">
+      <item>
+       <widget class="QLabel" name="oPIVLabel">
+        <property name="maximumSize">
+         <size>
+          <width>448</width>
+          <height>48</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>30</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="toolTip">
+         <string>PIV which were anonymized via Obfuscation Mixing</string>
+        </property>
+        <property name="text">
+         <string>Obfuscated PIV (oPIV)</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources>
+  <include location="../pivx.qrc"/>
+ </resources>
+ <connections/>
+</ui>
