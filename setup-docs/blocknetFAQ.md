@@ -1,6 +1,6 @@
 # BLOCKNET
 
-![alt text](https://github.com/Aderks/blocknet/blob/master/setup-docs/pictures/block.PNG "Logo Title Text 1")
+![alt text](https://github.com/blocknetdx/blockdx/blob/master/setup-docs/pictures/block.PNG "Logo Title Text 1")
 
 The Internet Of Blockchains
 
