@@ -45,6 +45,7 @@ public:
     ~PrivacyDialog();
 
     void setModel(WalletModel* model);
+    void showOutOfSyncWarning(bool fShow);
     void updateObfuscationProgress();
 
 public slots:

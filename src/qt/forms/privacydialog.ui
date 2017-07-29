@@ -6,16 +6,22 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>920</width>
+    <width>980</width>
     <height>620</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
   </property>
   <widget class="QWidget" name="horizontalLayoutWidget">
    <property name="geometry">
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>908</width>
+     <width>972</width>
      <height>604</height>
     </rect>
    </property>
@@ -28,15 +34,15 @@
       <item>
        <widget class="QFrame" name="zFrame">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
         <property name="minimumSize">
          <size>
-          <width>448</width>
-          <height>600</height>
+          <width>467</width>
+          <height>580</height>
          </size>
         </property>
         <property name="frameShape">
@@ -53,7 +59,7 @@
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>460</width>
+           <width>467</width>
            <height>48</height>
           </rect>
          </property>
@@ -89,6 +95,713 @@
           <set>Qt::AlignCenter</set>
          </property>
         </widget>
+        <widget class="QLabel" name="labelzDenom4Amount">
+         <property name="geometry">
+          <rect>
+           <x>240</x>
+           <y>140</y>
+           <width>101</width>
+           <height>21</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>0 zPIV</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+        <widget class="QLabel" name="labelzDenom3Amount">
+         <property name="geometry">
+          <rect>
+           <x>240</x>
+           <y>120</y>
+           <width>101</width>
+           <height>21</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>0 zPIV</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+        <widget class="QLabel" name="labelzDenom2Amount">
+         <property name="geometry">
+          <rect>
+           <x>240</x>
+           <y>100</y>
+           <width>101</width>
+           <height>21</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>0 zPIV</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+        <widget class="QLabel" name="labelzDenom6Text">
+         <property name="geometry">
+          <rect>
+           <x>30</x>
+           <y>180</y>
+           <width>201</width>
+           <height>21</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Denominations with value 500:</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+        <widget class="QLabel" name="labelzDenom6Amount">
+         <property name="geometry">
+          <rect>
+           <x>240</x>
+           <y>180</y>
+           <width>101</width>
+           <height>21</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>0 zPIV</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+        <widget class="QLabel" name="labelzDenom1Text">
+         <property name="geometry">
+          <rect>
+           <x>30</x>
+           <y>80</y>
+           <width>201</width>
+           <height>21</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Denominations with value 1:</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+        <widget class="QLabel" name="labelzDenom4Text">
+         <property name="geometry">
+          <rect>
+           <x>30</x>
+           <y>140</y>
+           <width>201</width>
+           <height>21</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Denominations with value 50:</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+        <widget class="QLabel" name="labelzDenom5Text">
+         <property name="geometry">
+          <rect>
+           <x>30</x>
+           <y>160</y>
+           <width>201</width>
+           <height>21</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Denominations with value 100:</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+        <widget class="QLabel" name="labelzDenom3Text">
+         <property name="geometry">
+          <rect>
+           <x>30</x>
+           <y>120</y>
+           <width>201</width>
+           <height>21</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Denominations with value 10:</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+        <widget class="QLabel" name="labelzAvailableAmount">
+         <property name="geometry">
+          <rect>
+           <x>240</x>
+           <y>50</y>
+           <width>101</width>
+           <height>21</height>
+          </rect>
+         </property>
+         <property name="font">
+          <font>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>0 zPIV</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+        <widget class="QLabel" name="labelzDenom5Amount">
+         <property name="geometry">
+          <rect>
+           <x>240</x>
+           <y>160</y>
+           <width>101</width>
+           <height>21</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>0 zPIV</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+        <widget class="QLabel" name="labelzDenom1Amount">
+         <property name="geometry">
+          <rect>
+           <x>240</x>
+           <y>80</y>
+           <width>101</width>
+           <height>21</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>0 zPIV</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+        <widget class="QLabel" name="labelzDenom2Text">
+         <property name="geometry">
+          <rect>
+           <x>30</x>
+           <y>100</y>
+           <width>201</width>
+           <height>21</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Denominations with value 5:</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+        <widget class="QLabel" name="labelzAvailableText">
+         <property name="geometry">
+          <rect>
+           <x>30</x>
+           <y>50</y>
+           <width>201</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="font">
+          <font>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>Available Zerocoin  Balance:</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+        <widget class="QLabel" name="labelzDenom7Text">
+         <property name="geometry">
+          <rect>
+           <x>30</x>
+           <y>200</y>
+           <width>201</width>
+           <height>21</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Denominations with value 1000:</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+        <widget class="QLabel" name="labelzDenom7Amount">
+         <property name="geometry">
+          <rect>
+           <x>240</x>
+           <y>200</y>
+           <width>101</width>
+           <height>21</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>0 zPIV</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+        <widget class="QLabel" name="labelzDenom8Text">
+         <property name="geometry">
+          <rect>
+           <x>30</x>
+           <y>220</y>
+           <width>201</width>
+           <height>21</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Denominations with value 5000:</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+        <widget class="QLabel" name="labelzDenom8Amount">
+         <property name="geometry">
+          <rect>
+           <x>240</x>
+           <y>220</y>
+           <width>101</width>
+           <height>21</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>0 zPIV</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+        <widget class="Line" name="linez1">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>250</y>
+           <width>467</width>
+           <height>1</height>
+          </rect>
+         </property>
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+        <widget class="QLabel" name="labelzPIVActions">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>250</y>
+           <width>181</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>12</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>Zerocoin Actions:</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+        <widget class="QLabel" name="labelzPIVSyncStatus">
+         <property name="geometry">
+          <rect>
+           <x>190</x>
+           <y>250</y>
+           <width>81</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string>The displayed information may be out of date. Your wallet automatically synchronizes with the PIVX network after a connection is established, but this process has not completed yet.</string>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QLabel { color: red; }</string>
+         </property>
+         <property name="text">
+          <string notr="true">(out of sync)</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="pushButtonMintzPIV">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>280</y>
+           <width>141</width>
+           <height>27</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string>Enter an amount of Piv to convert to zPiv</string>
+         </property>
+         <property name="text">
+          <string>Mint Zerocoin</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="labelzPIVAmountValue">
+         <property name="geometry">
+          <rect>
+           <x>230</x>
+           <y>280</y>
+           <width>111</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string>Enter an amount of Piv to convert to zPiv</string>
+         </property>
+         <property name="text">
+          <string>0.000 000 00 PIV</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+        <widget class="QLabel" name="labelzPIVAmountText">
+         <property name="geometry">
+          <rect>
+           <x>160</x>
+           <y>280</y>
+           <width>61</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Amount:</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="pushButtonMintReset">
+         <property name="geometry">
+          <rect>
+           <x>360</x>
+           <y>280</y>
+           <width>101</width>
+           <height>27</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string>Reset Zerocoin Minting</string>
+         </property>
+         <property name="text">
+          <string>Reset</string>
+         </property>
+        </widget>
+        <widget class="Line" name="linez2">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>320</y>
+           <width>467</width>
+           <height>1</height>
+          </rect>
+         </property>
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="pushButtonSpendzPIV">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>330</y>
+           <width>141</width>
+           <height>27</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string>Enter an amount of Piv to convert to zPiv</string>
+         </property>
+         <property name="text">
+          <string>Spend Zerocoin</string>
+         </property>
+        </widget>
+        <widget class="QLineEdit" name="addAsLabel">
+         <property name="geometry">
+          <rect>
+           <x>60</x>
+           <y>420</y>
+           <width>401</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string>Enter a label for this address to add it to the list of used addresses</string>
+         </property>
+        </widget>
+        <widget class="QWidget" name="layoutWidget">
+         <property name="geometry">
+          <rect>
+           <x>60</x>
+           <y>380</y>
+           <width>401</width>
+           <height>36</height>
+          </rect>
+         </property>
+         <layout class="QHBoxLayout" name="payToLayout">
+          <property name="spacing">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QValidatedLineEdit" name="payTo">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>31</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>The PIVX address to send the payment to</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QToolButton" name="addressBookButton">
+            <property name="toolTip">
+             <string>Choose previously used address</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../pivx.qrc">
+              <normaloff>:/icons/address-book</normaloff>:/icons/address-book</iconset>
+            </property>
+            <property name="shortcut">
+             <string>Alt+A</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QToolButton" name="pasteButton">
+            <property name="toolTip">
+             <string>Paste address from clipboard</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../pivx.qrc">
+              <normaloff>:/icons/editpaste</normaloff>:/icons/editpaste</iconset>
+            </property>
+            <property name="shortcut">
+             <string>Alt+P</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QToolButton" name="deleteButton">
+            <property name="toolTip">
+             <string>Remove this entry</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../pivx.qrc">
+              <normaloff>:/icons/remove</normaloff>:/icons/remove</iconset>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QLabel" name="labelLabel">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>420</y>
+           <width>54</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>&amp;Label:</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="buddy">
+          <cstring>addAsLabel</cstring>
+         </property>
+        </widget>
+        <widget class="BitcoinAmountField" name="payAmount">
+         <property name="geometry">
+          <rect>
+           <x>60</x>
+           <y>460</y>
+           <width>401</width>
+           <height>34</height>
+          </rect>
+         </property>
+        </widget>
+        <widget class="QLabel" name="payToLabel">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>382</y>
+           <width>54</width>
+           <height>30</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Pay &amp;To:</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="buddy">
+          <cstring>payTo</cstring>
+         </property>
+        </widget>
+        <widget class="QLabel" name="amountLabel">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>460</y>
+           <width>54</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>A&amp;mount:</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="buddy">
+          <cstring>payAmount</cstring>
+         </property>
+        </widget>
+        <widget class="QWidget" name="layoutWidget_2">
+         <property name="geometry">
+          <rect>
+           <x>280</x>
+           <y>320</y>
+           <width>181</width>
+           <height>51</height>
+          </rect>
+         </property>
+         <layout class="QHBoxLayout" name="securityLevelLayout">
+          <item>
+           <widget class="QLabel" name="labelSecurityLevel">
+            <property name="toolTip">
+             <string>Percentage of incoming PIV which get automatically converted to zPIV via Zerocoin Protocol (min: 10%)</string>
+            </property>
+            <property name="frameShape">
+             <enum>QFrame::Box</enum>
+            </property>
+            <property name="text">
+             <string>Security Level:</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSpinBox" name="securityLevel">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::UpDownArrows</enum>
+            </property>
+            <property name="minimum">
+             <number>10</number>
+            </property>
+            <property name="maximum">
+             <number>100</number>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QCheckBox" name="checkBoxMintChange">
+         <property name="geometry">
+          <rect>
+           <x>60</x>
+           <y>500</y>
+           <width>401</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Convert Change to Zerocoin (1 zPIV Fee)</string>
+         </property>
+        </widget>
+        <zorder>zPIVLabel</zorder>
+        <zorder>labelzDenom4Amount</zorder>
+        <zorder>labelzDenom3Amount</zorder>
+        <zorder>labelzDenom2Amount</zorder>
+        <zorder>labelzDenom6Text</zorder>
+        <zorder>labelzDenom6Amount</zorder>
+        <zorder>labelzDenom1Text</zorder>
+        <zorder>labelzDenom4Text</zorder>
+        <zorder>labelzDenom5Text</zorder>
+        <zorder>labelzDenom3Text</zorder>
+        <zorder>labelzAvailableAmount</zorder>
+        <zorder>labelzDenom5Amount</zorder>
+        <zorder>labelzDenom1Amount</zorder>
+        <zorder>labelzDenom2Text</zorder>
+        <zorder>labelzAvailableText</zorder>
+        <zorder>labelzDenom7Text</zorder>
+        <zorder>labelzDenom7Amount</zorder>
+        <zorder>labelzDenom8Text</zorder>
+        <zorder>labelzDenom8Amount</zorder>
+        <zorder>linez1</zorder>
+        <zorder>labelzPIVActions</zorder>
+        <zorder>labelzPIVSyncStatus</zorder>
+        <zorder>pushButtonMintzPIV</zorder>
+        <zorder>labelzPIVAmountValue</zorder>
+        <zorder>labelzPIVAmountText</zorder>
+        <zorder>pushButtonMintReset</zorder>
+        <zorder>linez2</zorder>
+        <zorder>pushButtonSpendzPIV</zorder>
+        <zorder>addAsLabel</zorder>
+        <zorder>layoutWidget</zorder>
+        <zorder>labelLabel</zorder>
+        <zorder>payAmount</zorder>
+        <zorder>payToLabel</zorder>
+        <zorder>amountLabel</zorder>
+        <zorder>layoutWidget_2</zorder>
+        <zorder>checkBoxMintChange</zorder>
+        <zorder>labelSecurityLevel</zorder>
        </widget>
       </item>
      </layout>
@@ -98,15 +811,15 @@
       <item>
        <widget class="QFrame" name="oFrame">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
         <property name="minimumSize">
          <size>
-          <width>448</width>
-          <height>600</height>
+          <width>467</width>
+          <height>580</height>
          </size>
         </property>
         <property name="frameShape">
@@ -120,7 +833,7 @@
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>460</width>
+           <width>467</width>
            <height>48</height>
           </rect>
          </property>
@@ -303,7 +1016,7 @@
           </font>
          </property>
          <property name="text">
-          <string>0.000 000 00 PIV</string>
+          <string>0.000 000 00 oPIV</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -319,7 +1032,7 @@
           </rect>
          </property>
          <property name="text">
-          <string>0.000 000 00 PIV</string>
+          <string>0.000 000 00 oPIV</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -335,7 +1048,7 @@
           </rect>
          </property>
          <property name="text">
-          <string>0.000 000 00 PIV</string>
+          <string>0.000 000 00 oPIV</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -351,7 +1064,7 @@
           </rect>
          </property>
          <property name="text">
-          <string>0.000 000 00 PIV</string>
+          <string>0.000 000 00 oPIV</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -367,7 +1080,7 @@
           </rect>
          </property>
          <property name="text">
-          <string>0.000 000 00 PIV</string>
+          <string>0.000 000 00 oPIV</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -383,7 +1096,7 @@
           </rect>
          </property>
          <property name="text">
-          <string>0.000 000 00 PIV</string>
+          <string>0.000 000 00 oPIV</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -399,7 +1112,7 @@
           </rect>
          </property>
          <property name="text">
-          <string>0.000 000 00 PIV</string>
+          <string>0.000 000 00 oPIV</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -415,7 +1128,7 @@
           </rect>
          </property>
          <property name="text">
-          <string>0.000 000 00 PIV</string>
+          <string>0.000 000 00 oPIV</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -425,7 +1138,7 @@
          <property name="geometry">
           <rect>
            <x>10</x>
-           <y>270</y>
+           <y>280</y>
            <width>141</width>
            <height>27</height>
           </rect>
@@ -438,8 +1151,8 @@
          <property name="geometry">
           <rect>
            <x>160</x>
-           <y>270</y>
-           <width>131</width>
+           <y>280</y>
+           <width>141</width>
            <height>27</height>
           </rect>
          </property>
@@ -450,8 +1163,8 @@
         <widget class="QPushButton" name="pushButtonResetMixing">
          <property name="geometry">
           <rect>
-           <x>300</x>
-           <y>270</y>
+           <x>310</x>
+           <y>280</y>
            <width>141</width>
            <height>27</height>
           </rect>
@@ -464,9 +1177,9 @@
          <property name="geometry">
           <rect>
            <x>10</x>
-           <y>240</y>
-           <width>201</width>
-           <height>17</height>
+           <y>250</y>
+           <width>181</width>
+           <height>31</height>
           </rect>
          </property>
          <property name="font">
@@ -510,8 +1223,8 @@
          <property name="geometry">
           <rect>
            <x>0</x>
-           <y>230</y>
-           <width>451</width>
+           <y>250</y>
+           <width>467</width>
            <height>1</height>
           </rect>
          </property>
@@ -524,7 +1237,7 @@
           <rect>
            <x>0</x>
            <y>320</y>
-           <width>451</width>
+           <width>467</width>
            <height>1</height>
           </rect>
          </property>
@@ -537,7 +1250,7 @@
           <rect>
            <x>9</x>
            <y>349</y>
-           <width>431</width>
+           <width>461</width>
            <height>241</height>
           </rect>
          </property>
@@ -693,7 +1406,7 @@
           <rect>
            <x>10</x>
            <y>510</y>
-           <width>421</width>
+           <width>451</width>
            <height>71</height>
           </rect>
          </property>
@@ -716,10 +1429,10 @@
         <widget class="QLabel" name="labelObfuscationSyncStatus">
          <property name="geometry">
           <rect>
-           <x>220</x>
-           <y>240</y>
-           <width>69</width>
-           <height>20</height>
+           <x>190</x>
+           <y>250</y>
+           <width>81</width>
+           <height>31</height>
           </rect>
          </property>
          <property name="toolTip">
@@ -732,7 +1445,7 @@
           <string notr="true">(out of sync)</string>
          </property>
          <property name="alignment">
-          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+          <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </widget>
@@ -742,6 +1455,18 @@
    </layout>
   </widget>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QValidatedLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>qvalidatedlineedit.h</header>
+  </customwidget>
+  <customwidget>
+   <class>BitcoinAmountField</class>
+   <extends>QLineEdit</extends>
+   <header>bitcoinamountfield.h</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="../pivx.qrc"/>
  </resources>

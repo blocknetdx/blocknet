@@ -32,6 +32,7 @@ PrivacyDialog::PrivacyDialog(QWidget* parent) : QDialog(parent),
     nDisplayUnit = 0; // just make sure it's not unitialized
     ui->setupUi(this);
     ui->labelObfuscationSyncStatus->setText("(" + tr("out of sync") + ")");
+    ui->labelzPIVSyncStatus->setText("(" + tr("out of sync") + ")");
 
     if (fMasterNode) {
         ui->pushButtonStartMixing->setText("(" + tr("Disabled") + ")");
@@ -47,6 +48,8 @@ PrivacyDialog::PrivacyDialog(QWidget* parent) : QDialog(parent),
         connect(timer, SIGNAL(timeout()), this, SLOT(obfuScationStatus()));
         timer->start(1000);
     }
+    // start with displaying the "out of sync" warnings
+    showOutOfSyncWarning(true);
 }
 
 PrivacyDialog::~PrivacyDialog()
@@ -89,6 +92,11 @@ void PrivacyDialog::updateDisplayUnit()
     }
 }
 
+void PrivacyDialog::showOutOfSyncWarning(bool fShow)
+{
+    ui->labelObfuscationSyncStatus->setVisible(fShow);
+    ui->labelzPIVSyncStatus->setVisible(fShow);
+}
 void PrivacyDialog::updateObfuscationProgress()
 {
     if (!masternodeSync.IsBlockchainSynced() || ShutdownRequested()) return;
@@ -272,16 +280,13 @@ void PrivacyDialog::toggleObfuscation()
     QSettings settings;
     // Popup some information on first mixing
     QString hasMixed = settings.value("hasMixed").toString();
-printf("XX42: toggleObfuscation 1\n");
     if (hasMixed.isEmpty()) {
-printf("XX42: toggleObfuscation 2\n");
         QMessageBox::information(this, tr("Obfuscation"),
             tr("If you don't want to see internal Obfuscation fees/transactions select \"Most Common\" as Type on the \"Transactions\" tab."),
             QMessageBox::Ok, QMessageBox::Ok);
         settings.setValue("hasMixed", "hasMixed");
     }
     if (!fEnableObfuscation) {
-printf("XX42: toggleObfuscation 3\n");
         int64_t balance = currentBalance;
         float minAmount = 14.90 * COIN;
         if (balance < minAmount) {

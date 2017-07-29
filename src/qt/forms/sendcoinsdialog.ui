@@ -1385,6 +1385,13 @@
         <number>3</number>
        </property>
        <item>
+        <widget class="QCheckBox" name="checkzPIV">
+         <property name="text">
+          <string>zPIV</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QCheckBox" name="checkUseObfuscation">
          <property name="minimumSize">
           <size>
