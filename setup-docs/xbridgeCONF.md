@@ -11,7 +11,7 @@
   * ```Username=``` Edit this field to match RPCuser in the coin's .conf
   * ```Password=``` Edit this field to match RPCpassword in the coin's .conf
   
-  * https://github.com/Aderks/blocknet/blob/master/setup-docs/supportedwalletsCONF.md
+  * https://github.com/blocknetdx/blockdx/blob/master/setup-docs/supportedwalletsCONF.md
 
 * This xbridge.conf will be updated as coins are added. Anything under the 'DX COMPATIBLE COINS' section can be traded on the DX.
 
