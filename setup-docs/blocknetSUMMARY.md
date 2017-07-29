@@ -1,6 +1,6 @@
 # BLOCKNET
 
-![alt text](https://github.com/Aderks/blocknet/blob/master/setup-docs/pictures/block.PNG "Logo Title Text 1")
+![alt text](https://github.com/blocknetdx/blockdx/blob/master/setup-docs/pictures/block.PNG "Logo Title Text 1")
 
 The Internet Of Blockchains
 
@@ -15,7 +15,7 @@ The Internet Of Blockchains
   * [Facebook](https://www.facebook.com/theblocknet)
   * [Youtube](https://www.youtube.com/channel/UCCDBoR9fHb21bLH7FGvFrQg)
   * [Github](https://github.com/atcsecure/blocknet)
-  * [FAQ](https://github.com/Aderks/blocknet/blob/master/setup-docs/blocknetFAQ.md)
+  * [FAQ](https://github.com/blocknetdx/blockdx/blob/master/setup-docs/blocknetFAQ.md)
 
 ## Block Specs
   * Max/Circulating Coin Supply: 3,910,516 BLOCK
@@ -139,10 +139,10 @@ https://docs.google.com/spreadsheets/d/1SfuVWjo7s14arkzUbIt-lEUt9NJk7CT9Vu_jOk2w
 
 * Linux Installation: https://github.com/atcsecure/blocknet/blob/xbridge-new-2/doc/build-ubuntu-debian-w-xbridge.md
 
-* Blocknet DX Setup: https://github.com/Aderks/blocknet/blob/master/setup-docs/blocknetdxSETUP.md
+* Blocknet DX Setup: https://github.com/blocknetdx/blockdx/blob/master/setup-docs/blocknetdxSETUP.md
 
 * Node Setup: https://docs.google.com/document/d/1M65hM03tX16FXN-X-30ETWq21WkWts1TxQXv-LR32AU/  (Temporary Document)
-   * https://github.com/Aderks/blocknet/blob/master/setup-docs/servicenodeSETUP.md 
+   * https://github.com/blocknetdx/blockdx/blob/master/setup-docs/servicenodeSETUP.md 
 
 ## Roadmap
 Link to roadmap here when completed
