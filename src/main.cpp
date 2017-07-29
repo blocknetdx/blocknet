@@ -982,9 +982,9 @@ bool MoneyRange(CAmount nValueOut)
 
 bool RecordMintToDB(PublicCoin publicZerocoin, const uint256& txHash)
 {
-    //Check the pubCoinValue didn't already store in the zerocoin database
+    //Check the pubCoinValue didn't already store in the zerocoin database. todo: pubcoin memory map?
     //write the zerocoinmint to db if we don't already have it
-    //note that many of the parameters are not set here
+    //note that many of the mint parameters are not set here because those params are private to the minter
     CZerocoinMint pubCoinTx;
     uint256 hashFromDB;
     if (zerocoinDB->ReadCoinMint(publicZerocoin.getValue(), hashFromDB)) {
@@ -1005,18 +1005,14 @@ bool RecordMintToDB(PublicCoin publicZerocoin, const uint256& txHash)
 
 bool TxOutToPublicCoin(const CTxOut txout, PublicCoin& pubCoin, CValidationState& state)
 {
-    LogPrintf("ZCPRINT %s\n", __func__);
     CBigNum publicZerocoin;
-    {
-        vector<unsigned char> vchZeroMint;
-        vchZeroMint.insert(vchZeroMint.end(), txout.scriptPubKey.begin() + SCRIPT_OFFSET,
+    vector<unsigned char> vchZeroMint;
+    vchZeroMint.insert(vchZeroMint.end(), txout.scriptPubKey.begin() + SCRIPT_OFFSET,
                            txout.scriptPubKey.begin() + txout.scriptPubKey.size());
-
-        publicZerocoin.setvch(vchZeroMint);
-    }
+    publicZerocoin.setvch(vchZeroMint);
 
     CoinDenomination denomination = AmountToZerocoinDenomination(txout.nValue);
-    LogPrintf("%s ZCPRINT denomination %d pubcoin %s\n", __func__, denomination, publicZerocoin.GetHex());
+    LogPrint("zero", "%s ZCPRINT denomination %d pubcoin %s\n", __func__, denomination, publicZerocoin.GetHex());
     if (denomination == ZQ_ERROR)
         return state.DoS(100, error("TxOutToPublicCoin : txout.nValue is not correct"));
 
@@ -1031,11 +1027,11 @@ bool TxOutToPublicCoin(const CTxOut txout, PublicCoin& pubCoin, CValidationState
 //return a list of zerocoin mints contained in a specific block
 bool BlockToZerocoinMintList(const CBlock& block, std::list<CZerocoinMint>& vMints)
 {
-    for(const CTransaction tx : block.vtx) {
+    for (const CTransaction tx : block.vtx) {
         if(!tx.IsZerocoinMint())
             continue;
 
-        for(const CTxOut txOut : tx.vout) {
+        for (const CTxOut txOut : tx.vout) {
             if(!txOut.scriptPubKey.IsZerocoinMint())
                 continue;
 
@@ -1052,17 +1048,16 @@ bool BlockToZerocoinMintList(const CBlock& block, std::list<CZerocoinMint>& vMin
     return true;
 }
 
-
-//return a list of zerocoin spends contained in a specific block, list will have different denominations
+//return a list of zerocoin spends contained in a specific block, list may have many denominations
 std::list<libzerocoin::CoinDenomination> ZerocoinSpendListFromBlock(const CBlock& block)
 {
     std::list<libzerocoin::CoinDenomination> vSpends;
-    for(const CTransaction tx : block.vtx) {
-        if(!tx.IsZerocoinSpend())
+    for (const CTransaction tx : block.vtx) {
+        if (!tx.IsZerocoinSpend())
             continue;
 
-        for(const CTxIn txin : tx.vin) {
-            if(!txin.scriptSig.IsZerocoinSpend())
+        for (const CTxIn txin : tx.vin) {
+            if (!txin.scriptSig.IsZerocoinSpend())
                 continue;
 
             libzerocoin::CoinDenomination c = libzerocoin::IntToZerocoinDenomination(txin.nSequence);
@@ -1072,11 +1067,8 @@ std::list<libzerocoin::CoinDenomination> ZerocoinSpendListFromBlock(const CBlock
     return vSpends;
 }
 
-
 bool CheckZerocoinMint(const uint256& txHash, const CTxOut& txout, CValidationState& state, bool fCheckOnly)
 {
-    LogPrintf("ZCPRINT %s\n", __func__);
-
     if(GetAdjustedTime() < GetSporkValue(SPORK_17_ENABLE_ZEROCOIN))
         return state.DoS(100, error("CheckZerocoinMint(): Zerocoin transactions are not allowed yet"));
 
@@ -1092,7 +1084,6 @@ bool CheckZerocoinMint(const uint256& txHash, const CTxOut& txout, CValidationSt
 
 CoinSpend TxInToZerocoinSpend(const CTxIn& txin)
 {
-    LogPrintf("ZCPRINT %s\n", __func__);
     // Deserialize the CoinSpend intro a fresh object
     std::vector<char, zero_after_free_allocator<char> > dataTxIn;
     dataTxIn.insert(dataTxIn.end(), txin.scriptSig.begin() + BIGNUM_SIZE, txin.scriptSig.end());
@@ -1119,8 +1110,6 @@ bool IsZerocoinSpendUnknown(CoinSpend coinSpend, uint256 hashTx, CValidationStat
 
 bool CheckZerocoinSpend(const CTransaction tx, CValidationState& state)
 {
-    LogPrintf("ZCPRINT %s\n", __func__);
-
     if(GetAdjustedTime() < GetSporkValue(SPORK_17_ENABLE_ZEROCOIN))
         return state.DoS(100, error("CheckZerocoinSpend(): Zerocoin transactions are not allowed yet"));
 
@@ -1203,7 +1192,7 @@ bool CheckZerocoinSpend(const CTransaction tx, CValidationState& state)
         for (const auto& newSpend : vSpends) {
             list<CBigNum>::iterator it = find(listMySerials.begin(), listMySerials.end(), newSpend.getCoinSerialNumber());
             if (it != listMySerials.end()) {
-                LogPrintf("ZCPRINT %s: %s detected spent zerocoin mint in transaction %s \n", __func__, it->GetHex(), tx.GetHash().GetHex());
+                LogPrintf("%s: %s detected spent zerocoin mint in transaction %s \n", __func__, it->GetHex(), tx.GetHash().GetHex());
                 pwalletMain->NotifyZerocoinChanged(pwalletMain, it->GetHex(), "Used", CT_UPDATED);
             }
         }
@@ -1258,14 +1247,11 @@ bool CheckTransaction(const CTransaction& tx, bool fZerocoinActive, CValidationS
 
     if (fZerocoinActive) {
         if (nZCSpendCount > Params().Zerocoin_MaxSpendsPerTransaction())
-            return state.DoS(100,
-                             error("CheckTransaction() : there are more zerocoin spends than are allowed in one transaction"));
+            return state.DoS(100, error("CheckTransaction() : there are more zerocoin spends than are allowed in one transaction"));
 
-        if (tx.IsZerocoinSpend())
-        {
+        if (tx.IsZerocoinSpend()) {
             //require that a zerocoinspend only has inputs that are zerocoins
-            for (const CTxIn in : tx.vin)
-            {
+            for (const CTxIn in : tx.vin) {
                 if (!in.scriptSig.IsZerocoinSpend())
                     return state.DoS(100,
                                      error("CheckTransaction() : zerocoinspend contains inputs that are not zerocoins"));
@@ -1393,7 +1379,6 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
         return state.DoS(0,
             error("AcceptToMemoryPool : nonstandard transaction: %s", reason),
             REJECT_NONSTANDARD, reason);
-    LogPrintf("%s after nonstandard\n", __func__);
     // is it already in the memory pool?
     uint256 hash = tx.GetHash();
     if (pool.exists(hash)) {
@@ -1412,7 +1397,6 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
             }
         }
     }
-    LogPrintf("%s after swift\n", __func__);
 
     // Check for conflicts with in-memory transactions
     if (!tx.IsZerocoinSpend()) {
@@ -1431,7 +1415,6 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
         CCoinsView dummy;
         CCoinsViewCache view(&dummy);
 
-        //todo ensure that the pivx is properly accounted for in CCoinsView database
         CAmount nValueIn = 0;
         if(tx.IsZerocoinSpend()){
             nValueIn = tx.GetZerocoinSpent();
@@ -1545,14 +1528,12 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
             return error("AcceptToMemoryPool: : insane fees %s, %d > %d",
                 hash.ToString(),
                 nFees, ::minRelayTxFee.GetFee(nSize) * 10000);
-        LogPrintf("%s after reject fee\n", __func__);
 
         // Check against previous transactions
         // This is done last to help prevent CPU exhaustion denial-of-service attacks.
         if (!CheckInputs(tx, state, view, true, STANDARD_SCRIPT_VERIFY_FLAGS, true)) {
             return error("AcceptToMemoryPool: : ConnectInputs failed %s", hash.ToString());
         }
-        LogPrintf("%s after check inputs\n", __func__);
 
         // Check again against just the consensus-critical mandatory script
         // verification flags, in case of bugs in the standard flags that cause
@@ -1616,8 +1597,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState& state, const CTransact
     }
 
     // Check for conflicts with in-memory transactions
-    if(!tx.IsZerocoinSpend())
-    {
+    if (!tx.IsZerocoinSpend()) {
         LOCK(pool.cs); // protect pool.mapNextTx
         for (unsigned int i = 0; i < tx.vin.size(); i++) {
             COutPoint outpoint = tx.vin[i].prevout;
@@ -2504,21 +2484,20 @@ bool DisconnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex
         const CTransaction& tx = block.vtx[i];
 
         /** UNDO ZEROCOIN DATABASING
-         * note we only undo zerocoin databasing in the following condition, value to and from PIVX
+         * note we only undo zerocoin databasing in the following statement, value to and from PIVX
          * addresses should still be handled by the typical bitcoin based undo code
          * */
         if (tx.ContainsZerocoins()) {
             if (tx.IsZerocoinSpend()) {
                 //erase all zerocoinspends in this transaction
-                for(const CTxIn txin : tx.vin){
+                for (const CTxIn txin : tx.vin){
                     if (txin.scriptSig.IsZerocoinSpend()) {
                         CoinSpend spend = TxInToZerocoinSpend(txin);
                         if(!CAccumulators::getInstance().EraseCoinSpend(spend.getCoinSerialNumber()))
-                            return error("failed to erase spent coin in block");
+                            return error("failed to erase spent zerocoin in block");
                     }
                 }
-            }
-            else if(tx.IsZerocoinMint()) {
+            } else if (tx.IsZerocoinMint()) {
                 //erase all zerocoinmints in this transaction
                 for (const CTxOut txout : tx.vout) {
                     if (txout.scriptPubKey.empty() || !txout.scriptPubKey.IsZerocoinMint())
@@ -2800,10 +2779,10 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
     }
 
     for (auto& denom : zerocoinDenomList) {
-        LogPrintf("zero: %s coins for denomination %d pubcoin %s\n", __func__,pindex->mapZerocoinSupply.at(denom), denom);
+        LogPrint("zero" "%s coins for denomination %d pubcoin %s\n", __func__, pindex->mapZerocoinSupply.at(denom), denom);
     }
 
-    // ppcoin: track money supply and mint amount info
+    // track money supply and mint amount info
     CAmount nMoneySupplyPrev = pindex->pprev ? pindex->pprev->nMoneySupply : 0;
     pindex->nMoneySupply = nMoneySupplyPrev + nValueOut - nValueIn;
     pindex->nMint = nValueOut - nValueIn + nFees - nAmountZerocoinSpent;
@@ -2830,19 +2809,19 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
             REJECT_INVALID, "bad-cb-amount");
     }
 
-    // zerocoin: if a new accumulator checkpoint was generated, check that it is the correct value
+    // zerocoin accumulator: if a new accumulator checkpoint was generated, check that it is the correct value
     if (block.GetBlockTime() >= GetSporkValue(SPORK_17_ENABLE_ZEROCOIN) && pindex->nHeight % 10 == 0) {
         uint256 nCheckpointCalculated = 0;
         if (!CAccumulators::getInstance().GetCheckpoint(pindex->nHeight, nCheckpointCalculated))
-            return state.DoS(100, error("CheckBlock() : failed to calculate accumulator checkpoint"));
+            return state.DoS(100, error("ConnectBlock() : failed to calculate accumulator checkpoint"));
 
         if (nCheckpointCalculated != block.nAccumulatorCheckpoint) {
-            LogPrintf("calculated: %s\n block: %s\n", nCheckpointCalculated.GetHex(), block.nAccumulatorCheckpoint.GetHex());
-            return state.DoS(100, error("CheckBlock() : accumulator does not match calculated value"));
+            LogPrintf("%s: calculated: %s\n block: %s\n", __func__, nCheckpointCalculated.GetHex(), block.nAccumulatorCheckpoint.GetHex());
+            return state.DoS(100, error("ConnectBlock() : accumulator does not match calculated value"));
         }
     } else {
         if (block.nAccumulatorCheckpoint != pindex->pprev->nAccumulatorCheckpoint) {
-            return state.DoS(100, error("CheckBlock() : new accumulator checkpoint generated on a block that is not multiple of 10"));
+            return state.DoS(100, error("ConnectBlock() : new accumulator checkpoint generated on a block that is not multiple of 10"));
         }
     }
 
@@ -3699,7 +3678,6 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
         return state.Invalid(error("CheckBlock() : block timestamp too far in the future"),
             REJECT_INVALID, "time-too-new");
 
-
     // Check the merkle root.
     if (fCheckMerkleRoot) {
         bool mutated;
@@ -3749,7 +3727,6 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
     }
 
     // ----------- swiftTX transaction scanning -----------
-
     if (IsSporkActive(SPORK_3_SWIFTTX_BLOCK_FILTERING)) {
         BOOST_FOREACH (const CTransaction& tx, block.vtx) {
             if (!tx.IsCoinBase()) {
@@ -3769,7 +3746,6 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
     } else {
         LogPrintf("CheckBlock() : skipping transaction locking checks\n");
     }
-
 
     // masternode payments / budgets
     CBlockIndex* pindexPrev = chainActive.Tip();
@@ -3802,16 +3778,16 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
     }
 
     // Check transactions
-    bool isZerocoinActive = block.nTime > GetSporkValue(SPORK_17_ENABLE_ZEROCOIN);
+    bool fZerocoinActive = block.nTime > GetSporkValue(SPORK_17_ENABLE_ZEROCOIN);
     BOOST_FOREACH (const CTransaction& tx, block.vtx)
-        if (!CheckTransaction(tx, isZerocoinActive, state))
+        if (!CheckTransaction(tx, fZerocoinActive, state))
             return error("CheckBlock() : CheckTransaction failed");
 
     unsigned int nSigOps = 0;
     BOOST_FOREACH (const CTransaction& tx, block.vtx) {
         nSigOps += GetLegacySigOpCount(tx);
     }
-    unsigned int nMaxBlockSigOps = block.nTime > GetSporkValue(SPORK_17_ENABLE_ZEROCOIN) ? MAX_BLOCK_SIGOPS_CURRENT : MAX_BLOCK_SIGOPS_LEGACY;
+    unsigned int nMaxBlockSigOps = fZerocoinActive ? MAX_BLOCK_SIGOPS_CURRENT : MAX_BLOCK_SIGOPS_LEGACY;
     if (nSigOps > nMaxBlockSigOps)
         return state.DoS(100, error("CheckBlock() : out-of-bounds SigOpCount"),
             REJECT_INVALID, "bad-blk-sigops", true);
@@ -3865,7 +3841,7 @@ bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationState& sta
 
     int nHeight = pindexPrev->nHeight + 1;
 
-    //If this is a reorg, check that it is not too depp
+    //If this is a reorg, check that it is not too deep
     if (chainActive.Height() - nHeight >= Params().MaxReorganizationDepth())
         return state.DoS(1, error("%s: forked chain older than max reorganization depth (height %d)", __func__, nHeight));
 
@@ -3920,26 +3896,6 @@ bool ContextualCheckBlock(const CBlock& block, CValidationState& state, CBlockIn
         if (block.vtx[0].vin[0].scriptSig.size() < expect.size() ||
             !std::equal(expect.begin(), expect.end(), block.vtx[0].vin[0].scriptSig.begin())) {
             return state.DoS(100, error("%s : block height mismatch in coinbase", __func__), REJECT_INVALID, "bad-cb-height");
-        }
-    }
-
-    // zerocoin: if a new accumulator checkpoint was generated, check that it is the correct value
-    if (block.GetBlockTime() >= GetSporkValue(SPORK_17_ENABLE_ZEROCOIN) && nHeight % 10 == 0) {
-        uint256 nCheckpointCalculated = 0;
-        LogPrintf("%s ZCPRINT get checkpoint for %d\n", __func__, nHeight);
-        if (!CAccumulators::getInstance().GetCheckpoint(nHeight, nCheckpointCalculated))
-            return state.DoS(100, error("CheckBlock() : failed to calculate accumulator checkpoint"));
-
-        if (nCheckpointCalculated != block.nAccumulatorCheckpoint) {
-            LogPrintf("calculated: %s\n block: %s\n", nCheckpointCalculated.GetHex(), block.nAccumulatorCheckpoint.GetHex());
-            return state.DoS(100, error("CheckBlock() : accumulator does not match calculated value"));
-        }
-    } else {
-        if(mapBlockIndex.find(block.hashPrevBlock) == mapBlockIndex.end())
-            return state.DoS(100, error("CheckBlock() : could not find previous block"));
-
-        if (block.nAccumulatorCheckpoint != mapBlockIndex[block.hashPrevBlock]->nAccumulatorCheckpoint) {
-            return state.DoS(100, error("CheckBlock() : new accumulator checkpoint generated on a block that is not multiple of 10"));
         }
     }
 
