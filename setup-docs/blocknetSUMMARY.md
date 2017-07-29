@@ -82,6 +82,8 @@ The following is a list of coins which have been tested and are confirmed to be 
  * Litecoin (LTC)
  * MonetaryUnit (MUE)
  * Namecoin (NMC)
+ * PIVX (PIVX)
+ * Qtum (QTUM)
  * SysCoin (SYS)
  * Vertcoin (VTC)
  * Viacoin (VIA)
