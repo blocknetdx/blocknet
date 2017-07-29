@@ -71,7 +71,7 @@ In brief, the Blocknet supplies three core services for inter-chain interoperabi
 ## Supported Coins
 Any coin that supports OP_CHECKLOCKTIMEVERIFY and has a stock JSON RPC interface cloned from Bitcoin Core will be Blocknet compatible.
 
-The following is a list of coins which have been tested and are confirmed to be supported and compatible. Any two coins from this list are a valid coin pair and can be traded directly. 
+The following is a list of coins which have been tested and are confirmed to be supported. Any two coins from this list are a valid coin pair and can be traded directly. 
 
  * Bitbay (BAY)
  * Bitcoin (BTC)
