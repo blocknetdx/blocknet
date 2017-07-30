@@ -107,6 +107,15 @@ The following is a list of coins which have been tested and are confirmed to be 
  
 ### MUE Pairs
  * [Blocknet MUE for DGB](https://www.youtube.com/watch?v=RMU4WyPTV4w)
+ 
+### NMC Pairs
+ * [Blocknet NMC for DOGE](https://www.youtube.com/watch?v=FGuLQNqcW9A)
+ 
+### PIVX Pairs
+ * [Blocknet PIVX for DGB](https://www.youtube.com/watch?v=NQS6WU1CtFQ)
+ 
+### QTUM Pairs
+ * [Blocknet QTUM for DGB](https://www.youtube.com/watch?v=btV4TMFnsCA)
 
 ### SYS Pairs
  * [Blocknet DASH for SYS](https://www.youtube.com/watch?v=d2yJTWvXHbA)
