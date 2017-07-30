@@ -262,6 +262,27 @@ ImportWithNoScanSupported=true
 MinTxFee=100000
 BlockTime=600
 FeePerByte=100
+
+[QTUM]
+Title=Qtum
+Address=YOUR ADDRESS
+Ip=127.0.0.1
+Port=3889
+Username=YOUR USERNAME
+Password=YOUR PASSWORD
+AddressPrefix=58
+ScriptPrefix=50
+SecretPrefix=128
+COIN=100000000
+MinimumAmount=0
+TxVersion=1
+DustAmount=0
+CreateTxMethod=BTC
+GetNewKeySupported=false
+ImportWithNoScanSupported=true
+MinTxFee=20000
+BlockTime=150
+FeePerByte=20
 ```
 
 ## COMMUNICATES BUT TX FAILS
