@@ -8,13 +8,19 @@
 #include "hash.h"
 #include "script/standard.h"
 #include "script/sign.h"
+#include "spork.h"
 #include "tinyformat.h"
 #include "utilstrencodings.h"
 #include "util.h"
 
+bool CBlockHeader::IsSha256Header() const
+{
+    return nTime > GetSporkValue(SPORK_17_ENABLE_ZEROCOIN);
+}
+
 uint256 CBlockHeader::GetHash() const
 {
-    if(nVersion <= 3 || nTime < HEADER_SWITCH_TIME)
+    if(!IsSha256Header())
         return HashQuark(BEGIN(nVersion), END(nNonce));
 
     return Hash(BEGIN(nVersion), END(nAccumulatorCheckpoint));

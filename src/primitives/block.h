@@ -15,9 +15,6 @@
 static const unsigned int MAX_BLOCK_SIZE_CURRENT = 2000000;
 static const unsigned int MAX_BLOCK_SIZE_LEGACY = 1000000;
 
-/** Block switch header time */
-static const unsigned int HEADER_SWITCH_TIME = 999999999;
-
 /** Nodes collect new transactions into a block, hash them into a hash tree,
  * and scan through nonce values to make the block's hash satisfy proof-of-work
  * requirements.  When they solve the proof-of-work, they broadcast the block
@@ -43,6 +40,8 @@ public:
         SetNull();
     }
 
+    bool IsSha256Header() const;
+
     ADD_SERIALIZE_METHODS;
 
     template <typename Stream, typename Operation>
@@ -56,7 +55,7 @@ public:
         READWRITE(nNonce);
 
         //zerocoin active, header changes to include accumulator checksum
-        if(this->nVersion >= 4 && nTime >= HEADER_SWITCH_TIME)
+        if(IsSha256Header())
             READWRITE(nAccumulatorCheckpoint);
     }
 
