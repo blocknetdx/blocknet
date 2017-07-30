@@ -97,6 +97,17 @@ enableaccounts=1
 paytxfee=0.001
 ```
 
+qtum.conf
+```
+server=1
+listen=1
+rpcuser=
+rpcpassword=
+rpcallowip=127.0.0.1
+enableaccounts=1
+staking=0
+```
+
 syscoin.conf
 ```
 server=1
