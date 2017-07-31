@@ -1201,6 +1201,11 @@ bool CheckZerocoinSpend(const CTransaction tx, CValidationState& state)
     return fValidated;
 }
 
+bool MoneyRange(CAmount nValueOut)
+{
+    return nValueOut >= 0 && nValueOut <= Params().MaxMoneyOut();
+}
+
 bool CheckTransaction(const CTransaction& tx, bool fZerocoinActive, CValidationState& state)
 {
     // Basic checks that don't depend on any context
