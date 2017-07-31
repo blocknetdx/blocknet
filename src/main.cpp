@@ -3659,6 +3659,17 @@ bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, bool f
         return state.DoS(50, error("CheckBlockHeader() : proof of work failed"),
             REJECT_INVALID, "high-hash");
 
+    // Version 4 header must be used when SPORK_17_ENABLEZEROCOIN is activated. And never before.
+    if (block.GetBlockTime() > GetSporkValue(SPORK_17_ENABLE_ZEROCOIN)) {
+        if (block.nVersion < 4)
+            return state.DoS(50, error("CheckBlockHeader() : block version must be above 4 after SPORK_17"),
+            REJECT_INVALID, "block-version");
+    } else {
+        if (block.nVersion > 3)
+            return state.DoS(50, error("CheckBlockHeader() : block version must be below 4 before SPORK_17"),
+            REJECT_INVALID, "block-version");
+    }
+
     return true;
 }
 

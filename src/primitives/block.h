@@ -40,8 +40,6 @@ public:
         SetNull();
     }
 
-    bool IsSha256Header() const;
-
     ADD_SERIALIZE_METHODS;
 
     template <typename Stream, typename Operation>
@@ -55,7 +53,7 @@ public:
         READWRITE(nNonce);
 
         //zerocoin active, header changes to include accumulator checksum
-        if(IsSha256Header())
+        if(nVersion > 3)
             READWRITE(nAccumulatorCheckpoint);
     }
 
