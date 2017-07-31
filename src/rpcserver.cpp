@@ -50,18 +50,20 @@ static std::vector<CSubNet> rpc_allow_subnets; //!< List of subnets to allow RPC
 static std::vector<boost::shared_ptr<ip::tcp::acceptor> > rpc_acceptors;
 
 void RPCTypeCheck(const Array& params,
-    const list<Value_type>& typesExpected,
-    bool fAllowNull)
+                  const list<Value_type>& typesExpected,
+                  bool fAllowNull)
 {
     unsigned int i = 0;
-    BOOST_FOREACH (Value_type t, typesExpected) {
+    for (Value_type t : typesExpected)
+    {
         if (params.size() <= i)
             break;
 
         const Value& v = params[i];
-        if (!((v.type() == t) || (fAllowNull && (v.type() == null_type)))) {
+        if (!((v.type() == t) || (fAllowNull && (v.type() == null_type))))
+        {
             string err = strprintf("Expected type %s, got %s",
-                Value_type_name[t], Value_type_name[v.type()]);
+                                   value_type_to_string(t).c_str(), value_type_to_string(v.type()).c_str());
             throw JSONRPCError(RPC_TYPE_ERROR, err);
         }
         i++;
@@ -69,17 +71,19 @@ void RPCTypeCheck(const Array& params,
 }
 
 void RPCTypeCheck(const Object& o,
-    const map<string, Value_type>& typesExpected,
-    bool fAllowNull)
+                  const map<string, Value_type>& typesExpected,
+                  bool fAllowNull)
 {
-    BOOST_FOREACH (const PAIRTYPE(string, Value_type) & t, typesExpected) {
+    for (const PAIRTYPE(string, Value_type)& t : typesExpected)
+    {
         const Value& v = find_value(o, t.first);
         if (!fAllowNull && v.type() == null_type)
-            throw JSONRPCError(RPC_TYPE_ERROR, strprintf("Missing %s", t.first));
+            throw JSONRPCError(RPC_TYPE_ERROR, strprintf("Missing %s", t.first.c_str()));
 
-        if (!((v.type() == t.second) || (fAllowNull && (v.type() == null_type)))) {
+        if (!((v.type() == t.second) || (fAllowNull && (v.type() == null_type))))
+        {
             string err = strprintf("Expected type %s for %s, got %s",
-                Value_type_name[t.second], t.first, Value_type_name[v.type()]);
+                                   value_type_to_string(t.second).c_str(), t.first.c_str(), value_type_to_string(v.type()).c_str());
             throw JSONRPCError(RPC_TYPE_ERROR, err);
         }
     }
