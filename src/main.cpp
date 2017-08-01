@@ -1281,14 +1281,13 @@ bool CheckTransaction(const CTransaction& tx, bool fZerocoinActive, CValidationS
             vInOutPoints.insert(txin.prevout);
     }
 
-    //todo double check this is robust enough for checks
     if (tx.IsCoinBase()) {
         if (tx.vin[0].scriptSig.size() < 2 || tx.vin[0].scriptSig.size() > 150)
             return state.DoS(100, error("CheckTransaction() : coinbase script size=%d", tx.vin[0].scriptSig.size()),
                 REJECT_INVALID, "bad-cb-length");
-    } else if(tx.IsZerocoinSpend()) {
-        //if(tx.vin.size() != 1)
-          //  return state.DoS(10, error("CheckTransaction() : Zerocoin Spend has more than 1 txin"), REJECT_INVALID, "bad-zerocoinspend");
+    } else if (fZerocoinActive && tx.IsZerocoinSpend()) {
+        if(tx.vin.size() < 1 || static_cast<int>(tx.vin.size()) > Params().Zerocoin_MaxSpendsPerTransaction())
+            return state.DoS(10, error("CheckTransaction() : Zerocoin Spend has more than allowed txin's"), REJECT_INVALID, "bad-zerocoinspend");
     } else {
         BOOST_FOREACH (const CTxIn& txin, tx.vin)
             if (txin.prevout.IsNull() && (fZerocoinActive && !txin.scriptSig.IsZerocoinSpend()))
