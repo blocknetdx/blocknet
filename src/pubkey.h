@@ -13,6 +13,8 @@
 #include <stdexcept>
 #include <vector>
 
+const unsigned int BIP32_EXTKEY_SIZE = 74;
+
 /** 
  * secp256k1:
  * const unsigned int PRIVATE_KEY_SIZE = 279;
@@ -181,7 +183,7 @@ public:
     bool Decompress();
 
     //! Derive BIP32 child pubkey.
-    bool Derive(CPubKey& pubkeyChild, unsigned char ccChild[32], unsigned int nChild, const unsigned char cc[32]) const;
+    bool Derive(CPubKey& pubkeyChild, ChainCode &ccChild, unsigned int nChild, const ChainCode &cc) const;
 
     std::vector<unsigned char> Raw() const
     {
@@ -199,17 +201,20 @@ struct CExtPubKey {
     unsigned char nDepth;
     unsigned char vchFingerprint[4];
     unsigned int nChild;
-    unsigned char vchChainCode[32];
+    ChainCode chaincode;
     CPubKey pubkey;
 
     friend bool operator==(const CExtPubKey& a, const CExtPubKey& b)
     {
-        return a.nDepth == b.nDepth && memcmp(&a.vchFingerprint[0], &b.vchFingerprint[0], 4) == 0 && a.nChild == b.nChild &&
-               memcmp(&a.vchChainCode[0], &b.vchChainCode[0], 32) == 0 && a.pubkey == b.pubkey;
+        return a.nDepth == b.nDepth &&
+            memcmp(&a.vchFingerprint[0], &b.vchFingerprint[0], sizeof(vchFingerprint)) == 0 &&
+            a.nChild == b.nChild &&
+            a.chaincode == b.chaincode &&
+            a.pubkey == b.pubkey;
     }
 
-    void Encode(unsigned char code[74]) const;
-    void Decode(const unsigned char code[74]);
+    void Encode(unsigned char code[BIP32_EXTKEY_SIZE]) const;
+    void Decode(const unsigned char code[BIP32_EXTKEY_SIZE]);
     bool Derive(CExtPubKey& out, unsigned int nChild) const;
 };
 
