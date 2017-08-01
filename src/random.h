@@ -6,8 +6,8 @@
 #ifndef BITCOIN_RANDOM_H
 #define BITCOIN_RANDOM_H
 
-#include "crypto/chacha20.h"
 #include "crypto/common.h"
+#include "crypto/chacha20.h"
 #include "uint256.h"
 
 #include <stdint.h>
@@ -22,6 +22,8 @@ void GetRandBytes(unsigned char* buf, int num);
 uint64_t GetRand(uint64_t nMax);
 int GetRandInt(int nMax);
 uint256 GetRandHash();
+
+void RandAddSeedPerfmon();
 
 /**
  * Add a little bit of randomness to the output of GetStrongRangBytes.
@@ -100,15 +102,15 @@ public:
     }
 
     /** Generate a random integer in the range [0..range). */
-    uint64_t randrange(uint64_t range)
-    {
-        --range;
-        int bits = CountBits(range);
-        while (true) {
-            uint64_t ret = randbits(bits);
-            if (ret <= range) return ret;
-        }
-    }
+//    uint64_t randrange(uint64_t range)
+//    {
+//        --range;
+//        int bits = CountBits(range);
+//        while (true) {
+//            uint64_t ret = randbits(bits);
+//            if (ret <= range) return ret;
+//        }
+//    }
 
     /** Generate random bytes. */
     std::vector<unsigned char> randbytes(size_t len);

@@ -46,8 +46,9 @@ void ComputePassfactor(std::string ownersalt, uint256 prefactor, uint256& passfa
 bool ComputePasspoint(uint256 passfactor, CPubKey& passpoint)
 {
     //passpoint is the ec_mult of passfactor on secp256k1
-    int clen = 65;
-    return secp256k1_ec_pubkey_create(UBEGIN(passpoint), &clen, passfactor.begin(), true) != 0;
+    // int clen = 65;
+    // return secp256k1_ec_pubkey_create(UBEGIN(passpoint), &clen, passfactor.begin()) != 0;
+    return false;
 }
 
 void ComputeSeedBPass(CPubKey passpoint, std::string strAddressHash, std::string strOwnerSalt, uint512& seedBPass)
@@ -215,7 +216,7 @@ bool BIP38_Decrypt(std::string strPassphrase, std::string strEncryptedKey, uint2
 
     //multiply passfactor by factorb mod N to yield the priv key
     privKey = factorB;
-    if (!secp256k1_ec_privkey_tweak_mul(privKey.begin(), passfactor.begin()))
+    // if (!secp256k1_ec_privkey_tweak_mul(privKey.begin(), passfactor.begin()))
         return false;
 
     //double check that the address hash matches our final privkey
