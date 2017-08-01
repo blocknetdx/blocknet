@@ -540,6 +540,12 @@ void BitcoinGUI::createToolBars()
         if (settings.value("fShowServicenodesTab").toBool()) {
             toolbar->addAction(servicenodeAction);
         }
+
+        if (XBridgeApp::isEnabled())
+        {
+            toolbar->addAction(xbridgeAction);
+        }
+
         toolbar->setMovable(false); // remove unused icon in upper left corner
         overviewAction->setChecked(true);
 
