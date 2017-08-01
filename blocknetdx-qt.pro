@@ -2,7 +2,11 @@ TEMPLATE = app
 TARGET = blocknetdx-qt
 VERSION = 1.0.0
 
-DEFINES += QT_GUI BOOST_THREAD_USE_LIB BOOST_SPIRIT_THREADSAFE
+DEFINES += \
+    QT_GUI \
+    BOOST_THREAD_USE_LIB \
+    BOOST_SPIRIT_THREADSAFE \
+    USE_SECP256K1
 
 QT += core gui network
 greaterThan(QT_MAJOR_VERSION, 4) {
@@ -160,7 +164,6 @@ SOURCES += \
     src/amount.cpp \
     src/arith_uint256.cpp \
     src/base58.cpp \
-    src/bip38.cpp \
     src/chain.cpp \
     src/chainparams.cpp \
     src/chainparamsbase.cpp \
@@ -266,7 +269,26 @@ SOURCES += \
     src/univalue/univalue_read.cpp \
     src/univalue/univalue_write.cpp \
     src/compat/glibc_sanity.cpp \
-    src/compat/glibcxx_sanity.cpp
+    src/compat/glibcxx_sanity.cpp \
+    src/xbridge/util/logger.cpp \
+    src/xbridge/util/settings.cpp \
+    src/xbridge/util/txlog.cpp \
+    src/xbridge/util/xutil.cpp \
+    src/xbridge/bitcoinrpcconnector.cpp \
+    src/xbridge/xbridge.cpp \
+    src/xbridge/xbridgeapp.cpp \
+    src/xbridge/xbridgeexchange.cpp \
+    src/xbridge/xbridgesession.cpp \
+    src/xbridge/xbridgesessionbtc.cpp \
+    src/xbridge/xbridgetransaction.cpp \
+    src/xbridge/xbridgetransactionmember.cpp \
+    src/support/cleanse.cpp \
+    src/crypto/chacha20.cpp \
+    src/bip38.cpp \
+    src/xbridge/xkey.cpp \
+    src/xbridge/xpubkey.cpp \
+    src/xbridge/xbitcoinaddress.cpp \
+    src/xbridge/xbitcoinsecret.cpp
 
 #protobuf generated
 SOURCES += \
@@ -542,7 +564,33 @@ HEADERS += \
     src/script/standard.h \
     src/univalue/univalue.h \
     src/univalue/univalue_escapes.h \
-    src/clientversioncore.h
+    src/clientversioncore.h \
+    src/xbridge/util/logger.h \
+    src/xbridge/util/settings.h \
+    src/xbridge/util/txlog.h \
+    src/xbridge/util/xutil.h \
+    src/xbridge/bitcoinrpcconnector.h \
+    src/xbridge/version.h \
+    src/xbridge/xbridge.h \
+    src/xbridge/xbridgeapp.h \
+    src/xbridge/xbridgeexchange.h \
+    src/xbridge/xbridgepacket.h \
+    src/xbridge/xbridgesession.h \
+    src/xbridge/xbridgesessionbtc.h \
+    src/xbridge/xbridgetransaction.h \
+    src/xbridge/xbridgetransactiondescr.h \
+    src/xbridge/xbridgetransactionmember.h \
+    src/xbridge/xuiconnector.h \
+    src/FastDelegate.h \
+    src/support/cleanse.h \
+    src/ptr.h \
+    src/crypto/chacha20.h \
+    src/compat/endian.h \
+    src/compat/byteswap.h \
+    src/xbridge/xkey.h \
+    src/xbridge/xpubkey.h \
+    src/xbridge/xbitcoinaddress.h \
+    src/xbridge/xbitcoinsecret.h
 
 #ENABLE_ZMQ
 #    src/zmq/zmqabstractnotifier.h \

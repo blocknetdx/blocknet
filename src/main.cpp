@@ -28,6 +28,7 @@
 #include "ui_interface.h"
 #include "util.h"
 #include "utilmoneystr.h"
+#include "xbridge/xbridgeapp.h"
 
 #include <sstream>
 
@@ -1176,8 +1177,8 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
             // be mined yet.
             // Must keep pool.cs for this unless we change CheckSequenceLocks to take a
             // CoinsViewCache instead of create its own
-            if (!CheckSequenceLocks(tx, STANDARD_LOCKTIME_VERIFY_FLAGS, &lp))
-                return state.DoS(0, false, REJECT_NONSTANDARD, "non-BIP68-final");
+//            if (!CheckSequenceLocks(tx, STANDARD_LOCKTIME_VERIFY_FLAGS, &lp))
+//                return state.DoS(0, false, REJECT_NONSTANDARD, "non-BIP68-final");
         }
 
         // Check for non-standard pay-to-script-hash in inputs
@@ -2055,29 +2056,29 @@ void ThreadScriptCheck()
     scriptcheckqueue.Thread();
 }
 
-static unsigned int GetBlockScriptFlags(const CBlockIndex* pindex, const Consensus::Params& consensusparams) {
-    AssertLockHeld(cs_main);
+//static unsigned int GetBlockScriptFlags(const CBlockIndex* pindex) {
+//    AssertLockHeld(cs_main);
 
-    // BIP16 didn't become active until Apr 1 2012
-    int64_t nBIP16SwitchTime = 1333238400;
-    bool fStrictPayToScriptHash = (pindex->GetBlockTime() >= nBIP16SwitchTime);
+//    // BIP16 didn't become active until Apr 1 2012
+//    int64_t nBIP16SwitchTime = 1333238400;
+//    bool fStrictPayToScriptHash = (pindex->GetBlockTime() >= nBIP16SwitchTime);
 
-    unsigned int flags = fStrictPayToScriptHash ? SCRIPT_VERIFY_P2SH : SCRIPT_VERIFY_NONE;
+//    unsigned int flags = fStrictPayToScriptHash ? SCRIPT_VERIFY_P2SH : SCRIPT_VERIFY_NONE;
 
     // Start enforcing the DERSIG (BIP66) rule
-    if (pindex->nHeight >= consensusparams.BIP66Height) {
-        flags |= SCRIPT_VERIFY_DERSIG;
-    }
+//    if (pindex->nHeight >= consensusparams.BIP66Height) {
+//        flags |= SCRIPT_VERIFY_DERSIG;
+//    }
 
     // Start enforcing CHECKLOCKTIMEVERIFY (BIP65) rule
-    if (pindex->nHeight >= consensusparams.BIP65Height) {
-        flags |= SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY;
-    }
+//    if (pindex->nHeight >= consensusparams.BIP65Height) {
+//        flags |= SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY;
+//    }
 
     // Start enforcing BIP68 (sequence locks) and BIP112 (CHECKSEQUENCEVERIFY) using versionbits logic.
-    if (VersionBitsState(pindex->pprev, consensusparams, Consensus::DEPLOYMENT_CSV, versionbitscache) == THRESHOLD_ACTIVE) {
-        flags |= SCRIPT_VERIFY_CHECKSEQUENCEVERIFY;
-    }
+//    if (VersionBitsState(pindex->pprev, consensusparams, Consensus::DEPLOYMENT_CSV, versionbitscache) == THRESHOLD_ACTIVE) {
+//        flags |= SCRIPT_VERIFY_CHECKSEQUENCEVERIFY;
+//    }
 
     // Start enforcing WITNESS rules using versionbits logic.
 //    if (IsWitnessEnabled(pindex->pprev, consensusparams)) {
@@ -2085,8 +2086,8 @@ static unsigned int GetBlockScriptFlags(const CBlockIndex* pindex, const Consens
 //        flags |= SCRIPT_VERIFY_NULLDUMMY;
 //    }
 
-    return flags;
-}
+//    return flags;
+//}
 
 static int64_t nTimeVerify = 0;
 static int64_t nTimeConnect = 0;
@@ -2152,9 +2153,11 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
     int64_t nBIP16SwitchTime = 1333238400;
     bool fStrictPayToScriptHash = (pindex->GetBlockTime() >= nBIP16SwitchTime);
 
+    unsigned int flags = fStrictPayToScriptHash ? SCRIPT_VERIFY_P2SH : SCRIPT_VERIFY_NONE;
+
     // unsigned int flags = fStrictPayToScriptHash ? SCRIPT_VERIFY_P2SH : SCRIPT_VERIFY_NONE;
     // Get the script flags for this block
-    unsigned int flags = GetBlockScriptFlags(pindex, Params());
+    // unsigned int flags = GetBlockScriptFlags(pindex);
 
 
     // Start enforcing the DERSIG (BIP66) rules, for block.nVersion=3 blocks, when 75% of the network has upgraded:
@@ -5383,7 +5386,108 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
                 LogPrint("net", "Unparseable reject message received\n");
             }
         }
-    } else {
+    }
+
+    else if (strCommand == "xbridge")
+    {
+        static bool isEnabled = XBridgeApp::isEnabled();
+        if (isEnabled)
+        {
+            std::vector<unsigned char> raw;
+            vRecv >> raw;
+
+            uint256 hash = Hash(raw.begin(), raw.end());
+            if (!pfrom->setKnown.count(hash))
+            {
+                pfrom->setKnown.insert(hash);
+
+                // Relay
+                {
+                    LOCK(cs_vNodes);
+                    for  (CNode * pnode : vNodes)
+                    {
+                        if (pnode->setKnown.insert(hash).second)
+                        {
+                            pnode->PushMessage("xbridge", raw);
+                        }
+                    }
+                }
+
+                if (raw.size() > 20 + sizeof(time_t))
+                {
+                    static std::vector<unsigned char> zero(20, 0);
+                    std::vector<unsigned char> addr(raw.begin(), raw.begin()+20);
+                    // remove addr from raw
+                    raw.erase(raw.begin(), raw.begin()+20);
+                    // remove timestamp from raw
+                    raw.erase(raw.begin(), raw.begin()+sizeof(uint64_t));
+
+                    XBridgeApp & app = XBridgeApp::instance();
+
+                    if (addr != zero)
+                    {
+                        app.onMessageReceived(addr, raw);
+                    }
+                    else
+                    {
+                        app.onBroadcastReceived(raw);
+                    }
+                }
+            }
+        } // if (isEnabled)
+    }
+
+    // messages
+    // TODO move to xbridge packet processing fn
+//    else if (strCommand == "message")
+//    {
+//        // received message
+//        Message msg;
+//        vRecv >> msg;
+
+//        // check known
+//        uint256 hash = msg.getNetworkHash();
+//        if (pfrom->setKnown.count(hash) == 0)
+//        {
+//            pfrom->setKnown.insert(hash);
+
+//            bool isForMe = false;
+//            if (!msg.process(isForMe))
+//            {
+//                pfrom->Misbehaving(10);
+//            }
+
+//            if (!isForMe)
+//            {
+//                // relay, if message not for me
+//                msg.broadcast();
+//            }
+//        }
+//    }
+//    else if (strCommand == "msgack")
+//    {
+//        // message delivered
+//        uint256 hash;
+//        vRecv >> hash;
+
+//        if (pfrom->setKnown.count(hash) == 0)
+//        {
+//            pfrom->setKnown.insert(hash);
+
+//            if (!Message::processReceived(hash))
+//            {
+//                // relay, if not for me
+//                LOCK(cs_vNodes);
+//                for (CNode* pnode : vNodes)
+//                {
+//                    pnode->PushMessage("msgack", hash);
+//                }
+//            }
+//        }
+//    }
+
+    else
+    {
         //probably one the extensions
         obfuScationPool.ProcessMessageObfuscation(pfrom, strCommand, vRecv);
         mnodeman.ProcessMessage(pfrom, strCommand, vRecv);

@@ -123,6 +123,7 @@ private:
     QAction* openBlockExplorerAction;
     QAction* showHelpMessageAction;
     QAction* multiSendAction;
+    QAction * xbridgeAction;
 
     QSystemTrayIcon* trayIcon;
     QMenu* trayIconMenu;

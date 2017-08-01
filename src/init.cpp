@@ -1642,11 +1642,7 @@ bool AppInit2(boost::thread_group& threadGroup)
         GenerateBitcoins(GetBoolArg("-gen", false), pwalletMain, GetArg("-genproclimit", 1));
 #endif
 
-    // ********************************************************* Step 12: init xbridge
-    XBridgeApp & xapp = XBridgeApp::instance();
-    xapp.init(argc, argv);
-
-    // ********************************************************* Step 13: finished
+    // ********************************************************* Step 12: finished
 
     SetRPCWarmupFinished();
     uiInterface.InitMessage(_("Done loading"));
@@ -1662,6 +1658,7 @@ bool AppInit2(boost::thread_group& threadGroup)
 #endif
 
     // start xbridge
+    XBridgeApp & xapp = XBridgeApp::instance();
     xapp.start();
 
     return !fRequestShutdown;
