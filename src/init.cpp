@@ -32,6 +32,7 @@
 #include "util.h"
 #include "utilmoneystr.h"
 #include "validationinterface.h"
+#include "xbridge/xbridgeapp.h"
 #ifdef ENABLE_WALLET
 #include "db.h"
 #include "wallet.h"
@@ -1641,7 +1642,11 @@ bool AppInit2(boost::thread_group& threadGroup)
         GenerateBitcoins(GetBoolArg("-gen", false), pwalletMain, GetArg("-genproclimit", 1));
 #endif
 
-    // ********************************************************* Step 12: finished
+    // ********************************************************* Step 12: init xbridge
+    XBridgeApp & xapp = XBridgeApp::instance();
+    xapp.init(argc, argv);
+
+    // ********************************************************* Step 13: finished
 
     SetRPCWarmupFinished();
     uiInterface.InitMessage(_("Done loading"));
@@ -1655,6 +1660,9 @@ bool AppInit2(boost::thread_group& threadGroup)
         threadGroup.create_thread(boost::bind(&ThreadFlushWalletDB, boost::ref(pwalletMain->strWalletFile)));
     }
 #endif
+
+    // start xbridge
+    xapp.start();
 
     return !fRequestShutdown;
 }
