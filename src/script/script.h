@@ -20,6 +20,10 @@ typedef std::vector<unsigned char> valtype;
 
 static const unsigned int MAX_SCRIPT_ELEMENT_SIZE = 520; // bytes
 
+// Threshold for nLockTime: below this value it is interpreted as block number,
+// otherwise as UNIX timestamp.
+static const unsigned int LOCKTIME_THRESHOLD = 500000000; // Tue Nov  5 00:53:20 1985 UTC
+
 template <typename T>
 std::vector<unsigned char> ToByteVector(const T& in)
 {
@@ -198,7 +202,10 @@ public:
         m_value = n;
     }
 
-    explicit CScriptNum(const std::vector<unsigned char>& vch, bool fRequireMinimal)
+    static const size_t nDefaultMaxNumSize = 4;
+
+    explicit CScriptNum(const std::vector<unsigned char>& vch, bool fRequireMinimal,
+                        const size_t nMaxNumSize = nDefaultMaxNumSize)
     {
         if (vch.size() > nMaxNumSize) {
             throw scriptnum_error("script number overflow");
@@ -246,6 +253,11 @@ public:
     inline CScriptNum& operator+=( const CScriptNum& rhs)       { return operator+=(rhs.m_value);  }
     inline CScriptNum& operator-=( const CScriptNum& rhs)       { return operator-=(rhs.m_value);  }
 
+    inline CScriptNum operator&(   const int64_t& rhs)    const { return CScriptNum(m_value & rhs);}
+    inline CScriptNum operator&(   const CScriptNum& rhs) const { return operator&(rhs.m_value);   }
+
+    inline CScriptNum& operator&=( const CScriptNum& rhs)       { return operator&=(rhs.m_value);  }
+
     inline CScriptNum operator-()                         const
     {
         assert(m_value != std::numeric_limits<int64_t>::min());
@@ -271,6 +283,12 @@ public:
         assert(rhs == 0 || (rhs > 0 && m_value >= std::numeric_limits<int64_t>::min() + rhs) ||
                            (rhs < 0 && m_value <= std::numeric_limits<int64_t>::max() + rhs));
         m_value -= rhs;
+        return *this;
+    }
+
+    inline CScriptNum& operator&=( const int64_t& rhs)
+    {
+        m_value &= rhs;
         return *this;
     }
 
@@ -320,8 +338,6 @@ public:
 
         return result;
     }
-
-    static const size_t nMaxNumSize = 4;
 
 private:
     static int64_t set_vch(const std::vector<unsigned char>& vch)
