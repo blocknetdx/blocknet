@@ -416,6 +416,20 @@ public:
         return *this;
     }
 
+    CScript& operator<<(const uint160& b)
+    {
+        insert(end(), sizeof(b));
+        insert(end(), (unsigned char*)&b, (unsigned char*)&b + sizeof(b));
+        return *this;
+    }
+
+    CScript& operator<<(const uint256& b)
+    {
+        insert(end(), sizeof(b));
+        insert(end(), (unsigned char*)&b, (unsigned char*)&b + sizeof(b));
+        return *this;
+    }
+
     CScript& operator<<(const CScriptNum& b)
     {
         *this << b.getvch();
@@ -449,13 +463,14 @@ public:
         return *this;
     }
 
-    CScript& operator<<(const CScript& b)
-    {
-        // I'm not sure if this should push the script or concatenate scripts.
-        // If there's ever a use for pushing a script onto a script, delete this member fn
-        assert(!"Warning: Pushing a CScript onto a CScript with << is probably not intended, use + to concatenate!");
-        return *this;
-    }
+    // WARNING this commented because operator << used in xbridge code (atomic crosschain)
+//    CScript& operator<<(const CScript& b)
+//    {
+//        // I'm not sure if this should push the script or concatenate scripts.
+//        // If there's ever a use for pushing a script onto a script, delete this member fn
+//        assert(!"Warning: Pushing a CScript onto a CScript with << is probably not intended, use + to concatenate!");
+//        return *this;
+//    }
 
     CScript& operator<<(const CPubKey& key)
     {
