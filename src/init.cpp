@@ -156,6 +156,7 @@ public:
 
 static CCoinsViewDB* pcoinsdbview = NULL;
 static CCoinsViewErrorCatcher* pcoinscatcher = NULL;
+static std::unique_ptr<ECCVerifyHandle> globalVerifyHandle;
 
 /** Preparing steps before shutting down or restarting the wallet */
 void PrepareShutdown()
@@ -254,6 +255,7 @@ void Shutdown()
     pwalletMain = NULL;
 #endif
 
+    globalVerifyHandle.reset();
     // ECC_Stop();
 
     LogPrintf("%s: done\n", __func__);
@@ -894,6 +896,7 @@ bool AppInit2(boost::thread_group& threadGroup)
 
     RandomInit();
     // ECC_Start();
+    globalVerifyHandle.reset(new ECCVerifyHandle());
 
     // Sanity check
     if (!InitSanityCheck())

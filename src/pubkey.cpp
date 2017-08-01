@@ -327,3 +327,25 @@ bool CExtPubKey::Derive(CExtPubKey& out, unsigned int _nChild) const
     out.nChild = _nChild;
     return pubkey.Derive(out.pubkey, out.chaincode, _nChild, chaincode);
 }
+
+/* static */ int ECCVerifyHandle::refcount = 0;
+
+ECCVerifyHandle::ECCVerifyHandle()
+{
+    if (refcount == 0) {
+        assert(secp256k1_context_verify == NULL);
+        secp256k1_context_verify = secp256k1_context_create(SECP256K1_CONTEXT_VERIFY);
+        assert(secp256k1_context_verify != NULL);
+    }
+    refcount++;
+}
+
+ECCVerifyHandle::~ECCVerifyHandle()
+{
+    refcount--;
+    if (refcount == 0) {
+        assert(secp256k1_context_verify != NULL);
+        secp256k1_context_destroy(secp256k1_context_verify);
+        secp256k1_context_verify = NULL;
+    }
+}
