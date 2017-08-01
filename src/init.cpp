@@ -253,6 +253,9 @@ void Shutdown()
     delete pwalletMain;
     pwalletMain = NULL;
 #endif
+
+    // ECC_Stop();
+
     LogPrintf("%s: done\n", __func__);
 }
 
@@ -884,6 +887,13 @@ bool AppInit2(boost::thread_group& threadGroup)
         nLocalServices |= NODE_BLOOM;
 
     // ********************************************************* Step 4: application initialization: dir lock, daemonize, pidfile, debug log
+
+    // Initialize elliptic curve code
+    // std::string sha256_algo = SHA256AutoDetect();
+    // LogPrintf("Using the '%s' SHA256 implementation\n", sha256_algo);
+
+    RandomInit();
+    // ECC_Start();
 
     // Sanity check
     if (!InitSanityCheck())
