@@ -198,6 +198,8 @@ private slots:
     void gotoOverviewPage();
     /** Switch to history (transactions) page */
     void gotoHistoryPage();
+    /** Switch to xbridge page */
+    void gotoXBridgePage();
     /** Switch to Explorer Page */
     void gotoBlockExplorerPage();
     /** Switch to servicenode page */

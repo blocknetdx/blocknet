@@ -2,7 +2,6 @@
 //******************************************************************************
 
 #include "xbridgeaddressbookview.h"
-#include "../util/verify.h"
 
 #include <QHBoxLayout>
 #include <QHeaderView>
@@ -40,8 +39,8 @@ void XBridgeAddressBookView::setupUi()
     m_entryList->setModel(&m_model);
     m_entryList->setSelectionBehavior(QAbstractItemView::SelectRows);
 
-    VERIFY(connect(m_entryList, SIGNAL(doubleClicked(QModelIndex)),
-                   this,        SLOT(onAddressSelect(QModelIndex))));
+    connect(m_entryList, SIGNAL(doubleClicked(QModelIndex)),
+            this,        SLOT(onAddressSelect(QModelIndex)));
 
     QHeaderView * header = m_entryList->horizontalHeader();
     header->resizeSection(XBridgeAddressBookModel::Currency,  80);

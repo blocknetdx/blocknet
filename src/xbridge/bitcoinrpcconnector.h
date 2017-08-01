@@ -17,7 +17,7 @@ namespace rpc
     class AcceptedConnection;
     void handleRpcRequest(AcceptedConnection * conn);
 
-    bool DecodeBase58Check(const char * psz, std::vector<unsigned char> & vchRet);
+    // bool DecodeBase58Check(const char * psz, std::vector<unsigned char> & vchRet);
 
     std::vector<unsigned char> toXAddr(const std::string & addr);
 

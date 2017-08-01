@@ -141,7 +141,7 @@ BitcoinGUI::BitcoinGUI(const NetworkStyle* networkStyle, QWidget* parent) : QMai
     XBridgeExchange & e = XBridgeExchange::instance();
     if (e.isEnabled())
     {
-        title += QString(" [%1] ").arg(tr("exchange mode"));
+        windowTitle += QString(" [%1] ").arg(tr("exchange mode"));
     }
 
     setWindowTitle(windowTitle);

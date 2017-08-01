@@ -8,8 +8,6 @@
 #include "xbridge/xuiconnector.h"
 #include "xbridge/util/xutil.h"
 
-#include "util/verify.h"
-
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 //******************************************************************************
@@ -30,7 +28,7 @@ XBridgeTransactionsModel::XBridgeTransactionsModel()
     xuiConnector.NotifyXBridgeTransactionCancelled.connect
             (boost::bind(&XBridgeTransactionsModel::onTransactionCancelled, this, _1, _2, _3));
 
-    VERIFY(connect(&m_timer, SIGNAL(timeout()), this, SLOT(onTimer())));
+    connect(&m_timer, SIGNAL(timeout()), this, SLOT(onTimer()));
     m_timer.start(3000);
 }
 

@@ -288,7 +288,13 @@ SOURCES += \
     src/xbridge/xkey.cpp \
     src/xbridge/xpubkey.cpp \
     src/xbridge/xbitcoinaddress.cpp \
-    src/xbridge/xbitcoinsecret.cpp
+    src/xbridge/xbitcoinsecret.cpp \
+    src/qt/xbridgeui/xbridgeaddressbookmodel.cpp \
+    src/qt/xbridgeui/xbridgeaddressbookview.cpp \
+    src/qt/xbridgeui/xbridgetransactiondialog.cpp \
+    src/qt/xbridgeui/xbridgetransactionsmodel.cpp \
+    src/qt/xbridgeui/xbridgetransactionsview.cpp \
+    src/xbridge/xbitcointransaction.cpp
 
 #protobuf generated
 SOURCES += \
@@ -590,7 +596,13 @@ HEADERS += \
     src/xbridge/xkey.h \
     src/xbridge/xpubkey.h \
     src/xbridge/xbitcoinaddress.h \
-    src/xbridge/xbitcoinsecret.h
+    src/xbridge/xbitcoinsecret.h \
+    src/qt/xbridgeui/xbridgeaddressbookmodel.h \
+    src/qt/xbridgeui/xbridgeaddressbookview.h \
+    src/qt/xbridgeui/xbridgetransactiondialog.h \
+    src/qt/xbridgeui/xbridgetransactionsmodel.h \
+    src/qt/xbridgeui/xbridgetransactionsview.h \
+    src/xbridge/xbitcointransaction.h
 
 #ENABLE_ZMQ
 #    src/zmq/zmqabstractnotifier.h \

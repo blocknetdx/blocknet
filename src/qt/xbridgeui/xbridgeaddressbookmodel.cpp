@@ -5,8 +5,6 @@
 
 #include "xbridge/xuiconnector.h"
 
-#include "util/verify.h"
-
 #include <assert.h>
 
 //******************************************************************************

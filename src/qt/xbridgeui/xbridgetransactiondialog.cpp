@@ -9,8 +9,6 @@
 #include "xbridge/xbridgeapp.h"
 #include "xbridge/xbridgesession.h"
 
-#include "util/verify.h"
-
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QGridLayout>
@@ -142,12 +140,12 @@ void XBridgeTransactionDialog::setupUI()
     QPushButton * pasteFrom = new QPushButton(this);
     pasteFrom->setIcon(QIcon(":/icons/editpaste"));
     pasteFrom->setToolTip(trUtf8("Paste source address"));
-    VERIFY(connect(pasteFrom, SIGNAL(clicked()), this, SLOT(onPasteFrom())));
+    connect(pasteFrom, SIGNAL(clicked()), this, SLOT(onPasteFrom()));
 
     QPushButton * abFrom = new QPushButton(this);
     abFrom->setIcon(QIcon(":/icons/address-book"));
     abFrom->setToolTip(trUtf8("Show address book"));
-    VERIFY(connect(abFrom, SIGNAL(clicked()), this, SLOT(onAddressBookFrom())));
+    connect(abFrom, SIGNAL(clicked()), this, SLOT(onAddressBookFrom()));
 
     QHBoxLayout * hbox = new QHBoxLayout;
     hbox->addWidget(m_addressFrom);
@@ -166,12 +164,12 @@ void XBridgeTransactionDialog::setupUI()
     QPushButton * pasteTo = new QPushButton(this);
     pasteTo->setIcon(QIcon(":/icons/editpaste"));
     pasteTo->setToolTip(trUtf8("Paste destination address"));
-    VERIFY(connect(pasteTo, SIGNAL(clicked()), this, SLOT(onPasteTo())));
+    connect(pasteTo, SIGNAL(clicked()), this, SLOT(onPasteTo()));
 
     QPushButton * abTo = new QPushButton(this);
     abTo->setIcon(QIcon(":/icons/address-book"));
     abTo->setToolTip(trUtf8("Show address book"));
-    VERIFY(connect(abTo, SIGNAL(clicked()), this, SLOT(onAddressBookTo())));
+    connect(abTo, SIGNAL(clicked()), this, SLOT(onAddressBookTo()));
 
     hbox = new QHBoxLayout;
     hbox->addWidget(m_addressTo);
@@ -229,8 +227,8 @@ void XBridgeTransactionDialog::setupUI()
 
     setLayout(vbox);
 
-    VERIFY(connect(m_btnSend, SIGNAL(clicked()), this, SLOT(onSendTransaction())));
-    VERIFY(connect(cancel,    SIGNAL(clicked()), this, SLOT(reject())));
+    connect(m_btnSend, SIGNAL(clicked()), this, SLOT(onSendTransaction()));
+    connect(cancel,    SIGNAL(clicked()), this, SLOT(reject()));
 }
 
 //******************************************************************************

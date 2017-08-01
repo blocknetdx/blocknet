@@ -4,7 +4,6 @@
 #include "xbridgetransactionsview.h"
 // #include "../xbridgeapp.h"
 // #include "xbridgetransactiondialog.h"
-#include "util/verify.h"
 #include "xbridge/xbridgeexchange.h"
 #include "xbridge/xuiconnector.h"
 #include "xbridge/util/logger.h"
@@ -17,6 +16,7 @@
 #include <QMessageBox>
 #include <QLabel>
 #include <QTextEdit>
+#include <QFile>
 
 //******************************************************************************
 //******************************************************************************
@@ -65,8 +65,8 @@ void XBridgeTransactionsView::setupUi()
     m_transactionsList->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_transactionsList->setSortingEnabled(true);
 
-    VERIFY(connect(m_transactionsList, SIGNAL(customContextMenuRequested(QPoint)),
-                   this,               SLOT(onContextMenu(QPoint))));
+    connect(m_transactionsList, SIGNAL(customContextMenuRequested(QPoint)),
+            this,               SLOT(onContextMenu(QPoint)));
 
 
     QHeaderView * header = m_transactionsList->horizontalHeader();
@@ -100,7 +100,7 @@ void XBridgeTransactionsView::setupUi()
     {
         QPushButton * addTxBtn = new QPushButton(trUtf8("New Transaction"), this);
         // addTxBtn->setIcon(QIcon("qrc://"))
-        VERIFY(connect(addTxBtn, SIGNAL(clicked()), this, SLOT(onNewTransaction())));
+        connect(addTxBtn, SIGNAL(clicked()), this, SLOT(onNewTransaction()));
         hbox->addWidget(addTxBtn);
     }
     else
@@ -113,7 +113,7 @@ void XBridgeTransactionsView::setupUi()
     hbox->addStretch();
 
     QPushButton * showHideButton = new QPushButton("Toggle to log", this);
-    VERIFY(connect(showHideButton, SIGNAL(clicked()), this, SLOT(onToggleHistoricLogs())));
+    connect(showHideButton, SIGNAL(clicked()), this, SLOT(onToggleHistoricLogs()));
     hbox->addWidget(showHideButton);
 
     vbox->addLayout(hbox);
@@ -184,16 +184,16 @@ QMenu * XBridgeTransactionsView::setupContextMenu(QModelIndex & index)
         QAction * acceptTransaction = new QAction(tr("&Accept transaction"), this);
         contextMenu->addAction(acceptTransaction);
 
-        VERIFY(connect(acceptTransaction,   SIGNAL(triggered()),
-                       this,                SLOT(onAcceptTransaction())));
+        connect(acceptTransaction,   SIGNAL(triggered()),
+                this,                SLOT(onAcceptTransaction()));
     }
     else
     {
         QAction * cancelTransaction = new QAction(tr("&Cancel transaction"), this);
         contextMenu->addAction(cancelTransaction);
 
-        VERIFY(connect(cancelTransaction,   SIGNAL(triggered()),
-                       this,                SLOT(onCancelTransaction())));
+        connect(cancelTransaction,   SIGNAL(triggered()),
+                this,                SLOT(onCancelTransaction()));
     }
 
     if (false)
@@ -201,8 +201,8 @@ QMenu * XBridgeTransactionsView::setupContextMenu(QModelIndex & index)
         QAction * rollbackTransaction = new QAction(tr("&Rollback transaction"), this);
         contextMenu->addAction(rollbackTransaction);
 
-        VERIFY(connect(rollbackTransaction, SIGNAL(triggered()),
-                       this,                SLOT(onRollbackTransaction())));
+        connect(rollbackTransaction, SIGNAL(triggered()),
+                this,                SLOT(onRollbackTransaction()));
     }
 
     return contextMenu;
