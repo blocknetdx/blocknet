@@ -131,7 +131,6 @@ LIBS += \
     -lmemenv \
     -lsecp256k1 \
     -lprotobuf \
-    -lcrypt32 \
     -lssl \
     -lcrypto \
     -ldb_cxx$$BDB_LIB_SUFFIX \
@@ -144,6 +143,7 @@ windows {
         -lole32 \
         -loleaut32 \
         -luuid \
+        -lcrypt32 \
         -lgdi32
 }
 
