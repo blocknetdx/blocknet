@@ -46,14 +46,9 @@ public:
 
     void setModel(WalletModel* model);
     void showOutOfSyncWarning(bool fShow);
-    void updateObfuscationProgress();
 
 public slots:
     void setBalance(const CAmount& balance, const CAmount& anonymizedBalance);
-    void obfuScationStatus();
-
-protected:
-//    virtual void keyPressEvent(QKeyEvent* event);
 
 private:
     Ui::PrivacyDialog* ui;
@@ -66,9 +61,9 @@ private:
     int nDisplayUnit;
 
 private slots:
-    void toggleObfuscation();
-    void obfuscationAuto();
-    void obfuscationReset();
+//    void toggleObfuscation();
+//    void obfuscationAuto();
+//    void obfuscationReset();
     void updateDisplayUnit();
 };
 
