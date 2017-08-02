@@ -14,6 +14,8 @@
 #include "sync.h"
 #include "wallet.h"
 
+#define SERVICENODE_REQUIRED_AMOUNT 5000
+
 #define ACTIVE_SERVICENODE_INITIAL 0 // initial state
 #define ACTIVE_SERVICENODE_SYNC_IN_PROCESS 1
 #define ACTIVE_SERVICENODE_INPUT_TOO_NEW 2
@@ -33,7 +35,7 @@ private:
     /// Register any Servicenode
     bool Register(CTxIn vin, CService service, CKey key, CPubKey pubKey, CKey keyServicenode, CPubKey pubKeyServicenode, std::string& errorMessage);
 
-    /// Get 10000 BLOCK input that can be used for the Servicenode
+    /// Get 5000 BLOCK input that can be used for the Servicenode
     bool GetServiceNodeVin(CTxIn& vin, CPubKey& pubkey, CKey& secretKey, std::string strTxHash, std::string strOutputIndex);
     bool GetVinFromOutput(COutput out, CTxIn& vin, CPubKey& pubkey, CKey& secretKey);
 
@@ -61,7 +63,7 @@ public:
     /// Register remote Servicenode
     bool Register(std::string strService, std::string strKey, std::string strTxHash, std::string strOutputIndex, std::string& errorMessage);
 
-    /// Get 10000 BLOCK input that can be used for the Servicenode
+    /// Get 5000 BLOCK input that can be used for the Servicenode
     bool GetServiceNodeVin(CTxIn& vin, CPubKey& pubkey, CKey& secretKey);
     vector<COutput> SelectCoinsServicenode();
 

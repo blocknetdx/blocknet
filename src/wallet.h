@@ -73,9 +73,11 @@ enum WalletFeature {
 enum AvailableCoinsType {
     ALL_COINS = 1,
     ONLY_DENOMINATED = 2,
-    ONLY_NOT10000IFMN = 3,
-    ONLY_NONDENOMINATED_NOT10000IFMN = 4, // ONLY_NONDENOMINATED and not 10000 BLOCK at the same time
-    ONLY_10000 = 5                        // find servicenode outputs including locked ones (use with caution)
+    ONLY_NOT_SERVICENODE_REQUIRED_AMOUNT_IFMN = 3,
+    // ONLY_NONDENOMINATED and not 5000 BLOCK at the same time
+    ONLY_NONDENOMINATED_NOT_SERVICENODE_REQUIRED_AMOUNT_IFMN = 4,
+    // find servicenode outputs including locked ones (use with caution)
+    ONLY_SERVICENODE_REQUIRED_AMOUNT = 5
 };
 
 struct CompactTallyItem {
