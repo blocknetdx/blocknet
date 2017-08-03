@@ -1069,7 +1069,7 @@ std::list<libzerocoin::CoinDenomination> ZerocoinSpendListFromBlock(const CBlock
 
 bool CheckZerocoinMint(const uint256& txHash, const CTxOut& txout, CValidationState& state, bool fCheckOnly)
 {
-    if(GetAdjustedTime() < GetSporkValue(SPORK_17_ENABLE_ZEROCOIN))
+    if(!fCheckOnly && GetAdjustedTime() < GetSporkValue(SPORK_17_ENABLE_ZEROCOIN))
         return state.DoS(100, error("CheckZerocoinMint(): Zerocoin transactions are not allowed yet"));
 
     PublicCoin pubCoin(Params().Zerocoin_Params());
@@ -1145,7 +1145,7 @@ bool CheckZerocoinSpend(const CTransaction tx, CValidationState& state)
         CoinSpend newSpend = TxInToZerocoinSpend(txin);
         vSpends.push_back(newSpend);
 
-        //double check the serialized denomination against the txout value
+        //check that the denomination is valid
         if (newSpend.getDenomination() == ZQ_ERROR)
             return state.DoS(100, error("Zerocoinspend does not have the correct denomination"));
 

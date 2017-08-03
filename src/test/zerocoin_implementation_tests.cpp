@@ -72,32 +72,93 @@ BOOST_AUTO_TEST_CASE(checkzerocoinmint_test)
     BOOST_CHECK(fFoundMint);
 }
 
-bool CheckZerocoinSpendNoDB(uint256 hashTx, const CTxOut txout, vector<CTxIn> vin, const CTransaction &txContainingMint, CValidationState& state)
+bool CheckZerocoinSpendNoDB(const CTransaction tx, string& strError)
 {
-    CoinDenomination denomination = AmountToZerocoinDenomination(txout.nValue);
-    if (denomination == ZQ_ERROR)
-        return false;
+    //max needed non-mint outputs should be 2 - one for redemption address and a possible 2nd for change
+    if (tx.vout.size() > 2){
+        int outs = 0;
+        for (const CTxOut out : tx.vout) {
+            if (out.IsZerocoinMint())
+                continue;
+            outs++;
+        }
+        if (outs > 2) {
+            strError = "CheckZerocoinSpend(): over two non-mint outputs in a zerocoinspend transaction";
+            return false;
+        }
 
-    // Check vIn
+    }
+
+    //compute the txout hash that is used for the zerocoinspend signatures
+    CMutableTransaction txTemp;
+    for (const CTxOut out : tx.vout) {
+        txTemp.vout.push_back(out);
+    }
+    uint256 hashTxOut = txTemp.GetHash();
+
     bool fValidated = false;
-    BOOST_FOREACH(const CTxIn& txin, vin) {
+    set<CBigNum> serials;
+    list<CoinSpend> vSpends;
+    CAmount nTotalRedeemed = 0;
+    BOOST_FOREACH(const CTxIn& txin, tx.vin) {
 
         //only check txin that is a zcspend
         if (!txin.scriptSig.IsZerocoinSpend())
             continue;
 
         CoinSpend newSpend = TxInToZerocoinSpend(txin);
+        vSpends.push_back(newSpend);
+
+        //check that the denomination is valid
+        if (newSpend.getDenomination() == ZQ_ERROR) {
+            strError = "Zerocoinspend does not have the correct denomination";
+            return false;
+        }
+
+        //check that denomination is what it claims to be in nSequence
+        if (newSpend.getDenomination() != txin.nSequence) {
+            strError = "Zerocoinspend nSequence denomination does not match CoinSpend";
+        }
+
+        //make sure the txout has not changed
+//        if (newSpend.getTxOutHash() != hashTxOut) {
+//            strError = "Zerocoinspend does not use the same txout that was used in the SoK";
+//            return false;
+//        }
 
         //see if we have record of the accumulator used in the spend tx
         CBigNum bnAccumulatorValue = CAccumulators::getInstance().GetAccumulatorValueFromChecksum(newSpend.getAccumulatorChecksum());
-        if(bnAccumulatorValue == 0)
-            return state.DoS(100, error("Zerocoinspend could not find accumulator associated with checksum"));
+        if(bnAccumulatorValue == 0) {
+            strError = "Zerocoinspend could not find accumulator associated with checksum";
+            return false;
+        }
 
         Accumulator accumulator(Params().Zerocoin_Params(), newSpend.getDenomination(), bnAccumulatorValue);
-//        if(!CheckZerocoinSpendProperties(txin, newSpend, accumulator, state))
-//            return state.DoS(100, error("Zerocoinspend properties are not valid"));
 
+        //Check that the coin is on the accumulator
+        if (!newSpend.Verify(accumulator)) {
+            strError = "CheckZerocoinSpend(): zerocoin spend did not verify";
+            return false;
+        }
+
+        if (serials.count(newSpend.getCoinSerialNumber())) {
+            strError = "Zerocoinspend serial is used twice in the same tx";
+            return false;
+        }
+        serials.insert(newSpend.getCoinSerialNumber());
+
+        //cannot check this without database
+       // if(!IsZerocoinSpendUnknown(newSpend, tx.GetHash(), state))
+       //     return state.DoS(100, error("Zerocoinspend is already known"));
+
+        //make sure that there is no over redemption of coins
+        nTotalRedeemed += ZerocoinDenominationToAmount(newSpend.getDenomination());
         fValidated = true;
+    }
+
+    if (nTotalRedeemed < tx.GetValueOut()) {
+        strError = "Transaction spend more than was redeemed in zerocoins";
+        return false;
     }
 
     return fValidated;
@@ -178,30 +239,21 @@ BOOST_AUTO_TEST_CASE(checkzerocoinspend_test)
     CTransaction txMintFrom;
     BOOST_CHECK_MESSAGE(DecodeHexTx(txMintFrom, rawTx1), "Failed to deserialize hex transaction");
 
-    bool passedTest = true;
-    for(const CTxOut& txout : txNew.vout) {
-        if (!CheckZerocoinSpendNoDB(txNew.GetHash(), txout, txNew.vin, txMintFrom,state)) {
-            passedTest = false;
-            cout << state.GetRejectReason() << endl;
-        }
-
+    string strError = "";
+    if (!CheckZerocoinSpendNoDB(txNew, strError)) {
+        cout << state.GetRejectCode() << endl;
+        BOOST_CHECK_MESSAGE(false, strError);
     }
-    BOOST_CHECK_MESSAGE(passedTest, "Valid zerocoinspend transaction did not pass checks");
     
     /**check an overspend*/
     CTxOut txOutOverSpend(100 * COIN, script);
     CTransaction txOverSpend;
     txOverSpend.vin.push_back(newTxIn);
     txOverSpend.vout.push_back(txOutOverSpend);
-    bool detectedOverSpend = false;
-
-    for(const CTxOut& txout : txOverSpend.vout) {
-        if(!CheckZerocoinSpendNoDB(txOverSpend.GetHash(), txout, txOverSpend.vin, txMintFrom, state))
-            detectedOverSpend = true;
-    }
-
-    BOOST_CHECK_MESSAGE(detectedOverSpend, "Zerocoinspend checks did not detect overspend");
-
+    strError = "";
+    CheckZerocoinSpendNoDB(txOverSpend, strError);
+    string str = "Failed to detect overspend. Error Message: " + strError;
+    BOOST_CHECK_MESSAGE(strError == "Transaction spend more than was redeemed in zerocoins", str);
 }
 
 
