@@ -2790,9 +2790,9 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
     CAmount nMoneySupplyPrev = pindex->pprev ? pindex->pprev->nMoneySupply : 0;
     pindex->nMoneySupply = nMoneySupplyPrev + nValueOut - nValueIn;
     pindex->nMint = nValueOut - nValueIn + nFees - nAmountZerocoinSpent;
-    LogPrintf("XX69----------> ConnectBlock(): nValueOut: %d, nValueIn: %d, nFees: %d, nMint: %d\n",
-              FormatMoney(nValueOut), FormatMoney(nValueIn),
-              FormatMoney(nFees), FormatMoney(pindex->nMint));
+//    LogPrintf("XX69----------> ConnectBlock(): nValueOut: %d, nValueIn: %d, nFees: %d, nMint: %d\n",
+//              FormatMoney(nValueOut), FormatMoney(nValueIn),
+//              FormatMoney(nFees), FormatMoney(pindex->nMint));
 
     if (!pblocktree->WriteBlockIndex(CDiskBlockIndex(pindex)))
         return error("Connect() : WriteBlockIndex for pindex failed");
@@ -2814,13 +2814,13 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
     }
 
     // zerocoin accumulator: if a new accumulator checkpoint was generated, check that it is the correct value
-    if (block.GetBlockTime() >= GetSporkValue(SPORK_17_ENABLE_ZEROCOIN) && pindex->nHeight % 10 == 0) {
+    if (block.nVersion >= Params().Zerocoin_HeaderVersion() && pindex->nHeight % 10 == 0) {
         uint256 nCheckpointCalculated = 0;
         if (!CAccumulators::getInstance().GetCheckpoint(pindex->nHeight, nCheckpointCalculated))
             return state.DoS(100, error("ConnectBlock() : failed to calculate accumulator checkpoint"));
 
         if (nCheckpointCalculated != block.nAccumulatorCheckpoint) {
-            LogPrintf("%s: calculated: %s\n block: %s\n", __func__, nCheckpointCalculated.GetHex(), block.nAccumulatorCheckpoint.GetHex());
+            LogPrintf("%s: block=%d calculated: %s\n block: %s\n", __func__, pindex->nHeight, nCheckpointCalculated.GetHex(), block.nAccumulatorCheckpoint.GetHex());
             return state.DoS(100, error("ConnectBlock() : accumulator does not match calculated value"));
         }
     } else {
@@ -3663,13 +3663,17 @@ bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, bool f
         return state.DoS(50, error("CheckBlockHeader() : proof of work failed"),
             REJECT_INVALID, "high-hash");
 
+    // If the spork value has not been populated yet then there is no good way to check this further
+    if (GetSporkValue(SPORK_17_ENABLE_ZEROCOIN) == SPORK_17_ENABLE_ZEROCOIN_DEFAULT)
+        return true;
+
     // Version 4 header must be used when SPORK_17_ENABLEZEROCOIN is activated. And never before.
     if (block.GetBlockTime() > GetSporkValue(SPORK_17_ENABLE_ZEROCOIN)) {
-        if (block.nVersion < 4)
+        if (block.nVersion < Params().Zerocoin_HeaderVersion())
             return state.DoS(50, error("CheckBlockHeader() : block version must be above 4 after SPORK_17"),
             REJECT_INVALID, "block-version");
     } else {
-        if (block.nVersion > 3)
+        if (block.nVersion >= Params().Zerocoin_HeaderVersion())
             return state.DoS(50, error("CheckBlockHeader() : block version must be below 4 before SPORK_17"),
             REJECT_INVALID, "block-version");
     }

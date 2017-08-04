@@ -38,6 +38,7 @@ public:
     bool EraseCoinMint(const CBigNum& bnPubCoin);
 
     //checksum/checkpoint
+    void DatabaseChecksums(const uint256& nCheckpoint);
     void AddAccumulatorChecksum(const uint32_t nChecksum, const CBigNum &bnValue, bool fMemoryOnly = false);
     void LoadAccumulatorValuesFromDB(const uint256 nCheckpoint);
     bool EraseAccumulatorValues(const uint256& nCheckpointErase, const uint256& nCheckpointPrevious);

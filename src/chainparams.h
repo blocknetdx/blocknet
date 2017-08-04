@@ -103,6 +103,7 @@ public:
     CAmount Zerocoin_MintFee() const { return nMinZerocoinMintFee; }
     int Zerocoin_MintRequiredConfirmations() const { return nMintRequiredConfirmations; }
     int Zerocoin_DefaultSpendSecurity() const { return nDefaultSecurityLevel; }
+    int Zerocoin_HeaderVersion() const { return nZerocoinHeaderVersion; }
 
 protected:
     CChainParams() {}
@@ -150,6 +151,7 @@ protected:
     CAmount nMinZerocoinMintFee;
     int nMintRequiredConfirmations;
     int nDefaultSecurityLevel;
+    int nZerocoinHeaderVersion;
 };
 
 /**

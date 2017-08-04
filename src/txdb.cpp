@@ -285,7 +285,7 @@ bool CZerocoinDB::WriteCoinMint(const PublicCoin& pubCoin, const uint256& hashTx
     CDataStream ss(SER_GETHASH, 0);
     ss << pubCoin.getValue();
     uint256 hash = Hash(ss.begin(), ss.end());
-    LogPrintf("*** %s value=%s \n hash=%s tx=%s\n", __func__, bnValue.GetHex(), hash.GetHex(), hashTx.GetHex());
+
     return Write(make_pair('m', hash), hashTx, true);
 }
 
@@ -294,7 +294,7 @@ bool CZerocoinDB::ReadCoinMint(const CBigNum& bnPubcoin, uint256& hashTx)
     CDataStream ss(SER_GETHASH, 0);
     ss << bnPubcoin;
     uint256 hash = Hash(ss.begin(), ss.end());
-    LogPrintf("*** %s value=%s \n hash=%s tx=%s\n", __func__, bnPubcoin.GetHex(), hash.GetHex(), hashTx.GetHex());
+
     return Read(make_pair('m', hash), hashTx);
 }
 
@@ -330,11 +330,7 @@ bool CZerocoinDB::WriteAccumulatorValue(const uint32_t& nChecksum, const CBigNum
 
 bool CZerocoinDB::ReadAccumulatorValue(const uint32_t& nChecksum, CBigNum& bnValue)
 {
-    LogPrintf("*** %s checksum:%d\n", __func__, nChecksum);
-    if(!Read(make_pair('a', nChecksum), bnValue))
-        return false;
-    LogPrintf("*** %s checksum:%d val:%s\n", __func__, nChecksum, bnValue.GetHex());
-    return true;
+    return Read(make_pair('a', nChecksum), bnValue);
 }
 
 bool CZerocoinDB::EraseAccumulatorValue(const uint32_t& nChecksum)

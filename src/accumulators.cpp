@@ -52,6 +52,17 @@ uint32_t CAccumulators::GetChecksum(const Accumulator &accumulator)
     return GetChecksum(accumulator.getValue());
 }
 
+void CAccumulators::DatabaseChecksums(const uint256& nCheckpoint)
+{
+    uint256 nCheckpointCalculated = 0;
+    for (auto& denom : zerocoinDenomList) {
+        CBigNum bnValue = mapAccumulators.at(denom)->getValue();
+        uint32_t nCheckSum = GetChecksum(bnValue);
+        AddAccumulatorChecksum(nCheckSum, bnValue);
+        nCheckpointCalculated = nCheckpointCalculated << 32 | nCheckSum;
+    }
+}
+
 void CAccumulators::AddAccumulatorChecksum(const uint32_t nChecksum, const CBigNum &bnValue, bool fMemoryOnly)
 {
     if(!fMemoryOnly)
@@ -168,7 +179,7 @@ uint256 CAccumulators::GetCheckpoint()
 //Get checkpoint value for a specific block height
 bool CAccumulators::GetCheckpoint(int nHeight, uint256& nCheckpoint)
 {
-    if (nHeight <= chainActive.Height() && chainActive[nHeight]->nTime < GetSporkValue(SPORK_17_ENABLE_ZEROCOIN)) {
+    if (nHeight <= chainActive.Height() && chainActive[nHeight]->GetBlockHeader().nVersion < Params().Zerocoin_HeaderVersion()) {
         nCheckpoint = 0;
         return true;
     }
@@ -190,7 +201,7 @@ bool CAccumulators::GetCheckpoint(int nHeight, uint256& nCheckpoint)
     CBlockIndex *pindex = chainActive[nHeight - 20];
     while (pindex->nHeight < nHeight - 10) {
         //make sure this block is eligible for accumulation
-        if (pindex->GetBlockTime() < GetSporkValue(SPORK_17_ENABLE_ZEROCOIN)) {
+        if (pindex->GetBlockHeader().nVersion < Params().Zerocoin_HeaderVersion()) {
             pindex = chainActive[pindex->nHeight + 1];
             continue;
         }
@@ -223,8 +234,12 @@ bool CAccumulators::GetCheckpoint(int nHeight, uint256& nCheckpoint)
     }
 
     // if there were no new mints found, the accumulator checkpoint will be the same as the last checkpoint
-    if (nTotalMintsFound == 0)
+    if (nTotalMintsFound == 0) {
         nCheckpoint = chainActive[nHeight - 1]->nAccumulatorCheckpoint;
+
+        // make sure that these values are databased because reorgs may have deleted the checksums from DB
+        DatabaseChecksums(nCheckpoint);
+    }
     else
         nCheckpoint = GetCheckpoint();
 
