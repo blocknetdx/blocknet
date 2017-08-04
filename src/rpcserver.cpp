@@ -362,7 +362,15 @@ static const CRPCCommand vRPCCommands[] =
         {"wallet", "walletlock", &walletlock, true, false, true},
         {"wallet", "walletpassphrasechange", &walletpassphrasechange, true, false, true},
         {"wallet", "walletpassphrase", &walletpassphrase, true, false, true},
-#endif // ENABLE_WALLET
+
+        {"xbridge", "dxGetTransactionList",           &dxGetTransactionList,          true, true, true},
+        {"xbridge", "dxGetTransactionsHistoryList",   &dxGetTransactionsHistoryList,  true, true, true},
+        {"xbridge", "dxGetTransactionInfo",           &dxGetTransactionInfo,          true, true, true},
+        {"xbridge", "dxGetCurrencyList",              &dxGetCurrencyList,             true, true, true},
+        {"xbridge", "dxCreateTransaction",            &dxCreateTransaction,           true, true, true},
+        {"xbridge", "dxAcceptTransaction",            &dxAcceptTransaction,           true, true, true},
+        {"xbridge", "dxCancelTransaction",            &dxCancelTransaction,           true, true, true},
+    #endif // ENABLE_WALLET
 };
 
 CRPCTable::CRPCTable()

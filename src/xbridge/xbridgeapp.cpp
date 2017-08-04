@@ -40,6 +40,7 @@ XUIConnector xuiConnector;
 boost::mutex                                  XBridgeApp::m_txLocker;
 std::map<uint256, XBridgeTransactionDescrPtr> XBridgeApp::m_pendingTransactions;
 std::map<uint256, XBridgeTransactionDescrPtr> XBridgeApp::m_transactions;
+std::map<uint256, XBridgeTransactionDescrPtr> XBridgeApp::m_historicTransactions;
 boost::mutex                                  XBridgeApp::m_txUnconfirmedLocker;
 std::map<uint256, XBridgeTransactionDescrPtr> XBridgeApp::m_unconfirmed;
 boost::mutex                                  XBridgeApp::m_ppLocker;

@@ -156,6 +156,28 @@ struct XBridgeTransactionDescr
         return from.size() != 0 && to.size() != 0;
     }
 
+    std::string strState() const
+    {
+        switch (state)
+        {
+            case trInvalid:   return std::string("Invalid");
+            case trNew:       return std::string("New");
+            case trPending:   return std::string("Open");
+            case trAccepting: return std::string("Accepting");
+            case trHold:      return std::string("Hold");
+            case trCreated:   return std::string("Created");
+            case trSigned:    return std::string("Signed");
+            case trCommited:  return std::string("Commited");
+            case trFinished:  return std::string("Finished");
+            case trCancelled: return std::string("Cancelled");
+            case trRollback:  return std::string("Rolled Back");
+            case trDropped:   return std::string("Dropped");
+            case trExpired:   return std::string("Expired");
+            case trOffline:   return std::string("Offline");
+            default:          return std::string("Unknown");
+        }
+    }
+
 private:
     void copyFrom(const XBridgeTransactionDescr & d)
     {

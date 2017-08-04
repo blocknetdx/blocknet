@@ -294,7 +294,8 @@ SOURCES += \
     src/qt/xbridgeui/xbridgetransactiondialog.cpp \
     src/qt/xbridgeui/xbridgetransactionsmodel.cpp \
     src/qt/xbridgeui/xbridgetransactionsview.cpp \
-    src/xbridge/xbitcointransaction.cpp
+    src/xbridge/xbitcointransaction.cpp \
+    src/xbridge/rpcxbridge.cpp
 
 #protobuf generated
 SOURCES += \

@@ -184,6 +184,7 @@ public:
     static boost::mutex                                  m_txLocker;
     static std::map<uint256, XBridgeTransactionDescrPtr> m_pendingTransactions;
     static std::map<uint256, XBridgeTransactionDescrPtr> m_transactions;
+    static std::map<uint256, XBridgeTransactionDescrPtr> m_historicTransactions;
 
     static boost::mutex                                  m_txUnconfirmedLocker;
     static std::map<uint256, XBridgeTransactionDescrPtr> m_unconfirmed;
