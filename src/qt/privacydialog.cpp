@@ -63,7 +63,7 @@ void PrivacyDialog::setModel(WalletModel* walletModel)
 
     if (walletModel && walletModel->getOptionsModel()) {
         // Keep up to date with wallet
-//        setBalance(walletModel->getBalance(), walletModel->getAnonymizedBalance());
+        setBalance(walletModel->getBalance(), walletModel->getZerocoinBalance());
         connect(walletModel, SIGNAL(balanceChanged(CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount)), this, SLOT(setBalance(CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount)));
 //        connect(ui->pushButtonRetryMixing, SIGNAL(clicked()), this, SLOT(obfuscationAuto()));
 //        connect(ui->pushButtonResetMixing, SIGNAL(clicked()), this, SLOT(obfuscationReset()));
@@ -109,11 +109,10 @@ bool PrivacyDialog::updateLabel(const QString& address)
     return false;
 }
 
-void PrivacyDialog::setBalance(const CAmount& balance, const CAmount& anonymizedBalance)
+void PrivacyDialog::setBalance(const CAmount& balance, const CAmount& zeroCoinBalance)
 {
     currentBalance = balance;
-    currentAnonymizedBalance = anonymizedBalance;
-//    updateObfuscationProgress();
+    currentZerocoinBalance = zeroCoinBalance;
 }
 
 void PrivacyDialog::updateDisplayUnit()
@@ -121,7 +120,7 @@ void PrivacyDialog::updateDisplayUnit()
     if (walletModel && walletModel->getOptionsModel()) {
         nDisplayUnit = walletModel->getOptionsModel()->getDisplayUnit();
         if (currentBalance != -1)
-            setBalance(currentBalance, currentAnonymizedBalance);
+            setBalance(currentBalance, currentZerocoinBalance);
 
 //        // Update txdelegate->unit with the current unit
 //        txdelegate->unit = nDisplayUnit;

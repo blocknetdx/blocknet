@@ -57,7 +57,7 @@ private:
     WalletModel* walletModel;
     QMenu* contextMenu;
     CAmount currentBalance;
-    CAmount currentAnonymizedBalance;
+    CAmount currentZerocoinBalance;
     int nDisplayUnit;
     bool updateLabel(const QString& address);
 
