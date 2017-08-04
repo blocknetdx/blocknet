@@ -583,6 +583,9 @@
           </property>
           <item>
            <widget class="QValidatedLineEdit" name="payTo">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
             <property name="minimumSize">
              <size>
               <width>0</width>
@@ -625,20 +628,6 @@
             </property>
             <property name="shortcut">
              <string>Alt+P</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QToolButton" name="deleteButton">
-            <property name="toolTip">
-             <string>Remove this entry</string>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-            <property name="icon">
-             <iconset resource="../pivx.qrc">
-              <normaloff>:/icons/remove</normaloff>:/icons/remove</iconset>
             </property>
            </widget>
           </item>

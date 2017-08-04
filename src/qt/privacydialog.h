@@ -59,11 +59,15 @@ private:
     CAmount currentBalance;
     CAmount currentAnonymizedBalance;
     int nDisplayUnit;
+    bool updateLabel(const QString& address);
 
 private slots:
 //    void toggleObfuscation();
 //    void obfuscationAuto();
 //    void obfuscationReset();
+    void on_payTo_textChanged(const QString& address);
+    void on_addressBookButton_clicked();
+    void on_pasteButton_clicked();
     void updateDisplayUnit();
 };
 
