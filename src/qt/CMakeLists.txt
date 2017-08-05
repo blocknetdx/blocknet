@@ -47,6 +47,7 @@ set(GUI_FORMS
   ${CMAKE_CURRENT_SOURCE_DIR}/forms/masternodelist.ui
   ${CMAKE_CURRENT_SOURCE_DIR}/forms/multisenddialog.ui
   ${CMAKE_CURRENT_SOURCE_DIR}/forms/obfuscationconfig.ui
+  ${CMAKE_CURRENT_SOURCE_DIR}/forms/privacydialog.ui
   ${CMAKE_CURRENT_SOURCE_DIR}/forms/openuridialog.ui
   ${CMAKE_CURRENT_SOURCE_DIR}/forms/optionsdialog.ui
   ${CMAKE_CURRENT_SOURCE_DIR}/forms/overviewpage.ui
@@ -101,6 +102,7 @@ SET(QT_FILES
 	askpassphrasedialog.cpp
 	coincontroldialog.cpp
 	coincontroltreewidget.cpp
+  privacydialog.cpp
 	obfuscationconfig.cpp
 	editaddressdialog.cpp
 	masternodelist.cpp

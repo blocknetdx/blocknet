@@ -94,7 +94,7 @@ bool CheckZerocoinSpendNoDB(const CTransaction tx, string& strError)
     for (const CTxOut out : tx.vout) {
         txTemp.vout.push_back(out);
     }
-    uint256 hashTxOut = txTemp.GetHash();
+    //    uint256 hashTxOut = txTemp.GetHash();
 
     bool fValidated = false;
     set<CBigNum> serials;
