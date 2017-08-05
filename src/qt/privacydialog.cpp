@@ -84,6 +84,88 @@ void PrivacyDialog::on_addressBookButton_clicked()
     }
 }
 
+void PrivacyDialog::on_pushButtonMintzPIV_clicked()
+{
+    if (!walletModel || !walletModel->getOptionsModel())
+        return;
+
+    // Reset message text
+    ui->labelMintStatus->setText(tr("Mint Status: okay"));
+    
+    // Wallet must be unlocked for minting
+    if (pwalletMain->IsLocked()){
+        ui->labelMintStatus->setText(tr("Error: your wallet is locked. Please enter the wallet passphrase first."));
+        return;
+    }
+
+    QString sAmount = ui->labelMintAmountValue->text();
+    CAmount nAmount = sAmount.toInt() * COIN;
+
+    // Minting amount must be > 0
+    if(nAmount <= 0){
+        ui->labelMintStatus->setText(tr("Message: Enter an amount > 0."));
+        return;
+    }
+
+    int64_t nTime = GetTimeMillis();
+    
+    CWalletTx wtx;
+    vector<CZerocoinMint> vMints;
+    string strError = pwalletMain->MintZerocoin(nAmount, wtx, vMints);
+    
+    // Return if something went wrong during minting
+    if (strError != ""){
+        QString strErrorMessage = tr("Error: ") + QString::fromStdString(strError);
+        ui->labelMintStatus->setText(strErrorMessage);
+        return;
+    }
+
+    int64_t nDuration = GetTimeMillis() - nTime;
+    
+    // Minting successfully finished. Show some stats for entertainment.
+    QString strStatsHeader = tr("Successful minted ") + ui->labelMintAmountValue->text() + tr(" zPIV in ") + 
+                             QString::number(nDuration) + tr(" ms. Used denominations:\n");
+    QString strStats = "";
+    ui->labelMintStatus->setText(strStatsHeader);
+
+    for (CZerocoinMint mint : vMints) {
+        strStats = strStats + QString::number(mint.GetDenomination()) + " ";
+        ui->labelMintStatus->setText(strStatsHeader + strStats);
+    }
+
+    // Available balance isn't always updated, so force it.
+    setBalance(walletModel->getBalance(),         walletModel->getUnconfirmedBalance(), walletModel->getImmatureBalance(), 
+               walletModel->getZerocoinBalance(), walletModel->getWatchBalance(),       walletModel->getWatchUnconfirmedBalance(), 
+               walletModel->getWatchImmatureBalance());
+    return;
+}
+
+void PrivacyDialog::on_pushButtonMintReset_clicked()
+{
+    if (!walletModel || !walletModel->getOptionsModel())
+        return;
+
+    QMessageBox::warning(this, tr("Reset Zerocoin"),
+                tr("Test for Reset"),
+                QMessageBox::Ok, QMessageBox::Ok);
+            return;
+
+        return;
+}
+
+void PrivacyDialog::on_pushButtonSpendzPIV_clicked()
+{
+    if (!walletModel || !walletModel->getOptionsModel())
+        return;
+
+    QMessageBox::warning(this, tr("Spend Zerocoin"),
+                tr("Test for Spend. But better hodl !1!"),
+                QMessageBox::Ok, QMessageBox::Ok);
+            return;
+
+        return;
+}
+
 void PrivacyDialog::on_payTo_textChanged(const QString& address)
 {
     updateLabel(address);

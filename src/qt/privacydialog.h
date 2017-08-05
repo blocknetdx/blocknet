@@ -74,6 +74,9 @@ private slots:
 //    void obfuscationReset();
     void on_payTo_textChanged(const QString& address);
     void on_addressBookButton_clicked();
+    void on_pushButtonMintzPIV_clicked();
+    void on_pushButtonMintReset_clicked();
+    void on_pushButtonSpendzPIV_clicked();
     void on_pasteButton_clicked();
     void updateDisplayUnit();
 };
