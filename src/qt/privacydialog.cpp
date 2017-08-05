@@ -8,22 +8,11 @@
 #include "addressbookpage.h"
 #include "addresstablemodel.h"
 #include "bitcoinunits.h"
-#include "guiutil.h"
-#include "obfuscation.h"
-#include "obfuscationconfig.h"
+#include "libzerocoin/Denominations.h"
 #include "optionsmodel.h"
-#include "receiverequestdialog.h"
-#include "recentrequeststablemodel.h"
 #include "walletmodel.h"
 
-#include <QAction>
 #include <QClipboard>
-#include <QCursor>
-#include <QItemSelection>
-#include <QMessageBox>
-#include <QScrollBar>
-#include <QSettings>
-#include <QTextDocument>
 
 PrivacyDialog::PrivacyDialog(QWidget* parent) : QDialog(parent),
                                                           ui(new Ui::PrivacyDialog),
@@ -33,7 +22,12 @@ PrivacyDialog::PrivacyDialog(QWidget* parent) : QDialog(parent),
     nDisplayUnit = 0; // just make sure it's not unitialized
     ui->setupUi(this);
     ui->labelzPIVSyncStatus->setText("(" + tr("out of sync") + ")");
-
+    ui->zPIVpayAmount->setValidator( new QIntValidator(0, 999999, this) ); // "Spending 999999 zPIV ought to be enough for anybody." - Bill Gates, 2017
+    ui->labelMintAmountValue->setValidator( new QIntValidator(0, 999999, this) );
+    ui->labelMintStatus->setFrameStyle(QFrame::StyledPanel | QFrame::Sunken);
+    ui->labelMintStatus->setLineWidth (2);
+    ui->labelMintStatus->setMidLineWidth (2);
+    
 //    if (fMasterNode) {
 //        ui->pushButtonStartMixing->setText("(" + tr("Disabled") + ")");
 //        ui->pushButtonRetryMixing->setText("(" + tr("Disabled") + ")");
@@ -63,11 +57,12 @@ void PrivacyDialog::setModel(WalletModel* walletModel)
 
     if (walletModel && walletModel->getOptionsModel()) {
         // Keep up to date with wallet
-        setBalance(walletModel->getBalance(), walletModel->getZerocoinBalance());
-        connect(walletModel, SIGNAL(balanceChanged(CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount)), this, SLOT(setBalance(CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount)));
-//        connect(ui->pushButtonRetryMixing, SIGNAL(clicked()), this, SLOT(obfuscationAuto()));
-//        connect(ui->pushButtonResetMixing, SIGNAL(clicked()), this, SLOT(obfuscationReset()));
-//        connect(ui->pushButtonStartMixing, SIGNAL(clicked()), this, SLOT(toggleObfuscation()));
+        setBalance(walletModel->getBalance(),         walletModel->getUnconfirmedBalance(), walletModel->getImmatureBalance(), 
+                   walletModel->getZerocoinBalance(), walletModel->getWatchBalance(),       walletModel->getWatchUnconfirmedBalance(), 
+                   walletModel->getWatchImmatureBalance());
+        
+        connect(walletModel, SIGNAL(balanceChanged(CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount)), this, 
+                               SLOT(setBalance(CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount)));
     }
 }
 
@@ -85,7 +80,7 @@ void PrivacyDialog::on_addressBookButton_clicked()
     dlg.setModel(walletModel->getAddressTableModel());
     if (dlg.exec()) {
         ui->payTo->setText(dlg.getReturnValue());
-        ui->payAmount->setFocus();
+        ui->zPIVpayAmount->setFocus();
     }
 }
 
@@ -109,10 +104,65 @@ bool PrivacyDialog::updateLabel(const QString& address)
     return false;
 }
 
-void PrivacyDialog::setBalance(const CAmount& balance, const CAmount& zeroCoinBalance)
+void PrivacyDialog::setBalance(const CAmount& balance,         const CAmount& unconfirmedBalance, const CAmount& immatureBalance, 
+                               const CAmount& zerocoinBalance, const CAmount& watchOnlyBalance,   const CAmount& watchUnconfBalance, 
+                               const CAmount& watchImmatureBalance)
 {
     currentBalance = balance;
-    currentZerocoinBalance = zeroCoinBalance;
+    currentUnconfirmedBalance = unconfirmedBalance;
+    currentImmatureBalance = immatureBalance;
+    currentZerocoinBalance = zerocoinBalance;
+    currentWatchOnlyBalance = watchOnlyBalance;
+    currentWatchUnconfBalance = watchUnconfBalance;
+    currentWatchImmatureBalance = watchImmatureBalance;
+
+    CWalletDB walletdb(pwalletMain->strWalletFile);
+    list<CZerocoinMint> listPubCoin = walletdb.ListMintedCoins(true);
+ 
+    std::map<libzerocoin::CoinDenomination, CAmount> spread;
+    for (const auto& denom : libzerocoin::zerocoinDenomList){
+        spread.insert(std::pair<libzerocoin::CoinDenomination, CAmount>(denom, 0));
+    }
+    for (auto& mint : listPubCoin){
+        spread.at(mint.GetDenomination())++;
+    }
+    
+    int64_t nCoins = 0;
+    for (const auto& m : libzerocoin::zerocoinDenomList) {
+        nCoins = libzerocoin::ZerocoinDenominationToInt(m);
+        switch (nCoins) {
+            case libzerocoin::CoinDenomination::ZQ_ONE: 
+                ui->labelzDenom1Amount->setText (QString::number(spread.at(m)));
+                break;
+            case libzerocoin::CoinDenomination::ZQ_FIVE:
+                ui->labelzDenom2Amount->setText (QString::number(spread.at(m)));
+                break;
+            case libzerocoin::CoinDenomination::ZQ_TEN:
+                ui->labelzDenom3Amount->setText (QString::number(spread.at(m)));
+                break;
+            case libzerocoin::CoinDenomination::ZQ_FIFTY:
+                ui->labelzDenom4Amount->setText (QString::number(spread.at(m)));
+                break;
+            case libzerocoin::CoinDenomination::ZQ_ONE_HUNDRED:
+                ui->labelzDenom5Amount->setText (QString::number(spread.at(m)));
+                break;
+            case libzerocoin::CoinDenomination::ZQ_FIVE_HUNDRED:
+                ui->labelzDenom6Amount->setText (QString::number(spread.at(m)));
+                break;
+            case libzerocoin::CoinDenomination::ZQ_ONE_THOUSAND:
+                ui->labelzDenom7Amount->setText (QString::number(spread.at(m)));
+                break;
+            case libzerocoin::CoinDenomination::ZQ_FIVE_THOUSAND:
+                ui->labelzDenom8Amount->setText (QString::number(spread.at(m)));
+                break;
+            default:
+                // Error Case: don't update display
+                break;
+        }
+    }
+    ui->labelzAvailableAmount->setText(QString::number(zerocoinBalance/COIN) + QString(" zPIV"));
+    ui->labelzAvailableAmount_2->setText(QString::number(zerocoinBalance/COIN) + QString(" zPIV"));
+    ui->labelzPIVAmountValue->setText(BitcoinUnits::floorHtmlWithUnit(nDisplayUnit, balance - immatureBalance, false, BitcoinUnits::separatorAlways));
 }
 
 void PrivacyDialog::updateDisplayUnit()
@@ -120,12 +170,8 @@ void PrivacyDialog::updateDisplayUnit()
     if (walletModel && walletModel->getOptionsModel()) {
         nDisplayUnit = walletModel->getOptionsModel()->getDisplayUnit();
         if (currentBalance != -1)
-            setBalance(currentBalance, currentZerocoinBalance);
-
-//        // Update txdelegate->unit with the current unit
-//        txdelegate->unit = nDisplayUnit;
-//
-//        ui->listTransactions->update();
+            setBalance(currentBalance, currentUnconfirmedBalance, currentImmatureBalance, currentZerocoinBalance, 
+                       currentWatchOnlyBalance, currentWatchUnconfBalance, currentWatchImmatureBalance);
     }
 }
 

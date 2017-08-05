@@ -51,6 +51,9 @@
           <height>578</height>
          </size>
         </property>
+        <property name="accessibleName">
+         <string/>
+        </property>
         <property name="frameShape">
          <enum>QFrame::Box</enum>
         </property>
@@ -105,7 +108,7 @@
          <property name="geometry">
           <rect>
            <x>820</x>
-           <y>150</y>
+           <y>160</y>
            <width>101</width>
            <height>21</height>
           </rect>
@@ -121,7 +124,7 @@
          <property name="geometry">
           <rect>
            <x>820</x>
-           <y>130</y>
+           <y>140</y>
            <width>101</width>
            <height>21</height>
           </rect>
@@ -137,7 +140,7 @@
          <property name="geometry">
           <rect>
            <x>820</x>
-           <y>110</y>
+           <y>120</y>
            <width>101</width>
            <height>21</height>
           </rect>
@@ -153,7 +156,7 @@
          <property name="geometry">
           <rect>
            <x>610</x>
-           <y>190</y>
+           <y>200</y>
            <width>201</width>
            <height>21</height>
           </rect>
@@ -169,7 +172,7 @@
          <property name="geometry">
           <rect>
            <x>820</x>
-           <y>190</y>
+           <y>200</y>
            <width>101</width>
            <height>21</height>
           </rect>
@@ -185,7 +188,7 @@
          <property name="geometry">
           <rect>
            <x>610</x>
-           <y>90</y>
+           <y>100</y>
            <width>201</width>
            <height>21</height>
           </rect>
@@ -201,7 +204,7 @@
          <property name="geometry">
           <rect>
            <x>610</x>
-           <y>150</y>
+           <y>160</y>
            <width>201</width>
            <height>21</height>
           </rect>
@@ -217,7 +220,7 @@
          <property name="geometry">
           <rect>
            <x>610</x>
-           <y>170</y>
+           <y>180</y>
            <width>201</width>
            <height>21</height>
           </rect>
@@ -233,7 +236,7 @@
          <property name="geometry">
           <rect>
            <x>610</x>
-           <y>130</y>
+           <y>140</y>
            <width>201</width>
            <height>21</height>
           </rect>
@@ -249,7 +252,7 @@
          <property name="geometry">
           <rect>
            <x>820</x>
-           <y>60</y>
+           <y>70</y>
            <width>101</width>
            <height>21</height>
           </rect>
@@ -271,7 +274,7 @@
          <property name="geometry">
           <rect>
            <x>820</x>
-           <y>170</y>
+           <y>180</y>
            <width>101</width>
            <height>21</height>
           </rect>
@@ -287,7 +290,7 @@
          <property name="geometry">
           <rect>
            <x>820</x>
-           <y>90</y>
+           <y>100</y>
            <width>101</width>
            <height>21</height>
           </rect>
@@ -303,7 +306,7 @@
          <property name="geometry">
           <rect>
            <x>610</x>
-           <y>110</y>
+           <y>120</y>
            <width>201</width>
            <height>21</height>
           </rect>
@@ -319,7 +322,7 @@
          <property name="geometry">
           <rect>
            <x>610</x>
-           <y>60</y>
+           <y>70</y>
            <width>201</width>
            <height>20</height>
           </rect>
@@ -329,6 +332,9 @@
            <weight>75</weight>
            <bold>true</bold>
           </font>
+         </property>
+         <property name="toolTip">
+          <string>Available Funds</string>
          </property>
          <property name="text">
           <string>Available Zerocoin  Balance:</string>
@@ -341,7 +347,7 @@
          <property name="geometry">
           <rect>
            <x>610</x>
-           <y>210</y>
+           <y>220</y>
            <width>201</width>
            <height>21</height>
           </rect>
@@ -357,7 +363,7 @@
          <property name="geometry">
           <rect>
            <x>820</x>
-           <y>210</y>
+           <y>220</y>
            <width>101</width>
            <height>21</height>
           </rect>
@@ -373,7 +379,7 @@
          <property name="geometry">
           <rect>
            <x>610</x>
-           <y>230</y>
+           <y>240</y>
            <width>201</width>
            <height>21</height>
           </rect>
@@ -389,7 +395,7 @@
          <property name="geometry">
           <rect>
            <x>820</x>
-           <y>230</y>
+           <y>240</y>
            <width>101</width>
            <height>21</height>
           </rect>
@@ -405,7 +411,7 @@
          <property name="geometry">
           <rect>
            <x>10</x>
-           <y>120</y>
+           <y>270</y>
            <width>571</width>
            <height>1</height>
           </rect>
@@ -440,8 +446,8 @@
         <widget class="QLabel" name="labelzPIVSyncStatus">
          <property name="geometry">
           <rect>
-           <x>230</x>
-           <y>40</y>
+           <x>170</x>
+           <y>30</y>
            <width>121</width>
            <height>31</height>
           </rect>
@@ -456,7 +462,7 @@
           <string notr="true">(out of sync)</string>
          </property>
          <property name="alignment">
-          <set>Qt::AlignCenter</set>
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
          </property>
         </widget>
         <widget class="QPushButton" name="pushButtonMintzPIV">
@@ -478,7 +484,7 @@
         <widget class="QLabel" name="labelzPIVAmountValue">
          <property name="geometry">
           <rect>
-           <x>270</x>
+           <x>460</x>
            <y>70</y>
            <width>111</width>
            <height>31</height>
@@ -491,20 +497,20 @@
           <string>0.000 000 00 PIV</string>
          </property>
          <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
          </property>
         </widget>
         <widget class="QLabel" name="labelzPIVAmountText">
          <property name="geometry">
           <rect>
-           <x>190</x>
+           <x>320</x>
            <y>70</y>
-           <width>61</width>
+           <width>131</width>
            <height>31</height>
           </rect>
          </property>
          <property name="text">
-          <string>Amount:</string>
+          <string>Available for Minting:</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -513,8 +519,8 @@
         <widget class="QPushButton" name="pushButtonMintReset">
          <property name="geometry">
           <rect>
-           <x>430</x>
-           <y>70</y>
+           <x>20</x>
+           <y>110</y>
            <width>141</width>
            <height>27</height>
           </rect>
@@ -523,33 +529,20 @@
           <string>Reset Zerocoin Minting</string>
          </property>
          <property name="text">
-          <string>Reset</string>
-         </property>
-        </widget>
-        <widget class="Line" name="hline2">
-         <property name="geometry">
-          <rect>
-           <x>10</x>
-           <y>350</y>
-           <width>571</width>
-           <height>1</height>
-          </rect>
-         </property>
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
+          <string>Reset WalletDB</string>
          </property>
         </widget>
         <widget class="QPushButton" name="pushButtonSpendzPIV">
          <property name="geometry">
           <rect>
            <x>20</x>
-           <y>140</y>
+           <y>290</y>
            <width>141</width>
            <height>27</height>
           </rect>
          </property>
          <property name="toolTip">
-          <string>Enter an amount of Piv to convert to zPiv</string>
+          <string>Spend Zerocoin. Without 'Pay To:' address creates payments to yourself.</string>
          </property>
          <property name="text">
           <string>Spend Zerocoin</string>
@@ -559,7 +552,7 @@
          <property name="geometry">
           <rect>
            <x>90</x>
-           <y>230</y>
+           <y>380</y>
            <width>481</width>
            <height>31</height>
           </rect>
@@ -572,7 +565,7 @@
          <property name="geometry">
           <rect>
            <x>90</x>
-           <y>190</y>
+           <y>340</y>
            <width>481</width>
            <height>36</height>
           </rect>
@@ -593,7 +586,7 @@
              </size>
             </property>
             <property name="toolTip">
-             <string>The PIVX address to send the payment to</string>
+             <string>The PIVX address to send the payment to. Creates local payment to yourself when empty.</string>
             </property>
            </widget>
           </item>
@@ -637,7 +630,7 @@
          <property name="geometry">
           <rect>
            <x>10</x>
-           <y>230</y>
+           <y>380</y>
            <width>71</width>
            <height>31</height>
           </rect>
@@ -652,21 +645,11 @@
           <cstring>addAsLabel</cstring>
          </property>
         </widget>
-        <widget class="BitcoinAmountField" name="payAmount">
-         <property name="geometry">
-          <rect>
-           <x>90</x>
-           <y>270</y>
-           <width>481</width>
-           <height>34</height>
-          </rect>
-         </property>
-        </widget>
         <widget class="QLabel" name="payToLabel">
          <property name="geometry">
           <rect>
            <x>10</x>
-           <y>192</y>
+           <y>342</y>
            <width>71</width>
            <height>30</height>
           </rect>
@@ -685,7 +668,7 @@
          <property name="geometry">
           <rect>
            <x>10</x>
-           <y>270</y>
+           <y>420</y>
            <width>71</width>
            <height>31</height>
           </rect>
@@ -696,16 +679,13 @@
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
          </property>
-         <property name="buddy">
-          <cstring>payAmount</cstring>
-         </property>
         </widget>
         <widget class="QWidget" name="layoutWidget_2">
          <property name="geometry">
           <rect>
-           <x>390</x>
-           <y>130</y>
-           <width>181</width>
+           <x>410</x>
+           <y>280</y>
+           <width>161</width>
            <height>51</height>
           </rect>
          </property>
@@ -734,6 +714,9 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="toolTip">
+             <string>Security Level 1 - 100 (default: 100)</string>
+            </property>
             <property name="buttonSymbols">
              <enum>QAbstractSpinBox::UpDownArrows</enum>
             </property>
@@ -741,6 +724,9 @@
              <number>10</number>
             </property>
             <property name="maximum">
+             <number>100</number>
+            </property>
+            <property name="value">
              <number>100</number>
             </property>
            </widget>
@@ -751,7 +737,7 @@
          <property name="geometry">
           <rect>
            <x>90</x>
-           <y>310</y>
+           <y>460</y>
            <width>401</width>
            <height>31</height>
           </rect>
@@ -775,6 +761,9 @@
            <weight>75</weight>
            <bold>true</bold>
           </font>
+         </property>
+         <property name="toolTip">
+          <string>Information about the available Zerocoin funds.</string>
          </property>
          <property name="text">
           <string>Zerocoin Stats:</string>
@@ -806,13 +795,131 @@
          <property name="geometry">
           <rect>
            <x>607</x>
-           <y>260</y>
+           <y>270</y>
            <width>321</width>
            <height>1</height>
           </rect>
          </property>
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+        <widget class="QLabel" name="labelMintStatus">
+         <property name="geometry">
+          <rect>
+           <x>20</x>
+           <y>150</y>
+           <width>551</width>
+           <height>101</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string>Status and/or Mesages from the last Mint Action.</string>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::Panel</enum>
+         </property>
+         <property name="lineWidth">
+          <number>2</number>
+         </property>
+         <property name="midLineWidth">
+          <number>2</number>
+         </property>
+         <property name="text">
+          <string>Mint Status: Okay</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+         </property>
+        </widget>
+        <widget class="QLabel" name="labelzPIVBalanceText">
+         <property name="geometry">
+          <rect>
+           <x>150</x>
+           <y>290</y>
+           <width>131</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Available Balance:</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+        <widget class="QLabel" name="labelzAvailableAmount_2">
+         <property name="geometry">
+          <rect>
+           <x>290</x>
+           <y>290</y>
+           <width>111</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="font">
+          <font>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>0 zPIV</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+        <widget class="QLineEdit" name="zPIVpayAmount">
+         <property name="geometry">
+          <rect>
+           <x>90</x>
+           <y>420</y>
+           <width>421</width>
+           <height>31</height>
+          </rect>
+         </property>
+        </widget>
+        <widget class="QLabel" name="labelzPIV">
+         <property name="geometry">
+          <rect>
+           <x>520</x>
+           <y>420</y>
+           <width>51</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>zPIV</string>
+         </property>
+        </widget>
+        <widget class="QLineEdit" name="labelMintAmountValue">
+         <property name="geometry">
+          <rect>
+           <x>170</x>
+           <y>70</y>
+           <width>61</width>
+           <height>27</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>0</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+        <widget class="QLabel" name="labelzPIV_2">
+         <property name="geometry">
+          <rect>
+           <x>240</x>
+           <y>70</y>
+           <width>31</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>zPIV</string>
          </property>
         </widget>
        </widget>
@@ -827,11 +934,6 @@
    <class>QValidatedLineEdit</class>
    <extends>QLineEdit</extends>
    <header>qvalidatedlineedit.h</header>
-  </customwidget>
-  <customwidget>
-   <class>BitcoinAmountField</class>
-   <extends>QLineEdit</extends>
-   <header>bitcoinamountfield.h</header>
   </customwidget>
  </customwidgets>
  <resources>

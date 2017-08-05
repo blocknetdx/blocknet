@@ -681,6 +681,15 @@ background-color:transparent;
 border:1px solid #000;
 }
 
+QWidget#PrivacyDialog QFrame#labelMintStatus {
+/* background-color:transparent; */
+background-color:#eee;
+/* border-style: inset; */
+/* border-width:2; */
+/* border:2px solid #00; */
+border: 1px inset gray;
+}
+
 QWidget#PrivacyDialog QLabel {
 border:0px solid #000;
 }

@@ -48,7 +48,8 @@ public:
     void showOutOfSyncWarning(bool fShow);
 
 public slots:
-    void setBalance(const CAmount& balance, const CAmount& anonymizedBalance);
+//    void setBalance(const CAmount& balance, const CAmount& anonymizedBalance);
+    void setBalance(const CAmount& balance, const CAmount& unconfirmedBalance, const CAmount& immatureBalance, const CAmount& zerocoinBalance, const CAmount& watchOnlyBalance, const CAmount& watchUnconfBalance, const CAmount& watchImmatureBalance);
 
 private:
     Ui::PrivacyDialog* ui;
@@ -57,7 +58,13 @@ private:
     WalletModel* walletModel;
     QMenu* contextMenu;
     CAmount currentBalance;
+    CAmount currentUnconfirmedBalance;
+    CAmount currentImmatureBalance;
     CAmount currentZerocoinBalance;
+    CAmount currentWatchOnlyBalance;
+    CAmount currentWatchUnconfBalance;
+    CAmount currentWatchImmatureBalance;
+
     int nDisplayUnit;
     bool updateLabel(const QString& address);
 
