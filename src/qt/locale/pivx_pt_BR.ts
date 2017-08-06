@@ -1688,6 +1688,10 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>&amp;Reiniciar Opções</translation>
     </message>
     <message>
+        <source>&amp;OK</source>
+        <translation>&amp;OK</translation>
+    </message>
+    <message>
         <source>&amp;Cancel</source>
         <translation>&amp;Cancel</translation>
     </message>
@@ -2005,6 +2009,14 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
 <context>
     <name>QRImageWidget</name>
     <message>
+        <source>&amp;Save Image...</source>
+        <translation>&amp;Salvar imagem...</translation>
+    </message>
+    <message>
+        <source>&amp;Copy Image</source>
+        <translation>&amp;Copiar imagem</translation>
+    </message>
+    <message>
         <source>Save QR Code</source>
         <translation>Salvar código QR</translation>
     </message>
@@ -2259,6 +2271,10 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>Um rótulo opcional para associar a novos endereços de recebimento.</translation>
     </message>
     <message>
+        <source>&amp;Label:</source>
+        <translation>Rótu&amp;lo:</translation>
+    </message>
+    <message>
         <source>&amp;Amount:</source>
         <translation>&amp;Quantidade:</translation>
     </message>
@@ -2316,6 +2332,10 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <message>
         <source>Copy &amp;URI</source>
         <translation>Copiar &amp;URI</translation>
+    </message>
+    <message>
+        <source>&amp;Save Image...</source>
+        <translation>&amp;Salvar imagem...</translation>
     </message>
     <message>
         <source>Request payment to %1</source>
@@ -2540,6 +2560,10 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>Envia para diversos recipientes de uma vez</translation>
     </message>
     <message>
+        <source>Add &amp;Recipient</source>
+        <translation>Adicionar &amp;Recipiente</translation>
+    </message>
+    <message>
         <source>SwiftTX</source>
         <translation>SwiftTX</translation>
     </message>
@@ -2675,6 +2699,10 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>Esse é um pagamento normal.</translation>
     </message>
     <message>
+        <source>Pay &amp;To:</source>
+        <translation>Pagar &amp;Para:</translation>
+    </message>
+    <message>
         <source>The PIVX address to send the payment to</source>
         <translation>O endereço PIVX para enviar o pagamento</translation>
     </message>
@@ -2697,6 +2725,10 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <message>
         <source>Remove this entry</source>
         <translation>Remova esta entrada</translation>
+    </message>
+    <message>
+        <source>&amp;Label:</source>
+        <translation>&amp;Rótulo:</translation>
     </message>
     <message>
         <source>Enter a label for this address to add it to the list of used addresses</source>

@@ -966,6 +966,10 @@
         <translation>Rescanning ...</translation>
     </message>
     <message>
+        <source>Run a thread to flush wallet periodically (default: %u)</source>
+        <translation>Execute uma thread para liberar a carteira periodicamente (padrão: %u)</translation>
+    </message>
+    <message>
         <source>Run in the background as a daemon and accept commands</source>
         <translation>Executar em segundo plano como um daemon e aceitar comandos</translation>
     </message>
@@ -1018,6 +1022,10 @@
         <translation>Defina o número de segmentos para atender chamadas RPC (padrão:%d)</translation>
     </message>
     <message>
+        <source>Sets the DB_PRIVATE flag in the wallet db environment (default: %u)</source>
+        <translation>Define o sinalizador DB_PRIVATE no ambiente db da carteira (padrão: %u)</translation>
+    </message>
+    <message>
         <source>Show all debugging options (usage: --help -help-debug)</source>
         <translation>Mostrar todas as opções de depuração (uso: --help -help-debug)</translation>
     </message>
@@ -1054,6 +1062,10 @@
         <translation>Especifique o arquivo de configuração masternode (padrão:%s)</translation>
     </message>
     <message>
+        <source>Specify pid file (default: %s)</source>
+        <translation>Especificar arquivo pid (padrão: %s)</translation>
+    </message>
+    <message>
         <source>Specify wallet file (within data directory)</source>
         <translation>Especifique o arquivo de carteira (dentro do diretório de dados)</translation>
     </message>
@@ -1072,6 +1084,10 @@
     <message>
         <source>Submitted following entries to masternode: %u / %d</source>
         <translation>Enviado as seguintes entradas para masternode:%u / %d</translation>
+    </message>
+    <message>
+        <source>Submitted to masternode, waiting for more entries ( %u / %d ) %s</source>
+        <translation>Enviado para masternode, aguardando mais entradas (%u / %d) %s</translation>
     </message>
     <message>
         <source>Submitted to masternode, waiting in queue %s</source>

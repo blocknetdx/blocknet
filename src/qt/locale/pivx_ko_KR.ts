@@ -573,6 +573,10 @@
         <source>&amp;Command-line options</source>
         <translation>&amp;명령행 옵션</translation>
     </message>
+    <message numerus="yes">
+        <source>Processed %n blocks of transaction history.</source>
+        <translation><numerusform>%n 블록의 거래내역을 처리함</numerusform></translation>
+    </message>
     <message>
         <source>Synchronizing additional data: %p%</source>
         <translation>추가 데이터 동기화: %p%</translation>
@@ -685,6 +689,10 @@
         <source>PIVX Core client</source>
         <translation>PIVX Core 클라이언트</translation>
     </message>
+    <message numerus="yes">
+        <source>%n active connection(s) to PIVX network</source>
+        <translation><numerusform>PIVX 네트워크에  %n 연결</numerusform></translation>
+    </message>
     <message>
         <source>Synchronizing with network...</source>
         <translation>네트워크 동기화중...</translation>
@@ -705,9 +713,25 @@
         <source>Up to date</source>
         <translation>최신</translation>
     </message>
+    <message numerus="yes">
+        <source>%n hour(s)</source>
+        <translation><numerusform>%n 시간</numerusform></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n day(s)</source>
+        <translation><numerusform>%n 일</numerusform></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n week(s)</source>
+        <translation><numerusform>%n 주</numerusform></translation>
+    </message>
     <message>
         <source>%1 and %2</source>
         <translation>%1 그리고 %2</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n year(s)</source>
+        <translation><numerusform>%n 년</numerusform></translation>
     </message>
     <message>
         <source>%1 behind</source>
@@ -1182,6 +1206,18 @@ Address: %4
     <message>
         <source>command-line options</source>
         <translation>명령행 옵션</translation>
+    </message>
+    <message>
+        <source>UI Options:</source>
+        <translation>UI 옵션:</translation>
+    </message>
+    <message>
+        <source>Choose data directory on startup (default: %u)</source>
+        <translation>데이터 디렉토리 선택 (기본: %u)</translation>
+    </message>
+    <message>
+        <source>Show splash screen on startup (default: %u)</source>
+        <translation>실행시 초기화면 표시 (기본: %u)</translation>
     </message>
     <message>
         <source>Set language, for example "de_DE" (default: system locale)</source>
@@ -1962,6 +1998,10 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <source>No inputs detected</source>
         <translation>값이 입력되지 않음</translation>
     </message>
+    <message numerus="yes">
+        <source>%n Rounds</source>
+        <translation><numerusform>%n 라운드</numerusform></translation>
+    </message>
     <message>
         <source>Not enough compatible inputs to anonymize &lt;span style='color:red;'&gt;%1&lt;/span&gt;,&lt;br&gt;will anonymize &lt;span style='color:red;'&gt;%2&lt;/span&gt; instead</source>
         <translation>익명화를 위한 값이 충분하지 않아 &lt;span style='color:red;'&gt;%1/span&gt;,&lt;br&gt;대신 &lt;span style='color:red;'&gt;%2&lt;/span&gt;가 익명화 됩니다.</translation>
@@ -1977,6 +2017,10 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <message>
         <source>Anonymized</source>
         <translation>익명화된</translation>
+    </message>
+    <message numerus="yes">
+        <source>Denominated inputs have %5 of %n rounds on average</source>
+        <translation><numerusform>지정된 입력값은  평균 %n 라운드중 %5입니다.</numerusform></translation>
     </message>
     <message>
         <source>Last Obfuscation message:
@@ -2372,24 +2416,49 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>&amp;지갑 복구</translation>
     </message>
     <message>
+        <source>Wallet In Use:</source>
+        <translation>사용중인 지갑:</translation>
+    </message>
+    <message>
         <source>Salvage wallet</source>
         <translation>지갑 복구</translation>
+    </message>
+    <message>
+        <source>Attempt to recover private keys from a corrupt wallet.dat.</source>
+        <translation>손상된 wallet.dat로 부터 개인키 복구 시도</translation>
     </message>
     <message>
         <source>Rescan blockchain files</source>
         <translation>블록체인 파일 재스캔</translation>
     </message>
     <message>
+        <source>Rescan the block chain for missing wallet transactions.</source>
+        <translation>거래내역 복구를 위한 블록체인 재검색</translation>
+    </message>
+    <message>
         <source>Recover transactions 1</source>
         <translation>트랜잭션 복구 1</translation>
+    </message>
+    <message>
+        <source>Recover transactions from blockchain (keep meta-data, e.g. account owner).</source>
+        <translation>블록체인에서 거래내역 복구 (메타 데이터 저장 예: 사용자 주소)
+</translation>
     </message>
     <message>
         <source>Recover transactions 2</source>
         <translation>트랜잭션 복구 2</translation>
     </message>
     <message>
+        <source>Recover transactions from blockchain (drop meta-data).</source>
+        <translation>블록체인에서 거래내역 복구 (메타 데이터 삭제)</translation>
+    </message>
+    <message>
         <source>Upgrade wallet format</source>
         <translation>지갑 구성 업그레이드</translation>
+    </message>
+    <message>
+        <source>Rebuild block chain index from current blk000??.dat files.</source>
+        <translation>현재 blk000??.dat로 부터 블록체인 인덱스 재작성</translation>
     </message>
     <message>
         <source>The buttons below will restart the wallet with command-line options to repair the wallet, fix issues with corrupt blockhain files or missing/obsolete transactions.</source>
@@ -2398,6 +2467,10 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <message>
         <source>Wallet repair options.</source>
         <translation>지갑 복구 옵션.</translation>
+    </message>
+    <message>
+        <source>Upgrade wallet to latest format on startup. (Note: this is NOT an update of the wallet itself!)</source>
+        <translation>시작시 지갑을 최신 포맷으로 업그레이드 (참고 : 지갑 자체의 업데이트 아님!)</translation>
     </message>
     <message>
         <source>Rebuild index</source>
@@ -4231,6 +4304,10 @@ rpcpassword=%s
         <translation>블록 데이터베이스를 초기화하는 중 오류가 발생했습니다.</translation>
     </message>
     <message>
+        <source>Error initializing wallet database environment %s!</source>
+        <translation>지갑 데이터베이스 환경  %s 을 초기화하는 중 오류가 발생했습니다!</translation>
+    </message>
+    <message>
         <source>Error loading block database</source>
         <translation>블록 데이터베이스를 불러오는 중 오류가 발생했습니다.</translation>
     </message>
@@ -4419,6 +4496,10 @@ rpcpassword=%s
         <translation>유효하지 않은 스크립트가 발견되었습니다.</translation>
     </message>
     <message>
+        <source>Enable staking functionality (0-1, default: %u)</source>
+        <translation>스테이킹 기능 사용 (0-1, 기본값: %u)</translation>
+    </message>
+    <message>
         <source>Keep N PIV anonymized (default: %u)</source>
         <translation>N PIV 익명으로 유지 (기본값: %u)</translation>
     </message>
@@ -4599,6 +4680,10 @@ rpcpassword=%s
         <translation>디버그 출력 앞에 타임스탬프를 추가합니다. (기본값: %u)</translation>
     </message>
     <message>
+        <source>Print version and exit</source>
+        <translation>버전 출력후 종료</translation>
+    </message>
+    <message>
         <source>RPC SSL options: (see the Bitcoin Wiki for SSL setup instructions)</source>
         <translation>RPC SSL 옵션: (SSL 설치 안내는 비트코인 위키를 참조하십시오)</translation>
     </message>
@@ -4755,6 +4840,10 @@ rpcpassword=%s
         <translation>트랜잭션 전송시 승인되지 않은 변경사항을 전송합니다 (기본값: %u)</translation>
     </message>
     <message>
+        <source>Staking options:</source>
+        <translation>스테이킹 옵션:</translation>
+    </message>
+    <message>
         <source>Stop running after importing blocks from disk (default: %u)</source>
         <translation>디스크에서 블록을 가져오면 실행 중지 (기본값: %u)</translation>
     </message>
@@ -4883,6 +4972,10 @@ rpcpassword=%s
         <translation>JSON-RPC 연결에 OpenSSL (https)를 사용합니다</translation>
     </message>
     <message>
+        <source>Use UPnP to map the listening port (default: %u)</source>
+        <translation>수신 포트를 매핑하려면 UPnP를 사용하십시오 (기본값: %u)</translation>
+    </message>
+    <message>
         <source>Use UPnP to map the listening port (default: 1 when listening)</source>
         <translation>수신 포트를 매핑하려면 UPnP를 사용하십시오 (기본값: 1 수신 상태일 때)</translation>
     </message>
@@ -4961,6 +5054,10 @@ rpcpassword=%s
     <message>
         <source>Zapping all transactions from wallet...</source>
         <translation>지갑 내 모든 트랜잭션들을 재핑하는 중...</translation>
+    </message>
+    <message>
+        <source>ZeroMQ notification options:</source>
+        <translation>ZeroMQ 알림 옵션:</translation>
     </message>
     <message>
         <source>on startup</source>

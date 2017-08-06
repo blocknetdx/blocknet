@@ -93,7 +93,11 @@
         <source>Exporting Failed</source>
         <translation>Export zlyhal</translation>
     </message>
-    </context>
+    <message>
+        <source>There was an error trying to save the address list to %1. Please try again.</source>
+        <translation>Pri pokuse o uloženie zoznamu adries na %1 sa vyskytla chyba. Prosím skúste znova.</translation>
+    </message>
+</context>
 <context>
     <name>AddressTableModel</name>
     <message>

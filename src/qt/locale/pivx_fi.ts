@@ -39,7 +39,7 @@
     </message>
     <message>
         <source>C&amp;lose</source>
-        <translation>Sulje</translation>
+        <translation>Su&amp;lje</translation>
     </message>
     <message>
         <source>Choose the address to send coins to</source>
@@ -51,7 +51,7 @@
     </message>
     <message>
         <source>C&amp;hoose</source>
-        <translation>Valitse</translation>
+        <translation>V&amp;alitse</translation>
     </message>
     <message>
         <source>Sending addresses</source>
@@ -75,7 +75,7 @@
     </message>
     <message>
         <source>Copy &amp;Label</source>
-        <translation>Kopioi &amp;nimike</translation>
+        <translation>Kopioi &amp;Nimike</translation>
     </message>
     <message>
         <source>&amp;Edit</source>
@@ -273,7 +273,7 @@ Syötä salausavain laatikon keskelle. Paina salaa tuottaaksesi salatun yksityis
     </message>
     <message>
         <source>Encrypt &amp;Key</source>
-        <translation>Salaus &amp; Avain</translation>
+        <translation>Salaus &amp;Avain</translation>
     </message>
     <message>
         <source>Reset all sign message fields</source>
@@ -424,7 +424,7 @@ Syötä salausavain laatikon keskelle. Paina salaa tuottaaksesi salatun yksityis
     </message>
     <message>
         <source>&amp;Options...</source>
-        <translation>&amp;Vaihtoehdot</translation>
+        <translation>&amp;Vaihtoehdot...</translation>
     </message>
     <message>
         <source>&amp;Show / Hide</source>
@@ -436,7 +436,7 @@ Syötä salausavain laatikon keskelle. Paina salaa tuottaaksesi salatun yksityis
     </message>
     <message>
         <source>&amp;Encrypt Wallet...</source>
-        <translation>&amp;Salaa lompakko</translation>
+        <translation>&amp;Salaa lompakko...</translation>
     </message>
     <message>
         <source>Encrypt the private keys that belong to your wallet</source>
@@ -444,7 +444,7 @@ Syötä salausavain laatikon keskelle. Paina salaa tuottaaksesi salatun yksityis
     </message>
     <message>
         <source>&amp;Backup Wallet...</source>
-        <translation>&amp;Varmuuskopioi lompakko</translation>
+        <translation>&amp;Varmuuskopioi lompakko...</translation>
     </message>
     <message>
         <source>Backup wallet to another location</source>
@@ -452,7 +452,7 @@ Syötä salausavain laatikon keskelle. Paina salaa tuottaaksesi salatun yksityis
     </message>
     <message>
         <source>&amp;Change Passphrase...</source>
-        <translation>&amp;Vaihda salausavain</translation>
+        <translation>&amp;Vaihda salausavain...</translation>
     </message>
     <message>
         <source>Change the passphrase used for wallet encryption</source>
@@ -460,7 +460,7 @@ Syötä salausavain laatikon keskelle. Paina salaa tuottaaksesi salatun yksityis
     </message>
     <message>
         <source>&amp;Unlock Wallet...</source>
-        <translation>&amp;Avaa lompakko</translation>
+        <translation>&amp;Avaa lompakko...</translation>
     </message>
     <message>
         <source>Unlock wallet</source>
@@ -472,11 +472,11 @@ Syötä salausavain laatikon keskelle. Paina salaa tuottaaksesi salatun yksityis
     </message>
     <message>
         <source>Sign &amp;message...</source>
-        <translation>Allekirjoita &amp;viesti</translation>
+        <translation>Allekirjoita &amp;viesti...</translation>
     </message>
     <message>
         <source>&amp;Verify message...</source>
-        <translation>Vahvista &amp;viesti</translation>
+        <translation>Vahvista &amp;viesti...</translation>
     </message>
     <message>
         <source>&amp;Information</source>
@@ -504,8 +504,7 @@ Syötä salausavain laatikon keskelle. Paina salaa tuottaaksesi salatun yksityis
     </message>
     <message>
         <source>&amp;Peers list</source>
-        <translation>&amp;Peer lista
-</translation>
+        <translation>&amp;Peer lista</translation>
     </message>
     <message>
         <source>Show peers info</source>
@@ -533,7 +532,7 @@ Syötä salausavain laatikon keskelle. Paina salaa tuottaaksesi salatun yksityis
     </message>
     <message>
         <source>&amp;Sending addresses...</source>
-        <translation>&amp;Lähettävät osoitteet</translation>
+        <translation>&amp;Lähettävät osoitteet...</translation>
     </message>
     <message>
         <source>Show the list of used sending addresses and labels</source>
@@ -541,7 +540,7 @@ Syötä salausavain laatikon keskelle. Paina salaa tuottaaksesi salatun yksityis
     </message>
     <message>
         <source>&amp;Receiving addresses...</source>
-        <translation>&amp;Vastaanottavat osoitteet</translation>
+        <translation>&amp;Vastaanottavat osoitteet...</translation>
     </message>
     <message>
         <source>Show the list of used receiving addresses and labels</source>
@@ -588,8 +587,16 @@ Syötä salausavain laatikon keskelle. Paina salaa tuottaaksesi salatun yksityis
         <translation>Pyydä maksuja (Generoi QR koodeja ja pivx: URIja)</translation>
     </message>
     <message>
+        <source>&amp;Masternodes</source>
+        <translation>&amp;Masternodet</translation>
+    </message>
+    <message>
         <source>Browse masternodes</source>
         <translation>Selaa masternodeja</translation>
+    </message>
+    <message>
+        <source>&amp;About PIVX Core</source>
+        <translation>PIVX Core &amp;ytimestä</translation>
     </message>
     <message>
         <source>Show information about PIVX Core</source>
@@ -608,8 +615,16 @@ Syötä salausavain laatikon keskelle. Paina salaa tuottaaksesi salatun yksityis
         <translation>Vahvista viestit varmistaaksesi, että ne allekirjoitettiin tietyllä PIVX osoiteella.</translation>
     </message>
     <message>
+        <source>&amp;BIP38 tool</source>
+        <translation>&amp;BIP38 työkalu</translation>
+    </message>
+    <message>
         <source>Encrypt and decrypt private keys using a passphrase</source>
         <translation>Salaa ja avaa yksityisavainten salaus käyttämällä salasanaa</translation>
+    </message>
+    <message>
+        <source>&amp;MultiSend</source>
+        <translation>&amp;MultiSend</translation>
     </message>
     <message>
         <source>MultiSend Settings</source>
@@ -1143,7 +1158,7 @@ Please check the address and try again.</source>
     </message>
     <message>
         <source>&amp;Connect through SOCKS5 proxy (default proxy):</source>
-        <translation>&amp;Yhdistä SOCKS5 proxyn kautta (Default Proxy)</translation>
+        <translation>&amp;Yhdistä SOCKS5 proxyn kautta (default proxy):</translation>
     </message>
     <message>
         <source>Expert</source>

@@ -2166,6 +2166,10 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>Введите адрес PIVX (например %1)</translation>
     </message>
     <message>
+        <source>%1 d</source>
+        <translation>%1 д</translation>
+    </message>
+    <message>
         <source>%1 h</source>
         <translation>%1 ч</translation>
     </message>
