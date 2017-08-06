@@ -2521,21 +2521,35 @@ Value resetmintzerocoin(const Array& params, bool fHelp)
     if (fHelp || params.size() != 0)
         throw runtime_error(
             "resetmintzerocoin"
+            "Scan the blockchain for all of the zerocoins that are held in the wallet.dat. Update any meta-data that is incorrect."
             + HelpRequiringPassphrase());
 
     CWalletDB walletdb(pwalletMain->strWalletFile);
-    list<CZerocoinMint> listPubcoin = walletdb.ListMintedCoins();
+    list<CZerocoinMint> listMints = walletdb.ListMintedCoins();
+    vector<CZerocoinMint> vMintsToFind{ std::make_move_iterator(std::begin(listMints)), std::make_move_iterator(std::end(listMints)) };
+    vector<CZerocoinMint> vMintsMissing;
+    vector<CZerocoinMint> vMintsToUpdate;
 
-    for (const CZerocoinMint& zerocoinItem : listPubcoin){
-        if(zerocoinItem.GetRandomness() != 0 && zerocoinItem.GetSerialNumber() != 0){
-            CZerocoinMint zerocoinTx(zerocoinItem.GetDenomination(), zerocoinItem.GetValue(), zerocoinItem.GetRandomness(), zerocoinItem.GetSerialNumber(), false);
-            zerocoinTx.SetHeight(-1);
-            walletdb.WriteZerocoinMint(zerocoinTx);
-        }
+    // search all of our available data for these mints
+    FindMints(vMintsToFind, vMintsToUpdate, vMintsMissing);
+
+    // update the meta data of mints that were marked for updating
+    Array arrUpdated;
+    for (CZerocoinMint mint : vMintsToUpdate) {
+        walletdb.WriteZerocoinMint(mint);
+        arrUpdated.push_back(mint.GetValue().GetHex());
     }
 
-    Object ret;
-    ret.push_back(Pair("reset", true));
+    // delete any mints that were unable to be located on the blockchain
+    Array arrDeleted;
+    for (CZerocoinMint mint : vMintsMissing) {
+        arrDeleted.push_back(mint.GetValue().GetHex());
+        walletdb.EraseZerocoinMint(mint);
+    }
 
-    return ret;
+    Object obj;
+    obj.push_back(Pair("updated", arrUpdated));
+    obj.push_back(Pair("deleted", arrDeleted));
+    return obj;
 }
+

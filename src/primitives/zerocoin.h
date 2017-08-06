@@ -75,6 +75,11 @@ public:
         txid = other.GetTxHash();
         isUsed = other.IsUsed();
     }
+
+    bool operator == (const CZerocoinMint& other) const
+    {
+        return this->GetValue() == other.GetValue();
+    }
     
     // Copy another CZerocoinMint
     inline CZerocoinMint& operator=(const CZerocoinMint& other) {

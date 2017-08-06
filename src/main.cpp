@@ -980,6 +980,91 @@ bool MoneyRange(CAmount nValueOut)
     return nValueOut >= 0 && nValueOut <= Params().MaxMoneyOut();
 }
 
+int nZerocoinStartHeight = 0;
+int GetZerocoinStartHeight()
+{
+    for (int i = 1; i < chainActive.Height(); i++) {
+        if (chainActive[i]->nVersion < Params().Zerocoin_HeaderVersion())
+            continue;
+        return i;
+    }
+    return 0;
+}
+
+void FindMints(vector<CZerocoinMint> vMintsToFind, vector<CZerocoinMint>& vMintsToUpdate, vector<CZerocoinMint>& vMissingMints)
+{
+    // see which mints are in our public zerocoin database. The mint should be here if it exists, unless
+    // something went wrong
+    for (CZerocoinMint mint : vMintsToFind) {
+        uint256 txHash;
+        if (!zerocoinDB->ReadCoinMint(mint.GetValue(), txHash)) {
+            vMissingMints.push_back(mint);
+            continue;
+        }
+
+        // make sure the txhash and block height meta data are correct for this mint
+        CTransaction tx;
+        uint256 hashBlock;
+        if (!GetTransaction(txHash, tx, hashBlock, true)) {
+            LogPrintf("%s : cannot find tx %s\n", __func__, txHash.GetHex());
+            vMissingMints.push_back(mint);
+            continue;
+        }
+
+        if (!mapBlockIndex.count(hashBlock)) {
+            LogPrintf("%s : cannot find block %s\n", __func__, hashBlock.GetHex());
+            vMissingMints.push_back(mint);
+        }
+
+        // if meta data is correct, then no need to update
+        if (mint.GetTxHash() == txHash && mint.GetHeight() == mapBlockIndex[hashBlock]->nHeight)
+            continue;
+
+        //mark this mint for update
+        mint.SetTxHash(txHash);
+        mint.SetHeight(mapBlockIndex[hashBlock]->nHeight);
+        vMintsToUpdate.push_back(mint);
+    }
+
+    // search the blockchain for the meta data on our missing mints
+    if (nZerocoinStartHeight == 0)
+        nZerocoinStartHeight = GetZerocoinStartHeight();
+
+    for (int i = nZerocoinStartHeight; i < chainActive.Height(); i++) {
+        if (chainActive[i]->GetBlockHeader().nVersion < Params().Zerocoin_HeaderVersion())
+            continue;
+
+        CBlock block;
+        if (!ReadBlockFromDisk(block, chainActive[i]))
+            continue;
+
+        list<CZerocoinMint> vMints;
+        if (!BlockToZerocoinMintList(block, vMints))
+            continue;
+
+        // search the blocks mints to see if it contains the mint that is requesting meta data updates
+        for (CZerocoinMint mintBlockChain : vMints) {
+            for (CZerocoinMint mintMissing : vMissingMints) {
+                if (mintMissing.GetValue() == mintBlockChain.GetValue()) {
+                    LogPrintf("%s FOUND %s in block %d\n", __func__, mintMissing.GetValue().GetHex(), i);
+                    mintMissing.SetHeight(i);
+                    mintMissing.SetTxHash(mintBlockChain.GetTxHash());
+                    vMintsToUpdate.push_back(mintMissing);
+                }
+            }
+        }
+    }
+
+    //remove any missing mints that were found
+    for (CZerocoinMint mintMissing : vMissingMints) {
+        for (CZerocoinMint mintFound : vMintsToUpdate) {
+            if (mintMissing.GetValue() == mintFound.GetValue())
+                std::remove(vMissingMints.begin(), vMissingMints.end(), mintMissing);
+        }
+    }
+}
+
+/** zerocoin transaction checks */
 bool RecordMintToDB(PublicCoin publicZerocoin, const uint256& txHash)
 {
     //Check the pubCoinValue didn't already store in the zerocoin database. todo: pubcoin memory map?
