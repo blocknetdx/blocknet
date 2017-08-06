@@ -1188,6 +1188,14 @@ Adresse: %4
         <translation>UI valgmuligheder</translation>
     </message>
     <message>
+        <source>Choose data directory on startup (default: %u)</source>
+        <translation>Vælg datamappe ved start (Standard: %u)</translation>
+    </message>
+    <message>
+        <source>Show splash screen on startup (default: %u)</source>
+        <translation>Vis splashskærm ved opstart (standard: %u)</translation>
+    </message>
+    <message>
         <source>Set language, for example "de_DE" (default: system locale)</source>
         <translation>Vælg sprog. For eksempel "de_DE" (standard: Systemsprog)</translation>
     </message>
@@ -1542,6 +1550,10 @@ Kontroller adressen og prøv igen.</translation>
     <message>
         <source>Obfuscation Configuration</source>
         <translation>Tilsløringskonfiguration</translation>
+    </message>
+    <message>
+        <source>Obfuscation was successfully set to basic (%1 and 2 rounds). You can change this at any time by opening PIVX's configuration screen.</source>
+        <translation>Tilsløring blev sat til grundlæggende (%1 og 2 gennemløb) De kan ændre dette hvornår De vil ved at åbne PIVX konfigurationsbillede.</translation>
     </message>
     <message>
         <source>Obfuscation was successfully set to high (%1 and 8 rounds). You can change this at any time by opening PIVX's configuration screen.</source>
@@ -2172,7 +2184,11 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <source>N/A</source>
         <translation>Ikke tilgængelig</translation>
     </message>
-    </context>
+    <message>
+        <source>%1 ms</source>
+        <translation>%1 ms</translation>
+    </message>
+</context>
 <context>
     <name>QRImageWidget</name>
     <message>
@@ -2221,6 +2237,10 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <message>
         <source>Number of connections</source>
         <translation>Antal forbindelser</translation>
+    </message>
+    <message>
+        <source>&amp;Open</source>
+        <translation>&amp;Åben</translation>
     </message>
     <message>
         <source>Startup time</source>
@@ -3878,8 +3898,16 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>Aktiver swifttx, vis bekræftelser for låste transaktioner (bool, default: %s)</translation>
     </message>
     <message>
+        <source>Enable use of automated obfuscation for funds stored in this wallet (0-1, default: %u)</source>
+        <translation>Slå automatisk tilsløring til for alle midler i denne tegebog (0-1, default: %u)</translation>
+    </message>
+    <message>
         <source>Enter regression test mode, which uses a special chain in which blocks can be solved instantly.</source>
         <translation>Opgiv regression test mode, der bruger en særlig kæde, hvor blokke kan løses med det samme</translation>
+    </message>
+    <message>
+        <source>Error: Listening for incoming connections failed (listen returned error %s)</source>
+        <translation>Fejl! Der opstod en fejl i under lytning efter indkommende forbindelser (Listen returnerede fejl %s)</translation>
     </message>
     <message>
         <source>Error: Unsupported argument -socks found. Setting SOCKS version isn't possible anymore, only SOCKS5 proxies are supported.</source>
@@ -3899,11 +3927,11 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>Fees (in PIV/Kb) smaller than this are considered zero fee for relaying (default: %s)</source>
-        <translation>Gebyrer (in PIV/kb) lavere end dette betragtes som et nul-gebyr for at videresende (default:%s)</translation>
+        <translation>Gebyrer (in PIV/kb) lavere end dette betragtes som et nul-gebyr for at videresende (default: %s)</translation>
     </message>
     <message>
         <source>Fees (in PIV/Kb) smaller than this are considered zero fee for transaction creation (default: %s)</source>
-        <translation>Gebyrer (in PIV/kb) lavere end dette betragtes som et nul-gebyr for at oprette en transaktion (default:%s)</translation>
+        <translation>Gebyrer (in PIV/kb) lavere end dette betragtes som et nul-gebyr for at oprette en transaktion (default: %s)</translation>
     </message>
     <message>
         <source>Flush database activity from memory pool to disk log every &lt;n&gt; megabytes (default: %u)</source>
@@ -3919,7 +3947,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>If paytxfee is not set, include enough fee so transactions begin confirmation on average within n blocks (default: %u)</source>
-        <translation>Hvis der ikke fastsættes et betalingsTxgebyr, skal der inkluderes tilstrækkelige midler til gebyret så transaktionens bekræftelsesproces vil begynde indenfor n blokke (default %u)</translation>
+        <translation>Hvis der ikke fastsættes et betalingsTxgebyr, skal der inkluderes tilstrækkelige midler til gebyret så transaktionens bekræftelsesproces vil begynde indenfor n blokke (default: %u)</translation>
     </message>
     <message>
         <source>In this mode -genproclimit controls how many blocks are generated immediately.</source>
@@ -3935,15 +3963,19 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>Log transaction priority and fee per kB when mining blocks (default: %u)</source>
-        <translation>Indskriv transaktionsprioritet og gebyr pr kB i loggen når der mineres (default:%u)</translation>
+        <translation>Indskriv transaktionsprioritet og gebyr pr kB i loggen når der mineres (default: %u)</translation>
     </message>
     <message>
         <source>Maintain a full transaction index, used by the getrawtransaction rpc call (default: %u)</source>
-        <translation>Vedligehold et fuldgyldigt transaktionsindeks fra getrawtransaktion fra rpc kald (default %u)</translation>
+        <translation>Vedligehold et fuldgyldigt transaktionsindeks fra getrawtransaktion fra rpc kald (default: %u)</translation>
     </message>
     <message>
         <source>Maximum size of data in data carrier transactions we relay and mine (default: %u)</source>
-        <translation>Maksimal størrelse på data hos databærerens transaktioner der videresendes og mineres (default %u)</translation>
+        <translation>Maksimal størrelse på data hos databærerens transaktioner der videresendes og mineres (default: %u)</translation>
+    </message>
+    <message>
+        <source>Maximum total fees to use in a single wallet transaction, setting too low may abort large transactions (default: %s)</source>
+        <translation>Maksimal gebyrstørrelse der an bruges i en enkelt transaktion. Hvis denne er sat for lavt kan det medføre afvisning af store transaktioner (default: %s)</translation>
     </message>
     <message>
         <source>Number of seconds to keep misbehaving peers from reconnecting (default: %u)</source>
@@ -3956,6 +3988,10 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <message>
         <source>Output debugging information (default: %u, supplying &lt;category&gt; is optional)</source>
         <translation>Output debug information (default: %u, supplying &lt;category&gt; er valgfri)</translation>
+    </message>
+    <message>
+        <source>Provide liquidity to Obfuscation by infrequently mixing coins on a continual basis (0-100, default: %u, 1=very frequent, high fees, 100=very infrequent, low fees)</source>
+        <translation>Tilfør tilsløring likviditet  ved at tilføje flere PIVX løbende (0-100, default:%u, 1=meget hyppigt, høje gebyrer, 100=sjældent, lave gebyrer)</translation>
     </message>
     <message>
         <source>Query for peer addresses via DNS lookup, if low on addresses (default: 1 unless -connect)</source>
@@ -4323,7 +4359,7 @@ For eksempel: alertnotify=Echo %% | mail - s "PIVX ALARM!" e-mail@administrator.
     </message>
     <message>
         <source>Fee (in PIV/kB) to add to transactions you send (default: %s)</source>
-        <translation>Gebyr (i PIV/kB) som skal tilføjes transaktionen der sendes (default %s)</translation>
+        <translation>Gebyr (i PIV/kB) som skal tilføjes transaktionen der sendes (default: %s)</translation>
     </message>
     <message>
         <source>Finalizing transaction.</source>
@@ -4666,6 +4702,10 @@ For eksempel: alertnotify=Echo %% | mail - s "PIVX ALARM!" e-mail@administrator.
         <translation>Modtag og vis P2P netværksalarmer (default: %u)</translation>
     </message>
     <message>
+        <source>Relay and mine data carrier transactions (default: %u)</source>
+        <translation>Videresend og minér databærer transaktioner (default: %u)</translation>
+    </message>
+    <message>
         <source>Relay non-P2SH multisig (default: %u)</source>
         <translation>Videresend ikke-P2SH mulisig (default %u)</translation>
     </message>
@@ -4694,6 +4734,10 @@ For eksempel: alertnotify=Echo %% | mail - s "PIVX ALARM!" e-mail@administrator.
         <translation>Servercertfikatfil (default %s)</translation>
     </message>
     <message>
+        <source>Server private key (default: %s)</source>
+        <translation>Server private nøgle (default: %s)</translation>
+    </message>
+    <message>
         <source>Session not complete!</source>
         <translation>Sessionen blev ikke færdiggjort!</translation>
     </message>
@@ -4714,6 +4758,10 @@ For eksempel: alertnotify=Echo %% | mail - s "PIVX ALARM!" e-mail@administrator.
         <translation>Angiv hoved poolstørrelse til &lt;n&gt; (default %u)</translation>
     </message>
     <message>
+        <source>Set maximum block size in bytes (default: %d)</source>
+        <translation>Angiv maksimal blokstørrelse i bytes (default: %d)</translation>
+    </message>
+    <message>
         <source>Set minimum block size in bytes (default: %u)</source>
         <translation>Angiv minimums blokstørrelse i bytes (default: %u)</translation>
     </message>
@@ -4727,7 +4775,7 @@ For eksempel: alertnotify=Echo %% | mail - s "PIVX ALARM!" e-mail@administrator.
     </message>
     <message>
         <source>Sets the DB_PRIVATE flag in the wallet db environment (default: %u)</source>
-        <translation>Sætter DB_PRIVATE flag i tegnebogens databasemiljø (default:%u)</translation>
+        <translation>Sætter DB_PRIVATE flag i tegnebogens databasemiljø (default: %u)</translation>
     </message>
     <message>
         <source>Show all debugging options (usage: --help -help-debug)</source>
@@ -4936,6 +4984,10 @@ For eksempel: alertnotify=Echo %% | mail - s "PIVX ALARM!" e-mail@administrator.
     <message>
         <source>Verifying wallet...</source>
         <translation>Verificerer  tegnebog</translation>
+    </message>
+    <message>
+        <source>Wallet %s resides outside data directory %s</source>
+        <translation>Tegnbogen %s befinder sig udenfor datamappen %s</translation>
     </message>
     <message>
         <source>Wallet is locked.</source>

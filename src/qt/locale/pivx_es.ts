@@ -1998,6 +1998,10 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <source>No inputs detected</source>
         <translation>No se detectan entradas</translation>
     </message>
+    <message numerus="yes">
+        <source>%n Rounds</source>
+        <translation><numerusform>%n Ronda</numerusform><numerusform>%n Rondas</numerusform></translation>
+    </message>
     <message>
         <source>Not enough compatible inputs to anonymize &lt;span style='color:red;'&gt;%1&lt;/span&gt;,&lt;br&gt;will anonymize &lt;span style='color:red;'&gt;%2&lt;/span&gt; instead</source>
         <translation>No hay suficientes entradas compatibles para anonimizar &lt;span style='color:red;'&gt;%1&lt;/span&gt;,&lt;br&gt;anonimizará &lt;span style='color:red;'&gt;%2&lt;/span&gt; en su lugar
@@ -3414,6 +3418,10 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <source>Credit</source>
         <translation>Crédito</translation>
     </message>
+    <message numerus="yes">
+        <source>matures in %n more block(s)</source>
+        <translation><numerusform>madura en %n bloque más</numerusform><numerusform>madura en %n bloques más</numerusform></translation>
+    </message>
     <message>
         <source>not accepted</source>
         <translation>rechazado</translation>
@@ -4528,8 +4536,7 @@ por ejemplo: alertnotify=echo %%s | mail -s "PIVX Alert" admin@foo.com
     </message>
     <message>
         <source>&lt;category&gt; can be:</source>
-        <translation>&lt;category&gt;puede ser: 
-</translation>
+        <translation>&lt;category&gt;puede ser: </translation>
     </message>
     <message>
         <source>Attempt to force blockchain corruption recovery</source>
@@ -4808,6 +4815,10 @@ por ejemplo: alertnotify=echo %%s | mail -s "PIVX Alert" admin@foo.com
         <translation>Ejecutar en segundo plano como demonio y aceptar comandos</translation>
     </message>
     <message>
+        <source>Send transactions as zero-fee transactions if possible (default: %u)</source>
+        <translation>Enviar transacciones como transacciones cero-comisión si es posible (predeterminado: %u)</translation>
+    </message>
+    <message>
         <source>Server certificate file (default: %s)</source>
         <translation>Archivo certificado del servidor (predeterminado: %s)</translation>
     </message>
@@ -4834,6 +4845,10 @@ por ejemplo: alertnotify=echo %%s | mail -s "PIVX Alert" admin@foo.com
     <message>
         <source>Set key pool size to &lt;n&gt; (default: %u)</source>
         <translation>Definir el tamaño del pool de llaves a &lt;n&gt; (predeterminado: %u)</translation>
+    </message>
+    <message>
+        <source>Set maximum block size in bytes (default: %d)</source>
+        <translation>Ajustar el tamaño máximo de bloque en bytes (predeterminado: %d)</translation>
     </message>
     <message>
         <source>Set minimum block size in bytes (default: %u)</source>

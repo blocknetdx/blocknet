@@ -578,6 +578,10 @@
         <translation>&amp;Instellingen</translation>
     </message>
     <message>
+        <source>&amp;Tools</source>
+        <translation>&amp;Gereedschap</translation>
+    </message>
+    <message>
         <source>&amp;Help</source>
         <translation>&amp;Help</translation>
     </message>

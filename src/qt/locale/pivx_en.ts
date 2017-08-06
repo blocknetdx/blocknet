@@ -175,7 +175,7 @@
         <translation>For anonymization and staking only</translation>
     </message>
     <message>
-        <location filename="../askpassphrasedialog.cpp" line="+42"/>
+        <location filename="../askpassphrasedialog.cpp" line="+44"/>
         <source>Enter the new passphrase to the wallet.&lt;br/&gt;Please use a passphrase of &lt;b&gt;ten or more random characters&lt;/b&gt;, or &lt;b&gt;eight or more words&lt;/b&gt;.</source>
         <translation>Enter the new passphrase to the wallet.&lt;br/&gt;Please use a passphrase of &lt;b&gt;ten or more random characters&lt;/b&gt;, or &lt;b&gt;eight or more words&lt;/b&gt;.</translation>
     </message>
@@ -215,7 +215,7 @@
         <translation>Enter the old and new passphrase to the wallet.</translation>
     </message>
     <message>
-        <location line="+44"/>
+        <location line="+41"/>
         <source>Confirm wallet encryption</source>
         <translation>Confirm wallet encryption</translation>
     </message>
@@ -1615,7 +1615,7 @@ Address: %4
         <translation>Error: Specified data directory &quot;%1&quot; cannot be created.</translation>
     </message>
     <message>
-        <location line="+23"/>
+        <location line="+24"/>
         <source>Error</source>
         <translation>Error</translation>
     </message>
@@ -2449,7 +2449,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
     </message>
     <message>
         <location line="+28"/>
-        <location filename="../overviewpage.cpp" line="+479"/>
+        <location filename="../overviewpage.cpp" line="+478"/>
         <location line="+11"/>
         <location line="+10"/>
         <location line="+12"/>
@@ -2507,7 +2507,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
         <translation>Reset</translation>
     </message>
     <message>
-        <location filename="../overviewpage.cpp" line="-382"/>
+        <location filename="../overviewpage.cpp" line="-381"/>
         <location line="+1"/>
         <location line="+1"/>
         <source>out of sync</source>
@@ -2517,12 +2517,12 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
         <location line="+6"/>
         <location line="+1"/>
         <location line="+1"/>
-        <location line="+294"/>
+        <location line="+293"/>
         <source>Disabled</source>
         <translation>Disabled</translation>
     </message>
     <message>
-        <location line="-118"/>
+        <location line="-117"/>
         <location line="+6"/>
         <source>No inputs detected</source>
         <translation>No inputs detected</translation>
@@ -2566,7 +2566,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
         </translation>
     </message>
     <message>
-        <location line="+45"/>
+        <location line="+44"/>
         <source>Last Obfuscation message:
 </source>
         <translation type="unfinished"></translation>
@@ -2592,30 +2592,30 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-161"/>
+        <location line="-160"/>
         <source>Found enough compatible inputs to anonymize %1</source>
         <translation>Found enough compatible inputs to anonymize %1</translation>
     </message>
     <message>
         <location line="-208"/>
-        <location line="+292"/>
+        <location line="+291"/>
         <location line="+89"/>
         <source>Start Obfuscation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-379"/>
-        <location line="+382"/>
+        <location line="-378"/>
+        <location line="+381"/>
         <source>Stop Obfuscation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-122"/>
+        <location line="-121"/>
         <source>Mixed</source>
         <translation>Mixed</translation>
     </message>
     <message>
-        <location line="+42"/>
+        <location line="+41"/>
         <source>Enabled</source>
         <translation>Enabled</translation>
     </message>
@@ -2801,6 +2801,11 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
         <location line="+15"/>
         <source>NETWORK</source>
         <translation>NETWORK</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>BLOOM</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+3"/>
@@ -3014,8 +3019,8 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
     </message>
     <message>
         <location line="+41"/>
-        <location filename="../rpcconsole.cpp" line="+260"/>
-        <location line="+439"/>
+        <location filename="../rpcconsole.cpp" line="+261"/>
+        <location line="+460"/>
         <source>Select a peer to view detailed information.</source>
         <translation>Select a peer to view detailed information.</translation>
     </message>
@@ -3462,10 +3467,9 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
     <name>SendCoinsDialog</name>
     <message>
         <location filename="../forms/sendcoinsdialog.ui" line="+14"/>
-        <location filename="../sendcoinsdialog.cpp" line="+233"/>
+        <location filename="../sendcoinsdialog.cpp" line="+234"/>
         <location line="+25"/>
-        <location line="+383"/>
-        <location line="+12"/>
+        <location line="+413"/>
         <source>Send Coins</source>
         <translation>Send Coins</translation>
     </message>
@@ -3706,7 +3710,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
         <translation>Balance:</translation>
     </message>
     <message>
-        <location filename="../sendcoinsdialog.cpp" line="-566"/>
+        <location filename="../sendcoinsdialog.cpp" line="-584"/>
         <source>Copy quantity</source>
         <translation>Copy quantity</translation>
     </message>
@@ -3769,12 +3773,12 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
         <translation>anonymous funds</translation>
     </message>
     <message>
-        <location line="+614"/>
+        <location line="+632"/>
         <source>Warning: Invalid PIVX address</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-605"/>
+        <location line="-623"/>
         <source>any available funds (not recommended)</source>
         <translation>any available funds (not recommended)</translation>
     </message>
@@ -3812,12 +3816,12 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
         <translation>Confirm send coins</translation>
     </message>
     <message>
-        <location line="+227"/>
+        <location line="+233"/>
         <source>A fee %1 times higher than %2 per kB is considered an insanely high fee.</source>
         <translation>A fee %1 times higher than %2 per kB is considered an insanely high fee.</translation>
     </message>
     <message numerus="yes">
-        <location line="+102"/>
+        <location line="+114"/>
         <source>Estimated to begin confirmation within %n block(s).</source>
         <translation>
             <numerusform>Estimated to begin confirmation within %n block.</numerusform>
@@ -3825,12 +3829,12 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
         </translation>
     </message>
     <message>
-        <location line="-129"/>
+        <location line="-145"/>
         <source>The recipient address is not valid, please recheck.</source>
         <translation>The recipient address is not valid, please recheck.</translation>
     </message>
     <message>
-        <location line="-341"/>
+        <location line="-343"/>
         <source>(obfuscation requires this amount to be rounded up to the nearest %1).</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3845,7 +3849,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
         <translation>&lt;b&gt;(%1 of %2 entries displayed)&lt;/b&gt;</translation>
     </message>
     <message>
-        <location line="+206"/>
+        <location line="+208"/>
         <source>The amount to pay must be larger than 0.</source>
         <translation>The amount to pay must be larger than 0.</translation>
     </message>
@@ -3875,12 +3879,17 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
         <translation>The transaction was rejected! This might happen if some of the coins in your wallet were already spent, such as if you used a copy of wallet.dat and coins were spent in the copy but not marked as spent here.</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+8"/>
         <source>Error: The wallet was unlocked only to anonymize coins.</source>
         <translation>Error: The wallet was unlocked only to anonymize coins.</translation>
     </message>
     <message>
-        <location line="+87"/>
+        <location line="+16"/>
+        <source>Error: The wallet was unlocked only to anonymize coins. Unlock canceled.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+84"/>
         <source>Pay only the minimum fee of %1</source>
         <translation>Pay only the minimum fee of %1</translation>
     </message>
@@ -4948,7 +4957,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</source>
         <translation>Selected amount:</translation>
     </message>
     <message>
-        <location line="+237"/>
+        <location line="+236"/>
         <source>Backup Wallet</source>
         <translation>Backup Wallet</translation>
     </message>

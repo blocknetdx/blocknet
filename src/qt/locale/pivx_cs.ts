@@ -1023,6 +1023,10 @@ MultiSend: %1</translation>
         <translation>Tento text zčervená, pokud je priorita menší než "střední".</translation>
     </message>
     <message>
+        <source>This label turns red, if any recipient receives an amount smaller than %1.</source>
+        <translation>Tento text zčervená, pokud je hodnota pro některého z příjemců menší než %1.</translation>
+    </message>
+    <message>
         <source>(no label)</source>
         <translation>(bez popisku)</translation>
     </message>

@@ -1168,6 +1168,10 @@ Proszę sprawdzić adres i spróbować ponownie</translation>
         <translation>Opcje</translation>
     </message>
     <message>
+        <source>&amp;Main</source>
+        <translation>&amp;Główne</translation>
+    </message>
+    <message>
         <source>Size of &amp;database cache</source>
         <translation>Rozmiar &amp;bazy danych cache</translation>
     </message>
