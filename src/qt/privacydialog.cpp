@@ -8,9 +8,11 @@
 #include "addressbookpage.h"
 #include "addresstablemodel.h"
 #include "bitcoinunits.h"
+#include "coincontroldialog.h"
 #include "libzerocoin/Denominations.h"
 #include "optionsmodel.h"
 #include "walletmodel.h"
+#include "coincontrol.h"
 
 #include <QClipboard>
 
@@ -21,28 +23,33 @@ PrivacyDialog::PrivacyDialog(QWidget* parent) : QDialog(parent),
 {
     nDisplayUnit = 0; // just make sure it's not unitialized
     ui->setupUi(this);
-    ui->labelzPIVSyncStatus->setText("(" + tr("out of sync") + ")");
-    ui->zPIVpayAmount->setValidator( new QIntValidator(0, 999999, this) ); // "Spending 999999 zPIV ought to be enough for anybody." - Bill Gates, 2017
+
+    // "Spending 999999 zPIV ought to be enough for anybody." - Bill Gates, 2017
+    ui->zPIVpayAmount->setValidator( new QIntValidator(0, 999999, this) );
     ui->labelMintAmountValue->setValidator( new QIntValidator(0, 999999, this) );
+
+    // Default texts for (mini-) coincontrol
+    ui->labelCoinControlQuantity->setText (tr("Coins automatically selected"));
+    ui->labelCoinControlAmount->setText (tr("Coins automatically selected"));
+    ui->labelzPIVSyncStatus->setText("(" + tr("out of sync") + ")");
+
+    // Sunken frame for minting messages
     ui->labelMintStatus->setFrameStyle(QFrame::StyledPanel | QFrame::Sunken);
     ui->labelMintStatus->setLineWidth (2);
     ui->labelMintStatus->setMidLineWidth (2);
-    
-//    if (fMasterNode) {
-//        ui->pushButtonStartMixing->setText("(" + tr("Disabled") + ")");
-//        ui->pushButtonRetryMixing->setText("(" + tr("Disabled") + ")");
-//        ui->pushButtonResetMixing->setText("(" + tr("Disabled") + ")");
-//    } else {
-//        if (!fEnableObfuscation) {
-//            ui->pushButtonStartMixing->setText(tr("Start"));
-//        } else {
-//            ui->pushButtonStartMixing->setText(tr("Stop"));
-//        }
-//        timer = new QTimer(this);
-//        connect(timer, SIGNAL(timeout()), this, SLOT(obfuScationStatus()));
-//        timer->start(1000);
-//    }
-    // start with displaying the "out of sync" warnings
+
+    // Coin Control signals
+    connect(ui->pushButtonCoinControl, SIGNAL(clicked()), this, SLOT(coinControlButtonClicked()));
+
+    // Coin Control: clipboard actions
+    QAction* clipboardQuantityAction = new QAction(tr("Copy quantity"), this);
+    QAction* clipboardAmountAction = new QAction(tr("Copy amount"), this);
+    connect(clipboardQuantityAction, SIGNAL(triggered()), this, SLOT(coinControlClipboardQuantity()));
+    connect(clipboardAmountAction, SIGNAL(triggered()), this, SLOT(coinControlClipboardAmount()));
+    ui->labelCoinControlQuantity->addAction(clipboardQuantityAction);
+    ui->labelCoinControlAmount->addAction(clipboardAmountAction);
+
+    // Start with displaying the "out of sync" warnings
     showOutOfSyncWarning(true);
 }
 
@@ -90,7 +97,7 @@ void PrivacyDialog::on_pushButtonMintzPIV_clicked()
         return;
 
     // Reset message text
-    ui->labelMintStatus->setText(tr("Mint Status: okay"));
+    ui->labelMintStatus->setText(tr("Mint Status: Okay"));
     
     // Wallet must be unlocked for minting
     if (pwalletMain->IsLocked()){
@@ -107,6 +114,9 @@ void PrivacyDialog::on_pushButtonMintzPIV_clicked()
         return;
     }
 
+    ui->labelMintStatus->setText(tr("Minting ") + ui->labelMintAmountValue->text() + " zPIV...");
+    ui->labelMintStatus->repaint ();
+    
     int64_t nTime = GetTimeMillis();
     
     CWalletTx wtx;
@@ -115,8 +125,7 @@ void PrivacyDialog::on_pushButtonMintzPIV_clicked()
     
     // Return if something went wrong during minting
     if (strError != ""){
-        QString strErrorMessage = tr("Error: ") + QString::fromStdString(strError);
-        ui->labelMintStatus->setText(strErrorMessage);
+        ui->labelMintStatus->setText(QString::fromStdString(strError));
         return;
     }
 
@@ -129,8 +138,11 @@ void PrivacyDialog::on_pushButtonMintzPIV_clicked()
     ui->labelMintStatus->setText(strStatsHeader);
 
     for (CZerocoinMint mint : vMints) {
+        boost::this_thread::sleep(boost::posix_time::milliseconds(100));
         strStats = strStats + QString::number(mint.GetDenomination()) + " ";
         ui->labelMintStatus->setText(strStatsHeader + strStats);
+        ui->labelMintStatus->repaint ();
+        
     }
 
     // Available balance isn't always updated, so force it.
@@ -169,6 +181,45 @@ void PrivacyDialog::on_pushButtonSpendzPIV_clicked()
 void PrivacyDialog::on_payTo_textChanged(const QString& address)
 {
     updateLabel(address);
+}
+
+// Coin Control: copy label "Quantity" to clipboard
+void PrivacyDialog::coinControlClipboardQuantity()
+{
+    GUIUtil::setClipboard(ui->labelCoinControlQuantity->text());
+}
+
+// Coin Control: copy label "Amount" to clipboard
+void PrivacyDialog::coinControlClipboardAmount()
+{
+    GUIUtil::setClipboard(ui->labelCoinControlAmount->text().left(ui->labelCoinControlAmount->text().indexOf(" ")));
+}
+
+// Coin Control: button inputs -> show actual coin control dialog
+void PrivacyDialog::coinControlButtonClicked()
+{
+    CoinControlDialog dlg;
+    dlg.setModel(walletModel);
+    dlg.exec();
+    coinControlUpdateLabels();
+}
+
+// Coin Control: update labels
+void PrivacyDialog::coinControlUpdateLabels()
+{
+    if (!walletModel || !walletModel->getOptionsModel() || !walletModel->getOptionsModel()->getCoinControlFeatures())
+        return;
+
+     // set pay amounts
+    CoinControlDialog::payAmounts.clear();
+
+    if (CoinControlDialog::coinControl->HasSelected()) {
+        // Actual coin control calculation
+        CoinControlDialog::updateLabels(walletModel, this);
+    } else {
+        ui->labelCoinControlQuantity->setText (tr("Coins automatically selected"));
+        ui->labelCoinControlAmount->setText (tr("Coins automatically selected"));
+    }
 }
 
 bool PrivacyDialog::updateLabel(const QString& address)

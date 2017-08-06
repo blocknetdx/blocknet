@@ -107,7 +107,7 @@
              <string notr="true"/>
             </property>
             <property name="text">
-             <string>Inputs...</string>
+             <string>Open Coin Control...</string>
             </property>
             <property name="autoDefault">
              <bool>false</bool>
@@ -117,7 +117,7 @@
           <item>
            <widget class="QLabel" name="labelCoinControlAutomaticallySelected">
             <property name="text">
-             <string>automatically selected</string>
+             <string>Coins automatically selected</string>
             </property>
             <property name="margin">
              <number>5</number>
@@ -1387,7 +1387,7 @@
        <item>
         <widget class="QCheckBox" name="checkzPIV">
          <property name="text">
-          <string>zPIV</string>
+          <string>Anonymized PIV</string>
          </property>
         </widget>
        </item>

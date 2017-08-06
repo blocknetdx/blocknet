@@ -713,10 +713,10 @@ border-radius:3px;
 color:#ffffff;
 font-size:12px;
 font-weight:normal;
-// padding-left:25px;
-// padding-right:25px;
-// padding-top:5px;
-// padding-bottom:5px;
+padding-left:5px;
+padding-right:5px;
+padding-top:5px;
+padding-bottom:5px;
 }
 
 QWidget#PrivacyDialog QPushButton:hover {

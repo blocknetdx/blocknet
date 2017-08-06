@@ -69,11 +69,23 @@ private:
     bool updateLabel(const QString& address);
 
 private slots:
-//    void toggleObfuscation();
-//    void obfuscationAuto();
-//    void obfuscationReset();
     void on_payTo_textChanged(const QString& address);
     void on_addressBookButton_clicked();
+//    void coinControlFeatureChanged(bool);
+    void coinControlButtonClicked();
+//    void coinControlChangeChecked(int);
+//    void coinControlChangeEdited(const QString&);
+    void coinControlUpdateLabels();
+
+    void coinControlClipboardQuantity();
+    void coinControlClipboardAmount();
+//    void coinControlClipboardFee();
+//    void coinControlClipboardAfterFee();
+//    void coinControlClipboardBytes();
+//    void coinControlClipboardPriority();
+//    void coinControlClipboardLowOutput();
+//    void coinControlClipboardChange();
+
     void on_pushButtonMintzPIV_clicked();
     void on_pushButtonMintReset_clicked();
     void on_pushButtonSpendzPIV_clicked();
