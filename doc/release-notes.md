@@ -1,6 +1,6 @@
 (note: this is a temporary file, to be added-to by anybody, and moved to release-notes at release time)
 
-PIVX Core version *version* is now available from:
+PIVX Core version 2.3.0 is now available from:
 
   <https://github.com/pivx-project/pivx/releases>
 
@@ -131,7 +131,7 @@ SPV Client Support
 
 PIVX Core now enables bloom filters by default to support SPV clients like mobile wallets. This feature can be disabled by using the `-peerbloomfilters` option on startup.
 
-*version* Change log
+2.3.0 Change log
 =================
 
 Detailed release notes follow. This overview includes changes that affect
@@ -140,24 +140,56 @@ the code changes and accompanying discussion, both the pull request and
 git merge commit are mentioned.
 
 ### RPC and other APIs
+- #179 `a64fa3d` [RPC] Allow infinite unlock (Mrs-X)
+- #183 `dc77b86` [RPC] Add proposal name to removal log (Mrs-X)
+- #189 `6dd8146` [RPC] Add missing 'vote-alias' implementation (Mrs-X)
+- #195 `aee05fe` [ZMQ] ZMQ integration for PIVX (Mrs-X)
+- #211 `b8c110b` [RPC] Refactor & JSONify results from masternode command(s) (Fuzzbawls)
+- #201 `f0e87b1` [RPC] Add active/incative flag to getstakingstatus RPC call (Mrs-X)
 
+###Configuration and command-line options
+- #180 `16b8601` [Wallet] Add parameter interaction between -disablewallet and -staking (Aaron Miller)
+- #208 `5f494c4` [Qt] Fix segfault when running with `-help` (Fuzzbawls)
+- #193 `ac7590b` [Output] Reformat help messages (Fuzzbawls)
+- #230 `aa47fa4` [Output] Update default value for -peerbloomfilters in help (Fuzzbawls)
 
-### Block and Transaction Handling
-
+### Wallet
+- #192 `283cf3b` [Trivial] Pre-release warning message fixed. (Mrs-X)
+- #169 `05c9a75` Add IsNull and SetNull interfaces to uint256 (Jon Spock)
+- #198 `d45c869` Update EXT_COIN_TYPE according to BIP44 (Jon Spock)
 
 ### P2P Protocol and Network Code
-
+- #219 `d2c3fdf` [P2P] Enable Bloom filter and add new nService for light clients. (furszy)
+- #234 `ed99e7b` [Consensus/Net] Ignore newly activated MNs in ranking/seesaw (Mrs-X Fuzzbawls presstab)
 
 ### GUI
+- #200 `bb1f255` [UI] Improved unlock usability (Mrs-X)
+- #207 `7a41f46` [Qt] Adjust size of splash screen image. (Fuzzbawls)
+- #206 `9c675ee` [Qt] Remove the All Masternodes UI tab/list (Fuzzbawls)
+- #220 `b80bc29` [Qt] Add "NODE_BLOOM" and "NODE_BLOOM_WITHOUT_MN" to guiutil (Fuzzbawls)
+- #225 `02209ec` [Qt] Add autocomplete to Qt client's debug console (Fuzzbawls)
+- #233 `2921a4d` [Qt] Enable support for Qt's HighDpiScaling (Fuzzbawls)
 
+###Tests and QA
+- #191 `3a778c3` [Tests] Fix the unit test suite for use with PIVX (Fuzzbawls)
+- #122 `7d135a1` [Utils] updated netmagic/port for linearize script (Satoshi Ninja)
 
 ### Miscellaneous
-
+- #231 `af0aa68` [Utils] Fix update-translations.py to allow % end of string (Fuzzbawls)
+- #175 `8727f1c` [Docs] Reformat main README.md (Fuzzbawls)
+- #213 `ddd8994` [Trivial] Reduce debug.log spam for masternode messages (Fuzzbawls)
 
 Credits
 =======
 
 Thanks to everyone who directly contributed to this release:
-
+- Aaron Miller
+- Fuzzbawls
+- Mrs-X
+- PIVX
+- Satoshi Ninja
+- Jon Spock
+- furszy
+- presstab
 
 As well as everyone that helped translating on [Transifex](https://www.transifex.com/projects/p/pivx-project-translations/).
