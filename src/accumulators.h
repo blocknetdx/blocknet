@@ -23,6 +23,7 @@ private:
     std::map<libzerocoin::CoinDenomination, std::unique_ptr<libzerocoin::Accumulator> > mapAccumulators;
     std::map<CBigNum, uint256> mapSerials;
     std::map<uint32_t, CBigNum> mapAccumulatorValues;
+    std::list<uint256> listAccCheckpointsNoDB;
 
     CAccumulators() { Setup(); }
     void Setup();
@@ -40,7 +41,7 @@ public:
     //checksum/checkpoint
     void DatabaseChecksums(const uint256& nCheckpoint);
     void AddAccumulatorChecksum(const uint32_t nChecksum, const CBigNum &bnValue, bool fMemoryOnly = false);
-    void LoadAccumulatorValuesFromDB(const uint256 nCheckpoint);
+    bool LoadAccumulatorValuesFromDB(const uint256 nCheckpoint);
     bool EraseAccumulatorValues(const uint256& nCheckpointErase, const uint256& nCheckpointPrevious);
     uint32_t GetChecksum(const CBigNum &bnValue);
     uint32_t GetChecksum(const libzerocoin::Accumulator &accumulator);
@@ -49,6 +50,8 @@ public:
     CBigNum GetAccumulatorValueFromChecksum(const uint32_t& nChecksum);
     CBigNum GetAccumulatorValueFromCheckpoint(const uint256& nCheckpoint, libzerocoin::CoinDenomination denomination);
     bool ResetToCheckpoint(const uint256& nCheckpoint);
+    std::list<uint256> GetAccCheckpointsNoDB() { return listAccCheckpointsNoDB; };
+    void ClearAccCheckpointsNoDB() { listAccCheckpointsNoDB.clear(); }
 };
 
 uint32_t ParseChecksum(uint256 nChecksum, libzerocoin::CoinDenomination denomination);

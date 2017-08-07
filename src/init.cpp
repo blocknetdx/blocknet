@@ -36,6 +36,8 @@
 #include "db.h"
 #include "wallet.h"
 #include "walletdb.h"
+#include "accumulators.h"
+
 #endif
 
 #include <fstream>
@@ -1261,6 +1263,48 @@ bool AppInit2(boost::thread_group& threadGroup)
                     strLoadError = _("You need to rebuild the database using -reindex to change -txindex");
                     break;
                 }
+
+                list<uint256> listAccCheckpointsNoDB = CAccumulators::getInstance().GetAccCheckpointsNoDB();
+                // PIVX: recalculate Accumulator Checkpoints that failed to database properly
+                if (listAccCheckpointsNoDB.size()) {
+                    //search the chain to see when zerocoin started
+                    int nZerocoinStart = 0;
+                    CBlockIndex* pindex = chainActive.Tip();
+                    while (pindex->pprev) {
+                        if (pindex->GetBlockHeader().nVersion >= Params().Zerocoin_HeaderVersion())
+                            nZerocoinStart = pindex->nHeight;
+                        else if (nZerocoinStart)
+                            break;
+                    }
+
+                    // find each checkpoint that is missing
+                    while (!listAccCheckpointsNoDB.empty()) {
+                        uint256 nCheckpoint = listAccCheckpointsNoDB.front();
+                        listAccCheckpointsNoDB.pop_front();
+
+                        // find checkpoint by iterating through the blockchain beginning with the first zerocoin block
+                        bool found;
+                        pindex = chainActive[nZerocoinStart];
+                        while (!found) {
+                            if (pindex->nAccumulatorCheckpoint == nCheckpoint) {
+                                uint256 nCheckpointCalculated = 0;
+                                CAccumulators::getInstance().GetCheckpoint(pindex->nHeight, nCheckpointCalculated);
+
+                                //assert that the calculated checkpoint is what is in the index.
+                                if (nCheckpointCalculated != nCheckpoint)
+                                    return InitError(_("Calculated accumulator checkpoint is not what is recorded by block index"));
+                                found = true;
+                            }
+
+                            // if we have iterated to the end of the blockchain, then this checkpoint does not even exist
+                            if (pindex->nHeight + 1 <= chainActive.Height())
+                                pindex = chainActive[pindex->nHeight + 1];
+                            else
+                                break;
+                        }
+                    }
+                }
+                CAccumulators::getInstance().ClearAccCheckpointsNoDB();
 
                 uiInterface.InitMessage(_("Verifying blocks..."));
                 if (!CVerifyDB().VerifyDB(pcoinsdbview, GetArg("-checklevel", 4), // Zerocoin must check at level 4

@@ -73,16 +73,21 @@ void CAccumulators::AddAccumulatorChecksum(const uint32_t nChecksum, const CBigN
     LogPrint("zero", "%s map val %s\n", __func__, mapAccumulatorValues[nChecksum].GetHex());
 }
 
-void CAccumulators::LoadAccumulatorValuesFromDB(const uint256 nCheckpoint)
+bool CAccumulators::LoadAccumulatorValuesFromDB(const uint256 nCheckpoint)
 {
     for (auto& denomination : zerocoinDenomList) {
         uint32_t nChecksum = ParseChecksum(nCheckpoint, denomination);
 
         //if read is not successful then we are not in a state to verify zerocoin transactions
         CBigNum bnValue;
-        assert(zerocoinDB->ReadAccumulatorValue(nChecksum, bnValue));
+        if (!zerocoinDB->ReadAccumulatorValue(nChecksum, bnValue)) {
+            LogPrintf("%s : Missing databased value for checksum %d\n", __func__, nChecksum);
+            listAccCheckpointsNoDB.push_back(nCheckpoint);
+            return false;
+        }
         mapAccumulatorValues.insert(make_pair(nChecksum, bnValue));
     }
+    return true;
 }
 
 bool CAccumulators::EraseAccumulatorValues(const uint256& nCheckpointErase, const uint256& nCheckpointPrevious)
