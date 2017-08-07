@@ -6,19 +6,13 @@
 
 #include "eccryptoverify.h"
 
-#ifdef USE_SECP256K1
 #include <secp256k1.h>
 #include <secp256k1_recovery.h>
-#else
-#include "ecwrapper.h"
-#endif
 
 namespace
 {
-#ifdef USE_SECP256K1
 /* Global secp256k1_context object used for verification. */
 secp256k1_context* secp256k1_context_verify = NULL;
-#endif
 } // namespace
 
 /** This function is taken from the libsecp256k1 distribution and implements
@@ -32,7 +26,6 @@ secp256k1_context* secp256k1_context_verify = NULL;
  *  violations present in the blockchain before that point.
  */
 
-#ifdef USE_SECP256K1
 static int ecdsa_signature_parse_der_lax(const secp256k1_context* ctx, secp256k1_ecdsa_signature* sig, const unsigned char *input, size_t inputlen) {
     size_t rpos, rlen, spos, slen;
     size_t pos = 0;
@@ -173,13 +166,11 @@ static int ecdsa_signature_parse_der_lax(const secp256k1_context* ctx, secp256k1
     }
     return 1;
 }
-#endif
 
 bool CPubKey::Verify(const uint256& hash, const std::vector<unsigned char>& vchSig) const
 {
     if (!IsValid())
         return false;
-#ifdef USE_SECP256K1
     secp256k1_pubkey pubkey;
     secp256k1_ecdsa_signature sig;
     if (!secp256k1_ec_pubkey_parse(secp256k1_context_verify, &pubkey, &(*this)[0], size())) {
@@ -192,14 +183,6 @@ bool CPubKey::Verify(const uint256& hash, const std::vector<unsigned char>& vchS
      * not historically been enforced in Bitcoin, so normalize them first. */
     secp256k1_ecdsa_signature_normalize(secp256k1_context_verify, &sig, &sig);
     return secp256k1_ecdsa_verify(secp256k1_context_verify, &sig, hash.begin(), &pubkey);
-#else
-    CECKey key;
-    if (!key.SetPubKey(begin(), size()))
-        return false;
-    if (!key.Verify(hash, vchSig))
-        return false;
-#endif
-    return true;
 }
 
 bool CPubKey::RecoverCompact(const uint256& hash, const std::vector<unsigned char>& vchSig)
@@ -208,7 +191,6 @@ bool CPubKey::RecoverCompact(const uint256& hash, const std::vector<unsigned cha
         return false;
     int recid = (vchSig[0] - 27) & 3;
     bool fComp = ((vchSig[0] - 27) & 4) != 0;
-#ifdef USE_SECP256K1
     secp256k1_pubkey pubkey;
     secp256k1_ecdsa_recoverable_signature sig;
     if (!secp256k1_ecdsa_recoverable_signature_parse_compact(secp256k1_context_verify, &sig, &vchSig[1], recid)) {
@@ -221,15 +203,6 @@ bool CPubKey::RecoverCompact(const uint256& hash, const std::vector<unsigned cha
     size_t publen = 65;
     secp256k1_ec_pubkey_serialize(secp256k1_context_verify, pub, &publen, &pubkey, fComp ? SECP256K1_EC_COMPRESSED : SECP256K1_EC_UNCOMPRESSED);
     Set(pub, pub + publen);
-
-#else
-    CECKey key;
-    if (!key.Recover(hash, &vchSig[1], recid))
-        return false;
-    std::vector<unsigned char> pubkey;
-    key.GetPubKey(pubkey, fComp);
-    Set(pubkey.begin(), pubkey.end());
-#endif
     return true;
 }
 
@@ -237,22 +210,14 @@ bool CPubKey::IsFullyValid() const
 {
     if (!IsValid())
         return false;
-#ifdef USE_SECP256K1
     secp256k1_pubkey pubkey;
     return secp256k1_ec_pubkey_parse(secp256k1_context_verify, &pubkey, &(*this)[0], size());
-#else
-    CECKey key;
-    if (!key.SetPubKey(begin(), size()))
-        return false;
-#endif
-    return true;
 }
 
 bool CPubKey::Decompress()
 {
     if (!IsValid())
         return false;
-#ifdef USE_SECP256K1
     secp256k1_pubkey pubkey;
     if (!secp256k1_ec_pubkey_parse(secp256k1_context_verify, &pubkey, &(*this)[0], size())) {
         return false;
@@ -261,14 +226,6 @@ bool CPubKey::Decompress()
     size_t publen = 65;
     secp256k1_ec_pubkey_serialize(secp256k1_context_verify, pub, &publen, &pubkey, SECP256K1_EC_UNCOMPRESSED);
     Set(pub, pub + publen);
-#else
-    CECKey key;
-    if (!key.SetPubKey(begin(), size()))
-        return false;
-    std::vector<unsigned char> pubkey;
-    key.GetPubKey(pubkey, false);
-    Set(pubkey.begin(), pubkey.end());
-#endif
     return true;
 }
 
@@ -280,7 +237,6 @@ bool CPubKey::Derive(CPubKey& pubkeyChild, ChainCode & ccChild, unsigned int nCh
     unsigned char out[64];
     BIP32Hash(cc, nChild, *begin(), begin() + 1, out);
     memcpy(ccChild.begin(), out+32, 32);
-#ifdef USE_SECP256K1
     secp256k1_pubkey pubkey;
     if (!secp256k1_ec_pubkey_parse(secp256k1_context_verify, &pubkey, &(*this)[0], size())) {
         return false;
@@ -293,15 +249,6 @@ bool CPubKey::Derive(CPubKey& pubkeyChild, ChainCode & ccChild, unsigned int nCh
     secp256k1_ec_pubkey_serialize(secp256k1_context_verify, pub, &publen, &pubkey, SECP256K1_EC_COMPRESSED);
     pubkeyChild.Set(pub, pub + publen);
     return true;
-#else
-    CECKey key;
-    bool ret = key.SetPubKey(begin(), size());
-    ret &= key.TweakPublic(out);
-    std::vector<unsigned char> pubkey;
-    key.GetPubKey(pubkey, true);
-    pubkeyChild.Set(pubkey.begin(), pubkey.end());
-    return ret;
-#endif
 }
 
 void CExtPubKey::Encode(unsigned char code[BIP32_EXTKEY_SIZE]) const
@@ -338,11 +285,9 @@ bool CExtPubKey::Derive(CExtPubKey& out, unsigned int _nChild) const
 ECCVerifyHandle::ECCVerifyHandle()
 {
     if (refcount == 0) {
-#ifdef USE_SECP256K1
         assert(secp256k1_context_verify == NULL);
         secp256k1_context_verify = secp256k1_context_create(SECP256K1_CONTEXT_VERIFY);
         assert(secp256k1_context_verify != NULL);
-#endif
     }
     refcount++;
 }
@@ -351,10 +296,8 @@ ECCVerifyHandle::~ECCVerifyHandle()
 {
     refcount--;
     if (refcount == 0) {
-#ifdef USE_SECP256K1
         assert(secp256k1_context_verify != NULL);
         secp256k1_context_destroy(secp256k1_context_verify);
         secp256k1_context_verify = NULL;
-#endif
     }
 }
