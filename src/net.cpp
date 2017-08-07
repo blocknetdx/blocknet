@@ -448,6 +448,18 @@ void CNode::CloseSocketDisconnect()
         vRecvMsg.clear();
 }
 
+bool CNode::DisconnectOldProtocol(int nVersionRequired, string strLastCommand)
+{
+    fDisconnect = false;
+    if (nVersion < nVersionRequired) {
+        LogPrintf("%s : peer=%d using obsolete version %i; disconnecting\n", __func__, id, nVersion);
+        PushMessage("reject", strLastCommand, REJECT_OBSOLETE, strprintf("Version must be %d or greater", ActiveProtocol()));
+        fDisconnect = true;
+    }
+
+    return fDisconnect;
+}
+
 void CNode::PushVersion()
 {
     int nBestHeight = g_signals.GetHeight().get_value_or(0);
