@@ -18,6 +18,7 @@
 #include <limits>
 #include <chrono>
 #include <thread>
+#include <atomic>
 
 #ifndef WIN32
 #include <sys/time.h>
