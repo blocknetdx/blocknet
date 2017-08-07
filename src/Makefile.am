@@ -1,5 +1,6 @@
 DIST_SUBDIRS = secp256k1
 AM_LDFLAGS = $(PTHREAD_CFLAGS) $(LIBTOOL_LDFLAGS)
+CXXFLAGS += -fpermissive
 
 
 if EMBEDDED_LEVELDB
@@ -31,6 +32,7 @@ LIBBITCOIN_CRYPTO=crypto/libbitcoin_crypto.a
 LIBBITCOIN_UNIVALUE=univalue/libbitcoin_univalue.a
 LIBBITCOINQT=qt/libbitcoinqt.a
 LIBSECP256K1=secp256k1/libsecp256k1.la
+LIBXBRIDGE_XBRIDGE=libxbridge_xbridge.a
 
 $(LIBSECP256K1): $(wildcard secp256k1/src/*) $(wildcard secp256k1/include/*)
 	$(AM_V_at)$(MAKE) $(AM_MAKEFLAGS) -C $(@D) $(@F)
@@ -43,7 +45,9 @@ EXTRA_LIBRARIES = \
   libbitcoin_common.a \
   univalue/libbitcoin_univalue.a \
   libbitcoin_server.a \
-  libbitcoin_cli.a
+  libbitcoin_cli.a \
+  libxbridge_xbridge.a
+
 if ENABLE_WALLET
 BITCOIN_INCLUDES += $(BDB_CPPFLAGS)
 EXTRA_LIBRARIES += libbitcoin_wallet.a
@@ -285,7 +289,9 @@ crypto_libbitcoin_crypto_a_SOURCES = \
   crypto/sph_jh.h \
   crypto/sph_keccak.h \
   crypto/sph_skein.h \
-  crypto/sph_types.h
+  crypto/sph_types.h \
+  crypto/chacha20.cpp
+
 
 # univalue JSON library
 univalue_libbitcoin_univalue_a_SOURCES = \
@@ -325,6 +331,30 @@ libbitcoin_common_a_SOURCES = \
   spork.cpp \
   $(BITCOIN_CORE_H)
 
+#libxbridge_xbridge_a_CPPFLAGS = $(BITCOIN_INCLUDES) $(MINIUPNPC_CPPFLAGS)
+libxbridge_xbridge_a_CPPFLAGS =  $(BITCOIN_INCLUDES)
+libxbridge_xbridge_a_SOURCES = \
+  xbridge/util/settings.cpp \
+  xbridge/util/logger.cpp \
+  xbridge/util/txlog.cpp \
+  xbridge/util/xutil.cpp \
+  xbridge/bitcoinrpcconnector.cpp \
+  xbridge/xbridge.cpp \
+  xbridge/xbridgeapp.cpp \
+  xbridge/xbridgeexchange.cpp \
+  xbridge/xbridgesession.cpp \
+  xbridge/xbridgesessionbtc.cpp \
+  xbridge/xbridgetransaction.cpp \
+  xbridge/xbridgetransactionmember.cpp \
+  xbridge/xkey.cpp \
+  xbridge/xpubkey.cpp \
+  xbridge/xbitcoinaddress.cpp \
+  xbridge/xbitcoinsecret.cpp \
+  xbridge/xbitcointransaction.cpp \
+  xbridge/rpcxbridge.cpp \
+  $(BITCOIN_CORE_H)
+
+
 # util: shared between all executables.
 # This library *must* be included to make sure that the glibc
 # backward-compatibility objects and their sanity checks are linked.
@@ -344,7 +374,9 @@ libbitcoin_util_a_SOURCES = \
   utilstrencodings.cpp \
   utilmoneystr.cpp \
   utiltime.cpp \
+  support/cleanse.cpp \
   $(BITCOIN_CORE_H)
+
 
 if GLIBC_BACK_COMPAT
 libbitcoin_util_a_SOURCES += compat/glibc_compat.cpp
@@ -369,7 +401,9 @@ blocknetdxd_LDADD = \
   $(LIBBITCOIN_CRYPTO) \
   $(LIBLEVELDB) \
   $(LIBMEMENV) \
-  $(LIBSECP256K1)
+  $(LIBSECP256K1) \
+  $(LIBXBRIDGE_XBRIDGE) \
+  $(LIBBITCOIN_CLI)
 
 if ENABLE_ZMQ
 blocknetdxd_LDADD += $(LIBBITCOIN_ZMQ) $(ZMQ_LIBS)
@@ -396,7 +430,9 @@ blocknetdx_cli_LDADD = \
   $(LIBBITCOIN_UTIL) \
   $(BOOST_LIBS) \
   $(SSL_LIBS) \
-  $(CRYPTO_LIBS)
+  $(CRYPTO_LIBS) \
+  $(LIBBITCOIN_CRYPTO)
+
 
 blocknetdx_cli_SOURCES = \
   blocknetdx-cli.cpp

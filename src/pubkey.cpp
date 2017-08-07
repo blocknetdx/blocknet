@@ -15,8 +15,10 @@
 
 namespace
 {
+#ifdef USE_SECP256K1
 /* Global secp256k1_context object used for verification. */
 secp256k1_context* secp256k1_context_verify = NULL;
+#endif
 } // namespace
 
 /** This function is taken from the libsecp256k1 distribution and implements
@@ -29,6 +31,8 @@ secp256k1_context* secp256k1_context_verify = NULL;
  *  strict DER before being passed to this module, and we know it supports all
  *  violations present in the blockchain before that point.
  */
+
+#ifdef USE_SECP256K1
 static int ecdsa_signature_parse_der_lax(const secp256k1_context* ctx, secp256k1_ecdsa_signature* sig, const unsigned char *input, size_t inputlen) {
     size_t rpos, rlen, spos, slen;
     size_t pos = 0;
@@ -169,6 +173,7 @@ static int ecdsa_signature_parse_der_lax(const secp256k1_context* ctx, secp256k1
     }
     return 1;
 }
+#endif
 
 bool CPubKey::Verify(const uint256& hash, const std::vector<unsigned char>& vchSig) const
 {
@@ -333,9 +338,11 @@ bool CExtPubKey::Derive(CExtPubKey& out, unsigned int _nChild) const
 ECCVerifyHandle::ECCVerifyHandle()
 {
     if (refcount == 0) {
+#ifdef USE_SECP256K1
         assert(secp256k1_context_verify == NULL);
         secp256k1_context_verify = secp256k1_context_create(SECP256K1_CONTEXT_VERIFY);
         assert(secp256k1_context_verify != NULL);
+#endif
     }
     refcount++;
 }
@@ -344,8 +351,10 @@ ECCVerifyHandle::~ECCVerifyHandle()
 {
     refcount--;
     if (refcount == 0) {
+#ifdef USE_SECP256K1
         assert(secp256k1_context_verify != NULL);
         secp256k1_context_destroy(secp256k1_context_verify);
         secp256k1_context_verify = NULL;
+#endif
     }
 }
