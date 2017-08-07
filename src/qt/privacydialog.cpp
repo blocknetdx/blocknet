@@ -121,7 +121,7 @@ void PrivacyDialog::on_pushButtonMintzPIV_clicked()
     
     CWalletTx wtx;
     vector<CZerocoinMint> vMints;
-    string strError = pwalletMain->MintZerocoin(nAmount, wtx, vMints);
+    string strError = pwalletMain->MintZerocoin(nAmount, wtx, vMints, CoinControlDialog::coinControl);
     
     // Return if something went wrong during minting
     if (strError != ""){
@@ -149,6 +149,8 @@ void PrivacyDialog::on_pushButtonMintzPIV_clicked()
     setBalance(walletModel->getBalance(),         walletModel->getUnconfirmedBalance(), walletModel->getImmatureBalance(), 
                walletModel->getZerocoinBalance(), walletModel->getWatchBalance(),       walletModel->getWatchUnconfirmedBalance(), 
                walletModel->getWatchImmatureBalance());
+    coinControlUpdateLabels();
+
     return;
 }
 
