@@ -206,11 +206,11 @@ public:
         nModifierUpdateBlock = 51197; //approx Mon, 17 Apr 2017 04:00:00 GMT
 
         //! Modify the testnet genesis block so the timestamp is valid for a later start.
-        genesis.nTime = 1454124731;
-        genesis.nNonce = 321071;
+        genesis.nTime = 1502198460;
+        genesis.nNonce = 823659;
 
-        hashGenesisBlock = genesis.GetHash();
-        assert(hashGenesisBlock == uint256("0x0000004618a1852b3d46d66d483fe6ac2411cbd832f82b13958afef1af0bb0b8"));
+        hashGenesisBlock = genesis.GetHash(); // testnet
+	assert(hashGenesisBlock == uint256("0x000001707425fcf2540395886e8055fddee9098ecd9d3e19cd6186dff0e786b1"));
 
         vFixedSeeds.clear();
         vSeeds.clear();
