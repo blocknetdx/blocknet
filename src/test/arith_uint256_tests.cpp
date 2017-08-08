@@ -110,8 +110,8 @@ BOOST_AUTO_TEST_CASE( basics ) // constructors, equality, inequality
 
     // uint64_t constructor
     BOOST_CHECK( (R1L & arith_uint256("0xffffffffffffffff")) == arith_uint256(R1LLow64));
-    BOOST_CHECK(ZeroL == arith_uint256(0));
-    BOOST_CHECK(OneL == arith_uint256(1));
+    BOOST_CHECK(ZeroL == arith_uint256(static_cast<uint64_t>(0)));
+    BOOST_CHECK(OneL == arith_uint256(static_cast<uint64_t>(1)));
     BOOST_CHECK(arith_uint256("0xffffffffffffffff") == arith_uint256(0xffffffffffffffffULL));
 
     // Assignment (from base_uint)
