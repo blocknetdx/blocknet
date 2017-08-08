@@ -1653,7 +1653,7 @@ int64_t GetServicenodePayment(int nHeight, int64_t blockValue, int nServicenodeC
         if (mNodeCoins == 0) {
             ret = 0;
 	}
-	ret = blockValue * .4;
+	ret = blockValue * .5;
 
     }
 
