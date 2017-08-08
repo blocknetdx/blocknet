@@ -53,7 +53,7 @@ win32 {
     }
 }
 
-QMAKE_CXXFLAGS = -fpermissive -std=c++11
+QMAKE_CXXFLAGS *= -fpermissive -std=c++11
 
 # use: qmake "USE_QRCODE=1"
 # libqrencode (http://fukuchi.org/works/qrencode/index.en.html) must be installed for support
@@ -368,7 +368,9 @@ greaterThan(QT_MAJOR_VERSION, 4) {
         -Wformat \
         -Wformat-security \
         -Wno-unused-parameter \
-        -Wstack-protector
+        -Wstack-protector \
+        -Wno-deprecated-declarations
+
     macx:QMAKE_CXXFLAGS_WARN_ON = \
         -fdiagnostics-show-option \
         -Wall \
@@ -376,7 +378,8 @@ greaterThan(QT_MAJOR_VERSION, 4) {
         -Wformat \
         -Wformat-security \
         -Wno-unused-parameter \
-        -Wstack-protector
+        -Wstack-protector \
+        -Wno-deprecated-declarations
 }
 lessThan(QT_MAJOR_VERSION, 5) {
     QMAKE_CXXFLAGS_WARN_ON = \
@@ -387,7 +390,8 @@ lessThan(QT_MAJOR_VERSION, 5) {
         -Wformat \
         -Wformat-security \
         -Wno-unused-parameter \
-        -Wstack-protector
+        -Wstack-protector \
+        -Wno-deprecated-declarations
 }
 
 # Input
