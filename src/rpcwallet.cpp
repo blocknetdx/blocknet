@@ -2544,12 +2544,37 @@ Value resetmintzerocoin(const Array& params, bool fHelp)
     Array arrDeleted;
     for (CZerocoinMint mint : vMintsMissing) {
         arrDeleted.push_back(mint.GetValue().GetHex());
-        walletdb.EraseZerocoinMint(mint);
+        walletdb.ArchiveMintOrphan(mint);
     }
 
     Object obj;
     obj.push_back(Pair("updated", arrUpdated));
-    obj.push_back(Pair("deleted", arrDeleted));
+    obj.push_back(Pair("archived", arrDeleted));
     return obj;
 }
 
+Value getarchivedzerocoin(const Array& params, bool fHelp)
+{
+    if(fHelp || params.size() != 0)
+        throw runtime_error(
+            "getarchivedzerocoin"
+            "Display zerocoins that were archived because they were believed to be orphans."
+            "Provides enough information to recover mint if it was incorrectly archived."
+            + HelpRequiringPassphrase());
+
+    CWalletDB walletdb(pwalletMain->strWalletFile);
+    list<CZerocoinMint> listMints = walletdb.ListArchivedZerocoins();
+
+    Array arrRet;
+    for (const CZerocoinMint mint : listMints) {
+        Object objMint;
+        objMint.push_back(Pair("txid", mint.GetTxHash().GetHex()));
+        objMint.push_back(Pair("denomination", FormatMoney(mint.GetDenominationAsAmount())));
+        objMint.push_back(Pair("serial", mint.GetSerialNumber().GetHex()));
+        objMint.push_back(Pair("randomness", mint.GetRandomness().GetHex()));
+        objMint.push_back(Pair("pubcoin", mint.GetValue().GetHex()));
+        arrRet.push_back(objMint);
+    }
+
+    return arrRet;
+}

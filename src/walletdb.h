@@ -147,10 +147,12 @@ public:
     bool WriteZerocoinMint(const CZerocoinMint& zerocoinMint);
     bool EraseZerocoinMint(const CZerocoinMint& zerocoinMint);
     bool ReadZerocoinMint(const CBigNum &bnSerial, CZerocoinMint& zerocoinMint);
+    bool ArchiveMintOrphan(const CZerocoinMint& zerocoinMint);
     std::list<CZerocoinMint> ListMintedCoins(bool fUnusedOnly = false, bool fMaturedOnly = false);
     std::list<CZerocoinSpend> ListSpentCoins();
     std::list<CBigNum> ListMintedCoinsSerial();
     std::list<CBigNum> ListSpentCoinsSerial();
+    std::list<CZerocoinMint> ListArchivedZerocoins();
     bool WriteZerocoinSpendSerialEntry(const CZerocoinSpend& zerocoinSpend);
     bool EraseZerocoinSpendSerialEntry(const CBigNum& serialEntry);
 

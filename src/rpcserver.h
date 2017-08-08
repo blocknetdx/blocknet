@@ -218,6 +218,7 @@ extern json_spirit::Value listzerocoinamounts(const json_spirit::Array& params, 
 extern json_spirit::Value mintzerocoin(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value spendzerocoin(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value resetmintzerocoin(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value getarchivedzerocoin(const json_spirit::Array& params, bool fHelp);
 
 extern json_spirit::Value getrawtransaction(const json_spirit::Array& params, bool fHelp); // in rcprawtransaction.cpp
 extern json_spirit::Value listunspent(const json_spirit::Array& params, bool fHelp);

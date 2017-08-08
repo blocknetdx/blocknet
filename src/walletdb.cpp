@@ -1040,6 +1040,25 @@ bool CWalletDB::EraseZerocoinMint(const CZerocoinMint& zerocoinMint)
     return Erase(make_pair(string("zerocoin"), hash));
 }
 
+bool CWalletDB::ArchiveMintOrphan(const CZerocoinMint& zerocoinMint)
+{
+    CDataStream ss(SER_GETHASH, 0);
+    ss << zerocoinMint.GetValue();
+    uint256 hash = Hash(ss.begin(), ss.end());;
+
+    if (!Write(make_pair(string("zco"), hash), zerocoinMint)) {
+        LogPrintf("%s : failed to database orphaned zerocoin mint\n", __func__);
+        return false;
+    }
+
+    if (!Erase(make_pair(string("zerocoin"), hash))) {
+        LogPrintf("%s : failed to erase orphaned zerocoin mint\n", __func__);
+        return false;
+    }
+
+    return true;
+}
+
 std::list<CZerocoinMint> CWalletDB::ListMintedCoins(bool fUnusedOnly, bool fMaturedOnly)
 {
     std::list<CZerocoinMint> listPubCoin;
@@ -1182,3 +1201,47 @@ std::list<CBigNum> CWalletDB::ListSpentCoinsSerial()
     }
     return listPubCoin;
 }
+
+std::list<CZerocoinMint> CWalletDB::ListArchivedZerocoins()
+{
+    std::list<CZerocoinMint> listMints;
+    Dbc* pcursor = GetCursor();
+    if (!pcursor)
+        throw runtime_error(std::string(__func__)+" : cannot create DB cursor");
+    unsigned int fFlags = DB_SET_RANGE;
+    for (;;)
+    {
+        // Read next record
+        CDataStream ssKey(SER_DISK, CLIENT_VERSION);
+        if (fFlags == DB_SET_RANGE)
+            ssKey << make_pair(string("zco"), CBigNum(0));
+        CDataStream ssValue(SER_DISK, CLIENT_VERSION);
+        int ret = ReadAtCursor(pcursor, ssKey, ssValue, fFlags);
+        fFlags = DB_NEXT;
+        if (ret == DB_NOTFOUND)
+            break;
+        else if (ret != 0)
+        {
+            pcursor->close();
+            throw runtime_error(std::string(__func__)+" : error scanning DB");
+        }
+
+        // Unserialize
+        string strType;
+        ssKey >> strType;
+        if (strType != "zco")
+            break;
+
+        uint256 value;
+        ssKey >> value;
+
+        CZerocoinMint mint;
+        ssValue >> mint;
+
+        listMints.push_back(mint);
+    }
+
+    pcursor->close();
+    return listMints;
+}
+
