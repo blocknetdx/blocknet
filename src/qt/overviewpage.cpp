@@ -92,7 +92,7 @@ public:
         painter->restore();
     }
 
-    inline QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const
+    inline QSize sizeHint(const QStyleOptionViewItem& /*option*/, const QModelIndex& /*index*/) const
     {
         return QSize(DECORATION_SIZE, DECORATION_SIZE);
     }

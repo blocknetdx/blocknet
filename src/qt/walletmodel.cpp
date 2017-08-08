@@ -447,13 +447,13 @@ bool WalletModel::backupWallet(const QString& filename)
 }
 
 // Handlers for core signals
-static void NotifyKeyStoreStatusChanged(WalletModel* walletmodel, CCryptoKeyStore* wallet)
+static void NotifyKeyStoreStatusChanged(WalletModel* walletmodel, CCryptoKeyStore* /*wallet*/)
 {
     qDebug() << "NotifyKeyStoreStatusChanged";
     QMetaObject::invokeMethod(walletmodel, "updateStatus", Qt::QueuedConnection);
 }
 
-static void NotifyAddressBookChanged(WalletModel* walletmodel, CWallet* wallet, const CTxDestination& address, const std::string& label, bool isMine, const std::string& purpose, ChangeType status)
+static void NotifyAddressBookChanged(WalletModel* walletmodel, CWallet* /*wallet*/, const CTxDestination& address, const std::string& label, bool isMine, const std::string& purpose, ChangeType status)
 {
     QString strAddress = QString::fromStdString(CBitcoinAddress(address).ToString());
     QString strLabel = QString::fromStdString(label);
@@ -471,7 +471,7 @@ static void NotifyAddressBookChanged(WalletModel* walletmodel, CWallet* wallet, 
 // queue notifications to show a non freezing progress dialog e.g. for rescan
 static bool fQueueNotifications = false;
 static std::vector<std::pair<uint256, ChangeType> > vQueueNotifications;
-static void NotifyTransactionChanged(WalletModel* walletmodel, CWallet* wallet, const uint256& hash, ChangeType status)
+static void NotifyTransactionChanged(WalletModel* walletmodel, CWallet* /*wallet*/, const uint256& hash, ChangeType status)
 {
     if (fQueueNotifications) {
         vQueueNotifications.push_back(make_pair(hash, status));

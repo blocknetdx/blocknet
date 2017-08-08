@@ -75,7 +75,7 @@ void ObfuscationConfig::clickMax()
     close();
 }
 
-void ObfuscationConfig::configure(bool enabled, int coins, int rounds)
+void ObfuscationConfig::configure(bool /*enabled*/, int coins, int rounds)
 {
     QSettings settings;
 
