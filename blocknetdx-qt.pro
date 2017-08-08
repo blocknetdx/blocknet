@@ -359,40 +359,14 @@ contains(USE_O3, 1) {
     QMAKE_CFLAGS += -msse2
 }
 
-greaterThan(QT_MAJOR_VERSION, 4) {
-    win32:QMAKE_CXXFLAGS_WARN_ON = \
-        -fdiagnostics-show-option \
-        -Wall \
-        -Wextra \
-        -Wno-ignored-qualifiers \
-        -Wformat \
-        -Wformat-security \
-        -Wno-unused-parameter \
-        -Wstack-protector \
-        -Wno-deprecated-declarations
-
-    macx:QMAKE_CXXFLAGS_WARN_ON = \
+QMAKE_CXXFLAGS_WARN_ON = \
         -fdiagnostics-show-option \
         -Wall \
         -Wextra \
         -Wformat \
         -Wformat-security \
-        -Wno-unused-parameter \
         -Wstack-protector \
         -Wno-deprecated-declarations
-}
-lessThan(QT_MAJOR_VERSION, 5) {
-    QMAKE_CXXFLAGS_WARN_ON = \
-        -fdiagnostics-show-option \
-        -Wall \
-        -Wextra \
-        -Wno-ignored-qualifiers \
-        -Wformat \
-        -Wformat-security \
-        -Wno-unused-parameter \
-        -Wstack-protector \
-        -Wno-deprecated-declarations
-}
 
 # Input
 DEPENDPATH += \
