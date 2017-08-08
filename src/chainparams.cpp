@@ -96,7 +96,7 @@ public:
         pchMessageStart[3] = 0xa3;
         vAlertPubKey = ParseHex("0452c91a00518fb8c6d38100341f88499554284d1ba75097cc25ae5a0d811835c63d2cb46c8855304bca81c452b63ce71fcb6897d06f8000450841f72602457f74");
         nDefaultPort = 41412;
-        bnProofOfWorkLimit = ~uint256(0) >> 20; // BlocknetDX starting difficulty is 1 / 2^12
+        bnProofOfWorkLimit = ~uint256() >> 20; // BlocknetDX starting difficulty is 1 / 2^12
         nSubsidyHalvingInterval = 210000;
         nMaxReorganizationDepth = 100;
         nEnforceBlockUpgradeMajority = 750;
@@ -269,7 +269,7 @@ public:
         nMinerThreads = 1;
         nTargetTimespan = 24 * 60 * 60; // Blocknetdx: 1 day
         nTargetSpacing = 1 * 60;        // Blocknetdx: 1 minutes
-        bnProofOfWorkLimit = ~uint256(0) >> 1;
+        bnProofOfWorkLimit = ~uint256() >> 1;
         genesis.nTime = 1454124731;
         genesis.nBits = 0x207fffff;
         genesis.nNonce = 12345;

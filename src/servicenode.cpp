@@ -665,12 +665,8 @@ bool CServicenodeBroadcast::Sign(CKey& keyCollateralAddress)
     return true;
 }
 
-CServicenodePing::CServicenodePing()
+CServicenodePing::CServicenodePing() : sigTime(0)
 {
-    vin = CTxIn();
-    blockHash = uint256(0);
-    sigTime = 0;
-    vchSig = std::vector<unsigned char>();
 }
 
 CServicenodePing::CServicenodePing(CTxIn& newVin)

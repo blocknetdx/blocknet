@@ -289,17 +289,16 @@ struct CNodeState {
     bool fPreferredDownload;
 
     CNodeState()
+        : fCurrentlyConnected(false)
+        , nMisbehavior(0)
+        , fShouldBan(false)
+        , pindexBestKnownBlock(nullptr)
+        , pindexLastCommonBlock(nullptr)
+        , fSyncStarted(false)
+        , nStallingSince(0)
+        , nBlocksInFlight(0)
+        , fPreferredDownload(false)
     {
-        fCurrentlyConnected = false;
-        nMisbehavior = 0;
-        fShouldBan = false;
-        pindexBestKnownBlock = NULL;
-        hashLastUnknownBlock = uint256(0);
-        pindexLastCommonBlock = NULL;
-        fSyncStarted = false;
-        nStallingSince = 0;
-        nBlocksInFlight = 0;
-        fPreferredDownload = false;
     }
 };
 
@@ -406,7 +405,7 @@ void ProcessBlockAvailability(NodeId nodeid)
         if (itOld != mapBlockIndex.end() && itOld->second->nChainWork > 0) {
             if (state->pindexBestKnownBlock == NULL || itOld->second->nChainWork >= state->pindexBestKnownBlock->nChainWork)
                 state->pindexBestKnownBlock = itOld->second;
-            state->hashLastUnknownBlock = uint256(0);
+            state->hashLastUnknownBlock = uint256();
         }
     }
 }
@@ -2103,7 +2102,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
         return false;
 
     // verify that the view's current state corresponds to the previous block
-    uint256 hashPrevBlock = pindex->pprev == NULL ? uint256(0) : pindex->pprev->GetBlockHash();
+    uint256 hashPrevBlock = pindex->pprev == NULL ? uint256() : pindex->pprev->GetBlockHash();
     if (hashPrevBlock != view.GetBestBlock())
         LogPrintf("%s: hashPrev=%s view=%s\n", __func__, hashPrevBlock.ToString().c_str(), view.GetBestBlock().ToString().c_str());
     assert(hashPrevBlock == view.GetBestBlock());
@@ -3501,7 +3500,7 @@ bool ProcessNewBlock(CValidationState& state, CNode* pfrom, CBlock* pblock, CDis
         //if we get this far, check if the prev block is our prev block, if not then request sync and return false
         BlockMap::iterator mi = mapBlockIndex.find(pblock->hashPrevBlock);
         if (mi == mapBlockIndex.end()) {
-            pfrom->PushMessage("getblocks", chainActive.GetLocator(), uint256(0));
+            pfrom->PushMessage("getblocks", chainActive.GetLocator(), uint256());
             return false;
         }
     }
@@ -4872,7 +4871,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         if (pindex)
             pindex = chainActive.Next(pindex);
         int nLimit = 500;
-        LogPrintf("getblocks %d to %s limit %d from peer=%d\n", (pindex ? pindex->nHeight : -1), hashStop == uint256(0) ? "end" : hashStop.ToString(), nLimit, pfrom->id);
+        LogPrintf("getblocks %d to %s limit %d from peer=%d\n", (pindex ? pindex->nHeight : -1), hashStop == uint256() ? "end" : hashStop.ToString(), nLimit, pfrom->id);
         for (; pindex; pindex = chainActive.Next(pindex)) {
             if (pindex->GetBlockHash() == hashStop) {
                 LogPrint("net", "  getblocks stopping at %d %s\n", pindex->nHeight, pindex->GetBlockHash().ToString());
@@ -5130,7 +5129,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
             // TODO: optimize: if pindexLast is an ancestor of chainActive.Tip or pindexBestHeader, continue
             // from there instead.
             LogPrintf("more getheaders (%d) to end to peer=%d (startheight:%d)\n", pindexLast->nHeight, pfrom->id, pfrom->nStartingHeight);
-            pfrom->PushMessage("getheaders", chainActive.GetLocator(pindexLast), uint256(0));
+            pfrom->PushMessage("getheaders", chainActive.GetLocator(pindexLast), uint256());
         }
 
         CheckBlockIndex();
@@ -5731,7 +5730,7 @@ bool SendMessages(CNode* pto, bool fSendTrickle)
                 //CBlockIndex *pindexStart = pindexBestHeader->pprev ? pindexBestHeader->pprev : pindexBestHeader;
                 //LogPrint("net", "initial getheaders (%d) to peer=%d (startheight:%d)\n", pindexStart->nHeight, pto->id, pto->nStartingHeight);
                 //pto->PushMessage("getheaders", chainActive.GetLocator(pindexStart), uint256(0));
-                pto->PushMessage("getblocks", chainActive.GetLocator(chainActive.Tip()), uint256(0));
+                pto->PushMessage("getblocks", chainActive.GetLocator(chainActive.Tip()), uint256());
             }
         }
 

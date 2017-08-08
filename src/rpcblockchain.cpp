@@ -67,7 +67,7 @@ Object blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool txDe
     BOOST_FOREACH (const CTransaction& tx, block.vtx) {
         if (txDetails) {
             Object objTx;
-            TxToJSON(tx, uint256(0), objTx);
+            TxToJSON(tx, uint256(), objTx);
             txs.push_back(objTx);
         } else
             txs.push_back(tx.GetHash().GetHex());
