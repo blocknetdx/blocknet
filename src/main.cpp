@@ -595,6 +595,7 @@ CBlockIndex* FindForkInGlobalIndex(const CChain& chain, const CBlockLocator& loc
 CCoinsViewCache* pcoinsTip = NULL;
 CBlockTreeDB* pblocktree = NULL;
 CZerocoinDB* zerocoinDB = NULL;
+CSporkDB* sporkDB = NULL;
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -3747,10 +3748,6 @@ bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, bool f
     if (fCheckPOW && !CheckProofOfWork(block.GetHash(), block.nBits))
         return state.DoS(50, error("CheckBlockHeader() : proof of work failed"),
             REJECT_INVALID, "high-hash");
-
-    // If the spork value has not been populated yet then there is no good way to check this further
-    if (GetSporkValue(SPORK_17_ENABLE_ZEROCOIN) == SPORK_17_ENABLE_ZEROCOIN_DEFAULT)
-        return true;
 
     // Version 4 header must be used when SPORK_17_ENABLEZEROCOIN is activated. And never before.
     if (block.GetBlockTime() > GetSporkValue(SPORK_17_ENABLE_ZEROCOIN)) {

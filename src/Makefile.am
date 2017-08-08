@@ -143,6 +143,7 @@ BITCOIN_CORE_H = \
   script/script_error.h \
   serialize.h \
   spork.h \
+  sporkdb.h \
   streams.h \
   sync.h \
   threadsafety.h \
@@ -208,6 +209,7 @@ libbitcoin_server_a_SOURCES = \
   rpcrawtransaction.cpp \
   rpcserver.cpp \
   script/sigcache.cpp \
+  sporkdb.cpp \
   timedata.cpp \
   txdb.cpp \
   txmempool.cpp \
@@ -350,6 +352,7 @@ libbitcoin_common_a_SOURCES = \
   script/standard.cpp \
   script/script_error.cpp \
   spork.cpp \
+  sporkdb.cpp \
   accumulators.cpp \
   $(BITCOIN_CORE_H)
 

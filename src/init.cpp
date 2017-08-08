@@ -27,6 +27,7 @@
 #include "rpcserver.h"
 #include "script/standard.h"
 #include "spork.h"
+#include "sporkdb.h"
 #include "txdb.h"
 #include "ui_interface.h"
 #include "util.h"
@@ -1234,6 +1235,7 @@ bool AppInit2(boost::thread_group& threadGroup)
                 delete zerocoinDB;
 
                 zerocoinDB = new CZerocoinDB(0, false, false);
+                sporkDB = new CSporkDB(0, false, false);
                 pblocktree = new CBlockTreeDB(nBlockTreeDBCache, false, fReindex);
                 pcoinsdbview = new CCoinsViewDB(nCoinDBCache, false, fReindex);
                 pcoinscatcher = new CCoinsViewErrorCatcher(pcoinsdbview);
@@ -1305,6 +1307,9 @@ bool AppInit2(boost::thread_group& threadGroup)
                     }
                 }
                 CAccumulators::getInstance().ClearAccCheckpointsNoDB();
+
+                // PIVX: load previous sessions sporks if we have them. note: only zerocoin spork being loaded right now)
+                LoadSporksFromDB();
 
                 uiInterface.InitMessage(_("Verifying blocks..."));
                 if (!CVerifyDB().VerifyDB(pcoinsdbview, GetArg("-checklevel", 4), // Zerocoin must check at level 4
