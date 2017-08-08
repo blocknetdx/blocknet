@@ -197,7 +197,7 @@ void XBridgeSession::onReadHeader(XBridgePacketPtr packet,
         return;
     }
 
-    if (offset + transferred != packet->headerSize)
+    if (offset + transferred != static_cast<size_t>(packet->headerSize))
     {
         LOG() << "partially read header, read " << transferred
               << " of " << packet->headerSize << " bytes";

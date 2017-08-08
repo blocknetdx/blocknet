@@ -98,10 +98,10 @@ struct XBridgeTransactionDescr
     XBridgeTransactionDescr()
         : role(0)
         , tax(0)
-        , state(trNew)
-        , reason(0)
         , lockTimeTx1(0)
         , lockTimeTx2(0)
+        , state(trNew)
+        , reason(0)
         , created(boost::posix_time::second_clock::universal_time())
         , txtime(boost::posix_time::second_clock::universal_time())
     {}
