@@ -1266,9 +1266,13 @@ bool AppInit2(boost::thread_group& threadGroup)
                     break;
                 }
 
+                // PIVX: load previous sessions sporks if we have them. note: only zerocoin spork being loaded right now)
+                LoadSporksFromDB();
+
                 list<uint256> listAccCheckpointsNoDB = CAccumulators::getInstance().GetAccCheckpointsNoDB();
                 // PIVX: recalculate Accumulator Checkpoints that failed to database properly
-                if (listAccCheckpointsNoDB.size()) {
+                if (listAccCheckpointsNoDB.size() && chainActive.Tip()->GetBlockHeader().nVersion >= Params().Zerocoin_HeaderVersion()) {
+                    LogPrintf("%s : finding missing checkpoints\n", __func__);
                     //search the chain to see when zerocoin started
                     int nZerocoinStart = 0;
                     CBlockIndex* pindex = chainActive.Tip();
@@ -1277,6 +1281,8 @@ bool AppInit2(boost::thread_group& threadGroup)
                             nZerocoinStart = pindex->nHeight;
                         else if (nZerocoinStart)
                             break;
+
+                        pindex = pindex->pprev;
                     }
 
                     // find each checkpoint that is missing
@@ -1285,7 +1291,7 @@ bool AppInit2(boost::thread_group& threadGroup)
                         listAccCheckpointsNoDB.pop_front();
 
                         // find checkpoint by iterating through the blockchain beginning with the first zerocoin block
-                        bool found;
+                        bool found = false;
                         pindex = chainActive[nZerocoinStart];
                         while (!found) {
                             if (pindex->nAccumulatorCheckpoint == nCheckpoint) {
@@ -1307,9 +1313,6 @@ bool AppInit2(boost::thread_group& threadGroup)
                     }
                 }
                 CAccumulators::getInstance().ClearAccCheckpointsNoDB();
-
-                // PIVX: load previous sessions sporks if we have them. note: only zerocoin spork being loaded right now)
-                LoadSporksFromDB();
 
                 uiInterface.InitMessage(_("Verifying blocks..."));
                 if (!CVerifyDB().VerifyDB(pcoinsdbview, GetArg("-checklevel", 4), // Zerocoin must check at level 4
