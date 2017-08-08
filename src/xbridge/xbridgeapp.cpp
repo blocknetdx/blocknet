@@ -877,7 +877,7 @@ bool XBridgeApp::sendCancelTransaction(const uint256 & txid,
 
 //******************************************************************************
 //******************************************************************************
-void XBridgeApp::handleRpcRequest(rpc::AcceptedConnection * conn)
+void XBridgeApp::handleRpcRequest(rpc::AcceptedConnection * /*conn*/)
 {
     // m_threads.create_thread(boost::bind(&XBridgeApp::rpcHandlerProc, this, conn));
 }

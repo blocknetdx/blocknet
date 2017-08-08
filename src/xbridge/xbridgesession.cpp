@@ -387,7 +387,7 @@ bool XBridgeSession::processZero(XBridgePacketPtr /*packet*/)
 
 //*****************************************************************************
 //*****************************************************************************
-bool XBridgeSession::processAnnounceAddresses(XBridgePacketPtr packet)
+bool XBridgeSession::processAnnounceAddresses(XBridgePacketPtr /*packet*/)
 {
 //    // DEBUG_TRACE();
 
@@ -454,7 +454,7 @@ bool XBridgeSession::takeXBridgeMessage(const std::vector<unsigned char> & messa
 //*****************************************************************************
 // retranslate packets from wallet to xbridge network
 //*****************************************************************************
-bool XBridgeSession::processXChatMessage(XBridgePacketPtr packet)
+bool XBridgeSession::processXChatMessage(XBridgePacketPtr /*packet*/)
 {
     assert(!"check rhis fn");
     return true;
