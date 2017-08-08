@@ -1,5 +1,5 @@
 ---
-name: "pivx-win-2.3"
+name: "pivx-win-3.0"
 enable_cache: true
 suites:
 - "trusty"

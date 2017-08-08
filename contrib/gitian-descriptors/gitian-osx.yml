@@ -1,5 +1,5 @@
 ---
-name: "pivx-osx-2.3"
+name: "pivx-osx-3.0"
 enable_cache: true
 suites:
 - "trusty"
