@@ -290,11 +290,12 @@ const int SINGLE_MEMFUNCPTR_SIZE = sizeof(void (GenericClass::*)());
 template <int N>
 struct SimplifyMemFunc {
 	template <class X, class XFuncType, class GenericMemFuncType>
-	inline static GenericClass *Convert(X *pthis, XFuncType function_to_bind, 
-		GenericMemFuncType &bound_func) { 
+    inline static GenericClass *Convert(X */*pthis*/, XFuncType /*function_to_bind*/,
+        GenericMemFuncType &/*bound_func*/) {
 		// Unsupported member function type -- force a compile failure.
 	    // (it's illegal to have a array with negative size).
-		typedef char ERROR_Unsupported_member_function_pointer_on_this_compiler[N-100];
+        // typedef char ERROR_Unsupported_member_function_pointer_on_this_compiler[N-100];
+        static_assert(N <= 100, "ERROR_Unsupported_member_function_pointer_on_this_compiler");
 		return 0; 
 	}
 };
