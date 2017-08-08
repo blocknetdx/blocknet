@@ -137,7 +137,7 @@ volatile bool fReopenDebugLog = false;
 
 /** Init OpenSSL library multithreading support */
 static CCriticalSection** ppmutexOpenSSL;
-void locking_callback(int mode, int i, const char* file, int line)
+void locking_callback(int mode, int i, const char* /*file*/, int /*line*/)
 {
     if (mode & CRYPTO_LOCK) {
         ENTER_CRITICAL_SECTION(*ppmutexOpenSSL[i]);
@@ -604,11 +604,13 @@ bool TruncateFile(FILE* file, unsigned int length)
  * this function tries to raise the file descriptor limit to the requested number.
  * It returns the actual file descriptor limit (which may be more or less than nMinFD)
  */
-int RaiseFileDescriptorLimit(int nMinFD)
-{
 #if defined(WIN32)
+int RaiseFileDescriptorLimit(int /*nMinFD*/)
+{
     return 2048;
 #else
+int RaiseFileDescriptorLimit(int nMinFD)
+{
     struct rlimit limitFD;
     if (getrlimit(RLIMIT_NOFILE, &limitFD) != -1) {
         if (limitFD.rlim_cur < (rlim_t)nMinFD) {

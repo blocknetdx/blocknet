@@ -164,7 +164,7 @@ private:
 public:
     DescribeAddressVisitor(isminetype mineIn) : mine(mineIn) {}
 
-    Object operator()(const CNoDestination& dest) const { return Object(); }
+    Object operator()(const CNoDestination& /*dest*/) const { return Object(); }
 
     Object operator()(const CKeyID& keyID) const
     {
@@ -207,7 +207,7 @@ public:
 /*
     Used for updating/reading spork settings on the network
 */
-Value spork(const Array& params, bool fHelp)
+Value spork(const Array& params, bool /*fHelp*/)
 {
     if (params.size() == 1 && params[0].get_str() == "show") {
         Object ret;

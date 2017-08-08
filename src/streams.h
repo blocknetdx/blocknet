@@ -251,7 +251,7 @@ public:
     }
 
     template <typename Stream>
-    void Serialize(Stream& s, int nType, int nVersion) const
+    void Serialize(Stream& s, int /*nType*/, int /*nVersion*/) const
     {
         // Special case: stream << stream concatenates like stream += stream
         if (!vch.empty())

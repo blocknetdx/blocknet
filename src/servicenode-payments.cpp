@@ -274,7 +274,7 @@ std::string GetRequiredPaymentsString(int nBlockHeight)
     }
 }
 
-void CServicenodePayments::FillBlockPayee(CMutableTransaction& txNew, int64_t nFees, bool fProofOfStake)
+void CServicenodePayments::FillBlockPayee(CMutableTransaction& txNew, int64_t /*nFees*/, bool fProofOfStake)
 {
     CBlockIndex* pindexPrev = chainActive.Tip();
     if (!pindexPrev) return;

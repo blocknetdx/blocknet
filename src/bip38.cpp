@@ -43,7 +43,7 @@ void ComputePassfactor(std::string ownersalt, uint256 prefactor, uint256& passfa
     Hash(passfactor.begin(), 32, passfactor.begin());
 }
 
-bool ComputePasspoint(uint256 passfactor, CPubKey& passpoint)
+bool ComputePasspoint(uint256 /*passfactor*/, CPubKey& /*passpoint*/)
 {
     //passpoint is the ec_mult of passfactor on secp256k1
     // int clen = 65;

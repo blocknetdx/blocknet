@@ -450,7 +450,7 @@ void CBudgetManager::CheckAndRemove()
     LogPrintf("CBudgetManager::CheckAndRemove - PASSED\n");
 }
 
-void CBudgetManager::FillBlockPayee(CMutableTransaction& txNew, CAmount nFees, bool fProofOfStake)
+void CBudgetManager::FillBlockPayee(CMutableTransaction& txNew, CAmount /*nFees*/, bool fProofOfStake)
 {
     LOCK(cs);
 
@@ -785,7 +785,7 @@ std::string CBudgetManager::GetRequiredPaymentsString(int nBlockHeight)
     return ret;
 }
 
-CAmount CBudgetManager::GetTotalBudget(int nHeight)
+CAmount CBudgetManager::GetTotalBudget(int /*nHeight*/)
 {
     if (chainActive.Tip() == NULL) return 0;
 

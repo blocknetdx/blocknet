@@ -31,17 +31,17 @@ void SyncWithWallets(const CTransaction& tx, const CBlock* pblock);
 
 class CValidationInterface {
 protected:
-    virtual void UpdatedBlockTip(const CBlockIndex *pindex) {}
-    virtual void SyncTransaction(const CTransaction &tx, const CBlock *pblock) {}
-    virtual void NotifyTransactionLock(const CTransaction &tx) {}
-    virtual void SetBestChain(const CBlockLocator &locator) {}
-    virtual bool UpdatedTransaction(const uint256 &hash) { return false;}
-    virtual void Inventory(const uint256 &hash) {}
+    virtual void UpdatedBlockTip(const CBlockIndex *) {}
+    virtual void SyncTransaction(const CTransaction &, const CBlock *) {}
+    virtual void NotifyTransactionLock(const CTransaction &) {}
+    virtual void SetBestChain(const CBlockLocator &) {}
+    virtual bool UpdatedTransaction(const uint256 &) { return false;}
+    virtual void Inventory(const uint256 &) {}
 // XX42    virtual void ResendWalletTransactions(int64_t nBestBlockTime) {}
     virtual void ResendWalletTransactions() {}
     virtual void BlockChecked(const CBlock&, const CValidationState&) {}
     virtual void GetScriptForMining(boost::shared_ptr<CReserveScript>&) {};
-    virtual void ResetRequestCount(const uint256 &hash) {};
+    virtual void ResetRequestCount(const uint256 &) {};
     friend void ::RegisterValidationInterface(CValidationInterface*);
     friend void ::UnregisterValidationInterface(CValidationInterface*);
     friend void ::UnregisterAllValidationInterfaces();

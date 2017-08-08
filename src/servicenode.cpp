@@ -160,7 +160,7 @@ bool CServicenode::UpdateFromNewBroadcast(CServicenodeBroadcast& mnb)
 // the proof of work for that block. The further away they are the better, the furthest will win the election
 // and get paid this block
 //
-uint256 CServicenode::CalculateScore(int mod, int64_t nBlockHeight)
+uint256 CServicenode::CalculateScore(int /*mod*/, int64_t nBlockHeight)
 {
     if (chainActive.Tip() == NULL) return 0;
 
