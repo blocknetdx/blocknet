@@ -155,86 +155,86 @@ bool XBridgeApp::init(int argc, char *argv[])
 
 //*****************************************************************************
 //*****************************************************************************
-bool XBridgeApp::initDht()
-{
-    LOG() << "initialize v." << version();
+//bool XBridgeApp::initDht()
+//{
+//    LOG() << "initialize v." << version();
 
-#ifdef WIN32
-    WSADATA wsa = {0};
-    int rc = WSAStartup(MAKEWORD(2, 2), &wsa);
-    if (rc != 0)
-    {
-        LOG() << "startup error";
-        return false;
-    }
-#endif
+//#ifdef WIN32
+//    WSADATA wsa = {0};
+//    int rc = WSAStartup(MAKEWORD(2, 2), &wsa);
+//    if (rc != 0)
+//    {
+//        LOG() << "startup error";
+//        return false;
+//    }
+//#endif
 
-    Settings & s = settings();
-    m_dhtPort    = s.dhtPort();
+//    Settings & s = settings();
+//    m_dhtPort    = s.dhtPort();
 
-    std::vector<std::string> peers = s.peers();
-    for (std::vector<std::string>::iterator i = peers.begin(); i != peers.end(); ++i)
-    {
-        std::string peer = *i;
-        std::string port = boost::lexical_cast<std::string>(Config::DHT_PORT);
+//    std::vector<std::string> peers = s.peers();
+//    for (std::vector<std::string>::iterator i = peers.begin(); i != peers.end(); ++i)
+//    {
+//        std::string peer = *i;
+//        std::string port = boost::lexical_cast<std::string>(Config::DHT_PORT);
 
-        size_t idx = peer.find(':');
-        if (idx != std::string::npos)
-        {
-            port = peer.substr(idx+1);
-            peer = peer.substr(0, idx);
-        }
+//        size_t idx = peer.find(':');
+//        if (idx != std::string::npos)
+//        {
+//            port = peer.substr(idx+1);
+//            peer = peer.substr(0, idx);
+//        }
 
-        LOG() << "peer -> " << peer << ":" << port;
+//        LOG() << "peer -> " << peer << ":" << port;
 
-        addrinfo   hints;
-        memset(&hints, 0, sizeof(hints));
-        hints.ai_socktype = SOCK_DGRAM;
-        hints.ai_family   = !m_ipv6 ? AF_INET :
-                            !m_ipv4 ? AF_INET6 : 0;
+//        addrinfo   hints;
+//        memset(&hints, 0, sizeof(hints));
+//        hints.ai_socktype = SOCK_DGRAM;
+//        hints.ai_family   = !m_ipv6 ? AF_INET :
+//                            !m_ipv4 ? AF_INET6 : 0;
 
-        addrinfo * info = 0;
-        int rc = getaddrinfo(peer.c_str(), port.c_str(), &hints, &info);
-        if (rc != 0)
-        {
-            LOG() << "getaddrinfo failed " << rc << gai_strerror(rc);
-            continue;
-        }
+//        addrinfo * info = 0;
+//        int rc = getaddrinfo(peer.c_str(), port.c_str(), &hints, &info);
+//        if (rc != 0)
+//        {
+//            LOG() << "getaddrinfo failed " << rc << gai_strerror(rc);
+//            continue;
+//        }
 
-        addrinfo * infop = info;
-        while(infop)
-        {
-            sockaddr_storage tmp;
-            memcpy(&tmp, infop->ai_addr, infop->ai_addrlen);
-            m_nodes.push_back(tmp);
-            infop = infop->ai_next;
-        }
-        freeaddrinfo(info);
-    }
+//        addrinfo * infop = info;
+//        while(infop)
+//        {
+//            sockaddr_storage tmp;
+//            memcpy(&tmp, infop->ai_addr, infop->ai_addrlen);
+//            m_nodes.push_back(tmp);
+//            infop = infop->ai_next;
+//        }
+//        freeaddrinfo(info);
+//    }
 
-    // start xbrige
-    m_bridge = XBridgePtr(new XBridge());
+//    // start xbrige
+//    m_bridge = XBridgePtr(new XBridge());
 
-    // start dht
-    memset(&m_sin, 0, sizeof(m_sin));
-    m_sin.sin_family = AF_INET;
-    m_sin.sin_port = htons(static_cast<unsigned short>(m_dhtPort));
+//    // start dht
+//    memset(&m_sin, 0, sizeof(m_sin));
+//    m_sin.sin_family = AF_INET;
+//    m_sin.sin_port = htons(static_cast<unsigned short>(m_dhtPort));
 
-    memset(&m_sin6, 0, sizeof(m_sin6));
-    m_sin6.sin6_family = AF_INET6;
-    m_sin6.sin6_port = htons(static_cast<unsigned short>(m_dhtPort));
+//    memset(&m_sin6, 0, sizeof(m_sin6));
+//    m_sin6.sin6_family = AF_INET6;
+//    m_sin6.sin6_port = htons(static_cast<unsigned short>(m_dhtPort));
 
-//    dht_debug = true;
+////    dht_debug = true;
 
-    // start dht thread
-    m_dhtStarted = false;
-    m_dhtStop    = false;
+//    // start dht thread
+//    m_dhtStarted = false;
+//    m_dhtStop    = false;
 
-    // m_threads.create_thread(boost::bind(&XBridgeApp::dhtThreadProc, this));
-    // m_threads.create_thread(boost::bind(&XBridgeApp::bridgeThreadProc, this));
+//    // m_threads.create_thread(boost::bind(&XBridgeApp::dhtThreadProc, this));
+//    // m_threads.create_thread(boost::bind(&XBridgeApp::bridgeThreadProc, this));
 
-    return true;
-}
+//    return true;
+//}
 
 //*****************************************************************************
 //*****************************************************************************
