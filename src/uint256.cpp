@@ -25,6 +25,14 @@ base_uint<BITS>::base_uint(const std::vector<unsigned char>& vch)
 }
 
 template <unsigned int BITS>
+base_uint<BITS>::base_uint(const unsigned char * data, const size_t & size)
+{
+    if (!data || size != sizeof(pn))
+        throw uint_error("Incorrect data pointer or incorrect size for set data to base_uint");
+    memcpy(pn, data, sizeof(pn));
+}
+
+template <unsigned int BITS>
 base_uint<BITS>& base_uint<BITS>::operator<<=(unsigned int shift)
 {
     base_uint<BITS> a(*this);
@@ -227,6 +235,7 @@ unsigned int base_uint<BITS>::bits() const
 // Explicit instantiations for base_uint<160>
 template base_uint<160>::base_uint(const std::string&);
 template base_uint<160>::base_uint(const std::vector<unsigned char>&);
+template base_uint<160>::base_uint(const unsigned char * data, const size_t & size);
 template base_uint<160>& base_uint<160>::operator<<=(unsigned int);
 template base_uint<160>& base_uint<160>::operator>>=(unsigned int);
 template base_uint<160>& base_uint<160>::operator*=(uint32_t b32);
@@ -244,6 +253,7 @@ template unsigned int base_uint<160>::bits() const;
 // Explicit instantiations for base_uint<256>
 template base_uint<256>::base_uint(const std::string&);
 template base_uint<256>::base_uint(const std::vector<unsigned char>&);
+template base_uint<256>::base_uint(const unsigned char * data, const size_t & size);
 template base_uint<256>& base_uint<256>::operator<<=(unsigned int);
 template base_uint<256>& base_uint<256>::operator>>=(unsigned int);
 template base_uint<256>& base_uint<256>::operator*=(uint32_t b32);
@@ -261,6 +271,7 @@ template std::string base_uint<256>::ToStringReverseEndian() const;
 
 // Explicit instantiations for base_uint<512>
 template base_uint<512>::base_uint(const std::string&);
+template base_uint<512>::base_uint(const unsigned char * data, const size_t & size);
 template base_uint<512>& base_uint<512>::operator<<=(unsigned int);
 template base_uint<512>& base_uint<512>::operator>>=(unsigned int);
 template std::string base_uint<512>::GetHex() const;

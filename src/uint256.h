@@ -73,6 +73,7 @@ public:
 
     explicit base_uint(const std::string& str);
     explicit base_uint(const std::vector<unsigned char>& vch);
+    explicit base_uint(const unsigned char * data, const size_t & size = sizeof(pn));
 
     bool operator!() const
     {
@@ -314,22 +315,24 @@ public:
 class uint160 : public base_uint<160>
 {
 public:
-    uint160() {}
+    uint160() : base_uint<160>() {}
     uint160(const base_uint<160>& b) : base_uint<160>(b) {}
     uint160(uint64_t b) : base_uint<160>(b) {}
     explicit uint160(const std::string& str) : base_uint<160>(str) {}
     explicit uint160(const std::vector<unsigned char>& vch) : base_uint<160>(vch) {}
+    explicit uint160(const unsigned char * data, const size_t & size = sizeof(pn)) : base_uint<160>(data, size) {}
 };
 
 /** 256-bit unsigned big integer. */
 class uint256 : public base_uint<256>
 {
 public:
-    uint256() {}
+    uint256() : base_uint<256>() {}
     uint256(const base_uint<256>& b) : base_uint<256>(b) {}
     uint256(uint64_t b) : base_uint<256>(b) {}
     explicit uint256(const std::string& str) : base_uint<256>(str) {}
     explicit uint256(const std::vector<unsigned char>& vch) : base_uint<256>(vch) {}
+    explicit uint256(const unsigned char * data, const size_t & size = sizeof(pn)) : base_uint<256>(data, size) {}
 
     /**
      * The "compact" format is a representation of a whole
@@ -381,11 +384,12 @@ inline uint256 uint256S(const std::string& str)
 class uint512 : public base_uint<512>
 {
 public:
-    uint512() {}
+    uint512() : base_uint<512>() {}
     uint512(const base_uint<512>& b) : base_uint<512>(b) {}
     uint512(uint64_t b) : base_uint<512>(b) {}
     explicit uint512(const std::string& str) : base_uint<512>(str) {}
     explicit uint512(const std::vector<unsigned char>& vch) : base_uint<512>(vch) {}
+    explicit uint512(const unsigned char * data, const size_t & size = sizeof(pn)) : base_uint<512>(data, size) {}
 
     uint256 trim256() const
     {
