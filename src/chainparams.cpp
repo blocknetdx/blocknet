@@ -131,12 +131,12 @@ public:
         genesis.hashPrevBlock = 0;
         genesis.hashMerkleRoot = genesis.BuildMerkleTree();
         genesis.nVersion = 1;
-        genesis.nTime = 1501978908;
+        genesis.nTime = 1502214073;
         genesis.nBits = bnProofOfWorkLimit.GetCompact();
-        genesis.nNonce = 3247918;
+        genesis.nNonce = 734967;
 
         hashGenesisBlock = genesis.GetHash();
-	assert(hashGenesisBlock == uint256("0x0000036532e41005c14ebbdfd7d979085fe2366ce25abb113db2f43292f6d9c4"));
+	assert(hashGenesisBlock == uint256("0x00000eb7919102da5a07dc90905651664e6ebf0811c28f06573b9a0fd84ab7b8"));
         assert(genesis.hashMerkleRoot == uint256("0xb1f0e93f6df55af4c23a0719ab33be2b8115e2b6127fc1d926a06c60a8b56bf2"));
 
 	/*
@@ -206,11 +206,11 @@ public:
         nModifierUpdateBlock = 51197; //approx Mon, 17 Apr 2017 04:00:00 GMT
 
         //! Modify the testnet genesis block so the timestamp is valid for a later start.
-        genesis.nTime = 1502198460;
-        genesis.nNonce = 823659;
+        genesis.nTime = 1454124731;
+        genesis.nNonce = 321071;
 
-        hashGenesisBlock = genesis.GetHash(); // testnet
-	assert(hashGenesisBlock == uint256("0x000001707425fcf2540395886e8055fddee9098ecd9d3e19cd6186dff0e786b1"));
+        hashGenesisBlock = genesis.GetHash();
+        assert(hashGenesisBlock == uint256("0x0000004618a1852b3d46d66d483fe6ac2411cbd832f82b13958afef1af0bb0b8"));
 
         vFixedSeeds.clear();
         vSeeds.clear();
