@@ -2553,6 +2553,55 @@ Value resetmintzerocoin(const Array& params, bool fHelp)
     return obj;
 }
 
+Value resetspentzerocoin(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() != 0)
+        throw runtime_error(
+            "resetspentzerocoin"
+                "Scan the blockchain for all of the zerocoins that are held in the wallet.dat. Reset mints that are considered spent that did not make it into the blockchain."
+            + HelpRequiringPassphrase());
+
+    CWalletDB walletdb(pwalletMain->strWalletFile);
+    list<CZerocoinMint> listMints = walletdb.ListMintedCoins();
+    list<CZerocoinSpend> listSpends = walletdb.ListSpentCoins();
+    list<CZerocoinSpend> listUnconfirmedSpends;
+
+    for (CZerocoinSpend spend : listSpends) {
+        CTransaction tx;
+        uint256 hashBlock = 0;
+        if (!GetTransaction(spend.GetTxHash(), tx, hashBlock)) {
+            listUnconfirmedSpends.push_back(spend);
+            continue;
+        }
+
+        //no confirmations
+        if (hashBlock == 0)
+            listUnconfirmedSpends.push_back(spend);
+    }
+
+    Object objRet;
+    Array arrRestored;
+    for (CZerocoinSpend spend : listUnconfirmedSpends) {
+        for (CZerocoinMint mint : listMints) {
+            if (mint.GetSerialNumber() == spend.GetSerial()) {
+                mint.SetUsed(false);
+                mint.SetTxHash(0);
+                mint.SetHeight(0);
+
+                walletdb.WriteZerocoinMint(mint);
+                walletdb.EraseZerocoinSpendSerialEntry(spend.GetSerial());
+                Object obj;
+                obj.push_back(Pair("serial", spend.GetSerial().GetHex()));
+                arrRestored.push_back(obj);
+                continue;
+            }
+        }
+    }
+
+    objRet.push_back(Pair("restored", arrRestored));
+    return objRet;
+}
+
 Value getarchivedzerocoin(const Array& params, bool fHelp)
 {
     if(fHelp || params.size() != 0)
