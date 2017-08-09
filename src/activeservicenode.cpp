@@ -8,7 +8,7 @@
 #include "spork.h"
 
 //
-// Bootup the Servicenode, look for a 10000 BlocknetDX input and register on the network
+// Bootup the Servicenode, look for a 5000 BlocknetDX input and register on the network
 //
 void CActiveServicenode::ManageStatus()
 {
@@ -468,7 +468,7 @@ vector<COutput> CActiveServicenode::SelectCoinsServicenode()
 
     // Filter
     BOOST_FOREACH (const COutput& out, vCoins) {
-        if (out.tx->vout[out.i].nValue == 5000 * COIN) { //exactly
+        if (out.tx->vout[out.i].nValue == SERVICENODE_REQUIRED_AMOUNT * COIN) { //exactly
             filteredCoins.push_back(out);
         }
     }

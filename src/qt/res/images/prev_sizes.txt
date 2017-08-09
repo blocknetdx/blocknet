@@ -1,0 +1,2 @@
+blocknetdx_logo_horizontal.png              600 x 150
+splash_testnet.png                          480 x 550

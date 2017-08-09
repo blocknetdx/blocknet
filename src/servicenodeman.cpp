@@ -919,7 +919,7 @@ void CServicenodeMan::ProcessMessage(CNode* pfrom, std::string& strCommand, CDat
 
         CValidationState state;
         CMutableTransaction tx = CMutableTransaction();
-        CTxOut vout = CTxOut(9999.99 * COIN, obfuScationPool.collateralPubKey);
+        CTxOut vout = CTxOut(SERVICENODE_ACCEPTABLE_INPUTS_CHECK_AMOUNT * COIN, obfuScationPool.collateralPubKey);
         tx.vin.push_back(vin);
         tx.vout.push_back(vout);
 
@@ -944,7 +944,7 @@ void CServicenodeMan::ProcessMessage(CNode* pfrom, std::string& strCommand, CDat
             GetTransaction(vin.prevout.hash, tx2, hashBlock, true);
             BlockMap::iterator mi = mapBlockIndex.find(hashBlock);
             if (mi != mapBlockIndex.end() && (*mi).second) {
-                CBlockIndex* pMNIndex = (*mi).second;                                                        // block for 10000 BLOCK tx -> 1 confirmation
+                CBlockIndex* pMNIndex = (*mi).second;                                                        // block for 5000 BLOCK tx -> 1 confirmation
                 CBlockIndex* pConfIndex = chainActive[pMNIndex->nHeight + SERVICENODE_MIN_CONFIRMATIONS - 1]; // block where tx got SERVICENODE_MIN_CONFIRMATIONS
                 if (pConfIndex->GetBlockTime() > sigTime) {
                     LogPrintf("mnb - Bad sigTime %d for Servicenode %s (%i conf block is at %d)\n",

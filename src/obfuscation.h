@@ -247,7 +247,7 @@ public:
 class CObfuScationSigner
 {
 public:
-    /// Is the inputs associated with this public key? (and there is 10000 BLOCK - checking if valid servicenode)
+    /// Is the inputs associated with this public key? (and there is 5000 BLOCK - checking if valid servicenode)
     bool IsVinAssociatedWithPubkey(CTxIn& vin, CPubKey& pubkey);
     /// Set the private/public key values, returns true if successful
     bool GetKeysFromSecret(std::string strSecret, CKey& keyRet, CPubKey& pubkeyRet);
