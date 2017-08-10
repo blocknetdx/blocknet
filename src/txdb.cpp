@@ -300,25 +300,37 @@ bool CZerocoinDB::ReadCoinMint(const CBigNum& bnPubcoin, uint256& hashTx)
 
 bool CZerocoinDB::EraseCoinMint(const CBigNum& bnPubcoin)
 {
-    uint256 hash = Hash(BEGIN(bnPubcoin), END(bnPubcoin));
+    CDataStream ss(SER_GETHASH, 0);
+    ss << bnPubcoin;
+    uint256 hash = Hash(ss.begin(), ss.end());
+
     return Erase(make_pair('m', hash));
 }
 
 bool CZerocoinDB::WriteCoinSpend(const CBigNum& bnSerial, const uint256& txHash)
 {
-    uint256 hash = Hash(BEGIN(bnSerial), END(bnSerial));
+    CDataStream ss(SER_GETHASH, 0);
+    ss << bnSerial;
+    uint256 hash = Hash(ss.begin(), ss.end());
+
     return Write(make_pair('s', hash), txHash, true);
 }
 
 bool CZerocoinDB::ReadCoinSpend(const CBigNum& bnSerial, uint256& txHash)
 {
-    uint256 hash = Hash(BEGIN(bnSerial), END(bnSerial));
+    CDataStream ss(SER_GETHASH, 0);
+    ss << bnSerial;
+    uint256 hash = Hash(ss.begin(), ss.end());
+
     return Read(make_pair('s', hash), txHash);
 }
 
 bool CZerocoinDB::EraseCoinSpend(const CBigNum& bnSerial)
 {
-    uint256 hash = Hash(BEGIN(bnSerial), END(bnSerial));
+    CDataStream ss(SER_GETHASH, 0);
+    ss << bnSerial;
+    uint256 hash = Hash(ss.begin(), ss.end());
+
     return Erase(make_pair('s', hash));
 }
 

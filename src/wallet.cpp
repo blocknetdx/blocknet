@@ -3816,12 +3816,14 @@ bool CWallet::MintToTxIn(CZerocoinMint zerocoinSelected, int nSecurityLevel, con
 
     // 3. Compute Accumulator and Witness
     LogPrintf("ZCPRINT %s step 3\n", __func__);
+    int64_t nTimeStart = GetTimeMillis();
     libzerocoin::Accumulator accumulator(Params().Zerocoin_Params(), pubCoinSelected.getDenomination());
     libzerocoin::AccumulatorWitness witness(Params().Zerocoin_Params(), accumulator, pubCoinSelected);
     if (!CAccumulators::getInstance().IntializeWitnessAndAccumulator(zerocoinSelected, pubCoinSelected, accumulator, witness, nSecurityLevel)) {
         LogPrintf("%s failed to initialize witness\n", __func__);
         return false;
     }
+    LogPrintf("*** step 3 time=%d\n", GetTimeMillis() - nTimeStart);
 
     // Construct the CoinSpend object. This acts like a signature on the transaction.
     LogPrintf("ZCPRINT %s step 4\n", __func__);
@@ -3916,9 +3918,15 @@ bool CWallet::CreateZerocoinSpendTransaction(CAmount nValue, int nSecurityLevel,
         return false;
     }
 
+    // Get a list of mints held by the wallet that are available to spend
+    list<CZerocoinMint> listMints = CWalletDB(strWalletFile).ListMintedCoins(true, true);
+    if (listMints.empty()) {
+        strFailReason = _("failed to find a zerocoin in database");
+        return false;
+    }
+
     const int nMaxSpends = Params().Zerocoin_MaxSpendsPerTransaction();
     CAmount nValueSelected = 0;
-    list<CZerocoinMint> listMints = CWalletDB(strWalletFile).ListMintedCoins(true, true);
     std::map<libzerocoin::CoinDenomination, CAmount> DenomMap = GetMyZerocoinDistribution();
     vSelectedMints = SelectMintsFromList(nValue, nValueSelected, nMaxSpends, listMints, DenomMap);
     // for Debug

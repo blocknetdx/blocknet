@@ -1017,13 +1017,20 @@ void FindMints(vector<CZerocoinMint> vMintsToFind, vector<CZerocoinMint>& vMints
             vMissingMints.push_back(mint);
         }
 
+        //see if this mint is spent
+        uint256 hashTxSpend = 0;
+        zerocoinDB->ReadCoinSpend(mint.GetSerialNumber(), hashTxSpend);
+        bool fSpent = hashTxSpend != 0;
+
         // if meta data is correct, then no need to update
-        if (mint.GetTxHash() == txHash && mint.GetHeight() == mapBlockIndex[hashBlock]->nHeight)
+        if (mint.GetTxHash() == txHash && mint.GetHeight() == mapBlockIndex[hashBlock]->nHeight && mint.IsUsed() == fSpent)
             continue;
 
         //mark this mint for update
         mint.SetTxHash(txHash);
         mint.SetHeight(mapBlockIndex[hashBlock]->nHeight);
+        mint.SetUsed(fSpent);
+
         vMintsToUpdate.push_back(mint);
     }
 
