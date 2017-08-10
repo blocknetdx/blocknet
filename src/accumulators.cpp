@@ -323,15 +323,20 @@ bool CAccumulators::IntializeWitnessAndAccumulator(const CZerocoinMint &zerocoin
     pindex = chainActive[nStartAccumulationHeight];
     int nAccumulatorsCheckpointsAdded = 0;
     uint256 nPreviousChecksum = 0;
-    while(pindex->nHeight < chainActive.Height() - 1) {
-
+    int nChainHeight = chainActive.Height();
+    int nHeightStop = nChainHeight % 10;
+    nHeightStop = nChainHeight - nHeightStop - 20; // at least two checkpoints deep
+    while(pindex->nHeight < nHeightStop + 1) {
         if (nPreviousChecksum != 0 && nPreviousChecksum != pindex->nAccumulatorCheckpoint)
             ++nAccumulatorsCheckpointsAdded;
 
         //if a new checkpoint was generated on this block, and we have added the specified amount of checkpointed accumulators,
-        //then break here
-        if (nSecurityLevel > 100 && nAccumulatorsCheckpointsAdded >= nSecurityLevel)
+        //then initialize the accumulator at this point and break
+        if (pindex->nHeight == nHeightStop || (nSecurityLevel > 100 && nAccumulatorsCheckpointsAdded >= nSecurityLevel)) {
+            CBigNum bnAccValue = GetAccumulatorValueFromCheckpoint(chainActive[pindex->nHeight + 20]->nAccumulatorCheckpoint, pubcoinSelected.getDenomination());
+            accumulator.setValue(bnAccValue);
             break;
+        }
 
         //grab mints from this block
         CBlock block;
@@ -351,9 +356,10 @@ bool CAccumulators::IntializeWitnessAndAccumulator(const CZerocoinMint &zerocoin
             if (mint.GetDenomination() != pubcoinSelected.getDenomination())
                 continue;
 
-            PublicCoin pubCoin(Params().Zerocoin_Params(), mint.GetValue(), mint.GetDenomination());
-            witness += pubCoin;
-            accumulator += pubCoin;
+            if (mint.GetValue() == pubcoinSelected.getValue())
+                continue;
+
+            witness.addRawValue(mint.GetValue());
         }
 
         pindex = chainActive[pindex->nHeight + 1];

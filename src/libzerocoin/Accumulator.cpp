@@ -40,6 +40,11 @@ Accumulator::Accumulator(const ZerocoinParams* p, const CoinDenomination d, cons
 		this->value = this->params->accumulatorBase;
 }
 
+void Accumulator::increment(const CBigNum& bnValue) {
+    // Compute new accumulator = "old accumulator"^{element} mod N
+    this->value = this->value.pow_mod(bnValue, this->params->accumulatorModulus);
+}
+
 void Accumulator::accumulate(const PublicCoin& coin) {
 	// Make sure we're initialized
 	if(!(this->value)) {
@@ -57,8 +62,7 @@ void Accumulator::accumulate(const PublicCoin& coin) {
 	}
 
 	if(coin.validate()) {
-		// Compute new accumulator = "old accumulator"^{element} mod N
-		this->value = this->value.pow_mod(coin.getValue(), this->params->accumulatorModulus);
+		increment(coin.getValue());
 	} else {
 		std::cout << "Coin not valid\n";
         throw std::runtime_error("Coin is not valid");
@@ -106,6 +110,11 @@ void AccumulatorWitness::AddElement(const PublicCoin& c) {
 	if(element != c) {
 		witness += c;
 	}
+}
+
+//warning check pubcoin value & denom outside of this function!
+void AccumulatorWitness::addRawValue(const CBigNum& bnValue) {
+        witness.increment(bnValue);
 }
 
 const CBigNum& AccumulatorWitness::getValue() const {

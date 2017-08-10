@@ -59,6 +59,7 @@ public:
 	 *
 	 **/
 	void accumulate(const PublicCoin &coin);
+    void increment(const CBigNum& bnValue);
 
 	CoinDenomination getDenomination() const;
 	/** Get the accumulator result
@@ -120,6 +121,12 @@ public:
 	 * @param c the coin to add
 	 */
 	void AddElement(const PublicCoin& c);
+
+    /** Adds element to the set whose's accumulation we are proving coin is a member of. No checks performed!
+	 *
+	 * @param bnValue the coin's value to add
+	 */
+    void addRawValue(const CBigNum& bnValue);
 
 	/**
 	 *
