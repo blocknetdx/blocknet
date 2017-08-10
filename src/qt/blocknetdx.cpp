@@ -676,12 +676,21 @@ int main(int argc, char* argv[])
         WinShutdownMonitor::registerShutdownBlockReason(QObject::tr("BlocknetDX Core didn't yet exit safely..."), (HWND)app.getMainWinId());
 #endif
         app.exec();
+
+        // stop xbridge
+        xapp.stop();
+
         app.requestShutdown();
+
         app.exec();
-    } catch (std::exception& e) {
+    }
+    catch (std::exception& e)
+    {
         PrintExceptionContinue(&e, "Runaway exception");
         app.handleRunawayException(QString::fromStdString(strMiscWarning));
-    } catch (...) {
+    }
+    catch (...)
+    {
         PrintExceptionContinue(NULL, "Runaway exception");
         app.handleRunawayException(QString::fromStdString(strMiscWarning));
     }
