@@ -486,7 +486,6 @@ HEADERS += \
     src/swifttx.h \
     src/timedata.h \
     src/txmempool.h \
-    src/uint512.h \
     src/undo.h \
     src/utilmoneystr.h \
     src/utilstrencodings.h \
