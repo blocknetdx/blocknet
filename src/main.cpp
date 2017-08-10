@@ -5389,29 +5389,29 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
 
     else if (strCommand == "xbridge")
     {
-        static bool isEnabled = XBridgeApp::isEnabled();
-        if (isEnabled)
+        std::vector<unsigned char> raw;
+        vRecv >> raw;
+
+        uint256 hash = Hash(raw.begin(), raw.end());
+        if (!pfrom->setKnown.count(hash))
         {
-            std::vector<unsigned char> raw;
-            vRecv >> raw;
+            pfrom->setKnown.insert(hash);
 
-            uint256 hash = Hash(raw.begin(), raw.end());
-            if (!pfrom->setKnown.count(hash))
+            // Relay
             {
-                pfrom->setKnown.insert(hash);
-
-                // Relay
+                LOCK(cs_vNodes);
+                for  (CNode * pnode : vNodes)
                 {
-                    LOCK(cs_vNodes);
-                    for  (CNode * pnode : vNodes)
+                    if (pnode->setKnown.insert(hash).second)
                     {
-                        if (pnode->setKnown.insert(hash).second)
-                        {
-                            pnode->PushMessage("xbridge", raw);
-                        }
+                        pnode->PushMessage("xbridge", raw);
                     }
                 }
+            }
 
+            static bool isEnabled = XBridgeApp::isEnabled();
+            if (isEnabled)
+            {
                 if (raw.size() > 20 + sizeof(time_t))
                 {
                     static std::vector<unsigned char> zero(20, 0);

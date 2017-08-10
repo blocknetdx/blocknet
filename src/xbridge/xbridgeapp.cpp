@@ -105,8 +105,8 @@ std::string XBridgeApp::version()
 // static
 bool XBridgeApp::isEnabled()
 {
-    // temporary always enabled
-    return true;
+    // temporary disable
+    return false;
 }
 
 //*****************************************************************************
@@ -256,22 +256,22 @@ bool XBridgeApp::stop()
 
 //*****************************************************************************
 //*****************************************************************************
-bool XBridgeApp::initRpc()
-{
-    Settings & s = settings();
-    if (!s.rpcEnabled())
-    {
-        return true;
-    }
+//bool XBridgeApp::initRpc()
+//{
+//    Settings & s = settings();
+//    if (!s.rpcEnabled())
+//    {
+//        return true;
+//    }
 
-    assert(!"rpc not tested");
-    return true;
+//    assert(!"rpc not tested");
+//    return true;
 
-    m_rpcStop = false;
+//    m_rpcStop = false;
 
-    m_threads.create_thread(boost::bind(&XBridgeApp::rpcThreadProc, this));
-    return true;
-}
+//    m_threads.create_thread(boost::bind(&XBridgeApp::rpcThreadProc, this));
+//    return true;
+//}
 
 //*****************************************************************************
 //*****************************************************************************

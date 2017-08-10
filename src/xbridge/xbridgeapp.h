@@ -72,7 +72,7 @@ public:
     // const unsigned char * myid() const { return m_myid; }
 
     // bool initDht();
-    bool initRpc();
+    // bool initRpc();
 
     bool stop();
 
