@@ -204,6 +204,7 @@ SET(SOURCES
 	./src/script/sign.cpp
 	./src/script/standard.cpp
 	./src/swifttx.cpp
+	./src/sporkdb.cpp
 	./src/timedata.cpp
 	./src/txdb.cpp
 	./src/txmempool.cpp
