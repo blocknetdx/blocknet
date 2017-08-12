@@ -179,6 +179,7 @@ public:
     
     //! zerocoin specific fields
     std::map<libzerocoin::CoinDenomination, int64_t> mapZerocoinSupply;
+    std::vector<libzerocoin::CoinDenomination> vMintDenominationsInBlock;
     
     void SetNull()
     {
@@ -213,7 +214,7 @@ public:
         for (auto& denom : libzerocoin::zerocoinDenomList) {
             mapZerocoinSupply.insert(make_pair(denom, 0));
         }
-
+        vMintDenominationsInBlock.clear();
     }
 
     CBlockIndex()
@@ -294,6 +295,11 @@ public:
             nTotal += libzerocoin::ZerocoinDenominationToAmount(denom) * mapZerocoinSupply.at(denom);
         }
         return nTotal;
+    }
+
+    bool MintedDenomination(libzerocoin::CoinDenomination denom) const
+    {
+        return std::find(vMintDenominationsInBlock.begin(), vMintDenominationsInBlock.end(), denom) != vMintDenominationsInBlock.end();
     }
 
     uint256 GetBlockHash() const
@@ -473,6 +479,7 @@ public:
         if(this->nVersion > 3) {
             READWRITE(nAccumulatorCheckpoint);
             READWRITE(mapZerocoinSupply);
+            READWRITE(vMintDenominationsInBlock);
         }
 
     }

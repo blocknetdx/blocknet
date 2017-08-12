@@ -34,7 +34,7 @@ public:
 
     libzerocoin::Accumulator Get(libzerocoin::CoinDenomination denomination);
     bool AddPubCoinToAccumulator(const libzerocoin::PublicCoin& publicCoin);
-    bool IntializeWitnessAndAccumulator(const CZerocoinMint &zerocoinSelected, const libzerocoin::PublicCoin &pubcoinSelected, libzerocoin::Accumulator& accumulator, libzerocoin::AccumulatorWitness& witness, int nSecurityLevel);
+    bool IntializeWitnessAndAccumulator(const libzerocoin::PublicCoin &coin, libzerocoin::Accumulator& accumulator, libzerocoin::AccumulatorWitness& witness, int nSecurityLevel);
     bool EraseCoinSpend(const CBigNum& bnSerial);
     bool EraseCoinMint(const CBigNum& bnPubCoin);
 
