@@ -443,7 +443,8 @@ Value masternode(const Array& params, bool fHelp)
             mnObj.push_back(Pair("message", activeMasternode.GetStatus()));
             return mnObj;
         }
-        throw runtime_error("Masternode not found\n");
+        throw runtime_error("Masternode not found in the list of available masternodes. Current status: " 
+                            + activeMasternode.GetStatus() + "\n");
     }
 
     if (strCommand == "winners") {
