@@ -81,7 +81,7 @@ bool CAccumulators::LoadAccumulatorValuesFromDB(const uint256 nCheckpoint)
         //if read is not successful then we are not in a state to verify zerocoin transactions
         CBigNum bnValue;
         if (!zerocoinDB->ReadAccumulatorValue(nChecksum, bnValue)) {
-            LogPrintf("%s : Missing databased value for checksum %d\n", __func__, nChecksum);
+            LogPrint("zero","%s : Missing databased value for checksum %d\n", __func__, nChecksum);
             listAccCheckpointsNoDB.push_back(nCheckpoint);
             return false;
         }
@@ -197,7 +197,7 @@ bool CAccumulators::GetCheckpoint(int nHeight, uint256& nCheckpoint)
 
     //set the accumulators to last checkpoint value
     if(!ResetToCheckpoint(chainActive[nHeight - 1]->nAccumulatorCheckpoint)) {
-        LogPrintf("%s: failed to reset to previous checkpoint\n", __func__);
+        LogPrint("zero","%s: failed to reset to previous checkpoint\n", __func__);
         return false;
     }
 
@@ -214,12 +214,12 @@ bool CAccumulators::GetCheckpoint(int nHeight, uint256& nCheckpoint)
         //grab mints from this block
         CBlock block;
         if(!ReadBlockFromDisk(block, pindex)) {
-            LogPrintf("%s: failed to read block from disk\n", __func__);
+            LogPrint("zero","%s: failed to read block from disk\n", __func__);
             return false;
         }
         std::list<CZerocoinMint> listMints;
         if(!BlockToZerocoinMintList(block, listMints)) {
-            LogPrintf("%s: failed to get zerocoin mintlist from block %n\n", __func__, pindex->nHeight);
+            LogPrint("zero","%s: failed to get zerocoin mintlist from block %n\n", __func__, pindex->nHeight);
             return false;
         }
 
@@ -231,7 +231,7 @@ bool CAccumulators::GetCheckpoint(int nHeight, uint256& nCheckpoint)
             CoinDenomination denomination = mint.GetDenomination();
             PublicCoin pubCoin(Params().Zerocoin_Params(), mint.GetValue(), denomination);
             if(!AddPubCoinToAccumulator(pubCoin)) {
-                LogPrintf("%s: failed to add pubcoin to accumulator at height %n\n", __func__, pindex->nHeight);
+                LogPrint("zero","%s: failed to add pubcoin to accumulator at height %n\n", __func__, pindex->nHeight);
                 return false;
             }
         }
@@ -256,14 +256,14 @@ bool CAccumulators::IntializeWitnessAndAccumulator(const PublicCoin &coin, Accum
 {
     uint256 txid;
     if (!zerocoinDB->ReadCoinMint(coin.getValue(), txid)) {
-        LogPrintf("%s failed to read mint from db\n", __func__);
+        LogPrint("zero","%s failed to read mint from db\n", __func__);
         return false;
     }
 
     CTransaction txMinted;
     uint256 hashBlock;
     if (!GetTransaction(txid, txMinted, hashBlock)) {
-        LogPrintf("%s failed to read tx\n", __func__);
+        LogPrint("zero","%s failed to read tx\n", __func__);
         return false;
     }
 
@@ -323,7 +323,7 @@ bool CAccumulators::IntializeWitnessAndAccumulator(const PublicCoin &coin, Accum
     int nHeightStop = nChainHeight % 10;
     nHeightStop = nChainHeight - nHeightStop - 20; // at least two checkpoints deep
 
-    LogPrintf("***from height: %d\n", pindex->nHeight);
+    LogPrint("zero","***from height: %d\n", pindex->nHeight);
     int nMintsAdded = 0, nCheckpointsAdded = 0;
     while(pindex->nHeight < nHeightStop + 1) {
         if (pindex->nHeight != nAccStartHeight && pindex->pprev->nAccumulatorCheckpoint != pindex->nAccumulatorCheckpoint)
@@ -342,13 +342,13 @@ bool CAccumulators::IntializeWitnessAndAccumulator(const PublicCoin &coin, Accum
             //grab mints from this block
             CBlock block;
             if(!ReadBlockFromDisk(block, pindex)) {
-                LogPrintf("%s: failed to read block from disk while adding pubcoins to witness\n", __func__);
+                LogPrint("zero","%s: failed to read block from disk while adding pubcoins to witness\n", __func__);
                 return false;
             }
 
             std::vector<CBigNum> vValues;
             if(!BlockToMintValueVector(block, coin.getDenomination(), vValues)) {
-                LogPrintf("%s: failed to get zerocoin mintlist from block %n\n", __func__, pindex->nHeight);
+                LogPrint("zero","%s: failed to get zerocoin mintlist from block %n\n", __func__, pindex->nHeight);
                 return false;
             }
 
@@ -365,6 +365,6 @@ bool CAccumulators::IntializeWitnessAndAccumulator(const PublicCoin &coin, Accum
         pindex = chainActive[pindex->nHeight + 1];
     }
 
-    LogPrintf("%s : %d mints added to witness\n", __func__, nMintsAdded);
+    LogPrint("zero","%s : %d mints added to witness\n", __func__, nMintsAdded);
     return true;
 }

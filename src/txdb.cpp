@@ -337,7 +337,7 @@ bool CZerocoinDB::EraseCoinSpend(const CBigNum& bnSerial)
 
 bool CZerocoinDB::WriteAccumulatorValue(const uint32_t& nChecksum, const CBigNum& bnValue)
 {
-    LogPrintf("*** %s checksum:%d val:%s\n", __func__, nChecksum, bnValue.GetHex());
+    LogPrint("zero","*** %s checksum:%d val:%s\n", __func__, nChecksum, bnValue.GetHex());
     return Write(make_pair('a', nChecksum), bnValue);
 }
 
