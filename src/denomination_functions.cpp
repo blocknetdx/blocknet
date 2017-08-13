@@ -173,6 +173,22 @@ CoinDenomination getNextHighestDenom(const CoinDenomination& this_denom)
     }
     return nextValue;
 }
+// -------------------------------------------------------------------------------------------------------
+// Get the next denomination below the current one that is also amongst those held.
+// Return ZQ_ERROR if none found
+// -------------------------------------------------------------------------------------------------------
+CoinDenomination getNextLowerDenomHeld(const CoinDenomination& this_denom,
+                                       const std::map<CoinDenomination, CAmount>& mapCoinsHeld)
+{
+    CoinDenomination nextValue = ZQ_ERROR;
+    for (auto& denom : reverse_iterate(zerocoinDenomList)) {
+        if ((denom < this_denom) && (mapCoinsHeld.at(denom) != 0)) {
+            nextValue = denom;
+            break;
+        }
+    }
+    return nextValue;
+}
 
 // -------------------------------------------------------------------------------------------------------
 // When the number of spends is too large, attempt to use different coins to decrease amount of spends
@@ -243,6 +259,7 @@ bool rebalanceCoinsSelect(
 // -------------------------------------------------------------------------------------------------------
 int calculateChange(
     int nMaxNumberOfSpends,
+    bool fMinimizeChange,
     const CAmount nValueTarget,
     const std::map<CoinDenomination, CAmount>& mapOfDenomsHeld,
     std::map<CoinDenomination, CAmount>& mapOfDenomsUsed)
@@ -266,9 +283,89 @@ int calculateChange(
         // Now find out # of coins in change
         CAmount nChangeAmount = ZerocoinDenominationToAmount(minDenomOverTarget) - nValueTarget;
         std::map<CoinDenomination, CAmount> mapChange = getChange(nChangeAmount);
-
         int nChangeCount = getNumberOfCoinsUsed(mapChange);
-        return nChangeCount;
+
+        // Now find out if possible without using 1 coin such that we have more spends but less change
+
+        // First get set of coins close to value but still less than value (since not exact)
+        CoinDenomination nextToMaxDenom = getNextLowerDenomHeld(minDenomOverTarget, mapOfDenomsHeld);
+        CAmount nRemainingValue = nValueTarget;
+        CAmount AmountUsed = 0;
+        int nCoinCount = 0;
+
+        // Re-clear this
+        for (const auto& denom : zerocoinDenomList)  mapOfDenomsUsed.at(denom) = 0;
+
+        // Find the amount this is less than total but uses up higher denoms first,
+        // starting at the denom that is not greater than the overall total
+        for (const auto& denom : reverse_iterate(zerocoinDenomList)) {
+            if (denom <= nextToMaxDenom) {
+                CAmount nValue = ZerocoinDenominationToAmount(denom);
+                do {
+                    if ((nRemainingValue > nValue) && (mapOfDenomsUsed.at(denom) < mapOfDenomsHeld.at(denom))) {
+                        mapOfDenomsUsed.at(denom)++;
+                        nRemainingValue -= nValue;
+                        AmountUsed += nValue;
+                        nCoinCount++;
+                    }
+                } while ((nRemainingValue > nValue) && (mapOfDenomsUsed.at(denom) < mapOfDenomsHeld.at(denom)));
+            }
+        }
+
+        // Now work way back up from the bottom filling in with the denom that we have that is just
+        // bigger than the remaining amount
+        // Shouldn't need more than one coin here?
+        for (const auto& denom : zerocoinDenomList) {
+            CAmount nValue = ZerocoinDenominationToAmount(denom);
+            if ((nValue > nRemainingValue) && (mapOfDenomsUsed.at(denom) < mapOfDenomsHeld.at(denom))) {
+                mapOfDenomsUsed.at(denom)++;
+                nRemainingValue -= nValue;
+                AmountUsed += nValue;
+                nCoinCount++;
+            }
+            if (nRemainingValue < 0) break;
+        }
+
+        // This can still result in a case where you've used an extra spend than needed.
+        // e.g Spend of 26, while having 1*5 + 4*10
+        // First stage may be 2*10+5 (i.e < 26)
+        // Second stage can be 3*10+5 (no more fives, so add a 10)
+        // So 5 is no longer needed and will become change also
+
+        CAmount nAltChangeAmount = AmountUsed - nValueTarget;
+        std::map<CoinDenomination, CAmount> mapAltChange = getChange(nAltChangeAmount);
+
+        // Check if there is overlap between change and spend denominations
+        for (const auto& denom : zerocoinDenomList) {
+            do {
+                if (mapAltChange.at(denom) && mapOfDenomsUsed.at(denom)) {
+                    mapOfDenomsUsed.at(denom)--;
+                    mapAltChange.at(denom)--;
+                    nCoinCount--;
+                    CAmount nValue = ZerocoinDenominationToAmount(denom);
+                    AmountUsed -= nValue;
+                }
+            } while (mapAltChange.at(denom) && mapOfDenomsUsed.at(denom));
+        }
+
+        // Re-calculate
+        nAltChangeAmount = AmountUsed - nValueTarget;
+        mapAltChange = getChange(nAltChangeAmount);
+
+        int AltChangeCount = getNumberOfCoinsUsed(mapAltChange);
+
+        //std::cout << "if not using larger denom, then " << nCoinCount << " coins for spend, " << AltChangeCount << " coins for change\n";
+
+        // Alternative method yields less mints and is less than MaxNumberOfSpends if true
+        if (fMinimizeChange && (AltChangeCount < nChangeCount) && (nCoinCount <= nMaxNumberOfSpends)) {
+            return AltChangeCount;
+        } else {
+            // Reclear
+            for (const auto& denom : zerocoinDenomList)  mapOfDenomsUsed.at(denom) = 0;
+            // Then reset as before previous clearing
+            mapOfDenomsUsed.at(minDenomOverTarget) = 1;
+            return nChangeCount;
+        }
 
     } else {
         CoinDenomination maxDenom = getMaxDenomHeld(mapOfDenomsHeld);
@@ -310,13 +407,17 @@ int calculateChange(
 // Given a Target Spend Amount, attempt to meet it with a set of coins where less than nMaxNumberOfSpends
 // 'spends' are required
 // -------------------------------------------------------------------------------------------------------
-std::vector<CZerocoinMint> SelectMintsFromList(const CAmount nValueTarget, CAmount& nSelectedValue, int nMaxNumberOfSpends, const std::list<CZerocoinMint>& listMints, const std::map<CoinDenomination, CAmount> mapOfDenomsHeld)
+std::vector<CZerocoinMint> SelectMintsFromList(const CAmount nValueTarget, CAmount& nSelectedValue,
+                                               int nMaxNumberOfSpends, bool fMinimizeChange, int& nCoinsReturned,
+                                               const std::list<CZerocoinMint>& listMints,
+                                               const std::map<CoinDenomination, CAmount> mapOfDenomsHeld)
 {
     std::vector<CZerocoinMint> vSelectedMints;
     std::map<CoinDenomination, CAmount> mapOfDenomsUsed;
 
     bool fCanMeetExactly = getIdealSpends(nValueTarget, listMints, mapOfDenomsHeld, mapOfDenomsUsed);
     if (fCanMeetExactly) {
+        nCoinsReturned = 0;
         nSelectedValue = nValueTarget;
         vSelectedMints = getSpends(listMints, mapOfDenomsUsed, nSelectedValue);
         // If true, we are good and done!
@@ -326,7 +427,7 @@ std::vector<CZerocoinMint> SelectMintsFromList(const CAmount nValueTarget, CAmou
     }
     // Since either too many spends needed or can not spend the exact amount,
     // calculate the change needed and the map of coins used
-    int nCoinsReturned = calculateChange(nMaxNumberOfSpends, nValueTarget, mapOfDenomsHeld, mapOfDenomsUsed);
+    nCoinsReturned = calculateChange(nMaxNumberOfSpends, fMinimizeChange, nValueTarget, mapOfDenomsHeld, mapOfDenomsUsed);
     if (nCoinsReturned == 0) {
         LogPrint("zero", "%s: Problem getting change (TBD) or Too many spends %d\n", __func__, nValueTarget);
         vSelectedMints.clear();

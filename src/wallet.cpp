@@ -1256,9 +1256,10 @@ CAmount CWallet::GetZerocoinBalance() const
         }
     }
     for (auto& denom : libzerocoin::zerocoinDenomList) {
-        LogPrintf("%s My coins for denomination %d pubcoin %s\n", __func__,myZerocoinSupply.at(denom), denom);
+        LogPrint("zero","%s My coins for denomination %d pubcoin %s\n", __func__,myZerocoinSupply.at(denom), denom);
     }
-    LogPrintf("Total value of coins %d\n",nTotal);
+    LogPrint("zero","Total value of coins %d\n",nTotal);
+
 
 
 
@@ -3928,7 +3929,9 @@ bool CWallet::CreateZerocoinSpendTransaction(CAmount nValue, int nSecurityLevel,
     const int nMaxSpends = Params().Zerocoin_MaxSpendsPerTransaction();
     CAmount nValueSelected = 0;
     std::map<libzerocoin::CoinDenomination, CAmount> DenomMap = GetMyZerocoinDistribution();
-    vSelectedMints = SelectMintsFromList(nValue, nValueSelected, nMaxSpends, listMints, DenomMap);
+    const bool fMinimizeChange = false; // Later should be a GUI option
+    int nCoinsReturned; // Number of coins returned in change from function below (for debug)
+    vSelectedMints = SelectMintsFromList(nValue, nValueSelected, nMaxSpends, fMinimizeChange, nCoinsReturned, listMints, DenomMap);
     // for Debug
     listSpends(vSelectedMints);
 
