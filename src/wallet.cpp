@@ -3722,6 +3722,11 @@ bool CWallet::CreateZerocoinMintTransaction(const CAmount nValue, CMutableTransa
         //mint a coin with the closest denomination to what is being requested
         nFeeRet = txNew.vout.size() * Params().Zerocoin_MintFee();
         nValueRemaining = nValue - nMintingValue - (isZCSpendChange ? nFeeRet : 0);
+
+        // if this is change of a zerocoinspend, then we can't mint all change, at least something must be given as a fee
+        if (isZCSpendChange && nValueRemaining <= 1 * COIN)
+            break;
+
         libzerocoin::CoinDenomination denomination = libzerocoin::AmountToClosestDenomination(nValueRemaining, nValueRemaining);
         if (denomination == libzerocoin::ZQ_ERROR)
             break;
@@ -3965,7 +3970,6 @@ bool CWallet::CreateZerocoinSpendTransaction(CAmount nValue, int nSecurityLevel,
     {
         LOCK2(cs_main, cs_wallet);
         {
-            LogPrintf("ZCPRINT %s after lock\n", __func__);
             txNew.vin.clear();
             txNew.vout.clear();
 
@@ -3991,7 +3995,6 @@ bool CWallet::CreateZerocoinSpendTransaction(CAmount nValue, int nSecurityLevel,
                 scriptZerocoinSpend = GetScriptForDestination(vchPubKey.GetID());
             }
 
-            LogPrintf("ZCPRINT %s before minting\n", __func__);
             //add change output if we are spending too much (only applies to spending multiple at once)
             if (nChange) {
                 //mint change as zerocoins
