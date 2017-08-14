@@ -1612,13 +1612,21 @@ bool CWallet::SelectStakeCoins(std::set<std::pair<const CWalletTx*, unsigned int
     AvailableCoins(vCoins, true);
     CAmount nAmountSelected = 0;
 
-    BOOST_FOREACH (const COutput& out, vCoins) {
+    for (const COutput& out : vCoins) {
         //make sure not to outrun target amount
         if (nAmountSelected + out.tx->vout[out.i].nValue > nTargetAmount)
             continue;
 
+        //if zerocoinspend, then use the block time
+        int64_t nTxTime = out.tx->GetTxTime();
+        if (out.tx->IsZerocoinSpend()) {
+            if (!out.tx->IsInMainChain())
+                continue;
+            nTxTime = mapBlockIndex.at(out.tx->hashBlock)->GetBlockTime();
+        }
+
         //check for min age
-        if (GetTime() - out.tx->GetTxTime() < nStakeMinAge)
+        if (GetAdjustedTime() - nTxTime < nStakeMinAge)
             continue;
 
         //check that it is matured
@@ -1643,8 +1651,15 @@ bool CWallet::MintableCoins()
     vector<COutput> vCoins;
     AvailableCoins(vCoins, true);
 
-    BOOST_FOREACH (const COutput& out, vCoins) {
-        if (GetTime() - out.tx->GetTxTime() > nStakeMinAge)
+    for (const COutput& out : vCoins) {
+        int64_t nTxTime = out.tx->GetTxTime();
+        if (out.tx->IsZerocoinSpend()) {
+            if (!out.tx->IsInMainChain())
+                continue;
+            nTxTime = mapBlockIndex.at(out.tx->hashBlock)->GetBlockTime();
+        }
+
+        if (GetAdjustedTime() - nTxTime > nStakeMinAge)
             return true;
     }
 
