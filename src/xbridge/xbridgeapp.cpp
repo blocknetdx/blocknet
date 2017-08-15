@@ -105,8 +105,8 @@ std::string XBridgeApp::version()
 // static
 bool XBridgeApp::isEnabled()
 {
-    // temporary disable
-    return false;
+    // enabled by default
+    return true;
 }
 
 //*****************************************************************************
