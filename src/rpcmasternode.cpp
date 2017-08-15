@@ -347,8 +347,10 @@ Value masternode(const Array& params, bool fHelp)
             CTxIn vin = CTxIn(uint256(mne.getTxHash()), uint32_t(nIndex));
             CMasternode* pmn = mnodeman.Find(vin);
 
-            if (strCommand == "start-missing" && pmn) continue;
-            if (strCommand == "start-disabled" && pmn && pmn->IsEnabled()) continue;
+            if (pmn != NULL) {
+                if (strCommand == "start-missing") continue;
+                if (strCommand == "start-disabled" && pmn->IsEnabled()) continue;
+            }
 
             bool result = activeMasternode.Register(mne.getIp(), mne.getPrivKey(), mne.getTxHash(), mne.getOutputIndex(), errorMessage);
 
@@ -598,23 +600,25 @@ Value masternodelist(const Array& params, bool fHelp)
 
         CMasternode* mn = mnodeman.Find(s.second.vin);
 
-        if (strFilter != "" && strTxHash.find(strFilter) == string::npos &&
-            mn->Status().find(strFilter) == string::npos &&
-            CBitcoinAddress(mn->pubKeyCollateralAddress.GetID()).ToString().find(strFilter) == string::npos) continue;
+        if (mn != NULL) {
+            if (strFilter != "" && strTxHash.find(strFilter) == string::npos &&
+                mn->Status().find(strFilter) == string::npos &&
+                CBitcoinAddress(mn->pubKeyCollateralAddress.GetID()).ToString().find(strFilter) == string::npos) continue;
 
-        std::string strStatus = mn->Status();
+            std::string strStatus = mn->Status();
 
-        obj.push_back(Pair("rank", (strStatus == "ENABLED" ? s.first : 0)));
-        obj.push_back(Pair("txhash", strTxHash));
-        obj.push_back(Pair("outidx", (uint64_t)oIdx));
-        obj.push_back(Pair("status", strStatus));
-        obj.push_back(Pair("addr", CBitcoinAddress(mn->pubKeyCollateralAddress.GetID()).ToString()));
-        obj.push_back(Pair("version", mn->protocolVersion));
-        obj.push_back(Pair("lastseen", (int64_t)mn->lastPing.sigTime));
-        obj.push_back(Pair("activetime", (int64_t)(mn->lastPing.sigTime - mn->sigTime)));
-        obj.push_back(Pair("lastpaid", (int64_t)mn->GetLastPaid()));
+            obj.push_back(Pair("rank", (strStatus == "ENABLED" ? s.first : 0)));
+            obj.push_back(Pair("txhash", strTxHash));
+            obj.push_back(Pair("outidx", (uint64_t)oIdx));
+            obj.push_back(Pair("status", strStatus));
+            obj.push_back(Pair("addr", CBitcoinAddress(mn->pubKeyCollateralAddress.GetID()).ToString()));
+            obj.push_back(Pair("version", mn->protocolVersion));
+            obj.push_back(Pair("lastseen", (int64_t)mn->lastPing.sigTime));
+            obj.push_back(Pair("activetime", (int64_t)(mn->lastPing.sigTime - mn->sigTime)));
+            obj.push_back(Pair("lastpaid", (int64_t)mn->GetLastPaid()));
 
-        ret.push_back(obj);
+            ret.push_back(obj);
+        }
     }
 
     return ret;
