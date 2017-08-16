@@ -37,6 +37,9 @@ struct WalletParam
     // block time in seconds
     uint32_t                   blockTime;
 
+    // required confirmations for tx
+    uint32_t                   requiredConfirmations;
+
     WalletParam()
         : fee(0)
         , txVersion(1)
@@ -48,6 +51,7 @@ struct WalletParam
         , isGetNewPubKeySupported(false)
         , isImportWithNoScanSupported(false)
         , blockTime(0)
+        , requiredConfirmations(0)
     {
         memset(addrPrefix,   0, sizeof(addrPrefix));
         memset(scriptPrefix, 0, sizeof(scriptPrefix));

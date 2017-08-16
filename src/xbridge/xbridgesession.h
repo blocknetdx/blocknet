@@ -122,6 +122,8 @@ protected:
 
     bool checkDepositTx(const XBridgeTransactionDescrPtr & xtx,
                         const std::string & depositTxId,
+                        const uint32_t & confirmations,
+                        const uint64_t & neededAmount,
                         bool & isGood);
 
 protected:

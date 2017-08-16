@@ -1260,27 +1260,65 @@ std::string XBridgeSession::createRawTransaction(const std::vector<std::pair<std
 //******************************************************************************
 bool XBridgeSession::checkDepositTx(const XBridgeTransactionDescrPtr & /*xtx*/,
                                     const std::string & depositTxId,
+                                    const uint32_t & confirmations,
+                                    const uint64_t & /*neededAmount*/,
                                     bool & isGood)
 {
     isGood  = false;
 
-    std::string rawtx;
-    if (!rpc::getRawTransaction(m_wallet.user, m_wallet.passwd,
-                                m_wallet.ip, m_wallet.port,
-                                depositTxId, rawtx))
+//    std::string rawtx;
+//    if (!rpc::getRawTransaction(m_wallet.user, m_wallet.passwd,
+//                                m_wallet.ip, m_wallet.port,
+//                                depositTxId, rawtx))
+//    {
+//        LOG() << "no tx found " << depositTxId << " " << __FUNCTION__;
+//        return false;
+//    }
+
+//    std::string txid;
+//    std::string txjson;
+//    if (!rpc::decodeRawTransaction(m_wallet.user, m_wallet.passwd,
+//                                   m_wallet.ip, m_wallet.port,
+//                                   rawtx, txid, txjson))
+//    {
+//        LOG() << "transaction decode error " << depositTxId << " " << __FUNCTION__;
+//        return false;
+//    }
+    std::string json;
+    if (!rpc::getTransaction(m_wallet.user, m_wallet.passwd,
+                             m_wallet.ip, m_wallet.port,
+                             depositTxId, json))
     {
         LOG() << "no tx found " << depositTxId << " " << __FUNCTION__;
         return false;
     }
 
-    std::string txid;
-    std::string txjson;
-    if (!rpc::decodeRawTransaction(m_wallet.user, m_wallet.passwd,
-                                   m_wallet.ip, m_wallet.port,
-                                   rawtx, txid, txjson))
+    // check confirmations
+    json_spirit::Value txv;
+    if (!json_spirit::read_string(json, txv))
     {
-        LOG() << "transaction decode error " << depositTxId << " " << __FUNCTION__;
+        LOG() << "json read error for " << depositTxId << " " << json << " " << __FUNCTION__;
         return false;
+    }
+
+    json_spirit::Object txo = txv.get_obj();
+
+    if (confirmations > 0)
+    {
+        json_spirit::Value txvConfCount = json_spirit::find_value(txo, "confirmations");
+        if (txvConfCount.type() != json_spirit::int_type)
+        {
+            // not found confirmations field, tx found but return isGood to false
+            LOG() << "confirmations not found in " << json << " " << __FUNCTION__;
+            return true;
+        }
+
+        if (confirmations < static_cast<uint32_t>(txvConfCount.get_int()))
+        {
+            // wait more
+            LOG() << "tx " << depositTxId << " unconfirmed, need " << confirmations << " " << __FUNCTION__;
+            return false;
+        }
     }
 
     // TODO check amount in tx
@@ -1381,7 +1419,7 @@ bool XBridgeSession::processTransactionCreate(XBridgePacketPtr packet)
         }
 
         bool isGood = false;
-        if (!receiver->checkDepositTx(xtx, binATxId, isGood))
+        if (!receiver->checkDepositTx(xtx, binATxId, m_wallet.requiredConfirmations, 0, isGood))
         {
             // move packet to pending
             boost::mutex::scoped_lock l(XBridgeApp::m_ppLocker);
@@ -1909,7 +1947,7 @@ bool XBridgeSession::processTransactionConfirmA(XBridgePacketPtr packet)
         // TODO check tx in blockchain and move packet to pending if not
 
         bool isGood = false;
-        if (!checkDepositTx(xtx, binTxId, isGood))
+        if (!checkDepositTx(xtx, binTxId, m_wallet.requiredConfirmations, 0, isGood))
         {
             // move packet to pending
             boost::mutex::scoped_lock l(XBridgeApp::m_ppLocker);
