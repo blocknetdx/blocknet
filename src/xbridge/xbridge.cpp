@@ -63,6 +63,7 @@ XBridge::XBridge()
                 wp.isGetNewPubKeySupported     = s.get<bool>(*i + ".GetNewKeySupported", false);
                 wp.isImportWithNoScanSupported = s.get<bool>(*i + ".ImportWithNoScanSupported", false);
                 wp.blockTime                   = s.get<int>(*i + ".BlockTime", 0);
+                wp.requiredConfirmations       = s.get<int>(*i + ".Confirmations", 0);
 
                 if (wp.ip.empty() || wp.port.empty() ||
                     wp.user.empty() || wp.passwd.empty() ||

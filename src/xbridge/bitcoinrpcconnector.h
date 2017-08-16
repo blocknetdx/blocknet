@@ -117,8 +117,8 @@ namespace rpc
                         const std::string & rpcpasswd,
                         const std::string & rpcip,
                         const std::string & rpcport,
-                        const std::string & txid);
-                        // std::string & tx);
+                        const std::string & txid,
+                        std::string & tx);
 
     bool getNewPubKey(const std::string & rpcuser,
                       const std::string & rpcpasswd,

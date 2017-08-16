@@ -1066,8 +1066,8 @@ bool getTransaction(const std::string & rpcuser,
                     const std::string & rpcpasswd,
                     const std::string & rpcip,
                     const std::string & rpcport,
-                    const std::string & txid)
-                    // std::string & tx)
+                    const std::string & txid,
+                    std::string & tx)
 {
     try
     {
@@ -1100,6 +1100,7 @@ bool getTransaction(const std::string & rpcuser,
         }
 
         // transaction exists, success
+        tx = write_string(result);
     }
     catch (std::exception & e)
     {
