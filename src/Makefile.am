@@ -133,6 +133,7 @@ BITCOIN_CORE_H = \
   noui.h \
   pow.h \
   protocol.h \
+  ptr.h \
   pubkey.h \
   random.h \
   rpcclient.h \
@@ -169,7 +170,9 @@ BITCOIN_CORE_H = \
   zmq/zmqabstractnotifier.h \
   zmq/zmqconfig.h \
   zmq/zmqnotificationinterface.h \
-  zmq/zmqpublishnotifier.h
+  zmq/zmqpublishnotifier.h \
+  FastDelegate.h \
+  arith_uint256.h
 
 JSON_H = \
   json/json_spirit.h \
