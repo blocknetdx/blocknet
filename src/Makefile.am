@@ -43,7 +43,6 @@ EXTRA_LIBRARIES = \
   crypto/libbitcoin_crypto.a \
   libbitcoin_util.a \
   libbitcoin_common.a \
-  libbitcoin_consensus.a \
   univalue/libbitcoin_univalue.a \
   libxbridge_xbridge.a \
   libbitcoin_server.a \
