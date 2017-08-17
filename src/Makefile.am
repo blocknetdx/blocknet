@@ -98,6 +98,8 @@ BITCOIN_CORE_H = \
   coins.h \
   compat.h \
   compat/sanity.h \
+  compat/endian.h \
+  compat/byteswap.h \
   compressor.h \
   primitives/block.h \
   primitives/transaction.h \
@@ -177,7 +179,8 @@ JSON_H = \
   json/json_spirit_utils.h \
   json/json_spirit_value.h \
   json/json_spirit_writer.h \
-  json/json_spirit_writer_template.h
+  json/json_spirit_writer_template.h \
+  json/json_spirit_writer_options.h
 
 obj/build.h: FORCE
 	@$(MKDIR_P) $(builddir)/obj
