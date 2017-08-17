@@ -147,6 +147,7 @@ BITCOIN_CORE_H = \
   serialize.h \
   spork.h \
   streams.h \
+  support/cleanse.h \
   sync.h \
   threadsafety.h \
   timedata.h \
@@ -357,6 +358,8 @@ libxbridge_xbridge_a_SOURCES = \
   xbridge/xbitcoinsecret.cpp \
   xbridge/xbitcointransaction.cpp \
   xbridge/rpcxbridge.cpp \
+  xbridge/xbridgeapp.h \
+  xbridge/xbridgeexchange.h \
   $(BITCOIN_CORE_H)
 
 
