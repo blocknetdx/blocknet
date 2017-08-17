@@ -96,7 +96,7 @@ public:
         pchMessageStart[3] = 0xa3;
         vAlertPubKey = ParseHex("0452c91a00518fb8c6d38100341f88499554284d1ba75097cc25ae5a0d811835c63d2cb46c8855304bca81c452b63ce71fcb6897d06f8000450841f72602457f74");
         nDefaultPort = 41412;
-        bnProofOfWorkLimit = ~uint256(0) >> 20; // BlocknetDX starting difficulty is 1 / 2^12
+        bnProofOfWorkLimit = ~uint256() >> 20; // BlocknetDX starting difficulty is 1 / 2^12
         nSubsidyHalvingInterval = 210000;
         nMaxReorganizationDepth = 100;
         nEnforceBlockUpgradeMajority = 750;
@@ -139,9 +139,9 @@ public:
 	assert(hashGenesisBlock == uint256("0x00000eb7919102da5a07dc90905651664e6ebf0811c28f06573b9a0fd84ab7b8"));
         assert(genesis.hashMerkleRoot == uint256("0xb1f0e93f6df55af4c23a0719ab33be2b8115e2b6127fc1d926a06c60a8b56bf2"));
 
-	/*
-        vSeeds.push_back(CDNSSeedData("blocknetdxseeds.ddns.net", "blocknetdxseeds.ddns.net")); // Single node address
-	*/
+        vSeeds.push_back(CDNSSeedData("178.62.90.213", "178.62.90.213")); // seed node
+        vSeeds.push_back(CDNSSeedData("138.197.73.214", "138.197.73.214")); // seed node
+
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 26);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1, 28);
         base58Prefixes[SECRET_KEY] = std::vector<unsigned char>(1, 154);
@@ -269,7 +269,7 @@ public:
         nMinerThreads = 1;
         nTargetTimespan = 24 * 60 * 60; // Blocknetdx: 1 day
         nTargetSpacing = 1 * 60;        // Blocknetdx: 1 minutes
-        bnProofOfWorkLimit = ~uint256(0) >> 1;
+        bnProofOfWorkLimit = ~uint256() >> 1;
         genesis.nTime = 1454124731;
         genesis.nBits = 0x207fffff;
         genesis.nNonce = 12345;

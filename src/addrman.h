@@ -273,7 +273,7 @@ public:
      * very little in common.
      */
     template <typename Stream>
-    void Serialize(Stream& s, int nType, int nVersionDummy) const
+    void Serialize(Stream& s, int /*nType*/, int /*nVersionDummy*/) const
     {
         LOCK(cs);
 
@@ -323,7 +323,7 @@ public:
     }
 
     template <typename Stream>
-    void Unserialize(Stream& s, int nType, int nVersionDummy)
+    void Unserialize(Stream& s, int /*nType*/, int /*nVersionDummy*/)
     {
         LOCK(cs);
 

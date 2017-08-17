@@ -160,7 +160,7 @@ void ReceiveCoinsDialog::on_recentRequestsView_doubleClicked(const QModelIndex& 
     dialog->show();
 }
 
-void ReceiveCoinsDialog::recentRequestsView_selectionChanged(const QItemSelection& selected, const QItemSelection& deselected)
+void ReceiveCoinsDialog::recentRequestsView_selectionChanged(const QItemSelection& /*selected*/, const QItemSelection& /*deselected*/)
 {
     // Enable Show/Remove buttons only if anything is selected.
     bool enable = !ui->recentRequestsView->selectionModel()->selectedRows().isEmpty();
@@ -227,7 +227,7 @@ void ReceiveCoinsDialog::copyColumnToClipboard(int column)
 }
 
 // context menu
-void ReceiveCoinsDialog::showMenu(const QPoint& point)
+void ReceiveCoinsDialog::showMenu(const QPoint& /*point*/)
 {
     if (!model || !model->getRecentRequestsTableModel() || !ui->recentRequestsView->selectionModel())
         return;

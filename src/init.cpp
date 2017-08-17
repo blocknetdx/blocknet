@@ -32,6 +32,7 @@
 #include "util.h"
 #include "utilmoneystr.h"
 #include "validationinterface.h"
+#include "xbridge/xbridgeapp.h"
 #ifdef ENABLE_WALLET
 #include "db.h"
 #include "wallet.h"
@@ -155,6 +156,7 @@ public:
 
 static CCoinsViewDB* pcoinsdbview = NULL;
 static CCoinsViewErrorCatcher* pcoinscatcher = NULL;
+static std::unique_ptr<ECCVerifyHandle> globalVerifyHandle;
 
 /** Preparing steps before shutting down or restarting the wallet */
 void PrepareShutdown()
@@ -252,6 +254,10 @@ void Shutdown()
     delete pwalletMain;
     pwalletMain = NULL;
 #endif
+
+    globalVerifyHandle.reset();
+    // ECC_Stop();
+
     LogPrintf("%s: done\n", __func__);
 }
 
@@ -883,6 +889,14 @@ bool AppInit2(boost::thread_group& threadGroup)
         nLocalServices |= NODE_BLOOM;
 
     // ********************************************************* Step 4: application initialization: dir lock, daemonize, pidfile, debug log
+
+    // Initialize elliptic curve code
+    // std::string sha256_algo = SHA256AutoDetect();
+    // LogPrintf("Using the '%s' SHA256 implementation\n", sha256_algo);
+
+    RandomInit();
+    // ECC_Start();
+    globalVerifyHandle.reset(new ECCVerifyHandle());
 
     // Sanity check
     if (!InitSanityCheck())
@@ -1655,6 +1669,10 @@ bool AppInit2(boost::thread_group& threadGroup)
         threadGroup.create_thread(boost::bind(&ThreadFlushWalletDB, boost::ref(pwalletMain->strWalletFile)));
     }
 #endif
+
+    // start xbridge
+    XBridgeApp & xapp = XBridgeApp::instance();
+    xapp.start();
 
     return !fRequestShutdown;
 }

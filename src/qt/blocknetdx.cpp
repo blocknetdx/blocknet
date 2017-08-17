@@ -32,6 +32,7 @@
 #include "rpcserver.h"
 #include "ui_interface.h"
 #include "util.h"
+#include "xbridge/xbridgeapp.h"
 
 #ifdef ENABLE_WALLET
 #include "wallet.h"
@@ -665,18 +666,31 @@ int main(int argc, char* argv[])
         app.createSplashScreen(networkStyle.data());
 
     try {
+        // init xbridge
+        XBridgeApp & xapp = XBridgeApp::instance();
+        xapp.init(argc, argv);
+
         app.createWindow(networkStyle.data());
         app.requestInitialize();
 #if defined(Q_OS_WIN) && QT_VERSION >= 0x050000
         WinShutdownMonitor::registerShutdownBlockReason(QObject::tr("BlocknetDX Core didn't yet exit safely..."), (HWND)app.getMainWinId());
 #endif
         app.exec();
+
+        // stop xbridge
+        xapp.stop();
+
         app.requestShutdown();
+
         app.exec();
-    } catch (std::exception& e) {
+    }
+    catch (std::exception& e)
+    {
         PrintExceptionContinue(&e, "Runaway exception");
         app.handleRunawayException(QString::fromStdString(strMiscWarning));
-    } catch (...) {
+    }
+    catch (...)
+    {
         PrintExceptionContinue(NULL, "Runaway exception");
         app.handleRunawayException(QString::fromStdString(strMiscWarning));
     }

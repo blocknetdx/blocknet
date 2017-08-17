@@ -1503,7 +1503,7 @@ bool BindListenPort(const CService& addrBind, string& strError, bool fWhiteliste
     return true;
 }
 
-void static Discover(boost::thread_group& threadGroup)
+void static Discover(boost::thread_group& /*threadGroup*/)
 {
     if (!fDiscover)
         return;

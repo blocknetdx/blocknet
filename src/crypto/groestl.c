@@ -2813,7 +2813,7 @@ static void
 groestl_small_close(sph_groestl_small_context *sc,
 	unsigned ub, unsigned n, void *dst, size_t out_len)
 {
-	unsigned char *buf;
+    // unsigned char *buf;
 	unsigned char pad[72];
 	size_t u=0, ptr=0, pad_len=0;
 #if SPH_64
@@ -2824,7 +2824,7 @@ groestl_small_close(sph_groestl_small_context *sc,
 	unsigned z=0;
 	DECL_STATE_SMALL
 
-	buf = sc->buf;
+    // buf = sc->buf;
 	ptr = sc->ptr;
 	z = 0x80 >> n;
 	pad[0] = ((ub & -z) | z) & 0xFF;
@@ -2950,7 +2950,7 @@ static void
 groestl_big_close(sph_groestl_big_context *sc,
 	unsigned ub, unsigned n, void *dst, size_t out_len)
 {
-	unsigned char *buf;
+    // unsigned char *buf;
 	unsigned char pad[136];
 	size_t ptr=0, pad_len=0, u=0;
 #if SPH_64
@@ -2961,7 +2961,7 @@ groestl_big_close(sph_groestl_big_context *sc,
 	unsigned z=0;
 	DECL_STATE_BIG
 
-	buf = sc->buf;
+    // buf = sc->buf;
 	ptr = sc->ptr;
 	z = 0x80 >> n;
 	pad[0] = ((ub & -z) | z) & 0xFF;

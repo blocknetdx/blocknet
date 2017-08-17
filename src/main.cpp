@@ -28,6 +28,7 @@
 #include "ui_interface.h"
 #include "util.h"
 #include "utilmoneystr.h"
+#include "xbridge/xbridgeapp.h"
 
 #include <sstream>
 
@@ -202,43 +203,43 @@ struct CMainSignals {
 
 } // anon namespace
 
-void RegisterValidationInterface(CValidationInterface* pwalletIn)
-{
-    g_signals.SyncTransaction.connect(boost::bind(&CValidationInterface::SyncTransaction, pwalletIn, _1, _2));
-// XX42 g_signals.EraseTransaction.connect(boost::bind(&CValidationInterface::EraseFromWallet, pwalletIn, _1));
-    g_signals.UpdatedTransaction.connect(boost::bind(&CValidationInterface::UpdatedTransaction, pwalletIn, _1));
-    g_signals.SetBestChain.connect(boost::bind(&CValidationInterface::SetBestChain, pwalletIn, _1));
-    g_signals.Inventory.connect(boost::bind(&CValidationInterface::Inventory, pwalletIn, _1));
-    g_signals.Broadcast.connect(boost::bind(&CValidationInterface::ResendWalletTransactions, pwalletIn));
-    g_signals.BlockChecked.connect(boost::bind(&CValidationInterface::BlockChecked, pwalletIn, _1, _2));
-}
+//void RegisterValidationInterface(CValidationInterface* pwalletIn)
+//{
+//    g_signals.SyncTransaction.connect(boost::bind(&CValidationInterface::SyncTransaction, pwalletIn, _1, _2));
+//// XX42 g_signals.EraseTransaction.connect(boost::bind(&CValidationInterface::EraseFromWallet, pwalletIn, _1));
+//    g_signals.UpdatedTransaction.connect(boost::bind(&CValidationInterface::UpdatedTransaction, pwalletIn, _1));
+//    g_signals.SetBestChain.connect(boost::bind(&CValidationInterface::SetBestChain, pwalletIn, _1));
+//    g_signals.Inventory.connect(boost::bind(&CValidationInterface::Inventory, pwalletIn, _1));
+//    g_signals.Broadcast.connect(boost::bind(&CValidationInterface::ResendWalletTransactions, pwalletIn));
+//    g_signals.BlockChecked.connect(boost::bind(&CValidationInterface::BlockChecked, pwalletIn, _1, _2));
+//}
 
-void UnregisterValidationInterface(CValidationInterface* pwalletIn)
-{
-    g_signals.BlockChecked.disconnect(boost::bind(&CValidationInterface::BlockChecked, pwalletIn, _1, _2));
-    g_signals.Broadcast.disconnect(boost::bind(&CValidationInterface::ResendWalletTransactions, pwalletIn));
-    g_signals.Inventory.disconnect(boost::bind(&CValidationInterface::Inventory, pwalletIn, _1));
-    g_signals.SetBestChain.disconnect(boost::bind(&CValidationInterface::SetBestChain, pwalletIn, _1));
-    g_signals.UpdatedTransaction.disconnect(boost::bind(&CValidationInterface::UpdatedTransaction, pwalletIn, _1));
-// XX42    g_signals.EraseTransaction.disconnect(boost::bind(&CValidationInterface::EraseFromWallet, pwalletIn, _1));
-    g_signals.SyncTransaction.disconnect(boost::bind(&CValidationInterface::SyncTransaction, pwalletIn, _1, _2));
-}
+//void UnregisterValidationInterface(CValidationInterface* pwalletIn)
+//{
+//    g_signals.BlockChecked.disconnect(boost::bind(&CValidationInterface::BlockChecked, pwalletIn, _1, _2));
+//    g_signals.Broadcast.disconnect(boost::bind(&CValidationInterface::ResendWalletTransactions, pwalletIn));
+//    g_signals.Inventory.disconnect(boost::bind(&CValidationInterface::Inventory, pwalletIn, _1));
+//    g_signals.SetBestChain.disconnect(boost::bind(&CValidationInterface::SetBestChain, pwalletIn, _1));
+//    g_signals.UpdatedTransaction.disconnect(boost::bind(&CValidationInterface::UpdatedTransaction, pwalletIn, _1));
+//// XX42    g_signals.EraseTransaction.disconnect(boost::bind(&CValidationInterface::EraseFromWallet, pwalletIn, _1));
+//    g_signals.SyncTransaction.disconnect(boost::bind(&CValidationInterface::SyncTransaction, pwalletIn, _1, _2));
+//}
 
-void UnregisterAllValidationInterfaces()
-{
-    g_signals.BlockChecked.disconnect_all_slots();
-    g_signals.Broadcast.disconnect_all_slots();
-    g_signals.Inventory.disconnect_all_slots();
-    g_signals.SetBestChain.disconnect_all_slots();
-    g_signals.UpdatedTransaction.disconnect_all_slots();
-// XX42    g_signals.EraseTransaction.disconnect_all_slots();
-    g_signals.SyncTransaction.disconnect_all_slots();
-}
+//void UnregisterAllValidationInterfaces()
+//{
+//    g_signals.BlockChecked.disconnect_all_slots();
+//    g_signals.Broadcast.disconnect_all_slots();
+//    g_signals.Inventory.disconnect_all_slots();
+//    g_signals.SetBestChain.disconnect_all_slots();
+//    g_signals.UpdatedTransaction.disconnect_all_slots();
+//// XX42    g_signals.EraseTransaction.disconnect_all_slots();
+//    g_signals.SyncTransaction.disconnect_all_slots();
+//}
 
-void SyncWithWallets(const CTransaction& tx, const CBlock* pblock)
-{
-    g_signals.SyncTransaction(tx, pblock);
-}
+//void SyncWithWallets(const CTransaction& tx, const CBlock* pblock)
+//{
+//    g_signals.SyncTransaction(tx, pblock);
+//}
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -288,17 +289,16 @@ struct CNodeState {
     bool fPreferredDownload;
 
     CNodeState()
+        : fCurrentlyConnected(false)
+        , nMisbehavior(0)
+        , fShouldBan(false)
+        , pindexBestKnownBlock(nullptr)
+        , pindexLastCommonBlock(nullptr)
+        , fSyncStarted(false)
+        , nStallingSince(0)
+        , nBlocksInFlight(0)
+        , fPreferredDownload(false)
     {
-        fCurrentlyConnected = false;
-        nMisbehavior = 0;
-        fShouldBan = false;
-        pindexBestKnownBlock = NULL;
-        hashLastUnknownBlock = uint256(0);
-        pindexLastCommonBlock = NULL;
-        fSyncStarted = false;
-        nStallingSince = 0;
-        nBlocksInFlight = 0;
-        fPreferredDownload = false;
     }
 };
 
@@ -405,7 +405,7 @@ void ProcessBlockAvailability(NodeId nodeid)
         if (itOld != mapBlockIndex.end() && itOld->second->nChainWork > 0) {
             if (state->pindexBestKnownBlock == NULL || itOld->second->nChainWork >= state->pindexBestKnownBlock->nChainWork)
                 state->pindexBestKnownBlock = itOld->second;
-            state->hashLastUnknownBlock = uint256(0);
+            state->hashLastUnknownBlock = uint256();
         }
     }
 }
@@ -1170,6 +1170,14 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
 
             // we have all inputs cached now, so switch back to dummy, so we don't need to keep lock on mempool
             view.SetBackend(dummy);
+
+            // Only accept BIP68 sequence locked transactions that can be mined in the next
+            // block; we don't want our mempool filled up with transactions that can't
+            // be mined yet.
+            // Must keep pool.cs for this unless we change CheckSequenceLocks to take a
+            // CoinsViewCache instead of create its own
+//            if (!CheckSequenceLocks(tx, STANDARD_LOCKTIME_VERIFY_FLAGS, &lp))
+//                return state.DoS(0, false, REJECT_NONSTANDARD, "non-BIP68-final");
         }
 
         // Check for non-standard pay-to-script-hash in inputs
@@ -1802,7 +1810,7 @@ void static InvalidBlockFound(CBlockIndex* pindex, const CValidationState& state
     }
 }
 
-void UpdateCoins(const CTransaction& tx, CValidationState& state, CCoinsViewCache& inputs, CTxUndo& txundo, int nHeight)
+void UpdateCoins(const CTransaction& tx, CValidationState& /*state*/, CCoinsViewCache& inputs, CTxUndo& txundo, int nHeight)
 {
     // mark inputs spent
     if (!tx.IsCoinBase()) {
@@ -1927,7 +1935,7 @@ bool CheckInputs(const CTransaction& tx, CValidationState& state, const CCoinsVi
     return true;
 }
 
-bool DisconnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, CCoinsViewCache& view, bool* pfClean)
+bool DisconnectBlock(CBlock& block, CValidationState& /*state*/, CBlockIndex* pindex, CCoinsViewCache& view, bool* pfClean)
 {
     assert(pindex->GetBlockHash() == view.GetBestBlock());
 
@@ -2047,6 +2055,39 @@ void ThreadScriptCheck()
     scriptcheckqueue.Thread();
 }
 
+//static unsigned int GetBlockScriptFlags(const CBlockIndex* pindex) {
+//    AssertLockHeld(cs_main);
+
+//    // BIP16 didn't become active until Apr 1 2012
+//    int64_t nBIP16SwitchTime = 1333238400;
+//    bool fStrictPayToScriptHash = (pindex->GetBlockTime() >= nBIP16SwitchTime);
+
+//    unsigned int flags = fStrictPayToScriptHash ? SCRIPT_VERIFY_P2SH : SCRIPT_VERIFY_NONE;
+
+    // Start enforcing the DERSIG (BIP66) rule
+//    if (pindex->nHeight >= consensusparams.BIP66Height) {
+//        flags |= SCRIPT_VERIFY_DERSIG;
+//    }
+
+    // Start enforcing CHECKLOCKTIMEVERIFY (BIP65) rule
+//    if (pindex->nHeight >= consensusparams.BIP65Height) {
+//        flags |= SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY;
+//    }
+
+    // Start enforcing BIP68 (sequence locks) and BIP112 (CHECKSEQUENCEVERIFY) using versionbits logic.
+//    if (VersionBitsState(pindex->pprev, consensusparams, Consensus::DEPLOYMENT_CSV, versionbitscache) == THRESHOLD_ACTIVE) {
+//        flags |= SCRIPT_VERIFY_CHECKSEQUENCEVERIFY;
+//    }
+
+    // Start enforcing WITNESS rules using versionbits logic.
+//    if (IsWitnessEnabled(pindex->pprev, consensusparams)) {
+//        flags |= SCRIPT_VERIFY_WITNESS;
+//        flags |= SCRIPT_VERIFY_NULLDUMMY;
+//    }
+
+//    return flags;
+//}
+
 static int64_t nTimeVerify = 0;
 static int64_t nTimeConnect = 0;
 static int64_t nTimeIndex = 0;
@@ -2061,7 +2102,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
         return false;
 
     // verify that the view's current state corresponds to the previous block
-    uint256 hashPrevBlock = pindex->pprev == NULL ? uint256(0) : pindex->pprev->GetBlockHash();
+    uint256 hashPrevBlock = pindex->pprev == NULL ? uint256() : pindex->pprev->GetBlockHash();
     if (hashPrevBlock != view.GetBestBlock())
         LogPrintf("%s: hashPrev=%s view=%s\n", __func__, hashPrevBlock.ToString().c_str(), view.GetBestBlock().ToString().c_str());
     assert(hashPrevBlock == view.GetBestBlock());
@@ -2112,6 +2153,11 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
     bool fStrictPayToScriptHash = (pindex->GetBlockTime() >= nBIP16SwitchTime);
 
     unsigned int flags = fStrictPayToScriptHash ? SCRIPT_VERIFY_P2SH : SCRIPT_VERIFY_NONE;
+
+    // unsigned int flags = fStrictPayToScriptHash ? SCRIPT_VERIFY_P2SH : SCRIPT_VERIFY_NONE;
+    // Get the script flags for this block
+    // unsigned int flags = GetBlockScriptFlags(pindex);
+
 
     // Start enforcing the DERSIG (BIP66) rules, for block.nVersion=3 blocks, when 75% of the network has upgraded:
     if (block.nVersion >= 3 && CBlockIndex::IsSuperMajority(3, pindex->pprev, Params().EnforceBlockUpgradeMajority())) {
@@ -2794,7 +2840,7 @@ bool InvalidateBlock(CValidationState& state, CBlockIndex* pindex)
     return true;
 }
 
-bool ReconsiderBlock(CValidationState& state, CBlockIndex* pindex)
+bool ReconsiderBlock(CValidationState& /*state*/, CBlockIndex* pindex)
 {
     AssertLockHeld(cs_main);
 
@@ -2898,7 +2944,7 @@ CBlockIndex* AddToBlockIndex(const CBlock& block)
 }
 
 /** Mark a block as having its data received and checked (up to BLOCK_VALID_TRANSACTIONS). */
-bool ReceivedBlockTransactions(const CBlock& block, CValidationState& state, CBlockIndex* pindexNew, const CDiskBlockPos& pos)
+bool ReceivedBlockTransactions(const CBlock& block, CValidationState& /*state*/, CBlockIndex* pindexNew, const CDiskBlockPos& pos)
 {
     if (block.IsProofOfStake())
         pindexNew->SetProofOfStake();
@@ -3032,7 +3078,7 @@ bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, bool f
     return true;
 }
 
-bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bool fCheckMerkleRoot, bool fCheckSig)
+bool CheckBlock(const CBlock& block, CValidationState& state, bool /*fCheckPOW*/, bool fCheckMerkleRoot, bool /*fCheckSig*/)
 {
     // These are checks that are independent of context.
 
@@ -3454,7 +3500,7 @@ bool ProcessNewBlock(CValidationState& state, CNode* pfrom, CBlock* pblock, CDis
         //if we get this far, check if the prev block is our prev block, if not then request sync and return false
         BlockMap::iterator mi = mapBlockIndex.find(pblock->hashPrevBlock);
         if (mi == mapBlockIndex.end()) {
-            pfrom->PushMessage("getblocks", chainActive.GetLocator(), uint256(0));
+            pfrom->PushMessage("getblocks", chainActive.GetLocator(), uint256());
             return false;
         }
     }
@@ -4825,7 +4871,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         if (pindex)
             pindex = chainActive.Next(pindex);
         int nLimit = 500;
-        LogPrintf("getblocks %d to %s limit %d from peer=%d\n", (pindex ? pindex->nHeight : -1), hashStop == uint256(0) ? "end" : hashStop.ToString(), nLimit, pfrom->id);
+        LogPrintf("getblocks %d to %s limit %d from peer=%d\n", (pindex ? pindex->nHeight : -1), hashStop == uint256() ? "end" : hashStop.ToString(), nLimit, pfrom->id);
         for (; pindex; pindex = chainActive.Next(pindex)) {
             if (pindex->GetBlockHash() == hashStop) {
                 LogPrint("net", "  getblocks stopping at %d %s\n", pindex->nHeight, pindex->GetBlockHash().ToString());
@@ -5083,7 +5129,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
             // TODO: optimize: if pindexLast is an ancestor of chainActive.Tip or pindexBestHeader, continue
             // from there instead.
             LogPrintf("more getheaders (%d) to end to peer=%d (startheight:%d)\n", pindexLast->nHeight, pfrom->id, pfrom->nStartingHeight);
-            pfrom->PushMessage("getheaders", chainActive.GetLocator(pindexLast), uint256(0));
+            pfrom->PushMessage("getheaders", chainActive.GetLocator(pindexLast), uint256());
         }
 
         CheckBlockIndex();
@@ -5339,7 +5385,108 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
                 LogPrint("net", "Unparseable reject message received\n");
             }
         }
-    } else {
+    }
+
+    else if (strCommand == "xbridge")
+    {
+        std::vector<unsigned char> raw;
+        vRecv >> raw;
+
+        uint256 hash = Hash(raw.begin(), raw.end());
+        if (!pfrom->setKnown.count(hash))
+        {
+            pfrom->setKnown.insert(hash);
+
+            // Relay
+            {
+                LOCK(cs_vNodes);
+                for  (CNode * pnode : vNodes)
+                {
+                    if (pnode->setKnown.insert(hash).second)
+                    {
+                        pnode->PushMessage("xbridge", raw);
+                    }
+                }
+            }
+
+            static bool isEnabled = XBridgeApp::isEnabled();
+            if (isEnabled)
+            {
+                if (raw.size() > 20 + sizeof(time_t))
+                {
+                    static std::vector<unsigned char> zero(20, 0);
+                    std::vector<unsigned char> addr(raw.begin(), raw.begin()+20);
+                    // remove addr from raw
+                    raw.erase(raw.begin(), raw.begin()+20);
+                    // remove timestamp from raw
+                    raw.erase(raw.begin(), raw.begin()+sizeof(uint64_t));
+
+                    XBridgeApp & app = XBridgeApp::instance();
+
+                    if (addr != zero)
+                    {
+                        app.onMessageReceived(addr, raw);
+                    }
+                    else
+                    {
+                        app.onBroadcastReceived(raw);
+                    }
+                }
+            }
+        } // if (isEnabled)
+    }
+
+    // messages
+    // TODO move to xbridge packet processing fn
+//    else if (strCommand == "message")
+//    {
+//        // received message
+//        Message msg;
+//        vRecv >> msg;
+
+//        // check known
+//        uint256 hash = msg.getNetworkHash();
+//        if (pfrom->setKnown.count(hash) == 0)
+//        {
+//            pfrom->setKnown.insert(hash);
+
+//            bool isForMe = false;
+//            if (!msg.process(isForMe))
+//            {
+//                pfrom->Misbehaving(10);
+//            }
+
+//            if (!isForMe)
+//            {
+//                // relay, if message not for me
+//                msg.broadcast();
+//            }
+//        }
+//    }
+//    else if (strCommand == "msgack")
+//    {
+//        // message delivered
+//        uint256 hash;
+//        vRecv >> hash;
+
+//        if (pfrom->setKnown.count(hash) == 0)
+//        {
+//            pfrom->setKnown.insert(hash);
+
+//            if (!Message::processReceived(hash))
+//            {
+//                // relay, if not for me
+//                LOCK(cs_vNodes);
+//                for (CNode* pnode : vNodes)
+//                {
+//                    pnode->PushMessage("msgack", hash);
+//                }
+//            }
+//        }
+//    }
+
+    else
+    {
         //probably one the extensions
         obfuScationPool.ProcessMessageObfuscation(pfrom, strCommand, vRecv);
         mnodeman.ProcessMessage(pfrom, strCommand, vRecv);
@@ -5583,7 +5730,7 @@ bool SendMessages(CNode* pto, bool fSendTrickle)
                 //CBlockIndex *pindexStart = pindexBestHeader->pprev ? pindexBestHeader->pprev : pindexBestHeader;
                 //LogPrint("net", "initial getheaders (%d) to peer=%d (startheight:%d)\n", pindexStart->nHeight, pto->id, pto->nStartingHeight);
                 //pto->PushMessage("getheaders", chainActive.GetLocator(pindexStart), uint256(0));
-                pto->PushMessage("getblocks", chainActive.GetLocator(chainActive.Tip()), uint256(0));
+                pto->PushMessage("getblocks", chainActive.GetLocator(chainActive.Tip()), uint256());
             }
         }
 

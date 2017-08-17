@@ -180,7 +180,7 @@ std::string CServicenodeSync::GetSyncStatus()
     return "";
 }
 
-void CServicenodeSync::ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv)
+void CServicenodeSync::ProcessMessage(CNode* /*pfrom*/, std::string& strCommand, CDataStream& vRecv)
 {
     if (strCommand == "ssc") { //Sync status count
         int nItemID;

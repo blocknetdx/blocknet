@@ -49,7 +49,9 @@ static const unsigned int STANDARD_SCRIPT_VERIFY_FLAGS = MANDATORY_SCRIPT_VERIFY
                                                          SCRIPT_VERIFY_STRICTENC |
                                                          SCRIPT_VERIFY_MINIMALDATA |
                                                          SCRIPT_VERIFY_NULLDUMMY |
-                                                         SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS;
+                                                         SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS |
+                                                         SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY |
+                                                         SCRIPT_VERIFY_CHECKSEQUENCEVERIFY;
 
 /** For convenience, standard but not mandatory verify flags. */
 static const unsigned int STANDARD_NOT_MANDATORY_VERIFY_FLAGS = STANDARD_SCRIPT_VERIFY_FLAGS & ~MANDATORY_SCRIPT_VERIFY_FLAGS;
@@ -67,8 +69,8 @@ enum txnouttype
 
 class CNoDestination {
 public:
-    friend bool operator==(const CNoDestination &a, const CNoDestination &b) { return true; }
-    friend bool operator<(const CNoDestination &a, const CNoDestination &b) { return true; }
+    friend bool operator==(const CNoDestination &/*a*/, const CNoDestination &/*b*/) { return true; }
+    friend bool operator<(const CNoDestination &/*a*/, const CNoDestination &/*b*/) { return true; }
 };
 
 /** 

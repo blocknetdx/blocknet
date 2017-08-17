@@ -165,7 +165,7 @@ void OptionsModel::Reset()
         GUIUtil::SetStartOnSystemStartup(false);
 }
 
-int OptionsModel::rowCount(const QModelIndex& parent) const
+int OptionsModel::rowCount(const QModelIndex& /*parent*/) const
 {
     return OptionIDRowCount;
 }

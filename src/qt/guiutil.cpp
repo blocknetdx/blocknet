@@ -382,9 +382,9 @@ void showBackups()
         QDesktopServices::openUrl(QUrl::fromLocalFile(boostPathToQString(pathBackups)));
 }
 
+#if defined(Q_OS_MAC)
 void SubstituteFonts(const QString& language)
 {
-#if defined(Q_OS_MAC)
 // Background:
 // OSX's default font changed in 10.9 and QT is unable to find it with its
 // usual fallback methods when building against the 10.7 sdk or lower.
@@ -413,6 +413,9 @@ void SubstituteFonts(const QString& language)
         }
     }
 #endif
+#else
+void SubstituteFonts(const QString& /*language*/)
+{
 #endif
 }
 
@@ -515,7 +518,7 @@ void TableViewLastColumnResizingFixer::stretchColumnWidth(int column)
 }
 
 // When a section is resized this is a slot-proxy for ajustAmountColumnWidth().
-void TableViewLastColumnResizingFixer::on_sectionResized(int logicalIndex, int oldSize, int newSize)
+void TableViewLastColumnResizingFixer::on_sectionResized(int logicalIndex, int /*oldSize*/, int newSize)
 {
     adjustTableColumnsWidth();
     int remainingWidth = getAvailableWidthForColumn(logicalIndex);

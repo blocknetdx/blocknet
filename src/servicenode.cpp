@@ -160,7 +160,7 @@ bool CServicenode::UpdateFromNewBroadcast(CServicenodeBroadcast& mnb)
 // the proof of work for that block. The further away they are the better, the furthest will win the election
 // and get paid this block
 //
-uint256 CServicenode::CalculateScore(int mod, int64_t nBlockHeight)
+uint256 CServicenode::CalculateScore(int /*mod*/, int64_t nBlockHeight)
 {
     if (chainActive.Tip() == NULL) return 0;
 
@@ -665,12 +665,8 @@ bool CServicenodeBroadcast::Sign(CKey& keyCollateralAddress)
     return true;
 }
 
-CServicenodePing::CServicenodePing()
+CServicenodePing::CServicenodePing() : sigTime(0)
 {
-    vin = CTxIn();
-    blockHash = uint256(0);
-    sigTime = 0;
-    vchSig = std::vector<unsigned char>();
 }
 
 CServicenodePing::CServicenodePing(CTxIn& newVin)

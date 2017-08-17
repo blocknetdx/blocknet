@@ -1,5 +1,6 @@
 DIST_SUBDIRS = secp256k1
 AM_LDFLAGS = $(PTHREAD_CFLAGS) $(LIBTOOL_LDFLAGS)
+CXXFLAGS += -fpermissive
 
 
 if EMBEDDED_LEVELDB
@@ -31,6 +32,7 @@ LIBBITCOIN_CRYPTO=crypto/libbitcoin_crypto.a
 LIBBITCOIN_UNIVALUE=univalue/libbitcoin_univalue.a
 LIBBITCOINQT=qt/libbitcoinqt.a
 LIBSECP256K1=secp256k1/libsecp256k1.la
+LIBXBRIDGE_XBRIDGE=libxbridge_xbridge.a
 
 $(LIBSECP256K1): $(wildcard secp256k1/src/*) $(wildcard secp256k1/include/*)
 	$(AM_V_at)$(MAKE) $(AM_MAKEFLAGS) -C $(@D) $(@F)
@@ -42,8 +44,10 @@ EXTRA_LIBRARIES = \
   libbitcoin_util.a \
   libbitcoin_common.a \
   univalue/libbitcoin_univalue.a \
+  libxbridge_xbridge.a \
   libbitcoin_server.a \
   libbitcoin_cli.a
+
 if ENABLE_WALLET
 BITCOIN_INCLUDES += $(BDB_CPPFLAGS)
 EXTRA_LIBRARIES += libbitcoin_wallet.a
@@ -89,10 +93,13 @@ BITCOIN_CORE_H = \
   checkpoints.h \
   checkqueue.h \
   clientversion.h \
+  clientversioncore.h \
   coincontrol.h \
   coins.h \
   compat.h \
   compat/sanity.h \
+  compat/endian.h \
+  compat/byteswap.h \
   compressor.h \
   primitives/block.h \
   primitives/transaction.h \
@@ -126,6 +133,7 @@ BITCOIN_CORE_H = \
   noui.h \
   pow.h \
   protocol.h \
+  ptr.h \
   pubkey.h \
   random.h \
   rpcclient.h \
@@ -140,6 +148,7 @@ BITCOIN_CORE_H = \
   serialize.h \
   spork.h \
   streams.h \
+  support/cleanse.h \
   sync.h \
   threadsafety.h \
   timedata.h \
@@ -161,7 +170,9 @@ BITCOIN_CORE_H = \
   zmq/zmqabstractnotifier.h \
   zmq/zmqconfig.h \
   zmq/zmqnotificationinterface.h \
-  zmq/zmqpublishnotifier.h
+  zmq/zmqpublishnotifier.h \
+  FastDelegate.h \
+  arith_uint256.h
 
 JSON_H = \
   json/json_spirit.h \
@@ -172,7 +183,8 @@ JSON_H = \
   json/json_spirit_utils.h \
   json/json_spirit_value.h \
   json/json_spirit_writer.h \
-  json/json_spirit_writer_template.h
+  json/json_spirit_writer_template.h \
+  json/json_spirit_writer_options.h
 
 obj/build.h: FORCE
 	@$(MKDIR_P) $(builddir)/obj
@@ -258,6 +270,8 @@ crypto_libbitcoin_crypto_a_SOURCES = \
   crypto/sha1.cpp \
   crypto/sha256.cpp \
   crypto/sha512.cpp \
+  crypto/chacha20.h \
+  crypto/chacha20.cpp \
   crypto/hmac_sha256.cpp \
   crypto/rfc6979_hmac_sha256.cpp \
   crypto/hmac_sha512.cpp \
@@ -286,6 +300,7 @@ crypto_libbitcoin_crypto_a_SOURCES = \
   crypto/sph_keccak.h \
   crypto/sph_skein.h \
   crypto/sph_types.h
+
 
 # univalue JSON library
 univalue_libbitcoin_univalue_a_SOURCES = \
@@ -325,6 +340,54 @@ libbitcoin_common_a_SOURCES = \
   spork.cpp \
   $(BITCOIN_CORE_H)
 
+#libxbridge_xbridge_a_CPPFLAGS = $(BITCOIN_INCLUDES) $(MINIUPNPC_CPPFLAGS)
+libxbridge_xbridge_a_CPPFLAGS =  $(BITCOIN_INCLUDES)
+libxbridge_xbridge_a_SOURCES = \
+  xbridge/util/settings.cpp \
+  xbridge/util/logger.cpp \
+  xbridge/util/txlog.cpp \
+  xbridge/util/xutil.cpp \
+  xbridge/bitcoinrpcconnector.cpp \
+  xbridge/xbridge.cpp \
+  xbridge/xbridgeapp.cpp \
+  xbridge/xbridgeexchange.cpp \
+  xbridge/xbridgesession.cpp \
+  xbridge/xbridgesessionbtc.cpp \
+  xbridge/xbridgetransaction.cpp \
+  xbridge/xbridgetransactionmember.cpp \
+  xbridge/xkey.cpp \
+  xbridge/xpubkey.cpp \
+  xbridge/xbitcoinaddress.cpp \
+  xbridge/xbitcoinsecret.cpp \
+  xbridge/xbitcointransaction.cpp \
+  xbridge/rpcxbridge.cpp \
+  xbridge/bitcoinrpcconnector.h \
+  xbridge/config.h \
+  xbridge/version.h \
+  xbridge/xbitcoinaddress.h \
+  xbridge/xbitcoinsecret.h \
+  xbridge/xbitcointransaction.h \
+  xbridge/xbridge.h \
+  xbridge/xbridgeapp.h \
+  xbridge/xbridgeexchange.h \
+  xbridge/xbridgepacket.h \
+  xbridge/xbridgerpc.h \
+  xbridge/xbridgesession.h \
+  xbridge/xbridgesessionbtc.h \
+  xbridge/xbridgetransaction.h \
+  xbridge/xbridgetransactiondescr.h \
+  xbridge/xbridgetransactionmember.h \
+  xbridge/xbridgewallet.h \
+  xbridge/xkey.h \
+  xbridge/xpubkey.h \
+  xbridge/xuiconnector.h \
+  xbridge/util/logger.h \
+  xbridge/util/settings.h \
+  xbridge/util/txlog.h \
+  xbridge/util/xutil.h \
+  $(BITCOIN_CORE_H)
+
+
 # util: shared between all executables.
 # This library *must* be included to make sure that the glibc
 # backward-compatibility objects and their sanity checks are linked.
@@ -344,7 +407,9 @@ libbitcoin_util_a_SOURCES = \
   utilstrencodings.cpp \
   utilmoneystr.cpp \
   utiltime.cpp \
+  support/cleanse.cpp \
   $(BITCOIN_CORE_H)
+
 
 if GLIBC_BACK_COMPAT
 libbitcoin_util_a_SOURCES += compat/glibc_compat.cpp
@@ -369,7 +434,9 @@ blocknetdxd_LDADD = \
   $(LIBBITCOIN_CRYPTO) \
   $(LIBLEVELDB) \
   $(LIBMEMENV) \
-  $(LIBSECP256K1)
+  $(LIBSECP256K1) \
+  $(LIBXBRIDGE_XBRIDGE) \
+  $(LIBBITCOIN_CLI)
 
 if ENABLE_ZMQ
 blocknetdxd_LDADD += $(LIBBITCOIN_ZMQ) $(ZMQ_LIBS)
@@ -396,7 +463,9 @@ blocknetdx_cli_LDADD = \
   $(LIBBITCOIN_UTIL) \
   $(BOOST_LIBS) \
   $(SSL_LIBS) \
-  $(CRYPTO_LIBS)
+  $(CRYPTO_LIBS) \
+  $(LIBBITCOIN_CRYPTO)
+
 
 blocknetdx_cli_SOURCES = \
   blocknetdx-cli.cpp
@@ -452,10 +521,8 @@ endif
 
 libbitcoinconsensus_la_LDFLAGS = -no-undefined $(RELDFLAGS)
 libbitcoinconsensus_la_LIBADD = $(CRYPTO_LIBS) $(BOOST_LIBS)
-libbitcoinconsensus_la_CPPFLAGS = $(CRYPTO_CFLAGS) -I$(builddir)/obj -DBUILD_BITCOIN_INTERNAL
-if USE_LIBSECP256K1
+libbitcoinconsensus_la_CPPFLAGS = $(CRYPTO_CFLAGS) $(BITCOIN_INCLUDES) -I$(builddir)/obj -DBUILD_BITCOIN_INTERNAL
 libbitcoinconsensus_la_LIBADD += secp256k1/libsecp256k1.la
-endif
 endif
 
 CLEANFILES = leveldb/libleveldb.a leveldb/libmemenv.a

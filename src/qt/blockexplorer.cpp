@@ -158,7 +158,7 @@ CTxOut getPrevOut(const COutPoint& out)
     return CTxOut();
 }
 
-void getNextIn(const COutPoint& Out, uint256& Hash, unsigned int& n)
+void getNextIn(const COutPoint& /*Out*/, uint256& /*Hash*/, unsigned int& /*n*/)
 {
     // Hash = 0;
     // n = 0;

@@ -246,6 +246,14 @@ extern json_spirit::Value mnbudgetvoteraw(const json_spirit::Array& params, bool
 extern json_spirit::Value mnfinalbudget(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value mnsync(const json_spirit::Array& params, bool fHelp);
 
+extern json_spirit::Value dxGetTransactionList(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value dxGetTransactionsHistoryList(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value dxGetTransactionInfo(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value dxGetCurrencyList(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value dxCreateTransaction(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value dxAcceptTransaction(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value dxCancelTransaction(const json_spirit::Array& params, bool fHelp);
+
 // in rest.cpp
 extern bool HTTPReq_REST(AcceptedConnection* conn,
     std::string& strURI,

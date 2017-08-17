@@ -266,7 +266,7 @@ inline void Unserialize(Stream& s, double& a, int, int = 0)
     READDATA(s, a);
 }
 
-inline unsigned int GetSerializeSize(bool a, int, int = 0) { return sizeof(char); }
+inline unsigned int GetSerializeSize(bool /*a*/, int, int = 0) { return sizeof(char); }
 template <typename Stream>
 inline void Serialize(Stream& s, bool a, int, int = 0)
 {
@@ -672,7 +672,7 @@ void Unserialize(Stream& is, std::basic_string<C>& str, int, int)
  * vector
  */
 template <typename T, typename A>
-unsigned int GetSerializeSize_impl(const std::vector<T, A>& v, int nType, int nVersion, const unsigned char&)
+unsigned int GetSerializeSize_impl(const std::vector<T, A>& v, int /*nType*/, int /*nVersion*/, const unsigned char&)
 {
     return (GetSizeOfCompactSize(v.size()) + v.size() * sizeof(T));
 }
@@ -694,7 +694,7 @@ inline unsigned int GetSerializeSize(const std::vector<T, A>& v, int nType, int 
 
 
 template <typename Stream, typename T, typename A>
-void Serialize_impl(Stream& os, const std::vector<T, A>& v, int nType, int nVersion, const unsigned char&)
+void Serialize_impl(Stream& os, const std::vector<T, A>& v, int /*nType*/, int /*nVersion*/, const unsigned char&)
 {
     WriteCompactSize(os, v.size());
     if (!v.empty())
@@ -717,7 +717,7 @@ inline void Serialize(Stream& os, const std::vector<T, A>& v, int nType, int nVe
 
 
 template <typename Stream, typename T, typename A>
-void Unserialize_impl(Stream& is, std::vector<T, A>& v, int nType, int nVersion, const unsigned char&)
+void Unserialize_impl(Stream& is, std::vector<T, A>& v, int /*nType*/, int /*nVersion*/, const unsigned char&)
 {
     // Limit size per read so bogus size value won't cause out of memory
     v.clear();
@@ -879,13 +879,13 @@ struct CSerActionUnserialize {
 };
 
 template <typename Stream, typename T>
-inline void SerReadWrite(Stream& s, const T& obj, int nType, int nVersion, CSerActionSerialize ser_action)
+inline void SerReadWrite(Stream& s, const T& obj, int nType, int nVersion, CSerActionSerialize /*ser_action*/)
 {
     ::Serialize(s, obj, nType, nVersion);
 }
 
 template <typename Stream, typename T>
-inline void SerReadWrite(Stream& s, T& obj, int nType, int nVersion, CSerActionUnserialize ser_action)
+inline void SerReadWrite(Stream& s, T& obj, int nType, int nVersion, CSerActionUnserialize /*ser_action*/)
 {
     ::Unserialize(s, obj, nType, nVersion);
 }
@@ -902,7 +902,7 @@ public:
 
     CSizeComputer(int nTypeIn, int nVersionIn) : nSize(0), nType(nTypeIn), nVersion(nVersionIn) {}
 
-    CSizeComputer& write(const char* psz, size_t nSize)
+    CSizeComputer& write(const char* /*psz*/, size_t nSize)
     {
         this->nSize += nSize;
         return *this;

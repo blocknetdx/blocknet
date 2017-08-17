@@ -73,7 +73,7 @@ uint256 CBlockIndex::GetBlockTrust() const
         return (uint256(1) << 256) / (bnTarget + 1);
     } else {
         // Calculate work amount for block
-        uint256 bnPoWTrust = ((~uint256(0) >> 20) / (bnTarget + 1));
+        uint256 bnPoWTrust = ((~uint256() >> 20) / (bnTarget + 1));
         return bnPoWTrust > 1 ? bnPoWTrust : 1;
     }
 }

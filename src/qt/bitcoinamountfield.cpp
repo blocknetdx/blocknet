@@ -31,7 +31,7 @@ public:
         connect(lineEdit(), SIGNAL(textEdited(QString)), this, SIGNAL(valueChanged()));
     }
 
-    QValidator::State validate(QString& text, int& pos) const
+    QValidator::State validate(QString& text, int& /*pos*/) const
     {
         if (text.isEmpty())
             return QValidator::Intermediate;

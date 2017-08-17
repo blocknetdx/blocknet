@@ -50,9 +50,9 @@ void MilliSleep(int64_t n)
  * until fixed in 1.52. Use the deprecated sleep method for the broken case.
  * See: https://svn.boost.org/trac/boost/ticket/7238
  */
-#if defined(HAVE_WORKING_BOOST_SLEEP_FOR)
+#if BOOST_VERSION >= 105000
     boost::this_thread::sleep_for(boost::chrono::milliseconds(n));
-#elif defined(HAVE_WORKING_BOOST_SLEEP)
+#elif BOOST_VERSION < 105000
     boost::this_thread::sleep(boost::posix_time::milliseconds(n));
 #else
 //should never get here

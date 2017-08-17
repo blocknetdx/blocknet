@@ -22,6 +22,9 @@
 #include "transactionview.h"
 #include "walletmodel.h"
 
+#include "xbridge/xbridgeapp.h"
+#include "xbridgeui/xbridgetransactionsview.h"
+
 #include "ui_interface.h"
 
 #include <QAction>
@@ -45,6 +48,13 @@ WalletView::WalletView(QWidget* parent) : QStackedWidget(parent),
     QVBoxLayout* vbox = new QVBoxLayout();
     QHBoxLayout* hbox_buttons = new QHBoxLayout();
     transactionView = new TransactionView(this);
+
+    // create messages dialog
+    // messagesPage = new MessagesDialog(this);
+
+    // xbridge page
+    xbridgePage = new XBridgeTransactionsView(this);
+
     vbox->addWidget(transactionView);
     QPushButton* exportButton = new QPushButton(tr("&Export"), this);
     exportButton->setToolTip(tr("Export the data in the current tab to a file"));
@@ -77,6 +87,11 @@ WalletView::WalletView(QWidget* parent) : QStackedWidget(parent),
     addWidget(receiveCoinsPage);
     addWidget(sendCoinsPage);
     addWidget(explorerWindow);
+
+    if (XBridgeApp::isEnabled())
+    {
+        addWidget(xbridgePage);
+    }
 
     QSettings settings;
     if (settings.value("fShowServicenodesTab").toBool()) {
@@ -149,6 +164,7 @@ void WalletView::setWalletModel(WalletModel* walletModel)
     }
     receiveCoinsPage->setModel(walletModel);
     sendCoinsPage->setModel(walletModel);
+    // messagesPage->setWalletModel(walletModel);
 
     if (walletModel) {
         // Receive and pass through messages from wallet model
@@ -196,6 +212,11 @@ void WalletView::gotoOverviewPage()
 void WalletView::gotoHistoryPage()
 {
     setCurrentWidget(transactionsPage);
+}
+
+void WalletView::gotoXBridgePage()
+{
+    setCurrentWidget(xbridgePage);
 }
 
 

@@ -91,7 +91,7 @@ static bool ParseHashStr(const string& strReq, uint256& v)
 
 static bool rest_block(AcceptedConnection* conn,
     string& strReq,
-    map<string, string>& mapHeaders,
+    map<string, string>& /*mapHeaders*/,
     bool fRun,
     bool showTxDetails)
 {
@@ -165,7 +165,7 @@ static bool rest_block_notxdetails(AcceptedConnection* conn,
 
 static bool rest_tx(AcceptedConnection* conn,
     string& strReq,
-    map<string, string>& mapHeaders,
+    map<string, string>& /*mapHeaders*/,
     bool fRun)
 {
     vector<string> params;

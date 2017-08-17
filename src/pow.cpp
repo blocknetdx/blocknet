@@ -15,7 +15,7 @@
 #include <math.h>
 
 
-unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHeader* pblock)
+unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHeader* /*pblock*/)
 {
     /* current difficulty formula, blocknetdx - DarkGravity v3, written by Evan Duffield - evan@dashpay.io */
     const CBlockIndex* BlockLastSolved = pindexLast;
@@ -33,7 +33,7 @@ unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHead
     }
 
     if (pindexLast->nHeight > Params().LAST_POW_BLOCK()) {
-        uint256 bnTargetLimit = (~uint256(0) >> 24);
+        uint256 bnTargetLimit = (~uint256() >> 24);
         int64_t nTargetSpacing = 60;
         int64_t nTargetTimespan = 60 * 40;
 

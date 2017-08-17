@@ -401,7 +401,7 @@ Value sendtoaddressix(const Array& params, bool fHelp)
 
     return wtx.GetHash().GetHex();
 }
-Value listaddressgroupings(const Array& params, bool fHelp)
+Value listaddressgroupings(const Array& /*params*/, bool fHelp)
 {
     if (fHelp)
         throw runtime_error(

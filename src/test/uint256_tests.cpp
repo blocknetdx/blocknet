@@ -140,12 +140,12 @@ BOOST_AUTO_TEST_CASE( basics ) // constructors, equality, inequality
 
     // uint64_t constructor
     BOOST_CHECK( (R1L & uint256("0xffffffffffffffff")) == uint256(R1LLow64));
-    BOOST_CHECK(ZeroL == uint256(0));
-    BOOST_CHECK(OneL == uint256(1));
+    BOOST_CHECK(ZeroL == uint256(static_cast<uint64_t>(0)));
+    BOOST_CHECK(OneL == uint256(static_cast<uint64_t>(1)));
     BOOST_CHECK(uint256("0xffffffffffffffff") = uint256(0xffffffffffffffffULL));
     BOOST_CHECK( (R1S & uint160("0xffffffffffffffff")) == uint160(R1LLow64));
-    BOOST_CHECK(ZeroS == uint160(0));
-    BOOST_CHECK(OneS == uint160(1));
+    BOOST_CHECK(ZeroS == uint160(static_cast<uint64_t>(0)));
+    BOOST_CHECK(OneS == uint160(static_cast<uint64_t>(1)));
     BOOST_CHECK(uint160("0xffffffffffffffff") = uint160(0xffffffffffffffffULL));
 
     // Assignment (from base_uint)
