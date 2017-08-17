@@ -27,9 +27,7 @@ XBridgeTransaction::XBridgeTransaction(const uint256     & id,
                                        const uint64_t    & sourceAmount,
                                        const std::string & destAddr,
                                        const std::string & destCurrency,
-                                       const uint64_t    & destAmount,
-                                       const uint32_t    & tax,
-                                       const std::string & taxAddress)
+                                       const uint64_t    & destAmount)
     : m_id(id)
     , m_created(boost::posix_time::second_clock::universal_time())
     , m_state(trNew)
@@ -42,8 +40,6 @@ XBridgeTransaction::XBridgeTransaction(const uint256     & id,
     , m_sourceAmount(sourceAmount)
     , m_destAmount(destAmount)
     , m_a(id)
-    , m_tax(tax)
-    , m_a_taxAddress(taxAddress)
 {
     m_a.setSource(sourceAddr);
     m_a.setDest(destAddr);
@@ -462,27 +458,6 @@ std::string XBridgeTransaction::fromXAddr(const std::vector<unsigned char> & xad
 
 //*****************************************************************************
 //*****************************************************************************
-boost::uint32_t XBridgeTransaction::tax() const
-{
-    return m_tax;
-}
-
-//*****************************************************************************
-//*****************************************************************************
-std::string XBridgeTransaction::a_taxAddress() const
-{
-    return m_a_taxAddress;
-}
-
-//*****************************************************************************
-//*****************************************************************************
-std::string XBridgeTransaction::b_taxAddress() const
-{
-    return m_b_taxAddress;
-}
-
-//*****************************************************************************
-//*****************************************************************************
 bool XBridgeTransaction::tryJoin(const XBridgeTransactionPtr other)
 {
     DEBUG_TRACE();
@@ -511,46 +486,11 @@ bool XBridgeTransaction::tryJoin(const XBridgeTransactionPtr other)
 
     // join second member
     m_b = other->m_a;
-//    m_second.setSource(other->m_first.source());
-//    m_second.setDest(other->m_first.dest());
-
-    // copy tax data
-    m_b_taxAddress = other->m_a_taxAddress;
-
-    // generate new id
-//    m_id = util::hash(BEGIN(m_id), END(m_id),
-//                      BEGIN(other->m_id), END(other->m_id));
 
     m_state = trJoined;
 
     return true;
 }
-
-//*****************************************************************************
-//*****************************************************************************
-//std::vector<unsigned char> XBridgeTransaction::opponentAddress(const std::vector<unsigned char> & addr)
-//{
-//    if (m_first.source() == addr)
-//    {
-//        return m_second.dest();
-//    }
-//    else if (m_first.dest() == addr)
-//    {
-//        return m_second.source();
-//    }
-//    else if (m_second.source() == addr)
-//    {
-//        return m_first.dest();
-//    }
-//    else if (m_second.dest() == addr)
-//    {
-//        return m_first.source();
-//    }
-
-//    // wtf?
-//    ERR() << "unknown address for this transaction " << __FUNCTION__;
-//    return std::vector<unsigned char>();
-//}
 
 //*****************************************************************************
 //*****************************************************************************

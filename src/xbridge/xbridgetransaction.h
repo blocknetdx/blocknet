@@ -64,9 +64,7 @@ public:
                        const uint64_t    & sourceAmount,
                        const std::string & destAddr,
                        const std::string & destCurrency,
-                       const uint64_t    & destAmount,
-                       const uint32_t    & tax,
-                       const std::string & taxAddress);
+                       const uint64_t    & destAmount);
     ~XBridgeTransaction();
 
     uint256 id() const;
@@ -124,13 +122,7 @@ public:
 
     std::string                fromXAddr(const std::vector<unsigned char> & xaddr) const;
 
-    boost::uint32_t            tax() const;
-    std::string                a_taxAddress() const;
-    std::string                b_taxAddress() const;
-
     bool tryJoin(const XBridgeTransactionPtr other);
-
-    // std::vector<unsigned char> opponentAddress(const std::vector<unsigned char> & addr);
 
     bool                       setKeys(const std::string & addr,
                                        const uint256 & datatxid,
@@ -174,10 +166,6 @@ private:
 
     xbridge::CPubKey           m_a_pk1;
     xbridge::CPubKey           m_b_pk1;
-
-    boost::uint32_t            m_tax;
-    std::string                m_a_taxAddress;
-    std::string                m_b_taxAddress;
 };
 
 #endif // XBRIDGETRANSACTION_H
