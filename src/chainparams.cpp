@@ -214,6 +214,10 @@ public:
 
         vFixedSeeds.clear();
         vSeeds.clear();
+	
+	
+        vSeeds.push_back(CDNSSeedData("178.62.90.213", "178.62.90.213")); // seed node
+        vSeeds.push_back(CDNSSeedData("138.197.73.214", "138.197.73.214")); // seed node
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 139); // Testnet blocknetdx addresses start with 'x' or 'y'
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1, 19);  // Testnet blocknetdx script addresses start with '8' or '9'
