@@ -16,8 +16,8 @@
 
 #include <stdlib.h>
 #include <limits>
-#include <chrono>
-#include <thread>
+#include <boost/chrono/chrono.hpp>
+#include <boost/thread/thread.hpp>
 #include <atomic>
 
 #ifndef WIN32
@@ -35,7 +35,8 @@
 #include <sys/sysctl.h>
 #endif
 
-#include <mutex>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/locks.hpp>
 
 #if defined(__x86_64__) || defined(__amd64__) || defined(__i386__)
 #include <cpuid.h>
@@ -271,7 +272,7 @@ static void AddDataToRng(void* data, size_t len);
 void RandAddSeedSleep()
 {
     int64_t nPerfCounter1 = GetPerformanceCounter();
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    boost::this_thread::sleep_for(boost::chrono::milliseconds(1));
     int64_t nPerfCounter2 = GetPerformanceCounter();
 
     // Combine with and update state
@@ -283,7 +284,7 @@ void RandAddSeedSleep()
 }
 
 
-static std::mutex cs_rng_state;
+static boost::mutex cs_rng_state;
 static unsigned char rng_state[32] = {0};
 static uint64_t rng_counter = 0;
 
@@ -293,7 +294,7 @@ static void AddDataToRng(void* data, size_t len) {
     hasher.Write((const unsigned char*)data, len);
     unsigned char buf[64];
     {
-        std::unique_lock<std::mutex> lock(cs_rng_state);
+        boost::unique_lock<boost::mutex> lock(cs_rng_state);
         hasher.Write(rng_state, sizeof(rng_state));
         hasher.Write((const unsigned char*)&rng_counter, sizeof(rng_counter));
         ++rng_counter;
@@ -325,7 +326,7 @@ void GetStrongRandBytes(unsigned char* out, int num)
 
     // Combine with and update state
     {
-        std::unique_lock<std::mutex> lock(cs_rng_state);
+        boost::unique_lock<boost::mutex> lock(cs_rng_state);
         hasher.Write(rng_state, sizeof(rng_state));
         hasher.Write((const unsigned char*)&rng_counter, sizeof(rng_counter));
         ++rng_counter;
@@ -430,7 +431,7 @@ bool Random_SanityCheck()
     if (num_overwritten != NUM_OS_RANDOM_BYTES) return false; /* If this failed, bailed out after too many tries */
 
     // Check that GetPerformanceCounter increases at least during a GetOSRand() call + 1ms sleep.
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    boost::this_thread::sleep_for(boost::chrono::milliseconds(1));
     uint64_t stop = GetPerformanceCounter();
     if (stop == start) return false;
 

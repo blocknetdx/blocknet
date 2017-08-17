@@ -15,8 +15,8 @@
 #include "xkey.h"
 #include "ui_interface.h"
 
-#include <thread>
-#include <chrono>
+#include <boost/chrono/chrono.hpp>
+#include <boost/thread/thread.hpp>
 #include <assert.h>
 
 #include <boost/thread.hpp>
@@ -447,7 +447,7 @@ void XBridgeApp::onBroadcastReceived(const std::vector<unsigned char> & message)
 // static
 void XBridgeApp::sleep(const unsigned int umilliseconds)
 {
-    std::this_thread::sleep_for(std::chrono::milliseconds(umilliseconds));
+    boost::this_thread::sleep_for(boost::chrono::milliseconds(umilliseconds));
 }
 
 #include <stdio.h>

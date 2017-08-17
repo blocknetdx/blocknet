@@ -7,6 +7,8 @@
 
 #include "clientversioncore.h"
 
+#if !defined(WINDRES_PREPROC)
+
 #include <string>
 #include <vector>
 
@@ -23,5 +25,7 @@ extern const std::string CLIENT_DATE;
 
 std::string FormatFullVersion();
 std::string FormatSubVersion(const std::string& name, int nClientVersion, const std::vector<std::string>& comments);
+
+#endif // WINDRES_PREPROC
 
 #endif // BITCOIN_CLIENTVERSION_H

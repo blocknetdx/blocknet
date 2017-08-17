@@ -10,13 +10,14 @@
 #include <string>
 #include <sstream>
 #include <fstream>
-#include <thread>
-#include <mutex>
+#include <boost/thread/thread.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/locks.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/filesystem.hpp>
 
-std::mutex logLocker;
+boost::mutex logLocker;
 
 //******************************************************************************
 //******************************************************************************
@@ -32,7 +33,7 @@ LOG::LOG(const char reason)
 {
     *this << "\n" << "[" << (char)std::toupper(m_r) << "] "
           << boost::posix_time::second_clock::local_time()
-          << " [0x" << std::this_thread::get_id() << "] ";
+          << " [0x" << boost::this_thread::get_id() << "] ";
 }
 
 //******************************************************************************
@@ -47,7 +48,7 @@ std::string LOG::logFileName()
 //******************************************************************************
 LOG::~LOG()
 {
-    std::lock_guard<std::mutex> lock(logLocker);
+    boost::lock_guard<boost::mutex> lock(logLocker);
 
     // const static std::string path     = settings().logPath().size() ? settings().logPath() : settings().appPath();
     const static bool logToFile       = true; // !path.empty();
