@@ -16,6 +16,7 @@
 
 #include <stdlib.h>
 #include <limits>
+#include <chrono>
 #include <boost/chrono/chrono.hpp>
 #include <boost/thread/thread.hpp>
 #include <atomic>
