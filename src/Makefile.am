@@ -360,6 +360,10 @@ libxbridge_xbridge_a_SOURCES = \
   xbridge/rpcxbridge.cpp \
   xbridge/xbridgeapp.h \
   xbridge/xbridgeexchange.h \
+  xbridge/xbridge.h \
+  xbridge/xbridgesession.h \
+  xbridge/xbridgepacket.h \
+  xbridge/xbridgetransactiondescr.h \
   $(BITCOIN_CORE_H)
 
 

@@ -52,7 +52,7 @@ void MilliSleep(int64_t n)
  */
 #if BOOST_VERSION >= 105000
     boost::this_thread::sleep_for(boost::chrono::milliseconds(n));
-#elif
+#elif BOOST_VERSION < 105000
     boost::this_thread::sleep(boost::posix_time::milliseconds(n));
 #else
 //should never get here
