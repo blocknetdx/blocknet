@@ -133,6 +133,7 @@ BITCOIN_CORE_H = \
   noui.h \
   pow.h \
   protocol.h \
+  ptr.h \
   pubkey.h \
   random.h \
   rpcclient.h \
@@ -169,7 +170,9 @@ BITCOIN_CORE_H = \
   zmq/zmqabstractnotifier.h \
   zmq/zmqconfig.h \
   zmq/zmqnotificationinterface.h \
-  zmq/zmqpublishnotifier.h
+  zmq/zmqpublishnotifier.h \
+  FastDelegate.h \
+  arith_uint256.h
 
 JSON_H = \
   json/json_spirit.h \
@@ -358,8 +361,30 @@ libxbridge_xbridge_a_SOURCES = \
   xbridge/xbitcoinsecret.cpp \
   xbridge/xbitcointransaction.cpp \
   xbridge/rpcxbridge.cpp \
+  xbridge/bitcoinrpcconnector.h \
+  xbridge/config.h \
+  xbridge/version.h \
+  xbridge/xbitcoinaddress.h \
+  xbridge/xbitcoinsecret.h \
+  xbridge/xbitcointransaction.h \
+  xbridge/xbridge.h \
   xbridge/xbridgeapp.h \
   xbridge/xbridgeexchange.h \
+  xbridge/xbridgepacket.h \
+  xbridge/xbridgerpc.h \
+  xbridge/xbridgesession.h \
+  xbridge/xbridgesessionbtc.h \
+  xbridge/xbridgetransaction.h \
+  xbridge/xbridgetransactiondescr.h \
+  xbridge/xbridgetransactionmember.h \
+  xbridge/xbridgewallet.h \
+  xbridge/xkey.h \
+  xbridge/xpubkey.h \
+  xbridge/xuiconnector.h \
+  xbridge/util/logger.h \
+  xbridge/util/settings.h \
+  xbridge/util/txlog.h \
+  xbridge/util/xutil.h \
   $(BITCOIN_CORE_H)
 
 
