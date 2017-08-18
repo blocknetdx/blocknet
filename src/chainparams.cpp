@@ -201,16 +201,16 @@ public:
         nMinerThreads = 0;
         nTargetTimespan = 1 * 60; // BlocknetDX: 1 day
         nTargetSpacing = 1 * 60;  // BlocknetDX: 1 minute
-        nLastPOWBlock = 200;
+        nLastPOWBlock = 2000;
         nMaturity = 15;
         nModifierUpdateBlock = 51197; //approx Mon, 17 Apr 2017 04:00:00 GMT
 
         //! Modify the testnet genesis block so the timestamp is valid for a later start.
-        genesis.nTime = 1454124731;
-        genesis.nNonce = 321071;
+        genesis.nTime = 1502991301;
+        genesis.nNonce = 377655;
 
         hashGenesisBlock = genesis.GetHash();
-        assert(hashGenesisBlock == uint256("0x0000004618a1852b3d46d66d483fe6ac2411cbd832f82b13958afef1af0bb0b8"));
+        assert(hashGenesisBlock == uint256("0x000002688a36edb1bf8021f83b10bfa37b66e9fcf6fec8bf9483246d48a3e480"));
 
         vFixedSeeds.clear();
         vSeeds.clear();
