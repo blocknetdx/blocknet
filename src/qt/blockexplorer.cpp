@@ -27,18 +27,18 @@ static std::string makeHRef(const std::string& Str)
     return "<a href=\"" + Str + "\">" + Str + "</a>";
 }
 
-static int64_t getTxIn(const CTransaction& tx)
+static CAmount getTxIn(const CTransaction& tx)
 {
     if (tx.IsCoinBase())
         return 0;
 
-    int64_t Sum = 0;
+    CAmount Sum = 0;
     for (unsigned int i = 0; i < tx.vin.size(); i++)
         Sum += getPrevOut(tx.vin[i].prevout).nValue;
     return Sum;
 }
 
-static std::string ValueToString(int64_t nValue, bool AllowNegative = false)
+static std::string ValueToString(CAmount nValue, bool AllowNegative = false)
 {
     if (nValue < 0 && !AllowNegative)
         return "<span>" + _("unknown") + "</span>";
@@ -196,9 +196,9 @@ std::string BlockToString(CBlockIndex* pBlock)
     CBlock block;
     ReadBlockFromDisk(block, pBlock);
 
-    int64_t Fees = 0;
-    int64_t OutVolume = 0;
-    int64_t Reward = 0;
+    CAmount Fees = 0;
+    CAmount OutVolume = 0;
+    CAmount Reward = 0;
 
     std::string TxLabels[] = {_("Hash"), _("From"), _("Amount"), _("To"), _("Amount")};
 
@@ -207,8 +207,8 @@ std::string BlockToString(CBlockIndex* pBlock)
         const CTransaction& tx = block.vtx[i];
         TxContent += TxToRow(tx);
 
-        int64_t In = getTxIn(tx);
-        int64_t Out = tx.GetValueOut();
+        CAmount In = getTxIn(tx);
+        CAmount Out = tx.GetValueOut();
         if (tx.IsCoinBase())
             Reward += Out;
         else if (In < 0)
@@ -220,7 +220,7 @@ std::string BlockToString(CBlockIndex* pBlock)
     }
     TxContent += "</table>";
 
-    int64_t Generated;
+    CAmount Generated;
     if (pBlock->nHeight == 0)
         Generated = OutVolume;
     else
@@ -286,8 +286,8 @@ std::string BlockToString(CBlockIndex* pBlock)
 
 std::string TxToString(uint256 BlockHash, const CTransaction& tx)
 {
-    int64_t Input = 0;
-    int64_t Output = tx.GetValueOut();
+    CAmount Input = 0;
+    CAmount Output = tx.GetValueOut();
 
     std::string InputsContentCells[] = {_("#"), _("Taken from"), _("Address"), _("Amount")};
     std::string InputsContent = makeHTMLTableRow(InputsContentCells, sizeof(InputsContentCells) / sizeof(std::string));
@@ -391,7 +391,7 @@ std::string AddressToString(const CBitcoinAddress& Address)
     CScript AddressScript;
     AddressScript.SetDestination(Address.Get());
 
-    int64_t Sum = 0;
+    CAmount Sum = 0;
     bool fAddrIndex = false;
 
     if (!fAddrIndex)

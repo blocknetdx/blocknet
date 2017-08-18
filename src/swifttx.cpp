@@ -167,8 +167,8 @@ bool IsIXTXValid(const CTransaction& txCollateral)
     if (txCollateral.vout.size() < 1) return false;
     if (txCollateral.nLockTime != 0) return false;
 
-    int64_t nValueIn = 0;
-    int64_t nValueOut = 0;
+    CAmount nValueIn = 0;
+    CAmount nValueOut = 0;
     bool missingTx = false;
 
     BOOST_FOREACH (const CTxOut o, txCollateral.vout)
