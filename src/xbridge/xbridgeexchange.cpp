@@ -238,8 +238,6 @@ bool XBridgeExchange::acceptTransaction(const uint256     & id,
         return false;
     }
 
-    const WalletParam & wp = m_wallets[sourceCurrency];
-
     XBridgeTransactionPtr tr(new XBridgeTransaction(id,
                                                     sourceAddr, sourceCurrency,
                                                     sourceAmount,
