@@ -492,7 +492,7 @@ void OverviewPage::toggleObfuscation()
         settings.setValue("hasMixed", "hasMixed");
     }
     if (!fEnableObfuscation) {
-        int64_t balance = currentBalance;
+        CAmount balance = currentBalance;
         float minAmount = 14.90 * COIN;
         if (balance < minAmount) {
             QString strMinAmount(BitcoinUnits::formatWithUnit(nDisplayUnit, minAmount));
