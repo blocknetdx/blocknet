@@ -1012,6 +1012,12 @@ bool CWalletDB::EraseZerocoinSpendSerialEntry(const CBigNum& serialEntry)
     return Erase(make_pair(string("zcserial"), serialEntry));
 }
 
+bool CWalletDB::ReadZerocoinSpendSerialEntry(const CBigNum& bnSerial)
+{
+    CZerocoinSpend spend;
+    return Read(make_pair(string("zcserial"), bnSerial), spend);
+}
+
 bool CWalletDB::WriteZerocoinMint(const CZerocoinMint& zerocoinMint)
 {
     CDataStream ss(SER_GETHASH, 0);

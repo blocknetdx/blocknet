@@ -464,6 +464,7 @@ public:
     {
         return ::IsMine(*this, txout.scriptPubKey);
     }
+    bool IsMyZerocoinSpend(const CBigNum& bnSerial) const;
     CAmount GetCredit(const CTxOut& txout, const isminefilter& filter) const
     {
         if (!MoneyRange(txout.nValue))
@@ -1180,6 +1181,7 @@ public:
     bool WriteToDisk();
 
     int64_t GetTxTime() const;
+    int64_t GetComputedTxTime() const;
     int GetRequestCount() const;
 
     void AddSupportingTransactions() { ; } //// HACK(SPOCK)

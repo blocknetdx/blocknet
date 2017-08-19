@@ -345,7 +345,7 @@ set<uint256> CWallet::GetConflicts(const uint256& txid) const
     std::pair<TxSpends::const_iterator, TxSpends::const_iterator> range;
 
     BOOST_FOREACH (const CTxIn& txin, wtx.vin) {
-        if (mapTxSpends.count(txin.prevout) <= 1)
+        if (mapTxSpends.count(txin.prevout) <= 1 || wtx.IsZerocoinSpend())
             continue; // No conflict if zero or one spends
         range = mapTxSpends.equal_range(txin.prevout);
         for (TxSpends::const_iterator it = range.first; it != range.second; ++it)
@@ -759,7 +759,7 @@ void CWallet::SyncTransaction(const CTransaction& tx, const CBlock* pblock)
     // available of the outputs it spends. So force those to be
     // recomputed, also:
     BOOST_FOREACH (const CTxIn& txin, tx.vin) {
-        if (mapWallet.count(txin.prevout.hash))
+        if (!tx.IsZerocoinSpend() && mapWallet.count(txin.prevout.hash))
             mapWallet[txin.prevout.hash].MarkDirty();
     }
 }
@@ -789,6 +789,11 @@ isminetype CWallet::IsMine(const CTxIn& txin) const
         }
     }
     return ISMINE_NO;
+}
+
+bool CWallet::IsMyZerocoinSpend(const CBigNum& bnSerial) const
+{
+    return CWalletDB(strWalletFile).ReadZerocoinSpendSerialEntry(bnSerial);
 }
 
 CAmount CWallet::GetDebit(const CTxIn& txin, const isminefilter& filter) const
@@ -956,6 +961,18 @@ int64_t CWalletTx::GetTxTime() const
     return n ? n : nTimeReceived;
 }
 
+int64_t CWalletTx::GetComputedTxTime() const
+{
+    int64_t nTime = GetTxTime();
+    if (IsZerocoinSpend()) {
+        if (IsInMainChain())
+            return mapBlockIndex.at(hashBlock)->GetBlockTime();
+        else
+            return nTimeReceived;
+    }
+    return nTime;
+}
+
 int CWalletTx::GetRequestCount() const
 {
     // Returns -1 if it wasn't being tracked
@@ -1019,7 +1036,7 @@ void CWalletTx::GetAmounts(list<COutputEntry>& listReceived,
             // Don't report 'change' txouts
             if (pwallet->IsChange(txout))
                 continue;
-        } else if (!(fIsMine & filter))
+        } else if (!(fIsMine & filter) && !IsZerocoinSpend())
             continue;
 
         // In either case, we need to get the destination address
@@ -4009,10 +4026,7 @@ bool CWallet::CreateZerocoinSpendTransaction(CAmount nValue, int nSecurityLevel,
                     for (CZerocoinMint mint : vNewMints) {
                         mint.SetTxHash(txNew.GetHash());
                         walletdb.WriteZerocoinMint(mint);
-                        // need this ??? (SPOCK)
-                        //pwalletMain->NotifyZerocoinChanged(pwalletMain, mint.GetValue().GetHex(), "Used", CT_UPDATED);
                     }
-
                 } else {
                     CTxOut txOutChange(nValueSelected - nValue, scriptChange);
                     txNew.vout.push_back(txOutChange);
@@ -4049,6 +4063,9 @@ bool CWallet::CreateZerocoinSpendTransaction(CAmount nValue, int nSecurityLevel,
 
             //turn the finalized transaction into a wallet transaction
             wtxNew = CWalletTx(this, txNew);
+            wtxNew.fFromMe = true;
+            wtxNew.fTimeReceivedIsTxTime = true;
+            wtxNew.nTimeReceived = GetAdjustedTime();
         }
     }
 

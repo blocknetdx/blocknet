@@ -149,7 +149,7 @@ public:
         QList<AddressTableEntry>::iterator upper = qUpperBound(
                                                                cachedAddressTable.begin(), cachedAddressTable.end(), pubCoin, AddressTableEntryLessThan());
         int lowerIndex = (lower - cachedAddressTable.begin());
-        //int upperIndex = (upper - cachedAddressTable.begin());
+        int upperIndex = (upper - cachedAddressTable.begin());
         bool inModel = (lower != upper);
         AddressTableEntry::Type newEntryType = AddressTableEntry::Zerocoin;
         
@@ -158,7 +158,7 @@ public:
             case CT_NEW:
                 if(inModel)
                 {
-                    qWarning() << "AddressTablePriv::updateEntry : Warning: Got CT_NEW, but entry is already in model";
+                    qWarning() << "AddressTablePriv_ZC::updateEntry : Warning: Got CT_NEW, but entry is already in model";
                 }
                 parent->beginInsertRows(QModelIndex(), lowerIndex, lowerIndex);
                 cachedAddressTable.insert(lowerIndex, AddressTableEntry(newEntryType, isUsed, pubCoin));
@@ -167,7 +167,7 @@ public:
             case CT_UPDATED:
                 if(!inModel)
                 {
-                    qWarning() << "AddressTablePriv::updateEntry : Warning: Got CT_UPDATED, but entry is not in model";
+                    qWarning() << "AddressTablePriv_ZC::updateEntry : Warning: Got CT_UPDATED, but entry is not in model";
                     break;
                 }
                 lower->type = newEntryType;

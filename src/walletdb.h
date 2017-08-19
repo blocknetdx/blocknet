@@ -155,6 +155,7 @@ public:
     std::list<CZerocoinMint> ListArchivedZerocoins();
     bool WriteZerocoinSpendSerialEntry(const CZerocoinSpend& zerocoinSpend);
     bool EraseZerocoinSpendSerialEntry(const CBigNum& serialEntry);
+    bool ReadZerocoinSpendSerialEntry(const CBigNum& bnSerial);
 
 private:
     CWalletDB(const CWalletDB&);
