@@ -143,7 +143,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QSpinBox" name="zPIV_Percentage">
+          <widget class="QSpinBox" name="zeromintPercentage">
            <property name="minimum">
             <number>10</number>
            </property>

@@ -4268,9 +4268,13 @@ bool ProcessNewBlock(CValidationState& state, CNode* pfrom, CBlock* pblock, CDis
         if (pwalletMain->isMultiSendEnabled())
             pwalletMain->MultiSend();
 
-        //If turned on Auto Combine will scan wallet for dust to combine
+        // If turned on Auto Combine will scan wallet for dust to combine
         if (pwalletMain->fCombineDust)
             pwalletMain->AutoCombineDust();
+        
+        // If turned on AutoZeromint will automatically convert PIV to zPIV
+        if (pwalletMain->isZeromintEnabled ())
+            pwalletMain->AutoZeromint ();
     }
 
     LogPrintf("%s : ACCEPTED\n", __func__);

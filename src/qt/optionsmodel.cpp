@@ -72,13 +72,13 @@ void OptionsModel::Init()
         settings.setValue("fCoinControlFeatures", false);
     fCoinControlFeatures = settings.value("fCoinControlFeatures", false).toBool();
 
-    if (!settings.contains("nObfuscationRounds"))
-        settings.setValue("nObfuscationRounds", 2);
+    if (!settings.contains("nZeromintPercentage"))
+        settings.setValue("nZeromintPercentage", 10);
 
     if (!settings.contains("nAnonymizePivxAmount"))
         settings.setValue("nAnonymizePivxAmount", 1000);
 
-    nObfuscationRounds = settings.value("nObfuscationRounds").toLongLong();
+    nZeromintPercentage = settings.value("nZeromintPercentage").toLongLong();
     nAnonymizePivxAmount = settings.value("nAnonymizePivxAmount").toLongLong();
 
     if (!settings.contains("fShowMasternodesTab"))
@@ -144,8 +144,8 @@ void OptionsModel::Init()
     if (!SoftSetArg("-lang", settings.value("language").toString().toStdString()))
         addOverriddenOption("-lang");
 
-    if (settings.contains("nObfuscationRounds"))
-        SoftSetArg("-obfuscationrounds", settings.value("nObfuscationRounds").toString().toStdString());
+    if (settings.contains("nZeromintPercentage"))
+        SoftSetArg("-zeromintpercentage", settings.value("nZeromintPercentage").toString().toStdString());
     if (settings.contains("nAnonymizePivxAmount"))
         SoftSetArg("-anonymizepivxamount", settings.value("nAnonymizePivxAmount").toString().toStdString());
 
@@ -225,8 +225,8 @@ QVariant OptionsModel::data(const QModelIndex& index, int role) const
             return settings.value("nDatabaseCache");
         case ThreadsScriptVerif:
             return settings.value("nThreadsScriptVerif");
-        case ObfuscationRounds:
-            return QVariant(nObfuscationRounds);
+        case ZeromintPercentage:
+            return QVariant(nZeromintPercentage);
         case AnonymizePivxAmount:
             return QVariant(nAnonymizePivxAmount);
         case Listen:
@@ -332,10 +332,11 @@ bool OptionsModel::setData(const QModelIndex& index, const QVariant& value, int 
                 setRestartRequired(true);
             }
             break;
-        case ObfuscationRounds:
-            nObfuscationRounds = value.toInt();
-            settings.setValue("nObfuscationRounds", nObfuscationRounds);
-            emit obfuscationRoundsChanged(nObfuscationRounds);
+        case ZeromintPercentage:
+            printf("XX42: Zeromint Percentage %s\n", value.toString ().toStdString ().c_str ());
+            nZeromintPercentage = value.toInt();
+            settings.setValue("nZeromintPercentage", nZeromintPercentage);
+            emit zeromintPercentageChanged(nZeromintPercentage);
             break;
         case AnonymizePivxAmount:
             nAnonymizePivxAmount = value.toInt();
