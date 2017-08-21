@@ -39,8 +39,6 @@ public:
 
     std::vector<std::string> peers() const;
 
-    uint32_t exchangeTax()
-        { return get<uint32_t>("Main.ExchangeTax", 300); }
     std::vector<std::string> exchangeWallets() const;
 
     bool rpcEnabled()

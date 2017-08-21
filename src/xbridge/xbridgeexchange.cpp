@@ -81,7 +81,6 @@ bool XBridgeExchange::init()
         wp.port       = port;
         wp.user       = user;
         wp.passwd     = passwd;
-        wp.fee        = s.exchangeTax();
         wp.minAmount  = minAmount;
         wp.dustAmount = dustAmount;
         wp.taxaddr    = feeAddress;
@@ -172,26 +171,11 @@ bool XBridgeExchange::createTransaction(const uint256     & id,
         }
     }
 
-
-    // calc tax percent
-    uint32_t taxPercent = wp.fee;
-    {
-        if (wp2.dustAmount)
-        {
-            uint32_t dustPercent = 100000 * wp2.dustAmount / destAmount;
-            if (dustPercent > taxPercent)
-            {
-                taxPercent = dustPercent;
-            }
-        }
-    }
-
     XBridgeTransactionPtr tr(new XBridgeTransaction(id,
                                                     sourceAddr, sourceCurrency,
                                                     sourceAmount,
                                                     destAddr, destCurrency,
-                                                    destAmount,
-                                                    taxPercent, wp.taxaddr));
+                                                    destAmount));
 
     LOG() << tr->hash1().ToString();
     LOG() << tr->hash2().ToString();
@@ -254,14 +238,11 @@ bool XBridgeExchange::acceptTransaction(const uint256     & id,
         return false;
     }
 
-    const WalletParam & wp = m_wallets[sourceCurrency];
-
     XBridgeTransactionPtr tr(new XBridgeTransaction(id,
                                                     sourceAddr, sourceCurrency,
                                                     sourceAmount,
                                                     destAddr, destCurrency,
-                                                    destAmount,
-                                                    wp.fee, wp.taxaddr));
+                                                    destAmount));
 
     transactionId = id;
 
