@@ -132,7 +132,7 @@ void PrivacyDialog::on_pushButtonMintzPIV_clicked()
     int64_t nDuration = GetTimeMillis() - nTime;
     
     // Minting successfully finished. Show some stats for entertainment.
-    QString strStatsHeader = tr("Successful minted ") + ui->labelMintAmountValue->text() + tr(" zPIV in ") + 
+    QString strStatsHeader = tr("Successfully minted ") + ui->labelMintAmountValue->text() + tr(" zPIV in ") + 
                              QString::number(nDuration) + tr(" ms. Used denominations:\n");
     QString strStats = "";
     ui->labelMintStatus->setText(strStatsHeader);

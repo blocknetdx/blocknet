@@ -333,7 +333,6 @@ bool OptionsModel::setData(const QModelIndex& index, const QVariant& value, int 
             }
             break;
         case ZeromintPercentage:
-            printf("XX42: Zeromint Percentage %s\n", value.toString ().toStdString ().c_str ());
             nZeromintPercentage = value.toInt();
             settings.setValue("nZeromintPercentage", nZeromintPercentage);
             emit zeromintPercentageChanged(nZeromintPercentage);

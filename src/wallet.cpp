@@ -14,6 +14,7 @@
 #include "kernel.h"
 #include "masternode-budget.h"
 #include "net.h"
+#include "primitives/transaction.h"
 #include "script/script.h"
 #include "script/sign.h"
 #include "spork.h"
@@ -1237,7 +1238,6 @@ void CWallet::ResendWalletTransactions()
  * @{
  */
 
-
 CAmount CWallet::GetBalance() const
 {
     CAmount nTotal = 0;
@@ -1279,6 +1279,24 @@ CAmount CWallet::GetZerocoinBalance() const
 
 
 
+
+    return nTotal;
+}
+
+CAmount CWallet::GetUnlockedCoins() const
+{
+    if (fLiteMode) return 0;
+
+    CAmount nTotal = 0;
+    {
+        LOCK2(cs_main, cs_wallet);
+        for (map<uint256, CWalletTx>::const_iterator it = mapWallet.begin(); it != mapWallet.end(); ++it) {
+            const CWalletTx* pcoin = &(*it).second;
+
+            if (pcoin->IsTrusted())
+                nTotal += pcoin->GetUnlockedCredit();
+        }
+    }
 
     return nTotal;
 }
@@ -3401,15 +3419,74 @@ bool CWallet::GetDestData(const CTxDestination& dest, const std::string& key, st
     return false;
 }
 
+// CWallet::AutoZeromint() gets called with each new incoming block
 void CWallet::AutoZeromint()
 {
+    // Wait until blockchain is fully synced
+    if (!masternodeSync.IsBlockchainSynced()) return;
+    
     CAmount nZerocoinBalance = GetZerocoinBalance();
-    CAmount nBalance = GetBalance();
+    CAmount nBalance = GetUnlockedCoins(); // We only consider unlocked coins, this also excludes masternode-vins
+                                           // from being accidentally minted
+    CAmount nMintAmount = 0;
+    CAmount nToMintAmount = 0;
+
+    // zPIV are integers > 0, so we can't mint 10% of 9 PIV
+    if (nBalance < 10){
+        LogPrintf("CWallet::AutoZeromint(): available balance (%ld) to small for minting zPIV\n", nBalance);
+        return;
+    }
+
+    // Percentage of zPIV we already have
+    double dPercentage = 100 * (double)nZerocoinBalance / (double)nBalance;
+
+    // Check if minting is actually needed
+    if(dPercentage >= nZeromintPercentage){
+        LogPrintf("CWallet::AutoZeromint(): percentage of existing zPIV (%.2f%%) already >= configured percentage (%d%%). Minting aborted.\n", 
+                  dPercentage, nZeromintPercentage);
+        return;
+    }
+        
+    // zPIV needed to mint the target percentage
+    nToMintAmount = ((((nBalance + nZerocoinBalance) * nZeromintPercentage) / 100)) / COIN;
+
+    // Use the biggest denomination smaller than the needed zPIV
+    // We'll only mint exact denomination to make mint faster
+    if (nToMintAmount >= libzerocoin::CoinDenomination::ZQ_FIVE_THOUSAND){
+        nMintAmount = libzerocoin::CoinDenomination::ZQ_FIVE_THOUSAND;        
+    } else if (nToMintAmount >= libzerocoin::CoinDenomination::ZQ_ONE_THOUSAND){
+        nMintAmount = libzerocoin::CoinDenomination::ZQ_ONE_THOUSAND;
+    } else if (nToMintAmount >= libzerocoin::CoinDenomination::ZQ_FIVE_HUNDRED){
+        nMintAmount = libzerocoin::CoinDenomination::ZQ_FIVE_HUNDRED;
+    } else if (nToMintAmount >= libzerocoin::CoinDenomination::ZQ_ONE_HUNDRED){
+        nMintAmount = libzerocoin::CoinDenomination::ZQ_ONE_HUNDRED;
+    } else if (nToMintAmount >= libzerocoin::CoinDenomination::ZQ_FIFTY){
+        nMintAmount = libzerocoin::CoinDenomination::ZQ_FIFTY;
+    } else if (nToMintAmount >= libzerocoin::CoinDenomination::ZQ_TEN){
+        nMintAmount = libzerocoin::CoinDenomination::ZQ_TEN;
+    } else if (nToMintAmount >= libzerocoin::CoinDenomination::ZQ_FIVE){
+        nMintAmount = libzerocoin::CoinDenomination::ZQ_FIVE;
+    } else if (nToMintAmount >= libzerocoin::CoinDenomination::ZQ_ONE){
+        nMintAmount = libzerocoin::CoinDenomination::ZQ_ONE;
+    } else {
+        nMintAmount = 0;
+    }
+
+    if (nMintAmount > 0){
+    CWalletTx wtx;
+        vector<CZerocoinMint> vMints;
+        string strError = pwalletMain->MintZerocoin(nMintAmount*COIN, wtx, vMints);
     
-    printf("XX42: Zeromint enabled with %ld PIV and %ld zPIV\n", nBalance/COIN, nZerocoinBalance/COIN);    
-    
-    
-    
+        // Return if something went wrong during minting
+        if (strError != ""){
+            LogPrintf("CWallet::AutoZeromint(): auto minting failed with error %s\n", strError);
+            return;
+        }
+        LogPrintf("CWallet::AutoZeromint(): successfully minted %ld zPIV\n", nMintAmount);
+    }
+    else {
+        LogPrintf("CWallet::AutoZeromint(): Amount to mint: %ld zPIV. Nothing minted.\n", nMintAmount);
+    }
 }
 
 void CWallet::AutoCombineDust()
