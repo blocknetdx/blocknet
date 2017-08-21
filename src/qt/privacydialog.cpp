@@ -169,15 +169,72 @@ void PrivacyDialog::on_pushButtonMintReset_clicked()
 
 void PrivacyDialog::on_pushButtonSpendzPIV_clicked()
 {
-    if (!walletModel || !walletModel->getOptionsModel())
+    if (!walletModel || !walletModel->getOptionsModel() || !pwalletMain)
         return;
 
-    QMessageBox::warning(this, tr("Spend Zerocoin"),
-                tr("Test for Spend. But better hodl !1!"),
-                QMessageBox::Ok, QMessageBox::Ok);
-            return;
-
+    CBitcoinAddress address(ui->payTo->text().toStdString());
+    if (!address.IsValid()) {
+        QMessageBox::warning(this, tr("Spend Zerocoin"), tr("Invalid Pivx Address"), QMessageBox::Ok, QMessageBox::Ok);
         return;
+    }
+
+    //grab as a double, increase by COIN and cutoff any remainder by assigning it as int64_t/CAmount
+    double dAmount = ui->zPIVpayAmount->text().toDouble();
+    CAmount nAmount = dAmount * COIN;
+    if (!MoneyRange(nAmount)) {
+        QMessageBox::warning(this, tr("Spend Zerocoin"), tr("Invalid Send Amount"), QMessageBox::Ok, QMessageBox::Ok);
+        return;
+    }
+
+    int nSecurityLevel = ui->securityLevel->value();
+    bool fMintChange = ui->checkBoxMintChange->isChecked();
+    CWalletTx wtxNew;
+    vector<CZerocoinMint> vMintsSelected;
+    vector<CZerocoinSpend> vSpends;
+
+    // attempt to spend the zPiv
+    ui->labelMintStatus->setText(tr("Spending Zerocoin. Computationally expensive, please be patient."));
+    ui->labelMintStatus->repaint();
+    string strError = pwalletMain->SpendZerocoin(nAmount, nSecurityLevel, wtxNew, vSpends, vMintsSelected, fMintChange, &address);
+
+    if (strError != "") {
+        QMessageBox::warning(this, tr("Spend Zerocoin"), tr(strError.c_str()), QMessageBox::Ok, QMessageBox::Ok);
+        ui->labelMintStatus->setText(tr("Spend Zerocoin Failed!"));
+        ui->labelMintStatus->repaint();
+        return;
+    }
+
+    QString strStats = "";
+    CAmount nValueIn = 0;
+    int nCount = 0;
+    for (CZerocoinSpend spend : vSpends) {
+        strStats += tr("zPiv Spend #: ") + QString::number(nCount) + ", ";
+        strStats += tr("denomination: ") + QString::number(spend.GetDenomination()) + ", ";
+        strStats += tr("serial: ") + spend.GetSerial().ToString().c_str() + "\n";
+        nValueIn += libzerocoin::ZerocoinDenominationToAmount(spend.GetDenomination());
+    }
+
+    CAmount nValueOut = 0;
+    for (const CTxOut& txout: wtxNew.vout) {
+        strStats += tr("value out: ") + QString::number(txout.nValue/COIN) + " Piv, ";
+        nValueOut += txout.nValue;
+
+        strStats += tr("address: ");
+        CTxDestination dest;
+        if(txout.scriptPubKey.IsZerocoinMint())
+            strStats += tr("zPiv Mint");
+        else if(ExtractDestination(txout.scriptPubKey, dest))
+            strStats += tr(CBitcoinAddress(dest).ToString().c_str());
+        strStats += "\n";
+    }
+
+    QString strReturn;
+    strReturn += tr("txid: ") + wtxNew.GetHash().ToString().c_str() + "\n";
+    strReturn += tr("fee: ") + QString::number((nValueIn-nValueOut)/COIN) + "\n";
+    strReturn += strStats;
+
+    ui->labelMintStatus->setText(strReturn);
+    ui->labelMintStatus->repaint();
 }
 
 void PrivacyDialog::on_payTo_textChanged(const QString& address)
