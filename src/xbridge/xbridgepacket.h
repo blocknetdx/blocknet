@@ -228,7 +228,6 @@ enum XBridgeCommand
     xbcTransactionCancel = 22,
     //
     // xbcTransactionRollback
-    //    uint160 hub address
     //    uint256 hub transaction id
     xbcTransactionRollback = 23,
     //

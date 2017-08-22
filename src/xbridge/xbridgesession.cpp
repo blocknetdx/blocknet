@@ -2927,7 +2927,7 @@ bool XBridgeSession::revertXBridgeTransaction(const uint256 & id)
     {
         // not commited....send cancel???
         // sendCancelTransaction(id);
-        return true;
+        return false;
     }
 
     return true;

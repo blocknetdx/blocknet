@@ -60,6 +60,7 @@ public:
                                    const std::string & to);
 
     bool cancelTransaction(const uint256 & id);
+    bool rollbackTransaction(const uint256 & id);
 
     XBridgeTransactionDescr item(const unsigned int index) const;
 
