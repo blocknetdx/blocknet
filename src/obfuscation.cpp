@@ -2182,8 +2182,6 @@ bool CObfuScationSigner::IsVinAssociatedWithPubkey(CTxIn& vin, CPubKey& pubkey)
 
 bool CObfuScationSigner::SetKey(std::string strSecret, std::string& errorMessage, CKey& key, CPubKey& pubkey)
 {
-    return false; // Disable until Obfuscation is removed from code
-
     CBitcoinSecret vchSecret;
     bool fGood = vchSecret.SetString(strSecret);
 
