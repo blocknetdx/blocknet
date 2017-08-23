@@ -45,6 +45,7 @@ CActiveMasternode activeMasternode;
 
 void CObfuscationPool::ProcessMessageObfuscation(CNode* pfrom, std::string& strCommand, CDataStream& vRecv)
 {
+    return; // Disable until Obfuscation is removed from code
     if (fLiteMode) return; //disable all Obfuscation/Masternode related functionality
     if (!masternodeSync.IsBlockchainSynced()) return;
 
@@ -380,6 +381,8 @@ int randomizeList(int i) { return std::rand() % i; }
 
 void CObfuscationPool::Reset()
 {
+    return; // Disable until Obfuscation is removed from code
+
     cachedLastSuccess = 0;
     lastNewBlock = 0;
     txCollateral = CMutableTransaction();
@@ -390,6 +393,8 @@ void CObfuscationPool::Reset()
 
 void CObfuscationPool::SetNull()
 {
+    return; // Disable until Obfuscation is removed from code
+
     // MN side
     sessionUsers = 0;
     vecSessionCollateral.clear();
@@ -417,6 +422,8 @@ void CObfuscationPool::SetNull()
 
 bool CObfuscationPool::SetCollateralAddress(std::string strAddress)
 {
+    return false; // Disable until Obfuscation is removed from code
+
     CBitcoinAddress address;
     if (!address.SetString(strAddress)) {
         LogPrintf("CObfuscationPool::SetCollateralAddress - Invalid Obfuscation collateral address\n");
@@ -431,6 +438,8 @@ bool CObfuscationPool::SetCollateralAddress(std::string strAddress)
 //
 void CObfuscationPool::UnlockCoins()
 {
+    return; // Disable until Obfuscation is removed from code
+
     while (true) {
         TRY_LOCK(pwalletMain->cs_wallet, lockWallet);
         if (!lockWallet) {
@@ -447,6 +456,8 @@ void CObfuscationPool::UnlockCoins()
 
 std::string CObfuscationPool::GetStatus()
 {
+    return _("Obfuscation not supported any more."); // Disable until Obfuscation is removed from code
+
     static int showingObfuScationMessage = 0;
     showingObfuScationMessage += 10;
     std::string suffix = "";
@@ -516,6 +527,7 @@ std::string CObfuscationPool::GetStatus()
 //
 void CObfuscationPool::Check()
 {
+    return; // Disable until Obfuscation is removed from code
     if (fMasterNode) LogPrint("obfuscation", "CObfuscationPool::Check() - entries count %lu\n", entries.size());
     //printf("CObfuscationPool::Check() %d - %d - %d\n", state, anonTx.CountEntries(), GetTimeMillis()-lastTimeChanged);
 
@@ -578,6 +590,8 @@ void CObfuscationPool::Check()
 
 void CObfuscationPool::CheckFinalTransaction()
 {
+    return; // Disable until Obfuscation is removed from code
+
     if (!fMasterNode) return; // check and relay final tx only on masternode
 
     CWalletTx txNew = CWalletTx(pwalletMain, finalTransaction);
@@ -663,6 +677,7 @@ void CObfuscationPool::CheckFinalTransaction()
 //
 void CObfuscationPool::ChargeFees()
 {
+    return; // Disable until Obfuscation is removed from code
     if (!fMasterNode) return;
 
     //we don't need to charge collateral for every offence.
@@ -766,6 +781,8 @@ void CObfuscationPool::ChargeFees()
 //  - Obfuscation is completely free, to pay miners we randomly pay the collateral of users.
 void CObfuscationPool::ChargeRandomFees()
 {
+    return; // Disable until Obfuscation is removed from code
+
     if (fMasterNode) {
         int i = 0;
 
@@ -802,6 +819,8 @@ void CObfuscationPool::ChargeRandomFees()
 //
 void CObfuscationPool::CheckTimeout()
 {
+    return; // Disable until Obfuscation is removed from code
+
     if (!fEnableZeromint && !fMasterNode) return;
 
     // catching hanging sessions
@@ -887,6 +906,8 @@ void CObfuscationPool::CheckTimeout()
 //
 void CObfuscationPool::CheckForCompleteQueue()
 {
+    return; // Disable until Obfuscation is removed from code
+
     if (!fEnableZeromint && !fMasterNode) return;
 
     /* Check to see if we're ready for submissions from clients */
@@ -910,6 +931,7 @@ void CObfuscationPool::CheckForCompleteQueue()
 // check to see if the signature is valid
 bool CObfuscationPool::SignatureValid(const CScript& newSig, const CTxIn& newVin)
 {
+    return false; // Disable until Obfuscation is removed from code
     CMutableTransaction txNew;
     txNew.vin.clear();
     txNew.vout.clear();
@@ -950,6 +972,8 @@ bool CObfuscationPool::SignatureValid(const CScript& newSig, const CTxIn& newVin
 // check to make sure the collateral provided by the client is valid
 bool CObfuscationPool::IsCollateralValid(const CTransaction& txCollateral)
 {
+    return false; // Disable until Obfuscation is removed from code
+
     if (txCollateral.vout.size() < 1) return false;
     if (txCollateral.nLockTime != 0) return false;
 
@@ -1009,6 +1033,7 @@ bool CObfuscationPool::IsCollateralValid(const CTransaction& txCollateral)
 //
 bool CObfuscationPool::AddEntry(const std::vector<CTxIn>& newInput, const CAmount& nAmount, const CTransaction& txCollateral, const std::vector<CTxOut>& newOutput, int& errorID)
 {
+    return false; // Disable until Obfuscation is removed from code
     if (!fMasterNode) return false;
 
     BOOST_FOREACH (CTxIn in, newInput) {
@@ -1060,6 +1085,8 @@ bool CObfuscationPool::AddEntry(const std::vector<CTxIn>& newInput, const CAmoun
 
 bool CObfuscationPool::AddScriptSig(const CTxIn& newVin)
 {
+    return false; // Disable until Obfuscation is removed from code
+
     LogPrint("obfuscation", "CObfuscationPool::AddScriptSig -- new sig  %s\n", newVin.scriptSig.ToString().substr(0, 24));
 
 
@@ -1100,6 +1127,7 @@ bool CObfuscationPool::AddScriptSig(const CTxIn& newVin)
 // Check to make sure everything is signed
 bool CObfuscationPool::SignaturesComplete()
 {
+    return false; // Disable until Obfuscation is removed from code
     BOOST_FOREACH (const CObfuScationEntry& v, entries) {
         BOOST_FOREACH (const CTxDSIn& s, v.sev) {
             if (!s.fHasSig) return false;
@@ -1114,6 +1142,8 @@ bool CObfuscationPool::SignaturesComplete()
 //
 void CObfuscationPool::SendObfuscationDenominate(std::vector<CTxIn>& vin, std::vector<CTxOut>& vout, CAmount amount)
 {
+    return; // Disable until Obfuscation is removed from code
+
     if (fMasterNode) {
         LogPrintf("CObfuscationPool::SendObfuscationDenominate() - Obfuscation from a Masternode is not supported currently.\n");
         return;
@@ -1209,6 +1239,8 @@ void CObfuscationPool::SendObfuscationDenominate(std::vector<CTxIn>& vin, std::v
 
 bool CObfuscationPool::StatusUpdate(int newState, int newEntriesCount, int newAccepted, int& errorID, int newSessionID)
 {
+    return false; // Disable until Obfuscation is removed from code
+
     if (fMasterNode) return false;
     if (state == POOL_STATUS_ERROR || state == POOL_STATUS_SUCCESS) return false;
 
@@ -1257,6 +1289,8 @@ bool CObfuscationPool::StatusUpdate(int newState, int newEntriesCount, int newAc
 //
 bool CObfuscationPool::SignFinalTransaction(CTransaction& finalTransactionNew, CNode* node)
 {
+    return false; // Disable until Obfuscation is removed from code
+
     if (fMasterNode) return false;
 
     finalTransaction = finalTransactionNew;
@@ -1334,6 +1368,8 @@ bool CObfuscationPool::SignFinalTransaction(CTransaction& finalTransactionNew, C
 
 void CObfuscationPool::NewBlock()
 {
+    return; // Disable until Obfuscation is removed from code
+
     LogPrint("obfuscation", "CObfuscationPool::NewBlock \n");
 
     //we we're processing lots of blocks, we'll just leave
@@ -1346,6 +1382,8 @@ void CObfuscationPool::NewBlock()
 // Obfuscation transaction was completed (failed or successful)
 void CObfuscationPool::CompletedTransaction(bool error, int errorID)
 {
+    return; // Disable until Obfuscation is removed from code
+
     if (fMasterNode) return;
 
     if (error) {
@@ -1380,6 +1418,8 @@ void CObfuscationPool::ClearLastMessage()
 //
 bool CObfuscationPool::DoAutomaticDenominating(bool fDryRun)
 {
+    return false;  // Disabled until Obfuscation is completely removed
+
     if (!fEnableZeromint) return false;
     if (fMasterNode) return false;
     if (state == POOL_STATUS_ERROR || state == POOL_STATUS_SUCCESS) return false;
@@ -1645,6 +1685,8 @@ bool CObfuscationPool::DoAutomaticDenominating(bool fDryRun)
 
 bool CObfuscationPool::PrepareObfuscationDenominate()
 {
+    return false; // Disable until Obfuscation is removed from code
+
     std::string strError = "";
     // Submit transaction to the pool if we get here
     // Try to use only inputs with the same number of rounds starting from lowest number of rounds possible
@@ -1667,8 +1709,10 @@ bool CObfuscationPool::PrepareObfuscationDenominate()
 
 bool CObfuscationPool::SendRandomPaymentToSelf()
 {
-    CAmount nBalance = pwalletMain->GetBalance();
-    CAmount nPayment = (nBalance * 0.35) + (rand() % nBalance);
+    return false; // Disable until Obfuscation is removed from code
+
+    int64_t nBalance = pwalletMain->GetBalance();
+    int64_t nPayment = (nBalance * 0.35) + (rand() % nBalance);
 
     if (nPayment > nBalance) nPayment = nBalance - (0.1 * COIN);
 
@@ -1705,6 +1749,8 @@ bool CObfuscationPool::SendRandomPaymentToSelf()
 // Split up large inputs or create fee sized inputs
 bool CObfuscationPool::MakeCollateralAmounts()
 {
+    return false; // Disable until Obfuscation is removed from code
+
     CWalletTx wtx;
     CAmount nFeeRet = 0;
     std::string strFail = "";
@@ -1759,6 +1805,8 @@ bool CObfuscationPool::MakeCollateralAmounts()
 // Create denominations
 bool CObfuscationPool::CreateDenominated(CAmount nTotalValue)
 {
+    return false; // Disable until Obfuscation is removed from code
+
     CWalletTx wtx;
     CAmount nFeeRet = 0;
     std::string strFail = "";
@@ -1837,6 +1885,8 @@ bool CObfuscationPool::CreateDenominated(CAmount nTotalValue)
 
 bool CObfuscationPool::IsCompatibleWithEntries(std::vector<CTxOut>& vout)
 {
+    return false; // Disable until Obfuscation is removed from code
+
     if (GetDenominations(vout) == 0) return false;
 
     BOOST_FOREACH (const CObfuScationEntry v, entries) {
@@ -1856,6 +1906,8 @@ bool CObfuscationPool::IsCompatibleWithEntries(std::vector<CTxOut>& vout)
 
 bool CObfuscationPool::IsCompatibleWithSession(int64_t nDenom, CTransaction txCollateral, int& errorID)
 {
+    return false; // Disable until Obfuscation is removed from code
+
     if (nDenom == 0) return false;
 
     LogPrintf("CObfuscationPool::IsCompatibleWithSession - sessionDenom %d sessionUsers %d\n", sessionDenom, sessionUsers);
@@ -1947,6 +1999,8 @@ void CObfuscationPool::GetDenominationsToString(int nDenom, std::string& strDeno
 
 int CObfuscationPool::GetDenominations(const std::vector<CTxDSOut>& vout)
 {
+    return 0; // Disable until Obfuscation is removed from code
+
     std::vector<CTxOut> vout2;
 
     BOOST_FOREACH (CTxDSOut out, vout)
@@ -1958,6 +2012,8 @@ int CObfuscationPool::GetDenominations(const std::vector<CTxDSOut>& vout)
 // return a bitshifted integer representing the denominations in this list
 int CObfuscationPool::GetDenominations(const std::vector<CTxOut>& vout, bool fSingleRandomDenom)
 {
+    return 0; // Disable until Obfuscation is removed from code
+
     std::vector<pair<int64_t, int> > denomUsed;
 
     // make a list of denominations, with zero uses
@@ -1999,6 +2055,8 @@ int CObfuscationPool::GetDenominations(const std::vector<CTxOut>& vout, bool fSi
 
 int CObfuscationPool::GetDenominationsByAmounts(std::vector<CAmount>& vecAmount)
 {
+    return 0; // Disable until Obfuscation is removed from code
+
     CScript e = CScript();
     std::vector<CTxOut> vout1;
 
@@ -2013,6 +2071,8 @@ int CObfuscationPool::GetDenominationsByAmounts(std::vector<CAmount>& vecAmount)
 
 int CObfuscationPool::GetDenominationsByAmount(CAmount nAmount, int nDenomTarget)
 {
+    return 0; // Disable until Obfuscation is removed from code
+
     CScript e = CScript();
     CAmount nValueLeft = nAmount;
 
@@ -2102,6 +2162,8 @@ std::string CObfuscationPool::GetMessageByID(int messageID)
 
 bool CObfuScationSigner::IsVinAssociatedWithPubkey(CTxIn& vin, CPubKey& pubkey)
 {
+    return false; // Disable until Obfuscation is removed from code
+
     CScript payee2;
     payee2 = GetScriptForDestination(pubkey.GetID());
 
@@ -2120,6 +2182,8 @@ bool CObfuScationSigner::IsVinAssociatedWithPubkey(CTxIn& vin, CPubKey& pubkey)
 
 bool CObfuScationSigner::SetKey(std::string strSecret, std::string& errorMessage, CKey& key, CPubKey& pubkey)
 {
+    return false; // Disable until Obfuscation is removed from code
+
     CBitcoinSecret vchSecret;
     bool fGood = vchSecret.SetString(strSecret);
 
@@ -2136,6 +2200,8 @@ bool CObfuScationSigner::SetKey(std::string strSecret, std::string& errorMessage
 
 bool CObfuScationSigner::GetKeysFromSecret(std::string strSecret, CKey& keyRet, CPubKey& pubkeyRet)
 {
+    return false; // Disable until Obfuscation is removed from code
+
     CBitcoinSecret vchSecret;
 
     if (!vchSecret.SetString(strSecret)) return false;
@@ -2148,6 +2214,8 @@ bool CObfuScationSigner::GetKeysFromSecret(std::string strSecret, CKey& keyRet, 
 
 bool CObfuScationSigner::SignMessage(std::string strMessage, std::string& errorMessage, vector<unsigned char>& vchSig, CKey key)
 {
+    return false; // Disable until Obfuscation is removed from code
+
     CHashWriter ss(SER_GETHASH, 0);
     ss << strMessageMagic;
     ss << strMessage;
@@ -2162,6 +2230,8 @@ bool CObfuScationSigner::SignMessage(std::string strMessage, std::string& errorM
 
 bool CObfuScationSigner::VerifyMessage(CPubKey pubkey, vector<unsigned char>& vchSig, std::string strMessage, std::string& errorMessage)
 {
+    return false; // Disable until Obfuscation is removed from code
+
     CHashWriter ss(SER_GETHASH, 0);
     ss << strMessageMagic;
     ss << strMessage;
@@ -2180,6 +2250,8 @@ bool CObfuScationSigner::VerifyMessage(CPubKey pubkey, vector<unsigned char>& vc
 
 bool CObfuscationQueue::Sign()
 {
+    return false; // Disable until Obfuscation is removed from code
+
     if (!fMasterNode) return false;
 
     std::string strMessage = vin.ToString() + boost::lexical_cast<std::string>(nDenom) + boost::lexical_cast<std::string>(time) + boost::lexical_cast<std::string>(ready);
@@ -2208,6 +2280,8 @@ bool CObfuscationQueue::Sign()
 
 bool CObfuscationQueue::Relay()
 {
+    return false; // Disable until Obfuscation is removed from code
+
     LOCK(cs_vNodes);
     BOOST_FOREACH (CNode* pnode, vNodes) {
         // always relay to everyone
@@ -2219,6 +2293,8 @@ bool CObfuscationQueue::Relay()
 
 bool CObfuscationQueue::CheckSignature()
 {
+    return false; // Disable until Obfuscation is removed from code
+
     CMasternode* pmn = mnodeman.Find(vin);
 
     if (pmn != NULL) {
@@ -2238,6 +2314,8 @@ bool CObfuscationQueue::CheckSignature()
 
 void CObfuscationPool::RelayFinalTransaction(const int sessionID, const CTransaction& txNew)
 {
+    return; // Disable until Obfuscation is removed from code
+
     LOCK(cs_vNodes);
     BOOST_FOREACH (CNode* pnode, vNodes) {
         pnode->PushMessage("dsf", sessionID, txNew);
@@ -2246,6 +2324,8 @@ void CObfuscationPool::RelayFinalTransaction(const int sessionID, const CTransac
 
 void CObfuscationPool::RelayIn(const std::vector<CTxDSIn>& vin, const int64_t& nAmount, const CTransaction& txCollateral, const std::vector<CTxDSOut>& vout)
 {
+    return; // Disable until Obfuscation is removed from code
+
     if (!pSubmittedToMasternode) return;
 
     std::vector<CTxIn> vin2;
@@ -2266,6 +2346,8 @@ void CObfuscationPool::RelayIn(const std::vector<CTxDSIn>& vin, const int64_t& n
 
 void CObfuscationPool::RelayStatus(const int sessionID, const int newState, const int newEntriesCount, const int newAccepted, const int errorID)
 {
+    return; // Disable until Obfuscation is removed from code
+
     LOCK(cs_vNodes);
     BOOST_FOREACH (CNode* pnode, vNodes)
         pnode->PushMessage("dssu", sessionID, newState, newEntriesCount, newAccepted, errorID);
@@ -2281,6 +2363,8 @@ void CObfuscationPool::RelayCompletedTransaction(const int sessionID, const bool
 //TODO: Rename/move to core
 void ThreadCheckObfuScationPool()
 {
+    return; // Disable until Obfuscation is removed from code
+
     if (fLiteMode) return; //disable all Obfuscation/Masternode related functionality
 
     // Make this thread recognisable as the wallet flushing thread
