@@ -34,9 +34,9 @@ PrivacyDialog::PrivacyDialog(QWidget* parent) : QDialog(parent),
     ui->labelzPIVSyncStatus->setText("(" + tr("out of sync") + ")");
 
     // Sunken frame for minting messages
-    ui->labelMintStatus->setFrameStyle(QFrame::StyledPanel | QFrame::Sunken);
-    ui->labelMintStatus->setLineWidth (2);
-    ui->labelMintStatus->setMidLineWidth (2);
+    ui->TEMintStatus->setFrameStyle(QFrame::StyledPanel | QFrame::Sunken);
+    ui->TEMintStatus->setLineWidth (2);
+    ui->TEMintStatus->setMidLineWidth (2);
 
     // Coin Control signals
     connect(ui->pushButtonCoinControl, SIGNAL(clicked()), this, SLOT(coinControlButtonClicked()));
@@ -97,11 +97,11 @@ void PrivacyDialog::on_pushButtonMintzPIV_clicked()
         return;
 
     // Reset message text
-    ui->labelMintStatus->setText(tr("Mint Status: Okay"));
+    ui->TEMintStatus->setPlainText(tr("Mint Status: Okay"));
     
     // Wallet must be unlocked for minting
     if (pwalletMain->IsLocked()){
-        ui->labelMintStatus->setText(tr("Error: your wallet is locked. Please enter the wallet passphrase first."));
+        ui->TEMintStatus->setPlainText(tr("Error: your wallet is locked. Please enter the wallet passphrase first."));
         return;
     }
 
@@ -110,12 +110,12 @@ void PrivacyDialog::on_pushButtonMintzPIV_clicked()
 
     // Minting amount must be > 0
     if(nAmount <= 0){
-        ui->labelMintStatus->setText(tr("Message: Enter an amount > 0."));
+        ui->TEMintStatus->setPlainText(tr("Message: Enter an amount > 0."));
         return;
     }
 
-    ui->labelMintStatus->setText(tr("Minting ") + ui->labelMintAmountValue->text() + " zPIV...");
-    ui->labelMintStatus->repaint ();
+    ui->TEMintStatus->setPlainText(tr("Minting ") + ui->labelMintAmountValue->text() + " zPIV...");
+    ui->TEMintStatus->repaint ();
     
     int64_t nTime = GetTimeMillis();
     
@@ -125,7 +125,7 @@ void PrivacyDialog::on_pushButtonMintzPIV_clicked()
     
     // Return if something went wrong during minting
     if (strError != ""){
-        ui->labelMintStatus->setText(QString::fromStdString(strError));
+        ui->TEMintStatus->setPlainText(QString::fromStdString(strError));
         return;
     }
 
@@ -134,14 +134,18 @@ void PrivacyDialog::on_pushButtonMintzPIV_clicked()
     // Minting successfully finished. Show some stats for entertainment.
     QString strStatsHeader = tr("Successfully minted ") + ui->labelMintAmountValue->text() + tr(" zPIV in ") + 
                              QString::number(nDuration) + tr(" ms. Used denominations:\n");
+    
+    // Clear amount to avoid double spending when accidentally clicking twice
+    ui->labelMintAmountValue->setText ("0");
+            
     QString strStats = "";
-    ui->labelMintStatus->setText(strStatsHeader);
+    ui->TEMintStatus->setPlainText(strStatsHeader);
 
     for (CZerocoinMint mint : vMints) {
         boost::this_thread::sleep(boost::posix_time::milliseconds(100));
         strStats = strStats + QString::number(mint.GetDenomination()) + " ";
-        ui->labelMintStatus->setText(strStatsHeader + strStats);
-        ui->labelMintStatus->repaint ();
+        ui->TEMintStatus->setPlainText(strStatsHeader + strStats);
+        ui->TEMintStatus->repaint ();
         
     }
 
@@ -193,14 +197,14 @@ void PrivacyDialog::on_pushButtonSpendzPIV_clicked()
     vector<CZerocoinSpend> vSpends;
 
     // attempt to spend the zPiv
-    ui->labelMintStatus->setText(tr("Spending Zerocoin. Computationally expensive, please be patient."));
-    ui->labelMintStatus->repaint();
+    ui->TEMintStatus->setPlainText(tr("Spending Zerocoin. Computationally expensive, please be patient."));
+    ui->TEMintStatus->repaint();
     string strError = pwalletMain->SpendZerocoin(nAmount, nSecurityLevel, wtxNew, vSpends, vMintsSelected, fMintChange, &address);
 
     if (strError != "") {
         QMessageBox::warning(this, tr("Spend Zerocoin"), tr(strError.c_str()), QMessageBox::Ok, QMessageBox::Ok);
-        ui->labelMintStatus->setText(tr("Spend Zerocoin Failed!"));
-        ui->labelMintStatus->repaint();
+        ui->TEMintStatus->setPlainText(tr("Spend Zerocoin Failed!"));
+        ui->TEMintStatus->repaint();
         return;
     }
 
@@ -233,8 +237,11 @@ void PrivacyDialog::on_pushButtonSpendzPIV_clicked()
     strReturn += tr("fee: ") + QString::number((nValueIn-nValueOut)/COIN) + "\n";
     strReturn += strStats;
 
-    ui->labelMintStatus->setText(strReturn);
-    ui->labelMintStatus->repaint();
+    // Clear amount to avoid double spending when accidentally clicking twice
+    ui->zPIVpayAmount->setText ("0");
+
+    ui->TEMintStatus->setPlainText(strReturn);
+    ui->TEMintStatus->repaint();
 }
 
 void PrivacyDialog::on_payTo_textChanged(const QString& address)

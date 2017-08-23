@@ -682,6 +682,9 @@
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
          </property>
+         <property name="buddy">
+          <cstring>zPIVpayAmount</cstring>
+         </property>
         </widget>
         <widget class="QWidget" name="layoutWidget_2">
          <property name="geometry">
@@ -805,37 +808,6 @@
          </property>
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
-         </property>
-        </widget>
-        <widget class="QLabel" name="labelMintStatus">
-         <property name="geometry">
-          <rect>
-           <x>20</x>
-           <y>150</y>
-           <width>551</width>
-           <height>111</height>
-          </rect>
-         </property>
-         <property name="toolTip">
-          <string>Status and/or Mesages from the last Mint Action.</string>
-         </property>
-         <property name="frameShape">
-          <enum>QFrame::Panel</enum>
-         </property>
-         <property name="lineWidth">
-          <number>2</number>
-         </property>
-         <property name="midLineWidth">
-          <number>2</number>
-         </property>
-         <property name="text">
-          <string>Mint Status: Okay</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-         </property>
-         <property name="wordWrap">
-          <bool>true</bool>
          </property>
         </widget>
         <widget class="QLabel" name="labelzPIVBalanceText">
@@ -1095,6 +1067,54 @@
           <bool>false</bool>
          </property>
         </widget>
+        <widget class="QPlainTextEdit" name="TEMintStatus">
+         <property name="geometry">
+          <rect>
+           <x>20</x>
+           <y>150</y>
+           <width>551</width>
+           <height>111</height>
+          </rect>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>8</pointsize>
+          </font>
+         </property>
+         <property name="toolTip">
+          <string>Status and/or Mesages from the last Mint Action.</string>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::Panel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Sunken</enum>
+         </property>
+         <property name="lineWidth">
+          <number>2</number>
+         </property>
+         <property name="midLineWidth">
+          <number>2</number>
+         </property>
+         <property name="verticalScrollBarPolicy">
+          <enum>Qt::ScrollBarAlwaysOn</enum>
+         </property>
+         <property name="horizontalScrollBarPolicy">
+          <enum>Qt::ScrollBarAlwaysOff</enum>
+         </property>
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
+         <property name="plainText">
+          <string notr="true"/>
+         </property>
+         <property name="backgroundVisible">
+          <bool>true</bool>
+         </property>
+         <property name="placeholderText">
+          <string/>
+         </property>
+        </widget>
        </widget>
       </item>
      </layout>
@@ -1346,8 +1366,8 @@
     <rect>
      <x>120</x>
      <y>690</y>
-     <width>41</width>
-     <height>21</height>
+     <width>101</width>
+     <height>53</height>
     </rect>
    </property>
    <layout class="QFormLayout" name="formLayoutCoinControl3">
@@ -1826,7 +1846,7 @@
      <height>16</height>
     </rect>
    </property>
-   <layout class="QHBoxLayout" name="horizontalLayoutCoinControl2" stretch="">
+   <layout class="QHBoxLayout" name="horizontalLayoutCoinControl2">
     <property name="spacing">
      <number>8</number>
     </property>
