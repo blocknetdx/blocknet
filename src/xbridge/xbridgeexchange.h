@@ -35,6 +35,8 @@ public:
     bool init();
 
     bool isEnabled();
+    bool isStarted();
+
     bool haveConnectedWallet(const std::string & walletName);
 
     // std::vector<unsigned char> walletAddress(const std::string & walletName);
