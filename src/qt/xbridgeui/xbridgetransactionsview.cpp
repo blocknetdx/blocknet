@@ -274,7 +274,26 @@ void XBridgeTransactionsView::onCancelTransaction()
 //******************************************************************************
 void XBridgeTransactionsView::onRollbackTransaction()
 {
+    if (!m_contextMenuIndex.isValid())
+    {
+        return;
+    }
 
+    if (QMessageBox::warning(this,
+                             trUtf8("Rollback transaction"),
+                             trUtf8("Are you sure?"),
+                             QMessageBox::Yes | QMessageBox::Cancel,
+                             QMessageBox::Cancel) != QMessageBox::Yes)
+    {
+        return;
+    }
+
+    if (!m_txModel.cancelTransaction(m_txModel.item(m_contextMenuIndex.row()).id))
+    {
+        QMessageBox::warning(this,
+                             trUtf8("Cancel transaction"),
+                             trUtf8("Error send cancel request"));
+    }
 }
 
 //******************************************************************************

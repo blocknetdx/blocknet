@@ -23,7 +23,6 @@ struct WalletParam
     char                       scriptPrefix[8];
     char                       secretPrefix[8];
     std::string                taxaddr;
-    uint32_t                   fee;
     uint32_t                   txVersion;
     uint64_t                   COIN;
     uint64_t                   minTxFee;
@@ -41,8 +40,7 @@ struct WalletParam
     uint32_t                   requiredConfirmations;
 
     WalletParam()
-        : fee(0)
-        , txVersion(1)
+        : txVersion(1)
         , COIN(0)
         , minTxFee(0)
         , feePerByte(200)

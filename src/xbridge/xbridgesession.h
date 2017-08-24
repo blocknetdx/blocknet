@@ -68,6 +68,8 @@ public:
     bool checkAmount(const uint64_t amount) const;
     double getAccountBalance() const;
 
+    bool revertXBridgeTransaction(const uint256 & id);
+
 private:
     virtual void init();
 
@@ -162,7 +164,6 @@ protected:
     virtual bool sendCancelTransaction(const XBridgeTransactionDescrPtr & tx,
                                        const TxCancelReason & reason);
     virtual bool rollbackTransaction(XBridgeTransactionPtr tr);
-    virtual bool revertXBridgeTransaction(const uint256 & id);
 
     virtual bool processTransactionCancel(XBridgePacketPtr packet);
     virtual bool processTransactionFinished(XBridgePacketPtr packet);
