@@ -280,6 +280,27 @@ bool XBridgeTransactionsModel::cancelTransaction(const uint256 & id)
 
 //******************************************************************************
 //******************************************************************************
+bool XBridgeTransactionsModel::rollbackTransaction(const uint256 & id)
+{
+    if (XBridgeApp::instance().rollbackXBridgeTransaction(id))
+    {
+        for (unsigned int i = 0; i < m_transactions.size(); ++i)
+        {
+            if (m_transactions[i].id == id)
+            {
+                // found
+                m_transactions[i].state = XBridgeTransactionDescr::trRollback;
+                emit dataChanged(index(i, FirstColumn), index(i, LastColumn));
+            }
+        }
+        return true;
+    }
+
+    return false;
+}
+
+//******************************************************************************
+//******************************************************************************
 void XBridgeTransactionsModel::onTimer()
 {
     // check pending transactions

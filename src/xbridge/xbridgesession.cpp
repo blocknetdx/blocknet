@@ -497,7 +497,7 @@ bool XBridgeSession::processTransaction(XBridgePacketPtr packet)
 {
     // check and process packet if bridge is exchange
     XBridgeExchange & e = XBridgeExchange::instance();
-    if (!e.isEnabled())
+    if (!e.isStarted())
     {
         return true;
     }
@@ -660,7 +660,7 @@ bool XBridgeSession::processTransactionAccepting(XBridgePacketPtr packet)
 {
     // check and process packet if bridge is exchange
     XBridgeExchange & e = XBridgeExchange::instance();
-    if (!e.isEnabled())
+    if (!e.isStarted())
     {
         return true;
     }
@@ -768,7 +768,7 @@ bool XBridgeSession::processTransactionHold(XBridgePacketPtr packet)
         // for xchange node remove tx
         // TODO mark as finished for debug
         XBridgeExchange & e = XBridgeExchange::instance();
-        if (e.isEnabled())
+        if (e.isStarted())
         {
             XBridgeTransactionPtr tr = e.transaction(id);
 
@@ -863,7 +863,7 @@ bool XBridgeSession::processTransactionHoldApply(XBridgePacketPtr packet)
     }
 
     XBridgeExchange & e = XBridgeExchange::instance();
-    if (!e.isEnabled())
+    if (!e.isStarted())
     {
         return true;
     }
@@ -1073,7 +1073,7 @@ bool XBridgeSession::processTransactionInitialized(XBridgePacketPtr packet)
     }
 
     XBridgeExchange & e = XBridgeExchange::instance();
-    if (!e.isEnabled())
+    if (!e.isStarted())
     {
         return true;
     }
@@ -1741,7 +1741,7 @@ bool XBridgeSession::processTransactionCreatedA(XBridgePacketPtr packet)
     }
 
     XBridgeExchange & e = XBridgeExchange::instance();
-    if (!e.isEnabled())
+    if (!e.isStarted())
     {
         return true;
     }
@@ -1824,7 +1824,7 @@ bool XBridgeSession::processTransactionCreatedB(XBridgePacketPtr packet)
     }
 
     XBridgeExchange & e = XBridgeExchange::instance();
-    if (!e.isEnabled())
+    if (!e.isStarted())
     {
         return true;
     }
@@ -2093,7 +2093,7 @@ bool XBridgeSession::processTransactionConfirmedA(XBridgePacketPtr packet)
     }
 
     XBridgeExchange & e = XBridgeExchange::instance();
-    if (!e.isEnabled())
+    if (!e.isStarted())
     {
         return true;
     }
@@ -2338,7 +2338,7 @@ bool XBridgeSession::processTransactionConfirmedB(XBridgePacketPtr packet)
     }
 
     XBridgeExchange & e = XBridgeExchange::instance();
-    if (!e.isEnabled())
+    if (!e.isStarted())
     {
         return true;
     }
@@ -2394,7 +2394,7 @@ bool XBridgeSession::processTransactionCancel(XBridgePacketPtr packet)
 
     // check and process packet if bridge is exchange
     XBridgeExchange & e = XBridgeExchange::instance();
-    if (e.isEnabled())
+    if (e.isStarted())
     {
         e.deletePendingTransactions(txid);
     }
@@ -2549,7 +2549,7 @@ bool XBridgeSession::processBitcoinTransactionHash(XBridgePacketPtr packet)
     }
 
     static XBridgeExchange & e = XBridgeExchange::instance();
-    if (!e.isEnabled())
+    if (!e.isStarted())
     {
         return true;
     }
@@ -2582,7 +2582,7 @@ bool XBridgeSession::processAddressBookEntry(XBridgePacketPtr packet)
 void XBridgeSession::sendListOfWallets()
 {
     XBridgeExchange & e = XBridgeExchange::instance();
-    if (!e.isEnabled())
+    if (!e.isStarted())
     {
         return;
     }
@@ -2624,7 +2624,7 @@ void XBridgeSession::sendListOfTransactions()
 
     // send exchange trx
     XBridgeExchange & e = XBridgeExchange::instance();
-    if (!e.isEnabled())
+    if (!e.isStarted())
     {
         return;
     }
@@ -2664,7 +2664,7 @@ void XBridgeSession::sendListOfTransactions()
 void XBridgeSession::eraseExpiredPendingTransactions()
 {
     XBridgeExchange & e = XBridgeExchange::instance();
-    if (!e.isEnabled())
+    if (!e.isStarted())
     {
         return;
     }
@@ -2734,7 +2734,7 @@ void XBridgeSession::requestUnconfirmedTx()
 void XBridgeSession::checkFinishedTransactions()
 {
     XBridgeExchange & e = XBridgeExchange::instance();
-    if (!e.isEnabled())
+    if (!e.isStarted())
     {
         return;
     }
@@ -2810,7 +2810,7 @@ void XBridgeSession::requestAddressBook()
 {
     // no address book for exchange node
     XBridgeExchange & e = XBridgeExchange::instance();
-    if (e.isEnabled())
+    if (e.isStarted())
     {
         return;
     }
@@ -2927,7 +2927,7 @@ bool XBridgeSession::revertXBridgeTransaction(const uint256 & id)
     {
         // not commited....send cancel???
         // sendCancelTransaction(id);
-        return true;
+        return false;
     }
 
     return true;

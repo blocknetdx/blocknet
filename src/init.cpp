@@ -1671,8 +1671,12 @@ bool AppInit2(boost::thread_group& threadGroup)
 #endif
 
     // start xbridge
-    XBridgeApp & xapp = XBridgeApp::instance();
-    xapp.start();
+    if (!fRequestShutdown)
+    {
+        uiInterface.InitMessage(_("Init xbridge service"));
+        XBridgeApp & xapp = XBridgeApp::instance();
+        xapp.start();
+    }
 
     return !fRequestShutdown;
 }

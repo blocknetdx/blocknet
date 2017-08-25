@@ -7,6 +7,7 @@
 #include "util/settings.h"
 #include "util/xutil.h"
 #include "bitcoinrpcconnector.h"
+#include "activeservicenode.h"
 
 #include <algorithm>
 
@@ -96,6 +97,11 @@ bool XBridgeExchange::init()
         LOG() << "exchange enabled";
     }
 
+    if (isStarted())
+    {
+        LOG() << "exchange started";
+    }
+
     return true;
 }
 
@@ -103,7 +109,14 @@ bool XBridgeExchange::init()
 //*****************************************************************************
 bool XBridgeExchange::isEnabled()
 {
-    return m_wallets.size() > 0;
+    return m_wallets.size() > 0 && fServiceNode;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+bool XBridgeExchange::isStarted()
+{
+    return isEnabled() && (activeServicenode.status == ACTIVE_SERVICENODE_STARTED);
 }
 
 //*****************************************************************************
