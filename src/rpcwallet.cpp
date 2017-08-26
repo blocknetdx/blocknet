@@ -979,7 +979,10 @@ UniValue addmultisigaddress(const UniValue& params, bool fHelp)
 class Witnessifier : public boost::static_visitor<bool>
 {
 public:
-    CScriptID result;
+    CTxDestination result;
+    bool already_witness;
+
+    explicit Witnessifier() : already_witness(false) {}
 
     bool operator()(const CKeyID &keyID) {
         CPubKey pubkey;
@@ -990,9 +993,7 @@ public:
             if (typ != ISMINE_SPENDABLE)
                 return false;
             CScript witscript = GetScriptForWitness(basescript);
-            pwalletMain->AddCScript(witscript);
-            result = CScriptID(witscript);
-            return true;
+            return ExtractDestination(witscript, result);
         }
         return false;
     }
@@ -1003,7 +1004,8 @@ public:
             int witnessversion;
             std::vector<unsigned char> witprog;
             if (subscript.IsWitnessProgram(witnessversion, witprog)) {
-                result = scriptID;
+                ExtractDestination(subscript, result);
+                already_witness = true;
                 return true;
             }
             isminetype typ;
@@ -1011,12 +1013,23 @@ public:
             if (typ != ISMINE_SPENDABLE)
                 return false;
             CScript witscript = GetScriptForWitness(subscript);
-            pwalletMain->AddCScript(witscript);
-            result = CScriptID(witscript);
-            return true;
+            return ExtractDestination(witscript, result);
         }
         return false;
     }
+
+    bool operator()(const WitnessV0KeyHash& id) {
+        already_witness = true;
+        result = id;
+        return true;
+    }
+
+    bool operator()(const WitnessV0ScriptHash& id) {
+        already_witness = true;
+        result = id;
+        return true;
+    }
+
 
     template<typename T>
     bool operator()(const T& dest) { return false; }
@@ -1024,17 +1037,18 @@ public:
 
 UniValue addwitnessaddress(const UniValue& params, bool fHelp)
 {
-    if (fHelp || params.size() < 1 || params.size() > 1)
+    if (fHelp || params.size() < 1 || params.size() > 2)
     {
-        string msg = "addwitnessaddress \"address\"\n"
+        string msg = "addwitnessaddress \"address\" ( p2sh )\n"
             "\nAdd a witness address for a script (with pubkey or redeemscript known).\n"
             "It returns the witness script.\n"
 
             "\nArguments:\n"
             "1. \"address\"       (string, required) An address known to the wallet\n"
+            "2. p2sh            (bool, optional, default=true) Embed inside P2SH\n"
 
             "\nResult:\n"
-            "\"witnessaddress\",  (string) The value of the new address (P2SH of witness script).\n"
+            "\"witnessaddress\",  (string) The value of the new address (P2SH or BIP173).\n"
             "}\n"
         ;
         throw runtime_error(msg);
@@ -1047,6 +1061,11 @@ UniValue addwitnessaddress(const UniValue& params, bool fHelp)
     if (!IsValidDestinationString(params[0].get_str()))
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Bitcoin address");
 
+    bool p2sh = true;
+    if (!params[1].isNull()) {
+        p2sh = params[1].get_bool();
+    }
+
     CTxDestination dest = DecodeDestination(params[0].get_str());
 
     Witnessifier w;
@@ -1055,7 +1074,22 @@ UniValue addwitnessaddress(const UniValue& params, bool fHelp)
         throw JSONRPCError(RPC_WALLET_ERROR, "Public key or redeemscript not known to wallet, or the key is uncompressed");
     }
 
-    return EncodeDestination(CTxDestination(w.result));
+    CScript witprogram = GetScriptForDestination(w.result);
+
+    if (p2sh) {
+        w.result = CScriptID(witprogram);
+    }
+
+    if (w.already_witness) {
+        if (!(dest == w.result)) {
+            throw JSONRPCError(RPC_WALLET_ERROR, "Cannot convert between witness address types");
+        }
+    } else {
+        pwalletMain->AddCScript(witprogram);
+        pwalletMain->SetAddressBook(w.result, "", "receive");
+    }
+
+    return EncodeDestination(w.result);
 }
 
 struct tallyitem {
