@@ -1277,8 +1277,7 @@ CAmount CWallet::GetZerocoinBalance() const
     }
     LogPrint("zero","Total value of coins %d\n",nTotal);
 
-
-
+    if (nTotal < 0 ) nTotal = 0; // Sanity never hurts
 
     return nTotal;
 }
@@ -3424,7 +3423,7 @@ void CWallet::AutoZeromint()
 {
     // Wait until blockchain is fully synced
     if (!masternodeSync.IsBlockchainSynced()) return;
-    
+
     CAmount nZerocoinBalance = GetZerocoinBalance();
     CAmount nBalance = GetUnlockedCoins(); // We only consider unlocked coins, this also excludes masternode-vins
                                            // from being accidentally minted
@@ -3438,23 +3437,23 @@ void CWallet::AutoZeromint()
     }
 
     // Percentage of zPIV we already have
-    double dPercentage = 100 * (double)nZerocoinBalance / (double)nBalance;
+    double dPercentage = 100 * (double)nZerocoinBalance / (double)(nZerocoinBalance + nBalance);
 
     // Check if minting is actually needed
     if(dPercentage >= nZeromintPercentage){
-        LogPrintf("CWallet::AutoZeromint(): percentage of existing zPIV (%lf%%) already >= configured percentage (%d%%). No minting needed...\n", 
+        LogPrintf("CWallet::AutoZeromint(): percentage of existing zPIV (%lf%%) already >= configured percentage (%d%%). No minting needed...\n",
                   dPercentage, nZeromintPercentage);
         return;
     }
-        
+
     // zPIV amount needed for the target percentage
-    nToMintAmount = (nBalance * nZeromintPercentage / 100);
+    nToMintAmount = ((nZerocoinBalance + nBalance) * nZeromintPercentage / 100);
 
     // zPIV amount missing from target (must be minted)
     nToMintAmount = (nToMintAmount - nZerocoinBalance) / COIN;
 
-    // Use the biggest denomination smaller than the needed zPIV We'll only mint exact denomination to make minting faster. 
-    // Exception: for big amounts use 6666 (6666 = 1*5000 + 1*1000 + 1*500 + 1*100 + 1*50 + 1*10 + 1*5 + 1) to create all 
+    // Use the biggest denomination smaller than the needed zPIV We'll only mint exact denomination to make minting faster.
+    // Exception: for big amounts use 6666 (6666 = 1*5000 + 1*1000 + 1*500 + 1*100 + 1*50 + 1*10 + 1*5 + 1) to create all
     // possible denominations to avoid having 5000 denominations only.
     if (nToMintAmount >= ZQ_6666){
         nMintAmount = ZQ_6666;
@@ -3482,7 +3481,7 @@ void CWallet::AutoZeromint()
     CWalletTx wtx;
         vector<CZerocoinMint> vMints;
         string strError = pwalletMain->MintZerocoin(nMintAmount*COIN, wtx, vMints);
-    
+
         // Return if something went wrong during minting
         if (strError != ""){
             LogPrintf("CWallet::AutoZeromint(): auto minting failed with error %s\n", strError);
@@ -3490,7 +3489,7 @@ void CWallet::AutoZeromint()
         }
         nZerocoinBalance = GetZerocoinBalance();
         nBalance = GetUnlockedCoins();
-        dPercentage = 100 * (double)nZerocoinBalance / (double)nBalance;
+        dPercentage = 100 * (double)nZerocoinBalance / (double)(nZerocoinBalance + nBalance);
         LogPrintf("CWallet::AutoZeromint(): successfully minted %ld zPIV. Current percentage of zPIV: %lf%%\n", nMintAmount, dPercentage);
     }
     else {
