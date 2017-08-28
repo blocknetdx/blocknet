@@ -3484,7 +3484,7 @@ void CWallet::AutoZeromint()
 
         // Return if something went wrong during minting
         if (strError != ""){
-            LogPrintf("CWallet::AutoZeromint(): auto minting failed with error %s\n", strError);
+            LogPrintf("CWallet::AutoZeromint(): auto minting failed with error: %s\n", strError);
             return;
         }
         nZerocoinBalance = GetZerocoinBalance();
