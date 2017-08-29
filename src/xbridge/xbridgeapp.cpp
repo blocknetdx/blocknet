@@ -144,7 +144,7 @@ bool XBridgeApp::init(int argc, char *argv[])
     }
 
     // init secp256
-    // xbridge::ECC_Start();
+    xbridge::ECC_Start();
 
     // init exchange
     XBridgeExchange & e = XBridgeExchange::instance();
@@ -249,7 +249,7 @@ bool XBridgeApp::stop()
     m_threads.join_all();
 
     // secp stop
-    // xbridge::ECC_Stop();
+    xbridge::ECC_Stop();
 
     return true;
 }
