@@ -302,8 +302,11 @@ Value createrawtransaction(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 2)
         throw runtime_error(
-            "createrawtransaction [{\"txid\":\"id\",\"vout\":n},...] {\"address\":amount,...}\n"
-            "\nCreate a transaction spending the given inputs and sending to the given addresses.\n"
+            "createrawtransaction [{\"txid\":\"id\",\"vout\":n},...] {\"data\":\"<Message>\",\"address\":amount,...}\n"
+            "\nCreate a transaction spending the given inputs\n"
+            "(array of objects containing transaction id and output number),\n"
+            "Message is Hex encoded for use with OP_RETURN Limit of 25300bytes\n"
+            "and sending to the given addresses.\n"
             "Returns hex-encoded raw transaction.\n"
             "Note that the transaction's inputs are not signed, and\n"
             "it is not stored in the wallet or transmitted to the network.\n"
@@ -319,6 +322,7 @@ Value createrawtransaction(const Array& params, bool fHelp)
             "     ]\n"
             "2. \"addresses\"           (string, required) a json object with addresses as keys and amounts as values\n"
             "    {\n"
+            "      \"data\":\"<Message>\", (string, optional) hex encoded data\n"
             "      \"address\": x.xxx   (numeric, required) The key is the blocknetdx address, the value is the btc amount\n"
             "      ,...\n"
             "    }\n"
