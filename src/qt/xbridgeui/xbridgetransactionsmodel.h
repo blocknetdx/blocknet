@@ -32,8 +32,7 @@ public:
         Size        = 1,
         BID         = 2,
         State       = 3,
-        Fee         = 4,
-        LastColumn  = Fee
+        LastColumn  = State
     };
 
     static const int rawStateRole = Qt::UserRole + 1;
