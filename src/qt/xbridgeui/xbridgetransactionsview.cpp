@@ -90,7 +90,6 @@ void XBridgeTransactionsView::setupUi()
     header->resizeSection(XBridgeTransactionsModel::Size,       80);
     header->resizeSection(XBridgeTransactionsModel::BID,        80);
     header->resizeSection(XBridgeTransactionsModel::State,      128);
-    header->resizeSection(XBridgeTransactionsModel::Fee,        80);
     vbox->addWidget(m_transactionsList);
 
     QHBoxLayout * hbox = new QHBoxLayout;
@@ -158,7 +157,6 @@ void XBridgeTransactionsView::setupUi()
     historicHeader->resizeSection(XBridgeTransactionsModel::Size,       80);
     historicHeader->resizeSection(XBridgeTransactionsModel::BID,        80);
     historicHeader->resizeSection(XBridgeTransactionsModel::State,      128);
-    historicHeader->resizeSection(XBridgeTransactionsModel::Fee,        80);
     vbox->addWidget(m_historicTransactionsList);
 
     m_logStrings = new QTextEdit(this);
