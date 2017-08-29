@@ -353,20 +353,33 @@ Value createrawtransaction(const Array& params, bool fHelp)
     }
 
     set<CBitcoinAddress> setAddress;
-    BOOST_FOREACH (const Pair& s, sendTo) {
-        CBitcoinAddress address(s.name_);
-        if (!address.IsValid())
-            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, string("Invalid BlocknetDX address: ") + s.name_);
+    BOOST_FOREACH (const Pair& s, sendTo)
+    {
+        if (s.name_ == string("data"))
+        {
+            std::vector<unsigned char> data = ParseHex(s.value_.get_str());
+            if(data.size()>512*1024)
+                throw JSONRPCError(RPC_INVALID_PARAMETER, "Message length greater than 1*1024*1024");
 
-        if (setAddress.count(address))
-            throw JSONRPCError(RPC_INVALID_PARAMETER, string("Invalid parameter, duplicated address: ") + s.name_);
-        setAddress.insert(address);
+            CTxOut out(0,CScript() << OP_RETURN << data);
+            rawTx.vout.push_back(out);
+        }
+        else
+        {
+            CBitcoinAddress address(s.name_);
+            if (!address.IsValid())
+                throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, string("Invalid BlocknetDX address: ") + s.name_);
 
-        CScript scriptPubKey = GetScriptForDestination(address.Get());
-        CAmount nAmount = AmountFromValue(s.value_);
+            if (setAddress.count(address))
+                throw JSONRPCError(RPC_INVALID_PARAMETER, string("Invalid parameter, duplicated address: ") + s.name_);
+            setAddress.insert(address);
 
-        CTxOut out(nAmount, scriptPubKey);
-        rawTx.vout.push_back(out);
+            CScript scriptPubKey = GetScriptForDestination(address.Get());
+            CAmount nAmount = AmountFromValue(s.value_);
+
+            CTxOut out(nAmount, scriptPubKey);
+            rawTx.vout.push_back(out);
+        }
     }
 
     return EncodeHexTx(rawTx);
