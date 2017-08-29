@@ -144,7 +144,7 @@ bool XBridgeApp::init(int argc, char *argv[])
     }
 
     // init secp256
-    // xbridge::ECC_Start();
+    xbridge::ECC_Start();
 
     // init exchange
     XBridgeExchange & e = XBridgeExchange::instance();
@@ -249,7 +249,7 @@ bool XBridgeApp::stop()
     m_threads.join_all();
 
     // secp stop
-    // xbridge::ECC_Stop();
+    xbridge::ECC_Stop();
 
     return true;
 }
@@ -849,6 +849,7 @@ bool XBridgeApp::cancelXBridgeTransaction(const uint256 & id,
 {
     {
         boost::mutex::scoped_lock l(m_txLocker);
+
         m_pendingTransactions.erase(id);
         if (m_transactions.count(id))
         {
@@ -857,6 +858,51 @@ bool XBridgeApp::cancelXBridgeTransaction(const uint256 & id,
     }
 
     return sendCancelTransaction(id, reason);
+}
+
+//******************************************************************************
+//******************************************************************************
+bool XBridgeApp::rollbackXBridgeTransaction(const uint256 & id)
+{
+    XBridgeSessionPtr session;
+    {
+        boost::mutex::scoped_lock l(m_txLocker);
+
+        if (m_transactions.count(id))
+        {
+            XBridgeTransactionDescrPtr ptr = m_transactions[id];
+            if (!ptr->refTx.empty())
+            {
+                session = sessionByCurrency(ptr->fromCurrency);
+                if (!session)
+                {
+                    ERR() << "unknown session for currency " << ptr->fromCurrency;
+                }
+            }
+        }
+    }
+
+    if (session)
+    {
+        // session use m_txLocker, must be unlocked because not recursive
+        if (!session->revertXBridgeTransaction(id))
+        {
+            LOG() << "revert tx failed for " << id.ToString();
+            return false;
+        }
+    }
+
+    {
+        boost::mutex::scoped_lock l(m_txLocker);
+
+        m_pendingTransactions.erase(id);
+        if (m_transactions.count(id))
+        {
+            m_transactions[id]->state = XBridgeTransactionDescr::trCancelled;
+        }
+    }
+
+    return sendRollbackTransaction(id);
 }
 
 //******************************************************************************
@@ -872,6 +918,20 @@ bool XBridgeApp::sendCancelTransaction(const uint256 & txid,
     onSend(addr, reply);
 
     // cancelled
+    return true;
+}
+
+//******************************************************************************
+//******************************************************************************
+bool XBridgeApp::sendRollbackTransaction(const uint256 & txid)
+{
+    XBridgePacketPtr reply(new XBridgePacket(xbcTransactionRollback));
+    reply->append(txid.begin(), 32);
+
+    static UcharVector addr(20, 0);
+    onSend(addr, reply);
+
+    // rolled back
     return true;
 }
 

@@ -68,6 +68,9 @@ public:
     bool cancelXBridgeTransaction(const uint256 & id, const TxCancelReason & reason);
     bool sendCancelTransaction(const uint256 & txid, const TxCancelReason & reason);
 
+    bool rollbackXBridgeTransaction(const uint256 & id);
+    bool sendRollbackTransaction(const uint256 & txid);
+
 public:
     // const unsigned char * myid() const { return m_myid; }
 

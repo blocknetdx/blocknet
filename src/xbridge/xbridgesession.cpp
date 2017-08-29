@@ -497,7 +497,7 @@ bool XBridgeSession::processTransaction(XBridgePacketPtr packet)
 {
     // check and process packet if bridge is exchange
     XBridgeExchange & e = XBridgeExchange::instance();
-    if (!e.isEnabled())
+    if (!e.isStarted())
     {
         return true;
     }
@@ -597,7 +597,6 @@ bool XBridgeSession::processTransaction(XBridgePacketPtr packet)
             reply->append(sc);
             reply->append(tr->b_amount());
             reply->append(sessionAddr());
-            reply->append(tr->tax());
 
             sendPacketBroadcast(reply);
         }
@@ -618,7 +617,7 @@ bool XBridgeSession::processPendingTransaction(XBridgePacketPtr packet)
 
     DEBUG_TRACE_LOG(currencyToLog());
 
-    if (packet->size() != 88)
+    if (packet->size() != 84)
     {
         ERR() << "incorrect packet size for xbcPendingTransaction "
               << "need 88 received " << packet->size() << " "
@@ -661,7 +660,7 @@ bool XBridgeSession::processTransactionAccepting(XBridgePacketPtr packet)
 {
     // check and process packet if bridge is exchange
     XBridgeExchange & e = XBridgeExchange::instance();
-    if (!e.isEnabled())
+    if (!e.isStarted())
     {
         return true;
     }
@@ -769,7 +768,7 @@ bool XBridgeSession::processTransactionHold(XBridgePacketPtr packet)
         // for xchange node remove tx
         // TODO mark as finished for debug
         XBridgeExchange & e = XBridgeExchange::instance();
-        if (e.isEnabled())
+        if (e.isStarted())
         {
             XBridgeTransactionPtr tr = e.transaction(id);
 
@@ -864,7 +863,7 @@ bool XBridgeSession::processTransactionHoldApply(XBridgePacketPtr packet)
     }
 
     XBridgeExchange & e = XBridgeExchange::instance();
-    if (!e.isEnabled())
+    if (!e.isStarted())
     {
         return true;
     }
@@ -1074,7 +1073,7 @@ bool XBridgeSession::processTransactionInitialized(XBridgePacketPtr packet)
     }
 
     XBridgeExchange & e = XBridgeExchange::instance();
-    if (!e.isEnabled())
+    if (!e.isStarted())
     {
         return true;
     }
@@ -1127,8 +1126,6 @@ bool XBridgeSession::processTransactionInitialized(XBridgePacketPtr packet)
             reply1->append(sessionAddr());
             reply1->append(id.begin(), 32);
             reply1->append(tr->b_destination());
-            reply1->append(tr->a_taxAddress());
-            reply1->append(static_cast<uint32_t>(0));
             reply1->append(tr->a_datatxid().begin(), 32);
             reply1->append(tr->b_pk1().begin(), tr->b_pk1().size());
 
@@ -1334,7 +1331,7 @@ bool XBridgeSession::processTransactionCreate(XBridgePacketPtr packet)
 {
     DEBUG_TRACE_LOG(currencyToLog());
 
-    if (packet->size() < 205)
+    if (packet->size() < 172)
     {
         ERR() << "incorrect packet size for xbcTransactionCreate "
               << "need min 205 bytes, received " << packet->size() << " "
@@ -1352,13 +1349,6 @@ bool XBridgeSession::processTransactionCreate(XBridgePacketPtr packet)
     uint32_t offset = 72;
     std::string destAddress(reinterpret_cast<const char *>(packet->data()+offset));
     offset += destAddress.size()+1;
-
-    // tax
-    std::string taxAddress(reinterpret_cast<const char *>(packet->data()+offset));
-    offset += taxAddress.size()+1;
-
-    const uint32_t taxPercent = *reinterpret_cast<uint32_t *>(packet->data()+offset);
-    offset += sizeof(uint32_t);
 
     uint256 datatxid(packet->data()+offset);
     offset += 32;
@@ -1444,7 +1434,6 @@ bool XBridgeSession::processTransactionCreate(XBridgePacketPtr packet)
     }
 
     double outAmount = static_cast<double>(xtx->fromAmount) / XBridgeTransactionDescr::COIN;
-    double taxToSend = std::max(outAmount * taxPercent / 100000, (double)m_wallet.dustAmount / m_wallet.COIN);
 
     double fee1      = 0;
     double fee2      = minTxFee2(1, 1);
@@ -1455,19 +1444,19 @@ bool XBridgeSession::processTransactionCreate(XBridgePacketPtr packet)
     {
         usedInTx.push_back(entry);
         inAmount += entry.amount;
-        fee1 = minTxFee1(usedInTx.size(), taxToSend > 0 ? 4 : 3);
+        fee1 = minTxFee1(usedInTx.size(), 3);
 
         LOG() << "USED FOR TX <" << entry.txId << "> amount " << entry.amount << " " << entry.vout << " fee " << fee1;
 
         // check amount
-        if (inAmount >= outAmount+fee1+fee2+taxToSend)
+        if (inAmount >= outAmount+fee1+fee2)
         {
             break;
         }
     }
 
     // check amount
-    if (inAmount < outAmount+fee1+fee2+taxToSend)
+    if (inAmount < outAmount+fee1+fee2)
     {
         // no money, cancel transaction
         LOG() << "no money, transaction canceled " << __FUNCTION__;
@@ -1522,14 +1511,8 @@ bool XBridgeSession::processTransactionCreate(XBridgePacketPtr packet)
         // amount
         outputs.push_back(std::make_pair(xtx->multisig, outAmount+fee2));
 
-        // tax
-        if (taxToSend)
-        {
-            outputs.push_back(std::make_pair(taxAddress, taxToSend));
-        }
-
         // rest
-        if (inAmount > outAmount+fee1+fee2+taxToSend)
+        if (inAmount > outAmount+fee1+fee2)
         {
             std::string addr;
             if (!rpc::getNewAddress(m_wallet.user, m_wallet.passwd,
@@ -1542,7 +1525,7 @@ bool XBridgeSession::processTransactionCreate(XBridgePacketPtr packet)
                 return true;
             }
 
-            double rest = inAmount-outAmount-fee1-fee2-taxToSend;
+            double rest = inAmount-outAmount-fee1-fee2;
             outputs.push_back(std::make_pair(addr, rest));
         }
 
@@ -1758,7 +1741,7 @@ bool XBridgeSession::processTransactionCreatedA(XBridgePacketPtr packet)
     }
 
     XBridgeExchange & e = XBridgeExchange::instance();
-    if (!e.isEnabled())
+    if (!e.isStarted())
     {
         return true;
     }
@@ -1809,8 +1792,6 @@ bool XBridgeSession::processTransactionCreatedA(XBridgePacketPtr packet)
     reply2->append(sessionAddr());
     reply2->append(txid.begin(), 32);
     reply2->append(tr->a_destination());
-    reply2->append(tr->b_taxAddress());
-    reply2->append(tr->tax());
     reply2->append(tr->a_datatxid().begin(), 32);
     reply2->append(tr->a_pk1().begin(), tr->a_pk1().size());
     reply2->append(binTxId);
@@ -1843,7 +1824,7 @@ bool XBridgeSession::processTransactionCreatedB(XBridgePacketPtr packet)
     }
 
     XBridgeExchange & e = XBridgeExchange::instance();
-    if (!e.isEnabled())
+    if (!e.isStarted())
     {
         return true;
     }
@@ -2112,7 +2093,7 @@ bool XBridgeSession::processTransactionConfirmedA(XBridgePacketPtr packet)
     }
 
     XBridgeExchange & e = XBridgeExchange::instance();
-    if (!e.isEnabled())
+    if (!e.isStarted())
     {
         return true;
     }
@@ -2357,7 +2338,7 @@ bool XBridgeSession::processTransactionConfirmedB(XBridgePacketPtr packet)
     }
 
     XBridgeExchange & e = XBridgeExchange::instance();
-    if (!e.isEnabled())
+    if (!e.isStarted())
     {
         return true;
     }
@@ -2413,7 +2394,7 @@ bool XBridgeSession::processTransactionCancel(XBridgePacketPtr packet)
 
     // check and process packet if bridge is exchange
     XBridgeExchange & e = XBridgeExchange::instance();
-    if (e.isEnabled())
+    if (e.isStarted())
     {
         e.deletePendingTransactions(txid);
     }
@@ -2568,7 +2549,7 @@ bool XBridgeSession::processBitcoinTransactionHash(XBridgePacketPtr packet)
     }
 
     static XBridgeExchange & e = XBridgeExchange::instance();
-    if (!e.isEnabled())
+    if (!e.isStarted())
     {
         return true;
     }
@@ -2601,7 +2582,7 @@ bool XBridgeSession::processAddressBookEntry(XBridgePacketPtr packet)
 void XBridgeSession::sendListOfWallets()
 {
     XBridgeExchange & e = XBridgeExchange::instance();
-    if (!e.isEnabled())
+    if (!e.isStarted())
     {
         return;
     }
@@ -2643,7 +2624,7 @@ void XBridgeSession::sendListOfTransactions()
 
     // send exchange trx
     XBridgeExchange & e = XBridgeExchange::instance();
-    if (!e.isEnabled())
+    if (!e.isStarted())
     {
         return;
     }
@@ -2669,17 +2650,11 @@ void XBridgeSession::sendListOfTransactions()
         std::copy(tmp.begin(), tmp.end(), tc.begin());
 
         packet->append(ptr->id().begin(), 32);
-        // packet->append(ptr->firstAddress());
         packet->append(fc);
         packet->append(ptr->a_amount());
-        // packet->append(ptr->firstDestination());
         packet->append(tc);
         packet->append(ptr->b_amount());
-        // packet->append(static_cast<uint32_t>(ptr->state()));
-
         packet->append(sessionAddr());
-        packet->append(ptr->tax());
-
         sendPacketBroadcast(packet);
     }
 }
@@ -2689,7 +2664,7 @@ void XBridgeSession::sendListOfTransactions()
 void XBridgeSession::eraseExpiredPendingTransactions()
 {
     XBridgeExchange & e = XBridgeExchange::instance();
-    if (!e.isEnabled())
+    if (!e.isStarted())
     {
         return;
     }
@@ -2759,7 +2734,7 @@ void XBridgeSession::requestUnconfirmedTx()
 void XBridgeSession::checkFinishedTransactions()
 {
     XBridgeExchange & e = XBridgeExchange::instance();
-    if (!e.isEnabled())
+    if (!e.isStarted())
     {
         return;
     }
@@ -2835,7 +2810,7 @@ void XBridgeSession::requestAddressBook()
 {
     // no address book for exchange node
     XBridgeExchange & e = XBridgeExchange::instance();
-    if (e.isEnabled())
+    if (e.isStarted())
     {
         return;
     }
@@ -2952,7 +2927,7 @@ bool XBridgeSession::revertXBridgeTransaction(const uint256 & id)
     {
         // not commited....send cancel???
         // sendCancelTransaction(id);
-        return true;
+        return false;
     }
 
     return true;

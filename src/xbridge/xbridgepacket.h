@@ -95,7 +95,7 @@ enum XBridgeCommand
     //    uint64 destination amount
     xbcTransaction = 3,
     //
-    // xbcPendingTransaction (88 bytes)
+    // xbcPendingTransaction (84 bytes)
     // exchange broadcast send this message, send list of opened transactions
     //    uint256 transaction id
     //    8 bytes source currency
@@ -103,7 +103,6 @@ enum XBridgeCommand
     //    8 bytes destination currency
     //    uint64 destination amount
     //    uint160 hub address
-    //    uint32_t fee in percent, *1000 (0.3% == 300)
     xbcPendingTransaction = 4,
     //
     // xbcTransactionAccepting (152 bytes min)
@@ -154,13 +153,11 @@ enum XBridgeCommand
     xbcTransactionInitialized = 9,
 
     //
-    // xbcTransactionCreateA (205 bytes min)
+    // xbcTransactionCreateA (172 bytes min)
     //    uint160  client address
     //    uint160  hub address
     //    uint256  hub transaction id
     //    string destination address (33-34 byte + 0)
-    //    string hub wallet address (33-34 byte + 0)
-    //    uint32_t fee in percent, *1000 (0.3% == 300)
     //    uint256 data tx id, 32 bytes
     //    opponent public key, 33 bytes
     xbcTransactionCreateA = 10,
@@ -231,7 +228,6 @@ enum XBridgeCommand
     xbcTransactionCancel = 22,
     //
     // xbcTransactionRollback
-    //    uint160 hub address
     //    uint256 hub transaction id
     xbcTransactionRollback = 23,
     //

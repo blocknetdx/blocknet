@@ -17,8 +17,7 @@ XBridgeTransactionsModel::XBridgeTransactionsModel()
     m_columns << trUtf8("TOTAL")
               << trUtf8("SIZE")
               << trUtf8("BID")
-              << trUtf8("STATE")
-              << trUtf8("FEE");
+              << trUtf8("STATE");
 
     xuiConnector.NotifyXBridgePendingTransactionReceived.connect
             (boost::bind(&XBridgeTransactionsModel::onTransactionReceived, this, _1));
@@ -103,10 +102,6 @@ QVariant XBridgeTransactionsModel::data(const QModelIndex & idx, int role) const
             case State:
             {
                 return QVariant(transactionState(d.state));
-            }
-            case Fee:
-            {
-                return QString("%1%").arg(QString::number((double)d.tax / 1000, 10, 2));
             }
 
             default:
@@ -269,6 +264,27 @@ bool XBridgeTransactionsModel::cancelTransaction(const uint256 & id)
             {
                 // found
                 m_transactions[i].state = XBridgeTransactionDescr::trCancelled;
+                emit dataChanged(index(i, FirstColumn), index(i, LastColumn));
+            }
+        }
+        return true;
+    }
+
+    return false;
+}
+
+//******************************************************************************
+//******************************************************************************
+bool XBridgeTransactionsModel::rollbackTransaction(const uint256 & id)
+{
+    if (XBridgeApp::instance().rollbackXBridgeTransaction(id))
+    {
+        for (unsigned int i = 0; i < m_transactions.size(); ++i)
+        {
+            if (m_transactions[i].id == id)
+            {
+                // found
+                m_transactions[i].state = XBridgeTransactionDescr::trRollback;
                 emit dataChanged(index(i, FirstColumn), index(i, LastColumn));
             }
         }

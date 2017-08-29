@@ -13,6 +13,7 @@
 #include "rpcserver.h"
 #include "ui_interface.h"
 #include "util.h"
+#include "xbridge/xbridgeapp.h"
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/filesystem.hpp>
@@ -141,6 +142,12 @@ bool AppInit(int argc, char* argv[])
         }
 #endif
         SoftSetBoolArg("-server", true);
+
+        {
+            // init xbridge
+            XBridgeApp & xapp = XBridgeApp::instance();
+            xapp.init(argc, argv);
+        }
 
         detectShutdownThread = new boost::thread(boost::bind(&DetectShutdownThread, &threadGroup));
         fRet = AppInit2(threadGroup);
