@@ -427,6 +427,7 @@ bool getRawTransaction(const std::string & rpcuser,
                        const std::string & rpcip,
                        const std::string & rpcport,
                        const std::string & txid,
+                       const bool verbose,
                        std::string & tx)
 {
     try
@@ -435,6 +436,10 @@ bool getRawTransaction(const std::string & rpcuser,
 
         Array params;
         params.push_back(txid);
+        if (verbose)
+        {
+            params.push_back(1);
+        }
         Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport,
                                "getrawtransaction", params);
 

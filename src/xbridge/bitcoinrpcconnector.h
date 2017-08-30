@@ -55,6 +55,7 @@ namespace rpc
                            const std::string & rpcip,
                            const std::string & rpcport,
                            const std::string & txid,
+                           const bool verbose,
                            std::string & tx);
 
     bool createRawTransaction(const std::string & rpcuser,
