@@ -454,15 +454,31 @@ bool getRawTransaction(const std::string & rpcuser,
             // int code = find_value(error.get_obj(), "code").get_int();
             return false;
         }
-        else if (result.type() != str_type)
-        {
-            // Result
-            LOG() << "result not an string " << write_string(result, true);
-            return false;
-        }
 
-        // transaction exists, success
-        tx = result.get_str();
+        if (verbose)
+        {
+            if (result.type() != obj_type)
+            {
+                // Result
+                LOG() << "result not an object " << write_string(result, true);
+                return false;
+            }
+
+            // transaction exists, success
+            tx = write_string(result, true);
+        }
+        else
+        {
+            if (result.type() != str_type)
+            {
+                // Result
+                LOG() << "result not an string " << write_string(result, true);
+                return false;
+            }
+
+            // transaction exists, success
+            tx = result.get_str();
+        }
     }
     catch (std::exception & e)
     {
