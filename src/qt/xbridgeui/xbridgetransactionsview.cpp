@@ -192,10 +192,7 @@ QMenu * XBridgeTransactionsView::setupContextMenu(QModelIndex & index)
 
         connect(cancelTransaction,   SIGNAL(triggered()),
                 this,                SLOT(onCancelTransaction()));
-    }
 
-    if (false)
-    {
         QAction * rollbackTransaction = new QAction(tr("&Rollback transaction"), this);
         contextMenu->addAction(rollbackTransaction);
 
