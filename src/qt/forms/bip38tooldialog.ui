@@ -69,7 +69,7 @@
            </property>
            <property name="icon">
             <iconset resource="../blocknetdx.qrc">
-             <normaloff>:/icons/address-book</normaloff>:/icons/address-book</iconset>
+             <normaloff>:/icons/address-book-white</normaloff>:/icons/address-book-white</iconset>
            </property>
            <property name="shortcut">
             <string>Alt+A</string>
@@ -89,7 +89,7 @@
            </property>
            <property name="icon">
             <iconset resource="../blocknetdx.qrc">
-             <normaloff>:/icons/editpaste</normaloff>:/icons/editpaste</iconset>
+             <normaloff>:/icons/editpaste-white</normaloff>:/icons/editpaste-white</iconset>
            </property>
            <property name="shortcut">
             <string>Alt+P</string>

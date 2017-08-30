@@ -1263,28 +1263,10 @@ bool XBridgeSession::checkDepositTx(const XBridgeTransactionDescrPtr & /*xtx*/,
 {
     isGood  = false;
 
-//    std::string rawtx;
-//    if (!rpc::getRawTransaction(m_wallet.user, m_wallet.passwd,
-//                                m_wallet.ip, m_wallet.port,
-//                                depositTxId, rawtx))
-//    {
-//        LOG() << "no tx found " << depositTxId << " " << __FUNCTION__;
-//        return false;
-//    }
-
-//    std::string txid;
-//    std::string txjson;
-//    if (!rpc::decodeRawTransaction(m_wallet.user, m_wallet.passwd,
-//                                   m_wallet.ip, m_wallet.port,
-//                                   rawtx, txid, txjson))
-//    {
-//        LOG() << "transaction decode error " << depositTxId << " " << __FUNCTION__;
-//        return false;
-//    }
-    std::string json;
-    if (!rpc::getTransaction(m_wallet.user, m_wallet.passwd,
-                             m_wallet.ip, m_wallet.port,
-                             depositTxId, json))
+    std::string rawtx;
+    if (!rpc::getRawTransaction(m_wallet.user, m_wallet.passwd,
+                                m_wallet.ip, m_wallet.port,
+                                depositTxId, true, rawtx))
     {
         LOG() << "no tx found " << depositTxId << " " << __FUNCTION__;
         return false;
@@ -1292,9 +1274,9 @@ bool XBridgeSession::checkDepositTx(const XBridgeTransactionDescrPtr & /*xtx*/,
 
     // check confirmations
     json_spirit::Value txv;
-    if (!json_spirit::read_string(json, txv))
+    if (!json_spirit::read_string(rawtx, txv))
     {
-        LOG() << "json read error for " << depositTxId << " " << json << " " << __FUNCTION__;
+        LOG() << "json read error for " << depositTxId << " " << rawtx << " " << __FUNCTION__;
         return false;
     }
 
@@ -1306,7 +1288,7 @@ bool XBridgeSession::checkDepositTx(const XBridgeTransactionDescrPtr & /*xtx*/,
         if (txvConfCount.type() != json_spirit::int_type)
         {
             // not found confirmations field, tx found but return isGood to false
-            LOG() << "confirmations not found in " << json << " " << __FUNCTION__;
+            LOG() << "confirmations not found in " << rawtx << " " << __FUNCTION__;
             return true;
         }
 
