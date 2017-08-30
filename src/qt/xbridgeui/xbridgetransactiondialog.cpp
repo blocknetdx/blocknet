@@ -138,12 +138,12 @@ void XBridgeTransactionDialog::setupUI()
     // grid->addWidget(m_addressFrom, 2, 0, 1, 1);
 
     QPushButton * pasteFrom = new QPushButton(this);
-    pasteFrom->setIcon(QIcon(":/icons/editpaste"));
+    pasteFrom->setIcon(QIcon(":/icons/editpaste-white"));
     pasteFrom->setToolTip(trUtf8("Paste source address"));
     connect(pasteFrom, SIGNAL(clicked()), this, SLOT(onPasteFrom()));
 
     QPushButton * abFrom = new QPushButton(this);
-    abFrom->setIcon(QIcon(":/icons/address-book"));
+    abFrom->setIcon(QIcon(":/icons/address-book-white"));
     abFrom->setToolTip(trUtf8("Show address book"));
     connect(abFrom, SIGNAL(clicked()), this, SLOT(onAddressBookFrom()));
 
@@ -162,12 +162,12 @@ void XBridgeTransactionDialog::setupUI()
     // grid->addWidget(m_addressTo, 2, 3, 1, 1);
 
     QPushButton * pasteTo = new QPushButton(this);
-    pasteTo->setIcon(QIcon(":/icons/editpaste"));
+    pasteTo->setIcon(QIcon(":/icons/editpaste-white"));
     pasteTo->setToolTip(trUtf8("Paste destination address"));
     connect(pasteTo, SIGNAL(clicked()), this, SLOT(onPasteTo()));
 
     QPushButton * abTo = new QPushButton(this);
-    abTo->setIcon(QIcon(":/icons/address-book"));
+    abTo->setIcon(QIcon(":/icons/address-book-white"));
     abTo->setToolTip(trUtf8("Show address book"));
     connect(abTo, SIGNAL(clicked()), this, SLOT(onAddressBookTo()));
 
