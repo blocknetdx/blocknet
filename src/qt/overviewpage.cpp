@@ -117,6 +117,10 @@ OverviewPage::OverviewPage(QWidget* parent) : QWidget(parent),
     nDisplayUnit = 0; // just make sure it's not unitialized
     ui->setupUi(this);
 
+    // stg Temporarily disable the whole Obfuscation section UI frame and child controls. All slots and signals still active tho.
+    // fEnableObfuscation is defined extern in util.h and initialized to false, the Obfuscation controls are only hidden and properties can still be set or got like normal.
+    ui->frameObfuscation->setVisible(false);
+
     // Recent transactions
     ui->listTransactions->setItemDelegate(txdelegate);
     ui->listTransactions->setIconSize(QSize(DECORATION_SIZE, DECORATION_SIZE));
