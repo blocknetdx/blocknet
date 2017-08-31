@@ -533,7 +533,7 @@ bool XBridgeSession::processTransaction(XBridgePacketPtr packet)
     offset += 8;
     boost::uint64_t damount = *static_cast<boost::uint64_t *>(static_cast<void *>(packet->data()+offset));
 
-    LOG() << "received transaction " << util::base64_encode(std::string((char *)id.begin(), 32)) << std::endl
+    LOG() << "received transaction " << util::to_str(id) << std::endl
           << "    from " << saddr << std::endl
           << "             " << scurrency << " : " << samount << std::endl
           << "    to   " << daddr << std::endl
@@ -571,12 +571,12 @@ bool XBridgeSession::processTransaction(XBridgePacketPtr packet)
         if (tr->id() == uint256())
         {
             LOG() << "transaction not found after create. "
-                  << util::base64_encode(std::string((char *)id.begin(), 32));
+                  << util::to_str(id);
             return false;
         }
 
         LOG() << "transaction created, id "
-              << util::base64_encode(std::string((char *)id.begin(), 32));
+              << util::to_str(id);
 
         if (isCreated)
         {
@@ -649,6 +649,8 @@ bool XBridgeSession::processPendingTransaction(XBridgePacketPtr packet)
         }
     }
 
+    LOG() << "received tx <" << util::to_str(ptr->id) << "> " << __FUNCTION__;
+
     xuiConnector.NotifyXBridgePendingTransactionReceived(*ptr);
 
     return true;
@@ -708,7 +710,7 @@ bool XBridgeSession::processTransactionAccepting(XBridgePacketPtr packet)
 //        xuiConnector.NotifyXBridgePendingTransactionReceived(d);
 //    }
 
-    LOG() << "received accepting transaction " << util::base64_encode(std::string((char *)id.begin(), 32)) << std::endl
+    LOG() << "received accepting transaction " << util::to_str(id) << std::endl
           << "    from " << saddr << std::endl
           << "             " << scurrency << " : " << samount << std::endl
           << "    to   " << daddr << std::endl
@@ -2432,10 +2434,6 @@ bool XBridgeSession::finishTransaction(XBridgeTransactionPtr tr)
 
 //    for (const std::vector<unsigned char> & to : rcpts)
     {
-        // TODO remove this log
-//        LOG() << "send xbcTransactionFinished to "
-//              << util::base64_encode(std::string((char *)&to[0], 20));
-
         XBridgePacketPtr reply(new XBridgePacket(xbcTransactionFinished));
         // reply->append(to);
         reply->append(tr->id().begin(), 32);
@@ -2455,10 +2453,6 @@ bool XBridgeSession::sendCancelTransaction(const uint256 & txid,
                                            const TxCancelReason & reason)
 {
     LOG() << "cancel transaction <" << txid.GetHex() << ">";
-
-    // TODO remove this log
-    // LOG() << "send xbcTransactionCancel to "
-    //       << util::base64_encode(std::string((char *)&to[0], 20));
 
     XBridgePacketPtr reply(new XBridgePacket(xbcTransactionCancel));
     reply->append(txid.begin(), 32);
