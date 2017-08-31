@@ -337,7 +337,7 @@ void BitcoinGUI::createActions(const NetworkStyle* networkStyle)
 #ifdef ENABLE_WALLET
 
     // TODO icons
-    xbridgeAction = new QAction(QIcon(":/icons/servicenodes"), tr("&XBridge"), this);
+    xbridgeAction = new QAction(QIcon(":/icons/servicenodes"), tr("&BlocknetDX"), this);
     xbridgeAction->setToolTip(tr("Show xbridge dialog"));
     // xbridgeAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_6));
     xbridgeAction->setCheckable(true);
@@ -536,14 +536,15 @@ void BitcoinGUI::createToolBars()
         toolbar->addAction(sendCoinsAction);
         toolbar->addAction(receiveCoinsAction);
         toolbar->addAction(historyAction);
-        QSettings settings;
-        if (settings.value("fShowServicenodesTab").toBool()) {
-            toolbar->addAction(servicenodeAction);
-        }
 
         if (XBridgeApp::isEnabled())
         {
             toolbar->addAction(xbridgeAction);
+        }
+
+        QSettings settings;
+        if (settings.value("fShowServicenodesTab").toBool()) {
+            toolbar->addAction(servicenodeAction);
         }
 
         toolbar->setMovable(false); // remove unused icon in upper left corner
