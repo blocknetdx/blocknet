@@ -1027,7 +1027,8 @@ bool XBridgeSession::processTransactionInit(XBridgePacketPtr packet)
         // send blocknet tx with hash of X
         CKeyID xid = xtx->xPubKey.GetID();
         std::string strtxid;
-        if (!rpc::storeDataIntoBlockchain(hubAddress, 1, std::vector<unsigned char>(xid.begin(), xid.end()), strtxid))
+        if (!rpc::storeDataIntoBlockchain(hubAddress, m_wallet.serviceNodeFee,
+                                          std::vector<unsigned char>(xid.begin(), xid.end()), strtxid))
         {
             ERR() << "storeDataIntoBlockchain failed, error send blocknet tx " << __FUNCTION__;
             sendCancelTransaction(xtx, crBlocknetError);
@@ -2488,28 +2489,13 @@ bool XBridgeSession::rollbackTransaction(XBridgeTransactionPtr tr)
 {
     LOG() << "rollback transaction <" << tr->id().GetHex() << ">";
 
-    std::vector<std::string> rcpts;
-
-    if (tr->state() >= XBridgeTransaction::trSigned)
+    if (tr->state() >= XBridgeTransaction::trCreated)
     {
-        rcpts.push_back(tr->a_address());
-        rcpts.push_back(tr->b_address());
+        XBridgeApp & app = XBridgeApp::instance();
+        app.sendRollbackTransaction(tr->id());
     }
 
-    for (const std::string & to : rcpts)
-    {
-        // TODO remove this log
-        LOG() << "send xbcTransactionRollback to "
-              << util::base64_encode(std::string((char *)&to[0], 20));
-
-        XBridgePacketPtr reply(new XBridgePacket(xbcTransactionRollback));
-        reply->append(to);
-        reply->append(tr->id().begin(), 32);
-
-        sendPacket(to, reply);
-    }
-
-    sendCancelTransaction(tr->id(), crRollback);
+    // sendCancelTransaction(tr->id(), crRollback);
     tr->finish();
 
     return true;
@@ -2912,6 +2898,10 @@ bool XBridgeSession::revertXBridgeTransaction(const uint256 & id)
         return false;
     }
 
+    // update transaction state for gui
+    xtx->state = XBridgeTransactionDescr::trRollback;
+    xuiConnector.NotifyXBridgeTransactionStateChanged(id, xtx->state);
+
     return true;
 }
 
@@ -2947,12 +2937,6 @@ bool XBridgeSession::processTransactionRollback(XBridgePacketPtr packet)
     }
 
     revertXBridgeTransaction(xtx->id);
-
-    // update transaction state for gui
-    xtx->state = XBridgeTransactionDescr::trRollback;
-
-    xuiConnector.NotifyXBridgeTransactionStateChanged(txid, xtx->state);
-
     return true;
 }
 

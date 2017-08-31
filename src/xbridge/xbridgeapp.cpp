@@ -892,16 +892,6 @@ bool XBridgeApp::rollbackXBridgeTransaction(const uint256 & id)
         }
     }
 
-    {
-        boost::mutex::scoped_lock l(m_txLocker);
-
-        m_pendingTransactions.erase(id);
-        if (m_transactions.count(id))
-        {
-            m_transactions[id]->state = XBridgeTransactionDescr::trCancelled;
-        }
-    }
-
     return sendRollbackTransaction(id);
 }
 
