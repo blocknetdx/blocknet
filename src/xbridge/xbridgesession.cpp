@@ -1288,9 +1288,9 @@ bool XBridgeSession::checkDepositTx(const XBridgeTransactionDescrPtr & /*xtx*/,
         json_spirit::Value txvConfCount = json_spirit::find_value(txo, "confirmations");
         if (txvConfCount.type() != json_spirit::int_type)
         {
-            // not found confirmations field, tx found but return isGood to false
+            // not found confirmations field, wait
             LOG() << "confirmations not found in " << rawtx << " " << __FUNCTION__;
-            return true;
+            return false;
         }
 
         if (confirmations < static_cast<uint32_t>(txvConfCount.get_int()))
