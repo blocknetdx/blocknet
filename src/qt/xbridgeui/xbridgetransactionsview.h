@@ -62,11 +62,6 @@ class XBridgeTransactionsView : public QWidget
     Q_OBJECT
 public:
     explicit XBridgeTransactionsView(QWidget *parent = 0);
-    ~XBridgeTransactionsView();
-
-signals:
-
-public slots:
 
 private:
     void setupUi();
@@ -80,8 +75,7 @@ private slots:
 
     void onContextMenu(QPoint pt);
 
-    void onToggleHistoricLogs();
-    void onLogString(const std::string str);
+    void onToggleHideHistoricTransactions();
 
 private:
     // WalletModel            * m_walletModel;
@@ -96,8 +90,6 @@ private:
     QTableView  * m_historicTransactionsList;
 
     QModelIndex   m_contextMenuIndex;
-
-    QTextEdit   * m_logStrings;
 };
 
 #endif // XBRIDGETRANSACTIONSVIEW_H

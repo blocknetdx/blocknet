@@ -30,14 +30,6 @@ XBridgeTransactionsView::XBridgeTransactionsView(QWidget *parent)
 
 //******************************************************************************
 //******************************************************************************
-XBridgeTransactionsView::~XBridgeTransactionsView()
-{
-    xuiConnector.NotifyLogMessage.disconnect
-            (boost::bind(&XBridgeTransactionsView::onLogString, this, _1));
-}
-
-//******************************************************************************
-//******************************************************************************
 void XBridgeTransactionsView::setupUi()
 {
     QVBoxLayout * vbox = new QVBoxLayout;
@@ -111,8 +103,8 @@ void XBridgeTransactionsView::setupUi()
 
     hbox->addStretch();
 
-    QPushButton * showHideButton = new QPushButton("Toggle to log", this);
-    connect(showHideButton, SIGNAL(clicked()), this, SLOT(onToggleHistoricLogs()));
+    QPushButton * showHideButton = new QPushButton("Hide historic transactions", this);
+    connect(showHideButton, SIGNAL(clicked()), this, SLOT(onToggleHideHistoricTransactions()));
     hbox->addWidget(showHideButton);
 
     vbox->addLayout(hbox);
@@ -159,16 +151,7 @@ void XBridgeTransactionsView::setupUi()
     historicHeader->resizeSection(XBridgeTransactionsModel::State,      128);
     vbox->addWidget(m_historicTransactionsList);
 
-    m_logStrings = new QTextEdit(this);
-    m_logStrings->setMinimumHeight(64);
-    m_logStrings->setReadOnly(true);
-    m_logStrings->setVisible(false);
-    vbox->addWidget(m_logStrings);
-
     setLayout(vbox);
-
-    xuiConnector.NotifyLogMessage.connect
-            (boost::bind(&XBridgeTransactionsView::onLogString, this, _1));
 }
 
 //******************************************************************************
@@ -321,44 +304,16 @@ void XBridgeTransactionsView::onContextMenu(QPoint /*pt*/)
 
 //******************************************************************************
 //******************************************************************************
-void XBridgeTransactionsView::onToggleHistoricLogs()
+void XBridgeTransactionsView::onToggleHideHistoricTransactions()
 {
     QPushButton * btn = qobject_cast<QPushButton *>(sender());
 
-    bool logsVisible = m_logStrings->isVisible();
     bool historicTrVisible = m_historicTransactionsList->isVisible();
 
-    if(logsVisible)
-        btn->setText("Toggle to log");
+    if(historicTrVisible)
+        btn->setText("Show historic transactions");
     else if(historicTrVisible)
-        btn->setText("Toggle to history");
+        btn->setText("Hide historic transactions");
 
-    m_logStrings->setVisible(!logsVisible);
     m_historicTransactionsList->setVisible(!historicTrVisible);
-
-    if (!logsVisible)
-    {
-        m_logStrings->clear();
-
-        // show, load all logs
-        QFile f(QString::fromStdString(LOG::logFileName()));
-        if (f.open(QIODevice::ReadOnly))
-        {
-            m_logStrings->insertPlainText(f.readAll());
-        }
-    }
-}
-
-//******************************************************************************
-//******************************************************************************
-void XBridgeTransactionsView::onLogString(const std::string str)
-{
-    const QString qstr = QString::fromStdString(str);
-    m_logStrings->insertPlainText(qstr);
-
-//    QTextCursor c = m_logStrings->textCursor();
-//    c.movePosition(QTextCursor::End);
-//    m_logStrings->setTextCursor(c);
-
-//    m_logStrings->ensureCursorVisible();
 }
