@@ -307,13 +307,14 @@ void XBridgeTransactionsView::onContextMenu(QPoint /*pt*/)
 void XBridgeTransactionsView::onToggleHideHistoricTransactions()
 {
     QPushButton * btn = qobject_cast<QPushButton *>(sender());
+    if (!btn)
+    {
+        return;
+    }
 
     bool historicTrVisible = m_historicTransactionsList->isVisible();
-
-    if(historicTrVisible)
-        btn->setText("Show historic transactions");
-    else if(historicTrVisible)
-        btn->setText("Hide historic transactions");
+    btn->setText(historicTrVisible ? trUtf8("Show historic transactions") :
+                                     trUtf8("Hide historic transactions"));
 
     m_historicTransactionsList->setVisible(!historicTrVisible);
 }
