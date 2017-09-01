@@ -19,6 +19,9 @@
 #include "xbitcoinsecret.h"
 #include "script/script.h"
 #include "base58.h"
+#include "activeservicenode.h"
+#include "servicenode.h"
+#include "servicenodeman.h"
 
 #include "json/json_spirit.h"
 #include "json/json_spirit_reader_template.h"
@@ -737,6 +740,8 @@ bool XBridgeSession::processTransactionAccepting(XBridgePacketPtr packet)
                 XBridgePacketPtr reply1(new XBridgePacket(xbcTransactionHold));
                 reply1->append(sessionAddr());
                 reply1->append(tr->id().begin(), 32);
+                reply1->append(activeServicenode.pubKeyServicenode.begin(),
+                               activeServicenode.pubKeyServicenode.size());
 
                 sendPacketBroadcast(reply1);
             }
@@ -752,19 +757,35 @@ bool XBridgeSession::processTransactionHold(XBridgePacketPtr packet)
 {
     DEBUG_TRACE_LOG(currencyToLog());
 
-    if (packet->size() != 52)
+    if (packet->size() != 85)
     {
         ERR() << "incorrect packet size for xbcTransactionHold "
-              << "need 52 received " << packet->size() << " "
+              << "need 85 received " << packet->size() << " "
               << __FUNCTION__;
         return false;
     }
 
-    // smart hub addr
+    // servicenode addr
     std::vector<unsigned char> hubAddress(packet->data(), packet->data()+20);
+    uint32_t offset = 20;
 
     // read packet data
-    uint256 id(packet->data()+20);
+    uint256 id(packet->data()+offset);
+    offset += 32;
+
+    // service node pub key
+    CPubKey pksnode(packet->data()+offset, packet->data()+offset+33);
+    // offset += 33;
+
+    {
+        // check servicenode
+        CServicenode * snode = mnodeman.Find(pksnode);
+        if (!snode)
+        {
+            // bad service node, no more
+            return true;
+        }
+    }
 
     {
         // for xchange node remove tx
@@ -911,6 +932,8 @@ bool XBridgeSession::processTransactionHoldApply(XBridgePacketPtr packet)
             reply1->append(rpc::toXAddr(tr->a_destination()));
             reply1->append(sessionAddr());
             reply1->append(id.begin(), 32);
+            reply1->append(activeServicenode.pubKeyServicenode.begin(),
+                           activeServicenode.pubKeyServicenode.size());
             reply1->append(static_cast<uint16_t>('A'));
             reply1->append(tr->a_address());
             reply1->append(fc);
@@ -930,6 +953,8 @@ bool XBridgeSession::processTransactionHoldApply(XBridgePacketPtr packet)
             reply2->append(rpc::toXAddr(tr->b_destination()));
             reply2->append(sessionAddr());
             reply2->append(id.begin(), 32);
+            reply2->append(activeServicenode.pubKeyServicenode.begin(),
+                           activeServicenode.pubKeyServicenode.size());
             reply2->append(static_cast<uint16_t>('B'));
             reply2->append(tr->b_address());
             reply2->append(sc);
@@ -951,10 +976,10 @@ bool XBridgeSession::processTransactionInit(XBridgePacketPtr packet)
 {
     DEBUG_TRACE_LOG(currencyToLog());
 
-    if (packet->size() <= 172)
+    if (packet->size() <= 205)
     {
         ERR() << "incorrect packet size for xbcTransactionInit "
-              << "need 172 bytes min, received " << packet->size() << " "
+              << "need 205 bytes min, received " << packet->size() << " "
               << __FUNCTION__;
         return false;
     }
@@ -965,6 +990,10 @@ bool XBridgeSession::processTransactionInit(XBridgePacketPtr packet)
     uint256 txid(packet->data()+40);
 
     uint32_t offset = 72;
+
+    // service node pub key
+    CPubKey pksnode(packet->data()+offset, packet->data()+offset+33);
+    offset += 33;
 
     const char role = static_cast<char>((*reinterpret_cast<uint16_t *>(packet->data()+offset)));
     offset += sizeof(uint16_t);
@@ -982,6 +1011,20 @@ bool XBridgeSession::processTransactionInit(XBridgePacketPtr packet)
     offset += 8;
     uint64_t      toAmount(*reinterpret_cast<uint64_t *>(packet->data()+offset));
     // offset += sizeof(uint64_t);
+
+    // check servicenode
+    std::vector<unsigned char> snodeAddress;
+    {
+        CServicenode * snode = mnodeman.Find(pksnode);
+        if (!snode)
+        {
+            // bad service node, no more
+            return true;
+        }
+
+        CKeyID id = snode->pubKeyCollateralAddress.GetID();
+        std::copy(id.begin(), id.end(), std::back_inserter(addr));
+    }
 
     XBridgeTransactionDescrPtr xtx;
     {
@@ -1029,7 +1072,7 @@ bool XBridgeSession::processTransactionInit(XBridgePacketPtr packet)
         // send blocknet tx with hash of X
         CKeyID xid = xtx->xPubKey.GetID();
         std::string strtxid;
-        if (!rpc::storeDataIntoBlockchain(hubAddress, m_wallet.serviceNodeFee,
+        if (!rpc::storeDataIntoBlockchain(snodeAddress, m_wallet.serviceNodeFee,
                                           std::vector<unsigned char>(xid.begin(), xid.end()), strtxid))
         {
             ERR() << "storeDataIntoBlockchain failed, error send blocknet tx " << __FUNCTION__;
