@@ -757,10 +757,10 @@ bool XBridgeSession::processTransactionHold(XBridgePacketPtr packet)
 {
     DEBUG_TRACE_LOG(currencyToLog());
 
-    if (packet->size() != 85)
+    if (packet->size() != 85 && packet->size() != 117)
     {
         ERR() << "incorrect packet size for xbcTransactionHold "
-              << "need 85 received " << packet->size() << " "
+              << "need 85 or 117 received " << packet->size() << " "
               << __FUNCTION__;
         return false;
     }
@@ -774,8 +774,18 @@ bool XBridgeSession::processTransactionHold(XBridgePacketPtr packet)
     offset += 32;
 
     // service node pub key
-    CPubKey pksnode(packet->data()+offset, packet->data()+offset+33);
-    // offset += 33;
+    CPubKey pksnode;
+    {
+        uint32_t len = CPubKey::GetLen(*(char *)(packet->data()+offset));
+        if (len != 33 && len != 65)
+        {
+            LOG() << "bad public key, startsWith " << *(char *)(packet->data()+offset) << " " << __FUNCTION__;
+            return false;
+        }
+
+        pksnode.Set(packet->data()+offset, packet->data()+offset+len);
+        // offset += len;
+    }
 
     {
         // check servicenode
@@ -982,7 +992,7 @@ bool XBridgeSession::processTransactionInit(XBridgePacketPtr packet)
     if (packet->size() <= 205)
     {
         ERR() << "incorrect packet size for xbcTransactionInit "
-              << "need 205 bytes min, received " << packet->size() << " "
+              << "need 205 or 237 bytes min, received " << packet->size() << " "
               << __FUNCTION__;
         return false;
     }
@@ -995,8 +1005,18 @@ bool XBridgeSession::processTransactionInit(XBridgePacketPtr packet)
     uint32_t offset = 72;
 
     // service node pub key
-    CPubKey pksnode(packet->data()+offset, packet->data()+offset+33);
-    offset += 33;
+    CPubKey pksnode;
+    {
+        uint32_t len = CPubKey::GetLen(*(char *)(packet->data()+offset));
+        if (len != 33 && len != 65)
+        {
+            LOG() << "bad public key, startsWith " << *(char *)(packet->data()+offset) << " " << __FUNCTION__;
+            return false;
+        }
+
+        pksnode.Set(packet->data()+offset, packet->data()+offset+len);
+        offset += len;
+    }
 
     const char role = static_cast<char>((*reinterpret_cast<uint16_t *>(packet->data()+offset)));
     offset += sizeof(uint16_t);
@@ -1344,7 +1364,7 @@ bool XBridgeSession::checkDepositTx(const XBridgeTransactionDescrPtr & /*xtx*/,
             return false;
         }
 
-        if (confirmations < static_cast<uint32_t>(txvConfCount.get_int()))
+        if (confirmations > static_cast<uint32_t>(txvConfCount.get_int()))
         {
             // wait more
             LOG() << "tx " << depositTxId << " unconfirmed, need " << confirmations << " " << __FUNCTION__;
@@ -1456,6 +1476,8 @@ bool XBridgeSession::processTransactionCreate(XBridgePacketPtr packet)
             sendCancelTransaction(xtx, crBadADepositTx);
             return true;
         }
+
+        LOG() << "deposit A tx confirmed " << util::to_str(txid);
     }
 
     std::vector<rpc::Unspent> entries;
@@ -1976,6 +1998,7 @@ bool XBridgeSession::processTransactionConfirmA(XBridgePacketPtr packet)
             return true;
         }
 
+        LOG() << "deposit B tx confirmed " << util::to_str(txid);
     }
 
     // payTx
