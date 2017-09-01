@@ -1027,7 +1027,7 @@ bool XBridgeSession::processTransactionInit(XBridgePacketPtr packet)
         }
 
         CKeyID id = snode->pubKeyCollateralAddress.GetID();
-        std::copy(id.begin(), id.end(), std::back_inserter(addr));
+        std::copy(id.begin(), id.end(), std::back_inserter(snodeAddress));
 
         LOG() << "use service node " << id.ToString() << " " << __FUNCTION__;
     }
