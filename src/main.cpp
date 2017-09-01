@@ -5331,6 +5331,8 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
             return false;
         }
 
+        pfrom->PushMessage("getsporks");
+
         int64_t nTime;
         CAddress addrMe;
         CAddress addrFrom;
