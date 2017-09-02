@@ -36,7 +36,7 @@ script: |
   FAKETIME_HOST_PROGS=""
   FAKETIME_PROGS="date ar ranlib nm"
   HOST_CFLAGS="-O2 -g"
-  HOST_CXXFLAGS="-O2 -g"
+  HOST_CXXFLAGS="-O2 -g -Wno-deprecated-declarations"
   HOST_LDFLAGS=-static-libstdc++
 
   export QT_RCC_TEST=1
