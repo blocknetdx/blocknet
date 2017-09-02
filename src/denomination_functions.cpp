@@ -7,8 +7,6 @@
  * @license    This project is released under the MIT license.
  **/
 #include "denomination_functions.h"
-#include "reverse_iterate.h"
-#include "util.h"
 
 using namespace libzerocoin;
 

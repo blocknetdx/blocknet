@@ -15,7 +15,7 @@
 #include <iostream>
 #include <fstream>
 #include <cmath>
-#include <curses.h>
+// #include <curses.h>
 #include <exception>
 #include "streams.h"
 #include "libzerocoin/ParamGeneration.h"

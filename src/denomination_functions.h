@@ -6,6 +6,8 @@
  * @copyright  Copyright 2017 PIVX Developers
  * @license    This project is released under the MIT license.
  **/
+#include "reverse_iterate.h"
+#include "util.h"
 #include "libzerocoin/Denominations.h"
 #include "primitives/zerocoin.h"
 #include <list>
