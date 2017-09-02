@@ -80,10 +80,10 @@ OptionsDialog::OptionsDialog(QWidget* parent, bool enableWallet) : QDialog(paren
         ui->digits->addItem(digits, digits);
     }
     
-    /* Preferred Zerocoin Denominations */
+    /* Theme selector static themes */
     ui->theme->addItem(QString("Default"), QVariant("default"));
 
-    /* Theme selector static themes */
+    /* Preferred Zerocoin Denominations */
     ui->preferredDenom->addItem(QString(tr("I don't care")), QVariant("0"));
     ui->preferredDenom->addItem(QString("1"), QVariant("1"));
     ui->preferredDenom->addItem(QString("5"), QVariant("5"));
