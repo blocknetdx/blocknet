@@ -3421,8 +3421,8 @@ bool CWallet::GetDestData(const CTxDestination& dest, const std::string& key, st
 // CWallet::AutoZeromint() gets called with each new incoming block
 void CWallet::AutoZeromint()
 {
-    // Wait until blockchain is fully synced
-    if (!masternodeSync.IsBlockchainSynced()) return;
+    // Wait until blockchain is fully synced and wallet is unlocked
+    if (!masternodeSync.IsBlockchainSynced() || IsLocked()) return;
 
     CAmount nZerocoinBalance = GetZerocoinBalance();
     CAmount nBalance = GetUnlockedCoins(); // We only consider unlocked coins, this also excludes masternode-vins
@@ -3441,8 +3441,8 @@ void CWallet::AutoZeromint()
 
     // Check if minting is actually needed
     if(dPercentage >= nZeromintPercentage){
-        LogPrintf("CWallet::AutoZeromint(): percentage of existing zPIV (%lf%%) already >= configured percentage (%d%%). No minting needed...\n",
-                  dPercentage, nZeromintPercentage);
+        LogPrintf("CWallet::AutoZeromint() @block %ld: percentage of existing zPIV (%lf%%) already >= configured percentage (%d%%). No minting needed...\n",
+                  chainActive.Tip()->nHeight, dPercentage, nZeromintPercentage);
         return;
     }
 
@@ -3455,6 +3455,15 @@ void CWallet::AutoZeromint()
     // Use the biggest denomination smaller than the needed zPIV We'll only mint exact denomination to make minting faster.
     // Exception: for big amounts use 6666 (6666 = 1*5000 + 1*1000 + 1*500 + 1*100 + 1*50 + 1*10 + 1*5 + 1) to create all
     // possible denominations to avoid having 5000 denominations only.
+    // If a preferred denomination is used (means nPreferredDenom != 0) do nothing until we have enough PIV to mint this denomination
+
+    if (nPreferredDenom > 0){
+        if (nToMintAmount >= nPreferredDenom)
+            nToMintAmount = nPreferredDenom;  // Enough coins => mint preferred denomination
+        else
+            nToMintAmount = 0;                // Not enough coins => do nothing and wait for more coins
+    }
+
     if (nToMintAmount >= ZQ_6666){
         nMintAmount = ZQ_6666;
     } else if (nToMintAmount >= libzerocoin::CoinDenomination::ZQ_FIVE_THOUSAND){
@@ -3490,7 +3499,8 @@ void CWallet::AutoZeromint()
         nZerocoinBalance = GetZerocoinBalance();
         nBalance = GetUnlockedCoins();
         dPercentage = 100 * (double)nZerocoinBalance / (double)(nZerocoinBalance + nBalance);
-        LogPrintf("CWallet::AutoZeromint(): successfully minted %ld zPIV. Current percentage of zPIV: %lf%%\n", nMintAmount, dPercentage);
+        LogPrintf("CWallet::AutoZeromint() @ block %ld: successfully minted %ld zPIV. Current percentage of zPIV: %lf%%\n",
+                  chainActive.Tip()->nHeight, nMintAmount, dPercentage);
     }
     else {
         LogPrintf("CWallet::AutoZeromint(): Amount to mint: %ld zPIV. Nothing minted.\n", nMintAmount);
@@ -4166,6 +4176,77 @@ bool CWallet::CreateZerocoinSpendTransaction(CAmount nValue, int nSecurityLevel,
     }
 
     return true;
+}
+
+string CWallet::ResetMintZerocoin()
+{
+    long updates = 0;
+    long deletions = 0;
+    CWalletDB walletdb(pwalletMain->strWalletFile);
+
+    list<CZerocoinMint> listMints = walletdb.ListMintedCoins();
+    vector<CZerocoinMint> vMintsToFind{ std::make_move_iterator(std::begin(listMints)), std::make_move_iterator(std::end(listMints)) };
+    vector<CZerocoinMint> vMintsMissing;
+    vector<CZerocoinMint> vMintsToUpdate;
+
+    // search all of our available data for these mints
+    FindMints(vMintsToFind, vMintsToUpdate, vMintsMissing);
+
+    // Update the meta data of mints that were marked for updating
+    for (CZerocoinMint mint : vMintsToUpdate) {
+        updates++;
+        walletdb.WriteZerocoinMint(mint);
+    }
+
+    // Delete any mints that were unable to be located on the blockchain
+    for (CZerocoinMint mint : vMintsMissing) {
+        deletions++;
+        walletdb.ArchiveMintOrphan(mint);
+    }
+
+    string strResult = _("ResetMintZerocoin finished: ") + to_string(updates) + _(" mints updated, ") + to_string(deletions) + _(" mints deleted\n");
+    return strResult;
+}
+
+string CWallet::ResetSpentZerocoin()
+{
+    long removed = 0;
+    CWalletDB walletdb(pwalletMain->strWalletFile);
+
+    list<CZerocoinMint> listMints = walletdb.ListMintedCoins();
+    list<CZerocoinSpend> listSpends = walletdb.ListSpentCoins();
+    list<CZerocoinSpend> listUnconfirmedSpends;
+
+    for (CZerocoinSpend spend : listSpends) {
+        CTransaction tx;
+        uint256 hashBlock = 0;
+        if (!GetTransaction(spend.GetTxHash(), tx, hashBlock)) {
+            listUnconfirmedSpends.push_back(spend);
+            continue;
+        }
+
+        //no confirmations
+        if (hashBlock == 0)
+            listUnconfirmedSpends.push_back(spend);
+    }
+
+    for (CZerocoinSpend spend : listUnconfirmedSpends) {
+        for (CZerocoinMint mint : listMints) {
+            if (mint.GetSerialNumber() == spend.GetSerial()) {
+                removed++;
+                mint.SetUsed(false);
+                mint.SetTxHash(0);
+                mint.SetHeight(0);
+
+                walletdb.WriteZerocoinMint(mint);
+                walletdb.EraseZerocoinSpendSerialEntry(spend.GetSerial());
+                continue;
+            }
+        }
+    }
+
+    string strResult = _("ResetSpentZerocoin finished: ") + to_string(removed) + _(" unconfirmed transactions removed\n");
+    return strResult;
 }
 
 string CWallet::MintZerocoin(CAmount nValue, CWalletTx& wtxNew, vector<CZerocoinMint>& vMints, const CCoinControl* coinControl)

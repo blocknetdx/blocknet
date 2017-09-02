@@ -519,7 +519,7 @@
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
          </property>
         </widget>
-        <widget class="QPushButton" name="pushButtonMintReset">
+        <widget class="QPushButton" name="pushButtonSpentReset">
          <property name="geometry">
           <rect>
            <x>510</x>
@@ -529,7 +529,7 @@
           </rect>
          </property>
          <property name="toolTip">
-          <string>Reset Zerocoin Wallet DB</string>
+          <string>Reset Zerocoin Wallet DB. Deletes transactions that did not make it into the blockchain.</string>
          </property>
          <property name="text">
           <string>Reset</string>
@@ -1113,6 +1113,22 @@
          </property>
          <property name="placeholderText">
           <string/>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="pushButtonMintReset">
+         <property name="geometry">
+          <rect>
+           <x>510</x>
+           <y>110</y>
+           <width>61</width>
+           <height>27</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string>Rescan the complete blockchain for  Zerocoin mints and their meta-data. Needs a very long time, please be patient.</string>
+         </property>
+         <property name="text">
+          <string>ReScan</string>
          </property>
         </widget>
        </widget>

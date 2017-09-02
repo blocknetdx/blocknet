@@ -36,6 +36,7 @@ extern bool fLiteMode;
 extern bool fEnableSwiftTX;
 extern int nSwiftTXDepth;
 extern int nZeromintPercentage;
+extern int nPreferredDenom;
 extern int nAnonymizePivxAmount;
 extern int nLiquidityProvider;
 extern bool fEnableZeromint;

@@ -37,6 +37,7 @@ PrivacyDialog::PrivacyDialog(QWidget* parent) : QDialog(parent),
     ui->TEMintStatus->setFrameStyle(QFrame::StyledPanel | QFrame::Sunken);
     ui->TEMintStatus->setLineWidth (2);
     ui->TEMintStatus->setMidLineWidth (2);
+    ui->TEMintStatus->setPlainText(tr("Mint Status: Okay"));
 
     // Coin Control signals
     connect(ui->pushButtonCoinControl, SIGNAL(clicked()), this, SLOT(coinControlButtonClicked()));
@@ -163,12 +164,31 @@ void PrivacyDialog::on_pushButtonMintReset_clicked()
     if (!walletModel || !walletModel->getOptionsModel())
         return;
 
-    QMessageBox::warning(this, tr("Reset Zerocoin"),
-                tr("Test for Reset"),
-                QMessageBox::Ok, QMessageBox::Ok);
-            return;
+    ui->TEMintStatus->setPlainText(tr("Starting ResetMintZerocoin: rescanning complete blockchain, please be patient..."));
+    ui->TEMintStatus->repaint ();
+    int64_t nTime = GetTimeMillis();
+    string strResetMintResult = pwalletMain->ResetMintZerocoin();
+    int64_t nDuration = GetTimeMillis() - nTime;
+    ui->TEMintStatus->setPlainText(QString::fromStdString(strResetMintResult) + tr("Duration: ") + QString::number(nDuration) + tr(" ms.\n"));
+    ui->TEMintStatus->repaint ();
 
+    return;
+}
+
+void PrivacyDialog::on_pushButtonSpentReset_clicked()
+{
+    if (!walletModel || !walletModel->getOptionsModel())
         return;
+
+    ui->TEMintStatus->setPlainText(tr("Starting ResetSpentZerocoin: "));
+    ui->TEMintStatus->repaint ();
+    int64_t nTime = GetTimeMillis();
+    string strResetSpentResult = pwalletMain->ResetSpentZerocoin();
+    int64_t nDuration = GetTimeMillis() - nTime;
+    ui->TEMintStatus->setPlainText(QString::fromStdString(strResetSpentResult) + tr("Duration: ") + QString::number(nDuration) + tr(" ms.\n"));
+    ui->TEMintStatus->repaint ();
+
+    return;
 }
 
 void PrivacyDialog::on_pushButtonSpendzPIV_clicked()
@@ -197,6 +217,7 @@ void PrivacyDialog::on_pushButtonSpendzPIV_clicked()
     vector<CZerocoinSpend> vSpends;
 
     // attempt to spend the zPiv
+    int64_t nTime = GetTimeMillis();
     ui->TEMintStatus->setPlainText(tr("Spending Zerocoin. Computationally expensive, please be patient."));
     ui->TEMintStatus->repaint();
     string strError = pwalletMain->SpendZerocoin(nAmount, nSecurityLevel, wtxNew, vSpends, vMintsSelected, fMintChange, &address);
@@ -231,6 +252,8 @@ void PrivacyDialog::on_pushButtonSpendzPIV_clicked()
             strStats += tr(CBitcoinAddress(dest).ToString().c_str());
         strStats += "\n";
     }
+    int64_t nDuration = GetTimeMillis() - nTime;
+    strStats += tr("Duration: ") + QString::number(nDuration) + tr(" ms.\n");
 
     QString strReturn;
     strReturn += tr("txid: ") + wtxNew.GetHash().ToString().c_str() + "\n";

@@ -88,6 +88,7 @@ private slots:
 
     void on_pushButtonMintzPIV_clicked();
     void on_pushButtonMintReset_clicked();
+    void on_pushButtonSpentReset_clicked();
     void on_pushButtonSpendzPIV_clicked();
     void on_pasteButton_clicked();
     void updateDisplayUnit();

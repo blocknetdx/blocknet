@@ -924,7 +924,7 @@
                 </font>
                </property>
                <property name="text">
-                <string>Combined Balances (including pending coins)</string>
+                <string>Combined Balances (including immature coins)</string>
                </property>
               </widget>
              </item>

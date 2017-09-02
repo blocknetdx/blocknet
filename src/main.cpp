@@ -3072,6 +3072,10 @@ void static UpdateTip(CBlockIndex* pindexNew)
 {
     chainActive.SetTip(pindexNew);
 
+    // If turned on AutoZeromint will automatically convert PIV to zPIV
+    if (pwalletMain->isZeromintEnabled ())
+        pwalletMain->AutoZeromint ();
+    
     // New best block
     nTimeBestReceived = GetTime();
     mempool.AddTransactionsUpdated(1);
@@ -4266,10 +4270,6 @@ bool ProcessNewBlock(CValidationState& state, CNode* pfrom, CBlock* pblock, CDis
         // If turned on Auto Combine will scan wallet for dust to combine
         if (pwalletMain->fCombineDust)
             pwalletMain->AutoCombineDust();
-
-        // If turned on AutoZeromint will automatically convert PIV to zPIV
-        if (pwalletMain->isZeromintEnabled ())
-            pwalletMain->AutoZeromint ();
     }
 
     LogPrintf("%s : ACCEPTED\n", __func__);

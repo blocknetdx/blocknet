@@ -117,6 +117,7 @@ int nSwiftTXDepth = 5;
 // Automatic Zerocoin minting
 bool fEnableZeromint = true;
 int nZeromintPercentage = 10;
+int nPreferredDenom = 0;
 
 int nAnonymizePivxAmount = 1000;
 int nLiquidityProvider = 0;

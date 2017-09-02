@@ -183,6 +183,8 @@ public:
     bool MintToTxIn(CZerocoinMint zerocoinSelected, int nSecurityLevel, const uint256& hashTxOut, CTxIn& newTxIn, CZerocoinSpend& zerocoinSpend, string strFailReason);
     std::string MintZerocoin(CAmount nValue, CWalletTx& wtxNew, vector<CZerocoinMint>& vMints, const CCoinControl* coinControl = NULL);
     std::string SpendZerocoin(CAmount nValue, int nSecurityLevel, CWalletTx& wtxNew, vector<CZerocoinSpend>& vSpends, vector<CZerocoinMint>& vMintsSelected, bool fMintChange, CBitcoinAddress* addressTo = NULL);
+    std::string ResetMintZerocoin();
+    std::string ResetSpentZerocoin();
 
     /** Zerocin entry changed.
     * @note called with lock cs_wallet held.
