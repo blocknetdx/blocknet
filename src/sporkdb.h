@@ -21,6 +21,7 @@ private:
 public:
     bool WriteSpork(const int nSporkId, const CSporkMessage& spork);
     bool ReadSpork(const int nSporkId, CSporkMessage& spork);
+    bool SporkExists(const int nSporkId);
 };
 
 

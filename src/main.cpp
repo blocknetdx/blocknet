@@ -23,6 +23,7 @@
 #include "obfuscation.h"
 #include "pow.h"
 #include "spork.h"
+#include "sporkdb.h"
 #include "swifttx.h"
 #include "txdb.h"
 #include "txmempool.h"
@@ -3787,7 +3788,7 @@ bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, bool f
         return state.DoS(50, error("CheckBlockHeader() : proof of work failed"),
             REJECT_INVALID, "high-hash");
 
-    // Version 4 header must be used when SPORK_17_ENABLEZEROCOIN is activated. And never before.
+    // Version 4 header must be used when SPORK_17_ENABLE_ZEROCOIN is activated. And never before.
     if (block.GetBlockTime() > GetSporkValue(SPORK_17_ENABLE_ZEROCOIN)) {
         if (block.nVersion < Params().Zerocoin_HeaderVersion())
             return state.DoS(50, error("CheckBlockHeader() : block version must be above 4 after SPORK_17"),
@@ -5331,7 +5332,14 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
             return false;
         }
 
-        pfrom->PushMessage("getsporks");
+        // PIVX: We use certain sporks during IBD, so check to see if they are
+        // available. If not, ask the first peer connected for them.
+        if (!sporkDB->SporkExists(SPORK_14_NEW_PROTOCOL_ENFORCEMENT) &&
+            !sporkDB->SporkExists(SPORK_15_NEW_PROTOCOL_ENFORCEMENT_2) &&
+            !sporkDB->SporkExists(SPORK_17_ENABLE_ZEROCOIN)) {
+            LogPrintf("Required sporks not found, asking peer to send them\n");
+            pfrom->PushMessage("getsporks");
+        }
 
         int64_t nTime;
         CAddress addrMe;

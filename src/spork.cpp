@@ -29,16 +29,23 @@ std::map<int, CSporkMessage> mapSporksActive;
 // PIVX: on startup load spork values from previous session if they exist in the sporkDB
 void LoadSporksFromDB()
 {
-    CSporkMessage spork;
-    if (!sporkDB->ReadSpork(SPORK_17_ENABLE_ZEROCOIN, spork)) {
-        LogPrintf("%s : no previous value for SPORK_17_ENABLE_ZEROCOIN found in database\n", __func__);
-        return;
-    }
+    for (int i = SPORK_START; i <= SPORK_END; ++i) {
+        // Since not all spork IDs are in use, we have to exclude undefined IDs
+        std::string strSpork = sporkManager.GetSporkNameByID(i);
+        if (strSpork == "Unknown") continue;
 
-    //add spork to memory
-    mapSporks[spork.GetHash()] = spork;
-    mapSporksActive[spork.nSporkID] = spork;
-    LogPrintf("%s : loaded spork %d with value %d\n", __func__, spork.nSporkID, spork.nValue);
+        // attempt to read spork from sporkDB
+        CSporkMessage spork;
+        if (!sporkDB->ReadSpork(i, spork)) {
+            LogPrintf("%s : no previous value for %s found in database\n", __func__, strSpork);
+            continue;
+        }
+
+        // add spork to memory
+        mapSporks[spork.GetHash()] = spork;
+        mapSporksActive[spork.nSporkID] = spork;
+        LogPrintf("%s : loaded spork %s with value %d\n", __func__, sporkManager.GetSporkNameByID(spork.nSporkID), spork.nValue);
+    }
 }
 
 void ProcessSpork(CNode* pfrom, std::string& strCommand, CDataStream& vRecv)
@@ -75,9 +82,8 @@ void ProcessSpork(CNode* pfrom, std::string& strCommand, CDataStream& vRecv)
         mapSporksActive[spork.nSporkID] = spork;
         sporkManager.Relay(spork);
 
-        // PIVX: add spork database. For now only database zerocoin activation spork
-        if (spork.nSporkID == SPORK_17_ENABLE_ZEROCOIN)
-            sporkDB->WriteSpork(spork.nSporkID, spork);
+        // PIVX: add to spork database.
+        sporkDB->WriteSpork(spork.nSporkID, spork);
 
         //does a task if needed
         ExecuteSpork(spork.nSporkID, spork.nValue);
