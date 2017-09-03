@@ -2520,7 +2520,7 @@ Value resetmintzerocoin(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 0)
         throw runtime_error(
-            "resetmintzerocoin"
+            "resetmintzerocoin\n"
             "Scan the blockchain for all of the zerocoins that are held in the wallet.dat. Update any meta-data that is incorrect."
             + HelpRequiringPassphrase());
 
@@ -2557,7 +2557,7 @@ Value resetspentzerocoin(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 0)
         throw runtime_error(
-            "resetspentzerocoin"
+            "resetspentzerocoin\n"
                 "Scan the blockchain for all of the zerocoins that are held in the wallet.dat. Reset mints that are considered spent that did not make it into the blockchain."
             + HelpRequiringPassphrase());
 
@@ -2606,7 +2606,7 @@ Value getarchivedzerocoin(const Array& params, bool fHelp)
 {
     if(fHelp || params.size() != 0)
         throw runtime_error(
-            "getarchivedzerocoin"
+            "getarchivedzerocoin\n"
             "Display zerocoins that were archived because they were believed to be orphans."
             "Provides enough information to recover mint if it was incorrectly archived."
             + HelpRequiringPassphrase());
@@ -2626,4 +2626,118 @@ Value getarchivedzerocoin(const Array& params, bool fHelp)
     }
 
     return arrRet;
+}
+
+Value exportzerocoins(const Array& params, bool fHelp)
+{
+    if(fHelp || params.size() != 1)
+        throw runtime_error(
+            "exportzerocoins include_spent\n"
+                "\nImport zerocoin mints.\n"
+                "Exports zerocoin mints that are held by this wallet.dat\n"
+
+                "\nArguments:\n"
+                "1. \"include_spent\"        (bool, required) Include mints that have already been spent\n"
+
+                "\nResult\n"
+                "[                   (array of json object)\n"
+                "  {\n"
+                "    \"d\" : n,        (numeric) the mint's zerocoin denomination \n"
+                "    \"p\" : \"pubcoin\", (string) The public coin\n"
+                "    \"s\" : \"serial\",  (string) The secret serial number\n"
+                "    \"r\" : \"random\",  (string) The secret random number\n"
+                "    \"t\" : \"txid\",    (string) The txid that the coin was minted in\n"
+                "    \"h\" : n,         (numeric) The height the tx was added to the blockchain\n"
+                "    \"u\" : used       (boolean) Whether the mint has been spent\n"
+                "  }\n"
+                "  ,...\n"
+                "]\n"
+
+                "\nExamples\n" +
+            HelpExampleCli("exportzerocoins", "false") + HelpExampleRpc("exportzerocoins", "false"));
+
+    if (pwalletMain->IsLocked())
+        throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
+
+    CWalletDB walletdb(pwalletMain->strWalletFile);
+
+    bool fIncludeSpent = params[0].get_bool();
+    list<CZerocoinMint> listMints = walletdb.ListMintedCoins(!fIncludeSpent, false);
+
+    Array jsonList;
+    for (const CZerocoinMint mint : listMints) {
+        Object objMint;
+        objMint.emplace_back(Pair("d", mint.GetDenomination()));
+        objMint.emplace_back(Pair("p", mint.GetValue().GetHex()));
+        objMint.emplace_back(Pair("s", mint.GetSerialNumber().GetHex()));
+        objMint.emplace_back(Pair("r", mint.GetRandomness().GetHex()));
+        objMint.emplace_back(Pair("t", mint.GetTxHash().GetHex()));
+        objMint.emplace_back(Pair("h", mint.GetHeight()));
+        objMint.emplace_back(Pair("u", mint.IsUsed()));
+        jsonList.emplace_back(objMint);
+    }
+
+    return jsonList;
+}
+
+Value importzerocoins(const Array& params, bool fHelp)
+{
+    if(fHelp || params.size() == 0)
+        throw runtime_error(
+            "importzerocoins importdata \n"
+                "[{\"d\":denomination,\"p\":\"pubcoin_hex\",\"s\":\"serial_hex\",\"r\":\"randomness_hex\",\"t\":\"txid\",\"h\":height, \"u\":used},{\"d\":...}]\n"
+                "\nImport zerocoin mints.\n"
+                "Adds raw zerocoin mints to the wallet.dat\n"
+                "Note it is recommended to use the json export created from the exportzerocoins RPC call\n"
+
+                "\nArguments:\n"
+                "1. \"importdata\"    (string, required) A json array of json objects containing zerocoin mints\n"
+
+                "\nResult:\n"
+                "\"added\"            (int) the quantity of zerocoin mints that were added\n"
+                "\"value\"            (string) the total zPiv value of zerocoin mints that were added\n"
+
+                "\nExamples\n" +
+            HelpExampleCli("importzerocoins", "\'[{\"d\":100,\"p\":\"mypubcoin\",\"s\":\"myserial\",\"r\":\"randomness_hex\",\"t\":\"mytxid\",\"h\":104923, \"u\":false},{\"d\":5,...}]\'") +
+                HelpExampleRpc("importzerocoins", "[{\"d\":100,\"p\":\"mypubcoin\",\"s\":\"myserial\",\"r\":\"randomness_hex\",\"t\":\"mytxid\",\"h\":104923, \"u\":false},{\"d\":5,...}]"));
+
+    if(pwalletMain->IsLocked())
+        throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
+
+    RPCTypeCheck(params, list_of(array_type)(obj_type));
+    Array arrMints = params[0].get_array();
+    CWalletDB walletdb(pwalletMain->strWalletFile);
+
+    int count = 0;
+    CAmount nValue = 0;
+    for (const Value &val : arrMints) {
+        const Object &o = val.get_obj();
+
+        int d = ParseInt(o, "d");
+        if (d < 0)
+            throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, d must be positive");
+
+        libzerocoin::CoinDenomination denom = libzerocoin::IntToZerocoinDenomination(d);
+        CBigNum bnValue = CBigNum(find_value(o, "p").get_str());
+        CBigNum bnSerial = CBigNum(find_value(o, "s").get_str());
+        CBigNum bnRandom = CBigNum(find_value(o, "r").get_str());
+        uint256 txid(find_value(o, "t").get_str());
+
+        int nHeight = ParseInt(o, "h");
+        if (nHeight < 0)
+            throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, h must be positive");
+
+        bool fUsed = ParseBool(o, "u");
+        CZerocoinMint mint(denom, bnValue, bnRandom, bnSerial, fUsed);
+        mint.SetTxHash(txid);
+        mint.SetHeight(nHeight);
+        walletdb.WriteZerocoinMint(mint);
+        count++;
+        nValue += libzerocoin::ZerocoinDenominationToAmount(denom);
+    }
+
+    Object ret;
+    ret.emplace_back(Pair("added", count));
+    ret.emplace_back(Pair("value", FormatMoney(nValue)));
+    return ret;
 }

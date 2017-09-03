@@ -133,6 +133,8 @@ extern uint256 ParseHashV(const json_spirit::Value& v, std::string strName);
 extern uint256 ParseHashO(const json_spirit::Object& o, std::string strKey);
 extern std::vector<unsigned char> ParseHexV(const json_spirit::Value& v, std::string strName);
 extern std::vector<unsigned char> ParseHexO(const json_spirit::Object& o, std::string strKey);
+extern int ParseInt(const json_spirit::Object& o, std::string strKey);
+extern bool ParseBool(const json_spirit::Object& o, std::string strKey);
 
 extern void InitRPCMining();
 extern void ShutdownRPCMining();
@@ -220,6 +222,8 @@ extern json_spirit::Value spendzerocoin(const json_spirit::Array& params, bool f
 extern json_spirit::Value resetmintzerocoin(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value resetspentzerocoin(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value getarchivedzerocoin(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value importzerocoins(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value exportzerocoins(const json_spirit::Array& params, bool fHelp);
 
 extern json_spirit::Value getrawtransaction(const json_spirit::Array& params, bool fHelp); // in rcprawtransaction.cpp
 extern json_spirit::Value listunspent(const json_spirit::Array& params, bool fHelp);
