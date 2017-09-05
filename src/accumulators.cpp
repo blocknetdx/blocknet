@@ -331,7 +331,7 @@ bool CAccumulators::IntializeWitnessAndAccumulator(const PublicCoin &coin, Accum
 
         //if a new checkpoint was generated on this block, and we have added the specified amount of checkpointed accumulators,
         //then initialize the accumulator at this point and break
-        if (pindex->nHeight == nHeightStop || (nSecurityLevel > 100 && nCheckpointsAdded >= nSecurityLevel)) {
+        if (pindex->nHeight == nHeightStop || nCheckpointsAdded >= nSecurityLevel) {
             CBigNum bnAccValue = GetAccumulatorValueFromCheckpoint(chainActive[pindex->nHeight + 20]->nAccumulatorCheckpoint, coin.getDenomination());
             accumulator.setValue(bnAccValue);
             break;
