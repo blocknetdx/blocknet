@@ -435,7 +435,7 @@ bool XBridgeExchange::updateTransactionWhenConfirmedReceived(XBridgeTransactionP
 bool XBridgeExchange::updateTransaction(const uint256 & /*hash*/)
 {
     // assert(!"not implemented");
-    LOG() << "unknown transaction, id";
+    LOG() << "not implemented";
     return true;
 
 //    // DEBUG_TRACE();
