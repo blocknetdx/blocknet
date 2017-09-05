@@ -4078,6 +4078,15 @@ bool CWallet::CreateZerocoinSpendTransaction(CAmount nValue, int nSecurityLevel,
     // for Debug
     listSpends(vSelectedMints);
 
+    for (CZerocoinMint mint : vSelectedMints) {
+        uint256 txHash = 0;
+        if (!IsSerialKnown(mint.GetSerialNumber()))
+            continue;
+
+        strFailReason = _("trying to spend an already spent serial #");
+        return false;
+    }
+
     if (vSelectedMints.empty()) {
         strFailReason = _("failed to select a zerocoin");
         return false;

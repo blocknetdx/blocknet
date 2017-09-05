@@ -1102,8 +1102,17 @@ std::list<CZerocoinMint> CWalletDB::ListMintedCoins(bool fUnusedOnly, bool fMatu
         CZerocoinMint mint;
         ssValue >> mint;
 
-        if (fUnusedOnly && mint.IsUsed())
-            continue;
+        if (fUnusedOnly) {
+            if (mint.IsUsed())
+                continue;
+
+            //double check that we have no record of this serial being used
+            uint256 txHash = 0;
+            if (ReadZerocoinSpendSerialEntry(mint.GetSerialNumber())) {
+                mint.SetUsed(true);
+                vOverWrite.emplace_back(mint);
+            }
+        }
 
         if (fMaturedOnly) {
             //if there is not a record of the block height, then look it up and assign it
@@ -1118,7 +1127,7 @@ std::list<CZerocoinMint> CWalletDB::ListMintedCoins(bool fUnusedOnly, bool fMatu
                 //set the updated block height
                 try {
                     mint.SetHeight(mapBlockIndex.at(hashBlock)->nHeight);
-                    vOverWrite.push_back(mint);
+                    vOverWrite.emplace_back(mint);
                 } catch (...) {
                     continue;
                 }

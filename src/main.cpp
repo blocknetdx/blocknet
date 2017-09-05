@@ -1073,6 +1073,12 @@ void FindMints(vector<CZerocoinMint> vMintsToFind, vector<CZerocoinMint>& vMints
     }
 }
 
+bool IsSerialKnown(const CBigNum& bnSerial)
+{
+    uint256 txHash = 0;
+    return zerocoinDB->ReadCoinSpend(bnSerial, txHash);
+}
+
 /** zerocoin transaction checks */
 bool RecordMintToDB(PublicCoin publicZerocoin, const uint256& txHash)
 {
