@@ -64,6 +64,8 @@ private:
     CAmount currentWatchOnlyBalance;
     CAmount currentWatchUnconfBalance;
     CAmount currentWatchImmatureBalance;
+    
+    int nSecurityLevel = 0;
 
     int nDisplayUnit;
     bool updateLabel(const QString& address);

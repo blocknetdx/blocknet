@@ -118,6 +118,7 @@ int nSwiftTXDepth = 5;
 bool fEnableZeromint = true;
 int nZeromintPercentage = 10;
 int nPreferredDenom = 0;
+const int64_t AUTOMINT_DELAY = (60 * 5); // Wait at least 5 minutes until Automint starts
 
 int nAnonymizePivxAmount = 1000;
 int nLiquidityProvider = 0;

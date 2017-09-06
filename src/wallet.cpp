@@ -49,6 +49,7 @@ bool fPayAtLeastCustomFee = true;
  * Override with -mintxfee
  */
 CFeeRate CWallet::minTxFee = CFeeRate(10000);
+int64_t nStartupTime = GetAdjustedTime();
 
 /** @defgroup mapWallet
  *
@@ -3421,8 +3422,17 @@ bool CWallet::GetDestData(const CTxDestination& dest, const std::string& key, st
 // CWallet::AutoZeromint() gets called with each new incoming block
 void CWallet::AutoZeromint()
 {
-    // Wait until blockchain is fully synced and wallet is unlocked
-    if (!masternodeSync.IsBlockchainSynced() || IsLocked()) return;
+
+    // Wait until blockchain is fully synced and wallet is unlocked.
+    if (!masternodeSync.IsBlockchainSynced() || IsLocked()){
+        // Re-adjust startup time in case syncing needs a long time
+        nStartupTime = GetAdjustedTime();
+        return;
+    }
+
+    // After sync wait even more to reduce load when wallet was just started
+    int64_t nWaitTime = GetAdjustedTime() - nStartupTime;
+    if (nWaitTime < AUTOMINT_DELAY) return;
 
     CAmount nZerocoinBalance = GetZerocoinBalance();
     CAmount nBalance = GetUnlockedCoins(); // We only consider unlocked coins, this also excludes masternode-vins

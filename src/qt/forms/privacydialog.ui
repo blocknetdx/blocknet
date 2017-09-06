@@ -724,16 +724,22 @@
              <string>Security Level 1 - 100 (default: 100)</string>
             </property>
             <property name="buttonSymbols">
-             <enum>QAbstractSpinBox::UpDownArrows</enum>
+             <enum>QAbstractSpinBox::PlusMinus</enum>
+            </property>
+            <property name="accelerated">
+             <bool>true</bool>
+            </property>
+            <property name="correctionMode">
+             <enum>QAbstractSpinBox::CorrectToNearestValue</enum>
             </property>
             <property name="minimum">
-             <number>10</number>
+             <number>1</number>
             </property>
             <property name="maximum">
              <number>100</number>
             </property>
             <property name="value">
-             <number>100</number>
+             <number>42</number>
             </property>
            </widget>
           </item>

@@ -15,6 +15,7 @@
 #include "coincontrol.h"
 
 #include <QClipboard>
+#include <QSettings>
 
 PrivacyDialog::PrivacyDialog(QWidget* parent) : QDialog(parent),
                                                           ui(new Ui::PrivacyDialog),
@@ -49,7 +50,17 @@ PrivacyDialog::PrivacyDialog(QWidget* parent) : QDialog(parent),
     connect(clipboardAmountAction, SIGNAL(triggered()), this, SLOT(coinControlClipboardAmount()));
     ui->labelCoinControlQuantity->addAction(clipboardQuantityAction);
     ui->labelCoinControlAmount->addAction(clipboardAmountAction);
-
+    
+    // PIVX settings
+    QSettings settings;
+    if (!settings.contains("nSecurityLevel")){
+        nSecurityLevel = 42;
+        settings.setValue("nSecurityLevel", nSecurityLevel);
+    }
+    else{
+        nSecurityLevel = settings.value("nSecurityLevel").toInt();
+    }
+    
     // Start with displaying the "out of sync" warnings
     showOutOfSyncWarning(true);
 }
@@ -71,6 +82,7 @@ void PrivacyDialog::setModel(WalletModel* walletModel)
         
         connect(walletModel, SIGNAL(balanceChanged(CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount)), this, 
                                SLOT(setBalance(CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount)));
+        ui->securityLevel->setValue(nSecurityLevel);
     }
 }
 
@@ -193,6 +205,8 @@ void PrivacyDialog::on_pushButtonSpentReset_clicked()
 
 void PrivacyDialog::on_pushButtonSpendzPIV_clicked()
 {
+    QSettings settings;
+    
     if (!walletModel || !walletModel->getOptionsModel() || !pwalletMain)
         return;
 
@@ -210,7 +224,9 @@ void PrivacyDialog::on_pushButtonSpendzPIV_clicked()
         return;
     }
 
-    int nSecurityLevel = ui->securityLevel->value();
+    nSecurityLevel = ui->securityLevel->value();
+    settings.setValue("nSecurityLevel", nSecurityLevel);
+    
     bool fMintChange = ui->checkBoxMintChange->isChecked();
     CWalletTx wtxNew;
     vector<CZerocoinMint> vMintsSelected;
