@@ -351,7 +351,7 @@ void UpdateCoins(const CTransaction& tx, CValidationState& state, CCoinsViewCach
 /** Context-independent validity checks */
 bool CheckTransaction(const CTransaction& tx, bool fZerocoinActive, CValidationState& state);
 bool CheckZerocoinMint(const uint256& txHash, const CTxOut& txout, CValidationState& state, bool fCheckOnly = false);
-bool CheckZerocoinSpend(const CTransaction tx, CValidationState& state);
+bool CheckZerocoinSpend(const CTransaction tx, bool fVerifySignature, CValidationState& state);
 bool CheckZerocoinOverSpend(const CAmount nAmountRedeemed, const CTransaction &txContainingMint, CValidationState& state);
 libzerocoin::CoinSpend TxInToZerocoinSpend(const CTxIn& txin);
 bool TxOutToPublicCoin(const CTxOut txout, libzerocoin::PublicCoin& pubCoin, CValidationState& state);

@@ -1234,7 +1234,7 @@ bool IsZerocoinSpendUnknown(CoinSpend coinSpend, uint256 hashTx, CValidationStat
     return true;
 }
 
-bool CheckZerocoinSpend(const CTransaction tx, CValidationState& state)
+bool CheckZerocoinSpend(const CTransaction tx, bool fVerifySignature, CValidationState& state)
 {
     if(GetAdjustedTime() < GetSporkValue(SPORK_17_ENABLE_ZEROCOIN))
         return state.DoS(100, error("CheckZerocoinSpend(): Zerocoin transactions are not allowed yet"));
@@ -1262,7 +1262,7 @@ bool CheckZerocoinSpend(const CTransaction tx, CValidationState& state)
     set<CBigNum> serials;
     list<CoinSpend> vSpends;
     CAmount nTotalRedeemed = 0;
-    BOOST_FOREACH(const CTxIn& txin, tx.vin) {
+    for (const CTxIn& txin : tx.vin) {
 
         //only check txin that is a zcspend
         if (!txin.scriptSig.IsZerocoinSpend())
@@ -1283,16 +1283,20 @@ bool CheckZerocoinSpend(const CTransaction tx, CValidationState& state)
         if (newSpend.getTxOutHash() != hashTxOut)
             return state.DoS(100, error("Zerocoinspend does not use the same txout that was used in the SoK"));
 
-        //see if we have record of the accumulator used in the spend tx
-        CBigNum bnAccumulatorValue = CAccumulators::getInstance().GetAccumulatorValueFromChecksum(newSpend.getAccumulatorChecksum());
-        if(bnAccumulatorValue == 0)
-            return state.DoS(100, error("Zerocoinspend could not find accumulator associated with checksum"));
+        // Skip signature verification during initial block download
+        if (fVerifySignature) {
+            //see if we have record of the accumulator used in the spend tx
+            CBigNum bnAccumulatorValue = CAccumulators::getInstance().GetAccumulatorValueFromChecksum(
+                newSpend.getAccumulatorChecksum());
+            if(bnAccumulatorValue == 0)
+                return state.DoS(100, error("Zerocoinspend could not find accumulator associated with checksum"));
 
-        Accumulator accumulator(Params().Zerocoin_Params(), newSpend.getDenomination(), bnAccumulatorValue);
+            Accumulator accumulator(Params().Zerocoin_Params(), newSpend.getDenomination(), bnAccumulatorValue);
 
-        //Check that the coin is on the accumulator
-        if (!newSpend.Verify(accumulator))
-            return state.DoS(100, error("CheckZerocoinSpend(): zerocoin spend did not verify"));
+            //Check that the coin is on the accumulator
+            if(!newSpend.Verify(accumulator))
+                return state.DoS(100, error("CheckZerocoinSpend(): zerocoin spend did not verify"));
+        }
 
         if (serials.count(newSpend.getCoinSerialNumber()))
             return state.DoS(100, error("Zerocoinspend serial is used twice in the same tx"));
@@ -1388,9 +1392,10 @@ bool CheckTransaction(const CTransaction& tx, bool fZerocoinActive, CValidationS
                                      error("CheckTransaction() : zerocoinspend contains inputs that are not zerocoins"));
             }
 
-            if (!CheckZerocoinSpend(tx, state))
+            // Do not require signature verification if this is initial sync and a block over 24 hours old
+            bool fVerifySignature = !IsInitialBlockDownload() && (GetTime() - chainActive.Tip()->GetBlockTime() < (60*60*24));
+            if (!CheckZerocoinSpend(tx, fVerifySignature, state))
                 return state.DoS(100, error("CheckTransaction() : invalid zerocoin spend"));
-
         }
     }
 
