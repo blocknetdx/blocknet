@@ -3432,7 +3432,10 @@ void CWallet::AutoZeromint()
 
     // After sync wait even more to reduce load when wallet was just started
     int64_t nWaitTime = GetAdjustedTime() - nStartupTime;
-    if (nWaitTime < AUTOMINT_DELAY) return;
+    if (nWaitTime < AUTOMINT_DELAY){
+        LogPrintf("CWallet::AutoZeromint(): time since blockchain synced (%ld sec) < default waiting time (%ld sec). Waiting again...\n", nWaitTime, AUTOMINT_DELAY);
+        return;
+    }
 
     CAmount nZerocoinBalance = GetZerocoinBalance();
     CAmount nBalance = GetUnlockedCoins(); // We only consider unlocked coins, this also excludes masternode-vins
@@ -3992,12 +3995,6 @@ bool CWallet::MintToTxIn(CZerocoinMint zerocoinSelected, int nSecurityLevel, con
     try {
         libzerocoin::CoinSpend spend(Params().Zerocoin_Params(), privateCoin, accumulator, nChecksum, witness, hashTxOut);
 
-
-
-
-
-
-
         if (!spend.Verify(accumulator)) {
             LogPrintf("%s : the new spend coin transaction did not verify\n", __func__);
             strFailReason = _("the new spend coin transaction did not verify");
@@ -4105,7 +4102,6 @@ bool CWallet::CreateZerocoinSpendTransaction(CAmount nValue, int nSecurityLevel,
     listSpends(vSelectedMints);
 
     for (CZerocoinMint mint : vSelectedMints) {
-        uint256 txHash = 0;
         if (!IsSerialKnown(mint.GetSerialNumber()))
             continue;
 
