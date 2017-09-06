@@ -392,10 +392,12 @@ void XBridgeTransactionDialog::onAddressBookTo()
     }
 }
 
+//******************************************************************************
+//******************************************************************************
 double XBridgeTransactionDialog::accountBalance(const std::string &currency)
 {
     XBridgeApp & app = XBridgeApp::instance();
     XBridgeSessionPtr session = app.sessionByCurrency(currency);
 
-    return session->getAccountBalance();
+    return session->getWalletBalance();
 }

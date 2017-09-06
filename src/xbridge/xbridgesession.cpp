@@ -2449,6 +2449,13 @@ bool XBridgeSession::processTransactionCancel(XBridgePacketPtr packet)
     uint256 txid(packet->data());
     TxCancelReason reason = static_cast<TxCancelReason>(*reinterpret_cast<uint32_t*>(packet->data() + 32));
 
+    return cancelOrRollbackTransaction(txid, reason);
+}
+
+//*****************************************************************************
+//*****************************************************************************
+bool XBridgeSession::cancelOrRollbackTransaction(const uint256 & txid, const TxCancelReason & reason)
+{
     // check and process packet if bridge is exchange
     XBridgeExchange & e = XBridgeExchange::instance();
     if (e.isStarted())
@@ -2475,9 +2482,29 @@ bool XBridgeSession::processTransactionCancel(XBridgePacketPtr packet)
         XBridgeApp::m_pendingPackets.erase(txid);
     }
 
-    // update transaction state for gui
-    xtx->state = XBridgeTransactionDescr::trCancelled;
-    xuiConnector.NotifyXBridgeTransactionCancelled(txid, XBridgeTransactionDescr::trCancelled, reason);
+    if (xtx->state < XBridgeTransactionDescr::trCreated)
+    {
+        xtx->state = XBridgeTransactionDescr::trCancelled;
+        xuiConnector.NotifyXBridgeTransactionCancelled(txid, XBridgeTransactionDescr::trCancelled, reason);
+    }
+    else
+    {
+        // rollback, commit revert transaction
+        std::string sid;
+        int32_t errCode = 0;
+        if (!rpc::sendRawTransaction(m_wallet.user, m_wallet.passwd, m_wallet.ip, m_wallet.port, xtx->refTx, sid, errCode))
+        {
+            LOG() << "send rollback error, tx " << util::to_str(txid) << " " << __FUNCTION__;
+            xtx->state = XBridgeTransactionDescr::trRollbackFailed;
+        }
+        else
+        {
+            xtx->state = XBridgeTransactionDescr::trRollback;
+        }
+
+        // update transaction state for gui
+        xuiConnector.NotifyXBridgeTransactionStateChanged(txid, (XBridgeTransactionDescr::State)xtx->state);
+    }
 
     XBridgeApp::m_historicTransactions[txid] = xtx;
 
@@ -2927,48 +2954,11 @@ bool XBridgeSession::processTransactionFinished(XBridgePacketPtr packet)
 
 //******************************************************************************
 //******************************************************************************
-bool XBridgeSession::revertXBridgeTransaction(const uint256 & id)
+bool XBridgeSession::rollbacktXBridgeTransaction(const uint256 & id)
 {
     DEBUG_TRACE_LOG(currencyToLog());
 
-    // TODO temporary implementation
-    XBridgeTransactionDescrPtr xtx;
-    {
-        boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
-
-        // search tx
-        for (std::map<uint256, XBridgeTransactionDescrPtr>::iterator i = XBridgeApp::m_transactions.begin();
-             i != XBridgeApp::m_transactions.end(); ++i)
-        {
-            if (i->second->id == id)
-            {
-                xtx = i->second;
-                break;
-            }
-        }
-    }
-
-    if (!xtx)
-    {
-        LOG() << "unknown transaction " << util::to_str(id) << " " << __FUNCTION__;
-        return true;
-    }
-
-    // rollback, commit revert transaction
-    std::string txid;
-    int32_t errCode = 0;
-    if (!rpc::sendRawTransaction(m_wallet.user, m_wallet.passwd, m_wallet.ip, m_wallet.port, xtx->refTx, txid, errCode))
-    {
-        // not commited....send cancel???
-        // sendCancelTransaction(id);
-        return false;
-    }
-
-    // update transaction state for gui
-    xtx->state = XBridgeTransactionDescr::trRollback;
-    xuiConnector.NotifyXBridgeTransactionStateChanged(id, xtx->state);
-
-    return true;
+    return cancelOrRollbackTransaction(id, crRollback);
 }
 
 //******************************************************************************
@@ -2977,14 +2967,14 @@ bool XBridgeSession::processTransactionRollback(XBridgePacketPtr packet)
 {
     DEBUG_TRACE_LOG(currencyToLog());
 
-    if (packet->size() != 52)
+    if (packet->size() != 32)
     {
         ERR() << "incorrect packet size for xbcTransactionRollback" << __FUNCTION__;
         return false;
     }
 
     // transaction id
-    uint256 txid(packet->data()+20);
+    uint256 txid(packet->data());
 
     // for rollback need local transaction id
     // TODO maybe hub id?
@@ -3002,7 +2992,7 @@ bool XBridgeSession::processTransactionRollback(XBridgePacketPtr packet)
         xtx = XBridgeApp::m_transactions[txid];
     }
 
-    revertXBridgeTransaction(xtx->id);
+    rollbacktXBridgeTransaction(xtx->id);
     return true;
 }
 
@@ -3102,7 +3092,9 @@ bool XBridgeSession::checkAmount(const uint64_t _amount) const
     return false;
 }
 
-double XBridgeSession::getAccountBalance() const
+//******************************************************************************
+//******************************************************************************
+double XBridgeSession::getWalletBalance() const
 {
     std::vector<rpc::Unspent> entries;
     if (!rpc::listUnspent(m_wallet.user, m_wallet.passwd,
@@ -3114,7 +3106,9 @@ double XBridgeSession::getAccountBalance() const
 
     double amount = 0;
     for (const rpc::Unspent & entry : entries)
+    {
         amount += entry.amount;
+    }
 
     return amount;
 }

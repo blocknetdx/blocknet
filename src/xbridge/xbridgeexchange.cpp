@@ -8,6 +8,7 @@
 #include "util/xutil.h"
 #include "bitcoinrpcconnector.h"
 #include "activeservicenode.h"
+#include "chainparamsbase.h"
 
 #include <algorithm>
 
@@ -109,14 +110,17 @@ bool XBridgeExchange::init()
 //*****************************************************************************
 bool XBridgeExchange::isEnabled()
 {
-    return m_wallets.size() > 0 && fServiceNode;
+    static bool isEnabled = (NetworkIdFromCommandLine() == CBaseChainParams::MAIN) ?
+                ((m_wallets.size() > 0) && fServiceNode) : (m_wallets.size() > 0);
+    return isEnabled;
 }
 
 //*****************************************************************************
 //*****************************************************************************
 bool XBridgeExchange::isStarted()
 {
-    return isEnabled() && (activeServicenode.status == ACTIVE_SERVICENODE_STARTED);
+    return (NetworkIdFromCommandLine() == CBaseChainParams::MAIN) ?
+                (isEnabled() && (activeServicenode.status == ACTIVE_SERVICENODE_STARTED)) : isEnabled();
 }
 
 //*****************************************************************************

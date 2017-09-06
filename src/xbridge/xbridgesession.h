@@ -66,9 +66,9 @@ public:
     void requestUnconfirmedTx();
 
     bool checkAmount(const uint64_t amount) const;
-    double getAccountBalance() const;
+    double getWalletBalance() const;
 
-    bool revertXBridgeTransaction(const uint256 & id);
+    bool rollbacktXBridgeTransaction(const uint256 & id);
 
 private:
     virtual void init();
@@ -166,6 +166,8 @@ protected:
     virtual bool rollbackTransaction(XBridgeTransactionPtr tr);
 
     virtual bool processTransactionCancel(XBridgePacketPtr packet);
+    bool cancelOrRollbackTransaction(const uint256 & txid, const TxCancelReason & reason);
+
     virtual bool processTransactionFinished(XBridgePacketPtr packet);
     virtual bool processTransactionRollback(XBridgePacketPtr packet);
     virtual bool processTransactionDropped(XBridgePacketPtr packet);

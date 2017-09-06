@@ -40,6 +40,7 @@ struct XBridgeTransactionDescr
         trCommited,
         trFinished,
         trRollback,
+        trRollbackFailed,
         trDropped,
         trCancelled,
         trInvalid

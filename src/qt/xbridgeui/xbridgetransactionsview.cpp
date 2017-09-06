@@ -170,17 +170,24 @@ QMenu * XBridgeTransactionsView::setupContextMenu(QModelIndex & index)
     }
     else
     {
-        QAction * cancelTransaction = new QAction(tr("&Cancel transaction"), this);
-        contextMenu->addAction(cancelTransaction);
+        XBridgeTransactionDescr d = m_txModel.item(m_contextMenuIndex.row());
 
-        connect(cancelTransaction,   SIGNAL(triggered()),
-                this,                SLOT(onCancelTransaction()));
+        if (d.state < XBridgeTransactionDescr::trCreated)
+        {
+            QAction * cancelTransaction = new QAction(tr("&Cancel transaction"), this);
+            contextMenu->addAction(cancelTransaction);
 
-        QAction * rollbackTransaction = new QAction(tr("&Rollback transaction"), this);
-        contextMenu->addAction(rollbackTransaction);
+            connect(cancelTransaction,   SIGNAL(triggered()),
+                    this,                SLOT(onCancelTransaction()));
+        }
+        else
+        {
+            QAction * rollbackTransaction = new QAction(tr("&Rollback transaction"), this);
+            contextMenu->addAction(rollbackTransaction);
 
-        connect(rollbackTransaction, SIGNAL(triggered()),
-                this,                SLOT(onRollbackTransaction()));
+            connect(rollbackTransaction, SIGNAL(triggered()),
+                    this,                SLOT(onRollbackTransaction()));
+        }
     }
 
     return contextMenu;
@@ -266,11 +273,11 @@ void XBridgeTransactionsView::onRollbackTransaction()
         return;
     }
 
-    if (!m_txModel.cancelTransaction(m_txModel.item(m_contextMenuIndex.row()).id))
+    if (!m_txModel.rollbackTransaction(m_txModel.item(m_contextMenuIndex.row()).id))
     {
         QMessageBox::warning(this,
                              trUtf8("Cancel transaction"),
-                             trUtf8("Error send cancel request"));
+                             trUtf8("Error send rollback request"));
     }
 }
 

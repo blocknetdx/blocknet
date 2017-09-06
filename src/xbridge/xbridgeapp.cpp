@@ -847,6 +847,7 @@ bool XBridgeApp::sendAcceptingTransaction(XBridgeTransactionDescrPtr & ptr)
 bool XBridgeApp::cancelXBridgeTransaction(const uint256 & id,
                                           const TxCancelReason & reason)
 {
+    if (sendCancelTransaction(id, reason))
     {
         boost::mutex::scoped_lock l(m_txLocker);
 
@@ -854,10 +855,11 @@ bool XBridgeApp::cancelXBridgeTransaction(const uint256 & id,
         if (m_transactions.count(id))
         {
             m_transactions[id]->state = XBridgeTransactionDescr::trCancelled;
+            xuiConnector.NotifyXBridgeTransactionStateChanged(id, XBridgeTransactionDescr::trCancelled);
         }
     }
 
-    return sendCancelTransaction(id, reason);
+    return true;
 }
 
 //******************************************************************************
@@ -877,6 +879,7 @@ bool XBridgeApp::rollbackXBridgeTransaction(const uint256 & id)
                 if (!session)
                 {
                     ERR() << "unknown session for currency " << ptr->fromCurrency;
+                    return false;
                 }
             }
         }
@@ -885,14 +888,16 @@ bool XBridgeApp::rollbackXBridgeTransaction(const uint256 & id)
     if (session)
     {
         // session use m_txLocker, must be unlocked because not recursive
-        if (!session->revertXBridgeTransaction(id))
+        if (!session->rollbacktXBridgeTransaction(id))
         {
             LOG() << "revert tx failed for " << id.ToString();
             return false;
         }
+
+        sendRollbackTransaction(id);
     }
 
-    return sendRollbackTransaction(id);
+    return true;
 }
 
 //******************************************************************************
