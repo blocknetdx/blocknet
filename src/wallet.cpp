@@ -3988,74 +3988,90 @@ bool CWallet::MintToTxIn(CZerocoinMint zerocoinSelected, int nSecurityLevel, con
     LogPrintf("ZCPRINT %s before get checksum\n", __func__);
     uint32_t nChecksum = CAccumulators::getInstance().GetChecksum(accumulator);
     LogPrintf("ZCPRINT %s checksum is %d\n", __func__, nChecksum);
-    libzerocoin::CoinSpend spend(Params().Zerocoin_Params(), privateCoin, accumulator, nChecksum, witness, hashTxOut);
 
-    if (!spend.Verify(accumulator)) {
-        LogPrintf("%s : the new spend coin transaction did not verify\n", __func__);
-        strFailReason = _("the new spend coin transaction did not verify");
-        return false;
-    }
-
-    /********************************************************************/
-    // What is it:      Coin spend verification
-    // Who does it:     ALL PARTIES
-    // What it does:    Verifies that a CoinSpend signature is correct
-    //                  with respect to a ZEROCOIN_SPEND transaction hash.
-    //                  The client must also extract the serial number from
-    //                  the CoinSpend and verify that this serial number has
-    //                  not previously appeared in another ZEROCOIN_SPEND
-    //                  transaction.
-    /********************************************************************/
-
-    // Deserialize the CoinSpend intro a fresh object
-    CDataStream serializedCoinSpend(SER_NETWORK, PROTOCOL_VERSION);
-    serializedCoinSpend << spend;
-    std::vector<unsigned char> data(serializedCoinSpend.begin(), serializedCoinSpend.end());
-
-    LogPrintf("ZCPRINT %s add to tx\n", __func__);
-    //Add the coin spend into a PIVX transaction
-    newTxIn.scriptSig = CScript() << OP_ZEROCOINSPEND << data.size();
-    newTxIn.scriptSig.insert(newTxIn.scriptSig.end(), data.begin(), data.end());
-    newTxIn.prevout.SetNull();
-
-    //use nSequence as a shorthand lookup of denomination
-    //NOTE that this should never be used in place of checking the value in the final blockchain acceptance/verification
-    //of the transaction
-    newTxIn.nSequence = denomination;
-
-    LogPrintf("ZCPRINT %s deserialize\n", __func__);
-    CDataStream serializedCoinSpendChecking(SER_NETWORK, PROTOCOL_VERSION);
     try {
-        serializedCoinSpendChecking << spend;
-    } catch (...) {
-        LogPrintf("ZCPRINT %s failed to deserialize\n", __func__);
-    }
+        libzerocoin::CoinSpend spend(Params().Zerocoin_Params(), privateCoin, accumulator, nChecksum, witness, hashTxOut);
 
-    LogPrintf("ZCPRINT %s verify spend\n", __func__);
-    libzerocoin::CoinSpend newSpendChecking(Params().Zerocoin_Params(), serializedCoinSpendChecking);
-    if (!newSpendChecking.Verify(accumulator)) {
-        LogPrintf("ZCPRINT %s verify spend failed\n", __func__);
-        strFailReason = _("the transaction did not verify");
-        return false;
-    }
 
-    LogPrintf("ZCPRINT %s listspend serial\n", __func__);
-    std::list<CBigNum> listCoinSpendSerial = CWalletDB(strWalletFile).ListSpentCoinsSerial();
-    for (const CBigNum& item : listCoinSpendSerial) {
-        if (spend.getCoinSerialNumber() == item) {
-            // THIS SELECEDTED COIN HAS BEEN USED, SO UPDATE ITS STATUS
-            zerocoinSelected.SetUsed(true);
-            if (!CWalletDB(strWalletFile).WriteZerocoinMint(zerocoinSelected))
-                LogPrintf("%s failed to write zerocoinmint\n", __func__);
 
-            pwalletMain->NotifyZerocoinChanged(pwalletMain, zerocoinSelected.GetValue().GetHex(), "Used", CT_UPDATED);
-            strFailReason = _("the coin spend has been used");
+
+
+
+
+        if (!spend.Verify(accumulator)) {
+            LogPrintf("%s : the new spend coin transaction did not verify\n", __func__);
+            strFailReason = _("the new spend coin transaction did not verify");
             return false;
         }
-    }
 
-    uint32_t nAccumulatorChecksum = CAccumulators::getInstance().GetChecksum(accumulator);
-    zerocoinSpend = CZerocoinSpend(spend.getCoinSerialNumber(), 0, zerocoinSelected.GetValue(), zerocoinSelected.GetDenomination(), nAccumulatorChecksum);
+        /********************************************************************/
+        // What is it:      Coin spend verification
+        // Who does it:     ALL PARTIES
+        // What it does:    Verifies that a CoinSpend signature is correct
+        //                  with respect to a ZEROCOIN_SPEND transaction hash.
+        //                  The client must also extract the serial number from
+        //                  the CoinSpend and verify that this serial number has
+        //                  not previously appeared in another ZEROCOIN_SPEND
+        //                  transaction.
+        /********************************************************************/
+
+        // Deserialize the CoinSpend intro a fresh object
+        CDataStream serializedCoinSpend(SER_NETWORK, PROTOCOL_VERSION);
+        serializedCoinSpend << spend;
+        std::vector<unsigned char> data(serializedCoinSpend.begin(), serializedCoinSpend.end());
+
+        LogPrintf("ZCPRINT %s add to tx\n", __func__);
+        //Add the coin spend into a PIVX transaction
+        newTxIn.scriptSig = CScript() << OP_ZEROCOINSPEND << data.size();
+        newTxIn.scriptSig.insert(newTxIn.scriptSig.end(), data.begin(), data.end());
+        newTxIn.prevout.SetNull();
+
+        //use nSequence as a shorthand lookup of denomination
+        //NOTE that this should never be used in place of checking the value in the final blockchain acceptance/verification
+        //of the transaction
+        newTxIn.nSequence = denomination;
+
+        LogPrintf("ZCPRINT %s deserialize\n", __func__);
+        CDataStream serializedCoinSpendChecking(SER_NETWORK, PROTOCOL_VERSION);
+        try {
+            serializedCoinSpendChecking << spend;
+        }
+        catch (...) {
+            LogPrintf("ZCPRINT %s failed to deserialize\n", __func__);
+        }
+
+        LogPrintf("ZCPRINT %s verify spend\n", __func__);
+        libzerocoin::CoinSpend newSpendChecking(Params().Zerocoin_Params(), serializedCoinSpendChecking);
+        if (!newSpendChecking.Verify(accumulator)) {
+            LogPrintf("ZCPRINT %s verify spend failed\n", __func__);
+            strFailReason = _("the transaction did not verify");
+            return false;
+        }
+
+        LogPrintf("ZCPRINT %s listspend serial\n", __func__);
+        std::list<CBigNum> listCoinSpendSerial = CWalletDB(strWalletFile).ListSpentCoinsSerial();
+        for (const CBigNum& item : listCoinSpendSerial) {
+            if (spend.getCoinSerialNumber() == item) {
+                // THIS SELECEDTED COIN HAS BEEN USED, SO UPDATE ITS STATUS
+                zerocoinSelected.SetUsed(true);
+                if (!CWalletDB(strWalletFile).WriteZerocoinMint(zerocoinSelected))
+                    LogPrintf("%s failed to write zerocoinmint\n", __func__);
+
+                pwalletMain->NotifyZerocoinChanged(pwalletMain, zerocoinSelected.GetValue().GetHex(), "Used", CT_UPDATED);
+                strFailReason = _("the coin spend has been used");
+                return false;
+            }
+        }
+
+        uint32_t nAccumulatorChecksum = CAccumulators::getInstance().GetChecksum(accumulator);
+        zerocoinSpend = CZerocoinSpend(spend.getCoinSerialNumber(), 0, zerocoinSelected.GetValue(), zerocoinSelected.GetDenomination(), nAccumulatorChecksum);
+
+    }
+    catch (const std::exception&) {
+        LogPrintf("%s : CoinSpend spend: Accumulator witness does not verify\n", __func__);
+        strFailReason = _("CoinSpend: Accumulator witness does not verify\n");
+        return false;
+    }
 
     return true;
 }
