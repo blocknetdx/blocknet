@@ -550,8 +550,7 @@ bool XBridgeSession::processTransaction(XBridgePacketPtr packet)
                                  daddr, dcurrency, damount,
                                  pendingId, isCreated))
         {
-            // not created, send cancel
-            sendCancelTransaction(id, crXbridgeRejected);
+            // not created
             return true;
         }
 
@@ -737,13 +736,21 @@ bool XBridgeSession::processTransactionAccepting(XBridgePacketPtr packet)
                 // TODO remove this log
                 LOG() << "send xbcTransactionHold ";
 
-                XBridgePacketPtr reply1(new XBridgePacket(xbcTransactionHold));
-                reply1->append(sessionAddr());
-                reply1->append(tr->id().begin(), 32);
-                reply1->append(activeServicenode.pubKeyServicenode.begin(),
-                               activeServicenode.pubKeyServicenode.size());
+                std::vector<std::string> hosts;
+                hosts.push_back(tr->a_address());
+                hosts.push_back(tr->a_address());
 
-                sendPacketBroadcast(reply1);
+                for (const std::string & host : hosts)
+                {
+                    XBridgePacketPtr reply1(new XBridgePacket(xbcTransactionHold));
+                    reply1->append(rpc::toXAddr(host));
+                    reply1->append(sessionAddr());
+                    reply1->append(tr->id().begin(), 32);
+                    reply1->append(activeServicenode.pubKeyServicenode.begin(),
+                                   activeServicenode.pubKeyServicenode.size());
+
+                    sendPacket(host, reply1);
+                }
             }
         }
     }
@@ -757,10 +764,10 @@ bool XBridgeSession::processTransactionHold(XBridgePacketPtr packet)
 {
     DEBUG_TRACE_LOG(currencyToLog());
 
-    if (packet->size() != 85 && packet->size() != 117)
+    if (packet->size() != 105 && packet->size() != 137)
     {
         ERR() << "incorrect packet size for xbcTransactionHold "
-              << "need 85 or 117 received " << packet->size() << " "
+              << "need 105 or 137 received " << packet->size() << " "
               << __FUNCTION__;
         return false;
     }

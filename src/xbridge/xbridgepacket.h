@@ -118,7 +118,8 @@ enum XBridgeCommand
     xbcTransactionAccepting = 5,
 
     //
-    // xbcTransactionHold (85 or 117 bytes)
+    // xbcTransactionHold (105 or 137 bytes)
+    //    uint160 client address
     //    uint160 hub address
     //    uint256 transaction id
     //    public key, 33 or 65 bytes, servicenode public key
