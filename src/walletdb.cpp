@@ -1107,7 +1107,6 @@ std::list<CZerocoinMint> CWalletDB::ListMintedCoins(bool fUnusedOnly, bool fMatu
                 continue;
 
             //double check that we have no record of this serial being used
-            uint256 txHash = 0;
             if (ReadZerocoinSpendSerialEntry(mint.GetSerialNumber())) {
                 mint.SetUsed(true);
                 vOverWrite.emplace_back(mint);

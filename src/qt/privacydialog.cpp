@@ -206,31 +206,74 @@ void PrivacyDialog::on_pushButtonSpentReset_clicked()
 void PrivacyDialog::on_pushButtonSpendzPIV_clicked()
 {
     QSettings settings;
-    
+
     if (!walletModel || !walletModel->getOptionsModel() || !pwalletMain)
         return;
 
+    // Request unlock if wallet was locked or unlocked for mixing:
+    WalletModel::EncryptionStatus encStatus = walletModel->getEncryptionStatus();
+    if (encStatus == walletModel->Locked || encStatus == walletModel->UnlockedForAnonymizationOnly) {
+        WalletModel::UnlockContext ctx(walletModel->requestUnlock(true));
+        if (!ctx.isValid()) {
+            // Unlock wallet was cancelled
+            return;
+        }
+    }
+
+    // Handle 'Pay To' address options
     CBitcoinAddress address(ui->payTo->text().toStdString());
-    if (!address.IsValid()) {
-        QMessageBox::warning(this, tr("Spend Zerocoin"), tr("Invalid Pivx Address"), QMessageBox::Ok, QMessageBox::Ok);
-        return;
+    if(ui->payTo->text().isEmpty()){
+        QMessageBox::information(this, tr("Spend Zerocoin"), tr("No 'Pay To' address provided, creating local payment"), QMessageBox::Ok, QMessageBox::Ok);
+    }
+    else{
+        if (!address.IsValid()) {
+            QMessageBox::warning(this, tr("Spend Zerocoin"), tr("Invalid Pivx Address"), QMessageBox::Ok, QMessageBox::Ok);
+            return;
+        }
     }
 
     //grab as a double, increase by COIN and cutoff any remainder by assigning it as int64_t/CAmount
     double dAmount = ui->zPIVpayAmount->text().toDouble();
     CAmount nAmount = dAmount * COIN;
-    if (!MoneyRange(nAmount)) {
+    if (!MoneyRange(nAmount) || nAmount < 1) {
         QMessageBox::warning(this, tr("Spend Zerocoin"), tr("Invalid Send Amount"), QMessageBox::Ok, QMessageBox::Ok);
         return;
     }
 
+    // Persist Security Level for next start
     nSecurityLevel = ui->securityLevel->value();
     settings.setValue("nSecurityLevel", nSecurityLevel);
-    
+
+    // Convert change to zPIV
     bool fMintChange = ui->checkBoxMintChange->isChecked();
+
     CWalletTx wtxNew;
     vector<CZerocoinMint> vMintsSelected;
     vector<CZerocoinSpend> vSpends;
+
+    // Spend confirmation message box
+    CAmount nDisplayAmount = nAmount / COIN;
+    QString strQuestionString = tr("Are you sure you want to send?<br /><br />");
+    QString strAmount = "<b>" + QString::number(nDisplayAmount, 10) + " zPIV</b> ";
+    QString strAddress = tr(" to address ") + QString::fromStdString(address.ToString()) + " ?";
+
+    if(ui->payTo->text().isEmpty()){
+        // No address provided => send to local address
+        strAddress = tr(" to a newly generated (unused and therefor anonymous) local address ?");
+    }
+
+    strQuestionString = strQuestionString + strAmount + strAddress;
+
+    // Display message box
+    QMessageBox::StandardButton retval = QMessageBox::question(this, tr("Confirm send coins"),
+        strQuestionString,
+        QMessageBox::Yes | QMessageBox::Cancel,
+        QMessageBox::Cancel);
+
+    if (retval != QMessageBox::Yes) {
+        // Sending canceled
+        return;
+    }
 
     // attempt to spend the zPiv
     int64_t nTime = GetTimeMillis();
