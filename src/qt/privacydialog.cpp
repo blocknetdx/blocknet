@@ -60,9 +60,14 @@ PrivacyDialog::PrivacyDialog(QWidget* parent) : QDialog(parent),
     else{
         nSecurityLevel = settings.value("nSecurityLevel").toInt();
     }
-    
+
     // Start with displaying the "out of sync" warnings
     showOutOfSyncWarning(true);
+
+    // Hide those placeholder elements needed for CoinControl interaction
+    ui->WarningLabel->hide();    // Explanatory text visible in QT-Creator
+    ui->dummyHideWidget->hide(); // Dummy widget with elements to hide
+
 }
 
 PrivacyDialog::~PrivacyDialog()
@@ -176,7 +181,7 @@ void PrivacyDialog::on_pushButtonMintReset_clicked()
     if (!walletModel || !walletModel->getOptionsModel())
         return;
 
-    ui->TEMintStatus->setPlainText(tr("Starting ResetMintZerocoin: rescanning complete blockchain, please be patient..."));
+    ui->TEMintStatus->setPlainText(tr("Starting ResetMintZerocoin: rescanning complete blockchain, this will need several minutes depending on your hardware. \nPlease be patient..."));
     ui->TEMintStatus->repaint ();
     int64_t nTime = GetTimeMillis();
     string strResetMintResult = pwalletMain->ResetMintZerocoin();
@@ -254,15 +259,17 @@ void PrivacyDialog::on_pushButtonSpendzPIV_clicked()
     // Spend confirmation message box
     CAmount nDisplayAmount = nAmount / COIN;
     QString strQuestionString = tr("Are you sure you want to send?<br /><br />");
-    QString strAmount = "<b>" + QString::number(nDisplayAmount, 10) + " zPIV</b> ";
-    QString strAddress = tr(" to address ") + QString::fromStdString(address.ToString()) + " ?";
+    QString strAmount = "<b>" + QString::number(nDisplayAmount, 10) + " zPIV</b>";
+    QString strAddress = tr(" to address ") + QString::fromStdString(address.ToString()) + " <br />";
 
     if(ui->payTo->text().isEmpty()){
         // No address provided => send to local address
-        strAddress = tr(" to a newly generated (unused and therefor anonymous) local address ?");
+        strAddress = tr(" to a newly generated (unused and therefor anonymous) local address <br />");
     }
 
-    strQuestionString = strQuestionString + strAmount + strAddress;
+    QString strSecurityLevel = tr("with Security Level ") + ui->securityLevel->text() + " ?";
+
+    strQuestionString = strQuestionString + strAmount + strAddress + strSecurityLevel;
 
     // Display message box
     QMessageBox::StandardButton retval = QMessageBox::question(this, tr("Confirm send coins"),
@@ -277,7 +284,7 @@ void PrivacyDialog::on_pushButtonSpendzPIV_clicked()
 
     // attempt to spend the zPiv
     int64_t nTime = GetTimeMillis();
-    ui->TEMintStatus->setPlainText(tr("Spending Zerocoin. Computationally expensive, please be patient."));
+    ui->TEMintStatus->setPlainText(tr("Spending Zerocoin.\nComputationally expensive, might need several minutes depending on the selected Security Level and your hardware. \nPlease be patient..."));
     ui->TEMintStatus->repaint();
     string strError = pwalletMain->SpendZerocoin(nAmount, nSecurityLevel, wtxNew, vSpends, vMintsSelected, fMintChange, &address);
 
