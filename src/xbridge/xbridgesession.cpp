@@ -75,8 +75,12 @@ XBridgeSession::~XBridgeSession()
 //*****************************************************************************
 //*****************************************************************************
 void XBridgeSession::init()
-{
-    assert(!m_handlers.size());
+{ 
+    if(m_handlers.size())
+    {
+        LOG() << "packet handlers map must be empty" << __FUNCTION__;
+        return;
+    }
 
     if (!rpc::getNewAddress(m_myid))
     {
@@ -325,7 +329,7 @@ bool XBridgeSession::checkPacketAddress(XBridgePacketPtr packet)
     {
         if (addr.size() != 20)
         {
-            assert(false && "incorrect address length");
+            LOG() << "incorrect address length" << __FUNCTION__;
             continue;
         }
 
@@ -459,7 +463,7 @@ bool XBridgeSession::takeXBridgeMessage(const std::vector<unsigned char> & messa
 //*****************************************************************************
 bool XBridgeSession::processXChatMessage(XBridgePacketPtr /*packet*/)
 {
-    assert(!"check rhis fn");
+    LOG() << "method BridgeSession::processXChatMessage not implemented";
     return true;
 
 //    DEBUG_TRACE();
@@ -836,7 +840,6 @@ bool XBridgeSession::processTransactionHold(XBridgePacketPtr packet)
         if (!XBridgeApp::m_pendingTransactions.count(id))
         {
             // wtf? unknown transaction
-            assert(!"unknown transaction");
             LOG() << "unknown transaction " << util::to_str(id) << " " << __FUNCTION__;
             return true;
         }
@@ -844,7 +847,6 @@ bool XBridgeSession::processTransactionHold(XBridgePacketPtr packet)
         if (XBridgeApp::m_transactions.count(id))
         {
             // wtf?
-            assert(!"duplicate transaction");
             LOG() << "duplicate transaction " << util::to_str(id) << " " << __FUNCTION__;
             return true;
         }
@@ -1073,13 +1075,17 @@ bool XBridgeSession::processTransactionInit(XBridgePacketPtr packet)
         xtx = XBridgeApp::m_transactions[txid];
     }
 
-    assert(xtx->id           == txid);
-    assert(xtx->from         == from);
-    assert(xtx->fromCurrency == fromCurrency);
-    assert(xtx->fromAmount   == fromAmount);
-    assert(xtx->to           == to);
-    assert(xtx->toCurrency   == toCurrency);
-    assert(xtx->toAmount     == toAmount);
+    if(xtx->id           != txid &&
+       xtx->from         != from &&
+       xtx->fromCurrency != fromCurrency &&
+       xtx->fromAmount   != fromAmount &&
+       xtx->to           != to &&
+       xtx->toCurrency   != toCurrency &&
+       xtx->toAmount     != toAmount)
+    {
+        LOG() << "not equal transaction body" << __FUNCTION__;
+        return true;
+    }
 
     xtx->role = role;
 
@@ -1270,7 +1276,7 @@ std::string XBridgeSession::round_x(const long double val, uint32_t prec)
 //******************************************************************************
 uint32_t XBridgeSession::lockTime(const char /*role*/) const
 {
-    assert(!"not implemented");
+    LOG() << "method XBridgeSession::lockTime not implemented";
     return 0;
 
     // lock time
@@ -1615,7 +1621,11 @@ bool XBridgeSession::processTransactionCreate(XBridgePacketPtr packet)
             return true;
         }
 
-        assert(complete && "not fully signed");
+        if(!complete)
+        {
+            LOG() << "transaction not fully signed" << __FUNCTION__;
+            return true;
+        }
 
         std::string bintxid;
         if (!rpc::decodeRawTransaction(m_wallet.user, m_wallet.passwd,
@@ -1765,7 +1775,6 @@ bool XBridgeSession::processTransactionCreate(XBridgePacketPtr packet)
     }
     else
     {
-        assert(!"unknown role");
         ERR() << "unknown role " << __FUNCTION__;
         return false;
     }
@@ -1839,8 +1848,6 @@ bool XBridgeSession::processTransactionCreatedA(XBridgePacketPtr packet)
     if (e.updateTransactionWhenCreatedReceived(tr, sfrom, binTxId, innerScript))
     {
         // wtf ?
-        assert(!"invalid createdA");
-
         ERR() << "invalid createdA " << __FUNCTION__;
         sendCancelTransaction(txid, crInvalidAddress);
         return true;
@@ -2184,8 +2191,6 @@ bool XBridgeSession::processTransactionConfirmedA(XBridgePacketPtr packet)
     if (e.updateTransactionWhenConfirmedReceived(tr, sfrom))
     {
         // wtf ?
-        assert(!"invalid confirmation");
-
         ERR() << "invalid confirmation " << __FUNCTION__;
         sendCancelTransaction(txid, crInvalidAddress);
         return true;

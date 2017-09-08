@@ -438,7 +438,7 @@ bool XBridgeExchange::updateTransactionWhenConfirmedReceived(XBridgeTransactionP
 //*****************************************************************************
 bool XBridgeExchange::updateTransaction(const uint256 & /*hash*/)
 {
-    assert(!"not implemented");
+    LOG() << "not implemented";
     return true;
 
 //    // DEBUG_TRACE();
@@ -512,8 +512,6 @@ const XBridgeTransactionPtr XBridgeExchange::transaction(const uint256 & hash)
         }
         else
         {
-            assert(false && "cannot find transaction");
-
             // unknown transaction
             LOG() << "unknown transaction, id <" << hash.GetHex() << ">";
         }
@@ -546,8 +544,6 @@ const XBridgeTransactionPtr XBridgeExchange::pendingTransaction(const uint256 & 
         }
         else
         {
-            assert(false && "cannot find pending transaction");
-
             // unknown transaction
             LOG() << "unknown pending transaction, id <" << hash.GetHex() << ">";
         }

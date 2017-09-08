@@ -82,13 +82,15 @@ QVariant XBridgeTransactionsModel::data(const QModelIndex & idx, int role) const
             case Total:
             {
                 double amount = (double)d.fromAmount / XBridgeTransactionDescr::COIN;
-                QString text = QString("%1 %2").arg(QString::number(amount), QString::fromStdString(d.fromCurrency));
+                QString text = QString("%1 %2").arg(QString::number(amount, 'f', 12).remove(QRegExp("\\.?0+$"))).arg(QString::fromStdString(d.fromCurrency));
+
                 return QVariant(text);
             }
             case Size:
             {
                 double amount = (double)d.toAmount / XBridgeTransactionDescr::COIN;
-                QString text = QString("%1 %2").arg(QString::number(amount), QString::fromStdString(d.toCurrency));
+                QString text = QString("%1 %2").arg(QString::number(amount, 'f', 12).remove(QRegExp("\\.?0+$"))).arg(QString::fromStdString(d.toCurrency));
+
                 return QVariant(text);
             }
             case BID:
@@ -96,8 +98,9 @@ QVariant XBridgeTransactionsModel::data(const QModelIndex & idx, int role) const
                 double amountTotal = (double)d.fromAmount / XBridgeTransactionDescr::COIN;
                 double amountSize = (double)d.toAmount / XBridgeTransactionDescr::COIN;
                 double bid = amountTotal / amountSize;
+                QString text = QString::number(bid, 'f', 12).remove(QRegExp("\\.?0+$"));
 
-                return QString::number(bid, 'g', 10);
+                return QVariant(text);
             }
             case State:
             {

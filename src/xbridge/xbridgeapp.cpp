@@ -305,7 +305,6 @@ void XBridgeApp::onSend(const UcharVector & id, const UcharVector & message)
     UcharVector msg(id);
     if (msg.size() != 20)
     {
-        assert(!"bad address");
         ERR() << "bad send address " << __FUNCTION__;
         return;
     }
@@ -463,7 +462,7 @@ void XBridgeApp::bridgeThreadProc()
 //*****************************************************************************
 void XBridgeApp::rpcThreadProc()
 {
-    assert(!"rpc server");
+    LOG() << "method XBridgeApp::rpcThreadProc not implemented" << __FUNCTION__;
     // rpc::threadRPCServer();
 }
 
@@ -645,7 +644,7 @@ uint256 XBridgeApp::sendXBridgeTransaction(const std::string & from,
 {
     if (fromCurrency.size() > 8 || toCurrency.size() > 8)
     {
-        assert(false && "invalid currency");
+        LOG() << "invalid currency" << __FUNCTION__;
         return uint256();
     }
 
