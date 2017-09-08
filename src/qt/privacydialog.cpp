@@ -420,36 +420,36 @@ void PrivacyDialog::setBalance(const CAmount& balance,         const CAmount& un
         nCoins = libzerocoin::ZerocoinDenominationToInt(m);
         switch (nCoins) {
             case libzerocoin::CoinDenomination::ZQ_ONE: 
-                ui->labelzDenom1Amount->setText (QString::number(spread.at(m)));
+                ui->labelzDenom1Amount->setText (QString::number(spread.at(m)) + QString(" x "));
                 break;
             case libzerocoin::CoinDenomination::ZQ_FIVE:
-                ui->labelzDenom2Amount->setText (QString::number(spread.at(m)));
+                ui->labelzDenom2Amount->setText (QString::number(spread.at(m)) + QString(" x "));
                 break;
             case libzerocoin::CoinDenomination::ZQ_TEN:
-                ui->labelzDenom3Amount->setText (QString::number(spread.at(m)));
+                ui->labelzDenom3Amount->setText (QString::number(spread.at(m)) + QString(" x "));
                 break;
             case libzerocoin::CoinDenomination::ZQ_FIFTY:
-                ui->labelzDenom4Amount->setText (QString::number(spread.at(m)));
+                ui->labelzDenom4Amount->setText (QString::number(spread.at(m)) + QString(" x "));
                 break;
             case libzerocoin::CoinDenomination::ZQ_ONE_HUNDRED:
-                ui->labelzDenom5Amount->setText (QString::number(spread.at(m)));
+                ui->labelzDenom5Amount->setText (QString::number(spread.at(m)) + QString(" x "));
                 break;
             case libzerocoin::CoinDenomination::ZQ_FIVE_HUNDRED:
-                ui->labelzDenom6Amount->setText (QString::number(spread.at(m)));
+                ui->labelzDenom6Amount->setText (QString::number(spread.at(m)) + QString(" x "));
                 break;
             case libzerocoin::CoinDenomination::ZQ_ONE_THOUSAND:
-                ui->labelzDenom7Amount->setText (QString::number(spread.at(m)));
+                ui->labelzDenom7Amount->setText (QString::number(spread.at(m)) + QString(" x "));
                 break;
             case libzerocoin::CoinDenomination::ZQ_FIVE_THOUSAND:
-                ui->labelzDenom8Amount->setText (QString::number(spread.at(m)));
+                ui->labelzDenom8Amount->setText (QString::number(spread.at(m)) + QString(" x "));
                 break;
             default:
                 // Error Case: don't update display
                 break;
         }
     }
-    ui->labelzAvailableAmount->setText(QString::number(zerocoinBalance/COIN) + QString(" zPIV"));
-    ui->labelzAvailableAmount_2->setText(QString::number(zerocoinBalance/COIN) + QString(" zPIV"));
+    ui->labelzAvailableAmount->setText(QString::number(zerocoinBalance/COIN) + QString(" zPIV "));
+    ui->labelzAvailableAmount_2->setText(QString::number(zerocoinBalance/COIN) + QString(" zPIV "));
     ui->labelzPIVAmountValue->setText(BitcoinUnits::floorHtmlWithUnit(nDisplayUnit, balance - immatureBalance, false, BitcoinUnits::separatorAlways));
 }
 
