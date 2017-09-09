@@ -11,6 +11,7 @@
 #include "coincontroldialog.h"
 #include "libzerocoin/Denominations.h"
 #include "optionsmodel.h"
+#include "sendcoinsentry.h"
 #include "walletmodel.h"
 #include "coincontrol.h"
 
@@ -252,15 +253,18 @@ void PrivacyDialog::on_pushButtonSpendzPIV_clicked()
     // Convert change to zPIV
     bool fMintChange = ui->checkBoxMintChange->isChecked();
 
-    CWalletTx wtxNew;
-    vector<CZerocoinMint> vMintsSelected;
-    vector<CZerocoinSpend> vSpends;
-
     // Spend confirmation message box
+
+    // Add address info if available
+    QString strAddressLabel = "";
+    if(!ui->payTo->text().isEmpty() && !ui->addAsLabel->text().isEmpty()){
+        strAddressLabel = " (" + ui->addAsLabel->text() + ") ";        
+    }
+
     CAmount nDisplayAmount = nAmount / COIN;
     QString strQuestionString = tr("Are you sure you want to send?<br /><br />");
     QString strAmount = "<b>" + QString::number(nDisplayAmount, 10) + " zPIV</b>";
-    QString strAddress = tr(" to address ") + QString::fromStdString(address.ToString()) + " <br />";
+    QString strAddress = tr(" to address ") + QString::fromStdString(address.ToString()) + strAddressLabel + " <br />";
 
     if(ui->payTo->text().isEmpty()){
         // No address provided => send to local address
@@ -283,6 +287,10 @@ void PrivacyDialog::on_pushButtonSpendzPIV_clicked()
     }
 
     // attempt to spend the zPiv
+    CWalletTx wtxNew;
+    vector<CZerocoinMint> vMintsSelected;
+    vector<CZerocoinSpend> vSpends;
+    
     int64_t nTime = GetTimeMillis();
     ui->TEMintStatus->setPlainText(tr("Spending Zerocoin.\nComputationally expensive, might need several minutes depending on the selected Security Level and your hardware. \nPlease be patient..."));
     ui->TEMintStatus->repaint();
