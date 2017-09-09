@@ -1231,8 +1231,6 @@ public:
     int64_t GetTxTime() const;
     int64_t GetComputedTxTime() const;
     int GetRequestCount() const;
-
-    void AddSupportingTransactions() { ; } //// HACK(SPOCK)
     void RelayWalletTransaction(std::string strCommand = "tx");
 
     std::set<uint256> GetConflicts() const;
