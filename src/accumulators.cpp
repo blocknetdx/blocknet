@@ -252,7 +252,7 @@ bool CAccumulators::GetCheckpoint(int nHeight, uint256& nCheckpoint)
     return true;
 }
 
-bool CAccumulators::IntializeWitnessAndAccumulator(const PublicCoin &coin, Accumulator& accumulator, AccumulatorWitness& witness, int nSecurityLevel)
+bool CAccumulators::IntializeWitnessAndAccumulator(const PublicCoin &coin, Accumulator& accumulator, AccumulatorWitness& witness, int nSecurityLevel, string& strError)
 {
     uint256 txid;
     if (!zerocoinDB->ReadCoinMint(coin.getValue(), txid)) {
@@ -297,12 +297,10 @@ bool CAccumulators::IntializeWitnessAndAccumulator(const PublicCoin &coin, Accum
     int nAccStartHeight = nHeightMintAdded - (nHeightMintAdded % 10);
 
     //Get the accumulator that is right before the cluster of blocks containing our mint was added to the accumulator
-    if (nChecksumBeforeMint != 2301755253) { //this is a zero value and wont initialize the accumulator. use existing.
-        CBigNum bnAccValue = GetAccumulatorValueFromCheckpoint(nChecksumBeforeMint, coin.getDenomination());
-        if (bnAccValue != 0) {
-            accumulator.setValue(bnAccValue);
-            witness.resetValue(accumulator, coin);
-        }
+    CBigNum bnAccValue = GetAccumulatorValueFromCheckpoint(nChecksumBeforeMint, coin.getDenomination());
+    if (bnAccValue != 0) {
+        accumulator.setValue(bnAccValue);
+        witness.resetValue(accumulator, coin);
     }
 
     //security level: this is an important prevention of tracing the coins via timing. Security level represents how many checkpoints
@@ -331,8 +329,8 @@ bool CAccumulators::IntializeWitnessAndAccumulator(const PublicCoin &coin, Accum
 
         //if a new checkpoint was generated on this block, and we have added the specified amount of checkpointed accumulators,
         //then initialize the accumulator at this point and break
-        if (pindex->nHeight == nHeightStop || nCheckpointsAdded >= nSecurityLevel) {
-            CBigNum bnAccValue = GetAccumulatorValueFromCheckpoint(chainActive[pindex->nHeight + 20]->nAccumulatorCheckpoint, coin.getDenomination());
+        if (pindex->nHeight == nHeightStop || (nSecurityLevel != 100 && nCheckpointsAdded >= nSecurityLevel)) {
+            CBigNum bnAccValue = GetAccumulatorValueFromCheckpoint(chainActive[pindex->nHeight + 10]->nAccumulatorCheckpoint, coin.getDenomination());
             accumulator.setValue(bnAccValue);
             break;
         }
@@ -365,6 +363,12 @@ bool CAccumulators::IntializeWitnessAndAccumulator(const PublicCoin &coin, Accum
         pindex = chainActive[pindex->nHeight + 1];
     }
 
+    if (nMintsAdded < 3) {
+        strError = _("Less than 3 mints added, unable to create spend");
+        LogPrintf("%s : %s\n", __func__, strError);
+        return false;
+    }
+    
     LogPrint("zero","%s : %d mints added to witness\n", __func__, nMintsAdded);
     return true;
 }

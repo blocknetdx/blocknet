@@ -3959,7 +3959,7 @@ bool CWallet::CreateZerocoinMintTransaction(const CAmount nValue, CMutableTransa
     return true;
 }
 
-bool CWallet::MintToTxIn(CZerocoinMint zerocoinSelected, int nSecurityLevel, const uint256& hashTxOut, CTxIn& newTxIn, CZerocoinSpend& zerocoinSpend, string strFailReason)
+bool CWallet::MintToTxIn(CZerocoinMint zerocoinSelected, int nSecurityLevel, const uint256& hashTxOut, CTxIn& newTxIn, CZerocoinSpend& zerocoinSpend, string& strFailReason)
 {
     libzerocoin::CoinDenomination denomination = zerocoinSelected.GetDenomination();
     // 2. Get pubcoin from the private coin
@@ -3976,8 +3976,9 @@ bool CWallet::MintToTxIn(CZerocoinMint zerocoinSelected, int nSecurityLevel, con
     int64_t nTimeStart = GetTimeMillis();
     libzerocoin::Accumulator accumulator(Params().Zerocoin_Params(), pubCoinSelected.getDenomination());
     libzerocoin::AccumulatorWitness witness(Params().Zerocoin_Params(), accumulator, pubCoinSelected);
-    if (!CAccumulators::getInstance().IntializeWitnessAndAccumulator(pubCoinSelected, accumulator, witness, nSecurityLevel)) {
+    if (!CAccumulators::getInstance().IntializeWitnessAndAccumulator(pubCoinSelected, accumulator, witness, nSecurityLevel, strFailReason)) {
         LogPrintf("%s failed to initialize witness\n", __func__);
+        strFailReason += _("Try to spend with a higher security level to include more coins");
         return false;
     }
     LogPrintf("*** step 3 time=%d\n", GetTimeMillis() - nTimeStart);
@@ -4086,7 +4087,8 @@ bool CWallet::CreateZerocoinSpendTransaction(CAmount nValue, int nSecurityLevel,
     }
 
     // Get a list of mints held by the wallet that are available to spend
-    list<CZerocoinMint> listMints = CWalletDB(strWalletFile).ListMintedCoins(true, true);
+    CWalletDB walletdb(pwalletMain->strWalletFile);
+    list<CZerocoinMint> listMints = walletdb.ListMintedCoins(true, true);
     if (listMints.empty()) {
         strFailReason = _("failed to find a zerocoin in database");
         return false;
@@ -4101,13 +4103,34 @@ bool CWallet::CreateZerocoinSpendTransaction(CAmount nValue, int nSecurityLevel,
     // for Debug
     listSpends(vSelectedMints);
 
+    int nArchived = 0;
     for (CZerocoinMint mint : vSelectedMints) {
-        if (!IsSerialKnown(mint.GetSerialNumber()))
-            continue;
+        // see if this serial has already been spent
+        if (IsSerialKnown(mint.GetSerialNumber())) {
+            strFailReason = _("trying to spend an already spent serial #");
+            return false;
+        }
 
-        strFailReason = _("trying to spend an already spent serial #");
-        return false;
+        //check that this mint made it into the blockchain
+        CTransaction txMint;
+        uint256 hashBlock;
+        bool fArchive = false;
+        if (!GetTransaction(mint.GetTxHash(), txMint, hashBlock)) {
+            strFailReason = _("unable to find transaction containing mint");
+            fArchive = true;
+        } else if (mapBlockIndex.count(hashBlock) < 1) {
+            strFailReason = _("mint did not make it into blockchain");
+            fArchive = true;
+        }
+
+        // archive this mint as an orphan
+        if (fArchive) {
+            walletdb.ArchiveMintOrphan(mint);
+            nArchived++;
+        }
     }
+    if (nArchived)
+        return false;
 
     if (vSelectedMints.empty()) {
         strFailReason = _("failed to select a zerocoin");

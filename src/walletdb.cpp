@@ -1110,6 +1110,7 @@ std::list<CZerocoinMint> CWalletDB::ListMintedCoins(bool fUnusedOnly, bool fMatu
             if (ReadZerocoinSpendSerialEntry(mint.GetSerialNumber())) {
                 mint.SetUsed(true);
                 vOverWrite.emplace_back(mint);
+                continue;
             }
         }
 
