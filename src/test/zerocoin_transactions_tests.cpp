@@ -36,12 +36,14 @@ BOOST_AUTO_TEST_CASE(zerocoin_spend_test)
     CAmount nAmount = COIN;
     int nSecurityLevel = 100;
 
-    std::string vString = cWallet.SpendZerocoin(nAmount, nSecurityLevel, *wtx, vSpends, vMints, fMintChange);
+    int nStatus;
+    std::string vString = cWallet.SpendZerocoin(nAmount, nSecurityLevel, *wtx, vSpends, vMints, fMintChange, nStatus);
     
     BOOST_CHECK_MESSAGE(vString == "Invalid amount","Failed Invalid Amount Check");
     
     nAmount = 1;
-    vString = cWallet.SpendZerocoin(nAmount, nSecurityLevel, *wtx, vSpends, vMints, fMintChange);
+    nStatus = 0;
+    vString = cWallet.SpendZerocoin(nAmount, nSecurityLevel, *wtx, vSpends, vMints, fMintChange, nStatus);
     
     // if using "wallet.dat", instead of "unlocked.dat" need this
     /// BOOST_CHECK_MESSAGE(vString == "Error: Wallet locked, unable to create transaction!"," Locked Wallet Check Failed");

@@ -2467,10 +2467,11 @@ Value spendzerocoin(const Array& params, bool fHelp)
     vector<CZerocoinMint> vMintsSelected;
     vector<CZerocoinSpend> vSpends;
     string strError;
+    int nStatus;
     if(address.IsValid())
-        strError = pwalletMain->SpendZerocoin(nAmount, nSecurityLevel, wtx, vSpends, vMintsSelected, fMintChange, &address);
+        strError = pwalletMain->SpendZerocoin(nAmount, nSecurityLevel, wtx, vSpends, vMintsSelected, fMintChange, nStatus, &address);
     else
-        strError = pwalletMain->SpendZerocoin(nAmount, nSecurityLevel, wtx, vSpends, vMintsSelected, fMintChange);
+        strError = pwalletMain->SpendZerocoin(nAmount, nSecurityLevel, wtx, vSpends, vMintsSelected, fMintChange, nStatus);
 
     if (strError != "")
         throw JSONRPCError(RPC_WALLET_ERROR, strError);
