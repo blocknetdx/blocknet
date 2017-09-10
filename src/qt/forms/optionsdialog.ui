@@ -168,10 +168,10 @@
             </size>
            </property>
            <property name="toolTip">
-            <string>Wait with automatic conversion to Zerocoin until enough PIV for this denomination is avialable</string>
+            <string>Wait with automatic conversion to Zerocoin until enough PIV for this denomination is available</string>
            </property>
            <property name="text">
-            <string>Preferred zPIV Denomination</string>
+            <string>Preferred Automint zPIV Denomination</string>
            </property>
           </widget>
          </item>
@@ -182,6 +182,9 @@
              <width>16777215</width>
              <height>27</height>
             </size>
+           </property>
+           <property name="toolTip">
+            <string>Wait with automatic conversion to Zerocoin until enough PIV for this denomination is available</string>
            </property>
            <property name="maxVisibleItems">
             <number>9</number>
