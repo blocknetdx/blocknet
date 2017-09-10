@@ -51,7 +51,17 @@ PrivacyDialog::PrivacyDialog(QWidget* parent) : QDialog(parent),
     connect(clipboardAmountAction, SIGNAL(triggered()), this, SLOT(coinControlClipboardAmount()));
     ui->labelCoinControlQuantity->addAction(clipboardQuantityAction);
     ui->labelCoinControlAmount->addAction(clipboardAmountAction);
-    
+
+    // Denomination labels
+    ui->labelzDenom1Text->setText("Denominations with value <b>1</b>:");
+    ui->labelzDenom2Text->setText("Denominations with value <b>5</b>:");
+    ui->labelzDenom3Text->setText("Denominations with value <b>10</b>:");
+    ui->labelzDenom4Text->setText("Denominations with value <b>50</b>:");
+    ui->labelzDenom5Text->setText("Denominations with value <b>100</b>:");
+    ui->labelzDenom6Text->setText("Denominations with value <b>500</b>:");
+    ui->labelzDenom7Text->setText("Denominations with value <b>1000</b>:");
+    ui->labelzDenom8Text->setText("Denominations with value <b>5000</b>:");
+
     // PIVX settings
     QSettings settings;
     if (!settings.contains("nSecurityLevel")){
@@ -148,11 +158,11 @@ void PrivacyDialog::on_pushButtonMintzPIV_clicked()
         return;
     }
 
-    int64_t nDuration = GetTimeMillis() - nTime;
-    
+    double fDuration = (double)(GetTimeMillis() - nTime)/1000.0;
+
     // Minting successfully finished. Show some stats for entertainment.
     QString strStatsHeader = tr("Successfully minted ") + ui->labelMintAmountValue->text() + tr(" zPIV in ") + 
-                             QString::number(nDuration) + tr(" ms. Used denominations:\n");
+                             QString::number(fDuration) + tr(" sec. Used denominations:\n");
     
     // Clear amount to avoid double spending when accidentally clicking twice
     ui->labelMintAmountValue->setText ("0");
@@ -186,8 +196,8 @@ void PrivacyDialog::on_pushButtonMintReset_clicked()
     ui->TEMintStatus->repaint ();
     int64_t nTime = GetTimeMillis();
     string strResetMintResult = pwalletMain->ResetMintZerocoin();
-    int64_t nDuration = GetTimeMillis() - nTime;
-    ui->TEMintStatus->setPlainText(QString::fromStdString(strResetMintResult) + tr("Duration: ") + QString::number(nDuration) + tr(" ms.\n"));
+    double fDuration = (double)(GetTimeMillis() - nTime)/1000.0;
+    ui->TEMintStatus->setPlainText(QString::fromStdString(strResetMintResult) + tr("Duration: ") + QString::number(fDuration) + tr(" sec.\n"));
     ui->TEMintStatus->repaint ();
 
     return;
@@ -202,8 +212,8 @@ void PrivacyDialog::on_pushButtonSpentReset_clicked()
     ui->TEMintStatus->repaint ();
     int64_t nTime = GetTimeMillis();
     string strResetSpentResult = pwalletMain->ResetSpentZerocoin();
-    int64_t nDuration = GetTimeMillis() - nTime;
-    ui->TEMintStatus->setPlainText(QString::fromStdString(strResetSpentResult) + tr("Duration: ") + QString::number(nDuration) + tr(" ms.\n"));
+    double fDuration = (double)(GetTimeMillis() - nTime)/1000.0;
+    ui->TEMintStatus->setPlainText(QString::fromStdString(strResetSpentResult) + tr("Duration: ") + QString::number(fDuration) + tr(" sec.\n"));
     ui->TEMintStatus->repaint ();
 
     return;
@@ -258,7 +268,7 @@ void PrivacyDialog::on_pushButtonSpendzPIV_clicked()
     // Add address info if available
     QString strAddressLabel = "";
     if(!ui->payTo->text().isEmpty() && !ui->addAsLabel->text().isEmpty()){
-        strAddressLabel = " (" + ui->addAsLabel->text() + ") ";        
+        strAddressLabel = "<br />(" + ui->addAsLabel->text() + ") ";        
     }
 
     CAmount nDisplayAmount = nAmount / COIN;
@@ -327,8 +337,8 @@ void PrivacyDialog::on_pushButtonSpendzPIV_clicked()
             strStats += tr(CBitcoinAddress(dest).ToString().c_str());
         strStats += "\n";
     }
-    int64_t nDuration = GetTimeMillis() - nTime;
-    strStats += tr("Duration: ") + QString::number(nDuration) + tr(" ms.\n");
+    double fDuration = (double)(GetTimeMillis() - nTime)/1000.0;
+    strStats += tr("Duration: ") + QString::number(fDuration) + tr(" sec.\n");
 
     QString strReturn;
     strReturn += tr("txid: ") + wtxNew.GetHash().ToString().c_str() + "\n";
@@ -425,32 +435,40 @@ void PrivacyDialog::setBalance(const CAmount& balance,         const CAmount& un
     }
     
     int64_t nCoins = 0;
+    int64_t nSumPerCoin = 0;
+    QString strDenomStats = "";
+    
     for (const auto& m : libzerocoin::zerocoinDenomList) {
         nCoins = libzerocoin::ZerocoinDenominationToInt(m);
+        nSumPerCoin = nCoins * spread.at(m);
+        strDenomStats = QString::number(spread.at(m)) + " x " + 
+                        QString::number(nCoins) + " = <b>" + 
+                        QString::number(nSumPerCoin) + " zPIV </b>";
+        
         switch (nCoins) {
             case libzerocoin::CoinDenomination::ZQ_ONE: 
-                ui->labelzDenom1Amount->setText (QString::number(spread.at(m)) + QString(" x "));
+                ui->labelzDenom1Amount->setText(strDenomStats);
                 break;
             case libzerocoin::CoinDenomination::ZQ_FIVE:
-                ui->labelzDenom2Amount->setText (QString::number(spread.at(m)) + QString(" x "));
+                ui->labelzDenom2Amount->setText(strDenomStats);
                 break;
             case libzerocoin::CoinDenomination::ZQ_TEN:
-                ui->labelzDenom3Amount->setText (QString::number(spread.at(m)) + QString(" x "));
+                ui->labelzDenom3Amount->setText(strDenomStats);
                 break;
             case libzerocoin::CoinDenomination::ZQ_FIFTY:
-                ui->labelzDenom4Amount->setText (QString::number(spread.at(m)) + QString(" x "));
+                ui->labelzDenom4Amount->setText(strDenomStats);
                 break;
             case libzerocoin::CoinDenomination::ZQ_ONE_HUNDRED:
-                ui->labelzDenom5Amount->setText (QString::number(spread.at(m)) + QString(" x "));
+                ui->labelzDenom5Amount->setText(strDenomStats);
                 break;
             case libzerocoin::CoinDenomination::ZQ_FIVE_HUNDRED:
-                ui->labelzDenom6Amount->setText (QString::number(spread.at(m)) + QString(" x "));
+                ui->labelzDenom6Amount->setText(strDenomStats);
                 break;
             case libzerocoin::CoinDenomination::ZQ_ONE_THOUSAND:
-                ui->labelzDenom7Amount->setText (QString::number(spread.at(m)) + QString(" x "));
+                ui->labelzDenom7Amount->setText(strDenomStats);
                 break;
             case libzerocoin::CoinDenomination::ZQ_FIVE_THOUSAND:
-                ui->labelzDenom8Amount->setText (QString::number(spread.at(m)) + QString(" x "));
+                ui->labelzDenom8Amount->setText(strDenomStats);
                 break;
             default:
                 // Error Case: don't update display

@@ -3423,9 +3423,9 @@ bool CWallet::GetDestData(const CTxDestination& dest, const std::string& key, st
 void CWallet::AutoZeromint()
 {
 
-    // Wait until blockchain is fully synced and wallet is unlocked.
-    if (!masternodeSync.IsBlockchainSynced() || IsLocked()){
-        // Re-adjust startup time in case syncing needs a long time
+    // Wait until blockchain + masternodes are fully synced and wallet is unlocked.
+    if (!masternodeSync.IsSynced() || IsLocked()){
+        // Re-adjust startup time in case syncing needs a long time.
         nStartupTime = GetAdjustedTime();
         return;
     }
@@ -3433,7 +3433,7 @@ void CWallet::AutoZeromint()
     // After sync wait even more to reduce load when wallet was just started
     int64_t nWaitTime = GetAdjustedTime() - nStartupTime;
     if (nWaitTime < AUTOMINT_DELAY){
-        LogPrintf("CWallet::AutoZeromint(): time since blockchain synced (%ld sec) < default waiting time (%ld sec). Waiting again...\n", nWaitTime, AUTOMINT_DELAY);
+        LogPrintf("CWallet::AutoZeromint(): time since sync-completion or last Automint (%ld sec) < default waiting time (%ld sec). Waiting again...\n", nWaitTime, AUTOMINT_DELAY);
         return;
     }
 
@@ -3514,9 +3514,11 @@ void CWallet::AutoZeromint()
         dPercentage = 100 * (double)nZerocoinBalance / (double)(nZerocoinBalance + nBalance);
         LogPrintf("CWallet::AutoZeromint() @ block %ld: successfully minted %ld zPIV. Current percentage of zPIV: %lf%%\n",
                   chainActive.Tip()->nHeight, nMintAmount, dPercentage);
+        // Re-adjust startup time to delay next Automint for 5 minutes
+        nStartupTime = GetAdjustedTime();
     }
     else {
-        LogPrintf("CWallet::AutoZeromint(): Amount to mint: %ld zPIV. Nothing minted.\n", nMintAmount);
+        LogPrintf("CWallet::AutoZeromint(): Nothing minted because either not enough funds available or the requested denomination size (%d) is not yet reached.\n", nPreferredDenom);
     }
 }
 

@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>991</width>
-    <height>542</height>
+    <height>552</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -946,7 +946,10 @@
                   </size>
                  </property>
                  <property name="text">
-                  <string>0 zPIV</string>
+                  <string>0 x</string>
+                 </property>
+                 <property name="textFormat">
+                  <enum>Qt::RichText</enum>
                  </property>
                  <property name="alignment">
                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -989,7 +992,10 @@
                   </size>
                  </property>
                  <property name="text">
-                  <string>0 zPIV</string>
+                  <string>0 x</string>
+                 </property>
+                 <property name="textFormat">
+                  <enum>Qt::RichText</enum>
                  </property>
                  <property name="alignment">
                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -1032,7 +1038,10 @@
                   </size>
                  </property>
                  <property name="text">
-                  <string>0 zPIV</string>
+                  <string>0 x</string>
+                 </property>
+                 <property name="textFormat">
+                  <enum>Qt::RichText</enum>
                  </property>
                  <property name="alignment">
                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -1075,7 +1084,10 @@
                   </size>
                  </property>
                  <property name="text">
-                  <string>0 zPIV</string>
+                  <string>0 x</string>
+                 </property>
+                 <property name="textFormat">
+                  <enum>Qt::RichText</enum>
                  </property>
                  <property name="alignment">
                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -1118,7 +1130,10 @@
                   </size>
                  </property>
                  <property name="text">
-                  <string>0 zPIV</string>
+                  <string>0 x</string>
+                 </property>
+                 <property name="textFormat">
+                  <enum>Qt::RichText</enum>
                  </property>
                  <property name="alignment">
                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -1161,7 +1176,10 @@
                   </size>
                  </property>
                  <property name="text">
-                  <string>0 zPIV</string>
+                  <string>0 x</string>
+                 </property>
+                 <property name="textFormat">
+                  <enum>Qt::RichText</enum>
                  </property>
                  <property name="alignment">
                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -1204,7 +1222,10 @@
                   </size>
                  </property>
                  <property name="text">
-                  <string>0 zPIV</string>
+                  <string>0 x</string>
+                 </property>
+                 <property name="textFormat">
+                  <enum>Qt::RichText</enum>
                  </property>
                  <property name="alignment">
                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -1247,7 +1268,10 @@
                   </size>
                  </property>
                  <property name="text">
-                  <string>0 zPIV</string>
+                  <string>0 x</string>
+                 </property>
+                 <property name="textFormat">
+                  <enum>Qt::RichText</enum>
                  </property>
                  <property name="alignment">
                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
