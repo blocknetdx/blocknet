@@ -75,6 +75,7 @@ bool fReindex = false;
 bool fTxIndex = true;
 bool fIsBareMultisigStd = true;
 bool fCheckBlockIndex = false;
+bool fVerifyingBlocks = false;
 unsigned int nCoinCacheSize = 5000;
 bool fAlerts = DEFAULT_ALERTS;
 
@@ -2625,14 +2626,15 @@ bool DisconnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex
         if (tx.ContainsZerocoins()) {
             if (tx.IsZerocoinSpend()) {
                 //erase all zerocoinspends in this transaction
-                for (const CTxIn txin : tx.vin){
+                for (const CTxIn txin : tx.vin) {
                     if (txin.scriptSig.IsZerocoinSpend()) {
                         CoinSpend spend = TxInToZerocoinSpend(txin);
-                        if(!CAccumulators::getInstance().EraseCoinSpend(spend.getCoinSerialNumber()))
+                        if (!CAccumulators::getInstance().EraseCoinSpend(spend.getCoinSerialNumber()))
                             return error("failed to erase spent zerocoin in block");
                     }
                 }
-            } else if (tx.IsZerocoinMint()) {
+            }
+            if (tx.IsZerocoinMint()) {
                 //erase all zerocoinmints in this transaction
                 for (const CTxOut txout : tx.vout) {
                     if (txout.scriptPubKey.empty() || !txout.scriptPubKey.IsZerocoinMint())
@@ -2705,11 +2707,13 @@ bool DisconnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex
     // move best block pointer to prevout block
     view.SetBestBlock(pindex->pprev->GetBlockHash());
 
-    //if block is an accumulator checkpoint block, remove checkpoint and checksums from db
-    uint256 nCheckpoint = pindex->nAccumulatorCheckpoint;
-    if(nCheckpoint != pindex->pprev->nAccumulatorCheckpoint) {
-        if(!CAccumulators::getInstance().EraseAccumulatorValues(nCheckpoint, pindex->pprev->nAccumulatorCheckpoint))
-            return error("DisconnectBlock(): failed to erase checkpoint");
+    if (!fVerifyingBlocks) {
+        //if block is an accumulator checkpoint block, remove checkpoint and checksums from db
+        uint256 nCheckpoint = pindex->nAccumulatorCheckpoint;
+        if(nCheckpoint != pindex->pprev->nAccumulatorCheckpoint) {
+            if(!CAccumulators::getInstance().EraseAccumulatorValues(nCheckpoint, pindex->pprev->nAccumulatorCheckpoint))
+                return error("DisconnectBlock(): failed to erase checkpoint");
+        }
     }
 
     if (pfClean) {
@@ -2946,7 +2950,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
     }
 
     // zerocoin accumulator: if a new accumulator checkpoint was generated, check that it is the correct value
-    if (block.nVersion >= Params().Zerocoin_HeaderVersion() && pindex->nHeight % 10 == 0) {
+    if (!fVerifyingBlocks && block.nVersion >= Params().Zerocoin_HeaderVersion() && pindex->nHeight % 10 == 0) {
         uint256 nCheckpointCalculated = 0;
         if (!CAccumulators::getInstance().GetCheckpoint(pindex->nHeight, nCheckpointCalculated))
             return state.DoS(100, error("ConnectBlock() : failed to calculate accumulator checkpoint"));
@@ -2955,7 +2959,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
             LogPrintf("%s: block=%d calculated: %s\n block: %s\n", __func__, pindex->nHeight, nCheckpointCalculated.GetHex(), block.nAccumulatorCheckpoint.GetHex());
             return state.DoS(100, error("ConnectBlock() : accumulator does not match calculated value"));
         }
-    } else {
+    } else if (!fVerifyingBlocks) {
         if (block.nAccumulatorCheckpoint != pindex->pprev->nAccumulatorCheckpoint) {
             return state.DoS(100, error("ConnectBlock() : new accumulator checkpoint generated on a block that is not multiple of 10"));
         }

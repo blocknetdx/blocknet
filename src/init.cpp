@@ -1317,17 +1317,21 @@ bool AppInit2(boost::thread_group& threadGroup)
                 CAccumulators::getInstance().ClearAccCheckpointsNoDB();
 
                 uiInterface.InitMessage(_("Verifying blocks..."));
+                fVerifyingBlocks = true;
                 if (!CVerifyDB().VerifyDB(pcoinsdbview, GetArg("-checklevel", 4), // Zerocoin must check at level 4
                         GetArg("-checkblocks", 500))) {
                     strLoadError = _("Corrupted block database detected");
+                    fVerifyingBlocks = false;
                     break;
                 }
             } catch (std::exception& e) {
                 if (fDebug) LogPrintf("%s\n", e.what());
                 strLoadError = _("Error opening block database");
+                fVerifyingBlocks = false;
                 break;
             }
 
+            fVerifyingBlocks = false;
             fLoaded = true;
         } while (false);
 
