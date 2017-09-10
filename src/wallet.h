@@ -40,6 +40,7 @@ extern CFeeRate payTxFee;
 extern CAmount maxTxFee;
 extern unsigned int nTxConfirmTarget;
 extern bool bSpendZeroConfChange;
+extern bool bdisableSystemnotifications;
 extern bool fSendFreeTransactions;
 extern bool fPayAtLeastCustomFee;
 
@@ -57,15 +58,6 @@ static const unsigned int MAX_FREE_TRANSACTION_CREATE_SIZE = 1000;
 // Zerocoin denomination which creates exactly one of each denominations:
 // 6666 = 1*5000 + 1*1000 + 1*500 + 1*100 + 1*50 + 1*10 + 1*5 + 1
 static const int ZQ_6666 = 6666;
-
-// zerocoin spend status
-#define VALID_SPEND 0
-#define INVALID_COIN 1
-#define FAILED_ACCUMULATOR_INITIALIZATION 2
-#define INVALID_WITNESS 3
-#define BAD_SERIALIZATION 4
-#define SPENT_USED_ZPIV 5
-
 
 class CAccountingEntry;
 class CCoinControl;
@@ -90,6 +82,25 @@ enum AvailableCoinsType {
     ONLY_NOT10000IFMN = 3,
     ONLY_NONDENOMINATED_NOT10000IFMN = 4, // ONLY_NONDENOMINATED and not 10000 PIV at the same time
     ONLY_10000 = 5                        // find masternode outputs including locked ones (use with caution)
+};
+
+// Possible states for zPIV send
+enum ZerocoinSpendStatus {
+    ZPIV_SPEND_OKAY = 0,                            // No error
+    ZPIV_SPEND_ERROR = 1,                           // Unspecified class of errors, more details are (hopefully) in the returning text
+    ZPIV_WALLET_LOCKED = 2,                         // Wallet was locked
+    ZPIV_COMMIT_FAILED = 3,                         // Commit failed, reset status
+    ZPIV_ERASE_SPENDS_FAILED = 4,                   // Erasing spends during reset failed
+    ZPIV_ERASE_NEW_MINTS_FAILED = 5,                // Erasing new mints during reset failed
+    ZPIV_TRX_FUNDS_PROBLEMS = 6,                    // Everything related to available funds
+    ZPIV_TRX_CREATE = 7,                            // Everything related to create the transaction
+    ZPIV_TRX_CHANGE = 8,                            // Everything related to transaction change
+    ZPIV_TXMINT_GENERAL = 9,                        // General errors in MintToTxIn
+    ZPIV_INVALID_COIN = 10,                         // Selected mint coin is not valid
+    ZPIV_FAILED_ACCUMULATOR_INITIALIZATION = 11,    // Failed to initialize witness
+    ZPIV_INVALID_WITNESS = 12,                      // Spend coin transaction did not verify
+    ZPIV_BAD_SERIALIZATION = 13,                    // Transaction verification failed
+    ZPIV_SPENT_USED_ZPIV = 14                       // Coin has already been spend
 };
 
 struct CompactTallyItem {

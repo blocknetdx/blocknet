@@ -39,6 +39,7 @@ CFeeRate payTxFee(DEFAULT_TRANSACTION_FEE);
 CAmount maxTxFee = DEFAULT_TRANSACTION_MAXFEE;
 unsigned int nTxConfirmTarget = 1;
 bool bSpendZeroConfChange = true;
+bool bdisableSystemnotifications = false; // Those bubbles can be annoying and slow down the UI when you get lots of trx
 bool fSendFreeTransactions = false;
 bool fPayAtLeastCustomFee = true;
 
@@ -3963,13 +3964,16 @@ bool CWallet::CreateZerocoinMintTransaction(const CAmount nValue, CMutableTransa
 
 bool CWallet::MintToTxIn(CZerocoinMint zerocoinSelected, int nSecurityLevel, const uint256& hashTxOut, CTxIn& newTxIn, CZerocoinSpend& zerocoinSpend, string& strFailReason, int& nStatus)
 {
+    // Default error status if not changed below
+    nStatus = ZPIV_TXMINT_GENERAL;
+
     libzerocoin::CoinDenomination denomination = zerocoinSelected.GetDenomination();
     // 2. Get pubcoin from the private coin
     libzerocoin::PublicCoin pubCoinSelected(Params().Zerocoin_Params(), zerocoinSelected.GetValue(), denomination);
     LogPrintf("%s : pubCoinSelected:\n denom=%d\n value%s\n", __func__, denomination, pubCoinSelected.getValue().GetHex());
     if (!pubCoinSelected.validate()) {
         strFailReason = _("the selected mint coin is an invalid coin");
-        nStatus = INVALID_COIN;
+        nStatus = ZPIV_INVALID_COIN;
         return false;
     }
 
@@ -3979,7 +3983,7 @@ bool CWallet::MintToTxIn(CZerocoinMint zerocoinSelected, int nSecurityLevel, con
     if (!CAccumulators::getInstance().IntializeWitnessAndAccumulator(pubCoinSelected, accumulator, witness, nSecurityLevel, strFailReason)) {
         LogPrintf("%s failed to initialize witness\n", __func__);
         strFailReason += _("Try to spend with a higher security level to include more coins");
-        nStatus = FAILED_ACCUMULATOR_INITIALIZATION;
+        nStatus = ZPIV_FAILED_ACCUMULATOR_INITIALIZATION;
         return false;
     }
 
@@ -3996,7 +4000,7 @@ bool CWallet::MintToTxIn(CZerocoinMint zerocoinSelected, int nSecurityLevel, con
         if (!spend.Verify(accumulator)) {
             strFailReason = _("the new spend coin transaction did not verify");
             LogPrintf("%s : %s\n", __func__, strFailReason);
-            nStatus = INVALID_WITNESS;
+            nStatus = ZPIV_INVALID_WITNESS;
             return false;
         }
 
@@ -4022,7 +4026,7 @@ bool CWallet::MintToTxIn(CZerocoinMint zerocoinSelected, int nSecurityLevel, con
         catch (...) {
             strFailReason = _("failed to deserialize");
             LogPrintf("%s : %s\n", __func__, strFailReason);
-            nStatus = BAD_SERIALIZATION;
+            nStatus = ZPIV_BAD_SERIALIZATION;
             return false;
         }
 
@@ -4030,7 +4034,7 @@ bool CWallet::MintToTxIn(CZerocoinMint zerocoinSelected, int nSecurityLevel, con
         if (!newSpendChecking.Verify(accumulator)) {
             strFailReason = _("the transaction did not verify");
             LogPrintf("%s : %s\n", __func__, strFailReason);
-            nStatus = BAD_SERIALIZATION;
+            nStatus = ZPIV_BAD_SERIALIZATION;
             return false;
         }
 
@@ -4044,7 +4048,7 @@ bool CWallet::MintToTxIn(CZerocoinMint zerocoinSelected, int nSecurityLevel, con
 
                 pwalletMain->NotifyZerocoinChanged(pwalletMain, zerocoinSelected.GetValue().GetHex(), "Used", CT_UPDATED);
                 strFailReason = _("the coin spend has been used");
-                nStatus = SPENT_USED_ZPIV;
+                nStatus = ZPIV_SPENT_USED_ZPIV;
                 return false;
             }
         }
@@ -4055,23 +4059,27 @@ bool CWallet::MintToTxIn(CZerocoinMint zerocoinSelected, int nSecurityLevel, con
     catch (const std::exception&) {
         strFailReason = _("CoinSpend: Accumulator witness does not verify\n");
         LogPrintf("%s : %s\n", __func__, strFailReason);
-        nStatus = INVALID_WITNESS;
+        nStatus = ZPIV_INVALID_WITNESS;
         return false;
     }
 
-    nStatus = VALID_SPEND;
+    nStatus = ZPIV_SPEND_OKAY; // Everything okay
+
     return true;
 }
 
 bool CWallet::CreateZerocoinSpendTransaction(CAmount nValue, int nSecurityLevel, CWalletTx& wtxNew, CReserveKey& reserveKey, vector<CZerocoinSpend>& vSpends, vector<CZerocoinMint>& vSelectedMints, vector<CZerocoinMint>& vNewMints, std::string& strFailReason, bool fMintChange, int& nStatus, CBitcoinAddress* address)
 {
+    // Check available funds
+    nStatus = ZPIV_TRX_FUNDS_PROBLEMS; 
+
     if (nValue > GetZerocoinBalance()) {
         strFailReason = _("You don't have enough Zerocoins in your wallet");
         return false;
     }
 
     if (nValue < 1) {
-        strFailReason = _("1 is the smallest denomination of zPiv available");
+        strFailReason = _("Value is below the the smallest available denomination (= 1) of zPiv");
         return false;
     }
 
@@ -4079,9 +4087,12 @@ bool CWallet::CreateZerocoinSpendTransaction(CAmount nValue, int nSecurityLevel,
     CWalletDB walletdb(pwalletMain->strWalletFile);
     list<CZerocoinMint> listMints = walletdb.ListMintedCoins(true, true);
     if (listMints.empty()) {
-        strFailReason = _("failed to find a zerocoin in database");
+        strFailReason = _("failed to find Zerocoins in in wallet.dat");
         return false;
     }
+
+    // Create transaction
+    nStatus = ZPIV_TRX_CREATE;
 
     const int nMaxSpends = Params().Zerocoin_MaxSpendsPerTransaction();
     CAmount nValueSelected = 0;
@@ -4131,6 +4142,9 @@ bool CWallet::CreateZerocoinSpendTransaction(CAmount nValue, int nSecurityLevel,
         return false;
     }
 
+    // Create change if needed
+    nStatus = ZPIV_TRX_CHANGE;
+    
     CMutableTransaction txNew;
     wtxNew.BindWallet(this);
     {
@@ -4217,6 +4231,8 @@ bool CWallet::CreateZerocoinSpendTransaction(CAmount nValue, int nSecurityLevel,
             wtxNew.nTimeReceived = GetAdjustedTime();
         }
     }
+
+    nStatus = ZPIV_SPEND_OKAY; // Everything okay
 
     return true;
 }
@@ -4340,7 +4356,11 @@ string CWallet::MintZerocoin(CAmount nValue, CWalletTx& wtxNew, vector<CZerocoin
 
 string CWallet::SpendZerocoin(CAmount nAmount, int nSecurityLevel, CWalletTx& wtxNew, vector<CZerocoinSpend>& vSpends, vector<CZerocoinMint>& vMintsSelected, bool fMintChange, int& nStatus, CBitcoinAddress* addressTo)
 {
+    // Default: assume something goes wrong. Depending on the problem this gets more specific below
+    nStatus = ZPIV_SPEND_ERROR;
+
     if (IsLocked()) {
+        nStatus = ZPIV_WALLET_LOCKED;
         string strError = _("Error: Wallet locked, unable to create transaction!");
         LogPrintf("SpendZerocoin() : %s", strError.c_str());
         return strError;
@@ -4359,6 +4379,7 @@ string CWallet::SpendZerocoin(CAmount nAmount, int nSecurityLevel, CWalletTx& wt
     CWalletDB walletdb(pwalletMain->strWalletFile);
     if (!CommitTransaction(wtxNew, reserveKey)) {
         LogPrintf("%s: failed to commit\n", __func__);
+        nStatus = ZPIV_COMMIT_FAILED;
 
         //reset all mints
         for (CZerocoinMint mint : vMintsSelected) {
@@ -4370,6 +4391,7 @@ string CWallet::SpendZerocoin(CAmount nAmount, int nSecurityLevel, CWalletTx& wt
         //erase spends
         for (CZerocoinSpend spend : vSpends) {
             if (!CWalletDB(strWalletFile).EraseZerocoinSpendSerialEntry(spend.GetSerial())) {
+                nStatus = ZPIV_ERASE_SPENDS_FAILED;
                 return _("Error: It cannot delete coin serial number in wallet");
             }
         }
@@ -4377,6 +4399,7 @@ string CWallet::SpendZerocoin(CAmount nAmount, int nSecurityLevel, CWalletTx& wt
         // erase new mints
         for (auto& mint : vNewMints) {
             if (!CWalletDB(strWalletFile).EraseZerocoinMint(mint)) {
+                nStatus = ZPIV_ERASE_NEW_MINTS_FAILED;
                 return _("Error: Unable to cannot delete zerocoin mint in wallet");
             }
         }
@@ -4396,6 +4419,8 @@ string CWallet::SpendZerocoin(CAmount nAmount, int nSecurityLevel, CWalletTx& wt
         if (!mintCheck.IsUsed())
             return _("Error, the mint did not get marked as used");
     }
+
+    nStatus = ZPIV_SPEND_OKAY;  // When we reach this point spending zPIV was successful
 
     return "";
 }

@@ -69,6 +69,7 @@ private:
 
     int nDisplayUnit;
     bool updateLabel(const QString& address);
+    void sendzPIV();
 
 private slots:
     void on_payTo_textChanged(const QString& address);

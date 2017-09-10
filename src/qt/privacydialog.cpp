@@ -221,7 +221,6 @@ void PrivacyDialog::on_pushButtonSpentReset_clicked()
 
 void PrivacyDialog::on_pushButtonSpendzPIV_clicked()
 {
-    QSettings settings;
 
     if (!walletModel || !walletModel->getOptionsModel() || !pwalletMain)
         return;
@@ -234,7 +233,17 @@ void PrivacyDialog::on_pushButtonSpendzPIV_clicked()
             // Unlock wallet was cancelled
             return;
         }
+        // Wallet is unlocked now, sedn zPIV
+        sendzPIV();
+        return;
     }
+    // Wallet already unlocked or not encrypted at all, send zPIV
+    sendzPIV();
+}
+
+void PrivacyDialog::sendzPIV()
+{
+    QSettings settings;
 
     // Handle 'Pay To' address options
     CBitcoinAddress address(ui->payTo->text().toStdString());
@@ -271,6 +280,7 @@ void PrivacyDialog::on_pushButtonSpendzPIV_clicked()
         strAddressLabel = "<br />(" + ui->addAsLabel->text() + ") ";        
     }
 
+    // General info
     CAmount nDisplayAmount = nAmount / COIN;
     QString strQuestionString = tr("Are you sure you want to send?<br /><br />");
     QString strAmount = "<b>" + QString::number(nDisplayAmount, 10) + " zPIV</b>";
@@ -282,7 +292,6 @@ void PrivacyDialog::on_pushButtonSpendzPIV_clicked()
     }
 
     QString strSecurityLevel = tr("with Security Level ") + ui->securityLevel->text() + " ?";
-
     strQuestionString = strQuestionString + strAmount + strAddress + strSecurityLevel;
 
     // Display message box
@@ -296,7 +305,7 @@ void PrivacyDialog::on_pushButtonSpendzPIV_clicked()
         return;
     }
 
-    // attempt to spend the zPiv
+    // Attempt to spend the zPiv
     CWalletTx wtxNew;
     vector<CZerocoinMint> vMintsSelected;
     vector<CZerocoinSpend> vSpends;
@@ -304,16 +313,20 @@ void PrivacyDialog::on_pushButtonSpendzPIV_clicked()
     int64_t nTime = GetTimeMillis();
     ui->TEMintStatus->setPlainText(tr("Spending Zerocoin.\nComputationally expensive, might need several minutes depending on the selected Security Level and your hardware. \nPlease be patient..."));
     ui->TEMintStatus->repaint();
+
+    // Spend zPIV
     int nStatus;
     string strError = pwalletMain->SpendZerocoin(nAmount, nSecurityLevel, wtxNew, vSpends, vMintsSelected, fMintChange, nStatus, &address);
 
-    if (strError != "") {
-        QMessageBox::warning(this, tr("Spend Zerocoin"), tr(strError.c_str()), QMessageBox::Ok, QMessageBox::Ok);
-        ui->TEMintStatus->setPlainText(tr("Spend Zerocoin Failed!"));
+    // Display errors during spend
+    if ((strError != "") || (nStatus != 0)) {
+        QMessageBox::warning(this, tr("Spend Zerocoin"), strError.c_str(), QMessageBox::Ok, QMessageBox::Ok);
+        ui->TEMintStatus->setPlainText(tr("Spend Zerocoin failed with status = ") +QString::number(nStatus, 10) + "\n" + "Message: " + QString::fromStdString(strError));
         ui->TEMintStatus->repaint();
         return;
     }
 
+    // Some statistics for entertainment
     QString strStats = "";
     CAmount nValueIn = 0;
     int nCount = 0;
@@ -339,6 +352,7 @@ void PrivacyDialog::on_pushButtonSpendzPIV_clicked()
     }
     double fDuration = (double)(GetTimeMillis() - nTime)/1000.0;
     strStats += tr("Duration: ") + QString::number(fDuration) + tr(" sec.\n");
+    strStats += tr("Sending successful, return code: ") + QString::number(nStatus) + "\n";
 
     QString strReturn;
     strReturn += tr("txid: ") + wtxNew.GetHash().ToString().c_str() + "\n";

@@ -379,6 +379,7 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += HelpMessageOpt("-salvagewallet", _("Attempt to recover private keys from a corrupt wallet.dat") + " " + _("on startup"));
     strUsage += HelpMessageOpt("-sendfreetransactions", strprintf(_("Send transactions as zero-fee transactions if possible (default: %u)"), 0));
     strUsage += HelpMessageOpt("-spendzeroconfchange", strprintf(_("Spend unconfirmed change when sending transactions (default: %u)"), 1));
+    strUsage += HelpMessageOpt("-disablesystemnotifications", strprintf(_("Disable OS notifications for incoming transactions (default: %u)"), 0));
     strUsage += HelpMessageOpt("-txconfirmtarget=<n>", strprintf(_("If paytxfee is not set, include enough fee so transactions begin confirmation on average within n blocks (default: %u)"), 1));
     strUsage += HelpMessageOpt("-maxtxfee=<amt>", strprintf(_("Maximum total fees to use in a single wallet transaction, setting too low may abort large transactions (default: %s)"),
         FormatMoney(maxTxFee)));
@@ -874,13 +875,14 @@ bool AppInit2(boost::thread_group& threadGroup)
         }
     }
     nTxConfirmTarget = GetArg("-txconfirmtarget", 1);
-    bSpendZeroConfChange = GetArg("-spendzeroconfchange", false);
-    fSendFreeTransactions = GetArg("-sendfreetransactions", false);
+    bSpendZeroConfChange = GetBoolArg("-spendzeroconfchange", false);
+    bdisableSystemnotifications = GetBoolArg("-disablesystemnotifications", false);
+    fSendFreeTransactions = GetBoolArg("-sendfreetransactions", false);
 
     std::string strWalletFile = GetArg("-wallet", "wallet.dat");
 #endif // ENABLE_WALLET
 
-    fIsBareMultisigStd = GetArg("-permitbaremultisig", true) != 0;
+    fIsBareMultisigStd = GetBoolArg("-permitbaremultisig", true) != 0;
     nMaxDatacarrierBytes = GetArg("-datacarriersize", nMaxDatacarrierBytes);
 
     fAlerts = GetBoolArg("-alerts", DEFAULT_ALERTS);

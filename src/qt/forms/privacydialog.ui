@@ -522,7 +522,7 @@
                <item>
                 <widget class="QLabel" name="labelSecurityLevel">
                  <property name="toolTip">
-                  <string>Percentage of incoming PIV which get automatically converted to zPIV via Zerocoin Protocol (min: 10%)</string>
+                  <string>Security Level for Zerocoin Transactions. More is better, but needs more time and resources.</string>
                  </property>
                  <property name="frameShape">
                   <enum>QFrame::Box</enum>
@@ -546,7 +546,7 @@
                     </sizepolicy>
                    </property>
                    <property name="toolTip">
-                    <string>Security Level 1 - 100 (default: 100)</string>
+                    <string>Security Level 1 - 100 (default: 42)</string>
                    </property>
                    <property name="buttonSymbols">
                     <enum>QAbstractSpinBox::PlusMinus</enum>
@@ -748,7 +748,7 @@
                   <enum>Qt::LeftToRight</enum>
                  </property>
                  <property name="text">
-                  <string>Convert Change to Zerocoin (1 zPIV Fee)</string>
+                  <string>Convert Change to Zerocoin (1 zPIV Fee per used Denomination)</string>
                  </property>
                 </widget>
                </item>

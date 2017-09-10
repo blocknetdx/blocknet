@@ -1052,19 +1052,22 @@ void BitcoinGUI::closeEvent(QCloseEvent* event)
 #ifdef ENABLE_WALLET
 void BitcoinGUI::incomingTransaction(const QString& date, int unit, const CAmount& amount, const QString& type, const QString& address)
 {
-    // On new transaction, make an info balloon
-    message((amount) < 0 ? (pwalletMain->fMultiSendNotify == true ? tr("Sent MultiSend transaction") : tr("Sent transaction")) : tr("Incoming transaction"),
-        tr("Date: %1\n"
-           "Amount: %2\n"
-           "Type: %3\n"
-           "Address: %4\n")
-            .arg(date)
-            .arg(BitcoinUnits::formatWithUnit(unit, amount, true))
-            .arg(type)
-            .arg(address),
-        CClientUIInterface::MSG_INFORMATION);
+    // Only send notifications when not disabled
+    if(!bdisableSystemnotifications){
+        // On new transaction, make an info balloon
+        message((amount) < 0 ? (pwalletMain->fMultiSendNotify == true ? tr("Sent MultiSend transaction") : tr("Sent transaction")) : tr("Incoming transaction"),
+            tr("Date: %1\n"
+               "Amount: %2\n"
+               "Type: %3\n"
+               "Address: %4\n")
+                .arg(date)
+                .arg(BitcoinUnits::formatWithUnit(unit, amount, true))
+                .arg(type)
+                .arg(address),
+            CClientUIInterface::MSG_INFORMATION);
 
-    pwalletMain->fMultiSendNotify = false;
+        pwalletMain->fMultiSendNotify = false;
+    }
 }
 #endif // ENABLE_WALLET
 
