@@ -4094,12 +4094,20 @@ bool CWallet::CreateZerocoinSpendTransaction(CAmount nValue, int nSecurityLevel,
     // Create transaction
     nStatus = ZPIV_TRX_CREATE;
 
+    // If the input value is not an int, then we want the selection algorithm to round up to the next highest int
+    double dValue = static_cast<double>(nValue) / static_cast<double>(COIN);
+    bool fWholeNumber = floor(dValue) == dValue;
+    CAmount nValueToSelect = nValue;
+    if (!fWholeNumber)
+        nValueToSelect = static_cast<CAmount>(ceil(dValue) * COIN);
+
+    // Select the zPiv mints to use in this spend
     const int nMaxSpends = Params().Zerocoin_MaxSpendsPerTransaction();
     CAmount nValueSelected = 0;
     std::map<libzerocoin::CoinDenomination, CAmount> DenomMap = GetMyZerocoinDistribution();
     const bool fMinimizeChange = false; // Later should be a GUI option
     int nCoinsReturned; // Number of coins returned in change from function below (for debug)
-    vSelectedMints = SelectMintsFromList(nValue, nValueSelected, nMaxSpends, fMinimizeChange, nCoinsReturned, listMints, DenomMap);
+    vSelectedMints = SelectMintsFromList(nValueToSelect, nValueSelected, nMaxSpends, fMinimizeChange, nCoinsReturned, listMints, DenomMap);
     // for Debug
     listSpends(vSelectedMints);
 

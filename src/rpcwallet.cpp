@@ -2450,7 +2450,7 @@ Value spendzerocoin(const Array& params, bool fHelp)
     if (pwalletMain->IsLocked())
         throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
 
-    CAmount nAmount = params[0].get_int() * COIN;
+    CAmount nAmount = AmountFromValue(params[0]);
 
     CBitcoinAddress address = CBitcoinAddress(params[1].get_str());
     if(!address.IsValid())
