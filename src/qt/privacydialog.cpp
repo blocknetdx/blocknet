@@ -27,7 +27,7 @@ PrivacyDialog::PrivacyDialog(QWidget* parent) : QDialog(parent),
     ui->setupUi(this);
 
     // "Spending 999999 zPIV ought to be enough for anybody." - Bill Gates, 2017
-    ui->zPIVpayAmount->setValidator( new QIntValidator(0, 999999, this) );
+    ui->zPIVpayAmount->setValidator( new QDoubleValidator(0.0, 21000000.0, 20, this) );
     ui->labelMintAmountValue->setValidator( new QIntValidator(0, 999999, this) );
 
     // Default texts for (mini-) coincontrol
@@ -241,6 +241,11 @@ void PrivacyDialog::on_pushButtonSpendzPIV_clicked()
     sendzPIV();
 }
 
+static inline int64_t roundint64(double d)
+{
+    return (int64_t)(d > 0 ? d + 0.5 : d - 0.5);
+}
+
 void PrivacyDialog::sendzPIV()
 {
     QSettings settings;
@@ -257,20 +262,43 @@ void PrivacyDialog::sendzPIV()
         }
     }
 
-    //grab as a double, increase by COIN and cutoff any remainder by assigning it as int64_t/CAmount
+    // Double is allowed now
     double dAmount = ui->zPIVpayAmount->text().toDouble();
-    CAmount nAmount = dAmount * COIN;
-    if (!MoneyRange(nAmount) || nAmount < 1) {
+    CAmount nAmount = roundint64(dAmount* COIN);
+
+    // Check amount validity
+    if (!MoneyRange(nAmount) || nAmount <= 0.0) {
         QMessageBox::warning(this, tr("Spend Zerocoin"), tr("Invalid Send Amount"), QMessageBox::Ok, QMessageBox::Ok);
         return;
+    }
+
+    // Convert change to zPIV
+    bool fMintChange = ui->checkBoxMintChange->isChecked();
+
+    // Warn for additional fees if amount is not an integer and change as zPIV is requested
+    bool fWholeNumber = floor(dAmount) == dAmount;
+    double dzFee = 0.0;
+
+    if(!fWholeNumber)
+        dzFee = 1.0 - (dAmount - static_cast<double>(floor(dAmount)));
+
+    if(!fWholeNumber && fMintChange){
+        QString strFeeWarning = "You've entered an mount with fractional digits and want the change to be converted to Zerocoin.<br /><br /><b>";
+        strFeeWarning += QString::number(dzFee, 'f', 8) + " PIV </b>will be added to the standard transaction fees!<br />";
+        QMessageBox::StandardButton retval = QMessageBox::question(this, tr("Confirm additional Fees"),
+            strFeeWarning,
+            QMessageBox::Yes | QMessageBox::Cancel,
+            QMessageBox::Cancel);
+
+        if (retval != QMessageBox::Yes) {
+            // Sending canceled
+            return;
+        }
     }
 
     // Persist Security Level for next start
     nSecurityLevel = ui->securityLevel->value();
     settings.setValue("nSecurityLevel", nSecurityLevel);
-
-    // Convert change to zPIV
-    bool fMintChange = ui->checkBoxMintChange->isChecked();
 
     // Spend confirmation message box
 
@@ -281,9 +309,8 @@ void PrivacyDialog::sendzPIV()
     }
 
     // General info
-    CAmount nDisplayAmount = nAmount / COIN;
     QString strQuestionString = tr("Are you sure you want to send?<br /><br />");
-    QString strAmount = "<b>" + QString::number(nDisplayAmount, 10) + " zPIV</b>";
+    QString strAmount = "<b>" + QString::number(dAmount, 'f', 8) + " zPIV</b>";
     QString strAddress = tr(" to address ") + QString::fromStdString(address.ToString()) + strAddressLabel + " <br />";
 
     if(ui->payTo->text().isEmpty()){
@@ -292,7 +319,7 @@ void PrivacyDialog::sendzPIV()
     }
 
     QString strSecurityLevel = tr("with Security Level ") + ui->securityLevel->text() + " ?";
-    strQuestionString = strQuestionString + strAmount + strAddress + strSecurityLevel;
+    strQuestionString += strAmount + strAddress + strSecurityLevel;
 
     // Display message box
     QMessageBox::StandardButton retval = QMessageBox::question(this, tr("Confirm send coins"),

@@ -748,7 +748,7 @@
                   <enum>Qt::LeftToRight</enum>
                  </property>
                  <property name="text">
-                  <string>Convert Change to Zerocoin (1 zPIV Fee per used Denomination)</string>
+                  <string>Convert Change to Zerocoin (might cost additional fees)</string>
                  </property>
                 </widget>
                </item>
