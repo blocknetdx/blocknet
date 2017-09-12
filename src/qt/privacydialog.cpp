@@ -280,10 +280,10 @@ void PrivacyDialog::sendzPIV()
     double dzFee = 0.0;
 
     if(!fWholeNumber)
-        dzFee = 1.0 - (dAmount - static_cast<double>(floor(dAmount)));
+        dzFee = 1.0 - (dAmount - floor(dAmount));
 
     if(!fWholeNumber && fMintChange){
-        QString strFeeWarning = "You've entered an mount with fractional digits and want the change to be converted to Zerocoin.<br /><br /><b>";
+        QString strFeeWarning = "You've entered an amount with fractional digits and want the change to be converted to Zerocoin.<br /><br /><b>";
         strFeeWarning += QString::number(dzFee, 'f', 8) + " PIV </b>will be added to the standard transaction fees!<br />";
         QMessageBox::StandardButton retval = QMessageBox::question(this, tr("Confirm additional Fees"),
             strFeeWarning,
