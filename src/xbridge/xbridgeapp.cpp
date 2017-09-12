@@ -481,6 +481,23 @@ XBridgeSessionPtr XBridgeApp::sessionByCurrency(const std::string & currency) co
 
 //*****************************************************************************
 //*****************************************************************************
+std::vector<std::string> XBridgeApp::sessionsCurrencies() const
+{
+    boost::mutex::scoped_lock l(m_sessionsLock);
+
+    std::vector<std::string> currencies;
+
+    for(auto i = m_sessionIds.begin(); i != m_sessionIds.end();)
+    {
+        currencies.push_back(i->first);
+        ++i;
+    }
+
+    return currencies;
+}
+
+//*****************************************************************************
+//*****************************************************************************
 void XBridgeApp::addSession(XBridgeSessionPtr session)
 {
     storageStore(session, session->sessionAddr());

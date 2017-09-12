@@ -232,14 +232,12 @@ Value dxGetCurrencyList(const Array & params, bool fHelp)
         throw runtime_error("dxGetCurrencyList\nList currencies.");
     }
 
-    XBridgeExchange & e = XBridgeExchange::instance();
-
     Object obj;
 
-    std::vector<StringPair> wallets = e.listOfWallets();
-    for (StringPair & w : wallets)
+    std::vector<std::string> currencies = XBridgeApp::instance().sessionsCurrencies();
+    for (std::string currency : currencies)
     {
-        obj.push_back(Pair(w.first, w.second));
+        obj.push_back(Pair(currency, ""));
     }
 
     return obj;
