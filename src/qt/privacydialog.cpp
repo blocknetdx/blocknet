@@ -17,6 +17,7 @@
 
 #include <QClipboard>
 #include <QSettings>
+#include <utilmoneystr.h>
 
 PrivacyDialog::PrivacyDialog(QWidget* parent) : QDialog(parent),
                                                           ui(new Ui::PrivacyDialog),
@@ -383,7 +384,7 @@ void PrivacyDialog::sendzPIV()
 
     QString strReturn;
     strReturn += tr("txid: ") + wtxNew.GetHash().ToString().c_str() + "\n";
-    strReturn += tr("fee: ") + QString::number((nValueIn-nValueOut)/COIN) + "\n";
+    strReturn += tr("fee: ") + QString::fromStdString(FormatMoney(nValueIn-nValueOut)) + "\n";
     strReturn += strStats;
 
     // Clear amount to avoid double spending when accidentally clicking twice
