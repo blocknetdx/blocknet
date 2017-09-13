@@ -9,7 +9,10 @@
 #include "obfuscation.h"
 #include "sync.h"
 #include "util.h"
+#include "xbridge/xbridgeexchange.h"
+
 #include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string.hpp>
 
 // keep track of the scanning errors I've seen
 map<uint256, int> mapSeenServicenodeScanningErrors;
@@ -60,76 +63,93 @@ bool GetBlockHash(uint256& hash, int nBlockHeight)
 CServicenode::CServicenode()
 {
     LOCK(cs);
-    vin = CTxIn();
-    addr = CService();
-    pubKeyCollateralAddress = CPubKey();
-    pubKeyServicenode = CPubKey();
-    sig = std::vector<unsigned char>();
-    activeState = SERVICENODE_ENABLED;
-    sigTime = GetAdjustedTime();
-    lastPing = CServicenodePing();
-    cacheInputAge = 0;
-    cacheInputAgeBlock = 0;
-    unitTest = false;
-    allowFreeTx = true;
-    nActiveState = SERVICENODE_ENABLED,
-    protocolVersion = PROTOCOL_VERSION;
-    nLastDsq = 0;
-    nScanningErrorCount = 0;
+
+    vin                           = CTxIn();
+    addr                          = CService();
+    pubKeyCollateralAddress       = CPubKey();
+    pubKeyServicenode             = CPubKey();
+    sig                           = std::vector<unsigned char>();
+    activeState                   = SERVICENODE_ENABLED;
+    sigTime                       = GetAdjustedTime();
+    lastPing                      = CServicenodePing();
+    cacheInputAge                 = 0;
+    cacheInputAgeBlock            = 0;
+    unitTest                      = false;
+    allowFreeTx                   = true;
+    nActiveState                  = SERVICENODE_ENABLED,
+    protocolVersion               = PROTOCOL_VERSION;
+    nLastDsq                      = 0;
+    nScanningErrorCount           = 0;
     nLastScanningErrorBlockHeight = 0;
-    lastTimeChecked = 0;
-    nLastDsee = 0;  // temporary, do not save. Remove after migration to v12
-    nLastDseep = 0; // temporary, do not save. Remove after migration to v12
+    lastTimeChecked               = 0;
+    nLastDsee                     = 0; // temporary, do not save. Remove after migration to v12
+    nLastDseep                    = 0; // temporary, do not save. Remove after migration to v12
+
+    XBridgeExchange & e = XBridgeExchange::instance();
+    if (e.isEnabled())
+    {
+        std::vector<StringPair> wallets = e.listOfWallets();
+        std::vector<std::string> list;
+        for (std::vector<StringPair>::iterator i = wallets.begin(); i != wallets.end(); ++i)
+        {
+            list.push_back(i->first);
+        }
+        connectedWallets = boost::algorithm::join(list, ",");
+    }
 }
 
 CServicenode::CServicenode(const CServicenode& other)
 {
     LOCK(cs);
-    vin = other.vin;
-    addr = other.addr;
-    pubKeyCollateralAddress = other.pubKeyCollateralAddress;
-    pubKeyServicenode = other.pubKeyServicenode;
-    sig = other.sig;
-    activeState = other.activeState;
-    sigTime = other.sigTime;
-    lastPing = other.lastPing;
-    cacheInputAge = other.cacheInputAge;
-    cacheInputAgeBlock = other.cacheInputAgeBlock;
-    unitTest = other.unitTest;
-    allowFreeTx = other.allowFreeTx;
-    nActiveState = SERVICENODE_ENABLED,
-    protocolVersion = other.protocolVersion;
-    nLastDsq = other.nLastDsq;
-    nScanningErrorCount = other.nScanningErrorCount;
+
+    vin                           = other.vin;
+    addr                          = other.addr;
+    pubKeyCollateralAddress       = other.pubKeyCollateralAddress;
+    pubKeyServicenode             = other.pubKeyServicenode;
+    sig                           = other.sig;
+    activeState                   = other.activeState;
+    sigTime                       = other.sigTime;
+    lastPing                      = other.lastPing;
+    cacheInputAge                 = other.cacheInputAge;
+    cacheInputAgeBlock            = other.cacheInputAgeBlock;
+    unitTest                      = other.unitTest;
+    allowFreeTx                   = other.allowFreeTx;
+    nActiveState                  = SERVICENODE_ENABLED,
+    protocolVersion               = other.protocolVersion;
+    nLastDsq                      = other.nLastDsq;
+    nScanningErrorCount           = other.nScanningErrorCount;
     nLastScanningErrorBlockHeight = other.nLastScanningErrorBlockHeight;
-    lastTimeChecked = 0;
-    nLastDsee = other.nLastDsee;   // temporary, do not save. Remove after migration to v12
-    nLastDseep = other.nLastDseep; // temporary, do not save. Remove after migration to v12
+    lastTimeChecked               = 0;
+    nLastDsee                     = other.nLastDsee;  // temporary, do not save. Remove after migration to v12
+    nLastDseep                    = other.nLastDseep; // temporary, do not save. Remove after migration to v12
+    connectedWallets              = other.connectedWallets;
 }
 
 CServicenode::CServicenode(const CServicenodeBroadcast& mnb)
 {
     LOCK(cs);
-    vin = mnb.vin;
-    addr = mnb.addr;
-    pubKeyCollateralAddress = mnb.pubKeyCollateralAddress;
-    pubKeyServicenode = mnb.pubKeyServicenode;
-    sig = mnb.sig;
-    activeState = SERVICENODE_ENABLED;
-    sigTime = mnb.sigTime;
-    lastPing = mnb.lastPing;
-    cacheInputAge = 0;
-    cacheInputAgeBlock = 0;
-    unitTest = false;
-    allowFreeTx = true;
-    nActiveState = SERVICENODE_ENABLED,
-    protocolVersion = mnb.protocolVersion;
-    nLastDsq = mnb.nLastDsq;
-    nScanningErrorCount = 0;
+
+    vin                           = mnb.vin;
+    addr                          = mnb.addr;
+    pubKeyCollateralAddress       = mnb.pubKeyCollateralAddress;
+    pubKeyServicenode             = mnb.pubKeyServicenode;
+    sig                           = mnb.sig;
+    activeState                   = SERVICENODE_ENABLED;
+    sigTime                       = mnb.sigTime;
+    lastPing                      = mnb.lastPing;
+    cacheInputAge                 = 0;
+    cacheInputAgeBlock            = 0;
+    unitTest                      = false;
+    allowFreeTx                   = true;
+    nActiveState                  = SERVICENODE_ENABLED,
+    protocolVersion               = mnb.protocolVersion;
+    nLastDsq                      = mnb.nLastDsq;
+    nScanningErrorCount           = 0;
     nLastScanningErrorBlockHeight = 0;
-    lastTimeChecked = 0;
-    nLastDsee = 0;  // temporary, do not save. Remove after migration to v12
-    nLastDseep = 0; // temporary, do not save. Remove after migration to v12
+    lastTimeChecked               = 0;
+    nLastDsee                     = 0; // temporary, do not save. Remove after migration to v12
+    nLastDseep                    = 0; // temporary, do not save. Remove after migration to v12
+    connectedWallets              = mnb.connectedWallets;
 }
 
 //

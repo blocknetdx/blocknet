@@ -564,15 +564,16 @@ Value servicenodelist(const Array& params, bool fHelp)
             "\nResult:\n"
             "[\n"
             "  {\n"
-            "    \"rank\": n,           (numeric) Servicenode Rank (or 0 if not enabled)\n"
-            "    \"txhash\": \"hash\",    (string) Collateral transaction hash\n"
-            "    \"outidx\": n,         (numeric) Collateral transaction output index\n"
-            "    \"status\": s,         (string) Status (ENABLED/EXPIRED/REMOVE/etc)\n"
-            "    \"addr\": \"addr\",      (string) Servicenode BlocknetDX address\n"
-            "    \"version\": v,        (numeric) Servicenode protocol version\n"
-            "    \"lastseen\": ttt,     (numeric) The time in seconds since epoch (Jan 1 1970 GMT) of the last seen\n"
-            "    \"activetime\": ttt,   (numeric) The time in seconds since epoch (Jan 1 1970 GMT) servicenode has been active\n"
-            "    \"lastpaid\": ttt,     (numeric) The time in seconds since epoch (Jan 1 1970 GMT) servicenode was last paid\n"
+            "    \"rank\": n,                (numeric) Servicenode Rank (or 0 if not enabled)\n"
+            "    \"txhash\": \"hash\",       (string) Collateral transaction hash\n"
+            "    \"outidx\": n,              (numeric) Collateral transaction output index\n"
+            "    \"status\": s,              (string) Status (ENABLED/EXPIRED/REMOVE/etc)\n"
+            "    \"addr\": \"addr\",         (string) Servicenode BlocknetDX address\n"
+            "    \"version\": v,             (numeric) Servicenode protocol version\n"
+            "    \"lastseen\": ttt,          (numeric) The time in seconds since epoch (Jan 1 1970 GMT) of the last seen\n"
+            "    \"activetime\": ttt,        (numeric) The time in seconds since epoch (Jan 1 1970 GMT) servicenode has been active\n"
+            "    \"lastpaid\": ttt,          (numeric) The time in seconds since epoch (Jan 1 1970 GMT) servicenode was last paid\n"
+            "    \"xwallets\": \"xwallets\", (string) xbridge, connected wallets\n"
             "  }\n"
             "  ,...\n"
             "]\n"
@@ -612,6 +613,7 @@ Value servicenodelist(const Array& params, bool fHelp)
         obj.push_back(Pair("lastseen", (int64_t)mn->lastPing.sigTime));
         obj.push_back(Pair("activetime", (int64_t)(mn->lastPing.sigTime - mn->sigTime)));
         obj.push_back(Pair("lastpaid", (int64_t)mn->GetLastPaid()));
+        obj.push_back(Pair("xwallets", mn->connectedWallets));
 
         ret.push_back(obj);
     }

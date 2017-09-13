@@ -143,6 +143,9 @@ public:
     int nLastScanningErrorBlockHeight;
     CServicenodePing lastPing;
 
+    // xbridge wallets list, connected to service node
+    std::string connectedWallets;
+
     int64_t nLastDsee;  // temporary, do not save. Remove after migration to v12
     int64_t nLastDseep; // temporary, do not save. Remove after migration to v12
 
@@ -315,6 +318,14 @@ public:
         READWRITE(protocolVersion);
         READWRITE(lastPing);
         READWRITE(nLastDsq);
+        if (nType == SER_NETWORK && nVersion >= SERVICENODE_WITH_XBRIDGE_INFO_PROTO_VERSION)
+        {
+            READWRITE(connectedWallets);
+        }
+        else
+        {
+            READWRITE(connectedWallets);
+        }
     }
 
     uint256 GetHash()
