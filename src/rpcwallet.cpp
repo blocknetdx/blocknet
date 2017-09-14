@@ -2631,14 +2631,14 @@ Value getarchivedzerocoin(const Array& params, bool fHelp)
 
 Value exportzerocoins(const Array& params, bool fHelp)
 {
-    if(fHelp || params.size() != 1)
+    if(fHelp || params.size() > 2)
         throw runtime_error(
-            "exportzerocoins include_spent\n"
-                "\nImport zerocoin mints.\n"
+            "exportzerocoins include_spent ( denomination )\n"
                 "Exports zerocoin mints that are held by this wallet.dat\n"
 
                 "\nArguments:\n"
                 "1. \"include_spent\"        (bool, required) Include mints that have already been spent\n"
+                "2. \"denomination\"         (integer, optional) Export a specific denomination of zPiv\n"
 
                 "\nResult\n"
                 "[                   (array of json object)\n"
@@ -2655,7 +2655,7 @@ Value exportzerocoins(const Array& params, bool fHelp)
                 "]\n"
 
                 "\nExamples\n" +
-            HelpExampleCli("exportzerocoins", "false") + HelpExampleRpc("exportzerocoins", "false"));
+            HelpExampleCli("exportzerocoins", "false 5") + HelpExampleRpc("exportzerocoins", "false 5"));
 
     if (pwalletMain->IsLocked())
         throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
@@ -2663,10 +2663,16 @@ Value exportzerocoins(const Array& params, bool fHelp)
     CWalletDB walletdb(pwalletMain->strWalletFile);
 
     bool fIncludeSpent = params[0].get_bool();
+    libzerocoin::CoinDenomination denomination = libzerocoin::ZQ_ERROR;
+    if (params.size() == 2)
+        denomination = libzerocoin::IntToZerocoinDenomination(params[1].get_int());
     list<CZerocoinMint> listMints = walletdb.ListMintedCoins(!fIncludeSpent, false);
 
     Array jsonList;
     for (const CZerocoinMint mint : listMints) {
+        if (denomination != libzerocoin::ZQ_ERROR && denomination != mint.GetDenomination())
+            continue;
+
         Object objMint;
         objMint.emplace_back(Pair("d", mint.GetDenomination()));
         objMint.emplace_back(Pair("p", mint.GetValue().GetHex()));

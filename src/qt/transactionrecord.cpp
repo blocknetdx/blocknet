@@ -75,13 +75,18 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet* 
         bool fSpendFromMe = wallet->IsMyZerocoinSpend(zcspend.getCoinSerialNumber());
 
         //zerocoin spend outputs
+        bool fFeeAssigned = false;
         for (const CTxOut txout : wtx.vout) {
             // change that was reminted as zerocoins
             if (txout.IsZerocoinMint()) {
                 TransactionRecord sub(hash, nTime);
                 sub.type = TransactionRecord::ZerocoinSpend_Change_zPiv;
                 sub.address = mapValue["zerocoinmint"];
-                sub.debit = txout.nValue + (wtx.GetZerocoinSpent() - wtx.GetValueOut());
+                sub.debit = -txout.nValue;
+                if (!fFeeAssigned) {
+                    sub.debit -= (wtx.GetZerocoinSpent() - wtx.GetValueOut());
+                    fFeeAssigned = true;
+                }
                 sub.idx = parts.size();
                 parts.append(sub);
                 continue;

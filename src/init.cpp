@@ -1270,13 +1270,16 @@ bool AppInit2(boost::thread_group& threadGroup)
                     break;
                 }
 
-                // PIVX: load previous sessions sporks if we have them. note: only zerocoin spork being loaded right now)
+                // PIVX: load previous sessions sporks if we have them.
+                uiInterface.InitMessage(_("Loading sporks..."));
                 LoadSporksFromDB();
 
                 list<uint256> listAccCheckpointsNoDB = CAccumulators::getInstance().GetAccCheckpointsNoDB();
                 // PIVX: recalculate Accumulator Checkpoints that failed to database properly
                 if (listAccCheckpointsNoDB.size() && chainActive.Tip()->GetBlockHeader().nVersion >= Params().Zerocoin_HeaderVersion()) {
+                    uiInterface.InitMessage(_("Calculating missing accumulators..."));
                     LogPrintf("%s : finding missing checkpoints\n", __func__);
+
                     //search the chain to see when zerocoin started
                     int nZerocoinStart = 0;
                     CBlockIndex* pindex = chainActive.Tip();
@@ -1321,7 +1324,7 @@ bool AppInit2(boost::thread_group& threadGroup)
                 uiInterface.InitMessage(_("Verifying blocks..."));
                 fVerifyingBlocks = true;
                 if (!CVerifyDB().VerifyDB(pcoinsdbview, GetArg("-checklevel", 4), // Zerocoin must check at level 4
-                        GetArg("-checkblocks", 500))) {
+                        GetArg("-checkblocks", 100))) {
                     strLoadError = _("Corrupted block database detected");
                     fVerifyingBlocks = false;
                     break;
