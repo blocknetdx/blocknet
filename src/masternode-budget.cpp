@@ -134,9 +134,15 @@ void CBudgetManager::SubmitFinalBudget()
     }
 
     int nBlockStart = nCurrentHeight - nCurrentHeight % GetBudgetPaymentCycleBlocks() + GetBudgetPaymentCycleBlocks();
-    if (nSubmittedHeight >= nBlockStart) return;
-    //submit final budget 2 days before payment for Mainnet, about 9 minutes for Testnet
-    if (nBlockStart - nCurrentHeight > ((GetBudgetPaymentCycleBlocks() / 30) * 2)) return;
+    if (nSubmittedHeight >= nBlockStart){
+        LogPrintf("CBudgetManager::SubmitFinalBudget - nSubmittedHeight(=%ld) < nBlockStart(=%ld) condition not fulfilled.\n", nSubmittedHeight, nBlockStart);
+        return;
+    }
+    // Submit final budget at least 2 days before payment for Mainnet, about 9 minutes for Testnet
+    if (nBlockStart - nCurrentHeight > ((GetBudgetPaymentCycleBlocks() / 30) * 2)){
+        LogPrintf("CBudgetManager::SubmitFinalBudget - Too late for finalization. Latest block for finalization before next Superblock: %ld (Superblock=%ld). You are %ld blocks before the next Superblock\n", ((GetBudgetPaymentCycleBlocks() / 30) * 2), nBlockStart, (nBlockStart - nCurrentHeight));
+        return;
+    }
 
     std::vector<CBudgetProposal*> vBudgetProposals = budget.GetBudget();
     std::string strBudgetName = "main";
