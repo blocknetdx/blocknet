@@ -2377,7 +2377,7 @@ void static UpdateTip(CBlockIndex* pindexNew)
     LogPrintf("UpdateTip: new best=%s  height=%d  log2_work=%.8g  tx=%lu  date=%s progress=%f  cache=%u\n",
         chainActive.Tip()->GetBlockHash().ToString(), chainActive.Height(), log(chainActive.Tip()->nChainWork.getdouble()) / log(2.0), (unsigned long)chainActive.Tip()->nChainTx,
         DateTimeStrFormat("%Y-%m-%d %H:%M:%S", chainActive.Tip()->GetBlockTime()),
-        Checkpoints::GuessVerificationProgress(chainActive.Tip()), (unsigned int)pcoinsTip->GetCacheSize());
+              SyncProgress(chainActive.Height()), (unsigned int)pcoinsTip->GetCacheSize());
 
     cvBlockChange.notify_all();
 
@@ -4242,6 +4242,129 @@ void static CheckBlockIndex()
 
     // Check that we actually traversed the entire map.
     assert(nNodes == forward.size());
+}
+
+/**
+ * Returns the estimated blockchain sync progress. Node heights are queried at most once every
+ * 15 seconds. The sync progress is determined by calculating the mean block height across first
+ * 21 valid nodes. The assumption on accuracy is that nodes in general will report a higher block
+ * count.
+ * @param activeChainHeight
+ * @return
+ */
+double nodeBlocksMean = 0.0;
+time_t nodeTime = 0;
+double SyncProgress(int activeChainHeight) {
+    int totalNodes = (int)vNodes.size();
+
+    // If chain height is invalid or no nodes detected return 0 or last known mean calc
+    if (activeChainHeight <= 0 || totalNodes == 0) {
+        if (nodeBlocksMean > 0.0) {
+            double syncPercent = (double)activeChainHeight/nodeBlocksMean;
+            if (syncPercent > 1.0)
+                syncPercent = 1.0;
+            return syncPercent;
+        }
+        return 0.0;
+    }
+
+    time_t currentTime = time(NULL);
+
+    // Get estimated elapsed time since last progress update, if previous check more than 15 seconds
+    // ago then proceed. Otherwise, if more than 10 nodes ignore lookup and process mean from memory.
+    int elapsedTime = (int)(currentTime-nodeTime);
+    if (elapsedTime < 15 || (nodeBlocksMean >= activeChainHeight && totalNodes > 10 && elapsedTime < 120)) {
+        double syncPercent = (double)activeChainHeight/nodeBlocksMean;
+        if (syncPercent > 1.0)
+            syncPercent = 1.0;
+        return syncPercent;
+    }
+
+    // This section is only processed if:
+    // 1) 15 seconds has elapsed since last check
+    // -and-
+    // 2) the calculated mean is smaller than the current chain height -or-
+    // 3) fewer than 10 nodes exist -or-
+    // 4) 2 minutes has elapsed since the last check
+
+    // Set node time to current time
+    nodeTime = currentTime;
+
+    // If there are no nodes and mean isn't calculated yet return 0, otherwise return
+    // progress based on last known mean
+    if (totalNodes == 0) {
+        if (nodeBlocksMean == 0.0)
+            return 0.0;
+        double syncPercent = (double)activeChainHeight/nodeBlocksMean;
+        if (syncPercent > 1.0)
+            syncPercent = 1.0;
+        return syncPercent;
+    }
+
+    // Calculate the progress using the mean of the blocks across nodes
+    // Cache node block heights. Bad nodes are ignored
+    int totalBlocks = GetEstimatedBlockchainBlocks(activeChainHeight);
+
+    // If no valid nodes
+    if (totalBlocks == 0) {
+        // Return if mean calc is 0
+        if (nodeBlocksMean == 0.0)
+            return 0.0;
+        // Pull mean from memory if previous mean calc is valid
+        double syncPercent = (double)activeChainHeight/nodeBlocksMean;
+        if (syncPercent > 1.0)
+            syncPercent = 1.0;
+        return syncPercent;
+    }
+
+    // Store mean calculation
+    nodeBlocksMean = totalBlocks;
+
+    // If the mean calc is smaller than our current chain height return 100%
+    if (nodeBlocksMean < (double)activeChainHeight) {
+        nodeBlocksMean = (double)activeChainHeight;
+        return 1.0;
+    }
+
+    // Return estimated sync percentage
+    double syncPercent = (double)activeChainHeight/nodeBlocksMean;
+    if (syncPercent > 1.0)
+        syncPercent = 1.0;
+    return syncPercent;
+}
+
+/**
+ * Returns the estimated total blocks on the chain. Calculates the mean over N blocks
+ * specified in the search count. This method accesses and locks vNodes.
+ * @param activeChainHeight
+ * @param nSearchCount
+ * @return
+ */
+int GetEstimatedBlockchainBlocks(int activeChainHeight, int nSearchCount) {
+    double nodeCount = 0.0;
+    double nodeBlocks = 0.0;
+
+    // Find mean of the blocks across nodes, up to search count
+    // Bad nodes are ignored
+    LOCK(cs_vNodes);
+    for (CNode *pNode : vNodes) {
+        int nH = pNode->nStartingHeight; // current node block height
+        if (nH <= 0 || nH < activeChainHeight) // ignore bad nodes
+            continue;
+        nodeBlocks += nH;
+        nodeCount++;
+        // Stop checking after N nodes
+        if (nodeCount > nSearchCount)
+            break;
+    }
+
+    // If no valid nodes
+    if (nodeCount == 0) {
+        return activeChainHeight;
+    }
+
+    // Calculate the mean
+    return (int)(nodeBlocks/nodeCount);
 }
 
 //////////////////////////////////////////////////////////////////////////////
