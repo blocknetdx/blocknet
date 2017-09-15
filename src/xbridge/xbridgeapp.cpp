@@ -305,7 +305,6 @@ void XBridgeApp::onSend(const UcharVector & id, const UcharVector & message)
     UcharVector msg(id);
     if (msg.size() != 20)
     {
-        assert(!"bad address");
         ERR() << "bad send address " << __FUNCTION__;
         return;
     }
@@ -463,7 +462,7 @@ void XBridgeApp::bridgeThreadProc()
 //*****************************************************************************
 void XBridgeApp::rpcThreadProc()
 {
-    assert(!"rpc server");
+    LOG() << "method XBridgeApp::rpcThreadProc not implemented" << __FUNCTION__;
     // rpc::threadRPCServer();
 }
 
@@ -478,6 +477,23 @@ XBridgeSessionPtr XBridgeApp::sessionByCurrency(const std::string & currency) co
     }
 
     return XBridgeSessionPtr();
+}
+
+//*****************************************************************************
+//*****************************************************************************
+std::vector<std::string> XBridgeApp::sessionsCurrencies() const
+{
+    boost::mutex::scoped_lock l(m_sessionsLock);
+
+    std::vector<std::string> currencies;
+
+    for(auto i = m_sessionIds.begin(); i != m_sessionIds.end();)
+    {
+        currencies.push_back(i->first);
+        ++i;
+    }
+
+    return currencies;
 }
 
 //*****************************************************************************
@@ -645,7 +661,7 @@ uint256 XBridgeApp::sendXBridgeTransaction(const std::string & from,
 {
     if (fromCurrency.size() > 8 || toCurrency.size() > 8)
     {
-        assert(false && "invalid currency");
+        LOG() << "invalid currency" << __FUNCTION__;
         return uint256();
     }
 

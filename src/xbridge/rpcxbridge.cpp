@@ -132,7 +132,7 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
 {
     if (fHelp || params.size() > 1)
     {
-        throw runtime_error("dxGetTransactionInfo\nTransaction info.");
+        throw runtime_error("dxGetTransactionInfo (id)\nTransaction info.");
     }
 
     std::string id = params[0].get_str();
@@ -146,8 +146,12 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
         std::map<uint256, XBridgeTransactionDescrPtr> trlist = XBridgeApp::m_pendingTransactions;
         for (const auto & trEntry : trlist)
         {
-            Object jtr;
             const auto tr = trEntry.second;
+
+            if(id != tr->id.GetHex())
+                continue;
+
+            Object jtr;
             jtr.push_back(Pair("id", tr->id.GetHex()));
             jtr.push_back(Pair("from", tr->fromCurrency));
             jtr.push_back(Pair("from address", tr->from));
@@ -168,8 +172,12 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
         std::map<uint256, XBridgeTransactionDescrPtr> trlist = XBridgeApp::m_transactions;
         for (const auto & trEntry : trlist)
         {
-            Object jtr;
             const auto tr = trEntry.second;
+
+            if(id != tr->id.GetHex())
+                continue;
+
+            Object jtr;
             jtr.push_back(Pair("id", tr->id.GetHex()));
             jtr.push_back(Pair("from", tr->fromCurrency));
             jtr.push_back(Pair("from address", tr->from));
@@ -190,8 +198,12 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
         std::map<uint256, XBridgeTransactionDescrPtr> trlist = XBridgeApp::m_historicTransactions;
         for (const auto & trEntry : trlist)
         {
-            Object jtr;
             const auto tr = trEntry.second;
+
+            if(id != tr->id.GetHex())
+                continue;
+
+            Object jtr;
             jtr.push_back(Pair("id", tr->id.GetHex()));
             jtr.push_back(Pair("from", tr->fromCurrency));
             jtr.push_back(Pair("from address", tr->from));
@@ -220,16 +232,12 @@ Value dxGetCurrencyList(const Array & params, bool fHelp)
         throw runtime_error("dxGetCurrencyList\nList currencies.");
     }
 
-    XBridgeExchange & e = XBridgeExchange::instance();
-    if (!e.isEnabled())
-        throw runtime_error("Not an exchange node.");
-
     Object obj;
 
-    std::vector<StringPair> wallets = e.listOfWallets();
-    for (StringPair & w : wallets)
+    std::vector<std::string> currencies = XBridgeApp::instance().sessionsCurrencies();
+    for (std::string currency : currencies)
     {
-        obj.push_back(Pair(w.first, w.second));
+        obj.push_back(Pair(currency, ""));
     }
 
     return obj;
