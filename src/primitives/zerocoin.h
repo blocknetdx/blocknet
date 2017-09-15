@@ -125,6 +125,7 @@ private:
     CBigNum pubCoin;
     libzerocoin::CoinDenomination denomination;
     unsigned int nAccumulatorChecksum;
+    int nMintCount; //memory only - the amount of mints that belong to the accumulator this is spent from
 
 public:
     CZerocoinSpend()
@@ -156,6 +157,8 @@ public:
     libzerocoin::CoinDenomination GetDenomination() const { return denomination; }
     unsigned int GetAccumulatorChecksum() const { return this->nAccumulatorChecksum; }
     uint256 GetHash() const;
+    void SetMintCount(int nMintsAdded) { this->nMintCount = nMintCount; }
+    int GetMintCount() const { return nMintCount; }
  
     ADD_SERIALIZE_METHODS;
 
@@ -167,6 +170,21 @@ public:
         READWRITE(denomination);
         READWRITE(nAccumulatorChecksum);
     };
+};
+
+class CZerocoinSpendReceipt
+{
+private:
+    std::string strStatusMessage;
+    int nStatus;
+    std::vector<CZerocoinSpend> vSpends;
+
+public:
+    void AddSpend(const CZerocoinSpend& spend);
+    std::vector<CZerocoinSpend> GetSpends();
+    void SetStatus(std::string strStatus, int nStatus);
+    std::string GetStatusMessage();
+    int GetStatus();
 };
 
 #endif //PIVX_ZEROCOIN_H

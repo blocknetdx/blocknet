@@ -2465,20 +2465,19 @@ Value spendzerocoin(const Array& params, bool fHelp)
 
     CWalletTx wtx;
     vector<CZerocoinMint> vMintsSelected;
-    vector<CZerocoinSpend> vSpends;
-    string strError;
-    int nStatus;
+    CZerocoinSpendReceipt receipt;
+    bool fSuccess;
     if(address.IsValid())
-        strError = pwalletMain->SpendZerocoin(nAmount, nSecurityLevel, wtx, vSpends, vMintsSelected, fMintChange, nStatus, &address);
+        fSuccess = pwalletMain->SpendZerocoin(nAmount, nSecurityLevel, wtx, receipt, vMintsSelected, fMintChange, &address);
     else
-        strError = pwalletMain->SpendZerocoin(nAmount, nSecurityLevel, wtx, vSpends, vMintsSelected, fMintChange, nStatus);
+        fSuccess = pwalletMain->SpendZerocoin(nAmount, nSecurityLevel, wtx, receipt, vMintsSelected, fMintChange);
 
-    if (strError != "")
-        throw JSONRPCError(RPC_WALLET_ERROR, strError);
+    if (!fSuccess)
+        throw JSONRPCError(RPC_WALLET_ERROR, receipt.GetStatusMessage());
 
     CAmount nValueIn = 0;
     Array arrSpends;
-    for (CZerocoinSpend spend : vSpends) {
+    for (CZerocoinSpend spend : receipt.GetSpends()) {
         Object obj;
         obj.push_back(Pair("denomination", spend.GetDenomination()));
         obj.push_back(Pair("pubcoin", spend.GetPubCoin().GetHex()));

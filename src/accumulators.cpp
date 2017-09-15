@@ -252,7 +252,7 @@ bool CAccumulators::GetCheckpoint(int nHeight, uint256& nCheckpoint)
     return true;
 }
 
-bool CAccumulators::IntializeWitnessAndAccumulator(const PublicCoin &coin, Accumulator& accumulator, AccumulatorWitness& witness, int nSecurityLevel, string& strError)
+bool CAccumulators::IntializeWitnessAndAccumulator(const PublicCoin &coin, Accumulator& accumulator, AccumulatorWitness& witness, int nSecurityLevel, int& nMintsAdded, string& strError)
 {
     uint256 txid;
     if (!zerocoinDB->ReadCoinMint(coin.getValue(), txid)) {
@@ -320,10 +320,9 @@ bool CAccumulators::IntializeWitnessAndAccumulator(const PublicCoin &coin, Accum
     int nChainHeight = chainActive.Height();
     int nHeightStop = nChainHeight % 10;
     nHeightStop = nChainHeight - nHeightStop - 20; // at least two checkpoints deep
-
-    LogPrint("zero","***from height: %d\n", pindex->nHeight);
-    int nMintsAdded = 0, nCheckpointsAdded = 0;
-    while(pindex->nHeight < nHeightStop + 1) {
+    int nCheckpointsAdded = 0;
+    nMintsAdded = 0;
+    while (pindex->nHeight < nHeightStop + 1) {
         if (pindex->nHeight != nAccStartHeight && pindex->pprev->nAccumulatorCheckpoint != pindex->nAccumulatorCheckpoint)
             ++nCheckpointsAdded;
 
@@ -367,6 +366,14 @@ bool CAccumulators::IntializeWitnessAndAccumulator(const PublicCoin &coin, Accum
         strError = _("Less than 3 mints added, unable to create spend");
         LogPrintf("%s : %s\n", __func__, strError);
         return false;
+    }
+
+    // calculate how many mints of this denomination existed in the accumulator we initialized
+    int nZerocoinStartHeight = GetZerocoinStartHeight();
+    pindex = chainActive[nZerocoinStartHeight];
+    while (pindex->nHeight < nAccStartHeight) {
+        nMintsAdded += count(pindex->vMintDenominationsInBlock.begin(), pindex->vMintDenominationsInBlock.end(), coin.getDenomination());
+        pindex = chainActive[pindex->nHeight + 1];
     }
     
     LogPrint("zero","%s : %d mints added to witness\n", __func__, nMintsAdded);

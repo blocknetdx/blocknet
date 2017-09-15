@@ -361,6 +361,7 @@ bool BlockToMintValueVector(const CBlock& block, const libzerocoin::CoinDenomina
 std::list<libzerocoin::CoinDenomination> ZerocoinSpendListFromBlock(const CBlock& block);
 void FindMints(vector<CZerocoinMint> vMintsToFind, vector<CZerocoinMint>& vMintsToUpdate, vector<CZerocoinMint>& vMissingMints);
 bool IsSerialKnown(const CBigNum& bnSerial);
+int GetZerocoinStartHeight();
 
 /**
  * Check if transaction will be final in the next block to be created.

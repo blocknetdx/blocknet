@@ -336,20 +336,20 @@ void PrivacyDialog::sendzPIV()
     // Attempt to spend the zPiv
     CWalletTx wtxNew;
     vector<CZerocoinMint> vMintsSelected;
-    vector<CZerocoinSpend> vSpends;
     
     int64_t nTime = GetTimeMillis();
     ui->TEMintStatus->setPlainText(tr("Spending Zerocoin.\nComputationally expensive, might need several minutes depending on the selected Security Level and your hardware. \nPlease be patient..."));
     ui->TEMintStatus->repaint();
 
     // Spend zPIV
-    int nStatus;
-    string strError = pwalletMain->SpendZerocoin(nAmount, nSecurityLevel, wtxNew, vSpends, vMintsSelected, fMintChange, nStatus, &address);
+    bool fSuccess;
+    CZerocoinSpendReceipt receipt;
+    fSuccess = pwalletMain->SpendZerocoin(nAmount, nSecurityLevel, wtxNew, receipt, vMintsSelected, fMintChange, &address);
 
     // Display errors during spend
-    if ((strError != "") || (nStatus != 0)) {
-        QMessageBox::warning(this, tr("Spend Zerocoin"), strError.c_str(), QMessageBox::Ok, QMessageBox::Ok);
-        ui->TEMintStatus->setPlainText(tr("Spend Zerocoin failed with status = ") +QString::number(nStatus, 10) + "\n" + "Message: " + QString::fromStdString(strError));
+    if (!fSuccess) {
+        QMessageBox::warning(this, tr("Spend Zerocoin"), receipt.GetStatusMessage().c_str(), QMessageBox::Ok, QMessageBox::Ok);
+        ui->TEMintStatus->setPlainText(tr("Spend Zerocoin failed with status = ") +QString::number(receipt.GetStatus(), 10) + "\n" + "Message: " + QString::fromStdString(receipt.GetStatusMessage()));
         ui->TEMintStatus->repaint();
         return;
     }
@@ -358,7 +358,7 @@ void PrivacyDialog::sendzPIV()
     QString strStats = "";
     CAmount nValueIn = 0;
     int nCount = 0;
-    for (CZerocoinSpend spend : vSpends) {
+    for (CZerocoinSpend spend : receipt.GetSpends()) {
         strStats += tr("zPiv Spend #: ") + QString::number(nCount) + ", ";
         strStats += tr("denomination: ") + QString::number(spend.GetDenomination()) + ", ";
         strStats += tr("serial: ") + spend.GetSerial().ToString().c_str() + "\n";
@@ -380,7 +380,7 @@ void PrivacyDialog::sendzPIV()
     }
     double fDuration = (double)(GetTimeMillis() - nTime)/1000.0;
     strStats += tr("Duration: ") + QString::number(fDuration) + tr(" sec.\n");
-    strStats += tr("Sending successful, return code: ") + QString::number(nStatus) + "\n";
+    strStats += tr("Sending successful, return code: ") + QString::number(receipt.GetStatus()) + "\n";
 
     QString strReturn;
     strReturn += tr("txid: ") + wtxNew.GetHash().ToString().c_str() + "\n";

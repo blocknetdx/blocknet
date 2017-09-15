@@ -2,23 +2,30 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "zerocoin.h"
-#include "amount.h"
-#include "hash.h"
-#include "utilstrencodings.h"
+#include "primitives/zerocoin.h"
 
-uint256 CZerocoinMint::GetHash() const
+void CZerocoinSpendReceipt::AddSpend(const CZerocoinSpend& spend)
 {
-    return Hash(BEGIN(value), END(value));
+    vSpends.emplace_back(spend);
 }
 
-//CAmount CZerocoinMint::GetDenominationAsAmount() const
-//{
-//    return ZerocoinDenominationToAmount(denomination);
-//}
-
-uint256 CZerocoinSpend::GetHash() const
+std::vector<CZerocoinSpend> CZerocoinSpendReceipt::GetSpends()
 {
-    return Hash(BEGIN(coinSerial), END(coinSerial));
+    return vSpends;
 }
 
+void CZerocoinSpendReceipt::SetStatus(std::string strStatus, int nStatus)
+{
+    strStatusMessage = strStatus;
+    this->nStatus = nStatus;
+}
+
+std::string CZerocoinSpendReceipt::GetStatusMessage()
+{
+    return strStatusMessage;
+}
+
+int CZerocoinSpendReceipt::GetStatus()
+{
+    return nStatus;
+}

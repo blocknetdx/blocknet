@@ -986,12 +986,16 @@ bool MoneyRange(CAmount nValueOut)
 int nZerocoinStartHeight = 0;
 int GetZerocoinStartHeight()
 {
+    if (nZerocoinStartHeight)
+        return nZerocoinStartHeight;
+
     for (int i = 1; i < chainActive.Height(); i++) {
         if (chainActive[i]->nVersion < Params().Zerocoin_HeaderVersion())
             continue;
-        return i;
+        nZerocoinStartHeight = i;
+        break;
     }
-    return 0;
+    return nZerocoinStartHeight;
 }
 
 void FindMints(vector<CZerocoinMint> vMintsToFind, vector<CZerocoinMint>& vMintsToUpdate, vector<CZerocoinMint>& vMissingMints)
