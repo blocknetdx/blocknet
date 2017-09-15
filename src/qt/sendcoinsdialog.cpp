@@ -67,6 +67,11 @@ SendCoinsDialog::SendCoinsDialog(QWidget* parent) : QDialog(parent),
         settings.setValue("bUseSwiftTX", false);
 
     bool useObfuScation = settings.value("bUseObfuScation").toBool();
+
+    // STG Disable obfuscation until ready...
+    useObfuScation = false;
+    ui->checkUseObfuscation->setVisible(false);
+
     bool useSwiftTX = settings.value("bUseSwiftTX").toBool();
     if (fLiteMode) {
         ui->checkUseObfuscation->setChecked(false);
