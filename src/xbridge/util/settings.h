@@ -21,7 +21,7 @@ private:
     Settings();
 
 public:
-    bool parseCmdLine(int argc, char * argv[]);
+    bool parseCmdLine(int, char * argv[]);
 
     bool read(const char * fileName = 0);
     bool write(const char * fileName = 0);
