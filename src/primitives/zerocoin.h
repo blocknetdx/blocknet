@@ -157,7 +157,7 @@ public:
     libzerocoin::CoinDenomination GetDenomination() const { return denomination; }
     unsigned int GetAccumulatorChecksum() const { return this->nAccumulatorChecksum; }
     uint256 GetHash() const;
-    void SetMintCount(int nMintsAdded) { this->nMintCount = nMintCount; }
+    void SetMintCount(int nMintsAdded) { this->nMintCount = nMintsAdded; }
     int GetMintCount() const { return nMintCount; }
  
     ADD_SERIALIZE_METHODS;
