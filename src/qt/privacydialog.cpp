@@ -467,7 +467,7 @@ void PrivacyDialog::setBalance(const CAmount& balance,         const CAmount& un
     currentWatchImmatureBalance = watchImmatureBalance;
 
     CWalletDB walletdb(pwalletMain->strWalletFile);
-    list<CZerocoinMint> listPubCoin = walletdb.ListMintedCoins(true);
+    list<CZerocoinMint> listPubCoin = walletdb.ListMintedCoins(true, true);
  
     std::map<libzerocoin::CoinDenomination, CAmount> spread;
     for (const auto& denom : libzerocoin::zerocoinDenomList){

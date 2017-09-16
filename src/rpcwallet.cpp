@@ -2352,7 +2352,7 @@ Value listzerocoinamounts(const Array& params, bool fHelp)
         throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
 
     CWalletDB walletdb(pwalletMain->strWalletFile);
-    list<CZerocoinMint> listPubCoin = walletdb.ListMintedCoins(true);
+    list<CZerocoinMint> listPubCoin = walletdb.ListMintedCoins(true,true);
  
     std::map<libzerocoin::CoinDenomination, CAmount> spread;
     for (const auto& denom : libzerocoin::zerocoinDenomList)

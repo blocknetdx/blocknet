@@ -1267,7 +1267,7 @@ CAmount CWallet::GetZerocoinBalance() const
     {
         LOCK2(cs_main, cs_wallet);
         // Get Unused coins
-        list<CZerocoinMint> listPubCoin = CWalletDB(strWalletFile).ListMintedCoins(true);
+        list<CZerocoinMint> listPubCoin = CWalletDB(strWalletFile).ListMintedCoins(true,true);
         for (auto& mint : listPubCoin) {
             libzerocoin::CoinDenomination denom = mint.GetDenomination();
             nTotal += libzerocoin::ZerocoinDenominationToAmount(denom);
@@ -1275,7 +1275,7 @@ CAmount CWallet::GetZerocoinBalance() const
         }
     }
     for (auto& denom : libzerocoin::zerocoinDenomList) {
-        LogPrint("zero","%s My coins for denomination %d pubcoin %s\n", __func__,myZerocoinSupply.at(denom), denom);
+        LogPrint("zero","%s My coins for denomination %d pubcoin %s\n", __func__,denom, myZerocoinSupply.at(denom));
     }
     LogPrint("zero","Total value of coins %d\n",nTotal);
 
