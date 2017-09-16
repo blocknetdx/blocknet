@@ -82,7 +82,8 @@ bool CAccumulators::LoadAccumulatorValuesFromDB(const uint256 nCheckpoint)
         CBigNum bnValue;
         if (!zerocoinDB->ReadAccumulatorValue(nChecksum, bnValue)) {
             LogPrint("zero","%s : Missing databased value for checksum %d\n", __func__, nChecksum);
-            listAccCheckpointsNoDB.push_back(nCheckpoint);
+            if (!count(listAccCheckpointsNoDB.begin(), listAccCheckpointsNoDB.end(), nCheckpoint))
+                listAccCheckpointsNoDB.push_back(nCheckpoint);
             return false;
         }
         mapAccumulatorValues.insert(make_pair(nChecksum, bnValue));
@@ -217,20 +218,18 @@ bool CAccumulators::GetCheckpoint(int nHeight, uint256& nCheckpoint)
             LogPrint("zero","%s: failed to read block from disk\n", __func__);
             return false;
         }
-        std::list<CZerocoinMint> listMints;
-        if(!BlockToZerocoinMintList(block, listMints)) {
+        std::list<PublicCoin> listPubcoins;
+        if(!BlockToPubcoinList(block, listPubcoins)) {
             LogPrint("zero","%s: failed to get zerocoin mintlist from block %n\n", __func__, pindex->nHeight);
             return false;
         }
 
-        nTotalMintsFound += listMints.size();
-        LogPrint("zero", "%s found %d mints\n", __func__, listMints.size());
+        nTotalMintsFound += listPubcoins.size();
+        LogPrint("zero", "%s found %d mints\n", __func__, listPubcoins.size());
 
         //add the pubcoins to accumulator
-        for(const CZerocoinMint mint : listMints) {
-            CoinDenomination denomination = mint.GetDenomination();
-            PublicCoin pubCoin(Params().Zerocoin_Params(), mint.GetValue(), denomination);
-            if(!AddPubCoinToAccumulator(pubCoin)) {
+        for(const PublicCoin pubcoin : listPubcoins) {
+            if(!AddPubCoinToAccumulator(pubcoin)) {
                 LogPrint("zero","%s: failed to add pubcoin to accumulator at height %n\n", __func__, pindex->nHeight);
                 return false;
             }

@@ -1276,7 +1276,7 @@ bool AppInit2(boost::thread_group& threadGroup)
 
                 list<uint256> listAccCheckpointsNoDB = CAccumulators::getInstance().GetAccCheckpointsNoDB();
                 // PIVX: recalculate Accumulator Checkpoints that failed to database properly
-                if (listAccCheckpointsNoDB.size() && chainActive.Tip()->GetBlockHeader().nVersion >= Params().Zerocoin_HeaderVersion()) {
+                if (!listAccCheckpointsNoDB.empty() && chainActive.Tip()->GetBlockHeader().nVersion >= Params().Zerocoin_HeaderVersion()) {
                     uiInterface.InitMessage(_("Calculating missing accumulators..."));
                     LogPrintf("%s : finding missing checkpoints\n", __func__);
 
@@ -1293,30 +1293,36 @@ bool AppInit2(boost::thread_group& threadGroup)
                     }
 
                     // find each checkpoint that is missing
+                    pindex = chainActive[nZerocoinStart];
                     while (!listAccCheckpointsNoDB.empty()) {
-                        uint256 nCheckpoint = listAccCheckpointsNoDB.front();
-                        listAccCheckpointsNoDB.pop_front();
+                        if (ShutdownRequested())
+                            break;
 
-                        // find checkpoint by iterating through the blockchain beginning with the first zerocoin block
-                        bool found = false;
-                        pindex = chainActive[nZerocoinStart];
-                        while (!found) {
-                            if (pindex->nAccumulatorCheckpoint == nCheckpoint) {
+                        // find checkpoints by iterating through the blockchain beginning with the first zerocoin block
+                        if (pindex->nAccumulatorCheckpoint != pindex->pprev->nAccumulatorCheckpoint) {
+
+                            double dPercent = (pindex->nHeight - nZerocoinStart) / (double)(chainActive.Height() - nZerocoinStart);
+                            uiInterface.ShowProgress(_("Calculating missing accumulators..."), (int)(dPercent * 100));
+                            if(find(listAccCheckpointsNoDB.begin(), listAccCheckpointsNoDB.end(), pindex->nAccumulatorCheckpoint) != listAccCheckpointsNoDB.end()) {
                                 uint256 nCheckpointCalculated = 0;
                                 CAccumulators::getInstance().GetCheckpoint(pindex->nHeight, nCheckpointCalculated);
 
-                                //assert that the calculated checkpoint is what is in the index.
-                                if (nCheckpointCalculated != nCheckpoint)
+                                //check that the calculated checkpoint is what is in the index.
+                                if(nCheckpointCalculated != pindex->nAccumulatorCheckpoint) {
+                                    LogPrintf("%s : height=%d calculated_checkpoint=%s actual=%s\n", __func__, pindex->nHeight, nCheckpointCalculated.GetHex(), pindex->nAccumulatorCheckpoint.GetHex());
                                     return InitError(_("Calculated accumulator checkpoint is not what is recorded by block index"));
-                                found = true;
-                            }
+                                }
 
-                            // if we have iterated to the end of the blockchain, then this checkpoint does not even exist
-                            if (pindex->nHeight + 1 <= chainActive.Height())
-                                pindex = chainActive[pindex->nHeight + 1];
-                            else
-                                break;
+                                auto it = find(listAccCheckpointsNoDB.begin(), listAccCheckpointsNoDB.end(), pindex->nAccumulatorCheckpoint);
+                                listAccCheckpointsNoDB.erase(it);
+                            }
                         }
+
+                        // if we have iterated to the end of the blockchain, then checkpoints should be in sync
+                        if (pindex->nHeight + 1 <= chainActive.Height())
+                            pindex = chainActive[pindex->nHeight + 1];
+                        else
+                            break;
                     }
                 }
                 CAccumulators::getInstance().ClearAccCheckpointsNoDB();
