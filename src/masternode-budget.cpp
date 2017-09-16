@@ -557,6 +557,7 @@ CBudgetProposal* CBudgetManager::FindProposal(uint256 nHash)
 bool CBudgetManager::IsBudgetPaymentBlock(int nBlockHeight)
 {
     int nHighestCount = -1;
+    int nFivePercent = mnodeman.CountEnabled(ActiveProtocol()) / 20;
 
     std::map<uint256, CFinalizedBudget>::iterator it = mapFinalizedBudgets.begin();
     while (it != mapFinalizedBudgets.end()) {
@@ -570,10 +571,12 @@ bool CBudgetManager::IsBudgetPaymentBlock(int nBlockHeight)
         ++it;
     }
 
+    LogPrintf("CBudgetManager::IsBudgetPaymentBlock() - nHighestCount: %lli, 5% of Masternodes: %lli\n", nHighestCount, nFivePercent);
+
     /*
         If budget doesn't have 5% of the network votes, then we should pay a masternode instead
     */
-    if (nHighestCount > mnodeman.CountEnabled(ActiveProtocol()) / 20) return true;
+    if (nHighestCount > nFivePercent) return true;
 
     return false;
 }
@@ -586,7 +589,7 @@ bool CBudgetManager::HasNextFinalizedBudget()
     if (masternodeSync.IsBudgetFinEmpty()) return true;
 
     int nBlockStart = pindexPrev->nHeight - pindexPrev->nHeight % GetBudgetPaymentCycleBlocks() + GetBudgetPaymentCycleBlocks();
-    if (nBlockStart - pindexPrev->nHeight > 576 * 2) return true; //we wouldn't have the budget yet
+    if (nBlockStart - pindexPrev->nHeight > 1440 * 2) return true; //we wouldn't have the budget yet
 
     if (budget.IsBudgetPaymentBlock(nBlockStart)) return true;
 
@@ -600,6 +603,7 @@ bool CBudgetManager::IsTransactionValid(const CTransaction& txNew, int nBlockHei
     LOCK(cs);
 
     int nHighestCount = 0;
+    int nFivePercent = mnodeman.CountEnabled(ActiveProtocol()) / 20;
     std::vector<CFinalizedBudget*> ret;
 
     // ------- Grab The Highest Count
@@ -616,10 +620,11 @@ bool CBudgetManager::IsTransactionValid(const CTransaction& txNew, int nBlockHei
         ++it;
     }
 
+    LogPrintf("CBudgetManager::IsTransactionValid() - nHighestCount: %lli, 5% of Masternodes: %lli\n", nHighestCount, nFivePercent);
     /*
         If budget doesn't have 5% of the network votes, then we should pay a masternode instead
     */
-    if (nHighestCount < mnodeman.CountEnabled(ActiveProtocol()) / 20) return false;
+    if (nHighestCount < nFivePercent) return false;
 
     // check the highest finalized budgets (+/- 10% to assist in consensus)
 
@@ -1044,7 +1049,7 @@ void CBudgetManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CData
             masternodeSync.AddedBudgetItem(vote.GetHash());
         }
 
-        LogPrint("mnbudget", "mvote - new budget vote - %s\n", vote.GetHash().ToString());
+        LogPrintf("mvote - new budget vote for budget %s - %s\n", vote.nProposalHash.ToString(),  vote.GetHash().ToString());
     }
 
     if (strCommand == "fbs") { //Finalized Budget Suggestion
@@ -1891,17 +1896,17 @@ bool CFinalizedBudget::IsValid(std::string& strError, bool fCheckCollateral)
         return false;
     }
     if (nBlockStart == 0) {
-        strError = "Invalid BlockStart == 0";
+        strError = "Budget " + strBudgetName + " Invalid BlockStart == 0";
         return false;
     }
     if (nFeeTXHash == 0) {
-        strError = "Invalid FeeTx == 0";
+        strError = "Budget " + strBudgetName + " Invalid FeeTx == 0";
         return false;
     }
 
     //can only pay out 10% of the possible coins (min value of coins)
     if (GetTotalPayout() > budget.GetTotalBudget(nBlockStart)) {
-        strError = "Invalid Payout (more than max)";
+        strError = "Budget " + strBudgetName + " Invalid Payout (more than max)";
         return false;
     }
 
@@ -1910,7 +1915,7 @@ bool CFinalizedBudget::IsValid(std::string& strError, bool fCheckCollateral)
         int nConf = 0;
         if (!IsBudgetCollateralValid(nFeeTXHash, GetHash(), strError2, nTime, nConf)) {
             {
-                strError = "Invalid Collateral : " + strError2;
+                strError = "Budget " + strBudgetName + " Invalid Collateral : " + strError2;
                 return false;
             }
         }
@@ -1922,7 +1927,7 @@ bool CFinalizedBudget::IsValid(std::string& strError, bool fCheckCollateral)
     if (pindexPrev == NULL) return true;
 
     if (nBlockStart < pindexPrev->nHeight - 100) {
-        strError = "Older than current blockHeight";
+        strError = "Budget " + strBudgetName + " Older than current blockHeight" ;
         return false;
     }
 
