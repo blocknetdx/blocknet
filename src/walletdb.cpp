@@ -1073,6 +1073,7 @@ std::list<CZerocoinMint> CWalletDB::ListMintedCoins(bool fUnusedOnly, bool fMatu
         throw runtime_error(std::string(__func__)+" : cannot create DB cursor");
     unsigned int fFlags = DB_SET_RANGE;
     vector<CZerocoinMint> vOverWrite;
+    vector<CZerocoinMint> vArchive;
     for (;;)
     {
         // Read next record
@@ -1120,7 +1121,8 @@ std::list<CZerocoinMint> CWalletDB::ListMintedCoins(bool fUnusedOnly, bool fMatu
                 CTransaction tx;
                 uint256 hashBlock;
                 if(!GetTransaction(mint.GetTxHash(), tx, hashBlock, true)) {
-                    LogPrintf("%s failed to find tx for mint\n", __func__);
+                    LogPrintf("%s failed to find tx for mint txid=%s\n", __func__, mint.GetTxHash().GetHex());
+                    vArchive.emplace_back(mint);
                     continue;
                 }
 
@@ -1144,7 +1146,14 @@ std::list<CZerocoinMint> CWalletDB::ListMintedCoins(bool fUnusedOnly, bool fMatu
 
     //overwrite any updates
     for (CZerocoinMint mint : vOverWrite) {
-        this->WriteZerocoinMint(mint);
+        if(!this->WriteZerocoinMint(mint))
+            LogPrintf("%s failed to update mint from tx %s\n", __func__, mint.GetTxHash().GetHex());
+    }
+
+    // archive mints
+    for (CZerocoinMint mint : vArchive) {
+        if (!this->ArchiveMintOrphan(mint))
+            LogPrintf("**failed to archive mint from %s\n", __func__, mint.GetTxHash().GetHex());
     }
 
     return listPubCoin;
