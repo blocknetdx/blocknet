@@ -86,10 +86,10 @@ bool IsBudgetCollateralValid(uint256 nTxCollateralHash, uint256 nExpectedHash, s
     nConf = conf;
 
     //if we're syncing we won't have swiftTX information, so accept 1 confirmation
-    if (conf >= BUDGET_FEE_CONFIRMATIONS) {
+    if (conf >= Params().Budget_Fee_Confirmations()) {
         return true;
     } else {
-        strError = strprintf("Collateral requires at least %d confirmations - %d confirmations", BUDGET_FEE_CONFIRMATIONS, conf);
+        strError = strprintf("Collateral requires at least %d confirmations - %d confirmations", Params().Budget_Fee_Confirmations(), conf);
         LogPrintf("CBudgetProposalBroadcast::IsBudgetCollateralValid - %s - %d confirmations\n", strError, conf);
         return false;
     }
@@ -138,9 +138,14 @@ void CBudgetManager::SubmitFinalBudget()
         LogPrintf("CBudgetManager::SubmitFinalBudget - nSubmittedHeight(=%ld) < nBlockStart(=%ld) condition not fulfilled.\n", nSubmittedHeight, nBlockStart);
         return;
     }
-    // Submit final budget at least 2 days before payment for Mainnet, about 9 minutes for Testnet
+    // Submit final budget during the last 2 days before payment for Mainnet, about 9 minutes for Testnet
+    int nFinalizationStart = nBlockStart - ((GetBudgetPaymentCycleBlocks() / 30) * 2);
+    int nOffsetToStart = nFinalizationStart - nCurrentHeight;
+    
     if (nBlockStart - nCurrentHeight > ((GetBudgetPaymentCycleBlocks() / 30) * 2)){
-        LogPrintf("CBudgetManager::SubmitFinalBudget - Too late for finalization. Latest block for finalization before next Superblock: %ld (Superblock=%ld). You are %ld blocks before the next Superblock\n", ((GetBudgetPaymentCycleBlocks() / 30) * 2), nBlockStart, (nBlockStart - nCurrentHeight));
+        LogPrintf("CBudgetManager::SubmitFinalBudget - Too early for finalization. Current block is %ld, next Superblock is %ld.\n", nCurrentHeight, nBlockStart);
+        LogPrintf("CBudgetManager::SubmitFinalBudget - First possible block for finalization: %ld. Last possible block for finalization: %ld. You have to wait for %ld block(s) until Budget finalization will be possible\n", nFinalizationStart, nBlockStart, nOffsetToStart);
+
         return;
     }
 
@@ -179,10 +184,10 @@ void CBudgetManager::SubmitFinalBudget()
             return;
         }
 
-        // make our change address
+        // Get our change address
         CReserveKey reservekey(pwalletMain);
-        //send the tx to the network
-        pwalletMain->CommitTransaction(wtx, reservekey, "ix");
+        // Send the tx to the network. Do NOT use SwiftTx, locking might need too much time to propagate, especially for testnet
+        pwalletMain->CommitTransaction(wtx, reservekey, "NO-ix");
         tx = (CTransaction)wtx;
         txidCollateral = tx.GetHash();
         mapCollateralTxids.insert(make_pair(tempBudget.GetHash(), txidCollateral));
@@ -213,8 +218,8 @@ void CBudgetManager::SubmitFinalBudget()
         Wait will we have 1 extra confirmation, otherwise some clients might reject this feeTX
         -- This function is tied to NewBlock, so we will propagate this budget while the block is also propagating
     */
-    if (conf < BUDGET_FEE_CONFIRMATIONS + 1) {
-        LogPrintf("CBudgetManager::SubmitFinalBudget - Collateral requires at least %d confirmations - %s - %d confirmations\n", BUDGET_FEE_CONFIRMATIONS + 1, txidCollateral.ToString(), conf);
+    if (conf < Params().Budget_Fee_Confirmations() + 1) {
+        LogPrintf("CBudgetManager::SubmitFinalBudget - Collateral requires at least %d confirmations - %s - %d confirmations\n", Params().Budget_Fee_Confirmations() + 1, txidCollateral.ToString(), conf);
         return;
     }
 
@@ -1415,8 +1420,12 @@ bool CBudgetProposal::IsValid(std::string& strError, bool fCheckCollateral)
         return true;
     }
 
-    if (GetBlockEnd() < pindexPrev->nHeight - GetBudgetPaymentCycleBlocks() / 2) {
-        strError = "Invalid nBlockEnd (end too early)";
+    // Calculate maximum block this proposal will be valid, which is start of proposal + (number of payments * cycle)
+    int nProposalEnd = GetBlockStart() + (GetBudgetPaymentCycleBlocks() * GetTotalPaymentCount());
+
+    // if (GetBlockEnd() < pindexPrev->nHeight - GetBudgetPaymentCycleBlocks() / 2) {
+    if(nProposalEnd < pindexPrev->nHeight){
+        strError = "Invalid nBlockEnd (" + std::to_string(nProposalEnd) + ") < current height (" + std::to_string(pindexPrev->nHeight) + ")";
         return false;
     }
 
@@ -1861,11 +1870,13 @@ std::string CFinalizedBudget::GetStatus()
 
 bool CFinalizedBudget::IsValid(std::string& strError, bool fCheckCollateral)
 {
-    //must be the correct block for payment to happen (once a month)
+    // Must be the correct block for payment to happen (once a month)
     if (nBlockStart % GetBudgetPaymentCycleBlocks() != 0) {
         strError = "Invalid BlockStart";
         return false;
     }
+    
+    // The following 2 checks check the same (basically if vecBudgetPayments.size() > 100)
     if (GetBlockEnd() - nBlockStart > 100) {
         strError = "Invalid BlockEnd";
         return false;
@@ -1887,7 +1898,7 @@ bool CFinalizedBudget::IsValid(std::string& strError, bool fCheckCollateral)
         return false;
     }
 
-    //can only pay out 10% of the possible coins (min value of coins)
+    // Can only pay out 10% of the possible coins (min value of coins)
     if (GetTotalPayout() > budget.GetTotalBudget(nBlockStart)) {
         strError = "Budget " + strBudgetName + " Invalid Payout (more than max)";
         return false;
@@ -1909,10 +1920,12 @@ bool CFinalizedBudget::IsValid(std::string& strError, bool fCheckCollateral)
     CBlockIndex* pindexPrev = chainActive.Tip();
     if (pindexPrev == NULL) return true;
 
-    if (nBlockStart < pindexPrev->nHeight - 100) {
-        strError = "Budget " + strBudgetName + " Older than current blockHeight" ;
-        return false;
-    }
+// TODO: verify if we can safely remove this
+//
+//    if (nBlockStart < pindexPrev->nHeight - 100) {
+//        strError = "Budget " + strBudgetName + " Older than current blockHeight" ;
+//        return false;
+//    }
 
     return true;
 }

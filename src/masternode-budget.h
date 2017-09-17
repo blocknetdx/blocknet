@@ -33,7 +33,6 @@ class CTxBudgetPayment;
 
 static const CAmount PROPOSAL_FEE_TX = (50 * COIN);
 static const CAmount BUDGET_FEE_TX = (50 * COIN);
-static const int64_t BUDGET_FEE_CONFIRMATIONS = 6;
 static const int64_t BUDGET_VOTE_UPDATE_MIN = 60 * 60;
 
 extern std::vector<CBudgetProposalBroadcast> vecImmatureBudgetProposals;
@@ -489,10 +488,10 @@ public:
 
     bool IsEstablished()
     {
-        //Proposals must be at least a day old to make it into a budget
+        // Proposals must be at least a day old to make it into a budget
         if (Params().NetworkID() == CBaseChainParams::MAIN) return (nTime < GetTime() - (60 * 60 * 24));
 
-        //for testing purposes - 4 hours
+        // For testing purposes - 5 minutes
         return (nTime < GetTime() - (60 * 5));
     }
 
