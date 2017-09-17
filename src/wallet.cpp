@@ -4184,13 +4184,6 @@ bool CWallet::CreateZerocoinSpendTransaction(CAmount nValue, int nSecurityLevel,
                         receipt.SetStatus("Failed to create mint", nStatus);
                         return false;
                     }
-
-                    // write new Mints to db
-                    CWalletDB walletdb(pwalletMain->strWalletFile);
-                    for (CZerocoinMint mint : vNewMints) {
-                        mint.SetTxHash(txNew.GetHash());
-                        walletdb.WriteZerocoinMint(mint);
-                    }
                 } else {
                     CTxOut txOutChange(nValueSelected - nValue, scriptChange);
                     txNew.vout.push_back(txOutChange);
@@ -4377,13 +4370,13 @@ bool CWallet::SpendZerocoin(CAmount nAmount, int nSecurityLevel, CWalletTx& wtxN
         //reset all mints
         for (CZerocoinMint mint : vMintsSelected) {
             mint.SetUsed(false); // having error, so set to false, to be able to use again
-            CWalletDB(strWalletFile).WriteZerocoinMint(mint);
+            walletdb.WriteZerocoinMint(mint);
             pwalletMain->NotifyZerocoinChanged(pwalletMain, mint.GetValue().GetHex(), "New", CT_UPDATED);
         }
 
         //erase spends
         for (CZerocoinSpend spend : receipt.GetSpends()) {
-            if (!CWalletDB(strWalletFile).EraseZerocoinSpendSerialEntry(spend.GetSerial())) {
+            if (!walletdb.EraseZerocoinSpendSerialEntry(spend.GetSerial())) {
                 receipt.SetStatus("Error: It cannot delete coin serial number in wallet", ZPIV_ERASE_SPENDS_FAILED);
                 return false;
             }
@@ -4391,7 +4384,7 @@ bool CWallet::SpendZerocoin(CAmount nAmount, int nSecurityLevel, CWalletTx& wtxN
 
         // erase new mints
         for (auto& mint : vNewMints) {
-            if (!CWalletDB(strWalletFile).EraseZerocoinMint(mint)) {
+            if (!walletdb.EraseZerocoinMint(mint)) {
                 receipt.SetStatus("Error: Unable to cannot delete zerocoin mint in wallet", ZPIV_ERASE_NEW_MINTS_FAILED);
                 return false;
             }
@@ -4403,24 +4396,27 @@ bool CWallet::SpendZerocoin(CAmount nAmount, int nSecurityLevel, CWalletTx& wtxN
 
     for (CZerocoinMint mint : vMintsSelected) {
         mint.SetUsed(true);
-        if (!CWalletDB(strWalletFile).WriteZerocoinMint(mint)) {
+        if (!walletdb.WriteZerocoinMint(mint)) {
             receipt.SetStatus("Failed to write mint to db", nStatus);
             return false;
         }
 
-
         CZerocoinMint mintCheck;
-        if (!CWalletDB(strWalletFile).ReadZerocoinMint(mint.GetValue(), mintCheck)) {
+        if (!walletdb.ReadZerocoinMint(mint.GetValue(), mintCheck)) {
             receipt.SetStatus("failed to read mintcheck", nStatus);
             return false;
         }
-
 
         if (!mintCheck.IsUsed()) {
             receipt.SetStatus("Error, the mint did not get marked as used", nStatus);
             return false;
         }
+    }
 
+    // write new Mints to db
+    for (CZerocoinMint mint : vNewMints) {
+        mint.SetTxHash(wtxNew.GetHash());
+        walletdb.WriteZerocoinMint(mint);
     }
 
     receipt.SetStatus("Spend Successful", ZPIV_SPEND_OKAY);  // When we reach this point spending zPIV was successful
