@@ -141,7 +141,7 @@ void CBudgetManager::SubmitFinalBudget()
     // Submit final budget during the last 2 days before payment for Mainnet, about 9 minutes for Testnet
     int nFinalizationStart = nBlockStart - ((GetBudgetPaymentCycleBlocks() / 30) * 2);
     int nOffsetToStart = nFinalizationStart - nCurrentHeight;
-    
+
     if (nBlockStart - nCurrentHeight > ((GetBudgetPaymentCycleBlocks() / 30) * 2)){
         LogPrintf("CBudgetManager::SubmitFinalBudget - Too early for finalization. Current block is %ld, next Superblock is %ld.\n", nCurrentHeight, nBlockStart);
         LogPrintf("CBudgetManager::SubmitFinalBudget - First possible block for finalization: %ld. Last possible block for finalization: %ld. You have to wait for %ld block(s) until Budget finalization will be possible\n", nFinalizationStart, nBlockStart, nOffsetToStart);
@@ -576,7 +576,7 @@ bool CBudgetManager::IsBudgetPaymentBlock(int nBlockHeight)
         ++it;
     }
 
-    LogPrintf("CBudgetManager::IsBudgetPaymentBlock() - nHighestCount: %lli, 5%% of Masternodes: %lli\n", nHighestCount, nFivePercent);
+    LogPrintf("CBudgetManager::IsBudgetPaymentBlock() - nHighestCount: %lli, 5%% of Masternodes: %lli. Number of budgets: %lli\n", nHighestCount, nFivePercent, mapFinalizedBudgets.size());
 
     /*
         If budget doesn't have 5% of the network votes, then we should pay a masternode instead
@@ -1358,7 +1358,7 @@ CBudgetProposal::CBudgetProposal(const CBudgetProposal& other)
 bool CBudgetProposal::IsValid(std::string& strError, bool fCheckCollateral)
 {
     if (GetNays() - GetYeas() > mnodeman.CountEnabled(ActiveProtocol()) / 10) {
-        strError = "Active removal";
+        strError = "Proposal " + strProposalName + ": Active removal";
         return false;
     }
 
@@ -1368,24 +1368,24 @@ bool CBudgetProposal::IsValid(std::string& strError, bool fCheckCollateral)
     }
 
     if (nBlockEnd < nBlockStart) {
-        strError = "Invalid nBlockEnd (end before start)";
+        strError = "Proposal " + strProposalName + ": Invalid nBlockEnd (end before start)";
         return false;
     }
 
     if (nAmount < 10 * COIN) {
-        strError = "Invalid nAmount";
+        strError = "Proposal " + strProposalName + ": Invalid nAmount";
         return false;
     }
 
     if (address == CScript()) {
-        strError = "Invalid Payment Address";
+        strError = "Proposal " + strProposalName + ": Invalid Payment Address";
         return false;
     }
 
     if (fCheckCollateral) {
         int nConf = 0;
         if (!IsBudgetCollateralValid(nFeeTXHash, GetHash(), strError, nTime, nConf)) {
-            strError = "Invalid collateral";
+            strError = "Proposal " + strProposalName + ": Invalid collateral";
             return false;
         }
     }
@@ -1394,7 +1394,7 @@ bool CBudgetProposal::IsValid(std::string& strError, bool fCheckCollateral)
         TODO: There might be an issue with multisig in the coinbase on mainnet, we will add support for it in a future release.
     */
     if (address.IsPayToScriptHash()) {
-        strError = "Multisig is not currently supported.";
+        strError = "Proposal " + strProposalName + ": Multisig is not currently supported.";
         return false;
     }
 
@@ -1410,13 +1410,13 @@ bool CBudgetProposal::IsValid(std::string& strError, bool fCheckCollateral)
 
     //can only pay out 10% of the possible coins (min value of coins)
     if (nAmount > budget.GetTotalBudget(nBlockStart)) {
-        strError = "Payment more than max";
+        strError = "Proposal " + strProposalName + ": Payment more than max";
         return false;
     }
 
     CBlockIndex* pindexPrev = chainActive.Tip();
     if (pindexPrev == NULL) {
-        strError = "Tip is NULL";
+        strError = "Proposal " + strProposalName + ": Tip is NULL";
         return true;
     }
 
@@ -1425,7 +1425,7 @@ bool CBudgetProposal::IsValid(std::string& strError, bool fCheckCollateral)
 
     // if (GetBlockEnd() < pindexPrev->nHeight - GetBudgetPaymentCycleBlocks() / 2) {
     if(nProposalEnd < pindexPrev->nHeight){
-        strError = "Invalid nBlockEnd (" + std::to_string(nProposalEnd) + ") < current height (" + std::to_string(pindexPrev->nHeight) + ")";
+        strError = "Proposal " + strProposalName + ": Invalid nBlockEnd (" + std::to_string(nProposalEnd) + ") < current height (" + std::to_string(pindexPrev->nHeight) + ")";
         return false;
     }
 
@@ -1875,7 +1875,7 @@ bool CFinalizedBudget::IsValid(std::string& strError, bool fCheckCollateral)
         strError = "Invalid BlockStart";
         return false;
     }
-    
+
     // The following 2 checks check the same (basically if vecBudgetPayments.size() > 100)
     if (GetBlockEnd() - nBlockStart > 100) {
         strError = "Invalid BlockEnd";
