@@ -467,24 +467,37 @@ void PrivacyDialog::setBalance(const CAmount& balance,         const CAmount& un
     currentWatchImmatureBalance = watchImmatureBalance;
 
     CWalletDB walletdb(pwalletMain->strWalletFile);
-    list<CZerocoinMint> listPubCoin = walletdb.ListMintedCoins(true, true);
+    list<CZerocoinMint> listMints = walletdb.ListMintedCoins(true, false);
  
-    std::map<libzerocoin::CoinDenomination, CAmount> spread;
+    std::map<libzerocoin::CoinDenomination, CAmount> mapDenomBalances;
+    std::map<libzerocoin::CoinDenomination, int> mapUnconfirmed;
     for (const auto& denom : libzerocoin::zerocoinDenomList){
-        spread.insert(std::pair<libzerocoin::CoinDenomination, CAmount>(denom, 0));
+        mapDenomBalances.insert(make_pair(denom, 0));
+        mapUnconfirmed.insert(make_pair(denom, 0));
     }
-    for (auto& mint : listPubCoin){
-        spread.at(mint.GetDenomination())++;
+
+    for (auto& mint : listMints){
+        mapDenomBalances.at(mint.GetDenomination())++;
+
+        if (!mint.GetHeight() || mint.GetHeight() > chainActive.Height() - Params().Zerocoin_MintRequiredConfirmations())
+            mapUnconfirmed.at(mint.GetDenomination())++;
     }
     
     int64_t nCoins = 0;
     int64_t nSumPerCoin = 0;
-    QString strDenomStats = "";
+    int64_t nUnconfirmed = 0;
+    QString strDenomStats, strUnconfirmed = "";
     
-    for (const auto& m : libzerocoin::zerocoinDenomList) {
-        nCoins = libzerocoin::ZerocoinDenominationToInt(m);
-        nSumPerCoin = nCoins * spread.at(m);
-        strDenomStats = QString::number(spread.at(m)) + " x " + 
+    for (const auto& denom : libzerocoin::zerocoinDenomList) {
+        nCoins = libzerocoin::ZerocoinDenominationToInt(denom);
+        nSumPerCoin = nCoins * mapDenomBalances.at(denom);
+        nUnconfirmed = mapUnconfirmed.at(denom);
+        if (nUnconfirmed)
+            strUnconfirmed = QString("(") + QString::number(nUnconfirmed) + QString(" unconfirmed) ");
+        else
+            strUnconfirmed = "";
+
+        strDenomStats = strUnconfirmed + QString::number(mapDenomBalances.at(denom)) + " x " +
                         QString::number(nCoins) + " = <b>" + 
                         QString::number(nSumPerCoin) + " zPIV </b>";
         

@@ -2630,7 +2630,7 @@ Value getarchivedzerocoin(const Array& params, bool fHelp)
 
 Value exportzerocoins(const Array& params, bool fHelp)
 {
-    if(fHelp || params.size() > 2)
+    if(fHelp || params.empty() || params.size() > 2)
         throw runtime_error(
             "exportzerocoins include_spent ( denomination )\n"
                 "Exports zerocoin mints that are held by this wallet.dat\n"
