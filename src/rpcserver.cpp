@@ -407,7 +407,8 @@ static const CRPCCommand vRPCCommands[] =
         {"zerocoin", "resetspentzerocoin", &resetspentzerocoin, false, false, true},
         {"zerocoin", "getarchivedzerocoin", &getarchivedzerocoin, false, false, true},
         {"zerocoin", "importzerocoins", &importzerocoins, false, false, true},
-        {"zerocoin", "exportzerocoins", &exportzerocoins, false, false, true}
+        {"zerocoin", "exportzerocoins", &exportzerocoins, false, false, true},
+        {"zerocoin", "reconsiderzerocoins", &reconsiderzerocoins, false, false, true}
 
 #endif // ENABLE_WALLET
 };

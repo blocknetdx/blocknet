@@ -224,6 +224,7 @@ extern json_spirit::Value resetspentzerocoin(const json_spirit::Array& params, b
 extern json_spirit::Value getarchivedzerocoin(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value importzerocoins(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value exportzerocoins(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value reconsiderzerocoins(const json_spirit::Array& params, bool fHelp);
 
 extern json_spirit::Value getrawtransaction(const json_spirit::Array& params, bool fHelp); // in rcprawtransaction.cpp
 extern json_spirit::Value listunspent(const json_spirit::Array& params, bool fHelp);

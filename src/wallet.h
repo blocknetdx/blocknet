@@ -205,6 +205,7 @@ public:
     bool SpendZerocoin(CAmount nValue, int nSecurityLevel, CWalletTx& wtxNew, CZerocoinSpendReceipt& receipt, vector<CZerocoinMint>& vMintsSelected, bool fMintChange, CBitcoinAddress* addressTo = NULL);
     std::string ResetMintZerocoin();
     std::string ResetSpentZerocoin();
+    void ReconsiderZerocoins(std::list<CZerocoinMint>& listMintsRestored);
 
     /** Zerocin entry changed.
     * @note called with lock cs_wallet held.

@@ -1065,6 +1065,20 @@ bool CWalletDB::ArchiveMintOrphan(const CZerocoinMint& zerocoinMint)
     return true;
 }
 
+bool CWalletDB::UnarchiveZerocoin(const CZerocoinMint& mint)
+{
+    CDataStream ss(SER_GETHASH, 0);
+    ss << mint.GetValue();
+    uint256 hash = Hash(ss.begin(), ss.end());;
+
+    if (!Erase(make_pair(string("zco"), hash))) {
+        LogPrintf("%s : failed to erase archived zerocoin mint\n", __func__);
+        return false;
+    }
+
+    return WriteZerocoinMint(mint);
+}
+
 std::list<CZerocoinMint> CWalletDB::ListMintedCoins(bool fUnusedOnly, bool fMaturedOnly)
 {
     std::list<CZerocoinMint> listPubCoin;

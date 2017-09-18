@@ -1021,6 +1021,7 @@ void FindMints(vector<CZerocoinMint> vMintsToFind, vector<CZerocoinMint>& vMints
         if (!mapBlockIndex.count(hashBlock)) {
             LogPrintf("%s : cannot find block %s\n", __func__, hashBlock.GetHex());
             vMissingMints.push_back(mint);
+            continue;
         }
 
         //see if this mint is spent
@@ -1076,6 +1077,12 @@ void FindMints(vector<CZerocoinMint> vMintsToFind, vector<CZerocoinMint>& vMints
                 std::remove(vMissingMints.begin(), vMissingMints.end(), mintMissing);
         }
     }
+}
+
+bool GetZerocoinMint(const CBigNum& bnPubcoin, uint256& txHash)
+{
+    txHash = 0;
+    return zerocoinDB->ReadCoinMint(bnPubcoin, txHash);
 }
 
 bool IsSerialKnown(const CBigNum& bnSerial)
@@ -3965,7 +3972,6 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
 
     // Check transactions
     bool fZerocoinActive = block.nTime > GetSporkValue(SPORK_17_ENABLE_ZEROCOIN);
-    LogPrintf("%s : checktransactions block %s\n", __func__, block.GetHash().GetHex());
     BOOST_FOREACH (const CTransaction& tx, block.vtx)
         if (!CheckTransaction(tx, fZerocoinActive, state))
             return error("CheckBlock() : CheckTransaction failed");
@@ -5663,7 +5669,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         if (pindex)
             pindex = chainActive.Next(pindex);
         int nLimit = 500;
-        LogPrintf("getblocks %d to %s limit %d from peer=%d\n", (pindex ? pindex->nHeight : -1), hashStop == uint256(0) ? "end" : hashStop.ToString(), nLimit, pfrom->id);
+        LogPrint("net", "getblocks %d to %s limit %d from peer=%d\n", (pindex ? pindex->nHeight : -1), hashStop == uint256(0) ? "end" : hashStop.ToString(), nLimit, pfrom->id);
         for (; pindex; pindex = chainActive.Next(pindex)) {
             if (pindex->GetBlockHash() == hashStop) {
                 LogPrint("net", "  getblocks stopping at %d %s\n", pindex->nHeight, pindex->GetBlockHash().ToString());

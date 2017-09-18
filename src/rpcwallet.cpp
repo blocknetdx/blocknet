@@ -2747,3 +2747,44 @@ Value importzerocoins(const Array& params, bool fHelp)
     ret.emplace_back(Pair("value", FormatMoney(nValue)));
     return ret;
 }
+
+Value reconsiderzerocoins(const Array& params, bool fHelp)
+{
+    if(fHelp || !params.empty())
+        throw runtime_error(
+            "reconsiderzerocoins\n"
+                "\nCheck archived zPiv list to see if any mints were added to the blockchain.\n"
+
+                "\nResult\n"
+                "[                                 (array of json objects)\n"
+                "  {\n"
+                "    \"txid\" : txid,              (numeric) the mint's zerocoin denomination \n"
+                "    \"denomination\" : \"denom\", (numeric) the mint's zerocoin denomination\n"
+                "    \"pubcoin\" : \"pubcoin\",    (string) The mint's public identifier\n"
+                "    \"height\" : n,               (numeric) The height the tx was added to the blockchain\n"
+                "  }\n"
+                "  ,...\n"
+                "]\n"
+
+                "\nExamples\n" +
+            HelpExampleCli("reconsiderzerocoins", "") + HelpExampleRpc("reconsiderzerocoins", ""));
+
+    if(pwalletMain->IsLocked())
+        throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED,
+                           "Error: Please enter the wallet passphrase with walletpassphrase first.");
+
+    list<CZerocoinMint> listMints;
+    pwalletMain->ReconsiderZerocoins(listMints);
+
+    Array arrRet;
+    for (const CZerocoinMint mint : listMints) {
+        Object objMint;
+        objMint.emplace_back(Pair("txid", mint.GetTxHash().GetHex()));
+        objMint.emplace_back(Pair("denomination", FormatMoney(mint.GetDenominationAsAmount())));
+        objMint.emplace_back(Pair("pubcoin", mint.GetValue().GetHex()));
+        objMint.emplace_back(Pair("height", mint.GetHeight()));
+        arrRet.emplace_back(objMint);
+    }
+
+    return arrRet;
+}

@@ -4303,6 +4303,36 @@ string CWallet::ResetSpentZerocoin()
     return strResult;
 }
 
+void CWallet::ReconsiderZerocoins(std::list<CZerocoinMint>& listMintsRestored)
+{
+    CWalletDB walletdb(pwalletMain->strWalletFile);
+    list<CZerocoinMint> listMints = walletdb.ListArchivedZerocoins();
+
+    if (listMints.empty())
+        return;
+
+    for (CZerocoinMint mint : listMints) {
+        if (IsSerialKnown(mint.GetSerialNumber()))
+            continue;
+
+        uint256 txHash;
+        if (!GetZerocoinMint(mint.GetValue(), txHash))
+            continue;
+
+        uint256 hashBlock = 0;
+        CTransaction tx;
+        if (!GetTransaction(txHash, tx, hashBlock))
+            continue;
+
+        mint.SetTxHash(txHash);
+        mint.SetHeight(mapBlockIndex.at(hashBlock)->nHeight);
+        if (!walletdb.UnarchiveZerocoin(mint)) {
+            LogPrintf("%s : failed to unarchive mint %s\n", __func__, mint.GetValue().GetHex());
+        }
+        listMintsRestored.emplace_back(mint);
+    }
+}
+
 string CWallet::MintZerocoin(CAmount nValue, CWalletTx& wtxNew, vector<CZerocoinMint>& vMints, const CCoinControl* coinControl)
 {
     // Check amount
