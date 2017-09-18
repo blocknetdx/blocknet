@@ -96,9 +96,24 @@ void XBridgeTransactionsView::setupUi()
     }
     else
     {
-        QPushButton * addTxBtn = new QPushButton(trUtf8("Exchange node"), this);
-        addTxBtn->setEnabled(false);
-        hbox->addWidget(addTxBtn);
+        QLabel * exchangeModeLabel = new QLabel(tr("Running exchange mode"), this);
+        exchangeModeLabel->setStyleSheet("color: red");
+
+        hbox->addWidget(exchangeModeLabel);
+
+        QTimer * timer = new QTimer(this);
+
+        connect(timer, &QTimer::timeout, [&e, timer, exchangeModeLabel](){
+            if(e.isStarted())
+            {
+                exchangeModeLabel->setText(tr("Exchange mode started"));
+                exchangeModeLabel->setStyleSheet("font-weight: bold; color: green");
+
+                timer->deleteLater();
+            }
+        });
+
+        timer->start(3000);
     }
 
     hbox->addStretch();

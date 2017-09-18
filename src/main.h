@@ -608,6 +608,24 @@ struct CBlockTemplate {
     std::vector<int64_t> vTxSigOps;
 };
 
+/**
+ * Returns the estimated blockchain sync progress. Node heights are queried at most once every
+ * 15 seconds. The sync progress is determined by calculating the mean block height across first
+ * 21 valid nodes. The assumption on accuracy is that nodes in general will report a higher block
+ * count.
+ * @param activeChainHeight
+ * @return
+ */
+double SyncProgress(int activeChainHeight);
+/**
+ * Returns the estimated total blocks on the chain. Calculates the mean over N blocks
+ * specified in the search count. This method accesses and locks vNodes.
+ * @param activeChainHeight
+ * @param nSearchCount
+ * @return
+ */
+int GetEstimatedBlockchainBlocks(int activeChainHeight, int nSearchCount = 21);
+
 /*
 class CValidationInterface
 {

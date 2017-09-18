@@ -163,7 +163,7 @@ background-color:#f2f2f2;
 /****************************************************************************************/
 
 QPushButton { /* Global Button Style */
-background-color:qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: .01 #64ACD2, stop: .1 #101341, stop: .95 #101341, stop: 1 #1D80B5);
+background-color:qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: .01 #64ACD2, stop: .1 #022B55, stop: .95 #022B55, stop: 1 #1D80B5);
 border:0;
 border-radius:3px;
 color:#ffffff;
@@ -176,7 +176,7 @@ padding-bottom:5px;
 }
 
 QPushButton:hover {
-background-color:qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: .01 #5B4C9A, stop: .1 #5B4C86, stop: .95 #5B4C86, stop: 1 #1F487E);
+background-color:qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: .01 #5B4C9A, stop: .1 #101341, stop: .95 #101341, stop: 1 #1F487E);
 }
 
 QPushButton:focus {
@@ -836,7 +836,7 @@ margin-left:16px;
 QWidget .QFrame#frame .QLabel#labelBalanceText { /* Available Balance Label */
 qproperty-alignment: 'AlignVCenter | AlignRight';
 min-width:160px;
-background-color:#1F487E;
+background-color:#022B55; /*1F487E;*/
 color:#fff;
 margin-right:5px;
 padding-right:5px;
@@ -1159,7 +1159,7 @@ margin-left:0px; /* CSS Voodoo - set to -66px to hide default transaction icons 
 /**************************** SEND DIALOG ***********************************************/
 
 QDialog#SendCoinsDialog {
-background-color:#fff;
+background-color:#AAAAAA;
 }
 
 QDialog#SendCoinsDialog .QFrame#frameCoinControl { /* Coin Control Section */
@@ -1295,7 +1295,7 @@ min-height:27px;
 /**************************** SEND COINS ENTRY ******************************************/
 
 QStackedWidget#SendCoinsEntry .QFrame#SendCoins > .QLabel { /* Send Coin Entry Labels */
-background-color:#1F487E;
+background-color:#022B55;
 min-width:102px;
 font-weight:bold;
 font-size:11px;
@@ -1478,11 +1478,11 @@ QDialog#CoinControlDialog .CoinControlTreeWidget#treeWidget::indicator { /* Coin
 /**************************** RECEIVE COINS *********************************************/
 
 QWidget#ReceiveCoinsDialog {
-background-color:#fff;
+background-color:#AAAAAA;
 }
 
 QWidget#ReceiveCoinsDialog .QFrame#frame2 .QLabel#label_2 { /* Label Label */
-background-color:#1F487E;
+background-color:#022B55;
 min-width:102px;
 color:#ffffff;
 font-weight:bold;
@@ -1500,7 +1500,7 @@ padding-right:5px;
 }
 
 QWidget#ReceiveCoinsDialog .QFrame#frame2 .QLabel#label_3 { /* Message Label */
-background-color:#1F487E;
+background-color:#022B55;
 min-width:102px;
 color:#ffffff;
 font-weight:bold;
