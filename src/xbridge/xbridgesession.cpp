@@ -740,9 +740,11 @@ bool XBridgeSession::processTransactionAccepting(XBridgePacketPtr packet)
                 // TODO remove this log
                 LOG() << "send xbcTransactionHold ";
 
-                std::vector<std::string> hosts;
-                hosts.push_back(tr->a_address());
-                hosts.push_back(tr->a_address());
+                std::set<std::string> hosts;
+                hosts.insert(tr->a_address());
+                hosts.insert(tr->b_address());
+
+                assert(hosts.size() == 2 && "bad addresses");
 
                 for (const std::string & host : hosts)
                 {
