@@ -776,9 +776,11 @@ bool XBridgeSession::processTransactionHold(XBridgePacketPtr packet)
         return false;
     }
 
-    // servicenode addr
-    std::vector<unsigned char> hubAddress(packet->data(), packet->data()+20);
     uint32_t offset = 20;
+
+    // servicenode addr
+    std::vector<unsigned char> hubAddress(packet->data()+offset, packet->data()+offset+20);
+    offset += 20;
 
     // read packet data
     uint256 id(packet->data()+offset);
