@@ -177,6 +177,7 @@ public:
         swap(first.nLastDsq, second.nLastDsq);
         swap(first.nScanningErrorCount, second.nScanningErrorCount);
         swap(first.nLastScanningErrorBlockHeight, second.nLastScanningErrorBlockHeight);
+        swap(first.connectedWallets, second.connectedWallets);
     }
 
     CServicenode& operator=(CServicenode from)
