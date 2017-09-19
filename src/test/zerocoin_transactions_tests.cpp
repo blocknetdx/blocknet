@@ -36,20 +36,19 @@ BOOST_AUTO_TEST_CASE(zerocoin_spend_test)
     CAmount nAmount = COIN;
     int nSecurityLevel = 100;
 
-    int nStatus;
-    std::string vString = cWallet.SpendZerocoin(nAmount, nSecurityLevel, *wtx, vSpends, vMints, fMintChange, nStatus);
+    CZerocoinSpendReceipt receipt;
+    cWallet.SpendZerocoin(nAmount, nSecurityLevel, *wtx, receipt, vMints, fMintChange);
     
-    BOOST_CHECK_MESSAGE(vString == "Invalid amount","Failed Invalid Amount Check");
+    BOOST_CHECK_MESSAGE(receipt.GetStatus() == ZPIV_TRX_FUNDS_PROBLEMS, "Failed Invalid Amount Check");
     
     nAmount = 1;
-    nStatus = 0;
-    vString = cWallet.SpendZerocoin(nAmount, nSecurityLevel, *wtx, vSpends, vMints, fMintChange, nStatus);
+    CZerocoinSpendReceipt receipt2;
+    cWallet.SpendZerocoin(nAmount, nSecurityLevel, *wtx, receipt2, vMints, fMintChange);
     
     // if using "wallet.dat", instead of "unlocked.dat" need this
     /// BOOST_CHECK_MESSAGE(vString == "Error: Wallet locked, unable to create transaction!"," Locked Wallet Check Failed");
- 
-    BOOST_CHECK_MESSAGE(vString == "it has to have at least two mint coins with at least 7 confirmation in order to spend a coin", "Failed not enough mint coins");
-    
+
+    BOOST_CHECK_MESSAGE(receipt2.GetStatus() == ZPIV_TRX_FUNDS_PROBLEMS, "Failed Invalid Amount Check");
     
 }
 
