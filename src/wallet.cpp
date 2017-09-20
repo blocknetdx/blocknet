@@ -3862,7 +3862,7 @@ bool CWallet::CreateZerocoinMintTransaction(const CAmount nValue, CMutableTransa
     CAmount nValueRemaining = 0;
     while (true) {
         //mint a coin with the closest denomination to what is being requested
-        nFeeRet = txNew.vout.size() * Params().Zerocoin_MintFee();
+        nFeeRet = max(static_cast<int>(txNew.vout.size()), 1) * Params().Zerocoin_MintFee();
         nValueRemaining = nValue - nMintingValue - (isZCSpendChange ? nFeeRet : 0);
 
         // if this is change of a zerocoinspend, then we can't mint all change, at least something must be given as a fee
