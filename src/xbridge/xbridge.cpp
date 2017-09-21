@@ -112,13 +112,6 @@ XBridge::XBridge()
 
 //*****************************************************************************
 //*****************************************************************************
-void XBridge::run()
-{
-    m_threads.join_all();
-}
-
-//*****************************************************************************
-//*****************************************************************************
 void XBridge::stop()
 {
     m_timer.cancel();
@@ -148,7 +141,6 @@ void XBridge::onTimer()
         m_services.push_back(m_services.front());
         m_services.pop_front();
 
-        // XBridgeSessionPtr session(new XBridgeSession);
         XBridgeApp & app = XBridgeApp::instance();
         XBridgeSessionPtr session = app.serviceSession();
 
@@ -157,23 +149,16 @@ void XBridge::onTimer()
         // call check expired transactions
         io->post(boost::bind(&XBridgeSession::checkFinishedTransactions, session));
 
-        // send list of wallets (broadcast)
-        // io->post(boost::bind(&XBridgeSession::sendListOfWallets, session));
-
         // send transactions list
         io->post(boost::bind(&XBridgeSession::sendListOfTransactions, session));
 
         // erase expired tx
         io->post(boost::bind(&XBridgeSession::eraseExpiredPendingTransactions, session));
 
-        // check unconfirmed tx
-        // io->post(boost::bind(&XBridgeSession::checkUnconfirmedTx, session));
-
-        // resend addressbook
-        // io->post(boost::bind(&XBridgeSession::resendAddressBook, session));
+        // get addressbook
         io->post(boost::bind(&XBridgeSession::getAddressBook, session));
 
-        // pending unprocessed packets
+        // unprocessed packets
         {
             std::map<uint256, std::pair<std::string, XBridgePacketPtr> > map;
             {

@@ -7,6 +7,8 @@
 #include "xbridge/xbridgeexchange.h"
 #include "xbridge/xuiconnector.h"
 #include "xbridge/util/logger.h"
+#include "wallet.h"
+#include "init.h"
 
 #include <QTableView>
 #include <QHeaderView>
@@ -212,6 +214,15 @@ QMenu * XBridgeTransactionsView::setupContextMenu(QModelIndex & index)
 //******************************************************************************
 void XBridgeTransactionsView::onNewTransaction()
 {
+    if (pwalletMain->IsLocked())
+    {
+        QMessageBox::warning(this,
+                             trUtf8("Create transaction"),
+                             trUtf8("Please, unlock wallet first"),
+                             QMessageBox::Ok);
+        return;
+    }
+
     m_dlg.setPendingId(uint256(), std::vector<unsigned char>());
     m_dlg.show();
 }

@@ -133,145 +133,10 @@ void XBridgeSession::init()
 
         m_handlers[xbcTransactionConfirmedA] .bind(this, &XBridgeSession::processTransactionConfirmedA);
         m_handlers[xbcTransactionConfirmedB] .bind(this, &XBridgeSession::processTransactionConfirmedB);
-
-        // wallet received transaction
-        m_handlers[xbcReceivedTransaction]   .bind(this, &XBridgeSession::processBitcoinTransactionHash);
     }
-
-    m_handlers[xbcAddressBookEntry].bind(this, &XBridgeSession::processAddressBookEntry);
 
     // retranslate messages to xbridge network
     m_handlers[xbcXChatMessage].bind(this, &XBridgeSession::processXChatMessage);
-}
-
-//*****************************************************************************
-//*****************************************************************************
-void XBridgeSession::start(XBridge::SocketPtr socket)
-{
-    // DEBUG_TRACE();
-
-    LOG() << "client connected " << socket.get();
-
-    m_socket = socket;
-
-    doReadHeader(XBridgePacketPtr(new XBridgePacket));
-}
-
-//*****************************************************************************
-//*****************************************************************************
-void XBridgeSession::disconnect()
-{
-    // DEBUG_TRACE();
-
-    m_socket->close();
-
-    LOG() << "client disconnected " << m_socket.get();
-
-    XBridgeApp & app = XBridgeApp::instance();
-    app.storageClean(shared_from_this());
-}
-
-//*****************************************************************************
-//*****************************************************************************
-void XBridgeSession::doReadHeader(XBridgePacketPtr packet,
-                                  const std::size_t offset)
-{
-    // DEBUG_TRACE();
-
-    m_socket->async_read_some(
-                boost::asio::buffer(packet->header()+offset,
-                                    packet->headerSize-offset),
-                boost::bind(&XBridgeSession::onReadHeader,
-                            shared_from_this(),
-                            packet, offset,
-                            boost::asio::placeholders::error,
-                            boost::asio::placeholders::bytes_transferred));
-}
-
-//*****************************************************************************
-//*****************************************************************************
-void XBridgeSession::onReadHeader(XBridgePacketPtr packet,
-                                  const std::size_t offset,
-                                  const boost::system::error_code & error,
-                                  std::size_t transferred)
-{
-    // DEBUG_TRACE();
-
-    if (error)
-    {
-        ERR() << PrintErrorCode(error);
-        disconnect();
-        return;
-    }
-
-    if (offset + transferred != static_cast<size_t>(packet->headerSize))
-    {
-        LOG() << "partially read header, read " << transferred
-              << " of " << packet->headerSize << " bytes";
-
-        doReadHeader(packet, offset + transferred);
-        return;
-    }
-
-    if (!checkXBridgePacketVersion(packet))
-    {
-        ERR() << "incorrect protocol version <" << packet->version() << "> " << __FUNCTION__;
-        disconnect();
-        return;
-    }
-
-    packet->alloc();
-    doReadBody(packet);
-}
-
-//*****************************************************************************
-//*****************************************************************************
-void XBridgeSession::doReadBody(XBridgePacketPtr packet,
-                const std::size_t offset)
-{
-    // DEBUG_TRACE();
-
-    m_socket->async_read_some(
-                boost::asio::buffer(packet->data()+offset,
-                                    packet->size()-offset),
-                boost::bind(&XBridgeSession::onReadBody,
-                            shared_from_this(),
-                            packet, offset,
-                            boost::asio::placeholders::error,
-                            boost::asio::placeholders::bytes_transferred));
-}
-
-//*****************************************************************************
-//*****************************************************************************
-void XBridgeSession::onReadBody(XBridgePacketPtr packet,
-                                const std::size_t offset,
-                                const boost::system::error_code & error,
-                                std::size_t transferred = 0)
-{
-    // DEBUG_TRACE();
-
-    if (error)
-    {
-        ERR() << PrintErrorCode(error);
-        disconnect();
-        return;
-    }
-
-    if (offset + transferred != packet->size())
-    {
-        LOG() << "partially read packet, read " << transferred
-              << " of " << packet->size() << " bytes";
-
-        doReadBody(packet, offset + transferred);
-        return;
-    }
-
-    if (!processPacket(packet))
-    {
-        ERR() << "packet processing error " << __FUNCTION__;
-    }
-
-    doReadHeader(XBridgePacketPtr(new XBridgePacket));
 }
 
 //*****************************************************************************
@@ -423,39 +288,6 @@ bool XBridgeSession::checkXBridgePacketVersion(XBridgePacketPtr packet)
     }
 
     return true;
-}
-
-//*****************************************************************************
-//*****************************************************************************
-bool XBridgeSession::sendXBridgeMessage(XBridgePacketPtr packet)
-{
-    boost::system::error_code error;
-    m_socket->send(boost::asio::buffer(packet->header(), packet->allSize()), 0, error);
-    if (error)
-    {
-        ERR() << "packet send error " << PrintErrorCode(error) << __FUNCTION__;
-        return false;
-    }
-
-    return true;
-}
-
-//*****************************************************************************
-//*****************************************************************************
-bool XBridgeSession::takeXBridgeMessage(const std::vector<unsigned char> & message)
-{
-    // DEBUG_TRACE();
-
-    XBridgePacketPtr packet(new XBridgePacket());
-    // packet->setData(message);
-    if (!packet->copyFrom(message))
-    {
-        ERR() << "incorrect packet " << __FUNCTION__;
-        return false;
-    }
-
-    // return sendXBridgeMessage(packet);
-    return processPacket(packet);
 }
 
 //*****************************************************************************
@@ -2456,7 +2288,7 @@ bool XBridgeSession::processTransactionCancel(XBridgePacketPtr packet)
     // size must be == 36 bytes
     if (packet->size() != 36)
     {
-        ERR() << "invalid packet size for xbcReceivedTransaction "
+        ERR() << "invalid packet size for xbcTransactionCancel "
               << "need 36 received " << packet->size() << " "
               << __FUNCTION__;
         return false;
@@ -2612,68 +2444,6 @@ bool XBridgeSession::rollbackTransaction(XBridgeTransactionPtr tr)
 
 //*****************************************************************************
 //*****************************************************************************
-bool XBridgeSession::processBitcoinTransactionHash(XBridgePacketPtr packet)
-{
-    // DEBUG_TRACE();
-
-    // size must be == 32 bytes (256bit)
-    if (packet->size() != 32)
-    {
-        ERR() << "invalid packet size for xbcReceivedTransaction "
-              << "need 32 received " << packet->size() << " "
-              << __FUNCTION__;
-        return false;
-    }
-
-    static XBridgeExchange & e = XBridgeExchange::instance();
-    if (!e.isStarted())
-    {
-        return true;
-    }
-
-    uint256 id(packet->data());
-//    // LOG() << "received transaction <" << id.GetHex() << ">";
-
-    e.updateTransaction(id);
-
-    return true;
-}
-
-//*****************************************************************************
-//*****************************************************************************
-bool XBridgeSession::processAddressBookEntry(XBridgePacketPtr packet)
-{
-    // DEBUG_TRACE();
-
-    std::string currency(reinterpret_cast<const char *>(packet->data()));
-    std::string name(reinterpret_cast<const char *>(packet->data()+currency.length()+1));
-    std::string address(reinterpret_cast<const char *>(packet->data()+currency.length()+name.length()+2));
-
-    XBridgeApp::instance().storeAddressBookEntry(currency, name, address);
-
-    return true;
-}
-
-//*****************************************************************************
-//*****************************************************************************
-void XBridgeSession::sendListOfWallets()
-{
-    XBridgeExchange & e = XBridgeExchange::instance();
-    if (!e.isStarted())
-    {
-        return;
-    }
-
-    std::vector<std::string> list = e.connectedWallets();
-
-    XBridgePacketPtr packet(new XBridgePacket(xbcExchangeWallets));
-    packet->setData(boost::algorithm::join(list, "|"));
-
-    sendPacketBroadcast(packet);
-}
-
-//*****************************************************************************
-//*****************************************************************************
 void XBridgeSession::sendListOfTransactions()
 {
     XBridgeApp & app = XBridgeApp::instance();
@@ -2759,50 +2529,6 @@ void XBridgeSession::eraseExpiredPendingTransactions()
 
 //*****************************************************************************
 //*****************************************************************************
-void XBridgeSession::checkUnconfirmedTx()
-{
-    XBridgeApp::instance().checkUnconfirmedTx();
-}
-
-//*****************************************************************************
-//*****************************************************************************
-void XBridgeSession::requestUnconfirmedTx()
-{
-//    DEBUG_TRACE_LOG(currencyToLog());
-
-//    std::map<uint256, XBridgeTransactionDescrPtr> utx;
-//    {
-//        boost::mutex::scoped_lock l(XBridgeApp::m_txUnconfirmedLocker);
-//        utx = XBridgeApp::m_unconfirmed;
-//    }
-
-//    for (std::map<uint256, XBridgeTransactionDescrPtr>::iterator i = utx.begin(); i != utx.end(); ++i)
-//    {
-//        // TODO debug fn rpc::getTransaction, payTxId is string instead uint256
-
-//        LOG() << "check transaction " << i->second->payTxId;
-//        if (rpc::getTransaction(m_wallet.user, m_wallet.passwd, m_wallet.ip, m_wallet.port,
-//                                i->second->payTxId))
-//        {
-//            {
-//                boost::mutex::scoped_lock l(XBridgeApp::m_txUnconfirmedLocker);
-//                XBridgeApp::m_unconfirmed.erase(i->first);
-//            }
-
-//            XBridgeTransactionDescrPtr & tx = i->second;
-
-//            XBridgePacketPtr ptr(new XBridgePacket(xbcTransactionConfirmed));
-//            ptr->append(tx->hubAddress);
-//            ptr->append(tx->confirmAddress);
-//            ptr->append(i->first.begin(), 32);
-
-//            sendPacket(tx->hubAddress, ptr);
-//        }
-//    }
-}
-
-//*****************************************************************************
-//*****************************************************************************
 void XBridgeSession::checkFinishedTransactions()
 {
     XBridgeExchange & e = XBridgeExchange::instance();
@@ -2864,13 +2590,6 @@ void XBridgeSession::checkFinishedTransactions()
 
 //*****************************************************************************
 //*****************************************************************************
-void XBridgeSession::resendAddressBook()
-{
-    XBridgeApp::instance().resendAddressBook();
-}
-
-//*****************************************************************************
-//*****************************************************************************
 void XBridgeSession::getAddressBook()
 {
     XBridgeApp::instance().getAddressBook();
@@ -2906,23 +2625,6 @@ void XBridgeSession::requestAddressBook()
             xuiConnector.NotifyXBridgeAddressBookEntryReceived
                     (m_wallet.currency, e.first, addr);
         }
-    }
-}
-
-//*****************************************************************************
-//*****************************************************************************
-void XBridgeSession::sendAddressbookEntry(const std::string & currency,
-                                          const std::string & name,
-                                          const std::string & address)
-{
-    if (m_socket->is_open())
-    {
-        XBridgePacketPtr p(new XBridgePacket(xbcAddressBookEntry));
-        p->append(currency);
-        p->append(name);
-        p->append(address);
-
-        sendXBridgeMessage(p);
     }
 }
 

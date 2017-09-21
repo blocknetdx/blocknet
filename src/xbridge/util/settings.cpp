@@ -24,8 +24,7 @@ Settings & settings()
 //******************************************************************************
 //******************************************************************************
 Settings::Settings()
-    : m_dhtPort(Config::DHT_PORT)
-    , m_isExchangeEnabled(false)
+    : m_isExchangeEnabled(false)
 {
 }
 

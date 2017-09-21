@@ -68,18 +68,18 @@ enum XBridgeCommand
     // xbcTransactionHold       <--    |     --> xbcTransactionHold
     // xbcTransactionHoldApply  -->    |     <-- xbcTransactionHoldApply
     //                                 |
-    // xbcTransactionCreate     <--    |     --> xbcTransactionCreate
-    // xbcTransactionCreated    -->    |     <-- xbcTransactionCreated
+    // xbcTransactionCreateA    <--    |
+    // xbcTransactionCreatedA   -->    |
     //                                 |
-    // xbcTransactionSign       <--    |     --> xbcTransactionSign
-    // xbcTransactionSigned     -->    |     <-- xbcTransactionSigned
+    //                                 |     --> xbcTransactionCreateB
+    //                                 |     <-- xbcTransactionCreatedB
     //                                 |
-    // xbcTransactionCommit     <--    |     --> xbcTransactionCommit
-    // xbcTransactionCommited   -->    |     <-- xbcTransactionCommited
+    // xbcTransactionCommitA    <--    |
+    // xbcTransactionCommitedA  -->    |
     //                                 |
-    //      hub wallet 1               |           hub wallet 2
-    // xbcReceivedTransaction   -->    |     <-- xbcReceivedTransaction
-    // xbcTransactionFinish     <--    |     --> xbcTransactionFinish
+    //                                 |     --> xbcTransactionCommitB
+    //                                 |     <-- xbcTransactionCommitedB
+    //                                 |
 
 
     // exchange transaction
@@ -244,26 +244,6 @@ enum XBridgeCommand
     //    uint256 hub transaction id
     //
     xbcTransactionDropped = 25,
-
-    // smart hub periodically send this message for invitations to trading
-    // this message contains address of smart hub and
-    // list of connected wallets (btc, xc, etc...)
-    // broadcast message
-    //
-    // xbcExchangeWallets
-    //     {wallet id (string)}|{wallet title (string)}|{wallet id (string)}|{wallet title (string)}
-    xbcExchangeWallets = 26,
-
-    // wallet send transaction hash when transaction received
-    //
-    // xbcReceivedTransaction
-    //     uint256 transaction id (bitcoin transaction hash)
-    xbcReceivedTransaction = 27,
-
-    // address book entry
-    //
-    // xbcAddressBook
-    xbcAddressBookEntry = 28
 };
 
 //******************************************************************************
