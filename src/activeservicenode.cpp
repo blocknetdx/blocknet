@@ -6,6 +6,7 @@
 #include "servicenodeman.h"
 #include "protocol.h"
 #include "spork.h"
+#include "xbridge/xbridgeexchange.h"
 
 //
 // Bootup the Servicenode, look for a 5000 BlocknetDX input and register on the network
@@ -291,7 +292,13 @@ bool CActiveServicenode::Register(CTxIn vin, CService service, CKey keyCollatera
     mnodeman.mapSeenServicenodePing.insert(make_pair(mnp.GetHash(), mnp));
 
     LogPrintf("CActiveServicenode::Register() - Adding to Servicenode list\n    service: %s\n    vin: %s\n", service.ToString(), vin.ToString());
-    mnb = CServicenodeBroadcast(service, vin, pubKeyCollateralAddress, pubKeyServicenode, PROTOCOL_VERSION);
+
+    XBridgeExchange & e = XBridgeExchange::instance();
+
+    mnb = CServicenodeBroadcast(service, vin,
+                                pubKeyCollateralAddress, pubKeyServicenode,
+                                PROTOCOL_VERSION,
+                                e.isEnabled() ? e.connectedWallets() : std::vector<std::string>());
     mnb.lastPing = mnp;
     if (!mnb.Sign(keyCollateralAddress)) {
         errorMessage = strprintf("Failed to sign broadcast, vin: %s", vin.ToString());

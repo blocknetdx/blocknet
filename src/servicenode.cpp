@@ -9,7 +9,6 @@
 #include "obfuscation.h"
 #include "sync.h"
 #include "util.h"
-#include "xbridge/xbridgeexchange.h"
 
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
@@ -84,18 +83,6 @@ CServicenode::CServicenode()
     lastTimeChecked               = 0;
     nLastDsee                     = 0; // temporary, do not save. Remove after migration to v12
     nLastDseep                    = 0; // temporary, do not save. Remove after migration to v12
-
-    XBridgeExchange & e = XBridgeExchange::instance();
-    if (e.isEnabled())
-    {
-        std::vector<StringPair> wallets = e.listOfWallets();
-        std::vector<std::string> list;
-        for (std::vector<StringPair>::iterator i = wallets.begin(); i != wallets.end(); ++i)
-        {
-            list.push_back(i->first);
-        }
-        connectedWallets = boost::algorithm::join(list, ",");
-    }
 }
 
 CServicenode::CServicenode(const CServicenode& other)
@@ -365,7 +352,12 @@ CServicenodeBroadcast::CServicenodeBroadcast()
     nLastScanningErrorBlockHeight = 0;
 }
 
-CServicenodeBroadcast::CServicenodeBroadcast(CService newAddr, CTxIn newVin, CPubKey pubKeyCollateralAddressNew, CPubKey pubKeyServicenodeNew, int protocolVersionIn)
+CServicenodeBroadcast::CServicenodeBroadcast(const CService & newAddr,
+                                             const CTxIn & newVin,
+                                             const CPubKey & pubKeyCollateralAddressNew,
+                                             const CPubKey & pubKeyServicenodeNew,
+                                             const int protocolVersionIn,
+                                             const std::vector<string> & exchangeWallets)
 {
     vin = newVin;
     addr = newAddr;
@@ -383,6 +375,7 @@ CServicenodeBroadcast::CServicenodeBroadcast(CService newAddr, CTxIn newVin, CPu
     nLastDsq = 0;
     nScanningErrorCount = 0;
     nLastScanningErrorBlockHeight = 0;
+    connectedWallets = exchangeWallets;
 }
 
 CServicenodeBroadcast::CServicenodeBroadcast(const CServicenode& mn)
@@ -405,7 +398,14 @@ CServicenodeBroadcast::CServicenodeBroadcast(const CServicenode& mn)
     nLastScanningErrorBlockHeight = mn.nLastScanningErrorBlockHeight;
 }
 
-bool CServicenodeBroadcast::Create(std::string strService, std::string strKeyServicenode, std::string strTxHash, std::string strOutputIndex, std::string& strErrorRet, CServicenodeBroadcast& mnbRet, bool fOffline)
+bool CServicenodeBroadcast::Create(const string & strService,
+                                   const string & strKeyServicenode,
+                                   const string & strTxHash,
+                                   const string & strOutputIndex,
+                                   const std::vector<string> & exchangeWallets,
+                                   std::string & strErrorRet,
+                                   CServicenodeBroadcast & mnbRet,
+                                   const bool fOffline)
 {
     CTxIn txin;
     CPubKey pubKeyCollateralAddressNew;
@@ -446,10 +446,21 @@ bool CServicenodeBroadcast::Create(std::string strService, std::string strKeySer
         return false;
     }
 
-    return Create(txin, CService(strService), keyCollateralAddressNew, pubKeyCollateralAddressNew, keyServicenodeNew, pubKeyServicenodeNew, strErrorRet, mnbRet);
+    return Create(txin, CService(strService), keyCollateralAddressNew,
+                  pubKeyCollateralAddressNew, keyServicenodeNew,
+                  pubKeyServicenodeNew, exchangeWallets,
+                  strErrorRet, mnbRet);
 }
 
-bool CServicenodeBroadcast::Create(CTxIn txin, CService service, CKey keyCollateralAddressNew, CPubKey pubKeyCollateralAddressNew, CKey keyServicenodeNew, CPubKey pubKeyServicenodeNew, std::string& strErrorRet, CServicenodeBroadcast& mnbRet)
+bool CServicenodeBroadcast::Create(const CTxIn & txin,
+                                   const CService & service,
+                                   const CKey & keyCollateralAddressNew,
+                                   const CPubKey &pubKeyCollateralAddressNew,
+                                   const CKey & keyServicenodeNew,
+                                   const CPubKey & pubKeyServicenodeNew,
+                                   const std::vector<string> & exchangeWallets,
+                                   std::string & strErrorRet,
+                                   CServicenodeBroadcast & mnbRet)
 {
     // wait for reindex and/or import to finish
     if (fImporting || fReindex) return false;
@@ -467,7 +478,8 @@ bool CServicenodeBroadcast::Create(CTxIn txin, CService service, CKey keyCollate
         return false;
     }
 
-    mnbRet = CServicenodeBroadcast(service, txin, pubKeyCollateralAddressNew, pubKeyServicenodeNew, PROTOCOL_VERSION);
+    mnbRet = CServicenodeBroadcast(service, txin, pubKeyCollateralAddressNew,
+                                   pubKeyServicenodeNew, PROTOCOL_VERSION, exchangeWallets);
 
     if (!mnbRet.IsValidNetAddr()) {
         strErrorRet = strprintf("Invalid IP address, servicenode=%s", txin.prevout.hash.ToString());
@@ -661,7 +673,7 @@ void CServicenodeBroadcast::Relay()
     RelayInv(inv);
 }
 
-bool CServicenodeBroadcast::Sign(CKey& keyCollateralAddress)
+bool CServicenodeBroadcast::Sign(const CKey & keyCollateralAddress)
 {
     std::string errorMessage;
 
@@ -689,7 +701,7 @@ CServicenodePing::CServicenodePing() : sigTime(0)
 {
 }
 
-CServicenodePing::CServicenodePing(CTxIn& newVin)
+CServicenodePing::CServicenodePing(const CTxIn & newVin)
 {
     vin = newVin;
     blockHash = chainActive[chainActive.Height() - 12]->GetBlockHash();
@@ -698,10 +710,10 @@ CServicenodePing::CServicenodePing(CTxIn& newVin)
 }
 
 
-bool CServicenodePing::Sign(CKey& keyServicenode, CPubKey& pubKeyServicenode)
+bool CServicenodePing::Sign(const CKey& keyServicenode, const CPubKey & pubKeyServicenode)
 {
     std::string errorMessage;
-    std::string strServiceNodeSignMessage;
+    // std::string strServiceNodeSignMessage;
 
     sigTime = GetAdjustedTime();
     std::string strMessage = vin.ToString() + blockHash.ToString() + boost::lexical_cast<std::string>(sigTime);

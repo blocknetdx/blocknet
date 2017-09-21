@@ -2664,12 +2664,7 @@ void XBridgeSession::sendListOfWallets()
         return;
     }
 
-    std::vector<StringPair> wallets = e.listOfWallets();
-    std::vector<std::string> list;
-    for (std::vector<StringPair>::iterator i = wallets.begin(); i != wallets.end(); ++i)
-    {
-        list.push_back(i->first + '|' + i->second);
-    }
+    std::vector<std::string> list = e.connectedWallets();
 
     XBridgePacketPtr packet(new XBridgePacket(xbcExchangeWallets));
     packet->setData(boost::algorithm::join(list, "|"));

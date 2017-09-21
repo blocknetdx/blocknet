@@ -38,11 +38,11 @@ XBridgeTransactionDialog::XBridgeTransactionDialog(XBridgeTransactionsModel & mo
 {
     setupUI();
 
-    XBridgeExchange & e = XBridgeExchange::instance();
-    std::vector<StringPair> wallets = e.listOfWallets();
-    for (StringPair & sp : wallets)
+    XBridgeApp & xapp = XBridgeApp::instance();
+    std::vector<std::string> wallets = xapp.sessionsCurrencies();
+    for (const std::string & s : wallets)
     {
-        m_thisWallets << QString::fromStdString(sp.first);
+        m_thisWallets << QString::fromStdString(s);
     }
     m_thisWalletsModel.setStringList(m_thisWallets);
 
@@ -233,13 +233,12 @@ void XBridgeTransactionDialog::setupUI()
 
 //******************************************************************************
 //******************************************************************************
-void XBridgeTransactionDialog::onWalletListReceived(const std::vector<std::pair<std::string, std::string> > & wallets)
+void XBridgeTransactionDialog::onWalletListReceived(const std::vector<std::string> & wallets)
 {
     QStringList list;
-    for (std::vector<std::pair<std::string, std::string> >::const_iterator i = wallets.begin();
-         i != wallets.end(); ++i)
+    for (const std::string & w : wallets)
     {
-        list.push_back(QString::fromStdString(i->first));
+        list.push_back(QString::fromStdString(w));
     }
 
     QMetaObject::invokeMethod(this, "onWalletListReceivedHandler", Qt::QueuedConnection,

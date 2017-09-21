@@ -46,7 +46,7 @@ public:
     //removed stop
 
     CServicenodePing();
-    CServicenodePing(CTxIn& newVin);
+    CServicenodePing(const CTxIn & newVin);
 
     ADD_SERIALIZE_METHODS;
 
@@ -60,7 +60,7 @@ public:
     }
 
     bool CheckAndUpdate(int& nDos, bool fRequireEnabled = true);
-    bool Sign(CKey& keyServicenode, CPubKey& pubKeyServicenode);
+    bool Sign(const CKey & keyServicenode, const CPubKey & pubKeyServicenode);
     void Relay();
 
     uint256 GetHash()
@@ -144,7 +144,7 @@ public:
     CServicenodePing lastPing;
 
     // xbridge wallets list, connected to service node
-    std::string connectedWallets;
+    std::vector<string> connectedWallets;
 
     int64_t nLastDsee;  // temporary, do not save. Remove after migration to v12
     int64_t nLastDseep; // temporary, do not save. Remove after migration to v12
@@ -297,12 +297,17 @@ class CServicenodeBroadcast : public CServicenode
 {
 public:
     CServicenodeBroadcast();
-    CServicenodeBroadcast(CService newAddr, CTxIn newVin, CPubKey newPubkey, CPubKey newPubkey2, int protocolVersionIn);
+    CServicenodeBroadcast(const CService & newAddr,
+                          const CTxIn & newVin,
+                          const CPubKey & pubKeyCollateralAddressNew,
+                          const CPubKey & pubKeyServicenodeNew,
+                          const int protocolVersionIn,
+                          const std::vector<std::string> & exchangeWallets);
     CServicenodeBroadcast(const CServicenode& mn);
 
     bool CheckAndUpdate(int& nDoS);
     bool CheckInputsAndAdd(int& nDos);
-    bool Sign(CKey& keyCollateralAddress);
+    bool Sign(const CKey & keyCollateralAddress);
     void Relay();
 
     ADD_SERIALIZE_METHODS;
@@ -323,7 +328,7 @@ public:
         {
             READWRITE(connectedWallets);
         }
-        else
+        else if (nType != SER_NETWORK)
         {
             READWRITE(connectedWallets);
         }
@@ -338,8 +343,23 @@ public:
     }
 
     /// Create Servicenode broadcast, needs to be relayed manually after that
-    static bool Create(CTxIn vin, CService service, CKey keyCollateralAddressNew, CPubKey pubKeyCollateralAddressNew, CKey keyServicenodeNew, CPubKey pubKeyServicenodeNew, std::string& strErrorRet, CServicenodeBroadcast& mnbRet);
-    static bool Create(std::string strService, std::string strKey, std::string strTxHash, std::string strOutputIndex, std::string& strErrorRet, CServicenodeBroadcast& mnbRet, bool fOffline = false);
+    static bool Create(const CTxIn & vin,
+                       const CService & service,
+                       const CKey & keyCollateralAddressNew,
+                       const CPubKey & pubKeyCollateralAddressNew,
+                       const CKey & keyServicenodeNew,
+                       const CPubKey & pubKeyServicenodeNew,
+                       const std::vector<string> & exchangeWallets,
+                       std::string & strErrorRet,
+                       CServicenodeBroadcast & mnbRet);
+    static bool Create(const std::string & strService,
+                       const std::string & strKey,
+                       const std::string & strTxHash,
+                       const std::string & strOutputIndex,
+                       const std::vector<string> & exchangeWallets,
+                       std::string & strErrorRet,
+                       CServicenodeBroadcast & mnbRet,
+                       const bool fOffline = false);
 };
 
 #endif
