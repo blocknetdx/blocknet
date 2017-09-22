@@ -578,9 +578,13 @@ bool CBudgetManager::IsBudgetPaymentBlock(int nBlockHeight)
 
     LogPrintf("CBudgetManager::IsBudgetPaymentBlock() - nHighestCount: %lli, 5%% of Masternodes: %lli. Number of budgets: %lli\n", nHighestCount, nFivePercent, mapFinalizedBudgets.size());
 
-    /*
-        If budget doesn't have 5% of the network votes, then we should pay a masternode instead
-    */
+    // Special handling for testnet: if too few masternodes are available there's most often NO consensus on a budget,
+    // so it won't get paid at all. This workend enables bidget tests in this case.
+    if (Params().NetworkID() == CBaseChainParams::TESTNET) {
+        if(nHighestCount == 0 && nFivePercent == 0) return true;
+    }
+
+    // If budget doesn't have 5% of the network votes, then we should pay a masternode instead
     if (nHighestCount > nFivePercent) return true;
 
     return false;
