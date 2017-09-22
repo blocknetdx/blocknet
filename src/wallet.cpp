@@ -3939,14 +3939,6 @@ bool CWallet::CreateZerocoinMintTransaction(const CAmount nValue, CMutableTransa
         CTxOut outChange(nChange, scriptChange);
         txNew.vout.push_back(outChange);
     } else {
-        if(reservekey)
-            reservekey->ReturnKey();
-    }
-
-        //add to the transaction
-        CTxOut outChange(nChange, scriptChange);
-        txNew.vout.push_back(outChange);
-    } else {
         if (reservekey)
             reservekey->ReturnKey();
     }
@@ -4343,7 +4335,7 @@ string CWallet::MintZerocoin(CAmount nValue, CWalletTx& wtxNew, vector<CZerocoin
         return _("Insufficient funds");
 
     CReserveKey reservekey(this);
-    //int64_t nFeeRequired;
+    int64_t nFeeRequired;
 
     if (IsLocked()) {
         string strError = _("Error: Wallet locked, unable to create transaction!");
