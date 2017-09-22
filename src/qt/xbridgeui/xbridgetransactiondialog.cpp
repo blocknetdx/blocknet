@@ -276,8 +276,8 @@ void XBridgeTransactionDialog::onSendTransaction()
 
     std::string from = m_addressFrom->text().toStdString();
     std::string to   = m_addressTo->text().toStdString().c_str();
-    if ((from.size() != 33 && from.size() != 34) ||
-        (to.size() != 33 && to.size() != 34))
+    if ((from.size() >= 32 && from.size() <= 36) ||
+        (to.size() >= 32 && to.size() <= 36))
     {
         QMessageBox::warning(this, trUtf8("check parameters"), trUtf8("Invalid address"));
         return;
