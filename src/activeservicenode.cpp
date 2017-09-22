@@ -189,7 +189,10 @@ bool CActiveServicenode::SendServicenodePing(std::string& errorMessage)
         //mnodeman.mapSeenServicenodeBroadcast.lastPing is probably outdated, so we'll update it
         CServicenodeBroadcast mnb(*pmn);
         uint256 hash = mnb.GetHash();
-        if (mnodeman.mapSeenServicenodeBroadcast.count(hash)) mnodeman.mapSeenServicenodeBroadcast[hash].lastPing = mnp;
+        if (mnodeman.mapSeenServicenodeBroadcast.count(hash))
+        {
+            mnodeman.mapSeenServicenodeBroadcast[hash].lastPing = mnp;
+        }
 
         mnp.Relay();
 
@@ -492,6 +495,24 @@ bool CActiveServicenode::EnableHotColdServiceNode(CTxIn& newVin, CService& newSe
     //The values below are needed for signing mnping messages going forward
     vin = newVin;
     service = newService;
+
+    // update xbridge info for my servicenode
+    CServicenode * mn = mnodeman.Find(vin);
+    if (mn)
+    {
+        XBridgeExchange & e = XBridgeExchange::instance();
+        if (e.isEnabled())
+        {
+            mn->connectedWallets = e.connectedWallets();
+
+            CServicenodeBroadcast mnb(*mn);
+            uint256 hash = mnb.GetHash();
+            if (mnodeman.mapSeenServicenodeBroadcast.count(hash))
+            {
+                mnodeman.mapSeenServicenodeBroadcast[hash].connectedWallets = mn->connectedWallets;
+            }
+        }
+    }
 
     LogPrintf("CActiveServicenode::EnableHotColdServiceNode() - Enabled! You may shut down the cold daemon.\n");
 

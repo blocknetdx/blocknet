@@ -145,15 +145,18 @@ CServicenode::CServicenode(const CServicenodeBroadcast& mnb)
 bool CServicenode::UpdateFromNewBroadcast(CServicenodeBroadcast& mnb)
 {
     if (mnb.sigTime > sigTime) {
-        pubKeyServicenode = mnb.pubKeyServicenode;
+        pubKeyServicenode       = mnb.pubKeyServicenode;
         pubKeyCollateralAddress = mnb.pubKeyCollateralAddress;
-        sigTime = mnb.sigTime;
-        sig = mnb.sig;
-        protocolVersion = mnb.protocolVersion;
-        addr = mnb.addr;
-        lastTimeChecked = 0;
-        int nDoS = 0;
-        if (mnb.lastPing == CServicenodePing() || (mnb.lastPing != CServicenodePing() && mnb.lastPing.CheckAndUpdate(nDoS, false))) {
+        sigTime                 = mnb.sigTime;
+        sig                     = mnb.sig;
+        protocolVersion         = mnb.protocolVersion;
+        addr                    = mnb.addr;
+        lastTimeChecked         = 0;
+        connectedWallets        = mnb.connectedWallets;
+        int nDoS                = 0;
+        if (mnb.lastPing == CServicenodePing() ||
+            (mnb.lastPing != CServicenodePing() && mnb.lastPing.CheckAndUpdate(nDoS, false)))
+        {
             lastPing = mnb.lastPing;
             mnodeman.mapSeenServicenodePing.insert(make_pair(lastPing.GetHash(), lastPing));
         }
@@ -396,6 +399,7 @@ CServicenodeBroadcast::CServicenodeBroadcast(const CServicenode& mn)
     nLastDsq = mn.nLastDsq;
     nScanningErrorCount = mn.nScanningErrorCount;
     nLastScanningErrorBlockHeight = mn.nLastScanningErrorBlockHeight;
+    connectedWallets = mn.connectedWallets;
 }
 
 bool CServicenodeBroadcast::Create(const string & strService,
