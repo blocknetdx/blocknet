@@ -753,6 +753,16 @@
                 </widget>
                </item>
                <item>
+                <widget class="QCheckBox" name="checkBoxMinimizeChange">
+                 <property name="toolTip">
+                  <string>If checked, the wallet tries to minimize the returning change instead of minimizing the number of spent denominations.</string>
+                 </property>
+                 <property name="text">
+                  <string>Minimize Change</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
                 <spacer name="horizontalSpacer_6">
                  <property name="orientation">
                   <enum>Qt::Horizontal</enum>

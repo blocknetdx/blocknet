@@ -72,6 +72,15 @@ PrivacyDialog::PrivacyDialog(QWidget* parent) : QDialog(parent),
     else{
         nSecurityLevel = settings.value("nSecurityLevel").toInt();
     }
+    
+    if (!settings.contains("fMinimizeChange")){
+        fMinimizeChange = false;
+        settings.setValue("fMinimizeChange", fMinimizeChange);
+    }
+    else{
+        fMinimizeChange = settings.value("fMinimizeChange").toBool();
+    }
+    ui->checkBoxMinimizeChange->setChecked(fMinimizeChange);
 
     // Start with displaying the "out of sync" warnings
     showOutOfSyncWarning(true);
@@ -276,6 +285,10 @@ void PrivacyDialog::sendzPIV()
     // Convert change to zPIV
     bool fMintChange = ui->checkBoxMintChange->isChecked();
 
+    // Persist minimize change setting
+    fMinimizeChange = ui->checkBoxMinimizeChange->isChecked();
+    settings.setValue("fMinimizeChange", fMinimizeChange);
+
     // Warn for additional fees if amount is not an integer and change as zPIV is requested
     bool fWholeNumber = floor(dAmount) == dAmount;
     double dzFee = 0.0;
@@ -344,7 +357,7 @@ void PrivacyDialog::sendzPIV()
     // Spend zPIV
     bool fSuccess;
     CZerocoinSpendReceipt receipt;
-    fSuccess = pwalletMain->SpendZerocoin(nAmount, nSecurityLevel, wtxNew, receipt, vMintsSelected, fMintChange, &address);
+    fSuccess = pwalletMain->SpendZerocoin(nAmount, nSecurityLevel, wtxNew, receipt, vMintsSelected, fMintChange, fMinimizeChange, &address);
 
     // Display errors during spend
     if (!fSuccess) {

@@ -2433,44 +2433,48 @@ Value mintzerocoin(const Array& params, bool fHelp)
 
 Value spendzerocoin(const Array& params, bool fHelp)
 {
-    if (fHelp || params.size() > 4 || params.size() < 3)
+    if (fHelp || params.size() > 5 || params.size() < 4)
         throw runtime_error(
-            "spendzerocoin <amount> <address> <mintchange [true|false]> <securitylevel [1-100 default:100]>\n"
-            "Overview: Convert zPiv (zerocoins) into Piv. \n"
-            "mintchange: if there is left over Pivx (change), the wallet can convert it automatically back to zerocoins [true]\n"
-            "address: Send straight to an address or leave the address blank and the wallet will send to a change address. If there is change then"
-                    "an address is required\n"
+            "spendzerocoin <amount> <mintchange [true|false]> <minimizechange [true|false]>  <securitylevel [1-100]> <address>\n"
+            "Overview: Convert zPIV (zerocoins) into PIV. \n"
+            "amount: amount to spend\n"
+            "mintchange: if there is left over PIV (change), the wallet can convert it automatically back to zerocoins [true]\n"
+            "minimizechange: try to minimize the returning change  [false]\n"
             "security level: the amount of checkpoints to add to the accumulator. A checkpoint contains 10 blocks worth of zerocoinmints."
                     "The more checkpoints that are added, the more untraceable the transaction will be. Use [100] to add the maximum amount"
-                    "of checkpoints available. Tip: adding more checkpoints makes the minting process take longer."
+                    "of checkpoints available. Tip: adding more checkpoints makes the minting process take longer\n"
+            "address: Send straight to an address or leave the address blank and the wallet will send to a change address. If there is change then"
+                    "an address is required"
             + HelpRequiringPassphrase());
 
-    LogPrintf("***ZCPRINT RPC spendzerocoin\n");
     int64_t nTimeStart = GetTimeMillis();
+
     if (pwalletMain->IsLocked())
         throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
 
-    CAmount nAmount = AmountFromValue(params[0]);
+    CAmount nAmount = AmountFromValue(params[0]);   // Spending amount
+    bool fMintChange = params[1].get_bool();        // Mint change to zPIV
+    bool fMinimizeChange = params[2].get_bool();    // Minimize change
+    int nSecurityLevel = params[3].get_int();       // Security level
 
-    CBitcoinAddress address = CBitcoinAddress(params[1].get_str());
-    if(!address.IsValid())
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid PIVX address");
-
-    bool fMintChange = params[2].get_bool();
-
-    int nSecurityLevel = Params().Zerocoin_DefaultSpendSecurity();
-    if (params.size() == 4) {
-        nSecurityLevel = params[3].get_int();
+    CBitcoinAddress address = CBitcoinAddress(); // Optional sending address. Dummy initialization here.
+    if (params.size() == 5) {
+        // Destination address was supplied as params[4]. Optional parameters MUST be at the end
+        // to avoid type confusion from the JSON interpreter
+        address = CBitcoinAddress(params[4].get_str());
+        if(!address.IsValid())
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid PIVX address");
     }
 
     CWalletTx wtx;
     vector<CZerocoinMint> vMintsSelected;
     CZerocoinSpendReceipt receipt;
     bool fSuccess;
-    if(address.IsValid())
-        fSuccess = pwalletMain->SpendZerocoin(nAmount, nSecurityLevel, wtx, receipt, vMintsSelected, fMintChange, &address);
-    else
-        fSuccess = pwalletMain->SpendZerocoin(nAmount, nSecurityLevel, wtx, receipt, vMintsSelected, fMintChange);
+
+    if(params.size() == 5) // Spend to supplied destination address
+        fSuccess = pwalletMain->SpendZerocoin(nAmount, nSecurityLevel, wtx, receipt, vMintsSelected, fMintChange, fMinimizeChange, &address);
+    else                   // Spend to newly generated local address
+        fSuccess = pwalletMain->SpendZerocoin(nAmount, nSecurityLevel, wtx, receipt, vMintsSelected, fMintChange, fMinimizeChange);
 
     if (!fSuccess)
         throw JSONRPCError(RPC_WALLET_ERROR, receipt.GetStatusMessage());
