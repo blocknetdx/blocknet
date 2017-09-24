@@ -4184,7 +4184,7 @@ bool CWallet::CreateZerocoinSpendTransaction(CAmount nValue, int nSecurityLevel,
                     txNew.vout.push_back(txOutChange);
                 }
             }
-            LogPrintf("ZCPRINT %s after minting\n", __func__);
+
             //add output to pivx address to the transaction (the actual primary spend taking place)
             CTxOut txOutZerocoinSpend(nValue, scriptZerocoinSpend);
             txNew.vout.push_back(txOutZerocoinSpend);
