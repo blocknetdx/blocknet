@@ -586,11 +586,6 @@ void CoinControlDialog::updateLabels(WalletModel* model, QDialog* dialog)
         if (nPayAmount > 0) {
             nChange = nAmount - nPayFee - nPayAmount;
 
-            // DS Fee = overpay
-            if (coinControl->useObfuScation && nChange > 0) {
-                nPayFee += nChange;
-                nChange = 0;
-            }
             // Never create dust outputs; if we would, just add the dust to the fee.
             if (nChange > 0 && nChange < CENT) {
                 CTxOut txout(nChange, (CScript)vector<unsigned char>(24, 0));
