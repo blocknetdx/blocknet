@@ -78,7 +78,7 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet* 
         bool fFeeAssigned = false;
         for (const CTxOut txout : wtx.vout) {
             // change that was reminted as zerocoins
-            if (txout.IsZerocoinMint()) {
+            if (fSpendFromMe && txout.IsZerocoinMint()) {
                 TransactionRecord sub(hash, nTime);
                 sub.type = TransactionRecord::ZerocoinSpend_Change_zPiv;
                 sub.address = mapValue["zerocoinmint"];
@@ -97,7 +97,7 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet* 
             if (ExtractDestination(txout.scriptPubKey, address))
                 strAddress = CBitcoinAddress(address).ToString();
 
-            // a zerocoinspend that was sent an address owned by this wallet
+            // a zerocoinspend that was sent to an address held by this wallet
             isminetype mine = wallet->IsMine(txout);
             if (mine) {
                 TransactionRecord sub(hash, nTime);
