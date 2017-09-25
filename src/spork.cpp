@@ -179,14 +179,21 @@ bool CSporkManager::CheckSignature(CSporkMessage& spork)
 {
     //note: need to investigate why this is failing
     std::string strMessage = boost::lexical_cast<std::string>(spork.nSporkID) + boost::lexical_cast<std::string>(spork.nValue) + boost::lexical_cast<std::string>(spork.nTimeSigned);
-    CPubKey pubkey(ParseHex(Params().SporkKey()));
+    CPubKey pubkeynew(ParseHex(Params().SporkKey()));
 
     std::string errorMessage = "";
-    if (!obfuScationSigner.VerifyMessage(pubkey, spork.vchSig, strMessage, errorMessage)) {
-        return false;
+    if (GetAdjustedTime() < Params().StopDualSporkKeys()) {
+        CPubKey pubkey(ParseHex(Params().SporkKeyOld()));
+        if (obfuScationSigner.VerifyMessage(pubkey, spork.vchSig, strMessage, errorMessage) ||
+            obfuScationSigner.VerifyMessage(pubkeynew, spork.vchSig, strMessage, errorMessage)) {
+            return true;
+        }
+    }
+    else if (obfuScationSigner.VerifyMessage(pubkeynew, spork.vchSig, strMessage, errorMessage)) {
+        return true;
     }
 
-    return true;
+    return false;
 }
 
 bool CSporkManager::Sign(CSporkMessage& spork)
