@@ -203,8 +203,8 @@ void PrivacyDialog::on_pushButtonMintReset_clicked()
         return;
 
     // Confirmation popup
-    QString strWarning = "Starting ResetMintZerocoin: rescanning complete blockchain, this will need up to 30 minutes depending on your hardware.<br /><br />";
-    strWarning += "You won't be able to do anything else during that time!<br />";
+    QString strWarning = tr("Starting ResetMintZerocoin: rescanning the complete blockchain, this will need up to 30 minutes depending on your hardware.<br /><br />");
+    strWarning += tr("You won't be able to do anything else during that time!<br />");
     QMessageBox::StandardButton retval = QMessageBox::question(this, tr("Confirm Rescan"),
         strWarning,
         QMessageBox::Yes | QMessageBox::Cancel,
