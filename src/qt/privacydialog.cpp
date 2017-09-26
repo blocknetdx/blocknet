@@ -202,8 +202,24 @@ void PrivacyDialog::on_pushButtonMintReset_clicked()
     if (!walletModel || !walletModel->getOptionsModel())
         return;
 
-    ui->TEMintStatus->setPlainText(tr("Starting ResetMintZerocoin: rescanning complete blockchain, this will need several minutes depending on your hardware. \nPlease be patient..."));
+    // Confirmation popup
+    QString strWarning = "Starting ResetMintZerocoin: rescanning complete blockchain, this will need up to 30 minutes depending on your hardware.<br /><br />";
+    strWarning += "You won't be able to do anything else during that time!<br />";
+    QMessageBox::StandardButton retval = QMessageBox::question(this, tr("Confirm Rescan"),
+        strWarning,
+        QMessageBox::Yes | QMessageBox::Cancel,
+        QMessageBox::Cancel);
+
+    if (retval != QMessageBox::Yes) {
+        // Rescan canceled
+        ui->TEMintStatus->setPlainText(tr("ResetMintZerocoin: action canceled by user"));
+        ui->TEMintStatus->repaint ();
+        return;
+    }
+
+    ui->TEMintStatus->setPlainText(tr("Starting ResetMintZerocoin: rescanning complete blockchain, this will need up to 30 minutes depending on your hardware. \nPlease be patient..."));
     ui->TEMintStatus->repaint ();
+
     int64_t nTime = GetTimeMillis();
     string strResetMintResult = pwalletMain->ResetMintZerocoin();
     double fDuration = (double)(GetTimeMillis() - nTime)/1000.0;
