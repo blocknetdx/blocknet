@@ -1152,6 +1152,18 @@ std::list<CZerocoinMint> CWalletDB::ListMintedCoins(bool fUnusedOnly, bool fMatu
             //not mature
             if (mint.GetHeight() > chainActive.Height() - Params().Zerocoin_MintRequiredConfirmations())
                 continue;
+
+            // check to make sure there are at least 3 other mints added to the accumulators after this
+            CBlockIndex* pindex = chainActive[mint.GetHeight() + 1];
+            int nMintsAdded = 0;
+            while (pindex->nHeight < chainActive.Height() - 30) { // 30 just to make sure that its at least 2 checkpoints from the top block
+                nMintsAdded += count(pindex->vMintDenominationsInBlock.begin(), pindex->vMintDenominationsInBlock.end(), mint.GetDenomination());
+                if (nMintsAdded >= 3)
+                    break;
+                pindex = chainActive[pindex->nHeight + 1];
+            }
+            if (nMintsAdded < 3)
+                continue;
         }
         listPubCoin.push_back(mint);
     }
@@ -1167,7 +1179,7 @@ std::list<CZerocoinMint> CWalletDB::ListMintedCoins(bool fUnusedOnly, bool fMatu
     // archive mints
     for (CZerocoinMint mint : vArchive) {
         if (!this->ArchiveMintOrphan(mint))
-            LogPrintf("**failed to archive mint from %s\n", __func__, mint.GetTxHash().GetHex());
+            LogPrintf("%s failed to archive mint from %s\n", __func__, mint.GetTxHash().GetHex());
     }
 
     return listPubCoin;
