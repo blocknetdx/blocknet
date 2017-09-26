@@ -965,7 +965,7 @@ int64_t CWalletTx::GetTxTime() const
 int64_t CWalletTx::GetComputedTxTime() const
 {
     int64_t nTime = GetTxTime();
-    if (IsZerocoinSpend()) {
+    if (IsZerocoinSpend() || IsZerocoinMint()) {
         if (IsInMainChain())
             return mapBlockIndex.at(hashBlock)->GetBlockTime();
         else
