@@ -54,14 +54,14 @@ PrivacyDialog::PrivacyDialog(QWidget* parent) : QDialog(parent),
     ui->labelCoinControlAmount->addAction(clipboardAmountAction);
 
     // Denomination labels
-    ui->labelzDenom1Text->setText("Denominations with value <b>1</b>:");
-    ui->labelzDenom2Text->setText("Denominations with value <b>5</b>:");
-    ui->labelzDenom3Text->setText("Denominations with value <b>10</b>:");
-    ui->labelzDenom4Text->setText("Denominations with value <b>50</b>:");
-    ui->labelzDenom5Text->setText("Denominations with value <b>100</b>:");
-    ui->labelzDenom6Text->setText("Denominations with value <b>500</b>:");
-    ui->labelzDenom7Text->setText("Denominations with value <b>1000</b>:");
-    ui->labelzDenom8Text->setText("Denominations with value <b>5000</b>:");
+    ui->labelzDenom1Text->setText("Denom. with value <b>1</b>:");
+    ui->labelzDenom2Text->setText("Denom. with value <b>5</b>:");
+    ui->labelzDenom3Text->setText("Denom. with value <b>10</b>:");
+    ui->labelzDenom4Text->setText("Denom. with value <b>50</b>:");
+    ui->labelzDenom5Text->setText("Denom. with value <b>100</b>:");
+    ui->labelzDenom6Text->setText("Denom. with value <b>500</b>:");
+    ui->labelzDenom7Text->setText("Denom. with value <b>1000</b>:");
+    ui->labelzDenom8Text->setText("Denom. with value <b>5000</b>:");
 
     // PIVX settings
     QSettings settings;

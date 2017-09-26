@@ -926,8 +926,11 @@
               <layout class="QHBoxLayout" name="horizontalLayout_13">
                <item>
                 <widget class="QLabel" name="labelzDenom1Text">
-                 <property name="text">
+                 <property name="toolTip">
                   <string>Denominations with value 1:</string>
+                 </property>
+                 <property name="text">
+                  <string>Denom. with value 1:</string>
                  </property>
                  <property name="alignment">
                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -972,8 +975,11 @@
               <layout class="QHBoxLayout" name="horizontalLayout_14">
                <item>
                 <widget class="QLabel" name="labelzDenom2Text">
-                 <property name="text">
+                 <property name="toolTip">
                   <string>Denominations with value 5:</string>
+                 </property>
+                 <property name="text">
+                  <string>Denom. with value 5:</string>
                  </property>
                  <property name="alignment">
                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -1018,8 +1024,11 @@
               <layout class="QHBoxLayout" name="horizontalLayout_15">
                <item>
                 <widget class="QLabel" name="labelzDenom3Text">
-                 <property name="text">
+                 <property name="toolTip">
                   <string>Denominations with value 10:</string>
+                 </property>
+                 <property name="text">
+                  <string>Denom. with value 10:</string>
                  </property>
                  <property name="alignment">
                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -1064,8 +1073,11 @@
               <layout class="QHBoxLayout" name="horizontalLayout_16">
                <item>
                 <widget class="QLabel" name="labelzDenom4Text">
-                 <property name="text">
+                 <property name="toolTip">
                   <string>Denominations with value 50:</string>
+                 </property>
+                 <property name="text">
+                  <string>Denom. with value 50:</string>
                  </property>
                  <property name="alignment">
                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -1110,8 +1122,11 @@
               <layout class="QHBoxLayout" name="horizontalLayout_17">
                <item>
                 <widget class="QLabel" name="labelzDenom5Text">
-                 <property name="text">
+                 <property name="toolTip">
                   <string>Denominations with value 100:</string>
+                 </property>
+                 <property name="text">
+                  <string>Denom. with value 100:</string>
                  </property>
                  <property name="alignment">
                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -1156,8 +1171,11 @@
               <layout class="QHBoxLayout" name="horizontalLayout_18">
                <item>
                 <widget class="QLabel" name="labelzDenom6Text">
-                 <property name="text">
+                 <property name="toolTip">
                   <string>Denominations with value 500:</string>
+                 </property>
+                 <property name="text">
+                  <string>Denom. with value 500:</string>
                  </property>
                  <property name="alignment">
                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -1202,8 +1220,11 @@
               <layout class="QHBoxLayout" name="horizontalLayout_19">
                <item>
                 <widget class="QLabel" name="labelzDenom7Text">
-                 <property name="text">
+                 <property name="toolTip">
                   <string>Denominations with value 1000:</string>
+                 </property>
+                 <property name="text">
+                  <string>Denom. with value 1000:</string>
                  </property>
                  <property name="alignment">
                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -1248,8 +1269,11 @@
               <layout class="QHBoxLayout" name="horizontalLayout_20">
                <item>
                 <widget class="QLabel" name="labelzDenom8Text">
-                 <property name="text">
+                 <property name="toolTip">
                   <string>Denominations with value 5000:</string>
+                 </property>
+                 <property name="text">
+                  <string>Denom. with value 5000:</string>
                  </property>
                  <property name="alignment">
                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
