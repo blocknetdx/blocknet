@@ -1239,7 +1239,7 @@ bool AppInit2(boost::thread_group& threadGroup)
                 delete zerocoinDB;
 
                 zerocoinDB = new CZerocoinDB(0, false, false);
-                sporkDB = new CSporkDB(0, false, false);
+                pSporkDB.reset(new CSporkDB(0, false, false));
                 pblocktree = new CBlockTreeDB(nBlockTreeDBCache, false, fReindex);
                 pcoinsdbview = new CCoinsViewDB(nCoinDBCache, false, fReindex);
                 pcoinscatcher = new CCoinsViewErrorCatcher(pcoinsdbview);

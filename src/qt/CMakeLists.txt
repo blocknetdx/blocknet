@@ -184,7 +184,7 @@ add_dependencies(pivx-qt translations_target)
 #set_source_files_properties(pivx.cpp PROPERTIES CMAKE_CXX_FLAGS "-std=c++11")
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  TARGET_LINK_LIBRARIES(pivx-qt coin qt_stuff mac_stuff db_cxx db secp256k1 bitcoin_crypto zerocoin leveldb ${OPENSSL_LIBRARIES} ${Boost_LIBRARIES} ${ANL} ${PROTOBUF_LIBRARIES} qrencode pthread "-framework Cocoa")
+  TARGET_LINK_LIBRARIES(pivx-qt coin qt_stuff mac_stuff db_cxx db secp256k1 bitcoin_crypto zerocoin leveldb ${OPENSSL_LIBRARIES} ${Boost_LIBRARIES} ${ANL} ${PROTOBUF_LIBRARIES} qrencode miniupnpc pthread "-framework Cocoa")
 else()
   TARGET_LINK_LIBRARIES(pivx-qt coin qt_stuff db_cxx db secp256k1 bitcoin_crypto zerocoin leveldb ${OPENSSL_LIBRARIES} ${Boost_LIBRARIES} ${ANL} ${PROTOBUF_LIBRARIES} qrencode pthread )
 endif()

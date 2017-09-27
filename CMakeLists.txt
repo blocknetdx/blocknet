@@ -21,7 +21,7 @@ endif()
 
 project(pivx)
 
-set(OPENSSL_VER "1.0.2k")
+set(OPENSSL_VER "1.0.2l")
 set(BDB_VER "4.8.30")
 
 #---------------------------------------------------------------------------------------------------------
@@ -292,7 +292,7 @@ target_link_libraries(pivx-cli coin zerocoin leveldb ${OPENSSL_LIBRARIES} ${Boos
 ###target_link_libraries(pivx-tx coin secp256k1 bitcoin_crypto leveldb ${OPENSSL_LIBRARIES} ${Boost_LIBRARIES} ${ANL} pthread)
 
 IF (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-	target_link_libraries(pivxd coin db_cxx db secp256k1 gmp bitcoin_crypto zerocoin leveldb ${OPENSSL_LIBRARIES} ${Boost_LIBRARIES} ${ANL} pthread )
+	target_link_libraries(pivxd coin db_cxx db secp256k1 gmp bitcoin_crypto zerocoin leveldb ${OPENSSL_LIBRARIES} ${Boost_LIBRARIES} ${ANL} miniupnpc pthread )
 else()
 	target_link_libraries(pivxd coin db_cxx db secp256k1 bitcoin_crypto zerocoin leveldb ${OPENSSL_LIBRARIES} ${Boost_LIBRARIES} ${ANL} pthread)
 endif()
@@ -309,6 +309,3 @@ if ($ENV{COVERAGE})
 endif()
 
 add_subdirectory(src/test)
-  
-
-

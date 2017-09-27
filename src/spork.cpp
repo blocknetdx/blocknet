@@ -36,7 +36,7 @@ void LoadSporksFromDB()
 
         // attempt to read spork from sporkDB
         CSporkMessage spork;
-        if (!sporkDB->ReadSpork(i, spork)) {
+        if (!pSporkDB->ReadSpork(i, spork)) {
             LogPrintf("%s : no previous value for %s found in database\n", __func__, strSpork);
             continue;
         }
@@ -83,7 +83,7 @@ void ProcessSpork(CNode* pfrom, std::string& strCommand, CDataStream& vRecv)
         sporkManager.Relay(spork);
 
         // PIVX: add to spork database.
-        sporkDB->WriteSpork(spork.nSporkID, spork);
+        pSporkDB->WriteSpork(spork.nSporkID, spork);
     }
     if (strCommand == "getsporks") {
         std::map<int, CSporkMessage>::iterator it = mapSporksActive.begin();
