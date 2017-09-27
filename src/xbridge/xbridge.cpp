@@ -80,7 +80,7 @@ XBridge::XBridge()
                 XBridgeSessionPtr session;
                 if (wp.method == "ETHER")
                 {
-                    assert(!"not implemented");
+                    LOG() << "wp.method ETHER not implemented" << __FUNCTION__;
                     // session.reset(new XBridgeSessionEthereum(wp));
                 }
                 else if (wp.method == "BTC")
@@ -89,7 +89,7 @@ XBridge::XBridge()
                 }
                 else if (wp.method == "RPC")
                 {
-                    assert(!"not implemented");
+                    LOG() << "wp.method RPC not implemented" << __FUNCTION__;
                     // session.reset(new XBridgeSessionRpc(wp));
                 }
                 else

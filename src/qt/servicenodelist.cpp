@@ -42,11 +42,18 @@ ServicenodeList::ServicenodeList(QWidget* parent) : QWidget(parent),
 
     ui->tableWidgetMyServicenodes->setContextMenuPolicy(Qt::CustomContextMenu);
 
+    //hided start alias buttons until fix/testing
+    ui->startAllButton->setVisible(false);
+    ui->startButton->setVisible(false);
+    ui->startMissingButton->setVisible(false);
+
     QAction* startAliasAction = new QAction(tr("Start alias"), this);
     contextMenu = new QMenu();
     contextMenu->addAction(startAliasAction);
-    connect(ui->tableWidgetMyServicenodes, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
-    connect(startAliasAction, SIGNAL(triggered()), this, SLOT(on_startButton_clicked()));
+
+    //hided hided start alias context menu until fix/testing
+//    connect(ui->tableWidgetMyServicenodes, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
+//    connect(startAliasAction, SIGNAL(triggered()), this, SLOT(on_startButton_clicked()));
 
     timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(updateMyNodeList()));

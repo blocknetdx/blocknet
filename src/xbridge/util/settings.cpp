@@ -31,52 +31,19 @@ Settings::Settings()
 
 //******************************************************************************
 //******************************************************************************
-bool Settings::parseCmdLine(int argc, char * argv[])
+bool Settings::parseCmdLine(int, char * argv[])
 {
     m_appPath = std::string(argv[0]);
     std::replace(m_appPath.begin(), m_appPath.end(), '\\', '/');
     m_appPath = m_appPath.substr(0, m_appPath.rfind('/')+1);
 
-    boost::program_options::options_description description("allowed options");
-    description.add_options()
-//            ("dhtport",    boost::program_options::value<unsigned short>(), "dht listen port")
-//            ("bridgeport", boost::program_options::value<unsigned short>(), "xbridge listen port")
-//            ("peer",       boost::program_options::value<std::vector<std::string> >(), "connect to peer")
-            ("enable-exchange", "enable exchange service");
+    bool enableExchange = GetBoolArg("-enableexchange", false);
 
-    boost::program_options::variables_map options;
-    try
-    {
-        boost::program_options::store(boost::program_options::command_line_parser(argc, argv)
-                                      .options(description)
-                                      .style(boost::program_options::command_line_style::unix_style |
-                                             boost::program_options::command_line_style::allow_long_disguise)
-                                      .allow_unregistered()
-                                      .run(), options);
-    }
-    catch (const boost::program_options::error & e)
-    {
-        LOG() << "command line error: " << e.what();
-    }
-
-    catch (const std::exception & e)
-    {
-        LOG() << "command line error: " << e.what();
-        return false;
-    }
-
-    if (options.count("enable-exchange"))
+    if (enableExchange)
     {
         m_isExchangeEnabled = true;
+        LOG() << "exchange enabled by passing argument";
     }
-//    if (options.count("dhtport"))
-//    {
-//        m_dhtPort = options["dhtport"].as<unsigned short>();
-//    }
-//    if (options.count("peer"))
-//    {
-//        m_peers = options["peer"].as<std::vector<std::string> >();
-//    }
 
     return true;
 }

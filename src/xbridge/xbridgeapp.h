@@ -82,6 +82,7 @@ public:
     bool signalRpcStopActive() const;
 
     XBridgeSessionPtr sessionByCurrency(const std::string & currency) const;
+    std::vector<std::string> sessionsCurrencies() const;
 
     // store session
     void addSession(XBridgeSessionPtr session);
