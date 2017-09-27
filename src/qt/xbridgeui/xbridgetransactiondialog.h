@@ -43,7 +43,7 @@ signals:
 private:
     void setupUI();
 
-    void onWalletListReceived(const std::vector<std::pair<std::string, std::string> > & wallets);
+    void onWalletListReceived(const std::vector<string> & wallets);
 
 private slots:
     void onWalletListReceivedHandler(const QStringList & wallets);

@@ -51,7 +51,6 @@ public:
     bool init(int argc, char *argv[]);
     bool start();
 
-
     uint256 sendXBridgeTransaction(const std::string & from,
                                    const std::string & fromCurrency,
                                    const uint64_t & fromAmount,
@@ -72,14 +71,7 @@ public:
     bool sendRollbackTransaction(const uint256 & txid);
 
 public:
-    // const unsigned char * myid() const { return m_myid; }
-
-    // bool initDht();
-    // bool initRpc();
-
     bool stop();
-
-    bool signalRpcStopActive() const;
 
     XBridgeSessionPtr sessionByCurrency(const std::string & currency) const;
     std::vector<std::string> sessionsCurrencies() const;
@@ -88,25 +80,17 @@ public:
     void addSession(XBridgeSessionPtr session);
     // store session addresses in local table
     void storageStore(XBridgeSessionPtr session, const std::vector<unsigned char> & id);
-    // clear local table
-    void storageClean(XBridgeSessionPtr session);
 
     bool isLocalAddress(const std::vector<unsigned char> & id);
     bool isKnownMessage(const std::vector<unsigned char> & message);
     void addToKnown(const std::vector<unsigned char> & message);
-
-    void handleRpcRequest(rpc::AcceptedConnection * conn);
 
     XBridgeSessionPtr serviceSession();
 
     void storeAddressBookEntry(const std::string & currency,
                                const std::string & name,
                                const std::string & address);
-    void resendAddressBook();
-
     void getAddressBook();
-
-    void checkUnconfirmedTx();
 
 public:// slots:
     // send messave via xbridge
@@ -125,41 +109,8 @@ public:
     static void sleep(const unsigned int umilliseconds);
 
 private:
-    // void dhtThreadProc();
-    void bridgeThreadProc();
-    void rpcThreadProc();
-    // void rpcHandlerProc(rpc::AcceptedConnection * conn);
-
-private:
-    unsigned char     m_myid[20];
-
     boost::thread_group m_threads;
-    // std::thread       m_dhtThread;
-    std::atomic<bool> m_dhtStarted;
-    std::atomic<bool> m_dhtStop;
-    std::atomic<bool> m_rpcStop;
 
-    std::atomic<bool> m_signalGenerate;
-    std::atomic<bool> m_signalDump;
-    std::atomic<bool> m_signalSearch;
-    std::atomic<bool> m_signalSend;
-
-    // from, to, packet, resend_flag
-    typedef std::tuple<UcharVector, UcharVector, UcharVector, bool> MessagePair;
-
-    std::list<std::string> m_searchStrings;
-    std::list<MessagePair> m_messages;
-
-    const bool        m_ipv4;
-    const bool        m_ipv6;
-
-    sockaddr_in       m_sin;
-    sockaddr_in6      m_sin6;
-    unsigned short    m_dhtPort;
-
-    std::vector<sockaddr_storage> m_nodes;
-
-    // unsigned short    m_bridgePort;
     XBridgePtr        m_bridge;
 
     mutable boost::mutex m_sessionsLock;
@@ -172,7 +123,6 @@ private:
 
     // service session
     XBridgeSessionPtr m_serviceSession;
-
 
     boost::mutex m_messagesLock;
     typedef std::set<uint256> ProcessedMessages;

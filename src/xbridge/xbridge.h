@@ -29,7 +29,6 @@ public:
 public:
     XBridge();
 
-    void run();
     void stop();
 
 private:

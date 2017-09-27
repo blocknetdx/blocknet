@@ -6,6 +6,7 @@
 #include "servicenodeman.h"
 #include "protocol.h"
 #include "spork.h"
+#include "xbridge/xbridgeexchange.h"
 
 //
 // Bootup the Servicenode, look for a 5000 BlocknetDX input and register on the network
@@ -188,7 +189,10 @@ bool CActiveServicenode::SendServicenodePing(std::string& errorMessage)
         //mnodeman.mapSeenServicenodeBroadcast.lastPing is probably outdated, so we'll update it
         CServicenodeBroadcast mnb(*pmn);
         uint256 hash = mnb.GetHash();
-        if (mnodeman.mapSeenServicenodeBroadcast.count(hash)) mnodeman.mapSeenServicenodeBroadcast[hash].lastPing = mnp;
+        if (mnodeman.mapSeenServicenodeBroadcast.count(hash))
+        {
+            mnodeman.mapSeenServicenodeBroadcast[hash].lastPing = mnp;
+        }
 
         mnp.Relay();
 
@@ -291,7 +295,13 @@ bool CActiveServicenode::Register(CTxIn vin, CService service, CKey keyCollatera
     mnodeman.mapSeenServicenodePing.insert(make_pair(mnp.GetHash(), mnp));
 
     LogPrintf("CActiveServicenode::Register() - Adding to Servicenode list\n    service: %s\n    vin: %s\n", service.ToString(), vin.ToString());
-    mnb = CServicenodeBroadcast(service, vin, pubKeyCollateralAddress, pubKeyServicenode, PROTOCOL_VERSION);
+
+    XBridgeExchange & e = XBridgeExchange::instance();
+
+    mnb = CServicenodeBroadcast(service, vin,
+                                pubKeyCollateralAddress, pubKeyServicenode,
+                                PROTOCOL_VERSION,
+                                e.isEnabled() ? e.connectedWallets() : std::vector<std::string>());
     mnb.lastPing = mnp;
     if (!mnb.Sign(keyCollateralAddress)) {
         errorMessage = strprintf("Failed to sign broadcast, vin: %s", vin.ToString());
@@ -485,6 +495,24 @@ bool CActiveServicenode::EnableHotColdServiceNode(CTxIn& newVin, CService& newSe
     //The values below are needed for signing mnping messages going forward
     vin = newVin;
     service = newService;
+
+    // update xbridge info for my servicenode
+    CServicenode * mn = mnodeman.Find(vin);
+    if (mn)
+    {
+        XBridgeExchange & e = XBridgeExchange::instance();
+        if (e.isEnabled())
+        {
+            mn->connectedWallets = e.connectedWallets();
+
+            CServicenodeBroadcast mnb(*mn);
+            uint256 hash = mnb.GetHash();
+            if (mnodeman.mapSeenServicenodeBroadcast.count(hash))
+            {
+                mnodeman.mapSeenServicenodeBroadcast[hash].connectedWallets = mn->connectedWallets;
+            }
+        }
+    }
 
     LogPrintf("CActiveServicenode::EnableHotColdServiceNode() - Enabled! You may shut down the cold daemon.\n");
 

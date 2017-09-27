@@ -7,6 +7,8 @@
 #include "xbridge/xbridgeexchange.h"
 #include "xbridge/xuiconnector.h"
 #include "xbridge/util/logger.h"
+#include "wallet.h"
+#include "init.h"
 
 #include <QTableView>
 #include <QHeaderView>
@@ -185,17 +187,24 @@ QMenu * XBridgeTransactionsView::setupContextMenu(QModelIndex & index)
     }
     else
     {
-        QAction * cancelTransaction = new QAction(tr("&Cancel transaction"), this);
-        contextMenu->addAction(cancelTransaction);
+        XBridgeTransactionDescr d = m_txModel.item(m_contextMenuIndex.row());
 
-        connect(cancelTransaction,   SIGNAL(triggered()),
-                this,                SLOT(onCancelTransaction()));
+        if (d.state < XBridgeTransactionDescr::trCreated)
+        {
+            QAction * cancelTransaction = new QAction(tr("&Cancel transaction"), this);
+            contextMenu->addAction(cancelTransaction);
 
-        QAction * rollbackTransaction = new QAction(tr("&Rollback transaction"), this);
-        contextMenu->addAction(rollbackTransaction);
+            connect(cancelTransaction,   SIGNAL(triggered()),
+                    this,                SLOT(onCancelTransaction()));
+        }
+        else
+        {
+            QAction * rollbackTransaction = new QAction(tr("&Rollback transaction"), this);
+            contextMenu->addAction(rollbackTransaction);
 
-        connect(rollbackTransaction, SIGNAL(triggered()),
-                this,                SLOT(onRollbackTransaction()));
+            connect(rollbackTransaction, SIGNAL(triggered()),
+                    this,                SLOT(onRollbackTransaction()));
+        }
     }
 
     return contextMenu;
@@ -205,6 +214,15 @@ QMenu * XBridgeTransactionsView::setupContextMenu(QModelIndex & index)
 //******************************************************************************
 void XBridgeTransactionsView::onNewTransaction()
 {
+    if (pwalletMain->IsLocked())
+    {
+        QMessageBox::warning(this,
+                             trUtf8("Create transaction"),
+                             trUtf8("Please, unlock wallet first"),
+                             QMessageBox::Ok);
+        return;
+    }
+
     m_dlg.setPendingId(uint256(), std::vector<unsigned char>());
     m_dlg.show();
 }
@@ -281,11 +299,11 @@ void XBridgeTransactionsView::onRollbackTransaction()
         return;
     }
 
-    if (!m_txModel.cancelTransaction(m_txModel.item(m_contextMenuIndex.row()).id))
+    if (!m_txModel.rollbackTransaction(m_txModel.item(m_contextMenuIndex.row()).id))
     {
         QMessageBox::warning(this,
                              trUtf8("Cancel transaction"),
-                             trUtf8("Error send cancel request"));
+                             trUtf8("Error send rollback request"));
     }
 }
 

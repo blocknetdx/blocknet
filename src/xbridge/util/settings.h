@@ -33,8 +33,6 @@ public:
     bool isExchangeEnabled() const { return m_isExchangeEnabled; }
     std::string appPath() const    { return m_appPath; }
 
-    unsigned short dhtPort() const    { return m_dhtPort; }
-
     std::string logPath() const;
 
     std::vector<std::string> peers() const;
@@ -104,8 +102,6 @@ private:
     std::string                 m_appPath;
     std::string                 m_fileName;
     boost::property_tree::ptree m_pt;
-
-    unsigned short              m_dhtPort;
 
     std::vector<std::string>    m_peers;
 

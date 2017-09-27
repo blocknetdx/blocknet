@@ -38,6 +38,7 @@ public:
     bool isStarted();
 
     bool haveConnectedWallet(const std::string & walletName);
+    std::vector<std::string> connectedWallets() const;
 
     // std::vector<unsigned char> walletAddress(const std::string & walletName);
 
@@ -85,8 +86,6 @@ public:
     std::list<XBridgeTransactionPtr> finishedTransactions() const;
     std::list<XBridgeTransactionPtr> transactionsHistory() const;
     void addToTransactionsHistory(const uint256 & id);
-
-    std::vector<StringPair> listOfWallets() const;
 
 private:
     std::list<XBridgeTransactionPtr> transactions(bool onlyFinished) const;

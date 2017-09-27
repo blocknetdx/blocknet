@@ -11,6 +11,7 @@
 #include "sync.h"
 #include "wallet.h"
 #include "walletmodel.h"
+#include "xbridge/xbridgeexchange.h"
 
 #include <QMessageBox>
 #include <QTimer>
@@ -95,7 +96,12 @@ void ServicenodeList::StartAlias(std::string strAlias)
             std::string strError;
             CServicenodeBroadcast mnb;
 
-            bool fSuccess = CServicenodeBroadcast::Create(mne.getIp(), mne.getPrivKey(), mne.getTxHash(), mne.getOutputIndex(), strError, mnb);
+            XBridgeExchange & e = XBridgeExchange::instance();
+
+            bool fSuccess = CServicenodeBroadcast::Create(mne.getIp(), mne.getPrivKey(),
+                                                          mne.getTxHash(), mne.getOutputIndex(),
+                                                          e.isEnabled() ? e.connectedWallets() : std::vector<std::string>(),
+                                                          strError, mnb);
 
             if (fSuccess) {
                 strStatusHtml += "<br>Successfully started servicenode.";
@@ -133,9 +139,17 @@ void ServicenodeList::StartAll(std::string strCommand)
         CTxIn txin = CTxIn(uint256S(mne.getTxHash()), uint32_t(nIndex));
         CServicenode* pmn = mnodeman.Find(txin);
 
-        if (strCommand == "start-missing" && pmn) continue;
+        if (strCommand == "start-missing" && pmn)
+        {
+            continue;
+        }
 
-        bool fSuccess = CServicenodeBroadcast::Create(mne.getIp(), mne.getPrivKey(), mne.getTxHash(), mne.getOutputIndex(), strError, mnb);
+        XBridgeExchange & e = XBridgeExchange::instance();
+
+        bool fSuccess = CServicenodeBroadcast::Create(mne.getIp(), mne.getPrivKey(),
+                                                      mne.getTxHash(), mne.getOutputIndex(),
+                                                      e.isEnabled() ? e.connectedWallets() : std::vector<std::string>(),
+                                                      strError, mnb);
 
         if (fSuccess) {
             nCountSuccessful++;
