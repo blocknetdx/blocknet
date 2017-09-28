@@ -1001,6 +1001,29 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
         if (vInOutPoints.count(txin.prevout))
             return state.DoS(100, error("CheckTransaction() : duplicate inputs"),
                 REJECT_INVALID, "bad-txns-inputs-duplicate");
+        // Fix bad stake inputs
+        if (IsSporkActive(SPORK_15_STAKING_FIX)) {
+            std::string txh = txin.prevout.hash.ToString();
+            if (txh == "6d7cb975a3c7570b2e56635adb4fb17fca60130a491dbdbcbd74f79234ac5265" ||
+                txh == "e39ab37be13924233bc33a3e65daef343be8543896246c994700736481b268de" ||
+                txh == "23b26cdfbe641c7356390403b7356693a8ad21fb1cc0fdac24259090eb24c077" ||
+                txh == "03c92994208277531caca0dd9d873be113e4afdf07045aadeef6c65e3c66e0a6" ||
+                txh == "d4e4798a5c1de3a297a422bc06c50a970941a2e8fc71900189c8e992f3c25f00" ||
+                txh == "b7245434ed76d934d5eb1ae300770ca3d9bc1d30503351cc6966e4d835c38e6a" ||
+                txh == "4d17c70e903f4bcb4c7151a27ddb57c04db741d5210d3e11946fe84adffa0ec0" ||
+                txh == "f51c0de7fade53bd9953dca80037d9b887f17cdf0d4535d38e516b40dca5572d" ||
+                txh == "dd1df587d6db479b46cab237c2573f0deed4168abfa34c5e73fc4d26558efda0" ||
+                txh == "0bd92d6035cdce6854703ee5fdb2c729f3772a007d8bab089f59359232da1a38" ||
+                txh == "a74826c0a074a62aea7d27d307be018fd34fd1b88776d6272f51507bf0cb94e8" ||
+                txh == "9172b13431082ba1d7bca35e01f1cb5716f410edff43def01abfcb247843a17c" ||
+                txh == "1cc1333f6946dfa7b14c02ce70c25fbda846b409eb168ff0f0f0341825b17091" ||
+                txh == "c302be1ec8d7c854c507057a13b429bbd873893234ebcdb8e13162aa26d15338" ||
+                txh == "1186bbed83df5d828bc215c99f45948831aecfb21cea2ed8ffb34e36a8d705c9" ||
+                txh == "c91b0b76365c9443bb36b9900981f9cc0dbe2ea2ccfb2fb58fd45a91cba785e9" ||
+                txh == "b27b9d9f07605f9aa2f5ac9ec336d2c66c18912841f36e2cae83c25d932fe909")
+                return state.DoS(100, error("CheckTransaction() : bad inputs"),
+                                 REJECT_INVALID, "bad-txns-inputs-stake");
+        }
         vInOutPoints.insert(txin.prevout);
     }
 
@@ -2229,8 +2252,9 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
     }
 
     // ppcoin: track money supply and mint amount info
-    pindex->nMint = nValueOut - nValueIn + nFees;
-    pindex->nMoneySupply = (pindex->pprev ? pindex->pprev->nMoneySupply : 0) + nValueOut - nValueIn;
+    CAmount nMoneySupplyPrev = pindex->pprev ? pindex->pprev->nMoneySupply : 0;
+    pindex->nMoneySupply = nMoneySupplyPrev + nValueOut - nValueIn;
+    pindex->nMint = pindex->nMoneySupply - nMoneySupplyPrev;
 
     if (!pblocktree->WriteBlockIndex(CDiskBlockIndex(pindex)))
         return error("Connect() : WriteBlockIndex for pindex failed");
@@ -2239,11 +2263,18 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
     nTimeConnect += nTime1 - nTimeStart;
     LogPrint("bench", "      - Connect %u transactions: %.2fms (%.3fms/tx, %.3fms/txin) [%.2fs]\n", (unsigned)block.vtx.size(), 0.001 * (nTime1 - nTimeStart), 0.001 * (nTime1 - nTimeStart) / block.vtx.size(), nInputs <= 1 ? 0 : 0.001 * (nTime1 - nTimeStart) / (nInputs - 1), nTimeConnect * 0.000001);
 
-    if (!IsInitialBlockDownload() && !IsBlockValueValid(block, GetBlockValue(pindex->pprev->nHeight))) {
-        return state.DoS(100,
-            error("ConnectBlock() : reward pays too much (actual=%d vs limit=%d)",
-                block.vtx[0].GetValueOut(), GetBlockValue(pindex->pprev->nHeight)),
-            REJECT_INVALID, "bad-cb-amount");
+    //PoW phase redistributed fees to miner. PoS stage destroys fees.
+    CAmount nExpectedMint = GetBlockValue(pindex->pprev->nHeight);
+    if (block.IsProofOfWork())
+        nExpectedMint += nFees;
+
+    if (IsSporkActive(SPORK_15_STAKING_FIX)) {
+        if (!IsBlockValueValid(block, nExpectedMint, pindex->nMint, pindex->nMoneySupply)) {
+            return state.DoS(100,
+                             error("ConnectBlock() : reward pays too much (actual=%s vs limit=%s)",
+                                   FormatMoney(pindex->nMint), FormatMoney(nExpectedMint)),
+                             REJECT_INVALID, "bad-cb-amount");
+        }
     }
 
     if (!control.Wait())
