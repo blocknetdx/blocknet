@@ -1079,7 +1079,7 @@ bool CWalletDB::UnarchiveZerocoin(const CZerocoinMint& mint)
     return WriteZerocoinMint(mint);
 }
 
-std::list<CZerocoinMint> CWalletDB::ListMintedCoins(bool fUnusedOnly, bool fMaturedOnly)
+std::list<CZerocoinMint> CWalletDB::ListMintedCoins(bool fUnusedOnly, bool fMaturedOnly, bool fUpdateStatus)
 {
     std::list<CZerocoinMint> listPubCoin;
     Dbc* pcursor = GetCursor();
@@ -1129,7 +1129,7 @@ std::list<CZerocoinMint> CWalletDB::ListMintedCoins(bool fUnusedOnly, bool fMatu
             }
         }
 
-        if (fMaturedOnly) {
+        if (fMaturedOnly || fUpdateStatus) {
             //if there is not a record of the block height, then look it up and assign it
             if (!mint.GetHeight()) {
                 CTransaction tx;
@@ -1140,32 +1140,42 @@ std::list<CZerocoinMint> CWalletDB::ListMintedCoins(bool fUnusedOnly, bool fMatu
                     continue;
                 }
 
-                //set the updated block height
-                try {
-                    mint.SetHeight(mapBlockIndex.at(hashBlock)->nHeight);
+                //if not in the block index, most likely is unconfirmed tx
+                if (mapBlockIndex.count(hashBlock)) {
+                    mint.SetHeight(mapBlockIndex[hashBlock]->nHeight);
                     vOverWrite.emplace_back(mint);
-                } catch (...) {
+                } else if (fMaturedOnly){
                     continue;
                 }
             }
 
             //not mature
-            if (mint.GetHeight() > chainActive.Height() - Params().Zerocoin_MintRequiredConfirmations())
+            if (mint.GetHeight() > chainActive.Height() - Params().Zerocoin_MintRequiredConfirmations()) {
+                if (!fMaturedOnly)
+                    listPubCoin.emplace_back(mint);
                 continue;
-
-            // check to make sure there are at least 3 other mints added to the accumulators after this
-            CBlockIndex* pindex = chainActive[mint.GetHeight() + 1];
-            int nMintsAdded = 0;
-            while (pindex->nHeight < chainActive.Height() - 30) { // 30 just to make sure that its at least 2 checkpoints from the top block
-                nMintsAdded += count(pindex->vMintDenominationsInBlock.begin(), pindex->vMintDenominationsInBlock.end(), mint.GetDenomination());
-                if (nMintsAdded >= 3)
-                    break;
-                pindex = chainActive[pindex->nHeight + 1];
             }
-            if (nMintsAdded < 3)
-                continue;
+
+            //if only requesting an update (fUpdateStatus) then skip the rest and add to list
+            if (fMaturedOnly) {
+                // check to make sure there are at least 3 other mints added to the accumulators after this
+                if (chainActive.Height() < mint.GetHeight() + 1)
+                    continue;
+
+                CBlockIndex *pindex = chainActive[mint.GetHeight() + 1];
+                int nMintsAdded = 0;
+                while(pindex->nHeight < chainActive.Height() - 30) { // 30 just to make sure that its at least 2 checkpoints from the top block
+                    nMintsAdded += count(pindex->vMintDenominationsInBlock.begin(), pindex->vMintDenominationsInBlock.end(), mint.GetDenomination());
+                    if(nMintsAdded >= 3)
+                        break;
+                    pindex = chainActive[pindex->nHeight + 1];
+                }
+
+                if(nMintsAdded < 3)
+                    continue;
+            }
         }
-        listPubCoin.push_back(mint);
+        listPubCoin.emplace_back(mint);
     }
 
     pcursor->close();
@@ -1188,7 +1198,7 @@ std::list<CZerocoinMint> CWalletDB::ListMintedCoins(bool fUnusedOnly, bool fMatu
 std::list<CBigNum> CWalletDB::ListMintedCoinsSerial()
 {
     std::list<CBigNum> listPubCoin;
-    std::list<CZerocoinMint> listCoins = ListMintedCoins();
+    std::list<CZerocoinMint> listCoins = ListMintedCoins(true, false, false);
     
     for ( auto& coin : listCoins) {
         listPubCoin.push_back(coin.GetSerialNumber());

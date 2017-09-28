@@ -149,7 +149,7 @@ public:
     bool ReadZerocoinMint(const CBigNum &bnSerial, CZerocoinMint& zerocoinMint);
     bool ArchiveMintOrphan(const CZerocoinMint& zerocoinMint);
     bool UnarchiveZerocoin(const CZerocoinMint& mint);
-    std::list<CZerocoinMint> ListMintedCoins(bool fUnusedOnly = false, bool fMaturedOnly = false);
+    std::list<CZerocoinMint> ListMintedCoins(bool fUnusedOnly, bool fMaturedOnly, bool fUpdateStatus);
     std::list<CZerocoinSpend> ListSpentCoins();
     std::list<CBigNum> ListMintedCoinsSerial();
     std::list<CBigNum> ListSpentCoinsSerial();

@@ -667,6 +667,14 @@ void WalletModel::listLockedCoins(std::vector<COutPoint>& vOutpts)
     wallet->ListLockedCoins(vOutpts);
 }
 
+
+void WalletModel::listZerocoinMints(std::list<CZerocoinMint>& listMints, bool fUnusedOnly, bool fMaturedOnly, bool fUpdateStatus)
+{
+    listMints.clear();
+    CWalletDB walletdb(wallet->strWalletFile);
+    listMints = walletdb.ListMintedCoins(fUnusedOnly, fMaturedOnly, fUpdateStatus);
+}
+
 void WalletModel::loadReceiveRequests(std::vector<std::string>& vReceiveRequests)
 {
     LOCK(wallet->cs_wallet);

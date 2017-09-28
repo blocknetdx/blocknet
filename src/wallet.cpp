@@ -1265,7 +1265,7 @@ CAmount CWallet::GetZerocoinBalance() const
     {
         LOCK2(cs_main, cs_wallet);
         // Get Unused coins
-        list<CZerocoinMint> listPubCoin = CWalletDB(strWalletFile).ListMintedCoins(true,true);
+        list<CZerocoinMint> listPubCoin = CWalletDB(strWalletFile).ListMintedCoins(true, true, true);
         for (auto& mint : listPubCoin) {
             libzerocoin::CoinDenomination denom = mint.GetDenomination();
             nTotal += libzerocoin::ZerocoinDenominationToAmount(denom);
@@ -1308,7 +1308,7 @@ std::map<libzerocoin::CoinDenomination, CAmount> CWallet::GetMyZerocoinDistribut
         spread.insert(std::pair<libzerocoin::CoinDenomination, CAmount>(denom, 0));
     {
         LOCK2(cs_main, cs_wallet);
-        list<CZerocoinMint> listPubCoin = CWalletDB(strWalletFile).ListMintedCoins(true, true); // Unused coins
+        list<CZerocoinMint> listPubCoin = CWalletDB(strWalletFile).ListMintedCoins(true, true, true);
         for (auto& mint : listPubCoin)
             spread.at(mint.GetDenomination())++;
     }
@@ -4071,30 +4071,38 @@ bool CWallet::CreateZerocoinSpendTransaction(CAmount nValue, int nSecurityLevel,
         return false;
     }
 
-    // Get a list of mints held by the wallet that are available to spend
-    CWalletDB walletdb(pwalletMain->strWalletFile);
-    list<CZerocoinMint> listMints = walletdb.ListMintedCoins(true, true);
-    if (listMints.empty()) {
-        receipt.SetStatus("failed to find Zerocoins in in wallet.dat", nStatus);
-        return false;
-    }
-
     // Create transaction
     nStatus = ZPIV_TRX_CREATE;
 
-    // If the input value is not an int, then we want the selection algorithm to round up to the next highest int
-    double dValue = static_cast<double>(nValue) / static_cast<double>(COIN);
-    bool fWholeNumber = floor(dValue) == dValue;
-    CAmount nValueToSelect = nValue;
-    if (!fWholeNumber)
-        nValueToSelect = static_cast<CAmount>(ceil(dValue) * COIN);
-
-    // Select the zPiv mints to use in this spend
-    const int nMaxSpends = Params().Zerocoin_MaxSpendsPerTransaction();
+    // If not already given pre-selected mints, then select mints from the wallet
+    CWalletDB walletdb(pwalletMain->strWalletFile);
+    list<CZerocoinMint> listMints;
     CAmount nValueSelected = 0;
-    std::map<libzerocoin::CoinDenomination, CAmount> DenomMap = GetMyZerocoinDistribution();
-    int nCoinsReturned; // Number of coins returned in change from function below (for debug)
-    vSelectedMints = SelectMintsFromList(nValueToSelect, nValueSelected, nMaxSpends, fMinimizeChange, nCoinsReturned, listMints, DenomMap);
+    if (vSelectedMints.empty()) {
+        listMints = walletdb.ListMintedCoins(true, true, true); // need to find mints to spend
+        if(listMints.empty()) {
+            receipt.SetStatus("failed to find Zerocoins in in wallet.dat", nStatus);
+            return false;
+        }
+
+        // If the input value is not an int, then we want the selection algorithm to round up to the next highest int
+        double dValue = static_cast<double>(nValue) / static_cast<double>(COIN);
+        bool fWholeNumber = floor(dValue) == dValue;
+        CAmount nValueToSelect = nValue;
+        if(!fWholeNumber)
+            nValueToSelect = static_cast<CAmount>(ceil(dValue) * COIN);
+
+        // Select the zPiv mints to use in this spend
+        const int nMaxSpends = Params().Zerocoin_MaxSpendsPerTransaction();
+        std::map<libzerocoin::CoinDenomination, CAmount> DenomMap = GetMyZerocoinDistribution();
+        int nCoinsReturned; // Number of coins returned in change from function below (for debug)
+        vSelectedMints = SelectMintsFromList(nValueToSelect, nValueSelected, nMaxSpends, fMinimizeChange,
+                                             nCoinsReturned, listMints, DenomMap);
+    } else {
+        for (const CZerocoinMint mint : vSelectedMints)
+            nValueSelected += ZerocoinDenominationToAmount(mint.GetDenomination());
+    }
+
     // for Debug
     listSpends(vSelectedMints);
 
@@ -4102,7 +4110,11 @@ bool CWallet::CreateZerocoinSpendTransaction(CAmount nValue, int nSecurityLevel,
     for (CZerocoinMint mint : vSelectedMints) {
         // see if this serial has already been spent
         if (IsSerialKnown(mint.GetSerialNumber())) {
-            receipt.SetStatus("trying to spend an already spent serial #", nStatus);
+            receipt.SetStatus("trying to spend an already spent serial #, try again.", nStatus);
+
+            mint.SetUsed(true);
+            walletdb.WriteZerocoinMint(mint);
+
             return false;
         }
 
@@ -4132,7 +4144,7 @@ bool CWallet::CreateZerocoinSpendTransaction(CAmount nValue, int nSecurityLevel,
         return false;
     }
 
-    if ((static_cast<int>(vSelectedMints.size()) > nMaxSpends)) {
+    if ((static_cast<int>(vSelectedMints.size()) > Params().Zerocoin_MaxSpendsPerTransaction())) {
         receipt.SetStatus("Failed to find coin set amongst held coins with less than maxNumber of Spends", nStatus);
         return false;
     }
@@ -4231,7 +4243,7 @@ string CWallet::ResetMintZerocoin()
     long deletions = 0;
     CWalletDB walletdb(pwalletMain->strWalletFile);
 
-    list<CZerocoinMint> listMints = walletdb.ListMintedCoins();
+    list<CZerocoinMint> listMints = walletdb.ListMintedCoins(false, false, true);
     vector<CZerocoinMint> vMintsToFind{ std::make_move_iterator(std::begin(listMints)), std::make_move_iterator(std::end(listMints)) };
     vector<CZerocoinMint> vMintsMissing;
     vector<CZerocoinMint> vMintsToUpdate;
@@ -4260,7 +4272,7 @@ string CWallet::ResetSpentZerocoin()
     long removed = 0;
     CWalletDB walletdb(pwalletMain->strWalletFile);
 
-    list<CZerocoinMint> listMints = walletdb.ListMintedCoins();
+    list<CZerocoinMint> listMints = walletdb.ListMintedCoins(false, false, true);
     list<CZerocoinSpend> listSpends = walletdb.ListSpentCoins();
     list<CZerocoinSpend> listUnconfirmedSpends;
 

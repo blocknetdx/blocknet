@@ -14,6 +14,7 @@
 #include "sendcoinsentry.h"
 #include "walletmodel.h"
 #include "coincontrol.h"
+#include "zpivcontroldialog.h"
 
 #include <QClipboard>
 #include <QSettings>
@@ -88,7 +89,6 @@ PrivacyDialog::PrivacyDialog(QWidget* parent) : QDialog(parent),
     // Hide those placeholder elements needed for CoinControl interaction
     ui->WarningLabel->hide();    // Explanatory text visible in QT-Creator
     ui->dummyHideWidget->hide(); // Dummy widget with elements to hide
-
 }
 
 PrivacyDialog::~PrivacyDialog()
@@ -267,6 +267,19 @@ void PrivacyDialog::on_pushButtonSpendzPIV_clicked()
     sendzPIV();
 }
 
+void PrivacyDialog::on_pushButtonZPivControl_clicked()
+{
+    ZPivControlDialog* zPivControl = new ZPivControlDialog(this);
+    zPivControl->setModel(walletModel);
+    zPivControl->exec();
+}
+
+void PrivacyDialog::setZPivControlLabels(int64_t nAmount, int nQuantity)
+{
+    ui->labelzPivSelected_int->setText(QString::number(nAmount));
+    ui->labelQuantitySelected_int->setText(QString::number(nQuantity));
+}
+
 static inline int64_t roundint64(double d)
 {
     return (int64_t)(d > 0 ? d + 0.5 : d - 0.5);
@@ -361,19 +374,21 @@ void PrivacyDialog::sendzPIV()
         // Sending canceled
         return;
     }
-
-    // Attempt to spend the zPiv
-    CWalletTx wtxNew;
-    vector<CZerocoinMint> vMintsSelected;
     
     int64_t nTime = GetTimeMillis();
     ui->TEMintStatus->setPlainText(tr("Spending Zerocoin.\nComputationally expensive, might need several minutes depending on the selected Security Level and your hardware. \nPlease be patient..."));
     ui->TEMintStatus->repaint();
 
+    // use mints from zPiv selector if applicable
+    vector<CZerocoinMint> vMintsSelected;
+    if (!ZPivControlDialog::listSelectedMints.empty()) {
+        vMintsSelected = ZPivControlDialog::GetSelectedMints();
+    }
+
     // Spend zPIV
-    bool fSuccess;
+    CWalletTx wtxNew;
     CZerocoinSpendReceipt receipt;
-    fSuccess = pwalletMain->SpendZerocoin(nAmount, nSecurityLevel, wtxNew, receipt, vMintsSelected, fMintChange, fMinimizeChange, &address);
+    bool fSuccess = pwalletMain->SpendZerocoin(nAmount, nSecurityLevel, wtxNew, receipt, vMintsSelected, fMintChange, fMinimizeChange, &address);
 
     // Display errors during spend
     if (!fSuccess) {
@@ -382,6 +397,9 @@ void PrivacyDialog::sendzPIV()
         ui->TEMintStatus->repaint();
         return;
     }
+
+    // Clear zpiv selector in case it was used
+    ZPivControlDialog::listSelectedMints.clear();
 
     // Some statistics for entertainment
     QString strStats = "";
@@ -496,7 +514,7 @@ void PrivacyDialog::setBalance(const CAmount& balance,         const CAmount& un
     currentWatchImmatureBalance = watchImmatureBalance;
 
     CWalletDB walletdb(pwalletMain->strWalletFile);
-    list<CZerocoinMint> listMints = walletdb.ListMintedCoins(true, false);
+    list<CZerocoinMint> listMints = walletdb.ListMintedCoins(true, false, true);
  
     std::map<libzerocoin::CoinDenomination, CAmount> mapDenomBalances;
     std::map<libzerocoin::CoinDenomination, int> mapUnconfirmed;

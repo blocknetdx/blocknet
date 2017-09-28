@@ -2352,7 +2352,7 @@ Value listzerocoinamounts(const Array& params, bool fHelp)
         throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
 
     CWalletDB walletdb(pwalletMain->strWalletFile);
-    list<CZerocoinMint> listPubCoin = walletdb.ListMintedCoins(true,true);
+    list<CZerocoinMint> listPubCoin = walletdb.ListMintedCoins(true, true, true);
  
     std::map<libzerocoin::CoinDenomination, CAmount> spread;
     for (const auto& denom : libzerocoin::zerocoinDenomList)
@@ -2529,7 +2529,7 @@ Value resetmintzerocoin(const Array& params, bool fHelp)
             + HelpRequiringPassphrase());
 
     CWalletDB walletdb(pwalletMain->strWalletFile);
-    list<CZerocoinMint> listMints = walletdb.ListMintedCoins();
+    list<CZerocoinMint> listMints = walletdb.ListMintedCoins(false, false, true);
     vector<CZerocoinMint> vMintsToFind{ std::make_move_iterator(std::begin(listMints)), std::make_move_iterator(std::end(listMints)) };
     vector<CZerocoinMint> vMintsMissing;
     vector<CZerocoinMint> vMintsToUpdate;
@@ -2566,7 +2566,7 @@ Value resetspentzerocoin(const Array& params, bool fHelp)
             + HelpRequiringPassphrase());
 
     CWalletDB walletdb(pwalletMain->strWalletFile);
-    list<CZerocoinMint> listMints = walletdb.ListMintedCoins();
+    list<CZerocoinMint> listMints = walletdb.ListMintedCoins(false, false, true);
     list<CZerocoinSpend> listSpends = walletdb.ListSpentCoins();
     list<CZerocoinSpend> listUnconfirmedSpends;
 
@@ -2669,7 +2669,7 @@ Value exportzerocoins(const Array& params, bool fHelp)
     libzerocoin::CoinDenomination denomination = libzerocoin::ZQ_ERROR;
     if (params.size() == 2)
         denomination = libzerocoin::IntToZerocoinDenomination(params[1].get_int());
-    list<CZerocoinMint> listMints = walletdb.ListMintedCoins(!fIncludeSpent, false);
+    list<CZerocoinMint> listMints = walletdb.ListMintedCoins(!fIncludeSpent, false, false);
 
     Array jsonList;
     for (const CZerocoinMint mint : listMints) {
