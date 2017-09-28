@@ -1004,7 +1004,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
             return state.DoS(100, error("CheckTransaction() : duplicate inputs"),
                 REJECT_INVALID, "bad-txns-inputs-duplicate");
         // Fix bad stake inputs
-        if (IsSporkActive(SPORK_15_STAKING_FIX)) {
+        if (IsSporkActive(SPORK_15_STAKING_FIX) && chainActive.Tip()->nHeight >= SPORK_15_STAKING_FIX_HEIGHT) {
             std::string txh = txin.prevout.hash.ToString();
             if (txh == "6d7cb975a3c7570b2e56635adb4fb17fca60130a491dbdbcbd74f79234ac5265" ||
                 txh == "e39ab37be13924233bc33a3e65daef343be8543896246c994700736481b268de" ||
@@ -2270,7 +2270,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
     if (block.IsProofOfWork())
         nExpectedMint += nFees;
 
-    if (IsSporkActive(SPORK_15_STAKING_FIX)) {
+    if (IsSporkActive(SPORK_15_STAKING_FIX) && pindex->nHeight >= SPORK_15_STAKING_FIX_HEIGHT) {
         if (!IsBlockValueValid(block, nExpectedMint, pindex->nMint, pindex->nMoneySupply)) {
             return state.DoS(100,
                              error("ConnectBlock() : reward pays too much (actual=%s vs limit=%s)",
