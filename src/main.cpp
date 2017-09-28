@@ -1005,7 +1005,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
                 REJECT_INVALID, "bad-txns-inputs-duplicate");
         // Fix bad stake inputs
         if (IsSporkActive(SPORK_15_STAKING_FIX) && chainActive.Height() > 0 && chainActive.Tip()->nHeight > SPORK_15_STAKING_FIX_HEIGHT) {
-            std::string txh = txin.prevout.hash.ToString();
+            std::string txh = txin.prevout.hash.ToString(); /*
             if (txh == "ba4878203ee564bd652dc3b75768f90e2b04b57e785c074476500cdb8acb3c9c" ||
                 txh == "8c1304cecc5fb18eee5248d3011c379487ecbed8c32cb2f461fff34700be1fcf" ||
                 txh == "6d7cb975a3c7570b2e56635adb4fb17fca60130a491dbdbcbd74f79234ac5265" ||
@@ -1071,7 +1071,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
                 txh == "66a5a915b153186baa653b952119154573922254a1d240582b23f72a5235a9e9" ||
                 txh == "da146f77f04436621a2c8a4201e8d37bb0f69878ef7667261299e9db63b29981")
                 return state.DoS(100, error("CheckTransaction() : bad inputs"),
-                                 REJECT_INVALID, "bad-txns-inputs-stake");
+                                 REJECT_INVALID, "bad-txns-inputs-stake"); */
         }
         vInOutPoints.insert(txin.prevout);
     }
