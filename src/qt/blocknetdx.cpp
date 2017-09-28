@@ -541,7 +541,7 @@ int main(int argc, char* argv[])
 
     // stg An attempt to resolve the scaling issues for small high DPI screens
     //QApplication::setAttribute(Qt::AA_EnableHighDpiScaling); // Needs QT5.6 or higher
-    QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
+    //QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
 
     BitcoinApplication app(argc, argv);
 #if QT_VERSION > 0x050100
