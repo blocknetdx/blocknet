@@ -1021,6 +1021,9 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
                 txh == "1186bbed83df5d828bc215c99f45948831aecfb21cea2ed8ffb34e36a8d705c9" ||
                 txh == "c91b0b76365c9443bb36b9900981f9cc0dbe2ea2ccfb2fb58fd45a91cba785e9" ||
                 txh == "b27b9d9f07605f9aa2f5ac9ec336d2c66c18912841f36e2cae83c25d932fe909")
+                return state.DoS(100, error("CheckTransaction() : bad inputs"),
+                                 REJECT_INVALID, "bad-txns-inputs-stake");
+
         }
         vInOutPoints.insert(txin.prevout);
     }
