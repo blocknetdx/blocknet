@@ -438,7 +438,13 @@ void CBudgetManager::CheckAndRemove()
         CFinalizedBudget* pfinalizedBudget = &((*it).second);
 
         pfinalizedBudget->fValid = pfinalizedBudget->IsValid(strError);
-        LogPrintf("CBudgetManager::CheckAndRemove - pfinalizedBudget->IsValid - strError: %s\n", strError);
+        if (!strError.empty ()) {
+            LogPrintf("CBudgetManager::CheckAndRemove - pfinalizedBudget->IsValid - strError: %s\n", strError);
+        }
+        else {
+            LogPrintf("CBudgetManager::CheckAndRemove - Found valid budget: %s\n", pfinalizedBudget->strBudgetName.c_str());
+        }
+
         if (pfinalizedBudget->fValid) {
             pfinalizedBudget->AutoCheck();
         }
@@ -705,18 +711,33 @@ std::vector<CBudgetProposal*> CBudgetManager::GetBudget()
     while (it2 != vBudgetPorposalsSort.end()) {
         CBudgetProposal* pbudgetProposal = (*it2).first;
 
+        LogPrintf("CBudgetManager::GetBudget() - Processing Budget %s\n", pbudgetProposal->strProposalName.c_str());
         //prop start/end should be inside this period
         if (pbudgetProposal->fValid && pbudgetProposal->nBlockStart <= nBlockStart &&
             pbudgetProposal->nBlockEnd >= nBlockEnd &&
             pbudgetProposal->GetYeas() - pbudgetProposal->GetNays() > mnodeman.CountEnabled(ActiveProtocol()) / 10 &&
             pbudgetProposal->IsEstablished()) {
+            
+            LogPrintf("CBudgetManager::GetBudget() -   Check 1 passed: valid=%d | %ld <= %ld | %ld >= %ld | Yeas=%d Nays=%d Count=%d | established=%d\n",
+                      pbudgetProposal->fValid, pbudgetProposal->nBlockStart, nBlockStart, pbudgetProposal->nBlockEnd, 
+                      nBlockEnd, pbudgetProposal->GetYeas(), pbudgetProposal->GetNays(), mnodeman.CountEnabled(ActiveProtocol()) / 10, 
+                      pbudgetProposal->IsEstablished());
+            
             if (pbudgetProposal->GetAmount() + nBudgetAllocated <= nTotalBudget) {
                 pbudgetProposal->SetAllotted(pbudgetProposal->GetAmount());
                 nBudgetAllocated += pbudgetProposal->GetAmount();
                 vBudgetProposalsRet.push_back(pbudgetProposal);
+                LogPrintf("CBudgetManager::GetBudget() -     Check 2 passed: Budget added\n");
             } else {
                 pbudgetProposal->SetAllotted(0);
+                LogPrintf("CBudgetManager::GetBudget() -     Check 2 failed: no amount allotted\n");
             }
+        }
+        else {
+            LogPrintf("CBudgetManager::GetBudget() -   Check 1 failed: valid=%d | %ld <= %ld | %ld >= %ld | Yeas=%d Nays=%d Count=%d | established=%d\n",
+                      pbudgetProposal->fValid, pbudgetProposal->nBlockStart, nBlockStart, pbudgetProposal->nBlockEnd, 
+                      nBlockEnd, pbudgetProposal->GetYeas(), pbudgetProposal->GetNays(), mnodeman.CountEnabled(ActiveProtocol()) / 10, 
+                      pbudgetProposal->IsEstablished());
         }
 
         ++it2;
@@ -1552,9 +1573,14 @@ int CBudgetProposal::GetBlockCurrentCycle()
 
 int CBudgetProposal::GetBlockEndCycle()
 {
+    // XX42: right now single payment proposals have nBlockEnd have a cycle too early!
+    // switch back if it break something else
     //end block is half way through the next cycle (so the proposal will be removed much after the payment is sent)
+    // return nBlockEnd - GetBudgetPaymentCycleBlocks() / 2;
 
-    return nBlockEnd - GetBudgetPaymentCycleBlocks() / 2;
+    // End block is half way through the next cycle (so the proposal will be removed much after the payment is sent)
+    return nBlockEnd;
+
 }
 
 int CBudgetProposal::GetTotalPaymentCount()
@@ -1578,8 +1604,14 @@ CBudgetProposalBroadcast::CBudgetProposalBroadcast(std::string strProposalNameIn
     nBlockStart = nBlockStartIn;
 
     int nCycleStart = nBlockStart - nBlockStart % GetBudgetPaymentCycleBlocks();
+    
+    // XX42: right now single payment proposals have nBlockEnd have a cycle too early!
+    // switch back if it break something else
     //calculate the end of the cycle for this vote, add half a cycle (vote will be deleted after that block)
-    nBlockEnd = nCycleStart + GetBudgetPaymentCycleBlocks() * nPaymentCount + GetBudgetPaymentCycleBlocks() / 2;
+    // nBlockEnd = nCycleStart + GetBudgetPaymentCycleBlocks() * nPaymentCount + GetBudgetPaymentCycleBlocks() / 2;
+    
+    // Calculate the end of the cycle for this vote, vote will be deleted after next cycle
+    nBlockEnd = nCycleStart + (GetBudgetPaymentCycleBlocks() + 1)  * nPaymentCount;
 
     address = addressIn;
     nAmount = nAmountIn;
