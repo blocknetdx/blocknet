@@ -78,7 +78,11 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet* 
         bool fFeeAssigned = false;
         for (const CTxOut txout : wtx.vout) {
             // change that was reminted as zerocoins
-            if (fSpendFromMe && txout.IsZerocoinMint()) {
+            if (txout.IsZerocoinMint()) {
+                // do not display record if this isn't from our wallet
+                if (!fSpendFromMe)
+                    continue;
+
                 TransactionRecord sub(hash, nTime);
                 sub.type = TransactionRecord::ZerocoinSpend_Change_zPiv;
                 sub.address = mapValue["zerocoinmint"];
@@ -110,6 +114,10 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet* 
                 parts.append(sub);
                 continue;
             }
+
+            // spend is not from us, so do not display the spend side of the record
+            if (!fSpendFromMe)
+                continue;
 
             // zerocoin spend that was sent to someone else
             TransactionRecord sub(hash, nTime);
