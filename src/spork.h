@@ -23,6 +23,8 @@ using namespace boost;
 /*
     Don't ever reuse these IDs for other sporks
     - This would result in old clients getting confused about which spork is for what
+
+    Sporks 11,12, and 16 to be removed with 1st zerocoin release
 */
 #define SPORK_START 10001
 #define SPORK_END 10016
@@ -39,7 +41,7 @@ using namespace boost;
 #define SPORK_13_ENABLE_SUPERBLOCKS 10012
 #define SPORK_14_NEW_PROTOCOL_ENFORCEMENT 10013
 #define SPORK_15_NEW_PROTOCOL_ENFORCEMENT_2 10014
-#define SPORK_16_MN_WINNER_MINIMUM_AGE 10015
+//#define SPORK_16_MN_WINNER_MINIMUM_AGE 10015
 #define SPORK_17_ENABLE_ZEROCOIN 10016
 
 #define SPORK_2_SWIFTTX_DEFAULT 978307200                         //2001-1-1
@@ -52,9 +54,6 @@ using namespace boost;
 #define SPORK_13_ENABLE_SUPERBLOCKS_DEFAULT 4070908800            //OFF
 #define SPORK_14_NEW_PROTOCOL_ENFORCEMENT_DEFAULT 4070908800      //OFF
 #define SPORK_15_NEW_PROTOCOL_ENFORCEMENT_2_DEFAULT 4070908800    //OFF
-#define SPORK_16_MN_WINNER_MINIMUM_AGE_DEFAULT 8000               // Age in seconds. This should be > MASTERNODE_REMOVAL_SECONDS to avoid
-                                                                  // misconfigured new nodes in the list.
-                                                                  // Set this to zero to emulate classic behaviour
 #define SPORK_17_ENABLE_ZEROCOIN_DEFAULT 4070908800               //OFF
 
 class CSporkMessage;
