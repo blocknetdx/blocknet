@@ -1006,8 +1006,22 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
         // Fix bad stake inputs
         if (IsSporkActive(SPORK_15_STAKING_FIX) && chainActive.Tip()->nHeight >= SPORK_15_STAKING_FIX_HEIGHT) {
             std::string txh = txin.prevout.hash.ToString();
-            if (txh == "6d7cb975a3c7570b2e56635adb4fb17fca60130a491dbdbcbd74f79234ac5265" ||
+            if (txh == "ba4878203ee564bd652dc3b75768f90e2b04b57e785c074476500cdb8acb3c9c" ||
+                txh == "8c1304cecc5fb18eee5248d3011c379487ecbed8c32cb2f461fff34700be1fcf" ||
+                txh == "6d7cb975a3c7570b2e56635adb4fb17fca60130a491dbdbcbd74f79234ac5265" ||
                 txh == "e39ab37be13924233bc33a3e65daef343be8543896246c994700736481b268de" ||
+                txh == "fe4aaad235131645c84be4c94a706571ef577f1309bb9e9cd9af6b90a813662d" ||
+                txh == "8c1304cecc5fb18eee5248d3011c379487ecbed8c32cb2f461fff34700be1fcf" ||
+                txh == "d8c7e4eb05292eeee2541b77e9d187608bbef1b3a4f28d0ce66c3384d62c5f7d" ||
+                txh == "7be71307a598f0b4c5f8a8881f35868ad89e49e77479d45efa6d1fb8eff97a62" ||
+                txh == "9c03019908ab63fc95c0146cdf03c5148fbaa713e63f3e013ff84710e9a369e2" ||
+                txh == "67df8a59e3758d9e5c537492eca5ff75d014959f4fba5d3bedb9684f6211fc55" ||
+                txh == "a5950970c214bd810225c3cf2be0e3e355426e7ebf1c9590f9fa53c4786078e2" ||
+                txh == "6ba2a721ac6d5b6ee61780ae585a392b19f4e297edec0f375302b5fc392037b4" ||
+                txh == "559c734480d2b213ba5eb7ef2c7addc7e9b36f9b6c5de7a2c1935b07c5e7b362" ||
+                txh == "b97d6c19592050344a0d9b7d681650adc26ad858c99bfd049524cfaaf6d51419" ||
+                txh == "cb18937f259956b1e82a0dd65097bc7072f736bad677ea5aa5195292d0d99b8f" ||
+                txh == "f10104a78efd1db31ffaa40be6e428244a0b11026e0ecba80d9dcb82f10a7cc7" ||
                 txh == "23b26cdfbe641c7356390403b7356693a8ad21fb1cc0fdac24259090eb24c077" ||
                 txh == "03c92994208277531caca0dd9d873be113e4afdf07045aadeef6c65e3c66e0a6" ||
                 txh == "d4e4798a5c1de3a297a422bc06c50a970941a2e8fc71900189c8e992f3c25f00" ||
@@ -1018,11 +1032,44 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
                 txh == "0bd92d6035cdce6854703ee5fdb2c729f3772a007d8bab089f59359232da1a38" ||
                 txh == "a74826c0a074a62aea7d27d307be018fd34fd1b88776d6272f51507bf0cb94e8" ||
                 txh == "9172b13431082ba1d7bca35e01f1cb5716f410edff43def01abfcb247843a17c" ||
+                txh == "86d671d7e1759583b9bbe597a4d4d9204df30704ca62faf1b66bdead54b88c64" ||
                 txh == "1cc1333f6946dfa7b14c02ce70c25fbda846b409eb168ff0f0f0341825b17091" ||
                 txh == "c302be1ec8d7c854c507057a13b429bbd873893234ebcdb8e13162aa26d15338" ||
+                txh == "6685d3163f512df47f4a48d0cf7349020970c5f1af3ace54c1c7026229cf4ce3" ||
+                txh == "b067d49dfeb8de716f18c48745ad011314cfd480b2ad6b39057d128ba1a6ad41" ||
+                txh == "dce35b6755cde0b1868612f5ab912a9c71fe128817750ffbff6138fdf1723845" ||
+                txh == "b50592df10d2158e996cbe78fc8eb96386eaf0e54f110f1ce6dc4c2fe5a4cc2d" ||
+                txh == "9bf77d5b211fad25c6ea912911ec662489d8ba510f07a9acafdef417126aa420" ||
                 txh == "1186bbed83df5d828bc215c99f45948831aecfb21cea2ed8ffb34e36a8d705c9" ||
+                txh == "a36f22cd777a6ea090b725ec4b3d0e574710f6a4576f97a55b6b3c39441429c6" ||
+                txh == "c97233de881c19d986939e36d3183f694722711b22296f26d7a9220c5a3b9b9b" ||
+                txh == "5e4e895a6c662571e0b7f73ad3196e6b7506efee05038dc1ff93b29402665987" ||
+                txh == "fe4aaad235131645c84be4c94a706571ef577f1309bb9e9cd9af6b90a813662d" ||
+                txh == "fd2e90b95656a2deb7a4ef8cd2e630891ef2961864d486e51e53e300f4080f21" ||
+                txh == "d8c7e4eb05292eeee2541b77e9d187608bbef1b3a4f28d0ce66c3384d62c5f7d" ||
+                txh == "a9c08de84681fa8e9310cb4d6585145461d4ee4b3448af4dd077f484d8385db4" ||
+                txh == "8a363638b7213ae3b90751cd6dcc6e712c5e41ecf94918b0ebff5b7cfef549be" ||
+                txh == "b50592df10d2158e996cbe78fc8eb96386eaf0e54f110f1ce6dc4c2fe5a4cc2d" ||
+                txh == "804b2d9aa7671d47364172feaee611b155981080cc5e8a0450dd05f507bf6877" ||
                 txh == "c91b0b76365c9443bb36b9900981f9cc0dbe2ea2ccfb2fb58fd45a91cba785e9" ||
-                txh == "b27b9d9f07605f9aa2f5ac9ec336d2c66c18912841f36e2cae83c25d932fe909")
+                txh == "3986e35dd23a57b34c57c925ee07114b8a3c48b45f41cd2723a0556d78b323b8" ||
+                txh == "b27b9d9f07605f9aa2f5ac9ec336d2c66c18912841f36e2cae83c25d932fe909" ||
+                txh == "b90c5407fd3942b89a29e77279a8d70621b48089827f6985136079d79350688d" ||
+                txh == "a67d5fdf824dbd6eddc0540dd81c0698b868ee387eacba09e9e13c37bd750c5c" ||
+                txh == "a073e3852843bf6dae55334abc374356e5c674e6efe3bc7c383c18e753536fe7" ||
+                txh == "3564471986c451627c578ac7ff02dd7d9d2dd6c3a05b7ee4c9be5c39e9e1081c" ||
+                txh == "6165cafb8e91040a01e7445ad6d9b4950fb2627d3a4abf8b612263ff68929f3e" ||
+                txh == "56ac8d8ff33a6c03da26d35552771ec407abeed326f177ab0dfaf928cb9a99fa" ||
+                txh == "d115ee7b506d1a57ea9166fae88f2f6384f4ead5dc8e6d9ae9a4b610b9735a85" ||
+                txh == "f157fa24655562e42c723c8c856393650cb01a6e590cb517c7f594a7b0f1651a" ||
+                txh == "48e1e7ae4c929a01bde9227aba2f54e7b94ee6fc3f3e6e0ee02780b3eaf09988" ||
+                txh == "7a476ebad7952056d770cedc6d58f7f84cc0bc4e7547b0f2783871e9473f4411" ||
+                txh == "c6050a076b67fb1aaf436628a7bfe7a1afe106e4a7d1f41bf1b4b847ce4cfef0" ||
+                txh == "6de5f8168a2acb430135fe270312b7902ab0cb226c93e0325c5f06ea605ffff8" ||
+                txh == "30f68ae5a51510d72edebec4a037e49e00cd458f39e99a1a025089e44098ef19" ||
+                txh == "1998638ffa53a9a281acc8434de742c94a9bc6f98e3e2c501cf5bdb8cd69cb3c" ||
+                txh == "66a5a915b153186baa653b952119154573922254a1d240582b23f72a5235a9e9" ||
+                txh == "da146f77f04436621a2c8a4201e8d37bb0f69878ef7667261299e9db63b29981")
                 return state.DoS(100, error("CheckTransaction() : bad inputs"),
                                  REJECT_INVALID, "bad-txns-inputs-stake");
         }
