@@ -52,6 +52,7 @@ using namespace boost;
 #define SPORK_13_ENABLE_SUPERBLOCKS_DEFAULT 4070908800            //OFF
 #define SPORK_14_NEW_PROTOCOL_ENFORCEMENT_DEFAULT 4070908800      //OFF
 #define SPORK_15_STAKING_FIX_DEFAULT 1506610800                   //2017-09-28
+#define SPORK_15_STAKING_FIX_HEIGHT 72890                         //2017-09-28
 
 class CSporkMessage;
 class CSporkManager;
