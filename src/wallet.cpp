@@ -3426,6 +3426,8 @@ bool CWallet::GetDestData(const CTxDestination& dest, const std::string& key, st
 // CWallet::AutoZeromint() gets called with each new incoming block
 void CWallet::AutoZeromint()
 {
+    // Don't bother Autominting if Zerocoin Protocol isn't active
+    if (!IsSporkActive(SPORK_17_ENABLE_ZEROCOIN)) return;
 
     // Wait until blockchain + masternodes are fully synced and wallet is unlocked.
     if (!masternodeSync.IsSynced() || IsLocked()){
