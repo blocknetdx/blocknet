@@ -43,18 +43,6 @@ const unsigned int MAX_SIZE = 0x02000000;
 
 //******************************************************************************
 //******************************************************************************
-std::vector<unsigned char> toXAddr(const std::string & addr)
-{
-    std::vector<unsigned char> vaddr;
-    if (DecodeBase58Check(addr.c_str(), vaddr))
-    {
-        vaddr.erase(vaddr.begin());
-    }
-    return vaddr;
-}
-
-//******************************************************************************
-//******************************************************************************
 int readHTTP(std::basic_istream<char>& stream, map<string, string>& mapHeadersRet, string& strMessageRet)
 {
     mapHeadersRet.clear();
@@ -410,6 +398,56 @@ bool listUnspent(const std::string & rpcuser,
                 }
             }
         }
+    }
+    catch (std::exception & e)
+    {
+        LOG() << "listunspent exception " << e.what();
+        return false;
+    }
+
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+bool gettxout(const std::string & rpcuser,
+              const std::string & rpcpasswd,
+              const std::string & rpcip,
+              const std::string & rpcport,
+              const std::string & txid,
+              const uint32_t & out)
+{
+    try
+    {
+        LOG() << "rpc call <gettxout>";
+
+        Array params;
+        params.push_back(txid);
+        params.push_back(static_cast<int>(out));
+        Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport,
+                               "gettxout", params);
+
+        // Parse reply
+        const Value & result = find_value(reply, "result");
+        const Value & error  = find_value(reply, "error");
+
+        if (error.type() != null_type)
+        {
+            // Error
+            LOG() << "error: " << write_string(error, false);
+            // int code = find_value(error.get_obj(), "code").get_int();
+            return false;
+        }
+//        else if (result.type() != array_type)
+//        {
+//            // Result
+//            LOG() << "result not an array " <<
+//                     (result.type() == null_type ? "" :
+//                      result.type() == str_type  ? result.get_str() :
+//                                                   write_string(result, true));
+//            return false;
+//        }
+
     }
     catch (std::exception & e)
     {
