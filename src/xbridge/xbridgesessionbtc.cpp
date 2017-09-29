@@ -38,6 +38,25 @@ XBridgeSessionBtc::~XBridgeSessionBtc()
 
 }
 
+//*****************************************************************************
+//*****************************************************************************
+std::string XBridgeSessionBtc::fromXAddr(const std::vector<unsigned char> & xaddr) const
+{
+    return EncodeBase58Check(xaddr);
+}
+
+//*****************************************************************************
+//*****************************************************************************
+std::vector<unsigned char> XBridgeSessionBtc::toXAddr(const std::string & addr) const
+{
+    std::vector<unsigned char> vaddr;
+    if (DecodeBase58Check(addr.c_str(), vaddr))
+    {
+        vaddr.erase(vaddr.begin());
+    }
+    return vaddr;
+}
+
 //******************************************************************************
 //******************************************************************************
 uint32_t XBridgeSessionBtc::lockTime(const char role) const
@@ -80,7 +99,7 @@ uint32_t XBridgeSessionBtc::lockTime(const char role) const
 
 //******************************************************************************
 //******************************************************************************
-xbridge::CTransactionPtr XBridgeSessionBtc::createTransaction()
+xbridge::CTransactionPtr XBridgeSessionBtc::createTransaction() const
 {
     return xbridge::CTransactionPtr(new xbridge::CBTCTransaction);
 }
@@ -89,7 +108,7 @@ xbridge::CTransactionPtr XBridgeSessionBtc::createTransaction()
 //******************************************************************************
 xbridge::CTransactionPtr XBridgeSessionBtc::createTransaction(const std::vector<std::pair<std::string, int> > & inputs,
                                                               const std::vector<std::pair<CScript, double> > &outputs,
-                                                              const uint32_t lockTime)
+                                                              const uint32_t lockTime) const
 {
     xbridge::CTransactionPtr tx(new xbridge::CBTCTransaction);
     tx->nVersion  = m_wallet.txVersion;
@@ -113,14 +132,4 @@ xbridge::CTransactionPtr XBridgeSessionBtc::createTransaction(const std::vector<
     }
 
     return tx;
-}
-
-//*****************************************************************************
-//*****************************************************************************
-std::string XBridgeSessionBtc::createRawTransaction(const std::vector<std::pair<std::string, int> > & inputs,
-                                                    const std::vector<std::pair<CScript, double> > &outputs,
-                                                    const uint32_t lockTime)
-{
-    xbridge::CTransactionPtr tx(createTransaction(inputs, outputs, lockTime));
-    return tx->toString();
 }

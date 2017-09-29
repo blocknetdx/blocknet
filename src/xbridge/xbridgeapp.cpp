@@ -2,6 +2,7 @@
 //*****************************************************************************
 
 #include "xbridgeapp.h"
+#include "xbridgeservicesession.h"
 #include "xbridgeexchange.h"
 #include "util/xutil.h"
 #include "util/logger.h"
@@ -106,7 +107,7 @@ bool XBridgeApp::isEnabled()
 //*****************************************************************************
 bool XBridgeApp::start()
 {
-    m_serviceSession.reset(new XBridgeSession);
+    m_serviceSession.reset(new XBridgeServiceSession);
 
     // start xbrige
     m_bridge = XBridgePtr(new XBridge());

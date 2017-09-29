@@ -120,7 +120,7 @@ public:
     // uint256                    b_datatxid() const;
     xbridge::CPubKey           b_pk1() const;
 
-    std::string                fromXAddr(const std::vector<unsigned char> & xaddr) const;
+    bool                       isAddressKnown(const std::string & addr) const;
 
     bool tryJoin(const XBridgeTransactionPtr other);
 

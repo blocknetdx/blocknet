@@ -94,7 +94,8 @@ XBridge::XBridge()
                 }
                 else
                 {
-                    session.reset(new XBridgeSession(wp));
+                    // session.reset(new XBridgeSession(wp));
+                    ERR() << "unknown session type " << __FUNCTION__;
                 }
                 if (session)
                 {
