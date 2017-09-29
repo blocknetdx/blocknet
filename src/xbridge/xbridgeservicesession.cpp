@@ -56,7 +56,7 @@ std::vector<unsigned char> XBridgeServiceSession::toXAddr(const std::string & /*
 
 //******************************************************************************
 //******************************************************************************
-uint32_t XBridgeServiceSession::lockTime(const char role) const
+uint32_t XBridgeServiceSession::lockTime(const char /*role*/) const
 {
     assert(!"not implemented in service session");
     return 0;
