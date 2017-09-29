@@ -352,6 +352,7 @@ libxbridge_xbridge_a_SOURCES = \
   xbridge/xbridgeapp.cpp \
   xbridge/xbridgeexchange.cpp \
   xbridge/xbridgesession.cpp \
+  xbridge/xbridgeservicesession.cpp \
   xbridge/xbridgesessionbtc.cpp \
   xbridge/xbridgetransaction.cpp \
   xbridge/xbridgetransactionmember.cpp \
@@ -373,6 +374,7 @@ libxbridge_xbridge_a_SOURCES = \
   xbridge/xbridgepacket.h \
   xbridge/xbridgerpc.h \
   xbridge/xbridgesession.h \
+  xbridge/xbridgeservicesession.h \
   xbridge/xbridgesessionbtc.h \
   xbridge/xbridgetransaction.h \
   xbridge/xbridgetransactiondescr.h \
