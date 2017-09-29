@@ -69,6 +69,10 @@ void ProcessSpork(CNode* pfrom, std::string& strCommand, CDataStream& vRecv)
 
         if (chainActive.Tip() == NULL) return;
 
+        // Ignore spork messages about unknown/deleted sporks
+        std::string strSpork = sporkManager.GetSporkNameByID(spork.nSporkID);
+        if (strSpork == "Unknown") return;
+
         uint256 hash = spork.GetHash();
         if (mapSporksActive.count(spork.nSporkID)) {
             if (mapSporksActive[spork.nSporkID].nTimeSigned >= spork.nTimeSigned) {
