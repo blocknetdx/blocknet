@@ -40,6 +40,7 @@ set(GUI_FORMS
   ${CMAKE_CURRENT_SOURCE_DIR}/forms/askpassphrasedialog.ui
   ${CMAKE_CURRENT_SOURCE_DIR}/forms/bip38tooldialog.ui
   ${CMAKE_CURRENT_SOURCE_DIR}/forms/coincontroldialog.ui
+  ${CMAKE_CURRENT_SOURCE_DIR}/forms/zpivcontroldialog.ui
   ${CMAKE_CURRENT_SOURCE_DIR}/forms/blockexplorer.ui
   ${CMAKE_CURRENT_SOURCE_DIR}/forms/editaddressdialog.ui
   ${CMAKE_CURRENT_SOURCE_DIR}/forms/helpmessagedialog.ui
@@ -101,6 +102,7 @@ SET(QT_FILES
 	addresstablemodel.cpp
 	askpassphrasedialog.cpp
 	coincontroldialog.cpp
+	zpivcontroldialog.cpp
 	coincontroltreewidget.cpp
   privacydialog.cpp
 	obfuscationconfig.cpp
