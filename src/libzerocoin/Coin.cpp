@@ -10,6 +10,7 @@
  * @license    This project is released under the MIT license.
  **/
 
+// Copyright (c) 2017 The PIVX developers
 #include <stdexcept>
 #include <iostream>
 #include "Coin.h"
