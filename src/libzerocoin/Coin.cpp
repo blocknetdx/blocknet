@@ -11,6 +11,7 @@
  **/
 
 #include <stdexcept>
+#include <iostream>
 #include "Coin.h"
 #include "Commitment.h"
 #include "Denominations.h"
