@@ -120,8 +120,6 @@ public:
     // uint256                    b_datatxid() const;
     xbridge::CPubKey           b_pk1() const;
 
-    bool                       isAddressKnown(const std::string & addr) const;
-
     bool tryJoin(const XBridgeTransactionPtr other);
 
     bool                       setKeys(const std::string & addr,

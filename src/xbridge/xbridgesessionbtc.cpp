@@ -40,10 +40,10 @@ XBridgeSessionBtc::~XBridgeSessionBtc()
 
 //*****************************************************************************
 //*****************************************************************************
-std::string XBridgeSessionBtc::fromXAddr(const std::vector<unsigned char> & xaddr) const
-{
-    return EncodeBase58Check(xaddr);
-}
+//std::string XBridgeSessionBtc::fromXAddr(const std::vector<unsigned char> & xaddr) const
+//{
+//    return EncodeBase58Check(xaddr);
+//}
 
 //*****************************************************************************
 //*****************************************************************************

@@ -13,6 +13,7 @@
 #include "uint256.h"
 #include "xkey.h"
 #include "xbitcointransaction.h"
+#include "bitcoinrpcconnector.h"
 #include "script/script.h"
 
 #include <memory>
@@ -52,13 +53,15 @@ public:
     void requestAddressBook();
 
     bool checkAmount(const uint64_t amount) const;
+    bool checkAmountAndGetInputs(const uint64_t amount,
+                                 std::vector<rpc::Unspent> & inputs) const;
     double getWalletBalance() const;
 
     bool rollbacktXBridgeTransaction(const uint256 & id);
 
 protected:
     // reimplement for currency
-    virtual std::string fromXAddr(const std::vector<unsigned char> & xaddr) const = 0;
+    // virtual std::string fromXAddr(const std::vector<unsigned char> & xaddr) const = 0;
     virtual std::vector<unsigned char> toXAddr(const std::string & addr) const = 0;
 
     virtual uint32_t lockTime(const char role) const = 0;
@@ -97,6 +100,11 @@ protected:
                         const uint32_t & confirmations,
                         const uint64_t & neededAmount,
                         bool & isGood);
+
+    // fn search xaddress in transaction and restore full 'coin' address as string
+    bool isAddressInTransaction(const std::vector<unsigned char> & address,
+                                const XBridgeTransactionPtr & tx,
+                                std::string & fullAddress);
 
 protected:
     virtual bool processInvalid(XBridgePacketPtr packet);
