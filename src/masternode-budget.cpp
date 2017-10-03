@@ -119,6 +119,7 @@ void CBudgetManager::CheckOrphanVotes()
             ++it2;
         }
     }
+    LogPrintf("CBudgetManager::CheckOrphanVotes - Done\n");
 }
 
 void CBudgetManager::SubmitFinalBudget()
@@ -605,7 +606,8 @@ bool CBudgetManager::IsBudgetPaymentBlock(int nBlockHeight)
         ++it;
     }
 
-    LogPrintf("CBudgetManager::IsBudgetPaymentBlock() - nHighestCount: %lli, 5%% of Masternodes: %lli. Number of budgets: %lli\n", nHighestCount, nFivePercent, mapFinalizedBudgets.size());
+    LogPrintf("CBudgetManager::IsBudgetPaymentBlock() - nHighestCount: %lli, 5%% of Masternodes: %lli. Number of budgets: %lli\n", 
+              nHighestCount, nFivePercent, mapFinalizedBudgets.size());
 
     // If budget doesn't have 5% of the network votes, then we should pay a masternode instead
     if (nHighestCount > nFivePercent) return true;
@@ -635,7 +637,8 @@ bool CBudgetManager::IsTransactionValid(const CTransaction& txNew, int nBlockHei
         ++it;
     }
 
-    LogPrintf("CBudgetManager::IsTransactionValid() - nHighestCount: %lli, 5%% of Masternodes: %lli mapFinalizedBudgets.size(): %ld\n", nHighestCount, nFivePercent, mapFinalizedBudgets.size());
+    LogPrintf("CBudgetManager::IsTransactionValid() - nHighestCount: %lli, 5%% of Masternodes: %lli mapFinalizedBudgets.size(): %ld\n", 
+              nHighestCount, nFivePercent, mapFinalizedBudgets.size());
     /*
         If budget doesn't have 5% of the network votes, then we should pay a masternode instead
     */
@@ -1357,7 +1360,7 @@ bool CBudgetManager::UpdateFinalizedBudget(CFinalizedBudgetVote& vote, CNode* pf
         strError = "Finalized Budget " + vote.nBudgetHash.ToString() +  " not found!";
         return false;
     }
-
+    LogPrintf("CBudgetManager::UpdateFinalizedBudget - Finalized Proposal %s added\n", vote.nBudgetHash.ToString());
     return mapFinalizedBudgets[vote.nBudgetHash].AddOrUpdateVote(vote, strError);
 }
 
@@ -1819,14 +1822,15 @@ void CFinalizedBudget::AutoCheck()
         }
 
         if (vBudgetProposals.size() != vecBudgetPayments.size()) {
-            LogPrintf("CFinalizedBudget::AutoCheck - Budget length doesn't match\n");
+            LogPrintf("CFinalizedBudget::AutoCheck - Budget length doesn't match. vBudgetProposals.size()=%ld != vecBudgetPayments.size()=%ld\n",
+                      vBudgetProposals.size(), vecBudgetPayments.size());
             return;
         }
 
 
         for (unsigned int i = 0; i < vecBudgetPayments.size(); i++) {
             if (i > vBudgetProposals.size() - 1) {
-                LogPrintf("CFinalizedBudget::AutoCheck - Vector size mismatch, aborting\n");
+                LogPrintf("CFinalizedBudget::AutoCheck - Proposal size mismatch, i=%d > (vBudgetProposals.size() - 1)=%d\n", i, vBudgetProposals.size() - 1);
                 return;
             }
 
@@ -2146,14 +2150,14 @@ bool CFinalizedBudgetVote::SignatureValid(bool fSignatureCheck)
     CMasternode* pmn = mnodeman.Find(vin);
 
     if (pmn == NULL) {
-        LogPrintf("CFinalizedBudgetVote::SignatureValid() - Unknown Masternode\n");
+        LogPrintf("CFinalizedBudgetVote::SignatureValid() - Unknown Masternode %s\n", strMessage);
         return false;
     }
 
     if (!fSignatureCheck) return true;
 
     if (!obfuScationSigner.VerifyMessage(pmn->pubKeyMasternode, vchSig, strMessage, errorMessage)) {
-        LogPrintf("CFinalizedBudgetVote::SignatureValid() - Verify message failed\n");
+        LogPrintf("CFinalizedBudgetVote::SignatureValid() - Verify message failed %s %s\n", strMessage, errorMessage);
         return false;
     }
 
