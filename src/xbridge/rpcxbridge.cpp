@@ -262,8 +262,8 @@ Value dxCreateTransaction(const Array & params, bool fHelp)
     std::string toCurrency      = params[4].get_str();
     double      toAmount        = params[5].get_real();
 
-    if ((from.size() != 33 && from.size() != 34) ||
-            (to.size() != 33 && to.size() != 34))
+    if ((from.size() < 32 && from.size() > 36) ||
+            (to.size() < 32 && to.size() > 36))
     {
         throw runtime_error("incorrect address");
     }

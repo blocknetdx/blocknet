@@ -42,6 +42,8 @@ struct WalletParam
     //service node fee, see rpc::storeDataIntoBlockchain
     const double               serviceNodeFee;
 
+    std::vector<unsigned char> netId;
+
     WalletParam()
         : txVersion(1)
         , COIN(0)
@@ -54,6 +56,7 @@ struct WalletParam
         , blockTime(0)
         , requiredConfirmations(0)
         , serviceNodeFee(.005)
+        , netId({0x0f, 0x21})
     {
         memset(addrPrefix,   0, sizeof(addrPrefix));
         memset(scriptPrefix, 0, sizeof(scriptPrefix));

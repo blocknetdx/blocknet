@@ -4,6 +4,7 @@
 #include "xbridge.h"
 #include "xbridgesession.h"
 #include "xbridgesessionbtc.h"
+#include "xbridgesessiondcr.h"
 // #include "xbridgesessionethereum.h"
 // #include "xbridgesessionrpccommon.h"
 #include "xbridgeapp.h"
@@ -91,6 +92,10 @@ XBridge::XBridge()
                 {
                     LOG() << "wp.method RPC not implemented" << __FUNCTION__;
                     // session.reset(new XBridgeSessionRpc(wp));
+                }
+                else if (wp.method == "DCR")
+                {
+                    session.reset(new XBridgeSessionDcr(wp));
                 }
                 else
                 {
