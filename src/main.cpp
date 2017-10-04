@@ -2271,13 +2271,11 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
     if (block.IsProofOfWork())
         nExpectedMint += nFees;
 
-    if (IsSporkActive(SPORK_15_STAKING_FIX) && pindex->nHeight >= SPORK_15_STAKING_FIX_HEIGHT) {
-        if (!IsBlockValueValid(block, nExpectedMint, pindex->nMint, pindex->nMoneySupply)) {
-            return state.DoS(100,
-                             error("ConnectBlock() : reward pays too much (actual=%s vs limit=%s)",
-                                   FormatMoney(pindex->nMint), FormatMoney(nExpectedMint)),
-                             REJECT_INVALID, "bad-cb-amount");
-        }
+    if (!IsBlockValueValid(block, nExpectedMint, pindex->nMint)) {
+        return state.DoS(100,
+                         error("ConnectBlock() : reward pays too much (actual=%s vs limit=%s)",
+                               FormatMoney(pindex->nMint), FormatMoney(nExpectedMint)),
+                         REJECT_INVALID, "bad-cb-amount");
     }
 
     if (!control.Wait())

@@ -173,7 +173,7 @@ void DumpServicenodePayments()
     LogPrintf("Budget dump finished  %dms\n", GetTimeMillis() - nStart);
 }
 
-bool IsBlockValueValid(const CBlock& block, CAmount nExpectedValue, CAmount nMinted, CAmount nMoneySupply)
+bool IsBlockValueValid(const CBlock& block, CAmount nExpectedValue, CAmount nMinted)
 {
     CBlockIndex* pindexPrev = chainActive.Tip();
     if (pindexPrev == NULL) return true;
@@ -191,13 +191,10 @@ bool IsBlockValueValid(const CBlock& block, CAmount nExpectedValue, CAmount nMin
         LogPrintf("IsBlockValueValid() : WARNING: Couldn't find previous block\n");
     }
 
-    // Maximum superblock mint allowed
-    CAmount maxSuperblockMint = nMoneySupply*0.11;
-
     if (!servicenodeSync.IsSynced()) { //there is no budget data to use to check anything
         //super blocks will always be on these blocks, max 100 per budgeting
         if (nHeight > 0 && nHeight % GetBudgetPaymentCycleBlocks() < 100) {
-            return nMinted < maxSuperblockMint;
+            return nMinted <= CBudgetManager::GetTotalBudget(nHeight);
         } else {
             if (nMinted > nExpectedValue) {
                 return false;
@@ -207,17 +204,12 @@ bool IsBlockValueValid(const CBlock& block, CAmount nExpectedValue, CAmount nMin
 
         //are these blocks even enabled
         if (!IsSporkActive(SPORK_13_ENABLE_SUPERBLOCKS)) {
-            // If we're a superblock, set max mint (ignore genesis block
-            if (nHeight > 0 && nHeight % GetBudgetPaymentCycleBlocks() < 100) {
-                return nMinted < maxSuperblockMint;
-            }
             return nMinted <= nExpectedValue;
         }
 
         if (budget.IsBudgetPaymentBlock(nHeight)) {
             //the value of the block is evaluated in CheckBlock
-            // only payout budgets that are less than 11% of money supply
-            return nMinted < maxSuperblockMint;
+            return nMinted <= CBudgetManager::GetTotalBudget(nHeight) + 1;
         } else {
             if (nMinted > nExpectedValue) {
                 return false;
