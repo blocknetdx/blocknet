@@ -2522,11 +2522,20 @@ Value spendzerocoin(const Array& params, bool fHelp)
 
 Value resetmintzerocoin(const Array& params, bool fHelp)
 {
-    if (fHelp || params.size() != 0)
+    if (fHelp || params.size() > 1)
         throw runtime_error(
-            "resetmintzerocoin\n"
-            "Scan the blockchain for all of the zerocoins that are held in the wallet.dat. Update any meta-data that is incorrect."
+            "resetmintzerocoin <extended_search>\n"
+            "Scan the blockchain for all of the zerocoins that are held in the wallet.dat. Update any meta-data that is incorrect.\n"
+            "Archive any mints that are not able to be found."
+
+            "\nArguments:\n"
+            "1. \"extended_search\"      (bool, optional) Rescan each block of the blockchain looking for your mints. WARNING - may take 30+ minutes!\n"
+
             + HelpRequiringPassphrase());
+
+    bool fExtendedSearch = false;
+    if (params.size() == 1)
+        fExtendedSearch = params[0].get_bool();
 
     CWalletDB walletdb(pwalletMain->strWalletFile);
     list<CZerocoinMint> listMints = walletdb.ListMintedCoins(false, false, true);
@@ -2535,7 +2544,7 @@ Value resetmintzerocoin(const Array& params, bool fHelp)
     vector<CZerocoinMint> vMintsToUpdate;
 
     // search all of our available data for these mints
-    FindMints(vMintsToFind, vMintsToUpdate, vMintsMissing);
+    FindMints(vMintsToFind, vMintsToUpdate, vMintsMissing, fExtendedSearch);
 
     // update the meta data of mints that were marked for updating
     Array arrUpdated;

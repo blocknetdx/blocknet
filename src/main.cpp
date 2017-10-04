@@ -998,7 +998,7 @@ int GetZerocoinStartHeight()
     return nZerocoinStartHeight;
 }
 
-void FindMints(vector<CZerocoinMint> vMintsToFind, vector<CZerocoinMint>& vMintsToUpdate, vector<CZerocoinMint>& vMissingMints)
+void FindMints(vector<CZerocoinMint> vMintsToFind, vector<CZerocoinMint>& vMintsToUpdate, vector<CZerocoinMint>& vMissingMints, bool fExtendedSearch)
 {
     // see which mints are in our public zerocoin database. The mint should be here if it exists, unless
     // something went wrong
@@ -1041,30 +1041,37 @@ void FindMints(vector<CZerocoinMint> vMintsToFind, vector<CZerocoinMint>& vMints
         vMintsToUpdate.push_back(mint);
     }
 
-    // search the blockchain for the meta data on our missing mints
-    if (nZerocoinStartHeight == 0)
-        nZerocoinStartHeight = GetZerocoinStartHeight();
+    if (fExtendedSearch)
+    {
+        // search the blockchain for the meta data on our missing mints
+        if (nZerocoinStartHeight == 0)
+            nZerocoinStartHeight = GetZerocoinStartHeight();
 
-    for (int i = nZerocoinStartHeight; i < chainActive.Height(); i++) {
-        if (chainActive[i]->GetBlockHeader().nVersion < Params().Zerocoin_HeaderVersion())
-            continue;
+        for (int i = nZerocoinStartHeight; i < chainActive.Height(); i++) {
 
-        CBlock block;
-        if (!ReadBlockFromDisk(block, chainActive[i]))
-            continue;
+            if(i % 1000 == 0)
+                LogPrintf("%s : scanned %d blocks\n", __func__, i - nZerocoinStartHeight);
 
-        list<CZerocoinMint> vMints;
-        if (!BlockToZerocoinMintList(block, vMints))
-            continue;
+            if(chainActive[i]->vMintDenominationsInBlock.empty())
+                continue;
 
-        // search the blocks mints to see if it contains the mint that is requesting meta data updates
-        for (CZerocoinMint mintBlockChain : vMints) {
-            for (CZerocoinMint mintMissing : vMissingMints) {
-                if (mintMissing.GetValue() == mintBlockChain.GetValue()) {
-                    LogPrintf("%s FOUND %s in block %d\n", __func__, mintMissing.GetValue().GetHex(), i);
-                    mintMissing.SetHeight(i);
-                    mintMissing.SetTxHash(mintBlockChain.GetTxHash());
-                    vMintsToUpdate.push_back(mintMissing);
+            CBlock block;
+            if(!ReadBlockFromDisk(block, chainActive[i]))
+                continue;
+
+            list<CZerocoinMint> vMints;
+            if(!BlockToZerocoinMintList(block, vMints))
+                continue;
+
+            // search the blocks mints to see if it contains the mint that is requesting meta data updates
+            for (CZerocoinMint mintBlockChain : vMints) {
+                for (CZerocoinMint mintMissing : vMissingMints) {
+                    if (mintMissing.GetValue() == mintBlockChain.GetValue()) {
+                        LogPrintf("%s FOUND %s in block %d\n", __func__, mintMissing.GetValue().GetHex(), i);
+                        mintMissing.SetHeight(i);
+                        mintMissing.SetTxHash(mintBlockChain.GetTxHash());
+                        vMintsToUpdate.push_back(mintMissing);
+                    }
                 }
             }
         }
@@ -1077,6 +1084,7 @@ void FindMints(vector<CZerocoinMint> vMintsToFind, vector<CZerocoinMint>& vMints
                 std::remove(vMissingMints.begin(), vMissingMints.end(), mintMissing);
         }
     }
+
 }
 
 bool GetZerocoinMint(const CBigNum& bnPubcoin, uint256& txHash)

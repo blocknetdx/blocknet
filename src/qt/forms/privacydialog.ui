@@ -398,7 +398,7 @@
                   </size>
                  </property>
                  <property name="toolTip">
-                  <string>Rescan the complete blockchain for  Zerocoin mints and their meta-data. Needs a very long time, please be patient.</string>
+                  <string>Rescan the complete blockchain for  Zerocoin mints and their meta-data.</string>
                  </property>
                  <property name="text">
                   <string>ReScan</string>

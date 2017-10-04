@@ -4237,7 +4237,7 @@ bool CWallet::CreateZerocoinSpendTransaction(CAmount nValue, int nSecurityLevel,
     return true;
 }
 
-string CWallet::ResetMintZerocoin()
+string CWallet::ResetMintZerocoin(bool fExtendedSearch)
 {
     long updates = 0;
     long deletions = 0;
@@ -4249,7 +4249,7 @@ string CWallet::ResetMintZerocoin()
     vector<CZerocoinMint> vMintsToUpdate;
 
     // search all of our available data for these mints
-    FindMints(vMintsToFind, vMintsToUpdate, vMintsMissing);
+    FindMints(vMintsToFind, vMintsToUpdate, vMintsMissing, fExtendedSearch);
 
     // Update the meta data of mints that were marked for updating
     for (CZerocoinMint mint : vMintsToUpdate) {
