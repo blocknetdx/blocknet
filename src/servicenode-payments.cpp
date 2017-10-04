@@ -204,16 +204,12 @@ bool IsBlockValueValid(const CBlock& block, CAmount nExpectedValue, CAmount nMin
 
         //are these blocks even enabled
         if (!IsSporkActive(SPORK_13_ENABLE_SUPERBLOCKS)) {
-            // If we're a superblock, set max mint (ignore genesis block)
-            if (nHeight > 0 && nHeight % GetBudgetPaymentCycleBlocks() == 0) {
-                return nMinted <= CBudgetManager::GetTotalBudget(nHeight);
-            }
             return nMinted <= nExpectedValue;
         }
 
         if (budget.IsBudgetPaymentBlock(nHeight)) {
             //the value of the block is evaluated in CheckBlock
-            return nMinted <= CBudgetManager::GetTotalBudget(nHeight);
+            return nMinted <= CBudgetManager::GetTotalBudget(nHeight) + 1;
         } else {
             if (nMinted > nExpectedValue) {
                 return false;
