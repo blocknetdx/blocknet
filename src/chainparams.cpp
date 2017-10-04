@@ -94,7 +94,7 @@ public:
         pchMessageStart[1] = 0xa0;
         pchMessageStart[2] = 0xa2;
         pchMessageStart[3] = 0xa3;
-        vAlertPubKey = ParseHex("0452c91a00518fb8c6d38100341f88499554284d1ba75097cc25ae5a0d811835c63d2cb46c8855304bca81c452b63ce71fcb6897d06f8000450841f72602457f74");
+        vAlertPubKey = ParseHex("0415758705177c87c35dadf7ebf66e93ecc2710253bbac955e695664011fa39ff29a84fa21ae9e203a43debb487170c143ab6eaffe4fa3b12e162d8a6d4da87395");
         nDefaultPort = 41412;
         bnProofOfWorkLimit = ~uint256() >> 20; // BlocknetDX starting difficulty is 1 / 2^12
         nSubsidyHalvingInterval = 210000;
@@ -141,6 +141,7 @@ public:
 
         vSeeds.push_back(CDNSSeedData("178.62.90.213", "178.62.90.213")); // seed node
         vSeeds.push_back(CDNSSeedData("138.197.73.214", "138.197.73.214")); // seed node
+        vSeeds.push_back(CDNSSeedData("34.235.49.248", "34.235.49.248")); // seed node
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 26);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1, 28);
@@ -167,7 +168,7 @@ public:
         fHeadersFirstSyncingActive = false;
 
         nPoolMaxTransactions = 3;
-        strSporkKey = "0484698d3ba6ba6e7423fa5cbd6a89e0a9a5348f88d332b44a5cb1a8b7ed2c1eaa335fc8dc4f012cb8241cc0bdafd6ca70c5f5448916e4e6f511bcd746ed57dc50";
+        strSporkKey = "04d179dd896fab8b4461bf828b5b618649c016c7e04c8361b4fe7abf4131f08d673115409241f71c27ee022bf3e945c941b96174e690858e5030f02e43c0970281";
         strObfuscationPoolDummyAddress = "D87q2gC9j6nNrnzCsg4aY6bHMLsT9nUhEw";
         nStartServicenodePayments = 1403728576; //Wed, 25 Jun 2014 20:36:16 GMT
     }
@@ -218,6 +219,7 @@ public:
 	
         vSeeds.push_back(CDNSSeedData("178.62.90.213", "178.62.90.213")); // seed node
         vSeeds.push_back(CDNSSeedData("138.197.73.214", "138.197.73.214")); // seed node
+        vSeeds.push_back(CDNSSeedData("34.235.49.248", "34.235.49.248")); // seed node
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 139); // Testnet blocknetdx addresses start with 'x' or 'y'
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1, 19);  // Testnet blocknetdx script addresses start with '8' or '9'
@@ -240,7 +242,7 @@ public:
         fTestnetToBeDeprecatedFieldRPC = true;
 
         nPoolMaxTransactions = 2;
-        strSporkKey = "04348C2F50F90267E64FACC65BFDC9D0EB147D090872FB97ABAE92E9A36E6CA60983E28E741F8E7277B11A7479B626AC115BA31463AC48178A5075C5A9319D4A38";
+        strSporkKey = "04565f429b8c68dabdcdf09608be05b4a10fc704f7de1866aaeed28a729ec5b8c418d90f9510ba115c0f35f353b1aea983fe99397d1c20685d6ab3ed0d0b7ba3ea";
         strObfuscationPoolDummyAddress = "y57cqfGRkekRyDRNeJiLtYVEbvhXrNbmox";
         nStartServicenodePayments = 1420837558; //Fri, 09 Jan 2015 21:05:58 GMT
     }
