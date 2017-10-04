@@ -1004,7 +1004,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
             return state.DoS(100, error("CheckTransaction() : duplicate inputs"),
                 REJECT_INVALID, "bad-txns-inputs-duplicate");
         // Fix bad stake inputs
-        if (IsSporkActive(SPORK_15_STAKING_FIX) && chainActive.Height() > 81862 && chainActive.Tip()->nHeight > SPORK_15_STAKING_FIX_HEIGHT) {
+        if (IsSporkActive(SPORK_15_STAKING_FIX) && chainActive.Height() > SPORK_15_STAKING_FIX_HEIGHT) {
             std::string txh = txin.prevout.hash.ToString();
             if (txh == "ef854505028c9f710f690010c2fde70949c233a56fe87170e00495bf31bab314" ||
                 txh == "b0387635224650ba8851583f1ba4ec6b2dc2aa563cf98bf2846418efd2486a41" ||
