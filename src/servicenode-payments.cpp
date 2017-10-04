@@ -194,7 +194,7 @@ bool IsBlockValueValid(const CBlock& block, CAmount nExpectedValue, CAmount nMin
     if (!servicenodeSync.IsSynced()) { //there is no budget data to use to check anything
         //super blocks will always be on these blocks, max 100 per budgeting
         if (nHeight > 0 && nHeight % GetBudgetPaymentCycleBlocks() < 100) {
-            return nMinted <= budget.GetTotalBudget(nHeight);
+            return nMinted <= CBudgetManager::GetTotalBudget(nHeight);
         } else {
             if (nMinted > nExpectedValue) {
                 return false;
@@ -206,14 +206,14 @@ bool IsBlockValueValid(const CBlock& block, CAmount nExpectedValue, CAmount nMin
         if (!IsSporkActive(SPORK_13_ENABLE_SUPERBLOCKS)) {
             // If we're a superblock, set max mint (ignore genesis block)
             if (nHeight > 0 && nHeight % GetBudgetPaymentCycleBlocks() == 0) {
-                return nMinted <= budget.GetTotalBudget(nHeight);
+                return nMinted <= CBudgetManager::GetTotalBudget(nHeight);
             }
             return nMinted <= nExpectedValue;
         }
 
         if (budget.IsBudgetPaymentBlock(nHeight)) {
             //the value of the block is evaluated in CheckBlock
-            return nMinted <= budget.GetTotalBudget(nHeight);
+            return nMinted <= CBudgetManager::GetTotalBudget(nHeight);
         } else {
             if (nMinted > nExpectedValue) {
                 return false;
