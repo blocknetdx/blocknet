@@ -94,7 +94,7 @@ public:
         pchMessageStart[1] = 0xa0;
         pchMessageStart[2] = 0xa2;
         pchMessageStart[3] = 0xa3;
-        vAlertPubKey = ParseHex("048fb01ba70e7d7de2a78c9240a9b459ce06770a02420c971068dd2d93aa733339f51170289edcacc643dfdb6a1cbad0f7ee9c2d56d1b6b670bf84781b32c8ddda");
+        vAlertPubKey = ParseHex("0415758705177c87c35dadf7ebf66e93ecc2710253bbac955e695664011fa39ff29a84fa21ae9e203a43debb487170c143ab6eaffe4fa3b12e162d8a6d4da87395");
         nDefaultPort = 41412;
         bnProofOfWorkLimit = ~uint256() >> 20; // BlocknetDX starting difficulty is 1 / 2^12
         nSubsidyHalvingInterval = 210000;
