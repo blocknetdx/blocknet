@@ -29,7 +29,7 @@ extern CServicenodePayments servicenodePayments;
 void ProcessMessageServicenodePayments(CNode* pfrom, std::string& strCommand, CDataStream& vRecv);
 bool IsBlockPayeeValid(const CBlock& block, int nBlockHeight);
 std::string GetRequiredPaymentsString(int nBlockHeight);
-bool IsBlockValueValid(const CBlock& block, CAmount nExpectedValue, CAmount nMinted, CAmount nMoneySupply);
+bool IsBlockValueValid(const CBlock& block, CAmount nExpectedValue, CAmount nMinted);
 void FillBlockPayee(CMutableTransaction& txNew, int64_t nFees, bool fProofOfStake);
 
 void DumpServicenodePayments();
