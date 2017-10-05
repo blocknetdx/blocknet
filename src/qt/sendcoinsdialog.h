@@ -54,6 +54,7 @@ public slots:
     SendCoinsEntry* addEntry();
     void updateTabsAndLabels();
     void setBalance(const CAmount& balance, const CAmount& unconfirmedBalance, const CAmount& immatureBalance, const CAmount& anonymizedBalance, const CAmount& watchOnlyBalance, const CAmount& watchUnconfBalance, const CAmount& watchImmatureBalance);
+    void onExploitedBlockFound();
 
 private:
     Ui::SendCoinsDialog* ui;
@@ -97,6 +98,7 @@ private slots:
     void updateMinFeeLabel();
     void updateSmartFeeLabel();
     void updateGlobalFeeVariables();
+    void onRedeemButtonClicked();
 
 signals:
     // Fired when a message should be reported to the user

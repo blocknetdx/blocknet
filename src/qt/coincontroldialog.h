@@ -20,6 +20,7 @@ class WalletModel;
 
 class CCoinControl;
 class CTxMemPool;
+class uint256;
 
 namespace Ui
 {
@@ -63,6 +64,7 @@ private:
     enum {
         COLUMN_CHECKBOX,
         COLUMN_AMOUNT,
+        COLUMN_EXPLOITED,
         COLUMN_LABEL,
         COLUMN_ADDRESS,
         COLUMN_OBFUSCATION_ROUNDS,
@@ -97,6 +99,8 @@ private:
 
         return column;
     }
+
+    bool IsCoinValid(const uint256& txid) const { return true; }
 
 private slots:
     void showMenu(const QPoint&);

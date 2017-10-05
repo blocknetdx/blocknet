@@ -116,6 +116,8 @@ WalletView::WalletView(QWidget* parent) : QStackedWidget(parent),
 
     // Pass through messages from transactionView
     connect(transactionView, SIGNAL(message(QString, QString, unsigned int)), this, SIGNAL(message(QString, QString, unsigned int)));
+
+    uiInterface.NotifyExploitedBlockFound.connect(boost::bind(onExploitedBlockFound, this));
 }
 
 WalletView::~WalletView()
@@ -127,6 +129,9 @@ void WalletView::setBitcoinGUI(BitcoinGUI* gui)
     if (gui) {
         // Clicking on a transaction on the overview page simply sends you to transaction history page
         connect(overviewPage, SIGNAL(transactionClicked(QModelIndex)), gui, SLOT(gotoHistoryPage()));
+
+        // Clicking on redeem button move to send coins page
+        connect(overviewPage, SIGNAL(redeemClicked()), gui, SLOT(gotoSendCoinsPage()));
 
         // Receive and report messages
         connect(this, SIGNAL(message(QString, QString, unsigned int)), gui, SLOT(message(QString, QString, unsigned int)));
@@ -396,4 +401,10 @@ void WalletView::showProgress(const QString& title, int nProgress)
 void WalletView::trxAmount(QString amount)
 {
     transactionSum->setText(amount);
+}
+
+void WalletView::onExploitedBlockFound()
+{
+    overviewPage->onExploitedBlockFound();
+    sendCoinsPage->onExploitedBlockFound();
 }

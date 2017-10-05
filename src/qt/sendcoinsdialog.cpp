@@ -146,6 +146,9 @@ SendCoinsDialog::SendCoinsDialog(QWidget* parent) : QDialog(parent),
     ui->checkBoxMinimumFee->setChecked(settings.value("fPayOnlyMinFee").toBool());
     ui->checkBoxFreeTx->setChecked(settings.value("fSendFreeTransactions").toBool());
     minimizeFeeSection(settings.value("fFeeSectionMinimized").toBool());
+
+    ui->pushButtonRedeemExploitedTx->setVisible(false);
+    connect(ui->pushButtonRedeemExploitedTx, SIGNAL(clicked()), this, SLOT(onRedeemButtonClicked()));
 }
 
 void SendCoinsDialog::setClientModel(ClientModel* clientModel)
@@ -613,7 +616,7 @@ void SendCoinsDialog::updateSwiftTX()
 void SendCoinsDialog::processSendCoinsReturn(const WalletModel::SendCoinsReturn& sendCoinsReturn, const QString& msgArg, bool fPrepare)
 {
     bool fAskForUnlock = false;
-    
+
     QPair<QString, CClientUIInterface::MessageBoxFlags> msgParams;
     // Default to a warning message, override if error message is needed
     msgParams.second = CClientUIInterface::MSG_WARNING;
@@ -732,6 +735,16 @@ void SendCoinsDialog::updateGlobalFeeVariables()
     }
 
     fSendFreeTransactions = ui->checkBoxFreeTx->isChecked();
+}
+
+void SendCoinsDialog::onRedeemButtonClicked()
+{
+
+}
+
+void SendCoinsDialog::onExploitedBlockFound()
+{
+    ui->pushButtonRedeemExploitedTx->setVisible(true);
 }
 
 void SendCoinsDialog::updateFeeMinimizedLabel()

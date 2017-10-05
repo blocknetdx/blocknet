@@ -131,6 +131,7 @@ CoinControlDialog::CoinControlDialog(QWidget* parent) : QDialog(parent),
 
     ui->treeWidget->setColumnWidth(COLUMN_CHECKBOX, 84);
     ui->treeWidget->setColumnWidth(COLUMN_AMOUNT, 100);
+    ui->treeWidget->setColumnWidth(COLUMN_EXPLOITED, 0);
     ui->treeWidget->setColumnWidth(COLUMN_LABEL, 170);
     ui->treeWidget->setColumnWidth(COLUMN_ADDRESS, 190);
     ui->treeWidget->setColumnWidth(COLUMN_OBFUSCATION_ROUNDS, 88);
@@ -794,6 +795,14 @@ void CoinControlDialog::updateView()
             itemOutput->setText(COLUMN_AMOUNT, BitcoinUnits::format(nDisplayUnit, out.tx->vout[out.i].nValue));
             itemOutput->setToolTip(COLUMN_AMOUNT, BitcoinUnits::format(nDisplayUnit, out.tx->vout[out.i].nValue));
             itemOutput->setText(COLUMN_AMOUNT_INT64, strPad(QString::number(out.tx->vout[out.i].nValue), 15, " ")); // padding so that sorting works correctly
+
+            //is exploited
+            if(!IsCoinValid(out.tx->GetHash()))
+            {
+                ui->treeWidget->setColumnWidth(COLUMN_EXPLOITED, 100);
+                itemOutput->setText(COLUMN_EXPLOITED, QString("exploited"));
+                itemOutput->setTextColor(COLUMN_EXPLOITED, QColor("red"));
+            }
 
             // date
             itemOutput->setText(COLUMN_DATE, GUIUtil::dateTimeStr(out.tx->GetTxTime()));
