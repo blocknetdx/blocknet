@@ -23,6 +23,7 @@
 #include "libzerocoin/Coin.h"
 #include "json/json_spirit_utils.h"
 #include "json/json_spirit_value.h"
+#include "spork.h"
 #include <boost/assign/list_of.hpp>
 
 using namespace std;
@@ -2404,6 +2405,9 @@ Value mintzerocoin(const Array& params, bool fHelp)
 
     int64_t nTime = GetTimeMillis();
 
+    if (GetAdjustedTime() < GetSporkValue(SPORK_17_ENABLE_ZEROCOIN))
+        throw JSONRPCError(RPC_WALLET_ERROR, "Error: Zerocoin functionality is not enabled on the PIVX network yet.");
+
     if (pwalletMain->IsLocked())
         throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
 
@@ -2447,8 +2451,10 @@ Value spendzerocoin(const Array& params, bool fHelp)
                     "an address is required"
             + HelpRequiringPassphrase());
 
-    int64_t nTimeStart = GetTimeMillis();
+    if (GetAdjustedTime() < GetSporkValue(SPORK_17_ENABLE_ZEROCOIN))
+        throw JSONRPCError(RPC_WALLET_ERROR, "Error: Zerocoin functionality is not enabled on the PIVX network yet.");
 
+    int64_t nTimeStart = GetTimeMillis();
     if (pwalletMain->IsLocked())
         throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
 
