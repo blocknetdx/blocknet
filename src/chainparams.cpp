@@ -94,7 +94,7 @@ public:
         pchMessageStart[1] = 0xa0;
         pchMessageStart[2] = 0xa2;
         pchMessageStart[3] = 0xa3;
-        vAlertPubKey = ParseHex("048fb01ba70e7d7de2a78c9240a9b459ce06770a02420c971068dd2d93aa733339f51170289edcacc643dfdb6a1cbad0f7ee9c2d56d1b6b670bf84781b32c8ddda");
+        vAlertPubKey = ParseHex("0415758705177c87c35dadf7ebf66e93ecc2710253bbac955e695664011fa39ff29a84fa21ae9e203a43debb487170c143ab6eaffe4fa3b12e162d8a6d4da87395");
         nDefaultPort = 41412;
         bnProofOfWorkLimit = ~uint256() >> 20; // BlocknetDX starting difficulty is 1 / 2^12
         nSubsidyHalvingInterval = 210000;
@@ -168,7 +168,7 @@ public:
         fHeadersFirstSyncingActive = false;
 
         nPoolMaxTransactions = 3;
-        strSporkKey = "04cf4da2ed0f2511d75e07ad1f06a2819c26a6bc6ad566db77f1b8d9534abec86f8c5817bc0bad137cd5367b21ebb63d04e06cf1fff3912cbb6daa2ceb5950353a";
+        strSporkKey = "04d179dd896fab8b4461bf828b5b618649c016c7e04c8361b4fe7abf4131f08d673115409241f71c27ee022bf3e945c941b96174e690858e5030f02e43c0970281";
         strObfuscationPoolDummyAddress = "D87q2gC9j6nNrnzCsg4aY6bHMLsT9nUhEw";
         nStartServicenodePayments = 1403728576; //Wed, 25 Jun 2014 20:36:16 GMT
     }
@@ -242,7 +242,7 @@ public:
         fTestnetToBeDeprecatedFieldRPC = true;
 
         nPoolMaxTransactions = 2;
-        strSporkKey = "04cf4da2ed0f2511d75e07ad1f06a2819c26a6bc6ad566db77f1b8d9534abec86f8c5817bc0bad137cd5367b21ebb63d04e06cf1fff3912cbb6daa2ceb5950353a";
+        strSporkKey = "04565f429b8c68dabdcdf09608be05b4a10fc704f7de1866aaeed28a729ec5b8c418d90f9510ba115c0f35f353b1aea983fe99397d1c20685d6ab3ed0d0b7ba3ea";
         strObfuscationPoolDummyAddress = "y57cqfGRkekRyDRNeJiLtYVEbvhXrNbmox";
         nStartServicenodePayments = 1420837558; //Fri, 09 Jan 2015 21:05:58 GMT
     }
