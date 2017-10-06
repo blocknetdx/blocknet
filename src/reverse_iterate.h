@@ -1,3 +1,7 @@
+// Copyright (c) 2017 The PIVX Core developers
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
 #pragma once
 /*
     Template used for reverse iteration in C++11 range-based for loops.
