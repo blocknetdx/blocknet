@@ -34,7 +34,6 @@ public:
     }
 
 protected:
-    std::string fromXAddr(const std::vector<unsigned char> & xaddr) const;
     std::vector<unsigned char> toXAddr(const std::string & addr) const;
 
     virtual uint32_t lockTime(const char role) const;

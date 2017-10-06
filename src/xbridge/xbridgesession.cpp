@@ -759,8 +759,8 @@ bool XBridgeSession::processTransactionHoldApply(XBridgePacketPtr packet)
 
     tr->updateTimestamp();
 
-    std::string sfrom = fromXAddr(from);
-    if (!sfrom.size() || !tr->isAddressKnown(sfrom))
+    std::string sfrom;
+    if (!isAddressInTransaction(from, tr, sfrom))
     {
         ERR() << "invalid transaction address " << __FUNCTION__;
         sendCancelTransaction(id, crInvalidAddress);
@@ -1020,8 +1020,8 @@ bool XBridgeSession::processTransactionInitialized(XBridgePacketPtr packet)
 
     tr->updateTimestamp();
 
-    std::string sfrom = fromXAddr(from);
-    if (!sfrom.size() || !tr->isAddressKnown(sfrom))
+    std::string sfrom;
+    if (!isAddressInTransaction(from, tr, sfrom))
     {
         ERR() << "invalid transaction address " << __FUNCTION__;
         sendCancelTransaction(id, crInvalidAddress);
@@ -1163,6 +1163,35 @@ bool XBridgeSession::checkDepositTx(const XBridgeTransactionDescrPtr & /*xtx*/,
     isGood = true;
 
     return true;
+}
+
+//******************************************************************************
+//******************************************************************************
+bool XBridgeSession::isAddressInTransaction(const std::vector<unsigned char> & address,
+                                            const XBridgeTransactionPtr & tx,
+                                            string & fullAddress)
+{
+    if (toXAddr(tx->a_address()) == address)
+    {
+        fullAddress = tx->a_address();
+        return true;
+    }
+    else if (toXAddr(tx->b_address()) == address)
+    {
+        fullAddress = tx->b_address();
+        return true;
+    }
+    else if (toXAddr(tx->a_destination()) == address)
+    {
+        fullAddress = tx->a_destination();
+        return true;
+    }
+    else if (toXAddr(tx->b_destination()) == address)
+    {
+        fullAddress = tx->b_destination();
+        return true;
+    }
+    return false;
 }
 
 //******************************************************************************
@@ -1616,8 +1645,8 @@ bool XBridgeSession::processTransactionCreatedA(XBridgePacketPtr packet)
 
     tr->updateTimestamp();
 
-    std::string sfrom = fromXAddr(from);
-    if (!sfrom.size() || !tr->isAddressKnown(sfrom))
+    std::string sfrom;
+    if (!isAddressInTransaction(from, tr, sfrom))
     {
         ERR() << "invalid transaction address " << __FUNCTION__;
         sendCancelTransaction(txid, crInvalidAddress);
@@ -1697,8 +1726,8 @@ bool XBridgeSession::processTransactionCreatedB(XBridgePacketPtr packet)
 
     tr->updateTimestamp();
 
-    std::string sfrom = fromXAddr(from);
-    if (!sfrom.size() || !tr->isAddressKnown(sfrom))
+    std::string sfrom;
+    if (!isAddressInTransaction(from, tr, sfrom))
     {
         ERR() << "invalid transaction address " << __FUNCTION__;
         sendCancelTransaction(txid, crInvalidAddress);
@@ -1965,8 +1994,8 @@ bool XBridgeSession::processTransactionConfirmedA(XBridgePacketPtr packet)
 
     tr->updateTimestamp();
 
-    std::string sfrom = fromXAddr(from);
-    if (!sfrom.size() || !tr->isAddressKnown(sfrom))
+    std::string sfrom;
+    if (!isAddressInTransaction(from, tr, sfrom))
     {
         ERR() << "invalid transaction address " << __FUNCTION__;
         sendCancelTransaction(txid, crInvalidAddress);
@@ -2211,8 +2240,8 @@ bool XBridgeSession::processTransactionConfirmedB(XBridgePacketPtr packet)
 
     tr->updateTimestamp();
 
-    std::string sfrom = fromXAddr(from);
-    if (!sfrom.size() || !tr->isAddressKnown(sfrom))
+    std::string sfrom;
+    if (!isAddressInTransaction(from, tr, sfrom))
     {
         ERR() << "invalid transaction address " << __FUNCTION__;
         sendCancelTransaction(txid, crInvalidAddress);
@@ -2722,8 +2751,19 @@ bool XBridgeSession::makeNewPubKey(xbridge::CPubKey & newPKey) const
 
 //******************************************************************************
 //******************************************************************************
-bool XBridgeSession::checkAmount(const uint64_t _amount) const
+bool XBridgeSession::checkAmount(const uint64_t amount) const
 {
+    std::vector<rpc::Unspent> inputs;
+    return checkAmountAndGetInputs(amount, inputs);
+}
+
+//******************************************************************************
+//******************************************************************************
+bool XBridgeSession::checkAmountAndGetInputs(const uint64_t _amount,
+                                             std::vector<rpc::Unspent> & inputs) const
+{
+    inputs.clear();
+
     double amount = _amount / XBridgeTransactionDescr::COIN;
 
     std::vector<rpc::Unspent> entries;
@@ -2737,6 +2777,8 @@ bool XBridgeSession::checkAmount(const uint64_t _amount) const
     double funds = 0;
     for (const rpc::Unspent & entry : entries)
     {
+        inputs.push_back(entry);
+
         funds += entry.amount;
         if (amount < funds)
         {
@@ -2744,6 +2786,7 @@ bool XBridgeSession::checkAmount(const uint64_t _amount) const
         }
     }
 
+    inputs.clear();
     return false;
 }
 

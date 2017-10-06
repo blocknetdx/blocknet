@@ -435,20 +435,6 @@ xbridge::CPubKey XBridgeTransaction::b_pk1() const
 
 //*****************************************************************************
 //*****************************************************************************
-bool XBridgeTransaction::isAddressKnown(const std::string & addr) const
-{
-    if (m_a.source() == addr ||
-        m_b.source() == addr ||
-        m_a.dest() == addr ||
-        m_b.dest() == addr)
-    {
-        return true;
-    }
-    return false;
-}
-
-//*****************************************************************************
-//*****************************************************************************
 bool XBridgeTransaction::tryJoin(const XBridgeTransactionPtr other)
 {
     DEBUG_TRACE();
