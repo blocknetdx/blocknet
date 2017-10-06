@@ -31,7 +31,6 @@ public:
     }
 
 protected:
-    std::string fromXAddr(const std::vector<unsigned char> & xaddr) const;
     std::vector<unsigned char> toXAddr(const std::string & addr) const;
 
     virtual uint32_t lockTime(const char role) const;
@@ -41,7 +40,6 @@ protected:
                                                        const uint32_t lockTime = 0) const;
 
 private:
-    std::string EncodeBase58Check(const std::vector<unsigned char>& vchIn) const;
     bool DecodeBase58Check(const char* psz, std::vector<unsigned char>& vchRet) const;
 };
 

@@ -124,20 +124,6 @@ xbridge::CTransactionPtr XBridgeSessionDcr::createTransaction(const std::vector<
     return tx;
 }
 
-std::string XBridgeSessionDcr::EncodeBase58Check(const std::vector<unsigned char>& vchIn) const
-{
-    std::vector<unsigned char> vch(vchIn);
-
-    uint256 hash = HashBlake(vch.begin(), vch.end());
-    uint256 hash2 = HashBlake(hash.begin(), hash.end());
-
-    vch.insert(vch.begin(), m_wallet.netId.begin(), m_wallet.netId.end());
-    vch.insert(vch.end(), (unsigned char*)&hash2, (unsigned char*)&hash2 + 4);
-
-    std::string encoded = EncodeBase58(vch);
-    return encoded;
-}
-
 bool XBridgeSessionDcr::DecodeBase58Check(const char* psz, std::vector<unsigned char>& vchRet) const
 {
     if (!DecodeBase58(psz, vchRet) ||
@@ -145,8 +131,6 @@ bool XBridgeSessionDcr::DecodeBase58Check(const char* psz, std::vector<unsigned 
         vchRet.clear();
         return false;
     }
-
-    std::vector<unsigned char> netId(vchRet[0], vchRet[1]);
 
     uint256 hash = HashBlake(vchRet.begin(), vchRet.end() - 4);
     uint256 hash2 = HashBlake(hash.begin(), hash.end());
