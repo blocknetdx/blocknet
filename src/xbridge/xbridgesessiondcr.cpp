@@ -37,13 +37,6 @@ XBridgeSessionDcr::~XBridgeSessionDcr()
 
 //*****************************************************************************
 //*****************************************************************************
-std::string XBridgeSessionDcr::fromXAddr(const std::vector<unsigned char> & xaddr) const
-{
-    return this->EncodeBase58Check(xaddr);
-}
-
-//*****************************************************************************
-//*****************************************************************************
 std::vector<unsigned char> XBridgeSessionDcr::toXAddr(const std::string & addr) const
 {
     std::vector<unsigned char> vaddr;
