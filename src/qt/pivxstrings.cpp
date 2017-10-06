@@ -9,6 +9,9 @@
 #define UNUSED
 #endif
 static const char UNUSED *pivx_strings[] = {
+QT_TRANSLATE_NOOP("pivx-core", " mints deleted\n"),
+QT_TRANSLATE_NOOP("pivx-core", " mints updated, "),
+QT_TRANSLATE_NOOP("pivx-core", " unconfirmed transactions removed\n"),
 QT_TRANSLATE_NOOP("pivx-core", ""
 "(1 = keep tx meta data e.g. account owner and payment request information, 2 "
 "= drop tx meta data)"),
@@ -29,6 +32,8 @@ QT_TRANSLATE_NOOP("pivx-core", ""
 "Bind to given address to listen for JSON-RPC connections. Use [host]:port "
 "notation for IPv6. This option can be specified multiple times (default: "
 "bind to all interfaces)"),
+QT_TRANSLATE_NOOP("pivx-core", ""
+"Calculated accumulator checkpoint is not what is recorded by block index"),
 QT_TRANSLATE_NOOP("pivx-core", ""
 "Cannot obtain a lock on data directory %s. PIVX Core is probably already "
 "running."),
@@ -56,13 +61,19 @@ QT_TRANSLATE_NOOP("pivx-core", ""
 "Enable swifttx, show confirmations for locked transactions (bool, default: "
 "%s)"),
 QT_TRANSLATE_NOOP("pivx-core", ""
-"Enable use of automated obfuscation for funds stored in this wallet (0-1, "
-"default: %u)"),
-QT_TRANSLATE_NOOP("pivx-core", ""
 "Enter regression test mode, which uses a special chain in which blocks can "
 "be solved instantly."),
 QT_TRANSLATE_NOOP("pivx-core", ""
 "Error: Listening for incoming connections failed (listen returned error %s)"),
+QT_TRANSLATE_NOOP("pivx-core", ""
+"Error: The transaction was rejected! This might happen if some of the coins "
+"in your wallet were already spent, such as if you used a copy of wallet.dat "
+"and coins were spent in the copy but not marked as spent here."),
+QT_TRANSLATE_NOOP("pivx-core", ""
+"Error: This transaction requires a transaction fee of at least %s because of "
+"its amount, complexity, or use of recently received funds!"),
+QT_TRANSLATE_NOOP("pivx-core", ""
+"Error: Unsupported argument -checklevel found. Checklevel must be level 4."),
 QT_TRANSLATE_NOOP("pivx-core", ""
 "Error: Unsupported argument -socks found. Setting SOCKS version isn't "
 "possible anymore, only SOCKS5 proxies are supported."),
@@ -87,8 +98,6 @@ QT_TRANSLATE_NOOP("pivx-core", ""
 QT_TRANSLATE_NOOP("pivx-core", ""
 "Found unconfirmed denominated outputs, will wait till they confirm to "
 "continue."),
-QT_TRANSLATE_NOOP("pivx-core", ""
-"How thorough the block verification of -checkblocks is (0-4, default: %u)"),
 QT_TRANSLATE_NOOP("pivx-core", ""
 "If paytxfee is not set, include enough fee so transactions begin "
 "confirmation on average within n blocks (default: %u)"),
@@ -119,12 +128,14 @@ QT_TRANSLATE_NOOP("pivx-core", ""
 QT_TRANSLATE_NOOP("pivx-core", ""
 "Output debugging information (default: %u, supplying <category> is optional)"),
 QT_TRANSLATE_NOOP("pivx-core", ""
-"Provide liquidity to Obfuscation by infrequently mixing coins on a continual "
-"basis (0-100, default: %u, 1=very frequent, high fees, 100=very infrequent, "
-"low fees)"),
+"Preferred Denomination for automatically minted Zerocoin  "
+"(1/5/10/50/100/500/1000/5000), 0 for no preference. default: %u)"),
 QT_TRANSLATE_NOOP("pivx-core", ""
 "Query for peer addresses via DNS lookup, if low on addresses (default: 1 "
 "unless -connect)"),
+QT_TRANSLATE_NOOP("pivx-core", ""
+"Randomize credentials for every proxy connection. This enables Tor stream "
+"isolation (default: %u)"),
 QT_TRANSLATE_NOOP("pivx-core", ""
 "Require high priority for relaying free or low-fee transactions (default:%u)"),
 QT_TRANSLATE_NOOP("pivx-core", ""
@@ -224,7 +235,9 @@ QT_TRANSLATE_NOOP("pivx-core", "Already have that input."),
 QT_TRANSLATE_NOOP("pivx-core", "Always query for peer addresses via DNS lookup (default: %u)"),
 QT_TRANSLATE_NOOP("pivx-core", "Attempt to force blockchain corruption recovery"),
 QT_TRANSLATE_NOOP("pivx-core", "Attempt to recover private keys from a corrupt wallet.dat"),
+QT_TRANSLATE_NOOP("pivx-core", "Automatically create Tor hidden service (default: %d)"),
 QT_TRANSLATE_NOOP("pivx-core", "Block creation options:"),
+QT_TRANSLATE_NOOP("pivx-core", "Calculating missing accumulators..."),
 QT_TRANSLATE_NOOP("pivx-core", "Can't denominate: no compatible inputs left."),
 QT_TRANSLATE_NOOP("pivx-core", "Can't find random Masternode."),
 QT_TRANSLATE_NOOP("pivx-core", "Can't mix while sync in progress."),
@@ -245,6 +258,7 @@ QT_TRANSLATE_NOOP("pivx-core", "Corrupted block database detected"),
 QT_TRANSLATE_NOOP("pivx-core", "Could not parse -rpcbind value %s as network address"),
 QT_TRANSLATE_NOOP("pivx-core", "Could not parse masternode.conf"),
 QT_TRANSLATE_NOOP("pivx-core", "Debugging/Testing options:"),
+QT_TRANSLATE_NOOP("pivx-core", "Disable OS notifications for incoming transactions (default: %u)"),
 QT_TRANSLATE_NOOP("pivx-core", "Disable safemode, override a real safe mode event (default: %u)"),
 QT_TRANSLATE_NOOP("pivx-core", "Discover own IP address (default: 1 when listening and no -externalip)"),
 QT_TRANSLATE_NOOP("pivx-core", "Display the stake modifier calculations in the debug.log file."),
@@ -252,6 +266,7 @@ QT_TRANSLATE_NOOP("pivx-core", "Display verbose coin stake messages in the debug
 QT_TRANSLATE_NOOP("pivx-core", "Do not load the wallet and disable wallet RPC calls"),
 QT_TRANSLATE_NOOP("pivx-core", "Do you want to rebuild the block database now?"),
 QT_TRANSLATE_NOOP("pivx-core", "Done loading"),
+QT_TRANSLATE_NOOP("pivx-core", "Enable automatic Zerocoin minting (0-1, default: %u)"),
 QT_TRANSLATE_NOOP("pivx-core", "Enable publish hash block in <address>"),
 QT_TRANSLATE_NOOP("pivx-core", "Enable publish hash transaction (locked via SwiftTX) in <address>"),
 QT_TRANSLATE_NOOP("pivx-core", "Enable publish hash transaction in <address>"),
@@ -297,24 +312,26 @@ QT_TRANSLATE_NOOP("pivx-core", "Incorrect or no genesis block found. Wrong datad
 QT_TRANSLATE_NOOP("pivx-core", "Information"),
 QT_TRANSLATE_NOOP("pivx-core", "Initialization sanity check failed. PIVX Core is shutting down."),
 QT_TRANSLATE_NOOP("pivx-core", "Input is not valid."),
+QT_TRANSLATE_NOOP("pivx-core", "Insufficient funds"),
 QT_TRANSLATE_NOOP("pivx-core", "Insufficient funds."),
-QT_TRANSLATE_NOOP("pivx-core", "Invalid -onion address: '%s'"),
-QT_TRANSLATE_NOOP("pivx-core", "Invalid -proxy address: '%s'"),
+QT_TRANSLATE_NOOP("pivx-core", "Invalid -onion address or hostname: '%s'"),
+QT_TRANSLATE_NOOP("pivx-core", "Invalid -proxy address or hostname: '%s'"),
 QT_TRANSLATE_NOOP("pivx-core", "Invalid amount for -maxtxfee=<amount>: '%s'"),
 QT_TRANSLATE_NOOP("pivx-core", "Invalid amount for -minrelaytxfee=<amount>: '%s'"),
 QT_TRANSLATE_NOOP("pivx-core", "Invalid amount for -mintxfee=<amount>: '%s'"),
 QT_TRANSLATE_NOOP("pivx-core", "Invalid amount for -paytxfee=<amount>: '%s' (must be at least %s)"),
 QT_TRANSLATE_NOOP("pivx-core", "Invalid amount for -paytxfee=<amount>: '%s'"),
 QT_TRANSLATE_NOOP("pivx-core", "Invalid amount for -reservebalance=<amount>"),
+QT_TRANSLATE_NOOP("pivx-core", "Invalid amount"),
 QT_TRANSLATE_NOOP("pivx-core", "Invalid masternodeprivkey. Please see documenation."),
 QT_TRANSLATE_NOOP("pivx-core", "Invalid netmask specified in -whitelist: '%s'"),
 QT_TRANSLATE_NOOP("pivx-core", "Invalid port detected in masternode.conf"),
 QT_TRANSLATE_NOOP("pivx-core", "Invalid private key."),
 QT_TRANSLATE_NOOP("pivx-core", "Invalid script detected."),
-QT_TRANSLATE_NOOP("pivx-core", "Keep N PIV anonymized (default: %u)"),
 QT_TRANSLATE_NOOP("pivx-core", "Keep at most <n> unconnectable transactions in memory (default: %u)"),
 QT_TRANSLATE_NOOP("pivx-core", "Last Obfuscation was too recent."),
 QT_TRANSLATE_NOOP("pivx-core", "Last successful Obfuscation action was too recent."),
+QT_TRANSLATE_NOOP("pivx-core", "Less than 3 mints added, unable to create spend"),
 QT_TRANSLATE_NOOP("pivx-core", "Limit size of signature cache to <n> entries (default: %u)"),
 QT_TRANSLATE_NOOP("pivx-core", "Line: %d"),
 QT_TRANSLATE_NOOP("pivx-core", "Listen for JSON-RPC connections on <port> (default: %u or testnet: %u)"),
@@ -324,6 +341,7 @@ QT_TRANSLATE_NOOP("pivx-core", "Loading block index..."),
 QT_TRANSLATE_NOOP("pivx-core", "Loading budget cache..."),
 QT_TRANSLATE_NOOP("pivx-core", "Loading masternode cache..."),
 QT_TRANSLATE_NOOP("pivx-core", "Loading masternode payment cache..."),
+QT_TRANSLATE_NOOP("pivx-core", "Loading sporks..."),
 QT_TRANSLATE_NOOP("pivx-core", "Loading wallet... (%3.2f %%)"),
 QT_TRANSLATE_NOOP("pivx-core", "Loading wallet..."),
 QT_TRANSLATE_NOOP("pivx-core", "Lock is already in place."),
@@ -348,13 +366,13 @@ QT_TRANSLATE_NOOP("pivx-core", "Not enough file descriptors available."),
 QT_TRANSLATE_NOOP("pivx-core", "Not in the Masternode list."),
 QT_TRANSLATE_NOOP("pivx-core", "Number of automatic wallet backups (default: 10)"),
 QT_TRANSLATE_NOOP("pivx-core", "Obfuscation is idle."),
-QT_TRANSLATE_NOOP("pivx-core", "Obfuscation options:"),
 QT_TRANSLATE_NOOP("pivx-core", "Obfuscation request complete:"),
 QT_TRANSLATE_NOOP("pivx-core", "Obfuscation request incomplete:"),
 QT_TRANSLATE_NOOP("pivx-core", "Only accept block chain matching built-in checkpoints (default: %u)"),
 QT_TRANSLATE_NOOP("pivx-core", "Only connect to nodes in network <net> (ipv4, ipv6 or onion)"),
 QT_TRANSLATE_NOOP("pivx-core", "Options:"),
 QT_TRANSLATE_NOOP("pivx-core", "Password for JSON-RPC connections"),
+QT_TRANSLATE_NOOP("pivx-core", "Percentage of automatically minted Zerocoin  (10-100, default: %u)"),
 QT_TRANSLATE_NOOP("pivx-core", "Prepend debug output with timestamp (default: %u)"),
 QT_TRANSLATE_NOOP("pivx-core", "Print version and exit"),
 QT_TRANSLATE_NOOP("pivx-core", "RPC SSL options: (see the Bitcoin Wiki for SSL setup instructions)"),
@@ -368,6 +386,8 @@ QT_TRANSLATE_NOOP("pivx-core", "Relay and mine data carrier transactions (defaul
 QT_TRANSLATE_NOOP("pivx-core", "Relay non-P2SH multisig (default: %u)"),
 QT_TRANSLATE_NOOP("pivx-core", "Rescan the block chain for missing wallet transactions"),
 QT_TRANSLATE_NOOP("pivx-core", "Rescanning..."),
+QT_TRANSLATE_NOOP("pivx-core", "ResetMintZerocoin finished: "),
+QT_TRANSLATE_NOOP("pivx-core", "ResetSpentZerocoin finished: "),
 QT_TRANSLATE_NOOP("pivx-core", "Run a thread to flush wallet periodically (default: %u)"),
 QT_TRANSLATE_NOOP("pivx-core", "Run in the background as a daemon and accept commands"),
 QT_TRANSLATE_NOOP("pivx-core", "Send transactions as zero-fee transactions if possible (default: %u)"),
@@ -414,6 +434,8 @@ QT_TRANSLATE_NOOP("pivx-core", "This is experimental software."),
 QT_TRANSLATE_NOOP("pivx-core", "This is intended for regression testing tools and app development."),
 QT_TRANSLATE_NOOP("pivx-core", "This is not a Masternode."),
 QT_TRANSLATE_NOOP("pivx-core", "Threshold for disconnecting misbehaving peers (default: %u)"),
+QT_TRANSLATE_NOOP("pivx-core", "Tor control port password (default: empty)"),
+QT_TRANSLATE_NOOP("pivx-core", "Tor control port to use if onion listening enabled (default: %s)"),
 QT_TRANSLATE_NOOP("pivx-core", "Transaction amount too small"),
 QT_TRANSLATE_NOOP("pivx-core", "Transaction amounts must be positive"),
 QT_TRANSLATE_NOOP("pivx-core", "Transaction created successfully."),
@@ -427,7 +449,6 @@ QT_TRANSLATE_NOOP("pivx-core", "Unable to sign spork message, wrong key?"),
 QT_TRANSLATE_NOOP("pivx-core", "Unknown network specified in -onlynet: '%s'"),
 QT_TRANSLATE_NOOP("pivx-core", "Unknown state: id = %u"),
 QT_TRANSLATE_NOOP("pivx-core", "Upgrade wallet to latest format"),
-QT_TRANSLATE_NOOP("pivx-core", "Use N separate masternodes to anonymize funds  (2-8, default: %u)"),
 QT_TRANSLATE_NOOP("pivx-core", "Use OpenSSL (https) for JSON-RPC connections"),
 QT_TRANSLATE_NOOP("pivx-core", "Use UPnP to map the listening port (default: %u)"),
 QT_TRANSLATE_NOOP("pivx-core", "Use UPnP to map the listening port (default: 1 when listening)"),
@@ -451,6 +472,8 @@ QT_TRANSLATE_NOOP("pivx-core", "Your entries added successfully."),
 QT_TRANSLATE_NOOP("pivx-core", "Your transaction was accepted into the pool!"),
 QT_TRANSLATE_NOOP("pivx-core", "Zapping all transactions from wallet..."),
 QT_TRANSLATE_NOOP("pivx-core", "ZeroMQ notification options:"),
+QT_TRANSLATE_NOOP("pivx-core", "Zerocoin options:"),
+QT_TRANSLATE_NOOP("pivx-core", "failed to validate zerocoin"),
 QT_TRANSLATE_NOOP("pivx-core", "on startup"),
 QT_TRANSLATE_NOOP("pivx-core", "wallet.dat corrupt, salvage failed"),
 };

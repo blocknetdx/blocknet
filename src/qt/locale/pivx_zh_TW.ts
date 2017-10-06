@@ -744,6 +744,25 @@
     <name>PeerTableModel</name>
     </context>
 <context>
+    <name>PrivacyDialog</name>
+    <message>
+        <source>Choose previously used address</source>
+        <translation>選擇之前用過的位址</translation>
+    </message>
+    <message>
+        <source>Alt+A</source>
+        <translation>Alt+A</translation>
+    </message>
+    <message>
+        <source>Paste address from clipboard</source>
+        <translation>從剪貼簿貼上</translation>
+    </message>
+    <message>
+        <source>Alt+P</source>
+        <translation>Alt+P</translation>
+    </message>
+    </context>
+<context>
     <name>QObject</name>
     </context>
 <context>
@@ -950,6 +969,9 @@
         <source>Export the data in the current tab to a file</source>
         <translation>匯出目前面板中的資料</translation>
     </message>
+    </context>
+<context>
+    <name>ZPivControlDialog</name>
     </context>
 <context>
     <name>pivx-core</name>

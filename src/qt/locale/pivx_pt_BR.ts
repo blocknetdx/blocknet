@@ -956,10 +956,6 @@ MultiSend: %1</translation>
         <translation>Favor alterar para o "Modo de lista" para usar esta função.</translation>
     </message>
     <message>
-        <source>Non-anonymized input selected. &lt;b&gt;Obfuscation will be disabled.&lt;/b&gt;&lt;br&gt;&lt;br&gt;If you still want to use Obfuscation, please deselect all non-nonymized inputs first and then check Obfuscation checkbox again.</source>
-        <translation>Input não-anonimizado selecionado. &lt;b&gt;Ofuscação será desabilitada.&lt;/b&gt;&lt;br&gt;&lt;br&gt; Se você ainda quiser usar a Ofuscação, favor desmarcar todos os inputs não anônimos primeiro e então marque a opção de Ofuscação novamente.</translation>
-    </message>
-    <message>
         <source>highest</source>
         <translation>mais alto</translation>
     </message>
@@ -978,10 +974,6 @@ MultiSend: %1</translation>
     <message>
         <source>Can vary +/- %1 duff(s) per input.</source>
         <translation>pode variar entre +/-%1 duff(s) por input</translation>
-    </message>
-    <message>
-        <source>n/a</source>
-        <translation>n/a</translation>
     </message>
     <message>
         <source>medium</source>
@@ -1582,18 +1574,6 @@ Favor verificar o endereço e tente novamente.</translation>
         <translation>&amp;Iniciar PIVX ao logar no sistema</translation>
     </message>
     <message>
-        <source>This setting determines the amount of individual masternodes that an input will be anonymized through.&lt;br/&gt;More rounds of anonymization gives a higher degree of privacy, but also costs more in fees.</source>
-        <translation>Esta configuração determina a quantidade de masternodes individuais em que um input será feito anônimo. &lt;br/&gt;Mais rodadas de anonimidade darão um grau maior de privacidade, mas também custarão mais em taxas. </translation>
-    </message>
-    <message>
-        <source>Obfuscation rounds to use</source>
-        <translation>Rodadas de ofuscação para usar</translation>
-    </message>
-    <message>
-        <source>Amount of PIVX to keep anonymized</source>
-        <translation>Quantidade de PIVX a manter anônima</translation>
-    </message>
-    <message>
         <source>Enable coin &amp;control features</source>
         <translation>Habilitar &amp;funcções de controle de moeda</translation>
     </message>
@@ -1751,10 +1731,6 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>Imaturo:</translation>
     </message>
     <message>
-        <source>Balances</source>
-        <translation>Fundos</translation>
-    </message>
-    <message>
         <source>The displayed information may be out of date. Your wallet automatically synchronizes with the PIVX network after a connection is established, but this process has not completed yet.</source>
         <translation>A informação mostrada pode estar desatualizada. A sua carteira se sincroniza automaticamente com a rede PIVX após estabelecer uma conexão, mas esse processo ainda não foi concluído.</translation>
     </message>
@@ -1783,130 +1759,12 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>Disponível:</translation>
     </message>
     <message>
-        <source>Status:</source>
-        <translation>Situação:</translation>
-    </message>
-    <message>
-        <source>Obfuscation Balance:</source>
-        <translation>Saldo ofuscado:</translation>
-    </message>
-    <message>
-        <source>0 PIV / 0 Rounds</source>
-        <translation>0 PIV / 0 Rodadas</translation>
-    </message>
-    <message>
-        <source>Enabled/Disabled</source>
-        <translation>Ativado/Desativado</translation>
-    </message>
-    <message>
-        <source>Try to manually submit a Obfuscation request.</source>
-        <translation>Tente encaminhar uma requisição manualmente de Ofuscação.</translation>
-    </message>
-    <message>
-        <source>Reset the current status of Obfuscation (can interrupt Obfuscation if it's in the process of Mixing, which can cost you money!)</source>
-        <translation>Reinicia o presente estado de ofuscação (pode interromper a Ofuscação se estiver em processo de Embaralhamento, o que pode lhe custar dinheiro!)</translation>
-    </message>
-    <message>
-        <source>Obfuscation</source>
-        <translation>Ofuscação</translation>
-    </message>
-    <message>
-        <source>Completion:</source>
-        <translation>Conclusão:</translation>
-    </message>
-    <message>
-        <source>Amount and Rounds:</source>
-        <translation>Quantia e Rodadas:</translation>
-    </message>
-    <message>
-        <source>n/a</source>
-        <translation>n/a</translation>
-    </message>
-    <message>
         <source>Recent transactions</source>
         <translation>Transações recentes</translation>
     </message>
     <message>
-        <source>Start/Stop Mixing</source>
-        <translation>Iniciar/Parar embaralhamento</translation>
-    </message>
-    <message>
-        <source>(Last Message)</source>
-        <translation>(Última mensagem)</translation>
-    </message>
-    <message>
-        <source>Try Mix</source>
-        <translation>Tente embaralhar</translation>
-    </message>
-    <message>
-        <source>Reset</source>
-        <translation>Reinicia</translation>
-    </message>
-    <message>
         <source>out of sync</source>
         <translation>fora de sincronia</translation>
-    </message>
-    <message>
-        <source>Disabled</source>
-        <translation>Desativado</translation>
-    </message>
-    <message>
-        <source>No inputs detected</source>
-        <translation>Nenhum input detectado</translation>
-    </message>
-    <message>
-        <source>Overall progress</source>
-        <translation>Progresso geral</translation>
-    </message>
-    <message>
-        <source>Denominated</source>
-        <translation>Denominado</translation>
-    </message>
-    <message>
-        <source>Anonymized</source>
-        <translation>Anonimizado</translation>
-    </message>
-    <message>
-        <source>Last Obfuscation message:
-</source>
-        <translation>Última mensagem de ofuscação:
-</translation>
-    </message>
-    <message>
-        <source>Obfuscation was successfully reset.</source>
-        <translation>Ofuscação foi reiniciada com sucesso.</translation>
-    </message>
-    <message>
-        <source>Obfuscation requires at least %1 to use.</source>
-        <translation>Ofuscação requer pelo menos %1 para usar.</translation>
-    </message>
-    <message>
-        <source>Wallet is locked and user declined to unlock. Disabling Obfuscation.</source>
-        <translation>A carteira está travada e o usuário recusou o destravamento. Desabilitando a Ofuscação.</translation>
-    </message>
-    <message>
-        <source>Found enough compatible inputs to anonymize %1</source>
-        <translation>Foram encontrados inputos suficientes para anonimizar %1</translation>
-    </message>
-    <message>
-        <source>Start Obfuscation</source>
-        <translation>Iniciar ofuscação</translation>
-    </message>
-    <message>
-        <source>Stop Obfuscation</source>
-        <translation>Parar ofuscação</translation>
-    </message>
-    <message>
-        <source>Mixed</source>
-        <translation>Embaralhado</translation>
-    </message>
-    <message>
-        <source>Enabled</source>
-        <translation>Ativado</translation>
-    </message>
-    <message>
-        <source>N/A</source>
-        <translation>N/A</translation>
     </message>
 </context>
 <context>
@@ -1959,6 +1817,109 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>Tempo de resposta</translation>
     </message>
 </context>
+<context>
+    <name>PrivacyDialog</name>
+    <message>
+        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the PIVX network after a connection is established, but this process has not completed yet.</source>
+        <translation>A informação mostrada pode estar desatualizada. A sua carteira se sincroniza automaticamente com a rede PIVX após estabelecer uma conexão, mas esse processo ainda não foi concluído.</translation>
+    </message>
+    <message>
+        <source>0</source>
+        <translation>0</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation>Reinicia</translation>
+    </message>
+    <message>
+        <source>Quantity:</source>
+        <translation>Quantidade:</translation>
+    </message>
+    <message>
+        <source>Amount:</source>
+        <translation>Quantia:</translation>
+    </message>
+    <message>
+        <source>Pay &amp;To:</source>
+        <translation>Pagar &amp;Para:</translation>
+    </message>
+    <message>
+        <source>Choose previously used address</source>
+        <translation>Escolha o endereço previamente utilizado</translation>
+    </message>
+    <message>
+        <source>Alt+A</source>
+        <translation>Alt+A</translation>
+    </message>
+    <message>
+        <source>Paste address from clipboard</source>
+        <translation>Cole o endereço da área de transferência</translation>
+    </message>
+    <message>
+        <source>Alt+P</source>
+        <translation>Alt+P</translation>
+    </message>
+    <message>
+        <source>&amp;Label:</source>
+        <translation>&amp;Rótulo:</translation>
+    </message>
+    <message>
+        <source>Enter a label for this address to add it to the list of used addresses</source>
+        <translation>Coloque uma etiqueta neste endereço para adicioná-lo à lista de endereços utilizados</translation>
+    </message>
+    <message>
+        <source>A&amp;mount:</source>
+        <translation>Quantia:</translation>
+    </message>
+    <message>
+        <source>Priority:</source>
+        <translation>Prioridade:</translation>
+    </message>
+    <message>
+        <source>Fee:</source>
+        <translation>Taxa:</translation>
+    </message>
+    <message>
+        <source>no</source>
+        <translation>não</translation>
+    </message>
+    <message>
+        <source>Bytes:</source>
+        <translation>Bytes:</translation>
+    </message>
+    <message>
+        <source>Insufficient funds!</source>
+        <translation>Fundos insuficientes!</translation>
+    </message>
+    <message>
+        <source>medium</source>
+        <translation>médio</translation>
+    </message>
+    <message>
+        <source>Coin Control Features</source>
+        <translation>Funções do Controle de Moedas</translation>
+    </message>
+    <message>
+        <source>Change:</source>
+        <translation>Troco:</translation>
+    </message>
+    <message>
+        <source>out of sync</source>
+        <translation>fora de sincronia</translation>
+    </message>
+    <message>
+        <source>Copy quantity</source>
+        <translation>Copiar quantidade</translation>
+    </message>
+    <message>
+        <source>Copy amount</source>
+        <translation>Copiar quantia</translation>
+    </message>
+    <message>
+        <source>Confirm send coins</source>
+        <translation>Confirmar envio de moedas</translation>
+    </message>
+    </context>
 <context>
     <name>QObject</name>
     <message>
@@ -2272,7 +2233,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>&amp;Label:</source>
-        <translation>Rótu&amp;lo:</translation>
+        <translation>&amp;Rótulo:</translation>
     </message>
     <message>
         <source>&amp;Amount:</source>
@@ -2416,10 +2377,6 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>Funções do Controle de Moedas</translation>
     </message>
     <message>
-        <source>automatically selected</source>
-        <translation>selecionado automaticamente</translation>
-    </message>
-    <message>
         <source>Insufficient funds!</source>
         <translation>Fundos insuficientes!</translation>
     </message>
@@ -2490,10 +2447,6 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <message>
         <source>Minimize</source>
         <translation>Minimizar</translation>
-    </message>
-    <message>
-        <source>Obfuscation</source>
-        <translation>Ofuscação</translation>
     </message>
     <message>
         <source>per kilobyte</source>
@@ -3452,6 +3405,13 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
 </context>
 <context>
+    <name>ZPivControlDialog</name>
+    <message>
+        <source>0</source>
+        <translation>0</translation>
+    </message>
+    </context>
+<context>
     <name>pivx-core</name>
     <message>
         <source>Delete all wallet transactions and only recover those parts of the blockchain through -rescan on startup</source>
@@ -3460,10 +3420,6 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <message>
         <source>Disable all PIVX specific functionality (Masternodes, Obfuscation, SwiftTX, Budgeting) (0-1, default: %u)</source>
         <translation>Desabilitar todas as funcionalidades específicas PIVX (Masternodes, Ofuscação, SwiftTX, Budgeting) (0-1, padrão: %u)</translation>
-    </message>
-    <message>
-        <source>Enable use of automated obfuscation for funds stored in this wallet (0-1, default: %u)</source>
-        <translation>Permitir o uso de ofuscação automática para fundos armazenados nesta carteira (0-1, padrão: %u)</translation>
     </message>
     <message>
         <source>Error: Unsupported argument -socks found. Setting SOCKS version isn't possible anymore, only SOCKS5 proxies are supported.</source>
@@ -3802,10 +3758,6 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>Script inválido detectado.</translation>
     </message>
     <message>
-        <source>Keep N PIV anonymized (default: %u)</source>
-        <translation>Manter N PIV anônimo (padrão: %u)</translation>
-    </message>
-    <message>
         <source>Last Obfuscation was too recent.</source>
         <translation>Última ofuscação foi muito recente.</translation>
     </message>
@@ -3904,10 +3856,6 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <message>
         <source>Obfuscation is idle.</source>
         <translation>Ofuscação está ociosa.</translation>
-    </message>
-    <message>
-        <source>Obfuscation options:</source>
-        <translation>Opções de ofuscação:</translation>
     </message>
     <message>
         <source>Obfuscation request complete:</source>

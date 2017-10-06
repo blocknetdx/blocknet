@@ -7,7 +7,7 @@
     </message>
     <message>
         <source>Create a new address</source>
-        <translation>Ny adresse</translation>
+        <translation>opret ny adresse</translation>
     </message>
     <message>
         <source>&amp;New</source>
@@ -899,10 +899,6 @@ Adresse: %4
         <translation>Modtaget med adresse</translation>
     </message>
     <message>
-        <source>DS Rounds</source>
-        <translation>DS gennemløb</translation>
-    </message>
-    <message>
         <source>Date</source>
         <translation>Dato</translation>
     </message>
@@ -975,10 +971,6 @@ Adresse: %4
         <translation>Skift til "listeformat" for at benytte denne funktion</translation>
     </message>
     <message>
-        <source>Non-anonymized input selected. &lt;b&gt;Obfuscation will be disabled.&lt;/b&gt;&lt;br&gt;&lt;br&gt;If you still want to use Obfuscation, please deselect all non-nonymized inputs first and then check Obfuscation checkbox again.</source>
-        <translation>Ikke anonymiseret indhold valgt.&lt;b&gt;tilsløring vil være slået fra.&lt;/b&gt;&lt;br&gt;&lt;br&gt;Hvis De ønsker at anvende tilsløring skal De fravælge alt ikke anonymiseret indhold først, derefter afmærke boksen for tilsløring igen.</translation>
-    </message>
-    <message>
         <source>highest</source>
         <translation>højeste</translation>
     </message>
@@ -997,10 +989,6 @@ Adresse: %4
     <message>
         <source>Can vary +/- %1 duff(s) per input.</source>
         <translation>kan variere +/- %1 duff(s) pr. input</translation>
-    </message>
-    <message>
-        <source>n/a</source>
-        <translation>Ikke tilgængelig</translation>
     </message>
     <message>
         <source>medium</source>
@@ -1650,22 +1638,6 @@ Kontroller adressen og prøv igen.</translation>
         <translation>&amp;start PIVX når der logges på systemet</translation>
     </message>
     <message>
-        <source>This setting determines the amount of individual masternodes that an input will be anonymized through.&lt;br/&gt;More rounds of anonymization gives a higher degree of privacy, but also costs more in fees.</source>
-        <translation>Denne indstilling bestemmer antallet af individuelle masternoder hvorgennem der tilsløres et input. &lt;br/&gt;Jo flere gennemløb der udføres, jo højere grad af tilsløring, og jo højere gebyrer.</translation>
-    </message>
-    <message>
-        <source>Obfuscation rounds to use</source>
-        <translation>Antal gennemløb der skal benyttes </translation>
-    </message>
-    <message>
-        <source>This amount acts as a threshold to turn off Obfuscation once it's reached.</source>
-        <translation>når dette antal er nået slås tilsløringsfunktonen fra. </translation>
-    </message>
-    <message>
-        <source>Amount of PIVX to keep anonymized</source>
-        <translation>Antallet af PIVX som skal holdes tilslørede</translation>
-    </message>
-    <message>
         <source>Whether to show coin control features or not.</source>
         <translation>Vis eller skjul møntkontrolfeatures</translation>
     </message>
@@ -1855,10 +1827,6 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>Indskyder- eller masternodebelønning er stadig under behandling</translation>
     </message>
     <message>
-        <source>Balances</source>
-        <translation>Saldi</translation>
-    </message>
-    <message>
         <source>The displayed information may be out of date. Your wallet automatically synchronizes with the PIVX network after a connection is established, but this process has not completed yet.</source>
         <translation>De viste informationer kan være uddaterede. Deres tegnebog synkronisere automatism med PIVX netværket så snart en forbindelse er etalbleret, men denne proces er ikke færdiggjort endnu. </translation>
     </message>
@@ -1895,145 +1863,12 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>Brugbare:</translation>
     </message>
     <message>
-        <source>Status:</source>
-        <translation>Status</translation>
-    </message>
-    <message>
-        <source>Obfuscation Balance:</source>
-        <translation>Sløret beløb</translation>
-    </message>
-    <message>
-        <source>0 PIV / 0 Rounds</source>
-        <translation>0 PIV / 0 gennemløb</translation>
-    </message>
-    <message>
-        <source>Enabled/Disabled</source>
-        <translation>Startet/Stoppet</translation>
-    </message>
-    <message>
-        <source>Try to manually submit a Obfuscation request.</source>
-        <translation>Prøv at send en manuel tilsløringsanmodning.</translation>
-    </message>
-    <message>
-        <source>Reset the current status of Obfuscation (can interrupt Obfuscation if it's in the process of Mixing, which can cost you money!)</source>
-        <translation>Nulstil den aktuelle status for tilsløringsfunktionen. (Kan forstyrre processen, hvilket kan koste mønter).</translation>
-    </message>
-    <message>
-        <source>Obfuscation</source>
-        <translation>Tilsløring</translation>
-    </message>
-    <message>
-        <source>Completion:</source>
-        <translation>Færdiggørelse:</translation>
-    </message>
-    <message>
-        <source>Amount and Rounds:</source>
-        <translation>Beløb og gennemløb</translation>
-    </message>
-    <message>
-        <source>Submitted Denom:</source>
-        <translation>Afsendte midler</translation>
-    </message>
-    <message>
-        <source>n/a</source>
-        <translation>Ikke tilgængelig</translation>
-    </message>
-    <message>
         <source>Recent transactions</source>
         <translation>Nylige transaktioner</translation>
     </message>
     <message>
-        <source>Start/Stop Mixing</source>
-        <translation>Start/Stop tilsløring</translation>
-    </message>
-    <message>
-        <source>The denominations you submitted to the Masternode.&lt;br&gt;To mix, other users must submit the exact same denominations.</source>
-        <translation>Designerede midler afsendt til masternoden. &lt;br&gt;For at gennemføre tilsløringen må andre brugere afsende tilsvarende designerede midler.</translation>
-    </message>
-    <message>
-        <source>(Last Message)</source>
-        <translation>(seneste besked)</translation>
-    </message>
-    <message>
-        <source>Try Mix</source>
-        <translation>Prøv at usynliggøre</translation>
-    </message>
-    <message>
-        <source>Reset</source>
-        <translation>Nulstil</translation>
-    </message>
-    <message>
         <source>out of sync</source>
         <translation>Ude af synk</translation>
-    </message>
-    <message>
-        <source>Disabled</source>
-        <translation>slået fra</translation>
-    </message>
-    <message>
-        <source>No inputs detected</source>
-        <translation>Ingen inputs valgt</translation>
-    </message>
-    <message>
-        <source>Not enough compatible inputs to anonymize &lt;span style='color:red;'&gt;%1&lt;/span&gt;,&lt;br&gt;will anonymize &lt;span style='color:red;'&gt;%2&lt;/span&gt; instead</source>
-        <translation>Der er ikke tilstrækkelige kompatible inputs tilgængelige for tilsløring &lt;span style='color:red;'&gt;%1&lt;/span&gt;,&lt;br&gt;vil tilsløre &lt;span style='color:red;'&gt;%2&lt;/span&gt; i stedet</translation>
-    </message>
-    <message>
-        <source>Overall progress</source>
-        <translation>Samlet status</translation>
-    </message>
-    <message>
-        <source>Denominated</source>
-        <translation>Designerede</translation>
-    </message>
-    <message>
-        <source>Anonymized</source>
-        <translation>Tilsløret</translation>
-    </message>
-    <message>
-        <source>Last Obfuscation message:
-</source>
-        <translation>Seneste besked fra tilsløringsprocessen</translation>
-    </message>
-    <message>
-        <source>Obfuscation was successfully reset.</source>
-        <translation>Tilsløringsfunktionen blev nulstillet </translation>
-    </message>
-    <message>
-        <source>If you don't want to see internal Obfuscation fees/transactions select "Most Common" as Type on the "Transactions" tab.</source>
-        <translation>Hvis de ikke ønsker at se de interne tilsløringsgebyrer og transaktioner, skal De vælge "Mest fremherskende" som type i transaktionsmenuen.</translation>
-    </message>
-    <message>
-        <source>Obfuscation requires at least %1 to use.</source>
-        <translation>Tilsløring kræver mindst %1 for at kunne anvendes </translation>
-    </message>
-    <message>
-        <source>Wallet is locked and user declined to unlock. Disabling Obfuscation.</source>
-        <translation>Tegnebogen er låst, brugeren har afvist at låse den op. Tilsløring slås fra.</translation>
-    </message>
-    <message>
-        <source>Found enough compatible inputs to anonymize %1</source>
-        <translation>Der er fundet nok kompatible inputs for tilsløring af %1</translation>
-    </message>
-    <message>
-        <source>Start Obfuscation</source>
-        <translation>Start tilsløring</translation>
-    </message>
-    <message>
-        <source>Stop Obfuscation</source>
-        <translation>stop tilsløring</translation>
-    </message>
-    <message>
-        <source>Mixed</source>
-        <translation>Tilsløret</translation>
-    </message>
-    <message>
-        <source>Enabled</source>
-        <translation>Slået til</translation>
-    </message>
-    <message>
-        <source>N/A</source>
-        <translation>Ikke tilgængelig</translation>
     </message>
 </context>
 <context>
@@ -2142,6 +1977,121 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>PingtidPingtid</translation>
     </message>
 </context>
+<context>
+    <name>PrivacyDialog</name>
+    <message>
+        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the PIVX network after a connection is established, but this process has not completed yet.</source>
+        <translation>De viste informationer kan være uddaterede. Deres tegnebog synkronisere automatism med PIVX netværket så snart en forbindelse er etalbleret, men denne proces er ikke færdiggjort endnu. </translation>
+    </message>
+    <message>
+        <source>0</source>
+        <translation>0</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation>Nulstil</translation>
+    </message>
+    <message>
+        <source>Quantity:</source>
+        <translation>Antal:</translation>
+    </message>
+    <message>
+        <source>Amount:</source>
+        <translation>Beløb</translation>
+    </message>
+    <message>
+        <source>Pay &amp;To:</source>
+        <translation>Betal &amp;Til</translation>
+    </message>
+    <message>
+        <source>Choose previously used address</source>
+        <translation>Benyt en tidligere anvendt adresse.</translation>
+    </message>
+    <message>
+        <source>Alt+A</source>
+        <translation>Alt+A</translation>
+    </message>
+    <message>
+        <source>Paste address from clipboard</source>
+        <translation>Indsæt adresse fra udklipsholderen.</translation>
+    </message>
+    <message>
+        <source>Alt+P</source>
+        <translation>Alt+P</translation>
+    </message>
+    <message>
+        <source>&amp;Label:</source>
+        <translation>&amp;Mærkning</translation>
+    </message>
+    <message>
+        <source>Enter a label for this address to add it to the list of used addresses</source>
+        <translation>Indtast et mærke til denne adresse for at tilføje den til listen over brugte adresser</translation>
+    </message>
+    <message>
+        <source>A&amp;mount:</source>
+        <translation>A&amp;mount</translation>
+    </message>
+    <message>
+        <source>Priority:</source>
+        <translation>Prioritet:</translation>
+    </message>
+    <message>
+        <source>Fee:</source>
+        <translation>Gebyr:</translation>
+    </message>
+    <message>
+        <source>Dust:</source>
+        <translation>Affald:</translation>
+    </message>
+    <message>
+        <source>no</source>
+        <translation>nej</translation>
+    </message>
+    <message>
+        <source>Bytes:</source>
+        <translation>Bytes:</translation>
+    </message>
+    <message>
+        <source>Insufficient funds!</source>
+        <translation>Saldo for lille!</translation>
+    </message>
+    <message>
+        <source>medium</source>
+        <translation>Middel</translation>
+    </message>
+    <message>
+        <source>Coin Control Features</source>
+        <translation>Møntkontrol, features</translation>
+    </message>
+    <message>
+        <source>If this is activated, but the change address is empty or invalid, change will be sent to a newly generated address.</source>
+        <translation>Hvis denne er aktiveret, men tilbagebetalingsadressen er tom, eller ugyldig, overskydende beløb vil blive fremsendt til en nyoprettet adresse</translation>
+    </message>
+    <message>
+        <source>Custom change address</source>
+        <translation>Brugerdefineret tilbagebetalingsadresse</translation>
+    </message>
+    <message>
+        <source>Change:</source>
+        <translation>Penge tilbage:</translation>
+    </message>
+    <message>
+        <source>out of sync</source>
+        <translation>Ude af synk</translation>
+    </message>
+    <message>
+        <source>Copy quantity</source>
+        <translation>Kopiér antal</translation>
+    </message>
+    <message>
+        <source>Copy amount</source>
+        <translation>Kopiér beløb</translation>
+    </message>
+    <message>
+        <source>Confirm send coins</source>
+        <translation>Bekræft at De vil sende mønter</translation>
+    </message>
+    </context>
 <context>
     <name>QObject</name>
     <message>
@@ -2687,14 +2637,6 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>Møntkontrol, features</translation>
     </message>
     <message>
-        <source>Inputs...</source>
-        <translation>Inputs...</translation>
-    </message>
-    <message>
-        <source>automatically selected</source>
-        <translation>Automatisk valgte</translation>
-    </message>
-    <message>
         <source>Insufficient funds!</source>
         <translation>Saldo for lille!</translation>
     </message>
@@ -2777,10 +2719,6 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <message>
         <source>Minimize</source>
         <translation>Minimer</translation>
-    </message>
-    <message>
-        <source>Obfuscation</source>
-        <translation>Tilsløring</translation>
     </message>
     <message>
         <source>per kilobyte</source>
@@ -2954,17 +2892,9 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <source>A fee %1 times higher than %2 per kB is considered an insanely high fee.</source>
         <translation>Et gebyr %1 gange højere end %2 pr. kilobyte er vanvittigt højt.</translation>
     </message>
-    <message numerus="yes">
-        <source>Estimated to begin confirmation within %n block(s).</source>
-        <translation><numerusform>Forventer bekræftelse indenfor %n blokke</numerusform><numerusform>Forventer bekræftelse indenfor %n blokke</numerusform></translation>
-    </message>
     <message>
         <source>The recipient address is not valid, please recheck.</source>
         <translation>Modtageradressen er ikke gyldig. Kontroller igen</translation>
-    </message>
-    <message>
-        <source>(obfuscation requires this amount to be rounded up to the nearest %1).</source>
-        <translation>(Tilsløring kræver at dette beløb rundes op til nærmeste %1)</translation>
     </message>
     <message>
         <source> split into %1 outputs using the UTXO splitter.</source>
@@ -3835,6 +3765,13 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
 </context>
 <context>
+    <name>ZPivControlDialog</name>
+    <message>
+        <source>0</source>
+        <translation>0</translation>
+    </message>
+    </context>
+<context>
     <name>pivx-core</name>
     <message>
         <source>(1 = keep tx meta data e.g. account owner and payment request information, 2 = drop tx meta data)</source>
@@ -3896,10 +3833,6 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <message>
         <source>Enable swifttx, show confirmations for locked transactions (bool, default: %s)</source>
         <translation>Aktiver swifttx, vis bekræftelser for låste transaktioner (bool, default: %s)</translation>
-    </message>
-    <message>
-        <source>Enable use of automated obfuscation for funds stored in this wallet (0-1, default: %u)</source>
-        <translation>Slå automatisk tilsløring til for alle midler i denne tegebog (0-1, default: %u)</translation>
     </message>
     <message>
         <source>Enter regression test mode, which uses a special chain in which blocks can be solved instantly.</source>
@@ -3988,10 +3921,6 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <message>
         <source>Output debugging information (default: %u, supplying &lt;category&gt; is optional)</source>
         <translation>Output debug information (default: %u, supplying &lt;category&gt; er valgfri)</translation>
-    </message>
-    <message>
-        <source>Provide liquidity to Obfuscation by infrequently mixing coins on a continual basis (0-100, default: %u, 1=very frequent, high fees, 100=very infrequent, low fees)</source>
-        <translation>Tilfør tilsløring likviditet  ved at tilføje flere PIVX løbende (0-100, default:%u, 1=meget hyppigt, høje gebyrer, 100=sjældent, lave gebyrer)</translation>
     </message>
     <message>
         <source>Query for peer addresses via DNS lookup, if low on addresses (default: 1 unless -connect)</source>
@@ -4494,10 +4423,6 @@ For eksempel: alertnotify=Echo %% | mail - s "PIVX ALARM!" e-mail@administrator.
         <translation>Forsøg at gennemtvinge reparation af korrumperet blokkæde</translation>
     </message>
     <message>
-        <source>Keep N PIV anonymized (default: %u)</source>
-        <translation>Behold N PIV anonymiserede (default: %u)</translation>
-    </message>
-    <message>
         <source>Keep at most &lt;n&gt; unconnectable transactions in memory (default: %u)</source>
         <translation>Behold højest &lt;n&gt; transaktioner i hukommelsen, der ikke kan forbindes (default: %u)</translation>
     </message>
@@ -4640,10 +4565,6 @@ For eksempel: alertnotify=Echo %% | mail - s "PIVX ALARM!" e-mail@administrator.
     <message>
         <source>Obfuscation is idle.</source>
         <translation>Tilsløringssystem ledigt</translation>
-    </message>
-    <message>
-        <source>Obfuscation options:</source>
-        <translation>Tilsløringsmuligheder</translation>
     </message>
     <message>
         <source>Obfuscation request complete:</source>
@@ -4948,10 +4869,6 @@ For eksempel: alertnotify=Echo %% | mail - s "PIVX ALARM!" e-mail@administrator.
     <message>
         <source>Upgrade wallet to latest format</source>
         <translation>Opdater tegnebogen til det nyeste format</translation>
-    </message>
-    <message>
-        <source>Use N separate masternodes to anonymize funds  (2-8, default: %u)</source>
-        <translation>Brug N forskellige masternoder for at anonymisere saldi (2-8, default: %u)</translation>
     </message>
     <message>
         <source>Use OpenSSL (https) for JSON-RPC connections</source>

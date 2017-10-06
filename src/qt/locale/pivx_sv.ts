@@ -3,7 +3,7 @@
     <name>AddressBookPage</name>
     <message>
         <source>Right-click to edit address or label</source>
-        <translation>Höger klicka för att ändra adress eller beteckning</translation>
+        <translation>Höger klicka för att redigera adress eller etikett</translation>
     </message>
     <message>
         <source>Create a new address</source>
@@ -71,7 +71,7 @@
     </message>
     <message>
         <source>Copy &amp;Label</source>
-        <translation>Kopiera &amp; Märk</translation>
+        <translation>Kopiera &amp; Ettikera</translation>
     </message>
     <message>
         <source>&amp;Edit</source>
@@ -224,8 +224,8 @@
     </message>
     <message>
         <source>Enter a Pivx Address that you would like to encrypt using BIP 38. Enter a passphrase in the middle box. Press encrypt to compute the encrypted private key.</source>
-        <translation>Skriv in en Pivx adress som du vill kryptera med BIP 38.
-Skriv in en lösenfras i den mellersta boxen. Tryck kryptera för att beräkna den krypterade privata nyckeln.</translation>
+        <translation>Ange en Pivx adress som du vill kryptera med BIP 38.
+Ange en lösenfras i den mellersta boxen. Tryck kryptera för att beräkna den krypterade privata nyckeln.</translation>
     </message>
     <message>
         <source>Address:</source>
@@ -285,7 +285,7 @@ Skriv in en lösenfras i den mellersta boxen. Tryck kryptera för att beräkna d
     </message>
     <message>
         <source>Enter the BIP 38 encrypted private key. Enter the passphrase in the middle box. Click Decrypt Key to compute the private key. After the key is decrypted, clicking 'Import Address' will add this private key to the wallet.</source>
-        <translation>Ange</translation>
+        <translation>Ange BIP 38 krypterade privata nyckeln. Ange lösenfrasen i med mittersta boxen. Tryck på krypetra nyckel för att beräkna den privata nyckeln. Efter att nyckeln är avkrypterad, Tryck på 'Importera Adress' kommer att lägga till denna privata nyckel till plånboken.</translation>
     </message>
     <message>
         <source>The PIVX address the message was signed with</source>
@@ -337,7 +337,7 @@ Skriv in en lösenfras i den mellersta boxen. Tryck kryptera för att beräkna d
     </message>
     <message>
         <source>Wallet unlock was cancelled.</source>
-        <translation>Plånboks upplåsningen var avbruten</translation>
+        <translation>Upplåsningen av plånboken var avbruten.</translation>
     </message>
     <message>
         <source>Private key for the entered address is not available.</source>
@@ -408,7 +408,7 @@ Skriv in en lösenfras i den mellersta boxen. Tryck kryptera för att beräkna d
     </message>
     <message>
         <source>Browse transaction history</source>
-        <translation>Bläddra i transaktions historien</translation>
+        <translation>Bläddra i transaktions historiken</translation>
     </message>
     <message>
         <source>E&amp;xit</source>
@@ -792,10 +792,6 @@ Skriv in en lösenfras i den mellersta boxen. Tryck kryptera för att beräkna d
         <translation>medel-hög</translation>
     </message>
     <message>
-        <source>n/a</source>
-        <translation>ingen uppgift</translation>
-    </message>
-    <message>
         <source>medium</source>
         <translation>medel</translation>
     </message>
@@ -897,16 +893,71 @@ Skriv in en lösenfras i den mellersta boxen. Tryck kryptera för att beräkna d
     </context>
 <context>
     <name>OverviewPage</name>
-    <message>
-        <source>n/a</source>
-        <translation>ingen uppgift</translation>
-    </message>
     </context>
 <context>
     <name>PaymentServer</name>
     </context>
 <context>
     <name>PeerTableModel</name>
+    </context>
+<context>
+    <name>PrivacyDialog</name>
+    <message>
+        <source>Quantity:</source>
+        <translation>Kvantitet:</translation>
+    </message>
+    <message>
+        <source>Amount:</source>
+        <translation>Antal:</translation>
+    </message>
+    <message>
+        <source>Choose previously used address</source>
+        <translation>Använd den föregående använda adressen</translation>
+    </message>
+    <message>
+        <source>Alt+A</source>
+        <translation>Alt+A</translation>
+    </message>
+    <message>
+        <source>Paste address from clipboard</source>
+        <translation>Limma in adress från urklipp</translation>
+    </message>
+    <message>
+        <source>Alt+P</source>
+        <translation>Alt+P</translation>
+    </message>
+    <message>
+        <source>&amp;Label:</source>
+        <translation>Etikett:</translation>
+    </message>
+    <message>
+        <source>Priority:</source>
+        <translation>Prioritet:</translation>
+    </message>
+    <message>
+        <source>Fee:</source>
+        <translation>Avgift:</translation>
+    </message>
+    <message>
+        <source>no</source>
+        <translation>nej</translation>
+    </message>
+    <message>
+        <source>Bytes:</source>
+        <translation>Bytes:</translation>
+    </message>
+    <message>
+        <source>medium</source>
+        <translation>medel</translation>
+    </message>
+    <message>
+        <source>Copy quantity</source>
+        <translation>Kopiera kvantitet</translation>
+    </message>
+    <message>
+        <source>Copy amount</source>
+        <translation>Kopiera antal</translation>
+    </message>
     </context>
 <context>
     <name>QObject</name>
@@ -1167,7 +1218,7 @@ Skriv in en lösenfras i den mellersta boxen. Tryck kryptera för att beräkna d
     </message>
     <message>
         <source>Wallet unlock was cancelled.</source>
-        <translation>Plånboks upplåsningen var avbruten</translation>
+        <translation>Upplåsningen av plånboken var avbruten.</translation>
     </message>
     <message>
         <source>Private key for the entered address is not available.</source>
@@ -1363,6 +1414,9 @@ Skriv in en lösenfras i den mellersta boxen. Tryck kryptera för att beräkna d
         <source>Export the data in the current tab to a file</source>
         <translation>Exportera data in den nuvarande fliken till en fil</translation>
     </message>
+    </context>
+<context>
+    <name>ZPivControlDialog</name>
     </context>
 <context>
     <name>pivx-core</name>

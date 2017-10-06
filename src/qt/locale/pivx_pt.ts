@@ -452,6 +452,41 @@
     <name>PeerTableModel</name>
     </context>
 <context>
+    <name>PrivacyDialog</name>
+    <message>
+        <source>Amount:</source>
+        <translation>Quantidade:</translation>
+    </message>
+    <message>
+        <source>Choose previously used address</source>
+        <translation>Escolha o endereço usado anteriormente.</translation>
+    </message>
+    <message>
+        <source>Alt+A</source>
+        <translation>Alt+A</translation>
+    </message>
+    <message>
+        <source>Paste address from clipboard</source>
+        <translation>Cole o endereço da areá de trabalho. </translation>
+    </message>
+    <message>
+        <source>Alt+P</source>
+        <translation>Alt+P</translation>
+    </message>
+    <message>
+        <source>Priority:</source>
+        <translation>Prioridade:</translation>
+    </message>
+    <message>
+        <source>Fee:</source>
+        <translation>Taxa:</translation>
+    </message>
+    <message>
+        <source>no</source>
+        <translation>não</translation>
+    </message>
+    </context>
+<context>
     <name>QObject</name>
     <message>
         <source>Amount</source>
@@ -868,6 +903,9 @@
     </message>
     </context>
 <context>
+    <name>ZPivControlDialog</name>
+    </context>
+<context>
     <name>pivx-core</name>
     <message>
         <source>Delete all wallet transactions and only recover those parts of the blockchain through -rescan on startup</source>
@@ -928,10 +966,6 @@
     <message>
         <source>No compatible Masternode found.</source>
         <translation>Nenhum Masternode compatível encontrado.</translation>
-    </message>
-    <message>
-        <source>Obfuscation options:</source>
-        <translation>Opções de ofuscação:</translation>
     </message>
     <message>
         <source>Obfuscation request complete:</source>
@@ -1196,10 +1230,6 @@
     <message>
         <source>Upgrade wallet to latest format</source>
         <translation>Atualizar a carteira para a ultimo formato</translation>
-    </message>
-    <message>
-        <source>Use N separate masternodes to anonymize funds  (2-8, default: %u)</source>
-        <translation>Use N masternodes separados para anonimizar fundos (2-8, padrão: %u)</translation>
     </message>
     <message>
         <source>Use OpenSSL (https) for JSON-RPC connections</source>

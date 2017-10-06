@@ -519,7 +519,7 @@
     </message>
     <message>
         <source>PIVX Core</source>
-        <translation>&amp;Rdzeń bitcoin</translation>
+        <translation>&amp;Rdzeń PIVX</translation>
     </message>
     <message>
         <source>Send coins to a PIVX address</source>
@@ -847,10 +847,6 @@ MultiWysyłlka: %1</translation>
         <translation>Średnio-wysoki</translation>
     </message>
     <message>
-        <source>n/a</source>
-        <translation>n/a</translation>
-    </message>
-    <message>
         <source>medium</source>
         <translation>średni</translation>
     </message>
@@ -917,7 +913,7 @@ MultiWysyłlka: %1</translation>
     <name>HelpMessageDialog</name>
     <message>
         <source>PIVX Core</source>
-        <translation>&amp;Rdzeń bitcoin</translation>
+        <translation>&amp;Rdzeń PIVX</translation>
     </message>
     </context>
 <context>
@@ -932,7 +928,7 @@ MultiWysyłlka: %1</translation>
     </message>
     <message>
         <source>PIVX Core</source>
-        <translation>&amp;Rdzeń bitcoin</translation>
+        <translation>&amp;Rdzeń PIVX</translation>
     </message>
     <message>
         <source>Error</source>
@@ -995,7 +991,7 @@ MultiWysyłlka: %1</translation>
     </message>
     <message>
         <source>Status will be updated automatically in (sec):</source>
-        <translation>Status będzie uaktualniany automatycznie w sekundach</translation>
+        <translation>Status będzie uaktualniany automatycznie (w sekundach)</translation>
     </message>
     <message>
         <source>0</source>
@@ -1200,10 +1196,6 @@ Proszę sprawdzić adres i spróbować ponownie</translation>
         <translation>&amp;Uruchom PIVX podczas logowania do systemu</translation>
     </message>
     <message>
-        <source>Amount of PIVX to keep anonymized</source>
-        <translation>Liczba PIVX do anonimizacji</translation>
-    </message>
-    <message>
         <source>Whether to show coin control features or not.</source>
         <translation>Czy pokazać cechy kontroli monety czy nie</translation>
     </message>
@@ -1345,10 +1337,6 @@ https://www.transifex.com/pivx-project/pivx-project-translations </translation>
         <translation>Niedojrzały</translation>
     </message>
     <message>
-        <source>Balances</source>
-        <translation>Balans</translation>
-    </message>
-    <message>
         <source>Total:</source>
         <translation>Całość:</translation>
     </message>
@@ -1369,60 +1357,12 @@ https://www.transifex.com/pivx-project/pivx-project-translations </translation>
         <translation>Możliwy do wysłania:</translation>
     </message>
     <message>
-        <source>Status:</source>
-        <translation>Status:</translation>
-    </message>
-    <message>
-        <source>0 PIV / 0 Rounds</source>
-        <translation>0 OIVX / 0 Rund</translation>
-    </message>
-    <message>
-        <source>Enabled/Disabled</source>
-        <translation>Włączony/Wyłączony</translation>
-    </message>
-    <message>
-        <source>Completion:</source>
-        <translation>Ukończono:</translation>
-    </message>
-    <message>
-        <source>Amount and Rounds:</source>
-        <translation>Liczba i rundy:</translation>
-    </message>
-    <message>
-        <source>n/a</source>
-        <translation>n/a</translation>
-    </message>
-    <message>
         <source>Recent transactions</source>
         <translation>Ostatnie transakcje</translation>
     </message>
     <message>
-        <source>Try Mix</source>
-        <translation>Wypróbuj MIX</translation>
-    </message>
-    <message>
-        <source>Reset</source>
-        <translation>Resetuj</translation>
-    </message>
-    <message>
         <source>out of sync</source>
         <translation>Brak synchronizacji</translation>
-    </message>
-    <message>
-        <source>Disabled</source>
-        <translation>Wyłączony</translation>
-    </message>
-    <message>
-        <source>Anonymized</source>
-        <translation>Zanonimizowany</translation>
-    </message>
-    <message>
-        <source>Enabled</source>
-        <translation>Włączony</translation>
-    </message>
-    <message>
-        <source>N/A</source>
-        <translation>N/A</translation>
     </message>
 </context>
 <context>
@@ -1448,9 +1388,72 @@ https://www.transifex.com/pivx-project/pivx-project-translations </translation>
     </message>
     <message>
         <source>Ping Time</source>
-        <translation>Czas Pingu</translation>
+        <translation>Czas PinguCzas pingu</translation>
     </message>
 </context>
+<context>
+    <name>PrivacyDialog</name>
+    <message>
+        <source>0</source>
+        <translation>0</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation>Resetuj</translation>
+    </message>
+    <message>
+        <source>Amount:</source>
+        <translation>Liczba:</translation>
+    </message>
+    <message>
+        <source>Choose previously used address</source>
+        <translation>Wybierz poprzednio używany adres</translation>
+    </message>
+    <message>
+        <source>Alt+A</source>
+        <translation>Alt+A</translation>
+    </message>
+    <message>
+        <source>Paste address from clipboard</source>
+        <translation>Wklej adres ze schowka</translation>
+    </message>
+    <message>
+        <source>Alt+P</source>
+        <translation>Alt+P</translation>
+    </message>
+    <message>
+        <source>Priority:</source>
+        <translation>Priorytet:</translation>
+    </message>
+    <message>
+        <source>Fee:</source>
+        <translation>Opłata:</translation>
+    </message>
+    <message>
+        <source>no</source>
+        <translation>nie</translation>
+    </message>
+    <message>
+        <source>medium</source>
+        <translation>średni</translation>
+    </message>
+    <message>
+        <source>Change:</source>
+        <translation>Zmiana:</translation>
+    </message>
+    <message>
+        <source>out of sync</source>
+        <translation>Brak synchronizacji</translation>
+    </message>
+    <message>
+        <source>Copy quantity</source>
+        <translation>Kopiuj ilość</translation>
+    </message>
+    <message>
+        <source>Copy amount</source>
+        <translation>Kopiuj liczbę</translation>
+    </message>
+    </context>
 <context>
     <name>QObject</name>
     <message>
@@ -1673,7 +1676,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations </translation>
     </message>
     <message>
         <source>Ping Time</source>
-        <translation>Czas Pingu</translation>
+        <translation>Czas PinguCzas pingu</translation>
     </message>
     <message>
         <source>&amp;Wallet Repair</source>
@@ -1933,7 +1936,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations </translation>
     <name>SplashScreen</name>
     <message>
         <source>PIVX Core</source>
-        <translation>&amp;Rdzeń bitcoin</translation>
+        <translation>&amp;Rdzeń PIVX</translation>
     </message>
     </context>
 <context>
@@ -2021,6 +2024,13 @@ https://www.transifex.com/pivx-project/pivx-project-translations </translation>
     <message>
         <source>&amp;Export</source>
         <translation>Eksportuj</translation>
+    </message>
+    </context>
+<context>
+    <name>ZPivControlDialog</name>
+    <message>
+        <source>0</source>
+        <translation>0</translation>
     </message>
     </context>
 <context>

@@ -964,6 +964,53 @@ MultiSend: %1</translation>
     <name>PeerTableModel</name>
     </context>
 <context>
+    <name>PrivacyDialog</name>
+    <message>
+        <source>Quantity:</source>
+        <translation>Množstvo:</translation>
+    </message>
+    <message>
+        <source>Amount:</source>
+        <translation>Suma:</translation>
+    </message>
+    <message>
+        <source>Choose previously used address</source>
+        <translation>Vyberte predtým použitú adresu</translation>
+    </message>
+    <message>
+        <source>Alt+A</source>
+        <translation>Alt+A</translation>
+    </message>
+    <message>
+        <source>Paste address from clipboard</source>
+        <translation>Vložte adresu zo schránky</translation>
+    </message>
+    <message>
+        <source>Alt+P</source>
+        <translation>Alt+P</translation>
+    </message>
+    <message>
+        <source>Priority:</source>
+        <translation>Priorita:</translation>
+    </message>
+    <message>
+        <source>Fee:</source>
+        <translation>Poplatok:</translation>
+    </message>
+    <message>
+        <source>Bytes:</source>
+        <translation>Bytov:</translation>
+    </message>
+    <message>
+        <source>Change:</source>
+        <translation>Zmena:</translation>
+    </message>
+    <message>
+        <source>Copy amount</source>
+        <translation>Skopírovať sumu</translation>
+    </message>
+    </context>
+<context>
     <name>QObject</name>
     <message>
         <source>Amount</source>
@@ -1258,6 +1305,9 @@ MultiSend: %1</translation>
         <source>Export the data in the current tab to a file</source>
         <translation>Exportovať údaje na aktuálnej karte do súboru</translation>
     </message>
+    </context>
+<context>
+    <name>ZPivControlDialog</name>
     </context>
 <context>
     <name>pivx-core</name>

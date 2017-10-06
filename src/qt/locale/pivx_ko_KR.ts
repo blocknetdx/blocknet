@@ -232,7 +232,7 @@
     <name>Bip38ToolDialog</name>
     <message>
         <source>BIP 38 Tool</source>
-        <translation>BIP 38 Tool</translation>
+        <translation>BIP 38 도구</translation>
     </message>
     <message>
         <source>&amp;BIP 38 Encrypt</source>
@@ -573,10 +573,6 @@
         <source>&amp;Command-line options</source>
         <translation>&amp;명령행 옵션</translation>
     </message>
-    <message numerus="yes">
-        <source>Processed %n blocks of transaction history.</source>
-        <translation><numerusform>%n 블록의 거래내역을 처리함</numerusform></translation>
-    </message>
     <message>
         <source>Synchronizing additional data: %p%</source>
         <translation>추가 데이터 동기화: %p%</translation>
@@ -689,10 +685,6 @@
         <source>PIVX Core client</source>
         <translation>PIVX Core 클라이언트</translation>
     </message>
-    <message numerus="yes">
-        <source>%n active connection(s) to PIVX network</source>
-        <translation><numerusform>PIVX 네트워크에  %n 연결</numerusform></translation>
-    </message>
     <message>
         <source>Synchronizing with network...</source>
         <translation>네트워크 동기화중...</translation>
@@ -713,29 +705,13 @@
         <source>Up to date</source>
         <translation>최신</translation>
     </message>
-    <message numerus="yes">
-        <source>%n hour(s)</source>
-        <translation><numerusform>%n 시간</numerusform></translation>
-    </message>
-    <message numerus="yes">
-        <source>%n day(s)</source>
-        <translation><numerusform>%n 일</numerusform></translation>
-    </message>
-    <message numerus="yes">
-        <source>%n week(s)</source>
-        <translation><numerusform>%n 주</numerusform></translation>
-    </message>
     <message>
         <source>%1 and %2</source>
         <translation>%1 그리고 %2</translation>
     </message>
-    <message numerus="yes">
-        <source>%n year(s)</source>
-        <translation><numerusform>%n 년</numerusform></translation>
-    </message>
     <message>
         <source>%1 behind</source>
-        <translation>%1 뒤</translation>
+        <translation>%1 남음</translation>
     </message>
     <message>
         <source>Catching up...</source>
@@ -923,10 +899,6 @@ Address: %4
         <translation>수신 된 주소</translation>
     </message>
     <message>
-        <source>DS Rounds</source>
-        <translation>DS 라운드</translation>
-    </message>
-    <message>
         <source>Date</source>
         <translation>날짜</translation>
     </message>
@@ -999,10 +971,6 @@ Address: %4
         <translation>이 기능을 사용하려면 "목록 모드"로 전환하십시오.</translation>
     </message>
     <message>
-        <source>Non-anonymized input selected. &lt;b&gt;Obfuscation will be disabled.&lt;/b&gt;&lt;br&gt;&lt;br&gt;If you still want to use Obfuscation, please deselect all non-nonymized inputs first and then check Obfuscation checkbox again.</source>
-        <translation>익명화되지 않은 입력이 선택되었습니다. &lt;b&gt;난독화가 비활성화 되었습니다.&lt;b&gt;&lt;br&gt;&lt;br&gt;난독화를 계속 사용하려면 먼저 익명화 되지 않은 모든 입력을 먼저 선택 취소한 뒤 다시 선택해주세요.</translation>
-    </message>
-    <message>
         <source>highest</source>
         <translation>최고</translation>
     </message>
@@ -1021,10 +989,6 @@ Address: %4
     <message>
         <source>Can vary +/- %1 duff(s) per input.</source>
         <translation>입력당 +/- %1 금액(s)을 변경할 수 있습니다.</translation>
-    </message>
-    <message>
-        <source>n/a</source>
-        <translation>n/a</translation>
     </message>
     <message>
         <source>medium</source>
@@ -1674,22 +1638,6 @@ Please check the address and try again.</source>
         <translation>&amp;시스템 로그인시 PIVX 시작</translation>
     </message>
     <message>
-        <source>This setting determines the amount of individual masternodes that an input will be anonymized through.&lt;br/&gt;More rounds of anonymization gives a higher degree of privacy, but also costs more in fees.</source>
-        <translation>이 설정은 익명화 할 입력 값의 개별 마스터노드의 수량을 결정합니다.&lt;br/&gt;더 많은 익명화할 액수는 높은 수준의 익명성을 제공하지만 수수료가 많이 듭니다.</translation>
-    </message>
-    <message>
-        <source>Obfuscation rounds to use</source>
-        <translation>난독화를 사용할 영역</translation>
-    </message>
-    <message>
-        <source>This amount acts as a threshold to turn off Obfuscation once it's reached.</source>
-        <translation>이 금액에 도달하면 난독화를 끌 수 있는 임계 값 역할을 합니다.</translation>
-    </message>
-    <message>
-        <source>Amount of PIVX to keep anonymized</source>
-        <translation>익명화할 PIVX 수량</translation>
-    </message>
-    <message>
         <source>Whether to show coin control features or not.</source>
         <translation>동전 제어 기능을 표시할지 여부를 나타냅니다.</translation>
     </message>
@@ -1879,10 +1827,6 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>아직 완료되지 않은 스테이크 및 마스터노드 보상</translation>
     </message>
     <message>
-        <source>Balances</source>
-        <translation>잔액</translation>
-    </message>
-    <message>
         <source>The displayed information may be out of date. Your wallet automatically synchronizes with the PIVX network after a connection is established, but this process has not completed yet.</source>
         <translation>표시된 정보가 오래되었을 수 있습니다. 연결이 완료되면 지갑이 PIVX 네트워크와 자동으로 동기화될 예정이지만, 아직 해당 프로세스가 완료되지 않았습니다.</translation>
     </message>
@@ -1919,154 +1863,12 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>출금 가능 액수:</translation>
     </message>
     <message>
-        <source>Status:</source>
-        <translation>상태:</translation>
-    </message>
-    <message>
-        <source>Obfuscation Balance:</source>
-        <translation>난독화 된 잔액:</translation>
-    </message>
-    <message>
-        <source>0 PIV / 0 Rounds</source>
-        <translation>0 PIV / 0 수량</translation>
-    </message>
-    <message>
-        <source>Enabled/Disabled</source>
-        <translation>활성화/비활성화</translation>
-    </message>
-    <message>
-        <source>Try to manually submit a Obfuscation request.</source>
-        <translation>난독화 요청을 수동으로 제출해주세요.</translation>
-    </message>
-    <message>
-        <source>Reset the current status of Obfuscation (can interrupt Obfuscation if it's in the process of Mixing, which can cost you money!)</source>
-        <translation>현재 난독화 상태를 초기화 합니다. (난독화가 믹스 중일 경우에 간섭으로 비용이 발생할 수 있습니다!)</translation>
-    </message>
-    <message>
-        <source>Obfuscation</source>
-        <translation>난독화</translation>
-    </message>
-    <message>
-        <source>Completion:</source>
-        <translation>완료:</translation>
-    </message>
-    <message>
-        <source>Amount and Rounds:</source>
-        <translation>금액 및 수량:</translation>
-    </message>
-    <message>
-        <source>Submitted Denom:</source>
-        <translation>제출된 단위:</translation>
-    </message>
-    <message>
-        <source>n/a</source>
-        <translation>n/a</translation>
-    </message>
-    <message>
         <source>Recent transactions</source>
         <translation>최근 트랜잭션</translation>
     </message>
     <message>
-        <source>Start/Stop Mixing</source>
-        <translation>믹싱 시작/종료</translation>
-    </message>
-    <message>
-        <source>The denominations you submitted to the Masternode.&lt;br&gt;To mix, other users must submit the exact same denominations.</source>
-        <translation>당신이 마스터노드에 제출한 단위.&lt;br&gt;믹스하려면 다른 유저들은 반드시 정확한 단위를 제출해야 합니다.</translation>
-    </message>
-    <message>
-        <source>(Last Message)</source>
-        <translation>(최근 메시지)</translation>
-    </message>
-    <message>
-        <source>Try Mix</source>
-        <translation>믹스 시도</translation>
-    </message>
-    <message>
-        <source>Reset</source>
-        <translation>초기화</translation>
-    </message>
-    <message>
         <source>out of sync</source>
         <translation>동기화되지 않음</translation>
-    </message>
-    <message>
-        <source>Disabled</source>
-        <translation>비활성됨</translation>
-    </message>
-    <message>
-        <source>No inputs detected</source>
-        <translation>값이 입력되지 않음</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n Rounds</source>
-        <translation><numerusform>%n 라운드</numerusform></translation>
-    </message>
-    <message>
-        <source>Not enough compatible inputs to anonymize &lt;span style='color:red;'&gt;%1&lt;/span&gt;,&lt;br&gt;will anonymize &lt;span style='color:red;'&gt;%2&lt;/span&gt; instead</source>
-        <translation>익명화를 위한 값이 충분하지 않아 &lt;span style='color:red;'&gt;%1/span&gt;,&lt;br&gt;대신 &lt;span style='color:red;'&gt;%2&lt;/span&gt;가 익명화 됩니다.</translation>
-    </message>
-    <message>
-        <source>Overall progress</source>
-        <translation>전체 내역</translation>
-    </message>
-    <message>
-        <source>Denominated</source>
-        <translation>표기된</translation>
-    </message>
-    <message>
-        <source>Anonymized</source>
-        <translation>익명화된</translation>
-    </message>
-    <message numerus="yes">
-        <source>Denominated inputs have %5 of %n rounds on average</source>
-        <translation><numerusform>지정된 입력값은  평균 %n 라운드중 %5입니다.</numerusform></translation>
-    </message>
-    <message>
-        <source>Last Obfuscation message:
-</source>
-        <translation>최근 Obfuscate한 메시지:
-</translation>
-    </message>
-    <message>
-        <source>Obfuscation was successfully reset.</source>
-        <translation>난독화가 성공적으로 초기화 되었습니다.</translation>
-    </message>
-    <message>
-        <source>If you don't want to see internal Obfuscation fees/transactions select "Most Common" as Type on the "Transactions" tab.</source>
-        <translation>내부 난독화 수수료/트랜잭션를 보고 싶지 않으면 "트랜잭션" 탭에서 '기본적인'을 선택하십시오.</translation>
-    </message>
-    <message>
-        <source>Obfuscation requires at least %1 to use.</source>
-        <translation>난독화를 사용하기 위해선 적어도 %1이 필요합니다.</translation>
-    </message>
-    <message>
-        <source>Wallet is locked and user declined to unlock. Disabling Obfuscation.</source>
-        <translation>지갑이 잠겼으며 사용자가 잠금 해제를 거부했습니다. 난독화 중단.</translation>
-    </message>
-    <message>
-        <source>Found enough compatible inputs to anonymize %1</source>
-        <translation>%1 익명화를 진행하기 위해서는 충분한 값이 필요합니다</translation>
-    </message>
-    <message>
-        <source>Start Obfuscation</source>
-        <translation>난독화 시작</translation>
-    </message>
-    <message>
-        <source>Stop Obfuscation</source>
-        <translation>난독화 중지</translation>
-    </message>
-    <message>
-        <source>Mixed</source>
-        <translation>믹스됨</translation>
-    </message>
-    <message>
-        <source>Enabled</source>
-        <translation>활성화됨</translation>
-    </message>
-    <message>
-        <source>N/A</source>
-        <translation>N/A</translation>
     </message>
 </context>
 <context>
@@ -2141,7 +1943,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>Error communicating with %1: %2</source>
-        <translation>%1 과 통신하는 중 오류 발생: %2</translation>
+        <translation>%1: %2 통신하는 중 오류 발생: </translation>
     </message>
     <message>
         <source>Payment request cannot be parsed!</source>
@@ -2176,6 +1978,121 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
 </context>
 <context>
+    <name>PrivacyDialog</name>
+    <message>
+        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the PIVX network after a connection is established, but this process has not completed yet.</source>
+        <translation>표시된 정보가 오래되었을 수 있습니다. 연결이 완료되면 지갑이 PIVX 네트워크와 자동으로 동기화될 예정이지만, 아직 해당 프로세스가 완료되지 않았습니다.</translation>
+    </message>
+    <message>
+        <source>0</source>
+        <translation>0</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation>초기화</translation>
+    </message>
+    <message>
+        <source>Quantity:</source>
+        <translation>수량:</translation>
+    </message>
+    <message>
+        <source>Amount:</source>
+        <translation>금액:</translation>
+    </message>
+    <message>
+        <source>Pay &amp;To:</source>
+        <translation>지불 &amp;대상:</translation>
+    </message>
+    <message>
+        <source>Choose previously used address</source>
+        <translation>이전에 사용한 주소 선택</translation>
+    </message>
+    <message>
+        <source>Alt+A</source>
+        <translation>Alt+A</translation>
+    </message>
+    <message>
+        <source>Paste address from clipboard</source>
+        <translation>클립보드에서 주소 붙여 넣기</translation>
+    </message>
+    <message>
+        <source>Alt+P</source>
+        <translation>Alt+P</translation>
+    </message>
+    <message>
+        <source>&amp;Label:</source>
+        <translation>&amp;라벨:</translation>
+    </message>
+    <message>
+        <source>Enter a label for this address to add it to the list of used addresses</source>
+        <translation>이 주소의 라벨을 입력하여 사용된 주소 목록에 추가하십시오</translation>
+    </message>
+    <message>
+        <source>A&amp;mount:</source>
+        <translation>금&amp;액:</translation>
+    </message>
+    <message>
+        <source>Priority:</source>
+        <translation>우선 순위:</translation>
+    </message>
+    <message>
+        <source>Fee:</source>
+        <translation>수수료:</translation>
+    </message>
+    <message>
+        <source>Dust:</source>
+        <translation>현금:</translation>
+    </message>
+    <message>
+        <source>no</source>
+        <translation>아니오</translation>
+    </message>
+    <message>
+        <source>Bytes:</source>
+        <translation>Bytes:</translation>
+    </message>
+    <message>
+        <source>Insufficient funds!</source>
+        <translation>자금이 충분하지 않습니다!</translation>
+    </message>
+    <message>
+        <source>medium</source>
+        <translation>중간</translation>
+    </message>
+    <message>
+        <source>Coin Control Features</source>
+        <translation>코인 제어 기능</translation>
+    </message>
+    <message>
+        <source>If this is activated, but the change address is empty or invalid, change will be sent to a newly generated address.</source>
+        <translation>이 옵션이 활성화되었지만, 변경 주소가 비어있거나 유효하지 않은 경우 변경사항은 새로 생성된 주소로 전송됩니다.</translation>
+    </message>
+    <message>
+        <source>Custom change address</source>
+        <translation>커스텀 주소 변경</translation>
+    </message>
+    <message>
+        <source>Change:</source>
+        <translation>변경:</translation>
+    </message>
+    <message>
+        <source>out of sync</source>
+        <translation>동기화되지 않음</translation>
+    </message>
+    <message>
+        <source>Copy quantity</source>
+        <translation>수량 복사</translation>
+    </message>
+    <message>
+        <source>Copy amount</source>
+        <translation>금액 복사</translation>
+    </message>
+    <message>
+        <source>Confirm send coins</source>
+        <translation>코인 전송 확인</translation>
+    </message>
+    </context>
+<context>
     <name>QObject</name>
     <message>
         <source>Amount</source>
@@ -2204,6 +2121,10 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <message>
         <source>NETWORK</source>
         <translation>네트워크</translation>
+    </message>
+    <message>
+        <source>BLOOM</source>
+        <translation>BLOOM</translation>
     </message>
     <message>
         <source>UNKNOWN</source>
@@ -2721,14 +2642,6 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>코인 제어 기능</translation>
     </message>
     <message>
-        <source>Inputs...</source>
-        <translation>입력...</translation>
-    </message>
-    <message>
-        <source>automatically selected</source>
-        <translation>자동 선택됨</translation>
-    </message>
-    <message>
         <source>Insufficient funds!</source>
         <translation>자금이 충분하지 않습니다!</translation>
     </message>
@@ -2811,10 +2724,6 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <message>
         <source>Minimize</source>
         <translation>최소화</translation>
-    </message>
-    <message>
-        <source>Obfuscation</source>
-        <translation>난독화</translation>
     </message>
     <message>
         <source>per kilobyte</source>
@@ -2993,10 +2902,6 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>수신자 주소가 유효하지 않습니다. 다시 확인해주세요.</translation>
     </message>
     <message>
-        <source>(obfuscation requires this amount to be rounded up to the nearest %1).</source>
-        <translation>(난독화로 이 금액을 가장 가까운 %1로 반올림 해야됩니다)</translation>
-    </message>
-    <message>
         <source> split into %1 outputs using the UTXO splitter.</source>
         <translation>UTXO 스플리터를 사용하여 %1 출력으로 분할하십시오.</translation>
     </message>
@@ -3031,6 +2936,10 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <message>
         <source>Error: The wallet was unlocked only to anonymize coins.</source>
         <translation>오류: 지갑이 코인 익명 처리를 위해 잠금해제 되었습니다.</translation>
+    </message>
+    <message>
+        <source>Error: The wallet was unlocked only to anonymize coins. Unlock canceled.</source>
+        <translation>에러 : 현재 지갑은 코인 익명화를 위해서만 잠금해제되었습니다. 잠금해제가 취소됩니다.</translation>
     </message>
     <message>
         <source>Pay only the minimum fee of %1</source>
@@ -3866,6 +3775,13 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
 </context>
 <context>
+    <name>ZPivControlDialog</name>
+    <message>
+        <source>0</source>
+        <translation>0</translation>
+    </message>
+    </context>
+<context>
     <name>pivx-core</name>
     <message>
         <source>(1 = keep tx meta data e.g. account owner and payment request information, 2 = drop tx meta data)</source>
@@ -3920,12 +3836,12 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>MIT 소프트웨어 라이센스에 따라 배포, 첨부 파일 COPYING 또는 &lt;http://www.opensource.org/licenses/mit-license.php&gt; 를 참조하십시오.</translation>
     </message>
     <message>
-        <source>Enable swifttx, show confirmations for locked transactions (bool, default: %s)</source>
-        <translation>swiftTX 활성화, 잠긴 트랜잭션들에 대한 확인 표시 (bool, 기본값: %s)</translation>
+        <source>Enable spork administration functionality with the appropriate private key.</source>
+        <translation>올바른 개인키로 spork 관리 기능을 사용 가능</translation>
     </message>
     <message>
-        <source>Enable use of automated obfuscation for funds stored in this wallet (0-1, default: %u)</source>
-        <translation>이 지갑에 저장된 금액에 대해 자동 난독화 사용을 활성화 합니다 (0-1, 기본값: %u)</translation>
+        <source>Enable swifttx, show confirmations for locked transactions (bool, default: %s)</source>
+        <translation>swiftTX 활성화, 잠긴 트랜잭션들에 대한 확인 표시 (bool, 기본값: %s)</translation>
     </message>
     <message>
         <source>Enter regression test mode, which uses a special chain in which blocks can be solved instantly.</source>
@@ -3984,6 +3900,10 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>-maxtxfee=&lt;amount&gt;에 대한 잘못된 금액: '%s' (트랜잭션 정지를 막을려면 적어도 %s의 minrelay 수수료가 있어야 합니다)</translation>
     </message>
     <message>
+        <source>Keep the specified amount available for spending at all times (default: 0)</source>
+        <translation>항상 송금할수 있도록 지정된 수량 유지 (기본값 : 0)</translation>
+    </message>
+    <message>
         <source>Log transaction priority and fee per kB when mining blocks (default: %u)</source>
         <translation>블록을 채굴 할 때 트랜잭션 우선 순위 및 kB 당 수수료를 기록합니다 (기본값: %u)</translation>
     </message>
@@ -4012,10 +3932,6 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>디버깅 정보 출력 (기본값: %u, &lt;category&gt; 공급은 선택입니다)</translation>
     </message>
     <message>
-        <source>Provide liquidity to Obfuscation by infrequently mixing coins on a continual basis (0-100, default: %u, 1=very frequent, high fees, 100=very infrequent, low fees)</source>
-        <translation>자주 사용하지 않는 코인을 믹싱하여 난독화에 유동성을 제공합니다 (0-100, 기본값: %u, 1=매우 잦음, 높은 수수료, 100=매운 드문, 낮은 수수료)</translation>
-    </message>
-    <message>
         <source>Query for peer addresses via DNS lookup, if low on addresses (default: 1 unless -connect)</source>
         <translation>DNS 검색을 통한 피어 주소 쿼리, 주소가 부족할 경우 (-connect 아닌 이상 기본값:1)</translation>
     </message>
@@ -4042,6 +3958,10 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <message>
         <source>Show N confirmations for a successfully locked transaction (0-9999, default: %u)</source>
         <translation>성공적으로 잠긴 트랜잭션에 대한 확인을 N으로 나타냅니다 (0-9999, 기본값: %u)</translation>
+    </message>
+    <message>
+        <source>Support filtering of blocks and transaction with bloom filters (default: %u)</source>
+        <translation>bloom필터를 사용한 블록 및 트랜잭션 필터링 지원 (기본값 : %u)</translation>
     </message>
     <message>
         <source>SwiftTX requires inputs with at least 6 confirmations, you might need to wait a few minutes and try again.</source>
@@ -4150,6 +4070,10 @@ rpcpassword=%s
     <message>
         <source>(must be 51472 for mainnet)</source>
         <translation>(메인넷 일경우 51472)</translation>
+    </message>
+    <message>
+        <source>Accept command line and JSON-RPC commands</source>
+        <translation> command line 과 JSON-RPC 적용</translation>
     </message>
     <message>
         <source>Accept connections from outside (default: 1 if no -proxy or -connect)</source>
@@ -4496,12 +4420,52 @@ rpcpassword=%s
         <translation>유효하지 않은 스크립트가 발견되었습니다.</translation>
     </message>
     <message>
-        <source>Enable staking functionality (0-1, default: %u)</source>
-        <translation>스테이킹 기능 사용 (0-1, 기본값: %u)</translation>
+        <source>This is a pre-release test build - use at your own risk - do not use for staking or merchant applications!</source>
+        <translation>이것은 사전 릴리스 테스트 빌드입니다 - 사용상 책임은 귀하에게 있습니다. - staking이나 상업적인 용도로는 절대 사용하지 마십시오!</translation>
     </message>
     <message>
-        <source>Keep N PIV anonymized (default: %u)</source>
-        <translation>N PIV 익명으로 유지 (기본값: %u)</translation>
+        <source>&lt;category&gt; can be:</source>
+        <translation>&lt;category&gt; 가능함 :</translation>
+    </message>
+    <message>
+        <source>Attempt to force blockchain corruption recovery</source>
+        <translation>블록체인 손상 복구 시도</translation>
+    </message>
+    <message>
+        <source>Display the stake modifier calculations in the debug.log file.</source>
+        <translation>debug.log에 stake 수정 계산 기록</translation>
+    </message>
+    <message>
+        <source>Display verbose coin stake messages in the debug.log file.</source>
+        <translation>debug.log 에 코인 stake 메시지를 자세히 기록</translation>
+    </message>
+    <message>
+        <source>Enable publish hash block in &lt;address&gt;</source>
+        <translation>&lt;address&gt; 에서 해시 블록 게시 가능</translation>
+    </message>
+    <message>
+        <source>Enable publish hash transaction (locked via SwiftTX) in &lt;address&gt;</source>
+        <translation>&lt;address&gt; 에서 해시 전송 게시 가능 (SwiftTX로 설정된)</translation>
+    </message>
+    <message>
+        <source>Enable publish hash transaction in &lt;address&gt;</source>
+        <translation>&lt;address&gt; 에서 해시 불록 게시 가능</translation>
+    </message>
+    <message>
+        <source>Enable publish raw block in &lt;address&gt;</source>
+        <translation>&lt;address&gt;에서 Raw 블록 게시 가능</translation>
+    </message>
+    <message>
+        <source>Enable publish raw transaction (locked via SwiftTX) in &lt;address&gt;</source>
+        <translation>&lt;address&gt;에서 Raw 트랜잭션 게시 지원 (SwiftTX를 통해 잠겨진)</translation>
+    </message>
+    <message>
+        <source>Enable publish raw transaction in &lt;address&gt;</source>
+        <translation>&lt;address&gt; 에서 Raw 트랜잭션 게시 지원</translation>
+    </message>
+    <message>
+        <source>Enable staking functionality (0-1, default: %u)</source>
+        <translation>스테이킹 기능 사용 (0-1, 기본값: %u)</translation>
     </message>
     <message>
         <source>Keep at most &lt;n&gt; unconnectable transactions in memory (default: %u)</source>
@@ -4646,10 +4610,6 @@ rpcpassword=%s
     <message>
         <source>Obfuscation is idle.</source>
         <translation>난독화는 유휴상태입니다.</translation>
-    </message>
-    <message>
-        <source>Obfuscation options:</source>
-        <translation>난독화 옵션:</translation>
     </message>
     <message>
         <source>Obfuscation request complete:</source>
@@ -4962,10 +4922,6 @@ rpcpassword=%s
     <message>
         <source>Upgrade wallet to latest format</source>
         <translation>지갑을 최신 포맷으로 업그레이드합니다</translation>
-    </message>
-    <message>
-        <source>Use N separate masternodes to anonymize funds  (2-8, default: %u)</source>
-        <translation>N개의 각각의 마스터노드를 이용하여 자금 익명화 (2-8, 기본값: %u)</translation>
     </message>
     <message>
         <source>Use OpenSSL (https) for JSON-RPC connections</source>

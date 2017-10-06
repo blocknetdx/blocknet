@@ -128,8 +128,16 @@
         <translation>Toista uusi salausavain</translation>
     </message>
     <message>
+        <source>Serves to disable the trivial sendmoney when OS account compromised. Provides no real security.</source>
+        <translation>Ottaa pois käytöstä tavallisen sendmoneyn kun käyttöjärjestelmä on kompromisoitu. Ei tarjoa todellista turvaa.</translation>
+    </message>
+    <message>
         <source>For anonymization and staking only</source>
         <translation>Vain anonymisointiin ja panostukseen</translation>
+    </message>
+    <message>
+        <source>Enter the new passphrase to the wallet.&lt;br/&gt;Please use a passphrase of &lt;b&gt;ten or more random characters&lt;/b&gt;, or &lt;b&gt;eight or more words&lt;/b&gt;.</source>
+        <translation>Syötä uusi salausavain lompakkoon &lt;br/&gt; Käytä salausavaimena &lt;b&gt;yli kymmentä satunnaista merkkiä&lt;/b&gt;, tai &lt;b&gt; kahdeksaa tai useampaa sanaa&lt;/b&gt;.</translation>
     </message>
     <message>
         <source>Encrypt wallet</source>
@@ -288,8 +296,16 @@ Syötä salausavain laatikon keskelle. Paina salaa tuottaaksesi salatun yksityis
         <translation>&amp;BIP 38 salauksen avaus</translation>
     </message>
     <message>
+        <source>Enter the BIP 38 encrypted private key. Enter the passphrase in the middle box. Click Decrypt Key to compute the private key. After the key is decrypted, clicking 'Import Address' will add this private key to the wallet.</source>
+        <translation>Syötä BIP 38 salattu yksityisavain. Syötä salausavain laatikkoon. Paina Avaa Salaus tuottaaksesi yksityisavaimen. Kun avain on dekryptattu, painamalla "Import osoite" lisää tämän yksityisavaimen lompakkoon.</translation>
+    </message>
+    <message>
         <source>The PIVX address the message was signed with</source>
         <translation>PIVX osoite, jolla viesti allekirjoitettiin</translation>
+    </message>
+    <message>
+        <source>Verify the message to ensure it was signed with the specified PIVX address</source>
+        <translation>Vahvista että viesti on allekirjoitettu kyseessä olevalla PIVX osoitteella.</translation>
     </message>
     <message>
         <source>Decrypt &amp;Key</source>
@@ -765,12 +781,32 @@ Syötä salausavain laatikon keskelle. Paina salaa tuottaaksesi salatun yksityis
 <context>
     <name>CoinControlDialog</name>
     <message>
+        <source>Quantity:</source>
+        <translation>Määrä:</translation>
+    </message>
+    <message>
+        <source>Bytes:</source>
+        <translation>Tavut:</translation>
+    </message>
+    <message>
         <source>Amount:</source>
         <translation>Määrä:</translation>
     </message>
     <message>
         <source>Priority:</source>
         <translation>Tärkeys:</translation>
+    </message>
+    <message>
+        <source>Fee:</source>
+        <translation>Taksa:</translation>
+    </message>
+    <message>
+        <source>After Fee:</source>
+        <translation>Taksan jälkeen:</translation>
+    </message>
+    <message>
+        <source>Change:</source>
+        <translation>Muutos:</translation>
     </message>
     <message>
         <source>Amount</source>
@@ -811,6 +847,10 @@ Syötä salausavain laatikon keskelle. Paina salaa tuottaaksesi salatun yksityis
     <message>
         <source>Copy quantity</source>
         <translation>Kopioi määrä</translation>
+    </message>
+    <message>
+        <source>Copy fee</source>
+        <translation>Kopioi taksa</translation>
     </message>
     <message>
         <source>highest</source>
@@ -927,6 +967,10 @@ Syötä salausavain laatikon keskelle. Paina salaa tuottaaksesi salatun yksityis
     </context>
 <context>
     <name>MasternodeList</name>
+    <message>
+        <source>Form</source>
+        <translation>Lomake</translation>
+    </message>
     <message>
         <source>Address</source>
         <translation>Osoite</translation>
@@ -1173,8 +1217,96 @@ Please check the address and try again.</source>
         <translation>&amp;Aloita PIVX järjestelmän kirjautumisessa</translation>
     </message>
     <message>
+        <source>Enable coin &amp;control features</source>
+        <translation>Ota käyttöön coin &amp;kontrolli palvelut</translation>
+    </message>
+    <message>
+        <source>Show Masternodes Tab</source>
+        <translation>Näytä Masternode välilehti</translation>
+    </message>
+    <message>
+        <source>&amp;Spend unconfirmed change</source>
+        <translation>&amp;Käytä vahvistamaton vaihtoraha</translation>
+    </message>
+    <message>
+        <source>&amp;Network</source>
+        <translation>&amp;Verkko</translation>
+    </message>
+    <message>
+        <source>The user interface language can be set here. This setting will take effect after restarting PIVX.</source>
+        <translation>Käyttöliittymän kielen voi säätää täällä. Tämä asetus tulee voimaan uudelleenkäynnistettyäsi lompakon.</translation>
+    </message>
+    <message>
+        <source>Connect to the PIVX network through a SOCKS5 proxy.</source>
+        <translation>Yhdistä PIVX verkkoon SOCKS5 proxyn kautta</translation>
+    </message>
+    <message>
+        <source>Proxy &amp;IP:</source>
+        <translation>Proxy &amp;IP:</translation>
+    </message>
+    <message>
+        <source>IP address of the proxy (e.g. IPv4: 127.0.0.1 / IPv6: ::1)</source>
+        <translation>Proxyn IP osoite  (esim. IPv4: 127.0.0.1 / IPv6: ::1)</translation>
+    </message>
+    <message>
+        <source>&amp;Port:</source>
+        <translation>&amp;Portti:</translation>
+    </message>
+    <message>
+        <source>Port of the proxy (e.g. 9050)</source>
+        <translation>Proxyn portti (esim. 9050)</translation>
+    </message>
+    <message>
         <source>&amp;Window</source>
         <translation>&amp;Ikkuna</translation>
+    </message>
+    <message>
+        <source>Show only a tray icon after minimizing the window.</source>
+        <translation>Näytä vain tarjotin ikoni pienennettyäsi ikkunan.</translation>
+    </message>
+    <message>
+        <source>&amp;Minimize to the tray instead of the taskbar</source>
+        <translation>&amp;Pienennä tarjottimelle tehtäväpalkin sijaan</translation>
+    </message>
+    <message>
+        <source>Minimize instead of exit the application when the window is closed. When this option is enabled, the application will be closed only after selecting Quit in the menu.</source>
+        <translation>Pienennä ikkuna poistumisen sijaan kun ikkuna suljetaan. Kun tämä vaihtoehto on valittuna, sovellus sulkeutuu vain kun se Lopetetaan valikosta.</translation>
+    </message>
+    <message>
+        <source>M&amp;inimize on close</source>
+        <translation>P&amp;ienennä suljettaessa</translation>
+    </message>
+    <message>
+        <source>&amp;Display</source>
+        <translation>&amp;Näyttö</translation>
+    </message>
+    <message>
+        <source>User Interface &amp;language:</source>
+        <translation>Käyttöliittymän &amp;kieli:</translation>
+    </message>
+    <message>
+        <source>User Interface Theme:</source>
+        <translation>Käyttöliittymän teema:</translation>
+    </message>
+    <message>
+        <source>&amp;Unit to show amounts in:</source>
+        <translation>&amp;Yksikkö jossa määrä näytetään:</translation>
+    </message>
+    <message>
+        <source>Choose the default subdivision unit to show in the interface and when sending coins.</source>
+        <translation>Käytä oletus vähennysyksikköä käyttöliittymässä ja kolikoita lähettäessä.</translation>
+    </message>
+    <message>
+        <source>Decimal digits</source>
+        <translation>Desimaalinumerot</translation>
+    </message>
+    <message>
+        <source>Reset all client options to default.</source>
+        <translation>Palauta kaikki asetukset oletuksiin</translation>
+    </message>
+    <message>
+        <source>&amp;Reset Options</source>
+        <translation>&amp;Palauta valinnat</translation>
     </message>
     <message>
         <source>&amp;OK</source>
@@ -1192,9 +1324,65 @@ Please check the address and try again.</source>
         <source>Confirm options reset</source>
         <translation>Vahvista asetusten nollaus</translation>
     </message>
-    </context>
+    <message>
+        <source>Client restart required to activate changes.</source>
+        <translation>Uudelleenkäynnistys vaadittu aktivoidaksesi muutokset</translation>
+    </message>
+    <message>
+        <source>Client will be shutdown, do you want to proceed?</source>
+        <translation>Ohjelma sammuu, haluatko jatkaa?</translation>
+    </message>
+    <message>
+        <source>This change would require a client restart.</source>
+        <translation>Tämä muutos vaatii uudelleenkäynnistyksen.</translation>
+    </message>
+    <message>
+        <source>The supplied proxy address is invalid.</source>
+        <translation>Tarjottu proxy osoite on virheellinen.</translation>
+    </message>
+</context>
 <context>
     <name>OverviewPage</name>
+    <message>
+        <source>Form</source>
+        <translation>Lomake</translation>
+    </message>
+    <message>
+        <source>Available:</source>
+        <translation>Saatavilla:</translation>
+    </message>
+    <message>
+        <source>Your current spendable balance</source>
+        <translation>Nykyinen käytettävä saldo</translation>
+    </message>
+    <message>
+        <source>Pending:</source>
+        <translation>Odottaa:</translation>
+    </message>
+    <message>
+        <source>Total of transactions that have yet to be confirmed, and do not yet count toward the spendable balance</source>
+        <translation>Kokonaismäärä rahansiirroista, joita ei ole vielä vahvistettu, eivätkä vielä lisäänny käytettävään saldoon.</translation>
+    </message>
+    <message>
+        <source>Immature:</source>
+        <translation>Epäkypsä:</translation>
+    </message>
+    <message>
+        <source>Staked or masternode rewards that has not yet matured</source>
+        <translation>Panostus tai masternodem palkiinnot jotka eivät ole vielä kypsyneet.</translation>
+    </message>
+    <message>
+        <source>Total:</source>
+        <translation>Määrä:</translation>
+    </message>
+    <message>
+        <source>Your current total balance</source>
+        <translation>Sinun nykyinen kokonaissaldo</translation>
+    </message>
+    <message>
+        <source>Spendable:</source>
+        <translation>Käytettävää:</translation>
+    </message>
     </context>
 <context>
     <name>PaymentServer</name>
@@ -1204,6 +1392,93 @@ Please check the address and try again.</source>
     <message>
         <source>Version</source>
         <translation>Versio</translation>
+    </message>
+    <message>
+        <source>Ping Time</source>
+        <translation>Ping aika</translation>
+    </message>
+</context>
+<context>
+    <name>PrivacyDialog</name>
+    <message>
+        <source>0</source>
+        <translation>0</translation>
+    </message>
+    <message>
+        <source>Quantity:</source>
+        <translation>Määrä:</translation>
+    </message>
+    <message>
+        <source>Amount:</source>
+        <translation>Määrä:</translation>
+    </message>
+    <message>
+        <source>Choose previously used address</source>
+        <translation>Valitse aikaisemmin käytetty osoite</translation>
+    </message>
+    <message>
+        <source>Alt+A</source>
+        <translation>Alt+A</translation>
+    </message>
+    <message>
+        <source>Paste address from clipboard</source>
+        <translation>Liitä osoite leikepöydältä</translation>
+    </message>
+    <message>
+        <source>Alt+P</source>
+        <translation>Alt+P</translation>
+    </message>
+    <message>
+        <source>&amp;Label:</source>
+        <translation>&amp;Nimike:</translation>
+    </message>
+    <message>
+        <source>Enter a label for this address to add it to the list of used addresses</source>
+        <translation>Syötä nimike tälle osoittelle lisätäksesi se käytettävien osoitteiden listaan</translation>
+    </message>
+    <message>
+        <source>A&amp;mount:</source>
+        <translation>M&amp;äärä:</translation>
+    </message>
+    <message>
+        <source>Priority:</source>
+        <translation>Tärkeys:</translation>
+    </message>
+    <message>
+        <source>Fee:</source>
+        <translation>Taksa:</translation>
+    </message>
+    <message>
+        <source>no</source>
+        <translation>ei</translation>
+    </message>
+    <message>
+        <source>Bytes:</source>
+        <translation>Tavut:</translation>
+    </message>
+    <message>
+        <source>Insufficient funds!</source>
+        <translation>Puutteelliset varat!</translation>
+    </message>
+    <message>
+        <source>medium</source>
+        <translation>kohtalainen</translation>
+    </message>
+    <message>
+        <source>Change:</source>
+        <translation>Muutos:</translation>
+    </message>
+    <message>
+        <source>Copy quantity</source>
+        <translation>Kopioi määrä</translation>
+    </message>
+    <message>
+        <source>Copy amount</source>
+        <translation>Kopioi määrä</translation>
+    </message>
+    <message>
+        <source>Confirm send coins</source>
+        <translation>Vahvista kolikoiden lähetys</translation>
     </message>
     </context>
 <context>
@@ -1267,12 +1542,32 @@ Please check the address and try again.</source>
         <translation>Lohko ketju</translation>
     </message>
     <message>
+        <source>Open the PIVX debug log file from the current data directory. This can take a few seconds for large log files.</source>
+        <translation>Avaa PIVX debug loki nykyisestä sijainnista. Tämä voi kestää muutaman sekunnin suurille lokeille</translation>
+    </message>
+    <message>
+        <source>Number of Masternodes</source>
+        <translation>Masternodien määrä</translation>
+    </message>
+    <message>
         <source>&amp;Console</source>
         <translation>&amp;Konsoli</translation>
     </message>
     <message>
+        <source>Clear console</source>
+        <translation>Tyhjennä konsoli</translation>
+    </message>
+    <message>
+        <source>&amp;Network Traffic</source>
+        <translation>&amp;Verkkoliikenne</translation>
+    </message>
+    <message>
         <source>&amp;Clear</source>
         <translation>&amp;Tyhjennä</translation>
+    </message>
+    <message>
+        <source>Totals</source>
+        <translation>Kokonaismäärät</translation>
     </message>
     <message>
         <source>Received</source>
@@ -1299,8 +1594,52 @@ Please check the address and try again.</source>
         <translation>Palvelut</translation>
     </message>
     <message>
+        <source>Connection Time</source>
+        <translation>Yhteysaika</translation>
+    </message>
+    <message>
+        <source>Last Send</source>
+        <translation>Viime lähetys</translation>
+    </message>
+    <message>
+        <source>Last Receive</source>
+        <translation>Viime vastaanotto</translation>
+    </message>
+    <message>
+        <source>Bytes Sent</source>
+        <translation>Tavuja lähetetty</translation>
+    </message>
+    <message>
+        <source>Bytes Received</source>
+        <translation>Tavuja vastaanotettu</translation>
+    </message>
+    <message>
+        <source>Ping Time</source>
+        <translation>Ping aika</translation>
+    </message>
+    <message>
+        <source>&amp;Wallet Repair</source>
+        <translation>&amp;Lompakon korjaus</translation>
+    </message>
+    <message>
+        <source>Wallet In Use:</source>
+        <translation>Käytössä oleva lompakko:</translation>
+    </message>
+    <message>
         <source>Salvage wallet</source>
         <translation>Pelasta lompakko</translation>
+    </message>
+    <message>
+        <source>Attempt to recover private keys from a corrupt wallet.dat.</source>
+        <translation>Yritä pelastaa yksityisavaimet korruptoituneesa wallet.dat tiedostosta</translation>
+    </message>
+    <message>
+        <source>Rescan blockchain files</source>
+        <translation>Uudelleenskannaa blockchain tiedostot</translation>
+    </message>
+    <message>
+        <source>Rescan the block chain for missing wallet transactions.</source>
+        <translation>Uudelleenskannaa blockchain puuttuvista rahansiirroista</translation>
     </message>
     <message>
         <source>Wallet repair options.</source>
@@ -1334,12 +1673,40 @@ Please check the address and try again.</source>
         <source>Unknown</source>
         <translation>Tuntematon</translation>
     </message>
-    </context>
+    <message>
+        <source>Fetching...</source>
+        <translation>Haetaan...</translation>
+    </message>
+</context>
 <context>
     <name>ReceiveCoinsDialog</name>
     <message>
+        <source>Reuse one of the previously used receiving addresses.&lt;br&gt;Reusing addresses has security and privacy issues.&lt;br&gt;Do not use this unless re-generating a payment request made before.</source>
+        <translation>Uudelleenkäytä yksi aikaisemmista vastaanottavista osoitteista. &lt;br&gt; Osoitteen uudelleenkäytössä on turvallisuus- ja yksityisyysongelmia.&lt;br&gt; Älä käytä tätä ellet halua uudelleen käyttää vanhaa maksupyyntöä.</translation>
+    </message>
+    <message>
+        <source>R&amp;euse an existing receiving address (not recommended)</source>
+        <translation>U&amp;udelleenkäytä olemassaoleva vastaanottava osoite (Ei suositeltu)</translation>
+    </message>
+    <message>
         <source>&amp;Message:</source>
         <translation>&amp;Viesti:</translation>
+    </message>
+    <message>
+        <source>An optional label to associate with the new receiving address.</source>
+        <translation>Vaihtoehtoinen nimike uudelle vastaanottavalle osoitteelle</translation>
+    </message>
+    <message>
+        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the PIVX network.</source>
+        <translation>Vaihtoehtoinen viesti joka liitetään maksupyyntöön, joka näytetään kun pyyntö avataan. Huomio: Viestiä ei lähetetä maksun mukana PIVX verkolle.</translation>
+    </message>
+    <message>
+        <source>An optional message to attach to the payment request, which will be displayed when the request is opened.&lt;br&gt;Note: The message will not be sent with the payment over the PIVX network.</source>
+        <translation>Vaihtoehtoinen viesti, joka liitetään maksupyyntöö, joka näytetään kun pyyntö avataan. &lt;br&gt; Huomio: Tätä viestiä ei lähetetä maksun mukana PIVX  verkolle.</translation>
+    </message>
+    <message>
+        <source>Use this form to request payments. All fields are &lt;b&gt;optional&lt;/b&gt;.</source>
+        <translation>Käytä tätä lomaketta luodaksesi maksupyyntöjä. Kaikki kentät ovat &lt;b&gt; vaihtoehtoisia&lt;/b&gt;.</translation>
     </message>
     <message>
         <source>&amp;Label:</source>
@@ -1444,7 +1811,15 @@ Please check the address and try again.</source>
         <source>Message</source>
         <translation>Viesti</translation>
     </message>
-    </context>
+    <message>
+        <source>Resulting URI too long, try to reduce the text for label / message.</source>
+        <translation>Tuotettu URI liian pitkä, yritä vähentää merkkien määrää nimikkeessä / viestissä.</translation>
+    </message>
+    <message>
+        <source>Error encoding URI into QR Code.</source>
+        <translation>Virhe koodetessa URIa QR koodiksi.</translation>
+    </message>
+</context>
 <context>
     <name>RecentRequestsTableModel</name>
     <message>
@@ -1483,8 +1858,16 @@ Please check the address and try again.</source>
         <translation>Lähetä Kolikot</translation>
     </message>
     <message>
-        <source>automatically selected</source>
-        <translation>automaattisesti valittu</translation>
+        <source>Insufficient funds!</source>
+        <translation>Puutteelliset varat!</translation>
+    </message>
+    <message>
+        <source>Quantity:</source>
+        <translation>Määrä:</translation>
+    </message>
+    <message>
+        <source>Bytes:</source>
+        <translation>Tavut:</translation>
     </message>
     <message>
         <source>Amount:</source>
@@ -1499,8 +1882,20 @@ Please check the address and try again.</source>
         <translation>kohtalainen</translation>
     </message>
     <message>
+        <source>Fee:</source>
+        <translation>Taksa:</translation>
+    </message>
+    <message>
         <source>no</source>
         <translation>ei</translation>
+    </message>
+    <message>
+        <source>After Fee:</source>
+        <translation>Taksan jälkeen:</translation>
+    </message>
+    <message>
+        <source>Change:</source>
+        <translation>Muutos:</translation>
     </message>
     <message>
         <source>0 PIV</source>
@@ -1531,6 +1926,18 @@ Please check the address and try again.</source>
         <translation>Suositeltu</translation>
     </message>
     <message>
+        <source>Send as zero-fee transaction if possible</source>
+        <translation>Lähetä nolla taksainen rahansiirto jos mahdollista</translation>
+    </message>
+    <message>
+        <source>(confirmation may take longer)</source>
+        <translation>(Vahvistus voi kestää pidempään)</translation>
+    </message>
+    <message>
+        <source>Confirm the send action</source>
+        <translation>Vahvista lähetys</translation>
+    </message>
+    <message>
         <source>S&amp;end</source>
         <translation>L&amp;ähetä</translation>
     </message>
@@ -1543,8 +1950,20 @@ Please check the address and try again.</source>
         <translation>Tyhjennä &amp;Kaikki</translation>
     </message>
     <message>
+        <source>Send to multiple recipients at once</source>
+        <translation>Lähetä useammalle vastaanottajalle kerralla</translation>
+    </message>
+    <message>
         <source>Add &amp;Recipient</source>
         <translation>Lisää &amp;Vastaanottaja</translation>
+    </message>
+    <message>
+        <source>SwiftTX</source>
+        <translation>SwiftTX</translation>
+    </message>
+    <message>
+        <source>Balance:</source>
+        <translation>Saldo:</translation>
     </message>
     <message>
         <source>Copy quantity</source>
@@ -1555,16 +1974,48 @@ Please check the address and try again.</source>
         <translation>Kopioi määrä</translation>
     </message>
     <message>
+        <source>Copy fee</source>
+        <translation>Kopioi taksa</translation>
+    </message>
+    <message>
         <source>using</source>
         <translation>käyttää</translation>
+    </message>
+    <message>
+        <source>Warning: Invalid PIVX address</source>
+        <translation>Varoitus: Virheellinen PIVX osoite</translation>
     </message>
     <message>
         <source>Are you sure you want to send?</source>
         <translation>Oletko varma että tahdot lähettää?</translation>
     </message>
     <message>
+        <source>are added as transaction fee</source>
+        <translation>lisätään rahansiirtotaksana</translation>
+    </message>
+    <message>
+        <source>Confirm send coins</source>
+        <translation>Vahvista kolikoiden lähetys</translation>
+    </message>
+    <message>
+        <source>The recipient address is not valid, please recheck.</source>
+        <translation>Vastaanottava osoite ei ole kunnollinen, tarkista</translation>
+    </message>
+    <message>
         <source>The amount exceeds your balance.</source>
         <translation>Määrä ylittää saldosi.</translation>
+    </message>
+    <message>
+        <source>Transaction creation failed!</source>
+        <translation>Maksun luonti epäonnistui!</translation>
+    </message>
+    <message>
+        <source>Error: The wallet was unlocked only to anonymize coins.</source>
+        <translation>Virhe: Lompakko avattiin vain kolikoiden anonymisointiin</translation>
+    </message>
+    <message>
+        <source>Error: The wallet was unlocked only to anonymize coins. Unlock canceled.</source>
+        <translation>Virhe: Lompakko avattiin vain kolikoiden anonymisointiin. Avaus peruutettu.</translation>
     </message>
     <message>
         <source>(no label)</source>
@@ -1576,6 +2027,10 @@ Please check the address and try again.</source>
     <message>
         <source>This is a normal payment.</source>
         <translation>Tämä on normaali maksu.</translation>
+    </message>
+    <message>
+        <source>The PIVX address to send the payment to</source>
+        <translation>PIVX osoite johon maksu lähetetään</translation>
     </message>
     <message>
         <source>Choose previously used address</source>
@@ -1601,12 +2056,40 @@ Please check the address and try again.</source>
         <source>&amp;Label:</source>
         <translation>&amp;Nimike:</translation>
     </message>
+    <message>
+        <source>Enter a label for this address to add it to the list of used addresses</source>
+        <translation>Syötä nimike tälle osoittelle lisätäksesi se käytettävien osoitteiden listaan</translation>
+    </message>
+    <message>
+        <source>A&amp;mount:</source>
+        <translation>M&amp;äärä:</translation>
+    </message>
+    <message>
+        <source>Message:</source>
+        <translation>Viesti:</translation>
+    </message>
     </context>
 <context>
     <name>ShutdownWindow</name>
-    </context>
+    <message>
+        <source>PIVX Core is shutting down...</source>
+        <translation>PIVX core sammuu...</translation>
+    </message>
+    <message>
+        <source>Do not shut down the computer until this window disappears.</source>
+        <translation>Älä sammuta konetta ennen kuin tämä ikkuna katoaa.</translation>
+    </message>
+</context>
 <context>
     <name>SignVerifyMessageDialog</name>
+    <message>
+        <source>&amp;Sign Message</source>
+        <translation>&amp;Allekirjoita viesti</translation>
+    </message>
+    <message>
+        <source>You can sign messages with your addresses to prove you own them. Be careful not to sign anything vague, as phishing attacks may try to trick you into signing your identity over to them. Only sign fully-detailed statements you agree to.</source>
+        <translation>Voit allekirjoittaa viestejä osoitteillasi todistaaksesi, että omistat ne. Ole varovainen ettet allekirjoita mitään kummallista, sillä kalasteluyritykset saattavat yrittää huijata sinut luovuttamaan tietoja. Allekirjoita vain täysin yksityiskohtaisia sanomia, jotka hyväksyt.</translation>
+    </message>
     <message>
         <source>The PIVX address to sign the message with</source>
         <translation>PIVX osoite, jolla viesti allekirjoitetaan</translation>
@@ -1628,6 +2111,14 @@ Please check the address and try again.</source>
         <translation>Alt+P</translation>
     </message>
     <message>
+        <source>Enter the message you want to sign here</source>
+        <translation>Syötä viesti jonka haluat kirjoittaa tähän</translation>
+    </message>
+    <message>
+        <source>Signature</source>
+        <translation>Allekirjoitus</translation>
+    </message>
+    <message>
         <source>Copy the current signature to the system clipboard</source>
         <translation>Kopioi nykyinen allekirjoitus järjestelmän leikepöydälle</translation>
     </message>
@@ -1640,6 +2131,14 @@ Please check the address and try again.</source>
         <translation>PIVX osoite, jolla viesti allekirjoitettiin</translation>
     </message>
     <message>
+        <source>Verify the message to ensure it was signed with the specified PIVX address</source>
+        <translation>Vahvista että viesti on allekirjoitettu kyseessä olevalla PIVX osoitteella.</translation>
+    </message>
+    <message>
+        <source>Sign &amp;Message</source>
+        <translation>Allekirjoita &amp;Viesti</translation>
+    </message>
+    <message>
         <source>Reset all sign message fields</source>
         <translation>Tyhjennä kaikki allekirjoita viesti kentät</translation>
     </message>
@@ -1648,8 +2147,20 @@ Please check the address and try again.</source>
         <translation>Tyhjennä &amp;Kaikki</translation>
     </message>
     <message>
+        <source>&amp;Verify Message</source>
+        <translation>&amp;Vahvista Viesti</translation>
+    </message>
+    <message>
+        <source>Verify &amp;Message</source>
+        <translation>Vahvista &amp;Viesti</translation>
+    </message>
+    <message>
         <source>Reset all verify message fields</source>
         <translation>Tyhjennä kaikki vahvista viesti kentät</translation>
+    </message>
+    <message>
+        <source>Click "Sign Message" to generate signature</source>
+        <translation>Klikkaa "Allekirjoita viesti" generoidaksesi allekirjoituksen</translation>
     </message>
     <message>
         <source>The entered address is invalid.</source>
@@ -1671,17 +2182,69 @@ Please check the address and try again.</source>
         <source>Private key for the entered address is not available.</source>
         <translation>Yksityisavain syötetylle osoitteelle ei ole saatavilla.</translation>
     </message>
-    </context>
+    <message>
+        <source>Message signing failed.</source>
+        <translation>Viestin allekirjoitus epäonnistui</translation>
+    </message>
+    <message>
+        <source>Message signed.</source>
+        <translation>Viesti allekirjoitettu</translation>
+    </message>
+    <message>
+        <source>The signature could not be decoded.</source>
+        <translation>Allekirjoitusta ei pystytty avaamaan.</translation>
+    </message>
+    <message>
+        <source>Please check the signature and try again.</source>
+        <translation>Tarkista allekirjoitus ja yritä uudestaan.</translation>
+    </message>
+    <message>
+        <source>The signature did not match the message digest.</source>
+        <translation>Allekirjoitus ei vastannut viestin sisältöä.</translation>
+    </message>
+    <message>
+        <source>Message verification failed.</source>
+        <translation>Viestin vahvistus epäonnistui</translation>
+    </message>
+    <message>
+        <source>Message verified.</source>
+        <translation>Viesti vahvistettu</translation>
+    </message>
+</context>
 <context>
     <name>SplashScreen</name>
     <message>
         <source>PIVX Core</source>
         <translation>PIVX Ydin</translation>
     </message>
-    </context>
+    <message>
+        <source>Version %1</source>
+        <translation>Versio %1</translation>
+    </message>
+    <message>
+        <source>The Bitcoin Core developers</source>
+        <translation>Bitcoin Core kehittäjät</translation>
+    </message>
+    <message>
+        <source>The Dash Core developers</source>
+        <translation>Dash Core kehittäjät</translation>
+    </message>
+    <message>
+        <source>The PIVX Core developers</source>
+        <translation>PIVX core kehittäjät</translation>
+    </message>
+    <message>
+        <source>[testnet]</source>
+        <translation>[testnet]</translation>
+    </message>
+</context>
 <context>
     <name>TrafficGraphWidget</name>
-    </context>
+    <message>
+        <source>KB/s</source>
+        <translation>KB/s</translation>
+    </message>
+</context>
 <context>
     <name>TransactionDesc</name>
     <message>
@@ -1775,6 +2338,14 @@ Please check the address and try again.</source>
         <translation>Maksut itsellesi</translation>
     </message>
     <message>
+        <source>Minted</source>
+        <translation>Luotu</translation>
+    </message>
+    <message>
+        <source>Mined</source>
+        <translation>Mainattu</translation>
+    </message>
+    <message>
         <source>Transaction status. Hover over this field to show number of confirmations.</source>
         <translation>Rahansiirron status. Liikuta hiiresi tämän kentän päälle nähdäksesi vahvistuksien määrä</translation>
     </message>
@@ -1810,6 +2381,42 @@ Please check the address and try again.</source>
         <translation>Tällä viikolla</translation>
     </message>
     <message>
+        <source>This month</source>
+        <translation>Tässä kuussa</translation>
+    </message>
+    <message>
+        <source>Last month</source>
+        <translation>Viime kuussa</translation>
+    </message>
+    <message>
+        <source>This year</source>
+        <translation>Tänä vuonna</translation>
+    </message>
+    <message>
+        <source>To yourself</source>
+        <translation>Itsellesi</translation>
+    </message>
+    <message>
+        <source>Mined</source>
+        <translation>Mainattu</translation>
+    </message>
+    <message>
+        <source>Minted</source>
+        <translation>Luotu</translation>
+    </message>
+    <message>
+        <source>Other</source>
+        <translation>Muu</translation>
+    </message>
+    <message>
+        <source>Enter address or label to search</source>
+        <translation>Syötä osoite tai nimike etsiäksesi</translation>
+    </message>
+    <message>
+        <source>Min amount</source>
+        <translation>Minimi määrä</translation>
+    </message>
+    <message>
         <source>Copy address</source>
         <translation>Kopioi osoite</translation>
     </message>
@@ -1828,6 +2435,14 @@ Please check the address and try again.</source>
     <message>
         <source>Edit label</source>
         <translation>Muokkaa nimikettä</translation>
+    </message>
+    <message>
+        <source>Show transaction details</source>
+        <translation>Näytä rahansiirron yksityiskohdat</translation>
+    </message>
+    <message>
+        <source>Export Transaction History</source>
+        <translation>Vie Rahansiirto historia</translation>
     </message>
     <message>
         <source>Comma separated file (*.csv)</source>
@@ -1861,13 +2476,25 @@ Please check the address and try again.</source>
         <source>Exporting Failed</source>
         <translation>Vienti epäonnistui</translation>
     </message>
+    <message>
+        <source>Exporting Successful</source>
+        <translation>Vienti onnistui</translation>
+    </message>
     </context>
 <context>
     <name>UnitDisplayStatusBarControl</name>
-    </context>
+    <message>
+        <source>Unit to show amounts in. Click to select another unit.</source>
+        <translation>Yksikkö jossa määrä näytetään. Klikkaa vaihtaaksesi yksikkö.</translation>
+    </message>
+</context>
 <context>
     <name>WalletFrame</name>
-    </context>
+    <message>
+        <source>No wallet has been loaded.</source>
+        <translation>Lompakkoa ei ole ladattu.</translation>
+    </message>
+</context>
 <context>
     <name>WalletModel</name>
     <message>
@@ -1885,12 +2512,111 @@ Please check the address and try again.</source>
         <source>Export the data in the current tab to a file</source>
         <translation>Vie tiedot nykyisestä välilehdestä tiedostoon</translation>
     </message>
+    <message>
+        <source>Selected amount:</source>
+        <translation>Valittu määrä:</translation>
+    </message>
+    <message>
+        <source>Backup Wallet</source>
+        <translation>Varmuuskopioi lompakko</translation>
+    </message>
+    <message>
+        <source>Wallet Data (*.dat)</source>
+        <translation>Lompakko Data (*.dat)</translation>
+    </message>
+    <message>
+        <source>Backup Failed</source>
+        <translation>Varmuuskopiointi epäonnistui</translation>
+    </message>
+    <message>
+        <source>Backup Successful</source>
+        <translation>Varmuuskopiointi onnistui</translation>
+    </message>
+    </context>
+<context>
+    <name>ZPivControlDialog</name>
+    <message>
+        <source>0</source>
+        <translation>0</translation>
+    </message>
     </context>
 <context>
     <name>pivx-core</name>
     <message>
+        <source>Warning: The network does not appear to fully agree! Some miners appear to be experiencing issues.</source>
+        <translation>Varoitus: Verkko ei näytä olevan samaa mieltä! Jotkin mainaajat saattavat kokea ongelmia.</translation>
+    </message>
+    <message>
+        <source>Warning: error reading wallet.dat! All keys read correctly, but transaction data or address book entries might be missing or incorrect.</source>
+        <translation>Varoitus: virhe yrittäessä lukea wallet.dat tiedostoa! Kaikki avaimet luettu onnistuneesti, mutta rahansiirto- tai yhteystietokirjat saattavat puuttua tai olla virheellisiä.</translation>
+    </message>
+    <message>
+        <source>Connect through SOCKS5 proxy</source>
+        <translation>Yhdistä SOCKS5 proxyn kautta</translation>
+    </message>
+    <message>
+        <source>Connection options:</source>
+        <translation>Yhteys vaihtoehdot:</translation>
+    </message>
+    <message>
+        <source>Corrupted block database detected</source>
+        <translation>Korruptoitunut lohko tietokannassa havaittu</translation>
+    </message>
+    <message>
+        <source>Do you want to rebuild the block database now?</source>
+        <translation>Haluatko rakentaa uudelleen lohkotietokannan?</translation>
+    </message>
+    <message>
+        <source>Done loading</source>
+        <translation>Lataus valmis</translation>
+    </message>
+    <message>
+        <source>Error connecting to Masternode.</source>
+        <translation>Virhe Masternodeen yhdistyksessä</translation>
+    </message>
+    <message>
+        <source>Error initializing block database</source>
+        <translation>Virhe aloittaessa lohko tietokantaa</translation>
+    </message>
+    <message>
+        <source>Error loading block database</source>
+        <translation>Virhe ladattaessa lohko tietokantaa</translation>
+    </message>
+    <message>
+        <source>Error loading wallet.dat</source>
+        <translation>Virhe ladattaessa wallet.dat tiedostoa</translation>
+    </message>
+    <message>
+        <source>Error loading wallet.dat: Wallet corrupted</source>
+        <translation>Virhe ladattaessa wallet.dat tiedostoa: Lompakko korruptoitunut</translation>
+    </message>
+    <message>
+        <source>Error loading wallet.dat: Wallet requires newer version of PIVX Core</source>
+        <translation>Virhe ladattaessa wallet.dat tiedostoa: Lompakko vaatii uudemman version PIVX Coresta</translation>
+    </message>
+    <message>
+        <source>Error reading from database, shutting down.</source>
+        <translation>Virhe lukiessa tietokantaa, sammutetaan.</translation>
+    </message>
+    <message>
         <source>Error</source>
         <translation>Virhe</translation>
+    </message>
+    <message>
+        <source>Error: Disk space is low!</source>
+        <translation>Virhe: Tallennustila vähissä!</translation>
+    </message>
+    <message>
+        <source>Error: Wallet locked, unable to create transaction!</source>
+        <translation>Virhe: Lompakko lukittu, ei voida luoda rahansiirtoa!</translation>
+    </message>
+    <message>
+        <source>Finalizing transaction.</source>
+        <translation>Viimeistellään rahansiirto.</translation>
+    </message>
+    <message>
+        <source>Importing...</source>
+        <translation>Tuodaan...</translation>
     </message>
     <message>
         <source>Incompatible mode.</source>
@@ -1907,6 +2633,18 @@ Please check the address and try again.</source>
     <message>
         <source>Insufficient funds.</source>
         <translation>Riittämättömät varat.</translation>
+    </message>
+    <message>
+        <source>Invalid private key.</source>
+        <translation>Virheellinen yksityisavain.</translation>
+    </message>
+    <message>
+        <source>Invalid script detected.</source>
+        <translation>Virheellinen skripti havaittu.</translation>
+    </message>
+    <message>
+        <source>&lt;category&gt; can be:</source>
+        <translation>&lt;category&gt; voi olla:</translation>
     </message>
     <message>
         <source>Loading addresses...</source>
@@ -1933,6 +2671,10 @@ Please check the address and try again.</source>
         <translation>Skannaa uudelleen...</translation>
     </message>
     <message>
+        <source>Session not complete!</source>
+        <translation>Sessio ei valmis!</translation>
+    </message>
+    <message>
         <source>Session timed out.</source>
         <translation>Istunto päättyi.</translation>
     </message>
@@ -1943,6 +2685,18 @@ Please check the address and try again.</source>
     <message>
         <source>Signing transaction failed</source>
         <translation>Rahansiirron allekirjoitus epäonnistui</translation>
+    </message>
+    <message>
+        <source>Specify data directory</source>
+        <translation>Määritä tiedostosijainti</translation>
+    </message>
+    <message>
+        <source>Specify your own public address</source>
+        <translation>Määritä oma julkinen osoitteesi</translation>
+    </message>
+    <message>
+        <source>Staking options:</source>
+        <translation>Panostus vaihtoehdot:</translation>
     </message>
     <message>
         <source>Synchronization failed</source>
@@ -1961,6 +2715,10 @@ Please check the address and try again.</source>
         <translation>Rahansiirron määrä on liian pieni</translation>
     </message>
     <message>
+        <source>Transaction amounts must be positive</source>
+        <translation>Rahansiirtojen tulee olla positiivisia</translation>
+    </message>
+    <message>
         <source>Transaction created successfully.</source>
         <translation>Rahansiirto luotu onnistuneesti.</translation>
     </message>
@@ -1969,8 +2727,20 @@ Please check the address and try again.</source>
         <translation>Rahansiirron taksat ovat liian korkeat.</translation>
     </message>
     <message>
+        <source>Transaction not valid.</source>
+        <translation>Rahansiirto ei onnistu</translation>
+    </message>
+    <message>
+        <source>Transaction too large for fee policy</source>
+        <translation>Rahansiirto liian iso taksaan nähden</translation>
+    </message>
+    <message>
         <source>Transaction too large</source>
         <translation>Rahansiirto liian suuri</translation>
+    </message>
+    <message>
+        <source>Transmitting final transaction.</source>
+        <translation>Lähetetään viimeinen rahansiirto.</translation>
     </message>
     <message>
         <source>Upgrade wallet to latest format</source>
@@ -1999,6 +2769,10 @@ Please check the address and try again.</source>
     <message>
         <source>Warning</source>
         <translation>Varoitus</translation>
+    </message>
+    <message>
+        <source>Warning: This version is obsolete, upgrade required!</source>
+        <translation>Varoitus: Tämä versio on vanha, päivitys vaadittu!</translation>
     </message>
     <message>
         <source>Will retry...</source>

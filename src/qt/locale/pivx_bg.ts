@@ -266,12 +266,24 @@
         <source>Encrypted Key:</source>
         <translation>Криптиращ ключ:</translation>
     </message>
+    <message>
+        <source>Copy the current signature to the system clipboard</source>
+        <translation>Копирай сегашния подпис в системния буфер</translation>
+    </message>
+    <message>
+        <source>Sign the message to prove you own this PIVX address</source>
+        <translation>Подпишете съобщението, за да докажете, че притежавате този PIVX адрес</translation>
+    </message>
+    <message>
+        <source>Encrypt &amp;Key</source>
+        <translation>Криптиращ ключ</translation>
+    </message>
     </context>
 <context>
     <name>BitcoinGUI</name>
     <message>
         <source>Unlock wallet</source>
-        <translation>Отключи портфейла</translation>
+        <translation>Отключване на портфейла</translation>
     </message>
     </context>
 <context>
@@ -334,6 +346,25 @@
     </context>
 <context>
     <name>PeerTableModel</name>
+    </context>
+<context>
+    <name>PrivacyDialog</name>
+    <message>
+        <source>Choose previously used address</source>
+        <translation>Изберете предишноизползван адрес</translation>
+    </message>
+    <message>
+        <source>Alt+A</source>
+        <translation>Алт+А</translation>
+    </message>
+    <message>
+        <source>Paste address from clipboard</source>
+        <translation>Постави адреса от буфера</translation>
+    </message>
+    <message>
+        <source>Alt+P</source>
+        <translation>Алт+П</translation>
+    </message>
     </context>
 <context>
     <name>QObject</name>
@@ -420,6 +451,14 @@
         <source>Alt+P</source>
         <translation>Алт+П</translation>
     </message>
+    <message>
+        <source>Copy the current signature to the system clipboard</source>
+        <translation>Копирай сегашния подпис в системния буфер</translation>
+    </message>
+    <message>
+        <source>Sign the message to prove you own this PIVX address</source>
+        <translation>Подпишете съобщението, за да докажете, че притежавате този PIVX адрес</translation>
+    </message>
     </context>
 <context>
     <name>SplashScreen</name>
@@ -478,6 +517,9 @@
         <source>Export the data in the current tab to a file</source>
         <translation>Експортиране информацията от сегашния таб във файл</translation>
     </message>
+    </context>
+<context>
+    <name>ZPivControlDialog</name>
     </context>
 <context>
     <name>pivx-core</name>

@@ -3,11 +3,11 @@
     <name>AddressBookPage</name>
     <message>
         <source>Right-click to edit address or label</source>
-        <translation>Click derecho para editar la dirección o etiqueta</translation>
+        <translation>Click derecho para editar dirección o etiqueta</translation>
     </message>
     <message>
         <source>Create a new address</source>
-        <translation>Crear una nueva dirección</translation>
+        <translation>Crear nueva dirección</translation>
     </message>
     <message>
         <source>&amp;New</source>
@@ -55,15 +55,15 @@
     </message>
     <message>
         <source>Sending addresses</source>
-        <translation>Enviando direcciones</translation>
+        <translation>Direcciones de envío</translation>
     </message>
     <message>
         <source>Receiving addresses</source>
-        <translation>Recibiendo direcciones</translation>
+        <translation>Direcciones de recepción</translation>
     </message>
     <message>
         <source>These are your PIVX addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
-        <translation>Estas son sus direcciones PIVX para realizar pagos. Siempre verifique la cantidad y la dirección de recepción antes de enviar monedas.</translation>
+        <translation>Estas son sus direcciones PIVX para realizar pagos. Verifique siempre la cantidad y la dirección de recepción antes de enviar monedas.</translation>
     </message>
     <message>
         <source>These are your PIVX addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
@@ -75,7 +75,7 @@
     </message>
     <message>
         <source>Copy &amp;Label</source>
-        <translation>Copiar y Etiquetar</translation>
+        <translation>Copiar etiqueta</translation>
     </message>
     <message>
         <source>&amp;Edit</source>
@@ -95,7 +95,7 @@
     </message>
     <message>
         <source>There was an error trying to save the address list to %1. Please try again.</source>
-        <translation>Hubo un error intentando guardar la lista de direcciones %1. Por favor intente nuevamente</translation>
+        <translation>Ha habido un error intentando guardar la lista de direcciones %1. Por favor inténtelo de nuevo.</translation>
     </message>
 </context>
 <context>
@@ -137,7 +137,7 @@
     </message>
     <message>
         <source>For anonymization and staking only</source>
-        <translation>Para anonimización y staking solamente</translation>
+        <translation>Desbloquear solo para anonimización y staking</translation>
     </message>
     <message>
         <source>Enter the new passphrase to the wallet.&lt;br/&gt;Please use a passphrase of &lt;b&gt;ten or more random characters&lt;/b&gt;, or &lt;b&gt;eight or more words&lt;/b&gt;.</source>
@@ -145,23 +145,23 @@
     </message>
     <message>
         <source>Encrypt wallet</source>
-        <translation>Encriptar la Wallet</translation>
+        <translation>Cifrar monedero</translation>
     </message>
     <message>
         <source>This operation needs your wallet passphrase to unlock the wallet.</source>
-        <translation>Esta operación requiere su contraseña para desbloquear la Wallet</translation>
+        <translation>Esta operación requiere su contraseña para desbloquear el monedero</translation>
     </message>
     <message>
         <source>Unlock wallet</source>
-        <translation>Desbloquear wallet</translation>
+        <translation>Desbloquear monedero</translation>
     </message>
     <message>
         <source>This operation needs your wallet passphrase to decrypt the wallet.</source>
-        <translation>Esta operación requiere su contraseña para desbloquear la Wallet</translation>
+        <translation>Esta operación requiere su contraseña para descifrar el monedero</translation>
     </message>
     <message>
         <source>Decrypt wallet</source>
-        <translation>Desencriptar Wallet</translation>
+        <translation>Descifrar monedero</translation>
     </message>
     <message>
         <source>Change passphrase</source>
@@ -169,55 +169,55 @@
     </message>
     <message>
         <source>Enter the old and new passphrase to the wallet.</source>
-        <translation>Ingrese la antigua y nueva contraseña para la Wallet</translation>
+        <translation>Ingrese la antigua y la nueva contraseña para el monedero</translation>
     </message>
     <message>
         <source>Confirm wallet encryption</source>
-        <translation>Confirmar la encriptación de la Wallet</translation>
+        <translation>Confirme el cifrado del monedero</translation>
     </message>
     <message>
         <source>PIVX will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your PIVs from being stolen by malware infecting your computer.</source>
-        <translation>PIVX se cerrará ahora para finalizar el proceso de encriptación. Recuerde que encriptar su Wallet no previene completamente que tus PIVs sean robados mediante malware infectando su ordenador.</translation>
+        <translation>PIVX se cerrará para finalizar el proceso de cifrado. Recuerde que cifrar su monedero no garantiza que sus PIVs no sean robados mediante malware de su ordenador.</translation>
     </message>
     <message>
         <source>Are you sure you wish to encrypt your wallet?</source>
-        <translation>¿Esta seguro de que desea encriptar tu Wallet?</translation>
+        <translation>¿Está seguro de que desea cifrar su monedero?</translation>
     </message>
     <message>
         <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR PIV&lt;/b&gt;!</source>
-        <translation>Atención: Si encripta su Wallet y pierde su contraseña, perderá &lt;b&gt; TODOS SUS PIV&lt;/b&gt;!</translation>
+        <translation>Atención: Si cifra su monedero y pierde su contraseña, perderá &lt;b&gt; TODOS SUS PIV&lt;/b&gt;!</translation>
     </message>
     <message>
         <source>Wallet encrypted</source>
-        <translation>Wallet encriptada</translation>
+        <translation>Monedero cifrado</translation>
     </message>
     <message>
         <source>IMPORTANT: Any previous backups you have made of your wallet file should be replaced with the newly generated, encrypted wallet file. For security reasons, previous backups of the unencrypted wallet file will become useless as soon as you start using the new, encrypted wallet.</source>
-        <translation>IMPORTANTE: Cualquier backup anterior que haya realizado de su Wallet debe ser reemplazado por el nuevo archivo de Wallet encriptado. Por razones de seguridad, las copias anteriores de seguridad de la Wallet sin encriptar pasaran a ser obsoletas tan pronto empiece a utilizar la nueva Wallet encriptada.</translation>
+        <translation>IMPORTANTE: Cualquier copia de seguridad anterior que haya realizado de su monedero debe ser reemplazada por la nueva copia de seguridad cifrada. Por razones de seguridad, las copias de seguridad anteriores del monedero sin cifrar pasarán a ser obsoletas tan pronto empiece a utilizar el nuevo monedero cifrado.</translation>
     </message>
     <message>
         <source>Wallet encryption failed</source>
-        <translation>La encriptación de la Wallet ha fallado</translation>
+        <translation>El cifrado del monedero ha fallado</translation>
     </message>
     <message>
         <source>Wallet encryption failed due to an internal error. Your wallet was not encrypted.</source>
-        <translation>La encriptación de la wallet ha fallado debido a un error interno. Tu wallet no ha sido encriptada.</translation>
+        <translation>El cifrado del monedero ha fallado debido a un error interno. Su monedero no ha sido cifrado.</translation>
     </message>
     <message>
         <source>The supplied passphrases do not match.</source>
-        <translation>Las contraseñas suministradas no coinciden.</translation>
+        <translation>Las contraseñas introducidas no coinciden.</translation>
     </message>
     <message>
         <source>Wallet unlock failed</source>
-        <translation>Fallo en el desbloqueo de la wallet</translation>
+        <translation>Desbloqueo del monedero fallido</translation>
     </message>
     <message>
         <source>The passphrase entered for the wallet decryption was incorrect.</source>
-        <translation>La contraseña introducida para la desencriptación de la wallet es incorrecta.</translation>
+        <translation>La contraseña introducida para el descifrado del monedero es incorrecta.</translation>
     </message>
     <message>
         <source>Wallet decryption failed</source>
-        <translation>Fallo en la desencriptación de la wallet</translation>
+        <translation>Descifrado del monedero fallido</translation>
     </message>
     <message>
         <source>Wallet passphrase was successfully changed.</source>
@@ -225,7 +225,7 @@
     </message>
     <message>
         <source>Warning: The Caps Lock key is on!</source>
-        <translation>Atención: La tecla Mayúsculas está encendida!</translation>
+        <translation>Aviso: La tecla Mayúsculas está encendida!</translation>
     </message>
 </context>
 <context>
@@ -236,11 +236,11 @@
     </message>
     <message>
         <source>&amp;BIP 38 Encrypt</source>
-        <translation>&amp;Encriptación BIP 38</translation>
+        <translation>&amp;Cifrado BIP 38</translation>
     </message>
     <message>
         <source>Enter a Pivx Address that you would like to encrypt using BIP 38. Enter a passphrase in the middle box. Press encrypt to compute the encrypted private key.</source>
-        <translation>Introduzca la dirección PIVX que querría encriptar usando BIP 38. Introduzca una contraseña en la caja central. Clickee en encriptar para computar la clave privada encriptada.</translation>
+        <translation>Introduzca la dirección PIVX que querría cifrar usando BIP 38. Introduzca una contraseña en el campo central. Haga clic en cifrar para generar la clave privada cifrada.</translation>
     </message>
     <message>
         <source>Address:</source>
@@ -248,11 +248,11 @@
     </message>
     <message>
         <source>The PIVX address to sign the message with</source>
-        <translation>La dirección PIVX con la que firmar el mensaje</translation>
+        <translation>La dirección PIVX con la que desee firmar el mensaje</translation>
     </message>
     <message>
         <source>Choose previously used address</source>
-        <translation>Escoge una dirección usada previamente</translation>
+        <translation>Escoja una dirección usada previamente</translation>
     </message>
     <message>
         <source>Alt+A</source>
@@ -260,7 +260,7 @@
     </message>
     <message>
         <source>Paste address from clipboard</source>
-        <translation>Pegar dirección desde el clipboard</translation>
+        <translation>Pegar dirección desde el portapapeles</translation>
     </message>
     <message>
         <source>Alt+P</source>
@@ -272,23 +272,23 @@
     </message>
     <message>
         <source>Encrypted Key:</source>
-        <translation>Clave Encriptada:</translation>
+        <translation>Clave cifrada:</translation>
     </message>
     <message>
         <source>Copy the current signature to the system clipboard</source>
-        <translation>Copiar la firma actual al clipboard del sistema</translation>
+        <translation>Copiar la firma actual al portapapeles del sistema</translation>
     </message>
     <message>
         <source>Sign the message to prove you own this PIVX address</source>
-        <translation>Firmar el mensaje para demostrar que eres el propietario de esta dirección PIVX</translation>
+        <translation>Firme el mensaje para demostrar que eres el propietario de esta dirección PIVX</translation>
     </message>
     <message>
         <source>Encrypt &amp;Key</source>
-        <translation>Encriptar &amp; Clave</translation>
+        <translation>Cifrar &amp;Clave</translation>
     </message>
     <message>
         <source>Reset all sign message fields</source>
-        <translation>Resetear todos los campos de firma de mensaje</translation>
+        <translation>Limpiar todos los campos de firma de mensaje</translation>
     </message>
     <message>
         <source>Clear &amp;All</source>
@@ -296,39 +296,39 @@
     </message>
     <message>
         <source>&amp;BIP 38 Decrypt</source>
-        <translation>&amp;Desencriptación BIP 38</translation>
+        <translation>&amp;Descifrado BIP 38</translation>
     </message>
     <message>
         <source>Enter the BIP 38 encrypted private key. Enter the passphrase in the middle box. Click Decrypt Key to compute the private key. After the key is decrypted, clicking 'Import Address' will add this private key to the wallet.</source>
-        <translation>Introducir la clave encriptada privada BIP 38. Introducir la contraseña en la caja central. Pulsar en Desencriptar Clave para computar la clave privada. Después de que la clave sea desencriptada, pulsando en 'Importar Dirección' añadirá esta clave privada a la wallet.</translation>
+        <translation>Introduzca la clave cifrada privada BIP 38. Introduzca la contraseña en el campo central. Haga clic en descifrar clave para generar la clave privada. Después de que la clave sea descifrada, pulsando en 'Importar dirección' añadirá esta clave privada al monedero.</translation>
     </message>
     <message>
         <source>The PIVX address the message was signed with</source>
-        <translation>La dirección PIVX con la que el mensaje fue firmado</translation>
+        <translation>La dirección PIVX con la que se firmó el mensaje</translation>
     </message>
     <message>
         <source>Verify the message to ensure it was signed with the specified PIVX address</source>
-        <translation>Verificar el mensaje para asegurarse que fue firmado con la dirección PIVX especificada</translation>
+        <translation>Verifica el mensaje para asegurar que fue firmado con la dirección PIVX especificada</translation>
     </message>
     <message>
         <source>Decrypt &amp;Key</source>
-        <translation>Desencriptar &amp; Clave</translation>
+        <translation>Descifrar &amp;Clave</translation>
     </message>
     <message>
         <source>Reset all verify message fields</source>
-        <translation>Resetear todos los campos de verificación de mensaje</translation>
+        <translation>Limpiar todos los campos de verificación de mensaje</translation>
     </message>
     <message>
         <source>Decrypted Key:</source>
-        <translation>Clave desencriptada</translation>
+        <translation>Clave descifrada:</translation>
     </message>
     <message>
         <source>Import Address</source>
-        <translation>Importar Dirección</translation>
+        <translation>Importar dirección</translation>
     </message>
     <message>
         <source>Click "Decrypt Key" to compute key</source>
-        <translation>Clickar "Desencriptar Clave" para computar la clave</translation>
+        <translation>Haga clic en "Descifrar clave" para generar la clave</translation>
     </message>
     <message>
         <source>The entered passphrase is invalid. </source>
@@ -344,15 +344,15 @@
     </message>
     <message>
         <source>Please check the address and try again.</source>
-        <translation>Por favor comprobar la dirección y probar de nuevo.</translation>
+        <translation>Por favor compruebe la dirección e inténtelo de nuevo.</translation>
     </message>
     <message>
         <source>The entered address does not refer to a key.</source>
-        <translation>La dirección introducido no se refiere a ninguna clave.</translation>
+        <translation>La dirección introducida no se refiere a ninguna clave.</translation>
     </message>
     <message>
         <source>Wallet unlock was cancelled.</source>
-        <translation>El desbloqueo de la wallet fue cancelado.</translation>
+        <translation>El desbloqueo del monedero fue cancelado.</translation>
     </message>
     <message>
         <source>Private key for the entered address is not available.</source>
@@ -360,23 +360,23 @@
     </message>
     <message>
         <source>Failed to decrypt.</source>
-        <translation>Fallo en la desencriptación</translation>
+        <translation>Falló el descifrado</translation>
     </message>
     <message>
         <source>Please check the key and passphrase and try again.</source>
-        <translation>Por favor comprobar la clave y la contraseña y probar de nuevo.</translation>
+        <translation>Por favor compruebe la clave y la contraseña e inténtelo de nuevo.</translation>
     </message>
     <message>
         <source>Data Not Valid.</source>
-        <translation>Datos No Válidos.</translation>
+        <translation>Datos no válidos.</translation>
     </message>
     <message>
         <source>Please try again.</source>
-        <translation>Por favor intentar de nuevo.</translation>
+        <translation>Por favor inténtelo de nuevo.</translation>
     </message>
     <message>
         <source>Please wait while key is imported</source>
-        <translation>Por favor esperar mientras se importa la clave</translation>
+        <translation>Por favor espere mientras la clave es importada</translation>
     </message>
     <message>
         <source>Key Already Held By Wallet</source>
@@ -483,7 +483,7 @@
     </message>
     <message>
         <source>Unlock wallet</source>
-        <translation>Desbloquear wallet</translation>
+        <translation>Desbloquear monedero</translation>
     </message>
     <message>
         <source>&amp;Lock Wallet</source>
@@ -575,7 +575,7 @@
     </message>
     <message numerus="yes">
         <source>Processed %n blocks of transaction history.</source>
-        <translation><numerusform>Procesados %n bloque del histórico de transacciones.</numerusform><numerusform>Procesados %n bloques del histórico de transacciones.</numerusform></translation>
+        <translation><numerusform>Procesado %n bloque del historial de transacciones.</numerusform><numerusform>Procesados %n bloques del historial de transacciones.</numerusform></translation>
     </message>
     <message>
         <source>Synchronizing additional data: %p%</source>
@@ -612,6 +612,14 @@
     <message>
         <source>Request payments (generates QR codes and pivx: URIs)</source>
         <translation>Solicitud de pago (genera un código QR y URIs)</translation>
+    </message>
+    <message>
+        <source>&amp;Privacy</source>
+        <translation>&amp;Privacidad</translation>
+    </message>
+    <message>
+        <source>Privacy Action for zPIV and Obfuscation</source>
+        <translation>Privacidad con zPIV y Ofuscación</translation>
     </message>
     <message>
         <source>&amp;Masternodes</source>
@@ -689,10 +697,6 @@
         <source>PIVX Core client</source>
         <translation>Cliente PIVX Core</translation>
     </message>
-    <message numerus="yes">
-        <source>%n active connection(s) to PIVX network</source>
-        <translation><numerusform>%n conexión(es) activa a la red PIVX</numerusform><numerusform>%n conexion(es) activas a la red PIVX</numerusform></translation>
-    </message>
     <message>
         <source>Synchronizing with network...</source>
         <translation>Sincronizando con la red...</translation>
@@ -713,25 +717,9 @@
         <source>Up to date</source>
         <translation>Actualizado</translation>
     </message>
-    <message numerus="yes">
-        <source>%n hour(s)</source>
-        <translation><numerusform>%n hora</numerusform><numerusform>%n horas</numerusform></translation>
-    </message>
-    <message numerus="yes">
-        <source>%n day(s)</source>
-        <translation><numerusform>%n día</numerusform><numerusform>%n días</numerusform></translation>
-    </message>
-    <message numerus="yes">
-        <source>%n week(s)</source>
-        <translation><numerusform>%n semana</numerusform><numerusform>%n semanas</numerusform></translation>
-    </message>
     <message>
         <source>%1 and %2</source>
         <translation>%1 y %2</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n year(s)</source>
-        <translation><numerusform>%n año</numerusform><numerusform>%n años</numerusform></translation>
     </message>
     <message>
         <source>%1 behind</source>
@@ -823,6 +811,14 @@ MultiEnvío: %1</translation>
     <message>
         <source>Blockchain Explorer</source>
         <translation>Explorador de Cadena de Bloques</translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation>Atrás</translation>
+    </message>
+    <message>
+        <source>Forward</source>
+        <translation>Adelante</translation>
     </message>
     <message>
         <source>Address / Block / Transaction</source>
@@ -923,10 +919,6 @@ MultiEnvío: %1</translation>
         <translation>Recibido con dirección</translation>
     </message>
     <message>
-        <source>DS Rounds</source>
-        <translation>Rondas DS:</translation>
-    </message>
-    <message>
         <source>Date</source>
         <translation>Fecha</translation>
     </message>
@@ -999,10 +991,6 @@ MultiEnvío: %1</translation>
         <translation>Por favor cambie a "Modo de Lista" para utilizar esta función.</translation>
     </message>
     <message>
-        <source>Non-anonymized input selected. &lt;b&gt;Obfuscation will be disabled.&lt;/b&gt;&lt;br&gt;&lt;br&gt;If you still want to use Obfuscation, please deselect all non-nonymized inputs first and then check Obfuscation checkbox again.</source>
-        <translation>Has seleccionado una entrada que no ha sido anonimizada. &lt;b&gt;La Ofuscación será deshabilitada.&lt;/b&gt;&lt;br&gt;&lt;br&gt;Si todavía quiere utilizar la Ofuscación, por favor primero deseleccione todas las entrada no anonimizadas y entonces marque la casilla de Ofuscación de nuevo.</translation>
-    </message>
-    <message>
         <source>highest</source>
         <translation>la más alta</translation>
     </message>
@@ -1021,10 +1009,6 @@ MultiEnvío: %1</translation>
     <message>
         <source>Can vary +/- %1 duff(s) per input.</source>
         <translation>Puede variar +/- %1 duff(s) por entrada.</translation>
-    </message>
-    <message>
-        <source>n/a</source>
-        <translation>n/a</translation>
     </message>
     <message>
         <source>medium</source>
@@ -1674,22 +1658,6 @@ Por favor compruebe la dirección e inténtelo de nuevo.</translation>
         <translation>&amp;Arrancar PIVX al inicio del sistema</translation>
     </message>
     <message>
-        <source>This setting determines the amount of individual masternodes that an input will be anonymized through.&lt;br/&gt;More rounds of anonymization gives a higher degree of privacy, but also costs more in fees.</source>
-        <translation>Esta configuración determina la cantidad máxima de nodos maestros individuales a través de los cuales una entrada se anonimizará.&lt;br/&gt;Más rondas de anonimización ofrecen un mayor grado de privacidad, pero también cuesta más en comisiones.</translation>
-    </message>
-    <message>
-        <source>Obfuscation rounds to use</source>
-        <translation>Rondas de Ofuscación a utilizar</translation>
-    </message>
-    <message>
-        <source>This amount acts as a threshold to turn off Obfuscation once it's reached.</source>
-        <translation>Esta cantidad actúa como un techo para desactivar la Ofuscación una vez alcanzado.</translation>
-    </message>
-    <message>
-        <source>Amount of PIVX to keep anonymized</source>
-        <translation>Cantidad de PIVX a mantener anonimizados</translation>
-    </message>
-    <message>
         <source>Whether to show coin control features or not.</source>
         <translation>Mostrar las características de control de monedas individuales, o no</translation>
     </message>
@@ -1726,6 +1694,18 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <message>
         <source>Map port using &amp;UPnP</source>
         <translation>Mapear un puerto utilizando &amp;UPnP</translation>
+    </message>
+    <message>
+        <source>Percentage of incoming PIV which get automatically converted to zPIV via Zerocoin Protocol (min: 10%)</source>
+        <translation>Porcentaje de PIVs entrantes que serán automáticamente convertidos a zPIV a través del Protocolo Zerocoin (mín: 10%)</translation>
+    </message>
+    <message>
+        <source>Percentage of autominted zPIV</source>
+        <translation>Porcentaje de zPIV autogenerados</translation>
+    </message>
+    <message>
+        <source>Wait with automatic conversion to Zerocoin until enough PIV for this denomination is available</source>
+        <translation>Retrasar la conversión automática a Zerocoin hasta que hayan suficientes PIV disponibles para esta denominación</translation>
     </message>
     <message>
         <source>Connect to the PIVX network through a SOCKS5 proxy.</source>
@@ -1820,6 +1800,10 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>&amp;Cancelar</translation>
     </message>
     <message>
+        <source>I don't care</source>
+        <translation>No me preocupa</translation>
+    </message>
+    <message>
         <source>default</source>
         <translation>por defecto</translation>
     </message>
@@ -1855,6 +1839,10 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>Formulario</translation>
     </message>
     <message>
+        <source>PIV Balances</source>
+        <translation>Balances PIV</translation>
+    </message>
+    <message>
         <source>Available:</source>
         <translation>Disponible:</translation>
     </message>
@@ -1877,10 +1865,6 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <message>
         <source>Staked or masternode rewards that has not yet matured</source>
         <translation>Recompensa de participación o de nodo maestro que aún no ha madurado</translation>
-    </message>
-    <message>
-        <source>Balances</source>
-        <translation>Balances</translation>
     </message>
     <message>
         <source>The displayed information may be out of date. Your wallet automatically synchronizes with the PIVX network after a connection is established, but this process has not completed yet.</source>
@@ -1919,155 +1903,12 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>Disponible:</translation>
     </message>
     <message>
-        <source>Status:</source>
-        <translation>Estado:</translation>
-    </message>
-    <message>
-        <source>Obfuscation Balance:</source>
-        <translation>Balance de Ofuscación:</translation>
-    </message>
-    <message>
-        <source>0 PIV / 0 Rounds</source>
-        <translation>0 PIV / 0 Rondas</translation>
-    </message>
-    <message>
-        <source>Enabled/Disabled</source>
-        <translation>Activado/Desactivado</translation>
-    </message>
-    <message>
-        <source>Try to manually submit a Obfuscation request.</source>
-        <translation>Intentar enviar manualmente una solicitud de Ofuscación.</translation>
-    </message>
-    <message>
-        <source>Reset the current status of Obfuscation (can interrupt Obfuscation if it's in the process of Mixing, which can cost you money!)</source>
-        <translation>Reiniciar el estado actual de Ofuscación (puede interrumpir la Ofuscación si está en el proceso de Mezcla, que puede costarle dinero!)</translation>
-    </message>
-    <message>
-        <source>Obfuscation</source>
-        <translation>Ofuscación</translation>
-    </message>
-    <message>
-        <source>Completion:</source>
-        <translation>Completado:</translation>
-    </message>
-    <message>
-        <source>Amount and Rounds:</source>
-        <translation>Cantidad y Rondas:</translation>
-    </message>
-    <message>
-        <source>Submitted Denom:</source>
-        <translation>Denominación Enviada:</translation>
-    </message>
-    <message>
-        <source>n/a</source>
-        <translation>n/a</translation>
-    </message>
-    <message>
         <source>Recent transactions</source>
         <translation>Transacciones recientes</translation>
     </message>
     <message>
-        <source>Start/Stop Mixing</source>
-        <translation>Empezar/Parar Mezcla</translation>
-    </message>
-    <message>
-        <source>The denominations you submitted to the Masternode.&lt;br&gt;To mix, other users must submit the exact same denominations.</source>
-        <translation>Las denominaciones que enviaste al Nodo Maestro.&lt;br&gt;Para mezclar, otros usuarios deben enviar exactamente las mismas denominaciones.</translation>
-    </message>
-    <message>
-        <source>(Last Message)</source>
-        <translation>(Último Mensaje)</translation>
-    </message>
-    <message>
-        <source>Try Mix</source>
-        <translation>Intentar Mezclar</translation>
-    </message>
-    <message>
-        <source>Reset</source>
-        <translation>Reiniciar</translation>
-    </message>
-    <message>
         <source>out of sync</source>
         <translation>desincronizado</translation>
-    </message>
-    <message>
-        <source>Disabled</source>
-        <translation>Desactivado</translation>
-    </message>
-    <message>
-        <source>No inputs detected</source>
-        <translation>No se detectan entradas</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n Rounds</source>
-        <translation><numerusform>%n Ronda</numerusform><numerusform>%n Rondas</numerusform></translation>
-    </message>
-    <message>
-        <source>Not enough compatible inputs to anonymize &lt;span style='color:red;'&gt;%1&lt;/span&gt;,&lt;br&gt;will anonymize &lt;span style='color:red;'&gt;%2&lt;/span&gt; instead</source>
-        <translation>No hay suficientes entradas compatibles para anonimizar &lt;span style='color:red;'&gt;%1&lt;/span&gt;,&lt;br&gt;anonimizará &lt;span style='color:red;'&gt;%2&lt;/span&gt; en su lugar
-</translation>
-    </message>
-    <message>
-        <source>Overall progress</source>
-        <translation>Progreso total</translation>
-    </message>
-    <message>
-        <source>Denominated</source>
-        <translation>Nominadas</translation>
-    </message>
-    <message>
-        <source>Anonymized</source>
-        <translation>Anonimizadas</translation>
-    </message>
-    <message numerus="yes">
-        <source>Denominated inputs have %5 of %n rounds on average</source>
-        <translation><numerusform>La entrada denominada tiene %5 de %n rondas de promedio</numerusform><numerusform>Las entradas seleccionadas tienen %5 de %n rondas de promedio</numerusform></translation>
-    </message>
-    <message>
-        <source>Last Obfuscation message:
-</source>
-        <translation>Último mensaje de Ofuscación:
-</translation>
-    </message>
-    <message>
-        <source>Obfuscation was successfully reset.</source>
-        <translation>La Ofuscación fue reiniciada satisfactoriamente.</translation>
-    </message>
-    <message>
-        <source>If you don't want to see internal Obfuscation fees/transactions select "Most Common" as Type on the "Transactions" tab.</source>
-        <translation>Si no quiere ver aquí las operaciones internas de Ofuscación seleccione "Las Más Comunes" como el Tipo en la pestaña de "Transacciones".</translation>
-    </message>
-    <message>
-        <source>Obfuscation requires at least %1 to use.</source>
-        <translation>La Ofuscación requiere como mínimo %1 para usarse.</translation>
-    </message>
-    <message>
-        <source>Wallet is locked and user declined to unlock. Disabling Obfuscation.</source>
-        <translation>El Monedero está bloqueado y el usuario declinó su desbloqueo. Desactivando Ofuscación.</translation>
-    </message>
-    <message>
-        <source>Found enough compatible inputs to anonymize %1</source>
-        <translation>Se encontraron suficientes entradas compatibles para anonimizar %1</translation>
-    </message>
-    <message>
-        <source>Start Obfuscation</source>
-        <translation>Comenzar Ofuscación</translation>
-    </message>
-    <message>
-        <source>Stop Obfuscation</source>
-        <translation>Parar Ofuscación</translation>
-    </message>
-    <message>
-        <source>Mixed</source>
-        <translation>Mezcladas</translation>
-    </message>
-    <message>
-        <source>Enabled</source>
-        <translation>Activado</translation>
-    </message>
-    <message>
-        <source>N/A</source>
-        <translation>N/A</translation>
     </message>
 </context>
 <context>
@@ -2176,6 +2017,121 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>Intervalo de Ping</translation>
     </message>
 </context>
+<context>
+    <name>PrivacyDialog</name>
+    <message>
+        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the PIVX network after a connection is established, but this process has not completed yet.</source>
+        <translation>La información mostrada puede estar desactualizada. Su monedero se sincroniza automáticamente con la red PIVX después de establecer una conexión, pero este proceso aún no se ha completado.</translation>
+    </message>
+    <message>
+        <source>0</source>
+        <translation>0</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation>Reiniciar</translation>
+    </message>
+    <message>
+        <source>Quantity:</source>
+        <translation>Cantidad:</translation>
+    </message>
+    <message>
+        <source>Amount:</source>
+        <translation>Cantidad:</translation>
+    </message>
+    <message>
+        <source>Pay &amp;To:</source>
+        <translation>Pagar &amp;A:</translation>
+    </message>
+    <message>
+        <source>Choose previously used address</source>
+        <translation>Escoja una dirección usada previamente</translation>
+    </message>
+    <message>
+        <source>Alt+A</source>
+        <translation>Alt + A</translation>
+    </message>
+    <message>
+        <source>Paste address from clipboard</source>
+        <translation>Pegar dirección desde el portapapeles</translation>
+    </message>
+    <message>
+        <source>Alt+P</source>
+        <translation>Alt + P</translation>
+    </message>
+    <message>
+        <source>&amp;Label:</source>
+        <translation>&amp;Etiqueta:</translation>
+    </message>
+    <message>
+        <source>Enter a label for this address to add it to the list of used addresses</source>
+        <translation>Introduzca una etiqueta para esta dirección para añadirla a la lista de direcciones utilizadas</translation>
+    </message>
+    <message>
+        <source>A&amp;mount:</source>
+        <translation>Ca&amp;ntidad:</translation>
+    </message>
+    <message>
+        <source>Priority:</source>
+        <translation>Prioridad:</translation>
+    </message>
+    <message>
+        <source>Fee:</source>
+        <translation>Comisión:</translation>
+    </message>
+    <message>
+        <source>Dust:</source>
+        <translation>Calderilla:</translation>
+    </message>
+    <message>
+        <source>no</source>
+        <translation>no</translation>
+    </message>
+    <message>
+        <source>Bytes:</source>
+        <translation>Octetos:</translation>
+    </message>
+    <message>
+        <source>Insufficient funds!</source>
+        <translation>¡Fondos insuficientes!</translation>
+    </message>
+    <message>
+        <source>medium</source>
+        <translation>media</translation>
+    </message>
+    <message>
+        <source>Coin Control Features</source>
+        <translation>Funciones de Control de Monedas</translation>
+    </message>
+    <message>
+        <source>If this is activated, but the change address is empty or invalid, change will be sent to a newly generated address.</source>
+        <translation>Si esto está activado, pero la dirección de cambio está vacía o es inválida, el cambio será mandado a una nueva dirección generada.</translation>
+    </message>
+    <message>
+        <source>Custom change address</source>
+        <translation>Dirección de cambio personalizada</translation>
+    </message>
+    <message>
+        <source>Change:</source>
+        <translation>Cambio:</translation>
+    </message>
+    <message>
+        <source>out of sync</source>
+        <translation>desincronizado</translation>
+    </message>
+    <message>
+        <source>Copy quantity</source>
+        <translation>Copiar cantidad</translation>
+    </message>
+    <message>
+        <source>Copy amount</source>
+        <translation>Copiar cantidad</translation>
+    </message>
+    <message>
+        <source>Confirm send coins</source>
+        <translation>Confirmar enviar monedas</translation>
+    </message>
+    </context>
 <context>
     <name>QObject</name>
     <message>
@@ -2721,14 +2677,6 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>Funciones de Control de Monedas</translation>
     </message>
     <message>
-        <source>Inputs...</source>
-        <translation>Entradas...</translation>
-    </message>
-    <message>
-        <source>automatically selected</source>
-        <translation>seleccionadas automáticamente</translation>
-    </message>
-    <message>
         <source>Insufficient funds!</source>
         <translation>¡Fondos insuficientes!</translation>
     </message>
@@ -2811,10 +2759,6 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <message>
         <source>Minimize</source>
         <translation>Minimizar</translation>
-    </message>
-    <message>
-        <source>Obfuscation</source>
-        <translation>Ofuscación</translation>
     </message>
     <message>
         <source>per kilobyte</source>
@@ -2988,17 +2932,9 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <source>A fee %1 times higher than %2 per kB is considered an insanely high fee.</source>
         <translation>Una comisión %1 veces más alta que %2 por kB se considera exageradamente alta.</translation>
     </message>
-    <message numerus="yes">
-        <source>Estimated to begin confirmation within %n block(s).</source>
-        <translation><numerusform>Estimamos que empezará la confirmación en %n bloque.</numerusform><numerusform>Estimamos que empezará la confirmación en %n bloques.</numerusform></translation>
-    </message>
     <message>
         <source>The recipient address is not valid, please recheck.</source>
         <translation>La dirección de destino no es válida, por favor compruébelo de nuevo.</translation>
-    </message>
-    <message>
-        <source>(obfuscation requires this amount to be rounded up to the nearest %1).</source>
-        <translation>(la ofuscación requiere redondear hacia arriba esta cantidad al %1 más cercano).</translation>
     </message>
     <message>
         <source> split into %1 outputs using the UTXO splitter.</source>
@@ -3065,7 +3001,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>Choose previously used address</source>
-        <translation>Escoge una dirección usada previamente</translation>
+        <translation>Escoja una dirección usada previamente</translation>
     </message>
     <message>
         <source>Alt+A</source>
@@ -3073,7 +3009,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>Paste address from clipboard</source>
-        <translation>Pegar dirección desde el clipboard</translation>
+        <translation>Pegar dirección desde el portapapeles</translation>
     </message>
     <message>
         <source>Alt+P</source>
@@ -3151,11 +3087,11 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>The PIVX address to sign the message with</source>
-        <translation>La dirección PIVX con la que firmar el mensaje</translation>
+        <translation>La dirección PIVX con la que desee firmar el mensaje</translation>
     </message>
     <message>
         <source>Choose previously used address</source>
-        <translation>Escoge una dirección usada previamente</translation>
+        <translation>Escoja una dirección usada previamente</translation>
     </message>
     <message>
         <source>Alt+A</source>
@@ -3163,7 +3099,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>Paste address from clipboard</source>
-        <translation>Pegar dirección desde el clipboard</translation>
+        <translation>Pegar dirección desde el portapapeles</translation>
     </message>
     <message>
         <source>Alt+P</source>
@@ -3179,19 +3115,19 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>Copy the current signature to the system clipboard</source>
-        <translation>Copiar la firma actual al clipboard del sistema</translation>
+        <translation>Copiar la firma actual al portapapeles del sistema</translation>
     </message>
     <message>
         <source>Sign the message to prove you own this PIVX address</source>
-        <translation>Firmar el mensaje para demostrar que eres el propietario de esta dirección PIVX</translation>
+        <translation>Firme el mensaje para demostrar que eres el propietario de esta dirección PIVX</translation>
     </message>
     <message>
         <source>The PIVX address the message was signed with</source>
-        <translation>La dirección PIVX con la que el mensaje fue firmado</translation>
+        <translation>La dirección PIVX con la que se firmó el mensaje</translation>
     </message>
     <message>
         <source>Verify the message to ensure it was signed with the specified PIVX address</source>
-        <translation>Verificar el mensaje para asegurarse que fue firmado con la dirección PIVX especificada</translation>
+        <translation>Verifica el mensaje para asegurar que fue firmado con la dirección PIVX especificada</translation>
     </message>
     <message>
         <source>Sign &amp;Message</source>
@@ -3199,7 +3135,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>Reset all sign message fields</source>
-        <translation>Resetear todos los campos de firma de mensaje</translation>
+        <translation>Limpiar todos los campos de firma de mensaje</translation>
     </message>
     <message>
         <source>Clear &amp;All</source>
@@ -3219,7 +3155,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>Reset all verify message fields</source>
-        <translation>Resetear todos los campos de verificación de mensaje</translation>
+        <translation>Limpiar todos los campos de verificación de mensaje</translation>
     </message>
     <message>
         <source>Click "Sign Message" to generate signature</source>
@@ -3231,15 +3167,15 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>Please check the address and try again.</source>
-        <translation>Por favor comprobar la dirección y probar de nuevo.</translation>
+        <translation>Por favor compruebe la dirección e inténtelo de nuevo.</translation>
     </message>
     <message>
         <source>The entered address does not refer to a key.</source>
-        <translation>La dirección introducido no se refiere a ninguna clave.</translation>
+        <translation>La dirección introducida no se refiere a ninguna clave.</translation>
     </message>
     <message>
         <source>Wallet unlock was cancelled.</source>
-        <translation>El desbloqueo de la wallet fue cancelado.</translation>
+        <translation>El desbloqueo del monedero fue cancelado.</translation>
     </message>
     <message>
         <source>Private key for the entered address is not available.</source>
@@ -3310,10 +3246,6 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
 </context>
 <context>
     <name>TransactionDesc</name>
-    <message numerus="yes">
-        <source>Open for %n more block(s)</source>
-        <translation><numerusform>Abierto para %n bloque más</numerusform><numerusform>Abierto para %n bloques más</numerusform></translation>
-    </message>
     <message>
         <source>Open until %1</source>
         <translation>Abierto hasta %1</translation>
@@ -3374,10 +3306,6 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <source>, has not been successfully broadcast yet</source>
         <translation>, no ha sido correctamente transmitida todavía</translation>
     </message>
-    <message numerus="yes">
-        <source>, broadcast through %n node(s)</source>
-        <translation><numerusform>, retransmitido a través de %n nodo</numerusform><numerusform>, retransmitido a través de %n nodos</numerusform></translation>
-    </message>
     <message>
         <source>Date</source>
         <translation>Fecha</translation>
@@ -3417,10 +3345,6 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <message>
         <source>Credit</source>
         <translation>Crédito</translation>
-    </message>
-    <message numerus="yes">
-        <source>matures in %n more block(s)</source>
-        <translation><numerusform>madura en %n bloque más</numerusform><numerusform>madura en %n bloques más</numerusform></translation>
     </message>
     <message>
         <source>not accepted</source>
@@ -3519,10 +3443,6 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <message>
         <source>Address</source>
         <translation>Dirección</translation>
-    </message>
-    <message numerus="yes">
-        <source>Open for %n more block(s)</source>
-        <translation><numerusform>Abierto para %n bloque más</numerusform><numerusform>Abierto para %n bloques más</numerusform></translation>
     </message>
     <message>
         <source>Open until %1</source>
@@ -3885,6 +3805,13 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
 </context>
 <context>
+    <name>ZPivControlDialog</name>
+    <message>
+        <source>0</source>
+        <translation>0</translation>
+    </message>
+    </context>
+<context>
     <name>pivx-core</name>
     <message>
         <source>(1 = keep tx meta data e.g. account owner and payment request information, 2 = drop tx meta data)</source>
@@ -3945,10 +3872,6 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <message>
         <source>Enable swifttx, show confirmations for locked transactions (bool, default: %s)</source>
         <translation>Activar swifttx, mostrar confirmaciones para transacciones bloqueadas (bool, predeterminado: %s)</translation>
-    </message>
-    <message>
-        <source>Enable use of automated obfuscation for funds stored in this wallet (0-1, default: %u)</source>
-        <translation>Activar el uso de ofuscación automatica para fondos guardados en este monedero (0-1, predeterminado: %u)</translation>
     </message>
     <message>
         <source>Enter regression test mode, which uses a special chain in which blocks can be solved instantly.</source>
@@ -4037,10 +3960,6 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <message>
         <source>Output debugging information (default: %u, supplying &lt;category&gt; is optional)</source>
         <translation>Saluda de información de depuración (predeterminado: %u, proveyendo &lt;category&gt; es opcional)</translation>
-    </message>
-    <message>
-        <source>Provide liquidity to Obfuscation by infrequently mixing coins on a continual basis (0-100, default: %u, 1=very frequent, high fees, 100=very infrequent, low fees)</source>
-        <translation>Proporcionar liquidez a la Ofuscación mezclando infrecuentemente las monedas continuamente (0-100, predeterminado: %u, 1=muy frecuente, altas comisiones, 100=muy infrecuente, bajas comisiones)</translation>
     </message>
     <message>
         <source>Query for peer addresses via DNS lookup, if low on addresses (default: 1 unless -connect)</source>
@@ -4579,10 +4498,6 @@ por ejemplo: alertnotify=echo %%s | mail -s "PIVX Alert" admin@foo.com
         <translation>Activar funcionalidad de recompensa por participación (0-1, por defecto: %u)</translation>
     </message>
     <message>
-        <source>Keep N PIV anonymized (default: %u)</source>
-        <translation>Mantener N PIV anonimizados (predeterminado: %u)</translation>
-    </message>
-    <message>
         <source>Keep at most &lt;n&gt; unconnectable transactions in memory (default: %u)</source>
         <translation>Mantener como máximo &lt;n&gt; transacciones no conectables en memoria (predeterminado: %u)</translation>
     </message>
@@ -4725,10 +4640,6 @@ por ejemplo: alertnotify=echo %%s | mail -s "PIVX Alert" admin@foo.com
     <message>
         <source>Obfuscation is idle.</source>
         <translation>La Ofuscación está sin uso.</translation>
-    </message>
-    <message>
-        <source>Obfuscation options:</source>
-        <translation>Opciones de Ofuscacion:</translation>
     </message>
     <message>
         <source>Obfuscation request complete:</source>
@@ -5041,10 +4952,6 @@ por ejemplo: alertnotify=echo %%s | mail -s "PIVX Alert" admin@foo.com
     <message>
         <source>Upgrade wallet to latest format</source>
         <translation>Actualizar el monedero al formato ultimo</translation>
-    </message>
-    <message>
-        <source>Use N separate masternodes to anonymize funds  (2-8, default: %u)</source>
-        <translation>Utilizar N nodos maestros distintos para anonimizar fondos (2-8, predeterminado: %u)</translation>
     </message>
     <message>
         <source>Use OpenSSL (https) for JSON-RPC connections</source>
