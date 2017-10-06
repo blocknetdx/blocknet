@@ -1,4 +1,3 @@
-// Copyright (c) 2010 Satoshi Nakamoto
 // Copyright (c) 2009-2012 The Bitcoin developers
 // Copyright (c) 2015-2017 The PIVX developers
 // Distributed under the MIT/X11 software license, see the accompanying
@@ -54,6 +53,8 @@ void SendMoney(const CTxDestination& address, CAmount nValue, CWalletTx& wtxNew,
 
 Value obfuscation(const Array& params, bool fHelp)
 {
+    throw runtime_error("Obfuscation is not supported any more. User Zerocoin\n");
+    
     if (fHelp || params.size() == 0)
         throw runtime_error(
             "obfuscation <pivxaddress> <amount>\n"

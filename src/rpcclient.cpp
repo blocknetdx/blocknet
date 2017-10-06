@@ -113,7 +113,21 @@ static const CRPCConvertParam vRPCConvertParams[] =
         {"reservebalance", 1},
         {"setstakesplitthreshold", 0},
         {"autocombinerewards", 0},
-        {"autocombinerewards", 1}};
+        {"autocombinerewards", 1},
+        {"getzerocoinbalance", 0},
+        {"listmintedzerocoins", 0},
+        {"listspentzerocoins", 0},
+        {"listzerocoinamounts", 0},
+        {"mintzerocoin", 0},
+        {"spendzerocoin", 0},
+        {"spendzerocoin", 1},
+        {"spendzerocoin", 2},
+        {"spendzerocoin", 3},
+        {"importzerocoins", 0},
+        {"exportzerocoins", 0},
+        {"exportzerocoins", 1},
+        {"resetmintzerocoin", 0}
+    };
 
 class CRPCConvertTable
 {

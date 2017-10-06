@@ -135,6 +135,24 @@ vector<unsigned char> ParseHexO(const Object& o, string strKey)
     return ParseHexV(find_value(o, strKey), strKey);
 }
 
+int ParseInt(const Object& o, string strKey)
+{
+    const Value& v = find_value(o, strKey);
+    if (v.type() != int_type)
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, " + strKey + "is not an int");
+
+    return v.get_int();
+}
+
+bool ParseBool(const Object& o, string strKey)
+{
+    const Value& v = find_value(o, strKey);
+    if (v.type() != bool_type)
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, " + strKey + "is not a bool");
+
+    return v.get_bool();
+}
+
 
 /**
  * Note: This interface may still be subject to change.
@@ -378,6 +396,20 @@ static const CRPCCommand vRPCCommands[] =
         {"wallet", "walletlock", &walletlock, true, false, true},
         {"wallet", "walletpassphrasechange", &walletpassphrasechange, true, false, true},
         {"wallet", "walletpassphrase", &walletpassphrase, true, false, true},
+
+        {"zerocoin", "getzerocoinbalance", &getzerocoinbalance, false, false, true},
+        {"zerocoin", "listmintedzerocoins", &listmintedzerocoins, false, false, true},
+        {"zerocoin", "listspentzerocoins", &listspentzerocoins, false, false, true},
+        {"zerocoin", "listzerocoinamounts", &listzerocoinamounts, false, false, true},
+        {"zerocoin", "mintzerocoin", &mintzerocoin, false, false, true},
+        {"zerocoin", "spendzerocoin", &spendzerocoin, false, false, true},
+        {"zerocoin", "resetmintzerocoin", &resetmintzerocoin, false, false, true},
+        {"zerocoin", "resetspentzerocoin", &resetspentzerocoin, false, false, true},
+        {"zerocoin", "getarchivedzerocoin", &getarchivedzerocoin, false, false, true},
+        {"zerocoin", "importzerocoins", &importzerocoins, false, false, true},
+        {"zerocoin", "exportzerocoins", &exportzerocoins, false, false, true},
+        {"zerocoin", "reconsiderzerocoins", &reconsiderzerocoins, false, false, true}
+
 #endif // ENABLE_WALLET
 };
 

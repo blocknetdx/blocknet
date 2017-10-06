@@ -1,5 +1,6 @@
 // Copyright (c) 2010 Satoshi Nakamoto
 // Copyright (c) 2009-2014 The Bitcoin developers
+// Copyright (c) 2015-2017 The PIVX developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -133,6 +134,8 @@ extern uint256 ParseHashV(const json_spirit::Value& v, std::string strName);
 extern uint256 ParseHashO(const json_spirit::Object& o, std::string strKey);
 extern std::vector<unsigned char> ParseHexV(const json_spirit::Value& v, std::string strName);
 extern std::vector<unsigned char> ParseHexO(const json_spirit::Object& o, std::string strKey);
+extern int ParseInt(const json_spirit::Object& o, std::string strKey);
+extern bool ParseBool(const json_spirit::Object& o, std::string strKey);
 
 extern void InitRPCMining();
 extern void ShutdownRPCMining();
@@ -211,6 +214,18 @@ extern json_spirit::Value setstakesplitthreshold(const json_spirit::Array& param
 extern json_spirit::Value getstakesplitthreshold(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value multisend(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value autocombinerewards(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value getzerocoinbalance(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value listmintedzerocoins(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value listspentzerocoins(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value listzerocoinamounts(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value mintzerocoin(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value spendzerocoin(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value resetmintzerocoin(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value resetspentzerocoin(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value getarchivedzerocoin(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value importzerocoins(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value exportzerocoins(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value reconsiderzerocoins(const json_spirit::Array& params, bool fHelp);
 
 extern json_spirit::Value getrawtransaction(const json_spirit::Array& params, bool fHelp); // in rcprawtransaction.cpp
 extern json_spirit::Value listunspent(const json_spirit::Array& params, bool fHelp);
