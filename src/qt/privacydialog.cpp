@@ -142,11 +142,16 @@ void PrivacyDialog::on_pushButtonMintzPIV_clicked()
 
     // Reset message text
     ui->TEMintStatus->setPlainText(tr("Mint Status: Okay"));
-    
-    // Wallet must be unlocked for minting
-    if (pwalletMain->IsLocked()){
-        ui->TEMintStatus->setPlainText(tr("Error: your wallet is locked. Please enter the wallet passphrase first."));
-        return;
+
+    // Request unlock if wallet was locked or unlocked for mixing:
+    WalletModel::EncryptionStatus encStatus = walletModel->getEncryptionStatus();
+    if (encStatus == walletModel->Locked) {
+        WalletModel::UnlockContext ctx(walletModel->requestUnlock(true));
+        if (!ctx.isValid()) {
+            // Unlock wallet was cancelled
+            ui->TEMintStatus->setPlainText(tr("Error: Your wallet is locked. Please enter the wallet passphrase first."));
+            return;
+        }
     }
 
     QString sAmount = ui->labelMintAmountValue->text();
