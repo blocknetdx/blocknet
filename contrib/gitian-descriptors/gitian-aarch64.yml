@@ -1,5 +1,5 @@
 ---
-name: "pivx-aarch64-2.3"
+name: "pivx-aarch64-3.0"
 enable_cache: true
 suites:
 - "xenial"
