@@ -559,13 +559,11 @@ WalletModel::UnlockContext WalletModel::requestUnlock(bool relock)
     // If wallet is still locked, unlock was failed or cancelled, mark context as invalid
     bool valid = getEncryptionStatus() != Locked;
 
-    return UnlockContext(this, valid, relock);
+    return UnlockContext(valid, relock);
     //    return UnlockContext(this, valid, was_locked && !isAnonymizeOnlyUnlocked());
 }
 
-WalletModel::UnlockContext::UnlockContext(WalletModel* wallet, bool valid, bool relock) : wallet(wallet),
-                                                                                          valid(valid),
-                                                                                          relock(relock)
+WalletModel::UnlockContext::UnlockContext(bool valid, bool relock) : valid(valid), relock(relock)
 {
 }
 
