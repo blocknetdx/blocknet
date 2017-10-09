@@ -5,7 +5,7 @@
 // #include <boost/asio/buffer.hpp>
 #include <boost/algorithm/string.hpp>
 
-#include "xbridgesessionbtc.h"
+#include "xbridgesessionbcc.h"
 #include "xbridgeapp.h"
 #include "xbridgeexchange.h"
 #include "xuiconnector.h"
@@ -19,21 +19,21 @@
 
 //*****************************************************************************
 //*****************************************************************************
-XBridgeSessionBtc::XBridgeSessionBtc()
+XBridgeSessionBcc::XBridgeSessionBcc()
     : XBridgeSession()
 {
 }
 
 //*****************************************************************************
 //*****************************************************************************
-XBridgeSessionBtc::XBridgeSessionBtc(const WalletParam & wallet)
+XBridgeSessionBcc::XBridgeSessionBcc(const WalletParam & wallet)
     : XBridgeSession(wallet)
 {
 }
 
 //*****************************************************************************
 //*****************************************************************************
-XBridgeSessionBtc::~XBridgeSessionBtc()
+XBridgeSessionBcc::~XBridgeSessionBcc()
 {
 
 }
@@ -47,7 +47,7 @@ XBridgeSessionBtc::~XBridgeSessionBtc()
 
 //*****************************************************************************
 //*****************************************************************************
-std::vector<unsigned char> XBridgeSessionBtc::toXAddr(const std::string & addr) const
+std::vector<unsigned char> XBridgeSessionBcc::toXAddr(const std::string & addr) const
 {
     std::vector<unsigned char> vaddr;
     if (DecodeBase58Check(addr.c_str(), vaddr))
@@ -59,7 +59,7 @@ std::vector<unsigned char> XBridgeSessionBtc::toXAddr(const std::string & addr) 
 
 //******************************************************************************
 //******************************************************************************
-uint32_t XBridgeSessionBtc::lockTime(const char role) const
+uint32_t XBridgeSessionBcc::lockTime(const char role) const
 {
     rpc::Info info;
     if (!rpc::getInfo(m_wallet.user, m_wallet.passwd,
@@ -99,14 +99,14 @@ uint32_t XBridgeSessionBtc::lockTime(const char role) const
 
 //******************************************************************************
 //******************************************************************************
-xbridge::CTransactionPtr XBridgeSessionBtc::createTransaction() const
+xbridge::CTransactionPtr XBridgeSessionBcc::createTransaction() const
 {
     return xbridge::CTransactionPtr(new xbridge::CBTCTransaction);
 }
 
 //******************************************************************************
 //******************************************************************************
-xbridge::CTransactionPtr XBridgeSessionBtc::createTransaction(const std::vector<std::pair<std::string, int> > & inputs,
+xbridge::CTransactionPtr XBridgeSessionBcc::createTransaction(const std::vector<std::pair<std::string, int> > & inputs,
                                                               const std::vector<std::pair<CScript, double> > &outputs,
                                                               const uint32_t lockTime) const
 {
@@ -136,13 +136,13 @@ xbridge::CTransactionPtr XBridgeSessionBtc::createTransaction(const std::vector<
 
 //******************************************************************************
 //******************************************************************************
-bool XBridgeSessionBtc::signTransaction(const xbridge::CKey & key,
+bool XBridgeSessionBcc::signTransaction(const xbridge::CKey & key,
                                         const xbridge::CTransactionPtr & transaction,
                                         const uint32_t inputIdx,
                                         const CScript & unlockScript,
                                         std::vector<unsigned char> & signature)
 {
-    uint256 hash = xbridge::SignatureHash2(unlockScript, transaction, inputIdx, SIGHASH_ALL);
+    uint256 hash = xbridge::SignatureHash2(unlockScript, transaction, inputIdx, SIGHASH_ALL | SIGHASH_FORKID);
     if (!key.Sign(hash, signature))
     {
         // cancel transaction
@@ -150,7 +150,7 @@ bool XBridgeSessionBtc::signTransaction(const xbridge::CKey & key,
         return false;
     }
 
-    signature.push_back((unsigned char)SIGHASH_ALL);
+    signature.push_back((unsigned char)SIGHASH_ALL | SIGHASH_FORKID);
 
     // TXLOG() << "signature " << HexStr(signature.begin(), signature.end());
 

@@ -4,6 +4,7 @@
 #include "xbridge.h"
 #include "xbridgesession.h"
 #include "xbridgesessionbtc.h"
+#include "xbridgesessionbcc.h"
 // #include "xbridgesessionethereum.h"
 // #include "xbridgesessionrpccommon.h"
 #include "xbridgeapp.h"
@@ -86,6 +87,10 @@ XBridge::XBridge()
                 else if (wp.method == "BTC")
                 {
                     session.reset(new XBridgeSessionBtc(wp));
+                }
+                else if (wp.method == "BCC")
+                {
+                    session.reset(new XBridgeSessionBcc(wp));
                 }
                 else if (wp.method == "RPC")
                 {

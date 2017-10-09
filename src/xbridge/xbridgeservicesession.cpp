@@ -71,3 +71,15 @@ xbridge::CTransactionPtr XBridgeServiceSession::createTransaction(const std::vec
     assert(!"not implemented in service session");
     return xbridge::CTransactionPtr();
 }
+
+//******************************************************************************
+//******************************************************************************
+bool XBridgeServiceSession::signTransaction(const xbridge::CKey & /*key*/,
+                                            const xbridge::CTransactionPtr & /*transaction*/,
+                                            const uint32_t /*inputIdx*/,
+                                            const CScript & /*unlockScript*/,
+                                            std::vector<unsigned char> & /*signature*/)
+{
+    assert(!"not implemented in service session");
+    return false;
+}

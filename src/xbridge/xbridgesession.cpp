@@ -1493,19 +1493,12 @@ bool XBridgeSession::processTransactionCreate(XBridgePacketPtr packet)
             tmp << raw << OP_TRUE << inner;
 
             std::vector<unsigned char> signature2;
+            if (!signTransaction(m, txUnsigned, 0, inner, signature2))
             {
-                uint256 hash = xbridge::SignatureHash2(inner, txUnsigned, 0, SIGHASH_ALL);
-                if (!m.Sign(hash, signature2))
-                {
-                    // cancel transaction
-                    LOG() << "sign transaction error, transaction canceled " << __FUNCTION__;
-                    sendCancelTransaction(xtx, crNotSigned);
-                    return true;
-                }
-
-                signature2.push_back((unsigned char)SIGHASH_ALL);
-
-                // TXLOG() << "signature2 " << HexStr(signature2.begin(), signature2.end());
+                // cancel transaction
+                LOG() << "sign transaction error, transaction canceled " << __FUNCTION__;
+                sendCancelTransaction(xtx, crNotSigned);
+                return true;
             }
 
             redeem << signature2;
@@ -1854,22 +1847,14 @@ bool XBridgeSession::processTransactionConfirmA(XBridgePacketPtr packet)
         }
 
         std::vector<unsigned char> signature2;
+        if (!signTransaction(m, txUnsigned, 0, inner, signature2))
         {
-            uint256 hash = xbridge::SignatureHash2(inner, txUnsigned, 0, SIGHASH_ALL);
-            if (!m.Sign(hash, signature2))
-            {
-                // cancel transaction
-                LOG() << "sign transaction error, transaction canceled " << __FUNCTION__;
-                sendCancelTransaction(xtx, crNotSigned);
-                return true;
-            }
-
-            signature2.push_back((unsigned char)SIGHASH_ALL);
-
-            // TXLOG() << "signature2 " << HexStr(signature2.begin(), signature2.end());
+            // cancel transaction
+            LOG() << "sign transaction error, transaction canceled " << __FUNCTION__;
+            sendCancelTransaction(xtx, crNotSigned);
+            return true;
         }
 
-        // sign2
         {
             CScript redeem;
             std::vector<unsigned char> rawx(xtx->xPubKey.begin(), xtx->xPubKey.end());

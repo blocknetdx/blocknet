@@ -70,6 +70,12 @@ protected:
                                                        const std::vector<std::pair<CScript, double> > & outputs,
                                                        const uint32_t lockTime = 0) const = 0;
 
+    virtual bool signTransaction(const xbridge::CKey & key,
+                                 const xbridge::CTransactionPtr & transaction,
+                                 const uint32_t inputIdx,
+                                 const CScript & unlockScript,
+                                 std::vector<unsigned char> & signature) = 0;
+
 private:
     virtual void init();
 
