@@ -549,7 +549,6 @@ HEADERS += \
     src/script/standard.h \
     src/univalue/univalue.h \
     src/univalue/univalue_escapes.h \
-    src/clientversioncore.h \
     src/xbridge/util/logger.h \
     src/xbridge/util/settings.h \
     src/xbridge/util/txlog.h \
@@ -738,6 +737,7 @@ isEmpty(BOOST_INCLUDE_PATH) {
 }
 
 windows:DEFINES += WIN32
+windows:QMAKE_RC = windres -DWINDRES_PREPROC
 windows:RC_FILE = src/qt/res/blocknetdx-qt-res.rc
 
 windows:!contains(MINGW_THREAD_BUGFIX, 0) {
