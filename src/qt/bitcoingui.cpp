@@ -317,27 +317,27 @@ void BitcoinGUI::createActions(const NetworkStyle* networkStyle)
 #endif
     tabGroup->addAction(receiveCoinsAction);
 
-    privacyAction = new QAction(QIcon(":/icons/privacy"), tr("&Privacy"), this);
-    privacyAction->setStatusTip(tr("Privacy Actions for zPIV"));
-    privacyAction->setToolTip(privacyAction->statusTip());
-    privacyAction->setCheckable(true);
-#ifdef Q_OS_MAC
-    privacyAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_4));
-#else
-    privacyAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_4));
-#endif
-    tabGroup->addAction(privacyAction);
-
     historyAction = new QAction(QIcon(":/icons/history"), tr("&Transactions"), this);
     historyAction->setStatusTip(tr("Browse transaction history"));
     historyAction->setToolTip(historyAction->statusTip());
     historyAction->setCheckable(true);
 #ifdef Q_OS_MAC
-    historyAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_5));
+    historyAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_4));
 #else
-    historyAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_5));
+    historyAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_4));
 #endif
     tabGroup->addAction(historyAction);
+
+    privacyAction = new QAction(QIcon(":/icons/privacy"), tr("&Privacy"), this);
+    privacyAction->setStatusTip(tr("Privacy Actions for zPIV"));
+    privacyAction->setToolTip(privacyAction->statusTip());
+    privacyAction->setCheckable(true);
+#ifdef Q_OS_MAC
+    privacyAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_5));
+#else
+    privacyAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_5));
+#endif
+    tabGroup->addAction(privacyAction);
 
 #ifdef ENABLE_WALLET
 
