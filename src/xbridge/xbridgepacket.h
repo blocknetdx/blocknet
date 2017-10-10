@@ -239,12 +239,6 @@ enum XBridgeCommand
     //    uint256 hub transaction id
     //
     xbcTransactionFinished = 24,
-    //
-    // xbcTransactionDropped
-    //    uint160 address
-    //    uint256 hub transaction id
-    //
-    xbcTransactionDropped = 25,
 };
 
 //******************************************************************************

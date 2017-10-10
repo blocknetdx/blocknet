@@ -15,6 +15,8 @@
 #include "util.h"
 #include "xkey.h"
 #include "ui_interface.h"
+#include "init.h"
+#include "wallet.h"
 
 #include <boost/chrono/chrono.hpp>
 #include <boost/thread/thread.hpp>
@@ -434,6 +436,13 @@ void XBridgeApp::getAddressBook()
     }
 }
 
+//*****************************************************************************
+//*****************************************************************************
+bool XBridgeApp::txOutIsLocked(const rpc::UtxoEntry & /*entry*/) const
+{
+    return false;
+}
+
 //******************************************************************************
 //******************************************************************************
 uint256 XBridgeApp::sendXBridgeTransaction(const std::string & from,
@@ -462,7 +471,28 @@ uint256 XBridgeApp::sendXBridgeTransaction(const std::string & from,
         return uint256();
     }
 
-    if (!s->checkAmount(fromAmount))
+    std::vector<rpc::UtxoEntry> outputs;
+    s->getUnspent(outputs);
+
+    double utxoAmount = 0;
+    std::vector<rpc::UtxoEntry> outputsForUse;
+    for (const rpc::UtxoEntry & entry : outputs)
+    {
+        if (!txOutIsLocked(entry))
+        {
+            utxoAmount += entry.amount;
+            outputsForUse.push_back(entry);
+
+            // TODO calculate fee for outputsForUse.count()
+
+            if (utxoAmount > fromAmount)
+            {
+                break;
+            }
+        }
+    }
+
+    if (utxoAmount < fromAmount)
     {
         uiInterface.ThreadSafeMessageBox(_("Insufficient funds for ") + fromCurrency,
                                          "blocknet",
@@ -489,6 +519,7 @@ uint256 XBridgeApp::sendXBridgeTransaction(const std::string & from,
     ptr->to           = to;
     ptr->toCurrency   = toCurrency;
     ptr->toAmount     = toAmount;
+    ptr->usedCoins    = outputsForUse;
 
     {
         boost::mutex::scoped_lock l(m_txLocker);
@@ -503,7 +534,7 @@ uint256 XBridgeApp::sendXBridgeTransaction(const std::string & from,
 
 //******************************************************************************
 //******************************************************************************
-bool XBridgeApp::sendPendingTransaction(XBridgeTransactionDescrPtr & ptr)
+bool XBridgeApp::sendPendingTransaction(const XBridgeTransactionDescrPtr & ptr)
 {
     // if (!ptr->packet)
     {
@@ -545,8 +576,13 @@ bool XBridgeApp::sendPendingTransaction(XBridgeTransactionDescrPtr & ptr)
 
     onSend(ptr->packet);
 
-    ptr->state = XBridgeTransactionDescr::trPending;
+    // lock used coins
+    for (const rpc::UtxoEntry & entry : ptr->usedCoins)
+    {
+        pwalletMain->LockCoin(COutPoint(entry.txId, entry.vout));
+    }
 
+    ptr->state = XBridgeTransactionDescr::trPending;
     xuiConnector.NotifyXBridgeTransactionStateChanged(ptr->id, XBridgeTransactionDescr::trPending);
 
     return true;
@@ -585,7 +621,28 @@ uint256 XBridgeApp::acceptXBridgeTransaction(const uint256 & id,
         return uint256();
     }
 
-    if (!s->checkAmount(ptr->toAmount))
+    std::vector<rpc::UtxoEntry> outputs;
+    s->getUnspent(outputs);
+
+    double utxoAmount = 0;
+    std::vector<rpc::UtxoEntry> outputsForUse;
+    for (const rpc::UtxoEntry & entry : outputs)
+    {
+        if (!txOutIsLocked(entry))
+        {
+            utxoAmount += entry.amount;
+            outputsForUse.push_back(entry);
+
+            // TODO calculate fee for outputsForUse.count()
+
+            if (utxoAmount > ptr->toAmount)
+            {
+                break;
+            }
+        }
+    }
+
+    if (utxoAmount < ptr->toAmount)
     {
         uiInterface.ThreadSafeMessageBox(_("Insufficient funds for ") + ptr->toCurrency,
                                          "blocknet",
@@ -599,6 +656,7 @@ uint256 XBridgeApp::acceptXBridgeTransaction(const uint256 & id,
     ptr->to   = to;
     std::swap(ptr->fromCurrency, ptr->toCurrency);
     std::swap(ptr->fromAmount,   ptr->toAmount);
+    ptr->usedCoins = outputsForUse;
 
     // try send immediatelly
     sendAcceptingTransaction(ptr);
@@ -608,7 +666,7 @@ uint256 XBridgeApp::acceptXBridgeTransaction(const uint256 & id,
 
 //******************************************************************************
 //******************************************************************************
-bool XBridgeApp::sendAcceptingTransaction(XBridgeTransactionDescrPtr & ptr)
+bool XBridgeApp::sendAcceptingTransaction(const XBridgeTransactionDescrPtr & ptr)
 {
     ptr->packet.reset(new XBridgePacket(xbcTransactionAccepting));
 
@@ -635,6 +693,15 @@ bool XBridgeApp::sendAcceptingTransaction(XBridgeTransactionDescrPtr & ptr)
     ptr->packet->append(ptr->toAmount);
 
     onSend(ptr->hubAddress, ptr->packet);
+
+    // lock used coins
+    for (const rpc::UtxoEntry & entry : ptr->usedCoins)
+    {
+        pwalletMain->LockCoin(COutPoint(entry.txId, entry.vout));
+    }
+
+    ptr->state = XBridgeTransactionDescr::trAccepting;
+    xuiConnector.NotifyXBridgeTransactionStateChanged(ptr->id, XBridgeTransactionDescr::trPending);
 
     return true;
 }

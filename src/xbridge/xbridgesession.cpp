@@ -129,7 +129,6 @@ void XBridgeSession::init()
         m_handlers[xbcTransactionCancel]     .bind(this, &XBridgeSession::processTransactionCancel);
         m_handlers[xbcTransactionRollback]   .bind(this, &XBridgeSession::processTransactionRollback);
         m_handlers[xbcTransactionFinished]   .bind(this, &XBridgeSession::processTransactionFinished);
-        m_handlers[xbcTransactionDropped]    .bind(this, &XBridgeSession::processTransactionDropped);
 
         m_handlers[xbcTransactionConfirmedA] .bind(this, &XBridgeSession::processTransactionConfirmedA);
         m_handlers[xbcTransactionConfirmedB] .bind(this, &XBridgeSession::processTransactionConfirmedB);
@@ -1295,7 +1294,7 @@ bool XBridgeSession::processTransactionCreate(XBridgePacketPtr packet)
         LOG() << "deposit A tx confirmed " << util::to_str(txid);
     }
 
-    std::vector<rpc::Unspent> entries;
+    std::vector<rpc::UtxoEntry> entries;
     if (!rpc::listUnspent(m_wallet.user, m_wallet.passwd,
                           m_wallet.ip, m_wallet.port, entries))
     {
@@ -1310,8 +1309,8 @@ bool XBridgeSession::processTransactionCreate(XBridgePacketPtr packet)
     double fee2      = minTxFee2(1, 1);
     double inAmount  = 0;
 
-    std::vector<rpc::Unspent> usedInTx;
-    for (const rpc::Unspent & entry : entries)
+    std::vector<rpc::UtxoEntry> usedInTx;
+    for (const rpc::UtxoEntry & entry : entries)
     {
         usedInTx.push_back(entry);
         inAmount += entry.amount;
@@ -1372,7 +1371,7 @@ bool XBridgeSession::processTransactionCreate(XBridgePacketPtr packet)
         std::vector<std::pair<std::string, double> > outputs;
 
         // inputs
-        for (const rpc::Unspent & entry : usedInTx)
+        for (const rpc::UtxoEntry & entry : usedInTx)
         {
             inputs.push_back(std::make_pair(entry.txId, entry.vout));
         }
@@ -2294,6 +2293,14 @@ bool XBridgeSession::cancelOrRollbackTransaction(const uint256 & txid, const TxC
     }
 
     {
+        // unlock coins
+        for (const rpc::UtxoEntry & entry : xtx->usedCoins)
+        {
+            pwalletMain->UnlockCoin(COutPoint(entry.txId, entry.vout));
+        }
+    }
+
+    {
         // remove from pending packets (if added)
         boost::mutex::scoped_lock l(XBridgeApp::m_ppLocker);
         XBridgeApp::m_pendingPackets.erase(txid);
@@ -2667,40 +2674,6 @@ bool XBridgeSession::processTransactionRollback(XBridgePacketPtr packet)
 
 //******************************************************************************
 //******************************************************************************
-bool XBridgeSession::processTransactionDropped(XBridgePacketPtr packet)
-{
-    if (packet->size() != 32)
-    {
-        ERR() << "incorrect packet size for xbcTransactionDropped" << __FUNCTION__;
-        return false;
-    }
-
-    // transaction id
-    uint256 id(packet->data());
-
-    XBridgeTransactionDescrPtr xtx;
-    {
-        boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
-
-        if (!XBridgeApp::m_transactions.count(id))
-        {
-            // signal for gui
-            xuiConnector.NotifyXBridgeTransactionStateChanged(id, XBridgeTransactionDescr::trDropped);
-            return false;
-        }
-
-        xtx = XBridgeApp::m_transactions[id];
-    }
-
-    // update transaction state for gui
-    xtx->state = XBridgeTransactionDescr::trDropped;
-    xuiConnector.NotifyXBridgeTransactionStateChanged(id, xtx->state);
-
-    return true;
-}
-
-//******************************************************************************
-//******************************************************************************
 bool XBridgeSession::makeNewPubKey(xbridge::CPubKey & newPKey) const
 {
     if (m_wallet.isGetNewPubKeySupported)
@@ -2736,31 +2709,23 @@ bool XBridgeSession::makeNewPubKey(xbridge::CPubKey & newPKey) const
 
 //******************************************************************************
 //******************************************************************************
-bool XBridgeSession::checkAmount(const uint64_t amount) const
+bool XBridgeSession::checkAmount(const uint64_t _amount) const
 {
-    std::vector<rpc::Unspent> inputs;
-    return checkAmountAndGetInputs(amount, inputs);
-}
-
-//******************************************************************************
-//******************************************************************************
-bool XBridgeSession::checkAmountAndGetInputs(const uint64_t _amount,
-                                             std::vector<rpc::Unspent> & inputs) const
-{
+    std::vector<rpc::UtxoEntry> inputs;
+    // return checkAmountAndGetInputs(amount, inputs);
     inputs.clear();
 
     double amount = _amount / XBridgeTransactionDescr::COIN;
 
-    std::vector<rpc::Unspent> entries;
-    if (!rpc::listUnspent(m_wallet.user, m_wallet.passwd,
-                          m_wallet.ip, m_wallet.port, entries))
+    std::vector<rpc::UtxoEntry> entries;
+    if (!getUnspent(entries))
     {
-        LOG() << "rpc::listUnspent failed" << __FUNCTION__;
+        LOG() << "getUnspent failed " << __FUNCTION__;
         return false;
     }
 
     double funds = 0;
-    for (const rpc::Unspent & entry : entries)
+    for (const rpc::UtxoEntry & entry : entries)
     {
         inputs.push_back(entry);
 
@@ -2777,18 +2742,31 @@ bool XBridgeSession::checkAmountAndGetInputs(const uint64_t _amount,
 
 //******************************************************************************
 //******************************************************************************
-double XBridgeSession::getWalletBalance() const
+bool XBridgeSession::getUnspent(std::vector<rpc::UtxoEntry> & inputs) const
 {
-    std::vector<rpc::Unspent> entries;
     if (!rpc::listUnspent(m_wallet.user, m_wallet.passwd,
-                          m_wallet.ip, m_wallet.port, entries))
+                          m_wallet.ip, m_wallet.port, inputs))
     {
         LOG() << "rpc::listUnspent failed" << __FUNCTION__;
+        return false;
+    }
+
+    return true;
+}
+
+//******************************************************************************
+//******************************************************************************
+double XBridgeSession::getWalletBalance() const
+{
+    std::vector<rpc::UtxoEntry> entries;
+    if (!getUnspent(entries))
+    {
+        LOG() << "getUnspent failed " << __FUNCTION__;
         return 0;
     }
 
     double amount = 0;
-    for (const rpc::Unspent & entry : entries)
+    for (const rpc::UtxoEntry & entry : entries)
     {
         amount += entry.amount;
     }

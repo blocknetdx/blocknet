@@ -29,7 +29,7 @@ namespace rpc
                  const std::string & rpcport,
                  Info & info);
 
-    struct Unspent
+    struct UtxoEntry
     {
         std::string txId;
         int vout;
@@ -39,14 +39,13 @@ namespace rpc
                      const std::string & rpcpasswd,
                      const std::string & rpcip,
                      const std::string & rpcport,
-                     std::vector<Unspent> & entries);
+                     std::vector<UtxoEntry> & entries);
 
     bool gettxout(const std::string & rpcuser,
                   const std::string & rpcpasswd,
                   const std::string & rpcip,
                   const std::string & rpcport,
-                  const std::string & txid,
-                  const uint32_t & out);
+                  UtxoEntry & txout);
 
     bool getRawTransaction(const std::string & rpcuser,
                            const std::string & rpcpasswd,

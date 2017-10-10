@@ -218,7 +218,6 @@ bool XBridgeTransactionsModel::newTransactionFromPending(const uint256 & id,
             XBridgeTransactionDescr & d = m_transactions[i];
             d.from  = from;
             d.to    = to;
-            d.state = XBridgeTransactionDescr::trAccepting;
             std::swap(d.fromCurrency, d.toCurrency);
             std::swap(d.fromAmount, d.toAmount);
 

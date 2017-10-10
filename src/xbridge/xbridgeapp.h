@@ -57,12 +57,12 @@ public:
                                    const std::string & to,
                                    const std::string & toCurrency,
                                    const uint64_t & toAmount);
-    bool sendPendingTransaction(XBridgeTransactionDescrPtr & ptr);
+    bool sendPendingTransaction(const XBridgeTransactionDescrPtr & ptr);
 
     uint256 acceptXBridgeTransaction(const uint256 & id,
                                      const std::string & from,
                                      const std::string & to);
-    bool sendAcceptingTransaction(XBridgeTransactionDescrPtr & ptr);
+    bool sendAcceptingTransaction(const XBridgeTransactionDescrPtr & ptr);
 
     bool cancelXBridgeTransaction(const uint256 & id, const TxCancelReason & reason);
     bool sendCancelTransaction(const uint256 & txid, const TxCancelReason & reason);
@@ -91,6 +91,8 @@ public:
                                const std::string & name,
                                const std::string & address);
     void getAddressBook();
+
+    bool txOutIsLocked(const rpc::UtxoEntry & entry) const;
 
 public:// slots:
     // send messave via xbridge

@@ -6,6 +6,7 @@
 #include "xbridgepacket.h"
 #include "xkey.h"
 #include "xbitcoinsecret.h"
+#include "bitcoinrpcconnector.h"
 
 #include <string>
 #include <boost/cstdint.hpp>
@@ -95,6 +96,9 @@ struct XBridgeTransactionDescr
     // X key
     xbridge::CPubKey           xPubKey;
     xbridge::CBitcoinSecret    xSecret;
+
+    // used coins in transaction
+    std::vector<rpc::UtxoEntry> usedCoins;
 
     XBridgeTransactionDescr()
         : role(0)

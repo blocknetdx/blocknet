@@ -53,8 +53,7 @@ public:
     void requestAddressBook();
 
     bool checkAmount(const uint64_t amount) const;
-    bool checkAmountAndGetInputs(const uint64_t amount,
-                                 std::vector<rpc::Unspent> & inputs) const;
+    bool getUnspent(std::vector<rpc::UtxoEntry> & inputs) const;
     double getWalletBalance() const;
 
     bool rollbacktXBridgeTransaction(const uint256 & id);
@@ -150,7 +149,6 @@ protected:
 
     virtual bool processTransactionFinished(XBridgePacketPtr packet);
     virtual bool processTransactionRollback(XBridgePacketPtr packet);
-    virtual bool processTransactionDropped(XBridgePacketPtr packet);
 
 protected:
     std::vector<unsigned char> m_myid;

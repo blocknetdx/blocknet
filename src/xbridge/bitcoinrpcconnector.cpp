@@ -332,7 +332,7 @@ bool listUnspent(const std::string & rpcuser,
                  const std::string & rpcpasswd,
                  const std::string & rpcip,
                  const std::string & rpcport,
-                 std::vector<Unspent> & entries)
+                 std::vector<UtxoEntry> & entries)
 {
     const static std::string txid("txid");
     const static std::string vout("vout");
@@ -373,7 +373,7 @@ bool listUnspent(const std::string & rpcuser,
             if (v.type() == obj_type)
             {
 
-                Unspent u;
+                UtxoEntry u;
 
                 Object o = v.get_obj();
                 for (const auto & v : o)
@@ -414,16 +414,17 @@ bool gettxout(const std::string & rpcuser,
               const std::string & rpcpasswd,
               const std::string & rpcip,
               const std::string & rpcport,
-              const std::string & txid,
-              const uint32_t & out)
+              UtxoEntry & txout)
 {
     try
     {
         LOG() << "rpc call <gettxout>";
 
+        txout.amount = 0;
+
         Array params;
-        params.push_back(txid);
-        params.push_back(static_cast<int>(out));
+        params.push_back(txout.txId);
+        params.push_back(static_cast<int>(txout.vout));
         Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport,
                                "gettxout", params);
 
@@ -438,16 +439,18 @@ bool gettxout(const std::string & rpcuser,
             // int code = find_value(error.get_obj(), "code").get_int();
             return false;
         }
-//        else if (result.type() != array_type)
-//        {
-//            // Result
-//            LOG() << "result not an array " <<
-//                     (result.type() == null_type ? "" :
-//                      result.type() == str_type  ? result.get_str() :
-//                                                   write_string(result, true));
-//            return false;
-//        }
+        else if (result.type() != obj_type)
+        {
+            // Result
+            LOG() << "result not an object " <<
+                     (result.type() == null_type ? "" :
+                      result.type() == str_type  ? result.get_str() :
+                                                   write_string(result, true));
+            return false;
+        }
 
+        Object o = result.get_obj();
+        txout.amount = find_value(o, "value").get_real();
     }
     catch (std::exception & e)
     {
