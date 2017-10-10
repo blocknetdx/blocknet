@@ -2293,14 +2293,6 @@ bool XBridgeSession::cancelOrRollbackTransaction(const uint256 & txid, const TxC
     }
 
     {
-        // unlock coins
-        for (const rpc::UtxoEntry & entry : xtx->usedCoins)
-        {
-            pwalletMain->UnlockCoin(COutPoint(entry.txId, entry.vout));
-        }
-    }
-
-    {
         // remove from pending packets (if added)
         boost::mutex::scoped_lock l(XBridgeApp::m_ppLocker);
         XBridgeApp::m_pendingPackets.erase(txid);
@@ -2308,6 +2300,12 @@ bool XBridgeSession::cancelOrRollbackTransaction(const uint256 & txid, const TxC
 
     if (xtx->state < XBridgeTransactionDescr::trCreated)
     {
+        // unlock coins
+        for (const rpc::UtxoEntry & entry : xtx->usedCoins)
+        {
+            pwalletMain->UnlockCoin(COutPoint(entry.txId, entry.vout));
+        }
+
         xtx->state = XBridgeTransactionDescr::trCancelled;
         xuiConnector.NotifyXBridgeTransactionCancelled(txid, XBridgeTransactionDescr::trCancelled, reason);
     }
