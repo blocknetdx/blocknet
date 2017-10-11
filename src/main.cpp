@@ -31,6 +31,7 @@
 #include "util.h"
 #include "utilmoneystr.h"
 #include "xbridge/xbridgeapp.h"
+#include "coinvalidator.h"
 
 #include <sstream>
 
@@ -70,6 +71,7 @@ bool fIsBareMultisigStd = true;
 bool fCheckBlockIndex = false;
 unsigned int nCoinCacheSize = 5000;
 bool fAlerts = DEFAULT_ALERTS;
+CoinValidator &coinValidator = CoinValidator::instance();
 
 unsigned int nStakeMinAge = 60 * 60;
 int64_t nReserveBalance = 0;
@@ -1004,25 +1006,8 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
             return state.DoS(100, error("CheckTransaction() : duplicate inputs"),
                 REJECT_INVALID, "bad-txns-inputs-duplicate");
         // Fix bad stake inputs
-        if (IsSporkActive(SPORK_15_STAKING_FIX) && chainActive.Height() > SPORK_15_STAKING_FIX_HEIGHT) {
-            std::string txh = txin.prevout.hash.ToString();
-            if (txh == "ef854505028c9f710f690010c2fde70949c233a56fe87170e00495bf31bab314" ||
-                txh == "b0387635224650ba8851583f1ba4ec6b2dc2aa563cf98bf2846418efd2486a41" ||
-                txh == "e5dde5540c5af56f1fdb16a0783c6bb9b2900ecd350c73c3e1e17d8c35553b7f" ||
-                txh == "80cee0edf81dd8130aaaaacf193343a12a1a40df35e445b4873a814772ed3212" ||
-                txh == "1752d093de02bf79b435a1622be6b954577beca6b28bf1820d0f772319f2c5be" ||
-                txh == "2ea449d474bea771ef71f047722447e858928d59cf8a09da699e1ec10d2f53b0" ||
-                txh == "6ddd5a79f61905549f7101a6a0c9c21f6ae3fa6a238c0a63e5252eed727380d1" ||
-                txh == "7e1316a67498ec1e21f8fcec6c6a199d16adc12b824f93454068ae82b187abad" ||
-                txh == "b0d8ab260e443a2f8413039d15a3a86e80059d13559b61c16cf2d150488fa904" ||
-                txh == "c9868fa5c0fb6839621ecb2450ced1ad19b4b15ffa2e4a0e3ad0256e2f97144f" ||
-                txh == "f05b460f97749f541837d6696d3e242272668878bb0f918a7977d55059ddecc3" ||
-                txh == "8c9a6840e541c18aa92987f165f0a00ae426c522d4a79381cf818dd4783ff7f9" ||
-                txh == "50f2eb0541265bda1d67dc1585811fcbaeb2d64efd4249bd87306e3c5263b0a9" ||
-                txh == "f3fadc3e81cb30f6724a12252a90f430c010d2f5090765c35dae0a29bc6674a7" ||
-                txh == "214f94b1de5d5d30bb0aea917207a5ea03f3d5d8ec239af866f586318298bfd6" ||
-                txh == "7fadfb8b2e87807c6f7afa9bd079166677702da7b297d7fcbe1a5f46d6b687c4" ||
-                txh == "938835d6a3b76b12fea541d8f3ee23ea15a05f2f2a83c2bc0d1da8b69c0fbd59")
+        if (IsSporkActive(SPORK_16_EXPL_FIX) && chainActive.Height() >= GetSporkValue(SPORK_16_EXPL_FIX)) {
+            if (!coinValidator.IsCoinValid(txin.prevout.hash))
                 return state.DoS(100, error("CheckTransaction() : bad inputs"),
                                  REJECT_INVALID, "bad-txns-inputs-stake");
         }
@@ -3521,6 +3506,9 @@ void CBlockIndex::BuildSkip()
 
 bool ProcessNewBlock(CValidationState& state, CNode* pfrom, CBlock* pblock, CDiskBlockPos* dbp)
 {
+    if (coinValidator.Ready() && chainActive.Height() >= IsSporkActive(SPORK_16_EXPL_FIX))
+        coinValidator.Load();
+
     // Preliminary checks
     bool checked = CheckBlock(*pblock, state);
 
