@@ -87,13 +87,18 @@ enum XBridgeCommand
     //
     // xbcTransaction  (132 bytes min)
     // clients not process this messages, only exchange
-    //    uint256 client transaction id
-    //    string source address (33-34 byte + 0)
-    //    8 bytes source currency
-    //    uint64 source amount
-    //    string destination address (33-34 byte + 0)
-    //    8 bytes destination currency
-    //    uint64 destination amount
+    //    uint256  client transaction id
+    //    string   source address (33-34 byte + 0)
+    //    8 bytes  source currency
+    //    uint64   source amount
+    //    string   destination address (33-34 byte + 0)
+    //    8 bytes  destination currency
+    //    uint64   destination amount
+    //    array of unspent outputs used in transaction
+    //      uint32_t count of array items
+    //      array items
+    //        uint256  transaction id
+    //        uint32_t out idx
     xbcTransaction = 3,
     //
     // xbcPendingTransaction (84 bytes)
@@ -116,6 +121,11 @@ enum XBridgeCommand
     //    string destination address (33-34 byte + 0)
     //    8 bytes destination currency
     //    uint64 destination amount
+    //    array of unspent outputs used in transaction
+    //      uint32_t count of array items
+    //      array items
+    //        uint256  transaction id
+    //        uint32_t out idx
     xbcTransactionAccepting = 5,
 
     //

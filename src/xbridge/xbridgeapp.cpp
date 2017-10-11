@@ -48,6 +48,8 @@ boost::mutex                                  XBridgeApp::m_txUnconfirmedLocker;
 std::map<uint256, XBridgeTransactionDescrPtr> XBridgeApp::m_unconfirmed;
 boost::mutex                                  XBridgeApp::m_ppLocker;
 std::map<uint256, std::pair<std::string, XBridgePacketPtr> >  XBridgeApp::m_pendingPackets;
+boost::mutex                                  XBridgeApp::m_utxoLocker;
+std::set<rpc::UtxoEntry>                      XBridgeApp::m_utxoItems;
 
 //*****************************************************************************
 //*****************************************************************************
@@ -438,8 +440,53 @@ void XBridgeApp::getAddressBook()
 
 //*****************************************************************************
 //*****************************************************************************
-bool XBridgeApp::txOutIsLocked(const rpc::UtxoEntry & /*entry*/) const
+bool XBridgeApp::checkUtxoItems(const std::vector<rpc::UtxoEntry> & items)
 {
+    for (const rpc::UtxoEntry & item : items)
+    {
+        if (txOutIsLocked(item))
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+bool XBridgeApp::lockUtxoItems(const std::vector<rpc::UtxoEntry> & items)
+{
+    bool hasDuplicate = false;
+    boost::mutex::scoped_lock l(m_utxoLocker);
+    for (const rpc::UtxoEntry & item : items)
+    {
+        if (!m_utxoItems.insert(item).second)
+        {
+            // duplicate items
+            hasDuplicate = true;
+            break;
+        }
+    }
+
+    if (hasDuplicate)
+    {
+        // TODO remove items?
+        return false;
+    }
+
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+bool XBridgeApp::txOutIsLocked(const rpc::UtxoEntry & entry) const
+{
+    boost::mutex::scoped_lock l(m_utxoLocker);
+    if (m_utxoItems.count(entry))
+    {
+        return true;
+    }
     return false;
 }
 
@@ -572,6 +619,15 @@ bool XBridgeApp::sendPendingTransaction(const XBridgeTransactionDescrPtr & ptr)
         ptr->packet->append(ptr->to);
         ptr->packet->append(tc);
         ptr->packet->append(ptr->toAmount);
+
+        // utxo items
+        ptr->packet->append(static_cast<uint32_t>(ptr->usedCoins.size()));
+        for (const rpc::UtxoEntry & entry : ptr->usedCoins)
+        {
+            uint256 txid(entry.txId);
+            ptr->packet->append(txid.begin(), 32);
+            ptr->packet->append(entry.vout);
+        }
     }
 
     onSend(ptr->packet);
@@ -691,6 +747,15 @@ bool XBridgeApp::sendAcceptingTransaction(const XBridgeTransactionDescrPtr & ptr
     ptr->packet->append(ptr->to);
     ptr->packet->append(tc);
     ptr->packet->append(ptr->toAmount);
+
+    // utxo items
+    ptr->packet->append(static_cast<uint32_t>(ptr->usedCoins.size()));
+    for (const rpc::UtxoEntry & entry : ptr->usedCoins)
+    {
+        uint256 txid(entry.txId);
+        ptr->packet->append(txid.begin(), 32);
+        ptr->packet->append(entry.vout);
+    }
 
     onSend(ptr->hubAddress, ptr->packet);
 

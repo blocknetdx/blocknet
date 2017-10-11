@@ -369,13 +369,47 @@ bool XBridgeSession::processTransaction(XBridgePacketPtr packet)
     offset += daddr.size() + 1;
     std::string dcurrency((const char *)packet->data()+offset);
     offset += 8;
-    boost::uint64_t damount = *static_cast<boost::uint64_t *>(static_cast<void *>(packet->data()+offset));
+    uint64_t damount = *static_cast<uint64_t *>(static_cast<void *>(packet->data()+offset));
+    offset += sizeof(uint64_t);
+
+    // utxo items
+    std::vector<rpc::UtxoEntry> utxoItems;
+    {
+        // array size
+        uint32_t utxoItemsCount = *static_cast<uint32_t *>(static_cast<void *>(packet->data()+offset));
+        offset += sizeof(uint32_t);
+
+        // items
+        for (uint32_t i = 0; i < utxoItemsCount; ++i)
+        {
+            rpc::UtxoEntry entry;
+
+            uint256 txid(packet->data()+offset);
+            offset += 32;
+
+            entry.txId = txid.ToString();
+
+            entry.vout = *static_cast<uint32_t *>(static_cast<void *>(packet->data()+offset));
+            offset += sizeof(uint32_t);
+
+            utxoItems.push_back(entry);
+        }
+    }
 
     LOG() << "received transaction " << util::to_str(id) << std::endl
           << "    from " << saddr << std::endl
           << "             " << scurrency << " : " << samount << std::endl
           << "    to   " << daddr << std::endl
           << "             " << dcurrency << " : " << damount << std::endl;
+
+    // check utxo items
+    XBridgeApp & xapp = XBridgeApp::instance();
+    if (!xapp.checkUtxoItems(utxoItems))
+    {
+        LOG() << "error check utxo items, transaction request rejected "
+              << __FUNCTION__;
+        return true;
+    }
 
     {
         bool isCreated = false;
@@ -389,7 +423,15 @@ bool XBridgeSession::processTransaction(XBridgePacketPtr packet)
             return true;
         }
 
-        // tx created
+        // tx created, lock utxo items
+        if (!xapp.lockUtxoItems(utxoItems))
+        {
+            e.deletePendingTransactions(id);
+
+            LOG() << "error lock utxo items, transaction request rejected "
+                  << __FUNCTION__;
+            return true;
+        }
 
         // TODO send signal to gui for debug
         {
@@ -457,7 +499,7 @@ bool XBridgeSession::processPendingTransaction(XBridgePacketPtr packet)
     if (packet->size() != 84)
     {
         ERR() << "incorrect packet size for xbcPendingTransaction "
-              << "need 88 received " << packet->size() << " "
+              << "need 84 received " << packet->size() << " "
               << __FUNCTION__;
         return false;
     }
@@ -515,6 +557,9 @@ bool XBridgeSession::processTransactionAccepting(XBridgePacketPtr packet)
         return false;
     }
 
+    // read packet data
+    uint256 id(packet->data());
+
     // source
     uint32_t offset = 52;
     std:: string saddr(reinterpret_cast<const char *>(packet->data()+offset));
@@ -530,28 +575,39 @@ bool XBridgeSession::processTransactionAccepting(XBridgePacketPtr packet)
     std::string dcurrency((const char *)packet->data()+offset);
     offset += 8;
     uint64_t damount = *static_cast<uint64_t *>(static_cast<void *>(packet->data()+offset));
-    // offset += sizeof(uint64_t);
+    offset += sizeof(uint64_t);
 
-    // read packet data
-    uint256 id(packet->data());
+    // utxo items
+    std::vector<rpc::UtxoEntry> utxoItems;
+    {
+        // array size
+        uint32_t utxoItemsCount = *static_cast<uint32_t *>(static_cast<void *>(packet->data()+offset));
+        offset += sizeof(uint32_t);
 
-    // TODO for debug
-//    {
-//        XBridgeTransactionDescr d;
-//        d.id           = id;
-//        d.fromCurrency = scurrency;
-//        d.fromAmount   = samount;
-//        d.toCurrency   = dcurrency;
-//        d.toAmount     = damount;
-//        d.state        = XBridgeTransactionDescr::trPending;
-//        xuiConnector.NotifyXBridgePendingTransactionReceived(d);
-//    }
+        // items
+        for (uint32_t i = 0; i < utxoItemsCount; ++i)
+        {
+            rpc::UtxoEntry entry;
+
+            uint256 txid(packet->data()+offset);
+            offset += 32;
+
+            entry.txId = txid.ToString();
+
+            entry.vout = *static_cast<uint32_t *>(static_cast<void *>(packet->data()+offset));
+            offset += sizeof(uint32_t);
+
+            utxoItems.push_back(entry);
+        }
+    }
 
     LOG() << "received accepting transaction " << util::to_str(id) << std::endl
           << "    from " << saddr << std::endl
           << "             " << scurrency << " : " << samount << std::endl
           << "    to   " << daddr << std::endl
           << "             " << dcurrency << " : " << damount << std::endl;
+
+    // TODO check utxo items
 
     {
         uint256 transactionId;

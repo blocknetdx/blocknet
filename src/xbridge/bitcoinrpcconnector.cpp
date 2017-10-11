@@ -41,6 +41,20 @@ using namespace boost::asio;
 
 const unsigned int MAX_SIZE = 0x02000000;
 
+//*****************************************************************************
+//*****************************************************************************
+bool operator < (const UtxoEntry & l, const UtxoEntry & r)
+{
+    return (l.txId < r.txId) || (l.vout < r.vout);
+}
+
+//*****************************************************************************
+//*****************************************************************************
+bool operator == (const UtxoEntry & l, const UtxoEntry & r)
+{
+    return (l.txId == r.txId) && (l.vout == r.vout);
+}
+
 //******************************************************************************
 //******************************************************************************
 int readHTTP(std::basic_istream<char>& stream, map<string, string>& mapHeadersRet, string& strMessageRet)

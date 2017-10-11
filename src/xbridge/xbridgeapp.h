@@ -92,6 +92,8 @@ public:
                                const std::string & address);
     void getAddressBook();
 
+    bool checkUtxoItems(const std::vector<rpc::UtxoEntry> & items);
+    bool lockUtxoItems(const std::vector<rpc::UtxoEntry> & items);
     bool txOutIsLocked(const rpc::UtxoEntry & entry) const;
 
 public:// slots:
@@ -147,6 +149,9 @@ public:
 
     static boost::mutex                                  m_ppLocker;
     static std::map<uint256, std::pair<std::string, XBridgePacketPtr> > m_pendingPackets;
+
+    static boost::mutex                                  m_utxoLocker;
+    static std::set<rpc::UtxoEntry>                      m_utxoItems;
 };
 
 #endif // XBRIDGEAPP_H

@@ -32,9 +32,13 @@ namespace rpc
     struct UtxoEntry
     {
         std::string txId;
-        int vout;
-        double amount;
+        uint32_t    vout;
+        double      amount;
+
+        friend bool operator < (const UtxoEntry & l, const UtxoEntry & r);
+        friend bool operator == (const UtxoEntry & l, const UtxoEntry & r);
     };
+
     bool listUnspent(const std::string & rpcuser,
                      const std::string & rpcpasswd,
                      const std::string & rpcip,
