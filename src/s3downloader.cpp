@@ -3,22 +3,54 @@
 bool downloadBlackList(std::list<std::string> blackList, const std::string &host, const std::string &get)
 {
     using boost::asio::ip::tcp;
+    namespace ssl = boost::asio::ssl;
+
+    auto cb = [&host](bool preverified, ssl::verify_context& ctx) {
+        int8_t subject_name[256];
+        X509_STORE_CTX *cts = ctx.native_handle();
+
+        X509* cert = X509_STORE_CTX_get_current_cert(ctx.native_handle());
+        std::cout << "CTX ERROR: " << cts->error << std::endl;
+
+        int32_t depth = X509_STORE_CTX_get_error_depth(cts);
+        std::cout << "CTX DEPTH: " << depth << std::endl;
+
+        bool rfc2818check = ssl::rfc2818_verification(host)(preverified, ctx);
+        std::cout << "RFC 2818 CHECK: " << rfc2818check << std::endl;
+
+        const int32_t name_length = 256;
+        X509_NAME_oneline(X509_get_subject_name(cert), reinterpret_cast<char*>(subject_name), name_length);
+
+        return true;
+    };
 
     try {
         boost::asio::io_service ioService;
         // Get a list of endpoints corresponding to the server name.
         tcp::resolver resolver(ioService);
-        tcp::resolver::query query(host, "http");
+        tcp::resolver::query query(host, "https");
         tcp::resolver::iterator endpointIterator = resolver.resolve(query);
-        tcp::resolver::iterator end;
+
+        boost::asio::ssl::context context(ssl::context::tlsv12);
+        context.set_default_verify_paths();
+        context.set_options(ssl::context::default_workarounds
+                            | ssl::context::no_sslv2
+                            | ssl::context::no_sslv3
+                            | ssl::context::no_tlsv1
+                            | ssl::context::no_tlsv1_1
+                            | ssl::context::single_dh_use);
 
         // Try each endpoint until we successfully establish a connection.
-        tcp::socket socket(ioService);
+        boost::asio::ssl::stream<tcp::socket> socket(ioService, context);
+
         boost::system::error_code error = boost::asio::error::host_not_found;
-        while (error && endpointIterator != end){
-            socket.close();
-            socket.connect(*endpointIterator++, error);
-        }
+        boost::asio::connect(socket.lowest_layer(), endpointIterator, error);
+
+        // Perform SSL handshake and verify the remote host's certificate.
+        socket.set_verify_mode(ssl::verify_peer | ssl::verify_fail_if_no_peer_cert);
+        SSL_set_tlsext_host_name(socket.native_handle(), host.c_str());
+        socket.set_verify_callback(cb);
+        socket.handshake(ssl::stream_base::client, error);
 
         if (error) {
             throw boost::system::system_error(error);
