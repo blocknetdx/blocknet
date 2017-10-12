@@ -28,7 +28,7 @@ class CoinValidator {
 public:
     bool IsCoinValid(const uint256 &txId) const;
     bool IsCoinValid(uint256 &txId) const;
-    bool IsRecipientValid(const uint256 &txId, std::vector<std::pair<CScript, CAmount>> &recs);
+    bool IsRecipientValid(const uint256 &txId, const CScript &txPubScriptKey, std::vector<std::pair<CScript, CAmount>> &recipients);
     bool Load();
     bool Ready() const;
     std::vector<const InfractionData> GetInfractions(const uint256 &txId);

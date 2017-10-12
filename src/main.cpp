@@ -981,7 +981,8 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
         return state.DoS(100, error("CheckTransaction() : size limits failed"),
             REJECT_INVALID, "bad-txns-oversize");
 
-    std::vector<std::pair<CScript, CAmount>> recOuts;
+    // Store all recipients
+    std::vector<std::pair<CScript, CAmount>> recipients;
 
     // Check for negative or overflow output values
     CAmount nValueOut = 0;
@@ -1000,8 +1001,9 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
             return state.DoS(100, error("CheckTransaction() : txout total out of range"),
                 REJECT_INVALID, "bad-txns-txouttotal-toolarge");
 
-        if (!tx.IsCoinBase()) // all keys
-            recOuts.push_back(std::make_pair(txout.scriptPubKey, txout.nValue));
+        // Track all valid recipients
+        if (!txout.IsEmpty())
+            recipients.push_back(std::make_pair(txout.scriptPubKey, txout.nValue));
     }
 
     // Check for duplicate inputs
@@ -1010,15 +1012,18 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
         if (vInOutPoints.count(txin.prevout))
             return state.DoS(100, error("CheckTransaction() : duplicate inputs"),
                 REJECT_INVALID, "bad-txns-inputs-duplicate");
+
         // Check for bad stake inputs
         if (IsSporkActive(SPORK_16_EXPL_FIX) && chainActive.Height() >= GetSporkValue(SPORK_16_EXPL_FIX)) {
-            auto &txhash = tx.GetHash();
             if (!coinValidator.IsCoinValid(txin.prevout.hash)) {
-                if (!coinValidator.IsRecipientValid(txin.prevout.hash, recOuts))
+                CTransaction prevtx; uint256 prevblock;
+                // If bad transaction or bad prev tx or bad recipient then reject tx
+                if (!GetTransaction(txin.prevout.hash, prevtx, prevblock, true) || prevtx.IsNull() || !coinValidator.IsRecipientValid(txin.prevout.hash, prevtx.vout[txin.prevout.n].scriptPubKey, recipients))
                     return state.DoS(100, error("CheckTransaction() : bad inputs"),
                          REJECT_INVALID, "bad-txns-inputs-stake");
             }
         }
+
         vInOutPoints.insert(txin.prevout);
     }
 

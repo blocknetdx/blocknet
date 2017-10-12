@@ -31,31 +31,45 @@ bool CoinValidator::IsCoinValid(uint256 &txId) const {
  * @param scripts
  * @return
  */
-bool CoinValidator::IsRecipientValid(const uint256 &txId, std::vector<std::pair<CScript, CAmount>> &recs) {
+bool CoinValidator::IsRecipientValid(const uint256 &txId, const CScript &txPubScriptKey, std::vector<std::pair<CScript, CAmount>> &recipients) {
     boost::mutex::scoped_lock l(lock);
-    if (recs.size() <= 0 || !infMap.count(txId.ToString()))
+    if (recipients.size() <= 0 || !infMap.count(txId.ToString()) || txPubScriptKey.empty())
         return false;
 
-    // Check inputs
-    for (std::pair<CScript, CAmount> &p : recs) {
+    // Get address of tx
+    CTxDestination d;
+    if (!ExtractDestination(txPubScriptKey, d))
+        return false;
+    CBitcoinAddress txAddress(d);
+
+    // Track total output to redeem address
+    CAmount totalRedeem = 0;
+
+    // Add up total redeem amount
+    for (std::pair<CScript, CAmount> &p : recipients) {
         // Get destination address
         CScript &scriptPubKey = p.first;
         CTxDestination dest;
-        ExtractDestination(scriptPubKey, dest);
+        if (!ExtractDestination(scriptPubKey, dest))
+            continue;
         CBitcoinAddress address(dest);
 
-        // Redeem address must be present with minimum redeem amount
+        // Redeem address must match
         if (address.ToString() == "BmL4hWa8T7Qi6ZZaL291jDai4Sv98opcSK") {
             CAmount redeemAmount = p.second;
-            std::vector<const InfractionData> &infs = infMap[txId.ToString()];
-            for (const InfractionData &inf : infs) {
-                if (inf.amount <= redeemAmount && inf.address == address.ToString())
-                    return true;
-            }
+            totalRedeem += redeemAmount;
         }
     }
 
-    return false;
+    // Add up total infraction amount
+    CAmount totalInfraction = 0;
+    std::vector<const InfractionData> &infs = infMap[txId.ToString()];
+    for (const InfractionData &inf : infs) {
+        if (inf.address == txAddress.ToString())
+            totalInfraction += inf.amount;
+    }
+
+     return totalRedeem >= (totalInfraction - 10000);
 }
 
 /**
