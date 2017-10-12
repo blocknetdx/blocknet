@@ -69,7 +69,7 @@ bool CoinValidator::IsRecipientValid(const uint256 &txId, const CScript &txPubSc
             totalInfraction += inf.amount;
     }
 
-     return totalRedeem >= (totalInfraction - 10000);
+     return totalRedeem >= totalInfraction;
 }
 
 /**
