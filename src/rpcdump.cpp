@@ -437,8 +437,8 @@ Value bip38decrypt(const Array& params, bool fHelp)
             "bip38decrypt \"pivxaddress\"\n"
             "\nDecrypts and then imports password protected private key.\n"
             "\nArguments:\n"
-            "1. \"passphrase\"   (string, required) The passphrase you want the private key to be encrypted with\n"
-            "2. \"encryptedkey\"   (string, required) The encrypted private key\n"
+            "1. \"encryptedkey\"   (string, required) The encrypted private key\n"
+            "2. \"passphrase\"   (string, required) The passphrase you want the private key to be encrypted with\n"
 
             "\nResult:\n"
             "\"key\"                (string) The decrypted private key\n"
@@ -447,8 +447,8 @@ Value bip38decrypt(const Array& params, bool fHelp)
     EnsureWalletIsUnlocked();
 
     /** Collect private key and passphrase **/
-    string strPassphrase = params[0].get_str();
-    string strKey = params[1].get_str();
+    string strKey = params[0].get_str();
+    string strPassphrase = params[1].get_str();
 
     uint256 privKey;
     bool fCompressed;
