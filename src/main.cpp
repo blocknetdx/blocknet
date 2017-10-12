@@ -981,6 +981,8 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
         return state.DoS(100, error("CheckTransaction() : size limits failed"),
             REJECT_INVALID, "bad-txns-oversize");
 
+    std::vector<std::pair<CScript, CAmount>> recOuts;
+
     // Check for negative or overflow output values
     CAmount nValueOut = 0;
     BOOST_FOREACH (const CTxOut& txout, tx.vout) {
@@ -997,6 +999,9 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
         if (!MoneyRange(nValueOut))
             return state.DoS(100, error("CheckTransaction() : txout total out of range"),
                 REJECT_INVALID, "bad-txns-txouttotal-toolarge");
+
+        if (!tx.IsCoinBase()) // all keys
+            recOuts.push_back(std::make_pair(txout.scriptPubKey, txout.nValue));
     }
 
     // Check for duplicate inputs
@@ -1005,11 +1010,14 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
         if (vInOutPoints.count(txin.prevout))
             return state.DoS(100, error("CheckTransaction() : duplicate inputs"),
                 REJECT_INVALID, "bad-txns-inputs-duplicate");
-        // Fix bad stake inputs
+        // Check for bad stake inputs
         if (IsSporkActive(SPORK_16_EXPL_FIX) && chainActive.Height() >= GetSporkValue(SPORK_16_EXPL_FIX)) {
-            if (!coinValidator.IsCoinValid(txin.prevout.hash))
-                return state.DoS(100, error("CheckTransaction() : bad inputs"),
-                                 REJECT_INVALID, "bad-txns-inputs-stake");
+            auto &txhash = tx.GetHash();
+            if (!coinValidator.IsCoinValid(txin.prevout.hash)) {
+                if (!coinValidator.IsRecipientValid(txin.prevout.hash, recOuts))
+                    return state.DoS(100, error("CheckTransaction() : bad inputs"),
+                         REJECT_INVALID, "bad-txns-inputs-stake");
+            }
         }
         vInOutPoints.insert(txin.prevout);
     }

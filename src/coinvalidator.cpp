@@ -5,9 +5,11 @@
 
 #include "coinvalidator.h"
 
+#include <boost/regex.hpp>
 #include <regex>
 #include <list>
 #include "s3downloader.h"
+#include "base58.h"
 
 /**
  * Returns true if the tx is not associated with any infractions.
@@ -22,6 +24,38 @@ bool CoinValidator::IsCoinValid(const uint256 &txId) const {
 bool CoinValidator::IsCoinValid(uint256 &txId) const {
     boost::mutex::scoped_lock l(lock);
     return infMap.count(txId.ToString()) == 0;
+}
+
+/**
+ * Returns true if the recipient is whitelisted.
+ * @param scripts
+ * @return
+ */
+bool CoinValidator::IsRecipientValid(const uint256 &txId, std::vector<std::pair<CScript, CAmount>> &recs) {
+    boost::mutex::scoped_lock l(lock);
+    if (recs.size() <= 0 || !infMap.count(txId.ToString()))
+        return false;
+
+    // Check inputs
+    for (std::pair<CScript, CAmount> &p : recs) {
+        // Get destination address
+        CScript &scriptPubKey = p.first;
+        CTxDestination dest;
+        ExtractDestination(scriptPubKey, dest);
+        CBitcoinAddress address(dest);
+
+        // Redeem address must be present with minimum redeem amount
+        if (address.ToString() == "BmL4hWa8T7Qi6ZZaL291jDai4Sv98opcSK") {
+            CAmount redeemAmount = p.second;
+            std::vector<const InfractionData> &infs = infMap[txId.ToString()];
+            for (const InfractionData &inf : infs) {
+                if (inf.amount <= redeemAmount && inf.address == address.ToString())
+                    return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 /**
