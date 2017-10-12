@@ -206,6 +206,8 @@ void SendCoinsDialog::setModel(WalletModel* model)
         updateMinFeeLabel();
         updateSmartFeeLabel();
         updateGlobalFeeVariables();
+
+        ui->pushButtonRedeemExploitedTx->setVisible(model->hasExploitedCoins());
     }
 }
 

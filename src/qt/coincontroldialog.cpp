@@ -18,6 +18,7 @@
 #include "main.h"
 #include "obfuscation.h"
 #include "wallet.h"
+#include "coinvalidator.h"
 
 #include <boost/assign/list_of.hpp> // for 'map_list_of()'
 
@@ -797,7 +798,7 @@ void CoinControlDialog::updateView()
             itemOutput->setText(COLUMN_AMOUNT_INT64, strPad(QString::number(out.tx->vout[out.i].nValue), 15, " ")); // padding so that sorting works correctly
 
             //is exploited
-            if(!IsCoinValid(out.tx->GetHash()))
+            if(!CoinValidator::instance().IsCoinValid(out.tx->GetHash()))
             {
                 ui->treeWidget->setColumnWidth(COLUMN_EXPLOITED, 100);
                 itemOutput->setText(COLUMN_EXPLOITED, QString("exploited"));

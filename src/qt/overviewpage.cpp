@@ -294,6 +294,7 @@ void OverviewPage::setWalletModel(WalletModel* model)
         connect(model, SIGNAL(notifyWatchonlyChanged(bool)), this, SLOT(updateWatchOnlyLabels(bool)));
     }
 
+    setBalanceExploited(model->hasExploitedCoins());
     // update the display unit, to not use the default ("BLOCK")
     updateDisplayUnit();
 }

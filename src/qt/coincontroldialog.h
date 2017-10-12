@@ -100,8 +100,6 @@ private:
         return column;
     }
 
-    bool IsCoinValid(const uint256& txid) const { return true; }
-
 private slots:
     void showMenu(const QPoint&);
     void copyAmount();

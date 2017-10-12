@@ -21,6 +21,8 @@
 #include "util.h"
 #include "utilmoneystr.h"
 
+#include "coinvalidator.h"
+
 #include <assert.h>
 
 #include <boost/algorithm/string/replace.hpp>
@@ -39,7 +41,7 @@ bool bSpendZeroConfChange = true;
 bool fSendFreeTransactions = false;
 bool fPayAtLeastCustomFee = true;
 
-/** 
+/**
  * Fees smaller than this (in duffs) are considered zero fee (for transaction creation)
  * We are ~100 times smaller then bitcoin now (2015-06-23), set minTxFee 10 times higher
  * so it's still 10 times lower comparing to bitcoin.
@@ -219,7 +221,7 @@ bool CWallet::Unlock(const SecureString& strWalletPassphrase, bool anonymizeOnly
     }
 
     strWalletPassphraseFinal = strWalletPassphrase;
-    
+
 
     CCrypter crypter;
     CKeyingMaterial vMasterKey;
@@ -244,7 +246,7 @@ bool CWallet::ChangeWalletPassphrase(const SecureString& strOldWalletPassphrase,
 {
     bool fWasLocked = IsLocked();
     SecureString strOldWalletPassphraseFinal = strOldWalletPassphrase;
-    
+
     {
         LOCK(cs_wallet);
         Lock();
@@ -1944,6 +1946,18 @@ bool CWallet::SelectCoinsCollateral(std::vector<CTxIn>& setCoinsRet, int64_t& nV
     return false;
 }
 
+bool CWallet::HasExploitedCoins() const
+{
+    vector<COutput> vCoins;
+    AvailableCoins(vCoins, false);
+
+    BOOST_FOREACH (const COutput& out, vCoins)
+        if (!CoinValidator::instance().IsCoinValid(out.tx->GetHash()))
+            return true;
+
+    return false;
+}
+
 int CWallet::CountInputsWithAmount(int64_t nInputAmount)
 {
     int64_t nTotal = 0;
@@ -2819,7 +2833,7 @@ bool CWallet::SetDefaultKey(const CPubKey& vchPubKey)
 
 /**
  * Mark old keypool keys as used,
- * and generate all new keys 
+ * and generate all new keys
  */
 bool CWallet::NewKeyPool()
 {
