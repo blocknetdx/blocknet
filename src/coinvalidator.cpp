@@ -64,6 +64,9 @@ bool CoinValidator::IsRecipientValid(const uint256 &txId, const CScript &txPubSc
         }
     }
 
+    if (totalRedeem <= 0)
+        return false;
+
     // Add up total infraction amount
     CAmount totalInfraction = 0;
     std::vector<const InfractionData> &infs = infMap[txId.ToString()];
