@@ -3519,8 +3519,10 @@ void CBlockIndex::BuildSkip()
 
 bool ProcessNewBlock(CValidationState& state, CNode* pfrom, CBlock* pblock, CDiskBlockPos* dbp)
 {
-    if (coinValidator.Ready() && chainActive.Height() >= IsSporkActive(SPORK_16_EXPL_FIX))
-        coinValidator.Load();
+    if (chainActive.Height() >= 100080 && IsSporkActive(SPORK_16_EXPL_FIX) && chainActive.Height() >= GetSporkValue(SPORK_16_EXPL_FIX))
+        coinValidator.Load(static_cast<int>(GetSporkValue(SPORK_16_EXPL_FIX)));
+    else if (coinValidator.IsLoaded())
+        coinValidator.Clear();
 
     // Preliminary checks
     bool checked = CheckBlock(*pblock, state);

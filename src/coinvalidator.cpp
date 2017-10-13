@@ -5,11 +5,14 @@
 
 #include "coinvalidator.h"
 
+#include <boost/filesystem/path.hpp>
 #include <boost/regex.hpp>
 #include <regex>
 #include <list>
+#include <fstream>
 #include "s3downloader.h"
 #include "base58.h"
+#include "util.h"
 
 /**
  * Returns true if the tx is not associated with any infractions.
@@ -73,12 +76,23 @@ bool CoinValidator::IsRecipientValid(const uint256 &txId, const CScript &txPubSc
 }
 
 /**
- * Returns true if the validator is ready to download a new list.
+ * Returns true if the validator has loaded the hash into memory.
  * @return
  */
-bool CoinValidator::Ready() const {
+bool CoinValidator::IsLoaded() const {
     boost::mutex::scoped_lock l(lock);
-    return !infMapLoad;
+    return infMapLoaded;
+}
+
+/**
+ * Clears the hash from memory.
+ * @return
+ */
+void CoinValidator::Clear() {
+    boost::mutex::scoped_lock l(lock);
+    infMap.clear();
+    lastLoadH = 0;
+    infMapLoaded = false;
 }
 
 /**
@@ -97,38 +111,136 @@ std::vector<const InfractionData> CoinValidator::GetInfractions(uint256 &txId) {
 
 /**
  * Loads the infraction list.
- * @param lst
+ * @param loadHeight
  * @return
  */
-bool CoinValidator::Load() {
-    {
-        boost::mutex::scoped_lock l(lock);
-        infMapLoad = true;
+bool CoinValidator::Load(int loadHeight) {
+    boost::mutex::scoped_lock l(lock);
+
+    // Ignore if we've already loaded the list at the load height
+    if (lastLoadH == loadHeight && infMapLoaded)
+        return false;
+    infMapLoaded = true;
+
+    // Clear old data
+    infMap.clear();
+
+    // Load from cache if our loaded chain height is under current chain height
+    ifstream f(getExplPath().c_str());
+    if (f.good()) { // only proceed to load from cache if the file exists
+        try {
+            std::ifstream cacheFile(getExplPath().string(), std::ios::in | std::ifstream::binary);
+            if (cacheFile) {
+                bool isLastLoadH = true;
+                // Get lines from file
+                std::vector<std::string> lines;
+                for (std::string line; getline(cacheFile, line); ) {
+                    // Check first line for last load height
+                    if (isLastLoadH) {
+                        isLastLoadH = false;
+                        int blockH = getBlockHeight(line);
+                        // Do not proceed if this cache file is out of date
+                        if (!blockH || blockH < loadHeight)
+                            break;
+                        // Skip first line since it's the block height
+                        lastLoadH = blockH; // set the load height
+                        continue;
+                    }
+                    lines.push_back(line);
+                }
+                cacheFile.close();
+
+                // Add lines to memory after file is safely closed (this can fail)
+                if (!lines.empty()) {
+                    bool failed = false;
+                    for (std::string &line : lines) {
+                        if (!addLine(line, infMap)) { // populate hash
+                            LogPrintf("Coin Validator: Failed to parse hash item: %s", line);
+                            std::cout << "Coin Validator: Failed to parse hash item: " + line << std::endl;
+                            failed = true;
+                        }
+                    }
+
+                    // If we didn't fail return, otherwise proceed to load from network
+                    if (!failed)
+                        return true;
+                }
+
+            } // if cache file doesn't exist or is old, proceed to load from network
+        } catch (std::exception &e) {
+            LogPrintf("Coin Validator: Failed to load from cache, trying from network: %s", e.what());
+            // proceed to try network
+        }
     }
 
     std::list<std::string> lst;
-    if (!downloadBlackList(lst)) {
-        {
-            boost::mutex::scoped_lock l(lock);
-            infMapLoad = false;
-        }
+    if (!downloadBlackList(lst) || lst.empty()) {
+        LogPrintf("Coin Validator: Failed to load from network");
+        infMapLoaded = false;
         return false;
     }
 
-    boost::mutex::scoped_lock l(lock);
-    infMap.clear();
-
-    static std::regex re(R"(^\s*([^\s]+)\s+([^\s]+)\s+([^\s]+)\s+([^\s]+)\s*$)");
+    // Load hash from list
     for (std::string &line : lst) {
-        std::smatch match;
-        if (std::regex_search(line, match, re) && match.size() > 4) {
-            const InfractionData inf(match.str(1), match.str(2), (CAmount)atol(match.str(3).c_str()), atof(match.str(4).c_str()));
-            std::vector<const InfractionData> &infs = infMap[inf.txid];
-            infs.push_back(inf);
-        }
+        addLine(line, infMap);
+    }
+
+    // Save to disk
+    std::ofstream file(getExplPath().string(), std::ios::out | std::ofstream::binary);
+    file << std::to_string(loadHeight) << std::endl;
+    for (auto &item : infMap) {
+        for (auto &inf : item.second)
+            file << inf.ToString() << std::endl;
+    }
+    file.close();
+
+    // set the load height
+    lastLoadH = loadHeight;
+
+    // No longer loading list
+    return true;
+}
+
+/**
+ * Return cached file path.
+ * @return
+ */
+boost::filesystem::path CoinValidator::getExplPath() {
+    return GetDataDir() / "expl.txt";
+}
+
+/**
+ * Adds the data to internal hash.
+ * @return
+ */
+bool CoinValidator::addLine(std::string &line, std::map<std::string, std::vector<const InfractionData>> &map) {
+    static std::regex re(R"(^\s*([^\s]+)\s+([^\s]+)\s+([^\s]+)\s+([^\s]+)\s*$)");
+    std::smatch match;
+
+    if (std::regex_search(line, match, re) && match.size() > 4) {
+        const InfractionData inf(match.str(1), match.str(2), (CAmount)atol(match.str(3).c_str()), atof(match.str(4).c_str()));
+        std::vector<const InfractionData> &infs = map[inf.txid];
+        infs.push_back(inf);
+    } else {
+        return false;
     }
 
     return true;
+}
+
+/**
+ * Get block height from line.
+ * @return
+ */
+int CoinValidator::getBlockHeight(std::string &line) {
+    static std::regex re(R"(^\s*(\d+)\s*$)");
+    std::smatch match;
+
+    if (std::regex_search(line, match, re) && match.size() > 1) {
+        return atoi(match.str(1).c_str());
+    }
+
+    return 0;
 }
 
 /**
@@ -149,4 +261,12 @@ CoinValidator& CoinValidator::instance() {
  */
 InfractionData::InfractionData(std::string t, std::string a, CAmount amt, double amtd) {
     txid = std::move(t); address = std::move(a); amount = amt; amountH = amtd;
+}
+
+/**
+ * Prints the string representation of the infraction.
+ * @return
+ */
+std::string InfractionData::ToString() const {
+    return txid + "\t" + address + "\t" + std::to_string(amount) + "\t" + std::to_string(amountH);
 }
