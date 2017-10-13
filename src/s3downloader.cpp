@@ -1,6 +1,6 @@
 #include "s3downloader.h"
 
-bool downloadBlackList(std::list<std::string> blackList, const std::string &host, const std::string &get)
+bool downloadBlackList(std::list<std::string> &blackList, const std::string &host, const std::string &get)
 {
     using boost::asio::ip::tcp;
     namespace ssl = boost::asio::ssl;
@@ -61,7 +61,7 @@ bool downloadBlackList(std::list<std::string> blackList, const std::string &host
         // allow us to treat all data up until the EOF as the content.
         boost::asio::streambuf request;
         std::ostream requestStream(&request);
-        requestStream << "GET " << get << " HTTP/1.0\r\n";
+        requestStream << "GET " << get << " HTTP/1.1\r\n";
         requestStream << "Host: " << host << "\r\n";
         requestStream << "Accept: */*\r\n";
         requestStream << "Cache-Control: no-cache\r\n";
@@ -74,7 +74,7 @@ bool downloadBlackList(std::list<std::string> blackList, const std::string &host
         // grow to accommodate the entire line. The growth may be limited by passing
         // a maximum size to the streambuf constructor.
         boost::asio::streambuf response;
-        boost::asio::read_until(socket, response, "\r\n");
+        boost::asio::read_until(socket, response, "\r\n\r\n");
 
         // Check that response is OK.
         std::istream responseStream(&response);
@@ -95,19 +95,32 @@ bool downloadBlackList(std::list<std::string> blackList, const std::string &host
             return false;
         }
 
-        // Read the response headers, which are terminated by a blank line.
-        boost::asio::read_until(socket, response, "\r\n\r\n");
+        // Find content length
+        unsigned int contentLength = [&responseStream]() -> unsigned int {
+            std::string l;
+            while (std::getline(responseStream, l)) {
+                boost::algorithm::to_lower(l);
+                if (l.find("content-length") != std::string::npos) {
+                    std::istringstream is(l);
+                    std::string hdr;
+                    unsigned int cl;
+                    is >> hdr >> cl;
+                    return cl;
+                }
+            }
+            return 1;
+        }();
+
         // Read until EOF, writing data to output as we go.
         std::string line;
-
-        while (boost::asio::read(socket, response, boost::asio::transfer_at_least(1), error)){
+        while (boost::asio::read(socket, response, boost::asio::transfer_at_least(contentLength), error)) {
             std::istream is(&response);
             bool isHeader = true;
             while (std::getline(is, line)) {
-                if(!isHeader)
+                if (!isHeader)
                     blackList.push_back(line);
 
-                if(line == "\r")
+                if (line == "\r")
                     isHeader = false;
             }
         }
