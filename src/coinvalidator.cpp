@@ -11,7 +11,6 @@
 #include <list>
 #include <fstream>
 #include "s3downloader.h"
-#include "base58.h"
 #include "util.h"
 
 /**
@@ -93,7 +92,10 @@ bool CoinValidator::RedeemAddressVerified(std::vector<RedeemData> &exploited,
     }
 
     // Allow spending inputs if the total redeem amount spent is greater than or equal to exploited amount
-    return totalRedeem >= totalExploited;
+    bool success = totalRedeem >= totalExploited;
+    if (!success && totalRedeem > 0)
+        LogPrintf("Coin Validator: Failed to Redeem: minimum amount required for this transaction (not including network fee): %f BLOCK\n", (double)totalExploited/(double)COIN);
+    return success;
 }
 
 /**
@@ -117,8 +119,7 @@ void CoinValidator::Clear() {
 }
 
 /**
- * Returns true if the tx is not associated with any infractions.
- * @param txId
+ * Get infractions for the specified criteria.
  * @return
  */
 std::vector<const InfractionData> CoinValidator::GetInfractions(const uint256 &txId) {
@@ -176,7 +177,7 @@ bool CoinValidator::Load(int loadHeight) {
                     bool failed = false;
                     for (std::string &line : lines) {
                         if (!addLine(line, infMap)) { // populate hash
-                            LogPrintf("Coin Validator: Failed to parse hash item: %s", line);
+                            LogPrintf("Coin Validator: Failed to parse hash item: %s\n", line);
                             std::cout << "Coin Validator: Failed to parse hash item: " + line << std::endl;
                             failed = true;
                         }
@@ -189,7 +190,7 @@ bool CoinValidator::Load(int loadHeight) {
 
             } // if cache file doesn't exist or is old, proceed to load from network
         } catch (std::exception &e) {
-            LogPrintf("Coin Validator: Failed to load from cache, trying from network: %s", e.what());
+            LogPrintf("Coin Validator: Failed to load from cache, trying from network: %s\n", e.what());
             // proceed to try network
         }
     }

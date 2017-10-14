@@ -61,6 +61,7 @@ private:
     mutable boost::mutex lock;
     boost::filesystem::path getExplPath();
     bool addLine(std::string &line, std::map<std::string, std::vector<const InfractionData>> &map);
+    int getBlockHeight(std::string &line);
 };
 
 #endif //BLOCKDX_COINVALIDATOR_H
