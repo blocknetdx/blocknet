@@ -130,6 +130,16 @@ std::vector<const InfractionData> CoinValidator::GetInfractions(uint256 &txId) {
     boost::mutex::scoped_lock l(lock);
     return infMap[txId.ToString()];
 }
+std::vector<const InfractionData> CoinValidator::GetInfractions(CBitcoinAddress &address) {
+    boost::mutex::scoped_lock l(lock);
+    std::vector<const InfractionData> infs;
+    for (auto &item : infMap) {
+        for (const InfractionData &inf : item.second)
+            if (inf.address == address.ToString())
+                infs.push_back(inf);
+    }
+    return infs;
+}
 
 /**
  * Loads the infraction list.

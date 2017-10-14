@@ -11,6 +11,7 @@
 #include <script/script.h>
 #include "uint256.h"
 #include "amount.h"
+#include "base58.h"
 
 /**
  * Stores infraction data.
@@ -52,7 +53,7 @@ public:
     void Clear();
     std::vector<const InfractionData> GetInfractions(const uint256 &txId);
     std::vector<const InfractionData> GetInfractions(uint256 &txId);
-    int getBlockHeight(std::string &line);
+    std::vector<const InfractionData> GetInfractions(CBitcoinAddress &address);
     static CoinValidator& instance();
 private:
     std::map<std::string, std::vector<const InfractionData>> infMap; // Store infractions in memory
