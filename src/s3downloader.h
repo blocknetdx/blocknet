@@ -7,6 +7,8 @@
 #include <string>
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
+#include <boost/algorithm/string.hpp>
+#include <list>
 
 
 /**
