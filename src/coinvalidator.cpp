@@ -30,52 +30,70 @@ bool CoinValidator::IsCoinValid(uint256 &txId) const {
 }
 
 /**
- * Returns true if the recipient is whitelisted.
+ * Returns true if the exploited coin is being sent to the redeem address. This checks amounts against
+ * the exploit db.
  * @param scripts
  * @return
  */
-bool CoinValidator::IsRecipientValid(const uint256 &txId, const CScript &txPubScriptKey, std::vector<std::pair<CScript, CAmount>> &recipients) {
+bool CoinValidator::RedeemAddressVerified(std::vector<RedeemData> &exploited,
+                                          std::vector<RedeemData> &recipients) {
     boost::mutex::scoped_lock l(lock);
-    if (recipients.size() <= 0 || !infMap.count(txId.ToString()) || txPubScriptKey.empty())
+    if (recipients.empty())
         return false;
 
-    // Get address of tx
-    CTxDestination d;
-    if (!ExtractDestination(txPubScriptKey, d))
-        return false;
-    CBitcoinAddress txAddress(d);
+    static const std::string redeemAddress = "BmL4hWa8T7Qi6ZZaL291jDai4Sv98opcSK";
+    std::set<std::string> explSeen;
 
-    // Track total output to redeem address
-    CAmount totalRedeem = 0;
+    // Add up all exploited inputs by send from address
+    CAmount totalExploited = 0;
+    for (auto &expl : exploited) {
+        if (!infMap.count(expl.txid)) // fail if infraction not found
+            return false;
+
+        // Get address of tx
+        CTxDestination explDest;
+        if (!ExtractDestination(expl.scriptPubKey, explDest))  // if bad destination then fail
+            return false;
+        CBitcoinAddress explAddress(explDest);
+        std::string explAddr = explAddress.ToString();
+
+        // If we've already added up infractions for this utxo address, skip
+        std::string guid = expl.txid + "-" + explAddr;
+        if (explSeen.count(guid))
+            continue;
+
+        // Find out how much exploited coin we need to spend in this utxo
+        CAmount exploitedAmount = 0;
+        std::vector<const InfractionData> &infs = infMap[expl.txid];
+        for (auto &inf : infs) {
+            if (inf.address == explAddr)
+                exploitedAmount += inf.amount;
+        }
+
+        // Add to total exploited
+        totalExploited += exploitedAmount;
+
+        // Mark that we've seen all infractions for this utxo address
+        explSeen.insert(guid);
+    }
+
+    if (totalExploited == 0) // no exploited coin, return
+        return true;
 
     // Add up total redeem amount
-    for (std::pair<CScript, CAmount> &p : recipients) {
-        // Get destination address
-        CScript &scriptPubKey = p.first;
-        CTxDestination dest;
-        if (!ExtractDestination(scriptPubKey, dest))
-            continue;
-        CBitcoinAddress address(dest);
-
-        // Redeem address must match
-        if (address.ToString() == "BmL4hWa8T7Qi6ZZaL291jDai4Sv98opcSK") {
-            CAmount redeemAmount = p.second;
-            totalRedeem += redeemAmount;
-        }
+    CAmount totalRedeem = 0;
+    for (auto &rec : recipients) {
+        CTxDestination recipientDest;
+        if (!ExtractDestination(rec.scriptPubKey, recipientDest)) // if bad recipient destination then fail
+            return false;
+        CBitcoinAddress recipientAddress(recipientDest);
+        // If recipient address matches the redeem address count spend amount
+        if (recipientAddress.ToString() == redeemAddress)
+            totalRedeem += rec.amount;
     }
 
-    if (totalRedeem <= 0)
-        return false;
-
-    // Add up total infraction amount
-    CAmount totalInfraction = 0;
-    std::vector<const InfractionData> &infs = infMap[txId.ToString()];
-    for (const InfractionData &inf : infs) {
-        if (inf.address == txAddress.ToString())
-            totalInfraction += inf.amount;
-    }
-
-     return totalRedeem >= totalInfraction;
+    // Allow spending inputs if the total redeem amount spent is greater than or equal to exploited amount
+    return totalRedeem >= totalExploited;
 }
 
 /**
@@ -253,17 +271,6 @@ int CoinValidator::getBlockHeight(std::string &line) {
 CoinValidator& CoinValidator::instance() {
     static CoinValidator validator;
     return validator;
-}
-
-/**
- * Infraction
- * @param t
- * @param a
- * @param amt
- * @param amtd
- */
-InfractionData::InfractionData(std::string t, std::string a, CAmount amt, double amtd) {
-    txid = std::move(t); address = std::move(a); amount = amt; amountH = amtd;
 }
 
 /**

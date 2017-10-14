@@ -982,7 +982,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
             REJECT_INVALID, "bad-txns-oversize");
 
     // Store all recipients
-    std::vector<std::pair<CScript, CAmount>> recipients;
+    std::vector<RedeemData> recipients;
 
     // Check for negative or overflow output values
     CAmount nValueOut = 0;
@@ -1003,8 +1003,11 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
 
         // Track all valid recipients
         if (!txout.IsEmpty())
-            recipients.push_back(std::make_pair(txout.scriptPubKey, txout.nValue));
+            recipients.emplace_back(tx.GetHash().ToString(), txout.scriptPubKey, txout.nValue);
     }
+
+    // Bad stake inputs
+    std::vector<RedeemData> exploited;
 
     // Check for duplicate inputs
     set<COutPoint> vInOutPoints;
@@ -1017,14 +1020,23 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
         if (IsSporkActive(SPORK_16_EXPL_FIX) && chainActive.Height() >= GetSporkValue(SPORK_16_EXPL_FIX)) {
             if (!coinValidator.IsCoinValid(txin.prevout.hash)) {
                 CTransaction prevtx; uint256 prevblock;
-                // If bad transaction or bad prev tx or bad recipient then reject tx
-                if (!GetTransaction(txin.prevout.hash, prevtx, prevblock, true) || prevtx.IsNull() || !coinValidator.IsRecipientValid(txin.prevout.hash, prevtx.vout[txin.prevout.n].scriptPubKey, recipients))
+                // If bad transaction or bad prev tx then reject tx
+                if (!GetTransaction(txin.prevout.hash, prevtx, prevblock, true) || prevtx.IsNull())
                     return state.DoS(100, error("CheckTransaction() : bad inputs"),
-                         REJECT_INVALID, "bad-txns-inputs-stake");
+                                     REJECT_INVALID, "bad-txns-inputs-stake");
+                // Track exploited coin
+                exploited.emplace_back(prevtx.GetHash().ToString(), prevtx.vout[txin.prevout.n].scriptPubKey, prevtx.vout[txin.prevout.n].nValue);
             }
         }
 
         vInOutPoints.insert(txin.prevout);
+    }
+
+    // Check bad stakes
+    if (!exploited.empty()) {
+        if (!coinValidator.RedeemAddressVerified(exploited, recipients))
+            return state.DoS(100, error("CheckTransaction() : bad inputs"),
+                             REJECT_INVALID, "bad-txns-inputs-stake");
     }
 
     if (tx.IsCoinBase()) {
@@ -3519,7 +3531,7 @@ void CBlockIndex::BuildSkip()
 
 bool ProcessNewBlock(CValidationState& state, CNode* pfrom, CBlock* pblock, CDiskBlockPos* dbp)
 {
-    if (chainActive.Height() >= 100080 && IsSporkActive(SPORK_16_EXPL_FIX) && chainActive.Height() >= GetSporkValue(SPORK_16_EXPL_FIX))
+    if (IsSporkActive(SPORK_16_EXPL_FIX) && chainActive.Height() >= GetSporkValue(SPORK_16_EXPL_FIX))
         coinValidator.Load(static_cast<int>(GetSporkValue(SPORK_16_EXPL_FIX)));
     else if (coinValidator.IsLoaded())
         coinValidator.Clear();

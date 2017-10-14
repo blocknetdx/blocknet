@@ -8,6 +8,7 @@
 
 #include <boost/thread/mutex.hpp>
 #include <boost/filesystem/path.hpp>
+#include <script/script.h>
 #include "uint256.h"
 #include "amount.h"
 
@@ -19,8 +20,22 @@ struct InfractionData {
     std::string address;
     CAmount amount;
     double amountH;
-    InfractionData(std::string t, std::string a, CAmount amt, double amtd);
+    InfractionData(std::string t, std::string a, CAmount amt, double amtd) {
+        txid = std::move(t); address = std::move(a); amount = amt; amountH = amtd;
+    }
     std::string ToString() const;
+};
+
+/**
+ * Stores redeem data.
+ */
+struct RedeemData {
+    std::string txid;
+    CScript scriptPubKey;
+    CAmount amount;
+    RedeemData(std::string t, CScript a, CAmount amt) {
+        txid = t; scriptPubKey = a; amount = amt;
+    }
 };
 
 /**
@@ -30,7 +45,8 @@ class CoinValidator {
 public:
     bool IsCoinValid(const uint256 &txId) const;
     bool IsCoinValid(uint256 &txId) const;
-    bool IsRecipientValid(const uint256 &txId, const CScript &txPubScriptKey, std::vector<std::pair<CScript, CAmount>> &recipients);
+    bool RedeemAddressVerified(std::vector<RedeemData> &exploited,
+                               std::vector<RedeemData> &recipients);
     bool Load(int loadHeight);
     bool IsLoaded() const;
     void Clear();
