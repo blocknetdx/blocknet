@@ -51,17 +51,17 @@ public:
     bool Load(int loadHeight);
     bool IsLoaded() const;
     void Clear();
-    std::vector<const InfractionData> GetInfractions(const uint256 &txId);
-    std::vector<const InfractionData> GetInfractions(uint256 &txId);
-    std::vector<const InfractionData> GetInfractions(CBitcoinAddress &address);
+    std::vector<InfractionData> GetInfractions(const uint256 &txId);
+    std::vector<InfractionData> GetInfractions(uint256 &txId);
+    std::vector<InfractionData> GetInfractions(CBitcoinAddress &address);
     static CoinValidator& instance();
 private:
-    std::map<std::string, std::vector<const InfractionData>> infMap; // Store infractions in memory
+    std::map<std::string, std::vector<InfractionData>> infMap; // Store infractions in memory
     bool infMapLoaded = false;
     int lastLoadH = 0;
     mutable boost::mutex lock;
     boost::filesystem::path getExplPath();
-    bool addLine(std::string &line, std::map<std::string, std::vector<const InfractionData>> &map);
+    bool addLine(std::string &line, std::map<std::string, std::vector<InfractionData>> &map);
     int getBlockHeight(std::string &line);
 };
 

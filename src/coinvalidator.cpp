@@ -63,7 +63,7 @@ bool CoinValidator::RedeemAddressVerified(std::vector<RedeemData> &exploited,
 
         // Find out how much exploited coin we need to spend in this utxo
         CAmount exploitedAmount = 0;
-        std::vector<const InfractionData> &infs = infMap[expl.txid];
+        std::vector<InfractionData> &infs = infMap[expl.txid];
         for (auto &inf : infs) {
             if (inf.address == explAddr)
                 exploitedAmount += inf.amount;
@@ -122,17 +122,17 @@ void CoinValidator::Clear() {
  * Get infractions for the specified criteria.
  * @return
  */
-std::vector<const InfractionData> CoinValidator::GetInfractions(const uint256 &txId) {
+std::vector<InfractionData> CoinValidator::GetInfractions(const uint256 &txId) {
     boost::mutex::scoped_lock l(lock);
     return infMap[txId.ToString()];
 }
-std::vector<const InfractionData> CoinValidator::GetInfractions(uint256 &txId) {
+std::vector<InfractionData> CoinValidator::GetInfractions(uint256 &txId) {
     boost::mutex::scoped_lock l(lock);
     return infMap[txId.ToString()];
 }
-std::vector<const InfractionData> CoinValidator::GetInfractions(CBitcoinAddress &address) {
+std::vector<InfractionData> CoinValidator::GetInfractions(CBitcoinAddress &address) {
     boost::mutex::scoped_lock l(lock);
-    std::vector<const InfractionData> infs;
+    std::vector<InfractionData> infs;
     for (auto &item : infMap) {
         for (const InfractionData &inf : item.second)
             if (inf.address == address.ToString())
@@ -245,13 +245,13 @@ boost::filesystem::path CoinValidator::getExplPath() {
  * Adds the data to internal hash.
  * @return
  */
-bool CoinValidator::addLine(std::string &line, std::map<std::string, std::vector<const InfractionData>> &map) {
+bool CoinValidator::addLine(std::string &line, std::map<std::string, std::vector<InfractionData>> &map) {
     static std::regex re(R"(^\s*([^\s]+)\s+([^\s]+)\s+([^\s]+)\s+([^\s]+)\s*$)");
     std::smatch match;
 
     if (std::regex_search(line, match, re) && match.size() > 4) {
         const InfractionData inf(match.str(1), match.str(2), (CAmount)atol(match.str(3).c_str()), atof(match.str(4).c_str()));
-        std::vector<const InfractionData> &infs = map[inf.txid];
+        std::vector<InfractionData> &infs = map[inf.txid];
         infs.push_back(inf);
     } else {
         return false;
