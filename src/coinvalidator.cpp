@@ -158,7 +158,7 @@ bool CoinValidator::Load(int loadHeight) {
     infMap.clear();
 
     // Load from cache if our loaded chain height is under current chain height
-    ifstream f(getExplPath().c_str());
+    ifstream f(getExplPath().string());
     if (f.good()) { // only proceed to load from cache if the file exists
         try {
             std::ifstream cacheFile(getExplPath().string(), std::ios::in | std::ifstream::binary);
