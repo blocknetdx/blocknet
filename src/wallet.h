@@ -206,6 +206,7 @@ public:
     std::string ResetMintZerocoin(bool fExtendedSearch);
     std::string ResetSpentZerocoin();
     void ReconsiderZerocoins(std::list<CZerocoinMint>& listMintsRestored);
+    void ZPivBackupWallet();
 
     /** Zerocin entry changed.
     * @note called with lock cs_wallet held.
@@ -223,6 +224,7 @@ public:
     bool fFileBacked;
     bool fWalletUnlockAnonymizeOnly;
     std::string strWalletFile;
+    bool fBackupMints;
 
     std::set<int64_t> setKeyPool;
     std::map<CKeyID, CKeyMetadata> mapKeyMetadata;
@@ -280,6 +282,7 @@ public:
         nLastResend = 0;
         nTimeFirstKey = 0;
         fWalletUnlockAnonymizeOnly = false;
+        fBackupMints = false;
 
         // Stake Settings
         nHashDrift = 45;
@@ -304,6 +307,11 @@ public:
     bool isZeromintEnabled()
     {
         return fEnableZeromint;
+    }
+
+    void setZPivAutoBackups(bool fEnabled)
+    {
+        fBackupMints = fEnabled;
     }
     
     bool isMultiSendEnabled()
