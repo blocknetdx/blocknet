@@ -5,10 +5,6 @@
 
 #include "coinvalidator.h"
 
-#include <boost/filesystem/path.hpp>
-#include <boost/regex.hpp>
-#include <regex>
-#include <list>
 #include <fstream>
 #include "s3downloader.h"
 #include "util.h"
@@ -116,6 +112,7 @@ void CoinValidator::Clear() {
     infMap.clear();
     lastLoadH = 0;
     infMapLoaded = false;
+    downloadErr = false;
 }
 
 /**
@@ -194,8 +191,10 @@ bool CoinValidator::Load(int loadHeight) {
                     }
 
                     // If we didn't fail return, otherwise proceed to load from network
-                    if (!failed)
+                    if (!failed) {
+                        LogPrintf("Coin Validator: Loading from cache: %u\n", lastLoadH);
                         return true;
+                    }
                 }
 
             } // if cache file doesn't exist or is old, proceed to load from network
@@ -205,9 +204,10 @@ bool CoinValidator::Load(int loadHeight) {
         }
     }
 
+    std::string err;
     std::list<std::string> lst;
-    if (!downloadBlackList(lst) || lst.empty()) {
-        LogPrintf("Coin Validator: Failed to load from network");
+    if (!downloadList(lst, err) || lst.empty()) {
+        LogPrintf("Coin Validator: Failed to load from network: %s\n", err);
         infMapLoaded = false;
         return false;
     }
@@ -228,6 +228,7 @@ bool CoinValidator::Load(int loadHeight) {
 
     // set the load height
     lastLoadH = loadHeight;
+    LogPrintf("Coin Validator: Loading from network: %u\n", loadHeight);
 
     // No longer loading list
     return true;
@@ -246,16 +247,19 @@ boost::filesystem::path CoinValidator::getExplPath() {
  * @return
  */
 bool CoinValidator::addLine(std::string &line, std::map<std::string, std::vector<InfractionData>> &map) {
-    static std::regex re(R"(^\s*([^\s]+)\s+([^\s]+)\s+([^\s]+)\s+([^\s]+)\s*$)");
-    std::smatch match;
+    std::stringstream os(line);
+    std::string t;
+    std::string a;
+    CAmount amt = 0;
+    double amtd = 0;
+    os >> t >> a >> amt >> amtd;
 
-    if (std::regex_search(line, match, re) && match.size() > 4) {
-        const InfractionData inf(match.str(1), match.str(2), (CAmount)atol(match.str(3).c_str()), atof(match.str(4).c_str()));
-        std::vector<InfractionData> &infs = map[inf.txid];
-        infs.push_back(inf);
-    } else {
+    if (t.empty() || a.empty() || amt == 0 || amtd == 0)
         return false;
-    }
+
+    const InfractionData inf(t, a, amt, amtd);
+    std::vector<InfractionData> &infs = map[inf.txid];
+    infs.push_back(inf);
 
     return true;
 }
@@ -265,14 +269,31 @@ bool CoinValidator::addLine(std::string &line, std::map<std::string, std::vector
  * @return
  */
 int CoinValidator::getBlockHeight(std::string &line) {
-    static std::regex re(R"(^\s*(\d+)\s*$)");
-    std::smatch match;
+    std::stringstream os(line);
+    int t = 0; os >> t;
+    if (t > 0)
+        return t;
+    else
+        return 0;
+}
 
-    if (std::regex_search(line, match, re) && match.size() > 1) {
-        return atoi(match.str(1).c_str());
-    }
+/**
+ * Download the list. Return false if error occurred.
+ * @return
+ */
+bool CoinValidator::downloadList(std::list<std::string> &lst, std::string &err) {
+    auto cb = [&lst, &err](const std::list<std::string> &list, const std::string error) -> void {
+        if (!error.empty())
+            err = error;
+        lst = list;
+    };
 
-    return 0;
+    // Wait for response
+    S3Downloader::create(cb)->downloadList(boost::posix_time::seconds(downloadErr ? 300 : 30));
+
+    // Report error
+    downloadErr = !err.empty();
+    return err.empty();
 }
 
 /**

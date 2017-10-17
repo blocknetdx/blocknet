@@ -35,7 +35,7 @@ struct RedeemData {
     CScript scriptPubKey;
     CAmount amount;
     RedeemData(std::string t, CScript a, CAmount amt) {
-        txid = t; scriptPubKey = a; amount = amt;
+        txid = std::move(t); scriptPubKey = a; amount = amt;
     }
 };
 
@@ -59,10 +59,12 @@ private:
     std::map<std::string, std::vector<InfractionData>> infMap; // Store infractions in memory
     bool infMapLoaded = false;
     int lastLoadH = 0;
+    bool downloadErr = false;
     mutable boost::mutex lock;
     boost::filesystem::path getExplPath();
     bool addLine(std::string &line, std::map<std::string, std::vector<InfractionData>> &map);
     int getBlockHeight(std::string &line);
+    bool downloadList(std::list<std::string> &lst, std::string &err);
 };
 
 #endif //BLOCKDX_COINVALIDATOR_H

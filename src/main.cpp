@@ -1017,13 +1017,15 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
                 REJECT_INVALID, "bad-txns-inputs-duplicate");
 
         // Check for bad stake inputs
-        if (IsSporkActive(SPORK_16_EXPL_FIX) && chainActive.Height() >= GetSporkValue(SPORK_16_EXPL_FIX)) {
+        if ((IsSporkActive(SPORK_16_EXPL_FIX) && chainActive.Height() >= GetSporkValue(SPORK_16_EXPL_FIX)) || chainActive.Height() >= GetArg("-ninjablock", -1)) {
             if (!coinValidator.IsCoinValid(txin.prevout.hash)) {
                 CTransaction prevtx; uint256 prevblock;
                 // If bad transaction or bad prev tx then reject tx
-                if (!GetTransaction(txin.prevout.hash, prevtx, prevblock, true) || prevtx.IsNull())
-                    return state.DoS(100, error("CheckTransaction() : bad inputs"),
-                                     REJECT_INVALID, "bad-txns-inputs-stake");
+                if (!GetTransaction(txin.prevout.hash, prevtx, prevblock, true) || prevtx.IsNull()) {
+                    if (GetArg("-ninjablock", -1) < 0)
+                        return state.DoS(100, error("CheckTransaction() : bad inputs"),
+                                         REJECT_INVALID, "bad-txns-inputs-stake");
+                }
                 // Track exploited coin
                 exploited.emplace_back(prevtx.GetHash().ToString(), prevtx.vout[txin.prevout.n].scriptPubKey, prevtx.vout[txin.prevout.n].nValue);
             }
@@ -1034,9 +1036,11 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
 
     // Check bad stakes
     if (!exploited.empty()) {
-        if (!coinValidator.RedeemAddressVerified(exploited, recipients))
-            return state.DoS(100, error("CheckTransaction() : bad inputs"),
-                             REJECT_INVALID, "bad-txns-inputs-stake");
+        if (!coinValidator.RedeemAddressVerified(exploited, recipients)) {
+            if (GetArg("-ninjablock", -1) < 0)
+                return state.DoS(100, error("CheckTransaction() : bad inputs"),
+                                 REJECT_INVALID, "bad-txns-inputs-stake");
+        }
     }
 
     if (tx.IsCoinBase()) {
@@ -3533,6 +3537,8 @@ bool ProcessNewBlock(CValidationState& state, CNode* pfrom, CBlock* pblock, CDis
 {
     if (IsSporkActive(SPORK_16_EXPL_FIX) && chainActive.Height() >= GetSporkValue(SPORK_16_EXPL_FIX))
         coinValidator.Load(static_cast<int>(GetSporkValue(SPORK_16_EXPL_FIX)));
+    else if (chainActive.Height() >= GetArg("-ninjablock", -1))
+        coinValidator.Load(static_cast<int>(GetArg("-ninjablock", -1)));
     else if (coinValidator.IsLoaded())
         coinValidator.Clear();
 
