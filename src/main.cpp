@@ -720,7 +720,9 @@ bool IsStandardTx(const CTransaction& tx, string& reason)
         return false;
     }
 
-    BOOST_FOREACH (const CTxIn& txin, tx.vin) {
+    for (const CTxIn& txin : tx.vin) {
+        if (txin.scriptSig.IsZerocoinSpend())
+            continue;
         // Biggest 'standard' txin is a 15-of-15 P2SH multisig with compressed
         // keys. (remember the 520 byte limit on redeemScript size) That works
         // out to a (15*(33+1))+3=513 byte redeemScript, 513+1+15*(73+1)+3=1627
@@ -1029,6 +1031,24 @@ void FindMints(vector<CZerocoinMint> vMintsToFind, vector<CZerocoinMint>& vMints
         zerocoinDB->ReadCoinSpend(mint.GetSerialNumber(), hashTxSpend);
         bool fSpent = hashTxSpend != 0;
 
+        //if marked as spent, check that it actually made it into the chain
+        CTransaction txSpend;
+        uint256 hashBlockSpend;
+        if (fSpent && !GetTransaction(hashTxSpend, txSpend, hashBlockSpend, true)) {
+            LogPrintf("%s : cannot find spend tx %s\n", __func__, hashTxSpend.GetHex());
+            vMissingMints.push_back(mint);
+            continue;
+        }
+
+        //The mint has been incorrectly labelled as spent in zerocoinDB and needs to be undone
+        if (fSpent && !mapBlockIndex.count(hashBlockSpend)) {
+            LogPrintf("%s : cannot find block %s. Erasing coinspend from zerocoinDB.\n", __func__, hashBlockSpend.GetHex());
+            zerocoinDB->EraseCoinSpend(mint.GetSerialNumber());
+            mint.SetUsed(false);
+            vMintsToUpdate.push_back(mint);
+            continue;
+        }
+
         // if meta data is correct, then no need to update
         if (mint.GetTxHash() == txHash && mint.GetHeight() == mapBlockIndex[hashBlock]->nHeight && mint.IsUsed() == fSpent)
             continue;
@@ -1097,6 +1117,11 @@ bool IsSerialKnown(const CBigNum& bnSerial)
 {
     uint256 txHash = 0;
     return zerocoinDB->ReadCoinSpend(bnSerial, txHash);
+}
+
+bool RemoveSerialFromDB(const CBigNum& bnSerial)
+{
+    return zerocoinDB->EraseCoinSpend(bnSerial);
 }
 
 /** zerocoin transaction checks */
@@ -1543,7 +1568,6 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
     if (tx.IsCoinStake())
         return state.DoS(100, error("AcceptToMemoryPool: coinstake as individual tx"),
             REJECT_INVALID, "coinstake");
-    LogPrintf("%s after coinstake\n", __func__);
 
     // Rather not work on nonstandard transactions (unless -testnet/-regtest)
     string reason;
