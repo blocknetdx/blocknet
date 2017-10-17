@@ -13,7 +13,7 @@ std::shared_ptr<S3Downloader> S3Downloader::create(boost::function<void (const s
                         | ssl::context::no_sslv2
                         | ssl::context::no_sslv3
                         | ssl::context::no_tlsv1
-                        | ssl::context::no_tlsv1_1
+//                        | ssl::context::no_tlsv1_1
                         | ssl::context::single_dh_use);
 
     return std::shared_ptr<S3Downloader>(new S3Downloader(cb, host, path, context));
@@ -63,6 +63,7 @@ void S3Downloader::handleResolve(const boost::system::error_code &error, tcp::re
     if (error)
     {
         callback(std::list<std::string>(), error.message());
+        close();
         return;
     }
 
@@ -76,6 +77,7 @@ void S3Downloader::handleConnect(const boost::system::error_code &error)
     if (error)
     {
         callback(std::list<std::string>(), error.message());
+        close();
         return;
     }
 
@@ -89,13 +91,14 @@ void S3Downloader::handleHandshake(const boost::system::error_code &error)
     if (error)
     {
         callback(std::list<std::string>(), error.message());
+        close();
         return;
     }
 
-    std::cout << "Handshake OK " << "\n";
-    std::cout << "Request: " << "\n";
+    //std::cout << "Handshake OK " << "\n";
+    //std::cout << "Request: " << "\n";
     const char* header = boost::asio::buffer_cast<const char*>(request.data());
-    std::cout << header << "\n";
+    //std::cout << header << "\n";
 
     // The handshake was successful. Send the request.
     boost::asio::async_write(socket, request,
@@ -108,6 +111,7 @@ void S3Downloader::handleWriteRequest(const boost::system::error_code &error)
     if (error)
     {
         callback(std::list<std::string>(), error.message());
+        close();
         return;
     }
 
@@ -124,6 +128,7 @@ void S3Downloader::handleReadStatusLine(const boost::system::error_code &error)
     if (error)
     {
         callback(std::list<std::string>(), error.message());
+        close();
         return;
     }
 
@@ -138,11 +143,13 @@ void S3Downloader::handleReadStatusLine(const boost::system::error_code &error)
     if (!response_stream || http_version.substr(0, 5) != "HTTP/")
     {
         callback(std::list<std::string>(), "Invalid response");
+        close();
         return;
     }
     if (status_code != 200)
     {
         callback(std::list<std::string>(), "Response returned with status code: " + std::to_string(status_code));
+        close();
         return;
     }
 
@@ -157,6 +164,7 @@ void S3Downloader::handleReadHeaders(const boost::system::error_code &error)
     if (error)
     {
         callback(std::list<std::string>(), error.message());
+        close();
         return;
     }
 
@@ -164,8 +172,8 @@ void S3Downloader::handleReadHeaders(const boost::system::error_code &error)
     std::istream response_stream(&response);
     std::string header;
     while (std::getline(response_stream, header) && header != "\r")
-        std::cout << header << "\n";
-    std::cout << "\n";
+        /*std::cout << header << "\n";*/true;
+//    std::cout << "\n";
 
     // Start reading remaining data until EOF.
     boost::asio::async_read(socket, response,
@@ -181,6 +189,7 @@ void S3Downloader::handleReadContent(const boost::system::error_code &error)
         error != boost::system::error_code(ERR_PACK(ERR_LIB_SSL, 0, SSL_R_SHORT_READ), boost::asio::error::get_ssl_category()))
     {
         callback(std::list<std::string>(), error.message());
+        close();
         return;
     }
     else if (!error)
@@ -204,18 +213,20 @@ void S3Downloader::handleReadContent(const boost::system::error_code &error)
             list.push_back(line);
         }
 
-        std::string signatureString = list.back();
-        list.pop_back();
-        std::vector<unsigned char> signature(signatureString.begin(), signatureString.end());
-        std::string joinedList = boost::algorithm::join(list, "\n");
-
-        if(!verifySign(joinedList, signature))
-        {
-            callback(std::list<std::string>(), "Signature verifying fail");
-            return;
-        }
+//        std::string signatureString = list.back();
+//        list.pop_back();
+//        std::vector<unsigned char> signature(signatureString.begin(), signatureString.end());
+//        std::string joinedList = boost::algorithm::join(list, "\n");
+//
+//        if(!verifySign(joinedList, signature))
+//        {
+//            callback(std::list<std::string>(), "Signature verifying fail");
+//            close();
+//            return;
+//        }
 
         callback(list, "");
+        close();
     }
 }
 
@@ -225,13 +236,16 @@ bool S3Downloader::verifyCertificate(bool preverified, ssl::verify_context &ctx)
     X509_STORE_CTX *cts = ctx.native_handle();
 
     X509* cert = X509_STORE_CTX_get_current_cert(ctx.native_handle());
-    std::cout << "CTX ERROR: " << cts->error << std::endl;
+    if (cts->error)
+        std::cout << "CTX ERROR: " << cts->error << std::endl;
 
     int32_t depth = X509_STORE_CTX_get_error_depth(cts);
-    std::cout << "CTX DEPTH: " << depth << std::endl;
+    if (cts->error)
+        std::cout << "CTX DEPTH: " << depth << std::endl;
 
     bool rfc2818check = ssl::rfc2818_verification(host)(preverified, ctx);
-    std::cout << "RFC 2818 CHECK: " << rfc2818check << std::endl;
+    if (cts->error)
+        std::cout << "RFC 2818 CHECK: " << rfc2818check << std::endl;
 
     const int32_t name_length = 256;
     X509_NAME_oneline(X509_get_subject_name(cert), reinterpret_cast<char*>(subject_name), name_length);
@@ -239,21 +253,21 @@ bool S3Downloader::verifyCertificate(bool preverified, ssl::verify_context &ctx)
     return true;
 }
 
-bool S3Downloader::verifySign(const std::string &list, std::vector<unsigned char> &vchSign)
-{
-    //CPubKey publicKey(ParseHex(Params().SporkKey()));
-    //TODO: delete after adding correct privkey/pubkey pair
-    CPubKey publicKey(ParseHex("04fb6d1940ce071c0f43d33db85b381ad2a761cb7e23be979153fabdcfe8d991a129df68801e84fd559ed3a675a94d6c31aad1bcb64a2d72d11d4b806582a482b5"));
-
-    if(!publicKey.IsValid())
-        return false;
-
-    std::string errorMessage = "";
-    if (!obfuScationSigner.VerifyMessage(publicKey, vchSign, list, errorMessage))
-        return false;
-
-    return true;
-}
+//bool S3Downloader::verifySign(const std::string &list, std::vector<unsigned char> &vchSign)
+//{
+//    //CPubKey publicKey(ParseHex(Params().SporkKey()));
+//    //TODO: delete after adding correct privkey/pubkey pair
+//    CPubKey publicKey(ParseHex("04fb6d1940ce071c0f43d33db85b381ad2a761cb7e23be979153fabdcfe8d991a129df68801e84fd559ed3a675a94d6c31aad1bcb64a2d72d11d4b806582a482b5"));
+//
+//    if(!publicKey.IsValid())
+//        return false;
+//
+//    std::string errorMessage = "";
+//    if (!obfuScationSigner.VerifyMessage(publicKey, vchSign, list, errorMessage))
+//        return false;
+//
+//    return true;
+//}
 
 void S3Downloader::checkDeadline()
 {
@@ -261,15 +275,19 @@ void S3Downloader::checkDeadline()
     {
         // The deadline has passed. The socket is closed so that any outstanding
         // asynchronous operations are cancelled.
-        boost::system::error_code error;
-        socket.lowest_layer().close(error);
-
-        callback(std::list<std::string>(), error.message());
-
-        // There is no longer an active deadline. The expiry is set to positive
-        // infinity so that the actor takes no action until a new deadline is set.
-        deadline.expires_at(boost::posix_time::pos_infin);
+        callback(std::list<std::string>(), "Downloader: Timeout exceeded, connection closed");
+        close();
+        return;
     }
 
     deadline.async_wait(boost::bind(&S3Downloader::checkDeadline, this));
+}
+
+boost::system::error_code S3Downloader::close() {
+    boost::system::error_code error;
+    if (!ioService.stopped()) {
+        socket.lowest_layer().close(error);
+        ioService.stop();
+    }
+    return error;
 }

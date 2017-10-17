@@ -13,7 +13,7 @@
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
 
-#include "obfuscation.h"
+//#include "obfuscation.h"
 #include "chainparams.h"
 
 class S3Downloader
@@ -22,7 +22,7 @@ class S3Downloader
 public:
     static std::shared_ptr<S3Downloader> create(boost::function<void (const std::list<std::string>& list, const std::string error)> cb,
                                                 const std::string &host = "dxlist.blocknet.co",
-                                                const std::string &path = "/test-2.txt");
+                                                const std::string &path = "/test-3.txt");
 
     void downloadList(boost::posix_time::time_duration timeout = boost::posix_time::seconds(15));
 
@@ -43,7 +43,8 @@ private:
     void handleReadHeaders(const boost::system::error_code& error);
     void handleReadContent(const boost::system::error_code& error);
     bool verifyCertificate(bool preverified, boost::asio::ssl::verify_context& ctx);
-    bool verifySign(const std::string &list, std::vector<unsigned char> &vchSign);
+    boost::system::error_code close();
+//    bool verifySign(const std::string &list, std::vector<unsigned char> &vchSign);
 
     void checkDeadline();
 
