@@ -1036,7 +1036,9 @@ void FindMints(vector<CZerocoinMint> vMintsToFind, vector<CZerocoinMint>& vMints
         uint256 hashBlockSpend;
         if (fSpent && !GetTransaction(hashTxSpend, txSpend, hashBlockSpend, true)) {
             LogPrintf("%s : cannot find spend tx %s\n", __func__, hashTxSpend.GetHex());
-            vMissingMints.push_back(mint);
+            zerocoinDB->EraseCoinSpend(mint.GetSerialNumber());
+            mint.SetUsed(false);
+            vMintsToUpdate.push_back(mint);
             continue;
         }
 
@@ -1117,6 +1119,21 @@ bool IsSerialKnown(const CBigNum& bnSerial)
 {
     uint256 txHash = 0;
     return zerocoinDB->ReadCoinSpend(bnSerial, txHash);
+}
+
+bool IsSerialInBlockchain(const CBigNum& bnSerial)
+{
+    uint256 txHash = 0;
+    // if not in zerocoinDB then its not in the blockchain
+    if (!zerocoinDB->ReadCoinSpend(bnSerial, txHash))
+        return false;
+
+    CTransaction tx;
+    uint256 hashBlock;
+    if (!GetTransaction(txHash, tx, hashBlock, true))
+        return false;
+
+    return static_cast<bool>(mapBlockIndex.count(hashBlock));
 }
 
 bool RemoveSerialFromDB(const CBigNum& bnSerial)
@@ -1288,12 +1305,8 @@ CoinSpend TxInToZerocoinSpend(const CTxIn& txin)
 bool IsZerocoinSpendUnknown(CoinSpend coinSpend, uint256 hashTx, CValidationState& state)
 {
     uint256 hashTxFromDB;
-    if(zerocoinDB->ReadCoinSpend(coinSpend.getCoinSerialNumber(), hashTxFromDB)) {
-        if(hashTx == hashTxFromDB)
-            return true;
-
-        return state.DoS(100, error("CheckZerocoinSpend(): The CoinSpend serial has been used"));
-    }
+    if(zerocoinDB->ReadCoinSpend(coinSpend.getCoinSerialNumber(), hashTxFromDB))
+        return hashTx == hashTxFromDB;
 
     if(!zerocoinDB->WriteCoinSpend(coinSpend.getCoinSerialNumber(), hashTx))
         return state.DoS(100, error("CheckZerocoinSpend(): Failed to write zerocoin mint to database"));
@@ -1369,8 +1382,14 @@ bool CheckZerocoinSpend(const CTransaction tx, bool fVerifySignature, CValidatio
             return state.DoS(100, error("Zerocoinspend serial is used twice in the same tx"));
         serials.insert(newSpend.getCoinSerialNumber());
 
-        if(!IsZerocoinSpendUnknown(newSpend, tx.GetHash(), state))
-            return state.DoS(100, error("Zerocoinspend is already known"));
+        //See if the database has knowledge of this serial
+        if (!IsZerocoinSpendUnknown(newSpend, tx.GetHash(), state)) {
+            //If the serial is not in the blockchain yet, but for some reason the database has knowledge,
+            //perhaps from an earlier spend attempt, then only reject if this serial made it into the chain
+            if (IsSerialInBlockchain(newSpend.getCoinSerialNumber()))
+                return state.DoS(100, error("Zerocoinspend with serial %s is already in the blockchain\n",
+                                            newSpend.getCoinSerialNumber().GetHex()));
+        }
 
         //make sure that there is no over redemption of coins
         nTotalRedeemed += ZerocoinDenominationToAmount(newSpend.getDenomination());

@@ -4273,7 +4273,7 @@ string CWallet::ResetSpentZerocoin()
     long removed = 0;
     CWalletDB walletdb(pwalletMain->strWalletFile);
 
-    list<CZerocoinMint> listMints = walletdb.ListMintedCoins(false, false, true);
+    list<CZerocoinMint> listMints = walletdb.ListMintedCoins(false, false, false);
     list<CZerocoinSpend> listSpends = walletdb.ListSpentCoins();
     list<CZerocoinSpend> listUnconfirmedSpends;
 
@@ -4295,9 +4295,7 @@ string CWallet::ResetSpentZerocoin()
             if (mint.GetSerialNumber() == spend.GetSerial()) {
                 removed++;
                 mint.SetUsed(false);
-                mint.SetTxHash(0);
-                mint.SetHeight(0);
-
+                RemoveSerialFromDB(spend.GetSerial());
                 walletdb.WriteZerocoinMint(mint);
                 walletdb.EraseZerocoinSpendSerialEntry(spend.GetSerial());
                 continue;

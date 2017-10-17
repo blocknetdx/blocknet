@@ -2331,11 +2331,11 @@ Value listmintedzerocoins(const Array& params, bool fHelp)
         throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
     
     CWalletDB walletdb(pwalletMain->strWalletFile);
-    list<CBigNum> listPubCoin = walletdb.ListMintedCoinsSerial();
+    list<CZerocoinMint> listPubCoin = walletdb.ListMintedCoins(true, false, true);
     
     Array jsonList;
-    for (const CBigNum& pubCoinItem : listPubCoin) {
-        jsonList.push_back(pubCoinItem.GetHex());
+    for (const CZerocoinMint& pubCoinItem : listPubCoin) {
+        jsonList.push_back(pubCoinItem.GetValue().GetHex());
     }
     
     return jsonList;
@@ -2581,7 +2581,7 @@ Value resetspentzerocoin(const Array& params, bool fHelp)
             + HelpRequiringPassphrase());
 
     CWalletDB walletdb(pwalletMain->strWalletFile);
-    list<CZerocoinMint> listMints = walletdb.ListMintedCoins(false, false, true);
+    list<CZerocoinMint> listMints = walletdb.ListMintedCoins(false, false, false);
     list<CZerocoinSpend> listSpends = walletdb.ListSpentCoins();
     list<CZerocoinSpend> listUnconfirmedSpends;
 
@@ -2604,11 +2604,9 @@ Value resetspentzerocoin(const Array& params, bool fHelp)
         for (CZerocoinMint mint : listMints) {
             if (mint.GetSerialNumber() == spend.GetSerial()) {
                 mint.SetUsed(false);
-                mint.SetTxHash(0);
-                mint.SetHeight(0);
-
                 walletdb.WriteZerocoinMint(mint);
                 walletdb.EraseZerocoinSpendSerialEntry(spend.GetSerial());
+                RemoveSerialFromDB(spend.GetSerial());
                 Object obj;
                 obj.push_back(Pair("serial", spend.GetSerial().GetHex()));
                 arrRestored.push_back(obj);
