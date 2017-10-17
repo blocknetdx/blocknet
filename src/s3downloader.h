@@ -22,7 +22,7 @@ class S3Downloader
 public:
     static std::shared_ptr<S3Downloader> create(boost::function<void (const std::list<std::string>& list, const std::string error)> cb,
                                                 const std::string &host = "dxlist.blocknet.co",
-                                                const std::string &path = "/test-3.txt");
+                                                const std::string &path = "/dxlist.txt");
 
     void downloadList(boost::posix_time::time_duration timeout = boost::posix_time::seconds(15));
 
