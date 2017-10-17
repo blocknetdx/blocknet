@@ -113,8 +113,8 @@ color:#333;
 }
 
 QToolTip {
-background-color:#dedbe5;
-color:#333;
+background-color:#0a1742;
+color:#3d66ec;
 }
 
 QTextEdit {
@@ -328,7 +328,8 @@ border:1px solid #333;
 }
 
 QTableView::item { /* Table Item */
-background-color:#fcfcfc;
+background-color:#7f7f7f;
+color:#ffff9f;
 font-size:12px;
 }
 
@@ -1157,6 +1158,11 @@ margin-right:5px;
 min-height:16px;
 }
 
+QListView::item {
+color:#5bd75a;
+background-color:transparent;
+}
+
 QWidget .QFrame#frame_2 QListView { /* Transaction List */
 font-weight:normal;
 font-size:12px;
@@ -1165,6 +1171,12 @@ max-width:369px;
 margin-top:12px;
 margin-left:0px; /* CSS Voodoo - set to -66px to hide default transaction icons */
 }
+
+QWidget .QFrame#frame_2 QListView::item {
+color:#5bd75a;
+}
+
+
 
 /**************************** SEND DIALOG ***********************************************/
 
