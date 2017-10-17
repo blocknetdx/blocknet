@@ -289,7 +289,7 @@ bool CoinValidator::downloadList(std::list<std::string> &lst, std::string &err) 
     };
 
     // Wait for response
-    S3Downloader::create(cb)->downloadList(boost::posix_time::seconds(downloadErr ? 300 : 30));
+    S3Downloader::create(cb)->downloadList(boost::posix_time::seconds(downloadErr ? 45 : 30));
 
     // Report error
     downloadErr = !err.empty();
