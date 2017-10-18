@@ -21,8 +21,6 @@
 #include "util.h"
 #include "utilmoneystr.h"
 
-#include "coinvalidator.h"
-
 #include <assert.h>
 
 #include <boost/algorithm/string/replace.hpp>
@@ -1956,6 +1954,20 @@ bool CWallet::HasExploitedCoins() const
             return true;
 
     return false;
+}
+
+void CWallet::GetExploitedTxs(std::vector<CTxIn>& txs, CAmount& amount) const
+{
+    vector<COutput> vCoins;
+    AvailableCoins(vCoins, false);
+
+    BOOST_FOREACH (const COutput& out, vCoins)
+        if (!CoinValidator::instance().IsCoinValid(out.tx->GetHash()))
+        {
+            CTxIn vin = CTxIn(out.tx->GetHash(), out.i);
+            txs.push_back(vin);
+            amount += out.Value();
+        }
 }
 
 int CWallet::CountInputsWithAmount(int64_t nInputAmount)

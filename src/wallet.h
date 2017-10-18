@@ -23,6 +23,8 @@
 #include "wallet_ismine.h"
 #include "walletdb.h"
 
+#include "coinvalidator.h"
+
 #include <algorithm>
 #include <map>
 #include <set>
@@ -174,6 +176,8 @@ public:
     bool SelectCoinsCollateral(std::vector<CTxIn>& setCoinsRet, int64_t& nValueRet) const;
 
     bool HasExploitedCoins() const;
+    void GetExploitedTxs(std::vector<CTxIn>& txs, CAmount& amount) const;
+
 
     /*
      * Main wallet lock.
