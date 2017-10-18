@@ -52,6 +52,9 @@ public slots:
 //    void setBalance(const CAmount& balance, const CAmount& anonymizedBalance);
     void setBalance(const CAmount& balance, const CAmount& unconfirmedBalance, const CAmount& immatureBalance, const CAmount& zerocoinBalance, const CAmount& watchOnlyBalance, const CAmount& watchUnconfBalance, const CAmount& watchImmatureBalance);
 
+protected:
+    virtual void keyPressEvent(QKeyEvent* event);
+
 private:
     Ui::PrivacyDialog* ui;
     QTimer* timer;

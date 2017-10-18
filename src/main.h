@@ -362,6 +362,8 @@ std::list<libzerocoin::CoinDenomination> ZerocoinSpendListFromBlock(const CBlock
 void FindMints(vector<CZerocoinMint> vMintsToFind, vector<CZerocoinMint>& vMintsToUpdate, vector<CZerocoinMint>& vMissingMints, bool fExtendedSearch);
 bool GetZerocoinMint(const CBigNum& bnPubcoin, uint256& txHash);
 bool IsSerialKnown(const CBigNum& bnSerial);
+bool IsSerialInBlockchain(const CBigNum& bnSerial);
+bool RemoveSerialFromDB(const CBigNum& bnSerial);
 int GetZerocoinStartHeight();
 
 /**
@@ -633,7 +635,7 @@ extern CBlockTreeDB* pblocktree;
 extern CZerocoinDB* zerocoinDB;
 
 /** Global variable that points to the spork database (protected by cs_main) */
-extern std::unique_ptr<CSporkDB> pSporkDB;
+extern CSporkDB* pSporkDB;
 
 struct CBlockTemplate {
     CBlock block;
