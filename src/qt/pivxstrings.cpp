@@ -56,6 +56,9 @@ QT_TRANSLATE_NOOP("pivx-core", ""
 "Distributed under the MIT software license, see the accompanying file "
 "COPYING or <http://www.opensource.org/licenses/mit-license.php>."),
 QT_TRANSLATE_NOOP("pivx-core", ""
+"Enable automatic wallet backups triggered after each zPiv minting (0-1, "
+"default: %u)"),
+QT_TRANSLATE_NOOP("pivx-core", ""
 "Enable spork administration functionality with the appropriate private key."),
 QT_TRANSLATE_NOOP("pivx-core", ""
 "Enable swifttx, show confirmations for locked transactions (bool, default: "

@@ -10,6 +10,7 @@
         <file alias="es">locale/pivx_es.qm</file>
         <file alias="fi">locale/pivx_fi.qm</file>
         <file alias="fr_FR">locale/pivx_fr_FR.qm</file>
+        <file alias="hr">locale/pivx_hr.qm</file>
         <file alias="it">locale/pivx_it.qm</file>
         <file alias="ja">locale/pivx_ja.qm</file>
         <file alias="ko_KR">locale/pivx_ko_KR.qm</file>

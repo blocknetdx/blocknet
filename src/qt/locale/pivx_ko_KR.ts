@@ -543,7 +543,7 @@
     </message>
     <message>
         <source>Show Automatic &amp;Backups</source>
-        <translation>자동 &amp;백업 표시</translation>
+        <translation>자동 &amp;백업 폴더 열기</translation>
     </message>
     <message>
         <source>Show automatically created wallet backups</source>
@@ -572,6 +572,10 @@
     <message>
         <source>&amp;Command-line options</source>
         <translation>&amp;명령행 옵션</translation>
+    </message>
+    <message numerus="yes">
+        <source>Processed %n blocks of transaction history.</source>
+        <translation><numerusform>트랜잭션 기록의 %n 블록을 처리함</numerusform></translation>
     </message>
     <message>
         <source>Synchronizing additional data: %p%</source>
@@ -608,6 +612,14 @@
     <message>
         <source>Request payments (generates QR codes and pivx: URIs)</source>
         <translation>결제 요청 (QR 코드 및 pivx: URI 생성)</translation>
+    </message>
+    <message>
+        <source>&amp;Privacy</source>
+        <translation>&amp;프라이버스</translation>
+    </message>
+    <message>
+        <source>Privacy Action for zPIV and Obfuscation</source>
+        <translation>zPIV와 난독화를 위한 프라이버스 작업</translation>
     </message>
     <message>
         <source>&amp;Masternodes</source>
@@ -685,6 +697,10 @@
         <source>PIVX Core client</source>
         <translation>PIVX Core 클라이언트</translation>
     </message>
+    <message numerus="yes">
+        <source>%n active connection(s) to PIVX network</source>
+        <translation><numerusform>%n 개 PIVX 네트웍에 연결</numerusform></translation>
+    </message>
     <message>
         <source>Synchronizing with network...</source>
         <translation>네트워크 동기화중...</translation>
@@ -705,9 +721,25 @@
         <source>Up to date</source>
         <translation>최신</translation>
     </message>
+    <message numerus="yes">
+        <source>%n hour(s)</source>
+        <translation><numerusform>%n 시간</numerusform></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n day(s)</source>
+        <translation><numerusform>%n 일</numerusform></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n week(s)</source>
+        <translation><numerusform>%n 주</numerusform></translation>
+    </message>
     <message>
         <source>%1 and %2</source>
         <translation>%1 그리고 %2</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n year(s)</source>
+        <translation><numerusform>%n 년</numerusform></translation>
     </message>
     <message>
         <source>%1 behind</source>
@@ -801,6 +833,14 @@ Address: %4
         <translation>블록체인 탐색기</translation>
     </message>
     <message>
+        <source>Back</source>
+        <translation>뒤로</translation>
+    </message>
+    <message>
+        <source>Forward</source>
+        <translation>앞으로</translation>
+    </message>
+    <message>
         <source>Address / Block / Transaction</source>
         <translation>주소 / 블록 / 트랜잭션</translation>
     </message>
@@ -820,8 +860,8 @@ Address: %4
 <context>
     <name>ClientModel</name>
     <message>
-        <source>Total: %1 (OBF compatible: %2 / Enabled: %3)</source>
-        <translation>총: %1 (OBF 호환: %2 / 사용됨: %3)</translation>
+        <source>Total: %1 (IPv4: %2 / IPv6: %3 / Tor: %4 / Unknown: %5)</source>
+        <translation>Total: %1 (IPv4: %2 / IPv6: %3 / Tor: %4 / Unknown: %5)</translation>
     </message>
     <message>
         <source>Network Alert</source>
@@ -864,7 +904,7 @@ Address: %4
     </message>
     <message>
         <source>Change:</source>
-        <translation>변경:</translation>
+        <translation>잔돈:</translation>
     </message>
     <message>
         <source>(un)select all</source>
@@ -1060,7 +1100,7 @@ Address: %4
     </message>
     <message>
         <source>(change)</source>
-        <translation>(변경)</translation>
+        <translation>(잔돈)</translation>
     </message>
 </context>
 <context>
@@ -1676,6 +1716,22 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>&amp;UPnp를 사용하여 포트 매핑</translation>
     </message>
     <message>
+        <source>Percentage of incoming PIV which get automatically converted to zPIV via Zerocoin Protocol (min: 10%)</source>
+        <translation>PIV수신시 자동변환 zPIV 퍼센트 (최소값:10%)</translation>
+    </message>
+    <message>
+        <source>Percentage of autominted zPIV</source>
+        <translation>자동 변환되는 zPIV 퍼센트</translation>
+    </message>
+    <message>
+        <source>Wait with automatic conversion to Zerocoin until enough PIV for this denomination is available</source>
+        <translation>이 디노미네이션의 PIV가 충분해질 때까지 Zerocoin으로 자동전환은 보류됩니다.</translation>
+    </message>
+    <message>
+        <source>Preferred Automint zPIV Denomination</source>
+        <translation>선호하는 자동생성 zPIV 디노미네이션 </translation>
+    </message>
+    <message>
         <source>Connect to the PIVX network through a SOCKS5 proxy.</source>
         <translation>SOCKS5 프록시를 통해 PIVX 네트워크에 연결해주세요.</translation>
     </message>
@@ -1768,6 +1824,10 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>&amp;취소</translation>
     </message>
     <message>
+        <source>I don't care</source>
+        <translation>없음</translation>
+    </message>
+    <message>
         <source>default</source>
         <translation>기본값</translation>
     </message>
@@ -1801,6 +1861,10 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <message>
         <source>Form</source>
         <translation>Form</translation>
+    </message>
+    <message>
+        <source>PIV Balances</source>
+        <translation>PIV 잔액</translation>
     </message>
     <message>
         <source>Available:</source>
@@ -1861,6 +1925,26 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <message>
         <source>Spendable:</source>
         <translation>출금 가능 액수:</translation>
+    </message>
+    <message>
+        <source>Combined Balances (including immature coins)</source>
+        <translation>전체 잔액 (대기중 코인 포함)</translation>
+    </message>
+    <message>
+        <source>PIV:</source>
+        <translation>PIV:</translation>
+    </message>
+    <message>
+        <source>zPIV:</source>
+        <translation>zPIV:</translation>
+    </message>
+    <message>
+        <source>0 %</source>
+        <translation>0 %</translation>
+    </message>
+    <message>
+        <source>Zerocoin Balance</source>
+        <translation>제로코인 잔액</translation>
     </message>
     <message>
         <source>Recent transactions</source>
@@ -1980,16 +2064,56 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
 <context>
     <name>PrivacyDialog</name>
     <message>
+        <source>PIV which were anonymized via Zerocin Protocol</source>
+        <translation>제로코인 프로토콜을 통해 익명화된 PIV</translation>
+    </message>
+    <message>
+        <source>Zerocoin PIV (zPIV)</source>
+        <translation>Zerocoin PIV (zPIV)</translation>
+    </message>
+    <message>
+        <source>Zerocoin Actions:</source>
+        <translation>제로코인 관리:</translation>
+    </message>
+    <message>
         <source>The displayed information may be out of date. Your wallet automatically synchronizes with the PIVX network after a connection is established, but this process has not completed yet.</source>
         <translation>표시된 정보가 오래되었을 수 있습니다. 연결이 완료되면 지갑이 PIVX 네트워크와 자동으로 동기화될 예정이지만, 아직 해당 프로세스가 완료되지 않았습니다.</translation>
+    </message>
+    <message>
+        <source>Enter an amount of Piv to convert to zPiv</source>
+        <translation>zPIV로 변환할 PIV 수량을 입력하세요.</translation>
+    </message>
+    <message>
+        <source>Mint Zerocoin</source>
+        <translation>제로코인 생성</translation>
     </message>
     <message>
         <source>0</source>
         <translation>0</translation>
     </message>
     <message>
+        <source>zPIV</source>
+        <translation>zPIV</translation>
+    </message>
+    <message>
+        <source>Available for Minting:</source>
+        <translation>생성 가능한 수량 :</translation>
+    </message>
+    <message>
+        <source>0.000 000 00 PIV</source>
+        <translation>0.000 000 00 PIV</translation>
+    </message>
+    <message>
+        <source>Reset Zerocoin Wallet DB. Deletes transactions that did not make it into the blockchain.</source>
+        <translation>제로코인 지갑 DB 재설정. 블록 체인에 포함시키지 않은 트랜잭션을 삭제합니다.</translation>
+    </message>
+    <message>
         <source>Reset</source>
         <translation>초기화</translation>
+    </message>
+    <message>
+        <source>Coin Control...</source>
+        <translation>코인 컨트롤...</translation>
     </message>
     <message>
         <source>Quantity:</source>
@@ -2000,8 +2124,64 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>금액:</translation>
     </message>
     <message>
+        <source>Rescan the complete blockchain for  Zerocoin mints and their meta-data.</source>
+        <translation>제로코인 생성과 메타데이타를 위해 블록체인을 다시 스캔합니다.</translation>
+    </message>
+    <message>
+        <source>ReScan</source>
+        <translation>재 스캔</translation>
+    </message>
+    <message>
+        <source>Status and/or Mesages from the last Mint Action.</source>
+        <translation>마지막 생성이후 상태나 메세지</translation>
+    </message>
+    <message>
+        <source>zPiv Control</source>
+        <translation>zPIV 설정</translation>
+    </message>
+    <message>
+        <source>zPiv Selected:</source>
+        <translation>선택한 zPIV : </translation>
+    </message>
+    <message>
+        <source>Quantity Selected:</source>
+        <translation>선택된 수량 :</translation>
+    </message>
+    <message>
+        <source>Spend Zerocoin. Without 'Pay To:' address creates payments to yourself.</source>
+        <translation>제로코인 전송 'Pay To :' 주소가 없으면 자신에게 지불합니다.</translation>
+    </message>
+    <message>
+        <source>Spend Zerocoin</source>
+        <translation>제로코인 보내기</translation>
+    </message>
+    <message>
+        <source>Available Balance:</source>
+        <translation>가능한 잔액:</translation>
+    </message>
+    <message>
+        <source>0 zPIV</source>
+        <translation>0 zPIV</translation>
+    </message>
+    <message>
+        <source>Security Level for Zerocoin Transactions. More is better, but needs more time and resources.</source>
+        <translation>제로코인 전송 시큐리티 레벨.  높을수록 좋지만, 시간과 많은 자원이 필요합니다.</translation>
+    </message>
+    <message>
+        <source>Security Level:</source>
+        <translation>시큐리티 레벨:</translation>
+    </message>
+    <message>
+        <source>Security Level 1 - 100 (default: 42)</source>
+        <translation>시큐리티 레벨 1 - 100 (기본값: 42)</translation>
+    </message>
+    <message>
         <source>Pay &amp;To:</source>
         <translation>지불 &amp;대상:</translation>
+    </message>
+    <message>
+        <source>The PIVX address to send the payment to. Creates local payment to yourself when empty.</source>
+        <translation>PIV를 전송할 PIVX 주소입니다. 비어있을 때 자신에게 지불할 주소를 생성합니다.</translation>
     </message>
     <message>
         <source>Choose previously used address</source>
@@ -2032,6 +2212,106 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>금&amp;액:</translation>
     </message>
     <message>
+        <source>Convert Change to Zerocoin (might cost additional fees)</source>
+        <translation>잔돈을 제로코인으로 변환 (추가 요금이 부과 될 수 있음)</translation>
+    </message>
+    <message>
+        <source>If checked, the wallet tries to minimize the returning change instead of minimizing the number of spent denominations.</source>
+        <translation>이 옵션을 선택하면 지갑은 사용한 디노미네이션의 수를 최소화하는 대신 남는 잔돈을 최소화합니다.</translation>
+    </message>
+    <message>
+        <source>Minimize Change</source>
+        <translation>잔돈 최소화하기</translation>
+    </message>
+    <message>
+        <source>Information about the available Zerocoin funds.</source>
+        <translation>사용가능한 제로코인 정보</translation>
+    </message>
+    <message>
+        <source>Zerocoin Stats:</source>
+        <translation>제로코인 상태 :</translation>
+    </message>
+    <message>
+        <source>Available Funds</source>
+        <translation>사용가는한 펀드</translation>
+    </message>
+    <message>
+        <source>Available Zerocoin  Balance:</source>
+        <translation>사용가능한 제로코인 잔액:</translation>
+    </message>
+    <message>
+        <source>Denominations with value 1:</source>
+        <translation>디노미네이션 값 1:</translation>
+    </message>
+    <message>
+        <source>Denom. with value 1:</source>
+        <translation>Denom. 값 1:</translation>
+    </message>
+    <message>
+        <source>0 x</source>
+        <translation>0 x</translation>
+    </message>
+    <message>
+        <source>Denominations with value 5:</source>
+        <translation>디노미네이션 값 5:</translation>
+    </message>
+    <message>
+        <source>Denom. with value 5:</source>
+        <translation>Denom. 값 5:</translation>
+    </message>
+    <message>
+        <source>Denominations with value 10:</source>
+        <translation>디노미네이션  값 10:</translation>
+    </message>
+    <message>
+        <source>Denom. with value 10:</source>
+        <translation>Denom. 값 10:</translation>
+    </message>
+    <message>
+        <source>Denominations with value 50:</source>
+        <translation>디노미네이션 값 50:</translation>
+    </message>
+    <message>
+        <source>Denom. with value 50:</source>
+        <translation>Denom. 값 50:</translation>
+    </message>
+    <message>
+        <source>Denominations with value 100:</source>
+        <translation>디노미네이션 값 100:</translation>
+    </message>
+    <message>
+        <source>Denom. with value 100:</source>
+        <translation>Denom. 값 100:</translation>
+    </message>
+    <message>
+        <source>Denominations with value 500:</source>
+        <translation>디노미네이션 값 500:</translation>
+    </message>
+    <message>
+        <source>Denom. with value 500:</source>
+        <translation>Denom. 값 500:</translation>
+    </message>
+    <message>
+        <source>Denominations with value 1000:</source>
+        <translation>디노미네이션 값 1000:</translation>
+    </message>
+    <message>
+        <source>Denom. with value 1000:</source>
+        <translation>Denom. 값 1000:</translation>
+    </message>
+    <message>
+        <source>Denominations with value 5000:</source>
+        <translation>디노미네이션 값 5000:</translation>
+    </message>
+    <message>
+        <source>Denom. with value 5000:</source>
+        <translation>Denom. 값 5000:</translation>
+    </message>
+    <message>
+        <source>Note: This hidden objects are used for communication between the 'Coin Control' dialog and its parent objects. We don't want to change/reimplement the existing Coin Control, so this objects must be here, even when we don't use them. No, we don't like this approach, either.</source>
+        <translation>Note: This hidden objects are used for communication between the 'Coin Control' dialog and its parent objects. We don't want to change/reimplement the existing Coin Control, so this objects must be here, even when we don't use them. No, we don't like this approach, either.</translation>
+    </message>
+    <message>
         <source>Priority:</source>
         <translation>우선 순위:</translation>
     </message>
@@ -2056,6 +2336,10 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>자금이 충분하지 않습니다!</translation>
     </message>
     <message>
+        <source>Coins automatically selected</source>
+        <translation>코인 자동으로 선택됨</translation>
+    </message>
+    <message>
         <source>medium</source>
         <translation>중간</translation>
     </message>
@@ -2072,12 +2356,20 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>커스텀 주소 변경</translation>
     </message>
     <message>
+        <source>Amount After Fee:</source>
+        <translation>수수료 차감 금액:</translation>
+    </message>
+    <message>
         <source>Change:</source>
         <translation>변경:</translation>
     </message>
     <message>
         <source>out of sync</source>
         <translation>동기화되지 않음</translation>
+    </message>
+    <message>
+        <source>Mint Status: Okay</source>
+        <translation>생성 상태 : Okay</translation>
     </message>
     <message>
         <source>Copy quantity</source>
@@ -2088,10 +2380,144 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>금액 복사</translation>
     </message>
     <message>
+        <source>Zerocoin functionality is not enabled on the PIVX network yet.</source>
+        <translation>Zerocoin functionality is not enabled on the PIVX network yet.</translation>
+    </message>
+    <message>
+        <source>Error: Your wallet is locked. Please enter the wallet passphrase first.</source>
+        <translation>Error : 지갑이 잠겨있습니다. 먼저 지갑을 열어주세요.</translation>
+    </message>
+    <message>
+        <source>Message: Enter an amount &gt; 0.</source>
+        <translation>Message: 0 이상의 수량을 입력하세요.</translation>
+    </message>
+    <message>
+        <source>Minting </source>
+        <translation>생성중입니다.</translation>
+    </message>
+    <message>
+        <source>Successfully minted </source>
+        <translation>성공적으로 발행됨</translation>
+    </message>
+    <message>
+        <source> zPIV in </source>
+        <translation> zPIV in </translation>
+    </message>
+    <message>
+        <source> sec. Used denominations:
+</source>
+        <translation> 초. 사용된 디노미네이션:
+</translation>
+    </message>
+    <message>
+        <source>Starting ResetMintZerocoin: rescanning complete blockchain, this will need up to 30 minutes depending on your hardware. 
+Please be patient...</source>
+        <translation>제로코인 생성 초기화 진행중... : 전체 블록체인을 다시 검색합니다. 하드웨어에 따라 최대 30분이 걸릴수 있습니다.
+기다려주세요...</translation>
+    </message>
+    <message>
+        <source>Duration: </source>
+        <translation>경과시간:</translation>
+    </message>
+    <message>
+        <source> sec.
+</source>
+        <translation>초.
+</translation>
+    </message>
+    <message>
+        <source>Starting ResetSpentZerocoin: </source>
+        <translation>전송된 제로코인 리셋 시작중...</translation>
+    </message>
+    <message>
+        <source>No 'Pay To' address provided, creating local payment</source>
+        <translation>주소를 입력하지 않아, 신규 주소를 생성합니다.</translation>
+    </message>
+    <message>
+        <source>Invalid Pivx Address</source>
+        <translation>잘못된 PIVX 주소</translation>
+    </message>
+    <message>
+        <source>Invalid Send Amount</source>
+        <translation>잘못된 전송 수량</translation>
+    </message>
+    <message>
+        <source>Confirm additional Fees</source>
+        <translation>추가 수수료 확인</translation>
+    </message>
+    <message>
+        <source>Are you sure you want to send?&lt;br /&gt;&lt;br /&gt;</source>
+        <translation>정말로 보내시겠습니까?&lt;br /&gt;&lt;br /&gt;</translation>
+    </message>
+    <message>
+        <source> to address </source>
+        <translation>주소로</translation>
+    </message>
+    <message>
+        <source> to a newly generated (unused and therefor anonymous) local address &lt;br /&gt;</source>
+        <translation>새로 생성된 개인 지갑 주소(미사용된 익명의) &lt;br /&gt; 로</translation>
+    </message>
+    <message>
+        <source>with Security Level </source>
+        <translation>시큐리티 레벨</translation>
+    </message>
+    <message>
         <source>Confirm send coins</source>
         <translation>코인 전송 확인</translation>
     </message>
-    </context>
+    <message>
+        <source>Spending Zerocoin.
+Computationally expensive, might need several minutes depending on the selected Security Level and your hardware. 
+Please be patient...</source>
+        <translation>제로코인 전송중입니다.
+시큐리티 레벨과 여러분의 하드웨어에 따라 수 분이 걸립니다.
+조금만 기다려주세요...</translation>
+    </message>
+    <message>
+        <source>Spend Zerocoin failed with status = </source>
+        <translation>제로코인 송금 실패 상태 =</translation>
+    </message>
+    <message>
+        <source>zPiv Spend #: </source>
+        <translation>zPiv 송금 #: </translation>
+    </message>
+    <message>
+        <source>denomination: </source>
+        <translation>denomination: </translation>
+    </message>
+    <message>
+        <source>serial: </source>
+        <translation>시리얼:</translation>
+    </message>
+    <message>
+        <source>Spend is 1 of : </source>
+        <translation>Spend is 1 of : </translation>
+    </message>
+    <message>
+        <source>value out: </source>
+        <translation>출력 값:</translation>
+    </message>
+    <message>
+        <source>address: </source>
+        <translation>주소:</translation>
+    </message>
+    <message>
+        <source>zPiv Mint</source>
+        <translation>zPIV 생성</translation>
+    </message>
+    <message>
+        <source>Sending successful, return code: </source>
+        <translation>성공 완료, 리턴 코드 :</translation>
+    </message>
+    <message>
+        <source>txid: </source>
+        <translation>txid:</translation>
+    </message>
+    <message>
+        <source>fee: </source>
+        <translation>수수료:</translation>
+    </message>
+</context>
 <context>
     <name>QObject</name>
     <message>
@@ -2750,6 +3176,14 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>승인 시간:</translation>
     </message>
     <message>
+        <source>Open Coin Control...</source>
+        <translation>코인 설정 열기...</translation>
+    </message>
+    <message>
+        <source>Coins automatically selected</source>
+        <translation>코인 자동으로 선택됨</translation>
+    </message>
+    <message>
         <source>If the custom fee is set to 1000 uPIVs and the transaction is only 250 bytes, then "per kilobyte" only pays 250 uPIVs in fee,&lt;br /&gt;while "at least" pays 1000 uPIVs. For transactions bigger than a kilobyte both pay by kilobyte.</source>
         <translation>트랜잭션이 250바이트 인 경우 사용자 지정 수수료가 1000 uPIVs로 설정되고,&lt;br /&gt;1000 uPIVs 안에는 최소 "킬로바이트당" 250 uPIVs 만 지불합니다. 1 킬로바이트보다 큰 트랜잭션의 경우 모두 킬로바이트 단위로 지불합니다.</translation>
     </message>
@@ -2804,6 +3238,10 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <message>
         <source>Add &amp;Recipient</source>
         <translation>&amp;받는 사람 추가</translation>
+    </message>
+    <message>
+        <source>Anonymized PIV</source>
+        <translation>익명화 PIV</translation>
     </message>
     <message>
         <source>SwiftTX</source>
@@ -2896,6 +3334,10 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <message>
         <source>A fee %1 times higher than %2 per kB is considered an insanely high fee.</source>
         <translation>KB당 %1보다 %2배 많은 수수료는 너무 높은 수수료입니다.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Estimated to begin confirmation within %n block(s).</source>
+        <translation><numerusform>%n 블록이내에서 컨펌이 시작될것 같습니다.</numerusform></translation>
     </message>
     <message>
         <source>The recipient address is not valid, please recheck.</source>
@@ -3215,6 +3657,10 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
 </context>
 <context>
     <name>TransactionDesc</name>
+    <message numerus="yes">
+        <source>Open for %n more block(s)</source>
+        <translation><numerusform>%n 이상의 블록 열기</numerusform></translation>
+    </message>
     <message>
         <source>Open until %1</source>
         <translation>%1까지 열기</translation>
@@ -3276,6 +3722,10 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <source>, has not been successfully broadcast yet</source>
         <translation>, 아직 성공적으로 브로드캐스트되지 않았습니다</translation>
     </message>
+    <message numerus="yes">
+        <source>, broadcast through %n node(s)</source>
+        <translation><numerusform>, %n 개 노드를 통해 브로드캐스트됩니다.</numerusform></translation>
+    </message>
     <message>
         <source>Date</source>
         <translation>날짜</translation>
@@ -3315,6 +3765,10 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <message>
         <source>Credit</source>
         <translation>크레딧</translation>
+    </message>
+    <message numerus="yes">
+        <source>matures in %n more block(s)</source>
+        <translation><numerusform>%n 개 이상의 블록에서 생성됩니다.</numerusform></translation>
     </message>
     <message>
         <source>not accepted</source>
@@ -3414,6 +3868,10 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <source>Address</source>
         <translation>주소</translation>
     </message>
+    <message numerus="yes">
+        <source>Open for %n more block(s)</source>
+        <translation><numerusform>%n 이상의 블록 열기</numerusform></translation>
+    </message>
     <message>
         <source>Open until %1</source>
         <translation>%1까지 열기</translation>
@@ -3503,8 +3961,32 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>난독화</translation>
     </message>
     <message>
+        <source>Converted Piv to zPiv</source>
+        <translation>zPIV로 변환된 PIV</translation>
+    </message>
+    <message>
+        <source>Spent zPiv</source>
+        <translation>전송된 zPIV</translation>
+    </message>
+    <message>
+        <source>Received Piv from zPiv</source>
+        <translation>zPIV로 전송받은 PIV</translation>
+    </message>
+    <message>
+        <source>Minted Change as zPiv from zPiv Spend</source>
+        <translation>zPIV 전송후 남은 잔돈 zPIV 생성됨</translation>
+    </message>
+    <message>
+        <source>Converted zPiv to Piv</source>
+        <translation>zPiv에서 Piv로 변환됨</translation>
+    </message>
+    <message>
         <source>watch-only</source>
         <translation>읽기 전용</translation>
+    </message>
+    <message>
+        <source>zPiv Accumulator</source>
+        <translation>zPiv 누산기</translation>
     </message>
     <message>
         <source>(n/a)</source>
@@ -3612,6 +4094,26 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <message>
         <source>Masternode Reward</source>
         <translation>마스터노드 보상 </translation>
+    </message>
+    <message>
+        <source>Received Piv from zPiv</source>
+        <translation>zPIV로 전송받은 PIV</translation>
+    </message>
+    <message>
+        <source>Zerocoin Mint</source>
+        <translation>제로코인 생성</translation>
+    </message>
+    <message>
+        <source>Zerocoin Spend</source>
+        <translation>제로코인 전송</translation>
+    </message>
+    <message>
+        <source>Zerocoin Spend, Change in zPiv</source>
+        <translation>제로코인 전송, 잔돈은 zPIV</translation>
+    </message>
+    <message>
+        <source>Zerocoin Spend to Self</source>
+        <translation>자신에게 제로코인 전송</translation>
     </message>
     <message>
         <source>Other</source>
@@ -3777,10 +4279,30 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
 <context>
     <name>ZPivControlDialog</name>
     <message>
+        <source>Select zPiv to Spend</source>
+        <translation>전송할 zPIV 선택</translation>
+    </message>
+    <message>
+        <source>Quantity</source>
+        <translation>수량</translation>
+    </message>
+    <message>
         <source>0</source>
         <translation>0</translation>
     </message>
-    </context>
+    <message>
+        <source>zPiv</source>
+        <translation>zPiv</translation>
+    </message>
+    <message>
+        <source>Select/Deselect All</source>
+        <translation>전체 선택 / 해제</translation>
+    </message>
+    <message>
+        <source>Is Spendable</source>
+        <translation>전송가능합니다.</translation>
+    </message>
+</context>
 <context>
     <name>pivx-core</name>
     <message>
@@ -3806,6 +4328,10 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <message>
         <source>Bind to given address to listen for JSON-RPC connections. Use [host]:port notation for IPv6. This option can be specified multiple times (default: bind to all interfaces)</source>
         <translation>JSON-RPC연결 수신을 위해 주어진 주소를 지정합니다. [host]: IPv6 포트 표기법 사용. 이 옵션은 여러번 지정할 수 있습니다. (기본값 : 모든 인터페이스에 지정)</translation>
+    </message>
+    <message>
+        <source>Calculated accumulator checkpoint is not what is recorded by block index</source>
+        <translation>계산된 누산기 체크포인트는 블록 인덱스에 의해 기록되는 것이 아닙니다.</translation>
     </message>
     <message>
         <source>Cannot obtain a lock on data directory %s. PIVX Core is probably already running.</source>
@@ -3882,10 +4408,6 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <message>
         <source>Found unconfirmed denominated outputs, will wait till they confirm to continue.</source>
         <translation>미확인 표시된 출력들을 찾고 계속하기 위한 확인을 받기 전까지 기다립니다.</translation>
-    </message>
-    <message>
-        <source>How thorough the block verification of -checkblocks is (0-4, default: %u)</source>
-        <translation>-checkblocks의 블록 검증이 얼마나 철저한 정도 (0-4, 기본값: %u)</translation>
     </message>
     <message>
         <source>If paytxfee is not set, include enough fee so transactions begin confirmation on average within n blocks (default: %u)</source>
@@ -4108,8 +4630,16 @@ rpcpassword=%s
         <translation>손상된 wallet.dat으로 부터 개인 키 복구를 시도합니다.</translation>
     </message>
     <message>
+        <source>Automatically create Tor hidden service (default: %d)</source>
+        <translation>자동 Tor 히든 서버스 생성 (기본값: %d)</translation>
+    </message>
+    <message>
         <source>Block creation options:</source>
         <translation>블록 생성 옵션:</translation>
+    </message>
+    <message>
+        <source>Calculating missing accumulators...</source>
+        <translation>누락된 누산기 계산중...</translation>
     </message>
     <message>
         <source>Can't denominate: no compatible inputs left.</source>
@@ -4192,6 +4722,10 @@ rpcpassword=%s
         <translation>디버깅/테스팅 옵션:</translation>
     </message>
     <message>
+        <source>Disable OS notifications for incoming transactions (default: %u)</source>
+        <translation>거래시 수신 알림창 해제  (기본값: %u)</translation>
+    </message>
+    <message>
         <source>Disable safemode, override a real safe mode event (default: %u)</source>
         <translation>안전모드 비활성화, 실시간 안전모드 이벤트 중단 (기본값: %u)</translation>
     </message>
@@ -4210,6 +4744,10 @@ rpcpassword=%s
     <message>
         <source>Done loading</source>
         <translation>로딩 완료</translation>
+    </message>
+    <message>
+        <source>Enable automatic Zerocoin minting (0-1, default: %u)</source>
+        <translation>자동 제로코인 생성 (0-1, 기본값: %u)</translation>
     </message>
     <message>
         <source>Enable the client to act as a masternode (0-1, default: %u)</source>
@@ -4364,16 +4902,20 @@ rpcpassword=%s
         <translation>입력이 올바르지 않습니다.</translation>
     </message>
     <message>
+        <source>Insufficient funds</source>
+        <translation>잔액이 충분하지 않음</translation>
+    </message>
+    <message>
         <source>Insufficient funds.</source>
         <translation>충분하지 않은 금액.</translation>
     </message>
     <message>
-        <source>Invalid -onion address: '%s'</source>
-        <translation>유효하지 않은 -onion 주소: '%s'</translation>
+        <source>Invalid -onion address or hostname: '%s'</source>
+        <translation>잘못된 -onion 주소거나 호스트네임 : '%s'</translation>
     </message>
     <message>
-        <source>Invalid -proxy address: '%s'</source>
-        <translation>유효하지 않은 -proxy 주소: '%s'</translation>
+        <source>Invalid -proxy address or hostname: '%s'</source>
+        <translation>잘못된 -proxy 주소거나 호스트네입 : '%s'</translation>
     </message>
     <message>
         <source>Invalid amount for -maxtxfee=&lt;amount&gt;: '%s'</source>
@@ -4400,6 +4942,10 @@ rpcpassword=%s
         <translation>-reservebalance=&lt;amount&gt;에 대한 금액이 유효하지 않은 값</translation>
     </message>
     <message>
+        <source>Invalid amount</source>
+        <translation>잘못된 수량</translation>
+    </message>
+    <message>
         <source>Invalid masternodeprivkey. Please see documenation.</source>
         <translation>마스터노드 개인 키가 잘못되었습니다. 설명서를 참조하십시오.</translation>
     </message>
@@ -4422,6 +4968,38 @@ rpcpassword=%s
     <message>
         <source>This is a pre-release test build - use at your own risk - do not use for staking or merchant applications!</source>
         <translation>이것은 사전 릴리스 테스트 빌드입니다 - 사용상 책임은 귀하에게 있습니다. - staking이나 상업적인 용도로는 절대 사용하지 마십시오!</translation>
+    </message>
+    <message>
+        <source> mints deleted
+</source>
+        <translation>생성 삭제
+</translation>
+    </message>
+    <message>
+        <source> mints updated, </source>
+        <translation>생성 업데이드</translation>
+    </message>
+    <message>
+        <source> unconfirmed transactions removed
+</source>
+        <translation>미확인된 거래 삭제됨
+</translation>
+    </message>
+    <message>
+        <source>Error: The transaction was rejected! This might happen if some of the coins in your wallet were already spent, such as if you used a copy of wallet.dat and coins were spent in the copy but not marked as spent here.</source>
+        <translation>에러 : 거래가 거부되었습니다. 예를 들어 다른 사본 wallet.dat에서 코인을 사용했다면 2중 사용으로 인식될수 있습니다. 혹은, 일부가 이미 소비 된 경우에 이런 일이 발생할 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Error: This transaction requires a transaction fee of at least %s because of its amount, complexity, or use of recently received funds!</source>
+        <translation>에러 :이 거래에는 전송량, 복잡성 또는 최근에 받은 자금의 사용등으로 인해 적어도 %s의 거래 수수료가 필요합니다!</translation>
+    </message>
+    <message>
+        <source>Error: Unsupported argument -checklevel found. Checklevel must be level 4.</source>
+        <translation>에러 : 지원하지않는 argument -checklevel 발견된.  Checklevel는 레벨 4이어야 합니다.</translation>
+    </message>
+    <message>
+        <source>Preferred Denomination for automatically minted Zerocoin  (1/5/10/50/100/500/1000/5000), 0 for no preference. default: %u)</source>
+        <translation>자동생성 제로코인 선호 디노미네이션 (1/5/10/50/100/500/1000/5000) 0사용안됨, 기본값 : %u)</translation>
     </message>
     <message>
         <source>&lt;category&gt; can be:</source>
@@ -4480,6 +5058,10 @@ rpcpassword=%s
         <translation>최근에 마지막으로 성공한 난독화 작업이 있습니다.</translation>
     </message>
     <message>
+        <source>Less than 3 mints added, unable to create spend</source>
+        <translation>3 미만 추가, 송금 불가능함</translation>
+    </message>
+    <message>
         <source>Limit size of signature cache to &lt;n&gt; entries (default: %u)</source>
         <translation>시그니처 캐시의 크기 제한을 &lt;n&gt; 항목으로 합니다 (기본값: %u)</translation>
     </message>
@@ -4514,6 +5096,10 @@ rpcpassword=%s
     <message>
         <source>Loading masternode payment cache...</source>
         <translation>마스터노드 결제 캐시를 불러오는 중...</translation>
+    </message>
+    <message>
+        <source>Loading sporks...</source>
+        <translation>sporks 로딩중...</translation>
     </message>
     <message>
         <source>Loading wallet... (%3.2f %%)</source>
@@ -4636,6 +5222,10 @@ rpcpassword=%s
         <translation>JSON-RPC 연결 비밀번호</translation>
     </message>
     <message>
+        <source>Percentage of automatically minted Zerocoin  (10-100, default: %u)</source>
+        <translation>자동 생성 제로코인 퍼센트 (10-100, 기본값: %u)</translation>
+    </message>
+    <message>
         <source>Prepend debug output with timestamp (default: %u)</source>
         <translation>디버그 출력 앞에 타임스탬프를 추가합니다. (기본값: %u)</translation>
     </message>
@@ -4686,6 +5276,14 @@ rpcpassword=%s
     <message>
         <source>Rescanning...</source>
         <translation>다시 스캔하는 중...</translation>
+    </message>
+    <message>
+        <source>ResetMintZerocoin finished: </source>
+        <translation>생성된 제로코인 초기화 완료:</translation>
+    </message>
+    <message>
+        <source>ResetSpentZerocoin finished: </source>
+        <translation>사용된 제로코인 초기화 완료:</translation>
     </message>
     <message>
         <source>Run a thread to flush wallet periodically (default: %u)</source>
@@ -4872,6 +5470,14 @@ rpcpassword=%s
         <translation>제대로 동작하지 않는 피어와 연결을 끊을 임계값 (기본값: %u)</translation>
     </message>
     <message>
+        <source>Tor control port password (default: empty)</source>
+        <translation>Tor 컨트롤 포트 암호 (기본값: 공백)</translation>
+    </message>
+    <message>
+        <source>Tor control port to use if onion listening enabled (default: %s)</source>
+        <translation>onion 활성화되었을 경우 사용할 Tor 코트롤 포트 (기본값: %s)</translation>
+    </message>
+    <message>
         <source>Transaction amount too small</source>
         <translation>트랜잭션 금액이 너무 적습니다</translation>
     </message>
@@ -5014,6 +5620,14 @@ rpcpassword=%s
     <message>
         <source>ZeroMQ notification options:</source>
         <translation>ZeroMQ 알림 옵션:</translation>
+    </message>
+    <message>
+        <source>Zerocoin options:</source>
+        <translation>제로코인 옵션:</translation>
+    </message>
+    <message>
+        <source>failed to validate zerocoin</source>
+        <translation>제로코인 검증을 못했습니다.</translation>
     </message>
     <message>
         <source>on startup</source>

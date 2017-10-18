@@ -813,10 +813,6 @@ MultiSend: %1</translation>
 <context>
     <name>ClientModel</name>
     <message>
-        <source>Total: %1 (OBF compatible: %2 / Enabled: %3)</source>
-        <translation>Total: %1 (OBF compatível: %2 / Ativado: %3)</translation>
-    </message>
-    <message>
         <source>Network Alert</source>
         <translation>Alerta de rede</translation>
     </message>
@@ -3704,14 +3700,6 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <message>
         <source>Insufficient funds.</source>
         <translation>Fundos insuficientes.</translation>
-    </message>
-    <message>
-        <source>Invalid -onion address: '%s'</source>
-        <translation>Inválido -onion endereço: '%s'</translation>
-    </message>
-    <message>
-        <source>Invalid -proxy address: '%s'</source>
-        <translation>Inválido -proxy endereço: '%s'</translation>
     </message>
     <message>
         <source>Invalid amount for -maxtxfee=&lt;amount&gt;: '%s'</source>

@@ -515,7 +515,7 @@
         <translation>Node</translation>
     </message>
     <message>
-        <location line="+157"/>
+        <location line="+161"/>
         <source>&amp;Overview</source>
         <translation>&amp;Overview</translation>
     </message>
@@ -535,7 +535,7 @@
         <translation>&amp;Receive</translation>
     </message>
     <message>
-        <location line="+22"/>
+        <location line="+11"/>
         <source>&amp;Transactions</source>
         <translation>&amp;Transactions</translation>
     </message>
@@ -543,6 +543,11 @@
         <location line="+1"/>
         <source>Browse transaction history</source>
         <translation>Browse transaction history</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Privacy Actions for zPIV</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+42"/>
@@ -769,8 +774,8 @@
         <translation>Tabs toolbar</translation>
     </message>
     <message>
-        <location line="-409"/>
-        <location line="+854"/>
+        <location line="-413"/>
+        <location line="+858"/>
         <source>PIVX Core</source>
         <translation type="unfinished"></translation>
     </message>
@@ -785,17 +790,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+21"/>
         <source>&amp;Privacy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+1"/>
-        <source>Privacy Action for zPIV and Obfuscation</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+25"/>
+        <location line="+15"/>
         <source>&amp;Masternodes</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5317,7 +5317,7 @@ Please be patient...</source>
         <translation>Show transaction details</translation>
     </message>
     <message>
-        <location line="+193"/>
+        <location line="+195"/>
         <source>Export Transaction History</source>
         <translation>Export Transaction History</translation>
     </message>
@@ -5327,7 +5327,7 @@ Please be patient...</source>
         <translation>Comma separated file (*.csv)</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+11"/>
         <source>Confirmed</source>
         <translation>Confirmed</translation>
     </message>
@@ -5362,7 +5362,7 @@ Please be patient...</source>
         <translation>ID</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+10"/>
         <source>Exporting Failed</source>
         <translation>Exporting Failed</translation>
     </message>
@@ -5372,7 +5372,7 @@ Please be patient...</source>
         <translation>There was an error trying to save the transaction history to %1.</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="-4"/>
         <source>Exporting Successful</source>
         <translation>Exporting Successful</translation>
     </message>
@@ -5382,7 +5382,7 @@ Please be patient...</source>
         <translation>The transaction history was successfully saved to %1.</translation>
     </message>
     <message>
-        <location line="+117"/>
+        <location line="+121"/>
         <source>Range:</source>
         <translation>Range:</translation>
     </message>
@@ -5579,7 +5579,7 @@ Please be patient...</source>
         <translation type="unfinished">Distributed under the MIT software license, see the accompanying file COPYING or &lt;http://www.opensource.org/licenses/mit-license.php&gt;.</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+6"/>
         <source>Enable spork administration functionality with the appropriate private key.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6329,7 +6329,7 @@ for example: alertnotify=echo %%s | mail -s &quot;PIVX Alert&quot; admin@foo.com
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-147"/>
+        <location line="-150"/>
         <source> mints deleted
 </source>
         <translation type="unfinished"></translation>
@@ -6346,7 +6346,12 @@ for example: alertnotify=echo %%s | mail -s &quot;PIVX Alert&quot; admin@foo.com
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+54"/>
+        <location line="+44"/>
+        <source>Enable automatic wallet backups triggered after each zPiv minting (0-1, default: %u)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+13"/>
         <source>Error: The transaction was rejected! This might happen if some of the coins in your wallet were already spent, such as if you used a copy of wallet.dat and coins were spent in the copy but not marked as spent here.</source>
         <translation type="unfinished"></translation>
     </message>

@@ -820,10 +820,6 @@ MultiSend: %1</translation>
 <context>
     <name>ClientModel</name>
     <message>
-        <source>Total: %1 (OBF compatible: %2 / Enabled: %3)</source>
-        <translation>Sumár: %1 (OBF kompatibilné: %2 / Zapnuté: %3)</translation>
-    </message>
-    <message>
         <source>Network Alert</source>
         <translation>Upozornenie siete </translation>
     </message>

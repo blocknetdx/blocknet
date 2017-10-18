@@ -820,10 +820,6 @@ Adresse: %4
 <context>
     <name>ClientModel</name>
     <message>
-        <source>Total: %1 (OBF compatible: %2 / Enabled: %3)</source>
-        <translation>I alt: %1 (OBF kompatible: %2 / Aktiverede: %3)</translation>
-    </message>
-    <message>
         <source>Network Alert</source>
         <translation>Netværksalarm!</translation>
     </message>
@@ -3875,10 +3871,6 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>Der er fundet ubekræftede designerede outputs. Vent indtil de bekræftes for at fortsætte.</translation>
     </message>
     <message>
-        <source>How thorough the block verification of -checkblocks is (0-4, default: %u)</source>
-        <translation>Hvor grundig er blokkens verificeringer af -checkblocks er (0-4, default %u)</translation>
-    </message>
-    <message>
         <source>If paytxfee is not set, include enough fee so transactions begin confirmation on average within n blocks (default: %u)</source>
         <translation>Hvis der ikke fastsættes et betalingsTxgebyr, skal der inkluderes tilstrækkelige midler til gebyret så transaktionens bekræftelsesproces vil begynde indenfor n blokke (default: %u)</translation>
     </message>
@@ -4357,14 +4349,6 @@ For eksempel: alertnotify=Echo %% | mail - s "PIVX ALARM!" e-mail@administrator.
     <message>
         <source>Insufficient funds.</source>
         <translation>Utilstrækkelige midler</translation>
-    </message>
-    <message>
-        <source>Invalid -onion address: '%s'</source>
-        <translation>Ugyldig -onion adresse: '%s'</translation>
-    </message>
-    <message>
-        <source>Invalid -proxy address: '%s'</source>
-        <translation>Ugyldig -proxy adresse: '%s'</translation>
     </message>
     <message>
         <source>Invalid amount for -maxtxfee=&lt;amount&gt;: '%s'</source>

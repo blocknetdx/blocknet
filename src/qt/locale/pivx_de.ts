@@ -855,10 +855,6 @@ Adresse: %4</translation>
 <context>
     <name>ClientModel</name>
     <message>
-        <source>Total: %1 (OBF compatible: %2 / Enabled: %3)</source>
-        <translation>Gesamt: %1 (OBF kompatibel: %2 / Aktiviert: %3)</translation>
-    </message>
-    <message>
         <source>Network Alert</source>
         <translation>Netzwerkalarm</translation>
     </message>
@@ -2056,7 +2052,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <name>PrivacyDialog</name>
     <message>
         <source>PIV which were anonymized via Zerocin Protocol</source>
-        <translation>PIV, die über das Zerocin-Protokoll anonymisiert wurden</translation>
+        <translation>PIV, die über das Zerocoin-Protokoll anonymisiert wurden</translation>
     </message>
     <message>
         <source>Zerocoin PIV (zPIV)</source>
@@ -2115,8 +2111,8 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>Betrag:</translation>
     </message>
     <message>
-        <source>Rescan the complete blockchain for  Zerocoin mints and their meta-data. Needs a very long time, please be patient.</source>
-        <translation>Nachscannen der komplette Blockchain für Zerocoin-Prägungen und ihre Metadaten. Braucht eine sehr lange Zeit. Bitte seien Sie geduldig.</translation>
+        <source>Rescan the complete blockchain for  Zerocoin mints and their meta-data.</source>
+        <translation>Erneutes Scannen der kompletten Blockchain nach Zerocoin Prägungen und deren Meta-Daten</translation>
     </message>
     <message>
         <source>ReScan</source>
@@ -2371,8 +2367,12 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
         <translation>Betrag kopieren</translation>
     </message>
     <message>
-        <source>Error: your wallet is locked. Please enter the wallet passphrase first.</source>
-        <translation>Fehler: Ihre Brieftasche ist gesperrt. Bitte geben Sie zuerst die Passphrase der Wallet ein.</translation>
+        <source>Zerocoin functionality is not enabled on the PIVX network yet.</source>
+        <translation>Zerocoin Funktionalität ist im PIVX Netzwerk im Moment nicht freigeschaltet.</translation>
+    </message>
+    <message>
+        <source>Error: Your wallet is locked. Please enter the wallet passphrase first.</source>
+        <translation>Fehler: Ihre Wallet ist gesperrt. Bitte geben Sie zuerst ihre Wallet Passphrase ein.</translation>
     </message>
     <message>
         <source>Message: Enter an amount &gt; 0.</source>
@@ -2395,22 +2395,6 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
 </source>
         <translation> ausg. Verwendete Stückelungen:
 </translation>
-    </message>
-    <message>
-        <source>Starting ResetMintZerocoin: rescanning the complete blockchain, this will need up to 30 minutes depending on your hardware.&lt;br /&gt;&lt;br /&gt;</source>
-        <translation>Starten von ResetMintZerocoin: Nachscannung der kompletten Blockchain. Das benötigt bis zu 30 Minuten je nach Hardware.&lt;br /&gt;&lt;br /&gt;</translation>
-    </message>
-    <message>
-        <source>You won't be able to do anything else during that time!&lt;br /&gt;</source>
-        <translation>Sie können während dieser Zeit nichts anderes machen!&lt;br /&gt;</translation>
-    </message>
-    <message>
-        <source>Confirm Rescan</source>
-        <translation>Nachscannen bestätigen</translation>
-    </message>
-    <message>
-        <source>ResetMintZerocoin: action canceled by user</source>
-        <translation>ResetMintZerocoin: Aktion vom Benutzer abgebrochen</translation>
     </message>
     <message>
         <source>Starting ResetMintZerocoin: rescanning complete blockchain, this will need up to 30 minutes depending on your hardware. 
@@ -2942,7 +2926,7 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>Requested payments history</source>
-        <translation>Verlauf der  Angeforderten Zahlungen</translation>
+        <translation>Verlauf der angeforderten Zahlungen</translation>
     </message>
     <message>
         <source>Show the selected request (does the same as double clicking an entry)</source>
@@ -4359,14 +4343,6 @@ Bitte haben Sie Geduld...</translation>
         <translation>Fehler: Horchen von eingehenden Verbindungen fehlgeschlagen (listen return error %s)</translation>
     </message>
     <message>
-        <source>Error: The transaction was rejected! This might happen if some of the coins in your wallet were already spent, such as if you used a copy of wallet.dat and coins were spent in the copy but not marked as spent here.</source>
-        <translation>Fehler: Die Transaktion wurde abgelehnt! Dies könnte passieren, wenn einige Coins in deiner Wallet schon ausgegeben wurden, als  wenn du eine Kopie von der wallet.dat benutzt hättest. Coins wurden in der Kopie verbracht, aber hier nicht als verbracht markiert.</translation>
-    </message>
-    <message>
-        <source>Error: This transaction requires a transaction fee of at least %s because of its amount, complexity, or use of recently received funds!</source>
-        <translation>Fehler: Diese Transaktion erfordert eine Transaktionsgebühr von mindestens %s wegen ihrer Menge, Komplexität oder Verwendung von kürzlich erhaltenen Mitteln!</translation>
-    </message>
-    <message>
         <source>Execute command when a relevant alert is received or we see a really long fork (%s in cmd is replaced by message)</source>
         <translation>Befehl ausführen, wenn eine relevante Warnung empfangen wird oder wir einen wirklich langen Fork sehen (%s in cmd wird durch Benachrichtigungen ersetzt)</translation>
     </message>
@@ -4393,10 +4369,6 @@ Bitte haben Sie Geduld...</translation>
     <message>
         <source>Found unconfirmed denominated outputs, will wait till they confirm to continue.</source>
         <translation>Gefundene unbestätigte benannte Outputs werden warten  bis sie bestätigen sind, um fortzufahren.</translation>
-    </message>
-    <message>
-        <source>How thorough the block verification of -checkblocks is (0-4, default: %u)</source>
-        <translation>Wie gründlich die Blockprüfung von -checkblocks ist (0-4, default: %u)</translation>
     </message>
     <message>
         <source>If paytxfee is not set, include enough fee so transactions begin confirmation on average within n blocks (default: %u)</source>
@@ -4435,12 +4407,36 @@ Bitte haben Sie Geduld...</translation>
         <translation>Sekundenanzahl, um fehlerhafte Peers zu halten von der Wiederverbindung (default: %u)</translation>
     </message>
     <message>
+        <source>This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit &lt;https://www.openssl.org/&gt; and cryptographic software written by Eric Young and UPnP software written by Thomas Bernard.</source>
+        <translation>Dieses Produkt beinhaltet Software, die vom OpenSSL Projekt für die Nutzung im OpenSSL Toolkit &lt;https://www.openssl.org/&gt; entwickelt wurde. Desweiteren kryptografische Software , die von Eric Young, und UPnP Software, die von Thomas Bernard, geschrieben wurde.</translation>
+    </message>
+    <message>
+        <source>Warning: Please check that your computer's date and time are correct! If your clock is wrong PIVX Core will not work properly.</source>
+        <translation>Warnung: Bitte stellen Sie sicher, das vom Computer verwendete Zeit und Datumangaben korrekt sind! Wenn ihr System falsche Zeitangaben nutzt, wird PIVX Core nicht korrekt funktionieren.</translation>
+    </message>
+    <message>
         <source>(default: %s)</source>
         <translation>(default: %s)</translation>
     </message>
     <message>
         <source>(default: 1)</source>
         <translation>(default: 1)</translation>
+    </message>
+    <message>
+        <source>Already have that input.</source>
+        <translation>Eingabe bereits erhalten.</translation>
+    </message>
+    <message>
+        <source>Can't find random Masternode.</source>
+        <translation>Kann zufällige Masternode nicht finden.</translation>
+    </message>
+    <message>
+        <source>Cannot write default address</source>
+        <translation>Standardadresse kann nicht geschrieben werden</translation>
+    </message>
+    <message>
+        <source>Connect through SOCKS5 proxy</source>
+        <translation>Verbindung per SOCKS5 proxy</translation>
     </message>
     <message>
         <source>Connection options:</source>
@@ -4459,8 +4455,80 @@ Bitte haben Sie Geduld...</translation>
         <translation>Copyright (C) 2015-%i The PIVX Core Developers</translation>
     </message>
     <message>
+        <source>Corrupted block database detected</source>
+        <translation>Beschädigte Block-Datenbank gefunden</translation>
+    </message>
+    <message>
+        <source>Debugging/Testing options:</source>
+        <translation>Debugging-  / Testoptionen</translation>
+    </message>
+    <message>
+        <source>Done loading</source>
+        <translation>Geladen</translation>
+    </message>
+    <message>
+        <source>Error connecting to Masternode.</source>
+        <translation>Fehler beim Verbinden zur Masternode.</translation>
+    </message>
+    <message>
+        <source>Error initializing block database</source>
+        <translation>Fehler bei der Initialisierung der Block Datenbank</translation>
+    </message>
+    <message>
+        <source>Error loading block database</source>
+        <translation>Fehler beim Laden der Block-Datenbank</translation>
+    </message>
+    <message>
+        <source>Error loading wallet.dat</source>
+        <translation>Fehler beim Laden von wallet.dat</translation>
+    </message>
+    <message>
+        <source>Error loading wallet.dat: Wallet corrupted</source>
+        <translation>Fehler beim Laden von wallet.dat : Wallet beschädigt</translation>
+    </message>
+    <message>
+        <source>Error opening block database</source>
+        <translation>Fehler beim Öffnen der Block-Datenbank</translation>
+    </message>
+    <message>
+        <source>Error reading from database, shutting down.</source>
+        <translation>Fehler beim Lesen der Datenbank, wird heruntergefahren.</translation>
+    </message>
+    <message>
+        <source>Error recovering public key.</source>
+        <translation>Fehler bei der Wiederherstellung des öffentlichen Schlüssels.</translation>
+    </message>
+    <message>
         <source>Error</source>
         <translation>Fehler</translation>
+    </message>
+    <message>
+        <source>Error: Disk space is low!</source>
+        <translation>Fehler: Festplattenspeicher ist knapp.</translation>
+    </message>
+    <message>
+        <source>Error: Wallet locked, unable to create transaction!</source>
+        <translation>Fehler: Wallet verschlossen, Transaktion konnte nicht erstellt werden!</translation>
+    </message>
+    <message>
+        <source>Failed to read block</source>
+        <translation>Block konnte nicht gelesen werden</translation>
+    </message>
+    <message>
+        <source>Finalizing transaction.</source>
+        <translation>Schließe Transaktion ab.</translation>
+    </message>
+    <message>
+        <source>Force safe mode (default: %u)</source>
+        <translation>Erzwinge Safe-Mode (Standard: %u)</translation>
+    </message>
+    <message>
+        <source>Found enough users, signing ( waiting %s )</source>
+        <translation>Genügend Benutzer gefunden, signiere (warte %s)</translation>
+    </message>
+    <message>
+        <source>Found enough users, signing ...</source>
+        <translation>Genügend Benutzer gefunden, signiere...</translation>
     </message>
     <message>
         <source>Generate coins (default: %u)</source>
@@ -4473,6 +4541,10 @@ Bitte haben Sie Geduld...</translation>
     <message>
         <source>Importing...</source>
         <translation>Importiere...</translation>
+    </message>
+    <message>
+        <source>Imports blocks from external blk000??.dat file</source>
+        <translation>Importiere Blöcke aus externer Datei blk000??.dat</translation>
     </message>
     <message>
         <source>Incompatible mode.</source>
@@ -4507,14 +4579,6 @@ Bitte haben Sie Geduld...</translation>
         <translation>Unzureichende Mittel.</translation>
     </message>
     <message>
-        <source>Invalid -onion address: '%s'</source>
-        <translation>Ungültige -onion Adresse: '%s'</translation>
-    </message>
-    <message>
-        <source>Invalid -proxy address: '%s'</source>
-        <translation>Ungültige -proxy Adresse: '%s'</translation>
-    </message>
-    <message>
         <source>Invalid amount for -maxtxfee=&lt;amount&gt;: '%s'</source>
         <translation>Ungültiger Betrag für -maxtxfee=&lt;amount&gt;: '%s'</translation>
     </message>
@@ -4543,8 +4607,52 @@ Bitte haben Sie Geduld...</translation>
         <translation>Ungültiger Betrag</translation>
     </message>
     <message>
+        <source>Invalid private key.</source>
+        <translation>Ungültiger privater Schlüssel.</translation>
+    </message>
+    <message>
+        <source>Invalid script detected.</source>
+        <translation>Ungültiges Skript entdeckt.</translation>
+    </message>
+    <message>
+        <source> mints deleted
+</source>
+        <translation>Prägungen gelöscht 
+</translation>
+    </message>
+    <message>
+        <source> mints updated, </source>
+        <translation>Prägungen geupdatet,</translation>
+    </message>
+    <message>
+        <source> unconfirmed transactions removed
+</source>
+        <translation>unbestätigte Transaktionen entfernt
+</translation>
+    </message>
+    <message>
+        <source>Error: The transaction was rejected! This might happen if some of the coins in your wallet were already spent, such as if you used a copy of wallet.dat and coins were spent in the copy but not marked as spent here.</source>
+        <translation>Fehler: Die Transaktion wurde abgelehnt! Dies könnte passieren, wenn einige Coins in deiner Wallet schon ausgegeben wurden, als  wenn du eine Kopie von der wallet.dat benutzt hättest. Coins wurden in der Kopie verbracht, aber hier nicht als verbracht markiert.</translation>
+    </message>
+    <message>
+        <source>Error: This transaction requires a transaction fee of at least %s because of its amount, complexity, or use of recently received funds!</source>
+        <translation>Fehler: Diese Transaktion erfordert eine Transaktionsgebühr von mindestens %s wegen ihrer Menge, Komplexität oder Verwendung von kürzlich erhaltenen Mitteln!</translation>
+    </message>
+    <message>
         <source>Enable staking functionality (0-1, default: %u)</source>
         <translation>Aktiviere Staking-Funktionalität (0-1, default: %u)</translation>
+    </message>
+    <message>
+        <source>Loading addresses...</source>
+        <translation>Lade Adressen...</translation>
+    </message>
+    <message>
+        <source>Loading block index...</source>
+        <translation>Lade Block-Index...</translation>
+    </message>
+    <message>
+        <source>Loading masternode cache...</source>
+        <translation>Lade Masternode Cache...</translation>
     </message>
     <message>
         <source>Loading wallet... (%3.2f %%)</source>
@@ -4567,12 +4675,36 @@ Bitte haben Sie Geduld...</translation>
         <translation>Masternode:</translation>
     </message>
     <message>
+        <source>No compatible Masternode found.</source>
+        <translation>Keine kompatible Masternode gefunden.</translation>
+    </message>
+    <message>
+        <source>Not in the Masternode list.</source>
+        <translation>Nicht in der Masternode-Liste.</translation>
+    </message>
+    <message>
+        <source>Number of automatic wallet backups (default: 10)</source>
+        <translation>Anzahl automatischer Wallet-Backups (Standard: 10)</translation>
+    </message>
+    <message>
         <source>Only connect to nodes in network &lt;net&gt; (ipv4, ipv6 or onion)</source>
         <translation>Nur Verbindung zu Knoten im Netzwerk &lt;net&gt; (ipv4, ipv6 oder onion)</translation>
     </message>
     <message>
         <source>Options:</source>
         <translation>Optionen:</translation>
+    </message>
+    <message>
+        <source>Password for JSON-RPC connections</source>
+        <translation>Passwort für JSON-RPC Verbindungen</translation>
+    </message>
+    <message>
+        <source>Percentage of automatically minted Zerocoin  (10-100, default: %u)</source>
+        <translation>Prozent automatisch geprägter Zerocoins (10-100, Standard: %u)</translation>
+    </message>
+    <message>
+        <source>Print version and exit</source>
+        <translation>Version drucken und Programm beenden</translation>
     </message>
     <message>
         <source>RPC server options:</source>
@@ -4595,8 +4727,24 @@ Bitte haben Sie Geduld...</translation>
         <translation>ResetSpentZerocoin abgeschlossen: </translation>
     </message>
     <message>
+        <source>Session timed out.</source>
+        <translation>Zeitüberschreitung</translation>
+    </message>
+    <message>
         <source>Show all debugging options (usage: --help -help-debug)</source>
         <translation>Zeige alle debugging Optionen (verwende: --help -help-debug)</translation>
+    </message>
+    <message>
+        <source>Signing failed.</source>
+        <translation>Signieren fehlgeschlagen.</translation>
+    </message>
+    <message>
+        <source>Signing timed out.</source>
+        <translation>Zeitüberschreitung bei der Signierung.</translation>
+    </message>
+    <message>
+        <source>Signing transaction failed</source>
+        <translation>Signieren der Transaktion fehlgeschlagen</translation>
     </message>
     <message>
         <source>Specify data directory</source>
@@ -4813,6 +4961,10 @@ Bitte haben Sie Geduld...</translation>
     <message>
         <source>Your transaction was accepted into the pool!</source>
         <translation>Ihre Transaktion wurde in den Pool aufgenommen!</translation>
+    </message>
+    <message>
+        <source>Zapping all transactions from wallet...</source>
+        <translation>Lösche alle Transaktionen aus der Wallet...</translation>
     </message>
     <message>
         <source>ZeroMQ notification options:</source>

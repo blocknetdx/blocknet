@@ -403,7 +403,7 @@
     </message>
     <message>
         <source>&amp;Overview</source>
-        <translation>&amp;概述</translation>
+        <translation>&amp;O概述</translation>
     </message>
     <message>
         <source>Show general overview of wallet</source>
@@ -411,15 +411,15 @@
     </message>
     <message>
         <source>&amp;Send</source>
-        <translation>&amp;发送</translation>
+        <translation>&amp;S发送</translation>
     </message>
     <message>
         <source>&amp;Receive</source>
-        <translation>&amp;接收</translation>
+        <translation>&amp;R接收</translation>
     </message>
     <message>
         <source>&amp;Transactions</source>
-        <translation>&amp;交易</translation>
+        <translation>&amp;T交易</translation>
     </message>
     <message>
         <source>Browse transaction history</source>
@@ -443,11 +443,11 @@
     </message>
     <message>
         <source>&amp;Options...</source>
-        <translation>&amp;选项</translation>
+        <translation>&amp;Q选项</translation>
     </message>
     <message>
         <source>&amp;Show / Hide</source>
-        <translation>&amp;显示/隐藏</translation>
+        <translation>&amp;S显示/隐藏</translation>
     </message>
     <message>
         <source>Show or hide the main Window</source>
@@ -455,7 +455,7 @@
     </message>
     <message>
         <source>&amp;Encrypt Wallet...</source>
-        <translation>&amp;加密钱包...</translation>
+        <translation>&amp;E加密钱包...</translation>
     </message>
     <message>
         <source>Encrypt the private keys that belong to your wallet</source>
@@ -463,7 +463,7 @@
     </message>
     <message>
         <source>&amp;Backup Wallet...</source>
-        <translation>&amp;备份钱包...</translation>
+        <translation>&amp;B备份钱包...</translation>
     </message>
     <message>
         <source>Backup wallet to another location</source>
@@ -471,7 +471,7 @@
     </message>
     <message>
         <source>&amp;Change Passphrase...</source>
-        <translation>&amp;修改密码</translation>
+        <translation>&amp;C修改密码</translation>
     </message>
     <message>
         <source>Change the passphrase used for wallet encryption</source>
@@ -479,7 +479,7 @@
     </message>
     <message>
         <source>&amp;Unlock Wallet...</source>
-        <translation>&amp;解锁钱包...</translation>
+        <translation>&amp;U解锁钱包...</translation>
     </message>
     <message>
         <source>Unlock wallet</source>
@@ -487,11 +487,11 @@
     </message>
     <message>
         <source>&amp;Lock Wallet</source>
-        <translation>&amp;锁定钱包</translation>
+        <translation>&amp;L锁定钱包</translation>
     </message>
     <message>
         <source>Sign &amp;message...</source>
-        <translation>签名&amp;消息</translation>
+        <translation>S签名&amp;消息</translation>
     </message>
     <message>
         <source>&amp;Verify message...</source>
@@ -499,7 +499,7 @@
     </message>
     <message>
         <source>&amp;Information</source>
-        <translation>&amp;信息</translation>
+        <translation>&amp;I信息</translation>
     </message>
     <message>
         <source>Show diagnostic information</source>
@@ -507,7 +507,7 @@
     </message>
     <message>
         <source>&amp;Debug console</source>
-        <translation>&amp;调试控制台</translation>
+        <translation>&amp;D调试控制台</translation>
     </message>
     <message>
         <source>Open debugging console</source>
@@ -515,7 +515,7 @@
     </message>
     <message>
         <source>&amp;Network Monitor</source>
-        <translation>&amp;网络监视器</translation>
+        <translation>&amp;N网络监视器</translation>
     </message>
     <message>
         <source>Show network monitor</source>
@@ -523,7 +523,7 @@
     </message>
     <message>
         <source>&amp;Peers list</source>
-        <translation>&amp;并列列表</translation>
+        <translation>&amp;P并列列表</translation>
     </message>
     <message>
         <source>Show peers info</source>
@@ -531,7 +531,7 @@
     </message>
     <message>
         <source>Wallet &amp;Repair</source>
-        <translation>钱包&amp;修复</translation>
+        <translation>W钱包&amp;修复</translation>
     </message>
     <message>
         <source>Show wallet repair options</source>
@@ -551,7 +551,7 @@
     </message>
     <message>
         <source>&amp;Sending addresses...</source>
-        <translation>&amp;发送地址...</translation>
+        <translation>&amp;S发送地址...</translation>
     </message>
     <message>
         <source>Show the list of used sending addresses and labels</source>
@@ -559,7 +559,7 @@
     </message>
     <message>
         <source>&amp;Receiving addresses...</source>
-        <translation>&amp;接收地址</translation>
+        <translation>&amp;R接收地址</translation>
     </message>
     <message>
         <source>Show the list of used receiving addresses and labels</source>
@@ -567,11 +567,15 @@
     </message>
     <message>
         <source>Open &amp;URI...</source>
-        <translation>打开&amp;URI</translation>
+        <translation>O打开&amp;URI</translation>
     </message>
     <message>
         <source>&amp;Command-line options</source>
-        <translation>&amp;命令行选项</translation>
+        <translation>&amp;C命令行选项</translation>
+    </message>
+    <message numerus="yes">
+        <source>Processed %n blocks of transaction history.</source>
+        <translation><numerusform>处理的 %n个交易记录块。</numerusform></translation>
     </message>
     <message>
         <source>Synchronizing additional data: %p%</source>
@@ -579,19 +583,19 @@
     </message>
     <message>
         <source>&amp;File</source>
-        <translation>&amp;文件</translation>
+        <translation>&amp;F文件</translation>
     </message>
     <message>
         <source>&amp;Settings</source>
-        <translation>&amp;设置</translation>
+        <translation>&amp;S设置</translation>
     </message>
     <message>
         <source>&amp;Tools</source>
-        <translation>&amp;工具</translation>
+        <translation>&amp;T工具</translation>
     </message>
     <message>
         <source>&amp;Help</source>
-        <translation>&amp;帮助</translation>
+        <translation>&amp;H帮助</translation>
     </message>
     <message>
         <source>Tabs toolbar</source>
@@ -599,7 +603,7 @@
     </message>
     <message>
         <source>PIVX Core</source>
-        <translation>PIVX 核心</translation>
+        <translation>PIVX Core</translation>
     </message>
     <message>
         <source>Send coins to a PIVX address</source>
@@ -610,8 +614,16 @@
         <translation>请求支付（生成二维码和pivx：URIs）</translation>
     </message>
     <message>
+        <source>&amp;Privacy</source>
+        <translation>&amp;P隐私</translation>
+    </message>
+    <message>
+        <source>Privacy Action for zPIV and Obfuscation</source>
+        <translation>zPIV和混淆的隐私操作</translation>
+    </message>
+    <message>
         <source>&amp;Masternodes</source>
-        <translation>&amp;主节点</translation>
+        <translation>&amp;M主节点</translation>
     </message>
     <message>
         <source>Browse masternodes</source>
@@ -619,11 +631,11 @@
     </message>
     <message>
         <source>&amp;About PIVX Core</source>
-        <translation>&amp;关于PIVX核心</translation>
+        <translation>&amp;A关于PIVX Core</translation>
     </message>
     <message>
         <source>Show information about PIVX Core</source>
-        <translation>显示PIVX核心的相关信息</translation>
+        <translation>显示PIVX  Core的相关信息</translation>
     </message>
     <message>
         <source>Modify configuration options for PIVX</source>
@@ -647,7 +659,7 @@
     </message>
     <message>
         <source>&amp;MultiSend</source>
-        <translation>&amp;多重发送</translation>
+        <translation>&amp;M多重发送</translation>
     </message>
     <message>
         <source>MultiSend Settings</source>
@@ -671,7 +683,7 @@
     </message>
     <message>
         <source>&amp;Blockchain explorer</source>
-        <translation>&amp;区块浏览器</translation>
+        <translation>&amp;B区块浏览器</translation>
     </message>
     <message>
         <source>Block explorer window</source>
@@ -679,11 +691,16 @@
     </message>
     <message>
         <source>Show the PIVX Core help message to get a list with possible PIVX command-line options</source>
-        <translation>显示PIVX Core帮助信息以获取可能的PIVX命令行选项的列表</translation>
+        <translation>显示PIVX Core帮助信息并获取PIVX命令行选项列表</translation>
     </message>
     <message>
         <source>PIVX Core client</source>
-        <translation>PIVX核心客户端</translation>
+        <translation>PIVX Core 客户端</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n active connection(s) to PIVX network</source>
+        <translation><numerusform>%n 活动连接到PIVX网络
+</numerusform></translation>
     </message>
     <message>
         <source>Synchronizing with network...</source>
@@ -704,6 +721,22 @@
     <message>
         <source>Up to date</source>
         <translation>最新</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n hour(s)</source>
+        <translation><numerusform>%n 小时</numerusform></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n day(s)</source>
+        <translation><numerusform>%n 天</numerusform></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n week(s)</source>
+        <translation><numerusform>%n 星期</numerusform></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n year(s)</source>
+        <translation><numerusform>%n 年</numerusform></translation>
     </message>
     <message>
         <source>%1 behind</source>
@@ -734,6 +767,18 @@
         <translation>信息</translation>
     </message>
     <message>
+        <source>Sent transaction</source>
+        <translation>发送交易</translation>
+    </message>
+    <message>
+        <source>Incoming transaction</source>
+        <translation>接收交易</translation>
+    </message>
+    <message>
+        <source>Sent MultiSend transaction</source>
+        <translation>发送MultiSend交易</translation>
+    </message>
+    <message>
         <source>Date: %1
 Amount: %2
 Type: %3
@@ -744,6 +789,14 @@ Address: %4
 类型：%3
 地址：%4
 </translation>
+    </message>
+    <message>
+        <source>Active</source>
+        <translation>激活</translation>
+    </message>
+    <message>
+        <source>Not Active</source>
+        <translation>未激活</translation>
     </message>
     </context>
 <context>
@@ -813,14 +866,30 @@ Address: %4
     <name>HelpMessageDialog</name>
     <message>
         <source>PIVX Core</source>
-        <translation>PIVX 核心</translation>
+        <translation>PIVX Core</translation>
+    </message>
+    <message>
+        <source>About PIVX Core</source>
+        <translation>关于PIVX Core</translation>
     </message>
     </context>
 <context>
     <name>Intro</name>
     <message>
+        <source>Welcome to PIVX Core.</source>
+        <translation>欢迎使用 PIVX Core</translation>
+    </message>
+    <message>
+        <source>As this is the first time the program is launched, you can choose where PIVX Core will store its data.</source>
+        <translation>由于这是该程序第一次启动，您可以选择存储PIVX Core 数据的位置。</translation>
+    </message>
+    <message>
+        <source>PIVX Core will download and store a copy of the PIVX block chain. At least %1GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</source>
+        <translation>PIVX Core将下载并存储PIVX区块链副本。 至少 %1 GB的数据将存储在此目录中，并且会随着时间的推移而增长。 钱包也将存储在此目录中。</translation>
+    </message>
+    <message>
         <source>PIVX Core</source>
-        <translation>PIVX 核心</translation>
+        <translation>PIVX Core</translation>
     </message>
     <message>
         <source>Error</source>
@@ -840,6 +909,10 @@ Address: %4
     <message>
         <source>Address</source>
         <translation>地址</translation>
+    </message>
+    <message>
+        <source>Active</source>
+        <translation>激活</translation>
     </message>
     <message>
         <source>S&amp;tart alias</source>
@@ -983,7 +1056,7 @@ Address: %4
     </message>
     <message>
         <source>Active command-line options that override above options:</source>
-        <translation>上述选项的主动命令行选项：</translation>
+        <translation>激活上述选项的命令行选项：</translation>
     </message>
     <message>
         <source>Reset all client options to default.</source>
@@ -1436,7 +1509,7 @@ Address: %4
     <name>SplashScreen</name>
     <message>
         <source>PIVX Core</source>
-        <translation>PIVX 核心</translation>
+        <translation>PIVX Core</translation>
     </message>
     </context>
 <context>
