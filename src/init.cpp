@@ -219,6 +219,8 @@ void PrepareShutdown()
         pblocktree = NULL;
         delete zerocoinDB;
         zerocoinDB = NULL;
+        delete pSporkDB;
+        pSporkDB = NULL;
     }
 #ifdef ENABLE_WALLET
     if (pwalletMain)
@@ -1265,9 +1267,10 @@ bool AppInit2(boost::thread_group& threadGroup)
                 delete pcoinscatcher;
                 delete pblocktree;
                 delete zerocoinDB;
+                delete pSporkDB;
 
                 zerocoinDB = new CZerocoinDB(0, false, false);
-                pSporkDB.reset(new CSporkDB(0, false, false));
+                pSporkDB = new CSporkDB(0, false, false);
                 pblocktree = new CBlockTreeDB(nBlockTreeDBCache, false, fReindex);
                 pcoinsdbview = new CCoinsViewDB(nCoinDBCache, false, fReindex);
                 pcoinscatcher = new CCoinsViewErrorCatcher(pcoinsdbview);
