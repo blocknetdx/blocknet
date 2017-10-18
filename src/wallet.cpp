@@ -1254,7 +1254,7 @@ CAmount CWallet::GetBalance() const
     return nTotal;
 }
 
-CAmount CWallet::GetZerocoinBalance() const
+CAmount CWallet::GetZerocoinBalance(bool fMatureOnly) const
 {
     CAmount nTotal = 0;
     //! zerocoin specific fields
@@ -1266,7 +1266,7 @@ CAmount CWallet::GetZerocoinBalance() const
     {
         LOCK2(cs_main, cs_wallet);
         // Get Unused coins
-        list<CZerocoinMint> listPubCoin = CWalletDB(strWalletFile).ListMintedCoins(true, true, true);
+        list<CZerocoinMint> listPubCoin = CWalletDB(strWalletFile).ListMintedCoins(true, fMatureOnly, true);
         for (auto& mint : listPubCoin) {
             libzerocoin::CoinDenomination denom = mint.GetDenomination();
             nTotal += libzerocoin::ZerocoinDenominationToAmount(denom);
@@ -1281,6 +1281,11 @@ CAmount CWallet::GetZerocoinBalance() const
     if (nTotal < 0 ) nTotal = 0; // Sanity never hurts
 
     return nTotal;
+}
+
+CAmount CWallet::GetPendingZerocoinBalance() const
+{
+    return GetZerocoinBalance(false) - GetZerocoinBalance(true);
 }
 
 CAmount CWallet::GetUnlockedCoins() const
@@ -3444,7 +3449,7 @@ void CWallet::AutoZeromint()
         return;
     }
 
-    CAmount nZerocoinBalance = GetZerocoinBalance();
+    CAmount nZerocoinBalance = GetPendingZerocoinBalance();
     CAmount nBalance = GetUnlockedCoins(); // We only consider unlocked coins, this also excludes masternode-vins
                                            // from being accidentally minted
     CAmount nMintAmount = 0;
@@ -3516,7 +3521,7 @@ void CWallet::AutoZeromint()
             LogPrintf("CWallet::AutoZeromint(): auto minting failed with error: %s\n", strError);
             return;
         }
-        nZerocoinBalance = GetZerocoinBalance();
+        nZerocoinBalance = GetPendingZerocoinBalance();
         nBalance = GetUnlockedCoins();
         dPercentage = 100 * (double)nZerocoinBalance / (double)(nZerocoinBalance + nBalance);
         LogPrintf("CWallet::AutoZeromint() @ block %ld: successfully minted %ld zPIV. Current percentage of zPIV: %lf%%\n",
@@ -4062,7 +4067,7 @@ bool CWallet::CreateZerocoinSpendTransaction(CAmount nValue, int nSecurityLevel,
 {
     // Check available funds
     int nStatus = ZPIV_TRX_FUNDS_PROBLEMS;
-    if (nValue > GetZerocoinBalance()) {
+    if (nValue > GetZerocoinBalance(true)) {
         receipt.SetStatus("You don't have enough Zerocoins in your wallet", nStatus);
         return false;
     }
