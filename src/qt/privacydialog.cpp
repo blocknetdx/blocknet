@@ -597,3 +597,13 @@ void PrivacyDialog::showOutOfSyncWarning(bool fShow)
 {
     ui->labelzPIVSyncStatus->setVisible(fShow);
 }
+
+void PrivacyDialog::keyPressEvent(QKeyEvent* event)
+{
+    if (event->key() != Qt::Key_Escape) // press esc -> ignore
+    {
+        this->QDialog::keyPressEvent(event);
+    } else {
+        event->ignore();
+    }
+}
