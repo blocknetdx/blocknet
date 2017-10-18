@@ -3449,7 +3449,7 @@ void CWallet::AutoZeromint()
         return;
     }
 
-    CAmount nZerocoinBalance = GetPendingZerocoinBalance();
+    CAmount nZerocoinBalance = GetZerocoinBalance(false); //false includes both pending and mature zerocoins. Need total balance for this so nothing is overminted.
     CAmount nBalance = GetUnlockedCoins(); // We only consider unlocked coins, this also excludes masternode-vins
                                            // from being accidentally minted
     CAmount nMintAmount = 0;
@@ -3521,7 +3521,7 @@ void CWallet::AutoZeromint()
             LogPrintf("CWallet::AutoZeromint(): auto minting failed with error: %s\n", strError);
             return;
         }
-        nZerocoinBalance = GetPendingZerocoinBalance();
+        nZerocoinBalance = GetZerocoinBalance(false);
         nBalance = GetUnlockedCoins();
         dPercentage = 100 * (double)nZerocoinBalance / (double)(nZerocoinBalance + nBalance);
         LogPrintf("CWallet::AutoZeromint() @ block %ld: successfully minted %ld zPIV. Current percentage of zPIV: %lf%%\n",
