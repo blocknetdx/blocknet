@@ -127,23 +127,24 @@ void ZPivControlDialog::updateList()
 // Update the list when a checkbox is clicked
 void ZPivControlDialog::updateSelection(QTreeWidgetItem* item, int column)
 {
-    if (column != COLUMN_CHECKBOX)
-        return;
+    // only want updates from non top level items that are available to spend
+    if (item->parent() && column == COLUMN_CHECKBOX && !item->isDisabled()){
 
-    // see if this mint is already selected in the selection list
-    std::string strPubcoin = item->text(COLUMN_PUBCOIN).toStdString();
-    auto iter = std::find(listSelectedMints.begin(), listSelectedMints.end(), strPubcoin);
-    bool fSelected = iter != listSelectedMints.end();
+        // see if this mint is already selected in the selection list
+        std::string strPubcoin = item->text(COLUMN_PUBCOIN).toStdString();
+        auto iter = std::find(listSelectedMints.begin(), listSelectedMints.end(), strPubcoin);
+        bool fSelected = iter != listSelectedMints.end();
 
-    // set the checkbox to the proper state and add or remove the mint from the selection list
-    if (item->checkState(COLUMN_CHECKBOX) == Qt::Checked) {
-        if (fSelected) return;
-        listSelectedMints.emplace_back(strPubcoin);
-    } else {
-        if (!fSelected) return;
-        listSelectedMints.erase(iter);
+        // set the checkbox to the proper state and add or remove the mint from the selection list
+        if (item->checkState(COLUMN_CHECKBOX) == Qt::Checked) {
+            if (fSelected) return;
+            listSelectedMints.emplace_back(strPubcoin);
+        } else {
+            if (!fSelected) return;
+            listSelectedMints.erase(iter);
+        }
+        updateLabels();
     }
-    updateLabels();
 }
 
 // Update the Quantity and Amount display
