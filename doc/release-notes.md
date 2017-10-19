@@ -1,4 +1,4 @@
-PIVX Core version 3.0.1 is now available from:
+PIVX Core version 3.0.2 is now available from:
 
   <https://github.com/pivx-project/pivx/releases>
 
@@ -12,7 +12,7 @@ Please report bugs using the issue tracker at github:
 Recommended Update
 ==============
 
-PIVX Core v3.0.1 is a recommended, semi-mandatory update for all users. This release contains transaction creation bug fixes for zPIV spends, automint calculation adjustments, and other various updates/fixes.
+PIVX Core v3.0.2 is a recommended, semi-mandatory update for all users. This release contains transaction creation bug fixes for zPIV spends, automint calculation adjustments, and other various updates/fixes.
 
 zPIV spending requires this update.
 
@@ -77,7 +77,7 @@ Bip38 Compatibility With 3rd Party Tools
 ---------------------
 The in-wallet bip38 encryption method was leaving the final 4 bytes of the encrypted key blank. This caused an incompatibility issue with 3rd party tools like the paper wallet generators that could decrypt bip38 encrypted keys. Cross-tool compatibility has now been restored.
 
-3.0.1 Change log
+3.0.2 Change log
 =================
 
 Detailed release notes follow. This overview includes changes that affect
@@ -90,6 +90,7 @@ git merge commit are mentioned.
 
 ### P2P Protocol and Network Code
 - #286 `85c0f53` [Main] Change sporkDB from smart ptr to ptr. (presstab)
+- #292 `feadab4` Additional checks for double spending of zPiv serials. (presstab)
 
 ### Wallet
 - #271 `5e9a086` [Wallet] Remove unused member wallet in UnlockContext inner class (Jon Spock)
@@ -104,6 +105,7 @@ git merge commit are mentioned.
 - #270 `bd2328e` [Qt] Make lock icon clickable to toggle wallet lock state (Fuzzbawls)
 - #273 `f31136e` [Qt] Fix UI tab order and shortcuts (Mrs-X)
 - #287 `74a1c3c` [Qt] Don't allow the Esc key to close the privacy tab (Fuzzbawls)
+- #291 `cb314e6` [Qt] zPiv control quantity/amount fixes (rejectedpromise)
 
 ### Miscellaneous
 - #266 `2d97b54` [Scripts] Fix location for aarch64 outputs in gitian-build.sh (Fuzzbawls)
@@ -120,6 +122,7 @@ Thanks to everyone who directly contributed to this release:
 - Mrs-X
 - furszy
 - presstab
+- rejectedpromise
 - Warrows
 
 As well as everyone that helped translating on [Transifex](https://www.transifex.com/projects/p/pivx-project-translations/).
