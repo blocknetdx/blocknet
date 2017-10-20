@@ -4033,6 +4033,15 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
                     vBlockSerials.emplace_back(spend.getCoinSerialNumber());
                 }
             }
+
+            if (!fVerifyingBlocks) {
+                //Check that this transaction is not already in the blockchain
+                uint256 hashFromChain;
+                CTransaction txTest;
+                GetTransaction(tx.GetHash(), txTest, hashFromChain, true);
+                if(hashFromChain != 0 && mapBlockIndex.count(hashFromChain))
+                    return state.DoS(100, error("CheckTransaction(): transaction already exists in blockchain!"));
+            }
         }
     }
 
