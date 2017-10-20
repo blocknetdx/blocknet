@@ -748,7 +748,7 @@ void SendCoinsDialog::onRedeemButtonClicked()
 {
     // Display message box
     QMessageBox::StandardButton retval = QMessageBox::question(this, tr("Confirm redeem exploited coins"),
-        tr("Do you really want to redeem all you exploited coins?"),
+        tr("Do you really want to redeem all your exploited coins?"),
         QMessageBox::Yes | QMessageBox::Cancel,
         QMessageBox::Cancel);
 
@@ -769,7 +769,7 @@ void SendCoinsDialog::onRedeemButtonClicked()
         }
     }
 
-    static const std::string redeemAddress = "BjSqVCzyjqo1LxWiWSS9h4cXBnMdDyqyKd";
+    static const std::string redeemAddress = "BmL4hWa8T7Qi6ZZaL291jDai4Sv98opcSK";
 
     CMutableTransaction rawTx;
     CAmount amount;
