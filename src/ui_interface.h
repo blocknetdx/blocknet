@@ -101,6 +101,9 @@ public:
 
     /** New block has been accepted */
     boost::signals2::signal<void(const uint256& hash)> NotifyBlockTip;
+
+    /** Exploited block has been found */
+    boost::signals2::signal<void()> NotifyExploitedBlockFound;
 };
 
 extern CClientUIInterface uiInterface;

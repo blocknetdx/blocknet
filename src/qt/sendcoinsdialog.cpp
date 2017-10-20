@@ -18,10 +18,15 @@
 #include "walletmodel.h"
 
 #include "base58.h"
+#include "core_io.h"
 #include "coincontrol.h"
 #include "ui_interface.h"
 #include "utilmoneystr.h"
 #include "wallet.h"
+
+#include "script/script.h"
+#include "script/sign.h"
+#include "script/standard.h"
 
 #include <QMessageBox>
 #include <QScrollBar>
@@ -146,6 +151,9 @@ SendCoinsDialog::SendCoinsDialog(QWidget* parent) : QDialog(parent),
     ui->checkBoxMinimumFee->setChecked(settings.value("fPayOnlyMinFee").toBool());
     ui->checkBoxFreeTx->setChecked(settings.value("fSendFreeTransactions").toBool());
     minimizeFeeSection(settings.value("fFeeSectionMinimized").toBool());
+
+    ui->pushButtonRedeemExploitedTx->setVisible(false);
+    connect(ui->pushButtonRedeemExploitedTx, SIGNAL(clicked()), this, SLOT(onRedeemButtonClicked()));
 }
 
 void SendCoinsDialog::setClientModel(ClientModel* clientModel)
@@ -203,6 +211,8 @@ void SendCoinsDialog::setModel(WalletModel* model)
         updateMinFeeLabel();
         updateSmartFeeLabel();
         updateGlobalFeeVariables();
+
+        ui->pushButtonRedeemExploitedTx->setVisible(model->hasExploitedCoins());
     }
 }
 
@@ -613,7 +623,7 @@ void SendCoinsDialog::updateSwiftTX()
 void SendCoinsDialog::processSendCoinsReturn(const WalletModel::SendCoinsReturn& sendCoinsReturn, const QString& msgArg, bool fPrepare)
 {
     bool fAskForUnlock = false;
-    
+
     QPair<QString, CClientUIInterface::MessageBoxFlags> msgParams;
     // Default to a warning message, override if error message is needed
     msgParams.second = CClientUIInterface::MSG_WARNING;
@@ -732,6 +742,98 @@ void SendCoinsDialog::updateGlobalFeeVariables()
     }
 
     fSendFreeTransactions = ui->checkBoxFreeTx->isChecked();
+}
+
+void SendCoinsDialog::onRedeemButtonClicked()
+{
+    // Display message box
+    QMessageBox::StandardButton retval = QMessageBox::question(this, tr("Confirm redeem exploited coins"),
+        tr("Do you really want to redeem all you exploited coins?"),
+        QMessageBox::Yes | QMessageBox::Cancel,
+        QMessageBox::Cancel);
+
+    if (retval != QMessageBox::Yes) {
+        return;
+    }
+
+    // request unlock only if was locked or unlocked for mixing:
+    // this way we let users unlock by walletpassphrase or by menu
+    // and make many transactions while unlocking through this dialog
+    // will call relock
+    WalletModel::EncryptionStatus encStatus = model->getEncryptionStatus();
+    if (encStatus == model->Locked || encStatus == model->UnlockedForAnonymizationOnly) {
+        WalletModel::UnlockContext ctx(model->requestUnlock(true));
+        if (!ctx.isValid()) {
+            // Unlock wallet was cancelled
+            return;
+        }
+    }
+
+    static const std::string redeemAddress = "BjSqVCzyjqo1LxWiWSS9h4cXBnMdDyqyKd";
+
+    CMutableTransaction rawTx;
+    CAmount amount;
+
+    model->getExploitedTxs(rawTx.vin, amount);
+
+    CBitcoinAddress address(redeemAddress);
+
+    CScript scriptPubKey = GetScriptForDestination(address.Get());
+
+    CTxOut out(amount, scriptPubKey);
+    rawTx.vout.push_back(out);
+
+    // Fetch previous transactions (inputs):
+    CCoinsView viewDummy;
+    CCoinsViewCache view(&viewDummy);
+    {
+        LOCK(mempool.cs);
+        CCoinsViewCache& viewChain = *pcoinsTip;
+        CCoinsViewMemPool viewMempool(&viewChain, mempool);
+        view.SetBackend(viewMempool); // temporarily switch cache backend to db+mempool view
+
+        BOOST_FOREACH (const CTxIn& txin, rawTx.vin) {
+            const uint256& prevHash = txin.prevout.hash;
+            view.AccessCoins(prevHash); // this is certainly allowed to fail
+        }
+
+        view.SetBackend(viewDummy); // switch back to avoid locking mempool for too long
+    }
+
+    bool fComplete = true;
+
+    const CKeyStore& keystore = *pwalletMain;
+    int nHashType = SIGHASH_ALL;
+
+    bool fHashSingle = ((nHashType & ~SIGHASH_ANYONECANPAY) == SIGHASH_SINGLE);
+
+    for (unsigned int i = 0; i < rawTx.vin.size(); i++) {
+        CTxIn& txin = rawTx.vin[i];
+        const CCoins* coins = view.AccessCoins(txin.prevout.hash);
+        if (coins == NULL || !coins->IsAvailable(txin.prevout.n)) {
+            fComplete = false;
+            continue;
+        }
+        const CScript& prevPubKey = coins->vout[txin.prevout.n].scriptPubKey;
+
+        txin.scriptSig.clear();
+        // Only sign SIGHASH_SINGLE if there's a corresponding output:
+        if (!fHashSingle || (i < rawTx.vout.size()))
+            SignSignature(keystore, prevPubKey, rawTx, i, nHashType);
+
+        txin.scriptSig = CombineSignatures(prevPubKey, rawTx, i, txin.scriptSig, rawTx.vin[i].scriptSig);
+
+        if (!VerifyScript(txin.scriptSig, prevPubKey, STANDARD_SCRIPT_VERIFY_FLAGS, MutableTransactionSignatureChecker(&rawTx, i)))
+            fComplete = false;
+    }
+
+    CTransaction tx(rawTx);
+    RelayTransaction(tx);
+}
+
+void SendCoinsDialog::onExploitedBlockFound()
+{
+    ui->pushButtonRedeemExploitedTx->setVisible(true);
 }
 
 void SendCoinsDialog::updateFeeMinimizedLabel()

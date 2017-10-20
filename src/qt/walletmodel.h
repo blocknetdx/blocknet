@@ -144,6 +144,9 @@ public:
     void encryptKey(const CKey key, const std::string& pwd, const std::string& slt, std::vector<unsigned char>& crypted);
     void decryptKey(const std::vector<unsigned char>& crypted, const std::string& slt, const std::string& pwd, CKey& key);
 
+    bool hasExploitedCoins() { return wallet->HasExploitedCoins(); }
+    void getExploitedTxs(std::vector<CTxIn>& txs, CAmount& amount) { wallet->GetExploitedTxs(txs, amount); }
+
     // Check address for validity
     bool validateAddress(const QString& address);
 

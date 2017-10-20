@@ -94,7 +94,7 @@
          </layout>
         </item>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayoutCoinControl2" stretch="0,0,0,0">
+         <layout class="QHBoxLayout" name="horizontalLayoutCoinControl2" stretch="0,0,0,0,0">
           <property name="spacing">
            <number>8</number>
           </property>
@@ -140,6 +140,13 @@
             </property>
             <property name="margin">
              <number>5</number>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButtonRedeemExploitedTx">
+            <property name="text">
+             <string>Redeem exploited transactions</string>
             </property>
            </widget>
           </item>
@@ -651,7 +658,7 @@
         <x>0</x>
         <y>0</y>
         <width>830</width>
-        <height>95</height>
+        <height>144</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,1">
@@ -1466,7 +1473,7 @@
  </resources>
  <connections/>
  <buttongroups>
-  <buttongroup name="groupCustomFee"/>
   <buttongroup name="groupFee"/>
+  <buttongroup name="groupCustomFee"/>
  </buttongroups>
 </ui>

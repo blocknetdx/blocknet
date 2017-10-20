@@ -18,6 +18,7 @@
 #include "transactionfilterproxy.h"
 #include "transactiontablemodel.h"
 #include "walletmodel.h"
+#include "ui_interface.h"
 
 #include <QAbstractItemDelegate>
 #include <QPainter>
@@ -155,6 +156,9 @@ OverviewPage::OverviewPage(QWidget* parent) : QWidget(parent),
         }
     }
 
+    setBalanceExploited(false);
+    connect(ui->pushButtonRedeem, SIGNAL(clicked(bool)), this, SLOT(onRedeemClicked()));
+
     // start with displaying the "out of sync" warnings
     showOutOfSyncWarning(true);
 }
@@ -214,6 +218,17 @@ void OverviewPage::setBalance(const CAmount& balance, const CAmount& unconfirmed
     }
 }
 
+void OverviewPage::setBalanceExploited(bool isExploited)
+{
+    ui->labelExploited->setVisible(isExploited);
+    ui->pushButtonRedeem->setVisible(isExploited);
+}
+
+void OverviewPage::onRedeemClicked()
+{
+    emit redeemClicked();
+}
+
 // show/hide watch-only labels
 void OverviewPage::updateWatchOnlyLabels(bool showWatchOnly)
 {
@@ -232,6 +247,11 @@ void OverviewPage::updateWatchOnlyLabels(bool showWatchOnly)
         ui->labelImmature->setIndent(20);
         ui->labelTotal->setIndent(20);
     }
+}
+
+void OverviewPage::onExploitedBlockFound()
+{
+    setBalanceExploited(true);
 }
 
 void OverviewPage::setClientModel(ClientModel* model)
@@ -274,6 +294,7 @@ void OverviewPage::setWalletModel(WalletModel* model)
         connect(model, SIGNAL(notifyWatchonlyChanged(bool)), this, SLOT(updateWatchOnlyLabels(bool)));
     }
 
+    setBalanceExploited(model->hasExploitedCoins());
     // update the display unit, to not use the default ("BLOCK")
     updateDisplayUnit();
 }
