@@ -1,4 +1,4 @@
-PIVX Core version 3.0.2 is now available from:
+PIVX Core version 3.0.3 is now available from:
 
   <https://github.com/pivx-project/pivx/releases>
 
@@ -12,7 +12,7 @@ Please report bugs using the issue tracker at github:
 Recommended Update
 ==============
 
-PIVX Core v3.0.2 is a recommended, semi-mandatory update for all users. This release contains transaction creation bug fixes for zPIV spends, automint calculation adjustments, and other various updates/fixes.
+PIVX Core v3.0.3 is a recommended, semi-mandatory update for all users. This release contains transaction creation bug fixes for zPIV spends, automint calculation adjustments, and other various updates/fixes.
 
 zPIV spending requires this update.
 
@@ -77,7 +77,7 @@ Bip38 Compatibility With 3rd Party Tools
 ---------------------
 The in-wallet bip38 encryption method was leaving the final 4 bytes of the encrypted key blank. This caused an incompatibility issue with 3rd party tools like the paper wallet generators that could decrypt bip38 encrypted keys. Cross-tool compatibility has now been restored.
 
-3.0.2 Change log
+3.0.3 Change log
 =================
 
 Detailed release notes follow. This overview includes changes that affect
@@ -91,6 +91,8 @@ git merge commit are mentioned.
 ### P2P Protocol and Network Code
 - #286 `85c0f53` [Main] Change sporkDB from smart ptr to ptr. (presstab)
 - #292 `feadab4` Additional checks for double spending of zPiv serials. (presstab)
+- #294 `3518af7` Add additional checks for txid for zpiv spend. (presstab)
+- #294 '54bac87' New checkpoint block 867733. (presstab)
 
 ### Wallet
 - #271 `5e9a086` [Wallet] Remove unused member wallet in UnlockContext inner class (Jon Spock)
