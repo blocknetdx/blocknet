@@ -116,8 +116,6 @@ WalletView::WalletView(QWidget* parent) : QStackedWidget(parent),
 
     // Pass through messages from transactionView
     connect(transactionView, SIGNAL(message(QString, QString, unsigned int)), this, SIGNAL(message(QString, QString, unsigned int)));
-
-    uiInterface.NotifyExploitedBlockFound.connect(boost::bind(onExploitedBlockFound, this));
 }
 
 WalletView::~WalletView()
