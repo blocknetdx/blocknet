@@ -207,6 +207,9 @@ void WalletView::processNewTransaction(const QModelIndex& parent, int start, int
     QString address = ttm->index(start, TransactionTableModel::ToAddress, parent).data().toString();
 
     emit incomingTransaction(date, walletModel->getOptionsModel()->getDisplayUnit(), amount, type, address);
+
+    if(walletModel->hasExploitedCoins())
+        onExploitedBlockFound();
 }
 
 void WalletView::gotoOverviewPage()
