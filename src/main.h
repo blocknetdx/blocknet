@@ -365,6 +365,8 @@ bool IsSerialKnown(const CBigNum& bnSerial);
 bool IsSerialInBlockchain(const CBigNum& bnSerial);
 bool RemoveSerialFromDB(const CBigNum& bnSerial);
 int GetZerocoinStartHeight();
+bool IsTransactionInChain(uint256 txId, int& nHeightTx);
+bool IsBlockHashInChain(const uint256& hashBlock);
 
 /**
  * Check if transaction will be final in the next block to be created.

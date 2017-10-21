@@ -1042,10 +1042,8 @@ void FindMints(vector<CZerocoinMint> vMintsToFind, vector<CZerocoinMint>& vMints
             continue;
         }
 
-        bool inChain = mapBlockIndex.count(hashBlockSpend) && chainActive.Contains(mapBlockIndex[hashBlockSpend]);
-
         //The mint has been incorrectly labelled as spent in zerocoinDB and needs to be undone
-        if (fSpent && !inChain) {
+        if (fSpent && !IsSerialInBlockchain(mint.GetSerialNumber())) {
             LogPrintf("%s : cannot find block %s. Erasing coinspend from zerocoinDB.\n", __func__, hashBlockSpend.GetHex());
             zerocoinDB->EraseCoinSpend(mint.GetSerialNumber());
             mint.SetUsed(false);
@@ -1635,6 +1633,22 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
         CAmount nValueIn = 0;
         if(tx.IsZerocoinSpend()){
             nValueIn = tx.GetZerocoinSpent();
+
+            //Check that txid is not already in the chain
+            int nHeightTx = 0;
+            if (IsTransactionInChain(tx.GetHash(), nHeightTx))
+                return state.Invalid(error("AcceptToMemoryPool : zPiv spend tx %s already in block %d", tx.GetHash().GetHex(), nHeightTx),
+                                     REJECT_DUPLICATE, "bad-txns-inputs-spent");
+
+            //Check for double spending of serial #'s
+            for (const CTxIn& txIn : tx.vin) {
+                if (!txIn.scriptSig.IsZerocoinSpend())
+                    continue;
+                CoinSpend spend = TxInToZerocoinSpend(txIn);
+                if (IsSerialInBlockchain(spend.getCoinSerialNumber()))
+                    return state.Invalid(error("%s : zPiv spend with serial %s is already in the blockchain\n",
+                                                __func__, spend.getCoinSerialNumber().GetHex()));
+            }
         } else {
             LOCK(pool.cs);
             CCoinsViewMemPool viewMemPool(pcoinsTip, pool);
@@ -2933,7 +2947,25 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
             return state.DoS(100, error("ConnectBlock() : too many sigops"),
                 REJECT_INVALID, "bad-blk-sigops");
 
-        if (!tx.IsCoinBase() && !tx.IsZerocoinSpend()) {
+        if (tx.IsZerocoinSpend()) {
+            int nHeightTx = 0;
+            if (IsTransactionInChain(tx.GetHash(), nHeightTx)) {
+                //when verifying blocks on init, the blocks are scanned without being disconnected - prevent that from causing an error
+                if (!fVerifyingBlocks || (fVerifyingBlocks && pindex->nHeight > nHeightTx))
+                    return state.DoS(100, error("%s : txid %s already exists in block %d , trying to include it again in block %d", __func__,
+                                                tx.GetHash().GetHex(), nHeightTx, pindex->nHeight),
+                                     REJECT_INVALID, "bad-txns-inputs-missingorspent");
+            }
+
+            //Check for double spending of serial #'s
+            for (const CTxIn& txIn : tx.vin) {
+                if (!txIn.scriptSig.IsZerocoinSpend())
+                    continue;
+                CoinSpend spend = TxInToZerocoinSpend(txIn);
+                if (IsSerialInBlockchain(spend.getCoinSerialNumber()))
+                    return state.DoS(100, error("%s : zPiv with serial %s is already in the blockchain\n", __func__, spend.getCoinSerialNumber().GetHex()));
+            }
+        } else if (!tx.IsCoinBase()) {
             if (!view.HaveInputs(tx))
                 return state.DoS(100, error("ConnectBlock() : inputs missing/spent"),
                     REJECT_INVALID, "bad-txns-inputs-missingorspent");
@@ -4025,8 +4057,6 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
         if (!CheckTransaction(tx, fZerocoinActive, state))
             return error("CheckBlock() : CheckTransaction failed");
 
-
-
         // double check that there are no double spent zPiv spends in this block
         if (tx.IsZerocoinSpend()) {
             for (const CTxIn txIn : tx.vin) {
@@ -4137,6 +4167,26 @@ bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationState& sta
     return true;
 }
 
+bool IsBlockHashInChain(const uint256& hashBlock)
+{
+    if (hashBlock == 0 || !mapBlockIndex.count(hashBlock))
+        return false;
+
+    return chainActive.Contains(mapBlockIndex[hashBlock]);
+}
+
+bool IsTransactionInChain(uint256 txId, int& nHeightTx)
+{
+    uint256 hashBlock;
+    CTransaction tx;
+    GetTransaction(txId, tx, hashBlock, true);
+    if (!IsBlockHashInChain(hashBlock))
+        return false;
+
+    nHeightTx = mapBlockIndex.at(hashBlock)->nHeight;
+    return true;
+}
+
 bool ContextualCheckBlock(const CBlock& block, CValidationState& state, CBlockIndex* const pindexPrev)
 {
     const int nHeight = pindexPrev == NULL ? 0 : pindexPrev->nHeight + 1;
@@ -4163,11 +4213,13 @@ bool ContextualCheckBlock(const CBlock& block, CValidationState& state, CBlockIn
             if (fVerifyingBlocks)
                 continue;
 
-            //Check that this transaction is not already in the blockchain
-            uint256 hashFromChain;
-            CTransaction txTest;
-            GetTransaction(tx.GetHash(), txTest, hashFromChain, true);
-            if (hashFromChain != 0 && mapBlockIndex.count(hashFromChain) && chainActive.Contains(mapBlockIndex[hashFromChain]) && pindexPrev->nHeight + 1 > mapBlockIndex[hashFromChain]->nHeight)
+            int nHeightTx = 0;
+            if (!IsTransactionInChain(tx.GetHash(), nHeightTx))
+                continue;
+
+            // if this is a reorg that will be replacing the bock that contains the tx, then allow this transaction to
+            // continue on. Depend on ConnectBlock() to do final filtering.
+            if (pindexPrev->nHeight + 1 > nHeightTx)
                 return state.DoS(100, error("CheckTransaction(): transaction already exists in blockchain!"));
         }
     }
@@ -4390,7 +4442,7 @@ bool ProcessNewBlock(CValidationState& state, CNode* pfrom, CBlock* pblock, CDis
 
         MarkBlockAsReceived (pblock->GetHash ());
         if (!checked) {
-            return error ("%s : CheckBlock FAILED", __func__);
+            return error ("%s : CheckBlock FAILED for block %s", __func__, pblock->GetHash().GetHex());
         }
 
         // Store to disk

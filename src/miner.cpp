@@ -308,6 +308,10 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
 
             // double check that there are no double spent zPiv spends in this block
             if (tx.IsZerocoinSpend()) {
+                int nHeightTx = 0;
+                if (IsTransactionInChain(tx.GetHash(), nHeightTx))
+                    continue;
+
                 for (const CTxIn txIn : tx.vin) {
                     if (txIn.scriptSig.IsZerocoinSpend()) {
                         libzerocoin::CoinSpend spend = TxInToZerocoinSpend(txIn);
