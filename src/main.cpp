@@ -1043,7 +1043,8 @@ void FindMints(vector<CZerocoinMint> vMintsToFind, vector<CZerocoinMint>& vMints
         }
 
         //The mint has been incorrectly labelled as spent in zerocoinDB and needs to be undone
-        if (fSpent && !IsSerialInBlockchain(mint.GetSerialNumber())) {
+        int nHeightTx = 0;
+        if (fSpent && !IsSerialInBlockchain(mint.GetSerialNumber(), nHeightTx)) {
             LogPrintf("%s : cannot find block %s. Erasing coinspend from zerocoinDB.\n", __func__, hashBlockSpend.GetHex());
             zerocoinDB->EraseCoinSpend(mint.GetSerialNumber());
             mint.SetUsed(false);
@@ -1121,7 +1122,7 @@ bool IsSerialKnown(const CBigNum& bnSerial)
     return zerocoinDB->ReadCoinSpend(bnSerial, txHash);
 }
 
-bool IsSerialInBlockchain(const CBigNum& bnSerial)
+bool IsSerialInBlockchain(const CBigNum& bnSerial, int& nHeightTx)
 {
     uint256 txHash = 0;
     // if not in zerocoinDB then its not in the blockchain
@@ -1133,7 +1134,11 @@ bool IsSerialInBlockchain(const CBigNum& bnSerial)
     if (!GetTransaction(txHash, tx, hashBlock, true))
         return false;
 
-    return static_cast<bool>(mapBlockIndex.count(hashBlock) && chainActive.Contains(mapBlockIndex[hashBlock]));
+    bool inChain = mapBlockIndex.count(hashBlock) && chainActive.Contains(mapBlockIndex[hashBlock]);
+    if (inChain)
+        nHeightTx = mapBlockIndex.at(hashBlock)->nHeight;
+
+    return inChain;
 }
 
 bool RemoveSerialFromDB(const CBigNum& bnSerial)
@@ -1386,9 +1391,10 @@ bool CheckZerocoinSpend(const CTransaction tx, bool fVerifySignature, CValidatio
         if (!IsZerocoinSpendUnknown(newSpend, tx.GetHash(), state)) {
             //If the serial is not in the blockchain yet, but for some reason the database has knowledge,
             //perhaps from an earlier spend attempt, then only reject if this serial made it into the chain
-            if (IsSerialInBlockchain(newSpend.getCoinSerialNumber()))
-                return state.DoS(100, error("Zerocoinspend with serial %s is already in the blockchain\n",
-                                            newSpend.getCoinSerialNumber().GetHex()));
+            int nHeightTx = 0;
+            if (IsSerialInBlockchain(newSpend.getCoinSerialNumber(), nHeightTx))
+                return state.DoS(100, error("%s : zPiv spend with serial %s is already in the block %d\n",
+                                            __func__, newSpend.getCoinSerialNumber().GetHex(), nHeightTx));
         }
 
         //make sure that there is no over redemption of coins
@@ -1645,9 +1651,10 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
                 if (!txIn.scriptSig.IsZerocoinSpend())
                     continue;
                 CoinSpend spend = TxInToZerocoinSpend(txIn);
-                if (IsSerialInBlockchain(spend.getCoinSerialNumber()))
-                    return state.Invalid(error("%s : zPiv spend with serial %s is already in the blockchain\n",
-                                                __func__, spend.getCoinSerialNumber().GetHex()));
+                int nHeightTx = 0;
+                if (IsSerialInBlockchain(spend.getCoinSerialNumber(), nHeightTx))
+                    return state.Invalid(error("%s : zPiv spend with serial %s is already in block %d\n",
+                                                __func__, spend.getCoinSerialNumber().GetHex(), nHeightTx));
             }
         } else {
             LOCK(pool.cs);
@@ -2962,8 +2969,11 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                 if (!txIn.scriptSig.IsZerocoinSpend())
                     continue;
                 CoinSpend spend = TxInToZerocoinSpend(txIn);
-                if (IsSerialInBlockchain(spend.getCoinSerialNumber()))
-                    return state.DoS(100, error("%s : zPiv with serial %s is already in the blockchain\n", __func__, spend.getCoinSerialNumber().GetHex()));
+                int nHeightTx = 0;
+                if (IsSerialInBlockchain(spend.getCoinSerialNumber(), nHeightTx)) {
+                    if (!fVerifyingBlocks || (fVerifyingBlocks && pindex->nHeight > nHeightTx))
+                        return state.DoS(100, error("%s : zPiv with serial %s is already in the block %d\n", __func__, spend.getCoinSerialNumber().GetHex(), nHeightTx));
+                }
             }
         } else if (!tx.IsCoinBase()) {
             if (!view.HaveInputs(tx))
