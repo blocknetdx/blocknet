@@ -1042,8 +1042,10 @@ void FindMints(vector<CZerocoinMint> vMintsToFind, vector<CZerocoinMint>& vMints
             continue;
         }
 
+        bool inChain = mapBlockIndex.count(hashBlockSpend) && chainActive.Contains(mapBlockIndex[hashBlockSpend]);
+
         //The mint has been incorrectly labelled as spent in zerocoinDB and needs to be undone
-        if (fSpent && !mapBlockIndex.count(hashBlockSpend)) {
+        if (fSpent && !inChain) {
             LogPrintf("%s : cannot find block %s. Erasing coinspend from zerocoinDB.\n", __func__, hashBlockSpend.GetHex());
             zerocoinDB->EraseCoinSpend(mint.GetSerialNumber());
             mint.SetUsed(false);
@@ -1133,7 +1135,7 @@ bool IsSerialInBlockchain(const CBigNum& bnSerial)
     if (!GetTransaction(txHash, tx, hashBlock, true))
         return false;
 
-    return static_cast<bool>(mapBlockIndex.count(hashBlock));
+    return static_cast<bool>(mapBlockIndex.count(hashBlock) && chainActive.Contains(mapBlockIndex[hashBlock]));
 }
 
 bool RemoveSerialFromDB(const CBigNum& bnSerial)
@@ -4023,6 +4025,8 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
         if (!CheckTransaction(tx, fZerocoinActive, state))
             return error("CheckBlock() : CheckTransaction failed");
 
+
+
         // double check that there are no double spent zPiv spends in this block
         if (tx.IsZerocoinSpend()) {
             for (const CTxIn txIn : tx.vin) {
@@ -4032,15 +4036,6 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
                         return state.DoS(100, error("Double spending of zPiv serial in block"));
                     vBlockSerials.emplace_back(spend.getCoinSerialNumber());
                 }
-            }
-
-            if (!fVerifyingBlocks) {
-                //Check that this transaction is not already in the blockchain
-                uint256 hashFromChain;
-                CTransaction txTest;
-                GetTransaction(tx.GetHash(), txTest, hashFromChain, true);
-                if(hashFromChain != 0 && mapBlockIndex.count(hashFromChain))
-                    return state.DoS(100, error("CheckTransaction(): transaction already exists in blockchain!"));
             }
         }
     }
@@ -4105,7 +4100,8 @@ bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationState& sta
     int nHeight = pindexPrev->nHeight + 1;
 
     //If this is a reorg, check that it is not too deep
-    if (chainActive.Height() - nHeight >= Params().MaxReorganizationDepth())
+    int nMaxReorgDepth = GetArg("-maxreorg", Params().MaxReorganizationDepth());
+    if (chainActive.Height() - nHeight >= nMaxReorgDepth)
         return state.DoS(1, error("%s: forked chain older than max reorganization depth (height %d)", __func__, nHeight));
 
     // Check timestamp against prev
@@ -4159,6 +4155,20 @@ bool ContextualCheckBlock(const CBlock& block, CValidationState& state, CBlockIn
         if (block.vtx[0].vin[0].scriptSig.size() < expect.size() ||
             !std::equal(expect.begin(), expect.end(), block.vtx[0].vin[0].scriptSig.begin())) {
             return state.DoS(100, error("%s : block height mismatch in coinbase", __func__), REJECT_INVALID, "bad-cb-height");
+        }
+    }
+
+    for (CTransaction tx : block.vtx) {
+        if (tx.IsZerocoinSpend()) {
+            if (fVerifyingBlocks)
+                continue;
+
+            //Check that this transaction is not already in the blockchain
+            uint256 hashFromChain;
+            CTransaction txTest;
+            GetTransaction(tx.GetHash(), txTest, hashFromChain, true);
+            if (hashFromChain != 0 && mapBlockIndex.count(hashFromChain) && chainActive.Contains(mapBlockIndex[hashFromChain]) && pindexPrev->nHeight + 1 > mapBlockIndex[hashFromChain]->nHeight)
+                return state.DoS(100, error("CheckTransaction(): transaction already exists in blockchain!"));
         }
     }
 
