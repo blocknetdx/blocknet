@@ -1387,16 +1387,6 @@ bool CheckZerocoinSpend(const CTransaction tx, bool fVerifySignature, CValidatio
             return state.DoS(100, error("Zerocoinspend serial is used twice in the same tx"));
         serials.insert(newSpend.getCoinSerialNumber());
 
-        //See if the database has knowledge of this serial
-        if (!IsZerocoinSpendUnknown(newSpend, tx.GetHash(), state)) {
-            //If the serial is not in the blockchain yet, but for some reason the database has knowledge,
-            //perhaps from an earlier spend attempt, then only reject if this serial made it into the chain
-            int nHeightTx = 0;
-            if (IsSerialInBlockchain(newSpend.getCoinSerialNumber(), nHeightTx))
-                return state.DoS(100, error("%s : zPiv spend with serial %s is already in the block %d\n",
-                                            __func__, newSpend.getCoinSerialNumber().GetHex(), nHeightTx));
-        }
-
         //make sure that there is no over redemption of coins
         nTotalRedeemed += ZerocoinDenominationToAmount(newSpend.getDenomination());
         fValidated = true;
@@ -2970,10 +2960,19 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                     continue;
                 CoinSpend spend = TxInToZerocoinSpend(txIn);
                 int nHeightTx = 0;
-                if (IsSerialInBlockchain(spend.getCoinSerialNumber(), nHeightTx)) {
-                    if (!fVerifyingBlocks || (fVerifyingBlocks && pindex->nHeight > nHeightTx))
-                        return state.DoS(100, error("%s : zPiv with serial %s is already in the block %d\n", __func__, spend.getCoinSerialNumber().GetHex(), nHeightTx));
+
+                uint256 hashTxFromDB;
+                if (zerocoinDB->ReadCoinSpend(spend.getCoinSerialNumber(), hashTxFromDB)) {
+                    if(IsSerialInBlockchain(spend.getCoinSerialNumber(), nHeightTx)) {
+                        if(!fVerifyingBlocks || (fVerifyingBlocks && pindex->nHeight > nHeightTx))
+                            return state.DoS(100, error("%s : zPiv with serial %s is already in the block %d\n",
+                                                        __func__, spend.getCoinSerialNumber().GetHex(), nHeightTx));
+                    }
                 }
+
+                //record spend to database
+                if (!zerocoinDB->WriteCoinSpend(spend.getCoinSerialNumber(), tx.GetHash()))
+                    return error("%s : failed to record coin serial to database");
             }
         } else if (!tx.IsCoinBase()) {
             if (!view.HaveInputs(tx))
@@ -4215,22 +4214,6 @@ bool ContextualCheckBlock(const CBlock& block, CValidationState& state, CBlockIn
         if (block.vtx[0].vin[0].scriptSig.size() < expect.size() ||
             !std::equal(expect.begin(), expect.end(), block.vtx[0].vin[0].scriptSig.begin())) {
             return state.DoS(100, error("%s : block height mismatch in coinbase", __func__), REJECT_INVALID, "bad-cb-height");
-        }
-    }
-
-    for (CTransaction tx : block.vtx) {
-        if (tx.IsZerocoinSpend()) {
-            if (fVerifyingBlocks)
-                continue;
-
-            int nHeightTx = 0;
-            if (!IsTransactionInChain(tx.GetHash(), nHeightTx))
-                continue;
-
-            // if this is a reorg that will be replacing the bock that contains the tx, then allow this transaction to
-            // continue on. Depend on ConnectBlock() to do final filtering.
-            if (pindexPrev->nHeight + 1 > nHeightTx)
-                return state.DoS(100, error("CheckTransaction(): transaction already exists in blockchain!"));
         }
     }
 
