@@ -86,7 +86,6 @@ BOOST_AUTO_TEST_CASE(zerocoin_spend_test241)
     // Also setup Map array corresponding to DenomAmount which is the current set of coins available
 
     for (const auto& denom : zerocoinDenomList) {
-        bool set = false;
         for (int i = 0; i < DenomAmounts[j]; i++) {
             CAmount currentAmount = ZerocoinDenominationToAmount(denom);
             nTotalAmount += currentAmount;
@@ -96,7 +95,6 @@ BOOST_AUTO_TEST_CASE(zerocoin_spend_test241)
             bool isUsed = false;
             CZerocoinMint mint(denom, value, rand, serial, isUsed);
             listMints.push_back(mint);
-            set = true;
         }
         mapDenom.insert(std::pair<CoinDenomination, CAmount>(denom, DenomAmounts[j]));
         j++;
@@ -165,7 +163,6 @@ BOOST_AUTO_TEST_CASE(zerocoin_spend_test115)
     // Create a set of Minted coins that fits profile given by DenomAmounts
     // Also setup Map array corresponding to DenomAmount which is the current set of coins available
     for (const auto& denom : zerocoinDenomList) {
-        bool set = false;
         for (int i = 0; i < DenomAmounts[j]; i++) {
             CAmount currentAmount = ZerocoinDenominationToAmount(denom);
             nTotalAmount += currentAmount;
@@ -175,7 +172,6 @@ BOOST_AUTO_TEST_CASE(zerocoin_spend_test115)
             bool isUsed = false;
             CZerocoinMint mint(denom, value, rand, serial, isUsed);
             listMints.push_back(mint);
-            set = true;
         }
         mapDenom.insert(std::pair<CoinDenomination, CAmount>(denom, DenomAmounts[j]));
         j++;
@@ -244,7 +240,6 @@ BOOST_AUTO_TEST_CASE(zerocoin_spend_test_from_245)
     // Create a set of Minted coins that fits profile given by DenomAmounts
     // Also setup Map array corresponding to DenomAmount which is the current set of coins available
     for (const auto& denom : zerocoinDenomList) {
-        bool set = false;
         for (int i = 0; i < DenomAmounts[j]; i++) {
             CAmount currentAmount = ZerocoinDenominationToAmount(denom);
             nTotalAmount += currentAmount;
@@ -254,7 +249,6 @@ BOOST_AUTO_TEST_CASE(zerocoin_spend_test_from_245)
             bool isUsed = false;
             CZerocoinMint mint(denom, value, rand, serial, isUsed);
             listMints.push_back(mint);
-            set = true;
         }
         mapOfDenomsHeld.insert(std::pair<CoinDenomination, CAmount>(denom, DenomAmounts[j]));
         j++;
@@ -340,7 +334,6 @@ BOOST_AUTO_TEST_CASE(zerocoin_spend_test_from_145)
     // Create a set of Minted coins that fits profile given by DenomAmounts
     // Also setup Map array corresponding to DenomAmount which is the current set of coins available
     for (const auto& denom : zerocoinDenomList) {
-        bool set = false;
         for (int i = 0; i < DenomAmounts[j]; i++) {
             CAmount currentAmount = ZerocoinDenominationToAmount(denom);
             nTotalAmount += currentAmount;
@@ -350,7 +343,6 @@ BOOST_AUTO_TEST_CASE(zerocoin_spend_test_from_145)
             bool isUsed = false;
             CZerocoinMint mint(denom, value, rand, serial, isUsed);
             listMints.push_back(mint);
-            set = true;
         }
         mapOfDenomsHeld.insert(std::pair<CoinDenomination, CAmount>(denom, DenomAmounts[j]));
         j++;
@@ -440,7 +432,6 @@ BOOST_AUTO_TEST_CASE(zerocoin_spend_test99)
     // Create a set of Minted coins that fits profile given by DenomAmounts
     // Also setup Map array corresponding to DenomAmount which is the current set of coins available
     for (const auto& denom : zerocoinDenomList) {
-        bool set = false;
         for (int i = 0; i < DenomAmounts[j]; i++) {
             CAmount currentAmount = ZerocoinDenominationToAmount(denom);
             nTotalAmount += currentAmount;
@@ -450,7 +441,6 @@ BOOST_AUTO_TEST_CASE(zerocoin_spend_test99)
             bool isUsed = false;
             CZerocoinMint mint(denom, value, rand, serial, isUsed);
             listMints.push_back(mint);
-            set = true;
         }
         mapOfDenomsHeld.insert(std::pair<CoinDenomination, CAmount>(denom, DenomAmounts[j]));
         j++;
