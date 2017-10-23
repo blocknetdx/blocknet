@@ -68,8 +68,8 @@ using namespace std;
 CWallet* pwalletMain = NULL;
 int nWalletBackups = 10;
 #endif
-bool fFeeEstimatesInitialized = false;
-bool fRestartRequested = false; // true: restart false: shutdown
+volatile bool fFeeEstimatesInitialized = false;
+volatile bool fRestartRequested = false; // true: restart false: shutdown
 
 #if ENABLE_ZMQ
 static CZMQNotificationInterface* pzmqNotificationInterface = NULL;
@@ -1448,6 +1448,9 @@ bool AppInit2(boost::thread_group& threadGroup)
                                 uint256 nCheckpointCalculated = 0;
                                 CAccumulators::getInstance().GetCheckpoint(pindex->nHeight, nCheckpointCalculated);
 
+                                // GetCheckpoint could have terminated due to a shutdown request. Check this here.
+                                if (ShutdownRequested())
+                                    break;
                                 //check that the calculated checkpoint is what is in the index.
                                 if(nCheckpointCalculated != pindex->nAccumulatorCheckpoint) {
                                     LogPrintf("%s : height=%d calculated_checkpoint=%s actual=%s\n", __func__, pindex->nHeight, nCheckpointCalculated.GetHex(), pindex->nAccumulatorCheckpoint.GetHex());
