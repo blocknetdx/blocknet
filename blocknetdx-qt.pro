@@ -75,7 +75,7 @@ contains(USE_UPNP, -) {
         USE_UPNP=1
     }
     DEFINES += USE_UPNP=$$USE_UPNP STATICLIB
-	DEFINES += USE_UPNP=$$USE_UPNP MINIUPNP_STATICLIB
+        DEFINES += USE_UPNP=$$USE_UPNP MINIUPNP_STATICLIB
     INCLUDEPATH += $$MINIUPNPC_INCLUDE_PATH
     LIBS += $$join(MINIUPNPC_LIB_PATH,,-L,) -lminiupnpc
     win32:LIBS += -liphlpapi
@@ -296,7 +296,8 @@ SOURCES += \
     src/xbridge/xbitcointransaction.cpp \
     src/xbridge/rpcxbridge.cpp \
     src/xbridge/xbridgeservicesession.cpp \
-    src/xbridge/xbridgesessionbcc.cpp
+    src/xbridge/xbridgesessionbcc.cpp \
+    src/s3downloader.cpp
 
 #protobuf generated
 SOURCES += \
@@ -451,7 +452,7 @@ HEADERS += \
     src/hash.h \
     src/limitedmap.h \
     src/threadsafety.h \
-    src/qt/macnotificationhandler.h \    
+    src/qt/macnotificationhandler.h \
     src/tinyformat.h \
     src/activeservicenode.h \
     src/amount.h \
@@ -582,7 +583,8 @@ HEADERS += \
     src/qt/xbridgeui/xbridgetransactionsview.h \
     src/xbridge/xbitcointransaction.h \
     src/xbridge/xbridgeservicesession.h \
-    src/xbridge/xbridgesessionbcc.h
+    src/xbridge/xbridgesessionbcc.h \
+    src/s3downloader.h
 
 #ENABLE_ZMQ
 #    src/zmq/zmqabstractnotifier.h \

@@ -31,7 +31,7 @@ using namespace boost::asio;
 
 Value dxGetTransactionList(const Array & params, bool fHelp)
 {
-    if (fHelp || params.size() > 1)
+    if (fHelp || params.size() > 0)
     {
         throw runtime_error("dxGetTransactionList\nList transactions.");
     }
@@ -92,7 +92,7 @@ Value dxGetTransactionList(const Array & params, bool fHelp)
 
 Value dxGetTransactionsHistoryList(const Array & params, bool fHelp)
 {
-    if (fHelp || params.size() > 1)
+    if (fHelp || params.size() > 0)
     {
         throw runtime_error("dxGetTransactionsHistoryList\nHistoric list transactions.");
     }
@@ -130,7 +130,7 @@ Value dxGetTransactionsHistoryList(const Array & params, bool fHelp)
 
 Value dxGetTransactionInfo(const Array & params, bool fHelp)
 {
-    if (fHelp || params.size() > 1)
+    if (fHelp || params.size() != 1)
     {
         throw runtime_error("dxGetTransactionInfo (id)\nTransaction info.");
     }
@@ -227,7 +227,7 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
 //******************************************************************************
 Value dxGetCurrencyList(const Array & params, bool fHelp)
 {
-    if (fHelp || params.size() > 1)
+    if (fHelp || params.size() > 0)
     {
         throw runtime_error("dxGetCurrencyList\nList currencies.");
     }
