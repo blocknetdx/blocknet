@@ -234,7 +234,7 @@ Value dxGetCurrencyList(const Array & params, bool fHelp)
 
     Object obj;
 
-    std::vector<std::string> currencies = XBridgeApp::instance().sessionsCurrencies();
+    std::vector<std::string> currencies = XBridgeApp::instance().availableCurrencies();
     for (std::string currency : currencies)
     {
         obj.push_back(Pair(currency, ""));

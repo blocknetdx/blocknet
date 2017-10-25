@@ -7,7 +7,7 @@
 #include "xbridge/util/xutil.h"
 #include "xbridge/xbridgeexchange.h"
 #include "xbridge/xbridgeapp.h"
-#include "xbridge/xbridgesession.h"
+#include "xbridge/xbridgewalletconnector.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -20,8 +20,8 @@
 #include <QApplication>
 #include <QClipboard>
 
-const QString testFrom("2J3u4r9D+pNS6ZPNMYR1tgl+wVI=");
-const QString testTo("BWU9J85uL4242RnXXhZfRdA8p9s=");
+const QString testFrom("<input from address>");
+const QString testTo("<input to address>");
 // const QString testFromCurrency("XC");
 // const QString testToCurrency("SWIFT");
 const QString testFromAmount("0.0005");
@@ -39,7 +39,7 @@ XBridgeTransactionDialog::XBridgeTransactionDialog(XBridgeTransactionsModel & mo
     setupUI();
 
     XBridgeApp & xapp = XBridgeApp::instance();
-    std::vector<std::string> wallets = xapp.sessionsCurrencies();
+    std::vector<std::string> wallets = xapp.availableCurrencies();
     for (const std::string & s : wallets)
     {
         m_thisWallets << QString::fromStdString(s);
@@ -400,10 +400,12 @@ void XBridgeTransactionDialog::onAddressBookTo()
 
 //******************************************************************************
 //******************************************************************************
-double XBridgeTransactionDialog::accountBalance(const std::string &currency)
+double XBridgeTransactionDialog::accountBalance(const std::string & currency)
 {
-    XBridgeApp & app = XBridgeApp::instance();
-    XBridgeSessionPtr session = app.sessionByCurrency(currency);
-
-    return session->getWalletBalance();
+    XBridgeWalletConnectorPtr conn = XBridgeApp::instance().connectorByCurrency(currency);
+    if (conn)
+    {
+        return conn->getWalletBalance();
+    }
+    return 0;
 }

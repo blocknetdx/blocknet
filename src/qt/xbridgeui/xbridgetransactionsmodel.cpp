@@ -173,7 +173,7 @@ bool XBridgeTransactionsModel::newTransaction(const std::string & from,
                                               const double toAmount)
 {
     XBridgeApp & app = XBridgeApp::instance();
-    XBridgeSessionPtr ptr = app.sessionByCurrency(fromCurrency);
+    XBridgeWalletConnectorPtr ptr = app.connectorByCurrency(fromCurrency);
     if (ptr && ptr->minAmount() > fromAmount)
     {
         return false;

@@ -9,6 +9,7 @@
 #include "xbridgepacket.h"
 #include "uint256.h"
 #include "xbridgetransactiondescr.h"
+#include "xbridgewalletconnector.h"
 
 #include <thread>
 #include <atomic>
@@ -73,15 +74,13 @@ public:
 public:
     bool stop();
 
+    XBridgeWalletConnectorPtr connectorByCurrency(const std::string & currency) const;
+
     XBridgeSessionPtr sessionByCurrency(const std::string & currency) const;
-    std::vector<std::string> sessionsCurrencies() const;
+    std::vector<std::string> availableCurrencies() const;
 
-    // store session
-    void addSession(XBridgeSessionPtr session);
-    // store session addresses in local table
-    void storageStore(XBridgeSessionPtr session, const std::vector<unsigned char> & id);
+    void addConnector(const XBridgeWalletConnectorPtr & conn);
 
-    bool isLocalAddress(const std::vector<unsigned char> & id);
     bool isKnownMessage(const std::vector<unsigned char> & message);
     void addToKnown(const std::vector<unsigned char> & message);
 
@@ -92,9 +91,9 @@ public:
                                const std::string & address);
     void getAddressBook();
 
-    bool checkUtxoItems(const std::vector<rpc::UtxoEntry> & items);
-    bool lockUtxoItems(const std::vector<rpc::UtxoEntry> & items);
-    bool txOutIsLocked(const rpc::UtxoEntry & entry) const;
+    bool checkUtxoItems(const std::vector<wallet::UtxoEntry> & items);
+    bool lockUtxoItems(const std::vector<wallet::UtxoEntry> & items);
+    bool txOutIsLocked(const wallet::UtxoEntry & entry) const;
 
 public:// slots:
     // send messave via xbridge
@@ -102,9 +101,12 @@ public:// slots:
     void onSend(const UcharVector & id, const XBridgePacketPtr & packet);
 
     // call when message from xbridge network received
-    void onMessageReceived(const std::vector<unsigned char> & id, const std::vector<unsigned char> & message);
+    void onMessageReceived(const std::vector<unsigned char> & id,
+                           const std::vector<unsigned char> & message,
+                           CValidationState & state);
     // broadcast message
-    void onBroadcastReceived(const std::vector<unsigned char> & message);
+    void onBroadcastReceived(const std::vector<unsigned char> & message,
+                             CValidationState & state);
 
 private:
     void onSend(const UcharVector & id, const UcharVector & message);
@@ -116,6 +118,14 @@ private:
     boost::thread_group m_threads;
 
     XBridgePtr        m_bridge;
+
+    mutable boost::mutex m_connectorsLock;
+    typedef std::vector<XBridgeWalletConnectorPtr> Connectors;
+    Connectors m_connectors;
+    typedef std::map<std::vector<unsigned char>, XBridgeWalletConnectorPtr> ConnectorsAddrMap;
+    ConnectorsAddrMap m_connAddrMap;
+    typedef std::map<std::string, XBridgeWalletConnectorPtr> ConnectorsCurrencyMap;
+    ConnectorsCurrencyMap m_connCurrMap;
 
     mutable boost::mutex m_sessionsLock;
     typedef std::map<std::vector<unsigned char>, XBridgeSessionPtr> SessionAddrMap;
@@ -151,7 +161,7 @@ public:
     static std::map<uint256, std::pair<std::string, XBridgePacketPtr> > m_pendingPackets;
 
     static boost::mutex                                  m_utxoLocker;
-    static std::set<rpc::UtxoEntry>                      m_utxoItems;
+    static std::set<wallet::UtxoEntry>                   m_utxoItems;
 };
 
 #endif // XBRIDGEAPP_H

@@ -296,7 +296,9 @@ SOURCES += \
     src/xbridge/xbitcointransaction.cpp \
     src/xbridge/rpcxbridge.cpp \
     src/xbridge/xbridgeservicesession.cpp \
-    src/xbridge/xbridgesessionbcc.cpp
+    src/xbridge/xbridgesessionbcc.cpp \
+    src/xbridge/xbridgewalletconnector.cpp \
+    src/xbridge/xbridgebtcwalletconnector.cpp
 
 #protobuf generated
 SOURCES += \
@@ -582,7 +584,10 @@ HEADERS += \
     src/qt/xbridgeui/xbridgetransactionsview.h \
     src/xbridge/xbitcointransaction.h \
     src/xbridge/xbridgeservicesession.h \
-    src/xbridge/xbridgesessionbcc.h
+    src/xbridge/xbridgesessionbcc.h \
+    src/validationstate.h \
+    src/xbridge/xbridgewalletconnector.h \
+    src/xbridge/xbridgebtcwalletconnector.h
 
 #ENABLE_ZMQ
 #    src/zmq/zmqabstractnotifier.h \

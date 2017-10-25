@@ -12,13 +12,6 @@
 //******************************************************************************
 namespace rpc
 {
-    typedef std::pair<std::string, std::vector<std::string> > AddressBookEntry;
-    bool requestAddressBook(const std::string & rpcuser,
-                            const std::string & rpcpasswd,
-                            const std::string & rpcip,
-                            const std::string & rpcport,
-                            std::vector<AddressBookEntry> & entries);
-
     struct Info
     {
         uint32_t blocks;
@@ -28,28 +21,6 @@ namespace rpc
                  const std::string & rpcip,
                  const std::string & rpcport,
                  Info & info);
-
-    struct UtxoEntry
-    {
-        std::string txId;
-        uint32_t    vout;
-        double      amount;
-
-        friend bool operator < (const UtxoEntry & l, const UtxoEntry & r);
-        friend bool operator == (const UtxoEntry & l, const UtxoEntry & r);
-    };
-
-    bool listUnspent(const std::string & rpcuser,
-                     const std::string & rpcpasswd,
-                     const std::string & rpcip,
-                     const std::string & rpcport,
-                     std::vector<UtxoEntry> & entries);
-
-    bool gettxout(const std::string & rpcuser,
-                  const std::string & rpcpasswd,
-                  const std::string & rpcip,
-                  const std::string & rpcport,
-                  UtxoEntry & txout);
 
     bool getRawTransaction(const std::string & rpcuser,
                            const std::string & rpcpasswd,

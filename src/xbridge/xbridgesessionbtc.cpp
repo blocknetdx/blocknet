@@ -45,25 +45,13 @@ XBridgeSessionBtc::~XBridgeSessionBtc()
 //    return EncodeBase58Check(xaddr);
 //}
 
-//*****************************************************************************
-//*****************************************************************************
-std::vector<unsigned char> XBridgeSessionBtc::toXAddr(const std::string & addr) const
-{
-    std::vector<unsigned char> vaddr;
-    if (DecodeBase58Check(addr.c_str(), vaddr))
-    {
-        vaddr.erase(vaddr.begin());
-    }
-    return vaddr;
-}
-
 //******************************************************************************
 //******************************************************************************
 uint32_t XBridgeSessionBtc::lockTime(const char role) const
 {
     rpc::Info info;
-    if (!rpc::getInfo(m_wallet.user, m_wallet.passwd,
-                     m_wallet.ip, m_wallet.port, info))
+    if (!rpc::getInfo(m_wallet.m_user, m_wallet.m_passwd,
+                     m_wallet.m_ip, m_wallet.m_port, info))
     {
         LOG() << "blockchain info not received " << __FUNCTION__;
         return 0;

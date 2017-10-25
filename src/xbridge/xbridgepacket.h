@@ -46,7 +46,7 @@ enum XBridgeCommand
     //
     // xbcAnnounceAddresses
     //     uint160 client address
-    xbcAnnounceAddresses = 1,
+    // xbcAnnounceAddresses = 1,
 
     // xchat message
     //

@@ -62,8 +62,8 @@ std::vector<unsigned char> XBridgeSessionBcc::toXAddr(const std::string & addr) 
 uint32_t XBridgeSessionBcc::lockTime(const char role) const
 {
     rpc::Info info;
-    if (!rpc::getInfo(m_wallet.user, m_wallet.passwd,
-                     m_wallet.ip, m_wallet.port, info))
+    if (!rpc::getInfo(m_wallet.m_user, m_wallet.m_passwd,
+                     m_wallet.m_ip, m_wallet.m_port, info))
     {
         LOG() << "blockchain info not received " << __FUNCTION__;
         return 0;

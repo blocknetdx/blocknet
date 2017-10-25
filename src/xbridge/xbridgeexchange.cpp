@@ -79,11 +79,11 @@ bool XBridgeExchange::init()
         WalletParam & wp = m_wallets[*i];
         wp.currency   = *i;
         wp.title      = label;
-        wp.ip         = ip;
-        wp.port       = port;
-        wp.user       = user;
-        wp.passwd     = passwd;
-        wp.minAmount  = minAmount;
+        wp.m_ip         = ip;
+        wp.m_port       = port;
+        wp.m_user       = user;
+        wp.m_passwd     = passwd;
+        wp.m_minAmount  = minAmount;
         wp.dustAmount = dustAmount;
         wp.taxaddr    = feeAddress;
         wp.txVersion  = txVersion;
@@ -184,14 +184,14 @@ bool XBridgeExchange::createTransaction(const uint256     & id,
 
     // check amounts
     {
-        if (wp.minAmount && wp.minAmount > sourceAmount)
+        if (wp.m_minAmount && wp.m_minAmount > sourceAmount)
         {
             LOG() << "tx "
                   << util::base64_encode(std::string((char *)id.begin(), 32))
                   << " rejected because sourceAmount less than minimum payment";
             return false;
         }
-        if (wp2.minAmount && wp2.minAmount > destAmount)
+        if (wp2.m_minAmount && wp2.m_minAmount > destAmount)
         {
             LOG() << "tx "
                   << util::base64_encode(std::string((char *)id.begin(), 32))

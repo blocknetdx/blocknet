@@ -2,11 +2,8 @@
 //*****************************************************************************
 
 #include "xbridge.h"
-#include "xbridgesession.h"
-#include "xbridgesessionbtc.h"
-#include "xbridgesessionbcc.h"
-// #include "xbridgesessionethereum.h"
-// #include "xbridgesessionrpccommon.h"
+#include "xbridgewalletconnector.h"
+#include "xbridgebtcwalletconnector.h"
 #include "xbridgeapp.h"
 #include "util/logger.h"
 #include "util/settings.h"
@@ -46,10 +43,10 @@ XBridge::XBridge()
                 wp.currency                    = *i;
                 wp.title                       = s.get<std::string>(*i + ".Title");
                 wp.address                     = s.get<std::string>(*i + ".Address");
-                wp.ip                          = s.get<std::string>(*i + ".Ip");
-                wp.port                        = s.get<std::string>(*i + ".Port");
-                wp.user                        = s.get<std::string>(*i + ".Username");
-                wp.passwd                      = s.get<std::string>(*i + ".Password");
+                wp.m_ip                          = s.get<std::string>(*i + ".Ip");
+                wp.m_port                        = s.get<std::string>(*i + ".Port");
+                wp.m_user                        = s.get<std::string>(*i + ".Username");
+                wp.m_passwd                      = s.get<std::string>(*i + ".Password");
                 wp.addrPrefix[0]               = s.get<int>(*i + ".AddressPrefix", 0);
                 wp.scriptPrefix[0]             = s.get<int>(*i + ".ScriptPrefix", 0);
                 wp.secretPrefix[0]             = s.get<int>(*i + ".SecretPrefix", 0);
@@ -57,7 +54,7 @@ XBridge::XBridge()
                 wp.txVersion                   = s.get<uint32_t>(*i + ".TxVersion", 1);
                 wp.minTxFee                    = s.get<uint64_t>(*i + ".MinTxFee", 0);
                 wp.feePerByte                  = s.get<uint64_t>(*i + ".FeePerByte", 200);
-                wp.minAmount                   = s.get<uint64_t>(*i + ".MinimumAmount", 0);
+                wp.m_minAmount                 = s.get<uint64_t>(*i + ".MinimumAmount", 0);
                 wp.dustAmount                  = 3 * wp.minTxFee;
                 wp.method                      = s.get<std::string>(*i + ".CreateTxMethod");
                 wp.isGetNewPubKeySupported     = s.get<bool>(*i + ".GetNewKeySupported", false);
@@ -65,8 +62,8 @@ XBridge::XBridge()
                 wp.blockTime                   = s.get<int>(*i + ".BlockTime", 0);
                 wp.requiredConfirmations       = s.get<int>(*i + ".Confirmations", 0);
 
-                if (wp.ip.empty() || wp.port.empty() ||
-                    wp.user.empty() || wp.passwd.empty() ||
+                if (wp.m_ip.empty() || wp.m_port.empty() ||
+                    wp.m_user.empty() || wp.m_passwd.empty() ||
                     wp.COIN == 0 || wp.blockTime == 0)
                 {
                     LOG() << "read wallet " << *i << " with empty parameters>";
@@ -74,11 +71,11 @@ XBridge::XBridge()
                 }
                 else
                 {
-                    LOG() << "read wallet " << *i << " [" << wp.title << "] " << wp.ip
-                          << ":" << wp.port; // << " COIN=" << wp.COIN;
+                    LOG() << "read wallet " << *i << " [" << wp.title << "] " << wp.m_ip
+                          << ":" << wp.m_port; // << " COIN=" << wp.COIN;
                 }
 
-                XBridgeSessionPtr session;
+                XBridgeWalletConnectorPtr conn;
                 if (wp.method == "ETHER")
                 {
                     LOG() << "wp.method ETHER not implemented" << __FUNCTION__;
@@ -86,25 +83,26 @@ XBridge::XBridge()
                 }
                 else if (wp.method == "BTC")
                 {
-                    session.reset(new XBridgeSessionBtc(wp));
+                    conn.reset(new XBridgeBtcWalletConnector);
+                    *conn = wp;
                 }
-                else if (wp.method == "BCC")
-                {
-                    session.reset(new XBridgeSessionBcc(wp));
-                }
-                else if (wp.method == "RPC")
-                {
-                    LOG() << "wp.method RPC not implemented" << __FUNCTION__;
-                    // session.reset(new XBridgeSessionRpc(wp));
-                }
+//                else if (wp.method == "BCC")
+//                {
+//                    session.reset(new XBridgeSessionBcc(wp));
+//                }
+//                else if (wp.method == "RPC")
+//                {
+//                    LOG() << "wp.method RPC not implemented" << __FUNCTION__;
+//                    // session.reset(new XBridgeSessionRpc(wp));
+//                }
                 else
                 {
                     // session.reset(new XBridgeSession(wp));
                     ERR() << "unknown session type " << __FUNCTION__;
                 }
-                if (session)
+                if (conn)
                 {
-                    app.addSession(session);
+                    app.addConnector(conn);
                 }
             }
         }
@@ -165,29 +163,29 @@ void XBridge::onTimer()
         io->post(boost::bind(&XBridgeSession::getAddressBook, session));
 
         // unprocessed packets
-        {
-            std::map<uint256, std::pair<std::string, XBridgePacketPtr> > map;
-            {
-                boost::mutex::scoped_lock l(XBridgeApp::m_ppLocker);
-                map = XBridgeApp::m_pendingPackets;
-                XBridgeApp::m_pendingPackets.clear();
-            }
+//        {
+//            std::map<uint256, std::pair<std::string, XBridgePacketPtr> > map;
+//            {
+//                boost::mutex::scoped_lock l(XBridgeApp::m_ppLocker);
+//                map = XBridgeApp::m_pendingPackets;
+//                XBridgeApp::m_pendingPackets.clear();
+//            }
 
-            for (const std::pair<uint256, std::pair<std::string, XBridgePacketPtr> > & item : map)
-            {
-                std::string      currency = std::get<0>(item.second);
-                XBridgeSessionPtr s = app.sessionByCurrency(currency);
-                if (!s)
-                {
-                    // no session. packet dropped
-                    WARN() << "no session for <" << currency << ">, packet dropped " << __FUNCTION__;
-                    continue;
-                }
+//            for (const std::pair<uint256, std::pair<std::string, XBridgePacketPtr> > & item : map)
+//            {
+//                std::string      currency = std::get<0>(item.second);
+//                XBridgeSessionPtr s = app.connectorByCurrency(currency);
+//                if (!s)
+//                {
+//                    // no session. packet dropped
+//                    WARN() << "no session for <" << currency << ">, packet dropped " << __FUNCTION__;
+//                    continue;
+//                }
 
-                XBridgePacketPtr packet   = std::get<1>(item.second);
-                io->post(boost::bind(&XBridgeSession::processPacket, s, packet));
-            }
-        }
+//                XBridgePacketPtr packet   = std::get<1>(item.second);
+//                io->post(boost::bind(&XBridgeSession::processPacket, s, packet));
+//            }
+//        }
     }
 
     m_timer.expires_at(m_timer.expires_at() + boost::posix_time::seconds(TIMER_INTERVAL));

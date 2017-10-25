@@ -34,8 +34,6 @@ public:
     }
 
 protected:
-    std::vector<unsigned char> toXAddr(const std::string & addr) const;
-
     virtual uint32_t lockTime(const char role) const;
     virtual xbridge::CTransactionPtr createTransaction() const;
     virtual xbridge::CTransactionPtr createTransaction(const std::vector<std::pair<std::string, int> > & inputs,

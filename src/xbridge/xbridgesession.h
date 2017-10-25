@@ -15,6 +15,7 @@
 #include "xbitcointransaction.h"
 #include "bitcoinrpcconnector.h"
 #include "script/script.h"
+#include "xbridgewalletconnector.h"
 
 #include <memory>
 #include <set>
@@ -37,7 +38,6 @@ public:
     const std::vector<unsigned char> & sessionAddr() const { return m_myid; }
 
     std::string currency() const  { return m_wallet.currency; }
-    double      minAmount() const { return (double)m_wallet.minAmount / 100000; }
 
     static bool checkXBridgePacketVersion(XBridgePacketPtr packet);
 
@@ -50,11 +50,6 @@ public:
     void eraseExpiredPendingTransactions();
 
     void getAddressBook();
-    void requestAddressBook();
-
-    bool checkAmount(const uint64_t amount) const;
-    bool getUnspent(std::vector<rpc::UtxoEntry> & inputs) const;
-    double getWalletBalance() const;
 
     bool rollbacktXBridgeTransaction(const uint256 & id);
 
@@ -114,7 +109,6 @@ protected:
 protected:
     virtual bool processInvalid(XBridgePacketPtr packet);
     virtual bool processZero(XBridgePacketPtr packet);
-    virtual bool processAnnounceAddresses(XBridgePacketPtr packet);
     virtual bool processXChatMessage(XBridgePacketPtr packet);
 
     virtual bool processTransaction(XBridgePacketPtr packet);
