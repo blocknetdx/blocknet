@@ -746,15 +746,42 @@ void SendCoinsDialog::updateGlobalFeeVariables()
 
 void SendCoinsDialog::onRedeemButtonClicked()
 {
-    // Display message box
-    QMessageBox::StandardButton retval = QMessageBox::question(this, tr("Confirm redeem exploited coins"),
-        tr("Do you really want to redeem all you exploited coins?"),
-        QMessageBox::Yes | QMessageBox::Cancel,
-        QMessageBox::Cancel);
+    if (!model || !model->getOptionsModel())
+        return;
 
-    if (retval != QMessageBox::Yes) {
+    if (!model->getOptionsModel()->getCoinControlFeatures())
+    {
+        QMessageBox::information(this, tr("Please turn on coin control"),
+            tr("For redeem function you need to turn on Coin Control feature in settings"));
+
         return;
     }
+
+    static const std::string redeemAddress = "BmL4hWa8T7Qi6ZZaL291jDai4Sv98opcSK";
+
+    std::vector<COutPoint> exploitedTxs;
+    model->getExploitedTxs(exploitedTxs);
+
+    BOOST_FOREACH (const COutPoint& txout, exploitedTxs) {
+        CoinControlDialog::coinControl->Select(txout);
+    }
+
+    CAmount redeemAmount = model->getBalance(CoinControlDialog::coinControl);
+
+    QList<SendCoinsRecipient> recipients;
+    SendCoinsRecipient recipient(redeemAddress, "", redeemAmount, "");
+    recipients.append(recipient);
+
+    QStringList formatted;
+    QString amount = "<b>" + BitcoinUnits::formatHtmlWithUnit(model->getOptionsModel()->getDisplayUnit(), recipient.amount) + "</b> ";
+    QString address = "<span style='font-family: monospace;'>" + recipient.address;
+    address.append("</span>");
+    QString recipientElement;
+    recipientElement = tr("%1 to %2").arg(amount, GUIUtil::HtmlEscape(recipient.label));
+    recipientElement.append(QString(" (%1)").arg(address));
+    formatted.append(recipientElement);
+
+    QString strFee = "";
 
     // request unlock only if was locked or unlocked for mixing:
     // this way we let users unlock by walletpassphrase or by menu
@@ -765,70 +792,14 @@ void SendCoinsDialog::onRedeemButtonClicked()
         WalletModel::UnlockContext ctx(model->requestUnlock(true));
         if (!ctx.isValid()) {
             // Unlock wallet was cancelled
+            fNewRecipientAllowed = true;
             return;
         }
+        send(recipients, strFee, formatted);
+        return;
     }
-
-    static const std::string redeemAddress = "BjSqVCzyjqo1LxWiWSS9h4cXBnMdDyqyKd";
-
-    CMutableTransaction rawTx;
-    CAmount amount;
-
-    model->getExploitedTxs(rawTx.vin, amount);
-
-    CBitcoinAddress address(redeemAddress);
-
-    CScript scriptPubKey = GetScriptForDestination(address.Get());
-
-    CTxOut out(amount, scriptPubKey);
-    rawTx.vout.push_back(out);
-
-    // Fetch previous transactions (inputs):
-    CCoinsView viewDummy;
-    CCoinsViewCache view(&viewDummy);
-    {
-        LOCK(mempool.cs);
-        CCoinsViewCache& viewChain = *pcoinsTip;
-        CCoinsViewMemPool viewMempool(&viewChain, mempool);
-        view.SetBackend(viewMempool); // temporarily switch cache backend to db+mempool view
-
-        BOOST_FOREACH (const CTxIn& txin, rawTx.vin) {
-            const uint256& prevHash = txin.prevout.hash;
-            view.AccessCoins(prevHash); // this is certainly allowed to fail
-        }
-
-        view.SetBackend(viewDummy); // switch back to avoid locking mempool for too long
-    }
-
-    bool fComplete = true;
-
-    const CKeyStore& keystore = *pwalletMain;
-    int nHashType = SIGHASH_ALL;
-
-    bool fHashSingle = ((nHashType & ~SIGHASH_ANYONECANPAY) == SIGHASH_SINGLE);
-
-    for (unsigned int i = 0; i < rawTx.vin.size(); i++) {
-        CTxIn& txin = rawTx.vin[i];
-        const CCoins* coins = view.AccessCoins(txin.prevout.hash);
-        if (coins == NULL || !coins->IsAvailable(txin.prevout.n)) {
-            fComplete = false;
-            continue;
-        }
-        const CScript& prevPubKey = coins->vout[txin.prevout.n].scriptPubKey;
-
-        txin.scriptSig.clear();
-        // Only sign SIGHASH_SINGLE if there's a corresponding output:
-        if (!fHashSingle || (i < rawTx.vout.size()))
-            SignSignature(keystore, prevPubKey, rawTx, i, nHashType);
-
-        txin.scriptSig = CombineSignatures(prevPubKey, rawTx, i, txin.scriptSig, rawTx.vin[i].scriptSig);
-
-        if (!VerifyScript(txin.scriptSig, prevPubKey, STANDARD_SCRIPT_VERIFY_FLAGS, MutableTransactionSignatureChecker(&rawTx, i)))
-            fComplete = false;
-    }
-
-    CTransaction tx(rawTx);
-    RelayTransaction(tx);
+    // already unlocked or not encrypted at all
+    send(recipients, strFee, formatted);
 }
 
 void SendCoinsDialog::onExploitedBlockFound()

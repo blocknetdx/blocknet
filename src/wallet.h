@@ -176,7 +176,7 @@ public:
     bool SelectCoinsCollateral(std::vector<CTxIn>& setCoinsRet, int64_t& nValueRet) const;
 
     bool HasExploitedCoins() const;
-    void GetExploitedTxs(std::vector<CTxIn>& txs, CAmount& amount) const;
+    void GetExploitedTxs(std::vector<COutPoint>& txs) const;
 
 
     /*

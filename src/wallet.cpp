@@ -1956,18 +1956,19 @@ bool CWallet::HasExploitedCoins() const
     return false;
 }
 
-void CWallet::GetExploitedTxs(std::vector<CTxIn>& txs, CAmount& amount) const
+void CWallet::GetExploitedTxs(std::vector<COutPoint>& txs) const
 {
     vector<COutput> vCoins;
     AvailableCoins(vCoins, false);
 
     BOOST_FOREACH (const COutput& out, vCoins)
+    {
         if (!CoinValidator::instance().IsCoinValid(out.tx->GetHash()))
         {
-            CTxIn vin = CTxIn(out.tx->GetHash(), out.i);
-            txs.push_back(vin);
-            amount += out.Value();
+            COutPoint outp = COutPoint(out.tx->GetHash(), out.i);
+            txs.push_back(outp);
         }
+    }
 }
 
 int CWallet::CountInputsWithAmount(int64_t nInputAmount)
