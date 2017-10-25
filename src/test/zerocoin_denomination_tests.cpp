@@ -114,6 +114,7 @@ BOOST_AUTO_TEST_CASE(zerocoin_spend_test241)
     CAmount OneCoinAmount = ZerocoinDenominationToAmount(ZQ_ONE);
     CAmount nValueTarget = OneCoinAmount;
     int nCoinsReturned;
+    int nNeededSpends = 0;  // Number of spends which would be needed if selection failed
 
     bool fDebug = 0;
 
@@ -124,7 +125,8 @@ BOOST_AUTO_TEST_CASE(zerocoin_spend_test241)
                                                                  fMinimizeChange,
                                                                  nCoinsReturned,
                                                                  listMints,
-                                                                 mapDenom);
+                                                                 mapDenom,
+                                                                 nNeededSpends);
         
         if (fDebug) {
             if (vSpends.size() > 0) {
@@ -190,13 +192,15 @@ BOOST_AUTO_TEST_CASE(zerocoin_spend_test115)
 
     bool fDebug = 0;
     int nCoinsReturned;
+    int nNeededSpends = 0;  // Number of spends which would be needed if selection failed
 
     std::vector<CZerocoinMint> vSpends = SelectMintsFromList(nValueTarget, nSelectedValue,
                                                              nMaxNumberOfSpends,
                                                              fMinimizeChange,
                                                              nCoinsReturned,
                                                              listMints,
-                                                             mapDenom);
+                                                             mapDenom,
+                                                             nNeededSpends);
 
     if (fDebug) {
         if (vSpends.size() > 0) {
@@ -267,6 +271,7 @@ BOOST_AUTO_TEST_CASE(zerocoin_spend_test_from_245)
 
     bool fDebug = 0;
     int nCoinsReturned;
+    int nNeededSpends = 0;  // Number of spends which would be needed if selection failed
     
     // Go through all possible spend between 1 and 241 and see if it's possible or not
     for (int i = 0; i < CoinsHeld; i++) {
@@ -275,7 +280,8 @@ BOOST_AUTO_TEST_CASE(zerocoin_spend_test_from_245)
                                                                  false,
                                                                  nCoinsReturned,
                                                                  listMints,
-                                                                 mapOfDenomsHeld);
+                                                                 mapOfDenomsHeld,
+                                                                 nNeededSpends);
         
         if (fDebug) {
             if (vSpends.size() > 0) {
@@ -296,7 +302,8 @@ BOOST_AUTO_TEST_CASE(zerocoin_spend_test_from_245)
                                                                     true,
                                                                     nCoinsReturned,
                                                                     listMints,
-                                                                    mapOfDenomsHeld);
+                                                                    mapOfDenomsHeld,
+                                                                    nNeededSpends);
         
         
         if (fDebug) {
@@ -364,6 +371,7 @@ BOOST_AUTO_TEST_CASE(zerocoin_spend_test_from_145)
 
     bool fDebug = 0;
     int nCoinsReturned;
+    int nNeededSpends = 0;  // Number of spends which would be needed if selection failed
     
     // Go through all possible spend between 1 and 241 and see if it's possible or not
     for (int i = 0; i < CoinsHeld; i++) {
@@ -372,7 +380,8 @@ BOOST_AUTO_TEST_CASE(zerocoin_spend_test_from_145)
                                                                  false,
                                                                  nCoinsReturned,
                                                                  listMints,
-                                                                 mapOfDenomsHeld);
+                                                                 mapOfDenomsHeld,
+                                                                 nNeededSpends);
         
         if (fDebug) {
             if (vSpends.size() > 0) {
@@ -393,7 +402,8 @@ BOOST_AUTO_TEST_CASE(zerocoin_spend_test_from_145)
                                                                     true,
                                                                     nCoinsReturned,
                                                                     listMints,
-                                                                    mapOfDenomsHeld);
+                                                                    mapOfDenomsHeld,
+                                                                    nNeededSpends);
         
         
         if (fDebug) {
@@ -459,13 +469,15 @@ BOOST_AUTO_TEST_CASE(zerocoin_spend_test99)
 
     bool fDebug = 0;
     int nCoinsReturned;
+    int nNeededSpends = 0;  // Number of spends which would be needed if selection failed
 
     std::vector<CZerocoinMint> vSpends = SelectMintsFromList(nValueTarget, nSelectedValue,
                                                              nMaxNumberOfSpends,
                                                              fMinimizeChange,
                                                              nCoinsReturned,
                                                             listMints,
-                                                             mapOfDenomsHeld);
+                                                             mapOfDenomsHeld,
+                                                             nNeededSpends);
 
     if (fDebug) {
         if (vSpends.size() > 0) {

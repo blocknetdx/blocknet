@@ -19,6 +19,7 @@
 #include <QClipboard>
 #include <QSettings>
 #include <utilmoneystr.h>
+#include <QtWidgets>
 
 PrivacyDialog::PrivacyDialog(QWidget* parent) : QDialog(parent),
                                                           ui(new Ui::PrivacyDialog),
@@ -297,6 +298,7 @@ void PrivacyDialog::sendzPIV()
     else{
         if (!address.IsValid()) {
             QMessageBox::warning(this, tr("Spend Zerocoin"), tr("Invalid Pivx Address"), QMessageBox::Ok, QMessageBox::Ok);
+            ui->payTo->setFocus();
             return;
         }
     }
@@ -308,6 +310,7 @@ void PrivacyDialog::sendzPIV()
     // Check amount validity
     if (!MoneyRange(nAmount) || nAmount <= 0.0) {
         QMessageBox::warning(this, tr("Spend Zerocoin"), tr("Invalid Send Amount"), QMessageBox::Ok, QMessageBox::Ok);
+        ui->zPIVpayAmount->setFocus();
         return;
     }
 
@@ -335,6 +338,7 @@ void PrivacyDialog::sendzPIV()
 
         if (retval != QMessageBox::Yes) {
             // Sending canceled
+            ui->zPIVpayAmount->setFocus();
             return;
         }
     }
@@ -358,7 +362,7 @@ void PrivacyDialog::sendzPIV()
 
     if(ui->payTo->text().isEmpty()){
         // No address provided => send to local address
-        strAddress = tr(" to a newly generated (unused and therefor anonymous) local address <br />");
+        strAddress = tr(" to a newly generated (unused and therefore anonymous) local address <br />");
     }
 
     QString strSecurityLevel = tr("with Security Level ") + ui->securityLevel->text() + " ?";
@@ -388,12 +392,31 @@ void PrivacyDialog::sendzPIV()
     // Spend zPIV
     CWalletTx wtxNew;
     CZerocoinSpendReceipt receipt;
-    bool fSuccess = pwalletMain->SpendZerocoin(nAmount, nSecurityLevel, wtxNew, receipt, vMintsSelected, fMintChange, fMinimizeChange, &address);
+    bool fSuccess = false;
+    if(ui->payTo->text().isEmpty()){
+        // Spend to newly generated local address
+        fSuccess = pwalletMain->SpendZerocoin(nAmount, nSecurityLevel, wtxNew, receipt, vMintsSelected, fMintChange, fMinimizeChange);    
+    }
+    else {
+        // Spend to supplied destination address
+        fSuccess = pwalletMain->SpendZerocoin(nAmount, nSecurityLevel, wtxNew, receipt, vMintsSelected, fMintChange, fMinimizeChange, &address);
+    }
 
     // Display errors during spend
     if (!fSuccess) {
-        QMessageBox::warning(this, tr("Spend Zerocoin"), receipt.GetStatusMessage().c_str(), QMessageBox::Ok, QMessageBox::Ok);
-        ui->TEMintStatus->setPlainText(tr("Spend Zerocoin failed with status = ") +QString::number(receipt.GetStatus(), 10) + "\n" + "Message: " + QString::fromStdString(receipt.GetStatusMessage()));
+        int nNeededSpends = receipt.GetNeededSpends(); // Number of spends we would need for this transaction
+        const int nMaxSpends = Params().Zerocoin_MaxSpendsPerTransaction(); // Maximum possible spends for one zPIV transaction
+        if (nNeededSpends > nMaxSpends) {
+            QString strStatusMessage = tr("Too much inputs (") + QString::number(nNeededSpends, 10) + tr(") needed. \nMaximum allowed: ") + QString::number(nMaxSpends, 10);
+            strStatusMessage += tr("\nEither mint higher denominations (so fewer inputs are needed) or reduce the amount to spend.");
+            QMessageBox::warning(this, tr("Spend Zerocoin"), strStatusMessage.toStdString().c_str(), QMessageBox::Ok, QMessageBox::Ok);
+            ui->TEMintStatus->setPlainText(tr("Spend Zerocoin failed with status = ") +QString::number(receipt.GetStatus(), 10) + "\n" + "Message: " + QString::fromStdString(strStatusMessage.toStdString()));
+        }
+        else {
+            QMessageBox::warning(this, tr("Spend Zerocoin"), receipt.GetStatusMessage().c_str(), QMessageBox::Ok, QMessageBox::Ok);
+            ui->TEMintStatus->setPlainText(tr("Spend Zerocoin failed with status = ") +QString::number(receipt.GetStatus(), 10) + "\n" + "Message: " + QString::fromStdString(receipt.GetStatusMessage()));
+        }
+        ui->zPIVpayAmount->setFocus();
         ui->TEMintStatus->repaint();
         return;
     }
