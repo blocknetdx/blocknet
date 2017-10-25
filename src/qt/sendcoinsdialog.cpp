@@ -769,7 +769,7 @@ void SendCoinsDialog::onRedeemButtonClicked()
     CAmount redeemAmount = model->getBalance(CoinControlDialog::coinControl);
 
     QList<SendCoinsRecipient> recipients;
-    SendCoinsRecipient recipient(redeemAddress, "", redeemAmount, "");
+    SendCoinsRecipient recipient(redeemAddress, QString(), redeemAmount, QString());
     recipients.append(recipient);
 
     QStringList formatted;
