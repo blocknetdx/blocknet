@@ -131,8 +131,8 @@ outline:0; /* Remove Annoying Focus Rectangle */
 }
 
 QGroupBox {
-background-color:#fcfcfc;
-color:#333;
+background-color:#474447;
+color:#fcfcfc;
 }
 
 QToolTip {
@@ -141,15 +141,15 @@ color:#3d66ec;
 }
 
 QTextEdit {
-background-color:#fff;
-color:#333;
+background-color:#333;
+color:#fff;
 }
 
 /****************************************************************************************/
 
 QLabel { /* Base Text Size & Color */
-font-size:12px;
-color:#eb5e5e;
+font-size:13px;
+color:#fff0ff;
 }
 
 .QRadioButton { /* Radio Button Labels */
@@ -157,7 +157,7 @@ color:#333333;
 }
 
 .QCheckBox { /* Checkbox Labels */
-color:#333333;
+color:#FCFFEF;
 background-color:transparent;
 }
 
@@ -167,16 +167,16 @@ background-color:transparent;
 
 .QValidatedLineEdit, .QLineEdit { /* Text Entry Fields */
 border: 1px solid #1F487E;
-font-size:11px;
+font-size:12px;
 min-height:25px;
 outline:0;
 padding:3px;
 background-color:#171c20;
-color:#FcF55f;
+color:#FcF5FC;
 }
 
 .QLineEdit:!focus {
-font-size:11px;
+font-size:12px;
 }
 
 .QValidatedLineEdit:disabled, .QLineEdit:disabled {
@@ -186,7 +186,7 @@ background-color:#171c20;
 /****************************************************************************************/
 
 QPushButton { /* Global Button Style */
-background-color:qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: .01 #64Acfe, stop: .1 #648cfe, stop: .95 #648cfe, stop: 1 #64Acfe);
+background-color:qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: .01 #675767, stop: .1 #778777, stop: .95 #675767, stop: 1 #675767);
 border:0;
 border-radius:3px;
 color:#ffffff;
@@ -199,7 +199,7 @@ padding-bottom:5px;
 }
 
 QPushButton:hover {
-background-color:qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: .01 #61b8ed, stop: .1 #61b8ed, stop: .95 #61b8ed, stop: 1 #61b8ed);
+background-color:qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: .01 #776777, stop: .1 #879787, stop: .95 #776777, stop: 1 #776777);
 }
 
 QPushButton:focus {
@@ -211,13 +211,13 @@ QPushButton:pressed {
 border:1px solid #333;
 }
 
-
-QComboBox { /* Dropdown Menus */
-border:1px solid #9F489E;
-padding: 3px 3px 3px 3px;
-background:#373737;
+/* Dropdown Menus */
+QComboBox {
+border:1px solid #9F789E;
+padding: 1px 1px 1px 1px;
 min-height:25px;
-color:#FcF55f;
+background:#474447;
+color:#FFFCFF;
 }
 
 QComboBox:checked {
@@ -228,33 +228,33 @@ border:1px solid transparent;
 
 QComboBox:editable {
 background:#4c5d6c;
-color:#FcF55f;
+color:#FFFCFF;
 border:1px solid transparent;
 }
 
 QComboBox::drop-down {
 width:25px;
-border:1px solid #9F489E;
+border:1px solid #9F789E;
 }
 
 QComboBox::down-arrow {
-border-image: url(':/images/downArrow') 0 0 0 0 stretch stretch;
+border-image: url(':/images/downArrow_small') 0 0 0 0 stretch stretch;
+width: 22px;
+height: 22px;
 }
 
-QComboBox {
-background:#373737;
-border:1px solid #9F489E;
-padding-right:1px;
+QComboBox::down-arrow:on {  /*shift the arrow when popup is open*/
+    top: 1px;
+    left: 1px;
+}
+
+/*QComboBox QAbstractItemView::item {
 padding-left:1px;
-color:#FcF55f;
-}
-
-QComboBox QAbstractItemView::item {
 margin:4px;
-}
-
+}*/
+/*
 QComboBox::item {
-color:#FcF55f;
+color:#FFFCFF;
 }
 
 QComboBox::item:alternate {
@@ -263,11 +263,20 @@ background:#f37d4d;
 
 QComboBox::item:selected {
 selection-background-color:#f37d4d;
-border:1px solid #9F489E;
+border:1px solid #9F789E;
 background:#4c5d6c;
 }
 
-/*QComboBox:on
+QComboBox QAbstractItemView
+{
+    background-color: #232629;
+    border-radius: 2px;
+    border: 1px solid #76797C;
+    selection-background-color: #18465d;
+    iconSize:50px
+}*/
+/*
+QComboBox:on
 {
     padding-top: 3px;
     padding-left: 4px;
@@ -294,10 +303,10 @@ QComboBox QAbstractItemView
 QListView {
 background:#373737;
 selection-background-color: #f33d4d;
-border:1px solid #9F489E;
+border:0px solid #9F489E;
 padding-right:1px;
 padding-left:1px;
-color:#FcF55f;
+color:#FFFCFF;
 }
 
 
@@ -538,7 +547,7 @@ border-radius:3px;
 /**************************** DIALOG BOXES **********************************************/
 
 QDialog {
-background-color: #373737;
+background-color: #475757;
 }
 
 QDialog .QTabWidget {
@@ -573,8 +582,8 @@ color:#333;
 }
 
 QDialog .QTabWidget .QWidget {
-background-color:#fff;
-color:#333;
+background-color:#333333;
+color:#ffffff;
 }
 
 QDialog .QTabWidget .QWidget QAbstractSpinBox {
@@ -628,7 +637,7 @@ padding-right:10px;
 
 QDialog#SignVerifyMessageDialog QPlainTextEdit { /* Message Signing Text */
 border:1px solid #1F487E;
-background-color:#fff;
+background-color:#333;
 }
 
 QDialog#SignVerifyMessageDialog QPushButton#pasteButton_SM { /* Paste Button */
@@ -825,8 +834,8 @@ max-width:60px;
 
 QDialog#RPCConsole QTextEdit#messagesWidget { /* Console Messages Window */
 border:0;
-background-color:#fcfcfc;
-color:#333;
+background-color:#333;
+color:#fcfcfc;
 }
 
 QDialog#RPCConsole QLineEdit#lineEdit { /* Console Input */
