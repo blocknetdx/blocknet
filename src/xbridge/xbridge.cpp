@@ -5,6 +5,7 @@
 #include "xbridgesession.h"
 #include "xbridgesessionbtc.h"
 #include "xbridgesessionbcc.h"
+#include "xbridgesessiondcr.h"
 // #include "xbridgesessionethereum.h"
 // #include "xbridgesessionrpccommon.h"
 #include "xbridgeapp.h"
@@ -91,6 +92,10 @@ XBridge::XBridge()
                 else if (wp.method == "BCC")
                 {
                     session.reset(new XBridgeSessionBcc(wp));
+                }
+                else if (wp.method == "DCR")
+                {
+                    session.reset(new XBridgeSessionDcr(wp));
                 }
                 else if (wp.method == "RPC")
                 {

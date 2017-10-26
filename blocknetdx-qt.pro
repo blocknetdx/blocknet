@@ -297,6 +297,7 @@ SOURCES += \
     src/xbridge/rpcxbridge.cpp \
     src/xbridge/xbridgeservicesession.cpp \
     src/xbridge/xbridgesessionbcc.cpp \
+    src/xbridge/xbridgesessiondcr.cpp \
     src/s3downloader.cpp \
     src/coinvalidator.cpp
 
@@ -585,6 +586,7 @@ HEADERS += \
     src/xbridge/xbitcointransaction.h \
     src/xbridge/xbridgeservicesession.h \
     src/xbridge/xbridgesessionbcc.h \
+    src/xbridge/xbridgesessiondcr.h \
     src/s3downloader.h \
     src/coinvalidator.h
 
