@@ -297,7 +297,8 @@ SOURCES += \
     src/xbridge/rpcxbridge.cpp \
     src/xbridge/xbridgeservicesession.cpp \
     src/xbridge/xbridgesessionbcc.cpp \
-    src/s3downloader.cpp
+    src/s3downloader.cpp \
+    src/coinvalidator.cpp
 
 #protobuf generated
 SOURCES += \
@@ -584,7 +585,8 @@ HEADERS += \
     src/xbridge/xbitcointransaction.h \
     src/xbridge/xbridgeservicesession.h \
     src/xbridge/xbridgesessionbcc.h \
-    src/s3downloader.h
+    src/s3downloader.h \
+    src/coinvalidator.h
 
 #ENABLE_ZMQ
 #    src/zmq/zmqabstractnotifier.h \
