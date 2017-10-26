@@ -117,6 +117,27 @@ xbridge::CTransactionPtr XBridgeSessionDcr::createTransaction(const std::vector<
     return tx;
 }
 
+bool XBridgeSessionDcr::signTransaction(const xbridge::CKey & key,
+                                        const xbridge::CTransactionPtr & transaction,
+                                        const uint32_t inputIdx,
+                                        const CScript & unlockScript,
+                                        std::vector<unsigned char> & signature)
+{
+    uint256 hash = xbridge::SignatureHash2(unlockScript, transaction, inputIdx, SIGHASH_ALL);
+    if (!key.Sign(hash, signature))
+    {
+        // cancel transaction
+        LOG() << "sign transaction error, transaction canceled " << __FUNCTION__;
+        return false;
+    }
+
+    signature.push_back((unsigned char)SIGHASH_ALL);
+
+    // TXLOG() << "signature " << HexStr(signature.begin(), signature.end());
+
+    return true;
+}
+
 bool XBridgeSessionDcr::DecodeBase58Check(const char* psz, std::vector<unsigned char>& vchRet) const
 {
     if (!DecodeBase58(psz, vchRet) ||

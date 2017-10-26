@@ -39,6 +39,12 @@ protected:
                                                        const std::vector<std::pair<CScript, double> > & outputs,
                                                        const uint32_t lockTime = 0) const;
 
+    virtual bool signTransaction(const xbridge::CKey & key,
+                                 const xbridge::CTransactionPtr & transaction,
+                                 const uint32_t inputIdx,
+                                 const CScript & unlockScript,
+                                 std::vector<unsigned char> & signature);
+
 private:
     bool DecodeBase58Check(const char* psz, std::vector<unsigned char>& vchRet) const;
 };
