@@ -110,17 +110,14 @@ bool XBridgeExchange::init()
 //*****************************************************************************
 bool XBridgeExchange::isEnabled()
 {
-    static bool isEnabled = (NetworkIdFromCommandLine() == CBaseChainParams::MAIN) ?
-                ((m_wallets.size() > 0) && fServiceNode) : (m_wallets.size() > 0);
-    return isEnabled;
+    return (m_wallets.size() > 0);
 }
 
 //*****************************************************************************
 //*****************************************************************************
 bool XBridgeExchange::isStarted()
 {
-    return (NetworkIdFromCommandLine() == CBaseChainParams::MAIN) ?
-                (isEnabled() && (activeServicenode.status == ACTIVE_SERVICENODE_STARTED)) : isEnabled();
+    return (isEnabled() && (activeServicenode.status == ACTIVE_SERVICENODE_STARTED));
 }
 
 //*****************************************************************************
