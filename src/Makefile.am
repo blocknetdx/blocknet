@@ -93,7 +93,6 @@ BITCOIN_CORE_H = \
   checkpoints.h \
   checkqueue.h \
   clientversion.h \
-  clientversioncore.h \
   coincontrol.h \
   coins.h \
   compat.h \
@@ -358,6 +357,7 @@ libxbridge_xbridge_a_SOURCES = \
   xbridge/xbridgesession.cpp \
   xbridge/xbridgeservicesession.cpp \
   xbridge/xbridgesessionbtc.cpp \
+  xbridge/xbridgesessionbcc.cpp \
   xbridge/xbridgesessiondcr.cpp \
   xbridge/xbridgetransaction.cpp \
   xbridge/xbridgetransactionmember.cpp \
@@ -381,6 +381,7 @@ libxbridge_xbridge_a_SOURCES = \
   xbridge/xbridgesession.h \
   xbridge/xbridgeservicesession.h \
   xbridge/xbridgesessionbtc.h \
+  xbridge/xbridgesessionbcc.h \
   xbridge/xbridgesessiondcr.h \
   xbridge/xbridgetransaction.h \
   xbridge/xbridgetransactiondescr.h \
