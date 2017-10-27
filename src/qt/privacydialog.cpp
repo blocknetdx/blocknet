@@ -103,12 +103,12 @@ void PrivacyDialog::setModel(WalletModel* walletModel)
 
     if (walletModel && walletModel->getOptionsModel()) {
         // Keep up to date with wallet
-        setBalance(walletModel->getBalance(),         walletModel->getUnconfirmedBalance(), walletModel->getImmatureBalance(), 
-                   walletModel->getZerocoinBalance(), walletModel->getWatchBalance(),       walletModel->getWatchUnconfirmedBalance(), 
-                   walletModel->getWatchImmatureBalance());
+        setBalance(walletModel->getBalance(), walletModel->getUnconfirmedBalance(), walletModel->getImmatureBalance(),
+                   walletModel->getZerocoinBalance(), walletModel->getUnconfirmedZerocoinBalance(), walletModel->getImmatureZerocoinBalance(),
+                   walletModel->getWatchBalance(), walletModel->getWatchUnconfirmedBalance(), walletModel->getWatchImmatureBalance());
         
-        connect(walletModel, SIGNAL(balanceChanged(CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount)), this, 
-                               SLOT(setBalance(CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount)));
+        connect(walletModel, SIGNAL(balanceChanged(CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount)), this, 
+                               SLOT(setBalance(CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount)));
         ui->securityLevel->setValue(nSecurityLevel);
     }
 }
@@ -200,9 +200,9 @@ void PrivacyDialog::on_pushButtonMintzPIV_clicked()
     }
 
     // Available balance isn't always updated, so force it.
-    setBalance(walletModel->getBalance(),         walletModel->getUnconfirmedBalance(), walletModel->getImmatureBalance(), 
-               walletModel->getZerocoinBalance(), walletModel->getWatchBalance(),       walletModel->getWatchUnconfirmedBalance(), 
-               walletModel->getWatchImmatureBalance());
+    setBalance(walletModel->getBalance(), walletModel->getUnconfirmedBalance(), walletModel->getImmatureBalance(), 
+               walletModel->getZerocoinBalance(), walletModel->getUnconfirmedZerocoinBalance(), walletModel->getImmatureZerocoinBalance(),
+               walletModel->getWatchBalance(), walletModel->getWatchUnconfirmedBalance(), walletModel->getWatchImmatureBalance());
     coinControlUpdateLabels();
 
     return;
@@ -524,14 +524,17 @@ bool PrivacyDialog::updateLabel(const QString& address)
     return false;
 }
 
-void PrivacyDialog::setBalance(const CAmount& balance,         const CAmount& unconfirmedBalance, const CAmount& immatureBalance, 
-                               const CAmount& zerocoinBalance, const CAmount& watchOnlyBalance,   const CAmount& watchUnconfBalance, 
-                               const CAmount& watchImmatureBalance)
+void PrivacyDialog::setBalance(const CAmount& balance, const CAmount& unconfirmedBalance, const CAmount& immatureBalance, 
+                               const CAmount& zerocoinBalance, const CAmount& unconfirmedZerocoinBalance, const CAmount& immatureZerocoinBalance,
+                               const CAmount& watchOnlyBalance, const CAmount& watchUnconfBalance, const CAmount& watchImmatureBalance)
 {
+
     currentBalance = balance;
     currentUnconfirmedBalance = unconfirmedBalance;
     currentImmatureBalance = immatureBalance;
     currentZerocoinBalance = zerocoinBalance;
+    currentUnconfirmedZerocoinBalance = unconfirmedZerocoinBalance;
+    currentImmatureZerocoinBalance = immatureZerocoinBalance;
     currentWatchOnlyBalance = watchOnlyBalance;
     currentWatchUnconfBalance = watchUnconfBalance;
     currentWatchImmatureBalance = watchImmatureBalance;
@@ -541,36 +544,65 @@ void PrivacyDialog::setBalance(const CAmount& balance,         const CAmount& un
  
     std::map<libzerocoin::CoinDenomination, CAmount> mapDenomBalances;
     std::map<libzerocoin::CoinDenomination, int> mapUnconfirmed;
+    std::map<libzerocoin::CoinDenomination, int> mapImmature;
     for (const auto& denom : libzerocoin::zerocoinDenomList){
         mapDenomBalances.insert(make_pair(denom, 0));
         mapUnconfirmed.insert(make_pair(denom, 0));
+        mapImmature.insert(make_pair(denom, 0));
     }
 
     for (auto& mint : listMints){
+        // All denominations
         mapDenomBalances.at(mint.GetDenomination())++;
 
-        if (!mint.GetHeight() || mint.GetHeight() > chainActive.Height() - Params().Zerocoin_MintRequiredConfirmations())
+        if (!mint.GetHeight() || mint.GetHeight() > chainActive.Height() - Params().Zerocoin_MintRequiredConfirmations()) {
+            // All unconfirmed denominations
             mapUnconfirmed.at(mint.GetDenomination())++;
+        }
+        else {
+            // After a denomination is confirmed it might still be immature because < 3 of the same denomination were minted after it
+            CBlockIndex *pindex = chainActive[mint.GetHeight()];
+            int nMintsAdded = 0;
+            while(pindex->nHeight < chainActive.Height() - 30) { // 30 just to make sure that its at least 2 checkpoints from the top block
+                nMintsAdded += count(pindex->vMintDenominationsInBlock.begin(), pindex->vMintDenominationsInBlock.end(), mint.GetDenomination());
+                if(nMintsAdded >= 3)
+                    break;
+                pindex = chainActive[pindex->nHeight + 1];
+            }
+            if(nMintsAdded < 3){
+                // Immature denominations
+                mapImmature.at(mint.GetDenomination())++;
+            }
+        }
     }
-    
+
     int64_t nCoins = 0;
     int64_t nSumPerCoin = 0;
     int64_t nUnconfirmed = 0;
+    int64_t nImmature = 0;
     QString strDenomStats, strUnconfirmed = "";
-    
+
     for (const auto& denom : libzerocoin::zerocoinDenomList) {
         nCoins = libzerocoin::ZerocoinDenominationToInt(denom);
         nSumPerCoin = nCoins * mapDenomBalances.at(denom);
         nUnconfirmed = mapUnconfirmed.at(denom);
-        if (nUnconfirmed)
-            strUnconfirmed = QString("(") + QString::number(nUnconfirmed) + QString(" unconfirmed) ");
-        else
-            strUnconfirmed = "";
+        nImmature = mapImmature.at(denom);
+
+        strUnconfirmed = "";
+        if (nUnconfirmed) {
+            strUnconfirmed += QString::number(nUnconfirmed) + QString(" unconf. ");
+        }
+        if(nImmature) {
+            strUnconfirmed += QString::number(nImmature) + QString(" immature ");
+        }
+        if(nImmature || nUnconfirmed) {
+            strUnconfirmed = QString("( ") + strUnconfirmed + QString(") ");
+        }
 
         strDenomStats = strUnconfirmed + QString::number(mapDenomBalances.at(denom)) + " x " +
                         QString::number(nCoins) + " = <b>" + 
                         QString::number(nSumPerCoin) + " zPIV </b>";
-        
+
         switch (nCoins) {
             case libzerocoin::CoinDenomination::ZQ_ONE: 
                 ui->labelzDenom1Amount->setText(strDenomStats);
@@ -601,9 +633,15 @@ void PrivacyDialog::setBalance(const CAmount& balance,         const CAmount& un
                 break;
         }
     }
+    CAmount matureZerocoinBalance = zerocoinBalance - immatureZerocoinBalance;
+    CAmount nLockedBalance = 0;
+    if (walletModel) {
+        nLockedBalance = walletModel->getLockedBalance();
+    }
+
     ui->labelzAvailableAmount->setText(QString::number(zerocoinBalance/COIN) + QString(" zPIV "));
-    ui->labelzAvailableAmount_2->setText(QString::number(zerocoinBalance/COIN) + QString(" zPIV "));
-    ui->labelzPIVAmountValue->setText(BitcoinUnits::floorHtmlWithUnit(nDisplayUnit, balance - immatureBalance, false, BitcoinUnits::separatorAlways));
+    ui->labelzAvailableAmount_2->setText(QString::number(matureZerocoinBalance/COIN) + QString(" zPIV "));
+    ui->labelzPIVAmountValue->setText(BitcoinUnits::floorHtmlWithUnit(nDisplayUnit, balance - immatureBalance - nLockedBalance, false, BitcoinUnits::separatorAlways));
 }
 
 void PrivacyDialog::updateDisplayUnit()
@@ -611,7 +649,8 @@ void PrivacyDialog::updateDisplayUnit()
     if (walletModel && walletModel->getOptionsModel()) {
         nDisplayUnit = walletModel->getOptionsModel()->getDisplayUnit();
         if (currentBalance != -1)
-            setBalance(currentBalance, currentUnconfirmedBalance, currentImmatureBalance, currentZerocoinBalance, 
+            setBalance(currentBalance, currentUnconfirmedBalance, currentImmatureBalance,
+                       currentZerocoinBalance, currentUnconfirmedZerocoinBalance, currentImmatureZerocoinBalance,
                        currentWatchOnlyBalance, currentWatchUnconfBalance, currentWatchImmatureBalance);
     }
 }

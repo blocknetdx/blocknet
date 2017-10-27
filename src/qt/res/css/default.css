@@ -786,7 +786,6 @@ padding-bottom:8px;
 }
 
 QDialog#OptionsDialog QCheckBox {
-qproperty-alignment: 'AlignVCenter';
 min-height:20px;
 }
 
@@ -1035,6 +1034,66 @@ color:#5B4C7C;
 margin-left:0px;
 }
 
+QWidget .QFrame#frame_4 .QLabel#labelzBalanceUnconfirmedText { /* Unconfirmed zPIV Label */
+qproperty-alignment: 'AlignVCenter | AlignRight';
+min-width:160px;
+background-color:#5B4C7C;
+color:#fff;
+margin-right:5px;
+padding-right:5px;
+font-weight:bold;
+font-size:14px;
+/* min-height:35px; */
+}
+
+QWidget .QFrame#frame_4 .QLabel#labelzBalanceUnconfirmed { /* Unconfirmed zPIV Balance */
+qproperty-alignment: 'AlignVCenter | AlignLeft';
+font-size:12px;
+font-weight:bold;
+color:#5B4C7C;
+margin-left:0px;
+}
+
+QWidget .QFrame#frame_4 .QLabel#labelzBalanceMatureText { /* Mature zPIV Label */
+qproperty-alignment: 'AlignVCenter | AlignRight';
+min-width:160px;
+background-color:#5B4C7C;
+color:#fff;
+margin-right:5px;
+padding-right:5px;
+font-weight:bold;
+font-size:14px;
+/* min-height:35px; */
+}
+
+QWidget .QFrame#frame_4 .QLabel#labelzBalanceMature { /* Mature zPIV Balance */
+qproperty-alignment: 'AlignVCenter | AlignLeft';
+font-size:12px;
+font-weight:bold;
+color:#5B4C7C;
+margin-left:0px;
+}
+
+QWidget .QFrame#frame_4 .QLabel#labelzBalanceImmatureText { /* Immature zPIV Label */
+qproperty-alignment: 'AlignVCenter | AlignRight';
+min-width:160px;
+background-color:#5B4C7C;
+color:#fff;
+margin-right:5px;
+padding-right:5px;
+font-weight:bold;
+font-size:14px;
+/* min-height:35px; */
+}
+
+QWidget .QFrame#frame_4 .QLabel#labelzBalanceImmature { /* Immature zPIV Balance */
+qproperty-alignment: 'AlignVCenter | AlignLeft';
+font-size:12px;
+font-weight:bold;
+color:#5B4C7C;
+margin-left:0px;
+}
+
 QWidget .QFrame#frame_3 .QLabel#label_5z { /* Combined Balance Label */
 qproperty-alignment: 'AlignVCenter | AlignLeft';
 min-width:160px;
@@ -1082,6 +1141,46 @@ QWidget .QFrame#frame_3 .QLabel#labelzBalancez { /* Available zPIV Balance */
 qproperty-alignment: 'AlignVCenter | AlignLeft';
 font-size:12px;
 font-weight:bold;
+color:#5B4C7C;
+margin-left:0px;
+}
+
+QWidget .QFrame#frame_3 .QLabel#labelLockedBalanceText { /* Available zPIV Label */
+qproperty-alignment: 'AlignVCenter | AlignRight';
+min-width:160px;
+background-color:#5B4C7C;
+color:#fff;
+margin-right:5px;
+padding-right:5px;
+font-weight:bold;
+font-size:14px;
+/* min-height:35px; */
+}
+
+QWidget .QFrame#frame_3 .QLabel#labelLockedBalance { /* Available zPIV Balance */
+qproperty-alignment: 'AlignVCenter | AlignLeft';
+font-size:12px;
+font-weight:normal;
+color:#5B4C7C;
+margin-left:0px;
+}
+
+QWidget .QFrame#frame_3 .QLabel#labelUnLockedBalanceText { /* Available zPIV Label */
+qproperty-alignment: 'AlignVCenter | AlignRight';
+min-width:160px;
+background-color:#5B4C7C;
+color:#fff;
+margin-right:5px;
+padding-right:5px;
+font-weight:bold;
+font-size:14px;
+/* min-height:35px; */
+}
+
+QWidget .QFrame#frame_3 .QLabel#labelUnLockedBalance { /* Available zPIV Balance */
+qproperty-alignment: 'AlignVCenter | AlignLeft';
+font-size:12px;
+font-weight:normal;
 color:#5B4C7C;
 margin-left:0px;
 }

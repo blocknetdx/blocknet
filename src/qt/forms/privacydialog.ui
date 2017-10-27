@@ -177,6 +177,9 @@
                </item>
                <item>
                 <widget class="QLabel" name="labelzPIVAmountText">
+                 <property name="toolTip">
+                  <string>Available for minting are coins which are confirmed and not locked or Masternode collaterals.</string>
+                 </property>
                  <property name="text">
                   <string>Available for Minting:</string>
                  </property>
@@ -556,6 +559,9 @@
                </item>
                <item>
                 <widget class="QLabel" name="labelzPIVBalanceText">
+                 <property name="toolTip">
+                  <string>Available (mature and spendable) zPIV for spending</string>
+                 </property>
                  <property name="text">
                   <string>Available Balance:</string>
                  </property>
@@ -571,6 +577,11 @@
                    <weight>75</weight>
                    <bold>true</bold>
                   </font>
+                 </property>
+                 <property name="toolTip">
+                  <string>Available (mature and spendable) zPIV for spending
+
+zPIV are mature when they have more than 20 confirmations AND more than 3 mints of the same denomination after them were minted</string>
                  </property>
                  <property name="text">
                   <string>0 zPIV</string>
@@ -949,10 +960,10 @@
                   </font>
                  </property>
                  <property name="toolTip">
-                  <string>Available Funds</string>
+                  <string>Total Balance including unconfirmed and immature zPIV</string>
                  </property>
                  <property name="text">
-                  <string>Available Zerocoin  Balance:</string>
+                  <string>Total Zerocoin  Balance:</string>
                  </property>
                  <property name="alignment">
                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -985,6 +996,9 @@
                    <weight>75</weight>
                    <bold>true</bold>
                   </font>
+                 </property>
+                 <property name="toolTip">
+                  <string>Total Balance including unconfirmed and immature zPIV</string>
                  </property>
                  <property name="text">
                   <string>0 zPIV</string>
@@ -1031,6 +1045,10 @@
                    <width>40</width>
                    <height>0</height>
                   </size>
+                 </property>
+                 <property name="toolTip">
+                  <string>Unconfirmed: less than 20 confirmations
+Immature: confirmed, but less than 3 mints of the same denomination after it was minted</string>
                  </property>
                  <property name="text">
                   <string>0 x</string>
@@ -1081,6 +1099,10 @@
                    <height>0</height>
                   </size>
                  </property>
+                 <property name="toolTip">
+                  <string>Unconfirmed: less than 20 confirmations
+Immature: confirmed, but less than 3 mints of the same denomination after it was minted</string>
+                 </property>
                  <property name="text">
                   <string>0 x</string>
                  </property>
@@ -1129,6 +1151,10 @@
                    <width>40</width>
                    <height>0</height>
                   </size>
+                 </property>
+                 <property name="toolTip">
+                  <string>Unconfirmed: less than 20 confirmations
+Immature: confirmed, but less than 3 mints of the same denomination after it was minted</string>
                  </property>
                  <property name="text">
                   <string>0 x</string>
@@ -1179,6 +1205,10 @@
                    <height>0</height>
                   </size>
                  </property>
+                 <property name="toolTip">
+                  <string>Unconfirmed: less than 20 confirmations
+Immature: confirmed, but less than 3 mints of the same denomination after it was minted</string>
+                 </property>
                  <property name="text">
                   <string>0 x</string>
                  </property>
@@ -1227,6 +1257,10 @@
                    <width>40</width>
                    <height>0</height>
                   </size>
+                 </property>
+                 <property name="toolTip">
+                  <string>Unconfirmed: less than 20 confirmations
+Immature: confirmed, but less than 3 mints of the same denomination after it was minted</string>
                  </property>
                  <property name="text">
                   <string>0 x</string>
@@ -1277,6 +1311,10 @@
                    <height>0</height>
                   </size>
                  </property>
+                 <property name="toolTip">
+                  <string>Unconfirmed: less than 20 confirmations
+Immature: confirmed, but less than 3 mints of the same denomination after it was minted</string>
+                 </property>
                  <property name="text">
                   <string>0 x</string>
                  </property>
@@ -1326,6 +1364,10 @@
                    <height>0</height>
                   </size>
                  </property>
+                 <property name="toolTip">
+                  <string>Unconfirmed: less than 20 confirmations
+Immature: confirmed, but less than 3 mints of the same denomination after it was minted</string>
+                 </property>
                  <property name="text">
                   <string>0 x</string>
                  </property>
@@ -1374,6 +1416,10 @@
                    <width>40</width>
                    <height>0</height>
                   </size>
+                 </property>
+                 <property name="toolTip">
+                  <string>Unconfirmed: less than 20 confirmations
+Immature: confirmed, but less than 3 mints of the same denomination after it was minted</string>
                  </property>
                  <property name="text">
                   <string>0 x</string>
