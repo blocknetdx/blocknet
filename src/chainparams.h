@@ -76,9 +76,7 @@ public:
     int64_t TargetTimespan() const { return nTargetTimespan; }
     int64_t TargetSpacing() const { return nTargetSpacing; }
     int64_t Interval() const { return nTargetTimespan / nTargetSpacing; }
-    int LAST_POW_BLOCK() const { return nLastPOWBlock; }
     int COINBASE_MATURITY() const { return nMaturity; }
-    int ModifierUpgradeBlock() const { return nModifierUpdateBlock; }
     CAmount MaxMoneyOut() const { return nMaxMoneyOut; }
     /** The masternode count that we will allow the see-saw reward payments to be off by */
     int MasternodeCountDrift() const { return nMasternodeCountDrift; }
@@ -109,6 +107,11 @@ public:
     int Zerocoin_MintRequiredConfirmations() const { return nMintRequiredConfirmations; }
     int Zerocoin_DefaultSpendSecurity() const { return nDefaultSecurityLevel; }
     int Zerocoin_HeaderVersion() const { return nZerocoinHeaderVersion; }
+
+    /** Height or Time Based Activations **/
+    int ModifierUpgradeBlock() const { return nModifierUpdateBlock; }
+    int LAST_POW_BLOCK() const { return nLastPOWBlock; }
+    int Zerocoin_StartHeight() const { return nZerocoinStartHeight; }
 
 protected:
     CChainParams() {}
@@ -160,6 +163,7 @@ protected:
     int nDefaultSecurityLevel;
     int nZerocoinHeaderVersion;
     int64_t nBudget_Fee_Confirmations;
+    int nZerocoinStartHeight;
 };
 
 /**

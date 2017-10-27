@@ -198,6 +198,16 @@ bool CBlockTreeDB::ReadFlag(const std::string& name, bool& fValue)
     return true;
 }
 
+bool CBlockTreeDB::WriteInt(const std::string& name, int nValue)
+{
+    return Write(std::make_pair('I', name), nValue);
+}
+
+bool CBlockTreeDB::ReadInt(const std::string& name, int& nValue)
+{
+    return Read(std::make_pair('I', name), nValue);
+}
+
 bool CBlockTreeDB::LoadBlockIndexGuts()
 {
     boost::scoped_ptr<leveldb::Iterator> pcursor(NewIterator());

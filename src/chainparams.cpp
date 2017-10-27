@@ -120,11 +120,14 @@ public:
         nMinerThreads = 0;
         nTargetTimespan = 1 * 60; // PIVX: 1 day
         nTargetSpacing = 1 * 60;  // PIVX: 1 minute
-        nLastPOWBlock = 259200;
         nMaturity = 100;
         nMasternodeCountDrift = 20;
-        nModifierUpdateBlock = 615800;
         nMaxMoneyOut = 21000000 * COIN;
+
+        /** Height or Time Based Activations **/
+        nLastPOWBlock = 259200;
+        nModifierUpdateBlock = 615800;
+        nZerocoinStartHeight = 863787;
 
         /**
          * Build the genesis block. Note that the output of the genesis coinbase cannot
