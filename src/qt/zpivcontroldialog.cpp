@@ -82,6 +82,11 @@ void ZPivControlDialog::updateList()
         itemMint->setText(COLUMN_PUBCOIN, QString::fromStdString(strPubCoin));
 
         int nConfirmations = (mint.GetHeight() ? chainActive.Height() - mint.GetHeight() : 0);
+        if (nConfirmations < 0) {
+            // Sanity check
+            nConfirmations = 0;
+        }
+
         itemMint->setText(COLUMN_CONFIRMATIONS, QString::number(nConfirmations));
 
         // check to make sure there are at least 3 other mints added to the accumulators after this
