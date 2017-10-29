@@ -19,7 +19,8 @@ std::vector<CZerocoinMint> SelectMintsFromList(const CAmount nValueTarget, CAmou
                                                bool fMinimizeChange,
                                                int& nCoinsReturned,
                                                const std::list<CZerocoinMint>& listMints,
-                                               const std::map<libzerocoin::CoinDenomination, CAmount> mapDenomsHeld
+                                               const std::map<libzerocoin::CoinDenomination, CAmount> mapDenomsHeld,
+                                               int& nNeededSpends
                                                );
 
 int calculateChange(

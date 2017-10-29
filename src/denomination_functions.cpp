@@ -409,11 +409,13 @@ int calculateChange(
 // 'spends' are required
 // -------------------------------------------------------------------------------------------------------
 std::vector<CZerocoinMint> SelectMintsFromList(const CAmount nValueTarget, CAmount& nSelectedValue, int nMaxNumberOfSpends, bool fMinimizeChange,
-                                               int& nCoinsReturned, const std::list<CZerocoinMint>& listMints, const std::map<CoinDenomination, CAmount> mapOfDenomsHeld)
+                                               int& nCoinsReturned, const std::list<CZerocoinMint>& listMints, 
+                                               const std::map<CoinDenomination, CAmount> mapOfDenomsHeld, int& nNeededSpends)
 {
     std::vector<CZerocoinMint> vSelectedMints;
     std::map<CoinDenomination, CAmount> mapOfDenomsUsed;
 
+    nNeededSpends = 0;
     bool fCanMeetExactly = getIdealSpends(nValueTarget, listMints, mapOfDenomsHeld, mapOfDenomsUsed);
     if (fCanMeetExactly) {
         nCoinsReturned = 0;
@@ -422,6 +424,9 @@ std::vector<CZerocoinMint> SelectMintsFromList(const CAmount nValueTarget, CAmou
         // If true, we are good and done!
         if (vSelectedMints.size() <= (size_t)nMaxNumberOfSpends) {
             return vSelectedMints;
+        }
+        else {
+            nNeededSpends = vSelectedMints.size();
         }
     }
     // Since either too many spends needed or can not spend the exact amount,

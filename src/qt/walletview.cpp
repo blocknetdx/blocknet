@@ -195,6 +195,8 @@ void WalletView::processNewTransaction(const QModelIndex& parent, int start, int
 void WalletView::gotoOverviewPage()
 {
     setCurrentWidget(overviewPage);
+    // Refresh UI-elements in case coins were locked/unlocked in CoinControl
+    walletModel->emitBalanceChanged();
 }
 
 void WalletView::gotoHistoryPage()
@@ -224,6 +226,8 @@ void WalletView::gotoReceiveCoinsPage()
 void WalletView::gotoPrivacyPage()
 {
     setCurrentWidget(privacyPage);
+    // Refresh UI-elements in case coins were locked/unlocked in CoinControl
+    walletModel->emitBalanceChanged();
 }
 
 void WalletView::gotoSendCoinsPage(QString addr)

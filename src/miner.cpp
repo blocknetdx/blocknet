@@ -312,16 +312,22 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
                 if (IsTransactionInChain(tx.GetHash(), nHeightTx))
                     continue;
 
+                bool fDoubleSerial = false;
                 for (const CTxIn txIn : tx.vin) {
                     if (txIn.scriptSig.IsZerocoinSpend()) {
                         libzerocoin::CoinSpend spend = TxInToZerocoinSpend(txIn);
                         if (count(vBlockSerials.begin(), vBlockSerials.end(), spend.getCoinSerialNumber()))
-                            continue;
+                            fDoubleSerial = true;
                         if (count(vTxSerials.begin(), vTxSerials.end(), spend.getCoinSerialNumber()))
-                            continue;
+                            fDoubleSerial = true;
+                        if (fDoubleSerial)
+                            break;
                         vTxSerials.emplace_back(spend.getCoinSerialNumber());
                     }
                 }
+                //This zPiv serial has already been included in the block, do not add this tx.
+                if (fDoubleSerial)
+                    continue;
             }
 
             CAmount nTxFees = view.GetValueIn(tx) - tx.GetValueOut();

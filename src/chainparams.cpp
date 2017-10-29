@@ -59,11 +59,15 @@ static Checkpoints::MapCheckpoints mapCheckpoints =
     (623933, uint256("c7aafa648a0f1450157dc93bd4d7448913a85b7448f803b4ab970d91fc2a7da7"))
     (791150, uint256("8e76f462e4e82d1bd21cb72e1ce1567d4ddda2390f26074ffd1f5d9c270e5e50"))
     (795000, uint256("4423cceeb9fd574137a18733416275a70fdf95283cc79ad976ca399aa424a443"))
-    (867733, uint256("03b26296bf693de5782c76843d2fb649cb66d4b05550c6a79c047ff7e1c3ae15"));
+    (863787, uint256("5b2482eca24caf2a46bb22e0545db7b7037282733faa3a42ec20542509999a64"))
+    (863795, uint256("2ad866818c4866e0d555181daccc628056216c0db431f88a825e84ed4f469067"))
+    (863805, uint256("a755bd9a22b63c70d3db474f4b2b61a1f86c835b290a081bb3ec1ba2103eb4cb"))
+    (867733, uint256("03b26296bf693de5782c76843d2fb649cb66d4b05550c6a79c047ff7e1c3ae15"))
+    (879650, uint256("227e1d2b738b6cd83c46d1d64617934ec899d77cee34336a56e61b71acd10bb2"));
 static const Checkpoints::CCheckpointData data = {
     &mapCheckpoints,
-    1508454843, // * UNIX timestamp of last checkpoint block
-    1740710,    // * total number of transactions between genesis and last checkpoint
+    1509225216, // * UNIX timestamp of last checkpoint block
+    1770098,    // * total number of transactions between genesis and last checkpoint
                 //   (the tx=... number in the SetBestChain debug.log lines)
     2000        // * estimated number of transactions per day after checkpoint
 };
@@ -120,11 +124,14 @@ public:
         nMinerThreads = 0;
         nTargetTimespan = 1 * 60; // PIVX: 1 day
         nTargetSpacing = 1 * 60;  // PIVX: 1 minute
-        nLastPOWBlock = 259200;
         nMaturity = 100;
         nMasternodeCountDrift = 20;
-        nModifierUpdateBlock = 615800;
         nMaxMoneyOut = 21000000 * COIN;
+
+        /** Height or Time Based Activations **/
+        nLastPOWBlock = 259200;
+        nModifierUpdateBlock = 615800;
+        nZerocoinStartHeight = 863787;
 
         /**
          * Build the genesis block. Note that the output of the genesis coinbase cannot

@@ -68,8 +68,8 @@ using namespace std;
 CWallet* pwalletMain = NULL;
 int nWalletBackups = 10;
 #endif
-bool fFeeEstimatesInitialized = false;
-bool fRestartRequested = false; // true: restart false: shutdown
+volatile bool fFeeEstimatesInitialized = false;
+volatile bool fRestartRequested = false; // true: restart false: shutdown
 
 #if ENABLE_ZMQ
 static CZMQNotificationInterface* pzmqNotificationInterface = NULL;
@@ -330,6 +330,7 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += HelpMessageOpt("-pid=<file>", strprintf(_("Specify pid file (default: %s)"), "pivxd.pid"));
 #endif
     strUsage += HelpMessageOpt("-reindex", _("Rebuild block chain index from current blk000??.dat files") + " " + _("on startup"));
+    strUsage += HelpMessageOpt("-resync", _("Delete blockchain folders and resync from scratch") + " " + _("on startup"));
 #if !defined(WIN32)
     strUsage += HelpMessageOpt("-sysperms", _("Create new files with system default permissions, instead of umask 077 (only effective with disabled wallet functionality)"));
 #endif
@@ -1043,6 +1044,41 @@ bool AppInit2(boost::thread_group& threadGroup)
             }
         }
 
+        if (GetBoolArg("-resync", false)) {
+            uiInterface.InitMessage(_("Preparing for resync..."));
+            // Delete the local blockchain folders to force a resync from scratch to get a consitent blockchain-state
+            filesystem::path blocksDir = GetDataDir() / "blocks";
+            filesystem::path chainstateDir = GetDataDir() / "chainstate";
+            filesystem::path sporksDir = GetDataDir() / "sporks";
+            filesystem::path zerocoinDir = GetDataDir() / "zerocoin";
+            
+            LogPrintf("Deleting blockchain folders blocks, chainstate, sporks and zerocoin\n");
+            // We delete in 4 individual steps in case one of the folder is missing already
+            try {
+                if (filesystem::exists(blocksDir)){
+                    boost::filesystem::remove_all(blocksDir);
+                    LogPrintf("-resync: folder deleted: %s\n", blocksDir.string().c_str());
+                }
+
+                if (filesystem::exists(chainstateDir)){
+                    boost::filesystem::remove_all(chainstateDir);
+                    LogPrintf("-resync: folder deleted: %s\n", chainstateDir.string().c_str());
+                }
+
+                if (filesystem::exists(sporksDir)){
+                    boost::filesystem::remove_all(sporksDir);
+                    LogPrintf("-resync: folder deleted: %s\n", sporksDir.string().c_str());
+                }
+
+                if (filesystem::exists(zerocoinDir)){
+                    boost::filesystem::remove_all(zerocoinDir);
+                    LogPrintf("-resync: folder deleted: %s\n", zerocoinDir.string().c_str());
+                }
+            } catch (boost::filesystem::filesystem_error& error) {
+                LogPrintf("Failed to delete blockchain folders %s\n", error.what());
+            }
+        }
+
         LogPrintf("Using wallet %s\n", strWalletFile);
         uiInterface.InitMessage(_("Verifying wallet..."));
 
@@ -1308,6 +1344,113 @@ bool AppInit2(boost::thread_group& threadGroup)
                     break;
                 }
 
+                // Recalculate money supply for blocks that are impacted by accounting issue after zerocoin activation
+                bool fVecFixed = false;
+                pblocktree->ReadFlag("msvecfix", fVecFixed);
+                bool fReindexRange = chainActive.Height() > GetZerocoinStartHeight();
+                if (fReindexRange && !fVecFixed) {
+                    uiInterface.InitMessage(_("Recalculating supply statistics may take 30-60 minutes..."));
+                    LogPrintf("%s : Recalculating supply statistics\n", __func__);
+
+                    //If recalculation was exited before it was finished, then start where it left off
+                    int nStartHeight = 0;
+                    if (!pblocktree->ReadInt("msvecindex", nStartHeight))
+                        nStartHeight = GetZerocoinStartHeight();
+                    CBlockIndex *pindex = chainActive[nStartHeight];
+                    int nHeightEnd = chainActive.Height();
+                    while (true) {
+                        if (ShutdownRequested())
+                            return false;
+
+                        double dPercent = 1 - ((nHeightEnd - pindex->nHeight) / (double)(nHeightEnd - nStartHeight));
+                        string strMessage = strprintf("Recalculating supply statistics may take 30-60 minutes block %d...", pindex->nHeight);
+                        uiInterface.ShowProgress(_(strMessage.c_str()), (int)(dPercent * 100));
+
+                        //overwrite possibly wrong vMintsInBlock data
+                        CBlock block;
+                        if (!ReadBlockFromDisk(block, pindex)) {
+                            return InitError(_("Failed to read block index"));
+                        }
+
+                        std::list<CZerocoinMint> listMints;
+                        BlockToZerocoinMintList(block, listMints);
+
+                        pindex->vMintDenominationsInBlock.clear();
+                        for (auto mint : listMints) {
+                            pindex->vMintDenominationsInBlock.emplace_back(mint.GetDenomination());
+                        }
+
+                        if (!pblocktree->WriteBlockIndex(CDiskBlockIndex(pindex))) {
+                            return InitError(_("Failed to write block index"));
+                        }
+
+                        LogPrintf("%s : rewrote vMintDenominationsInBlock for %d\n", __func__, pindex->nHeight);
+
+                        //Track progress in case of shutdown
+                        pblocktree->WriteInt("msvecindex", pindex->nHeight);
+
+                        if (pindex->nHeight < nHeightEnd)
+                            pindex = chainActive.Next(pindex);
+                        else
+                            break;
+                    }
+
+                    //This flag indicates that the fix has already been done and not needed in the future
+                    pblocktree->WriteFlag("msvecfix", true);
+                }
+
+                bool msIndexFixed = false;
+                pblocktree->ReadFlag("msindexfix", msIndexFixed);
+                if (fReindexRange && !msIndexFixed){
+                    uiInterface.InitMessage(_("Recalculating coin supply may take 30-60 minutes..."));
+                    LogPrintf("%s : Recalculating money supply statistics\n", __func__);
+
+                    //If recalculation was exited before it was finished, then start where it left off
+                    int nStartHeight = 0;
+                    if (!pblocktree->ReadInt("msindex", nStartHeight))
+                        nStartHeight = GetZerocoinStartHeight();
+                    CBlockIndex *pindex = chainActive[nStartHeight];
+                    int nHeightEnd = chainActive.Height();
+
+                    // Remove possible zPiv spends from the supply
+                    CAmount nzPivSpent = 0;
+                    while (true) {
+                        // get each blocks amount of zPiv minted and the zpiv money supply change for that block
+                        // figure out amount spent by difference in zpiv supply per denom and the amount minted per denom
+                        CAmount nBlockzPivSpent = 0;
+                        for (auto denom : libzerocoin::zerocoinDenomList) {
+                            int nDenomAdded = count(pindex->vMintDenominationsInBlock.begin(), pindex->vMintDenominationsInBlock.end(), denom);
+                            int64_t nDenomMinted = nDenomAdded * denom;
+
+                            //note zPiv supply is quantity of zPiv for the denom, not the amount
+                            int64_t nSupplyZPivLast = pindex->pprev->mapZerocoinSupply.at(denom) * denom;
+                            int64_t nSupplyZPiv = pindex->mapZerocoinSupply.at(denom) * denom;
+                            int64_t nDenomZPivSpent = (nSupplyZPivLast + nDenomMinted) - nSupplyZPiv;
+                            nBlockzPivSpent += nDenomZPivSpent * COIN;
+                        }
+
+                        //Total zPiv spent up to and including this block
+                        nzPivSpent += nBlockzPivSpent;
+
+                        //Rewrite money supply
+                        pindex->nMoneySupply = pindex->nMoneySupply - nzPivSpent;
+                        if (!pblocktree->WriteBlockIndex(CDiskBlockIndex(pindex))) {
+                            return InitError(_("Failed to write block index"));
+                        }
+
+                        //Track progress in case of shutdown
+                        pblocktree->WriteInt("msindex", pindex->nHeight);
+
+                        if (pindex->nHeight < nHeightEnd)
+                            pindex = chainActive.Next(pindex);
+                        else
+                            break;
+                    }
+
+                    //Mark reindexing as done, and not needed again in the futures
+                    pblocktree->WriteFlag("msindexfix", true);
+                }
+
                 list<uint256> listAccCheckpointsNoDB = CAccumulators::getInstance().GetAccCheckpointsNoDB();
                 // PIVX: recalculate Accumulator Checkpoints that failed to database properly
                 if (!listAccCheckpointsNoDB.empty() && chainActive.Tip()->GetBlockHeader().nVersion >= Params().Zerocoin_HeaderVersion()) {
@@ -1341,6 +1484,9 @@ bool AppInit2(boost::thread_group& threadGroup)
                                 uint256 nCheckpointCalculated = 0;
                                 CAccumulators::getInstance().GetCheckpoint(pindex->nHeight, nCheckpointCalculated);
 
+                                // GetCheckpoint could have terminated due to a shutdown request. Check this here.
+                                if (ShutdownRequested())
+                                    break;
                                 //check that the calculated checkpoint is what is in the index.
                                 if(nCheckpointCalculated != pindex->nAccumulatorCheckpoint) {
                                     LogPrintf("%s : height=%d calculated_checkpoint=%s actual=%s\n", __func__, pindex->nHeight, nCheckpointCalculated.GetHex(), pindex->nAccumulatorCheckpoint.GetHex());

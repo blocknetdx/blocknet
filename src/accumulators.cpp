@@ -206,6 +206,11 @@ bool CAccumulators::GetCheckpoint(int nHeight, uint256& nCheckpoint)
     int nTotalMintsFound = 0;
     CBlockIndex *pindex = chainActive[nHeight - 20];
     while (pindex->nHeight < nHeight - 10) {
+        // checking whether we should stop this process due to a shutdown request
+        if (ShutdownRequested()) {
+            return false;
+        }
+
         //make sure this block is eligible for accumulation
         if (pindex->GetBlockHeader().nVersion < Params().Zerocoin_HeaderVersion()) {
             pindex = chainActive[pindex->nHeight + 1];
