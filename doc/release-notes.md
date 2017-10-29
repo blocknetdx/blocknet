@@ -1,4 +1,4 @@
-PIVX Core version 3.0.3 is now available from:
+PIVX Core version 3.0.4 is now available from:
 
   <https://github.com/pivx-project/pivx/releases>
 
@@ -9,17 +9,20 @@ Please report bugs using the issue tracker at github:
 
   <https://github.com/pivx-project/pivx/issues>
 
-Recommended Update
+
+Mandatory Update
 ==============
 
-PIVX Core v3.0.3 is a recommended, semi-mandatory update for all users. This release contains transaction creation bug fixes for zPIV spends, automint calculation adjustments, and other various updates/fixes.
+PIVX Core v3.0.4 is a mandatory update for all users. This release contains various updates/fixes pertaining to the zPIV protocol, supply tracking, block transmission and relaying, as well as usability and quality-of-life updates to the GUI.
 
-zPIV spending requires this update.
+Users will have a grace period to update their clients before versions prior to this release are no longer allowed to connect to this (and future) version(s).
+
 
 How to Upgrade
 ==============
 
 If you are running an older version, shut it down. Wait until it has completely shut down (which might take a few minutes for older versions), then run the installer (on Windows) or just copy over /Applications/PIVX-Qt (on Mac) or pivxd/pivx-qt (on Linux).
+
 
 Compatibility
 ==============
@@ -43,41 +46,26 @@ frequently tested on them.
 Notable Changes
 ===============
 
-Auto Wallet Backup
+Refactoring of zPiv Spend Validation Code
 ---------------------
-In addition to the automatic wallet backup that is done at each start of the client, a new automatic backup function has been added that will, by default, create a backup of the wallet file during each zPIV mint operation (zPIV spends which re-mint their change are also included in this). This functionality is controlled by the `-backupzpiv` command-line option, which defaults to `1` (enabled, auto-backup).
+zPiv spend validation was too rigid and did not give enough slack for reorganizations. Many staking wallets were unable to reorganize back to the correct blockchain when they had an orphan stake which contained a zPiv spend. zPiv double spending validation has been refactored to properly account for reorganization.
 
-Users that wish to prevent this behavior (not recommended) can pass `-backupzpiv=0` at the command-line when starting the client, or add `backupzpiv=0` to their `pivx.conf` file.
-
-zPIV Automint Calculations
+Money Supply Calculation Fix
 ---------------------
-A bug in the automint calculations was made apparent on mainnet when block times exceeded expectations, resulting in zPIV mint transactions that were in an unconfirmed state to still be treated as if they had never been minted. This caused automint to effectively mint more than what was intended.
+Coin supply incorrectly was counting spent zPiv as newly minted coins that are added to the coin supply, thus resulting in innacurate coin supply data.
 
-zPIV Spending Fix
+The coin supply is now correctly calculated and if a new wallet client is synced from scratch or if `-reindex=1` is used then the correct money supply will be calculated. If neither of these two options are used, the wallet client will automatically reindex the money supply calculations upon the first time opening the software after updating to v3.0.4. The reindex takes approximately 10-60 minutes depending on the hardware used. If the reindex is exited mid-process, it will continue where it left off upon restart.
+
+Better Filtering of Transactions in Stake Miner
 ---------------------
-The size of zPIV spend transactions is knowingly larger than normal transactions, and while this was expected, a much stricter check against the scriptsig size is used for mainnet, causing the transactions to be rejected by the mempool, and thus not being packaged into any blocks.
+The stake miner code now filters out zPiv double spends that were rarely being slipped into blocks (and being rejected by peers when sent broadcast).
 
-zPIV Transaction Recovery
+More Responsive Shutdown Requests
 ---------------------
-Due to the aforementioned issue with zPIV spending, users may find that their attempted spends are now conflicted and zPIV balances are not represented as expected. "Recovery" of these transactions can be done using the following methods:
+When computationally expensive accumulator calculations are being performed and the user requests to close the application, the wallet will exit much sooner than before.
 
-1. GUI:
 
-   The Privacy tab has the `Reset` and `Rescan` buttons that can be used to restore these mints/spends from a state of being marked as unavailable.
-
-2. RPC:
-
-   The RPC commands `resetspentzerocoin` and `resetmintzerocoin` are the command-line counterparts to the above, and can be used by users that do not use the GUI wallet.
-
-RPC Changes
----------------------
-The `bip38decrypt` command has had it's parameter order changed to be more consistent with it's counterpart. The command now expects the PIVX address as it's first parameter and the passphrase as it's second parameter.
-
-Bip38 Compatibility With 3rd Party Tools
----------------------
-The in-wallet bip38 encryption method was leaving the final 4 bytes of the encrypted key blank. This caused an incompatibility issue with 3rd party tools like the paper wallet generators that could decrypt bip38 encrypted keys. Cross-tool compatibility has now been restored.
-
-3.0.3 Change log
+3.0.4 Change log
 =================
 
 Detailed release notes follow. This overview includes changes that affect
@@ -85,35 +73,37 @@ behavior, not code moves, refactors and string updates. For convenience in locat
 the code changes and accompanying discussion, both the pull request and
 git merge commit are mentioned.
 
-### RPC and other APIs
-- #275 `059aaa9` [RPC] Change Parameter Order of bip38decrypt (presstab)
-
 ### P2P Protocol and Network Code
-- #286 `85c0f53` [Main] Change sporkDB from smart ptr to ptr. (presstab)
-- #292 `feadab4` Additional checks for double spending of zPiv serials. (presstab)
-- #294 `3518af7` Add additional checks for txid for zpiv spend. (presstab)
-- #294 '54bac87' New checkpoint block 867733. (presstab)
+- #294 `27c0943` Add additional checks for txid for zpiv spend. (presstab)
+- #301 `b8392cd` Refactor zPiv tx counting code. Add a final check in ConnectBlock() (presstab)
+- #306 `77dd55c` [Core] Don't send not-validated blocks (Mrs-X)
+- #312 `5d79bea` [Main] Update last checkpoint data (Fuzzbawls)
+- #325 `7d98ebe` Reindex zPiv blocks and correct stats. (presstab)
+- #327 `aa1235a` [Main] Don't limit zPIV spends from getting into the mempool (Fuzzbawls)
+- #329 `19b38b2` Update checkpoints. (presstab)
+- #331 `b1fb710` [Consensus] Bump protocol. Activate via Spork 15. (rejectedpromise)
 
 ### Wallet
-- #271 `5e9a086` [Wallet] Remove unused member wallet in UnlockContext inner class (Jon Spock)
-- #279 `e734010` Add -backupzpiv startup flag. (presstab)
-- #280 `fdc182d` [Wallet] Fix zPiv spending errors. (presstab)
-- #282 `310f216` [Wallet] Count pending zPiv balance for automint. (presstab)
-- #290 `004d7b6` Include both pending and mature zerocoins for automint calculations (presstab)
+- #308 `bd8a982` [Minting] Clear mempool after invalid block from miner (presstab)
+- #316 `ed192cf` [Minting] Better filtering of zPiv serials in miner. (presstab)
 
 ### GUI
-- #268 `bc63f24` [GUI/RPC] Changed bubblehelp text + RPC startmasternode help text fixed (Mrs-X)
-- #269 `5466a9b` Check if model is valid before using in transactionView (Jon Spock)
-- #270 `bd2328e` [Qt] Make lock icon clickable to toggle wallet lock state (Fuzzbawls)
-- #273 `f31136e` [Qt] Fix UI tab order and shortcuts (Mrs-X)
-- #287 `74a1c3c` [Qt] Don't allow the Esc key to close the privacy tab (Fuzzbawls)
-- #291 `cb314e6` [Qt] zPiv control quantity/amount fixes (rejectedpromise)
+- #309 `f560ffc` [UI] Better error message when too much inputs are used for spending zPIV (Mrs-X)
+- #317 `b27cb72` [UI] Wallet repair option to resync from scratch (Mrs-X)
+- #323 `2b648be` [UI] Balance fix + bubble-help + usability improvements (Mrs-X)
+- #324 `8cdbb5d` disable negative confirmation numbers. (Mrs-X)
+
+### Build System
+- #322 `a91feb3` [Build] Add compile/link summary to configure (Fuzzbawls)
 
 ### Miscellaneous
-- #266 `2d97b54` [Scripts] Fix location for aarch64 outputs in gitian-build.sh (Fuzzbawls)
-- #272 `958f51e` [Minting] Replace deprecated auto_ptr. (presstab)
-- #276 `03f14ba` Append BIP38 encrypted key with an 4 byte Base58 Checksum (presstab)
-- #288 `2522aa1` Bad CBlockHeader copy. (furszy)
+- #298 `3580394` Reorg help to stop travis errors (Jon Spock)
+- #302 `efb648b` [Cleanup] Remove unused variables (rejectedpromise)
+- #307 `dbd801d` Remove hard-coded GIT_ARCHIVE define (Jon Spock)
+- #314 `f1c830a` Fix issue causing crash when pivxd --help was invoked (Jon Spock)
+- #326 `8b6a13e` Combine 2 LogPrintf statement to reduce debug.log clutter (Jon Spock)
+- #328 `a6c18c8` [Main] PIVX not responding on user quitting app (Aaron Langford)
+
 
 Credits
 =======
@@ -125,6 +115,6 @@ Thanks to everyone who directly contributed to this release:
 - furszy
 - presstab
 - rejectedpromise
-- Warrows
+- aaronlangford31
 
 As well as everyone that helped translating on [Transifex](https://www.transifex.com/projects/p/pivx-project-translations/).
