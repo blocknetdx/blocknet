@@ -336,7 +336,7 @@
     </message>
     <message>
         <source>Allowed: 0-9,a-z,A-Z,</source>
-        <translation>Zulässig: 0-9,a-z,A-Z</translation>
+        <translation>Zulässig: 0-9,a-z,A-Z,</translation>
     </message>
     <message>
         <source>The entered address is invalid.</source>
@@ -854,6 +854,10 @@ Adresse: %4</translation>
 </context>
 <context>
     <name>ClientModel</name>
+    <message>
+        <source>Total: %1 (IPv4: %2 / IPv6: %3 / Tor: %4 / Unknown: %5)</source>
+        <translation>Total: %1 (IPv4: %2 / IPv6: %3 / Tor: %4 / Unbekannt: %5)</translation>
+    </message>
     <message>
         <source>Network Alert</source>
         <translation>Netzwerkalarm</translation>
@@ -1520,7 +1524,7 @@ Bitte Adresse überprüfen und nochmals versuchen.</translation>
     </message>
     <message>
         <source>Basic Privacy</source>
-        <translation>Wenig Privatsphäre</translation>
+        <translation>Geringe Privatsphäre</translation>
     </message>
     <message>
         <source>High Privacy</source>
@@ -1690,12 +1694,12 @@ Bitte Adresse überprüfen und nochmals versuchen.</translation>
     </message>
     <message>
         <source>The user interface language can be set here. This setting will take effect after restarting PIVX.</source>
-        <translation>Die Sprache der Benutzeroberflächekann hier gesetzt werden. Diese Einstellung wird nach einem Neustart realisiert.</translation>
+        <translation>Die Sprache der Benutzeroberfläche kann hier festgelegt werden. Diese Einstellung wird nach einem Neustart realisiert.</translation>
     </message>
     <message>
         <source>Language missing or translation incomplete? Help contributing translations here:
 https://www.transifex.com/pivx-project/pivx-project-translations</source>
-        <translation>Sprache fehlt oder ist unvollständig? Helfe mit und trage zur Übersetzung hier bei:
+        <translation>Sprache fehlt oder ist unvollständig? Helfe mit und trage zur Übersetzung bei unter:
 https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
@@ -1704,7 +1708,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>Percentage of incoming PIV which get automatically converted to zPIV via Zerocoin Protocol (min: 10%)</source>
-        <translation>Anteil des einkommenden PIV, welcher automatisch zu zPIV via Zerocoin Protokoll konvertiert wird (min: 10%)</translation>
+        <translation>Anteil des eingehenden PIV, welcher automatisch zu zPIV via Zerocoin Protokoll konvertiert wird (min: 10%)</translation>
     </message>
     <message>
         <source>Percentage of autominted zPIV</source>
@@ -1970,7 +1974,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>URI cannot be parsed! This can be caused by an invalid PIVX address or malformed URI parameters.</source>
-        <translation>URI kann nicht analysiert werden! Dies kann durch eine ungültige PIVX-Adresse oder fehlerhafte URI-Parameter verursacht sein.</translation>
+        <translation>URI kann nicht analysiert werden! Dies kann durch eine ungültige PIVX-Adresse oder fehlerhafte URI-Parameter verursacht worden sein.</translation>
     </message>
     <message>
         <source>Payment request file cannot be read! This can be caused by an invalid payment request file.</source>
@@ -2014,7 +2018,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>Error communicating with %1: %2</source>
-        <translation>Fehler beim kommunizieren mit %1: %2</translation>
+        <translation>Fehler beim Kommunizieren mit %1: %2</translation>
     </message>
     <message>
         <source>Payment request cannot be parsed!</source>
@@ -2022,7 +2026,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>Bad response from server %1</source>
-        <translation>Schlechte Antwort vom Server %1</translation>
+        <translation>Fehlerhafte Antwort vom Server %1</translation>
     </message>
     <message>
         <source>Network request error</source>
@@ -2060,7 +2064,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>Zerocoin Actions:</source>
-        <translation>Zerocoin Handlungen:</translation>
+        <translation>Zerocoin Aktionen:</translation>
     </message>
     <message>
         <source>The displayed information may be out of date. Your wallet automatically synchronizes with the PIVX network after a connection is established, but this process has not completed yet.</source>
@@ -2116,11 +2120,11 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>ReScan</source>
-        <translation>NachScannen</translation>
+        <translation>Erneut Scannen</translation>
     </message>
     <message>
         <source>Status and/or Mesages from the last Mint Action.</source>
-        <translation>Status und/oder Mitteilungen aus der letzten Präge-Action</translation>
+        <translation>Status und/oder Mitteilungen aus der letzten Prägung</translation>
     </message>
     <message>
         <source>zPiv Control</source>
@@ -2136,11 +2140,11 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>Spend Zerocoin. Without 'Pay To:' address creates payments to yourself.</source>
-        <translation>Ausgebene Zerocoin. Ohne 'Pay To:'-Adresse erstellte Zahlungen an Sie selbst.</translation>
+        <translation>Überweise Zerocoin. Ohne Empfänger-Adresse werden Zahlungen an Sie selbst erstellt.</translation>
     </message>
     <message>
         <source>Spend Zerocoin</source>
-        <translation>Ausgebene Zerocoin.</translation>
+        <translation>Überweise Zerocoin</translation>
     </message>
     <message>
         <source>Available Balance:</source>
@@ -2152,7 +2156,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>Security Level for Zerocoin Transactions. More is better, but needs more time and resources.</source>
-        <translation>Sicherheitsstufe für Zerocoin-Transaktionen. Mehr ist besser, braucht aber mehr Zeit und Ressourcen.</translation>
+        <translation>Sicherheitsstufe für Zerocoin-Transaktionen. Höher ist besser, benötigt jedoch mehr Zeit und Ressourcen.</translation>
     </message>
     <message>
         <source>Security Level:</source>
@@ -2168,7 +2172,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>The PIVX address to send the payment to. Creates local payment to yourself when empty.</source>
-        <translation>Die PIVX-Adresse, an die die Zahlung gesenden wird. Erstelle Sie eine lokale Zahlung an sich selbst, wenn sie leer ist.</translation>
+        <translation>Die PIVX-Adresse, an die die Zahlung gesendet wird. Erstellt eine lokale Zahlung an Sie selbst, wenn die Zeile leer ist.</translation>
     </message>
     <message>
         <source>Choose previously used address</source>
@@ -2204,7 +2208,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>If checked, the wallet tries to minimize the returning change instead of minimizing the number of spent denominations.</source>
-        <translation>Wenn überprüft wird, versucht die Wallet, das zurückkehrende Wechselgeld zu minimieren, anstatt die Anzahl der verbrauchten Stückelungen zu minimieren.</translation>
+        <translation>Falls aktiviert, versucht die Wallet, das zurückkehrende Wechselgeld zu minimieren, anstatt die Anzahl der verbrauchten Stückelungen zu minimieren.</translation>
     </message>
     <message>
         <source>Minimize Change</source>
@@ -2212,7 +2216,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>Information about the available Zerocoin funds.</source>
-        <translation>Informationen über die verfügbaren Zerocoin-Mittel.</translation>
+        <translation>Informationen über den verfügbaren Zerocoin-Bestand.</translation>
     </message>
     <message>
         <source>Zerocoin Stats:</source>
@@ -2368,7 +2372,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>Zerocoin functionality is not enabled on the PIVX network yet.</source>
-        <translation>Zerocoin Funktionalität ist im PIVX Netzwerk im Moment nicht freigeschaltet.</translation>
+        <translation>Die Zerocoin Funktionalität ist im PIVX Netzwerk im Moment nicht freigeschaltet.</translation>
     </message>
     <message>
         <source>Error: Your wallet is locked. Please enter the wallet passphrase first.</source>
@@ -2399,8 +2403,8 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     <message>
         <source>Starting ResetMintZerocoin: rescanning complete blockchain, this will need up to 30 minutes depending on your hardware. 
 Please be patient...</source>
-        <translation>Starten von ResetMintZerocoin: Nachscannen der kompletten Blockchain. Das benötigt bis zu 30 Minuten je nach Hardware.
-Bitte haben Sie Geduld...</translation>
+        <translation>Starten von ResetMintZerocoin: Erneutes Scannen der kompletten Blockchain. Das benötigt, je nach Hardware, bis zu 30 Minuten .
+Bitte haben Sie etwas Geduld...</translation>
     </message>
     <message>
         <source>Duration: </source>
@@ -2651,7 +2655,7 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>Open the PIVX debug log file from the current data directory. This can take a few seconds for large log files.</source>
-        <translation>Öffne PIVX-Debug-Protokolldatei aus dem aktuellen Datenverzeichnis. Dies kann für einige Protokolldateien einige Sekunden dauern.</translation>
+        <translation>Öffne PIVX-Debug-Protokolldatei aus dem aktuellen Datenverzeichnis. Dies kann bei großen Protokolldateien einige Sekunden dauern.</translation>
     </message>
     <message>
         <source>Number of Masternodes</source>
@@ -2663,7 +2667,7 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>Clear console</source>
-        <translation> Leere Konsole</translation>
+        <translation>Konsole leeren</translation>
     </message>
     <message>
         <source>&amp;Network Traffic</source>
@@ -2747,7 +2751,7 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>&amp;Wallet Repair</source>
-        <translation>&amp;Wallet Reparieren </translation>
+        <translation>&amp;Wallet reparieren </translation>
     </message>
     <message>
         <source>Wallet In Use:</source>
@@ -2759,15 +2763,15 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>Attempt to recover private keys from a corrupt wallet.dat.</source>
-        <translation>Versuche, private Schlüssel aus einer beschädigten wallet.dat zurückzugewinnen.</translation>
+        <translation>Versuche, private Schlüssel aus einer beschädigten wallet.dat wiederherzustellen.</translation>
     </message>
     <message>
         <source>Rescan blockchain files</source>
-        <translation>Nachscannen der Bockchain Dateien</translation>
+        <translation>Erneutes Scannen der Bockchain Dateien</translation>
     </message>
     <message>
         <source>Rescan the block chain for missing wallet transactions.</source>
-        <translation>Nachscannen der Bockchain nach verschollen Wallet Transaktionen</translation>
+        <translation>Erneutes Scannen der Bockchain nach verschollen Wallet Transaktionen</translation>
     </message>
     <message>
         <source>Recover transactions 1</source>
@@ -2775,7 +2779,7 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>Recover transactions from blockchain (keep meta-data, e.g. account owner).</source>
-        <translation>Wiederherstellung von Transaktionen von Blockchain (behalte Meta-Daten, zB. Kontoinhaber)</translation>
+        <translation>Wiederherstellung von Transaktionen aus der Blockchain (behalte Meta-Daten, zB. Kontoinhaber)</translation>
     </message>
     <message>
         <source>Recover transactions 2</source>
@@ -2783,7 +2787,7 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>Recover transactions from blockchain (drop meta-data).</source>
-        <translation>Wiederherstellung von Transaktionen von Blockchain (verwerfe Meta-Daten)</translation>
+        <translation>Wiederherstellung von Transaktionen aus der Blockchain (verwerfe Meta-Daten)</translation>
     </message>
     <message>
         <source>Upgrade wallet format</source>
@@ -2791,11 +2795,11 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>Rebuild block chain index from current blk000??.dat files.</source>
-        <translation>Umbau des Blockchain Index vom aktuellen blk000??.dat Datei.</translation>
+        <translation>Blockchain Index aus der aktuellen blk000??.dat Datei neu aufbauen.</translation>
     </message>
     <message>
         <source>The buttons below will restart the wallet with command-line options to repair the wallet, fix issues with corrupt blockhain files or missing/obsolete transactions.</source>
-        <translation>Die unten aufgeführten Schaltflächen starten die Wallet mit Befehlszeilenoptionen, um die Wallet zu reparieren. Problemebehebung  mit beschädigten Blockhain-Dateien oder fehlenden/veralteten Transaktionen.</translation>
+        <translation>Die unten aufgeführten Schaltflächen starten die Wallet mit Befehlszeilenoptionen, um die Wallet zu reparieren. Probleme mit beschädigten Blockchain-Dateien oder fehlenden/veralteten Transaktionen werden behoben.</translation>
     </message>
     <message>
         <source>Wallet repair options.</source>
@@ -2803,11 +2807,11 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>Upgrade wallet to latest format on startup. (Note: this is NOT an update of the wallet itself!)</source>
-        <translation>Upgrade Wallet auf neueste Format beim Start. (Anmerkung: Dies ist NICHT ein Update der Wallet selbst!)</translation>
+        <translation>Upgrade die Wallet, beim Start, auf das neueste Format . (Anmerkung: Dies ist NICHT ein Update der Wallet selbst!)</translation>
     </message>
     <message>
         <source>Rebuild index</source>
-        <translation>Unbau-Index</translation>
+        <translation>Index neu aufbauen</translation>
     </message>
     <message>
         <source>In:</source>
@@ -2819,11 +2823,11 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>Welcome to the PIVX RPC console.</source>
-        <translation>Willkommen in der PIVX RPC Konsole.</translation>
+        <translation>Willkommen in der PIVX RPC-Konsole.</translation>
     </message>
     <message>
         <source>Use up and down arrows to navigate history, and &lt;b&gt;Ctrl-L&lt;/b&gt; to clear screen.</source>
-        <translation>Nutze Pfeiltasten hoch und runter um alt Konsolenbefehle hervor zu holen, und &lt;b&gt;Ctrl-L&lt;/b&gt; um die Konsole zu reinigen.</translation>
+        <translation>Nutze Pfeiltasten hoch und runter um ehemals genutze Konsolenbefehle durch zu scrollen, und &lt;b&gt;Ctrl-L&lt;/b&gt; um das Konsolenfenster zu leeren.</translation>
     </message>
     <message>
         <source>Type &lt;b&gt;help&lt;/b&gt; for an overview of available commands.</source>
@@ -2874,7 +2878,7 @@ Bitte haben Sie Geduld...</translation>
     <name>ReceiveCoinsDialog</name>
     <message>
         <source>Reuse one of the previously used receiving addresses.&lt;br&gt;Reusing addresses has security and privacy issues.&lt;br&gt;Do not use this unless re-generating a payment request made before.</source>
-        <translation>Wiederverwendung eines der zuvor verwendeten Empfangsadressen.&lt;br&gt;Wiederverwendung-Adressen haben Sicherheits- und Datenschutzprobleme.&lt;br&gt;Verwenden Sie diese nicht, es sei denn, dass Sie zuvor eine Zahlungsanforderung generieren.</translation>
+        <translation>Wiederverwendung einer zuvor verwendeten Empfangsadressen.&lt;br&gt;Wiederverwendete Adressen haben Sicherheits- und Datenschutzprobleme.&lt;br&gt;Verwenden Sie diese nicht, es sei denn, dass Sie zuvor eine Zahlungsanforderung generieren.</translation>
     </message>
     <message>
         <source>R&amp;euse an existing receiving address (not recommended)</source>
@@ -2890,11 +2894,11 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the PIVX network.</source>
-        <translation>Eine optionale Nachricht anhängen an die Zahlungsaufforderung, die bei der Eröffnung der Anforderung angezeigt wird. Hinweis: Die Nachricht wird nicht mit der Zahlung über das PIVX-Netzwerk gesendet.</translation>
+        <translation>Eine optionale Nachricht an die Zahlungsaufforderung anhängen, die bei der Eröffnung der Anforderung angezeigt wird. Hinweis: Die Nachricht wird nicht mit der Zahlung über das PIVX-Netzwerk gesendet.</translation>
     </message>
     <message>
         <source>An optional message to attach to the payment request, which will be displayed when the request is opened.&lt;br&gt;Note: The message will not be sent with the payment over the PIVX network.</source>
-        <translation>Eine optionale Nachricht anhängen an die Zahlungsaufforderung, die bei der Eröffnung der Anforderung angezeigt wird.&lt;br&gt;Hinweis: Die Nachricht wird nicht mit der Zahlung über das PIVX-Netzwerk gesendet.</translation>
+        <translation>Eine optionale Nachricht an die Zahlungsaufforderung anhängen, die bei der Eröffnung der Anforderung angezeigt wird.&lt;br&gt;Hinweis: Die Nachricht wird nicht mit der Zahlung über das PIVX-Netzwerk gesendet.</translation>
     </message>
     <message>
         <source>Use this form to request payments. All fields are &lt;b&gt;optional&lt;/b&gt;.</source>
@@ -2906,7 +2910,7 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>An optional amount to request. Leave this empty or zero to not request a specific amount.</source>
-        <translation>Einen optionalen Betrag anfordern. Lassen Sie diesen leer oder Null, um nicht einen bestimmten Betrag anzufordern.</translation>
+        <translation>Einen optionalen Betrag anfordern. Lassen Sie diesen leer oder Null, um einen unbestimmten Betrag anzufordern.</translation>
     </message>
     <message>
         <source>&amp;Amount:</source>
@@ -2950,7 +2954,7 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>Copy message</source>
-        <translation>Kopiere Nachricht</translation>
+        <translation>Nachricht kopieren</translation>
     </message>
     <message>
         <source>Copy amount</source>
@@ -2965,11 +2969,11 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>Copy &amp;URI</source>
-        <translation>Kopiere &amp;URI</translation>
+        <translation>&amp;URI kopieren</translation>
     </message>
     <message>
         <source>Copy &amp;Address</source>
-        <translation>Kopiere &amp;Adresse</translation>
+        <translation>&amp;Adresse kopieren</translation>
     </message>
     <message>
         <source>&amp;Save Image...</source>
@@ -2977,7 +2981,7 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>Request payment to %1</source>
-        <translation>Zahlung anfordern %1</translation>
+        <translation>Zahlung an %1 anfordern </translation>
     </message>
     <message>
         <source>Payment information</source>
@@ -3005,11 +3009,11 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>Resulting URI too long, try to reduce the text for label / message.</source>
-        <translation>Resultierende URI zu lange. Versuchen sie den Text für Label / Nachricht zu reduzieren.</translation>
+        <translation>Resultierende URI zu lang. Versuchen sie den Text für Label / Nachricht zu kürzen.</translation>
     </message>
     <message>
         <source>Error encoding URI into QR Code.</source>
-        <translation>Fehler, Codierung URI in QR-Code</translation>
+        <translation>Fehler bei der Kodierung der URI im QR-Code</translation>
     </message>
 </context>
 <context>
@@ -3143,7 +3147,7 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>total at least</source>
-        <translation>pro Kilobyte</translation>
+        <translation>Gesamt mindestens</translation>
     </message>
     <message>
         <source>(read the tooltip)</source>
@@ -3171,15 +3175,15 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>If the custom fee is set to 1000 uPIVs and the transaction is only 250 bytes, then "per kilobyte" only pays 250 uPIVs in fee,&lt;br /&gt;while "at least" pays 1000 uPIVs. For transactions bigger than a kilobyte both pay by kilobyte.</source>
-        <translation>Wenn die kundenspezifische Gebühr auf 1000 uPIVs eingestellt ist und die Transaktion nur 250 Bytes beträgt, dann zahlt man "pro Kilobyte" nur 250 uPIVs an Gebühr,&lt;br /&gt;während man "mindestens" 1000 uPIVs bezahlt. Für Transaktionen, die größer sind als ein Kilobyte, bezahlen sie mit Kilobyte.</translation>
+        <translation>Wenn die kundenspezifische Gebühr auf 1000 uPIVs eingestellt ist und die Transaktion nur 250 Bytes beträgt, dann zahlt man "pro Kilobyte" nur 250 uPIVs an Gebühren,&lt;br /&gt;während man "mindestens" 1000 uPIVs bezahlt. Für Transaktionen, die größer sind als ein Kilobyte, bezahlen sie per Kilobyte.</translation>
     </message>
     <message>
         <source>If the custom fee is set to 1000 uPIVs and the transaction is only 250 bytes, then "per kilobyte" only pays 250 uPIVs in fee,&lt;br /&gt;while "total at least" pays 1000 uPIVs. For transactions bigger than a kilobyte both pay by kilobyte.</source>
-        <translation>Wenn die kundenspezifische Gebühr auf 1000 uPIVs eingestellt ist und die Transaktion nur 250 Bytes beträgt, dann zahlt man "pro Kilobyte" nur 250 uPIVs an Gebühr,&lt;br /&gt;während man "insgesamt mindestens" 1000 uPIVs bezahlt. Für Transaktionen, die größer sind als ein Kilobyte, bezahlen sie mit Kilobyte.</translation>
+        <translation>Wenn die kundenspezifische Gebühr auf 1000 uPIVs eingestellt ist und die Transaktion nur 250 Bytes beträgt, dann zahlt man "pro Kilobyte" nur 250 uPIVs an Gebühren,&lt;br /&gt;während man "insgesamt mindestens" 1000 uPIVs bezahlt. Für Transaktionen, die größer sind als ein Kilobyte, bezahlen sie per Kilobyte.</translation>
     </message>
     <message>
         <source>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks.&lt;br /&gt;But be aware that this can end up in a never confirming transaction once there is more demand for PIVX transactions than the network can process.</source>
-        <translation>Nur die minimale Gebühr zu zahlen ist nur gut, solange es weniger Transaktionsvolumen als Platz in den Blocken ist.&lt;br /&gt;Aber sein Sie sich bewusst, dass dies am Ende in einer niemals bestätigende Transaktion endet, sobald es mehr Nachfrage nach PIVX-Transaktionen gibt, als das Netzwerk verarbeiten kann.</translation>
+        <translation>Nur die minimale Gebühr zu zahlen ist nur gut, solange es weniger Transaktionsvolumen als Platz in den Blocken gibt.&lt;br /&gt;Aber seien Sie sich bewusst, dass dies in einer niemals bestätigende Transaktion enden kann, sobald die Nachfrage nach PIVX-Transaktionen höher ist, als was das Netzwerk verarbeiten kann.</translation>
     </message>
     <message>
         <source>normal</source>
@@ -3195,11 +3199,11 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>Send as zero-fee transaction if possible</source>
-        <translation>Sende als Null-Gebühr Transaction, wenn möglich</translation>
+        <translation>Sende als gebührenfreie Transaktion, wenn möglich</translation>
     </message>
     <message>
         <source>(confirmation may take longer)</source>
-        <translation>(Bestätigung kann länger dauern)</translation>
+        <translation>(die Bestätigung kann länger dauern)</translation>
     </message>
     <message>
         <source>Confirm the send action</source>
@@ -3239,7 +3243,7 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>Copy quantity</source>
-        <translation>Kopiere Anzahl</translation>
+        <translation>Anzahl kopieren</translation>
     </message>
     <message>
         <source>Copy amount</source>
@@ -3247,7 +3251,7 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>Copy fee</source>
-        <translation>Kopiere Gebühr</translation>
+        <translation>Gebühr kopieren</translation>
     </message>
     <message>
         <source>Copy after fee</source>
@@ -3271,15 +3275,15 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>The split block tool does not work when sending to outside addresses. Try again.</source>
-        <translation>Das Split-Block-Tool funktioniert nicht beim Senden an externe Adressen. Versuch es noch einmal.</translation>
+        <translation>Das Split-Block-Tool funktioniert nicht beim Senden an externe Adressen. Versuchen Sie es erneut.</translation>
     </message>
     <message>
         <source>The split block tool does not work with multiple addresses. Try again.</source>
-        <translation>Das Split-Block-Tool funktioniert nicht mit mehreren Adressen. Versuch es noch einmal.</translation>
+        <translation>Das Split-Block-Tool funktioniert nicht mit mehreren Adressen. Versuchen Sie es erneut.</translation>
     </message>
     <message>
         <source>using</source>
-        <translation>benutzend</translation>
+        <translation>benutze</translation>
     </message>
     <message>
         <source>anonymous funds</source>
@@ -3291,7 +3295,7 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>any available funds (not recommended)</source>
-        <translation>verfügbare Mittel (nicht empfohlen)</translation>
+        <translation>alle verfügbaren Mittel (nicht empfohlen)</translation>
     </message>
     <message>
         <source>and SwiftTX</source>
@@ -3311,7 +3315,7 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>Total Amount = &lt;b&gt;%1&lt;/b&gt;&lt;br /&gt;= %2</source>
-        <translation>GesamtBetrag = &lt;b&gt;%1&lt;/b&gt;&lt;br /&gt;= %2</translation>
+        <translation>Gesamtbetrag = &lt;b&gt;%1&lt;/b&gt;&lt;br /&gt;= %2</translation>
     </message>
     <message>
         <source>Confirm send coins</source>
@@ -3319,11 +3323,11 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>A fee %1 times higher than %2 per kB is considered an insanely high fee.</source>
-        <translation>Eine Gebühr %1 mal höher als %2 pro kB gilt als eine wahnsinnig hohe Gebühr.</translation>
+        <translation>Eine Gebühr %1 mal höher als %2 pro kB gilt als wahnsinnig hohe Gebühr.</translation>
     </message>
     <message numerus="yes">
         <source>Estimated to begin confirmation within %n block(s).</source>
-        <translation><numerusform>Geschätzt beginnt die Betätigung in %n Blöcken.</numerusform><numerusform>Geschätzt beginnt die Betätigung in %n Blöcken.</numerusform></translation>
+        <translation><numerusform>Geschätzt beginnt die Betätigung in %n Blöcken.</numerusform><numerusform>Voraussichtlich beginnt die Betätigung in %n Blöcken.</numerusform></translation>
     </message>
     <message>
         <source>The recipient address is not valid, please recheck.</source>
@@ -3331,7 +3335,7 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source> split into %1 outputs using the UTXO splitter.</source>
-        <translation>In %1 Ausgänge mit dem UTXO-Splitter aufgeteilt.</translation>
+        <translation>In %1 Ausgänge mit dem UTXO-Splitter aufgeteilen.</translation>
     </message>
     <message>
         <source>&lt;b&gt;(%1 of %2 entries displayed)&lt;/b&gt;</source>
@@ -3343,15 +3347,15 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>The amount exceeds your balance.</source>
-        <translation>Der Betrag übersteigt ihre Bilanz.</translation>
+        <translation>Der Betrag übersteigt ihr Guthaben.</translation>
     </message>
     <message>
         <source>The total exceeds your balance when the %1 transaction fee is included.</source>
-        <translation>Die Gesamtsumme überschreitet Ihre Bilanz, wenn die Transaktionsgebühr von %1 enthalten ist.</translation>
+        <translation>Die Gesamtsumme überschreitet Ihr Guthaben, sobald die Transaktionsgebühr von %1 enthalten ist.</translation>
     </message>
     <message>
         <source>Duplicate address found, can only send to each address once per send operation.</source>
-        <translation>Doppelte Adresse gefunden. Es kann nur an jede Adresse einmal pro Sendeoperation gesenden werden.</translation>
+        <translation>Doppelte Adresse gefunden. Es kann nur einmal pro Sendeoperation an jede Adresse gesendet werden.</translation>
     </message>
     <message>
         <source>Transaction creation failed!</source>
@@ -3359,7 +3363,7 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>The transaction was rejected! This might happen if some of the coins in your wallet were already spent, such as if you used a copy of wallet.dat and coins were spent in the copy but not marked as spent here.</source>
-        <translation>Die Transaktion wurde abgelehnt! Dies könnte passieren, wenn einige der Coins in deiner Wallet schon ausgegeben wurden, wie wenn du eine Kopie der wallet.dat benutzt hättetst und Coins wurden in der Kopie verbracht.  Aber sie sind hier nicht als verbracht markiert.</translation>
+        <translation>Die Transaktion wurde abgelehnt! Dies könnte passieren, wenn einige der Coins in deiner Wallet schon ausgegeben wurden. Zum Beispiel wenn du eine Kopie der wallet.dat benutzt hättest und Coins in der Kopie verbracht wurden.  Hier aber noch nicht als verbraucht markiert wurden.</translation>
     </message>
     <message>
         <source>Error: The wallet was unlocked only to anonymize coins.</source>
@@ -3367,7 +3371,7 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>Error: The wallet was unlocked only to anonymize coins. Unlock canceled.</source>
-        <translation>Fehler: Die Wallet wurde nur zum Anonymisieren von Coins freigeschaltet. Freischalten aufgehoben.</translation>
+        <translation>Fehler: Die Wallet wurde nur zum Anonymisieren von Coins freigeschaltet. Freischaltung aufgehoben.</translation>
     </message>
     <message>
         <source>Pay only the minimum fee of %1</source>
@@ -3438,7 +3442,7 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>This is an unverified payment request.</source>
-        <translation>Dies is eine unverifizierte Zahlungsanforderung.</translation>
+        <translation>Dies ist eine unverifizierte Zahlungsanforderung.</translation>
     </message>
     <message>
         <source>Pay To:</source>
@@ -3450,7 +3454,7 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>This is a verified payment request.</source>
-        <translation>Dies is eine verifizierte Zahlungsanforderung.</translation>
+        <translation>Dies ist eine verifizierte Zahlungsanforderung.</translation>
     </message>
     <message>
         <source>Enter a label for this address to add it to your address book</source>
@@ -3480,7 +3484,7 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>You can sign messages with your addresses to prove you own them. Be careful not to sign anything vague, as phishing attacks may try to trick you into signing your identity over to them. Only sign fully-detailed statements you agree to.</source>
-        <translation>Sie können Nachrichten mit Ihren Adressen signieren, um zu beweisen, dass Sie sie besitzen. Sein Sie vorsichtig nichts nebulöses zu unterschreiben, da Phishing-Angriffe versuchen können, Sie dazu zu bringen, Ihre Identität zu denen zu untergeben. Unterschreiben Sie nur ganz detaillierte Aussagen, denen Sie zustimmen.</translation>
+        <translation>Sie können Nachrichten mit Ihren Adressen signieren, um zu beweisen, dass Sie diese besitzen. Seien Sie vorsichtig nichts fragwürdiges zu unterschreiben, da Phishing-Angriffe versuchen können, Sie dazu zu bringen, Ihre Identität zu überschreiben. Unterschreiben Sie nur ganz detaillierte Aussagen, denen Sie zustimmen.</translation>
     </message>
     <message>
         <source>The PIVX address to sign the message with</source>
@@ -3512,7 +3516,7 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>Copy the current signature to the system clipboard</source>
-        <translation>Kopiert die aktuelle Signatur in den Zwischenspeicher</translation>
+        <translation>Kopiert die aktuelle Signatur in die Zwischenablage</translation>
     </message>
     <message>
         <source>Sign the message to prove you own this PIVX address</source>
@@ -3544,7 +3548,7 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>Enter the signing address, message (ensure you copy line breaks, spaces, tabs, etc. exactly) and signature below to verify the message. Be careful not to read more into the signature than what is in the signed message itself, to avoid being tricked by a man-in-the-middle attack.</source>
-        <translation>Geben Sie die signierte Adresse, die Nachricht (stellen Sie sicher, dass Zeilenumbrüche, Leerzeichen, Tabs usw. genau kopieren) und Signatur unten ein, um die Nachricht zu überprüfen. Seien Sie vorsichtig, nicht mehr in die Signatur zu lesen, als was in der signierten Nachricht selbst ist, um zu vermeiden, von einem Mann-in-der-Mitte Angriff getroffen zu werden.</translation>
+        <translation>Geben Sie die signierte Adresse, die Nachricht (stellen Sie sicher, dass Zeilenumbrüche, Leerzeichen, Tabs usw. genau kopieren) und Signatur unten ein, um die Nachricht zu überprüfen. Seien Sie vorsichtig, nicht mehr in die Signatur hinein zu interpretieren, als das was in der signierten Nachricht selbst angegeben ist, um zu vermeiden, von einem Mann-in-der-Mitte Angriff getroffen zu werden.</translation>
     </message>
     <message>
         <source>Verify &amp;Message</source>
@@ -3576,11 +3580,11 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>Private key for the entered address is not available.</source>
-        <translation>Privater Schlüssel für die eingegebene Adresse ist nicht verfügbar</translation>
+        <translation>Kein privater Schlüssel für die eingegebene Adresse verfügbar</translation>
     </message>
     <message>
         <source>Message signing failed.</source>
-        <translation>Nachricht Signierung fehlgeschlagen.</translation>
+        <translation>Signierung der Nachricht fehlgeschlagen.</translation>
     </message>
     <message>
         <source>Message signed.</source>
@@ -4082,7 +4086,7 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>Received Piv from zPiv</source>
-        <translation>Empfangen PIV von zPIV</translation>
+        <translation>Empfangene PIV von zPIV</translation>
     </message>
     <message>
         <source>Zerocoin Mint</source>
@@ -4201,7 +4205,7 @@ Bitte haben Sie Geduld...</translation>
     <name>UnitDisplayStatusBarControl</name>
     <message>
         <source>Unit to show amounts in. Click to select another unit.</source>
-        <translation>Angezeigte Einheit. Anklicken Sie, um eine andere Einheit zu wählen.</translation>
+        <translation>Angezeigte Einheit. Klicken Sie, um eine andere Einheit zu wählen.</translation>
     </message>
 </context>
 <context>
@@ -4281,7 +4285,7 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>Select/Deselect All</source>
-        <translation>Markiere/Demarkiere Alle</translation>
+        <translation>Alle Aus-/Abwählen</translation>
     </message>
     <message>
         <source>Is Spendable</source>
@@ -4296,7 +4300,7 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>Allow JSON-RPC connections from specified source. Valid for &lt;ip&gt; are a single IP (e.g. 1.2.3.4), a network/netmask (e.g. 1.2.3.4/255.255.255.0) or a network/CIDR (e.g. 1.2.3.4/24). This option can be specified multiple times</source>
-        <translation>Erlaubt JSON-RPC Verbindungen von der angegebenen Quelle. Valide für &lt;ip&gt; sein eine einzelne  IP (z.B. 1.2.3.4), ein Netzwerk/Netzwerkmaske (z.B. 1.2.3.4/255.255.255.0) oder ein Netzwerk/CIDR (z.B. 1.2.3.4/24). Diese Option kann mehrfach angegeben werden</translation>
+        <translation>Erlaubt JSON-RPC Verbindungen von der angegebenen Quelle. Valide für &lt;ip&gt; ist eine einzelne IP (z.B. 1.2.3.4), ein Netzwerk/Netzwerkmaske (z.B. 1.2.3.4/255.255.255.0) oder ein Netzwerk/CIDR (z.B. 1.2.3.4/24). Diese Option kann mehrfach angegeben werden</translation>
     </message>
     <message>
         <source>An error occurred while setting up the RPC address %s port %u for listening: %s</source>
@@ -4304,7 +4308,7 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>Calculated accumulator checkpoint is not what is recorded by block index</source>
-        <translation>Der berechnete Akkumulator-Checkpoint ist nicht das, was vom Blockindex aufgezeichnet wurde</translation>
+        <translation>Der berechnete Akkumulator-Checkpoint stimmt nicht mit dem vom Blockindex aufgezeichneten überein</translation>
     </message>
     <message>
         <source>Cannot obtain a lock on data directory %s. PIVX Core is probably already running.</source>
@@ -4316,7 +4320,7 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>Delete all wallet transactions and only recover those parts of the blockchain through -rescan on startup</source>
-        <translation>Lösche alle Wallet-Transaktionen und stelle nur diese Teile der Blockchain wieder her durch -neuscan beim Start</translation>
+        <translation>Lösche alle Wallet-Transaktionen und stelle nur diese Teile der Blockchain  beim Start durch -neuscan wieder her</translation>
     </message>
     <message>
         <source>Disable all PIVX specific functionality (Masternodes, Obfuscation, SwiftTX, Budgeting) (0-1, default: %u)</source>
@@ -4332,7 +4336,7 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>Enable swifttx, show confirmations for locked transactions (bool, default: %s)</source>
-        <translation>Swifttx aktivieren, Bestätigungen für gesperrte Transaktionen anzeigen (bool, default: %s)</translation>
+        <translation>SwiftTx aktivieren, Bestätigungen für gesperrte Transaktionen anzeigen (bool, default: %s)</translation>
     </message>
     <message>
         <source>Enter regression test mode, which uses a special chain in which blocks can be solved instantly.</source>
@@ -4340,7 +4344,11 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>Error: Listening for incoming connections failed (listen returned error %s)</source>
-        <translation>Fehler: Horchen von eingehenden Verbindungen fehlgeschlagen (listen return error %s)</translation>
+        <translation>Fehler: Überwachung von eingehenden Verbindungen fehlgeschlagen (listen return error %s)</translation>
+    </message>
+    <message>
+        <source>Error: Unsupported argument -socks found. Setting SOCKS version isn't possible anymore, only SOCKS5 proxies are supported.</source>
+        <translation>Fehler: Nicht unterstütztes Argument -socks gefunden. Festlegen der SOCKS Version ist nicht mehr möglich, es werden nur noch SOCKS5-Proxys unterstützt.</translation>
     </message>
     <message>
         <source>Execute command when a relevant alert is received or we see a really long fork (%s in cmd is replaced by message)</source>
@@ -4356,7 +4364,7 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>Fees (in PIV/Kb) smaller than this are considered zero fee for relaying (default: %s)</source>
-        <translation>Gebühren (in PIV/kB) kleiner als diese gelten als Null-Gebühr für die Weiterleitung (default: %s)</translation>
+        <translation>Gebühren (in PIV/kB) kleiner als diese gelten für die Weiterleitung als Null-Gebühr  (default: %s)</translation>
     </message>
     <message>
         <source>Fees (in PIV/Kb) smaller than this are considered zero fee for transaction creation (default: %s)</source>
@@ -4368,7 +4376,7 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>Found unconfirmed denominated outputs, will wait till they confirm to continue.</source>
-        <translation>Gefundene unbestätigte benannte Outputs werden warten  bis sie bestätigen sind, um fortzufahren.</translation>
+        <translation>Gefundene unbestätigte benannte Outputs. Warte auf Bestätigung um fortzufahren.</translation>
     </message>
     <message>
         <source>If paytxfee is not set, include enough fee so transactions begin confirmation on average within n blocks (default: %u)</source>
@@ -4380,7 +4388,7 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>Invalid amount for -maxtxfee=&lt;amount&gt;: '%s' (must be at least the minrelay fee of %s to prevent stuck transactions)</source>
-        <translation>Ungültiger Betrag für -maxtxfee=&lt;amount&gt;: '%s' (muss mindestens das minrelay Gebühr von %s sein, um Transaktionsstau zu vermeiden)</translation>
+        <translation>Ungültiger Betrag für -maxtxfee=&lt;amount&gt;: '%s' (muss mindestens die minrelay Gebühr von %s sein, um Transaktionsstau zu vermeiden)</translation>
     </message>
     <message>
         <source>Keep the specified amount available for spending at all times (default: 0)</source>
@@ -4388,11 +4396,11 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>Log transaction priority and fee per kB when mining blocks (default: %u)</source>
-        <translation>Priorität der Protokolltransaktion und Gebühr pro kB wenn Mining-Blocke (default: %u)</translation>
+        <translation>Priorität der Protokolltransaktion und Gebühr pro kB wenn Blöcke geschürft werden (default: %u)</translation>
     </message>
     <message>
         <source>Maintain a full transaction index, used by the getrawtransaction rpc call (default: %u)</source>
-        <translation>Pflege einen vollständigen Transaktionsindex, der von der getrawtransaction rpc call verwendet wird. (default: %u)</translation>
+        <translation>Pflege einen vollständigen Transaktionsindex, der von getrawtransaction rpc call verwendet wird. (default: %u)</translation>
     </message>
     <message>
         <source>Maximum size of data in data carrier transactions we relay and mine (default: %u)</source>
@@ -4404,15 +4412,123 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>Number of seconds to keep misbehaving peers from reconnecting (default: %u)</source>
-        <translation>Sekundenanzahl, um fehlerhafte Peers zu halten von der Wiederverbindung (default: %u)</translation>
+        <translation>Sekundenanzahl, um fehlerhafte Peers von der Wiederverbindung abzuhalten (default: %u)</translation>
+    </message>
+    <message>
+        <source>Obfuscation uses exact denominated amounts to send funds, you might simply need to anonymize some more coins.</source>
+        <translation>Verschleierung benötigt exakt gestückelte Mengen um Gelder zu versenden, ggf. müssen Sie einfach mehr Münzen anonymisieren.</translation>
+    </message>
+    <message>
+        <source>Output debugging information (default: %u, supplying &lt;category&gt; is optional)</source>
+        <translation>Debug-Informationen ausgeben (Standard: %u, die Bereitstellung von &lt;category&gt; ist optional)</translation>
+    </message>
+    <message>
+        <source>Query for peer addresses via DNS lookup, if low on addresses (default: 1 unless -connect)</source>
+        <translation>Abfrage von Gegenstellen-Adressen per DNS-Lookup, falls wenige Adressen verfügbar sind (Standard: 1, ausser -connect ist aktiviert)</translation>
+    </message>
+    <message>
+        <source>Randomize credentials for every proxy connection. This enables Tor stream isolation (default: %u)</source>
+        <translation>Randomisiere Zugangsdaten für jede einzelne Proxy-Verbindung. Dies ermöglicht die Stream-Isolation im Tor Netzwerk (Standard: %u)</translation>
+    </message>
+    <message>
+        <source>Require high priority for relaying free or low-fee transactions (default:%u)</source>
+        <translation>Benötige hohe Priorität um kostenlose Transaktionen oder Transaktionen mit niedriger Gebühr weiterzuleiten (Standard: %u)</translation>
+    </message>
+    <message>
+        <source>Send trace/debug info to console instead of debug.log file (default: %u)</source>
+        <translation>Sende die Debug-Info an die Konsole, anstatt in die debug.log-Datei (Standard: %u)</translation>
+    </message>
+    <message>
+        <source>Set maximum size of high-priority/low-fee transactions in bytes (default: %d)</source>
+        <translation>Maximale Größe von Transaktionen mit hoher Priorität/niedrigen Gebühren festlegen, in Bytes (Standard: %d)</translation>
+    </message>
+    <message>
+        <source>Set the number of script verification threads (%u to %d, 0 = auto, &lt;0 = leave that many cores free, default: %d)</source>
+        <translation>Anzahl der Threads festlegen, die für die Skript Verifikation verwendet werden (%u to %d, 0 = auto, &lt;0 = diese Anzahl an Kernen ungenutzt lassen, Standard: %d)</translation>
+    </message>
+    <message>
+        <source>Set the number of threads for coin generation if enabled (-1 = all cores, default: %d)</source>
+        <translation>Wenn aktiviert, kann die Anzahl der CPU-Threads für die Coin-Erzeugung festgelegt werden (-1 = alle Kerne, Standard: %d)</translation>
+    </message>
+    <message>
+        <source>Support filtering of blocks and transaction with bloom filters (default: %u)</source>
+        <translation>Unterstütze Filtern von Blöcken und Transaktionen mittels Bloom-Filtern (Standard: %u)</translation>
+    </message>
+    <message>
+        <source>SwiftTX requires inputs with at least 6 confirmations, you might need to wait a few minutes and try again.</source>
+        <translation>SwiftTX benötigt mindestens 6 confirmations, Sie sollten ggf. einige Minuten abwarten und dann erneut probieren.</translation>
     </message>
     <message>
         <source>This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit &lt;https://www.openssl.org/&gt; and cryptographic software written by Eric Young and UPnP software written by Thomas Bernard.</source>
         <translation>Dieses Produkt beinhaltet Software, die vom OpenSSL Projekt für die Nutzung im OpenSSL Toolkit &lt;https://www.openssl.org/&gt; entwickelt wurde. Desweiteren kryptografische Software , die von Eric Young, und UPnP Software, die von Thomas Bernard, geschrieben wurde.</translation>
     </message>
     <message>
+        <source>To use pivxd, or the -server option to pivx-qt, you must set an rpcpassword in the configuration file:
+%s
+It is recommended you use the following random password:
+rpcuser=pivxrpc
+rpcpassword=%s
+(you do not need to remember this password)
+The username and password MUST NOT be the same.
+If the file does not exist, create it with owner-readable-only file permissions.
+It is also recommended to set alertnotify so you are notified of problems;
+for example: alertnotify=echo %%s | mail -s "PIVX Alert" admin@foo.com
+</source>
+        <translation>Um pivxd oder die -server option in pivx-qt zu nutzen, muss ein RPC-Passwort mittels rpcpassword in der Konfigurationsdatei gestzt werden:
+%s
+Es wird empfohlen das folgende zufällige Passwort zu nutzen:
+rpcuser=pivxrpc
+rpcpassword=%s
+(Sie müssen sich das Passwort nicht merken)
+User-Name und Passwort MÜSSEN NICHT die oben genannten sein.
+Falls die Datei bisher nicht existiert, erstellen Sie diese mit der eingeschränkten Berechtigung das nur der Besitzer diese lesen darf.
+Des weiteren wird empfohlen das Argument alertnotify zu setzen, damit Sie bei ggf. auftretenden Problemen benachrichtigt werden.
+Beispiel: alertnotify=echo %%s | mail -s "PIVX Alert" admin@foo.com
+</translation>
+    </message>
+    <message>
+        <source>Unable to locate enough Obfuscation denominated funds for this transaction.</source>
+        <translation>Nicht genügend gestückeltes, verschleiertes Guthaben für diese Transaktion gefunden.</translation>
+    </message>
+    <message>
+        <source>Use separate SOCKS5 proxy to reach peers via Tor hidden services (default: %s)</source>
+        <translation>Verwende seperate SOCKS5-Proxys um Gegenstellen über Tor-Hidden-Services zu erreichen (Standard: %s)</translation>
+    </message>
+    <message>
+        <source>Warning: -maxtxfee is set very high! Fees this large could be paid on a single transaction.</source>
+        <translation>Warnung: -maxtxfee ist sehr hoch eingestellt! Gebühren in dieser Höhe können in einer einzigen Transaktion abgebucht werden.</translation>
+    </message>
+    <message>
+        <source>Warning: -paytxfee is set very high! This is the transaction fee you will pay if you send a transaction.</source>
+        <translation>Warnung: -paytxfee ist sehr hoch eingestellt! Diese Transaktionsgebühr werden Ihnen abgebucht, falls Sie die Transaktion überweisen.</translation>
+    </message>
+    <message>
         <source>Warning: Please check that your computer's date and time are correct! If your clock is wrong PIVX Core will not work properly.</source>
         <translation>Warnung: Bitte stellen Sie sicher, das vom Computer verwendete Zeit und Datumangaben korrekt sind! Wenn ihr System falsche Zeitangaben nutzt, wird PIVX Core nicht korrekt funktionieren.</translation>
+    </message>
+    <message>
+        <source>Warning: The network does not appear to fully agree! Some miners appear to be experiencing issues.</source>
+        <translation>Warnung: Unstimmigkeiten im Netzwerk! Einige Miner scheinen Probleme zu haben.</translation>
+    </message>
+    <message>
+        <source>Warning: We do not appear to fully agree with our peers! You may need to upgrade, or other nodes may need to upgrade.</source>
+        <translation>Warnung: Es scheint einige Unstimmigkeiten mit unseren Gegenstellen zu geben. Eventuell müssen Sie oder andere Nodes Upgrades durchführen.</translation>
+    </message>
+    <message>
+        <source>Warning: error reading wallet.dat! All keys read correctly, but transaction data or address book entries might be missing or incorrect.</source>
+        <translation>Warnung: Fehler beim Lesen der wallet.dat! Alle Schlüssel wurden korrekt gelesen, aber Transaktionsdaten oder Adressbuch-Einträge könnten fehlen oder inkorrekt sein.</translation>
+    </message>
+    <message>
+        <source>Warning: wallet.dat corrupt, data salvaged! Original wallet.dat saved as wallet.{timestamp}.bak in %s; if your balance or transactions are incorrect you should restore from a backup.</source>
+        <translation>Warnung: wallet.dat fehlerhaft, Daten wurden gerettet! Die originale wallet.dat wurde als wallet.{Zeitstempel}.bak in %s gesichert; falls ihr Kontostand oder ihre Transaktionen fehlerhaft sind, sollten Sie ein Backup zur Wiederherstellung nutzen.</translation>
+    </message>
+    <message>
+        <source>You must specify a masternodeprivkey in the configuration. Please see documentation for help.</source>
+        <translation>Sie müssen einen privaten Masternode-Schlüssel in der Konfiguration festlegen. Bitte nutzen Sie die Dokumentation zwecks Hilfe.</translation>
+    </message>
+    <message>
+        <source>(51472 could be used only on mainnet)</source>
+        <translation>(51472 kann nur im Mainnet verwendet werden)</translation>
     </message>
     <message>
         <source>(default: %s)</source>
@@ -4423,20 +4539,92 @@ Bitte haben Sie Geduld...</translation>
         <translation>(default: 1)</translation>
     </message>
     <message>
+        <source>(must be 51472 for mainnet)</source>
+        <translation>(muss im Mainnet 51472 sein)</translation>
+    </message>
+    <message>
+        <source>Accept command line and JSON-RPC commands</source>
+        <translation>Akzeptiere Kommandozeilen- und JSON-RPC- Eingaben</translation>
+    </message>
+    <message>
+        <source>Accept connections from outside (default: 1 if no -proxy or -connect)</source>
+        <translation>Akzeptiere Verbindungen von aussen (Standard: 1 , falls -proxy oder -connect nicht genutzt wird)</translation>
+    </message>
+    <message>
+        <source>Accept public REST requests (default: %u)</source>
+        <translation>Akzeptiere öffentliche REST Anfragen (Standard: %u)</translation>
+    </message>
+    <message>
+        <source>Add a node to connect to and attempt to keep the connection open</source>
+        <translation>Füge ein Node zum verbinden hinzu und versuche die Verbindung offen zu halten</translation>
+    </message>
+    <message>
+        <source>Allow DNS lookups for -addnode, -seednode and -connect</source>
+        <translation>Erlaube DNS lookups für -addnode, -seednode und -connect</translation>
+    </message>
+    <message>
         <source>Already have that input.</source>
         <translation>Eingabe bereits erhalten.</translation>
+    </message>
+    <message>
+        <source>Always query for peer addresses via DNS lookup (default: %u)</source>
+        <translation>Gegenstellen-Adressen immer per DNS lookup anfragen (Standard: %u)</translation>
+    </message>
+    <message>
+        <source>Attempt to recover private keys from a corrupt wallet.dat</source>
+        <translation>Versuche private Schlüssel aus fehlerhafter wallet.dat wiederherzustellen.</translation>
+    </message>
+    <message>
+        <source>Automatically create Tor hidden service (default: %d)</source>
+        <translation>Tor-Hidden-Service automatisch erzeugen (Standard: %d)</translation>
+    </message>
+    <message>
+        <source>Block creation options:</source>
+        <translation>Block-Erzeugungs-Optionen:</translation>
     </message>
     <message>
         <source>Can't find random Masternode.</source>
         <translation>Kann zufällige Masternode nicht finden.</translation>
     </message>
     <message>
+        <source>Can't mix while sync in progress.</source>
+        <translation>Mixen während der Synchronisierung nicht möglich.</translation>
+    </message>
+    <message>
+        <source>Cannot downgrade wallet</source>
+        <translation>Wallet downgrade nicht möglich</translation>
+    </message>
+    <message>
+        <source>Cannot resolve -bind address: '%s'</source>
+        <translation>Kann -bind Adresse nicht auflösen: '%s'</translation>
+    </message>
+    <message>
+        <source>Cannot resolve -externalip address: '%s'</source>
+        <translation>Kann -externalip Adresse nicht auflösen: '%s'</translation>
+    </message>
+    <message>
+        <source>Cannot resolve -whitebind address: '%s'</source>
+        <translation>Kann -whitebind Adresse nicht auflösen: '%s'</translation>
+    </message>
+    <message>
         <source>Cannot write default address</source>
         <translation>Standardadresse kann nicht geschrieben werden</translation>
     </message>
     <message>
+        <source>Collateral not valid.</source>
+        <translation>Pfand ungültig.</translation>
+    </message>
+    <message>
+        <source>Connect only to the specified node(s)</source>
+        <translation>Nur mit den aufgeführten Node(s) verbinden</translation>
+    </message>
+    <message>
         <source>Connect through SOCKS5 proxy</source>
         <translation>Verbindung per SOCKS5 proxy</translation>
+    </message>
+    <message>
+        <source>Connect to a node to retrieve peer addresses, and disconnect</source>
+        <translation>Verbinde zu einer Node um Gegenstellen-Adressen abzurufen und trenne die Verbindung.</translation>
     </message>
     <message>
         <source>Connection options:</source>
@@ -4459,12 +4647,40 @@ Bitte haben Sie Geduld...</translation>
         <translation>Beschädigte Block-Datenbank gefunden</translation>
     </message>
     <message>
+        <source>Could not parse -rpcbind value %s as network address</source>
+        <translation>Kann -rpcbind Wert %s nicht als Netzwerkadresse parsen </translation>
+    </message>
+    <message>
+        <source>Could not parse masternode.conf</source>
+        <translation>Kann masternode.conf nicht parsen</translation>
+    </message>
+    <message>
         <source>Debugging/Testing options:</source>
         <translation>Debugging-  / Testoptionen</translation>
     </message>
     <message>
+        <source>Disable OS notifications for incoming transactions (default: %u)</source>
+        <translation>Benachrichtigungen über eingehende Transaktionen im Betriebsystem ausschalten (Standard: %u)</translation>
+    </message>
+    <message>
+        <source>Do not load the wallet and disable wallet RPC calls</source>
+        <translation>Wallet nicht laden und Wallet Fernaufruf/RPC unterbinden</translation>
+    </message>
+    <message>
+        <source>Do you want to rebuild the block database now?</source>
+        <translation>Möchten Sie die Blockdatenbank neu aufbauen?</translation>
+    </message>
+    <message>
         <source>Done loading</source>
         <translation>Geladen</translation>
+    </message>
+    <message>
+        <source>Enable automatic Zerocoin minting (0-1, default: %u)</source>
+        <translation>Automatische Zerocoin-Prägung ermöglichen (0-1, Standard: %u)</translation>
+    </message>
+    <message>
+        <source>Enable the client to act as a masternode (0-1, default: %u)</source>
+        <translation>Ermögliche dem Client als Masternode zu fungieren (0-1, Standard: %u)</translation>
     </message>
     <message>
         <source>Error connecting to Masternode.</source>
@@ -4473,6 +4689,10 @@ Bitte haben Sie Geduld...</translation>
     <message>
         <source>Error initializing block database</source>
         <translation>Fehler bei der Initialisierung der Block Datenbank</translation>
+    </message>
+    <message>
+        <source>Error initializing wallet database environment %s!</source>
+        <translation>Fehler beim Initialisieren der Wallet Datenbank Umgebung %s!</translation>
     </message>
     <message>
         <source>Error loading block database</source>
@@ -4485,6 +4705,10 @@ Bitte haben Sie Geduld...</translation>
     <message>
         <source>Error loading wallet.dat: Wallet corrupted</source>
         <translation>Fehler beim Laden von wallet.dat : Wallet beschädigt</translation>
+    </message>
+    <message>
+        <source>Error loading wallet.dat: Wallet requires newer version of PIVX Core</source>
+        <translation>Fehler beim Laden der wallet.dat: Neuere PIVX Core Version benötigt</translation>
     </message>
     <message>
         <source>Error opening block database</source>
@@ -4503,16 +4727,36 @@ Bitte haben Sie Geduld...</translation>
         <translation>Fehler</translation>
     </message>
     <message>
+        <source>Error: A fatal internal error occured, see debug.log for details</source>
+        <translation>Fehler: Ein schwerwiegender Fehler ist aufgetreten, schauen Sie für detailiertere Infos ins debug.log </translation>
+    </message>
+    <message>
         <source>Error: Disk space is low!</source>
         <translation>Fehler: Festplattenspeicher ist knapp.</translation>
+    </message>
+    <message>
+        <source>Error: Unsupported argument -tor found, use -onion.</source>
+        <translation>Fehler: Argument -tor nicht unterstützt, nutzen Sie -onion.</translation>
     </message>
     <message>
         <source>Error: Wallet locked, unable to create transaction!</source>
         <translation>Fehler: Wallet verschlossen, Transaktion konnte nicht erstellt werden!</translation>
     </message>
     <message>
+        <source>Error: You already have pending entries in the Obfuscation pool</source>
+        <translation>Fehler: Sie haben bereits ausstehende Einträge im Obfuscation-Pool</translation>
+    </message>
+    <message>
+        <source>Failed to listen on any port. Use -listen=0 if you want this.</source>
+        <translation>Abhören jeglicher Ports fehlgeschlagen. Nutzen Sie -listen=0 falls dies erwünscht ist.</translation>
+    </message>
+    <message>
         <source>Failed to read block</source>
         <translation>Block konnte nicht gelesen werden</translation>
+    </message>
+    <message>
+        <source>Fee (in PIV/kB) to add to transactions you send (default: %s)</source>
+        <translation>Gebühr (in PIV/kB) die den Transaktionen, die Sie überweisen, hinzugefügt wird (Standard: %s)</translation>
     </message>
     <message>
         <source>Finalizing transaction.</source>
@@ -4547,6 +4791,10 @@ Bitte haben Sie Geduld...</translation>
         <translation>Importiere Blöcke aus externer Datei blk000??.dat</translation>
     </message>
     <message>
+        <source>Include IP addresses in debug output (default: %u)</source>
+        <translation>Ip-Adresse in Debug-Ausgabe einbeziehen (Standard: %u)</translation>
+    </message>
+    <message>
         <source>Incompatible mode.</source>
         <translation>Inkompatibler Modus.</translation>
     </message>
@@ -4579,6 +4827,14 @@ Bitte haben Sie Geduld...</translation>
         <translation>Unzureichende Mittel.</translation>
     </message>
     <message>
+        <source>Invalid -onion address or hostname: '%s'</source>
+        <translation>Ungültige -onion Adresse oder Hostname: '%s'</translation>
+    </message>
+    <message>
+        <source>Invalid -proxy address or hostname: '%s'</source>
+        <translation>Ungültige Proxy-Adresse oder Hostname: '%s'</translation>
+    </message>
+    <message>
         <source>Invalid amount for -maxtxfee=&lt;amount&gt;: '%s'</source>
         <translation>Ungültiger Betrag für -maxtxfee=&lt;amount&gt;: '%s'</translation>
     </message>
@@ -4607,12 +4863,28 @@ Bitte haben Sie Geduld...</translation>
         <translation>Ungültiger Betrag</translation>
     </message>
     <message>
+        <source>Invalid masternodeprivkey. Please see documenation.</source>
+        <translation>Ungültiger privater Masternode-Schlüssel. Bitte sehen Sie in der Dokumentation nach.</translation>
+    </message>
+    <message>
+        <source>Invalid netmask specified in -whitelist: '%s'</source>
+        <translation>Fehlerhafte Netzmaske in -whitelist festgelegt: '%s'</translation>
+    </message>
+    <message>
+        <source>Invalid port detected in masternode.conf</source>
+        <translation>Ungültiger Port in masternode.conf entdeckt</translation>
+    </message>
+    <message>
         <source>Invalid private key.</source>
         <translation>Ungültiger privater Schlüssel.</translation>
     </message>
     <message>
         <source>Invalid script detected.</source>
         <translation>Ungültiges Skript entdeckt.</translation>
+    </message>
+    <message>
+        <source>This is a pre-release test build - use at your own risk - do not use for staking or merchant applications!</source>
+        <translation>Dies ist ein Pre-Release-Testbuild - Nutzung auf eigene Gefahr - Nutzen Sie diese Version nicht für Staking oder Handelsanwendungen.</translation>
     </message>
     <message>
         <source> mints deleted
@@ -4639,8 +4911,56 @@ Bitte haben Sie Geduld...</translation>
         <translation>Fehler: Diese Transaktion erfordert eine Transaktionsgebühr von mindestens %s wegen ihrer Menge, Komplexität oder Verwendung von kürzlich erhaltenen Mitteln!</translation>
     </message>
     <message>
+        <source>Error: Unsupported argument -checklevel found. Checklevel must be level 4.</source>
+        <translation>Fehler: Nicht unterstütztes Argument -checklevel entdeckt. Checklevel muss Level 4 sein.</translation>
+    </message>
+    <message>
+        <source>Preferred Denomination for automatically minted Zerocoin  (1/5/10/50/100/500/1000/5000), 0 for no preference. default: %u)</source>
+        <translation>Bervorzugte Stückelung für automatisch geprägte Zerocoins (1/5/10/50/100/500/1000/5000), 0 falls keine bestimmte Stückelung präferiert wird. Standard: %u)</translation>
+    </message>
+    <message>
+        <source>&lt;category&gt; can be:</source>
+        <translation>&lt;category&gt;kann folgendes sein:</translation>
+    </message>
+    <message>
+        <source>Attempt to force blockchain corruption recovery</source>
+        <translation>Versuche die Wiederherstellung der fehlerhaften Blockchain zu forcieren</translation>
+    </message>
+    <message>
         <source>Enable staking functionality (0-1, default: %u)</source>
         <translation>Aktiviere Staking-Funktionalität (0-1, default: %u)</translation>
+    </message>
+    <message>
+        <source>Keep at most &lt;n&gt; unconnectable transactions in memory (default: %u)</source>
+        <translation>Halte höchstens &lt;n&gt; unverbindbare Transaktionen im Speicher (Standard: %u)</translation>
+    </message>
+    <message>
+        <source>Last Obfuscation was too recent.</source>
+        <translation>Nicht genügend Zeit seit der letzten Verschleierung vergangen.</translation>
+    </message>
+    <message>
+        <source>Last successful Obfuscation action was too recent.</source>
+        <translation>Nicht genügend Zeit seit der letzten erfolgreichen Verschleierung vergangen.</translation>
+    </message>
+    <message>
+        <source>Less than 3 mints added, unable to create spend</source>
+        <translation>Weniger als 3 Prägungen hinzugefügt, Überweisung konnte nicht erstellt werden</translation>
+    </message>
+    <message>
+        <source>Limit size of signature cache to &lt;n&gt; entries (default: %u)</source>
+        <translation>Begrenze die Größe des Signatur Cache auf &lt;n&gt; Einträge (Standard: %u)</translation>
+    </message>
+    <message>
+        <source>Line: %d</source>
+        <translation>Zeile: %d</translation>
+    </message>
+    <message>
+        <source>Listen for JSON-RPC connections on &lt;port&gt; (default: %u or testnet: %u)</source>
+        <translation>Überwache Port &lt;port&gt; auf JSON-RPC Verbindungen (Standard: %u oder Testnetzwerk: %u)</translation>
+    </message>
+    <message>
+        <source>Listen for connections on &lt;port&gt; (default: %u or testnet: %u)</source>
+        <translation>Überwache Port &lt;port&gt; auf Verbindungen (Standard: %u oder Testnetzwerk: %u)</translation>
     </message>
     <message>
         <source>Loading addresses...</source>
@@ -4651,8 +4971,20 @@ Bitte haben Sie Geduld...</translation>
         <translation>Lade Block-Index...</translation>
     </message>
     <message>
+        <source>Loading budget cache...</source>
+        <translation>Lade Budget Puffer...</translation>
+    </message>
+    <message>
         <source>Loading masternode cache...</source>
         <translation>Lade Masternode Cache...</translation>
+    </message>
+    <message>
+        <source>Loading masternode payment cache...</source>
+        <translation>Lade Masternode-Zahlungs-Puffer... </translation>
+    </message>
+    <message>
+        <source>Loading sporks...</source>
+        <translation>Lade Sporks...</translation>
     </message>
     <message>
         <source>Loading wallet... (%3.2f %%)</source>
@@ -4675,8 +5007,52 @@ Bitte haben Sie Geduld...</translation>
         <translation>Masternode:</translation>
     </message>
     <message>
+        <source>Maximum per-connection receive buffer, &lt;n&gt;*1000 bytes (default: %u)</source>
+        <translation>Maximaler Empfangspuffer pro Verbindung &lt;n&gt;*1000 bytes (Standard: %u)</translation>
+    </message>
+    <message>
+        <source>Maximum per-connection send buffer, &lt;n&gt;*1000 bytes (default: %u)</source>
+        <translation>Maximaler Sendepuffer pro Verbindung &lt;n&gt;*1000 bytes (Standard: %u)</translation>
+    </message>
+    <message>
+        <source>Missing input transaction information.</source>
+        <translation>Fehlende Information in der Transaktionseingabe.</translation>
+    </message>
+    <message>
+        <source>Mixing in progress...</source>
+        <translation>Mixing im Gange...</translation>
+    </message>
+    <message>
+        <source>Need to specify a port with -whitebind: '%s'</source>
+        <translation>Sie müssen einen Port mittels -whitebind festlegen: '%s'</translation>
+    </message>
+    <message>
+        <source>No Masternodes detected.</source>
+        <translation>Keine Masternodes gefunden.</translation>
+    </message>
+    <message>
         <source>No compatible Masternode found.</source>
         <translation>Keine kompatible Masternode gefunden.</translation>
+    </message>
+    <message>
+        <source>No funds detected in need of denominating.</source>
+        <translation>Kein Guthaben entdeckt das gestückelt werden müsste.</translation>
+    </message>
+    <message>
+        <source>No matching denominations found for mixing.</source>
+        <translation>Keine passende Stückelung für den Mixing-Prozess gefunden.</translation>
+    </message>
+    <message>
+        <source>Non-standard public key detected.</source>
+        <translation>Nicht Standard-konformer öffentlicher Schlüssel entdeckt.</translation>
+    </message>
+    <message>
+        <source>Not compatible with existing transactions.</source>
+        <translation>Nicht kompatibel mit existierenden Transaktionen.</translation>
+    </message>
+    <message>
+        <source>Not enough file descriptors available.</source>
+        <translation>Nicht genügend Datei-Deskriptoren verfügbar.</translation>
     </message>
     <message>
         <source>Not in the Masternode list.</source>
@@ -4685,6 +5061,22 @@ Bitte haben Sie Geduld...</translation>
     <message>
         <source>Number of automatic wallet backups (default: 10)</source>
         <translation>Anzahl automatischer Wallet-Backups (Standard: 10)</translation>
+    </message>
+    <message>
+        <source>Obfuscation is idle.</source>
+        <translation>Verschleierung im Leerlauf</translation>
+    </message>
+    <message>
+        <source>Obfuscation request complete:</source>
+        <translation>Verschleierungsanfrage komplett</translation>
+    </message>
+    <message>
+        <source>Obfuscation request incomplete:</source>
+        <translation>Verschleierungsanfrage unvollständig</translation>
+    </message>
+    <message>
+        <source>Only accept block chain matching built-in checkpoints (default: %u)</source>
+        <translation>Akzeptiere nur Blockchains, die mit eingebauten Prüfpunkten übereinstimmt (Standard: %u)</translation>
     </message>
     <message>
         <source>Only connect to nodes in network &lt;net&gt; (ipv4, ipv6 or onion)</source>
@@ -4703,12 +5095,32 @@ Bitte haben Sie Geduld...</translation>
         <translation>Prozent automatisch geprägter Zerocoins (10-100, Standard: %u)</translation>
     </message>
     <message>
+        <source>Prepend debug output with timestamp (default: %u)</source>
+        <translation>Zeitstempel vor Debug-Ausgabe vermerken (Standard: %u)</translation>
+    </message>
+    <message>
         <source>Print version and exit</source>
         <translation>Version drucken und Programm beenden</translation>
     </message>
     <message>
+        <source>RPC SSL options: (see the Bitcoin Wiki for SSL setup instructions)</source>
+        <translation>RPC SSL Optionen: (Schauen Sie sich die Anleitungen für SSL Setup im Bitcoin Wiki an)</translation>
+    </message>
+    <message>
         <source>RPC server options:</source>
         <translation>RPC Serveroptionen:</translation>
+    </message>
+    <message>
+        <source>RPC support for HTTP persistent connections (default: %d)</source>
+        <translation>RPC-Unterstützung für persistente HTTP Verbindungen (Standard: %d)</translation>
+    </message>
+    <message>
+        <source>Rebuild block chain index from current blk000??.dat files</source>
+        <translation>Baue den Blockchain-Index mithilfe der aktuellen blk000??.dat Datei erneut auf</translation>
+    </message>
+    <message>
+        <source>Receive and display P2P network alerts (default: %u)</source>
+        <translation>Empfange P2P-Netzwerk-Warnsignale und zeige diese an (Standard: %u)</translation>
     </message>
     <message>
         <source>Rescan the block chain for missing wallet transactions</source>
@@ -4727,12 +5139,60 @@ Bitte haben Sie Geduld...</translation>
         <translation>ResetSpentZerocoin abgeschlossen: </translation>
     </message>
     <message>
+        <source>Run in the background as a daemon and accept commands</source>
+        <translation>Als Hintergrundprozess ausführen und Eingaben akzeptieren</translation>
+    </message>
+    <message>
+        <source>Send transactions as zero-fee transactions if possible (default: %u)</source>
+        <translation>Sende die Transaktion als gebührenfreie Transaktion, falls möglich (Standard: %u)</translation>
+    </message>
+    <message>
+        <source>Server certificate file (default: %s)</source>
+        <translation>Server Zertifikat-Datei (Standard: %s)</translation>
+    </message>
+    <message>
+        <source>Server private key (default: %s)</source>
+        <translation>Privater Server Schlüssel (Standard: %s)</translation>
+    </message>
+    <message>
+        <source>Session not complete!</source>
+        <translation>Sitzung unvollständig!</translation>
+    </message>
+    <message>
         <source>Session timed out.</source>
         <translation>Zeitüberschreitung</translation>
     </message>
     <message>
+        <source>Set database cache size in megabytes (%d to %d, default: %d)</source>
+        <translation>Größe des Datenbank-Cache in Megabytes festlegen (%d to %d, Standard: %d)</translation>
+    </message>
+    <message>
+        <source>Set external address:port to get to this masternode (example: %s)</source>
+        <translation>Port für externe Adressen festlegen, die verwendet werden um diese Masternode anzusteuern (Beispiel: %s)</translation>
+    </message>
+    <message>
+        <source>Set key pool size to &lt;n&gt; (default: %u)</source>
+        <translation>Setze Key-Pool Größe auf &lt;n&gt; (Standard: %u)</translation>
+    </message>
+    <message>
+        <source>Set maximum block size in bytes (default: %d)</source>
+        <translation>Maximale Blockgröße in Bytes festlegen (Standard: %d)</translation>
+    </message>
+    <message>
+        <source>Set the masternode private key</source>
+        <translation>Privaten Masternode-Schlüssel festlegen</translation>
+    </message>
+    <message>
+        <source>Set the number of threads to service RPC calls (default: %d)</source>
+        <translation>Anzahl der Threads festlegen, die genutzt werden um RPC Anfragen zu bearbeiten (Standard: %d)</translation>
+    </message>
+    <message>
         <source>Show all debugging options (usage: --help -help-debug)</source>
         <translation>Zeige alle debugging Optionen (verwende: --help -help-debug)</translation>
+    </message>
+    <message>
+        <source>Shrink debug.log file on client startup (default: 1 when no -debug)</source>
+        <translation>Schrumpfe debug.log Datei beim Client-Start (Standard: 1, falls -debug nicht gesetzt ist)</translation>
     </message>
     <message>
         <source>Signing failed.</source>
@@ -4745,6 +5205,14 @@ Bitte haben Sie Geduld...</translation>
     <message>
         <source>Signing transaction failed</source>
         <translation>Signieren der Transaktion fehlgeschlagen</translation>
+    </message>
+    <message>
+        <source>Specify configuration file (default: %s)</source>
+        <translation>Konfigurationsdatei auswählen (Standard: %s)</translation>
+    </message>
+    <message>
+        <source>Specify connection timeout in milliseconds (minimum: 1, default: %d)</source>
+        <translation>Verbindungs-Timeout in Millisekunden festlegen (Minimum: 1, Standard: %d)</translation>
     </message>
     <message>
         <source>Specify data directory</source>
@@ -4776,15 +5244,15 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>Submitted following entries to masternode: %u / %d</source>
-        <translation>Folgende Einträge zum Masternode eingereicht: %u / %d</translation>
+        <translation>Folgende Einträge werden beim Masternode eingereicht: %u / %d</translation>
     </message>
     <message>
         <source>Submitted to masternode, waiting for more entries ( %u / %d ) %s</source>
-        <translation>Eingereicht zum Masternode, wartet auf mehr Einträge ( %u / %d ) %s</translation>
+        <translation>Beim Masternode eingereicht, wartet auf mehr Einträge ( %u / %d ) %s</translation>
     </message>
     <message>
         <source>Submitted to masternode, waiting in queue %s</source>
-        <translation>Eingereicht zum Masternode, wartet in der Schlange %s</translation>
+        <translation>Beim Masternode eingereicht, befindet sich in der Warteschlange %s</translation>
     </message>
     <message>
         <source>SwiftTX options:</source>
@@ -4836,7 +5304,15 @@ Bitte haben Sie Geduld...</translation>
     </message>
     <message>
         <source>Threshold for disconnecting misbehaving peers (default: %u)</source>
-        <translation>Schwellwert zum trennen von sich falsch verhaltenden Gegenstellen (Standard: %u)</translation>
+        <translation>Schwellenwert zum Trennen von sich falsch verhaltenden Gegenstellen (Standard: %u)</translation>
+    </message>
+    <message>
+        <source>Tor control port password (default: empty)</source>
+        <translation>Tor Kontroll-Port Passwort (Standard: ohne)</translation>
+    </message>
+    <message>
+        <source>Tor control port to use if onion listening enabled (default: %s)</source>
+        <translation>Zu verwendender Tor Kontroll-Port, falls onion Überwachung aktiviert ist (Standard %s)</translation>
     </message>
     <message>
         <source>Transaction amount too small</source>
@@ -4949,6 +5425,14 @@ Bitte haben Sie Geduld...</translation>
     <message>
         <source>Warning: This version is obsolete, upgrade required!</source>
         <translation>Warnung: Diese Version is veraltet, Aktualisierung erforderlich!</translation>
+    </message>
+    <message>
+        <source>Warning: Unsupported argument -benchmark ignored, use -debug=bench.</source>
+        <translation>Warnung: Nicht unterstütztes Argument -benchmark wurde ignoriert, nutzen Sie -debug=bench.</translation>
+    </message>
+    <message>
+        <source>Warning: Unsupported argument -debugnet ignored, use -debug=net.</source>
+        <translation>Warnung: Nicht unterstütztes Argument -debugnet wurde ignoriert, nutze stattdessen -debug=net.</translation>
     </message>
     <message>
         <source>Will retry...</source>

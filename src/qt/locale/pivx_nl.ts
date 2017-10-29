@@ -3616,15 +3616,15 @@ Wees alsjeblieft geduldig...</translation>
     </message>
     <message>
         <source>The Bitcoin Core developers</source>
-        <translation>De Bitcoin Core ontwikkelaars</translation>
+        <translation>De Bitcoin Kernontwikkelaars</translation>
     </message>
     <message>
         <source>The Dash Core developers</source>
-        <translation>De Dash Core ontwikkelaars</translation>
+        <translation>De Dash Kernontwikkelaars</translation>
     </message>
     <message>
         <source>The PIVX Core developers</source>
-        <translation>De PIVX Core ontwikkelaars</translation>
+        <translation>De PIVX Kernontwikkelaars</translation>
     </message>
     <message>
         <source>[testnet]</source>
@@ -4677,15 +4677,15 @@ bijvoorbeeld: alertnotify = echo %%s | mail -s "PIVX Alert" admin@foo.com
     </message>
     <message>
         <source>Copyright (C) 2009-%i The Bitcoin Core Developers</source>
-        <translation>Copyright (C) 2009-%i The Bitcoin Core Ontwikkelaars</translation>
+        <translation>Copyright (C) 2009-%i The Bitcoin Kernontwikkelaars</translation>
     </message>
     <message>
         <source>Copyright (C) 2014-%i The Dash Core Developers</source>
-        <translation>Copyright (C) 2014-%i The Dash Core Ontwikkelaars</translation>
+        <translation>Copyright (C) 2014-%i The Dash Kernontwikkelaars</translation>
     </message>
     <message>
         <source>Copyright (C) 2015-%i The PIVX Core Developers</source>
-        <translation>Copyright (C) 2015-%i The PIVX Core Ontwikkelaars</translation>
+        <translation>Copyright (C) 2015-%i The PIVX Kernontwikkelaars</translation>
     </message>
     <message>
         <source>Corrupted block database detected</source>

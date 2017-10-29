@@ -359,11 +359,11 @@
     </message>
     <message>
         <source>Sign &amp;message...</source>
-        <translation>Signar &amp;missatge...</translation>
+        <translation>Signa &amp;missatge...</translation>
     </message>
     <message>
         <source>&amp;Verify message...</source>
-        <translation>&amp;Verifica el missatge...</translation>
+        <translation>&amp;Verifica un missatge...</translation>
     </message>
     <message>
         <source>&amp;Information</source>
@@ -696,11 +696,11 @@
     </message>
     <message>
         <source>highest</source>
-        <translation>la més alta</translation>
+        <translation>màxima</translation>
     </message>
     <message>
         <source>higher</source>
-        <translation>més alta</translation>
+        <translation>molt alta</translation>
     </message>
     <message>
         <source>high</source>
@@ -724,11 +724,11 @@
     </message>
     <message>
         <source>lower</source>
-        <translation>més baixa</translation>
+        <translation>molt baixa</translation>
     </message>
     <message>
         <source>lowest</source>
-        <translation>la més baixa</translation>
+        <translation>mínima</translation>
     </message>
     <message>
         <source>(%1 locked)</source>
@@ -1735,7 +1735,7 @@
     </message>
     <message>
         <source>&amp;Sign Message</source>
-        <translation>&amp;Signa el missatge</translation>
+        <translation>&amp;Signa un missatge</translation>
     </message>
     <message>
         <source>Alt+A</source>
@@ -1751,15 +1751,15 @@
     </message>
     <message>
         <source>Sign &amp;Message</source>
-        <translation>Signa el &amp;missatge</translation>
+        <translation>Signa un &amp;missatge</translation>
     </message>
     <message>
         <source>&amp;Verify Message</source>
-        <translation>&amp;Verifica el missatge</translation>
+        <translation>&amp;Verifica un missatge</translation>
     </message>
     <message>
         <source>Verify &amp;Message</source>
-        <translation>Verifica el &amp;missatge</translation>
+        <translation>Verifica un &amp;missatge</translation>
     </message>
     <message>
         <source>The entered address is invalid.</source>

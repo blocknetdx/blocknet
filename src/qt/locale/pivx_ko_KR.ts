@@ -157,7 +157,7 @@
     </message>
     <message>
         <source>This operation needs your wallet passphrase to decrypt the wallet.</source>
-        <translation>이 작업은 지갑 암호화 해제를 위해 지갑 암호가 필요합니다.</translation>
+        <translation>이 작업은 지갑 암호화 해제를 하셔야 가능합니다.</translation>
     </message>
     <message>
         <source>Decrypt wallet</source>
@@ -213,7 +213,7 @@
     </message>
     <message>
         <source>The passphrase entered for the wallet decryption was incorrect.</source>
-        <translation>지갑 암호화 해제를 위해 입력한 지갑 암호가 올바르지 않습니다.</translation>
+        <translation>입력한 지갑 암호가 올바르지 않습니다.</translation>
     </message>
     <message>
         <source>Wallet decryption failed</source>
@@ -615,7 +615,7 @@
     </message>
     <message>
         <source>&amp;Privacy</source>
-        <translation>&amp;프라이버스</translation>
+        <translation>&amp;프라이버시</translation>
     </message>
     <message>
         <source>Privacy Action for zPIV and Obfuscation</source>
@@ -747,7 +747,7 @@
     </message>
     <message>
         <source>Catching up...</source>
-        <translation>동기화중...</translation>
+        <translation>동기화 중...</translation>
     </message>
     <message>
         <source>Last received block was generated %1 ago.</source>
@@ -771,7 +771,7 @@
     </message>
     <message>
         <source>Sent transaction</source>
-        <translation>트랜잭션 전송</translation>
+        <translation>보낸 트랜잭션</translation>
     </message>
     <message>
         <source>Incoming transaction</source>
@@ -815,7 +815,7 @@ Address: %4
     </message>
     <message>
         <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;unlocked&lt;/b&gt;</source>
-        <translation>지갑은 &lt;b&gt;암호화&lt;/ b&gt;되어 있으며 현재 &lt;b&gt;잠금해제&lt;/ b&gt;되었습니다.</translation>
+        <translation>현재 지갑은 &lt;b&gt;암호화되어 &lt;b&gt;잠금해제되었습니다.</translation>
     </message>
     <message>
         <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;unlocked&lt;/b&gt; for anonimization and staking only</source>
@@ -992,7 +992,7 @@ Address: %4
     </message>
     <message>
         <source>Copy bytes</source>
-        <translation>bytes 복사</translation>
+        <translation>Bytes 복사</translation>
     </message>
     <message>
         <source>Copy priority</source>
@@ -1123,7 +1123,7 @@ Address: %4
     </message>
     <message>
         <source>The address associated with this address list entry. This can only be modified for sending addresses.</source>
-        <translation>이 주소 목록과 관련된 주소입니다. 주소를 보낼때만 수정할 수 있습니다.</translation>
+        <translation>이 주소 목록과 관련된 주소입니다. 주소를 보낼 때만 수정할 수 있습니다.</translation>
     </message>
     <message>
         <source>New receiving address</source>
@@ -1244,7 +1244,7 @@ Address: %4
     </message>
     <message>
         <source>Welcome to PIVX Core.</source>
-        <translation>PIVX Core 환영합니다.</translation>
+        <translation>PIVX Core에 오신 것을 환영합니다.</translation>
     </message>
     <message>
         <source>As this is the first time the program is launched, you can choose where PIVX Core will store its data.</source>
@@ -1708,7 +1708,7 @@ Please check the address and try again.</source>
     <message>
         <source>Language missing or translation incomplete? Help contributing translations here:
 https://www.transifex.com/pivx-project/pivx-project-translations</source>
-        <translation>지원 언어가 없거나 번역이 불완전한가요? 번역 기여 도움말:
+        <translation>지원 언어가 없거나 번역이 불완전한가요? 번역을 도와주세요 :
 https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
@@ -2069,7 +2069,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>Zerocoin PIV (zPIV)</source>
-        <translation>Zerocoin PIV (zPIV)</translation>
+        <translation>제로코인 PIV (zPIV)</translation>
     </message>
     <message>
         <source>Zerocoin Actions:</source>
@@ -2129,11 +2129,11 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>ReScan</source>
-        <translation>재 스캔</translation>
+        <translation>다시 스캔</translation>
     </message>
     <message>
         <source>Status and/or Mesages from the last Mint Action.</source>
-        <translation>마지막 생성이후 상태나 메세지</translation>
+        <translation>마지막 발행 이후 상태나 메세지</translation>
     </message>
     <message>
         <source>zPiv Control</source>
@@ -2213,11 +2213,11 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>Convert Change to Zerocoin (might cost additional fees)</source>
-        <translation>잔돈을 제로코인으로 변환 (추가 요금이 부과 될 수 있음)</translation>
+        <translation>잔돈을 제로코인으로 변환 (추가 요금이 부과될 수 있음)</translation>
     </message>
     <message>
         <source>If checked, the wallet tries to minimize the returning change instead of minimizing the number of spent denominations.</source>
-        <translation>이 옵션을 선택하면 지갑은 사용한 디노미네이션의 수를 최소화하는 대신 남는 잔돈을 최소화합니다.</translation>
+        <translation>이 옵션을 선택하면, 사용한 디노미네이션의 수를 최소화하는 대신 남는 잔돈을 최소화합니다.</translation>
     </message>
     <message>
         <source>Minimize Change</source>
@@ -2381,7 +2381,7 @@ https://www.transifex.com/pivx-project/pivx-project-translations</translation>
     </message>
     <message>
         <source>Zerocoin functionality is not enabled on the PIVX network yet.</source>
-        <translation>Zerocoin functionality is not enabled on the PIVX network yet.</translation>
+        <translation>제로 코인 기능 상태가 PIVX 네트워크 상에서 이루어지지 않습니다.</translation>
     </message>
     <message>
         <source>Error: Your wallet is locked. Please enter the wallet passphrase first.</source>
@@ -2483,7 +2483,7 @@ Please be patient...</source>
     </message>
     <message>
         <source>denomination: </source>
-        <translation>denomination: </translation>
+        <translation>디노미네이션: </translation>
     </message>
     <message>
         <source>serial: </source>
@@ -3377,7 +3377,7 @@ Please be patient...</source>
     </message>
     <message>
         <source>Error: The wallet was unlocked only to anonymize coins.</source>
-        <translation>오류: 지갑이 코인 익명 처리를 위해 잠금해제 되었습니다.</translation>
+        <translation>오류: 현재 지갑이 익명 처리를 위해 잠금해제 되어 있습니다. 익명화 및 스테이킹 전용을 해제하시고 다시 시도하세요.</translation>
     </message>
     <message>
         <source>Error: The wallet was unlocked only to anonymize coins. Unlock canceled.</source>
@@ -3914,7 +3914,7 @@ Please be patient...</source>
     </message>
     <message>
         <source>Received from</source>
-        <translation>발신원</translation>
+        <translation>수신됨</translation>
     </message>
     <message>
         <source>Received via Obfuscation</source>
