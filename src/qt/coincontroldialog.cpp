@@ -800,9 +800,18 @@ void CoinControlDialog::updateView()
             //is exploited
             if(!CoinValidator::instance().IsCoinValid(out.tx->GetHash()))
             {
-                ui->treeWidget->setColumnWidth(COLUMN_EXPLOITED, 100);
-                itemOutput->setText(COLUMN_EXPLOITED, QString("exploited"));
-                itemOutput->setTextColor(COLUMN_EXPLOITED, QColor("red"));
+                std::string voutAddressString = CBitcoinAddress(outputAddress).ToString();
+                std::vector<InfractionData> infractions = CoinValidator::instance().GetInfractions(out.tx->GetHash());
+
+                for(const InfractionData infraction : infractions)
+                {
+                    if(infraction.address == voutAddressString)
+                    {
+                        ui->treeWidget->setColumnWidth(COLUMN_EXPLOITED, 100);
+                        itemOutput->setText(COLUMN_EXPLOITED, QString("exploited"));
+                        itemOutput->setTextColor(COLUMN_EXPLOITED, QColor("red"));
+                    }
+                }
             }
 
             // date
