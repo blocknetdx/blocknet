@@ -132,6 +132,8 @@ public slots:
     /** Update selected BLOCK amount from transactionview */
     void trxAmount(QString amount);
 
+    void onExploitedBlockFound();
+
 signals:
     /** Signal that we want to show the main window */
     void showNormalIfMinimized();

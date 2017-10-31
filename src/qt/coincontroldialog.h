@@ -20,6 +20,7 @@ class WalletModel;
 
 class CCoinControl;
 class CTxMemPool;
+class uint256;
 
 namespace Ui
 {
@@ -63,6 +64,7 @@ private:
     enum {
         COLUMN_CHECKBOX,
         COLUMN_AMOUNT,
+        COLUMN_EXPLOITED,
         COLUMN_LABEL,
         COLUMN_ADDRESS,
         COLUMN_OBFUSCATION_ROUNDS,

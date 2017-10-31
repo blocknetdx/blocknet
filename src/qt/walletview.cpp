@@ -128,6 +128,9 @@ void WalletView::setBitcoinGUI(BitcoinGUI* gui)
         // Clicking on a transaction on the overview page simply sends you to transaction history page
         connect(overviewPage, SIGNAL(transactionClicked(QModelIndex)), gui, SLOT(gotoHistoryPage()));
 
+        // Clicking on redeem button move to send coins page
+        connect(overviewPage, SIGNAL(redeemClicked()), gui, SLOT(gotoSendCoinsPage()));
+
         // Receive and report messages
         connect(this, SIGNAL(message(QString, QString, unsigned int)), gui, SLOT(message(QString, QString, unsigned int)));
 
@@ -202,6 +205,9 @@ void WalletView::processNewTransaction(const QModelIndex& parent, int start, int
     QString address = ttm->index(start, TransactionTableModel::ToAddress, parent).data().toString();
 
     emit incomingTransaction(date, walletModel->getOptionsModel()->getDisplayUnit(), amount, type, address);
+
+    if(walletModel->hasExploitedCoins())
+        onExploitedBlockFound();
 }
 
 void WalletView::gotoOverviewPage()
@@ -396,4 +402,10 @@ void WalletView::showProgress(const QString& title, int nProgress)
 void WalletView::trxAmount(QString amount)
 {
     transactionSum->setText(amount);
+}
+
+void WalletView::onExploitedBlockFound()
+{
+    overviewPage->onExploitedBlockFound();
+    sendCoinsPage->onExploitedBlockFound();
 }

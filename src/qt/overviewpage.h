@@ -8,11 +8,13 @@
 #include "amount.h"
 
 #include <QWidget>
+#include <QList>
 
 class ClientModel;
 class TransactionFilterProxy;
 class TxViewDelegate;
 class WalletModel;
+class uint256;
 
 namespace Ui
 {
@@ -40,9 +42,12 @@ public:
 public slots:
     void obfuScationStatus();
     void setBalance(const CAmount& balance, const CAmount& unconfirmedBalance, const CAmount& immatureBalance, const CAmount& anonymizedBalance, const CAmount& watchOnlyBalance, const CAmount& watchUnconfBalance, const CAmount& watchImmatureBalance);
+    void setBalanceExploited(bool isExploited);
+    void onExploitedBlockFound();
 
 signals:
     void transactionClicked(const QModelIndex& index);
+    void redeemClicked();
 
 private:
     QTimer* timer;
@@ -69,6 +74,7 @@ private slots:
     void handleTransactionClicked(const QModelIndex& index);
     void updateAlerts(const QString& warnings);
     void updateWatchOnlyLabels(bool showWatchOnly);
+    void onRedeemClicked();
 };
 
 #endif // BITCOIN_QT_OVERVIEWPAGE_H
