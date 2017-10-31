@@ -32,8 +32,16 @@ uint32_t GetChecksum(const CBigNum &bnValue)
     return hash.Get32();
 }
 
-bool GetAccumulatorValueFromChecksum(uint32_t nChecksum, CBigNum& bnAccValue)
+bool GetAccumulatorValueFromChecksum(uint32_t nChecksum, bool fMemoryOnly, CBigNum& bnAccValue)
 {
+    if (mapAccumulatorValues.count(nChecksum)) {
+        bnAccValue = mapAccumulatorValues.at(nChecksum);
+        return true;
+    }
+
+    if (fMemoryOnly)
+        return false;
+
     if (!zerocoinDB->ReadAccumulatorValue(nChecksum, bnAccValue)) {
         bnAccValue = 0;
     }
@@ -44,7 +52,7 @@ bool GetAccumulatorValueFromChecksum(uint32_t nChecksum, CBigNum& bnAccValue)
 bool GetAccumulatorValueFromDB(uint256 nCheckpoint, CoinDenomination denom, CBigNum& bnAccValue)
 {
     uint32_t nChecksum = ParseChecksum(nCheckpoint, denom);
-    return GetAccumulatorValueFromChecksum(nChecksum, bnAccValue);
+    return GetAccumulatorValueFromChecksum(nChecksum, false, bnAccValue);
 }
 
 void AddAccumulatorChecksum(const uint32_t nChecksum, const CBigNum &bnValue, bool fMemoryOnly)

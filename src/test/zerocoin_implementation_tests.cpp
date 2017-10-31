@@ -135,7 +135,7 @@ bool CheckZerocoinSpendNoDB(const CTransaction tx, string& strError)
 
         //see if we have record of the accumulator used in the spend tx
         CBigNum bnAccumulatorValue = 0;
-        if (!GetAccumulatorValueFromChecksum(newSpend.getAccumulatorChecksum(), bnAccumulatorValue)) {
+        if (!GetAccumulatorValueFromChecksum(newSpend.getAccumulatorChecksum(), true, bnAccumulatorValue)) {
             strError = "Zerocoinspend could not find accumulator associated with checksum";
             return false;
         }

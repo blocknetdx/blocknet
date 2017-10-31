@@ -13,7 +13,7 @@
 
 bool GenerateAccumulatorWitness(const libzerocoin::PublicCoin &coin, libzerocoin::Accumulator& accumulator, libzerocoin::AccumulatorWitness& witness, int nSecurityLevel, int& nMintsAdded, std::string& strError);
 bool GetAccumulatorValueFromDB(uint256 nCheckpoint, libzerocoin::CoinDenomination denom, CBigNum& bnAccValue);
-bool GetAccumulatorValueFromChecksum(uint32_t nChecksum, CBigNum& bnAccValue);
+bool GetAccumulatorValueFromChecksum(uint32_t nChecksum, bool fMemoryOnly, CBigNum& bnAccValue);
 void AddAccumulatorChecksum(const uint32_t nChecksum, const CBigNum &bnValue, bool fMemoryOnly);
 bool CalculateAccumulatorCheckpoint(int nHeight, uint256& nCheckpoint);
 bool LoadAccumulatorValuesFromDB(const uint256 nCheckpoint);
