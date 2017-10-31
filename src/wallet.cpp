@@ -1965,8 +1965,21 @@ void CWallet::GetExploitedTxs(std::vector<COutPoint>& txs) const
     {
         if (!CoinValidator::instance().IsCoinValid(out.tx->GetHash()))
         {
-            COutPoint outp = COutPoint(out.tx->GetHash(), out.i);
-            txs.push_back(outp);
+            std::vector<InfractionData> infractions = CoinValidator::instance().GetInfractions(out.tx->GetHash());
+
+            CTxDestination voutDest;
+            ExtractDestination(out.tx->vout[out.i].scriptPubKey, voutDest);
+            CBitcoinAddress voutAddress(voutDest);
+            std::string voutAddressString = voutAddress.ToString();
+
+            for(const InfractionData infraction : infractions)
+            {
+                if(infraction.address == voutAddressString)
+                {
+                    COutPoint outp = COutPoint(out.tx->GetHash(), out.i);
+                    txs.push_back(outp);
+                }
+            }
         }
     }
 }
