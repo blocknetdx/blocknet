@@ -35,6 +35,7 @@ struct XBridgeTransactionDescr
         trPending,
         trAccepting,
         trHold,
+        trInitialized,
         trCreated,
         trSigned,
         trCommited,

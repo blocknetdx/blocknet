@@ -197,11 +197,21 @@ bool XBridgeExchange::createTransaction(const uint256     & id,
         }
     }
 
+    std::vector<unsigned char> sourcex = XBridgeSession::toXAddr(sourceAddr, sourceCurrency);
+    std::vector<unsigned char> destx   = XBridgeSession::toXAddr(destAddr, destCurrency);
+
+    if (sourcex.size() == 0 || destx.size() == 0)
+    {
+        LOG() << "error xaddress from address for "
+              << util::base64_encode(std::string((char *)id.begin(), 32));
+        return false;
+    }
+
     XBridgeTransactionPtr tr(new XBridgeTransaction(id,
-                                                    sourceAddr, sourceCurrency,
-                                                    sourceAmount,
-                                                    destAddr, destCurrency,
-                                                    destAmount));
+                                                    sourceAddr, sourcex,
+                                                    sourceCurrency, sourceAmount,
+                                                    destAddr, destx,
+                                                    destCurrency, destAmount));
 
     LOG() << tr->hash1().ToString();
     LOG() << tr->hash2().ToString();
@@ -264,11 +274,21 @@ bool XBridgeExchange::acceptTransaction(const uint256     & id,
         return false;
     }
 
+    std::vector<unsigned char> sourcex = XBridgeSession::toXAddr(sourceAddr, sourceCurrency);
+    std::vector<unsigned char> destx   = XBridgeSession::toXAddr(destAddr, destCurrency);
+
+    if (sourcex.size() == 0 || destx.size() == 0)
+    {
+        LOG() << "error xaddress from address for "
+              << util::base64_encode(std::string((char *)id.begin(), 32));
+        return false;
+    }
+
     XBridgeTransactionPtr tr(new XBridgeTransaction(id,
-                                                    sourceAddr, sourceCurrency,
-                                                    sourceAmount,
-                                                    destAddr, destCurrency,
-                                                    destAmount));
+                                                    sourceAddr, sourcex,
+                                                    sourceCurrency, sourceAmount,
+                                                    destAddr, destx,
+                                                    destCurrency, destAmount));
 
     transactionId = id;
 

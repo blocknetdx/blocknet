@@ -44,6 +44,8 @@ public:
     bool processPacket(XBridgePacketPtr packet);
 
 public:
+    static std::vector<unsigned char> toXAddr(const std::string & addr, const std::string & currency);
+
     // service functions
     void sendListOfTransactions();
     void checkFinishedTransactions();
@@ -86,7 +88,6 @@ protected:
     const unsigned char * myaddr() const;
 
     void sendPacket(const std::vector<unsigned char> & to, const XBridgePacketPtr & packet);
-    void sendPacket(const std::string & to, const XBridgePacketPtr & packet);
     void sendPacketBroadcast(XBridgePacketPtr packet);
 
     // return true if packet not for me, relayed
