@@ -566,8 +566,8 @@ bool XBridgeSession::processTransactionAccepting(XBridgePacketPtr packet)
                 LOG() << "send xbcTransactionHold ";
 
                 std::set<std::vector<unsigned char> > hosts;
-                hosts.insert(toXAddr(tr->a_address(), tr->a_currency()));
-                hosts.insert(toXAddr(tr->b_address(), tr->b_currency()));
+                hosts.insert(tr->a_xaddress());
+                hosts.insert(tr->b_xaddress());
 
                 assert(hosts.size() == 2 && "bad addresses");
 
@@ -780,7 +780,7 @@ bool XBridgeSession::processTransactionHoldApply(XBridgePacketPtr packet)
                   << tr->a_destination();
 
             XBridgePacketPtr reply1(new XBridgePacket(xbcTransactionInit));
-            reply1->append(toXAddr(tr->a_destination()));
+            reply1->append(tr->a_xdestination());
             reply1->append(sessionAddr());
             reply1->append(id.begin(), 32);
             reply1->append(activeServicenode.pubKeyServicenode.begin(),
@@ -793,7 +793,7 @@ bool XBridgeSession::processTransactionHoldApply(XBridgePacketPtr packet)
             reply1->append(sc);
             reply1->append(tr->b_amount());
 
-            sendPacket(toXAddr(tr->a_destination()), reply1);
+            sendPacket(tr->a_xdestination(), reply1);
 
             // second
             // TODO remove this log
@@ -801,7 +801,7 @@ bool XBridgeSession::processTransactionHoldApply(XBridgePacketPtr packet)
                   << tr->b_destination();
 
             XBridgePacketPtr reply2(new XBridgePacket(xbcTransactionInit));
-            reply2->append(toXAddr(tr->b_destination()));
+            reply2->append(tr->b_xdestination());
             reply2->append(sessionAddr());
             reply2->append(id.begin(), 32);
             reply2->append(activeServicenode.pubKeyServicenode.begin(),
@@ -814,7 +814,7 @@ bool XBridgeSession::processTransactionHoldApply(XBridgePacketPtr packet)
             reply2->append(fc);
             reply2->append(tr->a_amount());
 
-            sendPacket(toXAddr(tr->b_destination()), reply2);
+            sendPacket(tr->b_xdestination(), reply2);
         }
     }
 
@@ -951,6 +951,8 @@ bool XBridgeSession::processTransactionInit(XBridgePacketPtr packet)
         datatxtd = uint256(strtxid);
     }
 
+    xtx->state = XBridgeTransactionDescr::trInitialized;
+
     // send initialized
     XBridgePacketPtr reply(new XBridgePacket(xbcTransactionInitialized));
     reply->append(hubAddress);
@@ -1032,20 +1034,18 @@ bool XBridgeSession::processTransactionInitialized(XBridgePacketPtr packet)
             LOG() << "send xbcTransactionCreate to "
                   << tr->a_address();
 
-            std::vector<unsigned char> aaddr = toXAddr(tr->a_address(), tr->a_currency());
-
             // send xbcTransactionCreate
             // with nLockTime == lockTime*2 for first client,
             // with nLockTime == lockTime*4 for second
             XBridgePacketPtr reply1(new XBridgePacket(xbcTransactionCreateA));
-            reply1->append(aaddr);
+            reply1->append(tr->a_xaddress());
             reply1->append(sessionAddr());
             reply1->append(id.begin(), 32);
             reply1->append(tr->b_destination());
             reply1->append(tr->a_datatxid().begin(), 32);
             reply1->append(tr->b_pk1().begin(), tr->b_pk1().size());
 
-            sendPacket(aaddr, reply1);
+            sendPacket(tr->a_xaddress(), reply1);
         }
     }
 
@@ -1166,22 +1166,22 @@ bool XBridgeSession::isAddressInTransaction(const std::vector<unsigned char> & a
                                             const XBridgeTransactionPtr & tx,
                                             string & fullAddress)
 {
-    if (toXAddr(tx->a_address()) == address)
+    if (tx->a_xaddress() == address)
     {
         fullAddress = tx->a_address();
         return true;
     }
-    else if (toXAddr(tx->b_address()) == address)
+    else if (tx->b_xaddress() == address)
     {
         fullAddress = tx->b_address();
         return true;
     }
-    else if (toXAddr(tx->a_destination()) == address)
+    else if (tx->a_xdestination() == address)
     {
         fullAddress = tx->a_destination();
         return true;
     }
-    else if (toXAddr(tx->b_destination()) == address)
+    else if (tx->b_xdestination() == address)
     {
         fullAddress = tx->b_destination();
         return true;
@@ -1653,10 +1653,8 @@ bool XBridgeSession::processTransactionCreatedA(XBridgePacketPtr packet)
     LOG() << "send xbcTransactionCreate to "
           << tr->b_address();
 
-    std::vector<unsigned char> baddr = toXAddr(tr->b_address(), tr->b_currency());
-
     XBridgePacketPtr reply2(new XBridgePacket(xbcTransactionCreateB));
-    reply2->append(baddr);
+    reply2->append(tr->b_xaddress());
     reply2->append(sessionAddr());
     reply2->append(txid.begin(), 32);
     reply2->append(tr->a_destination());
@@ -1664,7 +1662,7 @@ bool XBridgeSession::processTransactionCreatedA(XBridgePacketPtr packet)
     reply2->append(tr->a_pk1().begin(), tr->a_pk1().size());
     reply2->append(binTxId);
 
-    sendPacket(baddr, reply2);
+    sendPacket(tr->b_xaddress(), reply2);
 
     return true;
 }
@@ -1735,16 +1733,14 @@ bool XBridgeSession::processTransactionCreatedB(XBridgePacketPtr packet)
             LOG() << "send xbcTransactionConfirmA to "
                   << tr->a_destination();
 
-            std::vector<unsigned char> adest = toXAddr(tr->a_destination(), tr->b_currency());
-
             XBridgePacketPtr reply(new XBridgePacket(xbcTransactionConfirmA));
-            reply->append(adest);
+            reply->append(tr->a_xdestination());
             reply->append(sessionAddr());
             reply->append(txid.begin(), 32);
             reply->append(tr->b_bintxid());
             reply->append(tr->b_innerScript());
 
-            sendPacket(adest, reply);
+            sendPacket(tr->a_xdestination(), reply);
         }
     }
 
@@ -1998,17 +1994,15 @@ bool XBridgeSession::processTransactionConfirmedA(XBridgePacketPtr packet)
     LOG() << "send xbcTransactionConfirmB to "
           << tr->b_destination();
 
-    std::vector<unsigned char> bdest = toXAddr(tr->b_destination(), tr->a_currency());
-
     XBridgePacketPtr reply2(new XBridgePacket(xbcTransactionConfirmB));
-    reply2->append(bdest);
+    reply2->append(tr->b_xdestination());
     reply2->append(sessionAddr());
     reply2->append(txid.begin(), 32);
     reply2->append(xPubkey.begin(), xPubkey.size());
     reply2->append(tr->a_bintxid());
     reply2->append(tr->a_innerScript());
 
-    sendPacket(bdest, reply2);
+    sendPacket(tr->b_xdestination(), reply2);
 
     return true;
 }

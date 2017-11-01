@@ -328,11 +328,6 @@ void XBridgeTransactionsModel::onTransactionReceived(const XBridgeTransactionDes
             return;
         }
 
-        if (descr.hubAddress != tx.hubAddress)
-        {
-            continue;
-        }
-
         // found
         if (descr.from.size() == 0)
         {
@@ -407,20 +402,22 @@ QString XBridgeTransactionsModel::transactionState(const XBridgeTransactionDescr
 {
     switch (state)
     {
-        case XBridgeTransactionDescr::trInvalid:   return trUtf8("Invalid");
-        case XBridgeTransactionDescr::trNew:       return trUtf8("New");
-        case XBridgeTransactionDescr::trPending:   return trUtf8("Open");
-        case XBridgeTransactionDescr::trAccepting: return trUtf8("Accepting");
-        case XBridgeTransactionDescr::trHold:      return trUtf8("Hold");
-        case XBridgeTransactionDescr::trCreated:   return trUtf8("Created");
-        case XBridgeTransactionDescr::trSigned:    return trUtf8("Signed");
-        case XBridgeTransactionDescr::trCommited:  return trUtf8("Commited");
-        case XBridgeTransactionDescr::trFinished:  return trUtf8("Finished");
-        case XBridgeTransactionDescr::trCancelled: return trUtf8("Cancelled");
-        case XBridgeTransactionDescr::trRollback:  return trUtf8("Rolled Back");
-        case XBridgeTransactionDescr::trDropped:   return trUtf8("Dropped");
-        case XBridgeTransactionDescr::trExpired:   return trUtf8("Expired");
-        case XBridgeTransactionDescr::trOffline:   return trUtf8("Offline");
-        default:                                   return trUtf8("Unknown");
+        case XBridgeTransactionDescr::trInvalid:        return trUtf8("Invalid");
+        case XBridgeTransactionDescr::trNew:            return trUtf8("New");
+        case XBridgeTransactionDescr::trPending:        return trUtf8("Open");
+        case XBridgeTransactionDescr::trAccepting:      return trUtf8("Accepting");
+        case XBridgeTransactionDescr::trHold:           return trUtf8("Hold");
+        case XBridgeTransactionDescr::trInitialized:    return trUtf8("Initialized");
+        case XBridgeTransactionDescr::trCreated:        return trUtf8("Created");
+        case XBridgeTransactionDescr::trSigned:         return trUtf8("Signed");
+        case XBridgeTransactionDescr::trCommited:       return trUtf8("Commited");
+        case XBridgeTransactionDescr::trFinished:       return trUtf8("Finished");
+        case XBridgeTransactionDescr::trCancelled:      return trUtf8("Cancelled");
+        case XBridgeTransactionDescr::trRollback:       return trUtf8("Rolled Back");
+        case XBridgeTransactionDescr::trRollbackFailed: return trUtf8("Rollback error");
+        case XBridgeTransactionDescr::trDropped:        return trUtf8("Dropped");
+        case XBridgeTransactionDescr::trExpired:        return trUtf8("Expired");
+        case XBridgeTransactionDescr::trOffline:        return trUtf8("Offline");
+        default:                                        return trUtf8("Unknown");
     }
 }
