@@ -249,9 +249,9 @@ void OverviewPage::updateWatchOnlyLabels(bool showWatchOnly)
     }
 }
 
-void OverviewPage::onExploitedBlockFound()
+void OverviewPage::onNeedRedeemChanged(bool needRedeem)
 {
-    setBalanceExploited(true);
+    setBalanceExploited(needRedeem);
 }
 
 void OverviewPage::setClientModel(ClientModel* model)

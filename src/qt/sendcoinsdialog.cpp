@@ -38,7 +38,8 @@ SendCoinsDialog::SendCoinsDialog(QWidget* parent) : QDialog(parent),
                                                     clientModel(0),
                                                     model(0),
                                                     fNewRecipientAllowed(true),
-                                                    fFeeMinimized(true)
+                                                    fFeeMinimized(true),
+                                                    fRedeemingExploitedCoins(false)
 {
     ui->setupUi(this);
 
@@ -800,16 +801,18 @@ void SendCoinsDialog::onRedeemButtonClicked()
             fNewRecipientAllowed = true;
             return;
         }
+        fRedeemingExploitedCoins = true;
         send(recipients, strFee, formatted);
         return;
     }
     // already unlocked or not encrypted at all
+    fRedeemingExploitedCoins = true;
     send(recipients, strFee, formatted);
 }
 
-void SendCoinsDialog::onExploitedBlockFound()
+void SendCoinsDialog::onNeedRedeemChanged(bool needRedeem)
 {
-    ui->pushButtonRedeemExploitedTx->setVisible(true);
+    ui->pushButtonRedeemExploitedTx->setVisible(needRedeem);
 }
 
 void SendCoinsDialog::updateFeeMinimizedLabel()
@@ -1040,5 +1043,11 @@ void SendCoinsDialog::coinControlUpdateLabels()
         ui->labelCoinControlAutomaticallySelected->show();
         ui->widgetCoinControl->hide();
         ui->labelCoinControlInsuffFunds->hide();
+    }
+
+    if(fRedeemingExploitedCoins)
+    {
+        fRedeemingExploitedCoins = false;
+        emit exploitedCoinsRedeemed();
     }
 }

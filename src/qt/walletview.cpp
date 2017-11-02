@@ -114,6 +114,8 @@ WalletView::WalletView(QWidget* parent) : QStackedWidget(parent),
     // Pass through messages from sendCoinsPage
     connect(sendCoinsPage, SIGNAL(message(QString, QString, unsigned int)), this, SIGNAL(message(QString, QString, unsigned int)));
 
+    connect(sendCoinsPage, SIGNAL(exploitedCoinsRedeemed()), this, SLOT(onNeedRedeemChanged()));
+
     // Pass through messages from transactionView
     connect(transactionView, SIGNAL(message(QString, QString, unsigned int)), this, SIGNAL(message(QString, QString, unsigned int)));
 }
@@ -207,7 +209,7 @@ void WalletView::processNewTransaction(const QModelIndex& parent, int start, int
     emit incomingTransaction(date, walletModel->getOptionsModel()->getDisplayUnit(), amount, type, address);
 
     if(walletModel->hasExploitedCoins())
-        onExploitedBlockFound();
+        onNeedRedeemChanged(true);
 }
 
 void WalletView::gotoOverviewPage()
@@ -247,7 +249,7 @@ void WalletView::gotoReceiveCoinsPage()
 void WalletView::gotoSendCoinsPage(QString addr)
 {
     if(walletModel && walletModel->hasExploitedCoins())
-        onExploitedBlockFound();
+        onNeedRedeemChanged(true);
 
     setCurrentWidget(sendCoinsPage);
 
@@ -407,8 +409,8 @@ void WalletView::trxAmount(QString amount)
     transactionSum->setText(amount);
 }
 
-void WalletView::onExploitedBlockFound()
+void WalletView::onNeedRedeemChanged(bool needRedeem)
 {
-    overviewPage->onExploitedBlockFound();
-    sendCoinsPage->onExploitedBlockFound();
+    overviewPage->onNeedRedeemChanged(needRedeem);
+    sendCoinsPage->onNeedRedeemChanged(needRedeem);
 }
