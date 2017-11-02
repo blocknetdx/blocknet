@@ -168,6 +168,7 @@ SOURCES += \
     src/chainparamsbase.cpp \
     src/clientversion.cpp \
     src/coins.cpp \
+    src/coinvalidator.cpp \
     src/compressor.cpp \
     src/core_read.cpp \
     src/core_write.cpp \
@@ -397,6 +398,7 @@ HEADERS += \
     src/checkpoints.h \
     src/compat.h \
     src/coincontrol.h \
+    src/coinvalidator.h \
     src/sync.h \
     src/util.h \
     src/uint256.h \

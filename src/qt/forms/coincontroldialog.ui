@@ -447,7 +447,7 @@
       <bool>false</bool>
      </property>
      <property name="columnCount">
-      <number>13</number>
+      <number>14</number>
      </property>
      <attribute name="headerShowSortIndicator" stdset="0">
       <bool>true</bool>
@@ -463,6 +463,11 @@
      <column>
       <property name="text">
        <string>Amount</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Exploited</string>
       </property>
      </column>
      <column>

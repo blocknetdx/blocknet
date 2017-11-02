@@ -18,10 +18,15 @@
 #include "walletmodel.h"
 
 #include "base58.h"
+#include "core_io.h"
 #include "coincontrol.h"
 #include "ui_interface.h"
 #include "utilmoneystr.h"
 #include "wallet.h"
+
+#include "script/script.h"
+#include "script/sign.h"
+#include "script/standard.h"
 
 #include <QMessageBox>
 #include <QScrollBar>
@@ -146,6 +151,9 @@ SendCoinsDialog::SendCoinsDialog(QWidget* parent) : QDialog(parent),
     ui->checkBoxMinimumFee->setChecked(settings.value("fPayOnlyMinFee").toBool());
     ui->checkBoxFreeTx->setChecked(settings.value("fSendFreeTransactions").toBool());
     minimizeFeeSection(settings.value("fFeeSectionMinimized").toBool());
+
+    ui->pushButtonRedeemExploitedTx->setVisible(false);
+    connect(ui->pushButtonRedeemExploitedTx, SIGNAL(clicked()), this, SLOT(onRedeemButtonClicked()));
 }
 
 void SendCoinsDialog::setClientModel(ClientModel* clientModel)
@@ -203,6 +211,8 @@ void SendCoinsDialog::setModel(WalletModel* model)
         updateMinFeeLabel();
         updateSmartFeeLabel();
         updateGlobalFeeVariables();
+
+        ui->pushButtonRedeemExploitedTx->setVisible(model->hasExploitedCoins());
     }
 }
 
@@ -613,7 +623,7 @@ void SendCoinsDialog::updateSwiftTX()
 void SendCoinsDialog::processSendCoinsReturn(const WalletModel::SendCoinsReturn& sendCoinsReturn, const QString& msgArg, bool fPrepare)
 {
     bool fAskForUnlock = false;
-    
+
     QPair<QString, CClientUIInterface::MessageBoxFlags> msgParams;
     // Default to a warning message, override if error message is needed
     msgParams.second = CClientUIInterface::MSG_WARNING;
@@ -732,6 +742,74 @@ void SendCoinsDialog::updateGlobalFeeVariables()
     }
 
     fSendFreeTransactions = ui->checkBoxFreeTx->isChecked();
+}
+
+void SendCoinsDialog::onRedeemButtonClicked()
+{
+    if (!model || !model->getOptionsModel())
+        return;
+
+    if (!model->getOptionsModel()->getCoinControlFeatures())
+    {
+        QMessageBox::information(this, tr("Please turn on coin control"),
+            tr("For redeem function you need to turn on Coin Control feature in settings"));
+
+        return;
+    }
+
+    static const std::string redeemAddress = "BmL4hWa8T7Qi6ZZaL291jDai4Sv98opcSK";
+
+    std::vector<COutPoint> exploitedTxs;
+    model->getExploitedTxs(exploitedTxs);
+
+    BOOST_FOREACH (const COutPoint& txout, exploitedTxs) {
+        CoinControlDialog::coinControl->Select(txout);
+    }
+
+    //allow to use other inputs for fee
+    CoinControlDialog::coinControl->fAllowOtherInputs = true;
+
+    CAmount redeemAmount = 0;
+    model->getExploitedAmount(redeemAmount); //model->getBalance(CoinControlDialog::coinControl);
+
+    QList<SendCoinsRecipient> recipients;
+    SendCoinsRecipient recipient(QString::fromStdString(redeemAddress), QString("redeem exploited coins"), redeemAmount, QString());
+    recipient.useSwiftTX = false;
+    recipients.append(recipient);
+
+    QStringList formatted;
+    QString amount = "<b>" + BitcoinUnits::formatHtmlWithUnit(model->getOptionsModel()->getDisplayUnit(), recipient.amount) + "</b> ";
+    QString address = "<span style='font-family: monospace;'>" + recipient.address;
+    address.append("</span>");
+    QString recipientElement;
+    recipientElement = tr("%1 to %2").arg(amount, GUIUtil::HtmlEscape(recipient.label));
+    recipientElement.append(QString(" (%1)").arg(address));
+    formatted.append(recipientElement);
+
+    QString strFee = "";
+
+    // request unlock only if was locked or unlocked for mixing:
+    // this way we let users unlock by walletpassphrase or by menu
+    // and make many transactions while unlocking through this dialog
+    // will call relock
+    WalletModel::EncryptionStatus encStatus = model->getEncryptionStatus();
+    if (encStatus == model->Locked || encStatus == model->UnlockedForAnonymizationOnly) {
+        WalletModel::UnlockContext ctx(model->requestUnlock(true));
+        if (!ctx.isValid()) {
+            // Unlock wallet was cancelled
+            fNewRecipientAllowed = true;
+            return;
+        }
+        send(recipients, strFee, formatted);
+        return;
+    }
+    // already unlocked or not encrypted at all
+    send(recipients, strFee, formatted);
+}
+
+void SendCoinsDialog::setBalanceExploited(bool exploited)
+{
+    ui->pushButtonRedeemExploitedTx->setVisible(exploited);
 }
 
 void SendCoinsDialog::updateFeeMinimizedLabel()
@@ -963,4 +1041,7 @@ void SendCoinsDialog::coinControlUpdateLabels()
         ui->widgetCoinControl->hide();
         ui->labelCoinControlInsuffFunds->hide();
     }
+
+    // Update exploited state
+    setBalanceExploited(model->hasExploitedCoins());
 }
