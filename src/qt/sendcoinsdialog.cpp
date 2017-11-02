@@ -1048,6 +1048,6 @@ void SendCoinsDialog::coinControlUpdateLabels()
     if(fRedeemingExploitedCoins)
     {
         fRedeemingExploitedCoins = false;
-        emit exploitedCoinsRedeemed();
+        emit exploitedCoinsRedeemed(!model->hasExploitedCoins());
     }
 }
