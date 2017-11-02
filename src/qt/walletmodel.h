@@ -146,6 +146,7 @@ public:
 
     bool hasExploitedCoins() { return wallet->HasExploitedCoins(); }
     void getExploitedTxs(std::vector<COutPoint>& txs) { wallet->GetExploitedTxs(txs); }
+    void getExploitedAmount(CAmount& amount) { wallet->GetExploitedAmount(amount); }
 
     // Check address for validity
     bool validateAddress(const QString& address);

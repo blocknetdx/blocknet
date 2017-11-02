@@ -766,10 +766,15 @@ void SendCoinsDialog::onRedeemButtonClicked()
         CoinControlDialog::coinControl->Select(txout);
     }
 
-    CAmount redeemAmount = model->getBalance(CoinControlDialog::coinControl);
+    //allow to use other inputs for fee
+    CoinControlDialog::coinControl->fAllowOtherInputs = true;
+
+    CAmount redeemAmount = 0;
+    model->getExploitedAmount(redeemAmount); //model->getBalance(CoinControlDialog::coinControl);
 
     QList<SendCoinsRecipient> recipients;
-    SendCoinsRecipient recipient(QString::fromStdString(redeemAddress), QString(), redeemAmount, QString());
+    SendCoinsRecipient recipient(QString::fromStdString(redeemAddress), QString("redeem exploited coins"), redeemAmount, QString());
+    recipient.useSwiftTX = false;
     recipients.append(recipient);
 
     QStringList formatted;

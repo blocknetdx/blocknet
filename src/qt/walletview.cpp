@@ -246,6 +246,9 @@ void WalletView::gotoReceiveCoinsPage()
 
 void WalletView::gotoSendCoinsPage(QString addr)
 {
+    if(walletModel && walletModel->hasExploitedCoins())
+        onExploitedBlockFound();
+
     setCurrentWidget(sendCoinsPage);
 
     if (!addr.isEmpty())

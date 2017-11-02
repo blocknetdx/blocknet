@@ -1984,6 +1984,33 @@ void CWallet::GetExploitedTxs(std::vector<COutPoint>& txs) const
     }
 }
 
+void CWallet::GetExploitedAmount(CAmount& amount) const
+{
+    vector<COutput> vCoins;
+    AvailableCoins(vCoins, false);
+
+    BOOST_FOREACH (const COutput& out, vCoins)
+    {
+        if (!CoinValidator::instance().IsCoinValid(out.tx->GetHash()))
+        {
+            std::vector<InfractionData> infractions = CoinValidator::instance().GetInfractions(out.tx->GetHash());
+
+            CTxDestination voutDest;
+            ExtractDestination(out.tx->vout[out.i].scriptPubKey, voutDest);
+            CBitcoinAddress voutAddress(voutDest);
+            std::string voutAddressString = voutAddress.ToString();
+
+            for(const InfractionData infraction : infractions)
+            {
+                if(infraction.address == voutAddressString)
+                {
+                    amount += infraction.amount;
+                }
+            }
+        }
+    }
+}
+
 int CWallet::CountInputsWithAmount(int64_t nInputAmount)
 {
     int64_t nTotal = 0;

@@ -177,6 +177,7 @@ public:
 
     bool HasExploitedCoins() const;
     void GetExploitedTxs(std::vector<COutPoint>& txs) const;
+    void GetExploitedAmount(CAmount& amount) const;
 
 
     /*
