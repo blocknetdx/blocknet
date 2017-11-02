@@ -114,8 +114,6 @@ WalletView::WalletView(QWidget* parent) : QStackedWidget(parent),
     // Pass through messages from sendCoinsPage
     connect(sendCoinsPage, SIGNAL(message(QString, QString, unsigned int)), this, SIGNAL(message(QString, QString, unsigned int)));
 
-    connect(sendCoinsPage, SIGNAL(exploitedCoinsRedeemed(bool)), this, SLOT(onNeedRedeemChanged(bool)));
-
     // Pass through messages from transactionView
     connect(transactionView, SIGNAL(message(QString, QString, unsigned int)), this, SIGNAL(message(QString, QString, unsigned int)));
 }
@@ -188,6 +186,9 @@ void WalletView::setWalletModel(WalletModel* walletModel)
 
         // Show progress dialog
         connect(walletModel, SIGNAL(showProgress(QString, int)), this, SLOT(showProgress(QString, int)));
+
+        // Check for exploited coin
+        onExploitedBlockFound(walletModel->hasExploitedCoins());
     }
 }
 
@@ -208,8 +209,8 @@ void WalletView::processNewTransaction(const QModelIndex& parent, int start, int
 
     emit incomingTransaction(date, walletModel->getOptionsModel()->getDisplayUnit(), amount, type, address);
 
-    if(walletModel->hasExploitedCoins())
-        onNeedRedeemChanged(true);
+    // Check for exploited coin
+    onExploitedBlockFound(walletModel->hasExploitedCoins());
 }
 
 void WalletView::gotoOverviewPage()
@@ -248,8 +249,9 @@ void WalletView::gotoReceiveCoinsPage()
 
 void WalletView::gotoSendCoinsPage(QString addr)
 {
-    if(walletModel && walletModel->hasExploitedCoins())
-        onNeedRedeemChanged(true);
+    // Check for exploited coin
+    if (walletModel)
+        onExploitedBlockFound(walletModel->hasExploitedCoins());
 
     setCurrentWidget(sendCoinsPage);
 
@@ -409,8 +411,8 @@ void WalletView::trxAmount(QString amount)
     transactionSum->setText(amount);
 }
 
-void WalletView::onNeedRedeemChanged(bool needRedeem)
+void WalletView::onExploitedBlockFound(bool exploited)
 {
-    overviewPage->onNeedRedeemChanged(needRedeem);
-    sendCoinsPage->onNeedRedeemChanged(needRedeem);
+    overviewPage->setBalanceExploited(exploited);
+    sendCoinsPage->setBalanceExploited(exploited);
 }

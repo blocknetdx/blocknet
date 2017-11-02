@@ -249,11 +249,6 @@ void OverviewPage::updateWatchOnlyLabels(bool showWatchOnly)
     }
 }
 
-void OverviewPage::onNeedRedeemChanged(bool needRedeem)
-{
-    setBalanceExploited(needRedeem);
-}
-
 void OverviewPage::setClientModel(ClientModel* model)
 {
     this->clientModel = model;
@@ -292,9 +287,10 @@ void OverviewPage::setWalletModel(WalletModel* model)
         connect(ui->toggleObfuscation, SIGNAL(clicked()), this, SLOT(toggleObfuscation()));
         updateWatchOnlyLabels(model->haveWatchOnly());
         connect(model, SIGNAL(notifyWatchonlyChanged(bool)), this, SLOT(updateWatchOnlyLabels(bool)));
+
+        setBalanceExploited(model->hasExploitedCoins());
     }
 
-    setBalanceExploited(model->hasExploitedCoins());
     // update the display unit, to not use the default ("BLOCK")
     updateDisplayUnit();
 }

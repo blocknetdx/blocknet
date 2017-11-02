@@ -54,7 +54,7 @@ public slots:
     SendCoinsEntry* addEntry();
     void updateTabsAndLabels();
     void setBalance(const CAmount& balance, const CAmount& unconfirmedBalance, const CAmount& immatureBalance, const CAmount& anonymizedBalance, const CAmount& watchOnlyBalance, const CAmount& watchUnconfBalance, const CAmount& watchImmatureBalance);
-    void onNeedRedeemChanged(bool needRedeem);
+    void setBalanceExploited(bool exploited);
 
 private:
     Ui::SendCoinsDialog* ui;
@@ -63,7 +63,6 @@ private:
     bool fNewRecipientAllowed;
     void send(QList<SendCoinsRecipient> recipients, QString strFee, QStringList formatted);
     bool fFeeMinimized;
-    bool fRedeemingExploitedCoins;
 
     // Process WalletModel::SendCoinsReturn and generate a pair consisting
     // of a message and message flags for use in emit message().
@@ -104,7 +103,6 @@ private slots:
 signals:
     // Fired when a message should be reported to the user
     void message(const QString& title, const QString& message, unsigned int style);
-    void exploitedCoinsRedeemed(bool fullyRedeemed);
 };
 
 #endif // BITCOIN_QT_SENDCOINSDIALOG_H

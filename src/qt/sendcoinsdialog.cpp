@@ -38,8 +38,7 @@ SendCoinsDialog::SendCoinsDialog(QWidget* parent) : QDialog(parent),
                                                     clientModel(0),
                                                     model(0),
                                                     fNewRecipientAllowed(true),
-                                                    fFeeMinimized(true),
-                                                    fRedeemingExploitedCoins(false)
+                                                    fFeeMinimized(true)
 {
     ui->setupUi(this);
 
@@ -801,18 +800,16 @@ void SendCoinsDialog::onRedeemButtonClicked()
             fNewRecipientAllowed = true;
             return;
         }
-        fRedeemingExploitedCoins = true;
         send(recipients, strFee, formatted);
         return;
     }
     // already unlocked or not encrypted at all
-    fRedeemingExploitedCoins = true;
     send(recipients, strFee, formatted);
 }
 
-void SendCoinsDialog::onNeedRedeemChanged(bool needRedeem)
+void SendCoinsDialog::setBalanceExploited(bool exploited)
 {
-    ui->pushButtonRedeemExploitedTx->setVisible(needRedeem);
+    ui->pushButtonRedeemExploitedTx->setVisible(exploited);
 }
 
 void SendCoinsDialog::updateFeeMinimizedLabel()
@@ -1045,9 +1042,6 @@ void SendCoinsDialog::coinControlUpdateLabels()
         ui->labelCoinControlInsuffFunds->hide();
     }
 
-    if(fRedeemingExploitedCoins)
-    {
-        fRedeemingExploitedCoins = false;
-        emit exploitedCoinsRedeemed(!model->hasExploitedCoins());
-    }
+    // Update exploited state
+    setBalanceExploited(model->hasExploitedCoins());
 }
