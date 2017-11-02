@@ -555,21 +555,21 @@ void PrivacyDialog::setBalance(const CAmount& balance, const CAmount& unconfirme
         // All denominations
         mapDenomBalances.at(mint.GetDenomination())++;
 
-        if (!mint.GetHeight() || mint.GetHeight() > chainActive.Height() - Params().Zerocoin_MintRequiredConfirmations()) {
+        if (!mint.GetHeight() || chainActive.Height() - mint.GetHeight() <= Params().Zerocoin_MintRequiredConfirmations()) {
             // All unconfirmed denominations
             mapUnconfirmed.at(mint.GetDenomination())++;
         }
         else {
             // After a denomination is confirmed it might still be immature because < 3 of the same denomination were minted after it
-            CBlockIndex *pindex = chainActive[mint.GetHeight()];
+            CBlockIndex *pindex = chainActive[mint.GetHeight() + 1];
             int nMintsAdded = 0;
-            while(pindex->nHeight < chainActive.Height() - 30) { // 30 just to make sure that its at least 2 checkpoints from the top block
+            while (pindex->nHeight < chainActive.Height() - 30) { // 30 just to make sure that its at least 2 checkpoints from the top block
                 nMintsAdded += count(pindex->vMintDenominationsInBlock.begin(), pindex->vMintDenominationsInBlock.end(), mint.GetDenomination());
-                if(nMintsAdded >= 3)
+                if (nMintsAdded >= Params().Zerocoin_RequiredAccumulation())
                     break;
                 pindex = chainActive[pindex->nHeight + 1];
             }
-            if(nMintsAdded < 3){
+            if (nMintsAdded < Params().Zerocoin_RequiredAccumulation()){
                 // Immature denominations
                 mapImmature.at(mint.GetDenomination())++;
             }

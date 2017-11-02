@@ -95,14 +95,14 @@ void ZPivControlDialog::updateList()
             CBlockIndex *pindex = chainActive[mint.GetHeight() + 1];
             while(pindex->nHeight < chainActive.Height() - 30) { // 30 just to make sure that its at least 2 checkpoints from the top block
                 nMintsAdded += count(pindex->vMintDenominationsInBlock.begin(), pindex->vMintDenominationsInBlock.end(), mint.GetDenomination());
-                if(nMintsAdded >= 3)
+                if(nMintsAdded >= Params().Zerocoin_RequiredAccumulation())
                     break;
                 pindex = chainActive[pindex->nHeight + 1];
             }
         }
 
         // disable selecting this mint if it is not spendable - also display a reason why
-        bool fSpendable = nMintsAdded >= 3 && nConfirmations >= Params().Zerocoin_MintRequiredConfirmations();
+        bool fSpendable = nMintsAdded >= Params().Zerocoin_RequiredAccumulation() && nConfirmations >= Params().Zerocoin_MintRequiredConfirmations();
         if(!fSpendable) {
             itemMint->setDisabled(true);
             itemMint->setCheckState(COLUMN_CHECKBOX, Qt::Unchecked);
@@ -117,7 +117,7 @@ void ZPivControlDialog::updateList()
             if(nConfirmations < Params().Zerocoin_MintRequiredConfirmations())
                 strReason = strprintf("Needs %d more confirmations", Params().Zerocoin_MintRequiredConfirmations() - nConfirmations);
             else
-                strReason = strprintf("Needs %d more mints added to network", 3 - nMintsAdded);
+                strReason = strprintf("Needs %d more mints added to network", Params().Zerocoin_RequiredAccumulation() - nMintsAdded);
 
             itemMint->setText(COLUMN_ISSPENDABLE, QString::fromStdString(strReason));
         } else {

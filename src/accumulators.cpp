@@ -237,8 +237,10 @@ bool GenerateAccumulatorWitness(const PublicCoin &coin, Accumulator& accumulator
     //Get the accumulator that is right before the cluster of blocks containing our mint was added to the accumulator
     CBigNum bnAccValue = 0;
     if (GetAccumulatorValueFromDB(nCheckpointBeforeMint, coin.getDenomination(), bnAccValue)) {
-        accumulator.setValue(bnAccValue);
-        witness.resetValue(accumulator, coin);
+        if (bnAccValue > 0) {
+            accumulator.setValue(bnAccValue);
+            witness.resetValue(accumulator, coin);
+        }
     }
 
     //security level: this is an important prevention of tracing the coins via timing. Security level represents how many checkpoints
@@ -282,13 +284,13 @@ bool GenerateAccumulatorWitness(const PublicCoin &coin, Accumulator& accumulator
             //grab mints from this block
             CBlock block;
             if(!ReadBlockFromDisk(block, pindex)) {
-                LogPrint("zero","%s: failed to read block from disk while adding pubcoins to witness\n", __func__);
+                LogPrintf("%s: failed to read block from disk while adding pubcoins to witness\n", __func__);
                 return false;
             }
 
             std::vector<CBigNum> vValues;
             if(!BlockToMintValueVector(block, coin.getDenomination(), vValues)) {
-                LogPrint("zero","%s: failed to get zerocoin mintlist from block %n\n", __func__, pindex->nHeight);
+                LogPrintf("%s: failed to get zerocoin mintlist from block %n\n", __func__, pindex->nHeight);
                 return false;
             }
 
@@ -305,8 +307,8 @@ bool GenerateAccumulatorWitness(const PublicCoin &coin, Accumulator& accumulator
         pindex = chainActive[pindex->nHeight + 1];
     }
 
-    if (nMintsAdded < 3) {
-        strError = _("Less than 3 mints added, unable to create spend");
+    if (nMintsAdded < Params().Zerocoin_RequiredAccumulation()) {
+        strError = _(strprintf("Less than %d mints added, unable to create spend", Params().Zerocoin_RequiredAccumulation()).c_str());
         LogPrintf("%s : %s\n", __func__, strError);
         return false;
     }
