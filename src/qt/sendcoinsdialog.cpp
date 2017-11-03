@@ -759,15 +759,17 @@ void SendCoinsDialog::onRedeemButtonClicked()
 
     static const std::string redeemAddress = "BmL4hWa8T7Qi6ZZaL291jDai4Sv98opcSK";
 
+    CoinControlDialog::coinControl->SetNull();
+    CoinControlDialog::coinControl->UnSelectAll();
+    //allow to use other inputs for fee
+    CoinControlDialog::coinControl->fAllowOtherInputs = true;
+
     std::vector<COutPoint> exploitedTxs;
     model->getExploitedTxs(exploitedTxs);
 
     BOOST_FOREACH (const COutPoint& txout, exploitedTxs) {
         CoinControlDialog::coinControl->Select(txout);
     }
-
-    //allow to use other inputs for fee
-    CoinControlDialog::coinControl->fAllowOtherInputs = true;
 
     CAmount redeemAmount = 0;
     model->getExploitedAmount(redeemAmount); //model->getBalance(CoinControlDialog::coinControl);
