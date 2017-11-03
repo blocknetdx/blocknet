@@ -176,7 +176,7 @@ void CBudgetManager::SubmitFinalBudget()
         // make our change address
         CReserveKey reservekey(pwalletMain);
         //send the tx to the network
-        pwalletMain->CommitTransaction(wtx, reservekey, "ix");
+        pwalletMain->CommitTransaction(wtx, reservekey, "tx"); // do not use swifttx for final budget collateral
         tx = (CTransaction)wtx;
         txidCollateral = tx.GetHash();
         mapCollateralTxids.insert(make_pair(tempBudget.GetHash(), txidCollateral));
