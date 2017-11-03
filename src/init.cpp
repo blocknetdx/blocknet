@@ -332,6 +332,7 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += HelpMessageOpt("-pid=<file>", strprintf(_("Specify pid file (default: %s)"), "pivxd.pid"));
 #endif
     strUsage += HelpMessageOpt("-reindex", _("Rebuild block chain index from current blk000??.dat files") + " " + _("on startup"));
+    strUsage += HelpMessageOpt("-reindexaccumulators", _("Reindex the accumulator database") + " " + _("on startup"));
     strUsage += HelpMessageOpt("-resync", _("Delete blockchain folders and resync from scratch") + " " + _("on startup"));
 #if !defined(WIN32)
     strUsage += HelpMessageOpt("-sysperms", _("Create new files with system default permissions, instead of umask 077 (only effective with disabled wallet functionality)"));
@@ -1451,6 +1452,16 @@ bool AppInit2(boost::thread_group& threadGroup)
 
                     //Mark reindexing as done, and not needed again in the futures
                     pblocktree->WriteFlag("msindexfix", true);
+                }
+
+                // Force recalculation of accumulators.
+                if (GetBoolArg("-reindexaccumulators", false)) {
+                    CBlockIndex* pindex = chainActive[Params().Zerocoin_StartHeight()];
+                    while (pindex->nHeight < chainActive.Height()) {
+                        if (!count(listAccCheckpointsNoDB.begin(), listAccCheckpointsNoDB.end(), pindex->nAccumulatorCheckpoint))
+                            listAccCheckpointsNoDB.emplace_back(pindex->nAccumulatorCheckpoint);
+                        pindex = chainActive.Next(pindex);
+                    }
                 }
 
                 // PIVX: recalculate Accumulator Checkpoints that failed to database properly
