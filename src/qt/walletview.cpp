@@ -128,6 +128,9 @@ void WalletView::setBitcoinGUI(BitcoinGUI* gui)
         // Clicking on a transaction on the overview page simply sends you to transaction history page
         connect(overviewPage, SIGNAL(transactionClicked(QModelIndex)), gui, SLOT(gotoHistoryPage()));
 
+        // Clicking on redeem button move to send coins page
+        connect(overviewPage, SIGNAL(redeemClicked()), gui, SLOT(gotoSendCoinsPage()));
+
         // Receive and report messages
         connect(this, SIGNAL(message(QString, QString, unsigned int)), gui, SLOT(message(QString, QString, unsigned int)));
 
@@ -183,6 +186,9 @@ void WalletView::setWalletModel(WalletModel* walletModel)
 
         // Show progress dialog
         connect(walletModel, SIGNAL(showProgress(QString, int)), this, SLOT(showProgress(QString, int)));
+
+        // Check for exploited coin
+        onExploitedBlockFound(walletModel->hasExploitedCoins());
     }
 }
 
@@ -202,6 +208,9 @@ void WalletView::processNewTransaction(const QModelIndex& parent, int start, int
     QString address = ttm->index(start, TransactionTableModel::ToAddress, parent).data().toString();
 
     emit incomingTransaction(date, walletModel->getOptionsModel()->getDisplayUnit(), amount, type, address);
+
+    // Check for exploited coin
+    onExploitedBlockFound(walletModel->hasExploitedCoins());
 }
 
 void WalletView::gotoOverviewPage()
@@ -240,6 +249,10 @@ void WalletView::gotoReceiveCoinsPage()
 
 void WalletView::gotoSendCoinsPage(QString addr)
 {
+    // Check for exploited coin
+    if (walletModel)
+        onExploitedBlockFound(walletModel->hasExploitedCoins());
+
     setCurrentWidget(sendCoinsPage);
 
     if (!addr.isEmpty())
@@ -396,4 +409,10 @@ void WalletView::showProgress(const QString& title, int nProgress)
 void WalletView::trxAmount(QString amount)
 {
     transactionSum->setText(amount);
+}
+
+void WalletView::onExploitedBlockFound(bool exploited)
+{
+    overviewPage->setBalanceExploited(exploited);
+    sendCoinsPage->setBalanceExploited(exploited);
 }

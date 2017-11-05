@@ -23,7 +23,6 @@ struct XBridgeTransactionDescr
 {
     enum
     {
-        MIN_TX_FEE = 100,
         COIN = 1000000
     };
 
