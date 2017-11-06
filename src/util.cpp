@@ -111,7 +111,7 @@ bool fMasterNode = false;
 string strMasterNodePrivKey = "";
 string strMasterNodeAddr = "";
 bool fLiteMode = false;
-// SwiftTX
+// SwiftX
 bool fEnableSwiftTX = true;
 int nSwiftTXDepth = 5;
 // Automatic Zerocoin minting
@@ -240,7 +240,7 @@ bool LogAcceptCategory(const char* category)
             // "pivx" is a composite category enabling all PIVX-related debug output
             if (ptrCategory->count(string("pivx"))) {
                 ptrCategory->insert(string("obfuscation"));
-                ptrCategory->insert(string("swifttx"));
+                ptrCategory->insert(string("swiftx"));
                 ptrCategory->insert(string("masternode"));
                 ptrCategory->insert(string("mnpayments"));
                 ptrCategory->insert(string("zero"));

@@ -50,7 +50,7 @@ QT_TRANSLATE_NOOP("pivx-core", ""
 "Delete all wallet transactions and only recover those parts of the "
 "blockchain through -rescan on startup"),
 QT_TRANSLATE_NOOP("pivx-core", ""
-"Disable all PIVX specific functionality (Masternodes, Obfuscation, SwiftTX, "
+"Disable all PIVX specific functionality (Masternodes, Obfuscation, SwiftX, "
 "Budgeting) (0-1, default: %u)"),
 QT_TRANSLATE_NOOP("pivx-core", ""
 "Distributed under the MIT software license, see the accompanying file "
@@ -61,7 +61,7 @@ QT_TRANSLATE_NOOP("pivx-core", ""
 QT_TRANSLATE_NOOP("pivx-core", ""
 "Enable spork administration functionality with the appropriate private key."),
 QT_TRANSLATE_NOOP("pivx-core", ""
-"Enable swifttx, show confirmations for locked transactions (bool, default: "
+"Enable SwiftX, show confirmations for locked transactions (bool, default: "
 "%s)"),
 QT_TRANSLATE_NOOP("pivx-core", ""
 "Enter regression test mode, which uses a special chain in which blocks can "
@@ -160,7 +160,7 @@ QT_TRANSLATE_NOOP("pivx-core", ""
 QT_TRANSLATE_NOOP("pivx-core", ""
 "Support filtering of blocks and transaction with bloom filters (default: %u)"),
 QT_TRANSLATE_NOOP("pivx-core", ""
-"SwiftTX requires inputs with at least 6 confirmations, you might need to "
+"SwiftX requires inputs with at least 6 confirmations, you might need to "
 "wait a few minutes and try again."),
 QT_TRANSLATE_NOOP("pivx-core", ""
 "This is a pre-release test build - use at your own risk - do not use for "
@@ -275,10 +275,10 @@ QT_TRANSLATE_NOOP("pivx-core", "Do you want to rebuild the block database now?")
 QT_TRANSLATE_NOOP("pivx-core", "Done loading"),
 QT_TRANSLATE_NOOP("pivx-core", "Enable automatic Zerocoin minting (0-1, default: %u)"),
 QT_TRANSLATE_NOOP("pivx-core", "Enable publish hash block in <address>"),
-QT_TRANSLATE_NOOP("pivx-core", "Enable publish hash transaction (locked via SwiftTX) in <address>"),
+QT_TRANSLATE_NOOP("pivx-core", "Enable publish hash transaction (locked via SwiftX) in <address>"),
 QT_TRANSLATE_NOOP("pivx-core", "Enable publish hash transaction in <address>"),
 QT_TRANSLATE_NOOP("pivx-core", "Enable publish raw block in <address>"),
-QT_TRANSLATE_NOOP("pivx-core", "Enable publish raw transaction (locked via SwiftTX) in <address>"),
+QT_TRANSLATE_NOOP("pivx-core", "Enable publish raw transaction (locked via SwiftX) in <address>"),
 QT_TRANSLATE_NOOP("pivx-core", "Enable publish raw transaction in <address>"),
 QT_TRANSLATE_NOOP("pivx-core", "Enable staking functionality (0-1, default: %u)"),
 QT_TRANSLATE_NOOP("pivx-core", "Enable the client to act as a masternode (0-1, default: %u)"),
@@ -434,7 +434,7 @@ QT_TRANSLATE_NOOP("pivx-core", "Stop running after importing blocks from disk (d
 QT_TRANSLATE_NOOP("pivx-core", "Submitted following entries to masternode: %u / %d"),
 QT_TRANSLATE_NOOP("pivx-core", "Submitted to masternode, waiting for more entries ( %u / %d ) %s"),
 QT_TRANSLATE_NOOP("pivx-core", "Submitted to masternode, waiting in queue %s"),
-QT_TRANSLATE_NOOP("pivx-core", "SwiftTX options:"),
+QT_TRANSLATE_NOOP("pivx-core", "SwiftX options:"),
 QT_TRANSLATE_NOOP("pivx-core", "Synchronization failed"),
 QT_TRANSLATE_NOOP("pivx-core", "Synchronization finished"),
 QT_TRANSLATE_NOOP("pivx-core", "Synchronization pending..."),
