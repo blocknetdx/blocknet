@@ -53,7 +53,7 @@ struct WalletParam
         , isImportWithNoScanSupported(false)
         , blockTime(0)
         , requiredConfirmations(0)
-        , serviceNodeFee(.005)
+        , serviceNodeFee(.025)
     {
         memset(addrPrefix,   0, sizeof(addrPrefix));
         memset(scriptPrefix, 0, sizeof(scriptPrefix));
