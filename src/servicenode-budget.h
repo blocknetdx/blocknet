@@ -177,6 +177,7 @@ private:
     //hold txes until they mature enough to use
     // XX42    map<uint256, CTransaction> mapCollateral;
     map<uint256, uint256> mapCollateralTxids;
+    bool allValidFinalPayees(std::vector<std::pair<CScript, CAmount>> &approvedPayees, int superblock);
 
 public:
     // critical section to protect the inner data structures
@@ -214,13 +215,11 @@ public:
     void MarkSynced();
     void Sync(CNode* node, uint256 nProp, bool fPartial = false);
 
-    void Calculate();
     void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv);
     void NewBlock();
     CBudgetProposal* FindProposal(const std::string& strProposalName);
     CBudgetProposal* FindProposal(uint256 nHash);
     CFinalizedBudget* FindFinalizedBudget(uint256 nHash);
-    std::pair<std::string, std::string> GetVotes(std::string strProposalName);
 
     static CAmount GetTotalBudget(int nHeight);
     std::vector<CBudgetProposal*> GetBudget();
@@ -230,14 +229,13 @@ public:
     bool AddProposal(CBudgetProposal& budgetProposal);
     bool AddFinalizedBudget(CFinalizedBudget& finalizedBudget);
     void SubmitFinalBudget();
-    bool HasNextFinalizedBudget();
 
     bool UpdateProposal(CBudgetVote& vote, CNode* pfrom, std::string& strError);
     bool UpdateFinalizedBudget(CFinalizedBudgetVote& vote, CNode* pfrom, std::string& strError);
     bool PropExists(uint256 nHash);
     bool IsTransactionValid(const CTransaction& txNew, int nBlockHeight);
     std::string GetRequiredPaymentsString(int nBlockHeight);
-    void FillBlockPayee(CMutableTransaction& txNew, CAmount nFees, bool fProofOfStake);
+    bool FillBlockPayees(CMutableTransaction &txNew, int superblock);
 
     void CheckOrphanVotes();
     void Clear()
@@ -328,37 +326,16 @@ public:
     void CleanAndRemove(bool fSignatureCheck);
     bool AddOrUpdateVote(CFinalizedBudgetVote& vote, std::string& strError);
     double GetScore();
-    bool HasMinimumRequiredSupport();
 
     bool IsValid(std::string& strError, bool fCheckCollateral = true);
 
     std::string GetName() { return strBudgetName; }
     std::string GetProposals();
+    bool GetPayees(std::vector<std::pair<CScript, CAmount>> &payees);
     int GetBlockStart() { return nBlockStart; }
-    int GetBlockEnd() { return nBlockStart + (int)(vecBudgetPayments.size() - 1); }
+    int GetBlockEnd() { return nBlockStart; } // only supporting 1 superblock payout on start block
     int GetVoteCount() { return (int)mapVotes.size(); }
-    bool IsTransactionValid(const CTransaction& txNew, int nBlockHeight);
-    bool GetBudgetPaymentByBlock(int64_t nBlockHeight, CTxBudgetPayment& payment)
-    {
-        LOCK(cs);
-
-        int i = nBlockHeight - GetBlockStart();
-        if (i < 0) return false;
-        if (i > (int)vecBudgetPayments.size() - 1) return false;
-        payment = vecBudgetPayments[i];
-        return true;
-    }
-    bool GetPayeeAndAmount(int64_t nBlockHeight, CScript& payee, CAmount& nAmount)
-    {
-        LOCK(cs);
-
-        int i = nBlockHeight - GetBlockStart();
-        if (i < 0) return false;
-        if (i > (int)vecBudgetPayments.size() - 1) return false;
-        payee = vecBudgetPayments[i].payee;
-        nAmount = vecBudgetPayments[i].nAmount;
-        return true;
-    }
+    bool GetBudgetPayments(int64_t nBlockHeight, std::vector<CTxBudgetPayment> &payments);
 
     //check to see if we should vote on this
     void AutoCheck();
@@ -475,16 +452,12 @@ public:
     uint256 nFeeTXHash;
 
     map<uint256, CBudgetVote> mapVotes;
-    //cache object
 
     CBudgetProposal();
     CBudgetProposal(const CBudgetProposal& other);
     CBudgetProposal(std::string strProposalNameIn, std::string strURLIn, int nBlockStartIn, int nBlockEndIn, CScript addressIn, CAmount nAmountIn, uint256 nFeeTXHashIn);
 
-    void Calculate();
     bool AddOrUpdateVote(CBudgetVote& vote, std::string& strError);
-    bool HasMinimumRequiredSupport();
-    std::pair<std::string, std::string> GetVotes();
 
     bool IsValid(std::string& strError, bool fCheckCollateral = true);
 
@@ -514,6 +487,11 @@ public:
     CAmount GetAmount() { return nAmount; }
     void SetAllotted(CAmount nAllotedIn) { nAlloted = nAllotedIn; }
     CAmount GetAllotted() { return nAlloted; }
+
+    // Get tally of votes Yes - No
+    int Votes() {
+        return GetYeas() - GetNays();
+    }
 
     void CleanAndRemove(bool fSignatureCheck);
 
