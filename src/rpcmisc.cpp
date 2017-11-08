@@ -96,6 +96,9 @@ Value getinfo(const Array& params, bool fHelp)
     obj.push_back(Pair("testnet", Params().TestnetToBeDeprecatedFieldRPC()));
     obj.push_back(Pair("moneysupply",ValueFromAmount(chainActive.Tip()->nMoneySupply)));
     obj.push_back(Pair("zerocoinsupply",ValueFromAmount(chainActive.Tip()->GetZerocoinSupply())));
+    for (auto denom : libzerocoin::zerocoinDenomList) {
+        obj.push_back(Pair(to_string(denom), ValueFromAmount(chainActive.Tip()->mapZerocoinSupply.at(denom) * (denom*COIN))));
+    }
     
 #ifdef ENABLE_WALLET
     if (pwalletMain) {

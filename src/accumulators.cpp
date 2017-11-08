@@ -126,7 +126,7 @@ bool CalculateAccumulatorCheckpoint(int nHeight, uint256& nCheckpoint)
 
     //set the accumulators to last checkpoint value
     AccumulatorMap mapAccumulators;
-    if(!mapAccumulators.Load(chainActive[nHeight - 1]->nAccumulatorCheckpoint)) {
+    if (!mapAccumulators.Load(chainActive[nHeight - 1]->nAccumulatorCheckpoint)) {
         if (chainActive[nHeight - 1]->nAccumulatorCheckpoint == 0) {
             //Before zerocoin is fully activated so set to init state
             mapAccumulators.Reset();
@@ -157,6 +157,7 @@ bool CalculateAccumulatorCheckpoint(int nHeight, uint256& nCheckpoint)
             LogPrint("zero","%s: failed to read block from disk\n", __func__);
             return false;
         }
+
         std::list<PublicCoin> listPubcoins;
         if(!BlockToPubcoinList(block, listPubcoins)) {
             LogPrint("zero","%s: failed to get zerocoin mintlist from block %n\n", __func__, pindex->nHeight);

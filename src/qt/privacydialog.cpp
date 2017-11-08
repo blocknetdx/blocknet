@@ -136,10 +136,10 @@ void PrivacyDialog::on_pushButtonMintzPIV_clicked()
     if (!walletModel || !walletModel->getOptionsModel())
         return;
 
-    if (GetAdjustedTime() < GetSporkValue(SPORK_17_ENABLE_ZEROCOIN)) {
-        QMessageBox::information(this, tr("Mint Zerocoin"), tr("Zerocoin functionality is not enabled on the PIVX network yet."), QMessageBox::Ok, QMessageBox::Ok);
-        return;
-    }
+
+    QMessageBox::information(this, tr("Mint Zerocoin"), tr("Zerocoin functionality is not enabled on the PIVX network."), QMessageBox::Ok, QMessageBox::Ok);
+    return;
+
 
     // Reset message text
     ui->TEMintStatus->setPlainText(tr("Mint Status: Okay"));
@@ -247,10 +247,10 @@ void PrivacyDialog::on_pushButtonSpendzPIV_clicked()
     if (!walletModel || !walletModel->getOptionsModel() || !pwalletMain)
         return;
 
-    if (GetAdjustedTime() < GetSporkValue(SPORK_17_ENABLE_ZEROCOIN)) {
-        QMessageBox::information(this, tr("Spend Zerocoin"), tr("Zerocoin functionality is not enabled on the PIVX network yet."), QMessageBox::Ok, QMessageBox::Ok);
-        return;
-    }
+
+    QMessageBox::information(this, tr("Spend Zerocoin"), tr("Zerocoin functionality is not enabled on the PIVX network."), QMessageBox::Ok, QMessageBox::Ok);
+    return;
+
 
     // Request unlock if wallet was locked or unlocked for mixing:
     WalletModel::EncryptionStatus encStatus = walletModel->getEncryptionStatus();

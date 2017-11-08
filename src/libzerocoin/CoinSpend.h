@@ -87,8 +87,13 @@ public:
 	 * @return the txout hash
 	 */
     uint256 getTxOutHash() const { return ptxHash; }
+    CBigNum getAccCommitment() const { return accCommitmentToCoinValue; }
+    CBigNum getSerialComm() const { return serialCommitmentToCoinValue; }
 
     bool Verify(const Accumulator& a) const;
+    bool HasValidSerial(ZerocoinParams* params) const;
+    CBigNum CalculateValidSerial(ZerocoinParams* params);
+
     ADD_SERIALIZE_METHODS;
     template <typename Stream, typename Operation>
     inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)

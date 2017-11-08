@@ -1315,7 +1315,7 @@ bool CheckZerocoinSpend(const CTransaction tx, bool fVerifySignature, CValidatio
         return state.DoS(100, error("CheckZerocoinSpend(): Zerocoin transactions are not allowed yet"));
 
     //max needed non-mint outputs should be 2 - one for redemption address and a possible 2nd for change
-    if (tx.vout.size() > 2){
+    if (tx.vout.size() > 2) {
         int outs = 0;
         for (const CTxOut out : tx.vout) {
             if (out.IsZerocoinMint())
@@ -1402,7 +1402,7 @@ bool CheckZerocoinSpend(const CTransaction tx, bool fVerifySignature, CValidatio
     return fValidated;
 }
 
-bool CheckTransaction(const CTransaction& tx, bool fZerocoinActive, CValidationState& state)
+bool CheckTransaction(const CTransaction& tx, bool fZerocoinActive, bool fRejectBadUTXO, CValidationState& state)
 {
     // Basic checks that don't depend on any context
     if (tx.vin.empty())
@@ -1468,7 +1468,7 @@ bool CheckTransaction(const CTransaction& tx, bool fZerocoinActive, CValidationS
     // Check for duplicate inputs
     set<COutPoint> vInOutPoints;
     set<CBigNum> vZerocoinSpendSerials;
-    BOOST_FOREACH (const CTxIn& txin, tx.vin) {
+    for (const CTxIn& txin : tx.vin) {
         if (vInOutPoints.count(txin.prevout))
             return state.DoS(100, error("CheckTransaction() : duplicate inputs"),
                 REJECT_INVALID, "bad-txns-inputs-duplicate");
@@ -1560,7 +1560,11 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
     if (pfMissingInputs)
         *pfMissingInputs = false;
 
-    if (!CheckTransaction(tx, GetAdjustedTime() > GetSporkValue(SPORK_17_ENABLE_ZEROCOIN), state))
+    //Temporarily disable zerocoin
+    if (tx.ContainsZerocoins())
+        return state.DoS(10, error("AcceptToMemoryPool : Zerocoin transactions temporarily disabled"));
+
+    if (!CheckTransaction(tx, GetAdjustedTime() > GetSporkValue(SPORK_17_ENABLE_ZEROCOIN), true, state))
         return state.DoS(100, error("AcceptToMemoryPool: : CheckTransaction failed"), REJECT_INVALID, "bad-tx");
 
     // Coinbase is only valid in a block, not as a loose transaction
@@ -1634,6 +1638,11 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
                 if (IsSerialInBlockchain(spend.getCoinSerialNumber(), nHeightTx))
                     return state.Invalid(error("%s : zPiv spend with serial %s is already in block %d\n",
                                                 __func__, spend.getCoinSerialNumber().GetHex(), nHeightTx));
+
+                //Is serial in the acceptable range
+                if (!spend.HasValidSerial(Params().Zerocoin_Params()))
+                    return state.Invalid(error("%s : zPiv spend with serial %s from tx %s is not in valid range\n",
+                                               __func__, spend.getCoinSerialNumber().GetHex(), tx.GetHash().GetHex()));
             }
         } else {
             LOCK(pool.cs);
@@ -1647,11 +1656,17 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
             // do all inputs exist?
             // Note that this does not check for the presence of actual outputs (see the next check for that),
             // only helps filling in pfMissingInputs (to determine missing vs spent).
-            BOOST_FOREACH (const CTxIn txin, tx.vin) {
+            for (const CTxIn txin : tx.vin) {
                 if (!view.HaveCoins(txin.prevout.hash)) {
                     if (pfMissingInputs)
                         *pfMissingInputs = true;
                     return false;
+                }
+
+                //Check for invalid/fraudulent inputs
+                if (!ValidOutPoint(txin.prevout, chainActive.Height())) {
+                    return state.Invalid(error("%s : tried to spend invalid input %s in tx %s", __func__, txin.prevout.ToString(),
+                                                tx.GetHash().GetHex()), REJECT_INVALID, "bad-txns-invalid-inputs");
                 }
             }
 
@@ -1780,7 +1795,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState& state, const CTransact
     if (pfMissingInputs)
         *pfMissingInputs = false;
 
-    if (!CheckTransaction(tx, GetAdjustedTime() > GetSporkValue(SPORK_17_ENABLE_ZEROCOIN), state))
+    if (!CheckTransaction(tx, GetAdjustedTime() > GetSporkValue(SPORK_17_ENABLE_ZEROCOIN), true, state))
         return error("AcceptableInputs: : CheckTransaction failed");
 
     // Coinbase is only valid in a block, not as a loose transaction
@@ -1843,11 +1858,17 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState& state, const CTransact
             // do all inputs exist?
             // Note that this does not check for the presence of actual outputs (see the next check for that),
             // only helps filling in pfMissingInputs (to determine missing vs spent).
-            BOOST_FOREACH (const CTxIn txin, tx.vin) {
+            for (const CTxIn txin : tx.vin) {
                 if (!view.HaveCoins(txin.prevout.hash)) {
                     if (pfMissingInputs)
                         *pfMissingInputs = true;
                     return false;
+                }
+
+                // check for invalid/fraudulent inputs
+                if (!ValidOutPoint(txin.prevout, chainActive.Height())) {
+                    return state.Invalid(error("%s : tried to spend invalid input %s in tx %s", __func__, txin.prevout.ToString(),
+                                                tx.GetHash().GetHex()), REJECT_INVALID, "bad-txns-invalid-inputs");
                 }
             }
 
@@ -2574,6 +2595,121 @@ bool CScriptCheck::operator()()
     return true;
 }
 
+map<COutPoint, COutPoint> mapInvalidOutPoints;
+list<CBitcoinAddress> listBadAddresses;
+void AddInvalidSpendsToMap(const CBlock& block)
+{
+    for (const CTransaction tx : block.vtx) {
+        if (!tx.IsZerocoinSpend())
+            continue;
+
+        //Check all zerocoinspends for bad serials
+        for (const CTxIn in : tx.vin) {
+            if (in.scriptSig.IsZerocoinSpend()) {
+                CoinSpend spend = TxInToZerocoinSpend(in);
+
+                //If serial is not valid, mark all outputs as bad
+                if (!spend.HasValidSerial(Params().Zerocoin_Params())) {
+                    LogPrint("zero", "%s :  invalid serial # %s in zerocoinspend tx %s\n", __func__, spend.getCoinSerialNumber().GetHex(), tx.GetHash().GetHex());
+
+                    // Derive the actual valid serial from the invalid serial if possible
+                    CBigNum bnActualSerial = spend.CalculateValidSerial(Params().Zerocoin_Params());
+                    uint256 txHash;
+                    if (zerocoinDB->ReadCoinSpend(bnActualSerial, txHash)) {
+                        LogPrint("zero", "%s : unmutated serial=%s in tx %s\n", __func__, bnActualSerial.GetHex(), txHash.GetHex());
+
+                        CTransaction txPrev;
+                        uint256 hashBlock;
+                        if (!GetTransaction(txHash, txPrev, hashBlock, true))
+                            continue;
+
+                        //Record all txouts from txPrev as invalid
+                        for (unsigned int i = 0; i < txPrev.vout.size(); i++) {
+                            //map to an empty outpoint to represent that this is the first in the chain of bad outs
+                            mapInvalidOutPoints[COutPoint(txPrev.GetHash(), i)] = COutPoint();
+                        }
+                    }
+
+                    //Record all txouts from this invalid zerocoin spend tx as invalid
+                    for (unsigned int i = 0; i < tx.vout.size(); i++) {
+                        //map to an empty outpoint to represent that this is the first in the chain of bad outs
+                        mapInvalidOutPoints[COutPoint(tx.GetHash(), i)] = COutPoint();
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Populate global map (mapInvalidOutPoints) of invalid/fraudulent OutPoints that are banned from being used on the chain.
+void PopulateInvalidOutPointMap()
+{
+    //Calculate over the entire period between the first bad tx and the tip of the chain - or the point at which this becomes enforced
+    int nHeightLast = min(Params().Zerocoin_Block_RecalculateAccumulators(), chainActive.Height());
+
+    for (int i = Params().Zerocoin_Block_FirstFraudulent(); i < nHeightLast; i++) {
+        CBlockIndex* pindex = chainActive[i];
+
+        CBlock block;
+        if (!ReadBlockFromDisk(block, pindex))
+            continue;
+
+        AddInvalidSpendsToMap(block);
+
+        //Any tx's that use a bad TxOut as an input is marked as bad
+        for (CTransaction tx : block.vtx) {
+            for (CTxIn txIn : tx.vin) {
+                if (mapInvalidOutPoints.count(txIn.prevout)) {
+                    std::list<COutPoint> listOutPoints;
+
+                    //If this is a stake transaction, masternode payments should not be considered fraudulent
+                    if (tx.IsCoinStake()) {
+                        CScript scriptPubKeyStake = tx.vout[1].scriptPubKey;
+                        for (unsigned int i =0 ; i < tx.vout.size(); i++) {
+                            //If a payment goes to a different address, then count it as a masternode payment
+                            if (tx.vout[i].scriptPubKey == scriptPubKeyStake) {
+                                CTxDestination dest;
+                                if (!ExtractDestination(scriptPubKeyStake, dest))
+                                    continue;
+                                CBitcoinAddress address(dest);
+                                if (!count(listBadAddresses.begin(), listBadAddresses.begin(), address))
+                                    listBadAddresses.emplace_back(address);
+                                listOutPoints.emplace_back(COutPoint(tx.GetHash(), i));
+                            }
+                        }
+                    } else {
+                        //Consider all outpoints in this transaction as fraudulent
+                        listOutPoints = tx.GetOutPoints();
+
+                        //Generate a list of addresses
+                        for (COutPoint p : listOutPoints) {
+                            CTxDestination dest;
+                            if (!ExtractDestination(tx.vout[p.n].scriptPubKey, dest))
+                                continue;
+                            CBitcoinAddress address(dest);
+                            if (!count(listBadAddresses.begin(), listBadAddresses.begin(), address))
+                                listBadAddresses.emplace_back(address);
+                        }
+                    }
+
+                    //Record each fraudulent outpoint and its cause.
+                    for (COutPoint o : listOutPoints)
+                        mapInvalidOutPoints[o] = txIn.prevout;
+
+                    //The entire tx set of outs are added, break here
+                    break;
+                }
+            }
+        }
+    }
+}
+
+bool ValidOutPoint(const COutPoint out, int nHeight)
+{
+    bool isInvalid = nHeight >= Params().Zerocoin_Block_RecalculateAccumulators() && mapInvalidOutPoints.count(out);
+    return !isInvalid;
+}
+
 bool CheckInputs(const CTransaction& tx, CValidationState& state, const CCoinsViewCache& inputs, bool fScriptChecks, unsigned int flags, bool cacheStore, std::vector<CScriptCheck>* pvChecks)
 {
     if (!tx.IsCoinBase() && !tx.IsZerocoinSpend()) {
@@ -2930,6 +3066,10 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
             return state.DoS(100, error("ConnectBlock() : too many sigops"),
                 REJECT_INVALID, "bad-blk-sigops");
 
+        //Temporarily shut off zerocoin transactions
+        if (pindex->nHeight >= Params().Zerocoin_Block_EnforceSerialRange() && tx.ContainsZerocoins())
+            return state.DoS(100, error("ConnectBlock() : zerocoin transactions are disabled"));
+
         if (tx.IsZerocoinSpend()) {
             int nHeightTx = 0;
             if (IsTransactionInChain(tx.GetHash(), nHeightTx)) {
@@ -2947,6 +3087,16 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                 CoinSpend spend = TxInToZerocoinSpend(txIn);
                 int nHeightTx = 0;
 
+                // Make sure that the serial number is in valid range
+                if (!spend.HasValidSerial(Params().Zerocoin_Params())) {
+                    string strError = strprintf("%s : txid=%s in block %d contains invalid serial %s\n", __func__, tx.GetHash().GetHex(), pindex->nHeight, spend.getCoinSerialNumber());
+                    if (pindex->nHeight >= Params().Zerocoin_Block_EnforceSerialRange())
+                        return state.DoS(100, error(strError.c_str()));
+                    strError = "NOT ENFORCING : " + strError;
+                    LogPrintf(strError.c_str());
+                }
+
+                //Is the serial already in the blockchain?
                 uint256 hashTxFromDB;
                 if (zerocoinDB->ReadCoinSpend(spend.getCoinSerialNumber(), hashTxFromDB)) {
                     if(IsSerialInBlockchain(spend.getCoinSerialNumber(), nHeightTx)) {
@@ -2964,6 +3114,14 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
             if (!view.HaveInputs(tx))
                 return state.DoS(100, error("ConnectBlock() : inputs missing/spent"),
                     REJECT_INVALID, "bad-txns-inputs-missingorspent");
+
+            // Check that the inputs are not marked as invalid/fraudulent
+            for (CTxIn in : tx.vin) {
+                if (!ValidOutPoint(in.prevout, pindex->nHeight)) {
+                    return state.DoS(100, error("%s : tried to spend invalid input %s in tx %s", __func__, in.prevout.ToString(),
+                                  tx.GetHash().GetHex()), REJECT_INVALID, "bad-txns-invalid-inputs");
+                }
+            }
 
             if (fStrictPayToScriptHash) {
                 // Add in sigops done by pay-to-script-hash inputs;
@@ -4057,7 +4215,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
     bool fZerocoinActive = block.nTime > GetSporkValue(SPORK_17_ENABLE_ZEROCOIN);
     vector<CBigNum> vBlockSerials;
     for (const CTransaction& tx : block.vtx) {
-        if (!CheckTransaction(tx, fZerocoinActive, state))
+        if (!CheckTransaction(tx, fZerocoinActive, chainActive.Height() + 1 >= Params().Zerocoin_Block_EnforceSerialRange(), state))
             return error("CheckBlock() : CheckTransaction failed");
 
         // double check that there are no double spent zPiv spends in this block

@@ -12,6 +12,7 @@
 #include "main.h"
 #include "tinyformat.h"
 #include "utilstrencodings.h"
+#include "transaction.h"
 
 #include <boost/foreach.hpp>
 
@@ -159,6 +160,25 @@ CAmount CTransaction::GetZerocoinMinted() const
     }
 
     return  CAmount(0);
+}
+
+bool CTransaction::UsesUTXO(const COutPoint out)
+{
+    for (const CTxIn in : vin) {
+        if (in.prevout == out)
+            return true;
+    }
+
+    return false;
+}
+
+std::list<COutPoint> CTransaction::GetOutPoints() const
+{
+    std::list<COutPoint> listOutPoints;
+    uint256 txHash = GetHash();
+    for (unsigned int i = 0; i < vout.size(); i++)
+        listOutPoints.emplace_back(COutPoint(txHash, i));
+    return listOutPoints;
 }
 
 CAmount CTransaction::GetZerocoinSpent() const

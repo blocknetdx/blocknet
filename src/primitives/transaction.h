@@ -12,6 +12,8 @@
 #include "serialize.h"
 #include "uint256.h"
 
+#include <list>
+
 class CTransaction;
 
 /** An outpoint - a combination of a transaction hash and an index n into its vout */
@@ -277,6 +279,9 @@ public:
     CAmount GetZerocoinMinted() const;
     CAmount GetZerocoinSpent() const;
     int GetZerocoinMintCount() const;
+
+    bool UsesUTXO(const COutPoint out);
+    std::list<COutPoint> GetOutPoints() const;
 
     bool IsCoinBase() const
     {

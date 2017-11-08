@@ -111,6 +111,10 @@ public:
     int ModifierUpgradeBlock() const { return nModifierUpdateBlock; }
     int LAST_POW_BLOCK() const { return nLastPOWBlock; }
     int Zerocoin_StartHeight() const { return nZerocoinStartHeight; }
+    int Zerocoin_Block_EnforceSerialRange() const { return nBlockEnforceSerialRange; }
+    int Zerocoin_Block_RecalculateAccumulators() const { return nBlockRecalculateAccumulators; }
+    int Zerocoin_Block_FirstFraudulent() const { return nBlockFirstFraudulent; }
+    int Zerocoin_Block_LastGoodCheckpoint() const { return nBlockLastGoodCheckpoint; }
 
 protected:
     CChainParams() {}
@@ -162,6 +166,10 @@ protected:
     int nZerocoinHeaderVersion;
     int64_t nBudget_Fee_Confirmations;
     int nZerocoinStartHeight;
+    int nBlockEnforceSerialRange;
+    int nBlockRecalculateAccumulators;
+    int nBlockFirstFraudulent;
+    int nBlockLastGoodCheckpoint;
 };
 
 /**
