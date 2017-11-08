@@ -469,7 +469,7 @@ bool CBudgetManager::FillBlockPayees(CMutableTransaction &txNew, int superblock)
     LOCK(cs);
     
     // Add all the payees for this superblock
-    std::vector<std::pair<CScript, CAmount>> approvedPayees;
+    std::vector<CTxBudgetPayment> approvedPayees;
     if (!allValidFinalPayees(approvedPayees, superblock))
         return false;
     
@@ -480,13 +480,13 @@ bool CBudgetManager::FillBlockPayees(CMutableTransaction &txNew, int superblock)
     // Add payees to tx
     int j = i;
     for (auto &item : approvedPayees) {
-        txNew.vout[j].scriptPubKey = item.first;
-        txNew.vout[j].nValue = item.second;
+        txNew.vout[j].scriptPubKey = item.payee;
+        txNew.vout[j].nValue = item.nAmount;
         
         CTxDestination address1;
-        ExtractDestination(item.first, address1);
+        ExtractDestination(item.payee, address1);
         CBitcoinAddress address2(address1);
-        LogPrintf("CBudgetManager::FillBlockPayees - Budget payment to %s for %lld\n", address2.ToString(), FormatMoney(item.second));
+        LogPrintf("CBudgetManager::FillBlockPayees - Budget payment to %s for %lld\n", address2.ToString(), FormatMoney(item.nAmount));
         
         j++;
     }
@@ -503,11 +503,11 @@ bool CBudgetManager::FillBlockPayees(CMutableTransaction &txNew, int superblock)
  * @param superblock
  * @return
  */
-bool CBudgetManager::allValidFinalPayees(std::vector<std::pair<CScript, CAmount>> &approvedPayees, int superblock) {
+bool CBudgetManager::allValidFinalPayees(std::vector<CTxBudgetPayment> &approvedPayees, int superblock) {
     // If not superblock do not proceed
     if (superblock > 0 && superblock % GetBudgetPaymentCycleBlocks() != 0)
         return false;
-    
+
     // We want to ensure highest voted budgets make it in the superblock (sort them descending by votes)
     std::vector<CFinalizedBudget*> sorted;
     for (auto &item : mapFinalizedBudgets) {
@@ -516,36 +516,44 @@ bool CBudgetManager::allValidFinalPayees(std::vector<std::pair<CScript, CAmount>
     sort(sorted.begin(), sorted.end(), [](CFinalizedBudget *a, CFinalizedBudget *b) {
         return a->GetVoteCount() > b->GetVoteCount();
     });
-    
+
     // Consolidate budgets that meet criteria, pay as many proposals within valid budgets
     // up to the max allotted by the superblock. This may result in at least one approved
     // final budget being partial paid out if the superblock runs out of funds
     CAmount maxPayout = CBudgetManager::GetTotalBudget(superblock);
     CAmount runningTotal = 0;
-    
+
+    // Unique payees
+    std::set<CTxBudgetPayment> uniquePayees;
+
     // Consolidate budget payees
     for (auto finalizedBudget : sorted) {
-        // must have votes and valid start and end blocks and have enough votes (10% consensus)
+        // Must have votes and valid start and end blocks and have enough votes (10% consensus)
         if (finalizedBudget->GetVoteCount() > 0 &&
             finalizedBudget->GetVoteCount() > (double)mnodeman.CountEnabled(ActiveProtocol()) / 10 &&
             superblock >= finalizedBudget->GetBlockStart() &&
             superblock <= finalizedBudget->GetBlockEnd()) {
             // Get finalized budget payees (these are sorted by highest votes first)
-            std::vector<std::pair<CScript, CAmount>> payees;
+            std::vector<CTxBudgetPayment> payees;
             finalizedBudget->GetPayees(payees);
             // Add payees that fit in the budget
             // It's possible some higher voted proposals could be excluded if they are too expensive
             for (auto &payee : payees) {
-                if (runningTotal + payee.second <= maxPayout) {
-                    runningTotal += payee.second;
-                    approvedPayees.push_back(payee);
+                // Skip existing payees (key comparator is proposal hash)
+                if (!uniquePayees.count(payee) && runningTotal + payee.nAmount <= maxPayout) {
+                    runningTotal += payee.nAmount;
+                    uniquePayees.insert(payee);
                 }
             }
         }
         if (runningTotal >= maxPayout)
             break;
     }
-    
+
+    // Copy unique payees into approved list
+    approvedPayees.clear();
+    std::copy(uniquePayees.begin(), uniquePayees.end(), approvedPayees.begin());
+
     // Must have payees to succeed
     return !approvedPayees.empty();
 }
@@ -634,7 +642,7 @@ bool CBudgetManager::IsTransactionValid(const CTransaction& txNew, int nBlockHei
     LOCK(cs);
     
     // The vote consensus check happens in allValidFinalPayees
-    std::vector<std::pair<CScript, CAmount>> approvedPayees;
+    std::vector<CTxBudgetPayment> approvedPayees;
     if (!allValidFinalPayees(approvedPayees, nBlockHeight))
         return false;
     
@@ -642,7 +650,7 @@ bool CBudgetManager::IsTransactionValid(const CTransaction& txNew, int nBlockHei
     for (auto i = static_cast<int>(approvedPayees.size() - 1); i >= 0; i--) {
         auto &payee = approvedPayees[i];
         for (auto &txOut : txNew.vout) {
-            if (payee.first == txOut.scriptPubKey && payee.second == txOut.nValue)
+            if (payee.payee == txOut.scriptPubKey && payee.nAmount == txOut.nValue)
                 approvedPayees.pop_back(); // removing for truthiness gives us a state machine (all were found if "approvedPayees" is empty)
         }
     }
@@ -652,9 +660,9 @@ bool CBudgetManager::IsTransactionValid(const CTransaction& txNew, int nBlockHei
     if (!approvedPayees.empty()) {
         for (auto &payee : approvedPayees) {
             CTxDestination address1;
-            ExtractDestination(payee.first, address1);
+            ExtractDestination(payee.payee, address1);
             CBitcoinAddress address2(address1);
-            LogPrintf("CBudgetManager::IsTransactionValid - Missing required payment - %s: %d\n", address2.ToString(), payee.second);
+            LogPrintf("CBudgetManager::IsTransactionValid - Missing required payment - %s: %d\n", address2.ToString(), FormatMoney(payee.nAmount));
         }
         return false;
     }
@@ -1851,26 +1859,22 @@ std::string CFinalizedBudget::GetProposals()
 
 /**
  * Return the payees in this finalized budget sorted by vote count, highest voted payees first.
- * @param payees Appends to list
+ * @param payees
  * @return
  */
-bool CFinalizedBudget::GetPayees(std::vector<std::pair<CScript, CAmount>> &payees) {
+bool CFinalizedBudget::GetPayees(std::vector<CTxBudgetPayment> &payees) {
     LOCK(cs);
     
     if (vecBudgetPayments.empty())
         return false;
     
     // Rank budget payments by votes (highest first)
-    auto sortedPayees = vecBudgetPayments;
-    sort(sortedPayees.begin(), sortedPayees.end(), [](const CTxBudgetPayment &a, const CTxBudgetPayment &b) {
+    payees = vecBudgetPayments;
+    sort(payees.begin(), payees.end(), [](const CTxBudgetPayment &a, const CTxBudgetPayment &b) {
         CBudgetProposal *proposalA = budget.FindProposal(a.nProposalHash);
         CBudgetProposal *proposalB = budget.FindProposal(b.nProposalHash);
         return proposalA->Votes() > proposalB->Votes();
     });
-    
-    for (auto &bp : sortedPayees) {
-        payees.emplace_back(bp.payee, bp.nAmount);
-    }
     
     return true;
 }

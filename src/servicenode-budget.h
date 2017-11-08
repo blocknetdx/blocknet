@@ -177,7 +177,7 @@ private:
     //hold txes until they mature enough to use
     // XX42    map<uint256, CTransaction> mapCollateral;
     map<uint256, uint256> mapCollateralTxids;
-    bool allValidFinalPayees(std::vector<std::pair<CScript, CAmount>> &approvedPayees, int superblock);
+    bool allValidFinalPayees(std::vector<CTxBudgetPayment> &approvedPayees, int superblock);
 
 public:
     // critical section to protect the inner data structures
@@ -298,6 +298,10 @@ public:
         READWRITE(nAmount);
         READWRITE(nProposalHash);
     }
+
+    bool operator<(const CTxBudgetPayment &b) const {
+        return nProposalHash < b.nProposalHash;
+    }
 };
 
 //
@@ -331,7 +335,7 @@ public:
 
     std::string GetName() { return strBudgetName; }
     std::string GetProposals();
-    bool GetPayees(std::vector<std::pair<CScript, CAmount>> &payees);
+    bool GetPayees(std::vector<CTxBudgetPayment> &payees);
     int GetBlockStart() { return nBlockStart; }
     int GetBlockEnd() { return nBlockStart; } // only supporting 1 superblock payout on start block
     int GetVoteCount() { return (int)mapVotes.size(); }
