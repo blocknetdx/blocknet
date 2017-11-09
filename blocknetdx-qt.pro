@@ -19,9 +19,9 @@ CONFIG(release, debug|release): DEFINES += NDEBUG
 # UNCOMMENT THIS SECTION TO BUILD ON WINDOWS
 # Change paths if needed, these use the foocoin/deps.git repository locations
 
-!include($$PWD/config.pri) {
-   error(Failed to include config.pri)
- }
+#!include($$PWD/config.pri) {
+#   error(Failed to include config.pri)
+# }
 
 OBJECTS_DIR = build
 MOC_DIR = build
@@ -122,8 +122,9 @@ LIBS += \
     $$join(BDB_LIB_PATH,,-L,) \
     $$join(OPENSSL_LIB_PATH,,-L,) \
     $$join(QRENCODE_LIB_PATH,,-L,) \
-    -L$$PWD/src/leveldb
-
+    -L$$PWD/src/leveldb \
+    -L$$PWD/src/secp256k1/.libs \
+    -L/usr/lib/x86_64-linux-gnu
 
 LIBS += \
     -lleveldb \
@@ -133,7 +134,9 @@ LIBS += \
     -lssl \
     -lcrypto \
     -ldb_cxx$$BDB_LIB_SUFFIX \
-    -lpthread
+    -lpthread \
+    -lqrencode \
+    -lanl
 
 windows {
     LIBS += \
@@ -294,7 +297,8 @@ SOURCES += \
     src/qt/xbridgeui/xbridgetransactionsmodel.cpp \
     src/qt/xbridgeui/xbridgetransactionsview.cpp \
     src/xbridge/xbitcointransaction.cpp \
-    src/xbridge/rpcxbridge.cpp
+    src/xbridge/rpcxbridge.cpp \
+    src/qt/walletnonencryptwarningdialog.cpp
 
 #protobuf generated
 SOURCES += \
@@ -367,6 +371,9 @@ QMAKE_CXXFLAGS_WARN_ON = \
         -Wformat-security \
         -Wstack-protector \
         -Wno-deprecated-declarations
+
+QMAKE_CXXFLAGS += -DHAVE_CONFIG_H -I./src/secp256k1/include -DQT_NO_VERSION_TAGGING
+QMAKE_LFLAGS += -L/home/smatyk/Development/DanMetcalf/BlockDX/src/.libs -L/usr/lib/x86_64-linux-gnu
 
 # Input
 DEPENDPATH += \
@@ -579,7 +586,8 @@ HEADERS += \
     src/qt/xbridgeui/xbridgetransactiondialog.h \
     src/qt/xbridgeui/xbridgetransactionsmodel.h \
     src/qt/xbridgeui/xbridgetransactionsview.h \
-    src/xbridge/xbitcointransaction.h
+    src/xbridge/xbitcointransaction.h \
+    src/qt/walletnonencryptwarningdialog.h
 
 #ENABLE_ZMQ
 #    src/zmq/zmqabstractnotifier.h \
@@ -665,7 +673,8 @@ FORMS += \
     src/qt/forms/receivecoinsdialog.ui \
     src/qt/forms/receiverequestdialog.ui \
     src/qt/forms/servicenodelist.ui \
-    src/qt/forms/tradingdialog.ui
+    src/qt/forms/tradingdialog.ui \
+    src/qt/forms/walletnonencryptwarningdialog.ui
 
 
 contains(USE_QRCODE, 1) {
