@@ -15,6 +15,7 @@
 #include "walletmodel.h"
 #include "coincontrol.h"
 #include "zpivcontroldialog.h"
+#include "spork.h"
 
 #include <QClipboard>
 #include <QSettings>
@@ -90,6 +91,15 @@ PrivacyDialog::PrivacyDialog(QWidget* parent) : QDialog(parent),
     // Hide those placeholder elements needed for CoinControl interaction
     ui->WarningLabel->hide();    // Explanatory text visible in QT-Creator
     ui->dummyHideWidget->hide(); // Dummy widget with elements to hide
+
+    //temporary disable for maintenance
+    if(GetAdjustedTime() > GetSporkValue(SPORK_16_ZEROCOIN_MAINTENANCE_MODE)) {
+        ui->pushButtonMintzPIV->setEnabled(false);
+        ui->pushButtonMintzPIV->setToolTip(tr("zPIV is currently disabled due to maintenance."));
+
+        ui->pushButtonSpendzPIV->setEnabled(false);
+        ui->pushButtonSpendzPIV->setToolTip(tr("zPIV is currently disabled due to maintenance."));
+    }
 }
 
 PrivacyDialog::~PrivacyDialog()
@@ -136,10 +146,12 @@ void PrivacyDialog::on_pushButtonMintzPIV_clicked()
     if (!walletModel || !walletModel->getOptionsModel())
         return;
 
-
-    QMessageBox::information(this, tr("Mint Zerocoin"), tr("Zerocoin functionality is not enabled on the PIVX network."), QMessageBox::Ok, QMessageBox::Ok);
-    return;
-
+    if(GetAdjustedTime() > GetSporkValue(SPORK_16_ZEROCOIN_MAINTENANCE_MODE)) {
+        QMessageBox::information(this, tr("Mint Zerocoin"),
+                                 tr("zPIV is currently undergoing maintenance."), QMessageBox::Ok,
+                                 QMessageBox::Ok);
+        return;
+    }
 
     // Reset message text
     ui->TEMintStatus->setPlainText(tr("Mint Status: Okay"));
@@ -247,10 +259,11 @@ void PrivacyDialog::on_pushButtonSpendzPIV_clicked()
     if (!walletModel || !walletModel->getOptionsModel() || !pwalletMain)
         return;
 
-
-    QMessageBox::information(this, tr("Spend Zerocoin"), tr("Zerocoin functionality is not enabled on the PIVX network."), QMessageBox::Ok, QMessageBox::Ok);
-    return;
-
+    if(GetAdjustedTime() > GetSporkValue(SPORK_16_ZEROCOIN_MAINTENANCE_MODE)) {
+        QMessageBox::information(this, tr("Mint Zerocoin"),
+                                 tr("zPIV is currently undergoing maintenance."), QMessageBox::Ok, QMessageBox::Ok);
+        return;
+    }
 
     // Request unlock if wallet was locked or unlocked for mixing:
     WalletModel::EncryptionStatus encStatus = walletModel->getEncryptionStatus();

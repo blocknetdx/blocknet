@@ -138,6 +138,7 @@ public:
         nBlockRecalculateAccumulators = 908000; //Trigger a recalculation of accumulators
         nBlockFirstFraudulent = 891737; //First block that bad serials emerged
         nBlockLastGoodCheckpoint = 891730; //Last valid accumulator checkpoint
+        nZerocoinStartTime = 1508214600; // October 17, 2017 4:30:00 AM
 
         /**
          * Build the genesis block. Note that the output of the genesis coinbase cannot
