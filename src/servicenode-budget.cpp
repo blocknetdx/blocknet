@@ -552,7 +552,8 @@ bool CBudgetManager::allValidFinalPayees(std::vector<CTxBudgetPayment> &approved
 
     // Copy unique payees into approved list
     approvedPayees.clear();
-    std::copy(uniquePayees.begin(), uniquePayees.end(), approvedPayees.begin());
+    for (const auto &payee : uniquePayees)
+        approvedPayees.push_back(payee);
 
     // Must have payees to succeed
     return !approvedPayees.empty();
@@ -1755,7 +1756,7 @@ void CFinalizedBudget::AutoCheck()
         if (!chainActive.Tip()) return;
         chainHeight = chainActive.Height();
     }
-    if (chainHeight <= 0)
+    if (chainHeight <= 0 || chainHeight % GetBudgetPaymentCycleBlocks() == 0) // do not autocheck superblock
         return;
     
     LOCK(cs);
@@ -1775,26 +1776,28 @@ void CFinalizedBudget::AutoCheck()
 
     fAutoChecked = true; //we only need to check this once
 
-    if (strBudgetMode == "auto") //only vote for exact matches
-    {
+    // Automatically submit a vote for this final budget if it's valid
+    if (strBudgetMode == "auto") {
         std::vector<CBudgetProposal*> vBudgetProposals = budget.GetBudget();
         auto budgetPayments = vecBudgetPayments;
-        
-        for (auto i = static_cast<int>(budgetPayments.size()); i >= 0; i--) {
-            CTxBudgetPayment &payment = budgetPayments[i];
-            for (auto proposal : vBudgetProposals) {
-                if (payment.nProposalHash == proposal->GetHash() &&
-                    payment.payee.ToString() == proposal->GetPayee().ToString() &&
-                    payment.nAmount == proposal->GetAmount()) {
-                    // Budget payment is valid, remove from list (using list as state machine, empty list means all were found)
-                    budgetPayments.pop_back();
-                    LogPrintf("CFinalizedBudget::AutoCheck - Valid Payment Found: %s | %s | %s for Proposal %s | %s | %s\n",
-                              payment.nProposalHash.ToString(), payment.payee.ToString(), std::to_string(payment.nAmount),
-                              proposal->GetHash().ToString(), proposal->GetPayee().ToString(), std::to_string(proposal->GetAmount()));
+        // Process budgets that are found
+        if (!vBudgetProposals.empty()) {
+            for (auto i = static_cast<int>(budgetPayments.size()); i >= 0; i--) {
+                CTxBudgetPayment &payment = budgetPayments[i];
+                for (auto proposal : vBudgetProposals) {
+                    if (payment.nProposalHash == proposal->GetHash() &&
+                        payment.payee.ToString() == proposal->GetPayee().ToString() &&
+                        payment.nAmount == proposal->GetAmount()) {
+                        // Budget payment is valid, remove from list (using list as state machine, empty list means all were found)
+                        budgetPayments.pop_back();
+                        LogPrintf("CFinalizedBudget::AutoCheck - Valid Payment Found: %s | %s | %s for Proposal %s | %s | %s\n",
+                                  payment.nProposalHash.ToString(), payment.payee.ToString(), std::to_string(payment.nAmount),
+                                  proposal->GetHash().ToString(), proposal->GetPayee().ToString(), std::to_string(proposal->GetAmount()));
+                    }
                 }
             }
         }
-        
+
         // Log orphaned payments
         for (auto &payment : budgetPayments) {
             LogPrintf("CFinalizedBudget::AutoCheck - Payment: %s | %s | %s doesn't match any proposals\n",
