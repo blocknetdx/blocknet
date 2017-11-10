@@ -135,7 +135,7 @@ public:
         nModifierUpdateBlock = 615800;
         nZerocoinStartHeight = 863787;
         nBlockEnforceSerialRange = 895400; //Enforce serial range starting this block
-        nBlockRecalculateAccumulators = 9896000; //Trigger a recalculation of accumulators
+        nBlockRecalculateAccumulators = 908000; //Trigger a recalculation of accumulators
         nBlockFirstFraudulent = 891737; //First block that bad serials emerged
         nBlockLastGoodCheckpoint = 891730; //Last valid accumulator checkpoint
 

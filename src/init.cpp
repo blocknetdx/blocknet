@@ -333,6 +333,7 @@ std::string HelpMessage(HelpMessageMode mode)
 #endif
     strUsage += HelpMessageOpt("-reindex", _("Rebuild block chain index from current blk000??.dat files") + " " + _("on startup"));
     strUsage += HelpMessageOpt("-reindexaccumulators", _("Reindex the accumulator database") + " " + _("on startup"));
+    strUsage += HelpMessageOpt("-reindexmoneysupply", _("Reindex the PIV and zPIV money supply statistics") + " " + _("on startup"));
     strUsage += HelpMessageOpt("-resync", _("Delete blockchain folders and resync from scratch") + " " + _("on startup"));
 #if !defined(WIN32)
     strUsage += HelpMessageOpt("-sysperms", _("Create new files with system default permissions, instead of umask 077 (only effective with disabled wallet functionality)"));
@@ -1347,111 +1348,16 @@ bool AppInit2(boost::thread_group& threadGroup)
                     break;
                 }
 
+                // Populate list of invalid/fraudulent outpoints that are banned from the chain
+                PopulateInvalidOutPointMap();
+
                 // Recalculate money supply for blocks that are impacted by accounting issue after zerocoin activation
-                bool fVecFixed = false;
-                pblocktree->ReadFlag("msvecfix", fVecFixed);
-                bool fReindexRange = chainActive.Height() > GetZerocoinStartHeight();
-                if (fReindexRange && !fVecFixed) {
-                    uiInterface.InitMessage(_("Recalculating supply statistics may take 30-60 minutes..."));
-                    LogPrintf("%s : Recalculating supply statistics\n", __func__);
-
-                    //If recalculation was exited before it was finished, then start where it left off
-                    int nStartHeight = 0;
-                    if (!pblocktree->ReadInt("msvecindex", nStartHeight))
-                        nStartHeight = GetZerocoinStartHeight();
-                    CBlockIndex *pindex = chainActive[nStartHeight];
-                    int nHeightEnd = chainActive.Height();
-                    while (true) {
-                        if (ShutdownRequested())
-                            return false;
-
-                        double dPercent = 1 - ((nHeightEnd - pindex->nHeight) / (double)(nHeightEnd - nStartHeight));
-                        string strMessage = strprintf("Recalculating supply statistics may take 30-60 minutes block %d...", pindex->nHeight);
-                        uiInterface.ShowProgress(_(strMessage.c_str()), (int)(dPercent * 100));
-
-                        //overwrite possibly wrong vMintsInBlock data
-                        CBlock block;
-                        if (!ReadBlockFromDisk(block, pindex)) {
-                            return InitError(_("Failed to read block index"));
-                        }
-
-                        std::list<CZerocoinMint> listMints;
-                        BlockToZerocoinMintList(block, listMints);
-
-                        pindex->vMintDenominationsInBlock.clear();
-                        for (auto mint : listMints) {
-                            pindex->vMintDenominationsInBlock.emplace_back(mint.GetDenomination());
-                        }
-
-                        if (!pblocktree->WriteBlockIndex(CDiskBlockIndex(pindex))) {
-                            return InitError(_("Failed to write block index"));
-                        }
-
-                        LogPrintf("%s : rewrote vMintDenominationsInBlock for %d\n", __func__, pindex->nHeight);
-
-                        //Track progress in case of shutdown
-                        pblocktree->WriteInt("msvecindex", pindex->nHeight);
-
-                        if (pindex->nHeight < nHeightEnd)
-                            pindex = chainActive.Next(pindex);
-                        else
-                            break;
+                if (GetBoolArg("-reindexmoneysupply", false)) {
+                    if (chainActive.Height() > Params().Zerocoin_StartHeight()) {
+                        RecalculateZPIVMinted();
+                        RecalculateZPIVSpent();
                     }
-
-                    //This flag indicates that the fix has already been done and not needed in the future
-                    pblocktree->WriteFlag("msvecfix", true);
-                }
-
-                bool msIndexFixed = false;
-                pblocktree->ReadFlag("msindexfix", msIndexFixed);
-                if (fReindexRange && !msIndexFixed){
-                    uiInterface.InitMessage(_("Recalculating coin supply may take 30-60 minutes..."));
-                    LogPrintf("%s : Recalculating money supply statistics\n", __func__);
-
-                    //If recalculation was exited before it was finished, then start where it left off
-                    int nStartHeight = 0;
-                    if (!pblocktree->ReadInt("msindex", nStartHeight))
-                        nStartHeight = GetZerocoinStartHeight();
-                    CBlockIndex *pindex = chainActive[nStartHeight];
-                    int nHeightEnd = chainActive.Height();
-
-                    // Remove possible zPiv spends from the supply
-                    CAmount nzPivSpent = 0;
-                    while (true) {
-                        // get each blocks amount of zPiv minted and the zpiv money supply change for that block
-                        // figure out amount spent by difference in zpiv supply per denom and the amount minted per denom
-                        CAmount nBlockzPivSpent = 0;
-                        for (auto denom : libzerocoin::zerocoinDenomList) {
-                            int nDenomAdded = count(pindex->vMintDenominationsInBlock.begin(), pindex->vMintDenominationsInBlock.end(), denom);
-                            int64_t nDenomMinted = nDenomAdded * denom;
-
-                            //note zPiv supply is quantity of zPiv for the denom, not the amount
-                            int64_t nSupplyZPivLast = pindex->pprev->mapZerocoinSupply.at(denom) * denom;
-                            int64_t nSupplyZPiv = pindex->mapZerocoinSupply.at(denom) * denom;
-                            int64_t nDenomZPivSpent = (nSupplyZPivLast + nDenomMinted) - nSupplyZPiv;
-                            nBlockzPivSpent += nDenomZPivSpent * COIN;
-                        }
-
-                        //Total zPiv spent up to and including this block
-                        nzPivSpent += nBlockzPivSpent;
-
-                        //Rewrite money supply
-                        pindex->nMoneySupply = pindex->nMoneySupply - nzPivSpent;
-                        if (!pblocktree->WriteBlockIndex(CDiskBlockIndex(pindex))) {
-                            return InitError(_("Failed to write block index"));
-                        }
-
-                        //Track progress in case of shutdown
-                        pblocktree->WriteInt("msindex", pindex->nHeight);
-
-                        if (pindex->nHeight < nHeightEnd)
-                            pindex = chainActive.Next(pindex);
-                        else
-                            break;
-                    }
-
-                    //Mark reindexing as done, and not needed again in the futures
-                    pblocktree->WriteFlag("msindexfix", true);
+                    RecalculatePIVSupply(1);
                 }
 
                 // Force recalculation of accumulators.
@@ -1519,9 +1425,6 @@ bool AppInit2(boost::thread_group& threadGroup)
                             break;
                     }
                 }
-
-                // Populate list of invalid/fraudulent outpoints that are banned from the chain
-                PopulateInvalidOutPointMap();
 
                 uiInterface.InitMessage(_("Verifying blocks..."));
 
