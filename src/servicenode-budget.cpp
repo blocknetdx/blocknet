@@ -486,7 +486,7 @@ bool CBudgetManager::FillBlockPayees(CMutableTransaction &txNew, int superblock)
         CTxDestination address1;
         ExtractDestination(item.payee, address1);
         CBitcoinAddress address2(address1);
-        LogPrintf("CBudgetManager::FillBlockPayees - Budget payment to %s for %lld\n", address2.ToString(), FormatMoney(item.nAmount));
+        LogPrintf("CBudgetManager::FillBlockPayees - Budget payment to %s for %s\n", address2.ToString(), FormatMoney(item.nAmount));
         
         j++;
     }
@@ -663,7 +663,7 @@ bool CBudgetManager::IsTransactionValid(const CTransaction& txNew, int nBlockHei
             CTxDestination address1;
             ExtractDestination(payee.payee, address1);
             CBitcoinAddress address2(address1);
-            LogPrintf("CBudgetManager::IsTransactionValid - Missing required payment - %s: %d\n", address2.ToString(), FormatMoney(payee.nAmount));
+            LogPrintf("CBudgetManager::IsTransactionValid - Missing required payment - %s: %s\n", address2.ToString(), FormatMoney(payee.nAmount));
         }
         return false;
     }
@@ -1335,7 +1335,7 @@ bool CBudgetManager::UpdateProposal(CBudgetVote& vote, CNode* pfrom, std::string
             //   otherwise we'll think a full sync succeeded when they return a result
             if (!servicenodeSync.IsSynced()) return false;
 
-            LogPrintf("CBudgetManager::UpdateProposal - Unknown proposal %d, asking for source proposal\n", vote.nProposalHash.ToString());
+            LogPrintf("CBudgetManager::UpdateProposal - Unknown proposal %s, asking for source proposal\n", vote.nProposalHash.ToString());
             mapOrphanServicenodeBudgetVotes[vote.nProposalHash] = vote;
 
             if (!askedForSourceProposalOrBudget.count(vote.nProposalHash)) {
@@ -1791,8 +1791,8 @@ void CFinalizedBudget::AutoCheck()
                         // Budget payment is valid, remove from list (using list as state machine, empty list means all were found)
                         budgetPayments.pop_back();
                         LogPrintf("CFinalizedBudget::AutoCheck - Valid Payment Found: %s | %s | %s for Proposal %s | %s | %s\n",
-                                  payment.nProposalHash.ToString(), payment.payee.ToString(), std::to_string(payment.nAmount),
-                                  proposal->GetHash().ToString(), proposal->GetPayee().ToString(), std::to_string(proposal->GetAmount()));
+                                  payment.nProposalHash.ToString(), payment.payee.ToString(), FormatMoney(payment.nAmount),
+                                  proposal->GetHash().ToString(), proposal->GetPayee().ToString(), FormatMoney(proposal->GetAmount()));
                     }
                 }
             }
@@ -1801,7 +1801,7 @@ void CFinalizedBudget::AutoCheck()
         // Log orphaned payments
         for (auto &payment : budgetPayments) {
             LogPrintf("CFinalizedBudget::AutoCheck - Payment: %s | %s | %s doesn't match any proposals\n",
-                      payment.nProposalHash.ToString(), payment.payee.ToString(), std::to_string(payment.nAmount));
+                      payment.nProposalHash.ToString(), payment.payee.ToString(), FormatMoney(payment.nAmount));
         }
         
         // Non-empty list indicates some payments have missing proposals, do not proceed to vote
