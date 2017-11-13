@@ -1315,9 +1315,6 @@ std::list<libzerocoin::CoinDenomination> ZerocoinSpendListFromBlock(const CBlock
 
 bool CheckZerocoinMint(const uint256& txHash, const CTxOut& txout, CValidationState& state, bool fCheckOnly)
 {
-    if(!fCheckOnly && chainActive.Height() <= Params().Zerocoin_StartHeight())
-        return state.DoS(100, error("CheckZerocoinMint(): This block was generated before zPIV activated. Invalid"));
-
     PublicCoin pubCoin(Params().Zerocoin_Params());
     if(!TxOutToPublicCoin(txout, pubCoin, state))
         return state.DoS(100, error("CheckZerocoinMint(): TxOutToPublicCoin() failed"));
