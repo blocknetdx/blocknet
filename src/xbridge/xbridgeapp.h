@@ -145,6 +145,20 @@ public:
 
     static boost::mutex                                  m_ppLocker;
     static std::map<uint256, std::pair<std::string, XBridgePacketPtr> > m_pendingPackets;
+
+private:
+    /**
+     * @brief m_historicTransactionsAccetpedStates - the status list of historical transactions
+     */
+    std::list<XBridgeTransactionDescr::State> m_historicTransactionsStates;
+public:
+    /**
+     * @brief isHistoricState
+     * @param state
+     * @return true, if
+     */
+    bool isHistoricState(const XBridgeTransactionDescr::State state);
+
 };
 
 #endif // XBRIDGEAPP_H
