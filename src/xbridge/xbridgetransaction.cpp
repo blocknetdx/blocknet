@@ -351,7 +351,7 @@ std::string XBridgeTransaction::a_bintxid() const
 
 //*****************************************************************************
 //*****************************************************************************
-std::string XBridgeTransaction::a_innerScript() const
+std::vector<unsigned char> XBridgeTransaction::a_innerScript() const
 {
     return m_innerScript1;
 }
@@ -414,7 +414,7 @@ std::string XBridgeTransaction::b_bintxid() const
 
 //*****************************************************************************
 //*****************************************************************************
-std::string XBridgeTransaction::b_innerScript() const
+std::vector<unsigned char> XBridgeTransaction::b_innerScript() const
 {
     return m_innerScript2;
 }
@@ -494,7 +494,7 @@ bool XBridgeTransaction::setKeys(const std::string & addr,
 //*****************************************************************************
 bool XBridgeTransaction::setBinTxId(const std::string & addr,
                                     const std::string & id,
-                                    const std::string & innerScript)
+                                    const std::vector<unsigned char> & innerScript)
 {
     if (m_b.source() == addr)
     {

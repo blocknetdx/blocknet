@@ -81,21 +81,21 @@ struct XBridgeTransactionDescr
     std::string                refTx;
 
     // multisig address and redeem script
-    std::string                multisig;
-    std::string                innerScript;
+    std::string                depositP2SH;
+    std::vector<unsigned char> innerScript;
 
     // prevtxs for signrawtransaction
     // std::string                prevtxs;
 
     XBridgePacketPtr           packet;
 
-    // multisig key
-    xbridge::CPubKey           mPubKey;
-    xbridge::CBitcoinSecret    mSecret;
+    // local created key (for exchange)
+    std::vector<unsigned char>    mPubKey;
+    std::vector<unsigned char>    mPrivKey;
 
-    // X key
-    xbridge::CPubKey           xPubKey;
-    xbridge::CBitcoinSecret    xSecret;
+    // X key (secret data)
+    std::vector<unsigned char>    xPubKey;
+    std::vector<unsigned char>    xPrivKey;
 
     // used coins in transaction
     std::vector<wallet::UtxoEntry> usedCoins;
@@ -210,7 +210,7 @@ private:
         refTx        = d.refTx;
 
         // multisig address and redeem script
-        multisig     = d.multisig;
+        depositP2SH     = d.depositP2SH;
         innerScript       = d.innerScript;
 
         // prevtxs for signrawtransaction
@@ -218,11 +218,11 @@ private:
 
         // multisig key
         mPubKey      = d.mPubKey;
-        mSecret      = d.mSecret;
+        mPrivKey      = d.mPrivKey;
 
         // X key
         xPubKey      = d.xPubKey;
-        xSecret      = d.xSecret;
+        xPrivKey      = d.xPrivKey;
 
         hubAddress     = d.hubAddress;
         confirmAddress = d.confirmAddress;

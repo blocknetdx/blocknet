@@ -47,7 +47,6 @@ public:
         memcpy(scriptPrefix, other.scriptPrefix, sizeof(scriptPrefix)*sizeof(scriptPrefix[0]));
         memcpy(secretPrefix, other.secretPrefix, sizeof(secretPrefix)*sizeof(secretPrefix[0]));
 
-        taxaddr                     = other.taxaddr;
         txVersion                   = other.txVersion;
         COIN                        = other.COIN;
         minTxFee                    = other.minTxFee;
@@ -81,7 +80,6 @@ public:
     char                       addrPrefix[8];
     char                       scriptPrefix[8];
     char                       secretPrefix[8];
-    std::string                taxaddr;
     uint32_t                   txVersion;
     uint64_t                   COIN;
     uint64_t                   minTxFee;

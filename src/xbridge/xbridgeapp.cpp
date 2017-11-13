@@ -2,7 +2,6 @@
 //*****************************************************************************
 
 #include "xbridgeapp.h"
-#include "xbridgeservicesession.h"
 #include "xbridgeexchange.h"
 #include "util/xutil.h"
 #include "util/logger.h"
@@ -111,7 +110,7 @@ bool XBridgeApp::isEnabled()
 //*****************************************************************************
 bool XBridgeApp::start()
 {
-    m_serviceSession.reset(new XBridgeServiceSession);
+    m_serviceSession.reset(new XBridgeSession);
 
     // start xbrige
     m_bridge = XBridgePtr(new XBridge());
@@ -222,7 +221,7 @@ void XBridgeApp::onSend(const UcharVector & id, const XBridgePacketPtr & packet)
 //*****************************************************************************
 void XBridgeApp::onMessageReceived(const UcharVector & id,
                                    const UcharVector & message,
-                                   CValidationState & state)
+                                   CValidationState & /*state*/)
 {
     if (isKnownMessage(message))
     {
@@ -285,7 +284,7 @@ XBridgeSessionPtr XBridgeApp::serviceSession()
 //*****************************************************************************
 //*****************************************************************************
 void XBridgeApp::onBroadcastReceived(const std::vector<unsigned char> & message,
-                                     CValidationState & state)
+                                     CValidationState & /*state*/)
 {
     if (isKnownMessage(message))
     {

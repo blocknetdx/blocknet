@@ -73,7 +73,7 @@ public:
     bool updateTransactionWhenCreatedReceived(XBridgeTransactionPtr tx,
                                               const std::string & from,
                                               const std::string & binTxId,
-                                              const std::string & innerScript);
+                                              const std::vector<unsigned char> & innerScript);
     bool updateTransactionWhenConfirmedReceived(XBridgeTransactionPtr tx,
                                                 const std::string & from);
 

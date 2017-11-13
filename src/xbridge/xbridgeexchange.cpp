@@ -68,14 +68,6 @@ bool XBridgeExchange::init()
             continue;
         }
 
-        // get new addres for receive fee
-        std::string feeAddress;
-        if (!rpc::getNewAddress(user, passwd, ip, port, feeAddress))
-        {
-            LOG() << "wallet not connected " << *i;
-            continue;
-        }
-
         WalletParam & wp = m_wallets[*i];
         wp.currency   = *i;
         wp.title      = label;
@@ -85,7 +77,6 @@ bool XBridgeExchange::init()
         wp.m_passwd     = passwd;
         wp.m_minAmount  = minAmount;
         wp.dustAmount = dustAmount;
-        wp.taxaddr    = feeAddress;
         wp.txVersion  = txVersion;
         wp.minTxFee   = minTxFee;
         wp.feePerByte = feePerByte;
@@ -415,7 +406,7 @@ bool XBridgeExchange::updateTransactionWhenInitializedReceived(XBridgeTransactio
 bool XBridgeExchange::updateTransactionWhenCreatedReceived(XBridgeTransactionPtr tx,
                                                            const std::string & from,
                                                            const std::string & binTxId,
-                                                           const std::string & innerScript)
+                                                           const std::vector<unsigned char> & innerScript)
 {
     if (!tx->setBinTxId(from, binTxId, innerScript))
     {

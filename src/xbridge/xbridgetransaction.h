@@ -102,7 +102,9 @@ public:
     std::string                a_payTx() const;
     std::string                a_refTx() const;
     std::string                a_bintxid() const;
-    std::string                a_innerScript() const;
+
+    // TODO remove script
+    std::vector<unsigned char> a_innerScript() const;
 
     uint256                    a_datatxid() const;
     xbridge::CPubKey           a_pk1() const;
@@ -115,7 +117,9 @@ public:
     std::string                b_payTx() const;
     std::string                b_refTx() const;
     std::string                b_bintxid() const;
-    std::string                b_innerScript() const;
+
+    // TODO remove script
+    std::vector<unsigned char> b_innerScript() const;
 
     // uint256                    b_datatxid() const;
     xbridge::CPubKey           b_pk1() const;
@@ -127,7 +131,7 @@ public:
                                        const xbridge::CPubKey & pk);
     bool                       setBinTxId(const std::string & addr,
                                           const std::string & id,
-                                          const std::string & innerScript);
+                                          const std::vector<unsigned char> & innerScript);
 
 public:
     boost::mutex               m_lock;
@@ -153,8 +157,8 @@ private:
     std::string                m_bintxid1;
     std::string                m_bintxid2;
 
-    std::string                m_innerScript1;
-    std::string                m_innerScript2;
+    std::vector<unsigned char> m_innerScript1;
+    std::vector<unsigned char> m_innerScript2;
 
     XBridgeTransactionMember   m_a;
     XBridgeTransactionMember   m_b;

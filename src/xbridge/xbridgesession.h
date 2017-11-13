@@ -32,7 +32,6 @@ class XBridgeSession
 {
 public:
     XBridgeSession();
-    XBridgeSession(const WalletParam & wallet);
     virtual ~XBridgeSession();
 
     const std::vector<unsigned char> & sessionAddr() const { return m_myid; }
@@ -53,23 +52,6 @@ public:
 
     bool rollbacktXBridgeTransaction(const uint256 & id);
 
-protected:
-    // reimplement for currency
-    // virtual std::string fromXAddr(const std::vector<unsigned char> & xaddr) const = 0;
-    virtual std::vector<unsigned char> toXAddr(const std::string & addr) const = 0;
-
-    virtual uint32_t lockTime(const char role) const = 0;
-    virtual xbridge::CTransactionPtr createTransaction() const = 0;
-    virtual xbridge::CTransactionPtr createTransaction(const std::vector<std::pair<std::string, int> > & inputs,
-                                                       const std::vector<std::pair<CScript, double> > & outputs,
-                                                       const uint32_t lockTime = 0) const = 0;
-
-    virtual bool signTransaction(const xbridge::CKey & key,
-                                 const xbridge::CTransactionPtr & transaction,
-                                 const uint32_t inputIdx,
-                                 const CScript & unlockScript,
-                                 std::vector<unsigned char> & signature) = 0;
-
 private:
     virtual void init();
 
@@ -77,23 +59,15 @@ private:
     bool decryptPacket(XBridgePacketPtr packet);
 
 protected:
-    const unsigned char * myaddr() const;
-
     void sendPacket(const std::vector<unsigned char> & to, const XBridgePacketPtr & packet);
-    void sendPacket(const std::string & to, const XBridgePacketPtr & packet);
     void sendPacketBroadcast(XBridgePacketPtr packet);
 
     // return true if packet not for me, relayed
     bool checkPacketAddress(XBridgePacketPtr packet);
 
-    virtual std::string currencyToLog() const { return std::string("[") + m_wallet.currency + std::string("]"); }
-
     bool makeNewPubKey(xbridge::CPubKey & newPKey) const;
 
-    double minTxFee1(const uint32_t inputCount, const uint32_t outputCount);
-    double minTxFee2(const uint32_t inputCount, const uint32_t outputCount);
-
-    std::string round_x(const long double val, uint32_t prec);
+    // std::string round_x(const long double val, uint32_t prec);
 
     bool checkDepositTx(const XBridgeTransactionDescrPtr & xtx,
                         const std::string & depositTxId,
@@ -150,11 +124,6 @@ protected:
     typedef fastdelegate::FastDelegate1<XBridgePacketPtr, bool> PacketHandler;
     typedef std::map<const int, PacketHandler> PacketHandlersMap;
     PacketHandlersMap m_handlers;
-
-protected:
-    std::set<std::vector<unsigned char> > m_addressBook;
-
-    WalletParam       m_wallet;
 };
 
 typedef std::shared_ptr<XBridgeSession> XBridgeSessionPtr;

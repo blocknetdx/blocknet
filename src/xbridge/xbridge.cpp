@@ -3,7 +3,8 @@
 
 #include "xbridge.h"
 #include "xbridgewalletconnector.h"
-#include "xbridgebtcwalletconnector.h"
+#include "xbridgewalletconnectorbtc.h"
+#include "xbridgewalletconnectorbcc.h"
 #include "xbridgeapp.h"
 #include "util/logger.h"
 #include "util/settings.h"
@@ -86,10 +87,11 @@ XBridge::XBridge()
                     conn.reset(new XBridgeBtcWalletConnector);
                     *conn = wp;
                 }
-//                else if (wp.method == "BCC")
-//                {
-//                    session.reset(new XBridgeSessionBcc(wp));
-//                }
+                else if (wp.method == "BCC")
+                {
+                    conn.reset(new XBridgeBccWalletConnector);
+                    *conn = wp;
+                }
 //                else if (wp.method == "RPC")
 //                {
 //                    LOG() << "wp.method RPC not implemented" << __FUNCTION__;
