@@ -47,6 +47,7 @@ Value dxGetTransactionList(const Array & params, bool fHelp)
         {
             Object jtr;
             const auto tr = trEntry.second;
+//            tr->state
             jtr.push_back(Pair("id", tr->id.GetHex()));
             jtr.push_back(Pair("from", tr->fromCurrency));
             jtr.push_back(Pair("from address", tr->from));
@@ -57,7 +58,6 @@ Value dxGetTransactionList(const Array & params, bool fHelp)
             double toAmount = static_cast<double>(tr->toAmount) / XBridgeTransactionDescr::COIN;
             jtr.push_back(Pair("toAmount", boost::lexical_cast<std::string>(toAmount)));
             jtr.push_back(Pair("state", tr->strState()));
-
             arr.push_back(jtr);
         }
     }
@@ -79,11 +79,9 @@ Value dxGetTransactionList(const Array & params, bool fHelp)
             double toAmount = static_cast<double>(tr->toAmount) / XBridgeTransactionDescr::COIN;
             jtr.push_back(Pair("toAmount", boost::lexical_cast<std::string>(toAmount)));
             jtr.push_back(Pair("state", tr->strState()));
-
             arr.push_back(jtr);
         }
     }
-
     return arr;
 }
 
@@ -96,13 +94,13 @@ Value dxGetTransactionsHistoryList(const Array & params, bool fHelp)
     {
         throw runtime_error("dxGetTransactionsHistoryList\nHistoric list transactions.");
     }
-
     Array arr;
-
     boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
-
     {
         std::map<uint256, XBridgeTransactionDescrPtr> trlist = XBridgeApp::m_historicTransactions;
+        if(trlist.empty()) {
+            LOG() << "empty history transactions list ";
+        }
         for (const auto & trEntry : trlist)
         {
             Object jtr;
@@ -117,11 +115,9 @@ Value dxGetTransactionsHistoryList(const Array & params, bool fHelp)
             double toAmount = static_cast<double>(tr->toAmount) / XBridgeTransactionDescr::COIN;
             jtr.push_back(Pair("toAmount", boost::lexical_cast<std::string>(toAmount)));
             jtr.push_back(Pair("state", tr->strState()));
-
             arr.push_back(jtr);
         }
     }
-
     return arr;
 }
 
@@ -147,10 +143,9 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
         for (const auto & trEntry : trlist)
         {
             const auto tr = trEntry.second;
-
-            if(id != tr->id.GetHex())
+            if(id != tr->id.GetHex()) {
                 continue;
-
+            }
             Object jtr;
             jtr.push_back(Pair("id", tr->id.GetHex()));
             jtr.push_back(Pair("from", tr->fromCurrency));
@@ -162,7 +157,6 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
             double toAmount = static_cast<double>(tr->toAmount) / XBridgeTransactionDescr::COIN;
             jtr.push_back(Pair("toAmount", boost::lexical_cast<std::string>(toAmount)));
             jtr.push_back(Pair("state", tr->strState()));
-
             arr.push_back(jtr);
         }
     }
@@ -188,7 +182,6 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
             double toAmount = static_cast<double>(tr->toAmount) / XBridgeTransactionDescr::COIN;
             jtr.push_back(Pair("toAmount", boost::lexical_cast<std::string>(toAmount)));
             jtr.push_back(Pair("state", tr->strState()));
-
             arr.push_back(jtr);
         }
     }
@@ -196,6 +189,9 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
     // historic tx
     {
         std::map<uint256, XBridgeTransactionDescrPtr> trlist = XBridgeApp::m_historicTransactions;
+        if(trlist.empty()) {
+            LOG() << "history transaction list empty " << __FUNCTION__;
+        }
         for (const auto & trEntry : trlist)
         {
             const auto tr = trEntry.second;
@@ -214,11 +210,9 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
             double toAmount = static_cast<double>(tr->toAmount) / XBridgeTransactionDescr::COIN;
             jtr.push_back(Pair("toAmount", boost::lexical_cast<std::string>(toAmount)));
             jtr.push_back(Pair("state", tr->strState()));
-
             arr.push_back(jtr);
         }
     }
-
     return arr;
 }
 
@@ -271,8 +265,6 @@ Value dxCreateTransaction(const Array & params, bool fHelp)
     uint256 id = XBridgeApp::instance().sendXBridgeTransaction
             (from, fromCurrency, (boost::uint64_t)(fromAmount * XBridgeTransactionDescr::COIN),
              to,   toCurrency,   (boost::uint64_t)(toAmount * XBridgeTransactionDescr::COIN));
-
-
     Object obj;
     obj.push_back(Pair("id", id.GetHex()));
     return obj;
@@ -315,11 +307,9 @@ Value dxCancelTransaction(const Array & params, bool fHelp)
         throw runtime_error("dxCancelTransaction (id)\n"
                             "Cancel xbridge transaction.");
     }
-
+    LOG() << "rpc cancel transaction " << __FUNCTION__;
     uint256 id(params[0].get_str());
-
     XBridgeApp::instance().cancelXBridgeTransaction(id, crRpcRequest);
-
     Object obj;
     obj.push_back(Pair("id", id.GetHex()));
     return obj;

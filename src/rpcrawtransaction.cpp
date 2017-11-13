@@ -575,7 +575,6 @@ Value signrawtransaction(const Array& params, bool fHelp)
             CCoins coins;
             view.AccessCoins(prevHash); // this is certainly allowed to fail
         }
-
         view.SetBackend(viewDummy); // switch back to avoid locking mempool for too long
     }
 
