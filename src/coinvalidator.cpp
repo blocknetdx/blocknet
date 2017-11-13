@@ -257,8 +257,11 @@ bool CoinValidator::LoadStatic() {
     // Load infractions into memory
     std::vector<string> infractions = getExplList();
     for (std::string &line : infractions) {
-        if (!addLine(line, infMap))
+        bool result = addLine(line, infMap);
+        if (!result) {
             LogPrintf("Coin Validator: Failed to read infraction: %s\n", line);
+            assert(result);
+        }
     }
 
     lastLoadH = CHAIN_HEIGHT;
