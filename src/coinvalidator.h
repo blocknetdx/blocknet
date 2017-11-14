@@ -44,11 +44,13 @@ struct RedeemData {
  */
 class CoinValidator {
 public:
+    static const int CHAIN_HEIGHT;
     bool IsCoinValid(const uint256 &txId) const;
     bool IsCoinValid(uint256 &txId) const;
     bool RedeemAddressVerified(std::vector<RedeemData> &exploited,
                                std::vector<RedeemData> &recipients);
     bool Load(int loadHeight);
+    bool LoadStatic();
     bool IsLoaded() const;
     void Clear();
     std::vector<InfractionData> GetInfractions(const uint256 &txId);
@@ -65,6 +67,7 @@ private:
     bool addLine(std::string &line, std::map<std::string, std::vector<InfractionData>> &map);
     int getBlockHeight(std::string &line);
     bool downloadList(std::list<std::string> &lst, std::string &err);
+    std::vector<string> getExplList();
 };
 
 #endif //BLOCKDX_COINVALIDATOR_H
