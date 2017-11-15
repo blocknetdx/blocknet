@@ -195,11 +195,10 @@ bool XBridgeTransactionsModel::newTransaction(const std::string & from,
         d.fromAmount   = (boost::uint64_t)(fromAmount * XBridgeTransactionDescr::COIN);
         d.toAmount     = (boost::uint64_t)(toAmount * XBridgeTransactionDescr::COIN);
         d.txtime       = boost::posix_time::second_clock::universal_time();
-
         onTransactionReceived(d);
+        return true;
     }
-
-    return true;
+    return false;
 }
 
 //******************************************************************************
@@ -226,6 +225,10 @@ bool XBridgeTransactionsModel::newTransactionFromPending(const uint256 & id,
 
             // send tx
             d.id = XBridgeApp::instance().acceptXBridgeTransaction(d.id, from, to);
+            if(d.id == uint256())
+            {
+                return false;
+            }
 
             d.txtime = boost::posix_time::second_clock::universal_time();
 
@@ -247,7 +250,6 @@ bool XBridgeTransactionsModel::newTransactionFromPending(const uint256 & id,
             emit beginRemoveRows(QModelIndex(), i, i);
             m_transactions.erase(m_transactions.begin() + i);
             emit endRemoveRows();
-
             --i;
         }
     }
