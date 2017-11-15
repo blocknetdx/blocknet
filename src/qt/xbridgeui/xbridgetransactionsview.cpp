@@ -2,7 +2,7 @@
 //******************************************************************************
 
 #include "xbridgetransactionsview.h"
-// #include "../xbridgeapp.h"
+ #include "xbridge/xbridgeapp.h"
 // #include "xbridgetransactiondialog.h"
 #include "xbridge/xbridgeexchange.h"
 #include "xbridge/xuiconnector.h"
@@ -277,7 +277,7 @@ void XBridgeTransactionsView::onCancelTransaction()
     {
         QMessageBox::warning(this,
                              trUtf8("Cancel transaction"),
-                             trUtf8("Error send cancel request"));
+                             trUtf8("Error send cancel request %1").arg(XBridgeApp::instance().lastError().c_str()));
     }
 }
 
@@ -303,7 +303,7 @@ void XBridgeTransactionsView::onRollbackTransaction()
     {
         QMessageBox::warning(this,
                              trUtf8("Cancel transaction"),
-                             trUtf8("Error send rollback request"));
+                             trUtf8("Error send rollback request %1").arg(XBridgeApp::instance().lastError().c_str()));
     }
 }
 
