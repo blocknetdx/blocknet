@@ -153,14 +153,6 @@ private:
      * @brief m_historicTransactionsStates - the status list of historical transactions
      */
     std::list<XBridgeTransactionDescr::State>       m_historicTransactionsStates;
-//    boost::asio::io_service                         m_timerIo;
-//    std::shared_ptr<boost::asio::io_service::work>  m_timerIoWork;
-//    boost::thread                                   m_timerThread;
-//    boost::asio::deadline_timer                     m_timer;
-//    std::deque<IoServicePtr>                        m_services;
-//    std::deque<WorkPtr>                             m_works;
-
-//    const uint TIMEOUT = 3;
 private:
 
 
@@ -171,9 +163,6 @@ public:
      * @return true, if state history
      */
     bool isHistoricState(const XBridgeTransactionDescr::State state);
-
-    void onTimer();
-
 private:
     std::string m_lastError;
 public:
