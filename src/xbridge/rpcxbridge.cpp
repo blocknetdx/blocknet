@@ -272,7 +272,7 @@ Value dxCreateTransaction(const Array & params, bool fHelp)
     if(id == uint256())
     {
         Object obj;
-        obj.push_back(Pair("error", XBridgeApp::instance().lastError()));
+        obj.push_back(Pair("error: ", XBridgeApp::instance().lastError()));
         return obj;
     }
     Object obj;
