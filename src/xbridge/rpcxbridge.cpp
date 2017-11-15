@@ -273,6 +273,12 @@ Value dxCreateTransaction(const Array & params, bool fHelp)
     {
         Object obj;
         obj.push_back(Pair("error: ", XBridgeApp::instance().lastError()));
+        obj.push_back(Pair("from: ", from));
+        obj.push_back(Pair("from currency: ", fromCurrency));
+        obj.push_back(Pair("from amount: ", fromAmount));
+        obj.push_back(Pair("to: ", to));
+        obj.push_back(Pair("to currency: ", toCurrency));
+        obj.push_back(Pair("to amount: ", toAmount));
         return obj;
     }
     Object obj;
@@ -302,10 +308,13 @@ Value dxAcceptTransaction(const Array & params, bool fHelp)
     }
 
     uint256 idresult = XBridgeApp::instance().acceptXBridgeTransaction(id, from, to);
-    if(id == uint256())
+    if(idresult == uint256())
     {
         Object obj;
-        obj.push_back(Pair("error", XBridgeApp::instance().lastError()));
+        obj.push_back(Pair("error: ", XBridgeApp::instance().lastError()));
+        obj.push_back(Pair("id: ", id.GetHex()));
+        obj.push_back(Pair("from: ", from));
+        obj.push_back(Pair("to: ", to));
         return obj;
     }
 
@@ -328,7 +337,8 @@ Value dxCancelTransaction(const Array & params, bool fHelp)
     if(!XBridgeApp::instance().cancelXBridgeTransaction(id, crRpcRequest))
     {
         Object obj;
-        obj.push_back(Pair("error: " + XBridgeApp::instance().lastError() +  " id ", id.GetHex()));
+        obj.push_back(Pair("error: ", XBridgeApp::instance().lastError()));
+        obj.push_back(Pair("id: ",id.GetHex()));
         return  obj;
     }
     Object obj;
