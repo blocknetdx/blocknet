@@ -309,14 +309,20 @@ void XBridgeTransactionDialog::onSendTransaction()
     if (m_pendingId != uint256())
     {
         // accept pending tx
-        m_model.newTransactionFromPending(m_pendingId, m_hubAddress, from, to);
+        if(!m_model.newTransactionFromPending(m_pendingId, m_hubAddress, from, to))
+        {
+            QMessageBox::warning(this, trUtf8("check parameters"),
+                                 trUtf8("Invalid address %1").arg(XBridgeApp::instance().lastError().c_str()));
+            return;
+        }
     }
     else
     {
         // new tx
         if (!m_model.newTransaction(from, to, fromCurrency, toCurrency, fromAmount, toAmount))
         {
-            QMessageBox::warning(this, trUtf8("check parameters"), trUtf8("Invalid amount (less than minimum)"));
+            QMessageBox::warning(this, trUtf8("check parameters"),
+                                 trUtf8("Invalid amount %1").arg(XBridgeApp::instance().lastError().c_str()));
             return;
         }
     }
