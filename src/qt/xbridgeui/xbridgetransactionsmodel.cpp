@@ -280,6 +280,10 @@ void XBridgeTransactionsModel::onTimer()
                 boost::posix_time::second_clock::universal_time() -
                 m_transactions[i].txtime;
 
+        auto id = m_transactions[i].id;
+        if(!m_transactions[i].from.empty() && !m_transactions[i].to.empty()){
+            LOG() << "XBridgeTransactionsModel::onTimer td.total_seconds() = " << td.total_seconds();
+        }
         if (m_transactions[i].state == XBridgeTransactionDescr::trNew &&
                 td.total_seconds() > XBridgeTransaction::TTL/60)
         {
@@ -307,6 +311,15 @@ void XBridgeTransactionsModel::onTimer()
             emit endRemoveRows();
             --i;
         }
+//        LOG() << "change transaction state to " <<  m_transactions[i].strState() << "\t" << __FUNCTION__;
+//        if(XBridgeApp::instance().isHistoricState(m_transactions[i].state))
+//        {
+//            XBridgeTransactionDescrPtr tmp = XBridgeTransactionDescrPtr(new XBridgeTransactionDescr(m_transactions[i]));
+//            LOG() << "insert into history transactions map " <<  m_transactions[i].strState() << "\t" << __FUNCTION__;
+//            boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
+//            XBridgeApp::m_historicTransactions[id] = tmp;
+//        }
+
     }
 }
 

@@ -148,6 +148,7 @@ void XBridge::onTimer()
 {
     // DEBUG_TRACE();
 
+    LOG() << "xbridge::onTimer ";
     {
         m_services.push_back(m_services.front());
         m_services.pop_front();
@@ -194,6 +195,7 @@ void XBridge::onTimer()
             }
         }
     }
+    XBridgeApp::instance().onTimer();
 
     m_timer.expires_at(m_timer.expires_at() + boost::posix_time::seconds(TIMER_INTERVAL));
     m_timer.async_wait(boost::bind(&XBridge::onTimer, this));
