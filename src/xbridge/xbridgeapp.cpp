@@ -151,7 +151,11 @@ bool XBridgeApp::init(int argc, char *argv[])
                                     XBridgeTransactionDescr::trDropped,
                                     XBridgeTransactionDescr::trCancelled,
                                     XBridgeTransactionDescr::trInvalid};
+    //init threads
     return true;
+
+
+
 }
 
 //*****************************************************************************
@@ -323,6 +327,60 @@ void XBridgeApp::sleep(const unsigned int umilliseconds)
     boost::this_thread::sleep_for(boost::chrono::milliseconds(umilliseconds));
 }
 
+void XBridgeApp::onTimer()
+{
+
+    for (auto item : m_pendingTransactions)
+    {
+        {
+            auto transaction = item.second;
+            boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
+            boost::posix_time::time_duration td =
+                    boost::posix_time::second_clock::universal_time() -
+                    transaction->txtime;
+            if(!transaction->from.empty() && !transaction->to.empty()){
+                LOG() << "td total seconds = " <<  td.total_seconds();
+            }
+
+
+            auto id = transaction->id;
+            if (transaction->state == XBridgeTransactionDescr::trNew &&
+                    td.total_seconds() > XBridgeTransaction::TTL/60)
+            {
+                transaction->state = XBridgeTransactionDescr::trOffline;
+            }
+            else if (transaction->state == XBridgeTransactionDescr::trPending &&
+                     td.total_seconds() > XBridgeTransaction::TTL/6)
+            {
+                transaction->state = XBridgeTransactionDescr::trExpired;
+            }
+            else if ((transaction->state == XBridgeTransactionDescr::trExpired ||
+                      transaction->state == XBridgeTransactionDescr::trOffline) &&
+                     td.total_seconds() < XBridgeTransaction::TTL/6)
+            {
+                transaction->state = XBridgeTransactionDescr::trPending;
+            }
+            else if (transaction->state == XBridgeTransactionDescr::trExpired &&
+                     td.total_seconds() > XBridgeTransaction::TTL)
+            {
+
+                LOG() << "erase pending transactions " << __FUNCTION__;
+//                m_transactions.erase(item);
+                //            m_transactions.erase(m_transactions.begin()+i);
+//                --i;
+            }
+        }
+        LOG() << "change transaction state to " <<  item.second->strState() << "\tXBridgeApp\t" << __FUNCTION__;
+        if(isHistoricState(item.second->state))
+        {
+            LOG() << "insert into history transactions map " <<  item.second->strState() << "\tXBridgeApp\t" << __FUNCTION__;
+            boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
+            auto id = item.second->id;
+            XBridgeApp::m_historicTransactions[id] = item.second;
+        }
+    }
+}
+
 bool XBridgeApp::isHistoricState(const XBridgeTransactionDescr::State state)
 {
     return std::find(m_historicTransactionsStates.begin(), m_historicTransactionsStates.end(), state) != m_historicTransactionsStates.end();
@@ -469,9 +527,10 @@ uint256 XBridgeApp::sendXBridgeTransaction(const std::string & from,
     if (!s)
     {
         // no session
-        uiInterface.ThreadSafeMessageBox(_("No session for ") + fromCurrency,
-                                         "blocknet",
-                                         CClientUIInterface::BTN_OK | CClientUIInterface::ICON_INFORMATION | CClientUIInterface::MODAL);
+        m_lastError = "No session for " + fromCurrency;
+//        uiInterface.ThreadSafeMessageBox(_("No session for ") + fromCurrency,
+//                                         "blocknet",
+//                                         CClientUIInterface::BTN_OK | CClientUIInterface::ICON_INFORMATION | CClientUIInterface::MODAL);
 
         WARN() << "no session for <" << fromCurrency << "> " << __FUNCTION__;
         return uint256();
@@ -479,6 +538,7 @@ uint256 XBridgeApp::sendXBridgeTransaction(const std::string & from,
 
     if (!s->checkAmount(fromAmount))
     {
+        m_lastError = "Insufficient funds for " + fromCurrency;
         uiInterface.ThreadSafeMessageBox(_("Insufficient funds for ") + fromCurrency,
                                          "blocknet",
                                          CClientUIInterface::BTN_OK
@@ -566,7 +626,8 @@ bool XBridgeApp::sendPendingTransaction(XBridgeTransactionDescrPtr & ptr)
     xuiConnector.NotifyXBridgeTransactionStateChanged(ptr->id, XBridgeTransactionDescr::trPending);
     LOG() << "transaction state = " << ptr->strState() << __FUNCTION__;
     LOG() << "is history state = " <<  isHistoricState(ptr->state) << __FUNCTION__;
-    if(isHistoricState(ptr->state)) {
+    if(isHistoricState(ptr->state))
+    {
         LOG() << "add to history map " << __FUNCTION__;
         boost::mutex::scoped_lock l(m_txLocker);
         m_historicTransactions[ptr->id] = ptr;
@@ -587,6 +648,7 @@ uint256 XBridgeApp::acceptXBridgeTransaction(const uint256 & id,
         boost::mutex::scoped_lock l(m_txLocker);
         if (!m_pendingTransactions.count(id))
         {
+            m_lastError = "Transaction not found";
             uiInterface.ThreadSafeMessageBox(_("Transaction not foud"),
                                              "blocknet",
                                              CClientUIInterface::BTN_OK | CClientUIInterface::ICON_INFORMATION | CClientUIInterface::MODAL);
@@ -600,6 +662,7 @@ uint256 XBridgeApp::acceptXBridgeTransaction(const uint256 & id,
     if (!s)
     {
         // no session
+        m_lastError = "No session for " + ptr->toCurrency;
         uiInterface.ThreadSafeMessageBox(_("No session for ") + ptr->toCurrency,
                                          "blocknet",
                                          CClientUIInterface::BTN_OK | CClientUIInterface::ICON_INFORMATION | CClientUIInterface::MODAL);
@@ -610,6 +673,7 @@ uint256 XBridgeApp::acceptXBridgeTransaction(const uint256 & id,
 
     if (!s->checkAmount(ptr->toAmount))
     {
+        m_lastError = "Insufficient funds for " + ptr->toCurrency;
         uiInterface.ThreadSafeMessageBox(_("Insufficient funds for ") + ptr->toCurrency,
                                          "blocknet",
                                          CClientUIInterface::BTN_OK | CClientUIInterface::ICON_INFORMATION | CClientUIInterface::MODAL);
@@ -668,16 +732,21 @@ bool XBridgeApp::cancelXBridgeTransaction(const uint256 & id,
     if (sendCancelTransaction(id, reason))
     {
         boost::mutex::scoped_lock l(m_txLocker);
-        if(m_pendingTransactions.erase(id) == 0) {
+        if(m_pendingTransactions.erase(id) == 0)
+        {
             LOG() << "can't remove transactions " << __FUNCTION__;
+            m_lastError = "can't remove transactions ";
+            return false;
         }
-        if (m_transactions.count(id)) {
+        if (m_transactions.count(id))
+        {
             LOG() << "transaction found " << __FUNCTION__;
             m_transactions[id]->state = XBridgeTransactionDescr::trCancelled;
             xuiConnector.NotifyXBridgeTransactionStateChanged(id, XBridgeTransactionDescr::trCancelled);
             LOG() << "transaction state = " << m_transactions[id]->strState() << " " << __FUNCTION__;
             LOG() << "is history state = " <<  isHistoricState(m_transactions[id]->state) << __FUNCTION__;
-            if(isHistoricState(m_transactions[id]->state)) {
+            if(isHistoricState(m_transactions[id]->state))
+            {
                 LOG() << "add to history map " << __FUNCTION__;
                 boost::mutex::scoped_lock l(m_txLocker);
                 m_historicTransactions[id] = m_transactions[id];

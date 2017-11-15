@@ -32,6 +32,8 @@ class AcceptedConnection;
 class XBridgeApp
 {
     typedef std::vector<unsigned char> UcharVector;
+    typedef std::shared_ptr<boost::asio::io_service>       IoServicePtr;
+    typedef std::shared_ptr<boost::asio::io_service::work> WorkPtr;
 
     friend void callback(void * closure, int event,
                          const unsigned char * info_hash,
@@ -148,16 +150,34 @@ public:
 
 private:
     /**
-     * @brief m_historicTransactionsAccetpedStates - the status list of historical transactions
+     * @brief m_historicTransactionsStates - the status list of historical transactions
      */
-    std::list<XBridgeTransactionDescr::State> m_historicTransactionsStates;
+    std::list<XBridgeTransactionDescr::State>       m_historicTransactionsStates;
+//    boost::asio::io_service                         m_timerIo;
+//    std::shared_ptr<boost::asio::io_service::work>  m_timerIoWork;
+//    boost::thread                                   m_timerThread;
+//    boost::asio::deadline_timer                     m_timer;
+//    std::deque<IoServicePtr>                        m_services;
+//    std::deque<WorkPtr>                             m_works;
+
+//    const uint TIMEOUT = 3;
+private:
+
+
 public:
     /**
      * @brief isHistoricState
      * @param state
-     * @return true, if
+     * @return true, if state history
      */
     bool isHistoricState(const XBridgeTransactionDescr::State state);
+
+    void onTimer();
+
+private:
+    std::string m_lastError;
+public:
+    const std::string &lastError() const { return  m_lastError; }
 
 };
 

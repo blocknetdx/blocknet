@@ -98,8 +98,10 @@ Value dxGetTransactionsHistoryList(const Array & params, bool fHelp)
     boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
     {
         std::map<uint256, XBridgeTransactionDescrPtr> trlist = XBridgeApp::m_historicTransactions;
-        if(trlist.empty()) {
+        if(trlist.empty())
+        {
             LOG() << "empty history transactions list ";
+            return arr;
         }
         for (const auto & trEntry : trlist)
         {
@@ -143,7 +145,8 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
         for (const auto & trEntry : trlist)
         {
             const auto tr = trEntry.second;
-            if(id != tr->id.GetHex()) {
+            if(id != tr->id.GetHex())
+            {
                 continue;
             }
             Object jtr;
@@ -189,7 +192,8 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
     // historic tx
     {
         std::map<uint256, XBridgeTransactionDescrPtr> trlist = XBridgeApp::m_historicTransactions;
-        if(trlist.empty()) {
+        if(trlist.empty())
+        {
             LOG() << "history transaction list empty " << __FUNCTION__;
         }
         for (const auto & trEntry : trlist)
@@ -265,6 +269,12 @@ Value dxCreateTransaction(const Array & params, bool fHelp)
     uint256 id = XBridgeApp::instance().sendXBridgeTransaction
             (from, fromCurrency, (boost::uint64_t)(fromAmount * XBridgeTransactionDescr::COIN),
              to,   toCurrency,   (boost::uint64_t)(toAmount * XBridgeTransactionDescr::COIN));
+    if(id == uint256())
+    {
+        Object obj;
+        obj.push_back(Pair("error", XBridgeApp::instance().lastError()));
+        return obj;
+    }
     Object obj;
     obj.push_back(Pair("id", id.GetHex()));
     return obj;
@@ -292,6 +302,12 @@ Value dxAcceptTransaction(const Array & params, bool fHelp)
     }
 
     uint256 idresult = XBridgeApp::instance().acceptXBridgeTransaction(id, from, to);
+    if(id == uint256())
+    {
+        Object obj;
+        obj.push_back(Pair("error", XBridgeApp::instance().lastError()));
+        return obj;
+    }
 
     Object obj;
     obj.push_back(Pair("id", idresult.GetHex()));
@@ -309,7 +325,12 @@ Value dxCancelTransaction(const Array & params, bool fHelp)
     }
     LOG() << "rpc cancel transaction " << __FUNCTION__;
     uint256 id(params[0].get_str());
-    XBridgeApp::instance().cancelXBridgeTransaction(id, crRpcRequest);
+    if(!XBridgeApp::instance().cancelXBridgeTransaction(id, crRpcRequest))
+    {
+        Object obj;
+        obj.push_back(Pair("error: " + XBridgeApp::instance().lastError() +  " id ", id.GetHex()));
+        return  obj;
+    }
     Object obj;
     obj.push_back(Pair("id", id.GetHex()));
     return obj;

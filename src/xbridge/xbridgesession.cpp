@@ -483,27 +483,6 @@ bool XBridgeSession::processPendingTransaction(XBridgePacketPtr packet)
     LOG() << "received tx <" << util::to_str(ptr->id) << "> " << __FUNCTION__;
 
     xuiConnector.NotifyXBridgePendingTransactionReceived(*ptr);
-    {
-        boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
-        for(auto item : XBridgeApp::m_transactions) {
-            LOG() << "transaction state = " << item.second->strState() << "  " << __FUNCTION__;
-            LOG() << "is history state = " <<  XBridgeApp::instance().isHistoricState(item.second->state) << "\t" << __FUNCTION__;
-            auto id = item.second->id;
-            if(XBridgeApp::instance().isHistoricState(item.second->state)) {
-                LOG() << "add to history map " << __FUNCTION__;
-                XBridgeApp::m_historicTransactions[id] = item.second;
-            }
-        }
-        for(auto item : XBridgeApp::m_pendingTransactions) {
-            LOG() << "transaction state from pending = " << item.second->strState() << "  " << __FUNCTION__;
-            LOG() << "is history state from pending = " <<  XBridgeApp::instance().isHistoricState(item.second->state) << "\t" << __FUNCTION__;
-            auto id = item.second->id;
-            if(XBridgeApp::instance().isHistoricState(item.second->state)) {
-                LOG() << "add to history map from pending " << __FUNCTION__;
-                XBridgeApp::m_historicTransactions[id] = item.second;
-            }
-        }
-    }
 
     return true;
 }
@@ -677,7 +656,6 @@ bool XBridgeSession::processTransactionHold(XBridgePacketPtr packet)
                 e.deletePendingTransactions(id);
 
                 xuiConnector.NotifyXBridgeTransactionStateChanged(id, XBridgeTransactionDescr::trFinished);
-
             }
 
             return true;
@@ -723,13 +701,6 @@ bool XBridgeSession::processTransactionHold(XBridgePacketPtr packet)
     }
 
     xuiConnector.NotifyXBridgeTransactionStateChanged(id, xtx->state);
-    LOG() << "transaction state = " << xtx->strState() << __FUNCTION__;
-    LOG() << "is history state = " <<  XBridgeApp::instance().isHistoricState(xtx->state) << __FUNCTION__;
-    if(XBridgeApp::instance().isHistoricState(xtx->state)) {
-        LOG() << "add to history map " << __FUNCTION__;
-        boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
-        XBridgeApp::m_historicTransactions[id] = xtx;
-    }
 
     if (xtx->isLocal())
     {
@@ -2652,13 +2623,6 @@ bool XBridgeSession::processTransactionFinished(XBridgePacketPtr packet)
         {
             // signal for gui
             xuiConnector.NotifyXBridgeTransactionStateChanged(txid, XBridgeTransactionDescr::trFinished);
-            LOG() << "transaction state = " << xtx->strState() << __FUNCTION__;
-            LOG() << "is history state = " <<  XBridgeApp::instance().isHistoricState(xtx->state) << __FUNCTION__;
-            if(XBridgeApp::instance().isHistoricState(xtx->state)) {
-                LOG() << "add to history map " << __FUNCTION__;
-                boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
-                XBridgeApp::m_historicTransactions[txid] = xtx;
-            }
             return true;
         }
 
@@ -2669,13 +2633,7 @@ bool XBridgeSession::processTransactionFinished(XBridgePacketPtr packet)
     xtx->state = XBridgeTransactionDescr::trFinished;
 
     xuiConnector.NotifyXBridgeTransactionStateChanged(txid, xtx->state);
-    LOG() << "transaction state = " << xtx->strState() << __FUNCTION__;
-    LOG() << "is history state = " <<  XBridgeApp::instance().isHistoricState(xtx->state) << __FUNCTION__;
-    if(XBridgeApp::instance().isHistoricState(xtx->state)) {
-        LOG() << "add to history map " << __FUNCTION__;
-        boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
-        XBridgeApp::m_historicTransactions[txid] = xtx;
-    }
+
     return true;
 }
 
@@ -2742,13 +2700,6 @@ bool XBridgeSession::processTransactionDropped(XBridgePacketPtr packet)
         if (!XBridgeApp::m_transactions.count(id)) {
             // signal for gui
             xuiConnector.NotifyXBridgeTransactionStateChanged(id, XBridgeTransactionDescr::trDropped);
-            LOG() << "transaction state = " << xtx->strState() << __FUNCTION__;
-            LOG() << "is history state = " <<  XBridgeApp::instance().isHistoricState(xtx->state) << __FUNCTION__;
-            if(XBridgeApp::instance().isHistoricState(xtx->state)) {
-                LOG() << "add to history map " << __FUNCTION__;
-                boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
-                XBridgeApp::m_historicTransactions[id] = xtx;
-            }
             return false;
         }
         xtx = XBridgeApp::m_transactions[id];
@@ -2757,13 +2708,7 @@ bool XBridgeSession::processTransactionDropped(XBridgePacketPtr packet)
     // update transaction state for gui
     xtx->state = XBridgeTransactionDescr::trDropped;
     xuiConnector.NotifyXBridgeTransactionStateChanged(id, xtx->state);
-    LOG() << "transaction state = " << xtx->strState() << __FUNCTION__;
-    LOG() << "is history state = " <<  XBridgeApp::instance().isHistoricState(xtx->state) << __FUNCTION__;
-    if(XBridgeApp::instance().isHistoricState(xtx->state)) {
-        LOG() << "add to history map " << __FUNCTION__;
-        boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
-        XBridgeApp::m_historicTransactions[id] = xtx;
-    }
+
     return true;
 }
 
