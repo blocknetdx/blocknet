@@ -101,7 +101,8 @@ enum ZerocoinSpendStatus {
     ZPHR_FAILED_ACCUMULATOR_INITIALIZATION = 11,    // Failed to initialize witness
     ZPHR_INVALID_WITNESS = 12,                      // Spend coin transaction did not verify
     ZPHR_BAD_SERIALIZATION = 13,                    // Transaction verification failed
-    ZPHR_SPENT_USED_ZPHR = 14                       // Coin has already been spend
+    ZPHR_SPENT_USED_ZPHR = 14,                      // Coin has already been spend
+    ZPHR_TX_TOO_LARGE = 15                          // The transaction is larger than the max tx size
 };
 
 struct CompactTallyItem {
@@ -313,7 +314,7 @@ public:
     {
         fBackupMints = fEnabled;
     }
-    
+
     bool isMultiSendEnabled()
     {
         return fMultiSendMasternodeReward || fMultiSendStake;
