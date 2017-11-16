@@ -160,7 +160,7 @@ void CBudgetManager::SubmitFinalBudget()
         return;
     
     std::vector<CBudgetProposal*> vBudgetProposals = budget.GetBudget();
-    std::string strBudgetName = "main";
+    std::string strBudgetName = "superblock-" + std::to_string(nBlockStart);
     std::vector<CTxBudgetPayment> vecTxBudgetPayments;
     
     for (auto vBudgetProposal : vBudgetProposals) {
