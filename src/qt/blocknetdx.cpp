@@ -469,7 +469,7 @@ void BitcoinApplication::initializeResult(int retval)
         if (pwalletMain) {
             walletModel = new WalletModel(pwalletMain, optionsModel);
 
-            // Warn user that the wallet is not encrypted and auto-backups are enabled
+            /// Warn user that the wallet is not encrypted and auto-backups are enabled
             if (walletModel)
             {
                 int nWalletBackups = GetArg("-createwalletbackups", 10);
