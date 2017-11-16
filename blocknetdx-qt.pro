@@ -19,9 +19,9 @@ CONFIG(release, debug|release): DEFINES += NDEBUG
 # UNCOMMENT THIS SECTION TO BUILD ON WINDOWS
 # Change paths if needed, these use the foocoin/deps.git repository locations
 
-!include($$PWD/config.pri) {
-   error(Failed to include config.pri)
- }
+#!include($$PWD/config.pri) {
+#   error(Failed to include config.pri)
+# }
 
 OBJECTS_DIR = build
 MOC_DIR = build
@@ -75,7 +75,7 @@ contains(USE_UPNP, -) {
         USE_UPNP=1
     }
     DEFINES += USE_UPNP=$$USE_UPNP STATICLIB
-        DEFINES += USE_UPNP=$$USE_UPNP MINIUPNP_STATICLIB
+	DEFINES += USE_UPNP=$$USE_UPNP MINIUPNP_STATICLIB
     INCLUDEPATH += $$MINIUPNPC_INCLUDE_PATH
     LIBS += $$join(MINIUPNPC_LIB_PATH,,-L,) -lminiupnpc
     win32:LIBS += -liphlpapi
@@ -115,16 +115,19 @@ INCLUDEPATH += \
     $$OPENSSL_INCLUDE_PATH \
     $$QRENCODE_INCLUDE_PATH \
     src/leveldb/include \
-    src/leveldb/helpers
+    src/leveldb/helpers \
+    src/secp256k1/include
+
 
 LIBS += \
     $$join(BOOST_LIB_PATH,,-L,) \
     $$join(BDB_LIB_PATH,,-L,) \
     $$join(OPENSSL_LIB_PATH,,-L,) \
     $$join(QRENCODE_LIB_PATH,,-L,) \
-    -L$$PWD/src/leveldb
-
-
+    -L$$PWD/src/leveldb \
+    -L$$PWD/src/secp256k1/.libs \
+    -L/usr/lib/x86_64-linux-gnu \
+    
 LIBS += \
     -lleveldb \
     -lmemenv \
@@ -133,7 +136,9 @@ LIBS += \
     -lssl \
     -lcrypto \
     -ldb_cxx$$BDB_LIB_SUFFIX \
-    -lpthread
+    -lpthread \
+    -lqrencode \
+    -lanl
 
 windows {
     LIBS += \
@@ -295,7 +300,9 @@ SOURCES += \
     src/qt/xbridgeui/xbridgetransactionsview.cpp \
     src/xbridge/xbitcointransaction.cpp \
     src/xbridge/rpcxbridge.cpp \
-    src/s3downloader.cpp
+    src/s3downloader.cpp \
+    src/qt/walletnonencryptwarningdialog.cpp
+
 
 #protobuf generated
 SOURCES += \
@@ -368,6 +375,9 @@ QMAKE_CXXFLAGS_WARN_ON = \
         -Wformat-security \
         -Wstack-protector \
         -Wno-deprecated-declarations
+
+QMAKE_CXXFLAGS += -DHAVE_CONFIG_H -I./src/secp256k1/include -DQT_NO_VERSION_TAGGING
+QMAKE_LFLAGS += -L/home/smatyk/Development/DanMetcalf/BlockDX/src/.libs -L/usr/lib/x86_64-linux-gnu
 
 # Input
 DEPENDPATH += \
@@ -450,7 +460,7 @@ HEADERS += \
     src/hash.h \
     src/limitedmap.h \
     src/threadsafety.h \
-    src/qt/macnotificationhandler.h \
+    src/qt/macnotificationhandler.h \    
     src/tinyformat.h \
     src/activeservicenode.h \
     src/amount.h \
@@ -581,7 +591,8 @@ HEADERS += \
     src/qt/xbridgeui/xbridgetransactionsmodel.h \
     src/qt/xbridgeui/xbridgetransactionsview.h \
     src/xbridge/xbitcointransaction.h \
-    src/s3downloader.h
+    src/s3downloader.h \
+    src/qt/walletnonencryptwarningdialog.h
 
 #ENABLE_ZMQ
 #    src/zmq/zmqabstractnotifier.h \
@@ -667,7 +678,8 @@ FORMS += \
     src/qt/forms/receivecoinsdialog.ui \
     src/qt/forms/receiverequestdialog.ui \
     src/qt/forms/servicenodelist.ui \
-    src/qt/forms/tradingdialog.ui
+    src/qt/forms/tradingdialog.ui \
+    src/qt/forms/walletnonencryptwarningdialog.ui
 
 
 contains(USE_QRCODE, 1) {

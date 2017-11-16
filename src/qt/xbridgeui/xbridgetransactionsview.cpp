@@ -7,8 +7,6 @@
 #include "xbridge/xbridgeexchange.h"
 #include "xbridge/xuiconnector.h"
 #include "xbridge/util/logger.h"
-#include "wallet.h"
-#include "init.h"
 
 #include <QTableView>
 #include <QHeaderView>
@@ -28,6 +26,14 @@ XBridgeTransactionsView::XBridgeTransactionsView(QWidget *parent)
     , m_dlg(m_txModel, this)
 {
     setupUi();
+}
+
+//******************************************************************************
+//******************************************************************************
+XBridgeTransactionsView::~XBridgeTransactionsView()
+{
+    xuiConnector.NotifyLogMessage.disconnect
+            (boost::bind(&XBridgeTransactionsView::onLogString, this, _1));
 }
 
 //******************************************************************************
@@ -98,30 +104,15 @@ void XBridgeTransactionsView::setupUi()
     }
     else
     {
-        QLabel * exchangeModeLabel = new QLabel(tr("Running exchange mode"), this);
-        exchangeModeLabel->setStyleSheet("color: red");
-
-        hbox->addWidget(exchangeModeLabel);
-
-        QTimer * timer = new QTimer(this);
-
-        connect(timer, &QTimer::timeout, [&e, timer, exchangeModeLabel](){
-            if(e.isStarted())
-            {
-                exchangeModeLabel->setText(tr("Exchange mode started"));
-                exchangeModeLabel->setStyleSheet("font-weight: bold; color: green");
-
-                timer->deleteLater();
-            }
-        });
-
-        timer->start(3000);
+        QPushButton * addTxBtn = new QPushButton(trUtf8("Exchange node"), this);
+        addTxBtn->setEnabled(false);
+        hbox->addWidget(addTxBtn);
     }
 
     hbox->addStretch();
 
-    QPushButton * showHideButton = new QPushButton("Hide historic transactions", this);
-    connect(showHideButton, SIGNAL(clicked()), this, SLOT(onToggleHideHistoricTransactions()));
+    QPushButton * showHideButton = new QPushButton("Toggle to log", this);
+    connect(showHideButton, SIGNAL(clicked()), this, SLOT(onToggleHistoricLogs()));
     hbox->addWidget(showHideButton);
 
     vbox->addLayout(hbox);
@@ -168,7 +159,16 @@ void XBridgeTransactionsView::setupUi()
     historicHeader->resizeSection(XBridgeTransactionsModel::State,      128);
     vbox->addWidget(m_historicTransactionsList);
 
+    m_logStrings = new QTextEdit(this);
+    m_logStrings->setMinimumHeight(64);
+    m_logStrings->setReadOnly(true);
+    m_logStrings->setVisible(false);
+    vbox->addWidget(m_logStrings);
+
     setLayout(vbox);
+
+    xuiConnector.NotifyLogMessage.connect
+            (boost::bind(&XBridgeTransactionsView::onLogString, this, _1));
 }
 
 //******************************************************************************
@@ -187,24 +187,20 @@ QMenu * XBridgeTransactionsView::setupContextMenu(QModelIndex & index)
     }
     else
     {
-        XBridgeTransactionDescr d = m_txModel.item(m_contextMenuIndex.row());
+        QAction * cancelTransaction = new QAction(tr("&Cancel transaction"), this);
+        contextMenu->addAction(cancelTransaction);
 
-        if (d.state < XBridgeTransactionDescr::trCreated)
-        {
-            QAction * cancelTransaction = new QAction(tr("&Cancel transaction"), this);
-            contextMenu->addAction(cancelTransaction);
+        connect(cancelTransaction,   SIGNAL(triggered()),
+                this,                SLOT(onCancelTransaction()));
+    }
 
-            connect(cancelTransaction,   SIGNAL(triggered()),
-                    this,                SLOT(onCancelTransaction()));
-        }
-        else
-        {
-            QAction * rollbackTransaction = new QAction(tr("&Rollback transaction"), this);
-            contextMenu->addAction(rollbackTransaction);
+    if (false)
+    {
+        QAction * rollbackTransaction = new QAction(tr("&Rollback transaction"), this);
+        contextMenu->addAction(rollbackTransaction);
 
-            connect(rollbackTransaction, SIGNAL(triggered()),
-                    this,                SLOT(onRollbackTransaction()));
-        }
+        connect(rollbackTransaction, SIGNAL(triggered()),
+                this,                SLOT(onRollbackTransaction()));
     }
 
     return contextMenu;
@@ -214,15 +210,6 @@ QMenu * XBridgeTransactionsView::setupContextMenu(QModelIndex & index)
 //******************************************************************************
 void XBridgeTransactionsView::onNewTransaction()
 {
-    if (pwalletMain->IsLocked())
-    {
-        QMessageBox::warning(this,
-                             trUtf8("Create transaction"),
-                             trUtf8("Please, unlock wallet first"),
-                             QMessageBox::Ok);
-        return;
-    }
-
     m_dlg.setPendingId(uint256(), std::vector<unsigned char>());
     m_dlg.show();
 }
@@ -299,11 +286,11 @@ void XBridgeTransactionsView::onRollbackTransaction()
         return;
     }
 
-    if (!m_txModel.rollbackTransaction(m_txModel.item(m_contextMenuIndex.row()).id))
+    if (!m_txModel.cancelTransaction(m_txModel.item(m_contextMenuIndex.row()).id))
     {
         QMessageBox::warning(this,
                              trUtf8("Cancel transaction"),
-                             trUtf8("Error send rollback request"));
+                             trUtf8("Error send cancel request"));
     }
 }
 
@@ -337,17 +324,44 @@ void XBridgeTransactionsView::onContextMenu(QPoint /*pt*/)
 
 //******************************************************************************
 //******************************************************************************
-void XBridgeTransactionsView::onToggleHideHistoricTransactions()
+void XBridgeTransactionsView::onToggleHistoricLogs()
 {
     QPushButton * btn = qobject_cast<QPushButton *>(sender());
-    if (!btn)
-    {
-        return;
-    }
 
+    bool logsVisible = m_logStrings->isVisible();
     bool historicTrVisible = m_historicTransactionsList->isVisible();
-    btn->setText(historicTrVisible ? trUtf8("Show historic transactions") :
-                                     trUtf8("Hide historic transactions"));
 
+    if(logsVisible)
+        btn->setText("Toggle to log");
+    else if(historicTrVisible)
+        btn->setText("Toggle to history");
+
+    m_logStrings->setVisible(!logsVisible);
     m_historicTransactionsList->setVisible(!historicTrVisible);
+
+    if (!logsVisible)
+    {
+        m_logStrings->clear();
+
+        // show, load all logs
+        QFile f(QString::fromStdString(LOG::logFileName()));
+        if (f.open(QIODevice::ReadOnly))
+        {
+            m_logStrings->insertPlainText(f.readAll());
+        }
+    }
+}
+
+//******************************************************************************
+//******************************************************************************
+void XBridgeTransactionsView::onLogString(const std::string str)
+{
+    const QString qstr = QString::fromStdString(str);
+    m_logStrings->insertPlainText(qstr);
+
+//    QTextCursor c = m_logStrings->textCursor();
+//    c.movePosition(QTextCursor::End);
+//    m_logStrings->setTextCursor(c);
+
+//    m_logStrings->ensureCursorVisible();
 }

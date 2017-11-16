@@ -80,7 +80,7 @@ XBridge::XBridge()
                 XBridgeSessionPtr session;
                 if (wp.method == "ETHER")
                 {
-                    LOG() << "wp.method ETHER not implemented" << __FUNCTION__;
+                    assert(!"not implemented");
                     // session.reset(new XBridgeSessionEthereum(wp));
                 }
                 else if (wp.method == "BTC")
@@ -89,7 +89,7 @@ XBridge::XBridge()
                 }
                 else if (wp.method == "RPC")
                 {
-                    LOG() << "wp.method RPC not implemented" << __FUNCTION__;
+                    assert(!"not implemented");
                     // session.reset(new XBridgeSessionRpc(wp));
                 }
                 else
@@ -108,6 +108,13 @@ XBridge::XBridge()
         ERR() << e.what();
         ERR() << __FUNCTION__;
     }
+}
+
+//*****************************************************************************
+//*****************************************************************************
+void XBridge::run()
+{
+    m_threads.join_all();
 }
 
 //*****************************************************************************
@@ -141,6 +148,7 @@ void XBridge::onTimer()
         m_services.push_back(m_services.front());
         m_services.pop_front();
 
+        // XBridgeSessionPtr session(new XBridgeSession);
         XBridgeApp & app = XBridgeApp::instance();
         XBridgeSessionPtr session = app.serviceSession();
 
@@ -149,16 +157,23 @@ void XBridge::onTimer()
         // call check expired transactions
         io->post(boost::bind(&XBridgeSession::checkFinishedTransactions, session));
 
+        // send list of wallets (broadcast)
+        // io->post(boost::bind(&XBridgeSession::sendListOfWallets, session));
+
         // send transactions list
         io->post(boost::bind(&XBridgeSession::sendListOfTransactions, session));
 
         // erase expired tx
         io->post(boost::bind(&XBridgeSession::eraseExpiredPendingTransactions, session));
 
-        // get addressbook
+        // check unconfirmed tx
+        // io->post(boost::bind(&XBridgeSession::checkUnconfirmedTx, session));
+
+        // resend addressbook
+        // io->post(boost::bind(&XBridgeSession::resendAddressBook, session));
         io->post(boost::bind(&XBridgeSession::getAddressBook, session));
 
-        // unprocessed packets
+        // pending unprocessed packets
         {
             std::map<uint256, std::pair<std::string, XBridgePacketPtr> > map;
             {

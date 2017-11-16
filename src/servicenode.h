@@ -46,7 +46,7 @@ public:
     //removed stop
 
     CServicenodePing();
-    CServicenodePing(const CTxIn & newVin);
+    CServicenodePing(CTxIn& newVin);
 
     ADD_SERIALIZE_METHODS;
 
@@ -60,7 +60,7 @@ public:
     }
 
     bool CheckAndUpdate(int& nDos, bool fRequireEnabled = true);
-    bool Sign(const CKey & keyServicenode, const CPubKey & pubKeyServicenode);
+    bool Sign(CKey& keyServicenode, CPubKey& pubKeyServicenode);
     void Relay();
 
     uint256 GetHash()
@@ -143,9 +143,6 @@ public:
     int nLastScanningErrorBlockHeight;
     CServicenodePing lastPing;
 
-    // xbridge wallets list, connected to service node
-    std::vector<string> connectedWallets;
-
     int64_t nLastDsee;  // temporary, do not save. Remove after migration to v12
     int64_t nLastDseep; // temporary, do not save. Remove after migration to v12
 
@@ -177,7 +174,6 @@ public:
         swap(first.nLastDsq, second.nLastDsq);
         swap(first.nScanningErrorCount, second.nScanningErrorCount);
         swap(first.nLastScanningErrorBlockHeight, second.nLastScanningErrorBlockHeight);
-        swap(first.connectedWallets, second.connectedWallets);
     }
 
     CServicenode& operator=(CServicenode from)
@@ -297,17 +293,12 @@ class CServicenodeBroadcast : public CServicenode
 {
 public:
     CServicenodeBroadcast();
-    CServicenodeBroadcast(const CService & newAddr,
-                          const CTxIn & newVin,
-                          const CPubKey & pubKeyCollateralAddressNew,
-                          const CPubKey & pubKeyServicenodeNew,
-                          const int protocolVersionIn,
-                          const std::vector<std::string> & exchangeWallets);
+    CServicenodeBroadcast(CService newAddr, CTxIn newVin, CPubKey newPubkey, CPubKey newPubkey2, int protocolVersionIn);
     CServicenodeBroadcast(const CServicenode& mn);
 
     bool CheckAndUpdate(int& nDoS);
     bool CheckInputsAndAdd(int& nDos);
-    bool Sign(const CKey & keyCollateralAddress);
+    bool Sign(CKey& keyCollateralAddress);
     void Relay();
 
     ADD_SERIALIZE_METHODS;
@@ -324,14 +315,6 @@ public:
         READWRITE(protocolVersion);
         READWRITE(lastPing);
         READWRITE(nLastDsq);
-        if (nType == SER_NETWORK && nVersion >= SERVICENODE_WITH_XBRIDGE_INFO_PROTO_VERSION)
-        {
-            READWRITE(connectedWallets);
-        }
-        else if (nType != SER_NETWORK)
-        {
-            READWRITE(connectedWallets);
-        }
     }
 
     uint256 GetHash()
@@ -343,23 +326,8 @@ public:
     }
 
     /// Create Servicenode broadcast, needs to be relayed manually after that
-    static bool Create(const CTxIn & vin,
-                       const CService & service,
-                       const CKey & keyCollateralAddressNew,
-                       const CPubKey & pubKeyCollateralAddressNew,
-                       const CKey & keyServicenodeNew,
-                       const CPubKey & pubKeyServicenodeNew,
-                       const std::vector<string> & exchangeWallets,
-                       std::string & strErrorRet,
-                       CServicenodeBroadcast & mnbRet);
-    static bool Create(const std::string & strService,
-                       const std::string & strKey,
-                       const std::string & strTxHash,
-                       const std::string & strOutputIndex,
-                       const std::vector<string> & exchangeWallets,
-                       std::string & strErrorRet,
-                       CServicenodeBroadcast & mnbRet,
-                       const bool fOffline = false);
+    static bool Create(CTxIn vin, CService service, CKey keyCollateralAddressNew, CPubKey pubKeyCollateralAddressNew, CKey keyServicenodeNew, CPubKey pubKeyServicenodeNew, std::string& strErrorRet, CServicenodeBroadcast& mnbRet);
+    static bool Create(std::string strService, std::string strKey, std::string strTxHash, std::string strOutputIndex, std::string& strErrorRet, CServicenodeBroadcast& mnbRet, bool fOffline = false);
 };
 
 #endif

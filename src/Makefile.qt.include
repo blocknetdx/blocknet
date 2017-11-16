@@ -41,7 +41,8 @@ QT_FORMS_UI = \
   qt/forms/sendcoinsdialog.ui \
   qt/forms/sendcoinsentry.ui \
   qt/forms/signverifymessagedialog.ui \
-  qt/forms/transactiondescdialog.ui
+  qt/forms/transactiondescdialog.ui \
+  qt/forms/walletnonencryptwarningdialog.ui
 
 QT_MOC_CPP = \
   qt/moc_addressbookpage.cpp \
@@ -96,7 +97,8 @@ QT_MOC_CPP = \
   qt/xbridgeui/moc_xbridgeaddressbookview.cpp \
   qt/xbridgeui/moc_xbridgetransactiondialog.cpp \
   qt/xbridgeui/moc_xbridgetransactionsmodel.cpp \
-  qt/xbridgeui/moc_xbridgetransactionsview.cpp
+  qt/xbridgeui/moc_xbridgetransactionsview.cpp \
+  qt/moc_walletnonencryptwarningdialog.cpp
 
 
 BITCOIN_MM = \
@@ -179,13 +181,13 @@ BITCOIN_QT_H = \
   qt/xbridgeui/xbridgeaddressbookview.h \
   qt/xbridgeui/xbridgetransactiondialog.h \
   qt/xbridgeui/xbridgetransactionsmodel.h \
-  qt/xbridgeui/xbridgetransactionsview.h
+  qt/xbridgeui/xbridgetransactionsview.h \
+  qt/walletnonencryptwarningdialog.h
 
 
 RES_ICONS = \
   qt/res/icons/add.png \
   qt/res/icons/address-book.png \
-  qt/res/icons/address-book-white.png \
   qt/res/icons/bitcoin.ico \
   qt/res/icons/bitcoin.png \
   qt/res/icons/bitcoin_testnet.ico \
@@ -206,7 +208,6 @@ RES_ICONS = \
   qt/res/icons/edit.png \
   qt/res/icons/editcopy.png \
   qt/res/icons/editpaste.png \
-  qt/res/icons/editpaste-white.png \
   qt/res/icons/explorer.png \
   qt/res/icons/export.png \
   qt/res/icons/eye.png \
@@ -271,6 +272,7 @@ BITCOIN_QT_CPP = \
   qt/xbridgeui/xbridgetransactiondialog.cpp \
   qt/xbridgeui/xbridgetransactionsmodel.cpp \
   qt/xbridgeui/xbridgetransactionsview.cpp
+  
 
 if ENABLE_WALLET
 BITCOIN_QT_CPP += \
@@ -304,7 +306,8 @@ BITCOIN_QT_CPP += \
   qt/walletframe.cpp \
   qt/walletmodel.cpp \
   qt/walletmodeltransaction.cpp \
-  qt/walletview.cpp
+  qt/walletview.cpp \
+  qt/walletnonencryptwarningdialog.cpp
 
 endif
 
