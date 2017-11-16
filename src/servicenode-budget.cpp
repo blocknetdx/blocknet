@@ -1592,12 +1592,17 @@ int CBudgetProposal::GetBlockStartCycle()
 
 int CBudgetProposal::GetBlockCurrentCycle()
 {
-    CBlockIndex* pindexPrev = chainActive.Tip();
-    if (pindexPrev == NULL) return -1;
+    int chainHeight = 0;
+    {
+        TRY_LOCK(cs_main, locked);
+        if (!locked) return -1;
+        if (!chainActive.Tip()) return -1;
+        chainHeight = chainActive.Height();
+    }
+    if (chainHeight >= GetBlockEndCycle() || chainHeight <= 0)
+        return -1;
 
-    if (pindexPrev->nHeight >= GetBlockEndCycle()) return -1;
-
-    return pindexPrev->nHeight - pindexPrev->nHeight % GetBudgetPaymentCycleBlocks();
+    return chainHeight - chainHeight % GetBudgetPaymentCycleBlocks();
 }
 
 int CBudgetProposal::GetBlockEndCycle()
@@ -1614,8 +1619,12 @@ int CBudgetProposal::GetTotalPaymentCount()
 
 int CBudgetProposal::GetRemainingPaymentCount()
 {
+    int currentCycle = GetBlockCurrentCycle();
+    if (currentCycle < 0)
+        return 0;
+
     // If this budget starts in the future, this value will be wrong
-    int nPayments = (GetBlockEndCycle() - GetBlockCurrentCycle()) / GetBudgetPaymentCycleBlocks() - 1;
+    int nPayments = (GetBlockEndCycle() - currentCycle) / GetBudgetPaymentCycleBlocks() - 1;
     // Take the lowest value
     return std::min(nPayments, GetTotalPaymentCount());
 }
