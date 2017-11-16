@@ -164,9 +164,10 @@ public:
      */
     bool isHistoricState(const XBridgeTransactionDescr::State state);
 private:
-    std::string m_lastError;
+    boost::mutex m_lastErrorLock;
 public:
-    const std::string &lastError() const { return  m_lastError; }
+    static std::string m_lastError;
+    static const std::string &lastError()  { return  m_lastError; }
 
 };
 
