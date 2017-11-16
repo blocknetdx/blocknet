@@ -14,6 +14,7 @@
 #include "obfuscation.h"
 #include "util.h"
 #include "utilmoneystr.h"
+#include "spork.h"
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
 
@@ -31,6 +32,24 @@ int GetBudgetPaymentCycleBlocks()
         return 43200;
     //for testing purposes
     return 144; // 10 times per day
+}
+
+/**
+ * Proposal fee. Sporked to allow the community to change the amount more easily.
+ * @return
+ */
+CAmount GetProposalFee() {
+    if (IsSporkActive(SPORK_18_PROPOSAL_FEE))
+        return static_cast<CAmount>(GetSporkValue(SPORK_18_PROPOSAL_FEE_AMOUNT) * COIN);
+    return 50 * COIN;
+}
+
+/**
+ * Budget fee is the same as the proposal fee.
+ * @return
+ */
+CAmount GetBudgetFee() {
+    return GetProposalFee();
 }
 
 bool IsBudgetCollateralValid(uint256 nTxCollateralHash, uint256 nExpectedHash, std::string& strError, int64_t& nTime, int& nConf)
@@ -56,7 +75,7 @@ bool IsBudgetCollateralValid(uint256 nTxCollateralHash, uint256 nExpectedHash, s
             LogPrintf("CBudgetProposalBroadcast::IsBudgetCollateralValid - %s\n", strError);
             return false;
         }
-        if (o.scriptPubKey == findScript && o.nValue >= PROPOSAL_FEE_TX) foundOpReturn = true;
+        if (o.scriptPubKey == findScript && o.nValue >= GetProposalFee()) foundOpReturn = true;
     }
     if (!foundOpReturn) {
         strError = strprintf("Couldn't find opReturn %s in %s", nExpectedHash.ToString(), txCollateral.ToString());
