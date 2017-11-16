@@ -302,11 +302,8 @@ Value createrawtransaction(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 2)
         throw runtime_error(
-            "createrawtransaction [{\"txid\":\"id\",\"vout\":n},...] {\"data\":\"<Message>\",\"address\":amount,...}\n"
-            "\nCreate a transaction spending the given inputs\n"
-            "(array of objects containing transaction id and output number),\n"
-            "Message is Hex encoded for use with OP_RETURN Limit of 25300bytes\n"
-            "and sending to the given addresses.\n"
+            "createrawtransaction [{\"txid\":\"id\",\"vout\":n},...] {\"address\":amount,...}\n"
+            "\nCreate a transaction spending the given inputs and sending to the given addresses.\n"
             "Returns hex-encoded raw transaction.\n"
             "Note that the transaction's inputs are not signed, and\n"
             "it is not stored in the wallet or transmitted to the network.\n"
@@ -322,7 +319,6 @@ Value createrawtransaction(const Array& params, bool fHelp)
             "     ]\n"
             "2. \"addresses\"           (string, required) a json object with addresses as keys and amounts as values\n"
             "    {\n"
-            "      \"data\":\"<Message>\", (string, optional) hex encoded data\n"
             "      \"address\": x.xxx   (numeric, required) The key is the blocknetdx address, the value is the btc amount\n"
             "      ,...\n"
             "    }\n"
@@ -357,33 +353,20 @@ Value createrawtransaction(const Array& params, bool fHelp)
     }
 
     set<CBitcoinAddress> setAddress;
-    BOOST_FOREACH (const Pair& s, sendTo)
-    {
-        if (s.name_ == string("data"))
-        {
-            std::vector<unsigned char> data = ParseHex(s.value_.get_str());
-            if(data.size()>512*1024)
-                throw JSONRPCError(RPC_INVALID_PARAMETER, "Message length greater than 1*1024*1024");
+    BOOST_FOREACH (const Pair& s, sendTo) {
+        CBitcoinAddress address(s.name_);
+        if (!address.IsValid())
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, string("Invalid BlocknetDX address: ") + s.name_);
 
-            CTxOut out(0,CScript() << OP_RETURN << data);
-            rawTx.vout.push_back(out);
-        }
-        else
-        {
-            CBitcoinAddress address(s.name_);
-            if (!address.IsValid())
-                throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, string("Invalid BlocknetDX address: ") + s.name_);
+        if (setAddress.count(address))
+            throw JSONRPCError(RPC_INVALID_PARAMETER, string("Invalid parameter, duplicated address: ") + s.name_);
+        setAddress.insert(address);
 
-            if (setAddress.count(address))
-                throw JSONRPCError(RPC_INVALID_PARAMETER, string("Invalid parameter, duplicated address: ") + s.name_);
-            setAddress.insert(address);
+        CScript scriptPubKey = GetScriptForDestination(address.Get());
+        CAmount nAmount = AmountFromValue(s.value_);
 
-            CScript scriptPubKey = GetScriptForDestination(address.Get());
-            CAmount nAmount = AmountFromValue(s.value_);
-
-            CTxOut out(nAmount, scriptPubKey);
-            rawTx.vout.push_back(out);
-        }
+        CTxOut out(nAmount, scriptPubKey);
+        rawTx.vout.push_back(out);
     }
 
     return EncodeHexTx(rawTx);

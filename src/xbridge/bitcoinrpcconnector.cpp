@@ -427,7 +427,6 @@ bool getRawTransaction(const std::string & rpcuser,
                        const std::string & rpcip,
                        const std::string & rpcport,
                        const std::string & txid,
-                       const bool verbose,
                        std::string & tx)
 {
     try
@@ -436,10 +435,6 @@ bool getRawTransaction(const std::string & rpcuser,
 
         Array params;
         params.push_back(txid);
-        if (verbose)
-        {
-            params.push_back(1);
-        }
         Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport,
                                "getrawtransaction", params);
 
@@ -454,31 +449,15 @@ bool getRawTransaction(const std::string & rpcuser,
             // int code = find_value(error.get_obj(), "code").get_int();
             return false;
         }
-
-        if (verbose)
+        else if (result.type() != str_type)
         {
-            if (result.type() != obj_type)
-            {
-                // Result
-                LOG() << "result not an object " << write_string(result, true);
-                return false;
-            }
-
-            // transaction exists, success
-            tx = write_string(result, true);
+            // Result
+            LOG() << "result not an string " << write_string(result, true);
+            return false;
         }
-        else
-        {
-            if (result.type() != str_type)
-            {
-                // Result
-                LOG() << "result not an string " << write_string(result, true);
-                return false;
-            }
 
-            // transaction exists, success
-            tx = result.get_str();
-        }
+        // transaction exists, success
+        tx = result.get_str();
     }
     catch (std::exception & e)
     {

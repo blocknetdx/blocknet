@@ -38,11 +38,11 @@ XBridgeTransactionDialog::XBridgeTransactionDialog(XBridgeTransactionsModel & mo
 {
     setupUI();
 
-    XBridgeApp & xapp = XBridgeApp::instance();
-    std::vector<std::string> wallets = xapp.sessionsCurrencies();
-    for (const std::string & s : wallets)
+    XBridgeExchange & e = XBridgeExchange::instance();
+    std::vector<StringPair> wallets = e.listOfWallets();
+    for (StringPair & sp : wallets)
     {
-        m_thisWallets << QString::fromStdString(s);
+        m_thisWallets << QString::fromStdString(sp.first);
     }
     m_thisWalletsModel.setStringList(m_thisWallets);
 
@@ -138,12 +138,12 @@ void XBridgeTransactionDialog::setupUI()
     // grid->addWidget(m_addressFrom, 2, 0, 1, 1);
 
     QPushButton * pasteFrom = new QPushButton(this);
-    pasteFrom->setIcon(QIcon(":/icons/editpaste-white"));
+    pasteFrom->setIcon(QIcon(":/icons/editpaste"));
     pasteFrom->setToolTip(trUtf8("Paste source address"));
     connect(pasteFrom, SIGNAL(clicked()), this, SLOT(onPasteFrom()));
 
     QPushButton * abFrom = new QPushButton(this);
-    abFrom->setIcon(QIcon(":/icons/address-book-white"));
+    abFrom->setIcon(QIcon(":/icons/address-book"));
     abFrom->setToolTip(trUtf8("Show address book"));
     connect(abFrom, SIGNAL(clicked()), this, SLOT(onAddressBookFrom()));
 
@@ -162,12 +162,12 @@ void XBridgeTransactionDialog::setupUI()
     // grid->addWidget(m_addressTo, 2, 3, 1, 1);
 
     QPushButton * pasteTo = new QPushButton(this);
-    pasteTo->setIcon(QIcon(":/icons/editpaste-white"));
+    pasteTo->setIcon(QIcon(":/icons/editpaste"));
     pasteTo->setToolTip(trUtf8("Paste destination address"));
     connect(pasteTo, SIGNAL(clicked()), this, SLOT(onPasteTo()));
 
     QPushButton * abTo = new QPushButton(this);
-    abTo->setIcon(QIcon(":/icons/address-book-white"));
+    abTo->setIcon(QIcon(":/icons/address-book"));
     abTo->setToolTip(trUtf8("Show address book"));
     connect(abTo, SIGNAL(clicked()), this, SLOT(onAddressBookTo()));
 
@@ -233,12 +233,13 @@ void XBridgeTransactionDialog::setupUI()
 
 //******************************************************************************
 //******************************************************************************
-void XBridgeTransactionDialog::onWalletListReceived(const std::vector<std::string> & wallets)
+void XBridgeTransactionDialog::onWalletListReceived(const std::vector<std::pair<std::string, std::string> > & wallets)
 {
     QStringList list;
-    for (const std::string & w : wallets)
+    for (std::vector<std::pair<std::string, std::string> >::const_iterator i = wallets.begin();
+         i != wallets.end(); ++i)
     {
-        list.push_back(QString::fromStdString(w));
+        list.push_back(QString::fromStdString(i->first));
     }
 
     QMetaObject::invokeMethod(this, "onWalletListReceivedHandler", Qt::QueuedConnection,
@@ -276,17 +277,10 @@ void XBridgeTransactionDialog::onSendTransaction()
 
     std::string from = m_addressFrom->text().toStdString();
     std::string to   = m_addressTo->text().toStdString().c_str();
-    if (from.size() < 32 || from.size() > 36)
+    if ((from.size() != 33 && from.size() != 34) ||
+        (to.size() != 33 && to.size() != 34))
     {
-        m_addressFrom->setFocus();
-        QMessageBox::warning(this, trUtf8("check parameters"), trUtf8("Invalid from address"));
-        return;
-    }
-
-    if (to.size() < 32 || to.size() > 36)
-    {
-        m_addressTo->setFocus();
-        QMessageBox::warning(this, trUtf8("check parameters"), trUtf8("Invalid to address"));
+        QMessageBox::warning(this, trUtf8("check parameters"), trUtf8("Invalid address"));
         return;
     }
 
@@ -398,12 +392,10 @@ void XBridgeTransactionDialog::onAddressBookTo()
     }
 }
 
-//******************************************************************************
-//******************************************************************************
 double XBridgeTransactionDialog::accountBalance(const std::string &currency)
 {
     XBridgeApp & app = XBridgeApp::instance();
     XBridgeSessionPtr session = app.sessionByCurrency(currency);
 
-    return session->getWalletBalance();
+    return session->getAccountBalance();
 }

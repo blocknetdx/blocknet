@@ -94,7 +94,6 @@ static const CRPCConvertParam vRPCConvertParams[] =
         {"prioritisetransaction", 1},
         {"prioritisetransaction", 2},
         {"spork", 1},
-        {"mnbudget", 3},
         {"mnbudget", 4},
         {"mnbudget", 6},
         {"mnbudget", 8},
@@ -104,9 +103,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
         {"reservebalance", 1},
         {"setstakesplitthreshold", 0},
         {"autocombinerewards", 0},
-        {"autocombinerewards", 1},
-        {"dxCreateTransaction", 2},
-        {"dxCreateTransaction", 5}};
+        {"autocombinerewards", 1}};
 
 class CRPCConvertTable
 {

@@ -263,7 +263,7 @@ string JSONRPCRequest(const string& strMethod, const Array& params, const Value&
     request.push_back(Pair("method", strMethod));
     request.push_back(Pair("params", params));
     request.push_back(Pair("id", id));
-    return write_string(Value(request), json_spirit::none, 8) + "\n";
+    return write_string(Value(request), false) + "\n";
 }
 
 Object JSONRPCReplyObj(const Value& result, const Value& error, const Value& id)
@@ -281,7 +281,7 @@ Object JSONRPCReplyObj(const Value& result, const Value& error, const Value& id)
 string JSONRPCReply(const Value& result, const Value& error, const Value& id)
 {
     Object reply = JSONRPCReplyObj(result, error, id);
-    return write_string(Value(reply), json_spirit::none, 8) + "\n";
+    return write_string(Value(reply), false) + "\n";
 }
 
 Object JSONRPCError(int code, const string& message)

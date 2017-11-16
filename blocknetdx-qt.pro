@@ -115,7 +115,9 @@ INCLUDEPATH += \
     $$OPENSSL_INCLUDE_PATH \
     $$QRENCODE_INCLUDE_PATH \
     src/leveldb/include \
-    src/leveldb/helpers
+    src/leveldb/helpers \
+    src/secp256k1/include
+
 
 LIBS += \
     $$join(BOOST_LIB_PATH,,-L,) \
@@ -124,8 +126,8 @@ LIBS += \
     $$join(QRENCODE_LIB_PATH,,-L,) \
     -L$$PWD/src/leveldb \
     -L$$PWD/src/secp256k1/.libs \
-    -L/usr/lib/x86_64-linux-gnu
-
+    -L/usr/lib/x86_64-linux-gnu \
+    
 LIBS += \
     -lleveldb \
     -lmemenv \

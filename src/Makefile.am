@@ -172,9 +172,7 @@ BITCOIN_CORE_H = \
   zmq/zmqnotificationinterface.h \
   zmq/zmqpublishnotifier.h \
   FastDelegate.h \
-  arith_uint256.h \
-  coinvalidator.h \
-  s3downloader.h
+  arith_uint256.h
 
 JSON_H = \
   json/json_spirit.h \
@@ -340,8 +338,6 @@ libbitcoin_common_a_SOURCES = \
   script/standard.cpp \
   script/script_error.cpp \
   spork.cpp \
-  coinvalidator.cpp \
-  s3downloader.cpp \
   $(BITCOIN_CORE_H)
 
 #libxbridge_xbridge_a_CPPFLAGS = $(BITCOIN_INCLUDES) $(MINIUPNPC_CPPFLAGS)

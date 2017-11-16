@@ -39,9 +39,6 @@ struct WalletParam
     // required confirmations for tx
     uint32_t                   requiredConfirmations;
 
-    //service node fee, see rpc::storeDataIntoBlockchain
-    const double               serviceNodeFee;
-
     WalletParam()
         : txVersion(1)
         , COIN(0)
@@ -53,7 +50,6 @@ struct WalletParam
         , isImportWithNoScanSupported(false)
         , blockTime(0)
         , requiredConfirmations(0)
-        , serviceNodeFee(.005)
     {
         memset(addrPrefix,   0, sizeof(addrPrefix));
         memset(scriptPrefix, 0, sizeof(scriptPrefix));

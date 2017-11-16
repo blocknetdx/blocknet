@@ -465,7 +465,6 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += HelpMessageOpt("-servicenodeprivkey=<n>", _("Set the servicenode private key"));
     strUsage += HelpMessageOpt("-servicenodeaddr=<n>", strprintf(_("Set external address:port to get to this servicenode (example: %s)"), "128.127.106.235:41412"));
     strUsage += HelpMessageOpt("-budgetvotemode=<mode>", _("Change automatic finalized budget voting behavior. mode=auto: Vote for only exact finalized budget match to my generated budget. (string, default: auto)"));
-    strUsage += HelpMessageOpt("-enableexchange", _("Turn on exchange servicenode mode"));
 
     strUsage += HelpMessageGroup(_("Obfuscation options:"));
     strUsage += HelpMessageOpt("-enableobfuscation=<n>", strprintf(_("Enable use of automated obfuscation for funds stored in this wallet (0-1, default: %u)"), 0));

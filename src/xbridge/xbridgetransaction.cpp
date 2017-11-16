@@ -5,7 +5,6 @@
 #include "util/logger.h"
 #include "util/xutil.h"
 #include "bitcoinrpcconnector.h"
-#include "utilstrencodings.h"
 
 
 //*****************************************************************************
