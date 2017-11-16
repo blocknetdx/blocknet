@@ -68,18 +68,18 @@ enum XBridgeCommand
     // xbcTransactionHold       <--    |     --> xbcTransactionHold
     // xbcTransactionHoldApply  -->    |     <-- xbcTransactionHoldApply
     //                                 |
-    // xbcTransactionCreateA    <--    |
-    // xbcTransactionCreatedA   -->    |
+    // xbcTransactionCreate     <--    |     --> xbcTransactionCreate
+    // xbcTransactionCreated    -->    |     <-- xbcTransactionCreated
     //                                 |
-    //                                 |     --> xbcTransactionCreateB
-    //                                 |     <-- xbcTransactionCreatedB
+    // xbcTransactionSign       <--    |     --> xbcTransactionSign
+    // xbcTransactionSigned     -->    |     <-- xbcTransactionSigned
     //                                 |
-    // xbcTransactionCommitA    <--    |
-    // xbcTransactionCommitedA  -->    |
+    // xbcTransactionCommit     <--    |     --> xbcTransactionCommit
+    // xbcTransactionCommited   -->    |     <-- xbcTransactionCommited
     //                                 |
-    //                                 |     --> xbcTransactionCommitB
-    //                                 |     <-- xbcTransactionCommitedB
-    //                                 |
+    //      hub wallet 1               |           hub wallet 2
+    // xbcReceivedTransaction   -->    |     <-- xbcReceivedTransaction
+    // xbcTransactionFinish     <--    |     --> xbcTransactionFinish
 
 
     // exchange transaction
@@ -118,11 +118,10 @@ enum XBridgeCommand
     xbcTransactionAccepting = 5,
 
     //
-    // xbcTransactionHold (105 or 137 bytes)
+    // xbcTransactionHold (72 bytes)
     //    uint160 client address
     //    uint160 hub address
     //    uint256 transaction id
-    //    public key, 33 or 65 bytes, servicenode public key
     xbcTransactionHold = 6,
     //
     // xbcTransactionHoldApply (72 bytes)
@@ -132,11 +131,10 @@ enum XBridgeCommand
     xbcTransactionHoldApply = 7,
 
     //
-    // xbcTransactionInit (207 or 239 bytes min)
+    // xbcTransactionInit (174 bytes min)
     //    uint160 client address
     //    uint160 hub address
     //    uint256 hub transaction id
-    //    public key, 33 or 65 bytes, servicenode public key
     //    uint16_t  role ( 'A' (Alice) or 'B' (Bob) :) )
     //    string source address (33-34 byte + 0)
     //    8 bytes source currency
@@ -244,6 +242,26 @@ enum XBridgeCommand
     //    uint256 hub transaction id
     //
     xbcTransactionDropped = 25,
+
+    // smart hub periodically send this message for invitations to trading
+    // this message contains address of smart hub and
+    // list of connected wallets (btc, xc, etc...)
+    // broadcast message
+    //
+    // xbcExchangeWallets
+    //     {wallet id (string)}|{wallet title (string)}|{wallet id (string)}|{wallet title (string)}
+    xbcExchangeWallets = 26,
+
+    // wallet send transaction hash when transaction received
+    //
+    // xbcReceivedTransaction
+    //     uint256 transaction id (bitcoin transaction hash)
+    xbcReceivedTransaction = 27,
+
+    // address book entry
+    //
+    // xbcAddressBook
+    xbcAddressBookEntry = 28
 };
 
 //******************************************************************************

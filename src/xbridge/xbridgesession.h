@@ -38,26 +38,58 @@ public:
     std::string currency() const  { return m_wallet.currency; }
     double      minAmount() const { return (double)m_wallet.minAmount / 100000; }
 
+    void start(XBridge::SocketPtr socket);
+
     static bool checkXBridgePacketVersion(XBridgePacketPtr packet);
+
+    bool sendXBridgeMessage(XBridgePacketPtr packet);
+    bool takeXBridgeMessage(const std::vector<unsigned char> & message);
 
     bool processPacket(XBridgePacketPtr packet);
 
 public:
     // service functions
+    void sendListOfWallets();
     void sendListOfTransactions();
     void checkFinishedTransactions();
     void eraseExpiredPendingTransactions();
 
+    void resendAddressBook();
+    void sendAddressbookEntry(const std::string & currency,
+                              const std::string & name,
+                              const std::string & address);
+
     void getAddressBook();
     void requestAddressBook();
 
-    bool checkAmount(const uint64_t amount) const;
-    double getWalletBalance() const;
+    void checkUnconfirmedTx();
+    void requestUnconfirmedTx();
 
-    bool rollbacktXBridgeTransaction(const uint256 & id);
+    bool checkAmount(const uint64_t amount) const;
+    double getAccountBalance() const;
+
+    bool revertXBridgeTransaction(const uint256 & id);
 
 private:
     virtual void init();
+
+    void disconnect();
+
+    void doReadHeader(XBridgePacketPtr packet,
+                      const std::size_t offset = 0);
+    void onReadHeader(XBridgePacketPtr packet,
+                      const std::size_t offset,
+                      const boost::system::error_code & error,
+                      std::size_t transferred);
+
+    void doReadBody(XBridgePacketPtr packet,
+                    const std::size_t offset = 0);
+    void onReadBody(XBridgePacketPtr packet,
+                    const std::size_t offset,
+                    const boost::system::error_code & error,
+                    std::size_t transferred);
+
+    // const unsigned char * myaddr() const;
 
     bool encryptPacket(XBridgePacketPtr packet);
     bool decryptPacket(XBridgePacketPtr packet);
@@ -106,6 +138,10 @@ protected:
     virtual bool processPendingTransaction(XBridgePacketPtr packet);
     virtual bool processTransactionAccepting(XBridgePacketPtr packet);
 
+    virtual bool processBitcoinTransactionHash(XBridgePacketPtr packet);
+
+    virtual bool processAddressBookEntry(XBridgePacketPtr packet);
+
     virtual bool processTransactionHold(XBridgePacketPtr packet);
     virtual bool processTransactionHoldApply(XBridgePacketPtr packet);
 
@@ -130,14 +166,14 @@ protected:
     virtual bool rollbackTransaction(XBridgeTransactionPtr tr);
 
     virtual bool processTransactionCancel(XBridgePacketPtr packet);
-    bool cancelOrRollbackTransaction(const uint256 & txid, const TxCancelReason & reason);
-
     virtual bool processTransactionFinished(XBridgePacketPtr packet);
     virtual bool processTransactionRollback(XBridgePacketPtr packet);
     virtual bool processTransactionDropped(XBridgePacketPtr packet);
 
 protected:
     std::vector<unsigned char> m_myid;
+
+    XBridge::SocketPtr m_socket;
 
     typedef fastdelegate::FastDelegate1<XBridgePacketPtr, bool> PacketHandler;
     typedef std::map<const int, PacketHandler> PacketHandlersMap;

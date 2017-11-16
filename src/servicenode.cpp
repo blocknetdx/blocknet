@@ -9,9 +9,7 @@
 #include "obfuscation.h"
 #include "sync.h"
 #include "util.h"
-
 #include <boost/lexical_cast.hpp>
-#include <boost/algorithm/string.hpp>
 
 // keep track of the scanning errors I've seen
 map<uint256, int> mapSeenServicenodeScanningErrors;
@@ -62,81 +60,76 @@ bool GetBlockHash(uint256& hash, int nBlockHeight)
 CServicenode::CServicenode()
 {
     LOCK(cs);
-
-    vin                           = CTxIn();
-    addr                          = CService();
-    pubKeyCollateralAddress       = CPubKey();
-    pubKeyServicenode             = CPubKey();
-    sig                           = std::vector<unsigned char>();
-    activeState                   = SERVICENODE_ENABLED;
-    sigTime                       = GetAdjustedTime();
-    lastPing                      = CServicenodePing();
-    cacheInputAge                 = 0;
-    cacheInputAgeBlock            = 0;
-    unitTest                      = false;
-    allowFreeTx                   = true;
-    nActiveState                  = SERVICENODE_ENABLED,
-    protocolVersion               = PROTOCOL_VERSION;
-    nLastDsq                      = 0;
-    nScanningErrorCount           = 0;
+    vin = CTxIn();
+    addr = CService();
+    pubKeyCollateralAddress = CPubKey();
+    pubKeyServicenode = CPubKey();
+    sig = std::vector<unsigned char>();
+    activeState = SERVICENODE_ENABLED;
+    sigTime = GetAdjustedTime();
+    lastPing = CServicenodePing();
+    cacheInputAge = 0;
+    cacheInputAgeBlock = 0;
+    unitTest = false;
+    allowFreeTx = true;
+    nActiveState = SERVICENODE_ENABLED,
+    protocolVersion = PROTOCOL_VERSION;
+    nLastDsq = 0;
+    nScanningErrorCount = 0;
     nLastScanningErrorBlockHeight = 0;
-    lastTimeChecked               = 0;
-    nLastDsee                     = 0; // temporary, do not save. Remove after migration to v12
-    nLastDseep                    = 0; // temporary, do not save. Remove after migration to v12
+    lastTimeChecked = 0;
+    nLastDsee = 0;  // temporary, do not save. Remove after migration to v12
+    nLastDseep = 0; // temporary, do not save. Remove after migration to v12
 }
 
 CServicenode::CServicenode(const CServicenode& other)
 {
     LOCK(cs);
-
-    vin                           = other.vin;
-    addr                          = other.addr;
-    pubKeyCollateralAddress       = other.pubKeyCollateralAddress;
-    pubKeyServicenode             = other.pubKeyServicenode;
-    sig                           = other.sig;
-    activeState                   = other.activeState;
-    sigTime                       = other.sigTime;
-    lastPing                      = other.lastPing;
-    cacheInputAge                 = other.cacheInputAge;
-    cacheInputAgeBlock            = other.cacheInputAgeBlock;
-    unitTest                      = other.unitTest;
-    allowFreeTx                   = other.allowFreeTx;
-    nActiveState                  = SERVICENODE_ENABLED,
-    protocolVersion               = other.protocolVersion;
-    nLastDsq                      = other.nLastDsq;
-    nScanningErrorCount           = other.nScanningErrorCount;
+    vin = other.vin;
+    addr = other.addr;
+    pubKeyCollateralAddress = other.pubKeyCollateralAddress;
+    pubKeyServicenode = other.pubKeyServicenode;
+    sig = other.sig;
+    activeState = other.activeState;
+    sigTime = other.sigTime;
+    lastPing = other.lastPing;
+    cacheInputAge = other.cacheInputAge;
+    cacheInputAgeBlock = other.cacheInputAgeBlock;
+    unitTest = other.unitTest;
+    allowFreeTx = other.allowFreeTx;
+    nActiveState = SERVICENODE_ENABLED,
+    protocolVersion = other.protocolVersion;
+    nLastDsq = other.nLastDsq;
+    nScanningErrorCount = other.nScanningErrorCount;
     nLastScanningErrorBlockHeight = other.nLastScanningErrorBlockHeight;
-    lastTimeChecked               = 0;
-    nLastDsee                     = other.nLastDsee;  // temporary, do not save. Remove after migration to v12
-    nLastDseep                    = other.nLastDseep; // temporary, do not save. Remove after migration to v12
-    connectedWallets              = other.connectedWallets;
+    lastTimeChecked = 0;
+    nLastDsee = other.nLastDsee;   // temporary, do not save. Remove after migration to v12
+    nLastDseep = other.nLastDseep; // temporary, do not save. Remove after migration to v12
 }
 
 CServicenode::CServicenode(const CServicenodeBroadcast& mnb)
 {
     LOCK(cs);
-
-    vin                           = mnb.vin;
-    addr                          = mnb.addr;
-    pubKeyCollateralAddress       = mnb.pubKeyCollateralAddress;
-    pubKeyServicenode             = mnb.pubKeyServicenode;
-    sig                           = mnb.sig;
-    activeState                   = SERVICENODE_ENABLED;
-    sigTime                       = mnb.sigTime;
-    lastPing                      = mnb.lastPing;
-    cacheInputAge                 = 0;
-    cacheInputAgeBlock            = 0;
-    unitTest                      = false;
-    allowFreeTx                   = true;
-    nActiveState                  = SERVICENODE_ENABLED,
-    protocolVersion               = mnb.protocolVersion;
-    nLastDsq                      = mnb.nLastDsq;
-    nScanningErrorCount           = 0;
+    vin = mnb.vin;
+    addr = mnb.addr;
+    pubKeyCollateralAddress = mnb.pubKeyCollateralAddress;
+    pubKeyServicenode = mnb.pubKeyServicenode;
+    sig = mnb.sig;
+    activeState = SERVICENODE_ENABLED;
+    sigTime = mnb.sigTime;
+    lastPing = mnb.lastPing;
+    cacheInputAge = 0;
+    cacheInputAgeBlock = 0;
+    unitTest = false;
+    allowFreeTx = true;
+    nActiveState = SERVICENODE_ENABLED,
+    protocolVersion = mnb.protocolVersion;
+    nLastDsq = mnb.nLastDsq;
+    nScanningErrorCount = 0;
     nLastScanningErrorBlockHeight = 0;
-    lastTimeChecked               = 0;
-    nLastDsee                     = 0; // temporary, do not save. Remove after migration to v12
-    nLastDseep                    = 0; // temporary, do not save. Remove after migration to v12
-    connectedWallets              = mnb.connectedWallets;
+    lastTimeChecked = 0;
+    nLastDsee = 0;  // temporary, do not save. Remove after migration to v12
+    nLastDseep = 0; // temporary, do not save. Remove after migration to v12
 }
 
 //
@@ -145,18 +138,15 @@ CServicenode::CServicenode(const CServicenodeBroadcast& mnb)
 bool CServicenode::UpdateFromNewBroadcast(CServicenodeBroadcast& mnb)
 {
     if (mnb.sigTime > sigTime) {
-        pubKeyServicenode       = mnb.pubKeyServicenode;
+        pubKeyServicenode = mnb.pubKeyServicenode;
         pubKeyCollateralAddress = mnb.pubKeyCollateralAddress;
-        sigTime                 = mnb.sigTime;
-        sig                     = mnb.sig;
-        protocolVersion         = mnb.protocolVersion;
-        addr                    = mnb.addr;
-        lastTimeChecked         = 0;
-        connectedWallets        = mnb.connectedWallets;
-        int nDoS                = 0;
-        if (mnb.lastPing == CServicenodePing() ||
-            (mnb.lastPing != CServicenodePing() && mnb.lastPing.CheckAndUpdate(nDoS, false)))
-        {
+        sigTime = mnb.sigTime;
+        sig = mnb.sig;
+        protocolVersion = mnb.protocolVersion;
+        addr = mnb.addr;
+        lastTimeChecked = 0;
+        int nDoS = 0;
+        if (mnb.lastPing == CServicenodePing() || (mnb.lastPing != CServicenodePing() && mnb.lastPing.CheckAndUpdate(nDoS, false))) {
             lastPing = mnb.lastPing;
             mnodeman.mapSeenServicenodePing.insert(make_pair(lastPing.GetHash(), lastPing));
         }
@@ -355,12 +345,7 @@ CServicenodeBroadcast::CServicenodeBroadcast()
     nLastScanningErrorBlockHeight = 0;
 }
 
-CServicenodeBroadcast::CServicenodeBroadcast(const CService & newAddr,
-                                             const CTxIn & newVin,
-                                             const CPubKey & pubKeyCollateralAddressNew,
-                                             const CPubKey & pubKeyServicenodeNew,
-                                             const int protocolVersionIn,
-                                             const std::vector<string> & exchangeWallets)
+CServicenodeBroadcast::CServicenodeBroadcast(CService newAddr, CTxIn newVin, CPubKey pubKeyCollateralAddressNew, CPubKey pubKeyServicenodeNew, int protocolVersionIn)
 {
     vin = newVin;
     addr = newAddr;
@@ -378,7 +363,6 @@ CServicenodeBroadcast::CServicenodeBroadcast(const CService & newAddr,
     nLastDsq = 0;
     nScanningErrorCount = 0;
     nLastScanningErrorBlockHeight = 0;
-    connectedWallets = exchangeWallets;
 }
 
 CServicenodeBroadcast::CServicenodeBroadcast(const CServicenode& mn)
@@ -399,17 +383,9 @@ CServicenodeBroadcast::CServicenodeBroadcast(const CServicenode& mn)
     nLastDsq = mn.nLastDsq;
     nScanningErrorCount = mn.nScanningErrorCount;
     nLastScanningErrorBlockHeight = mn.nLastScanningErrorBlockHeight;
-    connectedWallets = mn.connectedWallets;
 }
 
-bool CServicenodeBroadcast::Create(const string & strService,
-                                   const string & strKeyServicenode,
-                                   const string & strTxHash,
-                                   const string & strOutputIndex,
-                                   const std::vector<string> & exchangeWallets,
-                                   std::string & strErrorRet,
-                                   CServicenodeBroadcast & mnbRet,
-                                   const bool fOffline)
+bool CServicenodeBroadcast::Create(std::string strService, std::string strKeyServicenode, std::string strTxHash, std::string strOutputIndex, std::string& strErrorRet, CServicenodeBroadcast& mnbRet, bool fOffline)
 {
     CTxIn txin;
     CPubKey pubKeyCollateralAddressNew;
@@ -450,21 +426,10 @@ bool CServicenodeBroadcast::Create(const string & strService,
         return false;
     }
 
-    return Create(txin, CService(strService), keyCollateralAddressNew,
-                  pubKeyCollateralAddressNew, keyServicenodeNew,
-                  pubKeyServicenodeNew, exchangeWallets,
-                  strErrorRet, mnbRet);
+    return Create(txin, CService(strService), keyCollateralAddressNew, pubKeyCollateralAddressNew, keyServicenodeNew, pubKeyServicenodeNew, strErrorRet, mnbRet);
 }
 
-bool CServicenodeBroadcast::Create(const CTxIn & txin,
-                                   const CService & service,
-                                   const CKey & keyCollateralAddressNew,
-                                   const CPubKey &pubKeyCollateralAddressNew,
-                                   const CKey & keyServicenodeNew,
-                                   const CPubKey & pubKeyServicenodeNew,
-                                   const std::vector<string> & exchangeWallets,
-                                   std::string & strErrorRet,
-                                   CServicenodeBroadcast & mnbRet)
+bool CServicenodeBroadcast::Create(CTxIn txin, CService service, CKey keyCollateralAddressNew, CPubKey pubKeyCollateralAddressNew, CKey keyServicenodeNew, CPubKey pubKeyServicenodeNew, std::string& strErrorRet, CServicenodeBroadcast& mnbRet)
 {
     // wait for reindex and/or import to finish
     if (fImporting || fReindex) return false;
@@ -482,8 +447,7 @@ bool CServicenodeBroadcast::Create(const CTxIn & txin,
         return false;
     }
 
-    mnbRet = CServicenodeBroadcast(service, txin, pubKeyCollateralAddressNew,
-                                   pubKeyServicenodeNew, PROTOCOL_VERSION, exchangeWallets);
+    mnbRet = CServicenodeBroadcast(service, txin, pubKeyCollateralAddressNew, pubKeyServicenodeNew, PROTOCOL_VERSION);
 
     if (!mnbRet.IsValidNetAddr()) {
         strErrorRet = strprintf("Invalid IP address, servicenode=%s", txin.prevout.hash.ToString());
@@ -677,7 +641,7 @@ void CServicenodeBroadcast::Relay()
     RelayInv(inv);
 }
 
-bool CServicenodeBroadcast::Sign(const CKey & keyCollateralAddress)
+bool CServicenodeBroadcast::Sign(CKey& keyCollateralAddress)
 {
     std::string errorMessage;
 
@@ -705,7 +669,7 @@ CServicenodePing::CServicenodePing() : sigTime(0)
 {
 }
 
-CServicenodePing::CServicenodePing(const CTxIn & newVin)
+CServicenodePing::CServicenodePing(CTxIn& newVin)
 {
     vin = newVin;
     blockHash = chainActive[chainActive.Height() - 12]->GetBlockHash();
@@ -714,10 +678,10 @@ CServicenodePing::CServicenodePing(const CTxIn & newVin)
 }
 
 
-bool CServicenodePing::Sign(const CKey& keyServicenode, const CPubKey & pubKeyServicenode)
+bool CServicenodePing::Sign(CKey& keyServicenode, CPubKey& pubKeyServicenode)
 {
     std::string errorMessage;
-    // std::string strServiceNodeSignMessage;
+    std::string strServiceNodeSignMessage;
 
     sigTime = GetAdjustedTime();
     std::string strMessage = vin.ToString() + blockHash.ToString() + boost::lexical_cast<std::string>(sigTime);

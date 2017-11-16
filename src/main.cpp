@@ -2,8 +2,6 @@
 // Copyright (c) 2009-2014 The Bitcoin developers
 // Copyright (c) 2014-2015 The Dash developers
 // Copyright (c) 2015-2017 The BlocknetDX developers
-// Copyright (c) 2014-2017 PPCoin Developers
-// Copyright (c) 2017 PIVX Developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -31,7 +29,6 @@
 #include "util.h"
 #include "utilmoneystr.h"
 #include "xbridge/xbridgeapp.h"
-#include "coinvalidator.h"
 
 #include <sstream>
 
@@ -71,7 +68,6 @@ bool fIsBareMultisigStd = true;
 bool fCheckBlockIndex = false;
 unsigned int nCoinCacheSize = 5000;
 bool fAlerts = DEFAULT_ALERTS;
-CoinValidator &coinValidator = CoinValidator::instance();
 
 unsigned int nStakeMinAge = 60 * 60;
 int64_t nReserveBalance = 0;
@@ -981,9 +977,6 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
         return state.DoS(100, error("CheckTransaction() : size limits failed"),
             REJECT_INVALID, "bad-txns-oversize");
 
-    // Store all recipients
-    std::vector<RedeemData> recipients;
-
     // Check for negative or overflow output values
     CAmount nValueOut = 0;
     BOOST_FOREACH (const CTxOut& txout, tx.vout) {
@@ -1000,14 +993,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
         if (!MoneyRange(nValueOut))
             return state.DoS(100, error("CheckTransaction() : txout total out of range"),
                 REJECT_INVALID, "bad-txns-txouttotal-toolarge");
-
-        // Track all valid recipients
-        if (!txout.IsEmpty())
-            recipients.emplace_back(tx.GetHash().ToString(), txout.scriptPubKey, txout.nValue);
     }
-
-    // Bad stake inputs
-    std::vector<RedeemData> exploited;
 
     // Check for duplicate inputs
     set<COutPoint> vInOutPoints;
@@ -1015,30 +1001,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
         if (vInOutPoints.count(txin.prevout))
             return state.DoS(100, error("CheckTransaction() : duplicate inputs"),
                 REJECT_INVALID, "bad-txns-inputs-duplicate");
-
-        // Check for bad stake inputs
-        if (IsSporkActive(SPORK_17_EXPL_FIX) && chainActive.Height() >= GetSporkValue(SPORK_17_EXPL_FIX)) {
-            if (!coinValidator.IsCoinValid(txin.prevout.hash)) {
-                CTransaction prevtx; uint256 prevblock;
-                // If bad transaction or bad prev tx then reject tx
-                if (!GetTransaction(txin.prevout.hash, prevtx, prevblock, true) || prevtx.IsNull()) {
-                    return state.DoS(100, error("CheckTransaction() : bad inputs"),
-                                     REJECT_INVALID, "bad-txns-inputs-stake");
-                }
-                // Track exploited coin
-                exploited.emplace_back(prevtx.GetHash().ToString(), prevtx.vout[txin.prevout.n].scriptPubKey, prevtx.vout[txin.prevout.n].nValue);
-            }
-        }
-
         vInOutPoints.insert(txin.prevout);
-    }
-
-    // Check bad stakes
-    if (!exploited.empty()) {
-        if (!coinValidator.RedeemAddressVerified(exploited, recipients)) {
-            return state.DoS(100, error("CheckTransaction() : bad inputs"),
-                             REJECT_INVALID, "bad-txns-inputs-stake");
-        }
     }
 
     if (tx.IsCoinBase()) {
@@ -1659,19 +1622,16 @@ int64_t GetBlockValue(int nHeight)
             return 250000 * COIN;
     }
 
-    // Reduce Reward starting year 1
+
     if (nHeight == 0) {
-        nSubsidy = 4160024 * COIN; }
-    /* TBD/Review servicenode returns before changing
+        nSubsidy = 4060024 * COIN;
     } else if (nHeight < 525600 && nHeight > 0) {
 	nSubsidy = 1 * COIN;
     } else if (nHeight <= 1051200 && nHeight >= 525600) {
-	nSubsidy = 0.75 * COIN;
-    } else if (nHeight <= 1576800 && nHeight >= 1051201) {
-	nSubsidy = 0.50 * COIN;
-    } else if (nHeight >= 1576801) {
+	nSubsidy = 0.5 * COIN;
+    } else if (nHeight >= 1051201) {
 	nSubsidy = 0.25 * COIN;
-    } */ else {
+    } else {
         nSubsidy = 1 * COIN;
     }
 
@@ -2267,9 +2227,8 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
     }
 
     // ppcoin: track money supply and mint amount info
-    CAmount nMoneySupplyPrev = pindex->pprev ? pindex->pprev->nMoneySupply : 0;
-    pindex->nMoneySupply = nMoneySupplyPrev + nValueOut - nValueIn;
-    pindex->nMint = pindex->nMoneySupply - nMoneySupplyPrev;
+    pindex->nMint = nValueOut - nValueIn + nFees;
+    pindex->nMoneySupply = (pindex->pprev ? pindex->pprev->nMoneySupply : 0) + nValueOut - nValueIn;
 
     if (!pblocktree->WriteBlockIndex(CDiskBlockIndex(pindex)))
         return error("Connect() : WriteBlockIndex for pindex failed");
@@ -2278,19 +2237,14 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
     nTimeConnect += nTime1 - nTimeStart;
     LogPrint("bench", "      - Connect %u transactions: %.2fms (%.3fms/tx, %.3fms/txin) [%.2fs]\n", (unsigned)block.vtx.size(), 0.001 * (nTime1 - nTimeStart), 0.001 * (nTime1 - nTimeStart) / block.vtx.size(), nInputs <= 1 ? 0 : 0.001 * (nTime1 - nTimeStart) / (nInputs - 1), nTimeConnect * 0.000001);
 
-    //PoW phase redistributed fees to miner. PoS stage destroys fees.
-    CAmount nExpectedMint = GetBlockValue(pindex->pprev->nHeight);
-    if (block.IsProofOfWork())
-        nExpectedMint += nFees;
-
-    if (pindex->nHeight >= 72890 && std::time(nullptr) >= 1506610800 &&
-        !IsBlockValueValid(block, nExpectedMint, pindex->nMint)) {
-            return state.DoS(100,
-                             error("ConnectBlock() : reward pays too much (actual=%s vs limit=%s)",
-                                   FormatMoney(pindex->nMint), FormatMoney(nExpectedMint)),
-                             REJECT_INVALID, "bad-cb-amount");
+    /* disabled
+    if (!IsInitialBlockDownload() && !IsBlockValueValid(block, GetBlockValue(pindex->pprev->nHeight))) {
+        return state.DoS(100,
+            error("ConnectBlock() : reward pays too much (actual=%d vs limit=%d)",
+                block.vtx[0].GetValueOut(), GetBlockValue(pindex->pprev->nHeight)),
+            REJECT_INVALID, "bad-cb-amount");
     }
-
+    */
     if (!control.Wait())
         return state.DoS(100, false);
     int64_t nTime2 = GetTimeMicros();
@@ -2421,7 +2375,7 @@ void static UpdateTip(CBlockIndex* pindexNew)
     LogPrintf("UpdateTip: new best=%s  height=%d  log2_work=%.8g  tx=%lu  date=%s progress=%f  cache=%u\n",
         chainActive.Tip()->GetBlockHash().ToString(), chainActive.Height(), log(chainActive.Tip()->nChainWork.getdouble()) / log(2.0), (unsigned long)chainActive.Tip()->nChainTx,
         DateTimeStrFormat("%Y-%m-%d %H:%M:%S", chainActive.Tip()->GetBlockTime()),
-              SyncProgress(chainActive.Height()), (unsigned int)pcoinsTip->GetCacheSize());
+        Checkpoints::GuessVerificationProgress(chainActive.Tip()), (unsigned int)pcoinsTip->GetCacheSize());
 
     cvBlockChange.notify_all();
 
@@ -3533,11 +3487,6 @@ void CBlockIndex::BuildSkip()
 
 bool ProcessNewBlock(CValidationState& state, CNode* pfrom, CBlock* pblock, CDiskBlockPos* dbp)
 {
-    if (IsSporkActive(SPORK_17_EXPL_FIX) && chainActive.Height() >= GetSporkValue(SPORK_17_EXPL_FIX))
-        coinValidator.Load(static_cast<int>(GetSporkValue(SPORK_17_EXPL_FIX)));
-    else if (coinValidator.IsLoaded())
-        coinValidator.Clear();
-
     // Preliminary checks
     bool checked = CheckBlock(*pblock, state);
 
@@ -4291,129 +4240,6 @@ void static CheckBlockIndex()
 
     // Check that we actually traversed the entire map.
     assert(nNodes == forward.size());
-}
-
-/**
- * Returns the estimated blockchain sync progress. Node heights are queried at most once every
- * 15 seconds. The sync progress is determined by calculating the mean block height across first
- * 21 valid nodes. The assumption on accuracy is that nodes in general will report a higher block
- * count.
- * @param activeChainHeight
- * @return
- */
-double nodeBlocksMean = 0.0;
-time_t nodeTime = 0;
-double SyncProgress(int activeChainHeight) {
-    int totalNodes = (int)vNodes.size();
-
-    // If chain height is invalid or no nodes detected return 0 or last known mean calc
-    if (activeChainHeight <= 0 || totalNodes == 0) {
-        if (nodeBlocksMean > 0.0) {
-            double syncPercent = (double)activeChainHeight/nodeBlocksMean;
-            if (syncPercent > 1.0)
-                syncPercent = 1.0;
-            return syncPercent;
-        }
-        return 0.0;
-    }
-
-    time_t currentTime = time(NULL);
-
-    // Get estimated elapsed time since last progress update, if previous check more than 15 seconds
-    // ago then proceed. Otherwise, if more than 10 nodes ignore lookup and process mean from memory.
-    int elapsedTime = (int)(currentTime-nodeTime);
-    if (elapsedTime < 15 || (nodeBlocksMean >= activeChainHeight && totalNodes > 10 && elapsedTime < 120)) {
-        double syncPercent = (double)activeChainHeight/nodeBlocksMean;
-        if (syncPercent > 1.0)
-            syncPercent = 1.0;
-        return syncPercent;
-    }
-
-    // This section is only processed if:
-    // 1) 15 seconds has elapsed since last check
-    // -and-
-    // 2) the calculated mean is smaller than the current chain height -or-
-    // 3) fewer than 10 nodes exist -or-
-    // 4) 2 minutes has elapsed since the last check
-
-    // Set node time to current time
-    nodeTime = currentTime;
-
-    // If there are no nodes and mean isn't calculated yet return 0, otherwise return
-    // progress based on last known mean
-    if (totalNodes == 0) {
-        if (nodeBlocksMean == 0.0)
-            return 0.0;
-        double syncPercent = (double)activeChainHeight/nodeBlocksMean;
-        if (syncPercent > 1.0)
-            syncPercent = 1.0;
-        return syncPercent;
-    }
-
-    // Calculate the progress using the mean of the blocks across nodes
-    // Cache node block heights. Bad nodes are ignored
-    int totalBlocks = GetEstimatedBlockchainBlocks(activeChainHeight);
-
-    // If no valid nodes
-    if (totalBlocks == 0) {
-        // Return if mean calc is 0
-        if (nodeBlocksMean == 0.0)
-            return 0.0;
-        // Pull mean from memory if previous mean calc is valid
-        double syncPercent = (double)activeChainHeight/nodeBlocksMean;
-        if (syncPercent > 1.0)
-            syncPercent = 1.0;
-        return syncPercent;
-    }
-
-    // Store mean calculation
-    nodeBlocksMean = totalBlocks;
-
-    // If the mean calc is smaller than our current chain height return 100%
-    if (nodeBlocksMean < (double)activeChainHeight) {
-        nodeBlocksMean = (double)activeChainHeight;
-        return 1.0;
-    }
-
-    // Return estimated sync percentage
-    double syncPercent = (double)activeChainHeight/nodeBlocksMean;
-    if (syncPercent > 1.0)
-        syncPercent = 1.0;
-    return syncPercent;
-}
-
-/**
- * Returns the estimated total blocks on the chain. Calculates the mean over N blocks
- * specified in the search count. This method accesses and locks vNodes.
- * @param activeChainHeight
- * @param nSearchCount
- * @return
- */
-int GetEstimatedBlockchainBlocks(int activeChainHeight, int nSearchCount) {
-    double nodeCount = 0.0;
-    double nodeBlocks = 0.0;
-
-    // Find mean of the blocks across nodes, up to search count
-    // Bad nodes are ignored
-    LOCK(cs_vNodes);
-    for (CNode *pNode : vNodes) {
-        int nH = pNode->nStartingHeight; // current node block height
-        if (nH <= 0 || nH < activeChainHeight) // ignore bad nodes
-            continue;
-        nodeBlocks += nH;
-        nodeCount++;
-        // Stop checking after N nodes
-        if (nodeCount > nSearchCount)
-            break;
-    }
-
-    // If no valid nodes
-    if (nodeCount == 0) {
-        return activeChainHeight;
-    }
-
-    // Calculate the mean
-    return (int)(nodeBlocks/nodeCount);
 }
 
 //////////////////////////////////////////////////////////////////////////////

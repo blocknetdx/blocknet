@@ -12,6 +12,13 @@
 //******************************************************************************
 namespace rpc
 {
+    void threadRPCServer();
+
+    class AcceptedConnection;
+    void handleRpcRequest(AcceptedConnection * conn);
+
+    // bool DecodeBase58Check(const char * psz, std::vector<unsigned char> & vchRet);
+
     std::vector<unsigned char> toXAddr(const std::string & addr);
 
     typedef std::pair<std::string, std::vector<std::string> > AddressBookEntry;
@@ -48,7 +55,6 @@ namespace rpc
                            const std::string & rpcip,
                            const std::string & rpcport,
                            const std::string & txid,
-                           const bool verbose,
                            std::string & tx);
 
     bool createRawTransaction(const std::string & rpcuser,
