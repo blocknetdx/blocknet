@@ -283,9 +283,6 @@ void XBridgeTransactionsModel::onTimer()
                 m_transactions[i].txtime;
 
         auto id = m_transactions[i].id;
-        if(!m_transactions[i].from.empty() && !m_transactions[i].to.empty()){
-            LOG() << "XBridgeTransactionsModel::onTimer td.total_seconds() = " << td.total_seconds();
-        }
         if (m_transactions[i].state == XBridgeTransactionDescr::trNew &&
                 td.total_seconds() > XBridgeTransaction::TTL/60)
         {
