@@ -8,12 +8,23 @@
 #include "xbitcoinaddress.h"
 #include "xbitcointransaction.h"
 
+#include "util/logger.h"
+
 //******************************************************************************
 //******************************************************************************
 enum
 {
     SIGHASH_FORKID = 0x40
 };
+
+//******************************************************************************
+//******************************************************************************
+xbridge::CTransactionPtr createTransaction();
+xbridge::CTransactionPtr createTransaction(const std::vector<std::pair<std::string, int> > & inputs,
+                                           const std::vector<std::pair<std::string, double> >  & outputs,
+                                           const uint64_t COIN,
+                                           const uint32_t txversion,
+                                           const uint32_t lockTime);
 
 //******************************************************************************
 //******************************************************************************

@@ -172,9 +172,15 @@ bool XBridgeTransactionsModel::newTransaction(const std::string & from,
                                               const double fromAmount,
                                               const double toAmount)
 {
-    XBridgeApp & app = XBridgeApp::instance();
-    XBridgeWalletConnectorPtr ptr = app.connectorByCurrency(fromCurrency);
-    if (ptr && ptr->minAmount() > fromAmount)
+    XBridgeApp & xapp = XBridgeApp::instance();
+    XBridgeWalletConnectorPtr connFrom = xapp.connectorByCurrency(fromCurrency);
+    XBridgeWalletConnectorPtr connTo   = xapp.connectorByCurrency(toCurrency);
+    if (!connFrom || !connTo)
+    {
+        return false;
+    }
+
+    if (connFrom->minAmount() > fromAmount)
     {
         return false;
     }
@@ -186,15 +192,15 @@ bool XBridgeTransactionsModel::newTransaction(const std::string & from,
 
     if (id != uint256())
     {
-        XBridgeTransactionDescr d;
-        d.id           = id;
-        d.from         = from;
-        d.to           = to;
-        d.fromCurrency = fromCurrency;
-        d.toCurrency   = toCurrency;
-        d.fromAmount   = (boost::uint64_t)(fromAmount * XBridgeTransactionDescr::COIN);
-        d.toAmount     = (boost::uint64_t)(toAmount * XBridgeTransactionDescr::COIN);
-        d.txtime       = boost::posix_time::second_clock::universal_time();
+        XBridgeTransactionDescrPtr d(new XBridgeTransactionDescr);
+        d->id           = id;
+        d->from         = connFrom->toXAddr(from);
+        d->to           = connTo->toXAddr(to);
+        d->fromCurrency = fromCurrency;
+        d->toCurrency   = toCurrency;
+        d->fromAmount   = (boost::uint64_t)(fromAmount * XBridgeTransactionDescr::COIN);
+        d->toAmount     = (boost::uint64_t)(toAmount * XBridgeTransactionDescr::COIN);
+        d->txtime       = boost::posix_time::second_clock::universal_time();
 
         onTransactionReceived(d);
     }
@@ -216,10 +222,20 @@ bool XBridgeTransactionsModel::newTransactionFromPending(const uint256 & id,
         {
             // found
             XBridgeTransactionDescr & d = m_transactions[i];
-            d.from  = from;
-            d.to    = to;
+
             std::swap(d.fromCurrency, d.toCurrency);
             std::swap(d.fromAmount, d.toAmount);
+
+            XBridgeApp & xapp = XBridgeApp::instance();
+            XBridgeWalletConnectorPtr connFrom = xapp.connectorByCurrency(d.fromCurrency);
+            XBridgeWalletConnectorPtr connTo   = xapp.connectorByCurrency(d.toCurrency);
+            if (!connFrom || !connTo)
+            {
+                continue;
+            }
+
+            d.from  = connFrom->toXAddr(from);
+            d.to    = connTo->toXAddr(to);
 
             emit dataChanged(index(i, FirstColumn), index(i, LastColumn));
 
@@ -311,12 +327,12 @@ void XBridgeTransactionsModel::onTimer()
 
 //******************************************************************************
 //******************************************************************************
-void XBridgeTransactionsModel::onTransactionReceived(const XBridgeTransactionDescr & tx)
+void XBridgeTransactionsModel::onTransactionReceived(const XBridgeTransactionDescrPtr & tx)
 {
     for (unsigned int i = 0; i < m_transactions.size(); ++i)
     {
         const XBridgeTransactionDescr & descr = m_transactions.at(i);
-        if (descr.id != tx.id)
+        if (descr.id != tx->id)
         {
             continue;
         }
@@ -327,7 +343,7 @@ void XBridgeTransactionsModel::onTransactionReceived(const XBridgeTransactionDes
             return;
         }
 
-        if (descr.hubAddress != tx.hubAddress)
+        if (descr.hubAddress != tx->hubAddress)
         {
             continue;
         }
@@ -335,16 +351,16 @@ void XBridgeTransactionsModel::onTransactionReceived(const XBridgeTransactionDes
         // found
         if (descr.from.size() == 0)
         {
-            m_transactions[i] = tx;
+            m_transactions[i] = *tx;
         }
 
-        else if (descr.state < tx.state)
+        else if (descr.state < tx->state)
         {
-            m_transactions[i].state = tx.state;
+            m_transactions[i].state = tx->state;
         }
 
         // update timestamp
-        m_transactions[i].txtime = tx.txtime;
+        m_transactions[i].txtime = tx->txtime;
 
         emit dataChanged(index(i, FirstColumn), index(i, LastColumn));
         return;
@@ -358,7 +374,7 @@ void XBridgeTransactionsModel::onTransactionReceived(const XBridgeTransactionDes
     // }
 
     emit beginInsertRows(QModelIndex(), 0, 0);
-    m_transactions.insert(m_transactions.begin(), 1, tx);
+    m_transactions.insert(m_transactions.begin(), 1, *tx);
     // std::sort(m_transactions.begin(), m_transactions.end(), std::greater<XBridgeTransactionDescr>());
     emit endInsertRows();
 }

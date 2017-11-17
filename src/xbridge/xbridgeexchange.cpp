@@ -149,15 +149,15 @@ std::vector<std::string> XBridgeExchange::connectedWallets() const
 
 //*****************************************************************************
 //*****************************************************************************
-bool XBridgeExchange::createTransaction(const uint256     & id,
-                                        const std::string & sourceAddr,
-                                        const std::string & sourceCurrency,
-                                        const uint64_t    & sourceAmount,
-                                        const std::string & destAddr,
-                                        const std::string & destCurrency,
-                                        const uint64_t    & destAmount,
-                                        uint256           & pendingId,
-                                        bool              & isCreated)
+bool XBridgeExchange::createTransaction(const uint256                    & id,
+                                        const std::vector<unsigned char> & sourceAddr,
+                                        const std::string                & sourceCurrency,
+                                        const uint64_t                   & sourceAmount,
+                                        const std::vector<unsigned char> & destAddr,
+                                        const std::string                & destCurrency,
+                                        const uint64_t                   & destAmount,
+                                        uint256                          & pendingId,
+                                        bool                             & isCreated)
 {
     DEBUG_TRACE();
 
@@ -192,10 +192,10 @@ bool XBridgeExchange::createTransaction(const uint256     & id,
     }
 
     XBridgeTransactionPtr tr(new XBridgeTransaction(id,
-                                                    sourceAddr, sourceCurrency,
-                                                    sourceAmount,
-                                                    destAddr, destCurrency,
-                                                    destAmount));
+                                                    sourceAddr,
+                                                    sourceCurrency, sourceAmount,
+                                                    destAddr,
+                                                    destCurrency, destAmount));
 
     LOG() << tr->hash1().ToString();
     LOG() << tr->hash2().ToString();
@@ -240,14 +240,14 @@ bool XBridgeExchange::createTransaction(const uint256     & id,
 
 //*****************************************************************************
 //*****************************************************************************
-bool XBridgeExchange::acceptTransaction(const uint256     & id,
-                                        const std::string & sourceAddr,
-                                        const std::string & sourceCurrency,
-                                        const uint64_t    & sourceAmount,
-                                        const std::string & destAddr,
-                                        const std::string & destCurrency,
-                                        const uint64_t    & destAmount,
-                                        uint256           & transactionId)
+bool XBridgeExchange::acceptTransaction(const uint256                    & id,
+                                        const std::vector<unsigned char> & sourceAddr,
+                                        const std::string                & sourceCurrency,
+                                        const uint64_t                   & sourceAmount,
+                                        const std::vector<unsigned char> & destAddr,
+                                        const std::string                & destCurrency,
+                                        const uint64_t                   & destAmount,
+                                        uint256                          & transactionId)
 {
     DEBUG_TRACE();
 
@@ -259,15 +259,12 @@ bool XBridgeExchange::acceptTransaction(const uint256     & id,
     }
 
     XBridgeTransactionPtr tr(new XBridgeTransaction(id,
-                                                    sourceAddr, sourceCurrency,
-                                                    sourceAmount,
-                                                    destAddr, destCurrency,
-                                                    destAmount));
+                                                    sourceAddr,
+                                                    sourceCurrency, sourceAmount,
+                                                    destAddr,
+                                                    destCurrency, destAmount));
 
     transactionId = id;
-
-    LOG() << tr->hash1().ToString();
-    LOG() << tr->hash2().ToString();
 
     if (!tr->isValid())
     {
@@ -368,8 +365,8 @@ bool XBridgeExchange::deleteTransaction(const uint256 & id)
 
 //*****************************************************************************
 //*****************************************************************************
-bool XBridgeExchange::updateTransactionWhenHoldApplyReceived(XBridgeTransactionPtr tx,
-                                                             const std::string & from)
+bool XBridgeExchange::updateTransactionWhenHoldApplyReceived(const XBridgeTransactionPtr & tx,
+                                                             const std::vector<unsigned char> & from)
 {
     if (tx->increaseStateCounter(XBridgeTransaction::trJoined, from) == XBridgeTransaction::trHold)
     {
@@ -381,8 +378,8 @@ bool XBridgeExchange::updateTransactionWhenHoldApplyReceived(XBridgeTransactionP
 
 //*****************************************************************************
 //*****************************************************************************
-bool XBridgeExchange::updateTransactionWhenInitializedReceived(XBridgeTransactionPtr tx,
-                                                               const std::string & from,
+bool XBridgeExchange::updateTransactionWhenInitializedReceived(const XBridgeTransactionPtr &tx,
+                                                               const std::vector<unsigned char> & from,
                                                                const uint256 & datatxid,
                                                                const xbridge::CPubKey & pk)
 {
@@ -403,8 +400,8 @@ bool XBridgeExchange::updateTransactionWhenInitializedReceived(XBridgeTransactio
 
 //*****************************************************************************
 //*****************************************************************************
-bool XBridgeExchange::updateTransactionWhenCreatedReceived(XBridgeTransactionPtr tx,
-                                                           const std::string & from,
+bool XBridgeExchange::updateTransactionWhenCreatedReceived(const XBridgeTransactionPtr & tx,
+                                                           const std::vector<unsigned char> & from,
                                                            const std::string & binTxId,
                                                            const std::vector<unsigned char> & innerScript)
 {
@@ -425,8 +422,8 @@ bool XBridgeExchange::updateTransactionWhenCreatedReceived(XBridgeTransactionPtr
 
 //*****************************************************************************
 //*****************************************************************************
-bool XBridgeExchange::updateTransactionWhenConfirmedReceived(XBridgeTransactionPtr tx,
-                                                             const std::string & from)
+bool XBridgeExchange::updateTransactionWhenConfirmedReceived(const XBridgeTransactionPtr & tx,
+                                                             const std::vector<unsigned char> & from)
 {
     // update transaction state
     if (tx->increaseStateCounter(XBridgeTransaction::trCreated, from) == XBridgeTransaction::trFinished)

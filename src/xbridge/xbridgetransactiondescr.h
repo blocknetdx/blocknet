@@ -54,10 +54,10 @@ struct XBridgeTransactionDescr
     std::vector<unsigned char> hubAddress;
     std::vector<unsigned char> confirmAddress;
 
-    std::string                from;
+    std::vector<unsigned char> from;
     std::string                fromCurrency;
     uint64_t                   fromAmount;
-    std::string                to;
+    std::vector<unsigned char> to;
     std::string                toCurrency;
     uint64_t                   toAmount;
 

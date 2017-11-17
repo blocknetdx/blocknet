@@ -873,6 +873,15 @@ XBridgeBtcWalletConnector::XBridgeBtcWalletConnector()
 
 //*****************************************************************************
 //*****************************************************************************
+std::string XBridgeBtcWalletConnector::fromXAddr(const std::vector<unsigned char> & xaddr) const
+{
+    xbridge::XBitcoinAddress addr;
+    addr.Set(CKeyID(uint160(xaddr)), addrPrefix[0]);
+    return addr.ToString();
+}
+
+//*****************************************************************************
+//*****************************************************************************
 std::vector<unsigned char> XBridgeBtcWalletConnector::toXAddr(const std::string & addr) const
 {
     std::vector<unsigned char> vaddr;
@@ -1097,7 +1106,6 @@ double XBridgeBtcWalletConnector::minTxFee2(const uint32_t inputCount, const uin
 // isGood == true id depost tx is OK
 //******************************************************************************
 bool XBridgeBtcWalletConnector::checkTransaction(const std::string & depositTxId,
-                                                 const uint32_t & confirmations,
                                                  const std::string & /*destination*/,
                                                  const uint64_t & /*amount*/,
                                                  bool & isGood)
@@ -1121,7 +1129,7 @@ bool XBridgeBtcWalletConnector::checkTransaction(const std::string & depositTxId
 
     json_spirit::Object txo = txv.get_obj();
 
-    if (confirmations > 0)
+    if (requiredConfirmations > 0)
     {
         json_spirit::Value txvConfCount = json_spirit::find_value(txo, "confirmations");
         if (txvConfCount.type() != json_spirit::int_type)
@@ -1131,10 +1139,10 @@ bool XBridgeBtcWalletConnector::checkTransaction(const std::string & depositTxId
             return false;
         }
 
-        if (confirmations > static_cast<uint32_t>(txvConfCount.get_int()))
+        if (requiredConfirmations > static_cast<uint32_t>(txvConfCount.get_int()))
         {
             // wait more
-            LOG() << "tx " << depositTxId << " unconfirmed, need " << confirmations << " " << __FUNCTION__;
+            LOG() << "tx " << depositTxId << " unconfirmed, need " << requiredConfirmations << " " << __FUNCTION__;
             return false;
         }
     }

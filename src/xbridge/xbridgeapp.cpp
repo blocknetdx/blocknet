@@ -62,6 +62,10 @@ void badaboom()
 //*****************************************************************************
 XBridgeApp::XBridgeApp()
 {
+    for (uint32_t i = 0; i < boost::thread::hardware_concurrency(); ++i)
+    {
+        m_sessionQueue.push(XBridgeSessionPtr(new XBridgeSession()));
+    }
 }
 
 //*****************************************************************************
@@ -219,6 +223,20 @@ void XBridgeApp::onSend(const UcharVector & id, const XBridgePacketPtr & packet)
 
 //*****************************************************************************
 //*****************************************************************************
+XBridgeSessionPtr XBridgeApp::serviceSession()
+{
+    XBridgeSessionPtr ptr;
+
+    boost::mutex::scoped_lock l(m_sessionsLock);
+    ptr = m_sessionQueue.front();
+    m_sessionQueue.pop();
+    m_sessionQueue.push(ptr);
+
+    return ptr;
+}
+
+//*****************************************************************************
+//*****************************************************************************
 void XBridgeApp::onMessageReceived(const UcharVector & id,
                                    const UcharVector & message,
                                    CValidationState & /*state*/)
@@ -246,39 +264,11 @@ void XBridgeApp::onMessageReceived(const UcharVector & id,
         return;
     }
 
-    XBridgeSessionPtr ptr;
-
-    {
-        boost::mutex::scoped_lock l(m_sessionsLock);
-        if (m_sessionAddrs.count(id))
-        {
-            // found local client
-            ptr = m_sessionAddrs[id];
-        }
-
-        // check service session
-        else if (m_serviceSession->sessionAddr() == id)
-        {
-            ptr = serviceSession();
-        }
-
-        else
-        {
-            // LOG() << "process message for unknown address";
-        }
-    }
-
+    XBridgeSessionPtr ptr = serviceSession();
     if (ptr)
     {
         ptr->processPacket(packet);
     }
-}
-
-//*****************************************************************************
-//*****************************************************************************
-XBridgeSessionPtr XBridgeApp::serviceSession()
-{
-    return m_serviceSession;
 }
 
 //*****************************************************************************
@@ -309,8 +299,11 @@ void XBridgeApp::onBroadcastReceived(const std::vector<unsigned char> & message,
         return;
     }
 
-    // XBridgeSessionPtr ptr(new XBridgeSession);
-    serviceSession()->processPacket(packet);
+    XBridgeSessionPtr ptr = serviceSession();
+    if (ptr)
+    {
+        ptr->processPacket(packet);
+    }
 }
 
 //*****************************************************************************
@@ -326,9 +319,9 @@ void XBridgeApp::sleep(const unsigned int umilliseconds)
 XBridgeWalletConnectorPtr XBridgeApp::connectorByCurrency(const std::string & currency) const
 {
     boost::mutex::scoped_lock l(m_connectorsLock);
-    if (m_connCurrMap.count(currency))
+    if (m_currencyMap.count(currency))
     {
-        return m_connCurrMap.at(currency);
+        return m_currencyMap.at(currency);
     }
 
     return XBridgeWalletConnectorPtr();
@@ -342,7 +335,7 @@ std::vector<std::string> XBridgeApp::availableCurrencies() const
 
     std::vector<std::string> currencies;
 
-    for(auto i = m_connCurrMap.begin(); i != m_connCurrMap.end();)
+    for(auto i = m_currencyMap.begin(); i != m_currencyMap.end();)
     {
         currencies.push_back(i->first);
         ++i;
@@ -357,7 +350,7 @@ void XBridgeApp::addConnector(const XBridgeWalletConnectorPtr & conn)
 {
     boost::mutex::scoped_lock l(m_sessionsLock);
     m_connectors.push_back(conn);
-    m_connCurrMap[conn->currency] = conn;
+    m_currencyMap[conn->currency] = conn;
 }
 
 //*****************************************************************************
@@ -413,8 +406,8 @@ void XBridgeApp::getAddressBook()
             {
                 std::vector<unsigned char> vaddr = (*i)->toXAddr(addr);
                 // m_addressBook.insert(vaddr);
-                m_connAddrMap[vaddr] = (*i);
-                m_connCurrMap[(*i)->currency] = (*i);
+                m_addressMap[vaddr] = (*i);
+                m_currencyMap[(*i)->currency] = (*i);
 
                 xuiConnector.NotifyXBridgeAddressBookEntryReceived
                         ((*i)->currency, e.first, addr);
@@ -490,21 +483,21 @@ uint256 XBridgeApp::sendXBridgeTransaction(const std::string & from,
         return uint256();
     }
 
-    // check amount
-    XBridgeWalletConnectorPtr conn = connectorByCurrency(fromCurrency);
-    if (!conn)
+    XBridgeWalletConnectorPtr connFrom = connectorByCurrency(fromCurrency);
+    XBridgeWalletConnectorPtr connTo   = connectorByCurrency(toCurrency);
+    if (!connFrom || !connTo)
     {
-        // no session
-        uiInterface.ThreadSafeMessageBox(_("No connector for ") + fromCurrency,
+        uiInterface.ThreadSafeMessageBox(_("No connector for ") + (!connFrom ? fromCurrency : toCurrency),
                                          "blocknet",
                                          CClientUIInterface::BTN_OK | CClientUIInterface::ICON_INFORMATION | CClientUIInterface::MODAL);
 
-        WARN() << "no connector for <" << fromCurrency << "> " << __FUNCTION__;
+        WARN() << "no connector for <" << (!connFrom ? fromCurrency : toCurrency) << "> " << __FUNCTION__;
         return uint256();
     }
 
+    // check amount
     std::vector<wallet::UtxoEntry> outputs;
-    conn->getUnspent(outputs);
+    connFrom->getUnspent(outputs);
 
     double utxoAmount = 0;
     std::vector<wallet::UtxoEntry> outputsForUse;
@@ -545,10 +538,10 @@ uint256 XBridgeApp::sendXBridgeTransaction(const std::string & from,
 
     XBridgeTransactionDescrPtr ptr(new XBridgeTransactionDescr);
     ptr->id           = id;
-    ptr->from         = from;
+    ptr->from         = connFrom->toXAddr(from);
     ptr->fromCurrency = fromCurrency;
     ptr->fromAmount   = fromAmount;
-    ptr->to           = to;
+    ptr->to           = connTo->toXAddr(to);
     ptr->toCurrency   = toCurrency;
     ptr->toAmount     = toAmount;
     ptr->usedCoins    = outputsForUse;
@@ -556,7 +549,7 @@ uint256 XBridgeApp::sendXBridgeTransaction(const std::string & from,
     // try send immediatelly
     if (!sendPendingTransaction(ptr))
     {
-        uiInterface.ThreadSafeMessageBox(_("Transaction failed "),
+        uiInterface.ThreadSafeMessageBox(_("Transaction send error "),
                                          "blocknet",
                                          CClientUIInterface::BTN_OK | CClientUIInterface::ICON_INFORMATION | CClientUIInterface::MODAL);
 
@@ -564,8 +557,14 @@ uint256 XBridgeApp::sendXBridgeTransaction(const std::string & from,
         return uint256();
     }
 
+//    LOG() << "accept transaction " << util::to_str(ptr->id) << std::endl
+//          << "    from " << from << " (" << util::to_str(ptr->from) << ")" << std::endl
+//          << "             " << ptr->fromCurrency << " : " << ptr->fromAmount << std::endl
+//          << "    from " << to << " (" << util::to_str(ptr->to) << ")" << std::endl
+//          << "             " << ptr->toCurrency << " : " << ptr->toAmount << std::endl;
+
     // lock used coins
-    conn->lockUnspent(ptr->usedCoins, true);
+    connFrom->lockUnspent(ptr->usedCoins, true);
 
     {
         boost::mutex::scoped_lock l(m_txLocker);
@@ -605,7 +604,7 @@ bool XBridgeApp::sendPendingTransaction(const XBridgeTransactionDescrPtr & ptr)
 
         // 32 bytes - id of transaction
         // 2x
-        // 34 bytes - address
+        // 20 bytes - address
         //  8 bytes - currency
         //  8 bytes - amount
         ptr->packet->append(ptr->id.begin(), 32);
@@ -627,6 +626,9 @@ bool XBridgeApp::sendPendingTransaction(const XBridgeTransactionDescrPtr & ptr)
     }
 
     onSend(ptr->packet);
+
+    ptr->state = XBridgeTransactionDescr::trPending;
+    xuiConnector.NotifyXBridgeTransactionStateChanged(ptr->id, XBridgeTransactionDescr::trPending);
 
     return true;
 }
@@ -651,21 +653,21 @@ uint256 XBridgeApp::acceptXBridgeTransaction(const uint256 & id,
         ptr = m_pendingTransactions[id];
     }
 
-    // check amount
-    XBridgeWalletConnectorPtr conn = connectorByCurrency(ptr->toCurrency);
-    if (!conn)
+    XBridgeWalletConnectorPtr connFrom = connectorByCurrency(ptr->fromCurrency);
+    XBridgeWalletConnectorPtr connTo   = connectorByCurrency(ptr->toCurrency);
+    if (!connFrom || !connTo)
     {
-        // no session
-        uiInterface.ThreadSafeMessageBox(_("No connector for ") + ptr->toCurrency,
+        uiInterface.ThreadSafeMessageBox(_("No connector for ") + (!connFrom ? ptr->fromCurrency : ptr->toCurrency),
                                          "blocknet",
                                          CClientUIInterface::BTN_OK | CClientUIInterface::ICON_INFORMATION | CClientUIInterface::MODAL);
 
-        WARN() << "no connector for <" << ptr->toCurrency << "> " << __FUNCTION__;
-        return uint256();
+        WARN() << "no connector for <" << (!connFrom ? ptr->fromCurrency : ptr->toCurrency) << "> " << __FUNCTION__;
+        return false;
     }
 
+    // check amount
     std::vector<wallet::UtxoEntry> outputs;
-    conn->getUnspent(outputs);
+    connTo->getUnspent(outputs);
 
     double utxoAmount = 0;
     std::vector<wallet::UtxoEntry> outputsForUse;
@@ -695,8 +697,8 @@ uint256 XBridgeApp::acceptXBridgeTransaction(const uint256 & id,
         return uint256();
     }
 
-    ptr->from = from;
-    ptr->to   = to;
+    ptr->from = connTo->toXAddr(from);
+    ptr->to   = connFrom->toXAddr(to);
     std::swap(ptr->fromCurrency, ptr->toCurrency);
     std::swap(ptr->fromAmount,   ptr->toAmount);
     ptr->usedCoins = outputsForUse;
@@ -704,11 +706,21 @@ uint256 XBridgeApp::acceptXBridgeTransaction(const uint256 & id,
     // try send immediatelly
     if (!sendAcceptingTransaction(ptr))
     {
+        uiInterface.ThreadSafeMessageBox(_("Transaction send error"),
+                                         "blocknet",
+                                         CClientUIInterface::BTN_OK | CClientUIInterface::ICON_INFORMATION | CClientUIInterface::MODAL);
         return uint256();
     }
 
+//    LOG() << "accept transaction " << util::to_str(ptr->id) << std::endl
+//          << "    from " << from << " (" << util::to_str(ptr->from) << ")" << std::endl
+//          << "             " << ptr->fromCurrency << " : " << ptr->fromAmount << std::endl
+//          << "    from " << to << " (" << util::to_str(ptr->to) << ")" << std::endl
+//          << "             " << ptr->toCurrency << " : " << ptr->toAmount << std::endl;
+
+
     // lock used coins
-    conn->lockUnspent(ptr->usedCoins, true);
+    connTo->lockUnspent(ptr->usedCoins, true);
 
     return id;
 }
@@ -729,7 +741,7 @@ bool XBridgeApp::sendAcceptingTransaction(const XBridgeTransactionDescrPtr & ptr
 
     // 20 bytes - id of transaction
     // 2x
-    // 34 bytes - address
+    // 20 bytes - address
     //  8 bytes - currency
     //  4 bytes - amount
     ptr->packet->append(ptr->hubAddress);
@@ -753,7 +765,7 @@ bool XBridgeApp::sendAcceptingTransaction(const XBridgeTransactionDescrPtr & ptr
     onSend(ptr->hubAddress, ptr->packet);
 
     ptr->state = XBridgeTransactionDescr::trAccepting;
-    xuiConnector.NotifyXBridgeTransactionStateChanged(ptr->id, XBridgeTransactionDescr::trPending);
+    xuiConnector.NotifyXBridgeTransactionStateChanged(ptr->id, XBridgeTransactionDescr::trAccepting);
 
     return true;
 }

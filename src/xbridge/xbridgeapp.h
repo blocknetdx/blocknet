@@ -123,15 +123,11 @@ private:
     typedef std::vector<XBridgeWalletConnectorPtr> Connectors;
     Connectors m_connectors;
     typedef std::map<std::vector<unsigned char>, XBridgeWalletConnectorPtr> ConnectorsAddrMap;
-    ConnectorsAddrMap m_connAddrMap;
+    ConnectorsAddrMap m_addressMap;
     typedef std::map<std::string, XBridgeWalletConnectorPtr> ConnectorsCurrencyMap;
-    ConnectorsCurrencyMap m_connCurrMap;
+    ConnectorsCurrencyMap m_currencyMap;
 
     mutable boost::mutex m_sessionsLock;
-    typedef std::map<std::vector<unsigned char>, XBridgeSessionPtr> SessionAddrMap;
-    SessionAddrMap m_sessionAddrs;
-    typedef std::map<std::string, XBridgeSessionPtr> SessionIdMap;
-    SessionIdMap m_sessionIds;
     typedef std::queue<XBridgeSessionPtr> SessionQueue;
     SessionQueue m_sessionQueue;
 

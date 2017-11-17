@@ -15,8 +15,8 @@ public:
 
 public:
     // reimplement for currency
-    // virtual std::string fromXAddr(const std::vector<unsigned char> & xaddr) const = 0;
-    virtual std::vector<unsigned char> toXAddr(const std::string & addr) const;
+    std::string fromXAddr(const std::vector<unsigned char> & xaddr) const;
+    std::vector<unsigned char> toXAddr(const std::string & addr) const;
 
 public:
     bool requestAddressBook(std::vector<wallet::AddressBookEntry> & entries);
@@ -54,7 +54,6 @@ public:
     double minTxFee2(const uint32_t inputCount, const uint32_t outputCount);
 
     bool checkTransaction(const std::string & depositTxId,
-                          const uint32_t & confirmations,
                           const std::string & /*destination*/,
                           const uint64_t & /*amount*/,
                           bool & isGood);

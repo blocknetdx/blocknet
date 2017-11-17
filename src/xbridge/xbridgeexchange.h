@@ -42,40 +42,40 @@ public:
 
     // std::vector<unsigned char> walletAddress(const std::string & walletName);
 
-    bool createTransaction(const uint256     & id,
-                           const std::string & sourceAddr,
-                           const std::string & sourceCurrency,
-                           const uint64_t    & sourceAmount,
-                           const std::string & destAddr,
-                           const std::string & destCurrency,
-                           const uint64_t    & destAmount,
-                           uint256           & pendingId,
-                           bool              & isCreated);
+    bool createTransaction(const uint256                    & id,
+                           const std::vector<unsigned char> & sourceAddr,
+                           const std::string                & sourceCurrency,
+                           const uint64_t                   & sourceAmount,
+                           const std::vector<unsigned char> & destAddr,
+                           const std::string                & destCurrency,
+                           const uint64_t                   & destAmount,
+                           uint256                          & pendingId,
+                           bool                             & isCreated);
 
-    bool acceptTransaction(const uint256     & id,
-                           const std::string & sourceAddr,
-                           const std::string & sourceCurrency,
-                           const uint64_t    & sourceAmount,
-                           const std::string & destAddr,
-                           const std::string & destCurrency,
-                           const uint64_t    & destAmount,
-                           uint256           & transactionId);
+    bool acceptTransaction(const uint256                    & id,
+                           const std::vector<unsigned char> & sourceAddr,
+                           const std::string                & sourceCurrency,
+                           const uint64_t                   & sourceAmount,
+                           const std::vector<unsigned char> & destAddr,
+                           const std::string                & destCurrency,
+                           const uint64_t                   & destAmount,
+                           uint256                          & transactionId);
 
     bool deletePendingTransactions(const uint256 & id);
     bool deleteTransaction(const uint256 & id);
 
-    bool updateTransactionWhenHoldApplyReceived(XBridgeTransactionPtr tx,
-                                                const std::string & from);
-    bool updateTransactionWhenInitializedReceived(XBridgeTransactionPtr tx,
-                                                  const std::string & from,
+    bool updateTransactionWhenHoldApplyReceived(const XBridgeTransactionPtr & tx,
+                                                const std::vector<unsigned char> & from);
+    bool updateTransactionWhenInitializedReceived(const XBridgeTransactionPtr & tx,
+                                                  const std::vector<unsigned char> & from,
                                                   const uint256 & datatxid,
                                                   const xbridge::CPubKey & pk);
-    bool updateTransactionWhenCreatedReceived(XBridgeTransactionPtr tx,
-                                              const std::string & from,
+    bool updateTransactionWhenCreatedReceived(const XBridgeTransactionPtr & tx,
+                                              const std::vector<unsigned char> & from,
                                               const std::string & binTxId,
                                               const std::vector<unsigned char> & innerScript);
-    bool updateTransactionWhenConfirmedReceived(XBridgeTransactionPtr tx,
-                                                const std::string & from);
+    bool updateTransactionWhenConfirmedReceived(const XBridgeTransactionPtr & tx,
+                                                const std::vector<unsigned char> & from);
 
     bool updateTransaction(const uint256 & hash);
 

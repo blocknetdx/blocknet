@@ -58,13 +58,13 @@ public:
 
 public:
     XBridgeTransaction();
-    XBridgeTransaction(const uint256     & id,
-                       const std::string & sourceAddr,
-                       const std::string & sourceCurrency,
-                       const uint64_t    & sourceAmount,
-                       const std::string & destAddr,
-                       const std::string & destCurrency,
-                       const uint64_t    & destAmount);
+    XBridgeTransaction(const uint256                    & id,
+                       const std::vector<unsigned char> & sourceAddr,
+                       const std::string                & sourceCurrency,
+                       const uint64_t                   & sourceAmount,
+                       const std::vector<unsigned char> & destAddr,
+                       const std::string                & destCurrency,
+                       const uint64_t                   & destAmount);
     ~XBridgeTransaction();
 
     uint256 id() const;
@@ -72,7 +72,7 @@ public:
     // state of transaction
     State state() const;
     // update state counter and update state
-    State increaseStateCounter(State state, const std::string & from);
+    State increaseStateCounter(const State state, const std::vector<unsigned char> & from);
 
     static std::string strState(const State state);
     std::string strState() const;
@@ -95,8 +95,8 @@ public:
     uint256 hash2() const;
 
     // uint256                    firstId() const;
-    std::string                a_address() const;
-    std::string                a_destination() const;
+    std::vector<unsigned char> a_address() const;
+    std::vector<unsigned char> a_destination() const;
     std::string                a_currency() const;
     uint64_t                   a_amount() const;
     std::string                a_payTx() const;
@@ -110,8 +110,8 @@ public:
     xbridge::CPubKey           a_pk1() const;
 
     // uint256                    secondId() const;
-    std::string                b_address() const;
-    std::string                b_destination() const;
+    std::vector<unsigned char> b_address() const;
+    std::vector<unsigned char> b_destination() const;
     std::string                b_currency() const;
     uint64_t                   b_amount() const;
     std::string                b_payTx() const;
@@ -126,10 +126,10 @@ public:
 
     bool tryJoin(const XBridgeTransactionPtr other);
 
-    bool                       setKeys(const std::string & addr,
+    bool                       setKeys(const std::vector<unsigned char> & addr,
                                        const uint256 & datatxid,
                                        const xbridge::CPubKey & pk);
-    bool                       setBinTxId(const std::string & addr,
+    bool                       setBinTxId(const std::vector<unsigned char> &addr,
                                           const std::string & id,
                                           const std::vector<unsigned char> & innerScript);
 

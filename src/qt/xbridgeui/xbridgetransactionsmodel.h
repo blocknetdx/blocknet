@@ -67,7 +67,7 @@ private slots:
     void onTimer();
 
 private:
-    void onTransactionReceived(const XBridgeTransactionDescr & tx);
+    void onTransactionReceived(const XBridgeTransactionDescrPtr & tx);
     void onTransactionStateChanged(const uint256 & id, const uint32_t state);
     void onTransactionCancelled(const uint256 & id, const uint32_t state, const uint32_t reason);
 

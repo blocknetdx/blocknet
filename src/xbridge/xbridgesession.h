@@ -36,8 +36,6 @@ public:
 
     const std::vector<unsigned char> & sessionAddr() const { return m_myid; }
 
-    std::string currency() const  { return m_wallet.currency; }
-
     static bool checkXBridgePacketVersion(XBridgePacketPtr packet);
 
     bool processPacket(XBridgePacketPtr packet);
@@ -65,10 +63,6 @@ protected:
     // return true if packet not for me, relayed
     bool checkPacketAddress(XBridgePacketPtr packet);
 
-    bool makeNewPubKey(xbridge::CPubKey & newPKey) const;
-
-    // std::string round_x(const long double val, uint32_t prec);
-
     bool checkDepositTx(const XBridgeTransactionDescrPtr & xtx,
                         const std::string & depositTxId,
                         const uint32_t & confirmations,
@@ -77,8 +71,7 @@ protected:
 
     // fn search xaddress in transaction and restore full 'coin' address as string
     bool isAddressInTransaction(const std::vector<unsigned char> & address,
-                                const XBridgeTransactionPtr & tx,
-                                std::string & fullAddress);
+                                const XBridgeTransactionPtr & tx);
 
 protected:
     virtual bool processInvalid(XBridgePacketPtr packet);
