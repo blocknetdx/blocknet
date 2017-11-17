@@ -57,15 +57,28 @@ PrivacyDialog::PrivacyDialog(QWidget* parent) : QDialog(parent),
     ui->labelCoinControlAmount->addAction(clipboardAmountAction);
 
     // Denomination labels
-    ui->labelzDenom1Text->setText("Denom. with value <b>1</b>:");
-    ui->labelzDenom2Text->setText("Denom. with value <b>5</b>:");
-    ui->labelzDenom3Text->setText("Denom. with value <b>10</b>:");
-    ui->labelzDenom4Text->setText("Denom. with value <b>50</b>:");
-    ui->labelzDenom5Text->setText("Denom. with value <b>100</b>:");
-    ui->labelzDenom6Text->setText("Denom. with value <b>500</b>:");
-    ui->labelzDenom7Text->setText("Denom. with value <b>1000</b>:");
-    ui->labelzDenom8Text->setText("Denom. with value <b>5000</b>:");
+    ui->labelzDenom1Text->setText(tr("Denom. with value <b>1</b>:"));
+    ui->labelzDenom2Text->setText(tr("Denom. with value <b>5</b>:"));
+    ui->labelzDenom3Text->setText(tr("Denom. with value <b>10</b>:"));
+    ui->labelzDenom4Text->setText(tr("Denom. with value <b>50</b>:"));
+    ui->labelzDenom5Text->setText(tr("Denom. with value <b>100</b>:"));
+    ui->labelzDenom6Text->setText(tr("Denom. with value <b>500</b>:"));
+    ui->labelzDenom7Text->setText(tr("Denom. with value <b>1000</b>:"));
+    ui->labelzDenom8Text->setText(tr("Denom. with value <b>5000</b>:"));
 
+    // AutoMint status
+    ui->label_AutoMintStatus->setText(tr("AutoMint Status:"));
+
+    // Global Supply labels
+    ui->labelZsupplyText1->setText(tr("Denom. <b>1</b>:"));
+    ui->labelZsupplyText5->setText(tr("Denom. <b>5</b>:"));
+    ui->labelZsupplyText10->setText(tr("Denom. <b>10</b>:"));
+    ui->labelZsupplyText50->setText(tr("Denom. <b>50</b>:"));
+    ui->labelZsupplyText100->setText(tr("Denom. <b>100</b>:"));
+    ui->labelZsupplyText500->setText(tr("Denom. <b>500</b>:"));
+    ui->labelZsupplyText1000->setText(tr("Denom. <b>1000</b>:"));
+    ui->labelZsupplyText5000->setText(tr("Denom. <b>5000</b>:"));
+    
     // Phore settings
     QSettings settings;
     if (!settings.contains("nSecurityLevel")){
@@ -655,6 +668,56 @@ void PrivacyDialog::setBalance(const CAmount& balance, const CAmount& unconfirme
     ui->labelzAvailableAmount->setText(QString::number(zerocoinBalance/COIN) + QString(" zPHR "));
     ui->labelzAvailableAmount_2->setText(QString::number(matureZerocoinBalance/COIN) + QString(" zPHR "));
     ui->labelzPHRAmountValue->setText(BitcoinUnits::floorHtmlWithUnit(nDisplayUnit, balance - immatureBalance - nLockedBalance, false, BitcoinUnits::separatorAlways));
+
+    // Display AutoMint status
+    QString strAutomintStatus = tr("AutoMint Status:");
+
+    if (pwalletMain->isZeromintEnabled ()) {
+       strAutomintStatus += tr(" <b>enabled</b>.");
+    }
+    else {
+       strAutomintStatus += tr(" <b>disabled</b>.");
+    }
+
+    strAutomintStatus += tr(" Configured target percentage: <b>") + QString::number(pwalletMain->getZeromintPercentage()) + "%</b>";
+    ui->label_AutoMintStatus->setText(strAutomintStatus);
+
+    // Display global supply
+    ui->labelZsupplyAmount->setText(QString::number(chainActive.Tip()->GetZerocoinSupply()/COIN) + QString(" <b>zPHR </b> "));
+    for (auto denom : libzerocoin::zerocoinDenomList) {
+        int64_t nSupply = chainActive.Tip()->mapZerocoinSupply.at(denom);
+        QString strSupply = QString::number(nSupply) + " x " + QString::number(denom) + " = <b>" +
+                            QString::number(nSupply*denom) + " zPHR </b> ";
+        switch (denom) {
+            case libzerocoin::CoinDenomination::ZQ_ONE:
+                ui->labelZsupplyAmount1->setText(strSupply);
+                break;
+            case libzerocoin::CoinDenomination::ZQ_FIVE:
+                ui->labelZsupplyAmount5->setText(strSupply);
+                break;
+            case libzerocoin::CoinDenomination::ZQ_TEN:
+                ui->labelZsupplyAmount10->setText(strSupply);
+                break;
+            case libzerocoin::CoinDenomination::ZQ_FIFTY:
+                ui->labelZsupplyAmount50->setText(strSupply);
+                break;
+            case libzerocoin::CoinDenomination::ZQ_ONE_HUNDRED:
+                ui->labelZsupplyAmount100->setText(strSupply);
+                break;
+            case libzerocoin::CoinDenomination::ZQ_FIVE_HUNDRED:
+                ui->labelZsupplyAmount500->setText(strSupply);
+                break;
+            case libzerocoin::CoinDenomination::ZQ_ONE_THOUSAND:
+                ui->labelZsupplyAmount1000->setText(strSupply);
+                break;
+            case libzerocoin::CoinDenomination::ZQ_FIVE_THOUSAND:
+                ui->labelZsupplyAmount5000->setText(strSupply);
+                break;
+            default:
+                // Error Case: don't update display
+                break;
+        }
+    }
 }
 
 void PrivacyDialog::updateDisplayUnit()
