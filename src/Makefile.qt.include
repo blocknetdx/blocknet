@@ -41,7 +41,8 @@ QT_FORMS_UI = \
   qt/forms/sendcoinsdialog.ui \
   qt/forms/sendcoinsentry.ui \
   qt/forms/signverifymessagedialog.ui \
-  qt/forms/transactiondescdialog.ui
+  qt/forms/transactiondescdialog.ui \
+  qt/forms/walletnonencryptwarningdialog.ui
 
 QT_MOC_CPP = \
   qt/moc_addressbookpage.cpp \
@@ -96,7 +97,9 @@ QT_MOC_CPP = \
   qt/xbridgeui/moc_xbridgeaddressbookview.cpp \
   qt/xbridgeui/moc_xbridgetransactiondialog.cpp \
   qt/xbridgeui/moc_xbridgetransactionsmodel.cpp \
-  qt/xbridgeui/moc_xbridgetransactionsview.cpp
+  qt/xbridgeui/moc_xbridgetransactionsview.cpp \
+  qt/moc_walletnonencryptwarningdialog.cpp \
+  qt/moc_walletnonencryptwarningdialog.cpp
 
 
 BITCOIN_MM = \
@@ -304,8 +307,8 @@ BITCOIN_QT_CPP += \
   qt/walletframe.cpp \
   qt/walletmodel.cpp \
   qt/walletmodeltransaction.cpp \
-  qt/walletview.cpp
-
+  qt/walletview.cpp \
+  qt/walletnonencryptwarningdialog.cpp
 endif
 
 RES_IMAGES = \
