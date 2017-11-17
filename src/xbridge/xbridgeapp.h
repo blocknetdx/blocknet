@@ -148,26 +148,77 @@ public:
     static boost::mutex                                  m_ppLocker;
     static std::map<uint256, std::pair<std::string, XBridgePacketPtr> > m_pendingPackets;
 
-private:
     /**
      * @brief m_historicTransactionsStates - the status list of historical transactions
      */
     std::list<XBridgeTransactionDescr::State>       m_historicTransactionsStates;
-private:
 
+    /**
+     * @brief m_lastErrorLock - mutex for locking only m_lastError
+     */
+    boost::mutex m_lastErrorLock;
 
+    /**
+     * @brief m_lastError - contains a last error message
+     */
+    static std::string m_lastError;
+
+    /**
+     * @brief TIMER_INTERVAL - update historical transactions list timer interval
+     */
+    const uint TIMER_INTERVAL = 3;
+    /**
+     * @brief m_services
+     */
+    std::deque<IoServicePtr> m_services;
+
+    /**
+     * @brief m_works
+     */
+    std::deque<WorkPtr> m_works;
+
+    /**
+     * @brief m_timerIo
+     */
+    boost::asio::io_service m_timerIo;
+
+    /**
+     * @brief m_timerIoWork - update historical transactions list timer worker
+     */
+    std::shared_ptr<boost::asio::io_service::work>  m_timerIoWork;
+
+    /**
+     * @brief m_timerThread - timer thread
+     */
+    boost::thread m_timerThread;
+
+    /**
+     * @brief m_timer timer update historical transactions list
+     */
+    boost::asio::deadline_timer m_timer;
+
+    /**
+     * @brief updateHistoricalTransactionsList - periodically checks a list of transactions
+     * and in case of fulfillment of specified conditions moves them
+     * to the list of historical transactions
+     * @return true, if you have added at least one item
+     */
+    bool updateHistoricalTransactionsList();
 public:
     /**
-     * @brief isHistoricState
-     * @param state
-     * @return true, if state history
+     * @brief isHistoricState - checks the state of the transaction
+     * @param state - current state of transaction
+     * @return true, if the transaction is historical
      */
     bool isHistoricState(const XBridgeTransactionDescr::State state);
-private:
-    boost::mutex m_lastErrorLock;
 public:
-    static std::string m_lastError;
+
+    /**
+     * @brief lastError
+     * @return last error message
+     */
     static const std::string &lastError()  { return  m_lastError; }
+
 
 };
 

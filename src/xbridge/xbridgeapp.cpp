@@ -57,8 +57,21 @@ void badaboom()
 
 //*****************************************************************************
 //*****************************************************************************
-XBridgeApp::XBridgeApp()
+XBridgeApp::XBridgeApp(): m_timerIoWork(new boost::asio::io_service::work(m_timerIo))
+  , m_timerThread(boost::bind(&boost::asio::io_service::run, &m_timerIo))
+  , m_timer(m_timerIo, boost::posix_time::seconds(TIMER_INTERVAL))
 {
+    for (int i = 0; i < 2; ++i)
+    {
+        IoServicePtr ios(new boost::asio::io_service);
+
+        m_services.push_back(ios);
+        m_works.push_back(WorkPtr(new boost::asio::io_service::work(*ios)));
+
+        m_threads.create_thread(boost::bind(&boost::asio::io_service::run, ios));
+    }
+
+    m_timer.async_wait(boost::bind(&XBridgeApp::updateHistoricalTransactionsList, this));
 }
 
 //*****************************************************************************
@@ -162,6 +175,15 @@ bool XBridgeApp::init(int argc, char *argv[])
 //*****************************************************************************
 bool XBridgeApp::stop()
 {
+    m_timer.cancel();
+    m_timerIo.stop();
+    m_timerIoWork.reset();
+    m_timerThread.join();
+    for (WorkPtr & i : m_works)
+    {
+        i.reset();
+    }
+
     LOG() << "stopping threads...";
 
     m_bridge->stop();
@@ -244,7 +266,7 @@ void XBridgeApp::onMessageReceived(const UcharVector & id, const UcharVector & m
     }
 
     LOG() << "received message to " << util::base64_encode(std::string((char *)&id[0], 20)).c_str()
-             << " command " << packet->command();
+            << " command " << packet->command();
 
     if (!XBridgeSession::checkXBridgePacketVersion(packet))
     {
@@ -324,6 +346,57 @@ void XBridgeApp::onBroadcastReceived(const std::vector<unsigned char> & message)
 void XBridgeApp::sleep(const unsigned int umilliseconds)
 {
     boost::this_thread::sleep_for(boost::chrono::milliseconds(umilliseconds));
+}
+
+bool XBridgeApp::updateHistoricalTransactionsList()
+{
+    auto counter = 0;
+    boost::mutex::scoped_lock l(m_ppLocker);
+    for (auto it = m_pendingTransactions.begin(); it != m_pendingTransactions.end(); it++)
+    {
+        auto transaction = *it->second;
+        boost::posix_time::time_duration td =
+                boost::posix_time::second_clock::universal_time() -
+                transaction.txtime;
+
+        if(!transaction.from.empty() && !transaction.to.empty()){
+            LOG() << "XBridgeApp::updateHistoricalTransactionsList() = " << td.total_seconds();
+        }
+        auto id = transaction.id;
+        if (transaction.state == XBridgeTransactionDescr::trNew &&
+                td.total_seconds() > XBridgeTransaction::TTL/60)
+        {
+            transaction.state = XBridgeTransactionDescr::trOffline;
+        }
+        else if (transaction.state == XBridgeTransactionDescr::trPending &&
+                 td.total_seconds() > XBridgeTransaction::TTL/6)
+        {
+            transaction.state = XBridgeTransactionDescr::trExpired;
+        }
+        else if ((transaction.state == XBridgeTransactionDescr::trExpired ||
+                  transaction.state == XBridgeTransactionDescr::trOffline) &&
+                 td.total_seconds() < XBridgeTransaction::TTL/6)
+        {
+            transaction.state = XBridgeTransactionDescr::trPending;
+        }
+        else if (transaction.state == XBridgeTransactionDescr::trExpired &&
+                 td.total_seconds() > XBridgeTransaction::TTL)
+        {
+            m_pendingTransactions.erase(it);
+//            --it;///????
+        }
+        if(isHistoricState(transaction.state))
+        {
+            ++counter;
+            XBridgeTransactionDescrPtr tmp = XBridgeTransactionDescrPtr(new XBridgeTransactionDescr(transaction));
+            LOG() << "insert into history transactions map " <<  transaction.strState() << "\t" << __FUNCTION__;
+            boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
+            m_historicTransactions[id] = tmp;
+        }
+    }
+    m_timer.expires_at(m_timer.expires_at() + boost::posix_time::seconds(TIMER_INTERVAL));
+    m_timer.async_wait(boost::bind(&XBridgeApp::updateHistoricalTransactionsList, this));
+    return  counter != 0;
 }
 
 
@@ -668,7 +741,7 @@ bool XBridgeApp::cancelXBridgeTransaction(const uint256 & id,
             m_transactions[id]->state = XBridgeTransactionDescr::trCancelled;
             xuiConnector.NotifyXBridgeTransactionStateChanged(id, XBridgeTransactionDescr::trCancelled);
             return true;
-        }        
+        }
     }
     return false;
 }
