@@ -98,9 +98,7 @@ QT_MOC_CPP = \
   qt/xbridgeui/moc_xbridgetransactiondialog.cpp \
   qt/xbridgeui/moc_xbridgetransactionsmodel.cpp \
   qt/xbridgeui/moc_xbridgetransactionsview.cpp \
-  qt/moc_walletnonencryptwarningdialog.cpp \
-  qt/moc_walletnonencryptwarningdialog.cpp
-
+  qt/moc_walletnonencryptwarningdialog.cpp 
 
 BITCOIN_MM = \
   qt/macdockiconhandler.mm \
