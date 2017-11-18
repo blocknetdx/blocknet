@@ -93,6 +93,7 @@ QT_MOC_CPP = \
   qt/moc_walletframe.cpp \
   qt/moc_walletmodel.cpp \
   qt/moc_walletview.cpp \
+  qt/moc_walletnonencryptwarningdialog.cpp \
   qt/xbridgeui/moc_xbridgeaddressbookmodel.cpp \
   qt/xbridgeui/moc_xbridgeaddressbookview.cpp \
   qt/xbridgeui/moc_xbridgetransactiondialog.cpp \
