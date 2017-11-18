@@ -36,8 +36,8 @@
 
 #ifdef ENABLE_WALLET
 #include "wallet.h"
-#include "qt/walletnonencryptwarningdialog.h"
-#include "qt/askpassphrasedialog.h"
+#include "walletnonencryptwarningdialog.h"
+#include "askpassphrasedialog.h"
 #endif
 
 #include <stdint.h>
