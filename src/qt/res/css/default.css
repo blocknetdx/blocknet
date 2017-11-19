@@ -676,9 +676,10 @@ min-width:260px;
 
 /**************************** Privacy Dialog ********************************************/
 
+
 QWidget#PrivacyDialog QFrame {
 background-color:transparent;
-border:1px solid #000;
+border:0px solid #000;
 }
 
 QWidget#PrivacyDialog QFrame#labelMintStatus {
@@ -1690,6 +1691,37 @@ QDialog#TransactionDescDialog QTextEdit { /* Contents of Receive Coin Dialog */
 border:1px solid #d7d7d7;
 }
 
+<<<<<<< HEAD
+=======
+/**************************** PRIVACY PAGE *****************************************/
+/*
+QDialog#PrivacyDialog {
+background-color:#fff;
+}
+*/
+/*
+QWidget#PrivacyDialog {
+background-color:#fff;
+}
+*/
+
+QWidget#PrivacyDialog .QFrame[frameShape="4"] { /* QFrame::HLine == 0x0004 */
+border:1px solid #372f44;
+}
+
+QWidget#PrivacyDialog .QFrame#frame_Content {
+background-color:#f8f6f6;
+}
+
+QWidget#PrivacyDialog .QFrame#verticalFrameLeft {
+background-color:#ffffff;
+}
+
+QWidget#PrivacyDialog .QFrame#verticalFrameRight {
+background-color:#ffffff;
+}
+
+>>>>>>> 9f2474679... [UI] Redesign Privacy tab
 /********************************* CALENDAR WIDGET **************************************/
 
 QCalendarView {
