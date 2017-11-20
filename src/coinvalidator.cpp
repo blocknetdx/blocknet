@@ -337,7 +337,7 @@ bool CoinValidator::downloadList(std::list<std::string> &lst, std::string &err) 
 }
 
 /**
- * Returnt the string representation of the amount.
+ * Return the string representation of the amount.
  * @param amount
  * @return
  */
