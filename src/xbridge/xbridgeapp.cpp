@@ -38,15 +38,15 @@ XUIConnector xuiConnector;
 
 //*****************************************************************************
 //*****************************************************************************
-boost::mutex                                  XBridgeApp::m_txLocker;
-std::map<uint256, XBridgeTransactionDescrPtr> XBridgeApp::m_pendingTransactions;
-std::map<uint256, XBridgeTransactionDescrPtr> XBridgeApp::m_transactions;
-std::map<uint256, XBridgeTransactionDescrPtr> XBridgeApp::m_historicTransactions;
-boost::mutex                                  XBridgeApp::m_txUnconfirmedLocker;
-std::map<uint256, XBridgeTransactionDescrPtr> XBridgeApp::m_unconfirmed;
-boost::mutex                                  XBridgeApp::m_ppLocker;
+boost::mutex                                    XBridgeApp::m_txLocker;
+std::map<uint256, XBridgeTransactionDescrPtr>   XBridgeApp::m_pendingTransactions;
+std::map<uint256, XBridgeTransactionDescrPtr>   XBridgeApp::m_transactions;
+std::map<uint256, XBridgeTransactionDescrPtr>   XBridgeApp::m_historicTransactions;
+boost::mutex                                    XBridgeApp::m_txUnconfirmedLocker;
+std::map<uint256, XBridgeTransactionDescrPtr>   XBridgeApp::m_unconfirmed;
+boost::mutex                                    XBridgeApp::m_ppLocker;
 std::map<uint256, std::pair<std::string, XBridgePacketPtr> >  XBridgeApp::m_pendingPackets;
-
+std::string                                     XBridgeApp::m_lastError;
 //*****************************************************************************
 //*****************************************************************************
 void badaboom()
@@ -127,6 +127,7 @@ const unsigned char hash[20] =
 //*****************************************************************************
 bool XBridgeApp::init(int argc, char *argv[])
 {
+
     // init xbridge settings
     Settings & s = settings();
     {
@@ -144,7 +145,17 @@ bool XBridgeApp::init(int argc, char *argv[])
     XBridgeExchange & e = XBridgeExchange::instance();
     e.init();
 
+    m_historicTransactionsStates = {XBridgeTransactionDescr::trExpired,
+                                    XBridgeTransactionDescr::trOffline,
+                                    XBridgeTransactionDescr::trFinished,
+                                    XBridgeTransactionDescr::trDropped,
+                                    XBridgeTransactionDescr::trCancelled,
+                                    XBridgeTransactionDescr::trInvalid};
+    //init threads
     return true;
+
+
+
 }
 
 //*****************************************************************************
@@ -315,6 +326,14 @@ void XBridgeApp::sleep(const unsigned int umilliseconds)
     boost::this_thread::sleep_for(boost::chrono::milliseconds(umilliseconds));
 }
 
+
+bool XBridgeApp::isHistoricState(const XBridgeTransactionDescr::State state)
+{
+    return std::find(m_historicTransactionsStates.begin(), m_historicTransactionsStates.end(), state) != m_historicTransactionsStates.end();
+}
+
+
+
 //*****************************************************************************
 //*****************************************************************************
 XBridgeSessionPtr XBridgeApp::sessionByCurrency(const std::string & currency) const
@@ -350,7 +369,6 @@ std::vector<std::string> XBridgeApp::sessionsCurrencies() const
 void XBridgeApp::addSession(XBridgeSessionPtr session)
 {
     storageStore(session, session->sessionAddr());
-
     boost::mutex::scoped_lock l(m_sessionsLock);
     m_sessionQueue.push(session);
 }
@@ -445,7 +463,9 @@ uint256 XBridgeApp::sendXBridgeTransaction(const std::string & from,
 {
     if (fromCurrency.size() > 8 || toCurrency.size() > 8)
     {
-        LOG() << "invalid currency" << __FUNCTION__;
+        boost::mutex::scoped_lock l(m_lastErrorLock);
+        m_lastError = "invalid currency ";
+        WARN() << m_lastError << __FUNCTION__;
         return uint256();
     }
 
@@ -454,21 +474,17 @@ uint256 XBridgeApp::sendXBridgeTransaction(const std::string & from,
     if (!s)
     {
         // no session
-        uiInterface.ThreadSafeMessageBox(_("No session for ") + fromCurrency,
-                                         "blocknet",
-                                         CClientUIInterface::BTN_OK | CClientUIInterface::ICON_INFORMATION | CClientUIInterface::MODAL);
-
+        boost::mutex::scoped_lock l(m_lastErrorLock);
+        m_lastError = "No session for " + fromCurrency;
         WARN() << "no session for <" << fromCurrency << "> " << __FUNCTION__;
         return uint256();
     }
 
     if (!s->checkAmount(fromAmount))
     {
-        uiInterface.ThreadSafeMessageBox(_("Insufficient funds for ") + fromCurrency,
-                                         "blocknet",
-                                         CClientUIInterface::BTN_OK | CClientUIInterface::ICON_INFORMATION | CClientUIInterface::MODAL);
-
-        LOG() << "insufficient funds for <" << fromCurrency << "> " << __FUNCTION__;
+        boost::mutex::scoped_lock l(m_lastErrorLock);
+        m_lastError = "Insufficient funds for " + fromCurrency;
+        WARN() << "insufficient funds for <" << fromCurrency << "> " << __FUNCTION__;
         return uint256();
     }
 
@@ -542,13 +558,11 @@ bool XBridgeApp::sendPendingTransaction(XBridgeTransactionDescrPtr & ptr)
         ptr->packet->append(tc);
         ptr->packet->append(ptr->toAmount);
     }
-
     onSend(ptr->packet);
 
     ptr->state = XBridgeTransactionDescr::trPending;
 
     xuiConnector.NotifyXBridgeTransactionStateChanged(ptr->id, XBridgeTransactionDescr::trPending);
-
     return true;
 }
 
@@ -559,14 +573,13 @@ uint256 XBridgeApp::acceptXBridgeTransaction(const uint256 & id,
                                              const std::string & to)
 {
     XBridgeTransactionDescrPtr ptr;
-
     {
         boost::mutex::scoped_lock l(m_txLocker);
         if (!m_pendingTransactions.count(id))
         {
-            uiInterface.ThreadSafeMessageBox(_("Transaction not foud"),
-                                             "blocknet",
-                                             CClientUIInterface::BTN_OK | CClientUIInterface::ICON_INFORMATION | CClientUIInterface::MODAL);
+            boost::mutex::scoped_lock l(m_lastErrorLock);
+            m_lastError = "Transaction not found ";
+            WARN() << m_lastError << __FUNCTION__;
             return uint256();
         }
         ptr = m_pendingTransactions[id];
@@ -577,21 +590,17 @@ uint256 XBridgeApp::acceptXBridgeTransaction(const uint256 & id,
     if (!s)
     {
         // no session
-        uiInterface.ThreadSafeMessageBox(_("No session for ") + ptr->toCurrency,
-                                         "blocknet",
-                                         CClientUIInterface::BTN_OK | CClientUIInterface::ICON_INFORMATION | CClientUIInterface::MODAL);
-
+        boost::mutex::scoped_lock l(m_lastErrorLock);
+        m_lastError = "No session for " + ptr->toCurrency;
         WARN() << "no session for <" << ptr->toCurrency << "> " << __FUNCTION__;
         return uint256();
     }
 
     if (!s->checkAmount(ptr->toAmount))
     {
-        uiInterface.ThreadSafeMessageBox(_("Insufficient funds for ") + ptr->toCurrency,
-                                         "blocknet",
-                                         CClientUIInterface::BTN_OK | CClientUIInterface::ICON_INFORMATION | CClientUIInterface::MODAL);
-
-        LOG() << "insufficient funds for <" << ptr->toCurrency << "> " << __FUNCTION__;
+        boost::mutex::scoped_lock l(m_lastErrorLock);
+        m_lastError = "Insufficient funds for " + ptr->toCurrency;
+        WARN() << "insufficient funds for <" << ptr->toCurrency << "> " << __FUNCTION__;
         return uint256();
     }
 
@@ -599,10 +608,8 @@ uint256 XBridgeApp::acceptXBridgeTransaction(const uint256 & id,
     ptr->to   = to;
     std::swap(ptr->fromCurrency, ptr->toCurrency);
     std::swap(ptr->fromAmount,   ptr->toAmount);
-
     // try send immediatelly
     sendAcceptingTransaction(ptr);
-
     return id;
 }
 
@@ -647,16 +654,23 @@ bool XBridgeApp::cancelXBridgeTransaction(const uint256 & id,
     if (sendCancelTransaction(id, reason))
     {
         boost::mutex::scoped_lock l(m_txLocker);
-
-        m_pendingTransactions.erase(id);
+        if(m_pendingTransactions.erase(id) == 0)
+        {
+            boost::mutex::scoped_lock l(m_lastErrorLock);
+            m_lastError = "can't remove transactions ";
+            ERR() << m_lastError << __FUNCTION__;
+            return false;
+        }
         if (m_transactions.count(id))
         {
+            boost::mutex::scoped_lock l(m_lastErrorLock);
+            LOG() << "transaction found " << __FUNCTION__;
             m_transactions[id]->state = XBridgeTransactionDescr::trCancelled;
             xuiConnector.NotifyXBridgeTransactionStateChanged(id, XBridgeTransactionDescr::trCancelled);
-        }
+            return true;
+        }        
     }
-
-    return true;
+    return false;
 }
 
 //******************************************************************************
@@ -666,7 +680,6 @@ bool XBridgeApp::rollbackXBridgeTransaction(const uint256 & id)
     XBridgeSessionPtr session;
     {
         boost::mutex::scoped_lock l(m_txLocker);
-
         if (m_transactions.count(id))
         {
             XBridgeTransactionDescrPtr ptr = m_transactions[id];
@@ -675,7 +688,9 @@ bool XBridgeApp::rollbackXBridgeTransaction(const uint256 & id)
                 session = sessionByCurrency(ptr->fromCurrency);
                 if (!session)
                 {
-                    ERR() << "unknown session for currency " << ptr->fromCurrency;
+                    boost::mutex::scoped_lock l(m_lastErrorLock);
+                    m_lastError = "unknown session for currency " + ptr->fromCurrency;
+                    ERR() << m_lastError << __FUNCTION__;
                     return false;
                 }
             }
@@ -687,13 +702,13 @@ bool XBridgeApp::rollbackXBridgeTransaction(const uint256 & id)
         // session use m_txLocker, must be unlocked because not recursive
         if (!session->rollbacktXBridgeTransaction(id))
         {
-            LOG() << "revert tx failed for " << id.ToString();
+            boost::mutex::scoped_lock l(m_lastErrorLock);
+            m_lastError = "revert tx failed for " + id.ToString();
+            ERR() << m_lastError << __FUNCTION__;
             return false;
         }
-
         sendRollbackTransaction(id);
     }
-
     return true;
 }
 
@@ -705,10 +720,8 @@ bool XBridgeApp::sendCancelTransaction(const uint256 & txid,
     XBridgePacketPtr reply(new XBridgePacket(xbcTransactionCancel));
     reply->append(txid.begin(), 32);
     reply->append(static_cast<uint32_t>(reason));
-
     static UcharVector addr(20, 0);
     onSend(addr, reply);
-
     // cancelled
     return true;
 }
@@ -719,10 +732,8 @@ bool XBridgeApp::sendRollbackTransaction(const uint256 & txid)
 {
     XBridgePacketPtr reply(new XBridgePacket(xbcTransactionRollback));
     reply->append(txid.begin(), 32);
-
     static UcharVector addr(20, 0);
     onSend(addr, reply);
-
     // rolled back
     return true;
 }

@@ -32,6 +32,8 @@ class AcceptedConnection;
 class XBridgeApp
 {
     typedef std::vector<unsigned char> UcharVector;
+    typedef std::shared_ptr<boost::asio::io_service>       IoServicePtr;
+    typedef std::shared_ptr<boost::asio::io_service::work> WorkPtr;
 
     friend void callback(void * closure, int event,
                          const unsigned char * info_hash,
@@ -145,6 +147,28 @@ public:
 
     static boost::mutex                                  m_ppLocker;
     static std::map<uint256, std::pair<std::string, XBridgePacketPtr> > m_pendingPackets;
+
+private:
+    /**
+     * @brief m_historicTransactionsStates - the status list of historical transactions
+     */
+    std::list<XBridgeTransactionDescr::State>       m_historicTransactionsStates;
+private:
+
+
+public:
+    /**
+     * @brief isHistoricState
+     * @param state
+     * @return true, if state history
+     */
+    bool isHistoricState(const XBridgeTransactionDescr::State state);
+private:
+    boost::mutex m_lastErrorLock;
+public:
+    static std::string m_lastError;
+    static const std::string &lastError()  { return  m_lastError; }
+
 };
 
 #endif // XBRIDGEAPP_H

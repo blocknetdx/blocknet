@@ -195,11 +195,10 @@ bool XBridgeTransactionsModel::newTransaction(const std::string & from,
         d.fromAmount   = (boost::uint64_t)(fromAmount * XBridgeTransactionDescr::COIN);
         d.toAmount     = (boost::uint64_t)(toAmount * XBridgeTransactionDescr::COIN);
         d.txtime       = boost::posix_time::second_clock::universal_time();
-
         onTransactionReceived(d);
+        return true;
     }
-
-    return true;
+    return false;
 }
 
 //******************************************************************************
@@ -226,6 +225,10 @@ bool XBridgeTransactionsModel::newTransactionFromPending(const uint256 & id,
 
             // send tx
             d.id = XBridgeApp::instance().acceptXBridgeTransaction(d.id, from, to);
+            if(d.id == uint256())
+            {
+                return false;
+            }
 
             d.txtime = boost::posix_time::second_clock::universal_time();
 
@@ -247,7 +250,6 @@ bool XBridgeTransactionsModel::newTransactionFromPending(const uint256 & id,
             emit beginRemoveRows(QModelIndex(), i, i);
             m_transactions.erase(m_transactions.begin() + i);
             emit endRemoveRows();
-
             --i;
         }
     }
@@ -280,6 +282,10 @@ void XBridgeTransactionsModel::onTimer()
                 boost::posix_time::second_clock::universal_time() -
                 m_transactions[i].txtime;
 
+        auto id = m_transactions[i].id;
+        if(!m_transactions[i].from.empty() && !m_transactions[i].to.empty()){
+            LOG() << "XBridgeTransactionsModel::onTimer td.total_seconds() = " << td.total_seconds();
+        }
         if (m_transactions[i].state == XBridgeTransactionDescr::trNew &&
                 td.total_seconds() > XBridgeTransaction::TTL/60)
         {
@@ -307,6 +313,15 @@ void XBridgeTransactionsModel::onTimer()
             emit endRemoveRows();
             --i;
         }
+//        LOG() << "change transaction state to " <<  m_transactions[i].strState() << "\t" << __FUNCTION__;
+//        if(XBridgeApp::instance().isHistoricState(m_transactions[i].state))
+//        {
+//            XBridgeTransactionDescrPtr tmp = XBridgeTransactionDescrPtr(new XBridgeTransactionDescr(m_transactions[i]));
+//            LOG() << "insert into history transactions map " <<  m_transactions[i].strState() << "\t" << __FUNCTION__;
+//            boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
+//            XBridgeApp::m_historicTransactions[id] = tmp;
+//        }
+
     }
 }
 
