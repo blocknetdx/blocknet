@@ -310,14 +310,14 @@ void XBridgeTransactionsModel::onTimer()
             emit endRemoveRows();
             --i;
         }
-//        LOG() << "change transaction state to " <<  m_transactions[i].strState() << "\t" << __FUNCTION__;
-//        if(XBridgeApp::instance().isHistoricState(m_transactions[i].state))
-//        {
-//            XBridgeTransactionDescrPtr tmp = XBridgeTransactionDescrPtr(new XBridgeTransactionDescr(m_transactions[i]));
-//            LOG() << "insert into history transactions map " <<  m_transactions[i].strState() << "\t" << __FUNCTION__;
-//            boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
-//            XBridgeApp::m_historicTransactions[id] = tmp;
-//        }
+        //update historical transactions in XBridgeApp
+        if(XBridgeApp::instance().isHistoricState(m_transactions[i].state))
+        {
+            XBridgeTransactionDescrPtr tmp = XBridgeTransactionDescrPtr(new XBridgeTransactionDescr(m_transactions[i]));
+            LOG() << "insert into history transactions map " <<  m_transactions[i].strState() << "\t" << __FUNCTION__;
+            boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
+            XBridgeApp::m_historicTransactions[id] = tmp;
+        }
 
     }
 }
