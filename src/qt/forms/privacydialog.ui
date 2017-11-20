@@ -47,7 +47,7 @@
          <number>0</number>
         </property>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_Header" stretch="0,0,1">
+         <layout class="QHBoxLayout" name="horizontalLayout_Header" stretch="1,0,1">
           <item>
            <widget class="QLabel" name="labelOverviewHeaderLeft">
             <property name="minimumSize">
@@ -569,6 +569,25 @@
                         </property>
                         <property name="placeholderText">
                          <string/>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="Line" name="line">
+                        <property name="minimumSize">
+                         <size>
+                          <width>0</width>
+                          <height>1</height>
+                         </size>
+                        </property>
+                        <property name="maximumSize">
+                         <size>
+                          <width>16777215</width>
+                          <height>1</height>
+                         </size>
+                        </property>
+                        <property name="orientation">
+                         <enum>Qt::Horizontal</enum>
                         </property>
                        </widget>
                       </item>
