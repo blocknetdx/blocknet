@@ -309,14 +309,37 @@ void XBridgeTransactionsModel::onTimer()
             m_transactions.erase(m_transactions.begin()+i);
             emit endRemoveRows();
             --i;
+            {
+                boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
+                if(XBridgeApp::m_historicTransactions.find(id) != XBridgeApp::m_historicTransactions.end())
+                {
+                    XBridgeApp::m_historicTransactions.erase(id);
+                    LOG() << "remove historical transaction " << id.GetHex() << " " << __FUNCTION__;
+                } else {
+                    LOG() << "can't remove from historical transaction, transaction " << id.GetHex() << " not found " << __FUNCTION__;
+                }
+            }
         }
         //update historical transactions in XBridgeApp
         if(XBridgeApp::instance().isHistoricState(m_transactions[i].state))
         {
             XBridgeTransactionDescrPtr tmp = XBridgeTransactionDescrPtr(new XBridgeTransactionDescr(m_transactions[i]));
+
             LOG() << "insert into history transactions map " <<  m_transactions[i].strState() << "\t" << __FUNCTION__;
-            boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
-            XBridgeApp::m_historicTransactions[id] = tmp;
+            {
+                boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
+                XBridgeApp::m_historicTransactions[id] = tmp;
+            }
+            {
+                boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
+                if(XBridgeApp::m_pendingTransactions.find(id) != XBridgeApp::m_pendingTransactions.end())
+                {
+                    XBridgeApp::m_pendingTransactions.erase(id);
+                    LOG() << "remove pending transaction " << id.GetHex() << " " << __FUNCTION__;
+                } else {
+                    LOG() << "can't remove from pending transaction, transaction " << id.GetHex() << " not found " << __FUNCTION__;
+                }
+            }
         }
 
     }
