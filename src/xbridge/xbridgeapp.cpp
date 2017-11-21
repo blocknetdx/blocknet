@@ -158,13 +158,8 @@ bool XBridgeApp::init(int argc, char *argv[])
     XBridgeExchange & e = XBridgeExchange::instance();
     e.init();
 
-    m_historicTransactionsStates = {XBridgeTransactionDescr::trExpired,
-                                    XBridgeTransactionDescr::trOffline,
-                                    XBridgeTransactionDescr::trFinished,
-                                    XBridgeTransactionDescr::trDropped,
-                                    XBridgeTransactionDescr::trCancelled,
-                                    XBridgeTransactionDescr::trInvalid};
-    //init threads
+    m_historicTransactionsStates = {XBridgeTransactionDescr::trFinished};
+
     return true;
 
 
@@ -594,6 +589,8 @@ uint256 XBridgeApp::sendXBridgeTransaction(const std::string & from,
 //******************************************************************************
 bool XBridgeApp::sendPendingTransaction(XBridgeTransactionDescrPtr & ptr)
 {
+
+
     // if (!ptr->packet)
     {
         if (ptr->from.size() == 0 || ptr->to.size() == 0)
