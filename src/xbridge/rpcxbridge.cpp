@@ -110,8 +110,8 @@ Value dxGetTransactionsHistoryList(const Array & params, bool fHelp)
             Object jtr;
             Object buy;            
             const auto tr = trEntry.second;
-            double fromAmount = static_cast<double>(tr->fromAmount) / XBridgeTransactionDescr::COIN;
-            double toAmount = static_cast<double>(tr->toAmount) / XBridgeTransactionDescr::COIN;
+            double fromAmount = static_cast<double>(tr->fromAmount);
+            double toAmount = static_cast<double>(tr->toAmount);
             double price = fromAmount / toAmount;
             std::string buyTime = to_simple_string(tr->created);
             buy.push_back(Pair("time: ", buyTime));
