@@ -11,6 +11,8 @@
 #include <boost/asio/ssl.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include <boost/signals2.hpp>
+#include <boost/date_time/posix_time/ptime.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <stdio.h>
 #include <atomic>
 
@@ -103,21 +105,33 @@ Value dxGetTransactionsHistoryList(const Array & params, bool fHelp)
             LOG() << "empty history transactions list ";
             return arr;
         }
-        for (const auto & trEntry : trlist)
+        for (const auto &trEntry : trlist)
         {
             Object jtr;
+            Object buy;            
             const auto tr = trEntry.second;
-            jtr.push_back(Pair("id", tr->id.GetHex()));
-            jtr.push_back(Pair("from", tr->fromCurrency));
-            jtr.push_back(Pair("from address", tr->from));
             double fromAmount = static_cast<double>(tr->fromAmount) / XBridgeTransactionDescr::COIN;
-            jtr.push_back(Pair("fromAmount", boost::lexical_cast<std::string>(fromAmount)));
-            jtr.push_back(Pair("to", tr->toCurrency));
-            jtr.push_back(Pair("to address", tr->to));
             double toAmount = static_cast<double>(tr->toAmount) / XBridgeTransactionDescr::COIN;
-            jtr.push_back(Pair("toAmount", boost::lexical_cast<std::string>(toAmount)));
-            jtr.push_back(Pair("state", tr->strState()));
+            double price = fromAmount / toAmount;
+            std::string buyTime = to_simple_string(tr->created);
+            buy.push_back(Pair("time: ", buyTime));
+            buy.push_back(Pair("traid_id: ", tr->id.GetHex()));
+            buy.push_back(Pair("price: ", price));
+            buy.push_back(Pair("size: ", tr->toAmount));
+            buy.push_back(Pair("side: ", "buy"));
             arr.push_back(jtr);
+
+//            jtr.push_back(Pair("id", tr->id.GetHex()));
+//            jtr.push_back(Pair("from", tr->fromCurrency));
+//            jtr.push_back(Pair("from address", tr->from));
+//
+//            jtr.push_back(Pair("fromAmount", boost::lexical_cast<std::string>(fromAmount)));
+//            jtr.push_back(Pair("to", tr->toCurrency));
+//            jtr.push_back(Pair("to address", tr->to));
+//            double toAmount = static_cast<double>(tr->toAmount) / XBridgeTransactionDescr::COIN;
+//            jtr.push_back(Pair("toAmount", boost::lexical_cast<std::string>(toAmount)));
+//            jtr.push_back(Pair("state", tr->strState()));
+//            arr.push_back(jtr);
         }
     }
     return arr;
