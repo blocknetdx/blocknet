@@ -324,7 +324,6 @@ void XBridgeTransactionsModel::onTimer()
         if(XBridgeApp::instance().isHistoricState(m_transactions[i].state))
         {
             XBridgeTransactionDescrPtr tmp = XBridgeTransactionDescrPtr(new XBridgeTransactionDescr(m_transactions[i]));
-
             LOG() << "insert into history transactions map " <<  m_transactions[i].strState() << "\t" << __FUNCTION__;
             {
                 boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
