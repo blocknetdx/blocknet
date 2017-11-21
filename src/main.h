@@ -420,6 +420,7 @@ bool ValidOutPoint(const COutPoint out, int nHeight);
 void RecalculateZPHRSpent();
 void RecalculateZPHRMinted();
 bool RecalculatePHRSupply(int nHeightStart);
+bool ReindexAccumulators(list<uint256> listMissingCheckpoints, string& strError);
 
 
 /**
