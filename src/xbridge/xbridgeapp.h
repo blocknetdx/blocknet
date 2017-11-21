@@ -163,10 +163,7 @@ public:
      */
     static std::string m_lastError;
 
-    /**
-     * @brief TIMER_INTERVAL - update historical transactions list timer interval
-     */
-    const uint TIMER_INTERVAL = 3;
+
     /**
      * @brief m_services
      */
@@ -211,14 +208,13 @@ public:
      * @return true, if the transaction is historical
      */
     bool isHistoricState(const XBridgeTransactionDescr::State state);
-public:
+
 
     /**
      * @brief lastError
      * @return last error message
      */
     static const std::string &lastError()  { return  m_lastError; }
-
 
 };
 

@@ -59,7 +59,7 @@ void badaboom()
 //*****************************************************************************
 XBridgeApp::XBridgeApp(): m_timerIoWork(new boost::asio::io_service::work(m_timerIo))
   , m_timerThread(boost::bind(&boost::asio::io_service::run, &m_timerIo))
-  , m_timer(m_timerIo, boost::posix_time::seconds(TIMER_INTERVAL))
+  , m_timer(m_timerIo, boost::posix_time::seconds(3))
 {
     for (int i = 0; i < 2; ++i)
     {
@@ -394,7 +394,7 @@ bool XBridgeApp::updateHistoricalTransactionsList()
             m_historicTransactions[id] = tmp;
         }
     }
-    m_timer.expires_at(m_timer.expires_at() + boost::posix_time::seconds(TIMER_INTERVAL));
+    m_timer.expires_at(m_timer.expires_at() + boost::posix_time::seconds(3));
     m_timer.async_wait(boost::bind(&XBridgeApp::updateHistoricalTransactionsList, this));
     return  counter != 0;
 }
