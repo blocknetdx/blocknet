@@ -41,15 +41,6 @@ bool CheckBlock(int nHeight, const uint256& hash, bool fMatchesCheckpoint)
     return hash == i->second;
 }
 
-//! Returns true only when both the height and hash match a checkpoint
-bool IsCheckpointedBlock(int nHeight, const uint256& hash)
-{
-    const MapCheckpoints& checkpoints = *Params().Checkpoints().mapCheckpoints;
-    MapCheckpoints::const_iterator i = checkpoints.find(nHeight);
-    if (i == checkpoints.end()) return false;
-    return hash == i->second;
-}
-
 //! Guess how far we are in the verification process at the given block index
 double GuessVerificationProgress(CBlockIndex* pindex, bool fSigchecks)
 {
