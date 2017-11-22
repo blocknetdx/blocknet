@@ -273,11 +273,13 @@ void XBridgeTransactionsView::onCancelTransaction()
         return;
     }
 
-    if (!m_txModel.cancelTransaction(m_txModel.item(m_contextMenuIndex.row()).id))
+    const auto &id = m_txModel.item(m_contextMenuIndex.row()).id;
+    if (!m_txModel.cancelTransaction(id))
     {
         QMessageBox::warning(this,
                              trUtf8("Cancel transaction"),
-                             trUtf8("Error send cancel request %1").arg(XBridgeApp::lastError().c_str()));
+                             trUtf8("Error send cancel request %1")
+                             .arg(id.ToString().c_str()));
     }
 }
 
@@ -299,11 +301,12 @@ void XBridgeTransactionsView::onRollbackTransaction()
         return;
     }
 
-    if (!m_txModel.rollbackTransaction(m_txModel.item(m_contextMenuIndex.row()).id))
+    const auto &id = m_txModel.item(m_contextMenuIndex.row()).id;
+    if (!m_txModel.rollbackTransaction(id))
     {
         QMessageBox::warning(this,
                              trUtf8("Cancel transaction"),
-                             trUtf8("Error send rollback request %1").arg(XBridgeApp::lastError().c_str()));
+                             trUtf8("Error send rollback request %1").arg(id.ToString().c_str()));
     }
 }
 

@@ -18,6 +18,7 @@
 
 #include "util/settings.h"
 #include "util/logger.h"
+#include "util/xbridgeerror.h"
 #include "xbridgeapp.h"
 #include "xbridgeexchange.h"
 #include "xbridgetransaction.h"
@@ -114,24 +115,12 @@ Value dxGetTransactionsHistoryList(const Array & params, bool fHelp)
             double toAmount = static_cast<double>(tr->toAmount);
             double price = fromAmount / toAmount;
             std::string buyTime = to_simple_string(tr->created);
-            buy.push_back(Pair("time: ", buyTime));
-            buy.push_back(Pair("traid_id: ", tr->id.GetHex()));
-            buy.push_back(Pair("price: ", price));
-            buy.push_back(Pair("size: ", tr->toAmount));
-            buy.push_back(Pair("side: ", "buy"));
+            buy.push_back(Pair("time", buyTime));
+            buy.push_back(Pair("traid_id", tr->id.GetHex()));
+            buy.push_back(Pair("price", price));
+            buy.push_back(Pair("size", tr->toAmount));
+            buy.push_back(Pair("side", "buy"));
             arr.push_back(jtr);
-
-//            jtr.push_back(Pair("id", tr->id.GetHex()));
-//            jtr.push_back(Pair("from", tr->fromCurrency));
-//            jtr.push_back(Pair("from address", tr->from));
-//
-//            jtr.push_back(Pair("fromAmount", boost::lexical_cast<std::string>(fromAmount)));
-//            jtr.push_back(Pair("to", tr->toCurrency));
-//            jtr.push_back(Pair("to address", tr->to));
-//            double toAmount = static_cast<double>(tr->toAmount) / XBridgeTransactionDescr::COIN;
-//            jtr.push_back(Pair("toAmount", boost::lexical_cast<std::string>(toAmount)));
-//            jtr.push_back(Pair("state", tr->strState()));
-//            arr.push_back(jtr);
         }
     }
     return arr;
@@ -280,19 +269,19 @@ Value dxCreateTransaction(const Array & params, bool fHelp)
         throw runtime_error("incorrect address");
     }
 
-    uint256 id = XBridgeApp::instance().sendXBridgeTransaction
+    uint256 id = uint256();
+    const auto res = XBridgeApp::instance().sendXBridgeTransaction
             (from, fromCurrency, (boost::uint64_t)(fromAmount * XBridgeTransactionDescr::COIN),
-             to,   toCurrency,   (boost::uint64_t)(toAmount * XBridgeTransactionDescr::COIN));
-    if(id == uint256())
+             to,   toCurrency,   (boost::uint64_t)(toAmount * XBridgeTransactionDescr::COIN), id);
+    if(res == xbridge::NO_ERROR)
     {
         Object obj;
-        obj.push_back(Pair("error: ", XBridgeApp::lastError()));
-        obj.push_back(Pair("from: ", from));
-        obj.push_back(Pair("from currency: ", fromCurrency));
-        obj.push_back(Pair("from amount: ", fromAmount));
-        obj.push_back(Pair("to: ", to));
-        obj.push_back(Pair("to currency: ", toCurrency));
-        obj.push_back(Pair("to amount: ", toAmount));
+        obj.push_back(Pair("from", from));
+        obj.push_back(Pair("from currency", fromCurrency));
+        obj.push_back(Pair("from amount", fromAmount));
+        obj.push_back(Pair("to", to));
+        obj.push_back(Pair("to currency", toCurrency));
+        obj.push_back(Pair("to amount", toAmount));
         return obj;
     }
     Object obj;
@@ -321,19 +310,19 @@ Value dxAcceptTransaction(const Array & params, bool fHelp)
         throw runtime_error("incorrect address");
     }
 
-    uint256 idresult = XBridgeApp::instance().acceptXBridgeTransaction(id, from, to);
-    if(idresult == uint256())
+    uint256 idResult;
+    const auto error= XBridgeApp::instance().acceptXBridgeTransaction(id, from, to, idResult);
+    if(error == xbridge::NO_ERROR)
     {
         Object obj;
-        obj.push_back(Pair("error: ", XBridgeApp::lastError()));
-        obj.push_back(Pair("id: ", id.GetHex()));
-        obj.push_back(Pair("from: ", from));
-        obj.push_back(Pair("to: ", to));
+        obj.push_back(Pair("id", id.GetHex()));
+        obj.push_back(Pair("from", from));
+        obj.push_back(Pair("to", to));
         return obj;
     }
 
     Object obj;
-    obj.push_back(Pair("id", idresult.GetHex()));
+    obj.push_back(Pair("id", idResult.GetHex()));
     return obj;
 }
 
@@ -348,11 +337,10 @@ Value dxCancelTransaction(const Array & params, bool fHelp)
     }
     LOG() << "rpc cancel transaction " << __FUNCTION__;
     uint256 id(params[0].get_str());
-    if(!XBridgeApp::instance().cancelXBridgeTransaction(id, crRpcRequest))
+    if(XBridgeApp::instance().cancelXBridgeTransaction(id, crRpcRequest) == xbridge::NO_ERROR)
     {
         Object obj;
-        obj.push_back(Pair("error: ", XBridgeApp::lastError()));
-        obj.push_back(Pair("id: ",id.GetHex()));
+        obj.push_back(Pair("id",id.GetHex()));
         return  obj;
     }
     Object obj;

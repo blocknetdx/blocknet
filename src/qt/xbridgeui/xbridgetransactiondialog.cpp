@@ -309,20 +309,25 @@ void XBridgeTransactionDialog::onSendTransaction()
     if (m_pendingId != uint256())
     {
         // accept pending tx
-        if(!m_model.newTransactionFromPending(m_pendingId, m_hubAddress, from, to))
+        const auto error = m_model.newTransactionFromPending(m_pendingId, m_hubAddress, from, to);
+        if(error != xbridge::NO_ERROR)
         {
             QMessageBox::warning(this, trUtf8("check parameters"),
-                                 trUtf8("Invalid address %1").arg(XBridgeApp::instance().lastError().c_str()));
+                                 trUtf8("Invalid address %1")
+                                 .arg(xbridge::xbridgeErrorText(error, from).c_str()));
             return;
         }
     }
     else
     {
         // new tx
-        if (!m_model.newTransaction(from, to, fromCurrency, toCurrency, fromAmount, toAmount))
+        const auto error = m_model.newTransaction(from, to, fromCurrency, toCurrency, fromAmount, toAmount);
+        if (error != xbridge::NO_ERROR)
         {
             QMessageBox::warning(this, trUtf8("check parameters"),
-                                 trUtf8("Invalid amount %1").arg(XBridgeApp::instance().lastError().c_str()));
+                                 trUtf8("Invalid amount %1 %2")
+                                 .arg(xbridge::xbridgeErrorText(error).c_str())
+                                 .arg(fromAmount));
             return;
         }
     }

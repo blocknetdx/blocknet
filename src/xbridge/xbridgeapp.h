@@ -9,7 +9,7 @@
 #include "xbridgepacket.h"
 #include "uint256.h"
 #include "xbridgetransactiondescr.h"
-
+#include "util/xbridgeerror.h"
 #include <thread>
 #include <atomic>
 #include <vector>
@@ -53,23 +53,25 @@ public:
     bool init(int argc, char *argv[]);
     bool start();
 
-    uint256 sendXBridgeTransaction(const std::string & from,
-                                   const std::string & fromCurrency,
-                                   const uint64_t & fromAmount,
-                                   const std::string & to,
-                                   const std::string & toCurrency,
-                                   const uint64_t & toAmount);
-    bool sendPendingTransaction(XBridgeTransactionDescrPtr & ptr);
+    xbridge::Error sendXBridgeTransaction(const std::string &from,
+                                          const std::string &fromCurrency,
+                                          const uint64_t &fromAmount,
+                                          const std::string &to,
+                                          const std::string &toCurrency,
+                                          const uint64_t &toAmount,
+                                          uint256 &id);
 
-    uint256 acceptXBridgeTransaction(const uint256 & id,
+    bool sendPendingTransaction(XBridgeTransactionDescrPtr &ptr);
+
+    xbridge::Error acceptXBridgeTransaction(const uint256 & id,
                                      const std::string & from,
-                                     const std::string & to);
+                                     const std::string & to, uint256 &result);
     bool sendAcceptingTransaction(XBridgeTransactionDescrPtr & ptr);
 
-    bool cancelXBridgeTransaction(const uint256 & id, const TxCancelReason & reason);
+    xbridge::Error cancelXBridgeTransaction(const uint256 & id, const TxCancelReason & reason);
     bool sendCancelTransaction(const uint256 & txid, const TxCancelReason & reason);
 
-    bool rollbackXBridgeTransaction(const uint256 & id);
+    xbridge::Error rollbackXBridgeTransaction(const uint256 & id);
     bool sendRollbackTransaction(const uint256 & txid);
 
 public:
@@ -159,12 +161,6 @@ public:
     boost::mutex m_lastErrorLock;
 
     /**
-     * @brief m_lastError - contains a last error message
-     */
-    static std::string m_lastError;
-
-
-    /**
      * @brief m_services
      */
     std::deque<IoServicePtr> m_services;
@@ -210,11 +206,6 @@ public:
     bool isHistoricState(const XBridgeTransactionDescr::State state);
 
 
-    /**
-     * @brief lastError
-     * @return last error message
-     */
-    static const std::string &lastError()  { return  m_lastError; }
 
 };
 

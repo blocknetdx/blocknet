@@ -7,7 +7,7 @@
 // #include "xbridgeconnector.h"
 #include "xbridge/xuiconnector.h"
 #include "xbridge/util/xutil.h"
-
+#include "xbridge/util/xbridgeerror.h"
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 //******************************************************************************
@@ -165,7 +165,7 @@ bool XBridgeTransactionsModel::isMyTransaction(const unsigned int index) const
 
 //******************************************************************************
 //******************************************************************************
-bool XBridgeTransactionsModel::newTransaction(const std::string & from,
+xbridge::Error XBridgeTransactionsModel::newTransaction(const std::string & from,
                                               const std::string & to,
                                               const std::string & fromCurrency,
                                               const std::string & toCurrency,
@@ -176,15 +176,16 @@ bool XBridgeTransactionsModel::newTransaction(const std::string & from,
     XBridgeSessionPtr ptr = app.sessionByCurrency(fromCurrency);
     if (ptr && ptr->minAmount() > fromAmount)
     {
-        return false;
+        return xbridge::INVALID_AMOUNT;
     }
 
     // TODO check amount
-    uint256 id = XBridgeApp::instance().sendXBridgeTransaction
+    uint256 id = uint256();
+     const auto code = XBridgeApp::instance().sendXBridgeTransaction
             (from, fromCurrency, (uint64_t)(fromAmount * XBridgeTransactionDescr::COIN),
-             to,   toCurrency,   (uint64_t)(toAmount * XBridgeTransactionDescr::COIN));
+             to,   toCurrency,   (uint64_t)(toAmount * XBridgeTransactionDescr::COIN),id);
 
-    if (id != uint256())
+    if (code == xbridge::NO_ERROR)
     {
         XBridgeTransactionDescr d;
         d.id           = id;
@@ -196,17 +197,17 @@ bool XBridgeTransactionsModel::newTransaction(const std::string & from,
         d.toAmount     = (boost::uint64_t)(toAmount * XBridgeTransactionDescr::COIN);
         d.txtime       = boost::posix_time::second_clock::universal_time();
         onTransactionReceived(d);
-        return true;
+        return code;
     }
-    return false;
+    return code;
 }
 
 //******************************************************************************
 //******************************************************************************
-bool XBridgeTransactionsModel::newTransactionFromPending(const uint256 & id,
-                                                         const std::vector<unsigned char> & hub,
-                                                         const std::string & from,
-                                                         const std::string & to)
+xbridge::Error XBridgeTransactionsModel::newTransactionFromPending(const uint256 &id,
+                                                         const std::vector<unsigned char> &hub,
+                                                         const std::string &from,
+                                                         const std::string &to)
 {
     unsigned int i = 0;
     for (; i < m_transactions.size(); ++i)
@@ -214,7 +215,7 @@ bool XBridgeTransactionsModel::newTransactionFromPending(const uint256 & id,
         if (m_transactions[i].id == id && m_transactions[i].hubAddress == hub)
         {
             // found
-            XBridgeTransactionDescr & d = m_transactions[i];
+            XBridgeTransactionDescr &d = m_transactions[i];
             d.from  = from;
             d.to    = to;
             d.state = XBridgeTransactionDescr::trAccepting;
@@ -224,10 +225,10 @@ bool XBridgeTransactionsModel::newTransactionFromPending(const uint256 & id,
             emit dataChanged(index(i, FirstColumn), index(i, LastColumn));
 
             // send tx
-            d.id = XBridgeApp::instance().acceptXBridgeTransaction(d.id, from, to);
-            if(d.id == uint256())
+            const auto error = XBridgeApp::instance().acceptXBridgeTransaction(d.id, from, to, d.id);
+            if(error != xbridge::NO_ERROR)
             {
-                return false;
+                return error;
             }
 
             d.txtime = boost::posix_time::second_clock::universal_time();
@@ -239,7 +240,7 @@ bool XBridgeTransactionsModel::newTransactionFromPending(const uint256 & id,
     if (i == m_transactions.size())
     {
         // not found...assert ?
-        return false;
+        return xbridge::UNKNOWN_ERROR;
     }
 
     // remove all other tx with this id
@@ -254,21 +255,21 @@ bool XBridgeTransactionsModel::newTransactionFromPending(const uint256 & id,
         }
     }
 
-    return true;
+    return xbridge::NO_ERROR;
 }
 
 //******************************************************************************
 //******************************************************************************
-bool XBridgeTransactionsModel::cancelTransaction(const uint256 & id)
+bool XBridgeTransactionsModel::cancelTransaction(const uint256 &id)
 {
-    return XBridgeApp::instance().cancelXBridgeTransaction(id, crUserRequest);
+    return XBridgeApp::instance().cancelXBridgeTransaction(id, crUserRequest) == xbridge::NO_ERROR;
 }
 
 //******************************************************************************
 //******************************************************************************
 bool XBridgeTransactionsModel::rollbackTransaction(const uint256 & id)
 {
-    return XBridgeApp::instance().rollbackXBridgeTransaction(id);
+    return XBridgeApp::instance().rollbackXBridgeTransaction(id) == xbridge::NO_ERROR;
 }
 
 //******************************************************************************
