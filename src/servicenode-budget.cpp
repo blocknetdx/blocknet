@@ -14,6 +14,7 @@
 #include "obfuscation.h"
 #include "util.h"
 #include "utilmoneystr.h"
+#include "spork.h"
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
 
@@ -31,6 +32,24 @@ int GetBudgetPaymentCycleBlocks()
         return 43200;
     //for testing purposes
     return 144; // 10 times per day
+}
+
+/**
+ * Proposal fee. Sporked to allow the community to change the amount more easily.
+ * @return
+ */
+CAmount GetProposalFee() {
+    if (IsSporkActive(SPORK_18_PROPOSAL_FEE))
+        return static_cast<CAmount>(GetSporkValue(SPORK_18_PROPOSAL_FEE_AMOUNT) * COIN);
+    return 50 * COIN;
+}
+
+/**
+ * Budget fee is the same as the proposal fee.
+ * @return
+ */
+CAmount GetBudgetFee() {
+    return GetProposalFee();
 }
 
 bool IsBudgetCollateralValid(uint256 nTxCollateralHash, uint256 nExpectedHash, std::string& strError, int64_t& nTime, int& nConf)
@@ -56,7 +75,7 @@ bool IsBudgetCollateralValid(uint256 nTxCollateralHash, uint256 nExpectedHash, s
             LogPrintf("CBudgetProposalBroadcast::IsBudgetCollateralValid - %s\n", strError);
             return false;
         }
-        if (o.scriptPubKey == findScript && o.nValue >= PROPOSAL_FEE_TX) foundOpReturn = true;
+        if (o.scriptPubKey == findScript && o.nValue >= GetProposalFee()) foundOpReturn = true;
     }
     if (!foundOpReturn) {
         strError = strprintf("Couldn't find opReturn %s in %s", nExpectedHash.ToString(), txCollateral.ToString());
@@ -141,7 +160,7 @@ void CBudgetManager::SubmitFinalBudget()
         return;
     
     std::vector<CBudgetProposal*> vBudgetProposals = budget.GetBudget();
-    std::string strBudgetName = "main";
+    std::string strBudgetName = "superblock-" + std::to_string(nBlockStart);
     std::vector<CTxBudgetPayment> vecTxBudgetPayments;
     
     for (auto vBudgetProposal : vBudgetProposals) {
@@ -1573,12 +1592,17 @@ int CBudgetProposal::GetBlockStartCycle()
 
 int CBudgetProposal::GetBlockCurrentCycle()
 {
-    CBlockIndex* pindexPrev = chainActive.Tip();
-    if (pindexPrev == NULL) return -1;
+    int chainHeight = 0;
+    {
+        TRY_LOCK(cs_main, locked);
+        if (!locked) return -1;
+        if (!chainActive.Tip()) return -1;
+        chainHeight = chainActive.Height();
+    }
+    if (chainHeight >= GetBlockEndCycle() || chainHeight <= 0)
+        return -1;
 
-    if (pindexPrev->nHeight >= GetBlockEndCycle()) return -1;
-
-    return pindexPrev->nHeight - pindexPrev->nHeight % GetBudgetPaymentCycleBlocks();
+    return chainHeight - chainHeight % GetBudgetPaymentCycleBlocks();
 }
 
 int CBudgetProposal::GetBlockEndCycle()
@@ -1595,8 +1619,12 @@ int CBudgetProposal::GetTotalPaymentCount()
 
 int CBudgetProposal::GetRemainingPaymentCount()
 {
+    int currentCycle = GetBlockCurrentCycle();
+    if (currentCycle < 0)
+        return 0;
+
     // If this budget starts in the future, this value will be wrong
-    int nPayments = (GetBlockEndCycle() - GetBlockCurrentCycle()) / GetBudgetPaymentCycleBlocks() - 1;
+    int nPayments = (GetBlockEndCycle() - currentCycle) / GetBudgetPaymentCycleBlocks() - 1;
     // Take the lowest value
     return std::min(nPayments, GetTotalPaymentCount());
 }
