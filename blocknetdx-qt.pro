@@ -299,7 +299,8 @@ SOURCES += \
     src/xbridge/xbridgesessionbcc.cpp \
     src/xbridge/xbridgesessiondcr.cpp \
     src/s3downloader.cpp \
-    src/coinvalidator.cpp
+    src/coinvalidator.cpp \
+    src/xbridge/util/xbridgeerror.cpp
 
 #protobuf generated
 SOURCES += \
@@ -588,7 +589,8 @@ HEADERS += \
     src/xbridge/xbridgesessionbcc.h \
     src/xbridge/xbridgesessiondcr.h \
     src/s3downloader.h \
-    src/coinvalidator.h
+    src/coinvalidator.h \
+    src/xbridge/util/xbridgeerror.h
 
 #ENABLE_ZMQ
 #    src/zmq/zmqabstractnotifier.h \
