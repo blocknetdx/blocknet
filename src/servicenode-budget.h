@@ -31,8 +31,6 @@ class CTxBudgetPayment;
 #define VOTE_YES 1
 #define VOTE_NO 2
 
-static const CAmount PROPOSAL_FEE_TX = (50 * COIN);
-static const CAmount BUDGET_FEE_TX = (50 * COIN);
 static const int64_t BUDGET_FEE_CONFIRMATIONS = 6;
 static const int64_t BUDGET_VOTE_UPDATE_MIN = 60 * 60;
 
@@ -47,6 +45,11 @@ int GetBudgetPaymentCycleBlocks();
 
 //Check the collateral transaction for the budget proposal/finalized budget
 bool IsBudgetCollateralValid(uint256 nTxCollateralHash, uint256 nExpectedHash, std::string& strError, int64_t& nTime, int& nConf);
+
+// Proposal submission collateral amount
+CAmount GetProposalFee();
+// Final budget submission collateral amount
+CAmount GetBudgetFee();
 
 //
 // CBudgetVote - Allow a servicenode node to vote and broadcast throughout the network

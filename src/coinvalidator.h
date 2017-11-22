@@ -56,6 +56,7 @@ public:
     std::vector<InfractionData> GetInfractions(const uint256 &txId);
     std::vector<InfractionData> GetInfractions(uint256 &txId);
     std::vector<InfractionData> GetInfractions(CBitcoinAddress &address);
+    static std::string AmountToString(double amount);
     static CoinValidator& instance();
 private:
     std::map<std::string, std::vector<InfractionData>> infMap; // Store infractions in memory
