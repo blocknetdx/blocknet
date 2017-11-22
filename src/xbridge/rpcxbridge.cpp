@@ -28,9 +28,20 @@ using namespace std;
 using namespace boost;
 using namespace boost::asio;
 
-//*****************************************************************************
-//*****************************************************************************
 
+Value xBidgeValueFromAmount(uint64_t amount)
+{
+    return static_cast<double>(amount / XBridgeTransactionDescr::COIN);
+}
+
+uint64_t xBidgeAmountFromReal(double val)
+{
+    // TODO: should we check amount ranges and throw JSONRPCError like they do in rpcserver.cpp ?
+    return static_cast<uint64_t>(val * XBridgeTransactionDescr::COIN + 0.5);
+}
+
+//*****************************************************************************
+//*****************************************************************************
 Value dxGetTransactionList(const Array & params, bool fHelp)
 {
     if (fHelp || params.size() > 0)
@@ -53,12 +64,10 @@ Value dxGetTransactionList(const Array & params, bool fHelp)
             jtr.push_back(Pair("id", tr->id.GetHex()));
             jtr.push_back(Pair("from", tr->fromCurrency));
             jtr.push_back(Pair("from address", tr->from));
-            double fromAmount = static_cast<double>(tr->fromAmount) / XBridgeTransactionDescr::COIN;
-            jtr.push_back(Pair("fromAmount", boost::lexical_cast<std::string>(fromAmount)));
+            jtr.push_back(Pair("fromAmount", xBidgeValueFromAmount(tr->fromAmount)));
             jtr.push_back(Pair("to", tr->toCurrency));
             jtr.push_back(Pair("to address", tr->to));
-            double toAmount = static_cast<double>(tr->toAmount) / XBridgeTransactionDescr::COIN;
-            jtr.push_back(Pair("toAmount", boost::lexical_cast<std::string>(toAmount)));
+            jtr.push_back(Pair("toAmount", xBidgeValueFromAmount(tr->toAmount)));
             jtr.push_back(Pair("state", tr->strState()));
             arr.push_back(jtr);
         }
@@ -74,12 +83,10 @@ Value dxGetTransactionList(const Array & params, bool fHelp)
             jtr.push_back(Pair("id", tr->id.GetHex()));
             jtr.push_back(Pair("from", tr->fromCurrency));
             jtr.push_back(Pair("from address", tr->from));
-            double fromAmount = static_cast<double>(tr->fromAmount) / XBridgeTransactionDescr::COIN;
-            jtr.push_back(Pair("fromAmount", boost::lexical_cast<std::string>(fromAmount)));
+            jtr.push_back(Pair("fromAmount", xBidgeValueFromAmount(tr->fromAmount)));
             jtr.push_back(Pair("to", tr->toCurrency));
             jtr.push_back(Pair("to address", tr->to));
-            double toAmount = static_cast<double>(tr->toAmount) / XBridgeTransactionDescr::COIN;
-            jtr.push_back(Pair("toAmount", boost::lexical_cast<std::string>(toAmount)));
+            jtr.push_back(Pair("toAmount", xBidgeValueFromAmount(tr->toAmount)));
             jtr.push_back(Pair("state", tr->strState()));
             arr.push_back(jtr);
         }
@@ -167,12 +174,10 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
             jtr.push_back(Pair("id", tr->id.GetHex()));
             jtr.push_back(Pair("from", tr->fromCurrency));
             jtr.push_back(Pair("from address", tr->from));
-            double fromAmount = static_cast<double>(tr->fromAmount) / XBridgeTransactionDescr::COIN;
-            jtr.push_back(Pair("fromAmount", boost::lexical_cast<std::string>(fromAmount)));
+            jtr.push_back(Pair("fromAmount", xBidgeValueFromAmount(tr->fromAmount)));
             jtr.push_back(Pair("to", tr->toCurrency));
             jtr.push_back(Pair("to address", tr->to));
-            double toAmount = static_cast<double>(tr->toAmount) / XBridgeTransactionDescr::COIN;
-            jtr.push_back(Pair("toAmount", boost::lexical_cast<std::string>(toAmount)));
+            jtr.push_back(Pair("toAmount", xBidgeValueFromAmount(tr->toAmount)));
             jtr.push_back(Pair("state", tr->strState()));
             arr.push_back(jtr);
         }
@@ -192,12 +197,10 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
             jtr.push_back(Pair("id", tr->id.GetHex()));
             jtr.push_back(Pair("from", tr->fromCurrency));
             jtr.push_back(Pair("from address", tr->from));
-            double fromAmount = static_cast<double>(tr->fromAmount) / XBridgeTransactionDescr::COIN;
-            jtr.push_back(Pair("fromAmount", boost::lexical_cast<std::string>(fromAmount)));
+            jtr.push_back(Pair("fromAmount", xBidgeValueFromAmount(tr->fromAmount)));
             jtr.push_back(Pair("to", tr->toCurrency));
             jtr.push_back(Pair("to address", tr->to));
-            double toAmount = static_cast<double>(tr->toAmount) / XBridgeTransactionDescr::COIN;
-            jtr.push_back(Pair("toAmount", boost::lexical_cast<std::string>(toAmount)));
+            jtr.push_back(Pair("toAmount", xBidgeValueFromAmount(tr->toAmount)));
             jtr.push_back(Pair("state", tr->strState()));
             arr.push_back(jtr);
         }
@@ -221,12 +224,10 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
             jtr.push_back(Pair("id", tr->id.GetHex()));
             jtr.push_back(Pair("from", tr->fromCurrency));
             jtr.push_back(Pair("from address", tr->from));
-            double fromAmount = static_cast<double>(tr->fromAmount) / XBridgeTransactionDescr::COIN;
-            jtr.push_back(Pair("fromAmount", boost::lexical_cast<std::string>(fromAmount)));
+            jtr.push_back(Pair("fromAmount", xBidgeValueFromAmount(tr->fromAmount)));
             jtr.push_back(Pair("to", tr->toCurrency));
             jtr.push_back(Pair("to address", tr->to));
-            double toAmount = static_cast<double>(tr->toAmount) / XBridgeTransactionDescr::COIN;
-            jtr.push_back(Pair("toAmount", boost::lexical_cast<std::string>(toAmount)));
+            jtr.push_back(Pair("toAmount", xBidgeValueFromAmount(tr->toAmount)));
             jtr.push_back(Pair("state", tr->strState()));
             arr.push_back(jtr);
         }
@@ -281,8 +282,9 @@ Value dxCreateTransaction(const Array & params, bool fHelp)
     }
 
     uint256 id = XBridgeApp::instance().sendXBridgeTransaction
-            (from, fromCurrency, (boost::uint64_t)(fromAmount * XBridgeTransactionDescr::COIN),
-             to,   toCurrency,   (boost::uint64_t)(toAmount * XBridgeTransactionDescr::COIN));
+            (from, fromCurrency, xBidgeAmountFromReal(fromAmount),
+             to, toCurrency, xBidgeAmountFromReal(toAmount));
+
     if(id == uint256())
     {
         Object obj;

@@ -293,7 +293,18 @@ bool CoinValidator::addLine(std::string &line, std::map<std::string, std::vector
         return false;
 
     // Make sure parsed line matches expected
-    assert(line == t + "\t" + a + "\t" + std::to_string(amt) + "\t" + std::to_string(amtd));
+
+
+    std::ostringstream ss;
+    ss.imbue(std::locale("C"));
+    ss << t << "\t" << a << "\t" << amt << "\t" << amtd;
+    //std::string amtStr = ss.str();
+
+    std::cout << line << std::endl;
+    //auto nl = t + "\t" + a + "\t" + amtStr + "\t" + std::to_string(amtd);
+    std::cout << ss.str() << std::endl;
+
+    assert(line == ss.str());
 
     const InfractionData inf(t, a, amt, amtd);
     std::vector<InfractionData> &infs = map[inf.txid];
