@@ -283,21 +283,27 @@ void XBridgeTransactionsModel::onTimer()
         if (m_transactions[i].state == XBridgeTransactionDescr::trNew &&
                 td.total_seconds() > XBridgeTransaction::TTL/60)
         {
+            // From 'New' to 'Offline' changes table views as well
+            beginResetModel();
             m_transactions[i].state = XBridgeTransactionDescr::trOffline;
-            emit dataChanged(index(i, FirstColumn), index(i, LastColumn));
+            endResetModel();
         }
         else if (m_transactions[i].state == XBridgeTransactionDescr::trPending &&
                 td.total_seconds() > XBridgeTransaction::TTL/6)
         {
+            // From 'Pending' to 'Expired' changes table views as well
+            beginResetModel();
             m_transactions[i].state = XBridgeTransactionDescr::trExpired;
-            emit dataChanged(index(i, FirstColumn), index(i, LastColumn));
+            endResetModel();
         }
         else if ((m_transactions[i].state == XBridgeTransactionDescr::trExpired ||
                   m_transactions[i].state == XBridgeTransactionDescr::trOffline) &&
                          td.total_seconds() < XBridgeTransaction::TTL/6)
         {
+            // From 'Expired' or 'Offline' to 'Pending' changes table views as well
+            beginResetModel();
             m_transactions[i].state = XBridgeTransactionDescr::trPending;
-            emit dataChanged(index(i, FirstColumn), index(i, LastColumn));
+            endResetModel();
         }
         else if (m_transactions[i].state == XBridgeTransactionDescr::trExpired &&
                 td.total_seconds() > XBridgeTransaction::TTL)
@@ -369,8 +375,9 @@ void XBridgeTransactionsModel::onTransactionStateChanged(const uint256 & id,
         if (m_transactions[i].id == id)
         {
             // found
+            beginResetModel();
             m_transactions[i].state = static_cast<XBridgeTransactionDescr::State>(state);
-            emit dataChanged(index(i, FirstColumn), index(i, LastColumn));
+            endResetModel();
         }
     }
 }
@@ -387,9 +394,10 @@ void XBridgeTransactionsModel::onTransactionCancelled(const uint256 & id,
         if (tx.id == id)
         {
             // found
+            beginResetModel();
             tx.state = static_cast<XBridgeTransactionDescr::State>(state);
             tx.reason = reason;
-            emit dataChanged(index(i, FirstColumn), index(i, LastColumn));
+            endResetModel();
         }
 
         ++i;
