@@ -288,17 +288,19 @@ void XBridgeApp::onMessageReceived(const UcharVector & id,
 
     else
     {
-        // if no session address - find connector address
-        boost::mutex::scoped_lock l(m_connectorsLock);
-        if (m_connectorAddressMap.count(id))
         {
-            ptr = getSession();
+            // if no session address - find connector address
+            boost::mutex::scoped_lock l(m_connectorsLock);
+            if (m_connectorAddressMap.count(id))
+            {
+                ptr = getSession();
+            }
         }
-    }
 
-    if (ptr)
-    {
-        ptr->processPacket(packet);
+        if (ptr)
+        {
+            ptr->processPacket(packet);
+        }
     }
 }
 
