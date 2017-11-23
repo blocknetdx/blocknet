@@ -233,13 +233,6 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
                     continue;
                 }
 
-                //Check for invalid/fraudulent inputs. They shouldn't make it through mempool, but check anyways.
-                if (mapInvalidOutPoints.count(txin.prevout)) {
-                    LogPrintf("%s : found invalid input %s in tx %s", __func__, txin.prevout.ToString());
-                    fMissingInputs = true;
-                    break;
-                }
-
                 const CCoins* coins = view.AccessCoins(txin.prevout.hash);
                 assert(coins);
 
@@ -545,7 +538,7 @@ void BitcoinMiner(CWallet* pwallet, bool fProofOfStake)
         }
 
         MilliSleep(1000);
-        
+
         //
         // Create new block
         //

@@ -558,7 +558,7 @@ static void BlockNotifyCallback(const uint256& hashNewTip)
 static void MempoolNotifyCallback(const uint256& hashTransaction)
 {
     std::string strCmd = GetArg("-mempoolnotify", "");
-    
+
     boost::replace_all(strCmd, "%s", hashTransaction.GetHex());
     boost::thread t(runCommand, strCmd);
 }
@@ -1068,7 +1068,7 @@ bool AppInit2(boost::thread_group& threadGroup)
             filesystem::path chainstateDir = GetDataDir() / "chainstate";
             filesystem::path sporksDir = GetDataDir() / "sporks";
             filesystem::path zerocoinDir = GetDataDir() / "zerocoin";
-            
+
             LogPrintf("Deleting blockchain folders blocks, chainstate, sporks and zerocoin\n");
             // We delete in 4 individual steps in case one of the folder is missing already
             try {
@@ -1367,9 +1367,6 @@ bool AppInit2(boost::thread_group& threadGroup)
                     strLoadError = _("You need to rebuild the database using -reindex to change -addrindex");
                     break;
                 }
-
-                // Populate list of invalid/fraudulent outpoints that are banned from the chain
-                PopulateInvalidOutPointMap();
 
                 // Recalculate money supply for blocks that are impacted by accounting issue after zerocoin activation
                 if (GetBoolArg("-reindexmoneysupply", false)) {

@@ -59,7 +59,7 @@ static Checkpoints::MapCheckpoints mapCheckpoints =
     ( 10000, uint256("6af2431daa7456e4620e9493091648eeaac8ddfd53d8cff8101c26806e301d9a"))
     ( 90000, uint256("a883d86273f02cb19252a878d1e0bda1e5321140480b08e3df9544d7b3d1ce56"))
     (152000, uint256("4dc1a3eb7d17bab4e7f5768e927c9666ba760d6882d3b600519fdd7b83f65610"));
-    
+
 static const Checkpoints::CCheckpointData data = {
     &mapCheckpoints,
     1504595227, // * UNIX timestamp of last checkpoint block
@@ -129,9 +129,6 @@ public:
         nModifierUpdateBlock = 999999999;
         nZerocoinStartHeight = 90000;
         nBlockEnforceSerialRange = 90003; //Enforce serial range starting this block
-        nBlockRecalculateAccumulators = 90005; //Trigger a recalculation of accumulators
-        nBlockFirstFraudulent = 90002; //First block that bad serials emerged
-        nBlockLastGoodCheckpoint = 90005; //Last valid accumulator checkpoint
         nZerocoinStartTime = 1510734300; // October 17, 2017 4:30:00 AM
 
         /**
@@ -284,7 +281,7 @@ public:
         strSporkKey = "04659d53bd8f7ad9d34a17281febedac754e5a6eb136142d3a9c6c0ea21b6ed7498ceb3d872eed00ae755f7aeadaeb1d9ab5e1a8f1e7efcd0ddcb39d4623c12790";
         strObfuscationPoolDummyAddress = "PCYiHgGJJ6xGHqivmdZrYjRnhaYf6AJ2Mp";
         nStartMasternodePayments = 1505224800; //Fri, 09 Jan 2015 21:05:58 GMT
-        nBudget_Fee_Confirmations = 3; // Number of confirmations for the finalization fee. We have to make this very short 
+        nBudget_Fee_Confirmations = 3; // Number of confirmations for the finalization fee. We have to make this very short
                                        // here because we only have a 8 block finalization window on testnet
     }
     const Checkpoints::CCheckpointData& Checkpoints() const
