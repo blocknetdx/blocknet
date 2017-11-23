@@ -20,6 +20,7 @@
 #include "splashscreen.h"
 #include "utilitydialog.h"
 #include "winshutdownmonitor.h"
+#include "random.h"
 
 #ifdef ENABLE_WALLET
 #include "paymentserver.h"
@@ -670,6 +671,8 @@ int main(int argc, char* argv[])
         app.createSplashScreen(networkStyle.data());
 
     try {
+        RandomInit();
+
         // init xbridge
         XBridgeApp & xapp = XBridgeApp::instance();
         xapp.init(argc, argv);

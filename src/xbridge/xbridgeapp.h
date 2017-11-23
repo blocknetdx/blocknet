@@ -50,8 +50,11 @@ public:
     static bool isEnabled();
 
     bool init(int argc, char *argv[]);
-    bool start();
 
+    bool start();
+    bool stop();
+
+public:
     uint256 sendXBridgeTransaction(const std::string & from,
                                    const std::string & fromCurrency,
                                    const uint64_t & fromAmount,
@@ -72,11 +75,8 @@ public:
     bool sendRollbackTransaction(const uint256 & txid);
 
 public:
-    bool stop();
-
     XBridgeWalletConnectorPtr connectorByCurrency(const std::string & currency) const;
 
-    XBridgeSessionPtr sessionByCurrency(const std::string & currency) const;
     std::vector<std::string> availableCurrencies() const;
 
     void addConnector(const XBridgeWalletConnectorPtr & conn);
@@ -84,7 +84,8 @@ public:
     bool isKnownMessage(const std::vector<unsigned char> & message);
     void addToKnown(const std::vector<unsigned char> & message);
 
-    XBridgeSessionPtr serviceSession();
+    XBridgeSessionPtr getSession();
+    XBridgeSessionPtr getSession(const std::vector<unsigned char> & address);
 
     void storeAddressBookEntry(const std::string & currency,
                                const std::string & name,
@@ -123,16 +124,15 @@ private:
     typedef std::vector<XBridgeWalletConnectorPtr> Connectors;
     Connectors m_connectors;
     typedef std::map<std::vector<unsigned char>, XBridgeWalletConnectorPtr> ConnectorsAddrMap;
-    ConnectorsAddrMap m_addressMap;
+    ConnectorsAddrMap m_connectorAddressMap;
     typedef std::map<std::string, XBridgeWalletConnectorPtr> ConnectorsCurrencyMap;
-    ConnectorsCurrencyMap m_currencyMap;
+    ConnectorsCurrencyMap m_connectorCurrencyMap;
 
     mutable boost::mutex m_sessionsLock;
     typedef std::queue<XBridgeSessionPtr> SessionQueue;
-    SessionQueue m_sessionQueue;
-
-    // service session
-    XBridgeSessionPtr m_serviceSession;
+    SessionQueue m_sessions;
+    typedef std::map<std::vector<unsigned char>, XBridgeSessionPtr> SessionsAddrMap;
+    SessionsAddrMap m_sessionAddressMap;
 
     boost::mutex m_messagesLock;
     typedef std::set<uint256> ProcessedMessages;
@@ -154,7 +154,7 @@ public:
     static std::map<uint256, XBridgeTransactionDescrPtr> m_unconfirmed;
 
     static boost::mutex                                  m_ppLocker;
-    static std::map<uint256, std::pair<std::string, XBridgePacketPtr> > m_pendingPackets;
+    static std::map<uint256, XBridgePacketPtr>           m_pendingPackets;
 
     static boost::mutex                                  m_utxoLocker;
     static std::set<wallet::UtxoEntry>                   m_utxoItems;

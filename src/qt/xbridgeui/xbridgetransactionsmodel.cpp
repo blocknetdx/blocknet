@@ -343,11 +343,6 @@ void XBridgeTransactionsModel::onTransactionReceived(const XBridgeTransactionDes
             return;
         }
 
-        if (descr.hubAddress != tx->hubAddress)
-        {
-            continue;
-        }
-
         // found
         if (descr.from.size() == 0)
         {

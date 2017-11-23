@@ -46,7 +46,7 @@ std::map<uint256, XBridgeTransactionDescrPtr> XBridgeApp::m_historicTransactions
 boost::mutex                                  XBridgeApp::m_txUnconfirmedLocker;
 std::map<uint256, XBridgeTransactionDescrPtr> XBridgeApp::m_unconfirmed;
 boost::mutex                                  XBridgeApp::m_ppLocker;
-std::map<uint256, std::pair<std::string, XBridgePacketPtr> >  XBridgeApp::m_pendingPackets;
+std::map<uint256, XBridgePacketPtr>           XBridgeApp::m_pendingPackets;
 boost::mutex                                  XBridgeApp::m_utxoLocker;
 std::set<wallet::UtxoEntry>                   XBridgeApp::m_utxoItems;
 
@@ -62,9 +62,13 @@ void badaboom()
 //*****************************************************************************
 XBridgeApp::XBridgeApp()
 {
+    boost::mutex::scoped_lock l(m_sessionsLock);
+
     for (uint32_t i = 0; i < boost::thread::hardware_concurrency(); ++i)
     {
-        m_sessionQueue.push(XBridgeSessionPtr(new XBridgeSession()));
+        XBridgeSessionPtr ptr(new XBridgeSession());
+        m_sessions.push(ptr);
+        m_sessionAddressMap[ptr->sessionAddr()] = ptr;
     }
 }
 
@@ -114,8 +118,6 @@ bool XBridgeApp::isEnabled()
 //*****************************************************************************
 bool XBridgeApp::start()
 {
-    m_serviceSession.reset(new XBridgeSession);
-
     // start xbrige
     m_bridge = XBridgePtr(new XBridge());
 
@@ -223,16 +225,29 @@ void XBridgeApp::onSend(const UcharVector & id, const XBridgePacketPtr & packet)
 
 //*****************************************************************************
 //*****************************************************************************
-XBridgeSessionPtr XBridgeApp::serviceSession()
+XBridgeSessionPtr XBridgeApp::getSession()
 {
     XBridgeSessionPtr ptr;
 
     boost::mutex::scoped_lock l(m_sessionsLock);
-    ptr = m_sessionQueue.front();
-    m_sessionQueue.pop();
-    m_sessionQueue.push(ptr);
+    ptr = m_sessions.front();
+    m_sessions.pop();
+    m_sessions.push(ptr);
 
     return ptr;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+XBridgeSessionPtr XBridgeApp::getSession(const std::vector<unsigned char> & address)
+{
+    boost::mutex::scoped_lock l(m_sessionsLock);
+    if (m_sessionAddressMap.count(address))
+    {
+        return m_sessionAddressMap[address];
+    }
+
+    return XBridgeSessionPtr();
 }
 
 //*****************************************************************************
@@ -264,7 +279,23 @@ void XBridgeApp::onMessageReceived(const UcharVector & id,
         return;
     }
 
-    XBridgeSessionPtr ptr = serviceSession();
+    // check direct session address
+    XBridgeSessionPtr ptr = getSession(id);
+    if (ptr)
+    {
+        ptr->processPacket(packet);
+    }
+
+    else
+    {
+        // if no session address - find connector address
+        boost::mutex::scoped_lock l(m_connectorsLock);
+        if (m_connectorAddressMap.count(id))
+        {
+            ptr = getSession();
+        }
+    }
+
     if (ptr)
     {
         ptr->processPacket(packet);
@@ -299,7 +330,7 @@ void XBridgeApp::onBroadcastReceived(const std::vector<unsigned char> & message,
         return;
     }
 
-    XBridgeSessionPtr ptr = serviceSession();
+    XBridgeSessionPtr ptr = getSession();
     if (ptr)
     {
         ptr->processPacket(packet);
@@ -319,9 +350,9 @@ void XBridgeApp::sleep(const unsigned int umilliseconds)
 XBridgeWalletConnectorPtr XBridgeApp::connectorByCurrency(const std::string & currency) const
 {
     boost::mutex::scoped_lock l(m_connectorsLock);
-    if (m_currencyMap.count(currency))
+    if (m_connectorCurrencyMap.count(currency))
     {
-        return m_currencyMap.at(currency);
+        return m_connectorCurrencyMap.at(currency);
     }
 
     return XBridgeWalletConnectorPtr();
@@ -331,11 +362,11 @@ XBridgeWalletConnectorPtr XBridgeApp::connectorByCurrency(const std::string & cu
 //*****************************************************************************
 std::vector<std::string> XBridgeApp::availableCurrencies() const
 {
-    boost::mutex::scoped_lock l(m_sessionsLock);
+    boost::mutex::scoped_lock l(m_connectorsLock);
 
     std::vector<std::string> currencies;
 
-    for(auto i = m_currencyMap.begin(); i != m_currencyMap.end();)
+    for(auto i = m_connectorCurrencyMap.begin(); i != m_connectorCurrencyMap.end();)
     {
         currencies.push_back(i->first);
         ++i;
@@ -350,7 +381,7 @@ void XBridgeApp::addConnector(const XBridgeWalletConnectorPtr & conn)
 {
     boost::mutex::scoped_lock l(m_sessionsLock);
     m_connectors.push_back(conn);
-    m_currencyMap[conn->currency] = conn;
+    m_connectorCurrencyMap[conn->currency] = conn;
 }
 
 //*****************************************************************************
@@ -406,8 +437,8 @@ void XBridgeApp::getAddressBook()
             {
                 std::vector<unsigned char> vaddr = (*i)->toXAddr(addr);
                 // m_addressBook.insert(vaddr);
-                m_addressMap[vaddr] = (*i);
-                m_currencyMap[(*i)->currency] = (*i);
+                m_connectorAddressMap[vaddr] = (*i);
+                m_connectorCurrencyMap[(*i)->currency] = (*i);
 
                 xuiConnector.NotifyXBridgeAddressBookEntryReceived
                         ((*i)->currency, e.first, addr);
@@ -564,7 +595,7 @@ uint256 XBridgeApp::sendXBridgeTransaction(const std::string & from,
 //          << "             " << ptr->toCurrency << " : " << ptr->toAmount << std::endl;
 
     // lock used coins
-    connFrom->lockUnspent(ptr->usedCoins, true);
+    // connFrom->lockUnspent(ptr->usedCoins, true);
 
     {
         boost::mutex::scoped_lock l(m_txLocker);
@@ -720,7 +751,7 @@ uint256 XBridgeApp::acceptXBridgeTransaction(const uint256 & id,
 
 
     // lock used coins
-    connTo->lockUnspent(ptr->usedCoins, true);
+    // connTo->lockUnspent(ptr->usedCoins, true);
 
     return id;
 }

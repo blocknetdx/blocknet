@@ -22,6 +22,7 @@
 #include "activeservicenode.h"
 #include "servicenode.h"
 #include "servicenodeman.h"
+#include "random.h"
 
 #include "json/json_spirit.h"
 #include "json/json_spirit_reader_template.h"
@@ -74,6 +75,8 @@ void XBridgeSession::init()
         return;
     }
 
+    m_myid.resize(20);
+    GetStrongRandBytes(&m_myid[0], 20);
 //    if (!rpc::getNewAddress(m_myid))
 //    {
 //        m_myid = std::vector<unsigned char>(20, 0);
@@ -346,8 +349,9 @@ bool XBridgeSession::processTransaction(XBridgePacketPtr packet)
 
     // check utxo items
     XBridgeApp & xapp = XBridgeApp::instance();
-    if (!xapp.checkUtxoItems(utxoItems))
+    if (false && !xapp.checkUtxoItems(utxoItems))
     {
+        sendCancelTransaction(id, crBadUtxo);
         LOG() << "error check utxo items, transaction request rejected "
               << __FUNCTION__;
         return true;
@@ -488,11 +492,11 @@ bool XBridgeSession::processTransactionAccepting(XBridgePacketPtr packet)
 
     DEBUG_TRACE();
 
-    // size must be > 166 bytes
-    if (packet->size() <= 166)
+    // size must be >= 164 bytes
+    if (packet->size() < 164)
     {
         ERR() << "invalid packet size for xbcTransactionAccepting "
-              << "need min 166 bytes, received " << packet->size() << " "
+              << "need min 164 bytes, received " << packet->size() << " "
               << __FUNCTION__;
         return false;
     }
@@ -1100,8 +1104,6 @@ bool XBridgeSession::isAddressInTransaction(const std::vector<unsigned char> & a
 //******************************************************************************
 bool XBridgeSession::processTransactionCreate(XBridgePacketPtr packet)
 {
-    return true;
-
     DEBUG_TRACE();
 
     if (packet->size() < 157)
@@ -1159,7 +1161,7 @@ bool XBridgeSession::processTransactionCreate(XBridgePacketPtr packet)
     {
         // no data, move to pending
         boost::mutex::scoped_lock l(XBridgeApp::m_ppLocker);
-        XBridgeApp::m_pendingPackets[txid] = std::make_pair(xtx->fromCurrency, packet);
+        XBridgeApp::m_pendingPackets[txid] = packet;
         return true;
     }
     else
@@ -1189,7 +1191,7 @@ bool XBridgeSession::processTransactionCreate(XBridgePacketPtr packet)
         {
             // move packet to pending
             boost::mutex::scoped_lock l(XBridgeApp::m_ppLocker);
-            XBridgeApp::m_pendingPackets[txid] = std::make_pair(xtx->fromCurrency, packet);
+            XBridgeApp::m_pendingPackets[txid] = packet;
             return true;
         }
         else if (!isGood)
@@ -1613,7 +1615,7 @@ bool XBridgeSession::processTransactionConfirmA(XBridgePacketPtr packet)
         {
             // move packet to pending
             boost::mutex::scoped_lock l(XBridgeApp::m_ppLocker);
-            XBridgeApp::m_pendingPackets[txid] = std::make_pair(conn->currency, packet);
+            XBridgeApp::m_pendingPackets[txid] = packet;
             return true;
         }
         else if (!isGood)
@@ -1671,7 +1673,7 @@ bool XBridgeSession::processTransactionConfirmA(XBridgePacketPtr packet)
             LOG() << "payment A not send, no deposit tx, move to pending";
 
             boost::mutex::scoped_lock l(XBridgeApp::m_ppLocker);
-            XBridgeApp::m_pendingPackets[txid] = std::make_pair(conn->currency, packet);
+            XBridgeApp::m_pendingPackets[txid] = packet;
             return true;
         }
 
@@ -1869,7 +1871,7 @@ bool XBridgeSession::processTransactionConfirmB(XBridgePacketPtr packet)
             LOG() << "payment B not send, no deposit tx, move to pending";
 
             boost::mutex::scoped_lock l(XBridgeApp::m_ppLocker);
-            XBridgeApp::m_pendingPackets[txid] = std::make_pair(conn->currency, packet);
+            XBridgeApp::m_pendingPackets[txid] = packet;
             return true;
         }
 
@@ -1954,7 +1956,7 @@ bool XBridgeSession::processTransactionConfirmedB(XBridgePacketPtr packet)
 //*****************************************************************************
 bool XBridgeSession::processTransactionCancel(XBridgePacketPtr packet)
 {
-    // DEBUG_TRACE();
+    DEBUG_TRACE();
 
     // size must be == 36 bytes
     if (packet->size() != 36)
@@ -1975,6 +1977,8 @@ bool XBridgeSession::processTransactionCancel(XBridgePacketPtr packet)
 //*****************************************************************************
 bool XBridgeSession::cancelOrRollbackTransaction(const uint256 & txid, const TxCancelReason & reason)
 {
+    DEBUG_TRACE();
+
     // check and process packet if bridge is exchange
     XBridgeExchange & e = XBridgeExchange::instance();
     if (e.isStarted())

@@ -23,17 +23,18 @@ enum TxCancelReason
     crBadSettings     = 1,
     crUserRequest     = 2,
     crNoMoney         = 3,
-    crDust            = 4,
-    crRpcError        = 5,
-    crNotSigned       = 6,
-    crNotAccepted     = 7,
-    crRollback        = 8,
-    crRpcRequest      = 9,
-    crXbridgeRejected = 10,
-    crInvalidAddress  = 11,
-    crBlocknetError   = 12,
-    crBadADepositTx   = 13,
-    crBadBDepositTx   = 14
+    crBadUtxo         = 4,
+    crDust            = 5,
+    crRpcError        = 6,
+    crNotSigned       = 7,
+    crNotAccepted     = 8,
+    crRollback        = 9,
+    crRpcRequest      = 10,
+    crXbridgeRejected = 11,
+    crInvalidAddress  = 12,
+    crBlocknetError   = 13,
+    crBadADepositTx   = 14,
+    crBadBDepositTx   = 15
 };
 
 //******************************************************************************
@@ -111,7 +112,7 @@ enum XBridgeCommand
     //    uint160 hub address
     xbcPendingTransaction = 4,
     //
-    // xbcTransactionAccepting (166 bytes min)
+    // xbcTransactionAccepting (164 bytes min)
     // client accepting opened tx
     //    uint160 hub address
     //    uint256 client transaction id
