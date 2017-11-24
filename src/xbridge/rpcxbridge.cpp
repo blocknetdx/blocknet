@@ -41,8 +41,15 @@ uint64_t xBridgeAmountFromReal(double val)
     return static_cast<uint64_t>(val * XBridgeTransactionDescr::COIN + 0.5);
 }
 
-//*****************************************************************************
-//*****************************************************************************
+/** \brief Returns the list of open and pending transactions
+  * \param params A list of input params.
+  * \param fHelp For debug purposes, throw the exception describing parameters.
+  * \return A list of open(they go first) and pending transactions.
+  *
+  * Returns the list of open and pending transactions as JSON structures.
+  * The open transactions go first.
+  */
+
 Value dxGetTransactionList(const Array & params, bool fHelp)
 {
     if (fHelp || params.size() > 0)
