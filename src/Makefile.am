@@ -350,6 +350,7 @@ libxbridge_xbridge_a_SOURCES = \
   xbridge/util/logger.cpp \
   xbridge/util/txlog.cpp \
   xbridge/util/xutil.cpp \
+  xbridge/util/xbridgeerror.cpp \
   xbridge/bitcoinrpcconnector.cpp \
   xbridge/xbridge.cpp \
   xbridge/xbridgeapp.cpp \
@@ -394,6 +395,7 @@ libxbridge_xbridge_a_SOURCES = \
   xbridge/util/settings.h \
   xbridge/util/txlog.h \
   xbridge/util/xutil.h \
+  xbridge/util/xbridgeerror.h \
   $(BITCOIN_CORE_H)
 
 

@@ -7,7 +7,7 @@
 // #include "xbridgeconnector.h"
 #include "xbridge/xuiconnector.h"
 #include "xbridge/util/xutil.h"
-
+#include "xbridge/util/xbridgeerror.h"
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 //******************************************************************************
@@ -165,7 +165,7 @@ bool XBridgeTransactionsModel::isMyTransaction(const unsigned int index) const
 
 //******************************************************************************
 //******************************************************************************
-bool XBridgeTransactionsModel::newTransaction(const std::string & from,
+xbridge::Error XBridgeTransactionsModel::newTransaction(const std::string & from,
                                               const std::string & to,
                                               const std::string & fromCurrency,
                                               const std::string & toCurrency,
@@ -176,15 +176,16 @@ bool XBridgeTransactionsModel::newTransaction(const std::string & from,
     XBridgeSessionPtr ptr = app.sessionByCurrency(fromCurrency);
     if (ptr && ptr->minAmount() > fromAmount)
     {
-        return false;
+        return xbridge::INVALID_AMOUNT;
     }
 
     // TODO check amount
-    uint256 id = XBridgeApp::instance().sendXBridgeTransaction
+    uint256 id = uint256();
+     const auto code = XBridgeApp::instance().sendXBridgeTransaction
             (from, fromCurrency, (uint64_t)(fromAmount * XBridgeTransactionDescr::COIN),
-             to,   toCurrency,   (uint64_t)(toAmount * XBridgeTransactionDescr::COIN));
+             to,   toCurrency,   (uint64_t)(toAmount * XBridgeTransactionDescr::COIN),id);
 
-    if (id != uint256())
+    if (code == xbridge::NO_ERROR)
     {
         XBridgeTransactionDescr d;
         d.id           = id;
@@ -196,17 +197,16 @@ bool XBridgeTransactionsModel::newTransaction(const std::string & from,
         d.toAmount     = (boost::uint64_t)(toAmount * XBridgeTransactionDescr::COIN);
         d.txtime       = boost::posix_time::second_clock::universal_time();
         onTransactionReceived(d);
-        return true;
     }
-    return false;
+    return code;
 }
 
 //******************************************************************************
 //******************************************************************************
-bool XBridgeTransactionsModel::newTransactionFromPending(const uint256 & id,
-                                                         const std::vector<unsigned char> & hub,
-                                                         const std::string & from,
-                                                         const std::string & to)
+xbridge::Error XBridgeTransactionsModel::newTransactionFromPending(const uint256 &id,
+                                                         const std::vector<unsigned char> &hub,
+                                                         const std::string &from,
+                                                         const std::string &to)
 {
     unsigned int i = 0;
     for (; i < m_transactions.size(); ++i)
@@ -214,7 +214,7 @@ bool XBridgeTransactionsModel::newTransactionFromPending(const uint256 & id,
         if (m_transactions[i].id == id && m_transactions[i].hubAddress == hub)
         {
             // found
-            XBridgeTransactionDescr & d = m_transactions[i];
+            XBridgeTransactionDescr &d = m_transactions[i];
             d.from  = from;
             d.to    = to;
             d.state = XBridgeTransactionDescr::trAccepting;
@@ -224,10 +224,10 @@ bool XBridgeTransactionsModel::newTransactionFromPending(const uint256 & id,
             emit dataChanged(index(i, FirstColumn), index(i, LastColumn));
 
             // send tx
-            d.id = XBridgeApp::instance().acceptXBridgeTransaction(d.id, from, to);
-            if(d.id == uint256())
+            const auto error = XBridgeApp::instance().acceptXBridgeTransaction(d.id, from, to, d.id);
+            if(error != xbridge::NO_ERROR)
             {
-                return false;
+                return error;
             }
 
             d.txtime = boost::posix_time::second_clock::universal_time();
@@ -239,7 +239,7 @@ bool XBridgeTransactionsModel::newTransactionFromPending(const uint256 & id,
     if (i == m_transactions.size())
     {
         // not found...assert ?
-        return false;
+        return xbridge::UNKNOWN_ERROR;
     }
 
     // remove all other tx with this id
@@ -254,21 +254,21 @@ bool XBridgeTransactionsModel::newTransactionFromPending(const uint256 & id,
         }
     }
 
-    return true;
+    return xbridge::NO_ERROR;
 }
 
 //******************************************************************************
 //******************************************************************************
-bool XBridgeTransactionsModel::cancelTransaction(const uint256 & id)
+bool XBridgeTransactionsModel::cancelTransaction(const uint256 &id)
 {
-    return XBridgeApp::instance().cancelXBridgeTransaction(id, crUserRequest);
+    return XBridgeApp::instance().cancelXBridgeTransaction(id, crUserRequest) == xbridge::NO_ERROR;
 }
 
 //******************************************************************************
 //******************************************************************************
 bool XBridgeTransactionsModel::rollbackTransaction(const uint256 & id)
 {
-    return XBridgeApp::instance().rollbackXBridgeTransaction(id);
+    return XBridgeApp::instance().rollbackXBridgeTransaction(id) == xbridge::NO_ERROR;
 }
 
 //******************************************************************************
@@ -283,9 +283,7 @@ void XBridgeTransactionsModel::onTimer()
                 m_transactions[i].txtime;
 
         auto id = m_transactions[i].id;
-        if(!m_transactions[i].from.empty() && !m_transactions[i].to.empty()){
-            LOG() << "XBridgeTransactionsModel::onTimer td.total_seconds() = " << td.total_seconds();
-        }
+
         if (m_transactions[i].state == XBridgeTransactionDescr::trNew &&
                 td.total_seconds() > XBridgeTransaction::TTL/60)
         {
@@ -312,16 +310,43 @@ void XBridgeTransactionsModel::onTimer()
             m_transactions.erase(m_transactions.begin()+i);
             emit endRemoveRows();
             --i;
+            {
+                boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
+                if(XBridgeApp::m_historicTransactions.find(id) != XBridgeApp::m_historicTransactions.end())
+                {
+                    XBridgeApp::m_historicTransactions.erase(id);
+                    LOG() << "remove historical transaction " << id.GetHex() << " " << __FUNCTION__;
+                } else {
+                    LOG() << "can't remove from historical transaction, transaction " << id.GetHex() << " not found " << __FUNCTION__;
+                }
+            }
         }
-//        LOG() << "change transaction state to " <<  m_transactions[i].strState() << "\t" << __FUNCTION__;
-//        if(XBridgeApp::instance().isHistoricState(m_transactions[i].state))
-//        {
-//            XBridgeTransactionDescrPtr tmp = XBridgeTransactionDescrPtr(new XBridgeTransactionDescr(m_transactions[i]));
-//            LOG() << "insert into history transactions map " <<  m_transactions[i].strState() << "\t" << __FUNCTION__;
-//            boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
-//            XBridgeApp::m_historicTransactions[id] = tmp;
-//        }
-
+        //update historical transactions in XBridgeApp
+        if(XBridgeApp::instance().isHistoricState(m_transactions[i].state))
+        {
+            XBridgeTransactionDescrPtr tmp = XBridgeTransactionDescrPtr(new XBridgeTransactionDescr(m_transactions[i]));
+            LOG() << "insert into history transactions map " <<  m_transactions[i].strState() << "\t" << __FUNCTION__;
+            {
+                boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
+                XBridgeApp::m_historicTransactions[id] = tmp;
+            }
+            {
+                boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
+                if(XBridgeApp::m_pendingTransactions.find(id) != XBridgeApp::m_pendingTransactions.end())
+                {
+                    XBridgeApp::m_pendingTransactions.erase(id);
+                    LOG() << "remove pending transaction " << id.GetHex() << " " << __FUNCTION__;
+                } else {
+                    LOG() << "can't remove from pending transaction, transaction " << id.GetHex() << " not found " << __FUNCTION__;
+                }
+            }
+        }
+        if(XBridgeApp::instance().isHistoricState(m_transactions[i].state))
+        {
+            XBridgeTransactionDescrPtr tmp = XBridgeTransactionDescrPtr(new XBridgeTransactionDescr(m_transactions[i]));
+            boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
+            XBridgeApp::m_historicTransactions[id] = tmp;
+        }
     }
 }
 
