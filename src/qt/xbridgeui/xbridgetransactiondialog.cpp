@@ -309,6 +309,7 @@ void XBridgeTransactionDialog::onSendTransaction()
     if (m_pendingId != uint256())
     {
         // accept pending tx
+
         const auto error = m_model.newTransactionFromPending(m_pendingId, m_hubAddress, from, to);
         if(error != xbridge::NO_ERROR)
         {
@@ -325,6 +326,7 @@ void XBridgeTransactionDialog::onSendTransaction()
         if (error != xbridge::NO_ERROR)
         {
             QMessageBox::warning(this, trUtf8("check parameters"),
+
                                  trUtf8("Invalid amount %1 %2")
                                  .arg(xbridge::xbridgeErrorText(error).c_str())
                                  .arg(fromAmount));

@@ -49,7 +49,7 @@ boost::mutex                                    XBridgeApp::m_txUnconfirmedLocke
 std::map<uint256, XBridgeTransactionDescrPtr>   XBridgeApp::m_unconfirmed;
 boost::mutex                                    XBridgeApp::m_ppLocker;
 std::map<uint256, std::pair<std::string, XBridgePacketPtr> >  XBridgeApp::m_pendingPackets;
-
+std::string                                     XBridgeApp::m_lastError;
 //*****************************************************************************
 //*****************************************************************************
 void badaboom()
@@ -162,11 +162,7 @@ bool XBridgeApp::init(int argc, char *argv[])
     e.init();
 
     m_historicTransactionsStates = {XBridgeTransactionDescr::trFinished};
-
     return true;
-
-
-
 }
 
 //*****************************************************************************
@@ -344,57 +340,6 @@ void XBridgeApp::onBroadcastReceived(const std::vector<unsigned char> & message)
 void XBridgeApp::sleep(const unsigned int umilliseconds)
 {
     boost::this_thread::sleep_for(boost::chrono::milliseconds(umilliseconds));
-}
-
-bool XBridgeApp::updateHistoricalTransactionsList()
-{
-    auto counter = 0;
-    boost::mutex::scoped_lock l(m_ppLocker);
-    for (auto it = m_pendingTransactions.begin(); it != m_pendingTransactions.end(); it++)
-    {
-        auto &transaction = *it->second;
-        boost::posix_time::time_duration td =
-                boost::posix_time::second_clock::universal_time() -
-                transaction.txtime;
-
-        if(!transaction.from.empty() && !transaction.to.empty()){
-            LOG() << "XBridgeApp::updateHistoricalTransactionsList() = " << td.total_seconds();
-        }
-        const auto &id = transaction.id;
-        if (transaction.state == XBridgeTransactionDescr::trNew &&
-                td.total_seconds() > XBridgeTransaction::TTL/60)
-        {
-            transaction.state = XBridgeTransactionDescr::trOffline;
-        }
-        else if (transaction.state == XBridgeTransactionDescr::trPending &&
-                 td.total_seconds() > XBridgeTransaction::TTL/6)
-        {
-            transaction.state = XBridgeTransactionDescr::trExpired;
-        }
-        else if ((transaction.state == XBridgeTransactionDescr::trExpired ||
-                  transaction.state == XBridgeTransactionDescr::trOffline) &&
-                 td.total_seconds() < XBridgeTransaction::TTL/6)
-        {
-            transaction.state = XBridgeTransactionDescr::trPending;
-        }
-        else if (transaction.state == XBridgeTransactionDescr::trExpired &&
-                 td.total_seconds() > XBridgeTransaction::TTL)
-        {
-            m_pendingTransactions.erase(it);
-//            --it;///????
-        }
-        if(isHistoricState(transaction.state))
-        {
-            ++counter;
-            XBridgeTransactionDescrPtr tmp = XBridgeTransactionDescrPtr(new XBridgeTransactionDescr(transaction));
-            LOG() << "insert into history transactions map " <<  transaction.strState() << "\t" << __FUNCTION__;
-            boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
-            m_historicTransactions[id] = tmp;
-        }
-    }
-    m_timer.expires_at(m_timer.expires_at() + boost::posix_time::seconds(3));
-    m_timer.async_wait(boost::bind(&XBridgeApp::updateHistoricalTransactionsList, this));
-    return  counter != 0;
 }
 
 
@@ -645,6 +590,7 @@ xbridge::Error XBridgeApp::acceptXBridgeTransaction(const uint256 &id,
         boost::mutex::scoped_lock l(m_txLocker);
         if (!m_pendingTransactions.count(id))
         {
+
             WARN() << "transaction not found " << __FUNCTION__;
             return xbridge::TRANSACTION_NOT_FOUND;
         }
@@ -723,6 +669,8 @@ xbridge::Error XBridgeApp::cancelXBridgeTransaction(const uint256 &id,
         }
         if (m_transactions.count(id))
         {
+            boost::mutex::scoped_lock l(m_lastErrorLock);
+            LOG() << "transaction found " << __FUNCTION__;
             m_transactions[id]->state = XBridgeTransactionDescr::trCancelled;
             xuiConnector.NotifyXBridgeTransactionStateChanged(id, XBridgeTransactionDescr::trCancelled);
             return xbridge::NO_ERROR;
@@ -758,6 +706,7 @@ xbridge::Error XBridgeApp::rollbackXBridgeTransaction(const uint256 & id)
         // session use m_txLocker, must be unlocked because not recursive
         if (!session->rollbacktXBridgeTransaction(id))
         {
+
             ERR() << "revert tx failed for " + id.ToString() << __FUNCTION__;
             return xbridge::REVERT_TX_FAILED;
         }

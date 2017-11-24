@@ -197,7 +197,6 @@ xbridge::Error XBridgeTransactionsModel::newTransaction(const std::string & from
         d.toAmount     = (boost::uint64_t)(toAmount * XBridgeTransactionDescr::COIN);
         d.txtime       = boost::posix_time::second_clock::universal_time();
         onTransactionReceived(d);
-        return code;
     }
     return code;
 }
@@ -284,6 +283,7 @@ void XBridgeTransactionsModel::onTimer()
                 m_transactions[i].txtime;
 
         auto id = m_transactions[i].id;
+
         if (m_transactions[i].state == XBridgeTransactionDescr::trNew &&
                 td.total_seconds() > XBridgeTransaction::TTL/60)
         {
@@ -341,7 +341,12 @@ void XBridgeTransactionsModel::onTimer()
                 }
             }
         }
-
+        if(XBridgeApp::instance().isHistoricState(m_transactions[i].state))
+        {
+            XBridgeTransactionDescrPtr tmp = XBridgeTransactionDescrPtr(new XBridgeTransactionDescr(m_transactions[i]));
+            boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
+            XBridgeApp::m_historicTransactions[id] = tmp;
+        }
     }
 }
 
