@@ -49,7 +49,7 @@ boost::mutex                                    XBridgeApp::m_txUnconfirmedLocke
 std::map<uint256, XBridgeTransactionDescrPtr>   XBridgeApp::m_unconfirmed;
 boost::mutex                                    XBridgeApp::m_ppLocker;
 std::map<uint256, std::pair<std::string, XBridgePacketPtr> >  XBridgeApp::m_pendingPackets;
-std::string                                     XBridgeApp::m_lastError;
+
 //*****************************************************************************
 //*****************************************************************************
 void badaboom()
