@@ -113,9 +113,9 @@ Value dxGetTransactionsHistoryList(const Array & params, bool fHelp)
             LOG() << "empty history transactions list ";
             return arr;
         }
+
         for (const auto &trEntry : trlist)
         {
-            Object jtr;
             Object buy;            
             const auto tr = trEntry.second;
             double fromAmount = static_cast<double>(tr->fromAmount);
@@ -127,7 +127,7 @@ Value dxGetTransactionsHistoryList(const Array & params, bool fHelp)
             buy.push_back(Pair("price", price));
             buy.push_back(Pair("size", tr->toAmount));
             buy.push_back(Pair("side", "buy"));
-            arr.push_back(jtr);
+            arr.push_back(buy);
         }
     }
     return arr;
@@ -311,6 +311,7 @@ Value dxAcceptTransaction(const Array & params, bool fHelp)
     {
         throw runtime_error("incorrect address");
     }
+
 
     uint256 idResult;
     const auto error= XBridgeApp::instance().acceptXBridgeTransaction(id, from, to, idResult);
