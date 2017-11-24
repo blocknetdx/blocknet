@@ -395,7 +395,7 @@ libxbridge_xbridge_a_SOURCES = \
   xbridge/util/settings.h \
   xbridge/util/txlog.h \
   xbridge/util/xutil.h \
-  xbridge/util/xbridgeerror.h
+  xbridge/util/xbridgeerror.h \
   $(BITCOIN_CORE_H)
 
 

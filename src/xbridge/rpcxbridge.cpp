@@ -270,19 +270,12 @@ Value dxCreateTransaction(const Array & params, bool fHelp)
         throw runtime_error("incorrect address");
     }
 
-<<<<<<< HEAD
     uint256 id = uint256();
     const auto res = XBridgeApp::instance().sendXBridgeTransaction
-            (from, fromCurrency, (boost::uint64_t)(fromAmount * XBridgeTransactionDescr::COIN),
-             to,   toCurrency,   (boost::uint64_t)(toAmount * XBridgeTransactionDescr::COIN), id);
-    if(res == xbridge::NO_ERROR)
-=======
-    uint256 id = XBridgeApp::instance().sendXBridgeTransaction
-            (from, fromCurrency, xBridgeAmountFromReal(fromAmount),
-             to, toCurrency, xBridgeAmountFromReal(toAmount));
+          (from, fromCurrency, xBridgeAmountFromReal(fromAmount),
+           to, toCurrency, xBridgeAmountFromReal(toAmount), id);
 
-    if(id == uint256())
->>>>>>> 6fbba37c856db94466fd3bc97bc0755ed2422419
+    if(res == xbridge::NO_ERROR)
     {
         Object obj;
         obj.push_back(Pair("from", from));
