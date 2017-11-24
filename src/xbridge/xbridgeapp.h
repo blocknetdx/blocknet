@@ -191,13 +191,6 @@ public:
      */
     boost::asio::deadline_timer m_timer;
 
-    /**
-     * @brief updateHistoricalTransactionsList - periodically checks a list of transactions
-     * and in case of fulfillment of specified conditions moves them
-     * to the list of historical transactions
-     * @return true, if you have added at least one item
-     */
-    bool updateHistoricalTransactionsList();
 public:
     /**
      * @brief isHistoricState - checks the state of the transaction

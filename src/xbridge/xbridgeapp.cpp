@@ -70,11 +70,10 @@ XBridgeApp::XBridgeApp(): m_timerIoWork(new boost::asio::io_service::work(m_time
 
         m_services.push_back(ios);
         m_works.push_back(WorkPtr(new boost::asio::io_service::work(*ios)));
-
         m_threads.create_thread(boost::bind(&boost::asio::io_service::run, ios));
     }
 
-    m_timer.async_wait(boost::bind(&XBridgeApp::updateHistoricalTransactionsList, this));
+
 }
 
 //*****************************************************************************
