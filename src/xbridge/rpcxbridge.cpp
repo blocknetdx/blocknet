@@ -15,6 +15,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <stdio.h>
 #include <atomic>
+#include <numeric>
 
 #include "util/settings.h"
 #include "util/logger.h"
@@ -107,10 +108,15 @@ Value dxGetTransactionList(const Array & params, bool fHelp)
 
 Value dxGetTransactionsHistoryList(const Array & params, bool fHelp)
 {
-    if (fHelp || params.size() > 0)
+    bool invalidParams = ((params.size() != 0) ||
+                          (params.size() != 1));
+    if (fHelp || invalidParams)
     {
-        throw runtime_error("dxGetTransactionsHistoryList\nHistoric list transactions.");
+        throw runtime_error("dxGetTransactionsHistoryList "
+                            "(ALL - optional parameter) shows all transactions, "
+                            "but not only successfully completed ");
     }
+    bool isShowAll = params.size() == 1 && params[0].get_str() == "ALL";
     Array arr;
     boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
     {
@@ -123,8 +129,12 @@ Value dxGetTransactionsHistoryList(const Array & params, bool fHelp)
 
         for (const auto &trEntry : trlist)
         {
-            Object buy;            
-            const auto tr = trEntry.second;
+            Object buy;
+            const auto &tr = trEntry.second;
+            if(!isShowAll && tr->state != XBridgeTransactionDescr::trFinished)
+            {
+                continue;
+            }
             double fromAmount = static_cast<double>(tr->fromAmount);
             double toAmount = static_cast<double>(tr->toAmount);
             double price = fromAmount / toAmount;
@@ -136,6 +146,83 @@ Value dxGetTransactionsHistoryList(const Array & params, bool fHelp)
             buy.push_back(Pair("side", "buy"));
             arr.push_back(buy);
         }
+    }
+    return arr;
+}
+
+Value dxGetTransactionsTraideHistoryList(const json_spirit::Array& params, bool fHelp)
+{
+    if (fHelp || params.size() != 3)
+    {
+        throw runtime_error("dxGetTransactionsTraideHistoryList "
+                            "(from currency) (to currency) (timeframe) ");
+    }
+
+    Array arr;
+    boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
+    {
+        std::map<uint256, XBridgeTransactionDescrPtr> trlist = XBridgeApp::m_pendingTransactions/*m_historicTransactions*/;
+        if(trlist.empty())
+        {
+            LOG() << "empty history transactions list ";
+            return arr;
+        }
+        const auto fromCurrency = params[0].get_str();
+        const auto toCurrency = params[1].get_str();
+        const auto timeFrame = params[2].get_int();
+        using RealVector = std::vector<double>;
+        namespace bpt = boost::posix_time;
+        const auto timestamp  = [](bpt::ptime time) {
+            bpt::ptime epoch(boost::gregorian::date(1970, 1, 1));
+            return (time - epoch).total_seconds();
+        };
+        auto endTimeFrame = bpt::second_clock::universal_time();
+        bpt::time_duration timeFrameSize(0, timeFrame, 0);
+        auto startTimeFrame = endTimeFrame - timeFrameSize;
+        std::map<uint256, XBridgeTransactionDescrPtr> trList;
+        std::copy_if(trlist.begin(), trlist.end(), std::inserter(trList, trList.end()),
+                     [&startTimeFrame, &endTimeFrame, &toCurrency, &fromCurrency](const std::pair<uint256, XBridgeTransactionDescrPtr > &transaction){
+            return (transaction.second->created < endTimeFrame) &&
+                    (transaction.second->created > startTimeFrame) &&
+                    (transaction.second->toCurrency == toCurrency) &&
+                    (transaction.second->fromCurrency == fromCurrency)
+                    /*&&
+                    (transaction.second->state == XBridgeTransactionDescr::trFinished)*/;
+        });
+
+        if(trList.empty()) {
+            LOG() << "not found the transactions for the specified period " << __FUNCTION__;
+            return  arr;
+        }
+        RealVector toAmounts(trList.size());
+        RealVector fromAmounts(trList.size());
+        Object res;
+        Array times;
+        times.push_back(timestamp(startTimeFrame));
+        times.push_back(timestamp(endTimeFrame));
+        res.push_back(Pair("t", times));
+        for (const auto &trEntry : trList)
+        {
+            const auto &tr = trEntry.second;
+            double fromAmount = xBridgeValueFromAmount(tr->fromAmount).get_real();
+            double toAmount = xBridgeValueFromAmount(tr->toAmount).get_real();
+            toAmounts.push_back(toAmount);
+            fromAmounts.push_back(fromAmount);
+        }
+
+        Array volumes;
+        volumes.push_back(accumulate(toAmounts.begin(), toAmounts.end(), .0));
+        volumes.push_back(accumulate(fromAmounts.begin(), fromAmounts.end(), .0));
+        res.push_back(Pair("v", volumes));
+        Array highs;
+        highs.push_back(*std::max_element(toAmounts.begin(), toAmounts.end()));
+        highs.push_back(*std::max_element(fromAmounts.begin(), fromAmounts.end()));
+        res.push_back(Pair("h", highs));
+        Array lows;
+        lows.push_back(*std::min_element(toAmounts.begin(), toAmounts.end()));
+        lows.push_back(*std::min_element(fromAmounts.begin(), fromAmounts.end()));
+        res.push_back(Pair("l",lows));
+        arr.push_back(res);
     }
     return arr;
 }
