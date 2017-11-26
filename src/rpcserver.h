@@ -253,6 +253,7 @@ extern json_spirit::Value dxGetCurrencyList(const json_spirit::Array& params, bo
 extern json_spirit::Value dxCreateTransaction(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value dxAcceptTransaction(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value dxCancelTransaction(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value dxGetTransactionsTraideHistoryList(const json_spirit::Array& params, bool fHelp);
 
 // in rest.cpp
 extern bool HTTPReq_REST(AcceptedConnection* conn,
