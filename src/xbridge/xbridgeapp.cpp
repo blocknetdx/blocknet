@@ -160,7 +160,12 @@ bool XBridgeApp::init(int argc, char *argv[])
     XBridgeExchange & e = XBridgeExchange::instance();
     e.init();
 
-    m_historicTransactionsStates = {XBridgeTransactionDescr::trFinished};
+    m_historicTransactionsStates = {XBridgeTransactionDescr::trExpired,
+                                    XBridgeTransactionDescr::trOffline,
+                                    XBridgeTransactionDescr::trFinished,
+                                    XBridgeTransactionDescr::trDropped,
+                                    XBridgeTransactionDescr::trCancelled,
+                                    XBridgeTransactionDescr::trInvalid};
     return true;
 }
 
@@ -668,7 +673,6 @@ xbridge::Error XBridgeApp::cancelXBridgeTransaction(const uint256 &id,
         }
         if (m_transactions.count(id))
         {
-            boost::mutex::scoped_lock l(m_lastErrorLock);
             LOG() << "transaction found " << __FUNCTION__;
             m_transactions[id]->state = XBridgeTransactionDescr::trCancelled;
             xuiConnector.NotifyXBridgeTransactionStateChanged(id, XBridgeTransactionDescr::trCancelled);
