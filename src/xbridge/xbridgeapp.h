@@ -152,14 +152,9 @@ public:
 
   private:
     /**
-     * @brief m_historicTransactionsStates - the status list of historical transactions
+     * @brief m_historicTransactionsStates - transaction state, in the historical list
      */
     std::list<XBridgeTransactionDescr::State>       m_historicTransactionsStates;
-
-    /**
-     * @brief m_lastErrorLock - mutex for locking only m_lastError
-     */
-    boost::mutex m_lastErrorLock;
 
     /**
      * @brief m_services
