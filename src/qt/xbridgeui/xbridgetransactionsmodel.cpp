@@ -342,7 +342,8 @@ void XBridgeTransactionsModel::onTimer()
             }
         }
         if(XBridgeApp::instance().isHistoricState(m_transactions[i].state))
-        {
+        {//add transaction into history
+            //@TODO replace model to smartpointers
             XBridgeTransactionDescrPtr tmp = XBridgeTransactionDescrPtr(new XBridgeTransactionDescr(m_transactions[i]));
             boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
             XBridgeApp::m_historicTransactions[id] = tmp;
