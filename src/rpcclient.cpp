@@ -107,7 +107,8 @@ static const CRPCConvertParam vRPCConvertParams[] =
         {"autocombinerewards", 1},
         {"dxCreateTransaction", 2},
         {"dxCreateTransaction", 5},
-        {"dxGetTransactionsTraideHistoryList", 2}};
+        {"dxGetTransactionsTraideHistoryList", 2},
+        {"dxGetTransactionsTraideHistoryList", 3}};
 
 class CRPCConvertTable
 {

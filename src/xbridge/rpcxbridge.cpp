@@ -33,7 +33,7 @@ using namespace boost::asio;
 
 Value xBridgeValueFromAmount(uint64_t amount)
 {
-    return static_cast<double>(amount / XBridgeTransactionDescr::COIN);
+    return static_cast<double>(amount) / XBridgeTransactionDescr::COIN;
 }
 
 uint64_t xBridgeAmountFromReal(double val)
@@ -152,16 +152,16 @@ Value dxGetTransactionsHistoryList(const Array & params, bool fHelp)
 
 Value dxGetTransactionsTraideHistoryList(const json_spirit::Array& params, bool fHelp)
 {
-    if (fHelp || params.size() != 3)
+    if (fHelp || params.size() != 4)
     {
         throw runtime_error("dxGetTransactionsTraideHistoryList "
-                            "(from currency) (to currency) (timeframe) ");
+                            "(from currency) (to currency) (start time) (end time) ");
     }
 
     Array arr;
     boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
     {
-        std::map<uint256, XBridgeTransactionDescrPtr> trlist = XBridgeApp::m_pendingTransactions/*m_historicTransactions*/;
+        std::map<uint256, XBridgeTransactionDescrPtr> trlist = XBridgeApp::m_historicTransactions;
         if(trlist.empty())
         {
             LOG() << "empty history transactions list ";
@@ -169,60 +169,85 @@ Value dxGetTransactionsTraideHistoryList(const json_spirit::Array& params, bool 
         }
         const auto fromCurrency = params[0].get_str();
         const auto toCurrency = params[1].get_str();
-        const auto timeFrame = params[2].get_int();
+        const auto startTimeFrame = params[2].get_int();
+        const auto endTimeFrame = params[3].get_int();
+
         using RealVector = std::vector<double>;
+        using TransactionPair = std::pair<uint256, XBridgeTransactionDescrPtr>;
         namespace bpt = boost::posix_time;
         const auto timestamp  = [](bpt::ptime time) {
             bpt::ptime epoch(boost::gregorian::date(1970, 1, 1));
-            return (time - epoch).total_seconds();
+            ((time - epoch).total_seconds());
         };
-        auto endTimeFrame = bpt::second_clock::universal_time();
-        bpt::time_duration timeFrameSize(0, timeFrame, 0);
-        auto startTimeFrame = endTimeFrame - timeFrameSize;
+
         std::map<uint256, XBridgeTransactionDescrPtr> trList;
+        std::vector<XBridgeTransactionDescrPtr> trVector;
         std::copy_if(trlist.begin(), trlist.end(), std::inserter(trList, trList.end()),
-                     [&startTimeFrame, &endTimeFrame, &toCurrency, &fromCurrency](const std::pair<uint256, XBridgeTransactionDescrPtr > &transaction){
-            return (transaction.second->created < endTimeFrame) &&
-                    (transaction.second->created > startTimeFrame) &&
+                     [&startTimeFrame, &endTimeFrame, &toCurrency, &fromCurrency](const TransactionPair &transaction){
+            return  ((transaction.second->created) < bpt::from_time_t(endTimeFrame)) &&
+                    ((transaction.second->created) > bpt::from_time_t(startTimeFrame)) &&
                     (transaction.second->toCurrency == toCurrency) &&
-                    (transaction.second->fromCurrency == fromCurrency)
-                    /*&&
-                    (transaction.second->state == XBridgeTransactionDescr::trFinished)*/;
+                    (transaction.second->fromCurrency == fromCurrency) &&
+                    (transaction.second->state == XBridgeTransactionDescr::trFinished);
         });
 
         if(trList.empty()) {
             LOG() << "not found the transactions for the specified period " << __FUNCTION__;
             return  arr;
         }
-        RealVector toAmounts(trList.size());
-        RealVector fromAmounts(trList.size());
+
+        RealVector toAmounts;
+        RealVector fromAmounts;
+
         Object res;
+
         Array times;
-        times.push_back(timestamp(startTimeFrame));
-        times.push_back(timestamp(endTimeFrame));
-        res.push_back(Pair("t", times));
+        times.emplace_back(startTimeFrame);
+        times.emplace_back(endTimeFrame);
+        res.emplace_back(Pair("t", times));
+
         for (const auto &trEntry : trList)
         {
             const auto &tr = trEntry.second;
             double fromAmount = xBridgeValueFromAmount(tr->fromAmount).get_real();
             double toAmount = xBridgeValueFromAmount(tr->toAmount).get_real();
-            toAmounts.push_back(toAmount);
-            fromAmounts.push_back(fromAmount);
+            toAmounts.emplace_back(toAmount);
+            fromAmounts.emplace_back(fromAmount);
+            trVector.push_back(tr);
         }
 
+        auto cmp = [](const XBridgeTransactionDescrPtr &a,  const XBridgeTransactionDescrPtr &b)
+        {
+             return (a->created) < (b->created);
+        };
+        std::sort(trVector.begin(), trVector.end(), cmp);
+        Array opens;
+        opens.emplace_back(xBridgeValueFromAmount(trVector[0]->fromAmount));
+        opens.emplace_back(xBridgeValueFromAmount(trVector[0]->toAmount));
+        res.emplace_back(Pair("o", opens));
+
+        Array close;
+        close.emplace_back(xBridgeValueFromAmount(trVector[trVector.size() - 1]->fromAmount));
+        close.emplace_back(xBridgeValueFromAmount(trVector[trVector.size() - 1]->toAmount));
+        res.emplace_back(Pair("c", close));
+
         Array volumes;
-        volumes.push_back(accumulate(toAmounts.begin(), toAmounts.end(), .0));
-        volumes.push_back(accumulate(fromAmounts.begin(), fromAmounts.end(), .0));
-        res.push_back(Pair("v", volumes));
+        volumes.emplace_back(accumulate(toAmounts.begin(), toAmounts.end(), .0));
+        volumes.emplace_back(accumulate(fromAmounts.begin(), fromAmounts.end(), .0));
+        res.emplace_back(Pair("v", volumes));
+
         Array highs;
-        highs.push_back(*std::max_element(toAmounts.begin(), toAmounts.end()));
-        highs.push_back(*std::max_element(fromAmounts.begin(), fromAmounts.end()));
-        res.push_back(Pair("h", highs));
+        highs.emplace_back(*std::max_element(toAmounts.begin(), toAmounts.end()));
+        highs.emplace_back(*std::max_element(fromAmounts.begin(), fromAmounts.end()));
+        res.emplace_back(Pair("h", highs));
+
         Array lows;
-        lows.push_back(*std::min_element(toAmounts.begin(), toAmounts.end()));
-        lows.push_back(*std::min_element(fromAmounts.begin(), fromAmounts.end()));
-        res.push_back(Pair("l",lows));
-        arr.push_back(res);
+        lows.emplace_back(*std::min_element(toAmounts.begin(), toAmounts.end()));
+        lows.emplace_back(*std::min_element(fromAmounts.begin(), fromAmounts.end()));
+        res.emplace_back(Pair("l", lows));
+
+        res.emplace_back(Pair("s", "ok"));
+        arr.emplace_back(res);
     }
     return arr;
 }
