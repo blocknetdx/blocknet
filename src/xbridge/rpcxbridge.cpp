@@ -175,13 +175,10 @@ Value dxGetTransactionsTraideHistoryList(const json_spirit::Array& params, bool 
         using RealVector = std::vector<double>;
         using TransactionPair = std::pair<uint256, XBridgeTransactionDescrPtr>;
         namespace bpt = boost::posix_time;
-        const auto timestamp  = [](bpt::ptime time) {
-            bpt::ptime epoch(boost::gregorian::date(1970, 1, 1));
-            ((time - epoch).total_seconds());
-        };
 
         std::map<uint256, XBridgeTransactionDescrPtr> trList;
         std::vector<XBridgeTransactionDescrPtr> trVector;
+
         std::copy_if(trlist.begin(), trlist.end(), std::inserter(trList, trList.end()),
                      [&startTimeFrame, &endTimeFrame, &toCurrency, &fromCurrency](const TransactionPair &transaction){
             return  ((transaction.second->created) < bpt::from_time_t(endTimeFrame)) &&
