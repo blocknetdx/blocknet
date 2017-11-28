@@ -371,6 +371,7 @@ static const CRPCCommand vRPCCommands[] =
         {"xbridge", "dxAcceptTransaction",                  &dxAcceptTransaction,                   true, true, true},
         {"xbridge", "dxCancelTransaction",                  &dxCancelTransaction,                   true, true, true},
         {"xbridge", "dxGetTransactionsTraideHistoryList",   &dxGetTransactionsTraideHistoryList,    true, true, true},
+        {"xbridge", "dxGetOrderBookChartTransactionsList",  &dxGetOrderBookChartTransactionsList,    true, true, true},
     #endif // ENABLE_WALLET
 };
 

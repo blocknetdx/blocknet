@@ -466,3 +466,138 @@ Value dxCancelTransaction(const Array & params, bool fHelp)
     obj.push_back(Pair("id", id.GetHex()));
     return obj;
 }
+
+json_spirit::Value dxGetOrderBookChartTransactionsList(const json_spirit::Array& params, bool fHelp)
+{
+    if (fHelp || params.size() != 1)
+    {
+        throw runtime_error("dxGetOrderBookChartTransactionsList "
+                            "(the level of detail)");
+    }
+
+    Array arr;
+    boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
+    {
+        std::map<uint256, XBridgeTransactionDescrPtr> trList = XBridgeApp::m_pendingTransactions;
+        if(trList.empty())
+        {
+            LOG() << "empty  transactions list ";
+            return arr;
+        }
+
+        const auto detaiLevel = params[0].get_int();
+        using TransactionPair = std::pair<uint256, XBridgeTransactionDescrPtr>;
+
+        Object res;
+
+        Array bids;
+        Array asks;
+
+        switch (detaiLevel)
+        {
+        case 1:
+        {
+            const auto bidsItem = std::max_element(trList.begin(),trList.end(),
+                                       [](const TransactionPair &a, const TransactionPair &b)
+            {
+                const auto &tr1 = a.second;
+                const auto &tr2 = b.second;
+                const auto priceA = xBridgeValueFromAmount(tr1->fromAmount).get_real() / xBridgeValueFromAmount(tr1->toAmount).get_real();
+                const auto priceB = xBridgeValueFromAmount(tr2->fromAmount).get_real() / xBridgeValueFromAmount(tr2->toAmount).get_real();
+                return priceA < priceB;
+            });
+
+            {
+                const auto &tr = bidsItem->second;
+                const auto bidPrice = xBridgeValueFromAmount(tr->fromAmount).get_real() / xBridgeValueFromAmount(tr->toAmount).get_real();
+                bids.emplace_back(bidPrice);
+                bids.emplace_back(xBridgeValueFromAmount(tr->fromAmount));
+            }
+            ///////////////////////////////////////////////////////////////////////////////////////////////
+
+            const auto asksItem = std::min_element(trList.begin(), trList.end(),
+                                                   [](const TransactionPair &a, const TransactionPair &b)
+            {
+                const auto &tr1 = a.second;
+                const auto &tr2 = b.second;
+                const auto priceA = xBridgeValueFromAmount(tr1->toAmount).get_real() / xBridgeValueFromAmount(tr1->fromAmount).get_real();
+                const auto priceB = xBridgeValueFromAmount(tr2->toAmount).get_real() / xBridgeValueFromAmount(tr2->fromAmount).get_real();
+                return priceA < priceB;
+            });
+            {
+                const auto &tr = asksItem->second;
+                const auto askPrice = xBridgeValueFromAmount(tr->toAmount).get_real() / xBridgeValueFromAmount(tr->fromAmount).get_real();
+                asks.emplace_back(askPrice);
+                asks.emplace_back(xBridgeValueFromAmount(tr->toAmount));
+            }
+            break;
+        }
+        case 2:
+        {
+            std::vector<XBridgeTransactionDescrPtr> trVector;
+            const auto bestTransactionNumber = 50;
+            for (const auto &trEntry : trList)
+            {
+                const auto &tr = trEntry.second;
+                trVector.push_back(tr);
+            }
+
+            auto cmp = [](const XBridgeTransactionDescrPtr &a,  const XBridgeTransactionDescrPtr &b)
+            {
+                const auto priceA = xBridgeValueFromAmount(a->fromAmount).get_real() / xBridgeValueFromAmount(a->toAmount).get_real();
+                const auto priceB = xBridgeValueFromAmount(b->fromAmount).get_real() / xBridgeValueFromAmount(b->toAmount).get_real();
+                return priceA > priceB;
+            };
+            std::sort(trVector.begin(), trVector.end(), cmp);
+            auto bound = (trVector.size() >= bestTransactionNumber) ? bestTransactionNumber : trVector.size();
+            for(size_t i = 0; i < bound; i++)
+            {
+                {
+                    Array tmp;
+                    const auto bidPrice = xBridgeValueFromAmount(trVector[i]->fromAmount).get_real() / xBridgeValueFromAmount(trVector[i]->toAmount).get_real();
+                    tmp.emplace_back(bidPrice);
+                    tmp.emplace_back(xBridgeValueFromAmount(trVector[i]->fromAmount));
+                    bids.emplace_back(tmp);
+                }
+                {
+                    Array tmp;
+                    const auto askPrice = xBridgeValueFromAmount(trVector[i]->toAmount).get_real() / xBridgeValueFromAmount(trVector[i]->fromAmount).get_real();
+                    tmp.emplace_back(askPrice);
+                    tmp.emplace_back(xBridgeValueFromAmount(trVector[i]->toAmount));
+                    asks.emplace_back(tmp);
+                }
+            }
+            break;
+        }
+        case 3:
+        {
+            for (const auto &trEntry : trList)
+            {
+                const auto &tr = trEntry.second;
+                {
+                    Array tmp;
+                    const auto bidPrice = xBridgeValueFromAmount(tr->fromAmount).get_real() / xBridgeValueFromAmount(tr->toAmount).get_real();
+                    tmp.emplace_back(bidPrice);
+                    tmp.emplace_back(xBridgeValueFromAmount(tr->fromAmount));
+                    bids.emplace_back(tmp);
+                }
+                {
+                    Array tmp;
+                    const auto askPrice = xBridgeValueFromAmount(tr->toAmount).get_real() / xBridgeValueFromAmount(tr->fromAmount).get_real();
+                    tmp.emplace_back(askPrice);
+                    tmp.emplace_back(xBridgeValueFromAmount(tr->toAmount));
+                    asks.emplace_back(tmp);
+                }
+            }
+            break;
+        }
+        default:
+            LOG() << "invalid detail level value " << __FUNCTION__;
+            return arr;
+        }
+        res.emplace_back(Pair("bids", bids));
+        res.emplace_back(Pair("asks", asks));
+        arr.emplace_back(res);
+        return  arr;
+    }
+}
