@@ -542,13 +542,14 @@ json_spirit::Value dxGetOrderBookChartTransactionsList(const json_spirit::Array&
                 trVector.push_back(tr);
             }
 
-            auto cmp = [](const XBridgeTransactionDescrPtr &a,  const XBridgeTransactionDescrPtr &b)
+            auto greater = [](const XBridgeTransactionDescrPtr &a,  const XBridgeTransactionDescrPtr &b)
             {
                 const auto priceA = xBridgeValueFromAmount(a->fromAmount).get_real() / xBridgeValueFromAmount(a->toAmount).get_real();
                 const auto priceB = xBridgeValueFromAmount(b->fromAmount).get_real() / xBridgeValueFromAmount(b->toAmount).get_real();
                 return priceA > priceB;
             };
-            std::sort(trVector.begin(), trVector.end(), cmp);
+            std::sort(trVector.begin(), trVector.end(), greater);
+
             auto bound = (trVector.size() >= bestTransactionNumber) ? bestTransactionNumber : trVector.size();
             for(size_t i = 0; i < bound; i++)
             {
