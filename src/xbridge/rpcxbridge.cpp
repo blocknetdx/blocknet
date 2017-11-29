@@ -190,7 +190,7 @@ Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp)
         });
 
         if(trList.empty()) {
-            LOG() << "not found the transactions for the specified period " << __FUNCTION__;
+            LOG() << "No transactions for the specified period " << __FUNCTION__;
             return  arr;
         }
 
@@ -504,7 +504,7 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
          * @brief detaiLevel - Get a list of open orders for a product.
          * The amount of detail shown can be customized with the level parameter.
          */
-        const auto detaiLevel   = params[0].get_int();
+        const auto detailLevel  = params[0].get_int();
         const auto fromCurrency = params[1].get_str();
         const auto toCurrency   = params[2].get_str();
 
@@ -534,7 +534,7 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
         Array asks;
 
 
-        switch (detaiLevel)
+        switch (detailLevel)
         {
         case 1:
         {//return Only the best bid and ask
