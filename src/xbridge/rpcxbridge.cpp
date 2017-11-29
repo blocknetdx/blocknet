@@ -57,9 +57,6 @@ Value dxGetTransactionList(const Array & params, bool fHelp)
         throw runtime_error("dxGetTransactionList\nList transactions.");
     }
 
-    /**
-     * @brief arr
-     */
     Array arr;
 
     boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
@@ -169,10 +166,10 @@ Value dxGetTransactionsTraideHistoryList(const json_spirit::Array& params, bool 
             LOG() << "empty history transactions list ";
             return arr;
         }
-        const auto fromCurrency = params[0].get_str();
-        const auto toCurrency = params[1].get_str();
-        const auto startTimeFrame = params[2].get_int();
-        const auto endTimeFrame = params[3].get_int();
+        const auto fromCurrency     = params[0].get_str();
+        const auto toCurrency       = params[1].get_str();
+        const auto startTimeFrame   = params[2].get_int();
+        const auto endTimeFrame     = params[3].get_int();
 
         using RealVector = std::vector<double>;
         using TransactionPair = std::pair<uint256, XBridgeTransactionDescrPtr>;
@@ -181,6 +178,7 @@ Value dxGetTransactionsTraideHistoryList(const json_spirit::Array& params, bool 
         std::map<uint256, XBridgeTransactionDescrPtr> trList;
         std::vector<XBridgeTransactionDescrPtr> trVector;
 
+        //copy all transactions between startTimeFrame and endTimeFrame
         std::copy_if(trlist.begin(), trlist.end(), std::inserter(trList, trList.end()),
                      [&startTimeFrame, &endTimeFrame, &toCurrency, &fromCurrency](const TransactionPair &transaction){
             return  ((transaction.second->created) < bpt::from_time_t(endTimeFrame)) &&
@@ -205,11 +203,12 @@ Value dxGetTransactionsTraideHistoryList(const json_spirit::Array& params, bool 
         times.emplace_back(endTimeFrame);
         res.emplace_back(Pair("t", times));
 
+        //copy values into vector
         for (const auto &trEntry : trList)
         {
             const auto &tr = trEntry.second;
-            double fromAmount = xBridgeValueFromAmount(tr->fromAmount).get_real();
-            double toAmount = xBridgeValueFromAmount(tr->toAmount).get_real();
+            const auto fromAmount = xBridgeValueFromAmount(tr->fromAmount).get_real();
+            const auto toAmount = xBridgeValueFromAmount(tr->toAmount).get_real();
             toAmounts.emplace_back(toAmount);
             fromAmounts.emplace_back(fromAmount);
             trVector.push_back(tr);
@@ -220,31 +219,38 @@ Value dxGetTransactionsTraideHistoryList(const json_spirit::Array& params, bool 
              return (a->created) < (b->created);
         };
         std::sort(trVector.begin(), trVector.end(), cmp);
+
         Array opens;
+        //write start price
         opens.emplace_back(xBridgeValueFromAmount(trVector[0]->fromAmount));
         opens.emplace_back(xBridgeValueFromAmount(trVector[0]->toAmount));
         res.emplace_back(Pair("o", opens));
 
         Array close;
+        //write end price
         close.emplace_back(xBridgeValueFromAmount(trVector[trVector.size() - 1]->fromAmount));
         close.emplace_back(xBridgeValueFromAmount(trVector[trVector.size() - 1]->toAmount));
         res.emplace_back(Pair("c", close));
 
         Array volumes;
+        //write sum of bids and asks
         volumes.emplace_back(accumulate(toAmounts.begin(), toAmounts.end(), .0));
         volumes.emplace_back(accumulate(fromAmounts.begin(), fromAmounts.end(), .0));
         res.emplace_back(Pair("v", volumes));
 
         Array highs;
+        //write higs values of the bids and asks  in timeframe
         highs.emplace_back(*std::max_element(toAmounts.begin(), toAmounts.end()));
         highs.emplace_back(*std::max_element(fromAmounts.begin(), fromAmounts.end()));
         res.emplace_back(Pair("h", highs));
 
         Array lows;
+        //write lows values of the bids and ask in the timeframe
         lows.emplace_back(*std::min_element(toAmounts.begin(), toAmounts.end()));
         lows.emplace_back(*std::min_element(fromAmounts.begin(), fromAmounts.end()));
         res.emplace_back(Pair("l", lows));
 
+        //write status
         res.emplace_back(Pair("s", "ok"));
         arr.emplace_back(res);
     }
@@ -487,21 +493,32 @@ json_spirit::Value dxGetOrderBookChartTransactionsList(const json_spirit::Array&
             return arr;
         }
 
+        /**
+         * @brief detaiLevel - Get a list of open orders for a product.
+         * The amount of detail shown can be customized with the level parameter.
+         */
         const auto detaiLevel = params[0].get_int();
         using TransactionPair = std::pair<uint256, XBridgeTransactionDescrPtr>;
 
         Object res;
 
+        /**
+         * @brief bids - array with bids
+         */
         Array bids;
+        /**
+         * @brief asks - array with asks
+         */
         Array asks;
+
 
         switch (detaiLevel)
         {
         case 1:
-        {
+        {//return Only the best bid and ask
             const auto bidsItem = std::max_element(trList.begin(),trList.end(),
                                        [](const TransactionPair &a, const TransactionPair &b)
-            {
+            {//find transaction with best bids
                 const auto &tr1 = a.second;
                 const auto &tr2 = b.second;
                 const auto priceA = xBridgeValueFromAmount(tr1->fromAmount).get_real() / xBridgeValueFromAmount(tr1->toAmount).get_real();
@@ -519,7 +536,7 @@ json_spirit::Value dxGetOrderBookChartTransactionsList(const json_spirit::Array&
 
             const auto asksItem = std::min_element(trList.begin(), trList.end(),
                                                    [](const TransactionPair &a, const TransactionPair &b)
-            {
+            {//find transactions with best asks
                 const auto &tr1 = a.second;
                 const auto &tr2 = b.second;
                 const auto priceA = xBridgeValueFromAmount(tr1->toAmount).get_real() / xBridgeValueFromAmount(tr1->fromAmount).get_real();
@@ -535,7 +552,7 @@ json_spirit::Value dxGetOrderBookChartTransactionsList(const json_spirit::Array&
             break;
         }
         case 2:
-        {
+        {//Top 50 bids and asks (aggregated)
             std::vector<XBridgeTransactionDescrPtr> trVector;
             const auto bestTransactionNumber = 50;
             for (const auto &trEntry : trList)
@@ -544,19 +561,25 @@ json_spirit::Value dxGetOrderBookChartTransactionsList(const json_spirit::Array&
                 trVector.push_back(tr);
             }
 
+
             auto greater = [](const XBridgeTransactionDescrPtr &a,  const XBridgeTransactionDescrPtr &b)
             {
                 const auto priceA = xBridgeValueFromAmount(a->fromAmount).get_real() / xBridgeValueFromAmount(a->toAmount).get_real();
                 const auto priceB = xBridgeValueFromAmount(b->fromAmount).get_real() / xBridgeValueFromAmount(b->toAmount).get_real();
                 return priceA > priceB;
             };
+            //sort descending
             std::sort(trVector.begin(), trVector.end(), greater);
 
+            /**
+             * @brief bound - calculate upper bound
+             */
             auto bound = (trVector.size() >= bestTransactionNumber) ? bestTransactionNumber : trVector.size();
             for(size_t i = 0; i < bound; i++)
             {
                 {
                     Array tmp;
+                    //calculate bids and push to array
                     const auto bidPrice = xBridgeValueFromAmount(trVector[i]->fromAmount).get_real() / xBridgeValueFromAmount(trVector[i]->toAmount).get_real();
                     tmp.emplace_back(bidPrice);
                     tmp.emplace_back(xBridgeValueFromAmount(trVector[i]->fromAmount));
@@ -564,6 +587,7 @@ json_spirit::Value dxGetOrderBookChartTransactionsList(const json_spirit::Array&
                 }
                 {
                     Array tmp;
+                    //calculate asks and push to array
                     const auto askPrice = xBridgeValueFromAmount(trVector[i]->toAmount).get_real() / xBridgeValueFromAmount(trVector[i]->fromAmount).get_real();
                     tmp.emplace_back(askPrice);
                     tmp.emplace_back(xBridgeValueFromAmount(trVector[i]->toAmount));
@@ -573,7 +597,7 @@ json_spirit::Value dxGetOrderBookChartTransactionsList(const json_spirit::Array&
             break;
         }
         case 3:
-        {
+        {//Full order book (non aggregated)
             for (const auto &trEntry : trList)
             {
                 const auto &tr = trEntry.second;
