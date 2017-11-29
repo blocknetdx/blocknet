@@ -2,12 +2,12 @@
 #define XBRIDGEERROR_H
 #include <string>
 
-
 namespace xbridge
 {
     enum Error
     {
-        NO_ERROR = 0,
+        // 'NO_ERROR' is defined (probably by some windows headers) when compiling windows targets
+        SUCCESS = 0,
         INVALID_CURRENCY,
         NO_SESSION,
         INSIFFICIENT_FUNDS,
