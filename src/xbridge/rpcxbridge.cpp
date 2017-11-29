@@ -169,7 +169,7 @@ Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp)
         TransactionMap trlist = XBridgeApp::m_historicTransactions;
         if(trlist.empty())
         {
-            LOG() << "empty history transactions list ";
+            LOG() << "empty history transactions list";
             return arr;
         }
         const auto fromCurrency     = params[0].get_str();
@@ -181,7 +181,6 @@ Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp)
         {
             isShowTxids = (params[4].get_str() == "txids");
         }
-
 
         TransactionMap trList;
         std::vector<XBridgeTransactionDescrPtr> trVector;
@@ -494,11 +493,11 @@ Value dxCancelTransaction(const Array & params, bool fHelp)
     return obj;
 }
 
-json_spirit::Value dxGetOrderBookChartTransactionsList(const json_spirit::Array& params, bool fHelp)
+json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 3)
     {
-        throw runtime_error("dxGetOrderBookChartTransactionsList "
+        throw runtime_error("dxGetOrderBook "
                             "(the level of detail) (from currency) (to currency) ");
     }
 

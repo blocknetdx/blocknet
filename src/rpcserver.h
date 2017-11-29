@@ -315,12 +315,12 @@ extern json_spirit::Value dxCancelTransaction(const json_spirit::Array& params, 
 extern json_spirit::Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp);
 
 /**
- * @brief dxGetOrderBookChartTransactionsList Returns transactions list in a form of 'order book'
+ * @brief dxGetOrderBook Returns transactions list in a form of 'order book'
  * @param params The list of input params
  * @param fHelp Use for debugging purposes, throws an exception with parameter description message
  * @return The list of transactions as 'order book' records
  */
-extern json_spirit::Value dxGetOrderBookChartTransactionsList(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp);
 
 
 // in rest.cpp
