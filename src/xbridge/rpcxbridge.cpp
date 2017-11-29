@@ -30,8 +30,12 @@ using namespace std;
 using namespace boost;
 using namespace boost::asio;
 
+using TransactionMap = std::map<uint256, XBridgeTransactionDescrPtr>;
+using TransactionPair = std::pair<uint256, XBridgeTransactionDescrPtr>;
+using RealVector = std::vector<double>;
+namespace bpt = boost::posix_time;
 
-Value xBridgeValueFromAmount(uint64_t amount)
+double xBridgeValueFromAmount(uint64_t amount)
 {
     return static_cast<double>(amount) / XBridgeTransactionDescr::COIN;
 }
@@ -64,7 +68,7 @@ Value dxGetTransactionList(const Array & params, bool fHelp)
 
     // pending tx
     {
-        std::map<uint256, XBridgeTransactionDescrPtr> trlist = XBridgeApp::m_pendingTransactions;
+        TransactionMap trlist = XBridgeApp::m_pendingTransactions;
         for (const auto & trEntry : trlist)
         {
             Object jtr;
@@ -84,7 +88,7 @@ Value dxGetTransactionList(const Array & params, bool fHelp)
 
     // active tx
     {
-        std::map<uint256, XBridgeTransactionDescrPtr> trlist = XBridgeApp::m_transactions;
+        TransactionMap trlist = XBridgeApp::m_transactions;
         for (const auto & trEntry : trlist)
         {
             Object jtr;
@@ -120,7 +124,7 @@ Value dxGetTransactionsHistoryList(const Array & params, bool fHelp)
     Array arr;
     boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
     {
-        std::map<uint256, XBridgeTransactionDescrPtr> trlist = XBridgeApp::m_historicTransactions;
+        TransactionMap trlist = XBridgeApp::m_historicTransactions;
         if(trlist.empty())
         {
             LOG() << "empty history transactions list ";
@@ -161,7 +165,7 @@ Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp)
     Array arr;
     boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
     {
-        std::map<uint256, XBridgeTransactionDescrPtr> trlist = XBridgeApp::m_historicTransactions;
+        TransactionMap trlist = XBridgeApp::m_historicTransactions;
         if(trlist.empty())
         {
             LOG() << "empty history transactions list ";
@@ -172,11 +176,8 @@ Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp)
         const auto startTimeFrame   = params[2].get_int();
         const auto endTimeFrame     = params[3].get_int();
 
-        using RealVector = std::vector<double>;
-        using TransactionPair = std::pair<uint256, XBridgeTransactionDescrPtr>;
-        namespace bpt = boost::posix_time;
 
-        std::map<uint256, XBridgeTransactionDescrPtr> trList;
+        TransactionMap trList;
         std::vector<XBridgeTransactionDescrPtr> trVector;
 
         //copy all transactions between startTimeFrame and endTimeFrame
@@ -208,8 +209,8 @@ Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp)
         for (const auto &trEntry : trList)
         {
             const auto &tr = trEntry.second;
-            const auto fromAmount = xBridgeValueFromAmount(tr->fromAmount).get_real();
-            const auto toAmount = xBridgeValueFromAmount(tr->toAmount).get_real();
+            const auto fromAmount = xBridgeValueFromAmount(tr->fromAmount);
+            const auto toAmount = xBridgeValueFromAmount(tr->toAmount);
             toAmounts.emplace_back(toAmount);
             fromAmounts.emplace_back(fromAmount);
             trVector.push_back(tr);
@@ -276,7 +277,7 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
 
     // pending tx
     {
-        std::map<uint256, XBridgeTransactionDescrPtr> trlist = XBridgeApp::m_pendingTransactions;
+        TransactionMap trlist = XBridgeApp::m_pendingTransactions;
         for (const auto & trEntry : trlist)
         {
             const auto tr = trEntry.second;
@@ -299,7 +300,7 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
 
     // active tx
     {
-        std::map<uint256, XBridgeTransactionDescrPtr> trlist = XBridgeApp::m_transactions;
+        TransactionMap trlist = XBridgeApp::m_transactions;
         for (const auto & trEntry : trlist)
         {
             const auto tr = trEntry.second;
@@ -322,7 +323,7 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
 
     // historic tx
     {
-        std::map<uint256, XBridgeTransactionDescrPtr> trlist = XBridgeApp::m_historicTransactions;
+        TransactionMap trlist = XBridgeApp::m_historicTransactions;
         if(trlist.empty())
         {
             LOG() << "history transaction list empty " << __FUNCTION__;
@@ -439,7 +440,7 @@ Value dxAcceptTransaction(const Array & params, bool fHelp)
 
 
     uint256 idResult;
-    const auto error= XBridgeApp::instance().acceptXBridgeTransaction(id, from, to, idResult);
+    const auto error = XBridgeApp::instance().acceptXBridgeTransaction(id, from, to, idResult);
     if(error == xbridge::SUCCESS)
     {
         Object obj;
@@ -478,28 +479,49 @@ Value dxCancelTransaction(const Array & params, bool fHelp)
 
 json_spirit::Value dxGetOrderBookChartTransactionsList(const json_spirit::Array& params, bool fHelp)
 {
-    if (fHelp || params.size() != 1)
+    if (fHelp || params.size() != 3)
     {
         throw runtime_error("dxGetOrderBookChartTransactionsList "
-                            "(the level of detail)");
+                            "(the level of detail) (from currency) (to currency) ");
     }
 
     Array arr;
     boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
     {
-        std::map<uint256, XBridgeTransactionDescrPtr> trList = XBridgeApp::m_pendingTransactions;
+        TransactionMap trList = XBridgeApp::m_pendingTransactions;
+
         if(trList.empty())
         {
             LOG() << "empty  transactions list ";
             return arr;
         }
 
+        TransactionMap asksList;
+
+        TransactionMap bidsList;
+
+
         /**
          * @brief detaiLevel - Get a list of open orders for a product.
          * The amount of detail shown can be customized with the level parameter.
          */
-        const auto detaiLevel = params[0].get_int();
-        using TransactionPair = std::pair<uint256, XBridgeTransactionDescrPtr>;
+        const auto detaiLevel   = params[0].get_int();
+        const auto fromCurrency = params[1].get_str();
+        const auto toCurrency   = params[2].get_str();
+
+        //copy all transactions
+        std::copy_if(trList.begin(), trList.end(), std::inserter(asksList, asksList.end()),
+                     [&toCurrency, &fromCurrency](const TransactionPair &transaction){
+            return  ((transaction.second->toCurrency == fromCurrency) &&
+                    (transaction.second->fromCurrency == toCurrency));
+        });
+
+        std::copy_if(trList.begin(), trList.end(), std::inserter(bidsList, bidsList.end()),
+                     [&toCurrency, &fromCurrency](const TransactionPair &transaction){
+            return  ((transaction.second->toCurrency == toCurrency) &&
+                    (transaction.second->fromCurrency == fromCurrency));
+        });
+
 
         Object res;
 
@@ -517,105 +539,117 @@ json_spirit::Value dxGetOrderBookChartTransactionsList(const json_spirit::Array&
         {
         case 1:
         {//return Only the best bid and ask
-            const auto bidsItem = std::max_element(trList.begin(),trList.end(),
+            const auto bidsItem = std::max_element(bidsList.begin(), bidsList.end(),
                                        [](const TransactionPair &a, const TransactionPair &b)
             {//find transaction with best bids
                 const auto &tr1 = a.second;
                 const auto &tr2 = b.second;
-                const auto priceA = xBridgeValueFromAmount(tr1->fromAmount).get_real() / xBridgeValueFromAmount(tr1->toAmount).get_real();
-                const auto priceB = xBridgeValueFromAmount(tr2->fromAmount).get_real() / xBridgeValueFromAmount(tr2->toAmount).get_real();
+                const auto priceA = xBridgeValueFromAmount(tr1->fromAmount) / xBridgeValueFromAmount(tr1->toAmount);
+                const auto priceB = xBridgeValueFromAmount(tr2->fromAmount) / xBridgeValueFromAmount(tr2->toAmount);
                 return priceA < priceB;
             });
 
             {
                 const auto &tr = bidsItem->second;
-                const auto bidPrice = xBridgeValueFromAmount(tr->fromAmount).get_real() / xBridgeValueFromAmount(tr->toAmount).get_real();
+                const auto bidPrice = xBridgeValueFromAmount(tr->fromAmount) / xBridgeValueFromAmount(tr->toAmount);
                 bids.emplace_back(bidPrice);
                 bids.emplace_back(xBridgeValueFromAmount(tr->fromAmount));
             }
             ///////////////////////////////////////////////////////////////////////////////////////////////
 
-            const auto asksItem = std::min_element(trList.begin(), trList.end(),
+            const auto asksItem = std::min_element(asksList.begin(), asksList.end(),
                                                    [](const TransactionPair &a, const TransactionPair &b)
             {//find transactions with best asks
                 const auto &tr1 = a.second;
                 const auto &tr2 = b.second;
-                const auto priceA = xBridgeValueFromAmount(tr1->toAmount).get_real() / xBridgeValueFromAmount(tr1->fromAmount).get_real();
-                const auto priceB = xBridgeValueFromAmount(tr2->toAmount).get_real() / xBridgeValueFromAmount(tr2->fromAmount).get_real();
+                const auto priceA = xBridgeValueFromAmount(tr1->fromAmount) / xBridgeValueFromAmount(tr1->toAmount);
+                const auto priceB = xBridgeValueFromAmount(tr2->fromAmount) / xBridgeValueFromAmount(tr2->toAmount);
                 return priceA < priceB;
             });
+
             {
                 const auto &tr = asksItem->second;
-                const auto askPrice = xBridgeValueFromAmount(tr->toAmount).get_real() / xBridgeValueFromAmount(tr->fromAmount).get_real();
+                const auto askPrice = xBridgeValueFromAmount(tr->fromAmount) / xBridgeValueFromAmount(tr->toAmount);
                 asks.emplace_back(askPrice);
-                asks.emplace_back(xBridgeValueFromAmount(tr->toAmount));
+                asks.emplace_back(xBridgeValueFromAmount(tr->fromAmount));
             }
             break;
         }
         case 2:
         {//Top 50 bids and asks (aggregated)
-            std::vector<XBridgeTransactionDescrPtr> trVector;
+            std::vector<XBridgeTransactionDescrPtr> asksVector;
+            std::vector<XBridgeTransactionDescrPtr> bidsVector;
             const auto bestTransactionNumber = 50;
-            for (const auto &trEntry : trList)
+            for (const auto &trEntry : asksList)
             {
                 const auto &tr = trEntry.second;
-                trVector.push_back(tr);
+                asksVector.push_back(tr);
             }
 
-
-            auto greater = [](const XBridgeTransactionDescrPtr &a,  const XBridgeTransactionDescrPtr &b)
+            for (const auto &trEntry : bidsList)
             {
-                const auto priceA = xBridgeValueFromAmount(a->fromAmount).get_real() / xBridgeValueFromAmount(a->toAmount).get_real();
-                const auto priceB = xBridgeValueFromAmount(b->fromAmount).get_real() / xBridgeValueFromAmount(b->toAmount).get_real();
-                return priceA > priceB;
-            };
+                const auto &tr = trEntry.second;
+                bidsVector.push_back(tr);
+            }
+
             //sort descending
-            std::sort(trVector.begin(), trVector.end(), greater);
+            std::sort(bidsVector.begin(), bidsVector.end(), [](const XBridgeTransactionDescrPtr &a,  const XBridgeTransactionDescrPtr &b)
+            {
+                const auto priceA = xBridgeValueFromAmount(a->fromAmount) / xBridgeValueFromAmount(a->toAmount);
+                const auto priceB = xBridgeValueFromAmount(b->fromAmount) / xBridgeValueFromAmount(b->toAmount);
+                return priceA > priceB;
+            });
+
+            std::sort(asksVector.begin(), asksVector.end(), [](const XBridgeTransactionDescrPtr &a,  const XBridgeTransactionDescrPtr &b){
+                const auto priceA = xBridgeValueFromAmount(a->fromAmount) / xBridgeValueFromAmount(a->toAmount);
+                const auto priceB = xBridgeValueFromAmount(b->fromAmount) / xBridgeValueFromAmount(b->toAmount);
+                return priceA < priceB;
+            });
 
             /**
              * @brief bound - calculate upper bound
              */
-            auto bound = (trVector.size() >= bestTransactionNumber) ? bestTransactionNumber : trVector.size();
+            auto bound = (bidsVector.size() >= bestTransactionNumber) ? bestTransactionNumber : bidsVector.size();
             for(size_t i = 0; i < bound; i++)
             {
-                {
-                    Array tmp;
-                    //calculate bids and push to array
-                    const auto bidPrice = xBridgeValueFromAmount(trVector[i]->fromAmount).get_real() / xBridgeValueFromAmount(trVector[i]->toAmount).get_real();
-                    tmp.emplace_back(bidPrice);
-                    tmp.emplace_back(xBridgeValueFromAmount(trVector[i]->fromAmount));
-                    bids.emplace_back(tmp);
-                }
-                {
-                    Array tmp;
-                    //calculate asks and push to array
-                    const auto askPrice = xBridgeValueFromAmount(trVector[i]->toAmount).get_real() / xBridgeValueFromAmount(trVector[i]->fromAmount).get_real();
-                    tmp.emplace_back(askPrice);
-                    tmp.emplace_back(xBridgeValueFromAmount(trVector[i]->toAmount));
-                    asks.emplace_back(tmp);
-                }
+                Array tmp;
+                //calculate bids and push to array
+                const auto bidPrice = xBridgeValueFromAmount(bidsVector[i]->fromAmount) / xBridgeValueFromAmount(bidsVector[i]->toAmount);
+                tmp.emplace_back(bidPrice);
+                tmp.emplace_back(xBridgeValueFromAmount(bidsVector[i]->fromAmount));
+                bids.emplace_back(tmp);
+            }
+            bound = (asksVector.size() >= bestTransactionNumber) ? bestTransactionNumber : asksVector.size();
+            for(size_t  i = 0; i < bound; i++ )
+            {
+                Array tmp;
+                //calculate asks and push to array
+                const auto askPrice = xBridgeValueFromAmount(asksVector[i]->fromAmount) / xBridgeValueFromAmount(asksVector[i]->toAmount);
+                tmp.emplace_back(askPrice);
+                tmp.emplace_back(xBridgeValueFromAmount(asksVector[i]->fromAmount));
+                asks.emplace_back(tmp);
             }
             break;
         }
         case 3:
         {//Full order book (non aggregated)
-            for (const auto &trEntry : trList)
+            for (const auto &trEntry : bidsList)
             {
                 const auto &tr = trEntry.second;
-                {
-                    Array tmp;
-                    const auto bidPrice = xBridgeValueFromAmount(tr->fromAmount).get_real() / xBridgeValueFromAmount(tr->toAmount).get_real();
-                    tmp.emplace_back(bidPrice);
-                    tmp.emplace_back(xBridgeValueFromAmount(tr->fromAmount));
-                    bids.emplace_back(tmp);
-                }
-                {
-                    Array tmp;
-                    const auto askPrice = xBridgeValueFromAmount(tr->toAmount).get_real() / xBridgeValueFromAmount(tr->fromAmount).get_real();
-                    tmp.emplace_back(askPrice);
-                    tmp.emplace_back(xBridgeValueFromAmount(tr->toAmount));
-                    asks.emplace_back(tmp);
-                }
+                Array tmp;
+                const auto bidPrice = xBridgeValueFromAmount(tr->fromAmount) / xBridgeValueFromAmount(tr->toAmount);
+                tmp.emplace_back(bidPrice);
+                tmp.emplace_back(xBridgeValueFromAmount(tr->fromAmount));
+                bids.emplace_back(tmp);
+            }
+            for (const auto &trEntry : asksList)
+            {
+                const auto &tr = trEntry.second;
+                Array tmp;
+                const auto askPrice = xBridgeValueFromAmount(tr->fromAmount) / xBridgeValueFromAmount(tr->toAmount);
+                tmp.emplace_back(askPrice);
+                tmp.emplace_back(xBridgeValueFromAmount(tr->fromAmount));
+                asks.emplace_back(tmp);
             }
             break;
         }
