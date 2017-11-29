@@ -246,15 +246,85 @@ extern json_spirit::Value mnbudgetvoteraw(const json_spirit::Array& params, bool
 extern json_spirit::Value mnfinalbudget(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value mnsync(const json_spirit::Array& params, bool fHelp);
 
+//dx API
+/** \brief Returns the list of open and pending transactions
+  * \param params A list of input params.
+  * \param fHelp For debug purposes, throw the exception describing parameters.
+  * \return A list of open(they go first) and pending transactions.
+  *
+  * Returns the list of open and pending transactions as JSON structures.
+  * The open transactions go first.
+  */
 extern json_spirit::Value dxGetTransactionList(const json_spirit::Array& params, bool fHelp);
+
+/**
+ * @brief dxGetTransactionsHistoryList
+ * @param params
+ * @param fHelp
+ * @return
+ */
 extern json_spirit::Value dxGetTransactionsHistoryList(const json_spirit::Array& params, bool fHelp);
+
+/**
+ * @brief dxGetTransactionInfo
+ * @param params
+ * @param fHelp
+ * @return
+ */
 extern json_spirit::Value dxGetTransactionInfo(const json_spirit::Array& params, bool fHelp);
+
+/**
+ * @brief dxGetCurrencyList
+ * @param params
+ * @param fHelp
+ * @return
+ */
 extern json_spirit::Value dxGetCurrencyList(const json_spirit::Array& params, bool fHelp);
+
+/**
+ * @brief dxCreateTransaction
+ * @param params
+ * @param fHelp
+ * @return
+ */
 extern json_spirit::Value dxCreateTransaction(const json_spirit::Array& params, bool fHelp);
+
+/**
+ * @brief dxAcceptTransaction
+ * @param params:
+ * id  - id of transaction
+ * from - wallet 1
+ * to - wallet 2
+ * @param fHelp
+ * @return - the status of the operation
+ */
 extern json_spirit::Value dxAcceptTransaction(const json_spirit::Array& params, bool fHelp);
+
+/**
+ * @brief dxCancelTransaction
+ * @param params
+ * @param fHelp
+ * @return
+ */
 extern json_spirit::Value dxCancelTransaction(const json_spirit::Array& params, bool fHelp);
+
+/**
+ * @brief dxGetTransactionsTraideHistoryList
+ * @param params
+ * @param fHelp
+ * @return
+ */
 extern json_spirit::Value dxGetTransactionsTraideHistoryList(const json_spirit::Array& params, bool fHelp);
+
+/**
+ * @brief dxGetOrderBookChartTransactionsList
+ * @param params
+ * @param fHelp
+ * @return
+ */
 extern json_spirit::Value dxGetOrderBookChartTransactionsList(const json_spirit::Array& params, bool fHelp);
+
+
 // in rest.cpp
 extern bool HTTPReq_REST(AcceptedConnection* conn,
     std::string& strURI,
