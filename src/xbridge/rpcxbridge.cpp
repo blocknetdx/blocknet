@@ -156,10 +156,11 @@ Value dxGetTransactionsHistoryList(const Array & params, bool fHelp)
 
 Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp)
 {
-    if (fHelp || params.size() != 4)
+
+    if (fHelp || params.size() != 4 || params.size() != 5)
     {
         throw runtime_error("dxGetTradeHistory "
-                            "(from currency) (to currency) (start time) (end time) ");
+                            "(from currency) (to currency) (start time) (end time) (txids - optional) ");
     }
 
     Array arr;
@@ -175,6 +176,11 @@ Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp)
         const auto toCurrency       = params[1].get_str();
         const auto startTimeFrame   = params[2].get_int();
         const auto endTimeFrame     = params[3].get_int();
+        bool isShowTxids = false;
+        if(params.size() == 5)
+        {
+            isShowTxids = (params[4].get_str() == "txids");
+        }
 
         TransactionMap trList;
         std::vector<XBridgeTransactionDescrPtr> trVector;
@@ -182,11 +188,11 @@ Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp)
         //copy all transactions between startTimeFrame and endTimeFrame
         std::copy_if(trlist.begin(), trlist.end(), std::inserter(trList, trList.end()),
                      [&startTimeFrame, &endTimeFrame, &toCurrency, &fromCurrency](const TransactionPair &transaction){
-            return  ((transaction.second->created) < bpt::from_time_t(endTimeFrame)) &&
-                    ((transaction.second->created) > bpt::from_time_t(startTimeFrame)) &&
-                    (transaction.second->toCurrency == toCurrency) &&
-                    (transaction.second->fromCurrency == fromCurrency) &&
-                    (transaction.second->state == XBridgeTransactionDescr::trFinished);
+            return  ((transaction.second->created)      <   bpt::from_time_t(endTimeFrame)) &&
+                    ((transaction.second->created)      >   bpt::from_time_t(startTimeFrame)) &&
+                    (transaction.second->toCurrency     ==  toCurrency) &&
+                    (transaction.second->fromCurrency   ==  fromCurrency) &&
+                    (transaction.second->state          ==  XBridgeTransactionDescr::trFinished);
         });
 
         if(trList.empty()) {
@@ -215,11 +221,12 @@ Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp)
             trVector.push_back(tr);
         }
 
-        auto cmp = [](const XBridgeTransactionDescrPtr &a,  const XBridgeTransactionDescrPtr &b)
+
+        std::sort(trVector.begin(), trVector.end(),
+                  [](const XBridgeTransactionDescrPtr &a,  const XBridgeTransactionDescrPtr &b)
         {
              return (a->created) < (b->created);
-        };
-        std::sort(trVector.begin(), trVector.end(), cmp);
+        });
 
         Array opens;
         //write start price
@@ -250,6 +257,16 @@ Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp)
         lows.emplace_back(*std::min_element(toAmounts.begin(), toAmounts.end()));
         lows.emplace_back(*std::min_element(fromAmounts.begin(), fromAmounts.end()));
         res.emplace_back(Pair("l", lows));
+
+        if(isShowTxids)
+        {
+            Array tmp;
+            for(auto tr : trVector)
+            {
+                tmp.emplace_back(tr->id.GetHex());
+            }
+            res.emplace_back(Pair("txids", tmp));
+        }
 
         //write status
         res.emplace_back(Pair("s", "ok"));
@@ -532,7 +549,6 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
          * @brief asks - array with asks
          */
         Array asks;
-
 
         switch (detailLevel)
         {
