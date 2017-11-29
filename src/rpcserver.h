@@ -333,11 +333,12 @@ extern json_spirit::Value dxGetTradeHistory(const json_spirit::Array& params, bo
  * @brief dxGetOrderBook Returns transactions list in a form of 'order book'
  * @param params The list of input params:
  * params[0] - detail level:
- * 0 : The best ask and the best bid for all the time are returned
- * 1 : Top 50 asks and bids are returned in separate lists
- * 2 : All asks and bids are returned
+ * 1 : The best ask and the best bid for all the time are returned
+ * 2 : Top <num> asks and bids are returned in separate lists, see param[3]
+ * 3 : All asks and bids are returned
  * params[1] - currency sent
  * params[2] - currency received
+ * params[3] - optional, the maximum number of orders to return, applicable only to detail level 2, the default value is 50
  * @param fHelp if true, and exception with parameter description message will be thrown
  * @return The list of transactions as 'order book' records
  */

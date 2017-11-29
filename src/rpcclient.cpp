@@ -109,7 +109,8 @@ static const CRPCConvertParam vRPCConvertParams[] =
         {"dxCreateTransaction", 5},
         {"dxGetTradeHistory", 2},
         {"dxGetTradeHistory", 3},
-        {"dxGetOrderBook", 0}};
+        {"dxGetOrderBook", 0},
+        {"dxGetOrderBook", 3}};
 
 class CRPCConvertTable
 {

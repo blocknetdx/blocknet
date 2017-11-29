@@ -495,10 +495,10 @@ Value dxCancelTransaction(const Array & params, bool fHelp)
 
 json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
 {
-    if (fHelp || params.size() != 3)
+    if (fHelp || params.size() != 3 || params.size() != 4)
     {
         throw runtime_error("dxGetOrderBook "
-                            "(the level of detail) (from currency) (to currency) ");
+                            "(the level of detail) (from currency) (to currency) (max orders - optional, default = 50) ");
     }
 
     Array arr;
@@ -524,6 +524,10 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
         const auto detailLevel  = params[0].get_int();
         const auto fromCurrency = params[1].get_str();
         const auto toCurrency   = params[2].get_str();
+
+        std::size_t maxOrders = 50;
+        if(detailLevel == 2)
+            maxOrders = params[3].get_int();;
 
         //copy all transactions
         std::copy_if(trList.begin(), trList.end(), std::inserter(asksList, asksList.end()),
@@ -553,10 +557,13 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
         switch (detailLevel)
         {
         case 1:
-        {//return Only the best bid and ask
+        {
+            //return Only the best bid and ask
+
             const auto bidsItem = std::max_element(bidsList.begin(), bidsList.end(),
                                        [](const TransactionPair &a, const TransactionPair &b)
-            {//find transaction with best bids
+            {
+                //find transaction with best bids
                 const auto &tr1 = a.second;
                 const auto &tr2 = b.second;
                 const auto priceA = xBridgeValueFromAmount(tr1->fromAmount) / xBridgeValueFromAmount(tr1->toAmount);
@@ -574,7 +581,8 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
 
             const auto asksItem = std::min_element(asksList.begin(), asksList.end(),
                                                    [](const TransactionPair &a, const TransactionPair &b)
-            {//find transactions with best asks
+            {
+                //find transactions with best asks
                 const auto &tr1 = a.second;
                 const auto &tr2 = b.second;
                 const auto priceA = xBridgeValueFromAmount(tr1->fromAmount) / xBridgeValueFromAmount(tr1->toAmount);
@@ -591,10 +599,12 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
             break;
         }
         case 2:
-        {//Top 50 bids and asks (aggregated)
+        {
+            //Top X bids and asks (aggregated)
+
             std::vector<XBridgeTransactionDescrPtr> asksVector;
             std::vector<XBridgeTransactionDescrPtr> bidsVector;
-            const size_t bestTransactionNumber = 50;
+
             for (const auto &trEntry : asksList)
             {
                 const auto &tr = trEntry.second;
@@ -624,7 +634,7 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
             /**
              * @brief bound - calculate upper bound
              */
-            auto bound = std::min(bestTransactionNumber, bidsVector.size());
+            auto bound = std::min(maxOrders, bidsVector.size());
             for(size_t i = 0; i < bound; i++)
             {
                 Array tmp;
@@ -634,7 +644,7 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 tmp.emplace_back(xBridgeValueFromAmount(bidsVector[i]->fromAmount));
                 bids.emplace_back(tmp);
             }
-            bound = std::min(bestTransactionNumber, asksVector.size());
+            bound = std::min(maxOrders, asksVector.size());
             for(size_t  i = 0; i < bound; i++ )
             {
                 Array tmp;
@@ -647,7 +657,9 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
             break;
         }
         case 3:
-        {//Full order book (non aggregated)
+        {
+            //Full order book (non aggregated)
+
             for (const auto &trEntry : bidsList)
             {
                 const auto &tr = trEntry.second;
@@ -669,7 +681,7 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
             break;
         }
         default:
-            LOG() << "invalid detail level value " << __FUNCTION__;
+            LOG() << "invalid detail level value: " << detailLevel << ", " << __FUNCTION__;
             return arr;
         }
         res.emplace_back(Pair("bids", bids));
