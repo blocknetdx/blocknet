@@ -528,7 +528,7 @@ xbridge::Error  XBridgeApp::sendXBridgeTransaction(const std::string & from,
 
     // try send immediatelly
     sendPendingTransaction(ptr);
-    return xbridge::Error::NO_ERROR;
+    return xbridge::Error::SUCCESS;
 }
 
 //******************************************************************************
@@ -622,7 +622,7 @@ xbridge::Error XBridgeApp::acceptXBridgeTransaction(const uint256 &id,
     // try send immediatelly
     sendAcceptingTransaction(ptr);
     result = id;
-    return xbridge::NO_ERROR;
+    return xbridge::SUCCESS;
 }
 
 //******************************************************************************
@@ -676,7 +676,7 @@ xbridge::Error XBridgeApp::cancelXBridgeTransaction(const uint256 &id,
             LOG() << "transaction found " << __FUNCTION__;
             m_transactions[id]->state = XBridgeTransactionDescr::trCancelled;
             xuiConnector.NotifyXBridgeTransactionStateChanged(id, XBridgeTransactionDescr::trCancelled);
-            return xbridge::NO_ERROR;
+            return xbridge::SUCCESS;
         }
     }
     return xbridge::UNKNOWN_ERROR;
@@ -715,7 +715,7 @@ xbridge::Error XBridgeApp::rollbackXBridgeTransaction(const uint256 & id)
         }
         sendRollbackTransaction(id);
     }
-    return xbridge::NO_ERROR;
+    return xbridge::SUCCESS;
 }
 
 //******************************************************************************

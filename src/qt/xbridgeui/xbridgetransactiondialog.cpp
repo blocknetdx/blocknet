@@ -311,7 +311,7 @@ void XBridgeTransactionDialog::onSendTransaction()
         // accept pending tx
 
         const auto error = m_model.newTransactionFromPending(m_pendingId, m_hubAddress, from, to);
-        if(error != xbridge::NO_ERROR)
+        if(error != xbridge::SUCCESS)
         {
             QMessageBox::warning(this, trUtf8("check parameters"),
                                  trUtf8("Invalid address %1")
@@ -323,7 +323,7 @@ void XBridgeTransactionDialog::onSendTransaction()
     {
         // new tx
         const auto error = m_model.newTransaction(from, to, fromCurrency, toCurrency, fromAmount, toAmount);
-        if (error != xbridge::NO_ERROR)
+        if (error != xbridge::SUCCESS)
         {
             QMessageBox::warning(this, trUtf8("check parameters"),
 

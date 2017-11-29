@@ -16,12 +16,13 @@ namespace xbridge {
             return "Unknown session for " + argumrnt;
         case Error::REVERT_TX_FAILED:
             return "revert tx failed for "  + argumrnt;
-        case Error::NO_ERROR:
+        case Error::SUCCESS:
             return "";
         case Error::UNKNOWN_ERROR:
             return "unknown error";
         case Error::INVALID_AMOUNT:
             return "invalid amount " + argumrnt;
         }
+        return "invalid error value";
     }
 }

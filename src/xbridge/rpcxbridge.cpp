@@ -393,7 +393,7 @@ Value dxCreateTransaction(const Array & params, bool fHelp)
           (from, fromCurrency, xBridgeAmountFromReal(fromAmount),
            to, toCurrency, xBridgeAmountFromReal(toAmount), id);
 
-    if(res == xbridge::NO_ERROR)
+    if(res == xbridge::SUCCESS)
     {
         Object obj;
         obj.push_back(Pair("from", from));
@@ -433,7 +433,7 @@ Value dxAcceptTransaction(const Array & params, bool fHelp)
 
     uint256 idResult;
     const auto error= XBridgeApp::instance().acceptXBridgeTransaction(id, from, to, idResult);
-    if(error == xbridge::NO_ERROR)
+    if(error == xbridge::SUCCESS)
     {
         Object obj;
         obj.push_back(Pair("id", id.GetHex()));
@@ -458,7 +458,7 @@ Value dxCancelTransaction(const Array & params, bool fHelp)
     }
     LOG() << "rpc cancel transaction " << __FUNCTION__;
     uint256 id(params[0].get_str());
-    if(XBridgeApp::instance().cancelXBridgeTransaction(id, crRpcRequest) == xbridge::NO_ERROR)
+    if(XBridgeApp::instance().cancelXBridgeTransaction(id, crRpcRequest) == xbridge::SUCCESS)
     {
         Object obj;
         obj.push_back(Pair("id",id.GetHex()));

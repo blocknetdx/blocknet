@@ -185,7 +185,7 @@ xbridge::Error XBridgeTransactionsModel::newTransaction(const std::string & from
             (from, fromCurrency, (uint64_t)(fromAmount * XBridgeTransactionDescr::COIN),
              to,   toCurrency,   (uint64_t)(toAmount * XBridgeTransactionDescr::COIN),id);
 
-    if (code == xbridge::NO_ERROR)
+    if (code == xbridge::SUCCESS)
     {
         XBridgeTransactionDescr d;
         d.id           = id;
@@ -225,7 +225,7 @@ xbridge::Error XBridgeTransactionsModel::newTransactionFromPending(const uint256
 
             // send tx
             const auto error = XBridgeApp::instance().acceptXBridgeTransaction(d.id, from, to, d.id);
-            if(error != xbridge::NO_ERROR)
+            if(error != xbridge::SUCCESS)
             {
                 return error;
             }
@@ -254,21 +254,21 @@ xbridge::Error XBridgeTransactionsModel::newTransactionFromPending(const uint256
         }
     }
 
-    return xbridge::NO_ERROR;
+    return xbridge::SUCCESS;
 }
 
 //******************************************************************************
 //******************************************************************************
 bool XBridgeTransactionsModel::cancelTransaction(const uint256 &id)
 {
-    return XBridgeApp::instance().cancelXBridgeTransaction(id, crUserRequest) == xbridge::NO_ERROR;
+    return XBridgeApp::instance().cancelXBridgeTransaction(id, crUserRequest) == xbridge::SUCCESS;
 }
 
 //******************************************************************************
 //******************************************************************************
 bool XBridgeTransactionsModel::rollbackTransaction(const uint256 & id)
 {
-    return XBridgeApp::instance().rollbackXBridgeTransaction(id) == xbridge::NO_ERROR;
+    return XBridgeApp::instance().rollbackXBridgeTransaction(id) == xbridge::SUCCESS;
 }
 
 //******************************************************************************
