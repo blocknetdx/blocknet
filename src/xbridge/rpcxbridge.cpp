@@ -579,7 +579,7 @@ json_spirit::Value dxGetOrderBookChartTransactionsList(const json_spirit::Array&
         {//Top 50 bids and asks (aggregated)
             std::vector<XBridgeTransactionDescrPtr> asksVector;
             std::vector<XBridgeTransactionDescrPtr> bidsVector;
-            const auto bestTransactionNumber = 50;
+            const size_t bestTransactionNumber = 50;
             for (const auto &trEntry : asksList)
             {
                 const auto &tr = trEntry.second;
@@ -609,7 +609,7 @@ json_spirit::Value dxGetOrderBookChartTransactionsList(const json_spirit::Array&
             /**
              * @brief bound - calculate upper bound
              */
-            auto bound = (bidsVector.size() >= bestTransactionNumber) ? bestTransactionNumber : bidsVector.size();
+            auto bound = std::min(bestTransactionNumber, bidsVector.size());
             for(size_t i = 0; i < bound; i++)
             {
                 Array tmp;
@@ -619,7 +619,7 @@ json_spirit::Value dxGetOrderBookChartTransactionsList(const json_spirit::Array&
                 tmp.emplace_back(xBridgeValueFromAmount(bidsVector[i]->fromAmount));
                 bids.emplace_back(tmp);
             }
-            bound = (asksVector.size() >= bestTransactionNumber) ? bestTransactionNumber : asksVector.size();
+            bound = std::min(bestTransactionNumber, asksVector.size());
             for(size_t  i = 0; i < bound; i++ )
             {
                 Array tmp;
