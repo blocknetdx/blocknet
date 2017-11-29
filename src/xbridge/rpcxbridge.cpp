@@ -30,6 +30,7 @@ using namespace std;
 using namespace boost;
 using namespace boost::asio;
 
+
 Value xBridgeValueFromAmount(uint64_t amount)
 {
     return static_cast<double>(amount) / XBridgeTransactionDescr::COIN;
@@ -57,9 +58,6 @@ Value dxGetTransactionList(const Array & params, bool fHelp)
         throw runtime_error("dxGetTransactionList\nList transactions.");
     }
 
-    /**
-     * @brief arr
-     */
     Array arr;
 
     boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
@@ -152,11 +150,11 @@ Value dxGetTransactionsHistoryList(const Array & params, bool fHelp)
     return arr;
 }
 
-Value dxGetTransactionsTraideHistoryList(const json_spirit::Array& params, bool fHelp)
+Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 4)
     {
-        throw runtime_error("dxGetTransactionsTraideHistoryList "
+        throw runtime_error("dxGetTradeHistory "
                             "(from currency) (to currency) (start time) (end time) ");
     }
 

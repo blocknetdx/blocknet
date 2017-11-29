@@ -247,80 +247,78 @@ extern json_spirit::Value mnfinalbudget(const json_spirit::Array& params, bool f
 extern json_spirit::Value mnsync(const json_spirit::Array& params, bool fHelp);
 
 //dx API
+
 /** \brief Returns the list of open and pending transactions
-  * \param params A list of input params.
-  * \param fHelp For debug purposes, throw the exception describing parameters.
-  * \return A list of open(they go first) and pending transactions.
+  * \param params The list of input params
+  * \param fHelp Use for debugging purposes, throws an exception with parameter description message
+  * \return The list of open(they go first) and pending transactions
   *
-  * Returns the list of open and pending transactions as JSON structures.
+  * Returns the list of open and pending transactions as JSON value.
   * The open transactions go first.
   */
 extern json_spirit::Value dxGetTransactionList(const json_spirit::Array& params, bool fHelp);
 
 /**
- * @brief dxGetTransactionsHistoryList
- * @param params
- * @param fHelp
- * @return
+ * @brief dxGetTransactionsHistoryList Returns the list of historical(closed) transactions
+ * @param params The list of input params
+ * @param fHelp Use for debugging purposes, throws an exception with parameter description message
+ * @return The list of historical transaction  as a JSON value
  */
 extern json_spirit::Value dxGetTransactionsHistoryList(const json_spirit::Array& params, bool fHelp);
 
 /**
- * @brief dxGetTransactionInfo
- * @param params
- * @param fHelp
- * @return
+ * @brief dxGetTransactionInfo Returns the detailed description of given a transaction
+ * @param params The list of input params
+ * @param fHelp Use for debugging purposes, throws an exception with parameter description message
+ * @return The detailed description of given transaction as a JSON value
  */
 extern json_spirit::Value dxGetTransactionInfo(const json_spirit::Array& params, bool fHelp);
 
 /**
- * @brief dxGetCurrencyList
- * @param params
- * @param fHelp
- * @return
+ * @brief dxGetCurrencyList Returns the list of available currencies
+ * @param params The list of input params - should be empty
+ * @param fHelp Use for debugging purposes, throws an exception with parameter description message
+ * @return The list of available currencies as a JSON value
  */
 extern json_spirit::Value dxGetCurrencyList(const json_spirit::Array& params, bool fHelp);
 
 /**
- * @brief dxCreateTransaction
- * @param params
- * @param fHelp
- * @return
+ * @brief dxCreateTransaction Creates a new transaction
+ * @param params The list of input params
+ * @param fHelp Use for debugging purposes, throws an exception with parameter description message
+ * @return The transaction created, as a JSON value
  */
 extern json_spirit::Value dxCreateTransaction(const json_spirit::Array& params, bool fHelp);
 
 /**
- * @brief dxAcceptTransaction
- * @param params:
- * id  - id of transaction
- * from - wallet 1
- * to - wallet 2
- * @param fHelp
- * @return - the status of the operation
+ * @brief dxAcceptTransaction Accepts given transaction
+ * @param params The list of input params, it should include the next: id - transaction id, from - sending address, to - receiving address
+ * @param fHelp Use for debugging purposes, throws an exception with parameter description message
+ * @return The status of the operation
  */
 extern json_spirit::Value dxAcceptTransaction(const json_spirit::Array& params, bool fHelp);
 
 /**
- * @brief dxCancelTransaction
- * @param params
- * @param fHelp
- * @return
+ * @brief dxCancelTransaction Cancels given transaction
+ * @param params The list of input params, it should include the next: id - transaction id, from - sending address, to - receiving address
+ * @param fHelp Use for debugging purposes, throws an exception with parameter description message
+ * @return The status of the operation
  */
 extern json_spirit::Value dxCancelTransaction(const json_spirit::Array& params, bool fHelp);
 
 /**
- * @brief dxGetTransactionsTraideHistoryList
- * @param params
- * @param fHelp
- * @return
+ * @brief dxGetTradeHistory Returns trading history as a 'price chart'
+ * @param params The list of input params
+ * @param fHelp Use for debugging purposes, throws an exception with parameter description message
+ * @return The list of completed transactions as 'price chart' points
  */
-extern json_spirit::Value dxGetTransactionsTraideHistoryList(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp);
 
 /**
- * @brief dxGetOrderBookChartTransactionsList
- * @param params
- * @param fHelp
- * @return
+ * @brief dxGetOrderBookChartTransactionsList Returns transactions list in a form of 'order book'
+ * @param params The list of input params
+ * @param fHelp Use for debugging purposes, throws an exception with parameter description message
+ * @return The list of transactions as 'order book' records
  */
 extern json_spirit::Value dxGetOrderBookChartTransactionsList(const json_spirit::Array& params, bool fHelp);
 
