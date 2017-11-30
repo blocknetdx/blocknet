@@ -677,7 +677,7 @@ bool storeDataIntoBlockchain(const std::vector<unsigned char> & dstAddress,
             used.push_back(out);
 
             // (148*inputCount + 34*outputCount + 10) + data
-            uint32_t bytes = (148*used.size()) + (34) + 10 + data.size();
+            uint32_t bytes = 2 * ((148*used.size()) + (34*2) + 10 + (8+2+data.size()));
             fee = pwalletMain->GetMinimumFee(bytes, nTxConfirmTarget, mempool);
 
             if (amount >= (fee + amount*COIN))
