@@ -31,6 +31,8 @@
 
 using namespace json_spirit;
 
+#define LOG_KEYPAIR_VALUES
+
 //******************************************************************************
 //******************************************************************************
 // Threshold for nLockTime: below this value it is interpreted as block number,
@@ -341,10 +343,10 @@ bool XBridgeSession::processTransaction(XBridgePacketPtr packet)
         }
     }
 
-    LOG() << "received transaction " << util::to_str(id) << std::endl
-          << "    from " << util::to_str(saddr) << std::endl
+    LOG() << "received transaction " << HexStr(id) << std::endl
+          << "    from " << HexStr(saddr) << std::endl
           << "             " << scurrency << " : " << samount << std::endl
-          << "    to   " << util::to_str(daddr) << std::endl
+          << "    to   " << HexStr(daddr) << std::endl
           << "             " << dcurrency << " : " << damount << std::endl;
 
     // check utxo items
@@ -472,7 +474,7 @@ bool XBridgeSession::processPendingTransaction(XBridgePacketPtr packet)
         }
     }
 
-    LOG() << "received tx <" << util::to_str(ptr->id) << "> " << __FUNCTION__;
+    LOG() << "received tx <" << HexStr(ptr->id) << "> " << __FUNCTION__;
 
     xuiConnector.NotifyXBridgePendingTransactionReceived(ptr);
 
@@ -545,10 +547,10 @@ bool XBridgeSession::processTransactionAccepting(XBridgePacketPtr packet)
         }
     }
 
-    LOG() << "received accepting transaction " << util::to_str(id) << std::endl
-          << "    from " << util::to_str(saddr) << std::endl
+    LOG() << "received accepting transaction " << HexStr(id) << std::endl
+          << "    from " << HexStr(saddr) << std::endl
           << "             " << scurrency << " : " << samount << std::endl
-          << "    to   " << util::to_str(daddr) << std::endl
+          << "    to   " << HexStr(daddr) << std::endl
           << "             " << dcurrency << " : " << damount << std::endl;
 
     // TODO check utxo items
@@ -675,14 +677,14 @@ bool XBridgeSession::processTransactionHold(XBridgePacketPtr packet)
         if (!XBridgeApp::m_pendingTransactions.count(id))
         {
             // wtf? unknown transaction
-            LOG() << "unknown transaction " << util::to_str(id) << " " << __FUNCTION__;
+            LOG() << "unknown transaction " << HexStr(id) << " " << __FUNCTION__;
             return true;
         }
 
         if (XBridgeApp::m_transactions.count(id))
         {
             // wtf?
-            LOG() << "duplicate transaction " << util::to_str(id) << " " << __FUNCTION__;
+            LOG() << "duplicate transaction " << HexStr(id) << " " << __FUNCTION__;
             return true;
         }
 
@@ -789,7 +791,7 @@ bool XBridgeSession::processTransactionHoldApply(XBridgePacketPtr packet)
             // first
             // TODO remove this log
             LOG() << "send xbcTransactionInit to "
-                  << util::to_str(tr->a_destination());
+                  << HexStr(tr->a_destination());
 
             XBridgePacketPtr reply1(new XBridgePacket(xbcTransactionInit));
             reply1->append(tr->a_destination());
@@ -810,7 +812,7 @@ bool XBridgeSession::processTransactionHoldApply(XBridgePacketPtr packet)
             // second
             // TODO remove this log
             LOG() << "send xbcTransactionInit to "
-                  << util::to_str(tr->b_destination());
+                  << HexStr(tr->b_destination());
 
             XBridgePacketPtr reply2(new XBridgePacket(xbcTransactionInit));
             reply2->append(tr->b_destination());
@@ -909,7 +911,7 @@ bool XBridgeSession::processTransactionInit(XBridgePacketPtr packet)
         if (!XBridgeApp::m_transactions.count(txid))
         {
             // wtf? unknown transaction
-            LOG() << "unknown transaction " << util::to_str(txid) << " " << __FUNCTION__;
+            LOG() << "unknown transaction " << HexStr(txid) << " " << __FUNCTION__;
             return true;
         }
 
@@ -942,12 +944,26 @@ bool XBridgeSession::processTransactionInit(XBridgePacketPtr packet)
     conn->newKeyPair(xtx->mPubKey, xtx->mPrivKey);
     assert(xtx->mPubKey.size() == 33 && "bad pubkey size");
 
+#ifdef LOG_KEYPAIR_VALUES
+    LOG() << "generated M keypair " << std::endl <<
+             "    pub    " << HexStr(xtx->mPubKey) << std::endl <<
+             "    pub id " << HexStr(conn->getKeyId(xtx->mPubKey)) << std::endl <<
+             "    priv   " << HexStr(xtx->mPrivKey);
+#endif
+
 //    // x key
     uint256 datatxtd;
     if (role == 'A')
     {
         conn->newKeyPair(xtx->xPubKey, xtx->xPrivKey);
         assert(xtx->xPubKey.size() == 33 && "bad pubkey size");
+
+#ifdef LOG_KEYPAIR_VALUES
+        LOG() << "generated X keypair " << std::endl <<
+                 "    pub    " << HexStr(xtx->xPubKey) << std::endl <<
+                 "    pub id " << HexStr(conn->getKeyId(xtx->xPubKey)) << std::endl <<
+                 "    priv   " << HexStr(xtx->xPrivKey);
+#endif
 
         // send blocknet tx with hash of X
         std::vector<unsigned char> xid = conn->getKeyId(xtx->xPubKey);
@@ -1014,11 +1030,10 @@ bool XBridgeSession::processTransactionInitialized(XBridgePacketPtr packet)
 
     // data tx id
     uint256 datatxid(packet->data() + offset);
-    // std::vector<unsigned char> hx(packet->data()+offset, packet->data()+offset+20);
     offset += 32;
 
     // opponent publick key
-    xbridge::CPubKey pk1(packet->data()+offset, packet->data()+offset+33);
+    std::vector<unsigned char> pk1(packet->data()+offset, packet->data()+offset+33);
     // offset += 33;
 
     XBridgeTransactionPtr tr = e.transaction(id);
@@ -1042,7 +1057,7 @@ bool XBridgeSession::processTransactionInitialized(XBridgePacketPtr packet)
             // first
             // TODO remove this log
             LOG() << "send xbcTransactionCreate to "
-                  << util::to_str(tr->a_address());
+                  << HexStr(tr->a_address());
 
             // send xbcTransactionCreate
             // with nLockTime == lockTime*2 for first client,
@@ -1053,7 +1068,7 @@ bool XBridgeSession::processTransactionInitialized(XBridgePacketPtr packet)
             reply1->append(id.begin(), 32);
             reply1->append(tr->b_destination());
             reply1->append(tr->a_datatxid().begin(), 32);
-            reply1->append(tr->b_pk1().begin(), tr->b_pk1().size());
+            reply1->append(tr->b_pk1());
 
             sendPacket(tr->a_address(), reply1);
         }
@@ -1061,29 +1076,6 @@ bool XBridgeSession::processTransactionInitialized(XBridgePacketPtr packet)
 
     return true;
 }
-
-//******************************************************************************
-//******************************************************************************
-//std::string XBridgeSession::round_x(const long double val, uint32_t prec)
-//{
-//    long double value = val;
-//    value *= pow(10, prec);
-
-//    value += .5;
-//    value = std::floor(value);
-
-//    std::string svalue = boost::lexical_cast<std::string>(value); // std::to_string(value);
-
-//    if (prec >= svalue.length())
-//    {
-//        svalue.insert(0, prec-svalue.length()+1, '0');
-//    }
-//    svalue.insert(svalue.length()-prec, 1, '.');
-
-//    value = std::stold(svalue);
-////    return value;
-//    return svalue;
-//}
 
 //******************************************************************************
 //******************************************************************************
@@ -1138,7 +1130,7 @@ bool XBridgeSession::processTransactionCreate(XBridgePacketPtr packet)
         if (!XBridgeApp::m_transactions.count(txid))
         {
             // wtf? unknown transaction
-            LOG() << "unknown transaction " << util::to_str(txid) << " " << __FUNCTION__;
+            LOG() << "unknown transaction " << HexStr(txid) << " " << __FUNCTION__;
             return true;
         }
 
@@ -1181,7 +1173,7 @@ bool XBridgeSession::processTransactionCreate(XBridgePacketPtr packet)
 
         if (binATxId.size() == 0)
         {
-            LOG() << "bad A deposit tx id received for " << util::to_str(txid) << " " << __FUNCTION__;
+            LOG() << "bad A deposit tx id received for " << HexStr(txid) << " " << __FUNCTION__;
             sendCancelTransaction(xtx, crBadADepositTx);
             return true;
         }
@@ -1196,12 +1188,12 @@ bool XBridgeSession::processTransactionCreate(XBridgePacketPtr packet)
         }
         else if (!isGood)
         {
-            LOG() << "check A deposit tx error for " << util::to_str(txid) << " " << __FUNCTION__;
+            LOG() << "check A deposit tx error for " << HexStr(txid) << " " << __FUNCTION__;
             sendCancelTransaction(xtx, crBadADepositTx);
             return true;
         }
 
-        LOG() << "deposit A tx confirmed " << util::to_str(txid);
+        LOG() << "deposit A tx confirmed " << HexStr(txid);
     }
 
     std::vector<wallet::UtxoEntry> entries;
@@ -1253,6 +1245,15 @@ bool XBridgeSession::processTransactionCreate(XBridgePacketPtr packet)
     }
 
     // create transactions
+
+#ifdef LOG_KEYPAIR_VALUES
+    LOG() << "unlock script pub keys" << std::endl <<
+             "    my       " << HexStr(xtx->mPubKey) << std::endl <<
+             "    my id    " << HexStr(connFrom->getKeyId(xtx->mPubKey)) << std::endl <<
+             "    other    " << HexStr(mPubKey) << std::endl <<
+             "    other id " << HexStr(connFrom->getKeyId(mPubKey)) << std::endl <<
+             "    x id     " << HexStr(hx);
+#endif
 
     // create address for first tx
     connFrom->createDepositUnlockScript(xtx->mPubKey, mPubKey, hx, lTime, xtx->innerScript);
@@ -1454,7 +1455,7 @@ bool XBridgeSession::processTransactionCreatedA(XBridgePacketPtr packet)
 
     // TODO remove this log
     LOG() << "send xbcTransactionCreate to "
-          << util::to_str(tr->b_address());
+          << HexStr(tr->b_address());
 
     XBridgePacketPtr reply2(new XBridgePacket(xbcTransactionCreateB));
     reply2->append(tr->b_address());
@@ -1535,7 +1536,7 @@ bool XBridgeSession::processTransactionCreatedB(XBridgePacketPtr packet)
 
             // TODO remove this log
             LOG() << "send xbcTransactionConfirmA to "
-                  << util::to_str(tr->a_destination());
+                  << HexStr(tr->a_destination());
 
             XBridgePacketPtr reply(new XBridgePacket(xbcTransactionConfirmA));
             reply->append(tr->a_destination());
@@ -1590,7 +1591,7 @@ bool XBridgeSession::processTransactionConfirmA(XBridgePacketPtr packet)
         if (!XBridgeApp::m_transactions.count(txid))
         {
             // wtf? unknown transaction
-            LOG() << "unknown transaction " << util::to_str(txid) << " " << __FUNCTION__;
+            LOG() << "unknown transaction " << HexStr(txid) << " " << __FUNCTION__;
             return true;
         }
 
@@ -1620,12 +1621,12 @@ bool XBridgeSession::processTransactionConfirmA(XBridgePacketPtr packet)
         }
         else if (!isGood)
         {
-            LOG() << "check B deposit tx error for " << util::to_str(txid) << " " << __FUNCTION__;
+            LOG() << "check B deposit tx error for " << HexStr(txid) << " " << __FUNCTION__;
             sendCancelTransaction(xtx, crBadBDepositTx);
             return true;
         }
 
-        LOG() << "deposit B tx confirmed " << util::to_str(txid);
+        LOG() << "deposit B tx confirmed " << HexStr(txid);
     }
 
     // payTx
@@ -1753,7 +1754,7 @@ bool XBridgeSession::processTransactionConfirmedA(XBridgePacketPtr packet)
 
     // TODO remove this log
     LOG() << "send xbcTransactionConfirmB to "
-          << util::to_str(tr->b_destination());
+          << HexStr(tr->b_destination());
 
     XBridgePacketPtr reply2(new XBridgePacket(xbcTransactionConfirmB));
     reply2->append(tr->b_destination());
@@ -1810,7 +1811,7 @@ bool XBridgeSession::processTransactionConfirmB(XBridgePacketPtr packet)
         if (!XBridgeApp::m_transactions.count(txid))
         {
             // wtf? unknown transaction
-            LOG() << "unknown transaction " << util::to_str(txid) << " " << __FUNCTION__;
+            LOG() << "unknown transaction " << HexStr(txid) << " " << __FUNCTION__;
             return true;
         }
 
@@ -1992,7 +1993,7 @@ bool XBridgeSession::cancelOrRollbackTransaction(const uint256 & txid, const TxC
 
         if (!XBridgeApp::m_transactions.count(txid))
         {
-            LOG() << "unknown transaction " << util::to_str(txid) << " " << __FUNCTION__;
+            LOG() << "unknown transaction " << HexStr(txid) << " " << __FUNCTION__;
             return true;
         }
 
@@ -2031,7 +2032,7 @@ bool XBridgeSession::cancelOrRollbackTransaction(const uint256 & txid, const TxC
             int32_t errCode = 0;
             if (!conn->sendRawTransaction(xtx->refTx, sid, errCode))
             {
-                LOG() << "send rollback error, tx " << util::to_str(txid) << " " << __FUNCTION__;
+                LOG() << "send rollback error, tx " << HexStr(txid) << " " << __FUNCTION__;
                 xtx->state = XBridgeTransactionDescr::trRollbackFailed;
             }
             else
@@ -2342,7 +2343,7 @@ bool XBridgeSession::processTransactionRollback(XBridgePacketPtr packet)
         if (!XBridgeApp::m_transactions.count(txid))
         {
             // wtf? unknown tx
-            LOG() << "unknown transaction " << util::to_str(txid) << " " << __FUNCTION__;
+            LOG() << "unknown transaction " << HexStr(txid) << " " << __FUNCTION__;
             return true;
         }
 
