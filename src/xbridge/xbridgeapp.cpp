@@ -275,7 +275,7 @@ void XBridgeApp::onMessageReceived(const UcharVector & id,
 
     if (!XBridgeSession::checkXBridgePacketVersion(packet))
     {
-        ERR() << "incorrect protocol version <" << packet->version() << "> " << __FUNCTION__;
+        // ERR() << "incorrect protocol version <" << packet->version() << "> " << __FUNCTION__;
         return;
     }
 
@@ -328,7 +328,7 @@ void XBridgeApp::onBroadcastReceived(const std::vector<unsigned char> & message,
 
     if (!XBridgeSession::checkXBridgePacketVersion(packet))
     {
-        ERR() << "incorrect protocol version <" << packet->version() << "> " << __FUNCTION__;
+        // ERR() << "incorrect protocol version <" << packet->version() << "> " << __FUNCTION__;
         return;
     }
 
