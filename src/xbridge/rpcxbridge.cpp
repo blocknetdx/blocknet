@@ -117,8 +117,8 @@ Value dxGetTransactionsHistoryList(const Array & params, bool fHelp)
     if (fHelp || invalidParams)
     {
         throw runtime_error("dxGetTransactionsHistoryList "
-                            "(ALL - optional parameter) shows all transactions, "
-                            "but not only successfully completed ");
+                            "(ALL - optional parameter, if specified then all transactions are shown, "
+                            "not only successfully completed ");
     }
     bool isShowAll = params.size() == 1 && params[0].get_str() == "ALL";
     Array arr;
@@ -157,7 +157,7 @@ Value dxGetTransactionsHistoryList(const Array & params, bool fHelp)
 Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp)
 {
 
-    if (fHelp || params.size() != 4 || params.size() != 5)
+    if (fHelp || (params.size() != 4 && params.size() != 5))
     {
         throw runtime_error("dxGetTradeHistory "
                             "(from currency) (to currency) (start time) (end time) (txids - optional) ");
@@ -495,7 +495,7 @@ Value dxCancelTransaction(const Array & params, bool fHelp)
 
 json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
 {
-    if (fHelp || params.size() != 3 || params.size() != 4)
+    if (fHelp || (params.size() != 3 && params.size() != 4))
     {
         throw runtime_error("dxGetOrderBook "
                             "(the level of detail) (from currency) (to currency) (max orders - optional, default = 50) ");
