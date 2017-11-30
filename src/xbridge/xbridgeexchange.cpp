@@ -101,17 +101,14 @@ bool XBridgeExchange::init()
 //*****************************************************************************
 bool XBridgeExchange::isEnabled()
 {
-    static bool isEnabled = (NetworkIdFromCommandLine() == CBaseChainParams::MAIN) ?
-                ((m_wallets.size() > 0) && fServiceNode) : (m_wallets.size() > 0);
-    return isEnabled;
+    return ((m_wallets.size() > 0) && fServiceNode);
 }
 
 //*****************************************************************************
 //*****************************************************************************
 bool XBridgeExchange::isStarted()
 {
-    return (NetworkIdFromCommandLine() == CBaseChainParams::MAIN) ?
-                (isEnabled() && (activeServicenode.status == ACTIVE_SERVICENODE_STARTED)) : isEnabled();
+    return (isEnabled() && (activeServicenode.status == ACTIVE_SERVICENODE_STARTED));
 }
 
 //*****************************************************************************
@@ -381,7 +378,7 @@ bool XBridgeExchange::updateTransactionWhenHoldApplyReceived(const XBridgeTransa
 bool XBridgeExchange::updateTransactionWhenInitializedReceived(const XBridgeTransactionPtr &tx,
                                                                const std::vector<unsigned char> & from,
                                                                const uint256 & datatxid,
-                                                               const xbridge::CPubKey & pk)
+                                                               const std::vector<unsigned char> & pk)
 {
     if (!tx->setKeys(from, datatxid, pk))
     {
