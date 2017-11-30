@@ -112,7 +112,7 @@ Value dxGetTransactionList(const Array & params, bool fHelp)
 
 Value dxGetTransactionsHistoryList(const Array & params, bool fHelp)
 {
-    bool invalidParams = ((params.size() != 0) ||
+    bool invalidParams = ((params.size() != 0) &&
                           (params.size() != 1));
     if (fHelp || invalidParams)
     {
@@ -157,7 +157,7 @@ Value dxGetTransactionsHistoryList(const Array & params, bool fHelp)
 Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp)
 {
 
-    if (fHelp || params.size() != 4 || params.size() != 5)
+    if (fHelp || (params.size() != 4 && params.size() != 5))
     {
         throw runtime_error("dxGetTradeHistory "
                             "(from currency) (to currency) (start time) (end time) (txids - optional) ");
