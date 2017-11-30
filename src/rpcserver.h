@@ -1,7 +1,11 @@
-// Copyright (c) 2010 Satoshi Nakamoto
-// Copyright (c) 2009-2014 The Bitcoin developers
-// Distributed under the MIT software license, see the accompanying
-// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+/** \file rpcserver.h
+ * Functions exposed for RPC.
+ *
+ * Copyright (c) 2010 Satoshi Nakamoto
+ * Copyright (c) 2009-2014 The Bitcoin developers
+ * Distributed under the MIT software license, see the accompanying
+ * file COPYING or http://www.opensource.org/licenses/mit-license.php.
+ */
 
 #ifndef BITCOIN_RPCSERVER_H
 #define BITCOIN_RPCSERVER_H
@@ -246,119 +250,125 @@ extern json_spirit::Value mnbudgetvoteraw(const json_spirit::Array& params, bool
 extern json_spirit::Value mnfinalbudget(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value mnsync(const json_spirit::Array& params, bool fHelp);
 
-//dx API
+/** \defgroup xBridgeAPI xBridge API
+ *  @{
+ */
 
 /** @brief Returns the list of open and pending transactions
   * @param params The list of input params - should be empty
-  * @param fHelp if true, and exception with parameter description message will be thrown
+  * @param fHelp If true, and exception with parameter description message will be thrown
   * @return The list of open and pending transactions as JSON value. Open transactions go first.
   */
 extern json_spirit::Value dxGetTransactions(const json_spirit::Array& params, bool fHelp);
 
 /**
- * @brief dxGetTransactionsHistory Returns the list of historical(closed) transactions
- * @param params The list of input params:
- * params[0] - optional parameter, if it's specified and equals to "ALL" then all transactions will be
+ * @brief Returns the list of historical(closed) transactions
+ * @param params The list of input params:<br>
+ * params[0] : optional parameter, if it's specified and equals to "ALL" then all transactions will be
  * returned, not only successfully completed ones
- * @param fHelp if true, and exception with parameter description message will be thrown
+ * @param fHelp If true, and exception with parameter description message will be thrown
  * @return The list of historical transaction  as a JSON value
  */
 extern json_spirit::Value dxGetTransactionsHistory(const json_spirit::Array& params, bool fHelp);
 
 /**
- * @brief dxGetTransactionInfo Returns the detailed description of given a transaction
- * @param params The list of input params:
- * params[0] - transaction id
- * @param fHelp if true, and exception with parameter description message will be thrown
+ * @brief Returns the detailed description of given a transaction
+ * @param params The list of input params:<br>
+ * params[0] : transaction id
+ * @param fHelp If true, and exception with parameter description message will be thrown
  * @return The detailed description of given transaction as a JSON value
  */
 extern json_spirit::Value dxGetTransactionInfo(const json_spirit::Array& params, bool fHelp);
 
 /**
- * @brief dxGetCurrencies Returns the list of available currencies
- * @param params The list of input params - should be empty
- * @param fHelp if true, and exception with parameter description message will be thrown
+ * @brief Returns the list of available currencies
+ * @param params The list of input params, should be empty
+ * @param fHelp If true, and exception with parameter description message will be thrown
  * @return The list of available currencies as a JSON value
  */
 extern json_spirit::Value dxGetCurrencies(const json_spirit::Array& params, bool fHelp);
 
 /**
- * @brief dxCreateTransaction Creates a new transaction
- * @param params The list of input params
- * params[0] - sending address
- * params[1] - currency being sent
- * params[2] - amount being sent
- * params[3] - receiving address
- * params[4] - currency being received
- * params[5] - amount being received
- * @param fHelp if true, and exception with parameter description message will be thrown
+ * @brief Creates a new transaction
+ * @param params The list of input params:<br>
+ * params[0] : sending address<br>
+ * params[1] : currency being sent<br>
+ * params[2] : amount being sent<br>
+ * params[3] : receiving address<br>
+ * params[4] : currency being received<br>
+ * params[5] : amount being received<br>
+ * @param fHelp If true, and exception with parameter description message will be thrown
  * @return The transaction created, as a JSON value
  */
 extern json_spirit::Value dxCreateTransaction(const json_spirit::Array& params, bool fHelp);
 
 /**
- * @brief dxAcceptTransaction Accepts given transaction
- * @param params The list of input params:
- * params[0] - transaction id
- * params[1] - sending address
- * params[2] - receiving address
- * @param fHelp if true, and exception with parameter description message will be thrown
+ * @brief Accepts given transaction
+ * @param params The list of input params:<br>
+ * params[0] : transaction id<br>
+ * params[1] : sending address<br>
+ * params[2] : receiving address<br>
+ * @param fHelp If true, and exception with parameter description message will be thrown
  * @return The status of the operation
  */
 extern json_spirit::Value dxAcceptTransaction(const json_spirit::Array& params, bool fHelp);
 
 /**
- * @brief dxCancelTransaction Cancels given transaction
- * @param params The list of input params:
- * params[0] - transaction id
- * @param fHelp if true, and exception with parameter description message will be thrown
+ * @brief Cancels given transaction
+ * @param params The list of input params:<br>
+ * params[0] : transaction id<br>
+ * @param fHelp If true, and exception with parameter description message will be thrown
  * @return The status of the operation
  */
 extern json_spirit::Value dxCancelTransaction(const json_spirit::Array& params, bool fHelp);
 
 /**
- * @brief dxGetTradeHistory Returns trading history as a 'price chart'
- * @param params The list of input params
- * params[0] - currency sent
- * params[1] - currency received
- * params[2] - start time, Unix time
- * params[3] - end time, Unix time
- * @param fHelp if true, and exception with parameter description message will be thrown
+ * @brief Returns trading history as a 'price chart'
+ * @param params The list of input params:<br>
+ * params[0] : currency sent<br>
+ * params[1] : currency received<br>
+ * params[2] : start time, Unix time<br>
+ * params[3] : end time, Unix time<br>
+ * @param fHelp If true, and exception with parameter description message will be thrown
  * @return The list of completed transactions as 'price chart' points
  */
 extern json_spirit::Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp);
 
 /**
- * @brief dxGetOrderBook Returns transactions list in a form of 'order book'
- * @param params The list of input params:
- * params[0] - detail level:
- * 1 : The best ask and the best bid for all the time are returned
- * 2 : Top <num> asks and bids are returned in separate lists, see param[3]
- * 3 : All asks and bids are returned
- * params[1] - currency sent
- * params[2] - currency received
- * params[3] - optional, the maximum number of orders to return, applicable only to detail level 2, the default value is 50
- * @param fHelp if true, and exception with parameter description message will be thrown
- * @return The list of transactions as 'order book' records
- * Example:
- * [
- *  {
- *       "bids" : [
- *           [
- *               1.00000000000000000,
- *               0.00200000000000000
- *           ],
- *           [
- *               1.00000000000000000,
- *               0.00100000000000000
- *           ]
- *        ],
- *       "asks" : [
- *       ]
- *   }
- * ]
+ * @brief Returns transactions list in a form of 'order book'
+ * @param params The list of input params:<br>
+ * params[0] - detail level:<br>
+ * 1 : The best ask and the best bid for all the time are returned<br>
+ * 2 : Top <num> asks and bids are returned in separate lists, see param[3]<br>
+ * 3 : All asks and bids are returned<br>
+ * params[1] : currency sent<br>
+ * params[2] : currency received<br>
+ * params[3] : optional, the maximum number of orders to return, applicable only to detail level 2, the default value is 50<br>
+ * @param fHelp If true, and exception with parameter description message will be thrown
+ * @return The list of transactions as 'order book' records<br>
+ * Example:<br>
+ * \verbatim
+  [
+   {
+        "bids" : [
+            [
+                1.00000000000000000,
+                0.00200000000000000
+            ],
+            [
+                1.00000000000000000,
+                0.00100000000000000
+            ]
+         ],
+        "asks" : [
+        ]
+    }
+  ]
+ * \endverbatim
  */
 extern json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp);
+
+/** @} */
 
 
 // in rest.cpp
