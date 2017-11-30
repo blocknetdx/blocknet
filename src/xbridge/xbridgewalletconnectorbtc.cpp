@@ -1068,7 +1068,7 @@ std::vector<unsigned char> XBridgeBtcWalletConnector::getScriptId(const std::vec
 std::string XBridgeBtcWalletConnector::scriptIdToString(const std::vector<unsigned char> & id) const
 {
     xbridge::XBitcoinAddress baddr;
-    baddr.Set(CScriptID(CScript(id)), scriptPrefix[0]);
+    baddr.Set(CScriptID(uint160(id)), scriptPrefix[0]);
     return baddr.ToString();
 }
 
