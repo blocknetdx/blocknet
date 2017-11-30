@@ -112,7 +112,7 @@ Value dxGetTransactionList(const Array & params, bool fHelp)
 
 Value dxGetTransactionsHistoryList(const Array & params, bool fHelp)
 {
-    bool invalidParams = ((params.size() != 0) ||
+    bool invalidParams = ((params.size() != 0) &&
                           (params.size() != 1));
     if (fHelp || invalidParams)
     {
