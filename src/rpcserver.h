@@ -253,17 +253,17 @@ extern json_spirit::Value mnsync(const json_spirit::Array& params, bool fHelp);
   * @param fHelp if true, and exception with parameter description message will be thrown
   * @return The list of open and pending transactions as JSON value. Open transactions go first.
   */
-extern json_spirit::Value dxGetTransactionList(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value dxGetTransactions(const json_spirit::Array& params, bool fHelp);
 
 /**
- * @brief dxGetTransactionsHistoryList Returns the list of historical(closed) transactions
+ * @brief dxGetTransactionsHistory Returns the list of historical(closed) transactions
  * @param params The list of input params:
  * params[0] - optional parameter, if it's specified and equals to "ALL" then all transactions will be
  * returned, not only successfully completed ones
  * @param fHelp if true, and exception with parameter description message will be thrown
  * @return The list of historical transaction  as a JSON value
  */
-extern json_spirit::Value dxGetTransactionsHistoryList(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value dxGetTransactionsHistory(const json_spirit::Array& params, bool fHelp);
 
 /**
  * @brief dxGetTransactionInfo Returns the detailed description of given a transaction
@@ -275,12 +275,12 @@ extern json_spirit::Value dxGetTransactionsHistoryList(const json_spirit::Array&
 extern json_spirit::Value dxGetTransactionInfo(const json_spirit::Array& params, bool fHelp);
 
 /**
- * @brief dxGetCurrencyList Returns the list of available currencies
+ * @brief dxGetCurrencies Returns the list of available currencies
  * @param params The list of input params - should be empty
  * @param fHelp if true, and exception with parameter description message will be thrown
  * @return The list of available currencies as a JSON value
  */
-extern json_spirit::Value dxGetCurrencyList(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value dxGetCurrencies(const json_spirit::Array& params, bool fHelp);
 
 /**
  * @brief dxCreateTransaction Creates a new transaction

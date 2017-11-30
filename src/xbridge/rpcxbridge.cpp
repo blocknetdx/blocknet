@@ -55,11 +55,11 @@ uint64_t xBridgeAmountFromReal(double val)
   * The open transactions go first.
   */
 
-Value dxGetTransactionList(const Array & params, bool fHelp)
+Value dxGetTransactions(const Array & params, bool fHelp)
 {
     if (fHelp || params.size() > 0)
     {
-        throw runtime_error("dxGetTransactionList\nList transactions.");
+        throw runtime_error("dxGetTransactions\nList transactions.");
     }
 
     Array arr;
@@ -110,13 +110,13 @@ Value dxGetTransactionList(const Array & params, bool fHelp)
 //*****************************************************************************
 //*****************************************************************************
 
-Value dxGetTransactionsHistoryList(const Array & params, bool fHelp)
+Value dxGetTransactionsHistory(const Array & params, bool fHelp)
 {
     bool invalidParams = ((params.size() != 0) &&
                           (params.size() != 1));
     if (fHelp || invalidParams)
     {
-        throw runtime_error("dxGetTransactionsHistoryList "
+        throw runtime_error("dxGetTransactionsHistory "
                             "(ALL - optional parameter, if specified then all transactions are shown, "
                             "not only successfully completed ");
     }
@@ -369,11 +369,11 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
 
 //******************************************************************************
 //******************************************************************************
-Value dxGetCurrencyList(const Array & params, bool fHelp)
+Value dxGetCurrencies(const Array & params, bool fHelp)
 {
     if (fHelp || params.size() > 0)
     {
-        throw runtime_error("dxGetCurrencyList\nList currencies.");
+        throw runtime_error("dxGetCurrencies\nList currencies.");
     }
 
     Object obj;
