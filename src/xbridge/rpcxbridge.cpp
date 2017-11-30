@@ -526,7 +526,7 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
         const auto toCurrency   = params[2].get_str();
 
         std::size_t maxOrders = 50;
-        if(detailLevel == 2)
+        if(detailLevel == 2 && params.size() >= 4)
             maxOrders = params[3].get_int();;
 
         //copy all transactions

@@ -251,8 +251,7 @@ extern json_spirit::Value mnsync(const json_spirit::Array& params, bool fHelp);
 /** @brief Returns the list of open and pending transactions
   * @param params The list of input params - should be empty
   * @param fHelp if true, and exception with parameter description message will be thrown
-  * @return The list of open and pending transactions as JSON value.
-  * The open transactions go first.
+  * @return The list of open and pending transactions as JSON value. Open transactions go first.
   */
 extern json_spirit::Value dxGetTransactionList(const json_spirit::Array& params, bool fHelp);
 
@@ -341,6 +340,23 @@ extern json_spirit::Value dxGetTradeHistory(const json_spirit::Array& params, bo
  * params[3] - optional, the maximum number of orders to return, applicable only to detail level 2, the default value is 50
  * @param fHelp if true, and exception with parameter description message will be thrown
  * @return The list of transactions as 'order book' records
+ * Example:
+ * [
+ *  {
+ *       "bids" : [
+ *           [
+ *               1.00000000000000000,
+ *               0.00200000000000000
+ *           ],
+ *           [
+ *               1.00000000000000000,
+ *               0.00100000000000000
+ *           ]
+ *        ],
+ *       "asks" : [
+ *       ]
+ *   }
+ * ]
  */
 extern json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp);
 
