@@ -426,12 +426,12 @@ CScript _createmultisig_redeemScript(const UniValue& params)
         // Case 1: Phore address and we have full public key:
         if (pwalletMain && IsValidDestinationString(ks)) {
             CTxDestination dest = DecodeDestination(ks);
-            CKeyID *keyID = boost::get<CKeyID>(&dest);
-            if (!keyID)
+            CKeyID key = GetKeyForDestination(*pwallet, dest);
+            if (!key.IsNull())
                 throw runtime_error(
                     strprintf("%s does not refer to a key", ks));
             CPubKey vchPubKey;
-            if (!pwalletMain->GetPubKey(*keyID, vchPubKey))
+            if (!pwalletMain->GetPubKey(key, vchPubKey))
                 throw runtime_error(
                     strprintf("no full public key for address %s", ks));
             if (!vchPubKey.IsFullyValid())
