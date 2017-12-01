@@ -331,11 +331,11 @@ UniValue dumpprivkey(const UniValue& params, bool fHelp)
     if (!IsValidDestinationString(strAddress))
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Phore address");
     CTxDestination address = DecodeDestination(strAddress);
-    CKeyID *keyID = boost::get<CKeyID>(&address);
-    if (!keyID)
+    CKeyID keyid = GetKeyForDestination(*pwalletMain, address);
+    if (!keyid.IsNull())
         throw JSONRPCError(RPC_TYPE_ERROR, "Address does not refer to a key");
     CKey vchSecret;
-    if (!pwalletMain->GetKey(*keyID, vchSecret))
+    if (!pwalletMain->GetKey(keyid, vchSecret))
         throw JSONRPCError(RPC_WALLET_ERROR, "Private key for address " + strAddress + " is not known");
     return CBitcoinSecret(vchSecret).ToString();
 }
