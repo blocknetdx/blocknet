@@ -426,7 +426,7 @@ CScript _createmultisig_redeemScript(const UniValue& params)
         // Case 1: Phore address and we have full public key:
         if (pwalletMain && IsValidDestinationString(ks)) {
             CTxDestination dest = DecodeDestination(ks);
-            CKeyID key = GetKeyForDestination(*pwallet, dest);
+            CKeyID key = GetKeyForDestination(*pwalletMain, dest);
             if (!key.IsNull())
                 throw runtime_error(
                     strprintf("%s does not refer to a key", ks));
