@@ -83,8 +83,19 @@ public:
     friend bool operator<(const CNoDestination &a, const CNoDestination &b) { return true; }
 };
 
-struct WitnessV0ScriptHash : public uint256 {};
-struct WitnessV0KeyHash : public uint160 {};
+struct WitnessV0ScriptHash : public uint256
+{
+    WitnessV0ScriptHash() : uint256() {}
+    explicit WitnessV0ScriptHash(const uint256& hash) : uint256(hash) {}
+    using uint256::uint256;
+};
+
+struct WitnessV0KeyHash : public uint160
+{
+    WitnessV0KeyHash() : uint160() {}
+    explicit WitnessV0KeyHash(const uint160& hash) : uint160(hash) {}
+    using uint160::uint160;
+};
 
 //! CTxDestination subtype to encode any future Witness version
 struct WitnessUnknown
