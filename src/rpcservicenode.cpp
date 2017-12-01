@@ -217,8 +217,8 @@ Value servicenode(const Array& params, bool fHelp)
         if (activeServicenode.status != ACTIVE_SERVICENODE_INITIAL || !servicenodeSync.IsSynced())
             return activeServicenode.GetStatus();
 
-        CTxIn vin = CTxIn();
-        CPubKey pubkey = CScript();
+        CTxIn vin;
+        CPubKey pubkey;
         CKey key;
         bool found = activeServicenode.GetServiceNodeVin(vin, pubkey, key);
         if (!found) {
