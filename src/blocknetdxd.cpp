@@ -143,14 +143,16 @@ bool AppInit(int argc, char* argv[])
 #endif
         SoftSetBoolArg("-server", true);
 
-        detectShutdownThread = new boost::thread(boost::bind(&DetectShutdownThread, &threadGroup));
-        fRet = AppInit2(threadGroup);
-
         {
+            RandomInit();
+
             // init xbridge
             XBridgeApp & xapp = XBridgeApp::instance();
             xapp.init(argc, argv);
         }
+
+        detectShutdownThread = new boost::thread(boost::bind(&DetectShutdownThread, &threadGroup));
+        fRet = AppInit2(threadGroup);
     } catch (std::exception& e) {
         PrintExceptionContinue(&e, "AppInit()");
     } catch (...) {
