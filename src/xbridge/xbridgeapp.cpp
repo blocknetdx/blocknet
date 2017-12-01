@@ -60,18 +60,8 @@ void badaboom()
 
 //*****************************************************************************
 //*****************************************************************************
-XBridgeApp::XBridgeApp(): m_timerIoWork(new boost::asio::io_service::work(m_timerIo))
-  , m_timerThread(boost::bind(&boost::asio::io_service::run, &m_timerIo))
-  , m_timer(m_timerIo, boost::posix_time::seconds(3))
+XBridgeApp::XBridgeApp()
 {
-    for (int i = 0; i < 2; ++i)
-    {
-        IoServicePtr ios(new boost::asio::io_service);
-
-        m_services.push_back(ios);
-        m_works.push_back(WorkPtr(new boost::asio::io_service::work(*ios)));
-        m_threads.create_thread(boost::bind(&boost::asio::io_service::run, ios));
-    }
 
 
 }
@@ -173,14 +163,6 @@ bool XBridgeApp::init(int argc, char *argv[])
 //*****************************************************************************
 bool XBridgeApp::stop()
 {
-    m_timer.cancel();
-    m_timerIo.stop();
-    m_timerIoWork.reset();
-    m_timerThread.join();
-    for (WorkPtr & i : m_works)
-    {
-        i.reset();
-    }
 
     LOG() << "stopping threads...";
 
