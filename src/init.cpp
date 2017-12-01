@@ -895,6 +895,8 @@ bool AppInit2(boost::thread_group& threadGroup)
     // std::string sha256_algo = SHA256AutoDetect();
     // LogPrintf("Using the '%s' SHA256 implementation\n", sha256_algo);
 
+    RandomInit();
+
     globalVerifyHandle.reset(new ECCVerifyHandle());
 
     // Sanity check
