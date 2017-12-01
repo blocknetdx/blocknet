@@ -30,10 +30,11 @@ using namespace std;
 using namespace boost;
 using namespace boost::asio;
 
-using TransactionMap = std::map<uint256, XBridgeTransactionDescrPtr>;
-using TransactionPair = std::pair<uint256, XBridgeTransactionDescrPtr>;
-using RealVector = std::vector<double>;
-namespace bpt = boost::posix_time;
+using TransactionMap    = std::map<uint256, XBridgeTransactionDescrPtr>;
+using TransactionPair   = std::pair<uint256, XBridgeTransactionDescrPtr>;
+using RealVector        = std::vector<double>;
+
+namespace bpt           = boost::posix_time;
 
 double xBridgeValueFromAmount(uint64_t amount)
 {
@@ -62,45 +63,50 @@ Value dxGetTransactions(const Array & params, bool fHelp)
         throw runtime_error("dxGetTransactions\nList transactions.");
     }
 
-    Array arr;
-
-    boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
+    Array arr;    
 
     // pending tx
     {
-        TransactionMap trlist = XBridgeApp::m_pendingTransactions;
+        TransactionMap trlist;
+        {
+            boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
+            trlist = XBridgeApp::m_pendingTransactions;
+        }
         for (const auto & trEntry : trlist)
         {
             Object jtr;
             const auto tr = trEntry.second;
-//            tr->state
-            jtr.push_back(Pair("id", tr->id.GetHex()));
-            jtr.push_back(Pair("from", tr->fromCurrency));
-            jtr.push_back(Pair("from address", tr->from));
-            jtr.push_back(Pair("fromAmount", xBridgeValueFromAmount(tr->fromAmount)));
-            jtr.push_back(Pair("to", tr->toCurrency));
-            jtr.push_back(Pair("to address", tr->to));
-            jtr.push_back(Pair("toAmount", xBridgeValueFromAmount(tr->toAmount)));
-            jtr.push_back(Pair("state", tr->strState()));
+            jtr.push_back(Pair("id",            tr->id.GetHex()));
+            jtr.push_back(Pair("from",          tr->fromCurrency));
+            jtr.push_back(Pair("fromAddress",  tr->from));
+            jtr.push_back(Pair("fromAmount",    xBridgeValueFromAmount(tr->fromAmount)));
+            jtr.push_back(Pair("to",            tr->toCurrency));
+            jtr.push_back(Pair("toAddress",    tr->to));
+            jtr.push_back(Pair("toAmount",      xBridgeValueFromAmount(tr->toAmount)));
+            jtr.push_back(Pair("state",         tr->strState()));
             arr.push_back(jtr);
         }
     }
 
     // active tx
     {
-        TransactionMap trlist = XBridgeApp::m_transactions;
-        for (const auto & trEntry : trlist)
+        TransactionMap trlist;
+        {
+            boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
+            trlist = XBridgeApp::m_transactions;
+        }
+        for (const auto &trEntry : trlist)
         {
             Object jtr;
-            const auto tr = trEntry.second;
-            jtr.push_back(Pair("id", tr->id.GetHex()));
-            jtr.push_back(Pair("from", tr->fromCurrency));
-            jtr.push_back(Pair("from address", tr->from));
-            jtr.push_back(Pair("fromAmount", xBridgeValueFromAmount(tr->fromAmount)));
-            jtr.push_back(Pair("to", tr->toCurrency));
-            jtr.push_back(Pair("to address", tr->to));
-            jtr.push_back(Pair("toAmount", xBridgeValueFromAmount(tr->toAmount)));
-            jtr.push_back(Pair("state", tr->strState()));
+            const auto &tr = trEntry.second;
+            jtr.push_back(Pair("id",            tr->id.GetHex()));
+            jtr.push_back(Pair("from",          tr->fromCurrency));
+            jtr.push_back(Pair("fromAddress",  tr->from));
+            jtr.push_back(Pair("fromAmount",    xBridgeValueFromAmount(tr->fromAmount)));
+            jtr.push_back(Pair("to",            tr->toCurrency));
+            jtr.push_back(Pair("toAddress",    tr->to));
+            jtr.push_back(Pair("toAmount",      xBridgeValueFromAmount(tr->toAmount)));
+            jtr.push_back(Pair("state",         tr->strState()));
             arr.push_back(jtr);
         }
     }
@@ -122,9 +128,12 @@ Value dxGetTransactionsHistory(const Array & params, bool fHelp)
     }
     bool isShowAll = params.size() == 1 && params[0].get_str() == "ALL";
     Array arr;
-    boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
+    TransactionMap trlist;
     {
-        TransactionMap trlist = XBridgeApp::m_historicTransactions;
+        boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
+        trlist = XBridgeApp::m_historicTransactions;
+    }
+    {        
         if(trlist.empty())
         {
             LOG() << "empty history transactions list ";
@@ -143,11 +152,11 @@ Value dxGetTransactionsHistory(const Array & params, bool fHelp)
             double toAmount = static_cast<double>(tr->toAmount);
             double price = fromAmount / toAmount;
             std::string buyTime = to_simple_string(tr->created);
-            buy.push_back(Pair("time", buyTime));
-            buy.push_back(Pair("traid_id", tr->id.GetHex()));
-            buy.push_back(Pair("price", price));
-            buy.push_back(Pair("size", tr->toAmount));
-            buy.push_back(Pair("side", "buy"));
+            buy.push_back(Pair("time",      buyTime));
+            buy.push_back(Pair("traid_id",  tr->id.GetHex()));
+            buy.push_back(Pair("price",     price));
+            buy.push_back(Pair("size",      tr->toAmount));
+            buy.push_back(Pair("side",      "buy"));
             arr.push_back(buy);
         }
     }
@@ -164,9 +173,13 @@ Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp)
     }
 
     Array arr;
-    boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
+    TransactionMap trlist;
     {
-        TransactionMap trlist = XBridgeApp::m_historicTransactions;
+        boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
+        trlist = XBridgeApp::m_historicTransactions;
+    }
+    {
+
         if(trlist.empty())
         {
             LOG() << "empty history transactions list";
@@ -213,9 +226,9 @@ Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp)
         //copy values into vector
         for (const auto &trEntry : trList)
         {
-            const auto &tr = trEntry.second;
-            const auto fromAmount = xBridgeValueFromAmount(tr->fromAmount);
-            const auto toAmount = xBridgeValueFromAmount(tr->toAmount);
+            const auto &tr          = trEntry.second;
+            const auto fromAmount   = xBridgeValueFromAmount(tr->fromAmount);
+            const auto toAmount     = xBridgeValueFromAmount(tr->toAmount);
             toAmounts.emplace_back(toAmount);
             fromAmounts.emplace_back(fromAmount);
             trVector.push_back(tr);
@@ -285,81 +298,64 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
         throw runtime_error("dxGetTransactionInfo (id)\nTransaction info.");
     }
 
-    std::string id = params[0].get_str();
+    uint256 id(params[0].get_str());
 
     Array arr;
 
-    boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
 
     // pending tx
     {
-        TransactionMap trlist = XBridgeApp::m_pendingTransactions;
-        for (const auto & trEntry : trlist)
+        boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
+        if(XBridgeApp::m_pendingTransactions.count(uint256(id)))
         {
-            const auto tr = trEntry.second;
-            if(id != tr->id.GetHex())
-            {
-                continue;
-            }
+            const auto &tr = XBridgeApp::m_pendingTransactions[id];
             Object jtr;
-            jtr.push_back(Pair("id", tr->id.GetHex()));
-            jtr.push_back(Pair("from", tr->fromCurrency));
-            jtr.push_back(Pair("from address", tr->from));
-            jtr.push_back(Pair("fromAmount", xBridgeValueFromAmount(tr->fromAmount)));
-            jtr.push_back(Pair("to", tr->toCurrency));
-            jtr.push_back(Pair("to address", tr->to));
-            jtr.push_back(Pair("toAmount", xBridgeValueFromAmount(tr->toAmount)));
-            jtr.push_back(Pair("state", tr->strState()));
+            jtr.push_back(Pair("id",            tr->id.GetHex()));
+            jtr.push_back(Pair("from",          tr->fromCurrency));
+            jtr.push_back(Pair("fromAddress",  tr->from));
+            jtr.push_back(Pair("fromAmount",    xBridgeValueFromAmount(tr->fromAmount)));
+            jtr.push_back(Pair("to",            tr->toCurrency));
+            jtr.push_back(Pair("toAddress",    tr->to));
+            jtr.push_back(Pair("toAmount",      xBridgeValueFromAmount(tr->toAmount)));
+            jtr.push_back(Pair("state",         tr->strState()));
             arr.push_back(jtr);
         }
     }
 
     // active tx
     {
-        TransactionMap trlist = XBridgeApp::m_transactions;
-        for (const auto & trEntry : trlist)
+        boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
+        if(XBridgeApp::m_transactions.count(id))
         {
-            const auto tr = trEntry.second;
-
-            if(id != tr->id.GetHex())
-                continue;
-
+            const auto &tr = XBridgeApp::m_transactions[id];
             Object jtr;
-            jtr.push_back(Pair("id", tr->id.GetHex()));
-            jtr.push_back(Pair("from", tr->fromCurrency));
-            jtr.push_back(Pair("from address", tr->from));
-            jtr.push_back(Pair("fromAmount", xBridgeValueFromAmount(tr->fromAmount)));
-            jtr.push_back(Pair("to", tr->toCurrency));
-            jtr.push_back(Pair("to address", tr->to));
-            jtr.push_back(Pair("toAmount", xBridgeValueFromAmount(tr->toAmount)));
-            jtr.push_back(Pair("state", tr->strState()));
+            jtr.push_back(Pair("id",            tr->id.GetHex()));
+            jtr.push_back(Pair("from",          tr->fromCurrency));
+            jtr.push_back(Pair("fromAddress",  tr->from));
+            jtr.push_back(Pair("fromAmount",    xBridgeValueFromAmount(tr->fromAmount)));
+            jtr.push_back(Pair("to",            tr->toCurrency));
+            jtr.push_back(Pair("toAddress",    tr->to));
+            jtr.push_back(Pair("toAmount",      xBridgeValueFromAmount(tr->toAmount)));
+            jtr.push_back(Pair("state",         tr->strState()));
             arr.push_back(jtr);
         }
     }
 
     // historic tx
     {
-        TransactionMap trlist = XBridgeApp::m_historicTransactions;
-        if(trlist.empty())
+        boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
+        if(XBridgeApp::m_historicTransactions.count(id))
         {
-            LOG() << "history transaction list empty " << __FUNCTION__;
-        }
-        for (const auto & trEntry : trlist)
-        {
-            const auto tr = trEntry.second;
-
-            if(id != tr->id.GetHex())
-                continue;
-
+            const auto &tr = XBridgeApp::m_historicTransactions[id];
             Object jtr;
-            jtr.push_back(Pair("id", tr->id.GetHex()));
-            jtr.push_back(Pair("from", tr->fromCurrency));
-            jtr.push_back(Pair("from address", tr->from));
-            jtr.push_back(Pair("fromAmount", xBridgeValueFromAmount(tr->fromAmount)));
-            jtr.push_back(Pair("to", tr->toCurrency));
-            jtr.push_back(Pair("to address", tr->to));
-            jtr.push_back(Pair("toAmount", xBridgeValueFromAmount(tr->toAmount)));
-            jtr.push_back(Pair("state", tr->strState()));
+            jtr.push_back(Pair("id",            tr->id.GetHex()));
+            jtr.push_back(Pair("from",          tr->fromCurrency));
+            jtr.push_back(Pair("fromAddress",  tr->from));
+            jtr.push_back(Pair("fromAmount",    xBridgeValueFromAmount(tr->fromAmount)));
+            jtr.push_back(Pair("to",            tr->toCurrency));
+            jtr.push_back(Pair("toAddress",    tr->to));
+            jtr.push_back(Pair("toAmount",      xBridgeValueFromAmount(tr->toAmount)));
+            jtr.push_back(Pair("state",         tr->strState()));
             arr.push_back(jtr);
         }
     }
@@ -421,11 +417,11 @@ Value dxCreateTransaction(const Array & params, bool fHelp)
     {
         Object obj;
         obj.push_back(Pair("from", from));
-        obj.push_back(Pair("from currency", fromCurrency));
-        obj.push_back(Pair("from amount", fromAmount));
+        obj.push_back(Pair("fromCurrency", fromCurrency));
+        obj.push_back(Pair("fromAmount", fromAmount));
         obj.push_back(Pair("to", to));
-        obj.push_back(Pair("to currency", toCurrency));
-        obj.push_back(Pair("to amount", toAmount));
+        obj.push_back(Pair("toCurrency", toCurrency));
+        obj.push_back(Pair("toAmount", toAmount));
         return obj;
     }
     Object obj;
@@ -448,8 +444,8 @@ Value dxAcceptTransaction(const Array & params, bool fHelp)
     std::string from    = params[1].get_str();
     std::string to      = params[2].get_str();
 
-    if ((from.size() != 33 && from.size() != 34) ||
-            (to.size() != 33 && to.size() != 34))
+    if ((from.size() < 32 && from.size() > 36) ||
+            (to.size() < 32 && to.size() > 36))
     {
         throw runtime_error("incorrect address");
     }
@@ -460,9 +456,9 @@ Value dxAcceptTransaction(const Array & params, bool fHelp)
     if(error == xbridge::SUCCESS)
     {
         Object obj;
-        obj.push_back(Pair("id", id.GetHex()));
-        obj.push_back(Pair("from", from));
-        obj.push_back(Pair("to", to));
+        obj.push_back(Pair("id",    id.GetHex()));
+        obj.push_back(Pair("from",  from));
+        obj.push_back(Pair("to",    to));
         return obj;
     }
 
@@ -502,10 +498,12 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
     }
 
     Array arr;
-    boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
+    TransactionMap trList;
     {
-        TransactionMap trList = XBridgeApp::m_pendingTransactions;
-
+        boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
+        trList = XBridgeApp::m_pendingTransactions;
+    }
+    {
         if(trList.empty())
         {
             LOG() << "empty  transactions list ";
@@ -526,18 +524,22 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
         const auto toCurrency   = params[2].get_str();
 
         std::size_t maxOrders = 50;
-        if(detailLevel == 2 && params.size() >= 4)
+        if(detailLevel == 2 && params.size() == 4)
+        {
             maxOrders = params[3].get_int();;
+        }
 
         //copy all transactions
         std::copy_if(trList.begin(), trList.end(), std::inserter(asksList, asksList.end()),
-                     [&toCurrency, &fromCurrency](const TransactionPair &transaction){
+                     [&toCurrency, &fromCurrency](const TransactionPair &transaction)
+        {
             return  ((transaction.second->toCurrency == fromCurrency) &&
                     (transaction.second->fromCurrency == toCurrency));
         });
 
         std::copy_if(trList.begin(), trList.end(), std::inserter(bidsList, bidsList.end()),
-                     [&toCurrency, &fromCurrency](const TransactionPair &transaction){
+                     [&toCurrency, &fromCurrency](const TransactionPair &transaction)
+        {
             return  ((transaction.second->toCurrency == toCurrency) &&
                     (transaction.second->fromCurrency == fromCurrency));
         });
