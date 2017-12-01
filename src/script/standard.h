@@ -149,6 +149,19 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<std::v
 bool IsStandard(const CScript& scriptPubKey, txnouttype& whichType);
 bool IsWitnessStandard(const CTransaction& tx, const CCoinsViewCache& mapInputs);
 bool ExtractDestination(const CScript& scriptPubKey, CTxDestination& addressRet);
+
+/**
+ * Parse a standard scriptPubKey with one or more destination addresses. For
+ * multisig scripts, this populates the addressRet vector with the pubkey IDs
+ * and nRequiredRet with the n required to spend. For other destinations,
+ * addressRet is populated with a single value and nRequiredRet is set to 1.
+ * Returns true if successful. Currently does not extract address from
+ * pay-to-witness scripts.
+ *
+ * Note: this function confuses destinations (a subset of CScripts that are
+ * encodable as an address) with key identifiers (of keys involved in a
+ * CScript), and its use should be phased out.
+ */
 bool ExtractDestinations(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<CTxDestination>& addressRet, int& nRequiredRet);
 
 CScript GetScriptForDestination(const CTxDestination& dest);
