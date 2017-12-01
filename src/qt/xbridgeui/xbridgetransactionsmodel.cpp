@@ -312,9 +312,8 @@ void XBridgeTransactionsModel::onTimer()
             --i;
             {
                 boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
-                if(XBridgeApp::m_historicTransactions.find(id) != XBridgeApp::m_historicTransactions.end())
+                if(XBridgeApp::m_historicTransactions.erase(id))
                 {
-                    XBridgeApp::m_historicTransactions.erase(id);
                     LOG() << "remove historical transaction " << id.GetHex() << " " << __FUNCTION__;
                 } else {
                     LOG() << "can't remove from historical transaction, transaction " << id.GetHex() << " not found " << __FUNCTION__;
@@ -332,9 +331,8 @@ void XBridgeTransactionsModel::onTimer()
             }
             {
                 boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
-                if(XBridgeApp::m_pendingTransactions.find(id) != XBridgeApp::m_pendingTransactions.end())
+                if(XBridgeApp::m_pendingTransactions.erase(id))
                 {
-                    XBridgeApp::m_pendingTransactions.erase(id);
                     LOG() << "remove pending transaction " << id.GetHex() << " " << __FUNCTION__;
                 } else {
                     LOG() << "can't remove from pending transaction, transaction " << id.GetHex() << " not found " << __FUNCTION__;
@@ -346,7 +344,7 @@ void XBridgeTransactionsModel::onTimer()
             //@TODO replace model to smartpointers
             XBridgeTransactionDescrPtr tmp = XBridgeTransactionDescrPtr(new XBridgeTransactionDescr(m_transactions[i]));
             boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
-            XBridgeApp::m_historicTransactions[id] = tmp;
+            XBridgeApp::m_historicTransactions.insert(XBridgeApp::m_historicTransactions.end(), std::make_pair(tmp->id, tmp));
         }
     }
 }
