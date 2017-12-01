@@ -6,7 +6,6 @@
 
 #include "version.h"
 #include "util/logger.h"
-#include "xpubkey.h"
 
 #include <vector>
 #include <deque>
@@ -414,13 +413,6 @@ public:
     }
 
     void append(const std::vector<unsigned char> & data)
-    {
-        m_body.reserve(m_body.size() + data.size());
-        std::copy(data.begin(), data.end(), std::back_inserter(m_body));
-        sizeField() = static_cast<uint32_t>(m_body.size()) - headerSize;
-    }
-
-    void append(const xbridge::CPubKey & data)
     {
         m_body.reserve(m_body.size() + data.size());
         std::copy(data.begin(), data.end(), std::back_inserter(m_body));
