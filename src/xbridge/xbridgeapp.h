@@ -96,6 +96,13 @@ public:
                                const std::string & address);
     void getAddressBook();
 
+
+    /**
+     * @brief isHistoricState - checks the state of the transaction
+     * @param state - current state of transaction
+     * @return true, if the transaction is historical
+     */
+    bool isHistoricState(const XBridgeTransactionDescr::State state);
 public:// slots:
     // send messave via xbridge
     void onSend(const XBridgePacketPtr & packet);
@@ -156,43 +163,6 @@ public:
      */
     std::list<XBridgeTransactionDescr::State>       m_historicTransactionsStates;
 
-    /**
-     * @brief m_services
-     */
-    std::deque<IoServicePtr> m_services;
-
-    /**
-     * @brief m_works
-     */
-    std::deque<WorkPtr> m_works;
-
-    /**
-     * @brief m_timerIo
-     */
-    boost::asio::io_service m_timerIo;
-
-    /**
-     * @brief m_timerIoWork - update historical transactions list timer worker
-     */
-    std::shared_ptr<boost::asio::io_service::work>  m_timerIoWork;
-
-    /**
-     * @brief m_timerThread - timer thread
-     */
-    boost::thread m_timerThread;
-
-    /**
-     * @brief m_timer timer update historical transactions list
-     */
-    boost::asio::deadline_timer m_timer;
-
-public:
-    /**
-     * @brief isHistoricState - checks the state of the transaction
-     * @param state - current state of transaction
-     * @return true, if the transaction is historical
-     */
-    bool isHistoricState(const XBridgeTransactionDescr::State state);
 };
 
 #endif // XBRIDGEAPP_H
