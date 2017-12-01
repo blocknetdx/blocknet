@@ -358,7 +358,7 @@ uint256 XBridgeTransaction::a_datatxid() const
 
 //*****************************************************************************
 //*****************************************************************************
-xbridge::CPubKey XBridgeTransaction::a_pk1() const
+std::vector<unsigned char> XBridgeTransaction::a_pk1() const
 {
     return m_a_pk1;
 }
@@ -421,7 +421,7 @@ std::vector<unsigned char> XBridgeTransaction::b_innerScript() const
 
 //*****************************************************************************
 //*****************************************************************************
-xbridge::CPubKey XBridgeTransaction::b_pk1() const
+std::vector<unsigned char> XBridgeTransaction::b_pk1() const
 {
     return m_b_pk1;
 }
@@ -466,7 +466,7 @@ bool XBridgeTransaction::tryJoin(const XBridgeTransactionPtr other)
 //*****************************************************************************
 bool XBridgeTransaction::setKeys(const std::vector<unsigned char> & addr,
                                  const uint256 & datatxid,
-                                 const xbridge::CPubKey & pk)
+                                 const std::vector<unsigned char> & pk)
 {
     if (m_b.dest() == addr)
     {

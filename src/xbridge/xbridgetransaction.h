@@ -107,7 +107,7 @@ public:
     std::vector<unsigned char> a_innerScript() const;
 
     uint256                    a_datatxid() const;
-    xbridge::CPubKey           a_pk1() const;
+    std::vector<unsigned char> a_pk1() const;
 
     // uint256                    secondId() const;
     std::vector<unsigned char> b_address() const;
@@ -122,13 +122,13 @@ public:
     std::vector<unsigned char> b_innerScript() const;
 
     // uint256                    b_datatxid() const;
-    xbridge::CPubKey           b_pk1() const;
+    std::vector<unsigned char> b_pk1() const;
 
     bool tryJoin(const XBridgeTransactionPtr other);
 
     bool                       setKeys(const std::vector<unsigned char> & addr,
                                        const uint256 & datatxid,
-                                       const xbridge::CPubKey & pk);
+                                       const std::vector<unsigned char> & pk);
     bool                       setBinTxId(const std::vector<unsigned char> &addr,
                                           const std::string & id,
                                           const std::vector<unsigned char> & innerScript);
@@ -166,8 +166,8 @@ private:
     uint256                    m_a_datatxid;
     uint256                    m_b_datatxid;
 
-    xbridge::CPubKey           m_a_pk1;
-    xbridge::CPubKey           m_b_pk1;
+    std::vector<unsigned char> m_a_pk1;
+    std::vector<unsigned char> m_b_pk1;
 };
 
 #endif // XBRIDGETRANSACTION_H

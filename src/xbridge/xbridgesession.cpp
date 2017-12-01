@@ -1463,7 +1463,7 @@ bool XBridgeSession::processTransactionCreatedA(XBridgePacketPtr packet)
     reply2->append(txid.begin(), 32);
     reply2->append(tr->a_destination());
     reply2->append(tr->a_datatxid().begin(), 32);
-    reply2->append(tr->a_pk1().begin(), tr->a_pk1().size());
+    reply2->append(tr->a_pk1());
     reply2->append(binTxId);
 
     sendPacket(tr->b_address(), reply2);
