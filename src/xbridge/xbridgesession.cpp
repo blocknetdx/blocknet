@@ -290,11 +290,11 @@ bool XBridgeSession::processTransaction(XBridgePacketPtr packet)
 
     DEBUG_TRACE();
 
-    // size must be > 146 bytes
-    if (packet->size() <= 146)
+    // size must be > 144 bytes
+    if (packet->size() < 144)
     {
         ERR() << "invalid packet size for xbcTransaction "
-              << "need min 146 bytes, received " << packet->size() << " "
+              << "need min 144 bytes, received " << packet->size() << " "
               << __FUNCTION__;
         return false;
     }
