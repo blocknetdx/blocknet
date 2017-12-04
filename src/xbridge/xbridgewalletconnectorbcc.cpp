@@ -10,6 +10,11 @@
 
 #include "util/logger.h"
 
+//*****************************************************************************
+//*****************************************************************************
+namespace xbridge
+{
+
 //******************************************************************************
 //******************************************************************************
 enum
@@ -28,15 +33,15 @@ xbridge::CTransactionPtr createTransaction(const std::vector<std::pair<std::stri
 
 //******************************************************************************
 //******************************************************************************
-XBridgeBccWalletConnector::XBridgeBccWalletConnector()
-    : XBridgeBtcWalletConnector()
+BccWalletConnector::BccWalletConnector()
+    : BtcWalletConnector()
 {
 
 }
 
 //******************************************************************************
 //******************************************************************************
-bool XBridgeBccWalletConnector::createRefundTransaction(const std::vector<std::pair<std::string, int> > & inputs,
+bool BccWalletConnector::createRefundTransaction(const std::vector<std::pair<std::string, int> > & inputs,
                                                         const std::vector<std::pair<std::string, double> > & outputs,
                                                         const std::vector<unsigned char> & mpubKey,
                                                         const std::vector<unsigned char> & mprivKey,
@@ -111,7 +116,7 @@ bool XBridgeBccWalletConnector::createRefundTransaction(const std::vector<std::p
 
 //******************************************************************************
 //******************************************************************************
-bool XBridgeBccWalletConnector::createPaymentTransaction(const std::vector<std::pair<std::string, int> > & inputs,
+bool BccWalletConnector::createPaymentTransaction(const std::vector<std::pair<std::string, int> > & inputs,
                                                          const std::vector<std::pair<std::string, double> > & outputs,
                                                          const std::vector<unsigned char> & mpubKey,
                                                          const std::vector<unsigned char> & mprivKey,
@@ -176,3 +181,5 @@ bool XBridgeBccWalletConnector::createPaymentTransaction(const std::vector<std::
 
     return true;
 }
+
+} // namespace xbridge

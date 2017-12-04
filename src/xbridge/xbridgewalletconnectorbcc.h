@@ -6,12 +6,17 @@
 
 #include "xbridgewalletconnectorbtc.h"
 
+//*****************************************************************************
+//*****************************************************************************
+namespace xbridge
+{
+
 //******************************************************************************
 //******************************************************************************
-class XBridgeBccWalletConnector : public XBridgeBtcWalletConnector
+class BccWalletConnector : public BtcWalletConnector
 {
 public:
-    XBridgeBccWalletConnector();
+    BccWalletConnector();
 
 public:
     bool createRefundTransaction(const std::vector<std::pair<std::string, int> > & inputs,
@@ -32,5 +37,7 @@ public:
                                   std::string & txId,
                                   std::string & rawTx);
 };
+
+} // namespace xbridge
 
 #endif // XBRIDGEWALLETCONNECTORBCC_H

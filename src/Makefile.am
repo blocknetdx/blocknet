@@ -346,7 +346,6 @@ libxbridge_xbridge_a_SOURCES = \
   xbridge/util/txlog.cpp \
   xbridge/util/xutil.cpp \
   xbridge/bitcoinrpcconnector.cpp \
-  xbridge/xbridge.cpp \
   xbridge/xbridgeapp.cpp \
   xbridge/xbridgeexchange.cpp \
   xbridge/xbridgesession.cpp \
@@ -367,7 +366,7 @@ libxbridge_xbridge_a_SOURCES = \
   xbridge/xbitcoinaddress.h \
   xbridge/xbitcoinsecret.h \
   xbridge/xbitcointransaction.h \
-  xbridge/xbridge.h \
+  xbridge/xbridgedef.h \
   xbridge/xbridgeapp.h \
   xbridge/xbridgeexchange.h \
   xbridge/xbridgepacket.h \

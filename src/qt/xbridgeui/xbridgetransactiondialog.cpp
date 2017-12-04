@@ -38,7 +38,7 @@ XBridgeTransactionDialog::XBridgeTransactionDialog(XBridgeTransactionsModel & mo
 {
     setupUI();
 
-    XBridgeApp & xapp = XBridgeApp::instance();
+    xbridge::App & xapp = xbridge::App::instance();
     std::vector<std::string> wallets = xapp.availableCurrencies();
     for (const std::string & s : wallets)
     {
@@ -402,7 +402,7 @@ void XBridgeTransactionDialog::onAddressBookTo()
 //******************************************************************************
 double XBridgeTransactionDialog::accountBalance(const std::string & currency)
 {
-    XBridgeWalletConnectorPtr conn = XBridgeApp::instance().connectorByCurrency(currency);
+    xbridge::WalletConnectorPtr conn = xbridge::App::instance().connectorByCurrency(currency);
     if (conn)
     {
         return conn->getWalletBalance();

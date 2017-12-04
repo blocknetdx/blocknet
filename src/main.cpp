@@ -5570,7 +5570,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
                 }
             }
 
-            static bool isEnabled = XBridgeApp::isEnabled();
+            static bool isEnabled = xbridge::App::isEnabled();
             if (isEnabled)
             {
                 if (raw.size() < (20 + sizeof(time_t)))
@@ -5589,7 +5589,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
                     // remove timestamp from raw
                     raw.erase(raw.begin(), raw.begin()+sizeof(uint64_t));
 
-                    XBridgeApp & app = XBridgeApp::instance();
+                    xbridge::App & app = xbridge::App::instance();
 
                     if (addr != zero)
                     {

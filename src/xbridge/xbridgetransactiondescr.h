@@ -13,14 +13,14 @@
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
-//*****************************************************************************
-//*****************************************************************************
-struct XBridgeTransactionDescr;
-typedef boost::shared_ptr<XBridgeTransactionDescr> XBridgeTransactionDescrPtr;
+//******************************************************************************
+//******************************************************************************
+namespace xbridge
+{
 
 //******************************************************************************
 //******************************************************************************
-struct XBridgeTransactionDescr
+struct TransactionDescr
 {
     enum
     {
@@ -98,9 +98,9 @@ struct XBridgeTransactionDescr
     std::vector<unsigned char>    xPrivKey;
 
     // used coins in transaction
-    std::vector<wallet::UtxoEntry> usedCoins;
+    std::vector<xbridge::wallet::UtxoEntry> usedCoins;
 
-    XBridgeTransactionDescr()
+    TransactionDescr()
         : role(0)
         , tax(0)
         , lockTimeTx1(0)
@@ -116,17 +116,17 @@ struct XBridgeTransactionDescr
 //        return id == d.id;
 //    }
 
-    bool operator < (const XBridgeTransactionDescr & d) const
+    bool operator < (const TransactionDescr & d) const
     {
         return created < d.created;
     }
 
-    bool operator > (const XBridgeTransactionDescr & d) const
+    bool operator > (const TransactionDescr & d) const
     {
         return created > d.created;
     }
 
-    XBridgeTransactionDescr & operator = (const XBridgeTransactionDescr & d)
+    TransactionDescr & operator = (const TransactionDescr & d)
     {
         if (this == &d)
         {
@@ -138,7 +138,7 @@ struct XBridgeTransactionDescr
         return *this;
     }
 
-    XBridgeTransactionDescr(const XBridgeTransactionDescr & d)
+    TransactionDescr(const TransactionDescr & d)
     {
         state   = trNew;
         created = boost::posix_time::second_clock::universal_time();
@@ -147,7 +147,7 @@ struct XBridgeTransactionDescr
         copyFrom(d);
     }
 
-    void updateTimestamp(const XBridgeTransactionDescr & d)
+    void updateTimestamp(const TransactionDescr & d)
     {
         txtime       = boost::posix_time::second_clock::universal_time();
         if (created > d.created)
@@ -184,7 +184,7 @@ struct XBridgeTransactionDescr
     }
 
 private:
-    void copyFrom(const XBridgeTransactionDescr & d)
+    void copyFrom(const TransactionDescr & d)
     {
         id           = d.id;
         role         = d.role;
@@ -230,6 +230,8 @@ private:
         updateTimestamp(d);
     }
 };
+
+} // namespace xbridge
 
 #endif // XBRIDGETRANSACTIONDESCR
 

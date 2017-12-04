@@ -8,10 +8,15 @@
 
 //*****************************************************************************
 //*****************************************************************************
-class XBridgeBtcWalletConnector : public XBridgeWalletConnector
+namespace xbridge
+{
+
+//*****************************************************************************
+//*****************************************************************************
+class BtcWalletConnector : public WalletConnector
 {
 public:
-    XBridgeBtcWalletConnector();
+    BtcWalletConnector();
 
 public:
     // reimplement for currency
@@ -89,5 +94,7 @@ public:
                                   std::string & txId,
                                   std::string & rawTx);
 };
+
+} // namespace xbridge
 
 #endif // XBRIDGEWALLETCONNECTORBTC_H

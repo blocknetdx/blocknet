@@ -12,6 +12,11 @@
 
 //*****************************************************************************
 //*****************************************************************************
+namespace xbridge
+{
+
+//*****************************************************************************
+//*****************************************************************************
 namespace wallet
 {
 typedef std::pair<std::string, std::vector<std::string> > AddressBookEntry;
@@ -30,13 +35,13 @@ struct UtxoEntry
 
 //*****************************************************************************
 //*****************************************************************************
-class XBridgeWalletConnector : public WalletParam
+class WalletConnector : public WalletParam
 {
 public:
-    XBridgeWalletConnector();
+    WalletConnector();
 
 public:
-    XBridgeWalletConnector & operator = (const WalletParam & other)
+    WalletConnector & operator = (const WalletParam & other)
     {
         *(WalletParam *)this = other;
         return *this;
@@ -128,6 +133,6 @@ public:
                                           std::string & rawTx) = 0;
 };
 
-typedef std::shared_ptr<XBridgeWalletConnector> XBridgeWalletConnectorPtr;
+} // namespace xbridge
 
 #endif // XBRIDGEWALLETCONNECTOR_H

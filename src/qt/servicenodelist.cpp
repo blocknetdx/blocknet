@@ -96,7 +96,7 @@ void ServicenodeList::StartAlias(std::string strAlias)
             std::string strError;
             CServicenodeBroadcast mnb;
 
-            XBridgeExchange & e = XBridgeExchange::instance();
+            xbridge::Exchange & e = xbridge::Exchange::instance();
 
             bool fSuccess = CServicenodeBroadcast::Create(mne.getIp(), mne.getPrivKey(),
                                                           mne.getTxHash(), mne.getOutputIndex(),
@@ -144,7 +144,7 @@ void ServicenodeList::StartAll(std::string strCommand)
             continue;
         }
 
-        XBridgeExchange & e = XBridgeExchange::instance();
+        xbridge::Exchange & e = xbridge::Exchange::instance();
 
         bool fSuccess = CServicenodeBroadcast::Create(mne.getIp(), mne.getPrivKey(),
                                                       mne.getTxHash(), mne.getOutputIndex(),

@@ -273,7 +273,6 @@ SOURCES += \
     src/xbridge/util/txlog.cpp \
     src/xbridge/util/xutil.cpp \
     src/xbridge/bitcoinrpcconnector.cpp \
-    src/xbridge/xbridge.cpp \
     src/xbridge/xbridgeapp.cpp \
     src/xbridge/xbridgeexchange.cpp \
     src/xbridge/xbridgesession.cpp \
@@ -553,7 +552,6 @@ HEADERS += \
     src/xbridge/util/xutil.h \
     src/xbridge/bitcoinrpcconnector.h \
     src/xbridge/version.h \
-    src/xbridge/xbridge.h \
     src/xbridge/xbridgeapp.h \
     src/xbridge/xbridgeexchange.h \
     src/xbridge/xbridgepacket.h \
@@ -581,7 +579,8 @@ HEADERS += \
     src/validationstate.h \
     src/xbridge/xbridgewalletconnector.h \
     src/xbridge/xbridgewalletconnectorbtc.h \
-    src/xbridge/xbridgewalletconnectorbcc.h
+    src/xbridge/xbridgewalletconnectorbcc.h \
+    src/xbridge/xbridgedef.h
 
 #ENABLE_ZMQ
 #    src/zmq/zmqabstractnotifier.h \
@@ -788,4 +787,6 @@ contains(RELEASE, 1) {
 system($$QMAKE_LRELEASE -silent $$_PRO_FILE_)
 
 DISTFILES += \
-    src/qt/paymentrequest.proto
+    src/qt/paymentrequest.proto \
+    Makefile.am \
+    src/Makefile.am

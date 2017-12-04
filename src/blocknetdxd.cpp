@@ -147,7 +147,7 @@ bool AppInit(int argc, char* argv[])
             RandomInit();
 
             // init xbridge
-            XBridgeApp & xapp = XBridgeApp::instance();
+            xbridge::App & xapp = xbridge::App::instance();
             xapp.init(argc, argv);
         }
 

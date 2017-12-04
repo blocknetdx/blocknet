@@ -25,6 +25,11 @@
 
 //*****************************************************************************
 //*****************************************************************************
+namespace xbridge
+{
+
+//*****************************************************************************
+//*****************************************************************************
 namespace rpc
 {
 
@@ -866,14 +871,14 @@ bool sendRawTransaction(const std::string & rpcuser,
 
 //*****************************************************************************
 //*****************************************************************************
-XBridgeBtcWalletConnector::XBridgeBtcWalletConnector()
+BtcWalletConnector::BtcWalletConnector()
 {
 
 }
 
 //*****************************************************************************
 //*****************************************************************************
-std::string XBridgeBtcWalletConnector::fromXAddr(const std::vector<unsigned char> & xaddr) const
+std::string BtcWalletConnector::fromXAddr(const std::vector<unsigned char> & xaddr) const
 {
     xbridge::XBitcoinAddress addr;
     addr.Set(CKeyID(uint160(xaddr)), addrPrefix[0]);
@@ -882,7 +887,7 @@ std::string XBridgeBtcWalletConnector::fromXAddr(const std::vector<unsigned char
 
 //*****************************************************************************
 //*****************************************************************************
-std::vector<unsigned char> XBridgeBtcWalletConnector::toXAddr(const std::string & addr) const
+std::vector<unsigned char> BtcWalletConnector::toXAddr(const std::string & addr) const
 {
     std::vector<unsigned char> vaddr;
     if (DecodeBase58Check(addr.c_str(), vaddr))
@@ -894,7 +899,7 @@ std::vector<unsigned char> XBridgeBtcWalletConnector::toXAddr(const std::string 
 
 //*****************************************************************************
 //*****************************************************************************
-bool XBridgeBtcWalletConnector::requestAddressBook(std::vector<wallet::AddressBookEntry> & entries)
+bool BtcWalletConnector::requestAddressBook(std::vector<wallet::AddressBookEntry> & entries)
 {
     std::vector<std::string> accounts;
     if (!rpc::listaccounts(m_user, m_passwd, m_ip, m_port, accounts))
@@ -917,7 +922,7 @@ bool XBridgeBtcWalletConnector::requestAddressBook(std::vector<wallet::AddressBo
 
 //******************************************************************************
 //******************************************************************************
-bool XBridgeBtcWalletConnector::getUnspent(std::vector<wallet::UtxoEntry> & inputs) const
+bool BtcWalletConnector::getUnspent(std::vector<wallet::UtxoEntry> & inputs) const
 {
     if (!rpc::listUnspent(m_user, m_passwd, m_ip, m_port, inputs))
     {
@@ -930,7 +935,7 @@ bool XBridgeBtcWalletConnector::getUnspent(std::vector<wallet::UtxoEntry> & inpu
 
 //******************************************************************************
 //******************************************************************************
-bool XBridgeBtcWalletConnector::lockUnspent(const std::vector<wallet::UtxoEntry> & inputs,
+bool BtcWalletConnector::lockUnspent(const std::vector<wallet::UtxoEntry> & inputs,
                                             const bool lock) const
 {
     if (!rpc::lockUnspent(m_user, m_passwd, m_ip, m_port, inputs, lock))
@@ -944,7 +949,7 @@ bool XBridgeBtcWalletConnector::lockUnspent(const std::vector<wallet::UtxoEntry>
 
 //******************************************************************************
 //******************************************************************************
-bool XBridgeBtcWalletConnector::getRawTransaction(const std::string & txid,
+bool BtcWalletConnector::getRawTransaction(const std::string & txid,
                                                   const bool verbose, std::string & tx)
 {
     if (!rpc::getRawTransaction(m_user, m_passwd, m_ip, m_port, txid, verbose, tx))
@@ -958,7 +963,7 @@ bool XBridgeBtcWalletConnector::getRawTransaction(const std::string & txid,
 
 //******************************************************************************
 //******************************************************************************
-bool XBridgeBtcWalletConnector::getNewAddress(std::string & addr)
+bool BtcWalletConnector::getNewAddress(std::string & addr)
 {
     if (!rpc::getNewAddress(m_user, m_passwd, m_ip, m_port, addr))
     {
@@ -971,7 +976,7 @@ bool XBridgeBtcWalletConnector::getNewAddress(std::string & addr)
 
 //******************************************************************************
 //******************************************************************************
-bool XBridgeBtcWalletConnector::createRawTransaction(const std::vector<std::pair<std::string, int> > & inputs,
+bool BtcWalletConnector::createRawTransaction(const std::vector<std::pair<std::string, int> > & inputs,
                                                      const std::vector<std::pair<std::string, double> > & outputs,
                                                      const uint32_t lockTime,
                                                      std::string & tx)
@@ -988,7 +993,7 @@ bool XBridgeBtcWalletConnector::createRawTransaction(const std::vector<std::pair
 
 //******************************************************************************
 //******************************************************************************
-bool XBridgeBtcWalletConnector::signRawTransaction(std::string & rawtx, bool & complete)
+bool BtcWalletConnector::signRawTransaction(std::string & rawtx, bool & complete)
 {
     if (!rpc::signRawTransaction(m_user, m_passwd, m_ip, m_port,
                                  rawtx, complete))
@@ -1002,7 +1007,7 @@ bool XBridgeBtcWalletConnector::signRawTransaction(std::string & rawtx, bool & c
 
 //******************************************************************************
 //******************************************************************************
-bool XBridgeBtcWalletConnector::decodeRawTransaction(const std::string & rawtx,
+bool BtcWalletConnector::decodeRawTransaction(const std::string & rawtx,
                                                      std::string & txid,
                                                      std::string & tx)
 {
@@ -1018,7 +1023,7 @@ bool XBridgeBtcWalletConnector::decodeRawTransaction(const std::string & rawtx,
 
 //******************************************************************************
 //******************************************************************************
-bool XBridgeBtcWalletConnector::sendRawTransaction(const std::string & rawtx,
+bool BtcWalletConnector::sendRawTransaction(const std::string & rawtx,
                                                    std::string & txid,
                                                    int32_t & errorCode)
 {
@@ -1034,7 +1039,7 @@ bool XBridgeBtcWalletConnector::sendRawTransaction(const std::string & rawtx,
 
 //******************************************************************************
 //******************************************************************************
-bool XBridgeBtcWalletConnector::newKeyPair(std::vector<unsigned char> & pubkey,
+bool BtcWalletConnector::newKeyPair(std::vector<unsigned char> & pubkey,
                                            std::vector<unsigned char> & privkey)
 {
     xbridge::CKey km;
@@ -1049,7 +1054,7 @@ bool XBridgeBtcWalletConnector::newKeyPair(std::vector<unsigned char> & pubkey,
 
 //******************************************************************************
 //******************************************************************************
-std::vector<unsigned char> XBridgeBtcWalletConnector::getKeyId(const std::vector<unsigned char> & pubkey)
+std::vector<unsigned char> BtcWalletConnector::getKeyId(const std::vector<unsigned char> & pubkey)
 {
     CKeyID id = xbridge::CPubKey(pubkey).GetID();
     return std::vector<unsigned char>(id.begin(), id.end());
@@ -1057,7 +1062,7 @@ std::vector<unsigned char> XBridgeBtcWalletConnector::getKeyId(const std::vector
 
 //******************************************************************************
 //******************************************************************************
-std::vector<unsigned char> XBridgeBtcWalletConnector::getScriptId(const std::vector<unsigned char> & script)
+std::vector<unsigned char> BtcWalletConnector::getScriptId(const std::vector<unsigned char> & script)
 {
     CScriptID id = CScript(script.begin(), script.end());
     return std::vector<unsigned char>(id.begin(), id.end());
@@ -1065,7 +1070,7 @@ std::vector<unsigned char> XBridgeBtcWalletConnector::getScriptId(const std::vec
 
 //******************************************************************************
 //******************************************************************************
-std::string XBridgeBtcWalletConnector::scriptIdToString(const std::vector<unsigned char> & id) const
+std::string BtcWalletConnector::scriptIdToString(const std::vector<unsigned char> & id) const
 {
     xbridge::XBitcoinAddress baddr;
     baddr.Set(CScriptID(uint160(id)), scriptPrefix[0]);
@@ -1076,7 +1081,7 @@ std::string XBridgeBtcWalletConnector::scriptIdToString(const std::vector<unsign
 // calculate tx fee for deposit tx
 // output count always 1
 //******************************************************************************
-double XBridgeBtcWalletConnector::minTxFee1(const uint32_t inputCount, const uint32_t outputCount)
+double BtcWalletConnector::minTxFee1(const uint32_t inputCount, const uint32_t outputCount)
 {
     uint64_t fee = (148*inputCount + 34*outputCount + 10) * feePerByte;
     if (fee < minTxFee)
@@ -1090,7 +1095,7 @@ double XBridgeBtcWalletConnector::minTxFee1(const uint32_t inputCount, const uin
 // calculate tx fee for payment/refund tx
 // input count always 1
 //******************************************************************************
-double XBridgeBtcWalletConnector::minTxFee2(const uint32_t inputCount, const uint32_t outputCount)
+double BtcWalletConnector::minTxFee2(const uint32_t inputCount, const uint32_t outputCount)
 {
     uint64_t fee = (180*inputCount + 34*outputCount + 10) * feePerByte;
     if (fee < minTxFee)
@@ -1105,7 +1110,7 @@ double XBridgeBtcWalletConnector::minTxFee2(const uint32_t inputCount, const uin
 // true if tx found and checked
 // isGood == true id depost tx is OK
 //******************************************************************************
-bool XBridgeBtcWalletConnector::checkTransaction(const std::string & depositTxId,
+bool BtcWalletConnector::checkTransaction(const std::string & depositTxId,
                                                  const std::string & /*destination*/,
                                                  const uint64_t & /*amount*/,
                                                  bool & isGood)
@@ -1156,7 +1161,7 @@ bool XBridgeBtcWalletConnector::checkTransaction(const std::string & depositTxId
 
 //******************************************************************************
 //******************************************************************************
-uint32_t XBridgeBtcWalletConnector::lockTime(const char role) const
+uint32_t BtcWalletConnector::lockTime(const char role) const
 {
     rpc::Info info;
     if (!rpc::getInfo(m_user, m_passwd, m_ip, m_port, info))
@@ -1195,7 +1200,7 @@ uint32_t XBridgeBtcWalletConnector::lockTime(const char role) const
 
 //******************************************************************************
 //******************************************************************************
-bool XBridgeBtcWalletConnector::createDepositUnlockScript(const std::vector<unsigned char> & myPubKey,
+bool BtcWalletConnector::createDepositUnlockScript(const std::vector<unsigned char> & myPubKey,
                                                           const std::vector<unsigned char> & otherPubKey,
                                                           const std::vector<unsigned char> & xdata,
                                                           const uint32_t lockTime,
@@ -1220,7 +1225,7 @@ bool XBridgeBtcWalletConnector::createDepositUnlockScript(const std::vector<unsi
 
 //******************************************************************************
 //******************************************************************************
-bool XBridgeBtcWalletConnector::createDepositTransaction(const std::vector<std::pair<std::string, int> > & inputs,
+bool BtcWalletConnector::createDepositTransaction(const std::vector<std::pair<std::string, int> > & inputs,
                                                          const std::vector<std::pair<std::string, double> > & outputs,
                                                          std::string & txId,
                                                          std::string & rawTx)
@@ -1304,7 +1309,7 @@ xbridge::CTransactionPtr createTransaction(const std::vector<std::pair<std::stri
 
 //******************************************************************************
 //******************************************************************************
-bool XBridgeBtcWalletConnector::createRefundTransaction(const std::vector<std::pair<std::string, int> > & inputs,
+bool BtcWalletConnector::createRefundTransaction(const std::vector<std::pair<std::string, int> > & inputs,
                                                         const std::vector<std::pair<std::string, double> > & outputs,
                                                         const std::vector<unsigned char> & mpubKey,
                                                         const std::vector<unsigned char> & mprivKey,
@@ -1379,7 +1384,7 @@ bool XBridgeBtcWalletConnector::createRefundTransaction(const std::vector<std::p
 
 //******************************************************************************
 //******************************************************************************
-bool XBridgeBtcWalletConnector::createPaymentTransaction(const std::vector<std::pair<std::string, int> > & inputs,
+bool BtcWalletConnector::createPaymentTransaction(const std::vector<std::pair<std::string, int> > & inputs,
                                                          const std::vector<std::pair<std::string, double> > & outputs,
                                                          const std::vector<unsigned char> & mpubKey,
                                                          const std::vector<unsigned char> & mprivKey,
@@ -1444,3 +1449,5 @@ bool XBridgeBtcWalletConnector::createPaymentTransaction(const std::vector<std::
 
     return true;
 }
+
+} // namespace xbridge

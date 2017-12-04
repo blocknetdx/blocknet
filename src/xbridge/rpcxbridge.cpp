@@ -38,20 +38,20 @@ Value dxGetTransactionList(const Array & params, bool fHelp)
 
     Array arr;
 
-    XBridgeApp & xapp = XBridgeApp::instance();
+    xbridge::App & xapp = xbridge::App::instance();
 
     boost::mutex::scoped_lock l(xapp.m_txLocker);
 
 
     // pending tx
     {
-        std::map<uint256, XBridgeTransactionDescrPtr> trlist = XBridgeApp::m_pendingTransactions;
+        std::map<uint256, xbridge::TransactionDescrPtr> trlist = xbridge::App::m_pendingTransactions;
         for (const auto & trEntry : trlist)
         {
             const auto & tr = trEntry.second;
 
-            XBridgeWalletConnectorPtr connFrom = xapp.connectorByCurrency(tr->fromCurrency);
-            XBridgeWalletConnectorPtr connTo   = xapp.connectorByCurrency(tr->toCurrency);
+            xbridge::WalletConnectorPtr connFrom = xapp.connectorByCurrency(tr->fromCurrency);
+            xbridge::WalletConnectorPtr connTo   = xapp.connectorByCurrency(tr->toCurrency);
             if (!connFrom || !connTo)
             {
                 continue;
@@ -61,11 +61,11 @@ Value dxGetTransactionList(const Array & params, bool fHelp)
             jtr.push_back(Pair("id", tr->id.GetHex()));
             jtr.push_back(Pair("from", tr->fromCurrency));
             jtr.push_back(Pair("from address", connFrom->fromXAddr(tr->from)));
-            double fromAmount = static_cast<double>(tr->fromAmount) / XBridgeTransactionDescr::COIN;
+            double fromAmount = static_cast<double>(tr->fromAmount) / xbridge::TransactionDescr::COIN;
             jtr.push_back(Pair("fromAmount", boost::lexical_cast<std::string>(fromAmount)));
             jtr.push_back(Pair("to", tr->toCurrency));
             jtr.push_back(Pair("to address", connTo->fromXAddr(tr->to)));
-            double toAmount = static_cast<double>(tr->toAmount) / XBridgeTransactionDescr::COIN;
+            double toAmount = static_cast<double>(tr->toAmount) / xbridge::TransactionDescr::COIN;
             jtr.push_back(Pair("toAmount", boost::lexical_cast<std::string>(toAmount)));
             jtr.push_back(Pair("state", tr->strState()));
 
@@ -75,13 +75,13 @@ Value dxGetTransactionList(const Array & params, bool fHelp)
 
     // active tx
     {
-        std::map<uint256, XBridgeTransactionDescrPtr> trlist = XBridgeApp::m_transactions;
+        std::map<uint256, xbridge::TransactionDescrPtr> trlist = xbridge::App::m_transactions;
         for (const auto & trEntry : trlist)
         {
             const auto & tr = trEntry.second;
 
-            XBridgeWalletConnectorPtr connFrom = xapp.connectorByCurrency(tr->fromCurrency);
-            XBridgeWalletConnectorPtr connTo   = xapp.connectorByCurrency(tr->toCurrency);
+            xbridge::WalletConnectorPtr connFrom = xapp.connectorByCurrency(tr->fromCurrency);
+            xbridge::WalletConnectorPtr connTo   = xapp.connectorByCurrency(tr->toCurrency);
             if (!connFrom || !connTo)
             {
                 continue;
@@ -91,11 +91,11 @@ Value dxGetTransactionList(const Array & params, bool fHelp)
             jtr.push_back(Pair("id", tr->id.GetHex()));
             jtr.push_back(Pair("from", tr->fromCurrency));
             jtr.push_back(Pair("from address", connFrom->fromXAddr(tr->from)));
-            double fromAmount = static_cast<double>(tr->fromAmount) / XBridgeTransactionDescr::COIN;
+            double fromAmount = static_cast<double>(tr->fromAmount) / xbridge::TransactionDescr::COIN;
             jtr.push_back(Pair("fromAmount", boost::lexical_cast<std::string>(fromAmount)));
             jtr.push_back(Pair("to", tr->toCurrency));
             jtr.push_back(Pair("to address", connTo->fromXAddr(tr->to)));
-            double toAmount = static_cast<double>(tr->toAmount) / XBridgeTransactionDescr::COIN;
+            double toAmount = static_cast<double>(tr->toAmount) / xbridge::TransactionDescr::COIN;
             jtr.push_back(Pair("toAmount", boost::lexical_cast<std::string>(toAmount)));
             jtr.push_back(Pair("state", tr->strState()));
 
@@ -118,18 +118,18 @@ Value dxGetTransactionsHistoryList(const Array & params, bool fHelp)
 
     Array arr;
 
-    XBridgeApp & xapp = XBridgeApp::instance();
+    xbridge::App & xapp = xbridge::App::instance();
 
-    boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
+    boost::mutex::scoped_lock l(xbridge::App::m_txLocker);
 
     {
-        std::map<uint256, XBridgeTransactionDescrPtr> trlist = XBridgeApp::m_historicTransactions;
+        std::map<uint256, xbridge::TransactionDescrPtr> trlist = xbridge::App::m_historicTransactions;
         for (const auto & trEntry : trlist)
         {
             const auto & tr = trEntry.second;
 
-            XBridgeWalletConnectorPtr connFrom = xapp.connectorByCurrency(tr->fromCurrency);
-            XBridgeWalletConnectorPtr connTo   = xapp.connectorByCurrency(tr->toCurrency);
+            xbridge::WalletConnectorPtr connFrom = xapp.connectorByCurrency(tr->fromCurrency);
+            xbridge::WalletConnectorPtr connTo   = xapp.connectorByCurrency(tr->toCurrency);
             if (!connFrom || !connTo)
             {
                 continue;
@@ -139,11 +139,11 @@ Value dxGetTransactionsHistoryList(const Array & params, bool fHelp)
             jtr.push_back(Pair("id", tr->id.GetHex()));
             jtr.push_back(Pair("from", tr->fromCurrency));
             jtr.push_back(Pair("from address", connFrom->fromXAddr(tr->from)));
-            double fromAmount = static_cast<double>(tr->fromAmount) / XBridgeTransactionDescr::COIN;
+            double fromAmount = static_cast<double>(tr->fromAmount) / xbridge::TransactionDescr::COIN;
             jtr.push_back(Pair("fromAmount", boost::lexical_cast<std::string>(fromAmount)));
             jtr.push_back(Pair("to", tr->toCurrency));
             jtr.push_back(Pair("to address", connTo->fromXAddr(tr->to)));
-            double toAmount = static_cast<double>(tr->toAmount) / XBridgeTransactionDescr::COIN;
+            double toAmount = static_cast<double>(tr->toAmount) / xbridge::TransactionDescr::COIN;
             jtr.push_back(Pair("toAmount", boost::lexical_cast<std::string>(toAmount)));
             jtr.push_back(Pair("state", tr->strState()));
 
@@ -168,13 +168,13 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
 
     Array arr;
 
-    XBridgeApp & xapp = XBridgeApp::instance();
+    xbridge::App & xapp = xbridge::App::instance();
 
-    boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
+    boost::mutex::scoped_lock l(xbridge::App::m_txLocker);
 
     // pending tx
     {
-        std::map<uint256, XBridgeTransactionDescrPtr> trlist = XBridgeApp::m_pendingTransactions;
+        std::map<uint256, xbridge::TransactionDescrPtr> trlist = xbridge::App::m_pendingTransactions;
         for (const auto & trEntry : trlist)
         {
             const auto & tr = trEntry.second;
@@ -184,8 +184,8 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
                 continue;
             }
 
-            XBridgeWalletConnectorPtr connFrom = xapp.connectorByCurrency(tr->fromCurrency);
-            XBridgeWalletConnectorPtr connTo   = xapp.connectorByCurrency(tr->toCurrency);
+            xbridge::WalletConnectorPtr connFrom = xapp.connectorByCurrency(tr->fromCurrency);
+            xbridge::WalletConnectorPtr connTo   = xapp.connectorByCurrency(tr->toCurrency);
             if (!connFrom || !connTo)
             {
                 continue;
@@ -195,11 +195,11 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
             jtr.push_back(Pair("id", tr->id.GetHex()));
             jtr.push_back(Pair("from", tr->fromCurrency));
             jtr.push_back(Pair("from address", connFrom->fromXAddr(tr->from)));
-            double fromAmount = static_cast<double>(tr->fromAmount) / XBridgeTransactionDescr::COIN;
+            double fromAmount = static_cast<double>(tr->fromAmount) / xbridge::TransactionDescr::COIN;
             jtr.push_back(Pair("fromAmount", boost::lexical_cast<std::string>(fromAmount)));
             jtr.push_back(Pair("to", tr->toCurrency));
             jtr.push_back(Pair("to address", connTo->fromXAddr(tr->to)));
-            double toAmount = static_cast<double>(tr->toAmount) / XBridgeTransactionDescr::COIN;
+            double toAmount = static_cast<double>(tr->toAmount) / xbridge::TransactionDescr::COIN;
             jtr.push_back(Pair("toAmount", boost::lexical_cast<std::string>(toAmount)));
             jtr.push_back(Pair("state", tr->strState()));
 
@@ -209,7 +209,7 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
 
     // active tx
     {
-        std::map<uint256, XBridgeTransactionDescrPtr> trlist = XBridgeApp::m_transactions;
+        std::map<uint256, xbridge::TransactionDescrPtr> trlist = xbridge::App::m_transactions;
         for (const auto & trEntry : trlist)
         {
             const auto & tr = trEntry.second;
@@ -219,8 +219,8 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
                 continue;
             }
 
-            XBridgeWalletConnectorPtr connFrom = xapp.connectorByCurrency(tr->fromCurrency);
-            XBridgeWalletConnectorPtr connTo   = xapp.connectorByCurrency(tr->toCurrency);
+            xbridge::WalletConnectorPtr connFrom = xapp.connectorByCurrency(tr->fromCurrency);
+            xbridge::WalletConnectorPtr connTo   = xapp.connectorByCurrency(tr->toCurrency);
             if (!connFrom || !connTo)
             {
                 continue;
@@ -230,11 +230,11 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
             jtr.push_back(Pair("id", tr->id.GetHex()));
             jtr.push_back(Pair("from", tr->fromCurrency));
             jtr.push_back(Pair("from address", connFrom->fromXAddr(tr->from)));
-            double fromAmount = static_cast<double>(tr->fromAmount) / XBridgeTransactionDescr::COIN;
+            double fromAmount = static_cast<double>(tr->fromAmount) / xbridge::TransactionDescr::COIN;
             jtr.push_back(Pair("fromAmount", boost::lexical_cast<std::string>(fromAmount)));
             jtr.push_back(Pair("to", tr->toCurrency));
             jtr.push_back(Pair("to address", connTo->fromXAddr(tr->to)));
-            double toAmount = static_cast<double>(tr->toAmount) / XBridgeTransactionDescr::COIN;
+            double toAmount = static_cast<double>(tr->toAmount) / xbridge::TransactionDescr::COIN;
             jtr.push_back(Pair("toAmount", boost::lexical_cast<std::string>(toAmount)));
             jtr.push_back(Pair("state", tr->strState()));
 
@@ -244,7 +244,7 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
 
     // historic tx
     {
-        std::map<uint256, XBridgeTransactionDescrPtr> trlist = XBridgeApp::m_historicTransactions;
+        std::map<uint256, xbridge::TransactionDescrPtr> trlist = xbridge::App::m_historicTransactions;
         for (const auto & trEntry : trlist)
         {
             const auto & tr = trEntry.second;
@@ -254,8 +254,8 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
                 continue;
             }
 
-            XBridgeWalletConnectorPtr connFrom = xapp.connectorByCurrency(tr->fromCurrency);
-            XBridgeWalletConnectorPtr connTo   = xapp.connectorByCurrency(tr->toCurrency);
+            xbridge::WalletConnectorPtr connFrom = xapp.connectorByCurrency(tr->fromCurrency);
+            xbridge::WalletConnectorPtr connTo   = xapp.connectorByCurrency(tr->toCurrency);
             if (!connFrom || !connTo)
             {
                 continue;
@@ -266,11 +266,11 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
             jtr.push_back(Pair("id", tr->id.GetHex()));
             jtr.push_back(Pair("from", tr->fromCurrency));
             jtr.push_back(Pair("from address", connFrom->fromXAddr(tr->from)));
-            double fromAmount = static_cast<double>(tr->fromAmount) / XBridgeTransactionDescr::COIN;
+            double fromAmount = static_cast<double>(tr->fromAmount) / xbridge::TransactionDescr::COIN;
             jtr.push_back(Pair("fromAmount", boost::lexical_cast<std::string>(fromAmount)));
             jtr.push_back(Pair("to", tr->toCurrency));
             jtr.push_back(Pair("to address", connTo->fromXAddr(tr->to)));
-            double toAmount = static_cast<double>(tr->toAmount) / XBridgeTransactionDescr::COIN;
+            double toAmount = static_cast<double>(tr->toAmount) / xbridge::TransactionDescr::COIN;
             jtr.push_back(Pair("toAmount", boost::lexical_cast<std::string>(toAmount)));
             jtr.push_back(Pair("state", tr->strState()));
 
@@ -293,7 +293,7 @@ Value dxGetCurrencyList(const Array & params, bool fHelp)
 
     Object obj;
 
-    std::vector<std::string> currencies = XBridgeApp::instance().availableCurrencies();
+    std::vector<std::string> currencies = xbridge::App::instance().availableCurrencies();
     for (std::string currency : currencies)
     {
         obj.push_back(Pair(currency, ""));
@@ -327,9 +327,9 @@ Value dxCreateTransaction(const Array & params, bool fHelp)
         throw runtime_error("incorrect address");
     }
 
-    uint256 id = XBridgeApp::instance().sendXBridgeTransaction
-            (from, fromCurrency, (boost::uint64_t)(fromAmount * XBridgeTransactionDescr::COIN),
-             to,   toCurrency,   (boost::uint64_t)(toAmount * XBridgeTransactionDescr::COIN));
+    uint256 id = xbridge::App::instance().sendXBridgeTransaction
+            (from, fromCurrency, (boost::uint64_t)(fromAmount * xbridge::TransactionDescr::COIN),
+             to,   toCurrency,   (boost::uint64_t)(toAmount * xbridge::TransactionDescr::COIN));
 
 
     Object obj;
@@ -358,7 +358,7 @@ Value dxAcceptTransaction(const Array & params, bool fHelp)
         throw runtime_error("incorrect address");
     }
 
-    uint256 idresult = XBridgeApp::instance().acceptXBridgeTransaction(id, from, to);
+    uint256 idresult = xbridge::App::instance().acceptXBridgeTransaction(id, from, to);
 
     Object obj;
     obj.push_back(Pair("id", idresult.GetHex()));
@@ -377,7 +377,7 @@ Value dxCancelTransaction(const Array & params, bool fHelp)
 
     uint256 id(params[0].get_str());
 
-    XBridgeApp::instance().cancelXBridgeTransaction(id, crRpcRequest);
+    xbridge::App::instance().cancelXBridgeTransaction(id, crRpcRequest);
 
     Object obj;
     obj.push_back(Pair("id", id.GetHex()));

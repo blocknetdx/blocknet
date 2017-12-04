@@ -6,6 +6,11 @@
 
 //*****************************************************************************
 //*****************************************************************************
+namespace xbridge
+{
+
+//*****************************************************************************
+//*****************************************************************************
 namespace wallet
 {
 
@@ -27,20 +32,20 @@ bool operator == (const UtxoEntry & l, const UtxoEntry & r)
 
 //*****************************************************************************
 //*****************************************************************************
-XBridgeWalletConnector::XBridgeWalletConnector()
+WalletConnector::WalletConnector()
 {
 
 }
 
 //******************************************************************************
 //******************************************************************************
-bool XBridgeWalletConnector::checkAmount(const uint64_t _amount) const
+bool WalletConnector::checkAmount(const uint64_t _amount) const
 {
     std::vector<wallet::UtxoEntry> inputs;
     // return checkAmountAndGetInputs(amount, inputs);
     inputs.clear();
 
-    double amount = _amount / XBridgeTransactionDescr::COIN;
+    double amount = _amount / TransactionDescr::COIN;
 
     std::vector<wallet::UtxoEntry> entries;
     if (!getUnspent(entries))
@@ -67,7 +72,7 @@ bool XBridgeWalletConnector::checkAmount(const uint64_t _amount) const
 
 //******************************************************************************
 //******************************************************************************
-double XBridgeWalletConnector::getWalletBalance() const
+double WalletConnector::getWalletBalance() const
 {
     std::vector<wallet::UtxoEntry> entries;
     if (!getUnspent(entries))
@@ -84,3 +89,5 @@ double XBridgeWalletConnector::getWalletBalance() const
 
     return amount;
 }
+
+} // namespace xbridge

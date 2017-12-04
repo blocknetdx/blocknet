@@ -7,6 +7,7 @@
 #include "uint256.h"
 #include "xbridgetransactionmember.h"
 #include "xkey.h"
+#include "xbridgedef.h"
 
 #include <vector>
 #include <string>
@@ -16,14 +17,14 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 
-//*****************************************************************************
-//*****************************************************************************
-class XBridgeTransaction;
-typedef boost::shared_ptr<XBridgeTransaction> XBridgeTransactionPtr;
+//******************************************************************************
+//******************************************************************************
+namespace xbridge
+{
 
 //*****************************************************************************
 //*****************************************************************************
-class XBridgeTransaction
+class Transaction
 {
 public:
     // see strState when editing
@@ -57,15 +58,15 @@ public:
     };
 
 public:
-    XBridgeTransaction();
-    XBridgeTransaction(const uint256                    & id,
+    Transaction();
+    Transaction(const uint256                    & id,
                        const std::vector<unsigned char> & sourceAddr,
                        const std::string                & sourceCurrency,
                        const uint64_t                   & sourceAmount,
                        const std::vector<unsigned char> & destAddr,
                        const std::string                & destCurrency,
                        const uint64_t                   & destAmount);
-    ~XBridgeTransaction();
+    ~Transaction();
 
     uint256 id() const;
 
@@ -124,7 +125,7 @@ public:
     // uint256                    b_datatxid() const;
     std::vector<unsigned char> b_pk1() const;
 
-    bool tryJoin(const XBridgeTransactionPtr other);
+    bool tryJoin(const TransactionPtr other);
 
     bool                       setKeys(const std::vector<unsigned char> & addr,
                                        const uint256 & datatxid,
@@ -169,5 +170,7 @@ private:
     std::vector<unsigned char> m_a_pk1;
     std::vector<unsigned char> m_b_pk1;
 };
+
+} // namespace xbridge
 
 #endif // XBRIDGETRANSACTION_H

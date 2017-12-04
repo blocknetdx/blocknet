@@ -7,14 +7,18 @@
 
 
 class uint256;
-struct XBridgeTransactionDescr;
-typedef boost::shared_ptr<XBridgeTransactionDescr> XBridgeTransactionDescrPtr;
+
+namespace xbridge
+{
+struct TransactionDescr;
+typedef boost::shared_ptr<TransactionDescr> TransactionDescrPtr;
+}
 
 
 class XUIConnector
 {
 public:
-    boost::signals2::signal<void (const XBridgeTransactionDescrPtr & tx)> NotifyXBridgePendingTransactionReceived;
+    boost::signals2::signal<void (const xbridge::TransactionDescrPtr & tx)> NotifyXBridgePendingTransactionReceived;
 
     boost::signals2::signal<void (const uint256 & id,
                                   const unsigned int state)> NotifyXBridgeTransactionStateChanged;

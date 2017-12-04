@@ -4,7 +4,6 @@
 #ifndef XBRIDGESESSION_H
 #define XBRIDGESESSION_H
 
-#include "xbridge.h"
 #include "xbridgepacket.h"
 #include "xbridgetransaction.h"
 #include "xbridgetransactiondescr.h"
@@ -26,13 +25,18 @@ extern const unsigned int LOCKTIME_THRESHOLD;
 
 //*****************************************************************************
 //*****************************************************************************
-class XBridgeSession
-        : public std::enable_shared_from_this<XBridgeSession>
+namespace xbridge
+{
+
+//*****************************************************************************
+//*****************************************************************************
+class Session
+        : public std::enable_shared_from_this<Session>
         , private boost::noncopyable
 {
 public:
-    XBridgeSession();
-    virtual ~XBridgeSession();
+    Session();
+    virtual ~Session();
 
     const std::vector<unsigned char> & sessionAddr() const { return m_myid; }
 
@@ -63,7 +67,7 @@ protected:
     // return true if packet not for me, relayed
     bool checkPacketAddress(XBridgePacketPtr packet);
 
-    bool checkDepositTx(const XBridgeTransactionDescrPtr & xtx,
+    bool checkDepositTx(const TransactionDescrPtr & xtx,
                         const std::string & depositTxId,
                         const uint32_t & confirmations,
                         const uint64_t & neededAmount,
@@ -71,7 +75,7 @@ protected:
 
     // fn search xaddress in transaction and restore full 'coin' address as string
     bool isAddressInTransaction(const std::vector<unsigned char> & address,
-                                const XBridgeTransactionPtr & tx);
+                                const TransactionPtr & tx);
 
 protected:
     virtual bool processInvalid(XBridgePacketPtr packet);
@@ -98,12 +102,12 @@ protected:
     virtual bool processTransactionConfirmB(XBridgePacketPtr packet);
     virtual bool processTransactionConfirmedB(XBridgePacketPtr packet);
 
-    virtual bool finishTransaction(XBridgeTransactionPtr tr);
+    virtual bool finishTransaction(TransactionPtr tr);
     virtual bool sendCancelTransaction(const uint256 & txid,
                                        const TxCancelReason & reason);
-    virtual bool sendCancelTransaction(const XBridgeTransactionDescrPtr & tx,
+    virtual bool sendCancelTransaction(const TransactionDescrPtr & tx,
                                        const TxCancelReason & reason);
-    virtual bool rollbackTransaction(XBridgeTransactionPtr tr);
+    virtual bool rollbackTransaction(TransactionPtr tr);
 
     virtual bool processTransactionCancel(XBridgePacketPtr packet);
     bool cancelOrRollbackTransaction(const uint256 & txid, const TxCancelReason & reason);
@@ -119,6 +123,6 @@ protected:
     PacketHandlersMap m_handlers;
 };
 
-typedef std::shared_ptr<XBridgeSession> XBridgeSessionPtr;
+} // namespace xbridge
 
 #endif // XBRIDGESESSION_H

@@ -11,6 +11,11 @@
 
 #include <boost/cstdint.hpp>
 
+//******************************************************************************
+//******************************************************************************
+namespace xbridge
+{
+
 //*****************************************************************************
 //*****************************************************************************
 class XBridgeTransactionMember
@@ -33,5 +38,7 @@ private:
     std::vector<unsigned char> m_destAddr;
     uint256                    m_transactionHash;
 };
+
+} // namespace xbridge
 
 #endif // XBRIDGETRANSACTIONMEMBER_H
