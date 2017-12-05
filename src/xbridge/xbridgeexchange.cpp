@@ -374,7 +374,7 @@ bool XBridgeExchange::deletePendingTransactions(const uint256 & id)
 
     LOG() << "delete pending transaction <" << id.GetHex() << ">";
 
-    addToTransactionsHistory(id);
+
     m_pendingTransactions.erase(id);
     return true;
 }
@@ -387,7 +387,7 @@ bool XBridgeExchange::deleteTransaction(const uint256 & id)
 
     LOG() << "delete transaction <" << id.GetHex() << ">";
 
-    addToTransactionsHistory(id);
+
     m_transactions.erase(id);
     return true;
 }
@@ -657,18 +657,3 @@ std::list<XBridgeTransactionPtr> XBridgeExchange::transactionsHistory() const
 
 //*****************************************************************************
 //*****************************************************************************
-void XBridgeExchange::addToTransactionsHistory(const uint256 &id)
-{
-    boost::mutex::scoped_lock l(m_transactionsHistoryLock);
-
-    if (m_transactions.count(id))
-    {
-        m_transactionsHistory[id] = m_transactions[id];
-    }
-    else if(m_pendingTransactions.count(id))
-    {
-        m_transactionsHistory[id] = m_pendingTransactions[id];
-    }
-
-    LOG() << "Nothing to add to transactions history";
-}

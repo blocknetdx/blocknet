@@ -689,12 +689,12 @@ bool XBridgeSession::processTransactionHold(XBridgePacketPtr packet)
         {
             xtx->state = XBridgeTransactionDescr::trFinished;
             XBridgeApp::m_historicTransactions[id] = xtx;
+            LOG() << "XBridgeApp::m_historicTransactions[id] = xtx, id = " << id.ToString();
         }
         else
         {
             // move to processing
             XBridgeApp::m_transactions[id] = xtx;
-
             xtx->state = XBridgeTransactionDescr::trHold;
         }
     }
@@ -2247,6 +2247,7 @@ bool XBridgeSession::processTransactionConfirmedB(XBridgePacketPtr packet)
 //*****************************************************************************
 bool XBridgeSession::processTransactionCancel(XBridgePacketPtr packet)
 {
+
     // DEBUG_TRACE();
 
     // size must be == 36 bytes
@@ -2319,9 +2320,10 @@ bool XBridgeSession::cancelOrRollbackTransaction(const uint256 & txid, const TxC
     }
 
     XBridgeApp::m_historicTransactions[txid] = xtx;
+    LOG() << "XBridgeApp::m_historicTransactions[txid] = xtx, txid = " << txid.ToString();
 
     // ..and retranslate
-    // sendPacketBroadcast(packet);
+//     sendPacketBroadcast(packet);
     return true;
 }
 
@@ -2367,6 +2369,7 @@ bool XBridgeSession::sendCancelTransaction(const uint256 & txid,
 bool XBridgeSession::sendCancelTransaction(const XBridgeTransactionDescrPtr & tx,
                                            const TxCancelReason & reason)
 {
+    LOG() << "XBridgeSession::sendCancelTransaction " << __FUNCTION__;
     sendCancelTransaction(tx->id, reason);
 
     // update transaction state for gui
@@ -2693,14 +2696,11 @@ bool XBridgeSession::processTransactionDropped(XBridgePacketPtr packet)
     XBridgeTransactionDescrPtr xtx;
     {
         boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
-
-        if (!XBridgeApp::m_transactions.count(id))
-        {
+        if (!XBridgeApp::m_transactions.count(id)) {
             // signal for gui
             xuiConnector.NotifyXBridgeTransactionStateChanged(id, XBridgeTransactionDescr::trDropped);
             return false;
         }
-
         xtx = XBridgeApp::m_transactions[id];
     }
 

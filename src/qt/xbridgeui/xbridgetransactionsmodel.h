@@ -6,6 +6,7 @@
 
 #include "uint256.h"
 #include "xbridge/xbridgetransactiondescr.h"
+#include "xbridge/util/xbridgeerror.h"
 
 #include <QAbstractTableModel>
 #include <QStringList>
@@ -47,13 +48,13 @@ public:
 
     bool isMyTransaction(const unsigned int index) const;
 
-    bool newTransaction(const std::string & from,
+    xbridge::Error newTransaction(const std::string & from,
                         const std::string & to,
                         const std::string & fromCurrency,
                         const std::string & toCurrency,
                         const double fromAmount,
                         const double toAmount);
-    bool newTransactionFromPending(const uint256 & id,
+    xbridge::Error newTransactionFromPending(const uint256 & id,
                                    const std::vector<unsigned char> & hub,
                                    const std::string & from,
                                    const std::string & to);
