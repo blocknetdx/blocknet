@@ -532,6 +532,26 @@ void App::onBroadcastReceived(const std::vector<unsigned char> & message,
 
 //*****************************************************************************
 //*****************************************************************************
+bool App::processLater(const uint256 & txid, const XBridgePacketPtr & packet)
+{
+
+}
+
+//*****************************************************************************
+//*****************************************************************************
+bool App::removePackets(const uint256 & txid)
+{
+    // remove from pending packets (if added)
+
+    boost::mutex::scoped_lock l(App::m_ppLocker);
+    size_t removed = m_pendingPackets.erase(txid);
+    assert(removed < 2 && "duplicate packets in packets queue");
+
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
 WalletConnectorPtr App::connectorByCurrency(const std::string & currency) const
 {
     boost::mutex::scoped_lock l(m_p->m_connectorsLock);
@@ -656,6 +676,106 @@ bool App::txOutIsLocked(const wallet::UtxoEntry & entry) const
         return true;
     }
     return false;
+}
+
+//******************************************************************************
+//******************************************************************************
+TransactionDescrPtr App::transaction(const uint256 & id)
+{
+    TransactionDescrPtr result;
+
+    boost::mutex::scoped_lock l(m_txLocker);
+
+    if (m_pendingTransactions.count(id))
+    {
+        result = m_pendingTransactions[id];
+    }
+
+    if (m_transactions.count(id))
+    {
+        assert(!result && "duplicate objects");
+        result = m_transactions[id];
+    }
+
+    if (m_historicTransactions.count(id))
+    {
+        assert(!result && "duplicate objects");
+        result = m_historicTransactions[id];
+    }
+
+    return result;
+}
+
+//******************************************************************************
+//******************************************************************************
+void App::appendTransactionToPending(const TransactionDescrPtr & ptr)
+{
+    boost::mutex::scoped_lock l(m_txLocker);
+
+    if (m_transactions.count(ptr->id) || m_historicTransactions.count(ptr->id))
+    {
+        return;
+    }
+
+    if (!m_pendingTransactions.count(ptr->id))
+    {
+        // new transaction, copy data
+        m_pendingTransactions[ptr->id] = ptr;
+    }
+    else
+    {
+        // existing, update timestamp
+        m_pendingTransactions[ptr->id]->updateTimestamp(*ptr);
+    }
+}
+
+//******************************************************************************
+//******************************************************************************
+void App::moveTransactionToHistory(const uint256 & id)
+{
+    TransactionDescrPtr xtx;
+
+    {
+        boost::mutex::scoped_lock l(m_txLocker);
+
+        size_t counter = 0;
+
+        if (m_pendingTransactions.count(id))
+        {
+            xtx = m_pendingTransactions[id];
+
+            counter = m_pendingTransactions.erase(id);
+            assert(counter < 2 && "duplicate transaction in pending");
+        }
+
+        if (m_transactions.count(id))
+        {
+            assert(!xtx && "duplicate objects");
+            xtx = m_transactions[id];
+
+            counter = m_pendingTransactions.erase(id);
+            assert(counter < 2 && "duplicate transaction in pending");
+        }
+
+        if (xtx)
+        {
+            assert(m_historicTransactions.count(id) == 0 && "tx already in history");
+            m_historicTransactions[id] = xtx;
+        }
+    }
+
+    if (xtx)
+    {
+        // unlock tx coins
+        WalletConnectorPtr conn = connectorByCurrency(xtx->fromCurrency);
+        if (conn)
+        {
+            conn->lockUnspent(xtx->usedCoins, false);
+        }
+    }
+
+    // remove pending packets for this tx
+    removePackets(id);
 }
 
 //******************************************************************************
@@ -818,7 +938,7 @@ bool App::sendPendingTransaction(const TransactionDescrPtr & ptr)
     sendPacket(ptr->packet);
 
     ptr->state = TransactionDescr::trPending;
-    xuiConnector.NotifyXBridgeTransactionStateChanged(ptr->id, TransactionDescr::trPending);
+    xuiConnector.NotifyXBridgeTransactionStateChanged(ptr->id);
 
     return true;
 }
@@ -955,7 +1075,7 @@ bool App::sendAcceptingTransaction(const TransactionDescrPtr & ptr)
     sendPacket(ptr->hubAddress, ptr->packet);
 
     ptr->state = TransactionDescr::trAccepting;
-    xuiConnector.NotifyXBridgeTransactionStateChanged(ptr->id, TransactionDescr::trAccepting);
+    xuiConnector.NotifyXBridgeTransactionStateChanged(ptr->id);
 
     return true;
 }
@@ -963,17 +1083,17 @@ bool App::sendAcceptingTransaction(const TransactionDescrPtr & ptr)
 //******************************************************************************
 //******************************************************************************
 bool App::cancelXBridgeTransaction(const uint256 & id,
-                                          const TxCancelReason & reason)
+                                   const TxCancelReason & reason)
 {
     if (sendCancelTransaction(id, reason))
     {
-        boost::mutex::scoped_lock l(m_txLocker);
+        TransactionDescrPtr xtx = transaction(id);
+        xtx->state  = TransactionDescr::trCancelled;
+        xtx->reason = reason;
 
-        m_pendingTransactions.erase(id);
-        m_transactions.erase(id);
+        moveTransactionToHistory(id);
 
-        m_transactions[id]->state = TransactionDescr::trCancelled;
-        xuiConnector.NotifyXBridgeTransactionStateChanged(id, TransactionDescr::trCancelled);
+        xuiConnector.NotifyXBridgeTransactionStateChanged(id);
     }
 
     return true;

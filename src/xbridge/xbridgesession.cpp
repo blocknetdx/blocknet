@@ -396,7 +396,7 @@ bool Session::processTransaction(XBridgePacketPtr packet)
             d->toAmount     = damount;
             d->state        = TransactionDescr::trPending;
 
-            xuiConnector.NotifyXBridgePendingTransactionReceived(d);
+            xuiConnector.NotifyXBridgeTransactionReceived(d);
         }
 
         TransactionPtr tr = e.pendingTransaction(pendingId);
@@ -455,8 +455,17 @@ bool Session::processPendingTransaction(XBridgePacketPtr packet)
         return false;
     }
 
-    TransactionDescrPtr ptr(new TransactionDescr);
-    ptr->id           = uint256(packet->data());
+    uint256 txid = uint256(packet->data());
+    TransactionDescrPtr ptr = App::instance().transaction(txid);
+    if (ptr)
+    {
+        ptr->updateTimestamp();
+        xuiConnector.NotifyXBridgeTransactionReceived(ptr);
+        return true;
+    }
+
+    ptr.reset(new TransactionDescr);
+    ptr->id           = txid;
     ptr->fromCurrency = std::string(reinterpret_cast<const char *>(packet->data()+32));
     ptr->fromAmount   = *reinterpret_cast<boost::uint64_t *>(packet->data()+40);
     ptr->toCurrency   = std::string(reinterpret_cast<const char *>(packet->data()+48));
@@ -465,23 +474,11 @@ bool Session::processPendingTransaction(XBridgePacketPtr packet)
     ptr->tax          = *reinterpret_cast<boost::uint32_t *>(packet->data()+84);
     ptr->state        = TransactionDescr::trPending;
 
-    {
-        boost::mutex::scoped_lock l(xbridge::App::m_txLocker);
-        if (!xbridge::App::m_pendingTransactions.count(ptr->id))
-        {
-            // new transaction, copy data
-            xbridge::App::m_pendingTransactions[ptr->id] = ptr;
-        }
-        else
-        {
-            // existing, update timestamp
-            xbridge::App::m_pendingTransactions[ptr->id]->updateTimestamp(*ptr);
-        }
-    }
+    App::instance().appendTransactionToPending(ptr);
 
     LOG() << "received tx <" << HexStr(ptr->id) << "> " << __FUNCTION__;
 
-    xuiConnector.NotifyXBridgePendingTransactionReceived(ptr);
+    xuiConnector.NotifyXBridgeTransactionReceived(ptr);
 
     return true;
 }
@@ -666,8 +663,6 @@ bool Session::processTransactionHold(XBridgePacketPtr packet)
             if (!tr || tr->state() != xbridge::Transaction::trJoined)
             {
                 e.deletePendingTransactions(id);
-
-                xuiConnector.NotifyXBridgeTransactionStateChanged(id, TransactionDescr::trFinished);
             }
 
             return true;
@@ -720,7 +715,7 @@ bool Session::processTransactionHold(XBridgePacketPtr packet)
         return true;
     }
 
-    xuiConnector.NotifyXBridgeTransactionStateChanged(id, xtx->state);
+    xuiConnector.NotifyXBridgeTransactionStateChanged(id);
 
     if (xtx->isLocal())
     {
@@ -1348,7 +1343,7 @@ bool Session::processTransactionCreate(XBridgePacketPtr packet)
 
     xtx->state = TransactionDescr::trCreated;
 
-    xuiConnector.NotifyXBridgeTransactionStateChanged(txid, xtx->state);
+    xuiConnector.NotifyXBridgeTransactionStateChanged(txid);
 
     // send transactions
     {
@@ -1690,7 +1685,7 @@ bool Session::processTransactionConfirmA(XBridgePacketPtr packet)
 
     xtx->state = TransactionDescr::trCommited;
 
-    xuiConnector.NotifyXBridgeTransactionStateChanged(txid, xtx->state);
+    xuiConnector.NotifyXBridgeTransactionStateChanged(txid);
 
     // send reply
     XBridgePacketPtr reply(new XBridgePacket(xbcTransactionConfirmedA));
@@ -1888,7 +1883,7 @@ bool Session::processTransactionConfirmB(XBridgePacketPtr packet)
 
     xtx->state = TransactionDescr::trCommited;
 
-    xuiConnector.NotifyXBridgeTransactionStateChanged(txid, xtx->state);
+    xuiConnector.NotifyXBridgeTransactionStateChanged(txid);
 
     // send reply
     XBridgePacketPtr reply(new XBridgePacket(xbcTransactionConfirmedB));
@@ -1992,41 +1987,29 @@ bool Session::cancelOrRollbackTransaction(const uint256 & txid, const TxCancelRe
         e.deletePendingTransactions(txid);
     }
 
-    TransactionDescrPtr xtx;
+    App & app = App::instance();
+
+    TransactionDescrPtr xtx = app.transaction(txid);
+    if (!xtx)
     {
-        boost::mutex::scoped_lock l(xbridge::App::m_txLocker);
-
-        if (!xbridge::App::m_transactions.count(txid))
-        {
-            LOG() << "unknown transaction " << HexStr(txid) << " " << __FUNCTION__;
-            return true;
-        }
-
-        xtx = xbridge::App::m_transactions[txid];
-    }
-
-    {
-        // remove from pending packets (if added)
-        boost::mutex::scoped_lock l(xbridge::App::m_ppLocker);
-        xbridge::App::m_pendingPackets.erase(txid);
+        return true;
     }
 
     if (xtx->state < TransactionDescr::trCreated)
     {
-        // unlock coins
-//        for (const wallet::UtxoEntry & entry : xtx->usedCoins)
-//        {
-//            pwalletMain->UnlockCoin(COutPoint(entry.txId, entry.vout));
-//        }
+        app.moveTransactionToHistory(txid);
 
-        xtx->state = TransactionDescr::trCancelled;
-        xuiConnector.NotifyXBridgeTransactionCancelled(txid, TransactionDescr::trCancelled, reason);
+        xtx->state  = TransactionDescr::trCancelled;
+        xtx->reason = reason;
+        xuiConnector.NotifyXBridgeTransactionStateChanged(txid);
     }
     else
     {
+        // remove from pending packets (if added)
+        app.removePackets(txid);
+
         // rollback, commit revert transaction
-        xbridge::App & xapp = xbridge::App::instance();
-        WalletConnectorPtr conn = xapp.connectorByCurrency(xtx->fromCurrency);
+        WalletConnectorPtr conn = app.connectorByCurrency(xtx->fromCurrency);
         if (!conn)
         {
             WARN() << "no connector for <" << xtx->toCurrency << "> " << __FUNCTION__;
@@ -2037,6 +2020,7 @@ bool Session::cancelOrRollbackTransaction(const uint256 & txid, const TxCancelRe
             int32_t errCode = 0;
             if (!conn->sendRawTransaction(xtx->refTx, sid, errCode))
             {
+                // TODO move packet to pending if error
                 LOG() << "send rollback error, tx " << HexStr(txid) << " " << __FUNCTION__;
                 xtx->state = TransactionDescr::trRollbackFailed;
             }
@@ -2047,13 +2031,9 @@ bool Session::cancelOrRollbackTransaction(const uint256 & txid, const TxCancelRe
         }
 
         // update transaction state for gui
-        xuiConnector.NotifyXBridgeTransactionStateChanged(txid, (TransactionDescr::State)xtx->state);
+        xuiConnector.NotifyXBridgeTransactionStateChanged(txid);
     }
 
-    xbridge::App::m_historicTransactions[txid] = xtx;
-
-    // ..and retranslate
-    // sendPacketBroadcast(packet);
     return true;
 }
 
@@ -2102,8 +2082,9 @@ bool Session::sendCancelTransaction(const TransactionDescrPtr & tx,
     sendCancelTransaction(tx->id, reason);
 
     // update transaction state for gui
-    tx->state = TransactionDescr::trCancelled;
-    xuiConnector.NotifyXBridgeTransactionCancelled(tx->id, TransactionDescr::trCancelled, reason);
+    tx->state  = TransactionDescr::trCancelled;
+    tx->reason = reason;
+    xuiConnector.NotifyXBridgeTransactionStateChanged(tx->id);
 
     return true;
 }
@@ -2321,8 +2302,6 @@ bool Session::processTransactionFinished(XBridgePacketPtr packet)
 
         if (!xbridge::App::m_transactions.count(txid))
         {
-            // signal for gui
-            xuiConnector.NotifyXBridgeTransactionStateChanged(txid, TransactionDescr::trFinished);
             return true;
         }
 
@@ -2332,7 +2311,7 @@ bool Session::processTransactionFinished(XBridgePacketPtr packet)
     // update transaction state for gui
     xtx->state = TransactionDescr::trFinished;
 
-    xuiConnector.NotifyXBridgeTransactionStateChanged(txid, xtx->state);
+    xuiConnector.NotifyXBridgeTransactionStateChanged(txid);
 
     return true;
 }

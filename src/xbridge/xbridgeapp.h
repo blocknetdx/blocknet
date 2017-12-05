@@ -66,6 +66,10 @@ public:
 public:
     // transactions
 
+    TransactionDescrPtr transaction(const uint256 & id);
+    void appendTransactionToPending(const TransactionDescrPtr & ptr);
+    void moveTransactionToHistory(const uint256 & id);
+
     uint256 sendXBridgeTransaction(const std::string & from,
                                    const std::string & fromCurrency,
                                    const uint64_t & fromAmount,
@@ -114,6 +118,9 @@ public:
     // broadcast message
     void onBroadcastReceived(const std::vector<unsigned char> & message,
                              CValidationState & state);
+
+    bool processLater(const uint256 & txid, const XBridgePacketPtr & packet);
+    bool removePackets(const uint256 & txid);
 
 public:
     // UTXO

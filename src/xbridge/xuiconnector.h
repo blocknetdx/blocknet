@@ -18,13 +18,9 @@ typedef boost::shared_ptr<TransactionDescr> TransactionDescrPtr;
 class XUIConnector
 {
 public:
-    boost::signals2::signal<void (const xbridge::TransactionDescrPtr & tx)> NotifyXBridgePendingTransactionReceived;
+    boost::signals2::signal<void (const xbridge::TransactionDescrPtr & tx)> NotifyXBridgeTransactionReceived;
 
-    boost::signals2::signal<void (const uint256 & id,
-                                  const unsigned int state)> NotifyXBridgeTransactionStateChanged;
-    boost::signals2::signal<void (const uint256 & id,
-                                  const uint32_t state,
-                                  const uint32_t reason)> NotifyXBridgeTransactionCancelled;
+    boost::signals2::signal<void (const uint256 & id)> NotifyXBridgeTransactionStateChanged;
 
     boost::signals2::signal<void (const std::string & currency,
                                   const std::string & name,

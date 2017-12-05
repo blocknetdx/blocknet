@@ -187,9 +187,9 @@ QMenu * XBridgeTransactionsView::setupContextMenu(QModelIndex & index)
     }
     else
     {
-        xbridge::TransactionDescr d = m_txModel.item(m_contextMenuIndex.row());
+        xbridge::TransactionDescrPtr d = m_txModel.item(m_contextMenuIndex.row());
 
-        if (d.state < xbridge::TransactionDescr::trCreated)
+        if (d->state < xbridge::TransactionDescr::trCreated)
         {
             QAction * cancelTransaction = new QAction(tr("&Cancel transaction"), this);
             contextMenu->addAction(cancelTransaction);
@@ -241,17 +241,17 @@ void XBridgeTransactionsView::onAcceptTransaction()
         return;
     }
 
-    xbridge::TransactionDescr d = m_txModel.item(m_contextMenuIndex.row());
-    if (d.state != xbridge::TransactionDescr::trPending)
+    xbridge::TransactionDescrPtr d = m_txModel.item(m_contextMenuIndex.row());
+    if (d->state != xbridge::TransactionDescr::trPending)
     {
         return;
     }
 
-    m_dlg.setPendingId(d.id, d.hubAddress);
-    m_dlg.setFromAmount((double)d.toAmount / xbridge::TransactionDescr::COIN);
-    m_dlg.setToAmount((double)d.fromAmount / xbridge::TransactionDescr::COIN);
-    m_dlg.setFromCurrency(QString::fromStdString(d.toCurrency));
-    m_dlg.setToCurrency(QString::fromStdString(d.fromCurrency));
+    m_dlg.setPendingId(d->id, d->hubAddress);
+    m_dlg.setFromAmount((double)d->toAmount / xbridge::TransactionDescr::COIN);
+    m_dlg.setToAmount((double)d->fromAmount / xbridge::TransactionDescr::COIN);
+    m_dlg.setFromCurrency(QString::fromStdString(d->toCurrency));
+    m_dlg.setToCurrency(QString::fromStdString(d->fromCurrency));
     m_dlg.show();
 }
 
@@ -273,7 +273,7 @@ void XBridgeTransactionsView::onCancelTransaction()
         return;
     }
 
-    if (!m_txModel.cancelTransaction(m_txModel.item(m_contextMenuIndex.row()).id))
+    if (!m_txModel.cancelTransaction(m_txModel.item(m_contextMenuIndex.row())->id))
     {
         QMessageBox::warning(this,
                              trUtf8("Cancel transaction"),
@@ -299,7 +299,7 @@ void XBridgeTransactionsView::onRollbackTransaction()
         return;
     }
 
-    if (!m_txModel.rollbackTransaction(m_txModel.item(m_contextMenuIndex.row()).id))
+    if (!m_txModel.rollbackTransaction(m_txModel.item(m_contextMenuIndex.row())->id))
     {
         QMessageBox::warning(this,
                              trUtf8("Cancel transaction"),

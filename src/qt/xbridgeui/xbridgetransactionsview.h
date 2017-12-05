@@ -16,6 +16,8 @@
 class QTableView;
 class QTextEdit;
 
+//******************************************************************************
+//******************************************************************************
 class StateSortFilterProxyModel : public QSortFilterProxyModel
 {
     Q_OBJECT

@@ -147,6 +147,11 @@ struct TransactionDescr
         copyFrom(d);
     }
 
+    void updateTimestamp()
+    {
+        txtime       = boost::posix_time::second_clock::universal_time();
+    }
+
     void updateTimestamp(const TransactionDescr & d)
     {
         txtime       = boost::posix_time::second_clock::universal_time();
