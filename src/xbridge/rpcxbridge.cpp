@@ -489,6 +489,29 @@ Value dxCancelTransaction(const Array & params, bool fHelp)
     return obj;
 }
 
+//******************************************************************************
+//******************************************************************************
+json_spirit::Value dxrollbackTransaction(const json_spirit::Array& params, bool fHelp)
+{
+    if (fHelp || params.size() != 1)
+    {
+        throw runtime_error("dxrollbackTransaction (id)\n"
+                            "Rollback xbridge transaction.");
+    }
+    LOG() << "rpc rollback transaction " << __FUNCTION__;
+    uint256 id(params[0].get_str());
+    Object obj;
+    if(XBridgeApp::instance().rollbackXBridgeTransaction(id) == xbridge::SUCCESS)
+    {
+        obj.push_back(Pair("id",id.GetHex()));
+        return  obj;
+    }
+    obj.push_back(Pair("id", id.GetHex()));
+    return obj;
+}
+
+//******************************************************************************
+//******************************************************************************
 json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
 {
     if (fHelp || (params.size() != 3 && params.size() != 4))
