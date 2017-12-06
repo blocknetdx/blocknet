@@ -142,28 +142,46 @@ bool CKey::SetPrivKey(const CPrivKey &privkey, bool fCompressedIn) {
 }
 
 CPrivKey CKey::GetPrivKey() const {
-    assert(fValid);
+    if(!fValid) {
+        DEBUG_TRACE_LOG("invalid key (fvalid = false)");
+        return CPrivKey();
+    }
     CPrivKey privkey;
     int ret;
     size_t privkeylen;
     privkey.resize(279);
     privkeylen = 279;
     ret = ec_privkey_export_der(secp256k1_context_sign, (unsigned char*)&privkey[0], &privkeylen, begin(), fCompressed ? SECP256K1_EC_COMPRESSED : SECP256K1_EC_UNCOMPRESSED);
-    assert(ret);
+    if(!ret) {
+        DEBUG_TRACE_LOG("ec_privkey_export_der return error");
+        return CPrivKey();
+    }
     privkey.resize(privkeylen);
     return privkey;
 }
 
 CPubKey CKey::GetPubKey() const {
-    assert(fValid);
+    if(!fValid) {
+        DEBUG_TRACE_LOG("invalid key");
+        return CPubKey();
+    }
     secp256k1_pubkey pubkey;
     size_t clen = 65;
     CPubKey result;
     int ret = secp256k1_ec_pubkey_create(secp256k1_context_sign, &pubkey, begin());
-    assert(ret);
+    if(ret == 0) {
+        DEBUG_TRACE_LOG("secret was invalid, try again");
+        return CPubKey();
+    }
     secp256k1_ec_pubkey_serialize(secp256k1_context_sign, (unsigned char*)result.begin(), &clen, &pubkey, fCompressed ? SECP256K1_EC_COMPRESSED : SECP256K1_EC_UNCOMPRESSED);
-    assert(result.size() == clen);
-    assert(result.IsValid());
+    if(result.size() != clen) {
+        DEBUG_TRACE_LOG("serialize error");
+        return CPubKey();
+    }
+    if(!result.IsValid()) {
+        DEBUG_TRACE_LOG("invalid result");
+        return CPubKey();
+    }
     return result;
 }
 
@@ -176,7 +194,10 @@ bool CKey::Sign(const uint256 &hash, std::vector<unsigned char>& vchSig, uint32_
     WriteLE32(extra_entropy, test_case);
     secp256k1_ecdsa_signature sig;
     int ret = secp256k1_ecdsa_sign(secp256k1_context_sign, &sig, hash.begin(), begin(), secp256k1_nonce_function_rfc6979, test_case ? extra_entropy : NULL);
-    assert(ret);
+    if(ret == 0) {
+        DEBUG_TRACE_LOG("the nonce generation function failed, or the private key was invalid.");
+        return  false;
+    }
     secp256k1_ecdsa_signature_serialize_der(secp256k1_context_sign, (unsigned char*)&vchSig[0], &nSigLen, &sig);
     vchSig.resize(nSigLen);
     return true;
@@ -203,10 +224,19 @@ bool CKey::SignCompact(const uint256 &hash, std::vector<unsigned char>& vchSig) 
     int rec = -1;
     secp256k1_ecdsa_recoverable_signature sig;
     int ret = secp256k1_ecdsa_sign_recoverable(secp256k1_context_sign, &sig, hash.begin(), begin(), secp256k1_nonce_function_rfc6979, NULL);
-    assert(ret);
+    if(ret == 0) {
+        DEBUG_TRACE_LOG("the nonce generation function failed, or the private key was invalid.");
+        return false;
+    }
     secp256k1_ecdsa_recoverable_signature_serialize_compact(secp256k1_context_sign, (unsigned char*)&vchSig[1], &rec, &sig);
-    assert(ret);
-    assert(rec != -1);
+    if(ret == 0) {
+        DEBUG_TRACE_LOG("unknown error");
+        return false;
+    }
+    if(rec == -1) {
+        DEBUG_TRACE_LOG("recid  error");
+        return false;
+    }
     vchSig[0] = 27 + rec + (fCompressed ? 4 : 0);
     return true;
 }
@@ -303,10 +333,16 @@ bool ECC_InitSanityCheck() {
 }
 
 void ECC_Start() {
-    assert(secp256k1_context_sign == NULL);
+    if(secp256k1_context_sign != NULL) {
+        DEBUG_TRACE_LOG("secp256k1_context_sign != NULL");
+        return;
+    }
 
     secp256k1_context *ctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN);
-    assert(ctx != NULL);
+    if(ctx == NULL){
+        DEBUG_TRACE_LOG("cannot create context");
+        return;
+    }
 
     {
         // Pass in a random blinding seed to the secp256k1 context.
@@ -314,7 +350,10 @@ void ECC_Start() {
         LockObject(seed);
         GetRandBytes(seed, 32);
         bool ret = secp256k1_context_randomize(ctx, seed);
-        assert(ret);
+        if(ret == 0) {
+            DEBUG_TRACE_LOG("randomization updated error");
+            return;
+        }
         UnlockObject(seed);
     }
 

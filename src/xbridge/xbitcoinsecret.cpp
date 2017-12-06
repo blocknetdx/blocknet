@@ -2,7 +2,7 @@
 //******************************************************************************
 
 #include "xbitcoinsecret.h"
-
+#include "util/logger.h"
 //******************************************************************************
 //******************************************************************************
 namespace xbridge
@@ -12,7 +12,11 @@ namespace xbridge
 //******************************************************************************
 void CBitcoinSecret::SetKey(const CKey& vchSecret)
 {
-    assert(vchSecret.IsValid());
+
+    if(!vchSecret.IsValid()) {
+        DEBUG_TRACE_LOG("invalid key");
+        return;
+    }
     std::vector<unsigned char> pref(1, 0);
     SetData(pref, vchSecret.begin(), vchSecret.end());
     if (vchSecret.IsCompressed())
@@ -24,7 +28,10 @@ void CBitcoinSecret::SetKey(const CKey& vchSecret)
 CKey CBitcoinSecret::GetKey()
 {
     CKey ret;
-    assert(vchData.size() >= 32);
+    if(vchData.size() < 32) {
+        DEBUG_TRACE_LOG("invalid size");
+        return ret;
+    }
     ret.Set(vchData.begin(), vchData.begin() + 32, vchData.size() > 32 && vchData[32] == 1);
     return ret;
 }
