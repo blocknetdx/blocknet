@@ -1091,9 +1091,9 @@ bool App::cancelXBridgeTransaction(const uint256 & id,
         xtx->state  = TransactionDescr::trCancelled;
         xtx->reason = reason;
 
-        moveTransactionToHistory(id);
-
         xuiConnector.NotifyXBridgeTransactionStateChanged(id);
+
+        moveTransactionToHistory(id);
     }
 
     return true;

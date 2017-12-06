@@ -188,16 +188,7 @@ bool XBridgeTransactionsModel::newTransaction(const std::string & from,
 
     if (id != uint256())
     {
-        xbridge::TransactionDescrPtr d(new xbridge::TransactionDescr);
-        d->id           = id;
-        d->from         = connFrom->toXAddr(from);
-        d->to           = connTo->toXAddr(to);
-        d->fromCurrency = fromCurrency;
-        d->toCurrency   = toCurrency;
-        d->fromAmount   = (boost::uint64_t)(fromAmount * xbridge::TransactionDescr::COIN);
-        d->toAmount     = (boost::uint64_t)(toAmount * xbridge::TransactionDescr::COIN);
-        d->txtime       = boost::posix_time::second_clock::universal_time();
-
+        xbridge::TransactionDescrPtr d = xapp.transaction(id);
         onTransactionReceived(d);
     }
 
@@ -405,6 +396,6 @@ QString XBridgeTransactionsModel::transactionState(const xbridge::TransactionDes
         case xbridge::TransactionDescr::trDropped:   return trUtf8("Dropped");
         case xbridge::TransactionDescr::trExpired:   return trUtf8("Expired");
         case xbridge::TransactionDescr::trOffline:   return trUtf8("Offline");
-        default:                                   return trUtf8("Unknown");
+        default:                                     return trUtf8("Unknown");
     }
 }
