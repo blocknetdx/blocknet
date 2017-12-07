@@ -600,6 +600,7 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
             {
                 const auto &tr = bidsItem->second;
                 const auto bidPrice = xBridgeValueFromAmount(tr->fromAmount) / xBridgeValueFromAmount(tr->toAmount);
+                bids.emplace_back(tr->id.GetHex());
                 bids.emplace_back(bidPrice);
                 bids.emplace_back(xBridgeValueFromAmount(tr->fromAmount));
             }
@@ -619,6 +620,7 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
             {
                 const auto &tr = asksItem->second;
                 const auto askPrice = xBridgeValueFromAmount(tr->fromAmount) / xBridgeValueFromAmount(tr->toAmount);
+                asks.emplace_back(tr->id.GetHex());
                 asks.emplace_back(askPrice);
                 asks.emplace_back(xBridgeValueFromAmount(tr->fromAmount));
             }
@@ -666,6 +668,7 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 Array tmp;
                 //calculate bids and push to array
                 const auto bidPrice = xBridgeValueFromAmount(bidsVector[i]->fromAmount) / xBridgeValueFromAmount(bidsVector[i]->toAmount);
+                tmp.emplace_back(bidsVector[i]->id.GetHex());
                 tmp.emplace_back(bidPrice);
                 tmp.emplace_back(xBridgeValueFromAmount(bidsVector[i]->fromAmount));
                 bids.emplace_back(tmp);
@@ -676,6 +679,7 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 Array tmp;
                 //calculate asks and push to array
                 const auto askPrice = xBridgeValueFromAmount(asksVector[i]->fromAmount) / xBridgeValueFromAmount(asksVector[i]->toAmount);
+                tmp.emplace_back(asksVector[i]->id.GetHex());
                 tmp.emplace_back(askPrice);
                 tmp.emplace_back(xBridgeValueFromAmount(asksVector[i]->fromAmount));
                 asks.emplace_back(tmp);
@@ -691,6 +695,7 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 const auto &tr = trEntry.second;
                 Array tmp;
                 const auto bidPrice = xBridgeValueFromAmount(tr->fromAmount) / xBridgeValueFromAmount(tr->toAmount);
+                tmp.emplace_back(tr->id.GetHex());
                 tmp.emplace_back(bidPrice);
                 tmp.emplace_back(xBridgeValueFromAmount(tr->fromAmount));
                 bids.emplace_back(tmp);
@@ -700,6 +705,7 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 const auto &tr = trEntry.second;
                 Array tmp;
                 const auto askPrice = xBridgeValueFromAmount(tr->fromAmount) / xBridgeValueFromAmount(tr->toAmount);
+                tmp.emplace_back(tr->id.GetHex());
                 tmp.emplace_back(askPrice);
                 tmp.emplace_back(xBridgeValueFromAmount(tr->fromAmount));
                 asks.emplace_back(tmp);
