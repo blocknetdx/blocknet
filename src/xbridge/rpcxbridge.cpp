@@ -78,10 +78,10 @@ Value dxGetTransactions(const Array & params, bool fHelp)
             const auto tr = trEntry.second;
             jtr.push_back(Pair("id",            tr->id.GetHex()));
             jtr.push_back(Pair("from",          tr->fromCurrency));
-            jtr.push_back(Pair("fromAddress",  tr->from));
+            jtr.push_back(Pair("fromAddress",   tr->from));
             jtr.push_back(Pair("fromAmount",    xBridgeValueFromAmount(tr->fromAmount)));
             jtr.push_back(Pair("to",            tr->toCurrency));
-            jtr.push_back(Pair("toAddress",    tr->to));
+            jtr.push_back(Pair("toAddress",     tr->to));
             jtr.push_back(Pair("toAmount",      xBridgeValueFromAmount(tr->toAmount)));
             jtr.push_back(Pair("state",         tr->strState()));
             arr.push_back(jtr);
@@ -101,10 +101,10 @@ Value dxGetTransactions(const Array & params, bool fHelp)
             const auto &tr = trEntry.second;
             jtr.push_back(Pair("id",            tr->id.GetHex()));
             jtr.push_back(Pair("from",          tr->fromCurrency));
-            jtr.push_back(Pair("fromAddress",  tr->from));
+            jtr.push_back(Pair("fromAddress",   tr->from));
             jtr.push_back(Pair("fromAmount",    xBridgeValueFromAmount(tr->fromAmount)));
             jtr.push_back(Pair("to",            tr->toCurrency));
-            jtr.push_back(Pair("toAddress",    tr->to));
+            jtr.push_back(Pair("toAddress",     tr->to));
             jtr.push_back(Pair("toAmount",      xBridgeValueFromAmount(tr->toAmount)));
             jtr.push_back(Pair("state",         tr->strState()));
             arr.push_back(jtr);
@@ -312,10 +312,10 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
             Object jtr;
             jtr.push_back(Pair("id",            tr->id.GetHex()));
             jtr.push_back(Pair("from",          tr->fromCurrency));
-            jtr.push_back(Pair("fromAddress",  tr->from));
+            jtr.push_back(Pair("fromAddress",   tr->from));
             jtr.push_back(Pair("fromAmount",    xBridgeValueFromAmount(tr->fromAmount)));
             jtr.push_back(Pair("to",            tr->toCurrency));
-            jtr.push_back(Pair("toAddress",    tr->to));
+            jtr.push_back(Pair("toAddress",     tr->to));
             jtr.push_back(Pair("toAmount",      xBridgeValueFromAmount(tr->toAmount)));
             jtr.push_back(Pair("state",         tr->strState()));
             arr.push_back(jtr);
@@ -331,10 +331,10 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
             Object jtr;
             jtr.push_back(Pair("id",            tr->id.GetHex()));
             jtr.push_back(Pair("from",          tr->fromCurrency));
-            jtr.push_back(Pair("fromAddress",  tr->from));
+            jtr.push_back(Pair("fromAddress",   tr->from));
             jtr.push_back(Pair("fromAmount",    xBridgeValueFromAmount(tr->fromAmount)));
             jtr.push_back(Pair("to",            tr->toCurrency));
-            jtr.push_back(Pair("toAddress",    tr->to));
+            jtr.push_back(Pair("toAddress",     tr->to));
             jtr.push_back(Pair("toAmount",      xBridgeValueFromAmount(tr->toAmount)));
             jtr.push_back(Pair("state",         tr->strState()));
             arr.push_back(jtr);
@@ -350,10 +350,10 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
             Object jtr;
             jtr.push_back(Pair("id",            tr->id.GetHex()));
             jtr.push_back(Pair("from",          tr->fromCurrency));
-            jtr.push_back(Pair("fromAddress",  tr->from));
+            jtr.push_back(Pair("fromAddress",   tr->from));
             jtr.push_back(Pair("fromAmount",    xBridgeValueFromAmount(tr->fromAmount)));
             jtr.push_back(Pair("to",            tr->toCurrency));
-            jtr.push_back(Pair("toAddress",    tr->to));
+            jtr.push_back(Pair("toAddress",     tr->to));
             jtr.push_back(Pair("toAmount",      xBridgeValueFromAmount(tr->toAmount)));
             jtr.push_back(Pair("state",         tr->strState()));
             arr.push_back(jtr);
@@ -517,7 +517,8 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
     if (fHelp || (params.size() != 3 && params.size() != 4))
     {
         throw runtime_error("dxGetOrderBook "
-                            "(the level of detail) (from currency) (to currency) (max orders - optional, default = 50) ");
+                            "(the level of detail) (from currency) (to currency) "
+                            "(max orders - optional, default = 50) ");
     }
 
     Array arr;
