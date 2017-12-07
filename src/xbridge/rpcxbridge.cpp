@@ -60,7 +60,10 @@ Value dxGetTransactions(const Array & params, bool fHelp)
 {
     if (fHelp || params.size() > 0)
     {
-        throw runtime_error("dxGetTransactions\nList transactions.");
+        Object error;
+        error.push_back(Pair("error",
+                             "invalid parameters: dxGetTransactions\nList transactions."));
+        return  error;
     }
 
     Array arr;    
@@ -122,9 +125,13 @@ Value dxGetTransactionsHistory(const Array & params, bool fHelp)
                           (params.size() != 1));
     if (fHelp || invalidParams)
     {
-        throw runtime_error("dxGetTransactionsHistory "
-                            "(ALL - optional parameter, if specified then all transactions are shown, "
-                            "not only successfully completed ");
+        Object error;
+        error.emplace_back(Pair("error",
+                                "dxGetTransactionsHistory\n"
+                                "(ALL - optional parameter, if specified then all transactions are shown, "
+                                "not only successfully completed "));
+        return  error;
+
     }
     bool isShowAll = params.size() == 1 && params[0].get_str() == "ALL";
     Array arr;
@@ -168,8 +175,11 @@ Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp)
 
     if (fHelp || (params.size() != 4 && params.size() != 5))
     {
-        throw runtime_error("dxGetTradeHistory "
-                            "(from currency) (to currency) (start time) (end time) (txids - optional) ");
+        Object error;
+        error.push_back(Pair("error",
+                             "invalid parameters: dxGetTradeHistory "
+                             "(from currency) (to currency) (start time) (end time) (txids - optional) "));
+        return  error;
     }
 
     Array arr;
@@ -293,16 +303,15 @@ Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp)
 
 Value dxGetTransactionInfo(const Array & params, bool fHelp)
 {
-    if (fHelp || params.size() != 1)
-    {
-        throw runtime_error("dxGetTransactionInfo (id)\nTransaction info.");
+    if (fHelp || params.size() != 1) {
+        Object error;
+        error.push_back(Pair("error",
+                             "invalid parameters: dxGetTransactionInfo (id)\nTransaction info"));
+        return  error;
     }
 
     uint256 id(params[0].get_str());
-
     Array arr;
-
-
     // pending tx
     {
         boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
@@ -369,7 +378,10 @@ Value dxGetCurrencies(const Array & params, bool fHelp)
 {
     if (fHelp || params.size() > 0)
     {
-        throw runtime_error("dxGetCurrencies\nList currencies.");
+        Object error;
+        error.push_back(Pair("error",
+                             "invalid parameters: dxGetCurrencies\nList currencies."));
+        return  error;
     }
 
     Object obj;
@@ -379,7 +391,6 @@ Value dxGetCurrencies(const Array & params, bool fHelp)
     {
         obj.push_back(Pair(currency, ""));
     }
-
     return obj;
 }
 
@@ -389,10 +400,13 @@ Value dxCreateTransaction(const Array & params, bool fHelp)
 {
     if (fHelp || params.size() != 6)
     {
-        throw runtime_error("dxCreateTransaction "
-                            "(address from) (currency from) (amount from) "
-                            "(address to) (currency to) (amount to)\n"
-                            "Create xbridge transaction.");
+        Object error;
+        error.push_back(Pair("error",
+                             "invalid parameters: dxCreateTransaction "
+                             "(address from) (currency from) (amount from) "
+                             "(address to) (currency to) (amount to)\n"
+                             "Create xbridge transaction."));
+        return  error;
     }
 
     std::string from            = params[0].get_str();
@@ -405,7 +419,9 @@ Value dxCreateTransaction(const Array & params, bool fHelp)
     if ((from.size() < 32 && from.size() > 36) ||
             (to.size() < 32 && to.size() > 36))
     {
-        throw runtime_error("incorrect address");
+        Object error;
+        error.push_back(Pair("error", "incorrect address."));
+        return  error;
     }
 
     uint256 id = uint256();
@@ -423,10 +439,11 @@ Value dxCreateTransaction(const Array & params, bool fHelp)
         obj.push_back(Pair("toCurrency", toCurrency));
         obj.push_back(Pair("toAmount", toAmount));
         return obj;
+    } else {
+        Object error;
+        error.emplace_back(Pair("error", xbridge::xbridgeErrorText(res)));
+        return error;
     }
-    Object obj;
-    obj.push_back(Pair("id", id.GetHex()));
-    return obj;
 }
 
 //******************************************************************************
@@ -435,36 +452,43 @@ Value dxAcceptTransaction(const Array & params, bool fHelp)
 {
     if (fHelp || params.size() != 3)
     {
-        throw runtime_error("dxAcceptTransaction (id) "
-                            "(address from) (address to)\n"
-                            "Accept xbridge transaction.");
+        Object error;
+        error.push_back(Pair("error",
+                             "invalid parameters: dxAcceptTransaction (id) "
+                             "(address from) (address to)\n"
+                             "Accept xbridge transaction."));
+        return  error;
     }
 
     uint256 id(params[0].get_str());
-    std::string from    = params[1].get_str();
-    std::string to      = params[2].get_str();
+    std::string fromAddress    = params[1].get_str();
+    std::string toAddress      = params[2].get_str();
 
-    if ((from.size() < 32 && from.size() > 36) ||
-            (to.size() < 32 && to.size() > 36))
+    if ((fromAddress.size() < 32 && fromAddress.size() > 36) ||
+            (toAddress.size() < 32 && toAddress.size() > 36))
     {
-        throw runtime_error("incorrect address");
+        Object error;
+        error.push_back(Pair("error",
+                             "incorrect address"));
+        return  error;
     }
 
 
     uint256 idResult;
-    const auto error = XBridgeApp::instance().acceptXBridgeTransaction(id, from, to, idResult);
-    if(error == xbridge::SUCCESS)
-    {
+    const auto error = XBridgeApp::instance().acceptXBridgeTransaction(id, fromAddress, toAddress, idResult);
+    if(error == xbridge::SUCCESS) {
         Object obj;
+        obj.push_back(Pair("status", "Accepted"));
         obj.push_back(Pair("id",    id.GetHex()));
-        obj.push_back(Pair("from",  from));
-        obj.push_back(Pair("to",    to));
+        obj.push_back(Pair("from",  fromAddress));
+        obj.push_back(Pair("to",    toAddress));
+        return obj;
+    } else {
+        Object obj;
+        obj.push_back(Pair("error", xbridge::xbridgeErrorText(error)));
         return obj;
     }
 
-    Object obj;
-    obj.push_back(Pair("id", idResult.GetHex()));
-    return obj;
 }
 
 //******************************************************************************
@@ -473,20 +497,24 @@ Value dxCancelTransaction(const Array & params, bool fHelp)
 {
     if (fHelp || params.size() != 1)
     {
-        throw runtime_error("dxCancelTransaction (id)\n"
-                            "Cancel xbridge transaction.");
+        Object error;
+        error.push_back(Pair("error", "invalid parameters: dxCancelTransaction (id)\n"
+                                      "Cancel xbridge transaction."));
+        return  error;
     }
     LOG() << "rpc cancel transaction " << __FUNCTION__;
     uint256 id(params[0].get_str());
-    if(XBridgeApp::instance().cancelXBridgeTransaction(id, crRpcRequest) == xbridge::SUCCESS)
+    const auto res = XBridgeApp::instance().cancelXBridgeTransaction(id, crRpcRequest);
+    if(res == xbridge::SUCCESS)
     {
         Object obj;
         obj.push_back(Pair("id",id.GetHex()));
         return  obj;
+    } else {
+        Object obj;
+        obj.push_back(Pair("error", xbridge::xbridgeErrorText(res)));
+        return obj;
     }
-    Object obj;
-    obj.push_back(Pair("id", id.GetHex()));
-    return obj;
 }
 
 //******************************************************************************
@@ -495,19 +523,26 @@ json_spirit::Value dxrollbackTransaction(const json_spirit::Array& params, bool 
 {
     if (fHelp || params.size() != 1)
     {
-        throw runtime_error("dxrollbackTransaction (id)\n"
-                            "Rollback xbridge transaction.");
+        Object error;
+        error.push_back(Pair("error",
+                             "invalid parameters: dxrollbackTransaction (id)\n"
+                             "Rollback xbridge transaction."));
+        return  error;
     }
     LOG() << "rpc rollback transaction " << __FUNCTION__;
     uint256 id(params[0].get_str());
-    Object obj;
-    if(XBridgeApp::instance().rollbackXBridgeTransaction(id) == xbridge::SUCCESS)
+    const auto res = XBridgeApp::instance().rollbackXBridgeTransaction(id);
+
+    if(res == xbridge::SUCCESS)
     {
+        Object obj;
         obj.push_back(Pair("id",id.GetHex()));
         return  obj;
+    } else {
+        Object obj;
+        obj.push_back(Pair("error", xbridge::xbridgeErrorText(res)));
+        return obj;
     }
-    obj.push_back(Pair("id", id.GetHex()));
-    return obj;
 }
 
 //******************************************************************************
@@ -516,9 +551,12 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
 {
     if (fHelp || (params.size() != 3 && params.size() != 4))
     {
-        throw runtime_error("dxGetOrderBook "
-                            "(the level of detail) (from currency) (to currency) "
-                            "(max orders - optional, default = 50) ");
+        Object error;
+        error.push_back(Pair("error",
+                             "invalid parameters: dxGetOrderBook "
+                             "(the level of detail) (from currency) (to currency) "
+                             "(max orders - optional, default = 50) "));
+        return  error;
     }
 
     Array arr;
@@ -714,7 +752,10 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
         }
         default:
             LOG() << "invalid detail level value: " << detailLevel << ", " << __FUNCTION__;
-            return arr;
+            Object error;
+            error.emplace_back(Pair("error", "invalid detail level value:"));
+            return  error;
+
         }
         res.emplace_back(Pair("bids", bids));
         res.emplace_back(Pair("asks", asks));
