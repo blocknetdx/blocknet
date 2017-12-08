@@ -20,6 +20,10 @@ namespace xbridge {
             return "";
         case Error::UNKNOWN_ERROR:
             return "unknown error";
+        case Error::INVALID_ADDRESS:
+            return "invalid address";
+        case Error::INVALID_PARAMETERS:
+            return "";
         case Error::INVALID_AMOUNT:
             return "invalid amount " + argumrnt;
         }
