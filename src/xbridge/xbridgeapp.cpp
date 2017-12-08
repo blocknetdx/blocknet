@@ -545,7 +545,9 @@ bool App::removePackets(const uint256 & txid)
 
     boost::mutex::scoped_lock l(App::m_ppLocker);
     size_t removed = m_pendingPackets.erase(txid);
-    assert(removed < 2 && "duplicate packets in packets queue");
+    if(removed > 1) {
+        DEBUG_TRACE_LOG("duplicate packets in packets queue");
+    }
 
     return true;
 }
@@ -693,16 +695,23 @@ TransactionDescrPtr App::transaction(const uint256 & id)
 
     if (m_transactions.count(id))
     {
-        assert(!result && "duplicate objects");
+        if(result)
+        {
+            DEBUG_TRACE_LOG("duplicate objects");
+            return  result;
+        }
         result = m_transactions[id];
     }
 
     if (m_historicTransactions.count(id))
     {
-        assert(!result && "duplicate objects");
+        if(result)
+        {
+            DEBUG_TRACE_LOG("duplicate objects");
+            return  result;
+        }
         result = m_historicTransactions[id];
     }
-
     return result;
 }
 
@@ -745,22 +754,34 @@ void App::moveTransactionToHistory(const uint256 & id)
             xtx = m_pendingTransactions[id];
 
             counter = m_pendingTransactions.erase(id);
-            assert(counter < 2 && "duplicate transaction in pending");
+            if(counter > 1)
+            {
+                DEBUG_TRACE_LOG("duplicate transaction in pending");
+            }
         }
 
         if (m_transactions.count(id))
         {
-            assert(!xtx && "duplicate objects");
-            xtx = m_transactions[id];
 
+            if(xtx) {
+                DEBUG_TRACE_LOG("duplicate objects");
+            } else {
+                xtx = m_transactions[id];
+            }
             counter = m_pendingTransactions.erase(id);
-            assert(counter < 2 && "duplicate transaction in pending");
+            if( counter > 1 )
+            {
+                DEBUG_TRACE_LOG("duplicate transaction in pending");
+            }
         }
 
         if (xtx)
         {
-            assert(m_historicTransactions.count(id) == 0 && "tx already in history");
-            m_historicTransactions[id] = xtx;
+            if(m_historicTransactions.count(id) == 0 ){
+                m_historicTransactions[id] = xtx;
+            } else {
+                DEBUG_TRACE_LOG("tx already in history");
+            }
         }
     }
 
@@ -1071,6 +1092,7 @@ bool App::sendAcceptingTransaction(const TransactionDescrPtr & ptr)
         ptr->packet->append(txid.begin(), 32);
         ptr->packet->append(entry.vout);
     }
+
 
     sendPacket(ptr->hubAddress, ptr->packet);
 

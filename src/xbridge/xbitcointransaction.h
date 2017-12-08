@@ -5,6 +5,7 @@
 #define BITCOINTRANSACTION_H
 
 #include "main.h"
+#include "util/logger.h"
 
 #include <string>
 #include <cstring>
@@ -430,10 +431,12 @@ public:
         // Serialize the prevout
         ::Serialize(s, txTo.vin[nInput].prevout, nType, nVersion);
         // Serialize the script
-        if (nInput != nIn)
+        if (nInput != nIn){
             // Blank out other inputs' signatures
             // ::Serialize(s, CScriptBase(), nType, nVersion);
-            assert(!"CScriptBase not defined");
+            DEBUG_TRACE_LOG("CScriptBase not defined");
+        }
+
         else
             SerializeScriptCode(s, nType, nVersion);
         // Serialize the nSequence
