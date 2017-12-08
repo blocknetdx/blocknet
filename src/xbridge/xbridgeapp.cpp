@@ -567,9 +567,9 @@ bool XBridgeApp::sendPendingTransaction(XBridgeTransactionDescrPtr & ptr)
 //******************************************************************************
 //******************************************************************************
 xbridge::Error XBridgeApp::acceptXBridgeTransaction(const uint256 &id,
-                                             const std::string &from,
-                                             const std::string &to,
-                                             uint256 &result)
+                                                    const std::string &from,
+                                                    const std::string &to,
+                                                    uint256 &result)
 {
     XBridgeTransactionDescrPtr ptr;
     {
