@@ -58,8 +58,10 @@ uint64_t xBridgeAmountFromReal(double val)
 
 Value dxGetTransactions(const Array & params, bool fHelp)
 {
-    if (fHelp || params.size() > 0)
-    {
+    if(fHelp) {
+        throw runtime_error("dxGetTransactions\nList transactions.");
+    }
+    if (params.size() > 0) {
         Object error;
         error.emplace_back(Pair("error",
                                 "This function does not accept any parameter"));
@@ -76,8 +78,7 @@ Value dxGetTransactions(const Array & params, bool fHelp)
             boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
             trlist = XBridgeApp::m_pendingTransactions;
         }
-        for (const auto & trEntry : trlist)
-        {
+        for (const auto & trEntry : trlist) {
             Object jtr;
             const auto tr = trEntry.second;
             jtr.emplace_back(Pair("id",            tr->id.GetHex()));
@@ -99,8 +100,7 @@ Value dxGetTransactions(const Array & params, bool fHelp)
             boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
             trlist = XBridgeApp::m_transactions;
         }
-        for (const auto &trEntry : trlist)
-        {
+        for (const auto &trEntry : trlist) {
             Object jtr;
             const auto &tr = trEntry.second;
             jtr.emplace_back(Pair("id",            tr->id.GetHex()));
@@ -122,15 +122,19 @@ Value dxGetTransactions(const Array & params, bool fHelp)
 
 Value dxGetTransactionsHistory(const Array & params, bool fHelp)
 {
+    if (fHelp) {
+        throw runtime_error("dxGetTransactionsHistory "
+                            "(ALL - optional parameter, if specified then all transactions are shown, "
+                            "not only successfully completed ");
+    }
     bool invalidParams = ((params.size() != 0) &&
                           (params.size() != 1));
-    if (fHelp || invalidParams) {
+    if (invalidParams) {
         Object error;
         error.emplace_back(Pair("error",
                                 "Invalid number of parameters"));
         error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
         return  error;
-
     }
     bool isShowAll = params.size() == 1 && params[0].get_str() == "ALL";
     Array arr;
@@ -169,7 +173,11 @@ Value dxGetTransactionsHistory(const Array & params, bool fHelp)
 Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp)
 {
 
-    if (fHelp || (params.size() != 4 && params.size() != 5)) {
+    if (fHelp) {
+        throw runtime_error("dxGetTradeHistory "
+                            "(from currency) (to currency) (start time) (end time) (txids - optional) ");
+    }
+    if ((params.size() != 4 && params.size() != 5)) {
         Object error;
         error.emplace_back(Pair("error",
                                 "Invalid number of parameters"));
@@ -287,12 +295,14 @@ Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp)
 
 Value dxGetTransactionInfo(const Array & params, bool fHelp)
 {
-    if (fHelp || params.size() != 1) {
+    if (fHelp) {
+         throw runtime_error("dxGetTransactionInfo (id) Transaction info.");
+    }
+    if (params.size() != 1) {
         Object error;
         error.emplace_back(Pair("error",
                                 "Invalid number of parameters"));
-        error.emplace_back(Pair("code",
-                                xbridge::INVALID_PARAMETERS));
+        error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
         return  error;
     }
 
@@ -359,7 +369,10 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
 //******************************************************************************
 Value dxGetCurrencies(const Array & params, bool fHelp)
 {
-    if (fHelp || params.size() > 0) {
+    if (fHelp) {
+        throw runtime_error("dxGetCurrencies\nList currencies.");
+    }
+    if (params.size() > 0) {
         Object error;
         error.emplace_back(Pair("error",
                                 "This function does not accept any parameter"));
@@ -380,12 +393,17 @@ Value dxGetCurrencies(const Array & params, bool fHelp)
 //******************************************************************************
 Value dxCreateTransaction(const Array & params, bool fHelp)
 {
-    if (fHelp || params.size() != 6) {
+    if (fHelp) {
+        throw runtime_error("dxCreateTransaction "
+                            "(address from) (currency from) (amount from) "
+                            "(address to) (currency to) (amount to)\n"
+                            "Create xbridge transaction.");
+    }
+    if (params.size() != 6) {
         Object error;
         error.emplace_back(Pair("error",
                                 "Invalid number of parameters"));
-        error.emplace_back(Pair("code",
-                                xbridge::INVALID_PARAMETERS));
+        error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
         return  error;
     }
 
@@ -430,7 +448,12 @@ Value dxCreateTransaction(const Array & params, bool fHelp)
 //******************************************************************************
 Value dxAcceptTransaction(const Array & params, bool fHelp)
 {
-    if (fHelp || params.size() != 3) {
+    if (fHelp) {
+        throw runtime_error("dxAcceptTransaction (id) "
+                            "(address from) (address to)\n"
+                            "Accept xbridge transaction.");
+    }
+    if (params.size() != 3) {
         Object error;
         error.emplace_back(Pair("error",
                                 "Invalid number of parameters"));
@@ -468,14 +491,17 @@ Value dxAcceptTransaction(const Array & params, bool fHelp)
         obj.emplace_back(Pair("code", error));
         return obj;
     }
-
 }
 
 //******************************************************************************
 //******************************************************************************
 Value dxCancelTransaction(const Array & params, bool fHelp)
 {
-    if (fHelp || params.size() != 1) {
+    if(fHelp) {
+        throw runtime_error("dxCancelTransaction (id)\n"
+                            "Cancel xbridge transaction.");
+    }
+    if (params.size() != 1) {
         Object error;
         error.emplace_back(Pair("error",
                                 "Invalid number of parameters"));
@@ -501,7 +527,11 @@ Value dxCancelTransaction(const Array & params, bool fHelp)
 //******************************************************************************
 json_spirit::Value dxrollbackTransaction(const json_spirit::Array& params, bool fHelp)
 {
-    if (fHelp || params.size() != 1) {
+    if (fHelp) {
+        throw runtime_error("dxRollbackTransaction (id)\n"
+                            "Rollback xbridge transaction.");
+    }
+    if (params.size() != 1) {
         Object error;
         error.emplace_back(Pair("error",
                                 "Invalid number of parameters"));
@@ -528,7 +558,12 @@ json_spirit::Value dxrollbackTransaction(const json_spirit::Array& params, bool 
 //******************************************************************************
 json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
 {
-    if (fHelp || (params.size() != 3 && params.size() != 4)) {
+    if (fHelp) {
+        throw runtime_error("dxGetOrderBook "
+                            "(the level of detail) (from currency) (to currency) "
+                            "(max orders - optional, default = 50) ");
+    }
+    if ((params.size() != 3 && params.size() != 4)) {
         Object error;
         error.emplace_back(Pair("error",
                                 "Invalid number of parameters"));
@@ -562,12 +597,27 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
         const auto fromCurrency = params[1].get_str();
         const auto toCurrency   = params[2].get_str();
 
+        if (detailLevel < 1 || detailLevel > 3) {
+            Object error;
+            error.emplace_back(Pair("error",
+                                    "invalid detail level value:"));
+            error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
+            return  error;
+        }
+
         std::size_t maxOrders = 50;
         if(detailLevel == 2 && params.size() == 4) {
             maxOrders = params[3].get_int();;
         }
+        if(maxOrders < 1) {
+            Object error;
+            error.emplace_back(Pair("error",
+                                    "Negative value of maximum orders parameter"));
+            error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
+            return  error;
+        }
 
-        //copy all transactions
+        //copy all transactions in currencies specified in the parameters
         std::copy_if(trList.begin(), trList.end(), std::inserter(asksList, asksList.end()),
                      [&toCurrency, &fromCurrency](const TransactionPair &transaction) {
             return  ((transaction.second->toCurrency == fromCurrency) &&
@@ -597,7 +647,6 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
         case 1:
         {
             //return Only the best bid and ask
-
             const auto bidsItem = std::max_element(bidsList.begin(), bidsList.end(),
                                        [](const TransactionPair &a, const TransactionPair &b) {
                 //find transaction with best bids
