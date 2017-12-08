@@ -30,22 +30,9 @@ namespace xbridge
 
 //*****************************************************************************
 //*****************************************************************************
-namespace rpc
-{
-class AcceptedConnection;
-}
-
-//*****************************************************************************
-//*****************************************************************************
 class App
 {
     class Impl;
-
-    typedef std::vector<unsigned char> UcharVector;
-
-    friend void callback(void * closure, int event,
-                         const unsigned char * info_hash,
-                         const void * data, size_t data_len);
 
 private:
     App();
@@ -66,8 +53,12 @@ public:
 public:
     // transactions
 
-    TransactionDescrPtr transaction(const uint256 & id);
-    void appendTransactionToPending(const TransactionDescrPtr & ptr);
+    TransactionDescrPtr transaction(const uint256 & id) const;
+    std::map<uint256, xbridge::TransactionDescrPtr> transactions() const;
+    std::map<uint256, xbridge::TransactionDescrPtr> history() const;
+
+    void appendTransaction(const TransactionDescrPtr & ptr);
+
     void moveTransactionToHistory(const uint256 & id);
 
     uint256 sendXBridgeTransaction(const std::string & from,
@@ -93,6 +84,7 @@ public:
     // connectors
 
     std::vector<std::string> availableCurrencies() const;
+    bool hasCurrency(const std::string & currency) const;
 
     void addConnector(const WalletConnectorPtr & conn);
     void updateConnector(const WalletConnectorPtr & conn,
@@ -109,7 +101,7 @@ public:
 
     // send messave via xbridge
     void sendPacket(const XBridgePacketPtr & packet);
-    void sendPacket(const UcharVector & id, const XBridgePacketPtr & packet);
+    void sendPacket(const std::vector<unsigned char> & id, const XBridgePacketPtr & packet);
 
     // call when message from xbridge network received
     void onMessageReceived(const std::vector<unsigned char> & id,
@@ -128,21 +120,6 @@ public:
     bool checkUtxoItems(const std::vector<wallet::UtxoEntry> & items);
     bool lockUtxoItems(const std::vector<wallet::UtxoEntry> & items);
     bool txOutIsLocked(const wallet::UtxoEntry & entry) const;
-
-public:
-    static boost::mutex                           m_txLocker;
-    static std::map<uint256, TransactionDescrPtr> m_pendingTransactions;
-    static std::map<uint256, TransactionDescrPtr> m_transactions;
-    static std::map<uint256, TransactionDescrPtr> m_historicTransactions;
-
-    static boost::mutex                           m_txUnconfirmedLocker;
-    static std::map<uint256, TransactionDescrPtr> m_unconfirmed;
-
-    static boost::mutex                           m_ppLocker;
-    static std::map<uint256, XBridgePacketPtr>    m_pendingPackets;
-
-    static boost::mutex                           m_utxoLocker;
-    static std::set<wallet::UtxoEntry>            m_utxoItems;
 
 private:
     std::unique_ptr<Impl> m_p;

@@ -43,19 +43,6 @@ namespace xbridge
 
 //*****************************************************************************
 //*****************************************************************************
-boost::mutex                                  App::m_txLocker;
-std::map<uint256, TransactionDescrPtr> App::m_pendingTransactions;
-std::map<uint256, TransactionDescrPtr> App::m_transactions;
-std::map<uint256, TransactionDescrPtr> App::m_historicTransactions;
-boost::mutex                                  App::m_txUnconfirmedLocker;
-std::map<uint256, TransactionDescrPtr> App::m_unconfirmed;
-boost::mutex                                  App::m_ppLocker;
-std::map<uint256, XBridgePacketPtr>           App::m_pendingPackets;
-boost::mutex                                  App::m_utxoLocker;
-std::set<wallet::UtxoEntry>                   App::m_utxoItems;
-
-//*****************************************************************************
-//*****************************************************************************
 void badaboom()
 {
     int * a = 0;
@@ -80,7 +67,7 @@ protected:
     bool stop();
 
 protected:
-    void onSend(const UcharVector & id, const UcharVector & message);
+    void onSend(const std::vector<unsigned char> & id, const std::vector<unsigned char> & message);
 
     void onTimer();
 
@@ -119,6 +106,19 @@ protected:
     boost::mutex                                    m_addressBookLock;
     AddressBook                                     m_addressBook;
     std::set<std::string>                           m_addresses;
+
+    // transactions
+    boost::mutex                                    m_txLocker;
+    std::map<uint256, TransactionDescrPtr>          m_transactions;
+    std::map<uint256, TransactionDescrPtr>          m_historicTransactions;
+
+    // utxo records
+    boost::mutex                                    m_utxoLocker;
+    std::set<wallet::UtxoEntry>                     m_utxoItems;
+
+    // network packets queue
+    boost::mutex                                    m_ppLocker;
+    std::map<uint256, XBridgePacketPtr>             m_pendingPackets;
 };
 
 //*****************************************************************************
@@ -367,8 +367,8 @@ bool App::Impl::stop()
 //*****************************************************************************
 void App::sendPacket(const XBridgePacketPtr & packet)
 {
-    static UcharVector addr(20, 0);
-    UcharVector v(packet->header(), packet->header()+packet->allSize());
+    static std::vector<unsigned char> addr(20, 0);
+    std::vector<unsigned char> v(packet->header(), packet->header()+packet->allSize());
     m_p->onSend(addr, v);
 }
 
@@ -376,9 +376,9 @@ void App::sendPacket(const XBridgePacketPtr & packet)
 // send packet to xbridge network to specified id,
 // or broadcast, when id is empty
 //*****************************************************************************
-void App::Impl::onSend(const UcharVector & id, const UcharVector & message)
+void App::Impl::onSend(const std::vector<unsigned char> & id, const std::vector<unsigned char> & message)
 {
-    UcharVector msg(id);
+    std::vector<unsigned char> msg(id);
     if (msg.size() != 20)
     {
         ERR() << "bad send address " << __FUNCTION__;
@@ -407,9 +407,9 @@ void App::Impl::onSend(const UcharVector & id, const UcharVector & message)
 
 //*****************************************************************************
 //*****************************************************************************
-void App::sendPacket(const UcharVector & id, const XBridgePacketPtr & packet)
+void App::sendPacket(const std::vector<unsigned char> & id, const XBridgePacketPtr & packet)
 {
-    UcharVector v;
+    std::vector<unsigned char> v;
     std::copy(packet->header(), packet->header()+packet->allSize(), std::back_inserter(v));
     m_p->onSend(id, v);
 }
@@ -443,8 +443,8 @@ SessionPtr App::Impl::getSession(const std::vector<unsigned char> & address)
 
 //*****************************************************************************
 //*****************************************************************************
-void App::onMessageReceived(const UcharVector & id,
-                                   const UcharVector & message,
+void App::onMessageReceived(const std::vector<unsigned char> & id,
+                                   const std::vector<unsigned char> & message,
                                    CValidationState & /*state*/)
 {
     if (isKnownMessage(message))
@@ -534,7 +534,9 @@ void App::onBroadcastReceived(const std::vector<unsigned char> & message,
 //*****************************************************************************
 bool App::processLater(const uint256 & txid, const XBridgePacketPtr & packet)
 {
-
+    boost::mutex::scoped_lock l(m_p->m_ppLocker);
+    m_p->m_pendingPackets[txid] = packet;
+    return true;
 }
 
 //*****************************************************************************
@@ -543,8 +545,8 @@ bool App::removePackets(const uint256 & txid)
 {
     // remove from pending packets (if added)
 
-    boost::mutex::scoped_lock l(App::m_ppLocker);
-    size_t removed = m_pendingPackets.erase(txid);
+    boost::mutex::scoped_lock l(m_p->m_ppLocker);
+    size_t removed = m_p->m_pendingPackets.erase(txid);
     assert(removed < 2 && "duplicate packets in packets queue");
 
     return true;
@@ -578,6 +580,14 @@ std::vector<std::string> App::availableCurrencies() const
     }
 
     return currencies;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+bool App::hasCurrency(const std::string & currency) const
+{
+    boost::mutex::scoped_lock l(m_p->m_connectorsLock);
+    return m_p->m_connectorCurrencyMap.count(currency);
 }
 
 //*****************************************************************************
@@ -646,10 +656,10 @@ bool App::checkUtxoItems(const std::vector<wallet::UtxoEntry> & items)
 bool App::lockUtxoItems(const std::vector<wallet::UtxoEntry> & items)
 {
     bool hasDuplicate = false;
-    boost::mutex::scoped_lock l(m_utxoLocker);
+    boost::mutex::scoped_lock l(m_p->m_utxoLocker);
     for (const wallet::UtxoEntry & item : items)
     {
-        if (!m_utxoItems.insert(item).second)
+        if (!m_p->m_utxoItems.insert(item).second)
         {
             // duplicate items
             hasDuplicate = true;
@@ -670,8 +680,8 @@ bool App::lockUtxoItems(const std::vector<wallet::UtxoEntry> & items)
 //*****************************************************************************
 bool App::txOutIsLocked(const wallet::UtxoEntry & entry) const
 {
-    boost::mutex::scoped_lock l(m_utxoLocker);
-    if (m_utxoItems.count(entry))
+    boost::mutex::scoped_lock l(m_p->m_utxoLocker);
+    if (m_p->m_utxoItems.count(entry))
     {
         return true;
     }
@@ -680,27 +690,21 @@ bool App::txOutIsLocked(const wallet::UtxoEntry & entry) const
 
 //******************************************************************************
 //******************************************************************************
-TransactionDescrPtr App::transaction(const uint256 & id)
+TransactionDescrPtr App::transaction(const uint256 & id) const
 {
     TransactionDescrPtr result;
 
-    boost::mutex::scoped_lock l(m_txLocker);
+    boost::mutex::scoped_lock l(m_p->m_txLocker);
 
-    if (m_pendingTransactions.count(id))
+    if (m_p->m_transactions.count(id))
     {
-        result = m_pendingTransactions[id];
+        result = m_p->m_transactions[id];
     }
 
-    if (m_transactions.count(id))
+    if (m_p->m_historicTransactions.count(id))
     {
         assert(!result && "duplicate objects");
-        result = m_transactions[id];
-    }
-
-    if (m_historicTransactions.count(id))
-    {
-        assert(!result && "duplicate objects");
-        result = m_historicTransactions[id];
+        result = m_p->m_historicTransactions[id];
     }
 
     return result;
@@ -708,24 +712,40 @@ TransactionDescrPtr App::transaction(const uint256 & id)
 
 //******************************************************************************
 //******************************************************************************
-void App::appendTransactionToPending(const TransactionDescrPtr & ptr)
+std::map<uint256, xbridge::TransactionDescrPtr> App::transactions() const
 {
-    boost::mutex::scoped_lock l(m_txLocker);
+    boost::mutex::scoped_lock l(m_p->m_txLocker);
+    return m_p->m_transactions;
+}
 
-    if (m_transactions.count(ptr->id) || m_historicTransactions.count(ptr->id))
+//******************************************************************************
+//******************************************************************************
+std::map<uint256, xbridge::TransactionDescrPtr> App::history() const
+{
+    boost::mutex::scoped_lock l(m_p->m_txLocker);
+    return m_p->m_historicTransactions;
+}
+
+//******************************************************************************
+//******************************************************************************
+void App::appendTransaction(const TransactionDescrPtr & ptr)
+{
+    boost::mutex::scoped_lock l(m_p->m_txLocker);
+
+    if (m_p->m_historicTransactions.count(ptr->id))
     {
         return;
     }
 
-    if (!m_pendingTransactions.count(ptr->id))
+    if (!m_p->m_transactions.count(ptr->id))
     {
         // new transaction, copy data
-        m_pendingTransactions[ptr->id] = ptr;
+        m_p->m_transactions[ptr->id] = ptr;
     }
     else
     {
         // existing, update timestamp
-        m_pendingTransactions[ptr->id]->updateTimestamp(*ptr);
+        m_p->m_transactions[ptr->id]->updateTimestamp(*ptr);
     }
 }
 
@@ -736,31 +756,22 @@ void App::moveTransactionToHistory(const uint256 & id)
     TransactionDescrPtr xtx;
 
     {
-        boost::mutex::scoped_lock l(m_txLocker);
+        boost::mutex::scoped_lock l(m_p->m_txLocker);
 
         size_t counter = 0;
 
-        if (m_pendingTransactions.count(id))
+        if (m_p->m_transactions.count(id))
         {
-            xtx = m_pendingTransactions[id];
+            xtx = m_p->m_transactions[id];
 
-            counter = m_pendingTransactions.erase(id);
-            assert(counter < 2 && "duplicate transaction in pending");
-        }
-
-        if (m_transactions.count(id))
-        {
-            assert(!xtx && "duplicate objects");
-            xtx = m_transactions[id];
-
-            counter = m_pendingTransactions.erase(id);
-            assert(counter < 2 && "duplicate transaction in pending");
+            counter = m_p->m_transactions.erase(id);
+            assert(counter < 2 && "duplicate transaction");
         }
 
         if (xtx)
         {
-            assert(m_historicTransactions.count(id) == 0 && "tx already in history");
-            m_historicTransactions[id] = xtx;
+            assert(m_p->m_historicTransactions.count(id) == 0 && "duplicate tx in tx list and history");
+            m_p->m_historicTransactions[id] = xtx;
         }
     }
 
@@ -787,6 +798,8 @@ uint256 App::sendXBridgeTransaction(const std::string & from,
                                            const std::string & toCurrency,
                                            const uint64_t    & toAmount)
 {
+    assert(false);
+
     if (fromCurrency.size() > 8 || toCurrency.size() > 8)
     {
         LOG() << "invalid currency" << __FUNCTION__;
@@ -877,8 +890,8 @@ uint256 App::sendXBridgeTransaction(const std::string & from,
     connFrom->lockUnspent(ptr->usedCoins, true);
 
     {
-        boost::mutex::scoped_lock l(m_txLocker);
-        m_pendingTransactions[id] = ptr;
+        boost::mutex::scoped_lock l(m_p->m_txLocker);
+        m_p->m_transactions[id] = ptr;
     }
 
     return id;
@@ -952,15 +965,15 @@ uint256 App::acceptXBridgeTransaction(const uint256 & id,
     TransactionDescrPtr ptr;
 
     {
-        boost::mutex::scoped_lock l(m_txLocker);
-        if (!m_pendingTransactions.count(id))
+        boost::mutex::scoped_lock l(m_p->m_txLocker);
+        if (!m_p->m_transactions.count(id))
         {
             uiInterface.ThreadSafeMessageBox(_("Transaction not foud"),
                                              "blocknet",
                                              CClientUIInterface::BTN_OK | CClientUIInterface::ICON_INFORMATION | CClientUIInterface::MODAL);
             return uint256();
         }
-        ptr = m_pendingTransactions[id];
+        ptr = m_p->m_transactions[id];
     }
 
     WalletConnectorPtr connFrom = connectorByCurrency(ptr->fromCurrency);
@@ -1105,11 +1118,11 @@ bool App::rollbackXBridgeTransaction(const uint256 & id)
 {
     WalletConnectorPtr conn;
     {
-        boost::mutex::scoped_lock l(m_txLocker);
+        boost::mutex::scoped_lock l(m_p->m_txLocker);
 
-        if (m_transactions.count(id))
+        if (m_p->m_transactions.count(id))
         {
-            TransactionDescrPtr ptr = m_transactions[id];
+            TransactionDescrPtr ptr = m_p->m_transactions[id];
             if (!ptr->refTx.empty())
             {
                 conn = connectorByCurrency(ptr->fromCurrency);
@@ -1146,7 +1159,7 @@ bool App::sendCancelTransaction(const uint256 & txid,
     reply->append(txid.begin(), 32);
     reply->append(static_cast<uint32_t>(reason));
 
-    static UcharVector addr(20, 0);
+    static std::vector<unsigned char> addr(20, 0);
     sendPacket(addr, reply);
 
     // cancelled
@@ -1160,7 +1173,7 @@ bool App::sendRollbackTransaction(const uint256 & txid)
     XBridgePacketPtr reply(new XBridgePacket(xbcTransactionRollback));
     reply->append(txid.begin(), 32);
 
-    static UcharVector addr(20, 0);
+    static std::vector<unsigned char> addr(20, 0);
     sendPacket(addr, reply);
 
     // rolled back
@@ -1197,9 +1210,9 @@ void App::Impl::onTimer()
         {
             std::map<uint256, XBridgePacketPtr> map;
             {
-                boost::mutex::scoped_lock l(xbridge::App::m_ppLocker);
-                map = xbridge::App::m_pendingPackets;
-                xbridge::App::m_pendingPackets.clear();
+                boost::mutex::scoped_lock l(m_ppLocker);
+                map = m_pendingPackets;
+                m_pendingPackets.clear();
             }
 
             for (const std::pair<uint256, XBridgePacketPtr> & item : map)
