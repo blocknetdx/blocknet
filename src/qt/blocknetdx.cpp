@@ -670,11 +670,12 @@ int main(int argc, char* argv[])
     if (GetBoolArg("-splash", true) && !GetBoolArg("-min", false))
         app.createSplashScreen(networkStyle.data());
 
+    xbridge::App & xapp = xbridge::App::instance();
+
     try {
         RandomInit();
 
         // init xbridge
-        xbridge::App & xapp = xbridge::App::instance();
         xapp.init(argc, argv);
 
         app.createWindow(networkStyle.data());
@@ -694,7 +695,15 @@ int main(int argc, char* argv[])
     catch (std::exception& e)
     {
         PrintExceptionContinue(&e, "Runaway exception");
-        app.handleRunawayException(QString::fromStdString(strMiscWarning));
+
+        // stop xbridge
+        xapp.stop();
+
+        // stop appication
+        app.requestShutdown();
+        app.exec();
+
+        // app.handleRunawayException(QString::fromStdString(strMiscWarning));
     }
     catch (...)
     {
@@ -703,4 +712,18 @@ int main(int argc, char* argv[])
     }
     return app.getReturnValue();
 }
+
+void waitForClose()
+{
+    throw std::runtime_error("assert catched");
+//    BitcoinApplication * app = qobject_cast<BitcoinApplication *>(qApp);
+//    app->requestShutdown();
+//    app->exec();
+
+//    while (true)
+//    {
+//        qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
+//    }
+}
+
 #endif // BITCOIN_QT_TEST

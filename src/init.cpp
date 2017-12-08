@@ -274,6 +274,14 @@ void HandleSIGHUP(int)
     fReopenDebugLog = true;
 }
 
+void waitForClose();
+
+void HandleSIGABRT(int)
+{
+    fRequestShutdown = true;
+    waitForClose();
+}
+
 bool static InitError(const std::string& str)
 {
     uiInterface.ThreadSafeMessageBox(str, "", CClientUIInterface::MSG_ERROR);
@@ -677,7 +685,13 @@ bool AppInit2(boost::thread_group& threadGroup)
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = 0;
     sigaction(SIGTERM, &sa, NULL);
-    sigaction(SIGINT, &sa, NULL);
+    sigaction(SIGINT,  &sa, NULL);
+
+    struct sigaction sa_abrt;
+    sa_abrt.sa_handler = HandleSIGABRT;
+    sigemptyset(&sa_abrt.sa_mask);
+    sa_abrt.sa_flags = 0;
+    sigaction(SIGABRT, &sa_abrt, NULL);
 
     // Reopen debug.log on SIGHUP
     struct sigaction sa_hup;

@@ -37,6 +37,14 @@
 
 static bool fDaemon;
 
+void waitForClose()
+{
+    while (true)
+    {
+       boost::this_thread::sleep_for(boost::chrono::seconds(1));
+    }
+}
+
 void DetectShutdownThread(boost::thread_group* threadGroup)
 {
     bool fShutdown = ShutdownRequested();
