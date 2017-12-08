@@ -61,12 +61,13 @@ Value dxGetTransactions(const Array & params, bool fHelp)
     if (fHelp || params.size() > 0)
     {
         Object error;
-        error.push_back(Pair("error",
-                             "invalid parameters: dxGetTransactions\nList transactions."));
+        error.emplace_back(Pair("error",
+                                "This function does not accept any parameter"));
+        error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
         return  error;
     }
 
-    Array arr;    
+    Array arr;
 
     // pending tx
     {
@@ -79,15 +80,15 @@ Value dxGetTransactions(const Array & params, bool fHelp)
         {
             Object jtr;
             const auto tr = trEntry.second;
-            jtr.push_back(Pair("id",            tr->id.GetHex()));
-            jtr.push_back(Pair("from",          tr->fromCurrency));
-            jtr.push_back(Pair("fromAddress",   tr->from));
-            jtr.push_back(Pair("fromAmount",    xBridgeValueFromAmount(tr->fromAmount)));
-            jtr.push_back(Pair("to",            tr->toCurrency));
-            jtr.push_back(Pair("toAddress",     tr->to));
-            jtr.push_back(Pair("toAmount",      xBridgeValueFromAmount(tr->toAmount)));
-            jtr.push_back(Pair("state",         tr->strState()));
-            arr.push_back(jtr);
+            jtr.emplace_back(Pair("id",            tr->id.GetHex()));
+            jtr.emplace_back(Pair("from",          tr->fromCurrency));
+            jtr.emplace_back(Pair("fromAddress",   tr->from));
+            jtr.emplace_back(Pair("fromAmount",    xBridgeValueFromAmount(tr->fromAmount)));
+            jtr.emplace_back(Pair("to",            tr->toCurrency));
+            jtr.emplace_back(Pair("toAddress",     tr->to));
+            jtr.emplace_back(Pair("toAmount",      xBridgeValueFromAmount(tr->toAmount)));
+            jtr.emplace_back(Pair("state",         tr->strState()));
+            arr.emplace_back(jtr);
         }
     }
 
@@ -102,15 +103,15 @@ Value dxGetTransactions(const Array & params, bool fHelp)
         {
             Object jtr;
             const auto &tr = trEntry.second;
-            jtr.push_back(Pair("id",            tr->id.GetHex()));
-            jtr.push_back(Pair("from",          tr->fromCurrency));
-            jtr.push_back(Pair("fromAddress",   tr->from));
-            jtr.push_back(Pair("fromAmount",    xBridgeValueFromAmount(tr->fromAmount)));
-            jtr.push_back(Pair("to",            tr->toCurrency));
-            jtr.push_back(Pair("toAddress",     tr->to));
-            jtr.push_back(Pair("toAmount",      xBridgeValueFromAmount(tr->toAmount)));
-            jtr.push_back(Pair("state",         tr->strState()));
-            arr.push_back(jtr);
+            jtr.emplace_back(Pair("id",            tr->id.GetHex()));
+            jtr.emplace_back(Pair("from",          tr->fromCurrency));
+            jtr.emplace_back(Pair("fromAddress",   tr->from));
+            jtr.emplace_back(Pair("fromAmount",    xBridgeValueFromAmount(tr->fromAmount)));
+            jtr.emplace_back(Pair("to",            tr->toCurrency));
+            jtr.emplace_back(Pair("toAddress",     tr->to));
+            jtr.emplace_back(Pair("toAmount",      xBridgeValueFromAmount(tr->toAmount)));
+            jtr.emplace_back(Pair("state",         tr->strState()));
+            arr.emplace_back(jtr);
         }
     }
     return arr;
@@ -123,13 +124,11 @@ Value dxGetTransactionsHistory(const Array & params, bool fHelp)
 {
     bool invalidParams = ((params.size() != 0) &&
                           (params.size() != 1));
-    if (fHelp || invalidParams)
-    {
+    if (fHelp || invalidParams) {
         Object error;
         error.emplace_back(Pair("error",
-                                "dxGetTransactionsHistory\n"
-                                "(ALL - optional parameter, if specified then all transactions are shown, "
-                                "not only successfully completed "));
+                                "Invalid number of parameters"));
+        error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
         return  error;
 
     }
@@ -141,30 +140,27 @@ Value dxGetTransactionsHistory(const Array & params, bool fHelp)
         trlist = XBridgeApp::m_historicTransactions;
     }
     {        
-        if(trlist.empty())
-        {
+        if(trlist.empty()) {
             LOG() << "empty history transactions list ";
             return arr;
         }
 
-        for (const auto &trEntry : trlist)
-        {
+        for (const auto &trEntry : trlist) {
             Object buy;
             const auto &tr = trEntry.second;
-            if(!isShowAll && tr->state != XBridgeTransactionDescr::trFinished)
-            {
+            if(!isShowAll && tr->state != XBridgeTransactionDescr::trFinished) {
                 continue;
             }
             double fromAmount = static_cast<double>(tr->fromAmount);
             double toAmount = static_cast<double>(tr->toAmount);
             double price = fromAmount / toAmount;
             std::string buyTime = to_simple_string(tr->created);
-            buy.push_back(Pair("time",      buyTime));
-            buy.push_back(Pair("traid_id",  tr->id.GetHex()));
-            buy.push_back(Pair("price",     price));
-            buy.push_back(Pair("size",      tr->toAmount));
-            buy.push_back(Pair("side",      "buy"));
-            arr.push_back(buy);
+            buy.emplace_back(Pair("time",      buyTime));
+            buy.emplace_back(Pair("traid_id",  tr->id.GetHex()));
+            buy.emplace_back(Pair("price",     price));
+            buy.emplace_back(Pair("size",      tr->toAmount));
+            buy.emplace_back(Pair("side",      "buy"));
+            arr.emplace_back(buy);
         }
     }
     return arr;
@@ -173,12 +169,11 @@ Value dxGetTransactionsHistory(const Array & params, bool fHelp)
 Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp)
 {
 
-    if (fHelp || (params.size() != 4 && params.size() != 5))
-    {
+    if (fHelp || (params.size() != 4 && params.size() != 5)) {
         Object error;
-        error.push_back(Pair("error",
-                             "invalid parameters: dxGetTradeHistory "
-                             "(from currency) (to currency) (start time) (end time) (txids - optional) "));
+        error.emplace_back(Pair("error",
+                                "Invalid number of parameters"));
+        error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
         return  error;
     }
 
@@ -190,8 +185,7 @@ Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp)
     }
     {
 
-        if(trlist.empty())
-        {
+        if(trlist.empty()) {
             LOG() << "empty history transactions list";
             return arr;
         }
@@ -200,8 +194,7 @@ Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp)
         const auto startTimeFrame   = params[2].get_int();
         const auto endTimeFrame     = params[3].get_int();
         bool isShowTxids = false;
-        if(params.size() == 5)
-        {
+        if(params.size() == 5) {
             isShowTxids = (params[4].get_str() == "txids");
         }
 
@@ -210,7 +203,7 @@ Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp)
 
         //copy all transactions between startTimeFrame and endTimeFrame
         std::copy_if(trlist.begin(), trlist.end(), std::inserter(trList, trList.end()),
-                     [&startTimeFrame, &endTimeFrame, &toCurrency, &fromCurrency](const TransactionPair &transaction){
+                     [&startTimeFrame, &endTimeFrame, &toCurrency, &fromCurrency](const TransactionPair &transaction) {
             return  ((transaction.second->created)      <   bpt::from_time_t(endTimeFrame)) &&
                     ((transaction.second->created)      >   bpt::from_time_t(startTimeFrame)) &&
                     (transaction.second->toCurrency     ==  toCurrency) &&
@@ -222,32 +215,25 @@ Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp)
             LOG() << "No transactions for the specified period " << __FUNCTION__;
             return  arr;
         }
-
         RealVector toAmounts;
         RealVector fromAmounts;
-
         Object res;
-
         Array times;
         times.emplace_back(startTimeFrame);
         times.emplace_back(endTimeFrame);
         res.emplace_back(Pair("t", times));
 
         //copy values into vector
-        for (const auto &trEntry : trList)
-        {
+        for (const auto &trEntry : trList) {
             const auto &tr          = trEntry.second;
             const auto fromAmount   = xBridgeValueFromAmount(tr->fromAmount);
             const auto toAmount     = xBridgeValueFromAmount(tr->toAmount);
             toAmounts.emplace_back(toAmount);
             fromAmounts.emplace_back(fromAmount);
-            trVector.push_back(tr);
+            trVector.emplace_back(tr);
         }
-
-
         std::sort(trVector.begin(), trVector.end(),
-                  [](const XBridgeTransactionDescrPtr &a,  const XBridgeTransactionDescrPtr &b)
-        {
+                  [](const XBridgeTransactionDescrPtr &a,  const XBridgeTransactionDescrPtr &b) {
              return (a->created) < (b->created);
         });
 
@@ -281,11 +267,9 @@ Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp)
         lows.emplace_back(*std::min_element(fromAmounts.begin(), fromAmounts.end()));
         res.emplace_back(Pair("l", lows));
 
-        if(isShowTxids)
-        {
+        if(isShowTxids) {
             Array tmp;
-            for(auto tr : trVector)
-            {
+            for(const auto &tr : trVector) {
                 tmp.emplace_back(tr->id.GetHex());
             }
             res.emplace_back(Pair("txids", tmp));
@@ -305,8 +289,10 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
 {
     if (fHelp || params.size() != 1) {
         Object error;
-        error.push_back(Pair("error",
-                             "invalid parameters: dxGetTransactionInfo (id)\nTransaction info"));
+        error.emplace_back(Pair("error",
+                                "Invalid number of parameters"));
+        error.emplace_back(Pair("code",
+                                xbridge::INVALID_PARAMETERS));
         return  error;
     }
 
@@ -315,57 +301,54 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
     // pending tx
     {
         boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
-        if(XBridgeApp::m_pendingTransactions.count(uint256(id)))
-        {
+        if(XBridgeApp::m_pendingTransactions.count(uint256(id))) {
             const auto &tr = XBridgeApp::m_pendingTransactions[id];
             Object jtr;
-            jtr.push_back(Pair("id",            tr->id.GetHex()));
-            jtr.push_back(Pair("from",          tr->fromCurrency));
-            jtr.push_back(Pair("fromAddress",   tr->from));
-            jtr.push_back(Pair("fromAmount",    xBridgeValueFromAmount(tr->fromAmount)));
-            jtr.push_back(Pair("to",            tr->toCurrency));
-            jtr.push_back(Pair("toAddress",     tr->to));
-            jtr.push_back(Pair("toAmount",      xBridgeValueFromAmount(tr->toAmount)));
-            jtr.push_back(Pair("state",         tr->strState()));
-            arr.push_back(jtr);
+            jtr.emplace_back(Pair("id",            tr->id.GetHex()));
+            jtr.emplace_back(Pair("from",          tr->fromCurrency));
+            jtr.emplace_back(Pair("fromAddress",   tr->from));
+            jtr.emplace_back(Pair("fromAmount",    xBridgeValueFromAmount(tr->fromAmount)));
+            jtr.emplace_back(Pair("to",            tr->toCurrency));
+            jtr.emplace_back(Pair("toAddress",     tr->to));
+            jtr.emplace_back(Pair("toAmount",      xBridgeValueFromAmount(tr->toAmount)));
+            jtr.emplace_back(Pair("state",         tr->strState()));
+            arr.emplace_back(jtr);
         }
     }
 
     // active tx
     {
         boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
-        if(XBridgeApp::m_transactions.count(id))
-        {
+        if(XBridgeApp::m_transactions.count(id)) {
             const auto &tr = XBridgeApp::m_transactions[id];
             Object jtr;
-            jtr.push_back(Pair("id",            tr->id.GetHex()));
-            jtr.push_back(Pair("from",          tr->fromCurrency));
-            jtr.push_back(Pair("fromAddress",   tr->from));
-            jtr.push_back(Pair("fromAmount",    xBridgeValueFromAmount(tr->fromAmount)));
-            jtr.push_back(Pair("to",            tr->toCurrency));
-            jtr.push_back(Pair("toAddress",     tr->to));
-            jtr.push_back(Pair("toAmount",      xBridgeValueFromAmount(tr->toAmount)));
-            jtr.push_back(Pair("state",         tr->strState()));
-            arr.push_back(jtr);
+            jtr.emplace_back(Pair("id",            tr->id.GetHex()));
+            jtr.emplace_back(Pair("from",          tr->fromCurrency));
+            jtr.emplace_back(Pair("fromAddress",   tr->from));
+            jtr.emplace_back(Pair("fromAmount",    xBridgeValueFromAmount(tr->fromAmount)));
+            jtr.emplace_back(Pair("to",            tr->toCurrency));
+            jtr.emplace_back(Pair("toAddress",     tr->to));
+            jtr.emplace_back(Pair("toAmount",      xBridgeValueFromAmount(tr->toAmount)));
+            jtr.emplace_back(Pair("state",         tr->strState()));
+            arr.emplace_back(jtr);
         }
     }
 
     // historic tx
     {
         boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
-        if(XBridgeApp::m_historicTransactions.count(id))
-        {
+        if(XBridgeApp::m_historicTransactions.count(id)) {
             const auto &tr = XBridgeApp::m_historicTransactions[id];
             Object jtr;
-            jtr.push_back(Pair("id",            tr->id.GetHex()));
-            jtr.push_back(Pair("from",          tr->fromCurrency));
-            jtr.push_back(Pair("fromAddress",   tr->from));
-            jtr.push_back(Pair("fromAmount",    xBridgeValueFromAmount(tr->fromAmount)));
-            jtr.push_back(Pair("to",            tr->toCurrency));
-            jtr.push_back(Pair("toAddress",     tr->to));
-            jtr.push_back(Pair("toAmount",      xBridgeValueFromAmount(tr->toAmount)));
-            jtr.push_back(Pair("state",         tr->strState()));
-            arr.push_back(jtr);
+            jtr.emplace_back(Pair("id",            tr->id.GetHex()));
+            jtr.emplace_back(Pair("from",          tr->fromCurrency));
+            jtr.emplace_back(Pair("fromAddress",   tr->from));
+            jtr.emplace_back(Pair("fromAmount",    xBridgeValueFromAmount(tr->fromAmount)));
+            jtr.emplace_back(Pair("to",            tr->toCurrency));
+            jtr.emplace_back(Pair("toAddress",     tr->to));
+            jtr.emplace_back(Pair("toAmount",      xBridgeValueFromAmount(tr->toAmount)));
+            jtr.emplace_back(Pair("state",         tr->strState()));
+            arr.emplace_back(jtr);
         }
     }
     return arr;
@@ -376,20 +359,19 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
 //******************************************************************************
 Value dxGetCurrencies(const Array & params, bool fHelp)
 {
-    if (fHelp || params.size() > 0)
-    {
+    if (fHelp || params.size() > 0) {
         Object error;
-        error.push_back(Pair("error",
-                             "invalid parameters: dxGetCurrencies\nList currencies."));
+        error.emplace_back(Pair("error",
+                                "This function does not accept any parameter"));
+        error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
         return  error;
     }
 
     Object obj;
 
     std::vector<std::string> currencies = XBridgeApp::instance().sessionsCurrencies();
-    for (std::string currency : currencies)
-    {
-        obj.push_back(Pair(currency, ""));
+    for (std::string currency : currencies) {
+        obj.emplace_back(Pair(currency, ""));
     }
     return obj;
 }
@@ -398,14 +380,12 @@ Value dxGetCurrencies(const Array & params, bool fHelp)
 //******************************************************************************
 Value dxCreateTransaction(const Array & params, bool fHelp)
 {
-    if (fHelp || params.size() != 6)
-    {
+    if (fHelp || params.size() != 6) {
         Object error;
-        error.push_back(Pair("error",
-                             "invalid parameters: dxCreateTransaction "
-                             "(address from) (currency from) (amount from) "
-                             "(address to) (currency to) (amount to)\n"
-                             "Create xbridge transaction."));
+        error.emplace_back(Pair("error",
+                                "Invalid number of parameters"));
+        error.emplace_back(Pair("code",
+                                xbridge::INVALID_PARAMETERS));
         return  error;
     }
 
@@ -417,10 +397,10 @@ Value dxCreateTransaction(const Array & params, bool fHelp)
     double      toAmount        = params[5].get_real();
 
     if ((from.size() < 32 && from.size() > 36) ||
-            (to.size() < 32 && to.size() > 36))
-    {
+            (to.size() < 32 && to.size() > 36)) {
         Object error;
-        error.push_back(Pair("error", "incorrect address."));
+        error.emplace_back(Pair("error", "Incorrect address"));
+        error.emplace_back(Pair("code", xbridge::INVALID_ADDRESS));
         return  error;
     }
 
@@ -429,19 +409,19 @@ Value dxCreateTransaction(const Array & params, bool fHelp)
           (from, fromCurrency, xBridgeAmountFromReal(fromAmount),
            to, toCurrency, xBridgeAmountFromReal(toAmount), id);
 
-    if(res == xbridge::SUCCESS)
-    {
+    if(res == xbridge::SUCCESS) {
         Object obj;
-        obj.push_back(Pair("from", from));
-        obj.push_back(Pair("fromCurrency", fromCurrency));
-        obj.push_back(Pair("fromAmount", fromAmount));
-        obj.push_back(Pair("to", to));
-        obj.push_back(Pair("toCurrency", toCurrency));
-        obj.push_back(Pair("toAmount", toAmount));
+        obj.emplace_back(Pair("from",           from));
+        obj.emplace_back(Pair("fromCurrency",   fromCurrency));
+        obj.emplace_back(Pair("fromAmount",     fromAmount));
+        obj.emplace_back(Pair("to",             to));
+        obj.emplace_back(Pair("toCurrency",     toCurrency));
+        obj.emplace_back(Pair("toAmount",       toAmount));
         return obj;
     } else {
         Object error;
         error.emplace_back(Pair("error", xbridge::xbridgeErrorText(res)));
+        error.emplace_back(Pair("code", res));
         return error;
     }
 }
@@ -450,13 +430,11 @@ Value dxCreateTransaction(const Array & params, bool fHelp)
 //******************************************************************************
 Value dxAcceptTransaction(const Array & params, bool fHelp)
 {
-    if (fHelp || params.size() != 3)
-    {
+    if (fHelp || params.size() != 3) {
         Object error;
-        error.push_back(Pair("error",
-                             "invalid parameters: dxAcceptTransaction (id) "
-                             "(address from) (address to)\n"
-                             "Accept xbridge transaction."));
+        error.emplace_back(Pair("error",
+                                "Invalid number of parameters"));
+        error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
         return  error;
     }
 
@@ -465,11 +443,11 @@ Value dxAcceptTransaction(const Array & params, bool fHelp)
     std::string toAddress      = params[2].get_str();
 
     if ((fromAddress.size() < 32 && fromAddress.size() > 36) ||
-            (toAddress.size() < 32 && toAddress.size() > 36))
-    {
+            (toAddress.size() < 32 && toAddress.size() > 36)) {
         Object error;
-        error.push_back(Pair("error",
-                             "incorrect address"));
+        error.emplace_back(Pair("error",
+                                "incorrect address"));
+        error.emplace_back(Pair("code", xbridge::INVALID_ADDRESS));
         return  error;
     }
 
@@ -478,14 +456,16 @@ Value dxAcceptTransaction(const Array & params, bool fHelp)
     const auto error = XBridgeApp::instance().acceptXBridgeTransaction(id, fromAddress, toAddress, idResult);
     if(error == xbridge::SUCCESS) {
         Object obj;
-        obj.push_back(Pair("status", "Accepted"));
-        obj.push_back(Pair("id",    id.GetHex()));
-        obj.push_back(Pair("from",  fromAddress));
-        obj.push_back(Pair("to",    toAddress));
+        obj.emplace_back(Pair("status", "Accepted"));
+        obj.emplace_back(Pair("id",     id.GetHex()));
+        obj.emplace_back(Pair("from",   fromAddress));
+        obj.emplace_back(Pair("to",     toAddress));
         return obj;
     } else {
         Object obj;
-        obj.push_back(Pair("error", xbridge::xbridgeErrorText(error)));
+        obj.emplace_back(Pair("error",
+                              xbridge::xbridgeErrorText(error)));
+        obj.emplace_back(Pair("code", error));
         return obj;
     }
 
@@ -495,24 +475,24 @@ Value dxAcceptTransaction(const Array & params, bool fHelp)
 //******************************************************************************
 Value dxCancelTransaction(const Array & params, bool fHelp)
 {
-    if (fHelp || params.size() != 1)
-    {
+    if (fHelp || params.size() != 1) {
         Object error;
-        error.push_back(Pair("error", "invalid parameters: dxCancelTransaction (id)\n"
-                                      "Cancel xbridge transaction."));
+        error.emplace_back(Pair("error",
+                                "Invalid number of parameters"));
+        error.emplace_back(Pair("code", xbridge::INVALID_ADDRESS));
         return  error;
     }
     LOG() << "rpc cancel transaction " << __FUNCTION__;
     uint256 id(params[0].get_str());
     const auto res = XBridgeApp::instance().cancelXBridgeTransaction(id, crRpcRequest);
-    if(res == xbridge::SUCCESS)
-    {
+    if(res == xbridge::SUCCESS) {
         Object obj;
-        obj.push_back(Pair("id",id.GetHex()));
+        obj.emplace_back(Pair("id", id.GetHex()));
         return  obj;
     } else {
         Object obj;
-        obj.push_back(Pair("error", xbridge::xbridgeErrorText(res)));
+        obj.emplace_back(Pair("error", xbridge::xbridgeErrorText(res)));
+        obj.emplace_back(Pair("code", res));
         return obj;
     }
 }
@@ -521,26 +501,25 @@ Value dxCancelTransaction(const Array & params, bool fHelp)
 //******************************************************************************
 json_spirit::Value dxrollbackTransaction(const json_spirit::Array& params, bool fHelp)
 {
-    if (fHelp || params.size() != 1)
-    {
+    if (fHelp || params.size() != 1) {
         Object error;
-        error.push_back(Pair("error",
-                             "invalid parameters: dxrollbackTransaction (id)\n"
-                             "Rollback xbridge transaction."));
+        error.emplace_back(Pair("error",
+                                "Invalid number of parameters"));
+        error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
         return  error;
     }
     LOG() << "rpc rollback transaction " << __FUNCTION__;
     uint256 id(params[0].get_str());
     const auto res = XBridgeApp::instance().rollbackXBridgeTransaction(id);
 
-    if(res == xbridge::SUCCESS)
-    {
+    if(res == xbridge::SUCCESS) {
         Object obj;
-        obj.push_back(Pair("id",id.GetHex()));
+        obj.emplace_back(Pair("id", id.GetHex()));
         return  obj;
     } else {
         Object obj;
-        obj.push_back(Pair("error", xbridge::xbridgeErrorText(res)));
+        obj.emplace_back(Pair("error", xbridge::xbridgeErrorText(res)));
+        obj.emplace_back(Pair("code", res));
         return obj;
     }
 }
@@ -549,13 +528,12 @@ json_spirit::Value dxrollbackTransaction(const json_spirit::Array& params, bool 
 //******************************************************************************
 json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
 {
-    if (fHelp || (params.size() != 3 && params.size() != 4))
-    {
+    if (fHelp || (params.size() != 3 && params.size() != 4)) {
         Object error;
-        error.push_back(Pair("error",
-                             "invalid parameters: dxGetOrderBook "
-                             "(the level of detail) (from currency) (to currency) "
-                             "(max orders - optional, default = 50) "));
+        error.emplace_back(Pair("error",
+                                "Invalid number of parameters"));
+        error.emplace_back(Pair("code",
+                                xbridge::INVALID_PARAMETERS));
         return  error;
     }
 
@@ -566,8 +544,7 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
         trList = XBridgeApp::m_pendingTransactions;
     }
     {
-        if(trList.empty())
-        {
+        if(trList.empty()) {
             LOG() << "empty  transactions list ";
             return arr;
         }
@@ -586,22 +563,19 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
         const auto toCurrency   = params[2].get_str();
 
         std::size_t maxOrders = 50;
-        if(detailLevel == 2 && params.size() == 4)
-        {
+        if(detailLevel == 2 && params.size() == 4) {
             maxOrders = params[3].get_int();;
         }
 
         //copy all transactions
         std::copy_if(trList.begin(), trList.end(), std::inserter(asksList, asksList.end()),
-                     [&toCurrency, &fromCurrency](const TransactionPair &transaction)
-        {
+                     [&toCurrency, &fromCurrency](const TransactionPair &transaction) {
             return  ((transaction.second->toCurrency == fromCurrency) &&
                     (transaction.second->fromCurrency == toCurrency));
         });
 
         std::copy_if(trList.begin(), trList.end(), std::inserter(bidsList, bidsList.end()),
-                     [&toCurrency, &fromCurrency](const TransactionPair &transaction)
-        {
+                     [&toCurrency, &fromCurrency](const TransactionPair &transaction) {
             return  ((transaction.second->toCurrency == toCurrency) &&
                     (transaction.second->fromCurrency == fromCurrency));
         });
@@ -625,8 +599,7 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
             //return Only the best bid and ask
 
             const auto bidsItem = std::max_element(bidsList.begin(), bidsList.end(),
-                                       [](const TransactionPair &a, const TransactionPair &b)
-            {
+                                       [](const TransactionPair &a, const TransactionPair &b) {
                 //find transaction with best bids
                 const auto &tr1 = a.second;
                 const auto &tr2 = b.second;
@@ -645,8 +618,7 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
             ///////////////////////////////////////////////////////////////////////////////////////////////
 
             const auto asksItem = std::min_element(asksList.begin(), asksList.end(),
-                                                   [](const TransactionPair &a, const TransactionPair &b)
-            {
+                                                   [](const TransactionPair &a, const TransactionPair &b) {
                 //find transactions with best asks
                 const auto &tr1 = a.second;
                 const auto &tr2 = b.second;
@@ -671,21 +643,19 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
             std::vector<XBridgeTransactionDescrPtr> asksVector;
             std::vector<XBridgeTransactionDescrPtr> bidsVector;
 
-            for (const auto &trEntry : asksList)
-            {
+            for (const auto &trEntry : asksList) {
                 const auto &tr = trEntry.second;
-                asksVector.push_back(tr);
+                asksVector.emplace_back(tr);
             }
 
-            for (const auto &trEntry : bidsList)
-            {
+            for (const auto &trEntry : bidsList) {
                 const auto &tr = trEntry.second;
-                bidsVector.push_back(tr);
+                bidsVector.emplace_back(tr);
             }
 
             //sort descending
-            std::sort(bidsVector.begin(), bidsVector.end(), [](const XBridgeTransactionDescrPtr &a,  const XBridgeTransactionDescrPtr &b)
-            {
+            std::sort(bidsVector.begin(), bidsVector.end(),
+                      [](const XBridgeTransactionDescrPtr &a,  const XBridgeTransactionDescrPtr &b) {
                 const auto priceA = xBridgeValueFromAmount(a->fromAmount) / xBridgeValueFromAmount(a->toAmount);
                 const auto priceB = xBridgeValueFromAmount(b->fromAmount) / xBridgeValueFromAmount(b->toAmount);
                 return priceA > priceB;
@@ -701,8 +671,7 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
              * @brief bound - calculate upper bound
              */
             auto bound = std::min(maxOrders, bidsVector.size());
-            for(size_t i = 0; i < bound; i++)
-            {
+            for(size_t i = 0; i < bound; i++) {
                 Array tmp;
                 //calculate bids and push to array
                 const auto bidPrice = xBridgeValueFromAmount(bidsVector[i]->fromAmount) / xBridgeValueFromAmount(bidsVector[i]->toAmount);
@@ -712,8 +681,7 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 bids.emplace_back(tmp);
             }
             bound = std::min(maxOrders, asksVector.size());
-            for(size_t  i = 0; i < bound; i++ )
-            {
+            for(size_t  i = 0; i < bound; i++ ) {
                 Array tmp;
                 //calculate asks and push to array
                 const auto askPrice = xBridgeValueFromAmount(asksVector[i]->fromAmount) / xBridgeValueFromAmount(asksVector[i]->toAmount);
@@ -728,8 +696,7 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
         {
             //Full order book (non aggregated)
 
-            for (const auto &trEntry : bidsList)
-            {
+            for (const auto &trEntry : bidsList) {
                 const auto &tr = trEntry.second;
                 Array tmp;
                 const auto bidPrice = xBridgeValueFromAmount(tr->fromAmount) / xBridgeValueFromAmount(tr->toAmount);
@@ -738,8 +705,7 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 tmp.emplace_back(xBridgeValueFromAmount(tr->fromAmount));
                 bids.emplace_back(tmp);
             }
-            for (const auto &trEntry : asksList)
-            {
+            for (const auto &trEntry : asksList) {
                 const auto &tr = trEntry.second;
                 Array tmp;
                 const auto askPrice = xBridgeValueFromAmount(tr->fromAmount) / xBridgeValueFromAmount(tr->toAmount);
@@ -753,9 +719,10 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
         default:
             LOG() << "invalid detail level value: " << detailLevel << ", " << __FUNCTION__;
             Object error;
-            error.emplace_back(Pair("error", "invalid detail level value:"));
+            error.emplace_back(Pair("error",
+                                    "invalid detail level value:"));
+            error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
             return  error;
-
         }
         res.emplace_back(Pair("bids", bids));
         res.emplace_back(Pair("asks", asks));
