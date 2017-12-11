@@ -12,6 +12,7 @@
 
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/range/adaptor/transformed.hpp>
 
 // keep track of the scanning errors I've seen
 map<uint256, int> mapSeenServicenodeScanningErrors;
@@ -287,7 +288,7 @@ int64_t CServicenode::GetLastPaid()
 
         if (servicenodePayments.mapServicenodeBlocks.count(BlockReading->nHeight)) {
             /*
-                Search for this payee, with at least 2 votes. This will aid in consensus allowing the network 
+                Search for this payee, with at least 2 votes. This will aid in consensus allowing the network
                 to converge on the same payees quickly, then keep the same schedule.
             */
             if (servicenodePayments.mapServicenodeBlocks[BlockReading->nHeight].HasPayeeWithVotes(mnpayee, 2)) {
@@ -332,7 +333,21 @@ bool CServicenode::IsValidNetAddr()
     // TODO: regtest is fine with any addresses for now,
     // should probably be a bit smarter if one day we start to implement tests for this
     return Params().NetworkID() == CBaseChainParams::REGTEST ||
-           (IsReachable(addr) && addr.IsRoutable());
+            (IsReachable(addr) && addr.IsRoutable());
+}
+
+std::string CServicenode::GetConnectedWalletsStr() const
+{
+    if(connectedWallets.size() == 0)
+        return "";
+
+    std::string separator = ",";
+
+    std::string result = boost::algorithm::join(connectedWallets |
+                                                boost::adaptors::transformed([](const CServicenodeXWallet & item) { return item.strWalletName;}),
+                                                separator);
+
+    return result;
 }
 
 CServicenodeBroadcast::CServicenodeBroadcast()
@@ -378,7 +393,10 @@ CServicenodeBroadcast::CServicenodeBroadcast(const CService & newAddr,
     nLastDsq = 0;
     nScanningErrorCount = 0;
     nLastScanningErrorBlockHeight = 0;
-    connectedWallets = exchangeWallets;
+
+    connectedWallets.clear();
+    for(const std::string & walletName : exchangeWallets)
+        connectedWallets.push_back(CServicenodeXWallet(walletName));
 }
 
 CServicenodeBroadcast::CServicenodeBroadcast(const CServicenode& mn)
