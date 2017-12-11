@@ -99,11 +99,11 @@ public:
     }
 };
 
-class CServicenodeXWallets
+class CServicenodeXWallet
 {
 public:
-    CServicenodeXWallets() {}
-    CServicenodeXWallets(const std::string & walletName) : strWalletName(walletName) {}
+    explicit CServicenodeXWallet() {}
+    explicit CServicenodeXWallet(const std::string & walletName) : strWalletName(walletName) {}
 
     std::string strWalletName;
 
@@ -161,7 +161,7 @@ public:
     CServicenodePing lastPing;
 
     // xbridge wallets list, connected to service node
-    std::vector<CServicenodeXWallets> connectedWallets;
+    std::vector<CServicenodeXWallet> connectedWallets;
 
     int64_t nLastDsee;  // temporary, do not save. Remove after migration to v12
     int64_t nLastDseep; // temporary, do not save. Remove after migration to v12
@@ -304,7 +304,7 @@ public:
     int64_t GetLastPaid();
     bool IsValidNetAddr();
 
-    std::string GetConnectedWalletsStr();
+    std::string GetConnectedWalletsStr() const;
 };
 
 //

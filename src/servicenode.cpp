@@ -12,6 +12,7 @@
 
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/range/adaptor/transformed.hpp>
 
 // keep track of the scanning errors I've seen
 map<uint256, int> mapSeenServicenodeScanningErrors;
@@ -335,21 +336,16 @@ bool CServicenode::IsValidNetAddr()
             (IsReachable(addr) && addr.IsRoutable());
 }
 
-std::string CServicenode::GetConnectedWalletsStr()
+std::string CServicenode::GetConnectedWalletsStr() const
 {
     if(connectedWallets.size() == 0)
         return "";
 
-    std::string result;
-    std::string separator = ", ";
+    std::string separator = ",";
 
-    for(const auto i = connectedWallets.begin(); i != connectedWallets.end(); ++i)
-    {
-        result.append(i->strWalletName);
-
-        if(i + 1 != connectedWallets.end())
-            result.append(separator);
-    }
+    std::string result = boost::algorithm::join(connectedWallets |
+                                                boost::adaptors::transformed([](const CServicenodeXWallet & item) { return item.strWalletName;}),
+                                                separator);
 
     return result;
 }
@@ -397,11 +393,10 @@ CServicenodeBroadcast::CServicenodeBroadcast(const CService & newAddr,
     nLastDsq = 0;
     nScanningErrorCount = 0;
     nLastScanningErrorBlockHeight = 0;
-//    connectedWallets = exchangeWallets;
 
     connectedWallets.clear();
-    for(std::string walletName : exchangeWallets)
-        connectedWallets.push_back(walletName);
+    for(const std::string & walletName : exchangeWallets)
+        connectedWallets.push_back(CServicenodeXWallet(walletName));
 }
 
 CServicenodeBroadcast::CServicenodeBroadcast(const CServicenode& mn)

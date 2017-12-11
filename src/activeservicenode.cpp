@@ -503,11 +503,9 @@ bool CActiveServicenode::EnableHotColdServiceNode(CTxIn& newVin, CService& newSe
         xbridge::Exchange & e = xbridge::Exchange::instance();
         if (e.isEnabled())
         {
-//            mn->connectedWallets = e.connectedWallets();
             mn->connectedWallets.clear();
-            for(std::string walletName : e.connectedWallets())
-                mn->connectedWallets.push_back(walletName);
-
+            for(const std::string & walletName : e.connectedWallets())
+                mn->connectedWallets.push_back(CServicenodeXWallet(walletName));
 
             CServicenodeBroadcast mnb(*mn);
             uint256 hash = mnb.GetHash();
