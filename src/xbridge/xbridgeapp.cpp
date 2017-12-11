@@ -798,8 +798,6 @@ uint256 App::sendXBridgeTransaction(const std::string & from,
                                            const std::string & toCurrency,
                                            const uint64_t    & toAmount)
 {
-    assert(false);
-
     if (fromCurrency.size() > 8 || toCurrency.size() > 8)
     {
         LOG() << "invalid currency" << __FUNCTION__;
