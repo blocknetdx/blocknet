@@ -172,7 +172,6 @@ SOURCES += \
     src/core_read.cpp \
     src/core_write.cpp \
     src/eccryptoverify.cpp \
-    src/ecwrapper.cpp \
     src/leveldbwrapper.cpp \
     src/merkleblock.cpp \
     src/obfuscation.cpp \
@@ -469,7 +468,6 @@ HEADERS += \
     src/compressor.h \
     src/core_io.h \
     src/eccryptoverify.h \
-    src/ecwrapper.h \
     src/leveldbwrapper.h \
     src/merkleblock.h \
     src/noui.h \
