@@ -44,7 +44,7 @@ private:
     virtual ~XBridgeApp();
 
 public:
-    static XBridgeApp & instance();
+    static XBridgeApp &instance();
 
     static std::string version();
 
@@ -63,16 +63,20 @@ public:
 
     bool sendPendingTransaction(XBridgeTransactionDescrPtr &ptr);
 
-    xbridge::Error acceptXBridgeTransaction(const uint256 & id,
-                                     const std::string & from,
-                                     const std::string & to, uint256 &result);
-    bool sendAcceptingTransaction(XBridgeTransactionDescrPtr & ptr);
+    xbridge::Error acceptXBridgeTransaction(const uint256 &id,
+                                     const std::string &from,
+                                     const std::string &to, uint256 &result);
+    bool sendAcceptingTransaction(XBridgeTransactionDescrPtr &ptr);
 
-    xbridge::Error cancelXBridgeTransaction(const uint256 & id, const TxCancelReason & reason);
-    bool sendCancelTransaction(const uint256 & txid, const TxCancelReason & reason);
+    xbridge::Error cancelXBridgeTransaction(const uint256 &id, const TxCancelReason &reason);
+    bool sendCancelTransaction(const uint256 &txid, const TxCancelReason &reason);
 
-    xbridge::Error rollbackXBridgeTransaction(const uint256 & id);
-    bool sendRollbackTransaction(const uint256 & txid);
+    xbridge::Error rollbackXBridgeTransaction(const uint256 &id);
+    bool sendRollbackTransaction(const uint256 &txid);
+
+    bool isValidAddress(const std::string &address) const;
+
+    xbridge::Error validateAcceptParams(const uint256 &id, XBridgeTransactionDescrPtr &ptr);
 
 public:
     bool stop();

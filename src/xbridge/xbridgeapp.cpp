@@ -456,12 +456,12 @@ void XBridgeApp::getAddressBook()
 
 //******************************************************************************
 //******************************************************************************
-xbridge::Error  XBridgeApp::sendXBridgeTransaction(const std::string & from,
-                                       const std::string & fromCurrency,
-                                       const uint64_t & fromAmount,
-                                       const std::string & to,
-                                       const std::string & toCurrency,
-                                       const uint64_t & toAmount,
+xbridge::Error  XBridgeApp::sendXBridgeTransaction(const std::string &from,
+                                       const std::string &fromCurrency,
+                                       const uint64_t &fromAmount,
+                                       const std::string &to,
+                                       const std::string &toCurrency,
+                                       const uint64_t &toAmount,
                                        uint256 &id)
 {
     if (fromCurrency.size() > 8 || toCurrency.size() > 8)
@@ -572,30 +572,9 @@ xbridge::Error XBridgeApp::acceptXBridgeTransaction(const uint256 &id,
                                                     uint256 &result)
 {
     XBridgeTransactionDescrPtr ptr;
-    {
-        boost::mutex::scoped_lock l(m_txLocker);
-        if (!m_pendingTransactions.count(id))
-        {
-
-            WARN() << "transaction not found " << __FUNCTION__;
-            return xbridge::TRANSACTION_NOT_FOUND;
-        }
-        ptr = m_pendingTransactions[id];
-    }
-
-    // check amount
-    XBridgeSessionPtr s = sessionByCurrency(ptr->toCurrency);
-    if (!s)
-    {
-        // no session
-        WARN() << "no session for <" << ptr->toCurrency << "> " << __FUNCTION__;
-        return xbridge::NO_SESSION;
-    }
-
-    if (!s->checkAmount(ptr->toAmount))
-    {
-        WARN() << "insufficient funds for <" << ptr->toCurrency << "> " << __FUNCTION__;
-        return xbridge::INSIFFICIENT_FUNDS;
+    const auto res = validateAcceptParams(id, ptr);
+    if(res != xbridge::SUCCESS) {
+        return res;
     }
     ptr->from = from;
     ptr->to   = to;
@@ -725,4 +704,37 @@ bool XBridgeApp::sendRollbackTransaction(const uint256 & txid)
     // rolled back
     return true;
 }
+
+bool XBridgeApp::isValidAddress(const string &address) const
+{
+    return ((address.size() >= 32) && (address.size() <= 36));
+}
+
+Error XBridgeApp::validateAcceptParams(const uint256 &id, XBridgeTransactionDescrPtr &ptr)
+{
+
+    {
+        boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
+        if (!XBridgeApp::m_pendingTransactions.count(id)) {
+            WARN() << "transaction not found " << __FUNCTION__;
+            return  xbridge::TRANSACTION_NOT_FOUND;
+        }
+        ptr = XBridgeApp::m_pendingTransactions[id];
+    }
+
+    // check sesssion
+    XBridgeSessionPtr s = XBridgeApp::instance().sessionByCurrency(ptr->toCurrency);
+    if (!s) {
+        // no session
+        WARN() << "no session for <" << ptr->toCurrency << "> " << __FUNCTION__;
+        return  xbridge::NO_SESSION;
+    }
+    // check amount
+    if (!s->checkAmount(ptr->toAmount)) {
+         WARN() << "insufficient funds for <" << ptr->toCurrency << "> " << __FUNCTION__;
+        return  xbridge::INSIFFICIENT_FUNDS;
+    }
+    return xbridge::SUCCESS;
+}
+
 
