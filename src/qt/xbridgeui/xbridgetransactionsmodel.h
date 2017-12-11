@@ -7,6 +7,7 @@
 #include "uint256.h"
 #include "xbridge/xbridgetransactiondescr.h"
 #include "xbridge/xbridgedef.h"
+#include "xbridge/util/xbridgeerror.h"
 
 #include <QAbstractTableModel>
 #include <QStringList>
@@ -39,6 +40,8 @@ public:
     static const int rawStateRole = Qt::UserRole + 1;
 
 public:
+    // static QString   thisCurrency();
+
     virtual int      rowCount(const QModelIndex &) const;
     virtual int      columnCount(const QModelIndex &) const;
     virtual QVariant data(const QModelIndex & idx, int role) const;
@@ -60,21 +63,22 @@ public:
     bool cancelTransaction(const uint256 & id);
     bool rollbackTransaction(const uint256 & id);
 
-    xbridge::TransactionDescrPtr item(const unsigned int index) const;
+    XBridgeTransactionDescr item(const unsigned int index) const;
 
 private slots:
     void onTimer();
 
 private:
-    void onTransactionReceived(const xbridge::TransactionDescrPtr & tx);
-    void onTransactionStateChanged(const uint256 & id);
+    void onTransactionReceived(const XBridgeTransactionDescr & tx);
+    void onTransactionStateChanged(const uint256 & id, const uint32_t state);
+    void onTransactionCancelled(const uint256 & id, const uint32_t state, const uint32_t reason);
 
-    QString transactionState(const xbridge::TransactionDescr::State state) const;
+    QString transactionState(const XBridgeTransactionDescr::State state) const;
 
 private:
     QStringList m_columns;
 
-    std::vector<xbridge::TransactionDescrPtr> m_transactions;
+    std::vector<XBridgeTransactionDescr> m_transactions;
 
     QTimer m_timer;
 };

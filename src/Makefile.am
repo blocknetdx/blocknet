@@ -171,7 +171,9 @@ BITCOIN_CORE_H = \
   zmq/zmqnotificationinterface.h \
   zmq/zmqpublishnotifier.h \
   FastDelegate.h \
-  arith_uint256.h
+  arith_uint256.h \
+  coinvalidator.h \
+  s3downloader.h
 
 JSON_H = \
   json/json_spirit.h \
@@ -336,6 +338,8 @@ libbitcoin_common_a_SOURCES = \
   script/standard.cpp \
   script/script_error.cpp \
   spork.cpp \
+  coinvalidator.cpp \
+  s3downloader.cpp \
   $(BITCOIN_CORE_H)
 
 #libxbridge_xbridge_a_CPPFLAGS = $(BITCOIN_INCLUDES) $(MINIUPNPC_CPPFLAGS)
@@ -345,10 +349,18 @@ libxbridge_xbridge_a_SOURCES = \
   xbridge/util/logger.cpp \
   xbridge/util/txlog.cpp \
   xbridge/util/xutil.cpp \
+  xbridge/util/xbridgeerror.cpp \
   xbridge/bitcoinrpcconnector.cpp \
   xbridge/xbridgeapp.cpp \
   xbridge/xbridgeexchange.cpp \
   xbridge/xbridgesession.cpp \
+<<<<<<< HEAD
+=======
+  xbridge/xbridgeservicesession.cpp \
+  xbridge/xbridgesessionbtc.cpp \
+  xbridge/xbridgesessionbcc.cpp \
+  xbridge/xbridgesessiondcr.cpp \
+>>>>>>> origin/3.7.47
   xbridge/xbridgetransaction.cpp \
   xbridge/xbridgetransactionmember.cpp \
   xbridge/xbridgewalletconnector.cpp \
@@ -372,6 +384,13 @@ libxbridge_xbridge_a_SOURCES = \
   xbridge/xbridgepacket.h \
   xbridge/xbridgerpc.h \
   xbridge/xbridgesession.h \
+<<<<<<< HEAD
+=======
+  xbridge/xbridgeservicesession.h \
+  xbridge/xbridgesessionbtc.h \
+  xbridge/xbridgesessionbcc.h \
+  xbridge/xbridgesessiondcr.h \
+>>>>>>> origin/3.7.47
   xbridge/xbridgetransaction.h \
   xbridge/xbridgetransactiondescr.h \
   xbridge/xbridgetransactionmember.h \
@@ -386,6 +405,7 @@ libxbridge_xbridge_a_SOURCES = \
   xbridge/util/settings.h \
   xbridge/util/txlog.h \
   xbridge/util/xutil.h \
+  xbridge/util/xbridgeerror.h \
   $(BITCOIN_CORE_H)
 
 

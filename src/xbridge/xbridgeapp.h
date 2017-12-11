@@ -8,6 +8,7 @@
 #include "xbridgepacket.h"
 #include "uint256.h"
 #include "xbridgetransactiondescr.h"
+#include "util/xbridgeerror.h"
 #include "xbridgewalletconnector.h"
 #include "xbridgedef.h"
 
@@ -61,23 +62,23 @@ public:
 
     void moveTransactionToHistory(const uint256 & id);
 
-    uint256 sendXBridgeTransaction(const std::string & from,
+    Error sendXBridgeTransaction(const std::string & from,
                                    const std::string & fromCurrency,
                                    const uint64_t & fromAmount,
                                    const std::string & to,
                                    const std::string & toCurrency,
                                    const uint64_t & toAmount);
-    bool sendPendingTransaction(const TransactionDescrPtr & ptr);
+    bool sendPendingTransaction(TransactionDescrPtr & ptr);
 
-    uint256 acceptXBridgeTransaction(const uint256 & id,
+    Error acceptXBridgeTransaction(const uint256 & id,
                                      const std::string & from,
-                                     const std::string & to);
-    bool sendAcceptingTransaction(const TransactionDescrPtr & ptr);
+                                     const std::string & to, uint256 &result);
+    bool sendAcceptingTransaction(TransactionDescrPtr & ptr);
 
-    bool cancelXBridgeTransaction(const uint256 & id, const TxCancelReason & reason);
+    xbridge::Error cancelXBridgeTransaction(const uint256 & id, const TxCancelReason & reason);
     bool sendCancelTransaction(const uint256 & txid, const TxCancelReason & reason);
 
-    bool rollbackXBridgeTransaction(const uint256 & id);
+    xbridge::Error rollbackXBridgeTransaction(const uint256 & id);
     bool sendRollbackTransaction(const uint256 & txid);
 
 public:

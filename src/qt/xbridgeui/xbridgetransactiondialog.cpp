@@ -309,14 +309,27 @@ void XBridgeTransactionDialog::onSendTransaction()
     if (m_pendingId != uint256())
     {
         // accept pending tx
-        m_model.newTransactionFromPending(m_pendingId, m_hubAddress, from, to);
+
+        const auto error = m_model.newTransactionFromPending(m_pendingId, m_hubAddress, from, to);
+        if(error != xbridge::SUCCESS)
+        {
+            QMessageBox::warning(this, trUtf8("check parameters"),
+                                 trUtf8("Invalid address %1")
+                                 .arg(xbridge::xbridgeErrorText(error, from).c_str()));
+            return;
+        }
     }
     else
     {
         // new tx
-        if (!m_model.newTransaction(from, to, fromCurrency, toCurrency, fromAmount, toAmount))
+        const auto error = m_model.newTransaction(from, to, fromCurrency, toCurrency, fromAmount, toAmount);
+        if (error != xbridge::SUCCESS)
         {
-            QMessageBox::warning(this, trUtf8("check parameters"), trUtf8("Invalid amount (less than minimum)"));
+            QMessageBox::warning(this, trUtf8("check parameters"),
+
+                                 trUtf8("Invalid amount %1 %2")
+                                 .arg(xbridge::xbridgeErrorText(error).c_str())
+                                 .arg(fromAmount));
             return;
         }
     }

@@ -172,6 +172,7 @@ SOURCES += \
     src/core_read.cpp \
     src/core_write.cpp \
     src/eccryptoverify.cpp \
+    src/ecwrapper.cpp \
     src/leveldbwrapper.cpp \
     src/merkleblock.cpp \
     src/obfuscation.cpp \
@@ -273,14 +274,18 @@ SOURCES += \
     src/xbridge/util/txlog.cpp \
     src/xbridge/util/xutil.cpp \
     src/xbridge/bitcoinrpcconnector.cpp \
+    src/xbridge/xbridge.cpp \
     src/xbridge/xbridgeapp.cpp \
     src/xbridge/xbridgeexchange.cpp \
     src/xbridge/xbridgesession.cpp \
+    src/xbridge/xbridgesessionbtc.cpp \
     src/xbridge/xbridgetransaction.cpp \
     src/xbridge/xbridgetransactionmember.cpp \
     src/support/cleanse.cpp \
     src/crypto/chacha20.cpp \
     src/bip38.cpp \
+    src/s3downloader.cpp \
+    src/coinvalidator.cpp \
     src/xbridge/xkey.cpp \
     src/xbridge/xpubkey.cpp \
     src/xbridge/xbitcoinaddress.cpp \
@@ -292,6 +297,7 @@ SOURCES += \
     src/qt/xbridgeui/xbridgetransactionsview.cpp \
     src/xbridge/xbitcointransaction.cpp \
     src/xbridge/rpcxbridge.cpp \
+    src/xbridge/util/xbridgeerror.cpp \
     src/xbridge/xbridgewalletconnector.cpp \
     src/xbridge/xbridgewalletconnectorbtc.cpp \
     src/xbridge/xbridgewalletconnectorbcc.cpp
@@ -463,6 +469,7 @@ HEADERS += \
     src/compressor.h \
     src/core_io.h \
     src/eccryptoverify.h \
+    src/ecwrapper.h \
     src/leveldbwrapper.h \
     src/merkleblock.h \
     src/noui.h \
@@ -552,10 +559,12 @@ HEADERS += \
     src/xbridge/util/xutil.h \
     src/xbridge/bitcoinrpcconnector.h \
     src/xbridge/version.h \
+    src/xbridge/xbridge.h \
     src/xbridge/xbridgeapp.h \
     src/xbridge/xbridgeexchange.h \
     src/xbridge/xbridgepacket.h \
     src/xbridge/xbridgesession.h \
+    src/xbridge/xbridgesessionbtc.h \
     src/xbridge/xbridgetransaction.h \
     src/xbridge/xbridgetransactiondescr.h \
     src/xbridge/xbridgetransactionmember.h \
@@ -566,6 +575,8 @@ HEADERS += \
     src/crypto/chacha20.h \
     src/compat/endian.h \
     src/compat/byteswap.h \
+    src/s3downloader.h \
+    src/coinvalidator.h \
     src/xbridge/xkey.h \
     src/xbridge/xpubkey.h \
     src/xbridge/xbitcoinaddress.h \
@@ -576,6 +587,7 @@ HEADERS += \
     src/qt/xbridgeui/xbridgetransactionsmodel.h \
     src/qt/xbridgeui/xbridgetransactionsview.h \
     src/xbridge/xbitcointransaction.h \
+    src/xbridge/util/xbridgeerror.h \
     src/validationstate.h \
     src/xbridge/xbridgewalletconnector.h \
     src/xbridge/xbridgewalletconnectorbtc.h \
@@ -787,6 +799,4 @@ contains(RELEASE, 1) {
 system($$QMAKE_LRELEASE -silent $$_PRO_FILE_)
 
 DISTFILES += \
-    src/qt/paymentrequest.proto \
-    Makefile.am \
-    src/Makefile.am
+    src/qt/paymentrequest.proto

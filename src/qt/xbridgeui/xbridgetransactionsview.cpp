@@ -42,14 +42,14 @@ void XBridgeTransactionsView::setupUi()
     m_transactionsProxy.setSourceModel(&m_txModel);
     m_transactionsProxy.setDynamicSortFilter(true);
 
-    QList<xbridge::TransactionDescr::State> transactionsAccetpedStates;
-    transactionsAccetpedStates << xbridge::TransactionDescr::trNew
-                               << xbridge::TransactionDescr::trPending
-                               << xbridge::TransactionDescr::trAccepting
-                               << xbridge::TransactionDescr::trHold
-                               << xbridge::TransactionDescr::trCreated
-                               << xbridge::TransactionDescr::trSigned
-                               << xbridge::TransactionDescr::trCommited;
+    QList<XBridgeTransactionDescr::State> transactionsAccetpedStates;
+    transactionsAccetpedStates << XBridgeTransactionDescr::trNew
+                               << XBridgeTransactionDescr::trPending
+                               << XBridgeTransactionDescr::trAccepting
+                               << XBridgeTransactionDescr::trHold
+                               << XBridgeTransactionDescr::trCreated
+                               << XBridgeTransactionDescr::trSigned
+                               << XBridgeTransactionDescr::trCommited;
 
     m_transactionsProxy.setAcceptedStates(transactionsAccetpedStates);
 
@@ -88,7 +88,7 @@ void XBridgeTransactionsView::setupUi()
 
     QHBoxLayout * hbox = new QHBoxLayout;
 
-    xbridge::Exchange & e = xbridge::Exchange::instance();
+    XBridgeExchange & e = XBridgeExchange::instance();
     if (!e.isEnabled())
     {
         QPushButton * addTxBtn = new QPushButton(trUtf8("New Transaction"), this);
@@ -129,13 +129,13 @@ void XBridgeTransactionsView::setupUi()
     m_historicTransactionsProxy.setSourceModel(&m_txModel);
     m_historicTransactionsProxy.setDynamicSortFilter(true);
 
-    QList<xbridge::TransactionDescr::State> historicTransactionsAccetpedStates;
-    historicTransactionsAccetpedStates << xbridge::TransactionDescr::trExpired
-                                       << xbridge::TransactionDescr::trOffline
-                                       << xbridge::TransactionDescr::trFinished
-                                       << xbridge::TransactionDescr::trDropped
-                                       << xbridge::TransactionDescr::trCancelled
-                                       << xbridge::TransactionDescr::trInvalid;
+    QList<XBridgeTransactionDescr::State> historicTransactionsAccetpedStates;
+    historicTransactionsAccetpedStates << XBridgeTransactionDescr::trExpired
+                                       << XBridgeTransactionDescr::trOffline
+                                       << XBridgeTransactionDescr::trFinished
+                                       << XBridgeTransactionDescr::trDropped
+                                       << XBridgeTransactionDescr::trCancelled
+                                       << XBridgeTransactionDescr::trInvalid;
 
     m_historicTransactionsProxy.setAcceptedStates(historicTransactionsAccetpedStates);
 
@@ -187,9 +187,9 @@ QMenu * XBridgeTransactionsView::setupContextMenu(QModelIndex & index)
     }
     else
     {
-        xbridge::TransactionDescrPtr d = m_txModel.item(m_contextMenuIndex.row());
+        XBridgeTransactionDescr d = m_txModel.item(m_contextMenuIndex.row());
 
-        if (d->state < xbridge::TransactionDescr::trCreated)
+        if (d.state < XBridgeTransactionDescr::trCreated)
         {
             QAction * cancelTransaction = new QAction(tr("&Cancel transaction"), this);
             contextMenu->addAction(cancelTransaction);
@@ -241,17 +241,17 @@ void XBridgeTransactionsView::onAcceptTransaction()
         return;
     }
 
-    xbridge::TransactionDescrPtr d = m_txModel.item(m_contextMenuIndex.row());
-    if (d->state != xbridge::TransactionDescr::trPending)
+    XBridgeTransactionDescr d = m_txModel.item(m_contextMenuIndex.row());
+    if (d.state != XBridgeTransactionDescr::trPending)
     {
         return;
     }
 
-    m_dlg.setPendingId(d->id, d->hubAddress);
-    m_dlg.setFromAmount((double)d->toAmount / xbridge::TransactionDescr::COIN);
-    m_dlg.setToAmount((double)d->fromAmount / xbridge::TransactionDescr::COIN);
-    m_dlg.setFromCurrency(QString::fromStdString(d->toCurrency));
-    m_dlg.setToCurrency(QString::fromStdString(d->fromCurrency));
+    m_dlg.setPendingId(d.id, d.hubAddress);
+    m_dlg.setFromAmount((double)d.toAmount / XBridgeTransactionDescr::COIN);
+    m_dlg.setToAmount((double)d.fromAmount / XBridgeTransactionDescr::COIN);
+    m_dlg.setFromCurrency(QString::fromStdString(d.toCurrency));
+    m_dlg.setToCurrency(QString::fromStdString(d.fromCurrency));
     m_dlg.show();
 }
 
@@ -273,7 +273,8 @@ void XBridgeTransactionsView::onCancelTransaction()
         return;
     }
 
-    if (!m_txModel.cancelTransaction(m_txModel.item(m_contextMenuIndex.row())->id))
+    const auto &id = m_txModel.item(m_contextMenuIndex.row()).id;
+    if (!m_txModel.cancelTransaction(id))
     {
         QMessageBox::warning(this,
                              trUtf8("Cancel transaction"),
@@ -299,7 +300,8 @@ void XBridgeTransactionsView::onRollbackTransaction()
         return;
     }
 
-    if (!m_txModel.rollbackTransaction(m_txModel.item(m_contextMenuIndex.row())->id))
+    const auto &id = m_txModel.item(m_contextMenuIndex.row()).id;
+    if (!m_txModel.rollbackTransaction(id))
     {
         QMessageBox::warning(this,
                              trUtf8("Cancel transaction"),
@@ -311,7 +313,7 @@ void XBridgeTransactionsView::onRollbackTransaction()
 //******************************************************************************
 void XBridgeTransactionsView::onContextMenu(QPoint /*pt*/)
 {
-    xbridge::Exchange & e = xbridge::Exchange::instance();
+    XBridgeExchange & e = XBridgeExchange::instance();
     if (e.isEnabled())
     {
         return;

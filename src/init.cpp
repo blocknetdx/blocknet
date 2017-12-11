@@ -33,6 +33,8 @@
 #include "utilmoneystr.h"
 #include "validationinterface.h"
 #include "xbridge/xbridgeapp.h"
+#include "coinvalidator.h"
+
 #ifdef ENABLE_WALLET
 #include "db.h"
 #include "wallet.h"
@@ -1197,6 +1199,9 @@ bool AppInit2(boost::thread_group& threadGroup)
 #endif
 
     // ********************************************************* Step 7: load block chain
+
+    // Load coin validator
+    CoinValidator::instance().LoadStatic();
 
     fReindex = GetBoolArg("-reindex", false);
 
