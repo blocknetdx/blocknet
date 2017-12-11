@@ -453,11 +453,14 @@ Value dxAcceptTransaction(const Array & params, bool fHelp)
                             "(address from) (address to)\n"
                             "Accept xbridge transaction.");
     }
-    if (params.size() != 3) {
-        Object error;
+    auto statusCode = xbridge::SUCCESS;
+
+    if ((params.size() != 3) && (params.size() != 4)) {
+        statusCode = xbridge::INVALID_PARAMETERS;
+        Object error;        
         error.emplace_back(Pair("error",
-                                "Invalid number of parameters"));
-        error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
+                                xbridge::xbridgeErrorText(statusCode)));
+        error.emplace_back(Pair("code", statusCode));
         return  error;
     }
 
@@ -465,19 +468,57 @@ Value dxAcceptTransaction(const Array & params, bool fHelp)
     std::string fromAddress    = params[1].get_str();
     std::string toAddress      = params[2].get_str();
 
-    if ((fromAddress.size() < 32 && fromAddress.size() > 36) ||
-            (toAddress.size() < 32 && toAddress.size() > 36)) {
+    if (!XBridgeApp::instance().isValidAddress(fromAddress)) {
+        statusCode = xbridge::INVALID_ADDRESS;
         Object error;
         error.emplace_back(Pair("error",
-                                "incorrect address"));
-        error.emplace_back(Pair("code", xbridge::INVALID_ADDRESS));
+                                xbridge::xbridgeErrorText(statusCode, fromAddress)));
+        error.emplace_back(Pair("code", statusCode));
         return  error;
     }
-
+    if (!XBridgeApp::instance().isValidAddress(toAddress)) {
+        statusCode = xbridge::INVALID_ADDRESS;
+        Object error;
+        error.emplace_back(Pair("error",
+                                xbridge::xbridgeErrorText(statusCode, toAddress)));
+        error.emplace_back(Pair("code", statusCode));
+        return  error;
+    }
+    bool validateParams = ((params.size() == 4) && (params[3].get_str() == "validate"));
+    //if validate mode enabled
+    if(validateParams) {
+        Object result;
+        XBridgeTransactionDescrPtr ptr;
+        statusCode = XBridgeApp::instance().validateAcceptParams(id, ptr);
+        switch (statusCode) {
+        case xbridge::SUCCESS:
+            result.emplace_back(Pair("status", "Accepted"));
+            result.emplace_back(Pair("id", uint256().GetHex()));
+            result.emplace_back(Pair("from", fromAddress));
+            result.emplace_back(Pair("to", toAddress));
+            return result;
+        case xbridge::TRANSACTION_NOT_FOUND:
+            result.emplace_back(Pair("error",
+                                    xbridge::xbridgeErrorText(statusCode, id.GetHex())));
+            break;
+        case xbridge::NO_SESSION:
+            result.emplace_back(Pair("error",
+                                    xbridge::xbridgeErrorText(statusCode, ptr->toCurrency)));
+            break;
+        case xbridge::INSIFFICIENT_FUNDS:
+            result.emplace_back(Pair("error",
+                                     xbridge::xbridgeErrorText(statusCode, ptr->to)));
+            break;
+        default:
+            result.emplace_back(Pair("error", xbridge::xbridgeErrorText(statusCode)));
+        }
+        result.emplace_back(Pair("code", statusCode));
+        return  result;
+    }
 
     uint256 idResult;
-    const auto error = XBridgeApp::instance().acceptXBridgeTransaction(id, fromAddress, toAddress, idResult);
-    if(error == xbridge::SUCCESS) {
+    statusCode = XBridgeApp::instance().acceptXBridgeTransaction(id, fromAddress, toAddress, idResult);
+    if(statusCode == xbridge::SUCCESS) {
         Object obj;
         obj.emplace_back(Pair("status", "Accepted"));
         obj.emplace_back(Pair("id",     id.GetHex()));
@@ -487,8 +528,8 @@ Value dxAcceptTransaction(const Array & params, bool fHelp)
     } else {
         Object obj;
         obj.emplace_back(Pair("error",
-                              xbridge::xbridgeErrorText(error)));
-        obj.emplace_back(Pair("code", error));
+                              xbridge::xbridgeErrorText(statusCode)));
+        obj.emplace_back(Pair("code", statusCode));
         return obj;
     }
 }
@@ -642,6 +683,31 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
          */
         Array asks;
 
+        std::vector<XBridgeTransactionDescrPtr> asksVector;
+        std::vector<XBridgeTransactionDescrPtr> bidsVector;
+
+        for (const auto &trEntry : asksList) {
+            asksVector.emplace_back(trEntry.second);
+        }
+
+        for (const auto &trEntry : bidsList) {
+            bidsVector.emplace_back(trEntry.second);
+        }
+
+        //sort descending
+        std::sort(bidsVector.begin(), bidsVector.end(),
+                  [](const XBridgeTransactionDescrPtr &a,  const XBridgeTransactionDescrPtr &b) {
+            const auto priceA = xBridgeValueFromAmount(a->fromAmount) / xBridgeValueFromAmount(a->toAmount);
+            const auto priceB = xBridgeValueFromAmount(b->fromAmount) / xBridgeValueFromAmount(b->toAmount);
+            return priceA > priceB;
+        });
+
+        std::sort(asksVector.begin(), asksVector.end(), [](const XBridgeTransactionDescrPtr &a,  const XBridgeTransactionDescrPtr &b){
+            const auto priceA = xBridgeValueFromAmount(a->fromAmount) / xBridgeValueFromAmount(a->toAmount);
+            const auto priceB = xBridgeValueFromAmount(b->fromAmount) / xBridgeValueFromAmount(b->toAmount);
+            return priceA < priceB;
+        });
+
         switch (detailLevel)
         {
         case 1:
@@ -660,9 +726,9 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
             {
                 const auto &tr = bidsItem->second;
                 const auto bidPrice = xBridgeValueFromAmount(tr->fromAmount) / xBridgeValueFromAmount(tr->toAmount);
-                bids.emplace_back(tr->id.GetHex());
                 bids.emplace_back(bidPrice);
                 bids.emplace_back(xBridgeValueFromAmount(tr->fromAmount));
+                bids.emplace_back(tr->id.GetHex());
             }
             ///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -679,42 +745,15 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
             {
                 const auto &tr = asksItem->second;
                 const auto askPrice = xBridgeValueFromAmount(tr->fromAmount) / xBridgeValueFromAmount(tr->toAmount);
-                asks.emplace_back(tr->id.GetHex());
                 asks.emplace_back(askPrice);
                 asks.emplace_back(xBridgeValueFromAmount(tr->fromAmount));
+                asks.emplace_back(tr->id.GetHex());
             }
             break;
         }
         case 2:
         {
             //Top X bids and asks (aggregated)
-
-            std::vector<XBridgeTransactionDescrPtr> asksVector;
-            std::vector<XBridgeTransactionDescrPtr> bidsVector;
-
-            for (const auto &trEntry : asksList) {
-                const auto &tr = trEntry.second;
-                asksVector.emplace_back(tr);
-            }
-
-            for (const auto &trEntry : bidsList) {
-                const auto &tr = trEntry.second;
-                bidsVector.emplace_back(tr);
-            }
-
-            //sort descending
-            std::sort(bidsVector.begin(), bidsVector.end(),
-                      [](const XBridgeTransactionDescrPtr &a,  const XBridgeTransactionDescrPtr &b) {
-                const auto priceA = xBridgeValueFromAmount(a->fromAmount) / xBridgeValueFromAmount(a->toAmount);
-                const auto priceB = xBridgeValueFromAmount(b->fromAmount) / xBridgeValueFromAmount(b->toAmount);
-                return priceA > priceB;
-            });
-
-            std::sort(asksVector.begin(), asksVector.end(), [](const XBridgeTransactionDescrPtr &a,  const XBridgeTransactionDescrPtr &b){
-                const auto priceA = xBridgeValueFromAmount(a->fromAmount) / xBridgeValueFromAmount(a->toAmount);
-                const auto priceB = xBridgeValueFromAmount(b->fromAmount) / xBridgeValueFromAmount(b->toAmount);
-                return priceA < priceB;
-            });
 
             /**
              * @brief bound - calculate upper bound
@@ -745,22 +784,21 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
         {
             //Full order book (non aggregated)
 
-            for (const auto &trEntry : bidsList) {
-                const auto &tr = trEntry.second;
+            for (const auto &tr : bidsVector) {
                 Array tmp;
                 const auto bidPrice = xBridgeValueFromAmount(tr->fromAmount) / xBridgeValueFromAmount(tr->toAmount);
-                tmp.emplace_back(tr->id.GetHex());
                 tmp.emplace_back(bidPrice);
                 tmp.emplace_back(xBridgeValueFromAmount(tr->fromAmount));
+                tmp.emplace_back(tr->id.GetHex());
                 bids.emplace_back(tmp);
+
             }
-            for (const auto &trEntry : asksList) {
-                const auto &tr = trEntry.second;
+            for (const auto &tr : asksVector) {
                 Array tmp;
                 const auto askPrice = xBridgeValueFromAmount(tr->fromAmount) / xBridgeValueFromAmount(tr->toAmount);
-                tmp.emplace_back(tr->id.GetHex());
                 tmp.emplace_back(askPrice);
                 tmp.emplace_back(xBridgeValueFromAmount(tr->fromAmount));
+                tmp.emplace_back(tr->id.GetHex());
                 asks.emplace_back(tmp);
             }
             break;
