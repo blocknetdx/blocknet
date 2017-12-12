@@ -49,13 +49,13 @@ public:
 
     bool isMyTransaction(const unsigned int index) const;
 
-    bool newTransaction(const std::string & from,
+    xbridge::Error newTransaction(const std::string & from,
                         const std::string & to,
                         const std::string & fromCurrency,
                         const std::string & toCurrency,
                         const double fromAmount,
                         const double toAmount);
-    bool newTransactionFromPending(const uint256 & id,
+    xbridge::Error newTransactionFromPending(const uint256 & id,
                                    const std::vector<unsigned char> & hub,
                                    const std::string & from,
                                    const std::string & to);
@@ -63,22 +63,21 @@ public:
     bool cancelTransaction(const uint256 & id);
     bool rollbackTransaction(const uint256 & id);
 
-    xbridge::TransactionDescr item(const unsigned int index) const;
+    xbridge::TransactionDescrPtr item(const unsigned int index) const;
 
 private slots:
     void onTimer();
 
 private:
-    void onTransactionReceived(const xbridge::TransactionDescr & tx);
-    void onTransactionStateChanged(const uint256 & id, const uint32_t state);
-    void onTransactionCancelled(const uint256 & id, const uint32_t state, const uint32_t reason);
+    void onTransactionReceived(const xbridge::TransactionDescrPtr & tx);
+    void onTransactionStateChanged(const uint256 & id);
 
     QString transactionState(const xbridge::TransactionDescr::State state) const;
 
 private:
     QStringList m_columns;
 
-    std::vector<xbridge::TransactionDescr> m_transactions;
+    std::vector<xbridge::TransactionDescrPtr> m_transactions;
 
     QTimer m_timer;
 };

@@ -214,6 +214,8 @@ void Transaction::updateTimestamp()
     m_created = boost::posix_time::second_clock::universal_time();
 }
 
+//*****************************************************************************
+//*****************************************************************************
 boost::posix_time::ptime Transaction::createdTime() const
 {
     return m_created;

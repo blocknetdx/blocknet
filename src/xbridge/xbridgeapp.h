@@ -73,7 +73,7 @@ public:
 
     Error acceptXBridgeTransaction(const uint256 & id,
                                      const std::string & from,
-                                     const std::string & to, uint256 &result);
+                                     const std::string & to);
     bool sendAcceptingTransaction(const TransactionDescrPtr & ptr);
 
     xbridge::Error cancelXBridgeTransaction(const uint256 & id, const TxCancelReason & reason);

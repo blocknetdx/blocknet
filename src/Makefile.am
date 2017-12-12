@@ -354,18 +354,10 @@ libxbridge_xbridge_a_SOURCES = \
   xbridge/xbridgeapp.cpp \
   xbridge/xbridgeexchange.cpp \
   xbridge/xbridgesession.cpp \
-<<<<<<< HEAD
-=======
   xbridge/xbridgeservicesession.cpp \
   xbridge/xbridgesessionbtc.cpp \
-  xbridge/xbridgesessionbcc.cpp \
-  xbridge/xbridgesessiondcr.cpp \
->>>>>>> origin/3.7.47
   xbridge/xbridgetransaction.cpp \
   xbridge/xbridgetransactionmember.cpp \
-  xbridge/xbridgewalletconnector.cpp \
-  xbridge/xbridgewalletconnectorbtc.cpp \
-  xbridge/xbridgewalletconnectorbcc.cpp \
   xbridge/xkey.cpp \
   xbridge/xpubkey.cpp \
   xbridge/xbitcoinaddress.cpp \
@@ -384,13 +376,6 @@ libxbridge_xbridge_a_SOURCES = \
   xbridge/xbridgepacket.h \
   xbridge/xbridgerpc.h \
   xbridge/xbridgesession.h \
-<<<<<<< HEAD
-=======
-  xbridge/xbridgeservicesession.h \
-  xbridge/xbridgesessionbtc.h \
-  xbridge/xbridgesessionbcc.h \
-  xbridge/xbridgesessiondcr.h \
->>>>>>> origin/3.7.47
   xbridge/xbridgetransaction.h \
   xbridge/xbridgetransactiondescr.h \
   xbridge/xbridgetransactionmember.h \

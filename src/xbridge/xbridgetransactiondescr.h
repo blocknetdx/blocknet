@@ -24,7 +24,6 @@ struct TransactionDescr
 {
     enum
     {
-        MIN_TX_FEE = 100,
         COIN = 1000000
     };
 
@@ -36,6 +35,7 @@ struct TransactionDescr
         trPending,
         trAccepting,
         trHold,
+        trInitialized,
         trCreated,
         trSigned,
         trCommited,

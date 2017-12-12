@@ -792,7 +792,7 @@ void App::moveTransactionToHistory(const uint256 & id)
 
 //******************************************************************************
 //******************************************************************************
-Error  App::sendXBridgeTransaction(const std::string & from,
+xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                                        const std::string & fromCurrency,
                                        const uint64_t & fromAmount,
                                        const std::string & to,
@@ -943,10 +943,9 @@ bool App::sendPendingTransaction(const TransactionDescrPtr & ptr)
 
 //******************************************************************************
 //******************************************************************************
-Error App::acceptXBridgeTransaction(const uint256 &id,
-                                             const std::string &from,
-                                             const std::string &to,
-                                             uint256 & result)
+Error App::acceptXBridgeTransaction(const uint256     & id,
+                                    const std::string & from,
+                                    const std::string & to)
 {
     TransactionDescrPtr ptr;
 
@@ -1152,11 +1151,11 @@ bool App::sendRollbackTransaction(const uint256 & txid)
 }
 
 //******************************************************************************
+
 //******************************************************************************
 void App::Impl::onTimer()
 {
     // DEBUG_TRACE();
-
     {
         m_services.push_back(m_services.front());
         m_services.pop_front();
@@ -1185,13 +1184,13 @@ void App::Impl::onTimer()
                 map = m_pendingPackets;
                 m_pendingPackets.clear();
             }
-
             for (const std::pair<uint256, XBridgePacketPtr> & item : map)
             {
-                xbridge::SessionPtr s = getSession();
 
+                xbridge::SessionPtr s = getSession();
                 XBridgePacketPtr packet   = item.second;
                 io->post(boost::bind(&xbridge::Session::processPacket, s, packet));
+
             }
         }
     }
@@ -1201,3 +1200,4 @@ void App::Impl::onTimer()
 }
 
 } // namespace xbridge
+
