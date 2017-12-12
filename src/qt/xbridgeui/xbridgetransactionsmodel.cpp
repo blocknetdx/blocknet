@@ -139,12 +139,12 @@ QVariant XBridgeTransactionsModel::headerData(int section, Qt::Orientation orien
 
 //******************************************************************************
 //******************************************************************************
-XBridgeTransactionDescr XBridgeTransactionsModel::item(const unsigned int index) const
+xbridge::TransactionDescr XBridgeTransactionsModel::item(const unsigned int index) const
 {
     if (index >= m_transactions.size())
     {
-        XBridgeTransactionDescr dummy;
-        dummy.state = XBridgeTransactionDescr::trInvalid;
+        xbridge::TransactionDescr dummy;
+        dummy.state = xbridge::TransactionDescr::trInvalid;
         return dummy;
     }
 
@@ -317,11 +317,11 @@ void XBridgeTransactionsModel::onTimer()
 
 //******************************************************************************
 //******************************************************************************
-void XBridgeTransactionsModel::onTransactionReceived(const XBridgeTransactionDescr & tx)
+void XBridgeTransactionsModel::onTransactionReceived(const xbridge::TransactionDescr &tx)
 {
     for (unsigned int i = 0; i < m_transactions.size(); ++i)
     {
-        const XBridgeTransactionDescr & descr = m_transactions.at(i);
+        const xbridge::TransactionDescr & descr = m_transactions.at(i);
         if (descr.id != tx.id)
         {
             continue;

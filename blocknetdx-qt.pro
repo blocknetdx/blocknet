@@ -273,11 +273,9 @@ SOURCES += \
     src/xbridge/util/txlog.cpp \
     src/xbridge/util/xutil.cpp \
     src/xbridge/bitcoinrpcconnector.cpp \
-    src/xbridge/xbridge.cpp \
     src/xbridge/xbridgeapp.cpp \
     src/xbridge/xbridgeexchange.cpp \
     src/xbridge/xbridgesession.cpp \
-    src/xbridge/xbridgesessionbtc.cpp \
     src/xbridge/xbridgetransaction.cpp \
     src/xbridge/xbridgetransactionmember.cpp \
     src/support/cleanse.cpp \
@@ -557,12 +555,10 @@ HEADERS += \
     src/xbridge/util/xutil.h \
     src/xbridge/bitcoinrpcconnector.h \
     src/xbridge/version.h \
-    src/xbridge/xbridge.h \
     src/xbridge/xbridgeapp.h \
     src/xbridge/xbridgeexchange.h \
     src/xbridge/xbridgepacket.h \
     src/xbridge/xbridgesession.h \
-    src/xbridge/xbridgesessionbtc.h \
     src/xbridge/xbridgetransaction.h \
     src/xbridge/xbridgetransactiondescr.h \
     src/xbridge/xbridgetransactionmember.h \

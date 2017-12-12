@@ -63,17 +63,18 @@ public:
     void moveTransactionToHistory(const uint256 & id);
 
     Error sendXBridgeTransaction(const std::string & from,
-                                   const std::string & fromCurrency,
-                                   const uint64_t & fromAmount,
-                                   const std::string & to,
-                                   const std::string & toCurrency,
-                                   const uint64_t & toAmount);
-    bool sendPendingTransaction(TransactionDescrPtr & ptr);
+                                 const std::string & fromCurrency,
+                                 const uint64_t & fromAmount,
+                                 const std::string & to,
+                                 const std::string & toCurrency,
+                                 const uint64_t & toAmount,
+                                 uint256 & id);
+    bool sendPendingTransaction(const TransactionDescrPtr & ptr);
 
     Error acceptXBridgeTransaction(const uint256 & id,
                                      const std::string & from,
                                      const std::string & to, uint256 &result);
-    bool sendAcceptingTransaction(TransactionDescrPtr & ptr);
+    bool sendAcceptingTransaction(const TransactionDescrPtr & ptr);
 
     xbridge::Error cancelXBridgeTransaction(const uint256 & id, const TxCancelReason & reason);
     bool sendCancelTransaction(const uint256 & txid, const TxCancelReason & reason);

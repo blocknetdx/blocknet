@@ -135,7 +135,12 @@ bool PaymentRequestPlus::getMerchant(X509_STORE* certStore, QString& merchant) c
     char* website = NULL;
     bool fResult = true;
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
     EVP_MD_CTX * ctx = EVP_MD_CTX_new();
+#else
+    EVP_MD_CTX ctxobj;
+    EVP_MD_CTX * ctx = &ctxobj;
+#endif
 
     try {
         if (!X509_STORE_CTX_init(store_ctx, certStore, signing_cert, chain)) {
@@ -186,7 +191,9 @@ bool PaymentRequestPlus::getMerchant(X509_STORE* certStore, QString& merchant) c
     for (unsigned int i = 0; i < certs.size(); i++)
         X509_free(certs[i]);
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
     EVP_MD_CTX_free(ctx);
+#endif
 
     return fResult;
 }

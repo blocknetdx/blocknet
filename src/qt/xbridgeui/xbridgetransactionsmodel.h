@@ -63,22 +63,22 @@ public:
     bool cancelTransaction(const uint256 & id);
     bool rollbackTransaction(const uint256 & id);
 
-    XBridgeTransactionDescr item(const unsigned int index) const;
+    xbridge::TransactionDescr item(const unsigned int index) const;
 
 private slots:
     void onTimer();
 
 private:
-    void onTransactionReceived(const XBridgeTransactionDescr & tx);
+    void onTransactionReceived(const xbridge::TransactionDescr & tx);
     void onTransactionStateChanged(const uint256 & id, const uint32_t state);
     void onTransactionCancelled(const uint256 & id, const uint32_t state, const uint32_t reason);
 
-    QString transactionState(const XBridgeTransactionDescr::State state) const;
+    QString transactionState(const xbridge::TransactionDescr::State state) const;
 
 private:
     QStringList m_columns;
 
-    std::vector<XBridgeTransactionDescr> m_transactions;
+    std::vector<xbridge::TransactionDescr> m_transactions;
 
     QTimer m_timer;
 };

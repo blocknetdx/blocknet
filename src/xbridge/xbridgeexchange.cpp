@@ -646,3 +646,5 @@ void Exchange::addToTransactionsHistory(const uint256 &id)
     LOG() << "Nothing to add to transactions history";
 }
 
+} // namespace xbridge
+
