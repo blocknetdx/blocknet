@@ -391,7 +391,7 @@ Value dxGetCurrencies(const Array & params, bool fHelp)
 
 //******************************************************************************
 //******************************************************************************
-Value dxCreateTransaction(const Array & params, bool fHelp)
+Value dxCreateTransaction(const Array &params, bool fHelp)
 {
     if (fHelp) {
         throw runtime_error("dxCreateTransaction "

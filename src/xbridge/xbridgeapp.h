@@ -74,9 +74,21 @@ public:
     xbridge::Error rollbackXBridgeTransaction(const uint256 &id);
     bool sendRollbackTransaction(const uint256 &txid);
 
+    /**
+     * @brief isValidAddress
+     * @param address
+     * @return
+     */
     bool isValidAddress(const std::string &address) const;
 
+    /**
+     * @brief validateAcceptParams
+     * @param id
+     * @param ptr
+     * @return
+     */
     xbridge::Error validateAcceptParams(const uint256 &id, XBridgeTransactionDescrPtr &ptr);
+
 
 public:
     bool stop();
