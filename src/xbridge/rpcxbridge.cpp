@@ -407,39 +407,87 @@ Value dxCreateTransaction(const Array &params, bool fHelp)
         return  error;
     }
 
-    std::string from            = params[0].get_str();
+    std::string fromAddress     = params[0].get_str();
     std::string fromCurrency    = params[1].get_str();
     double      fromAmount      = params[2].get_real();
-    std::string to              = params[3].get_str();
+    std::string toAddress       = params[3].get_str();
     std::string toCurrency      = params[4].get_str();
     double      toAmount        = params[5].get_real();
 
-    if ((from.size() < 32 && from.size() > 36) ||
-            (to.size() < 32 && to.size() > 36)) {
+    auto statusCode = xbridge::SUCCESS;
+
+    if (!XBridgeApp::instance().isValidAddress(fromAddress)) {
+        statusCode = xbridge::INVALID_ADDRESS;
         Object error;
-        error.emplace_back(Pair("error", "Incorrect address"));
-        error.emplace_back(Pair("code", xbridge::INVALID_ADDRESS));
+        error.emplace_back(Pair("error",
+                                xbridge::xbridgeErrorText(statusCode, fromAddress)));
+        error.emplace_back(Pair("code", statusCode));
         return  error;
+    }
+    if (!XBridgeApp::instance().isValidAddress(toAddress)) {
+        statusCode = xbridge::INVALID_ADDRESS;
+        Object error;
+        error.emplace_back(Pair("error",
+                                xbridge::xbridgeErrorText(statusCode, toAddress)));
+        error.emplace_back(Pair("code", statusCode));
+        return  error;
+    }
+    bool validateParams = ((params.size() == 7) && (params[6].get_str() == "validate"));
+
+    //if validate mode enabled
+    if(validateParams) {
+        Object result;
+        statusCode = XBridgeApp::instance().checkCreateParams(fromCurrency, toCurrency,
+                                                              xBridgeAmountFromReal(fromAmount));
+        switch (statusCode) {
+        case xbridge::SUCCESS:
+            result.emplace_back(Pair("status",         "created"));
+            result.emplace_back(Pair("id",             uint256().GetHex()));
+            result.emplace_back(Pair("from",           fromAddress));
+            result.emplace_back(Pair("fromCurrency",   fromCurrency));
+            result.emplace_back(Pair("fromAmount",     fromAmount));
+            result.emplace_back(Pair("to",             toAddress));
+            result.emplace_back(Pair("toCurrency",     toCurrency));
+            result.emplace_back(Pair("toAmount",       toAmount));
+            return result;
+        case xbridge::INVALID_CURRENCY:
+            result.emplace_back(Pair("error",
+                                    xbridge::xbridgeErrorText(statusCode, fromCurrency)));
+            break;
+        case xbridge::NO_SESSION:
+            result.emplace_back(Pair("error",
+                                    xbridge::xbridgeErrorText(statusCode, fromCurrency)));
+            break;
+        case xbridge::INSIFFICIENT_FUNDS:
+            result.emplace_back(Pair("error",
+                                     xbridge::xbridgeErrorText(statusCode, toAddress)));
+            break;
+        default:
+            result.emplace_back(Pair("error", xbridge::xbridgeErrorText(statusCode)));
+        }
+        result.emplace_back(Pair("code", statusCode));
+        return  result;
     }
 
     uint256 id = uint256();
-    const auto res = XBridgeApp::instance().sendXBridgeTransaction
-          (from, fromCurrency, xBridgeAmountFromReal(fromAmount),
-           to, toCurrency, xBridgeAmountFromReal(toAmount), id);
+    statusCode = XBridgeApp::instance().sendXBridgeTransaction
+          (fromAddress, fromCurrency, xBridgeAmountFromReal(fromAmount),
+           toAddress, toCurrency, xBridgeAmountFromReal(toAmount), id);
 
-    if(res == xbridge::SUCCESS) {
+    if(statusCode== xbridge::SUCCESS) {
         Object obj;
-        obj.emplace_back(Pair("from",           from));
+        obj.emplace_back(Pair("id",             id.GetHex()));
+        obj.emplace_back(Pair("from",           fromAddress));
         obj.emplace_back(Pair("fromCurrency",   fromCurrency));
         obj.emplace_back(Pair("fromAmount",     fromAmount));
-        obj.emplace_back(Pair("to",             to));
+        obj.emplace_back(Pair("to",             toAddress));
         obj.emplace_back(Pair("toCurrency",     toCurrency));
         obj.emplace_back(Pair("toAmount",       toAmount));
         return obj;
     } else {
         Object error;
-        error.emplace_back(Pair("error", xbridge::xbridgeErrorText(res)));
-        error.emplace_back(Pair("code", res));
+        error.emplace_back(Pair("error", xbridge::xbridgeErrorText(statusCode)));
+        error.emplace_back(Pair("code", statusCode));
         return error;
     }
 }
@@ -489,7 +537,7 @@ Value dxAcceptTransaction(const Array & params, bool fHelp)
     if(validateParams) {
         Object result;
         XBridgeTransactionDescrPtr ptr;
-        statusCode = XBridgeApp::instance().validateAcceptParams(id, ptr);
+        statusCode = XBridgeApp::instance().checkAcceptParams(id, ptr);
         switch (statusCode) {
         case xbridge::SUCCESS:
             result.emplace_back(Pair("status", "Accepted"));
