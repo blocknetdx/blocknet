@@ -75,21 +75,37 @@ public:
     bool sendRollbackTransaction(const uint256 &txid);
 
     /**
-     * @brief isValidAddress
-     * @param address
-     * @return
+     * @brief isValidAddress checks the correctness of the address
+     * @param address checked address
+     * @return true, if address valid
      */
     bool isValidAddress(const std::string &address) const;
 
     /**
-     * @brief validateAcceptParams
-     * @param id
-     * @param ptr
-     * @return
+     * @brief checkAcceptParams checks the correctness of the parameters
+     * @param id - id accepted transaction
+     * @param ptr - smart pointer to accepted transaction
+     * @return xbridge::SUCCESS, if all parameters valid
      */
-    xbridge::Error validateAcceptParams(const uint256 &id, XBridgeTransactionDescrPtr &ptr);
+    xbridge::Error checkAcceptParams(const uint256 &id, XBridgeTransactionDescrPtr &ptr);
 
+    /**
+     * @brief checkCreateParams - checks parameter needs to success created transaction
+     * @param fromCurrency - from currency
+     * @param toCurrency - to currency
+     * @param fromAmount -  amount
+     * @return xbridge::SUCCES, if all parameters valid
+     */
+    xbridge::Error checkCreateParams(const std::string &fromCurrency, const std::string &toCurrency, const uint64_t &fromAmount);
 
+    /**
+     * @brief checkAmount - checks wallet balance
+     * @param currency - currency name
+     * @param amount - amount
+     * @return xbridge::SUCCES, if  the session currency is open and
+     * on account has sufficient funds for operations
+     */
+    xbridge::Error checkAmount(const std::string &currency, const uint64_t &amount);
 public:
     bool stop();
 
