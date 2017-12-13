@@ -201,10 +201,9 @@ Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp)
         const auto toCurrency       = params[1].get_str();
         const auto startTimeFrame   = params[2].get_int();
         const auto endTimeFrame     = params[3].get_int();
-        bool isShowTxids = false;
-        if(params.size() == 5) {
-            isShowTxids = (params[4].get_str() == "txids");
-        }
+
+        bool isShowTxids = (params.size() == 5) && (params[4].get_str() == "txids");
+
 
         TransactionMap trList;
         std::vector<XBridgeTransactionDescrPtr> trVector;
