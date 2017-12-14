@@ -13,10 +13,12 @@
 #include <boost/signals2.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+
+
 #include <stdio.h>
 #include <atomic>
 #include <numeric>
-
+#include <math.h>
 #include "util/settings.h"
 #include "util/logger.h"
 #include "util/xbridgeerror.h"
@@ -29,6 +31,9 @@ using namespace json_spirit;
 using namespace std;
 using namespace boost;
 using namespace boost::asio;
+using namespace boost::math;
+
+
 
 using TransactionMap    = std::map<uint256, XBridgeTransactionDescrPtr>;
 using TransactionPair   = std::pair<uint256, XBridgeTransactionDescrPtr>;
@@ -651,7 +656,7 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                             "(the level of detail) (from currency) (to currency) "
                             "(max orders - optional, default = 50) ");
     }
-    if ((params.size() != 3 && params.size() != 4)) {
+    if ((params.size() < 3 || params.size() > 5)) {
         Object error;
         error.emplace_back(Pair("error",
                                 "Invalid number of parameters"));
@@ -684,6 +689,7 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
         const auto detailLevel  = params[0].get_int();
         const auto fromCurrency = params[1].get_str();
         const auto toCurrency   = params[2].get_str();
+        bool isShowTxids = (params.size() == 5) && (params[4].get_str() == "txids");
 
         if (detailLevel < 1 || detailLevel > 3) {
             Object error;
@@ -695,7 +701,7 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
 
         std::size_t maxOrders = 50;
         if(detailLevel == 2 && params.size() == 4) {
-            maxOrders = params[3].get_int();;
+            maxOrders = params[3].get_int();
         }
         if(maxOrders < 1) {
             Object error;
@@ -775,7 +781,9 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 const auto bidPrice = xBridgeValueFromAmount(tr->fromAmount) / xBridgeValueFromAmount(tr->toAmount);
                 bids.emplace_back(bidPrice);
                 bids.emplace_back(xBridgeValueFromAmount(tr->fromAmount));
-                bids.emplace_back(tr->id.GetHex());
+                if(isShowTxids) {
+                    bids.emplace_back(tr->id.GetHex());
+                }
             }
             ///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -794,7 +802,9 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 const auto askPrice = xBridgeValueFromAmount(tr->fromAmount) / xBridgeValueFromAmount(tr->toAmount);
                 asks.emplace_back(askPrice);
                 asks.emplace_back(xBridgeValueFromAmount(tr->fromAmount));
-                asks.emplace_back(tr->id.GetHex());
+                if(isShowTxids) {
+                    asks.emplace_back(tr->id.GetHex());
+                }
             }
             break;
         }
@@ -806,23 +816,78 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
              * @brief bound - calculate upper bound
              */
             auto bound = std::min(maxOrders, bidsVector.size());
-            for(size_t i = 0; i < bound; i++) {
+
+            // floating point comparisons
+            // see Knuth 4.2.2 Eq 36
+            auto floatCompare = [](const double a, const double b) -> bool {
+                auto epsilon = std::numeric_limits<double>::epsilon();
+                return (fabs(a - b) / fabs(a) <= epsilon  ) && (fabs(a - b) / fabs(b) <= epsilon);
+            };
+            for(size_t i = 0; i < bound;) {
                 Array tmp;
                 //calculate bids and push to array
-                const auto bidPrice = xBridgeValueFromAmount(bidsVector[i]->fromAmount) / xBridgeValueFromAmount(bidsVector[i]->toAmount);
-                tmp.emplace_back(bidsVector[i]->id.GetHex());
+                const auto fromAmount   = bidsVector[i]->fromAmount;
+                const auto toAmount     = bidsVector[i]->toAmount;
+                const auto bidPrice     = xBridgeValueFromAmount(fromAmount) / xBridgeValueFromAmount(toAmount);
+                auto volume             = xBridgeValueFromAmount(bidsVector[i]->fromAmount);
+                size_t j = i + 1;
                 tmp.emplace_back(bidPrice);
-                tmp.emplace_back(xBridgeValueFromAmount(bidsVector[i]->fromAmount));
+                Array txids;
+                if(isShowTxids) {
+                    txids.emplace_back(bidsVector[i]->id.GetHex());
+                }
+                while(j < bound) {
+                    const auto fromAmount2  = bidsVector[j]->fromAmount;
+                    const auto toAmount2    = bidsVector[j]->toAmount;
+                    const auto bidPrice2    = xBridgeValueFromAmount(fromAmount2) / xBridgeValueFromAmount(toAmount2);
+                    if(!floatCompare(bidPrice, bidPrice2)) {
+                        i = j;
+                        tmp.emplace_back(volume);
+                        if(isShowTxids) {
+                            tmp.emplace_back(txids);
+                        }
+                        break;
+                    }
+                    volume += xBridgeValueFromAmount(bidsVector[j]->fromAmount);
+                    if(isShowTxids) {
+                        txids.emplace_back(bidsVector[j]->id.GetHex());
+                    }
+                    j++;
+                }
                 bids.emplace_back(tmp);
             }
             bound = std::min(maxOrders, asksVector.size());
-            for(size_t  i = 0; i < bound; i++ ) {
+            for(size_t  i = 0; i < bound; ) {
                 Array tmp;
                 //calculate asks and push to array
-                const auto askPrice = xBridgeValueFromAmount(asksVector[i]->fromAmount) / xBridgeValueFromAmount(asksVector[i]->toAmount);
-                tmp.emplace_back(asksVector[i]->id.GetHex());
+                const auto fromAmount   = asksVector[i]->fromAmount;
+                const auto toAmount     = asksVector[i]->toAmount;
+                const auto askPrice     = xBridgeValueFromAmount(fromAmount) / xBridgeValueFromAmount(toAmount);
+                auto volume             = xBridgeValueFromAmount(asksVector[i]->fromAmount);
+                size_t j = i + 1;
                 tmp.emplace_back(askPrice);
-                tmp.emplace_back(xBridgeValueFromAmount(asksVector[i]->fromAmount));
+                Array txids;
+                if(isShowTxids) {
+                    txids.emplace_back(asksVector[i]->id.GetHex());
+                }
+                while(j < bound) {
+                    const auto fromAmount2  = asksVector[j]->fromAmount;
+                    const auto toAmount2    = asksVector[j]->toAmount;
+                    const auto askPrice2    = xBridgeValueFromAmount(fromAmount2) / xBridgeValueFromAmount(toAmount2);
+                    if(!floatCompare(askPrice, askPrice2)) {
+                        i = j;
+                        tmp.emplace_back(volume);
+                        if(isShowTxids) {
+                            tmp.emplace_back(txids);
+                        }
+                        break;
+                    }
+                    volume += xBridgeValueFromAmount(asksVector[j]->fromAmount);
+                    if(isShowTxids) {
+                        txids.emplace_back(asksVector[j]->id.GetHex());
+                    }
+                    j++;
+                }
                 asks.emplace_back(tmp);
             }
             break;
@@ -851,7 +916,6 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
             break;
         }
         default:
-            LOG() << "invalid detail level value: " << detailLevel << ", " << __FUNCTION__;
             Object error;
             error.emplace_back(Pair("error",
                                     "invalid detail level value:"));
