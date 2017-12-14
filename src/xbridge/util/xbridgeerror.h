@@ -15,6 +15,8 @@ namespace xbridge
         UNKNOWN_SESSION,
         REVERT_TX_FAILED,
         INVALID_AMOUNT,
+        INVALID_PARAMETERS,
+        INVALID_ADDRESS,
         UNKNOWN_ERROR
     };
 
@@ -24,6 +26,6 @@ namespace xbridge
      * @param argumrnt
      * @return
      */
-    const std::string xbridgeErrorText(const Error error, const std::string &argumrnt = "");
+    const std::string xbridgeErrorText(const Error error, const std::string &argument = "");
 }
 #endif // XBRIDGEERROR_H
