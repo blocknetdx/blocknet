@@ -13,7 +13,7 @@
 
 static const int PROTOCOL_VERSION = 70712;
 
-static const int SERVICENODE_WITH_XBRIDGE_INFO_PROTO_VERSION = 70712;
+static const int SERVICENODE_WITH_XWALLETS_IN_PING_VERSION = 70712;
 
 //! initial proto version, to be increased after version/verack negotiation
 static const int INIT_PROTO_VERSION = 209;

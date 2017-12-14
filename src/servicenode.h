@@ -77,14 +77,8 @@ public:
         READWRITE(blockHash);
         READWRITE(sigTime);
         READWRITE(vchSig);
-        if (nType == SER_NETWORK && nVersion >= SERVICENODE_WITH_XBRIDGE_INFO_PROTO_VERSION)
-        {
+        if (nVersion >= SERVICENODE_WITH_XWALLETS_IN_PING_VERSION)
             READWRITE(connectedWallets);
-        }
-        else if (nType != SER_NETWORK)
-        {
-            READWRITE(connectedWallets);
-        }
     }
 
     bool CheckAndUpdate(int& nDos, bool fRequireEnabled = true);
