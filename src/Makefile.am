@@ -354,10 +354,11 @@ libxbridge_xbridge_a_SOURCES = \
   xbridge/xbridgeapp.cpp \
   xbridge/xbridgeexchange.cpp \
   xbridge/xbridgesession.cpp \
-  xbridge/xbridgeservicesession.cpp \
-  xbridge/xbridgesessionbtc.cpp \
   xbridge/xbridgetransaction.cpp \
   xbridge/xbridgetransactionmember.cpp \
+  xbridge/xbridgewalletconnector.cpp \
+  xbridge/xbridgewalletconnectorbtc.cpp \
+  xbridge/xbridgewalletconnectorbcc.cpp \
   xbridge/xkey.cpp \
   xbridge/xpubkey.cpp \
   xbridge/xbitcoinaddress.cpp \
