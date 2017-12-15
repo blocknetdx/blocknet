@@ -17,9 +17,32 @@
 namespace xbridge
 {
 
+//******************************************************************************
+//******************************************************************************
+class Exchange::Impl
+{
+    friend class Exchange;
+
+protected:
+    std::list<TransactionPtr> transactions(bool onlyFinished) const;
+
+protected:
+    // connected wallets
+    typedef std::map<std::string, WalletParam> WalletList;
+    WalletList                               m_wallets;
+
+    mutable boost::mutex                     m_pendingTransactionsLock;
+    std::map<uint256, uint256>               m_hashToIdMap;
+    std::map<uint256, TransactionPtr>        m_pendingTransactions;
+
+    mutable boost::mutex                     m_transactionsLock;
+    std::map<uint256, TransactionPtr>        m_transactions;
+};
+
 //*****************************************************************************
 //*****************************************************************************
 Exchange::Exchange()
+    : m_p(new Impl)
 {
 }
 
@@ -73,7 +96,7 @@ bool Exchange::init()
             continue;
         }
 
-        WalletParam & wp = m_wallets[*i];
+        WalletParam & wp = m_p->m_wallets[*i];
         wp.currency   = *i;
         wp.title      = label;
         wp.m_ip         = ip;
@@ -106,7 +129,7 @@ bool Exchange::init()
 //*****************************************************************************
 bool Exchange::isEnabled()
 {
-    return ((m_wallets.size() > 0) && fServiceNode);
+    return ((m_p->m_wallets.size() > 0) && fServiceNode);
 }
 
 //*****************************************************************************
@@ -120,7 +143,7 @@ bool Exchange::isStarted()
 //*****************************************************************************
 bool Exchange::haveConnectedWallet(const std::string & walletName)
 {
-    return m_wallets.count(walletName) > 0;
+    return m_p->m_wallets.count(walletName) > 0;
 }
 
 //*****************************************************************************
@@ -128,26 +151,12 @@ bool Exchange::haveConnectedWallet(const std::string & walletName)
 std::vector<std::string> Exchange::connectedWallets() const
 {
     std::vector<std::string> list;
-    for (const auto & wallet : m_wallets)
+    for (const auto & wallet : m_p->m_wallets)
     {
         list.push_back(wallet.first);
     }
     return list;
 }
-
-//*****************************************************************************
-//*****************************************************************************
-//std::vector<unsigned char> XBridgeExchange::walletAddress(const std::string & walletName)
-//{
-//    if (!m_wallets.count(walletName))
-//    {
-//        ERR() << "reqyest address for unknown wallet <" << walletName
-//              << ">" << __FUNCTION__;
-//        return std::vector<unsigned char>();
-//    }
-
-//    return m_wallets[walletName].address;
-//}
 
 //*****************************************************************************
 //*****************************************************************************
@@ -172,8 +181,8 @@ bool Exchange::createTransaction(const uint256                    & id,
         return false;
     }
 
-    const WalletParam & wp  = m_wallets[sourceCurrency];
-    const WalletParam & wp2 = m_wallets[destCurrency];
+    const WalletParam & wp  = m_p->m_wallets[sourceCurrency];
+    const WalletParam & wp2 = m_p->m_wallets[destCurrency];
 
     // check amounts
     {
@@ -194,10 +203,10 @@ bool Exchange::createTransaction(const uint256                    & id,
     }
 
     TransactionPtr tr(new xbridge::Transaction(id,
-                                                    sourceAddr,
-                                                    sourceCurrency, sourceAmount,
-                                                    destAddr,
-                                                    destCurrency, destAmount));
+                                               sourceAddr,
+                                               sourceCurrency, sourceAmount,
+                                               destAddr,
+                                               destCurrency, destAmount));
 
     LOG() << tr->hash1().ToString();
     LOG() << tr->hash2().ToString();
@@ -211,28 +220,28 @@ bool Exchange::createTransaction(const uint256                    & id,
     pendingId = h;
 
     {
-        boost::mutex::scoped_lock l(m_pendingTransactionsLock);
+        boost::mutex::scoped_lock l(m_p->m_pendingTransactionsLock);
 
-        if (!m_pendingTransactions.count(h))
+        if (!m_p->m_pendingTransactions.count(h))
         {
             // new transaction
             isCreated = true;
             pendingId = h = tr->hash1();
-            m_pendingTransactions[h] = tr;
+            m_p->m_pendingTransactions[h] = tr;
         }
         else
         {
-            boost::mutex::scoped_lock l2(m_pendingTransactions[h]->m_lock);
+            boost::mutex::scoped_lock l2(m_p->m_pendingTransactions[h]->m_lock);
 
             // found, check if expired
-            if (m_pendingTransactions[h]->isExpired())
+            if (m_p->m_pendingTransactions[h]->isExpired())
             {
                 // if expired - delete old transaction
-                m_pendingTransactions.erase(h);
+                m_p->m_pendingTransactions.erase(h);
 
                 // create new
                 pendingId = h = tr->hash1();
-                m_pendingTransactions[h] = tr;
+                m_p->m_pendingTransactions[h] = tr;
             }
         }
     }
@@ -243,13 +252,13 @@ bool Exchange::createTransaction(const uint256                    & id,
 //*****************************************************************************
 //*****************************************************************************
 bool Exchange::acceptTransaction(const uint256                    & id,
-                                        const std::vector<unsigned char> & sourceAddr,
-                                        const std::string                & sourceCurrency,
-                                        const uint64_t                   & sourceAmount,
-                                        const std::vector<unsigned char> & destAddr,
-                                        const std::string                & destCurrency,
-                                        const uint64_t                   & destAmount,
-                                        uint256                          & transactionId)
+                                 const std::vector<unsigned char> & sourceAddr,
+                                 const std::string                & sourceCurrency,
+                                 const uint64_t                   & sourceAmount,
+                                 const std::vector<unsigned char> & destAddr,
+                                 const std::string                & destCurrency,
+                                 const uint64_t                   & destAmount,
+                                 uint256                          & transactionId)
 {
     DEBUG_TRACE();
 
@@ -261,10 +270,10 @@ bool Exchange::acceptTransaction(const uint256                    & id,
     }
 
     TransactionPtr tr(new xbridge::Transaction(id,
-                                                    sourceAddr,
-                                                    sourceCurrency, sourceAmount,
-                                                    destAddr,
-                                                    destCurrency, destAmount));
+                                               sourceAddr,
+                                               sourceCurrency, sourceAmount,
+                                               destAddr,
+                                               destCurrency, destAmount));
 
     transactionId = id;
 
@@ -278,44 +287,44 @@ bool Exchange::acceptTransaction(const uint256                    & id,
     TransactionPtr tmp;
 
     {
-        boost::mutex::scoped_lock l(m_pendingTransactionsLock);
+        boost::mutex::scoped_lock l(m_p->m_pendingTransactionsLock);
 
-        if (!m_pendingTransactions.count(h))
+        if (!m_p->m_pendingTransactions.count(h))
         {
             // no pending
             return false;
         }
         else
         {
-            boost::mutex::scoped_lock l2(m_pendingTransactions[h]->m_lock);
+            boost::mutex::scoped_lock l2(m_p->m_pendingTransactions[h]->m_lock);
 
             // found, check if expired
-            if (m_pendingTransactions[h]->isExpired())
+            if (m_p->m_pendingTransactions[h]->isExpired())
             {
                 // if expired - delete old transaction
-                m_pendingTransactions.erase(h);
+                m_p->m_pendingTransactions.erase(h);
 
                 // create new
                 h = tr->hash1();
-                m_pendingTransactions[h] = tr;
+                m_p->m_pendingTransactions[h] = tr;
             }
             else
             {
                 // try join with existing transaction
-                if (!m_pendingTransactions[h]->tryJoin(tr))
+                if (!m_p->m_pendingTransactions[h]->tryJoin(tr))
                 {
                     LOG() << "transaction not joined";
                     // return false;
 
                     // create new transaction
                     h = tr->hash1();
-                    m_pendingTransactions[h] = tr;
+                    m_p->m_pendingTransactions[h] = tr;
                 }
                 else
                 {
                     LOG() << "transactions joined, new id <" << tr->id().GetHex() << ">";
 
-                    tmp = m_pendingTransactions[h];
+                    tmp = m_p->m_pendingTransactions[h];
                 }
             }
         }
@@ -325,12 +334,12 @@ bool Exchange::acceptTransaction(const uint256                    & id,
     {
         // move to transactions
         {
-            boost::mutex::scoped_lock l(m_transactionsLock);
-            m_transactions[tmp->id()] = tmp;
+            boost::mutex::scoped_lock l(m_p->m_transactionsLock);
+            m_p->m_transactions[tmp->id()] = tmp;
         }
         {
-            boost::mutex::scoped_lock l(m_pendingTransactionsLock);
-            m_pendingTransactions.erase(h);
+            boost::mutex::scoped_lock l(m_p->m_pendingTransactionsLock);
+            m_p->m_pendingTransactions.erase(h);
         }
 
         transactionId = tmp->id();
@@ -343,11 +352,32 @@ bool Exchange::acceptTransaction(const uint256                    & id,
 //*****************************************************************************
 bool Exchange::deletePendingTransactions(const uint256 & id)
 {
-    boost::mutex::scoped_lock l(m_pendingTransactionsLock);
+    boost::mutex::scoped_lock l(m_p->m_pendingTransactionsLock);
 
     LOG() << "delete pending transaction <" << id.GetHex() << ">";
 
-    m_pendingTransactions.erase(id);
+    m_p->m_pendingTransactions.erase(id);
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+bool Exchange::deletePendingTransactionsByTransactionId(const uint256 & id)
+{
+    boost::mutex::scoped_lock l(m_p->m_pendingTransactionsLock);
+
+    LOG() << "delete pending transaction by txid <" << id.GetHex() << ">";
+
+    for (const auto & pair : m_p->m_pendingTransactions)
+    {
+        const TransactionPtr & ptr = pair.second;
+
+        if (ptr->id() == id)
+        {
+            m_p->m_pendingTransactions.erase(pair.first);
+            break;
+        }
+    }
     return true;
 }
 
@@ -355,11 +385,11 @@ bool Exchange::deletePendingTransactions(const uint256 & id)
 //*****************************************************************************
 bool Exchange::deleteTransaction(const uint256 & id)
 {
-    boost::mutex::scoped_lock l(m_transactionsLock);
+    boost::mutex::scoped_lock l(m_p->m_transactionsLock);
 
     LOG() << "delete transaction <" << id.GetHex() << ">";
 
-    m_transactions.erase(id);
+    m_p->m_transactions.erase(id);
     return true;
 }
 
@@ -436,79 +466,14 @@ bool Exchange::updateTransactionWhenConfirmedReceived(const TransactionPtr & tx,
 
 //*****************************************************************************
 //*****************************************************************************
-bool Exchange::updateTransaction(const uint256 & /*hash*/)
-{
-    LOG() << "not implemented";
-    return true;
-
-//    // DEBUG_TRACE();
-
-//    // store
-//    m_walletTransactions.insert(hash);
-
-//    // check unconfirmed
-//    boost::mutex::scoped_lock l (m_unconfirmedLock);
-//    if (m_unconfirmed.size())
-//    {
-//        for (std::map<uint256, uint256>::iterator i = m_unconfirmed.begin(); i != m_unconfirmed.end();)
-//        {
-//            if (m_walletTransactions.count(i->first))
-//            {
-//                LOG() << "confirm transaction, id <" << i->second.GetHex()
-//                      << "> hash <" << i->first.GetHex() << ">";
-
-//                XBridgeTransactionPtr tr = transaction(i->second);
-//                boost::mutex::scoped_lock l(tr->m_lock);
-
-//                tr->confirm(i->first);
-
-//                i = m_unconfirmed.erase(i);
-//            }
-//            else
-//            {
-//                ++i;
-//            }
-//        }
-//    }
-
-
-//    uint256 txid;
-
-//    boost::mutex::scoped_lock l (m_unconfirmedLock);
-//    if (m_unconfirmed.count(hash))
-//    {
-//        txid = m_unconfirmed[hash];
-
-//        LOG() << "confirm transaction, id <"
-//              << util::base64_encode(std::string((char *)(txid.begin()), 32))
-//              << "> hash <"
-//              << util::base64_encode(std::string((char *)(hash.begin()), 32))
-//              << ">";
-
-//        m_unconfirmed.erase(hash);
-//    }
-
-//    if (txid != uint256())
-//    {
-//        XBridgeTransactionPtr tr = transaction(txid);
-//        boost::mutex::scoped_lock l(tr->m_lock);
-
-//        tr->confirm(hash);
-//    }
-
-    return true;
-}
-
-//*****************************************************************************
-//*****************************************************************************
 const TransactionPtr Exchange::transaction(const uint256 & hash)
 {
     {
-        boost::mutex::scoped_lock l(m_transactionsLock);
+        boost::mutex::scoped_lock l(m_p->m_transactionsLock);
 
-        if (m_transactions.count(hash))
+        if (m_p->m_transactions.count(hash))
         {
-            return m_transactions[hash];
+            return m_p->m_transactions[hash];
         }
         else
         {
@@ -517,17 +482,6 @@ const TransactionPtr Exchange::transaction(const uint256 & hash)
         }
     }
 
-    // TODO not search in pending transactions
-//    {
-//        boost::mutex::scoped_lock l(m_pendingTransactionsLock);
-
-//        if (m_pendingTransactions.count(hash))
-//        {
-//            return m_pendingTransactions[hash];
-//        }
-//    }
-
-    // return XBridgeTransaction::trInvalid;
     return TransactionPtr(new xbridge::Transaction);
 }
 
@@ -536,11 +490,11 @@ const TransactionPtr Exchange::transaction(const uint256 & hash)
 const TransactionPtr Exchange::pendingTransaction(const uint256 & hash)
 {
     {
-        boost::mutex::scoped_lock l(m_pendingTransactionsLock);
+        boost::mutex::scoped_lock l(m_p->m_pendingTransactionsLock);
 
-        if (m_pendingTransactions.count(hash))
+        if (m_p->m_pendingTransactions.count(hash))
         {
-            return m_pendingTransactions[hash];
+            return m_p->m_pendingTransactions[hash];
         }
         else
         {
@@ -557,12 +511,12 @@ const TransactionPtr Exchange::pendingTransaction(const uint256 & hash)
 //*****************************************************************************
 std::list<TransactionPtr> Exchange::pendingTransactions() const
 {
-    boost::mutex::scoped_lock l(m_pendingTransactionsLock);
+    boost::mutex::scoped_lock l(m_p->m_pendingTransactionsLock);
 
     std::list<TransactionPtr> list;
 
-    for (std::map<uint256, TransactionPtr>::const_iterator i = m_pendingTransactions.begin();
-         i != m_pendingTransactions.end(); ++i)
+    for (std::map<uint256, TransactionPtr>::const_iterator i = m_p->m_pendingTransactions.begin();
+         i != m_p->m_pendingTransactions.end(); ++i)
     {
         list.push_back(i->second);
     }
@@ -572,7 +526,7 @@ std::list<TransactionPtr> Exchange::pendingTransactions() const
 
 //*****************************************************************************
 //*****************************************************************************
-std::list<TransactionPtr> Exchange::transactions(bool onlyFinished) const
+std::list<TransactionPtr> Exchange::Impl::transactions(bool onlyFinished) const
 {
     boost::mutex::scoped_lock l(m_transactionsLock);
 
@@ -600,30 +554,14 @@ std::list<TransactionPtr> Exchange::transactions(bool onlyFinished) const
 //*****************************************************************************
 std::list<TransactionPtr> Exchange::transactions() const
 {
-    return transactions(false);
+    return m_p->transactions(false);
 }
 
 //*****************************************************************************
 //*****************************************************************************
 std::list<TransactionPtr> Exchange::finishedTransactions() const
 {
-    return transactions(true);
-}
-
-//*****************************************************************************
-//*****************************************************************************
-std::list<TransactionPtr> Exchange::transactionsHistory() const
-{
-    boost::mutex::scoped_lock l(m_transactionsHistoryLock);
-
-    std::list<TransactionPtr> list;
-
-    for (std::map<uint256, TransactionPtr>::const_iterator i = m_transactionsHistory.begin(); i != m_transactionsHistory.end(); ++i)
-    {
-        list.push_back(i->second);
-    }
-
-    return list;
+    return m_p->transactions(true);
 }
 
 } // namespace xbridge

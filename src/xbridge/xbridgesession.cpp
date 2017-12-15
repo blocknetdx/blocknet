@@ -434,6 +434,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
           << "             " << dcurrency << " : " << damount << std::endl;
 
     // check utxo items
+    // TODO temporary disabled
     xbridge::App & xapp = xbridge::App::instance();
     if (false && !xapp.checkUtxoItems(utxoItems))
     {
@@ -456,10 +457,12 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
         }
 
         // tx created, lock utxo items
-        if (!xapp.lockUtxoItems(utxoItems))
+        // TODO temporary disabled
+        if (false && !xapp.lockUtxoItems(utxoItems))
         {
-            e.deletePendingTransactions(id);
+            e.deletePendingTransactions(pendingId);
 
+            sendCancelTransaction(id, crBadUtxo);
             LOG() << "error lock utxo items, transaction request rejected "
                   << __FUNCTION__;
             return true;
@@ -741,7 +744,7 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet)
 
             if (!tr || tr->state() != xbridge::Transaction::trJoined)
             {
-                e.deletePendingTransactions(id);
+                e.deletePendingTransactionsByTransactionId(id);
             }
 
             return true;
@@ -2006,7 +2009,7 @@ bool Session::Impl::cancelOrRollbackTransaction(const uint256 & txid, const TxCa
     Exchange & e = Exchange::instance();
     if (e.isStarted())
     {
-        e.deletePendingTransactions(txid);
+        e.deletePendingTransactionsByTransactionId(txid);
     }
 
     App & app = App::instance();

@@ -60,8 +60,8 @@ public:
                                    const std::string & from,
                                    const std::string & to);
 
-    bool cancelTransaction(const uint256 & id);
-    bool rollbackTransaction(const uint256 & id);
+    xbridge::Error cancelTransaction(const uint256 & id);
+    xbridge::Error rollbackTransaction(const uint256 & id);
 
     xbridge::TransactionDescrPtr item(const unsigned int index) const;
 

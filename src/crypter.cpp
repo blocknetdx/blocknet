@@ -57,7 +57,12 @@ bool CCrypter::Encrypt(const CKeyingMaterial& vchPlaintext, std::vector<unsigned
     int nCLen = nLen + AES_BLOCK_SIZE, nFLen = 0;
     vchCiphertext = std::vector<unsigned char>(nCLen);
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
     EVP_CIPHER_CTX * ctx = EVP_CIPHER_CTX_new();
+#else
+    EVP_CIPHER_CTX ctxobj;
+    EVP_CIPHER_CTX * ctx = &ctxobj;
+#endif
 
     bool fOk = true;
 
@@ -67,7 +72,9 @@ bool CCrypter::Encrypt(const CKeyingMaterial& vchPlaintext, std::vector<unsigned
     if (fOk) fOk = EVP_EncryptFinal_ex(ctx, (&vchCiphertext[0]) + nCLen, &nFLen) != 0;
     EVP_CIPHER_CTX_cleanup(ctx);
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
     EVP_CIPHER_CTX_free(ctx);
+#endif
 
     if (!fOk) return false;
 
@@ -86,7 +93,12 @@ bool CCrypter::Decrypt(const std::vector<unsigned char>& vchCiphertext, CKeyingM
 
     vchPlaintext = CKeyingMaterial(nPLen);
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
     EVP_CIPHER_CTX * ctx = EVP_CIPHER_CTX_new();
+#else
+    EVP_CIPHER_CTX ctxobj;
+    EVP_CIPHER_CTX * ctx = &ctxobj;
+#endif
 
     bool fOk = true;
 
@@ -96,7 +108,9 @@ bool CCrypter::Decrypt(const std::vector<unsigned char>& vchCiphertext, CKeyingM
     if (fOk) fOk = EVP_DecryptFinal_ex(ctx, (&vchPlaintext[0]) + nPLen, &nFLen) != 0;
     EVP_CIPHER_CTX_cleanup(ctx);
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
     EVP_CIPHER_CTX_free(ctx);
+#endif
 
     if (!fOk) return false;
 
@@ -135,7 +149,12 @@ bool EncryptAES256(const SecureString& sKey, const SecureString& sPlaintext, con
     sCiphertext.resize(nCLen);
 
     // Perform the encryption
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
     EVP_CIPHER_CTX * ctx = EVP_CIPHER_CTX_new();
+#else
+    EVP_CIPHER_CTX ctxobj;
+    EVP_CIPHER_CTX * ctx = &ctxobj;
+#endif
 
     bool fOk = true;
 
@@ -145,7 +164,9 @@ bool EncryptAES256(const SecureString& sKey, const SecureString& sPlaintext, con
     if (fOk) fOk = EVP_EncryptFinal_ex(ctx, (unsigned char*)(&sCiphertext[0]) + nCLen, &nFLen);
     EVP_CIPHER_CTX_cleanup(ctx);
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
     EVP_CIPHER_CTX_free(ctx);
+#endif
 
     if (!fOk) return false;
 
@@ -178,7 +199,12 @@ bool DecryptAES256(const SecureString& sKey, const std::string& sCiphertext, con
 
     sPlaintext.resize(nPLen);
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
     EVP_CIPHER_CTX * ctx = EVP_CIPHER_CTX_new();
+#else
+    EVP_CIPHER_CTX ctxobj;
+    EVP_CIPHER_CTX * ctx = &ctxobj;
+#endif
 
     bool fOk = true;
 
@@ -188,7 +214,9 @@ bool DecryptAES256(const SecureString& sKey, const std::string& sCiphertext, con
     if (fOk) fOk = EVP_DecryptFinal_ex(ctx, (unsigned char*)(&sPlaintext[0]) + nPLen, &nFLen);
     EVP_CIPHER_CTX_cleanup(ctx);
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
     EVP_CIPHER_CTX_free(ctx);
+#endif
 
     if (!fOk) return false;
 

@@ -274,7 +274,7 @@ void XBridgeTransactionsView::onCancelTransaction()
     }
 
     const auto & id = m_txModel.item(m_contextMenuIndex.row())->id;
-    if (!m_txModel.cancelTransaction(id))
+    if (m_txModel.cancelTransaction(id) != xbridge::SUCCESS)
     {
         QMessageBox::warning(this,
                              trUtf8("Cancel transaction"),
@@ -302,7 +302,7 @@ void XBridgeTransactionsView::onRollbackTransaction()
     }
 
     const auto & id = m_txModel.item(m_contextMenuIndex.row())->id;
-    if (!m_txModel.rollbackTransaction(id))
+    if (m_txModel.rollbackTransaction(id) != xbridge::SUCCESS)
     {
         QMessageBox::warning(this,
                              trUtf8("Cancel transaction"),

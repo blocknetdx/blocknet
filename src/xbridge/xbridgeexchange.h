@@ -12,6 +12,7 @@
 #include <set>
 #include <map>
 #include <list>
+#include <memory>
 
 #include <boost/cstdint.hpp>
 #include <boost/thread/mutex.hpp>
@@ -23,12 +24,10 @@ namespace xbridge
 
 //*****************************************************************************
 //*****************************************************************************
-typedef std::pair<std::string, std::string> StringPair;
-
-//*****************************************************************************
-//*****************************************************************************
 class Exchange
 {
+    class Impl;
+
 public:
     static Exchange & instance();
 
@@ -67,6 +66,7 @@ public:
                            uint256                          & transactionId);
 
     bool deletePendingTransactions(const uint256 & id);
+    bool deletePendingTransactionsByTransactionId(const uint256 & id);
     bool deleteTransaction(const uint256 & id);
 
     bool updateTransactionWhenHoldApplyReceived(const TransactionPtr & tx,
@@ -82,41 +82,14 @@ public:
     bool updateTransactionWhenConfirmedReceived(const TransactionPtr & tx,
                                                 const std::vector<unsigned char> & from);
 
-    bool updateTransaction(const uint256 & hash);
-
-    const TransactionPtr transaction(const uint256 & hash);
-    const TransactionPtr pendingTransaction(const uint256 & hash);
+    const TransactionPtr      transaction(const uint256 & hash);
+    const TransactionPtr      pendingTransaction(const uint256 & hash);
     std::list<TransactionPtr> pendingTransactions() const;
     std::list<TransactionPtr> transactions() const;
     std::list<TransactionPtr> finishedTransactions() const;
-    std::list<TransactionPtr> transactionsHistory() const;
-    void addToTransactionsHistory(const uint256 & id);
 
 private:
-    std::list<TransactionPtr> transactions(bool onlyFinished) const;
-
-private:
-    // connected wallets
-    typedef std::map<std::string, WalletParam> WalletList;
-    WalletList                               m_wallets;
-
-    mutable boost::mutex                     m_pendingTransactionsLock;
-    std::map<uint256, TransactionPtr> m_pendingTransactions;
-
-    mutable boost::mutex                     m_transactionsLock;
-    std::map<uint256, TransactionPtr> m_transactions;
-
-    mutable boost::mutex                     m_transactionsHistoryLock;
-    std::map<uint256, TransactionPtr> m_transactionsHistory;
-
-    mutable boost::mutex                     m_unconfirmedLock;
-    std::map<std::string, uint256>           m_unconfirmed;
-
-    // TODO use deque and limit size
-    std::set<uint256>                        m_walletTransactions;
-
-    mutable boost::mutex                     m_knownTxLock;
-    std::set<uint256>                        m_knownTransactions;
+    std::unique_ptr<Impl> m_p;
 };
 
 } // namespace xbridge

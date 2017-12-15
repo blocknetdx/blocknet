@@ -872,7 +872,8 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
 //          << "             " << ptr->toCurrency << " : " << ptr->toAmount << std::endl;
 
     // lock used coins
-    connFrom->lockUnspent(ptr->usedCoins, true);
+    // TODO temporary disabled
+    // connFrom->lockUnspent(ptr->usedCoins, true);
 
     {
         boost::mutex::scoped_lock l(m_p->m_txLocker);
@@ -971,7 +972,7 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
 
     // check amount
     std::vector<wallet::UtxoEntry> outputs;
-    connTo->getUnspent(outputs);
+    connFrom->getUnspent(outputs);
 
     double utxoAmount = 0;
     std::vector<wallet::UtxoEntry> outputsForUse;
@@ -984,23 +985,23 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
 
             // TODO calculate fee for outputsForUse.count()
 
-            if (utxoAmount > ptr->toAmount)
+            if (utxoAmount > ptr->fromAmount)
             {
                 break;
             }
         }
     }
 
-    if ((utxoAmount * TransactionDescr::COIN) < ptr->toAmount)
+    if ((utxoAmount * TransactionDescr::COIN) < ptr->fromAmount)
     {
-        WARN() << "insufficient funds for <" << ptr->toCurrency << "> " << __FUNCTION__;
+        WARN() << "insufficient funds for <" << ptr->fromCurrency << "> " << __FUNCTION__;
         return xbridge::INSIFFICIENT_FUNDS;
     }
 
-    ptr->from = connTo->toXAddr(from);
-    ptr->to   = connFrom->toXAddr(to);
-    std::swap(ptr->fromCurrency, ptr->toCurrency);
-    std::swap(ptr->fromAmount,   ptr->toAmount);
+    ptr->from = connFrom->toXAddr(from);
+    ptr->to   = connTo->toXAddr(to);
+    // std::swap(ptr->fromCurrency, ptr->toCurrency);
+    // std::swap(ptr->fromAmount,   ptr->toAmount);
     ptr->usedCoins = outputsForUse;
 
     // try send immediatelly
@@ -1014,7 +1015,8 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
 
 
     // lock used coins
-    connTo->lockUnspent(ptr->usedCoins, true);
+    // TODO temporary disabled
+    // connTo->lockUnspent(ptr->usedCoins, true);
 
     return xbridge::Error::SUCCESS;
 }

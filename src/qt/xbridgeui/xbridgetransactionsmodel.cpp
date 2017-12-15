@@ -176,7 +176,7 @@ xbridge::Error XBridgeTransactionsModel::newTransaction(const std::string & from
 
     // TODO check amount
     uint256 id = uint256();
-     const auto code = xapp.sendXBridgeTransaction
+    const auto code = xapp.sendXBridgeTransaction
             (from, fromCurrency, (uint64_t)(fromAmount * xbridge::TransactionDescr::COIN),
              to,   toCurrency,   (uint64_t)(toAmount * xbridge::TransactionDescr::COIN),id);
 
@@ -256,14 +256,14 @@ xbridge::Error XBridgeTransactionsModel::newTransactionFromPending(const uint256
 
 //******************************************************************************
 //******************************************************************************
-bool XBridgeTransactionsModel::cancelTransaction(const uint256 & id)
+xbridge::Error XBridgeTransactionsModel::cancelTransaction(const uint256 & id)
 {
     return xbridge::App::instance().cancelXBridgeTransaction(id, crUserRequest);
 }
 
 //******************************************************************************
 //******************************************************************************
-bool XBridgeTransactionsModel::rollbackTransaction(const uint256 & id)
+xbridge::Error XBridgeTransactionsModel::rollbackTransaction(const uint256 & id)
 {
     return xbridge::App::instance().rollbackXBridgeTransaction(id);
 }

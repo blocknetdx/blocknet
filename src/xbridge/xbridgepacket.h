@@ -70,6 +70,10 @@ enum XBridgeCommand
     // xbcTransactionHold       <--    |     --> xbcTransactionHold
     // xbcTransactionHoldApply  -->    |     <-- xbcTransactionHoldApply
     //                                 |
+    //                                 |
+    // xbcTransactionInit       <--    |     --> xbcTransactionInit
+    // xbcTransactionHoldInit-d -->    |     <-- xbcTransactionInitialized
+    //                                 |
     // xbcTransactionCreateA    <--    |
     // xbcTransactionCreatedA   -->    |
     //                                 |
