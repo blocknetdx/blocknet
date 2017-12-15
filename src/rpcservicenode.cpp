@@ -444,7 +444,7 @@ Value servicenode(const Array& params, bool fHelp)
             mnObj.push_back(Pair("message", activeServicenode.GetStatus()));
             return mnObj;
         }
-        throw runtime_error("Servicenode not found\n");
+        throw runtime_error("Servicenode has not been verified by the network yet. This typically takes 5-10 minutes after start.\n");
     }
 
     if (strCommand == "winners") {
