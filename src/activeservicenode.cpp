@@ -144,7 +144,7 @@ std::string CActiveServicenode::GetStatus()
 {
     switch (status) {
     case ACTIVE_SERVICENODE_INITIAL:
-        return "Node just started, not yet activated";
+        return "Servicenode started, activation in progress...";
     case ACTIVE_SERVICENODE_SYNC_IN_PROCESS:
         return "Sync in progress. Must wait until sync is complete to start Servicenode";
     case ACTIVE_SERVICENODE_INPUT_TOO_NEW:
@@ -315,6 +315,10 @@ bool CActiveServicenode::Register(CTxIn vin, CService service, CKey keyCollatera
         LogPrintf("CActiveServicenode::Register() - %s\n", errorMessage);
         return false;
     }
+
+    // Assign the new vin
+    this->vin = vin;
+
     mnodeman.mapSeenServicenodeBroadcast.insert(make_pair(mnb.GetHash(), mnb));
     servicenodeSync.AddedServicenodeList(mnb.GetHash());
 
