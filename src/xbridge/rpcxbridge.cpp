@@ -844,7 +844,7 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                     const auto toAmount2    = bidsVector[j]->toAmount;
                     const auto bidPrice2    = xBridgeValueFromAmount(fromAmount2) / xBridgeValueFromAmount(toAmount2);
                     if(!floatCompare(bidPrice, bidPrice2)) {
-                        i = j;
+                        i = j - 1;
                         break;
                     }
                     volume += xBridgeValueFromAmount(bidsVector[j]->fromAmount);
@@ -878,7 +878,7 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                     const auto toAmount2    = asksVector[j]->toAmount;
                     const auto askPrice2    = xBridgeValueFromAmount(fromAmount2) / xBridgeValueFromAmount(toAmount2);
                     if(!floatCompare(askPrice, askPrice2)) {
-                        i = j;                        
+                        i = j - 1;
                         break;
                     }
                     volume += xBridgeValueFromAmount(asksVector[j]->fromAmount);
