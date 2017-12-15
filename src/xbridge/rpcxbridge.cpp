@@ -806,7 +806,10 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                     asks.emplace_back(tr->id.GetHex());
                 }
             }
-            break;
+            res.emplace_back(Pair("bids", bids));
+            res.emplace_back(Pair("asks", asks));
+            arr.emplace_back(res);
+            return  arr;
         }
         case 2:
         {
@@ -823,7 +826,7 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 auto epsilon = std::numeric_limits<double>::epsilon();
                 return (fabs(a - b) / fabs(a) <= epsilon  ) && (fabs(a - b) / fabs(b) <= epsilon);
             };
-            for(size_t i = 0; i < bound;) {
+            for(size_t i = 0; i < bound; i++) {
                 Array tmp;
                 //calculate bids and push to array
                 const auto fromAmount   = bidsVector[i]->fromAmount;
@@ -842,10 +845,6 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                     const auto bidPrice2    = xBridgeValueFromAmount(fromAmount2) / xBridgeValueFromAmount(toAmount2);
                     if(!floatCompare(bidPrice, bidPrice2)) {
                         i = j;
-                        tmp.emplace_back(volume);
-                        if(isShowTxids) {
-                            tmp.emplace_back(txids);
-                        }
                         break;
                     }
                     volume += xBridgeValueFromAmount(bidsVector[j]->fromAmount);
@@ -854,10 +853,14 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                     }
                     j++;
                 }
+                tmp.emplace_back(volume);
+                if(isShowTxids) {
+                    tmp.emplace_back(txids);
+                }
                 bids.emplace_back(tmp);
             }
             bound = std::min(maxOrders, asksVector.size());
-            for(size_t  i = 0; i < bound; ) {
+            for(size_t  i = 0; i < bound; i++ ) {
                 Array tmp;
                 //calculate asks and push to array
                 const auto fromAmount   = asksVector[i]->fromAmount;
@@ -875,11 +878,7 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                     const auto toAmount2    = asksVector[j]->toAmount;
                     const auto askPrice2    = xBridgeValueFromAmount(fromAmount2) / xBridgeValueFromAmount(toAmount2);
                     if(!floatCompare(askPrice, askPrice2)) {
-                        i = j;
-                        tmp.emplace_back(volume);
-                        if(isShowTxids) {
-                            tmp.emplace_back(txids);
-                        }
+                        i = j;                        
                         break;
                     }
                     volume += xBridgeValueFromAmount(asksVector[j]->fromAmount);
@@ -888,9 +887,16 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                     }
                     j++;
                 }
+                tmp.emplace_back(volume);
+                if(isShowTxids) {
+                    tmp.emplace_back(txids);
+                }
                 asks.emplace_back(tmp);
             }
-            break;
+            res.emplace_back(Pair("bids", bids));
+            res.emplace_back(Pair("asks", asks));
+            arr.emplace_back(res);
+            return  arr;
         }
         case 3:
         {
@@ -913,7 +919,11 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 tmp.emplace_back(tr->id.GetHex());
                 asks.emplace_back(tmp);
             }
-            break;
+            res.emplace_back(Pair("bids", bids));
+            res.emplace_back(Pair("asks", asks));
+            arr.emplace_back(res);
+            return  arr;
+
         }
         default:
             Object error;
