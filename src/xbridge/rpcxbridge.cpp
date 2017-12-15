@@ -665,7 +665,8 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
         return  error;
     }
 
-    Array arr;
+
+    Object res;
     TransactionMap trList;
     {
         boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
@@ -674,7 +675,7 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
     {
         if(trList.empty()) {
             LOG() << "empty  transactions list ";
-            return arr;
+            return res;
         }
 
         TransactionMap asksList;
@@ -725,7 +726,7 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
         });
 
 
-        Object res;
+
 
         /**
          * @brief bids - array with bids
@@ -808,8 +809,7 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
             }
             res.emplace_back(Pair("bids", bids));
             res.emplace_back(Pair("asks", asks));
-            arr.emplace_back(res);
-            return  arr;
+            return  res;
         }
         case 2:
         {
@@ -895,8 +895,7 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
             }
             res.emplace_back(Pair("bids", bids));
             res.emplace_back(Pair("asks", asks));
-            arr.emplace_back(res);
-            return  arr;
+            return  res;
         }
         case 3:
         {
@@ -921,8 +920,7 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
             }
             res.emplace_back(Pair("bids", bids));
             res.emplace_back(Pair("asks", asks));
-            arr.emplace_back(res);
-            return  arr;
+            return  res;
 
         }
         default:
@@ -931,10 +929,6 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                                     "invalid detail level value:"));
             error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
             return  error;
-        }
-        res.emplace_back(Pair("bids", bids));
-        res.emplace_back(Pair("asks", asks));
-        arr.emplace_back(res);
-        return  arr;
+        }        
     }
 }
