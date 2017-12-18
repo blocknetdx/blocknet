@@ -259,7 +259,35 @@ extern json_spirit::Value mnsync(const json_spirit::Array& params, bool fHelp);
   * @param params The list of input params - should be empty
   * @param fHelp If is true then an exception with parameter description message will be thrown
   * @return The list of open and pending transactions as JSON value. Open transactions go first.
+  * * Example:<br>
+  * \verbatim
+    dxGetTransactions
+￼
+    [
+        {
+            "id" : "1632417312d5ea676abb88b8fb48ace1a11e9b1a937fc24ff79296d9d2963b32",
+            "from" : "BLOCK",
+            "fromAddress" : "",
+            "fromAmount" : 0.01000000000000000,
+            "to" : "SYS",
+            "toAddress" : "",
+            "toAmount" : 0.50000000000000000,
+            "state" : "Open"
+        },
+        {
+            "id" : "6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a",
+            "from" : "LTC",
+            "fromAddress" : "",
+            "fromAmount" : 0.00010000000000000,
+            "to" : "SYS",
+            "toAddress" : "",
+            "toAmount" : 0.00010000000000000,
+            "state" : "Open"
+        }
+    ]
+  * \endverbatim
   */
+
 extern json_spirit::Value dxGetTransactions(const json_spirit::Array& params, bool fHelp);
 
 /**
@@ -269,6 +297,33 @@ extern json_spirit::Value dxGetTransactions(const json_spirit::Array& params, bo
  * returned, not only successfully completed ones
  * @param fHelp If is true then an exception with parameter description message will be thrown
  * @return The list of historical transaction  as a JSON value
+ * * Example:<br>
+ * \verbatim
+    dxGetTransactionsHistory ALL
+￼
+    [
+        {
+            "id" : "1632417312d5ea676abb88b8fb48ace1a11e9b1a937fc24ff79296d9d2963b32",
+            "from" : "BLOCK",
+            "fromAddress" : "",
+            "fromAmount" : 0.01000000000000000,
+            "to" : "SYS",
+            "toAddress" : "",
+            "toAmount" : 0.50000000000000000,
+            "state" : "Finished"
+        },
+        {
+            "id" : "6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a",
+            "from" : "LTC",
+            "fromAddress" : "",
+            "fromAmount" : 0.00010000000000000,
+            "to" : "SYS",
+            "toAddress" : "",
+            "toAmount" : 0.00010000000000000,
+            "state" : "Finished"
+        }
+    ]
+ * \endverbatim
  */
 extern json_spirit::Value dxGetTransactionsHistory(const json_spirit::Array& params, bool fHelp);
 
@@ -278,6 +333,23 @@ extern json_spirit::Value dxGetTransactionsHistory(const json_spirit::Array& par
  * params[0] : transaction id
  * @param fHelp If is true then an exception with parameter description message will be thrown
  * @return The detailed description of given transaction as a JSON value
+ * * Example:<br>
+ * \verbatim
+    dxGetTransactionInfo 91d0ea83edc79b9a2041c51d08037cff87c181efb311a095dfdd4edbcc7993a9
+￼
+    [
+        {
+            "id" : "91d0ea83edc79b9a2041c51d08037cff87c181efb311a095dfdd4edbcc7993a9",
+            "from" : "LTC",
+            "fromAddress" : "",
+            "fromAmount" : 0.01000000000000000,
+            "to" : "BLOCK",
+            "toAddress" : "",
+            "toAmount" : 0.05500000000000000,
+            "state" : "Open"
+        }
+    ]
+ * \endverbatim
  */
 extern json_spirit::Value dxGetTransactionInfo(const json_spirit::Array& params, bool fHelp);
 
@@ -286,6 +358,16 @@ extern json_spirit::Value dxGetTransactionInfo(const json_spirit::Array& params,
  * @param params The list of input params, should be empty
  * @param fHelp If is true then an exception with parameter description message will be thrown
  * @return The list of available currencies as a JSON value
+ * * Example:<br>
+ * \verbatim
+    {
+        "DCR" : "",
+        "DEC" : "",
+        "DOGE" : "",
+        "LTC" : "",
+        "SYS" : ""
+    }
+ * \endverbatim
  */
 extern json_spirit::Value dxGetCurrencies(const json_spirit::Array& params, bool fHelp);
 
@@ -300,6 +382,19 @@ extern json_spirit::Value dxGetCurrencies(const json_spirit::Array& params, bool
  * params[5] : amount being received<br>
  * @param fHelp If is true then an exception with parameter description message will be thrown
  * @return The transaction created, as a JSON value
+ * * Example:<br>
+ * \verbatim
+ *
+    dxCreateTransaction  1NDqZ7piDqyDhNveWS48kDSwPdyJLEEcCp SYS 1.3 LRuXAU2fdSU7imXzk8cTy2k3heMK5vTuQ4 LTC 0.13
+    {
+        "from" : "1NDqZ7piDqyDhNveWS48kDSwPdyJLEEcCp",
+        "fromCurrency" : "SYS",
+        "fromAmount" : 1.30000000000000004,
+        "to" : "LRuXAU2fdSU7imXzk8cTy2k3heMK5vTuQ4",
+        "toCurrency" : "LTC",
+        "toAmount" : 0.13000000000000000
+    }
+ * \endverbatim
  */
 extern json_spirit::Value dxCreateTransaction(const json_spirit::Array& params, bool fHelp);
 
@@ -311,6 +406,15 @@ extern json_spirit::Value dxCreateTransaction(const json_spirit::Array& params, 
  * params[2] : receiving address<br>
  * @param fHelp If is true then an exception with parameter description message will be thrown
  * @return The status of the operation
+ * * Example:<br>
+ * \verbatim￼
+    dxAcceptTransaction 6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a 1NDqZ7piDqyDhNveWS48kDSwPdyJLEEcCp LRuXAU2fdSU7imXzk8cTy2k3heMK5vTuQ4
+    {
+        "id" : "6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a",
+        "from" : "1NDqZ7piDqyDhNveWS48kDSwPdyJLEEcCp",
+        "to" : "LRuXAU2fdSU7imXzk8cTy2k3heMK5vTuQ4"
+    }
+ * \endverbatim
  */
 extern json_spirit::Value dxAcceptTransaction(const json_spirit::Array& params, bool fHelp);
 
@@ -320,8 +424,32 @@ extern json_spirit::Value dxAcceptTransaction(const json_spirit::Array& params, 
  * params[0] : transaction id<br>
  * @param fHelp If is true then an exception with parameter description message will be thrown
  * @return The status of the operation
+ * * Example:<br>
+ * \verbatim ￼
+    dxCancelTransaction 6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a
+    {
+        "id" : "6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a"
+    }
+ * \endverbatim
+
  */
 extern json_spirit::Value dxCancelTransaction(const json_spirit::Array& params, bool fHelp);
+
+/**
+ * @brief Rollback given transaction
+ * @param params The list of input params:<br>
+ * params[0] : transaction id<br>
+ * @param fHelp If is true then an exception with parameter description message will be thrown
+ * @return The status of the operation
+ * * Example:<br>
+ * \verbatim
+    dxrollbackTransaction 6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a
+    {
+        "id" : "6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a"
+    }
+ * \endverbatim
+ */
+extern json_spirit::Value dxrollbackTransaction(const json_spirit::Array& params, bool fHelp);
 
 /**
  * @brief Returns trading history as a 'price chart'
@@ -332,6 +460,25 @@ extern json_spirit::Value dxCancelTransaction(const json_spirit::Array& params, 
  * params[3] : end time, Unix time<br>
  * @param fHelp If is true then an exception with parameter description message will be thrown
  * @return The list of completed transactions as 'price chart' points
+ * * Example:<br>
+ * \verbatim
+  [
+   {
+        "bids" : [
+            [
+                1.00000000000000000,
+                0.00200000000000000
+            ],
+            [
+                1.00000000000000000,
+                0.00100000000000000
+            ]
+         ],
+        "asks" : [
+        ]
+    }
+  ]
+ * \endverbatim
  */
 extern json_spirit::Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp);
 
