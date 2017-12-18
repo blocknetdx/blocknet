@@ -115,7 +115,7 @@ UniValue getnewaddress(const UniValue& params, bool fHelp)
 }
 
 
-CTxDestination GetAccountAddress(string strAccount, bool bForceNew = false)
+CTxDestination GetAccountDestination(string strAccount, bool bForceNew = false)
 {
     CWalletDB walletdb(pwalletMain->strWalletFile);
 
@@ -169,7 +169,7 @@ UniValue getaccountaddress(const UniValue& params, bool fHelp)
 
     UniValue ret(UniValue::VSTR);
 
-    ret = EncodeDestination(GetAccountAddress(strAccount));
+    ret = EncodeDestination(GetAccountDestination(strAccount));
     return ret;
 }
 
@@ -232,8 +232,8 @@ UniValue setaccount(const UniValue& params, bool fHelp)
         // Detect when changing the account of an address that is the 'unused current key' of another account:
         if (pwalletMain->mapAddressBook.count(address)) {
             string strOldAccount = pwalletMain->mapAddressBook[address].name;
-            if (address == GetAccountAddress(strOldAccount))
-                GetAccountAddress(strOldAccount, true);
+            if (address == GetAccountDestination(strOldAccount))
+                GetAccountDestination(strOldAccount, true);
         }
         pwalletMain->SetAddressBook(address, strAccount, "receive");
     } else
