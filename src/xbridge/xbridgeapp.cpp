@@ -608,20 +608,14 @@ xbridge::Error XBridgeApp::cancelXBridgeTransaction(const uint256 &id,
     if (sendCancelTransaction(id, reason))
     {
         boost::mutex::scoped_lock l(m_txLocker);
-        if(m_pendingTransactions.erase(id) == 0)
-        {
-            ERR() << "can't remove transactions " << __FUNCTION__;
-            return xbridge::TRANSACTION_NOT_FOUND;
-        }
-        if (m_transactions.count(id))
-        {
-            LOG() << "transaction found " << __FUNCTION__;
+        m_pendingTransactions.erase(id);
+        if(m_transactions.count(id)) {
             m_transactions[id]->state = XBridgeTransactionDescr::trCancelled;
             xuiConnector.NotifyXBridgeTransactionStateChanged(id, XBridgeTransactionDescr::trCancelled);
-            return xbridge::SUCCESS;
         }
     }
-    return xbridge::UNKNOWN_ERROR;
+    xuiConnector.NotifyXBridgeTransactionStateChanged(id, XBridgeTransactionDescr::trCancelled);
+    return xbridge::SUCCESS;
 }
 
 //******************************************************************************
