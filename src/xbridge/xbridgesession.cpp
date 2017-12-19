@@ -593,7 +593,6 @@ bool XBridgeSession::processTransactionAccepting(XBridgePacketPtr packet)
 //******************************************************************************
 bool XBridgeSession::processTransactionHold(XBridgePacketPtr packet)
 {
-    LOG() << "XBridgeSession::processTransactionHold " << __FUNCTION__;
     DEBUG_TRACE_LOG(currencyToLog());
 
     if (packet->size() != 105 && packet->size() != 137)
@@ -2248,7 +2247,7 @@ bool XBridgeSession::processTransactionConfirmedB(XBridgePacketPtr packet)
 //*****************************************************************************
 bool XBridgeSession::processTransactionCancel(XBridgePacketPtr packet)
 {
-    LOG() << "XBridgeSession::processTransactionCancel 2" << __FUNCTION__;
+
     // DEBUG_TRACE();
 
     // size must be == 36 bytes

@@ -60,18 +60,8 @@ void badaboom()
 
 //*****************************************************************************
 //*****************************************************************************
-XBridgeApp::XBridgeApp(): m_timerIoWork(new boost::asio::io_service::work(m_timerIo))
-  , m_timerThread(boost::bind(&boost::asio::io_service::run, &m_timerIo))
-  , m_timer(m_timerIo, boost::posix_time::seconds(3))
+XBridgeApp::XBridgeApp()
 {
-    for (int i = 0; i < 2; ++i)
-    {
-        IoServicePtr ios(new boost::asio::io_service);
-
-        m_services.push_back(ios);
-        m_works.push_back(WorkPtr(new boost::asio::io_service::work(*ios)));
-        m_threads.create_thread(boost::bind(&boost::asio::io_service::run, ios));
-    }
 
 
 }
@@ -173,14 +163,6 @@ bool XBridgeApp::init(int argc, char *argv[])
 //*****************************************************************************
 bool XBridgeApp::stop()
 {
-    m_timer.cancel();
-    m_timerIo.stop();
-    m_timerIoWork.reset();
-    m_timerThread.join();
-    for (WorkPtr & i : m_works)
-    {
-        i.reset();
-    }
 
     LOG() << "stopping threads...";
 
@@ -474,33 +456,17 @@ void XBridgeApp::getAddressBook()
 
 //******************************************************************************
 //******************************************************************************
-xbridge::Error  XBridgeApp::sendXBridgeTransaction(const std::string & from,
-                                       const std::string & fromCurrency,
-                                       const uint64_t & fromAmount,
-                                       const std::string & to,
-                                       const std::string & toCurrency,
-                                       const uint64_t & toAmount,
+xbridge::Error  XBridgeApp::sendXBridgeTransaction(const std::string &from,
+                                       const std::string &fromCurrency,
+                                       const uint64_t &fromAmount,
+                                       const std::string &to,
+                                       const std::string &toCurrency,
+                                       const uint64_t &toAmount,
                                        uint256 &id)
 {
-    if (fromCurrency.size() > 8 || toCurrency.size() > 8)
-    {
-        WARN() << "invalid currency " << __FUNCTION__;
-        return xbridge::Error::INVALID_CURRENCY;
-    }
-
-    // check amount
-    XBridgeSessionPtr s = sessionByCurrency(fromCurrency);
-    if (!s)
-    {
-        // no session
-        WARN() << "no session for <" << fromCurrency << "> " << __FUNCTION__;
-        return xbridge::Error::NO_SESSION;
-    }
-
-    if (!s->checkAmount(fromAmount))
-    {
-        WARN() << "insufficient funds for <" << fromCurrency << "> " << __FUNCTION__;
-        return xbridge::Error::INSIFFICIENT_FUNDS;
+    const auto statusCode = checkCreateParams(fromCurrency, toCurrency, fromAmount);
+    if(statusCode != xbridge::SUCCESS) {
+        return statusCode;
     }
 
     boost::uint32_t timestamp = time(0);
@@ -535,8 +501,6 @@ xbridge::Error  XBridgeApp::sendXBridgeTransaction(const std::string & from,
 //******************************************************************************
 bool XBridgeApp::sendPendingTransaction(XBridgeTransactionDescrPtr & ptr)
 {
-
-
     // if (!ptr->packet)
     {
         if (ptr->from.size() == 0 || ptr->to.size() == 0)
@@ -550,7 +514,6 @@ bool XBridgeApp::sendPendingTransaction(XBridgeTransactionDescrPtr & ptr)
             // not send pending packets if not an xbcTransaction
             return true;
         }
-
         ptr->packet.reset(new XBridgePacket(xbcTransaction));
 
         // field length must be 8 bytes
@@ -585,35 +548,14 @@ bool XBridgeApp::sendPendingTransaction(XBridgeTransactionDescrPtr & ptr)
 //******************************************************************************
 //******************************************************************************
 xbridge::Error XBridgeApp::acceptXBridgeTransaction(const uint256 &id,
-                                             const std::string &from,
-                                             const std::string &to,
-                                             uint256 &result)
+                                                    const std::string &from,
+                                                    const std::string &to,
+                                                    uint256 &result)
 {
     XBridgeTransactionDescrPtr ptr;
-    {
-        boost::mutex::scoped_lock l(m_txLocker);
-        if (!m_pendingTransactions.count(id))
-        {
-
-            WARN() << "transaction not found " << __FUNCTION__;
-            return xbridge::TRANSACTION_NOT_FOUND;
-        }
-        ptr = m_pendingTransactions[id];
-    }
-
-    // check amount
-    XBridgeSessionPtr s = sessionByCurrency(ptr->toCurrency);
-    if (!s)
-    {
-        // no session
-        WARN() << "no session for <" << ptr->toCurrency << "> " << __FUNCTION__;
-        return xbridge::NO_SESSION;
-    }
-
-    if (!s->checkAmount(ptr->toAmount))
-    {
-        WARN() << "insufficient funds for <" << ptr->toCurrency << "> " << __FUNCTION__;
-        return xbridge::INSIFFICIENT_FUNDS;
+    const auto res = checkAcceptParams(id, ptr);
+    if(res != xbridge::SUCCESS) {
+        return res;
     }
     ptr->from = from;
     ptr->to   = to;
@@ -743,4 +685,52 @@ bool XBridgeApp::sendRollbackTransaction(const uint256 & txid)
     // rolled back
     return true;
 }
+
+bool XBridgeApp::isValidAddress(const string &address) const
+{
+    return ((address.size() >= 32) && (address.size() <= 36));
+}
+
+Error XBridgeApp::checkAcceptParams(const uint256 &id, XBridgeTransactionDescrPtr &ptr)
+{
+    {
+        boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
+        if (!XBridgeApp::m_pendingTransactions.count(id)) {
+            WARN() << "transaction not found " << __FUNCTION__;
+            return  xbridge::TRANSACTION_NOT_FOUND;
+        }
+        ptr = XBridgeApp::m_pendingTransactions.at(id);
+    }
+    return checkAmount(ptr->toCurrency, ptr->toAmount);
+}
+
+Error XBridgeApp::checkCreateParams(const string &fromCurrency,
+                                    const string &toCurrency,
+                                    const uint64_t &fromAmount)
+{
+    if (fromCurrency.size() > 8 || toCurrency.size() > 8) {
+        WARN() << "invalid currency " << __FUNCTION__;
+        return xbridge::INVALID_CURRENCY;
+    }
+    return  checkAmount(fromCurrency, fromAmount);
+}
+
+Error XBridgeApp::checkAmount(const string &currency, const uint64_t &amount)
+{
+    // check amount
+    XBridgeSessionPtr s = sessionByCurrency(currency);
+    if (!s) {
+        // no session
+        WARN() << "no session for <" << currency << "> " << __FUNCTION__;
+        return xbridge::NO_SESSION;
+    }
+
+    if (!s->checkAmount(amount)) {
+        WARN() << "insufficient funds for <" << currency << "> " << __FUNCTION__;
+        return xbridge::INSIFFICIENT_FUNDS;
+    }
+    return xbridge::SUCCESS;
+}
+
+
 

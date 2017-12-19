@@ -44,7 +44,7 @@ private:
     virtual ~XBridgeApp();
 
 public:
-    static XBridgeApp & instance();
+    static XBridgeApp &instance();
 
     static std::string version();
 
@@ -63,17 +63,49 @@ public:
 
     bool sendPendingTransaction(XBridgeTransactionDescrPtr &ptr);
 
-    xbridge::Error acceptXBridgeTransaction(const uint256 & id,
-                                     const std::string & from,
-                                     const std::string & to, uint256 &result);
-    bool sendAcceptingTransaction(XBridgeTransactionDescrPtr & ptr);
+    xbridge::Error acceptXBridgeTransaction(const uint256 &id,
+                                     const std::string &from,
+                                     const std::string &to, uint256 &result);
+    bool sendAcceptingTransaction(XBridgeTransactionDescrPtr &ptr);
 
-    xbridge::Error cancelXBridgeTransaction(const uint256 & id, const TxCancelReason & reason);
-    bool sendCancelTransaction(const uint256 & txid, const TxCancelReason & reason);
+    xbridge::Error cancelXBridgeTransaction(const uint256 &id, const TxCancelReason &reason);
+    bool sendCancelTransaction(const uint256 &txid, const TxCancelReason &reason);
 
-    xbridge::Error rollbackXBridgeTransaction(const uint256 & id);
-    bool sendRollbackTransaction(const uint256 & txid);
+    xbridge::Error rollbackXBridgeTransaction(const uint256 &id);
+    bool sendRollbackTransaction(const uint256 &txid);
 
+    /**
+     * @brief isValidAddress checks the correctness of the address
+     * @param address checked address
+     * @return true, if address valid
+     */
+    bool isValidAddress(const std::string &address) const;
+
+    /**
+     * @brief checkAcceptParams checks the correctness of the parameters
+     * @param id - id accepted transaction
+     * @param ptr - smart pointer to accepted transaction
+     * @return xbridge::SUCCESS, if all parameters valid
+     */
+    xbridge::Error checkAcceptParams(const uint256 &id, XBridgeTransactionDescrPtr &ptr);
+
+    /**
+     * @brief checkCreateParams - checks parameter needs to success created transaction
+     * @param fromCurrency - from currency
+     * @param toCurrency - to currency
+     * @param fromAmount -  amount
+     * @return xbridge::SUCCES, if all parameters valid
+     */
+    xbridge::Error checkCreateParams(const std::string &fromCurrency, const std::string &toCurrency, const uint64_t &fromAmount);
+
+    /**
+     * @brief checkAmount - checks wallet balance
+     * @param currency - currency name
+     * @param amount - amount
+     * @return xbridge::SUCCES, if  the session currency is open and
+     * on account has sufficient funds for operations
+     */
+    xbridge::Error checkAmount(const std::string &currency, const uint64_t &amount);
 public:
     bool stop();
 
@@ -96,6 +128,13 @@ public:
                                const std::string & address);
     void getAddressBook();
 
+
+    /**
+     * @brief isHistoricState - checks the state of the transaction
+     * @param state - current state of transaction
+     * @return true, if the transaction is historical
+     */
+    bool isHistoricState(const XBridgeTransactionDescr::State state);
 public:// slots:
     // send messave via xbridge
     void onSend(const XBridgePacketPtr & packet);
@@ -156,43 +195,6 @@ public:
      */
     std::list<XBridgeTransactionDescr::State>       m_historicTransactionsStates;
 
-    /**
-     * @brief m_services
-     */
-    std::deque<IoServicePtr> m_services;
-
-    /**
-     * @brief m_works
-     */
-    std::deque<WorkPtr> m_works;
-
-    /**
-     * @brief m_timerIo
-     */
-    boost::asio::io_service m_timerIo;
-
-    /**
-     * @brief m_timerIoWork - update historical transactions list timer worker
-     */
-    std::shared_ptr<boost::asio::io_service::work>  m_timerIoWork;
-
-    /**
-     * @brief m_timerThread - timer thread
-     */
-    boost::thread m_timerThread;
-
-    /**
-     * @brief m_timer timer update historical transactions list
-     */
-    boost::asio::deadline_timer m_timer;
-
-public:
-    /**
-     * @brief isHistoricState - checks the state of the transaction
-     * @param state - current state of transaction
-     * @return true, if the transaction is historical
-     */
-    bool isHistoricState(const XBridgeTransactionDescr::State state);
 };
 
 #endif // XBRIDGEAPP_H
