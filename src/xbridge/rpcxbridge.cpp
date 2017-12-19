@@ -31,7 +31,6 @@ using namespace json_spirit;
 using namespace std;
 using namespace boost;
 using namespace boost::asio;
-using namespace boost::math;
 
 
 
@@ -163,7 +162,7 @@ Value dxGetTransactionsHistory(const Array & params, bool fHelp)
             double fromAmount = static_cast<double>(tr->fromAmount);
             double toAmount = static_cast<double>(tr->toAmount);
             double price = fromAmount / toAmount;
-            std::string buyTime = to_simple_string(tr->created);
+            std::string buyTime = to_iso_extended_string(tr->created);
             buy.emplace_back(Pair("time",      buyTime));
             buy.emplace_back(Pair("traid_id",  tr->id.GetHex()));
             buy.emplace_back(Pair("price",     price));
@@ -216,6 +215,8 @@ Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp)
         //copy all transactions between startTimeFrame and endTimeFrame
         std::copy_if(trlist.begin(), trlist.end(), std::inserter(trList, trList.end()),
                      [&startTimeFrame, &endTimeFrame, &toCurrency, &fromCurrency](const TransactionPair &transaction) {
+
+
             return  ((transaction.second->created)      <   bpt::from_time_t(endTimeFrame)) &&
                     ((transaction.second->created)      >   bpt::from_time_t(startTimeFrame)) &&
                     (transaction.second->toCurrency     ==  toCurrency) &&
@@ -319,6 +320,7 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
             const auto &tr = XBridgeApp::m_pendingTransactions[id];
             Object jtr;
             jtr.emplace_back(Pair("id",            tr->id.GetHex()));
+            jtr.emplace_back(Pair("created",       bpt::to_iso_extended_string(tr->created)));
             jtr.emplace_back(Pair("from",          tr->fromCurrency));
             jtr.emplace_back(Pair("fromAddress",   tr->from));
             jtr.emplace_back(Pair("fromAmount",    xBridgeValueFromAmount(tr->fromAmount)));
@@ -326,6 +328,15 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
             jtr.emplace_back(Pair("toAddress",     tr->to));
             jtr.emplace_back(Pair("toAmount",      xBridgeValueFromAmount(tr->toAmount)));
             jtr.emplace_back(Pair("state",         tr->strState()));
+            switch (tr->state) {
+            case XBridgeTransactionDescr::trPending:
+            case XBridgeTransactionDescr::trFinished:
+            case XBridgeTransactionDescr::trCancelled:
+                jtr.emplace_back(Pair("time" , bpt::to_iso_extended_string(tr->txtime)));
+                break;
+            default:
+                break;
+            }
             arr.emplace_back(jtr);
         }
     }
@@ -344,6 +355,15 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
             jtr.emplace_back(Pair("toAddress",     tr->to));
             jtr.emplace_back(Pair("toAmount",      xBridgeValueFromAmount(tr->toAmount)));
             jtr.emplace_back(Pair("state",         tr->strState()));
+            switch (tr->state) {
+            case XBridgeTransactionDescr::trPending:
+            case XBridgeTransactionDescr::trFinished:
+            case XBridgeTransactionDescr::trCancelled:
+                jtr.emplace_back(Pair("time" , bpt::to_iso_extended_string(tr->txtime)));
+                break;
+            default:
+                break;
+            }
             arr.emplace_back(jtr);
         }
     }
@@ -362,6 +382,15 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
             jtr.emplace_back(Pair("toAddress",     tr->to));
             jtr.emplace_back(Pair("toAmount",      xBridgeValueFromAmount(tr->toAmount)));
             jtr.emplace_back(Pair("state",         tr->strState()));
+            switch (tr->state) {
+            case XBridgeTransactionDescr::trPending:
+            case XBridgeTransactionDescr::trFinished:
+            case XBridgeTransactionDescr::trCancelled:
+                jtr.emplace_back(Pair("time" , bpt::to_iso_extended_string(tr->txtime)));
+                break;
+            default:
+                break;
+            }
             arr.emplace_back(jtr);
         }
     }
@@ -386,7 +415,8 @@ Value dxGetCurrencies(const Array & params, bool fHelp)
 
     Object obj;
 
-    std::vector<std::string> currencies = XBridgeApp::instance().sessionsCurrencies();
+    XBridgeApp &app = XBridgeApp::instance();
+    std::vector<std::string> currencies = app.sessionsCurrencies();
     for (std::string currency : currencies) {
         obj.emplace_back(Pair(currency, ""));
     }
@@ -420,7 +450,8 @@ Value dxCreateTransaction(const Array &params, bool fHelp)
 
     auto statusCode = xbridge::SUCCESS;
 
-    if (!XBridgeApp::instance().isValidAddress(fromAddress)) {
+    XBridgeApp &app = XBridgeApp::instance();
+    if (!app.isValidAddress(fromAddress)) {
         statusCode = xbridge::INVALID_ADDRESS;
         Object error;
         error.emplace_back(Pair("error",
@@ -428,7 +459,7 @@ Value dxCreateTransaction(const Array &params, bool fHelp)
         error.emplace_back(Pair("code", statusCode));
         return  error;
     }
-    if (!XBridgeApp::instance().isValidAddress(toAddress)) {
+    if (!app.isValidAddress(toAddress)) {
         statusCode = xbridge::INVALID_ADDRESS;
         Object error;
         error.emplace_back(Pair("error",
@@ -441,8 +472,8 @@ Value dxCreateTransaction(const Array &params, bool fHelp)
     //if validate mode enabled
     if(validateParams) {
         Object result;
-        statusCode = XBridgeApp::instance().checkCreateParams(fromCurrency, toCurrency,
-                                                              xBridgeAmountFromReal(fromAmount));
+        statusCode = app.checkCreateParams(fromCurrency, toCurrency,
+                                           xBridgeAmountFromReal(fromAmount));
         switch (statusCode) {
         case xbridge::SUCCESS:
             result.emplace_back(Pair("status",         "created"));
@@ -474,13 +505,15 @@ Value dxCreateTransaction(const Array &params, bool fHelp)
     }
 
     uint256 id = uint256();
-    statusCode = XBridgeApp::instance().sendXBridgeTransaction
-          (fromAddress, fromCurrency, xBridgeAmountFromReal(fromAmount),
-           toAddress, toCurrency, xBridgeAmountFromReal(toAmount), id);
+    statusCode = app.sendXBridgeTransaction
+            (fromAddress, fromCurrency, xBridgeAmountFromReal(fromAmount),
+             toAddress, toCurrency, xBridgeAmountFromReal(toAmount), id);
 
     if(statusCode== xbridge::SUCCESS) {
         Object obj;
         obj.emplace_back(Pair("id",             id.GetHex()));
+        const auto &createdTime = XBridgeApp::m_pendingTransactions.at(id)->created;
+        obj.emplace_back(Pair("time",           bpt::to_iso_extended_string(createdTime)));
         obj.emplace_back(Pair("from",           fromAddress));
         obj.emplace_back(Pair("fromCurrency",   fromCurrency));
         obj.emplace_back(Pair("fromAmount",     fromAmount));
@@ -519,8 +552,9 @@ Value dxAcceptTransaction(const Array & params, bool fHelp)
     uint256 id(params[0].get_str());
     std::string fromAddress    = params[1].get_str();
     std::string toAddress      = params[2].get_str();
+    XBridgeApp &app = XBridgeApp::instance();
 
-    if (!XBridgeApp::instance().isValidAddress(fromAddress)) {
+    if (!app.isValidAddress(fromAddress)) {
         statusCode = xbridge::INVALID_ADDRESS;
         Object error;
         error.emplace_back(Pair("error",
@@ -528,7 +562,7 @@ Value dxAcceptTransaction(const Array & params, bool fHelp)
         error.emplace_back(Pair("code", statusCode));
         return  error;
     }
-    if (!XBridgeApp::instance().isValidAddress(toAddress)) {
+    if (!app.isValidAddress(toAddress)) {
         statusCode = xbridge::INVALID_ADDRESS;
         Object error;
         error.emplace_back(Pair("error",
@@ -541,7 +575,7 @@ Value dxAcceptTransaction(const Array & params, bool fHelp)
     if(validateParams) {
         Object result;
         XBridgeTransactionDescrPtr ptr;
-        statusCode = XBridgeApp::instance().checkAcceptParams(id, ptr);
+        statusCode = app.checkAcceptParams(id, ptr);
         switch (statusCode) {
         case xbridge::SUCCESS:
             result.emplace_back(Pair("status", "Accepted"));
@@ -569,10 +603,11 @@ Value dxAcceptTransaction(const Array & params, bool fHelp)
     }
 
     uint256 idResult;
-    statusCode = XBridgeApp::instance().acceptXBridgeTransaction(id, fromAddress, toAddress, idResult);
+    statusCode = app.acceptXBridgeTransaction(id, fromAddress, toAddress, idResult);
     if(statusCode == xbridge::SUCCESS) {
         Object obj;
         obj.emplace_back(Pair("status", "Accepted"));
+        obj.emplace_back(Pair("time",   bpt::to_iso_extended_string(bpt::second_clock::universal_time())));
         obj.emplace_back(Pair("id",     id.GetHex()));
         obj.emplace_back(Pair("from",   fromAddress));
         obj.emplace_back(Pair("to",     toAddress));
@@ -588,7 +623,7 @@ Value dxAcceptTransaction(const Array & params, bool fHelp)
 
 //******************************************************************************
 //******************************************************************************
-Value dxCancelTransaction(const Array & params, bool fHelp)
+Value dxCancelTransaction(const Array &params, bool fHelp)
 {
     if(fHelp) {
         throw runtime_error("dxCancelTransaction (id)\n"
@@ -603,10 +638,14 @@ Value dxCancelTransaction(const Array & params, bool fHelp)
     }
     LOG() << "rpc cancel transaction " << __FUNCTION__;
     uint256 id(params[0].get_str());
-    const auto res = XBridgeApp::instance().cancelXBridgeTransaction(id, crRpcRequest);
+    XBridgeApp &app = XBridgeApp::instance();
+    const auto res = app.cancelXBridgeTransaction(id, crRpcRequest);
     if(res == xbridge::SUCCESS) {
         Object obj;
         obj.emplace_back(Pair("id", id.GetHex()));
+        //I purposely did not grab a mutex
+        const auto &txtime = XBridgeApp::m_pendingTransactions.at(id)->txtime;
+        obj.emplace_back(Pair("time", bpt::to_iso_extended_string(txtime)));
         return  obj;
     } else {
         Object obj;
@@ -627,14 +666,597 @@ json_spirit::Value dxrollbackTransaction(const json_spirit::Array& params, bool 
     if (params.size() != 1) {
         Object error;
         error.emplace_back(Pair("error",
-                                "Invalid number of parameters"));
+                                "Invali"
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                ""
+                                "d number of parameters"));
         error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
         return  error;
     }
     LOG() << "rpc rollback transaction " << __FUNCTION__;
     uint256 id(params[0].get_str());
-    const auto res = XBridgeApp::instance().rollbackXBridgeTransaction(id);
-
+    XBridgeApp &app = XBridgeApp::instance();
+    const auto res = app.rollbackXBridgeTransaction(id);
     if(res == xbridge::SUCCESS) {
         Object obj;
         obj.emplace_back(Pair("id", id.GetHex()));
