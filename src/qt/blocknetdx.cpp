@@ -54,6 +54,7 @@
 #include <QThread>
 #include <QTimer>
 #include <QTranslator>
+#include <QAbstractEventDispatcher>
 
 #if defined(QT_STATICPLUGIN)
 #include <QtPlugin>
@@ -713,17 +714,22 @@ int main(int argc, char* argv[])
     return app.getReturnValue();
 }
 
+#endif // BITCOIN_QT_TEST
+
 void waitForClose()
 {
-    throw std::runtime_error("assert catched");
-//    BitcoinApplication * app = qobject_cast<BitcoinApplication *>(qApp);
-//    app->requestShutdown();
-//    app->exec();
-
-//    while (true)
-//    {
-//        qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
-//    }
+    // if (qApp->thread() == QThread::currentThread())
+    if (QAbstractEventDispatcher::instance())
+    {
+        // throw exception in gui thread across event loop
+        throw std::runtime_error("assert catched");
+    }
+    else
+    {
+        // sleep thread
+        while (true)
+        {
+           boost::this_thread::sleep_for(boost::chrono::seconds(1));
+        }
+    }
 }
-
-#endif // BITCOIN_QT_TEST
