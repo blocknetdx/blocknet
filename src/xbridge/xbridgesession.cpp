@@ -67,6 +67,9 @@ class Session::Impl
     friend class Session;
 
 protected:
+    void init();
+
+protected:
     void sendPacket(const std::vector<unsigned char> & to, const XBridgePacketPtr & packet);
     void sendPacketBroadcast(XBridgePacketPtr packet);
 
@@ -133,7 +136,7 @@ protected:
 Session::Session()
     : m_p(new Impl)
 {
-    init();
+    m_p->init();
 }
 
 //*****************************************************************************
@@ -151,65 +154,57 @@ const std::vector<unsigned char> & Session::sessionAddr() const
 
 //*****************************************************************************
 //*****************************************************************************
-void Session::init()
+void Session::Impl::init()
 { 
-    if (m_p->m_handlers.size())
+    if (m_handlers.size())
     {
         LOG() << "packet handlers map must be empty" << __FUNCTION__;
         return;
     }
 
-    m_p->m_myid.resize(20);
-    GetStrongRandBytes(&m_p->m_myid[0], 20);
-//    if (!rpc::getNewAddress(m_myid))
-//    {
-//        m_myid = std::vector<unsigned char>(20, 0);
-//        LOG() << "fail generate address for <" << m_wallet.currency << "> session " << __FUNCTION__;
-//        return;
-//    }
-
-    Impl * impl = m_p.get();
+    m_myid.resize(20);
+    GetStrongRandBytes(&m_myid[0], 20);
 
     // process invalid
-    m_p->m_handlers[xbcInvalid]               .bind(impl, &Impl::processInvalid);
+    m_handlers[xbcInvalid]               .bind(this, &Impl::processInvalid);
 
     // process transaction from client wallet
     // if (XBridgeExchange::instance().isEnabled())
     {
-        m_p->m_handlers[xbcTransaction]           .bind(impl, &Impl::processTransaction);
-        m_p->m_handlers[xbcTransactionAccepting]  .bind(impl, &Impl::processTransactionAccepting);
+        m_handlers[xbcTransaction]           .bind(this, &Impl::processTransaction);
+        m_handlers[xbcTransactionAccepting]  .bind(this, &Impl::processTransactionAccepting);
     }
     // else
     {
-        m_p->m_handlers[xbcPendingTransaction]    .bind(impl, &Impl::processPendingTransaction);
+        m_handlers[xbcPendingTransaction]    .bind(this, &Impl::processPendingTransaction);
     }
 
     // transaction processing
     {
-        m_p->m_handlers[xbcTransactionHold]       .bind(impl, &Impl::processTransactionHold);
-        m_p->m_handlers[xbcTransactionHoldApply]  .bind(impl, &Impl::processTransactionHoldApply);
+        m_handlers[xbcTransactionHold]       .bind(this, &Impl::processTransactionHold);
+        m_handlers[xbcTransactionHoldApply]  .bind(this, &Impl::processTransactionHoldApply);
 
-        m_p->m_handlers[xbcTransactionInit]       .bind(impl, &Impl::processTransactionInit);
-        m_p->m_handlers[xbcTransactionInitialized].bind(impl, &Impl::processTransactionInitialized);
+        m_handlers[xbcTransactionInit]       .bind(this, &Impl::processTransactionInit);
+        m_handlers[xbcTransactionInitialized].bind(this, &Impl::processTransactionInitialized);
 
-        m_p->m_handlers[xbcTransactionCreateA]    .bind(impl, &Impl::processTransactionCreate);
-        m_p->m_handlers[xbcTransactionCreateB]    .bind(impl, &Impl::processTransactionCreate);
-        m_p->m_handlers[xbcTransactionCreatedA]   .bind(impl, &Impl::processTransactionCreatedA);
-        m_p->m_handlers[xbcTransactionCreatedB]   .bind(impl, &Impl::processTransactionCreatedB);
+        m_handlers[xbcTransactionCreateA]    .bind(this, &Impl::processTransactionCreate);
+        m_handlers[xbcTransactionCreateB]    .bind(this, &Impl::processTransactionCreate);
+        m_handlers[xbcTransactionCreatedA]   .bind(this, &Impl::processTransactionCreatedA);
+        m_handlers[xbcTransactionCreatedB]   .bind(this, &Impl::processTransactionCreatedB);
 
-        m_p->m_handlers[xbcTransactionConfirmA]   .bind(impl, &Impl::processTransactionConfirmA);
-        m_p->m_handlers[xbcTransactionConfirmB]   .bind(impl, &Impl::processTransactionConfirmB);
+        m_handlers[xbcTransactionConfirmA]   .bind(this, &Impl::processTransactionConfirmA);
+        m_handlers[xbcTransactionConfirmB]   .bind(this, &Impl::processTransactionConfirmB);
 
-        m_p->m_handlers[xbcTransactionCancel]     .bind(impl, &Impl::processTransactionCancel);
-        m_p->m_handlers[xbcTransactionRollback]   .bind(impl, &Impl::processTransactionRollback);
-        m_p->m_handlers[xbcTransactionFinished]   .bind(impl, &Impl::processTransactionFinished);
+        m_handlers[xbcTransactionCancel]     .bind(this, &Impl::processTransactionCancel);
+        m_handlers[xbcTransactionRollback]   .bind(this, &Impl::processTransactionRollback);
+        m_handlers[xbcTransactionFinished]   .bind(this, &Impl::processTransactionFinished);
 
-        m_p->m_handlers[xbcTransactionConfirmedA] .bind(impl, &Impl::processTransactionConfirmedA);
-        m_p->m_handlers[xbcTransactionConfirmedB] .bind(impl, &Impl::processTransactionConfirmedB);
+        m_handlers[xbcTransactionConfirmedA] .bind(this, &Impl::processTransactionConfirmedA);
+        m_handlers[xbcTransactionConfirmedB] .bind(this, &Impl::processTransactionConfirmedB);
     }
 
     // retranslate messages to xbridge network
-    m_p->m_handlers[xbcXChatMessage].bind(impl, &Impl::processXChatMessage);
+    m_handlers[xbcXChatMessage].bind(this, &Impl::processXChatMessage);
 }
 
 //*****************************************************************************
@@ -434,9 +429,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
           << "             " << dcurrency << " : " << damount << std::endl;
 
     // check utxo items
-    // TODO temporary disabled
-    xbridge::App & xapp = xbridge::App::instance();
-    if (false && !xapp.checkUtxoItems(utxoItems))
+    if (!e.checkUtxoItems(id, utxoItems))
     {
         sendCancelTransaction(id, crBadUtxo);
         LOG() << "error check utxo items, transaction request rejected "
@@ -450,21 +443,10 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
         if (!e.createTransaction(id,
                                  saddr, scurrency, samount,
                                  daddr, dcurrency, damount,
+                                 utxoItems,
                                  pendingId, isCreated))
         {
             // not created
-            return true;
-        }
-
-        // tx created, lock utxo items
-        // TODO temporary disabled
-        if (false && !xapp.lockUtxoItems(utxoItems))
-        {
-            e.deletePendingTransactions(pendingId);
-
-            sendCancelTransaction(id, crBadUtxo);
-            LOG() << "error lock utxo items, transaction request rejected "
-                  << __FUNCTION__;
             return true;
         }
 
@@ -637,11 +619,17 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet)
           << "    to   " << HexStr(daddr) << std::endl
           << "             " << dcurrency << " : " << damount << std::endl;
 
-    // TODO check utxo items
+
+    if (!e.checkUtxoItems(id, utxoItems))
+    {
+        LOG() << "error check utxo items, transaction accept request rejected "
+              << __FUNCTION__;
+        return true;
+    }
 
     {
         uint256 transactionId;
-        if (e.acceptTransaction(id, saddr, scurrency, samount, daddr, dcurrency, damount, transactionId))
+        if (e.acceptTransaction(id, saddr, scurrency, samount, daddr, dcurrency, damount, utxoItems, transactionId))
         {
             // check transaction state, if trNew - do nothing,
             // if trJoined = send hold to client

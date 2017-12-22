@@ -39,10 +39,13 @@ public:
     Session();
     ~Session();
 
+public:
+    // helper functions
     const std::vector<unsigned char> & sessionAddr() const;
 
+public:
+    // network
     static bool checkXBridgePacketVersion(XBridgePacketPtr packet);
-
     bool processPacket(XBridgePacketPtr packet);
 
 public:
@@ -51,9 +54,6 @@ public:
     void checkFinishedTransactions();
     void eraseExpiredPendingTransactions();
     void getAddressBook();
-
-private:
-    void init();
 
 private:
     std::unique_ptr<Impl> m_p;

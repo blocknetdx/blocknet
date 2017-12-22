@@ -29,14 +29,19 @@ protected:
 protected:
     // connected wallets
     typedef std::map<std::string, WalletParam> WalletList;
-    WalletList                               m_wallets;
+    WalletList                                         m_wallets;
 
-    mutable boost::mutex                     m_pendingTransactionsLock;
-    std::map<uint256, uint256>               m_hashToIdMap;
-    std::map<uint256, TransactionPtr>        m_pendingTransactions;
+    mutable boost::mutex                               m_pendingTransactionsLock;
+    std::map<uint256, uint256>                         m_hashToIdMap;
+    std::map<uint256, TransactionPtr>                  m_pendingTransactions;
 
-    mutable boost::mutex                     m_transactionsLock;
-    std::map<uint256, TransactionPtr>        m_transactions;
+    mutable boost::mutex                               m_transactionsLock;
+    std::map<uint256, TransactionPtr>                  m_transactions;
+
+    // utxo records
+    boost::mutex                                       m_utxoLocker;
+    std::set<wallet::UtxoEntry>                        m_utxoItems;
+    std::map<uint256, std::vector<wallet::UtxoEntry> > m_utxoTxMap;
 };
 
 //*****************************************************************************
@@ -136,7 +141,7 @@ bool Exchange::isEnabled()
 //*****************************************************************************
 bool Exchange::isStarted()
 {
-    return (isEnabled() && (activeServicenode.status == ACTIVE_SERVICENODE_STARTED));
+    return (isEnabled());// && (activeServicenode.status == ACTIVE_SERVICENODE_STARTED));
 }
 
 //*****************************************************************************
@@ -160,15 +165,53 @@ std::vector<std::string> Exchange::connectedWallets() const
 
 //*****************************************************************************
 //*****************************************************************************
-bool Exchange::createTransaction(const uint256                    & id,
-                                        const std::vector<unsigned char> & sourceAddr,
-                                        const std::string                & sourceCurrency,
-                                        const uint64_t                   & sourceAmount,
-                                        const std::vector<unsigned char> & destAddr,
-                                        const std::string                & destCurrency,
-                                        const uint64_t                   & destAmount,
-                                        uint256                          & pendingId,
-                                        bool                             & isCreated)
+bool Exchange::checkUtxoItems(const uint256 & txid, const std::vector<wallet::UtxoEntry> & items)
+{
+    boost::mutex::scoped_lock l(m_p->m_utxoLocker);
+
+    if (m_p->m_utxoTxMap.count(txid))
+    {
+        // transaction found
+        return false;
+    }
+
+    // check
+    for (const wallet::UtxoEntry & item : items)
+    {
+        if (m_p->m_utxoItems.count(item))
+        {
+            // duplicate items
+            return false;
+        }
+    }
+
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+bool Exchange::txOutIsLocked(const wallet::UtxoEntry & entry) const
+{
+    boost::mutex::scoped_lock l(m_p->m_utxoLocker);
+    if (m_p->m_utxoItems.count(entry))
+    {
+        return true;
+    }
+    return false;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+bool Exchange::createTransaction(const uint256                        & txid,
+                                 const std::vector<unsigned char>     & sourceAddr,
+                                 const std::string                    & sourceCurrency,
+                                 const uint64_t                       & sourceAmount,
+                                 const std::vector<unsigned char>     & destAddr,
+                                 const std::string                    & destCurrency,
+                                 const uint64_t                       & destAmount,
+                                 const std::vector<wallet::UtxoEntry> & items,
+                                 uint256                              & pendingId,
+                                 bool                                 & isCreated)
 {
     DEBUG_TRACE();
 
@@ -177,8 +220,29 @@ bool Exchange::createTransaction(const uint256                    & id,
     if (!haveConnectedWallet(sourceCurrency) || !haveConnectedWallet(destCurrency))
     {
         LOG() << "no active wallet for transaction "
-              << util::base64_encode(std::string((char *)id.begin(), 32));
+              << util::base64_encode(std::string((char *)txid.begin(), 32));
         return false;
+    }
+
+    // check locked items
+    {
+        boost::mutex::scoped_lock l(m_p->m_utxoLocker);
+
+        if (m_p->m_utxoTxMap.count(txid))
+        {
+            // transaction found
+            return false;
+        }
+
+        // check
+        for (const wallet::UtxoEntry & item : items)
+        {
+            if (m_p->m_utxoItems.count(item))
+            {
+                // duplicate items
+                return false;
+            }
+        }
     }
 
     const WalletParam & wp  = m_p->m_wallets[sourceCurrency];
@@ -189,20 +253,20 @@ bool Exchange::createTransaction(const uint256                    & id,
         if (wp.m_minAmount && wp.m_minAmount > sourceAmount)
         {
             LOG() << "tx "
-                  << util::base64_encode(std::string((char *)id.begin(), 32))
+                  << util::base64_encode(std::string((char *)txid.begin(), 32))
                   << " rejected because sourceAmount less than minimum payment";
             return false;
         }
         if (wp2.m_minAmount && wp2.m_minAmount > destAmount)
         {
             LOG() << "tx "
-                  << util::base64_encode(std::string((char *)id.begin(), 32))
+                  << util::base64_encode(std::string((char *)txid.begin(), 32))
                   << " rejected because destAmount less than minimum payment";
             return false;
         }
     }
 
-    TransactionPtr tr(new xbridge::Transaction(id,
+    TransactionPtr tr(new xbridge::Transaction(txid,
                                                sourceAddr,
                                                sourceCurrency, sourceAmount,
                                                destAddr,
@@ -246,36 +310,74 @@ bool Exchange::createTransaction(const uint256                    & id,
         }
     }
 
+    // add locked items
+    {
+        // check locked items
+        {
+            boost::mutex::scoped_lock l(m_p->m_utxoLocker);
+
+            for (const wallet::UtxoEntry & item : items)
+            {
+                m_p->m_utxoItems.insert(item);
+            }
+
+            // store tx data
+            m_p->m_utxoTxMap[txid] = items;
+        }
+    }
+
     return true;
 }
 
 //*****************************************************************************
 //*****************************************************************************
-bool Exchange::acceptTransaction(const uint256                    & id,
-                                 const std::vector<unsigned char> & sourceAddr,
-                                 const std::string                & sourceCurrency,
-                                 const uint64_t                   & sourceAmount,
-                                 const std::vector<unsigned char> & destAddr,
-                                 const std::string                & destCurrency,
-                                 const uint64_t                   & destAmount,
-                                 uint256                          & transactionId)
+bool Exchange::acceptTransaction(const uint256                        & txid,
+                                 const std::vector<unsigned char>     & sourceAddr,
+                                 const std::string                    & sourceCurrency,
+                                 const uint64_t                       & sourceAmount,
+                                 const std::vector<unsigned char>     & destAddr,
+                                 const std::string                    & destCurrency,
+                                 const uint64_t                       & destAmount,
+                                 const std::vector<wallet::UtxoEntry> & items,
+                                 uint256                              & transactionId)
 {
     DEBUG_TRACE();
 
     if (!haveConnectedWallet(sourceCurrency) || !haveConnectedWallet(destCurrency))
     {
         LOG() << "no active wallet for transaction "
-              << util::base64_encode(std::string((char *)id.begin(), 32));
+              << util::base64_encode(std::string((char *)txid.begin(), 32));
         return false;
     }
 
-    TransactionPtr tr(new xbridge::Transaction(id,
+    // check locked items
+    {
+        boost::mutex::scoped_lock l(m_p->m_utxoLocker);
+
+        if (m_p->m_utxoTxMap.count(txid))
+        {
+            // transaction found
+            return false;
+        }
+
+        // check
+        for (const wallet::UtxoEntry & item : items)
+        {
+            if (m_p->m_utxoItems.count(item))
+            {
+                // duplicate items
+                return false;
+            }
+        }
+    }
+
+    TransactionPtr tr(new xbridge::Transaction(txid,
                                                sourceAddr,
                                                sourceCurrency, sourceAmount,
                                                destAddr,
                                                destCurrency, destAmount));
 
-    transactionId = id;
+    transactionId = txid;
 
     if (!tr->isValid())
     {
@@ -345,6 +447,22 @@ bool Exchange::acceptTransaction(const uint256                    & id,
         transactionId = tmp->id();
     }
 
+    // add locked items
+    {
+        // check locked items
+        {
+            boost::mutex::scoped_lock l(m_p->m_utxoLocker);
+
+            for (const wallet::UtxoEntry & item : items)
+            {
+                m_p->m_utxoItems.insert(item);
+            }
+
+            // store tx data
+            m_p->m_utxoTxMap[txid] = items;
+        }
+    }
+
     return true;
 }
 
@@ -356,40 +474,92 @@ bool Exchange::deletePendingTransactions(const uint256 & id)
 
     LOG() << "delete pending transaction <" << id.GetHex() << ">";
 
+    if (!m_p->m_pendingTransactions.count(id))
+    {
+        return true;
+    }
+
+    uint256 txid = m_p->m_pendingTransactions[id]->id();
+
     m_p->m_pendingTransactions.erase(id);
+
+    {
+        boost::mutex::scoped_lock l(m_p->m_utxoLocker);
+
+        if (m_p->m_utxoTxMap.count(txid))
+        {
+            for (const wallet::UtxoEntry & item : m_p->m_utxoTxMap[txid])
+            {
+                m_p->m_utxoItems.erase(item);
+            }
+
+            m_p->m_utxoTxMap.erase(txid);
+        }
+    }
+
     return true;
 }
 
 //*****************************************************************************
 //*****************************************************************************
-bool Exchange::deletePendingTransactionsByTransactionId(const uint256 & id)
+bool Exchange::deletePendingTransactionsByTransactionId(const uint256 & txid)
 {
     boost::mutex::scoped_lock l(m_p->m_pendingTransactionsLock);
 
-    LOG() << "delete pending transaction by txid <" << id.GetHex() << ">";
+    LOG() << "delete pending transaction by txid <" << txid.GetHex() << ">";
 
     for (const auto & pair : m_p->m_pendingTransactions)
     {
         const TransactionPtr & ptr = pair.second;
 
-        if (ptr->id() == id)
+        if (ptr->id() == txid)
         {
             m_p->m_pendingTransactions.erase(pair.first);
+
             break;
         }
     }
+
+    {
+        boost::mutex::scoped_lock l(m_p->m_utxoLocker);
+
+        if (m_p->m_utxoTxMap.count(txid))
+        {
+            for (const wallet::UtxoEntry & item : m_p->m_utxoTxMap[txid])
+            {
+                m_p->m_utxoItems.erase(item);
+            }
+
+            m_p->m_utxoTxMap.erase(txid);
+        }
+    }
+
     return true;
 }
 
 //*****************************************************************************
 //*****************************************************************************
-bool Exchange::deleteTransaction(const uint256 & id)
+bool Exchange::deleteTransaction(const uint256 & txid)
 {
     boost::mutex::scoped_lock l(m_p->m_transactionsLock);
 
-    LOG() << "delete transaction <" << id.GetHex() << ">";
+    LOG() << "delete transaction <" << txid.GetHex() << ">";
 
-    m_p->m_transactions.erase(id);
+    m_p->m_transactions.erase(txid);
+
+    {
+        boost::mutex::scoped_lock l(m_p->m_utxoLocker);
+
+        if (m_p->m_utxoTxMap.count(txid))
+        {
+            for (const wallet::UtxoEntry & item : m_p->m_utxoTxMap[txid])
+            {
+                m_p->m_utxoItems.erase(item);
+            }
+
+            m_p->m_utxoTxMap.erase(txid);
+        }
+    }
     return true;
 }
 

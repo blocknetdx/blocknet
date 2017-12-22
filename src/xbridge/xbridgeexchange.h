@@ -44,26 +44,30 @@ public:
     bool haveConnectedWallet(const std::string & walletName);
     std::vector<std::string> connectedWallets() const;
 
-    // std::vector<unsigned char> walletAddress(const std::string & walletName);
+    bool checkUtxoItems(const uint256 & txid,
+                        const std::vector<wallet::UtxoEntry> & items);
+    bool txOutIsLocked(const wallet::UtxoEntry & entry) const;
 
-    bool createTransaction(const uint256                    & id,
-                           const std::vector<unsigned char> & sourceAddr,
-                           const std::string                & sourceCurrency,
-                           const uint64_t                   & sourceAmount,
-                           const std::vector<unsigned char> & destAddr,
-                           const std::string                & destCurrency,
-                           const uint64_t                   & destAmount,
-                           uint256                          & pendingId,
-                           bool                             & isCreated);
+    bool createTransaction(const uint256                        & id,
+                           const std::vector<unsigned char>     & sourceAddr,
+                           const std::string                    & sourceCurrency,
+                           const uint64_t                       & sourceAmount,
+                           const std::vector<unsigned char>     & destAddr,
+                           const std::string                    & destCurrency,
+                           const uint64_t                       & destAmount,
+                           const std::vector<wallet::UtxoEntry> & items,
+                           uint256                              & pendingId,
+                           bool                                 & isCreated);
 
-    bool acceptTransaction(const uint256                    & id,
-                           const std::vector<unsigned char> & sourceAddr,
-                           const std::string                & sourceCurrency,
-                           const uint64_t                   & sourceAmount,
-                           const std::vector<unsigned char> & destAddr,
-                           const std::string                & destCurrency,
-                           const uint64_t                   & destAmount,
-                           uint256                          & transactionId);
+    bool acceptTransaction(const uint256                        & id,
+                           const std::vector<unsigned char>     & sourceAddr,
+                           const std::string                    & sourceCurrency,
+                           const uint64_t                       & sourceAmount,
+                           const std::vector<unsigned char>     & destAddr,
+                           const std::string                    & destCurrency,
+                           const uint64_t                       & destAmount,
+                           const std::vector<wallet::UtxoEntry> & items,
+                           uint256                              & transactionId);
 
     bool deletePendingTransactions(const uint256 & id);
     bool deletePendingTransactionsByTransactionId(const uint256 & id);

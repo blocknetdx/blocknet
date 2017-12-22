@@ -116,13 +116,6 @@ public:
     bool processLater(const uint256 & txid, const XBridgePacketPtr & packet);
     bool removePackets(const uint256 & txid);
 
-public:
-    // UTXO
-    // TODO move to connector
-    bool checkUtxoItems(const std::vector<wallet::UtxoEntry> & items);
-    bool lockUtxoItems(const std::vector<wallet::UtxoEntry> & items);
-    bool txOutIsLocked(const wallet::UtxoEntry & entry) const;
-
 private:
     std::unique_ptr<Impl> m_p;
 };

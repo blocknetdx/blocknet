@@ -11,6 +11,29 @@
 
 //*****************************************************************************
 //*****************************************************************************
+namespace xbridge
+{
+
+//*****************************************************************************
+//*****************************************************************************
+namespace wallet
+{
+typedef std::pair<std::string, std::vector<std::string> > AddressBookEntry;
+
+struct UtxoEntry
+{
+    std::string txId;
+    uint32_t    vout;
+    double      amount;
+
+    friend bool operator < (const UtxoEntry & l, const UtxoEntry & r);
+    friend bool operator == (const UtxoEntry & l, const UtxoEntry & r);
+};
+
+} // namespace wallet
+
+//*****************************************************************************
+//*****************************************************************************
 class WalletParam
 {
 public:
@@ -100,5 +123,6 @@ public:
     const double               serviceNodeFee;
 };
 
+} // namespace xbridge
 
 #endif // XBRIDGEWALLET_H

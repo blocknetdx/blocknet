@@ -77,49 +77,45 @@ protected:
 
 protected:
     // workers
-    std::deque<IoServicePtr>                        m_services;
-    std::deque<WorkPtr>                             m_works;
-    boost::thread_group                             m_threads;
+    std::deque<IoServicePtr>                           m_services;
+    std::deque<WorkPtr>                                m_works;
+    boost::thread_group                                m_threads;
 
     // timer
-    boost::asio::io_service                         m_timerIo;
-    std::shared_ptr<boost::asio::io_service::work>  m_timerIoWork;
-    boost::thread                                   m_timerThread;
-    boost::asio::deadline_timer                     m_timer;
+    boost::asio::io_service                            m_timerIo;
+    std::shared_ptr<boost::asio::io_service::work>     m_timerIoWork;
+    boost::thread                                      m_timerThread;
+    boost::asio::deadline_timer                        m_timer;
 
     // sessions
-    mutable boost::mutex                            m_sessionsLock;
-    SessionQueue                                    m_sessions;
-    SessionsAddrMap                                 m_sessionAddressMap;
+    mutable boost::mutex                               m_sessionsLock;
+    SessionQueue                                       m_sessions;
+    SessionsAddrMap                                    m_sessionAddressMap;
 
     // connectors
-    mutable boost::mutex                            m_connectorsLock;
-    Connectors                                      m_connectors;
-    ConnectorsAddrMap                               m_connectorAddressMap;
-    ConnectorsCurrencyMap                           m_connectorCurrencyMap;
+    mutable boost::mutex                               m_connectorsLock;
+    Connectors                                         m_connectors;
+    ConnectorsAddrMap                                  m_connectorAddressMap;
+    ConnectorsCurrencyMap                              m_connectorCurrencyMap;
 
     // pending messages (packet processing loop)
-    boost::mutex                                    m_messagesLock;
+    boost::mutex                                       m_messagesLock;
     typedef std::set<uint256> ProcessedMessages;
-    ProcessedMessages                               m_processedMessages;
+    ProcessedMessages                                  m_processedMessages;
 
     // address book
-    boost::mutex                                    m_addressBookLock;
-    AddressBook                                     m_addressBook;
-    std::set<std::string>                           m_addresses;
+    boost::mutex                                       m_addressBookLock;
+    AddressBook                                        m_addressBook;
+    std::set<std::string>                              m_addresses;
 
     // transactions
-    boost::mutex                                    m_txLocker;
-    std::map<uint256, TransactionDescrPtr>          m_transactions;
-    std::map<uint256, TransactionDescrPtr>          m_historicTransactions;
-
-    // utxo records
-    boost::mutex                                    m_utxoLocker;
-    std::set<wallet::UtxoEntry>                     m_utxoItems;
+    boost::mutex                                       m_txLocker;
+    std::map<uint256, TransactionDescrPtr>             m_transactions;
+    std::map<uint256, TransactionDescrPtr>             m_historicTransactions;
 
     // network packets queue
-    boost::mutex                                    m_ppLocker;
-    std::map<uint256, XBridgePacketPtr>             m_pendingPackets;
+    boost::mutex                                       m_ppLocker;
+    std::map<uint256, XBridgePacketPtr>                m_pendingPackets;
 };
 
 //*****************************************************************************
@@ -637,58 +633,6 @@ void App::addToKnown(const std::vector<unsigned char> & message)
     m_p->m_processedMessages.insert(Hash(message.begin(), message.end()));
 }
 
-//*****************************************************************************
-//*****************************************************************************
-bool App::checkUtxoItems(const std::vector<wallet::UtxoEntry> & items)
-{
-    for (const wallet::UtxoEntry & item : items)
-    {
-        if (txOutIsLocked(item))
-        {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-//*****************************************************************************
-//*****************************************************************************
-bool App::lockUtxoItems(const std::vector<wallet::UtxoEntry> & items)
-{
-    bool hasDuplicate = false;
-    boost::mutex::scoped_lock l(m_p->m_utxoLocker);
-    for (const wallet::UtxoEntry & item : items)
-    {
-        if (!m_p->m_utxoItems.insert(item).second)
-        {
-            // duplicate items
-            hasDuplicate = true;
-            break;
-        }
-    }
-
-    if (hasDuplicate)
-    {
-        // TODO remove items?
-        return false;
-    }
-
-    return true;
-}
-
-//*****************************************************************************
-//*****************************************************************************
-bool App::txOutIsLocked(const wallet::UtxoEntry & entry) const
-{
-    boost::mutex::scoped_lock l(m_p->m_utxoLocker);
-    if (m_p->m_utxoItems.count(entry))
-    {
-        return true;
-    }
-    return false;
-}
-
 //******************************************************************************
 //******************************************************************************
 TransactionDescrPtr App::transaction(const uint256 & id) const
@@ -782,7 +726,7 @@ void App::moveTransactionToHistory(const uint256 & id)
         WalletConnectorPtr conn = connectorByCurrency(xtx->fromCurrency);
         if (conn)
         {
-            conn->lockUnspent(xtx->usedCoins, false);
+            conn->lockCoins(xtx->usedCoins, false);
         }
     }
 
@@ -823,17 +767,14 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     std::vector<wallet::UtxoEntry> outputsForUse;
     for (const wallet::UtxoEntry & entry : outputs)
     {
-        if (!txOutIsLocked(entry))
+        utxoAmount += entry.amount;
+        outputsForUse.push_back(entry);
+
+        // TODO calculate fee for outputsForUse.count()
+
+        if (utxoAmount > fromAmount)
         {
-            utxoAmount += entry.amount;
-            outputsForUse.push_back(entry);
-
-            // TODO calculate fee for outputsForUse.count()
-
-            if (utxoAmount > fromAmount)
-            {
-                break;
-            }
+            break;
         }
     }
 
@@ -978,17 +919,14 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
     std::vector<wallet::UtxoEntry> outputsForUse;
     for (const wallet::UtxoEntry & entry : outputs)
     {
-        if (!txOutIsLocked(entry))
+        utxoAmount += entry.amount;
+        outputsForUse.push_back(entry);
+
+        // TODO calculate fee for outputsForUse.count()
+
+        if (utxoAmount > ptr->fromAmount)
         {
-            utxoAmount += entry.amount;
-            outputsForUse.push_back(entry);
-
-            // TODO calculate fee for outputsForUse.count()
-
-            if (utxoAmount > ptr->fromAmount)
-            {
-                break;
-            }
+            break;
         }
     }
 
