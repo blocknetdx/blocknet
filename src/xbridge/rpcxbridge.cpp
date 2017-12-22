@@ -779,11 +779,13 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
 
             {
                 const auto &tr = bidsItem->second;
-                const auto bidPrice = xBridgeValueFromAmount(tr->fromAmount) / xBridgeValueFromAmount(tr->toAmount);
-                bids.emplace_back(bidPrice);
-                bids.emplace_back(xBridgeValueFromAmount(tr->fromAmount));
-                if(isShowTxids) {
-                    bids.emplace_back(tr->id.GetHex());
+                if(tr != nullptr) {
+                    const auto bidPrice = xBridgeValueFromAmount(tr->fromAmount) / xBridgeValueFromAmount(tr->toAmount);
+                    bids.emplace_back(bidPrice);
+                    bids.emplace_back(xBridgeValueFromAmount(tr->fromAmount));
+                    if(isShowTxids) {
+                        bids.emplace_back(tr->id.GetHex());
+                    }
                 }
             }
             ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -800,11 +802,13 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
 
             {
                 const auto &tr = asksItem->second;
-                const auto askPrice = xBridgeValueFromAmount(tr->fromAmount) / xBridgeValueFromAmount(tr->toAmount);
-                asks.emplace_back(askPrice);
-                asks.emplace_back(xBridgeValueFromAmount(tr->fromAmount));
-                if(isShowTxids) {
-                    asks.emplace_back(tr->id.GetHex());
+                if(tr != nullptr) {
+                    const auto askPrice = xBridgeValueFromAmount(tr->fromAmount) / xBridgeValueFromAmount(tr->toAmount);
+                    asks.emplace_back(askPrice);
+                    asks.emplace_back(xBridgeValueFromAmount(tr->fromAmount));
+                    if(isShowTxids) {
+                        asks.emplace_back(tr->id.GetHex());
+                    }
                 }
             }
             res.emplace_back(Pair("bids", bids));
