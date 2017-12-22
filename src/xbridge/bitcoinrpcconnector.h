@@ -18,7 +18,6 @@ namespace xbridge
 namespace rpc
 {
     // helper fn-s
-    bool getNewAddress(std::vector<unsigned char> & addr);
     bool storeDataIntoBlockchain(const std::vector<unsigned char> & dstAddress,
                                  const double amount,
                                  const std::vector<unsigned char> & data,

@@ -369,22 +369,6 @@ Object CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
 
 //*****************************************************************************
 //*****************************************************************************
-bool getNewAddress(std::vector<unsigned char> & addr)
-{
-    CPubKey pub;
-    if (!pwalletMain->GetKeyFromPool(pub))
-    {
-        LOG() << "failed generate new key " << __FUNCTION__;
-        return false;
-    }
-
-    CKeyID id = pub.GetID();
-    std::copy(id.begin(), id.end(), std::back_inserter(addr));
-    return true;
-}
-
-//*****************************************************************************
-//*****************************************************************************
 bool storeDataIntoBlockchain(const std::vector<unsigned char> & dstAddress,
                              const double amount,
                              const std::vector<unsigned char> & data,
