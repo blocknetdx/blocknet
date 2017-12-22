@@ -48,6 +48,8 @@ public:
     virtual bool lockCoins(const std::vector<wallet::UtxoEntry> & inputs,
                              const bool lock = true) const = 0;
 
+    virtual bool getTxOut(wallet::UtxoEntry & entry) = 0;
+
     virtual bool sendRawTransaction(const std::string & rawtx,
                                     std::string & txid,
                                     int32_t & errorCode) = 0;

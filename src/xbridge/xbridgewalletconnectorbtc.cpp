@@ -926,7 +926,7 @@ bool BtcWalletConnector::getUnspent(std::vector<wallet::UtxoEntry> & inputs) con
 {
     if (!rpc::listUnspent(m_user, m_passwd, m_ip, m_port, inputs))
     {
-        LOG() << "rpc::listUnspent failed" << __FUNCTION__;
+        LOG() << "rpc::listUnspent failed " << __FUNCTION__;
         return false;
     }
 
@@ -940,7 +940,7 @@ bool BtcWalletConnector::lockCoins(const std::vector<wallet::UtxoEntry> & inputs
 {
     if (!rpc::lockUnspent(m_user, m_passwd, m_ip, m_port, inputs, lock))
     {
-        LOG() << "rpc::lockUnspent failed" << __FUNCTION__;
+        LOG() << "rpc::lockUnspent failed " << __FUNCTION__;
         return false;
     }
 
@@ -953,7 +953,20 @@ bool BtcWalletConnector::getNewAddress(std::string & addr)
 {
     if (!rpc::getNewAddress(m_user, m_passwd, m_ip, m_port, addr))
     {
-        LOG() << "rpc::getNewAddress failed" << __FUNCTION__;
+        LOG() << "rpc::getNewAddress failed " << __FUNCTION__;
+        return false;
+    }
+
+    return true;
+}
+
+//******************************************************************************
+//******************************************************************************
+bool BtcWalletConnector::getTxOut(wallet::UtxoEntry & entry)
+{
+    if (!rpc::gettxout(m_user, m_passwd, m_ip, m_port, entry))
+    {
+        LOG() << "rpc::gettxout failed " << __FUNCTION__;
         return false;
     }
 
@@ -969,7 +982,7 @@ bool BtcWalletConnector::sendRawTransaction(const std::string & rawtx,
     if (!rpc::sendRawTransaction(m_user, m_passwd, m_ip, m_port,
                                  rawtx, txid, errorCode))
     {
-        LOG() << "rpc::createRawTransaction failed" << __FUNCTION__;
+        LOG() << "rpc::createRawTransaction failed " << __FUNCTION__;
         return false;
     }
 

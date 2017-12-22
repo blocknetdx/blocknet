@@ -31,6 +31,8 @@ public:
 
     bool getNewAddress(std::string & addr);
 
+    bool getTxOut(wallet::UtxoEntry & entry);
+
     bool sendRawTransaction(const std::string & rawtx,
                             std::string & txid,
                             int32_t & errorCode);

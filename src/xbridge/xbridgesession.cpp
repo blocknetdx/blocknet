@@ -398,6 +398,16 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
     uint64_t damount = *static_cast<uint64_t *>(static_cast<void *>(packet->data()+offset));
     offset += sizeof(uint64_t);
 
+    xbridge::App & xapp = xbridge::App::instance();
+    WalletConnectorPtr conn = xapp.connectorByCurrency(scurrency);
+    if (!conn)
+    {
+        WARN() << "no connector for <" << scurrency << "> " << __FUNCTION__;
+        return true;
+    }
+
+    double commonAmount = 0;
+
     // utxo items
     std::vector<wallet::UtxoEntry> utxoItems;
     {
@@ -418,8 +428,24 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
             entry.vout = *static_cast<uint32_t *>(static_cast<void *>(packet->data()+offset));
             offset += sizeof(uint32_t);
 
+            if (!conn->getTxOut(entry))
+            {
+                LOG() << "transaction rejected, bad utx out tx <" << entry.txId
+                      << "> no " << entry.vout << " " << __FUNCTION__;
+                return true;
+            }
+
+            commonAmount += entry.amount;
+
             utxoItems.push_back(entry);
         }
+    }
+
+    if (commonAmount < samount)
+    {
+        LOG() << "transaction rejected, amount from utxo items <" << commonAmount
+              << "> less than required <" << samount << "> " << __FUNCTION__;
+        return true;
     }
 
     LOG() << "received transaction " << HexStr(id) << std::endl
@@ -432,7 +458,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
     if (!e.checkUtxoItems(id, utxoItems))
     {
         sendCancelTransaction(id, crBadUtxo);
-        LOG() << "error check utxo items, transaction request rejected "
+        LOG() << "transaction rejected, error check utxo items "
               << __FUNCTION__;
         return true;
     }
@@ -447,6 +473,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
                                  pendingId, isCreated))
         {
             // not created
+            LOG() << "transaction create error " << __FUNCTION__;
             return true;
         }
 
@@ -466,7 +493,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
         TransactionPtr tr = e.pendingTransaction(pendingId);
         if (tr->id() == uint256())
         {
-            LOG() << "transaction not found after create. " << id.GetHex();
+            LOG() << "transaction not found after create. " << id.GetHex() << " " << __FUNCTION__;
             return false;
         }
 
@@ -589,6 +616,16 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet)
     uint64_t damount = *static_cast<uint64_t *>(static_cast<void *>(packet->data()+offset));
     offset += sizeof(uint64_t);
 
+    xbridge::App & xapp = xbridge::App::instance();
+    WalletConnectorPtr conn = xapp.connectorByCurrency(scurrency);
+    if (!conn)
+    {
+        WARN() << "no connector for <" << scurrency << "> " << __FUNCTION__;
+        return true;
+    }
+
+    double commonAmount = 0;
+
     // utxo items
     std::vector<wallet::UtxoEntry> utxoItems;
     {
@@ -609,8 +646,24 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet)
             entry.vout = *static_cast<uint32_t *>(static_cast<void *>(packet->data()+offset));
             offset += sizeof(uint32_t);
 
+            if (!conn->getTxOut(entry))
+            {
+                LOG() << "transaction rejected, bad utx out tx <" << entry.txId
+                      << "> no " << entry.vout << " " << __FUNCTION__;
+                return true;
+            }
+
+            commonAmount += entry.amount;
+
             utxoItems.push_back(entry);
         }
+    }
+
+    if (commonAmount < samount)
+    {
+        LOG() << "transaction rejected, amount from utxo items <" << commonAmount
+              << "> less than required <" << samount << "> " << __FUNCTION__;
+        return true;
     }
 
     LOG() << "received accepting transaction " << HexStr(id) << std::endl
