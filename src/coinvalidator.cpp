@@ -265,7 +265,7 @@ bool CoinValidator::LoadStatic() {
     }
 
     lastLoadH = CHAIN_HEIGHT;
-    LogPrintf("Coin Validator: Ready: %u", lastLoadH);
+    LogPrintf("Coin Validator: Ready: %u\n", lastLoadH);
     return true;
 }
 
