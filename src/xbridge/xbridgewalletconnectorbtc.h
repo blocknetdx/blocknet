@@ -27,22 +27,9 @@ public:
     bool requestAddressBook(std::vector<wallet::AddressBookEntry> & entries);
 
     bool getUnspent(std::vector<wallet::UtxoEntry> & inputs) const;
-    bool lockUnspent(const std::vector<wallet::UtxoEntry> & inputs, const bool lock = true) const;
-
-    bool getRawTransaction(const std::string & txid, const bool verbose, std::string & tx);
+    bool lockCoins(const std::vector<wallet::UtxoEntry> & inputs, const bool lock = true) const;
 
     bool getNewAddress(std::string & addr);
-
-    bool createRawTransaction(const std::vector<std::pair<std::string, int> > & inputs,
-                              const std::vector<std::pair<std::string, double> > & outputs,
-                              const uint32_t lockTime,
-                              std::string & tx);
-
-    bool signRawTransaction(std::string & rawtx, bool & complete);
-
-    bool decodeRawTransaction(const std::string & rawtx,
-                              std::string & txid,
-                              std::string & tx);
 
     bool sendRawTransaction(const std::string & rawtx,
                             std::string & txid,

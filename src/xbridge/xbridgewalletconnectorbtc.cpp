@@ -935,7 +935,7 @@ bool BtcWalletConnector::getUnspent(std::vector<wallet::UtxoEntry> & inputs) con
 
 //******************************************************************************
 //******************************************************************************
-bool BtcWalletConnector::lockUnspent(const std::vector<wallet::UtxoEntry> & inputs,
+bool BtcWalletConnector::lockCoins(const std::vector<wallet::UtxoEntry> & inputs,
                                             const bool lock) const
 {
     if (!rpc::lockUnspent(m_user, m_passwd, m_ip, m_port, inputs, lock))
@@ -949,72 +949,11 @@ bool BtcWalletConnector::lockUnspent(const std::vector<wallet::UtxoEntry> & inpu
 
 //******************************************************************************
 //******************************************************************************
-bool BtcWalletConnector::getRawTransaction(const std::string & txid,
-                                                  const bool verbose, std::string & tx)
-{
-    if (!rpc::getRawTransaction(m_user, m_passwd, m_ip, m_port, txid, verbose, tx))
-    {
-        LOG() << "rpc::getRawTransaction failed" << __FUNCTION__;
-        return false;
-    }
-
-    return true;
-}
-
-//******************************************************************************
-//******************************************************************************
 bool BtcWalletConnector::getNewAddress(std::string & addr)
 {
     if (!rpc::getNewAddress(m_user, m_passwd, m_ip, m_port, addr))
     {
         LOG() << "rpc::getNewAddress failed" << __FUNCTION__;
-        return false;
-    }
-
-    return true;
-}
-
-//******************************************************************************
-//******************************************************************************
-bool BtcWalletConnector::createRawTransaction(const std::vector<std::pair<std::string, int> > & inputs,
-                                                     const std::vector<std::pair<std::string, double> > & outputs,
-                                                     const uint32_t lockTime,
-                                                     std::string & tx)
-{
-    if (!rpc::createRawTransaction(m_user, m_passwd, m_ip, m_port,
-                                   inputs, outputs, lockTime, tx))
-    {
-        LOG() << "rpc::createRawTransaction failed" << __FUNCTION__;
-        return false;
-    }
-
-    return true;
-}
-
-//******************************************************************************
-//******************************************************************************
-bool BtcWalletConnector::signRawTransaction(std::string & rawtx, bool & complete)
-{
-    if (!rpc::signRawTransaction(m_user, m_passwd, m_ip, m_port,
-                                 rawtx, complete))
-    {
-        LOG() << "rpc::createRawTransaction failed" << __FUNCTION__;
-        return false;
-    }
-
-    return true;
-}
-
-//******************************************************************************
-//******************************************************************************
-bool BtcWalletConnector::decodeRawTransaction(const std::string & rawtx,
-                                                     std::string & txid,
-                                                     std::string & tx)
-{
-    if (!rpc::decodeRawTransaction(m_user, m_passwd, m_ip, m_port,
-                                   rawtx, txid, tx))
-    {
-        LOG() << "rpc::createRawTransaction failed" << __FUNCTION__;
         return false;
     }
 
@@ -1118,7 +1057,7 @@ bool BtcWalletConnector::checkTransaction(const std::string & depositTxId,
     isGood  = false;
 
     std::string rawtx;
-    if (!getRawTransaction(depositTxId, true, rawtx))
+    if (!rpc::getRawTransaction(m_user, m_passwd, m_ip, m_port, depositTxId, true, rawtx))
     {
         LOG() << "no tx found " << depositTxId << " " << __FUNCTION__;
         return false;
@@ -1231,7 +1170,8 @@ bool BtcWalletConnector::createDepositTransaction(const std::vector<std::pair<st
                                                          std::string & rawTx)
 {
     std::string raw;
-    if (!createRawTransaction(inputs, outputs, 0, raw))
+    if (!rpc::createRawTransaction(m_user, m_passwd, m_ip, m_port,
+                                   inputs, outputs, 0, raw))
     {
         // cancel transaction
         LOG() << "create transaction error, transaction canceled " << __FUNCTION__;
@@ -1240,7 +1180,7 @@ bool BtcWalletConnector::createDepositTransaction(const std::vector<std::pair<st
 
     // sign
     bool complete = false;
-    if (!signRawTransaction(raw, complete))
+    if (!rpc::signRawTransaction(m_user, m_passwd, m_ip, m_port, raw, complete))
     {
         // do not sign, cancel
         LOG() << "sign transaction error, transaction canceled " << __FUNCTION__;
@@ -1255,7 +1195,7 @@ bool BtcWalletConnector::createDepositTransaction(const std::vector<std::pair<st
 
     std::string txid;
     std::string json;
-    if (!decodeRawTransaction(raw, txid, json))
+    if (!rpc::decodeRawTransaction(m_user, m_passwd, m_ip, m_port, raw, txid, json))
     {
         LOG() << "decode signed transaction error, transaction canceled " << __FUNCTION__;
         return false;
@@ -1369,7 +1309,7 @@ bool BtcWalletConnector::createRefundTransaction(const std::vector<std::pair<std
 
     std::string json;
     std::string reftxid;
-    if (!decodeRawTransaction(tx->toString(), reftxid, json))
+    if (!rpc::decodeRawTransaction(m_user, m_passwd, m_ip, m_port, tx->toString(), reftxid, json))
     {
         LOG() << "decode signed transaction error, transaction canceled " << __FUNCTION__;
 //            sendCancelTransaction(xtx, crRpcError);
@@ -1437,7 +1377,7 @@ bool BtcWalletConnector::createPaymentTransaction(const std::vector<std::pair<st
 
     std::string json;
     std::string paytxid;
-    if (!decodeRawTransaction(tx->toString(), paytxid, json))
+    if (!rpc::decodeRawTransaction(m_user, m_passwd, m_ip, m_port, tx->toString(), paytxid, json))
     {
             LOG() << "decode signed transaction error, transaction canceled " << __FUNCTION__;
 //                sendCancelTransaction(xtx, crRpcError);

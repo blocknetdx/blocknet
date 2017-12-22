@@ -15,6 +15,15 @@
 namespace xbridge
 {
 
+namespace rpc
+{
+bool decodeRawTransaction(const std::string & rpcuser, const std::string & rpcpasswd,
+                          const std::string & rpcip, const std::string & rpcport,
+                          const std::string & rawtx,
+                          std::string & txid, std::string & tx);
+
+}
+
 //******************************************************************************
 //******************************************************************************
 enum
@@ -101,7 +110,7 @@ bool BccWalletConnector::createRefundTransaction(const std::vector<std::pair<std
 
     std::string json;
     std::string reftxid;
-    if (!decodeRawTransaction(tx->toString(), reftxid, json))
+    if (!rpc::decodeRawTransaction(m_user, m_passwd, m_ip, m_port, tx->toString(), reftxid, json))
     {
         LOG() << "decode signed transaction error, transaction canceled " << __FUNCTION__;
 //            sendCancelTransaction(xtx, crRpcError);
@@ -169,7 +178,7 @@ bool BccWalletConnector::createPaymentTransaction(const std::vector<std::pair<st
 
     std::string json;
     std::string paytxid;
-    if (!decodeRawTransaction(tx->toString(), paytxid, json))
+    if (!rpc::decodeRawTransaction(m_user, m_passwd, m_ip, m_port, tx->toString(), paytxid, json))
     {
             LOG() << "decode signed transaction error, transaction canceled " << __FUNCTION__;
 //                sendCancelTransaction(xtx, crRpcError);

@@ -17,24 +17,6 @@ namespace xbridge
 
 //*****************************************************************************
 //*****************************************************************************
-namespace wallet
-{
-typedef std::pair<std::string, std::vector<std::string> > AddressBookEntry;
-
-struct UtxoEntry
-{
-    std::string txId;
-    uint32_t    vout;
-    double      amount;
-
-    friend bool operator < (const UtxoEntry & l, const UtxoEntry & r);
-    friend bool operator == (const UtxoEntry & l, const UtxoEntry & r);
-};
-
-} // namespace wallet
-
-//*****************************************************************************
-//*****************************************************************************
 class WalletConnector : public WalletParam
 {
 public:
@@ -55,30 +37,16 @@ public:
 public:
     // wallet RPC
 
+    virtual bool getNewAddress(std::string & addr) = 0;
+
     virtual bool requestAddressBook(std::vector<wallet::AddressBookEntry> & entries) = 0;
+
+    double getWalletBalance() const;
 
     virtual bool getUnspent(std::vector<wallet::UtxoEntry> & inputs) const = 0;
 
-    bool checkAmount(const uint64_t amount) const;
-    double getWalletBalance() const;
-
-    virtual bool lockUnspent(const std::vector<wallet::UtxoEntry> & inputs,
+    virtual bool lockCoins(const std::vector<wallet::UtxoEntry> & inputs,
                              const bool lock = true) const = 0;
-
-    virtual bool getRawTransaction(const std::string & txid, const bool verbose, std::string & tx) = 0;
-
-    virtual bool getNewAddress(std::string & addr) = 0;
-
-    virtual bool createRawTransaction(const std::vector<std::pair<std::string, int> > & inputs,
-                                      const std::vector<std::pair<std::string, double> > & outputs,
-                                      const uint32_t lockTime,
-                                      std::string & tx) = 0;
-
-    virtual bool signRawTransaction(std::string & rawtx, bool & complete) = 0;
-
-    virtual bool decodeRawTransaction(const std::string & rawtx,
-                                      std::string & txid,
-                                      std::string & tx) = 0;
 
     virtual bool sendRawTransaction(const std::string & rawtx,
                                     std::string & txid,
