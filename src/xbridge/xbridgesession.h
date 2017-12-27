@@ -13,6 +13,7 @@
 #include "uint256.h"
 #include "xkey.h"
 #include "xbitcointransaction.h"
+#include "bitcoinrpcconnector.h"
 #include "script/script.h"
 
 #include <memory>
@@ -43,6 +44,8 @@ public:
     bool processPacket(XBridgePacketPtr packet);
 
 public:
+    static std::vector<unsigned char> toXAddr(const std::string & addr, const std::string & currency);
+
     // service functions
     void sendListOfTransactions();
     void checkFinishedTransactions();
@@ -52,9 +55,28 @@ public:
     void requestAddressBook();
 
     bool checkAmount(const uint64_t amount) const;
+    bool checkAmountAndGetInputs(const uint64_t amount,
+                                 std::vector<rpc::Unspent> & inputs) const;
     double getWalletBalance() const;
 
     bool rollbacktXBridgeTransaction(const uint256 & id);
+
+protected:
+    // reimplement for currency
+    // virtual std::string fromXAddr(const std::vector<unsigned char> & xaddr) const = 0;
+    virtual std::vector<unsigned char> toXAddr(const std::string & addr) const = 0;
+
+    virtual uint32_t lockTime(const char role) const = 0;
+    virtual xbridge::CTransactionPtr createTransaction() const = 0;
+    virtual xbridge::CTransactionPtr createTransaction(const std::vector<std::pair<std::string, int> > & inputs,
+                                                       const std::vector<std::pair<CScript, double> > & outputs,
+                                                       const uint32_t lockTime = 0) const = 0;
+
+    virtual bool signTransaction(const xbridge::CKey & key,
+                                 const xbridge::CTransactionPtr & transaction,
+                                 const uint32_t inputIdx,
+                                 const CScript & unlockScript,
+                                 std::vector<unsigned char> & signature) = 0;
 
 private:
     virtual void init();
@@ -66,7 +88,6 @@ protected:
     const unsigned char * myaddr() const;
 
     void sendPacket(const std::vector<unsigned char> & to, const XBridgePacketPtr & packet);
-    void sendPacket(const std::string & to, const XBridgePacketPtr & packet);
     void sendPacketBroadcast(XBridgePacketPtr packet);
 
     // return true if packet not for me, relayed
@@ -81,20 +102,16 @@ protected:
 
     std::string round_x(const long double val, uint32_t prec);
 
-    virtual uint32_t lockTime(const char role) const;
-    virtual xbridge::CTransactionPtr createTransaction();
-    virtual xbridge::CTransactionPtr createTransaction(const std::vector<std::pair<std::string, int> > & inputs,
-                                                       const std::vector<std::pair<CScript, double> > & outputs,
-                                                       const uint32_t lockTime = 0);
-    virtual std::string createRawTransaction(const std::vector<std::pair<std::string, int> > & inputs,
-                                             const std::vector<std::pair<CScript, double> > & outputs,
-                                             const uint32_t lockTime = 0);
-
     bool checkDepositTx(const XBridgeTransactionDescrPtr & xtx,
                         const std::string & depositTxId,
                         const uint32_t & confirmations,
                         const uint64_t & neededAmount,
                         bool & isGood);
+
+    // fn search xaddress in transaction and restore full 'coin' address as string
+    bool isAddressInTransaction(const std::vector<unsigned char> & address,
+                                const XBridgeTransactionPtr & tx,
+                                std::string & fullAddress);
 
 protected:
     virtual bool processInvalid(XBridgePacketPtr packet);

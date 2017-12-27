@@ -23,7 +23,6 @@ struct XBridgeTransactionDescr
 {
     enum
     {
-        MIN_TX_FEE = 100,
         COIN = 1000000
     };
 
@@ -35,6 +34,7 @@ struct XBridgeTransactionDescr
         trPending,
         trAccepting,
         trHold,
+        trInitialized,
         trCreated,
         trSigned,
         trCommited,

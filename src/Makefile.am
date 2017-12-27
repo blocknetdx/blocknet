@@ -93,7 +93,6 @@ BITCOIN_CORE_H = \
   checkpoints.h \
   checkqueue.h \
   clientversion.h \
-  clientversioncore.h \
   coincontrol.h \
   coins.h \
   compat.h \
@@ -351,12 +350,16 @@ libxbridge_xbridge_a_SOURCES = \
   xbridge/util/logger.cpp \
   xbridge/util/txlog.cpp \
   xbridge/util/xutil.cpp \
+  xbridge/util/xbridgeerror.cpp \
   xbridge/bitcoinrpcconnector.cpp \
   xbridge/xbridge.cpp \
   xbridge/xbridgeapp.cpp \
   xbridge/xbridgeexchange.cpp \
   xbridge/xbridgesession.cpp \
+  xbridge/xbridgeservicesession.cpp \
   xbridge/xbridgesessionbtc.cpp \
+  xbridge/xbridgesessionbcc.cpp \
+  xbridge/xbridgesessiondcr.cpp \
   xbridge/xbridgetransaction.cpp \
   xbridge/xbridgetransactionmember.cpp \
   xbridge/xkey.cpp \
@@ -377,7 +380,10 @@ libxbridge_xbridge_a_SOURCES = \
   xbridge/xbridgepacket.h \
   xbridge/xbridgerpc.h \
   xbridge/xbridgesession.h \
+  xbridge/xbridgeservicesession.h \
   xbridge/xbridgesessionbtc.h \
+  xbridge/xbridgesessionbcc.h \
+  xbridge/xbridgesessiondcr.h \
   xbridge/xbridgetransaction.h \
   xbridge/xbridgetransactiondescr.h \
   xbridge/xbridgetransactionmember.h \
@@ -389,6 +395,7 @@ libxbridge_xbridge_a_SOURCES = \
   xbridge/util/settings.h \
   xbridge/util/txlog.h \
   xbridge/util/xutil.h \
+  xbridge/util/xbridgeerror.h \
   $(BITCOIN_CORE_H)
 
 

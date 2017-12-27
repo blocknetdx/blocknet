@@ -4,6 +4,8 @@
 #include "xbridge.h"
 #include "xbridgesession.h"
 #include "xbridgesessionbtc.h"
+#include "xbridgesessionbcc.h"
+#include "xbridgesessiondcr.h"
 // #include "xbridgesessionethereum.h"
 // #include "xbridgesessionrpccommon.h"
 #include "xbridgeapp.h"
@@ -87,6 +89,14 @@ XBridge::XBridge()
                 {
                     session.reset(new XBridgeSessionBtc(wp));
                 }
+                else if (wp.method == "BCC")
+                {
+                    session.reset(new XBridgeSessionBcc(wp));
+                }
+                else if (wp.method == "DCR")
+                {
+                    session.reset(new XBridgeSessionDcr(wp));
+                }
                 else if (wp.method == "RPC")
                 {
                     LOG() << "wp.method RPC not implemented" << __FUNCTION__;
@@ -94,7 +104,8 @@ XBridge::XBridge()
                 }
                 else
                 {
-                    session.reset(new XBridgeSession(wp));
+                    // session.reset(new XBridgeSession(wp));
+                    ERR() << "unknown session type " << __FUNCTION__;
                 }
                 if (session)
                 {
@@ -137,6 +148,7 @@ void XBridge::onTimer()
 {
     // DEBUG_TRACE();
 
+    LOG() << "xbridge::onTimer ";
     {
         m_services.push_back(m_services.front());
         m_services.pop_front();
@@ -183,6 +195,7 @@ void XBridge::onTimer()
             }
         }
     }
+
 
     m_timer.expires_at(m_timer.expires_at() + boost::posix_time::seconds(TIMER_INTERVAL));
     m_timer.async_wait(boost::bind(&XBridge::onTimer, this));

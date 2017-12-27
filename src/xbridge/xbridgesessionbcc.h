@@ -1,8 +1,8 @@
 //*****************************************************************************
 //*****************************************************************************
 
-#ifndef XBRIDGESESSIONBTC_H
-#define XBRIDGESESSIONBTC_H
+#ifndef XBRIDGESESSIONBCC_H
+#define XBRIDGESESSIONBCC_H
 
 #include "xbridge.h"
 #include "xbridgesession.h"
@@ -17,20 +17,25 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/noncopyable.hpp>
 
+enum
+{
+    SIGHASH_FORKID = 0x40,
+};
+
 //*****************************************************************************
 //*****************************************************************************
-class XBridgeSessionBtc
+class XBridgeSessionBcc
         : public XBridgeSession
 {
 public:
-    XBridgeSessionBtc();
-    XBridgeSessionBtc(const WalletParam & wallet);
-    virtual ~XBridgeSessionBtc();
+    XBridgeSessionBcc();
+    XBridgeSessionBcc(const WalletParam & wallet);
+    virtual ~XBridgeSessionBcc();
 
 public:
-    std::shared_ptr<XBridgeSessionBtc> shared_from_this()
+    std::shared_ptr<XBridgeSessionBcc> shared_from_this()
     {
-        return std::static_pointer_cast<XBridgeSessionBtc>(XBridgeSession::shared_from_this());
+        return std::static_pointer_cast<XBridgeSessionBcc>(XBridgeSession::shared_from_this());
     }
 
 protected:
@@ -49,6 +54,6 @@ protected:
                                  std::vector<unsigned char> & signature);
 };
 
-typedef std::shared_ptr<XBridgeSessionBtc> XBridgeSessionBtcPtr;
+typedef std::shared_ptr<XBridgeSessionBcc> XBridgeSessionBccPtr;
 
-#endif // XBRIDGESESSIONBTC_H
+#endif // XBRIDGESESSIONBCC_H

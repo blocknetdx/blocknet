@@ -14,6 +14,8 @@
 #include "servicenodeman.h"
 #include "rpcserver.h"
 #include "utilmoneystr.h"
+#include "tinyformat.h"
+#include "primitives/transaction.h"
 
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string.hpp>
@@ -291,12 +293,46 @@ Value servicenode(const Array& params, bool fHelp)
                 found = true;
                 std::string errorMessage;
 
-                bool result = activeServicenode.Register(mne.getIp(), mne.getPrivKey(), mne.getTxHash(), mne.getOutputIndex(), errorMessage);
+                CTransaction snodeTx;
+                uint256 snodeTxBlock;
+                GetTransaction(uint256S(mne.getTxHash()), snodeTx, snodeTxBlock, true);
+                int snodeTxIdx;
+                if (!snodeTx.IsNull() && mne.castOutputIndex(snodeTxIdx) && static_cast<int>(snodeTx.vout.size()) > snodeTxIdx) {
+                    CAmount snodeTxAmount = snodeTx.vout[snodeTxIdx].nValue;
+                    if (snodeTxAmount != SERVICENODE_REQUIRED_AMOUNT*COIN) {
+                        statusObj.push_back(Pair("result", "failed"));
+                        statusObj.push_back(Pair("errorMessage", strprintf("Servicenode input requires %d BLOCK. Only %f BLOCK was found",
+                                                         SERVICENODE_REQUIRED_AMOUNT, (float)snodeTxAmount/(float)COIN)));
+                        break;
+                    }
+                    // Check vin input age, make sure it's the minimum
+                    int age = 0;
+                    BlockMap::iterator mi = mapBlockIndex.find(snodeTxBlock);
+                    if (mi != mapBlockIndex.end() && (*mi).second) {
+                        CBlockIndex* pindex = (*mi).second;
+                        if (chainActive.Contains(pindex)) {
+                            age += chainActive.Height() - pindex->nHeight + 1;
+                        }
+                    }
+                    if (age < SERVICENODE_MIN_CONFIRMATIONS) {
+                        statusObj.push_back(Pair("result", "failed"));
+                        statusObj.push_back(Pair("errorMessage", strprintf("Servicenode input requires %d confirmations. It only has %d",
+                                                         SERVICENODE_MIN_CONFIRMATIONS, age)));
+                        break;
+                    }
 
-                statusObj.push_back(Pair("result", result ? "successful" : "failed"));
-                if (!result) {
-                    statusObj.push_back(Pair("errorMessage", errorMessage));
+                    activeServicenode.status = ACTIVE_SERVICENODE_INITIAL;
+                    bool result = activeServicenode.Register(mne.getIp(), mne.getPrivKey(), mne.getTxHash(), mne.getOutputIndex(), errorMessage);
+                    statusObj.push_back(Pair("result", result ? "successful" : "failed"));
+                    if (!result) {
+                        statusObj.push_back(Pair("errorMessage", errorMessage));
+                    }
+
+                } else {
+                    statusObj.push_back(Pair("result", "failed"));
+                    statusObj.push_back(Pair("errorMessage", "Servicenode input collateral is invalid."));
                 }
+
                 break;
             }
         }
@@ -351,13 +387,51 @@ Value servicenode(const Array& params, bool fHelp)
             if (strCommand == "start-missing" && pmn) continue;
             if (strCommand == "start-disabled" && pmn && pmn->IsEnabled()) continue;
 
-            bool result = activeServicenode.Register(mne.getIp(), mne.getPrivKey(), mne.getTxHash(), mne.getOutputIndex(), errorMessage);
+            // Lookup collateral transaction
+            CTransaction snodeTx;
+            uint256 snodeTxBlock;
+            GetTransaction(uint256S(mne.getTxHash()), snodeTx, snodeTxBlock, true);
+
+            bool success = !snodeTx.IsNull() && static_cast<int>(snodeTx.vout.size()) > nIndex;
+            if (success) {
+                // Verify required amount
+                CAmount snodeTxAmount = snodeTx.vout[nIndex].nValue;
+                if (snodeTxAmount != SERVICENODE_REQUIRED_AMOUNT * COIN) {
+                    success = false;
+                    errorMessage = strprintf("Servicenode input requires %d BLOCK. Only %f BLOCK was found",
+                                                       SERVICENODE_REQUIRED_AMOUNT, (float) snodeTxAmount / (float) COIN);
+                }
+                // Verify collateral input age
+                if (success) {
+                    // Check vin input age, make sure it's the minimum
+                    int age = 0;
+                    BlockMap::iterator mi = mapBlockIndex.find(snodeTxBlock);
+                    if (mi != mapBlockIndex.end() && (*mi).second) {
+                        CBlockIndex *pindex = (*mi).second;
+                        if (chainActive.Contains(pindex)) {
+                            age += chainActive.Height() - pindex->nHeight + 1;
+                        }
+                    }
+                    if (age < SERVICENODE_MIN_CONFIRMATIONS) {
+                        success = false;
+                        errorMessage = strprintf("Servicenode input requires %d confirmations. It only has %d",
+                                                           SERVICENODE_MIN_CONFIRMATIONS, age);
+                    }
+                }
+                // Register servicenode with network
+                if (success) {
+                    activeServicenode.status = ACTIVE_SERVICENODE_INITIAL;
+                    success = activeServicenode.Register(mne.getIp(), mne.getPrivKey(), mne.getTxHash(), mne.getOutputIndex(), errorMessage);
+                }
+            } else {
+                errorMessage = "Servicenode input collateral is invalid.";
+            }
 
             Object statusObj;
             statusObj.push_back(Pair("alias", mne.getAlias()));
-            statusObj.push_back(Pair("result", result ? "successful" : "failed"));
+            statusObj.push_back(Pair("result", success ? "successful" : "failed"));
 
-            if (result) {
+            if (success) {
                 successful++;
             } else {
                 failed++;
@@ -444,7 +518,7 @@ Value servicenode(const Array& params, bool fHelp)
             mnObj.push_back(Pair("message", activeServicenode.GetStatus()));
             return mnObj;
         }
-        throw runtime_error("Servicenode not found\n");
+        throw runtime_error("Servicenode has not been verified by the network yet. This typically takes 5-10 minutes after start.\n");
     }
 
     if (strCommand == "winners") {

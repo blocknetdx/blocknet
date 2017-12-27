@@ -85,7 +85,7 @@ public:
     std::list<XBridgeTransactionPtr> transactions() const;
     std::list<XBridgeTransactionPtr> finishedTransactions() const;
     std::list<XBridgeTransactionPtr> transactionsHistory() const;
-    void addToTransactionsHistory(const uint256 & id);
+
 
 private:
     std::list<XBridgeTransactionPtr> transactions(bool onlyFinished) const;

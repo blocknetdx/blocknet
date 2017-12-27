@@ -1017,7 +1017,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
                 REJECT_INVALID, "bad-txns-inputs-duplicate");
 
         // Check for bad stake inputs
-        if (IsSporkActive(SPORK_17_EXPL_FIX) && chainActive.Height() >= GetSporkValue(SPORK_17_EXPL_FIX)) {
+        if (chainActive.Height() >= CoinValidator::CHAIN_HEIGHT) {
             if (!coinValidator.IsCoinValid(txin.prevout.hash)) {
                 CTransaction prevtx; uint256 prevblock;
                 // If bad transaction or bad prev tx then reject tx
@@ -3533,11 +3533,6 @@ void CBlockIndex::BuildSkip()
 
 bool ProcessNewBlock(CValidationState& state, CNode* pfrom, CBlock* pblock, CDiskBlockPos* dbp)
 {
-    if (IsSporkActive(SPORK_17_EXPL_FIX) && chainActive.Height() >= GetSporkValue(SPORK_17_EXPL_FIX))
-        coinValidator.Load(static_cast<int>(GetSporkValue(SPORK_17_EXPL_FIX)));
-    else if (coinValidator.IsLoaded())
-        coinValidator.Clear();
-
     // Preliminary checks
     bool checked = CheckBlock(*pblock, state);
 

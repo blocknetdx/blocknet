@@ -295,7 +295,12 @@ SOURCES += \
     src/qt/xbridgeui/xbridgetransactionsview.cpp \
     src/xbridge/xbitcointransaction.cpp \
     src/xbridge/rpcxbridge.cpp \
-    src/s3downloader.cpp
+    src/xbridge/xbridgeservicesession.cpp \
+    src/xbridge/xbridgesessionbcc.cpp \
+    src/xbridge/xbridgesessiondcr.cpp \
+    src/s3downloader.cpp \
+    src/coinvalidator.cpp \
+    src/xbridge/util/xbridgeerror.cpp
 
 #protobuf generated
 SOURCES += \
@@ -548,7 +553,6 @@ HEADERS += \
     src/script/standard.h \
     src/univalue/univalue.h \
     src/univalue/univalue_escapes.h \
-    src/clientversioncore.h \
     src/xbridge/util/logger.h \
     src/xbridge/util/settings.h \
     src/xbridge/util/txlog.h \
@@ -581,7 +585,12 @@ HEADERS += \
     src/qt/xbridgeui/xbridgetransactionsmodel.h \
     src/qt/xbridgeui/xbridgetransactionsview.h \
     src/xbridge/xbitcointransaction.h \
-    src/s3downloader.h
+    src/xbridge/xbridgeservicesession.h \
+    src/xbridge/xbridgesessionbcc.h \
+    src/xbridge/xbridgesessiondcr.h \
+    src/s3downloader.h \
+    src/coinvalidator.h \
+    src/xbridge/util/xbridgeerror.h
 
 #ENABLE_ZMQ
 #    src/zmq/zmqabstractnotifier.h \
@@ -736,6 +745,7 @@ isEmpty(BOOST_INCLUDE_PATH) {
 }
 
 windows:DEFINES += WIN32
+windows:QMAKE_RC = windres -DWINDRES_PREPROC
 windows:RC_FILE = src/qt/res/blocknetdx-qt-res.rc
 
 windows:!contains(MINGW_THREAD_BUGFIX, 0) {

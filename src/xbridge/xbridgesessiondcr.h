@@ -1,8 +1,5 @@
-//*****************************************************************************
-//*****************************************************************************
-
-#ifndef XBRIDGESESSIONBTC_H
-#define XBRIDGESESSIONBTC_H
+#ifndef XBRIDGESESSIONDCR_H
+#define XBRIDGESESSIONDCR_H
 
 #include "xbridge.h"
 #include "xbridgesession.h"
@@ -19,18 +16,18 @@
 
 //*****************************************************************************
 //*****************************************************************************
-class XBridgeSessionBtc
+class XBridgeSessionDcr
         : public XBridgeSession
 {
 public:
-    XBridgeSessionBtc();
-    XBridgeSessionBtc(const WalletParam & wallet);
-    virtual ~XBridgeSessionBtc();
+    XBridgeSessionDcr();
+    XBridgeSessionDcr(const WalletParam & wallet);
+    virtual ~XBridgeSessionDcr();
 
 public:
-    std::shared_ptr<XBridgeSessionBtc> shared_from_this()
+    std::shared_ptr<XBridgeSessionDcr> shared_from_this()
     {
-        return std::static_pointer_cast<XBridgeSessionBtc>(XBridgeSession::shared_from_this());
+        return std::static_pointer_cast<XBridgeSessionDcr>(XBridgeSession::shared_from_this());
     }
 
 protected:
@@ -47,8 +44,11 @@ protected:
                                  const uint32_t inputIdx,
                                  const CScript & unlockScript,
                                  std::vector<unsigned char> & signature);
+
+private:
+    bool DecodeBase58Check(const char* psz, std::vector<unsigned char>& vchRet) const;
 };
 
-typedef std::shared_ptr<XBridgeSessionBtc> XBridgeSessionBtcPtr;
+typedef std::shared_ptr<XBridgeSessionDcr> XBridgeSessionDecPtr;
 
-#endif // XBRIDGESESSIONBTC_H
+#endif // XBRIDGESESSIONDCR_H

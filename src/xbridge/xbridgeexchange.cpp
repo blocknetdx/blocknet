@@ -110,17 +110,14 @@ bool XBridgeExchange::init()
 //*****************************************************************************
 bool XBridgeExchange::isEnabled()
 {
-    static bool isEnabled = (NetworkIdFromCommandLine() == CBaseChainParams::MAIN) ?
-                ((m_wallets.size() > 0) && fServiceNode) : (m_wallets.size() > 0);
-    return isEnabled;
+    return (m_wallets.size() > 0);
 }
 
 //*****************************************************************************
 //*****************************************************************************
 bool XBridgeExchange::isStarted()
 {
-    return (NetworkIdFromCommandLine() == CBaseChainParams::MAIN) ?
-                (isEnabled() && (activeServicenode.status == ACTIVE_SERVICENODE_STARTED)) : isEnabled();
+    return (isEnabled() && (activeServicenode.status == ACTIVE_SERVICENODE_STARTED));
 }
 
 //*****************************************************************************
@@ -200,11 +197,21 @@ bool XBridgeExchange::createTransaction(const uint256     & id,
         }
     }
 
+    std::vector<unsigned char> sourcex = XBridgeSession::toXAddr(sourceAddr, sourceCurrency);
+    std::vector<unsigned char> destx   = XBridgeSession::toXAddr(destAddr, destCurrency);
+
+    if (sourcex.size() == 0 || destx.size() == 0)
+    {
+        LOG() << "error xaddress from address for "
+              << util::base64_encode(std::string((char *)id.begin(), 32));
+        return false;
+    }
+
     XBridgeTransactionPtr tr(new XBridgeTransaction(id,
-                                                    sourceAddr, sourceCurrency,
-                                                    sourceAmount,
-                                                    destAddr, destCurrency,
-                                                    destAmount));
+                                                    sourceAddr, sourcex,
+                                                    sourceCurrency, sourceAmount,
+                                                    destAddr, destx,
+                                                    destCurrency, destAmount));
 
     LOG() << tr->hash1().ToString();
     LOG() << tr->hash2().ToString();
@@ -267,11 +274,21 @@ bool XBridgeExchange::acceptTransaction(const uint256     & id,
         return false;
     }
 
+    std::vector<unsigned char> sourcex = XBridgeSession::toXAddr(sourceAddr, sourceCurrency);
+    std::vector<unsigned char> destx   = XBridgeSession::toXAddr(destAddr, destCurrency);
+
+    if (sourcex.size() == 0 || destx.size() == 0)
+    {
+        LOG() << "error xaddress from address for "
+              << util::base64_encode(std::string((char *)id.begin(), 32));
+        return false;
+    }
+
     XBridgeTransactionPtr tr(new XBridgeTransaction(id,
-                                                    sourceAddr, sourceCurrency,
-                                                    sourceAmount,
-                                                    destAddr, destCurrency,
-                                                    destAmount));
+                                                    sourceAddr, sourcex,
+                                                    sourceCurrency, sourceAmount,
+                                                    destAddr, destx,
+                                                    destCurrency, destAmount));
 
     transactionId = id;
 
@@ -357,7 +374,7 @@ bool XBridgeExchange::deletePendingTransactions(const uint256 & id)
 
     LOG() << "delete pending transaction <" << id.GetHex() << ">";
 
-    addToTransactionsHistory(id);
+
     m_pendingTransactions.erase(id);
     return true;
 }
@@ -370,7 +387,7 @@ bool XBridgeExchange::deleteTransaction(const uint256 & id)
 
     LOG() << "delete transaction <" << id.GetHex() << ">";
 
-    addToTransactionsHistory(id);
+
     m_transactions.erase(id);
     return true;
 }
@@ -640,18 +657,3 @@ std::list<XBridgeTransactionPtr> XBridgeExchange::transactionsHistory() const
 
 //*****************************************************************************
 //*****************************************************************************
-void XBridgeExchange::addToTransactionsHistory(const uint256 &id)
-{
-    boost::mutex::scoped_lock l(m_transactionsHistoryLock);
-
-    if (m_transactions.count(id))
-    {
-        m_transactionsHistory[id] = m_transactions[id];
-    }
-    else if(m_pendingTransactions.count(id))
-    {
-        m_transactionsHistory[id] = m_pendingTransactions[id];
-    }
-
-    LOG() << "Nothing to add to transactions history";
-}
