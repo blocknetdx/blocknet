@@ -614,7 +614,6 @@ xbridge::Error XBridgeApp::cancelXBridgeTransaction(const uint256 &id,
             xuiConnector.NotifyXBridgeTransactionStateChanged(id, XBridgeTransactionDescr::trCancelled);
         }
     }
-    xuiConnector.NotifyXBridgeTransactionStateChanged(id, XBridgeTransactionDescr::trCancelled);
     return xbridge::SUCCESS;
 }
 
