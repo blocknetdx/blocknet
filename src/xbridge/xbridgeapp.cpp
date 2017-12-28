@@ -132,6 +132,12 @@ const unsigned char hash[20] =
 //*****************************************************************************
 bool XBridgeApp::init(int argc, char *argv[])
 {
+    m_historicTransactionsStates = {XBridgeTransactionDescr::trExpired,
+                                    XBridgeTransactionDescr::trOffline,
+                                    XBridgeTransactionDescr::trFinished,
+                                    XBridgeTransactionDescr::trDropped,
+                                    XBridgeTransactionDescr::trCancelled,
+                                    XBridgeTransactionDescr::trInvalid};
 
     // init xbridge settings
     Settings & s = settings();
@@ -150,12 +156,7 @@ bool XBridgeApp::init(int argc, char *argv[])
     XBridgeExchange & e = XBridgeExchange::instance();
     e.init();
 
-    m_historicTransactionsStates = {XBridgeTransactionDescr::trExpired,
-                                    XBridgeTransactionDescr::trOffline,
-                                    XBridgeTransactionDescr::trFinished,
-                                    XBridgeTransactionDescr::trDropped,
-                                    XBridgeTransactionDescr::trCancelled,
-                                    XBridgeTransactionDescr::trInvalid};
+
     return true;
 }
 
