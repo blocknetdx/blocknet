@@ -611,9 +611,9 @@ xbridge::Error XBridgeApp::cancelXBridgeTransaction(const uint256 &id,
         m_pendingTransactions.erase(id);
         if(m_transactions.count(id)) {
             m_transactions[id]->state = XBridgeTransactionDescr::trCancelled;
-            xuiConnector.NotifyXBridgeTransactionStateChanged(id, XBridgeTransactionDescr::trCancelled);
         }
     }
+    xuiConnector.NotifyXBridgeTransactionStateChanged(id, XBridgeTransactionDescr::trCancelled);
     return xbridge::SUCCESS;
 }
 
