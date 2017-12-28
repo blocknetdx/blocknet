@@ -132,6 +132,12 @@ const unsigned char hash[20] =
 //*****************************************************************************
 bool XBridgeApp::init(int argc, char *argv[])
 {
+    m_historicTransactionsStates = {XBridgeTransactionDescr::trExpired,
+                                    XBridgeTransactionDescr::trOffline,
+                                    XBridgeTransactionDescr::trFinished,
+                                    XBridgeTransactionDescr::trDropped,
+                                    XBridgeTransactionDescr::trCancelled,
+                                    XBridgeTransactionDescr::trInvalid};
 
     // init xbridge settings
     Settings & s = settings();
@@ -150,12 +156,7 @@ bool XBridgeApp::init(int argc, char *argv[])
     XBridgeExchange & e = XBridgeExchange::instance();
     e.init();
 
-    m_historicTransactionsStates = {XBridgeTransactionDescr::trExpired,
-                                    XBridgeTransactionDescr::trOffline,
-                                    XBridgeTransactionDescr::trFinished,
-                                    XBridgeTransactionDescr::trDropped,
-                                    XBridgeTransactionDescr::trCancelled,
-                                    XBridgeTransactionDescr::trInvalid};
+
     return true;
 }
 
@@ -611,9 +612,9 @@ xbridge::Error XBridgeApp::cancelXBridgeTransaction(const uint256 &id,
         m_pendingTransactions.erase(id);
         if(m_transactions.count(id)) {
             m_transactions[id]->state = XBridgeTransactionDescr::trCancelled;
-            xuiConnector.NotifyXBridgeTransactionStateChanged(id, XBridgeTransactionDescr::trCancelled);
         }
     }
+    xuiConnector.NotifyXBridgeTransactionStateChanged(id, XBridgeTransactionDescr::trCancelled);
     return xbridge::SUCCESS;
 }
 
