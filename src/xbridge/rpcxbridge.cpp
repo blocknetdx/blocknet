@@ -816,7 +816,7 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 return priceA < priceB;
             });
 
-            {
+            if(bidsItem != bidsList.end()) {
                 const auto &tr = bidsItem->second;
                 const auto bidPrice = xBridgeValueFromAmount(tr->fromAmount) / xBridgeValueFromAmount(tr->toAmount);
                 bids.emplace_back(bidPrice);
@@ -837,7 +837,7 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 return priceA < priceB;
             });
 
-            {
+             if(asksItem != asksList.end()) {
                 const auto &tr = asksItem->second;
                 const auto askPrice = xBridgeValueFromAmount(tr->fromAmount) / xBridgeValueFromAmount(tr->toAmount);
                 asks.emplace_back(askPrice);
