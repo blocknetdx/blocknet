@@ -122,7 +122,11 @@ Value getpoolinfo(const Array& params, bool fHelp)
 
 Value servicenode(const Array& params, bool fHelp)
 {
+    bool walletWasLocked = false;
     string strCommand;
+
+    walletWasLocked = pwalletMain->IsLocked();
+
     if (params.size() >= 1)
         strCommand = params[0].get_str();
 
@@ -255,7 +259,9 @@ Value servicenode(const Array& params, bool fHelp)
         if (activeServicenode.status != ACTIVE_SERVICENODE_STARTED) {
             activeServicenode.status = ACTIVE_SERVICENODE_INITIAL; // TODO: consider better way
             activeServicenode.ManageStatus();
-            pwalletMain->Lock();
+            if (params.size() == 2 && walletWasLocked) {
+                pwalletMain->Lock();
+            }
         }
 
         return activeServicenode.GetStatus();
@@ -342,7 +348,9 @@ Value servicenode(const Array& params, bool fHelp)
             statusObj.push_back(Pair("errorMessage", "could not find alias in config. Verify with list-conf."));
         }
 
-        pwalletMain->Lock();
+        if (params.size() == 3 && walletWasLocked) {
+            pwalletMain->Lock();
+        }
         return statusObj;
     }
 
@@ -440,7 +448,9 @@ Value servicenode(const Array& params, bool fHelp)
 
             resultsObj.push_back(Pair("status", statusObj));
         }
-        pwalletMain->Lock();
+        if (params.size() == 2 && walletWasLocked) {
+            pwalletMain->Lock();
+        }
 
         Object returnObj;
         returnObj.push_back(Pair("overall", strprintf("Successfully started %d servicenodes, failed to start %d, total %d", successful, failed, successful + failed)));
