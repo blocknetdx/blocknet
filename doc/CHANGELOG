@@ -53,3 +53,9 @@ boa85 (4):
       chancge initialization order (https://github.com/BlocknetDX/BlockDX/commit/1595165ad)
       removed recording to log (https://github.com/BlocknetDX/BlockDX/commit/9d60e7f68)
 
+3.7.54
+Andrey Lazarko (1):
+      fix for random crash on checking is transaction state historic (https://github.com/Blockn etDX/BlockDX/commit/68806a3d1)
+
+sawtoothgeek (1):
+      Fix for the Wallet Lock/Unlock problem when issuing rpc cmds (https://github.com/Blockn etDX/BlockDX/commit/27f0ddf01)
