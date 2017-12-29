@@ -305,22 +305,24 @@ void XBridgeTransactionsModel::onTimer()
         }
         else if (m_transactions[i].state == XBridgeTransactionDescr::trExpired &&
                 td.total_seconds() > XBridgeTransaction::TTL)
-        {//if waiting time-out of transaction exceeds the limit
+        {
+            //if waiting time-out of transaction exceeds the limit
             emit beginRemoveRows(QModelIndex(), i, i);
             m_transactions.erase(m_transactions.begin()+i);
             emit endRemoveRows();
             --i;
-            {//to remove also from the core
+            {
+                //to remove also from the core
                 boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
                 XBridgeApp::m_historicTransactions.erase(id);
-
             }
+            continue;
         }
-        //
-        if(XBridgeApp::instance().isHistoricState(m_transactions[i].state))
-        {//add transaction into history
-            auto tmp = XBridgeTransactionDescrPtr(new XBridgeTransactionDescr(m_transactions[i]));
 
+        if(XBridgeApp::instance().isHistoricState(m_transactions[i].state))
+        {
+            //add transaction into history
+            auto tmp = XBridgeTransactionDescrPtr(new XBridgeTransactionDescr(m_transactions[i]));
             {
                 boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
                 XBridgeApp::m_historicTransactions.insert(XBridgeApp::m_historicTransactions.end(),
@@ -329,7 +331,6 @@ void XBridgeTransactionsModel::onTimer()
             {
                 boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
                 XBridgeApp::m_pendingTransactions.erase(id);
-
             }
         }
     }
