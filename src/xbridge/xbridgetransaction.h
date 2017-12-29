@@ -60,9 +60,11 @@ public:
     XBridgeTransaction();
     XBridgeTransaction(const uint256     & id,
                        const std::string & sourceAddr,
+                       const std::vector<unsigned char> & sourceXAddr,
                        const std::string & sourceCurrency,
                        const uint64_t    & sourceAmount,
                        const std::string & destAddr,
+                       const std::vector<unsigned char> & destXAddr,
                        const std::string & destCurrency,
                        const uint64_t    & destAmount);
     ~XBridgeTransaction();
@@ -96,7 +98,9 @@ public:
 
     // uint256                    firstId() const;
     std::string                a_address() const;
+    std::vector<unsigned char> a_xaddress() const;
     std::string                a_destination() const;
+    std::vector<unsigned char> a_xdestination() const;
     std::string                a_currency() const;
     uint64_t                   a_amount() const;
     std::string                a_payTx() const;
@@ -109,7 +113,9 @@ public:
 
     // uint256                    secondId() const;
     std::string                b_address() const;
+    std::vector<unsigned char> b_xaddress() const;
     std::string                b_destination() const;
+    std::vector<unsigned char> b_xdestination() const;
     std::string                b_currency() const;
     uint64_t                   b_amount() const;
     std::string                b_payTx() const;
@@ -119,8 +125,6 @@ public:
 
     // uint256                    b_datatxid() const;
     xbridge::CPubKey           b_pk1() const;
-
-    std::string                fromXAddr(const std::vector<unsigned char> & xaddr) const;
 
     bool tryJoin(const XBridgeTransactionPtr other);
 

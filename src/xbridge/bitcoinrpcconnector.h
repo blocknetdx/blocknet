@@ -12,8 +12,6 @@
 //******************************************************************************
 namespace rpc
 {
-    std::vector<unsigned char> toXAddr(const std::string & addr);
-
     typedef std::pair<std::string, std::vector<std::string> > AddressBookEntry;
     bool requestAddressBook(const std::string & rpcuser,
                             const std::string & rpcpasswd,
@@ -42,6 +40,13 @@ namespace rpc
                      const std::string & rpcip,
                      const std::string & rpcport,
                      std::vector<Unspent> & entries);
+
+    bool gettxout(const std::string & rpcuser,
+                  const std::string & rpcpasswd,
+                  const std::string & rpcip,
+                  const std::string & rpcport,
+                  const std::string & txid,
+                  const uint32_t & out);
 
     bool getRawTransaction(const std::string & rpcuser,
                            const std::string & rpcpasswd,

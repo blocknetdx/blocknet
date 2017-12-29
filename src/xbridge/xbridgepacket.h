@@ -20,19 +20,20 @@
 enum TxCancelReason
 {
     crUnknown         = 0,
-    crUserRequest     = 1,
-    crNoMoney         = 2,
-    crDust            = 3,
-    crRpcError        = 4,
-    crNotSigned       = 5,
-    crNotAccepted     = 6,
-    crRollback        = 7,
-    crRpcRequest      = 8,
-    crXbridgeRejected = 9,
-    crInvalidAddress  = 10,
-    crBlocknetError   = 11,
-    crBadADepositTx   = 12,
-    crBadBDepositTx   = 13
+    crBadSettings     = 1,
+    crUserRequest     = 2,
+    crNoMoney         = 3,
+    crDust            = 4,
+    crRpcError        = 5,
+    crNotSigned       = 6,
+    crNotAccepted     = 7,
+    crRollback        = 8,
+    crRpcRequest      = 9,
+    crXbridgeRejected = 10,
+    crInvalidAddress  = 11,
+    crBlocknetError   = 12,
+    crBadADepositTx   = 13,
+    crBadBDepositTx   = 14
 };
 
 //******************************************************************************

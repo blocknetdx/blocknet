@@ -416,6 +416,18 @@ inline uint256 HashQuark(const T1 pbegin, const T1 pend)
     return hash[8].trim256();
 }
 
+template<typename T1>
+inline uint256 HashBlake(const T1 pbegin, const T1 pend)
+{
+    sph_blake256_context ctx_blake;
+    static unsigned char pblank[1];
+    uint256 hash;
+    sph_blake256_init(&ctx_blake);
+    sph_blake256 (&ctx_blake, (pbegin == pend ? pblank : static_cast<const void*>(&pbegin[0])), (pend - pbegin) * sizeof(pbegin[0]));
+    sph_blake256_close(&ctx_blake, static_cast<void*>(&hash));
+    return hash;
+}
+
 void scrypt_hash(const char* pass, unsigned int pLen, const char* salt, unsigned int sLen, char* output, unsigned int N, unsigned int r, unsigned int p, unsigned int dkLen);
 
 #endif // BITCOIN_HASH_H

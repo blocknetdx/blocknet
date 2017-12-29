@@ -4,7 +4,6 @@
 #include "xbridgetransaction.h"
 #include "util/logger.h"
 #include "util/xutil.h"
-#include "bitcoinrpcconnector.h"
 #include "utilstrencodings.h"
 
 
@@ -24,9 +23,11 @@ XBridgeTransaction::XBridgeTransaction()
 //*****************************************************************************
 XBridgeTransaction::XBridgeTransaction(const uint256     & id,
                                        const std::string & sourceAddr,
+                                       const std::vector<unsigned char> & sourceXAddr,
                                        const std::string & sourceCurrency,
                                        const uint64_t    & sourceAmount,
                                        const std::string & destAddr,
+                                       const std::vector<unsigned char> & destXAddr,
                                        const std::string & destCurrency,
                                        const uint64_t    & destAmount)
     : m_id(id)
@@ -42,8 +43,8 @@ XBridgeTransaction::XBridgeTransaction(const uint256     & id,
     , m_destAmount(destAmount)
     , m_a(id)
 {
-    m_a.setSource(sourceAddr);
-    m_a.setDest(destAddr);
+    m_a.setSource(sourceAddr, sourceXAddr);
+    m_a.setDest(destAddr, destXAddr);
 }
 
 //*****************************************************************************
@@ -324,9 +325,23 @@ std::string XBridgeTransaction::a_address() const
 
 //*****************************************************************************
 //*****************************************************************************
+std::vector<unsigned char> XBridgeTransaction::a_xaddress() const
+{
+    return m_a.xsource();
+}
+
+//*****************************************************************************
+//*****************************************************************************
 std::string XBridgeTransaction::a_destination() const
 {
     return m_a.dest();
+}
+
+//*****************************************************************************
+//*****************************************************************************
+std::vector<unsigned char> XBridgeTransaction::a_xdestination() const
+{
+    return m_a.xdest();
 }
 
 //*****************************************************************************
@@ -387,9 +402,23 @@ std::string XBridgeTransaction::b_address() const
 
 //*****************************************************************************
 //*****************************************************************************
+std::vector<unsigned char> XBridgeTransaction::b_xaddress() const
+{
+    return m_b.xsource();
+}
+
+//*****************************************************************************
+//*****************************************************************************
 std::string XBridgeTransaction::b_destination() const
 {
     return m_b.dest();
+}
+
+//*****************************************************************************
+//*****************************************************************************
+std::vector<unsigned char> XBridgeTransaction::b_xdestination() const
+{
+    return m_b.xdest();
 }
 
 //*****************************************************************************
@@ -432,29 +461,6 @@ std::string XBridgeTransaction::b_innerScript() const
 xbridge::CPubKey XBridgeTransaction::b_pk1() const
 {
     return m_b_pk1;
-}
-
-//*****************************************************************************
-//*****************************************************************************
-std::string XBridgeTransaction::fromXAddr(const std::vector<unsigned char> & xaddr) const
-{
-    if (rpc::toXAddr(m_a.source()) == xaddr)
-    {
-        return m_a.source();
-    }
-    else if (rpc::toXAddr(m_b.source()) == xaddr)
-    {
-        return m_b.source();
-    }
-    else if (rpc::toXAddr(m_a.dest()) == xaddr)
-    {
-        return m_a.dest();
-    }
-    else if (rpc::toXAddr(m_b.dest()) == xaddr)
-    {
-        return m_b.dest();
-    }
-    return std::string();
 }
 
 //*****************************************************************************
