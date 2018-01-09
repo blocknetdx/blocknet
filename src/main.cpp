@@ -5582,11 +5582,18 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
                 }
             }
 
-            static bool isEnabled = XBridgeApp::isEnabled();
+            static bool isEnabled = xbridge::App::isEnabled();
             if (isEnabled)
             {
-                if (raw.size() > 20 + sizeof(time_t))
+                if (raw.size() < (20 + sizeof(time_t)))
                 {
+                    // bad packet, small penalty
+                    Misbehaving(pfrom->GetId(), 10);
+                }
+                else
+                {
+                    CValidationState state;
+
                     static std::vector<unsigned char> zero(20, 0);
                     std::vector<unsigned char> addr(raw.begin(), raw.begin()+20);
                     // remove addr from raw
@@ -5594,15 +5601,34 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
                     // remove timestamp from raw
                     raw.erase(raw.begin(), raw.begin()+sizeof(uint64_t));
 
-                    XBridgeApp & app = XBridgeApp::instance();
+                    xbridge::App & app = xbridge::App::instance();
 
                     if (addr != zero)
                     {
-                        app.onMessageReceived(addr, raw);
+                        app.onMessageReceived(addr, raw, state);
                     }
                     else
                     {
-                        app.onBroadcastReceived(raw);
+                        app.onBroadcastReceived(raw, state);
+                    }
+
+                    int dos = 0;
+                    if (state.IsInvalid(dos))
+                    {
+                        LogPrint("xbridge", "invalid xbridge packet from peer=%d %s : %s\n",
+                            pfrom->id, pfrom->cleanSubVer,
+                            state.GetRejectReason());
+                        if (dos > 0)
+                        {
+                            Misbehaving(pfrom->GetId(), dos);
+                        }
+                    }
+                    else if (state.IsError())
+                    {
+                        LogPrint("xbridge", "xbridge packet from peer=%d %s processed with error: %s\n",
+                            pfrom->id, pfrom->cleanSubVer,
+                            state.GetRejectReason());
+                        // Misbehaving(pfrom->GetId(), 10);
                     }
                 }
             }

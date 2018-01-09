@@ -29,4 +29,8 @@ namespace xbridge {
         }
         return "invalid error value";
     }
+    const std::string xbridgeErrorText(const Error error, const std::vector<unsigned char> &argument)
+    {
+        return xbridgeErrorText(error, std::string(argument.begin(), argument.end()));
+    }
 }

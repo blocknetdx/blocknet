@@ -16,6 +16,8 @@
 class QTableView;
 class QTextEdit;
 
+//******************************************************************************
+//******************************************************************************
 class StateSortFilterProxyModel : public QSortFilterProxyModel
 {
     Q_OBJECT
@@ -23,7 +25,7 @@ class StateSortFilterProxyModel : public QSortFilterProxyModel
 public:
     StateSortFilterProxyModel(QObject *parent = 0) : QSortFilterProxyModel(parent) {}
 
-    void setAcceptedStates(const QList<XBridgeTransactionDescr::State> &acceptedStates)
+    void setAcceptedStates(const QList<xbridge::TransactionDescr::State> &acceptedStates)
     {
         m_acceptedStates = acceptedStates;
     }
@@ -41,7 +43,7 @@ protected:
 
             if(ok)
             {
-                XBridgeTransactionDescr::State transactionState = static_cast<XBridgeTransactionDescr::State>(stateValue);
+                xbridge::TransactionDescr::State transactionState = static_cast<xbridge::TransactionDescr::State>(stateValue);
                 return m_acceptedStates.contains(transactionState);
             }
         }
@@ -50,7 +52,7 @@ protected:
     }
 
 private:
-    QList<XBridgeTransactionDescr::State> m_acceptedStates;
+    QList<xbridge::TransactionDescr::State> m_acceptedStates;
 
 };
 

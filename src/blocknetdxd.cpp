@@ -37,6 +37,14 @@
 
 static bool fDaemon;
 
+void waitForClose()
+{
+    while (true)
+    {
+       boost::this_thread::sleep_for(boost::chrono::seconds(1));
+    }
+}
+
 void DetectShutdownThread(boost::thread_group* threadGroup)
 {
     bool fShutdown = ShutdownRequested();
@@ -144,8 +152,10 @@ bool AppInit(int argc, char* argv[])
         SoftSetBoolArg("-server", true);
 
         {
+            RandomInit();
+
             // init xbridge
-            XBridgeApp & xapp = XBridgeApp::instance();
+            xbridge::App & xapp = xbridge::App::instance();
             xapp.init(argc, argv);
         }
 

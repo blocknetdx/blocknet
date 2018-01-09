@@ -6,6 +6,7 @@
 
 #include "uint256.h"
 #include "xbridge/xbridgetransactiondescr.h"
+#include "xbridge/xbridgedef.h"
 #include "xbridge/util/xbridgeerror.h"
 
 #include <QAbstractTableModel>
@@ -59,25 +60,24 @@ public:
                                    const std::string & from,
                                    const std::string & to);
 
-    bool cancelTransaction(const uint256 & id);
-    bool rollbackTransaction(const uint256 & id);
+    xbridge::Error cancelTransaction(const uint256 & id);
+    xbridge::Error rollbackTransaction(const uint256 & id);
 
-    XBridgeTransactionDescr item(const unsigned int index) const;
+    xbridge::TransactionDescrPtr item(const unsigned int index) const;
 
 private slots:
     void onTimer();
 
 private:
-    void onTransactionReceived(const XBridgeTransactionDescr & tx);
-    void onTransactionStateChanged(const uint256 & id, const uint32_t state);
-    void onTransactionCancelled(const uint256 & id, const uint32_t state, const uint32_t reason);
+    void onTransactionReceived(const xbridge::TransactionDescrPtr & tx);
+    void onTransactionStateChanged(const uint256 & id);
 
-    QString transactionState(const XBridgeTransactionDescr::State state) const;
+    QString transactionState(const xbridge::TransactionDescr::State state) const;
 
 private:
     QStringList m_columns;
 
-    std::vector<XBridgeTransactionDescr> m_transactions;
+    std::vector<xbridge::TransactionDescrPtr> m_transactions;
 
     QTimer m_timer;
 };

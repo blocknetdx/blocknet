@@ -167,4 +167,9 @@ std::string base64_decode(const std::string& s)
     return std::string();
 }
 
+std::string to_str(const std::vector<unsigned char> & obj)
+{
+    return util::base64_encode(obj);
+}
+
 } // namespace util

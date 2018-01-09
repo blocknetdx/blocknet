@@ -20,6 +20,7 @@
 #include "splashscreen.h"
 #include "utilitydialog.h"
 #include "winshutdownmonitor.h"
+#include "random.h"
 
 #ifdef ENABLE_WALLET
 #include "paymentserver.h"
@@ -53,6 +54,7 @@
 #include <QThread>
 #include <QTimer>
 #include <QTranslator>
+#include <QAbstractEventDispatcher>
 
 #if defined(QT_STATICPLUGIN)
 #include <QtPlugin>
@@ -669,9 +671,12 @@ int main(int argc, char* argv[])
     if (GetBoolArg("-splash", true) && !GetBoolArg("-min", false))
         app.createSplashScreen(networkStyle.data());
 
+    xbridge::App & xapp = xbridge::App::instance();
+
     try {
+        RandomInit();
+
         // init xbridge
-        XBridgeApp & xapp = XBridgeApp::instance();
         xapp.init(argc, argv);
 
         app.createWindow(networkStyle.data());
@@ -691,7 +696,15 @@ int main(int argc, char* argv[])
     catch (std::exception& e)
     {
         PrintExceptionContinue(&e, "Runaway exception");
-        app.handleRunawayException(QString::fromStdString(strMiscWarning));
+
+        // stop xbridge
+        xapp.stop();
+
+        // stop appication
+        app.requestShutdown();
+        app.exec();
+
+        // app.handleRunawayException(QString::fromStdString(strMiscWarning));
     }
     catch (...)
     {
@@ -700,4 +713,23 @@ int main(int argc, char* argv[])
     }
     return app.getReturnValue();
 }
+
 #endif // BITCOIN_QT_TEST
+
+void waitForClose()
+{
+    // if (qApp->thread() == QThread::currentThread())
+    if (QAbstractEventDispatcher::instance())
+    {
+        // throw exception in gui thread across event loop
+        throw std::runtime_error("assert catched");
+    }
+    else
+    {
+        // sleep thread
+        while (true)
+        {
+           boost::this_thread::sleep_for(boost::chrono::seconds(1));
+        }
+    }
+}

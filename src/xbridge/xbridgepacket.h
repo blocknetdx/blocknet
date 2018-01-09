@@ -23,17 +23,18 @@ enum TxCancelReason
     crBadSettings     = 1,
     crUserRequest     = 2,
     crNoMoney         = 3,
-    crDust            = 4,
-    crRpcError        = 5,
-    crNotSigned       = 6,
-    crNotAccepted     = 7,
-    crRollback        = 8,
-    crRpcRequest      = 9,
-    crXbridgeRejected = 10,
-    crInvalidAddress  = 11,
-    crBlocknetError   = 12,
-    crBadADepositTx   = 13,
-    crBadBDepositTx   = 14
+    crBadUtxo         = 4,
+    crDust            = 5,
+    crRpcError        = 6,
+    crNotSigned       = 7,
+    crNotAccepted     = 8,
+    crRollback        = 9,
+    crRpcRequest      = 10,
+    crXbridgeRejected = 11,
+    crInvalidAddress  = 12,
+    crBlocknetError   = 13,
+    crBadADepositTx   = 14,
+    crBadBDepositTx   = 15
 };
 
 //******************************************************************************
@@ -46,7 +47,7 @@ enum XBridgeCommand
     //
     // xbcAnnounceAddresses
     //     uint160 client address
-    xbcAnnounceAddresses = 1,
+    // xbcAnnounceAddresses = 1,
 
     // xchat message
     //
@@ -69,6 +70,10 @@ enum XBridgeCommand
     // xbcTransactionHold       <--    |     --> xbcTransactionHold
     // xbcTransactionHoldApply  -->    |     <-- xbcTransactionHoldApply
     //                                 |
+    //                                 |
+    // xbcTransactionInit       <--    |     --> xbcTransactionInit
+    // xbcTransactionHoldInit-d -->    |     <-- xbcTransactionInitialized
+    //                                 |
     // xbcTransactionCreateA    <--    |
     // xbcTransactionCreatedA   -->    |
     //                                 |
@@ -85,15 +90,20 @@ enum XBridgeCommand
 
     // exchange transaction
     //
-    // xbcTransaction  (132 bytes min)
+    // xbcTransaction  (144 bytes min)
     // clients not process this messages, only exchange
-    //    uint256 client transaction id
-    //    string source address (33-34 byte + 0)
-    //    8 bytes source currency
-    //    uint64 source amount
-    //    string destination address (33-34 byte + 0)
-    //    8 bytes destination currency
-    //    uint64 destination amount
+    //    uint256  client transaction id
+    //    20 bytes source address
+    //    8 bytes  source currency
+    //    uint64   source amount
+    //    20 bytes destination address
+    //    8 bytes  destination currency
+    //    uint64   destination amount
+    //    array of unspent outputs used in transaction
+    //      uint32_t count of array items
+    //      array items
+    //        uint256  transaction id
+    //        uint32_t out idx
     xbcTransaction = 3,
     //
     // xbcPendingTransaction (84 bytes)
@@ -106,16 +116,21 @@ enum XBridgeCommand
     //    uint160 hub address
     xbcPendingTransaction = 4,
     //
-    // xbcTransactionAccepting (152 bytes min)
+    // xbcTransactionAccepting (164 bytes min)
     // client accepting opened tx
     //    uint160 hub address
     //    uint256 client transaction id
-    //    string source address (33-34 byte + 0)
+    //    20 bytes source address
     //    8 bytes source currency
     //    uint64 source amount
-    //    string destination address (33-34 byte + 0)
+    //    20 bytes destination address
     //    8 bytes destination currency
     //    uint64 destination amount
+    //    array of unspent outputs used in transaction
+    //      uint32_t count of array items
+    //      array items
+    //        uint256  transaction id
+    //        uint32_t out idx
     xbcTransactionAccepting = 5,
 
     //
@@ -133,16 +148,16 @@ enum XBridgeCommand
     xbcTransactionHoldApply = 7,
 
     //
-    // xbcTransactionInit (207 or 239 bytes min)
+    // xbcTransactionInit (188 or 221 bytes min)
     //    uint160 client address
     //    uint160 hub address
     //    uint256 hub transaction id
     //    public key, 33 or 65 bytes, servicenode public key
     //    uint16_t  role ( 'A' (Alice) or 'B' (Bob) :) )
-    //    string source address (33-34 byte + 0)
+    //    20 bytes source address
     //    8 bytes source currency
     //    uint64 source amount
-    //    string destination address (33-34 byte + 0)
+    //    20 bytes source address
     //    8 bytes destination currency
     //    uint64 destination amount
     xbcTransactionInit = 8,
@@ -156,11 +171,11 @@ enum XBridgeCommand
     xbcTransactionInitialized = 9,
 
     //
-    // xbcTransactionCreateA (172 bytes min)
+    // xbcTransactionCreateA (157 bytes min)
     //    uint160  client address
     //    uint160  hub address
     //    uint256  hub transaction id
-    //    string destination address (33-34 byte + 0)
+    //    20 bytes source address
     //    uint256 data tx id, 32 bytes
     //    opponent public key, 33 bytes
     xbcTransactionCreateA = 10,
@@ -239,12 +254,6 @@ enum XBridgeCommand
     //    uint256 hub transaction id
     //
     xbcTransactionFinished = 24,
-    //
-    // xbcTransactionDropped
-    //    uint160 address
-    //    uint256 hub transaction id
-    //
-    xbcTransactionDropped = 25,
 };
 
 //******************************************************************************

@@ -138,7 +138,7 @@ BitcoinGUI::BitcoinGUI(const NetworkStyle* networkStyle, QWidget* parent) : QMai
     MacDockIconHandler::instance()->setIcon(networkStyle->getAppIcon());
 #endif
 
-    XBridgeExchange & e = XBridgeExchange::instance();
+    xbridge::Exchange & e = xbridge::Exchange::instance();
     if (e.isEnabled())
     {
         windowTitle += QString(" [%1] ").arg(tr("exchange mode"));
@@ -340,7 +340,7 @@ void BitcoinGUI::createActions(const NetworkStyle* networkStyle)
     xbridgeAction->setToolTip(tr("Show xbridge dialog"));
     // xbridgeAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_6));
     xbridgeAction->setCheckable(true);
-    if (XBridgeApp::isEnabled())
+    if (xbridge::App::isEnabled())
     {
         tabGroup->addAction(xbridgeAction);
     }
@@ -536,7 +536,7 @@ void BitcoinGUI::createToolBars()
         toolbar->addAction(receiveCoinsAction);
         toolbar->addAction(historyAction);
 
-        if (XBridgeApp::isEnabled())
+        if (xbridge::App::isEnabled())
         {
             toolbar->addAction(xbridgeAction);
         }
