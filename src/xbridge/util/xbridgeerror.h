@@ -1,6 +1,7 @@
 #ifndef XBRIDGEERROR_H
 #define XBRIDGEERROR_H
 #include <string>
+#include <vector>
 
 namespace xbridge
 {
@@ -15,6 +16,8 @@ namespace xbridge
         UNKNOWN_SESSION,
         REVERT_TX_FAILED,
         INVALID_AMOUNT,
+        INVALID_PARAMETERS,
+        INVALID_ADDRESS,
         UNKNOWN_ERROR
     };
 
@@ -24,6 +27,7 @@ namespace xbridge
      * @param argumrnt
      * @return
      */
-    const std::string xbridgeErrorText(const Error error, const std::string &argumrnt = "");
+    const std::string xbridgeErrorText(const Error error, const std::string &argument = "");
+    const std::string xbridgeErrorText(const Error error, const std::vector<unsigned char> &argument);
 }
 #endif // XBRIDGEERROR_H

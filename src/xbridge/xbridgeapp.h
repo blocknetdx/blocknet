@@ -76,12 +76,44 @@ public:
                                      const std::string & to);
     bool sendAcceptingTransaction(const TransactionDescrPtr & ptr);
 
-    xbridge::Error cancelXBridgeTransaction(const uint256 & id, const TxCancelReason & reason);
-    bool sendCancelTransaction(const uint256 & txid, const TxCancelReason & reason);
+    xbridge::Error cancelXBridgeTransaction(const uint256 &id, const TxCancelReason &reason);
+    bool sendCancelTransaction(const uint256 &txid, const TxCancelReason &reason);
 
-    xbridge::Error rollbackXBridgeTransaction(const uint256 & id);
-    bool sendRollbackTransaction(const uint256 & txid);
+    xbridge::Error rollbackXBridgeTransaction(const uint256 &id);
+    bool sendRollbackTransaction(const uint256 &txid);
 
+    /**
+     * @brief isValidAddress checks the correctness of the address
+     * @param address checked address
+     * @return true, if address valid
+     */
+    bool isValidAddress(const std::string &address) const;
+
+    /**
+     * @brief checkAcceptParams checks the correctness of the parameters
+     * @param id - id accepted transaction
+     * @param ptr - smart pointer to accepted transaction
+     * @return xbridge::SUCCESS, if all parameters valid
+     */
+    xbridge::Error checkAcceptParams(const uint256 &id, TransactionDescrPtr &ptr);
+
+    /**
+     * @brief checkCreateParams - checks parameter needs to success created transaction
+     * @param fromCurrency - from currency
+     * @param toCurrency - to currency
+     * @param fromAmount -  amount
+     * @return xbridge::SUCCES, if all parameters valid
+     */
+    xbridge::Error checkCreateParams(const std::string &fromCurrency, const std::string &toCurrency, const uint64_t &fromAmount);
+
+    /**
+     * @brief checkAmount - checks wallet balance
+     * @param currency - currency name
+     * @param amount - amount
+     * @return xbridge::SUCCES, if  the session currency is open and
+     * on account has sufficient funds for operations
+     */
+    xbridge::Error checkAmount(const std::string &currency, const uint64_t &amount);
 public:
     // connectors
 

@@ -19,6 +19,9 @@ void CActiveServicenode::ManageStatus()
 
     if (fDebug) LogPrintf("CActiveServicenode::ManageStatus() - Begin\n");
 
+    // If state is set to true, servicenode ping will be sent regardless of last occurrence.
+    bool forceSendPing = false;
+
     //need correct blocks to send ping
     if (Params().NetworkID() != CBaseChainParams::REGTEST && !servicenodeSync.IsBlockchainSynced()) {
         status = ACTIVE_SERVICENODE_SYNC_IN_PROCESS;
@@ -33,7 +36,10 @@ void CActiveServicenode::ManageStatus()
         pmn = mnodeman.Find(pubKeyServicenode);
         if (pmn != NULL) {
             pmn->Check();
-            if (pmn->IsEnabled() && pmn->protocolVersion == PROTOCOL_VERSION) EnableHotColdServiceNode(pmn->vin, pmn->addr);
+            if (pmn->IsEnabled() && pmn->protocolVersion == PROTOCOL_VERSION) {
+                forceSendPing = true;
+                EnableHotColdServiceNode(pmn->vin, pmn->addr);
+            }
         }
     }
 
@@ -129,7 +135,7 @@ void CActiveServicenode::ManageStatus()
     }
 
     //send to all peers
-    if (!SendServicenodePing(errorMessage)) {
+    if (!SendServicenodePing(errorMessage, forceSendPing)) {
         LogPrintf("CActiveServicenode::ManageStatus() - Error on Ping: %s\n", errorMessage);
     }
 }
@@ -138,7 +144,7 @@ std::string CActiveServicenode::GetStatus()
 {
     switch (status) {
     case ACTIVE_SERVICENODE_INITIAL:
-        return "Node just started, not yet activated";
+        return "Servicenode started, activation in progress...";
     case ACTIVE_SERVICENODE_SYNC_IN_PROCESS:
         return "Sync in progress. Must wait until sync is complete to start Servicenode";
     case ACTIVE_SERVICENODE_INPUT_TOO_NEW:
@@ -152,7 +158,7 @@ std::string CActiveServicenode::GetStatus()
     }
 }
 
-bool CActiveServicenode::SendServicenodePing(std::string& errorMessage)
+bool CActiveServicenode::SendServicenodePing(std::string& errorMessage, bool force)
 {
     if (status != ACTIVE_SERVICENODE_STARTED) {
         errorMessage = "Servicenode is not in a running status";
@@ -178,7 +184,8 @@ bool CActiveServicenode::SendServicenodePing(std::string& errorMessage)
     // Update lastPing for our servicenode in Servicenode list
     CServicenode* pmn = mnodeman.Find(vin);
     if (pmn != NULL) {
-        if (pmn->IsPingedWithin(SERVICENODE_PING_SECONDS, mnp.sigTime)) {
+        // If we have a force send ping request, skip the time check here
+        if (!force && pmn->IsPingedWithin(SERVICENODE_PING_SECONDS, mnp.sigTime)) {
             errorMessage = "Too early to send Servicenode Ping";
             return false;
         }
@@ -308,6 +315,10 @@ bool CActiveServicenode::Register(CTxIn vin, CService service, CKey keyCollatera
         LogPrintf("CActiveServicenode::Register() - %s\n", errorMessage);
         return false;
     }
+
+    // Assign the new vin
+    this->vin = vin;
+
     mnodeman.mapSeenServicenodeBroadcast.insert(make_pair(mnb.GetHash(), mnb));
     servicenodeSync.AddedServicenodeList(mnb.GetHash());
 
@@ -371,11 +382,14 @@ bool CActiveServicenode::GetServiceNodeVin(CTxIn& vin, CPubKey& pubkey, CKey& se
 
 bool CActiveServicenode::GetServiceNodeVin(CTxIn& vin, CPubKey& pubkey, CKey& secretKey, std::string strTxHash, std::string strOutputIndex)
 {
-    // Find possible candidates
-    TRY_LOCK(pwalletMain->cs_wallet, fWallet);
-    if (!fWallet) return false;
-
+    // Get servicenode coins
     vector<COutput> possibleCoins = SelectCoinsServicenode();
+    // If no coins return
+    if (possibleCoins.empty()) {
+        LogPrintf("CActiveServicenode::GetServiceNodeVin - No coins, could not locate valid vin\n");
+        return false;
+    }
+
     COutput* selectedOutput;
 
     // Find the vin
@@ -404,7 +418,7 @@ bool CActiveServicenode::GetServiceNodeVin(CTxIn& vin, CPubKey& pubkey, CKey& se
         }
     } else {
         // No output specified,  Select the first one
-        if (possibleCoins.size() > 0) {
+        if (!possibleCoins.empty()) {
             selectedOutput = &possibleCoins[0];
         } else {
             LogPrintf("CActiveServicenode::GetServiceNodeVin - Could not locate specified vin from possible list\n");
@@ -453,6 +467,7 @@ vector<COutput> CActiveServicenode::SelectCoinsServicenode()
 
     // Temporary unlock MN coins from servicenode.conf
     if (GetBoolArg("-mnconflock", true)) {
+        LOCK(pwalletMain->cs_wallet);
         uint256 mnTxHash;
         BOOST_FOREACH (CServicenodeConfig::CServicenodeEntry mne, servicenodeConfig.getEntries()) {
             mnTxHash.SetHex(mne.getTxHash());
@@ -472,6 +487,7 @@ vector<COutput> CActiveServicenode::SelectCoinsServicenode()
 
     // Lock MN coins from servicenode.conf back if they where temporary unlocked
     if (!confLockedCoins.empty()) {
+        LOCK(pwalletMain->cs_wallet);
         BOOST_FOREACH (COutPoint outpoint, confLockedCoins)
             pwalletMain->LockCoin(outpoint);
     }
