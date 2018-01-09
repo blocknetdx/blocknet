@@ -108,7 +108,6 @@ BITCOIN_CORE_H = \
   obfuscation-relay.h \
   db.h \
   eccryptoverify.h \
-  ecwrapper.h \
   hash.h \
   init.h \
   kernel.h \
@@ -162,6 +161,7 @@ BITCOIN_CORE_H = \
   utilmoneystr.h \
   utiltime.h \
   validationinterface.h \
+  validationstate.h \
   version.h \
   wallet.h \
   wallet_ismine.h \
@@ -326,7 +326,6 @@ libbitcoin_common_a_SOURCES = \
   core_read.cpp \
   core_write.cpp \
   eccryptoverify.cpp \
-  ecwrapper.cpp \
   hash.cpp \
   key.cpp \
   keystore.cpp \
@@ -352,16 +351,14 @@ libxbridge_xbridge_a_SOURCES = \
   xbridge/util/xutil.cpp \
   xbridge/util/xbridgeerror.cpp \
   xbridge/bitcoinrpcconnector.cpp \
-  xbridge/xbridge.cpp \
   xbridge/xbridgeapp.cpp \
   xbridge/xbridgeexchange.cpp \
   xbridge/xbridgesession.cpp \
-  xbridge/xbridgeservicesession.cpp \
-  xbridge/xbridgesessionbtc.cpp \
-  xbridge/xbridgesessionbcc.cpp \
-  xbridge/xbridgesessiondcr.cpp \
   xbridge/xbridgetransaction.cpp \
   xbridge/xbridgetransactionmember.cpp \
+  xbridge/xbridgewalletconnector.cpp \
+  xbridge/xbridgewalletconnectorbtc.cpp \
+  xbridge/xbridgewalletconnectorbcc.cpp \
   xbridge/xkey.cpp \
   xbridge/xpubkey.cpp \
   xbridge/xbitcoinaddress.cpp \
@@ -374,19 +371,18 @@ libxbridge_xbridge_a_SOURCES = \
   xbridge/xbitcoinaddress.h \
   xbridge/xbitcoinsecret.h \
   xbridge/xbitcointransaction.h \
-  xbridge/xbridge.h \
+  xbridge/xbridgedef.h \
   xbridge/xbridgeapp.h \
   xbridge/xbridgeexchange.h \
   xbridge/xbridgepacket.h \
   xbridge/xbridgerpc.h \
   xbridge/xbridgesession.h \
-  xbridge/xbridgeservicesession.h \
-  xbridge/xbridgesessionbtc.h \
-  xbridge/xbridgesessionbcc.h \
-  xbridge/xbridgesessiondcr.h \
   xbridge/xbridgetransaction.h \
   xbridge/xbridgetransactiondescr.h \
   xbridge/xbridgetransactionmember.h \
+  xbridge/xbridgewalletconnector.h \
+  xbridge/xbridgewalletconnectorbtc.h \
+  xbridge/xbridgewalletconnectorbcc.h \
   xbridge/xbridgewallet.h \
   xbridge/xkey.h \
   xbridge/xpubkey.h \
@@ -516,7 +512,6 @@ libbitcoinconsensus_la_SOURCES = \
   crypto/sha512.cpp \
   crypto/ripemd160.cpp \
   eccryptoverify.cpp \
-  ecwrapper.cpp \
   hash.cpp \
   pubkey.cpp \
   script/script.cpp \

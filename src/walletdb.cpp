@@ -547,7 +547,7 @@ bool ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue, CW
             ssValue >> vchPrivKey;
             wss.nCKeys++;
 
-            if (!pwallet->LoadCryptedKey(vchPubKey, vchPrivKey)) {
+            if (!pwallet->LoadCryptedKey(CPubKey(vchPubKey), vchPrivKey)) {
                 strErr = "Error reading wallet database: LoadCryptedKey failed";
                 return false;
             }

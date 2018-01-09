@@ -276,6 +276,14 @@ void HandleSIGHUP(int)
     fReopenDebugLog = true;
 }
 
+void waitForClose();
+
+void HandleSIGABRT(int)
+{
+    fRequestShutdown = true;
+    waitForClose();
+}
+
 bool static InitError(const std::string& str)
 {
     uiInterface.ThreadSafeMessageBox(str, "", CClientUIInterface::MSG_ERROR);
@@ -679,7 +687,13 @@ bool AppInit2(boost::thread_group& threadGroup)
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = 0;
     sigaction(SIGTERM, &sa, NULL);
-    sigaction(SIGINT, &sa, NULL);
+    sigaction(SIGINT,  &sa, NULL);
+
+    struct sigaction sa_abrt;
+    sa_abrt.sa_handler = HandleSIGABRT;
+    sigemptyset(&sa_abrt.sa_mask);
+    sa_abrt.sa_flags = 0;
+    sigaction(SIGABRT, &sa_abrt, NULL);
 
     // Reopen debug.log on SIGHUP
     struct sigaction sa_hup;
@@ -897,8 +911,6 @@ bool AppInit2(boost::thread_group& threadGroup)
     // std::string sha256_algo = SHA256AutoDetect();
     // LogPrintf("Using the '%s' SHA256 implementation\n", sha256_algo);
 
-    RandomInit();
-    // ECC_Start();
     globalVerifyHandle.reset(new ECCVerifyHandle());
 
     // Sanity check
@@ -1680,7 +1692,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     if (!fRequestShutdown)
     {
         uiInterface.InitMessage(_("Init xbridge service"));
-        XBridgeApp & xapp = XBridgeApp::instance();
+        xbridge::App & xapp = xbridge::App::instance();
         xapp.start();
     }
 

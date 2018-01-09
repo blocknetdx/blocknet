@@ -1,6 +1,7 @@
 #ifndef XBRIDGEERROR_H
 #define XBRIDGEERROR_H
 #include <string>
+#include <vector>
 
 namespace xbridge
 {
@@ -27,5 +28,6 @@ namespace xbridge
      * @return
      */
     const std::string xbridgeErrorText(const Error error, const std::string &argument = "");
+    const std::string xbridgeErrorText(const Error error, const std::vector<unsigned char> &argument);
 }
 #endif // XBRIDGEERROR_H
