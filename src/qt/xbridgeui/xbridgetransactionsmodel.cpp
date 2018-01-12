@@ -350,6 +350,11 @@ void XBridgeTransactionsModel::onTimer()
 
 //******************************************************************************
 //******************************************************************************
+
+/* XBridge signals are caught and propagated as GUI-thread QT events. The events
+   are caught in 'customEvent' method, are decoded there and propagated to the handlers
+   defined below. */
+
 void XBridgeTransactionsModel::onTransactionReceived(const XBridgeTransactionDescr & tx)
 {
 
@@ -461,10 +466,12 @@ void XBridgeTransactionsModel::customEvent(QEvent * event)
 
 }
 
+/* XBridge thread signal handlers.
+   These handlers propagate signals as GUI-thread QT events
+   to be caught in 'customEvent' method. */
+
 void XBridgeTransactionsModel::onTransactionReceivedExtSignal(const XBridgeTransactionDescr & tx)
 {
-
-//    std::cout << "tx received signal thread: " << std::this_thread::get_id() << std::endl;
 
     QApplication::postEvent(this, new TransactionReceivedEvent(tx));
 }

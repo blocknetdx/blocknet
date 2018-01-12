@@ -20,6 +20,12 @@
 //******************************************************************************
 //******************************************************************************
 
+/* The events declared below are made for inter-thread communication.
+   Original xbridge events being received should be propagated to the GUI
+   thread. Since xbridge uses non-QT threads a simple 'emit' would make signal handlers
+   be executed in the xbridge thread. Event posting helps propagate signals to the QT
+   GUI thread */
+
 const QEvent::Type TRANSACTION_RECEIVED_EVENT = static_cast<QEvent::Type>(QEvent::User + 1);
 const QEvent::Type TRANSACTION_STATE_CHANGED_EVENT = static_cast<QEvent::Type>(QEvent::User + 2);
 const QEvent::Type TRANSACTION_CANCELLED_EVENT = static_cast<QEvent::Type>(QEvent::User + 3);
@@ -117,12 +123,16 @@ private slots:
 
 private:
 
+    /* Custom events handler - handles xbridge signals propagated as
+       QT-thread events, see '*ExtSignal' methods. */
     void customEvent(QEvent * event);
 
+    /* GUI thread QT event handlers */
     void onTransactionReceived(const XBridgeTransactionDescr & tx);
     void onTransactionStateChanged(const uint256 & id, const uint32_t state);
     void onTransactionCancelled(const uint256 & id, const uint32_t state, const uint32_t reason);
 
+    /* xbridge thread signal handlers */
     void onTransactionReceivedExtSignal(const XBridgeTransactionDescr & tx);
     void onTransactionStateChangedExtSignal(const uint256 & id, const uint32_t state);
     void onTransactionCancelledExtSignal(const uint256 & id, const uint32_t state, const uint32_t reason);
