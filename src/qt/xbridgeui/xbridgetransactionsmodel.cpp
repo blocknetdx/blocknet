@@ -9,14 +9,9 @@
 #include "xbridge/util/xutil.h"
 #include "xbridge/util/xbridgeerror.h"
 
-
 #include <QApplication>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
-
-
-#include <thread>
-#include <iostream>
 
 //******************************************************************************
 //******************************************************************************
@@ -71,9 +66,6 @@ int XBridgeTransactionsModel::columnCount(const QModelIndex &) const
 //******************************************************************************
 QVariant XBridgeTransactionsModel::data(const QModelIndex & idx, int role) const
 {
-
-
-    std::cout << "data thread: " << std::this_thread::get_id() << std::endl;
 
     if (!idx.isValid())
     {
@@ -357,8 +349,6 @@ void XBridgeTransactionsModel::onTimer()
 
 void XBridgeTransactionsModel::onTransactionReceived(const XBridgeTransactionDescr & tx)
 {
-
-//    std::cout << "tx received thread: " << std::this_thread::get_id() << std::endl;
 
     for (unsigned int i = 0; i < m_transactions.size(); ++i)
     {
