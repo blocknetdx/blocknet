@@ -11,6 +11,7 @@
 #include <QAbstractTableModel>
 #include <QStringList>
 #include <QTimer>
+#include <QEvent>
 
 #include <vector>
 #include <string>
@@ -18,6 +19,59 @@
 
 //******************************************************************************
 //******************************************************************************
+
+/* The events declared below are made for inter-thread communication.
+   Original xbridge events being received should be propagated to the GUI
+   thread. Since xbridge uses non-QT threads a simple 'emit' would make signal handlers
+   be executed in the xbridge thread. Event posting helps propagate signals to the QT
+   GUI thread */
+
+const QEvent::Type TRANSACTION_RECEIVED_EVENT = static_cast<QEvent::Type>(QEvent::User + 1);
+const QEvent::Type TRANSACTION_STATE_CHANGED_EVENT = static_cast<QEvent::Type>(QEvent::User + 2);
+const QEvent::Type TRANSACTION_CANCELLED_EVENT = static_cast<QEvent::Type>(QEvent::User + 3);
+
+class TransactionReceivedEvent : public QEvent
+{
+    public:
+        TransactionReceivedEvent(const XBridgeTransactionDescr & tx):
+            QEvent(TRANSACTION_RECEIVED_EVENT),
+            tx(tx)
+        {
+        }
+
+        const XBridgeTransactionDescr tx;
+};
+
+class TransactionStateChangedEvent : public QEvent
+{
+    public:
+        TransactionStateChangedEvent(const uint256 & id, const uint32_t state):
+            QEvent(TRANSACTION_STATE_CHANGED_EVENT),
+            id(id),
+            state(state)
+        {
+        }
+
+        const uint256 id;
+        const uint32_t state;
+};
+
+class TransactionCancelledEvent : public QEvent
+{
+    public:
+        TransactionCancelledEvent(const uint256 & id, const uint32_t state, const uint32_t reason):
+            QEvent(TRANSACTION_CANCELLED_EVENT),
+            id(id),
+            state(state),
+            reason(reason)
+        {
+        }
+
+        const uint256 id;
+        const uint32_t state;
+        const uint32_t reason;
+};
+
 class XBridgeTransactionsModel : public QAbstractTableModel
 {
     Q_OBJECT
@@ -68,13 +122,23 @@ private slots:
     void onTimer();
 
 private:
+
+    /* Custom events handler - handles xbridge signals propagated as
+       QT-thread events, see '*ExtSignal' methods. */
+    void customEvent(QEvent * event);
+
+    /* GUI thread QT event handlers */
     void onTransactionReceived(const XBridgeTransactionDescr & tx);
     void onTransactionStateChanged(const uint256 & id, const uint32_t state);
     void onTransactionCancelled(const uint256 & id, const uint32_t state, const uint32_t reason);
 
+    /* xbridge thread signal handlers */
+    void onTransactionReceivedExtSignal(const XBridgeTransactionDescr & tx);
+    void onTransactionStateChangedExtSignal(const uint256 & id, const uint32_t state);
+    void onTransactionCancelledExtSignal(const uint256 & id, const uint32_t state, const uint32_t reason);
+
     QString transactionState(const XBridgeTransactionDescr::State state) const;
 
-private:
     QStringList m_columns;
 
     std::vector<XBridgeTransactionDescr> m_transactions;

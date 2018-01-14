@@ -8,6 +8,9 @@
 #include "xbridge/xuiconnector.h"
 #include "xbridge/util/xutil.h"
 #include "xbridge/util/xbridgeerror.h"
+
+#include <QApplication>
+
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 //******************************************************************************
@@ -20,12 +23,12 @@ XBridgeTransactionsModel::XBridgeTransactionsModel()
               << trUtf8("STATE");
 
     xuiConnector.NotifyXBridgePendingTransactionReceived.connect
-            (boost::bind(&XBridgeTransactionsModel::onTransactionReceived, this, _1));
+            (boost::bind(&XBridgeTransactionsModel::onTransactionReceivedExtSignal, this, _1));
 
     xuiConnector.NotifyXBridgeTransactionStateChanged.connect
-            (boost::bind(&XBridgeTransactionsModel::onTransactionStateChanged, this, _1, _2));
+            (boost::bind(&XBridgeTransactionsModel::onTransactionStateChangedExtSignal, this, _1, _2));
     xuiConnector.NotifyXBridgeTransactionCancelled.connect
-            (boost::bind(&XBridgeTransactionsModel::onTransactionCancelled, this, _1, _2, _3));
+            (boost::bind(&XBridgeTransactionsModel::onTransactionCancelledExtSignal, this, _1, _2, _3));
 
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(onTimer()));
     m_timer.start(3000);
@@ -36,13 +39,13 @@ XBridgeTransactionsModel::XBridgeTransactionsModel()
 XBridgeTransactionsModel::~XBridgeTransactionsModel()
 {
     xuiConnector.NotifyXBridgePendingTransactionReceived.disconnect
-            (boost::bind(&XBridgeTransactionsModel::onTransactionReceived, this, _1));
+            (boost::bind(&XBridgeTransactionsModel::onTransactionReceivedExtSignal, this, _1));
 
     xuiConnector.NotifyXBridgeTransactionStateChanged.disconnect
-            (boost::bind(&XBridgeTransactionsModel::onTransactionStateChanged, this, _1, _2));
+            (boost::bind(&XBridgeTransactionsModel::onTransactionStateChangedExtSignal, this, _1, _2));
 
     xuiConnector.NotifyXBridgeTransactionCancelled.disconnect
-            (boost::bind(&XBridgeTransactionsModel::onTransactionCancelled, this, _1, _2, _3));
+            (boost::bind(&XBridgeTransactionsModel::onTransactionCancelledExtSignal, this, _1, _2, _3));
 }
 
 //******************************************************************************
@@ -63,6 +66,7 @@ int XBridgeTransactionsModel::columnCount(const QModelIndex &) const
 //******************************************************************************
 QVariant XBridgeTransactionsModel::data(const QModelIndex & idx, int role) const
 {
+
     if (!idx.isValid())
     {
         return QVariant();
@@ -338,8 +342,14 @@ void XBridgeTransactionsModel::onTimer()
 
 //******************************************************************************
 //******************************************************************************
+
+/* XBridge signals are caught and propagated as GUI-thread QT events. The events
+   are caught in 'customEvent' method, are decoded there and propagated to the handlers
+   defined below. */
+
 void XBridgeTransactionsModel::onTransactionReceived(const XBridgeTransactionDescr & tx)
 {
+
     for (unsigned int i = 0; i < m_transactions.size(); ++i)
     {
         const XBridgeTransactionDescr & descr = m_transactions.at(i);
@@ -420,6 +430,53 @@ void XBridgeTransactionsModel::onTransactionCancelled(const uint256 & id,
 
         ++i;
     }
+}
+
+void XBridgeTransactionsModel::customEvent(QEvent * event)
+{
+    // When we get here, we've crossed the thread boundary and are now
+    // executing in the Qt object's thread
+
+    if(event->type() == TRANSACTION_RECEIVED_EVENT) {
+
+        auto e = static_cast<TransactionReceivedEvent *>(event);
+        onTransactionReceived(e->tx);
+
+    } else if(event->type() == TRANSACTION_STATE_CHANGED_EVENT) {
+
+        auto e = static_cast<TransactionStateChangedEvent *>(event);
+        onTransactionStateChanged(e->id, e->state);
+
+    } else if(event->type() == TRANSACTION_CANCELLED_EVENT) {
+
+        auto e = static_cast<TransactionCancelledEvent *>(event);
+        onTransactionCancelled(e->id, e->state, e->reason);
+
+    }
+
+}
+
+/* XBridge thread signal handlers.
+   These handlers propagate signals as GUI-thread QT events
+   to be caught in 'customEvent' method. */
+
+void XBridgeTransactionsModel::onTransactionReceivedExtSignal(const XBridgeTransactionDescr & tx)
+{
+
+    QApplication::postEvent(this, new TransactionReceivedEvent(tx));
+}
+
+void XBridgeTransactionsModel::onTransactionStateChangedExtSignal(const uint256 & id,
+                                                               const uint32_t state)
+{
+    QApplication::postEvent(this, new TransactionStateChangedEvent(id, state));
+}
+
+void XBridgeTransactionsModel::onTransactionCancelledExtSignal(const uint256 & id,
+                                                      const uint32_t state,
+                                                      const uint32_t reason)
+{
+    QApplication::postEvent(this, new TransactionCancelledEvent(id, state, reason));
 }
 
 //******************************************************************************
