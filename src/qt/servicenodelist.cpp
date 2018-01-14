@@ -127,6 +127,9 @@ void ServicenodeList::StartAll(std::string strCommand)
     int nCountSuccessful = 0;
     int nCountFailed = 0;
     std::string strFailedHtml;
+    bool walletWasLocked = false;
+
+    walletWasLocked = pwalletMain->IsLocked();
 
     BOOST_FOREACH (CServicenodeConfig::CServicenodeEntry mne, servicenodeConfig.getEntries()) {
         std::string strError;
@@ -160,7 +163,10 @@ void ServicenodeList::StartAll(std::string strCommand)
             strFailedHtml += "\nFailed to start " + mne.getAlias() + ". Error: " + strError;
         }
     }
-    pwalletMain->Lock();
+    // Re-Lock only if the wallet was previously locked
+    if (walletWasLocked == true) {
+        pwalletMain->Lock();
+    }
 
     std::string returnObj;
     returnObj = strprintf("Successfully started %d servicenodes, failed to start %d, total %d", nCountSuccessful, nCountFailed, nCountFailed + nCountSuccessful);
