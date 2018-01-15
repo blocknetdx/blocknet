@@ -37,6 +37,9 @@ public:
                             std::string & txid,
                             int32_t & errorCode);
 
+    bool signMessage(const std::string & address, const std::string & message, std::string & signature);
+    bool verifyMessage(const std::string & address, const std::string & message, const std::string & signature);
+
 public:
     bool newKeyPair(std::vector<unsigned char> & pubkey, std::vector<unsigned char> & privkey);
 

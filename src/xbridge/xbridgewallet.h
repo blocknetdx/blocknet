@@ -25,6 +25,12 @@ struct UtxoEntry
     std::string txId;
     uint32_t    vout;
     double      amount;
+    std::string address;
+
+    std::vector<unsigned char> rawAddress;
+    std::vector<unsigned char> signature;
+
+    std::string toString() const;
 
     friend bool operator < (const UtxoEntry & l, const UtxoEntry & r);
     friend bool operator == (const UtxoEntry & l, const UtxoEntry & r);

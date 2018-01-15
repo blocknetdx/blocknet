@@ -428,11 +428,28 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
             entry.vout = *static_cast<uint32_t *>(static_cast<void *>(packet->data()+offset));
             offset += sizeof(uint32_t);
 
+            entry.rawAddress = std::vector<unsigned char>(packet->data()+offset, packet->data()+offset+20);
+            offset += 20;
+
+            entry.address = conn->fromXAddr(entry.rawAddress);
+
+            entry.signature = std::vector<unsigned char>(packet->data()+offset, packet->data()+offset+20);
+            offset += 20;
+
             if (!conn->getTxOut(entry))
             {
-                LOG() << "transaction rejected, bad utx out tx <" << entry.txId
+                LOG() << "not found utxo entry <" << entry.txId
                       << "> no " << entry.vout << " " << __FUNCTION__;
-                return true;
+                continue;
+            }
+
+            // check signature
+            std::string signature = EncodeBase64(&entry.signature[0], entry.signature.size());
+            if (!conn->verifyMessage(entry.address, entry.toString(), signature))
+            {
+                LOG() << "not valid signature, bad utxo entry <" << entry.txId
+                      << "> no " << entry.vout << " " << __FUNCTION__;
+                continue;
             }
 
             commonAmount += entry.amount;
@@ -646,11 +663,28 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet)
             entry.vout = *static_cast<uint32_t *>(static_cast<void *>(packet->data()+offset));
             offset += sizeof(uint32_t);
 
+            entry.rawAddress = std::vector<unsigned char>(packet->data()+offset, packet->data()+offset+20);
+            offset += 20;
+
+            entry.address = conn->fromXAddr(entry.rawAddress);
+
+            entry.signature = std::vector<unsigned char>(packet->data()+offset, packet->data()+offset+20);
+            offset += 20;
+
             if (!conn->getTxOut(entry))
             {
-                LOG() << "transaction rejected, bad utx out tx <" << entry.txId
+                LOG() << "not found utxo entry <" << entry.txId
                       << "> no " << entry.vout << " " << __FUNCTION__;
-                return true;
+                continue;
+            }
+
+            // check signature
+            std::string signature = EncodeBase64(&entry.signature[0], entry.signature.size());
+            if (!conn->verifyMessage(entry.address, entry.toString(), signature))
+            {
+                LOG() << "not valid signature, bad utxo entry <" << entry.txId
+                      << "> no " << entry.vout << " " << __FUNCTION__;
+                continue;
             }
 
             commonAmount += entry.amount;
