@@ -297,7 +297,8 @@ SOURCES += \
     src/xbridge/util/xbridgeerror.cpp \
     src/xbridge/xbridgewalletconnector.cpp \
     src/xbridge/xbridgewalletconnectorbtc.cpp \
-    src/xbridge/xbridgewalletconnectorbcc.cpp
+    src/xbridge/xbridgewalletconnectorbcc.cpp \
+    src/xbridge/xbridgewalletconnectorsys.cpp
 
 #protobuf generated
 SOURCES += \
@@ -586,7 +587,8 @@ HEADERS += \
     src/xbridge/xbridgewalletconnector.h \
     src/xbridge/xbridgewalletconnectorbtc.h \
     src/xbridge/xbridgewalletconnectorbcc.h \
-    src/xbridge/xbridgedef.h
+    src/xbridge/xbridgedef.h \
+    src/xbridge/xbridgewalletconnectorsys.h
 
 #ENABLE_ZMQ
 #    src/zmq/zmqabstractnotifier.h \
@@ -793,4 +795,5 @@ contains(RELEASE, 1) {
 system($$QMAKE_LRELEASE -silent $$_PRO_FILE_)
 
 DISTFILES += \
-    src/qt/paymentrequest.proto
+    src/qt/paymentrequest.proto \
+    src/Makefile.am

@@ -54,6 +54,9 @@ public:
                                     std::string & txid,
                                     int32_t & errorCode) = 0;
 
+    virtual bool signMessage(const std::string & address, const std::string & message, std::string & signature) = 0;
+    virtual bool verifyMessage(const std::string & address, const std::string & message, const std::string & signature) = 0;
+
 public:
     // helper functions
 

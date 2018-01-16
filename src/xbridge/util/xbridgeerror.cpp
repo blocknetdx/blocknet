@@ -10,6 +10,8 @@ namespace xbridge {
             return "no session for currency " + argument;
         case Error::INSIFFICIENT_FUNDS:
             return "Insufficient funds for " + argument;
+        case Error::FUNDS_NOT_SIGNED:
+            return "Funds not signed for " + argument;
         case Error::TRANSACTION_NOT_FOUND:
             return "Transaction " + argument + " not found";
         case Error::UNKNOWN_SESSION:

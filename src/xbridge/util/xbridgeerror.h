@@ -12,6 +12,7 @@ namespace xbridge
         INVALID_CURRENCY,
         NO_SESSION,
         INSIFFICIENT_FUNDS,
+        FUNDS_NOT_SIGNED,
         TRANSACTION_NOT_FOUND,
         UNKNOWN_SESSION,
         REVERT_TX_FAILED,

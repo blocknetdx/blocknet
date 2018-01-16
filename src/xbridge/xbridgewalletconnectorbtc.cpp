@@ -34,9 +34,6 @@ namespace rpc
 {
 
 using namespace json_spirit;
-using namespace std;
-using namespace boost;
-using namespace boost::asio;
 
 Object CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
                const std::string & rpcip, const std::string & rpcport,
@@ -161,6 +158,7 @@ bool listUnspent(const std::string & rpcuser,
     const static std::string txid("txid");
     const static std::string vout("vout");
     const static std::string amount("amount");
+    const static std::string address("address");
 
     try
     {
@@ -213,6 +211,10 @@ bool listUnspent(const std::string & rpcuser,
                     else if (v.name_ == amount)
                     {
                         u.amount = v.value_.get_real();
+                    }
+                    else if (v.name_ == address)
+                    {
+                        u.address = v.value_.get_str();
                     }
                 }
 
@@ -867,6 +869,110 @@ bool sendRawTransaction(const std::string & rpcuser,
     return true;
 }
 
+//*****************************************************************************
+//*****************************************************************************
+bool signMessage(const std::string & rpcuser, const std::string & rpcpasswd,
+                 const std::string & rpcip,   const std::string & rpcport,
+                 const std::string & address, const std::string & message,
+                 std::string & signature)
+{
+    try
+    {
+        LOG() << "rpc call <signmessage>";
+
+        Array params;
+        params.push_back(address);
+        params.push_back(message);
+        const Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport,
+                                    "signmessage", params);
+
+        // reply
+        const Value & error  = find_value(reply, "error");
+        if (error.type() != null_type)
+        {
+            // Error
+            LOG() << "error: " << write_string(error, false);
+            return false;
+        }
+
+        const Value & result = find_value(reply, "result");
+        if (result.type() != str_type)
+        {
+            // Result
+            LOG() << "result not an string " << write_string(result, true);
+            return false;
+        }
+
+        const std::string base64result  = result.get_str();
+
+        bool isInvalid = false;
+        DecodeBase64(base64result.c_str(), &isInvalid);
+
+        if (isInvalid)
+        {
+            signature.clear();
+            return false;
+        }
+
+        signature = base64result;
+    }
+    catch (std::exception & e)
+    {
+        signature.clear();
+
+        LOG() << "signmessage exception " << e.what();
+        return false;
+    }
+
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+bool verifyMessage(const std::string & rpcuser, const std::string & rpcpasswd,
+                   const std::string & rpcip,   const std::string & rpcport,
+                   const std::string & address, const std::string & message,
+                   const std::string & signature)
+{
+    try
+    {
+        LOG() << "rpc call <verifymessage>";
+
+        Array params;
+        params.push_back(address);
+        params.push_back(signature);
+        params.push_back(message);
+        const Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport,
+                                    "verifymessage", params);
+
+        // reply
+        const Value & error  = find_value(reply, "error");
+        if (error.type() != null_type)
+        {
+            // Error
+            LOG() << "error: " << write_string(error, false);
+            return false;
+        }
+
+        const Value & result = find_value(reply, "result");
+        if (result.type() != bool_type)
+        {
+            // Result
+            LOG() << "result not an string " << write_string(result, true);
+            return false;
+        }
+
+        return result.get_bool();
+    }
+    catch (std::exception & e)
+    {
+        LOG() << "verifymessage exception " << e.what();
+        return false;
+    }
+
+    return true;
+}
+
 } // namespace rpc
 
 //*****************************************************************************
@@ -983,6 +1089,38 @@ bool BtcWalletConnector::sendRawTransaction(const std::string & rawtx,
                                  rawtx, txid, errorCode))
     {
         LOG() << "rpc::createRawTransaction failed " << __FUNCTION__;
+        return false;
+    }
+
+    return true;
+}
+
+//******************************************************************************
+//******************************************************************************
+bool BtcWalletConnector::signMessage(const std::string & address,
+                                     const std::string & message,
+                                     std::string & signature)
+{
+    if (!rpc::signMessage(m_user, m_passwd, m_ip, m_port,
+                          address, message, signature))
+    {
+        LOG() << "rpc::signMessage failed " << __FUNCTION__;
+        return false;
+    }
+
+    return true;
+}
+
+//******************************************************************************
+//******************************************************************************
+bool BtcWalletConnector::verifyMessage(const std::string & address,
+                                       const std::string & message,
+                                       const std::string & signature)
+{
+    if (!rpc::verifyMessage(m_user, m_passwd, m_ip, m_port,
+                            address, message, signature))
+    {
+        LOG() << "rpc::verifyMessage failed " << __FUNCTION__;
         return false;
     }
 

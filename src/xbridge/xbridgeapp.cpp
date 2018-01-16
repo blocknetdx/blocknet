@@ -20,6 +20,7 @@
 #include "xbridgewalletconnector.h"
 #include "xbridgewalletconnectorbtc.h"
 #include "xbridgewalletconnectorbcc.h"
+#include "xbridgewalletconnectorsys.h"
 
 #include <assert.h>
 
@@ -261,6 +262,11 @@ bool App::Impl::start()
                 else if (wp.method == "BCC")
                 {
                     conn.reset(new BccWalletConnector);
+                    *conn = wp;
+                }
+                else if (wp.method == "SYS")
+                {
+                    conn.reset(new SysWalletConnector);
                     *conn = wp;
                 }
 //                else if (wp.method == "RPC")
@@ -760,7 +766,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     if (!connFrom || !connTo)
     {
         // no session
-        WARN() << "no session for <" << fromCurrency << "> " << __FUNCTION__;
+        WARN() << "no session for <" << (connFrom ? toCurrency : fromCurrency) << "> " << __FUNCTION__;
         return xbridge::Error::NO_SESSION;
     }
 
@@ -787,6 +793,30 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     {
         WARN() << "insufficient funds for <" << fromCurrency << "> " << __FUNCTION__;
         return xbridge::Error::INSIFFICIENT_FUNDS;
+    }
+
+    // sign used coins
+    for (wallet::UtxoEntry & entry : outputsForUse)
+    {
+        std::string signature;
+        if (!connFrom->signMessage(entry.address, entry.toString(), signature))
+        {
+            WARN() << "funds not signed <" << fromCurrency << "> " << __FUNCTION__;
+            return xbridge::Error::FUNDS_NOT_SIGNED;
+        }
+
+        bool isInvalid = false;
+        entry.signature = DecodeBase64(signature.c_str(), &isInvalid);
+        if (isInvalid)
+        {
+            WARN() << "invalid signature <" << fromCurrency << "> " << __FUNCTION__;
+            return xbridge::Error::FUNDS_NOT_SIGNED;
+        }
+
+        entry.rawAddress = connFrom->toXAddr(entry.address);
+
+        assert(entry.signature.size() == 65 && "incorrect signature length, need 20 bytes");
+        assert(entry.rawAddress.size() == 20 && "incorrect raw address length, need 20 bytes");
     }
 
     boost::uint32_t timestamp = time(0);
@@ -876,6 +906,8 @@ bool App::sendPendingTransaction(const TransactionDescrPtr & ptr)
             uint256 txid(entry.txId);
             ptr->packet->append(txid.begin(), 32);
             ptr->packet->append(entry.vout);
+            ptr->packet->append(entry.rawAddress);
+            ptr->packet->append(entry.signature);
         }
     }
 
@@ -915,7 +947,7 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
     if (!connFrom || !connTo)
     {
         // no session
-        WARN() << "no session for <" << ptr->toCurrency << "> " << __FUNCTION__;
+        WARN() << "no session for <" << (connFrom ? ptr->toCurrency : ptr->fromCurrency) << "> " << __FUNCTION__;
         return xbridge::NO_SESSION;
     }
 
@@ -944,10 +976,32 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
         return xbridge::INSIFFICIENT_FUNDS;
     }
 
+    // sign used coins
+    for (wallet::UtxoEntry & entry : outputsForUse)
+    {
+        std::string signature;
+        if (!connFrom->signMessage(entry.address, entry.toString(), signature))
+        {
+            WARN() << "funds not signed <" << ptr->fromCurrency << "> " << __FUNCTION__;
+            return xbridge::Error::FUNDS_NOT_SIGNED;
+        }
+
+        bool isInvalid = false;
+        entry.signature = DecodeBase64(signature.c_str(), &isInvalid);
+        if (isInvalid)
+        {
+            WARN() << "invalid signature <" << ptr->fromCurrency << "> " << __FUNCTION__;
+            return xbridge::Error::FUNDS_NOT_SIGNED;
+        }
+
+        entry.rawAddress = connFrom->toXAddr(entry.address);
+
+        assert(entry.signature.size() == 65 && "incorrect signature length, need 20 bytes");
+        assert(entry.rawAddress.size() == 20 && "incorrect raw address length, need 20 bytes");
+    }
+
     ptr->from = connFrom->toXAddr(from);
     ptr->to   = connTo->toXAddr(to);
-    // std::swap(ptr->fromCurrency, ptr->toCurrency);
-    // std::swap(ptr->fromAmount,   ptr->toAmount);
     ptr->usedCoins = outputsForUse;
 
     // try send immediatelly
@@ -1002,6 +1056,8 @@ bool App::sendAcceptingTransaction(const TransactionDescrPtr & ptr)
         uint256 txid(entry.txId);
         ptr->packet->append(txid.begin(), 32);
         ptr->packet->append(entry.vout);
+        ptr->packet->append(entry.rawAddress);
+        ptr->packet->append(entry.signature);
     }
 
     sendPacket(ptr->hubAddress, ptr->packet);

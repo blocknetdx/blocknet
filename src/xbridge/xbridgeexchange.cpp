@@ -141,7 +141,7 @@ bool Exchange::isEnabled()
 //*****************************************************************************
 bool Exchange::isStarted()
 {
-    return (isEnabled());// && (activeServicenode.status == ACTIVE_SERVICENODE_STARTED));
+    return (isEnabled() && (activeServicenode.status == ACTIVE_SERVICENODE_STARTED));
 }
 
 //*****************************************************************************
