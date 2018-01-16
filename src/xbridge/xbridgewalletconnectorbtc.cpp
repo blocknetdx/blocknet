@@ -34,9 +34,6 @@ namespace rpc
 {
 
 using namespace json_spirit;
-using namespace std;
-using namespace boost;
-using namespace boost::asio;
 
 Object CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
                const std::string & rpcip, const std::string & rpcport,
@@ -886,16 +883,32 @@ bool signMessage(const std::string & rpcuser, const std::string & rpcpasswd,
         Array params;
         params.push_back(address);
         params.push_back(message);
-        const Value reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport,
+        const Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport,
                                     "signmessage", params);
 
         // reply
-        const std::string base64result  = reply.get_str();
+        const Value & error  = find_value(reply, "error");
+        if (error.type() != null_type)
+        {
+            // Error
+            LOG() << "error: " << write_string(error, false);
+            return false;
+        }
 
-        bool isValid = false;
-        DecodeBase64(base64result.c_str(), &isValid);
+        const Value & result = find_value(reply, "result");
+        if (result.type() != str_type)
+        {
+            // Result
+            LOG() << "result not an string " << write_string(result, true);
+            return false;
+        }
 
-        if (!isValid)
+        const std::string base64result  = result.get_str();
+
+        bool isInvalid = false;
+        DecodeBase64(base64result.c_str(), &isInvalid);
+
+        if (isInvalid)
         {
             signature.clear();
             return false;
@@ -929,11 +942,27 @@ bool verifyMessage(const std::string & rpcuser, const std::string & rpcpasswd,
         params.push_back(address);
         params.push_back(signature);
         params.push_back(message);
-        const Value reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport,
+        const Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport,
                                     "verifymessage", params);
 
         // reply
-        return reply.get_bool();
+        const Value & error  = find_value(reply, "error");
+        if (error.type() != null_type)
+        {
+            // Error
+            LOG() << "error: " << write_string(error, false);
+            return false;
+        }
+
+        const Value & result = find_value(reply, "result");
+        if (result.type() != bool_type)
+        {
+            // Result
+            LOG() << "result not an string " << write_string(result, true);
+            return false;
+        }
+
+        return result.get_bool();
     }
     catch (std::exception & e)
     {

@@ -20,6 +20,7 @@
 #include "xbridgewalletconnector.h"
 #include "xbridgewalletconnectorbtc.h"
 #include "xbridgewalletconnectorbcc.h"
+#include "xbridgewalletconnectorsys.h"
 
 #include <assert.h>
 
@@ -261,6 +262,11 @@ bool App::Impl::start()
                 else if (wp.method == "BCC")
                 {
                     conn.reset(new BccWalletConnector);
+                    *conn = wp;
+                }
+                else if (wp.method == "SYS")
+                {
+                    conn.reset(new SysWalletConnector);
                     *conn = wp;
                 }
 //                else if (wp.method == "RPC")
@@ -760,7 +766,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     if (!connFrom || !connTo)
     {
         // no session
-        WARN() << "no session for <" << fromCurrency << "> " << __FUNCTION__;
+        WARN() << "no session for <" << (connFrom ? toCurrency : fromCurrency) << "> " << __FUNCTION__;
         return xbridge::Error::NO_SESSION;
     }
 
@@ -799,9 +805,9 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
             return xbridge::Error::FUNDS_NOT_SIGNED;
         }
 
-        bool isValid = false;
-        entry.signature = DecodeBase64(signature.c_str(), &isValid);
-        if (!isValid)
+        bool isInvalid = false;
+        entry.signature = DecodeBase64(signature.c_str(), &isInvalid);
+        if (isInvalid)
         {
             WARN() << "invalid signature <" << fromCurrency << "> " << __FUNCTION__;
             return xbridge::Error::FUNDS_NOT_SIGNED;
@@ -809,7 +815,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
 
         entry.rawAddress = connFrom->toXAddr(entry.address);
 
-        assert(entry.signature.size() == 20 && "incorrect signature length, need 20 bytes");
+        assert(entry.signature.size() == 65 && "incorrect signature length, need 20 bytes");
         assert(entry.rawAddress.size() == 20 && "incorrect raw address length, need 20 bytes");
     }
 
@@ -941,7 +947,7 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
     if (!connFrom || !connTo)
     {
         // no session
-        WARN() << "no session for <" << ptr->toCurrency << "> " << __FUNCTION__;
+        WARN() << "no session for <" << (connFrom ? ptr->toCurrency : ptr->fromCurrency) << "> " << __FUNCTION__;
         return xbridge::NO_SESSION;
     }
 
@@ -980,9 +986,9 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
             return xbridge::Error::FUNDS_NOT_SIGNED;
         }
 
-        bool isValid = false;
-        entry.signature = DecodeBase64(signature.c_str(), &isValid);
-        if (!isValid)
+        bool isInvalid = false;
+        entry.signature = DecodeBase64(signature.c_str(), &isInvalid);
+        if (isInvalid)
         {
             WARN() << "invalid signature <" << ptr->fromCurrency << "> " << __FUNCTION__;
             return xbridge::Error::FUNDS_NOT_SIGNED;
@@ -990,7 +996,7 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
 
         entry.rawAddress = connFrom->toXAddr(entry.address);
 
-        assert(entry.signature.size() == 20 && "incorrect signature length, need 20 bytes");
+        assert(entry.signature.size() == 65 && "incorrect signature length, need 20 bytes");
         assert(entry.rawAddress.size() == 20 && "incorrect raw address length, need 20 bytes");
     }
 

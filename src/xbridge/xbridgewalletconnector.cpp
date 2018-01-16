@@ -20,6 +20,7 @@ std::string UtxoEntry::toString() const
 {
     std::ostringstream o;
     o << txId << ":" << vout << ":" << amount << ":" << address;
+    return o.str();
 }
 
 //*****************************************************************************

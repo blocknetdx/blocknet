@@ -433,8 +433,8 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
 
             entry.address = conn->fromXAddr(entry.rawAddress);
 
-            entry.signature = std::vector<unsigned char>(packet->data()+offset, packet->data()+offset+20);
-            offset += 20;
+            entry.signature = std::vector<unsigned char>(packet->data()+offset, packet->data()+offset+65);
+            offset += 65;
 
             if (!conn->getTxOut(entry))
             {
@@ -458,7 +458,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
         }
     }
 
-    if (commonAmount < samount)
+    if (commonAmount * TransactionDescr::COIN < samount)
     {
         LOG() << "transaction rejected, amount from utxo items <" << commonAmount
               << "> less than required <" << samount << "> " << __FUNCTION__;
@@ -668,7 +668,7 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet)
 
             entry.address = conn->fromXAddr(entry.rawAddress);
 
-            entry.signature = std::vector<unsigned char>(packet->data()+offset, packet->data()+offset+20);
+            entry.signature = std::vector<unsigned char>(packet->data()+offset, packet->data()+offset+65);
             offset += 20;
 
             if (!conn->getTxOut(entry))
@@ -693,7 +693,7 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet)
         }
     }
 
-    if (commonAmount < samount)
+    if (commonAmount * TransactionDescr::COIN < samount)
     {
         LOG() << "transaction rejected, amount from utxo items <" << commonAmount
               << "> less than required <" << samount << "> " << __FUNCTION__;
