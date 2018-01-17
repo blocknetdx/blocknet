@@ -474,7 +474,6 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
     // check utxo items
     if (!e.checkUtxoItems(id, utxoItems))
     {
-        sendCancelTransaction(id, crBadUtxo);
         LOG() << "transaction rejected, error check utxo items "
               << __FUNCTION__;
         return true;
@@ -726,29 +725,19 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet)
 
             if (tr && tr->state() == xbridge::Transaction::trJoined)
             {
-                // send hold to clients
+                // send hold
 
                 // first
                 // TODO remove this log
                 LOG() << "send xbcTransactionHold ";
 
-                std::set<std::vector<unsigned char> > hosts;
-                hosts.insert(tr->a_address());
-                hosts.insert(tr->b_address());
+                XBridgePacketPtr reply1(new XBridgePacket(xbcTransactionHold));
+                reply1->append(m_myid);
+                reply1->append(tr->id().begin(), 32);
+                reply1->append(activeServicenode.pubKeyServicenode.begin(),
+                               activeServicenode.pubKeyServicenode.size());
 
-                assert(hosts.size() == 2 && "bad addresses");
-
-                for (const std::vector<unsigned char> & host : hosts)
-                {
-                    XBridgePacketPtr reply1(new XBridgePacket(xbcTransactionHold));
-                    reply1->append(host);
-                    reply1->append(m_myid);
-                    reply1->append(tr->id().begin(), 32);
-                    reply1->append(activeServicenode.pubKeyServicenode.begin(),
-                                   activeServicenode.pubKeyServicenode.size());
-
-                    sendPacket(host, reply1);
-                }
+                sendPacketBroadcast(reply1);
             }
         }
     }
@@ -762,7 +751,7 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet)
 {
     DEBUG_TRACE();
 
-    if (packet->size() != 105 && packet->size() != 137)
+    if (packet->size() != 85 && packet->size() != 117)
     {
         ERR() << "incorrect packet size for xbcTransactionHold "
               << "need 105 or 137 received " << packet->size() << " "
