@@ -172,7 +172,7 @@ bool Exchange::checkUtxoItems(const uint256 & txid, const std::vector<wallet::Ut
     if (m_p->m_utxoTxMap.count(txid))
     {
         // transaction found
-        return false;
+        return true;
     }
 
     // check
