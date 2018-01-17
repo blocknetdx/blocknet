@@ -300,7 +300,11 @@ bool Exchange::createTransaction(const uint256                        & txid,
             boost::mutex::scoped_lock l2(m_p->m_pendingTransactions[h]->m_lock);
 
             // found, check if expired
-            if (m_p->m_pendingTransactions[h]->isExpired())
+            if (!m_p->m_pendingTransactions[h]->isExpired())
+            {
+                m_p->m_pendingTransactions[h]->updateTimestamp();
+            }
+            else
             {
                 // if expired - delete old transaction
                 m_p->m_pendingTransactions.erase(h);
