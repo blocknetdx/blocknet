@@ -61,8 +61,6 @@ struct TransactionDescr
     std::string                toCurrency;
     uint64_t                   toAmount;
 
-    uint32_t                   tax;
-
     uint32_t                   lockTimeTx1;
     uint32_t                   lockTimeTx2;
 
@@ -102,7 +100,6 @@ struct TransactionDescr
 
     TransactionDescr()
         : role(0)
-        , tax(0)
         , lockTimeTx1(0)
         , lockTimeTx2(0)
         , state(trNew)
@@ -199,7 +196,6 @@ private:
         to           = d.to;
         toCurrency   = d.toCurrency;
         toAmount     = d.toAmount;
-        tax          = d.tax;
         lockTimeTx1  = d.lockTimeTx1;
         lockTimeTx2  = d.lockTimeTx2;
         state        = d.state;

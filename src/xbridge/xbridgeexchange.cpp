@@ -210,6 +210,7 @@ bool Exchange::createTransaction(const uint256                        & txid,
                                  const std::string                    & destCurrency,
                                  const uint64_t                       & destAmount,
                                  const std::vector<wallet::UtxoEntry> & items,
+                                 const uint32_t                       & timestamp,
                                  uint256                              & pendingId,
                                  bool                                 & isCreated)
 {
@@ -270,7 +271,8 @@ bool Exchange::createTransaction(const uint256                        & txid,
                                                sourceAddr,
                                                sourceCurrency, sourceAmount,
                                                destAddr,
-                                               destCurrency, destAmount));
+                                               destCurrency, destAmount,
+                                               timestamp));
 
     LOG() << tr->hash1().ToString();
     LOG() << tr->hash2().ToString();
@@ -375,7 +377,8 @@ bool Exchange::acceptTransaction(const uint256                        & txid,
                                                sourceAddr,
                                                sourceCurrency, sourceAmount,
                                                destAddr,
-                                               destCurrency, destAmount));
+                                               destCurrency, destAmount,
+                                               std::time(0)));
 
     transactionId = txid;
 

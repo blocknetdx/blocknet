@@ -369,11 +369,11 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
 
     DEBUG_TRACE();
 
-    // size must be > 144 bytes
-    if (packet->size() < 144)
+    // size must be > 148 bytes
+    if (packet->size() < 148)
     {
         ERR() << "invalid packet size for xbcTransaction "
-              << "need min 144 bytes, received " << packet->size() << " "
+              << "need min 148 bytes, received " << packet->size() << " "
               << __FUNCTION__;
         return false;
     }
@@ -397,6 +397,9 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
     offset += 8;
     uint64_t damount = *static_cast<uint64_t *>(static_cast<void *>(packet->data()+offset));
     offset += sizeof(uint64_t);
+
+    uint32_t timestamp = *static_cast<uint32_t *>(static_cast<void *>(packet->data()+offset));
+    offset += sizeof(uint32_t);
 
     xbridge::App & xapp = xbridge::App::instance();
     WalletConnectorPtr conn = xapp.connectorByCurrency(scurrency);
@@ -485,7 +488,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
         if (!e.createTransaction(id,
                                  saddr, scurrency, samount,
                                  daddr, dcurrency, damount,
-                                 utxoItems,
+                                 utxoItems, timestamp,
                                  pendingId, isCreated))
         {
             // not created
@@ -554,10 +557,10 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
 
     DEBUG_TRACE();
 
-    if (packet->size() != 84)
+    if (packet->size() != 88)
     {
         ERR() << "incorrect packet size for xbcPendingTransaction "
-              << "need 84 received " << packet->size() << " "
+              << "need 88 received " << packet->size() << " "
               << __FUNCTION__;
         return false;
     }
@@ -578,7 +581,7 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
     ptr->toCurrency   = std::string(reinterpret_cast<const char *>(packet->data()+48));
     ptr->toAmount     = *reinterpret_cast<boost::uint64_t *>(packet->data()+56);
     ptr->hubAddress   = std::vector<unsigned char>(packet->data()+64, packet->data()+84);
-    ptr->tax          = *reinterpret_cast<boost::uint32_t *>(packet->data()+84);
+    ptr->created      = boost::posix_time::from_time_t(*reinterpret_cast<boost::uint32_t *>(packet->data()+84));
     ptr->state        = TransactionDescr::trPending;
 
     App::instance().appendTransaction(ptr);
