@@ -59,7 +59,7 @@ class App::Impl
 
     enum
     {
-        TIMER_INTERVAL = 60
+        TIMER_INTERVAL = 15
     };
 
 protected:
