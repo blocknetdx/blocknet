@@ -537,6 +537,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
             reply->append(sc);
             reply->append(tr->b_amount());
             reply->append(m_myid);
+            reply->append(static_cast<uint32_t>(boost::posix_time::to_time_t(tr->createdTime())));
 
             sendPacketBroadcast(reply);
         }
@@ -2252,6 +2253,7 @@ void Session::sendListOfTransactions()
         packet->append(tc);
         packet->append(ptr->b_amount());
         packet->append(m_p->m_myid);
+        packet->append(static_cast<uint32_t>(boost::posix_time::to_time_t(ptr->createdTime())));
         m_p->sendPacketBroadcast(packet);
     }
 }
