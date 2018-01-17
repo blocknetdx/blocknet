@@ -53,7 +53,7 @@ void SendMoney(const CTxDestination& address, CAmount nValue, CWalletTx& wtxNew,
 
 Value obfuscation(const Array& params, bool fHelp)
 {
-    throw runtime_error("Obfuscation is not supported any more. User Zerocoin\n");
+    throw runtime_error("Obfuscation is not supported any more. Use Zerocoin\n");
     
     if (fHelp || params.size() == 0)
         throw runtime_error(
@@ -67,7 +67,7 @@ Value obfuscation(const Array& params, bool fHelp)
 
     if (params[0].get_str() == "auto") {
         if (fMasterNode)
-            return "ObfuScation is not supported from masternodes";
+            return "Obfuscation is not supported from masternodes";
 
         return "DoAutomaticDenominating " + (obfuScationPool.DoAutomaticDenominating() ? "successful" : ("failed: " + obfuScationPool.GetStatus()));
     }
@@ -127,7 +127,7 @@ Value getpoolinfo(const Array& params, bool fHelp)
     return obj;
 }
 
-// This command is retained for backwards compatibility, but is depreciated.
+// This command is retained for backwards compatibility, but is deprecated.
 // Future removal of this command is planned to keep things clean.
 Value masternode(const Array& params, bool fHelp)
 {
@@ -143,7 +143,7 @@ Value masternode(const Array& params, bool fHelp)
         throw runtime_error(
             "masternode \"command\"...\n"
             "\nSet of commands to execute masternode related actions\n"
-            "This command is depreciated, please see individual command documentation for future reference\n\n"
+            "This command is deprecated, please see individual command documentation for future reference\n\n"
 
             "\nArguments:\n"
             "1. \"command\"        (string or set of strings, required) The command to execute\n"
@@ -256,7 +256,7 @@ Value listmasternodes(const Array& params, bool fHelp)
             "    \"txhash\": \"hash\",    (string) Collateral transaction hash\n"
             "    \"outidx\": n,         (numeric) Collateral transaction output index\n"
             "    \"status\": s,         (string) Status (ENABLED/EXPIRED/REMOVE/etc)\n"
-            "    \"addr\": \"addr\",      (string) Masternode Phore address\n"
+            "    \"addr\": \"addr\",      (string) Masternode phore address\n"
             "    \"version\": v,        (numeric) Masternode protocol version\n"
             "    \"lastseen\": ttt,     (numeric) The time in seconds since epoch (Jan 1 1970 GMT) of the last seen\n"
             "    \"activetime\": ttt,   (numeric) The time in seconds since epoch (Jan 1 1970 GMT) masternode has been active\n"
@@ -777,7 +777,7 @@ Value getmasternodewinners (const Array& params, bool fHelp)
             "  {\n"
             "    \"nHeight\": n,           (numeric) block height\n"
             "    \"winner\": {\n"
-            "      \"address\": \"xxxx\",    (string) Phore MN Address\n"
+            "      \"address\": \"xxxx\",    (string) Phore MN address\n"
             "      \"nVotes\": n,          (numeric) Number of votes for winner\n"
             "    }\n"
             "  }\n"
@@ -790,7 +790,7 @@ Value getmasternodewinners (const Array& params, bool fHelp)
             "    \"nHeight\": n,           (numeric) block height\n"
             "    \"winner\": [\n"
             "      {\n"
-            "        \"address\": \"xxxx\",  (string) Phore MN Address\n"
+            "        \"address\": \"xxxx\",  (string) Phore MN address\n"
             "        \"nVotes\": n,        (numeric) Number of votes for winner\n"
             "      }\n"
             "      ,...\n"

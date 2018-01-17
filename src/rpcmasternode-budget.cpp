@@ -47,7 +47,7 @@ void budgetToJSON(CBudgetProposal* pbudgetProposal, Object& bObj)
     bObj.push_back(Pair("fValid", pbudgetProposal->fValid));
 }
 
-// This command is retained for backwards compatibility, but is depreciated.
+// This command is retained for backwards compatibility, but is deprecated.
 // Future removal of this command is planned to keep things clean.
 Value mnbudget(const Array& params, bool fHelp)
 {
@@ -60,7 +60,7 @@ Value mnbudget(const Array& params, bool fHelp)
         throw runtime_error(
             "mnbudget \"command\"... ( \"passphrase\" )\n"
             "\nVote or show current budgets\n"
-            "This command is depreciated, please see individual command documentation for future reference\n\n"
+            "This command is deprecated, please see individual command documentation for future reference\n\n"
 
             "\nAvailable commands:\n"
             "  prepare            - Prepare proposal for network by signing and creating tx\n"
@@ -136,7 +136,7 @@ Value preparebudget(const Array& params, bool fHelp)
 
     if (fHelp || params.size() != 6)
         throw runtime_error(
-            "preparebudget \"proposal-name\" \"url\" payment-count block-start \"phore-address\" monthy-payment\n"
+            "preparebudget \"proposal-name\" \"url\" payment-count block-start \"phore-address\" monthly-payment\n"
             "\nPrepare proposal for network by signing and creating tx\n"
 
             "\nArguments:\n"
@@ -229,7 +229,7 @@ Value submitbudget(const Array& params, bool fHelp)
 
     if (fHelp || params.size() != 7)
         throw runtime_error(
-            "submitbudget \"proposal-name\" \"url\" payment-count block-start \"phore-address\" monthy-payment \"fee-tx\"\n"
+            "submitbudget \"proposal-name\" \"url\" payment-count block-start \"phore-address\" monthly-payment \"fee-tx\"\n"
             "\nSubmit proposal to the network\n"
 
             "\nArguments:\n"
@@ -652,7 +652,7 @@ Value getbudgetprojection(const Array& params, bool fHelp)
             "\nResult:\n"
             "[\n"
             "  {\n"
-            "    \"Name\": \"xxxx\",               (string) Proposal Name\n"
+            "    \"Name\": \"xxxx\",               (string) Proposal name\n"
             "    \"URL\": \"xxxx\",                (string) Proposal URL\n"
             "    \"Hash\": \"xxxx\",               (string) Proposal vote hash\n"
             "    \"FeeHash\": \"xxxx\",            (string) Proposal fee hash\n"
@@ -715,7 +715,7 @@ Value getbudgetinfo(const Array& params, bool fHelp)
             "\nResult:\n"
             "[\n"
             "  {\n"
-            "    \"Name\": \"xxxx\",               (string) Proposal Name\n"
+            "    \"Name\": \"xxxx\",               (string) Proposal name\n"
             "    \"URL\": \"xxxx\",                (string) Proposal URL\n"
             "    \"Hash\": \"xxxx\",               (string) Proposal vote hash\n"
             "    \"FeeHash\": \"xxxx\",            (string) Proposal fee hash\n"
