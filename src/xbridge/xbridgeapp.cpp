@@ -59,7 +59,7 @@ class App::Impl
 
     enum
     {
-        TIMER_INTERVAL = 60
+        TIMER_INTERVAL = 15
     };
 
 protected:
@@ -829,6 +829,8 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
               BEGIN(timestamp), END(timestamp));
 
     TransactionDescrPtr ptr(new TransactionDescr);
+    ptr->created      = boost::posix_time::from_time_t(timestamp);
+    ptr->txtime       = boost::posix_time::from_time_t(timestamp);
     ptr->id           = id;
     ptr->from         = connFrom->toXAddr(from);
     ptr->fromCurrency = fromCurrency;
@@ -898,6 +900,7 @@ bool App::sendPendingTransaction(const TransactionDescrPtr & ptr)
         ptr->packet->append(ptr->to);
         ptr->packet->append(tc);
         ptr->packet->append(ptr->toAmount);
+        ptr->packet->append(static_cast<uint32_t>(boost::posix_time::to_time_t(ptr->created)));
 
         // utxo items
         ptr->packet->append(static_cast<uint32_t>(ptr->usedCoins.size()));

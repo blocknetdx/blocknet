@@ -172,7 +172,7 @@ bool Exchange::checkUtxoItems(const uint256 & txid, const std::vector<wallet::Ut
     if (m_p->m_utxoTxMap.count(txid))
     {
         // transaction found
-        return false;
+        return true;
     }
 
     // check
@@ -210,6 +210,7 @@ bool Exchange::createTransaction(const uint256                        & txid,
                                  const std::string                    & destCurrency,
                                  const uint64_t                       & destAmount,
                                  const std::vector<wallet::UtxoEntry> & items,
+                                 const uint32_t                       & timestamp,
                                  uint256                              & pendingId,
                                  bool                                 & isCreated)
 {
@@ -270,7 +271,8 @@ bool Exchange::createTransaction(const uint256                        & txid,
                                                sourceAddr,
                                                sourceCurrency, sourceAmount,
                                                destAddr,
-                                               destCurrency, destAmount));
+                                               destCurrency, destAmount,
+                                               timestamp));
 
     LOG() << tr->hash1().ToString();
     LOG() << tr->hash2().ToString();
@@ -298,7 +300,11 @@ bool Exchange::createTransaction(const uint256                        & txid,
             boost::mutex::scoped_lock l2(m_p->m_pendingTransactions[h]->m_lock);
 
             // found, check if expired
-            if (m_p->m_pendingTransactions[h]->isExpired())
+            if (!m_p->m_pendingTransactions[h]->isExpired())
+            {
+                m_p->m_pendingTransactions[h]->updateTimestamp();
+            }
+            else
             {
                 // if expired - delete old transaction
                 m_p->m_pendingTransactions.erase(h);
@@ -375,7 +381,8 @@ bool Exchange::acceptTransaction(const uint256                        & txid,
                                                sourceAddr,
                                                sourceCurrency, sourceAmount,
                                                destAddr,
-                                               destCurrency, destAmount));
+                                               destCurrency, destAmount,
+                                               std::time(0)));
 
     transactionId = txid;
 

@@ -369,11 +369,11 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
 
     DEBUG_TRACE();
 
-    // size must be > 144 bytes
-    if (packet->size() < 144)
+    // size must be > 148 bytes
+    if (packet->size() < 148)
     {
         ERR() << "invalid packet size for xbcTransaction "
-              << "need min 144 bytes, received " << packet->size() << " "
+              << "need min 148 bytes, received " << packet->size() << " "
               << __FUNCTION__;
         return false;
     }
@@ -397,6 +397,9 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
     offset += 8;
     uint64_t damount = *static_cast<uint64_t *>(static_cast<void *>(packet->data()+offset));
     offset += sizeof(uint64_t);
+
+    uint32_t timestamp = *static_cast<uint32_t *>(static_cast<void *>(packet->data()+offset));
+    offset += sizeof(uint32_t);
 
     xbridge::App & xapp = xbridge::App::instance();
     WalletConnectorPtr conn = xapp.connectorByCurrency(scurrency);
@@ -474,7 +477,6 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
     // check utxo items
     if (!e.checkUtxoItems(id, utxoItems))
     {
-        sendCancelTransaction(id, crBadUtxo);
         LOG() << "transaction rejected, error check utxo items "
               << __FUNCTION__;
         return true;
@@ -486,7 +488,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
         if (!e.createTransaction(id,
                                  saddr, scurrency, samount,
                                  daddr, dcurrency, damount,
-                                 utxoItems,
+                                 utxoItems, timestamp,
                                  pendingId, isCreated))
         {
             // not created
@@ -555,10 +557,10 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
 
     DEBUG_TRACE();
 
-    if (packet->size() != 84)
+    if (packet->size() != 88)
     {
         ERR() << "incorrect packet size for xbcPendingTransaction "
-              << "need 84 received " << packet->size() << " "
+              << "need 88 received " << packet->size() << " "
               << __FUNCTION__;
         return false;
     }
@@ -579,7 +581,7 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
     ptr->toCurrency   = std::string(reinterpret_cast<const char *>(packet->data()+48));
     ptr->toAmount     = *reinterpret_cast<boost::uint64_t *>(packet->data()+56);
     ptr->hubAddress   = std::vector<unsigned char>(packet->data()+64, packet->data()+84);
-    ptr->tax          = *reinterpret_cast<boost::uint32_t *>(packet->data()+84);
+    ptr->created      = boost::posix_time::from_time_t(*reinterpret_cast<boost::uint32_t *>(packet->data()+84));
     ptr->state        = TransactionDescr::trPending;
 
     App::instance().appendTransaction(ptr);
@@ -726,29 +728,19 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet)
 
             if (tr && tr->state() == xbridge::Transaction::trJoined)
             {
-                // send hold to clients
+                // send hold
 
                 // first
                 // TODO remove this log
                 LOG() << "send xbcTransactionHold ";
 
-                std::set<std::vector<unsigned char> > hosts;
-                hosts.insert(tr->a_address());
-                hosts.insert(tr->b_address());
+                XBridgePacketPtr reply1(new XBridgePacket(xbcTransactionHold));
+                reply1->append(m_myid);
+                reply1->append(tr->id().begin(), 32);
+                reply1->append(activeServicenode.pubKeyServicenode.begin(),
+                               activeServicenode.pubKeyServicenode.size());
 
-                assert(hosts.size() == 2 && "bad addresses");
-
-                for (const std::vector<unsigned char> & host : hosts)
-                {
-                    XBridgePacketPtr reply1(new XBridgePacket(xbcTransactionHold));
-                    reply1->append(host);
-                    reply1->append(m_myid);
-                    reply1->append(tr->id().begin(), 32);
-                    reply1->append(activeServicenode.pubKeyServicenode.begin(),
-                                   activeServicenode.pubKeyServicenode.size());
-
-                    sendPacket(host, reply1);
-                }
+                sendPacketBroadcast(reply1);
             }
         }
     }
@@ -762,7 +754,7 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet)
 {
     DEBUG_TRACE();
 
-    if (packet->size() != 105 && packet->size() != 137)
+    if (packet->size() != 85 && packet->size() != 117)
     {
         ERR() << "incorrect packet size for xbcTransactionHold "
               << "need 105 or 137 received " << packet->size() << " "
@@ -770,7 +762,7 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet)
         return false;
     }
 
-    uint32_t offset = 20;
+    uint32_t offset = 0;
 
     // servicenode addr
     std::vector<unsigned char> hubAddress(packet->data()+offset, packet->data()+offset+20);

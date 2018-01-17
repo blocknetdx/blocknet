@@ -56,6 +56,7 @@ public:
                            const std::string                    & destCurrency,
                            const uint64_t                       & destAmount,
                            const std::vector<wallet::UtxoEntry> & items,
+                           const uint32_t                       & timestamp,
                            uint256                              & pendingId,
                            bool                                 & isCreated);
 

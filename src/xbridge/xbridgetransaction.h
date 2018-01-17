@@ -50,8 +50,8 @@ public:
         // transaction lock time base, in seconds, 10 min
         lockTime = 600,
 
-        // pending transaction ttl in seconds, 72 hours
-        pendingTTL = 259200,
+        // pending transaction ttl in seconds, 1 min from last update
+        pendingTTL = 60,
 
         // transaction ttl in seconds, 60 min
         TTL = 3600
@@ -60,12 +60,13 @@ public:
 public:
     Transaction();
     Transaction(const uint256                    & id,
-                       const std::vector<unsigned char> & sourceAddr,
-                       const std::string                & sourceCurrency,
-                       const uint64_t                   & sourceAmount,
-                       const std::vector<unsigned char> & destAddr,
-                       const std::string                & destCurrency,
-                       const uint64_t                   & destAmount);
+                const std::vector<unsigned char> & sourceAddr,
+                const std::string                & sourceCurrency,
+                const uint64_t                   & sourceAmount,
+                const std::vector<unsigned char> & destAddr,
+                const std::string                & destCurrency,
+                const uint64_t                   & destAmount,
+                const std::time_t                & created);
     ~Transaction();
 
     uint256 id() const;
@@ -141,6 +142,7 @@ private:
     uint256                    m_id;
 
     boost::posix_time::ptime   m_created;
+    boost::posix_time::ptime   m_last;
 
     State                      m_state;
 

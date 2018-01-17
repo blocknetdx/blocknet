@@ -6,6 +6,8 @@
 #include "util/xutil.h"
 #include "utilstrencodings.h"
 
+#include <boost/date_time/posix_time/conversion.hpp>
+
 //******************************************************************************
 //******************************************************************************
 namespace xbridge
@@ -26,14 +28,16 @@ Transaction::Transaction()
 //*****************************************************************************
 //*****************************************************************************
 Transaction::Transaction(const uint256                    & id,
-                                       const std::vector<unsigned char> & sourceAddr,
-                                       const std::string                & sourceCurrency,
-                                       const uint64_t                   & sourceAmount,
-                                       const std::vector<unsigned char> & destAddr,
-                                       const std::string                & destCurrency,
-                                       const uint64_t                   & destAmount)
+                         const std::vector<unsigned char> & sourceAddr,
+                         const std::string                & sourceCurrency,
+                         const uint64_t                   & sourceAmount,
+                         const std::vector<unsigned char> & destAddr,
+                         const std::string                & destCurrency,
+                         const uint64_t                   & destAmount,
+                         const time_t                     & created)
     : m_id(id)
-    , m_created(boost::posix_time::second_clock::universal_time())
+    , m_created(boost::posix_time::from_time_t(created))
+    , m_last(boost::posix_time::from_time_t(created))
     , m_state(trNew)
     // , m_stateCounter(0)
     , m_a_stateChanged(false)
@@ -211,7 +215,7 @@ std::string Transaction::strState() const
 //*****************************************************************************
 void Transaction::updateTimestamp()
 {
-    m_created = boost::posix_time::second_clock::universal_time();
+    m_last = boost::posix_time::second_clock::universal_time();
 }
 
 //*****************************************************************************
@@ -241,7 +245,7 @@ bool Transaction::isValid() const
 //*****************************************************************************
 bool Transaction::isExpired() const
 {
-    boost::posix_time::time_duration td = boost::posix_time::second_clock::universal_time() - m_created;
+    boost::posix_time::time_duration td = boost::posix_time::second_clock::universal_time() - m_last;
     if (m_state == trNew && td.total_seconds() > pendingTTL)
     {
         return true;
