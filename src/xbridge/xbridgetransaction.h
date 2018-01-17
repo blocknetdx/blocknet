@@ -50,8 +50,8 @@ public:
         // transaction lock time base, in seconds, 10 min
         lockTime = 600,
 
-        // pending transaction ttl in seconds, 72 hours
-        pendingTTL = 259200,
+        // pending transaction ttl in seconds, 1 min from last update
+        pendingTTL = 60,
 
         // transaction ttl in seconds, 60 min
         TTL = 3600
