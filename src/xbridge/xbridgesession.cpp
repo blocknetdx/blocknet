@@ -484,42 +484,40 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
 
     {
         bool isCreated = false;
-        uint256 pendingId;
         if (!e.createTransaction(id,
                                  saddr, scurrency, samount,
                                  daddr, dcurrency, damount,
-                                 utxoItems, timestamp,
-                                 pendingId, isCreated))
+                                 utxoItems, timestamp, isCreated))
         {
             // not created
             LOG() << "transaction create error " << __FUNCTION__;
             return true;
         }
 
-        // TODO send signal to gui for debug
-        {
-            TransactionDescrPtr d(new TransactionDescr);
-            d->id           = id;
-            d->fromCurrency = scurrency;
-            d->fromAmount   = samount;
-            d->toCurrency   = dcurrency;
-            d->toAmount     = damount;
-            d->state        = TransactionDescr::trPending;
-
-            xuiConnector.NotifyXBridgeTransactionReceived(d);
-        }
-
-        TransactionPtr tr = e.pendingTransaction(pendingId);
-        if (tr->id() == uint256())
-        {
-            LOG() << "transaction not found after create. " << id.GetHex() << " " << __FUNCTION__;
-            return false;
-        }
-
-        LOG() << "transaction created, id " << id.GetHex();
-
         if (isCreated)
         {
+            // TODO send signal to gui for debug
+            {
+                TransactionDescrPtr d(new TransactionDescr);
+                d->id           = id;
+                d->fromCurrency = scurrency;
+                d->fromAmount   = samount;
+                d->toCurrency   = dcurrency;
+                d->toAmount     = damount;
+                d->state        = TransactionDescr::trPending;
+
+                xuiConnector.NotifyXBridgeTransactionReceived(d);
+            }
+
+            TransactionPtr tr = e.pendingTransaction(id);
+            if (tr->id() == uint256())
+            {
+                LOG() << "transaction not found after create. " << id.GetHex() << " " << __FUNCTION__;
+                return false;
+            }
+
+            LOG() << "transaction created, id " << id.GetHex();
+
             boost::mutex::scoped_lock l(tr->m_lock);
 
             std::string firstCurrency = tr->a_currency();
@@ -616,11 +614,13 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet)
         return false;
     }
 
+    uint32_t offset = 20;
+
     // read packet data
-    uint256 id(packet->data());
+    uint256 id(packet->data()+offset);
+    offset += 32;
 
     // source
-    uint32_t offset = 52;
     std::vector<unsigned char> saddr(packet->data()+offset, packet->data()+offset+20);
     offset += 20;
     std::string scurrency((const char *)packet->data()+offset);
@@ -672,7 +672,7 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet)
             entry.address = conn->fromXAddr(entry.rawAddress);
 
             entry.signature = std::vector<unsigned char>(packet->data()+offset, packet->data()+offset+65);
-            offset += 20;
+            offset += 65;
 
             if (!conn->getTxOut(entry))
             {
@@ -718,12 +718,11 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet)
     }
 
     {
-        uint256 transactionId;
-        if (e.acceptTransaction(id, saddr, scurrency, samount, daddr, dcurrency, damount, utxoItems, transactionId))
+        if (e.acceptTransaction(id, saddr, scurrency, samount, daddr, dcurrency, damount, utxoItems))
         {
             // check transaction state, if trNew - do nothing,
             // if trJoined = send hold to client
-            TransactionPtr tr = e.transaction(transactionId);
+            TransactionPtr tr = e.transaction(id);
 
             boost::mutex::scoped_lock l(tr->m_lock);
 
@@ -812,7 +811,7 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet)
 
             if (!tr || tr->state() != xbridge::Transaction::trJoined)
             {
-                e.deletePendingTransactionsByTransactionId(id);
+                e.deletePendingTransactions(id);
             }
 
             return true;
@@ -1306,14 +1305,6 @@ bool Session::Impl::processTransactionCreate(XBridgePacketPtr packet)
         LOG() << "deposit A tx confirmed " << HexStr(txid);
     }
 
-    std::vector<wallet::UtxoEntry> entries;
-    if (!connFrom->getUnspent(entries))
-    {
-        LOG() << "conector::listUnspent failed" << __FUNCTION__;
-        sendCancelTransaction(xtx, crRpcError);
-        return true;
-    }
-
     double outAmount = static_cast<double>(xtx->fromAmount) / TransactionDescr::COIN;
 
     double fee1      = 0;
@@ -1321,7 +1312,7 @@ bool Session::Impl::processTransactionCreate(XBridgePacketPtr packet)
     double inAmount  = 0;
 
     std::vector<wallet::UtxoEntry> usedInTx;
-    for (const wallet::UtxoEntry & entry : entries)
+    for (const wallet::UtxoEntry & entry : xtx->usedCoins)
     {
         usedInTx.push_back(entry);
         inAmount += entry.amount;
@@ -2077,7 +2068,7 @@ bool Session::Impl::cancelOrRollbackTransaction(const uint256 & txid, const TxCa
     Exchange & e = Exchange::instance();
     if (e.isStarted())
     {
-        e.deletePendingTransactionsByTransactionId(txid);
+        e.deletePendingTransactions(txid);
     }
 
     App & app = App::instance();
@@ -2279,7 +2270,7 @@ void Session::eraseExpiredPendingTransactions()
         if (ptr->isExpired())
         {
             LOG() << "transaction expired <" << ptr->id().GetHex() << ">";
-            e.deletePendingTransactions(ptr->hash1());
+            e.deletePendingTransactions(ptr->id());
         }
     }
 }

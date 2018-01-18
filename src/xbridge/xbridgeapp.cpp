@@ -783,7 +783,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
 
         // TODO calculate fee for outputsForUse.count()
 
-        if (utxoAmount > fromAmount)
+        if ((utxoAmount * TransactionDescr::COIN) > fromAmount)
         {
             break;
         }
@@ -967,7 +967,7 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
 
         // TODO calculate fee for outputsForUse.count()
 
-        if (utxoAmount > ptr->fromAmount)
+        if ((utxoAmount * TransactionDescr::COIN) > ptr->fromAmount)
         {
             break;
         }

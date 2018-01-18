@@ -299,26 +299,6 @@ bool Transaction::confirm(const std::string & id)
 
 //*****************************************************************************
 //*****************************************************************************
-uint256 Transaction::hash1() const
-{
-    return Hash(m_sourceCurrency.begin(), m_sourceCurrency.end(),
-                BEGIN(m_sourceAmount), END(m_sourceAmount),
-                m_destCurrency.begin(), m_destCurrency.end(),
-                BEGIN(m_destAmount), END(m_destAmount));
-}
-
-//*****************************************************************************
-//*****************************************************************************
-uint256 Transaction::hash2() const
-{
-    return Hash(m_destCurrency.begin(), m_destCurrency.end(),
-                BEGIN(m_destAmount), END(m_destAmount),
-                m_sourceCurrency.begin(), m_sourceCurrency.end(),
-                BEGIN(m_sourceAmount), END(m_sourceAmount));
-}
-
-//*****************************************************************************
-//*****************************************************************************
 std::vector<unsigned char> Transaction::a_address() const
 {
     return m_a.source();
