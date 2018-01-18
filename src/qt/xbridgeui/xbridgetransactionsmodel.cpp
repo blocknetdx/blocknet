@@ -73,7 +73,7 @@ QVariant XBridgeTransactionsModel::data(const QModelIndex & idx, int role) const
 {
 
 
-    std::cout << "data thread: " << std::this_thread::get_id() << std::endl;
+
 
     if (!idx.isValid())
     {
@@ -358,6 +358,9 @@ void XBridgeTransactionsModel::onTransactionReceived(const XBridgeTransactionDes
     for (unsigned int i = 0; i < m_transactions.size(); ++i)
     {
         const XBridgeTransactionDescr & descr = m_transactions.at(i);
+        if(descr.state == XBridgeTransactionDescr::trFinished) {
+            continue;
+        }
         if (descr.id != tx.id)
         {
             continue;
