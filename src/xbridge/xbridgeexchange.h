@@ -58,6 +58,7 @@ public:
                            const std::vector<wallet::UtxoEntry> & items,
                            const uint32_t                       & timestamp,
                            uint256                              & pendingId,
+                           uint256                              & blockHash,
                            bool                                 & isCreated);
 
     bool acceptTransaction(const uint256                        & id,

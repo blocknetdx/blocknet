@@ -5,6 +5,7 @@
 #include "util/logger.h"
 #include "util/xutil.h"
 #include "utilstrencodings.h"
+#include "main.h"
 
 #include <boost/date_time/posix_time/conversion.hpp>
 
@@ -34,10 +35,12 @@ Transaction::Transaction(const uint256                    & id,
                          const std::vector<unsigned char> & destAddr,
                          const std::string                & destCurrency,
                          const uint64_t                   & destAmount,
-                         const time_t                     & created)
+                         const time_t                     & created,
+                         const uint256                    & blockHash)
     : m_id(id)
     , m_created(boost::posix_time::from_time_t(created))
     , m_last(boost::posix_time::from_time_t(created))
+    , m_blockHash(blockHash)
     , m_state(trNew)
     // , m_stateCounter(0)
     , m_a_stateChanged(false)
@@ -66,6 +69,11 @@ uint256 Transaction::id() const
     return m_id;
 }
 
+uint256 Transaction::blockHash() const
+{
+    return m_blockHash;
+}
+
 //*****************************************************************************
 // state of transaction
 //*****************************************************************************
@@ -77,7 +85,7 @@ Transaction::State Transaction::state() const
 //*****************************************************************************
 //*****************************************************************************
 Transaction::State Transaction::increaseStateCounter(const Transaction::State state,
-                                                                   const std::vector<unsigned char> & from)
+                                                     const std::vector<unsigned char> & from)
 {
     LOG() << "confirm transaction state <" << strState(state)
           << "> from " << util::to_str(from);
@@ -254,6 +262,24 @@ bool Transaction::isExpired() const
     {
         return true;
     }
+    return false;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+bool Transaction::isExpiredByBlockNumber() const
+{
+    if (mapBlockIndex.count(m_blockHash) == 0)
+        return true; //expired because we don't have this hash
+
+    CBlockIndex* blockindex = mapBlockIndex[m_blockHash];
+
+    int trBlockHeight = blockindex->nHeight;
+    int lastBlockHeight = chainActive.Height();
+
+    if(lastBlockHeight - trBlockHeight > 15)
+        return true;
+
     return false;
 }
 

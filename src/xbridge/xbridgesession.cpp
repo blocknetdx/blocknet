@@ -155,7 +155,7 @@ const std::vector<unsigned char> & Session::sessionAddr() const
 //*****************************************************************************
 //*****************************************************************************
 void Session::Impl::init()
-{ 
+{
     if (m_handlers.size())
     {
         LOG() << "packet handlers map must be empty" << __FUNCTION__;
@@ -401,6 +401,9 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
     uint32_t timestamp = *static_cast<uint32_t *>(static_cast<void *>(packet->data()+offset));
     offset += sizeof(uint32_t);
 
+    uint256 blockHash(packet->data()+offset);
+    offset += 32;
+
     xbridge::App & xapp = xbridge::App::instance();
     WalletConnectorPtr conn = xapp.connectorByCurrency(scurrency);
     if (!conn)
@@ -489,7 +492,8 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
                                  saddr, scurrency, samount,
                                  daddr, dcurrency, damount,
                                  utxoItems, timestamp,
-                                 pendingId, isCreated))
+                                 pendingId, blockHash,
+                                 isCreated))
         {
             // not created
             LOG() << "transaction create error " << __FUNCTION__;
@@ -505,6 +509,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
             d->toCurrency   = dcurrency;
             d->toAmount     = damount;
             d->state        = TransactionDescr::trPending;
+            d->blockHash    = blockHash;
 
             xuiConnector.NotifyXBridgeTransactionReceived(d);
         }
@@ -538,6 +543,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
             reply->append(tr->b_amount());
             reply->append(m_myid);
             reply->append(static_cast<uint32_t>(boost::posix_time::to_time_t(tr->createdTime())));
+            reply->append(tr->blockHash());
 
             sendPacketBroadcast(reply);
         }
@@ -584,6 +590,7 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
     ptr->hubAddress   = std::vector<unsigned char>(packet->data()+64, packet->data()+84);
     ptr->created      = boost::posix_time::from_time_t(*reinterpret_cast<boost::uint32_t *>(packet->data()+84));
     ptr->state        = TransactionDescr::trPending;
+    ptr->blockHash    = uint256(packet->data()+92);
 
     App::instance().appendTransaction(ptr);
 
@@ -2276,7 +2283,7 @@ void Session::eraseExpiredPendingTransactions()
 
         boost::mutex::scoped_lock l(ptr->m_lock);
 
-        if (ptr->isExpired())
+        if (ptr->isExpired() || ptr->isExpiredByBlockNumber())
         {
             LOG() << "transaction expired <" << ptr->id().GetHex() << ">";
             e.deletePendingTransactions(ptr->hash1());

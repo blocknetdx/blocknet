@@ -212,6 +212,7 @@ bool Exchange::createTransaction(const uint256                        & txid,
                                  const std::vector<wallet::UtxoEntry> & items,
                                  const uint32_t                       & timestamp,
                                  uint256                              & pendingId,
+                                 uint256                              & blockHash,
                                  bool                                 & isCreated)
 {
     DEBUG_TRACE();
@@ -272,7 +273,8 @@ bool Exchange::createTransaction(const uint256                        & txid,
                                                sourceCurrency, sourceAmount,
                                                destAddr,
                                                destCurrency, destAmount,
-                                               timestamp));
+                                               timestamp,
+                                               blockHash));
 
     LOG() << tr->hash1().ToString();
     LOG() << tr->hash2().ToString();
@@ -303,6 +305,10 @@ bool Exchange::createTransaction(const uint256                        & txid,
             if (!m_p->m_pendingTransactions[h]->isExpired())
             {
                 m_p->m_pendingTransactions[h]->updateTimestamp();
+            }
+            else if(m_p->m_pendingTransactions[h]->isExpiredByBlockNumber())
+            {
+                m_p->m_pendingTransactions.erase(h);
             }
             else
             {

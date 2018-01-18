@@ -70,6 +70,8 @@ struct TransactionDescr
     boost::posix_time::ptime   created;
     boost::posix_time::ptime   txtime;
 
+    uint256                    blockHash;
+
     // raw bitcoin transactions
     std::string                binTxId;
     std::string                binTx;

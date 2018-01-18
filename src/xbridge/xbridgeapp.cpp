@@ -743,12 +743,13 @@ void App::moveTransactionToHistory(const uint256 & id)
 //******************************************************************************
 //******************************************************************************
 xbridge::Error App::sendXBridgeTransaction(const std::string & from,
-                                       const std::string & fromCurrency,
-                                       const uint64_t & fromAmount,
-                                       const std::string & to,
-                                       const std::string & toCurrency,
-                                       const uint64_t & toAmount,
-                                       uint256 & id)
+                                           const std::string & fromCurrency,
+                                           const uint64_t & fromAmount,
+                                           const std::string & to,
+                                           const std::string & toCurrency,
+                                           const uint64_t & toAmount,
+                                           uint256 & id,
+                                           uint256 & blockHash)
 {
     const auto statusCode = checkCreateParams(fromCurrency, toCurrency, fromAmount);
     if(statusCode != xbridge::SUCCESS) {
@@ -828,6 +829,8 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
               BEGIN(toAmount), END(toAmount),
               BEGIN(timestamp), END(timestamp));
 
+    blockHash = chainActive.Tip()->GetBlockHash();
+
     TransactionDescrPtr ptr(new TransactionDescr);
     ptr->created      = boost::posix_time::from_time_t(timestamp);
     ptr->txtime       = boost::posix_time::from_time_t(timestamp);
@@ -839,6 +842,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     ptr->toCurrency   = toCurrency;
     ptr->toAmount     = toAmount;
     ptr->usedCoins    = outputsForUse;
+    ptr->blockHash    = blockHash;
 
     // try send immediatelly
     sendPendingTransaction(ptr);
@@ -893,6 +897,7 @@ bool App::sendPendingTransaction(const TransactionDescrPtr & ptr)
         // 20 bytes - address
         //  8 bytes - currency
         //  8 bytes - amount
+        // 32 bytes - hash of block when tr created
         ptr->packet->append(ptr->id.begin(), 32);
         ptr->packet->append(ptr->from);
         ptr->packet->append(fc);
@@ -901,6 +906,7 @@ bool App::sendPendingTransaction(const TransactionDescrPtr & ptr)
         ptr->packet->append(tc);
         ptr->packet->append(ptr->toAmount);
         ptr->packet->append(static_cast<uint32_t>(boost::posix_time::to_time_t(ptr->created)));
+        ptr->packet->append(ptr->blockHash.begin(), 32);
 
         // utxo items
         ptr->packet->append(static_cast<uint32_t>(ptr->usedCoins.size()));
