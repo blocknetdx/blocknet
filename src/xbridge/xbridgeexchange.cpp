@@ -437,16 +437,12 @@ bool Exchange::deletePendingTransactions(const uint256 & id)
     {
         boost::mutex::scoped_lock l(m_p->m_utxoLocker);
 
-        uint32_t size = m_p->m_utxoTxMap[id].size();
-
         if (m_p->m_utxoTxMap.count(id))
         {
             for (const wallet::UtxoEntry & item : m_p->m_utxoTxMap[id])
             {
-                size -= m_p->m_utxoItems.erase(item);
+                m_p->m_utxoItems.erase(item);
             }
-
-            assert(size == 0 && "bad remove operation");
 
             m_p->m_utxoTxMap.erase(id);
         }
@@ -468,16 +464,12 @@ bool Exchange::deleteTransaction(const uint256 & txid)
     {
         boost::mutex::scoped_lock l(m_p->m_utxoLocker);
 
-        uint32_t size = m_p->m_utxoTxMap[txid].size();
-
         if (m_p->m_utxoTxMap.count(txid))
         {
             for (const wallet::UtxoEntry & item : m_p->m_utxoTxMap[txid])
             {
-                size -= m_p->m_utxoItems.erase(item);
+                m_p->m_utxoItems.erase(item);
             }
-
-            assert(size == 0 && "bad remove operation");
 
             m_p->m_utxoTxMap.erase(txid);
         }
