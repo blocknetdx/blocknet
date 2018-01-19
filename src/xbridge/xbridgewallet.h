@@ -6,6 +6,7 @@
 
 #include <string>
 #include <vector>
+#include <set>
 #include <stdint.h>
 #include <cstring>
 
@@ -34,7 +35,7 @@ struct UtxoEntry
 
     bool operator < (const UtxoEntry & r) const
     {
-        return (txId < r.txId) || (vout < r.vout);
+        return (txId < r.txId) || ((txId == r.txId) && (vout < r.vout));
     }
 };
 
