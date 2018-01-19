@@ -1,0 +1,12 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Phore
+Comment=Phore P2P Cryptocurrency
+Comment[fr]=Phore, monnaie virtuelle cryptographique pair à pair
+Comment[tr]=Phore, eşten eşe kriptografik sanal para birimi
+Exec=phore-qt %u
+Terminal=false
+Type=Application
+Icon=phore128
+MimeType=x-scheme-handler/phore;
+Categories=Office;Finance;

@@ -1,11 +1,11 @@
 Mac OS X Build Instructions and Notes
 ====================================
-This guide will show you how to build pivxd (headless client) for OSX.
+This guide will show you how to build phored (headless client) for OSX.
 
 Notes
 -----
 
-* Tested on OS X 10.7 through 10.10 on 64-bit Intel processors only.
+* Tested on OS X 10.7 through 10.10 on 64-bit Intel processors only. Please read carefully if you are building on High Sierra (10.13), there are special instructions.
 
 * All of the commands should be executed in a Terminal application. The
 built-in one is located in `/Applications/Utilities`.
@@ -39,25 +39,30 @@ Instructions: Homebrew
 #### Install dependencies using Homebrew
 
         brew install autoconf automake berkeley-db4 libtool boost miniupnpc openssl pkg-config protobuf qt5 libzmq
+        
+        Note: On High Sierra (or when libzmq cannot be found), libzmq should be replaced with zeromq
 
-### Building `pivxd`
+### Building `phored`
 
 1. Clone the github tree to get the source code and go into the directory.
 
-        git clone https://github.com/PIVX-Project/PIVX.git
-        cd PIVX
+        git clone https://github.com/phoreproject/Phore.git
+        cd Phore
 
-2.  Build pivxd:
-
+2.  Build phored:
+        
+        chmod +x share/genbuild.sh autogen.sh 
         ./autogen.sh
-        ./configure --with-gui=qt5
+        ./configure --with-gui=qt5 
         make
+(note: if configure fails with libprotobuf not found see [Troubleshooting](#trouble) at the bottom)
+
 
 3.  It is also a good idea to build and run the unit tests:
 
         make check
 
-4.  (Optional) You can also install pivxd to your path:
+4.  (Optional) You can also install phored to your path:
 
         make install
 
@@ -69,7 +74,7 @@ Download Qt Creator from http://www.qt.io/download/. Download the "community edi
 1. Make sure you installed everything through homebrew mentioned above
 2. Do a proper ./configure --with-gui=qt5 --enable-debug
 3. In Qt Creator do "New Project" -> Import Project -> Import Existing Project
-4. Enter "pivx-qt" as project name, enter src/qt as location
+4. Enter "phore-qt" as project name, enter src/qt as location
 5. Leave the file selection as it is
 6. Confirm the "summary page"
 7. In the "Projects" tab select "Manage Kits..."
@@ -79,11 +84,11 @@ Download Qt Creator from http://www.qt.io/download/. Download the "community edi
 
 Creating a release build
 ------------------------
-You can ignore this section if you are building `pivxd` for your own use.
+You can ignore this section if you are building `phored` for your own use.
 
-pivxd/pivx-cli binaries are not included in the pivx-Qt.app bundle.
+phored/phore-cli binaries are not included in the phore-Qt.app bundle.
 
-If you are building `pivxd` or `pivx-qt` for others, your build machine should be set up
+If you are building `phored` or `phore-qt` for others, your build machine should be set up
 as follows for maximum compatibility:
 
 All dependencies should be compiled with these flags:
@@ -92,30 +97,51 @@ All dependencies should be compiled with these flags:
  -arch x86_64
  -isysroot $(xcode-select --print-path)/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk
 
-Once dependencies are compiled, see release-process.md for how the PIVX-Qt.app
+Once dependencies are compiled, see release-process.md for how the Phore-Qt.app
 bundle is packaged and signed to create the .dmg disk image that is distributed.
 
 Running
 -------
 
-It's now available at `./pivxd`, provided that you are still in the `src`
+It's now available at `./phored`, provided that you are still in the `src`
 directory. We have to first create the RPC configuration file, though.
 
-Run `./pivxd` to get the filename where it should be put, or just try these
+Run `./phored` to get the filename where it should be put, or just try these
 commands:
 
-    echo -e "rpcuser=pivxrpc\nrpcpassword=$(xxd -l 16 -p /dev/urandom)" > "/Users/${USER}/Library/Application Support/PIVX/pivx.conf"
-    chmod 600 "/Users/${USER}/Library/Application Support/PIVX/pivx.conf"
+    echo -e "rpcuser=phorerpc\nrpcpassword=$(xxd -l 16 -p /dev/urandom)" > "/Users/${USER}/Library/Application Support/Phore/phore.conf"
+    chmod 600 "/Users/${USER}/Library/Application Support/Phore/phore.conf"
 
 The next time you run it, it will start downloading the blockchain, but it won't
 output anything while it's doing this. This process may take several hours;
 you can monitor its process by looking at the debug.log file, like this:
 
-    tail -f $HOME/Library/Application\ Support/PIVX/debug.log
+    tail -f $HOME/Library/Application\ Support/Phore/debug.log
 
 Other commands:
 -------
 
-    ./pivxd -daemon # to start the pivx daemon.
-    ./pivx-cli --help  # for a list of command-line options.
-    ./pivx-cli help    # When the daemon is running, to get a list of RPC commands
+    ./phored -daemon # to start the phore daemon.
+    ./phore-cli --help  # for a list of command-line options.
+    ./phore-cli help    # When the daemon is running, to get a list of RPC commands
+    
+Troubleshooting:<a name="trouble"></a>
+---------
+* brew install not working? Try replacing libzmq with zeromq in the brew install command
+                
+* libprotobuf not found during ./configure? Make sure you have installed protobuf with `brew install protobuf` and then run `export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig` and try again
+                
+* Database errors have been seen in builds on High Sierra. One solution is to build Berkeley DB from source.
+        
+        cd ~
+        wget 'http://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz'
+        tar -xzvf db-4.8.30.NC.tar.gz
+        cd db-4.8.30.NC/build_unix/
+        ../dist/configure --enable-cxx
+        make
+        sudo make install
+
+        Then configure Phore with this build of BerkeleyDB,
+        ./configure --with-gui=qt5  LDFLAGS="-L/usr/local/BerkeleyDB.4.8/lib/" CPPFLAGS="-I/usr/local/BerkeleyDB.4.8/include/"
+                
+        

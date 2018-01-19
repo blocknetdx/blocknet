@@ -1,0 +1,26 @@
+[Unit]
+Description=Phore's distributed currency daemon
+After=network.target
+
+[Service]
+User=phore
+Group=phore
+
+Type=forking
+PIDFile=/var/lib/phored/phored.pid
+
+ExecStart=/usr/bin/phored -daemon -pid=/var/lib/phored/phored.pid \
+          -conf=/etc/phore/phore.conf -datadir=/var/lib/phored
+
+ExecStop=-/usr/bin/phore-cli -conf=/etc/phore/phore.conf \
+         -datadir=/var/lib/phored stop
+
+Restart=always
+PrivateTmp=true
+TimeoutStopSec=60s
+TimeoutStartSec=2s
+StartLimitInterval=120s
+StartLimitBurst=5
+
+[Install]
+WantedBy=multi-user.target
