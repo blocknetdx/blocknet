@@ -2616,10 +2616,10 @@ bool XBridgeSession::processTransactionFinished(XBridgePacketPtr packet)
 
     XBridgeTransactionDescrPtr xtx;
     {
-        boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
+
 
         if (XBridgeApp::m_transactions.count(txid)) {
-
+            boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
             xtx = XBridgeApp::m_transactions[txid];
 
             if(xtx != nullptr){
@@ -2628,14 +2628,12 @@ bool XBridgeSession::processTransactionFinished(XBridgePacketPtr packet)
             }
 
         } else if(XBridgeApp::m_pendingTransactions.count(txid)) {
-
+            boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
             XBridgeApp::m_pendingTransactions[txid]->state = XBridgeTransactionDescr::trFinished;
             xtx = XBridgeApp::m_pendingTransactions[txid];
 
             if(xtx != nullptr){
-
-                XBridgeApp::m_historicTransactions.insert(XBridgeApp::m_historicTransactions.end(),
-                                                          std::make_pair(xtx->id, xtx));
+                XBridgeApp::m_historicTransactions.insert(std::make_pair(xtx->id, xtx));
                 XBridgeApp::m_pendingTransactions.erase(txid);
                 xuiConnector.NotifyXBridgeTransactionStateChanged(txid, xtx->state);
 
