@@ -6,6 +6,7 @@
 
 #include <string>
 #include <vector>
+#include <set>
 #include <stdint.h>
 #include <cstring>
 
@@ -32,8 +33,10 @@ struct UtxoEntry
 
     std::string toString() const;
 
-    friend bool operator < (const UtxoEntry & l, const UtxoEntry & r);
-    friend bool operator == (const UtxoEntry & l, const UtxoEntry & r);
+    bool operator < (const UtxoEntry & r) const
+    {
+        return (txId < r.txId) || ((txId == r.txId) && (vout < r.vout));
+    }
 };
 
 } // namespace wallet

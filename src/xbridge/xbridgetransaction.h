@@ -96,10 +96,6 @@ public:
 
     bool confirm(const std::string & id);
 
-    // hash of transaction
-    uint256 hash1() const;
-    uint256 hash2() const;
-
     // uint256                    firstId() const;
     std::vector<unsigned char> a_address() const;
     std::vector<unsigned char> a_destination() const;
