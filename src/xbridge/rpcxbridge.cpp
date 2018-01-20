@@ -444,7 +444,7 @@ Value dxCreateTransaction(const Array &params, bool fHelp)
     uint256 blockHash = uint256();
     statusCode = xbridge::App::instance().sendXBridgeTransaction
           (fromAddress, fromCurrency, xBridgeAmountFromReal(fromAmount),
-           toAddress, toCurrency, xBridgeAmountFromReal(toAmount), id);
+           toAddress, toCurrency, xBridgeAmountFromReal(toAmount), id, blockHash);
 
     if(statusCode== xbridge::SUCCESS) {
         Object obj;

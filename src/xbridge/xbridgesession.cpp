@@ -540,7 +540,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
             reply->append(tr->b_amount());
             reply->append(m_myid);
             reply->append(static_cast<uint32_t>(boost::posix_time::to_time_t(tr->createdTime())));
-            reply->append(tr->blockHash());
+            reply->append(tr->blockHash().begin(), 32);
 
             sendPacketBroadcast(reply);
         }

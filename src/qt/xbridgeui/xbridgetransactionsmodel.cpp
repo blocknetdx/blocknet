@@ -161,11 +161,11 @@ bool XBridgeTransactionsModel::isMyTransaction(const unsigned int index) const
 //******************************************************************************
 //******************************************************************************
 xbridge::Error XBridgeTransactionsModel::newTransaction(const std::string & from,
-                                              const std::string & to,
-                                              const std::string & fromCurrency,
-                                              const std::string & toCurrency,
-                                              const double fromAmount,
-                                              const double toAmount)
+                                                        const std::string & to,
+                                                        const std::string & fromCurrency,
+                                                        const std::string & toCurrency,
+                                                        const double fromAmount,
+                                                        const double toAmount)
 {
     xbridge::App & xapp = xbridge::App::instance();
     xbridge::WalletConnectorPtr ptr = xapp.connectorByCurrency(fromCurrency);
@@ -176,9 +176,10 @@ xbridge::Error XBridgeTransactionsModel::newTransaction(const std::string & from
 
     // TODO check amount
     uint256 id = uint256();
+    uint256 blockHash = uint256();
     const auto code = xapp.sendXBridgeTransaction
             (from, fromCurrency, (uint64_t)(fromAmount * xbridge::TransactionDescr::COIN),
-             to,   toCurrency,   (uint64_t)(toAmount * xbridge::TransactionDescr::COIN),id);
+             to,   toCurrency,   (uint64_t)(toAmount * xbridge::TransactionDescr::COIN), id, blockHash);
 
     if (code == xbridge::SUCCESS)
     {

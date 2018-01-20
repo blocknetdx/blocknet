@@ -283,9 +283,9 @@ bool Exchange::createTransaction(const uint256                        & txid,
             {
                 m_p->m_pendingTransactions[txid]->updateTimestamp();
             }
-            else if(m_p->m_pendingTransactions[h]->isExpiredByBlockNumber())
+            else if(m_p->m_pendingTransactions[txid]->isExpiredByBlockNumber())
             {
-                m_p->m_pendingTransactions.erase(h);
+                m_p->m_pendingTransactions.erase(txid);
             }
             else
             {
@@ -349,7 +349,7 @@ bool Exchange::acceptTransaction(const uint256                        & txid,
                                                sourceCurrency, sourceAmount,
                                                destAddr,
                                                destCurrency, destAmount,
-                                               std::time(0)));
+                                               std::time(0), uint256()));
     if (!tr->isValid())
     {
         return false;
