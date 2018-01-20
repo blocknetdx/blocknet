@@ -75,7 +75,7 @@ XBridgeSession::~XBridgeSession()
 //*****************************************************************************
 //*****************************************************************************
 void XBridgeSession::init()
-{ 
+{
     if(m_handlers.size())
     {
         LOG() << "packet handlers map must be empty" << __FUNCTION__;
@@ -2616,22 +2616,32 @@ bool XBridgeSession::processTransactionFinished(XBridgePacketPtr packet)
 
     XBridgeTransactionDescrPtr xtx;
     {
-        boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
 
-        if (!XBridgeApp::m_transactions.count(txid))
-        {
-            // signal for gui
-            xuiConnector.NotifyXBridgeTransactionStateChanged(txid, XBridgeTransactionDescr::trFinished);
-            return true;
+
+        if (XBridgeApp::m_transactions.count(txid)) {
+            boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
+            xtx = XBridgeApp::m_transactions[txid];
+
+            if(xtx != nullptr){
+                xtx->state = XBridgeTransactionDescr::trFinished;
+                xuiConnector.NotifyXBridgeTransactionStateChanged(txid, xtx->state);
+            }
+
+        } else if(XBridgeApp::m_pendingTransactions.count(txid)) {
+            boost::mutex::scoped_lock l(XBridgeApp::m_txLocker);
+            XBridgeApp::m_pendingTransactions[txid]->state = XBridgeTransactionDescr::trFinished;
+            xtx = XBridgeApp::m_pendingTransactions[txid];
+
+            if(xtx != nullptr){
+                XBridgeApp::m_historicTransactions.insert(std::make_pair(xtx->id, xtx));
+                XBridgeApp::m_pendingTransactions.erase(txid);
+                xuiConnector.NotifyXBridgeTransactionStateChanged(txid, xtx->state);
+
+            }
         }
-
-        xtx = XBridgeApp::m_transactions[txid];
     }
 
     // update transaction state for gui
-    xtx->state = XBridgeTransactionDescr::trFinished;
-
-    xuiConnector.NotifyXBridgeTransactionStateChanged(txid, xtx->state);
 
     return true;
 }

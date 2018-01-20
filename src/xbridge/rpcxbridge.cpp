@@ -639,12 +639,19 @@ Value dxCancelTransaction(const Array &params, bool fHelp)
     LOG() << "rpc cancel transaction " << __FUNCTION__;
     uint256 id(params[0].get_str());
     XBridgeApp &app = XBridgeApp::instance();
+    bpt::ptime txtime;
+    if(app.m_pendingTransactions.count(id)) {
+        txtime = XBridgeApp::m_pendingTransactions.at(id)->txtime;
+    } else {
+        Object obj;
+        obj.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::TRANSACTION_NOT_FOUND, id.GetHex())));
+        obj.emplace_back(Pair("code", xbridge::TRANSACTION_NOT_FOUND));
+        return obj;
+    }
     const auto res = app.cancelXBridgeTransaction(id, crRpcRequest);
     if(res == xbridge::SUCCESS) {
         Object obj;
         obj.emplace_back(Pair("id", id.GetHex()));
-        //I purposely did not grab a mutex
-        const auto &txtime = XBridgeApp::m_pendingTransactions.at(id)->txtime;
         obj.emplace_back(Pair("time", bpt::to_iso_extended_string(txtime)));
         return  obj;
     } else {
