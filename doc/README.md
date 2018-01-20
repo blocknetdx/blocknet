@@ -3,7 +3,7 @@ BlocknetDX Core
 
 Setup
 ---------------------
-[BlocknetDX Core](http://blocknetdx.org/wallet) is the original BlocknetDX client and it builds the backbone of the network. However, it downloads and stores the entire history of BlocknetDX transactions; depending on the speed of your computer and network connection, the synchronization process can take anywhere from a few hours to a day or more. Thankfully you only have to do this once.
+[BlocknetDX Core](https://github.com/BlocknetDX/BlockDX/releases/tag/v3.7.36) is the original BlocknetDX client and it builds the backbone of the network. However, it downloads and stores the entire history of BlocknetDX transactions; depending on the speed of your computer and network connection, the synchronization process can take anywhere from a few hours to a day or more. Thankfully you only have to do this once.
 
 Running
 ---------------------
@@ -26,10 +26,7 @@ Drag BlocknetDX-Qt to your applications folder, and then run BlocknetDX-Qt.
 
 ### Need Help?
 
-* See the documentation at the [BlocknetDX Wiki](https://en.bitcoin.it/wiki/Main_Page) ***TODO***
-for help and more information.
-* Ask for help on [BitcoinTalk](https://bitcointalk.org/index.php?topic=1262920.0) or on the [BlocknetDX Forum](http://forum.blocknetdx.org/).
-* Join one of our Slack groups [BlocknetDX Slack Groups](https://blocknetdx.org/slack-logins/).
+* Join our Rocket.Chat [Blocknet Rocket.Chat](https://rocket.blocknet.co:8443) and ask for help in the #wallet channel.
 
 Building
 ---------------------
@@ -41,7 +38,7 @@ The following are developer notes on how to build BlocknetDX on your native plat
 
 Development
 ---------------------
-The Blocknetdx repo's [root README](https://github.com/BlocknetDX-Project/BlocknetDX/blob/master/README.md) contains relevant information on the development process and automated testing.
+The Blocknetdx repo's [root README](https://github.com/BlocknetDX/BlockDX/blob/master/README.md) contains relevant information on the development process and automated testing.
 
 - [Developer Notes](developer-notes.md)
 - [Multiwallet Qt Development](multiwallet-qt.md)
@@ -55,8 +52,8 @@ The Blocknetdx repo's [root README](https://github.com/BlocknetDX-Project/Blockn
 
 ### Resources
 
-* Discuss on the [BitcoinTalk](https://bitcointalk.org/index.php?topic=1262920.0) or the [BlocknetDX](http://forum.blocknetdx.org/) forum.
-* Join the [BlocknetDX-Dev](https://blocknetdx-dev.slack.com/) Slack group ([Sign-Up](https://blocknetdx-dev.herokuapp.com/)).
+* Visit our website [https://blocknet.co](https://blocknet.co)
+* Join our Rocket.Chat [https://rocket.blocknet.co:8443](https://rocket.blocknet.co:8443)
 
 ### Miscellaneous
 - [Assets Attribution](assets-attribution.md)

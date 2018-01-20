@@ -22,9 +22,9 @@ Build-Depends: debhelper,
  libqrencode-dev,
  libprotobuf-dev, protobuf-compiler
 Standards-Version: 3.9.2
-Homepage: http://www.blocknetdx.org
-Vcs-Git: git://github.com/BlocknetDX-Project/BlocknetDX.git
-Vcs-Browser: http://github.com/BlocknetDX-Project/BlocknetDX
+Homepage: https://www.blocknet.co
+Vcs-Git: git://github.com/BlocknetDX/BlockDX.git
+Vcs-Browser: http://github.com/BlocknetDX/BlockDX
 
 Package: blocknetdxd
 Architecture: any
