@@ -2020,6 +2020,10 @@ bool Session::Impl::processTransactionConfirmedB(XBridgePacketPtr packet)
     uint256 txid(packet->data()+40);
 
     TransactionPtr tr = e.transaction(txid);
+    if(tr == nullptr)
+    {
+        return false;
+    }
     boost::mutex::scoped_lock l(tr->m_lock);
 
     tr->updateTimestamp();
@@ -2083,7 +2087,7 @@ bool Session::Impl::cancelOrRollbackTransaction(const uint256 & txid, const TxCa
     App & app = App::instance();
 
     TransactionDescrPtr xtx = app.transaction(txid);
-    if (!xtx)
+    if (xtx == nullptr)
     {
         return true;
     }
@@ -2134,6 +2138,10 @@ bool Session::Impl::cancelOrRollbackTransaction(const uint256 & txid, const TxCa
 //*****************************************************************************
 bool Session::Impl::finishTransaction(TransactionPtr tr)
 {
+    if (tr == nullptr)
+    {
+        return false;
+    }
     LOG() << "finish transaction <" << tr->id().GetHex() << ">";
 
     if (tr->state() != xbridge::Transaction::trConfirmed)
@@ -2172,6 +2180,10 @@ bool Session::Impl::sendCancelTransaction(const uint256 & txid,
 bool Session::Impl::sendCancelTransaction(const TransactionDescrPtr & tx,
                                            const TxCancelReason & reason)
 {
+    if (tx == nullptr)
+    {
+        return false;
+    }
     sendCancelTransaction(tx->id, reason);
 
     // update transaction state for gui
@@ -2188,6 +2200,11 @@ bool Session::Impl::rollbackTransaction(TransactionPtr tr)
 {
     LOG() << "rollback transaction <" << tr->id().GetHex() << ">";
 
+    if (tr == nullptr ) {
+
+        return  false;
+
+    }
     if (tr->state() >= xbridge::Transaction::trCreated)
     {
         xbridge::App & app = xbridge::App::instance();
@@ -2300,6 +2317,7 @@ void Session::checkFinishedTransactions()
     {
         TransactionPtr & ptr = *i;
 
+
         boost::mutex::scoped_lock l(ptr->m_lock);
 
         uint256 txid = ptr->id();
@@ -2392,9 +2410,9 @@ bool Session::Impl::processTransactionFinished(XBridgePacketPtr packet)
     xbridge::App & xapp = xbridge::App::instance();
 
     TransactionDescrPtr xtx = xapp.transaction(txid);
-    if (!xtx)
+    if (xtx == nullptr)
     {
-        // LOG() << "unknown transaction " << HexStr(txid) << " " << __FUNCTION__;
+        LOG() << "unknown transaction " << HexStr(txid) << " " << __FUNCTION__;
         return true;
     }
 
@@ -2424,7 +2442,7 @@ bool Session::Impl::processTransactionRollback(XBridgePacketPtr packet)
     xbridge::App & xapp = xbridge::App::instance();
 
     TransactionDescrPtr xtx = xapp.transaction(txid);
-    if (!xtx)
+    if (xtx == nullptr)
     {
         LOG() << "unknown transaction " << HexStr(txid) << " " << __FUNCTION__;
         return true;
