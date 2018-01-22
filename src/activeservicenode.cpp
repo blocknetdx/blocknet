@@ -175,7 +175,10 @@ bool CActiveServicenode::SendServicenodePing(std::string& errorMessage, bool for
 
     LogPrintf("CActiveServicenode::SendServicenodePing() - Relay Servicenode Ping vin = %s\n", vin.ToString());
 
-    CServicenodePing mnp(vin);
+    xbridge::Exchange & e = xbridge::Exchange::instance();
+
+    CServicenodePing mnp(vin, e.connectedWallets());
+
     if (!mnp.Sign(keyServicenode, pubKeyServicenode)) {
         errorMessage = "Couldn't sign Servicenode Ping";
         return false;
@@ -293,7 +296,10 @@ bool CActiveServicenode::Register(std::string strService, std::string strKeyServ
 bool CActiveServicenode::Register(CTxIn vin, CService service, CKey keyCollateralAddress, CPubKey pubKeyCollateralAddress, CKey keyServicenode, CPubKey pubKeyServicenode, std::string& errorMessage)
 {
     CServicenodeBroadcast mnb;
-    CServicenodePing mnp(vin);
+
+    xbridge::Exchange & e = xbridge::Exchange::instance();
+
+    CServicenodePing mnp(vin, e.connectedWallets());
     if (!mnp.Sign(keyServicenode, pubKeyServicenode)) {
         errorMessage = strprintf("Failed to sign ping, vin: %s", vin.ToString());
         LogPrintf("CActiveServicenode::Register() -  %s\n", errorMessage);
@@ -303,12 +309,9 @@ bool CActiveServicenode::Register(CTxIn vin, CService service, CKey keyCollatera
 
     LogPrintf("CActiveServicenode::Register() - Adding to Servicenode list\n    service: %s\n    vin: %s\n", service.ToString(), vin.ToString());
 
-    xbridge::Exchange & e = xbridge::Exchange::instance();
-
     mnb = CServicenodeBroadcast(service, vin,
                                 pubKeyCollateralAddress, pubKeyServicenode,
-                                PROTOCOL_VERSION,
-                                e.isEnabled() ? e.connectedWallets() : std::vector<std::string>());
+                                PROTOCOL_VERSION);
     mnb.lastPing = mnp;
     if (!mnb.Sign(keyCollateralAddress)) {
         errorMessage = strprintf("Failed to sign broadcast, vin: %s", vin.ToString());
@@ -519,15 +522,15 @@ bool CActiveServicenode::EnableHotColdServiceNode(CTxIn& newVin, CService& newSe
         xbridge::Exchange & e = xbridge::Exchange::instance();
         if (e.isEnabled())
         {
-            mn->connectedWallets.clear();
+            mn->lastPing.connectedWallets.clear();
             for(const std::string & walletName : e.connectedWallets())
-                mn->connectedWallets.push_back(CServicenodeXWallet(walletName));
+                mn->lastPing.connectedWallets.push_back(CServicenodeXWallet(walletName));
 
             CServicenodeBroadcast mnb(*mn);
             uint256 hash = mnb.GetHash();
             if (mnodeman.mapSeenServicenodeBroadcast.count(hash))
             {
-                mnodeman.mapSeenServicenodeBroadcast[hash].connectedWallets = mn->connectedWallets;
+                mnodeman.mapSeenServicenodeBroadcast[hash].lastPing.connectedWallets = mn->lastPing.connectedWallets;
             }
         }
     }

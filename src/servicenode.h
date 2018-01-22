@@ -31,6 +31,22 @@ extern map<int64_t, uint256> mapCacheBlockHashes;
 
 bool GetBlockHash(uint256& hash, int nBlockHeight);
 
+class CServicenodeXWallet
+{
+public:
+    explicit CServicenodeXWallet() {}
+    explicit CServicenodeXWallet(const std::string & walletName) : strWalletName(walletName) {}
+
+    std::string strWalletName;
+
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
+    {
+        READWRITE(LIMITED_STRING(strWalletName, 8));
+    }
+};
 
 //
 // The Servicenode Ping Class : Contains a different serialize method for sending pings from servicenodes throughout the network
@@ -45,8 +61,12 @@ public:
     std::vector<unsigned char> vchSig;
     //removed stop
 
+    // xbridge wallets list, connected to service node
+    std::vector<CServicenodeXWallet> connectedWallets;
+
     CServicenodePing();
     CServicenodePing(const CTxIn & newVin);
+    CServicenodePing(const CTxIn & newVin, const std::vector<std::string> & exchangeWallets);
 
     ADD_SERIALIZE_METHODS;
 
@@ -57,6 +77,8 @@ public:
         READWRITE(blockHash);
         READWRITE(sigTime);
         READWRITE(vchSig);
+        if (nVersion >= SERVICENODE_WITH_XWALLETS_IN_PING_VERSION)
+            READWRITE(connectedWallets);
     }
 
     bool CheckAndUpdate(int& nDos, bool fRequireEnabled = true);
@@ -82,6 +104,7 @@ public:
         swap(first.blockHash, second.blockHash);
         swap(first.sigTime, second.sigTime);
         swap(first.vchSig, second.vchSig);
+        swap(first.connectedWallets, second.connectedWallets);
     }
 
     CServicenodePing& operator=(CServicenodePing from)
@@ -97,23 +120,7 @@ public:
     {
         return !(a == b);
     }
-};
-
-class CServicenodeXWallet
-{
-public:
-    explicit CServicenodeXWallet() {}
-    explicit CServicenodeXWallet(const std::string & walletName) : strWalletName(walletName) {}
-
-    std::string strWalletName;
-
-    ADD_SERIALIZE_METHODS;
-
-    template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
-    {
-        READWRITE(LIMITED_STRING(strWalletName, 8));
-    }
+    std::string GetConnectedWalletsStr() const;
 };
 
 //
@@ -160,9 +167,6 @@ public:
     int nLastScanningErrorBlockHeight;
     CServicenodePing lastPing;
 
-    // xbridge wallets list, connected to service node
-    std::vector<CServicenodeXWallet> connectedWallets;
-
     int64_t nLastDsee;  // temporary, do not save. Remove after migration to v12
     int64_t nLastDseep; // temporary, do not save. Remove after migration to v12
 
@@ -194,7 +198,6 @@ public:
         swap(first.nLastDsq, second.nLastDsq);
         swap(first.nScanningErrorCount, second.nScanningErrorCount);
         swap(first.nLastScanningErrorBlockHeight, second.nLastScanningErrorBlockHeight);
-        swap(first.connectedWallets, second.connectedWallets);
     }
 
     CServicenode& operator=(CServicenode from)
@@ -303,8 +306,6 @@ public:
 
     int64_t GetLastPaid();
     bool IsValidNetAddr();
-
-    std::string GetConnectedWalletsStr() const;
 };
 
 //
@@ -319,8 +320,7 @@ public:
                           const CTxIn & newVin,
                           const CPubKey & pubKeyCollateralAddressNew,
                           const CPubKey & pubKeyServicenodeNew,
-                          const int protocolVersionIn,
-                          const std::vector<std::string> & exchangeWallets);
+                          const int protocolVersionIn);
     CServicenodeBroadcast(const CServicenode& mn);
 
     bool CheckAndUpdate(int& nDoS);
@@ -342,14 +342,6 @@ public:
         READWRITE(protocolVersion);
         READWRITE(lastPing);
         READWRITE(nLastDsq);
-        if (nType == SER_NETWORK && nVersion >= SERVICENODE_WITH_XBRIDGE_INFO_PROTO_VERSION)
-        {
-            READWRITE(connectedWallets);
-        }
-        else if (nType != SER_NETWORK)
-        {
-            READWRITE(connectedWallets);
-        }
     }
 
     uint256 GetHash()
