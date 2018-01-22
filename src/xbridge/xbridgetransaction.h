@@ -66,10 +66,13 @@ public:
                 const std::vector<unsigned char> & destAddr,
                 const std::string                & destCurrency,
                 const uint64_t                   & destAmount,
-                const std::time_t                & created);
+                const std::time_t                & created,
+                const uint256                    & blockHash);
     ~Transaction();
 
     uint256 id() const;
+
+    uint256 blockHash() const;
 
     // state of transaction
     State state() const;
@@ -85,16 +88,13 @@ public:
     bool isFinished() const;
     bool isValid() const;
     bool isExpired() const;
+    bool isExpiredByBlockNumber() const;
 
     void cancel();
     void drop();
     void finish();
 
     bool confirm(const std::string & id);
-
-    // hash of transaction
-    uint256 hash1() const;
-    uint256 hash2() const;
 
     // uint256                    firstId() const;
     std::vector<unsigned char> a_address() const;
@@ -143,6 +143,8 @@ private:
 
     boost::posix_time::ptime   m_created;
     boost::posix_time::ptime   m_last;
+
+    uint256                    m_blockHash; //hash of block when transaction created
 
     State                      m_state;
 

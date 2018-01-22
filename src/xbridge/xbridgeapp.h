@@ -68,7 +68,8 @@ public:
                                  const std::string & to,
                                  const std::string & toCurrency,
                                  const uint64_t & toAmount,
-                                 uint256 & id);
+                                 uint256 & id,
+                                 uint256& blockHash);
     bool sendPendingTransaction(const TransactionDescrPtr & ptr);
 
     Error acceptXBridgeTransaction(const uint256 & id,

@@ -211,7 +211,7 @@ bool Exchange::createTransaction(const uint256                        & txid,
                                  const uint64_t                       & destAmount,
                                  const std::vector<wallet::UtxoEntry> & items,
                                  const uint32_t                       & timestamp,
-                                 uint256                              & pendingId,
+                                 uint256                              & blockHash,
                                  bool                                 & isCreated)
 {
     DEBUG_TRACE();
@@ -226,24 +226,10 @@ bool Exchange::createTransaction(const uint256                        & txid,
     }
 
     // check locked items
+    if (!checkUtxoItems(txid, items))
     {
-        boost::mutex::scoped_lock l(m_p->m_utxoLocker);
-
-        if (m_p->m_utxoTxMap.count(txid))
-        {
-            // transaction found
-            return false;
-        }
-
-        // check
-        for (const wallet::UtxoEntry & item : items)
-        {
-            if (m_p->m_utxoItems.count(item))
-            {
-                // duplicate items
-                return false;
-            }
-        }
+        // duplicate items
+        return false;
     }
 
     const WalletParam & wp  = m_p->m_wallets[sourceCurrency];
@@ -272,46 +258,42 @@ bool Exchange::createTransaction(const uint256                        & txid,
                                                sourceCurrency, sourceAmount,
                                                destAddr,
                                                destCurrency, destAmount,
-                                               timestamp));
-
-    LOG() << tr->hash1().ToString();
-    LOG() << tr->hash2().ToString();
-
+                                               timestamp,
+                                               blockHash));
     if (!tr->isValid())
     {
         return false;
     }
 
-    uint256 h = tr->hash2();
-    pendingId = h;
-
     {
         boost::mutex::scoped_lock l(m_p->m_pendingTransactionsLock);
 
-        if (!m_p->m_pendingTransactions.count(h))
+        if (!m_p->m_pendingTransactions.count(txid))
         {
             // new transaction
             isCreated = true;
-            pendingId = h = tr->hash1();
-            m_p->m_pendingTransactions[h] = tr;
+            m_p->m_pendingTransactions[txid] = tr;
         }
         else
         {
-            boost::mutex::scoped_lock l2(m_p->m_pendingTransactions[h]->m_lock);
+            boost::mutex::scoped_lock l2(m_p->m_pendingTransactions[txid]->m_lock);
 
             // found, check if expired
-            if (!m_p->m_pendingTransactions[h]->isExpired())
+            if (!m_p->m_pendingTransactions[txid]->isExpired())
             {
-                m_p->m_pendingTransactions[h]->updateTimestamp();
+                m_p->m_pendingTransactions[txid]->updateTimestamp();
+            }
+            else if(m_p->m_pendingTransactions[txid]->isExpiredByBlockNumber())
+            {
+                m_p->m_pendingTransactions.erase(txid);
             }
             else
             {
                 // if expired - delete old transaction
-                m_p->m_pendingTransactions.erase(h);
+                m_p->m_pendingTransactions.erase(txid);
 
                 // create new
-                pendingId = h = tr->hash1();
-                m_p->m_pendingTransactions[h] = tr;
+                m_p->m_pendingTransactions[txid] = tr;
             }
         }
     }
@@ -344,8 +326,7 @@ bool Exchange::acceptTransaction(const uint256                        & txid,
                                  const std::vector<unsigned char>     & destAddr,
                                  const std::string                    & destCurrency,
                                  const uint64_t                       & destAmount,
-                                 const std::vector<wallet::UtxoEntry> & items,
-                                 uint256                              & transactionId)
+                                 const std::vector<wallet::UtxoEntry> & items)
 {
     DEBUG_TRACE();
 
@@ -357,24 +338,10 @@ bool Exchange::acceptTransaction(const uint256                        & txid,
     }
 
     // check locked items
+    if (!checkUtxoItems(txid, items))
     {
-        boost::mutex::scoped_lock l(m_p->m_utxoLocker);
-
-        if (m_p->m_utxoTxMap.count(txid))
-        {
-            // transaction found
-            return false;
-        }
-
-        // check
-        for (const wallet::UtxoEntry & item : items)
-        {
-            if (m_p->m_utxoItems.count(item))
-            {
-                // duplicate items
-                return false;
-            }
-        }
+        // duplicate items
+        return false;
     }
 
     TransactionPtr tr(new xbridge::Transaction(txid,
@@ -382,58 +349,45 @@ bool Exchange::acceptTransaction(const uint256                        & txid,
                                                sourceCurrency, sourceAmount,
                                                destAddr,
                                                destCurrency, destAmount,
-                                               std::time(0)));
-
-    transactionId = txid;
-
+                                               std::time(0), uint256()));
     if (!tr->isValid())
     {
         return false;
     }
-
-    uint256 h = tr->hash2();
 
     TransactionPtr tmp;
 
     {
         boost::mutex::scoped_lock l(m_p->m_pendingTransactionsLock);
 
-        if (!m_p->m_pendingTransactions.count(h))
+        if (!m_p->m_pendingTransactions.count(txid))
         {
             // no pending
             return false;
         }
         else
         {
-            boost::mutex::scoped_lock l2(m_p->m_pendingTransactions[h]->m_lock);
+            boost::mutex::scoped_lock l2(m_p->m_pendingTransactions[txid]->m_lock);
 
             // found, check if expired
-            if (m_p->m_pendingTransactions[h]->isExpired())
+            if (m_p->m_pendingTransactions[txid]->isExpired())
             {
                 // if expired - delete old transaction
-                m_p->m_pendingTransactions.erase(h);
-
-                // create new
-                h = tr->hash1();
-                m_p->m_pendingTransactions[h] = tr;
+                m_p->m_pendingTransactions.erase(txid);
+                return false;
             }
             else
             {
                 // try join with existing transaction
-                if (!m_p->m_pendingTransactions[h]->tryJoin(tr))
+                if (!m_p->m_pendingTransactions[txid]->tryJoin(tr))
                 {
                     LOG() << "transaction not joined";
-                    // return false;
-
-                    // create new transaction
-                    h = tr->hash1();
-                    m_p->m_pendingTransactions[h] = tr;
+                    return false;
                 }
                 else
                 {
-                    LOG() << "transactions joined, new id <" << tr->id().GetHex() << ">";
-
-                    tmp = m_p->m_pendingTransactions[h];
+                    LOG() << "transactions joined, id <" << tr->id().GetHex() << ">";
+                    tmp = m_p->m_pendingTransactions[txid];
                 }
             }
         }
@@ -444,14 +398,12 @@ bool Exchange::acceptTransaction(const uint256                        & txid,
         // move to transactions
         {
             boost::mutex::scoped_lock l(m_p->m_transactionsLock);
-            m_p->m_transactions[tmp->id()] = tmp;
+            m_p->m_transactions[txid] = tmp;
         }
         {
             boost::mutex::scoped_lock l(m_p->m_pendingTransactionsLock);
-            m_p->m_pendingTransactions.erase(h);
+            m_p->m_pendingTransactions.erase(txid);
         }
-
-        transactionId = tmp->id();
     }
 
     // add locked items
@@ -486,58 +438,19 @@ bool Exchange::deletePendingTransactions(const uint256 & id)
         return true;
     }
 
-    uint256 txid = m_p->m_pendingTransactions[id]->id();
-
     m_p->m_pendingTransactions.erase(id);
 
     {
         boost::mutex::scoped_lock l(m_p->m_utxoLocker);
 
-        if (m_p->m_utxoTxMap.count(txid))
+        if (m_p->m_utxoTxMap.count(id))
         {
-            for (const wallet::UtxoEntry & item : m_p->m_utxoTxMap[txid])
+            for (const wallet::UtxoEntry & item : m_p->m_utxoTxMap[id])
             {
                 m_p->m_utxoItems.erase(item);
             }
 
-            m_p->m_utxoTxMap.erase(txid);
-        }
-    }
-
-    return true;
-}
-
-//*****************************************************************************
-//*****************************************************************************
-bool Exchange::deletePendingTransactionsByTransactionId(const uint256 & txid)
-{
-    boost::mutex::scoped_lock l(m_p->m_pendingTransactionsLock);
-
-    LOG() << "delete pending transaction by txid <" << txid.GetHex() << ">";
-
-    for (const auto & pair : m_p->m_pendingTransactions)
-    {
-        const TransactionPtr & ptr = pair.second;
-
-        if (ptr->id() == txid)
-        {
-            m_p->m_pendingTransactions.erase(pair.first);
-
-            break;
-        }
-    }
-
-    {
-        boost::mutex::scoped_lock l(m_p->m_utxoLocker);
-
-        if (m_p->m_utxoTxMap.count(txid))
-        {
-            for (const wallet::UtxoEntry & item : m_p->m_utxoTxMap[txid])
-            {
-                m_p->m_utxoItems.erase(item);
-            }
-
-            m_p->m_utxoTxMap.erase(txid);
+            m_p->m_utxoTxMap.erase(id);
         }
     }
 
