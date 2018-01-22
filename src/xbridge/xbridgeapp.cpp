@@ -1116,6 +1116,8 @@ xbridge::Error App::rollbackXBridgeTransaction(const uint256 & id)
                     return xbridge::UNKNOWN_SESSION;
                 }
             }
+        } else {
+            return xbridge::TRANSACTION_NOT_FOUND;
         }
     }
 

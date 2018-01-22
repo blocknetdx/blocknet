@@ -10,6 +10,7 @@
 #include "xbridge/util/xbridgeerror.h"
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+#include <QApplication>
 //******************************************************************************
 //******************************************************************************
 XBridgeTransactionsModel::XBridgeTransactionsModel()
@@ -19,11 +20,12 @@ XBridgeTransactionsModel::XBridgeTransactionsModel()
               << trUtf8("BID")
               << trUtf8("STATE");
 
+
     xuiConnector.NotifyXBridgeTransactionReceived.connect
-            (boost::bind(&XBridgeTransactionsModel::onTransactionReceived, this, _1));
+            (boost::bind(&XBridgeTransactionsModel::onTransactionReceivedExtSignal, this, _1));
 
     xuiConnector.NotifyXBridgeTransactionStateChanged.connect
-            (boost::bind(&XBridgeTransactionsModel::onTransactionStateChanged, this, _1));
+            (boost::bind(&XBridgeTransactionsModel::onTransactionStateChangedExtSignal, this, _1));
 
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(onTimer()));
     m_timer.start(3000);
@@ -34,10 +36,10 @@ XBridgeTransactionsModel::XBridgeTransactionsModel()
 XBridgeTransactionsModel::~XBridgeTransactionsModel()
 {
     xuiConnector.NotifyXBridgeTransactionReceived.disconnect
-            (boost::bind(&XBridgeTransactionsModel::onTransactionReceived, this, _1));
+            (boost::bind(&XBridgeTransactionsModel::onTransactionReceivedExtSignal, this, _1));
 
     xuiConnector.NotifyXBridgeTransactionStateChanged.disconnect
-            (boost::bind(&XBridgeTransactionsModel::onTransactionStateChanged, this, _1));
+            (boost::bind(&XBridgeTransactionsModel::onTransactionStateChangedExtSignal, this, _1));
 }
 
 //******************************************************************************
@@ -130,6 +132,24 @@ QVariant XBridgeTransactionsModel::headerData(int section, Qt::Orientation orien
         }
     }
     return QVariant();
+}
+
+void XBridgeTransactionsModel::customEvent(QEvent *event)
+{
+    // When we get here, we've crossed the thread boundary and are now
+    // executing in the Qt object's thread
+
+    if (event->type() == TRANSACTION_RECEIVED_EVENT) {
+
+        auto e = static_cast<TransactionReceivedEvent *>(event);
+        onTransactionReceived(e->tx);
+
+    } else if (event->type() == TRANSACTION_STATE_CHANGED_EVENT) {
+
+        auto e = static_cast<TransactionStateChangedEvent *>(event);
+        onTransactionStateChanged(e->id);
+
+    }
 }
 
 //******************************************************************************
@@ -367,10 +387,22 @@ void XBridgeTransactionsModel::onTransactionStateChanged(const uint256 & id)
     {
         if (m_transactions[i]->id == id)
         {
+            std::cout << "old transaction state = " << m_transactions[i]->strState() << std::endl;
+            std::cout << "new transaction state = " << xbridge::App::instance().transaction(id)->strState() << std::endl;
             // found
             emit dataChanged(index(i, FirstColumn), index(i, LastColumn));
         }
     }
+}
+
+void XBridgeTransactionsModel::onTransactionReceivedExtSignal(const xbridge::TransactionDescrPtr &tx)
+{
+    QApplication::postEvent(this, new TransactionReceivedEvent(tx));
+}
+
+void XBridgeTransactionsModel::onTransactionStateChangedExtSignal(const uint256 &id)
+{
+    QApplication::postEvent(this, new TransactionStateChangedEvent(id));
 }
 
 //******************************************************************************
