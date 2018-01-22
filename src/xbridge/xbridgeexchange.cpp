@@ -265,6 +265,11 @@ bool Exchange::createTransaction(const uint256                        & txid,
         return false;
     }
 
+    if(tr->isExpiredByBlockNumber())
+    {
+        return false;
+    }
+
     {
         boost::mutex::scoped_lock l(m_p->m_pendingTransactionsLock);
 
