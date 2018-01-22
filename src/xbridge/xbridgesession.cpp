@@ -2198,13 +2198,14 @@ bool Session::Impl::sendCancelTransaction(const TransactionDescrPtr & tx,
 //*****************************************************************************
 bool Session::Impl::rollbackTransaction(TransactionPtr tr)
 {
+    if (tr == nullptr )
+    {
+        LOG() << "unknown transaction " << tr->id().GetHex() << ">" << __FUNCTION__;
+        return  false;
+    }
     LOG() << "rollback transaction <" << tr->id().GetHex() << ">";
 
-    if (tr == nullptr ) {
 
-        return  false;
-
-    }
     if (tr->state() >= xbridge::Transaction::trCreated)
     {
         xbridge::App & app = xbridge::App::instance();
