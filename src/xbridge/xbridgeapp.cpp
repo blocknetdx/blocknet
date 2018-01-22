@@ -829,7 +829,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
               BEGIN(toAmount), END(toAmount),
               BEGIN(timestamp), END(timestamp));
 
-    blockHash = chainActive.Tip()->GetBlockHash();
+    blockHash = chainActive.Tip()->pprev->GetBlockHash();
 
     TransactionDescrPtr ptr(new TransactionDescr);
     ptr->created      = boost::posix_time::from_time_t(timestamp);

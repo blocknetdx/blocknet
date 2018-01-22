@@ -270,7 +270,7 @@ bool Transaction::isExpired() const
 bool Transaction::isExpiredByBlockNumber() const
 {
     if (mapBlockIndex.count(m_blockHash) == 0)
-        return true; //expired because we don't have this hash
+        return true; //expired because we don't have this hash in blockchain
 
     CBlockIndex* blockindex = mapBlockIndex[m_blockHash];
 
