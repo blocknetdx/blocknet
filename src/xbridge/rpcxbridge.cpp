@@ -95,14 +95,17 @@ Value dxGetTransactions(const Array & params, bool fHelp)
         Object jtr;
         jtr.emplace_back(Pair("id",            tr->id.GetHex()));
         jtr.emplace_back(Pair("from",          tr->fromCurrency));
-        jtr.emplace_back(Pair("from address",  connFrom->fromXAddr(tr->from)));
+
+        jtr.emplace_back(Pair("fromAddress", tr->isLocal() ?  connFrom->fromXAddr(tr->from) : ""));
         jtr.emplace_back(Pair("fromAmount",    xBridgeValueFromAmount(tr->fromAmount)));
         jtr.emplace_back(Pair("to",            tr->toCurrency));
-        jtr.emplace_back(Pair("to address",    connTo->fromXAddr(tr->to)));
+
+        jtr.emplace_back(Pair("toAddress",   tr->isLocal() ? connTo->fromXAddr(tr->to) : ""));
+
         jtr.emplace_back(Pair("toAmount",      xBridgeValueFromAmount(tr->toAmount)));
         jtr.emplace_back(Pair("state",         tr->strState()));
-        jtr.emplace_back(Pair("creation time", bpt::to_iso_extended_string(tr->created)));
-        jtr.emplace_back(Pair("block hash",    tr->blockHash.GetHex()));
+        jtr.emplace_back(Pair("creationTime", bpt::to_iso_extended_string(tr->created)));
+        jtr.emplace_back(Pair("blockHash",    tr->blockHash.GetHex()));
 
         arr.emplace_back(jtr);
     }
@@ -152,12 +155,12 @@ Value dxGetTransactionsHistory(const Array & params, bool fHelp)
         double toAmount     = static_cast<double>(tr->toAmount);
         double price        = fromAmount / toAmount;
         std::string buyTime = to_iso_extended_string(tr->created);
-        buy.emplace_back(Pair("time",          buyTime));
-        buy.emplace_back(Pair("traid_id",      tr->id.GetHex()));
-        buy.emplace_back(Pair("price",         price));
-        buy.emplace_back(Pair("size",          tr->toAmount));
-        buy.emplace_back(Pair("side",          "buy"));
-        buy.emplace_back(Pair("block hash",    tr->blockHash.GetHex()));
+        buy.emplace_back(Pair("time",           buyTime));
+        buy.emplace_back(Pair("traidId",        tr->id.GetHex()));
+        buy.emplace_back(Pair("price",          price));
+        buy.emplace_back(Pair("size",           tr->toAmount));
+        buy.emplace_back(Pair("side",           "buy"));
+        buy.emplace_back(Pair("blockHash",      tr->blockHash.GetHex()));
         arr.emplace_back(buy);
     }
 
@@ -337,16 +340,16 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
         }
 
         Object jtr;
-        jtr.emplace_back(Pair("id",            tr->id.GetHex()));
-        jtr.emplace_back(Pair("created",       bpt::to_iso_extended_string(tr->created)));
-        jtr.emplace_back(Pair("from",          tr->fromCurrency));
-        jtr.emplace_back(Pair("from address",  connFrom->fromXAddr(tr->from)));
-        jtr.emplace_back(Pair("fromAmount",    xBridgeValueFromAmount(tr->fromAmount)));
-        jtr.emplace_back(Pair("to",            tr->toCurrency));
-        jtr.emplace_back(Pair("to address",    connTo->fromXAddr(tr->to)));
-        jtr.emplace_back(Pair("toAmount",      xBridgeValueFromAmount(tr->toAmount)));
-        jtr.emplace_back(Pair("state",         tr->strState()));
-        jtr.emplace_back(Pair("block hash",    tr->blockHash.GetHex()));
+        jtr.emplace_back(Pair("id",             tr->id.GetHex()));
+        jtr.emplace_back(Pair("created",        bpt::to_iso_extended_string(tr->created)));
+        jtr.emplace_back(Pair("from",           tr->fromCurrency));
+        jtr.emplace_back(Pair("fromAddress",    tr->isLocal() ? connFrom->fromXAddr(tr->from) : ""));
+        jtr.emplace_back(Pair("fromAmount",     xBridgeValueFromAmount(tr->fromAmount)));
+        jtr.emplace_back(Pair("to",             tr->toCurrency));
+        jtr.emplace_back(Pair("toAddress",      tr->isLocal() ? connTo->fromXAddr(tr->to) : ""));
+        jtr.emplace_back(Pair("toAmount",       xBridgeValueFromAmount(tr->toAmount)));
+        jtr.emplace_back(Pair("state",          tr->strState()));
+        jtr.emplace_back(Pair("blockHash",      tr->blockHash.GetHex()));
 
         arr.emplace_back(jtr);
     }
@@ -508,7 +511,7 @@ Value dxCreateTransaction(const Array &params, bool fHelp)
         obj.emplace_back(Pair("to",             toAddress));
         obj.emplace_back(Pair("toCurrency",     toCurrency));
         obj.emplace_back(Pair("toAmount",       toAmount));
-        obj.emplace_back(Pair("block hash",     blockHash.GetHex()));
+        obj.emplace_back(Pair("blockHash",      blockHash.GetHex()));
         return obj;
 
     } else {
