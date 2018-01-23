@@ -422,8 +422,8 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
     if(checkId != id)
     {
         WARN() << "id from packet is differs from body hash:" << std::endl
-               << "packet id: " << id << std::endl
-               << "body hash:" << checkId << std::endl
+               << "packet id: " << id.GetHex() << std::endl
+               << "body hash:" << checkId.GetHex() << std::endl
                << __FUNCTION__;
 
         return true;
