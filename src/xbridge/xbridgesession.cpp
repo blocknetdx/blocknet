@@ -412,6 +412,23 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
         return true;
     }
 
+    uint256 checkId = Hash(saddr.begin(), saddr.end(),
+                           scurrency.begin(), scurrency.end(),
+                           BEGIN(samount), END(samount),
+                           daddr.begin(), daddr.end(),
+                           dcurrency.begin(), dcurrency.end(),
+                           BEGIN(damount), END(damount),
+                           BEGIN(timestamp), END(timestamp));
+    if(checkId != id)
+    {
+        WARN() << "id from packet is differs from body hash:" << std::endl
+               << "packet id: " << id << std::endl
+               << "body hash:" << checkId << std::endl
+               << __FUNCTION__;
+
+        return true;
+    }
+
     double commonAmount = 0;
 
     // utxo items
