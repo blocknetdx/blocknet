@@ -821,15 +821,19 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     }
 
     boost::uint32_t timestamp = time(0);
+    blockHash = chainActive.Tip()->pprev->GetBlockHash();
+
+    std::vector<unsigned char> firstUtxoSig = outputsForUse.at(0).signature;
+
     id = Hash(from.begin(), from.end(),
               fromCurrency.begin(), fromCurrency.end(),
               BEGIN(fromAmount), END(fromAmount),
               to.begin(), to.end(),
               toCurrency.begin(), toCurrency.end(),
               BEGIN(toAmount), END(toAmount),
-              BEGIN(timestamp), END(timestamp));
-
-    blockHash = chainActive.Tip()->pprev->GetBlockHash();
+              BEGIN(timestamp), END(timestamp),
+              blockHash.begin(), blockHash.end(),
+              firstUtxoSig.begin(), firstUtxoSig.end());
 
     TransactionDescrPtr ptr(new TransactionDescr);
     ptr->created      = boost::posix_time::from_time_t(timestamp);

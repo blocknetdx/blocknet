@@ -405,10 +405,11 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
     offset += 32;
 
     xbridge::App & xapp = xbridge::App::instance();
-    WalletConnectorPtr conn = xapp.connectorByCurrency(scurrency);
-    if (!conn)
+    WalletConnectorPtr sconn = xapp.connectorByCurrency(scurrency);
+    WalletConnectorPtr dconn = xapp.connectorByCurrency(dcurrency);
+    if (!sconn || !dconn)
     {
-        WARN() << "no connector for <" << scurrency << "> " << __FUNCTION__;
+        WARN() << "no connector for <" << (!sconn ? scurrency : dcurrency) << "> " << __FUNCTION__;
         return true;
     }
 
@@ -454,12 +455,12 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
             entry.rawAddress = std::vector<unsigned char>(packet->data()+offset, packet->data()+offset+20);
             offset += 20;
 
-            entry.address = conn->fromXAddr(entry.rawAddress);
+            entry.address = sconn->fromXAddr(entry.rawAddress);
 
             entry.signature = std::vector<unsigned char>(packet->data()+offset, packet->data()+offset+65);
             offset += 65;
 
-            if (!conn->getTxOut(entry))
+            if (!sconn->getTxOut(entry))
             {
                 LOG() << "not found utxo entry <" << entry.txId
                       << "> no " << entry.vout << " " << __FUNCTION__;
@@ -468,7 +469,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
 
             // check signature
             std::string signature = EncodeBase64(&entry.signature[0], entry.signature.size());
-            if (!conn->verifyMessage(entry.address, entry.toString(), signature))
+            if (!sconn->verifyMessage(entry.address, entry.toString(), signature))
             {
                 LOG() << "not valid signature, bad utxo entry <" << entry.txId
                       << "> no " << entry.vout << " " << __FUNCTION__;
@@ -479,6 +480,12 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
 
             utxoItems.push_back(entry);
         }
+    }
+
+    if(utxoItems.empty())
+    {
+        LOG() << "transaction rejected, utxo items are empty <" << __FUNCTION__;
+        return true;
     }
 
     if (commonAmount * TransactionDescr::COIN < samount)
@@ -493,6 +500,30 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
           << "             " << scurrency << " : " << samount << std::endl
           << "    to   " << HexStr(daddr) << std::endl
           << "             " << dcurrency << " : " << damount << std::endl;
+
+    std::string saddrStr = sconn->fromXAddr(saddr);
+    std::string daddrStr = dconn->fromXAddr(daddr);
+
+    std::vector<unsigned char> firstUtxoSig = utxoItems.at(0).signature;
+
+    uint256 checkId = Hash(saddrStr.begin(), saddrStr.end(),
+                           scurrency.begin(), scurrency.end(),
+                           BEGIN(samount), END(samount),
+                           daddrStr.begin(), daddrStr.end(),
+                           dcurrency.begin(), dcurrency.end(),
+                           BEGIN(damount), END(damount),
+                           BEGIN(timestamp), END(timestamp),
+                           blockHash.begin(), blockHash.end(),
+                           firstUtxoSig.begin(), firstUtxoSig.end());
+    if(checkId != id)
+    {
+        WARN() << "id from packet is differs from body hash:" << std::endl
+               << "packet id: " << id.GetHex() << std::endl
+               << "body hash:" << checkId.GetHex() << std::endl
+               << __FUNCTION__;
+
+        return true;
+    }
 
     // check utxo items
     if (!e.checkUtxoItems(id, utxoItems))
