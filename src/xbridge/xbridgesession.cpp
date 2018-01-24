@@ -465,6 +465,12 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
         }
     }
 
+    if(utxoItems.empty())
+    {
+        LOG() << "transaction rejected, utxo items are empty <" << __FUNCTION__;
+        return true;
+    }
+
     if (commonAmount * TransactionDescr::COIN < samount)
     {
         LOG() << "transaction rejected, amount from utxo items <" << commonAmount
