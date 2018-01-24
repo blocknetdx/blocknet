@@ -409,7 +409,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
     WalletConnectorPtr dconn = xapp.connectorByCurrency(dcurrency);
     if (!sconn || !dconn)
     {
-        WARN() << "no connector for" << (!sconn ? scurrency : dcurrency) << "> " << __FUNCTION__;
+        WARN() << "no connector for <" << (!sconn ? scurrency : dcurrency) << "> " << __FUNCTION__;
         return true;
     }
 
@@ -454,7 +454,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
             std::string signature = EncodeBase64(&entry.signature[0], entry.signature.size());
             if (!sconn->verifyMessage(entry.address, entry.toString(), signature))
             {
-                LOG() << "not valid signature, bad utxo entry <" << entry.txId
+                LOG() << "not valid signature, bad utxo entry" << entry.txId
                       << "> no " << entry.vout << " " << __FUNCTION__;
                 continue;
             }
