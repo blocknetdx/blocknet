@@ -67,59 +67,219 @@ class Session::Impl
     friend class Session;
 
 protected:
+    /**
+     * @brief init
+     */
     void init();
 
 protected:
+    /**
+     * @brief sendPacket
+     * @param to
+     * @param packet
+     */
     void sendPacket(const std::vector<unsigned char> & to, const XBridgePacketPtr & packet);
+    /**
+     * @brief sendPacketBroadcast
+     * @param packet
+     */
     void sendPacketBroadcast(XBridgePacketPtr packet);
 
-    // return true if packet not for me, relayed
+    //
+    /**
+     * @brief checkPacketAddress
+     * @param packet
+     * @return  return true if packet not for me, relayed
+     */
     bool checkPacketAddress(XBridgePacketPtr packet);
 
-    // fn search xaddress in transaction and restore full 'coin' address as string
+    // fn
+    /**
+     * @brief isAddressInTransaction  search xaddress in transaction and restore full 'coin' address as string
+     * @param address
+     * @param tx
+     * @return
+     */
     bool isAddressInTransaction(const std::vector<unsigned char> & address,
                                 const TransactionPtr & tx);
 
 protected:
+    /**
+     * @brief encryptPacket - encrypt the packet
+     * @param packet - processing packet
+     * @return status of operation
+     */
     bool encryptPacket(XBridgePacketPtr packet);
+    /**
+     * @brief decryptPacket - decrypt packet
+     * @param packet - processing packet
+     * @return status of operation
+     */
     bool decryptPacket(XBridgePacketPtr packet);
 
 protected:
+    /**
+     * @brief processInvalid
+     * @param packet - processing packet
+     * @return
+     */
     bool processInvalid(XBridgePacketPtr packet);
+    /**
+     * @brief processZero
+     * @param packet - processing packet
+     * @return
+     */
     bool processZero(XBridgePacketPtr packet);
     bool processXChatMessage(XBridgePacketPtr packet);
 
+    /**
+     * @brief processTransaction check and process packet if bridge is exchange
+     * @param packet - processing packet
+     * @return
+     */
     bool processTransaction(XBridgePacketPtr packet);
+    /**
+     * @brief processPendingTransaction - process packet with info about pending transaction
+     * if transaction known - update timestamp, else added new transaction to list
+     * @param packet - processing packet
+     * @return
+     */
     bool processPendingTransaction(XBridgePacketPtr packet);
+    /**
+     * @brief processTransactionAccepting  check and process packet if bridge is exchange
+     * check transaction state, if trNew - do nothing, if trJoined - send hold to client
+     * @param packet - processing packet
+     * @return
+     */
     bool processTransactionAccepting(XBridgePacketPtr packet);
 
+    /**
+     * @brief processTransactionHold - read packet data, check signature, if transaction local
+     * set state to hold and set packet with new state to network
+     * @param packet - processing packet
+     * @return
+     */
     bool processTransactionHold(XBridgePacketPtr packet);
+    /**
+     * @brief processTransactionHoldApply - processing packet, only  echange mode
+     * send initialize transaction command to clients
+     * @param packet - processing packet
+     * @return
+     */
     bool processTransactionHoldApply(XBridgePacketPtr packet);
 
+    /**
+     * @brief processTransactionInit
+     * @param packet - processing packet
+     * @return
+     */
     bool processTransactionInit(XBridgePacketPtr packet);
+    /**
+     * @brief processTransactionInitialized
+     * @param packet - processing packet
+     * @return
+     */
     bool processTransactionInitialized(XBridgePacketPtr packet);
 
+    /**
+     * @brief processTransactionCreate
+     * @param packet - processing packet
+     * @return
+     */
     bool processTransactionCreate(XBridgePacketPtr packet);
+    /**
+     * @brief processTransactionCreatedA
+     * @param packet - processing packet
+     * @return
+     */
     bool processTransactionCreatedA(XBridgePacketPtr packet);
+    /**
+     * @brief processTransactionCreatedB
+     * @param packet - processing packet
+     * @return
+     */
     bool processTransactionCreatedB(XBridgePacketPtr packet);
 
+    /**
+     * @brief processTransactionConfirmA
+     * @param packet
+     * @return
+     */
     bool processTransactionConfirmA(XBridgePacketPtr packet);
+    /**
+     * @brief processTransactionConfirmedA
+     * @param packet - processing packet
+     * @return
+     */
     bool processTransactionConfirmedA(XBridgePacketPtr packet);
 
+    /**
+     * @brief processTransactionConfirmB
+     * @param packet - processing packet
+     * @return
+     */
     bool processTransactionConfirmB(XBridgePacketPtr packet);
+    /**
+     * @brief processTransactionConfirmedB
+     * @param packet - processing packet
+     * @return
+     */
     bool processTransactionConfirmedB(XBridgePacketPtr packet);
 
+    /**
+     * @brief finishTransaction -
+     * @param tr
+     * @return
+     */
     bool finishTransaction(TransactionPtr tr);
+    /**
+     * @brief sendCancelTransaction
+     * @param txid
+     * @param reason
+     * @return
+     */
     bool sendCancelTransaction(const uint256 & txid,
-                                       const TxCancelReason & reason);
+                               const TxCancelReason & reason);
+    /**
+     * @brief sendCancelTransaction
+     * @param tx
+     * @param reason
+     * @return
+     */
     bool sendCancelTransaction(const TransactionDescrPtr & tx,
-                                       const TxCancelReason & reason);
+                               const TxCancelReason & reason);
+    /**
+     * @brief rollbackTransaction
+     * @param tr
+     * @return
+     */
     bool rollbackTransaction(TransactionPtr tr);
 
+    /**
+     * @brief processTransactionCancel
+     * @param packet
+     * @return
+     */
     bool processTransactionCancel(XBridgePacketPtr packet);
+    /**
+     * @brief cancelOrRollbackTransaction
+     * @param txid
+     * @param reason
+     * @return
+     */
     bool cancelOrRollbackTransaction(const uint256 & txid, const TxCancelReason & reason);
 
+    /**
+     * @brief processTransactionFinished
+     * @param packet
+     * @return
+     */
     bool processTransactionFinished(XBridgePacketPtr packet);
+    /**
+     * @brief processTransactionRollback
+     * @param packet
+     * @return
+     */
     bool processTransactionRollback(XBridgePacketPtr packet);
 
 protected:

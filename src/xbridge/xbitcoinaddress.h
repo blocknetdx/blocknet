@@ -13,6 +13,9 @@ namespace xbridge
 
 //*****************************************************************************
 //*****************************************************************************
+/**
+ * @brief The XBitcoinAddress class
+ */
 class XBitcoinAddress : public CBase58Data
 {
 public:
@@ -24,12 +27,24 @@ public:
         SCRIPT_ADDRESS_TEST = 196,
     };
 
+    /**
+     * @brief Set
+     * @param id
+     * @param prefix
+     * @return
+     */
     bool Set(const CKeyID &id, const char prefix) {
         std::vector<unsigned char> pref(1, prefix);
         SetData(pref, id.begin(), id.end());
         return true;
     }
 
+    /**
+     * @brief Set
+     * @param id
+     * @param prefix
+     * @return
+     */
     bool Set(const CScriptID &id, const char prefix) {
         std::vector<unsigned char> pref(1, prefix);
         SetData(pref, id.begin(), id.end());
@@ -41,26 +56,45 @@ public:
 //        return boost::apply_visitor(CBitcoinAddressVisitor(this), dest);
 //    }
 
+    /**
+     * @brief IsValid
+     * @return true, if address size correctly
+     */
     bool IsValid() const
     {
         unsigned int nExpectedSize = 20;
         return vchData.size() == nExpectedSize;
     }
 
+    /**
+     * @brief XBitcoinAddress - default constructor
+     */
     XBitcoinAddress()
     {
     }
 
+    /**
+     * @brief XBitcoinAddress construct new XBircoinAddressfrom string
+     * @param strAddress new address value
+     */
     XBitcoinAddress(const std::string& strAddress)
     {
         SetString(strAddress);
     }
 
+    /**
+     * @brief XBitcoinAddress - contruct new XBircoinAddress from C style string
+     * @param pszAddress
+     */
     XBitcoinAddress(const char* pszAddress)
     {
         SetString(pszAddress);
     }
 
+    /**
+     * @brief Get
+     * @return new CKeyID, if data valid
+     */
     CKeyID Get() const
     {
         if (!IsValid())

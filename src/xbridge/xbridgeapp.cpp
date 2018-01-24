@@ -69,11 +69,29 @@ protected:
     bool stop();
 
 protected:
+    /**
+     * @brief onSend send packet to xbridge network to specified id,
+     *  or broadcast, when id is empty
+     * @param id
+     * @param message
+     */
     void onSend(const std::vector<unsigned char> & id, const std::vector<unsigned char> & message);
 
+    /**
+     * @brief onTimer - timeout handler
+     */
     void onTimer();
 
+    /**
+     * @brief getSession
+     * @return
+     */
     SessionPtr getSession();
+    /**
+     * @brief getSession
+     * @param address
+     * @return
+     */
     SessionPtr getSession(const std::vector<unsigned char> & address);
 
 protected:
@@ -192,7 +210,7 @@ bool App::Impl::start()
     // start xbrige
     try
     {
-        // services and threas
+        // services and threads
         for (int i = 0; i < boost::thread::hardware_concurrency(); ++i)
         {
             IoServicePtr ios(new boost::asio::io_service);

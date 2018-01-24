@@ -41,18 +41,45 @@ public:
 
 public:
     // helper functions
+    /**
+     * @brief sessionAddr
+     * @return current session address
+     */
     const std::vector<unsigned char> & sessionAddr() const;
 
 public:
     // network
+    /**
+     * @brief checkXBridgePacketVersion Compares the package version to the version of the Protocol
+     * @param packet -
+     * @return true, if the versions are equal
+     */
     static bool checkXBridgePacketVersion(XBridgePacketPtr packet);
+    /**
+     * @brief processPacket - processes the packet in accordance with the received command
+     * @param packet
+     * @return true, if packet are valid and processing successful
+     */
     bool processPacket(XBridgePacketPtr packet);
 
 public:
     // service functions
+    /**
+     * @brief sendListOfTransactions - sends to the network a list of pending transactions
+     */
     void sendListOfTransactions();
+    /**
+     * @brief checkFinishedTransactions checks the status of the transaction
+     * if the transaction is completed/cancelled/expired - remove it from the list and notify the network
+     */
     void checkFinishedTransactions();
+    /**
+     * @brief eraseExpiredPendingTransactions - removed expired transactions from pending
+     */
     void eraseExpiredPendingTransactions();
+    /**
+     * @brief getAddressBook - gets the list of addresses
+     */
     void getAddressBook();
 
 private:
