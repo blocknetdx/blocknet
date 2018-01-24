@@ -13,7 +13,7 @@
 
 #if defined(HAVE_BYTESWAP_H)
 #include <byteswap.h>
-#endif
+#else
 
 #if defined(__APPLE__)
 
@@ -62,5 +62,6 @@
     #endif // HAVE_DECL_BSWAP64
 
 #endif // defined(__APPLE__)
+#endif
 
 #endif // BITCOIN_COMPAT_BYTESWAP_H

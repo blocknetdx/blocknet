@@ -61,7 +61,7 @@ public:
             uint256 randomHash = GetRandHash();
             std::vector<unsigned char> unused;
             std::set<sigdata_type>::iterator it =
-                setValid.lower_bound(sigdata_type(randomHash, unused, unused));
+                setValid.lower_bound(sigdata_type(randomHash, unused, CPubKey(unused)));
             if (it == setValid.end())
                 it = setValid.begin();
             setValid.erase(*it);

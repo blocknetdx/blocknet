@@ -1,7 +1,8 @@
 // Copyright (c) 2010 Satoshi Nakamoto
 // Copyright (c) 2009-2014 The Bitcoin developers
 // Copyright (c) 2014-2015 The Dash developers
-// Copyright (c) 2015-2017 The BlocknetDX developers
+// Copyright (c) 2015-2017 The PIVX developers
+// Copyright (c) 2015-2018 The Blocknet developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -575,7 +576,6 @@ Value signrawtransaction(const Array& params, bool fHelp)
             CCoins coins;
             view.AccessCoins(prevHash); // this is certainly allowed to fail
         }
-
         view.SetBackend(viewDummy); // switch back to avoid locking mempool for too long
     }
 

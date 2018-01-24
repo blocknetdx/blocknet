@@ -25,10 +25,12 @@ namespace util
     std::string base64_encode(const std::string & s);
     std::string base64_decode(const std::string & s);
 
+    std::string to_str(const std::vector<unsigned char> & obj);
+
     template<class _T> std::string to_str(const _T & obj)
     {
-        return util::base64_encode(std::string((char *)(obj.begin()),
-                                               (char *)(obj.end())));
+        return util::base64_encode(std::string((const char *)(obj.begin()),
+                                               (const char *)(obj.end())));
     }
 
 } // namespace
