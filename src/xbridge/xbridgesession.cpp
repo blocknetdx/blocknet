@@ -409,24 +409,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
     WalletConnectorPtr dconn = xapp.connectorByCurrency(dcurrency);
     if (!sconn || !dconn)
     {
-        WARN() << "no connector for <" << (!sconn ? scurrency : dcurrency) << "> " << __FUNCTION__;
-        return true;
-    }
-
-    uint256 checkId = Hash(saddr.begin(), saddr.end(),
-                           scurrency.begin(), scurrency.end(),
-                           BEGIN(samount), END(samount),
-                           daddr.begin(), daddr.end(),
-                           dcurrency.begin(), dcurrency.end(),
-                           BEGIN(damount), END(damount),
-                           BEGIN(timestamp), END(timestamp));
-    if(checkId != id)
-    {
-        WARN() << "id from packet is differs from body hash:" << std::endl
-               << "packet id: " << id.GetHex() << std::endl
-               << "body hash:" << checkId.GetHex() << std::endl
-               << __FUNCTION__;
-
+        WARN() << "no connector for" << (!sconn ? scurrency : dcurrency) << "> " << __FUNCTION__;
         return true;
     }
 
