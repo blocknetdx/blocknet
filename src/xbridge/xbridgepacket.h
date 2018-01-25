@@ -90,7 +90,7 @@ enum XBridgeCommand
 
     // exchange transaction
     //
-    // xbcTransaction  (148 bytes min)
+    // xbcTransaction  (181 bytes min)
     // clients not process this messages, only exchange
     //    uint256  client transaction id
     //    20 bytes source address
@@ -100,6 +100,7 @@ enum XBridgeCommand
     //    8 bytes  destination currency
     //    uint64   destination amount
     //    uint32_t timestamp
+    //    m public key, 33 bytes
     //
     //    array of unspent outputs used in transaction
     //      uint32_t count of array items
@@ -119,7 +120,7 @@ enum XBridgeCommand
     //    uint32_t timestamp
     xbcPendingTransaction = 4,
     //
-    // xbcTransactionAccepting (164 bytes min)
+    // xbcTransactionAccepting (197 bytes min)
     // client accepting opened tx
     //    uint160 hub address
     //    uint256 client transaction id
@@ -129,6 +130,7 @@ enum XBridgeCommand
     //    20 bytes destination address
     //    8 bytes destination currency
     //    uint64 destination amount
+    //    m public key, 33 bytes
     //    array of unspent outputs used in transaction
     //      uint32_t count of array items
     //      array items
@@ -282,9 +284,14 @@ class XBridgePacket
 public:
     enum
     {
-        headerSize    = 8*sizeof(uint32_t),
-        commandSize   = sizeof(uint32_t),
-        timestampSize = sizeof(uint32_t)
+        // header, size, version, command, timestamp, pubkey, signature
+        headerSize       = 8*sizeof(uint32_t)+33+65,
+        commandSize      = sizeof(uint32_t),
+        timestampSize    = sizeof(uint32_t),
+        addressSize      = 20,
+        hashSize         = 32,
+        pubkeySize       = 33,
+        signatureSize    = 65
     };
 
     uint32_t     size()    const     { return sizeField(); }
@@ -301,6 +308,9 @@ public:
     uint32_t version() const       { return versionField(); }
 
     XBridgeCommand  command() const       { return static_cast<XBridgeCommand>(commandField()); }
+
+    unsigned char * pubkey() const        { return pubkeyFild(); }
+    unsigned char * signature() const     { return signatureField(); }
 
     void    alloc()                       { m_body.resize(headerSize + size()); }
 
@@ -470,6 +480,9 @@ public:
         return *this;
     }
 
+    bool sign(const unsigned char * privkey);
+    bool verify(const unsigned char * pubkey);
+
 private:
     template<uint32_t INDEX>
     uint32_t & field32()
@@ -479,16 +492,21 @@ private:
     uint32_t const& field32() const
         { return *static_cast<uint32_t const*>(static_cast<void const*>(&m_body[INDEX * 4])); }
 
-    uint32_t       & versionField()         { return field32<0>(); }
-    uint32_t const & versionField() const   { return field32<0>(); }
-    uint32_t &       commandField()         { return field32<1>(); }
-    uint32_t const & commandField() const   { return field32<1>(); }
-    uint32_t &       timestampField()       { return field32<2>(); }
-    uint32_t const & timestampField() const { return field32<2>(); }
-    uint32_t &       sizeField()            { return field32<3>(); }
-    uint32_t const & sizeField() const      { return field32<3>(); }
-    uint32_t &       crcField()             { return field32<4>(); }
-    uint32_t const & crcField() const       { return field32<4>(); }
+    uint32_t       & versionField()              { return field32<0>(); }
+    uint32_t const & versionField() const        { return field32<0>(); }
+    uint32_t &       commandField()              { return field32<1>(); }
+    uint32_t const & commandField() const        { return field32<1>(); }
+    uint32_t &       timestampField()            { return field32<2>(); }
+    uint32_t const & timestampField() const      { return field32<2>(); }
+    uint32_t &       sizeField()                 { return field32<3>(); }
+    uint32_t const & sizeField() const           { return field32<3>(); }
+    uint32_t &       crcField()                  { return field32<4>(); }
+    uint32_t const & crcField() const            { return field32<4>(); }
+
+    unsigned char *       pubkeyField()          { return &m_body[20]; }
+    const unsigned char * pubkeyField() const    { return &m_body[20]; }
+    unsigned char *       signatureField()       { return &m_body[53]; }
+    const unsigned char * signatureField() const { return &m_body[53]; }
 };
 
 typedef std::shared_ptr<XBridgePacket> XBridgePacketPtr;

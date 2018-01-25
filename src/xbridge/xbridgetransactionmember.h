@@ -31,12 +31,15 @@ public:
     void setSource(const std::vector<unsigned char> & addr) { m_sourceAddr = addr; }
     const std::vector<unsigned char> & dest() const         { return m_destAddr; }
     void setDest(const std::vector<unsigned char> & addr)   { m_destAddr = addr; }
+    const std::vector<unsigned char> & mpubkey() const      { return m_mpubkey; }
+    void setMPubkey(const std::vector<unsigned char> & mpub){ m_mpubkey = mpub; }
 
 private:
     uint256                    m_id;
     std::vector<unsigned char> m_sourceAddr;
     std::vector<unsigned char> m_destAddr;
     uint256                    m_transactionHash;
+    std::vector<unsigned char> m_mpubkey;
 };
 
 } // namespace xbridge

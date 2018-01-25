@@ -160,6 +160,7 @@ struct TransactionDescr
 
     bool isLocal() const
     {
+        // must have from and to addresses
         return from.size() != 0 && to.size() != 0;
     }
 

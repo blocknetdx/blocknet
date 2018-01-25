@@ -209,8 +209,9 @@ bool Exchange::createTransaction(const uint256                        & txid,
                                  const std::vector<unsigned char>     & destAddr,
                                  const std::string                    & destCurrency,
                                  const uint64_t                       & destAmount,
-                                 const std::vector<wallet::UtxoEntry> & items,
                                  const uint32_t                       & timestamp,
+                                 const std::vector<unsigned char>     & mpubkey,
+                                 const std::vector<wallet::UtxoEntry> & items,
                                  bool                                 & isCreated)
 {
     DEBUG_TRACE();
@@ -257,7 +258,7 @@ bool Exchange::createTransaction(const uint256                        & txid,
                                                sourceCurrency, sourceAmount,
                                                destAddr,
                                                destCurrency, destAmount,
-                                               timestamp));
+                                               timestamp, mpubkey));
     if (!tr->isValid())
     {
         return false;
@@ -320,6 +321,7 @@ bool Exchange::acceptTransaction(const uint256                        & txid,
                                  const std::vector<unsigned char>     & destAddr,
                                  const std::string                    & destCurrency,
                                  const uint64_t                       & destAmount,
+                                 const std::vector<unsigned char>     & mpubkey,
                                  const std::vector<wallet::UtxoEntry> & items)
 {
     DEBUG_TRACE();
@@ -343,7 +345,7 @@ bool Exchange::acceptTransaction(const uint256                        & txid,
                                                sourceCurrency, sourceAmount,
                                                destAddr,
                                                destCurrency, destAmount,
-                                               std::time(0)));
+                                               std::time(0), mpubkey));
     if (!tr->isValid())
     {
         return false;

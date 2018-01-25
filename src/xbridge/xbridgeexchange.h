@@ -55,8 +55,9 @@ public:
                            const std::vector<unsigned char>     & destAddr,
                            const std::string                    & destCurrency,
                            const uint64_t                       & destAmount,
-                           const std::vector<wallet::UtxoEntry> & items,
                            const uint32_t                       & timestamp,
+                           const std::vector<unsigned char>     & mpubkey,
+                           const std::vector<wallet::UtxoEntry> & items,
                            bool                                 & isCreated);
 
     bool acceptTransaction(const uint256                        & id,
@@ -66,6 +67,7 @@ public:
                            const std::vector<unsigned char>     & destAddr,
                            const std::string                    & destCurrency,
                            const uint64_t                       & destAmount,
+                           const std::vector<unsigned char>     & mpubkey,
                            const std::vector<wallet::UtxoEntry> & items);
 
     bool deletePendingTransactions(const uint256 & id);

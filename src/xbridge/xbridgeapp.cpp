@@ -840,6 +840,25 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     ptr->toAmount     = toAmount;
     ptr->usedCoins    = outputsForUse;
 
+    // m key
+    connTo->newKeyPair(ptr->mPubKey, ptr->mPrivKey);
+    assert(ptr->mPubKey.size() == 33 && "bad pubkey size");
+
+    // x key
+    connTo->newKeyPair(ptr->xPubKey, ptr->xPrivKey);
+    assert(ptr->xPubKey.size() == 33 && "bad pubkey size");
+
+#ifdef LOG_KEYPAIR_VALUES
+    LOG() << "generated M keypair " << std::endl <<
+             "    pub    " << HexStr(ptr->mPubKey) << std::endl <<
+             "    pub id " << HexStr(connTo->getKeyId(ptr->mPubKey)) << std::endl <<
+             "    priv   " << HexStr(ptr->mPrivKey);
+    LOG() << "generated X keypair " << std::endl <<
+             "    pub    " << HexStr(ptr->xPubKey) << std::endl <<
+             "    pub id " << HexStr(connTo->getKeyId(ptr->xPubKey)) << std::endl <<
+             "    priv   " << HexStr(ptr->xPrivKey);
+#endif
+
     // try send immediatelly
     sendPendingTransaction(ptr);
 
@@ -901,6 +920,7 @@ bool App::sendPendingTransaction(const TransactionDescrPtr & ptr)
         ptr->packet->append(tc);
         ptr->packet->append(ptr->toAmount);
         ptr->packet->append(static_cast<uint32_t>(boost::posix_time::to_time_t(ptr->created)));
+        ptr->packet->append(ptr->mPubKey);
 
         // utxo items
         ptr->packet->append(static_cast<uint32_t>(ptr->usedCoins.size()));
@@ -913,6 +933,8 @@ bool App::sendPendingTransaction(const TransactionDescrPtr & ptr)
             ptr->packet->append(entry.signature);
         }
     }
+
+    ptr->packet->sign(ptr->mPrivKey);
 
     sendPacket(ptr->packet);
 
@@ -1007,6 +1029,25 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
     ptr->to   = connTo->toXAddr(to);
     ptr->usedCoins = outputsForUse;
 
+    // m key
+    connTo->newKeyPair(ptr->mPubKey, ptr->mPrivKey);
+    assert(ptr->mPubKey.size() == 33 && "bad pubkey size");
+
+    // x key
+    connTo->newKeyPair(ptr->xPubKey, ptr->xPrivKey);
+    assert(ptr->xPubKey.size() == 33 && "bad pubkey size");
+
+#ifdef LOG_KEYPAIR_VALUES
+    LOG() << "generated M keypair " << std::endl <<
+             "    pub    " << HexStr(ptr->mPubKey) << std::endl <<
+             "    pub id " << HexStr(connTo->getKeyId(ptr->mPubKey)) << std::endl <<
+             "    priv   " << HexStr(ptr->mPrivKey);
+    LOG() << "generated X keypair " << std::endl <<
+             "    pub    " << HexStr(ptr->xPubKey) << std::endl <<
+             "    pub id " << HexStr(connTo->getKeyId(ptr->xPubKey)) << std::endl <<
+             "    priv   " << HexStr(ptr->xPrivKey);
+#endif
+
     // try send immediatelly
     sendAcceptingTransaction(ptr);
 
@@ -1051,6 +1092,7 @@ bool App::sendAcceptingTransaction(const TransactionDescrPtr & ptr)
     ptr->packet->append(ptr->to);
     ptr->packet->append(tc);
     ptr->packet->append(ptr->toAmount);
+    ptr->packet->append(ptr->mPubKey);
 
     // utxo items
     ptr->packet->append(static_cast<uint32_t>(ptr->usedCoins.size()));
@@ -1062,6 +1104,8 @@ bool App::sendAcceptingTransaction(const TransactionDescrPtr & ptr)
         ptr->packet->append(entry.rawAddress);
         ptr->packet->append(entry.signature);
     }
+
+    ptr->packet->sign(ptr->mPrivKey);
 
     sendPacket(ptr->hubAddress, ptr->packet);
 
@@ -1130,11 +1174,14 @@ xbridge::Error App::rollbackXBridgeTransaction(const uint256 & id)
 //******************************************************************************
 //******************************************************************************
 bool App::sendCancelTransaction(const uint256 & txid,
-                                       const TxCancelReason & reason)
+                                const TxCancelReason & reason)
 {
     XBridgePacketPtr reply(new XBridgePacket(xbcTransactionCancel));
     reply->append(txid.begin(), 32);
     reply->append(static_cast<uint32_t>(reason));
+
+    TransactionDescrPtr ptr = transaction(txid);
+    reply->sign(ptr->mPrivKey);
 
     static std::vector<unsigned char> addr(20, 0);
     sendPacket(addr, reply);
@@ -1150,6 +1197,9 @@ bool App::sendRollbackTransaction(const uint256 & txid)
     XBridgePacketPtr reply(new XBridgePacket(xbcTransactionRollback));
     reply->append(txid.begin(), 32);
 
+    TransactionDescrPtr ptr = transaction(txid);
+    reply->sign(ptr->mPrivKey);
+
     static std::vector<unsigned char> addr(20, 0);
     sendPacket(addr, reply);
 
@@ -1157,13 +1207,19 @@ bool App::sendRollbackTransaction(const uint256 & txid)
     return true;
 }
 
+//******************************************************************************
+//******************************************************************************
 bool App::isValidAddress(const string &address) const
 {
+    // TODO need refactoring
     return ((address.size() >= 32) && (address.size() <= 36));
 }
 
+//******************************************************************************
+//******************************************************************************
 Error App::checkAcceptParams(const uint256 &id, TransactionDescrPtr &ptr)
 {
+    // TODO need refactoring
     ptr = transaction(id);
 
     if(!ptr) {
@@ -1174,10 +1230,13 @@ Error App::checkAcceptParams(const uint256 &id, TransactionDescrPtr &ptr)
     return checkAmount(ptr->toCurrency, ptr->toAmount);
 }
 
+//******************************************************************************
+//******************************************************************************
 Error App::checkCreateParams(const string &fromCurrency,
                              const string &toCurrency,
                              const uint64_t &fromAmount)
 {
+    // TODO need refactoring
     if (fromCurrency.size() > 8 || toCurrency.size() > 8) {
         WARN() << "invalid currency " << __FUNCTION__;
         return xbridge::INVALID_CURRENCY;
@@ -1185,6 +1244,8 @@ Error App::checkCreateParams(const string &fromCurrency,
     return  checkAmount(fromCurrency, fromAmount);
 }
 
+//******************************************************************************
+//******************************************************************************
 Error App::checkAmount(const string &currency, const uint64_t &amount)
 {
     // check amount

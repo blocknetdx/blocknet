@@ -66,7 +66,9 @@ public:
                 const std::vector<unsigned char> & destAddr,
                 const std::string                & destCurrency,
                 const uint64_t                   & destAmount,
-                const std::time_t                & created);
+                const std::time_t                & created,
+                const std::vector<unsigned char> & mpubkey);
+
     ~Transaction();
 
     uint256 id() const;
@@ -89,8 +91,6 @@ public:
     void cancel();
     void drop();
     void finish();
-
-    bool confirm(const std::string & id);
 
     // uint256                    firstId() const;
     std::vector<unsigned char> a_address() const;
@@ -164,9 +164,6 @@ private:
 
     uint256                    m_a_datatxid;
     uint256                    m_b_datatxid;
-
-    std::vector<unsigned char> m_a_pk1;
-    std::vector<unsigned char> m_b_pk1;
 };
 
 } // namespace xbridge
