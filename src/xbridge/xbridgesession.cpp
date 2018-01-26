@@ -592,10 +592,10 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
 
     DEBUG_TRACE();
 
-    if (packet->size() != 88)
+    if (packet->size() != 120)
     {
         ERR() << "incorrect packet size for xbcPendingTransaction "
-              << "need 88 received " << packet->size() << " "
+              << "need 120 received " << packet->size() << " "
               << __FUNCTION__;
         return false;
     }
