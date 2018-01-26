@@ -95,6 +95,9 @@ struct TransactionDescr
     std::vector<unsigned char>    xPubKey;
     std::vector<unsigned char>    xPrivKey;
 
+    // service node pub key
+    std::vector<unsigned char>    sPubKey;
+
     // used coins in transaction
     std::vector<xbridge::wallet::UtxoEntry> usedCoins;
 

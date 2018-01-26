@@ -460,7 +460,13 @@ void App::onMessageReceived(const std::vector<unsigned char> & id,
     XBridgePacketPtr packet(new XBridgePacket);
     if (!packet->copyFrom(message))
     {
-        LOG() << "incorrect packet received";
+        LOG() << "incorrect packet received " << __FUNCTION__;
+        return;
+    }
+
+    if (!packet->verify())
+    {
+        LOG() << "unsigned packet or signature error " << __FUNCTION__;
         return;
     }
 
@@ -514,7 +520,13 @@ void App::onBroadcastReceived(const std::vector<unsigned char> & message,
     XBridgePacketPtr packet(new XBridgePacket);
     if (!packet->copyFrom(message))
     {
-        LOG() << "incorrect broadcast packet received";
+        LOG() << "incorrect packet received " << __FUNCTION__;
+        return;
+    }
+
+    if (!packet->verify())
+    {
+        LOG() << "unsigned packet or signature error " << __FUNCTION__;
         return;
     }
 
@@ -934,7 +946,7 @@ bool App::sendPendingTransaction(const TransactionDescrPtr & ptr)
         }
     }
 
-    ptr->packet->sign(ptr->mPrivKey);
+    ptr->packet->sign(ptr->mPubKey, ptr->mPrivKey);
 
     sendPacket(ptr->packet);
 
@@ -1105,7 +1117,7 @@ bool App::sendAcceptingTransaction(const TransactionDescrPtr & ptr)
         ptr->packet->append(entry.signature);
     }
 
-    ptr->packet->sign(ptr->mPrivKey);
+    ptr->packet->sign(ptr->mPubKey, ptr->mPrivKey);
 
     sendPacket(ptr->hubAddress, ptr->packet);
 
@@ -1181,7 +1193,7 @@ bool App::sendCancelTransaction(const uint256 & txid,
     reply->append(static_cast<uint32_t>(reason));
 
     TransactionDescrPtr ptr = transaction(txid);
-    reply->sign(ptr->mPrivKey);
+    reply->sign(ptr->mPubKey, ptr->mPrivKey);
 
     static std::vector<unsigned char> addr(20, 0);
     sendPacket(addr, reply);
@@ -1198,7 +1210,7 @@ bool App::sendRollbackTransaction(const uint256 & txid)
     reply->append(txid.begin(), 32);
 
     TransactionDescrPtr ptr = transaction(txid);
-    reply->sign(ptr->mPrivKey);
+    reply->sign(ptr->mPubKey, ptr->mPrivKey);
 
     static std::vector<unsigned char> addr(20, 0);
     sendPacket(addr, reply);

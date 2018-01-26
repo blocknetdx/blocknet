@@ -24,6 +24,8 @@ class Exchange::Impl
     friend class Exchange;
 
 protected:
+    bool initKeyPair();
+
     std::list<TransactionPtr> transactions(bool onlyFinished) const;
 
 protected:
@@ -42,6 +44,9 @@ protected:
     boost::mutex                                       m_utxoLocker;
     std::set<wallet::UtxoEntry>                        m_utxoItems;
     std::map<uint256, std::vector<wallet::UtxoEntry> > m_utxoTxMap;
+
+    std::vector<unsigned char>                         m_pubkey;
+    std::vector<unsigned char>                         m_privkey;
 };
 
 //*****************************************************************************
@@ -142,6 +147,61 @@ bool Exchange::isEnabled()
 bool Exchange::isStarted()
 {
     return (isEnabled() && (activeServicenode.status == ACTIVE_SERVICENODE_STARTED));
+}
+
+//*****************************************************************************
+//*****************************************************************************
+bool Exchange::Impl::initKeyPair()
+{
+    std::string secret = GetArg("-servicenodeprivkey", "");
+    if (secret.empty())
+    {
+        ERR() << "service node key not set " << __FUNCTION__;
+        return false;
+    }
+
+    CBitcoinSecret vchSecret;
+    if (!vchSecret.SetString(secret))
+    {
+        ERR() << "invalid service node key " << __FUNCTION__;
+        return false;
+    }
+
+    CKey    key    = vchSecret.GetKey();
+    CPubKey pubkey = key.GetPubKey();
+
+    m_pubkey  = std::vector<unsigned char>(pubkey.begin(), pubkey.end());
+    m_privkey = std::vector<unsigned char>(key.begin(),    key.end());
+
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+const std::vector<unsigned char> & Exchange::pubKey() const
+{
+    if (m_p->m_pubkey.empty() || m_p->m_pubkey.size() != 33)
+    {
+        if (!m_p->initKeyPair())
+        {
+            ERR() << "bad service node key pair " << __FUNCTION__;
+        }
+    }
+    return m_p->m_pubkey;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+const std::vector<unsigned char> & Exchange::privKey() const
+{
+    if (m_p->m_privkey.empty() || m_p->m_privkey.size() != 32)
+    {
+        if (!m_p->initKeyPair())
+        {
+            ERR() << "bad service node key pair " << __FUNCTION__;
+        }
+    }
+    return m_p->m_privkey;
 }
 
 //*****************************************************************************

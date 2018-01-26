@@ -41,6 +41,10 @@ public:
     bool isEnabled();
     bool isStarted();
 
+    // public-private keys (service node key pair)
+    const std::vector<unsigned char> & pubKey() const;
+    const std::vector<unsigned char> & privKey() const;
+
     bool haveConnectedWallet(const std::string & walletName);
     std::vector<std::string> connectedWallets() const;
 
