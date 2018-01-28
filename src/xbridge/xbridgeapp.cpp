@@ -912,6 +912,7 @@ bool App::sendPendingTransaction(const TransactionDescrPtr & ptr)
         ptr->packet->append(static_cast<uint32_t>(boost::posix_time::to_time_t(ptr->created)));
         ptr->packet->append(ptr->blockHash.begin(), 32);
 
+        LOG() << "packet size without utxo items = " << ptr->packet->size() << __FUNCTION__;
         // utxo items
         ptr->packet->append(static_cast<uint32_t>(ptr->usedCoins.size()));
         for (const wallet::UtxoEntry & entry : ptr->usedCoins)
@@ -922,6 +923,7 @@ bool App::sendPendingTransaction(const TransactionDescrPtr & ptr)
             ptr->packet->append(entry.rawAddress);
             ptr->packet->append(entry.signature);
         }
+        LOG() << "packet size with utxo items = " << ptr->packet->size() << __FUNCTION__;
     }
 
     sendPacket(ptr->packet);

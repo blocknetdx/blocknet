@@ -584,6 +584,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
 //******************************************************************************
 bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
 {
+    LOG() << "packet size = " << packet->size() << __FUNCTION__;
     Exchange & e = Exchange::instance();
     if (e.isEnabled())
     {
@@ -633,6 +634,7 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
 //*****************************************************************************
 bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet)
 {
+    LOG() << "packet size = " << packet->size() << __FUNCTION__;
     // check and process packet if bridge is exchange
     Exchange & e = Exchange::instance();
     if (!e.isStarted())
@@ -789,9 +791,10 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet)
 //******************************************************************************
 bool Session::Impl::processTransactionHold(XBridgePacketPtr packet)
 {
+    LOG() << "packet size = " << packet->size() << __FUNCTION__;
     DEBUG_TRACE();
 
-    if (packet->size() != 85 && packet->size() != 117)
+    if (packet->size() != 85 + 32 && packet->size() != 117 + 32)
     {
         ERR() << "incorrect packet size for xbcTransactionHold "
               << "need 105 or 137 received " << packet->size() << " "
@@ -900,10 +903,11 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet)
 //*****************************************************************************
 bool Session::Impl::processTransactionHoldApply(XBridgePacketPtr packet)
 {
+    LOG() << "packet size = " << packet->size() << __FUNCTION__;
     DEBUG_TRACE();
 
     // size must be eq 72 bytes
-    if (packet->size() != 72)
+    if (packet->size() != 72 )
     {
         ERR() << "invalid packet size for xbcTransactionHoldApply "
               << "need 72 received " << packet->size() << " "
@@ -1160,6 +1164,7 @@ bool Session::Impl::processTransactionInitialized(XBridgePacketPtr packet)
 {
     DEBUG_TRACE();
 
+    LOG() << "packet size = " << packet->size() << __FUNCTION__;
     // size must be eq 137 bytes
     if (packet->size() != 137)
     {
@@ -2023,6 +2028,7 @@ bool Session::Impl::processTransactionConfirmedB(XBridgePacketPtr packet)
 {
     DEBUG_TRACE();
 
+    LOG() << "packet size = " << packet->size() << __FUNCTION__;
     // size must be == 72 bytes
     if (packet->size() != 72)
     {
@@ -2084,6 +2090,7 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet)
 {
     DEBUG_TRACE();
 
+    LOG() << "packet size = " << packet->size() << __FUNCTION__;
     // size must be == 36 bytes
     if (packet->size() != 36)
     {
@@ -2427,6 +2434,7 @@ bool Session::Impl::processTransactionFinished(XBridgePacketPtr packet)
 {
     DEBUG_TRACE();
 
+    LOG() << "packet size = " << packet->size() << __FUNCTION__;
     if (packet->size() != 32)
     {
         ERR() << "incorrect packet size for xbcTransactionFinished" << __FUNCTION__;
@@ -2459,6 +2467,7 @@ bool Session::Impl::processTransactionRollback(XBridgePacketPtr packet)
 {
     DEBUG_TRACE();
 
+    LOG() << "packet size = " << packet->size() << __FUNCTION__;
     if (packet->size() != 32)
     {
         ERR() << "incorrect packet size for xbcTransactionRollback" << __FUNCTION__;
