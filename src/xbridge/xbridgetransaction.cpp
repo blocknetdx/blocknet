@@ -38,7 +38,7 @@ Transaction::Transaction(const uint256                    & id,
                          const std::vector<unsigned char> & mpubkey)
     : m_id(id)
     , m_created(boost::posix_time::from_time_t(created))
-    , m_last(boost::posix_time::from_time_t(created))
+    , m_last(boost::posix_time::from_time_t(time(0)))
     , m_state(trNew)
     , m_a_stateChanged(false)
     , m_b_stateChanged(false)
