@@ -61,7 +61,7 @@ bool XBridgePacket::sign(const std::vector<unsigned char> & pubkey,
     }
 
     memcpy(pubkeyField(), &pubkey[0], pubkeySize);
-    memset(signatureField(), 0, signatureSize);
+    memset(signatureField(), 0, rawSignatureSize);
 
     unsigned char hash[CSHA256::OUTPUT_SIZE];
 
@@ -88,9 +88,9 @@ bool XBridgePacket::sign(const std::vector<unsigned char> & pubkey,
 //******************************************************************************
 bool XBridgePacket::verify()
 {
-    unsigned char signature[signatureSize];
-    memcpy(signature, signatureField(), signatureSize);
-    memset(signatureField(), 0, signatureSize);
+    unsigned char signature[rawSignatureSize];
+    memcpy(signature, signatureField(), rawSignatureSize);
+    memset(signatureField(), 0, rawSignatureSize);
 
     unsigned char hash[CSHA256::OUTPUT_SIZE];
 
@@ -101,7 +101,7 @@ bool XBridgePacket::verify()
     }
 
     // restore signature
-    memcpy(signatureField(), signature, signatureSize);
+    memcpy(signatureField(), signature, rawSignatureSize);
 
     secp256k1_ecdsa_signature sig;
     if (secp256k1_ecdsa_signature_parse_compact(secpContext, &sig, signatureField()) == 0)

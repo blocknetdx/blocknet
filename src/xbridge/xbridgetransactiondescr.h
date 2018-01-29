@@ -4,8 +4,6 @@
 // #include "uint256.h"
 #include "base58.h"
 #include "xbridgepacket.h"
-#include "xkey.h"
-#include "xbitcoinsecret.h"
 #include "xbridgewalletconnector.h"
 
 #include <string>

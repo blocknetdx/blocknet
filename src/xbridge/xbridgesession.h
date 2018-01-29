@@ -9,7 +9,6 @@
 #include "xbridgetransactiondescr.h"
 #include "xbridgewallet.h"
 #include "uint256.h"
-#include "xkey.h"
 #include "xbitcointransaction.h"
 #include "bitcoinrpcconnector.h"
 #include "script/script.h"

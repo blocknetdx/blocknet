@@ -932,7 +932,6 @@ bool App::sendPendingTransaction(const TransactionDescrPtr & ptr)
         ptr->packet->append(tc);
         ptr->packet->append(ptr->toAmount);
         ptr->packet->append(static_cast<uint32_t>(boost::posix_time::to_time_t(ptr->created)));
-        ptr->packet->append(ptr->mPubKey);
 
         // utxo items
         ptr->packet->append(static_cast<uint32_t>(ptr->usedCoins.size()));
@@ -1104,7 +1103,6 @@ bool App::sendAcceptingTransaction(const TransactionDescrPtr & ptr)
     ptr->packet->append(ptr->to);
     ptr->packet->append(tc);
     ptr->packet->append(ptr->toAmount);
-    ptr->packet->append(ptr->mPubKey);
 
     // utxo items
     ptr->packet->append(static_cast<uint32_t>(ptr->usedCoins.size()));

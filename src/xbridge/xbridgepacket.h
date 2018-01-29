@@ -137,10 +137,9 @@ enum XBridgeCommand
     xbcTransactionAccepting = 5,
 
     //
-    // xbcTransactionHold (85 or 117 bytes)
+    // xbcTransactionHold (52 bytes)
     //    uint160 hub address
     //    uint256 transaction id
-    //    public key, 33 or 65 bytes, servicenode public key
     xbcTransactionHold = 6,
     //
     // xbcTransactionHoldApply (72 bytes)
@@ -150,11 +149,10 @@ enum XBridgeCommand
     xbcTransactionHoldApply = 7,
 
     //
-    // xbcTransactionInit (188 or 221 bytes min)
+    // xbcTransactionInit (146 bytes min)
     //    uint160 client address
     //    uint160 hub address
     //    uint256 hub transaction id
-    //    public key, 33 or 65 bytes, servicenode public key
     //    uint16_t  role ( 'A' (Alice) or 'B' (Bob) :) )
     //    20 bytes source address
     //    8 bytes source currency
@@ -164,12 +162,11 @@ enum XBridgeCommand
     //    uint64 destination amount
     xbcTransactionInit = 8,
     //
-    // xbcTransactionInitialized (137 bytes)
+    // xbcTransactionInitialized (104 bytes)
     //    uint160 hub address
     //    uint160 client address
     //    uint256 hub transaction id
     //    uint256 data transaction id
-    //    public key, 33 bytes
     xbcTransactionInitialized = 9,
 
     //
@@ -290,7 +287,8 @@ public:
         hashSize         = 32,
         privkeySize      = 32,
         pubkeySize       = 33,
-        signatureSize    = 64
+        rawSignatureSize = 64,
+        signatureSize    = 65
     };
 
     uint32_t     size()    const     { return sizeField(); }

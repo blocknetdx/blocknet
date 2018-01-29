@@ -6,7 +6,6 @@
 
 #include "uint256.h"
 #include "xbridgetransactionmember.h"
-#include "xkey.h"
 #include "xbridgedef.h"
 
 #include <vector>

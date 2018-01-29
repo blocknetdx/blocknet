@@ -10,6 +10,9 @@
 #include "activeservicenode.h"
 #include "chainparamsbase.h"
 
+#include "key.h"
+#include "pubkey.h"
+
 #include <algorithm>
 
 //******************************************************************************
@@ -81,6 +84,11 @@ bool Exchange::init()
         return true;
     }
 
+    if (!m_p->initKeyPair())
+    {
+        ERR() << "bad service node key pair " << __FUNCTION__;
+    }
+
     Settings & s = settings();
 
     std::vector<std::string> wallets = s.exchangeWallets();
@@ -139,7 +147,7 @@ bool Exchange::init()
 //*****************************************************************************
 bool Exchange::isEnabled()
 {
-    return ((m_p->m_wallets.size() > 0) && fServiceNode);
+    return ((m_p->m_wallets.size() > 0) && GetBoolArg("-servicenode", false));
 }
 
 //*****************************************************************************
@@ -160,15 +168,19 @@ bool Exchange::Impl::initKeyPair()
         return false;
     }
 
-    CBitcoinSecret vchSecret;
+    ::CBitcoinSecret vchSecret;
     if (!vchSecret.SetString(secret))
     {
         ERR() << "invalid service node key " << __FUNCTION__;
         return false;
     }
 
-    CKey    key    = vchSecret.GetKey();
-    CPubKey pubkey = key.GetPubKey();
+    ::CKey    key    = vchSecret.GetKey();
+    ::CPubKey pubkey = key.GetPubKey();
+    if (!pubkey.IsCompressed())
+    {
+        pubkey.Compress();
+    }
 
     m_pubkey  = std::vector<unsigned char>(pubkey.begin(), pubkey.end());
     m_privkey = std::vector<unsigned char>(key.begin(),    key.end());
