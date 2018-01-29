@@ -12,7 +12,8 @@
  * network protocol versioning
  */
 
-static const int PROTOCOL_VERSION = 70711;
+static const int PROTOCOL_VERSION = 70712;
+static const int MIN_XBRIDGE_PROTOCOL_VERSION = 70712;
 
 static const int SERVICENODE_WITH_XBRIDGE_INFO_PROTO_VERSION = 70711;
 
