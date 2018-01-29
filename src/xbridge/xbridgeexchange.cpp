@@ -347,15 +347,19 @@ bool Exchange::createTransaction(const uint256                        & txid,
         }
         else
         {
-            boost::mutex::scoped_lock l2(m_p->m_pendingTransactions[txid]->m_lock);
+            m_p->m_pendingTransactions[txid]->m_lock.lock();
 
             // found, check if expired
             if (!m_p->m_pendingTransactions[txid]->isExpired())
             {
                 m_p->m_pendingTransactions[txid]->updateTimestamp();
+
+                m_p->m_pendingTransactions[txid]->m_lock.unlock();
             }
             else
             {
+                m_p->m_pendingTransactions[txid]->m_lock.unlock();
+
                 // if expired - delete old transaction
                 m_p->m_pendingTransactions.erase(txid);
 
@@ -435,11 +439,13 @@ bool Exchange::acceptTransaction(const uint256                        & txid,
         }
         else
         {
-            boost::mutex::scoped_lock l2(m_p->m_pendingTransactions[txid]->m_lock);
+            m_p->m_pendingTransactions[txid]->m_lock.lock();
 
             // found, check if expired
             if (m_p->m_pendingTransactions[txid]->isExpired())
             {
+                m_p->m_pendingTransactions[txid]->m_lock.unlock();
+
                 // if expired - delete old transaction
                 m_p->m_pendingTransactions.erase(txid);
                 return false;
@@ -450,6 +456,7 @@ bool Exchange::acceptTransaction(const uint256                        & txid,
                 if (!m_p->m_pendingTransactions[txid]->tryJoin(tr))
                 {
                     LOG() << "transaction not joined";
+                    m_p->m_pendingTransactions[txid]->m_lock.unlock();
                     return false;
                 }
                 else
@@ -458,6 +465,8 @@ bool Exchange::acceptTransaction(const uint256                        & txid,
                     tmp = m_p->m_pendingTransactions[txid];
                 }
             }
+
+            m_p->m_pendingTransactions[txid]->m_lock.unlock();
         }
     }
 
