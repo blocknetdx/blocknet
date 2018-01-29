@@ -682,7 +682,7 @@ bool CServicenodeBroadcast::CheckInputsAndAdd(int& nDoS)
         activeServicenode.EnableHotColdServiceNode(vin, addr);
     }
 
-    bool isLocal = addr.IsRFC1918() || addr.IsLocal();
+    bool isLocal = /*addr.IsRFC1918() ||*/ addr.IsLocal(); // Disabled the RFC1918 check for now
     if (Params().NetworkID() == CBaseChainParams::REGTEST) isLocal = false;
 
     if (!isLocal) Relay();
