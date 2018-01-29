@@ -75,14 +75,15 @@ void XBridgeTransactionsView::setupUi()
     header->setSectionResizeMode(XBridgeTransactionsModel::Size, QHeaderView::Stretch);
 #endif
 #if QT_VERSION <0x050000
-    header->setResizeMode(XBridgeTransactionsModel::BID, QHeaderView::Stretch);
+    header->setResizeMode(XBridgeTransactionsModel::Date, QHeaderView::Stretch);
 #else
-    header->setSectionResizeMode(XBridgeTransactionsModel::BID, QHeaderView::Stretch);
+    header->setSectionResizeMode(XBridgeTransactionsModel::Date, QHeaderView::Stretch);
 #endif
 
     header->resizeSection(XBridgeTransactionsModel::Total,      80);
     header->resizeSection(XBridgeTransactionsModel::Size,       80);
     header->resizeSection(XBridgeTransactionsModel::BID,        80);
+    header->resizeSection(XBridgeTransactionsModel::Date,       100);
     header->resizeSection(XBridgeTransactionsModel::State,      128);
     vbox->addWidget(m_transactionsList);
 
@@ -157,14 +158,15 @@ void XBridgeTransactionsView::setupUi()
     historicHeader->setSectionResizeMode(XBridgeTransactionsModel::Size, QHeaderView::Stretch);
 #endif
 #if QT_VERSION <0x050000
-    header->setResizeMode(XBridgeTransactionsModel::BID, QHeaderView::Stretch);
+    historicHeader->setResizeMode(XBridgeTransactionsModel::Date, QHeaderView::Stretch);
 #else
-    historicHeader->setSectionResizeMode(XBridgeTransactionsModel::BID, QHeaderView::Stretch);
+    historicHeader->setSectionResizeMode(XBridgeTransactionsModel::Date, QHeaderView::Stretch);
 #endif
 
     historicHeader->resizeSection(XBridgeTransactionsModel::Total,      80);
     historicHeader->resizeSection(XBridgeTransactionsModel::Size,       80);
     historicHeader->resizeSection(XBridgeTransactionsModel::BID,        80);
+    historicHeader->resizeSection(XBridgeTransactionsModel::Date,       100);
     historicHeader->resizeSection(XBridgeTransactionsModel::State,      128);
     vbox->addWidget(m_historicTransactionsList);
 

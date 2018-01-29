@@ -11,6 +11,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <QApplication>
+#include <QDateTime>
 //******************************************************************************
 //******************************************************************************
 XBridgeTransactionsModel::XBridgeTransactionsModel()
@@ -18,6 +19,7 @@ XBridgeTransactionsModel::XBridgeTransactionsModel()
     m_columns << trUtf8("TOTAL")
               << trUtf8("SIZE")
               << trUtf8("BID")
+              << trUtf8("DATE")
               << trUtf8("STATE");
 
 
@@ -79,14 +81,17 @@ QVariant XBridgeTransactionsModel::data(const QModelIndex & idx, int role) const
             case Total:
             {
                 double amount = (double)d->fromAmount / xbridge::TransactionDescr::COIN;
-                QString text = QString("%1 %2").arg(QString::number(amount, 'f', 12).remove(QRegExp("\\.?0+$"))).arg(QString::fromStdString(d->fromCurrency));
+                QString text = QString("%1 %2").arg(QString::number(amount, 'f', 12).
+                                                    remove(QRegExp("\\.?0+$"))).
+                        arg(QString::fromStdString(d->fromCurrency));
 
                 return QVariant(text);
             }
             case Size:
             {
                 double amount = (double)d->toAmount / xbridge::TransactionDescr::COIN;
-                QString text = QString("%1 %2").arg(QString::number(amount, 'f', 12).remove(QRegExp("\\.?0+$"))).arg(QString::fromStdString(d->toCurrency));
+                QString text = QString("%1 %2").arg(QString::number(amount, 'f', 12).remove(QRegExp("\\.?0+$"))).
+                        arg(QString::fromStdString(d->toCurrency));
 
                 return QVariant(text);
             }
@@ -98,6 +103,11 @@ QVariant XBridgeTransactionsModel::data(const QModelIndex & idx, int role) const
                 QString text = QString::number(bid, 'f', 12).remove(QRegExp("\\.?0+$"));
 
                 return QVariant(text);
+            }
+            case Date:
+            {
+                return QVariant(QDateTime::fromTime_t(boost::posix_time::to_time_t(d->created)).
+                                toString("dd/MM/yyyy HH:MM:ss"));
             }
             case State:
             {
@@ -387,8 +397,6 @@ void XBridgeTransactionsModel::onTransactionStateChanged(const uint256 & id)
     {
         if (m_transactions[i]->id == id)
         {
-            std::cout << "old transaction state = " << m_transactions[i]->strState() << std::endl;
-            std::cout << "new transaction state = " << xbridge::App::instance().transaction(id)->strState() << std::endl;
             // found
             emit dataChanged(index(i, FirstColumn), index(i, LastColumn));
         }
