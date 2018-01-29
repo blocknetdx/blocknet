@@ -309,6 +309,21 @@ bool Session::Impl::processZero(XBridgePacketPtr /*packet*/)
 //*****************************************************************************
 //*****************************************************************************
 // static
+bool Session::checkXBridgePacketVersion(const std::vector<unsigned char> & message)
+{
+    const uint32_t version = *reinterpret_cast<const uint32_t *>(&message[0]);
+
+    if (version != static_cast<boost::uint32_t>(XBRIDGE_PROTOCOL_VERSION))
+    {
+        return false;
+    }
+
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+// static
 bool Session::checkXBridgePacketVersion(XBridgePacketPtr packet)
 {
     if (packet->version() != static_cast<boost::uint32_t>(XBRIDGE_PROTOCOL_VERSION))

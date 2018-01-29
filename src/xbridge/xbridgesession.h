@@ -44,6 +44,7 @@ public:
 
 public:
     // network
+    static bool checkXBridgePacketVersion(const std::vector<unsigned char> & message);
     static bool checkXBridgePacketVersion(XBridgePacketPtr packet);
     bool processPacket(XBridgePacketPtr packet);
 

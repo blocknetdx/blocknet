@@ -457,6 +457,12 @@ void App::onMessageReceived(const std::vector<unsigned char> & id,
 
     addToKnown(message);
 
+    if (!Session::checkXBridgePacketVersion(message))
+    {
+        // ERR() << "incorrect protocol version <" << packet->version() << "> " << __FUNCTION__;
+        return;
+    }
+
     XBridgePacketPtr packet(new XBridgePacket);
     if (!packet->copyFrom(message))
     {
@@ -472,12 +478,6 @@ void App::onMessageReceived(const std::vector<unsigned char> & id,
 
     LOG() << "received message to " << util::base64_encode(std::string((char *)&id[0], 20)).c_str()
              << " command " << packet->command();
-
-    if (!Session::checkXBridgePacketVersion(packet))
-    {
-        // ERR() << "incorrect protocol version <" << packet->version() << "> " << __FUNCTION__;
-        return;
-    }
 
     // check direct session address
     SessionPtr ptr = m_p->getSession(id);
