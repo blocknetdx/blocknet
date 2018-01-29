@@ -31,23 +31,58 @@ public:
 
 public:
     // reimplement for currency
+    /**
+     * @brief fromXAddr
+     * @param xaddr
+     * @return
+     */
     virtual std::string fromXAddr(const std::vector<unsigned char> & xaddr) const = 0;
+    /**
+     * @brief toXAddr
+     * @param addr
+     * @return
+     */
     virtual std::vector<unsigned char> toXAddr(const std::string & addr) const = 0;
 
 public:
     // wallet RPC
 
+    /**
+     * @brief getNewAddress - request new wallet address
+     * @param addr- address
+     * @return true, if address has been generated
+     */
     virtual bool getNewAddress(std::string & addr) = 0;
 
+    /**
+     * @brief requestAddressBook -
+     * @param entries - list of addresses
+     * @return true, if list of addresses get
+     */
     virtual bool requestAddressBook(std::vector<wallet::AddressBookEntry> & entries) = 0;
 
+    /**
+     * @brief getWalletBalance
+     * @return wallet balance
+     */
     double getWalletBalance() const;
 
     virtual bool getUnspent(std::vector<wallet::UtxoEntry> & inputs) const = 0;
 
+    /**
+     * @brief lockCoins
+     * @param inputs
+     * @param lock
+     * @return
+     */
     virtual bool lockCoins(const std::vector<wallet::UtxoEntry> & inputs,
                              const bool lock = true) const = 0;
 
+    /**
+     * @brief getTxOut - get transaction outputs
+     * @param entry
+     * @return
+     */
     virtual bool getTxOut(wallet::UtxoEntry & entry) = 0;
 
     virtual bool sendRawTransaction(const std::string & rawtx,
