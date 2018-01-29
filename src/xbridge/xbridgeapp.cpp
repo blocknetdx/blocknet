@@ -401,7 +401,8 @@ void App::Impl::onSend(const std::vector<unsigned char> & id, const std::vector<
     LOCK(cs_vNodes);
     for  (CNode * pnode : vNodes)
     {
-        if (pnode->setKnown.insert(hash).second)
+        // Only relay to nodes with minimum protocol support version required by xbridge
+        if (pnode->nVersion >= MIN_XBRIDGE_PROTOCOL_VERSION && pnode->setKnown.insert(hash).second)
         {
             pnode->PushMessage("xbridge", msg);
         }
