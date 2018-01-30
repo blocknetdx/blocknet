@@ -1,11 +1,11 @@
 ---
-name: "phore-osx-3.0"
+name: "phore-osx-1.2"
 enable_cache: true
 suites:
 - "trusty"
 architectures:
 - "amd64"
-packages: 
+packages:
 - "ca-certificates"
 - "curl"
 - "g++"
