@@ -310,7 +310,7 @@ bool App::init(int argc, char *argv[])
     }
 
     // init secp256
-    if(ECC_Start()) {
+    if(!ECC_Start()) {
 
         ERR() << "can't start secp256, xbridgeApp not started " << __FUNCTION__;
         throw  std::runtime_error("can't start secp256, xbridgeApp not started ");

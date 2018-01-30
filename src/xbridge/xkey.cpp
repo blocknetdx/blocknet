@@ -394,6 +394,7 @@ bool ECC_Start() {
     }
 
     secp256k1_context_sign = ctx;
+    return true;
 }
 
 void ECC_Stop() {
