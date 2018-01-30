@@ -313,7 +313,7 @@ bool App::init(int argc, char *argv[])
     if(ECC_Start()) {
 
         ERR() << "can't start secp256, xbridgeApp not started " << __FUNCTION__;
-        return  false;
+        throw  std::runtime_error("can't start secp256, xbridgeApp not started ");
 
     }
     // init exchange
