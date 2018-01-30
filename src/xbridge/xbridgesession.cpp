@@ -514,8 +514,8 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
         if (!e.createTransaction(id,
                                  saddr, scurrency, samount,
                                  daddr, dcurrency, damount,
-                                 utxoItems,
-                                 timestamp, mpubkey,
+                                 timestamp,
+                                 mpubkey, utxoItems,
                                  blockHash, isCreated))
         {
             // not created
