@@ -36,13 +36,13 @@ Transaction::Transaction(const uint256                    & id,
                          const std::string                & destCurrency,
                          const uint64_t                   & destAmount,
                          const time_t                     & created,
-                         const uint256                    & blockHash)
+                         const uint256                    & blockHash,
+                         const std::vector<unsigned char> & mpubkey)
     : m_id(id)
     , m_created(boost::posix_time::from_time_t(created))
-    , m_last(boost::posix_time::from_time_t(created))
+    , m_last(boost::posix_time::from_time_t(time(0)))
     , m_blockHash(blockHash)
     , m_state(trNew)
-    // , m_stateCounter(0)
     , m_a_stateChanged(false)
     , m_b_stateChanged(false)
     , m_confirmationCounter(0)
@@ -54,6 +54,7 @@ Transaction::Transaction(const uint256                    & id,
 {
     m_a.setSource(sourceAddr);
     m_a.setDest(destAddr);
+    m_a.setMPubkey(mpubkey);
 }
 
 //*****************************************************************************
@@ -282,7 +283,7 @@ bool Transaction::isExpiredByBlockNumber() const
     int trBlockHeight = blockindex->nHeight;
     int lastBlockHeight = chainActive.Height();
 
-    if(lastBlockHeight - trBlockHeight > 15)
+    if(lastBlockHeight - trBlockHeight > blocksTTL)
         return true;
 
     return false;
@@ -310,22 +311,6 @@ void Transaction::finish()
 {
     LOG() << "finish transaction <" << m_id.GetHex() << ">";
     m_state = trFinished;
-}
-
-//*****************************************************************************
-//*****************************************************************************
-bool Transaction::confirm(const std::string & id)
-{
-    if (m_bintxid1 == id || m_bintxid2 == id)
-    {
-        if (++m_confirmationCounter >= 2)
-        {
-            m_state = trConfirmed;
-            return true;
-        }
-    }
-
-    return false;
 }
 
 //*****************************************************************************
@@ -381,7 +366,7 @@ uint256 Transaction::a_datatxid() const
 //*****************************************************************************
 std::vector<unsigned char> Transaction::a_pk1() const
 {
-    return m_a_pk1;
+    return m_a.mpubkey();
 }
 
 //*****************************************************************************
@@ -444,7 +429,7 @@ std::vector<unsigned char> Transaction::b_innerScript() const
 //*****************************************************************************
 std::vector<unsigned char> Transaction::b_pk1() const
 {
-    return m_b_pk1;
+    return m_b.mpubkey();
 }
 
 //*****************************************************************************
@@ -492,13 +477,13 @@ bool Transaction::setKeys(const std::vector<unsigned char> & addr,
     if (m_b.dest() == addr)
     {
         m_b_datatxid = datatxid;
-        m_b_pk1      = pk;
+        m_b.setMPubkey(pk);
         return true;
     }
     else if (m_a.dest() == addr)
     {
         m_a_datatxid = datatxid;
-        m_a_pk1      = pk;
+        m_a.setMPubkey(pk);
         return true;
     }
     return false;

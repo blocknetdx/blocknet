@@ -10,6 +10,9 @@
 #include "activeservicenode.h"
 #include "chainparamsbase.h"
 
+#include "key.h"
+#include "pubkey.h"
+
 #include <algorithm>
 
 //******************************************************************************
@@ -24,6 +27,8 @@ class Exchange::Impl
     friend class Exchange;
 
 protected:
+    bool initKeyPair();
+
     std::list<TransactionPtr> transactions(bool onlyFinished) const;
 
 protected:
@@ -42,6 +47,9 @@ protected:
     boost::mutex                                       m_utxoLocker;
     std::set<wallet::UtxoEntry>                        m_utxoItems;
     std::map<uint256, std::vector<wallet::UtxoEntry> > m_utxoTxMap;
+
+    std::vector<unsigned char>                         m_pubkey;
+    std::vector<unsigned char>                         m_privkey;
 };
 
 //*****************************************************************************
@@ -74,6 +82,11 @@ bool Exchange::init()
     {
         // disabled
         return true;
+    }
+
+    if (!m_p->initKeyPair())
+    {
+        ERR() << "bad service node key pair " << __FUNCTION__;
     }
 
     Settings & s = settings();
@@ -134,7 +147,7 @@ bool Exchange::init()
 //*****************************************************************************
 bool Exchange::isEnabled()
 {
-    return ((m_p->m_wallets.size() > 0) && fServiceNode);
+    return ((m_p->m_wallets.size() > 0) && GetBoolArg("-servicenode", false));
 }
 
 //*****************************************************************************
@@ -142,6 +155,65 @@ bool Exchange::isEnabled()
 bool Exchange::isStarted()
 {
     return (isEnabled() && (activeServicenode.status == ACTIVE_SERVICENODE_STARTED));
+}
+
+//*****************************************************************************
+//*****************************************************************************
+bool Exchange::Impl::initKeyPair()
+{
+    std::string secret = GetArg("-servicenodeprivkey", "");
+    if (secret.empty())
+    {
+        ERR() << "service node key not set " << __FUNCTION__;
+        return false;
+    }
+
+    ::CBitcoinSecret vchSecret;
+    if (!vchSecret.SetString(secret))
+    {
+        ERR() << "invalid service node key " << __FUNCTION__;
+        return false;
+    }
+
+    ::CKey    key    = vchSecret.GetKey();
+    ::CPubKey pubkey = key.GetPubKey();
+    if (!pubkey.IsCompressed())
+    {
+        pubkey.Compress();
+    }
+
+    m_pubkey  = std::vector<unsigned char>(pubkey.begin(), pubkey.end());
+    m_privkey = std::vector<unsigned char>(key.begin(),    key.end());
+
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+const std::vector<unsigned char> & Exchange::pubKey() const
+{
+    if (m_p->m_pubkey.empty() || m_p->m_pubkey.size() != 33)
+    {
+        if (!m_p->initKeyPair())
+        {
+            ERR() << "bad service node key pair " << __FUNCTION__;
+        }
+    }
+    return m_p->m_pubkey;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+const std::vector<unsigned char> & Exchange::privKey() const
+{
+    if (m_p->m_privkey.empty() || m_p->m_privkey.size() != 32)
+    {
+        if (!m_p->initKeyPair())
+        {
+            ERR() << "bad service node key pair " << __FUNCTION__;
+        }
+    }
+    return m_p->m_privkey;
 }
 
 //*****************************************************************************
@@ -209,8 +281,9 @@ bool Exchange::createTransaction(const uint256                        & txid,
                                  const std::vector<unsigned char>     & destAddr,
                                  const std::string                    & destCurrency,
                                  const uint64_t                       & destAmount,
-                                 const std::vector<wallet::UtxoEntry> & items,
                                  const uint32_t                       & timestamp,
+                                 const std::vector<unsigned char>     & mpubkey,
+                                 const std::vector<wallet::UtxoEntry> & items,
                                  uint256                              & blockHash,
                                  bool                                 & isCreated)
 {
@@ -259,7 +332,8 @@ bool Exchange::createTransaction(const uint256                        & txid,
                                                destAddr,
                                                destCurrency, destAmount,
                                                timestamp,
-                                               blockHash));
+                                               blockHash,
+                                               mpubkey));
     if (!tr->isValid())
     {
         return false;
@@ -281,12 +355,14 @@ bool Exchange::createTransaction(const uint256                        & txid,
         }
         else
         {
-            boost::mutex::scoped_lock l2(m_p->m_pendingTransactions[txid]->m_lock);
+            m_p->m_pendingTransactions[txid]->m_lock.lock();
 
             // found, check if expired
             if (!m_p->m_pendingTransactions[txid]->isExpired())
             {
                 m_p->m_pendingTransactions[txid]->updateTimestamp();
+
+                m_p->m_pendingTransactions[txid]->m_lock.unlock();
             }
             else if(m_p->m_pendingTransactions[txid]->isExpiredByBlockNumber())
             {
@@ -294,6 +370,8 @@ bool Exchange::createTransaction(const uint256                        & txid,
             }
             else
             {
+                m_p->m_pendingTransactions[txid]->m_lock.unlock();
+
                 // if expired - delete old transaction
                 m_p->m_pendingTransactions.erase(txid);
 
@@ -331,6 +409,7 @@ bool Exchange::acceptTransaction(const uint256                        & txid,
                                  const std::vector<unsigned char>     & destAddr,
                                  const std::string                    & destCurrency,
                                  const uint64_t                       & destAmount,
+                                 const std::vector<unsigned char>     & mpubkey,
                                  const std::vector<wallet::UtxoEntry> & items)
 {
     DEBUG_TRACE();
@@ -354,7 +433,7 @@ bool Exchange::acceptTransaction(const uint256                        & txid,
                                                sourceCurrency, sourceAmount,
                                                destAddr,
                                                destCurrency, destAmount,
-                                               std::time(0), uint256()));
+                                               std::time(0), uint256(), mpubkey));
     if (!tr->isValid())
     {
         return false;
@@ -372,11 +451,13 @@ bool Exchange::acceptTransaction(const uint256                        & txid,
         }
         else
         {
-            boost::mutex::scoped_lock l2(m_p->m_pendingTransactions[txid]->m_lock);
+            m_p->m_pendingTransactions[txid]->m_lock.lock();
 
             // found, check if expired
             if (m_p->m_pendingTransactions[txid]->isExpired())
             {
+                m_p->m_pendingTransactions[txid]->m_lock.unlock();
+
                 // if expired - delete old transaction
                 m_p->m_pendingTransactions.erase(txid);
                 return false;
@@ -387,6 +468,7 @@ bool Exchange::acceptTransaction(const uint256                        & txid,
                 if (!m_p->m_pendingTransactions[txid]->tryJoin(tr))
                 {
                     LOG() << "transaction not joined";
+                    m_p->m_pendingTransactions[txid]->m_lock.unlock();
                     return false;
                 }
                 else
@@ -395,6 +477,8 @@ bool Exchange::acceptTransaction(const uint256                        & txid,
                     tmp = m_p->m_pendingTransactions[txid];
                 }
             }
+
+            m_p->m_pendingTransactions[txid]->m_lock.unlock();
         }
     }
 
