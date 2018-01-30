@@ -137,10 +137,9 @@ enum XBridgeCommand
     xbcTransactionAccepting = 5,
 
     //
-    // xbcTransactionHold (85 or 117 bytes)
+    // xbcTransactionHold (52 bytes)
     //    uint160 hub address
     //    uint256 transaction id
-    //    public key, 33 or 65 bytes, servicenode public key
     xbcTransactionHold = 6,
     //
     // xbcTransactionHoldApply (72 bytes)
@@ -150,11 +149,10 @@ enum XBridgeCommand
     xbcTransactionHoldApply = 7,
 
     //
-    // xbcTransactionInit (188 or 221 bytes min)
+    // xbcTransactionInit (146 bytes min)
     //    uint160 client address
     //    uint160 hub address
     //    uint256 hub transaction id
-    //    public key, 33 or 65 bytes, servicenode public key
     //    uint16_t  role ( 'A' (Alice) or 'B' (Bob) :) )
     //    20 bytes source address
     //    8 bytes source currency
@@ -164,12 +162,11 @@ enum XBridgeCommand
     //    uint64 destination amount
     xbcTransactionInit = 8,
     //
-    // xbcTransactionInitialized (137 bytes)
+    // xbcTransactionInitialized (104 bytes)
     //    uint160 hub address
     //    uint160 client address
     //    uint256 hub transaction id
     //    uint256 data transaction id
-    //    public key, 33 bytes
     xbcTransactionInitialized = 9,
 
     //
@@ -282,9 +279,16 @@ class XBridgePacket
 public:
     enum
     {
-        headerSize    = 8*sizeof(uint32_t),
-        commandSize   = sizeof(uint32_t),
-        timestampSize = sizeof(uint32_t)
+        // header, size, version, command, timestamp, pubkey, signature
+        headerSize       = 8*sizeof(uint32_t)+33+64,
+        commandSize      = sizeof(uint32_t),
+        timestampSize    = sizeof(uint32_t),
+        addressSize      = 20,
+        hashSize         = 32,
+        privkeySize      = 32,
+        pubkeySize       = 33,
+        rawSignatureSize = 64,
+        signatureSize    = 65
     };
 
     uint32_t     size()    const     { return sizeField(); }
@@ -298,16 +302,19 @@ public:
         // return crcField();
     }
 
-    uint32_t version() const       { return versionField(); }
+    uint32_t version() const                { return versionField(); }
 
-    XBridgeCommand  command() const       { return static_cast<XBridgeCommand>(commandField()); }
+    XBridgeCommand  command() const         { return static_cast<XBridgeCommand>(commandField()); }
 
-    void    alloc()                       { m_body.resize(headerSize + size()); }
+    const unsigned char * pubkey() const    { return pubkeyField(); }
+    const unsigned char * signature() const { return signatureField(); }
+
+    void    alloc()                         { m_body.resize(headerSize + size()); }
 
     const std::vector<unsigned char> & body() const
-                                          { return m_body; }
-    unsigned char  * header()             { return &m_body[0]; }
-    unsigned char  * data()               { return &m_body[headerSize]; }
+                                            { return m_body; }
+    unsigned char  * header()               { return &m_body[0]; }
+    unsigned char  * data()                 { return &m_body[headerSize]; }
 
     // boost::int32_t int32Data() const { return field32<2>(); }
 
@@ -427,12 +434,17 @@ public:
 
     bool copyFrom(const std::vector<unsigned char> & data)
     {
+        if (data.size() < headerSize)
+        {
+            ERR() << "received data size less than packet header size " << __FUNCTION__;
+            return false;
+        }
+
         m_body = data;
 
         if (sizeField() != static_cast<uint32_t>(data.size())-headerSize)
         {
-            ERR() << "incorrect data size in XBridgePacket::copyFrom";
-            assert(!"incorrect data size in XBridgePacket::copyFrom");
+            ERR() << "incorrect data size " << __FUNCTION__;
             return false;
         }
 
@@ -470,6 +482,11 @@ public:
         return *this;
     }
 
+    bool sign(const std::vector<unsigned char> & pubkey,
+              const std::vector<unsigned char> & privkey);
+    bool verify();
+    bool verify(const std::vector<unsigned char> & pubkey);
+
 private:
     template<uint32_t INDEX>
     uint32_t & field32()
@@ -479,16 +496,21 @@ private:
     uint32_t const& field32() const
         { return *static_cast<uint32_t const*>(static_cast<void const*>(&m_body[INDEX * 4])); }
 
-    uint32_t       & versionField()         { return field32<0>(); }
-    uint32_t const & versionField() const   { return field32<0>(); }
-    uint32_t &       commandField()         { return field32<1>(); }
-    uint32_t const & commandField() const   { return field32<1>(); }
-    uint32_t &       timestampField()       { return field32<2>(); }
-    uint32_t const & timestampField() const { return field32<2>(); }
-    uint32_t &       sizeField()            { return field32<3>(); }
-    uint32_t const & sizeField() const      { return field32<3>(); }
-    uint32_t &       crcField()             { return field32<4>(); }
-    uint32_t const & crcField() const       { return field32<4>(); }
+    uint32_t       & versionField()              { return field32<0>(); }
+    uint32_t const & versionField() const        { return field32<0>(); }
+    uint32_t &       commandField()              { return field32<1>(); }
+    uint32_t const & commandField() const        { return field32<1>(); }
+    uint32_t &       timestampField()            { return field32<2>(); }
+    uint32_t const & timestampField() const      { return field32<2>(); }
+    uint32_t &       sizeField()                 { return field32<3>(); }
+    uint32_t const & sizeField() const           { return field32<3>(); }
+    uint32_t &       crcField()                  { return field32<4>(); }
+    uint32_t const & crcField() const            { return field32<4>(); }
+
+    unsigned char *       pubkeyField()          { return &m_body[20]; }
+    const unsigned char * pubkeyField() const    { return &m_body[20]; }
+    unsigned char *       signatureField()       { return &m_body[53]; }
+    const unsigned char * signatureField() const { return &m_body[53]; }
 };
 
 typedef std::shared_ptr<XBridgePacket> XBridgePacketPtr;

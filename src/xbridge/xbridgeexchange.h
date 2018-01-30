@@ -41,6 +41,10 @@ public:
     bool isEnabled();
     bool isStarted();
 
+    // public-private keys (service node key pair)
+    const std::vector<unsigned char> & pubKey() const;
+    const std::vector<unsigned char> & privKey() const;
+
     bool haveConnectedWallet(const std::string & walletName);
     std::vector<std::string> connectedWallets() const;
 
@@ -55,8 +59,9 @@ public:
                            const std::vector<unsigned char>     & destAddr,
                            const std::string                    & destCurrency,
                            const uint64_t                       & destAmount,
-                           const std::vector<wallet::UtxoEntry> & items,
                            const uint32_t                       & timestamp,
+                           const std::vector<unsigned char>     & mpubkey,
+                           const std::vector<wallet::UtxoEntry> & items,
                            uint256                              & blockHash,
                            bool                                 & isCreated);
 
@@ -67,6 +72,7 @@ public:
                            const std::vector<unsigned char>     & destAddr,
                            const std::string                    & destCurrency,
                            const uint64_t                       & destAmount,
+                           const std::vector<unsigned char>     & mpubkey,
                            const std::vector<wallet::UtxoEntry> & items);
 
     bool deletePendingTransactions(const uint256 & id);
