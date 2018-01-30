@@ -142,57 +142,29 @@ bool CKey::SetPrivKey(const CPrivKey &privkey, bool fCompressedIn) {
 }
 
 CPrivKey CKey::GetPrivKey() const {
-    if(!fValid) {
-        ERR() << "invalid private key " << __FUNCTION__;
-        return CPrivKey();
-    }
-//    assert(fValid);
+    assert(fValid);
     CPrivKey privkey;
     int ret;
     size_t privkeylen;
     privkey.resize(279);
     privkeylen = 279;
     ret = ec_privkey_export_der(secp256k1_context_sign, (unsigned char*)&privkey[0], &privkeylen, begin(), fCompressed ? SECP256K1_EC_COMPRESSED : SECP256K1_EC_UNCOMPRESSED);
-//    assert(ret);
-    if(ret == 0) {
-
-        ERR() << "can't create private key " << __FUNCTION__;
-        return CPrivKey();
-
-    }
+    assert(ret);
     privkey.resize(privkeylen);
     return privkey;
 }
 
 CPubKey CKey::GetPubKey() const {
-//    assert(fValid);
-    if(!fValid) {
-        ERR() << "invalid key" << __FUNCTION__;
-    }
+    assert(fValid);
     secp256k1_pubkey pubkey;
     size_t clen = 65;
     CPubKey result;
     int ret = secp256k1_ec_pubkey_create(secp256k1_context_sign, &pubkey, begin());
-    if(ret == 0) {
-
-        ERR() << "can't create public key " << __FUNCTION__;
-        return CPubKey();
-
-    }
-//    assert(ret);
+    assert(ret);
     secp256k1_ec_pubkey_serialize(secp256k1_context_sign, (unsigned char*)result.begin(), &clen, &pubkey,
                                   fCompressed ? SECP256K1_EC_COMPRESSED : SECP256K1_EC_UNCOMPRESSED);
-    if(result.size() != clen) {
-        ERR() << "can't serialize public key " << __FUNCTION__;
-    }
-//    assert(result.size() == clen);
-    if(!result.IsValid()) {
-
-        ERR() << "invalid  public key " << __FUNCTION__;
-        return CPubKey();
-
-    }
-//    assert(result.IsValid());
+    assert(result.size() == clen);
+    assert(result.IsValid());
     return result;
 }
 
@@ -246,22 +218,10 @@ bool CKey::SignCompact(const uint256 &hash, std::vector<unsigned char>& vchSig) 
         return false;
 
     }
-//    assert(ret);
+    assert(ret);
     secp256k1_ecdsa_recoverable_signature_serialize_compact(secp256k1_context_sign, (unsigned char*)&vchSig[1], &rec, &sig);
-    if(ret == 0) {
-
-        ERR() << "can't serialize signature, ret =  " << ret << __FUNCTION__;
-        return false;
-
-    }
-//    assert(ret);
-    if(ret == -1) {
-
-        ERR() << "can't serialize signature, ret =  " << ret << __FUNCTION__;
-        return false;
-
-    }
-//    assert(rec != -1);
+    assert(ret);
+    assert(rec != -1);
     vchSig[0] = 27 + rec + (fCompressed ? 4 : 0);
     return true;
 }
