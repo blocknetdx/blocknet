@@ -310,8 +310,12 @@ bool App::init(int argc, char *argv[])
     }
 
     // init secp256
-    ECC_Start();
+    if(!ECC_Start()) {
 
+        ERR() << "can't start secp256, xbridgeApp not started " << __FUNCTION__;
+        throw  std::runtime_error("can't start secp256, xbridgeApp not started ");
+
+    }
     // init exchange
     Exchange & e = Exchange::instance();
     e.init();
@@ -329,6 +333,7 @@ bool App::init(int argc, char *argv[])
     }
 
     return true;
+
 }
 
 //*****************************************************************************
@@ -562,7 +567,11 @@ bool App::removePackets(const uint256 & txid)
 
     boost::mutex::scoped_lock l(m_p->m_ppLocker);
     size_t removed = m_p->m_pendingPackets.erase(txid);
-    assert(removed < 2 && "duplicate packets in packets queue");
+    if(removed > 1) {
+        ERR() << "duplicate packets in packets queue" << __FUNCTION__;
+        return false;
+    }
+//    assert(removed < 2 && "duplicate packets in packets queue");
 
     return true;
 }
@@ -666,10 +675,13 @@ TransactionDescrPtr App::transaction(const uint256 & id) const
 
     if (m_p->m_historicTransactions.count(id))
     {
-        assert(!result && "duplicate objects");
+        if(result != nullptr) {
+            ERR() << "duplicate transaction " << __FUNCTION__;
+            return result;
+        }
+//        assert(!result && "duplicate objects");
         result = m_p->m_historicTransactions[id];
     }
-
     return result;
 }
 
@@ -728,12 +740,19 @@ void App::moveTransactionToHistory(const uint256 & id)
             xtx = m_p->m_transactions[id];
 
             counter = m_p->m_transactions.erase(id);
-            assert(counter < 2 && "duplicate transaction");
+            if(counter > 1) {
+                ERR() << "duplicate transaction id = " << id.GetHex() << " " << __FUNCTION__;
+            }
+//            assert(counter < 2 && "duplicate transaction");
         }
 
         if (xtx)
         {
-            assert(m_p->m_historicTransactions.count(id) == 0 && "duplicate tx in tx list and history");
+            if(m_p->m_historicTransactions.count(id) != 0) {
+                ERR() << "duplicate tx " << id.GetHex() << " in tx list and history " << __FUNCTION__;
+                return;
+            }
+//            assert(m_p->m_historicTransactions.count(id) == 0 && "duplicate tx in tx list and history");
             m_p->m_historicTransactions[id] = xtx;
         }
     }
@@ -828,8 +847,20 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
 
         entry.rawAddress = connFrom->toXAddr(entry.address);
 
-        assert(entry.signature.size() == 65 && "incorrect signature length, need 20 bytes");
-        assert(entry.rawAddress.size() == 20 && "incorrect raw address length, need 20 bytes");
+        if(entry.signature.size() != 65) {
+
+            ERR() << "incorrect signature length, need 20 bytes " << __FUNCTION__;
+            return xbridge::Error::INVALID_SIGNATURE;
+
+        }
+//        assert(entry.signature.size() == 65 && "incorrect signature length, need 20 bytes");
+        if(entry.rawAddress.size() != 20) {
+
+            ERR() << "incorrect raw address length, need 20 bytes " << __FUNCTION__;
+            return  xbridge::Error::INVALID_ADDRESS;
+
+        }
+//        assert(entry.rawAddress.size() == 20 && "incorrect raw address length, need 20 bytes");
     }
 
     boost::uint32_t timestamp = time(0);
@@ -1043,9 +1074,21 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
         }
 
         entry.rawAddress = connFrom->toXAddr(entry.address);
+        if(entry.signature.size() != 65) {
 
-        assert(entry.signature.size() == 65 && "incorrect signature length, need 20 bytes");
-        assert(entry.rawAddress.size() == 20 && "incorrect raw address length, need 20 bytes");
+            ERR() << "incorrect signature length, need 20 bytes " << __FUNCTION__;
+            return xbridge::Error::INVALID_SIGNATURE;
+
+        }
+//        assert(entry.signature.size() == 65 && "incorrect signature length, need 20 bytes");
+        if(entry.rawAddress.size() != 20) {
+
+            ERR() << "incorrect raw address length, need 20 bytes " << __FUNCTION__;
+            return  xbridge::Error::INVALID_ADDRESS;
+
+        }
+
+//        assert(entry.rawAddress.size() == 20 && "incorrect raw address length, need 20 bytes");
     }
 
     ptr->from = connFrom->toXAddr(from);

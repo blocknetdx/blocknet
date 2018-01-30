@@ -19,6 +19,7 @@ namespace xbridge
         INVALID_AMOUNT,
         INVALID_PARAMETERS,
         INVALID_ADDRESS,
+        INVALID_SIGNATURE,
         UNKNOWN_ERROR
     };
 

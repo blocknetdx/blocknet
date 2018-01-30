@@ -12,7 +12,7 @@
 #include <memory>
 #include <ctime>
 #include <stdint.h>
-#include <assert.h>
+//#include <assert.h>
 #include <string.h>
 
 //******************************************************************************
@@ -298,7 +298,8 @@ public:
     crc_t        crc()     const
     {
         // TODO implement this
-        assert(!"not implemented");
+        ERR() << "not implemented " << __FUNCTION__;
+//        assert(!"not implemented");
         return 0;
         // return crcField();
     }

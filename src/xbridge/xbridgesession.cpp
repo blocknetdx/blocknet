@@ -1215,17 +1215,33 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet)
     }
 
     // m key
-    assert(xtx->mPubKey.size() == 33 && "bad pubkey size");
+    conn->newKeyPair(xtx->mPubKey, xtx->mPrivKey);
+    if(xtx->mPubKey.size() != 33) {
+
+        ERR() << "bad pubkey size " << __FUNCTION__;
+        return false;
+
+    }
 
 //    // x key
     uint256 datatxtd;
     if (role == 'A')
     {
-        assert(xtx->xPubKey.size() == 33 && "bad pubkey size");
+        conn->newKeyPair(xtx->xPubKey, xtx->xPrivKey);
+
+        if(xtx->xPubKey.size() != 33) 
+        {
+            ERR() << "bad pubkey size " << __FUNCTION__;
+            return false;
+        }
 
         // send blocknet tx with hash of X
         std::vector<unsigned char> xid = conn->getKeyId(xtx->xPubKey);
-        assert(xid.size() == 20 && "bad pubkey id size");
+        if(xid.size() != 20) 
+        {
+            ERR() << "bad pubkey id size " << __FUNCTION__;
+            return false;
+        }
 
         std::string strtxid;
         if (!rpc::storeDataIntoBlockchain(snodeAddress, conn->serviceNodeFee,

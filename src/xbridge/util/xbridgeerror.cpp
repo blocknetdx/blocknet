@@ -28,6 +28,8 @@ namespace xbridge {
             return "";
         case Error::INVALID_AMOUNT:
             return "invalid amount " + argument;
+        case INVALID_SIGNATURE:
+            return "invalid signature " + argument;
         }
         return "invalid error value";
     }
