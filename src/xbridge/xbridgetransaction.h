@@ -6,7 +6,6 @@
 
 #include "uint256.h"
 #include "xbridgetransactionmember.h"
-#include "xkey.h"
 #include "xbridgedef.h"
 
 #include <vector>
@@ -54,7 +53,11 @@ public:
         pendingTTL = 60,
 
         // transaction ttl in seconds, 60 min
-        TTL = 3600
+        TTL = 3600,
+
+        // number of blocks ttl
+
+        blocksTTL = 60
     };
 
 public:
@@ -67,7 +70,9 @@ public:
                 const std::string                & destCurrency,
                 const uint64_t                   & destAmount,
                 const std::time_t                & created,
-                const uint256                    & blockHash);
+                const uint256                    & blockHash,
+                const std::vector<unsigned char> & mpubkey);
+
     ~Transaction();
 
     uint256 id() const;
@@ -93,8 +98,6 @@ public:
     void cancel();
     void drop();
     void finish();
-
-    bool confirm(const std::string & id);
 
     // uint256                    firstId() const;
     std::vector<unsigned char> a_address() const;
@@ -170,9 +173,6 @@ private:
 
     uint256                    m_a_datatxid;
     uint256                    m_b_datatxid;
-
-    std::vector<unsigned char> m_a_pk1;
-    std::vector<unsigned char> m_b_pk1;
 };
 
 } // namespace xbridge

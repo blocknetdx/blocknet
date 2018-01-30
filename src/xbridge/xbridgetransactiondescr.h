@@ -4,8 +4,6 @@
 // #include "uint256.h"
 #include "base58.h"
 #include "xbridgepacket.h"
-#include "xkey.h"
-#include "xbitcoinsecret.h"
 #include "xbridgewalletconnector.h"
 
 #include <string>
@@ -97,6 +95,9 @@ struct TransactionDescr
     std::vector<unsigned char>    xPubKey;
     std::vector<unsigned char>    xPrivKey;
 
+    // service node pub key
+    std::vector<unsigned char>    sPubKey;
+
     // used coins in transaction
     std::vector<xbridge::wallet::UtxoEntry> usedCoins;
 
@@ -162,6 +163,7 @@ struct TransactionDescr
 
     bool isLocal() const
     {
+        // must have from and to addresses
         return from.size() != 0 && to.size() != 0;
     }
 

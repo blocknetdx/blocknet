@@ -298,7 +298,8 @@ SOURCES += \
     src/xbridge/xbridgewalletconnector.cpp \
     src/xbridge/xbridgewalletconnectorbtc.cpp \
     src/xbridge/xbridgewalletconnectorbcc.cpp \
-    src/xbridge/xbridgewalletconnectorsys.cpp
+    src/xbridge/xbridgewalletconnectorsys.cpp \
+    src/xbridge/xbridgepacket.cpp
 
 #protobuf generated
 SOURCES += \
