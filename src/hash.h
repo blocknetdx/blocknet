@@ -1,7 +1,8 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2014 The Bitcoin developers
 // Copyright (c) 2014-2015 The Dash developers
-// Copyright (c) 2015-2017 The BlocknetDX developers
+// Copyright (c) 2015-2017 The PIVX developers
+// Copyright (c) 2015-2018 The Blocknet developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -258,6 +259,33 @@ inline uint256 Hash(const T1 p1begin, const T1 p1end,
             .Write(p5begin == p5end ? pblank : (const unsigned char*)&p5begin[0], (p5end - p5begin) * sizeof(p5begin[0]))
             .Write(p6begin == p6end ? pblank : (const unsigned char*)&p6begin[0], (p6end - p6begin) * sizeof(p6begin[0]))
             .Write(p7begin == p7end ? pblank : (const unsigned char*)&p7begin[0], (p7end - p7begin) * sizeof(p7begin[0]))
+            .Finalize((unsigned char*)&result);
+    return result;
+}
+
+/** Compute the 256-bit hash of the concatenation of nine objects. */
+template <typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9>
+inline uint256 Hash(const T1 p1begin, const T1 p1end,
+                    const T2 p2begin, const T2 p2end,
+                    const T3 p3begin, const T3 p3end,
+                    const T4 p4begin, const T4 p4end,
+                    const T5 p5begin, const T5 p5end,
+                    const T6 p6begin, const T6 p6end,
+                    const T7 p7begin, const T7 p7end,
+                    const T8 p8begin, const T8 p8end,
+                    const T9 p9begin, const T9 p9end)
+{
+    static const unsigned char pblank[1] = {};
+    uint256 result;
+    CHash256().Write(p1begin == p1end ? pblank : (const unsigned char*)&p1begin[0], (p1end - p1begin) * sizeof(p1begin[0]))
+            .Write(p2begin == p2end ? pblank : (const unsigned char*)&p2begin[0], (p2end - p2begin) * sizeof(p2begin[0]))
+            .Write(p3begin == p3end ? pblank : (const unsigned char*)&p3begin[0], (p3end - p3begin) * sizeof(p3begin[0]))
+            .Write(p4begin == p4end ? pblank : (const unsigned char*)&p4begin[0], (p4end - p4begin) * sizeof(p4begin[0]))
+            .Write(p5begin == p5end ? pblank : (const unsigned char*)&p5begin[0], (p5end - p5begin) * sizeof(p5begin[0]))
+            .Write(p6begin == p6end ? pblank : (const unsigned char*)&p6begin[0], (p6end - p6begin) * sizeof(p6begin[0]))
+            .Write(p7begin == p7end ? pblank : (const unsigned char*)&p7begin[0], (p7end - p7begin) * sizeof(p7begin[0]))
+            .Write(p8begin == p8end ? pblank : (const unsigned char*)&p8begin[0], (p8end - p8begin) * sizeof(p8begin[0]))
+            .Write(p9begin == p9end ? pblank : (const unsigned char*)&p9begin[0], (p9end - p9begin) * sizeof(p9begin[0]))
             .Finalize((unsigned char*)&result);
     return result;
 }

@@ -833,15 +833,19 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     }
 
     boost::uint32_t timestamp = time(0);
+    blockHash = chainActive.Tip()->pprev->GetBlockHash();
+
+    std::vector<unsigned char> firstUtxoSig = outputsForUse.at(0).signature;
+
     id = Hash(from.begin(), from.end(),
               fromCurrency.begin(), fromCurrency.end(),
               BEGIN(fromAmount), END(fromAmount),
               to.begin(), to.end(),
               toCurrency.begin(), toCurrency.end(),
               BEGIN(toAmount), END(toAmount),
-              BEGIN(timestamp), END(timestamp));
-
-    blockHash = chainActive.Tip()->pprev->GetBlockHash();
+              BEGIN(timestamp), END(timestamp),
+              blockHash.begin(), blockHash.end(),
+              firstUtxoSig.begin(), firstUtxoSig.end());
 
     TransactionDescrPtr ptr(new TransactionDescr);
     ptr->created      = boost::posix_time::from_time_t(timestamp);
@@ -939,6 +943,7 @@ bool App::sendPendingTransaction(const TransactionDescrPtr & ptr)
         ptr->packet->append(static_cast<uint32_t>(boost::posix_time::to_time_t(ptr->created)));
         ptr->packet->append(ptr->blockHash.begin(), 32);
 
+
         // utxo items
         ptr->packet->append(static_cast<uint32_t>(ptr->usedCoins.size()));
         for (const wallet::UtxoEntry & entry : ptr->usedCoins)
@@ -949,6 +954,7 @@ bool App::sendPendingTransaction(const TransactionDescrPtr & ptr)
             ptr->packet->append(entry.rawAddress);
             ptr->packet->append(entry.signature);
         }
+
     }
 
     ptr->packet->sign(ptr->mPubKey, ptr->mPrivKey);
@@ -1170,6 +1176,8 @@ xbridge::Error App::rollbackXBridgeTransaction(const uint256 & id)
                     return xbridge::UNKNOWN_SESSION;
                 }
             }
+        } else {
+            return xbridge::TRANSACTION_NOT_FOUND;
         }
     }
 

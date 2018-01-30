@@ -421,10 +421,11 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
     }
 
     xbridge::App & xapp = xbridge::App::instance();
-    WalletConnectorPtr conn = xapp.connectorByCurrency(scurrency);
-    if (!conn)
+    WalletConnectorPtr sconn = xapp.connectorByCurrency(scurrency);
+    WalletConnectorPtr dconn = xapp.connectorByCurrency(dcurrency);
+    if (!sconn || !dconn)
     {
-        WARN() << "no connector for <" << scurrency << "> " << __FUNCTION__;
+        WARN() << "no connector for <" << (!sconn ? scurrency : dcurrency) << "> " << __FUNCTION__;
         return true;
     }
 
@@ -461,12 +462,12 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
             entry.rawAddress = std::vector<unsigned char>(packet->data()+offset, packet->data()+offset+20);
             offset += XBridgePacket::addressSize;
 
-            entry.address = conn->fromXAddr(entry.rawAddress);
+            entry.address = sconn->fromXAddr(entry.rawAddress);
 
             entry.signature = std::vector<unsigned char>(packet->data()+offset, packet->data()+offset+XBridgePacket::signatureSize);
             offset += XBridgePacket::signatureSize;
 
-            if (!conn->getTxOut(entry))
+            if (!sconn->getTxOut(entry))
             {
                 LOG() << "not found utxo entry <" << entry.txId
                       << "> no " << entry.vout << " " << __FUNCTION__;
@@ -475,9 +476,9 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
 
             // check signature
             std::string signature = EncodeBase64(&entry.signature[0], entry.signature.size());
-            if (!conn->verifyMessage(entry.address, entry.toString(), signature))
+            if (!sconn->verifyMessage(entry.address, entry.toString(), signature))
             {
-                LOG() << "not valid signature, bad utxo entry <" << entry.txId
+                LOG() << "not valid signature, bad utxo entry" << entry.txId
                       << "> no " << entry.vout << " " << __FUNCTION__;
                 continue;
             }
@@ -486,6 +487,12 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
 
             utxoItems.push_back(entry);
         }
+    }
+
+    if(utxoItems.empty())
+    {
+        LOG() << "transaction rejected, utxo items are empty <" << __FUNCTION__;
+        return true;
     }
 
     if (commonAmount * TransactionDescr::COIN < samount)
@@ -500,6 +507,30 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
           << "             " << scurrency << " : " << samount << std::endl
           << "    to   " << HexStr(daddr) << std::endl
           << "             " << dcurrency << " : " << damount << std::endl;
+
+    std::string saddrStr = sconn->fromXAddr(saddr);
+    std::string daddrStr = dconn->fromXAddr(daddr);
+
+    std::vector<unsigned char> firstUtxoSig = utxoItems.at(0).signature;
+
+    uint256 checkId = Hash(saddrStr.begin(), saddrStr.end(),
+                           scurrency.begin(), scurrency.end(),
+                           BEGIN(samount), END(samount),
+                           daddrStr.begin(), daddrStr.end(),
+                           dcurrency.begin(), dcurrency.end(),
+                           BEGIN(damount), END(damount),
+                           BEGIN(timestamp), END(timestamp),
+                           blockHash.begin(), blockHash.end(),
+                           firstUtxoSig.begin(), firstUtxoSig.end());
+    if(checkId != id)
+    {
+        WARN() << "id from packet is differs from body hash:" << std::endl
+               << "packet id: " << id.GetHex() << std::endl
+               << "body hash:" << checkId.GetHex() << std::endl
+               << __FUNCTION__;
+
+        return true;
+    }
 
     // check utxo items
     if (!e.checkUtxoItems(id, utxoItems))
@@ -579,6 +610,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
 //******************************************************************************
 bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
 {
+
     Exchange & e = Exchange::instance();
     if (e.isEnabled())
     {
@@ -587,10 +619,10 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
 
     DEBUG_TRACE();
 
-    if (packet->size() != 88)
+    if (packet->size() != 120)
     {
         ERR() << "incorrect packet size for xbcPendingTransaction "
-              << "need 88 received " << packet->size() << " "
+              << "need 120 received " << packet->size() << " "
               << __FUNCTION__;
         return false;
     }
@@ -628,6 +660,7 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
 //*****************************************************************************
 bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet)
 {
+
     // check and process packet if bridge is exchange
     Exchange & e = Exchange::instance();
     if (!e.isStarted())
@@ -807,12 +840,13 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet)
 //******************************************************************************
 bool Session::Impl::processTransactionHold(XBridgePacketPtr packet)
 {
+
     DEBUG_TRACE();
 
-    if (packet->size() != 52)
+    if (packet->size() != 85 + 32 && packet->size() != 117 + 32)
     {
         ERR() << "incorrect packet size for xbcTransactionHold "
-              << "need 52 received " << packet->size() << " "
+              << "need 117 or 149 received " << packet->size() << " "
               << __FUNCTION__;
         return false;
     }
@@ -938,10 +972,11 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet)
 //*****************************************************************************
 bool Session::Impl::processTransactionHoldApply(XBridgePacketPtr packet)
 {
+
     DEBUG_TRACE();
 
     // size must be eq 72 bytes
-    if (packet->size() != 72)
+    if (packet->size() != 72 )
     {
         ERR() << "invalid packet size for xbcTransactionHoldApply "
               << "need 72 received " << packet->size() << " "
@@ -1224,11 +1259,11 @@ bool Session::Impl::processTransactionInitialized(XBridgePacketPtr packet)
 {
     DEBUG_TRACE();
 
-    // size must be eq 104 bytes
-    if (packet->size() != 104)
+    // size must be eq 137 bytes
+    if (packet->size() != 137)
     {
         ERR() << "invalid packet size for xbcTransactionHoldApply "
-              << "need 104 received " << packet->size() << " "
+              << "need 137 received " << packet->size() << " "
               << __FUNCTION__;
         return false;
     }
@@ -2154,6 +2189,7 @@ bool Session::Impl::processTransactionConfirmedB(XBridgePacketPtr packet)
 {
     DEBUG_TRACE();
 
+
     // size must be == 72 bytes
     if (packet->size() != 72)
     {
@@ -2179,6 +2215,7 @@ bool Session::Impl::processTransactionConfirmedB(XBridgePacketPtr packet)
     uint256 txid(packet->data()+40);
 
     TransactionPtr tr = e.transaction(txid);
+
     if (!packet->verify(tr->a_pk1()) && !packet->verify(tr->b_pk1()))
     {
         LOG() << "invalid packet signature " << __FUNCTION__;
@@ -2220,8 +2257,8 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet)
 {
     DEBUG_TRACE();
 
-    // size must be == 101 bytes
-    if (packet->size() != 101)
+    // size must be == 36 bytes
+    if (packet->size() != 36)
     {
         ERR() << "invalid packet size for xbcTransactionCancel "
               << "need 101 received " << packet->size() << " "
@@ -2266,7 +2303,7 @@ bool Session::Impl::cancelOrRollbackTransaction(const uint256 & txid, const TxCa
     App & app = App::instance();
 
     TransactionDescrPtr xtx = app.transaction(txid);
-    if (!xtx)
+    if (xtx == nullptr)
     {
         return true;
     }
@@ -2317,6 +2354,10 @@ bool Session::Impl::cancelOrRollbackTransaction(const uint256 & txid, const TxCa
 //*****************************************************************************
 bool Session::Impl::finishTransaction(TransactionPtr tr)
 {
+    if (tr == nullptr)
+    {
+        return false;
+    }
     LOG() << "finish transaction <" << tr->id().GetHex() << ">";
 
     if (tr->state() != xbridge::Transaction::trConfirmed)
@@ -2395,6 +2436,11 @@ bool Session::Impl::sendCancelTransaction(const TransactionDescrPtr & tx,
 //*****************************************************************************
 bool Session::Impl::rollbackTransaction(TransactionPtr tr)
 {
+    if (tr == nullptr )
+    {
+        LOG() << "unknown transaction " << tr->id().GetHex() << ">" << __FUNCTION__;
+        return  false;
+    }
     LOG() << "rollback transaction <" << tr->id().GetHex() << ">";
 
     Exchange & e = Exchange::instance();
@@ -2523,6 +2569,7 @@ void Session::checkFinishedTransactions()
     {
         TransactionPtr & ptr = *i;
 
+
         boost::mutex::scoped_lock l(ptr->m_lock);
 
         uint256 txid = ptr->id();
@@ -2603,6 +2650,7 @@ bool Session::Impl::processTransactionFinished(XBridgePacketPtr packet)
 {
     DEBUG_TRACE();
 
+
     if (packet->size() != 32)
     {
         ERR() << "incorrect packet size for xbcTransactionFinished" << __FUNCTION__;
@@ -2615,9 +2663,9 @@ bool Session::Impl::processTransactionFinished(XBridgePacketPtr packet)
     xbridge::App & xapp = xbridge::App::instance();
 
     TransactionDescrPtr xtx = xapp.transaction(txid);
-    if (!xtx)
+    if (xtx == nullptr)
     {
-        // LOG() << "unknown transaction " << HexStr(txid) << " " << __FUNCTION__;
+        LOG() << "unknown transaction " << HexStr(txid) << " " << __FUNCTION__;
         return true;
     }
     if (!packet->verify(xtx->sPubKey))
@@ -2628,7 +2676,7 @@ bool Session::Impl::processTransactionFinished(XBridgePacketPtr packet)
 
     // update transaction state for gui
     xtx->state = TransactionDescr::trFinished;
-
+    xapp.moveTransactionToHistory(txid);
     xuiConnector.NotifyXBridgeTransactionStateChanged(txid);
 
     return true;
@@ -2639,6 +2687,7 @@ bool Session::Impl::processTransactionFinished(XBridgePacketPtr packet)
 bool Session::Impl::processTransactionRollback(XBridgePacketPtr packet)
 {
     DEBUG_TRACE();
+
 
     if (packet->size() != 32)
     {
@@ -2652,7 +2701,7 @@ bool Session::Impl::processTransactionRollback(XBridgePacketPtr packet)
     xbridge::App & xapp = xbridge::App::instance();
 
     TransactionDescrPtr xtx = xapp.transaction(txid);
-    if (!xtx)
+    if (xtx == nullptr)
     {
         LOG() << "unknown transaction " << HexStr(txid) << " " << __FUNCTION__;
         return true;
