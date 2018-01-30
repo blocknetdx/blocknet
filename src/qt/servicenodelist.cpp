@@ -25,7 +25,7 @@ ServicenodeList::ServicenodeList(QWidget* parent) : QWidget(parent),
 {
     ui->setupUi(this);
 
-    ui->startButton->setEnabled(false);
+    ui->startButton->setEnabled(true);
 
     int columnAliasWidth = 100;
     int columnAddressWidth = 200;
@@ -43,18 +43,18 @@ ServicenodeList::ServicenodeList(QWidget* parent) : QWidget(parent),
 
     ui->tableWidgetMyServicenodes->setContextMenuPolicy(Qt::CustomContextMenu);
 
-    //hided start alias buttons until fix/testing
-    ui->startAllButton->setVisible(false);
-    ui->startButton->setVisible(false);
-    ui->startMissingButton->setVisible(false);
+    // Reactivated for testing
+    ui->startAllButton->setVisible(true);
+    ui->startButton->setVisible(true);
+    ui->startMissingButton->setVisible(true);
 
     QAction* startAliasAction = new QAction(tr("Start alias"), this);
     contextMenu = new QMenu();
     contextMenu->addAction(startAliasAction);
 
-    //hided hided start alias context menu until fix/testing
-//    connect(ui->tableWidgetMyServicenodes, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
-//    connect(startAliasAction, SIGNAL(triggered()), this, SLOT(on_startButton_clicked()));
+    // Reactivated for testing
+    connect(ui->tableWidgetMyServicenodes, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
+    connect(startAliasAction, SIGNAL(triggered()), this, SLOT(on_startButton_clicked()));
 
     timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(updateMyNodeList()));
