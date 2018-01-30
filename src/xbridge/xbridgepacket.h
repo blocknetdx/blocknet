@@ -267,9 +267,9 @@ typedef uint32_t crc_t;
 // boost::uint32_t command
 // boost::uint32_t timestamp
 // boost::uint32_t size
+// boost::uint32_t extsize (backward compatibility)
 // boost::uint32_t crc
 //
-// boost::uint32_t rezerved
 // boost::uint32_t rezerved
 // boost::uint32_t rezerved
 //******************************************************************************
@@ -317,13 +317,12 @@ public:
     unsigned char  * header()               { return &m_body[0]; }
     unsigned char  * data()                 { return &m_body[headerSize]; }
 
-    // boost::int32_t int32Data() const { return field32<2>(); }
-
     void    clear()
     {
         m_body.resize(headerSize);
-        commandField() = 0;
-        sizeField() = 0;
+        commandField()   = 0;
+        sizeField()      = 0;
+        __oldSizeField() = 0;
 
         // TODO crc
         // crcField() = 0;
@@ -333,6 +332,7 @@ public:
     {
         m_body.resize(size+headerSize);
         sizeField() = size;
+        __oldSizeField() = sizeField()+__headerDifference;
     }
 
     void    setData(const unsigned char data)
@@ -340,14 +340,16 @@ public:
         m_body.resize(sizeof(data) + headerSize);
         sizeField() = sizeof(data);
         m_body[headerSize] = data;
+        __oldSizeField() = sizeField()+__headerDifference;
     }
 
-    void    setData(const int32_t data)
-    {
-        m_body.resize(sizeof(data) + headerSize);
-        sizeField() = sizeof(data);
-        field32<2>() = data;
-    }
+//    void    setData(const int32_t data)
+//    {
+//        m_body.resize(sizeof(data) + headerSize);
+//        sizeField() = sizeof(data);
+//        field32<2>() = data;
+//        __oldSizeField() = sizeField()+__headerDifference;
+//    }
 
     void    setData(const std::string & data)
     {
@@ -357,26 +359,28 @@ public:
         {
             data.copy((char *)(&m_body[headerSize]), data.size());
         }
+        __oldSizeField() = sizeField()+__headerDifference;
     }
 
-    void    setData(const std::vector<unsigned char> & data, const unsigned int offset = 0)
-    {
-        setData(&data[0], static_cast<uint32_t>(data.size()), offset);
-    }
+//    void    setData(const std::vector<unsigned char> & data, const unsigned int offset = 0)
+//    {
+//        setData(&data[0], static_cast<uint32_t>(data.size()), offset);
+//    }
 
-    void    setData(const unsigned char * data, const uint32_t size, const uint32_t offset = 0)
-    {
-        unsigned int off = offset + headerSize;
-        if (size)
-        {
-            if (m_body.size() < size+off)
-            {
-                m_body.resize(size+off);
-                sizeField() = size+off-headerSize;
-            }
-            memcpy(&m_body[off], data, size);
-        }
-    }
+//    void    setData(const unsigned char * data, const uint32_t size, const uint32_t offset = 0)
+//    {
+//        unsigned int off = offset + headerSize;
+//        if (size)
+//        {
+//            if (m_body.size() < size+off)
+//            {
+//                m_body.resize(size+off);
+//                sizeField() = size+off-headerSize;
+//            }
+//            memcpy(&m_body[off], data, size);
+//            __oldSizeField() = sizeField()+__headerDifference;
+//        }
+//    }
 
 //    template<typename _T>
 //    void append(const _T data)
@@ -393,6 +397,7 @@ public:
         unsigned char * ptr = (unsigned char *)&data;
         std::copy(ptr, ptr+sizeof(data), std::back_inserter(m_body));
         sizeField() = static_cast<uint32_t>(m_body.size()) - headerSize;
+        __oldSizeField() = sizeField()+__headerDifference;
     }
 
     void append(const uint32_t data)
@@ -401,6 +406,7 @@ public:
         unsigned char * ptr = (unsigned char *)&data;
         std::copy(ptr, ptr+sizeof(data), std::back_inserter(m_body));
         sizeField() = static_cast<uint32_t>(m_body.size()) - headerSize;
+        __oldSizeField() = sizeField()+__headerDifference;
     }
 
     void append(const uint64_t data)
@@ -409,6 +415,7 @@ public:
         unsigned char * ptr = (unsigned char *)&data;
         std::copy(ptr, ptr+sizeof(data), std::back_inserter(m_body));
         sizeField() = static_cast<uint32_t>(m_body.size()) - headerSize;
+        __oldSizeField() = sizeField()+__headerDifference;
     }
 
     void append(const unsigned char * data, const int size)
@@ -416,6 +423,7 @@ public:
         m_body.reserve(m_body.size() + size);
         std::copy(data, data+size, std::back_inserter(m_body));
         sizeField() = static_cast<uint32_t>(m_body.size()) - headerSize;
+        __oldSizeField() = sizeField()+__headerDifference;
     }
 
     void append(const std::string & data)
@@ -424,6 +432,7 @@ public:
         std::copy(data.begin(), data.end(), std::back_inserter(m_body));
         m_body.push_back(0);
         sizeField() = static_cast<uint32_t>(m_body.size()) - headerSize;
+        __oldSizeField() = sizeField()+__headerDifference;
     }
 
     void append(const std::vector<unsigned char> & data)
@@ -431,6 +440,7 @@ public:
         m_body.reserve(m_body.size() + data.size());
         std::copy(data.begin(), data.end(), std::back_inserter(m_body));
         sizeField() = static_cast<uint32_t>(m_body.size()) - headerSize;
+        __oldSizeField() = sizeField()+__headerDifference;
     }
 
     bool copyFrom(const std::vector<unsigned char> & data)
@@ -503,15 +513,28 @@ private:
     uint32_t const & commandField() const        { return field32<1>(); }
     uint32_t &       timestampField()            { return field32<2>(); }
     uint32_t const & timestampField() const      { return field32<2>(); }
-    uint32_t &       sizeField()                 { return field32<3>(); }
-    uint32_t const & sizeField() const           { return field32<3>(); }
-    uint32_t &       crcField()                  { return field32<4>(); }
-    uint32_t const & crcField() const            { return field32<4>(); }
+    uint32_t &       sizeField()                 { return field32<4>(); }
+    uint32_t const & sizeField() const           { return field32<4>(); }
+    uint32_t &       crcField()                  { return field32<5>(); }
+    uint32_t const & crcField() const            { return field32<5>(); }
 
     unsigned char *       pubkeyField()          { return &m_body[20]; }
     const unsigned char * pubkeyField() const    { return &m_body[20]; }
     unsigned char *       signatureField()       { return &m_body[53]; }
     const unsigned char * signatureField() const { return &m_body[53]; }
+
+private:
+    // TODO temporary constants for backward compatibility
+    enum
+    {
+        // header: size, version, command, timestamp, rezerved
+        __oldHeaderSize = 8*sizeof(uint32_t),
+        __headerDifference = headerSize - __oldHeaderSize
+    };
+
+    // save size field for backward compatibility
+    uint32_t &       __oldSizeField()              { return field32<3>(); }
+    uint32_t const & __oldSizeField() const        { return field32<3>(); }
 };
 
 typedef std::shared_ptr<XBridgePacket> XBridgePacketPtr;
