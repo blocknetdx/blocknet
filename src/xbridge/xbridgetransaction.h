@@ -53,7 +53,11 @@ public:
         pendingTTL = 60,
 
         // transaction ttl in seconds, 60 min
-        TTL = 3600
+        TTL = 3600,
+
+        // number of blocks ttl
+
+        blocksTTL = 60
     };
 
 public:

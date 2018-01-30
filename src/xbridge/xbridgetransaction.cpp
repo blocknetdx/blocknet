@@ -283,7 +283,7 @@ bool Transaction::isExpiredByBlockNumber() const
     int trBlockHeight = blockindex->nHeight;
     int lastBlockHeight = chainActive.Height();
 
-    if(lastBlockHeight - trBlockHeight > 15)
+    if(lastBlockHeight - trBlockHeight > blocksTTL)
         return true;
 
     return false;
