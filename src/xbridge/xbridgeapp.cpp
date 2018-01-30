@@ -310,8 +310,12 @@ bool App::init(int argc, char *argv[])
     }
 
     // init secp256
-    ECC_Start();
+    if(!ECC_Start()) {
 
+        ERR() << "can't start secp256, xbridgeApp not started " << __FUNCTION__;
+        throw  std::runtime_error("can't start secp256, xbridgeApp not started ");
+
+    }
     // init exchange
     Exchange & e = Exchange::instance();
     e.init();
@@ -329,6 +333,7 @@ bool App::init(int argc, char *argv[])
     }
 
     return true;
+
 }
 
 //*****************************************************************************
@@ -457,21 +462,27 @@ void App::onMessageReceived(const std::vector<unsigned char> & id,
 
     addToKnown(message);
 
+    if (!Session::checkXBridgePacketVersion(message))
+    {
+        // ERR() << "incorrect protocol version <" << packet->version() << "> " << __FUNCTION__;
+        return;
+    }
+
     XBridgePacketPtr packet(new XBridgePacket);
     if (!packet->copyFrom(message))
     {
-        LOG() << "incorrect packet received";
+        LOG() << "incorrect packet received " << __FUNCTION__;
+        return;
+    }
+
+    if (!packet->verify())
+    {
+        LOG() << "unsigned packet or signature error " << __FUNCTION__;
         return;
     }
 
     LOG() << "received message to " << util::base64_encode(std::string((char *)&id[0], 20)).c_str()
              << " command " << packet->command();
-
-    if (!Session::checkXBridgePacketVersion(packet))
-    {
-        // ERR() << "incorrect protocol version <" << packet->version() << "> " << __FUNCTION__;
-        return;
-    }
 
     // check direct session address
     SessionPtr ptr = m_p->getSession(id);
@@ -514,7 +525,13 @@ void App::onBroadcastReceived(const std::vector<unsigned char> & message,
     XBridgePacketPtr packet(new XBridgePacket);
     if (!packet->copyFrom(message))
     {
-        LOG() << "incorrect broadcast packet received";
+        LOG() << "incorrect packet received " << __FUNCTION__;
+        return;
+    }
+
+    if (!packet->verify())
+    {
+        LOG() << "unsigned packet or signature error " << __FUNCTION__;
         return;
     }
 
@@ -550,7 +567,11 @@ bool App::removePackets(const uint256 & txid)
 
     boost::mutex::scoped_lock l(m_p->m_ppLocker);
     size_t removed = m_p->m_pendingPackets.erase(txid);
-    assert(removed < 2 && "duplicate packets in packets queue");
+    if(removed > 1) {
+        ERR() << "duplicate packets in packets queue" << __FUNCTION__;
+        return false;
+    }
+//    assert(removed < 2 && "duplicate packets in packets queue");
 
     return true;
 }
@@ -654,10 +675,13 @@ TransactionDescrPtr App::transaction(const uint256 & id) const
 
     if (m_p->m_historicTransactions.count(id))
     {
-        assert(!result && "duplicate objects");
+        if(result != nullptr) {
+            ERR() << "duplicate transaction " << __FUNCTION__;
+            return result;
+        }
+//        assert(!result && "duplicate objects");
         result = m_p->m_historicTransactions[id];
     }
-
     return result;
 }
 
@@ -716,12 +740,19 @@ void App::moveTransactionToHistory(const uint256 & id)
             xtx = m_p->m_transactions[id];
 
             counter = m_p->m_transactions.erase(id);
-            assert(counter < 2 && "duplicate transaction");
+            if(counter > 1) {
+                ERR() << "duplicate transaction id = " << id.GetHex() << " " << __FUNCTION__;
+            }
+//            assert(counter < 2 && "duplicate transaction");
         }
 
         if (xtx)
         {
-            assert(m_p->m_historicTransactions.count(id) == 0 && "duplicate tx in tx list and history");
+            if(m_p->m_historicTransactions.count(id) != 0) {
+                ERR() << "duplicate tx " << id.GetHex() << " in tx list and history " << __FUNCTION__;
+                return;
+            }
+//            assert(m_p->m_historicTransactions.count(id) == 0 && "duplicate tx in tx list and history");
             m_p->m_historicTransactions[id] = xtx;
         }
     }
@@ -816,8 +847,20 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
 
         entry.rawAddress = connFrom->toXAddr(entry.address);
 
-        assert(entry.signature.size() == 65 && "incorrect signature length, need 20 bytes");
-        assert(entry.rawAddress.size() == 20 && "incorrect raw address length, need 20 bytes");
+        if(entry.signature.size() != 65) {
+
+            ERR() << "incorrect signature length, need 20 bytes " << __FUNCTION__;
+            return xbridge::Error::INVALID_SIGNATURE;
+
+        }
+//        assert(entry.signature.size() == 65 && "incorrect signature length, need 20 bytes");
+        if(entry.rawAddress.size() != 20) {
+
+            ERR() << "incorrect raw address length, need 20 bytes " << __FUNCTION__;
+            return  xbridge::Error::INVALID_ADDRESS;
+
+        }
+//        assert(entry.rawAddress.size() == 20 && "incorrect raw address length, need 20 bytes");
     }
 
     boost::uint32_t timestamp = time(0);
@@ -847,6 +890,25 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     ptr->toAmount     = toAmount;
     ptr->usedCoins    = outputsForUse;
     ptr->blockHash    = blockHash;
+
+    // m key
+    connTo->newKeyPair(ptr->mPubKey, ptr->mPrivKey);
+    assert(ptr->mPubKey.size() == 33 && "bad pubkey size");
+
+    // x key
+    connTo->newKeyPair(ptr->xPubKey, ptr->xPrivKey);
+    assert(ptr->xPubKey.size() == 33 && "bad pubkey size");
+
+#ifdef LOG_KEYPAIR_VALUES
+    LOG() << "generated M keypair " << std::endl <<
+             "    pub    " << HexStr(ptr->mPubKey) << std::endl <<
+             "    pub id " << HexStr(connTo->getKeyId(ptr->mPubKey)) << std::endl <<
+             "    priv   " << HexStr(ptr->mPrivKey);
+    LOG() << "generated X keypair " << std::endl <<
+             "    pub    " << HexStr(ptr->xPubKey) << std::endl <<
+             "    pub id " << HexStr(connTo->getKeyId(ptr->xPubKey)) << std::endl <<
+             "    priv   " << HexStr(ptr->xPrivKey);
+#endif
 
     // try send immediatelly
     sendPendingTransaction(ptr);
@@ -925,6 +987,8 @@ bool App::sendPendingTransaction(const TransactionDescrPtr & ptr)
         }
 
     }
+
+    ptr->packet->sign(ptr->mPubKey, ptr->mPrivKey);
 
     sendPacket(ptr->packet);
 
@@ -1010,14 +1074,45 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
         }
 
         entry.rawAddress = connFrom->toXAddr(entry.address);
+        if(entry.signature.size() != 65) {
 
-        assert(entry.signature.size() == 65 && "incorrect signature length, need 20 bytes");
-        assert(entry.rawAddress.size() == 20 && "incorrect raw address length, need 20 bytes");
+            ERR() << "incorrect signature length, need 20 bytes " << __FUNCTION__;
+            return xbridge::Error::INVALID_SIGNATURE;
+
+        }
+//        assert(entry.signature.size() == 65 && "incorrect signature length, need 20 bytes");
+        if(entry.rawAddress.size() != 20) {
+
+            ERR() << "incorrect raw address length, need 20 bytes " << __FUNCTION__;
+            return  xbridge::Error::INVALID_ADDRESS;
+
+        }
+
+//        assert(entry.rawAddress.size() == 20 && "incorrect raw address length, need 20 bytes");
     }
 
     ptr->from = connFrom->toXAddr(from);
     ptr->to   = connTo->toXAddr(to);
     ptr->usedCoins = outputsForUse;
+
+    // m key
+    connTo->newKeyPair(ptr->mPubKey, ptr->mPrivKey);
+    assert(ptr->mPubKey.size() == 33 && "bad pubkey size");
+
+    // x key
+    connTo->newKeyPair(ptr->xPubKey, ptr->xPrivKey);
+    assert(ptr->xPubKey.size() == 33 && "bad pubkey size");
+
+#ifdef LOG_KEYPAIR_VALUES
+    LOG() << "generated M keypair " << std::endl <<
+             "    pub    " << HexStr(ptr->mPubKey) << std::endl <<
+             "    pub id " << HexStr(connTo->getKeyId(ptr->mPubKey)) << std::endl <<
+             "    priv   " << HexStr(ptr->mPrivKey);
+    LOG() << "generated X keypair " << std::endl <<
+             "    pub    " << HexStr(ptr->xPubKey) << std::endl <<
+             "    pub id " << HexStr(connTo->getKeyId(ptr->xPubKey)) << std::endl <<
+             "    priv   " << HexStr(ptr->xPrivKey);
+#endif
 
     // try send immediatelly
     sendAcceptingTransaction(ptr);
@@ -1074,6 +1169,8 @@ bool App::sendAcceptingTransaction(const TransactionDescrPtr & ptr)
         ptr->packet->append(entry.rawAddress);
         ptr->packet->append(entry.signature);
     }
+
+    ptr->packet->sign(ptr->mPubKey, ptr->mPrivKey);
 
     sendPacket(ptr->hubAddress, ptr->packet);
 
@@ -1144,11 +1241,14 @@ xbridge::Error App::rollbackXBridgeTransaction(const uint256 & id)
 //******************************************************************************
 //******************************************************************************
 bool App::sendCancelTransaction(const uint256 & txid,
-                                       const TxCancelReason & reason)
+                                const TxCancelReason & reason)
 {
     XBridgePacketPtr reply(new XBridgePacket(xbcTransactionCancel));
     reply->append(txid.begin(), 32);
     reply->append(static_cast<uint32_t>(reason));
+
+    TransactionDescrPtr ptr = transaction(txid);
+    reply->sign(ptr->mPubKey, ptr->mPrivKey);
 
     static std::vector<unsigned char> addr(20, 0);
     sendPacket(addr, reply);
@@ -1164,6 +1264,9 @@ bool App::sendRollbackTransaction(const uint256 & txid)
     XBridgePacketPtr reply(new XBridgePacket(xbcTransactionRollback));
     reply->append(txid.begin(), 32);
 
+    TransactionDescrPtr ptr = transaction(txid);
+    reply->sign(ptr->mPubKey, ptr->mPrivKey);
+
     static std::vector<unsigned char> addr(20, 0);
     sendPacket(addr, reply);
 
@@ -1171,13 +1274,19 @@ bool App::sendRollbackTransaction(const uint256 & txid)
     return true;
 }
 
+//******************************************************************************
+//******************************************************************************
 bool App::isValidAddress(const string &address) const
 {
+    // TODO need refactoring
     return ((address.size() >= 32) && (address.size() <= 36));
 }
 
+//******************************************************************************
+//******************************************************************************
 Error App::checkAcceptParams(const uint256 &id, TransactionDescrPtr &ptr)
 {
+    // TODO need refactoring
     ptr = transaction(id);
 
     if(!ptr) {
@@ -1188,10 +1297,13 @@ Error App::checkAcceptParams(const uint256 &id, TransactionDescrPtr &ptr)
     return checkAmount(ptr->toCurrency, ptr->toAmount);
 }
 
+//******************************************************************************
+//******************************************************************************
 Error App::checkCreateParams(const string &fromCurrency,
                              const string &toCurrency,
                              const uint64_t &fromAmount)
 {
+    // TODO need refactoring
     if (fromCurrency.size() > 8 || toCurrency.size() > 8) {
         WARN() << "invalid currency " << __FUNCTION__;
         return xbridge::INVALID_CURRENCY;
@@ -1199,6 +1311,8 @@ Error App::checkCreateParams(const string &fromCurrency,
     return  checkAmount(fromCurrency, fromAmount);
 }
 
+//******************************************************************************
+//******************************************************************************
 Error App::checkAmount(const string &currency, const uint64_t &amount)
 {
     // check amount
