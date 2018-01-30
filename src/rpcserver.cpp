@@ -365,16 +365,16 @@ static const CRPCCommand vRPCCommands[] =
         {"wallet", "walletpassphrasechange", &walletpassphrasechange, true, false, true},
         {"wallet", "walletpassphrase", &walletpassphrase, true, false, true},
 
-        {"xbridge", "dxGetTransactions",                    &dxGetTransactions,          true, true, true},
-        {"xbridge", "dxGetTransactionsHistory",             &dxGetTransactionsHistory,   true, true, true},
-        {"xbridge", "dxGetTransactionInfo",                 &dxGetTransactionInfo,       true, true, true},
-        {"xbridge", "dxGetCurrencies",                      &dxGetCurrencies,            true, true, true},
+        {"xbridge", "dxGetOrderss",                    &dxGetOrderss,          true, true, true},
+        {"xbridge", "dxGetOrderssHistory",             &dxGetOrderssHistory,   true, true, true},
+        {"xbridge", "dxGetOrdersInfo",                 &dxGetOrdersInfo,       true, true, true},
+        {"xbridge", "dxGetLocalTokens",                     &dxGetLocalTokens,           true, true, true},
+        {"xbridge", "dxGetNetworkTokens",                   &dxGetNetworkTokens,         true, true, true},
         {"xbridge", "dxCreateTransaction",                  &dxCreateTransaction,        true, true, true},
         {"xbridge", "dxAcceptTransaction",                  &dxAcceptTransaction,        true, true, true},
         {"xbridge", "dxCancelTransaction",                  &dxCancelTransaction,        true, true, true},
         {"xbridge", "dxGetTradeHistory",                    &dxGetTradeHistory,          true, true, true},
-        {"xbridge", "dxGetOrderBook",                       &dxGetOrderBook,             true, true, true},
-        {"xbridge", "dxrollbackTransaction",                &dxrollbackTransaction,      true, true, true}
+        {"xbridge", "dxGetOrderBook",                       &dxGetOrderBook,             true, true, true}
     #endif // ENABLE_WALLET
 };
 

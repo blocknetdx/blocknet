@@ -59,11 +59,11 @@ uint64_t xBridgeAmountFromReal(double val)
   * The open transactions go first.
   */
 
-Value dxGetTransactions(const Array & params, bool fHelp)
+Value dxGetOrderss(const Array & params, bool fHelp)
 {
     if (fHelp) {
 
-        throw runtime_error("dxGetTransactions\nList transactions.");
+        throw runtime_error("dxGetOrderss\nList transactions.");
 
     }
     if (params.size() > 0) {
@@ -116,11 +116,11 @@ Value dxGetTransactions(const Array & params, bool fHelp)
 //*****************************************************************************
 //*****************************************************************************
 
-Value dxGetTransactionsHistory(const Array & params, bool fHelp)
+Value dxGetOrderssHistory(const Array & params, bool fHelp)
 {
     if (fHelp) {
 
-        throw runtime_error("dxGetTransactionsHistory "
+        throw runtime_error("dxGetOrderssHistory "
                             "(ALL - optional parameter, if specified then all transactions are shown, "
                             "not only successfully completed ");
 
@@ -307,11 +307,11 @@ Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp)
 //*****************************************************************************
 //*****************************************************************************
 
-Value dxGetTransactionInfo(const Array & params, bool fHelp)
+Value dxGetOrdersInfo(const Array & params, bool fHelp)
 {
     if (fHelp) {
 
-         throw runtime_error("dxGetTransactionInfo (id) Transaction info.");
+         throw runtime_error("dxGetOrdersInfo (id) Transaction info.");
 
     }
     if (params.size() != 1) {
@@ -360,11 +360,11 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
 
 //******************************************************************************
 //******************************************************************************
-Value dxGetCurrencies(const Array & params, bool fHelp)
+Value dxGetLocalTokens(const Array & params, bool fHelp)
 {
     if (fHelp) {
 
-        throw runtime_error("dxGetCurrencies\nList currencies.");
+        throw runtime_error("dxGetLocalTokens\nList currencies supported by the wallet.");
 
     }
     if (params.size() > 0) {
@@ -376,6 +376,38 @@ Value dxGetCurrencies(const Array & params, bool fHelp)
         return  error;
 
     }
+
+    Object obj;
+
+    std::vector<std::string> currencies = xbridge::App::instance().availableCurrencies();
+    for (std::string currency : currencies) {
+
+        obj.emplace_back(Pair(currency, ""));
+
+    }
+    return obj;
+}
+
+//******************************************************************************
+//******************************************************************************
+Value dxGetNetworkTokens(const Array & params, bool fHelp)
+{
+    if (fHelp) {
+
+        throw runtime_error("dxGetNetworkTokens\nList currencies supported by the network.");
+
+    }
+    if (params.size() > 0) {
+
+        Object error;
+        error.emplace_back(Pair("error",
+                                "This function does not accept any parameter"));
+        error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
+        return  error;
+
+    }
+
+    // Ivanenko: TODO : implement
 
     Object obj;
 
