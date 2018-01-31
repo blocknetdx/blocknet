@@ -521,6 +521,12 @@ void App::onBroadcastReceived(const std::vector<unsigned char> & message,
 
     addToKnown(message);
 
+    if (!Session::checkXBridgePacketVersion(message))
+    {
+        // ERR() << "incorrect protocol version <" << packet->version() << "> " << __FUNCTION__;
+        return;
+    }
+
     // process message
     XBridgePacketPtr packet(new XBridgePacket);
     if (!packet->copyFrom(message))
@@ -536,12 +542,6 @@ void App::onBroadcastReceived(const std::vector<unsigned char> & message,
     }
 
     LOG() << "broadcast message, command " << packet->command();
-
-    if (!Session::checkXBridgePacketVersion(packet))
-    {
-        // ERR() << "incorrect protocol version <" << packet->version() << "> " << __FUNCTION__;
-        return;
-    }
 
     SessionPtr ptr = m_p->getSession();
     if (ptr)

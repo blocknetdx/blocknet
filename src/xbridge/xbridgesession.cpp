@@ -598,6 +598,8 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
             reply->append(static_cast<uint32_t>(boost::posix_time::to_time_t(tr->createdTime())));
             reply->append(tr->blockHash().begin(), 32);
 
+            reply->sign(e.pubKey(), e.privKey());
+
             sendPacketBroadcast(reply);
         }
     }
@@ -843,10 +845,10 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet)
 
     DEBUG_TRACE();
 
-    if (packet->size() != 85 + 32 && packet->size() != 117 + 32)
+    if (packet->size() != 52)
     {
         ERR() << "incorrect packet size for xbcTransactionHold "
-              << "need 117 or 149 received " << packet->size() << " "
+              << "need 52 received " << packet->size() << " "
               << __FUNCTION__;
         return false;
     }
