@@ -52,8 +52,8 @@ bool CServicenodeSync::IsBlockchainSynced()
     CBlockIndex* pindex = chainActive.Tip();
     if (pindex == NULL) return false;
 
-
-    if (pindex->nTime + 60 * 60 < GetTime())
+    // Do not stall testnet
+    if (Params().NetworkID() == CBaseChainParams::MAIN && pindex->nTime + 60 * 60 < GetTime())
         return false;
 
     fBlockchainSynced = true;

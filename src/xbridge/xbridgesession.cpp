@@ -2378,7 +2378,7 @@ bool Session::Impl::finishTransaction(TransactionPtr tr)
     Exchange & e = Exchange::instance();
     if (!e.isStarted())
     {
-        return;
+        return false;
     }
 
     {
@@ -2455,7 +2455,7 @@ bool Session::Impl::rollbackTransaction(TransactionPtr tr)
     Exchange & e = Exchange::instance();
     if (!e.isStarted())
     {
-        return;
+        return false;
     }
 
     if (tr->state() >= xbridge::Transaction::trCreated)
