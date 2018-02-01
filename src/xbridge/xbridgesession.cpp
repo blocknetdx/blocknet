@@ -1209,26 +1209,17 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet)
 
     xtx->role = role;
 
-    WalletConnectorPtr conn = xapp.connectorByCurrency(xtx->toCurrency);
-    if (!conn)
-    {
-        WARN() << "no connector for <" << xtx->toCurrency << "> " << __FUNCTION__;
-        return true;
-    }
-
-    // m key
-    conn->newKeyPair(xtx->mPubKey, xtx->mPrivKey);
-    if(xtx->mPubKey.size() != 33) {
-
-        ERR() << "bad pubkey size " << __FUNCTION__;
-        return false;
-
-    }
-
 //    // x key
     uint256 datatxtd;
     if (role == 'A')
     {
+        WalletConnectorPtr conn = xapp.connectorByCurrency(xtx->toCurrency);
+        if (!conn)
+        {
+            WARN() << "no connector for <" << xtx->toCurrency << "> " << __FUNCTION__;
+            return true;
+        }
+
         conn->newKeyPair(xtx->xPubKey, xtx->xPrivKey);
 
         if(xtx->xPubKey.size() != 33) 
