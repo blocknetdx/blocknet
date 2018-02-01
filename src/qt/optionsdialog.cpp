@@ -93,6 +93,7 @@ OptionsDialog::OptionsDialog(QWidget* parent, bool enableWallet) : QDialog(paren
         QFileInfo fileInfo = list.at(i);
         ui->theme->addItem(fileInfo.fileName(), QVariant(fileInfo.fileName()));
     }
+    //ui->theme->addItem(fileInfo.fileName(), QVariant(fileInfo.fileName()));
 
     /* Language selector */
     QDir translations(":translations");
