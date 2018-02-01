@@ -1271,7 +1271,7 @@ bool Session::Impl::processTransactionInitialized(XBridgePacketPtr packet)
     // size must be eq 104 bytes
     if (packet->size() != 104)
     {
-        ERR() << "invalid packet size for xbcTransactionHoldApply "
+        ERR() << "invalid packet size for xbcTransactionInitialized "
               << "need 104 received " << packet->size() << " "
               << __FUNCTION__;
         return false;
