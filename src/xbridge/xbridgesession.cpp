@@ -274,8 +274,8 @@ bool Session::processPacket(XBridgePacketPtr packet)
 
     if (m_p->m_handlers.count(c) == 0)
     {
+        ERR() << "unknown command code <" << c << "> " << __FUNCTION__;
         m_p->m_handlers[xbcInvalid](packet);
-        // ERR() << "incorrect command code <" << c << "> " << __FUNCTION__;
         return false;
     }
 
@@ -295,7 +295,7 @@ bool Session::processPacket(XBridgePacketPtr packet)
 bool Session::Impl::processInvalid(XBridgePacketPtr packet)
 {
     // DEBUG_TRACE();
-    LOG() << "xbcInvalid instead of " << packet->command();
+    // LOG() << "xbcInvalid instead of " << packet->command();
     return true;
 }
 
