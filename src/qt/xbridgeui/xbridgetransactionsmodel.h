@@ -66,7 +66,9 @@ public:
         FirstColumn = Total,
         Size        = 1,
         BID         = 2,
-        State       = 3,
+        Date        = 3,
+        Hash        = 4,
+        State       = 5,
         LastColumn  = State
     };
 

@@ -11,6 +11,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <QApplication>
+#include <QDateTime>
 //******************************************************************************
 //******************************************************************************
 XBridgeTransactionsModel::XBridgeTransactionsModel()
@@ -18,6 +19,8 @@ XBridgeTransactionsModel::XBridgeTransactionsModel()
     m_columns << trUtf8("TOTAL")
               << trUtf8("SIZE")
               << trUtf8("BID")
+              << trUtf8("DATE")
+              << trUtf8("HASH")
               << trUtf8("STATE");
 
 
@@ -76,36 +79,45 @@ QVariant XBridgeTransactionsModel::data(const QModelIndex & idx, int role) const
     {
         switch (idx.column())
         {
-            case Total:
-            {
-                double amount = (double)d->fromAmount / xbridge::TransactionDescr::COIN;
-                QString text = QString("%1 %2").arg(QString::number(amount, 'f', 12).remove(QRegExp("\\.?0+$"))).arg(QString::fromStdString(d->fromCurrency));
+        case Total:
+        {
+            double amount = (double)d->fromAmount / xbridge::TransactionDescr::COIN;
+            QString text = QString("%1 %2").arg(QString::number(amount, 'f', 12).remove(QRegExp("\\.?0+$"))).arg(QString::fromStdString(d->fromCurrency));
 
-                return QVariant(text);
-            }
-            case Size:
-            {
-                double amount = (double)d->toAmount / xbridge::TransactionDescr::COIN;
-                QString text = QString("%1 %2").arg(QString::number(amount, 'f', 12).remove(QRegExp("\\.?0+$"))).arg(QString::fromStdString(d->toCurrency));
+            return QVariant(text);
+        }
+        case Size:
+        {
+            double amount = (double)d->toAmount / xbridge::TransactionDescr::COIN;
+            QString text = QString("%1 %2").arg(QString::number(amount, 'f', 12).remove(QRegExp("\\.?0+$"))).arg(QString::fromStdString(d->toCurrency));
 
-                return QVariant(text);
-            }
-            case BID:
-            {
-                double amountTotal = (double)d->fromAmount / xbridge::TransactionDescr::COIN;
-                double amountSize = (double)d->toAmount / xbridge::TransactionDescr::COIN;
-                double bid = amountTotal / amountSize;
-                QString text = QString::number(bid, 'f', 12).remove(QRegExp("\\.?0+$"));
+            return QVariant(text);
+        }
+        case BID:
+        {
+            double amountTotal = (double)d->fromAmount / xbridge::TransactionDescr::COIN;
+            double amountSize = (double)d->toAmount / xbridge::TransactionDescr::COIN;
+            double bid = amountTotal / amountSize;
+            QString text = QString::number(bid, 'f', 12).remove(QRegExp("\\.?0+$"));
 
-                return QVariant(text);
-            }
-            case State:
-            {
-                return QVariant(transactionState(d->state));
-            }
+            return QVariant(text);
+        }
+        case Date:
+        {
+            return QVariant(QDateTime::fromTime_t(boost::posix_time::to_time_t(d->created)).
+                            toString("dd/MM/yyyy HH:MM:ss"));
+        }
+        case Hash:
+        {
+            return QString::fromStdString(d->blockHash.GetHex()).right(10);
+        }
+        case State:
+        {
+            return QVariant(transactionState(d->state));
+        }
 
-            default:
-                return QVariant();
+        default:
+            return QVariant();
         }
     }
 
