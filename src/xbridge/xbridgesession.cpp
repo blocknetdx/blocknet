@@ -1222,7 +1222,7 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet)
 
         conn->newKeyPair(xtx->xPubKey, xtx->xPrivKey);
 
-        if(xtx->xPubKey.size() != 33) 
+        if(xtx->xPubKey.size() != 33)
         {
             ERR() << "bad pubkey size " << __FUNCTION__;
             return false;
@@ -1230,7 +1230,7 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet)
 
         // send blocknet tx with hash of X
         std::vector<unsigned char> xid = conn->getKeyId(xtx->xPubKey);
-        if(xid.size() != 20) 
+        if(xid.size() != 20)
         {
             ERR() << "bad pubkey id size " << __FUNCTION__;
             return false;
@@ -2529,6 +2529,7 @@ void Session::sendListOfTransactions()
         packet->append(ptr->b_amount());
         packet->append(m_p->m_myid);
         packet->append(static_cast<uint32_t>(boost::posix_time::to_time_t(ptr->createdTime())));
+        packet->append(ptr->blockHash().begin(), 32);
 
         packet->sign(e.pubKey(), e.privKey());
 
