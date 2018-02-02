@@ -108,16 +108,17 @@ bool BccWalletConnector::createRefundTransaction(const std::vector<std::pair<std
     tx->vout      = txUnsigned->vout;
     tx->nLockTime = txUnsigned->nLockTime;
 
+    rawTx = tx->toString();
+
     std::string json;
     std::string reftxid;
-    if (!rpc::decodeRawTransaction(m_user, m_passwd, m_ip, m_port, tx->toString(), reftxid, json))
+    if (!rpc::decodeRawTransaction(m_user, m_passwd, m_ip, m_port, rawTx, reftxid, json))
     {
         LOG() << "decode signed transaction error, transaction canceled " << __FUNCTION__;
 //            sendCancelTransaction(xtx, crRpcError);
             return true;
     }
 
-    rawTx = tx->toString();
     txId  = reftxid;
 
     return true;
@@ -176,16 +177,17 @@ bool BccWalletConnector::createPaymentTransaction(const std::vector<std::pair<st
     tx->vin.push_back(CTxIn(txUnsigned->vin[0].prevout, redeem));
     tx->vout      = txUnsigned->vout;
 
+    rawTx = tx->toString();
+
     std::string json;
     std::string paytxid;
-    if (!rpc::decodeRawTransaction(m_user, m_passwd, m_ip, m_port, tx->toString(), paytxid, json))
+    if (!rpc::decodeRawTransaction(m_user, m_passwd, m_ip, m_port, rawTx, paytxid, json))
     {
             LOG() << "decode signed transaction error, transaction canceled " << __FUNCTION__;
 //                sendCancelTransaction(xtx, crRpcError);
         return true;
     }
 
-    rawTx = tx->toString();
     txId  = paytxid;
 
     return true;

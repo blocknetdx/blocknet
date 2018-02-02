@@ -1557,7 +1557,8 @@ bool Session::Impl::processTransactionCreate(XBridgePacketPtr packet)
         if (!connFrom->createDepositTransaction(inputs, outputs, xtx->binTxId, xtx->binTx))
         {
             // cancel transaction
-            LOG() << "deposit not created, transaction canceled " << __FUNCTION__;
+            ERR() << "deposit not created, transaction canceled " << __FUNCTION__;
+            TXERR() << "deposit sendrawtransaction " << xtx->binTx;
             sendCancelTransaction(xtx, crRpcError);
             return true;
         }
@@ -1595,7 +1596,8 @@ bool Session::Impl::processTransactionCreate(XBridgePacketPtr packet)
                                                xtx->refTxId, xtx->refTx))
         {
             // cancel transaction
-            LOG() << "refund transaction not created, transaction canceled " << __FUNCTION__;
+            ERR() << "refund transaction not created, transaction canceled " << __FUNCTION__;
+            TXERR() << "refund sendrawtransaction " << xtx->refTx;
             sendCancelTransaction(xtx, crRpcError);
             return true;
         }
@@ -1932,7 +1934,8 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet)
                                             xtx->payTxId, xtx->payTx))
         {
             // cancel transaction
-            LOG() << "payment transaction create error, transaction canceled " << __FUNCTION__;
+            ERR() << "payment transaction create error, transaction canceled " << __FUNCTION__;
+            TXERR() << "payment A sendrawtransaction " << xtx->payTx;
             sendCancelTransaction(xtx, crRpcError);
             return true;
         }
@@ -2142,7 +2145,8 @@ bool Session::Impl::processTransactionConfirmB(XBridgePacketPtr packet)
                                             xtx->payTxId, xtx->payTx))
         {
             // cancel transaction
-            LOG() << "payment transaction create error, transaction canceled " << __FUNCTION__;
+            ERR() << "payment transaction create error, transaction canceled " << __FUNCTION__;
+            TXERR() << "payment B sendrawtransaction " << xtx->payTx;
             sendCancelTransaction(xtx, crRpcError);
             return true;
         }
