@@ -81,7 +81,7 @@ void XBridgeTransactionsView::setupUi()
 #if QT_VERSION <0x050000
     header->setResizeMode(XBridgeTransactionsModel::Date, QHeaderView::Stretch);
 #else
-    header->setSectionResizeMode(XBridgeTransactionsModel::Date, QHeaderView::Stretch);
+    header->setSectionResizeMode(XBridgeTransactionsModel::Hash, QHeaderView::Stretch);
 #endif
 
     header->resizeSection(XBridgeTransactionsModel::Total,      80);
@@ -161,7 +161,7 @@ void XBridgeTransactionsView::setupUi()
 #if QT_VERSION <0x050000
     header->setResizeMode(XBridgeTransactionsModel::Date, QHeaderView::Stretch);
 #else
-    historicHeader->setSectionResizeMode(XBridgeTransactionsModel::Date, QHeaderView::Stretch);
+    historicHeader->setSectionResizeMode(XBridgeTransactionsModel::Hash, QHeaderView::Stretch);
 #endif
 
     historicHeader->resizeSection(XBridgeTransactionsModel::Total,      80);

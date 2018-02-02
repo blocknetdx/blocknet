@@ -109,7 +109,7 @@ QVariant XBridgeTransactionsModel::data(const QModelIndex & idx, int role) const
         }
         case Hash:
         {
-            return QString::fromStdString(d->blockHash.GetHex()).right(10);
+            return QString::fromStdString(d->blockHash.GetHex())/*.right(10)*/;
         }
         case State:
         {
