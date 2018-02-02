@@ -387,8 +387,6 @@ void XBridgeTransactionsModel::onTransactionStateChanged(const uint256 & id)
     {
         if (m_transactions[i]->id == id)
         {
-            std::cout << "old transaction state = " << m_transactions[i]->strState() << std::endl;
-            std::cout << "new transaction state = " << xbridge::App::instance().transaction(id)->strState() << std::endl;
             // found
             emit dataChanged(index(i, FirstColumn), index(i, LastColumn));
         }

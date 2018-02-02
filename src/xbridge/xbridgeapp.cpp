@@ -1004,6 +1004,9 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
                                     const std::string & from,
                                     const std::string & to)
 {
+    std::cerr << "id = " << id.GetHex() << std::endl
+              << "from = " << from << std::endl
+              << "to = " << to << " " << __FUNCTION__ << std::endl ;
     TransactionDescrPtr ptr;
     const auto res = checkAcceptParams(id, ptr);
     if(res != xbridge::SUCCESS) {
