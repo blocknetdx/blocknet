@@ -156,6 +156,7 @@ bool storeDataIntoBlockchain(const std::vector<unsigned char> & dstAddress,
                              string & txid)
 {
     const static std::string createCommand("createrawtransaction");
+    const static std::string fundCommand("fundrawtransaction");
     const static std::string signCommand("signrawtransaction");
     const static std::string sendCommand("sendrawtransaction");
 
@@ -175,47 +176,9 @@ bool storeDataIntoBlockchain(const std::vector<unsigned char> & dstAddress,
         addr.Set(CKeyID(id));
         outputs.push_back(Pair(addr.ToString(), amount));
 
-        std::vector<COutput> vCoins;
-        pwalletMain->AvailableCoins(vCoins, true, nullptr);
-        // model->wallet->AvailableCoins(vCoins, true, nullptr);
-
         uint64_t inamount = 0;
         uint64_t fee = 0;
         std::vector<COutput> used;
-
-        for (const COutput & out : vCoins)
-        {
-            inamount += out.tx->vout[out.i].nValue;
-
-            used.push_back(out);
-
-            // (148*inputCount + 34*outputCount + 10) + data
-            uint32_t bytes = 2 * ((148*used.size()) + (34*2) + 10 + (8+2+data.size()));
-            fee = pwalletMain->GetMinimumFee(bytes, nTxConfirmTarget, mempool);
-
-            if (amount >= (fee + amount*COIN))
-            {
-                break;
-            }
-        }
-
-        if (inamount < (fee + amount*COIN))
-        {
-            throw std::runtime_error("No money");
-        }
-        else if (inamount > (fee + amount*COIN))
-        {
-            // rest
-            CReserveKey rkey(pwalletMain);
-            CPubKey pk;
-            if (!rkey.GetReservedKey(pk))
-            {
-                throw std::runtime_error("No key");
-            }
-            CBitcoinAddress addr(pk.GetID());
-            uint64_t rest = inamount - (fee + amount*COIN);
-            outputs.push_back(Pair(addr.ToString(), (double)rest/COIN));
-        }
 
         Array inputs;
         for (const COutput & out : used)
@@ -241,6 +204,27 @@ bool storeDataIntoBlockchain(const std::vector<unsigned char> & dstAddress,
             }
 
             rawtx = result.get_str();
+        }
+
+        {
+            Array params;
+            params.push_back(rawtx);
+
+            // call fund
+            result = tableRPC.execute(fundCommand, params);
+            if (result.type() != obj_type)
+            {
+                throw std::runtime_error("Fund transaction command finished with error");
+            }
+
+            Object obj = result.get_obj();
+            const Value  & tx = find_value(obj, "hex");
+            if (tx.type() != str_type)
+            {
+                throw std::runtime_error("Fund transaction error or not completed");
+            }
+
+            rawtx = tx.get_str();
         }
 
         {
