@@ -441,7 +441,7 @@ Value decoderawtransaction(const Array& params, bool fHelp)
 
     RPCTypeCheck(params, list_of(str_type));
 
-    CTransaction tx;
+    CMutableTransaction tx;
 
     if (!DecodeHexTx(tx, params[0].get_str()))
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "TX decode failed");
@@ -489,6 +489,194 @@ Value decodescript(const Array& params, bool fHelp)
 
     r.push_back(Pair("p2sh", CBitcoinAddress(CScriptID(script)).ToString()));
     return r;
+}
+
+Value fundrawtransaction(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() < 1 || params.size() > 2)
+    {
+        throw runtime_error(
+                            "fundrawtransaction \"hexstring\" ( options )\n"
+                            "\nAdd inputs to a transaction until it has enough in value to meet its out value.\n"
+                            "This will not modify existing inputs, and will add at most one change output to the outputs.\n"
+                            "No existing outputs will be modified unless \"subtractFeeFromOutputs\" is specified.\n"
+                            "Note that inputs which were signed may need to be resigned after completion since in/outputs have been added.\n"
+                            "The inputs added will not be signed, use signrawtransaction for that.\n"
+                            "Note that all existing inputs must have their previous output transaction be in the wallet.\n"
+                            "Note that all inputs selected must be of standard form and P2SH scripts must be\n"
+                            "in the wallet using importaddress or addmultisigaddress (to calculate fees).\n"
+                            "You can see whether this is the case by checking the \"solvable\" field in the listunspent output.\n"
+                            "Only pay-to-pubkey, multisig, and P2SH versions thereof are currently supported for watch-only\n"
+                            "\nArguments:\n"
+                            "1. \"hexstring\"           (string, required) The hex string of the raw transaction\n"
+                            "2. options                 (object, optional)\n"
+                            "   {\n"
+                            "     \"changeAddress\"          (string, optional, default pool address) The platincoin address to receive the change\n"
+                            "     \"changePosition\"         (numeric, optional, default random /not implemented/) The index of the change output\n"
+                            "     \"includeWatching\"        (boolean, optional, default false) Also select inputs which are watch only\n"
+                            "     \"lockUnspents\"           (boolean, optional, default false) Lock selected unspent outputs\n"
+                            "     \"reserveChangeKey\"       (boolean, optional, default true) Reserves the change output key from the keypool\n"
+                            "     \"feeRate\"                (numeric, optional, default not set: makes wallet determine the fee) Set a specific feerate (BLOCK per KB)\n"
+                            "     \"subtractFeeFromOutputs\" (array, optional /not implemented/) A json array of integers.\n"
+                            "                              The fee will be equally deducted from the amount of each specified output.\n"
+                            "                              The outputs are specified by their zero-based index, before any change output is added.\n"
+                            "                              Those recipients will receive less platincoins than you enter in their corresponding amount field.\n"
+                            "                              If no outputs are specified here, the sender pays the fee.\n"
+                            "                                  [vout_index,...]\n"
+                            "   }\n"
+                            "                         for backward compatibility: passing in a true instead of an object will result in {\"includeWatching\":true}\n"
+                            "\nResult:\n"
+                            "{\n"
+                            "  \"hex\":       \"value\", (string)  The resulting raw transaction (hex-encoded string)\n"
+                            "  \"fee\":       n,         (numeric) Fee in BLOCK the resulting transaction pays\n"
+                            "  \"changepos\": n          (numeric) The position of the added change output, or -1\n"
+                            "}\n"
+                            "\nExamples:\n"
+                            "\nCreate a transaction with no inputs\n"
+                            + HelpExampleCli("createrawtransaction", "\"[]\" \"{\\\"myaddress\\\":0.01}\"") +
+                            "\nAdd sufficient unsigned inputs to meet the output value\n"
+                            + HelpExampleCli("fundrawtransaction", "\"rawtransactionhex\"") +
+                            "\nSign the transaction\n"
+                            + HelpExampleCli("signrawtransaction", "\"fundedtransactionhex\"") +
+                            "\nSend the transaction\n"
+                            + HelpExampleCli("sendrawtransaction", "\"signedtransactionhex\"")
+                            );
+    }
+
+    RPCTypeCheck(params, list_of(str_type), true);
+
+    CTxDestination changeAddress = CNoDestination();
+    int changePosition = -1;
+    bool includeWatching = false;
+    bool lockUnspents = false;
+    bool reserveChangeKey = true;
+    CFeeRate feeRate = CFeeRate(0);
+    bool overrideEstimatedFeerate = false;
+    Array subtractFeeFromOutputs;
+    std::set<int> setSubtractFeeFromOutputs;
+
+    if (params.size() > 1)
+    {
+        if (params[1].type() == bool_type)
+        {
+            // backward compatibility bool only fallback
+            includeWatching = params[1].get_bool();
+        }
+        else
+        {
+            RPCTypeCheck(params, list_of(str_type)(obj_type));
+
+            Object options = params[1].get_obj();
+
+            RPCTypeCheck(options,
+                         map_list_of("changeAddress",          str_type)
+                                    ("changePosition",         int_type)
+                                    ("includeWatching",        bool_type)
+                                    ("lockUnspents",           bool_type)
+                                    ("reserveChangeKey",       bool_type)
+                                    ("feeRate",                null_type) // will be checked below
+                                    ("subtractFeeFromOutputs", array_type),
+                         true);
+
+            Value v = find_value(options, "changeAddress");
+            if (v.type() != null_type)
+            {
+                CBitcoinAddress address(v.get_str());
+                if (!address.IsValid())
+                {
+                    throw JSONRPCError(RPC_INVALID_PARAMETER, "changeAddress must be a valid platincoin address");
+                }
+                changeAddress = address.Get();
+            }
+
+            v = find_value(options, "changePosition");
+            if (v.type() != null_type)
+            {
+                changePosition = v.get_int();
+            }
+
+            v = find_value(options, "includeWatching");
+            if (v.type() != null_type)
+            {
+                includeWatching = v.get_bool();
+            }
+
+            v = find_value(options, "lockUnspents");
+            if (v.type() != null_type)
+            {
+                lockUnspents = v.get_bool();
+            }
+
+            v = find_value(options, "reserveChangeKey");
+            if (v.type() != null_type)
+            {
+                reserveChangeKey = v.get_bool();
+            }
+
+            v = find_value(options, "feeRate");
+            if (v.type() != null_type)
+            {
+                feeRate = CFeeRate(AmountFromValue(v));
+                overrideEstimatedFeerate = true;
+            }
+
+            v = find_value(options, "subtractFeeFromOutputs");
+            if (v.type() != null_type)
+            {
+                subtractFeeFromOutputs = v.get_array();
+            }
+        }
+    }
+
+    // parse hex string from parameter
+    CMutableTransaction tx;
+    if (!DecodeHexTx(tx, params[0].get_str()))
+    {
+        throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "TX decode failed");
+    }
+
+    if (tx.vout.size() == 0)
+    {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "TX must have at least one output");
+    }
+
+    if (changePosition != -1 && (changePosition < 0 || (unsigned int)changePosition > tx.vout.size()))
+    {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "changePosition out of bounds");
+    }
+
+    for (unsigned int idx = 0; idx < subtractFeeFromOutputs.size(); idx++)
+    {
+        int pos = subtractFeeFromOutputs[idx].get_int();
+        if (setSubtractFeeFromOutputs.count(pos))
+        {
+            throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Invalid parameter, duplicated position: %d", pos));
+        }
+        if (pos < 0)
+        {
+            throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Invalid parameter, negative position: %d", pos));
+        }
+        if (pos >= int(tx.vout.size()))
+        {
+            throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Invalid parameter, position too large: %d", pos));
+        }
+        setSubtractFeeFromOutputs.insert(pos);
+    }
+
+    CAmount nFeeOut;
+    string strFailReason;
+
+    if (!pwalletMain->FundTransaction(tx, nFeeOut, overrideEstimatedFeerate, feeRate, changePosition, strFailReason, includeWatching, lockUnspents, setSubtractFeeFromOutputs, reserveChangeKey, changeAddress))
+    {
+        throw JSONRPCError(RPC_INTERNAL_ERROR, strFailReason);
+    }
+
+    Object result;
+    result.push_back(Pair("hex",       EncodeHexTx(tx)));
+    result.push_back(Pair("changepos", changePosition));
+    result.push_back(Pair("fee",       ValueFromAmount(nFeeOut)));
+
+    return result;
 }
 
 Value signrawtransaction(const Array& params, bool fHelp)
@@ -719,7 +907,7 @@ Value sendrawtransaction(const Array& params, bool fHelp)
     RPCTypeCheck(params, list_of(str_type)(bool_type));
 
     // parse hex string from parameter
-    CTransaction tx;
+    CMutableTransaction tx;
     if (!DecodeHexTx(tx, params[0].get_str()))
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "TX decode failed");
     uint256 hashTx = tx.GetHash();

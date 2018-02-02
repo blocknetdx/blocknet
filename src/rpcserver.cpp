@@ -285,12 +285,13 @@ static const CRPCCommand vRPCCommands[] =
 #endif
 
         /* Raw transactions */
-        {"rawtransactions", "createrawtransaction", &createrawtransaction, true, false, false},
-        {"rawtransactions", "decoderawtransaction", &decoderawtransaction, true, false, false},
-        {"rawtransactions", "decodescript", &decodescript, true, false, false},
-        {"rawtransactions", "getrawtransaction", &getrawtransaction, true, false, false},
-        {"rawtransactions", "sendrawtransaction", &sendrawtransaction, false, false, false},
-        {"rawtransactions", "signrawtransaction", &signrawtransaction, false, false, false}, /* uses wallet if enabled */
+        {"rawtransactions", "createrawtransaction", &createrawtransaction, true,  false, false},
+        {"rawtransactions", "fundrawtransaction",   &fundrawtransaction,   false, false, false },
+        {"rawtransactions", "decoderawtransaction", &decoderawtransaction, true,  false, false},
+        {"rawtransactions", "decodescript",         &decodescript,         true,  false, false},
+        {"rawtransactions", "getrawtransaction",    &getrawtransaction,    true,  false, false},
+        {"rawtransactions", "sendrawtransaction",   &sendrawtransaction,   false, false, false},
+        {"rawtransactions", "signrawtransaction",   &signrawtransaction,   false, false, false}, /* uses wallet if enabled */
 
         /* Utility functions */
         {"util", "createmultisig", &createmultisig, true, true, false},

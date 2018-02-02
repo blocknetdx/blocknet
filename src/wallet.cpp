@@ -2089,15 +2089,89 @@ bool CWallet::ConvertList(std::vector<CTxIn> vCoins, std::vector<int64_t>& vecAm
     return true;
 }
 
+bool CWallet::FundTransaction(CMutableTransaction  & tx,
+                              CAmount              & nFeeRet,
+                              bool                   overrideEstimatedFeeRate,
+                              const CFeeRate       & specificFeeRate,
+                              int                  & /*nChangePosInOut*/,
+                              std::string          & strFailReason,
+                              bool                   includeWatching,
+                              bool                   lockUnspents,
+                              const std::set<int>  & /*setSubtractFeeFromOutputs*/,
+                              bool                   keepReserveKey,
+                              const CTxDestination & destChange)
+{
+    // vector<CRecipient> vecSend;
+    std::vector<std::pair<CScript, CAmount> > vecSend;
+
+    // Turn the txout set into a CRecipient vector
+    for (size_t idx = 0; idx < tx.vout.size(); idx++)
+    {
+        const CTxOut& txOut = tx.vout[idx];
+        // CRecipient recipient = {txOut.scriptPubKey, txOut.nValue, setSubtractFeeFromOutputs.count(idx) == 1};
+        // vecSend.push_back(recipient);
+        vecSend.push_back(std::make_pair(txOut.scriptPubKey, txOut.nValue));
+    }
+
+    CCoinControl coinControl;
+    coinControl.destChange = destChange;
+    coinControl.fAllowOtherInputs = true;
+    coinControl.fAllowWatchOnly = includeWatching;
+    coinControl.fOverrideFeeRate = overrideEstimatedFeeRate;
+    coinControl.nFeeRate = specificFeeRate;
+
+    BOOST_FOREACH(const CTxIn& txin, tx.vin)
+    {
+        coinControl.Select(txin.prevout);
+    }
+
+    CReserveKey reservekey(this);
+    CWalletTx wtx;
+    if (!CreateTransaction(vecSend, wtx, reservekey, nFeeRet, strFailReason, &coinControl, ALL_COINS, false, 0))
+    {
+        return false;
+    }
+
+    // Copy output sizes from new transaction; they may have had the fee subtracted from them
+    tx.vout.resize(wtx.vout.size());
+    for (unsigned int idx = 0; idx < wtx.vout.size(); ++idx)
+    {
+        tx.vout[idx].nValue = wtx.vout[idx].nValue;
+    }
+
+    // Add new txins (keeping original txin scriptSig/order)
+    BOOST_FOREACH(const CTxIn& txin, wtx.vin)
+    {
+        if (!coinControl.IsSelected(txin.prevout))
+        {
+            tx.vin.push_back(txin);
+
+            if (lockUnspents)
+            {
+                LOCK2(cs_main, cs_wallet);
+                LockCoin(txin.prevout);
+            }
+        }
+    }
+
+    // optionally keep the change output key
+    if (keepReserveKey)
+    {
+        reservekey.KeepKey();
+    }
+
+    return true;
+}
+
 bool CWallet::CreateTransaction(const vector<pair<CScript, CAmount> >& vecSend,
-    CWalletTx& wtxNew,
-    CReserveKey& reservekey,
-    CAmount& nFeeRet,
-    std::string& strFailReason,
-    const CCoinControl* coinControl,
-    AvailableCoinsType coin_type,
-    bool useIX,
-    CAmount nFeePay)
+                                CWalletTx& wtxNew,
+                                CReserveKey& reservekey,
+                                CAmount& nFeeRet,
+                                std::string& strFailReason,
+                                const CCoinControl* coinControl,
+                                AvailableCoinsType coin_type,
+                                bool useIX,
+                                CAmount nFeePay)
 {
     if (useIX && nFeePay < CENT) nFeePay = CENT;
 
