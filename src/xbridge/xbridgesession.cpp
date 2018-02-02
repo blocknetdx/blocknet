@@ -2382,7 +2382,7 @@ bool Session::Impl::finishTransaction(TransactionPtr tr)
     Exchange & e = Exchange::instance();
     if (!e.isStarted())
     {
-        return;
+        return false;
     }
 
     {
