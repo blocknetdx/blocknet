@@ -404,15 +404,11 @@ public:
      */
     bool FundTransaction(CMutableTransaction  & tx,
                          CAmount              & nFeeRet,
-                         bool                   overrideEstimatedFeeRate,
-                         const CFeeRate       & specificFeeRate,
                          int                  & nChangePosInOut,
                          std::string          & strFailReason,
-                         bool                   includeWatching,
-                         bool                   lockUnspents,
                          const std::set<int>  & setSubtractFeeFromOutputs,
                          bool                   keepReserveKey = true,
-                         const CTxDestination & destChange = CNoDestination());
+                         const CCoinControl   * coinControl = NULL);
 
     bool CreateTransaction(const std::vector<std::pair<CScript, CAmount> > & vecSend,
                            CWalletTx& wtxNew,

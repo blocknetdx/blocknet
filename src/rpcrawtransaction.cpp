@@ -18,6 +18,7 @@
 #include "script/sign.h"
 #include "script/standard.h"
 #include "uint256.h"
+#include "coincontrol.h"
 #ifdef ENABLE_WALLET
 #include "wallet.h"
 #endif
@@ -543,6 +544,11 @@ Value fundrawtransaction(const Array& params, bool fHelp)
                             );
     }
 
+#ifndef ENABLE_WALLET
+    throw JSONRPCError(RPC_INTERNAL_ERROR, "Wallet not available");
+    return Value();
+#else
+
     RPCTypeCheck(params, list_of(str_type), true);
 
     CTxDestination changeAddress = CNoDestination();
@@ -666,9 +672,36 @@ Value fundrawtransaction(const Array& params, bool fHelp)
     CAmount nFeeOut;
     string strFailReason;
 
-    if (!pwalletMain->FundTransaction(tx, nFeeOut, overrideEstimatedFeerate, feeRate, changePosition, strFailReason, includeWatching, lockUnspents, setSubtractFeeFromOutputs, reserveChangeKey, changeAddress))
+    CCoinControl coinControl;
+    coinControl.destChange             = changeAddress;
+    coinControl.fAllowOtherInputs      = true;
+    coinControl.fAllowWatchOnly        = includeWatching;
+    coinControl.fOverrideFeeRate       = overrideEstimatedFeerate;
+    coinControl.nFeeRate               = feeRate;
+    coinControl.fAllowZeroValueOutputs = true;
+
+    BOOST_FOREACH(const CTxIn & txin, tx.vin)
+    {
+        coinControl.Select(txin.prevout);
+    }
+
+    if (!pwalletMain->FundTransaction(tx, nFeeOut, changePosition, strFailReason,
+                                      setSubtractFeeFromOutputs, reserveChangeKey,
+                                      &coinControl))
     {
         throw JSONRPCError(RPC_INTERNAL_ERROR, strFailReason);
+    }
+
+    // Add new txins (keeping original txin scriptSig/order)
+    BOOST_FOREACH(const CTxIn & txin, tx.vin)
+    {
+        if (!coinControl.IsSelected(txin.prevout))
+        {
+            if (lockUnspents)
+            {
+                pwalletMain->LockCoin(txin.prevout);
+            }
+        }
     }
 
     Object result;
@@ -677,6 +710,7 @@ Value fundrawtransaction(const Array& params, bool fHelp)
     result.push_back(Pair("fee",       ValueFromAmount(nFeeOut)));
 
     return result;
+#endif
 }
 
 Value signrawtransaction(const Array& params, bool fHelp)
