@@ -5,6 +5,7 @@
 // #include <boost/asio/buffer.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/date_time/posix_time/conversion.hpp>
 
 #include "xbridgesession.h"
 #include "xbridgeapp.h"
@@ -29,6 +30,8 @@
 #include "json/json_spirit_reader_template.h"
 #include "json/json_spirit_writer_template.h"
 #include "json/json_spirit_utils.h"
+
+#include "posixtimeconversion.h"
 
 using namespace json_spirit;
 
