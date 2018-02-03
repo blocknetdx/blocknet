@@ -31,6 +31,8 @@ public:
     CFeeRate nFeeRate;
     //! Override the default confirmation target, 0 = use default
     int nConfirmTarget;
+    //! Allow zero-value outputs (used for data-field (wia OP_RETURN))
+    bool fAllowZeroValueOutputs;
 
     CCoinControl()
     {
@@ -52,6 +54,7 @@ public:
         nFeeRate = CFeeRate(0);
         fOverrideFeeRate = false;
         nConfirmTarget = 0;
+        fAllowZeroValueOutputs = false;
     }
 
     bool HasSelected() const
