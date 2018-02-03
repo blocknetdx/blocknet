@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2014 The Bitcoin developers
+/ Copyright (c) 2009-2014 The Bitcoin developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -542,7 +542,7 @@ static int CommandLineRawTx(int argc, char* argv[])
             argv++;
         }
 
-        CTransaction txDecodeTmp;
+        CMutableTransaction tx;
         int startArg;
 
         if (!fCreateBlank) {
@@ -561,8 +561,6 @@ static int CommandLineRawTx(int argc, char* argv[])
             startArg = 2;
         } else
             startArg = 1;
-
-        CMutableTransaction tx(txDecodeTmp);
 
         for (int i = startArg; i < argc; i++) {
             string arg = argv[i];
