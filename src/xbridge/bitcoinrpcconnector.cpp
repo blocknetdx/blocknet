@@ -176,8 +176,6 @@ bool storeDataIntoBlockchain(const std::vector<unsigned char> & dstAddress,
         addr.Set(CKeyID(id));
         outputs.push_back(Pair(addr.ToString(), amount));
 
-        uint64_t inamount = 0;
-        uint64_t fee = 0;
         std::vector<COutput> used;
 
         Array inputs;
