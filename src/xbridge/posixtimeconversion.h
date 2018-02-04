@@ -2,6 +2,9 @@
 #define POSIXTIMECONVERSION_H
 
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/preprocessor/stringize.hpp>
+
+#pragma message "BOOST_VERSION=" BOOST_PP_STRINGIZE(BOOST_VERSION)
 
 // old boost versions compatibility
 
