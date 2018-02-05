@@ -448,9 +448,6 @@ bool Transaction::tryJoin(const TransactionPtr other)
         m_destCurrency != other->m_sourceCurrency)
     {
         // not same currencies
-        ERR() << "not same currencies. transaction not joined" << __FUNCTION__;
-        ERR() << "m_sourceCurrency = " << m_sourceCurrency << " other->m_destCurrency = " << other->m_destCurrency << __FUNCTION__;
-        ERR() << "m_destCurrency = " << m_destCurrency << " other->m_sourceCurrency = " << other->m_sourceCurrency << __FUNCTION__;
         return false;
     }
 
