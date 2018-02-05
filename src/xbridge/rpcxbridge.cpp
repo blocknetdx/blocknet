@@ -634,6 +634,15 @@ Value dxAcceptTransaction(const Array & params, bool fHelp)
     std::swap(ptr->fromCurrency, ptr->toCurrency);
     std::swap(ptr->fromAmount, ptr->toAmount);
 
+    xbridge::WalletConnectorPtr connFrom = app.connectorByCurrency(ptr->fromCurrency);
+    xbridge::WalletConnectorPtr connTo   = app.connectorByCurrency(ptr->toCurrency);
+    if (!connFrom || !connTo)
+    {
+        return xbridge::NO_SESSION;
+    }
+
+    ptr->from  = connFrom->toXAddr(fromAddress);
+    ptr->to    = connTo->toXAddr(toAddress);
 
     statusCode = app.acceptXBridgeTransaction(id, fromAddress, toAddress);
     if (statusCode == xbridge::SUCCESS) {
