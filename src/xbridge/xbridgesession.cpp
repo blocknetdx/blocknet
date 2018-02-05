@@ -5,6 +5,7 @@
 // #include <boost/asio/buffer.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/date_time/posix_time/conversion.hpp>
 
 #include "xbridgesession.h"
 #include "xbridgeapp.h"
@@ -29,6 +30,8 @@
 #include "json/json_spirit_reader_template.h"
 #include "json/json_spirit_writer_template.h"
 #include "json/json_spirit_utils.h"
+
+#include "posixtimeconversion.h"
 
 using namespace json_spirit;
 
@@ -274,8 +277,8 @@ bool Session::processPacket(XBridgePacketPtr packet)
 
     if (m_p->m_handlers.count(c) == 0)
     {
+        ERR() << "unknown command code <" << c << "> " << __FUNCTION__;
         m_p->m_handlers[xbcInvalid](packet);
-        // ERR() << "incorrect command code <" << c << "> " << __FUNCTION__;
         return false;
     }
 
@@ -295,7 +298,7 @@ bool Session::processPacket(XBridgePacketPtr packet)
 bool Session::Impl::processInvalid(XBridgePacketPtr packet)
 {
     // DEBUG_TRACE();
-    LOG() << "xbcInvalid instead of " << packet->command();
+    // LOG() << "xbcInvalid instead of " << packet->command();
     return true;
 }
 
@@ -1222,7 +1225,7 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet)
 
         conn->newKeyPair(xtx->xPubKey, xtx->xPrivKey);
 
-        if(xtx->xPubKey.size() != 33) 
+        if(xtx->xPubKey.size() != 33)
         {
             ERR() << "bad pubkey size " << __FUNCTION__;
             return false;
@@ -1230,7 +1233,7 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet)
 
         // send blocknet tx with hash of X
         std::vector<unsigned char> xid = conn->getKeyId(xtx->xPubKey);
-        if(xid.size() != 20) 
+        if(xid.size() != 20)
         {
             ERR() << "bad pubkey id size " << __FUNCTION__;
             return false;
@@ -1271,7 +1274,7 @@ bool Session::Impl::processTransactionInitialized(XBridgePacketPtr packet)
     // size must be eq 104 bytes
     if (packet->size() != 104)
     {
-        ERR() << "invalid packet size for xbcTransactionHoldApply "
+        ERR() << "invalid packet size for xbcTransactionInitialized "
               << "need 104 received " << packet->size() << " "
               << __FUNCTION__;
         return false;
@@ -1557,7 +1560,8 @@ bool Session::Impl::processTransactionCreate(XBridgePacketPtr packet)
         if (!connFrom->createDepositTransaction(inputs, outputs, xtx->binTxId, xtx->binTx))
         {
             // cancel transaction
-            LOG() << "deposit not created, transaction canceled " << __FUNCTION__;
+            ERR() << "deposit not created, transaction canceled " << __FUNCTION__;
+            TXERR() << "deposit sendrawtransaction " << xtx->binTx;
             sendCancelTransaction(xtx, crRpcError);
             return true;
         }
@@ -1595,7 +1599,8 @@ bool Session::Impl::processTransactionCreate(XBridgePacketPtr packet)
                                                xtx->refTxId, xtx->refTx))
         {
             // cancel transaction
-            LOG() << "refund transaction not created, transaction canceled " << __FUNCTION__;
+            ERR() << "refund transaction not created, transaction canceled " << __FUNCTION__;
+            TXERR() << "refund sendrawtransaction " << xtx->refTx;
             sendCancelTransaction(xtx, crRpcError);
             return true;
         }
@@ -1932,7 +1937,8 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet)
                                             xtx->payTxId, xtx->payTx))
         {
             // cancel transaction
-            LOG() << "payment transaction create error, transaction canceled " << __FUNCTION__;
+            ERR() << "payment transaction create error, transaction canceled " << __FUNCTION__;
+            TXERR() << "payment A sendrawtransaction " << xtx->payTx;
             sendCancelTransaction(xtx, crRpcError);
             return true;
         }
@@ -2142,7 +2148,8 @@ bool Session::Impl::processTransactionConfirmB(XBridgePacketPtr packet)
                                             xtx->payTxId, xtx->payTx))
         {
             // cancel transaction
-            LOG() << "payment transaction create error, transaction canceled " << __FUNCTION__;
+            ERR() << "payment transaction create error, transaction canceled " << __FUNCTION__;
+            TXERR() << "payment B sendrawtransaction " << xtx->payTx;
             sendCancelTransaction(xtx, crRpcError);
             return true;
         }
@@ -2529,6 +2536,7 @@ void Session::sendListOfTransactions()
         packet->append(ptr->b_amount());
         packet->append(m_p->m_myid);
         packet->append(static_cast<uint32_t>(boost::posix_time::to_time_t(ptr->createdTime())));
+        packet->append(ptr->blockHash().begin(), 32);
 
         packet->sign(e.pubKey(), e.privKey());
 

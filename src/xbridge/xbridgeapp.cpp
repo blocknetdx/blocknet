@@ -34,6 +34,8 @@
 #include <openssl/rand.h>
 #include <openssl/md5.h>
 
+#include "posixtimeconversion.h"
+
 //*****************************************************************************
 //*****************************************************************************
 XUIConnector xuiConnector;

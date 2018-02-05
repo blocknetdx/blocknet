@@ -1320,9 +1320,8 @@ bool BtcWalletConnector::createDepositTransaction(const std::vector<std::pair<st
                                                          std::string & txId,
                                                          std::string & rawTx)
 {
-    std::string raw;
     if (!rpc::createRawTransaction(m_user, m_passwd, m_ip, m_port,
-                                   inputs, outputs, 0, raw))
+                                   inputs, outputs, 0, rawTx))
     {
         // cancel transaction
         LOG() << "create transaction error, transaction canceled " << __FUNCTION__;
@@ -1331,7 +1330,7 @@ bool BtcWalletConnector::createDepositTransaction(const std::vector<std::pair<st
 
     // sign
     bool complete = false;
-    if (!rpc::signRawTransaction(m_user, m_passwd, m_ip, m_port, raw, complete))
+    if (!rpc::signRawTransaction(m_user, m_passwd, m_ip, m_port, rawTx, complete))
     {
         // do not sign, cancel
         LOG() << "sign transaction error, transaction canceled " << __FUNCTION__;
@@ -1346,14 +1345,13 @@ bool BtcWalletConnector::createDepositTransaction(const std::vector<std::pair<st
 
     std::string txid;
     std::string json;
-    if (!rpc::decodeRawTransaction(m_user, m_passwd, m_ip, m_port, raw, txid, json))
+    if (!rpc::decodeRawTransaction(m_user, m_passwd, m_ip, m_port, rawTx, txid, json))
     {
         LOG() << "decode signed transaction error, transaction canceled " << __FUNCTION__;
         return false;
     }
 
     txId = txid;
-    rawTx = raw;
 
     return true;
 }
@@ -1458,16 +1456,17 @@ bool BtcWalletConnector::createRefundTransaction(const std::vector<std::pair<std
     tx->vout      = txUnsigned->vout;
     tx->nLockTime = txUnsigned->nLockTime;
 
+    rawTx = tx->toString();
+
     std::string json;
     std::string reftxid;
-    if (!rpc::decodeRawTransaction(m_user, m_passwd, m_ip, m_port, tx->toString(), reftxid, json))
+    if (!rpc::decodeRawTransaction(m_user, m_passwd, m_ip, m_port, rawTx, reftxid, json))
     {
         LOG() << "decode signed transaction error, transaction canceled " << __FUNCTION__;
 //            sendCancelTransaction(xtx, crRpcError);
             return true;
     }
 
-    rawTx = tx->toString();
     txId  = reftxid;
 
     return true;
@@ -1526,16 +1525,17 @@ bool BtcWalletConnector::createPaymentTransaction(const std::vector<std::pair<st
     tx->vin.push_back(CTxIn(txUnsigned->vin[0].prevout, redeem));
     tx->vout      = txUnsigned->vout;
 
+    rawTx = tx->toString();
+
     std::string json;
     std::string paytxid;
-    if (!rpc::decodeRawTransaction(m_user, m_passwd, m_ip, m_port, tx->toString(), paytxid, json))
+    if (!rpc::decodeRawTransaction(m_user, m_passwd, m_ip, m_port, rawTx, paytxid, json))
     {
             LOG() << "decode signed transaction error, transaction canceled " << __FUNCTION__;
 //                sendCancelTransaction(xtx, crRpcError);
         return true;
     }
 
-    rawTx = tx->toString();
     txId  = paytxid;
 
     return true;
