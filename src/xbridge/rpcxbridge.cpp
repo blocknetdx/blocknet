@@ -528,6 +528,7 @@ Value dxCreateTransaction(const Array &params, bool fHelp)
 //******************************************************************************
 Value dxAcceptTransaction(const Array & params, bool fHelp)
 {
+
     if (fHelp) {
 
         throw runtime_error("dxAcceptTransaction (id) "
@@ -551,6 +552,7 @@ Value dxAcceptTransaction(const Array & params, bool fHelp)
     uint256 id(params[0].get_str());
     std::string fromAddress    = params[1].get_str();
     std::string toAddress      = params[2].get_str();
+
     xbridge::App &app = xbridge::App::instance();
 
     if (!app.isValidAddress(fromAddress)) {
@@ -628,6 +630,19 @@ Value dxAcceptTransaction(const Array & params, bool fHelp)
     }
 
 
+
+    std::swap(ptr->fromCurrency, ptr->toCurrency);
+    std::swap(ptr->fromAmount, ptr->toAmount);
+
+    xbridge::WalletConnectorPtr connFrom = app.connectorByCurrency(ptr->fromCurrency);
+    xbridge::WalletConnectorPtr connTo   = app.connectorByCurrency(ptr->toCurrency);
+    if (!connFrom || !connTo)
+    {
+        return xbridge::NO_SESSION;
+    }
+
+    ptr->from  = connFrom->toXAddr(fromAddress);
+    ptr->to    = connTo->toXAddr(toAddress);
 
     statusCode = app.acceptXBridgeTransaction(id, fromAddress, toAddress);
     if (statusCode == xbridge::SUCCESS) {

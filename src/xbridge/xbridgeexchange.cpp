@@ -412,6 +412,13 @@ bool Exchange::acceptTransaction(const uint256                        & txid,
                                  const std::vector<unsigned char>     & mpubkey,
                                  const std::vector<wallet::UtxoEntry> & items)
 {
+    LOG() << "txid = " << txid.GetHex() << std::endl
+          << "source address = " << sourceAddr.data() << std::endl
+          << "source currency = " << sourceCurrency <<std::endl
+          << "source Amount = " << sourceAmount << std::endl
+          << "destination address = " << destAddr.data() << std::endl
+          << "destination currency = " << destCurrency << std::endl
+          << "destination amount = " << destAmount;
     DEBUG_TRACE();
 
     if (!haveConnectedWallet(sourceCurrency) || !haveConnectedWallet(destCurrency))
@@ -424,6 +431,7 @@ bool Exchange::acceptTransaction(const uint256                        & txid,
     // check locked items
     if (!checkUtxoItems(txid, items))
     {
+        LOG() << "dx accept duplicate items " << __FUNCTION__;
         // duplicate items
         return false;
     }
@@ -436,6 +444,7 @@ bool Exchange::acceptTransaction(const uint256                        & txid,
                                                std::time(0), uint256(), mpubkey));
     if (!tr->isValid())
     {
+        LOG() << "invalid transaction " << __FUNCTION__;
         return false;
     }
 
@@ -446,6 +455,7 @@ bool Exchange::acceptTransaction(const uint256                        & txid,
 
         if (!m_p->m_pendingTransactions.count(txid))
         {
+            LOG() << "transaction not found " << __FUNCTION__;
             // no pending
             return false;
         }
@@ -460,6 +470,7 @@ bool Exchange::acceptTransaction(const uint256                        & txid,
 
                 // if expired - delete old transaction
                 m_p->m_pendingTransactions.erase(txid);
+                LOG() << "try accept expired transaction " << __FUNCTION__;
                 return false;
             }
             else
@@ -467,7 +478,7 @@ bool Exchange::acceptTransaction(const uint256                        & txid,
                 // try join with existing transaction
                 if (!m_p->m_pendingTransactions[txid]->tryJoin(tr))
                 {
-                    LOG() << "transaction not joined";
+                    LOG() << "transaction not joined " << __FUNCTION__;
                     m_p->m_pendingTransactions[txid]->m_lock.unlock();
                     return false;
                 }
