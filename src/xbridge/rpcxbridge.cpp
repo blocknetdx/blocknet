@@ -631,9 +631,10 @@ Value dxAcceptTransaction(const Array & params, bool fHelp)
 
 
 
-    std::cerr << "id = " << id.GetHex() << std::endl
-              << "from = " << fromAddress << std::endl
-              << "to = " << toAddress << " " << __FUNCTION__ << std::endl;
+    std::swap(ptr->fromCurrency, ptr->toCurrency);
+    std::swap(ptr->fromAmount, ptr->toAmount);
+
+
     statusCode = app.acceptXBridgeTransaction(id, fromAddress, toAddress);
     if (statusCode == xbridge::SUCCESS) {
 
