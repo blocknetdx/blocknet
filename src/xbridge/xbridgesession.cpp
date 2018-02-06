@@ -933,6 +933,7 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet)
     {
         xtx->state = TransactionDescr::trFinished;
         xapp.moveTransactionToHistory(id);
+        xuiConnector.NotifyXBridgeTransactionStateChanged(xtx->id);
         return true;
     }
 
@@ -2324,8 +2325,14 @@ bool Session::Impl::cancelOrRollbackTransaction(const uint256 & txid, const TxCa
         return true;
     }
 
+
     if (xtx->state < TransactionDescr::trCreated)
     {
+        if(!xtx->isLocal()) {
+
+            app.transactions().erase(xtx->id);
+            return  true;
+        }
         app.moveTransactionToHistory(txid);
 
         xtx->state  = TransactionDescr::trCancelled;
@@ -2398,7 +2405,8 @@ bool Session::Impl::finishTransaction(TransactionPtr tr)
     }
 
     tr->finish();
-
+    xbridge::App::instance().moveTransactionToHistory(tr->id());
+    xuiConnector.NotifyXBridgeTransactionStateChanged(tr->id());
     return true;
 }
 
