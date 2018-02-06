@@ -2405,8 +2405,6 @@ bool Session::Impl::finishTransaction(TransactionPtr tr)
     }
 
     tr->finish();
-    xbridge::App::instance().moveTransactionToHistory(tr->id());
-    xuiConnector.NotifyXBridgeTransactionStateChanged(tr->id());
     return true;
 }
 
