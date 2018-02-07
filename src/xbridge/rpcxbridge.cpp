@@ -422,12 +422,12 @@ Value dxGetNetworkTokens(const Array & params, bool fHelp)
 
 //******************************************************************************
 //******************************************************************************
-Value dxCreateTransaction(const Array &params, bool fHelp)
+Value dxMakeOrder(const Array &params, bool fHelp)
 {
 
     if (fHelp) {
 
-        throw runtime_error("dxCreateTransaction "
+        throw runtime_error("dxMakeOrder "
                             "(address from) (currency from) (amount from) "
                             "(address to) (currency to) (amount to)\n"
                             "Create xbridge transaction.");
@@ -559,12 +559,12 @@ Value dxCreateTransaction(const Array &params, bool fHelp)
 
 //******************************************************************************
 //******************************************************************************
-Value dxAcceptTransaction(const Array & params, bool fHelp)
+Value dxTakeOrder(const Array & params, bool fHelp)
 {
 
     if (fHelp) {
 
-        throw runtime_error("dxAcceptTransaction (id) "
+        throw runtime_error("dxTakeOrder (id) "
                             "(address from) (address to)\n"
                             "Accept xbridge transaction.");
 
@@ -689,11 +689,11 @@ Value dxAcceptTransaction(const Array & params, bool fHelp)
 
 //******************************************************************************
 //******************************************************************************
-Value dxCancelTransaction(const Array &params, bool fHelp)
+Value dxCancelOrder(const Array &params, bool fHelp)
 {
     if(fHelp) {
 
-        throw runtime_error("dxCancelTransaction (id)\n"
+        throw runtime_error("dxCancelOrder (id)\n"
                             "Cancel xbridge transaction.");
 
     }
@@ -1108,4 +1108,54 @@ json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
             return  error;
         }
     }
+}
+
+//******************************************************************************
+//******************************************************************************
+json_spirit::Value dxGetMyOrders(const json_spirit::Array& params, bool fHelp)
+{
+    if (fHelp) {
+
+        throw runtime_error("dxGetOrderBook "
+                            "(the level of detail) (from currency) (to currency) "
+                            "(max orders - optional, default = 50) ");
+
+    }
+    if ((params.size() < 3 || params.size() > 5)) {
+
+        Object error;
+        error.emplace_back(Pair("error",
+                                "Invalid number of parameters"));
+        error.emplace_back(Pair("code",
+                                xbridge::INVALID_PARAMETERS));
+        return  error;
+
+    }
+
+    // todo: should we lock?
+    Object res;
+    TransactionMap trList = xbridge::App::instance().transactions();
+    {
+        if(trList.empty()) {
+
+            LOG() << "empty  transactions list ";
+            return res;
+
+        }
+
+        // using TransactionMap    = std::map<uint256, xbridge::TransactionDescrPtr>;
+
+        Array r;
+
+        for(auto i : trList)
+        {
+
+
+
+        }
+
+
+    }
+
+    return r;
 }

@@ -1198,6 +1198,8 @@ xbridge::Error App::cancelXBridgeTransaction(const uint256 &id,
         moveTransactionToHistory(id);
     }
 
+    // TODO : Rollback transaction if needed
+
     return xbridge::SUCCESS;
 }
 

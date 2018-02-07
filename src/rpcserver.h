@@ -404,7 +404,7 @@ extern json_spirit::Value dxGetNetworkTokens(const json_spirit::Array& params, b
  * * Example:<br>
  * \verbatim
  *
-    dxCreateTransaction  1NDqZ7piDqyDhNveWS48kDSwPdyJLEEcCp SYS 1.3 LRuXAU2fdSU7imXzk8cTy2k3heMK5vTuQ4 LTC 0.13
+    dxMakeOrder  1NDqZ7piDqyDhNveWS48kDSwPdyJLEEcCp SYS 1.3 LRuXAU2fdSU7imXzk8cTy2k3heMK5vTuQ4 LTC 0.13
     {
         "from" : "1NDqZ7piDqyDhNveWS48kDSwPdyJLEEcCp",
         "fromCurrency" : "SYS",
@@ -415,7 +415,7 @@ extern json_spirit::Value dxGetNetworkTokens(const json_spirit::Array& params, b
     }
  * \endverbatim
  */
-extern json_spirit::Value dxCreateTransaction(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value dxMakeOrder(const json_spirit::Array& params, bool fHelp);
 
 /**
  * @brief Accepts given transaction
@@ -427,7 +427,7 @@ extern json_spirit::Value dxCreateTransaction(const json_spirit::Array& params, 
  * @return The status of the operation
  * * Example:<br>
  * \verbatim￼
-    dxAcceptTransaction 6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a 1NDqZ7piDqyDhNveWS48kDSwPdyJLEEcCp LRuXAU2fdSU7imXzk8cTy2k3heMK5vTuQ4
+    dxTakeOrder 6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a 1NDqZ7piDqyDhNveWS48kDSwPdyJLEEcCp LRuXAU2fdSU7imXzk8cTy2k3heMK5vTuQ4
     {
         "id" : "6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a",
         "from" : "1NDqZ7piDqyDhNveWS48kDSwPdyJLEEcCp",
@@ -435,7 +435,7 @@ extern json_spirit::Value dxCreateTransaction(const json_spirit::Array& params, 
     }
  * \endverbatim
  */
-extern json_spirit::Value dxAcceptTransaction(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value dxTakeOrder(const json_spirit::Array& params, bool fHelp);
 
 /**
  * @brief Cancels given transaction
@@ -445,14 +445,14 @@ extern json_spirit::Value dxAcceptTransaction(const json_spirit::Array& params, 
  * @return The status of the operation
  * * Example:<br>
  * \verbatim ￼
-    dxCancelTransaction 6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a
+    dxCancelOrder 6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a
     {
         "id" : "6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a"
     }
  * \endverbatim
 
  */
-extern json_spirit::Value dxCancelTransaction(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value dxCancelOrder(const json_spirit::Array& params, bool fHelp);
 
 /**
  * @brief Returns trading history as a 'price chart'

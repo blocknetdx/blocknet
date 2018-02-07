@@ -370,9 +370,9 @@ static const CRPCCommand vRPCCommands[] =
         {"xbridge", "dxGetOrdersInfo",                 &dxGetOrdersInfo,       true, true, true},
         {"xbridge", "dxGetLocalTokens",                     &dxGetLocalTokens,           true, true, true},
         {"xbridge", "dxGetNetworkTokens",                   &dxGetNetworkTokens,         true, true, true},
-        {"xbridge", "dxCreateTransaction",                  &dxCreateTransaction,        true, true, true},
-        {"xbridge", "dxAcceptTransaction",                  &dxAcceptTransaction,        true, true, true},
-        {"xbridge", "dxCancelTransaction",                  &dxCancelTransaction,        true, true, true},
+        {"xbridge", "dxMakeOrder",                  &dxMakeOrder,        true, true, true},
+        {"xbridge", "dxTakeOrder",                  &dxTakeOrder,        true, true, true},
+        {"xbridge", "dxCancelOrder",                  &dxCancelOrder,        true, true, true},
         {"xbridge", "dxGetTradeHistory",                    &dxGetTradeHistory,          true, true, true},
         {"xbridge", "dxGetOrderBook",                       &dxGetOrderBook,             true, true, true}
     #endif // ENABLE_WALLET
