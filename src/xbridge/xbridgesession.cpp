@@ -295,7 +295,7 @@ bool Session::processPacket(XBridgePacketPtr packet)
 
 //*****************************************************************************
 //*****************************************************************************
-bool Session::Impl::processInvalid(XBridgePacketPtr packet)
+bool Session::Impl::processInvalid(XBridgePacketPtr /*packet*/)
 {
     // DEBUG_TRACE();
     // LOG() << "xbcInvalid instead of " << packet->command();
