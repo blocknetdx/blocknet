@@ -634,12 +634,26 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
         return false;
     }
 
+    std::vector<unsigned char> spubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
+    if (!packet->verify(spubkey))
+    {
+        LOG() << "invalid packet signature " << __FUNCTION__;
+        return true;
+    }
+
     uint256 txid = uint256(packet->data());
     TransactionDescrPtr ptr = App::instance().transaction(txid);
     if (ptr)
     {
+        // update snode addr and pubkey ( ???? )
+        ptr->hubAddress   = std::vector<unsigned char>(packet->data()+64, packet->data()+84);
+        ptr->sPubKey      = spubkey;
+
+        // update timestamp
         ptr->updateTimestamp();
+
         xuiConnector.NotifyXBridgeTransactionReceived(ptr);
+
         return true;
     }
 
@@ -652,6 +666,7 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
     ptr->hubAddress   = std::vector<unsigned char>(packet->data()+64, packet->data()+84);
     ptr->created      = boost::posix_time::from_time_t(*reinterpret_cast<boost::uint32_t *>(packet->data()+84));
     ptr->state        = TransactionDescr::trPending;
+    ptr->sPubKey      = spubkey;
     ptr->blockHash    = uint256(packet->data()+92);
 
     App::instance().appendTransaction(ptr);
