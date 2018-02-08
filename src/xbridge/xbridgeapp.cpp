@@ -454,8 +454,8 @@ SessionPtr App::Impl::getSession(const std::vector<unsigned char> & address)
 //*****************************************************************************
 //*****************************************************************************
 void App::onMessageReceived(const std::vector<unsigned char> & id,
-                                   const std::vector<unsigned char> & message,
-                                   CValidationState & /*state*/)
+                            const std::vector<unsigned char> & message,
+                            CValidationState & /*state*/)
 {
     if (isKnownMessage(message))
     {
@@ -466,7 +466,7 @@ void App::onMessageReceived(const std::vector<unsigned char> & id,
 
     if (!Session::checkXBridgePacketVersion(message))
     {
-        // ERR() << "incorrect protocol version <" << packet->version() << "> " << __FUNCTION__;
+        // TODO state.DoS()
         return;
     }
 
@@ -525,7 +525,7 @@ void App::onBroadcastReceived(const std::vector<unsigned char> & message,
 
     if (!Session::checkXBridgePacketVersion(message))
     {
-        // ERR() << "incorrect protocol version <" << packet->version() << "> " << __FUNCTION__;
+        // TODO state.DoS()
         return;
     }
 
