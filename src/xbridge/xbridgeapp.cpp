@@ -467,7 +467,6 @@ void App::onMessageReceived(const std::vector<unsigned char> & id,
     if (!Session::checkXBridgePacketVersion(message))
     {
         // TODO state.DoS()
-        ERR() << "incorrect protocol version <" << packet->version() << "> " << __FUNCTION__;
         return;
     }
 
@@ -527,7 +526,6 @@ void App::onBroadcastReceived(const std::vector<unsigned char> & message,
     if (!Session::checkXBridgePacketVersion(message))
     {
         // TODO state.DoS()
-        ERR() << "incorrect protocol version <" << packet->version() << "> " << __FUNCTION__;
         return;
     }
 

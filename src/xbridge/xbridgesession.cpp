@@ -318,6 +318,7 @@ bool Session::checkXBridgePacketVersion(const std::vector<unsigned char> & messa
 
     if (version != static_cast<boost::uint32_t>(XBRIDGE_PROTOCOL_VERSION))
     {
+        ERR() << "incorrect protocol version <" << version << "> " << __FUNCTION__;
         return false;
     }
 
@@ -331,6 +332,7 @@ bool Session::checkXBridgePacketVersion(XBridgePacketPtr packet)
 {
     if (packet->version() != static_cast<boost::uint32_t>(XBRIDGE_PROTOCOL_VERSION))
     {
+        ERR() << "incorrect protocol version <" << packet->version() << "> " << __FUNCTION__;
         return false;
     }
 
