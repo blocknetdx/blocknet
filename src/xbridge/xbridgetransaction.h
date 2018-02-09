@@ -50,7 +50,7 @@ public:
         lockTime = 600,
 
         // pending transaction ttl in seconds, 1 min from last update
-        pendingTTL = 60,
+        pendingTTL = 90,
 
         // transaction ttl in seconds, 60 min
         TTL = 3600,
