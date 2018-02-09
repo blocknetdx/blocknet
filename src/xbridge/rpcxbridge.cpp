@@ -392,6 +392,7 @@ Value dxGetCurrencies(const Array & params, bool fHelp)
 //******************************************************************************
 Value dxCreateTransaction(const Array &params, bool fHelp)
 {
+
     if (fHelp) {
 
         throw runtime_error("dxCreateTransaction "
@@ -499,7 +500,7 @@ Value dxCreateTransaction(const Array &params, bool fHelp)
           (fromAddress, fromCurrency, xBridgeAmountFromReal(fromAmount),
            toAddress, toCurrency, xBridgeAmountFromReal(toAmount), id, blockHash);
 
-    if (statusCode== xbridge::SUCCESS) {
+    if (statusCode == xbridge::SUCCESS) {
 
         Object obj;
         obj.emplace_back(Pair("id",             id.GetHex()));
