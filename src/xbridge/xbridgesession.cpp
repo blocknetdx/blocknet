@@ -2347,13 +2347,7 @@ bool Session::Impl::cancelOrRollbackTransaction(const uint256 & txid, const TxCa
 
     if (xtx->state < TransactionDescr::trCreated)
     {
-        if(!xtx->isLocal()) {
-
-            app.transactions().erase(xtx->id);
-            return  true;
-        }
         app.moveTransactionToHistory(txid);
-
         xtx->state  = TransactionDescr::trCancelled;
         xtx->reason = reason;
         xuiConnector.NotifyXBridgeTransactionStateChanged(txid);
