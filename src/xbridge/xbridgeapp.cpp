@@ -784,6 +784,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                                            uint256 & id,
                                            uint256 & blockHash)
 {
+//    LOG() <<
     const auto statusCode = checkCreateParams(fromCurrency, toCurrency, fromAmount);
     if(statusCode != xbridge::SUCCESS) {
         return statusCode;
@@ -923,7 +924,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
 
     // lock used coins
     // TODO temporary disabled
-    // connFrom->lockUnspent(ptr->usedCoins, true);
+    // connFrom->lockCoins(ptr->usedCoins, true);
 
     {
         boost::mutex::scoped_lock l(m_p->m_txLocker);
