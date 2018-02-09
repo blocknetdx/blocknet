@@ -21,7 +21,8 @@ public:
     uint32_t n;
 
     COutPoint() { SetNull(); }
-    COutPoint(uint256 hashIn, uint32_t nIn) { hash = hashIn; n = nIn; }
+    COutPoint(const uint256 & hashIn,    const uint32_t nIn) { hash = hashIn; n = nIn; }
+    COutPoint(const std::string & strIn, const uint32_t nIn) { hash = uint256(strIn); n = nIn; }
 
     ADD_SERIALIZE_METHODS;
 

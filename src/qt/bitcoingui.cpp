@@ -1,6 +1,7 @@
 // Copyright (c) 2011-2014 The Bitcoin developers
 // Copyright (c) 2014-2015 The Dash developers
-// Copyright (c) 2015-2017 The BlocknetDX developers
+// Copyright (c) 2015-2017 The PIVX developers
+// Copyright (c) 2015-2018 The Blocknet developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -138,7 +139,7 @@ BitcoinGUI::BitcoinGUI(const NetworkStyle* networkStyle, QWidget* parent) : QMai
     MacDockIconHandler::instance()->setIcon(networkStyle->getAppIcon());
 #endif
 
-    XBridgeExchange & e = XBridgeExchange::instance();
+    xbridge::Exchange & e = xbridge::Exchange::instance();
     if (e.isEnabled())
     {
         windowTitle += QString(" [%1] ").arg(tr("exchange mode"));
@@ -218,7 +219,6 @@ BitcoinGUI::BitcoinGUI(const NetworkStyle* networkStyle, QWidget* parent) : QMai
 
     // Progress bar and label for blocks download
     progressBarLabel = new QLabel();
-    progressBarLabel->setVisible(true);
     progressBar = new GUIUtil::ProgressBar();
     progressBar->setAlignment(Qt::AlignCenter);
     progressBar->setVisible(true);
@@ -341,7 +341,7 @@ void BitcoinGUI::createActions(const NetworkStyle* networkStyle)
     xbridgeAction->setToolTip(tr("Show xbridge dialog"));
     // xbridgeAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_6));
     xbridgeAction->setCheckable(true);
-    if (XBridgeApp::isEnabled())
+    if (xbridge::App::isEnabled())
     {
         tabGroup->addAction(xbridgeAction);
     }
@@ -537,7 +537,7 @@ void BitcoinGUI::createToolBars()
         toolbar->addAction(receiveCoinsAction);
         toolbar->addAction(historyAction);
 
-        if (XBridgeApp::isEnabled())
+        if (xbridge::App::isEnabled())
         {
             toolbar->addAction(xbridgeAction);
         }

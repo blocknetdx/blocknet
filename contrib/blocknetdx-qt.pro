@@ -81,7 +81,6 @@ HEADERS += src/activeservicenode.h \
            src/blocknetdx-config.h \
            src/db.h \
            src/eccryptoverify.h \
-           src/ecwrapper.h \
            src/hash.h \
            src/init.h \
            src/swifttx.h \
@@ -379,7 +378,6 @@ SOURCES += src/activeservicenode.cpp \
            src/blocknetdx.cpp \
            src/db.cpp \
            src/eccryptoverify.cpp \
-           src/ecwrapper.cpp \
            src/editaddressdialog.cpp \
            src/hash.cpp \
            src/init.cpp \
