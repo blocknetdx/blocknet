@@ -38,7 +38,6 @@ public:
         trSigned,
         trCommited,
 
-        trConfirmed,
         trFinished,
         trCancelled,
         trDropped

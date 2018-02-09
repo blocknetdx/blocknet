@@ -540,8 +540,8 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
     // check utxo items
     if (!e.checkUtxoItems(id, utxoItems))
     {
-        LOG() << "transaction rejected, error check utxo items "
-              << __FUNCTION__;
+        LOG() << "transaction rejected, error check utxo items "  << id.ToString()
+              << " " << __FUNCTION__;
         return true;
     }
 
@@ -555,7 +555,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
                                  blockHash, isCreated))
         {
             // not created
-            LOG() << "transaction create error " << __FUNCTION__;
+            LOG() << "transaction create error "  << id.ToString() << " " << __FUNCTION__;
             return true;
         }
 
@@ -577,7 +577,8 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
             TransactionPtr tr = e.pendingTransaction(id);
             if (tr->id() == uint256())
             {
-                LOG() << "transaction not found after create. " << id.GetHex() << " " << __FUNCTION__;
+                LOG() << "transaction not found after create. " << id.ToString()
+                      << " " << __FUNCTION__;
                 return false;
             }
 
@@ -671,7 +672,7 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
 
     App::instance().appendTransaction(ptr);
 
-    LOG() << "received tx <" << HexStr(ptr->id) << "> " << __FUNCTION__;
+    LOG() << "received tx <" << ptr->id.ToString() << "> " << __FUNCTION__;
 
     xuiConnector.NotifyXBridgeTransactionReceived(ptr);
 
@@ -760,7 +761,8 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet)
                                                  XBridgePacket::addressSize + XBridgePacket::signatureSize;
             if (packet->size() < offset+utxoItemSize)
             {
-                WARN() << "bad packet size while reading utxo items, packet dropped in " << __FUNCTION__;
+                WARN() << "bad packet size while reading utxo items, packet dropped in "
+                       << __FUNCTION__;
                 return true;
             }
 
@@ -813,7 +815,7 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet)
         return true;
     }
 
-    LOG() << "received accepting transaction " << HexStr(id) << std::endl
+    LOG() << "received accepting transaction " << id.ToString() << std::endl
           << "    from " << HexStr(saddr) << std::endl
           << "             " << scurrency << " : " << samount << std::endl
           << "    to   " << HexStr(daddr) << std::endl
@@ -942,7 +944,7 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet)
     TransactionDescrPtr xtx = xapp.transaction(id);
     if (!xtx)
     {
-        LOG() << "unknown transaction " << HexStr(id) << " " << __FUNCTION__;
+        LOG() << "unknown transaction " << id.ToString() << " " << __FUNCTION__;
         return true;
     }
 
@@ -1203,12 +1205,12 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet)
     TransactionDescrPtr xtx = xapp.transaction(txid);
     if (!xtx)
     {
-        LOG() << "unknown transaction " << HexStr(txid) << " " << __FUNCTION__;
+        LOG() << "unknown transaction " << txid.ToString() << " " << __FUNCTION__;
         return true;
     }
     if (!xtx->isLocal())
     {
-        ERR() << "not local transaction " << HexStr(txid) << " " << __FUNCTION__;
+        ERR() << "not local transaction " << txid.ToString() << " " << __FUNCTION__;
         return true;
     }
 
@@ -1423,12 +1425,12 @@ bool Session::Impl::processTransactionCreate(XBridgePacketPtr packet)
     TransactionDescrPtr xtx = xapp.transaction(txid);
     if (!xtx)
     {
-        LOG() << "unknown transaction " << HexStr(txid) << " " << __FUNCTION__;
+        LOG() << "unknown transaction " << txid.ToString() << " " << __FUNCTION__;
         return true;
     }
     if (!xtx->isLocal())
     {
-        ERR() << "not local transaction " << HexStr(txid) << " " << __FUNCTION__;
+        ERR() << "not local transaction " << txid.ToString() << " " << __FUNCTION__;
         return true;
     }
     if (!packet->verify(xtx->sPubKey))
@@ -1465,7 +1467,7 @@ bool Session::Impl::processTransactionCreate(XBridgePacketPtr packet)
 
         if (binATxId.size() == 0)
         {
-            LOG() << "bad A deposit tx id received for " << HexStr(txid) << " " << __FUNCTION__;
+            LOG() << "bad A deposit tx id received for " << txid.ToString() << " " << __FUNCTION__;
             sendCancelTransaction(xtx, crBadADepositTx);
             return true;
         }
@@ -1479,12 +1481,12 @@ bool Session::Impl::processTransactionCreate(XBridgePacketPtr packet)
         }
         else if (!isGood)
         {
-            LOG() << "check A deposit tx error for " << HexStr(txid) << " " << __FUNCTION__;
+            LOG() << "check A deposit tx error for " << txid.ToString() << " " << __FUNCTION__;
             sendCancelTransaction(xtx, crBadADepositTx);
             return true;
         }
 
-        LOG() << "deposit A tx confirmed " << HexStr(txid);
+        LOG() << "deposit A tx confirmed " << txid.ToString();
     }
 
     double outAmount = static_cast<double>(xtx->fromAmount) / TransactionDescr::COIN;
@@ -2393,12 +2395,6 @@ bool Session::Impl::finishTransaction(TransactionPtr tr)
     }
     LOG() << "finish transaction <" << tr->id().GetHex() << ">";
 
-    if (tr->state() != xbridge::Transaction::trConfirmed)
-    {
-        ERR() << "finished unconfirmed transaction <" << tr->id().GetHex() << ">";
-        return false;
-    }
-
     Exchange & e = Exchange::instance();
     if (!e.isStarted())
     {
@@ -2565,26 +2561,11 @@ void Session::sendListOfTransactions()
 //*****************************************************************************
 void Session::eraseExpiredPendingTransactions()
 {
+    // check xbridge transactions
     Exchange & e = Exchange::instance();
-    if (!e.isStarted())
-    {
-        return;
-    }
+    e.eraseExpiredTransactions();
 
-    std::list<TransactionPtr> list = e.pendingTransactions();
-    std::list<TransactionPtr>::iterator i = list.begin();
-    for (; i != list.end(); ++i)
-    {
-        TransactionPtr & ptr = *i;
-
-        boost::mutex::scoped_lock l(ptr->m_lock);
-
-        if (ptr->isExpired() || ptr->isExpiredByBlockNumber())
-        {
-            LOG() << "transaction expired <" << ptr->id().GetHex() << ">";
-            e.deletePendingTransactions(ptr->id());
-        }
-    }
+    // check client transactions
 }
 
 //*****************************************************************************
@@ -2608,13 +2589,7 @@ void Session::checkFinishedTransactions()
 
         uint256 txid = ptr->id();
 
-        if (ptr->state() == xbridge::Transaction::trConfirmed)
-        {
-            // send finished
-            LOG() << "confirmed transaction <" << txid.GetHex() << ">";
-            m_p->finishTransaction(ptr);
-        }
-        else if (ptr->state() == xbridge::Transaction::trCancelled)
+        if (ptr->state() == xbridge::Transaction::trCancelled)
         {
             // drop cancelled tx
             LOG() << "drop cancelled transaction <" << txid.GetHex() << ">";

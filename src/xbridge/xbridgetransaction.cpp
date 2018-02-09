@@ -206,7 +206,7 @@ std::string Transaction::strState(const State state)
     static std::string states[] = {
         "trInvalid", "trNew", "trJoined",
         "trHold", "trInitialized", "trCreated",
-        "trSigned", "trCommited", "trConfirmed",
+        "trSigned", "trCommited",
         "trFinished", "trCancelled", "trDropped"
     };
 
