@@ -97,6 +97,8 @@ public:
     std::list<TransactionPtr> transactions() const;
     std::list<TransactionPtr> finishedTransactions() const;
 
+    size_t eraseExpiredTransactions();
+
 private:
     std::unique_ptr<Impl> m_p;
 };

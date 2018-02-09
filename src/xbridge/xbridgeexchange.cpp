@@ -293,8 +293,7 @@ bool Exchange::createTransaction(const uint256                        & txid,
 
     if (!haveConnectedWallet(sourceCurrency) || !haveConnectedWallet(destCurrency))
     {
-        LOG() << "no active wallet for transaction "
-              << util::base64_encode(std::string((char *)txid.begin(), 32));
+        LOG() << "no active wallet for transaction " << txid.ToString();
         return false;
     }
 
@@ -302,6 +301,7 @@ bool Exchange::createTransaction(const uint256                        & txid,
     if (!checkUtxoItems(txid, items))
     {
         // duplicate items
+        LOG() << "utxo check failed " << txid.ToString();
         return false;
     }
 
@@ -312,15 +312,13 @@ bool Exchange::createTransaction(const uint256                        & txid,
     {
         if (wp.m_minAmount && wp.m_minAmount > sourceAmount)
         {
-            LOG() << "tx "
-                  << util::base64_encode(std::string((char *)txid.begin(), 32))
+            LOG() << "tx " <<  txid.ToString()
                   << " rejected because sourceAmount less than minimum payment";
             return false;
         }
         if (wp2.m_minAmount && wp2.m_minAmount > destAmount)
         {
-            LOG() << "tx "
-                  << util::base64_encode(std::string((char *)txid.begin(), 32))
+            LOG() << "tx " << txid.ToString()
                   << " rejected because destAmount less than minimum payment";
             return false;
         }
@@ -722,18 +720,17 @@ std::list<TransactionPtr> Exchange::Impl::transactions(bool onlyFinished) const
 
     std::list<TransactionPtr> list;
 
-    for (std::map<uint256, TransactionPtr>::const_iterator i = m_transactions.begin(); i != m_transactions.end(); ++i)
+    for (const std::pair<uint256, TransactionPtr> & i : m_transactions)
     {
         if (!onlyFinished)
         {
-            list.push_back(i->second);
+            list.push_back(i.second);
         }
-        else if (i->second->isExpired() ||
-                 !i->second->isValid() ||
-                 i->second->isFinished() ||
-                 i->second->state() == xbridge::Transaction::trConfirmed)
+        else if (i.second->isExpired() ||
+                 !i.second->isValid() ||
+                 i.second->isFinished())
         {
-            list.push_back(i->second);
+            list.push_back(i.second);
         }
     }
 
@@ -752,6 +749,43 @@ std::list<TransactionPtr> Exchange::transactions() const
 std::list<TransactionPtr> Exchange::finishedTransactions() const
 {
     return m_p->transactions(true);
+}
+
+//*****************************************************************************
+//*****************************************************************************
+size_t Exchange::eraseExpiredTransactions()
+{
+    if (!isStarted())
+    {
+        return 0;
+    }
+
+    size_t result = 0;
+
+    boost::mutex::scoped_lock l(m_p->m_pendingTransactionsLock);
+
+    std::map<uint256, TransactionPtr>::const_iterator i = m_p->m_pendingTransactions.begin();
+    for (; i != m_p->m_pendingTransactions.end(); )
+    {
+        TransactionPtr ptr = i->second;
+
+        boost::mutex::scoped_lock l(ptr->m_lock);
+
+        if (ptr->isExpired() || ptr->isExpiredByBlockNumber())
+        {
+            LOG() << "transaction expired <" << ptr->id().ToString() << ">";
+
+            i = m_p->m_pendingTransactions.erase(i);
+            ++result;
+        }
+        else
+        {
+            ++i;
+        }
+    }
+
+    LOG() << "deleted " << result << "  expired transactions";
+    return result;
 }
 
 } // namespace xbridge

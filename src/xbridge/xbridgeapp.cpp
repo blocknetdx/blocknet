@@ -454,8 +454,8 @@ SessionPtr App::Impl::getSession(const std::vector<unsigned char> & address)
 //*****************************************************************************
 //*****************************************************************************
 void App::onMessageReceived(const std::vector<unsigned char> & id,
-                                   const std::vector<unsigned char> & message,
-                                   CValidationState & /*state*/)
+                            const std::vector<unsigned char> & message,
+                            CValidationState & /*state*/)
 {
     if (isKnownMessage(message))
     {
@@ -466,7 +466,7 @@ void App::onMessageReceived(const std::vector<unsigned char> & id,
 
     if (!Session::checkXBridgePacketVersion(message))
     {
-        // ERR() << "incorrect protocol version <" << packet->version() << "> " << __FUNCTION__;
+        // TODO state.DoS()
         return;
     }
 
@@ -525,7 +525,7 @@ void App::onBroadcastReceived(const std::vector<unsigned char> & message,
 
     if (!Session::checkXBridgePacketVersion(message))
     {
-        // ERR() << "incorrect protocol version <" << packet->version() << "> " << __FUNCTION__;
+        // TODO state.DoS()
         return;
     }
 
@@ -1349,7 +1349,15 @@ void App::Impl::onTimer()
         io->post(boost::bind(&xbridge::Session::checkFinishedTransactions, session));
 
         // send transactions list
-        io->post(boost::bind(&xbridge::Session::sendListOfTransactions, session));
+        {
+            static uint32_t counter = 0;
+            if (++counter == 4)
+            {
+                // 15 sec * 4 = 60 sec
+                counter = 0;
+                io->post(boost::bind(&xbridge::Session::sendListOfTransactions, session));
+            }
+        }
 
         // erase expired tx
         io->post(boost::bind(&xbridge::Session::eraseExpiredPendingTransactions, session));
@@ -1359,19 +1367,24 @@ void App::Impl::onTimer()
 
         // unprocessed packets
         {
-            std::map<uint256, XBridgePacketPtr> map;
+            static uint32_t counter = 0;
+            if (++counter == 2)
             {
-                boost::mutex::scoped_lock l(m_ppLocker);
-                map = m_pendingPackets;
-                m_pendingPackets.clear();
-            }
-            for (const std::pair<uint256, XBridgePacketPtr> & item : map)
-            {
+                counter = 0;
+                std::map<uint256, XBridgePacketPtr> map;
+                {
+                    boost::mutex::scoped_lock l(m_ppLocker);
+                    map = m_pendingPackets;
+                    m_pendingPackets.clear();
+                }
+                for (const std::pair<uint256, XBridgePacketPtr> & item : map)
+                {
 
-                xbridge::SessionPtr s = getSession();
-                XBridgePacketPtr packet   = item.second;
-                io->post(boost::bind(&xbridge::Session::processPacket, s, packet));
+                    xbridge::SessionPtr s = getSession();
+                    XBridgePacketPtr packet   = item.second;
+                    io->post(boost::bind(&xbridge::Session::processPacket, s, packet));
 
+                }
             }
         }
     }
