@@ -30,6 +30,7 @@
 #include <QLocale>
 #include <QMessageBox>
 #include <QTimer>
+#include <QFileDialog>
 
 OptionsDialog::OptionsDialog(QWidget* parent, bool enableWallet) : QDialog(parent),
                                                                    ui(new Ui::OptionsDialog),
@@ -93,7 +94,9 @@ OptionsDialog::OptionsDialog(QWidget* parent, bool enableWallet) : QDialog(paren
         QFileInfo fileInfo = list.at(i);
         ui->theme->addItem(fileInfo.fileName(), QVariant(fileInfo.fileName()));
     }
-    //ui->theme->addItem(fileInfo.fileName(), QVariant(fileInfo.fileName()));
+
+    // Add a button to the end of the list for a user selectable theme via file open dialog
+    ui->theme->addItem("Load Custom Theme", QVariant(""));
 
     /* Language selector */
     QDir translations(":translations");
@@ -311,4 +314,16 @@ bool OptionsDialog::eventFilter(QObject* object, QEvent* event)
         }
     }
     return QDialog::eventFilter(object, event);
+}
+
+
+void OptionsDialog::on_theme_activated(const QString &arg1)
+{
+    ui->statusLabel->setText(tr("The theme combobox item: %s is activated."));
+    QTimer::singleShot(10000, this, SLOT(clearStatusLabel()));
+    QFileDialog fileDialog(this, "Select a Custom Wallet UI Theme");
+    fileDialog.setFileMode(QFileDialog::AnyFile);
+    QString fileName;
+    if (fileDialog.exec())
+        fileDialog.selectFile(fileName);
 }
