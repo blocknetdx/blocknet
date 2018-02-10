@@ -1435,8 +1435,6 @@ Immature: confirmed, but less than 2 mints of the same denomination after it was
               </layout>
              </item>
              <item>
-<<<<<<< HEAD
-=======
               <widget class="Line" name="line_2_right">
                <property name="minimumSize">
                 <size>
@@ -1802,7 +1800,6 @@ To change the percentage (no restart required):
               </layout>
              </item>
              <item>
->>>>>>> aff9b5914... [UI] Redesign Privacy-Tab: global zPHR supply
               <spacer name="verticalSpacer_2">
                <property name="orientation">
                 <enum>Qt::Vertical</enum>
