@@ -59,6 +59,7 @@ private:
     OptionsModel* model;
     QDataWidgetMapper* mapper;
     bool fProxyIpValid;
+    QString *styleSheet;
 };
 
 #endif // BITCOIN_QT_OPTIONSDIALOG_H
