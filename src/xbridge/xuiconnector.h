@@ -20,7 +20,7 @@ class XUIConnector
 public:
     boost::signals2::signal<void (const xbridge::TransactionDescrPtr & tx)> NotifyXBridgeTransactionReceived;
 
-    boost::signals2::signal<void (const uint256 & id)> NotifyXBridgeTransactionStateChanged;
+    boost::signals2::signal<void (const uint256 & id)> NotifyXBridgeTransactionChanged;
 
     boost::signals2::signal<void (const std::string & currency,
                                   const std::string & name,

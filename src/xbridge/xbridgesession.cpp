@@ -653,7 +653,7 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
         // update timestamp
         ptr->updateTimestamp();
 
-        xuiConnector.NotifyXBridgeTransactionReceived(ptr);
+        xuiConnector.NotifyXBridgeTransactionChanged(ptr->id);
 
         return true;
     }
@@ -952,7 +952,7 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet)
     {
         xtx->state = TransactionDescr::trFinished;
         xapp.moveTransactionToHistory(id);
-        xuiConnector.NotifyXBridgeTransactionStateChanged(xtx->id);
+        xuiConnector.NotifyXBridgeTransactionChanged(xtx->id);
         return true;
     }
 
@@ -976,7 +976,7 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet)
     }
 
     xtx->state = TransactionDescr::trHold;
-    xuiConnector.NotifyXBridgeTransactionStateChanged(id);
+    xuiConnector.NotifyXBridgeTransactionChanged(id);
 
     if (xtx->isLocal())
     {
@@ -1631,7 +1631,7 @@ bool Session::Impl::processTransactionCreate(XBridgePacketPtr packet)
 
     xtx->state = TransactionDescr::trCreated;
 
-    xuiConnector.NotifyXBridgeTransactionStateChanged(txid);
+    xuiConnector.NotifyXBridgeTransactionChanged(txid);
 
     // send transactions
     {
@@ -1992,7 +1992,7 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet)
 
     xtx->state = TransactionDescr::trCommited;
 
-    xuiConnector.NotifyXBridgeTransactionStateChanged(txid);
+    xuiConnector.NotifyXBridgeTransactionChanged(txid);
 
     // send reply
     XBridgePacketPtr reply(new XBridgePacket(xbcTransactionConfirmedA));
@@ -2204,7 +2204,7 @@ bool Session::Impl::processTransactionConfirmB(XBridgePacketPtr packet)
 
     xtx->state = TransactionDescr::trCommited;
 
-    xuiConnector.NotifyXBridgeTransactionStateChanged(txid);
+    xuiConnector.NotifyXBridgeTransactionChanged(txid);
 
     // send reply
     XBridgePacketPtr reply(new XBridgePacket(xbcTransactionConfirmedB));
@@ -2350,7 +2350,7 @@ bool Session::Impl::cancelOrRollbackTransaction(const uint256 & txid, const TxCa
         app.moveTransactionToHistory(txid);
         xtx->state  = TransactionDescr::trCancelled;
         xtx->reason = reason;
-        xuiConnector.NotifyXBridgeTransactionStateChanged(txid);
+        xuiConnector.NotifyXBridgeTransactionChanged(txid);
     }
     else
     {
@@ -2380,7 +2380,7 @@ bool Session::Impl::cancelOrRollbackTransaction(const uint256 & txid, const TxCa
         }
 
         // update transaction state for gui
-        xuiConnector.NotifyXBridgeTransactionStateChanged(txid);
+        xuiConnector.NotifyXBridgeTransactionChanged(txid);
     }
 
     return true;
@@ -2456,7 +2456,7 @@ bool Session::Impl::sendCancelTransaction(const TransactionDescrPtr & tx,
     // update transaction state for gui
     tx->state  = TransactionDescr::trCancelled;
     tx->reason = reason;
-    xuiConnector.NotifyXBridgeTransactionStateChanged(tx->id);
+    xuiConnector.NotifyXBridgeTransactionChanged(tx->id);
 
     return true;
 }
@@ -2686,7 +2686,7 @@ bool Session::Impl::processTransactionFinished(XBridgePacketPtr packet)
     // update transaction state for gui
     xtx->state = TransactionDescr::trFinished;
     xapp.moveTransactionToHistory(txid);
-    xuiConnector.NotifyXBridgeTransactionStateChanged(txid);
+    xuiConnector.NotifyXBridgeTransactionChanged(txid);
 
     return true;
 }

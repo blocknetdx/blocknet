@@ -996,7 +996,7 @@ bool App::sendPendingTransaction(const TransactionDescrPtr & ptr)
     sendPacket(ptr->packet);
 
     ptr->state = TransactionDescr::trPending;
-    xuiConnector.NotifyXBridgeTransactionStateChanged(ptr->id);
+    xuiConnector.NotifyXBridgeTransactionChanged(ptr->id);
 
     return true;
 }
@@ -1178,7 +1178,7 @@ bool App::sendAcceptingTransaction(const TransactionDescrPtr & ptr)
     sendPacket(ptr->hubAddress, ptr->packet);
 
     ptr->state = TransactionDescr::trAccepting;
-    xuiConnector.NotifyXBridgeTransactionStateChanged(ptr->id);
+    xuiConnector.NotifyXBridgeTransactionChanged(ptr->id);
 
     return true;
 }
@@ -1194,7 +1194,7 @@ xbridge::Error App::cancelXBridgeTransaction(const uint256 &id,
         xtx->state  = TransactionDescr::trCancelled;
         xtx->reason = reason;
 
-        xuiConnector.NotifyXBridgeTransactionStateChanged(id);
+        xuiConnector.NotifyXBridgeTransactionChanged(id);
 
         moveTransactionToHistory(id);
     }
