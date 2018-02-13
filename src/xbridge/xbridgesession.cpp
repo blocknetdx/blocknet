@@ -961,6 +961,10 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet)
         return true;
     }
 
+    // TODO temporary
+    // update service node key
+    xtx->sPubKey = pubkey;
+
     // second signature check
     if (!packet->verify(xtx->sPubKey))
     {
