@@ -933,6 +933,9 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet)
             LOG() << "invalid packet signature " << __FUNCTION__;
             return true;
         }
+
+        // store service node public key
+        xtx->sPubKey = pubkey;
     }
 
     LOG() << "use service node " << pksnode.GetID().ToString() << " " << __FUNCTION__;
@@ -971,9 +974,6 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet)
         xuiConnector.NotifyXBridgeTransactionChanged(xtx->id);
         return true;
     }
-
-    // store service node public key
-    xtx->sPubKey = pubkey;
 
     // processing
 
