@@ -895,6 +895,7 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet)
 
     // service node pub key
     ::CPubKey pksnode;
+
     {
         uint32_t len = ::CPubKey::GetLen(*(char *)(packet->pubkey()));
         if (len != 33)
@@ -905,9 +906,7 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet)
         }
 
         pksnode.Set(packet->pubkey(), packet->pubkey()+len);
-    }
 
-    {
         // check servicenode
         CServicenode * snode = mnodeman.Find(pksnode);
         if (!snode)
@@ -926,16 +925,11 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet)
         }
     }
 
+    std::vector<unsigned char> pubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
+    if (!packet->verify(pubkey))
     {
-        std::vector<unsigned char> pubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
-        if (!packet->verify(pubkey))
-        {
-            LOG() << "invalid packet signature " << __FUNCTION__;
-            return true;
-        }
-
-        // store service node public key
-        xtx->sPubKey = pubkey;
+        LOG() << "invalid packet signature " << __FUNCTION__;
+        return true;
     }
 
     LOG() << "use service node " << pksnode.GetID().ToString() << " " << __FUNCTION__;
@@ -964,6 +958,13 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet)
     if (!xtx)
     {
         LOG() << "unknown transaction " << id.ToString() << " " << __FUNCTION__;
+        return true;
+    }
+
+    // second signature check
+    if (!packet->verify(xtx->sPubKey))
+    {
+        LOG() << "invalid packet signature " << __FUNCTION__;
         return true;
     }
 

@@ -411,7 +411,7 @@ void XBridgeTransactionsModel::onTransactionStateChanged(const uint256 & id)
             if (tr->state == xbridge::TransactionDescr::trCancelled && !tr->isLocal())
             {
                 emit beginRemoveRows(QModelIndex(), i, i);
-                m_transactions.erase(i);
+                m_transactions.erase(m_transactions.begin() + i);
                 emit endRemoveRows();
             }
             else
