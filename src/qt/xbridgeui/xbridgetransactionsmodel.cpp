@@ -346,7 +346,7 @@ void XBridgeTransactionsModel::onTimer()
 //******************************************************************************
 void XBridgeTransactionsModel::onTransactionReceived(const xbridge::TransactionDescrPtr & tx)
 {
-    if (tx->state > xbridge::TransactionDescr::trNew)
+    if (tx->state > xbridge::TransactionDescr::trPending)
     {
         // TODO temporary log
         ERR() << "received tx with incorrect tx state <" << tx->state << "> " << __FUNCTION__;
