@@ -646,6 +646,12 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
     TransactionDescrPtr ptr = App::instance().transaction(txid);
     if (ptr)
     {
+        if (ptr->state > TransactionDescr::trPending)
+        {
+            LOG() << "received pending for hold transaction " << __FUNCTION__;
+            return true;
+        }
+
         // update snode addr and pubkey ( ???? )
         ptr->hubAddress   = std::vector<unsigned char>(packet->data()+64, packet->data()+84);
         ptr->sPubKey      = spubkey;
@@ -658,6 +664,7 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
         return true;
     }
 
+    // create tx item
     ptr.reset(new TransactionDescr);
     ptr->id           = txid;
     ptr->fromCurrency = std::string(reinterpret_cast<const char *>(packet->data()+32));
@@ -919,6 +926,15 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet)
         }
     }
 
+    {
+        std::vector<unsigned char> pubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
+        if (!packet->verify(pubkey))
+        {
+            LOG() << "invalid packet signature " << __FUNCTION__;
+            return true;
+        }
+    }
+
     LOG() << "use service node " << pksnode.GetID().ToString() << " " << __FUNCTION__;
 
     {
@@ -953,13 +969,6 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet)
         xtx->state = TransactionDescr::trFinished;
         xapp.moveTransactionToHistory(id);
         xuiConnector.NotifyXBridgeTransactionChanged(xtx->id);
-        return true;
-    }
-
-    std::vector<unsigned char> pubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
-    if (!packet->verify(pubkey))
-    {
-        LOG() << "invalid packet signature " << __FUNCTION__;
         return true;
     }
 
