@@ -407,7 +407,17 @@ void XBridgeTransactionsModel::onTransactionStateChanged(const uint256 & id)
         if (m_transactions[i]->id == id)
         {
             // found
-            emit dataChanged(index(i, FirstColumn), index(i, LastColumn));
+            xbridge::TransactionDescrPtr & tr = m_transactions[i];
+            if (tr->state == xbridge::TransactionDescr::trCancelled && !tr->isLocal())
+            {
+                emit beginRemoveRows(QModelIndex(), i, i);
+                m_transactions.erase(i);
+                emit endRemoveRows();
+            }
+            else
+            {
+                emit dataChanged(index(i, FirstColumn), index(i, LastColumn));
+            }
             break;
         }
     }
