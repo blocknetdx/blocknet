@@ -923,8 +923,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
 //          << "             " << ptr->toCurrency << " : " << ptr->toAmount << std::endl;
 
     // lock used coins
-    // TODO temporary disabled
-    // connFrom->lockCoins(ptr->usedCoins, true);
+    connFrom->lockCoins(ptr->usedCoins, true);
 
     {
         boost::mutex::scoped_lock l(m_p->m_txLocker);

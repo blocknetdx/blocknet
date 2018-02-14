@@ -653,9 +653,10 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
         }
 
         // update snode addr and pubkey ( ???? )
+
         // ptr->hubAddress   = std::vector<unsigned char>(packet->data()+64, packet->data()+84);
         // ptr->sPubKey      = spubkey;
-
+      
         // update timestamp
         ptr->updateTimestamp();
 
