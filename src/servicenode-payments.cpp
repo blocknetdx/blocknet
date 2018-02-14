@@ -1,5 +1,6 @@
 // Copyright (c) 2014-2015 The Dash developers
-// Copyright (c) 2015-2017 The BlocknetDX developers
+// Copyright (c) 2015-2017 The PIVX developers
+// Copyright (c) 2015-2018 The Blocknet developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -191,29 +192,25 @@ bool IsBlockValueValid(const CBlock& block, CAmount nExpectedValue, CAmount nMin
         LogPrintf("IsBlockValueValid() : WARNING: Couldn't find previous block\n");
     }
 
-    if (!servicenodeSync.IsSynced()) { //there is no budget data to use to check anything
-        //super blocks will always be on these blocks, max 100 per budgeting
-        if (nHeight > 0 && nHeight % GetBudgetPaymentCycleBlocks() < 100) {
-            return nMinted <= CBudgetManager::GetTotalBudget(nHeight);
-        } else {
-            if (nMinted > nExpectedValue) {
-                return false;
-            }
+    if (!servicenodeSync.IsSynced()) {
+        // Check for superblock and allow superblock budget when in non-sync'd state due to
+        // unavailability of budget data
+        if (nHeight > 0 && nHeight % GetBudgetPaymentCycleBlocks() == 0) {
+            return nMinted <= CBudgetManager::GetTotalBudget(nHeight) + nExpectedValue;
+        } else if (nMinted > nExpectedValue) {
+            return false;
         }
-    } else { // we're synced and have data so check the budget schedule
-
-        //are these blocks even enabled
+    } else {
+        // Ignore superblock check if it's disabled
         if (!IsSporkActive(SPORK_13_ENABLE_SUPERBLOCKS)) {
             return nMinted <= nExpectedValue;
         }
 
+        // Check for valid superblock and allow superblock payment
         if (budget.IsBudgetPaymentBlock(nHeight)) {
-            //the value of the block is evaluated in CheckBlock
-            return nMinted <= CBudgetManager::GetTotalBudget(nHeight) + 1;
-        } else {
-            if (nMinted > nExpectedValue) {
-                return false;
-            }
+            return nMinted <= CBudgetManager::GetTotalBudget(nHeight) + nExpectedValue;
+        } else if (nMinted > nExpectedValue) {
+            return false;
         }
     }
 
@@ -229,19 +226,17 @@ bool IsBlockPayeeValid(const CBlock& block, int nBlockHeight)
 
     const CTransaction& txNew = (nBlockHeight > Params().LAST_POW_BLOCK() ? block.vtx[1] : block.vtx[0]);
 
-    //check if it's a budget block
-    if (IsSporkActive(SPORK_13_ENABLE_SUPERBLOCKS)) {
-        if (budget.IsBudgetPaymentBlock(nBlockHeight)) {
-            if (budget.IsTransactionValid(txNew, nBlockHeight))
-                return true;
-
-            LogPrintf("Invalid budget payment detected %s\n", txNew.ToString().c_str());
-            if (IsSporkActive(SPORK_9_SERVICENODE_BUDGET_ENFORCEMENT))
-                return false;
-
-            LogPrintf("Budget enforcement is disabled, accepting block\n");
+    // If superblock check that payees are valid
+    if (IsSporkActive(SPORK_13_ENABLE_SUPERBLOCKS) && budget.IsBudgetPaymentBlock(nBlockHeight)) {
+        if (budget.IsTransactionValid(txNew, nBlockHeight))
             return true;
-        }
+
+        LogPrintf("Invalid budget payment detected %s\n", txNew.ToString().c_str());
+        if (IsSporkActive(SPORK_9_SERVICENODE_BUDGET_ENFORCEMENT))
+            return false;
+
+        LogPrintf("Budget enforcement is disabled, accepting block\n");
+        return true;
     }
 
     //check for servicenode payee
@@ -262,11 +257,16 @@ void FillBlockPayee(CMutableTransaction& txNew, int64_t nFees, bool fProofOfStak
     CBlockIndex* pindexPrev = chainActive.Tip();
     if (!pindexPrev) return;
 
-    if (IsSporkActive(SPORK_13_ENABLE_SUPERBLOCKS) && budget.IsBudgetPaymentBlock(pindexPrev->nHeight + 1)) {
-        budget.FillBlockPayee(txNew, nFees, fProofOfStake);
-    } else {
-        servicenodePayments.FillBlockPayee(txNew, nFees, fProofOfStake);
+    // Handle superblock payments
+    int superblock = pindexPrev->nHeight + 1;
+    if (IsSporkActive(SPORK_13_ENABLE_SUPERBLOCKS) && budget.IsBudgetPaymentBlock(superblock)) {
+        // If the budget payment fails, pay a servicenode. Only supporting budget payments on PoS blocks
+        if (!fProofOfStake || !budget.FillBlockPayees(txNew, superblock))
+            servicenodePayments.FillBlockPayee(txNew, nFees, fProofOfStake);
+        return;
     }
+
+    servicenodePayments.FillBlockPayee(txNew, nFees, fProofOfStake);
 }
 
 std::string GetRequiredPaymentsString(int nBlockHeight)

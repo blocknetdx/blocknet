@@ -1,6 +1,7 @@
 
 // Copyright (c) 2014-2015 The Dash developers
-// Copyright (c) 2015-2017 The BlocknetDX developers
+// Copyright (c) 2015-2017 The PIVX developers
+// Copyright (c) 2015-2018 The Blocknet developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #ifndef SERVICENODE_H
@@ -99,6 +100,23 @@ public:
     }
 };
 
+class CServicenodeXWallet
+{
+public:
+    explicit CServicenodeXWallet() {}
+    explicit CServicenodeXWallet(const std::string & walletName) : strWalletName(walletName) {}
+
+    std::string strWalletName;
+
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
+    {
+        READWRITE(LIMITED_STRING(strWalletName, 8));
+    }
+};
+
 //
 // The Servicenode Class. For managing the Obfuscation process. It contains the input of the 5000 BLOCK, signature to prove
 // it's the one who own that ip address and code for calculating the payment election.
@@ -144,7 +162,7 @@ public:
     CServicenodePing lastPing;
 
     // xbridge wallets list, connected to service node
-    std::vector<string> connectedWallets;
+    std::vector<CServicenodeXWallet> connectedWallets;
 
     int64_t nLastDsee;  // temporary, do not save. Remove after migration to v12
     int64_t nLastDseep; // temporary, do not save. Remove after migration to v12
@@ -286,8 +304,9 @@ public:
 
     int64_t GetLastPaid();
     bool IsValidNetAddr();
-};
 
+    std::string GetConnectedWalletsStr() const;
+};
 
 //
 // The Servicenode Broadcast Class : Contains a different serialize method for sending servicenodes through the network

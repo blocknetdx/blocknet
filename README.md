@@ -33,11 +33,11 @@ Step 5.
 Initiator creates TxBp which spends TxBb using privkey i2 and secret X. With the revealed secret, responder can create TxAp which spends TxAb with privkey r1 and secret X.
 ```
 
-LICENSE:
+## LICENSE
 
 The MIT License (MIT)
 
-Copyright (c) 2014-2017 The Blocknet Developers, see LICENSE for additional detail
+Copyright (c) 2014-2018 The Blocknet Developers, see LICENSE for additional detail.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

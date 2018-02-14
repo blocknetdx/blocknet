@@ -217,14 +217,43 @@ bool CPubKey::IsFullyValid() const
 bool CPubKey::Decompress()
 {
     if (!IsValid())
+    {
         return false;
+    }
+    if (!IsCompressed())
+    {
+        return true;
+    }
     secp256k1_pubkey pubkey;
-    if (!secp256k1_ec_pubkey_parse(secp256k1_context_verify, &pubkey, &(*this)[0], size())) {
+    if (!secp256k1_ec_pubkey_parse(secp256k1_context_verify, &pubkey, &(*this)[0], size()))
+    {
         return false;
     }
     unsigned char pub[65];
     size_t publen = 65;
     secp256k1_ec_pubkey_serialize(secp256k1_context_verify, pub, &publen, &pubkey, SECP256K1_EC_UNCOMPRESSED);
+    Set(pub, pub + publen);
+    return true;
+}
+
+bool CPubKey::Compress()
+{
+    if (!IsValid())
+    {
+        return false;
+    }
+    if (IsCompressed())
+    {
+        return true;
+    }
+    secp256k1_pubkey pubkey;
+    if (!secp256k1_ec_pubkey_parse(secp256k1_context_verify, &pubkey, &(*this)[0], size()))
+    {
+        return false;
+    }
+    unsigned char pub[65];
+    size_t publen = 65;
+    secp256k1_ec_pubkey_serialize(secp256k1_context_verify, pub, &publen, &pubkey, SECP256K1_EC_COMPRESSED);
     Set(pub, pub + publen);
     return true;
 }

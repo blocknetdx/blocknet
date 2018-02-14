@@ -1,7 +1,8 @@
 // Copyright (c) 2010 Satoshi Nakamoto
 // Copyright (c) 2009-2014 The Bitcoin developers
 // Copyright (c) 2014-2015 The Dash developers
-// Copyright (c) 2015-2017 The BlocknetDX developers
+// Copyright (c) 2015-2017 The PIVX developers
+// Copyright (c) 2015-2018 The Blocknet developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -284,12 +285,13 @@ static const CRPCCommand vRPCCommands[] =
 #endif
 
         /* Raw transactions */
-        {"rawtransactions", "createrawtransaction", &createrawtransaction, true, false, false},
-        {"rawtransactions", "decoderawtransaction", &decoderawtransaction, true, false, false},
-        {"rawtransactions", "decodescript", &decodescript, true, false, false},
-        {"rawtransactions", "getrawtransaction", &getrawtransaction, true, false, false},
-        {"rawtransactions", "sendrawtransaction", &sendrawtransaction, false, false, false},
-        {"rawtransactions", "signrawtransaction", &signrawtransaction, false, false, false}, /* uses wallet if enabled */
+        {"rawtransactions", "createrawtransaction", &createrawtransaction, true,  false, false},
+        {"rawtransactions", "fundrawtransaction",   &fundrawtransaction,   false, false, false },
+        {"rawtransactions", "decoderawtransaction", &decoderawtransaction, true,  false, false},
+        {"rawtransactions", "decodescript",         &decodescript,         true,  false, false},
+        {"rawtransactions", "getrawtransaction",    &getrawtransaction,    true,  false, false},
+        {"rawtransactions", "sendrawtransaction",   &sendrawtransaction,   false, false, false},
+        {"rawtransactions", "signrawtransaction",   &signrawtransaction,   false, false, false}, /* uses wallet if enabled */
 
         /* Utility functions */
         {"util", "createmultisig", &createmultisig, true, true, false},
@@ -363,13 +365,16 @@ static const CRPCCommand vRPCCommands[] =
         {"wallet", "walletpassphrasechange", &walletpassphrasechange, true, false, true},
         {"wallet", "walletpassphrase", &walletpassphrase, true, false, true},
 
-        {"xbridge", "dxGetTransactionList",           &dxGetTransactionList,          true, true, true},
-        {"xbridge", "dxGetTransactionsHistoryList",   &dxGetTransactionsHistoryList,  true, true, true},
-        {"xbridge", "dxGetTransactionInfo",           &dxGetTransactionInfo,          true, true, true},
-        {"xbridge", "dxGetCurrencyList",              &dxGetCurrencyList,             true, true, true},
-        {"xbridge", "dxCreateTransaction",            &dxCreateTransaction,           true, true, true},
-        {"xbridge", "dxAcceptTransaction",            &dxAcceptTransaction,           true, true, true},
-        {"xbridge", "dxCancelTransaction",            &dxCancelTransaction,           true, true, true},
+        {"xbridge", "dxGetTransactions",                    &dxGetTransactions,          true, true, true},
+        {"xbridge", "dxGetTransactionsHistory",             &dxGetTransactionsHistory,   true, true, true},
+        {"xbridge", "dxGetTransactionInfo",                 &dxGetTransactionInfo,       true, true, true},
+        {"xbridge", "dxGetCurrencies",                      &dxGetCurrencies,            true, true, true},
+        {"xbridge", "dxCreateTransaction",                  &dxCreateTransaction,        true, true, true},
+        {"xbridge", "dxAcceptTransaction",                  &dxAcceptTransaction,        true, true, true},
+        {"xbridge", "dxCancelTransaction",                  &dxCancelTransaction,        true, true, true},
+        {"xbridge", "dxGetTradeHistory",                    &dxGetTradeHistory,          true, true, true},
+        {"xbridge", "dxGetOrderBook",                       &dxGetOrderBook,             true, true, true},
+        {"xbridge", "dxrollbackTransaction",                &dxrollbackTransaction,      true, true, true}
     #endif // ENABLE_WALLET
 };
 

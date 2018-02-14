@@ -93,7 +93,6 @@ BITCOIN_CORE_H = \
   checkpoints.h \
   checkqueue.h \
   clientversion.h \
-  clientversioncore.h \
   coincontrol.h \
   coins.h \
   compat.h \
@@ -109,7 +108,6 @@ BITCOIN_CORE_H = \
   obfuscation-relay.h \
   db.h \
   eccryptoverify.h \
-  ecwrapper.h \
   hash.h \
   init.h \
   kernel.h \
@@ -163,6 +161,7 @@ BITCOIN_CORE_H = \
   utilmoneystr.h \
   utiltime.h \
   validationinterface.h \
+  validationstate.h \
   version.h \
   wallet.h \
   wallet_ismine.h \
@@ -327,7 +326,6 @@ libbitcoin_common_a_SOURCES = \
   core_read.cpp \
   core_write.cpp \
   eccryptoverify.cpp \
-  ecwrapper.cpp \
   hash.cpp \
   key.cpp \
   keystore.cpp \
@@ -351,36 +349,44 @@ libxbridge_xbridge_a_SOURCES = \
   xbridge/util/logger.cpp \
   xbridge/util/txlog.cpp \
   xbridge/util/xutil.cpp \
+  xbridge/util/xbridgeerror.cpp \
   xbridge/bitcoinrpcconnector.cpp \
-  xbridge/xbridge.cpp \
+  xbridge/xbridgepacket.cpp \
   xbridge/xbridgeapp.cpp \
   xbridge/xbridgeexchange.cpp \
   xbridge/xbridgesession.cpp \
-  xbridge/xbridgesessionbtc.cpp \
   xbridge/xbridgetransaction.cpp \
   xbridge/xbridgetransactionmember.cpp \
+  xbridge/xbridgewalletconnector.cpp \
+  xbridge/xbridgewalletconnectorbtc.cpp \
+  xbridge/xbridgewalletconnectorbcc.cpp \
+  xbridge/xbridgewalletconnectorsys.cpp \
   xbridge/xkey.cpp \
   xbridge/xpubkey.cpp \
   xbridge/xbitcoinaddress.cpp \
   xbridge/xbitcoinsecret.cpp \
   xbridge/xbitcointransaction.cpp \
   xbridge/rpcxbridge.cpp \
+  xbridge/posixtimeconversion.cpp \
   xbridge/bitcoinrpcconnector.h \
   xbridge/config.h \
   xbridge/version.h \
   xbridge/xbitcoinaddress.h \
   xbridge/xbitcoinsecret.h \
   xbridge/xbitcointransaction.h \
-  xbridge/xbridge.h \
+  xbridge/xbridgedef.h \
   xbridge/xbridgeapp.h \
   xbridge/xbridgeexchange.h \
   xbridge/xbridgepacket.h \
   xbridge/xbridgerpc.h \
   xbridge/xbridgesession.h \
-  xbridge/xbridgesessionbtc.h \
   xbridge/xbridgetransaction.h \
   xbridge/xbridgetransactiondescr.h \
   xbridge/xbridgetransactionmember.h \
+  xbridge/xbridgewalletconnector.h \
+  xbridge/xbridgewalletconnectorbtc.h \
+  xbridge/xbridgewalletconnectorbcc.h \
+  xbridge/xbridgewalletconnectorsys.h \
   xbridge/xbridgewallet.h \
   xbridge/xkey.h \
   xbridge/xpubkey.h \
@@ -389,6 +395,8 @@ libxbridge_xbridge_a_SOURCES = \
   xbridge/util/settings.h \
   xbridge/util/txlog.h \
   xbridge/util/xutil.h \
+  xbridge/util/xbridgeerror.h \
+  xbridge/posixtimeconversion.h \
   $(BITCOIN_CORE_H)
 
 
@@ -509,7 +517,6 @@ libbitcoinconsensus_la_SOURCES = \
   crypto/sha512.cpp \
   crypto/ripemd160.cpp \
   eccryptoverify.cpp \
-  ecwrapper.cpp \
   hash.cpp \
   pubkey.cpp \
   script/script.cpp \
