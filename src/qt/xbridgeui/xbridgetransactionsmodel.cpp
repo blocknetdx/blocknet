@@ -27,7 +27,7 @@ XBridgeTransactionsModel::XBridgeTransactionsModel()
     xuiConnector.NotifyXBridgeTransactionReceived.connect
             (boost::bind(&XBridgeTransactionsModel::onTransactionReceivedExtSignal, this, _1));
 
-    xuiConnector.NotifyXBridgeTransactionStateChanged.connect
+    xuiConnector.NotifyXBridgeTransactionChanged.connect
             (boost::bind(&XBridgeTransactionsModel::onTransactionStateChangedExtSignal, this, _1));
 
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(onTimer()));
@@ -41,7 +41,7 @@ XBridgeTransactionsModel::~XBridgeTransactionsModel()
     xuiConnector.NotifyXBridgeTransactionReceived.disconnect
             (boost::bind(&XBridgeTransactionsModel::onTransactionReceivedExtSignal, this, _1));
 
-    xuiConnector.NotifyXBridgeTransactionStateChanged.disconnect
+    xuiConnector.NotifyXBridgeTransactionChanged.disconnect
             (boost::bind(&XBridgeTransactionsModel::onTransactionStateChangedExtSignal, this, _1));
 }
 
@@ -346,6 +346,13 @@ void XBridgeTransactionsModel::onTimer()
 //******************************************************************************
 void XBridgeTransactionsModel::onTransactionReceived(const xbridge::TransactionDescrPtr & tx)
 {
+    if (tx->state > xbridge::TransactionDescr::trPending)
+    {
+        // TODO temporary log
+        ERR() << "received tx with incorrect tx state <" << tx->state << "> " << __FUNCTION__;
+        return;
+    }
+
     for (unsigned int i = 0; i < m_transactions.size(); ++i)
     {
         const xbridge::TransactionDescrPtr & descr = m_transactions.at(i);
@@ -400,7 +407,18 @@ void XBridgeTransactionsModel::onTransactionStateChanged(const uint256 & id)
         if (m_transactions[i]->id == id)
         {
             // found
-            emit dataChanged(index(i, FirstColumn), index(i, LastColumn));
+            xbridge::TransactionDescrPtr & tr = m_transactions[i];
+            if (tr->state == xbridge::TransactionDescr::trCancelled && !tr->isLocal())
+            {
+                emit beginRemoveRows(QModelIndex(), i, i);
+                m_transactions.erase(m_transactions.begin() + i);
+                emit endRemoveRows();
+            }
+            else
+            {
+                emit dataChanged(index(i, FirstColumn), index(i, LastColumn));
+            }
+            break;
         }
     }
 }

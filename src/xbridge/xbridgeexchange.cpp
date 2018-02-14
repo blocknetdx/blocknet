@@ -410,13 +410,6 @@ bool Exchange::acceptTransaction(const uint256                        & txid,
                                  const std::vector<unsigned char>     & mpubkey,
                                  const std::vector<wallet::UtxoEntry> & items)
 {
-    LOG() << "txid = " << txid.GetHex() << std::endl
-          << "source address = " << sourceAddr.data() << std::endl
-          << "source currency = " << sourceCurrency <<std::endl
-          << "source Amount = " << sourceAmount << std::endl
-          << "destination address = " << destAddr.data() << std::endl
-          << "destination currency = " << destCurrency << std::endl
-          << "destination amount = " << destAmount;
     DEBUG_TRACE();
 
     if (!haveConnectedWallet(sourceCurrency) || !haveConnectedWallet(destCurrency))
