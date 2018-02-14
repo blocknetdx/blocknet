@@ -269,8 +269,8 @@ void OptionsDialog::on_okButton_clicked()
     obfuScationPool.cachedNumBlocks = std::numeric_limits<int>::max();
     pwalletMain->MarkDirty();
     accept();
-    parentWidget()->setStyleSheet(*styleSheet);
-    parentWidget()->update();
+  //  parentWidget()->setStyleSheet(*styleSheet);
+  //  parentWidget()->update();
 }
 
 void OptionsDialog::on_cancelButton_clicked()
@@ -330,7 +330,9 @@ bool OptionsDialog::eventFilter(QObject* object, QEvent* event)
 // Load a custom theme from user selected path
 void OptionsDialog::on_theme_activated(const QString &arg1)
 {
+    QString fileName;
     QString dataDir(GetDataDir().string().c_str());
+    QString cssName = dataDir+"/themes/"+fileName;
     QString infoText = QString("The theme combobox item: ") + arg1 + QString(" is activated, Theme path is: ") + dataDir;
 
     ui->statusLabel->setText(tr(infoText.toStdString().c_str()));
@@ -341,22 +343,31 @@ void OptionsDialog::on_theme_activated(const QString &arg1)
         fileDialog.setFileMode(QFileDialog::AnyFile);
         fileDialog.setNameFilter(tr("Custom Themes (*.css)"));
         fileDialog.setDirectory(dataDir+"/themes");
-        QString fileName;
         if (fileDialog.exec())
             fileDialog.selectFile(fileName);
 
-        QString cssName = dataDir+"/themes/"+fileName;
+
         QFile qFile(cssName);
         if (qFile.open(QFile::ReadOnly)) {
             ui->statusLabel->setText(tr("Opened theme file..."));
-            parentWidget()->setStyleSheet(QLatin1String(qFile.readAll()));
-            parentWidget()->update();
+            qFile.seek(0);
             *styleSheet = QLatin1String(qFile.readAll());
+            parentWidget()->setStyleSheet(*styleSheet);
+            parentWidget()->update();
+            qFile.close();
         }
     }
     else if (arg1 == "Default")
     {
-
+        QFile qFile(":/css/default");
+        if (qFile.open(QFile::ReadOnly)) {
+            ui->statusLabel->setText(tr("Opened default theme file..."));
+            qFile.seek(0);
+            *styleSheet = QLatin1String(qFile.readAll());
+            parentWidget()->setStyleSheet(*styleSheet);
+            parentWidget()->update();
+            qFile.close();
+        }
     }
     else
     {
@@ -364,9 +375,11 @@ void OptionsDialog::on_theme_activated(const QString &arg1)
         QFile qFile(cssName);
         if (qFile.open(QFile::ReadOnly)) {
             ui->statusLabel->setText(tr(cssName.toStdString().c_str()));
-            parentWidget()->setStyleSheet(QLatin1String(qFile.readAll()));
-            parentWidget()->update();
+            qFile.seek(0);
             *styleSheet = QLatin1String(qFile.readAll());
+            parentWidget()->setStyleSheet(*styleSheet);
+            parentWidget()->update();
+            qFile.close();
         }
     }
 }

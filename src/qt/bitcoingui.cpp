@@ -114,6 +114,7 @@ BitcoinGUI::BitcoinGUI(const NetworkStyle* networkStyle, QWidget* parent) : QMai
 {
     /* Open CSS when configured */
     this->setStyleSheet(GUIUtil::loadStyleSheet());
+    this->update();
 
     GUIUtil::restoreWindowGeometry("nWindow", QSize(850, 550), this);
 
