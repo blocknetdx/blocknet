@@ -144,12 +144,18 @@ OptionsDialog::OptionsDialog(QWidget* parent, bool enableWallet) : QDialog(paren
     connect(this, SIGNAL(proxyIpChecks(QValidatedLineEdit*, int)), this, SLOT(doProxyIpChecks(QValidatedLineEdit*, int)));
 
     styleSheet = new QString();
+    origStyleSheet = new QString();
+
+    *origStyleSheet = GUIUtil::loadStyleSheet();
+
 }
 
 OptionsDialog::~OptionsDialog()
 {
     GUIUtil::saveWindowGeometry("nOptionsDialogWindow", this);
     delete ui;
+    delete styleSheet;
+    delete origStyleSheet;
 }
 
 void OptionsDialog::setModel(OptionsModel* model)
@@ -276,6 +282,8 @@ void OptionsDialog::on_okButton_clicked()
 void OptionsDialog::on_cancelButton_clicked()
 {
     reject();
+    parentWidget()->setStyleSheet(*origStyleSheet);
+    parentWidget()->update();
 }
 
 void OptionsDialog::showRestartWarning(bool fPersistent)
