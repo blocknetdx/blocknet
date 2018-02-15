@@ -14,7 +14,6 @@
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-
 #include <stdio.h>
 #include <atomic>
 #include <numeric>
@@ -26,6 +25,8 @@
 #include "xbridgeexchange.h"
 #include "xbridgetransaction.h"
 #include "rpcserver.h"
+
+#include "posixtimeconversion.h"
 
 using namespace json_spirit;
 using namespace std;
@@ -59,11 +60,11 @@ uint64_t xBridgeAmountFromReal(double val)
   * The open transactions go first.
   */
 
-Value dxGetOrderss(const Array & params, bool fHelp)
+Value dxGetOrders(const Array & params, bool fHelp)
 {
     if (fHelp) {
 
-        throw runtime_error("dxGetOrderss\nList transactions.");
+        throw runtime_error("dxGetOrders\nList transactions.");
 
     }
     if (params.size() > 0) {
@@ -116,11 +117,11 @@ Value dxGetOrderss(const Array & params, bool fHelp)
 //*****************************************************************************
 //*****************************************************************************
 
-Value dxGetOrderssHistory(const Array & params, bool fHelp)
+Value dxGetOrderFills(const Array & params, bool fHelp)
 {
     if (fHelp) {
 
-        throw runtime_error("dxGetOrderssHistory "
+        throw runtime_error("dxGetOrderFills "
                             "(ALL - optional parameter, if specified then all transactions are shown, "
                             "not only successfully completed ");
 
@@ -167,12 +168,12 @@ Value dxGetOrderssHistory(const Array & params, bool fHelp)
     return arr;
 }
 
-Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp)
+Value dxGetOrderHistory(const json_spirit::Array& params, bool fHelp)
 {
 
     if (fHelp) {
 
-        throw runtime_error("dxGetTradeHistory "
+        throw runtime_error("dxGetOrderHistory "
                             "(from currency) (to currency) (start time) (end time) (txids - optional) ");
 
     }
@@ -407,11 +408,9 @@ Value dxGetNetworkTokens(const Array & params, bool fHelp)
 
     }
 
-    // Ivanenko: TODO : implement
-
     Object obj;
 
-    std::vector<std::string> currencies = xbridge::App::instance().availableCurrencies();
+    std::vector<std::string> currencies = xbridge::App::instance().networkCurrencies();
     for (std::string currency : currencies) {
 
         obj.emplace_back(Pair(currency, ""));
@@ -1116,42 +1115,70 @@ json_spirit::Value dxGetMyOrders(const json_spirit::Array& params, bool fHelp)
 {
     if (fHelp) {
 
-        throw runtime_error("dxGetOrderBook "
-                            "(the level of detail) (from currency) (to currency) "
-                            "(max orders - optional, default = 50) ");
+        throw runtime_error("dxGetMyOrders");
 
     }
-    if ((params.size() < 3 || params.size() > 5)) {
+
+    if (params.size() > 0) {
 
         Object error;
         error.emplace_back(Pair("error",
-                                "Invalid number of parameters"));
-        error.emplace_back(Pair("code",
-                                xbridge::INVALID_PARAMETERS));
+                                "This function does not accept any parameter"));
+        error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
         return  error;
 
     }
 
+    xbridge::App & xapp = xbridge::App::instance();
+
     // todo: should we lock?
-    Object res;
+    Array r;
+
     TransactionMap trList = xbridge::App::instance().transactions();
     {
         if(trList.empty()) {
 
             LOG() << "empty  transactions list ";
-            return res;
+            return r;
 
         }
 
         // using TransactionMap    = std::map<uint256, xbridge::TransactionDescrPtr>;
 
-        Array r;
-
         for(auto i : trList)
         {
 
+            const auto& t = *i.second;
 
+            xbridge::WalletConnectorPtr connFrom = xapp.connectorByCurrency(t.fromCurrency);
+            xbridge::WalletConnectorPtr connTo   = xapp.connectorByCurrency(t.toCurrency);
 
+            Object o;
+
+            o.emplace_back(Pair("id", t.id.GetHex()));
+
+            // todo : special processing for non-local
+
+            // todo : filter out non-owned addresses
+
+            // maker data
+            o.emplace_back(Pair("maker", t.fromCurrency));
+            o.emplace_back(Pair("maker_size", xBridgeValueFromAmount(t.fromAmount)));
+            o.emplace_back(Pair("maker_address", connFrom->fromXAddr(t.from)));
+            // taker data
+            o.emplace_back(Pair("taker", t.toCurrency));
+            o.emplace_back(Pair("taker_size", xBridgeValueFromAmount(t.toAmount)));
+            o.emplace_back(Pair("taker_address", connFrom->fromXAddr(t.to)));
+
+            // todo: check if it's ISO 8601
+            o.emplace_back(Pair("updated_at", bpt::to_iso_extended_string(t.txtime)));
+            o.emplace_back(Pair("created_at", bpt::to_iso_extended_string(t.created)));
+
+            // should we make returning value correspond to the description or vice versa?
+            // Order status: created|open|pending|filled|canceled
+            o.emplace_back(Pair("status", t.strState()));
+
+            r.emplace_back(o);
         }
 
 

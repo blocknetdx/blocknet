@@ -610,6 +610,17 @@ std::vector<std::string> App::availableCurrencies() const
 
 //*****************************************************************************
 //*****************************************************************************
+std::vector<std::string> App::networkCurrencies() const
+{
+
+    static const std::vector<std::string> currencies =
+           { "BTC", "BCC", "SYS" };
+
+    return currencies;
+}
+
+//*****************************************************************************
+//*****************************************************************************
 bool App::hasCurrency(const std::string & currency) const
 {
     boost::mutex::scoped_lock l(m_p->m_connectorsLock);

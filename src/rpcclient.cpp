@@ -108,8 +108,8 @@ static const CRPCConvertParam vRPCConvertParams[] =
         {"autocombinerewards", 1},
         {"dxMakeOrder", 2},
         {"dxMakeOrder", 5},
-        {"dxGetTradeHistory", 2},
-        {"dxGetTradeHistory", 3},
+        {"dxGetOrderHistory", 2},
+        {"dxGetOrderHistory", 3},
         {"dxGetOrderBook", 0},
         {"dxGetOrderBook", 3}};
 
