@@ -2,7 +2,7 @@
 '''
 Generate valid and invalid base58 address and private key test vectors.
 
-Usage: 
+Usage:
     gen_base58_test_vectors.py valid 50 > ../../src/test/data/base58_keys_valid.json
     gen_base58_test_vectors.py invalid 50 > ../../src/test/data/base58_keys_invalid.json
 '''
@@ -15,7 +15,7 @@ import random
 from binascii import b2a_hex
 
 # key types
-PUBKEY_ADDRESS = 30
+PUBKEY_ADDRESS = 55
 SCRIPT_ADDRESS = 13
 PUBKEY_ADDRESS_TEST = 139
 SCRIPT_ADDRESS_TEST = 19
@@ -56,7 +56,7 @@ def gen_valid_vectors():
     while True:
         for template in templates:
             prefix = str(bytearray(template[0]))
-            payload = os.urandom(template[1]) 
+            payload = os.urandom(template[1])
             suffix = str(bytearray(template[2]))
             rv = b58encode_chk(prefix + payload + suffix)
             assert is_valid(rv)
@@ -69,12 +69,12 @@ def gen_invalid_vector(template, corrupt_prefix, randomize_payload_size, corrupt
         prefix = os.urandom(1)
     else:
         prefix = str(bytearray(template[0]))
-    
+
     if randomize_payload_size:
         payload = os.urandom(max(int(random.expovariate(0.5)), 50))
     else:
         payload = os.urandom(template[1])
-    
+
     if corrupt_suffix:
         suffix = os.urandom(len(template[2]))
     else:
@@ -119,7 +119,7 @@ if __name__ == '__main__':
         count = int(sys.argv[2])
     except IndexError:
         count = 0
-   
+
     data = list(islice(uiter(), count))
     json.dump(data, sys.stdout, sort_keys=True, indent=4)
     sys.stdout.write('\n')
