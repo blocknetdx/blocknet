@@ -1203,45 +1203,6 @@ xbridge::Error App::cancelXBridgeTransaction(const uint256 &id,
 
 //******************************************************************************
 //******************************************************************************
-xbridge::Error App::rollbackXBridgeTransaction(const uint256 & id)
-{
-    WalletConnectorPtr conn;
-    {
-        boost::mutex::scoped_lock l(m_p->m_txLocker);
-
-        if (m_p->m_transactions.count(id))
-        {
-            TransactionDescrPtr ptr = m_p->m_transactions[id];
-            if (!ptr->refTx.empty())
-            {
-                conn = connectorByCurrency(ptr->fromCurrency);
-                if (!conn)
-                {
-                    ERR() << "unknown session for currency " + ptr->fromCurrency << __FUNCTION__;
-                    return xbridge::UNKNOWN_SESSION;
-                }
-            }
-        } else {
-            return xbridge::TRANSACTION_NOT_FOUND;
-        }
-    }
-
-//    if (conn)
-//    {
-//        // session use m_txLocker, must be unlocked because not recursive
-//        if (!conn->rollbacktXBridgeTransaction(id))
-//        {
-//            LOG() << "revert tx failed for " << id.ToString();
-//            return false;
-//        }
-//
-//        sendRollbackTransaction(id);
-//    }
-    return xbridge::SUCCESS;
-}
-
-//******************************************************************************
-//******************************************************************************
 bool App::sendCancelTransaction(const uint256 & txid,
                                 const TxCancelReason & reason)
 {
@@ -1256,23 +1217,6 @@ bool App::sendCancelTransaction(const uint256 & txid,
     sendPacket(addr, reply);
 
     // cancelled
-    return true;
-}
-
-//******************************************************************************
-//******************************************************************************
-bool App::sendRollbackTransaction(const uint256 & txid)
-{
-    XBridgePacketPtr reply(new XBridgePacket(xbcTransactionRollback));
-    reply->append(txid.begin(), 32);
-
-    TransactionDescrPtr ptr = transaction(txid);
-    reply->sign(ptr->mPubKey, ptr->mPrivKey);
-
-    static std::vector<unsigned char> addr(20, 0);
-    sendPacket(addr, reply);
-
-    // rolled back
     return true;
 }
 

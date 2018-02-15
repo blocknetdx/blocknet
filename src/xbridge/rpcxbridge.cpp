@@ -710,44 +710,6 @@ Value dxCancelTransaction(const Array &params, bool fHelp)
 
 //******************************************************************************
 //******************************************************************************
-json_spirit::Value dxrollbackTransaction(const json_spirit::Array& params, bool fHelp)
-{
-    if (fHelp) {
-
-        throw runtime_error("dxRollbackTransaction (id)\n"
-                            "Rollback xbridge transaction.");
-
-    }
-    if (params.size() != 1) {
-
-        Object error;
-        error.emplace_back(Pair("error",
-                                "Invalid number of parameters"));
-        error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
-        return  error;
-
-    }
-    LOG() << "rpc rollback transaction " << __FUNCTION__;
-    uint256 id(params[0].get_str());
-    const auto res = xbridge::App::instance().rollbackXBridgeTransaction(id);
-    if (res == xbridge::SUCCESS) {
-
-        Object obj;
-        obj.emplace_back(Pair("id", id.GetHex()));
-        return  obj;
-
-    } else {
-
-        Object obj;
-        obj.emplace_back(Pair("error", xbridge::xbridgeErrorText(res)));
-        obj.emplace_back(Pair("code", res));
-        return obj;
-
-    }
-}
-
-//******************************************************************************
-//******************************************************************************
 json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
 {
     if (fHelp) {

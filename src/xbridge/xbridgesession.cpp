@@ -115,7 +115,6 @@ protected:
                                const TxCancelReason & reason);
     bool sendCancelTransaction(const TransactionDescrPtr & tx,
                                const TxCancelReason & reason);
-    bool rollbackTransaction(TransactionPtr tr);
 
     bool processTransactionCancel(XBridgePacketPtr packet);
     bool cancelOrRollbackTransaction(const uint256 & txid, const TxCancelReason & reason);
@@ -2478,39 +2477,6 @@ bool Session::Impl::sendCancelTransaction(const TransactionDescrPtr & tx,
 
 //*****************************************************************************
 //*****************************************************************************
-bool Session::Impl::rollbackTransaction(TransactionPtr tr)
-{
-    if (tr == nullptr )
-    {
-        LOG() << "unknown transaction " << tr->id().GetHex() << ">" << __FUNCTION__;
-        return  false;
-    }
-    LOG() << "rollback transaction <" << tr->id().GetHex() << ">";
-
-    Exchange & e = Exchange::instance();
-    if (!e.isStarted())
-    {
-        return false;
-    }
-
-    if (tr->state() >= xbridge::Transaction::trCreated)
-    {
-        XBridgePacketPtr reply(new XBridgePacket(xbcTransactionRollback));
-        reply->append(tr->id().begin(), 32);
-
-        reply->sign(e.pubKey(), e.privKey());
-
-        static std::vector<unsigned char> addr(20, 0);
-        sendPacket(addr, reply);
-    }
-
-    tr->finish();
-
-    return true;
-}
-
-//*****************************************************************************
-//*****************************************************************************
 void Session::sendListOfTransactions()
 {
     xbridge::App & xapp = xbridge::App::instance();
@@ -2599,7 +2565,6 @@ void Session::checkFinishedTransactions()
     {
         TransactionPtr & ptr = *i;
 
-
         boost::mutex::scoped_lock l(ptr->m_lock);
 
         uint256 txid = ptr->id();
@@ -2634,7 +2599,8 @@ void Session::checkFinishedTransactions()
                   << " state " << ptr->strState();
 
             // send rollback
-            m_p->rollbackTransaction(ptr);
+            m_p->sendCancelTransaction(ptr, TxCancelReason::crTimeout);
+            ptr->finish();
         }
     }
 }

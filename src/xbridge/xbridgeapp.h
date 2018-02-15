@@ -80,9 +80,6 @@ public:
     xbridge::Error cancelXBridgeTransaction(const uint256 &id, const TxCancelReason &reason);
     bool sendCancelTransaction(const uint256 &txid, const TxCancelReason &reason);
 
-    xbridge::Error rollbackXBridgeTransaction(const uint256 &id);
-    bool sendRollbackTransaction(const uint256 &txid);
-
     /**
      * @brief isValidAddress checks the correctness of the address
      * @param address checked address

@@ -34,7 +34,8 @@ enum TxCancelReason
     crInvalidAddress  = 12,
     crBlocknetError   = 13,
     crBadADepositTx   = 14,
-    crBadBDepositTx   = 15
+    crBadBDepositTx   = 15,
+    crTimeout         = 16
 };
 
 //******************************************************************************
