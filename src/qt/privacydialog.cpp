@@ -78,7 +78,7 @@ PrivacyDialog::PrivacyDialog(QWidget* parent) : QDialog(parent),
     ui->labelZsupplyText500->setText(tr("Denom. <b>500</b>:"));
     ui->labelZsupplyText1000->setText(tr("Denom. <b>1000</b>:"));
     ui->labelZsupplyText5000->setText(tr("Denom. <b>5000</b>:"));
-    
+
     // Phore settings
     QSettings settings;
     if (!settings.contains("nSecurityLevel")){
@@ -207,7 +207,7 @@ void PrivacyDialog::on_pushButtonMintzPHR_clicked()
     double fDuration = (double)(GetTimeMillis() - nTime)/1000.0;
 
     // Minting successfully finished. Show some stats for entertainment.
-    QString strStatsHeader = tr("Successfully minted ") + ui->labelMintAmountValue->text() + tr(" zPHR in ") + 
+    QString strStatsHeader = tr("Successfully minted ") + ui->labelMintAmountValue->text() + tr(" zPHR in ") +
                              QString::number(fDuration) + tr(" sec. Used denominations:\n");
 
     // Clear amount to avoid double spending when accidentally clicking twice
@@ -303,7 +303,7 @@ void PrivacyDialog::on_pushButtonZPhrControl_clicked()
 
 void PrivacyDialog::setZPhrControlLabels(int64_t nAmount, int nQuantity)
 {
-    ui->labelzPhrSelected_int->setText(QString::number(nAmount));
+    ui->labelzPHRSelected_int->setText(QString::number(nAmount));
     ui->labelQuantitySelected_int->setText(QString::number(nQuantity));
 }
 
@@ -626,7 +626,7 @@ void PrivacyDialog::setBalance(const CAmount& balance, const CAmount& unconfirme
         }
 
         strDenomStats = strUnconfirmed + QString::number(mapDenomBalances.at(denom)) + " x " +
-                        QString::number(nCoins) + " = <b>" + 
+                        QString::number(nCoins) + " = <b>" +
                         QString::number(nSumPerCoin) + " zPHR </b>";
 
         switch (nCoins) {
@@ -668,56 +668,6 @@ void PrivacyDialog::setBalance(const CAmount& balance, const CAmount& unconfirme
     ui->labelzAvailableAmount->setText(QString::number(zerocoinBalance/COIN) + QString(" zPHR "));
     ui->labelzAvailableAmount_2->setText(QString::number(matureZerocoinBalance/COIN) + QString(" zPHR "));
     ui->labelzPHRAmountValue->setText(BitcoinUnits::floorHtmlWithUnit(nDisplayUnit, balance - immatureBalance - nLockedBalance, false, BitcoinUnits::separatorAlways));
-
-    // Display AutoMint status
-    QString strAutomintStatus = tr("AutoMint Status:");
-
-    if (pwalletMain->isZeromintEnabled ()) {
-       strAutomintStatus += tr(" <b>enabled</b>.");
-    }
-    else {
-       strAutomintStatus += tr(" <b>disabled</b>.");
-    }
-
-    strAutomintStatus += tr(" Configured target percentage: <b>") + QString::number(pwalletMain->getZeromintPercentage()) + "%</b>";
-    ui->label_AutoMintStatus->setText(strAutomintStatus);
-
-    // Display global supply
-    ui->labelZsupplyAmount->setText(QString::number(chainActive.Tip()->GetZerocoinSupply()/COIN) + QString(" <b>zPHR </b> "));
-    for (auto denom : libzerocoin::zerocoinDenomList) {
-        int64_t nSupply = chainActive.Tip()->mapZerocoinSupply.at(denom);
-        QString strSupply = QString::number(nSupply) + " x " + QString::number(denom) + " = <b>" +
-                            QString::number(nSupply*denom) + " zPHR </b> ";
-        switch (denom) {
-            case libzerocoin::CoinDenomination::ZQ_ONE:
-                ui->labelZsupplyAmount1->setText(strSupply);
-                break;
-            case libzerocoin::CoinDenomination::ZQ_FIVE:
-                ui->labelZsupplyAmount5->setText(strSupply);
-                break;
-            case libzerocoin::CoinDenomination::ZQ_TEN:
-                ui->labelZsupplyAmount10->setText(strSupply);
-                break;
-            case libzerocoin::CoinDenomination::ZQ_FIFTY:
-                ui->labelZsupplyAmount50->setText(strSupply);
-                break;
-            case libzerocoin::CoinDenomination::ZQ_ONE_HUNDRED:
-                ui->labelZsupplyAmount100->setText(strSupply);
-                break;
-            case libzerocoin::CoinDenomination::ZQ_FIVE_HUNDRED:
-                ui->labelZsupplyAmount500->setText(strSupply);
-                break;
-            case libzerocoin::CoinDenomination::ZQ_ONE_THOUSAND:
-                ui->labelZsupplyAmount1000->setText(strSupply);
-                break;
-            case libzerocoin::CoinDenomination::ZQ_FIVE_THOUSAND:
-                ui->labelZsupplyAmount5000->setText(strSupply);
-                break;
-            default:
-                // Error Case: don't update display
-                break;
-        }
-    }
 }
 
 void PrivacyDialog::updateDisplayUnit()
