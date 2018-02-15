@@ -642,6 +642,18 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
     }
 
     uint256 txid = uint256(packet->data());
+    std::string scurrency = std::string(reinterpret_cast<const char *>(packet->data()+32));
+    std::string dcurrency = std::string(reinterpret_cast<const char *>(packet->data()+48));
+
+    xbridge::App & xapp = xbridge::App::instance();
+    WalletConnectorPtr sconn = xapp.connectorByCurrency(scurrency);
+    WalletConnectorPtr dconn = xapp.connectorByCurrency(dcurrency);
+    if (!sconn || !dconn)
+    {
+        WARN() << "no connector for <" << (!sconn ? scurrency : dcurrency) << "> " << __FUNCTION__;
+        return true;
+    }
+
     TransactionDescrPtr ptr = App::instance().transaction(txid);
     if (ptr)
     {
@@ -652,10 +664,9 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
         }
 
         // update snode addr and pubkey ( ???? )
-
         // ptr->hubAddress   = std::vector<unsigned char>(packet->data()+64, packet->data()+84);
         // ptr->sPubKey      = spubkey;
-      
+
         // update timestamp
         ptr->updateTimestamp();
 
@@ -667,9 +678,9 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
     // create tx item
     ptr.reset(new TransactionDescr);
     ptr->id           = txid;
-    ptr->fromCurrency = std::string(reinterpret_cast<const char *>(packet->data()+32));
+    ptr->fromCurrency = scurrency;
     ptr->fromAmount   = *reinterpret_cast<boost::uint64_t *>(packet->data()+40);
-    ptr->toCurrency   = std::string(reinterpret_cast<const char *>(packet->data()+48));
+    ptr->toCurrency   = dcurrency;
     ptr->toAmount     = *reinterpret_cast<boost::uint64_t *>(packet->data()+56);
     ptr->hubAddress   = std::vector<unsigned char>(packet->data()+64, packet->data()+84);
     ptr->created      = boost::posix_time::from_time_t(*reinterpret_cast<boost::uint32_t *>(packet->data()+84));
