@@ -617,7 +617,6 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
 //******************************************************************************
 bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
 {
-
     Exchange & e = Exchange::instance();
     if (e.isEnabled())
     {
@@ -645,7 +644,7 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
     std::string scurrency = std::string(reinterpret_cast<const char *>(packet->data()+32));
     std::string dcurrency = std::string(reinterpret_cast<const char *>(packet->data()+48));
 
-    xbridge::App & xapp = xbridge::App::instance();
+    xbridge::App & xapp = App::instance();
     WalletConnectorPtr sconn = xapp.connectorByCurrency(scurrency);
     WalletConnectorPtr dconn = xapp.connectorByCurrency(dcurrency);
     if (!sconn || !dconn)
@@ -654,7 +653,7 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
         return true;
     }
 
-    TransactionDescrPtr ptr = App::instance().transaction(txid);
+    TransactionDescrPtr ptr = xapp.transaction(txid);
     if (ptr)
     {
         if (ptr->state > TransactionDescr::trPending)
@@ -688,7 +687,7 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
     ptr->sPubKey      = spubkey;
     ptr->blockHash    = uint256(packet->data()+92);
 
-    App::instance().appendTransaction(ptr);
+    xapp.appendTransaction(ptr);
 
     LOG() << "received tx <" << ptr->id.ToString() << "> " << __FUNCTION__;
 
