@@ -9,7 +9,7 @@ namespace xbridge
     {
         // 'NO_ERROR' is defined (probably by some windows headers) when compiling windows targets
         SUCCESS = 0,
-        INVALID_CURRENCY,
+        INVALID_CURRENCY = 1001,
         NO_SESSION,
         INSIFFICIENT_FUNDS,
         FUNDS_NOT_SIGNED,

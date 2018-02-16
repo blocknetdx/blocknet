@@ -307,11 +307,11 @@ Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp)
 //*****************************************************************************
 //*****************************************************************************
 
-Value dxGetTransactionInfo(const Array & params, bool fHelp)
+Value dxGetOrder(const Array & params, bool fHelp)
 {
     if (fHelp) {
 
-         throw runtime_error("dxGetTransactionInfo (id) Transaction info.");
+         throw runtime_error("dxGetOrder (id) Get order info by id.	.");
 
     }
     if (params.size() != 1) {
@@ -319,7 +319,8 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
         Object error;
         error.emplace_back(Pair("error",
                                 "Invalid number of parameters"));
-        error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
+        error.emplace_back(Pair("code",  xbridge::INVALID_PARAMETERS));
+        error.emplace_back(Pair("name", __FUNCTION__));
         return  error;
 
     }
@@ -329,30 +330,53 @@ Value dxGetTransactionInfo(const Array & params, bool fHelp)
 
     xbridge::App & xapp = xbridge::App::instance();
 
-    const xbridge::TransactionDescrPtr tr = xapp.transaction(uint256(id));
-    if (tr != nullptr) {
-        xbridge::WalletConnectorPtr connFrom = xapp.connectorByCurrency(tr->fromCurrency);
-        xbridge::WalletConnectorPtr connTo   = xapp.connectorByCurrency(tr->toCurrency);
-        if (!connFrom || !connTo) {
+    const xbridge::TransactionDescrPtr order = xapp.transaction(uint256(id));
 
-            throw runtime_error("connector not found");
+    if(order == nullptr) {
 
-        }
+        Object error;
+        error.emplace_back(Pair("error", "Invalid id"));
+        error.emplace_back(Pair("code",  xbridge::Error::TRANSACTION_NOT_FOUND));
+        error.emplace_back(Pair("name",  __FUNCTION__));
+        return  error;
 
-        Object jtr;
-        jtr.emplace_back(Pair("id",             tr->id.GetHex()));
-        jtr.emplace_back(Pair("created",        bpt::to_iso_extended_string(tr->created)));
-        jtr.emplace_back(Pair("from",           tr->fromCurrency));
-        jtr.emplace_back(Pair("fromAddress",    tr->isLocal() ? connFrom->fromXAddr(tr->from) : ""));
-        jtr.emplace_back(Pair("fromAmount",     xBridgeValueFromAmount(tr->fromAmount)));
-        jtr.emplace_back(Pair("to",             tr->toCurrency));
-        jtr.emplace_back(Pair("toAddress",      tr->isLocal() ? connTo->fromXAddr(tr->to) : ""));
-        jtr.emplace_back(Pair("toAmount",       xBridgeValueFromAmount(tr->toAmount)));
-        jtr.emplace_back(Pair("state",          tr->strState()));
-        jtr.emplace_back(Pair("blockHash",      tr->blockHash.GetHex()));
-
-        arr.emplace_back(jtr);
     }
+
+    xbridge::WalletConnectorPtr connFrom = xapp.connectorByCurrency(order->fromCurrency);
+    xbridge::WalletConnectorPtr connTo   = xapp.connectorByCurrency(order->toCurrency);
+    if(!connFrom) {
+
+        Object error;
+        auto statusCode = xbridge::Error::NO_SESSION;
+        error.emplace_back(Pair("error", xbridge::xbridgeErrorText(statusCode, order->fromCurrency)));
+        error.emplace_back(Pair("code",  statusCode));
+        error.emplace_back(Pair("name",  __FUNCTION__));
+        return  error;
+
+    }
+    if (!connTo) {
+
+        Object error;
+        auto statusCode = xbridge::Error::NO_SESSION;
+        error.emplace_back(Pair("error", xbridge::xbridgeErrorText(statusCode, order->toCurrency)));
+        error.emplace_back(Pair("code",  statusCode));
+        error.emplace_back(Pair("name",  __FUNCTION__));
+        return  error;
+
+    }
+
+    Object result;
+    result.emplace_back(Pair("id",          order->id.GetHex()));
+    result.emplace_back(Pair("maker",       order->fromCurrency));
+    result.emplace_back(Pair("maker_size",  xBridgeValueFromAmount(order->fromAmount)));
+    result.emplace_back(Pair("taker",       order->toCurrency));
+    result.emplace_back(Pair("taker_size",  xBridgeValueFromAmount(order->toAmount)));
+    result.emplace_back(Pair("state",       order->strState()));
+    result.emplace_back(Pair("created_at",  bpt::to_iso_extended_string(order->created)));
+    result.emplace_back(Pair("updated_at",  bpt::to_iso_extended_string(order->txtime)));
+
+    arr.emplace_back(result);
+
 
     return arr;
 }
