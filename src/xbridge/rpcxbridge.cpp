@@ -49,7 +49,6 @@ uint64_t xBridgeAmountFromReal(double val)
     // TODO: should we check amount ranges and throw JSONRPCError like they do in rpcserver.cpp ?
     return static_cast<uint64_t>(val * xbridge::TransactionDescr::COIN + 0.5);
 }
-
 /** \brief Returns the list of open and pending transactions
   * \param params A list of input params.
   * \param fHelp For debug purposes, throw the exception describing parameters.
