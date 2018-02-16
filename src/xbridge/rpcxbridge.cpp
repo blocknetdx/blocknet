@@ -25,6 +25,7 @@
 #include "xbridgeapp.h"
 #include "xbridgeexchange.h"
 #include "xbridgetransaction.h"
+#include "xbridgetransactiondescr.h"
 #include "rpcserver.h"
 
 using namespace json_spirit;
@@ -657,54 +658,71 @@ Value dxAcceptTransaction(const Array & params, bool fHelp)
 
 //******************************************************************************
 //******************************************************************************
-Value dxCancelTransaction(const Array &params, bool fHelp)
+Value dxCancelOrder(const Array &params, bool fHelp)
 {
-    if(fHelp) {
-
-        throw runtime_error("dxCancelTransaction (id)\n"
-                            "Cancel xbridge transaction.");
-
+    if(fHelp)
+    {
+        throw runtime_error("dxCancelOrder (id)\n"
+                            "Cancel xbridge order.");
     }
-    if (params.size() != 1) {
 
+    if (params.size() != 1)
+    {
         Object error;
         error.emplace_back(Pair("error",
                                 "Invalid number of parameters"));
         error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
         return  error;
-
     }
-    LOG() << "rpc cancel transaction " << __FUNCTION__;
+
+    LOG() << "rpc cancel order " << __FUNCTION__;
     uint256 id(params[0].get_str());
-    bpt::ptime txtime;
+
     if (xbridge::App::instance().transactions().count(id) ) {
 
-        txtime = xbridge::App::instance().transaction(id)->txtime;
-        const auto res = xbridge::App::instance().cancelXBridgeTransaction(id, crRpcRequest);
-        if (res == xbridge::SUCCESS) {
-
-            Object obj;
-            obj.emplace_back(Pair("id", id.GetHex()));
-            //I purposely did not grab a mutex
-            txtime = xbridge::App::instance().transaction(id)->txtime;
-            obj.emplace_back(Pair("time", bpt::to_iso_extended_string(txtime)));
-            return  obj;
-
-        } else {
-
-            Object obj;
-            obj.emplace_back(Pair("error", xbridge::xbridgeErrorText(res)));
-            obj.emplace_back(Pair("code", res));
-            return obj;
-
+        if(xbridge::App::instance().transaction(id)->state < xbridge::TransactionDescr::trCreated)
+        {
+            const auto res = xbridge::App::instance().cancelXBridgeTransaction(id, crRpcRequest);
+            if (res == xbridge::SUCCESS) {
+                Object obj;
+                obj.emplace_back(Pair("id", id.GetHex()));
+                bpt::ptime txtime = xbridge::App::instance().transaction(id)->txtime;
+                obj.emplace_back(Pair("time", bpt::to_iso_extended_string(txtime)));
+                return  obj;
+            }
+            else
+            {
+                Object obj;
+                obj.emplace_back(Pair("error", xbridge::xbridgeErrorText(res)));
+                obj.emplace_back(Pair("code", res));
+                return obj;
+            }
         }
-    } else {
-
+        else
+        {
+            const auto res = xbridge::App::instance().rollbackXBridgeTransaction(id);
+            if (res == xbridge::SUCCESS) {
+                Object obj;
+                obj.emplace_back(Pair("id", id.GetHex()));
+                bpt::ptime txtime = xbridge::App::instance().transaction(id)->txtime;
+                obj.emplace_back(Pair("time", bpt::to_iso_extended_string(txtime)));
+                return  obj;
+            }
+            else
+            {
+                Object obj;
+                obj.emplace_back(Pair("error", xbridge::xbridgeErrorText(res)));
+                obj.emplace_back(Pair("code", res));
+                return obj;
+            }
+        }
+    }
+    else
+    {
         Object obj;
         obj.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::Error::TRANSACTION_NOT_FOUND, id.GetHex())));
         obj.emplace_back(Pair("code", xbridge::Error::TRANSACTION_NOT_FOUND));
         return obj;
-
     }
 }
 
