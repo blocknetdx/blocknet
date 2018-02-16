@@ -186,7 +186,7 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet* 
             if (fAllToMe > mine) fAllToMe = mine;
         }
 
-        if (fAllFromMeDenom && fAllToMeDenom && nFromMe * nToMe) {
+        if (fAllFromMeDenom && fAllToMeDenom && nFromMe && nToMe) {
             parts.append(TransactionRecord(hash, nTime, TransactionRecord::ObfuscationDenominate, "", -nDebit, nCredit));
             parts.last().involvesWatchAddress = false; // maybe pass to TransactionRecord as constructor argument
         } else if (fAllFromMe && fAllToMe) {
