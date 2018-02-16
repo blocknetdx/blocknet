@@ -316,10 +316,10 @@ Value dxGetOrder(const Array & params, bool fHelp)
     if (params.size() != 1) {
 
         Object error;
-        error.emplace_back(Pair("error",
-                                "Invalid number of parameters"));
-        error.emplace_back(Pair("code",  xbridge::INVALID_PARAMETERS));
-        error.emplace_back(Pair("name", __FUNCTION__));
+        const auto statusCode = xbridge::INVALID_PARAMETERS;
+        error.emplace_back(Pair("error", xbridge::xbridgeErrorText(statusCode)));
+        error.emplace_back(Pair("code",  statusCode));
+        error.emplace_back(Pair("name",  __FUNCTION__));
         return  error;
 
     }
@@ -327,15 +327,16 @@ Value dxGetOrder(const Array & params, bool fHelp)
     uint256 id(params[0].get_str());
     Array arr;
 
-    xbridge::App & xapp = xbridge::App::instance();
+    auto &xapp = xbridge::App::instance();
 
     const xbridge::TransactionDescrPtr order = xapp.transaction(uint256(id));
 
     if(order == nullptr) {
 
         Object error;
-        error.emplace_back(Pair("error", "Invalid id"));
-        error.emplace_back(Pair("code",  xbridge::Error::TRANSACTION_NOT_FOUND));
+        const auto statusCode = xbridge::Error::TRANSACTION_NOT_FOUND;
+        error.emplace_back(Pair("error", xbridge::xbridgeErrorText(statusCode)));
+        error.emplace_back(Pair("code",  statusCode));
         error.emplace_back(Pair("name",  __FUNCTION__));
         return  error;
 
@@ -370,9 +371,9 @@ Value dxGetOrder(const Array & params, bool fHelp)
     result.emplace_back(Pair("maker_size",  xBridgeValueFromAmount(order->fromAmount)));
     result.emplace_back(Pair("taker",       order->toCurrency));
     result.emplace_back(Pair("taker_size",  xBridgeValueFromAmount(order->toAmount)));
-    result.emplace_back(Pair("state",       order->strState()));
-    result.emplace_back(Pair("created_at",  bpt::to_iso_extended_string(order->created)));
     result.emplace_back(Pair("updated_at",  bpt::to_iso_extended_string(order->txtime)));
+    result.emplace_back(Pair("created_at",  bpt::to_iso_extended_string(order->created)));
+    result.emplace_back(Pair("status",      order->strState()));
 
     arr.emplace_back(result);
 
