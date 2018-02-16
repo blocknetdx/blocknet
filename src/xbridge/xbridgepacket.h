@@ -245,10 +245,7 @@ enum XBridgeCommand
     //    uint256  hub transaction id
     //    uint32_t reason
     xbcTransactionCancel = 22,
-    //
-    // xbcTransactionRollback
-    //    uint256 hub transaction id
-    xbcTransactionRollback = 23,
+
     //
     // xbcTransactionFinished
     //    uint160 client address
