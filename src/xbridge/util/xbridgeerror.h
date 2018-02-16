@@ -5,11 +5,18 @@
 
 namespace xbridge
 {
+
     enum Error
     {
         // 'NO_ERROR' is defined (probably by some windows headers) when compiling windows targets
         SUCCESS                 = 0,
+        UNAUTHORIZED           = 1001,
         UNKNOWN_ERROR           = 1002,
+        BAD_REQUEST             = 1004,
+        INVALID_MAKE_SYMBOL     = 1011,
+        INVALID_TAKE_SYMBOL     = 1012,
+        INVALID_DETAIL_LEVEL    = 1015,
+        INVALID_TIME            = 1016,
         INVALID_CURRENCY        = 1017,
         NO_SESSION              = 1018,
         INSIFFICIENT_FUNDS      = 1019,
