@@ -547,27 +547,25 @@ Value dxCreateTransaction(const Array &params, bool fHelp)
 
 //******************************************************************************
 //******************************************************************************
-Value dxAcceptTransaction(const Array & params, bool fHelp)
+Value dxTakeOrder(const Array & params, bool fHelp)
 {
 
-    if (fHelp) {
-
-        throw runtime_error("dxAcceptTransaction (id) "
-                            "(address from) (address to)\n"
+    if (fHelp)
+    {
+        throw runtime_error("dxTakeOrder (id) "
+                            "(address from) (address to) [opt](dryrun)\n"
                             "Accept xbridge transaction.");
-
     }
+
     auto statusCode = xbridge::SUCCESS;
 
-    if ((params.size() != 3) && (params.size() != 4)) {
-
-        statusCode = xbridge::INVALID_PARAMETERS;
+    if ((params.size() != 3) && (params.size() != 4))
+    {
         Object error;
-        error.emplace_back(Pair("error",
-                                xbridge::xbridgeErrorText(statusCode)));
-        error.emplace_back(Pair("code", statusCode));
+        error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS)));
+        error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
+        error.emplace_back(Pair("name", "dxTakeOrder"));
         return  error;
-
     }
 
     uint256 id(params[0].get_str());
@@ -576,102 +574,111 @@ Value dxAcceptTransaction(const Array & params, bool fHelp)
 
     xbridge::App &app = xbridge::App::instance();
 
-    if (!app.isValidAddress(fromAddress)) {
-
-        statusCode = xbridge::INVALID_ADDRESS;
+    if (!app.isValidAddress(fromAddress))
+    {
         Object error;
-        error.emplace_back(Pair("error",
-                                xbridge::xbridgeErrorText(statusCode, fromAddress)));
-        error.emplace_back(Pair("code", statusCode));
+        error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::INVALID_ADDRESS, fromAddress)));
+        error.emplace_back(Pair("code", xbridge::INVALID_ADDRESS));
+        error.emplace_back(Pair("name", "dxTakeOrder"));
         return  error;
-
     }
-    if (!app.isValidAddress(toAddress)) {
 
-        statusCode = xbridge::INVALID_ADDRESS;
+    if (!app.isValidAddress(toAddress))
+    {
         Object error;
-        error.emplace_back(Pair("error",
-                                xbridge::xbridgeErrorText(statusCode, toAddress)));
-        error.emplace_back(Pair("code", statusCode));
+        error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::INVALID_ADDRESS, toAddress)));
+        error.emplace_back(Pair("code", xbridge::INVALID_ADDRESS));
+        error.emplace_back(Pair("name", "dxTakeOrder"));
         return  error;
-
     }
-    bool validateParams = ((params.size() == 4) && (params[3].get_str() == "validate"));
-    //if validate mode enabled
+
+    bool dryrun = ((params.size() == 4) && (params[3].get_str() == "dryrun"));
+
     Object result;
-    xbridge::TransactionDescrPtr ptr;
-    statusCode = app.checkAcceptParams(id, ptr);
+    xbridge::TransactionDescrPtr txDescr;
+    statusCode = app.checkAcceptParams(id, txDescr);
 
-    switch (statusCode) {
+    switch (statusCode)
+    {
     case xbridge::SUCCESS: {
-
-        if(validateParams) {
-
-            result.emplace_back(Pair("status", "Accepted"));
+        if(dryrun)
+        {
             result.emplace_back(Pair("id", uint256().GetHex()));
-            result.emplace_back(Pair("from", fromAddress));
-            result.emplace_back(Pair("to", toAddress));
+
+            result.emplace_back(Pair("maker", txDescr->fromCurrency));
+            result.emplace_back(Pair("maker_size", xBridgeValueFromAmount(txDescr->fromAmount)));
+
+            result.emplace_back(Pair("taker", txDescr->toCurrency));
+            result.emplace_back(Pair("taker_size", xBridgeValueFromAmount(txDescr->toAmount)));
+
+            result.emplace_back(Pair("updated_at", bpt::to_iso_extended_string(bpt::second_clock::universal_time())));
+            result.emplace_back(Pair("created_at", bpt::to_iso_extended_string(txDescr->created)));
+
+            result.emplace_back(Pair("status", "filled"));
             return result;
-
         }
+
         break;
-
     }
-    case xbridge::TRANSACTION_NOT_FOUND: {
-
-        result.emplace_back(Pair("error",
-                                 xbridge::xbridgeErrorText(statusCode, id.GetHex())));
+    case xbridge::TRANSACTION_NOT_FOUND:
+    {
+        result.emplace_back(Pair("error", xbridge::xbridgeErrorText(statusCode, id.GetHex())));
         result.emplace_back(Pair("code", statusCode));
-        return  result;
-
+        result.emplace_back(Pair("name", "dxTakeOrder"));
+        return result;
     }
 
-    case xbridge::NO_SESSION: {
-
-        result.emplace_back(Pair("error",
-                                 xbridge::xbridgeErrorText(statusCode, ptr->toCurrency)));
+    case xbridge::NO_SESSION:
+    {
+        result.emplace_back(Pair("error", xbridge::xbridgeErrorText(statusCode, txDescr->toCurrency)));
         result.emplace_back(Pair("code", statusCode));
-        return  result;
-
+        result.emplace_back(Pair("name", "dxTakeOrder"));
+        return result;
     }
 
-    case xbridge::INSIFFICIENT_FUNDS:{
-
-        result.emplace_back(Pair("error",
-                                 xbridge::xbridgeErrorText(statusCode, ptr->to)));
+    case xbridge::INSIFFICIENT_FUNDS:
+    {
+        result.emplace_back(Pair("error", xbridge::xbridgeErrorText(statusCode, txDescr->to)));
         result.emplace_back(Pair("code", statusCode));
-        return  result;
-
+        result.emplace_back(Pair("name", "dxTakeOrder"));
+        return result;
     }
 
     default:
+    {
         result.emplace_back(Pair("error", xbridge::xbridgeErrorText(statusCode)));
         result.emplace_back(Pair("code", statusCode));
-        return  result;
+        result.emplace_back(Pair("name", "dxTakeOrder"));
+        return result;
+    }
     }
 
-    std::swap(ptr->fromCurrency, ptr->toCurrency);
-    std::swap(ptr->fromAmount, ptr->toAmount);
+    std::swap(txDescr->fromCurrency, txDescr->toCurrency);
+    std::swap(txDescr->fromAmount, txDescr->toAmount);
 
     statusCode = app.acceptXBridgeTransaction(id, fromAddress, toAddress);
-    if (statusCode == xbridge::SUCCESS) {
+    if (statusCode == xbridge::SUCCESS)
+    {
+        result.emplace_back(Pair("id", id.GetHex()));
 
-        Object obj;
-        obj.emplace_back(Pair("status", "Accepted"));
-        obj.emplace_back(Pair("time",   bpt::to_iso_extended_string(bpt::second_clock::universal_time())));
-        obj.emplace_back(Pair("id",     id.GetHex()));
-        obj.emplace_back(Pair("from",   fromAddress));
-        obj.emplace_back(Pair("to",     toAddress));
-        return obj;
+        result.emplace_back(Pair("maker", txDescr->fromCurrency));
+        result.emplace_back(Pair("maker_size", xBridgeValueFromAmount(txDescr->fromAmount)));
 
-    } else {
+        result.emplace_back(Pair("taker", txDescr->toCurrency));
+        result.emplace_back(Pair("taker_size", xBridgeValueFromAmount(txDescr->toAmount)));
 
-        Object obj;
-        obj.emplace_back(Pair("error",
-                              xbridge::xbridgeErrorText(statusCode)));
-        obj.emplace_back(Pair("code", statusCode));
-        return obj;
+        result.emplace_back(Pair("updated_at", bpt::to_iso_extended_string(bpt::second_clock::universal_time())));
+        result.emplace_back(Pair("created_at", bpt::to_iso_extended_string(txDescr->created)));
 
+        result.emplace_back(Pair("status", txDescr->strState()));
+        return result;
+    }
+    else
+    {
+        result.emplace_back(Pair("error", xbridge::xbridgeErrorText(statusCode)));
+        result.emplace_back(Pair("code", statusCode));
+        result.emplace_back(Pair("name", "dxTakeOrder"));
+        return result;
     }
 }
 
