@@ -365,7 +365,7 @@ static const CRPCCommand vRPCCommands[] =
         {"wallet", "walletpassphrasechange", &walletpassphrasechange, true, false, true},
         {"wallet", "walletpassphrase", &walletpassphrase, true, false, true},
 
-        {"xbridge", "dxGetTransactions",                    &dxGetTransactions,          true, true, true},
+        {"xbridge", "dxGetOrders",                    &dxGetOrders,          true, true, true},
         {"xbridge", "dxGetTransactionsHistory",             &dxGetTransactionsHistory,   true, true, true},
         {"xbridge", "dxGetTransactionInfo",                 &dxGetTransactionInfo,       true, true, true},
         {"xbridge", "dxGetCurrencies",                      &dxGetCurrencies,            true, true, true},

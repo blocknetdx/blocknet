@@ -262,7 +262,7 @@ extern json_spirit::Value mnsync(const json_spirit::Array& params, bool fHelp);
   * @return The list of open and pending transactions as JSON value. Open transactions go first.
   * * Example:<br>
   * \verbatim
-    dxGetTransactions
+    dxGetOrders
 ￼
     [
         {
@@ -289,7 +289,7 @@ extern json_spirit::Value mnsync(const json_spirit::Array& params, bool fHelp);
   * \endverbatim
   */
 
-extern json_spirit::Value dxGetTransactions(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value dxGetOrders(const json_spirit::Array& params, bool fHelp);
 
 /**
  * @brief Returns the list of historical(closed) transactions

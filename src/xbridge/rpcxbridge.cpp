@@ -59,30 +59,32 @@ uint64_t xBridgeAmountFromReal(double val)
   * The open transactions go first.
   */
 
-Value dxGetTransactions(const Array & params, bool fHelp)
+Value dxGetOrders(const Array & params, bool fHelp)
 {
     if (fHelp) {
 
-        throw runtime_error("dxGetTransactions\nList transactions.");
+        throw runtime_error("dxGetOrders Returns a list of orders.");
 
     }
     if (params.size() > 0) {
 
         Object error;
+        const auto statusCode = xbridge::INVALID_PARAMETERS;
         error.emplace_back(Pair("error",
-                                "This function does not accept any parameter"));
-        error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
+                                xbridge::xbridgeErrorText(statusCode, "This function does not accept any parameter")));
+        error.emplace_back(Pair("code", statusCode));
+        error.emplace_back(Pair("name", __FUNCTION__));
         return  error;
 
-    }
+    }    
 
-    Array arr;
-
-    xbridge::App & xapp = xbridge::App::instance();
+    auto &xapp = xbridge::App::instance();
     TransactionMap trlist = xapp.transactions();
+
+    Array result;
     for (const auto& trEntry : trlist) {
 
-        const xbridge::TransactionDescrPtr &tr = trEntry.second;
+        const auto &tr = trEntry.second;
 
         xbridge::WalletConnectorPtr connFrom = xapp.connectorByCurrency(tr->fromCurrency);
         xbridge::WalletConnectorPtr connTo   = xapp.connectorByCurrency(tr->toCurrency);
@@ -93,24 +95,20 @@ Value dxGetTransactions(const Array & params, bool fHelp)
         }
 
         Object jtr;
-        jtr.emplace_back(Pair("id",            tr->id.GetHex()));
-        jtr.emplace_back(Pair("from",          tr->fromCurrency));
+        jtr.emplace_back(Pair("id",             tr->id.GetHex()));
+        jtr.emplace_back(Pair("maker",          tr->fromCurrency));
+        jtr.emplace_back(Pair("maker_size",     xBridgeValueFromAmount(tr->fromAmount)));
+        jtr.emplace_back(Pair("taker",          tr->toCurrency));
+        jtr.emplace_back(Pair("taker_size",     xBridgeValueFromAmount(tr->toAmount)));
+        jtr.emplace_back(Pair("updated_at",     bpt::to_iso_extended_string(tr->txtime)));
+        jtr.emplace_back(Pair("created_at",     bpt::to_iso_extended_string(tr->created)));
+        jtr.emplace_back(Pair("status",         tr->strState()));
+        result.emplace_back(jtr);
 
-        jtr.emplace_back(Pair("fromAddress", tr->isLocal() ?  connFrom->fromXAddr(tr->from) : ""));
-        jtr.emplace_back(Pair("fromAmount",    xBridgeValueFromAmount(tr->fromAmount)));
-        jtr.emplace_back(Pair("to",            tr->toCurrency));
-
-        jtr.emplace_back(Pair("toAddress",   tr->isLocal() ? connTo->fromXAddr(tr->to) : ""));
-
-        jtr.emplace_back(Pair("toAmount",      xBridgeValueFromAmount(tr->toAmount)));
-        jtr.emplace_back(Pair("state",         tr->strState()));
-        jtr.emplace_back(Pair("creationTime", bpt::to_iso_extended_string(tr->created)));
-        jtr.emplace_back(Pair("blockHash",    tr->blockHash.GetHex()));
-
-        arr.emplace_back(jtr);
     }
 
-    return arr;
+
+    return result;
 }
 
 //*****************************************************************************
