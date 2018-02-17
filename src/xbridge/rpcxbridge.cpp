@@ -324,8 +324,7 @@ Value dxGetOrder(const Array & params, bool fHelp)
 
     }
 
-    uint256 id(params[0].get_str());
-    Array arr;
+    uint256 id(params[0].get_str());    
 
     auto &xapp = xbridge::App::instance();
 
@@ -374,11 +373,7 @@ Value dxGetOrder(const Array & params, bool fHelp)
     result.emplace_back(Pair("updated_at",  bpt::to_iso_extended_string(order->txtime)));
     result.emplace_back(Pair("created_at",  bpt::to_iso_extended_string(order->created)));
     result.emplace_back(Pair("status",      order->strState()));
-
-    arr.emplace_back(result);
-
-
-    return arr;
+    return result;
 }
 
 
