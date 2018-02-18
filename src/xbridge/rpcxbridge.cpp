@@ -147,10 +147,11 @@ Value dxGetOrderFills(const Array & params, bool fHelp)
 
     }
 
-    bool combined = params.size() == 3 && params[2].get_str() == "true";
+    bool combined = params.size() == 3 && params[2].get_bool();
 
     const auto maker = params[0].get_str();
     const auto taker = params[1].get_str();
+
 
 
     TransactionMap history = xbridge::App::instance().history();
