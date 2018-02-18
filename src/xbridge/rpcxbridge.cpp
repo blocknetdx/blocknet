@@ -174,7 +174,7 @@ Value dxGetOrderFills(const Array & params, bool fHelp)
     std::sort(result.begin(), result.end(),
               [](const xbridge::TransactionDescrPtr &a,  const xbridge::TransactionDescrPtr &b)
     {
-         return (a->txtime) < (b->txtime);
+         return (a->txtime) > (b->txtime);
     });
 
     Array arr;
