@@ -478,6 +478,7 @@ vector<COutput> CActiveServicenode::SelectCoinsServicenode()
 
     // Filter
     BOOST_FOREACH (const COutput& out, vCoins) {
+        // Node marking
         if (out.tx->vout[out.i].nValue == SERVICENODE_REQUIRED_AMOUNT * COIN) { //exactly
             filteredCoins.push_back(out);
         }
