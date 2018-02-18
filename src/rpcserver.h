@@ -300,7 +300,7 @@ extern json_spirit::Value dxGetTransactions(const json_spirit::Array& params, bo
  * @return The list of historical transaction  as a JSON value
  * * Example:<br>
  * \verbatim
-    dxGetTransactionsHistory ALL
+    dxGetOrderFills ALL
 ￼
     [
         {
@@ -326,7 +326,7 @@ extern json_spirit::Value dxGetTransactions(const json_spirit::Array& params, bo
     ]
  * \endverbatim
  */
-extern json_spirit::Value dxGetTransactionsHistory(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value dxGetOrderFills(const json_spirit::Array& params, bool fHelp);
 
 /**
  * @brief Returns the detailed description of given a transaction
