@@ -1133,8 +1133,15 @@ min-width:410px;
 margin-right:20px;
 margin-left:0;
 margin-top:0;
-background-image: url(':/images/blocknetdx_logo_horizontal');
-background-repeat:none;
+/*background-image: url(':/images/blocknetdx_logo_horizontal');
+background-repeat:none;*/
+}
+
+QWidget .QFrame#frame_2 .QLabel#bannerLabel { /* Banner/Logo Image Container */
+/* Set pixmap and other properties here next when needed */
+image: url(':/images/blocknet_alt3_logo_text_trans_bg');
+min-width:400px;
+min-height:66px;
 }
 
 QWidget .QFrame#frame_2 .QLabel#label_4 { /* Recent Transactions Label */
