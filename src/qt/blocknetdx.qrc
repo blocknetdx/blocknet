@@ -61,6 +61,7 @@
     <qresource prefix="/images">
         <file alias="about">res/images/about.png</file>
         <file alias="blocknetdx_logo_horizontal">res/images/blocknetdx_logo_horizontal.png</file>
+        <file alias="Blocknet Alt3 Logo-Text Trans BG">res/images/Blocknet Alt3 Logo-Text Trans BG.png</file>
         <file alias="downArrow">res/images/downArrow.png</file>
         <file alias="downArrow_small">res/images/downArrow_small.png</file>
         <file alias="upArrow_small">res/images/upArrow_small.png</file>
