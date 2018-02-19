@@ -5,7 +5,6 @@
 
 namespace xbridge
 {
-
     enum Error
     {
         // 'NO_ERROR' is defined (probably by some windows headers) when compiling windows targets
@@ -28,7 +27,6 @@ namespace xbridge
         INVALID_PARAMETERS      = 1025,
         INVALID_ADDRESS         = 1026,
         INVALID_SIGNATURE       = 1027
-
     };
 
     /**

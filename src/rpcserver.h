@@ -336,7 +336,7 @@ extern json_spirit::Value dxGetTransactionsHistory(const json_spirit::Array& par
  * @return The detailed description of given transaction as a JSON value
  * * Example:<br>
  * \verbatim
-    dxGetTransactionInfo 91d0ea83edc79b9a2041c51d08037cff87c181efb311a095dfdd4edbcc7993a9
+    dxGetOrder 91d0ea83edc79b9a2041c51d08037cff87c181efb311a095dfdd4edbcc7993a9
 ￼
     [
         {
@@ -352,7 +352,7 @@ extern json_spirit::Value dxGetTransactionsHistory(const json_spirit::Array& par
     ]
  * \endverbatim
  */
-extern json_spirit::Value dxGetTransactionInfo(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value dxGetOrder(const json_spirit::Array& params, bool fHelp);
 
 /**
  * @brief Returns the list of available currencies
