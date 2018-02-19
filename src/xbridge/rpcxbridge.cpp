@@ -25,6 +25,7 @@
 #include "xbridgeapp.h"
 #include "xbridgeexchange.h"
 #include "xbridgetransaction.h"
+#include "xbridgetransactiondescr.h"
 #include "rpcserver.h"
 
 using namespace json_spirit;
@@ -676,54 +677,111 @@ Value dxAcceptTransaction(const Array & params, bool fHelp)
 
 //******************************************************************************
 //******************************************************************************
-Value dxCancelTransaction(const Array &params, bool fHelp)
+Value dxCancelOrder(const Array &params, bool fHelp)
 {
-    if(fHelp) {
-
-        throw runtime_error("dxCancelTransaction (id)\n"
-                            "Cancel xbridge transaction.");
-
+    if(fHelp)
+    {
+        throw runtime_error("dxCancelOrder (id)\n"
+                            "Cancel xbridge order.");
     }
-    if (params.size() != 1) {
 
+    if (params.size() != 1)
+    {
         Object error;
-        error.emplace_back(Pair("error",
-                                "Invalid number of parameters"));
+        error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS)));
         error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
-        return  error;
-
+        error.emplace_back(Pair("name", "dxCancelOrder"));
+        return error;
     }
-    LOG() << "rpc cancel transaction " << __FUNCTION__;
+
+    LOG() << "rpc cancel order " << __FUNCTION__;
     uint256 id(params[0].get_str());
-    bpt::ptime txtime;
+
     if (xbridge::App::instance().transactions().count(id) ) {
+        xbridge::TransactionDescrPtr tx = xbridge::App::instance().transaction(id);
 
-        txtime = xbridge::App::instance().transaction(id)->txtime;
-        const auto res = xbridge::App::instance().cancelXBridgeTransaction(id, crRpcRequest);
-        if (res == xbridge::SUCCESS) {
+        xbridge::WalletConnectorPtr connFrom = xbridge::App::instance().connectorByCurrency(tx->fromCurrency);
+        xbridge::WalletConnectorPtr connTo   = xbridge::App::instance().connectorByCurrency(tx->toCurrency);
 
-            Object obj;
-            obj.emplace_back(Pair("id", id.GetHex()));
-            //I purposely did not grab a mutex
-            txtime = xbridge::App::instance().transaction(id)->txtime;
-            obj.emplace_back(Pair("time", bpt::to_iso_extended_string(txtime)));
-            return  obj;
-
-        } else {
-
-            Object obj;
-            obj.emplace_back(Pair("error", xbridge::xbridgeErrorText(res)));
-            obj.emplace_back(Pair("code", res));
-            return obj;
-
+        if (!connFrom || !connTo)
+        {
+            Object error;
+            error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::NO_SESSION)));
+            error.emplace_back(Pair("code", xbridge::NO_SESSION));
+            error.emplace_back(Pair("name", "dxCancelOrder"));
+            return error;
         }
-    } else {
 
+        if(tx->state < xbridge::TransactionDescr::trCreated)
+        {
+            const auto res = xbridge::App::instance().cancelXBridgeTransaction(id, crRpcRequest);
+            if (res == xbridge::SUCCESS)
+            {
+                Object obj;
+                obj.emplace_back(Pair("id", id.GetHex()));
+
+                obj.emplace_back(Pair("maker", tx->fromCurrency));
+                obj.emplace_back(Pair("maker_size", xBridgeValueFromAmount(tx->fromAmount)));
+                obj.emplace_back(Pair("maker_address", connFrom->fromXAddr(tx->from)));
+
+                obj.emplace_back(Pair("taker", tx->toCurrency));
+                obj.emplace_back(Pair("taker_size", xBridgeValueFromAmount(tx->toAmount)));
+                obj.emplace_back(Pair("taker_address", connTo->fromXAddr(tx->to)));
+
+                obj.emplace_back(Pair("updated_at", bpt::to_iso_extended_string(tx->txtime)));
+                obj.emplace_back(Pair("created_at", bpt::to_iso_extended_string(tx->created)));
+
+                obj.emplace_back(Pair("status", tx->strState()));
+                return obj;
+            }
+            else
+            {
+                Object obj;
+                obj.emplace_back(Pair("error", xbridge::xbridgeErrorText(res)));
+                obj.emplace_back(Pair("code", res));
+                obj.emplace_back(Pair("name", "dxCancelOrder"));
+                return obj;
+            }
+        }
+        else
+        {
+            const auto res = xbridge::App::instance().rollbackXBridgeTransaction(id);
+            if (res == xbridge::SUCCESS)
+            {
+                Object obj;
+                obj.emplace_back(Pair("id", id.GetHex()));
+
+                obj.emplace_back(Pair("maker", tx->fromCurrency));
+                obj.emplace_back(Pair("maker_size", xBridgeValueFromAmount(tx->fromAmount)));
+                obj.emplace_back(Pair("maker_address", connFrom->fromXAddr(tx->from)));
+
+                obj.emplace_back(Pair("taker", tx->toCurrency));
+                obj.emplace_back(Pair("taker_size", xBridgeValueFromAmount(tx->toAmount)));
+                obj.emplace_back(Pair("taker_address", connTo->fromXAddr(tx->to)));
+
+                obj.emplace_back(Pair("updated_at", bpt::to_iso_extended_string(tx->txtime)));
+                obj.emplace_back(Pair("created_at", bpt::to_iso_extended_string(tx->created)));
+
+                obj.emplace_back(Pair("status", tx->strState()));
+                return obj;
+            }
+            else
+            {
+                Object obj;
+                obj.emplace_back(Pair("error", xbridge::xbridgeErrorText(res)));
+                obj.emplace_back(Pair("code", res));
+                obj.emplace_back(Pair("name", "dxCancelOrder"));
+                return obj;
+            }
+        }
+    }
+    else
+    {
         Object obj;
         obj.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::Error::TRANSACTION_NOT_FOUND, id.GetHex())));
         obj.emplace_back(Pair("code", xbridge::Error::TRANSACTION_NOT_FOUND));
+        obj.emplace_back(Pair("name", "dxCancelOrder"));
         return obj;
-
     }
 }
 
