@@ -1,8 +1,16 @@
+//******************************************************************************
+//******************************************************************************
+
 #ifndef XBRIDGEERROR_H
 #define XBRIDGEERROR_H
+
+//******************************************************************************
+//******************************************************************************
 #include <string>
 #include <vector>
 
+//******************************************************************************
+//******************************************************************************
 namespace xbridge
 {
     enum Error
@@ -10,6 +18,7 @@ namespace xbridge
         // 'NO_ERROR' is defined (probably by some windows headers) when compiling windows targets
         SUCCESS = 0,
         INVALID_CURRENCY,
+        INVALID_STATE,
         NO_SESSION,
         INSIFFICIENT_FUNDS,
         FUNDS_NOT_SIGNED,
@@ -31,5 +40,7 @@ namespace xbridge
      */
     const std::string xbridgeErrorText(const Error error, const std::string &argument = "");
     const std::string xbridgeErrorText(const Error error, const std::vector<unsigned char> &argument);
-}
+
+} // namespace xbridge
+
 #endif // XBRIDGEERROR_H

@@ -1,11 +1,23 @@
+//******************************************************************************
+//******************************************************************************
+
 #include "xbridgeerror.h"
-namespace xbridge {
-    const std::string xbridgeErrorText(const Error error, const std::string &argument)
+
+//******************************************************************************
+//******************************************************************************
+namespace xbridge
+{
+
+//******************************************************************************
+//******************************************************************************
+const std::string xbridgeErrorText(const Error error, const std::string &argument)
+{
+    switch (error)
     {
-        switch (error)
-        {
         case Error::INVALID_CURRENCY:
             return "invalid currency " + argument;
+        case Error::INVALID_STATE:
+            return "invalid transaction state";
         case Error::NO_SESSION:
             return "no session for currency " + argument;
         case Error::INSIFFICIENT_FUNDS:
@@ -30,11 +42,15 @@ namespace xbridge {
             return "invalid amount " + argument;
         case INVALID_SIGNATURE:
             return "invalid signature " + argument;
-        }
-        return "invalid error value";
     }
-    const std::string xbridgeErrorText(const Error error, const std::vector<unsigned char> &argument)
-    {
-        return xbridgeErrorText(error, std::string(argument.begin(), argument.end()));
-    }
+    return "invalid error value";
 }
+
+//******************************************************************************
+//******************************************************************************
+const std::string xbridgeErrorText(const Error error, const std::vector<unsigned char> &argument)
+{
+    return xbridgeErrorText(error, std::string(argument.begin(), argument.end()));
+}
+
+} // namespace xbridge
