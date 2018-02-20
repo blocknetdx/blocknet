@@ -91,6 +91,9 @@ struct TransactionDescr
     std::vector<unsigned char>    mPubKey;
     std::vector<unsigned char>    mPrivKey;
 
+    // other node pubkey (set when ... )
+    std::vector<unsigned char>    oPubKey;
+
     // X key (secret data)
     std::vector<unsigned char>    xPubKey;
     std::vector<unsigned char>    xPrivKey;

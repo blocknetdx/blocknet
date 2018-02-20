@@ -1486,6 +1486,8 @@ bool Session::Impl::processTransactionCreate(XBridgePacketPtr packet)
 
     if (xtx->role == 'B')
     {
+        assert(xtx->xPubKey.size() == 0 && "bad role");
+
         // for B need to check A deposit tx
         // check packet length
 
@@ -1555,6 +1557,9 @@ bool Session::Impl::processTransactionCreate(XBridgePacketPtr packet)
         sendCancelTransaction(xtx, crRpcError);
         return true;
     }
+
+    // store opponent public key (packet verification)
+    xtx->oPubKey = mPubKey;
 
     // create transactions
 
