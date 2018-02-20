@@ -10,6 +10,7 @@
 #include "xbridgesession.h"
 #include "xbridgeapp.h"
 #include "xbridgeexchange.h"
+#include "xbridgepacket.h"
 #include "xuiconnector.h"
 #include "util/xutil.h"
 #include "util/logger.h"
@@ -111,6 +112,9 @@ protected:
     bool processTransactionConfirmedB(XBridgePacketPtr packet);
 
     bool finishTransaction(TransactionPtr tr);
+//    bool sendRejectTransaction(const std::vector<unsigned char> & to,
+//                               const uint256 & txid,
+//                               const TxRejectReason & reason);
     bool sendCancelTransaction(const TransactionPtr & tx,
                                const TxCancelReason & reason);
     bool sendCancelTransaction(const TransactionDescrPtr & tx,
@@ -491,7 +495,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
         }
     }
 
-    if(utxoItems.empty())
+    if (utxoItems.empty())
     {
         LOG() << "transaction rejected, utxo items are empty <" << __FUNCTION__;
         return true;
@@ -2327,20 +2331,33 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet)
     uint256 txid(packet->data());
     TxCancelReason reason = static_cast<TxCancelReason>(*reinterpret_cast<uint32_t*>(packet->data() + 32));
 
-    // TODO temporary disabled
-//    xbridge::App & xapp = xbridge::App::instance();
-//    TransactionDescrPtr xtx = xapp.transaction(txid);
-//    if (!xtx)
-//    {
-//        LOG() << "unknown transaction " << HexStr(txid) << " " << __FUNCTION__;
-//        return true;
-//    }
+    // check packet signature
+    Exchange & e = Exchange::instance();
+    if (e.isStarted())
+    {
+        TransactionPtr tr = e.transaction(txid);
+        if (!packet->verify(tr->a_pk1()) && !packet->verify(tr->b_pk1()))
+        {
+            LOG() << "invalid packet signature " << __FUNCTION__;
+            return true;
+        }
+    }
+    else
+    {
+        xbridge::App & xapp = xbridge::App::instance();
+        TransactionDescrPtr xtx = xapp.transaction(txid);
+        if (!xtx)
+        {
+            LOG() << "unknown transaction " << HexStr(txid) << " " << __FUNCTION__;
+            return true;
+        }
 
-//    if (!packet->verify(xtx->sPubKey))
-//    {
-//        LOG() << "invalid packet signature " << __FUNCTION__;
-//        return true;
-//    }
+        if (!packet->verify(xtx->sPubKey) && !packet->verify(xtx->oPubKey))
+        {
+            LOG() << "invalid packet signature " << __FUNCTION__;
+            return true;
+        }
+    }
 
     // TODO process later if failed
     cancelOrRollbackTransaction(txid, reason);
@@ -2443,20 +2460,44 @@ bool Session::Impl::finishTransaction(TransactionPtr tr)
 
 //*****************************************************************************
 //*****************************************************************************
+//bool Session::Impl::sendRejectTransaction(const std::vector<unsigned char> & to,
+//                                          const uint256 & txid,
+//                                          const TxRejectReason & reason)
+//{
+//    Exchange & e = Exchange::instance();
+//    if (!e.isStarted())
+//    {
+//        return false;
+//    }
+
+//    LOG() << "reject transaction <" << txid.GetHex() << ">";
+
+//    XBridgePacketPtr reply(new XBridgePacket(xbcTransactionReject));
+//    reply->append(txid.begin(), 32);
+//    reply->append(static_cast<uint32_t>(reason));
+
+//    reply->sign(e.pubKey(), e.privKey());
+
+//    sendPacket(to, reply);
+//    return true;
+//}
+
+//*****************************************************************************
+//*****************************************************************************
 bool Session::Impl::sendCancelTransaction(const TransactionPtr & tx,
                                           const TxCancelReason & reason)
 {
-    LOG() << "cancel transaction <" << tx->id().GetHex() << ">";
-
-    XBridgePacketPtr reply(new XBridgePacket(xbcTransactionCancel));
-    reply->append(tx->id().begin(), 32);
-    reply->append(static_cast<uint32_t>(reason));
-
     Exchange & e = Exchange::instance();
     if (!e.isStarted())
     {
         return false;
     }
+
+    LOG() << "cancel transaction <" << tx->id().GetHex() << ">";
+
+    XBridgePacketPtr reply(new XBridgePacket(xbcTransactionCancel));
+    reply->append(tx->id().begin(), 32);
+    reply->append(static_cast<uint32_t>(reason));
 
     reply->sign(e.pubKey(), e.privKey());
 
