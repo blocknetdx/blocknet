@@ -607,7 +607,7 @@ bool CBudgetManager::IsBudgetPaymentBlock(int nBlockHeight)
         ++it;
     }
 
-    LogPrint("masternode","CBudgetManager::IsBudgetPaymentBlock() - nHighestCount: %lli, 5%% of Masternodes: %lli. Number of budgets: %lli\n", 
+    LogPrint("masternode","CBudgetManager::IsBudgetPaymentBlock() - nHighestCount: %lli, 5%% of Masternodes: %lli. Number of budgets: %lli\n",
               nHighestCount, nFivePercent, mapFinalizedBudgets.size());
 
     // If budget doesn't have 5% of the network votes, then we should pay a masternode instead
@@ -638,7 +638,7 @@ bool CBudgetManager::IsTransactionValid(const CTransaction& txNew, int nBlockHei
         ++it;
     }
 
-    LogPrint("masternode","CBudgetManager::IsTransactionValid() - nHighestCount: %lli, 5%% of Masternodes: %lli mapFinalizedBudgets.size(): %ld\n", 
+    LogPrint("masternode","CBudgetManager::IsTransactionValid() - nHighestCount: %lli, 5%% of Masternodes: %lli mapFinalizedBudgets.size(): %ld\n",
               nHighestCount, nFivePercent, mapFinalizedBudgets.size());
     /*
         If budget doesn't have 5% of the network votes, then we should pay a masternode instead
@@ -839,22 +839,8 @@ CAmount CBudgetManager::GetTotalBudget(int nHeight)
         return ((nSubsidy / 100) * 10) * 146;
     }
 
-    //get block value and calculate from that
-    CAmount nSubsidy = 0;
-    if (nHeight > 200 && nHeight <= 250000) {
-        nSubsidy = 7.7 * COIN;
-    } else if (nHeight > 250000 && nHeight <= 518399) {
-        nSubsidy = 5 * COIN;
-    } else if (nHeight > 518399 && nHeight <= 1036798) {
-        nSubsidy = 4 * COIN;
-    } else if (nHeight > 1036798) {
-        nSubsidy = 3 * COIN;
-    } else {
-        nSubsidy = 0 * COIN;
-    }
-
     // Amount of blocks in a months period of time (using 1 minutes per) = (60*24*30)
-    return ((nSubsidy / 100) * 10) * 1440 * 30;
+    return 1 * 1440 * 30;
 }
 
 void CBudgetManager::NewBlock()
