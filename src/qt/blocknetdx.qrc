@@ -1,6 +1,7 @@
 <RCC>
     <qresource prefix="/icons">
         <file alias="bitcoin">res/icons/bitcoin.png</file>
+        <file alias="bitcoin-ms-icon-310x310">res/icons/ms-icon-310x310.png</file>
         <file alias="address-book">res/icons/address-book.png</file>
         <file alias="quit">res/icons/quit.png</file>
         <file alias="send">res/icons/send.png</file>
@@ -60,8 +61,18 @@
     </qresource>
     <qresource prefix="/images">
         <file alias="about">res/images/about.png</file>
+        <file alias="aboutImage1">res/images/aboutImage1.png</file>
+        <file alias="aboutImage2">res/images/aboutImage2.png</file>
+        <file alias="aboutImage1_bg">res/images/aboutImage1_bg.png</file>
+        <file alias="Blocknet_splash_Logo_Hor_Neg_022718">res/images/Blocknet_splash_Logo_Hor_Neg_022718.png</file>
+        <file alias="Blocknet_splash_Logo_Symbol_Pos_022718">res/images/Blocknet_splash_Logo_Symbol_Pos_022718.png</file>
+        <file alias="Blocknet_splash_Logo_Symbol_Neg_022718">res/images/Blocknet_splash_Logo_Symbol_Neg_022718.png</file>
+        <file alias="alt_splash_net1_trans">res/images/alt_splash_net1_trans.png</file>
+        <file alias="alt_splash_net1_blackbg">res/images/alt_splash_net1_blackbg.png</file>
         <file alias="blocknet_alt3_logo_text_trans_bg">res/images/blocknet_alt3_logo_text_trans_bg.png</file>
+        <file alias="Blocknet_Logo_Hor_Neg_022718">res/images/Blocknet_Logo_Hor_Neg_022718.png</file>
         <file alias="blocknetdx_logo_horizontal">res/images/blocknetdx_logo_horizontal.png</file>
+        <file alias="BlockDX_Logo_Hor_Hifi_Pos_022718">res/images/BlockDX_Logo_Hor_Hifi_Pos_022718.png</file>
         <file alias="downArrow">res/images/downArrow.png</file>
         <file alias="downArrow_small">res/images/downArrow_small.png</file>
         <file alias="upArrow_small">res/images/upArrow_small.png</file>
