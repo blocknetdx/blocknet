@@ -174,21 +174,21 @@ struct TransactionDescr
     {
         switch (state)
         {
-            case trInvalid:   return std::string("Invalid");
-            case trNew:       return std::string("New");
-            case trPending:   return std::string("Open");
-            case trAccepting: return std::string("Accepting");
-            case trHold:      return std::string("Hold");
-            case trCreated:   return std::string("Created");
-            case trSigned:    return std::string("Signed");
-            case trCommited:  return std::string("Commited");
-            case trFinished:  return std::string("Finished");
-            case trCancelled: return std::string("Cancelled");
-            case trRollback:  return std::string("Rolled Back");
-            case trDropped:   return std::string("Dropped");
-            case trExpired:   return std::string("Expired");
-            case trOffline:   return std::string("Offline");
-            default:          return std::string("Unknown");
+            case trInvalid:   return std::string("invalid");
+            case trNew:       return std::string("new");
+            case trPending:   return std::string("open");
+            case trAccepting: return std::string("accepting");
+            case trHold:      return std::string("hold");
+            case trCreated:   return std::string("created");
+            case trSigned:    return std::string("signed");
+            case trCommited:  return std::string("commited");
+            case trFinished:  return std::string("finished");
+            case trCancelled: return std::string("canceled");
+            case trRollback:  return std::string("rolled Back");
+            case trDropped:   return std::string("dropped");
+            case trExpired:   return std::string("expired");
+            case trOffline:   return std::string("offline");
+            default:          return std::string("unknown");
         }
     }
 

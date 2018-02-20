@@ -51,8 +51,8 @@ public:
         // pending transaction ttl in seconds, 1 min from last update
         pendingTTL = 90,
 
-        // transaction ttl in seconds, 60 min
-        TTL = 3600,
+        // transaction ttl in seconds, 60 sec * 60 min * 24 h
+        TTL = 60 * 60 * 24,
 
         // number of blocks ttl
 
