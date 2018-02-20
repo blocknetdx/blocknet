@@ -408,7 +408,7 @@ Value dxGetCurrencies(const Array & params, bool fHelp)
 
 //******************************************************************************
 //******************************************************************************
-Value dxCreateTransaction(const Array &params, bool fHelp)
+Value dxMakeOrder(const Array &params, bool fHelp)
 {
 
     if (fHelp) {
@@ -422,10 +422,11 @@ Value dxCreateTransaction(const Array &params, bool fHelp)
     if (params.size() != 6) {
 
         Object error;
-        error.emplace_back(Pair("error",
-                                "Invalid number of parameters"));
+        error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS)));
         error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
-        return  error;
+        error.emplace_back(Pair("name", "dxMakeOrder"));
+
+        return error;
     }
 
 
@@ -440,20 +441,20 @@ Value dxCreateTransaction(const Array &params, bool fHelp)
 
     xbridge::App &app = xbridge::App::instance();
     if (!app.isValidAddress(fromAddress)) {
-        statusCode = xbridge::INVALID_ADDRESS;
         Object error;
-        error.emplace_back(Pair("error",
-                                xbridge::xbridgeErrorText(statusCode, fromAddress)));
-        error.emplace_back(Pair("code", statusCode));
-        return  error;
+        error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::INVALID_ADDRESS)));
+        error.emplace_back(Pair("code", xbridge::INVALID_ADDRESS));
+        error.emplace_back(Pair("name", "dxMakeOrder"));
+
+        return error;
     }
     if (!app.isValidAddress(toAddress)) {
-        statusCode = xbridge::INVALID_ADDRESS;
         Object error;
-        error.emplace_back(Pair("error",
-                                xbridge::xbridgeErrorText(statusCode, toAddress)));
-        error.emplace_back(Pair("code", statusCode));
-        return  error;
+        error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::INVALID_ADDRESS)));
+        error.emplace_back(Pair("code", xbridge::INVALID_ADDRESS));
+        error.emplace_back(Pair("name", "dxMakeOrder"));
+
+        return error;
     }
     bool validateParams = ((params.size() == 7) && (params[6].get_str() == "validate"));
 
@@ -483,32 +484,37 @@ Value dxCreateTransaction(const Array &params, bool fHelp)
 
     case xbridge::INVALID_CURRENCY: {
 
-        result.emplace_back(Pair("error",
-                                 xbridge::xbridgeErrorText(statusCode, fromCurrency)));
+        result.emplace_back(Pair("error", xbridge::xbridgeErrorText(statusCode, fromCurrency)));
         result.emplace_back(Pair("code", statusCode));
-        return  result;
+        result.emplace_back(Pair("name", "dxMakeOrder"));
+
+        return result;
 
     }
     case xbridge::NO_SESSION:{
 
-        result.emplace_back(Pair("error",
-                                 xbridge::xbridgeErrorText(statusCode, fromCurrency)));
+        result.emplace_back(Pair("error", xbridge::xbridgeErrorText(statusCode, fromCurrency)));
         result.emplace_back(Pair("code", statusCode));
-        return  result;
+        result.emplace_back(Pair("name", "dxMakeOrder"));
+
+        return result;
 
     }
     case xbridge::INSIFFICIENT_FUNDS:{
 
-        result.emplace_back(Pair("error",
-                                 xbridge::xbridgeErrorText(statusCode, toAddress)));
+        result.emplace_back(Pair("error", xbridge::xbridgeErrorText(statusCode, toAddress)));
         result.emplace_back(Pair("code", statusCode));
-        return  result;
+        result.emplace_back(Pair("name", "dxMakeOrder"));
+
+        return result;
     }
 
     default:
         result.emplace_back(Pair("error", xbridge::xbridgeErrorText(statusCode)));
         result.emplace_back(Pair("code", statusCode));
-        return  result;
+        result.emplace_back(Pair("name", "dxMakeOrder"));
+
+        return result;
     }
 
 
@@ -538,6 +544,8 @@ Value dxCreateTransaction(const Array &params, bool fHelp)
         Object error;
         error.emplace_back(Pair("error", xbridge::xbridgeErrorText(statusCode)));
         error.emplace_back(Pair("code", statusCode));
+        error.emplace_back(Pair("name", "dxMakeOrder"));
+        
         return error;
 
     }
