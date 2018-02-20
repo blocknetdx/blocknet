@@ -413,13 +413,13 @@ Value dxMakeOrder(const Array &params, bool fHelp)
 
     if (fHelp) {
 
-        throw runtime_error("dxCreateTransaction "
-                            "(address from) (currency from) (amount from) "
-                            "(address to) (currency to) (amount to)\n"
-                            "Create xbridge transaction.");
+        throw runtime_error("dxMakeOrder "
+                            "(maker) (maker size) (maker address) "
+                            "(taker) (taker size) (taker address) (type) (dryrun)[optional]\n"
+                            "Create a new order. dryrun will validate the order without submitting the order to the network.");
 
     }
-    if (params.size() != 6) {
+    if (params.size() < 7) {
 
         Object error;
         error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS)));
@@ -430,12 +430,22 @@ Value dxMakeOrder(const Array &params, bool fHelp)
     }
 
 
-    std::string fromAddress     = params[0].get_str();
-    std::string fromCurrency    = params[1].get_str();
-    double      fromAmount      = params[2].get_real();
-    std::string toAddress       = params[3].get_str();
-    std::string toCurrency      = params[4].get_str();
-    double      toAmount        = params[5].get_real();
+    std::string fromAddress     = params[2].get_str();
+    std::string fromCurrency    = params[0].get_str();
+    double      fromAmount      = params[1].get_real();
+    std::string toAddress       = params[5].get_str();
+    std::string toCurrency      = params[3].get_str();
+    double      toAmount        = params[4].get_real();
+    std::string type            = params[6].get_str();
+
+    // Validate the order type
+    if (type != "exact") {
+        Object error;
+        error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS, "Only the exact type is supported at this time.")));
+        error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
+        error.emplace_back(Pair("name", "dxMakeOrder"));
+        return error;
+    }
 
     auto statusCode = xbridge::SUCCESS;
 
@@ -456,28 +466,37 @@ Value dxMakeOrder(const Array &params, bool fHelp)
 
         return error;
     }
-    bool validateParams = ((params.size() == 7) && (params[6].get_str() == "validate"));
+    // Perform explicit check on dryrun to avoid executing order on bad spelling
+    bool dryrun = false;
+    if (params.size() == 8) {
+        std::string dryrunParam = params[7].get_str();
+        if (dryrunParam != "dryrun") {
+            Object error;
+            error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS, dryrunParam)));
+            error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
+            error.emplace_back(Pair("name", "dxMakeOrder"));
+            return error;
+        }
+        dryrun = true;
+    }
 
-    //if validate mode enabled
 
     Object result;
     statusCode = app.checkCreateParams(fromCurrency, toCurrency,
                                        xBridgeAmountFromReal(fromAmount));
     switch (statusCode) {
     case xbridge::SUCCESS:{
-
-        if (validateParams) {
-
-            result.emplace_back(Pair("status",         "created"));
-            result.emplace_back(Pair("id",             uint256().GetHex()));
-            result.emplace_back(Pair("from",           fromAddress));
-            result.emplace_back(Pair("fromCurrency",   fromCurrency));
-            result.emplace_back(Pair("fromAmount",     fromAmount));
-            result.emplace_back(Pair("to",             toAddress));
-            result.emplace_back(Pair("toCurrency",     toCurrency));
-            result.emplace_back(Pair("toAmount",       toAmount));
+        // If dryrun
+        if (dryrun) {
+            result.emplace_back(Pair("id", uint256().GetHex()));
+            result.emplace_back(Pair("maker", fromCurrency));
+            result.emplace_back(Pair("maker_size", xBridgeValueFromAmount(xBridgeAmountFromReal(fromAmount))));
+            result.emplace_back(Pair("maker_address", fromAddress));
+            result.emplace_back(Pair("taker", toCurrency));
+            result.emplace_back(Pair("taker_size", xBridgeValueFromAmount(xBridgeAmountFromReal(toAmount))));
+            result.emplace_back(Pair("taker_address", toAddress));
+            result.emplace_back(Pair("status", "created"));
             return result;
-
         }
         break;
     }
@@ -525,18 +544,19 @@ Value dxMakeOrder(const Array &params, bool fHelp)
            toAddress, toCurrency, xBridgeAmountFromReal(toAmount), id, blockHash);
 
     if (statusCode == xbridge::SUCCESS) {
-
         Object obj;
         obj.emplace_back(Pair("id",             id.GetHex()));
+        obj.emplace_back(Pair("maker_address",  fromAddress));
+        obj.emplace_back(Pair("maker",          fromCurrency));
+        obj.emplace_back(Pair("maker_size",     xBridgeValueFromAmount(xBridgeAmountFromReal(fromAmount))));
+        obj.emplace_back(Pair("taker_address",  toAddress));
+        obj.emplace_back(Pair("taker",          toCurrency));
+        obj.emplace_back(Pair("taker_size",     xBridgeValueFromAmount(xBridgeAmountFromReal(toAmount))));
         const auto &createdTime = xbridge::App::instance().transaction(id)->created;
-        obj.emplace_back(Pair("time",           bpt::to_iso_extended_string(createdTime)));
-        obj.emplace_back(Pair("from",           fromAddress));
-        obj.emplace_back(Pair("fromCurrency",   fromCurrency));
-        obj.emplace_back(Pair("fromAmount",     fromAmount));
-        obj.emplace_back(Pair("to",             toAddress));
-        obj.emplace_back(Pair("toCurrency",     toCurrency));
-        obj.emplace_back(Pair("toAmount",       toAmount));
-        obj.emplace_back(Pair("blockHash",      blockHash.GetHex()));
+        obj.emplace_back(Pair("created_at",     bpt::to_iso_extended_string(createdTime)));
+        obj.emplace_back(Pair("updated_at",     bpt::to_iso_extended_string(bpt::second_clock::universal_time())));
+        obj.emplace_back(Pair("block_id",       blockHash.GetHex()));
+        obj.emplace_back(Pair("status",         "created"));
         return obj;
 
     } else {
