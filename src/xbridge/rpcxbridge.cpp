@@ -678,9 +678,10 @@ Value dxCancelOrder(const Array &params, bool fHelp)
     LOG() << "rpc cancel order " << __FUNCTION__;
     uint256 id(params[0].get_str());
 
-    if (xbridge::App::instance().transactions().count(id) ) {
-        xbridge::TransactionDescrPtr tx = xbridge::App::instance().transaction(id);
+    xbridge::TransactionDescrPtr tx = xbridge::App::instance().transaction(id);
 
+    if (tx != nullptr)
+    {
         xbridge::WalletConnectorPtr connFrom = xbridge::App::instance().connectorByCurrency(tx->fromCurrency);
         xbridge::WalletConnectorPtr connTo   = xbridge::App::instance().connectorByCurrency(tx->toCurrency);
 
