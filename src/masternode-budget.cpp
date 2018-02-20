@@ -26,6 +26,14 @@ std::vector<CFinalizedBudgetBroadcast> vecImmatureFinalizedBudgets;
 
 int nSubmittedFinalBudget;
 
+CAmount GetBudgetSystemCollateralAmount(int nHeight) {
+  if (nHeight < 250000) {
+    return 50 * COIN;
+  } else {
+    return 25 * COIN;
+  }
+}
+
 int GetBudgetPaymentCycleBlocks()
 {
     // Amount of blocks in a months period of time (using 1 minutes per) = (60*24*30)
@@ -58,7 +66,7 @@ bool IsBudgetCollateralValid(uint256 nTxCollateralHash, uint256 nExpectedHash, s
             LogPrint("masternode","CBudgetProposalBroadcast::IsBudgetCollateralValid - %s\n", strError);
             return false;
         }
-        if (o.scriptPubKey == findScript && o.nValue >= PROPOSAL_FEE_TX) foundOpReturn = true;
+        if (o.scriptPubKey == findScript && o.nValue >= GetBudgetSystemCollateralAmount(chainActive.Height())) foundOpReturn = true;
     }
     if (!foundOpReturn) {
         strError = strprintf("Couldn't find opReturn %s in %s", nExpectedHash.ToString(), txCollateral.ToString());

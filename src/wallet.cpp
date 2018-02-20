@@ -1323,7 +1323,7 @@ CAmount CWallet::GetUnconfirmedZerocoinBalance() const
     CAmount nUnconfirmed = 0;
     CWalletDB walletdb(pwalletMain->strWalletFile);
     list<CZerocoinMint> listMints = walletdb.ListMintedCoins(true, false, true);
- 
+
     std::map<libzerocoin::CoinDenomination, int> mapUnconfirmed;
     for (const auto& denom : libzerocoin::zerocoinDenomList){
         mapUnconfirmed.insert(make_pair(denom, 0));
@@ -2261,7 +2261,7 @@ bool CWallet::GetBudgetSystemCollateralTX(CWalletTx& tx, uint256 hash, bool useI
     CAmount nFeeRet = 0;
     std::string strFail = "";
     vector<pair<CScript, CAmount> > vecSend;
-    vecSend.push_back(make_pair(scriptChange, BUDGET_FEE_TX));
+    vecSend.push_back(make_pair(scriptChange, GetBudgetSystemCollateralAmount(chainActive.Height())));
 
     CCoinControl* coinControl = NULL;
     bool success = CreateTransaction(vecSend, tx, reservekey, nFeeRet, strFail, coinControl, ALL_COINS, useIX, (CAmount)0);
