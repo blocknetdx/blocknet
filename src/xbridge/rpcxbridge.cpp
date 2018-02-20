@@ -822,6 +822,9 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
         std::copy_if(trList.begin(), trList.end(), std::inserter(asksList, asksList.end()),
                      [&toCurrency, &fromCurrency](const TransactionPair &transaction)
         {
+            if(transaction.second == nullptr)
+                return false;
+
             return  ((transaction.second->toCurrency == fromCurrency) &&
                     (transaction.second->fromCurrency == toCurrency));
         });
@@ -829,6 +832,9 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
         std::copy_if(trList.begin(), trList.end(), std::inserter(bidsList, bidsList.end()),
                      [&toCurrency, &fromCurrency](const TransactionPair &transaction)
         {
+            if(transaction.second == nullptr)
+                return false;
+
             return  ((transaction.second->toCurrency == toCurrency) &&
                     (transaction.second->fromCurrency == fromCurrency));
         });
@@ -849,7 +855,6 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
             const auto priceA = xBridgeValueFromAmount(a->fromAmount) / xBridgeValueFromAmount(a->toAmount);
             const auto priceB = xBridgeValueFromAmount(b->fromAmount) / xBridgeValueFromAmount(b->toAmount);
             return priceA > priceB;
-
         });
 
         std::sort(asksVector.begin(), asksVector.end(),
@@ -879,6 +884,13 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 //find transaction with best bids
                 const auto &tr1 = a.second;
                 const auto &tr2 = b.second;
+
+                if(tr1 == nullptr)
+                    return true;
+
+                if(tr2 == nullptr)
+                    return false;
+
                 const auto priceA = xBridgeValueFromAmount(tr1->fromAmount) / xBridgeValueFromAmount(tr1->toAmount);
                 const auto priceB = xBridgeValueFromAmount(tr2->fromAmount) / xBridgeValueFromAmount(tr2->toAmount);
 
@@ -888,13 +900,16 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
             const auto bidsCount = std::count_if(bidsList.begin(), bidsList.end(), [bidsItem, floatCompare](const TransactionPair &a)
             {
                 const auto &tr = a.second;
+
+                if(tr == nullptr)
+                    return false;
+
                 const auto price = xBridgeValueFromAmount(tr->fromAmount) / xBridgeValueFromAmount(tr->toAmount);
 
                 const auto &bestTr = bidsItem->second;
                 if (bestTr != nullptr)
                 {
-                    const auto bestBidPrice = xBridgeValueFromAmount(tr->fromAmount) / xBridgeValueFromAmount(tr->toAmount);
-
+                    const auto bestBidPrice = xBridgeValueFromAmount(bestTr->fromAmount) / xBridgeValueFromAmount(bestTr->toAmount);
                     return floatCompare(price, bestBidPrice);
                 }
 
@@ -918,6 +933,13 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 //find transactions with best asks
                 const auto &tr1 = a.second;
                 const auto &tr2 = b.second;
+
+                if(tr1 == nullptr)
+                    return true;
+
+                if(tr2 == nullptr)
+                    return false;
+
                 const auto priceA = xBridgeValueFromAmount(tr1->fromAmount) / xBridgeValueFromAmount(tr1->toAmount);
                 const auto priceB = xBridgeValueFromAmount(tr2->fromAmount) / xBridgeValueFromAmount(tr2->toAmount);
                 return priceA < priceB;
@@ -926,13 +948,16 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
             const auto asksCount = std::count_if(asksList.begin(), asksList.end(), [asksItem, floatCompare](const TransactionPair &a)
             {
                 const auto &tr = a.second;
+
+                if(tr == nullptr)
+                    return false;
+
                 const auto price = xBridgeValueFromAmount(tr->fromAmount) / xBridgeValueFromAmount(tr->toAmount);
 
                 const auto &bestTr = asksItem->second;
                 if (bestTr != nullptr)
                 {
-                    const auto bestAskPrice = xBridgeValueFromAmount(tr->fromAmount) / xBridgeValueFromAmount(tr->toAmount);
-
+                    const auto bestAskPrice = xBridgeValueFromAmount(bestTr->fromAmount) / xBridgeValueFromAmount(bestTr->toAmount);
                     return floatCompare(price, bestAskPrice);
                 }
 
@@ -965,6 +990,9 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
 
             for (size_t i = 0; i < bound; i++)
             {
+                if(bidsVector[i] == nullptr)
+                    continue;
+
                 Array bid;
                 //calculate bids and push to array
                 const auto fromAmount   = bidsVector[i]->fromAmount;
@@ -975,6 +1003,10 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                                                      [bidPrice, floatCompare](const TransactionPair &a)
                 {
                     const auto &tr = a.second;
+
+                    if(tr == nullptr)
+                        return false;
+
                     const auto price = xBridgeValueFromAmount(tr->fromAmount) / xBridgeValueFromAmount(tr->toAmount);
 
                     return floatCompare(price, bidPrice);
@@ -991,6 +1023,9 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
 
             for (size_t i = 0; i < bound; i++)
             {
+                if(asksVector[i] == nullptr)
+                    continue;
+
                 Array ask;
                 //calculate asks and push to array
                 const auto fromAmount   = asksVector[i]->fromAmount;
@@ -1001,6 +1036,10 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                                                      [askPrice, floatCompare](const TransactionPair &a)
                 {
                     const auto &tr = a.second;
+
+                    if(tr == nullptr)
+                        return false;
+
                     const auto price = xBridgeValueFromAmount(tr->fromAmount) / xBridgeValueFromAmount(tr->toAmount);
 
                     return floatCompare(price, askPrice);
@@ -1024,6 +1063,9 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
 
             for (size_t i = 0; i < bound; i++)
             {
+                if(bidsVector[i] == nullptr)
+                    continue;
+
                 Array bid;
                 const auto fromAmount   = bidsVector[i]->fromAmount;
                 const auto toAmount     = bidsVector[i]->toAmount;
@@ -1039,6 +1081,9 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
 
             for (size_t i = 0; i < bound; i++)
             {
+                if(asksVector[i] == nullptr)
+                    continue;
+
                 Array ask;
                 const auto fromAmount   = asksVector[i]->fromAmount;
                 const auto toAmount     = asksVector[i]->toAmount;
@@ -1063,6 +1108,13 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 //find transaction with best bids
                 const auto &tr1 = a.second;
                 const auto &tr2 = b.second;
+
+                if(tr1 == nullptr)
+                    return true;
+
+                if(tr2 == nullptr)
+                    return false;
+
                 const auto priceA = xBridgeValueFromAmount(tr1->fromAmount) / xBridgeValueFromAmount(tr1->toAmount);
                 const auto priceB = xBridgeValueFromAmount(tr2->fromAmount) / xBridgeValueFromAmount(tr2->toAmount);
 
@@ -1083,6 +1135,9 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                     for(const TransactionPair &tp : bidsList)
                     {
                         const auto &otherTr = tp.second;
+
+                        if(otherTr == nullptr)
+                            continue;
 
                         if(tr->id == otherTr->id)
                             continue;
@@ -1105,6 +1160,13 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 //find transactions with best asks
                 const auto &tr1 = a.second;
                 const auto &tr2 = b.second;
+
+                if(tr1 == nullptr)
+                    return true;
+
+                if(tr2 == nullptr)
+                    return false;
+
                 const auto priceA = xBridgeValueFromAmount(tr1->fromAmount) / xBridgeValueFromAmount(tr1->toAmount);
                 const auto priceB = xBridgeValueFromAmount(tr2->fromAmount) / xBridgeValueFromAmount(tr2->toAmount);
                 return priceA < priceB;
@@ -1124,6 +1186,9 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                     for(const TransactionPair &tp : asksList)
                     {
                         const auto &otherTr = tp.second;
+
+                        if(otherTr == nullptr)
+                            continue;
 
                         if(tr->id == otherTr->id)
                             continue;
