@@ -1150,16 +1150,15 @@ json_spirit::Value dxGetMyOrders(const json_spirit::Array& params, bool fHelp)
 
             const auto& t = *i.second;
 
+            if(!t.isLocal())
+                continue;
+
             xbridge::WalletConnectorPtr connFrom = xapp.connectorByCurrency(t.fromCurrency);
             xbridge::WalletConnectorPtr connTo   = xapp.connectorByCurrency(t.toCurrency);
 
             Object o;
 
             o.emplace_back(Pair("id", t.id.GetHex()));
-
-            // todo : special processing for non-local
-
-            // todo : filter out non-owned addresses
 
             // maker data
             o.emplace_back(Pair("maker", t.fromCurrency));
