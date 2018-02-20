@@ -386,7 +386,7 @@ extern json_spirit::Value dxGetCurrencies(const json_spirit::Array& params, bool
  * * Example:<br>
  * \verbatim
  *
-    dxCreateTransaction  1NDqZ7piDqyDhNveWS48kDSwPdyJLEEcCp SYS 1.3 LRuXAU2fdSU7imXzk8cTy2k3heMK5vTuQ4 LTC 0.13
+    dxMakeOrder  1NDqZ7piDqyDhNveWS48kDSwPdyJLEEcCp SYS 1.3 LRuXAU2fdSU7imXzk8cTy2k3heMK5vTuQ4 LTC 0.13
     {
         "from" : "1NDqZ7piDqyDhNveWS48kDSwPdyJLEEcCp",
         "fromCurrency" : "SYS",
@@ -397,7 +397,7 @@ extern json_spirit::Value dxGetCurrencies(const json_spirit::Array& params, bool
     }
  * \endverbatim
  */
-extern json_spirit::Value dxCreateTransaction(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value dxMakeOrder(const json_spirit::Array& params, bool fHelp);
 
 /**
  * @brief Accepts given transaction
