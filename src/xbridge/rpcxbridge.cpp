@@ -553,8 +553,8 @@ Value dxTakeOrder(const Array & params, bool fHelp)
     if (fHelp)
     {
         throw runtime_error("dxTakeOrder (id) "
-                            "(address from) (address to) [opt](dryrun)\n"
-                            "Accept xbridge transaction.");
+                            "(address from) (address to) [optional](dryrun)\n"
+                            "Accepts the order. dryrun will evaluate input without accepting the order.");
     }
 
     auto statusCode = xbridge::SUCCESS;
@@ -592,7 +592,19 @@ Value dxTakeOrder(const Array & params, bool fHelp)
         return  error;
     }
 
-    bool dryrun = ((params.size() == 4) && (params[3].get_str() == "dryrun"));
+    // Perform explicit check on dryrun to avoid executing order on bad spelling
+    bool dryrun = false;
+    if (params.size() == 4) {
+        std::string dryrunParam = params[3].get_str();
+        if (dryrunParam != "dryrun") {
+            Object error;
+            error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS, dryrunParam)));
+            error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
+            error.emplace_back(Pair("name", "dxTakeOrder"));
+            return error;
+        }
+        dryrun = true;
+    }
 
     Object result;
     xbridge::TransactionDescrPtr txDescr;
