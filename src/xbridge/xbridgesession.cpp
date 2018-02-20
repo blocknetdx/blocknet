@@ -121,7 +121,6 @@ protected:
                                const TxCancelReason & reason);
 
     bool processTransactionCancel(XBridgePacketPtr packet);
-    bool cancelOrRollbackTransaction(const uint256 & txid, const TxCancelReason & reason);
 
     bool processTransactionFinished(XBridgePacketPtr packet);
 
@@ -2346,53 +2345,27 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet)
             LOG() << "invalid packet signature " << __FUNCTION__;
             return true;
         }
-    }
-    else
-    {
-        xbridge::App & xapp = xbridge::App::instance();
-        TransactionDescrPtr xtx = xapp.transaction(txid);
-        if (!xtx)
-        {
-            LOG() << "unknown transaction " << HexStr(txid) << " " << __FUNCTION__;
-            return true;
-        }
 
-        if (!packet->verify(xtx->sPubKey) && !packet->verify(xtx->oPubKey))
-        {
-            LOG() << "invalid packet signature " << __FUNCTION__;
-            return true;
-        }
-    }
-
-    // TODO process later if failed
-    cancelOrRollbackTransaction(txid, reason);
-
-    return true;
-}
-
-//*****************************************************************************
-//*****************************************************************************
-bool Session::Impl::cancelOrRollbackTransaction(const uint256 & txid, const TxCancelReason & reason)
-{
-    DEBUG_TRACE();
-
-    // check and process packet if bridge is exchange
-    Exchange & e = Exchange::instance();
-    if (e.isStarted())
-    {
         e.deletePendingTransactions(txid);
+        return true;
     }
 
-    App & app = App::instance();
-
-    TransactionDescrPtr xtx = app.transaction(txid);
+    xbridge::App & xapp = xbridge::App::instance();
+    TransactionDescrPtr xtx = xapp.transaction(txid);
     if (!xtx)
     {
+        LOG() << "unknown transaction " << HexStr(txid) << " " << __FUNCTION__;
+        return true;
+    }
+
+    if (!packet->verify(xtx->sPubKey) && !packet->verify(xtx->oPubKey))
+    {
+        LOG() << "invalid packet signature " << __FUNCTION__;
         return true;
     }
 
     // rollback, commit revert transaction
-    WalletConnectorPtr conn = app.connectorByCurrency(xtx->fromCurrency);
+    WalletConnectorPtr conn = xapp.connectorByCurrency(xtx->fromCurrency);
     if (!conn)
     {
         WARN() << "no connector for <" << xtx->toCurrency << "> " << __FUNCTION__;
@@ -2404,32 +2377,32 @@ bool Session::Impl::cancelOrRollbackTransaction(const uint256 & txid, const TxCa
 
     if (xtx->state < TransactionDescr::trCreated)
     {
-        app.moveTransactionToHistory(txid);
+        xapp.moveTransactionToHistory(txid);
         xtx->state  = TransactionDescr::trCancelled;
         xtx->reason = reason;
         xuiConnector.NotifyXBridgeTransactionChanged(txid);
+        return true;
+    }
+
+    // remove from pending packets (if added)
+    xapp.removePackets(txid);
+
+    std::string sid;
+    int32_t errCode = 0;
+    if (!conn->sendRawTransaction(xtx->refTx, sid, errCode))
+    {
+        // TODO move packet to pending if error
+        LOG() << "send rollback error, tx " << HexStr(txid) << " " << __FUNCTION__;
+        xtx->state = TransactionDescr::trRollbackFailed;
+        xapp.processLater(txid, packet);
     }
     else
     {
-        // remove from pending packets (if added)
-        app.removePackets(txid);
-
-        std::string sid;
-        int32_t errCode = 0;
-        if (!conn->sendRawTransaction(xtx->refTx, sid, errCode))
-        {
-            // TODO move packet to pending if error
-            LOG() << "send rollback error, tx " << HexStr(txid) << " " << __FUNCTION__;
-            xtx->state = TransactionDescr::trRollbackFailed;
-        }
-        else
-        {
-            xtx->state = TransactionDescr::trRollback;
-        }
-
-        // update transaction state for gui
-        xuiConnector.NotifyXBridgeTransactionChanged(txid);
+        xtx->state = TransactionDescr::trRollback;
     }
+
+    // update transaction state for gui
+    xuiConnector.NotifyXBridgeTransactionChanged(txid);
 
     return true;
 }
