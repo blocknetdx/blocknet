@@ -63,15 +63,15 @@ Value dxGetOrders(const Array & params, bool fHelp)
 {
     if (fHelp) {
 
-        throw runtime_error("dxGetOrders Returns a list of orders.");
+        throw runtime_error("dxGetOrders returns the list of open orders.");
 
     }
-    if (params.size() > 0) {
+    if (!params.empty()) {
 
         Object error;
         const auto statusCode = xbridge::INVALID_PARAMETERS;
         error.emplace_back(Pair("error",
-                                xbridge::xbridgeErrorText(statusCode, "This function does not accept any parameter")));
+                                xbridge::xbridgeErrorText(statusCode, "This function does not accept parameters")));
         error.emplace_back(Pair("code", statusCode));
         error.emplace_back(Pair("name", __FUNCTION__));
         return  error;
