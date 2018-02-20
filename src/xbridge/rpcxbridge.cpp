@@ -753,8 +753,8 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
     if (fHelp)
     {
         throw runtime_error("dxGetOrderBook "
-                            "(the level of detail) (from currency) (to currency) "
-                            "(max orders - optional, default = 50) ");
+                            "(detail level) (maker) (taker) "
+                            "(max orders)[optional, default=50) ");
     }
 
     if ((params.size() < 3 || params.size() > 4))
@@ -921,9 +921,7 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 if (tr != nullptr)
                 {
                     const auto bidPrice = xBridgeValueFromAmount(tr->fromAmount) / xBridgeValueFromAmount(tr->toAmount);
-                    bids.emplace_back(bidPrice);
-                    bids.emplace_back(xBridgeValueFromAmount(tr->fromAmount));
-                    bids.emplace_back(bidsCount);
+                    bids.emplace_back(Array{bidPrice, xBridgeValueFromAmount(tr->fromAmount), (int64_t)bidsCount});
                 }
             }
 
@@ -969,9 +967,7 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 if (tr != nullptr)
                 {
                     const auto askPrice = xBridgeValueFromAmount(tr->fromAmount) / xBridgeValueFromAmount(tr->toAmount);
-                    asks.emplace_back(askPrice);
-                    asks.emplace_back(xBridgeValueFromAmount(tr->fromAmount));
-                    asks.emplace_back(asksCount);
+                    asks.emplace_back(Array{askPrice, xBridgeValueFromAmount(tr->fromAmount), (int64_t)asksCount});
                 }
             }
 
@@ -1014,7 +1010,7 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
 
                 bid.emplace_back(bidPrice);
                 bid.emplace_back(bidSize);
-                bid.emplace_back(bidsCount);
+                bid.emplace_back((int64_t)bidsCount);
 
                 bids.emplace_back(bid);
             }
@@ -1047,7 +1043,7 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
 
                 ask.emplace_back(askPrice);
                 ask.emplace_back(askSize);
-                ask.emplace_back(asksCount);
+                ask.emplace_back((int64_t)asksCount);
 
                 asks.emplace_back(ask);
             }
