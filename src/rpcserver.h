@@ -417,7 +417,7 @@ extern json_spirit::Value dxCreateTransaction(const json_spirit::Array& params, 
     }
  * \endverbatim
  */
-extern json_spirit::Value dxAcceptTransaction(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value dxTakeOrder(const json_spirit::Array& params, bool fHelp);
 
 /**
  * @brief Cancels given order

@@ -370,7 +370,7 @@ static const CRPCCommand vRPCCommands[] =
         {"xbridge", "dxGetOrder",                           &dxGetOrder,                 true, true, true},
         {"xbridge", "dxGetCurrencies",                      &dxGetCurrencies,            true, true, true},
         {"xbridge", "dxCreateTransaction",                  &dxCreateTransaction,        true, true, true},
-        {"xbridge", "dxAcceptTransaction",                  &dxAcceptTransaction,        true, true, true},
+        {"xbridge", "dxTakeOrder",                          &dxTakeOrder,                true, true, true},
         {"xbridge", "dxCancelOrder",                        &dxCancelOrder,              true, true, true},
         {"xbridge", "dxGetTradeHistory",                    &dxGetTradeHistory,          true, true, true},
         {"xbridge", "dxGetOrderBook",                       &dxGetOrderBook,             true, true, true},
