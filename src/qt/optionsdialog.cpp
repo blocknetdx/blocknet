@@ -189,7 +189,7 @@ void OptionsDialog::setModel(OptionsModel* model)
     connect(ui->connectSocks, SIGNAL(clicked(bool)), this, SLOT(showRestartWarning()));
     /* Display */
     connect(ui->digits, SIGNAL(valueChanged()), this, SLOT(showRestartWarning()));
-    connect(ui->theme, SIGNAL(valueChanged()), this, SLOT(showRestartWarning()));
+    //connect(ui->theme, SIGNAL(valueChanged()), this, SLOT(showRestartWarning()));
     connect(ui->lang, SIGNAL(valueChanged()), this, SLOT(showRestartWarning()));
     connect(ui->thirdPartyTxUrls, SIGNAL(textChanged(const QString&)), this, SLOT(showRestartWarning()));
     connect(ui->showServicenodesTab, SIGNAL(clicked(bool)), this, SLOT(showRestartWarning()));
@@ -274,9 +274,7 @@ void OptionsDialog::on_okButton_clicked()
     mapper->submit();
     obfuScationPool.cachedNumBlocks = std::numeric_limits<int>::max();
     pwalletMain->MarkDirty();
-    accept();
-  //  parentWidget()->setStyleSheet(*styleSheet);
-  //  parentWidget()->update();
+    accept(); 
 }
 
 void OptionsDialog::on_cancelButton_clicked()
@@ -338,56 +336,39 @@ bool OptionsDialog::eventFilter(QObject* object, QEvent* event)
 // Load a custom theme from user selected path
 void OptionsDialog::on_theme_activated(const QString &arg1)
 {
-    QString fileName;
     QString dataDir(GetDataDir().string().c_str());
-    QString cssName = dataDir+"/themes/"+fileName;
-    QString infoText = QString("The theme combobox item: ") + arg1 + QString(" is activated, Theme path is: ") + dataDir;
+    QString cssName = dataDir+"/themes/";
 
-    ui->statusLabel->setText(tr(infoText.toStdString().c_str()));
-    QTimer::singleShot(10000, this, SLOT(clearStatusLabel()));
     if (arg1 == "Custom")
     {
         QFileDialog fileDialog(this, "Select a Custom Wallet UI Theme");
         fileDialog.setFileMode(QFileDialog::AnyFile);
         fileDialog.setNameFilter(tr("Custom Themes (*.css)"));
-        fileDialog.setDirectory(dataDir+"/themes");
+        fileDialog.setDirectory(cssName);
         if (fileDialog.exec())
-            fileDialog.selectFile(fileName);
-
-
-        QFile qFile(cssName);
-        if (qFile.open(QFile::ReadOnly)) {
-            ui->statusLabel->setText(tr("Opened theme file..."));
-            qFile.seek(0);
-            *styleSheet = QLatin1String(qFile.readAll());
-            parentWidget()->setStyleSheet(*styleSheet);
-            parentWidget()->update();
-            qFile.close();
+        {
+            QString fileName;
+            QStringList fileList = fileDialog.selectedFiles();
+            fileName = fileList[0];
+            cssName = fileName;
         }
     }
     else if (arg1 == "Default")
     {
-        QFile qFile(":/css/default");
-        if (qFile.open(QFile::ReadOnly)) {
-            ui->statusLabel->setText(tr("Opened default theme file..."));
-            qFile.seek(0);
-            *styleSheet = QLatin1String(qFile.readAll());
-            parentWidget()->setStyleSheet(*styleSheet);
-            parentWidget()->update();
-            qFile.close();
-        }
+        cssName = ":/css/default";
     }
     else
     {
-        QString cssName = dataDir+"/themes/"+arg1;
-        QFile qFile(cssName);
-        if (qFile.open(QFile::ReadOnly)) {
-            ui->statusLabel->setText(tr(cssName.toStdString().c_str()));
-            qFile.seek(0);
-            *styleSheet = QLatin1String(qFile.readAll());
-            parentWidget()->setStyleSheet(*styleSheet);
-            parentWidget()->update();
-            qFile.close();
-        }
+        cssName += arg1;
+    }
+
+    //ui->statusLabel->setText(cssName);
+    QFile qFile(cssName);
+    if (qFile.open(QFile::ReadOnly)) {
+        qFile.seek(0);
+        *styleSheet = QLatin1String(qFile.readAll());
+        parentWidget()->setStyleSheet(*styleSheet);
+        parentWidget()->update();
+        qFile.close();
     }
 }
