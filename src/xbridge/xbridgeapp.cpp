@@ -1223,6 +1223,18 @@ xbridge::Error App::cancelXBridgeTransaction(const uint256 &id,
     return xbridge::SUCCESS;
 }
 
+void App::cancelMyXBridgeTransactions()
+{
+    for(const auto &transaction : transactions())
+    {
+        if(transaction.second == nullptr)
+            continue;
+
+        if(transaction.second->isLocal())
+            cancelXBridgeTransaction(transaction.second->id, crUserRequest);
+    }
+}
+
 //******************************************************************************
 //******************************************************************************
 bool App::Impl::sendCancelTransaction(const uint256 & txid,
