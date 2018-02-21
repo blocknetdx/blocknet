@@ -45,6 +45,9 @@ int GetBudgetPaymentCycleBlocks();
 //Check the collateral transaction for the budget proposal/finalized budget
 bool IsBudgetCollateralValid(uint256 nTxCollateralHash, uint256 nExpectedHash, std::string& strError, int64_t& nTime, int& nConf);
 
+// Get the budget collateral amount for a block height
+CAmount GetBudgetSystemCollateralAmount(int nHeight);
+
 //
 // CBudgetVote - Allow a masternode node to vote and broadcast throughout the network
 //
