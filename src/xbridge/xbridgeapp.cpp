@@ -1223,62 +1223,16 @@ xbridge::Error App::cancelXBridgeTransaction(const uint256 &id,
     return xbridge::SUCCESS;
 }
 
-Error App::cancelMyXBridgeTransactions()
+void App::cancelMyXBridgeTransactions()
 {
-    std::map<uint256, xbridge::TransactionDescrPtr> allTransactions = transactions();
-    std::map<uint256, xbridge::TransactionDescrPtr> myTransactions;
-
-    std::vector<std::string> myAddresses;
-
-    std::vector<WalletConnectorPtr> avaliableConnectors = connectors();
-
-    for(const auto &connector : avaliableConnectors)
-    {
-        std::vector<wallet::AddressBookEntry> entries;
-
-        if(!connector->requestAddressBook(entries))
-            continue;
-
-        for(const auto& entry : entries)
-            for(const auto &address : entry.second)
-                myAddresses.emplace_back(address);
-    }
-
-    std::copy_if(allTransactions.begin(), allTransactions.end(), std::inserter(myTransactions, myTransactions.end()),
-                 [this, &myAddresses](const std::pair<uint256, xbridge::TransactionDescrPtr> &transaction)
-    {
-        if(transaction.second == nullptr)
-            return false;
-
-        const auto &toConnector = connectorByCurrency(transaction.second->toCurrency);
-        const auto &fromConnector = connectorByCurrency(transaction.second->fromCurrency);
-
-        std::string toAddress = toConnector->fromXAddr(transaction.second->to);
-        std::string fromAddress = fromConnector->fromXAddr(transaction.second->from);
-
-        for(const auto &address : myAddresses)
-        {
-            if(address == toAddress || address == fromAddress)
-                return true;
-        }
-
-        return false;
-    });
-
-    xbridge::Error res = xbridge::SUCCESS;
-
-    for(const std::pair<uint256, xbridge::TransactionDescrPtr> &transaction : myTransactions)
+    for(const auto &transaction : transactions())
     {
         if(transaction.second == nullptr)
             continue;
 
-        res = cancelXBridgeTransaction(transaction.second->id, crUserRequest);
-
-        if(res != xbridge::SUCCESS)
-            return res;
+        if(transaction.second->isLocal())
+            cancelXBridgeTransaction(transaction.second->id, crUserRequest);
     }
-
-    return res;
 }
 
 //******************************************************************************

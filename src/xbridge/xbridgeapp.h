@@ -78,7 +78,7 @@ public:
                                      const std::string & to);
 
     xbridge::Error cancelXBridgeTransaction(const uint256 &id, const TxCancelReason &reason);
-    xbridge::Error cancelMyXBridgeTransactions();
+    void cancelMyXBridgeTransactions();
 
     /**
      * @brief isValidAddress checks the correctness of the address
