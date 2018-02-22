@@ -92,8 +92,8 @@ Value dxGetOrders(const Array & params, bool fHelp)
         jtr.emplace_back(Pair("maker_size",     util::xBridgeValueFromAmount(tr->fromAmount)));
         jtr.emplace_back(Pair("taker",          tr->toCurrency));
         jtr.emplace_back(Pair("taker_size",     util::xBridgeValueFromAmount(tr->toAmount)));
-        jtr.emplace_back(Pair("updated_at",     util::iso8061(tr->txtime)));
-        jtr.emplace_back(Pair("created_at",     util::iso8061(tr->created)));
+        jtr.emplace_back(Pair("updated_at",     util::iso8601(tr->txtime)));
+        jtr.emplace_back(Pair("created_at",     util::iso8601(tr->created)));
         jtr.emplace_back(Pair("status",         tr->strState()));
         result.emplace_back(jtr);
 
@@ -361,8 +361,8 @@ Value dxGetOrder(const Array & params, bool fHelp)
     result.emplace_back(Pair("maker_size",  util::xBridgeValueFromAmount(order->fromAmount)));
     result.emplace_back(Pair("taker",       order->toCurrency));
     result.emplace_back(Pair("taker_size",  util::xBridgeValueFromAmount(order->toAmount)));
-    result.emplace_back(Pair("updated_at",  util::iso8061(order->txtime)));
-    result.emplace_back(Pair("created_at",  util::iso8061(order->created)));
+    result.emplace_back(Pair("updated_at",  util::iso8601(order->txtime)));
+    result.emplace_back(Pair("created_at",  util::iso8601(order->created)));
     result.emplace_back(Pair("status",      order->strState()));
     return result;
 }
@@ -545,8 +545,8 @@ Value dxMakeOrder(const Array &params, bool fHelp)
         obj.emplace_back(Pair("taker",          toCurrency));
         obj.emplace_back(Pair("taker_size",     util::xBridgeValueFromAmount(util::xBridgeAmountFromReal(toAmount))));
         const auto &createdTime = xbridge::App::instance().transaction(id)->created;
-        obj.emplace_back(Pair("created_at",     util::iso8061(createdTime)));
-        obj.emplace_back(Pair("updated_at",     util::iso8061(bpt::second_clock::universal_time())));
+        obj.emplace_back(Pair("created_at",     util::iso8601(createdTime)));
+        obj.emplace_back(Pair("updated_at",     util::iso8601(bpt::second_clock::universal_time())));
         obj.emplace_back(Pair("block_id",       blockHash.GetHex()));
         obj.emplace_back(Pair("status",         "created"));
         return obj;
@@ -641,8 +641,8 @@ Value dxTakeOrder(const Array & params, bool fHelp)
             result.emplace_back(Pair("taker", txDescr->toCurrency));
             result.emplace_back(Pair("taker_size", util::xBridgeValueFromAmount(txDescr->toAmount)));
 
-            result.emplace_back(Pair("updated_at", util::iso8061(bpt::second_clock::universal_time())));
-            result.emplace_back(Pair("created_at", util::iso8061(txDescr->created)));
+            result.emplace_back(Pair("updated_at", util::iso8601(bpt::second_clock::universal_time())));
+            result.emplace_back(Pair("created_at", util::iso8601(txDescr->created)));
 
             result.emplace_back(Pair("status", "filled"));
             return result;
@@ -697,8 +697,8 @@ Value dxTakeOrder(const Array & params, bool fHelp)
         result.emplace_back(Pair("taker", txDescr->toCurrency));
         result.emplace_back(Pair("taker_size", util::xBridgeValueFromAmount(txDescr->toAmount)));
 
-        result.emplace_back(Pair("updated_at", util::iso8061(bpt::second_clock::universal_time())));
-        result.emplace_back(Pair("created_at", util::iso8061(txDescr->created)));
+        result.emplace_back(Pair("updated_at", util::iso8601(bpt::second_clock::universal_time())));
+        result.emplace_back(Pair("created_at", util::iso8601(txDescr->created)));
 
         result.emplace_back(Pair("status", txDescr->strState()));
         return result;
@@ -785,8 +785,8 @@ Value dxCancelOrder(const Array &params, bool fHelp)
     obj.emplace_back(Pair("taker_size", util::xBridgeValueFromAmount(tx->toAmount)));
     obj.emplace_back(Pair("taker_address", connTo->fromXAddr(tx->to)));
 
-    obj.emplace_back(Pair("updated_at", util::iso8061(tx->txtime)));
-    obj.emplace_back(Pair("created_at", util::iso8061(tx->created)));
+    obj.emplace_back(Pair("updated_at", util::iso8601(tx->txtime)));
+    obj.emplace_back(Pair("created_at", util::iso8601(tx->created)));
 
     obj.emplace_back(Pair("status", tx->strState()));
     return obj;

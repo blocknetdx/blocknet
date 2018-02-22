@@ -38,11 +38,11 @@ namespace bpt = boost::posix_time;
 
 
     /**
-     * @brief iso8061 - converted boost posix time to string in ISO 8061 format
+     * @brief iso8601 - converted boost posix time to string in ISO 8061 format
      * @param time - boost posix time
      * @return string in ISO 8061 format
      */
-    const std::string iso8061(const bpt::ptime &time);
+    const std::string iso8601(const bpt::ptime &time);
 
     double xBridgeValueFromAmount(uint64_t amount);
 

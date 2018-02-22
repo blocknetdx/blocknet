@@ -173,7 +173,7 @@ std::string to_str(const std::vector<unsigned char> & obj)
     return util::base64_encode(obj);
 }
 
-const std::string iso8061(const bpt::ptime &time)
+const std::string iso8601(const bpt::ptime &time)
 {
     return bpt::to_iso_extended_string(time) + "Z";
 }
