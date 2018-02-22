@@ -112,7 +112,8 @@ static const CRPCConvertParam vRPCConvertParams[] =
         {"dxGetOrderHistory", 3},
         {"dxGetOrderBook", 0},
         {"dxGetOrderBook", 3},
-        {"dxGetOrderBook", 4}};
+        {"dxGetOrderBook", 4},
+        {"dxGetOrderFills",2}};
 
 class CRPCConvertTable
 {
