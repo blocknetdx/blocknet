@@ -7,7 +7,7 @@
 #include "xbridge/util/xutil.h"
 #include "xbridge/xbridgeexchange.h"
 #include "xbridge/xbridgeapp.h"
-#include "xbridge/xbridgesession.h"
+#include "xbridge/xbridgewalletconnector.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -20,8 +20,8 @@
 #include <QApplication>
 #include <QClipboard>
 
-const QString testFrom("2J3u4r9D+pNS6ZPNMYR1tgl+wVI=");
-const QString testTo("BWU9J85uL4242RnXXhZfRdA8p9s=");
+const QString testFrom("<input from address>");
+const QString testTo("<input to address>");
 // const QString testFromCurrency("XC");
 // const QString testToCurrency("SWIFT");
 const QString testFromAmount("0.0005");
@@ -38,8 +38,8 @@ XBridgeTransactionDialog::XBridgeTransactionDialog(XBridgeTransactionsModel & mo
 {
     setupUI();
 
-    XBridgeApp & xapp = XBridgeApp::instance();
-    std::vector<std::string> wallets = xapp.sessionsCurrencies();
+    xbridge::App & xapp = xbridge::App::instance();
+    std::vector<std::string> wallets = xapp.availableCurrencies();
     for (const std::string & s : wallets)
     {
         m_thisWallets << QString::fromStdString(s);
@@ -309,14 +309,27 @@ void XBridgeTransactionDialog::onSendTransaction()
     if (m_pendingId != uint256())
     {
         // accept pending tx
-        m_model.newTransactionFromPending(m_pendingId, m_hubAddress, from, to);
+
+        const auto error = m_model.newTransactionFromPending(m_pendingId, m_hubAddress, from, to);
+        if(error != xbridge::SUCCESS)
+        {
+            QMessageBox::warning(this, trUtf8("check parameters"),
+                                 trUtf8("Invalid address %1")
+                                 .arg(xbridge::xbridgeErrorText(error, from).c_str()));
+            return;
+        }
     }
     else
     {
         // new tx
-        if (!m_model.newTransaction(from, to, fromCurrency, toCurrency, fromAmount, toAmount))
+        const auto error = m_model.newTransaction(from, to, fromCurrency, toCurrency, fromAmount, toAmount);
+        if (error != xbridge::SUCCESS)
         {
-            QMessageBox::warning(this, trUtf8("check parameters"), trUtf8("Invalid amount (less than minimum)"));
+            QMessageBox::warning(this, trUtf8("check parameters"),
+
+                                 trUtf8("Invalid amount %1 %2")
+                                 .arg(xbridge::xbridgeErrorText(error).c_str())
+                                 .arg(fromAmount));
             return;
         }
     }
@@ -400,10 +413,12 @@ void XBridgeTransactionDialog::onAddressBookTo()
 
 //******************************************************************************
 //******************************************************************************
-double XBridgeTransactionDialog::accountBalance(const std::string &currency)
+double XBridgeTransactionDialog::accountBalance(const std::string & currency)
 {
-    XBridgeApp & app = XBridgeApp::instance();
-    XBridgeSessionPtr session = app.sessionByCurrency(currency);
-
-    return session->getWalletBalance();
+    xbridge::WalletConnectorPtr conn = xbridge::App::instance().connectorByCurrency(currency);
+    if (conn)
+    {
+        return conn->getWalletBalance();
+    }
+    return 0;
 }

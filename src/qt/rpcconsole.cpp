@@ -1,6 +1,7 @@
 // Copyright (c) 2011-2014 The Bitcoin developers
 // Copyright (c) 2014-2015 The Dash developers
-// Copyright (c) 2015-2017 The BlocknetDX developers
+// Copyright (c) 2015-2017 The PIVX developers
+// Copyright (c) 2015-2018 The Blocknet developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -190,7 +191,8 @@ void RPCExecutor::request(const QString& command)
         // and pass it along with the method name to the dispatcher.
         json_spirit::Value result = tableRPC.execute(
             args[0],
-            RPCConvertValues(args[0], std::vector<std::string>(args.begin() + 1, args.end())));
+            RPCConvertValues(args[0], std::vector<std::string>(args.begin() + 1,
+                                                               args.end())));
 
         // Format result reply
         if (result.type() == json_spirit::null_type)

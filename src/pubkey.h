@@ -86,7 +86,7 @@ public:
     }
 
     //! Construct a public key from a byte vector.
-    CPubKey(const std::vector<unsigned char>& vch)
+    explicit CPubKey(const std::vector<unsigned char>& vch)
     {
         Set(vch.begin(), vch.end());
     }
@@ -182,6 +182,9 @@ public:
 
     //! Turn this public key into an uncompressed public key.
     bool Decompress();
+
+    //! Turn this public key into an compressed public key.
+    bool Compress();
 
     //! Derive BIP32 child pubkey.
     bool Derive(CPubKey& pubkeyChild, ChainCode &ccChild, unsigned int nChild, const ChainCode &cc) const;
