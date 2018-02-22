@@ -8,11 +8,14 @@
 #include "logger.h"
 
 #include <string>
+#include <boost/date_time/posix_time/ptime.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 //*****************************************************************************
 //*****************************************************************************
 namespace util
 {
+namespace bpt = boost::posix_time;
     void init();
 
     std::wstring wide_string(std::string const & s);//, std::locale const &loc);
@@ -33,6 +36,17 @@ namespace util
                                                (const char *)(obj.end())));
     }
 
+
+    /**
+     * @brief iso8601 - converted boost posix time to string in ISO 8061 format
+     * @param time - boost posix time
+     * @return string in ISO 8061 format
+     */
+    const std::string iso8601(const bpt::ptime &time);
+
+    double xBridgeValueFromAmount(uint64_t amount);
+
+    uint64_t xBridgeAmountFromReal(double val);
 } // namespace
 
 #endif // UTIL_H
