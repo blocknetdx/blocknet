@@ -49,7 +49,7 @@ void StopRPCThreads();
 /** Query whether RPC is running */
 bool IsRPCRunning();
 
-/** 
+/**
  * Set the RPC warmup status.  When this is done, all RPC calls will error out
  * immediately with RPC_IN_WARMUP.
  */
@@ -438,7 +438,7 @@ extern json_spirit::Value dxMakeOrder(const json_spirit::Array& params, bool fHe
 extern json_spirit::Value dxTakeOrder(const json_spirit::Array& params, bool fHelp);
 
 /**
- * @brief Cancels given transaction
+ * @brief Cancels given order
  * @param params The list of input params:<br>
  * params[0] : transaction id<br>
  * @param fHelp If is true then an exception with parameter description message will be thrown
@@ -453,6 +453,21 @@ extern json_spirit::Value dxTakeOrder(const json_spirit::Array& params, bool fHe
 
  */
 extern json_spirit::Value dxCancelOrder(const json_spirit::Array& params, bool fHelp);
+/**
+ * @brief Rollback given transaction
+ * @param params The list of input params:<br>
+ * params[0] : transaction id<br>
+ * @param fHelp If is true then an exception with parameter description message will be thrown
+ * @return The status of the operation
+ * * Example:<br>
+ * \verbatim
+    dxrollbackTransaction 6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a
+    {
+        "id" : "6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a"
+    }
+ * \endverbatim
+ */
+extern json_spirit::Value dxrollbackTransaction(const json_spirit::Array& params, bool fHelp);
 
 /**
  * @brief Returns trading history as a 'price chart'
