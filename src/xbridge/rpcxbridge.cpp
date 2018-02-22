@@ -64,11 +64,7 @@ Value dxGetOrders(const Array & params, bool fHelp)
 {
     if (fHelp) {
 
-<<<<<<< HEAD
-        throw runtime_error("dxGetOrders\nList transactions.");
-=======
         throw runtime_error("dxGetOrders returns the list of open orders.");
->>>>>>> origin/dx-get-orders
 
     }
     if (!params.empty()) {
