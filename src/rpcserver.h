@@ -336,7 +336,11 @@ extern json_spirit::Value dxGetOrderFills(const json_spirit::Array& params, bool
  * @return The detailed description of given transaction as a JSON value
  * * Example:<br>
  * \verbatim
+<<<<<<< HEAD
     dxGetOrdersInfo 91d0ea83edc79b9a2041c51d08037cff87c181efb311a095dfdd4edbcc7993a9
+=======
+    dxGetOrder 91d0ea83edc79b9a2041c51d08037cff87c181efb311a095dfdd4edbcc7993a9
+>>>>>>> origin/dx-get-order
 ￼
     [
         {
@@ -352,6 +356,7 @@ extern json_spirit::Value dxGetOrderFills(const json_spirit::Array& params, bool
     ]
  * \endverbatim
  */
+<<<<<<< HEAD
 extern json_spirit::Value dxGetOrdersInfo(const json_spirit::Array& params, bool fHelp);
 
 /**
@@ -371,6 +376,8 @@ extern json_spirit::Value dxGetOrdersInfo(const json_spirit::Array& params, bool
  * \endverbatim
  */
 extern json_spirit::Value dxGetLocalTokens(const json_spirit::Array& params, bool fHelp);
+
+extern json_spirit::Value dxGetOrder(const json_spirit::Array& params, bool fHelp);
 
 /**
  * @brief Returns the list of the currencies supported bt the network

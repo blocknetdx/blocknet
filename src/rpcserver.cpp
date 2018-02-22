@@ -367,7 +367,7 @@ static const CRPCCommand vRPCCommands[] =
 
         {"xbridge", "dxGetOrders", &dxGetOrders, true, true, true},
         {"xbridge", "dxGetOrderFills", &dxGetOrderFills, true, true, true},
-        {"xbridge", "dxGetOrdersInfo", &dxGetOrdersInfo, true, true, true},
+        {"xbridge", "dxGetOrder", &dxGetOrder, true, true, true},
         {"xbridge", "dxGetLocalTokens", &dxGetLocalTokens, true, true, true},
         {"xbridge", "dxGetNetworkTokens", &dxGetNetworkTokens, true, true, true},
         {"xbridge", "dxMakeOrder", &dxMakeOrder, true, true, true},
