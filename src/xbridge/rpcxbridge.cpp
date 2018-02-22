@@ -174,7 +174,7 @@ Value dxGetOrderHistory(const json_spirit::Array& params, bool fHelp)
     if (fHelp) {
 
         throw runtime_error("dxGetOrderHistory "
-                            "(from currency) (to currency) (start time) (end time) (txids - optional) ");
+                            "(maker) (taker) (start time) (end time) (order_ids - optional) ");
 
     }
     if ((params.size() != 4 && params.size() != 5)) {
@@ -204,7 +204,7 @@ Value dxGetOrderHistory(const json_spirit::Array& params, bool fHelp)
     bool isShowTxids = false;
     if(params.size() == 5) {
 
-        isShowTxids = (params[4].get_str() == "txids");
+        isShowTxids = (params[4].get_str() == "order_ids");
 
     }
 
@@ -295,7 +295,7 @@ Value dxGetOrderHistory(const json_spirit::Array& params, bool fHelp)
             tmp.emplace_back(tr->id.GetHex());
 
         }
-        res.emplace_back(Pair("txids", tmp));
+        res.emplace_back(Pair("order_ids", tmp));
     }
 
     //write status
