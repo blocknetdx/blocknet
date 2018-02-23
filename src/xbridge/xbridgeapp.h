@@ -115,7 +115,17 @@ public:
 public:
     // connectors
 
+    /**
+     * @brief availableCurrencies - list currencies available for the wallet
+     * @return local currencies list
+     */
     std::vector<std::string> availableCurrencies() const;
+    /**
+     * @brief networkCurrencies - list currencies supported by the network
+     * @return all currencies list
+     */
+    std::vector<std::string> networkCurrencies() const;
+
     bool hasCurrency(const std::string & currency) const;
 
     void addConnector(const WalletConnectorPtr & conn);
