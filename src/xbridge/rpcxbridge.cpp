@@ -67,15 +67,15 @@ Value dxGetLocalTokens(const Array & params, bool fHelp)
 
     }
 
-    Object obj;
+    Array r;
 
     std::vector<std::string> currencies = xbridge::App::instance().availableCurrencies();
     for (std::string currency : currencies) {
 
-        obj.emplace_back(Pair(currency, ""));
+        r.emplace_back(currency);
 
     }
-    return obj;
+    return r;
 }
 
 //******************************************************************************
@@ -97,15 +97,15 @@ Value dxGetNetworkTokens(const Array & params, bool fHelp)
 
     }
 
-    Object obj;
+    Array r;
 
     std::vector<std::string> currencies = xbridge::App::instance().networkCurrencies();
     for (std::string currency : currencies) {
 
-        obj.emplace_back(Pair(currency, ""));
+        r.emplace_back(currency);
 
     }
-    return obj;
+    return r;
 }
 
 //******************************************************************************
