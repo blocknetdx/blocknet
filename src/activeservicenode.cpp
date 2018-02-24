@@ -9,7 +9,7 @@
 #include "xbridge/xbridgeexchange.h"
 
 //
-// Bootup the Servicenode, look for a 5000 BlocknetDX input and register on the network
+// Bootup the Servicenode, look for a 5000 Rotam input and register on the network
 //
 void CActiveServicenode::ManageStatus()
 {

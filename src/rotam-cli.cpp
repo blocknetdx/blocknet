@@ -1,7 +1,7 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2015 The Bitcoin developers
 // Copyright (c) 2009-2015 The Dash developers
-// Copyright (c) 2015-2017 The BlocknetDX developers
+// Copyright (c) 2015-2017 The Rotam developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -26,7 +26,7 @@ std::string HelpMessageCli()
     string strUsage;
     strUsage += HelpMessageGroup(_("Options:"));
     strUsage += HelpMessageOpt("-?", _("This help message"));
-    strUsage += HelpMessageOpt("-conf=<file>", strprintf(_("Specify configuration file (default: %s)"), "blocknetdx.conf"));
+    strUsage += HelpMessageOpt("-conf=<file>", strprintf(_("Specify configuration file (default: %s)"), "rotam.conf"));
     strUsage += HelpMessageOpt("-datadir=<dir>", _("Specify data directory"));
     strUsage += HelpMessageOpt("-testnet", _("Use the test network"));
     strUsage += HelpMessageOpt("-regtest", _("Enter regression test mode, which uses a special chain in which blocks can be "
@@ -70,9 +70,9 @@ static bool AppInitRPC(int argc, char* argv[])
         std::string strUsage = _("Blocknetdx Core RPC client version") + " " + FormatFullVersion() + "\n";
         if (!mapArgs.count("-version")) {
             strUsage += "\n" + _("Usage:") + "\n" +
-                        "  blocknetdx-cli [options] <command> [params]  " + _("Send command to Blocknetdx Core") + "\n" +
-                        "  blocknetdx-cli [options] help                " + _("List commands") + "\n" +
-                        "  blocknetdx-cli [options] help <command>      " + _("Get help for a command") + "\n";
+                        "  rotam-cli [options] <command> [params]  " + _("Send command to Blocknetdx Core") + "\n" +
+                        "  rotam-cli [options] help                " + _("List commands") + "\n" +
+                        "  rotam-cli [options] help <command>      " + _("Get help for a command") + "\n";
 
             strUsage += "\n" + HelpMessageCli();
         }

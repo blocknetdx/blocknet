@@ -1,7 +1,7 @@
 // Copyright (c) 2010 Satoshi Nakamoto
 // Copyright (c) 2009-2014 The Bitcoin developers
 // Copyright (c) 2014-2015 The Dash developers
-// Copyright (c) 2015-2017 The BlocknetDX developers
+// Copyright (c) 2015-2017 The Rotam developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -96,15 +96,15 @@ public:
         pchMessageStart[3] = 0xa3;
         vAlertPubKey = ParseHex("0415758705177c87c35dadf7ebf66e93ecc2710253bbac955e695664011fa39ff29a84fa21ae9e203a43debb487170c143ab6eaffe4fa3b12e162d8a6d4da87395");
         nDefaultPort = 41412;
-        bnProofOfWorkLimit = ~uint256() >> 20; // BlocknetDX starting difficulty is 1 / 2^12
+        bnProofOfWorkLimit = ~uint256() >> 20; // Rotam starting difficulty is 1 / 2^12
         nSubsidyHalvingInterval = 210000;
         nMaxReorganizationDepth = 100;
         nEnforceBlockUpgradeMajority = 750;
         nRejectBlockOutdatedMajority = 950;
         nToCheckBlockUpgradeMajority = 1000;
         nMinerThreads = 0;
-        nTargetTimespan = 1 * 60; // BlocknetDX: 1 day
-        nTargetSpacing = 1 * 60;  // BlocknetDX: 1 minute
+        nTargetTimespan = 1 * 60; // Rotam: 1 day
+        nTargetSpacing = 1 * 60;  // Rotam: 1 minute
         nLastPOWBlock = 2000;
         nMaturity = 100;
         nServicenodeCountDrift = 20;
@@ -200,8 +200,8 @@ public:
         nRejectBlockOutdatedMajority = 75;
         nToCheckBlockUpgradeMajority = 100;
         nMinerThreads = 0;
-        nTargetTimespan = 1 * 60; // BlocknetDX: 1 day
-        nTargetSpacing = 1 * 60;  // BlocknetDX: 1 minute
+        nTargetTimespan = 1 * 60; // Rotam: 1 day
+        nTargetSpacing = 1 * 60;  // Rotam: 1 minute
         nLastPOWBlock = 2000;
         nMaturity = 15;
         nModifierUpdateBlock = 51197; //approx Mon, 17 Apr 2017 04:00:00 GMT
@@ -221,14 +221,14 @@ public:
         vSeeds.push_back(CDNSSeedData("138.197.73.214", "138.197.73.214")); // seed node
         vSeeds.push_back(CDNSSeedData("34.235.49.248", "34.235.49.248")); // seed node
 
-        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 139); // Testnet blocknetdx addresses start with 'x' or 'y'
-        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1, 19);  // Testnet blocknetdx script addresses start with '8' or '9'
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 139); // Testnet rotam addresses start with 'x' or 'y'
+        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1, 19);  // Testnet rotam script addresses start with '8' or '9'
         base58Prefixes[SECRET_KEY] = std::vector<unsigned char>(1, 239);     // Testnet private keys start with '9' or 'c' (Bitcoin defaults)
-        // Testnet blocknetdx BIP32 pubkeys start with 'DRKV'
+        // Testnet rotam BIP32 pubkeys start with 'DRKV'
         base58Prefixes[EXT_PUBLIC_KEY] = boost::assign::list_of(0x3a)(0x80)(0x61)(0xa0).convert_to_container<std::vector<unsigned char> >();
-        // Testnet blocknetdx BIP32 prvkeys start with 'DRKP'
+        // Testnet rotam BIP32 prvkeys start with 'DRKP'
         base58Prefixes[EXT_SECRET_KEY] = boost::assign::list_of(0x3a)(0x80)(0x58)(0x37).convert_to_container<std::vector<unsigned char> >();
-        // Testnet blocknetdx BIP44 coin type is '1' (All coin's testnet default)
+        // Testnet rotam BIP44 coin type is '1' (All coin's testnet default)
         base58Prefixes[EXT_COIN_TYPE] = boost::assign::list_of(0x80)(0x00)(0x00)(0x01).convert_to_container<std::vector<unsigned char> >();
 
         convertSeed6(vFixedSeeds, pnSeed6_test, ARRAYLEN(pnSeed6_test));

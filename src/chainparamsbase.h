@@ -9,7 +9,7 @@
 #include <vector>
 
 /**
- * CBaseChainParams defines the base parameters (shared between blocknetdx-cli and blocknetdxd)
+ * CBaseChainParams defines the base parameters (shared between rotam-cli and rotamd)
  * of a given instance of the Blocknetdx system.
  */
 class CBaseChainParams

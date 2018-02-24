@@ -1,5 +1,5 @@
 // Copyright (c) 2014-2015 The Dash developers
-// Copyright (c) 2015-2017 The BlocknetDX developers
+// Copyright (c) 2015-2017 The Rotam developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -938,7 +938,7 @@ void CServicenodeMan::ProcessMessage(CNode* pfrom, std::string& strCommand, CDat
             }
 
             // verify that sig time is legit in past
-            // should be at least not earlier than block when 1000 BlocknetDX tx got SERVICENODE_MIN_CONFIRMATIONS
+            // should be at least not earlier than block when 1000 Rotam tx got SERVICENODE_MIN_CONFIRMATIONS
             uint256 hashBlock = 0;
             CTransaction tx2;
             GetTransaction(vin.prevout.hash, tx2, hashBlock, true);
