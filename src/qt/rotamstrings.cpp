@@ -30,7 +30,7 @@ static const char UNUSED* rotam_strings[] = {
                                    "notation for IPv6. This option can be specified multiple times (default: "
                                    "bind to all interfaces)"),
     QT_TRANSLATE_NOOP("rotam-core", ""
-                                   "Cannot obtain a lock on data directory %s. BlocknetDX Core is probably already "
+                                   "Cannot obtain a lock on data directory %s. Rotam Core is probably already "
                                    "running."),
     QT_TRANSLATE_NOOP("rotam-core", ""
                                    "Change automatic finalized budget voting behavior. mode=auto: Vote for only "
@@ -45,7 +45,7 @@ static const char UNUSED* rotam_strings[] = {
                                    "Delete all wallet transactions and only recover those parts of the "
                                    "blockchain through -rescan on startup"),
     QT_TRANSLATE_NOOP("rotam-core", ""
-                                   "Disable all BlocknetDX specific functionality (Servicenodes, Obfuscation, SwiftTX, "
+                                   "Disable all Rotam specific functionality (Servicenodes, Obfuscation, SwiftTX, "
                                    "Budgeting) (0-1, default: %u)"),
     QT_TRANSLATE_NOOP("rotam-core", ""
                                    "Distributed under the MIT software license, see the accompanying file "
@@ -160,9 +160,9 @@ static const char UNUSED* rotam_strings[] = {
                                    "If the file does not exist, create it with owner-readable-only file "
                                    "permissions.\n"
                                    "It is also recommended to set alertnotify so you are notified of problems;\n"
-                                   "for example: alertnotify=echo %%s | mail -s \"BlocknetDX Alert\" admin@foo.com\n"),
+                                   "for example: alertnotify=echo %%s | mail -s \"Rotam Alert\" admin@foo.com\n"),
     QT_TRANSLATE_NOOP("rotam-core", ""
-                                   "Unable to bind to %s on this computer. BlocknetDX Core is probably already running."),
+                                   "Unable to bind to %s on this computer. Rotam Core is probably already running."),
     QT_TRANSLATE_NOOP("rotam-core", ""
                                    "Unable to locate enough Obfuscation denominated funds for this transaction."),
     QT_TRANSLATE_NOOP("rotam-core", ""
@@ -182,7 +182,7 @@ static const char UNUSED* rotam_strings[] = {
                                    "pay if you send a transaction."),
     QT_TRANSLATE_NOOP("rotam-core", ""
                                    "Warning: Please check that your computer's date and time are correct! If "
-                                   "your clock is wrong BlocknetDX Core will not work properly."),
+                                   "your clock is wrong Rotam Core will not work properly."),
     QT_TRANSLATE_NOOP("rotam-core", ""
                                    "Warning: The network does not appear to fully agree! Some miners appear to "
                                    "be experiencing issues."),
@@ -236,7 +236,7 @@ static const char UNUSED* rotam_strings[] = {
     QT_TRANSLATE_NOOP("rotam-core", "Connection options:"),
     QT_TRANSLATE_NOOP("rotam-core", "Copyright (C) 2009-%i The Bitcoin Core Developers"),
     QT_TRANSLATE_NOOP("rotam-core", "Copyright (C) 2014-%i The Dash Core Developers"),
-    QT_TRANSLATE_NOOP("rotam-core", "Copyright (C) 2015-%i The BlocknetDX Core Developers"),
+    QT_TRANSLATE_NOOP("rotam-core", "Copyright (C) 2015-%i The Rotam Core Developers"),
     QT_TRANSLATE_NOOP("rotam-core", "Corrupted block database detected"),
     QT_TRANSLATE_NOOP("rotam-core", "Could not parse -rpcbind value %s as network address"),
     QT_TRANSLATE_NOOP("rotam-core", "Could not parse servicenode.conf"),
@@ -254,7 +254,7 @@ static const char UNUSED* rotam_strings[] = {
     QT_TRANSLATE_NOOP("rotam-core", "Error loading block database"),
     QT_TRANSLATE_NOOP("rotam-core", "Error loading wallet.dat"),
     QT_TRANSLATE_NOOP("rotam-core", "Error loading wallet.dat: Wallet corrupted"),
-    QT_TRANSLATE_NOOP("rotam-core", "Error loading wallet.dat: Wallet requires newer version of BlocknetDX Core"),
+    QT_TRANSLATE_NOOP("rotam-core", "Error loading wallet.dat: Wallet requires newer version of Rotam Core"),
     QT_TRANSLATE_NOOP("rotam-core", "Error opening block database"),
     QT_TRANSLATE_NOOP("rotam-core", "Error reading from database, shutting down."),
     QT_TRANSLATE_NOOP("rotam-core", "Error recovering public key."),
@@ -282,7 +282,7 @@ static const char UNUSED* rotam_strings[] = {
     QT_TRANSLATE_NOOP("rotam-core", "Incompatible version."),
     QT_TRANSLATE_NOOP("rotam-core", "Incorrect or no genesis block found. Wrong datadir for network?"),
     QT_TRANSLATE_NOOP("rotam-core", "Information"),
-    QT_TRANSLATE_NOOP("rotam-core", "Initialization sanity check failed. BlocknetDX Core is shutting down."),
+    QT_TRANSLATE_NOOP("rotam-core", "Initialization sanity check failed. Rotam Core is shutting down."),
     QT_TRANSLATE_NOOP("rotam-core", "Input is not valid."),
     QT_TRANSLATE_NOOP("rotam-core", "Insufficient funds."),
     QT_TRANSLATE_NOOP("rotam-core", "Invalid -onion address: '%s'"),
@@ -426,7 +426,7 @@ static const char UNUSED* rotam_strings[] = {
     QT_TRANSLATE_NOOP("rotam-core", "Verifying wallet..."),
     QT_TRANSLATE_NOOP("rotam-core", "Wallet %s resides outside data directory %s"),
     QT_TRANSLATE_NOOP("rotam-core", "Wallet is locked."),
-    QT_TRANSLATE_NOOP("rotam-core", "Wallet needed to be rewritten: restart BlocknetDX Core to complete"),
+    QT_TRANSLATE_NOOP("rotam-core", "Wallet needed to be rewritten: restart Rotam Core to complete"),
     QT_TRANSLATE_NOOP("rotam-core", "Wallet options:"),
     QT_TRANSLATE_NOOP("rotam-core", "Wallet window title"),
     QT_TRANSLATE_NOOP("rotam-core", "Warning"),
