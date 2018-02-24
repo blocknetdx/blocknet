@@ -317,10 +317,10 @@
 #define PACKAGE_BUGREPORT "www.rotam.org"
 
 /* Define to the full name of this package. */
-#define PACKAGE_NAME "Blocknetdx Core"
+#define PACKAGE_NAME "rotam Core"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "Blocknetdx Core 3.7.36"
+#define PACKAGE_STRING "rotam Core 3.7.36"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "rotam"
