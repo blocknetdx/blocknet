@@ -5,7 +5,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #if defined(HAVE_CONFIG_H)
-#include "config/blocknetdx-config.h"
+#include "config/rotam-config.h"
 #endif
 
 #include "optionsmodel.h"
@@ -147,7 +147,7 @@ void OptionsModel::Init()
     if (settings.contains("nObfuscationRounds"))
         SoftSetArg("-obfuscationrounds", settings.value("nObfuscationRounds").toString().toStdString());
     if (settings.contains("nAnonymizeBlocknetdxAmount"))
-        SoftSetArg("-anonymizeblocknetdxamount", settings.value("nAnonymizeBlocknetdxAmount").toString().toStdString());
+        SoftSetArg("-anonymizerotamamount", settings.value("nAnonymizeBlocknetdxAmount").toString().toStdString());
 
     language = settings.value("language").toString();
 }
@@ -158,7 +158,7 @@ void OptionsModel::Reset()
 
     // Remove all entries from our QSettings object
     settings.clear();
-    resetSettings = true; // Needed in blocknetdx.cpp during shotdown to also remove the window positions
+    resetSettings = true; // Needed in rotam.cpp during shotdown to also remove the window positions
 
     // default setting for OptionsModel::StartAtStartup - disabled
     if (GUIUtil::GetStartOnSystemStartup())

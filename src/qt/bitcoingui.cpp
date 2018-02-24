@@ -313,7 +313,7 @@ void BitcoinGUI::createActions(const NetworkStyle* networkStyle)
     tabGroup->addAction(sendCoinsAction);
 
     receiveCoinsAction = new QAction(QIcon(":/icons/receiving_addresses"), tr("&receive"), this);
-    receiveCoinsAction->setStatusTip(tr("Request payments (generates QR codes and blocknetdx: URIs)"));
+    receiveCoinsAction->setStatusTip(tr("Request payments (generates QR codes and rotam: URIs)"));
     receiveCoinsAction->setToolTip(receiveCoinsAction->statusTip());
     receiveCoinsAction->setCheckable(true);
 #ifdef Q_OS_MAC

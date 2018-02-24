@@ -31,9 +31,9 @@ SendCoinsEntry::SendCoinsEntry(QWidget* parent) : QStackedWidget(parent),
     ui->addAsLabel->setPlaceholderText(tr("Enter a label for this address to add it to your address book"));
 #endif
 
-    // normal blocknetdx address field
+    // normal rotam address field
     GUIUtil::setupAddressWidget(ui->payTo, this);
-    // just a label for displaying blocknetdx address(es)
+    // just a label for displaying rotam address(es)
     ui->payTo_is->setFont(GUIUtil::bitcoinAddressFont());
 
     // Connect signals

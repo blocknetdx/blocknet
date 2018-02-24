@@ -183,8 +183,8 @@ bool Intro::pickDataDirectory()
         settings.setValue("strDataDir", dataDir);
     }
     /* Only override -datadir if different from the default, to make it possible to
-     * override -datadir in the blocknetdx.conf file in the default data directory
-     * (to be consistent with blocknetdxd behavior)
+     * override -datadir in the rotam.conf file in the default data directory
+     * (to be consistent with rotamd behavior)
      */
     if (dataDir != getDefaultDataDirectory())
         SoftSetArg("-datadir", GUIUtil::qstringToBoostPath(dataDir).string()); // use OS locale for path setting

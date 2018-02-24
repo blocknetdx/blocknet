@@ -91,7 +91,7 @@ public slots:
     void showPeers();
     /** Switch to wallet-repair tab and show */
     void showRepair();
-    /** Open external (default) editor with blocknetdx.conf */
+    /** Open external (default) editor with rotam.conf */
     void showConfEditor();
     /** Open external (default) editor with servicenode.conf */
     void showMNConfEditor();

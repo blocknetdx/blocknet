@@ -41,11 +41,11 @@ QString BitcoinUnits::id(int unit)
 {
     switch (unit) {
     case BLOCK:
-        return QString("blocknetdx");
+        return QString("rotam");
     case mBLOCK:
-        return QString("mblocknetdx");
+        return QString("mrotam");
     case uBLOCK:
-        return QString::fromUtf8("ublocknetdx");
+        return QString::fromUtf8("urotam");
     default:
         return QString("???");
     }
