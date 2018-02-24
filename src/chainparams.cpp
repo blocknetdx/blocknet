@@ -120,14 +120,14 @@ public:
          *     CTxOut(nValue=50.00000000, scriptPubKey=0xA9037BAC7050C479B121CF)
          *   vMerkleTree: e0028e
          */
-        const char* pszTimestamp = "rotam is 
+        const char* pszTimestamp = "rotam is our future";
         CMutableTransaction txNew;
         txNew.vin.resize(1);
         txNew.vout.resize(1);
         txNew.vin[0].scriptSig = CScript() << 486604799 << CScriptNum(4) << vector<unsigned char>((const unsigned char*)pszTimestamp, (const unsigned char*)pszTimestamp + strlen(pszTimestamp));
         txNew.vout[0].nValue = 0; //250 * COIN;
-        txNew.vout[0].scriptPubkey = cscript() << 0x0 << OP_CHECKSIG;
-        genesis.vtx.push_back(txnew);
+        txNew.vout[0].scriptPubKey = CScript() << 0x0 << OP_CHECKSIG;
+        genesis.vtx.push_back(txNew);
         genesis.hashPrevBlock = 0;
         genesis.hashMerkleRoot = genesis.BuildMerkleTree();
         genesis.nVersion = 1;
