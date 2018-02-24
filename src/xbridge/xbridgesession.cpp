@@ -1539,6 +1539,9 @@ bool Session::Impl::processTransactionCreate(XBridgePacketPtr packet)
         }
     }
 
+    LOG() << "fee2 " << fee2;
+    LOG() << "inAmount " << inAmount << " outAmount " << outAmount + fee1 + fee2;
+
     // check amount
     if (inAmount < outAmount+fee1+fee2)
     {
