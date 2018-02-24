@@ -1659,6 +1659,7 @@ int64_t GetBlockValue(int nHeight)
             return 250000 * COIN;
     }
 
+    // Marking ROI rate per specific block size.
     // Reduce Reward starting year 1
     if (nHeight == 0) {
         nSubsidy = 4160024 * COIN; }
@@ -1705,7 +1706,7 @@ int64_t GetServicenodePayment(int nHeight, int64_t blockValue, int nServicenodeC
         if (mNodeCoins == 0) {
             ret = 0;
 	}
-	ret = blockValue * .7;
+	ret = blockValue * .65;
 
     }
 

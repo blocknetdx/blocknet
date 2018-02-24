@@ -120,28 +120,26 @@ public:
          *     CTxOut(nValue=50.00000000, scriptPubKey=0xA9037BAC7050C479B121CF)
          *   vMerkleTree: e0028e
          */
-        const char* pszTimestamp = "decentralized consensus based democracy is the future";
+        const char* pszTimestamp = "rotam is 
         CMutableTransaction txNew;
         txNew.vin.resize(1);
         txNew.vout.resize(1);
         txNew.vin[0].scriptSig = CScript() << 486604799 << CScriptNum(4) << vector<unsigned char>((const unsigned char*)pszTimestamp, (const unsigned char*)pszTimestamp + strlen(pszTimestamp));
-        txNew.vout[0].nValue = 250 * COIN;
-        txNew.vout[0].scriptPubKey = CScript() << ParseHex("0452c91a00518fb8c6d38100341f88499554284d1ba75097cc25ae5a0d811835c63d2cb46c8855304bca81c452b63ce71fcb6897d06f8000450841f72602457f74") << OP_CHECKSIG;
-        genesis.vtx.push_back(txNew);
+        txNew.vout[0].nValue = 0; //250 * COIN;
+        txNew.vout[0].scriptPubkey = cscript() << 0x0 << OP_CHECKSIG;
+        genesis.vtx.push_back(txnew);
         genesis.hashPrevBlock = 0;
         genesis.hashMerkleRoot = genesis.BuildMerkleTree();
         genesis.nVersion = 1;
-        genesis.nTime = 1502214073;
+        genesis.nTime = 1519450598;
         genesis.nBits = bnProofOfWorkLimit.GetCompact();
-        genesis.nNonce = 734967;
+        genesis.nNonce = 743679;
 
         hashGenesisBlock = genesis.GetHash();
 	assert(hashGenesisBlock == uint256("0x00000eb7919102da5a07dc90905651664e6ebf0811c28f06573b9a0fd84ab7b8"));
         assert(genesis.hashMerkleRoot == uint256("0xb1f0e93f6df55af4c23a0719ab33be2b8115e2b6127fc1d926a06c60a8b56bf2"));
 
-        vSeeds.push_back(CDNSSeedData("178.62.90.213", "178.62.90.213")); // seed node
-        vSeeds.push_back(CDNSSeedData("138.197.73.214", "138.197.73.214")); // seed node
-        vSeeds.push_back(CDNSSeedData("34.235.49.248", "34.235.49.248")); // seed node
+        vSeeds.push_back(CDNSSeedData("192.168.0.1", "192.168.0.1")); // seed node
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 26);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1, 28);
@@ -170,7 +168,7 @@ public:
         nPoolMaxTransactions = 3;
         strSporkKey = "04d179dd896fab8b4461bf828b5b618649c016c7e04c8361b4fe7abf4131f08d673115409241f71c27ee022bf3e945c941b96174e690858e5030f02e43c0970281";
         strObfuscationPoolDummyAddress = "D87q2gC9j6nNrnzCsg4aY6bHMLsT9nUhEw";
-        nStartServicenodePayments = 1403728576; //Wed, 25 Jun 2014 20:36:16 GMT
+        nStartServicenodePayments = 1519450598; //Wed, 25 Jun 2014 20:36:16 GMT
     }
 
     const Checkpoints::CCheckpointData& Checkpoints() const
