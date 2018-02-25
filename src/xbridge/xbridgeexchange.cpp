@@ -262,18 +262,6 @@ bool Exchange::checkUtxoItems(const uint256 & txid, const std::vector<wallet::Ut
 
 //*****************************************************************************
 //*****************************************************************************
-bool Exchange::txOutIsLocked(const wallet::UtxoEntry & entry) const
-{
-    boost::mutex::scoped_lock l(m_p->m_utxoLocker);
-    if (m_p->m_utxoItems.count(entry))
-    {
-        return true;
-    }
-    return false;
-}
-
-//*****************************************************************************
-//*****************************************************************************
 bool Exchange::createTransaction(const uint256                        & txid,
                                  const std::vector<unsigned char>     & sourceAddr,
                                  const std::string                    & sourceCurrency,
