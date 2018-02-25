@@ -50,7 +50,6 @@ public:
 
     bool checkUtxoItems(const uint256 & txid,
                         const std::vector<wallet::UtxoEntry> & items);
-    bool txOutIsLocked(const wallet::UtxoEntry & entry) const;
 
     bool createTransaction(const uint256                        & id,
                            const std::vector<unsigned char>     & sourceAddr,
