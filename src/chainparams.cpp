@@ -25,9 +25,32 @@ struct SeedSpec6 {
 
 #include "chainparamsseeds.h"
 
+#include "arith_uint256.h"
 /**
  * Main network
  */
+void MineGenesisBlock(CBlock& genesis)
+{
+    arith_uint256 best = arith_uint256();
+    int n = 0;
+    arith_uint256 hashTarget = arith_uint256().SetCompact(genesis.nBits);
+    while (UintToArith256(genesis.GetHash()) > hashTarget) {
+        arith_uint256 c = UintToArith256(genesis.GetHash());
+
+        if (c < best || n == 0) {
+            best = c;
+            n = 1;
+            printf("%s %s %s\n", genesis.GetHash().GetHex().c_str(), hashTarget.GetHex().c_str(),
+                best.GetHex().c_str());
+        }
+        ++genesis.nNonce;
+        if (genesis.nNonce == 0) {
+            ++genesis.nTime;
+        }
+    }
+    //printf("HASH IS: %s\n", UintToArith256(genesis.GetHash()).ToString().c_str());
+    printf("Converting genesis hash to string: %s\n", genesis.ToString().c_str());
+}
 
 //! Convert the pnSeeds6 array into usable address objects.
 static void convertSeed6(std::vector<CAddress>& vSeedsOut, const SeedSpec6* data, unsigned int count)
@@ -90,9 +113,9 @@ public:
          * The characters are rarely used upper ASCII, not valid as UTF-8, and produce
          * a large 4-byte int at any alignment.
          */
-        pchMessageStart[0] = 0xa1;
-        pchMessageStart[1] = 0xa0;
-        pchMessageStart[2] = 0xa2;
+        pchMessageStart[0] = 0xd8;
+        pchMessageStart[1] = 0xf1;
+        pchMessageStart[2] = 0x6e;
         pchMessageStart[3] = 0xa3;
         vAlertPubKey = ParseHex("0415758705177c87c35dadf7ebf66e93ecc2710253bbac955e695664011fa39ff29a84fa21ae9e203a43debb487170c143ab6eaffe4fa3b12e162d8a6d4da87395");
         nDefaultPort = 44155;
@@ -120,7 +143,7 @@ public:
          *     CTxOut(nValue=50.00000000, scriptPubKey=0xA9037BAC7050C479B121CF)
          *   vMerkleTree: e0028e
          */
-        const char* pszTimestamp = "rotam is our future";
+        const char* pszTimestamp = "rotam is our futrue";
         CMutableTransaction txNew;
         txNew.vin.resize(1);
         txNew.vout.resize(1);
@@ -129,13 +152,15 @@ public:
         txNew.vout[0].scriptPubKey = CScript() << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f") << OP_CHECKSIG;
         genesis.vtx.push_back(txNew);
         genesis.hashPrevBlock = 0;
-        genesis.hashMerkleRoot = genesis.BuildMerkleTree();
+        genesis.hashMerkleRoot = uint256("0x1e6e26e5dc9a7bc7d4134144ab9754d815c17bbcc7c6a77ec4c19233f6ae28e1");//genesis.BuildMerkleTree();
         genesis.nVersion = 1;
         genesis.nTime = 1519450598;
         genesis.nBits = bnProofOfWorkLimit.GetCompact();
-        genesis.nNonce = 1956278036;
+        genesis.nNonce = 0; //1956278036;
 
         hashGenesisBlock = genesis.GetHash();
+        MineGenesisBlock(genesis);
+        printf("%s\n", hashGenesisBlock.ToString().c_str());
         assert(hashGenesisBlock == uint256("0x00000000175b27478de545dadb078c95e27faa3122b3284c4c9275e08cfae5b2"));
         assert(genesis.hashMerkleRoot == uint256("0x1e6e26e5dc9a7bc7d4134144ab9754d815c17bbcc7c6a77ec4c19233f6ae28e1"));
 

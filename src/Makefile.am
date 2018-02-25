@@ -82,6 +82,7 @@ BITCOIN_CORE_H = \
   addrman.h \
   alert.h \
   allocators.h \
+  arith_uint256.h \
   amount.h \
   base58.h \
   bip38.h \
@@ -317,6 +318,7 @@ libbitcoin_common_a_CPPFLAGS = $(BITCOIN_INCLUDES)
 libbitcoin_common_a_SOURCES = \
   allocators.cpp \
   amount.cpp \
+  arith_uint256.cpp \
   base58.cpp \
   bip38.cpp \
   chainparams.cpp \
