@@ -1,8 +1,8 @@
 /* src/config/rotam-config.h.in.  Generated from configure.ac by autoheader.  */
 
-#ifndef ROTAM_CONFIG_H
+#ifndef BLOCKNETDX_CONFIG_H
 
-#define ROTAM_CONFIG_H
+#define BLOCKNETDX_CONFIG_H
 
 /* Define if building universal (internal helper macro) */
 #undef AC_APPLE_UNIVERSAL_BUILD
@@ -385,4 +385,4 @@
 /* Define for large files, on AIX-style hosts. */
 #undef _LARGE_FILES
 
-#endif //ROTAM_CONFIG_H
+#endif //BLOCKNETDX_CONFIG_H

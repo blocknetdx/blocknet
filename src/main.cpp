@@ -3122,15 +3122,16 @@ bool FindUndoPos(CValidationState& state, int nFile, CDiskBlockPos& pos, unsigne
 bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, bool fCheckPOW)
 {
     // Check proof of work matches claimed amount
-    if (fCheckPOW && !CheckProofOfWork(block.GetHash(), block.nBits))
+    /*if (fCheckPOW && !CheckProofOfWork(block.GetHash(), block.nBits))
         return state.DoS(50, error("CheckBlockHeader() : proof of work failed"),
             REJECT_INVALID, "high-hash");
-
+*/
     return true;
 }
 
 bool CheckBlock(const CBlock& block, CValidationState& state, bool /*fCheckPOW*/, bool fCheckMerkleRoot, bool /*fCheckSig*/)
 {
+    /*
     // These are checks that are independent of context.
 
     // Check that the header is valid (particularly PoW).  This is mostly
@@ -3254,7 +3255,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool /*fCheckPOW*/
     if (nSigOps > MAX_BLOCK_SIGOPS)
         return state.DoS(100, error("CheckBlock() : out-of-bounds SigOpCount"),
             REJECT_INVALID, "bad-blk-sigops", true);
-
+*/
     return true;
 }
 

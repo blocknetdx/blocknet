@@ -75,31 +75,31 @@ static void convertSeed6(std::vector<CAddress>& vSeedsOut, const SeedSpec6* data
 //    timestamp before)
 // + Contains no strange transactions
 static Checkpoints::MapCheckpoints mapCheckpoints =
-    boost::assign::map_list_of(0, uint256("0x00000f72e2d72e0ab1c850131b8da24236fd954263b6e74e61ca4b1f4f8cf6bc"));
+    boost::assign::map_list_of(0, uint256("0x00000eed6f2f91203829a968e203316662562928d441fdeb14d664163491eae7"));
 
 static const Checkpoints::CCheckpointData data = {
     &mapCheckpoints,
-    1519450598, // * UNIX timestamp of last checkpoint block
-    0,    // * total number of transactions between genesis and last checkpoint
+    1493667067, // * UNIX timestamp of last checkpoint block
+    1157185,    // * total number of transactions between genesis and last checkpoint
                 //   (the tx=... number in the SetBestChain debug.log lines)
-    1.0        // * estimated number of transactions per day after checkpoint
+    2000        // * estimated number of transactions per day after checkpoint
 };
 
 static Checkpoints::MapCheckpoints mapCheckpointsTestnet =
     boost::assign::map_list_of(0, uint256("0x001"));
 static const Checkpoints::CCheckpointData dataTestnet = {
     &mapCheckpointsTestnet,
-    1519450598,
+    1454124731,
     0,
-    0};
+    250};
 
 static Checkpoints::MapCheckpoints mapCheckpointsRegtest =
     boost::assign::map_list_of(0, uint256("0x001"));
 static const Checkpoints::CCheckpointData dataRegtest = {
     &mapCheckpointsRegtest,
-    1519450598,
+    1454124731,
     0,
-    0};
+    100};
 
 class CMainParams : public CChainParams
 {
@@ -161,7 +161,6 @@ public:
         hashGenesisBlock = genesis.GetHash();
         //MineGenesisBlock(genesis);
         //printf("%s\n", hashGenesisBlock.ToString().c_str());
-        //printf("%s\n", genesis.hashMerkleRoot.ToString().c_str());
         assert(hashGenesisBlock == uint256("0x00000f72e2d72e0ab1c850131b8da24236fd954263b6e74e61ca4b1f4f8cf6bc"));
         assert(genesis.hashMerkleRoot == uint256("0x4302d43576548f0205767f5b2669b3ab0dc3e918478df191217cc7d6edb31c23"));
 
@@ -214,10 +213,10 @@ public:
     {
         networkID = CBaseChainParams::TESTNET;
         strNetworkID = "test";
-        pchMessageStart[0] = 0x18;
-        pchMessageStart[1] = 0x77;
-        pchMessageStart[2] = 0x25;
-        pchMessageStart[3] = 0xfe;
+        pchMessageStart[0] = 0xa5;
+        pchMessageStart[1] = 0x56;
+        pchMessageStart[2] = 0x6e;
+        pchMessageStart[3] = 0xfa;
         vAlertPubKey = ParseHex("000010e83b2703ccf322f7dbd62dd5855ac7c10bd055814ce121ba32607d573b8810c02c0582aed05b4deb9c4b77b26d92428c61256cd42774babea0a073b2ed0c9");
         nDefaultPort = 44157;
         nEnforceBlockUpgradeMajority = 51;
@@ -241,7 +240,7 @@ public:
         vSeeds.clear();
 	
 	
-        vSeeds.push_back(CDNSSeedData("192.168.0.1", "192.168.0.1")); // seed node
+        // vSeeds.push_back(CDNSSeedData("192.168.0.1", "192.168.0.1")); // seed node
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 139); // Testnet rotam addresses start with 'x' or 'y'
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1, 19);  // Testnet rotam script addresses start with '8' or '9'
