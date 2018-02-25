@@ -160,16 +160,8 @@ public:
         assert(hashGenesisBlock == uint256("0x2b1a0f66712aad59ad283662d5b919415a25921ce89511d73019107e380485bf"));
         assert(genesis.hashMerkleRoot == uint256("0x894177137a45952cfed89dd395e7fc85208a53548f34defc7c1a85cb0736b3a3"));
 
-        vSeeds.push_back(CDNSSeedData("0", "dns0.phore.io"));
-        vSeeds.push_back(CDNSSeedData("1", "dns1.phore.io"));
-        vSeeds.push_back(CDNSSeedData("2", "dns2.phore.io"));
-        vSeeds.push_back(CDNSSeedData("3", "dns3.phore.io"));
-        vSeeds.push_back(CDNSSeedData("4", "dns4.phore.io"));
-        vSeeds.push_back(CDNSSeedData("5", "dns5.phore.io"));
-        vSeeds.push_back(CDNSSeedData("6", "dns6.phore.io"));
-        vSeeds.push_back(CDNSSeedData("7", "dns7.phore.io"));
-        vSeeds.push_back(CDNSSeedData("8", "dns8.phore.io"));
-        vSeeds.push_back(CDNSSeedData("9", "dns9.phore.io"));
+        vSeeds.push_back(CDNSSeedData("0", "dns0.phore.io")); // run by Moonshot
+        vSeeds.push_back(CDNSSeedData("1", "phore.seed.rho.industries")); // run by Julian Meyer (meyer9)
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 55);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1, 13);
