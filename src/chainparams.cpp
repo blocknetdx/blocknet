@@ -86,7 +86,7 @@ static const Checkpoints::CCheckpointData data = {
 };
 
 static Checkpoints::MapCheckpoints mapCheckpointsTestnet =
-    boost::assign::map_list_of(0, uint256("0x001"));
+    boost::assign::map_list_of(0, uint256("0x00000eed6f2f91203829a968e203316662562928d441fdeb14d664163491eae7"));
 static const Checkpoints::CCheckpointData dataTestnet = {
     &mapCheckpointsTestnet,
     1454124731,
@@ -265,7 +265,7 @@ public:
 
         nPoolMaxTransactions = 2;
 
-        strSporkKey = "04a6e9e8b254f162d220545b0616f4e48269870ea1a3048f088945f258dccaec230894710e1986649ebbfc40d2c8387e0c07a7acb8a38489c74c4f466a33b43dfa";
+        strSporkKey = "04526e33f96cfd5fd225beba2268c4ed6d2cb2655f4c8d5982f9c7a0453ddcc8c5ebb5aca30d60e937e9177ab7889b38a6a1240268b9972172396bcc92bd8905df";
         //strSporkKey = "04565f429b8c68dabdcdf09608be05b4a10fc704f7de1866aaeed28a729ec5b8c418d90f9510ba115c0f35f353b1aea983fe99397d1c20685d6ab3ed0d0b7ba3ea";
         strObfuscationPoolDummyAddress = "y57cqfGRkekRyDRNeJiLtYVEbvhXrNbmox";
         nStartServicenodePayments = 1519450598; //Fri, 09 Jan 2015 21:05:58 GMT
