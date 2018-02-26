@@ -298,7 +298,7 @@ xbridge::Error XBridgeTransactionsModel::cancelTransaction(const uint256 & id)
 //******************************************************************************
 xbridge::Error XBridgeTransactionsModel::rollbackTransaction(const uint256 & id)
 {
-    return xbridge::App::instance().rollbackXBridgeTransaction(id);
+    return xbridge::App::instance().cancelXBridgeTransaction(id, crRollback);
 }
 
 //******************************************************************************

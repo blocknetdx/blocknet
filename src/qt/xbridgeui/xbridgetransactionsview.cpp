@@ -204,7 +204,9 @@ QMenu * XBridgeTransactionsView::setupContextMenu(QModelIndex & index)
         else
         {
             QAction * rollbackTransaction = new QAction(tr("&Rollback transaction"), this);
-            contextMenu->addAction(rollbackTransaction);
+            // rollbask disabled because transaction time-locked
+            // need to enable after lock expired
+            // contextMenu->addAction(rollbackTransaction);
 
             connect(rollbackTransaction, SIGNAL(triggered()),
                     this,                SLOT(onRollbackTransaction()));

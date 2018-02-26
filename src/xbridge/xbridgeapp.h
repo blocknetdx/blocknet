@@ -70,18 +70,15 @@ public:
                                  const uint64_t & toAmount,
                                  uint256 & id,
                                  uint256& blockHash);
+    // TODO make protected
     bool sendPendingTransaction(const TransactionDescrPtr & ptr);
 
     Error acceptXBridgeTransaction(const uint256 & id,
                                      const std::string & from,
                                      const std::string & to);
-    bool sendAcceptingTransaction(const TransactionDescrPtr & ptr);
 
     xbridge::Error cancelXBridgeTransaction(const uint256 &id, const TxCancelReason &reason);
-    bool sendCancelTransaction(const uint256 &txid, const TxCancelReason &reason);
-
-    xbridge::Error rollbackXBridgeTransaction(const uint256 &id);
-    bool sendRollbackTransaction(const uint256 &txid);
+    void cancelMyXBridgeTransactions();
 
     /**
      * @brief isValidAddress checks the correctness of the address

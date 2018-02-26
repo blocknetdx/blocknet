@@ -3,6 +3,7 @@
 
 #include "xutil.h"
 #include "logger.h"
+#include "xbridge/xbridgetransactiondescr.h"
 
 #include <boost/locale.hpp>
 #include <boost/archive/iterators/base64_from_binary.hpp>
@@ -170,6 +171,23 @@ std::string base64_decode(const std::string& s)
 std::string to_str(const std::vector<unsigned char> & obj)
 {
     return util::base64_encode(obj);
+}
+
+const std::string iso8601(const bpt::ptime &time)
+{
+    return bpt::to_iso_extended_string(time) + "Z";
+}
+
+double xBridgeValueFromAmount(uint64_t amount)
+{
+    return static_cast<double>(amount) / xbridge::TransactionDescr::COIN;
+}
+
+uint64_t xBridgeAmountFromReal(double val)
+{
+    // TODO: should we check amount ranges and throw JSONRPCError like they do in rpcserver.cpp ?
+    return static_cast<uint64_t>(val * xbridge::TransactionDescr::COIN + 0.5);
+
 }
 
 } // namespace util

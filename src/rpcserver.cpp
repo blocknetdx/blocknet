@@ -365,16 +365,16 @@ static const CRPCCommand vRPCCommands[] =
         {"wallet", "walletpassphrasechange", &walletpassphrasechange, true, false, true},
         {"wallet", "walletpassphrase", &walletpassphrase, true, false, true},
 
-        {"xbridge", "dxGetTransactions",                    &dxGetTransactions,          true, true, true},
         {"xbridge", "dxGetOrderFills",                      &dxGetOrderFills,            true, true, true},
-        {"xbridge", "dxGetTransactionInfo",                 &dxGetTransactionInfo,       true, true, true},
+        {"xbridge", "dxGetOrders",                          &dxGetOrders,                true, true, true},
+        {"xbridge", "dxGetTransactionsHistory",             &dxGetTransactionsHistory,   true, true, true},
+        {"xbridge", "dxGetOrder",                           &dxGetOrder,                 true, true, true},
         {"xbridge", "dxGetCurrencies",                      &dxGetCurrencies,            true, true, true},
-        {"xbridge", "dxCreateTransaction",                  &dxCreateTransaction,        true, true, true},
-        {"xbridge", "dxAcceptTransaction",                  &dxAcceptTransaction,        true, true, true},
-        {"xbridge", "dxCancelTransaction",                  &dxCancelTransaction,        true, true, true},
+        {"xbridge", "dxMakeOrder",                          &dxMakeOrder,                true, true, true},
+        {"xbridge", "dxTakeOrder",                          &dxTakeOrder,                true, true, true},
+        {"xbridge", "dxCancelOrder",                        &dxCancelOrder,              true, true, true},
         {"xbridge", "dxGetTradeHistory",                    &dxGetTradeHistory,          true, true, true},
-        {"xbridge", "dxGetOrderBook",                       &dxGetOrderBook,             true, true, true},
-        {"xbridge", "dxrollbackTransaction",                &dxrollbackTransaction,      true, true, true}
+        {"xbridge", "dxGetOrderBook",                       &dxGetOrderBook,             true, true, true}
     #endif // ENABLE_WALLET
 };
 

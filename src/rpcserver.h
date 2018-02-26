@@ -49,7 +49,7 @@ void StopRPCThreads();
 /** Query whether RPC is running */
 bool IsRPCRunning();
 
-/** 
+/**
  * Set the RPC warmup status.  When this is done, all RPC calls will error out
  * immediately with RPC_IN_WARMUP.
  */
@@ -262,7 +262,7 @@ extern json_spirit::Value mnsync(const json_spirit::Array& params, bool fHelp);
   * @return The list of open and pending transactions as JSON value. Open transactions go first.
   * * Example:<br>
   * \verbatim
-    dxGetTransactions
+    dxGetOrders
 ￼
     [
         {
@@ -289,7 +289,7 @@ extern json_spirit::Value mnsync(const json_spirit::Array& params, bool fHelp);
   * \endverbatim
   */
 
-extern json_spirit::Value dxGetTransactions(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value dxGetOrders(const json_spirit::Array& params, bool fHelp);
 
 /**
  * @brief Returns the list of historical(closed) transactions
@@ -336,7 +336,7 @@ extern json_spirit::Value dxGetOrderFills(const json_spirit::Array& params, bool
  * @return The detailed description of given transaction as a JSON value
  * * Example:<br>
  * \verbatim
-    dxGetTransactionInfo 91d0ea83edc79b9a2041c51d08037cff87c181efb311a095dfdd4edbcc7993a9
+    dxGetOrder 91d0ea83edc79b9a2041c51d08037cff87c181efb311a095dfdd4edbcc7993a9
 ￼
     [
         {
@@ -352,7 +352,7 @@ extern json_spirit::Value dxGetOrderFills(const json_spirit::Array& params, bool
     ]
  * \endverbatim
  */
-extern json_spirit::Value dxGetTransactionInfo(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value dxGetOrder(const json_spirit::Array& params, bool fHelp);
 
 /**
  * @brief Returns the list of available currencies
@@ -386,7 +386,7 @@ extern json_spirit::Value dxGetCurrencies(const json_spirit::Array& params, bool
  * * Example:<br>
  * \verbatim
  *
-    dxCreateTransaction  1NDqZ7piDqyDhNveWS48kDSwPdyJLEEcCp SYS 1.3 LRuXAU2fdSU7imXzk8cTy2k3heMK5vTuQ4 LTC 0.13
+    dxMakeOrder  1NDqZ7piDqyDhNveWS48kDSwPdyJLEEcCp SYS 1.3 LRuXAU2fdSU7imXzk8cTy2k3heMK5vTuQ4 LTC 0.13
     {
         "from" : "1NDqZ7piDqyDhNveWS48kDSwPdyJLEEcCp",
         "fromCurrency" : "SYS",
@@ -397,7 +397,7 @@ extern json_spirit::Value dxGetCurrencies(const json_spirit::Array& params, bool
     }
  * \endverbatim
  */
-extern json_spirit::Value dxCreateTransaction(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value dxMakeOrder(const json_spirit::Array& params, bool fHelp);
 
 /**
  * @brief Accepts given transaction
@@ -417,40 +417,24 @@ extern json_spirit::Value dxCreateTransaction(const json_spirit::Array& params, 
     }
  * \endverbatim
  */
-extern json_spirit::Value dxAcceptTransaction(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value dxTakeOrder(const json_spirit::Array& params, bool fHelp);
 
 /**
- * @brief Cancels given transaction
+ * @brief Cancels given order
  * @param params The list of input params:<br>
  * params[0] : transaction id<br>
  * @param fHelp If is true then an exception with parameter description message will be thrown
  * @return The status of the operation
  * * Example:<br>
  * \verbatim ￼
-    dxCancelTransaction 6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a
+    dxCancelOrder 6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a
     {
         "id" : "6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a"
     }
  * \endverbatim
 
  */
-extern json_spirit::Value dxCancelTransaction(const json_spirit::Array& params, bool fHelp);
-
-/**
- * @brief Rollback given transaction
- * @param params The list of input params:<br>
- * params[0] : transaction id<br>
- * @param fHelp If is true then an exception with parameter description message will be thrown
- * @return The status of the operation
- * * Example:<br>
- * \verbatim
-    dxrollbackTransaction 6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a
-    {
-        "id" : "6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a"
-    }
- * \endverbatim
- */
-extern json_spirit::Value dxrollbackTransaction(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value dxCancelOrder(const json_spirit::Array& params, bool fHelp);
 
 /**
  * @brief Returns trading history as a 'price chart'

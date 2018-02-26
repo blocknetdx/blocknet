@@ -1302,7 +1302,7 @@ bool BtcWalletConnector::createDepositUnlockScript(const std::vector<unsigned ch
                 << OP_DUP << OP_HASH160 << getKeyId(myPubKey) << OP_EQUALVERIFY << OP_CHECKSIG
           << OP_ELSE
                 << OP_DUP << OP_HASH160 << getKeyId(otherPubKey) << OP_EQUALVERIFY << OP_CHECKSIGVERIFY
-                << OP_HASH160 << xdata << OP_EQUAL
+                << OP_SIZE << 33 << OP_EQUALVERIFY << OP_HASH160 << xdata << OP_EQUAL
           << OP_ENDIF;
 
 //    xbridge::XBitcoinAddress baddr;

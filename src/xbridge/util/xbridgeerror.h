@@ -1,11 +1,18 @@
+//******************************************************************************
+//******************************************************************************
+
 #ifndef XBRIDGEERROR_H
 #define XBRIDGEERROR_H
+
+//******************************************************************************
+//******************************************************************************
 #include <string>
 #include <vector>
 
+//******************************************************************************
+//******************************************************************************
 namespace xbridge
 {
-
     enum Error
     {
         // 'NO_ERROR' is defined (probably by some windows headers) when compiling windows targets
@@ -27,8 +34,8 @@ namespace xbridge
         INVALID_AMOUNT          = 1024,
         INVALID_PARAMETERS      = 1025,
         INVALID_ADDRESS         = 1026,
-        INVALID_SIGNATURE       = 1027
-
+        INVALID_SIGNATURE       = 1027,
+        INVALID_STATE           = 1028
     };
 
     /**
@@ -39,5 +46,7 @@ namespace xbridge
      */
     const std::string xbridgeErrorText(const Error error, const std::string &argument = "");
     const std::string xbridgeErrorText(const Error error, const std::vector<unsigned char> &argument);
-}
+
+} // namespace xbridge
+
 #endif // XBRIDGEERROR_H
