@@ -319,14 +319,14 @@ void XBridgeTransactionsModel::onTimer()
             emit dataChanged(index(i, FirstColumn), index(i, LastColumn));
         }
         else if (m_transactions[i]->state == xbridge::TransactionDescr::trPending &&
-                td.total_seconds() > xbridge::Transaction::TTL/6)
+                td.total_seconds() > xbridge::Transaction::pendingTTL)
         {
             m_transactions[i]->state = xbridge::TransactionDescr::trExpired;
             emit dataChanged(index(i, FirstColumn), index(i, LastColumn));
         }
         else if ((m_transactions[i]->state == xbridge::TransactionDescr::trExpired ||
                   m_transactions[i]->state == xbridge::TransactionDescr::trOffline) &&
-                         td.total_seconds() < xbridge::Transaction::TTL/6)
+                         td.total_seconds() < xbridge::Transaction::pendingTTL)
         {
             m_transactions[i]->state = xbridge::TransactionDescr::trPending;
             emit dataChanged(index(i, FirstColumn), index(i, LastColumn));
