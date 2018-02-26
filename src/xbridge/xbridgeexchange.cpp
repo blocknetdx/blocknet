@@ -260,6 +260,40 @@ bool Exchange::checkUtxoItems(const uint256 & txid, const std::vector<wallet::Ut
     return true;
 }
 
+bool Exchange::getUtxoItems(const uint256 & txid, std::vector<wallet::UtxoEntry> & items)
+{
+    boost::mutex::scoped_lock l(m_p->m_utxoLocker);
+
+    if (m_p->m_utxoTxMap.count(txid))
+    {
+        for(const wallet::UtxoEntry & entry : m_p->m_utxoTxMap[txid])
+            items.push_back(entry);
+
+        return true;
+    }
+
+    return false;
+}
+
+bool Exchange::removeUtxoItems(const uint256& txid)
+{
+    boost::mutex::scoped_lock l(m_p->m_utxoLocker);
+
+    if (m_p->m_utxoTxMap.count(txid))
+    {
+        for (const wallet::UtxoEntry & item : m_p->m_utxoTxMap[txid])
+        {
+            m_p->m_utxoItems.erase(item);
+        }
+
+        m_p->m_utxoTxMap[txid] = std::vector<wallet::UtxoEntry>();
+
+        return true;
+    }
+
+    return false;
+}
+
 //*****************************************************************************
 //*****************************************************************************
 bool Exchange::txOutIsLocked(const wallet::UtxoEntry & entry) const

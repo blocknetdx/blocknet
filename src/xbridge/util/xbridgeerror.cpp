@@ -54,6 +54,8 @@ const std::string xbridgeErrorText(const Error error, const std::string &argumen
             return "Invalid detail level, possible values: 1 - 3";
         case INVALID_TIME:
             return "Invalid time format, ISO 8601 date format required";
+        case NOT_EXCHANGE_NODE:
+            return "BlocknetDX not running as exchange node";
     }
     return "invalid error value";
 }
