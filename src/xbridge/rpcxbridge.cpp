@@ -147,6 +147,7 @@ Value dxGetOrderFills(const Array & params, bool fHelp)
     TransactionMap history = xbridge::App::instance().history();
 
 
+
     TransactionVector result;
 
     boost::push_back(result,
@@ -172,11 +173,11 @@ Value dxGetOrderFills(const Array & params, bool fHelp)
 
         Object tmp;
         tmp.emplace_back(Pair("id",         transaction->id.GetHex()));
-        tmp.emplace_back(Pair("time",       bpt::to_iso_extended_string(transaction->txtime)));
+        tmp.emplace_back(Pair("time",       util::iso8601(transaction->txtime)));
         tmp.emplace_back(Pair("maker",      transaction->fromCurrency));
-        tmp.emplace_back(Pair("maker_size", xBridgeValueFromAmount(transaction->fromAmount)));
+        tmp.emplace_back(Pair("maker_size", util::xBridgeValueFromAmount(transaction->fromAmount)));
         tmp.emplace_back(Pair("taker",      transaction->toCurrency));
-        tmp.emplace_back(Pair("taker_size", xBridgeValueFromAmount(transaction->toAmount)));
+        tmp.emplace_back(Pair("taker_size", util::xBridgeValueFromAmount(transaction->toAmount)));
         arr.emplace_back(tmp);
 
     }
