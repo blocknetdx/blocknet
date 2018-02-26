@@ -35,7 +35,8 @@ namespace xbridge
         INVALID_PARAMETERS      = 1025,
         INVALID_ADDRESS         = 1026,
         INVALID_SIGNATURE       = 1027,
-        INVALID_STATE           = 1028
+        INVALID_STATE           = 1028,
+        NOT_EXCHANGE_NODE       = 1029,
     };
 
     /**

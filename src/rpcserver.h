@@ -501,6 +501,9 @@ extern json_spirit::Value dxGetTradeHistory(const json_spirit::Array& params, bo
  */
 extern json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp);
 
+extern json_spirit::Value dxGetLockedUtxo(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value dxUnlockUtxo(const json_spirit::Array& params, bool fHelp);
+
 /** @} */
 
 
