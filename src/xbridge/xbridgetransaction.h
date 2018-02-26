@@ -45,17 +45,19 @@ public:
 
     enum
     {
-        // transaction lock time base, in seconds, 10 min
-        lockTime = 600,
+        // transaction lock time base, in seconds, 60 sec * 10 min
+        lockTime = 60 * 10,
 
         // pending transaction ttl in seconds, 1 min from last update
         pendingTTL = 90,
 
-        // transaction ttl in seconds, 60 sec * 60 min * 24 h
-        TTL = 60 * 60 * 24,
+        // transaction ttl in seconds, 60 sec * 60 min
+        TTL = 60 * 60,
+
+        // order deadline ttl in seconds, 60 sec * 60 min * 24h
+        deadlineTTL = 60 * 60 * 24,
 
         // number of blocks ttl
-
         blocksTTL = 60
     };
 
