@@ -116,9 +116,10 @@ Value dxGetOrderFills(const Array & params, bool fHelp)
     if (fHelp) {
 
         throw runtime_error("dxGetOrderFills Returns all the recent trades by trade pair that have been filled \n"
-                            "(i.e. completed). Maker symbol is always listed first. The [combined] flag set to false\n "
-                            "will return only maker trades, switch maker and taker to get the reverse.\n"
-                            "(maker) (taker) (combined - optional)"
+                            "(i.e. completed). Maker symbol is always listed first. The [combined] flag defaults \n"
+                            "to true. When set to false [combined] will return only maker trades, switch maker \n"
+                            "and taker to get the reverse.\n"
+                            "(maker) (taker) [optional](combined, default = true)"
                             );
 
     }
@@ -137,7 +138,7 @@ Value dxGetOrderFills(const Array & params, bool fHelp)
 
     }
 
-    bool combined = params.size() == 3 && params[2].get_bool();
+    bool combined = params.size() == 3 ? params[2].get_bool() : true;
 
     const auto maker = params[0].get_str();
     const auto taker = params[1].get_str();
