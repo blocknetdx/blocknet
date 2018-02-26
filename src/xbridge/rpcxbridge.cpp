@@ -13,7 +13,10 @@
 #include <boost/signals2.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
-
+#include <boost/range/algorithm_ext/push_back.hpp>
+#include <boost/range/adaptor/map.hpp>
+#include <boost/range/adaptor/filtered.hpp>
+#include <boost/range/algorithm/copy.hpp>
 
 #include <stdio.h>
 #include <atomic>
@@ -35,10 +38,12 @@ using namespace boost;
 using namespace boost::asio;
 
 using TransactionMap    = std::map<uint256, xbridge::TransactionDescrPtr>;
+
 using TransactionPair   = std::pair<uint256, xbridge::TransactionDescrPtr>;
 
 using RealVector        = std::vector<double>;
 
+using TransactionVector = std::vector<xbridge::TransactionDescrPtr>;
 namespace bpt           = boost::posix_time;
 
 
@@ -106,54 +111,73 @@ Value dxGetOrders(const Array & params, bool fHelp)
 //*****************************************************************************
 //*****************************************************************************
 
-Value dxGetTransactionsHistory(const Array & params, bool fHelp)
+Value dxGetOrderFills(const Array & params, bool fHelp)
 {
     if (fHelp) {
 
-        throw runtime_error("dxGetTransactionsHistory "
-                            "(ALL - optional parameter, if specified then all transactions are shown, "
-                            "not only successfully completed ");
+        throw runtime_error("dxGetOrderFills Returns all the recent trades by trade pair that have been filled \n"
+                            "(i.e. completed). Maker symbol is always listed first. The [combined] flag defaults \n"
+                            "to true. When set to false [combined] will return only maker trades, switch maker \n"
+                            "and taker to get the reverse.\n"
+                            "(maker) (taker) [optional](combined, default = true)"
+                            );
 
     }
 
-    bool invalidParams = ((params.size() != 0) &&
-                          (params.size() != 1));
+    bool invalidParams = ((params.size() != 2) &&
+                          (params.size() != 3));
     if (invalidParams) {
 
         Object error;
+        const auto statusCode = xbridge::INVALID_PARAMETERS;
         error.emplace_back(Pair("error",
-                                "Invalid number of parameters"));
-        error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
+                                xbridge::xbridgeErrorText(statusCode)));
+        error.emplace_back(Pair("code", statusCode));
+        error.emplace_back(Pair("name", __FUNCTION__ ));
         return  error;
 
     }
 
-    bool isShowAll = params.size() == 1 && params[0].get_str() == "ALL";
+    bool combined = params.size() == 3 ? params[2].get_bool() : true;
 
-    Array arr;
+    const auto maker = params[0].get_str();
+    const auto taker = params[1].get_str();
 
-    TransactionMap trlist = xbridge::App::instance().history();
 
-    for (const auto &trEntry : trlist) {
-        Object buy;
-        const auto &tr = trEntry.second;
-        if (!isShowAll && tr->state != xbridge::TransactionDescr::trFinished) {
-            continue;
+
+    TransactionMap history = xbridge::App::instance().history();
+
+
+
+    TransactionVector result;
+
+    for (auto &item : history) {
+        const xbridge::TransactionDescrPtr &ptr = item.second;
+        if ((ptr->state == xbridge::TransactionDescr::trFinished) &&
+            (combined ? (ptr->fromCurrency == maker && ptr->toCurrency == taker) : (ptr->fromCurrency == maker))) {
+            result.push_back(ptr);
         }
-
-        double fromAmount   = static_cast<double>(tr->fromAmount);
-        double toAmount     = static_cast<double>(tr->toAmount);
-        double price        = fromAmount / toAmount;
-        std::string buyTime = to_iso_extended_string(tr->created);
-        buy.emplace_back(Pair("time",           buyTime));
-        buy.emplace_back(Pair("traidId",        tr->id.GetHex()));
-        buy.emplace_back(Pair("price",          price));
-        buy.emplace_back(Pair("size",           tr->toAmount));
-        buy.emplace_back(Pair("side",           "buy"));
-        buy.emplace_back(Pair("blockHash",      tr->blockHash.GetHex()));
-        arr.emplace_back(buy);
     }
 
+    std::sort(result.begin(), result.end(),
+              [](const xbridge::TransactionDescrPtr &a,  const xbridge::TransactionDescrPtr &b)
+    {
+         return (a->txtime) > (b->txtime);
+    });
+
+    Array arr;
+    for(const auto &transaction : result) {
+
+        Object tmp;
+        tmp.emplace_back(Pair("id",         transaction->id.GetHex()));
+        tmp.emplace_back(Pair("time",       util::iso8601(transaction->txtime)));
+        tmp.emplace_back(Pair("maker",      transaction->fromCurrency));
+        tmp.emplace_back(Pair("maker_size", util::xBridgeValueFromAmount(transaction->fromAmount)));
+        tmp.emplace_back(Pair("taker",      transaction->toCurrency));
+        tmp.emplace_back(Pair("taker_size", util::xBridgeValueFromAmount(transaction->toAmount)));
+        arr.emplace_back(tmp);
+
+    }
     return arr;
 }
 
