@@ -151,17 +151,13 @@ Value dxGetOrderFills(const Array & params, bool fHelp)
 
     TransactionVector result;
 
-    boost::push_back(result,
-                     history | boost::adaptors::map_values
-                     | boost::adaptors::filtered(
-                         [&maker, &taker, combined](const xbridge::TransactionDescrPtr &ptr) -> bool {
-
-        return (ptr->state == xbridge::TransactionDescr::trFinished) &&
-
-                (combined ? (ptr->fromCurrency == maker && ptr->toCurrency == taker) :
-                            (ptr->fromCurrency == maker));
-
-    }));
+    for (auto &item : history) {
+        const xbridge::TransactionDescrPtr &ptr = item.second;
+        if ((ptr->state == xbridge::TransactionDescr::trFinished) &&
+            (combined ? (ptr->fromCurrency == maker && ptr->toCurrency == taker) : (ptr->fromCurrency == maker))) {
+            result.push_back(ptr);
+        }
+    }
 
     std::sort(result.begin(), result.end(),
               [](const xbridge::TransactionDescrPtr &a,  const xbridge::TransactionDescrPtr &b)
