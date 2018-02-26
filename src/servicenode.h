@@ -1,6 +1,6 @@
 
 // Copyright (c) 2014-2015 The Dash developers
-// Copyright (c) 2015-2017 The BlocknetDX developers
+// Copyright (c) 2015-2017 The Rotam developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #ifndef SERVICENODE_H
@@ -120,7 +120,8 @@ public:
         SERVICENODE_WATCHDOG_EXPIRED,
         SERVICENODE_POSE_BAN,
         SERVICENODE_VIN_SPENT,
-        SERVICENODE_POS_ERROR
+        SERVICENODE_POS_ERROR,
+        SERVICENODE_VALID,
     };
 
     CTxIn vin;
@@ -136,6 +137,7 @@ public:
     int cacheInputAgeBlock;
     bool unitTest;
     bool allowFreeTx;
+    bool is_valid;
     int protocolVersion;
     int nActiveState;
     int64_t nLastDsq; //the dsq count from the last dsq broadcast of this node
@@ -178,6 +180,7 @@ public:
         swap(first.nScanningErrorCount, second.nScanningErrorCount);
         swap(first.nLastScanningErrorBlockHeight, second.nLastScanningErrorBlockHeight);
         swap(first.connectedWallets, second.connectedWallets);
+        swap(first.is_valid, second.is_valid);
     }
 
     CServicenode& operator=(CServicenode from)
@@ -280,6 +283,7 @@ public:
         if (activeState == CServicenode::SERVICENODE_VIN_SPENT) strStatus = "VIN_SPENT";
         if (activeState == CServicenode::SERVICENODE_REMOVE) strStatus = "REMOVE";
         if (activeState == CServicenode::SERVICENODE_POS_ERROR) strStatus = "POS_ERROR";
+        if (activeState == CServicenode::SERVICENODE_VALID) strStatus = "VALID";
 
         return strStatus;
     }

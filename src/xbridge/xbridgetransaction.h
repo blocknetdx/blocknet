@@ -46,8 +46,8 @@ public:
 
     enum
     {
-        // transaction lock time base, in seconds, 10 min
-        lockTime = 600,
+        // transaction lock time base, in seconds, 1 min
+        lockTime = 60,
 
         // pending transaction ttl in seconds, 72 hours
         pendingTTL = 259200,

@@ -1,5 +1,5 @@
 // Copyright (c) 2014-2015 The Dash Developers
-// Copyright (c) 2015-2017 The BlocknetDX developers
+// Copyright (c) 2015-2017 The Rotam developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -55,7 +55,7 @@ Value mnbudget(const Array& params, bool fHelp)
         CBlockIndex* pindexPrev = chainActive.Tip();
 
         if (params.size() != 7)
-            throw runtime_error("Correct usage is 'mnbudget prepare proposal-name url payment_count block_start blocknetdx_address monthly_payment_blocknetdx'");
+            throw runtime_error("Correct usage is 'mnbudget prepare proposal-name url payment_count block_start rotam_address monthly_payment_rotam'");
 
         std::string strProposalName = params[1].get_str();
         if (strProposalName.size() > 20)
@@ -128,7 +128,7 @@ Value mnbudget(const Array& params, bool fHelp)
         CBlockIndex* pindexPrev = chainActive.Tip();
 
         if (params.size() != 8)
-            throw runtime_error("Correct usage is 'mnbudget submit proposal-name url payment_count block_start blocknetdx_address monthly_payment_blocknetdx fee_tx'");
+            throw runtime_error("Correct usage is 'mnbudget submit proposal-name url payment_count block_start rotam_address monthly_payment_rotam fee_tx'");
 
         // Check these inputs the same way we check the vote commands:
         // **********************************************************

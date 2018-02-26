@@ -6,14 +6,16 @@
 #define BITCOIN_COMPAT_BYTESWAP_H
 
 #if defined(HAVE_CONFIG_H)
-#include "config/blocknetdx-config.h"
+#include "config/rotam-config.h"
 #endif
 
 #include <stdint.h>
 
-#if defined(HAVE_BYTESWAP_H)
+#ifndef HAVE_BYTESWAP_H
 #include <byteswap.h>
 #endif
+
+#if 0
 
 #if defined(__APPLE__)
 
@@ -62,5 +64,6 @@
     #endif // HAVE_DECL_BSWAP64
 
 #endif // defined(__APPLE__)
+#endif
 
 #endif // BITCOIN_COMPAT_BYTESWAP_H

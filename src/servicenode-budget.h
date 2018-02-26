@@ -1,5 +1,5 @@
 // Copyright (c) 2014-2015 The Dash developers
-// Copyright (c) 2015-2017 The BlocknetDX developers
+// Copyright (c) 2015-2017 The Rotam developers
 
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -362,7 +362,7 @@ public:
 
     //check to see if we should vote on this
     void AutoCheck();
-    //total blocknetdx paid out by this budget
+    //total rotam paid out by this budget
     CAmount GetTotalPayout();
     //vote on this finalized budget as a servicenode
     void SubmitVote();

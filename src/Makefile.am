@@ -68,20 +68,21 @@ bin_PROGRAMS =
 TESTS =
 
 if BUILD_BITCOIND
-  bin_PROGRAMS += blocknetdxd
+  bin_PROGRAMS += rotamd
 endif
 
 if BUILD_BITCOIN_UTILS
-  bin_PROGRAMS += blocknetdx-cli blocknetdx-tx
+  bin_PROGRAMS += rotam-cli rotam-tx
 endif
 
 .PHONY: FORCE
-# blocknetdx core #
+# rotam core #
 BITCOIN_CORE_H = \
   activeservicenode.h \
   addrman.h \
   alert.h \
   allocators.h \
+  arith_uint256.h \
   amount.h \
   base58.h \
   bip38.h \
@@ -194,7 +195,7 @@ obj/build.h: FORCE
 	  $(abs_top_srcdir)
 libbitcoin_util_a-clientversion.$(OBJEXT): obj/build.h
 
-# server: shared between blocknetdxd and blocknetdx-qt
+# server: shared between rotamd and rotam-qt
 libbitcoin_server_a_CPPFLAGS = $(BITCOIN_INCLUDES) $(MINIUPNPC_CPPFLAGS)
 libbitcoin_server_a_SOURCES = \
   addrman.cpp \
@@ -238,7 +239,7 @@ libbitcoin_zmq_a_SOURCES = \
   zmq/zmqpublishnotifier.cpp
 endif
 
-# wallet: shared between blocknetdxd and blocknetdx-qt, but only linked
+# wallet: shared between rotamd and rotam-qt, but only linked
 # when wallet enabled
 
 libbitcoin_wallet_a_CFLAGS = -fPIC
@@ -312,11 +313,12 @@ univalue_libbitcoin_univalue_a_SOURCES = \
   univalue/univalue_escapes.h \
   univalue/univalue.h
 
-# common: shared between blocknetdxd, and blocknetdx-qt and non-server tools
+# common: shared between rotamd, and rotam-qt and non-server tools
 libbitcoin_common_a_CPPFLAGS = $(BITCOIN_INCLUDES)
 libbitcoin_common_a_SOURCES = \
   allocators.cpp \
   amount.cpp \
+  arith_uint256.cpp \
   base58.cpp \
   bip38.cpp \
   chainparams.cpp \
@@ -420,7 +422,7 @@ libbitcoin_util_a_SOURCES += compat/glibc_compat.cpp
 libbitcoin_util_a_SOURCES += compat/glibcxx_compat.cpp
 endif
 
-# cli: shared between blocknetdx-cli and blocknetdx-qt
+# cli: shared between rotam-cli and rotam-qt
 libbitcoin_cli_a_CPPFLAGS = $(BITCOIN_INCLUDES)
 libbitcoin_cli_a_SOURCES = \
   rpcclient.cpp \
@@ -430,7 +432,7 @@ nodist_libbitcoin_util_a_SOURCES = $(srcdir)/obj/build.h
 #
 
 # bitcoind binary #
-blocknetdxd_LDADD = \
+rotamd_LDADD = \
   $(LIBBITCOIN_SERVER) \
   $(LIBBITCOIN_COMMON) \
   $(LIBBITCOIN_UNIVALUE) \
@@ -443,26 +445,26 @@ blocknetdxd_LDADD = \
   $(LIBBITCOIN_CLI)
 
 if ENABLE_ZMQ
-blocknetdxd_LDADD += $(LIBBITCOIN_ZMQ) $(ZMQ_LIBS)
+rotamd_LDADD += $(LIBBITCOIN_ZMQ) $(ZMQ_LIBS)
 endif
 
 if ENABLE_WALLET
-blocknetdxd_LDADD += libbitcoin_wallet.a
+rotamd_LDADD += libbitcoin_wallet.a
 endif
-blocknetdxd_SOURCES = blocknetdxd.cpp
+rotamd_SOURCES = rotamd.cpp
 #
 
 if TARGET_WINDOWS
-blocknetdxd_SOURCES += blocknetdxd-res.rc
+rotamd_SOURCES += rotamd-res.rc
 endif
 
-blocknetdxd_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS)
-blocknetdxd_CPPFLAGS = $(BITCOIN_INCLUDES)
-blocknetdxd_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+rotamd_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS)
+rotamd_CPPFLAGS = $(BITCOIN_INCLUDES)
+rotamd_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
 
-# blocknetdx-cli binary #
-blocknetdx_cli_LDADD = \
+# rotam-cli binary #
+rotam_cli_LDADD = \
   $(LIBBITCOIN_CLI) \
   $(LIBBITCOIN_UTIL) \
   $(BOOST_LIBS) \
@@ -471,14 +473,14 @@ blocknetdx_cli_LDADD = \
   $(LIBBITCOIN_CRYPTO)
 
 
-blocknetdx_cli_SOURCES = \
-  blocknetdx-cli.cpp
+rotam_cli_SOURCES = \
+  rotam-cli.cpp
 
-blocknetdx_cli_CPPFLAGS = $(BITCOIN_INCLUDES)
+rotam_cli_CPPFLAGS = $(BITCOIN_INCLUDES)
 #
 
-# blocknetdx-tx binary #
-blocknetdx_tx_LDADD = \
+# rotam-tx binary #
+rotam_tx_LDADD = \
   $(LIBBITCOIN_UNIVALUE) \
   $(LIBBITCOIN_COMMON) \
   $(LIBBITCOIN_UTIL) \
@@ -487,15 +489,15 @@ blocknetdx_tx_LDADD = \
   $(BOOST_LIBS) \
   $(CRYPTO_LIBS)
 
-blocknetdx_tx_SOURCES = blocknetdx-tx.cpp
-blocknetdx_tx_CPPFLAGS = $(BITCOIN_INCLUDES)
+rotam_tx_SOURCES = rotam-tx.cpp
+rotam_tx_CPPFLAGS = $(BITCOIN_INCLUDES)
 #
-blocknetdx_tx_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+rotam_tx_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
 if TARGET_WINDOWS
-blocknetdx_cli_SOURCES += blocknetdx-cli-res.rc
+rotam_cli_SOURCES += rotam-cli-res.rc
 endif
-blocknetdx_cli_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+rotam_cli_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
 if BUILD_BITCOIN_LIBS
 include_HEADERS = script/bitcoinconsensus.h

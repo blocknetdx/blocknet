@@ -95,7 +95,7 @@ public:
 };
 
 /**
- * BlocknetDX RPC command dispatcher.
+ * Rotam RPC command dispatcher.
  */
 class CRPCTable
 {

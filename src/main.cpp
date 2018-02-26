@@ -1,7 +1,7 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2014 The Bitcoin developers
 // Copyright (c) 2014-2015 The Dash developers
-// Copyright (c) 2015-2017 The BlocknetDX developers
+// Copyright (c) 2015-2017 The Rotam developers
 // Copyright (c) 2014-2017 PPCoin Developers
 // Copyright (c) 2017 PIVX Developers
 // Distributed under the MIT software license, see the accompanying
@@ -45,7 +45,7 @@ using namespace boost;
 using namespace std;
 
 #if defined(NDEBUG)
-#error "BlocknetDX cannot be compiled without assertions."
+#error "Rotam cannot be compiled without assertions."
 #endif
 
 /**
@@ -1659,6 +1659,7 @@ int64_t GetBlockValue(int nHeight)
             return 250000 * COIN;
     }
 
+    // Marking ROI rate per specific block size.
     // Reduce Reward starting year 1
     if (nHeight == 0) {
         nSubsidy = 4160024 * COIN; }
@@ -1705,7 +1706,7 @@ int64_t GetServicenodePayment(int nHeight, int64_t blockValue, int nServicenodeC
         if (mNodeCoins == 0) {
             ret = 0;
 	}
-	ret = blockValue * .7;
+	ret = blockValue * .65;
 
     }
 
@@ -2095,7 +2096,7 @@ static CCheckQueue<CScriptCheck> scriptcheckqueue(128);
 
 void ThreadScriptCheck()
 {
-    RenameThread("blocknetdx-scriptch");
+    RenameThread("rotam-scriptch");
     scriptcheckqueue.Thread();
 }
 
@@ -3121,15 +3122,16 @@ bool FindUndoPos(CValidationState& state, int nFile, CDiskBlockPos& pos, unsigne
 bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, bool fCheckPOW)
 {
     // Check proof of work matches claimed amount
-    if (fCheckPOW && !CheckProofOfWork(block.GetHash(), block.nBits))
+    /*if (fCheckPOW && !CheckProofOfWork(block.GetHash(), block.nBits))
         return state.DoS(50, error("CheckBlockHeader() : proof of work failed"),
             REJECT_INVALID, "high-hash");
-
+*/
     return true;
 }
 
 bool CheckBlock(const CBlock& block, CValidationState& state, bool /*fCheckPOW*/, bool fCheckMerkleRoot, bool /*fCheckSig*/)
 {
+    /*
     // These are checks that are independent of context.
 
     // Check that the header is valid (particularly PoW).  This is mostly
@@ -3253,7 +3255,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool /*fCheckPOW*/
     if (nSigOps > MAX_BLOCK_SIGOPS)
         return state.DoS(100, error("CheckBlock() : out-of-bounds SigOpCount"),
             REJECT_INVALID, "bad-blk-sigops", true);
-
+*/
     return true;
 }
 

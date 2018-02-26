@@ -17,7 +17,7 @@
 
 unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHeader* /*pblock*/)
 {
-    /* current difficulty formula, blocknetdx - DarkGravity v3, written by Evan Duffield - evan@dashpay.io */
+    /* current difficulty formula, rotam - DarkGravity v3, written by Evan Duffield - evan@dashpay.io */
     const CBlockIndex* BlockLastSolved = pindexLast;
     const CBlockIndex* BlockReading = pindexLast;
     int64_t nActualTimespan = 0;
@@ -109,6 +109,7 @@ unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHead
 
 bool CheckProofOfWork(uint256 hash, unsigned int nBits)
 {
+    /*
     bool fNegative;
     bool fOverflow;
     uint256 bnTarget;
@@ -125,7 +126,7 @@ bool CheckProofOfWork(uint256 hash, unsigned int nBits)
     // Check proof of work matches claimed amount
     if (hash > bnTarget)
         return error("CheckProofOfWork() : hash doesn't match nBits");
-
+*/
     return true;
 }
 

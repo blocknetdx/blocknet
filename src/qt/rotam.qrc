@@ -37,12 +37,12 @@
         <file alias="tx_input">res/icons/tx_input.png</file>
         <file alias="tx_output">res/icons/tx_output.png</file>
         <file alias="tx_inout">res/icons/tx_inout.png</file>
-        <file alias="unit_blocknetdx">res/icons/unit_blocknetdx.png</file>
-        <file alias="unit_mblocknetdx">res/icons/unit_mblocknetdx.png</file>
-        <file alias="unit_ublocknetdx">res/icons/unit_ublocknetdx.png</file>
-        <file alias="unit_tblocknetdx">res/icons/unit_tblocknetdx.png</file>
-        <file alias="unit_tmblocknetdx">res/icons/unit_tmblocknetdx.png</file>
-        <file alias="unit_tublocknetdx">res/icons/unit_tublocknetdx.png</file>
+        <file alias="unit_rotam">res/icons/unit_rotam.png</file>
+        <file alias="unit_mrotam">res/icons/unit_mrotam.png</file>
+        <file alias="unit_urotam">res/icons/unit_urotam.png</file>
+        <file alias="unit_trotam">res/icons/unit_trotam.png</file>
+        <file alias="unit_tmrotam">res/icons/unit_tmrotam.png</file>
+        <file alias="unit_turotam">res/icons/unit_turotam.png</file>
         <file alias="lock_closed">res/icons/lock_closed.png</file>
         <file alias="lock_open">res/icons/lock_open.png</file>
         <file alias="key">res/icons/key.png</file>
@@ -60,7 +60,7 @@
     </qresource>
     <qresource prefix="/images">
         <file alias="about">res/images/about.png</file>
-        <file alias="blocknetdx_logo_horizontal">res/images/blocknetdx_logo_horizontal.png</file>
+        <file alias="rotam_logo_horizontal">res/images/rotam_logo_horizontal.png</file>
         <file alias="downArrow">res/images/downArrow.png</file>
         <file alias="downArrow_small">res/images/downArrow_small.png</file>
         <file alias="upArrow_small">res/images/upArrow_small.png</file>

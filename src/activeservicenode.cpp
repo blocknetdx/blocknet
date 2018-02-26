@@ -9,7 +9,7 @@
 #include "xbridge/xbridgeexchange.h"
 
 //
-// Bootup the Servicenode, look for a 5000 BlocknetDX input and register on the network
+// Bootup the Servicenode, look for a 5000 Rotam input and register on the network
 //
 void CActiveServicenode::ManageStatus()
 {
@@ -65,13 +65,13 @@ void CActiveServicenode::ManageStatus()
         }
 
         if (Params().NetworkID() == CBaseChainParams::MAIN) {
-            if (service.GetPort() != 41412) {
-                notCapableReason = strprintf("Invalid port: %u - only 41412 is supported on mainnet.", service.GetPort());
+            if (service.GetPort() != 44155) {
+                notCapableReason = strprintf("Invalid port: %u - only 44155 is supported on mainnet.", service.GetPort());
                 LogPrintf("CActiveServicenode::ManageStatus() - not capable: %s\n", notCapableReason);
                 return;
             }
-        } else if (service.GetPort() == 41412) {
-            notCapableReason = strprintf("Invalid port: %u - 41412 is only supported on mainnet.", service.GetPort());
+        } else if (service.GetPort() == 44155) {
+            notCapableReason = strprintf("Invalid port: %u - 44155 is only supported on mainnet.", service.GetPort());
             LogPrintf("CActiveServicenode::ManageStatus() - not capable: %s\n", notCapableReason);
             return;
         }
@@ -267,13 +267,13 @@ bool CActiveServicenode::Register(std::string strService, std::string strKeyServ
 
     CService service = CService(strService);
     if (Params().NetworkID() == CBaseChainParams::MAIN) {
-        if (service.GetPort() != 41412) {
-            errorMessage = strprintf("Invalid port %u for servicenode %s - only 41412 is supported on mainnet.", service.GetPort(), strService);
+        if (service.GetPort() != 44155) {
+            errorMessage = strprintf("Invalid port %u for servicenode %s - only 44155 is supported on mainnet.", service.GetPort(), strService);
             LogPrintf("CActiveServicenode::Register() - %s\n", errorMessage);
             return false;
         }
-    } else if (service.GetPort() == 41412) {
-        errorMessage = strprintf("Invalid port %u for servicenode %s - 41412 is only supported on mainnet.", service.GetPort(), strService);
+    } else if (service.GetPort() == 44155) {
+        errorMessage = strprintf("Invalid port %u for servicenode %s - 44155 is only supported on mainnet.", service.GetPort(), strService);
         LogPrintf("CActiveServicenode::Register() - %s\n", errorMessage);
         return false;
     }
@@ -478,6 +478,7 @@ vector<COutput> CActiveServicenode::SelectCoinsServicenode()
 
     // Filter
     BOOST_FOREACH (const COutput& out, vCoins) {
+        // Node marking
         if (out.tx->vout[out.i].nValue == SERVICENODE_REQUIRED_AMOUNT * COIN) { //exactly
             filteredCoins.push_back(out);
         }

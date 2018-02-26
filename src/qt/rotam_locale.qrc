@@ -1,0 +1,20 @@
+<!DOCTYPE RCC><RCC version="1.0">
+    <qresource prefix="/translations">
+        <file alias="bg">locale/rotam_bg.qm</file>
+        <file alias="de">locale/rotam_de.qm</file>
+        <file alias="en">locale/rotam_en.qm</file>
+        <file alias="es">locale/rotam_es.qm</file>
+        <file alias="fi">locale/rotam_fi.qm</file>
+        <file alias="fr">locale/rotam_fr.qm</file>
+        <file alias="it">locale/rotam_it.qm</file>
+        <file alias="ja">locale/rotam_ja.qm</file>
+        <file alias="pl">locale/rotam_pl.qm</file>
+        <file alias="pt">locale/rotam_pt.qm</file>
+        <file alias="ru">locale/rotam_ru.qm</file>
+        <file alias="sk">locale/rotam_sk.qm</file>
+        <file alias="sv">locale/rotam_sv.qm</file>
+        <file alias="vi">locale/rotam_vi.qm</file>
+        <file alias="zh_CN">locale/rotam_zh_CN.qm</file>
+        <file alias="zh_TW">locale/rotam_zh_TW.qm</file>
+    </qresource>
+</RCC>

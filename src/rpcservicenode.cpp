@@ -1,6 +1,6 @@
 // Copyright (c) 2010 Satoshi Nakamoto
 // Copyright (c) 2009-2012 The Bitcoin developers
-// Copyright (c) 2015-2017 The BlocknetDX developers
+// Copyright (c) 2015-2017 The Rotam developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -57,8 +57,8 @@ Value obfuscation(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() == 0)
         throw runtime_error(
-            "obfuscation <blocknetdxaddress> <amount>\n"
-            "blocknetdxaddress, reset, or auto (AutoDenominate)"
+            "obfuscation <rotamaddress> <amount>\n"
+            "rotamaddress, reset, or auto (AutoDenominate)"
             "<amount> is a real and will be rounded to the next 0.1" +
             HelpRequiringPassphrase());
 
@@ -79,8 +79,8 @@ Value obfuscation(const Array& params, bool fHelp)
 
     if (params.size() != 2)
         throw runtime_error(
-            "obfuscation <blocknetdxaddress> <amount>\n"
-            "blocknetdxaddress, denominate, or auto (AutoDenominate)"
+            "obfuscation <rotamaddress> <amount>\n"
+            "rotamaddress, denominate, or auto (AutoDenominate)"
             "<amount> is a real and will be rounded to the next 0.1" +
             HelpRequiringPassphrase());
 
@@ -142,7 +142,7 @@ Value servicenode(const Array& params, bool fHelp)
             "  genkey       - Generate new servicenodeprivkey\n"
             "  enforce      - Enforce servicenode payments\n"
             "  outputs      - Print servicenode compatible outputs\n"
-            "  start        - Start servicenode configured in blocknetdx.conf\n"
+            "  start        - Start servicenode configured in rotam.conf\n"
             "  start-alias  - Start single servicenode by assigned alias configured in servicenode.conf\n"
             "  start-<mode> - Start servicenodes configured in servicenode.conf (<mode>: 'all', 'missing', 'disabled')\n"
             "  status       - Print servicenode status information\n"
@@ -569,7 +569,7 @@ Value servicenodelist(const Array& params, bool fHelp)
             "    \"txhash\": \"hash\",       (string) Collateral transaction hash\n"
             "    \"outidx\": n,              (numeric) Collateral transaction output index\n"
             "    \"status\": s,              (string) Status (ENABLED/EXPIRED/REMOVE/etc)\n"
-            "    \"addr\": \"addr\",         (string) Servicenode BlocknetDX address\n"
+            "    \"addr\": \"addr\",         (string) Servicenode Rotam address\n"
             "    \"version\": v,             (numeric) Servicenode protocol version\n"
             "    \"lastseen\": ttt,          (numeric) The time in seconds since epoch (Jan 1 1970 GMT) of the last seen\n"
             "    \"activetime\": ttt,        (numeric) The time in seconds since epoch (Jan 1 1970 GMT) servicenode has been active\n"
