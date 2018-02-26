@@ -365,7 +365,7 @@ static const CRPCCommand vRPCCommands[] =
         {"wallet", "walletpassphrasechange", &walletpassphrasechange, true, false, true},
         {"wallet", "walletpassphrase", &walletpassphrase, true, false, true},
 
-        {"xbridge", "dxGetOrders",                    &dxGetOrders,          true, true, true},
+        {"xbridge", "dxGetOrders",                          &dxGetOrders,                true, true, true},
         {"xbridge", "dxGetTransactionsHistory",             &dxGetTransactionsHistory,   true, true, true},
         {"xbridge", "dxGetOrder",                           &dxGetOrder,                 true, true, true},
         {"xbridge", "dxGetCurrencies",                      &dxGetCurrencies,            true, true, true},
@@ -373,7 +373,9 @@ static const CRPCCommand vRPCCommands[] =
         {"xbridge", "dxTakeOrder",                          &dxTakeOrder,                true, true, true},
         {"xbridge", "dxCancelOrder",                        &dxCancelOrder,              true, true, true},
         {"xbridge", "dxGetTradeHistory",                    &dxGetTradeHistory,          true, true, true},
-        {"xbridge", "dxGetOrderBook",                       &dxGetOrderBook,             true, true, true}
+        {"xbridge", "dxGetOrderBook",                       &dxGetOrderBook,             true, true, true},
+        {"xbridge", "dxGetLockedUtxo",                      &dxGetLockedUtxo,            true, true, true},
+        {"xbridge", "dxUnlockUtxo",                         &dxUnlockUtxo,               true, true, true}
     #endif // ENABLE_WALLET
 };
 
