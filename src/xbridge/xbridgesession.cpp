@@ -2339,13 +2339,14 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet)
     Exchange & e = Exchange::instance();
     if (e.isStarted())
     {
-        TransactionPtr tr = e.transaction(txid);
+        TransactionPtr tr = e.pendingTransaction(txid);
         if (!packet->verify(tr->a_pk1()) && !packet->verify(tr->b_pk1()))
         {
             LOG() << "invalid packet signature " << __FUNCTION__;
             return true;
         }
 
+        sendCancelTransaction(tr, reason);
         e.deletePendingTransactions(txid);
         return true;
     }
@@ -2360,7 +2361,7 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet)
 
     if (!packet->verify(xtx->sPubKey) && !packet->verify(xtx->oPubKey))
     {
-        LOG() << "invalid packet signature " << __FUNCTION__;
+        LOG() << "invalid packet signature or packet from node " << __FUNCTION__;
         return true;
     }
 
