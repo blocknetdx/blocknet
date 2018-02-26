@@ -1345,9 +1345,9 @@ void App::Impl::onTimer()
         // send transactions list
         {
             static uint32_t counter = 0;
-            if (++counter == 4)
+            if (++counter == 20)
             {
-                // 15 sec * 4 = 60 sec
+                // 15 sec * 20 = 5 min
                 counter = 0;
                 io->post(boost::bind(&xbridge::Session::sendListOfTransactions, session));
             }
