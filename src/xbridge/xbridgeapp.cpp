@@ -812,21 +812,26 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     connFrom->getUnspent(outputs);
 
     double utxoAmount = 0;
+    double fee1       = 0;
+    double fee2       = connTo->minTxFee2(1, 1);
+
     std::vector<wallet::UtxoEntry> outputsForUse;
     for (const wallet::UtxoEntry & entry : outputs)
     {
         utxoAmount += entry.amount;
         outputsForUse.push_back(entry);
 
-        // TODO calculate fee for outputsForUse.count()
+        fee1 = connFrom->minTxFee1(outputsForUse.size(), 3);
 
-        if ((utxoAmount * TransactionDescr::COIN) > fromAmount)
+        LOG() << "USED FOR TX <" << entry.txId << "> amount " << entry.amount << " " << entry.vout << " fee " << fee1;
+
+        if ((utxoAmount * TransactionDescr::COIN) > fromAmount + ((fee1 + fee2) * TransactionDescr::COIN))
         {
             break;
         }
     }
 
-    if ((utxoAmount * TransactionDescr::COIN) < fromAmount)
+    if ((utxoAmount * TransactionDescr::COIN) < fromAmount + ((fee1 + fee2) * TransactionDescr::COIN))
     {
         WARN() << "insufficient funds for <" << fromCurrency << "> " << __FUNCTION__;
         return xbridge::Error::INSIFFICIENT_FUNDS;
