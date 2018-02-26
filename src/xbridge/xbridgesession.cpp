@@ -957,7 +957,7 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet)
 
             if (!tr || tr->state() != xbridge::Transaction::trJoined)
             {
-                e.deletePendingTransactions(id);
+                e.deletePendingTransaction(id);
             }
 
             return true;
@@ -2350,7 +2350,7 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet)
         }
 
         sendCancelTransaction(tr, reason);
-        e.deletePendingTransactions(txid);
+        e.deletePendingTransaction(txid);
         return true;
     }
 
