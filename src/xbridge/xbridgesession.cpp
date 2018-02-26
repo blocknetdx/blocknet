@@ -1520,7 +1520,7 @@ bool Session::Impl::processTransactionCreate(XBridgePacketPtr packet)
     double outAmount = static_cast<double>(xtx->fromAmount) / TransactionDescr::COIN;
 
     double fee1      = 0;
-    double fee2      = connTo->minTxFee2(1, 1);
+    double fee2      = connFrom->minTxFee2(1, 1);
     double inAmount  = 0;
 
     std::vector<wallet::UtxoEntry> usedInTx;

@@ -813,7 +813,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
 
     double utxoAmount = 0;
     double fee1       = 0;
-    double fee2       = connTo->minTxFee2(1, 1);
+    double fee2       = connFrom->minTxFee2(1, 1);
 
     std::vector<wallet::UtxoEntry> outputsForUse;
     for (const wallet::UtxoEntry & entry : outputs)
