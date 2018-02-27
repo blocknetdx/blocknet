@@ -84,14 +84,14 @@ Value dxGetNetworkTokens(const Array & params, bool fHelp)
 {
     if (fHelp) {
 
-        throw runtime_error("dxGetNetworkTokens\nList currencies supported by the network.");
+        throw runtime_error("dxGetNetworkTokens\nList coins supported by the network.");
 
     }
     if (params.size() > 0) {
 
         Object error;
         error.emplace_back(Pair("error",
-                                "This function does not accept any parameter"));
+                                "This function does not accept any parameters"));
         error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
         return  error;
 
