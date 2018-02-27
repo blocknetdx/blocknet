@@ -104,8 +104,8 @@ QVariant XBridgeTransactionsModel::data(const QModelIndex & idx, int role) const
         }
         case Date:
         {
-            return QVariant(QDateTime::fromTime_t(boost::posix_time::to_time_t(d->created)).
-                            toString("dd/MM/yyyy HH:MM:ss"));
+            return QVariant(QDateTime::fromMSecsSinceEpoch(util::timeToInt(d->created)).
+                            toString("dd/MM/yyyy HH:MM:ss.zzz"));
         }
         case Hash:
         {
@@ -259,7 +259,7 @@ xbridge::Error XBridgeTransactionsModel::newTransactionFromPending(const uint256
                 return error;
             }
 
-            d->txtime = boost::posix_time::second_clock::universal_time();
+            d->txtime = boost::posix_time::microsec_clock::universal_time();
 
             break;
         }
@@ -309,7 +309,7 @@ void XBridgeTransactionsModel::onTimer()
     for (unsigned int i = 0; i < m_transactions.size(); ++i)
     {
         boost::posix_time::time_duration td =
-                boost::posix_time::second_clock::universal_time() -
+                boost::posix_time::microsec_clock::universal_time() -
                 m_transactions[i]->txtime;
 
         if (m_transactions[i]->state == xbridge::TransactionDescr::trNew &&

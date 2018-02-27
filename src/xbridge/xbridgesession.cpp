@@ -382,11 +382,11 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
 
     DEBUG_TRACE();
 
-    // size must be > 148 bytes
-    if (packet->size() < 148)
+    // size must be > 180 bytes
+    if (packet->size() < 180)
     {
         ERR() << "invalid packet size for xbcTransaction "
-              << "need min 148 bytes, received " << packet->size() << " "
+              << "need min 180 bytes, received " << packet->size() << " "
               << __FUNCTION__;
         return false;
     }
@@ -411,8 +411,8 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
     uint64_t damount = *static_cast<uint64_t *>(static_cast<void *>(packet->data()+offset));
     offset += sizeof(uint64_t);
 
-    uint32_t timestamp = *static_cast<uint32_t *>(static_cast<void *>(packet->data()+offset));
-    offset += sizeof(uint32_t);
+    uint64_t timestamp = *static_cast<uint64_t *>(static_cast<void *>(packet->data()+offset));
+    offset += sizeof(uint64_t);
 
     uint256 blockHash(packet->data()+offset);
     offset += XBridgePacket::hashSize;
@@ -601,7 +601,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
             reply->append(sc);
             reply->append(tr->b_amount());
             reply->append(m_myid);
-            reply->append(static_cast<uint32_t>(boost::posix_time::to_time_t(tr->createdTime())));
+            reply->append(util::timeToInt(tr->createdTime()));
             reply->append(tr->blockHash().begin(), 32);
 
             reply->sign(e.pubKey(), e.privKey());
@@ -626,10 +626,10 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
 
     DEBUG_TRACE();
 
-    if (packet->size() != 120)
+    if (packet->size() != 152)
     {
         ERR() << "incorrect packet size for xbcPendingTransaction "
-              << "need 120 received " << packet->size() << " "
+              << "need 152 received " << packet->size() << " "
               << __FUNCTION__;
         return false;
     }
@@ -683,10 +683,10 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
     ptr->toCurrency   = dcurrency;
     ptr->toAmount     = *reinterpret_cast<boost::uint64_t *>(packet->data()+56);
     ptr->hubAddress   = std::vector<unsigned char>(packet->data()+64, packet->data()+84);
-    ptr->created      = boost::posix_time::from_time_t(*reinterpret_cast<boost::uint32_t *>(packet->data()+84));
+    ptr->created      = util::intToTime(*reinterpret_cast<boost::uint64_t *>(packet->data()+84));
     ptr->state        = TransactionDescr::trPending;
     ptr->sPubKey      = spubkey;
-    ptr->blockHash    = uint256(packet->data()+92);
+    ptr->blockHash    = uint256(packet->data()+124);
 
     xapp.appendTransaction(ptr);
 
@@ -2564,7 +2564,7 @@ void Session::sendListOfTransactions()
         packet->append(tc);
         packet->append(ptr->b_amount());
         packet->append(m_p->m_myid);
-        packet->append(static_cast<uint32_t>(boost::posix_time::to_time_t(ptr->createdTime())));
+        packet->append(util::timeToInt(ptr->createdTime()));
         packet->append(ptr->blockHash().begin(), 32);
 
         packet->sign(e.pubKey(), e.privKey());

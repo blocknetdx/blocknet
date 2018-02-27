@@ -68,7 +68,7 @@ Value dxGetOrders(const Array & params, bool fHelp)
         error.emplace_back(Pair("name", __FUNCTION__));
         return  error;
 
-    }    
+    }
 
     auto &xapp = xbridge::App::instance();
     TransactionMap trlist = xapp.transactions();
@@ -315,7 +315,7 @@ Value dxGetOrder(const Array & params, bool fHelp)
 
     }
 
-    uint256 id(params[0].get_str());    
+    uint256 id(params[0].get_str());
 
     auto &xapp = xbridge::App::instance();
 
@@ -546,7 +546,7 @@ Value dxMakeOrder(const Array &params, bool fHelp)
         obj.emplace_back(Pair("taker_size",     util::xBridgeValueFromAmount(util::xBridgeAmountFromReal(toAmount))));
         const auto &createdTime = xbridge::App::instance().transaction(id)->created;
         obj.emplace_back(Pair("created_at",     util::iso8601(createdTime)));
-        obj.emplace_back(Pair("updated_at",     util::iso8601(bpt::second_clock::universal_time())));
+        obj.emplace_back(Pair("updated_at",     util::iso8601(bpt::microsec_clock::universal_time())));
         obj.emplace_back(Pair("block_id",       blockHash.GetHex()));
         obj.emplace_back(Pair("status",         "created"));
         return obj;
@@ -557,7 +557,7 @@ Value dxMakeOrder(const Array &params, bool fHelp)
         error.emplace_back(Pair("error", xbridge::xbridgeErrorText(statusCode)));
         error.emplace_back(Pair("code", statusCode));
         error.emplace_back(Pair("name", "dxMakeOrder"));
-        
+
         return error;
 
     }
@@ -641,7 +641,7 @@ Value dxTakeOrder(const Array & params, bool fHelp)
             result.emplace_back(Pair("taker", txDescr->toCurrency));
             result.emplace_back(Pair("taker_size", util::xBridgeValueFromAmount(txDescr->toAmount)));
 
-            result.emplace_back(Pair("updated_at", util::iso8601(bpt::second_clock::universal_time())));
+            result.emplace_back(Pair("updated_at", util::iso8601(bpt::microsec_clock::universal_time())));
             result.emplace_back(Pair("created_at", util::iso8601(txDescr->created)));
 
             result.emplace_back(Pair("status", "filled"));
@@ -697,7 +697,7 @@ Value dxTakeOrder(const Array & params, bool fHelp)
         result.emplace_back(Pair("taker", txDescr->toCurrency));
         result.emplace_back(Pair("taker_size", util::xBridgeValueFromAmount(txDescr->toAmount)));
 
-        result.emplace_back(Pair("updated_at", util::iso8601(bpt::second_clock::universal_time())));
+        result.emplace_back(Pair("updated_at", util::iso8601(bpt::microsec_clock::universal_time())));
         result.emplace_back(Pair("created_at", util::iso8601(txDescr->created)));
 
         result.emplace_back(Pair("status", txDescr->strState()));
