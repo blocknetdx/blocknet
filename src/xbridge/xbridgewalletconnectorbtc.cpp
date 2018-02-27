@@ -85,7 +85,9 @@ bool listaccounts(const std::string & rpcuser, const std::string & rpcpasswd,
     }
     catch (std::exception & e)
     {
-        LOG() << "listaccounts exception " << e.what();
+        if(fDebug)
+            LOG() << "listaccounts exception " << e.what();
+
         return false;
     }
 
