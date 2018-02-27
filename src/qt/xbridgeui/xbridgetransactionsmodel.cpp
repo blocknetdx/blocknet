@@ -12,6 +12,8 @@
 
 #include <QApplication>
 #include <QDateTime>
+
+#include "xbridge/posixtimeconversion.h"
 //******************************************************************************
 //******************************************************************************
 XBridgeTransactionsModel::XBridgeTransactionsModel()

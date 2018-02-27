@@ -17,6 +17,7 @@
 #include "ui_interface.h"
 #include "init.h"
 #include "wallet.h"
+#include "servicenodeman.h"
 #include "xbridgewalletconnector.h"
 #include "xbridgewalletconnectorbtc.h"
 #include "xbridgewalletconnectorbcc.h"
@@ -608,6 +609,27 @@ std::vector<std::string> App::availableCurrencies() const
     }
 
     return currencies;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+std::vector<std::string> App::networkCurrencies() const
+{
+    std::set<string> coins;
+    std::vector<CServicenode> snodes = mnodeman.GetFullServicenodeVector();
+    // Obtain unique xwallets supported across network
+    for (CServicenode &sn : snodes) {
+        for (auto &w : sn.connectedWallets) {
+            if (!coins.count(w.strWalletName))
+                coins.insert(w.strWalletName);
+        }
+    }
+    if (!coins.empty()) {
+        std::vector<std::string> result(coins.size());
+        std::copy(coins.begin(), coins.end(), std::back_inserter(result));
+        return result;
+    }
+    return std::vector<string>();
 }
 
 //*****************************************************************************

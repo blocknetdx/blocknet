@@ -47,6 +47,70 @@ using TransactionVector = std::vector<xbridge::TransactionDescrPtr>;
 namespace bpt           = boost::posix_time;
 
 
+
+//******************************************************************************
+//******************************************************************************
+Value dxGetLocalTokens(const Array & params, bool fHelp)
+{
+    if (fHelp) {
+
+        throw runtime_error("dxGetLocalTokens\nList currencies supported by the wallet.");
+
+    }
+    if (params.size() > 0) {
+
+        Object error;
+        error.emplace_back(Pair("error",
+                                "This function does not accept any parameter"));
+        error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
+        return  error;
+
+    }
+
+    Array r;
+
+    std::vector<std::string> currencies = xbridge::App::instance().availableCurrencies();
+    for (std::string currency : currencies) {
+
+        r.emplace_back(currency);
+
+    }
+    return r;
+}
+
+//******************************************************************************
+//******************************************************************************
+Value dxGetNetworkTokens(const Array & params, bool fHelp)
+{
+    if (fHelp) {
+
+        throw runtime_error("dxGetNetworkTokens\nList coins supported by the network.");
+
+    }
+    if (params.size() > 0) {
+
+        Object error;
+        error.emplace_back(Pair("error",
+                                "This function does not accept any parameters"));
+        error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
+        return  error;
+
+    }
+
+    Array r;
+
+    std::vector<std::string> currencies = xbridge::App::instance().networkCurrencies();
+    for (std::string currency : currencies) {
+
+        r.emplace_back(currency);
+
+    }
+    return r;
+}
+
+//******************************************************************************
+//******************************************************************************
+
 /** \brief Returns the list of open and pending transactions
   * \param params A list of input params.
   * \param fHelp For debug purposes, throw the exception describing parameters.
@@ -1284,4 +1348,77 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
             return error;
         }
     }
+}
+
+//******************************************************************************
+//******************************************************************************
+json_spirit::Value dxGetMyOrders(const json_spirit::Array& params, bool fHelp)
+{
+    if (fHelp) {
+
+        throw runtime_error("dxGetMyOrders");
+
+    }
+
+    if (!params.empty()) {
+
+        Object error;
+        error.emplace_back(Pair("error",
+                                "This function does not accept any parameters"));
+        error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
+        return  error;
+
+    }
+
+    xbridge::App & xapp = xbridge::App::instance();
+
+    Array r;
+
+    TransactionMap trList = xbridge::App::instance().transactions();
+    {
+        if(trList.empty()) {
+
+            LOG() << "empty  transactions list ";
+            return r;
+
+        }
+
+        for(auto i : trList)
+        {
+
+            const auto& t = *i.second;
+
+            if(!t.isLocal())
+                continue;
+
+            xbridge::WalletConnectorPtr connFrom = xapp.connectorByCurrency(t.fromCurrency);
+            xbridge::WalletConnectorPtr connTo   = xapp.connectorByCurrency(t.toCurrency);
+
+            Object o;
+
+            o.emplace_back(Pair("id", t.id.GetHex()));
+
+            // maker data
+            o.emplace_back(Pair("maker", t.fromCurrency));
+            o.emplace_back(Pair("maker_size", util::xBridgeValueFromAmount(t.fromAmount)));
+            o.emplace_back(Pair("maker_address", connFrom->fromXAddr(t.from)));
+            // taker data
+            o.emplace_back(Pair("taker", t.toCurrency));
+            o.emplace_back(Pair("taker_size", util::xBridgeValueFromAmount(t.toAmount)));
+            o.emplace_back(Pair("taker_address", connFrom->fromXAddr(t.to)));
+            // dates
+            o.emplace_back(Pair("updated_at", util::iso8601(t.txtime)));
+            o.emplace_back(Pair("created_at", util::iso8601(t.created)));
+
+            // should we make returning value correspond to the description or vice versa?
+            // Order status: created|open|pending|filled|canceled
+            o.emplace_back(Pair("status", t.strState()));
+
+            r.emplace_back(o);
+        }
+
+
+    }
+
+    return r;
 }
