@@ -642,8 +642,12 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
     }
 
     uint256 txid = uint256(packet->data());
-    std::string scurrency = std::string(reinterpret_cast<const char *>(packet->data()+32));
-    std::string dcurrency = std::string(reinterpret_cast<const char *>(packet->data()+48));
+    uint32_t offset = XBridgePacket::hashSize;
+
+    std::string scurrency = std::string(reinterpret_cast<const char *>(packet->data()+offset));
+    offset += 8;
+    std::string dcurrency = std::string(reinterpret_cast<const char *>(packet->data()+offset));
+    offset += 8;
 
     xbridge::App & xapp = App::instance();
     WalletConnectorPtr sconn = xapp.connectorByCurrency(scurrency);
@@ -678,15 +682,26 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
     // create tx item
     ptr.reset(new TransactionDescr);
     ptr->id           = txid;
+
     ptr->fromCurrency = scurrency;
-    ptr->fromAmount   = *reinterpret_cast<boost::uint64_t *>(packet->data()+40);
+    ptr->fromAmount   = *reinterpret_cast<boost::uint64_t *>(packet->data()+offset);
+    offset += sizeof(uint64_t);
+
     ptr->toCurrency   = dcurrency;
-    ptr->toAmount     = *reinterpret_cast<boost::uint64_t *>(packet->data()+56);
-    ptr->hubAddress   = std::vector<unsigned char>(packet->data()+64, packet->data()+84);
-    ptr->created      = util::intToTime(*reinterpret_cast<boost::uint64_t *>(packet->data()+84));
+    ptr->toAmount     = *reinterpret_cast<boost::uint64_t *>(packet->data()+offset);
+    offset += sizeof(uint64_t);
+
+    ptr->hubAddress   = std::vector<unsigned char>(packet->data()+offset, packet->data()+offset+XBridgePacket::addressSize;);
+    offset += XBridgePacket::addressSize;
+
+    ptr->created      = util::intToTime(*reinterpret_cast<boost::uint64_t *>(packet->data()+offset));
+    offset += sizeof(uint64_t);
+
     ptr->state        = TransactionDescr::trPending;
     ptr->sPubKey      = spubkey;
-    ptr->blockHash    = uint256(packet->data()+124);
+
+    ptr->blockHash    = uint256(packet->data()+offset);
+    offset += XBridgePacket::hashSize;
 
     xapp.appendTransaction(ptr);
 
