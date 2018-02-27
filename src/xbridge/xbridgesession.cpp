@@ -691,7 +691,7 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
     ptr->toAmount     = *reinterpret_cast<boost::uint64_t *>(packet->data()+offset);
     offset += sizeof(uint64_t);
 
-    ptr->hubAddress   = std::vector<unsigned char>(packet->data()+offset, packet->data()+offset+XBridgePacket::addressSize;);
+    ptr->hubAddress   = std::vector<unsigned char>(packet->data()+offset, packet->data()+offset+XBridgePacket::addressSize);
     offset += XBridgePacket::addressSize;
 
     ptr->created      = util::intToTime(*reinterpret_cast<boost::uint64_t *>(packet->data()+offset));
