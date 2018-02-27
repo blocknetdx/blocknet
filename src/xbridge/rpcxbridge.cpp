@@ -898,16 +898,20 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
         std::sort(bidsVector.begin(), bidsVector.end(),
                   [](const xbridge::TransactionDescrPtr &a, const xbridge::TransactionDescrPtr &b)
         {
-            const auto priceA = util::xBridgeValueFromAmount(a->fromAmount) / util::xBridgeValueFromAmount(a->toAmount);
-            const auto priceB = util::xBridgeValueFromAmount(b->fromAmount) / util::xBridgeValueFromAmount(b->toAmount);
+            const auto priceA = util::xBridgeValueFromAmount(a->fromAmount) /
+                                util::xBridgeValueFromAmount(a->toAmount);
+            const auto priceB = util::xBridgeValueFromAmount(b->fromAmount) /
+                                util::xBridgeValueFromAmount(b->toAmount);
             return priceA > priceB;
         });
 
         std::sort(asksVector.begin(), asksVector.end(),
                   [](const xbridge::TransactionDescrPtr &a, const xbridge::TransactionDescrPtr &b)
         {
-            const auto priceA = util::xBridgeValueFromAmount(a->fromAmount) / util::xBridgeValueFromAmount(a->toAmount);
-            const auto priceB = util::xBridgeValueFromAmount(b->fromAmount) / util::xBridgeValueFromAmount(b->toAmount);
+            const auto priceA = util::xBridgeValueFromAmount(a->fromAmount) /
+                                util::xBridgeValueFromAmount(a->toAmount);
+            const auto priceB = util::xBridgeValueFromAmount(b->fromAmount) /
+                                util::xBridgeValueFromAmount(b->toAmount);
             return priceA < priceB;
         });
 
@@ -937,25 +941,30 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 if(tr2 == nullptr)
                     return false;
 
-                const auto priceA = util::xBridgeValueFromAmount(tr1->fromAmount) / util::xBridgeValueFromAmount(tr1->toAmount);
-                const auto priceB = util::xBridgeValueFromAmount(tr2->fromAmount) / util::xBridgeValueFromAmount(tr2->toAmount);
+                const auto priceA = util::xBridgeValueFromAmount(tr1->fromAmount) /
+                                    util::xBridgeValueFromAmount(tr1->toAmount);
+                const auto priceB = util::xBridgeValueFromAmount(tr2->fromAmount) /
+                                    util::xBridgeValueFromAmount(tr2->toAmount);
 
                 return priceA < priceB;
             });
 
-            const auto bidsCount = std::count_if(bidsList.begin(), bidsList.end(), [bidsItem, floatCompare](const TransactionPair &a)
+            const auto bidsCount = std::count_if(bidsList.begin(), bidsList.end(),
+                                                 [bidsItem, floatCompare](const TransactionPair &a)
             {
                 const auto &tr = a.second;
 
                 if(tr == nullptr)
                     return false;
 
-                const auto price = util::xBridgeValueFromAmount(tr->fromAmount) / util::xBridgeValueFromAmount(tr->toAmount);
+                const auto price =  util::xBridgeValueFromAmount(tr->fromAmount) /
+                                    util::xBridgeValueFromAmount(tr->toAmount);
 
                 const auto &bestTr = bidsItem->second;
                 if (bestTr != nullptr)
                 {
-                    const auto bestBidPrice = util::xBridgeValueFromAmount(bestTr->fromAmount) / util::xBridgeValueFromAmount(bestTr->toAmount);
+                    const auto bestBidPrice = util::xBridgeValueFromAmount(bestTr->fromAmount) /
+                                              util::xBridgeValueFromAmount(bestTr->toAmount);
                     return floatCompare(price, bestBidPrice);
                 }
 
@@ -966,8 +975,11 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 const auto &tr = bidsItem->second;
                 if (tr != nullptr)
                 {
-                    const auto bidPrice = util::xBridgeValueFromAmount(tr->fromAmount) / util::xBridgeValueFromAmount(tr->toAmount);
-                    bids.emplace_back(Array{bidPrice, util::xBridgeValueFromAmount(tr->fromAmount), (int64_t)bidsCount});
+                    const auto bidPrice = util::xBridgeValueFromAmount(tr->fromAmount) /
+                                          util::xBridgeValueFromAmount(tr->toAmount);
+                    bids.emplace_back(Array{bidPrice,
+                                            util::xBridgeValueFromAmount(tr->fromAmount),
+                                            static_cast<int64_t>(bidsCount)});
                 }
             }
 
@@ -984,24 +996,29 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 if(tr2 == nullptr)
                     return false;
 
-                const auto priceA = util::xBridgeValueFromAmount(tr1->fromAmount) / util::xBridgeValueFromAmount(tr1->toAmount);
-                const auto priceB = util::xBridgeValueFromAmount(tr2->fromAmount) / util::xBridgeValueFromAmount(tr2->toAmount);
+                const auto priceA = util::xBridgeValueFromAmount(tr1->toAmount) /
+                                    util::xBridgeValueFromAmount(tr1->fromAmount);
+                const auto priceB = util::xBridgeValueFromAmount(tr2->toAmount) /
+                                    util::xBridgeValueFromAmount(tr2->fromAmount);
                 return priceA < priceB;
             });
 
-            const auto asksCount = std::count_if(asksList.begin(), asksList.end(), [asksItem, floatCompare](const TransactionPair &a)
+            const auto asksCount = std::count_if(asksList.begin(), asksList.end(),
+                                                 [asksItem, floatCompare](const TransactionPair &a)
             {
                 const auto &tr = a.second;
 
                 if(tr == nullptr)
                     return false;
 
-                const auto price = util::xBridgeValueFromAmount(tr->fromAmount) / util::xBridgeValueFromAmount(tr->toAmount);
+                const auto price = util::xBridgeValueFromAmount(tr->toAmount) /
+                                   util::xBridgeValueFromAmount(tr->fromAmount);
 
                 const auto &bestTr = asksItem->second;
                 if (bestTr != nullptr)
                 {
-                    const auto bestAskPrice = util::xBridgeValueFromAmount(bestTr->fromAmount) / util::xBridgeValueFromAmount(bestTr->toAmount);
+                    const auto bestAskPrice = util::xBridgeValueFromAmount(bestTr->toAmount) /
+                                              util::xBridgeValueFromAmount(bestTr->fromAmount);
                     return floatCompare(price, bestAskPrice);
                 }
 
@@ -1012,8 +1029,11 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 const auto &tr = asksItem->second;
                 if (tr != nullptr)
                 {
-                    const auto askPrice = util::xBridgeValueFromAmount(tr->fromAmount) / util::xBridgeValueFromAmount(tr->toAmount);
-                    asks.emplace_back(Array{askPrice, util::xBridgeValueFromAmount(tr->fromAmount), static_cast<int64_t>(asksCount)});
+                    const auto askPrice = util::xBridgeValueFromAmount(tr->toAmount) /
+                                          util::xBridgeValueFromAmount(tr->fromAmount);
+                    asks.emplace_back(Array{askPrice,
+                                            util::xBridgeValueFromAmount(tr->fromAmount),
+                                            static_cast<int64_t>(asksCount)});
                 }
             }
 
@@ -1072,7 +1092,8 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 //calculate asks and push to array
                 const auto fromAmount   = asksVector[i]->fromAmount;
                 const auto toAmount     = asksVector[i]->toAmount;
-                const auto askPrice     = util::xBridgeValueFromAmount(fromAmount) / util::xBridgeValueFromAmount(toAmount);
+                const auto askPrice     = util::xBridgeValueFromAmount(toAmount) /
+                                          util::xBridgeValueFromAmount(fromAmount);
                 const auto askSize      = util::xBridgeValueFromAmount(fromAmount);
                 const auto asksCount    = std::count_if(asksList.begin(), asksList.end(),
                                                      [askPrice, floatCompare](const TransactionPair &a)
@@ -1082,14 +1103,15 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                     if(tr == nullptr)
                         return false;
 
-                    const auto price = util::xBridgeValueFromAmount(tr->fromAmount) / util::xBridgeValueFromAmount(tr->toAmount);
+                    const auto price = util::xBridgeValueFromAmount(tr->toAmount) /
+                                       util::xBridgeValueFromAmount(tr->fromAmount);
 
                     return floatCompare(price, askPrice);
                 });
 
                 ask.emplace_back(askPrice);
                 ask.emplace_back(askSize);
-                ask.emplace_back((int64_t)asksCount);
+                ask.emplace_back(static_cast<int64_t>(asksCount));
 
                 asks.emplace_back(ask);
             }
@@ -1129,9 +1151,10 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 Array ask;
                 const auto fromAmount   = asksVector[i]->fromAmount;
                 const auto toAmount     = asksVector[i]->toAmount;
-                const auto askPrice = util::xBridgeValueFromAmount(fromAmount) / util::xBridgeValueFromAmount(toAmount);
+                const auto askPrice     = util::xBridgeValueFromAmount(toAmount) /
+                                          util::xBridgeValueFromAmount(fromAmount);
                 ask.emplace_back(askPrice);
-                ask.emplace_back(util::xBridgeValueFromAmount(fromAmount));
+                ask.emplace_back(util::xBridgeValueFromAmount(toAmount));
                 ask.emplace_back(asksVector[i]->id.GetHex());
 
                 asks.emplace_back(ask);
@@ -1157,8 +1180,10 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 if(tr2 == nullptr)
                     return false;
 
-                const auto priceA = util::xBridgeValueFromAmount(tr1->fromAmount) / util::xBridgeValueFromAmount(tr1->toAmount);
-                const auto priceB = util::xBridgeValueFromAmount(tr2->fromAmount) / util::xBridgeValueFromAmount(tr2->toAmount);
+                const auto priceA = util::xBridgeValueFromAmount(tr1->fromAmount) /
+                                    util::xBridgeValueFromAmount(tr1->toAmount);
+                const auto priceB = util::xBridgeValueFromAmount(tr2->fromAmount) /
+                                    util::xBridgeValueFromAmount(tr2->toAmount);
 
                 return priceA < priceB;
             });
@@ -1167,7 +1192,8 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 const auto &tr = bidsItem->second;
                 if (tr != nullptr)
                 {
-                    const auto bidPrice = util::xBridgeValueFromAmount(tr->fromAmount) / util::xBridgeValueFromAmount(tr->toAmount);
+                    const auto bidPrice = util::xBridgeValueFromAmount(tr->fromAmount) /
+                                          util::xBridgeValueFromAmount(tr->toAmount);
                     bids.emplace_back(bidPrice);
                     bids.emplace_back(util::xBridgeValueFromAmount(tr->fromAmount));
 
@@ -1184,7 +1210,8 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                         if(tr->id == otherTr->id)
                             continue;
 
-                        const auto otherTrBidPrice = util::xBridgeValueFromAmount(otherTr->fromAmount) / util::xBridgeValueFromAmount(otherTr->toAmount);
+                        const auto otherTrBidPrice = util::xBridgeValueFromAmount(otherTr->fromAmount) /
+                                                     util::xBridgeValueFromAmount(otherTr->toAmount);
 
                         if(!floatCompare(bidPrice, otherTrBidPrice))
                             continue;
@@ -1209,8 +1236,10 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 if(tr2 == nullptr)
                     return false;
 
-                const auto priceA = util::xBridgeValueFromAmount(tr1->fromAmount) / util::xBridgeValueFromAmount(tr1->toAmount);
-                const auto priceB = util::xBridgeValueFromAmount(tr2->fromAmount) / util::xBridgeValueFromAmount(tr2->toAmount);
+                const auto priceA = util::xBridgeValueFromAmount(tr1->toAmount) /
+                                    util::xBridgeValueFromAmount(tr1->fromAmount);
+                const auto priceB = util::xBridgeValueFromAmount(tr2->toAmount) /
+                                    util::xBridgeValueFromAmount(tr2->fromAmount);
                 return priceA < priceB;
             });
 
@@ -1218,9 +1247,10 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 const auto &tr = asksItem->second;
                 if (tr != nullptr)
                 {
-                    const auto askPrice = util::xBridgeValueFromAmount(tr->fromAmount) / util::xBridgeValueFromAmount(tr->toAmount);
+                    const auto askPrice = util::xBridgeValueFromAmount(tr->toAmount) /
+                                          util::xBridgeValueFromAmount(tr->fromAmount);
                     asks.emplace_back(askPrice);
-                    asks.emplace_back(util::xBridgeValueFromAmount(tr->fromAmount));
+                    asks.emplace_back(util::xBridgeValueFromAmount(tr->toAmount));
 
                     Array asksIds;
                     asksIds.emplace_back(tr->id.GetHex());
@@ -1235,7 +1265,8 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                         if(tr->id == otherTr->id)
                             continue;
 
-                        const auto otherTrAskPrice = util::xBridgeValueFromAmount(otherTr->fromAmount) / util::xBridgeValueFromAmount(otherTr->toAmount);
+                        const auto otherTrAskPrice = util::xBridgeValueFromAmount(otherTr->toAmount) /
+                                                     util::xBridgeValueFromAmount(otherTr->fromAmount);
 
                         if(!floatCompare(askPrice, otherTrAskPrice))
                             continue;
@@ -1254,7 +1285,8 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
 
         default:
             Object error;
-            error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS)));
+            error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS,
+                                                                       "value of detailLeve need be between [1..4]")));
             error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
             error.emplace_back(Pair("name", "dxGetOrderBook"));
             return error;
