@@ -646,8 +646,13 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
 
     std::string scurrency = std::string(reinterpret_cast<const char *>(packet->data()+offset));
     offset += 8;
+    uint64_t samount = *reinterpret_cast<boost::uint64_t *>(packet->data()+offset);
+    offset += sizeof(uint64_t);
+
     std::string dcurrency = std::string(reinterpret_cast<const char *>(packet->data()+offset));
     offset += 8;
+    uint64_t damount = *reinterpret_cast<boost::uint64_t *>(packet->data()+offset);
+    offset += sizeof(uint64_t);
 
     xbridge::App & xapp = App::instance();
     WalletConnectorPtr sconn = xapp.connectorByCurrency(scurrency);
@@ -684,12 +689,10 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
     ptr->id           = txid;
 
     ptr->fromCurrency = scurrency;
-    ptr->fromAmount   = *reinterpret_cast<boost::uint64_t *>(packet->data()+offset);
-    offset += sizeof(uint64_t);
+    ptr->fromAmount   = samount;
 
     ptr->toCurrency   = dcurrency;
-    ptr->toAmount     = *reinterpret_cast<boost::uint64_t *>(packet->data()+offset);
-    offset += sizeof(uint64_t);
+    ptr->toAmount     = damount;
 
     ptr->hubAddress   = std::vector<unsigned char>(packet->data()+offset, packet->data()+offset+XBridgePacket::addressSize);
     offset += XBridgePacket::addressSize;
@@ -2358,6 +2361,16 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet)
     if (e.isStarted())
     {
         TransactionPtr tr = e.pendingTransaction(txid);
+
+        if(tr->state() == Transaction::trInvalid)
+            tr = e.transaction(txid);
+
+        if(tr->state() == Transaction::trInvalid)
+        {
+            LOG() << "can't find transaction " << __FUNCTION__;
+            return true;
+        }
+
         if (!packet->verify(tr->a_pk1()) && !packet->verify(tr->b_pk1()))
         {
             LOG() << "invalid packet signature " << __FUNCTION__;
