@@ -401,8 +401,9 @@ void App::Impl::onSend(const std::vector<unsigned char> & id, const std::vector<
     }
 
     // timestamp
-    uint64_t timestamp = std::time(0);
-    unsigned char * ptr = reinterpret_cast<unsigned char *>(&timestamp);
+    boost::posix_time::ptime timestamp = boost::posix_time::microsec_clock::universal_time();
+    uint64_t timestampValue = util::timeToInt(timestamp);
+    unsigned char * ptr = reinterpret_cast<unsigned char *>(&timestampValue);
     msg.insert(msg.end(), ptr, ptr + sizeof(uint64_t));
 
     // body
@@ -895,7 +896,9 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
 //        assert(entry.rawAddress.size() == 20 && "incorrect raw address length, need 20 bytes");
     }
 
-    boost::uint32_t timestamp = time(0);
+    boost::posix_time::ptime timestamp = boost::posix_time::microsec_clock::universal_time();
+    uint64_t timestampValue = util::timeToInt(timestamp);
+
     blockHash = chainActive.Tip()->pprev->GetBlockHash();
 
     std::vector<unsigned char> firstUtxoSig = outputsForUse.at(0).signature;
@@ -906,13 +909,13 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
               to.begin(), to.end(),
               toCurrency.begin(), toCurrency.end(),
               BEGIN(toAmount), END(toAmount),
-              BEGIN(timestamp), END(timestamp),
+              BEGIN(timestampValue), END(timestampValue),
               blockHash.begin(), blockHash.end(),
               firstUtxoSig.begin(), firstUtxoSig.end());
 
     TransactionDescrPtr ptr(new TransactionDescr);
-    ptr->created      = boost::posix_time::from_time_t(timestamp);
-    ptr->txtime       = boost::posix_time::from_time_t(timestamp);
+    ptr->created      = timestamp;
+    ptr->txtime       = timestamp;
     ptr->id           = id;
     ptr->from         = connFrom->toXAddr(from);
     ptr->fromCurrency = fromCurrency;
@@ -1009,7 +1012,7 @@ bool App::Impl::sendPendingTransaction(const TransactionDescrPtr & ptr)
         ptr->packet->append(ptr->to);
         ptr->packet->append(tc);
         ptr->packet->append(ptr->toAmount);
-        ptr->packet->append(static_cast<uint32_t>(boost::posix_time::to_time_t(ptr->created)));
+        ptr->packet->append(util::timeToInt(ptr->created));
         ptr->packet->append(ptr->blockHash.begin(), 32);
 
 

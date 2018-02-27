@@ -58,7 +58,7 @@ public:
                            const std::vector<unsigned char>     & destAddr,
                            const std::string                    & destCurrency,
                            const uint64_t                       & destAmount,
-                           const uint32_t                       & timestamp,
+                           const uint64_t                       & timestamp,
                            const std::vector<unsigned char>     & mpubkey,
                            const std::vector<wallet::UtxoEntry> & items,
                            uint256                              & blockHash,

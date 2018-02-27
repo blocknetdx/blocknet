@@ -91,7 +91,7 @@ enum XBridgeCommand
 
     // exchange transaction
     //
-    // xbcTransaction  (148 bytes min)
+    // xbcTransaction  (152 bytes min)
     // clients not process this messages, only exchange
     //    uint256  client transaction id
     //    20 bytes source address
@@ -100,7 +100,7 @@ enum XBridgeCommand
     //    20 bytes destination address
     //    8 bytes  destination currency
     //    uint64   destination amount
-    //    uint32_t timestamp
+    //    uint64   timestamp
     //
     //    array of unspent outputs used in transaction
     //      uint32_t count of array items
@@ -109,15 +109,15 @@ enum XBridgeCommand
     //        uint32_t out idx
     xbcTransaction = 3,
     //
-    // xbcPendingTransaction (120 bytes)
+    // xbcPendingTransaction (124 bytes)
     // exchange broadcast send this message, send list of opened transactions
     //    uint256 transaction id
     //    8 bytes source currency
-    //    uint64 source amount
+    //    uint64  source amount
     //    8 bytes destination currency
-    //    uint64 destination amount
+    //    uint64  destination amount
     //    uint160 hub address
-    //    uint32_t timestamp
+    //    uint64  timestamp
     //    uint256 block hash
     xbcPendingTransaction = 4,
     //
@@ -177,7 +177,7 @@ enum XBridgeCommand
     //    uint160  hub address
     //    uint256  hub transaction id
     //    20 bytes source address
-    //    uint256 data tx id, 32 bytes
+    //    uint256  data tx id, 32 bytes
     //    opponent public key, 33 bytes
     xbcTransactionCreateA = 10,
     //
@@ -185,8 +185,8 @@ enum XBridgeCommand
     //    uint160 hub address
     //    uint160 client address
     //    uint256 hub transaction id
-    //    string deposit tx id
-    //    string inner script (TODO delete later)
+    //    string  deposit tx id
+    //    string  inner script (TODO delete later)
     xbcTransactionCreatedA = 11,
     //
     // xbcTransactionCreateB (205 bytes min)

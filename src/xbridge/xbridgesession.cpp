@@ -382,11 +382,11 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
 
     DEBUG_TRACE();
 
-    // size must be > 148 bytes
-    if (packet->size() < 148)
+    // size must be > 152 bytes
+    if (packet->size() < 152)
     {
         ERR() << "invalid packet size for xbcTransaction "
-              << "need min 148 bytes, received " << packet->size() << " "
+              << "need min 152 bytes, received " << packet->size() << " "
               << __FUNCTION__;
         return false;
     }
@@ -411,8 +411,8 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
     uint64_t damount = *static_cast<uint64_t *>(static_cast<void *>(packet->data()+offset));
     offset += sizeof(uint64_t);
 
-    uint32_t timestamp = *static_cast<uint32_t *>(static_cast<void *>(packet->data()+offset));
-    offset += sizeof(uint32_t);
+    uint64_t timestamp = *static_cast<uint64_t *>(static_cast<void *>(packet->data()+offset));
+    offset += sizeof(uint64_t);
 
     uint256 blockHash(packet->data()+offset);
     offset += XBridgePacket::hashSize;
@@ -601,7 +601,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
             reply->append(sc);
             reply->append(tr->b_amount());
             reply->append(m_myid);
-            reply->append(static_cast<uint32_t>(boost::posix_time::to_time_t(tr->createdTime())));
+            reply->append(util::timeToInt(tr->createdTime()));
             reply->append(tr->blockHash().begin(), 32);
 
             reply->sign(e.pubKey(), e.privKey());
@@ -626,10 +626,10 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
 
     DEBUG_TRACE();
 
-    if (packet->size() != 120)
+    if (packet->size() != 124)
     {
         ERR() << "incorrect packet size for xbcPendingTransaction "
-              << "need 120 received " << packet->size() << " "
+              << "need 124 received " << packet->size() << " "
               << __FUNCTION__;
         return false;
     }
@@ -642,8 +642,17 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
     }
 
     uint256 txid = uint256(packet->data());
-    std::string scurrency = std::string(reinterpret_cast<const char *>(packet->data()+32));
-    std::string dcurrency = std::string(reinterpret_cast<const char *>(packet->data()+48));
+    uint32_t offset = XBridgePacket::hashSize;
+
+    std::string scurrency = std::string(reinterpret_cast<const char *>(packet->data()+offset));
+    offset += 8;
+    uint64_t samount = *reinterpret_cast<boost::uint64_t *>(packet->data()+offset);
+    offset += sizeof(uint64_t);
+
+    std::string dcurrency = std::string(reinterpret_cast<const char *>(packet->data()+offset));
+    offset += 8;
+    uint64_t damount = *reinterpret_cast<boost::uint64_t *>(packet->data()+offset);
+    offset += sizeof(uint64_t);
 
     xbridge::App & xapp = App::instance();
     WalletConnectorPtr sconn = xapp.connectorByCurrency(scurrency);
@@ -678,15 +687,24 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
     // create tx item
     ptr.reset(new TransactionDescr);
     ptr->id           = txid;
+
     ptr->fromCurrency = scurrency;
-    ptr->fromAmount   = *reinterpret_cast<boost::uint64_t *>(packet->data()+40);
+    ptr->fromAmount   = samount;
+
     ptr->toCurrency   = dcurrency;
-    ptr->toAmount     = *reinterpret_cast<boost::uint64_t *>(packet->data()+56);
-    ptr->hubAddress   = std::vector<unsigned char>(packet->data()+64, packet->data()+84);
-    ptr->created      = boost::posix_time::from_time_t(*reinterpret_cast<boost::uint32_t *>(packet->data()+84));
+    ptr->toAmount     = damount;
+
+    ptr->hubAddress   = std::vector<unsigned char>(packet->data()+offset, packet->data()+offset+XBridgePacket::addressSize);
+    offset += XBridgePacket::addressSize;
+
+    ptr->created      = util::intToTime(*reinterpret_cast<boost::uint64_t *>(packet->data()+offset));
+    offset += sizeof(uint64_t);
+
     ptr->state        = TransactionDescr::trPending;
     ptr->sPubKey      = spubkey;
-    ptr->blockHash    = uint256(packet->data()+92);
+
+    ptr->blockHash    = uint256(packet->data()+offset);
+    offset += XBridgePacket::hashSize;
 
     xapp.appendTransaction(ptr);
 
@@ -2343,6 +2361,16 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet)
     if (e.isStarted())
     {
         TransactionPtr tr = e.pendingTransaction(txid);
+
+        if(tr->state() == Transaction::trInvalid)
+            tr = e.transaction(txid);
+
+        if(tr->state() == Transaction::trInvalid)
+        {
+            LOG() << "can't find transaction " << __FUNCTION__;
+            return true;
+        }
+
         if (!packet->verify(tr->a_pk1()) && !packet->verify(tr->b_pk1()))
         {
             LOG() << "invalid packet signature " << __FUNCTION__;
@@ -2564,7 +2592,7 @@ void Session::sendListOfTransactions()
         packet->append(tc);
         packet->append(ptr->b_amount());
         packet->append(m_p->m_myid);
-        packet->append(static_cast<uint32_t>(boost::posix_time::to_time_t(ptr->createdTime())));
+        packet->append(util::timeToInt(ptr->createdTime()));
         packet->append(ptr->blockHash().begin(), 32);
 
         packet->sign(e.pubKey(), e.privKey());

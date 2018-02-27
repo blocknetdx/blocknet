@@ -70,7 +70,7 @@ public:
                 const std::vector<unsigned char> & destAddr,
                 const std::string                & destCurrency,
                 const uint64_t                   & destAmount,
-                const std::time_t                & created,
+                const uint64_t                   & created,
                 const uint256                    & blockHash,
                 const std::vector<unsigned char> & mpubkey);
 

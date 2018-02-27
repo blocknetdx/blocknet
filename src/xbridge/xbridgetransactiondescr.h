@@ -110,8 +110,8 @@ struct TransactionDescr
         , lockTimeTx2(0)
         , state(trNew)
         , reason(0)
-        , created(boost::posix_time::second_clock::universal_time())
-        , txtime(boost::posix_time::second_clock::universal_time())
+        , created(boost::posix_time::microsec_clock::universal_time())
+        , txtime(boost::posix_time::microsec_clock::universal_time())
     {}
 
 //    bool operator == (const XBridgeTransactionDescr & d) const
@@ -144,20 +144,20 @@ struct TransactionDescr
     TransactionDescr(const TransactionDescr & d)
     {
         state   = trNew;
-        created = boost::posix_time::second_clock::universal_time();
-        txtime  = boost::posix_time::second_clock::universal_time();
+        created = boost::posix_time::microsec_clock::universal_time();
+        txtime  = boost::posix_time::microsec_clock::universal_time();
 
         copyFrom(d);
     }
 
     void updateTimestamp()
     {
-        txtime       = boost::posix_time::second_clock::universal_time();
+        txtime       = boost::posix_time::microsec_clock::universal_time();
     }
 
     void updateTimestamp(const TransactionDescr & d)
     {
-        txtime       = boost::posix_time::second_clock::universal_time();
+        txtime       = boost::posix_time::microsec_clock::universal_time();
         if (created > d.created)
         {
             created = d.created;

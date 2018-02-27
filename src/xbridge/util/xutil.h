@@ -44,6 +44,9 @@ namespace bpt = boost::posix_time;
      */
     const std::string iso8601(const bpt::ptime &time);
 
+    boost::uint64_t timeToInt(const bpt::ptime &time);
+    bpt::ptime intToTime(const uint64_t& number);
+
     double xBridgeValueFromAmount(uint64_t amount);
 
     uint64_t xBridgeAmountFromReal(double val);
