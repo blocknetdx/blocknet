@@ -49,11 +49,7 @@ void XBridgeTransactionsView::setupUi()
                                << xbridge::TransactionDescr::trHold
                                << xbridge::TransactionDescr::trCreated
                                << xbridge::TransactionDescr::trSigned
-                               << xbridge::TransactionDescr::trCommited
-                               << xbridge::TransactionDescr::trExpired
-                               << xbridge::TransactionDescr::trOffline
-                               << xbridge::TransactionDescr::trDropped
-                               << xbridge::TransactionDescr::trInvalid;
+                               << xbridge::TransactionDescr::trCommited;
 
     m_transactionsProxy.setAcceptedStates(transactionsAccetpedStates);
 
@@ -137,7 +133,11 @@ void XBridgeTransactionsView::setupUi()
 
     QList<xbridge::TransactionDescr::State> historicTransactionsAccetpedStates;
     historicTransactionsAccetpedStates << xbridge::TransactionDescr::trFinished
-                                       << xbridge::TransactionDescr::trCancelled;
+                                       << xbridge::TransactionDescr::trCancelled
+                                       << xbridge::TransactionDescr::trExpired
+                                       << xbridge::TransactionDescr::trOffline
+                                       << xbridge::TransactionDescr::trDropped
+                                       << xbridge::TransactionDescr::trInvalid;
 
     m_historicTransactionsProxy.setAcceptedStates(historicTransactionsAccetpedStates);
 
