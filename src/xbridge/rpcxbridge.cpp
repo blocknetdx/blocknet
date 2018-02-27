@@ -1360,11 +1360,11 @@ json_spirit::Value dxGetMyOrders(const json_spirit::Array& params, bool fHelp)
 
     }
 
-    if (params.size() > 0) {
+    if (!params.empty()) {
 
         Object error;
         error.emplace_back(Pair("error",
-                                "This function does not accept any parameter"));
+                                "This function does not accept any parameters"));
         error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
         return  error;
 
@@ -1372,7 +1372,6 @@ json_spirit::Value dxGetMyOrders(const json_spirit::Array& params, bool fHelp)
 
     xbridge::App & xapp = xbridge::App::instance();
 
-    // todo: should we lock?
     Array r;
 
     TransactionMap trList = xbridge::App::instance().transactions();
@@ -1383,8 +1382,6 @@ json_spirit::Value dxGetMyOrders(const json_spirit::Array& params, bool fHelp)
             return r;
 
         }
-
-        // using TransactionMap    = std::map<uint256, xbridge::TransactionDescrPtr>;
 
         for(auto i : trList)
         {
@@ -1409,10 +1406,9 @@ json_spirit::Value dxGetMyOrders(const json_spirit::Array& params, bool fHelp)
             o.emplace_back(Pair("taker", t.toCurrency));
             o.emplace_back(Pair("taker_size", util::xBridgeValueFromAmount(t.toAmount)));
             o.emplace_back(Pair("taker_address", connFrom->fromXAddr(t.to)));
-
-            // todo: check if it's ISO 8601
-            o.emplace_back(Pair("updated_at", bpt::to_iso_extended_string(t.txtime)));
-            o.emplace_back(Pair("created_at", bpt::to_iso_extended_string(t.created)));
+            // dates
+            o.emplace_back(Pair("updated_at", util::iso8601(t.txtime)));
+            o.emplace_back(Pair("created_at", util::iso8601(t.created)));
 
             // should we make returning value correspond to the description or vice versa?
             // Order status: created|open|pending|filled|canceled
