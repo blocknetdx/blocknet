@@ -506,16 +506,14 @@ bool Exchange::acceptTransaction(const uint256                        & txid,
 
 //*****************************************************************************
 //*****************************************************************************
-bool Exchange::deletePendingTransactions(const uint256 & id)
+bool Exchange::deletePendingTransaction(const uint256 & id)
 {
     boost::mutex::scoped_lock l(m_p->m_pendingTransactionsLock);
 
     LOG() << "delete pending transaction <" << id.GetHex() << ">";
 
     if (!m_p->m_pendingTransactions.count(id))
-    {
-        return true;
-    }
+        return false;
 
     m_p->m_pendingTransactions.erase(id);
 
@@ -525,9 +523,7 @@ bool Exchange::deletePendingTransactions(const uint256 & id)
         if (m_p->m_utxoTxMap.count(id))
         {
             for (const wallet::UtxoEntry & item : m_p->m_utxoTxMap[id])
-            {
                 m_p->m_utxoItems.erase(item);
-            }
 
             m_p->m_utxoTxMap.erase(id);
         }
@@ -552,9 +548,7 @@ bool Exchange::deleteTransaction(const uint256 & txid)
         if (m_p->m_utxoTxMap.count(txid))
         {
             for (const wallet::UtxoEntry & item : m_p->m_utxoTxMap[txid])
-            {
                 m_p->m_utxoItems.erase(item);
-            }
 
             m_p->m_utxoTxMap.erase(txid);
         }
@@ -745,10 +739,9 @@ size_t Exchange::eraseExpiredTransactions()
 
     boost::mutex::scoped_lock l(m_p->m_pendingTransactionsLock);
 
-    std::map<uint256, TransactionPtr>::const_iterator i = m_p->m_pendingTransactions.begin();
-    for (; i != m_p->m_pendingTransactions.end(); )
+    for (const std::pair<uint256, TransactionPtr> & i : m_p->m_pendingTransactions)
     {
-        TransactionPtr ptr = i->second;
+        TransactionPtr ptr = i.second;
 
         boost::mutex::scoped_lock l(ptr->m_lock);
 
@@ -756,16 +749,15 @@ size_t Exchange::eraseExpiredTransactions()
         {
             LOG() << "transaction expired <" << ptr->id().ToString() << ">";
 
-            i = m_p->m_pendingTransactions.erase(i);
+            deletePendingTransaction(ptr->id());
+
             ++result;
-        }
-        else
-        {
-            ++i;
         }
     }
 
-    LOG() << "deleted " << result << "  expired transactions";
+    if(result > 0)
+        LOG() << "deleted " << result << "  expired transactions";
+
     return result;
 }
 

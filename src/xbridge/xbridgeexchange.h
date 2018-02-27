@@ -74,7 +74,7 @@ public:
                            const std::vector<unsigned char>     & mpubkey,
                            const std::vector<wallet::UtxoEntry> & items);
 
-    bool deletePendingTransactions(const uint256 & id);
+    bool deletePendingTransaction(const uint256 & id);
     bool deleteTransaction(const uint256 & id);
 
     bool updateTransactionWhenHoldApplyReceived(const TransactionPtr & tx,
