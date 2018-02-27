@@ -401,7 +401,7 @@ void App::Impl::onSend(const std::vector<unsigned char> & id, const std::vector<
 
     // timestamp
     boost::posix_time::ptime timestamp = boost::posix_time::microsec_clock::universal_time();
-    uint64_t timestampValue = static_cast<uint64_t>(util::timeToInt(timestamp));
+    uint64_t timestampValue = util::timeToInt(timestamp);
     unsigned char * ptr = reinterpret_cast<unsigned char *>(&timestampValue);
     msg.insert(msg.end(), ptr, ptr + sizeof(uint64_t));
 
@@ -875,7 +875,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     }
 
     boost::posix_time::ptime timestamp = boost::posix_time::microsec_clock::universal_time();
-    boost::int64_t timestampValue = util::timeToInt(timestamp);
+    uint64_t timestampValue = util::timeToInt(timestamp);
 
     blockHash = chainActive.Tip()->pprev->GetBlockHash();
 

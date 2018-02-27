@@ -190,31 +190,21 @@ uint64_t xBridgeAmountFromReal(double val)
 
 }
 
-int64_t timeToInt(const boost::posix_time::ptime& time)
+uint64_t timeToInt(const boost::posix_time::ptime& time)
 {
     bpt::ptime start(boost::gregorian::date(1970,1,1));
     bpt::time_duration timeFromEpoch = time - start;
     boost::int64_t res = timeFromEpoch.total_milliseconds();
 
-    return res;
-}
-
-uint64_t timeToInt(const boost::posix_time::ptime& time)
-{
-    return static_cast<uint64_t>(timeToInt(time));
-}
-
-boost::posix_time::ptime intToTime(const int64_t& number)
-{
-    bpt::ptime start(boost::gregorian::date(1970,1,1));
-    bpt::ptime res = start + bpt::milliseconds(number);
-
-    return res;
+    return static_cast<uint64_t>(res);
 }
 
 boost::posix_time::ptime intToTime(const uint64_t& number)
 {
-    return intToTime(static_cast<int64_t>(number));
+    bpt::ptime start(boost::gregorian::date(1970,1,1));
+    bpt::ptime res = start + bpt::milliseconds(static_cast<int64_t>(number));
+
+    return res;
 }
 
 } // namespace util
