@@ -547,6 +547,13 @@ extern json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool 
 extern json_spirit::Value dxGetMyOrders(const json_spirit::Array& params, bool fHelp);
 
 
+/**
+ * @brief dxGetTokenBalances
+ * @param params The list of input params, should be empty
+ * @param fHelp If is true then an exception with parameter description message will be thrown
+ * @return list of currences with balance
+ */
+extern json_spirit::Value  dxGetTokenBalances(const json_spirit::Array& params, bool fHelp);
 /** @} */
 
 
