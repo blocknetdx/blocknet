@@ -30,6 +30,7 @@
 #include "xbridgeexchange.h"
 #include "xbridgetransaction.h"
 #include "xbridgetransactiondescr.h"
+#include "xuiconnector.h"
 #include "rpcserver.h"
 
 using namespace json_spirit;
@@ -624,6 +625,7 @@ Value dxMakeOrder(const Array &params, bool fHelp)
            toAddress, toCurrency, util::xBridgeAmountFromReal(toAmount), id, blockHash);
 
     if (statusCode == xbridge::SUCCESS) {
+        xuiConnector.NotifyXBridgeTransactionReceived(xbridge::App::instance().transaction(id));
         Object obj;
         obj.emplace_back(Pair("id",             id.GetHex()));
         obj.emplace_back(Pair("maker_address",  fromAddress));

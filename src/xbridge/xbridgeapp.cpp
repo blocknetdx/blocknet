@@ -958,7 +958,6 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
         boost::mutex::scoped_lock l(m_p->m_txLocker);
         m_p->m_transactions[id] = ptr;
     }
-
     return xbridge::Error::SUCCESS;
 }
 
@@ -1032,7 +1031,6 @@ bool App::Impl::sendPendingTransaction(const TransactionDescrPtr & ptr)
     onSend(addr, ptr->packet->body());
 
     ptr->state = TransactionDescr::trPending;
-    xuiConnector.NotifyXBridgeTransactionReceived(ptr);
     xuiConnector.NotifyXBridgeTransactionChanged(ptr->id);
 
     return true;
