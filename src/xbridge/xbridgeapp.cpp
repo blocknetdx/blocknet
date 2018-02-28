@@ -1032,6 +1032,7 @@ bool App::Impl::sendPendingTransaction(const TransactionDescrPtr & ptr)
     onSend(addr, ptr->packet->body());
 
     ptr->state = TransactionDescr::trPending;
+    xuiConnector.NotifyXBridgeTransactionReceived(ptr);
     xuiConnector.NotifyXBridgeTransactionChanged(ptr->id);
 
     return true;
