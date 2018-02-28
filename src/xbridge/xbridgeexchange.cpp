@@ -749,7 +749,19 @@ size_t Exchange::eraseExpiredTransactions()
         {
             LOG() << "transaction expired <" << ptr->id().ToString() << ">";
 
-            deletePendingTransaction(ptr->id());
+            m_p->m_pendingTransactions.erase(id);
+
+            {
+                boost::mutex::scoped_lock l(m_p->m_utxoLocker);
+
+                if (m_p->m_utxoTxMap.count(id))
+                {
+                    for (const wallet::UtxoEntry & item : m_p->m_utxoTxMap[id])
+                        m_p->m_utxoItems.erase(item);
+
+                    m_p->m_utxoTxMap.erase(id);
+                }
+            }
 
             ++result;
         }
