@@ -1476,3 +1476,31 @@ json_spirit::Value dxGetMyOrders(const json_spirit::Array& params, bool fHelp)
 
     return r;
 }
+json_spirit::Value  dxGetTokenBalances(const json_spirit::Array& params, bool fHelp)
+{
+    if (fHelp) {
+
+        throw runtime_error("dxGetTokenBalances");
+
+    }
+
+    if (params.size() != 0) {
+
+        Object error;
+        error.emplace_back(Pair("error",
+                                "This function does not accept any parameters"));
+        error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
+        return  error;
+
+    }
+    Object res;
+    const auto &connectors = xbridge::App::instance().connectors();
+    for(const auto &connector : connectors) {
+
+        res.emplace_back(connector->currency, connector->getWalletBalance());
+
+    }
+
+    return res;
+
+}
