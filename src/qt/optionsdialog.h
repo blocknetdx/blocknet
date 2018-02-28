@@ -49,6 +49,8 @@ private slots:
     void clearStatusLabel();
     void doProxyIpChecks(QValidatedLineEdit* pUiProxyIp, int nProxyPort);
 
+    void on_theme_activated(const QString &arg1);
+
 signals:
     void proxyIpChecks(QValidatedLineEdit* pUiProxyIp, int nProxyPort);
 
@@ -57,6 +59,8 @@ private:
     OptionsModel* model;
     QDataWidgetMapper* mapper;
     bool fProxyIpValid;
+    QString *styleSheet;
+    QString *origStyleSheet;
 };
 
 #endif // BITCOIN_QT_OPTIONSDIALOG_H

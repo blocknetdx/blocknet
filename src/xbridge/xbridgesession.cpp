@@ -2387,7 +2387,7 @@ bool Session::Impl::finishTransaction(TransactionPtr tr)
     Exchange & e = Exchange::instance();
     if (!e.isStarted())
     {
-        return;
+        return false; // Missing ret val
     }
 
     {
@@ -2464,7 +2464,7 @@ bool Session::Impl::rollbackTransaction(TransactionPtr tr)
     Exchange & e = Exchange::instance();
     if (!e.isStarted())
     {
-        return;
+        return false; // Added missing ret val
     }
 
     if (tr->state() >= xbridge::Transaction::trCreated)

@@ -817,8 +817,11 @@ QString loadStyleSheet()
     if (isExternal(theme)) {
         // External CSS
         settings.setValue("fCSSexternal", true);
-        boost::filesystem::path pathAddr = GetDataDir() / "themes/";
-        cssName = pathAddr.string().c_str() + theme + "/css/theme.css";
+        QString dataDir(GetDataDir().string().c_str());
+        QString themePath = dataDir + "/themes/";
+        //boost::filesystem::path pathAddr = GetDataDir() / "themes/";
+        //cssName = pathAddr.string().c_str() + theme + "/css/theme.css";
+        cssName = themePath + theme;
     } else {
         // Build-in CSS
         settings.setValue("fCSSexternal", false);
@@ -832,7 +835,8 @@ QString loadStyleSheet()
 
     QFile qFile(cssName);
     if (qFile.open(QFile::ReadOnly)) {
-        styleSheet = QLatin1String(qFile.readAll());
+        styleSheet = QLatin1String(qFile.readAll());        
+        qFile.close();
     }
 
     return styleSheet;
