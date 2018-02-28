@@ -507,7 +507,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
         return true;
     }
 
-    LOG() << "received transaction " << HexStr(id) << std::endl
+    LOG() << "received transaction " << id.GetHex() << std::endl
           << "    from " << HexStr(saddr) << std::endl
           << "             " << scurrency << " : " << samount << std::endl
           << "    to   " << HexStr(daddr) << std::endl
