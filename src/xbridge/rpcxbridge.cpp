@@ -265,9 +265,9 @@ Value dxGetOrderHistory(const json_spirit::Array& params, bool fHelp)
     }
 
     Array arr;
-    TransactionMap trlist = xbridge::App::instance().history();
+    TransactionMap history = xbridge::App::instance().history();
 
-    if(trlist.empty()) {
+    if(history.empty()) {
 
         LOG() << "empty history transactions list";
         return arr;
@@ -302,7 +302,7 @@ Value dxGetOrderHistory(const json_spirit::Array& params, bool fHelp)
     std::vector<xbridge::TransactionDescrPtr> trVector;
 
     //copy all transactions between startTimeFrame and endTimeFrame
-    std::copy_if(trlist.begin(), trlist.end(), std::inserter(trList, trList.end()),
+    std::copy_if(history.begin(), history.end(), std::inserter(trList, trList.end()),
                  [&startTimeFrame, &endTimeFrame, &toCurrency, &fromCurrency](const TransactionPair &transaction){
         return  ((transaction.second->created)      <   bpt::from_time_t(endTimeFrame)) &&
                 ((transaction.second->created)      >   bpt::from_time_t(startTimeFrame)) &&
@@ -360,9 +360,9 @@ Value dxGetOrderHistory(const json_spirit::Array& params, bool fHelp)
                     low = tr;
 
                 // calc prices, algo: to/from = price (in terms of to). e.g. LTC-SYS price = SYS-size / LTC-size = SYS per unit priced in LTC
-                double high_price = util::xBridgeValueFromAmount(high->toAmount)/util::xBridgeValueFromAmount(high->fromAmount);
-                double low_price = util::xBridgeValueFromAmount(low->toAmount)/util::xBridgeValueFromAmount(low->fromAmount);
-                double current_price = util::xBridgeValueFromAmount(tr->toAmount)/util::xBridgeValueFromAmount(tr->fromAmount);
+                double high_price = util::price(high);
+                double low_price = util::price(low);
+                double current_price = util::price(tr);
 
                 // record highest if current price larger than highest price
                 if (current_price > high_price)
@@ -380,10 +380,10 @@ Value dxGetOrderHistory(const json_spirit::Array& params, bool fHelp)
         }
 
         // latest prices
-        double open_price = util::xBridgeValueFromAmount(open->toAmount)/util::xBridgeValueFromAmount(open->fromAmount);
-        double close_price = util::xBridgeValueFromAmount(close->toAmount)/util::xBridgeValueFromAmount(close->fromAmount);
-        double high_price = util::xBridgeValueFromAmount(high->toAmount)/util::xBridgeValueFromAmount(high->fromAmount);
-        double low_price = util::xBridgeValueFromAmount(low->toAmount)/util::xBridgeValueFromAmount(low->fromAmount);
+        double open_price = util::price(open);
+        double close_price = util::price(close);
+        double high_price = util::price(high);
+        double low_price = util::price(low);
 
         // format: [ time, low, high, open, close, volume ]
         interval.emplace_back(util::iso8601(open->txtime));
