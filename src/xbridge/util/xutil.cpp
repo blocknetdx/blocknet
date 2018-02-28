@@ -207,4 +207,9 @@ boost::posix_time::ptime intToTime(const uint64_t& number)
     return res;
 }
 
+double price(const xbridge::TransactionDescrPtr ptr)
+{
+    return xBridgeValueFromAmount(ptr->toAmount) / xBridgeValueFromAmount(ptr->fromAmount);
+}
+
 } // namespace util

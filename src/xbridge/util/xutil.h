@@ -6,7 +6,7 @@
 
 #include "uint256.h"
 #include "logger.h"
-
+#include "xbridge/xbridgedef.h"
 #include <string>
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -43,6 +43,13 @@ namespace bpt = boost::posix_time;
      * @return string in ISO 8061 format
      */
     const std::string iso8601(const bpt::ptime &time);
+
+    /**
+     * @brief tranactionPrice - calculated transaction price - toAmount/fromAmount
+     * @param ptr - pointer to transaction description
+     * @return price of transaction
+     */
+    double price(const xbridge::TransactionDescrPtr ptr);
 
     boost::uint64_t timeToInt(const bpt::ptime &time);
     bpt::ptime intToTime(const uint64_t& number);
