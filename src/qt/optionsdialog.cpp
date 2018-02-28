@@ -30,6 +30,9 @@
 #include <QLocale>
 #include <QMessageBox>
 #include <QTimer>
+#include <QFileDialog>
+#include <QSettings>
+#include <QProcess>
 
 OptionsDialog::OptionsDialog(QWidget* parent, bool enableWallet) : QDialog(parent),
                                                                    ui(new Ui::OptionsDialog),
@@ -86,13 +89,17 @@ OptionsDialog::OptionsDialog(QWidget* parent, bool enableWallet) : QDialog(paren
     /* Theme selector external themes */
     boost::filesystem::path pathAddr = GetDataDir() / "themes";
     QDir dir(pathAddr.string().c_str());
-    dir.setFilter(QDir::Dirs | QDir::NoSymLinks | QDir::NoDotAndDotDot);
-    QFileInfoList list = dir.entryInfoList();
+    //dir.setFilter(QDir::Dirs | QDir::NoSymLinks | QDir::NoDotAndDotDot);
+    QStringList nameFilterList;
+    nameFilterList << "*.css";
+    //dir.setNameFilters(nameFilterList);
+    QFileInfoList list = dir.entryInfoList(nameFilterList);
 
     for (int i = 0; i < list.size(); ++i) {
         QFileInfo fileInfo = list.at(i);
         ui->theme->addItem(fileInfo.fileName(), QVariant(fileInfo.fileName()));
     }
+    ui->theme->addItem(QString("Custom"), QVariant("custom"));
 
     /* Language selector */
     QDir translations(":translations");
@@ -132,12 +139,18 @@ OptionsDialog::OptionsDialog(QWidget* parent, bool enableWallet) : QDialog(paren
 
     /* setup/change UI elements when proxy IP is invalid/valid */
     connect(this, SIGNAL(proxyIpChecks(QValidatedLineEdit*, int)), this, SLOT(doProxyIpChecks(QValidatedLineEdit*, int)));
+
+    styleSheet = new QString();
+    origStyleSheet = new QString();
+    *origStyleSheet = GUIUtil::loadStyleSheet();
 }
 
 OptionsDialog::~OptionsDialog()
 {
     GUIUtil::saveWindowGeometry("nOptionsDialogWindow", this);
     delete ui;
+    delete styleSheet;
+    delete origStyleSheet;
 }
 
 void OptionsDialog::setModel(OptionsModel* model)
@@ -171,7 +184,7 @@ void OptionsDialog::setModel(OptionsModel* model)
     connect(ui->connectSocks, SIGNAL(clicked(bool)), this, SLOT(showRestartWarning()));
     /* Display */
     connect(ui->digits, SIGNAL(valueChanged()), this, SLOT(showRestartWarning()));
-    connect(ui->theme, SIGNAL(valueChanged()), this, SLOT(showRestartWarning()));
+    //connect(ui->theme, SIGNAL(valueChanged()), this, SLOT(showRestartWarning()));
     connect(ui->lang, SIGNAL(valueChanged()), this, SLOT(showRestartWarning()));
     connect(ui->thirdPartyTxUrls, SIGNAL(textChanged(const QString&)), this, SLOT(showRestartWarning()));
     connect(ui->showServicenodesTab, SIGNAL(clicked(bool)), this, SLOT(showRestartWarning()));
@@ -205,7 +218,7 @@ void OptionsDialog::setMapper()
     /* Display */
     mapper->addMapping(ui->digits, OptionsModel::Digits);
     mapper->addMapping(ui->theme, OptionsModel::Theme);
-    mapper->addMapping(ui->theme, OptionsModel::Theme);
+    //mapper->addMapping(ui->theme, OptionsModel::Theme);
     mapper->addMapping(ui->lang, OptionsModel::Language);
     mapper->addMapping(ui->unit, OptionsModel::DisplayUnit);
     mapper->addMapping(ui->thirdPartyTxUrls, OptionsModel::ThirdPartyTxUrls);
@@ -262,6 +275,8 @@ void OptionsDialog::on_okButton_clicked()
 void OptionsDialog::on_cancelButton_clicked()
 {
     reject();
+    parentWidget()->setStyleSheet(*origStyleSheet);
+    parentWidget()->update();
 }
 
 void OptionsDialog::showRestartWarning(bool fPersistent)
@@ -310,4 +325,55 @@ bool OptionsDialog::eventFilter(QObject* object, QEvent* event)
         }
     }
     return QDialog::eventFilter(object, event);
+}
+
+
+// Load a custom theme from user selected path
+void OptionsDialog::on_theme_activated(const QString &arg1)
+{
+    QString cssName;
+    boost::filesystem::path pathAddr = GetDataDir() / "themes";
+    QSettings settings;
+
+    if (arg1 == "Custom")
+    {
+        QFileDialog fileDialog(this, "Select a Custom Wallet UI Theme");
+        fileDialog.setFileMode(QFileDialog::AnyFile);
+        fileDialog.setNameFilter(tr("Custom Themes (*.css)"));
+        fileDialog.setDirectory(pathAddr.string().c_str());
+        if (fileDialog.exec())
+        {
+            QString fileName;
+            QStringList fileList = fileDialog.selectedFiles();
+            fileName = fileList[0];
+            cssName = fileName;
+            //boost::filesystem::path themeName = fileName.toStdString();
+            //boost::filesystem::path themeFullAddr = pathAddr / themeName;
+            settings.setValue("themeCustom", fileName); //themeFullAddr.string().c_str());
+        }
+    }
+    else if (arg1 == "Default")
+    {
+        cssName = ":/css/default";
+    }
+    else
+    {
+        boost::filesystem::path themeName = arg1.toStdString();
+        boost::filesystem::path themePath = pathAddr / themeName;
+        cssName = themePath.string().c_str();
+    }
+
+    //ui->statusLabel->setText(cssName);
+    QFile qFile(cssName);
+    if (qFile.open(QFile::ReadOnly)) {
+        qFile.seek(0);
+        *styleSheet = QLatin1String(qFile.readAll());
+        QDir::setCurrent(pathAddr.string().c_str());
+        parentWidget()->setStyleSheet(*styleSheet);
+        parentWidget()->update();
+        qFile.close();
+        //if (arg1 == "Custom") {
+        //    settings.setValue("themeCustom", cssName);
+        //}
+    }
 }

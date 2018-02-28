@@ -60,6 +60,7 @@
 #include <QTimer>
 #include <QToolBar>
 #include <QVBoxLayout>
+#include <QDir>
 
 #if QT_VERSION < 0x050000
 #include <QTextDocument>
@@ -113,7 +114,10 @@ BitcoinGUI::BitcoinGUI(const NetworkStyle* networkStyle, QWidget* parent) : QMai
                                                                             spinnerFrame(0)
 {
     /* Open CSS when configured */
+    boost::filesystem::path pathAddr = GetDataDir() / "themes";
+    QDir::setCurrent(pathAddr.string().c_str());
     this->setStyleSheet(GUIUtil::loadStyleSheet());
+    this->update();
 
     GUIUtil::restoreWindowGeometry("nWindow", QSize(850, 550), this);
 
