@@ -961,7 +961,6 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
         boost::mutex::scoped_lock l(m_p->m_txLocker);
         m_p->m_transactions[id] = ptr;
     }
-
     return xbridge::Error::SUCCESS;
 }
 
