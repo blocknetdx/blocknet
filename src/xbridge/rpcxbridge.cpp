@@ -245,16 +245,16 @@ Value dxGetOrderFills(const Array & params, bool fHelp)
     return arr;
 }
 
-Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp)
+Value dxGetOrderHistory(const json_spirit::Array& params, bool fHelp)
 {
 
     if (fHelp) {
 
-        throw runtime_error("dxGetTradeHistory "
-                            "(from currency) (to currency) (start time) (end time) (txids - optional) ");
+        throw runtime_error("dxGetOrderHistory "
+                            "(maker) (taker) (start time) (end time) (granularity) [optional](order_ids, default = false) ");
 
     }
-    if ((params.size() != 4 && params.size() != 5)) {
+    if (params.size() < 5) {
 
         Object error;
         error.emplace_back(Pair("error",
@@ -278,12 +278,25 @@ Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp)
     const auto toCurrency       = params[1].get_str();
     const auto startTimeFrame   = params[2].get_int();
     const auto endTimeFrame     = params[3].get_int();
-    bool isShowTxids = false;
-    if(params.size() == 5) {
+    const auto granularity      = params[4].get_int();
 
-        isShowTxids = (params[4].get_str() == "txids");
-
+    // Validate granularity
+    switch (granularity) {
+        case 60:
+        case 300:
+        case 900:
+        case 3600:
+        case 21600:
+        case 86400:
+            break;
+        default:
+            Object error;
+            error.emplace_back(Pair("error", "granularity must be one of: 60,300,900,3600,21600,86400"));
+            error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
+            return  error;
     }
+
+    bool isShowTxids = params.size() == 6 ? params[5].get_bool() : false;
 
     TransactionMap trList;
     std::vector<xbridge::TransactionDescrPtr> trVector;
@@ -300,84 +313,91 @@ Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp)
 
     if(trList.empty()) {
 
-        LOG() << "No transactions for the specified period " << __FUNCTION__;
+        LOG() << "No orders for the specified period " << __FUNCTION__;
         return  arr;
 
     }
 
-    RealVector toAmounts;
-    RealVector fromAmounts;
-
-    Object res;
-
-    Array times;
-    times.emplace_back(startTimeFrame);
-    times.emplace_back(endTimeFrame);
-    res.emplace_back(Pair("t", times));
-
     //copy values into vector
     for (const auto &trEntry : trList) {
-
-        const auto &tr          = trEntry.second;
-        const auto fromAmount   = util::xBridgeValueFromAmount(tr->fromAmount);
-        const auto toAmount     = util::xBridgeValueFromAmount(tr->toAmount);
-        toAmounts.emplace_back(toAmount);
-        fromAmounts.emplace_back(fromAmount);
+        const auto &tr = trEntry.second;
         trVector.push_back(tr);
-
     }
 
-
+    // Sort ascending by updated time
     std::sort(trVector.begin(), trVector.end(),
-              [](const xbridge::TransactionDescrPtr &a,  const xbridge::TransactionDescrPtr &b)
+              [](const xbridge::TransactionDescrPtr &a, const xbridge::TransactionDescrPtr &b)
     {
-         return (a->created) < (b->created);
+         return (a->txtime) < (b->txtime);
     });
 
-    Array opens;
-    //write start price
-    opens.emplace_back(util::xBridgeValueFromAmount(trVector[0]->fromAmount));
-    opens.emplace_back(util::xBridgeValueFromAmount(trVector[0]->toAmount));
-    res.emplace_back(Pair("o", opens));
+    // Setup intervals. Each time period (interval) has a high,low,open,close,volume. This code is
+    // responsible for calculating the results for each interval.
+    int jstart = 0;
+    for (int timeInterval = startTimeFrame; timeInterval < endTimeFrame; timeInterval += granularity) {
+        Array interval;
 
-    Array close;
-    //write end price
-    close.emplace_back(util::xBridgeValueFromAmount(trVector[trVector.size() - 1]->fromAmount));
-    close.emplace_back(util::xBridgeValueFromAmount(trVector[trVector.size() - 1]->toAmount));
-    res.emplace_back(Pair("c", close));
+        double volume = 0;
+        const xbridge::TransactionDescrPtr open = trVector[0]; // first order in interval
+        const xbridge::TransactionDescrPtr close = trVector[trVector.size()-1]; // last order in interval
+        xbridge::TransactionDescrPtr high = nullptr;
+        xbridge::TransactionDescrPtr low = nullptr;
+        Array orderIds;
 
-    Array volumes;
-    //write sum of bids and asks
-    volumes.emplace_back(accumulate(toAmounts.begin(), toAmounts.end(), .0));
-    volumes.emplace_back(accumulate(fromAmounts.begin(), fromAmounts.end(), .0));
-    res.emplace_back(Pair("v", volumes));
+        // start searching from point of last checked order (since orders are only processed once)
+        for (int j = jstart; j < trVector.size(); j++) {
+            const auto &tr = trVector[j];
+            uint64_t t = util::timeToInt(tr->txtime)/1000; // need seconds, timeToInt is in milliseconds
+            // only check orders within boundaries (time interval)
+            if (t >= timeInterval && t < timeInterval + granularity) {
+                // volume is based in "to amount" (track volume of what we're priced in, in this case orders are priced in "to amount")
+                volume += util::xBridgeValueFromAmount(high->toAmount);
 
-    Array highs;
-    //write higs values of the bids and asks  in timeframe
-    highs.emplace_back(*std::max_element(toAmounts.begin(), toAmounts.end()));
-    highs.emplace_back(*std::max_element(fromAmounts.begin(), fromAmounts.end()));
-    res.emplace_back(Pair("h", highs));
+                // defaults
+                if (high == nullptr)
+                    high = tr;
+                if (low == nullptr)
+                    low = tr;
 
-    Array lows;
-    //write lows values of the bids and ask in the timeframe
-    lows.emplace_back(*std::min_element(toAmounts.begin(), toAmounts.end()));
-    lows.emplace_back(*std::min_element(fromAmounts.begin(), fromAmounts.end()));
-    res.emplace_back(Pair("l", lows));
+                // calc prices, algo: to/from = price (in terms of to). e.g. LTC-SYS price = SYS-size / LTC-size = SYS per unit priced in LTC
+                double high_price = util::xBridgeValueFromAmount(high->toAmount)/util::xBridgeValueFromAmount(high->fromAmount);
+                double low_price = util::xBridgeValueFromAmount(low->toAmount)/util::xBridgeValueFromAmount(low->fromAmount);
+                double current_price = util::xBridgeValueFromAmount(tr->toAmount)/util::xBridgeValueFromAmount(tr->fromAmount);
 
-    if (isShowTxids) {
+                // record highest if current price larger than highest price
+                if (current_price > high_price)
+                    high = tr;
+                // record lowest if current price is lower than lowest price
+                if (current_price < low_price)
+                    low = tr;
 
-        Array tmp;
-        for(auto tr : trVector) {
+                // store order id if necessary
+                if (isShowTxids)
+                    orderIds.emplace_back(tr->id.GetHex());
 
-            tmp.emplace_back(tr->id.GetHex());
-
+                jstart = j; // want to skip already searched orders
+            }
         }
-        res.emplace_back(Pair("txids", tmp));
-    }
 
-    //write status
-    res.emplace_back(Pair("s", "ok"));
-    arr.emplace_back(res);
+        // latest prices
+        double open_price = util::xBridgeValueFromAmount(open->toAmount)/util::xBridgeValueFromAmount(open->fromAmount);
+        double close_price = util::xBridgeValueFromAmount(close->toAmount)/util::xBridgeValueFromAmount(close->fromAmount);
+        double high_price = util::xBridgeValueFromAmount(high->toAmount)/util::xBridgeValueFromAmount(high->fromAmount);
+        double low_price = util::xBridgeValueFromAmount(low->toAmount)/util::xBridgeValueFromAmount(low->fromAmount);
+
+        // format: [ time, low, high, open, close, volume ]
+        interval.emplace_back(util::iso8601(open->txtime));
+        interval.emplace_back(low_price);
+        interval.emplace_back(high_price);
+        interval.emplace_back(open_price);
+        interval.emplace_back(close_price);
+        interval.emplace_back(volume);
+
+        if (isShowTxids)
+            interval.emplace_back(orderIds);
+
+        arr.emplace_back(interval);
+    }
 
     return arr;
 }

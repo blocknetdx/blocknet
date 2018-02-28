@@ -484,7 +484,7 @@ extern json_spirit::Value dxCancelOrder(const json_spirit::Array& params, bool f
   ]
  * \endverbatim
  */
-extern json_spirit::Value dxGetTradeHistory(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value dxGetOrderHistory(const json_spirit::Array& params, bool fHelp);
 
 /**
  * @brief Returns transactions list in a form of 'order book'
