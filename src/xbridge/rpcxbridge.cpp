@@ -1497,7 +1497,7 @@ json_spirit::Value  dxGetTokenBalances(const json_spirit::Array& params, bool fH
     const auto &connectors = xbridge::App::instance().connectors();
     for(const auto &connector : connectors) {
 
-        res.emplace_back(connector->currency, connector->getWalletBalance());
+        res.emplace_back(connector->currency, boost::lexical_cast<std::string>(connector->getWalletBalance()));
 
     }
 
