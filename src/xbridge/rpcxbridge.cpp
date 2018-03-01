@@ -159,9 +159,9 @@ Value dxGetOrders(const Array & params, bool fHelp)
         Object jtr;
         jtr.emplace_back(Pair("id",             tr->id.GetHex()));
         jtr.emplace_back(Pair("maker",          tr->fromCurrency));
-        jtr.emplace_back(Pair("maker_size",     util::xBridgeValueFromAmount(tr->fromAmount)));
+        jtr.emplace_back(Pair("maker_size",     boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(tr->fromAmount))));
         jtr.emplace_back(Pair("taker",          tr->toCurrency));
-        jtr.emplace_back(Pair("taker_size",     util::xBridgeValueFromAmount(tr->toAmount)));
+        jtr.emplace_back(Pair("taker_size",     boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(tr->toAmount))));
         jtr.emplace_back(Pair("updated_at",     util::iso8601(tr->txtime)));
         jtr.emplace_back(Pair("created_at",     util::iso8601(tr->created)));
         jtr.emplace_back(Pair("status",         tr->strState()));
