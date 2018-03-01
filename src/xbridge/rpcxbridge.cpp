@@ -184,7 +184,7 @@ Value dxGetOrderFills(const Array & params, bool fHelp)
                             "(i.e. completed). Maker symbol is always listed first. The [combined] flag defaults \n"
                             "to true. When set to false [combined] will return only maker trades, switch maker \n"
                             "and taker to get the reverse.\n"
-                            "(maker) (taker) [optional](combined, default = true)"
+                            "(maker) (taker) (combined, default=true)[optional]"
                             );
 
     }
@@ -237,9 +237,9 @@ Value dxGetOrderFills(const Array & params, bool fHelp)
         tmp.emplace_back(Pair("id",         transaction->id.GetHex()));
         tmp.emplace_back(Pair("time",       util::iso8601(transaction->txtime)));
         tmp.emplace_back(Pair("maker",      transaction->fromCurrency));
-        tmp.emplace_back(Pair("maker_size", util::xBridgeValueFromAmount(transaction->fromAmount)));
+        tmp.emplace_back(Pair("maker_size", boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(transaction->fromAmount))));
         tmp.emplace_back(Pair("taker",      transaction->toCurrency));
-        tmp.emplace_back(Pair("taker_size", util::xBridgeValueFromAmount(transaction->toAmount)));
+        tmp.emplace_back(Pair("taker_size", boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(transaction->toAmount))));
         arr.emplace_back(tmp);
 
     }
