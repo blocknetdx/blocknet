@@ -98,6 +98,8 @@ Value dxGetNetworkTokens(const Array & params, bool fHelp)
 
     }
 
+    return dxGetLocalTokens(params, fHelp); // TODO Remove when xwallet broadcast is ready
+
     Array r;
 
     std::vector<std::string> currencies = xbridge::App::instance().networkCurrencies();
