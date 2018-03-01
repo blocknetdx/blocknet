@@ -888,11 +888,11 @@ Value dxCancelOrder(const Array &params, bool fHelp)
     obj.emplace_back(Pair("id", id.GetHex()));
 
     obj.emplace_back(Pair("maker", tx->fromCurrency));
-    obj.emplace_back(Pair("maker_size", util::xBridgeValueFromAmount(tx->fromAmount)));
+    obj.emplace_back(Pair("maker_size", boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(tx->fromAmount))));
     obj.emplace_back(Pair("maker_address", connFrom->fromXAddr(tx->from)));
 
     obj.emplace_back(Pair("taker", tx->toCurrency));
-    obj.emplace_back(Pair("taker_size", util::xBridgeValueFromAmount(tx->toAmount)));
+    obj.emplace_back(Pair("taker_size", boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(tx->toAmount))));
     obj.emplace_back(Pair("taker_address", connTo->fromXAddr(tx->to)));
 
     obj.emplace_back(Pair("updated_at", util::iso8601(tx->txtime)));
