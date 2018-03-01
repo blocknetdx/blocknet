@@ -58,7 +58,7 @@ public:
         deadlineTTL = 60 * 60 * 24,
 
         // number of blocks ttl
-        blocksTTL = 60
+        blocksTTL = 1440
     };
 
 public:
