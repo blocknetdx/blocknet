@@ -467,9 +467,9 @@ Value dxGetOrder(const Array & params, bool fHelp)
     Object result;
     result.emplace_back(Pair("id",          order->id.GetHex()));
     result.emplace_back(Pair("maker",       order->fromCurrency));
-    result.emplace_back(Pair("maker_size",  util::xBridgeValueFromAmount(order->fromAmount)));
+    result.emplace_back(Pair("maker_size",  boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(order->fromAmount))));
     result.emplace_back(Pair("taker",       order->toCurrency));
-    result.emplace_back(Pair("taker_size",  util::xBridgeValueFromAmount(order->toAmount)));
+    result.emplace_back(Pair("taker_size",  boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(order->toAmount))));
     result.emplace_back(Pair("updated_at",  util::iso8601(order->txtime)));
     result.emplace_back(Pair("created_at",  util::iso8601(order->created)));
     result.emplace_back(Pair("status",      order->strState()));
