@@ -45,11 +45,19 @@ namespace bpt = boost::posix_time;
     const std::string iso8601(const bpt::ptime &time);
 
     /**
-     * @brief tranactionPrice - calculated transaction price - toAmount/fromAmount
+     * @brief tranactionPrice - calculated transaction price in terms of bid price - toAmount/fromAmount
      * @param ptr - pointer to transaction description
      * @return price of transaction
      */
     double price(const xbridge::TransactionDescrPtr ptr);
+
+    /**
+     * @brief priceAsk - the inverted price calculation. Used by asks to calculate price in terms of bid price.
+     * askFromAmount/askToAmount.
+     * @param ptr - pointer to transaction description
+     * @return price of transaction
+     */
+    double priceBid(const xbridge::TransactionDescrPtr ptr);
 
     boost::uint64_t timeToInt(const bpt::ptime &time);
     bpt::ptime intToTime(const uint64_t& number);

@@ -211,5 +211,9 @@ double price(const xbridge::TransactionDescrPtr ptr)
 {
     return xBridgeValueFromAmount(ptr->toAmount) / xBridgeValueFromAmount(ptr->fromAmount);
 }
+double priceBid(const xbridge::TransactionDescrPtr ptr)
+{
+    return xBridgeValueFromAmount(ptr->fromAmount) / xBridgeValueFromAmount(ptr->toAmount);
+}
 
 } // namespace util
