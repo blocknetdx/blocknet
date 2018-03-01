@@ -1509,11 +1509,11 @@ json_spirit::Value  dxGetTokenBalances(const json_spirit::Array& params, bool fH
 
 //******************************************************************************
 //******************************************************************************
-Value dxGetLockedUtxo(const json_spirit::Array& params, bool fHelp)
+Value dxGetLockedUtxos(const json_spirit::Array& params, bool fHelp)
 {
     if (fHelp)
     {
-        throw runtime_error("dxGetLockedUtxo (id)\n"
+        throw runtime_error("dxGetLockedUtxos (id)\n"
                             "Return list of locked utxo of an order.");
     }
 
@@ -1522,7 +1522,7 @@ Value dxGetLockedUtxo(const json_spirit::Array& params, bool fHelp)
         Object error;
         error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS)));
         error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
-        error.emplace_back(Pair("name", "dxGetLockedUtxo"));
+        error.emplace_back(Pair("name", "dxGetLockedUtxos"));
         return error;
     }
 
@@ -1532,7 +1532,7 @@ Value dxGetLockedUtxo(const json_spirit::Array& params, bool fHelp)
         Object error;
         error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::NOT_EXCHANGE_NODE)));
         error.emplace_back(Pair("code", xbridge::NOT_EXCHANGE_NODE));
-        error.emplace_back(Pair("name", "dxGetLockedUtxo"));
+        error.emplace_back(Pair("name", "dxGetLockedUtxos"));
         return error;
     }
 
@@ -1546,7 +1546,7 @@ Value dxGetLockedUtxo(const json_spirit::Array& params, bool fHelp)
         Object error;
         error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::Error::TRANSACTION_NOT_FOUND, id.GetHex())));
         error.emplace_back(Pair("code", xbridge::Error::TRANSACTION_NOT_FOUND));
-        error.emplace_back(Pair("name", "dxGetLockedUtxo"));
+        error.emplace_back(Pair("name", "dxGetLockedUtxos"));
         return error;
     }
 
@@ -1557,7 +1557,7 @@ Value dxGetLockedUtxo(const json_spirit::Array& params, bool fHelp)
         Object error;
         error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::Error::TRANSACTION_NOT_FOUND, id.GetHex())));
         error.emplace_back(Pair("code", xbridge::Error::TRANSACTION_NOT_FOUND));
-        error.emplace_back(Pair("name", "dxGetLockedUtxo"));
+        error.emplace_back(Pair("name", "dxGetLockedUtxos"));
         return error;
     }
 
