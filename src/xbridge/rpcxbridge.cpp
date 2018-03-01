@@ -1398,11 +1398,11 @@ json_spirit::Value dxGetMyOrders(const json_spirit::Array& params, bool fHelp)
 
             // maker data
             o.emplace_back(Pair("maker", t.fromCurrency));
-            o.emplace_back(Pair("maker_size", util::xBridgeValueFromAmount(t.fromAmount)));
+            o.emplace_back(Pair("maker_size", boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(t.fromAmount))));
             o.emplace_back(Pair("maker_address", connFrom->fromXAddr(t.from)));
             // taker data
             o.emplace_back(Pair("taker", t.toCurrency));
-            o.emplace_back(Pair("taker_size", util::xBridgeValueFromAmount(t.toAmount)));
+            o.emplace_back(Pair("taker_size", boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(t.toAmount))));
             o.emplace_back(Pair("taker_address", connFrom->fromXAddr(t.to)));
             // dates
             o.emplace_back(Pair("updated_at", util::iso8601(t.txtime)));
