@@ -746,10 +746,10 @@ Value dxTakeOrder(const Array & params, bool fHelp)
             result.emplace_back(Pair("id", uint256().GetHex()));
 
             result.emplace_back(Pair("maker", txDescr->fromCurrency));
-            result.emplace_back(Pair("maker_size", util::xBridgeValueFromAmount(txDescr->fromAmount)));
+            result.emplace_back(Pair("maker_size", boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(txDescr->fromAmount))));
 
             result.emplace_back(Pair("taker", txDescr->toCurrency));
-            result.emplace_back(Pair("taker_size", util::xBridgeValueFromAmount(txDescr->toAmount)));
+            result.emplace_back(Pair("taker_size", boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(txDescr->toAmount))));
 
             result.emplace_back(Pair("updated_at", util::iso8601(bpt::microsec_clock::universal_time())));
             result.emplace_back(Pair("created_at", util::iso8601(txDescr->created)));
@@ -802,10 +802,10 @@ Value dxTakeOrder(const Array & params, bool fHelp)
         result.emplace_back(Pair("id", id.GetHex()));
 
         result.emplace_back(Pair("maker", txDescr->fromCurrency));
-        result.emplace_back(Pair("maker_size", util::xBridgeValueFromAmount(txDescr->fromAmount)));
+        result.emplace_back(Pair("maker_size", boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(txDescr->fromAmount))));
 
         result.emplace_back(Pair("taker", txDescr->toCurrency));
-        result.emplace_back(Pair("taker_size", util::xBridgeValueFromAmount(txDescr->toAmount)));
+        result.emplace_back(Pair("taker_size", boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(txDescr->toAmount))));
 
         result.emplace_back(Pair("updated_at", util::iso8601(bpt::microsec_clock::universal_time())));
         result.emplace_back(Pair("created_at", util::iso8601(txDescr->created)));
