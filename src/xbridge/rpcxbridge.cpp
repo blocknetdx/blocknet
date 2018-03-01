@@ -1530,8 +1530,8 @@ Value dxGetLockedUtxos(const json_spirit::Array& params, bool fHelp)
     if (!e.isStarted())
     {
         Object error;
-        error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::NOT_EXCHANGE_NODE)));
-        error.emplace_back(Pair("code", xbridge::NOT_EXCHANGE_NODE));
+        error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::Error::NOT_EXCHANGE_NODE)));
+        error.emplace_back(Pair("code", xbridge::Error::NOT_EXCHANGE_NODE));
         error.emplace_back(Pair("name", "dxGetLockedUtxos"));
         return error;
     }
