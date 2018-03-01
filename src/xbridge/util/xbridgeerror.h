@@ -17,7 +17,7 @@ namespace xbridge
     {
         // 'NO_ERROR' is defined (probably by some windows headers) when compiling windows targets
         SUCCESS                 = 0,
-        UNAUTHORIZED           = 1001,
+        UNAUTHORIZED            = 1001,
         UNKNOWN_ERROR           = 1002,
         BAD_REQUEST             = 1004,
         INVALID_MAKE_SYMBOL     = 1011,
@@ -35,7 +35,8 @@ namespace xbridge
         INVALID_PARAMETERS      = 1025,
         INVALID_ADDRESS         = 1026,
         INVALID_SIGNATURE       = 1027,
-        INVALID_STATE           = 1028
+        INVALID_STATE           = 1028,
+        NOT_EXCHANGE_NODE       = 1029
     };
 
     /**

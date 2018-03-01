@@ -50,6 +50,8 @@ public:
 
     bool checkUtxoItems(const uint256 & txid,
                         const std::vector<wallet::UtxoEntry> & items);
+    bool getUtxoItems(const uint256 & txid,
+                      std::vector<wallet::UtxoEntry> & items);
 
     bool createTransaction(const uint256                        & id,
                            const std::vector<unsigned char>     & sourceAddr,
