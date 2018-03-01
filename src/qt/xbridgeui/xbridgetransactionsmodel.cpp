@@ -106,7 +106,7 @@ QVariant XBridgeTransactionsModel::data(const QModelIndex & idx, int role) const
         }
         case Date:
         {
-            return QVariant(QDateTime::fromMSecsSinceEpoch(util::timeToInt(d->created)).
+            return QVariant(QDateTime::fromMSecsSinceEpoch(util::timeToInt(d->created) / 1000).
                             toString("dd/MM/yyyy HH:MM:ss.zzz"));
         }
         case Hash:
