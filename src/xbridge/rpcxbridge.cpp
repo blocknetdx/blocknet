@@ -953,6 +953,8 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
         {
             if(transaction.second == nullptr)
                 return false;
+            if (transaction.second->fromAmount <= 0 || transaction.second->toAmount <= 0)
+                return false;
 
             return  ((transaction.second->toCurrency == toCurrency) &&
                     (transaction.second->fromCurrency == fromCurrency));
@@ -963,6 +965,8 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                      [&toCurrency, &fromCurrency](const TransactionPair &transaction)
         {
             if(transaction.second == nullptr)
+                return false;
+            if (transaction.second->fromAmount <= 0 || transaction.second->toAmount <= 0)
                 return false;
 
             return  ((transaction.second->toCurrency == fromCurrency) &&
