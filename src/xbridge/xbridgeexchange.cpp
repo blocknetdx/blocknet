@@ -339,11 +339,15 @@ bool Exchange::createTransaction(const uint256                        & txid,
                                                mpubkey));
     if (!tr->isValid())
     {
+        LOG() << "created tx " <<  txid.ToString()
+              << " is not valid so rejected";
         return false;
     }
 
     if(tr->isExpiredByBlockNumber())
     {
+        LOG() << "tx " <<  txid.ToString()
+              << " is expired by block number so rejected";
         return false;
     }
 
@@ -366,10 +370,6 @@ bool Exchange::createTransaction(const uint256                        & txid,
                 m_p->m_pendingTransactions[txid]->updateTimestamp();
 
                 m_p->m_pendingTransactions[txid]->m_lock.unlock();
-            }
-            else if(m_p->m_pendingTransactions[txid]->isExpiredByBlockNumber())
-            {
-                m_p->m_pendingTransactions.erase(txid);
             }
             else
             {
@@ -766,7 +766,19 @@ size_t Exchange::eraseExpiredTransactions()
         {
             LOG() << "transaction expired <" << ptr->id().ToString() << ">";
 
-            deletePendingTransaction(ptr->id());
+            m_p->m_pendingTransactions.erase(ptr->id());
+
+            {
+                boost::mutex::scoped_lock l(m_p->m_utxoLocker);
+
+                if (m_p->m_utxoTxMap.count(ptr->id()))
+                {
+                    for (const wallet::UtxoEntry & item : m_p->m_utxoTxMap[ptr->id()])
+                        m_p->m_utxoItems.erase(item);
+
+                    m_p->m_utxoTxMap.erase(ptr->id());
+                }
+            }
 
             ++result;
         }

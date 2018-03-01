@@ -348,7 +348,7 @@ Value dxGetOrderHistory(const json_spirit::Array& params, bool fHelp)
         // start searching from point of last checked order (since orders are only processed once)
         for (int j = jstart; j < trVector.size(); j++) {
             const auto &tr = trVector[j];
-            uint64_t t = util::timeToInt(tr->txtime)/1000; // need seconds, timeToInt is in milliseconds
+            uint64_t t = util::timeToInt(tr->txtime)/1000/1000; // need seconds, timeToInt is in microseconds
             // only check orders within boundaries (time interval)
             if (t >= timeInterval && t < timeInterval + granularity) {
                 // volume is based in "to amount" (track volume of what we're priced in, in this case orders are priced in "to amount")
@@ -1475,6 +1475,36 @@ json_spirit::Value dxGetMyOrders(const json_spirit::Array& params, bool fHelp)
     }
 
     return r;
+}
+
+//******************************************************************************
+//******************************************************************************
+json_spirit::Value  dxGetTokenBalances(const json_spirit::Array& params, bool fHelp)
+{
+    if (fHelp) {
+
+        throw runtime_error("dxGetTokenBalances");
+
+    }
+
+    if (params.size() != 0) {
+
+        Object error;
+        error.emplace_back(Pair("error",
+                                "This function does not accept any parameters"));
+        error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
+        return  error;
+
+    }
+    Object res;
+    const auto &connectors = xbridge::App::instance().connectors();
+    for(const auto &connector : connectors) {
+
+        res.emplace_back(connector->currency, boost::lexical_cast<std::string>(connector->getWalletBalance()));
+
+    }
+
+    return res;
 }
 
 //******************************************************************************
