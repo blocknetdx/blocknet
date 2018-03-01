@@ -1058,7 +1058,7 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 {
                     const auto bidPrice = util::priceBid(tr);
                     bids.emplace_back(Array{boost::lexical_cast<std::string>(bidPrice),
-                                            boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(tr->fromAmount)),
+                                            boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(tr->toAmount)),
                                             static_cast<int64_t>(bidsCount)});
                 }
             }
@@ -1107,7 +1107,7 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 {
                     const auto askPrice = util::price(tr);
                     asks.emplace_back(Array{boost::lexical_cast<std::string>(askPrice),
-                                            boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(tr->toAmount)),
+                                            boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(tr->fromAmount)),
                                             static_cast<int64_t>(asksCount)});
                 }
             }
@@ -1132,7 +1132,7 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
 
                 Array bid;
                 //calculate bids and push to array
-                const auto bidAmount    = bidsVector[i]->fromAmount;
+                const auto bidAmount    = bidsVector[i]->toAmount;
                 const auto bidPrice     = util::priceBid(bidsVector[i]);
                 const auto bidSize      = util::xBridgeValueFromAmount(bidAmount);
                 const auto bidsCount    = std::count_if(bidsList.begin(), bidsList.end(),
@@ -1164,7 +1164,7 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
 
                 Array ask;
                 //calculate asks and push to array
-                const auto bidAmount    = asksVector[i]->toAmount;
+                const auto bidAmount    = asksVector[i]->fromAmount;
                 const auto askPrice     = util::price(asksVector[i]);
                 const auto bidSize      = util::xBridgeValueFromAmount(bidAmount);
                 const auto asksCount    = std::count_if(asksList.begin(), asksList.end(),
@@ -1202,7 +1202,7 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                     continue;
 
                 Array bid;
-                const auto bidAmount   = bidsVector[i]->fromAmount;
+                const auto bidAmount   = bidsVector[i]->toAmount;
                 const auto bidPrice    = util::priceBid(bidsVector[i]);
                 bid.emplace_back(boost::lexical_cast<std::string>(bidPrice));
                 bid.emplace_back(boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(bidAmount)));
@@ -1219,7 +1219,7 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                     continue;
 
                 Array ask;
-                const auto bidAmount    = asksVector[i]->toAmount;
+                const auto bidAmount    = asksVector[i]->fromAmount;
                 const auto askPrice     = util::price(asksVector[i]);
                 ask.emplace_back(boost::lexical_cast<std::string>(askPrice));
                 ask.emplace_back(boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(bidAmount)));
@@ -1260,7 +1260,7 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 {
                     const auto bidPrice = util::priceBid(tr);
                     bids.emplace_back(boost::lexical_cast<std::string>(bidPrice));
-                    bids.emplace_back(boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(tr->fromAmount)));
+                    bids.emplace_back(boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(tr->toAmount)));
 
                     Array bidsIds;
                     bidsIds.emplace_back(tr->id.GetHex());
@@ -1311,7 +1311,7 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 {
                     const auto askPrice = util::price(tr);
                     asks.emplace_back(boost::lexical_cast<std::string>(askPrice));
-                    asks.emplace_back(boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(tr->toAmount)));
+                    asks.emplace_back(boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(tr->fromAmount)));
 
                     Array asksIds;
                     asksIds.emplace_back(tr->id.GetHex());
