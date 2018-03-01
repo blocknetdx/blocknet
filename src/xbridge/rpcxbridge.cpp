@@ -1541,7 +1541,7 @@ Value dxGetLockedUtxo(const json_spirit::Array& params, bool fHelp)
     xbridge::TransactionPtr pendingTx = e.pendingTransaction(id);
     xbridge::TransactionPtr acceptedTx = e.transaction(id);
 
-    if (!pendingTx && !acceptedTx)
+    if (!pendingTx->isValid() && !acceptedTx->isValid())
     {
         Object error;
         error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::Error::TRANSACTION_NOT_FOUND, id.GetHex())));
@@ -1569,10 +1569,9 @@ Value dxGetLockedUtxo(const json_spirit::Array& params, bool fHelp)
     Object obj;
     obj.emplace_back(Pair("id", id.GetHex()));
 
-    if(pendingTx)
+    if(pendingTx->isValid())
         obj.emplace_back(Pair(pendingTx->a_currency(), utxo));
-
-    if(acceptedTx)
+    else if(acceptedTx->isValid())
         obj.emplace_back(Pair(acceptedTx->a_currency() + " and " + acceptedTx->b_currency(), utxo));
 
     return obj;
