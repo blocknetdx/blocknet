@@ -262,6 +262,23 @@ bool Exchange::checkUtxoItems(const uint256 & txid, const std::vector<wallet::Ut
 
 //*****************************************************************************
 //*****************************************************************************
+bool Exchange::getUtxoItems(const uint256 & txid, std::vector<wallet::UtxoEntry> & items)
+{
+    boost::mutex::scoped_lock l(m_p->m_utxoLocker);
+
+    if (m_p->m_utxoTxMap.count(txid))
+    {
+        for(const wallet::UtxoEntry & entry : m_p->m_utxoTxMap[txid])
+            items.push_back(entry);
+
+        return true;
+    }
+
+    return false;
+}
+
+//*****************************************************************************
+//*****************************************************************************
 bool Exchange::createTransaction(const uint256                        & txid,
                                  const std::vector<unsigned char>     & sourceAddr,
                                  const std::string                    & sourceCurrency,

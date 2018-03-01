@@ -546,6 +546,29 @@ extern json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool 
  */
 extern json_spirit::Value dxGetMyOrders(const json_spirit::Array& params, bool fHelp);
 
+/**
+ * @brief Returns locked utxo list
+ * @param params The list of input params:<br>
+ * params[0] : order id
+ * @param fHelp If is true then an exception with parameter description message will be thrown
+ * @return The list of locked utxo for an order
+ * * Example:<br>
+ * \verbatim
+    dxGetLockedUtxo 91d0ea83edc79b9a2041c51d08037cff87c181efb311a095dfdd4edbcc7993a9
+    [
+        {
+            "id" : "91d0ea83edc79b9a2041c51d08037cff87c181efb311a095dfdd4edbcc7993a9",
+            "LTC" :
+            [
+                6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a,
+                6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a,
+                6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a
+            ]
+        }
+    ]
+ * \endverbatim
+ */
+extern json_spirit::Value dxGetLockedUtxo(const json_spirit::Array& params, bool fHelp);
 
 /** @} */
 

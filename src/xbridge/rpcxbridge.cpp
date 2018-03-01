@@ -1476,3 +1476,74 @@ json_spirit::Value dxGetMyOrders(const json_spirit::Array& params, bool fHelp)
 
     return r;
 }
+
+//******************************************************************************
+//******************************************************************************
+Value dxGetLockedUtxo(const json_spirit::Array& params, bool fHelp)
+{
+    if (fHelp)
+    {
+        throw runtime_error("dxGetLockedUtxo (id)\n"
+                            "Return list of locked utxo of an order.");
+    }
+
+    if (params.size() != 1)
+    {
+        Object error;
+        error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS)));
+        error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
+        error.emplace_back(Pair("name", "dxGetLockedUtxo"));
+        return error;
+    }
+
+    xbridge::Exchange & e = xbridge::Exchange::instance();
+    if (!e.isStarted())
+    {
+        Object error;
+        error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::NOT_EXCHANGE_NODE)));
+        error.emplace_back(Pair("code", xbridge::NOT_EXCHANGE_NODE));
+        error.emplace_back(Pair("name", "dxGetLockedUtxo"));
+        return error;
+    }
+
+    uint256 id(params[0].get_str());
+
+    xbridge::TransactionPtr pendingTx = e.pendingTransaction(id);
+    xbridge::TransactionPtr acceptedTx = e.transaction(id);
+
+    if (!pendingTx && !acceptedTx)
+    {
+        Object error;
+        error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::Error::TRANSACTION_NOT_FOUND, id.GetHex())));
+        error.emplace_back(Pair("code", xbridge::Error::TRANSACTION_NOT_FOUND));
+        error.emplace_back(Pair("name", "dxGetLockedUtxo"));
+        return error;
+    }
+
+    std::vector<xbridge::wallet::UtxoEntry> items;
+
+    if(!e.getUtxoItems(id, items))
+    {
+        Object error;
+        error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::Error::TRANSACTION_NOT_FOUND, id.GetHex())));
+        error.emplace_back(Pair("code", xbridge::Error::TRANSACTION_NOT_FOUND));
+        error.emplace_back(Pair("name", "dxGetLockedUtxo"));
+        return error;
+    }
+
+    Array utxo;
+
+    for(const xbridge::wallet::UtxoEntry & entry : items)
+        utxo.emplace_back(entry.toString());
+
+    Object obj;
+    obj.emplace_back(Pair("id", id.GetHex()));
+
+    if(pendingTx)
+        obj.emplace_back(Pair(pendingTx->a_currency(), utxo));
+
+    if(acceptedTx)
+        obj.emplace_back(Pair(acceptedTx->a_currency() + " and " + acceptedTx->b_currency(), utxo));
+
+    return obj;
+}
