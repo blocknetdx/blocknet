@@ -98,6 +98,8 @@ Value dxGetNetworkTokens(const Array & params, bool fHelp)
 
     }
 
+    return dxGetLocalTokens(params, fHelp); // TODO Remove when xwallet broadcast is ready
+
     Array r;
 
     std::vector<std::string> currencies = xbridge::App::instance().networkCurrencies();
@@ -159,9 +161,9 @@ Value dxGetOrders(const Array & params, bool fHelp)
         Object jtr;
         jtr.emplace_back(Pair("id",             tr->id.GetHex()));
         jtr.emplace_back(Pair("maker",          tr->fromCurrency));
-        jtr.emplace_back(Pair("maker_size",     util::xBridgeValueFromAmount(tr->fromAmount)));
+        jtr.emplace_back(Pair("maker_size",     boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(tr->fromAmount))));
         jtr.emplace_back(Pair("taker",          tr->toCurrency));
-        jtr.emplace_back(Pair("taker_size",     util::xBridgeValueFromAmount(tr->toAmount)));
+        jtr.emplace_back(Pair("taker_size",     boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(tr->toAmount))));
         jtr.emplace_back(Pair("updated_at",     util::iso8601(tr->txtime)));
         jtr.emplace_back(Pair("created_at",     util::iso8601(tr->created)));
         jtr.emplace_back(Pair("status",         tr->strState()));
@@ -184,7 +186,7 @@ Value dxGetOrderFills(const Array & params, bool fHelp)
                             "(i.e. completed). Maker symbol is always listed first. The [combined] flag defaults \n"
                             "to true. When set to false [combined] will return only maker trades, switch maker \n"
                             "and taker to get the reverse.\n"
-                            "(maker) (taker) [optional](combined, default = true)"
+                            "(maker) (taker) (combined, default=true)[optional]"
                             );
 
     }
@@ -237,9 +239,9 @@ Value dxGetOrderFills(const Array & params, bool fHelp)
         tmp.emplace_back(Pair("id",         transaction->id.GetHex()));
         tmp.emplace_back(Pair("time",       util::iso8601(transaction->txtime)));
         tmp.emplace_back(Pair("maker",      transaction->fromCurrency));
-        tmp.emplace_back(Pair("maker_size", util::xBridgeValueFromAmount(transaction->fromAmount)));
+        tmp.emplace_back(Pair("maker_size", boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(transaction->fromAmount))));
         tmp.emplace_back(Pair("taker",      transaction->toCurrency));
-        tmp.emplace_back(Pair("taker_size", util::xBridgeValueFromAmount(transaction->toAmount)));
+        tmp.emplace_back(Pair("taker_size", boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(transaction->toAmount))));
         arr.emplace_back(tmp);
 
     }
@@ -467,44 +469,13 @@ Value dxGetOrder(const Array & params, bool fHelp)
     Object result;
     result.emplace_back(Pair("id",          order->id.GetHex()));
     result.emplace_back(Pair("maker",       order->fromCurrency));
-    result.emplace_back(Pair("maker_size",  util::xBridgeValueFromAmount(order->fromAmount)));
+    result.emplace_back(Pair("maker_size",  boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(order->fromAmount))));
     result.emplace_back(Pair("taker",       order->toCurrency));
-    result.emplace_back(Pair("taker_size",  util::xBridgeValueFromAmount(order->toAmount)));
+    result.emplace_back(Pair("taker_size",  boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(order->toAmount))));
     result.emplace_back(Pair("updated_at",  util::iso8601(order->txtime)));
     result.emplace_back(Pair("created_at",  util::iso8601(order->created)));
     result.emplace_back(Pair("status",      order->strState()));
     return result;
-}
-
-
-//******************************************************************************
-//******************************************************************************
-Value dxGetCurrencies(const Array & params, bool fHelp)
-{
-    if (fHelp) {
-
-        throw runtime_error("dxGetCurrencies\nList currencies.");
-
-    }
-    if (params.size() > 0) {
-
-        Object error;
-        error.emplace_back(Pair("error",
-                                "This function does not accept any parameter"));
-        error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
-        return  error;
-
-    }
-
-    Object obj;
-
-    std::vector<std::string> currencies = xbridge::App::instance().availableCurrencies();
-    for (std::string currency : currencies) {
-
-        obj.emplace_back(Pair(currency, ""));
-
-    }
-    return obj;
 }
 
 //******************************************************************************
@@ -591,10 +562,10 @@ Value dxMakeOrder(const Array &params, bool fHelp)
         if (dryrun) {
             result.emplace_back(Pair("id", uint256().GetHex()));
             result.emplace_back(Pair("maker", fromCurrency));
-            result.emplace_back(Pair("maker_size", util::xBridgeValueFromAmount(util::xBridgeAmountFromReal(fromAmount))));
+            result.emplace_back(Pair("maker_size", boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(util::xBridgeAmountFromReal(fromAmount)))));
             result.emplace_back(Pair("maker_address", fromAddress));
             result.emplace_back(Pair("taker", toCurrency));
-            result.emplace_back(Pair("taker_size", util::xBridgeValueFromAmount(util::xBridgeAmountFromReal(toAmount))));
+            result.emplace_back(Pair("taker_size", boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(util::xBridgeAmountFromReal(toAmount)))));
             result.emplace_back(Pair("taker_address", toAddress));
             result.emplace_back(Pair("status", "created"));
             return result;
@@ -650,10 +621,10 @@ Value dxMakeOrder(const Array &params, bool fHelp)
         obj.emplace_back(Pair("id",             id.GetHex()));
         obj.emplace_back(Pair("maker_address",  fromAddress));
         obj.emplace_back(Pair("maker",          fromCurrency));
-        obj.emplace_back(Pair("maker_size",     util::xBridgeValueFromAmount(util::xBridgeAmountFromReal(fromAmount))));
+        obj.emplace_back(Pair("maker_size",     boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(util::xBridgeAmountFromReal(fromAmount)))));
         obj.emplace_back(Pair("taker_address",  toAddress));
         obj.emplace_back(Pair("taker",          toCurrency));
-        obj.emplace_back(Pair("taker_size",     util::xBridgeValueFromAmount(util::xBridgeAmountFromReal(toAmount))));
+        obj.emplace_back(Pair("taker_size",     boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(util::xBridgeAmountFromReal(toAmount)))));
         const auto &createdTime = xbridge::App::instance().transaction(id)->created;
         obj.emplace_back(Pair("created_at",     util::iso8601(createdTime)));
         obj.emplace_back(Pair("updated_at",     util::iso8601(bpt::microsec_clock::universal_time())));
@@ -746,10 +717,10 @@ Value dxTakeOrder(const Array & params, bool fHelp)
             result.emplace_back(Pair("id", uint256().GetHex()));
 
             result.emplace_back(Pair("maker", txDescr->fromCurrency));
-            result.emplace_back(Pair("maker_size", util::xBridgeValueFromAmount(txDescr->fromAmount)));
+            result.emplace_back(Pair("maker_size", boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(txDescr->fromAmount))));
 
             result.emplace_back(Pair("taker", txDescr->toCurrency));
-            result.emplace_back(Pair("taker_size", util::xBridgeValueFromAmount(txDescr->toAmount)));
+            result.emplace_back(Pair("taker_size", boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(txDescr->toAmount))));
 
             result.emplace_back(Pair("updated_at", util::iso8601(bpt::microsec_clock::universal_time())));
             result.emplace_back(Pair("created_at", util::iso8601(txDescr->created)));
@@ -802,10 +773,10 @@ Value dxTakeOrder(const Array & params, bool fHelp)
         result.emplace_back(Pair("id", id.GetHex()));
 
         result.emplace_back(Pair("maker", txDescr->fromCurrency));
-        result.emplace_back(Pair("maker_size", util::xBridgeValueFromAmount(txDescr->fromAmount)));
+        result.emplace_back(Pair("maker_size", boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(txDescr->fromAmount))));
 
         result.emplace_back(Pair("taker", txDescr->toCurrency));
-        result.emplace_back(Pair("taker_size", util::xBridgeValueFromAmount(txDescr->toAmount)));
+        result.emplace_back(Pair("taker_size", boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(txDescr->toAmount))));
 
         result.emplace_back(Pair("updated_at", util::iso8601(bpt::microsec_clock::universal_time())));
         result.emplace_back(Pair("created_at", util::iso8601(txDescr->created)));
@@ -888,11 +859,11 @@ Value dxCancelOrder(const Array &params, bool fHelp)
     obj.emplace_back(Pair("id", id.GetHex()));
 
     obj.emplace_back(Pair("maker", tx->fromCurrency));
-    obj.emplace_back(Pair("maker_size", util::xBridgeValueFromAmount(tx->fromAmount)));
+    obj.emplace_back(Pair("maker_size", boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(tx->fromAmount))));
     obj.emplace_back(Pair("maker_address", connFrom->fromXAddr(tx->from)));
 
     obj.emplace_back(Pair("taker", tx->toCurrency));
-    obj.emplace_back(Pair("taker_size", util::xBridgeValueFromAmount(tx->toAmount)));
+    obj.emplace_back(Pair("taker_size", boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(tx->toAmount))));
     obj.emplace_back(Pair("taker_address", connTo->fromXAddr(tx->to)));
 
     obj.emplace_back(Pair("updated_at", util::iso8601(tx->txtime)));
@@ -1429,11 +1400,11 @@ json_spirit::Value dxGetMyOrders(const json_spirit::Array& params, bool fHelp)
 
             // maker data
             o.emplace_back(Pair("maker", t.fromCurrency));
-            o.emplace_back(Pair("maker_size", util::xBridgeValueFromAmount(t.fromAmount)));
+            o.emplace_back(Pair("maker_size", boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(t.fromAmount))));
             o.emplace_back(Pair("maker_address", connFrom->fromXAddr(t.from)));
             // taker data
             o.emplace_back(Pair("taker", t.toCurrency));
-            o.emplace_back(Pair("taker_size", util::xBridgeValueFromAmount(t.toAmount)));
+            o.emplace_back(Pair("taker_size", boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(t.toAmount))));
             o.emplace_back(Pair("taker_address", connFrom->fromXAddr(t.to)));
             // dates
             o.emplace_back(Pair("updated_at", util::iso8601(t.txtime)));
