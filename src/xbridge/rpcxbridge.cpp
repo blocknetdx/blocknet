@@ -591,10 +591,10 @@ Value dxMakeOrder(const Array &params, bool fHelp)
         if (dryrun) {
             result.emplace_back(Pair("id", uint256().GetHex()));
             result.emplace_back(Pair("maker", fromCurrency));
-            result.emplace_back(Pair("maker_size", util::xBridgeValueFromAmount(util::xBridgeAmountFromReal(fromAmount))));
+            result.emplace_back(Pair("maker_size", boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(util::xBridgeAmountFromReal(fromAmount)))));
             result.emplace_back(Pair("maker_address", fromAddress));
             result.emplace_back(Pair("taker", toCurrency));
-            result.emplace_back(Pair("taker_size", util::xBridgeValueFromAmount(util::xBridgeAmountFromReal(toAmount))));
+            result.emplace_back(Pair("taker_size", boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(util::xBridgeAmountFromReal(toAmount)))));
             result.emplace_back(Pair("taker_address", toAddress));
             result.emplace_back(Pair("status", "created"));
             return result;
@@ -650,10 +650,10 @@ Value dxMakeOrder(const Array &params, bool fHelp)
         obj.emplace_back(Pair("id",             id.GetHex()));
         obj.emplace_back(Pair("maker_address",  fromAddress));
         obj.emplace_back(Pair("maker",          fromCurrency));
-        obj.emplace_back(Pair("maker_size",     util::xBridgeValueFromAmount(util::xBridgeAmountFromReal(fromAmount))));
+        obj.emplace_back(Pair("maker_size",     boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(util::xBridgeAmountFromReal(fromAmount)))));
         obj.emplace_back(Pair("taker_address",  toAddress));
         obj.emplace_back(Pair("taker",          toCurrency));
-        obj.emplace_back(Pair("taker_size",     util::xBridgeValueFromAmount(util::xBridgeAmountFromReal(toAmount))));
+        obj.emplace_back(Pair("taker_size",     boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(util::xBridgeAmountFromReal(toAmount)))));
         const auto &createdTime = xbridge::App::instance().transaction(id)->created;
         obj.emplace_back(Pair("created_at",     util::iso8601(createdTime)));
         obj.emplace_back(Pair("updated_at",     util::iso8601(bpt::microsec_clock::universal_time())));
