@@ -554,7 +554,7 @@ extern json_spirit::Value dxGetMyOrders(const json_spirit::Array& params, bool f
  * @return The list of locked utxo for an order
  * * Example:<br>
  * \verbatim
-    dxGetLockedUtxo 91d0ea83edc79b9a2041c51d08037cff87c181efb311a095dfdd4edbcc7993a9
+    dxGetLockedUtxos 91d0ea83edc79b9a2041c51d08037cff87c181efb311a095dfdd4edbcc7993a9
     [
         {
             "id" : "91d0ea83edc79b9a2041c51d08037cff87c181efb311a095dfdd4edbcc7993a9",
@@ -568,7 +568,7 @@ extern json_spirit::Value dxGetMyOrders(const json_spirit::Array& params, bool f
     ]
  * \endverbatim
  */
-extern json_spirit::Value dxGetLockedUtxo(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value dxGetLockedUtxos(const json_spirit::Array& params, bool fHelp);
 
 /**
  * @brief dxGetTokenBalances
