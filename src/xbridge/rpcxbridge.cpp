@@ -476,37 +476,6 @@ Value dxGetOrder(const Array & params, bool fHelp)
     return result;
 }
 
-
-//******************************************************************************
-//******************************************************************************
-Value dxGetCurrencies(const Array & params, bool fHelp)
-{
-    if (fHelp) {
-
-        throw runtime_error("dxGetCurrencies\nList currencies.");
-
-    }
-    if (params.size() > 0) {
-
-        Object error;
-        error.emplace_back(Pair("error",
-                                "This function does not accept any parameter"));
-        error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
-        return  error;
-
-    }
-
-    Object obj;
-
-    std::vector<std::string> currencies = xbridge::App::instance().availableCurrencies();
-    for (std::string currency : currencies) {
-
-        obj.emplace_back(Pair(currency, ""));
-
-    }
-    return obj;
-}
-
 //******************************************************************************
 //******************************************************************************
 Value dxMakeOrder(const Array &params, bool fHelp)
