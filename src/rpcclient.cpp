@@ -106,8 +106,6 @@ static const CRPCConvertParam vRPCConvertParams[] =
         {"setstakesplitthreshold", 0},
         {"autocombinerewards", 0},
         {"autocombinerewards", 1},
-        {"dxMakeOrder", 1},
-        {"dxMakeOrder", 4},
         {"dxGetOrderHistory", 2},
         {"dxGetOrderHistory", 3},
         {"dxGetOrderHistory", 4},
@@ -116,9 +114,6 @@ static const CRPCConvertParam vRPCConvertParams[] =
         {"dxGetOrderBook", 3},
         {"dxGetOrderBook", 4},
         {"dxGetOrderFills",2}};
-
-        
-
 
 class CRPCConvertTable
 {
