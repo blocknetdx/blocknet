@@ -221,7 +221,7 @@ Value dxGetOrderFills(const Array & params, bool fHelp)
     for (auto &item : history) {
         const xbridge::TransactionDescrPtr &ptr = item.second;
         if ((ptr->state == xbridge::TransactionDescr::trFinished) &&
-            (combined ? (ptr->fromCurrency == maker && ptr->toCurrency == taker) : (ptr->fromCurrency == maker))) {
+            (combined ? ((ptr->fromCurrency == maker && ptr->toCurrency == taker) || (ptr->toCurrency == maker && ptr->fromCurrency == taker)) : (ptr->fromCurrency == maker && ptr->toCurrency == taker))) {
             result.push_back(ptr);
         }
     }
