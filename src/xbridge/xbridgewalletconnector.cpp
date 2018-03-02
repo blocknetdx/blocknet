@@ -40,7 +40,7 @@ double WalletConnector::getWalletBalance() const
     if (!getUnspent(entries))
     {
         LOG() << "getUnspent failed " << __FUNCTION__;
-        return 0;
+        return -1.;//return negative value for check in called methods
     }
 
     double amount = 0;
