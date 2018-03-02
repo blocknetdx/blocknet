@@ -353,14 +353,14 @@ Value dxGetOrderHistory(const json_spirit::Array& params, bool fHelp)
             uint64_t t = util::timeToInt(tr->txtime)/1000/1000; // need seconds, timeToInt is in microseconds
             // only check orders within boundaries (time interval)
             if (t >= timeInterval && t < timeInterval + granularity) {
-                // volume is based in "to amount" (track volume of what we're priced in, in this case orders are priced in "to amount")
-                volume += util::xBridgeValueFromAmount(high->toAmount);
-
                 // defaults
                 if (high == nullptr)
                     high = tr;
                 if (low == nullptr)
                     low = tr;
+
+                // volume is based in "to amount" (track volume of what we're priced in, in this case orders are priced in "to amount")
+                volume += util::xBridgeValueFromAmount(tr->toAmount);
 
                 // calc prices, algo: to/from = price (in terms of to). e.g. LTC-SYS price = SYS-size / LTC-size = SYS per unit priced in LTC
                 double high_price = util::price(high);
