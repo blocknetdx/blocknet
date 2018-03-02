@@ -32,7 +32,8 @@
 #include "xbridgetransactiondescr.h"
 #include "xuiconnector.h"
 #include "rpcserver.h"
-
+#include "init.h"
+#include "wallet.h"
 using namespace json_spirit;
 using namespace std;
 using namespace boost;
@@ -61,9 +62,10 @@ Value dxGetLocalTokens(const Array & params, bool fHelp)
     if (params.size() > 0) {
 
         Object error;
-        error.emplace_back(Pair("error",
-                                "This function does not accept any parameter"));
-        error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
+        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS,
+                                                                      "This function does not accept any parameter")));
+        error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
+        error.emplace_back(Pair("name",     __FUNCTION__));
         return  error;
 
     }
@@ -91,9 +93,10 @@ Value dxGetNetworkTokens(const Array & params, bool fHelp)
     if (params.size() > 0) {
 
         Object error;
-        error.emplace_back(Pair("error",
-                                "This function does not accept any parameters"));
-        error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
+        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS,
+                                                                      "This function does not accept any parameters")));
+        error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
+        error.emplace_back(Pair("name",     __FUNCTION__));
         return  error;
 
     }
@@ -197,10 +200,10 @@ Value dxGetOrderFills(const Array & params, bool fHelp)
 
         Object error;
         const auto statusCode = xbridge::INVALID_PARAMETERS;
-        error.emplace_back(Pair("error",
-                                xbridge::xbridgeErrorText(statusCode)));
-        error.emplace_back(Pair("code", statusCode));
-        error.emplace_back(Pair("name", __FUNCTION__ ));
+        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(statusCode,
+                                                                      "(maker) (taker) (combined, default=true)[optional]")));
+        error.emplace_back(Pair("code",     statusCode));
+        error.emplace_back(Pair("name",     __FUNCTION__ ));
         return  error;
 
     }
@@ -263,8 +266,11 @@ Value dxGetOrderHistory(const json_spirit::Array& params, bool fHelp)
 
         Object error;
         error.emplace_back(Pair("error",
-                                "Invalid number of parameters"));
+                                xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS,
+                                                          "(maker) (taker) (start time) (end time) (granularity) "
+                                                          "(order_ids, default=false)[optional]")));
         error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
+
         return  error;
 
     }
@@ -477,9 +483,9 @@ Value dxGetOrder(const Array & params, bool fHelp)
 
         Object error;
         auto statusCode = xbridge::Error::NO_SESSION;
-        error.emplace_back(Pair("error", xbridge::xbridgeErrorText(statusCode, order->toCurrency)));
-        error.emplace_back(Pair("code",  statusCode));
-        error.emplace_back(Pair("name",  __FUNCTION__));
+        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(statusCode, order->toCurrency)));
+        error.emplace_back(Pair("code",     statusCode));
+        error.emplace_back(Pair("name",     __FUNCTION__));
         return  error;
 
     }
@@ -511,9 +517,9 @@ Value dxMakeOrder(const Array &params, bool fHelp)
     if (params.size() < 7) {
 
         Object error;
-        error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS)));
-        error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
-        error.emplace_back(Pair("name", "dxMakeOrder"));
+        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS)));
+        error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
+        error.emplace_back(Pair("name",     __FUNCTION__));
 
         return error;
     }
@@ -531,9 +537,10 @@ Value dxMakeOrder(const Array &params, bool fHelp)
     // Validate the order type
     if (type != "exact") {
         Object error;
-        error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS, "Only the exact type is supported at this time.")));
-        error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
-        error.emplace_back(Pair("name", "dxMakeOrder"));
+        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS,
+                                                                      "Only the exact type is supported at this time.")));
+        error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
+        error.emplace_back(Pair("name",     __FUNCTION__));
         return error;
     }
 
@@ -542,17 +549,17 @@ Value dxMakeOrder(const Array &params, bool fHelp)
     xbridge::App &app = xbridge::App::instance();
     if (!app.isValidAddress(fromAddress)) {
         Object error;
-        error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::INVALID_ADDRESS)));
-        error.emplace_back(Pair("code", xbridge::INVALID_ADDRESS));
-        error.emplace_back(Pair("name", "dxMakeOrder"));
+        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_ADDRESS)));
+        error.emplace_back(Pair("code",     xbridge::INVALID_ADDRESS));
+        error.emplace_back(Pair("name",     __FUNCTION__));
 
         return error;
     }
     if (!app.isValidAddress(toAddress)) {
         Object error;
-        error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::INVALID_ADDRESS)));
-        error.emplace_back(Pair("code", xbridge::INVALID_ADDRESS));
-        error.emplace_back(Pair("name", "dxMakeOrder"));
+        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_ADDRESS)));
+        error.emplace_back(Pair("code",     xbridge::INVALID_ADDRESS));
+        error.emplace_back(Pair("name",     __FUNCTION__));
 
         return error;
     }
@@ -562,9 +569,9 @@ Value dxMakeOrder(const Array &params, bool fHelp)
         std::string dryrunParam = params[7].get_str();
         if (dryrunParam != "dryrun") {
             Object error;
-            error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS, dryrunParam)));
-            error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
-            error.emplace_back(Pair("name", "dxMakeOrder"));
+            error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS, dryrunParam)));
+            error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
+            error.emplace_back(Pair("name",     __FUNCTION__));
             return error;
         }
         dryrun = true;
@@ -593,35 +600,35 @@ Value dxMakeOrder(const Array &params, bool fHelp)
 
     case xbridge::INVALID_CURRENCY: {
 
-        result.emplace_back(Pair("error", xbridge::xbridgeErrorText(statusCode, fromCurrency)));
-        result.emplace_back(Pair("code", statusCode));
-        result.emplace_back(Pair("name", "dxMakeOrder"));
+        result.emplace_back(Pair("error",   xbridge::xbridgeErrorText(statusCode, fromCurrency)));
+        result.emplace_back(Pair("code",    statusCode));
+        result.emplace_back(Pair("name",    __FUNCTION__));
 
         return result;
 
     }
     case xbridge::NO_SESSION:{
 
-        result.emplace_back(Pair("error", xbridge::xbridgeErrorText(statusCode, fromCurrency)));
-        result.emplace_back(Pair("code", statusCode));
-        result.emplace_back(Pair("name", "dxMakeOrder"));
+        result.emplace_back(Pair("error",   xbridge::xbridgeErrorText(statusCode, fromCurrency)));
+        result.emplace_back(Pair("code",    statusCode));
+        result.emplace_back(Pair("name",    __FUNCTION__));
 
         return result;
 
     }
     case xbridge::INSIFFICIENT_FUNDS:{
 
-        result.emplace_back(Pair("error", xbridge::xbridgeErrorText(statusCode, toAddress)));
-        result.emplace_back(Pair("code", statusCode));
-        result.emplace_back(Pair("name", "dxMakeOrder"));
+        result.emplace_back(Pair("error",   xbridge::xbridgeErrorText(statusCode, toAddress)));
+        result.emplace_back(Pair("code",    statusCode));
+        result.emplace_back(Pair("name",    __FUNCTION__));
 
         return result;
     }
 
     default:
-        result.emplace_back(Pair("error", xbridge::xbridgeErrorText(statusCode)));
-        result.emplace_back(Pair("code", statusCode));
-        result.emplace_back(Pair("name", "dxMakeOrder"));
+        result.emplace_back(Pair("error",   xbridge::xbridgeErrorText(statusCode)));
+        result.emplace_back(Pair("code",    statusCode));
+        result.emplace_back(Pair("name",    __FUNCTION__));
 
         return result;
     }
@@ -652,9 +659,9 @@ Value dxMakeOrder(const Array &params, bool fHelp)
     } else {
 
         Object error;
-        error.emplace_back(Pair("error", xbridge::xbridgeErrorText(statusCode)));
-        error.emplace_back(Pair("code", statusCode));
-        error.emplace_back(Pair("name", "dxMakeOrder"));
+        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(statusCode)));
+        error.emplace_back(Pair("code",     statusCode));
+        error.emplace_back(Pair("name",     __FUNCTION__));
 
         return error;
 
@@ -677,9 +684,9 @@ Value dxTakeOrder(const Array & params, bool fHelp)
     if ((params.size() != 3) && (params.size() != 4))
     {
         Object error;
-        error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS)));
-        error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
-        error.emplace_back(Pair("name", "dxTakeOrder"));
+        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS)));
+        error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
+        error.emplace_back(Pair("name",     __FUNCTION__));
         return  error;
     }
 
@@ -692,18 +699,18 @@ Value dxTakeOrder(const Array & params, bool fHelp)
     if (!app.isValidAddress(fromAddress))
     {
         Object error;
-        error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::INVALID_ADDRESS, fromAddress)));
-        error.emplace_back(Pair("code", xbridge::INVALID_ADDRESS));
-        error.emplace_back(Pair("name", "dxTakeOrder"));
+        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_ADDRESS, fromAddress)));
+        error.emplace_back(Pair("code",     xbridge::INVALID_ADDRESS));
+        error.emplace_back(Pair("name",     __FUNCTION__));
         return  error;
     }
 
     if (!app.isValidAddress(toAddress))
     {
         Object error;
-        error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::INVALID_ADDRESS, toAddress)));
-        error.emplace_back(Pair("code", xbridge::INVALID_ADDRESS));
-        error.emplace_back(Pair("name", "dxTakeOrder"));
+        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_ADDRESS, toAddress)));
+        error.emplace_back(Pair("code",     xbridge::INVALID_ADDRESS));
+        error.emplace_back(Pair("name",     __FUNCTION__));
         return  error;
     }
 
@@ -713,9 +720,9 @@ Value dxTakeOrder(const Array & params, bool fHelp)
         std::string dryrunParam = params[3].get_str();
         if (dryrunParam != "dryrun") {
             Object error;
-            error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS, dryrunParam)));
-            error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
-            error.emplace_back(Pair("name", "dxTakeOrder"));
+            error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS, dryrunParam)));
+            error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
+            error.emplace_back(Pair("name",     __FUNCTION__));
             return error;
         }
         dryrun = true;
@@ -751,31 +758,31 @@ Value dxTakeOrder(const Array & params, bool fHelp)
     {
         result.emplace_back(Pair("error", xbridge::xbridgeErrorText(statusCode, id.GetHex())));
         result.emplace_back(Pair("code", statusCode));
-        result.emplace_back(Pair("name", "dxTakeOrder"));
+        result.emplace_back(Pair("name", __FUNCTION__));
         return result;
     }
 
     case xbridge::NO_SESSION:
     {
-        result.emplace_back(Pair("error", xbridge::xbridgeErrorText(statusCode, txDescr->toCurrency)));
-        result.emplace_back(Pair("code", statusCode));
-        result.emplace_back(Pair("name", "dxTakeOrder"));
+        result.emplace_back(Pair("error",   xbridge::xbridgeErrorText(statusCode, txDescr->toCurrency)));
+        result.emplace_back(Pair("code",    statusCode));
+        result.emplace_back(Pair("name",    __FUNCTION__));
         return result;
     }
 
     case xbridge::INSIFFICIENT_FUNDS:
     {
-        result.emplace_back(Pair("error", xbridge::xbridgeErrorText(statusCode, txDescr->to)));
-        result.emplace_back(Pair("code", statusCode));
-        result.emplace_back(Pair("name", "dxTakeOrder"));
+        result.emplace_back(Pair("error",   xbridge::xbridgeErrorText(statusCode, txDescr->to)));
+        result.emplace_back(Pair("code",    statusCode));
+        result.emplace_back(Pair("name",    __FUNCTION__));
         return result;
     }
 
     default:
     {
-        result.emplace_back(Pair("error", xbridge::xbridgeErrorText(statusCode)));
-        result.emplace_back(Pair("code", statusCode));
-        result.emplace_back(Pair("name", "dxTakeOrder"));
+        result.emplace_back(Pair("error",   xbridge::xbridgeErrorText(statusCode)));
+        result.emplace_back(Pair("code",    statusCode));
+        result.emplace_back(Pair("name",    __FUNCTION__));
         return result;
     }
     }
@@ -802,9 +809,9 @@ Value dxTakeOrder(const Array & params, bool fHelp)
     }
     else
     {
-        result.emplace_back(Pair("error", xbridge::xbridgeErrorText(statusCode)));
-        result.emplace_back(Pair("code", statusCode));
-        result.emplace_back(Pair("name", "dxTakeOrder"));
+        result.emplace_back(Pair("error",   xbridge::xbridgeErrorText(statusCode)));
+        result.emplace_back(Pair("code",    statusCode));
+        result.emplace_back(Pair("name",    __FUNCTION__));
         return result;
     }
 }
@@ -822,9 +829,9 @@ Value dxCancelOrder(const Array &params, bool fHelp)
     if (params.size() != 1)
     {
         Object error;
-        error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS)));
-        error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
-        error.emplace_back(Pair("name", "dxCancelOrder"));
+        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS)));
+        error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
+        error.emplace_back(Pair("name",     __FUNCTION__));
         return error;
     }
 
@@ -835,18 +842,18 @@ Value dxCancelOrder(const Array &params, bool fHelp)
     if (!tx)
     {
         Object obj;
-        obj.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::Error::TRANSACTION_NOT_FOUND, id.GetHex())));
-        obj.emplace_back(Pair("code", xbridge::Error::TRANSACTION_NOT_FOUND));
-        obj.emplace_back(Pair("name", "dxCancelOrder"));
+        obj.emplace_back(Pair("error",  xbridge::xbridgeErrorText(xbridge::Error::TRANSACTION_NOT_FOUND, id.GetHex())));
+        obj.emplace_back(Pair("code",   xbridge::Error::TRANSACTION_NOT_FOUND));
+        obj.emplace_back(Pair("name",   __FUNCTION__));
         return obj;
     }
 
     if (tx->state >= xbridge::TransactionDescr::trCreated)
     {
         Object error;
-        error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::INVALID_STATE)));
-        error.emplace_back(Pair("code", xbridge::INVALID_STATE));
-        error.emplace_back(Pair("name", "dxCancelOrder"));
+        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_STATE)));
+        error.emplace_back(Pair("code",     xbridge::INVALID_STATE));
+        error.emplace_back(Pair("name",     __FUNCTION__));
         return error;
     }
 
@@ -854,9 +861,9 @@ Value dxCancelOrder(const Array &params, bool fHelp)
     if (res != xbridge::SUCCESS)
     {
         Object obj;
-        obj.emplace_back(Pair("error", xbridge::xbridgeErrorText(res)));
-        obj.emplace_back(Pair("code", res));
-        obj.emplace_back(Pair("name", "dxCancelOrder"));
+        obj.emplace_back(Pair("error",  xbridge::xbridgeErrorText(res)));
+        obj.emplace_back(Pair("code",   res));
+        obj.emplace_back(Pair("name",   __FUNCTION__));
         return obj;
     }
 
@@ -865,9 +872,9 @@ Value dxCancelOrder(const Array &params, bool fHelp)
     if (!connFrom || !connTo)
     {
         Object error;
-        error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::NO_SESSION)));
-        error.emplace_back(Pair("code", xbridge::NO_SESSION));
-        error.emplace_back(Pair("name", "dxCancelOrder"));
+        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::NO_SESSION)));
+        error.emplace_back(Pair("code",     xbridge::NO_SESSION));
+        error.emplace_back(Pair("name",     __FUNCTION__));
         return error;
     }
 
@@ -1390,8 +1397,10 @@ json_spirit::Value dxGetMyOrders(const json_spirit::Array& params, bool fHelp)
 
         Object error;
         error.emplace_back(Pair("error",
-                                "This function does not accept any parameters"));
-        error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
+                                            xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS,
+                                                                      "This function does not accept any parameters")));
+        error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
+        error.emplace_back(Pair("name",     __FUNCTION__));
         return  error;
 
     }
@@ -1483,16 +1492,40 @@ json_spirit::Value  dxGetTokenBalances(const json_spirit::Array& params, bool fH
 
         Object error;
         error.emplace_back(Pair("error",
-                                "This function does not accept any parameters"));
-        error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
+                                            xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS,
+                                                                      "This function does not accept any parameters")));
+        error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
+        error.emplace_back(Pair("name",     __FUNCTION__));
         return  error;
 
     }
     Object res;
+    const std::string blockName = "BLOCK";
+    const auto blockConnector = xbridge::App::instance().connectorByCurrency(blockName);
+    if(blockConnector == nullptr) {
+
+        Object error;
+        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::NO_SESSION, blockName)));
+        error.emplace_back(Pair("code",     xbridge::NO_SESSION));
+        error.emplace_back(Pair("name",     __FUNCTION__));
+        return  error;
+
+    }
+    res.emplace_back(Pair("WALLET_BALANCE", boost::lexical_cast<std::string>(blockConnector->getWalletBalance())));
     const auto &connectors = xbridge::App::instance().connectors();
     for(const auto &connector : connectors) {
 
-        res.emplace_back(connector->currency, boost::lexical_cast<std::string>(connector->getWalletBalance()));
+        if(connector->currency == blockName) {
+
+            continue;
+
+        }
+        const auto balance = connector->getWalletBalance();
+        if(balance >= 0) {//ignore not connected wallets
+
+            res.emplace_back(connector->currency, boost::lexical_cast<std::string>(balance));
+
+        }
 
     }
 
@@ -1512,9 +1545,9 @@ Value dxGetLockedUtxos(const json_spirit::Array& params, bool fHelp)
     if (params.size() != 1)
     {
         Object error;
-        error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS)));
-        error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
-        error.emplace_back(Pair("name", "dxGetLockedUtxos"));
+        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS, "requered transaction id")));
+        error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
+        error.emplace_back(Pair("name",     __FUNCTION__));
         return error;
     }
 
@@ -1522,9 +1555,9 @@ Value dxGetLockedUtxos(const json_spirit::Array& params, bool fHelp)
     if (!e.isStarted())
     {
         Object error;
-        error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::Error::NOT_EXCHANGE_NODE)));
-        error.emplace_back(Pair("code", xbridge::Error::NOT_EXCHANGE_NODE));
-        error.emplace_back(Pair("name", "dxGetLockedUtxos"));
+        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::Error::NOT_EXCHANGE_NODE)));
+        error.emplace_back(Pair("code",     xbridge::Error::NOT_EXCHANGE_NODE));
+        error.emplace_back(Pair("name",     __FUNCTION__));
         return error;
     }
 
@@ -1536,9 +1569,9 @@ Value dxGetLockedUtxos(const json_spirit::Array& params, bool fHelp)
     if (!pendingTx->isValid() && !acceptedTx->isValid())
     {
         Object error;
-        error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::Error::TRANSACTION_NOT_FOUND, id.GetHex())));
-        error.emplace_back(Pair("code", xbridge::Error::TRANSACTION_NOT_FOUND));
-        error.emplace_back(Pair("name", "dxGetLockedUtxos"));
+        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::Error::TRANSACTION_NOT_FOUND, id.GetHex())));
+        error.emplace_back(Pair("code",     xbridge::Error::TRANSACTION_NOT_FOUND));
+        error.emplace_back(Pair("name",     __FUNCTION__));
         return error;
     }
 
@@ -1547,9 +1580,9 @@ Value dxGetLockedUtxos(const json_spirit::Array& params, bool fHelp)
     if(!e.getUtxoItems(id, items))
     {
         Object error;
-        error.emplace_back(Pair("error", xbridge::xbridgeErrorText(xbridge::Error::TRANSACTION_NOT_FOUND, id.GetHex())));
-        error.emplace_back(Pair("code", xbridge::Error::TRANSACTION_NOT_FOUND));
-        error.emplace_back(Pair("name", "dxGetLockedUtxos"));
+        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::Error::TRANSACTION_NOT_FOUND, id.GetHex())));
+        error.emplace_back(Pair("code",     xbridge::Error::TRANSACTION_NOT_FOUND));
+        error.emplace_back(Pair("name",     __FUNCTION__));
         return error;
     }
 
