@@ -502,11 +502,11 @@ Value dxMakeOrder(const Array &params, bool fHelp)
     }
 
     std::string fromCurrency    = params[0].get_str();
-    double      fromAmount      = params[1].get_real();
+    double      fromAmount      = boost::lexical_cast<double>(params[1].get_str());
     std::string fromAddress     = params[2].get_str();
 
     std::string toCurrency      = params[3].get_str();
-    double      toAmount        = params[4].get_real();
+    double      toAmount        = boost::lexical_cast<double>(params[4].get_str());
     std::string toAddress       = params[5].get_str();
 
     std::string type            = params[6].get_str();
