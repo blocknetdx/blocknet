@@ -1440,7 +1440,7 @@ json_spirit::Value dxGetMyOrders(const json_spirit::Array& params, bool fHelp)
     // sort ascending by updated time
     std::sort(orders.begin(), orders.end(),
         [](const xbridge::TransactionDescrPtr &a,  const xbridge::TransactionDescrPtr &b) {
-            return (a->txtime) > (b->txtime);
+            return (a->txtime) < (b->txtime);
         });
 
     std::map<std::string, bool> seen;
