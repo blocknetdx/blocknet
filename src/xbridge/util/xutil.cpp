@@ -180,14 +180,14 @@ const std::string iso8601(const bpt::ptime &time)
 
 double xBridgeValueFromAmount(uint64_t amount)
 {
-    return static_cast<double>(amount) / xbridge::TransactionDescr::COIN;
+    return boost::lexical_cast<double>(amount)/boost::lexical_cast<double>(xbridge::TransactionDescr::COIN);
 }
 
 uint64_t xBridgeAmountFromReal(double val)
 {
+    double coin = val * boost::lexical_cast<double>(xbridge::TransactionDescr::COIN);
     // TODO: should we check amount ranges and throw JSONRPCError like they do in rpcserver.cpp ?
-    return static_cast<uint64_t>(val * xbridge::TransactionDescr::COIN + 0.5);
-
+    return boost::lexical_cast<uint64_t>(coin);
 }
 
 uint64_t timeToInt(const boost::posix_time::ptime& time)
