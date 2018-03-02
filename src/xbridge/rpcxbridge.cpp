@@ -955,6 +955,8 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 return false;
             if (transaction.second->fromAmount <= 0 || transaction.second->toAmount <= 0)
                 return false;
+            if (transaction.second->state != xbridge::TransactionDescr::trPending)
+                return false;
 
             return  ((transaction.second->toCurrency == toCurrency) &&
                     (transaction.second->fromCurrency == fromCurrency));
@@ -967,6 +969,8 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
             if(transaction.second == nullptr)
                 return false;
             if (transaction.second->fromAmount <= 0 || transaction.second->toAmount <= 0)
+                return false;
+            if (transaction.second->state != xbridge::TransactionDescr::trPending)
                 return false;
 
             return  ((transaction.second->toCurrency == fromCurrency) &&
