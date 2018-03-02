@@ -285,6 +285,21 @@ Value dxGetOrderHistory(const json_spirit::Array& params, bool fHelp)
     const auto endTimeFrame     = params[3].get_int();
     const auto granularity      = params[4].get_int();
 
+    // Validate start time
+    if (startTimeFrame < 1519540000) {
+        Object error;
+        error.emplace_back(Pair("error", "Start time too early."));
+        error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
+        return error;
+    }
+    // Validate start and end times
+    if (startTimeFrame > 4102444800 || endTimeFrame > 4102444800) {
+        Object error;
+        error.emplace_back(Pair("error", "Start/end times are too large."));
+        error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
+        return error;
+    }
+
     // Validate granularity
     switch (granularity) {
         case 60:
