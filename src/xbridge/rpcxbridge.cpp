@@ -1579,6 +1579,7 @@ Value dxGetLockedUtxos(const json_spirit::Array& params, bool fHelp)
 
     if(!e.getUtxoItems(id, items))
     {
+
         Object error;
         error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::Error::TRANSACTION_NOT_FOUND, id.GetHex())));
         error.emplace_back(Pair("code",     xbridge::Error::TRANSACTION_NOT_FOUND));
