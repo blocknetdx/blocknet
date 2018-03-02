@@ -1431,7 +1431,9 @@ json_spirit::Value dxGetMyOrders(const json_spirit::Array& params, bool fHelp)
 
     for (auto &item : history) {
         const xbridge::TransactionDescrPtr &ptr = item.second;
-        if (ptr->isLocal() && ptr->state == xbridge::TransactionDescr::trFinished) {
+        if (ptr->isLocal() &&
+                (ptr->state == xbridge::TransactionDescr::trFinished ||
+                 ptr->state == xbridge::TransactionDescr::trCancelled)) {
             result.push_back(ptr);
         }
     }
