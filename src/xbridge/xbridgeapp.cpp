@@ -945,14 +945,11 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
              "    priv   " << HexStr(ptr->xPrivKey);
 #endif
 
+    // notify ui about new order
+    xuiConnector.NotifyXBridgeTransactionReceived(ptr);
+
     // try send immediatelly
     m_p->sendPendingTransaction(ptr);
-
-//    LOG() << "accept transaction " << util::to_str(ptr->id) << std::endl
-//          << "    from " << from << " (" << util::to_str(ptr->from) << ")" << std::endl
-//          << "             " << ptr->fromCurrency << " : " << ptr->fromAmount << std::endl
-//          << "    from " << to << " (" << util::to_str(ptr->to) << ")" << std::endl
-//          << "             " << ptr->toCurrency << " : " << ptr->toAmount << std::endl;
 
     // lock used coins
     connFrom->lockCoins(ptr->usedCoins, true);
@@ -961,6 +958,9 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
         boost::mutex::scoped_lock l(m_p->m_txLocker);
         m_p->m_transactions[id] = ptr;
     }
+
+    LOG() << "created order with id " << id.GetHex();
+
     return xbridge::Error::SUCCESS;
 }
 

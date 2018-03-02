@@ -215,11 +215,6 @@ xbridge::Error XBridgeTransactionsModel::newTransaction(const std::string & from
             (from, fromCurrency, (uint64_t)(fromAmount * xbridge::TransactionDescr::COIN),
              to,   toCurrency,   (uint64_t)(toAmount * xbridge::TransactionDescr::COIN), id, blockHash);
 
-    if (code == xbridge::SUCCESS)
-    {
-        xbridge::TransactionDescrPtr d = xapp.transaction(id);
-        onTransactionReceived(d);
-    }
     return code;
 }
 
