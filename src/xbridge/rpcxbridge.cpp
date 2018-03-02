@@ -501,13 +501,14 @@ Value dxMakeOrder(const Array &params, bool fHelp)
         return error;
     }
 
-
-    std::string fromAddress     = params[2].get_str();
     std::string fromCurrency    = params[0].get_str();
     double      fromAmount      = params[1].get_real();
-    std::string toAddress       = params[5].get_str();
+    std::string fromAddress     = params[2].get_str();
+
     std::string toCurrency      = params[3].get_str();
     double      toAmount        = params[4].get_real();
+    std::string toAddress       = params[5].get_str();
+
     std::string type            = params[6].get_str();
 
     // Validate the order type
@@ -616,7 +617,6 @@ Value dxMakeOrder(const Array &params, bool fHelp)
            toAddress, toCurrency, util::xBridgeAmountFromReal(toAmount), id, blockHash);
 
     if (statusCode == xbridge::SUCCESS) {
-        xuiConnector.NotifyXBridgeTransactionReceived(xbridge::App::instance().transaction(id));
         Object obj;
         obj.emplace_back(Pair("id",             id.GetHex()));
         obj.emplace_back(Pair("maker_address",  fromAddress));
