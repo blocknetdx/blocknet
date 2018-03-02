@@ -67,7 +67,7 @@ public:
         Size        = 1,
         BID         = 2,
         Date        = 3,
-        Hash        = 4,
+        ID          = 4,
         State       = 5,
         LastColumn  = State
     };

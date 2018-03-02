@@ -22,7 +22,7 @@ XBridgeTransactionsModel::XBridgeTransactionsModel()
               << trUtf8("SIZE")
               << trUtf8("BID")
               << trUtf8("DATE")
-              << trUtf8("HASH")
+              << trUtf8("ID")
               << trUtf8("STATE");
 
 
@@ -109,9 +109,9 @@ QVariant XBridgeTransactionsModel::data(const QModelIndex & idx, int role) const
             return QVariant(QDateTime::fromMSecsSinceEpoch(util::timeToInt(d->created) / 1000).
                             toString("dd/MM/yyyy HH:MM:ss.zzz"));
         }
-        case Hash:
+        case ID:
         {
-            return QString::fromStdString(d->id.GetHex()).right(10);
+            return QString::fromStdString(d->id.GetHex()).left(10);
         }
         case State:
         {
