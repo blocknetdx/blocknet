@@ -55,7 +55,7 @@ Value dxGetLocalTokens(const Array & params, bool fHelp)
 {
     if (fHelp) {
 
-        throw runtime_error("dxGetLocalTokens\nList currencies supported by the wallet.");
+        throw runtime_error("dxGetLocalTokens\nList coins supported by your node. You can only trade with these supported coins.");
 
     }
     if (params.size() > 0) {
@@ -127,7 +127,7 @@ Value dxGetOrders(const Array & params, bool fHelp)
 {
     if (fHelp) {
 
-        throw runtime_error("dxGetOrders returns the list of open orders.");
+        throw runtime_error("dxGetOrders\nList of all orders.");
 
     }
     if (!params.empty()) {
@@ -182,11 +182,11 @@ Value dxGetOrderFills(const Array & params, bool fHelp)
 {
     if (fHelp) {
 
-        throw runtime_error("dxGetOrderFills Returns all the recent trades by trade pair that have been filled \n"
-                            "(i.e. completed). Maker symbol is always listed first. The [combined] flag defaults \n"
-                            "to true. When set to false [combined] will return only maker trades, switch maker \n"
-                            "and taker to get the reverse.\n"
-                            "(maker) (taker) (combined, default=true)[optional]"
+        throw runtime_error("dxGetOrderFills (maker) (taker) (combined, default=true)[optional]\n"
+                            "Returns all the recent trades by trade pair that have been filled \n"
+                            "(i.e. completed). Maker symbol is always listed first. The [combined] \n"
+                            "flag defaults to true. When set to false [combined] will return only \n"
+                            "maker trades, switch maker and taker to get the reverse."
                             );
 
     }
@@ -253,8 +253,10 @@ Value dxGetOrderHistory(const json_spirit::Array& params, bool fHelp)
 
     if (fHelp) {
 
-        throw runtime_error("dxGetOrderHistory "
-                            "(maker) (taker) (start time) (end time) (granularity) [optional](order_ids, default = false) ");
+        throw runtime_error("dxGetOrderHistory (maker) (taker) (start time) (end time) (granularity) (order_ids, default=false)[optional]\n"
+                            "Returns the order history over a specified time interval. [start_time] and [end_time] are \n"
+                            "in unix time seconds [granularity] in seconds of supported time interval lengths include: \n"
+                            "60,300,900,3600,21600,86400. [order_ids] is a boolean, defaults to false (not showing ids).");
 
     }
     if (params.size() < 5) {
@@ -412,7 +414,8 @@ Value dxGetOrder(const Array & params, bool fHelp)
 {
     if (fHelp) {
 
-         throw runtime_error("dxGetOrder (id) Get order info by id.	.");
+         throw runtime_error("dxGetOrder (id)\n"
+                             "Get order info by id.");
 
     }
     if (params.size() != 1) {
@@ -485,8 +488,7 @@ Value dxMakeOrder(const Array &params, bool fHelp)
 
     if (fHelp) {
 
-        throw runtime_error("dxMakeOrder "
-                            "(maker) (maker size) (maker address) "
+        throw runtime_error("dxMakeOrder (maker) (maker size) (maker address) "
                             "(taker) (taker size) (taker address) (type) (dryrun)[optional]\n"
                             "Create a new order. dryrun will validate the order without submitting the order to the network.");
 
@@ -651,8 +653,7 @@ Value dxTakeOrder(const Array & params, bool fHelp)
 
     if (fHelp)
     {
-        throw runtime_error("dxTakeOrder (id) "
-                            "(address from) (address to) [optional](dryrun)\n"
+        throw runtime_error("dxTakeOrder (id) (address from) (address to) [optional](dryrun)\n"
                             "Accepts the order. dryrun will evaluate input without accepting the order.");
     }
 
@@ -879,9 +880,11 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
 {
     if (fHelp)
     {
-        throw runtime_error("dxGetOrderBook "
-                            "(detail level) (maker) (taker) "
-                            "(max orders)[optional, default=50) ");
+        throw runtime_error("dxGetOrderBook (detail level, 1-4) (maker) (taker) (max orders, default=50)[optional]\n"
+                            "Returns the order book. There are 4 detail levels that can be specified to obtain \n"
+                            "different outputs for the orderbook. 1 lists the best bid and ask. 2 lists the \n"
+                            "aggregated bids and asks. 3 lists the non-aggregated bids and asks. 4 is level 1 \n"
+                            "with order ids. Optionally specify the maximum orders you wish to return.");
     }
 
     if ((params.size() < 3 || params.size() > 4))
@@ -1364,7 +1367,7 @@ json_spirit::Value dxGetMyOrders(const json_spirit::Array& params, bool fHelp)
 {
     if (fHelp) {
 
-        throw runtime_error("dxGetMyOrders");
+        throw runtime_error("dxGetMyOrders\nLists all orders owned by you.");
 
     }
 
@@ -1476,7 +1479,10 @@ json_spirit::Value  dxGetTokenBalances(const json_spirit::Array& params, bool fH
 {
     if (fHelp) {
 
-        throw runtime_error("dxGetTokenBalances");
+        throw runtime_error("dxGetTokenBalances\n"
+                            "List of connected wallet balances. These balances do not include orders that are using \n"
+                            "locked utxos to support a pending or open order. The DX works best with presliced utxos \n"
+                            "so that your entire wallet balance is capable of multiple simultaneous trades.");
 
     }
 
