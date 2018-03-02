@@ -1499,27 +1499,16 @@ json_spirit::Value  dxGetTokenBalances(const json_spirit::Array& params, bool fH
         return  error;
 
     }
+
     Object res;
-    const std::string blockName = "BLOCK";
-    const auto blockConnector = xbridge::App::instance().connectorByCurrency(blockName);
-    if(blockConnector == nullptr) {
 
-        Object error;
-        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::NO_SESSION, blockName)));
-        error.emplace_back(Pair("code",     xbridge::NO_SESSION));
-        error.emplace_back(Pair("name",     __FUNCTION__));
-        return  error;
+    // Wallet balance
+    res.emplace_back("Wallet", boost::lexical_cast<std::string>(pwalletMain->GetBalance()/COIN));
 
-    }
-    res.emplace_back(Pair("WALLET_BALANCE", boost::lexical_cast<std::string>(blockConnector->getWalletBalance())));
+    // Add connected wallet balances
     const auto &connectors = xbridge::App::instance().connectors();
     for(const auto &connector : connectors) {
 
-        if(connector->currency == blockName) {
-
-            continue;
-
-        }
         const auto balance = connector->getWalletBalance();
         if(balance >= 0) {//ignore not connected wallets
 
