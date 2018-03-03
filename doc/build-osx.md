@@ -149,3 +149,66 @@ Troubleshooting:<a name="trouble"></a>
 
         export LDFLAGS=-L/usr/local/opt/openssl/lib
         export CPPFLAGS=-I/usr/local/opt/openssl/include
+
+### Building Qt wallet for OSX High Sierra
+
+Currently the gitian build is not supported for Mac OSX High Sierra, but a Qt wallet can be built natively on a OSX High Sierra machine. These instructions provide the steps to perform that build from source code.
+
+If you do not have XCode instlled, go to the Mac App Store and install it.
+
+If you already had homebrew installed, you likely have a newer version that we need of boost, which will cause problems. Uninstall boost first. We need version 1.57 to compile the wallet.
+
+Otherwise, open Terminal and type in the command to install homebrew:
+
+```/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"```
+
+The use homebrew to install a number of unix programs and libraries needed to build the Phore wallet:
+
+```brew install autoconf automake berkeley-db@4 boost@1.57 git libevent libtool miniupnpc openssl pkg-config protobuf qt zeromq```
+
+To have the build process use the proper version of boost, link that version as follows:
+
+```brew link boost@1.57 --force```
+
+Next, switch into your Downloads folder:
+
+```cd ~/Downloads```
+
+The next step is to download the current version of the wallet from Github and go into that directory:
+
+```git clone https://github.com/phoreproject/phore.git```
+```cd Phore```
+
+Now set some configuration flags:
+
+export LDFLAGS=-L/usr/local/opt/openssl/lib;export CPPFLAGS=-I/usr/local/opt/openssl/include
+
+Then we begin the build process:
+
+```./autogen.sh```
+```./configure```
+```make```
+
+You have the choice to build the GUI Phore wallet as a Mac OSX app, described in “How to build the Phore-Qt App”. If, for whatever reason, you prefer to use the command line tools, continue with “Command line tools”.
+
+### How to build the Phore-Qt App:
+
+After make is finished, you can create an App bundle inside a disk image with:
+
+```make deploy```
+
+Once this is done, you’ll find Phore-Qt.dmg inside your Phore folder. Open and install the wallet like any typical Mac app.
+
+### Command line tools
+
+Once the build is complete, switch into the src/qt subdirectory:
+
+```cd src/qt```
+
+And there you have your wallet – you can start it by running:
+
+```./phore-qt```
+
+You can move the wallet app to another more permanent location. If you have not moved it and want to start your wallet in the future, open Terminal and run this command:
+
+~/Downloads/Phore/src/qt/phore-qt
