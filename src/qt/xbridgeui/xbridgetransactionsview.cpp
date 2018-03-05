@@ -280,12 +280,13 @@ void XBridgeTransactionsView::onCancelTransaction()
     }
 
     const auto & id = m_txModel.item(m_contextMenuIndex.row())->id;
-    if (m_txModel.cancelTransaction(id) != xbridge::SUCCESS)
+    const auto statusCode = m_txModel.cancelTransaction(id);
+    if (statusCode != xbridge::SUCCESS)
     {
         QMessageBox::warning(this,
                              trUtf8("Cancel transaction"),
                              trUtf8("Error send cancel request %1")
-                             .arg(id.ToString().c_str()));
+                             .arg(xbridge::xbridgeErrorText(statusCode, id.ToString()).c_str()));
     }
 }
 
@@ -308,11 +309,14 @@ void XBridgeTransactionsView::onRollbackTransaction()
     }
 
     const auto & id = m_txModel.item(m_contextMenuIndex.row())->id;
-    if (m_txModel.rollbackTransaction(id) != xbridge::SUCCESS)
+    const auto statusCode = m_txModel.rollbackTransaction(id);
+
+    if (statusCode != xbridge::SUCCESS)
     {
         QMessageBox::warning(this,
                              trUtf8("Cancel transaction"),
-                             trUtf8("Error send rollback request %1").arg(id.ToString().c_str()));
+                             trUtf8("Error send rollback request %1").
+                             arg(xbridge::xbridgeErrorText(statusCode,id.ToString()).c_str()));
     }
 }
 
