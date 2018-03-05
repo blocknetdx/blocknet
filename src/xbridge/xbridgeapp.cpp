@@ -1221,7 +1221,7 @@ xbridge::Error App::cancelXBridgeTransaction(const uint256 &id,
         return xbridge::TRANSACTION_NOT_FOUND;
     }
 
-    if (ptr->state > TransactionDescr::trPending)
+    if (ptr->state > TransactionDescr::trCreated)
     {
         return xbridge::INVALID_STATE;
     }
