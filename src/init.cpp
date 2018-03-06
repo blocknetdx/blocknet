@@ -1,7 +1,8 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2014 The Bitcoin developers
 // Copyright (c) 2014-2015 The Dash developers
-// Copyright (c) 2015-2017 The BlocknetDX developers
+// Copyright (c) 2015-2017 The PIVX developers
+// Copyright (c) 2015-2018 The Blocknet developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -33,6 +34,8 @@
 #include "utilmoneystr.h"
 #include "validationinterface.h"
 #include "xbridge/xbridgeapp.h"
+#include "coinvalidator.h"
+
 #ifdef ENABLE_WALLET
 #include "db.h"
 #include "wallet.h"
@@ -161,6 +164,8 @@ static std::unique_ptr<ECCVerifyHandle> globalVerifyHandle;
 /** Preparing steps before shutting down or restarting the wallet */
 void PrepareShutdown()
 {
+    xbridge::App::instance().cancelMyXBridgeTransactions();
+
     fRequestShutdown = true;  // Needed when we shutdown the wallet
     fRestartRequested = true; // Needed when we restart the wallet
     LogPrintf("%s: In progress...\n", __func__);
@@ -272,6 +277,14 @@ void HandleSIGTERM(int)
 void HandleSIGHUP(int)
 {
     fReopenDebugLog = true;
+}
+
+void waitForClose();
+
+void HandleSIGABRT(int)
+{
+    fRequestShutdown = true;
+    waitForClose();
 }
 
 bool static InitError(const std::string& str)
@@ -677,7 +690,13 @@ bool AppInit2(boost::thread_group& threadGroup)
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = 0;
     sigaction(SIGTERM, &sa, NULL);
-    sigaction(SIGINT, &sa, NULL);
+    sigaction(SIGINT,  &sa, NULL);
+
+    struct sigaction sa_abrt;
+    sa_abrt.sa_handler = HandleSIGABRT;
+    sigemptyset(&sa_abrt.sa_mask);
+    sa_abrt.sa_flags = 0;
+    sigaction(SIGABRT, &sa_abrt, NULL);
 
     // Reopen debug.log on SIGHUP
     struct sigaction sa_hup;
@@ -895,8 +914,6 @@ bool AppInit2(boost::thread_group& threadGroup)
     // std::string sha256_algo = SHA256AutoDetect();
     // LogPrintf("Using the '%s' SHA256 implementation\n", sha256_algo);
 
-    RandomInit();
-    // ECC_Start();
     globalVerifyHandle.reset(new ECCVerifyHandle());
 
     // Sanity check
@@ -1185,6 +1202,9 @@ bool AppInit2(boost::thread_group& threadGroup)
 #endif
 
     // ********************************************************* Step 7: load block chain
+
+    // Load coin validator
+    CoinValidator::instance().LoadStatic();
 
     fReindex = GetBoolArg("-reindex", false);
 
@@ -1675,7 +1695,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     if (!fRequestShutdown)
     {
         uiInterface.InitMessage(_("Init xbridge service"));
-        XBridgeApp & xapp = XBridgeApp::instance();
+        xbridge::App & xapp = xbridge::App::instance();
         xapp.start();
     }
 

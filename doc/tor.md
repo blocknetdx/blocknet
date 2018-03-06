@@ -112,15 +112,4 @@ for normal IPv4/IPv6 communication, use:
 
 List of known BlocknetDX Tor relays
 ------------------------------------
-```
-y5kcscnhpygvvnjn.onion:989
-5bmhtjvn2jvwpiej.onion:989
-pyfdxkazur3iib7y.onion:989
-ok3ym5zy6m5klimk.onion:989
-i6vpvzk2jxuqqs5f.onion:989
-bgdhpb76fkbw5fmg.onion:989
-gtlqzb5zbws5di7g.onion:989
-f7j2m26rptm5f7af.onion:989
-dnetzj6l4cvo2fxy.onion:989
-s3v3n7xhqafg6sb7.onion:989
-```
+***TODO***

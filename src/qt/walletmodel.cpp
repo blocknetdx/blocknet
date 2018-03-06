@@ -1,6 +1,7 @@
 // Copyright (c) 2011-2014 The Bitcoin developers
 // Copyright (c) 2014-2015 The Dash developers
-// Copyright (c) 2015-2017 The BlocknetDX developers
+// Copyright (c) 2015-2017 The PIVX developers
+// Copyright (c) 2015-2018 The Blocknet developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -550,11 +551,9 @@ WalletModel::UnlockContext::UnlockContext(WalletModel* wallet, bool valid, bool 
 
 WalletModel::UnlockContext::~UnlockContext()
 {
-/*
     if (valid && relock) {
         wallet->setWalletLocked(true);
     }
-*/
 }
 
 void WalletModel::UnlockContext::CopyFrom(const UnlockContext& rhs)

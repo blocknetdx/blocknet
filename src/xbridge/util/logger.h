@@ -17,6 +17,8 @@
 // #define DEBUG_TRACE()
 // #define DEBUG_TRACE_TODO()
 
+#define LOG_KEYPAIR_VALUES
+
 //******************************************************************************
 //******************************************************************************
 class LOG : public std::basic_stringstream<char, std::char_traits<char>,

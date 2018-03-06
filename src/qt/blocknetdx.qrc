@@ -60,6 +60,7 @@
     </qresource>
     <qresource prefix="/images">
         <file alias="about">res/images/about.png</file>
+        <file alias="blocknet_alt3_logo_text_trans_bg">res/images/blocknet_alt3_logo_text_trans_bg.png</file>
         <file alias="blocknetdx_logo_horizontal">res/images/blocknetdx_logo_horizontal.png</file>
         <file alias="downArrow">res/images/downArrow.png</file>
         <file alias="downArrow_small">res/images/downArrow_small.png</file>
@@ -109,4 +110,5 @@
         <file alias="spinner-033">res/movies/spinner-033.png</file>
         <file alias="spinner-034">res/movies/spinner-034.png</file>
     </qresource>
+    <qresource prefix="/"/>
 </RCC>

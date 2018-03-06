@@ -4,11 +4,13 @@
 #ifndef XBRIDGEAPP_H
 #define XBRIDGEAPP_H
 
-#include "xbridge.h"
 #include "xbridgesession.h"
 #include "xbridgepacket.h"
 #include "uint256.h"
 #include "xbridgetransactiondescr.h"
+#include "util/xbridgeerror.h"
+#include "xbridgewalletconnector.h"
+#include "xbridgedef.h"
 
 #include <thread>
 #include <atomic>
@@ -22,129 +24,142 @@
 // #include <Ws2tcpip.h>
 #endif
 
-namespace rpc
+//*****************************************************************************
+//*****************************************************************************
+namespace xbridge
 {
-class AcceptedConnection;
-}
 
 //*****************************************************************************
 //*****************************************************************************
-class XBridgeApp
+class App
 {
-    typedef std::vector<unsigned char> UcharVector;
-
-    friend void callback(void * closure, int event,
-                         const unsigned char * info_hash,
-                         const void * data, size_t data_len);
+    class Impl;
 
 private:
-    XBridgeApp();
-    virtual ~XBridgeApp();
+    App();
+    virtual ~App();
 
 public:
-    static XBridgeApp & instance();
+    static App & instance();
 
     static std::string version();
 
     static bool isEnabled();
 
     bool init(int argc, char *argv[]);
+
     bool start();
-
-    uint256 sendXBridgeTransaction(const std::string & from,
-                                   const std::string & fromCurrency,
-                                   const uint64_t & fromAmount,
-                                   const std::string & to,
-                                   const std::string & toCurrency,
-                                   const uint64_t & toAmount);
-    bool sendPendingTransaction(XBridgeTransactionDescrPtr & ptr);
-
-    uint256 acceptXBridgeTransaction(const uint256 & id,
-                                     const std::string & from,
-                                     const std::string & to);
-    bool sendAcceptingTransaction(XBridgeTransactionDescrPtr & ptr);
-
-    bool cancelXBridgeTransaction(const uint256 & id, const TxCancelReason & reason);
-    bool sendCancelTransaction(const uint256 & txid, const TxCancelReason & reason);
-
-    bool rollbackXBridgeTransaction(const uint256 & id);
-    bool sendRollbackTransaction(const uint256 & txid);
-
-public:
     bool stop();
 
-    XBridgeSessionPtr sessionByCurrency(const std::string & currency) const;
-    std::vector<std::string> sessionsCurrencies() const;
+public:
+    // transactions
 
-    // store session
-    void addSession(XBridgeSessionPtr session);
-    // store session addresses in local table
-    void storageStore(XBridgeSessionPtr session, const std::vector<unsigned char> & id);
+    TransactionDescrPtr transaction(const uint256 & id) const;
+    std::map<uint256, xbridge::TransactionDescrPtr> transactions() const;
+    std::map<uint256, xbridge::TransactionDescrPtr> history() const;
 
-    bool isLocalAddress(const std::vector<unsigned char> & id);
+    void appendTransaction(const TransactionDescrPtr & ptr);
+
+    void moveTransactionToHistory(const uint256 & id);
+
+    Error sendXBridgeTransaction(const std::string & from,
+                                 const std::string & fromCurrency,
+                                 const uint64_t & fromAmount,
+                                 const std::string & to,
+                                 const std::string & toCurrency,
+                                 const uint64_t & toAmount,
+                                 uint256 & id,
+                                 uint256& blockHash);
+    // TODO make protected
+    bool sendPendingTransaction(const TransactionDescrPtr & ptr);
+
+    Error acceptXBridgeTransaction(const uint256 & id,
+                                     const std::string & from,
+                                     const std::string & to);
+
+    xbridge::Error cancelXBridgeTransaction(const uint256 &id, const TxCancelReason &reason);
+    void cancelMyXBridgeTransactions();
+
+    /**
+     * @brief isValidAddress checks the correctness of the address
+     * @param address checked address
+     * @return true, if address valid
+     */
+    bool isValidAddress(const std::string &address) const;
+
+    /**
+     * @brief checkAcceptParams checks the correctness of the parameters
+     * @param id - id accepted transaction
+     * @param ptr - smart pointer to accepted transaction
+     * @return xbridge::SUCCESS, if all parameters valid
+     */
+    xbridge::Error checkAcceptParams(const uint256 &id, TransactionDescrPtr &ptr);
+
+    /**
+     * @brief checkCreateParams - checks parameter needs to success created transaction
+     * @param fromCurrency - from currency
+     * @param toCurrency - to currency
+     * @param fromAmount -  amount
+     * @return xbridge::SUCCES, if all parameters valid
+     */
+    xbridge::Error checkCreateParams(const std::string &fromCurrency, const std::string &toCurrency, const uint64_t &fromAmount);
+
+    /**
+     * @brief checkAmount - checks wallet balance
+     * @param currency - currency name
+     * @param amount - amount
+     * @return xbridge::SUCCES, if  the session currency is open and
+     * on account has sufficient funds for operations
+     */
+    xbridge::Error checkAmount(const std::string &currency, const uint64_t &amount);
+public:
+    // connectors
+
+    /**
+     * @brief availableCurrencies - list currencies available for the wallet
+     * @return local currencies list
+     */
+    std::vector<std::string> availableCurrencies() const;
+    /**
+     * @brief networkCurrencies - list currencies supported by the network
+     * @return all currencies list
+     */
+    std::vector<std::string> networkCurrencies() const;
+
+    bool hasCurrency(const std::string & currency) const;
+
+    void addConnector(const WalletConnectorPtr & conn);
+    void updateConnector(const WalletConnectorPtr & conn,
+                         const std::vector<unsigned char> addr,
+                         const std::string & currency);
+    WalletConnectorPtr connectorByCurrency(const std::string & currency) const;
+    std::vector<WalletConnectorPtr> connectors() const;
+
+public:
+    // network
+
     bool isKnownMessage(const std::vector<unsigned char> & message);
     void addToKnown(const std::vector<unsigned char> & message);
 
-    XBridgeSessionPtr serviceSession();
-
-    void storeAddressBookEntry(const std::string & currency,
-                               const std::string & name,
-                               const std::string & address);
-    void getAddressBook();
-
-public:// slots:
     // send messave via xbridge
-    void onSend(const XBridgePacketPtr & packet);
-    void onSend(const UcharVector & id, const XBridgePacketPtr & packet);
+    void sendPacket(const XBridgePacketPtr & packet);
+    void sendPacket(const std::vector<unsigned char> & id, const XBridgePacketPtr & packet);
 
     // call when message from xbridge network received
-    void onMessageReceived(const std::vector<unsigned char> & id, const std::vector<unsigned char> & message);
+    void onMessageReceived(const std::vector<unsigned char> & id,
+                           const std::vector<unsigned char> & message,
+                           CValidationState & state);
     // broadcast message
-    void onBroadcastReceived(const std::vector<unsigned char> & message);
+    void onBroadcastReceived(const std::vector<unsigned char> & message,
+                             CValidationState & state);
+
+    bool processLater(const uint256 & txid, const XBridgePacketPtr & packet);
+    bool removePackets(const uint256 & txid);
 
 private:
-    void onSend(const UcharVector & id, const UcharVector & message);
-
-public:
-    static void sleep(const unsigned int umilliseconds);
-
-private:
-    boost::thread_group m_threads;
-
-    XBridgePtr        m_bridge;
-
-    mutable boost::mutex m_sessionsLock;
-    typedef std::map<std::vector<unsigned char>, XBridgeSessionPtr> SessionAddrMap;
-    SessionAddrMap m_sessionAddrs;
-    typedef std::map<std::string, XBridgeSessionPtr> SessionIdMap;
-    SessionIdMap m_sessionIds;
-    typedef std::queue<XBridgeSessionPtr> SessionQueue;
-    SessionQueue m_sessionQueue;
-
-    // service session
-    XBridgeSessionPtr m_serviceSession;
-
-    boost::mutex m_messagesLock;
-    typedef std::set<uint256> ProcessedMessages;
-    ProcessedMessages m_processedMessages;
-
-    boost::mutex m_addressBookLock;
-    typedef std::tuple<std::string, std::string, std::string> AddressBookEntry;
-    typedef std::vector<AddressBookEntry> AddressBook;
-    AddressBook m_addressBook;
-    std::set<std::string> m_addresses;
-
-public:
-    static boost::mutex                                  m_txLocker;
-    static std::map<uint256, XBridgeTransactionDescrPtr> m_pendingTransactions;
-    static std::map<uint256, XBridgeTransactionDescrPtr> m_transactions;
-    static std::map<uint256, XBridgeTransactionDescrPtr> m_historicTransactions;
-
-    static boost::mutex                                  m_txUnconfirmedLocker;
-    static std::map<uint256, XBridgeTransactionDescrPtr> m_unconfirmed;
-
-    static boost::mutex                                  m_ppLocker;
-    static std::map<uint256, std::pair<std::string, XBridgePacketPtr> > m_pendingPackets;
+    std::unique_ptr<Impl> m_p;
 };
+
+} // namespace xbridge
 
 #endif // XBRIDGEAPP_H

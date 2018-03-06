@@ -1,46 +1,55 @@
 //*****************************************************************************
 //*****************************************************************************
 
-// #include <boost/asio.hpp>
-// #include <boost/asio/buffer.hpp>
-#include <boost/algorithm/string.hpp>
+#include "xbridgesessiondcr.h"
 
-#include "xbridgesessionbtc.h"
 #include "xbridgeapp.h"
 #include "xbridgeexchange.h"
 #include "xuiconnector.h"
 #include "util/xutil.h"
 #include "util/logger.h"
 #include "util/txlog.h"
-// #include "dht/dht.h"
 #include "bitcoinrpcconnector.h"
 #include "xbitcointransaction.h"
 #include "base58.h"
+#include <boost/algorithm/string.hpp>
 
 //*****************************************************************************
 //*****************************************************************************
-XBridgeSessionBtc::XBridgeSessionBtc()
+XBridgeSessionDcr::XBridgeSessionDcr()
     : XBridgeSession()
 {
 }
 
 //*****************************************************************************
 //*****************************************************************************
-XBridgeSessionBtc::XBridgeSessionBtc(const WalletParam & wallet)
+XBridgeSessionDcr::XBridgeSessionDcr(const WalletParam & wallet)
     : XBridgeSession(wallet)
 {
 }
 
 //*****************************************************************************
 //*****************************************************************************
-XBridgeSessionBtc::~XBridgeSessionBtc()
+XBridgeSessionDcr::~XBridgeSessionDcr()
 {
 
 }
 
+//*****************************************************************************
+//*****************************************************************************
+std::vector<unsigned char> XBridgeSessionDcr::toXAddr(const std::string & addr) const
+{
+    std::vector<unsigned char> vaddr;
+    if (this->DecodeBase58Check(addr.c_str(), vaddr))
+    {
+        vaddr.erase(vaddr.begin());
+    }
+    return vaddr;
+}
+
 //******************************************************************************
 //******************************************************************************
-uint32_t XBridgeSessionBtc::lockTime(const char role) const
+uint32_t XBridgeSessionDcr::lockTime(const char role) const
 {
     rpc::Info info;
     if (!rpc::getInfo(m_wallet.user, m_wallet.passwd,
@@ -80,28 +89,21 @@ uint32_t XBridgeSessionBtc::lockTime(const char role) const
 
 //******************************************************************************
 //******************************************************************************
-xbridge::CTransactionPtr XBridgeSessionBtc::createTransaction()
+xbridge::CTransactionPtr XBridgeSessionDcr::createTransaction() const
 {
     return xbridge::CTransactionPtr(new xbridge::CBTCTransaction);
 }
 
 //******************************************************************************
 //******************************************************************************
-xbridge::CTransactionPtr XBridgeSessionBtc::createTransaction(const std::vector<std::pair<std::string, int> > & inputs,
+xbridge::CTransactionPtr XBridgeSessionDcr::createTransaction(const std::vector<std::pair<std::string, int> > & inputs,
                                                               const std::vector<std::pair<CScript, double> > &outputs,
-                                                              const uint32_t lockTime)
+                                                              const uint32_t lockTime) const
 {
     xbridge::CTransactionPtr tx(new xbridge::CBTCTransaction);
     tx->nVersion  = m_wallet.txVersion;
     tx->nLockTime = lockTime;
 
-//    uint32_t sequence = lockTime ? std::numeric_limits<uint32_t>::max() - 1 : std::numeric_limits<uint32_t>::max();
-
-//    for (const std::pair<std::string, int> & in : inputs)
-//    {
-//        tx->vin.push_back(CTxIn(COutPoint(uint256(in.first), in.second),
-//                                CScript(), sequence));
-//    }
     for (const std::pair<std::string, int> & in : inputs)
     {
         tx->vin.push_back(CTxIn(COutPoint(uint256(in.first), in.second)));
@@ -115,12 +117,45 @@ xbridge::CTransactionPtr XBridgeSessionBtc::createTransaction(const std::vector<
     return tx;
 }
 
-//*****************************************************************************
-//*****************************************************************************
-std::string XBridgeSessionBtc::createRawTransaction(const std::vector<std::pair<std::string, int> > & inputs,
-                                                    const std::vector<std::pair<CScript, double> > &outputs,
-                                                    const uint32_t lockTime)
+bool XBridgeSessionDcr::signTransaction(const xbridge::CKey & key,
+                                        const xbridge::CTransactionPtr & transaction,
+                                        const uint32_t inputIdx,
+                                        const CScript & unlockScript,
+                                        std::vector<unsigned char> & signature)
 {
-    xbridge::CTransactionPtr tx(createTransaction(inputs, outputs, lockTime));
-    return tx->toString();
+    uint256 hash = xbridge::SignatureHash2(unlockScript, transaction, inputIdx, SIGHASH_ALL);
+    if (!key.Sign(hash, signature))
+    {
+        // cancel transaction
+        LOG() << "sign transaction error, transaction canceled " << __FUNCTION__;
+        return false;
+    }
+
+    signature.push_back((unsigned char)SIGHASH_ALL);
+
+    // TXLOG() << "signature " << HexStr(signature.begin(), signature.end());
+
+    return true;
 }
+
+bool XBridgeSessionDcr::DecodeBase58Check(const char* psz, std::vector<unsigned char>& vchRet) const
+{
+    if (!DecodeBase58(psz, vchRet) ||
+        (vchRet.size() < 6)) {
+        vchRet.clear();
+        return false;
+    }
+
+    uint256 hash = HashBlake(vchRet.begin(), vchRet.end() - 4);
+    uint256 hash2 = HashBlake(hash.begin(), hash.end());
+
+    if (memcmp(&hash2, &vchRet.end()[-4], 4) != 0) {
+        vchRet.clear();
+        return false;
+    }
+
+    vchRet.resize(vchRet.size() - 4);
+    vchRet.erase(vchRet.begin(), vchRet.begin() + 2);
+    return true;
+}
+

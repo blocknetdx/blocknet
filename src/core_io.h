@@ -11,12 +11,13 @@
 class CBlock;
 class CScript;
 class CTransaction;
+class CMutableTransaction;
 class uint256;
 class UniValue;
 
 // core_read.cpp
 extern CScript ParseScript(std::string s);
-extern bool DecodeHexTx(CTransaction& tx, const std::string& strHexTx);
+extern bool DecodeHexTx(CMutableTransaction &tx, const std::string& strHexTx);
 extern bool DecodeHexBlk(CBlock&, const std::string& strHexBlk);
 extern uint256 ParseHashUV(const UniValue& v, const std::string& strName);
 extern uint256 ParseHashStr(const std::string&, const std::string& strName);

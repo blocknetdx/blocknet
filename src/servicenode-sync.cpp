@@ -1,5 +1,6 @@
 // Copyright (c) 2014-2015 The Dash developers
-// Copyright (c) 2015-2017 The BlocknetDX developers
+// Copyright (c) 2015-2017 The PIVX developers
+// Copyright (c) 2015-2018 The Blocknet developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -51,8 +52,8 @@ bool CServicenodeSync::IsBlockchainSynced()
     CBlockIndex* pindex = chainActive.Tip();
     if (pindex == NULL) return false;
 
-
-    if (pindex->nTime + 60 * 60 < GetTime())
+    // Do not stall testnet
+    if (Params().NetworkID() == CBaseChainParams::MAIN && pindex->nTime + 60 * 60 < GetTime())
         return false;
 
     fBlockchainSynced = true;
@@ -368,8 +369,6 @@ void CServicenodeSync::Process()
             if (RequestedServicenodeAssets == SERVICENODE_SYNC_BUDGET) {
                 //we'll start rejecting votes if we accidentally get set as synced too soon
                 if (lastBudgetItem > 0 && lastBudgetItem < GetTime() - SERVICENODE_SYNC_TIMEOUT * 2 && RequestedServicenodeAttempt >= SERVICENODE_SYNC_THRESHOLD) { //hasn't received a new item in the last five seconds, so we'll move to the
-                                                                                                                                                                 //LogPrintf("CServicenodeSync::Process - HasNextFinalizedBudget %d nCountFailures %d IsBudgetPropEmpty %d\n", budget.HasNextFinalizedBudget(), nCountFailures, IsBudgetPropEmpty());
-                                                                                                                                                                 //if(budget.HasNextFinalizedBudget() || nCountFailures >= 2 || IsBudgetPropEmpty()) {
                     GetNextAsset();
 
                     //try to activate our servicenode if possible

@@ -4,13 +4,19 @@
 #include "xbridgetransaction.h"
 #include "util/logger.h"
 #include "util/xutil.h"
-#include "bitcoinrpcconnector.h"
 #include "utilstrencodings.h"
+#include "main.h"
 
+#include <boost/date_time/posix_time/conversion.hpp>
+
+//******************************************************************************
+//******************************************************************************
+namespace xbridge
+{
 
 //*****************************************************************************
 //*****************************************************************************
-XBridgeTransaction::XBridgeTransaction()
+Transaction::Transaction()
     : m_state(trInvalid)
     // , m_stateCounter(0)
     , m_a_stateChanged(false)
@@ -22,17 +28,21 @@ XBridgeTransaction::XBridgeTransaction()
 
 //*****************************************************************************
 //*****************************************************************************
-XBridgeTransaction::XBridgeTransaction(const uint256     & id,
-                                       const std::string & sourceAddr,
-                                       const std::string & sourceCurrency,
-                                       const uint64_t    & sourceAmount,
-                                       const std::string & destAddr,
-                                       const std::string & destCurrency,
-                                       const uint64_t    & destAmount)
+Transaction::Transaction(const uint256                    & id,
+                         const std::vector<unsigned char> & sourceAddr,
+                         const std::string                & sourceCurrency,
+                         const uint64_t                   & sourceAmount,
+                         const std::vector<unsigned char> & destAddr,
+                         const std::string                & destCurrency,
+                         const uint64_t                   & destAmount,
+                         const uint64_t                   & created,
+                         const uint256                    & blockHash,
+                         const std::vector<unsigned char> & mpubkey)
     : m_id(id)
-    , m_created(boost::posix_time::second_clock::universal_time())
+    , m_created(util::intToTime(created))
+    , m_last(boost::posix_time::microsec_clock::universal_time())
+    , m_blockHash(blockHash)
     , m_state(trNew)
-    // , m_stateCounter(0)
     , m_a_stateChanged(false)
     , m_b_stateChanged(false)
     , m_confirmationCounter(0)
@@ -44,36 +54,42 @@ XBridgeTransaction::XBridgeTransaction(const uint256     & id,
 {
     m_a.setSource(sourceAddr);
     m_a.setDest(destAddr);
+    m_a.setMPubkey(mpubkey);
 }
 
 //*****************************************************************************
 //*****************************************************************************
-XBridgeTransaction::~XBridgeTransaction()
+Transaction::~Transaction()
 {
 }
 
 //*****************************************************************************
 //*****************************************************************************
-uint256 XBridgeTransaction::id() const
+uint256 Transaction::id() const
 {
     return m_id;
+}
+
+uint256 Transaction::blockHash() const
+{
+    return m_blockHash;
 }
 
 //*****************************************************************************
 // state of transaction
 //*****************************************************************************
-XBridgeTransaction::State XBridgeTransaction::state() const
+Transaction::State Transaction::state() const
 {
     return m_state;
 }
 
 //*****************************************************************************
 //*****************************************************************************
-XBridgeTransaction::State XBridgeTransaction::increaseStateCounter(XBridgeTransaction::State state,
-                                                                   const std::string & from)
+Transaction::State Transaction::increaseStateCounter(const Transaction::State state,
+                                                     const std::vector<unsigned char> & from)
 {
     LOG() << "confirm transaction state <" << strState(state)
-          << "> from " << from;
+          << "> from " << util::to_str(from);
 
     if (state == trJoined && m_state == state)
     {
@@ -185,12 +201,12 @@ XBridgeTransaction::State XBridgeTransaction::increaseStateCounter(XBridgeTransa
 //*****************************************************************************
 //*****************************************************************************
 // static
-std::string XBridgeTransaction::strState(const State state)
+std::string Transaction::strState(const State state)
 {
     static std::string states[] = {
         "trInvalid", "trNew", "trJoined",
         "trHold", "trInitialized", "trCreated",
-        "trSigned", "trCommited", "trConfirmed",
+        "trSigned", "trCommited",
         "trFinished", "trCancelled", "trDropped"
     };
 
@@ -199,26 +215,28 @@ std::string XBridgeTransaction::strState(const State state)
 
 //*****************************************************************************
 //*****************************************************************************
-std::string XBridgeTransaction::strState() const
+std::string Transaction::strState() const
 {
     return strState(m_state);
 }
 
 //*****************************************************************************
 //*****************************************************************************
-void XBridgeTransaction::updateTimestamp()
+void Transaction::updateTimestamp()
 {
-    m_created = boost::posix_time::second_clock::universal_time();
+    m_last = boost::posix_time::microsec_clock::universal_time();
 }
 
-boost::posix_time::ptime XBridgeTransaction::createdTime() const
+//*****************************************************************************
+//*****************************************************************************
+boost::posix_time::ptime Transaction::createdTime() const
 {
     return m_created;
 }
 
 //*****************************************************************************
 //*****************************************************************************
-bool XBridgeTransaction::isFinished() const
+bool Transaction::isFinished() const
 {
     return m_state == trCancelled ||
            m_state == trFinished ||
@@ -227,30 +245,56 @@ bool XBridgeTransaction::isFinished() const
 
 //*****************************************************************************
 //*****************************************************************************
-bool XBridgeTransaction::isValid() const
+bool Transaction::isValid() const
 {
     return m_state != trInvalid;
 }
 
 //*****************************************************************************
 //*****************************************************************************
-bool XBridgeTransaction::isExpired() const
+bool Transaction::isExpired() const
 {
-    boost::posix_time::time_duration td = boost::posix_time::second_clock::universal_time() - m_created;
-    if (m_state == trNew && td.total_seconds() > pendingTTL)
-    {
+    boost::posix_time::time_duration tdLast = boost::posix_time::microsec_clock::universal_time() - m_last;
+    boost::posix_time::time_duration tdCreated = boost::posix_time::microsec_clock::universal_time() - m_created;
+
+    if (m_state == trNew && tdCreated.total_seconds() > deadlineTTL)
         return true;
-    }
-    if (m_state > trNew && td.total_seconds() > TTL)
-    {
+
+    if (m_state == trNew && tdLast.total_seconds() > pendingTTL)
         return true;
-    }
+
+    if (m_state > trNew && tdLast.total_seconds() > TTL)
+        return true;
+
     return false;
 }
 
 //*****************************************************************************
 //*****************************************************************************
-void XBridgeTransaction::cancel()
+bool Transaction::isExpiredByBlockNumber() const
+{
+    LOCK(cs_main);
+
+    if (mapBlockIndex.count(m_blockHash) == 0)
+        return true; //expired because we don't have this hash in blockchain
+
+    if(m_state > trNew && !isFinished())
+        return false;
+
+    CBlockIndex* blockindex = mapBlockIndex[m_blockHash];
+
+    int trBlockHeight = blockindex->nHeight;
+    int lastBlockHeight = chainActive.Height();
+
+    if(lastBlockHeight - trBlockHeight > blocksTTL)
+        return true;
+
+    return false;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+void Transaction::cancel()
 {
     LOG() << "cancel transaction <" << m_id.GetHex() << ">";
     m_state = trCancelled;
@@ -258,7 +302,7 @@ void XBridgeTransaction::cancel()
 
 //*****************************************************************************
 //*****************************************************************************
-void XBridgeTransaction::drop()
+void Transaction::drop()
 {
     LOG() << "drop transaction <" << m_id.GetHex() << ">";
     m_state = trDropped;
@@ -266,7 +310,7 @@ void XBridgeTransaction::drop()
 
 //*****************************************************************************
 //*****************************************************************************
-void XBridgeTransaction::finish()
+void Transaction::finish()
 {
     LOG() << "finish transaction <" << m_id.GetHex() << ">";
     m_state = trFinished;
@@ -274,101 +318,58 @@ void XBridgeTransaction::finish()
 
 //*****************************************************************************
 //*****************************************************************************
-bool XBridgeTransaction::confirm(const std::string & id)
-{
-    if (m_bintxid1 == id || m_bintxid2 == id)
-    {
-        if (++m_confirmationCounter >= 2)
-        {
-            m_state = trConfirmed;
-            return true;
-        }
-    }
-
-    return false;
-}
-
-//*****************************************************************************
-//*****************************************************************************
-uint256 XBridgeTransaction::hash1() const
-{
-    return Hash(m_sourceCurrency.begin(), m_sourceCurrency.end(),
-                BEGIN(m_sourceAmount), END(m_sourceAmount),
-                m_destCurrency.begin(), m_destCurrency.end(),
-                BEGIN(m_destAmount), END(m_destAmount));
-}
-
-//*****************************************************************************
-//*****************************************************************************
-uint256 XBridgeTransaction::hash2() const
-{
-    return Hash(m_destCurrency.begin(), m_destCurrency.end(),
-                BEGIN(m_destAmount), END(m_destAmount),
-                m_sourceCurrency.begin(), m_sourceCurrency.end(),
-                BEGIN(m_sourceAmount), END(m_sourceAmount));
-}
-
-//*****************************************************************************
-//*****************************************************************************
-//uint256 XBridgeTransaction::firstId() const
-//{
-//    return m_first.id();
-//}
-
-//*****************************************************************************
-//*****************************************************************************
-std::string XBridgeTransaction::a_address() const
+std::vector<unsigned char> Transaction::a_address() const
 {
     return m_a.source();
 }
 
 //*****************************************************************************
 //*****************************************************************************
-std::string XBridgeTransaction::a_destination() const
+std::vector<unsigned char> Transaction::a_destination() const
 {
     return m_a.dest();
 }
 
 //*****************************************************************************
 //*****************************************************************************
-std::string XBridgeTransaction::a_currency() const
+std::string Transaction::a_currency() const
 {
     return m_sourceCurrency;
 }
 
 //*****************************************************************************
 //*****************************************************************************
-uint64_t XBridgeTransaction::a_amount() const
+uint64_t Transaction::a_amount() const
 {
     return m_sourceAmount;
 }
 
 //*****************************************************************************
 //*****************************************************************************
-std::string XBridgeTransaction::a_bintxid() const
+std::string Transaction::a_bintxid() const
 {
     return m_bintxid1;
 }
 
 //*****************************************************************************
 //*****************************************************************************
-std::string XBridgeTransaction::a_innerScript() const
+std::vector<unsigned char> Transaction::a_innerScript() const
 {
     return m_innerScript1;
 }
 
 //*****************************************************************************
 //*****************************************************************************
-uint256 XBridgeTransaction::a_datatxid() const
+uint256 Transaction::a_datatxid() const
 {
     return m_a_datatxid;
 }
 
 //*****************************************************************************
 //*****************************************************************************
-xbridge::CPubKey XBridgeTransaction::a_pk1() const
+std::vector<unsigned char> Transaction::a_pk1() const
 {
-    return m_a_pk1;
+    return m_a.mpubkey();
 }
 
 //*****************************************************************************
@@ -380,42 +381,42 @@ xbridge::CPubKey XBridgeTransaction::a_pk1() const
 
 //*****************************************************************************
 //*****************************************************************************
-std::string XBridgeTransaction::b_address() const
+std::vector<unsigned char> Transaction::b_address() const
 {
     return m_b.source();
 }
 
 //*****************************************************************************
 //*****************************************************************************
-std::string XBridgeTransaction::b_destination() const
+std::vector<unsigned char> Transaction::b_destination() const
 {
     return m_b.dest();
 }
 
 //*****************************************************************************
 //*****************************************************************************
-std::string XBridgeTransaction::b_currency() const
+std::string Transaction::b_currency() const
 {
     return m_destCurrency;
 }
 
 //*****************************************************************************
 //*****************************************************************************
-uint64_t XBridgeTransaction::b_amount() const
+uint64_t Transaction::b_amount() const
 {
     return m_destAmount;
 }
 
 //*****************************************************************************
 //*****************************************************************************
-std::string XBridgeTransaction::b_bintxid() const
+std::string Transaction::b_bintxid() const
 {
     return m_bintxid2;
 }
 
 //*****************************************************************************
 //*****************************************************************************
-std::string XBridgeTransaction::b_innerScript() const
+std::vector<unsigned char> Transaction::b_innerScript() const
 {
     return m_innerScript2;
 }
@@ -429,37 +430,14 @@ std::string XBridgeTransaction::b_innerScript() const
 
 //*****************************************************************************
 //*****************************************************************************
-xbridge::CPubKey XBridgeTransaction::b_pk1() const
+std::vector<unsigned char> Transaction::b_pk1() const
 {
-    return m_b_pk1;
+    return m_b.mpubkey();
 }
 
 //*****************************************************************************
 //*****************************************************************************
-std::string XBridgeTransaction::fromXAddr(const std::vector<unsigned char> & xaddr) const
-{
-    if (rpc::toXAddr(m_a.source()) == xaddr)
-    {
-        return m_a.source();
-    }
-    else if (rpc::toXAddr(m_b.source()) == xaddr)
-    {
-        return m_b.source();
-    }
-    else if (rpc::toXAddr(m_a.dest()) == xaddr)
-    {
-        return m_a.dest();
-    }
-    else if (rpc::toXAddr(m_b.dest()) == xaddr)
-    {
-        return m_b.dest();
-    }
-    return std::string();
-}
-
-//*****************************************************************************
-//*****************************************************************************
-bool XBridgeTransaction::tryJoin(const XBridgeTransactionPtr other)
+bool Transaction::tryJoin(const TransactionPtr other)
 {
     DEBUG_TRACE();
 
@@ -473,7 +451,6 @@ bool XBridgeTransaction::tryJoin(const XBridgeTransactionPtr other)
         m_destCurrency != other->m_sourceCurrency)
     {
         // not same currencies
-        ERR() << "not same currencies. transaction not joined" << __FUNCTION__;
         return false;
     }
 
@@ -495,20 +472,20 @@ bool XBridgeTransaction::tryJoin(const XBridgeTransactionPtr other)
 
 //*****************************************************************************
 //*****************************************************************************
-bool XBridgeTransaction::setKeys(const std::string & addr,
+bool Transaction::setKeys(const std::vector<unsigned char> & addr,
                                  const uint256 & datatxid,
-                                 const xbridge::CPubKey & pk)
+                                 const std::vector<unsigned char> & pk)
 {
     if (m_b.dest() == addr)
     {
         m_b_datatxid = datatxid;
-        m_b_pk1      = pk;
+        m_b.setMPubkey(pk);
         return true;
     }
     else if (m_a.dest() == addr)
     {
         m_a_datatxid = datatxid;
-        m_a_pk1      = pk;
+        m_a.setMPubkey(pk);
         return true;
     }
     return false;
@@ -516,9 +493,9 @@ bool XBridgeTransaction::setKeys(const std::string & addr,
 
 //*****************************************************************************
 //*****************************************************************************
-bool XBridgeTransaction::setBinTxId(const std::string & addr,
+bool Transaction::setBinTxId(const std::vector<unsigned char> & addr,
                                     const std::string & id,
-                                    const std::string & innerScript)
+                                    const std::vector<unsigned char> & innerScript)
 {
     if (m_b.source() == addr)
     {
@@ -534,3 +511,5 @@ bool XBridgeTransaction::setBinTxId(const std::string & addr,
     }
     return false;
 }
+
+} // namespace xbridge

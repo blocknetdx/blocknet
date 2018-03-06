@@ -63,9 +63,6 @@ LOG::~LOG()
 
     try
     {
-        std::string copy(str().c_str());
-        xuiConnector.NotifyLogMessage(copy);
-
         if (logToFile)
         {
             boost::gregorian::date tmpday =

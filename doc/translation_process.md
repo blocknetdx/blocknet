@@ -8,7 +8,7 @@ Transifex is setup to monitor the GitHub repo for updates, and when code contain
 
 Multiple language support is critical in assisting BlocknetDX's global adoption, and growth. One of BlocknetDX's greatest strengths is cross-border money transfers, any help making that easier is greatly appreciated.
 
-See the [Transifex BlocknetDX project](https://www.transifex.com/blocknetdx-project/blocknetdx-project-translations/) to assist in translations.
+See the [Transifex BlocknetDX project](https://www.transifex.com/blocknetdx/blocknetdx-translations/) to assist in translations.
 
 ### Writing code with translations
 We use automated scripts to help extract translations in both Qt, and non-Qt source files. It is rarely necessary to manually edit the files in `src/qt/locale/`. The translation source files must adhere to the following format:
@@ -106,6 +106,6 @@ To create a new language template, you will need to edit the languages manifest 
 **Note:** that the language translation file **must end in `.qm`** (the compiled extension), and not `.ts`.
 
 ### Questions and general assistance
-The BlocknetDX Core translation maintainers include *Fuzzbawls and s3v3nh4cks*. You can find them, and others, in the [BlocknetDX Slack](https://blocknetdx.slack.com).
+The BlocknetDX Core translation maintainers include *hanniabu*. You can find them, and others, in the [BlocknetDX Rocket.Chat](https://rocket.blocknet.co:8443).
 
 Announcements will be posted during application pre-releases to notify translators to check for updates.

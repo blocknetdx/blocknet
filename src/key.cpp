@@ -10,7 +10,6 @@
 #include "pubkey.h"
 #include "random.h"
 
-#include "ecwrapper.h"
 #include <secp256k1.h>
 #include <secp256k1_recovery.h>
 

@@ -2,7 +2,7 @@
 //******************************************************************************
 
 #include "xbridgetransactionsview.h"
-// #include "../xbridgeapp.h"
+ #include "xbridge/xbridgeapp.h"
 // #include "xbridgetransactiondialog.h"
 #include "xbridge/xbridgeexchange.h"
 #include "xbridge/xuiconnector.h"
@@ -42,14 +42,14 @@ void XBridgeTransactionsView::setupUi()
     m_transactionsProxy.setSourceModel(&m_txModel);
     m_transactionsProxy.setDynamicSortFilter(true);
 
-    QList<XBridgeTransactionDescr::State> transactionsAccetpedStates;
-    transactionsAccetpedStates << XBridgeTransactionDescr::trNew
-                               << XBridgeTransactionDescr::trPending
-                               << XBridgeTransactionDescr::trAccepting
-                               << XBridgeTransactionDescr::trHold
-                               << XBridgeTransactionDescr::trCreated
-                               << XBridgeTransactionDescr::trSigned
-                               << XBridgeTransactionDescr::trCommited;
+    QList<xbridge::TransactionDescr::State> transactionsAccetpedStates;
+    transactionsAccetpedStates << xbridge::TransactionDescr::trNew
+                               << xbridge::TransactionDescr::trPending
+                               << xbridge::TransactionDescr::trAccepting
+                               << xbridge::TransactionDescr::trHold
+                               << xbridge::TransactionDescr::trCreated
+                               << xbridge::TransactionDescr::trSigned
+                               << xbridge::TransactionDescr::trCommited;
 
     m_transactionsProxy.setAcceptedStates(transactionsAccetpedStates);
 
@@ -75,20 +75,22 @@ void XBridgeTransactionsView::setupUi()
     header->setSectionResizeMode(XBridgeTransactionsModel::Size, QHeaderView::Stretch);
 #endif
 #if QT_VERSION <0x050000
-    header->setResizeMode(XBridgeTransactionsModel::BID, QHeaderView::Stretch);
+    header->setResizeMode(XBridgeTransactionsModel::Date, QHeaderView::Stretch);
 #else
-    header->setSectionResizeMode(XBridgeTransactionsModel::BID, QHeaderView::Stretch);
+    header->setSectionResizeMode(XBridgeTransactionsModel::ID, QHeaderView::Stretch);
 #endif
 
     header->resizeSection(XBridgeTransactionsModel::Total,      80);
     header->resizeSection(XBridgeTransactionsModel::Size,       80);
     header->resizeSection(XBridgeTransactionsModel::BID,        80);
+    header->resizeSection(XBridgeTransactionsModel::Date,       80);
+    header->resizeSection(XBridgeTransactionsModel::ID,         80);
     header->resizeSection(XBridgeTransactionsModel::State,      128);
     vbox->addWidget(m_transactionsList);
 
     QHBoxLayout * hbox = new QHBoxLayout;
 
-    XBridgeExchange & e = XBridgeExchange::instance();
+    xbridge::Exchange & e = xbridge::Exchange::instance();
     if (!e.isEnabled())
     {
         QPushButton * addTxBtn = new QPushButton(trUtf8("New Transaction"), this);
@@ -129,13 +131,13 @@ void XBridgeTransactionsView::setupUi()
     m_historicTransactionsProxy.setSourceModel(&m_txModel);
     m_historicTransactionsProxy.setDynamicSortFilter(true);
 
-    QList<XBridgeTransactionDescr::State> historicTransactionsAccetpedStates;
-    historicTransactionsAccetpedStates << XBridgeTransactionDescr::trExpired
-                                       << XBridgeTransactionDescr::trOffline
-                                       << XBridgeTransactionDescr::trFinished
-                                       << XBridgeTransactionDescr::trDropped
-                                       << XBridgeTransactionDescr::trCancelled
-                                       << XBridgeTransactionDescr::trInvalid;
+    QList<xbridge::TransactionDescr::State> historicTransactionsAccetpedStates;
+    historicTransactionsAccetpedStates << xbridge::TransactionDescr::trFinished
+                                       << xbridge::TransactionDescr::trCancelled
+                                       << xbridge::TransactionDescr::trExpired
+                                       << xbridge::TransactionDescr::trOffline
+                                       << xbridge::TransactionDescr::trDropped
+                                       << xbridge::TransactionDescr::trInvalid;
 
     m_historicTransactionsProxy.setAcceptedStates(historicTransactionsAccetpedStates);
 
@@ -157,14 +159,16 @@ void XBridgeTransactionsView::setupUi()
     historicHeader->setSectionResizeMode(XBridgeTransactionsModel::Size, QHeaderView::Stretch);
 #endif
 #if QT_VERSION <0x050000
-    header->setResizeMode(XBridgeTransactionsModel::BID, QHeaderView::Stretch);
+    header->setResizeMode(XBridgeTransactionsModel::Date, QHeaderView::Stretch);
 #else
-    historicHeader->setSectionResizeMode(XBridgeTransactionsModel::BID, QHeaderView::Stretch);
+    historicHeader->setSectionResizeMode(XBridgeTransactionsModel::ID, QHeaderView::Stretch);
 #endif
 
     historicHeader->resizeSection(XBridgeTransactionsModel::Total,      80);
     historicHeader->resizeSection(XBridgeTransactionsModel::Size,       80);
     historicHeader->resizeSection(XBridgeTransactionsModel::BID,        80);
+    historicHeader->resizeSection(XBridgeTransactionsModel::Date,       80);
+    historicHeader->resizeSection(XBridgeTransactionsModel::ID,         80);
     historicHeader->resizeSection(XBridgeTransactionsModel::State,      128);
     vbox->addWidget(m_historicTransactionsList);
 
@@ -187,9 +191,9 @@ QMenu * XBridgeTransactionsView::setupContextMenu(QModelIndex & index)
     }
     else
     {
-        XBridgeTransactionDescr d = m_txModel.item(m_contextMenuIndex.row());
+        const xbridge::TransactionDescrPtr & d = m_txModel.item(m_contextMenuIndex.row());
 
-        if (d.state < XBridgeTransactionDescr::trCreated)
+        if (d->state < xbridge::TransactionDescr::trCreated)
         {
             QAction * cancelTransaction = new QAction(tr("&Cancel transaction"), this);
             contextMenu->addAction(cancelTransaction);
@@ -200,7 +204,9 @@ QMenu * XBridgeTransactionsView::setupContextMenu(QModelIndex & index)
         else
         {
             QAction * rollbackTransaction = new QAction(tr("&Rollback transaction"), this);
-            contextMenu->addAction(rollbackTransaction);
+            // rollbask disabled because transaction time-locked
+            // need to enable after lock expired
+            // contextMenu->addAction(rollbackTransaction);
 
             connect(rollbackTransaction, SIGNAL(triggered()),
                     this,                SLOT(onRollbackTransaction()));
@@ -241,17 +247,17 @@ void XBridgeTransactionsView::onAcceptTransaction()
         return;
     }
 
-    XBridgeTransactionDescr d = m_txModel.item(m_contextMenuIndex.row());
-    if (d.state != XBridgeTransactionDescr::trPending)
+    const xbridge::TransactionDescrPtr & d = m_txModel.item(m_contextMenuIndex.row());
+    if (d->state != xbridge::TransactionDescr::trPending)
     {
         return;
     }
 
-    m_dlg.setPendingId(d.id, d.hubAddress);
-    m_dlg.setFromAmount((double)d.toAmount / XBridgeTransactionDescr::COIN);
-    m_dlg.setToAmount((double)d.fromAmount / XBridgeTransactionDescr::COIN);
-    m_dlg.setFromCurrency(QString::fromStdString(d.toCurrency));
-    m_dlg.setToCurrency(QString::fromStdString(d.fromCurrency));
+    m_dlg.setPendingId(d->id, d->hubAddress);
+    m_dlg.setFromAmount((double)d->toAmount / xbridge::TransactionDescr::COIN);
+    m_dlg.setToAmount((double)d->fromAmount / xbridge::TransactionDescr::COIN);
+    m_dlg.setFromCurrency(QString::fromStdString(d->toCurrency));
+    m_dlg.setToCurrency(QString::fromStdString(d->fromCurrency));
     m_dlg.show();
 }
 
@@ -273,11 +279,13 @@ void XBridgeTransactionsView::onCancelTransaction()
         return;
     }
 
-    if (!m_txModel.cancelTransaction(m_txModel.item(m_contextMenuIndex.row()).id))
+    const auto & id = m_txModel.item(m_contextMenuIndex.row())->id;
+    if (m_txModel.cancelTransaction(id) != xbridge::SUCCESS)
     {
         QMessageBox::warning(this,
                              trUtf8("Cancel transaction"),
-                             trUtf8("Error send cancel request"));
+                             trUtf8("Error send cancel request %1")
+                             .arg(id.ToString().c_str()));
     }
 }
 
@@ -299,11 +307,12 @@ void XBridgeTransactionsView::onRollbackTransaction()
         return;
     }
 
-    if (!m_txModel.rollbackTransaction(m_txModel.item(m_contextMenuIndex.row()).id))
+    const auto & id = m_txModel.item(m_contextMenuIndex.row())->id;
+    if (m_txModel.rollbackTransaction(id) != xbridge::SUCCESS)
     {
         QMessageBox::warning(this,
                              trUtf8("Cancel transaction"),
-                             trUtf8("Error send rollback request"));
+                             trUtf8("Error send rollback request %1").arg(id.ToString().c_str()));
     }
 }
 
@@ -311,7 +320,7 @@ void XBridgeTransactionsView::onRollbackTransaction()
 //******************************************************************************
 void XBridgeTransactionsView::onContextMenu(QPoint /*pt*/)
 {
-    XBridgeExchange & e = XBridgeExchange::instance();
+    xbridge::Exchange & e = xbridge::Exchange::instance();
     if (e.isEnabled())
     {
         return;

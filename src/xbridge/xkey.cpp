@@ -161,7 +161,8 @@ CPubKey CKey::GetPubKey() const {
     CPubKey result;
     int ret = secp256k1_ec_pubkey_create(secp256k1_context_sign, &pubkey, begin());
     assert(ret);
-    secp256k1_ec_pubkey_serialize(secp256k1_context_sign, (unsigned char*)result.begin(), &clen, &pubkey, fCompressed ? SECP256K1_EC_COMPRESSED : SECP256K1_EC_UNCOMPRESSED);
+    secp256k1_ec_pubkey_serialize(secp256k1_context_sign, (unsigned char*)result.begin(), &clen, &pubkey,
+                                  fCompressed ? SECP256K1_EC_COMPRESSED : SECP256K1_EC_UNCOMPRESSED);
     assert(result.size() == clen);
     assert(result.IsValid());
     return result;
@@ -175,7 +176,8 @@ bool CKey::Sign(const uint256 &hash, std::vector<unsigned char>& vchSig, uint32_
     unsigned char extra_entropy[32] = {0};
     WriteLE32(extra_entropy, test_case);
     secp256k1_ecdsa_signature sig;
-    int ret = secp256k1_ecdsa_sign(secp256k1_context_sign, &sig, hash.begin(), begin(), secp256k1_nonce_function_rfc6979, test_case ? extra_entropy : NULL);
+    int ret = secp256k1_ecdsa_sign(secp256k1_context_sign, &sig, hash.begin(), begin(),
+                                   secp256k1_nonce_function_rfc6979, test_case ? extra_entropy : NULL);
     assert(ret);
     secp256k1_ecdsa_signature_serialize_der(secp256k1_context_sign, (unsigned char*)&vchSig[0], &nSigLen, &sig);
     vchSig.resize(nSigLen);
@@ -202,7 +204,14 @@ bool CKey::SignCompact(const uint256 &hash, std::vector<unsigned char>& vchSig) 
     vchSig.resize(65);
     int rec = -1;
     secp256k1_ecdsa_recoverable_signature sig;
-    int ret = secp256k1_ecdsa_sign_recoverable(secp256k1_context_sign, &sig, hash.begin(), begin(), secp256k1_nonce_function_rfc6979, NULL);
+    int ret = secp256k1_ecdsa_sign_recoverable(secp256k1_context_sign, &sig, hash.begin(), begin(),
+                                               secp256k1_nonce_function_rfc6979, NULL);
+    if(ret != 0) {
+
+        ERR() << "the nonce generation signature failed, or the private key was invalid. " << __FUNCTION__;
+        return false;
+
+    }
     assert(ret);
     secp256k1_ecdsa_recoverable_signature_serialize_compact(secp256k1_context_sign, (unsigned char*)&vchSig[1], &rec, &sig);
     assert(ret);
@@ -302,11 +311,23 @@ bool ECC_InitSanityCheck() {
     return key.VerifyPubKey(pubkey);
 }
 
-void ECC_Start() {
-    assert(secp256k1_context_sign == NULL);
+bool ECC_Start() {
+    if(secp256k1_context_sign != nullptr) {
+
+        ERR() << "can't start ECC, " << __FUNCTION__;
+        return false;
+
+    }
+//    assert(secp256k1_context_sign == NULL);
 
     secp256k1_context *ctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN);
-    assert(ctx != NULL);
+    if(ctx == nullptr) {
+
+        ERR() << "can't create secp256k1 context, ECC not started "  << __FUNCTION__;
+        return false;
+
+    }
+//    assert(ctx != NULL);
 
     {
         // Pass in a random blinding seed to the secp256k1 context.
@@ -314,11 +335,20 @@ void ECC_Start() {
         LockObject(seed);
         GetRandBytes(seed, 32);
         bool ret = secp256k1_context_randomize(ctx, seed);
-        assert(ret);
+        if(!ret) {
+
+            ERR() << "can't randomize secp256k1 context " << __FUNCTION__;
+            UnlockObject(seed);
+            return false;
+
+        }
+
+//        assert(ret);
         UnlockObject(seed);
     }
 
     secp256k1_context_sign = ctx;
+    return true;
 }
 
 void ECC_Stop() {

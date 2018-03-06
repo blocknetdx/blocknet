@@ -1,6 +1,7 @@
 // Copyright (c) 2009-2014 The Bitcoin developers
 // Copyright (c) 2014-2015 The Dash developers
-// Copyright (c) 2015-2017 The BlocknetDX developers
+// Copyright (c) 2015-2017 The PIVX developers
+// Copyright (c) 2015-2018 The Blocknet developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -20,6 +21,7 @@
 #include "splashscreen.h"
 #include "utilitydialog.h"
 #include "winshutdownmonitor.h"
+#include "random.h"
 
 #ifdef ENABLE_WALLET
 #include "paymentserver.h"
@@ -53,6 +55,7 @@
 #include <QThread>
 #include <QTimer>
 #include <QTranslator>
+#include <QAbstractEventDispatcher>
 
 #if defined(QT_STATICPLUGIN)
 #include <QtPlugin>
@@ -669,9 +672,12 @@ int main(int argc, char* argv[])
     if (GetBoolArg("-splash", true) && !GetBoolArg("-min", false))
         app.createSplashScreen(networkStyle.data());
 
+    xbridge::App & xapp = xbridge::App::instance();
+
     try {
+        RandomInit();
+
         // init xbridge
-        XBridgeApp & xapp = XBridgeApp::instance();
         xapp.init(argc, argv);
 
         app.createWindow(networkStyle.data());
@@ -691,7 +697,15 @@ int main(int argc, char* argv[])
     catch (std::exception& e)
     {
         PrintExceptionContinue(&e, "Runaway exception");
-        app.handleRunawayException(QString::fromStdString(strMiscWarning));
+
+        // stop xbridge
+        xapp.stop();
+
+        // stop appication
+        app.requestShutdown();
+        app.exec();
+
+        // app.handleRunawayException(QString::fromStdString(strMiscWarning));
     }
     catch (...)
     {
@@ -700,4 +714,23 @@ int main(int argc, char* argv[])
     }
     return app.getReturnValue();
 }
+
 #endif // BITCOIN_QT_TEST
+
+void waitForClose()
+{
+    // if (qApp->thread() == QThread::currentThread())
+    if (QAbstractEventDispatcher::instance())
+    {
+        // throw exception in gui thread across event loop
+        throw std::runtime_error("assert catched");
+    }
+    else
+    {
+        // sleep thread
+        while (true)
+        {
+           boost::this_thread::sleep_for(boost::chrono::seconds(1));
+        }
+    }
+}

@@ -1,7 +1,8 @@
 // Copyright (c) 2010 Satoshi Nakamoto
 // Copyright (c) 2009-2014 The Bitcoin developers
 // Copyright (c) 2014-2015 The Dash developers
-// Copyright (c) 2015-2017 The BlocknetDX developers
+// Copyright (c) 2015-2017 The PIVX developers
+// Copyright (c) 2015-2018 The Blocknet developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -105,8 +106,14 @@ static const CRPCConvertParam vRPCConvertParams[] =
         {"setstakesplitthreshold", 0},
         {"autocombinerewards", 0},
         {"autocombinerewards", 1},
-        {"dxCreateTransaction", 2},
-        {"dxCreateTransaction", 5}};
+        {"dxGetOrderHistory", 2},
+        {"dxGetOrderHistory", 3},
+        {"dxGetOrderHistory", 4},
+        {"dxGetOrderHistory", 5},
+        {"dxGetOrderBook", 0},
+        {"dxGetOrderBook", 3},
+        {"dxGetOrderBook", 4},
+        {"dxGetOrderFills",2}};
 
 class CRPCConvertTable
 {

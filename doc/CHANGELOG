@@ -1,0 +1,45 @@
+Michael M (2):
+      Fix servicenode start and status calls (https://github.com/BlocknetDX/BlockDX/commit/5edb42629)
+      Improve servicenode start states (https://github.com/BlocknetDX/BlockDX/commit/3cf0da428)
+
+atcsecure (1):
+      3.7.48 Build_preRelease (https://github.com/BlocknetDX/BlockDX/commit/20b8148f4)
+
+boa85 (22):
+      added implementation dxRollbackTransaction (https://github.com/BlocknetDX/BlockDX/commit/be492eecb)
+      added dxRollbackTransaction method and example inputs and outputs into docs (https://github.com/BlocknetDX/BlockDX/commit/22b660d38)
+      added txid to dxGetOrderBook (https://github.com/BlocknetDX/BlockDX/commit/7d96b18d8)
+      added txid to dxGetOrderBook (https://github.com/BlocknetDX/BlockDX/commit/a4a7f2d45)
+      replace exceptions to object with error description (https://github.com/BlocknetDX/BlockDX/commit/4c50f0443)
+      removed duplicate code (https://github.com/BlocknetDX/BlockDX/commit/b3183ddac)
+      formatted code (https://github.com/BlocknetDX/BlockDX/commit/39fb85396)
+      added more error codes (https://github.com/BlocknetDX/BlockDX/commit/af1937726)
+      added error code to returned object (https://github.com/BlocknetDX/BlockDX/commit/ba265340a)
+      split help and response with error (https://github.com/BlocknetDX/BlockDX/commit/32ea377da)
+      fix typo in parameter name (https://github.com/BlocknetDX/BlockDX/commit/042fd53ce)
+      fix typo in the parameter name (https://github.com/BlocknetDX/BlockDX/commit/285b0cdd2)
+      added methods for validate address and dxAcceptTransaction method params (https://github.com/BlocknetDX/BlockDX/commit/b6881f971)
+      Add optional validate parameter to  dxAccept. (https://github.com/BlocknetDX/BlockDX/commit/8d38e7cd0)
+      added more connents (https://github.com/BlocknetDX/BlockDX/commit/6fb668ba5)
+      added checkCreateParams and checkAmount methods (https://github.com/BlocknetDX/BlockDX/commit/842e0095c)
+      added validation params into dxCreateTransaction (https://github.com/BlocknetDX/BlockDX/commit/3687428a0)
+      small refactoring (https://github.com/BlocknetDX/BlockDX/commit/ea39aab68)
+      implemented all points from task dxGetOrderbook adjustments (https://github.com/BlocknetDX/BlockDX/commit/ebe788e35)
+      fix the infinity loop (https://github.com/BlocknetDX/BlockDX/commit/be79ecc04)
+      fix missing items (https://github.com/BlocknetDX/BlockDX/commit/ed480051b)
+      replace return type from array to object in dxGetOrderBook (https://github.com/BlocknetDX/BlockDX/commit/cf1be5e29)
+
+## v3.7.52
+Alexander Ivanenko (1):
+      make path to the source relative (https://github.com/BlocknetDX/BlockDX/commit/029a70d1b)
+
+atcsecure (1):
+      3.7.52 Branch (https://github.com/BlocknetDX/BlockDX/commit/d7c2ff586)
+
+boa (1):
+      removed typo (https://github.com/BlocknetDX/BlockDX/commit/e9376e353)
+
+boa85 (3):
+      fixed error in cancelXBridgeTransaction (https://github.com/BlocknetDX/BlockDX/commit/26a347ad0)
+      added timestamp label to dxAccept, dxCancel, dxCreate (https://github.com/BlocknetDX/BlockDX/commit/a27ed7a8e)
+      fix duplicate notyfy to UI (https://github.com/BlocknetDX/BlockDX/commit/104ddc668)

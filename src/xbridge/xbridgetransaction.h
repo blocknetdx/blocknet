@@ -6,7 +6,7 @@
 
 #include "uint256.h"
 #include "xbridgetransactionmember.h"
-#include "xkey.h"
+#include "xbridgedef.h"
 
 #include <vector>
 #include <string>
@@ -16,14 +16,14 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 
-//*****************************************************************************
-//*****************************************************************************
-class XBridgeTransaction;
-typedef boost::shared_ptr<XBridgeTransaction> XBridgeTransactionPtr;
+//******************************************************************************
+//******************************************************************************
+namespace xbridge
+{
 
 //*****************************************************************************
 //*****************************************************************************
-class XBridgeTransaction
+class Transaction
 {
 public:
     // see strState when editing
@@ -38,7 +38,6 @@ public:
         trSigned,
         trCommited,
 
-        trConfirmed,
         trFinished,
         trCancelled,
         trDropped
@@ -46,33 +45,45 @@ public:
 
     enum
     {
-        // transaction lock time base, in seconds, 10 min
-        lockTime = 600,
+        // transaction lock time base, in seconds, 60 sec * 10 min
+        lockTime = 60 * 10,
 
-        // pending transaction ttl in seconds, 72 hours
-        pendingTTL = 259200,
+        // pending transaction ttl in seconds, 6 min from last update
+        pendingTTL = 60 * 6,
 
-        // transaction ttl in seconds, 60 min
-        TTL = 3600
+        // transaction ttl in seconds, 60 sec * 60 min
+        TTL = 60 * 60,
+
+        // order deadline ttl in seconds, 60 sec * 60 min * 24h
+        deadlineTTL = 60 * 60 * 24,
+
+        // number of blocks ttl
+        blocksTTL = 1440
     };
 
 public:
-    XBridgeTransaction();
-    XBridgeTransaction(const uint256     & id,
-                       const std::string & sourceAddr,
-                       const std::string & sourceCurrency,
-                       const uint64_t    & sourceAmount,
-                       const std::string & destAddr,
-                       const std::string & destCurrency,
-                       const uint64_t    & destAmount);
-    ~XBridgeTransaction();
+    Transaction();
+    Transaction(const uint256                    & id,
+                const std::vector<unsigned char> & sourceAddr,
+                const std::string                & sourceCurrency,
+                const uint64_t                   & sourceAmount,
+                const std::vector<unsigned char> & destAddr,
+                const std::string                & destCurrency,
+                const uint64_t                   & destAmount,
+                const uint64_t                   & created,
+                const uint256                    & blockHash,
+                const std::vector<unsigned char> & mpubkey);
+
+    ~Transaction();
 
     uint256 id() const;
+
+    uint256 blockHash() const;
 
     // state of transaction
     State state() const;
     // update state counter and update state
-    State increaseStateCounter(State state, const std::string & from);
+    State increaseStateCounter(const State state, const std::vector<unsigned char> & from);
 
     static std::string strState(const State state);
     std::string strState() const;
@@ -83,53 +94,50 @@ public:
     bool isFinished() const;
     bool isValid() const;
     bool isExpired() const;
+    bool isExpiredByBlockNumber() const;
 
     void cancel();
     void drop();
     void finish();
 
-    bool confirm(const std::string & id);
-
-    // hash of transaction
-    uint256 hash1() const;
-    uint256 hash2() const;
-
     // uint256                    firstId() const;
-    std::string                a_address() const;
-    std::string                a_destination() const;
+    std::vector<unsigned char> a_address() const;
+    std::vector<unsigned char> a_destination() const;
     std::string                a_currency() const;
     uint64_t                   a_amount() const;
     std::string                a_payTx() const;
     std::string                a_refTx() const;
     std::string                a_bintxid() const;
-    std::string                a_innerScript() const;
+
+    // TODO remove script
+    std::vector<unsigned char> a_innerScript() const;
 
     uint256                    a_datatxid() const;
-    xbridge::CPubKey           a_pk1() const;
+    std::vector<unsigned char> a_pk1() const;
 
     // uint256                    secondId() const;
-    std::string                b_address() const;
-    std::string                b_destination() const;
+    std::vector<unsigned char> b_address() const;
+    std::vector<unsigned char> b_destination() const;
     std::string                b_currency() const;
     uint64_t                   b_amount() const;
     std::string                b_payTx() const;
     std::string                b_refTx() const;
     std::string                b_bintxid() const;
-    std::string                b_innerScript() const;
+
+    // TODO remove script
+    std::vector<unsigned char> b_innerScript() const;
 
     // uint256                    b_datatxid() const;
-    xbridge::CPubKey           b_pk1() const;
+    std::vector<unsigned char> b_pk1() const;
 
-    std::string                fromXAddr(const std::vector<unsigned char> & xaddr) const;
+    bool tryJoin(const TransactionPtr other);
 
-    bool tryJoin(const XBridgeTransactionPtr other);
-
-    bool                       setKeys(const std::string & addr,
+    bool                       setKeys(const std::vector<unsigned char> & addr,
                                        const uint256 & datatxid,
-                                       const xbridge::CPubKey & pk);
-    bool                       setBinTxId(const std::string & addr,
+                                       const std::vector<unsigned char> & pk);
+    bool                       setBinTxId(const std::vector<unsigned char> &addr,
                                           const std::string & id,
-                                          const std::string & innerScript);
+                                          const std::vector<unsigned char> & innerScript);
 
 public:
     boost::mutex               m_lock;
@@ -138,6 +146,9 @@ private:
     uint256                    m_id;
 
     boost::posix_time::ptime   m_created;
+    boost::posix_time::ptime   m_last;
+
+    uint256                    m_blockHash; //hash of block when transaction created
 
     State                      m_state;
 
@@ -155,17 +166,16 @@ private:
     std::string                m_bintxid1;
     std::string                m_bintxid2;
 
-    std::string                m_innerScript1;
-    std::string                m_innerScript2;
+    std::vector<unsigned char> m_innerScript1;
+    std::vector<unsigned char> m_innerScript2;
 
     XBridgeTransactionMember   m_a;
     XBridgeTransactionMember   m_b;
 
     uint256                    m_a_datatxid;
     uint256                    m_b_datatxid;
-
-    xbridge::CPubKey           m_a_pk1;
-    xbridge::CPubKey           m_b_pk1;
 };
+
+} // namespace xbridge
 
 #endif // XBRIDGETRANSACTION_H

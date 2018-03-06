@@ -3,6 +3,7 @@
 
 #include "xutil.h"
 #include "logger.h"
+#include "xbridge/xbridgetransactiondescr.h"
 
 #include <boost/locale.hpp>
 #include <boost/archive/iterators/base64_from_binary.hpp>
@@ -165,6 +166,54 @@ std::string base64_decode(const std::string& s)
     {
     }
     return std::string();
+}
+
+std::string to_str(const std::vector<unsigned char> & obj)
+{
+    return util::base64_encode(obj);
+}
+
+const std::string iso8601(const bpt::ptime &time)
+{
+    return bpt::to_iso_extended_string(time) + "Z";
+}
+
+double xBridgeValueFromAmount(uint64_t amount)
+{
+    return boost::lexical_cast<double>(amount)/boost::lexical_cast<double>(xbridge::TransactionDescr::COIN);
+}
+
+uint64_t xBridgeAmountFromReal(double val)
+{
+    double coin = val * boost::lexical_cast<double>(xbridge::TransactionDescr::COIN);
+    // TODO: should we check amount ranges and throw JSONRPCError like they do in rpcserver.cpp ?
+    return boost::lexical_cast<uint64_t>(coin);
+}
+
+uint64_t timeToInt(const boost::posix_time::ptime& time)
+{
+    bpt::ptime start(boost::gregorian::date(1970,1,1));
+    bpt::time_duration timeFromEpoch = time - start;
+    boost::int64_t res = timeFromEpoch.total_microseconds();
+
+    return static_cast<uint64_t>(res);
+}
+
+boost::posix_time::ptime intToTime(const uint64_t& number)
+{
+    bpt::ptime start(boost::gregorian::date(1970,1,1));
+    bpt::ptime res = start + bpt::microseconds(static_cast<int64_t>(number));
+
+    return res;
+}
+
+double price(const xbridge::TransactionDescrPtr ptr)
+{
+    return xBridgeValueFromAmount(ptr->toAmount) / xBridgeValueFromAmount(ptr->fromAmount);
+}
+double priceBid(const xbridge::TransactionDescrPtr ptr)
+{
+    return xBridgeValueFromAmount(ptr->fromAmount) / xBridgeValueFromAmount(ptr->toAmount);
 }
 
 } // namespace util

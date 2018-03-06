@@ -78,7 +78,7 @@ CScript ParseScript(std::string s)
     return result;
 }
 
-bool DecodeHexTx(CTransaction& tx, const std::string& strHexTx)
+bool DecodeHexTx(CMutableTransaction& tx, const std::string& strHexTx)
 {
     if (!IsHex(strHexTx))
         return false;

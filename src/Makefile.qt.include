@@ -313,6 +313,7 @@ RES_IMAGES = \
   qt/res/images/splash.png \
   qt/res/images/splash_testnet.png \
   qt/res/images/blocknetdx_logo_horizontal.png \
+  qt/res/images/blocknet_alt3_logo_text_trans_bg.png \
   qt/res/images/downArrow.png \
   qt/res/images/downArrow_small.png \
   qt/res/images/upArrow_small.png \

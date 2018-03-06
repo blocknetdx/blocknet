@@ -44,8 +44,8 @@ Instructions: Homebrew
 
 1. Clone the github tree to get the source code and go into the directory.
 
-        git clone https://github.com/BlocknetDX-Project/BlocknetDX.git
-        cd BlocknetDX
+        git clone https://github.com/BlocknetDX/BlockDX.git
+        cd BlockDX
 
 2.  Build blocknetdxd:
 

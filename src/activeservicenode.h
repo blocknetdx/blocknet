@@ -30,8 +30,8 @@ private:
     // critical section to protect the inner data structures
     mutable CCriticalSection cs;
 
-    /// Ping Servicenode
-    bool SendServicenodePing(std::string& errorMessage);
+    /// Ping Servicenode with the option to force ping
+    bool SendServicenodePing(std::string& errorMessage, bool force = false);
 
     /// Register any Servicenode
     bool Register(CTxIn vin, CService service, CKey key, CPubKey pubKey, CKey keyServicenode, CPubKey pubKeyServicenode, std::string& errorMessage);

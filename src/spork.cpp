@@ -91,6 +91,8 @@ bool IsSporkActive(int nSporkID)
         if (nSporkID == SPORK_13_ENABLE_SUPERBLOCKS) r = SPORK_13_ENABLE_SUPERBLOCKS_DEFAULT;
         if (nSporkID == SPORK_14_NEW_PROTOCOL_ENFORCEMENT) r = SPORK_14_NEW_PROTOCOL_ENFORCEMENT_DEFAULT;
         if (nSporkID == SPORK_17_EXPL_FIX) r = SPORK_17_EXPL_FIX_DEFAULT;
+        if (nSporkID == SPORK_18_PROPOSAL_FEE) r = SPORK_18_PROPOSAL_FEE_DEFAULT;
+        if (nSporkID == SPORK_18_PROPOSAL_FEE_AMOUNT) r = SPORK_18_PROPOSAL_FEE_AMOUNT_DEFAULT;
 
         if (r == -1) LogPrintf("GetSpork::Unknown Spork %d\n", nSporkID);
     }
@@ -119,6 +121,8 @@ int64_t GetSporkValue(int nSporkID)
         if (nSporkID == SPORK_13_ENABLE_SUPERBLOCKS) r = SPORK_13_ENABLE_SUPERBLOCKS_DEFAULT;
         if (nSporkID == SPORK_14_NEW_PROTOCOL_ENFORCEMENT) r = SPORK_14_NEW_PROTOCOL_ENFORCEMENT_DEFAULT;
         if (nSporkID == SPORK_17_EXPL_FIX) r = SPORK_17_EXPL_FIX_DEFAULT;
+        if (nSporkID == SPORK_18_PROPOSAL_FEE) r = SPORK_18_PROPOSAL_FEE_DEFAULT;
+        if (nSporkID == SPORK_18_PROPOSAL_FEE_AMOUNT) r = SPORK_18_PROPOSAL_FEE_AMOUNT_DEFAULT;
 
         if (r == -1) LogPrintf("GetSpork::Unknown Spork %d\n", nSporkID);
     }
@@ -266,6 +270,8 @@ int CSporkManager::GetSporkIDByName(std::string strName)
     if (strName == "SPORK_13_ENABLE_SUPERBLOCKS") return SPORK_13_ENABLE_SUPERBLOCKS;
     if (strName == "SPORK_14_NEW_PROTOCOL_ENFORCEMENT") return SPORK_14_NEW_PROTOCOL_ENFORCEMENT;
     if (strName == "SPORK_17_EXPL_FIX") return SPORK_17_EXPL_FIX;
+    if (strName == "SPORK_18_PROPOSAL_FEE") return SPORK_18_PROPOSAL_FEE;
+    if (strName == "SPORK_18_PROPOSAL_FEE_AMOUNT") return SPORK_18_PROPOSAL_FEE_AMOUNT;
 
     return -1;
 }
@@ -284,6 +290,8 @@ std::string CSporkManager::GetSporkNameByID(int id)
     if (id == SPORK_13_ENABLE_SUPERBLOCKS) return "SPORK_13_ENABLE_SUPERBLOCKS";
     if (id == SPORK_14_NEW_PROTOCOL_ENFORCEMENT) return "SPORK_14_NEW_PROTOCOL_ENFORCEMENT";
     if (id == SPORK_17_EXPL_FIX) return "SPORK_17_EXPL_FIX";
+    if (id == SPORK_18_PROPOSAL_FEE) return "SPORK_18_PROPOSAL_FEE";
+    if (id == SPORK_18_PROPOSAL_FEE_AMOUNT) return "SPORK_18_PROPOSAL_FEE_AMOUNT";
 
     return "Unknown";
 }
