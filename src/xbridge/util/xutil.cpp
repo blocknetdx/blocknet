@@ -223,11 +223,23 @@ boost::posix_time::ptime intToTime(const uint64_t& number)
 
 double price(const xbridge::TransactionDescrPtr ptr)
 {
-    return (double)ptr->toAmount / (double)ptr->fromAmount;
+    if(ptr == nullptr) {
+        return .0;
+    }
+    if(fabs(ptr->fromAmount)  < std::numeric_limits<double>::epsilon()) {
+        return  .0;
+    }
+    return xBridgeValueFromAmount(ptr->toAmount) / xBridgeValueFromAmount(ptr->fromAmount);
 }
 double priceBid(const xbridge::TransactionDescrPtr ptr)
 {
-    return (double)ptr->fromAmount / (double)ptr->toAmount;
+    if(ptr == nullptr) {
+        return .0;
+    }
+    if(fabs(ptr->toAmount)  < std::numeric_limits<double>::epsilon()) {
+        return  .0;
+    }
+    return xBridgeValueFromAmount(ptr->fromAmount) / xBridgeValueFromAmount(ptr->toAmount);
 }
 
 } // namespace util
