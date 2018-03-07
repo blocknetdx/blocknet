@@ -164,9 +164,9 @@ Value dxGetOrders(const Array & params, bool fHelp)
         Object jtr;
         jtr.emplace_back(Pair("id",             tr->id.GetHex()));
         jtr.emplace_back(Pair("maker",          tr->fromCurrency));
-        jtr.emplace_back(Pair("maker_size",     boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(tr->fromAmount))));
+        jtr.emplace_back(Pair("maker_size",     util::xBridgeStringValueFromAmount(tr->fromAmount)));
         jtr.emplace_back(Pair("taker",          tr->toCurrency));
-        jtr.emplace_back(Pair("taker_size",     boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(tr->toAmount))));
+        jtr.emplace_back(Pair("taker_size",     util::xBridgeStringValueFromAmount(tr->toAmount)));
         jtr.emplace_back(Pair("updated_at",     util::iso8601(tr->txtime)));
         jtr.emplace_back(Pair("created_at",     util::iso8601(tr->created)));
         jtr.emplace_back(Pair("status",         tr->strState()));
@@ -242,9 +242,9 @@ Value dxGetOrderFills(const Array & params, bool fHelp)
         tmp.emplace_back(Pair("id",         transaction->id.GetHex()));
         tmp.emplace_back(Pair("time",       util::iso8601(transaction->txtime)));
         tmp.emplace_back(Pair("maker",      transaction->fromCurrency));
-        tmp.emplace_back(Pair("maker_size", boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(transaction->fromAmount))));
+        tmp.emplace_back(Pair("maker_size", util::xBridgeStringValueFromAmount(transaction->fromAmount)));
         tmp.emplace_back(Pair("taker",      transaction->toCurrency));
-        tmp.emplace_back(Pair("taker_size", boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(transaction->toAmount))));
+        tmp.emplace_back(Pair("taker_size", util::xBridgeStringValueFromAmount(transaction->toAmount)));
         arr.emplace_back(tmp);
 
     }
@@ -493,9 +493,9 @@ Value dxGetOrder(const Array & params, bool fHelp)
     Object result;
     result.emplace_back(Pair("id",          order->id.GetHex()));
     result.emplace_back(Pair("maker",       order->fromCurrency));
-    result.emplace_back(Pair("maker_size",  boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(order->fromAmount))));
+    result.emplace_back(Pair("maker_size",  util::xBridgeStringValueFromAmount(order->fromAmount)));
     result.emplace_back(Pair("taker",       order->toCurrency));
-    result.emplace_back(Pair("taker_size",  boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(order->toAmount))));
+    result.emplace_back(Pair("taker_size",  util::xBridgeStringValueFromAmount(order->toAmount)));
     result.emplace_back(Pair("updated_at",  util::iso8601(order->txtime)));
     result.emplace_back(Pair("created_at",  util::iso8601(order->created)));
     result.emplace_back(Pair("status",      order->strState()));
@@ -587,10 +587,12 @@ Value dxMakeOrder(const Array &params, bool fHelp)
         if (dryrun) {
             result.emplace_back(Pair("id", uint256().GetHex()));
             result.emplace_back(Pair("maker", fromCurrency));
-            result.emplace_back(Pair("maker_size", boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(util::xBridgeAmountFromReal(fromAmount)))));
+            result.emplace_back(Pair("maker_size",
+                                     util::xBridgeStringValueFromAmount(util::xBridgeAmountFromReal(fromAmount))));
             result.emplace_back(Pair("maker_address", fromAddress));
             result.emplace_back(Pair("taker", toCurrency));
-            result.emplace_back(Pair("taker_size", boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(util::xBridgeAmountFromReal(toAmount)))));
+            result.emplace_back(Pair("taker_size",
+                                     util::xBridgeStringValueFromAmount(util::xBridgeAmountFromReal(toAmount))));
             result.emplace_back(Pair("taker_address", toAddress));
             result.emplace_back(Pair("status", "created"));
             return result;
@@ -645,13 +647,13 @@ Value dxMakeOrder(const Array &params, bool fHelp)
         obj.emplace_back(Pair("id",             id.GetHex()));
         obj.emplace_back(Pair("maker_address",  fromAddress));
         obj.emplace_back(Pair("maker",          fromCurrency));
-        obj.emplace_back(Pair("maker_size",     boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(util::xBridgeAmountFromReal(fromAmount)))));
+        obj.emplace_back(Pair("maker_size",     util::xBridgeStringValueFromAmount(util::xBridgeAmountFromReal(fromAmount))));
         obj.emplace_back(Pair("taker_address",  toAddress));
         obj.emplace_back(Pair("taker",          toCurrency));
-        obj.emplace_back(Pair("taker_size",     boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(util::xBridgeAmountFromReal(toAmount)))));
+        obj.emplace_back(Pair("taker_size",     util::xBridgeStringValueFromAmount(util::xBridgeAmountFromReal(toAmount))));
         const auto &createdTime = xbridge::App::instance().transaction(id)->created;
         obj.emplace_back(Pair("created_at",     util::iso8601(createdTime)));
-        obj.emplace_back(Pair("updated_at",     util::iso8601(bpt::microsec_clock::universal_time())));
+        obj.emplace_back(Pair("updated_at",     util::iso8601(bpt::microsec_clock::universal_time()))); // TODO Need actual updated time, this is just estimate
         obj.emplace_back(Pair("block_id",       blockHash.GetHex()));
         obj.emplace_back(Pair("status",         "created"));
         return obj;
@@ -740,10 +742,10 @@ Value dxTakeOrder(const Array & params, bool fHelp)
             result.emplace_back(Pair("id", uint256().GetHex()));
 
             result.emplace_back(Pair("maker", txDescr->fromCurrency));
-            result.emplace_back(Pair("maker_size", boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(txDescr->fromAmount))));
+            result.emplace_back(Pair("maker_size", util::xBridgeStringValueFromAmount(txDescr->fromAmount)));
 
             result.emplace_back(Pair("taker", txDescr->toCurrency));
-            result.emplace_back(Pair("taker_size", boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(txDescr->toAmount))));
+            result.emplace_back(Pair("taker_size", util::xBridgeStringValueFromAmount(txDescr->toAmount)));
 
             result.emplace_back(Pair("updated_at", util::iso8601(bpt::microsec_clock::universal_time())));
             result.emplace_back(Pair("created_at", util::iso8601(txDescr->created)));
@@ -796,10 +798,10 @@ Value dxTakeOrder(const Array & params, bool fHelp)
         result.emplace_back(Pair("id", id.GetHex()));
 
         result.emplace_back(Pair("maker", txDescr->fromCurrency));
-        result.emplace_back(Pair("maker_size", boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(txDescr->fromAmount))));
+        result.emplace_back(Pair("maker_size", util::xBridgeStringValueFromAmount(txDescr->fromAmount)));
 
         result.emplace_back(Pair("taker", txDescr->toCurrency));
-        result.emplace_back(Pair("taker_size", boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(txDescr->toAmount))));
+        result.emplace_back(Pair("taker_size", util::xBridgeStringValueFromAmount(txDescr->toAmount)));
 
         result.emplace_back(Pair("updated_at", util::iso8601(bpt::microsec_clock::universal_time())));
         result.emplace_back(Pair("created_at", util::iso8601(txDescr->created)));
@@ -882,11 +884,11 @@ Value dxCancelOrder(const Array &params, bool fHelp)
     obj.emplace_back(Pair("id", id.GetHex()));
 
     obj.emplace_back(Pair("maker", tx->fromCurrency));
-    obj.emplace_back(Pair("maker_size", boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(tx->fromAmount))));
+    obj.emplace_back(Pair("maker_size", util::xBridgeStringValueFromAmount(tx->fromAmount)));
     obj.emplace_back(Pair("maker_address", connFrom->fromXAddr(tx->from)));
 
     obj.emplace_back(Pair("taker", tx->toCurrency));
-    obj.emplace_back(Pair("taker_size", boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(tx->toAmount))));
+    obj.emplace_back(Pair("taker_size", util::xBridgeStringValueFromAmount(tx->toAmount)));
     obj.emplace_back(Pair("taker_address", connTo->fromXAddr(tx->to)));
 
     obj.emplace_back(Pair("updated_at", util::iso8601(tx->txtime)));
@@ -1086,8 +1088,8 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 if (tr != nullptr)
                 {
                     const auto bidPrice = util::priceBid(tr);
-                    bids.emplace_back(Array{boost::lexical_cast<std::string>(bidPrice),
-                                            boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(tr->toAmount)),
+                    bids.emplace_back(Array{util::xBridgeStringValueFromPrice(bidPrice),
+                                            util::xBridgeStringValueFromAmount(tr->toAmount),
                                             static_cast<int64_t>(bidsCount)});
                 }
             }
@@ -1135,8 +1137,8 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 if (tr != nullptr)
                 {
                     const auto askPrice = util::price(tr);
-                    asks.emplace_back(Array{boost::lexical_cast<std::string>(askPrice),
-                                            boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(tr->fromAmount)),
+                    asks.emplace_back(Array{util::xBridgeStringValueFromPrice(askPrice),
+                                            util::xBridgeStringValueFromAmount(tr->fromAmount),
                                             static_cast<int64_t>(asksCount)});
                 }
             }
@@ -1163,7 +1165,7 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 //calculate bids and push to array
                 const auto bidAmount    = bidsVector[i]->toAmount;
                 const auto bidPrice     = util::priceBid(bidsVector[i]);
-                const auto bidSize      = util::xBridgeValueFromAmount(bidAmount);
+                const auto bidSize      = util::xBridgeStringValueFromAmount(bidAmount);
                 const auto bidsCount    = std::count_if(bidsList.begin(), bidsList.end(),
                                                      [bidPrice, floatCompare](const TransactionPair &a)
                 {
@@ -1177,8 +1179,8 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                     return floatCompare(price, bidPrice);
                 });
 
-                bid.emplace_back(boost::lexical_cast<std::string>(bidPrice));
-                bid.emplace_back(boost::lexical_cast<std::string>(bidSize));
+                bid.emplace_back(util::xBridgeStringValueFromPrice(bidPrice));
+                bid.emplace_back(bidSize);
                 bid.emplace_back((int64_t)bidsCount);
 
                 bids.emplace_back(bid);
@@ -1195,7 +1197,7 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 //calculate asks and push to array
                 const auto bidAmount    = asksVector[i]->fromAmount;
                 const auto askPrice     = util::price(asksVector[i]);
-                const auto bidSize      = util::xBridgeValueFromAmount(bidAmount);
+                const auto bidSize      = util::xBridgeStringValueFromAmount(bidAmount);
                 const auto asksCount    = std::count_if(asksList.begin(), asksList.end(),
                                                      [askPrice, floatCompare](const TransactionPair &a)
                 {
@@ -1209,8 +1211,8 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                     return floatCompare(price, askPrice);
                 });
 
-                ask.emplace_back(boost::lexical_cast<std::string>(askPrice));
-                ask.emplace_back(boost::lexical_cast<std::string>(bidSize));
+                ask.emplace_back(util::xBridgeStringValueFromPrice(askPrice));
+                ask.emplace_back(bidSize);
                 ask.emplace_back(static_cast<int64_t>(asksCount));
 
                 asks.emplace_back(ask);
@@ -1233,8 +1235,8 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 Array bid;
                 const auto bidAmount   = bidsVector[i]->toAmount;
                 const auto bidPrice    = util::priceBid(bidsVector[i]);
-                bid.emplace_back(boost::lexical_cast<std::string>(bidPrice));
-                bid.emplace_back(boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(bidAmount)));
+                bid.emplace_back(util::xBridgeStringValueFromPrice(bidPrice));
+                bid.emplace_back(util::xBridgeStringValueFromAmount(bidAmount));
                 bid.emplace_back(bidsVector[i]->id.GetHex());
 
                 bids.emplace_back(bid);
@@ -1250,8 +1252,8 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 Array ask;
                 const auto bidAmount    = asksVector[i]->fromAmount;
                 const auto askPrice     = util::price(asksVector[i]);
-                ask.emplace_back(boost::lexical_cast<std::string>(askPrice));
-                ask.emplace_back(boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(bidAmount)));
+                ask.emplace_back(util::xBridgeStringValueFromPrice(askPrice));
+                ask.emplace_back(util::xBridgeStringValueFromAmount(bidAmount));
                 ask.emplace_back(asksVector[i]->id.GetHex());
 
                 asks.emplace_back(ask);
@@ -1288,8 +1290,8 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 if (tr != nullptr)
                 {
                     const auto bidPrice = util::priceBid(tr);
-                    bids.emplace_back(boost::lexical_cast<std::string>(bidPrice));
-                    bids.emplace_back(boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(tr->toAmount)));
+                    bids.emplace_back(util::xBridgeStringValueFromPrice(bidPrice));
+                    bids.emplace_back(util::xBridgeStringValueFromAmount(tr->toAmount));
 
                     Array bidsIds;
                     bidsIds.emplace_back(tr->id.GetHex());
@@ -1339,8 +1341,8 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 if (tr != nullptr)
                 {
                     const auto askPrice = util::price(tr);
-                    asks.emplace_back(boost::lexical_cast<std::string>(askPrice));
-                    asks.emplace_back(boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(tr->fromAmount)));
+                    asks.emplace_back(util::xBridgeStringValueFromPrice(askPrice));
+                    asks.emplace_back(util::xBridgeStringValueFromAmount(tr->fromAmount));
 
                     Array asksIds;
                     asksIds.emplace_back(tr->id.GetHex());
@@ -1458,11 +1460,11 @@ json_spirit::Value dxGetMyOrders(const json_spirit::Array& params, bool fHelp)
 
         // maker data
         o.emplace_back(Pair("maker", t->fromCurrency));
-        o.emplace_back(Pair("maker_size", boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(t->fromAmount))));
+        o.emplace_back(Pair("maker_size", util::xBridgeStringValueFromAmount(t->fromAmount)));
         o.emplace_back(Pair("maker_address", connFrom->fromXAddr(t->from)));
         // taker data
         o.emplace_back(Pair("taker", t->toCurrency));
-        o.emplace_back(Pair("taker_size", boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(t->toAmount))));
+        o.emplace_back(Pair("taker_size", util::xBridgeStringValueFromAmount(t->toAmount)));
         o.emplace_back(Pair("taker_address", connFrom->fromXAddr(t->to)));
         // dates
         o.emplace_back(Pair("updated_at", util::iso8601(t->txtime)));
@@ -1503,7 +1505,7 @@ json_spirit::Value  dxGetTokenBalances(const json_spirit::Array& params, bool fH
     Object res;
 
     // Wallet balance
-    res.emplace_back("Wallet", boost::lexical_cast<std::string>(pwalletMain->GetBalance()/COIN));
+    res.emplace_back("Wallet", util::xBridgeStringValueFromPrice(pwalletMain->GetBalance()/COIN));
 
     // Add connected wallet balances
     const auto &connectors = xbridge::App::instance().connectors();
@@ -1512,7 +1514,7 @@ json_spirit::Value  dxGetTokenBalances(const json_spirit::Array& params, bool fH
         const auto balance = connector->getWalletBalance();
         if(balance >= 0) {//ignore not connected wallets
 
-            res.emplace_back(connector->currency, boost::lexical_cast<std::string>(balance));
+            res.emplace_back(connector->currency, util::xBridgeStringValueFromPrice(balance));
 
         }
 

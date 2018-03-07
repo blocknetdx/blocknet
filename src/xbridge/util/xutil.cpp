@@ -178,16 +178,30 @@ const std::string iso8601(const bpt::ptime &time)
     return bpt::to_iso_extended_string(time) + "Z";
 }
 
-double xBridgeValueFromAmount(uint64_t amount)
+std::string xBridgeStringValueFromAmount(uint64_t amount)
 {
-    return boost::lexical_cast<double>(amount)/boost::lexical_cast<double>(xbridge::TransactionDescr::COIN);
+    std::stringstream ss;
+    ss << setprecision(6) << xBridgeValueFromAmount(amount); // precision = xbridge::TransactionDescr::COIN length
+    return ss.str();
+}
+
+std::string xBridgeStringValueFromPrice(double price)
+{
+    std::stringstream ss;
+    ss << setprecision(6) << price;
+    return ss.str();
+}
+
+double xBridgeValueFromAmount(uint64_t amount) {
+    return boost::numeric_cast<double>(amount) /
+            boost::numeric_cast<double>(xbridge::TransactionDescr::COIN);
 }
 
 uint64_t xBridgeAmountFromReal(double val)
 {
-    double coin = val * boost::lexical_cast<double>(xbridge::TransactionDescr::COIN);
-    // TODO: should we check amount ranges and throw JSONRPCError like they do in rpcserver.cpp ?
-    return boost::lexical_cast<uint64_t>(coin);
+    double d = val * boost::numeric_cast<double>(xbridge::TransactionDescr::COIN);
+    auto r = (int64_t)(d > 0 ? d + 0.5 : d - 0.5);
+    return (uint64_t)r;
 }
 
 uint64_t timeToInt(const boost::posix_time::ptime& time)
@@ -209,11 +223,11 @@ boost::posix_time::ptime intToTime(const uint64_t& number)
 
 double price(const xbridge::TransactionDescrPtr ptr)
 {
-    return xBridgeValueFromAmount(ptr->toAmount) / xBridgeValueFromAmount(ptr->fromAmount);
+    return (double)ptr->toAmount / (double)ptr->fromAmount;
 }
 double priceBid(const xbridge::TransactionDescrPtr ptr)
 {
-    return xBridgeValueFromAmount(ptr->fromAmount) / xBridgeValueFromAmount(ptr->toAmount);
+    return (double)ptr->fromAmount / (double)ptr->toAmount;
 }
 
 } // namespace util
