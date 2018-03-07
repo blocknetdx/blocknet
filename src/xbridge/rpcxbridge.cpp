@@ -1044,46 +1044,46 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
         case 1:
         {
             //return only the best bid and ask
-            const auto bidsItem = std::max_element(bidsList.begin(), bidsList.end(),
+            if (!bidsList.empty()) {
+                const auto bidsItem = std::max_element(bidsList.begin(), bidsList.end(),
                                        [](const TransactionPair &a, const TransactionPair &b)
-            {
-                //find transaction with best bids
-                const auto &tr1 = a.second;
-                const auto &tr2 = b.second;
-
-                if(tr1 == nullptr)
-                    return true;
-
-                if(tr2 == nullptr)
-                    return false;
-
-                const auto priceA = util::priceBid(tr1);
-                const auto priceB = util::priceBid(tr2);
-
-                return priceA < priceB;
-            });
-
-            const auto bidsCount = std::count_if(bidsList.begin(), bidsList.end(),
-                                                 [bidsItem, floatCompare](const TransactionPair &a)
-            {
-                const auto &tr = a.second;
-
-                if(tr == nullptr)
-                    return false;
-
-                const auto price = util::priceBid(tr);
-
-                const auto &bestTr = bidsItem->second;
-                if (bestTr != nullptr)
                 {
-                    const auto bestBidPrice = util::priceBid(bestTr);
-                    return floatCompare(price, bestBidPrice);
-                }
+                    //find transaction with best bids
+                    const auto &tr1 = a.second;
+                    const auto &tr2 = b.second;
 
-                return false;
-            });
+                    if(tr1 == nullptr)
+                        return true;
 
-            {
+                    if(tr2 == nullptr)
+                        return false;
+
+                    const auto priceA = util::priceBid(tr1);
+                    const auto priceB = util::priceBid(tr2);
+
+                    return priceA < priceB;
+                });
+
+                const auto bidsCount = std::count_if(bidsList.begin(), bidsList.end(),
+                                                     [bidsItem, floatCompare](const TransactionPair &a)
+                {
+                    const auto &tr = a.second;
+
+                    if(tr == nullptr)
+                        return false;
+
+                    const auto price = util::priceBid(tr);
+
+                    const auto &bestTr = bidsItem->second;
+                    if (bestTr != nullptr)
+                    {
+                        const auto bestBidPrice = util::priceBid(bestTr);
+                        return floatCompare(price, bestBidPrice);
+                    }
+
+                    return false;
+                });
+
                 const auto &tr = bidsItem->second;
                 if (tr != nullptr)
                 {
@@ -1094,45 +1094,45 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 }
             }
 
-            const auto asksItem = std::min_element(asksList.begin(), asksList.end(),
+            if (!asksList.empty()) {
+                const auto asksItem = std::min_element(asksList.begin(), asksList.end(),
                                                    [](const TransactionPair &a, const TransactionPair &b)
-            {
-                //find transactions with best asks
-                const auto &tr1 = a.second;
-                const auto &tr2 = b.second;
-
-                if(tr1 == nullptr)
-                    return true;
-
-                if(tr2 == nullptr)
-                    return false;
-
-                const auto priceA = util::price(tr1);
-                const auto priceB = util::price(tr2);
-                return priceA < priceB;
-            });
-
-            const auto asksCount = std::count_if(asksList.begin(), asksList.end(),
-                                                 [asksItem, floatCompare](const TransactionPair &a)
-            {
-                const auto &tr = a.second;
-
-                if(tr == nullptr)
-                    return false;
-
-                const auto price = util::price(tr);
-
-                const auto &bestTr = asksItem->second;
-                if (bestTr != nullptr)
                 {
-                    const auto bestAskPrice = util::price(bestTr);
-                    return floatCompare(price, bestAskPrice);
-                }
+                    //find transactions with best asks
+                    const auto &tr1 = a.second;
+                    const auto &tr2 = b.second;
 
-                return false;
-            });
+                    if(tr1 == nullptr)
+                        return true;
 
-            {
+                    if(tr2 == nullptr)
+                        return false;
+
+                    const auto priceA = util::price(tr1);
+                    const auto priceB = util::price(tr2);
+                    return priceA < priceB;
+                });
+
+                const auto asksCount = std::count_if(asksList.begin(), asksList.end(),
+                                                     [asksItem, floatCompare](const TransactionPair &a)
+                {
+                    const auto &tr = a.second;
+
+                    if(tr == nullptr)
+                        return false;
+
+                    const auto price = util::price(tr);
+
+                    const auto &bestTr = asksItem->second;
+                    if (bestTr != nullptr)
+                    {
+                        const auto bestAskPrice = util::price(bestTr);
+                        return floatCompare(price, bestAskPrice);
+                    }
+
+                    return false;
+                });
+
                 const auto &tr = asksItem->second;
                 if (tr != nullptr)
                 {
@@ -1266,26 +1266,26 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
         case 4:
         {
             //return Only the best bid and ask
-            const auto bidsItem = std::max_element(bidsList.begin(), bidsList.end(),
-                                       [](const TransactionPair &a, const TransactionPair &b)
-            {
-                //find transaction with best bids
-                const auto &tr1 = a.second;
-                const auto &tr2 = b.second;
+            if (!bidsList.empty()) {
+                const auto bidsItem = std::max_element(bidsList.begin(), bidsList.end(),
+                                           [](const TransactionPair &a, const TransactionPair &b)
+                {
+                    //find transaction with best bids
+                    const auto &tr1 = a.second;
+                    const auto &tr2 = b.second;
 
-                if(tr1 == nullptr)
-                    return true;
+                    if(tr1 == nullptr)
+                        return true;
 
-                if(tr2 == nullptr)
-                    return false;
+                    if(tr2 == nullptr)
+                        return false;
 
-                const auto priceA = util::priceBid(tr1);
-                const auto priceB = util::priceBid(tr2);
+                    const auto priceA = util::priceBid(tr1);
+                    const auto priceB = util::priceBid(tr2);
 
-                return priceA < priceB;
-            });
+                    return priceA < priceB;
+                });
 
-            {
                 const auto &tr = bidsItem->second;
                 if (tr != nullptr)
                 {
@@ -1318,25 +1318,25 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 }
             }
 
-            const auto asksItem = std::min_element(asksList.begin(), asksList.end(),
+            if (!asksList.empty()) {
+                const auto asksItem = std::min_element(asksList.begin(), asksList.end(),
                                                    [](const TransactionPair &a, const TransactionPair &b)
-            {
-                //find transactions with best asks
-                const auto &tr1 = a.second;
-                const auto &tr2 = b.second;
+                {
+                    //find transactions with best asks
+                    const auto &tr1 = a.second;
+                    const auto &tr2 = b.second;
 
-                if(tr1 == nullptr)
-                    return true;
+                    if(tr1 == nullptr)
+                        return true;
 
-                if(tr2 == nullptr)
-                    return false;
+                    if(tr2 == nullptr)
+                        return false;
 
-                const auto priceA = util::price(tr1);
-                const auto priceB = util::price(tr2);
-                return priceA < priceB;
-            });
+                    const auto priceA = util::price(tr1);
+                    const auto priceB = util::price(tr2);
+                    return priceA < priceB;
+                });
 
-            {
                 const auto &tr = asksItem->second;
                 if (tr != nullptr)
                 {
