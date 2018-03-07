@@ -63,8 +63,9 @@ namespace bpt = boost::posix_time;
     bpt::ptime intToTime(const uint64_t& number);
 
     double xBridgeValueFromAmount(uint64_t amount);
-
     uint64_t xBridgeAmountFromReal(double val);
+    std::string xBridgeStringValueFromPrice(double price);
+    std::string xBridgeStringValueFromAmount(uint64_t amount);
 } // namespace
 
 #endif // UTIL_H
