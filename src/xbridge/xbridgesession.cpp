@@ -653,7 +653,6 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
                 d->toAmount     = damount;
                 d->state        = TransactionDescr::trPending;
                 d->blockHash    = blockHash;
-                d->usedCoins    = utxoItems;
 
                 logTransaction(__FUNCTION__, "", d);
 
@@ -693,6 +692,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
             sendPacketBroadcast(reply);
 
             logTransaction(__FUNCTION__, "", tr);
+            logUtxo(__FUNCTION__, "", utxoItems);
         }
     }
 
