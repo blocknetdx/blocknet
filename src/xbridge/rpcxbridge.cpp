@@ -379,9 +379,9 @@ Value dxGetOrderHistory(const json_spirit::Array& params, bool fHelp)
         Array orderIds;
 
         // start searching from point of last checked order (since orders are only processed once)
-        for (int j = jstart; j < trVector.size(); j++) {
+        for (int j = jstart; j < (int)trVector.size(); j++) {
             const auto &tr = trVector[j];
-            uint64_t t = util::timeToInt(tr->txtime)/1000/1000; // need seconds, timeToInt is in microseconds
+            auto t = (int)(util::timeToInt(tr->txtime)/1000/1000); // need seconds, timeToInt is in microseconds
             // only check orders within boundaries (time interval)
             if (t >= timeInterval && t < timeInterval + granularity) {
                 // Record if order found
