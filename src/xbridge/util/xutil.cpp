@@ -181,7 +181,7 @@ const std::string iso8601(const bpt::ptime &time)
 std::string xBridgeStringValueFromAmount(uint64_t amount)
 {
     std::stringstream ss;
-    ss << setprecision(6) << xBridgeValueFromAmount(amount); // precision = xbridge::TransactionDescr::COIN length
+    ss << fixed << setprecision(6) << xBridgeValueFromAmount(amount); // precision = xbridge::TransactionDescr::COIN length
     return ss.str();
 }
 
