@@ -37,7 +37,7 @@ const std::string xbridgeErrorText(const Error error, const std::string &argumen
         case Error::INVALID_ADDRESS:
             return "Bad address";
         case Error::INVALID_PARAMETERS:
-            return "Invalid parameters";
+            return "Invalid parameters " + argument;
         case Error::INVALID_AMOUNT:
             return "Invalid amount " + argument;
         case INVALID_SIGNATURE:

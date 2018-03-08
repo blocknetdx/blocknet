@@ -66,6 +66,31 @@ namespace bpt = boost::posix_time;
     uint64_t xBridgeAmountFromReal(double val);
     std::string xBridgeStringValueFromPrice(double price);
     std::string xBridgeStringValueFromAmount(uint64_t amount);
+
+    /**
+     * @brief Returns true if the input precision is supported by xbridge.
+     * @param coin Coin amount as string
+     * @return true if valid, false if invalid
+     * Example:<br>
+     * \verbatim￼
+        xBridgeValidCoin("0.000001")
+        // returns true
+     * \endverbatim
+     */
+    bool xBridgeValidCoin(std::string coin);
+
+    /**
+     * @brief Returns the number of digits in base 10 integer not including the most significant.
+     * @param amount Coin amount as 64bit integer.
+     * @return Number of digits (i.e. length of digits past decimal in 1/amount)
+     * Example:<br>
+     * \verbatim￼
+        xBridgeSignificantDigits(1000000)
+        // returns 6
+     * \endverbatim
+     */
+    unsigned int xBridgeSignificantDigits(int64_t amount);
+
 } // namespace
 
 #endif // UTIL_H

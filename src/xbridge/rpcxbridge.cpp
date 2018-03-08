@@ -554,6 +554,26 @@ Value dxMakeOrder(const Array &params, bool fHelp)
         return error;
     }
 
+    if (!util::xBridgeValidCoin(params[1].get_str())) {
+        Object error;
+        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS,
+                      "maker size is too precise, maximum precision supported is " +
+                              std::to_string(util::xBridgeSignificantDigits(xbridge::TransactionDescr::COIN)) + " digits")));
+        error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
+        error.emplace_back(Pair("name",     __FUNCTION__));
+        return error;
+    }
+
+    if (!util::xBridgeValidCoin(params[4].get_str())) {
+        Object error;
+        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS,
+                      "taker size is too precise, maximum precision supported is " +
+                              std::to_string(util::xBridgeSignificantDigits(xbridge::TransactionDescr::COIN)) + " digits")));
+        error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
+        error.emplace_back(Pair("name",     __FUNCTION__));
+        return error;
+    }
+
     std::string fromCurrency    = params[0].get_str();
     double      fromAmount      = boost::lexical_cast<double>(params[1].get_str());
     std::string fromAddress     = params[2].get_str();
