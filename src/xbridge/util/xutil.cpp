@@ -181,14 +181,14 @@ const std::string iso8601(const bpt::ptime &time)
 std::string xBridgeStringValueFromAmount(uint64_t amount)
 {
     std::stringstream ss;
-    ss << setprecision(6) << xBridgeValueFromAmount(amount); // precision = xbridge::TransactionDescr::COIN length
+    ss << fixed << setprecision(xBridgeSignificantDigits(xbridge::TransactionDescr::COIN)) << xBridgeValueFromAmount(amount);
     return ss.str();
 }
 
 std::string xBridgeStringValueFromPrice(double price)
 {
     std::stringstream ss;
-    ss << setprecision(6) << price;
+    ss << fixed << setprecision(xBridgeSignificantDigits(xbridge::TransactionDescr::COIN)) << price;
     return ss.str();
 }
 
@@ -202,6 +202,39 @@ uint64_t xBridgeAmountFromReal(double val)
     double d = val * boost::numeric_cast<double>(xbridge::TransactionDescr::COIN);
     auto r = (int64_t)(d > 0 ? d + 0.5 : d - 0.5);
     return (uint64_t)r;
+}
+
+bool xBridgeValidCoin(const std::string coin)
+{
+    bool f = false;
+    int n = 0;
+    int j = 0; // count 0s
+    // count precision digits, ignore trailing 0s
+    for (const char &c : coin) {
+        if (!f && c == '.')
+            f = true;
+        else if (f) {
+            n++;
+            if (c == '0')
+                j++;
+            else
+                j = 0;
+        }
+    }
+    return n - j <= xBridgeSignificantDigits(xbridge::TransactionDescr::COIN);
+}
+
+unsigned int xBridgeSignificantDigits(const int64_t amount)
+{
+    unsigned int n = 0;
+    int64_t i = amount;
+
+    do {
+        n++;
+        i /= 10;
+    } while (i > 1);
+
+    return n;
 }
 
 uint64_t timeToInt(const boost::posix_time::ptime& time)
