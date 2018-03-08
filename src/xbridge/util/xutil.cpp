@@ -181,14 +181,14 @@ const std::string iso8601(const bpt::ptime &time)
 std::string xBridgeStringValueFromAmount(uint64_t amount)
 {
     std::stringstream ss;
-    ss << fixed << setprecision(6) << xBridgeValueFromAmount(amount); // precision = xbridge::TransactionDescr::COIN length
+    ss << fixed << setprecision(xBridgeSignificantDigits(xbridge::TransactionDescr::COIN)) << xBridgeValueFromAmount(amount);
     return ss.str();
 }
 
 std::string xBridgeStringValueFromPrice(double price)
 {
     std::stringstream ss;
-    ss << fixed << setprecision(6) << price;
+    ss << fixed << setprecision(xBridgeSignificantDigits(xbridge::TransactionDescr::COIN)) << price;
     return ss.str();
 }
 
