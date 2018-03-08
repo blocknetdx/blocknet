@@ -35,7 +35,8 @@ public:
 
     bool sendRawTransaction(const std::string & rawtx,
                             std::string & txid,
-                            int32_t & errorCode);
+                            int32_t & errorCode,
+                            std::string & message);
 
     bool signMessage(const std::string & address, const std::string & message, std::string & signature);
     bool verifyMessage(const std::string & address, const std::string & message, const std::string & signature);

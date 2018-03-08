@@ -846,13 +846,17 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
 
         fee1 = connFrom->minTxFee1(outputsForUse.size(), 3);
 
-        LOG() << "USED FOR TX <" << entry.txId << "> amount " << entry.amount << " " << entry.vout << " fee " << fee1;
+        LOG() << "using utxo item, id: <" << entry.txId << "> amount: " << entry.amount << " vout: " << entry.vout;
 
         if ((utxoAmount * TransactionDescr::COIN) > fromAmount + ((fee1 + fee2) * TransactionDescr::COIN))
         {
             break;
         }
     }
+
+    LOG() << "fee1: " << fee1;
+    LOG() << "fee2: " << fee2;
+    LOG() << "amount of used utxo items: " << utxoAmount << " required amount + fees: " << (fromAmount / TransactionDescr::COIN) + fee1 + fee2;
 
     if ((utxoAmount * TransactionDescr::COIN) < fromAmount + ((fee1 + fee2) * TransactionDescr::COIN))
     {
