@@ -2408,10 +2408,10 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet)
     {
         TransactionPtr tr = e.pendingTransaction(txid);
 
-        if(tr->isValid())
+        if(!tr->isValid())
             tr = e.transaction(txid);
 
-        if(tr->isValid())
+        if(!tr->isValid())
         {
             LOG() << "can't find transaction " << __FUNCTION__;
             return true;
