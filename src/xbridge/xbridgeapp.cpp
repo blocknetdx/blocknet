@@ -18,7 +18,6 @@
 #include "init.h"
 #include "wallet.h"
 #include "servicenodeman.h"
-#include "xbridgesession.h"
 #include "xbridgewalletconnector.h"
 #include "xbridgewalletconnectorbtc.h"
 #include "xbridgewalletconnectorbcc.h"
@@ -961,7 +960,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
         m_p->m_transactions[id] = ptr;
     }
 
-    Session::logTransaction(__FUNCTION__, "order created", ptr);
+    LOG() << "order created" << ptr << __FUNCTION__;
 
     return xbridge::Error::SUCCESS;
 }
@@ -1160,7 +1159,7 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
     // lock used coins
     connTo->lockCoins(ptr->usedCoins, true);
 
-    Session::logTransaction(__FUNCTION__, "order accepted", ptr);
+    LOG() << "order accepted" << ptr << __FUNCTION__;
 
     return xbridge::Error::SUCCESS;
 }
@@ -1254,7 +1253,7 @@ xbridge::Error App::cancelXBridgeTransaction(const uint256 &id,
         moveTransactionToHistory(id);
     }
 
-    Session::logTransaction(__FUNCTION__, "order cancelled", ptr);
+    LOG() << "order cancelled" << ptr << __FUNCTION__;
 
     return xbridge::SUCCESS;
 }

@@ -153,108 +153,6 @@ const std::vector<unsigned char> & Session::sessionAddr() const
     return m_p->m_myid;
 }
 
-void Session::logTransaction(const char* function, const std::string & message, const TransactionDescrPtr& tx)
-{
-    xbridge::WalletConnectorPtr connFrom = xbridge::App::instance().connectorByCurrency(tx->fromCurrency);
-    xbridge::WalletConnectorPtr connTo   = xbridge::App::instance().connectorByCurrency(tx->toCurrency);
-
-    if (!connFrom || !connTo)
-        LOG() << "MISSING SOME CONNECTOR, NOT ALL ORDER INFO WILL BE LOGGED";
-
-    std::ostringstream inputsStream;
-    uint32_t count = 0;
-    for(const xbridge::wallet::UtxoEntry & entry : tx->usedCoins)
-    {
-        inputsStream << "    INDEX: " << count << std::endl
-                     << "    ID: " << entry.txId << std::endl
-                     << "    VOUT: " << boost::lexical_cast<std::string>(entry.vout) << std::endl
-                     << "    AMOUNT: " << entry.amount << std::endl
-                     << "    ADDRESS: " << entry.address << std::endl;
-
-        ++count;
-    }
-
-    LOG() << std::endl
-          << "LOG ORDER BODY" << std::endl
-          << "CALLED FROM FUNCTION: " << function << " WITH MESSAGE: " << message << std::endl
-          << "ID: " << tx->id.GetHex() << std::endl
-          << "MAKER: " << tx->fromCurrency << std::endl
-          << "MAKER SIZE: " << boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(tx->fromAmount)) << std::endl
-          << "MAKER ADDR: " << (!tx->from.empty() && connFrom ? connFrom->fromXAddr(tx->from) : "") << std::endl
-          << "TAKER: " << tx->toCurrency << std::endl
-          << "TAKER SIZE: " << boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(tx->toAmount)) << std::endl
-          << "TAKER ADDR: " << (!tx->to.empty() && connTo ? connTo->fromXAddr(tx->to) : "") << std::endl
-          << "STATE: " << tx->strState() << std::endl
-          << "BLOCK HASH: " << tx->blockHash.GetHex() << std::endl
-          << "UPDATED AT: " << util::iso8601(tx->txtime) << std::endl
-          << "CREATED AT: " << util::iso8601(tx->created) << std::endl
-          << "USED INPUTS: " << std::endl << inputsStream.str();
-}
-
-void Session::logTransaction(const char* function, const std::string & message, const TransactionPtr& tx)
-{
-    xbridge::WalletConnectorPtr connFrom = xbridge::App::instance().connectorByCurrency(tx->a_currency());
-    xbridge::WalletConnectorPtr connTo   = xbridge::App::instance().connectorByCurrency(tx->b_currency());
-
-    if (!connFrom || !connTo)
-        LOG() << "MISSING SOME CONNECTOR, NOT ALL ORDER INFO WILL BE LOGGED";
-
-    xbridge::Exchange & e = xbridge::Exchange::instance();
-
-    std::vector<xbridge::wallet::UtxoEntry> items;
-    e.getUtxoItems(tx->id(), items);
-
-    std::ostringstream inputsStream;
-    uint32_t count = 0;
-    for(const xbridge::wallet::UtxoEntry & entry : items)
-    {
-        inputsStream << "    INDEX: " << count << std::endl
-                     << "    ID: " << entry.txId << std::endl
-                     << "    VOUT: " << boost::lexical_cast<std::string>(entry.vout) << std::endl
-                     << "    AMOUNT: " << entry.amount << std::endl
-                     << "    ADDRESS: " << entry.address << std::endl;
-
-        ++count;
-    }
-
-    LOG() << std::endl
-          << "LOG ORDER BODY" << std::endl
-          << "CALLED FROM FUNCTION: " << function << " WITH MESSAGE: " << message << std::endl
-          << "ID: " << tx->id().GetHex() << std::endl
-          << "MAKER: " << tx->a_currency() << std::endl
-          << "MAKER SIZE: " << boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(tx->a_amount())) << std::endl
-          << "MAKER ADDR: " << (connFrom ? connFrom->fromXAddr(tx->a_address()) : "") << std::endl
-          << "TAKER: " << tx->b_currency() << std::endl
-          << "TAKER SIZE: " << boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(tx->b_amount())) << std::endl
-          << "TAKER ADDR: " << (connTo ? connTo->fromXAddr(tx->b_address()) : "") << std::endl
-          << "STATE: " << tx->strState() << std::endl
-          << "BLOCK HASH: " << tx->blockHash().GetHex() << std::endl
-          << "CREATED AT: " << util::iso8601(tx->createdTime()) << std::endl
-          << "USED INPUTS: " << std::endl << inputsStream.str();
-}
-
-void Session::logUtxo(const char* function, const string& message, const std::vector<wallet::UtxoEntry>& utxos)
-{
-    std::ostringstream inputsStream;
-    uint32_t count = 0;
-    for(const xbridge::wallet::UtxoEntry & entry : utxos)
-    {
-        inputsStream << "    NUMBER: " << count << std::endl
-                     << "    ID: " << entry.txId << std::endl
-                     << "    VOUT: " << boost::lexical_cast<std::string>(entry.vout) << std::endl
-                     << "    AMOUNT: " << entry.amount << std::endl
-                     << "    ADDRESS: " << entry.address << std::endl;
-
-        ++count;
-    }
-
-    LOG() << std::endl
-          << "LOG UTXO" << std::endl
-          << "CALLED FROM FUNCTION: " << function << " WITH MESSAGE: " << message << std::endl
-          << "UTXO ENTRIES: " << std::endl
-          << inputsStream.str();
-}
-
 //*****************************************************************************
 //*****************************************************************************
 void Session::Impl::init()
@@ -673,7 +571,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
                 d->state        = TransactionDescr::trPending;
                 d->blockHash    = blockHash;
 
-                logTransaction(__FUNCTION__, "", d);
+                LOG() << __FUNCTION__ << d;
 
                 xuiConnector.NotifyXBridgeTransactionReceived(d);
             }
@@ -710,8 +608,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
 
             sendPacketBroadcast(reply);
 
-            logTransaction(__FUNCTION__, "", tr);
-            logUtxo(__FUNCTION__, "", utxoItems);
+            LOG() << __FUNCTION__ << tr;
         }
     }
 
@@ -775,7 +672,7 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
         {
             LOG() << "received pending for hold transaction " << __FUNCTION__;
 
-            logTransaction(__FUNCTION__, "", ptr);
+            LOG() << __FUNCTION__ << ptr;
 
             return true;
         }
@@ -787,7 +684,7 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
         // update timestamp
         ptr->updateTimestamp();
 
-        logTransaction(__FUNCTION__, "", ptr);
+        LOG() << __FUNCTION__ << ptr;
 
         xuiConnector.NotifyXBridgeTransactionChanged(ptr->id);
 
@@ -820,7 +717,7 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
 
     LOG() << "received order <" << ptr->id.GetHex() << "> " << __FUNCTION__;
 
-    logTransaction(__FUNCTION__, "", ptr);
+    LOG() << __FUNCTION__ << ptr;
 
     xuiConnector.NotifyXBridgeTransactionReceived(ptr);
 
@@ -986,8 +883,7 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet)
 
             boost::mutex::scoped_lock l(tr->m_lock);
 
-            logTransaction(__FUNCTION__, "", tr);
-            logUtxo(__FUNCTION__, "", utxoItems);
+            LOG() << __FUNCTION__ << tr;
 
             if (tr && tr->state() == xbridge::Transaction::trJoined)
             {
@@ -1088,7 +984,7 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet)
 
             boost::mutex::scoped_lock l(tr->m_lock);
 
-            logTransaction(__FUNCTION__, "", tr);
+            LOG() << __FUNCTION__ << tr;
 
             if (!tr || tr->state() != xbridge::Transaction::trJoined)
             {
@@ -1122,7 +1018,7 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet)
     {
         xtx->state = TransactionDescr::trFinished;
 
-        logTransaction(__FUNCTION__, "order is taken, moving to history", xtx);
+        LOG() << __FUNCTION__ << std::endl << "order is taken, moving to history" << xtx;
 
         xapp.moveTransactionToHistory(id);
         xuiConnector.NotifyXBridgeTransactionChanged(xtx->id);
@@ -1140,7 +1036,7 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet)
 
     xtx->state = TransactionDescr::trHold;
 
-    logTransaction(__FUNCTION__, "order holded", xtx);
+    LOG() << __FUNCTION__ << std::endl << "order holded" << xtx;
 
     xuiConnector.NotifyXBridgeTransactionChanged(id);
 
@@ -1272,7 +1168,7 @@ bool Session::Impl::processTransactionHoldApply(XBridgePacketPtr packet)
         }
     }
 
-    logTransaction(__FUNCTION__, "", tr);
+    LOG() << __FUNCTION__ << tr;
 
     return true;
 }
@@ -1439,7 +1335,7 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet)
         datatxtd = uint256(strtxid);
     }
 
-    logTransaction(__FUNCTION__, "", xtx);
+    LOG() << __FUNCTION__ << xtx;
 
     // send initialized
     XBridgePacketPtr reply(new XBridgePacket(xbcTransactionInitialized));
@@ -1542,7 +1438,7 @@ bool Session::Impl::processTransactionInitialized(XBridgePacketPtr packet)
         }
     }
 
-    logTransaction(__FUNCTION__, "", tr);
+    LOG() << __FUNCTION__ << tr;
 
     return true;
 }
@@ -1612,7 +1508,7 @@ bool Session::Impl::processTransactionCreate(XBridgePacketPtr packet)
         return true;
     }
 
-    logTransaction(__FUNCTION__, "", xtx);
+    LOG() << __FUNCTION__ << xtx;
 
     // connectors
     WalletConnectorPtr connFrom = xapp.connectorByCurrency(xtx->fromCurrency);
@@ -1951,7 +1847,7 @@ bool Session::Impl::processTransactionCreatedA(XBridgePacketPtr packet)
 
     sendPacket(tr->b_address(), reply2);
 
-    logTransaction(__FUNCTION__, "", tr);
+    LOG() << __FUNCTION__ << tr;
 
     return true;
 }
@@ -2044,7 +1940,7 @@ bool Session::Impl::processTransactionCreatedB(XBridgePacketPtr packet)
         }
     }
 
-    logTransaction(__FUNCTION__, "", tr);
+    LOG() << __FUNCTION__ << tr;
 
     return true;
 }
@@ -2183,7 +2079,7 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet)
 
     xtx->state = TransactionDescr::trCommited;
 
-    logTransaction(__FUNCTION__, "", xtx);
+    LOG() << __FUNCTION__ << xtx;
 
     xuiConnector.NotifyXBridgeTransactionChanged(txid);
 
@@ -2278,7 +2174,7 @@ bool Session::Impl::processTransactionConfirmedA(XBridgePacketPtr packet)
 
     sendPacket(tr->b_destination(), reply2);
 
-    logTransaction(__FUNCTION__, "", tr);
+    LOG() << __FUNCTION__ << tr;
 
     return true;
 }
@@ -2401,7 +2297,7 @@ bool Session::Impl::processTransactionConfirmB(XBridgePacketPtr packet)
 
     xtx->state = TransactionDescr::trCommited;
 
-    logTransaction(__FUNCTION__, "", xtx);
+    LOG() << __FUNCTION__ << xtx;
 
     xuiConnector.NotifyXBridgeTransactionChanged(txid);
 
@@ -2483,7 +2379,7 @@ bool Session::Impl::processTransactionConfirmedB(XBridgePacketPtr packet)
         }
     }
 
-    logTransaction(__FUNCTION__, "", tr);
+    LOG() << __FUNCTION__ << tr;
 
     return true;
 }
@@ -2523,7 +2419,7 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet)
 
         boost::mutex::scoped_lock l(tr->m_lock);
 
-        logTransaction(__FUNCTION__, "", tr);
+        LOG() << __FUNCTION__ << tr;
 
         if (!packet->verify(tr->a_pk1()) && !packet->verify(tr->b_pk1()))
         {
@@ -2567,7 +2463,7 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet)
         xtx->state  = TransactionDescr::trCancelled;
         xtx->reason = reason;
 
-        logTransaction(__FUNCTION__, "", xtx);
+        LOG() << __FUNCTION__ << xtx;
 
         xuiConnector.NotifyXBridgeTransactionChanged(txid);
         return true;
@@ -2591,7 +2487,7 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet)
         xtx->state = TransactionDescr::trRollback;
     }
 
-    logTransaction(__FUNCTION__, "", xtx);
+    LOG() << __FUNCTION__ << xtx;
 
     // update transaction state for gui
     xuiConnector.NotifyXBridgeTransactionChanged(txid);
@@ -2890,7 +2786,7 @@ bool Session::Impl::processTransactionFinished(XBridgePacketPtr packet)
     // update transaction state for gui
     xtx->state = TransactionDescr::trFinished;
 
-    logTransaction(__FUNCTION__, "", xtx);
+    LOG() << __FUNCTION__ << xtx;
 
     xapp.moveTransactionToHistory(txid);
     xuiConnector.NotifyXBridgeTransactionChanged(txid);

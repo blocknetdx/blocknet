@@ -41,9 +41,6 @@ public:
 public:
     // helper functions
     const std::vector<unsigned char> & sessionAddr() const;
-    static void logTransaction(const char* function, const std::string & message, const TransactionDescrPtr & tx);
-    static void logTransaction(const char* function, const std::string & message, const TransactionPtr & tx);
-    static void logUtxo(const char* function, const std::string & message, const std::vector<wallet::UtxoEntry> & utxos);
 
 public:
     // network
