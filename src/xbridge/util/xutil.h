@@ -97,7 +97,7 @@ using namespace json_spirit;
      * \endverbatim
      */
     unsigned int xBridgeSignificantDigits(int64_t amount);
-     * @brief makeError - generate standard json_sprit object with error description
+     /** @brief makeError - generate standard json_sprit object with error description
      * @param statusCode - error code
      * @param function - nome of called function
      * @param message - additional error description
