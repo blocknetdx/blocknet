@@ -300,7 +300,9 @@ void XBridgeTransactionDialog::onSendTransaction()
 
     double fromAmount      = m_amountFrom->text().toDouble();
     double toAmount        = m_amountTo->text().toDouble();
-    if (fromAmount <= 0 || toAmount <= 0)
+    double minimumAmount   = 1.0 / boost::numeric_cast<double>(xbridge::TransactionDescr::COIN);
+
+    if (fromAmount < minimumAmount || toAmount < minimumAmount)
     {
         QMessageBox::warning(this, trUtf8("check parameters"), trUtf8("Invalid amount"));
         return;
