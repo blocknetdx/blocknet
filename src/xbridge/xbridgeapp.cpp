@@ -18,6 +18,7 @@
 #include "init.h"
 #include "wallet.h"
 #include "servicenodeman.h"
+#include "xbridgesession.h"
 #include "xbridgewalletconnector.h"
 #include "xbridgewalletconnectorbtc.h"
 #include "xbridgewalletconnectorbcc.h"
@@ -770,7 +771,6 @@ void App::moveTransactionToHistory(const uint256 & id)
             if(counter > 1) {
                 ERR() << "duplicate transaction id = " << id.GetHex() << " " << __FUNCTION__;
             }
-//            assert(counter < 2 && "duplicate transaction");
         }
 
         if (xtx)
@@ -779,7 +779,6 @@ void App::moveTransactionToHistory(const uint256 & id)
                 ERR() << "duplicate tx " << id.GetHex() << " in tx list and history " << __FUNCTION__;
                 return;
             }
-//            assert(m_p->m_historicTransactions.count(id) == 0 && "duplicate tx in tx list and history");
             m_p->m_historicTransactions[id] = xtx;
         }
     }
@@ -809,7 +808,6 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                                            uint256 & id,
                                            uint256 & blockHash)
 {
-//    LOG() <<
     const auto statusCode = checkCreateParams(fromCurrency, toCurrency, fromAmount);
     if(statusCode != xbridge::SUCCESS) {
         return statusCode;
@@ -963,7 +961,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
         m_p->m_transactions[id] = ptr;
     }
 
-    LOG() << "created order with id " << id.GetHex();
+    Session::logTransaction(__FUNCTION__, "order created", ptr);
 
     return xbridge::Error::SUCCESS;
 }
@@ -1162,6 +1160,8 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
     // lock used coins
     connTo->lockCoins(ptr->usedCoins, true);
 
+    Session::logTransaction(__FUNCTION__, "order accepted", ptr);
+
     return xbridge::Error::SUCCESS;
 }
 
@@ -1222,11 +1222,13 @@ xbridge::Error App::cancelXBridgeTransaction(const uint256 &id,
     TransactionDescrPtr ptr = transaction(id);
     if (!ptr || !ptr->isLocal())
     {
+        LOG() << "order with id: " << id.GetHex() << " not found or order isn't local " << __FUNCTION__;
         return xbridge::TRANSACTION_NOT_FOUND;
     }
 
     if (ptr->state > TransactionDescr::trPending)
     {
+        LOG() << "order with id: " << id.GetHex() << " already in work " << __FUNCTION__;
         return xbridge::INVALID_STATE;
     }
 
@@ -1251,6 +1253,8 @@ xbridge::Error App::cancelXBridgeTransaction(const uint256 &id,
 
         moveTransactionToHistory(id);
     }
+
+    Session::logTransaction(__FUNCTION__, "order cancelled", ptr);
 
     return xbridge::SUCCESS;
 }

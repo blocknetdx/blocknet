@@ -764,7 +764,7 @@ size_t Exchange::eraseExpiredTransactions()
 
         if (ptr->isExpired() || ptr->isExpiredByBlockNumber())
         {
-            LOG() << "transaction expired <" << ptr->id().ToString() << ">";
+            Session::logTransaction(__FUNCTION__, "order expired", ptr);
 
             m_p->m_pendingTransactions.erase(ptr->id());
 

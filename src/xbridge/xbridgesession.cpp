@@ -199,6 +199,24 @@ void Session::logTransaction(const char* function, const std::string & message, 
     if (!connFrom || !connTo)
         LOG() << "MISSING SOME CONNECTOR, NOT ALL ORDER INFO WILL BE LOGGED";
 
+    xbridge::Exchange & e = xbridge::Exchange::instance();
+
+    std::vector<xbridge::wallet::UtxoEntry> items;
+    e.getUtxoItems(tx->id(), items);
+
+    std::ostringstream inputsStream;
+    uint32_t count = 0;
+    for(const xbridge::wallet::UtxoEntry & entry : items)
+    {
+        inputsStream << "    INDEX: " << count << std::endl
+                     << "    ID: " << entry.txId << std::endl
+                     << "    VOUT: " << boost::lexical_cast<std::string>(entry.vout) << std::endl
+                     << "    AMOUNT: " << entry.amount << std::endl
+                     << "    ADDRESS: " << entry.address << std::endl;
+
+        ++count;
+    }
+
     LOG() << std::endl
           << "LOG ORDER BODY" << std::endl
           << "CALLED FROM FUNCTION: " << function << " WITH MESSAGE: " << message << std::endl
@@ -211,7 +229,8 @@ void Session::logTransaction(const char* function, const std::string & message, 
           << "TAKER ADDR: " << (connTo ? connTo->fromXAddr(tx->b_address()) : "") << std::endl
           << "STATE: " << tx->strState() << std::endl
           << "BLOCK HASH: " << tx->blockHash().GetHex() << std::endl
-          << "CREATED AT: " << util::iso8601(tx->createdTime());
+          << "CREATED AT: " << util::iso8601(tx->createdTime()) << std::endl
+          << "USED INPUTS: " << std::endl << inputsStream.str();
 }
 
 void Session::logUtxo(const char* function, const string& message, const std::vector<wallet::UtxoEntry>& utxos)
