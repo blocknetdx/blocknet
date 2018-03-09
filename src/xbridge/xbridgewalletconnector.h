@@ -29,6 +29,8 @@ public:
         return *this;
     }
 
+    virtual bool init() = 0;
+
 public:
     // reimplement for currency
     virtual std::string fromXAddr(const std::vector<unsigned char> & xaddr) const = 0;
@@ -59,6 +61,8 @@ public:
 
 public:
     // helper functions
+
+    virtual bool isDustAmount(const double & amount) const = 0;
 
     virtual bool newKeyPair(std::vector<unsigned char> & pubkey, std::vector<unsigned char> & privkey) = 0;
 

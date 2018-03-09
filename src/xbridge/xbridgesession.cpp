@@ -507,6 +507,15 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
         return true;
     }
 
+    // check dust amount
+    if (sconn->isDustAmount(static_cast<double>(samount) / TransactionDescr::COIN) ||
+        sconn->isDustAmount(commonAmount - (static_cast<double>(samount) / TransactionDescr::COIN)) ||
+        dconn->isDustAmount(static_cast<double>(damount) / TransactionDescr::COIN))
+    {
+        LOG() << "reject dust amount transaction " << id.ToString() << " " << __FUNCTION__;
+        return true;
+    }
+
     LOG() << "received transaction " << id.GetHex() << std::endl
           << "    from " << HexStr(saddr) << std::endl
           << "             " << scurrency << " : " << samount << std::endl
@@ -848,6 +857,14 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet)
     {
         LOG() << "transaction rejected, amount from utxo items <" << commonAmount
               << "> less than required <" << samount << "> " << __FUNCTION__;
+        return true;
+    }
+
+    // check dust amount
+    if (conn->isDustAmount(static_cast<double>(samount) / TransactionDescr::COIN) ||
+        conn->isDustAmount(commonAmount - (static_cast<double>(samount) / TransactionDescr::COIN)))
+    {
+        LOG() << "reject dust amount transaction " << id.ToString() << " " << __FUNCTION__;
         return true;
     }
 

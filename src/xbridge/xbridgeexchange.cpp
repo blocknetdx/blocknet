@@ -101,10 +101,7 @@ bool Exchange::init()
         std::string user       = s.get<std::string>(*i + ".Username");
         std::string passwd     = s.get<std::string>(*i + ".Password");
         uint64_t    minAmount  = s.get<uint64_t>(*i + ".MinimumAmount", 0);
-        uint64_t    dustAmount = s.get<uint64_t>(*i + ".DustAmount", 0);
         uint32_t    txVersion  = s.get<uint32_t>(*i + ".TxVersion", 1);
-        uint64_t    minTxFee   = s.get<uint64_t>(*i + ".MinTxFee", 0);
-        uint64_t    feePerByte = s.get<uint64_t>(*i + ".FeePerByte", 200);
 
 
         if (/*address.empty() || */ip.empty() || port.empty() ||
@@ -121,11 +118,8 @@ bool Exchange::init()
         wp.m_port       = port;
         wp.m_user       = user;
         wp.m_passwd     = passwd;
-        wp.m_minAmount  = minAmount;
-        wp.dustAmount = dustAmount;
+        wp.dustAmount  = minAmount;
         wp.txVersion  = txVersion;
-        wp.minTxFee   = minTxFee;
-        wp.feePerByte = feePerByte;
 
         LOG() << "read wallet " << *i << " \"" << label << "\" address <" << address << ">";
     }
@@ -315,13 +309,13 @@ bool Exchange::createTransaction(const uint256                        & txid,
 
     // check amounts
     {
-        if (wp.m_minAmount && wp.m_minAmount > sourceAmount)
+        if (wp.dustAmount && wp.dustAmount > sourceAmount)
         {
             LOG() << "tx " <<  txid.ToString()
                   << " rejected because sourceAmount less than minimum payment";
             return false;
         }
-        if (wp2.m_minAmount && wp2.m_minAmount > destAmount)
+        if (wp2.dustAmount && wp2.dustAmount > destAmount)
         {
             LOG() << "tx " << txid.ToString()
                   << " rejected because destAmount less than minimum payment";
