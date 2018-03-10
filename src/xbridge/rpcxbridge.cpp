@@ -564,12 +564,12 @@ Value dxMakeOrder(const Array &params, bool fHelp)
     }
     if(fromAmount <= .0) {
         return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "negative or zero value of fromAmount");
+                               "maker size must be greater than 0");
     }
     if(toAmount <= .0) {
 
         return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "negative or zero value of toAmount");
+                               "taker size must be greater than 0");
 
     }
     // Perform explicit check on dryrun to avoid executing order on bad spelling
