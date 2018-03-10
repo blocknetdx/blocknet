@@ -10,7 +10,7 @@ namespace xbridge
 
 //******************************************************************************
 //******************************************************************************
-const std::string xbridgeErrorText(const Error error, const std::string &argument)
+const std::string xbridgeErrorText(const Error & error, const std::string & argument)
 {
     switch (error)
     {
@@ -56,14 +56,15 @@ const std::string xbridgeErrorText(const Error error, const std::string &argumen
             return "Invalid time format, ISO 8601 date format required";
         case NOT_EXCHANGE_NODE:
             return "Blocknet is not running as an exchange node";
-
+        case DUST:
+            return "Amount is dust (very small)";
     }
     return "invalid error value";
 }
 
 //******************************************************************************
 //******************************************************************************
-const std::string xbridgeErrorText(const Error error, const std::vector<unsigned char> &argument)
+const std::string xbridgeErrorText(const Error &error, const std::vector<unsigned char> &argument)
 {
     return xbridgeErrorText(error, std::string(argument.begin(), argument.end()));
 }
