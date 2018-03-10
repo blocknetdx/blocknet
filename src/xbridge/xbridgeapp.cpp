@@ -1225,7 +1225,7 @@ xbridge::Error App::cancelXBridgeTransaction(const uint256 &id,
         return xbridge::TRANSACTION_NOT_FOUND;
     }
 
-    if (ptr->state > TransactionDescr::trPending)
+    if (ptr->state > TransactionDescr::trCreated)
     {
         LOG() << "order with id: " << id.GetHex() << " already in work " << __FUNCTION__;
         return xbridge::INVALID_STATE;
