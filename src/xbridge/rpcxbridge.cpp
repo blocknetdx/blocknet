@@ -274,13 +274,7 @@ Value dxGetOrderHistory(const json_spirit::Array& params, bool fHelp)
                                "Start time too early.");
 
     }
-    // Validate start and end times
-    if (startTimeFrame > 4102444800 || endTimeFrame > 4102444800) {
 
-        return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "Start/end times are too large.");
-
-    }
     // Validate start and end times (no times too far in the future)
     std::time_t currentTime = std::time(nullptr);
     std::time_t oneDayFromNow = currentTime + 86400;
