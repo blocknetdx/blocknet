@@ -544,10 +544,10 @@ std::ostream & operator << (std::ostream & out, const TransactionPtr & tx)
         << "ORDER BODY" << std::endl
         << "ID: " << tx->id().GetHex() << std::endl
         << "MAKER: " << tx->a_currency() << std::endl
-        << "MAKER SIZE: " << boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(tx->a_amount())) << std::endl
+        << "MAKER SIZE: " << util::xBridgeStringValueFromAmount(tx->a_amount()) << std::endl
         << "MAKER ADDR: " << (connFrom ? connFrom->fromXAddr(tx->a_address()) : "") << std::endl
         << "TAKER: " << tx->b_currency() << std::endl
-        << "TAKER SIZE: " << boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(tx->b_amount())) << std::endl
+        << "TAKER SIZE: " << util::xBridgeStringValueFromAmount(tx->b_amount()) << std::endl
         << "TAKER ADDR: " << (connTo ? connTo->fromXAddr(tx->b_address()) : "") << std::endl
         << "STATE: " << tx->strState() << std::endl
         << "BLOCK HASH: " << tx->blockHash().GetHex() << std::endl
