@@ -29,10 +29,10 @@ ostream & operator << (ostream& out, const TransactionDescrPtr& tx)
         << "LOG ORDER BODY" << std::endl
         << "ID: " << tx->id.GetHex() << std::endl
         << "MAKER: " << tx->fromCurrency << std::endl
-        << "MAKER SIZE: " << boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(tx->fromAmount)) << std::endl
+        << "MAKER SIZE: " << util::xBridgeStringValueFromAmount(tx->fromAmount) << std::endl
         << "MAKER ADDR: " << (!tx->from.empty() && connFrom ? connFrom->fromXAddr(tx->from) : "") << std::endl
         << "TAKER: " << tx->toCurrency << std::endl
-        << "TAKER SIZE: " << boost::lexical_cast<std::string>(util::xBridgeValueFromAmount(tx->toAmount)) << std::endl
+        << "TAKER SIZE: " << util::xBridgeStringValueFromAmount(tx->toAmount) << std::endl
         << "TAKER ADDR: " << (!tx->to.empty() && connTo ? connTo->fromXAddr(tx->to) : "") << std::endl
         << "STATE: " << tx->strState() << std::endl
         << "BLOCK HASH: " << tx->blockHash.GetHex() << std::endl
