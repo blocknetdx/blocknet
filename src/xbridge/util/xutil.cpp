@@ -275,4 +275,13 @@ double priceBid(const xbridge::TransactionDescrPtr ptr)
     return xBridgeValueFromAmount(ptr->fromAmount) / xBridgeValueFromAmount(ptr->toAmount);
 }
 
+Object makeError(const xbridge::Error statusCode, const string &function, const string &message)
+{
+    Object error;
+    error.emplace_back(Pair("error",xbridge::xbridgeErrorText(statusCode,message)));
+    error.emplace_back(Pair("code", statusCode));
+    error.emplace_back(Pair("name",function));
+    return  error;
+}
+
 } // namespace util
