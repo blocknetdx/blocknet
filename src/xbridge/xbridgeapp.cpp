@@ -874,9 +874,10 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
         }
     }
 
-    LOG() << "fee1: " << fee1;
-    LOG() << "fee2: " << fee2;
-    LOG() << "amount of used utxo items: " << utxoAmount << " required amount + fees: " << (fromAmount / TransactionDescr::COIN) + fee1 + fee2;
+    LOG() << "fee1: " << (static_cast<double>(fee1) / TransactionDescr::COIN);
+    LOG() << "fee2: " << (static_cast<double>(fee2) / TransactionDescr::COIN);
+    LOG() << "amount of used utxo items: " << (static_cast<double>(utxoAmount) / TransactionDescr::COIN)
+          << " required amount + fees: " << (static_cast<double>(fromAmount + fee1 + fee2) / TransactionDescr::COIN);
 
     if (utxoAmount < (fromAmount + fee1 + fee2))
     {
