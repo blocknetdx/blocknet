@@ -2459,7 +2459,10 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet)
 
     if (!packet->verify(xtx->sPubKey) && !packet->verify(xtx->oPubKey))
     {
-        LOG() << "invalid packet signature or packet from node " << __FUNCTION__;
+        if (xtx->state == xbridge::Transaction::trNew && xtx->state == xbridge::Transaction::trCreated)
+            LOG() << "No packet signature for cancel on order " << xtx->id.GetHex() << __FUNCTION__;
+        else
+            LOG() << "invalid packet signature for cancel on order " << xtx->id.GetHex() << __FUNCTION__;
         return true;
     }
 
