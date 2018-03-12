@@ -22,7 +22,8 @@ struct TransactionDescr
 {
     enum
     {
-        COIN = 1000000
+        COIN = 1000000,
+        MAX_COIN = 100000000
     };
 
     enum State
