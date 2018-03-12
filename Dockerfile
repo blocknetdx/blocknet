@@ -32,13 +32,14 @@ RUN mkdir -p /tmp/berkeley \
   && ../dist/configure --enable-cxx --disable-shared --with-pic --prefix=/tmp/berkeley \
   && make install
 
+# Copy source files
+COPY . /opt/blocknetdx/BlockDX/
+
 # Build source
-RUN mkdir -p /opt/blocknetdx \
+RUN mkdir -p /opt/blocknetdx/BlockDX \
   && mkdir -p /opt/blockchain/config \
   && mkdir -p /opt/blockchain/data \
   && ln -s /opt/blockchain/config /root/.blocknetdx \
-  && cd /opt/blocknetdx \
-  && git clone --depth 1 --branch v3.9.10 https://github.com/BlocknetDX/BlockDX.git \
   && cd /opt/blocknetdx/BlockDX \
   && chmod +x ./autogen.sh \
   && ./autogen.sh \
@@ -67,7 +68,7 @@ rpcallowip=0.0.0.0/0                      \n\
 rpctimeout=15                             \n\
 rpcclienttimeout=15                       \n\
 rpcuser=test                              \n\
-rpcpassword=test" > /opt/blockchain/config/blocknetdx.conf
+rpcpassword=user" > /opt/blockchain/config/blocknetdx.conf
 
 WORKDIR /opt/blockchain/
 VOLUME ["/opt/blockchain/config", "/opt/blockchain/data"]
