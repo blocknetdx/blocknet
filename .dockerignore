@@ -1,0 +1,5 @@
+.git*/**
+**/*.o
+**/*.a
+.DS_Store
+wallet.dat
