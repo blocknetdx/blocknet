@@ -1392,7 +1392,8 @@ Error App::checkAmount(const string & currency, const uint64_t & amount)
         return xbridge::NO_SESSION;
     }
 
-    if (conn->getWalletBalance() < (amount / conn->COIN)) {
+    // Check that wallet balance is larger than the smallest supported balance
+    if (conn->getWalletBalance() < (static_cast<double>(amount) / TransactionDescr::COIN)) {
         WARN() << "insufficient funds for <" << currency << "> " << __FUNCTION__;
         return xbridge::INSIFFICIENT_FUNDS;
     }
