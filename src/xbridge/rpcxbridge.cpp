@@ -553,6 +553,11 @@ Value dxMakeOrder(const Array &params, bool fHelp)
         return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
                                "Maximum supported size is " + std::to_string(xbridge::TransactionDescr::MAX_COIN));
     }
+    // Check lower limits
+    if (fromAmount <= 0 || toAmount <= 0) {
+        return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "Minimum supported size is " + util::xBridgeStringValueFromPrice(1.0/xbridge::TransactionDescr::COIN));
+    }
 
     auto statusCode = xbridge::SUCCESS;
 
