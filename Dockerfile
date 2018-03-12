@@ -41,7 +41,7 @@ RUN mkdir -p /opt/blocknetdx/BlockDX \
   && mkdir -p /opt/blockchain/data \
   && ln -s /opt/blockchain/config /root/.blocknetdx \
   && cd /opt/blocknetdx/BlockDX \
-  && chmod +x ./autogen.sh \
+  && chmod +x ./autogen.sh; sync \
   && ./autogen.sh \
   && ./configure LDFLAGS="-L/tmp/berkeley/lib/" CPPFLAGS="-I/tmp/berkeley/include/" --without-gui --enable-hardening \
   && echo "Building with cores: $ecores" \
