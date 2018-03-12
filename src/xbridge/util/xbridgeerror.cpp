@@ -17,7 +17,7 @@ const std::string xbridgeErrorText(const Error & error, const std::string & argu
         case Error::INVALID_CURRENCY:
             return "Invalid coin " + argument;
         case Error::INVALID_STATE:
-            return "invalid transaction state" + argument;
+            return "invalid transaction state " + argument;
         case Error::NO_SESSION:
             return "No session for currency " + argument;
         case Error::INSIFFICIENT_FUNDS:
@@ -35,17 +35,17 @@ const std::string xbridgeErrorText(const Error & error, const std::string & argu
         case Error::UNKNOWN_ERROR:
             return "Internal Server Error";
         case Error::INVALID_ADDRESS:
-            return "Bad address" + argument;
+            return "Bad address " + argument;
         case Error::INVALID_PARAMETERS:
-            return "Invalid parameters" + argument;
+            return "Invalid parameters " + argument;
         case Error::INVALID_AMOUNT:
             return "Invalid amount " + argument;
         case INVALID_SIGNATURE:
             return "Invalid signature " + argument;
         case UNAUTHORIZED:
-            return "Unauthorized" + argument;
+            return "Unauthorized " + argument;
         case BAD_REQUEST:
-            return  "Bad Request" + argument;
+            return  "Bad Request " + argument;
         case INVALID_MAKE_SYMBOL:
             return "Invalid maker symbol " + argument;
         case INVALID_TAKE_SYMBOL:
