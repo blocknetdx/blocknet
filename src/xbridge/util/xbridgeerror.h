@@ -36,7 +36,8 @@ namespace xbridge
         INVALID_ADDRESS         = 1026,
         INVALID_SIGNATURE       = 1027,
         INVALID_STATE           = 1028,
-        NOT_EXCHANGE_NODE       = 1029
+        NOT_EXCHANGE_NODE       = 1029,
+        DUST                    = 1030
     };
 
     /**
@@ -45,8 +46,8 @@ namespace xbridge
      * @param argumrnt
      * @return
      */
-    const std::string xbridgeErrorText(const Error error, const std::string &argument = "");
-    const std::string xbridgeErrorText(const Error error, const std::vector<unsigned char> &argument);
+    const std::string xbridgeErrorText(const Error & error, const std::string & argument = "");
+    const std::string xbridgeErrorText(const Error & error, const std::vector<unsigned char> & argument);
 
 } // namespace xbridge
 

@@ -7,6 +7,11 @@
 #include "uint256.h"
 #include "logger.h"
 #include "xbridge/xbridgedef.h"
+#include "xbridge/util/xbridgeerror.h"
+#include "json/json_spirit_reader_template.h"
+#include "json/json_spirit_writer_template.h"
+#include "json/json_spirit_utils.h"
+
 #include <string>
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -16,6 +21,7 @@
 namespace util
 {
 namespace bpt = boost::posix_time;
+using namespace json_spirit;
     void init();
 
     std::wstring wide_string(std::string const & s);//, std::locale const &loc);
@@ -63,6 +69,7 @@ namespace bpt = boost::posix_time;
     bpt::ptime intToTime(const uint64_t& number);
 
     double xBridgeValueFromAmount(uint64_t amount);
+
     uint64_t xBridgeAmountFromReal(double val);
     std::string xBridgeStringValueFromPrice(double price);
     std::string xBridgeStringValueFromAmount(uint64_t amount);
@@ -90,6 +97,13 @@ namespace bpt = boost::posix_time;
      * \endverbatim
      */
     unsigned int xBridgeSignificantDigits(int64_t amount);
+     /** @brief makeError - generate standard json_sprit object with error description
+     * @param statusCode - error code
+     * @param function - nome of called function
+     * @param message - additional error description
+     * @return  json_spirit object with error description
+     */
+    Object makeError(const xbridge::Error statusCode, const std::string &function, const std::string &message = "");
 
 } // namespace
 

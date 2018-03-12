@@ -202,18 +202,12 @@ xbridge::Error XBridgeTransactionsModel::newTransaction(const std::string & from
                                                         const double toAmount)
 {
     xbridge::App & xapp = xbridge::App::instance();
-    xbridge::WalletConnectorPtr ptr = xapp.connectorByCurrency(fromCurrency);
-    if (ptr && ptr->minAmount() > fromAmount)
-    {
-        return xbridge::INVALID_AMOUNT;
-    }
 
-    // TODO check amount
-    uint256 id = uint256();
-    uint256 blockHash = uint256();
+    uint256 id, blockHash;
     const auto code = xapp.sendXBridgeTransaction
             (from, fromCurrency, (uint64_t)(fromAmount * xbridge::TransactionDescr::COIN),
-             to,   toCurrency,   (uint64_t)(toAmount * xbridge::TransactionDescr::COIN), id, blockHash);
+             to,   toCurrency,   (uint64_t)(toAmount * xbridge::TransactionDescr::COIN),
+             id, blockHash);
 
     return code;
 }
