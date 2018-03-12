@@ -1160,7 +1160,7 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
         entry.rawAddress = connFrom->toXAddr(entry.address);
         if(entry.signature.size() != 65)
         {
-            ERR() << "incorrect signature length, need 20 bytes " << __FUNCTION__;
+            ERR() << "incorrect signature length, need 65 bytes " << __FUNCTION__;
             return xbridge::Error::INVALID_SIGNATURE;
         }
 
