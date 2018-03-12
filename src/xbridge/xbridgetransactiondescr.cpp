@@ -1,11 +1,19 @@
 #include "xbridgetransactiondescr.h"
 #include "xbridgeapp.h"
+#include "util/settings.h"
 
 namespace xbridge
 {
 
 ostream & operator << (ostream& out, const TransactionDescrPtr& tx)
 {
+    if(!settings().isFullLog())
+    {
+        out << std::endl << "ORDER ID: " << tx->id.GetHex() << std::endl;
+
+        return out;
+    }
+
     xbridge::WalletConnectorPtr connFrom = xbridge::App::instance().connectorByCurrency(tx->fromCurrency);
     xbridge::WalletConnectorPtr connTo   = xbridge::App::instance().connectorByCurrency(tx->toCurrency);
 

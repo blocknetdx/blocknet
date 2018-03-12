@@ -6,6 +6,7 @@
 #include "xbridgeexchange.h"
 #include "util/logger.h"
 #include "util/xutil.h"
+#include "util/settings.h"
 #include "utilstrencodings.h"
 #include "main.h"
 
@@ -516,6 +517,13 @@ bool Transaction::setBinTxId(const std::vector<unsigned char> & addr,
 
 std::ostream & operator << (std::ostream & out, const TransactionPtr & tx)
 {
+    if(!settings().isFullLog())
+    {
+        out << std::endl << "ORDER ID: " << tx->id().GetHex() << std::endl;
+
+        return out;
+    }
+
     xbridge::WalletConnectorPtr connFrom = xbridge::App::instance().connectorByCurrency(tx->a_currency());
     xbridge::WalletConnectorPtr connTo   = xbridge::App::instance().connectorByCurrency(tx->b_currency());
 
