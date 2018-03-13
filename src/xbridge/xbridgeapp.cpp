@@ -906,7 +906,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
 
         if(entry.signature.size() != 65)
         {
-            ERR() << "incorrect signature length, need 20 bytes " << __FUNCTION__;
+            ERR() << "incorrect signature length, need 65 bytes " << __FUNCTION__;
             return xbridge::Error::INVALID_SIGNATURE;
         }
 //        assert(entry.signature.size() == 65 && "incorrect signature length, need 20 bytes");
