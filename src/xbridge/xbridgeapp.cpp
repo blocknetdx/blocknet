@@ -1054,9 +1054,6 @@ bool App::Impl::sendPendingTransaction(const TransactionDescrPtr & ptr)
     static std::vector<unsigned char> addr(20, 0);
     onSend(addr, ptr->packet->body());
 
-    ptr->state = TransactionDescr::trPending;
-    xuiConnector.NotifyXBridgeTransactionChanged(ptr->id);
-
     return true;
 }
 
