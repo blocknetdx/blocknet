@@ -761,7 +761,7 @@ size_t Exchange::eraseExpiredTransactions()
         {
             LOG() << __FUNCTION__ << std::endl << "order expired" << ptr;
 
-            m_p->m_pendingTransactions.erase(ptr->id());
+            m_p->m_pendingTransactions.erase(it);
 
             {
                 boost::mutex::scoped_lock l(m_p->m_utxoLocker);
