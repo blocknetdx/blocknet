@@ -703,6 +703,12 @@ Value dxTakeOrder(const Array & params, bool fHelp)
         return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, toAddress);
     }
 
+    // Check that addresses are not the same
+    if (fromAddress == toAddress) {
+        return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "address from and address to cannot be the same: " + fromAddress);
+    }
+
     // Perform explicit check on dryrun to avoid executing order on bad spelling
     bool dryrun = false;
     if (params.size() == 4) {
@@ -720,6 +726,20 @@ Value dxTakeOrder(const Array & params, bool fHelp)
     switch (statusCode)
     {
     case xbridge::SUCCESS: {
+        // Order cannot be accepted if taker from/to addresses match maker to/from addresses (can't trade with self)
+        xbridge::WalletConnectorPtr connTo   = xbridge::App::instance().connectorByCurrency(txDescr->toCurrency);
+        xbridge::WalletConnectorPtr connFrom = xbridge::App::instance().connectorByCurrency(txDescr->fromCurrency);
+        if (!connTo) return util::makeError(xbridge::NO_SESSION, __FUNCTION__, "unable to connect to wallet: " + txDescr->toCurrency);
+        if (!connFrom) return util::makeError(xbridge::NO_SESSION, __FUNCTION__, "unable to connect to wallet: " + txDescr->fromCurrency);
+        // Taker [from] is trading with order's taker address (i.e. check against order's Maker [to])
+        if (connTo->fromXAddr(txDescr->to) == fromAddress)
+            return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                txDescr->toCurrency + "[from] address cannot be the same as the order's " + txDescr->toCurrency + " address (unable to trade with self): " + fromAddress);
+        // Taker [to] is trading with order's maker address (i.e. check against order's Maker [from])
+        if (connFrom->fromXAddr(txDescr->from) == toAddress)
+            return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                txDescr->fromCurrency + "[to] address cannot be the same as the order's " + txDescr->fromCurrency + " address (unable to trade with self): " + toAddress);
+
         if(dryrun)
         {
             result.emplace_back(Pair("id", uint256().GetHex()));
