@@ -29,30 +29,83 @@ class Exchange
     class Impl;
 
 public:
+    /**
+     * @brief instance - classical implementation of singletone
+     * @return
+     */
     static Exchange & instance();
 
 protected:
+    /**
+     * @brief Exchange - default constructor, init private implementation
+     */
     Exchange();
     ~Exchange();
 
 public:
+    /**
+     * @brief init - init exchange Wallets from settings
+     * @return
+     */
     bool init();
 
+    /**
+     * @brief isEnabled
+     * @return true, if list of exchange wallets not empty and set flag -enableexchange
+     */
     bool isEnabled();
+    /**
+     * @brief isStarted
+     * @return true, enabled and servicenode started
+     */
     bool isStarted();
 
     // public-private keys (service node key pair)
+    /**
+     * @brief pubKey
+     * @return service node public key
+     */
     const std::vector<unsigned char> & pubKey() const;
+    /**
+     * @brief privKey
+     * @return service node private key
+     */
     const std::vector<unsigned char> & privKey() const;
 
+    /**
+     * @brief haveConnectedWallet
+     * @param walletName -
+     * @return true, if echange connected to wallet
+     */
     bool haveConnectedWallet(const std::string & walletName);
+    /**
+     * @brief connectedWallets
+     * @return  vector of connected wallets
+     */
     std::vector<std::string> connectedWallets() const;
+
 
     bool checkUtxoItems(const uint256 & txid,
                         const std::vector<wallet::UtxoEntry> & items);
     bool getUtxoItems(const uint256 & txid,
                       std::vector<wallet::UtxoEntry> & items);
 
+    /**
+     * @brief createTransaction
+     * @param id
+     * @param sourceAddr
+     * @param sourceCurrency
+     * @param sourceAmount
+     * @param destAddr
+     * @param destCurrency
+     * @param destAmount
+     * @param timestamp
+     * @param mpubkey
+     * @param items
+     * @param blockHash
+     * @param isCreated
+     * @return
+     */
     bool createTransaction(const uint256                        & id,
                            const std::vector<unsigned char>     & sourceAddr,
                            const std::string                    & sourceCurrency,

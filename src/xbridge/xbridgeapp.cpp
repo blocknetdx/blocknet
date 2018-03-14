@@ -66,22 +66,74 @@ class App::Impl
     };
 
 protected:
+    /**
+     * @brief Impl - default constructor, init
+     * services and timer
+     */
     Impl();
 
+    /**
+     * @brief start - run sessions, threads and services
+     * @return true, if run succesfull
+     */
     bool start();
+    /**
+     * @brief stop stopped service, timer, secp stop
+     * @return true
+     */
     bool stop();
 
 protected:
+    /**
+     * @brief onSend  send packet to xbridge network to specified id,
+     *  or broadcast, when id is empty
+     * @param id
+     * @param message
+     */
     void onSend(const std::vector<unsigned char> & id, const std::vector<unsigned char> & message);
 
+    /**
+     * @brief onTimer call check expired transactions,
+     * send transactions list, erase expired transactions,
+     * get addressbook,
+     */
     void onTimer();
 
+    /**
+     * @brief getSession - move session to head of queue
+     * @return pointer to head of sessions queue
+     */
     SessionPtr getSession();
+    /**
+     * @brief getSession
+     * @param address - session address
+     * @return pointer to exists session if found, else new instance
+     */
     SessionPtr getSession(const std::vector<unsigned char> & address);
 
 protected:
+    /**
+     * @brief sendPendingTransaction - check transaction data,
+     * make packet with data and send to network
+     * @param ptr - pointer to transaction
+     * @return  true, if all date  correctly and packet has send to network
+     */
     bool sendPendingTransaction(const TransactionDescrPtr & ptr);
+    /**
+     * @brief sendAcceptingTransaction - check transaction date,
+     * make new packet and - sent packet with cancelled command
+     * to network, update transaction state, notify ui about trabsaction state changed
+     * @param ptr - pointer to transaction
+     * @return
+     */
     bool sendAcceptingTransaction(const TransactionDescrPtr & ptr);
+    /**
+     * @brief sendCancelTransaction  - sent packet with cancelled command
+     * to network, update transaction state, notify ui about trabsaction state changed
+     * @param txid - id of transaction
+     * @param reason - cancel reason
+     * @return
+     */
     bool sendCancelTransaction(const uint256 &txid, const TxCancelReason &reason);
 
 protected:
@@ -200,7 +252,7 @@ bool App::Impl::start()
     // start xbrige
     try
     {
-        // services and threas
+        // services and thredas
         for (size_t i = 0; i < boost::thread::hardware_concurrency(); ++i)
         {
             IoServicePtr ios(new boost::asio::io_service);
