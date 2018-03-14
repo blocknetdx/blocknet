@@ -510,23 +510,20 @@ Value dxMakeOrder(const Array &params, bool fHelp)
     }
 
     if (!util::xBridgeValidCoin(params[1].get_str())) {
-        Object error;
-        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS,
-                      "maker size is too precise, maximum precision supported is " +
-                              std::to_string(util::xBridgeSignificantDigits(xbridge::TransactionDescr::COIN)) + " digits")));
-        error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
-        error.emplace_back(Pair("name",     __FUNCTION__));
-        return error;
+
+        return util::makeError(xbridge::INVALID_PARAMETERS,__FUNCTION__,
+                               "maker size is too precise, maximum precision supported is " +
+                               std::to_string(util::xBridgeSignificantDigits(xbridge::TransactionDescr::COIN))
+                               + " digits");
+
     }
 
     if (!util::xBridgeValidCoin(params[4].get_str())) {
-        Object error;
-        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS,
-                      "taker size is too precise, maximum precision supported is " +
-                              std::to_string(util::xBridgeSignificantDigits(xbridge::TransactionDescr::COIN)) + " digits")));
-        error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
-        error.emplace_back(Pair("name",     __FUNCTION__));
-        return error;
+
+        return  util::makeError(xbridge::INVALID_PARAMETERS,__FUNCTION__,
+                                "taker size is too precise, maximum precision supported is " +
+                                std::to_string(util::xBridgeSignificantDigits(xbridge::TransactionDescr::COIN)) + " digits");
+
     }
 
     std::string fromCurrency    = params[0].get_str();
@@ -547,50 +544,21 @@ Value dxMakeOrder(const Array &params, bool fHelp)
 
     }
 
-    // Check upper limits
-    if (fromAmount > (double)xbridge::TransactionDescr::MAX_COIN ||
-            toAmount > (double)xbridge::TransactionDescr::MAX_COIN) {
-        return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "Maximum supported size is " + std::to_string(xbridge::TransactionDescr::MAX_COIN));
-    }
-    // Check lower limits
-    if (fromAmount <= 0 || toAmount <= 0) {
-        return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "Minimum supported size is " + util::xBridgeStringValueFromPrice(1.0/xbridge::TransactionDescr::COIN));
-    }
+
 
     auto statusCode = xbridge::SUCCESS;
 
     xbridge::App &app = xbridge::App::instance();
 
 
-    if (!app.isValidAddress(fromAddress)) {
-
-        return util::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__, fromAddress);
-
-    }
-    if (!app.isValidAddress(toAddress)) {
-
-        return util::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__, toAddress);
-
-    }
-    if(fromAmount <= .0) {
-        return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "maker size must be greater than 0");
-    }
-    if(toAmount <= .0) {
-
-        return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "taker size must be greater than 0");
-
-    }
     // Perform explicit check on dryrun to avoid executing order on bad spelling
     bool dryrun = false;
     if (params.size() == 8) {
         std::string dryrunParam = params[7].get_str();
         if (dryrunParam != "dryrun") {
 
-            return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, dryrunParam);
+            return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                                   dryrunParam);
 
         }
         dryrun = true;
@@ -598,8 +566,10 @@ Value dxMakeOrder(const Array &params, bool fHelp)
 
 
     Object result;
-    statusCode = app.checkCreateParams(fromCurrency, toCurrency,
-                                       util::xBridgeAmountFromReal(fromAmount));
+    const auto fa = util::xBridgeAmountFromReal(fromAmount);
+    const auto ta = util::xBridgeAmountFromReal(toAmount);
+    statusCode = app.checkCreateParams(fromAddress, fromCurrency, fa,
+                                       toAddress, toCurrency, ta);
     switch (statusCode) {
     case xbridge::SUCCESS:{
         // If dryrun
@@ -637,8 +607,8 @@ Value dxMakeOrder(const Array &params, bool fHelp)
     uint256 id = uint256();
     uint256 blockHash = uint256();
     statusCode = xbridge::App::instance().sendXBridgeTransaction
-          (fromAddress, fromCurrency, util::xBridgeAmountFromReal(fromAmount),
-           toAddress, toCurrency, util::xBridgeAmountFromReal(toAmount), id, blockHash);
+          (fromAddress, fromCurrency, fa,
+           toAddress, toCurrency, ta, id, blockHash);
 
     if (statusCode == xbridge::SUCCESS) {
 
@@ -687,15 +657,6 @@ Value dxTakeOrder(const Array & params, bool fHelp)
 
     xbridge::App &app = xbridge::App::instance();
 
-    if (!app.isValidAddress(fromAddress))
-    {
-        return util::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__, fromAddress);
-    }
-
-    if (!app.isValidAddress(toAddress))
-    {
-        return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, toAddress);
-    }
 
     // Perform explicit check on dryrun to avoid executing order on bad spelling
     bool dryrun = false;
