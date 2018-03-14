@@ -880,8 +880,9 @@ bool sendRawTransaction(const std::string & rpcuser,
                         const std::string & rpcip,
                         const std::string & rpcport,
                         const std::string & rawtx,
-                        string & txid,
-                        int32_t & errorCode)
+                        std::string & txid,
+                        int32_t & errorCode,
+                        std::string & message)
 {
     try
     {
@@ -902,6 +903,8 @@ bool sendRawTransaction(const std::string & rpcuser,
             // Error
             LOG() << "error: " << write_string(error, false);
             errorCode = find_value(error.get_obj(), "code").get_int();
+            message = find_value(error.get_obj(), "message").get_str();
+
             return false;
         }
 
@@ -1161,13 +1164,18 @@ bool BtcWalletConnector::getTxOut(wallet::UtxoEntry & entry)
 //******************************************************************************
 //******************************************************************************
 bool BtcWalletConnector::sendRawTransaction(const std::string & rawtx,
-                                                   std::string & txid,
-                                                   int32_t & errorCode)
+                                            std::string & txid,
+                                            int32_t & errorCode,
+                                            std::string & message)
 {
     if (!rpc::sendRawTransaction(m_user, m_passwd, m_ip, m_port,
-                                 rawtx, txid, errorCode))
+                                 rawtx, txid, errorCode, message))
     {
-        LOG() << "rpc::createRawTransaction failed " << __FUNCTION__;
+        LOG() << "rpc::createRawTransaction failed, error code: "
+              << errorCode
+              << " message: "
+              << message
+              << __FUNCTION__;
         return false;
     }
 

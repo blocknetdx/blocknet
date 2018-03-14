@@ -54,7 +54,8 @@ public:
 
     virtual bool sendRawTransaction(const std::string & rawtx,
                                     std::string & txid,
-                                    int32_t & errorCode) = 0;
+                                    int32_t & errorCode,
+                                    std::string & message) = 0;
 
     virtual bool signMessage(const std::string & address, const std::string & message, std::string & signature) = 0;
     virtual bool verifyMessage(const std::string & address, const std::string & message, const std::string & signature) = 0;

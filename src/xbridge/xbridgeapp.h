@@ -11,6 +11,7 @@
 #include "util/xbridgeerror.h"
 #include "xbridgewalletconnector.h"
 #include "xbridgedef.h"
+#include "validationstate.h"
 
 #include <thread>
 #include <atomic>
