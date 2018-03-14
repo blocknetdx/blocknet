@@ -545,10 +545,10 @@ std::ostream & operator << (std::ostream & out, const TransactionPtr & tx)
         << "ID: " << tx->id().GetHex() << std::endl
         << "MAKER: " << tx->a_currency() << std::endl
         << "MAKER SIZE: " << util::xBridgeStringValueFromAmount(tx->a_amount()) << std::endl
-        << "MAKER ADDR: " << (connFrom ? connFrom->fromXAddr(tx->a_address()) : "") << std::endl
+        << "MAKER ADDR: " << (!tx->a_address().empty() && connFrom ? connFrom->fromXAddr(tx->a_address()) : "") << std::endl
         << "TAKER: " << tx->b_currency() << std::endl
         << "TAKER SIZE: " << util::xBridgeStringValueFromAmount(tx->b_amount()) << std::endl
-        << "TAKER ADDR: " << (connTo ? connTo->fromXAddr(tx->b_address()) : "") << std::endl
+        << "TAKER ADDR: " << (!tx->b_address().empty() && connTo ? connTo->fromXAddr(tx->b_address()) : "") << std::endl
         << "STATE: " << tx->strState() << std::endl
         << "BLOCK HASH: " << tx->blockHash().GetHex() << std::endl
         << "CREATED AT: " << util::iso8601(tx->createdTime()) << std::endl
