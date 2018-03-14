@@ -86,7 +86,7 @@ public:
      * @param address checked address
      * @return true, if address valid
      */
-    bool isValidAddress(const std::string &address) const;
+    bool isValidAddress(const std::string &address, const std::string &currency) const;
 
     /**
      * @brief checkAcceptParams checks the correctness of the parameters
@@ -103,7 +103,12 @@ public:
      * @param fromAmount -  amount
      * @return xbridge::SUCCES, if all parameters valid
      */
-    xbridge::Error checkCreateParams(const std::string &fromCurrency, const std::string &toCurrency, const uint64_t &fromAmount);
+    xbridge::Error checkCreateParams(const std::string  &fromAddress,
+                                     const std::string  &fromCurrency,
+                                     const uint64_t     &fromAmount,
+                                     const std::string  &toAddress,
+                                     const std::string  &toCurrency,
+                                     const uint64_t     &toAmount);
 
     /**
      * @brief checkAmount - checks wallet balance

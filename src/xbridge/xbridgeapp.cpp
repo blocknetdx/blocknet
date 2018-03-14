@@ -811,7 +811,8 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                                            uint256 & id,
                                            uint256 & blockHash)
 {
-    const auto statusCode = checkCreateParams(fromCurrency, toCurrency, fromAmount);
+    const auto statusCode = checkCreateParams(from, fromCurrency, fromAmount,
+                                              to, toCurrency, toAmount);
     if(statusCode != xbridge::SUCCESS)
     {
         return statusCode;
@@ -1342,10 +1343,21 @@ bool App::Impl::sendCancelTransaction(const uint256 & txid,
 
 //******************************************************************************
 //******************************************************************************
-bool App::isValidAddress(const string &address) const
+bool App::isValidAddress(const std::string &address, const std::string &currency) const
 {
+
     // TODO need refactoring
-    return ((address.size() >= 32) && (address.size() <= 36));
+    if((address.size() >= 32) && (address.size() <= 36)) {
+
+        auto connector = connectorByCurrency(currency);
+        if(connector != nullptr) {
+
+            const auto prefix = std::string(connector->addrPrefix);
+            return  address.compare(0, prefix.length(), prefix) == 0;
+
+        }
+    }
+    return  false;
 }
 
 //******************************************************************************
@@ -1359,21 +1371,58 @@ Error App::checkAcceptParams(const uint256 &id, TransactionDescrPtr &ptr)
         WARN() << "transaction not found " << __FUNCTION__;
         return xbridge::TRANSACTION_NOT_FOUND;
     }
+    if(!isValidAddress(std::string(ptr->from.begin(), ptr->from.end()),
+                       ptr->fromCurrency)) {
+        return xbridge::INVALID_ADDRESS;
+    }
+    if(!isValidAddress(std::string(ptr->to.begin(), ptr->to.end()),
+                       ptr->toCurrency)) {
+        return xbridge::INVALID_ADDRESS;
+    }
 
     return checkAmount(ptr->toCurrency, ptr->toAmount);
 }
 
 //******************************************************************************
 //******************************************************************************
-Error App::checkCreateParams(const string &fromCurrency,
-                             const string &toCurrency,
-                             const uint64_t &fromAmount)
+Error App::checkCreateParams(const string   &fromAddress,
+                             const string   &fromCurrency,
+                             const uint64_t &fromAmount,
+                             const string   &toAddress,
+                             const string   &toCurrency,
+                             const uint64_t &toAmount)
 {
+    if(!isValidAddress(fromAddress,fromCurrency)) {
+
+        return xbridge::INVALID_ADDRESS;
+
+    }
+    if(!isValidAddress(toAddress,toCurrency)) {
+
+        return xbridge::INVALID_ADDRESS;
+
+    }
+
+    // Check upper limits
+    if (fromAmount > static_cast<double>(xbridge::TransactionDescr::MAX_COIN) ||
+            toAmount > static_cast<double>(xbridge::TransactionDescr::MAX_COIN)) {
+
+        return INVALID_AMOUNT;
+
+    }
+    // Check lower limits
+    if (fromAmount <= 0 || toAmount <= 0) {
+
+        return INVALID_AMOUNT;
+
+    }
+
     // TODO need refactoring
-    if (fromCurrency.size() > 8 || toCurrency.size() > 8)
-    {
+    if (fromCurrency.size() > 8 || toCurrency.size() > 8) {
+
         WARN() << "invalid currency " << __FUNCTION__;
         return xbridge::INVALID_CURRENCY;
+
     }
     return  checkAmount(fromCurrency, fromAmount);
 }
@@ -1385,15 +1434,19 @@ Error App::checkAmount(const string & currency, const uint64_t & amount)
     // check amount
     WalletConnectorPtr conn = connectorByCurrency(currency);
     if (!conn) {
+
         // no session
         WARN() << "no session for <" << currency << "> " << __FUNCTION__;
         return xbridge::NO_SESSION;
+
     }
 
     // Check that wallet balance is larger than the smallest supported balance
     if (conn->getWalletBalance() < (static_cast<double>(amount) / TransactionDescr::COIN)) {
+
         WARN() << "insufficient funds for <" << currency << "> " << __FUNCTION__;
         return xbridge::INSIFFICIENT_FUNDS;
+
     }
     return xbridge::SUCCESS;
 }
