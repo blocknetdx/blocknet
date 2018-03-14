@@ -139,6 +139,8 @@ public:
                                           const std::string & id,
                                           const std::vector<unsigned char> & innerScript);
 
+    friend std::ostream & operator << (std::ostream & out, const TransactionPtr & tx);
+
 public:
     boost::mutex               m_lock;
 

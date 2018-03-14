@@ -29,6 +29,8 @@ public:
         return *this;
     }
 
+    virtual bool init() = 0;
+
 public:
     // reimplement for currency
     virtual std::string fromXAddr(const std::vector<unsigned char> & xaddr) const = 0;
@@ -52,13 +54,16 @@ public:
 
     virtual bool sendRawTransaction(const std::string & rawtx,
                                     std::string & txid,
-                                    int32_t & errorCode) = 0;
+                                    int32_t & errorCode,
+                                    std::string & message) = 0;
 
     virtual bool signMessage(const std::string & address, const std::string & message, std::string & signature) = 0;
     virtual bool verifyMessage(const std::string & address, const std::string & message, const std::string & signature) = 0;
 
 public:
     // helper functions
+
+    virtual bool isDustAmount(const double & amount) const = 0;
 
     virtual bool newKeyPair(std::vector<unsigned char> & pubkey, std::vector<unsigned char> & privkey) = 0;
 

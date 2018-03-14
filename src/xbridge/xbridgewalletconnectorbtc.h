@@ -18,6 +18,8 @@ class BtcWalletConnector : public WalletConnector
 public:
     BtcWalletConnector();
 
+    bool init();
+
 public:
     // reimplement for currency
     std::string fromXAddr(const std::vector<unsigned char> & xaddr) const;
@@ -35,12 +37,15 @@ public:
 
     bool sendRawTransaction(const std::string & rawtx,
                             std::string & txid,
-                            int32_t & errorCode);
+                            int32_t & errorCode,
+                            std::string & message);
 
     bool signMessage(const std::string & address, const std::string & message, std::string & signature);
     bool verifyMessage(const std::string & address, const std::string & message, const std::string & signature);
 
 public:
+    bool isDustAmount(const double & amount) const;
+
     bool newKeyPair(std::vector<unsigned char> & pubkey, std::vector<unsigned char> & privkey);
 
     std::vector<unsigned char> getKeyId(const std::vector<unsigned char> & pubkey);

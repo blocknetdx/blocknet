@@ -178,16 +178,63 @@ const std::string iso8601(const bpt::ptime &time)
     return bpt::to_iso_extended_string(time) + "Z";
 }
 
-double xBridgeValueFromAmount(uint64_t amount)
+std::string xBridgeStringValueFromAmount(uint64_t amount)
 {
-    return boost::lexical_cast<double>(amount)/boost::lexical_cast<double>(xbridge::TransactionDescr::COIN);
+    std::stringstream ss;
+    ss << fixed << setprecision(xBridgeSignificantDigits(xbridge::TransactionDescr::COIN)) << xBridgeValueFromAmount(amount);
+    return ss.str();
+}
+
+std::string xBridgeStringValueFromPrice(double price)
+{
+    std::stringstream ss;
+    ss << fixed << setprecision(xBridgeSignificantDigits(xbridge::TransactionDescr::COIN)) << price;
+    return ss.str();
+}
+
+double xBridgeValueFromAmount(uint64_t amount) {
+    return boost::numeric_cast<double>(amount) /
+            boost::numeric_cast<double>(xbridge::TransactionDescr::COIN);
 }
 
 uint64_t xBridgeAmountFromReal(double val)
 {
-    double coin = val * boost::lexical_cast<double>(xbridge::TransactionDescr::COIN);
-    // TODO: should we check amount ranges and throw JSONRPCError like they do in rpcserver.cpp ?
-    return boost::lexical_cast<uint64_t>(coin);
+    double d = val * boost::numeric_cast<double>(xbridge::TransactionDescr::COIN);
+    auto r = (int64_t)(d > 0 ? d + 0.5 : d - 0.5);
+    return (uint64_t)r;
+}
+
+bool xBridgeValidCoin(const std::string coin)
+{
+    bool f = false;
+    int n = 0;
+    int j = 0; // count 0s
+    // count precision digits, ignore trailing 0s
+    for (const char &c : coin) {
+        if (!f && c == '.')
+            f = true;
+        else if (f) {
+            n++;
+            if (c == '0')
+                j++;
+            else
+                j = 0;
+        }
+    }
+    return n - j <= xBridgeSignificantDigits(xbridge::TransactionDescr::COIN);
+}
+
+unsigned int xBridgeSignificantDigits(const int64_t amount)
+{
+    unsigned int n = 0;
+    int64_t i = amount;
+
+    do {
+        n++;
+        i /= 10;
+    } while (i > 1);
+
+    return n;
 }
 
 uint64_t timeToInt(const boost::posix_time::ptime& time)
@@ -209,11 +256,32 @@ boost::posix_time::ptime intToTime(const uint64_t& number)
 
 double price(const xbridge::TransactionDescrPtr ptr)
 {
+    if(ptr == nullptr) {
+        return .0;
+    }
+    if(fabs(ptr->fromAmount)  < std::numeric_limits<double>::epsilon()) {
+        return  .0;
+    }
     return xBridgeValueFromAmount(ptr->toAmount) / xBridgeValueFromAmount(ptr->fromAmount);
 }
 double priceBid(const xbridge::TransactionDescrPtr ptr)
 {
+    if(ptr == nullptr) {
+        return .0;
+    }
+    if(fabs(ptr->toAmount)  < std::numeric_limits<double>::epsilon()) {
+        return  .0;
+    }
     return xBridgeValueFromAmount(ptr->fromAmount) / xBridgeValueFromAmount(ptr->toAmount);
+}
+
+Object makeError(const xbridge::Error statusCode, const string &function, const string &message)
+{
+    Object error;
+    error.emplace_back(Pair("error",xbridge::xbridgeErrorText(statusCode,message)));
+    error.emplace_back(Pair("code", statusCode));
+    error.emplace_back(Pair("name",function));
+    return  error;
 }
 
 } // namespace util
