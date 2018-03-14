@@ -547,6 +547,12 @@ Value dxMakeOrder(const Array &params, bool fHelp)
 
     }
 
+    // Check that addresses are not the same
+    if (fromAddress == toAddress) {
+        return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "maker address and taker address cannot be the same: " + fromAddress);
+    }
+
     // Check upper limits
     if (fromAmount > (double)xbridge::TransactionDescr::MAX_COIN ||
             toAmount > (double)xbridge::TransactionDescr::MAX_COIN) {
