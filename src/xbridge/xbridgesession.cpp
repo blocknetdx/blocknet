@@ -681,6 +681,12 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
             return true;
         }
 
+        if (ptr->state == TransactionDescr::trNew)
+        {
+            LOG() << "received confirmed order from snode, setting status to pending " << __FUNCTION__;
+            ptr->state = TransactionDescr::trPending;
+        }
+
         // update snode addr and pubkey ( ???? )
         // ptr->hubAddress   = std::vector<unsigned char>(packet->data()+64, packet->data()+84);
         // ptr->sPubKey      = spubkey;
@@ -2569,7 +2575,8 @@ void Session::sendListOfTransactions()
         // send pending transactions
         for (const auto & i : transactions)
         {
-            if (i.second->state == xbridge::TransactionDescr::trPending)
+            if (i.second->state == xbridge::TransactionDescr::trNew ||
+                i.second->state == xbridge::TransactionDescr::trPending)
             {
                 xapp.sendPendingTransaction(i.second);
             }
