@@ -22,6 +22,12 @@ RUN add-apt-repository ppa:bitcoin/bitcoin \
      libdb4.8-dev libdb4.8++-dev libgmp-dev libminiupnpc-dev libzmq3-dev \
   && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+RUN apt update \
+  && apt install -y --no-install-recommends \
+     libqt5gui5 libqt5core5a libqt5dbus5 qttools5-dev \
+     qttools5-dev-tools libprotobuf-dev protobuf-compiler \
+  && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
 # Build berkeleydb4.8
 RUN mkdir -p /tmp/berkeley \
   && cd /tmp/berkeley \
@@ -43,7 +49,7 @@ RUN mkdir -p /opt/blocknetdx/BlockDX \
   && cd /opt/blocknetdx/BlockDX \
   && chmod +x ./autogen.sh; sync \
   && ./autogen.sh \
-  && ./configure LDFLAGS="-L/tmp/berkeley/lib/" CPPFLAGS="-I/tmp/berkeley/include/" --without-gui --enable-hardening \
+  && ./configure LDFLAGS="-L/tmp/berkeley/lib/" CPPFLAGS="-I/tmp/berkeley/include/" --with-gui=qt5 --enable-hardening \
   && echo "Building with cores: $ecores" \
   && make -j$ecores \
   && make install \
