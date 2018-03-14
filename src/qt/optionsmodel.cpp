@@ -324,7 +324,7 @@ bool OptionsModel::setData(const QModelIndex& index, const QVariant& value, int 
         case Theme:
             if (settings.value("theme") != value) {
                 settings.setValue("theme", value);
-                setRestartRequired(true);
+                setRestartRequired(false);
             }
             break;
         case Language:
