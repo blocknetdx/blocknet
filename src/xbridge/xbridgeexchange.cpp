@@ -750,9 +750,10 @@ size_t Exchange::eraseExpiredTransactions()
 
     boost::mutex::scoped_lock l(m_p->m_pendingTransactionsLock);
 
-    for (const std::pair<uint256, TransactionPtr> & i : m_p->m_pendingTransactions)
+    // Use non-hoisted iterator to prevent invalidation during erase
+    for (auto it = m_p->m_pendingTransactions.cbegin(); it != m_p->m_pendingTransactions.cend(); )
     {
-        TransactionPtr ptr = i.second;
+        TransactionPtr ptr = it->second;
 
         boost::mutex::scoped_lock l(ptr->m_lock);
 
@@ -776,6 +777,8 @@ size_t Exchange::eraseExpiredTransactions()
 
             ++result;
         }
+
+        ++it;
     }
 
     if(result > 0)
