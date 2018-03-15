@@ -60,14 +60,16 @@ double WalletConnector::getWalletBalance() const
  * If the specified wallet address has a valid prefix the method returns true, otherwise false.
  */
 bool WalletConnector::hasValidAddressPrefix(const std::string &addr) const {
-    if (addr.empty())
+    std::vector<unsigned char> decoded;
+    if (!DecodeBase58Check(addr, decoded))
+    {
         return false;
-    std::string addrChk = DecodeBase58(addr.c_str());
-    std::string prefix(addrChk.begin(), addrChk.begin()+2);
-    stringstream o1; o1 << std::hex << prefix;
-    int ah; o1 >> ah;
-    int ac = (int)addrPrefix[0];
-    return ah == ac;
+    }
+
+    bool isP2PKH = memcmp(addrPrefix,   &decoded[0], decoded.size()-sizeof(uint160)) == 0;
+    bool isP2SH  = memcmp(scriptPrefix, &decoded[0], decoded.size()-sizeof(uint160)) == 0;
+
+    return isP2PKH || isP2SH;
 }
 
 } // namespace xbridge
