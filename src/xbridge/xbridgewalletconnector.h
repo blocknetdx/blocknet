@@ -62,6 +62,7 @@ public:
 
 public:
     // helper functions
+    bool hasValidAddressPrefix(const std::string & addr) const;
 
     virtual bool isDustAmount(const double & amount) const = 0;
 
