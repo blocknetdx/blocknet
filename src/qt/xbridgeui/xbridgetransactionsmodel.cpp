@@ -304,26 +304,27 @@ void XBridgeTransactionsModel::onTimer()
                 m_transactions[i]->txtime;
 
         if (m_transactions[i]->state == xbridge::TransactionDescr::trNew &&
-                td.total_seconds() > xbridge::Transaction::TTL/60)
+                td.total_seconds() > xbridge::Transaction::pendingTTL)
         {
             m_transactions[i]->state = xbridge::TransactionDescr::trOffline;
             emit dataChanged(index(i, FirstColumn), index(i, LastColumn));
         }
         else if (m_transactions[i]->state == xbridge::TransactionDescr::trPending &&
-                td.total_seconds() > xbridge::Transaction::pendingTTL)
+                 td.total_seconds() > xbridge::Transaction::pendingTTL)
         {
             m_transactions[i]->state = xbridge::TransactionDescr::trExpired;
             emit dataChanged(index(i, FirstColumn), index(i, LastColumn));
         }
         else if ((m_transactions[i]->state == xbridge::TransactionDescr::trExpired ||
                   m_transactions[i]->state == xbridge::TransactionDescr::trOffline) &&
-                         td.total_seconds() < xbridge::Transaction::pendingTTL)
+                 td.total_seconds() < xbridge::Transaction::pendingTTL)
         {
             m_transactions[i]->state = xbridge::TransactionDescr::trPending;
             emit dataChanged(index(i, FirstColumn), index(i, LastColumn));
         }
-        else if (m_transactions[i]->state == xbridge::TransactionDescr::trExpired &&
-                td.total_seconds() > xbridge::Transaction::TTL)
+        else if ((m_transactions[i]->state == xbridge::TransactionDescr::trExpired ||
+                  m_transactions[i]->state == xbridge::TransactionDescr::trOffline) &&
+                 td.total_seconds() > xbridge::Transaction::TTL)
         {
             emit beginRemoveRows(QModelIndex(), i, i);
             m_transactions.erase(m_transactions.begin()+i);
