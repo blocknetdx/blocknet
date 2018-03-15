@@ -520,6 +520,40 @@ extern json_spirit::Value dxGetOrderHistory(const json_spirit::Array& params, bo
  */
 extern json_spirit::Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp);
 
+/**
+ * @brief Returns transactions list in a form of 'order book' inverted from the view of default order book.
+ * @param params The list of input params:<br>
+ * params[0] - detail level:<br>
+ * 1 : The best ask and the best bid for all the time are returned<br>
+ * 2 : Top <num> asks and bids are returned in separate lists, see param[3]<br>
+ * 3 : All asks and bids are returned<br>
+ * params[1] : currency sent<br>
+ * params[2] : currency received<br>
+ * params[3] : optional, the maximum number of orders to return, applicable only to detail level 2, the default value is 50<br>
+ * @param fHelp If is true then an exception with parameter description message will be thrown
+ * @return The list of transactions as 'order book' records<br>
+ * Example:<br>
+ * \verbatim
+  [
+   {
+        "bids" : [
+            [
+                1.00000000000000000,
+                0.00200000000000000
+            ],
+            [
+                1.00000000000000000,
+                0.00100000000000000
+            ]
+         ],
+        "asks" : [
+        ]
+    }
+  ]
+ * \endverbatim
+ */
+extern json_spirit::Value dxGetOrderBookInv(const json_spirit::Array& params, bool fHelp);
+
 
 /**
  * @brief Returns the list of the orders created by the user
