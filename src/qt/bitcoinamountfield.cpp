@@ -6,6 +6,7 @@
 
 #include "bitcoinunits.h"
 #include "guiconstants.h"
+#include "guiutil.h"
 #include "qvaluecombobox.h"
 
 #include <QAbstractSpinBox>
@@ -182,7 +183,16 @@ signals:
 BitcoinAmountField::BitcoinAmountField(QWidget* parent) : QWidget(parent),
                                                           amount(0)
 {
+    this->setObjectName("BitcoinAmountField"); // ID as CSS-reference
+    // For whatever reasons the Gods of Qt-CSS-manipulation won't let us change this class' stylesheet in the CSS file.
+    // Workaround for the people after me:
+    // - name all UI objects, preferably with a unique name
+    // - address those names globally in the CSS file
+
     amount = new AmountSpinBox(this);
+    // According to the Qt-CSS specs this should work, but doesn't
+    amount->setStyleSheet("QSpinBox::up-button:hover { background-color: #f2f2f2; }"
+                          "QSpinBox::down-button:hover { background-color: #f2f2f2; }");
     amount->setLocale(QLocale::c());
     amount->installEventFilter(this);
     amount->setMaximumWidth(170);
@@ -231,7 +241,9 @@ bool BitcoinAmountField::validate()
 void BitcoinAmountField::setValid(bool valid)
 {
     if (valid)
-        amount->setStyleSheet("");
+        // According to the Qt-CSS specs this should work, but doesn't
+        amount->setStyleSheet("QSpinBox::up-button:hover { background-color: #f2f2f2 }"
+                              "QSpinBox::down-button:hover { background-color: #f2f2f2 }");
     else
         amount->setStyleSheet(STYLE_INVALID);
 }

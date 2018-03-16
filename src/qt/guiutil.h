@@ -65,6 +65,14 @@ QString HtmlEscape(const std::string& str, bool fMultiLine = false);
      */
 void copyEntryData(QAbstractItemView* view, int column, int role = Qt::EditRole);
 
+/** Return a field of the currently selected entry as a QString. Does nothing if nothing
+        is selected.
+       @param[in] column  Data column to extract from the model
+       @param[in] role    Data role to extract from the model
+       @see  TransactionView::copyLabel, TransactionView::copyAmount, TransactionView::copyAddress
+     */
+QString getEntryData(QAbstractItemView *view, int column, int role);
+
 void setClipboard(const QString& str);
 
 /** Get save filename, mimics QFileDialog::getSaveFileName, except that it appends a default suffix
@@ -215,6 +223,9 @@ QString formatServicesStr(quint64 mask);
 
 /* Format a CNodeCombinedStats.dPingTime into a user-readable string or display N/A, if 0*/
 QString formatPingTime(double dPingTime);
+
+/* Format a CNodeCombinedStats.nTimeOffset into a user-readable string. */
+QString formatTimeOffset(int64_t nTimeOffset);
 
 #if defined(Q_OS_MAC) && QT_VERSION >= 0x050000
 // workaround for Qt OSX Bug:

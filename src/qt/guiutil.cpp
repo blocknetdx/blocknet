@@ -254,6 +254,19 @@ void copyEntryData(QAbstractItemView* view, int column, int role)
     }
 }
 
+QString getEntryData(QAbstractItemView *view, int column, int role)
+{
+    if(!view || !view->selectionModel())
+        return QString();
+    QModelIndexList selection = view->selectionModel()->selectedRows(column);
+
+    if(!selection.isEmpty()) {
+        // Return first item
+        return (selection.at(0).data(role).toString());
+    }
+    return QString();
+}
+
 QString getSaveFileName(QWidget* parent, const QString& caption, const QString& dir, const QString& filter, QString* selectedSuffixOut)
 {
     QString selectedFilter;
@@ -928,6 +941,11 @@ QString formatServicesStr(quint64 mask)
 QString formatPingTime(double dPingTime)
 {
     return dPingTime == 0 ? QObject::tr("N/A") : QString(QObject::tr("%1 ms")).arg(QString::number((int)(dPingTime * 1000), 10));
+}
+
+QString formatTimeOffset(int64_t nTimeOffset)
+{
+  return QString(QObject::tr("%1 s")).arg(QString::number((int)nTimeOffset, 10));
 }
 
 } // namespace GUIUtil

@@ -60,6 +60,7 @@ extern bool fLogIPs;
 extern volatile bool fReopenDebugLog;
 
 void SetupEnvironment();
+bool SetupNetworking();
 
 /** Return true if log accepts specified category */
 bool LogAcceptCategory(const char* category);
@@ -105,6 +106,8 @@ static inline bool error(const char* format)
     return false;
 }
 
+double double_safe_addition(double fValue, double fIncrement);
+double double_safe_multiplication(double fValue, double fmultiplicator);
 void PrintExceptionContinue(std::exception* pex, const char* pszThread);
 void ParseParameters(int argc, const char* const argv[]);
 void FileCommit(FILE* fileout);
@@ -202,38 +205,6 @@ std::string HelpMessageOpt(const std::string& option, const std::string& message
 
 void SetThreadPriority(int nPriority);
 void RenameThread(const char* name);
-
-/**
- * Standard wrapper for do-something-forever thread functions.
- * "Forever" really means until the thread is interrupted.
- * Use it like:
- *   new boost::thread(boost::bind(&LoopForever<void (*)()>, "dumpaddr", &DumpAddresses, 900000));
- * or maybe:
- *    boost::function<void()> f = boost::bind(&FunctionWithArg, argument);
- *    threadGroup.create_thread(boost::bind(&LoopForever<boost::function<void()> >, "nothing", f, milliseconds));
- */
-template <typename Callable>
-void LoopForever(const char* name, Callable func, int64_t msecs)
-{
-    std::string s = strprintf("phore-%s", name);
-    RenameThread(s.c_str());
-    LogPrintf("%s thread start\n", name);
-    try {
-        while (1) {
-            MilliSleep(msecs);
-            func();
-        }
-    } catch (boost::thread_interrupted) {
-        LogPrintf("%s thread stop\n", name);
-        throw;
-    } catch (std::exception& e) {
-        PrintExceptionContinue(&e, name);
-        throw;
-    } catch (...) {
-        PrintExceptionContinue(NULL, name);
-        throw;
-    }
-}
 
 /**
  * .. and a wrapper that just calls func once

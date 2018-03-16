@@ -328,6 +328,7 @@ public:
     /// Create Masternode broadcast, needs to be relayed manually after that
     static bool Create(CTxIn vin, CService service, CKey keyCollateralAddressNew, CPubKey pubKeyCollateralAddressNew, CKey keyMasternodeNew, CPubKey pubKeyMasternodeNew, std::string& strErrorRet, CMasternodeBroadcast& mnbRet);
     static bool Create(std::string strService, std::string strKey, std::string strTxHash, std::string strOutputIndex, std::string& strErrorRet, CMasternodeBroadcast& mnbRet, bool fOffline = false);
+    static bool CheckDefaultPort(std::string strService, std::string& strErrorRet, std::string strContext);
 };
 
 #endif

@@ -769,8 +769,14 @@ void InterruptTorControl()
 
 void StopTorControl()
 {
+    // timed_join() avoids the wallet not closing during a repair-restart. For a 'normal' wallet exit
+    // it behaves for our cases exactly like the normal join()
     if (gBase) {
-        torControlThread.join();
+#if BOOST_VERSION >= 105000
+        torControlThread.try_join_for(boost::chrono::seconds(1));
+#else
+        torControlThread.timed_join(boost::posix_time::seconds(1));
+#endif
         event_base_free(gBase);
         gBase = 0;
     }

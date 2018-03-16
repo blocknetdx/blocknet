@@ -33,6 +33,7 @@ MasternodeList::MasternodeList(QWidget* parent) : QWidget(parent),
     int columnActiveWidth = 130;
     int columnLastSeenWidth = 130;
 
+    ui->tableWidgetMyMasternodes->setAlternatingRowColors(true);
     ui->tableWidgetMyMasternodes->setColumnWidth(0, columnAliasWidth);
     ui->tableWidgetMyMasternodes->setColumnWidth(1, columnAddressWidth);
     ui->tableWidgetMyMasternodes->setColumnWidth(2, columnProtocolWidth);

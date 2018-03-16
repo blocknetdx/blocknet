@@ -646,7 +646,7 @@ bool CBudgetManager::IsTransactionValid(const CTransaction& txNew, int nBlockHei
         ++it;
     }
 
-    LogPrint("masternode","CBudgetManager::IsTransactionValid() - nHighestCount: %lli, 5%% of Masternodes: %lli mapFinalizedBudgets.size(): %ld\n",
+    LogPrint("masternode","CBudgetManager::IsTransactionValid() - nHighestCount: %lli, 5%% of Masternodes: %lli mapFinalizedBudgets.size(): %ld\n", 
               nHighestCount, nFivePercent, mapFinalizedBudgets.size());
     /*
         If budget doesn't have 5% of the network votes, then we should pay a masternode instead
@@ -849,9 +849,8 @@ CAmount CBudgetManager::GetTotalBudget(int nHeight)
 
     if (nHeight > 200 && nHeight <= 250000) {
         return 0.77 * COIN * 1440 * 30;
-    } else if (nHeight > 250000) {
-        return 1 * COIN * 1440 * 30;
     }
+    return 1 * COIN * 1440 * 30;
 }
 
 void CBudgetManager::NewBlock()
