@@ -323,6 +323,16 @@ extern json_spirit::Value dxGetOrders(const json_spirit::Array& params, bool fHe
             "toAmount" : 0.00010000000000000,
             "state" : "Finished"
         }
+        {
+            "id" : "6be54829948f7e679dd96657f8bc46a3dcc69b6d5655f5870a017e005caa050a",
+            "from" : "LTC",
+            "fromAddress" : "",
+            "fromAmount" : 0.00010000000000000,
+            "to" : "SYS",
+            "toAddress" : "",
+            "toAmount" : 0.00010000000000000,
+            "state" : "Cancelled"
+        }
     ]
  * \endverbatim
  */
@@ -400,12 +410,13 @@ extern json_spirit::Value dxGetNetworkTokens(const json_spirit::Array& params, b
  * params[3] : receiving address<br>
  * params[4] : currency being received<br>
  * params[5] : amount being received<br>
+ * params[6] : type of opetation<br>
  * @param fHelp If is true then an exception with parameter description message will be thrown
  * @return The transaction created, as a JSON value
  * * Example:<br>
  * \verbatim
  *
-    dxMakeOrder  1NDqZ7piDqyDhNveWS48kDSwPdyJLEEcCp SYS 1.3 LRuXAU2fdSU7imXzk8cTy2k3heMK5vTuQ4 LTC 0.13
+    dxMakeOrder  1NDqZ7piDqyDhNveWS48kDSwPdyJLEEcCp SYS 1.3 LRuXAU2fdSU7imXzk8cTy2k3heMK5vTuQ4 LTC 0.13 exact
     {
         "from" : "1NDqZ7piDqyDhNveWS48kDSwPdyJLEEcCp",
         "fromCurrency" : "SYS",
@@ -448,10 +459,19 @@ extern json_spirit::Value dxTakeOrder(const json_spirit::Array& params, bool fHe
  * \verbatim ￼
     dxCancelOrder 6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a
     {
-        "id" : "6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a"
-    }
- * \endverbatim
 
+        "id" : "6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a"
+        "maker" : "SYS"
+        "maker_size" : "0.1"
+        "maker_address" : "1NDqZ7piDqyDhNveWS48kDSwPdyJLEEcCp"
+        "taker" : "LTC"
+        "taker_size" : "0.01"
+        "taker_address" : "LRuXAU2fdSU7imXzk8cTy2k3heMK5vTuQ4"
+        "updated_at" : "2018-03-01-14:18:31.zzz"
+        "created_at" : "2018-03-01-13:28:31.zzz"
+        "status" : "cancelled"
+}
+ * \endverbatim
  */
 extern json_spirit::Value dxCancelOrder(const json_spirit::Array& params, bool fHelp);
 

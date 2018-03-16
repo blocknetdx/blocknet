@@ -28,19 +28,41 @@ public:
 
     int nVersion;
     unsigned int nTime;
+    /**
+     * @brief vin - vector of inputs
+     */
     std::vector<CTxIn> vin;
+    /**
+     * @brief vout - vector of outputs
+     */
     std::vector<CTxOut> vout;
     unsigned int nLockTime;
 
-    // Denial-of-service detection:
+    /**
+     * @brief nDoS - count of Denial-of-service detection:
+     */
     mutable int nDoS;
+    /**
+     * @brief DoS- change Denial-of-service detection counter
+     * @param nDoSIn -
+     * @param fIn
+     * @return
+     */
     bool DoS(int nDoSIn, bool fIn) const { nDoS += nDoSIn; return fIn; }
 
+    /**
+     * @brief CTransaction - defult constructor,
+     * set all fields in default values
+     */
     CTransaction()
     {
         SetNull();
     }
 
+    /**
+     * @brief clone
+     * @return copy of current transaction
+     */
     virtual CTransactionPtr clone()
     {
         return CTransactionPtr(new CTransaction(*this));
@@ -59,6 +81,9 @@ public:
         READWRITE(nLockTime);
     }
 
+    /**
+     * @brief SetNull - reset all fields to default values
+     */
     void SetNull()
     {
         nVersion = CTransaction::CURRENT_VERSION;
@@ -69,11 +94,19 @@ public:
         nDoS = 0;  // Denial-of-service prevention
     }
 
+    /**
+     * @brief IsNull - check count of inputs and outputs
+     * @return true, if inputs and outputs empty
+     */
     bool IsNull() const
     {
         return (vin.empty() && vout.empty());
     }
 
+    /**
+     * @brief GetHash Compute the 256-bit hash of an object's serialization.
+     * @return computed hash
+     */
     virtual uint256 GetHash() const
     {
         return SerializeHash(*this);
@@ -96,6 +129,11 @@ public:
 //        return true;
 //    }
 
+    /**
+     * @brief IsNewerThan - equal "age" between old and this transaction
+     * @param old - other transaction
+     * @return true, if this newer than old
+     */
     bool IsNewerThan(const CTransaction& old) const
     {
         if (vin.size() != old.vin.size())
@@ -125,11 +163,16 @@ public:
         return fNewer;
     }
 
+
     bool IsCoinBase() const
     {
         return (vin.size() == 1 && vin[0].prevout.IsNull() && vout.size() >= 1);
     }
 
+    /**
+      * @brief IsCoinStake the coin stake transaction is marked with the first output empty
+      * @return true
+      */
     bool IsCoinStake() const
     {
         // ppcoin: the coin stake transaction is marked with the first output empty
@@ -142,9 +185,11 @@ public:
     }
 
 
-    /** Check for standard transaction types
-        @return True if all outputs (scriptPubKeys) use only standard transaction forms
-    */
+
+    /**
+     * @brief IsStandard Check for standard transaction types
+     * @return True if all outputs (scriptPubKeys) use only standard transaction forms
+     */
     bool IsStandard() const;
 
     /** Check for standard transaction types
@@ -154,10 +199,11 @@ public:
     */
     // bool AreInputsStandard(const MapPrevTx& mapInputs) const;
 
-    /** Count ECDSA signature operations the old-fashioned (pre-0.6) way
+    /**
+     * @brief GetLegacySigOpCount  Count ECDSA signature operations the old-fashioned (pre-0.6) way
         @return number of sigops this transaction's outputs will produce when spent
         @see CTransaction::FetchInputs
-    */
+     */
     unsigned int GetLegacySigOpCount() const;
 
     /** Count ECDSA signature operations in pay-to-script-hash inputs.
@@ -243,6 +289,10 @@ public:
         return !(a == b);
     }
 
+    /**
+     * @brief toString
+     * @return
+     */
     virtual std::string toString() const
     {
         CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
@@ -331,6 +381,7 @@ typedef CTransaction CBTCTransaction;
 
 //******************************************************************************
 //******************************************************************************
+
 class CXCTransaction : public CTransaction
 {
 public:
@@ -382,14 +433,35 @@ public:
 
 //******************************************************************************
 //******************************************************************************
+/**
+ * @brief The CTransactionSignatureSerializer class -class for serialization transaction signature
+ */
 class CTransactionSignatureSerializer {
 private:
-    const CTransaction& txTo;  //!< reference to the spending transaction (the one being serialized)
-    const CScript& scriptCode; //!< output script being consumed
-    const unsigned int nIn;    //!< input index of txTo being signed
-    const bool fAnyoneCanPay;  //!< whether the hashtype has the SIGHASH_ANYONECANPAY flag set
-    const bool fHashSingle;    //!< whether the hashtype is SIGHASH_SINGLE
-    const bool fHashNone;      //!< whether the hashtype is SIGHASH_NONE
+    /**
+     * @brief txTo reference to the spending transaction (the one being serialized)
+     */
+    const CTransaction& txTo;
+    /**
+     * @brief scriptCode  output script being consumed
+     */
+    const CScript& scriptCode;
+    /**
+     * @brief nIn input index of txTo being signed
+     */
+    const unsigned int nIn;
+    /**
+     * @brief fAnyoneCanPay whether the hashtype has the SIGHASH_ANYONECANPAY flag set
+     */
+    const bool fAnyoneCanPay;
+    /**
+     * @brief fHashSingle whether the hashtype is SIGHASH_SINGLE
+     */
+    const bool fHashSingle;
+    /**
+     * @brief fHashNone whether the hashtype is SIGHASH_NONE
+     */
+    const bool fHashNone;
 
 public:
     CTransactionSignatureSerializer(const CTransaction &txToIn, const CScript &scriptCodeIn, unsigned int nInIn, int nHashTypeIn) :
@@ -398,7 +470,11 @@ public:
         fHashSingle((nHashTypeIn & 0x1f) == SIGHASH_SINGLE),
         fHashNone((nHashTypeIn & 0x1f) == SIGHASH_NONE) {}
 
-    /** Serialize the passed scriptCode, skipping OP_CODESEPARATORs */
+
+    /**
+     * @brief SerializeScriptCode  Serialize the passed scriptCode, skipping OP_CODESEPARATORs
+     * @param s
+     */
     template<typename S>
     void SerializeScriptCode(S &s, int /*nType*/, int /*nVersion*/) const {
         CScript::const_iterator it = scriptCode.begin();
@@ -421,7 +497,13 @@ public:
             s.write((char*)&itBegin[0], it-itBegin);
     }
 
-    /** Serialize an input of txTo */
+
+    /**
+     * @brief SerializeInput  Serialize an input of txTo
+     * @param nInput
+     * @param nType
+     * @param nVersion
+     */
     template<typename S>
     void SerializeInput(S &s, unsigned int nInput, int nType, int nVersion) const {
         // In case of SIGHASH_ANYONECANPAY, only the input being signed is serialized
@@ -444,7 +526,13 @@ public:
             ::Serialize(s, txTo.vin[nInput].nSequence, nType, nVersion);
     }
 
-    /** Serialize an output of txTo */
+
+    /**
+     * @brief SerializeOutput  Serialize an output of txTo
+     * @param nOutput
+     * @param nType
+     * @param nVersion
+     */
     template<typename S>
     void SerializeOutput(S &s, unsigned int nOutput, int nType, int nVersion) const {
         if (fHashSingle && nOutput != nIn)
@@ -454,7 +542,11 @@ public:
             ::Serialize(s, txTo.vout[nOutput], nType, nVersion);
     }
 
-    /** Serialize txTo */
+    /**
+     * @brief Serialize Serialize txTo
+     * @param nType
+     * @param nVersion
+     */
     template<typename S>
     void Serialize(S &s, int nType, int nVersion) const {
         // Serialize nVersion
@@ -474,6 +566,14 @@ public:
     }
 };
 
+/**
+ * @brief SignatureHash2  compute hash of transaction signature
+ * @param scriptCode
+ * @param txTo
+ * @param nIn
+ * @param nHashType
+ * @return hash of transaction signature
+ */
 uint256 SignatureHash2(const CScript& scriptCode, const CTransactionPtr & txTo, unsigned int nIn, int nHashType/*, const CAmount& amount, SigVersion sigversion, const PrecomputedTransactionData* cache*/);
 
 } // namespace xbridge

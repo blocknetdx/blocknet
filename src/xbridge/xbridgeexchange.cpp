@@ -570,7 +570,7 @@ bool Exchange::deleteTransaction(const uint256 & txid)
 //*****************************************************************************
 //*****************************************************************************
 bool Exchange::updateTransactionWhenHoldApplyReceived(const TransactionPtr & tx,
-                                                             const std::vector<unsigned char> & from)
+                                                      const std::vector<unsigned char> & from)
 {
     if (tx->increaseStateCounter(xbridge::Transaction::trJoined, from) == xbridge::Transaction::trHold)
     {
