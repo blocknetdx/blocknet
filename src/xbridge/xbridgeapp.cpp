@@ -201,7 +201,7 @@ bool App::Impl::start()
     try
     {
         // services and threas
-        for (int i = 0; i < boost::thread::hardware_concurrency(); ++i)
+        for (size_t i = 0; i < boost::thread::hardware_concurrency(); ++i)
         {
             IoServicePtr ios(new boost::asio::io_service);
 
@@ -224,10 +224,10 @@ bool App::Impl::start()
                 wp.currency                    = *i;
                 wp.title                       = s.get<std::string>(*i + ".Title");
                 wp.address                     = s.get<std::string>(*i + ".Address");
-                wp.m_ip                          = s.get<std::string>(*i + ".Ip");
-                wp.m_port                        = s.get<std::string>(*i + ".Port");
-                wp.m_user                        = s.get<std::string>(*i + ".Username");
-                wp.m_passwd                      = s.get<std::string>(*i + ".Password");
+                wp.m_ip                        = s.get<std::string>(*i + ".Ip");
+                wp.m_port                      = s.get<std::string>(*i + ".Port");
+                wp.m_user                      = s.get<std::string>(*i + ".Username");
+                wp.m_passwd                    = s.get<std::string>(*i + ".Password");
                 wp.addrPrefix[0]               = s.get<int>(*i + ".AddressPrefix", 0);
                 wp.scriptPrefix[0]             = s.get<int>(*i + ".ScriptPrefix", 0);
                 wp.secretPrefix[0]             = s.get<int>(*i + ".SecretPrefix", 0);
@@ -235,11 +235,7 @@ bool App::Impl::start()
                 wp.txVersion                   = s.get<uint32_t>(*i + ".TxVersion", 1);
                 wp.minTxFee                    = s.get<uint64_t>(*i + ".MinTxFee", 0);
                 wp.feePerByte                  = s.get<uint64_t>(*i + ".FeePerByte", 200);
-                wp.m_minAmount                 = s.get<uint64_t>(*i + ".MinimumAmount", 0);
-                wp.dustAmount                  = 3 * wp.minTxFee;
                 wp.method                      = s.get<std::string>(*i + ".CreateTxMethod");
-                wp.isGetNewPubKeySupported     = s.get<bool>(*i + ".GetNewKeySupported", false);
-                wp.isImportWithNoScanSupported = s.get<bool>(*i + ".ImportWithNoScanSupported", false);
                 wp.blockTime                   = s.get<int>(*i + ".BlockTime", 0);
                 wp.requiredConfirmations       = s.get<int>(*i + ".Confirmations", 0);
 
@@ -287,10 +283,18 @@ bool App::Impl::start()
                     // session.reset(new XBridgeSession(wp));
                     ERR() << "unknown session type " << __FUNCTION__;
                 }
-                if (conn)
+                if (!conn)
                 {
-                    app.addConnector(conn);
+                    continue;
                 }
+
+                if (!conn->init())
+                {
+                    ERR() << "connection not initialized " << *i << " " << __FUNCTION__;
+                    continue;
+                }
+
+                app.addConnector(conn);
             }
         }
     }
@@ -770,7 +774,6 @@ void App::moveTransactionToHistory(const uint256 & id)
             if(counter > 1) {
                 ERR() << "duplicate transaction id = " << id.GetHex() << " " << __FUNCTION__;
             }
-//            assert(counter < 2 && "duplicate transaction");
         }
 
         if (xtx)
@@ -779,7 +782,6 @@ void App::moveTransactionToHistory(const uint256 & id)
                 ERR() << "duplicate tx " << id.GetHex() << " in tx list and history " << __FUNCTION__;
                 return;
             }
-//            assert(m_p->m_historicTransactions.count(id) == 0 && "duplicate tx in tx list and history");
             m_p->m_historicTransactions[id] = xtx;
         }
     }
@@ -809,9 +811,9 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                                            uint256 & id,
                                            uint256 & blockHash)
 {
-//    LOG() <<
-    const auto statusCode = checkCreateParams(fromCurrency, toCurrency, fromAmount);
-    if(statusCode != xbridge::SUCCESS) {
+    const auto statusCode = checkCreateParams(fromCurrency, toCurrency, fromAmount, from);
+    if(statusCode != xbridge::SUCCESS)
+    {
         return statusCode;
     }
 
@@ -830,31 +832,57 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
         return xbridge::Error::NO_SESSION;
     }
 
+    if (connFrom->isDustAmount(static_cast<double>(fromAmount) / TransactionDescr::COIN))
+    {
+        return xbridge::Error::DUST;
+    }
+
+    if (connTo->isDustAmount(static_cast<double>(toAmount) / TransactionDescr::COIN))
+    {
+        return xbridge::Error::DUST;
+    }
+
     // check amount
     std::vector<wallet::UtxoEntry> outputs;
     connFrom->getUnspent(outputs);
 
-    double utxoAmount = 0;
-    double fee1       = 0;
-    double fee2       = connFrom->minTxFee2(1, 1);
+    uint64_t utxoAmount = 0;
+    uint64_t fee1       = 0;
+    uint64_t fee2       = connFrom->minTxFee2(1, 1) * TransactionDescr::COIN;
 
     std::vector<wallet::UtxoEntry> outputsForUse;
     for (const wallet::UtxoEntry & entry : outputs)
     {
-        utxoAmount += entry.amount;
+        if (entry.address != from) // filter utxo's by user specified from address
+            continue;
+
+        utxoAmount += (entry.amount * TransactionDescr::COIN);
         outputsForUse.push_back(entry);
 
-        fee1 = connFrom->minTxFee1(outputsForUse.size(), 3);
+        fee1 = connFrom->minTxFee1(outputsForUse.size(), 3) * TransactionDescr::COIN;
 
-        LOG() << "USED FOR TX <" << entry.txId << "> amount " << entry.amount << " " << entry.vout << " fee " << fee1;
+        LOG() << "using utxo item, id: <" << entry.txId << "> amount: " << entry.amount << " vout: " << entry.vout;
 
-        if ((utxoAmount * TransactionDescr::COIN) > fromAmount + ((fee1 + fee2) * TransactionDescr::COIN))
+        uint64_t fullAmount = fromAmount + fee1 + fee2;
+        if (utxoAmount > fullAmount)
         {
+            // check change (rest)
+            if (connFrom->isDustAmount(static_cast<double>(utxoAmount - fullAmount) / TransactionDescr::COIN))
+            {
+                // change is dust, need more inputs
+                continue;
+            }
+
             break;
         }
     }
 
-    if ((utxoAmount * TransactionDescr::COIN) < fromAmount + ((fee1 + fee2) * TransactionDescr::COIN))
+    LOG() << "fee1: " << (static_cast<double>(fee1) / TransactionDescr::COIN);
+    LOG() << "fee2: " << (static_cast<double>(fee2) / TransactionDescr::COIN);
+    LOG() << "amount of used utxo items: " << (static_cast<double>(utxoAmount) / TransactionDescr::COIN)
+          << " required amount + fees: " << (static_cast<double>(fromAmount + fee1 + fee2) / TransactionDescr::COIN);
+
+    if (utxoAmount < (fromAmount + fee1 + fee2))
     {
         WARN() << "insufficient funds for <" << fromCurrency << "> " << __FUNCTION__;
         return xbridge::Error::INSIFFICIENT_FUNDS;
@@ -880,18 +908,16 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
 
         entry.rawAddress = connFrom->toXAddr(entry.address);
 
-        if(entry.signature.size() != 65) {
-
-            ERR() << "incorrect signature length, need 20 bytes " << __FUNCTION__;
+        if(entry.signature.size() != 65)
+        {
+            ERR() << "incorrect signature length, need 65 bytes " << __FUNCTION__;
             return xbridge::Error::INVALID_SIGNATURE;
-
         }
 //        assert(entry.signature.size() == 65 && "incorrect signature length, need 20 bytes");
-        if(entry.rawAddress.size() != 20) {
-
+        if(entry.rawAddress.size() != 20)
+        {
             ERR() << "incorrect raw address length, need 20 bytes " << __FUNCTION__;
             return  xbridge::Error::INVALID_ADDRESS;
-
         }
 //        assert(entry.rawAddress.size() == 20 && "incorrect raw address length, need 20 bytes");
     }
@@ -959,7 +985,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
         m_p->m_transactions[id] = ptr;
     }
 
-    LOG() << "created order with id " << id.GetHex();
+    LOG() << "order created" << ptr << __FUNCTION__;
 
     return xbridge::Error::SUCCESS;
 }
@@ -1033,9 +1059,6 @@ bool App::Impl::sendPendingTransaction(const TransactionDescrPtr & ptr)
     static std::vector<unsigned char> addr(20, 0);
     onSend(addr, ptr->packet->body());
 
-    ptr->state = TransactionDescr::trPending;
-    xuiConnector.NotifyXBridgeTransactionChanged(ptr->id);
-
     return true;
 }
 
@@ -1046,10 +1069,12 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
                                     const std::string & to)
 {
     TransactionDescrPtr ptr;
-    const auto res = checkAcceptParams(id, ptr);
-    if(res != xbridge::SUCCESS) {
-        return res;
-    }
+    // TODO checkAcceptPrams can't be used after swap: uncovered bug, fix in progress (due to swap changing to/from)
+//    const auto res = checkAcceptParams(id, ptr, from);
+//    if(res != xbridge::SUCCESS)
+//    {
+//        return res;
+//    }
 
     {
         boost::mutex::scoped_lock l(m_p->m_txLocker);
@@ -1071,26 +1096,50 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
         return xbridge::NO_SESSION;
     }
 
+    // check dust
+    if (connFrom->isDustAmount(static_cast<double>(ptr->fromAmount) / TransactionDescr::COIN))
+    {
+        return xbridge::Error::DUST;
+    }
+    if (connTo->isDustAmount(static_cast<double>(ptr->toAmount) / TransactionDescr::COIN))
+    {
+        return xbridge::Error::DUST;
+    }
+
     // check amount
     std::vector<wallet::UtxoEntry> outputs;
     connFrom->getUnspent(outputs);
 
-    double utxoAmount = 0;
+    uint64_t utxoAmount = 0;
+    uint64_t fee1       = 0;
+    uint64_t fee2       = connFrom->minTxFee2(1, 1) * TransactionDescr::COIN;
+
     std::vector<wallet::UtxoEntry> outputsForUse;
     for (const wallet::UtxoEntry & entry : outputs)
     {
-        utxoAmount += entry.amount;
+        if (entry.address != from) // filter utxo's by user specified from address
+            continue;
+
+        utxoAmount += (entry.amount * TransactionDescr::COIN);
         outputsForUse.push_back(entry);
 
-        // TODO calculate fee for outputsForUse.count()
+        fee1 = connFrom->minTxFee1(outputsForUse.size(), 3) * TransactionDescr::COIN;
 
-        if ((utxoAmount * TransactionDescr::COIN) > ptr->fromAmount)
+        uint64_t fullAmount = ptr->fromAmount + fee1 + fee2;
+        if (utxoAmount > fullAmount)
         {
+            // check change (rest)
+            if (connFrom->isDustAmount(static_cast<double>(utxoAmount - fullAmount) / TransactionDescr::COIN))
+            {
+                // change is dust, need more inputs
+                continue;
+            }
+
             break;
         }
     }
 
-    if ((utxoAmount * TransactionDescr::COIN) < ptr->fromAmount)
+    if (utxoAmount < (ptr->fromAmount + fee1 + fee2))
     {
         WARN() << "insufficient funds for <" << ptr->fromCurrency << "> " << __FUNCTION__;
         return xbridge::INSIFFICIENT_FUNDS;
@@ -1115,18 +1164,16 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
         }
 
         entry.rawAddress = connFrom->toXAddr(entry.address);
-        if(entry.signature.size() != 65) {
-
-            ERR() << "incorrect signature length, need 20 bytes " << __FUNCTION__;
+        if(entry.signature.size() != 65)
+        {
+            ERR() << "incorrect signature length, need 65 bytes " << __FUNCTION__;
             return xbridge::Error::INVALID_SIGNATURE;
-
         }
 
-        if(entry.rawAddress.size() != 20) {
-
+        if(entry.rawAddress.size() != 20)
+        {
             ERR() << "incorrect raw address length, need 20 bytes " << __FUNCTION__;
             return  xbridge::Error::INVALID_ADDRESS;
-
         }
     }
 
@@ -1157,6 +1204,8 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
 
     // lock used coins
     connTo->lockCoins(ptr->usedCoins, true);
+
+    LOG() << "order accepted" << ptr << __FUNCTION__;
 
     return xbridge::Error::SUCCESS;
 }
@@ -1218,11 +1267,13 @@ xbridge::Error App::cancelXBridgeTransaction(const uint256 &id,
     TransactionDescrPtr ptr = transaction(id);
     if (!ptr || !ptr->isLocal())
     {
+        LOG() << "order with id: " << id.GetHex() << " not found or order isn't local " << __FUNCTION__;
         return xbridge::TRANSACTION_NOT_FOUND;
     }
 
-    if (ptr->state > TransactionDescr::trPending)
+    if (ptr->state > TransactionDescr::trCreated)
     {
+        LOG() << "order with id: " << id.GetHex() << " already in work " << __FUNCTION__;
         return xbridge::INVALID_STATE;
     }
 
@@ -1247,6 +1298,8 @@ xbridge::Error App::cancelXBridgeTransaction(const uint256 &id,
 
         moveTransactionToHistory(id);
     }
+
+    LOG() << "order cancelled" << ptr << __FUNCTION__;
 
     return xbridge::SUCCESS;
 }
@@ -1304,7 +1357,7 @@ bool App::isValidAddress(const string &address) const
 
 //******************************************************************************
 //******************************************************************************
-Error App::checkAcceptParams(const uint256 &id, TransactionDescrPtr &ptr)
+Error App::checkAcceptParams(const uint256 &id, TransactionDescrPtr &ptr, const string &fromAddress)
 {
     // TODO need refactoring
     ptr = transaction(id);
@@ -1314,26 +1367,28 @@ Error App::checkAcceptParams(const uint256 &id, TransactionDescrPtr &ptr)
         return xbridge::TRANSACTION_NOT_FOUND;
     }
 
-    return checkAmount(ptr->toCurrency, ptr->toAmount);
+    return checkAmount(ptr->toCurrency, ptr->toAmount, fromAddress);
 }
 
 //******************************************************************************
 //******************************************************************************
 Error App::checkCreateParams(const string &fromCurrency,
                              const string &toCurrency,
-                             const uint64_t &fromAmount)
+                             const uint64_t &fromAmount,
+                             const string &fromAddress)
 {
     // TODO need refactoring
-    if (fromCurrency.size() > 8 || toCurrency.size() > 8) {
+    if (fromCurrency.size() > 8 || toCurrency.size() > 8)
+    {
         WARN() << "invalid currency " << __FUNCTION__;
         return xbridge::INVALID_CURRENCY;
     }
-    return  checkAmount(fromCurrency, fromAmount);
+    return checkAmount(fromCurrency, fromAmount, fromAddress);
 }
 
 //******************************************************************************
 //******************************************************************************
-Error App::checkAmount(const string &currency, const uint64_t &amount)
+Error App::checkAmount(const string & currency, const uint64_t & amount, const string & address)
 {
     // check amount
     WalletConnectorPtr conn = connectorByCurrency(currency);
@@ -1343,7 +1398,8 @@ Error App::checkAmount(const string &currency, const uint64_t &amount)
         return xbridge::NO_SESSION;
     }
 
-    if (conn->getWalletBalance() < (amount / conn->COIN)) {
+    // Check that wallet balance is larger than the smallest supported balance
+    if (conn->getWalletBalance(address) < (static_cast<double>(amount) / TransactionDescr::COIN)) {
         WARN() << "insufficient funds for <" << currency << "> " << __FUNCTION__;
         return xbridge::INSIFFICIENT_FUNDS;
     }

@@ -190,6 +190,7 @@ RES_ICONS = \
   qt/res/icons/bitcoin.png \
   qt/res/icons/bitcoin_testnet.ico \
   qt/res/icons/bitcoin_testnet.png \
+  qt/res/icons/ms-icon-310x310.png \
   qt/res/icons/browse.png \
   qt/res/icons/clock1.png \
   qt/res/icons/clock2.png \
@@ -310,9 +311,19 @@ endif
 
 RES_IMAGES = \
   qt/res/images/about.png \
+  qt/res/images/aboutImage1.png \
+  qt/res/images/aboutImage1_bg.png \
+  qt/res/images/aboutImage2.png \
   qt/res/images/splash.png \
   qt/res/images/splash_testnet.png \
+  qt/res/images/Blocknet_splash_Logo_Hor_Neg_022718.png \
+  qt/res/images/Blocknet_splash_Logo_Symbol_Pos_022718.png \
+  qt/res/images/Blocknet_splash_Logo_Symbol_Neg_022718.png \
+  qt/res/images/alt_splash_net1_trans.png \
+  qt/res/images/alt_splash_net1_blackbg.png \
   qt/res/images/blocknetdx_logo_horizontal.png \
+  qt/res/images/BlockDX_Logo_Hor_Hifi_Pos_022718.png \
+  qt/res/images/Blocknet_Logo_Hor_Neg_022718.png \
   qt/res/images/blocknet_alt3_logo_text_trans_bg.png \
   qt/res/images/downArrow.png \
   qt/res/images/downArrow_small.png \

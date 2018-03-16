@@ -11,6 +11,7 @@
 #include "util/xbridgeerror.h"
 #include "xbridgewalletconnector.h"
 #include "xbridgedef.h"
+#include "validationstate.h"
 
 #include <thread>
 #include <atomic>
@@ -91,27 +92,30 @@ public:
      * @brief checkAcceptParams checks the correctness of the parameters
      * @param id - id accepted transaction
      * @param ptr - smart pointer to accepted transaction
+     * @param fromAddress - address to pull utxo's from
      * @return xbridge::SUCCESS, if all parameters valid
      */
-    xbridge::Error checkAcceptParams(const uint256 &id, TransactionDescrPtr &ptr);
+    xbridge::Error checkAcceptParams(const uint256 &id, TransactionDescrPtr &ptr, const std::string &fromAddress);
 
     /**
      * @brief checkCreateParams - checks parameter needs to success created transaction
      * @param fromCurrency - from currency
      * @param toCurrency - to currency
      * @param fromAmount -  amount
+     * @param fromAddress - address to pull utxo's from
      * @return xbridge::SUCCES, if all parameters valid
      */
-    xbridge::Error checkCreateParams(const std::string &fromCurrency, const std::string &toCurrency, const uint64_t &fromAmount);
+    xbridge::Error checkCreateParams(const std::string &fromCurrency, const std::string &toCurrency, const uint64_t &fromAmount, const std::string &fromAddress);
 
     /**
      * @brief checkAmount - checks wallet balance
      * @param currency - currency name
      * @param amount - amount
+     * @param address - address to pull utxo's from
      * @return xbridge::SUCCES, if  the session currency is open and
      * on account has sufficient funds for operations
      */
-    xbridge::Error checkAmount(const std::string &currency, const uint64_t &amount);
+    xbridge::Error checkAmount(const std::string &currency, const uint64_t &amount, const std::string &address);
 public:
     // connectors
 

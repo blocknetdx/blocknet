@@ -2,8 +2,11 @@
 //*****************************************************************************
 
 #include "xbridgetransaction.h"
+#include "xbridgeapp.h"
+#include "xbridgeexchange.h"
 #include "util/logger.h"
 #include "util/xutil.h"
+#include "util/settings.h"
 #include "utilstrencodings.h"
 #include "main.h"
 
@@ -510,6 +513,56 @@ bool Transaction::setBinTxId(const std::vector<unsigned char> & addr,
         return true;
     }
     return false;
+}
+
+std::ostream & operator << (std::ostream & out, const TransactionPtr & tx)
+{
+    if(!settings().isFullLog())
+    {
+        out << std::endl << "ORDER ID: " << tx->id().GetHex() << std::endl;
+
+        return out;
+    }
+
+    xbridge::WalletConnectorPtr connFrom = xbridge::App::instance().connectorByCurrency(tx->a_currency());
+    xbridge::WalletConnectorPtr connTo   = xbridge::App::instance().connectorByCurrency(tx->b_currency());
+
+    if (!connFrom || !connTo)
+        out << "MISSING SOME CONNECTOR, NOT ALL ORDER INFO WILL BE LOGGED";
+
+    xbridge::Exchange & e = xbridge::Exchange::instance();
+
+    std::vector<xbridge::wallet::UtxoEntry> items;
+    e.getUtxoItems(tx->id(), items);
+
+    std::ostringstream inputsStream;
+    uint32_t count = 0;
+    for(const xbridge::wallet::UtxoEntry & entry : items)
+    {
+        inputsStream << "    INDEX: " << count << std::endl
+                     << "    ID: " << entry.txId << std::endl
+                     << "    VOUT: " << boost::lexical_cast<std::string>(entry.vout) << std::endl
+                     << "    AMOUNT: " << entry.amount << std::endl
+                     << "    ADDRESS: " << entry.address << std::endl;
+
+        ++count;
+    }
+
+    out << std::endl
+        << "ORDER BODY" << std::endl
+        << "ID: " << tx->id().GetHex() << std::endl
+        << "MAKER: " << tx->a_currency() << std::endl
+        << "MAKER SIZE: " << util::xBridgeStringValueFromAmount(tx->a_amount()) << std::endl
+        << "MAKER ADDR: " << (!tx->a_address().empty() && connFrom ? connFrom->fromXAddr(tx->a_address()) : "") << std::endl
+        << "TAKER: " << tx->b_currency() << std::endl
+        << "TAKER SIZE: " << util::xBridgeStringValueFromAmount(tx->b_amount()) << std::endl
+        << "TAKER ADDR: " << (!tx->b_address().empty() && connTo ? connTo->fromXAddr(tx->b_address()) : "") << std::endl
+        << "STATE: " << tx->strState() << std::endl
+        << "BLOCK HASH: " << tx->blockHash().GetHex() << std::endl
+        << "CREATED AT: " << util::iso8601(tx->createdTime()) << std::endl
+        << "USED INPUTS: " << std::endl << inputsStream.str();
+
+    return out;
 }
 
 } // namespace xbridge

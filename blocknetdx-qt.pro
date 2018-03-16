@@ -277,6 +277,7 @@ SOURCES += \
     src/xbridge/xbridgeexchange.cpp \
     src/xbridge/xbridgesession.cpp \
     src/xbridge/xbridgetransaction.cpp \
+    src/xbridge/xbridgetransactiondescr.cpp \
     src/xbridge/xbridgetransactionmember.cpp \
     src/support/cleanse.cpp \
     src/crypto/chacha20.cpp \
@@ -454,7 +455,7 @@ HEADERS += \
     src/hash.h \
     src/limitedmap.h \
     src/threadsafety.h \
-    src/qt/macnotificationhandler.h \    
+    src/qt/macnotificationhandler.h \
     src/tinyformat.h \
     src/activeservicenode.h \
     src/amount.h \
