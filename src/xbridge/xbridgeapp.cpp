@@ -811,7 +811,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                                            uint256 & id,
                                            uint256 & blockHash)
 {
-    const auto statusCode = checkCreateParams(fromCurrency, toCurrency, fromAmount);
+    const auto statusCode = checkCreateParams(fromCurrency, toCurrency, fromAmount, from);
     if(statusCode != xbridge::SUCCESS)
     {
         return statusCode;
@@ -853,6 +853,9 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     std::vector<wallet::UtxoEntry> outputsForUse;
     for (const wallet::UtxoEntry & entry : outputs)
     {
+        if (entry.address != from) // filter utxo's by user specified from address
+            continue;
+
         utxoAmount += (entry.amount * TransactionDescr::COIN);
         outputsForUse.push_back(entry);
 
@@ -1066,11 +1069,12 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
                                     const std::string & to)
 {
     TransactionDescrPtr ptr;
-    const auto res = checkAcceptParams(id, ptr);
-    if(res != xbridge::SUCCESS)
-    {
-        return res;
-    }
+    // TODO checkAcceptPrams can't be used after swap: uncovered bug, fix in progress (due to swap changing to/from)
+//    const auto res = checkAcceptParams(id, ptr, from);
+//    if(res != xbridge::SUCCESS)
+//    {
+//        return res;
+//    }
 
     {
         boost::mutex::scoped_lock l(m_p->m_txLocker);
@@ -1113,6 +1117,9 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
     std::vector<wallet::UtxoEntry> outputsForUse;
     for (const wallet::UtxoEntry & entry : outputs)
     {
+        if (entry.address != from) // filter utxo's by user specified from address
+            continue;
+
         utxoAmount += (entry.amount * TransactionDescr::COIN);
         outputsForUse.push_back(entry);
 
@@ -1350,7 +1357,7 @@ bool App::isValidAddress(const string &address) const
 
 //******************************************************************************
 //******************************************************************************
-Error App::checkAcceptParams(const uint256 &id, TransactionDescrPtr &ptr)
+Error App::checkAcceptParams(const uint256 &id, TransactionDescrPtr &ptr, const string &fromAddress)
 {
     // TODO need refactoring
     ptr = transaction(id);
@@ -1360,14 +1367,15 @@ Error App::checkAcceptParams(const uint256 &id, TransactionDescrPtr &ptr)
         return xbridge::TRANSACTION_NOT_FOUND;
     }
 
-    return checkAmount(ptr->toCurrency, ptr->toAmount);
+    return checkAmount(ptr->toCurrency, ptr->toAmount, fromAddress);
 }
 
 //******************************************************************************
 //******************************************************************************
 Error App::checkCreateParams(const string &fromCurrency,
                              const string &toCurrency,
-                             const uint64_t &fromAmount)
+                             const uint64_t &fromAmount,
+                             const string &fromAddress)
 {
     // TODO need refactoring
     if (fromCurrency.size() > 8 || toCurrency.size() > 8)
@@ -1375,12 +1383,12 @@ Error App::checkCreateParams(const string &fromCurrency,
         WARN() << "invalid currency " << __FUNCTION__;
         return xbridge::INVALID_CURRENCY;
     }
-    return  checkAmount(fromCurrency, fromAmount);
+    return checkAmount(fromCurrency, fromAmount, fromAddress);
 }
 
 //******************************************************************************
 //******************************************************************************
-Error App::checkAmount(const string & currency, const uint64_t & amount)
+Error App::checkAmount(const string & currency, const uint64_t & amount, const string & address)
 {
     // check amount
     WalletConnectorPtr conn = connectorByCurrency(currency);
@@ -1391,7 +1399,7 @@ Error App::checkAmount(const string & currency, const uint64_t & amount)
     }
 
     // Check that wallet balance is larger than the smallest supported balance
-    if (conn->getWalletBalance() < (static_cast<double>(amount) / TransactionDescr::COIN)) {
+    if (conn->getWalletBalance(address) < (static_cast<double>(amount) / TransactionDescr::COIN)) {
         WARN() << "insufficient funds for <" << currency << "> " << __FUNCTION__;
         return xbridge::INSIFFICIENT_FUNDS;
     }
