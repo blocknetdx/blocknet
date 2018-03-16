@@ -35,17 +35,40 @@ class Session
     class Impl;
 
 public:
+    /**
+     * @brief Session - default constructor, init PIMPL
+     */
     Session();
+
     ~Session();
 
 public:
     // helper functions
+    /**
+     * @brief sessionAddr
+     * @return session id (address)
+     */
     const std::vector<unsigned char> & sessionAddr() const;
 
 public:
     // network
+    /**
+     * @brief checkXBridgePacketVersion - equal packet version with current xbridge protocol version
+     * @param message - data
+     * @return true, packet version == current xbridge protocol version
+     */
     static bool checkXBridgePacketVersion(const std::vector<unsigned char> & message);
+    /**
+     * @brief checkXBridgePacketVersion - equal packet version with current xbridge protocol version
+     * @param packet - data
+     * @return true, packet version == current xbridge protocol version
+     */
     static bool checkXBridgePacketVersion(XBridgePacketPtr packet);
+    /**
+     * @brief processPacket - decrypt packet, execute packet command
+     * @param packet
+     * @return true, if packet decrypted and packet command executed
+     */
     bool processPacket(XBridgePacketPtr packet);
 
 public:
