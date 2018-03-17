@@ -488,3 +488,18 @@ void CAddrMan::Connected_(const CService& addr, int64_t nTime)
     if (nTime - info.nTime > nUpdateInterval)
         info.nTime = nTime;
 }
+
+void CAddrMan::SetServices_(const CService& addr, uint64_t nServices)
+{
+    CAddrInfo* pinfo = Find(addr);
+
+    if (!pinfo)
+        return;
+    
+    CAddrInfo& info = *pinfo;
+
+    if (info != addr) 
+        return;
+
+    info.nServices = nServices;
+}
