@@ -586,6 +586,7 @@ HEADERS += \
     src/xbridge/xbitcointransaction.h \
     src/xbridge/util/xbridgeerror.h \
     src/validationstate.h \
+    src/xbridge/xbridgewallet.h \
     src/xbridge/xbridgewalletconnector.h \
     src/xbridge/xbridgewalletconnectorbtc.h \
     src/xbridge/xbridgewalletconnectorbcc.h \
