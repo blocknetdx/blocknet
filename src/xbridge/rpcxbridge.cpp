@@ -1438,7 +1438,7 @@ json_spirit::Value dxGetMyOrders(const json_spirit::Array& params, bool fHelp)
         // taker data
         o.emplace_back(Pair("taker", t->toCurrency));
         o.emplace_back(Pair("taker_size", util::xBridgeStringValueFromAmount(t->toAmount)));
-        o.emplace_back(Pair("taker_address", connFrom->fromXAddr(t->to)));
+        o.emplace_back(Pair("taker_address", connTo->fromXAddr(t->to)));
         // dates
         o.emplace_back(Pair("updated_at", util::iso8601(t->txtime)));
         o.emplace_back(Pair("created_at", util::iso8601(t->created)));
