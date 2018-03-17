@@ -214,7 +214,7 @@ bool CActiveMasternode::SendMasternodePing(std::string& errorMessage)
         LogPrint("masternode", "dseep - relaying from active mn, %s \n", vin.ToString().c_str());
         LOCK(cs_vNodes);
         BOOST_FOREACH (CNode* pnode, vNodes)
-            pnode->PushMessage("dseep", vin, vchMasterNodeSignature, masterNodeSignatureTime, false);
+            pnode->PushMessage(NetMsgType::DSEEP, vin, vchMasterNodeSignature, masterNodeSignatureTime, false);
 
         /*
          * END OF "REMOVE"
@@ -334,7 +334,7 @@ bool CActiveMasternode::Register(CTxIn vin, CService service, CKey keyCollateral
 
     LOCK(cs_vNodes);
     BOOST_FOREACH (CNode* pnode, vNodes)
-        pnode->PushMessage("dsee", vin, service, vchMasterNodeSignature, masterNodeSignatureTime, pubKeyCollateralAddress, pubKeyMasternode, -1, -1, masterNodeSignatureTime, PROTOCOL_VERSION, donationAddress, donationPercantage);
+        pnode->PushMessage(NetMsgType::DSEE, vin, service, vchMasterNodeSignature, masterNodeSignatureTime, pubKeyCollateralAddress, pubKeyMasternode, -1, -1, masterNodeSignatureTime, PROTOCOL_VERSION, donationAddress, donationPercantage);
 
     /*
      * END OF "REMOVE"

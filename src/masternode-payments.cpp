@@ -9,6 +9,7 @@
 #include "masternode-sync.h"
 #include "masternodeman.h"
 #include "obfuscation.h"
+#include "protocol.h"
 #include "spork.h"
 #include "sync.h"
 #include "util.h"
@@ -350,24 +351,24 @@ void CMasternodePayments::ProcessMessageMasternodePayments(CNode* pfrom, std::st
     if (fLiteMode) return; //disable all Obfuscation/Masternode related functionality
 
 
-    if (strCommand == "mnget") { //Masternode Payments Request Sync
+    if (strCommand == NetMsgType::MNGET) { //Masternode Payments Request Sync
         if (fLiteMode) return;   //disable all Obfuscation/Masternode related functionality
 
         int nCountNeeded;
         vRecv >> nCountNeeded;
 
         if (Params().NetworkID() == CBaseChainParams::MAIN) {
-            if (pfrom->HasFulfilledRequest("mnget")) {
+            if (pfrom->HasFulfilledRequest(NetMsgType::MNGET)) {
                 LogPrint("masternode","mnget - peer already asked me for the list\n");
                 Misbehaving(pfrom->GetId(), 20);
                 return;
             }
         }
 
-        pfrom->FulfilledRequest("mnget");
+        pfrom->FulfilledRequest(NetMsgType::MNGET);
         masternodePayments.Sync(pfrom, nCountNeeded);
         LogPrint("mnpayments", "mnget - Sent Masternode winners to peer %i\n", pfrom->GetId());
-    } else if (strCommand == "mnw") { //Masternode Payments Declare Winner
+    } else if (strCommand == NetMsgType::MNW) { //Masternode Payments Declare Winner
         //this is required in litemodef
         CMasternodePaymentWinner winner;
         vRecv >> winner;
@@ -803,7 +804,7 @@ void CMasternodePayments::Sync(CNode* node, int nCountNeeded)
         }
         ++it;
     }
-    node->PushMessage("ssc", MASTERNODE_SYNC_MNW, nInvCount);
+    node->PushMessage(NetMsgType::SSC, MASTERNODE_SYNC_MNW, nInvCount);
 }
 
 std::string CMasternodePayments::ToString() const

@@ -473,7 +473,7 @@ public:
         bool useIX = false,
         CAmount nFeePay = 0);
     bool CreateTransaction(CScript scriptPubKey, const CAmount& nValue, CWalletTx& wtxNew, CReserveKey& reservekey, CAmount& nFeeRet, std::string& strFailReason, const CCoinControl* coinControl = NULL, AvailableCoinsType coin_type = ALL_COINS, bool useIX = false, CAmount nFeePay = 0);
-    bool CommitTransaction(CWalletTx& wtxNew, CReserveKey& reservekey, std::string strCommand = "tx");
+    bool CommitTransaction(CWalletTx& wtxNew, CReserveKey& reservekey, std::string strCommand = NetMsgType::TX);
     bool AddAccountingEntry(const CAccountingEntry&, CWalletDB & pwalletdb);
     std::string PrepareObfuscationDenominate(int minRounds, int maxRounds);
     int GenerateObfuscationOutputs(int nTotalValue, std::vector<CTxOut>& vout);
@@ -1009,7 +1009,7 @@ public:
     int64_t GetTxTime() const;
     int64_t GetComputedTxTime() const;
     int GetRequestCount() const;
-    void RelayWalletTransaction(std::string strCommand = "tx");
+    void RelayWalletTransaction(std::string strCommand = NetMsgType::TX);
 
     std::set<uint256> GetConflicts() const;
 };
