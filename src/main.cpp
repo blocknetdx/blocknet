@@ -5450,7 +5450,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
             SeenLocal(addrMe);
         }
 
-        // Be shy and send version eagerly
+        // Send version eagerly
         if (pfrom->fInbound)
             pfrom->PushVersion();
 
@@ -5528,7 +5528,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
 
     else if (pfrom->nVersion == 0) {
         // Must have a version message before anything else
-        LogPrintf("received message before version number");
+        LogPrintf("received message before version number\n");
         Misbehaving(pfrom->GetId(), 1);
         return false;
     }
