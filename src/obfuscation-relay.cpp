@@ -106,7 +106,7 @@ void CObfuScationRelay::RelayThroughNode(int nRank)
         CNode* pnode = ConnectNode((CAddress)pmn->addr, NULL, false);
         if (pnode) {
             //printf("Connected\n");
-            pnode->PushMessage("dsr", (*this));
+            pnode->PushMessage(NetMsgType::DSR, (*this));
             pnode->Release();
             return;
         }
