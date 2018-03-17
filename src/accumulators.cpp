@@ -153,7 +153,7 @@ bool EraseCheckpoints(int nStartHeight, int nEndHeight)
 }
 
 //Get checkpoint value for a specific block height
-bool CalculateAccumulatorCheckpoint(int nHeight, uint256& nCheckpoint)
+bool CalculateAccumulatorCheckpoint(int nHeight, uint256& nCheckpoint, AccumulatorMap& mapAccumulators)
 {
     if (nHeight < Params().Zerocoin_StartHeight()) {
         nCheckpoint = 0;
@@ -167,7 +167,7 @@ bool CalculateAccumulatorCheckpoint(int nHeight, uint256& nCheckpoint)
     }
 
     //set the accumulators to last checkpoint value
-    AccumulatorMap mapAccumulators;
+    mapAccumulators.Reset();
     if (!mapAccumulators.Load(chainActive[nHeight - 1]->nAccumulatorCheckpoint)) {
         if (chainActive[nHeight - 1]->nAccumulatorCheckpoint == 0) {
             //Before zerocoin is fully activated so set to init state
@@ -223,6 +223,8 @@ bool CalculateAccumulatorCheckpoint(int nHeight, uint256& nCheckpoint)
     else
         nCheckpoint = mapAccumulators.GetCheckpoint();
 
+    DatabaseChecksums(mapAccumulators);
+
     LogPrint("zero", "%s checkpoint=%s\n", __func__, nCheckpoint.GetHex());
     return true;
 }
@@ -232,7 +234,7 @@ bool ValidateAccumulatorCheckpoint(const CBlock& block, CBlockIndex* pindex, Acc
     if (!fVerifyingBlocks && pindex->nHeight >= Params().Zerocoin_StartHeight() && pindex->nHeight % 10 == 0) {
         uint256 nCheckpointCalculated = 0;
 
-        if (!CalculateAccumulatorCheckpoint(pindex->nHeight, nCheckpointCalculated)) {
+        if (!CalculateAccumulatorCheckpoint(pindex->nHeight, nCheckpointCalculated, mapAccumulators)) {
             return error("%s : failed to calculate accumulator checkpoint", __func__);
         }
 

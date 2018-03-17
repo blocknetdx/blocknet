@@ -17,7 +17,7 @@ bool GenerateAccumulatorWitness(const libzerocoin::PublicCoin &coin, libzerocoin
 bool GetAccumulatorValueFromDB(uint256 nCheckpoint, libzerocoin::CoinDenomination denom, CBigNum& bnAccValue);
 bool GetAccumulatorValueFromChecksum(uint32_t nChecksum, bool fMemoryOnly, CBigNum& bnAccValue);
 void AddAccumulatorChecksum(const uint32_t nChecksum, const CBigNum &bnValue, bool fMemoryOnly);
-bool CalculateAccumulatorCheckpoint(int nHeight, uint256& nCheckpoint);
+bool CalculateAccumulatorCheckpoint(int nHeight, uint256& nCheckpoint, AccumulatorMap& mapAccumulators);
 bool ValidateAccumulatorCheckpoint(const CBlock& block, CBlockIndex* pindex, AccumulatorMap& mapAccumulators);
 void DatabaseChecksums(AccumulatorMap& mapAccumulators);
 bool LoadAccumulatorValuesFromDB(const uint256 nCheckpoint);
