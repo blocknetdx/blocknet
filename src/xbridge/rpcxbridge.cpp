@@ -847,7 +847,7 @@ Value dxCancelOrder(const Array &params, bool fHelp)
 
     if (tx->state >= xbridge::TransactionDescr::trCreated)
     {
-        return util::makeError(xbridge::INVALID_STATE, __FUNCTION__);
+        return util::makeError(xbridge::INVALID_STATE, __FUNCTION__, "order is already " + tx->strState());
     }
 
     const auto res = xbridge::App::instance().cancelXBridgeTransaction(id, crRpcRequest);
