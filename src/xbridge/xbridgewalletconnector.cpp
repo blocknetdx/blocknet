@@ -94,7 +94,10 @@ bool WalletConnector::getUtxoEntriesForAmount(const uint64_t& amount, std::vecto
     getUnspent(outputs);
 
     if(outputs.empty())
+    {
+        LOG() << "outputs list are empty " << __FUNCTION__;
         return false;
+    }
 
     //sort entries from smaller to larger
     std::sort(outputs.begin(), outputs.end(),
@@ -161,7 +164,10 @@ bool WalletConnector::getUtxoEntriesForAmount(const uint64_t& amount, std::vecto
     if(!smallerOutputsLargerThanTarget)
     {
         if(greaterThanTargetOutput.empty())
+        {
+            LOG() << "can't make any list of utxo's " << __FUNCTION__;
             return false;
+        }
 
         entries = greaterThanTargetOutput;
         return true;
@@ -207,7 +213,10 @@ bool WalletConnector::getUtxoEntriesForAmount(const uint64_t& amount, std::vecto
 
 
     if(greaterThanTargetOutput.empty() && bestSmallerOutputsCombination.empty())
+    {
+        LOG() << "all strategy are fail to create utxo's list " << __FUNCTION__;
         return false;
+    }
     else if(greaterThanTargetOutput.empty())
         entries = bestSmallerOutputsCombination;
     else if(bestSmallerOutputsCombination.empty())
