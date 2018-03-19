@@ -894,44 +894,8 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
         return xbridge::Error::DUST;
     }
 
-    // check amount
-    std::vector<wallet::UtxoEntry> outputs;
-    connFrom->getUnspent(outputs);
-
-    uint64_t utxoAmount = 0;
-    uint64_t fee1       = 0;
-    uint64_t fee2       = connFrom->minTxFee2(1, 1) * TransactionDescr::COIN;
-
     std::vector<wallet::UtxoEntry> outputsForUse;
-    for (const wallet::UtxoEntry & entry : outputs)
-    {
-        utxoAmount += (entry.amount * TransactionDescr::COIN);
-        outputsForUse.push_back(entry);
-
-        fee1 = connFrom->minTxFee1(outputsForUse.size(), 3) * TransactionDescr::COIN;
-
-        LOG() << "using utxo item, id: <" << entry.txId << "> amount: " << entry.amount << " vout: " << entry.vout;
-
-        uint64_t fullAmount = fromAmount + fee1 + fee2;
-        if (utxoAmount > fullAmount)
-        {
-            // check change (rest)
-            if (connFrom->isDustAmount(static_cast<double>(utxoAmount - fullAmount) / TransactionDescr::COIN))
-            {
-                // change is dust, need more inputs
-                continue;
-            }
-
-            break;
-        }
-    }
-
-    LOG() << "fee1: " << (static_cast<double>(fee1) / TransactionDescr::COIN);
-    LOG() << "fee2: " << (static_cast<double>(fee2) / TransactionDescr::COIN);
-    LOG() << "amount of used utxo items: " << (static_cast<double>(utxoAmount) / TransactionDescr::COIN)
-          << " required amount + fees: " << (static_cast<double>(fromAmount + fee1 + fee2) / TransactionDescr::COIN);
-
-    if (utxoAmount < (fromAmount + fee1 + fee2))
+    if (connFrom->getUtxoEntriesForAmount(fromAmount, outputsForUse))
     {
         WARN() << "insufficient funds for <" << fromCurrency << "> " << __FUNCTION__;
         return xbridge::Error::INSIFFICIENT_FUNDS;
@@ -1154,40 +1118,11 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
         return xbridge::Error::DUST;
     }
 
-    // check amount
-    std::vector<wallet::UtxoEntry> outputs;
-    connFrom->getUnspent(outputs);
-
-    uint64_t utxoAmount = 0;
-    uint64_t fee1       = 0;
-    uint64_t fee2       = connFrom->minTxFee2(1, 1) * TransactionDescr::COIN;
-
     std::vector<wallet::UtxoEntry> outputsForUse;
-    for (const wallet::UtxoEntry & entry : outputs)
-    {
-        utxoAmount += (entry.amount * TransactionDescr::COIN);
-        outputsForUse.push_back(entry);
-
-        fee1 = connFrom->minTxFee1(outputsForUse.size(), 3) * TransactionDescr::COIN;
-
-        uint64_t fullAmount = ptr->fromAmount + fee1 + fee2;
-        if (utxoAmount > fullAmount)
-        {
-            // check change (rest)
-            if (connFrom->isDustAmount(static_cast<double>(utxoAmount - fullAmount) / TransactionDescr::COIN))
-            {
-                // change is dust, need more inputs
-                continue;
-            }
-
-            break;
-        }
-    }
-
-    if (utxoAmount < (ptr->fromAmount + fee1 + fee2))
+    if (connFrom->getUtxoEntriesForAmount(ptr->fromAmount, outputsForUse))
     {
         WARN() << "insufficient funds for <" << ptr->fromCurrency << "> " << __FUNCTION__;
-        return xbridge::INSIFFICIENT_FUNDS;
+        return xbridge::Error::INSIFFICIENT_FUNDS;
     }
 
     // sign used coins

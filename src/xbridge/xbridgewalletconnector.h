@@ -63,6 +63,7 @@ public:
 public:
     // helper functions
     bool hasValidAddressPrefix(const std::string & addr) const;
+    bool getUtxoEntriesForAmount(const uint64_t & amount, std::vector<wallet::UtxoEntry> & entries) const;
 
     virtual bool isDustAmount(const double & amount) const = 0;
 
@@ -72,8 +73,8 @@ public:
     virtual std::vector<unsigned char> getScriptId(const std::vector<unsigned char> & script) = 0;
     virtual std::string scriptIdToString(const std::vector<unsigned char> & id) const = 0;
 
-    virtual double minTxFee1(const uint32_t inputCount, const uint32_t outputCount) = 0;
-    virtual double minTxFee2(const uint32_t inputCount, const uint32_t outputCount) = 0;
+    virtual double minTxFee1(const uint32_t inputCount, const uint32_t outputCount) const = 0;
+    virtual double minTxFee2(const uint32_t inputCount, const uint32_t outputCount) const = 0;
 
     virtual bool checkTransaction(const std::string & depositTxId,
                                   const std::string & /*destination*/,
