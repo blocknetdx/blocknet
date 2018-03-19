@@ -260,6 +260,14 @@ bool Exchange::getUtxoItems(const uint256 & txid, std::vector<wallet::UtxoEntry>
 {
     boost::mutex::scoped_lock l(m_p->m_utxoLocker);
 
+    if(txid.IsNull())
+    {
+        for(const wallet::UtxoEntry & entry : m_p->m_utxoItems)
+            items.push_back(entry);
+
+        return true;
+    }
+
     if (m_p->m_utxoTxMap.count(txid))
     {
         for(const wallet::UtxoEntry & entry : m_p->m_utxoTxMap[txid])
