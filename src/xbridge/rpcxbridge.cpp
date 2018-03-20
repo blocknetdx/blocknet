@@ -1549,7 +1549,7 @@ Value dxGetLockedUtxos(const json_spirit::Array& params, bool fHelp)
     Object obj;
     if(id.IsNull())
     {
-        obj.emplace_back(Pair("List of all locked utxo's", utxo));
+        obj.emplace_back(Pair("all_locked_utxo", utxo));
 
         return obj;
     }
@@ -1571,7 +1571,7 @@ Value dxGetLockedUtxos(const json_spirit::Array& params, bool fHelp)
     if(pendingTx->isValid())
         obj.emplace_back(Pair(pendingTx->a_currency(), utxo));
     else if(acceptedTx->isValid())
-        obj.emplace_back(Pair(acceptedTx->a_currency() + " and " + acceptedTx->b_currency(), utxo));
+        obj.emplace_back(Pair(acceptedTx->a_currency() + "_and_" + acceptedTx->b_currency(), utxo));
 
     return obj;
 }
