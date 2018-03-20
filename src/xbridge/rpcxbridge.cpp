@@ -510,23 +510,21 @@ Value dxMakeOrder(const Array &params, bool fHelp)
     }
 
     if (!util::xBridgeValidCoin(params[1].get_str())) {
-        Object error;
-        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS,
-                      "maker size is too precise, maximum precision supported is " +
-                              std::to_string(util::xBridgeSignificantDigits(xbridge::TransactionDescr::COIN)) + " digits")));
-        error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
-        error.emplace_back(Pair("name",     __FUNCTION__));
-        return error;
+
+        return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "maker size is too precise, maximum precision supported is " +
+                               std::to_string(util::xBridgeSignificantDigits(xbridge::TransactionDescr::COIN)) +
+                               " digits");
+
     }
 
     if (!util::xBridgeValidCoin(params[4].get_str())) {
-        Object error;
-        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS,
-                      "taker size is too precise, maximum precision supported is " +
-                              std::to_string(util::xBridgeSignificantDigits(xbridge::TransactionDescr::COIN)) + " digits")));
-        error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
-        error.emplace_back(Pair("name",     __FUNCTION__));
-        return error;
+
+        return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "taker size is too precise, maximum precision supported is " +
+                               std::to_string(util::xBridgeSignificantDigits(xbridge::TransactionDescr::COIN)) +
+                               " digits");
+
     }
 
     std::string fromCurrency    = params[0].get_str();
@@ -832,8 +830,7 @@ Value dxCancelOrder(const Array &params, bool fHelp)
 
     if (params.size() != 1)
     {
-        return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "(id)");
+        return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, "(id)");
     }
 
     LOG() << "rpc cancel order " << __FUNCTION__;
@@ -1370,13 +1367,7 @@ json_spirit::Value dxGetMyOrders(const json_spirit::Array& params, bool fHelp)
 
     if (!params.empty()) {
 
-        Object error;
-        error.emplace_back(Pair("error",
-                                            xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS,
-                                                                      "This function does not accept any parameters")));
-        error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
-        error.emplace_back(Pair("name",     __FUNCTION__));
-        return  error;
+        return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, "This function does not accept any parameters");
 
     }
 
@@ -1465,13 +1456,8 @@ json_spirit::Value  dxGetTokenBalances(const json_spirit::Array& params, bool fH
 
     if (params.size() != 0) {
 
-        Object error;
-        error.emplace_back(Pair("error",
-                                            xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS,
-                                                                      "This function does not accept any parameters")));
-        error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
-        error.emplace_back(Pair("name",     __FUNCTION__));
-        return  error;
+        return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "This function does not accept any parameters");
 
     }
 
@@ -1506,23 +1492,17 @@ Value dxGetLockedUtxos(const json_spirit::Array& params, bool fHelp)
                             "Return list of locked utxo of an order.");
     }
 
-    if (params.size() != 1)
-    {
-        Object error;
-        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS, "requered transaction id")));
-        error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
-        error.emplace_back(Pair("name",     __FUNCTION__));
-        return error;
+    if (params.size() != 1) {
+
+        return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, "requered transaction id");
+
     }
 
     xbridge::Exchange & e = xbridge::Exchange::instance();
-    if (!e.isStarted())
-    {
-        Object error;
-        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::Error::NOT_EXCHANGE_NODE)));
-        error.emplace_back(Pair("code",     xbridge::Error::NOT_EXCHANGE_NODE));
-        error.emplace_back(Pair("name",     __FUNCTION__));
-        return error;
+    if (!e.isStarted()) {
+
+        return util::makeError(xbridge::NOT_EXCHANGE_NODE,__FUNCTION__);
+
     }
 
     uint256 id(params[0].get_str());
@@ -1530,39 +1510,40 @@ Value dxGetLockedUtxos(const json_spirit::Array& params, bool fHelp)
     xbridge::TransactionPtr pendingTx = e.pendingTransaction(id);
     xbridge::TransactionPtr acceptedTx = e.transaction(id);
 
-    if (!pendingTx->isValid() && !acceptedTx->isValid())
-    {
-        Object error;
-        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::Error::TRANSACTION_NOT_FOUND, id.GetHex())));
-        error.emplace_back(Pair("code",     xbridge::Error::TRANSACTION_NOT_FOUND));
-        error.emplace_back(Pair("name",     __FUNCTION__));
-        return error;
+    if (!pendingTx->isValid() && !acceptedTx->isValid()) {
+
+        return util::makeError(xbridge::TRANSACTION_NOT_FOUND, __FUNCTION__, id.ToString());
+
     }
 
     std::vector<xbridge::wallet::UtxoEntry> items;
 
-    if(!e.getUtxoItems(id, items))
-    {
+    if(!e.getUtxoItems(id, items)) {
 
-        Object error;
-        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::Error::TRANSACTION_NOT_FOUND, id.GetHex())));
-        error.emplace_back(Pair("code",     xbridge::Error::TRANSACTION_NOT_FOUND));
-        error.emplace_back(Pair("name",     __FUNCTION__));
-        return error;
+        return util::makeError(xbridge::TRANSACTION_NOT_FOUND, __FUNCTION__, id.ToString());
+
     }
 
     Array utxo;
 
-    for(const xbridge::wallet::UtxoEntry & entry : items)
+    for(const xbridge::wallet::UtxoEntry & entry : items) {
+
         utxo.emplace_back(entry.toString());
+
+    }
 
     Object obj;
     obj.emplace_back(Pair("id", id.GetHex()));
 
-    if(pendingTx->isValid())
+    if(pendingTx->isValid()){
+
         obj.emplace_back(Pair(pendingTx->a_currency(), utxo));
-    else if(acceptedTx->isValid())
+
+    } else if(acceptedTx->isValid()) {
+
         obj.emplace_back(Pair(acceptedTx->a_currency() + " and " + acceptedTx->b_currency(), utxo));
+
+    }
 
     return obj;
 }
