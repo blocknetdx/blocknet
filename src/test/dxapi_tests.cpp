@@ -17,17 +17,20 @@ BOOST_AUTO_TEST_SUITE(dxapi_tests)
 
 BOOST_AUTO_TEST_CASE(dx_get_local_tokens)
 {
-    BOOST_CHECK_THROW(CallRPC("dxGetLocalTokens"), runtime_error);
+    BOOST_CHECK_THROW(CallRPC("dxGetLocalTokens SYS LTC"), runtime_error);
+    BOOST_CHECK_NO_THROW(CallRPC("dxGetLocalTokens"));
 }
 
 BOOST_AUTO_TEST_CASE(dx_get_network_tokens)
 {
-    BOOST_CHECK_THROW(CallRPC("dxGetNetworkTokens"), runtime_error);
+    BOOST_CHECK_THROW(CallRPC("dxGetNetworkTokens SYS 1 []"), runtime_error);
+    BOOST_CHECK_NO_THROW(CallRPC("dxGetNetworkTokens"));
 }
 
 BOOST_AUTO_TEST_CASE(dx_get_token_balances)
 {
-    BOOST_CHECK_THROW(CallRPC("dxGetTokenBalances"), runtime_error);
+    BOOST_CHECK_THROW(CallRPC("dxGetTokenBalances txid"), runtime_error);
+    BOOST_CHECK_NO_THROW(CallRPC("dxGetTokenBalances"));
 }
 
 
