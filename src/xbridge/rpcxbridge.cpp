@@ -795,6 +795,7 @@ Value dxTakeOrder(const Array & params, bool fHelp)
 
     }
 
+    // TODO swap is destructive on state (also complicates historical data)
     std::swap(txDescr->fromCurrency, txDescr->toCurrency);
     std::swap(txDescr->fromAmount, txDescr->toAmount);
 
@@ -816,6 +817,9 @@ Value dxTakeOrder(const Array & params, bool fHelp)
         return result;
 
     } else {
+        // restore state on error
+        std::swap(txDescr->fromCurrency, txDescr->toCurrency);
+        std::swap(txDescr->fromAmount, txDescr->toAmount);
         return util::makeError(statusCode, __FUNCTION__);
     }
 }
