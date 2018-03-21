@@ -617,7 +617,7 @@ Value dxMakeOrder(const Array &params, bool fHelp)
 
     Object result;
     statusCode = app.checkCreateParams(fromCurrency, toCurrency,
-                                       util::xBridgeAmountFromReal(fromAmount));
+                                       util::xBridgeAmountFromReal(fromAmount), fromAddress);
     switch (statusCode) {
     case xbridge::SUCCESS:{
         // If dryrun
@@ -733,7 +733,7 @@ Value dxTakeOrder(const Array & params, bool fHelp)
 
     Object result;
     xbridge::TransactionDescrPtr txDescr;
-    statusCode = app.checkAcceptParams(id, txDescr);
+    statusCode = app.checkAcceptParams(id, txDescr, fromAddress);
 
     switch (statusCode)
     {
