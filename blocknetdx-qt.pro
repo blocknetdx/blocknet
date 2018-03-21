@@ -300,7 +300,10 @@ SOURCES += \
     src/xbridge/xbridgewalletconnectorbtc.cpp \
     src/xbridge/xbridgewalletconnectorbcc.cpp \
     src/xbridge/xbridgewalletconnectorsys.cpp \
-    src/xbridge/xbridgepacket.cpp
+    src/xbridge/xbridgepacket.cpp \
+    src/qt/proposalvotedialog.cpp \
+    src/qt/proposalvotemodel.cpp \
+    src/qt/proposalcreationdialog.cpp
 
 #protobuf generated
 SOURCES += \
@@ -590,7 +593,10 @@ HEADERS += \
     src/xbridge/xbridgewalletconnectorbtc.h \
     src/xbridge/xbridgewalletconnectorbcc.h \
     src/xbridge/xbridgedef.h \
-    src/xbridge/xbridgewalletconnectorsys.h
+    src/xbridge/xbridgewalletconnectorsys.h \
+    src/qt/proposalvotedialog.h \
+    src/qt/proposalvotemodel.h \
+    src/qt/proposalcreationdialog.h
 
 #ENABLE_ZMQ
 #    src/zmq/zmqabstractnotifier.h \
@@ -676,7 +682,9 @@ FORMS += \
     src/qt/forms/receivecoinsdialog.ui \
     src/qt/forms/receiverequestdialog.ui \
     src/qt/forms/servicenodelist.ui \
-    src/qt/forms/tradingdialog.ui
+    src/qt/forms/tradingdialog.ui \
+    src/qt/forms/proposalvotedialog.ui \
+    src/qt/forms/proposalcreationdialog.ui
 
 
 contains(USE_QRCODE, 1) {

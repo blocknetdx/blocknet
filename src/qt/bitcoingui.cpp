@@ -17,6 +17,8 @@
 #include "openuridialog.h"
 #include "optionsdialog.h"
 #include "optionsmodel.h"
+#include "proposalcreationdialog.h"
+#include "proposalvotedialog.h"
 #include "rpcconsole.h"
 #include "utilitydialog.h"
 #include "servicenode-sync.h"
@@ -446,6 +448,11 @@ void BitcoinGUI::createActions(const NetworkStyle* networkStyle)
     openBlockExplorerAction = new QAction(QIcon(":/icons/explorer"), tr("&Blockchain explorer"), this);
     openBlockExplorerAction->setStatusTip(tr("Block explorer window"));
 
+    openProposalCreationAction = new QAction(QIcon(":/icons/proposalcreation"), tr("&Proposal Creation"), this);
+    openProposalCreationAction->setStatusTip(tr("Open the Proposal Creation window"));
+    openProposalVotingAction = new QAction(QIcon(":/icons/proposalvoting"), tr("&Proposal Voting"), this);
+    openProposalVotingAction->setStatusTip(tr("Open the Proposal Voting window"));
+
     showHelpMessageAction = new QAction(QApplication::style()->standardIcon(QStyle::SP_MessageBoxInformation), tr("&Command-line options"), this);
     showHelpMessageAction->setMenuRole(QAction::NoRole);
     showHelpMessageAction->setStatusTip(tr("Show the BlocknetDX Core help message to get a list with possible BlocknetDX command-line options"));
@@ -456,6 +463,9 @@ void BitcoinGUI::createActions(const NetworkStyle* networkStyle)
     connect(optionsAction, SIGNAL(triggered()), this, SLOT(optionsClicked()));
     connect(toggleHideAction, SIGNAL(triggered()), this, SLOT(toggleHidden()));
     connect(showHelpMessageAction, SIGNAL(triggered()), this, SLOT(showHelpMessageClicked()));
+    connect(openProposalCreationAction, SIGNAL(triggered()), this, SLOT(proposalCreationClicked()));
+    connect(openProposalVotingAction, SIGNAL(triggered()), this, SLOT(proposalVoteClicked()));
+    //connect(proposalVoteDialog, SIGNAL(destroyed()), this, SLOT(proposalVoteDialogDestroyed()));
 #ifdef ENABLE_WALLET
     if (walletFrame) {
         connect(encryptWalletAction, SIGNAL(triggered(bool)), walletFrame, SLOT(encryptWallet(bool)));
@@ -522,6 +532,9 @@ void BitcoinGUI::createMenuBar()
         tools->addAction(openMNConfEditorAction);
         tools->addAction(showBackupsAction);
         tools->addAction(openBlockExplorerAction);
+        QMenu* proposals = tools->addMenu(QIcon(":/icons/proposals"), tr("&Proposals"));
+        proposals->addAction(openProposalCreationAction);
+        proposals->addAction(openProposalVotingAction);
     }
 
     QMenu* help = appMenuBar->addMenu(tr("&Help"));
@@ -731,6 +744,40 @@ void BitcoinGUI::optionsClicked()
     dlg.setModel(clientModel->getOptionsModel());
     dlg.exec();
 }
+
+
+void BitcoinGUI::proposalCreationClicked()
+{
+    // if (!clientModel || !clientModel->getOptionsModel())
+    //     return;
+
+    if (!proposalCreationActive)
+    {
+        if (!proposalCreationDialog)
+            proposalCreationDialog = new ProposalCreationDialog(this, enableWallet);
+        //dlg.setModel(clientModel->getOptionsModel());
+        proposalCreationActive = true;
+        proposalCreationDialog->show();
+    }
+}
+
+
+void BitcoinGUI::proposalVoteClicked()
+{
+    //static QWeakPointer<ProposalVoteDialog> dlg_;
+    // if (!clientModel || !clientModel->getOptionsModel())
+    //     return;
+
+    if (!proposalVoteActive)
+    {
+        if (!proposalVoteDialog)
+            proposalVoteDialog = new ProposalVoteDialog(this, enableWallet);
+        //dlg.setModel(clientModel->getOptionsModel());
+        proposalVoteActive = true;
+        proposalVoteDialog->show();
+    }
+}
+
 
 void BitcoinGUI::aboutClicked()
 {

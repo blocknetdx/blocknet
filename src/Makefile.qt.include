@@ -35,6 +35,8 @@ QT_FORMS_UI = \
   qt/forms/openuridialog.ui \
   qt/forms/optionsdialog.ui \
   qt/forms/overviewpage.ui \
+  qt/forms/proposalcreationdialog.ui \
+  qt/forms/proposalvotedialog.ui \
   qt/forms/receivecoinsdialog.ui \
   qt/forms/receiverequestdialog.ui \
   qt/forms/rpcconsole.ui \
@@ -72,6 +74,9 @@ QT_MOC_CPP = \
   qt/moc_overviewpage.cpp \
   qt/moc_peertablemodel.cpp \
   qt/moc_paymentserver.cpp \
+  qt/moc_proposalcreationdialog.cpp \
+  qt/moc_proposalvotedialog.cpp \
+  qt/moc_proposalvotemodel.cpp \
   qt/moc_qvalidatedlineedit.cpp \
   qt/moc_qvaluecombobox.cpp \
   qt/moc_receivecoinsdialog.cpp \
@@ -152,6 +157,9 @@ BITCOIN_QT_H = \
   qt/paymentserver.h \
   qt/peertablemodel.h \
   qt/platformstyle.h \
+  qt/proposalcreationdialog.h \
+  qt/proposalvotedialog.h \
+  qt/proposalvotemodel.h \
   qt/qvalidatedlineedit.h \
   qt/qvaluecombobox.h \
   qt/receivecoinsdialog.h \
@@ -241,7 +249,11 @@ RES_ICONS = \
   qt/res/icons/unit_ublocknetdx.png \
   qt/res/icons/unit_tblocknetdx.png \
   qt/res/icons/unit_tmblocknetdx.png \
-  qt/res/icons/unit_tublocknetdx.png
+  qt/res/icons/unit_tublocknetdx.png \
+  qt/res/icons/proposalvoting.png \
+  qt/res/icons/proposalcreation.png \
+  qt/res/icons/proposals.png
+
 
 BITCOIN_QT_CPP = \
   qt/bitcoinaddressvalidator.cpp \
@@ -260,6 +272,9 @@ BITCOIN_QT_CPP = \
   qt/optionsmodel.cpp \
   qt/peertablemodel.cpp \
   qt/platformstyle.cpp \
+  qt/proposalcreationdialog.cpp \
+  qt/proposalvotedialog.cpp \
+  qt/proposalvotemodel.cpp \
   qt/qvalidatedlineedit.cpp \
   qt/qvaluecombobox.cpp \
   qt/rpcconsole.cpp \

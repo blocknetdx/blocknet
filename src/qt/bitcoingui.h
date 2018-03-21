@@ -30,6 +30,8 @@ class UnitDisplayStatusBarControl;
 class WalletFrame;
 class WalletModel;
 class ServicenodeList;
+class ProposalCreationDialog;
+class ProposalVoteDialog;
 
 class CWallet;
 
@@ -69,6 +71,10 @@ public:
 #endif // ENABLE_WALLET
     bool enableWallet;
     bool fMultiSend = false;
+    bool proposalVoteActive = false;
+    bool proposalCreationActive = false;
+    ProposalCreationDialog* proposalCreationDialog=nullptr;
+    ProposalVoteDialog* proposalVoteDialog=nullptr;
 
 protected:
     void changeEvent(QEvent* e);
@@ -121,6 +127,8 @@ private:
     QAction* showBackupsAction;
     QAction* openAction;
     QAction* openBlockExplorerAction;
+    QAction* openProposalCreationAction;
+    QAction* openProposalVotingAction;
     QAction* showHelpMessageAction;
     QAction* multiSendAction;
     QAction * xbridgeAction;
@@ -225,6 +233,10 @@ private slots:
 #endif // ENABLE_WALLET
     /** Show configuration dialog */
     void optionsClicked();
+    void proposalCreationClicked();
+    void proposalVoteClicked();
+    //void proposalVoteDialogDestroyed();
+
     /** Show about dialog */
     void aboutClicked();
     /** Show help message dialog */
