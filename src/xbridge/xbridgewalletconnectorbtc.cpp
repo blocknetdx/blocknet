@@ -189,10 +189,7 @@ bool listaccounts(const std::string & rpcuser, const std::string & rpcpasswd,
         Object acclist = result.get_obj();
         for (auto nameval : acclist)
         {
-            if (!nameval.name_.empty())
-            {
-                accounts.push_back(nameval.name_);
-            }
+            accounts.push_back(nameval.name_);
         }
     }
     catch (std::exception & e)
@@ -1100,7 +1097,7 @@ bool BtcWalletConnector::requestAddressBook(std::vector<wallet::AddressBookEntry
         std::vector<std::string> addrs;
         if (rpc::getaddressesbyaccount(m_user, m_passwd, m_ip, m_port, account, addrs))
         {
-            entries.push_back(std::make_pair(account, addrs));
+            entries.emplace_back(account.empty() ? "_none" : account, addrs);
             // LOG() << acc << " - " << boost::algorithm::join(addrs, ",");
         }
     }

@@ -260,6 +260,14 @@ bool Exchange::getUtxoItems(const uint256 & txid, std::vector<wallet::UtxoEntry>
 {
     boost::mutex::scoped_lock l(m_p->m_utxoLocker);
 
+    if(txid.IsNull())
+    {
+        for(const wallet::UtxoEntry & entry : m_p->m_utxoItems)
+            items.push_back(entry);
+
+        return true;
+    }
+
     if (m_p->m_utxoTxMap.count(txid))
     {
         for(const wallet::UtxoEntry & entry : m_p->m_utxoTxMap[txid])
@@ -379,20 +387,7 @@ bool Exchange::createTransaction(const uint256                        & txid,
     }
 
     // add locked items
-    {
-        // check locked items
-        {
-            boost::mutex::scoped_lock l(m_p->m_utxoLocker);
-
-            for (const wallet::UtxoEntry & item : items)
-            {
-                m_p->m_utxoItems.insert(item);
-            }
-
-            // store tx data
-            m_p->m_utxoTxMap[txid] = items;
-        }
-    }
+    lockUtxos(txid, items);
 
     return true;
 }
@@ -497,20 +492,7 @@ bool Exchange::acceptTransaction(const uint256                        & txid,
     }
 
     // add locked items
-    {
-        // check locked items
-        {
-            boost::mutex::scoped_lock l(m_p->m_utxoLocker);
-
-            for (const wallet::UtxoEntry & item : items)
-            {
-                m_p->m_utxoItems.insert(item);
-            }
-
-            // store tx data
-            m_p->m_utxoTxMap[txid] = items;
-        }
-    }
+    lockUtxos(txid, items);
 
     return true;
 }
@@ -523,22 +505,13 @@ bool Exchange::deletePendingTransaction(const uint256 & id)
 
     LOG() << "delete pending transaction <" << id.GetHex() << ">";
 
+    // if there are any locked utxo's for this txid, unlock them
+    unlockUtxos(id);
+
     if (!m_p->m_pendingTransactions.count(id))
         return false;
 
     m_p->m_pendingTransactions.erase(id);
-
-    {
-        boost::mutex::scoped_lock l(m_p->m_utxoLocker);
-
-        if (m_p->m_utxoTxMap.count(id))
-        {
-            for (const wallet::UtxoEntry & item : m_p->m_utxoTxMap[id])
-                m_p->m_utxoItems.erase(item);
-
-            m_p->m_utxoTxMap.erase(id);
-        }
-    }
 
     return true;
 }
@@ -553,17 +526,8 @@ bool Exchange::deleteTransaction(const uint256 & txid)
 
     m_p->m_transactions.erase(txid);
 
-    {
-        boost::mutex::scoped_lock l(m_p->m_utxoLocker);
+    unlockUtxos(txid);
 
-        if (m_p->m_utxoTxMap.count(txid))
-        {
-            for (const wallet::UtxoEntry & item : m_p->m_utxoTxMap[txid])
-                m_p->m_utxoItems.erase(item);
-
-            m_p->m_utxoTxMap.erase(txid);
-        }
-    }
     return true;
 }
 
@@ -755,7 +719,7 @@ size_t Exchange::eraseExpiredTransactions()
     {
         TransactionPtr ptr = it->second;
 
-        boost::mutex::scoped_lock l(ptr->m_lock);
+        boost::mutex::scoped_lock l1(ptr->m_lock);
 
         if (ptr->isExpired() || ptr->isExpiredByBlockNumber())
         {
@@ -763,20 +727,13 @@ size_t Exchange::eraseExpiredTransactions()
 
             m_p->m_pendingTransactions.erase(it);
 
-            {
-                boost::mutex::scoped_lock l(m_p->m_utxoLocker);
-
-                if (m_p->m_utxoTxMap.count(ptr->id()))
-                {
-                    for (const wallet::UtxoEntry & item : m_p->m_utxoTxMap[ptr->id()])
-                        m_p->m_utxoItems.erase(item);
-
-                    m_p->m_utxoTxMap.erase(ptr->id());
-                }
-            }
+            unlockUtxos(ptr->id());
 
             ++result;
         }
+
+        if (m_p->m_pendingTransactions.empty())
+            break;
 
         ++it;
     }
@@ -785,6 +742,44 @@ size_t Exchange::eraseExpiredTransactions()
         LOG() << "deleted " << result << "  expired transactions";
 
     return result;
+}
+
+bool Exchange::lockUtxos(const uint256 &id, const std::vector<wallet::UtxoEntry> &items) {
+    if (items.empty())
+        return false;
+
+    boost::mutex::scoped_lock l(m_p->m_utxoLocker);
+    // use set to prevent overwriting utxo's from 'A' or 'B' role
+    std::set<wallet::UtxoEntry> utxoTxMapItems;
+    for (const wallet::UtxoEntry & item : m_p->m_utxoTxMap[id])
+        utxoTxMapItems.insert(item);
+
+    for (const wallet::UtxoEntry & item : items)
+    {
+        m_p->m_utxoItems.insert(item);
+        if (!utxoTxMapItems.count(item)) {
+            utxoTxMapItems.insert(item);
+            m_p->m_utxoTxMap[id].push_back(item);
+        }
+    }
+
+    return true;
+}
+
+bool Exchange::unlockUtxos(const uint256 &id) {
+    boost::mutex::scoped_lock l(m_p->m_utxoLocker);
+
+    if (m_p->m_utxoTxMap.count(id))
+    {
+        for (const wallet::UtxoEntry & item : m_p->m_utxoTxMap[id])
+            m_p->m_utxoItems.erase(item);
+
+        m_p->m_utxoTxMap.erase(id);
+    } else {
+        return false;
+    }
+
+    return true;
 }
 
 } // namespace xbridge
