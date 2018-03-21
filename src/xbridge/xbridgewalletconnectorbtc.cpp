@@ -41,21 +41,6 @@ Object CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
 
 //*****************************************************************************
 //*****************************************************************************
-struct WalletInfo
-{
-    double   relayFee;
-    uint32_t blocks;
-
-    WalletInfo()
-        : relayFee(0)
-        , blocks(0)
-    {
-
-    }
-};
-
-//*****************************************************************************
-//*****************************************************************************
 bool getinfo(const std::string & rpcuser, const std::string & rpcpasswd,
              const std::string & rpcip, const std::string & rpcport,
              WalletInfo & info)
@@ -1103,6 +1088,17 @@ bool BtcWalletConnector::requestAddressBook(std::vector<wallet::AddressBookEntry
             entries.push_back(std::make_pair(account, addrs));
             // LOG() << acc << " - " << boost::algorithm::join(addrs, ",");
         }
+    }
+
+    return true;
+}
+
+bool BtcWalletConnector::getInfo(rpc::WalletInfo & info) const
+{
+    if(rpc::getinfo(m_user, m_passwd, m_ip, m_port, info))
+    {
+        LOG() << "rpc::getinfo failed " << __FUNCTION__;
+        return false;
     }
 
     return true;
