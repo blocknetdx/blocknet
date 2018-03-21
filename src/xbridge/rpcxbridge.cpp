@@ -1531,14 +1531,13 @@ Value dxGetLockedUtxos(const json_spirit::Array& params, bool fHelp)
 
     obj.emplace_back(Pair("id", id.GetHex()));
 
-    if(pendingTx->isValid()){
-
+    if(pendingTx->isValid()) {
         obj.emplace_back(Pair(pendingTx->a_currency(), utxo));
-
-    else if(acceptedTx->isValid())
+    } else if(acceptedTx->isValid()) {
         obj.emplace_back(Pair(acceptedTx->a_currency() + "_and_" + acceptedTx->b_currency(), utxo));
-
     }
+
+
 
     return obj;
 }
