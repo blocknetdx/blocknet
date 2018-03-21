@@ -1506,10 +1506,10 @@ Value dxGetLockedUtxos(const json_spirit::Array& params, bool fHelp)
                             "Return list of locked utxo of an order.");
     }
 
-    if (params.size() != 1)
+    if (params.size() != 0 || params.size() != 1)
     {
         Object error;
-        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS, "requered transaction id")));
+        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS, "requered transaction id or empty param")));
         error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
         error.emplace_back(Pair("name",     __FUNCTION__));
         return error;
@@ -1525,22 +1525,12 @@ Value dxGetLockedUtxos(const json_spirit::Array& params, bool fHelp)
         return error;
     }
 
-    uint256 id(params[0].get_str());
+    uint256 id;
 
-    xbridge::TransactionPtr pendingTx = e.pendingTransaction(id);
-    xbridge::TransactionPtr acceptedTx = e.transaction(id);
-
-    if (!pendingTx->isValid() && !acceptedTx->isValid())
-    {
-        Object error;
-        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::Error::TRANSACTION_NOT_FOUND, id.GetHex())));
-        error.emplace_back(Pair("code",     xbridge::Error::TRANSACTION_NOT_FOUND));
-        error.emplace_back(Pair("name",     __FUNCTION__));
-        return error;
-    }
+    if(params.size() == 1)
+        id = uint256(params[0].get_str());
 
     std::vector<xbridge::wallet::UtxoEntry> items;
-
     if(!e.getUtxoItems(id, items))
     {
 
@@ -1557,12 +1547,31 @@ Value dxGetLockedUtxos(const json_spirit::Array& params, bool fHelp)
         utxo.emplace_back(entry.toString());
 
     Object obj;
+    if(id.IsNull())
+    {
+        obj.emplace_back(Pair("all_locked_utxo", utxo));
+
+        return obj;
+    }
+
+    xbridge::TransactionPtr pendingTx = e.pendingTransaction(id);
+    xbridge::TransactionPtr acceptedTx = e.transaction(id);
+
+    if (!pendingTx->isValid() && !acceptedTx->isValid())
+    {
+        Object error;
+        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::Error::TRANSACTION_NOT_FOUND, id.GetHex())));
+        error.emplace_back(Pair("code",     xbridge::Error::TRANSACTION_NOT_FOUND));
+        error.emplace_back(Pair("name",     __FUNCTION__));
+        return error;
+    }
+
     obj.emplace_back(Pair("id", id.GetHex()));
 
     if(pendingTx->isValid())
         obj.emplace_back(Pair(pendingTx->a_currency(), utxo));
     else if(acceptedTx->isValid())
-        obj.emplace_back(Pair(acceptedTx->a_currency() + " and " + acceptedTx->b_currency(), utxo));
+        obj.emplace_back(Pair(acceptedTx->a_currency() + "_and_" + acceptedTx->b_currency(), utxo));
 
     return obj;
 }
