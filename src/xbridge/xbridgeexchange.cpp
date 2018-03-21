@@ -763,7 +763,7 @@ size_t Exchange::eraseExpiredTransactions()
     {
         TransactionPtr ptr = it->second;
 
-        boost::mutex::scoped_lock l(ptr->m_lock);
+        boost::mutex::scoped_lock l1(ptr->m_lock);
 
         if (ptr->isExpired() || ptr->isExpiredByBlockNumber())
         {
@@ -772,7 +772,7 @@ size_t Exchange::eraseExpiredTransactions()
             m_p->m_pendingTransactions.erase(it);
 
             {
-                boost::mutex::scoped_lock l(m_p->m_utxoLocker);
+                boost::mutex::scoped_lock l2(m_p->m_utxoLocker);
 
                 if (m_p->m_utxoTxMap.count(ptr->id()))
                 {
@@ -785,6 +785,9 @@ size_t Exchange::eraseExpiredTransactions()
 
             ++result;
         }
+
+        if (m_p->m_pendingTransactions.empty())
+            break;
 
         ++it;
     }
