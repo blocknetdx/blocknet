@@ -54,4 +54,11 @@ BOOST_AUTO_TEST_CASE(dx_take_order)
     BOOST_CHECK_NO_THROW(CallRPC("dxTakeOrder 5eed087e8ef3b3c91a5c6e302d1f8b037543a40beb5d69a3158be4a5181608cb LZwAVhrTUkYspqRjcCGGiFHMcWNxxsgnqP  1NDqZ7piDqyDhNveWS48kDSwPdyJLEEcCp"));
 }
 
+BOOST_AUTO_TEST_CASE(dx_get_my_orders)
+{
+    BOOST_CHECK_THROW(CallRPC("dxGetMyOrders txid"), runtime_error);
+    BOOST_CHECK_NO_THROW(CallRPC("dxGetMyOrders"));
+}
+
+
 BOOST_AUTO_TEST_SUITE_END()
