@@ -3,7 +3,6 @@ Phore Core integration/staging repository
 
 Phore is a cutting edge cryptocurrency, with many features not available in most other cryptocurrencies.
 - Anonymized transactions using zerocoin technology.
-- Fast transactions featuring guaranteed zero confirmation transactions, we call it _SwiftTX_.
 - Masternode technology used to secure the network and provide the above features, each Masternode is secured
   with collateral of 10K PHR
 
