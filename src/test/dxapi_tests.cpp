@@ -33,5 +33,13 @@ BOOST_AUTO_TEST_CASE(dx_get_token_balances)
     BOOST_CHECK_NO_THROW(CallRPC("dxGetTokenBalances"));
 }
 
+BOOST_AUTO_TEST_CASE(dx_make_order)
+{
+    BOOST_CHECK_THROW(CallRPC("dxMakeOrder SYS LTC "), runtime_error);
+    BOOST_CHECK_THROW(CallRPC("dxMakeOrder SYS 1 LTC 1 dryrun "), runtime_error);
+    BOOST_CHECK_THROW(CallRPC("dxMakeOrder SYS LTC "), runtime_error);
+    BOOST_CHECK_NO_THROW(CallRPC("dxMakeOrder SYS 1NDqZ7piDqyDhNveWS48kDSwPdyJLEEcCp 1 LTC LZwAVhrTUkYspqRjcCGGiFHMcWNxxsgnqP 0.01 "));
+    BOOST_CHECK_NO_THROW(CallRPC("dxMakeOrder SYS 1NDqZ7piDqyDhNveWS48kDSwPdyJLEEcCp 2 LTC LZwAVhrTUkYspqRjcCGGiFHMcWNxxsgnqP 0.02 dryrun"));
+}
 
 BOOST_AUTO_TEST_SUITE_END()
