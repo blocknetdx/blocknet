@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE(dx_get_order_book)
     BOOST_CHECK_NO_THROW(CallRPC("dxGetOrderBook 2 LTC SYS "));
     BOOST_CHECK_NO_THROW(CallRPC("dxGetOrderBook 3 LTC SYS 50 "));
     BOOST_CHECK_NO_THROW(CallRPC("dxGetOrderBook 4 LTC SYS "));
-    BOOST_CHECK_NO_THROW(CallRPC("dxGetOrderBook LTC SYS false"));
+    BOOST_CHECK_THROW(CallRPC("dxGetOrderBook LTC SYS false"));
     BOOST_CHECK_THROW(CallRPC("dxGetOrderBook -1 LTC SYS no_bool"), runtime_error);
     BOOST_CHECK_THROW(CallRPC("dxGetOrderBook 1 LTC SYS -1"), runtime_error);
     BOOST_CHECK_THROW(CallRPC("dxGetOrderBook SYS LTC"), runtime_error);
