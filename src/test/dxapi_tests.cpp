@@ -67,4 +67,12 @@ BOOST_AUTO_TEST_CASE(dx_cancel_order)
     BOOST_CHECK_THROW(CallRPC("dxCancelOrder 06cdb308781f2729052d9d2ed4ee2ea1ee5ad0d4ef9c978796d49826868a5965"), runtime_error);
 }
 
+BOOST_AUTO_TEST_CASE(dx_get_order)
+{
+    BOOST_CHECK_THROW(CallRPC("dxGetOrder txid"), runtime_error);
+    BOOST_CHECK_THROW(CallRPC("dxGetOrder"), runtime_error);
+    BOOST_CHECK_THROW(CallRPC("dxGetOrder 01cdb308781f2729052d9d2ed4ee2ea1ee5ad0d4ef9c978796d49826868a6559"), runtime_error);
+    BOOST_CHECK_THROW(CallRPC("dxGetOrder 01cdb308781f2729052d926868a6559"), runtime_error);
+}
+
 BOOST_AUTO_TEST_SUITE_END()
