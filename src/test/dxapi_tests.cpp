@@ -75,4 +75,15 @@ BOOST_AUTO_TEST_CASE(dx_get_order)
     BOOST_CHECK_THROW(CallRPC("dxGetOrder 01cdb308781f2729052d926868a6559"), runtime_error);
 }
 
+
+BOOST_AUTO_TEST_CASE(dx_get_order_fills)
+{
+    BOOST_CHECK_NO_THROW(CallRPC("dxGetOrderFills LTC SYS"));
+    BOOST_CHECK_NO_THROW(CallRPC("dxGetOrderFills LTC SYS true"));
+    BOOST_CHECK_NO_THROW(CallRPC("dxGetOrderFills LTC SYS false"));
+    BOOST_CHECK_THROW(CallRPC("dxGetOrderFills LTC SYS no_bool"), runtime_error);
+    BOOST_CHECK_THROW(CallRPC("dxGetOrderFills LTC SYS 1"), runtime_error);
+    BOOST_CHECK_THROW(CallRPC("dxGetOrderFills 01cdb308781f2729052d926868a6559"), runtime_error);
+}
+
 BOOST_AUTO_TEST_SUITE_END()
