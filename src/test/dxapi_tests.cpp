@@ -99,4 +99,11 @@ BOOST_AUTO_TEST_CASE(dx_get_order_book)
     BOOST_CHECK_THROW(CallRPC("dxGetOrderBook SYS LTC"), runtime_error);
 }
 
+BOOST_AUTO_TEST_CASE(dx_get_locked_utxos)
+{
+	BOOST_CHECK_NO_THROW(CallRPC("dxGetLockedUtxos 01cdb308781f2729052d9d2ed4ee2ea1ee5ad0d4ef9c978796d49826868a6559"));
+	BOOST_CHECK_THROW(CallRPC("dxGetLockedUtxos uint256()"), runtime_error);
+	BOOST_CHECK_THROW(CallRPC("dxGetLockedUtxos 01cdb308781f978796d49826868a6559"), runtime_error);
+}
+
 BOOST_AUTO_TEST_SUITE_END()
