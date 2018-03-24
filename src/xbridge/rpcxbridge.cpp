@@ -510,23 +510,21 @@ Value dxMakeOrder(const Array &params, bool fHelp)
     }
 
     if (!util::xBridgeValidCoin(params[1].get_str())) {
-        Object error;
-        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS,
-                      "maker size is too precise, maximum precision supported is " +
-                              std::to_string(util::xBridgeSignificantDigits(xbridge::TransactionDescr::COIN)) + " digits")));
-        error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
-        error.emplace_back(Pair("name",     __FUNCTION__));
-        return error;
+
+        return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "maker size is too precise, maximum precision supported is " +
+                               std::to_string(util::xBridgeSignificantDigits(xbridge::TransactionDescr::COIN)) +
+                               " digits");
+
     }
 
     if (!util::xBridgeValidCoin(params[4].get_str())) {
-        Object error;
-        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS,
-                      "taker size is too precise, maximum precision supported is " +
-                              std::to_string(util::xBridgeSignificantDigits(xbridge::TransactionDescr::COIN)) + " digits")));
-        error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
-        error.emplace_back(Pair("name",     __FUNCTION__));
-        return error;
+
+        return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "taker size is too precise, maximum precision supported is " +
+                               std::to_string(util::xBridgeSignificantDigits(xbridge::TransactionDescr::COIN)) +
+                               " digits");
+
     }
 
     std::string fromCurrency    = params[0].get_str();
@@ -836,8 +834,7 @@ Value dxCancelOrder(const Array &params, bool fHelp)
 
     if (params.size() != 1)
     {
-        return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "(id)");
+        return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, "(id)");
     }
 
     LOG() << "rpc cancel order " << __FUNCTION__;
@@ -1100,28 +1097,31 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 {
                     const auto &tr = a.second;
 
-                    if(tr == nullptr)
+                    if(tr == nullptr) {
                         return false;
+                    }
 
                     const auto price = util::price(tr);
 
                     const auto &bestTr = asksItem->second;
-                    if (bestTr != nullptr)
-                    {
+                    if (bestTr != nullptr) {
+
                         const auto bestAskPrice = util::price(bestTr);
                         return floatCompare(price, bestAskPrice);
+
                     }
 
                     return false;
                 });
 
                 const auto &tr = asksItem->second;
-                if (tr != nullptr)
-                {
+                if (tr != nullptr) {
+
                     const auto askPrice = util::price(tr);
                     asks.emplace_back(Array{util::xBridgeStringValueFromPrice(askPrice),
                                             util::xBridgeStringValueFromAmount(tr->fromAmount),
                                             static_cast<int64_t>(asksCount)});
+
                 }
             }
 
@@ -1138,8 +1138,7 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
              */
             auto bound = std::min(maxOrders, bidsVector.size());
 
-            for (size_t i = 0; i < bound; i++)
-            {
+            for (size_t i = 0; i < bound; i++) {
                 if(bidsVector[i] == nullptr)
                     continue;
 
@@ -1147,56 +1146,58 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 //calculate bids and push to array
                 const auto bidAmount    = bidsVector[i]->toAmount;
                 const auto bidPrice     = util::priceBid(bidsVector[i]);
-                const auto bidSize      = util::xBridgeStringValueFromAmount(bidAmount);
+                auto bidSize      = (bidAmount);
                 const auto bidsCount    = std::count_if(bidsList.begin(), bidsList.end(),
-                                                     [bidPrice, floatCompare](const TransactionPair &a)
-                {
+                                                        [bidPrice, floatCompare]
+                                                        (const TransactionPair &a) {
+
                     const auto &tr = a.second;
-
-                    if(tr == nullptr)
-                        return false;
-
                     const auto price = util::priceBid(tr);
-
                     return floatCompare(price, bidPrice);
+
                 });
 
+
+                //array sorted by bid price, we can to skip the transactions with equals bid price
+                while((++i < bound) && floatCompare(util::priceBid(bidsVector[i]), bidPrice)) {
+                    bidSize += bidsVector[i]->toAmount;
+                }
+
                 bid.emplace_back(util::xBridgeStringValueFromPrice(bidPrice));
-                bid.emplace_back(bidSize);
-                bid.emplace_back((int64_t)bidsCount);
+                bid.emplace_back(util::xBridgeStringValueFromAmount(bidSize));
+                bid.emplace_back(static_cast<int64_t>(bidsCount));
 
                 bids.emplace_back(bid);
             }
 
             bound = std::min(maxOrders, asksVector.size());
 
-            for (size_t i = 0; i < bound; i++)
-            {
+            for (size_t i = 0; i < bound; i++) {
+
                 if(asksVector[i] == nullptr)
                     continue;
-
                 Array ask;
                 //calculate asks and push to array
-                const auto bidAmount    = asksVector[i]->fromAmount;
+                const auto askAmount    = asksVector[i]->fromAmount;
                 const auto askPrice     = util::price(asksVector[i]);
-                const auto bidSize      = util::xBridgeStringValueFromAmount(bidAmount);
+                auto askSize            = askAmount;
                 const auto asksCount    = std::count_if(asksList.begin(), asksList.end(),
-                                                     [askPrice, floatCompare](const TransactionPair &a)
-                {
+                                                        [askPrice, floatCompare]
+                                                        (const TransactionPair &a) {
                     const auto &tr = a.second;
-
-                    if(tr == nullptr)
-                        return false;
-
                     const auto price = util::price(tr);
-
                     return floatCompare(price, askPrice);
+
                 });
 
-                ask.emplace_back(util::xBridgeStringValueFromPrice(askPrice));
-                ask.emplace_back(bidSize);
-                ask.emplace_back(static_cast<int64_t>(asksCount));
 
+                //array sorted by price, we can to skip the transactions with equals price
+                while((++i < bound) && floatCompare(util::price(asksVector[i]), askPrice)){
+                    askSize += asksVector[i]->fromAmount;
+                }
+                ask.emplace_back(util::xBridgeStringValueFromPrice(askPrice));
+                ask.emplace_back(util::xBridgeStringValueFromAmount(askSize));
+                ask.emplace_back(static_cast<int64_t>(asksCount));
                 asks.emplace_back(ask);
             }
 
@@ -1209,10 +1210,7 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
             //Full order book (non aggregated)
             auto bound = std::min(maxOrders, bidsVector.size());
 
-            for (size_t i = 0; i < bound; i++)
-            {
-                if(bidsVector[i] == nullptr)
-                    continue;
+            for (size_t i = 0; i < bound; i++) {
 
                 Array bid;
                 const auto bidAmount   = bidsVector[i]->toAmount;
@@ -1220,16 +1218,13 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 bid.emplace_back(util::xBridgeStringValueFromPrice(bidPrice));
                 bid.emplace_back(util::xBridgeStringValueFromAmount(bidAmount));
                 bid.emplace_back(bidsVector[i]->id.GetHex());
-
                 bids.emplace_back(bid);
+
             }
 
             bound = std::min(maxOrders, asksVector.size());
 
-            for (size_t i = 0; i < bound; i++)
-            {
-                if(asksVector[i] == nullptr)
-                    continue;
+            for (size_t i = 0; i < bound; i++) {
 
                 Array ask;
                 const auto bidAmount    = asksVector[i]->fromAmount;
@@ -1237,8 +1232,8 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 ask.emplace_back(util::xBridgeStringValueFromPrice(askPrice));
                 ask.emplace_back(util::xBridgeStringValueFromAmount(bidAmount));
                 ask.emplace_back(asksVector[i]->id.GetHex());
-
                 asks.emplace_back(ask);
+
             }
 
             res.emplace_back(Pair("asks", asks));
@@ -1255,65 +1250,46 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                     //find transaction with best bids
                     const auto &tr1 = a.second;
                     const auto &tr2 = b.second;
-
-                    if(tr1 == nullptr)
-                        return true;
-
-                    if(tr2 == nullptr)
-                        return false;
-
                     const auto priceA = util::priceBid(tr1);
                     const auto priceB = util::priceBid(tr2);
-
                     return priceA < priceB;
+
                 });
 
                 const auto &tr = bidsItem->second;
-                if (tr != nullptr)
+                const auto bidPrice = util::priceBid(tr);
+                bids.emplace_back(util::xBridgeStringValueFromPrice(bidPrice));
+                bids.emplace_back(util::xBridgeStringValueFromAmount(tr->toAmount));
+
+                Array bidsIds;
+                bidsIds.emplace_back(tr->id.GetHex());
+
+                for(const TransactionPair &tp : bidsList)
                 {
-                    const auto bidPrice = util::priceBid(tr);
-                    bids.emplace_back(util::xBridgeStringValueFromPrice(bidPrice));
-                    bids.emplace_back(util::xBridgeStringValueFromAmount(tr->toAmount));
+                    const auto &otherTr = tp.second;
 
-                    Array bidsIds;
-                    bidsIds.emplace_back(tr->id.GetHex());
+                    if(tr->id == otherTr->id)
+                        continue;
 
-                    for(const TransactionPair &tp : bidsList)
-                    {
-                        const auto &otherTr = tp.second;
+                    const auto otherTrBidPrice = util::priceBid(otherTr);
 
-                        if(otherTr == nullptr)
-                            continue;
+                    if(!floatCompare(bidPrice, otherTrBidPrice))
+                        continue;
 
-                        if(tr->id == otherTr->id)
-                            continue;
-
-                        const auto otherTrBidPrice = util::priceBid(otherTr);
-
-                        if(!floatCompare(bidPrice, otherTrBidPrice))
-                            continue;
-
-                        bidsIds.emplace_back(otherTr->id.GetHex());
-                    }
-
-                    bids.emplace_back(bidsIds);
+                    bidsIds.emplace_back(otherTr->id.GetHex());
                 }
+
+                bids.emplace_back(bidsIds);
+
             }
 
             if (!asksList.empty()) {
                 const auto asksItem = std::min_element(asksList.begin(), asksList.end(),
-                                                   [](const TransactionPair &a, const TransactionPair &b)
+                                                       [](const TransactionPair &a, const TransactionPair &b)
                 {
                     //find transactions with best asks
                     const auto &tr1 = a.second;
                     const auto &tr2 = b.second;
-
-                    if(tr1 == nullptr)
-                        return true;
-
-                    if(tr2 == nullptr)
-                        return false;
-
                     const auto priceA = util::price(tr1);
                     const auto priceB = util::price(tr2);
                     return priceA < priceB;
@@ -1374,13 +1350,7 @@ json_spirit::Value dxGetMyOrders(const json_spirit::Array& params, bool fHelp)
 
     if (!params.empty()) {
 
-        Object error;
-        error.emplace_back(Pair("error",
-                                            xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS,
-                                                                      "This function does not accept any parameters")));
-        error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
-        error.emplace_back(Pair("name",     __FUNCTION__));
-        return  error;
+        return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, "This function does not accept any parameters");
 
     }
 
@@ -1469,13 +1439,8 @@ json_spirit::Value  dxGetTokenBalances(const json_spirit::Array& params, bool fH
 
     if (params.size() != 0) {
 
-        Object error;
-        error.emplace_back(Pair("error",
-                                            xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS,
-                                                                      "This function does not accept any parameters")));
-        error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
-        error.emplace_back(Pair("name",     __FUNCTION__));
-        return  error;
+        return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "This function does not accept any parameters");
 
     }
 
@@ -1510,6 +1475,7 @@ Value dxGetLockedUtxos(const json_spirit::Array& params, bool fHelp)
                             "Return list of locked utxo of an order.");
     }
 
+
     if (params.size() != 0 || params.size() != 1)
     {
         Object error;
@@ -1520,19 +1486,17 @@ Value dxGetLockedUtxos(const json_spirit::Array& params, bool fHelp)
     }
 
     xbridge::Exchange & e = xbridge::Exchange::instance();
-    if (!e.isStarted())
-    {
-        Object error;
-        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::Error::NOT_EXCHANGE_NODE)));
-        error.emplace_back(Pair("code",     xbridge::Error::NOT_EXCHANGE_NODE));
-        error.emplace_back(Pair("name",     __FUNCTION__));
-        return error;
+    if (!e.isStarted()) {
+
+        return util::makeError(xbridge::NOT_EXCHANGE_NODE,__FUNCTION__);
+
     }
 
     uint256 id;
 
     if(params.size() == 1)
         id = uint256(params[0].get_str());
+
 
     std::vector<xbridge::wallet::UtxoEntry> items;
     if(!e.getUtxoItems(id, items))
@@ -1546,6 +1510,7 @@ Value dxGetLockedUtxos(const json_spirit::Array& params, bool fHelp)
     }
 
     Array utxo;
+
 
     for(const xbridge::wallet::UtxoEntry & entry : items)
         utxo.emplace_back(entry.toString());
@@ -1572,10 +1537,13 @@ Value dxGetLockedUtxos(const json_spirit::Array& params, bool fHelp)
 
     obj.emplace_back(Pair("id", id.GetHex()));
 
-    if(pendingTx->isValid())
+    if(pendingTx->isValid()) {
         obj.emplace_back(Pair(pendingTx->a_currency(), utxo));
-    else if(acceptedTx->isValid())
+    } else if(acceptedTx->isValid()) {
         obj.emplace_back(Pair(acceptedTx->a_currency() + "_and_" + acceptedTx->b_currency(), utxo));
+    }
+
+
 
     return obj;
 }
