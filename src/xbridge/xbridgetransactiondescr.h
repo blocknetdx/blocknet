@@ -155,11 +155,19 @@ struct TransactionDescr
         copyFrom(d);
     }
 
+
+    /**
+     * @brief updateTimestamp
+     */
     void updateTimestamp()
     {
         txtime       = boost::posix_time::microsec_clock::universal_time();
     }
 
+    /**
+     * @brief updateTimestamp
+     * @param d
+     */
     void updateTimestamp(const TransactionDescr & d)
     {
         txtime       = boost::posix_time::microsec_clock::universal_time();
@@ -169,12 +177,20 @@ struct TransactionDescr
         }
     }
 
+    /**
+     * @brief isLocal
+     * @return
+     */
     bool isLocal() const
     {
         // must have from and to addresses
         return from.size() != 0 && to.size() != 0;
     }
 
+    /**
+     * @brief strState
+     * @return
+     */
     std::string strState() const
     {
         switch (state)
@@ -198,6 +214,10 @@ struct TransactionDescr
     }
 
 private:
+    /**
+     * @brief copyFrom
+     * @param d
+     */
     void copyFrom(const TransactionDescr & d)
     {
         id           = d.id;

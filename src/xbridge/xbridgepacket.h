@@ -302,20 +302,54 @@ public:
         // return crcField();
     }
 
+    /**
+     * @brief version
+     * @return packet version
+     */
     uint32_t version() const                { return versionField(); }
 
+    /**
+     * @brief command
+     * @return a cammand contains in packet
+     */
     XBridgeCommand  command() const         { return static_cast<XBridgeCommand>(commandField()); }
 
+    /**
+     * @brief pubkey
+     * @return a public key contains in packet
+     */
     const unsigned char * pubkey() const    { return pubkeyField(); }
-    const unsigned char * signature() const { return signatureField(); }
+    /**
+     * @brief signature
+     * @return a packet signature
+     */
+    const unsigned char *signature() const { return signatureField(); }
 
+    /**
+     * @brief alloc - allocated memory for packet
+     */
     void    alloc()                         { m_body.resize(headerSize + size()); }
 
-    const std::vector<unsigned char> & body() const
-                                            { return m_body; }
+    /**
+     * @brief body
+     * @return a body of packet
+     */
+    const std::vector<unsigned char> & body() const { return m_body; }
+    /**
+     * @brief header
+     * @return  a header of packet
+     */
     unsigned char  * header()               { return &m_body[0]; }
+    /**
+     * @brief data
+     * @return a data contains in packet
+     */
     unsigned char  * data()                 { return &m_body[headerSize]; }
 
+
+    /**
+     * @brief clear - reset packet data
+     */
     void    clear()
     {
         m_body.resize(headerSize);
@@ -327,13 +361,21 @@ public:
         // crcField() = 0;
     }
 
+    /**
+     * @brief resize - allocated memory for new packet size
+     * @param size - new packet size
+     */
     void resize(const uint32_t size)
     {
-        m_body.resize(size+headerSize);
+        m_body.resize(size + headerSize);
         sizeField() = size;
-        __oldSizeField() = sizeField()+__headerDifference;
+        __oldSizeField() = sizeField() + __headerDifference;
     }
 
+    /**
+     * @brief setData - set packet data
+     * @param data
+     */
     void    setData(const unsigned char data)
     {
         m_body.resize(sizeof(data) + headerSize);
@@ -492,9 +534,24 @@ public:
         return *this;
     }
 
+    /**
+     * @brief sign - signs the packet
+     * @param pubkey - public key
+     * @param privkey - private key
+     * @return true, if packet signed successful
+     */
     bool sign(const std::vector<unsigned char> & pubkey,
               const std::vector<unsigned char> & privkey);
+    /**
+     * @brief verify - verify signature of packet
+     * @return true, if verification success
+     */
     bool verify();
+    /**
+     * @brief verify -  verify signature and pubkey
+     * @param pubkey
+     * @return true, if verification success
+     */
     bool verify(const std::vector<unsigned char> & pubkey);
 
 private:

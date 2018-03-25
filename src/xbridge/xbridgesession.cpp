@@ -64,64 +64,215 @@ struct PrintErrorCode
 
 //*****************************************************************************
 //*****************************************************************************
+/**
+ * @brief The Session::Impl class
+ */
 class Session::Impl
 {
     friend class Session;
 
 protected:
+    /**
+     * @brief init - init cammand handlers on server side, client side and common handlers
+     */
     void init();
 
 protected:
+    /**
+     * @brief sendPacket - send packet to specified address
+     * @param to - receiver address
+     * @param packet
+     */
     void sendPacket(const std::vector<unsigned char> & to, const XBridgePacketPtr & packet);
+    /**
+     * @brief sendPacketBroadcast - send packet to network broadcast
+     * @param packet
+     */
     void sendPacketBroadcast(XBridgePacketPtr packet);
 
-    // return true if packet not for me, relayed
+    //
+    /**
+     * @brief checkPacketAddress
+     * @param packet
+     * @return  return true if packet for me and need to process
+     */
     bool checkPacketAddress(XBridgePacketPtr packet);
 
-    // fn search xaddress in transaction and restore full 'coin' address as string
+    // fn
+    /**
+     * @brief isAddressInTransaction  search xaddress in transaction and restore full 'coin' address as string
+     * @param address
+     * @param tx
+     * @return
+     */
     bool isAddressInTransaction(const std::vector<unsigned char> & address,
                                 const TransactionPtr & tx);
 
 protected:
+    /**
+     * @brief encryptPacket
+     * @param packet
+     * @return
+     */
     bool encryptPacket(XBridgePacketPtr packet);
+    /**
+     * @brief decryptPacket
+     * @param packet
+     * @return
+     */
     bool decryptPacket(XBridgePacketPtr packet);
 
 protected:
+    /**
+     * @brief processInvalid
+     * @param packet
+     * @return
+     */
     bool processInvalid(XBridgePacketPtr packet);
+    /**
+     * @brief processZero
+     * @param packet
+     * @return
+     */
     bool processZero(XBridgePacketPtr packet);
+    /**
+     * @brief processXChatMessage
+     * @param packet
+     * @return
+     */
     bool processXChatMessage(XBridgePacketPtr packet);
 
+    /**
+     * @brief processTransaction
+     * @param packet
+     * @return
+     */
     bool processTransaction(XBridgePacketPtr packet);
+    /**
+     * @brief processPendingTransaction - processing of received pending transactions
+     * @param packet
+     * @return true, if transaction processing success
+     */
     bool processPendingTransaction(XBridgePacketPtr packet);
+    /**
+     * @brief processTransactionAccepting - check and process packet if bridge is exchange
+     * process accepting command
+     * @param packet
+     * @return true, if transaction processing success
+     */
     bool processTransactionAccepting(XBridgePacketPtr packet);
 
+    /**
+     * @brief processTransactionHold - check and process packet with xbridgeTransactionHold command
+     * @param packet
+     * @return true, if transaction processing success
+     */
     bool processTransactionHold(XBridgePacketPtr packet);
+    /**
+     * @brief processTransactionHoldApply - check and process packet with xbridgeTransactionHoldApply command
+     * @param packet
+     * @return true, if transaction processing success
+     */
     bool processTransactionHoldApply(XBridgePacketPtr packet);
 
+    /**
+     * @brief processTransactionInit - check and process packet with xbridgeTransactionInit command
+     * @param packet
+     * @return true, if transaction processing success
+     */
     bool processTransactionInit(XBridgePacketPtr packet);
+    /**
+     * @brief processTransactionInitialized - check and process packet with xbridgeTransactionInitialized command
+     * @param packet
+     * @return true, if transaction processing success
+     */
     bool processTransactionInitialized(XBridgePacketPtr packet);
 
+    /**
+     * @brief processTransactionCreate - check and process packet with xbridgeTransactionCreate command
+     * @param packet
+     * @return true, if transaction processing success
+     */
     bool processTransactionCreate(XBridgePacketPtr packet);
+    /**
+     * @brief processTransactionCreatedA - check and process packet with xbridgeTransactionCreateA command
+     * @param packet
+     * @return true, if transaction processing success
+     */
     bool processTransactionCreatedA(XBridgePacketPtr packet);
+    /**
+     * @brief processTransactionCreatedB - check and process packet with xbridgeTransactionCreateB command
+     * @param packet
+     * @return true, if transaction processing success
+     */
     bool processTransactionCreatedB(XBridgePacketPtr packet);
 
+    /**
+     * @brief processTransactionConfirmA - check and process packet with xbridgeTransactionConfirmA command
+     * @param packet
+     * @return true, if transaction processing success
+     */
     bool processTransactionConfirmA(XBridgePacketPtr packet);
+    /**
+     * @brief processTransactionConfirmedA - check and process packet with xbridgeTransactionConfirmedA command
+     * @param packet
+     * @return true, if transaction processing success
+     */
     bool processTransactionConfirmedA(XBridgePacketPtr packet);
 
+    /**
+     * @brief processTransactionConfirmB - check and process packet with xbridgeTransactionConfirmB command
+     * @param packet
+     * @return true, if transaction processing success
+     */
     bool processTransactionConfirmB(XBridgePacketPtr packet);
+    /**
+     * @brief processTransactionConfirmedB - check and process packet with xbridgeTransactionConfirmedB command
+     * @param packet
+     * @return true, if transaction processing success
+     */
     bool processTransactionConfirmedB(XBridgePacketPtr packet);
 
+    /**
+     * @brief finishTransaction - mark transaction as finished and send bradcast message into network
+     * @param tr
+     * @return true, if transaction processing success
+     */
     bool finishTransaction(TransactionPtr tr);
 //    bool sendRejectTransaction(const std::vector<unsigned char> & to,
 //                               const uint256 & txid,
 //                               const TxRejectReason & reason);
+    /**
+     * @brief sendCancelTransaction - generate new packet with cancel command and send
+     * broadcast message
+     * @param tx
+     * @param reason
+     * @return
+     */
     bool sendCancelTransaction(const TransactionPtr & tx,
                                const TxCancelReason & reason);
+    /**
+     * @brief sendCancelTransaction - generate new packet with cancel command and send
+     * broadcast message
+     * @param tx
+     * @param reason
+     * @return
+     */
     bool sendCancelTransaction(const TransactionDescrPtr & tx,
                                const TxCancelReason & reason);
 
+    /**
+     * @brief processTransactionCancel  - check and process packet with xbridgeTransactionCancel command
+     * @param packet
+     * @return true, if transaction processing success
+     */
     bool processTransactionCancel(XBridgePacketPtr packet);
 
+    /**
+     * @brief processTransactionFinished  - check and process packet with xbridgeTransactionFinished command
+     * @param packet
+     * @return true, if transaction processing success
+     */
     bool processTransactionFinished(XBridgePacketPtr packet);
 
 protected:

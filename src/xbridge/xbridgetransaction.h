@@ -62,7 +62,23 @@ public:
     };
 
 public:
+    /**
+     * @brief Transaction
+     */
     Transaction();
+    /**
+     * @brief Transaction
+     * @param id
+     * @param sourceAddr
+     * @param sourceCurrency
+     * @param sourceAmount
+     * @param destAddr
+     * @param destCurrency
+     * @param destAmount
+     * @param created
+     * @param blockHash
+     * @param mpubkey
+     */
     Transaction(const uint256                    & id,
                 const std::vector<unsigned char> & sourceAddr,
                 const std::string                & sourceCurrency,
@@ -76,8 +92,16 @@ public:
 
     ~Transaction();
 
+    /**
+     * @brief id
+     * @return
+     */
     uint256 id() const;
 
+    /**
+     * @brief blockHash
+     * @return
+     */
     uint256 blockHash() const;
 
     //
@@ -148,43 +172,138 @@ public:
     void finish();
 
     // uint256                    firstId() const;
+    /**
+     * @brief a_address
+     * @return
+     */
     std::vector<unsigned char> a_address() const;
+    /**
+     * @brief a_destination
+     * @return
+     */
     std::vector<unsigned char> a_destination() const;
-    std::string                a_currency() const;
-    uint64_t                   a_amount() const;
-    std::string                a_payTx() const;
-    std::string                a_refTx() const;
-    std::string                a_bintxid() const;
+    /**
+     * @brief a_currency
+     * @return
+     */
+    std::string a_currency() const;
+    /**
+     * @brief a_amount
+     * @return
+     */
+    uint64_t a_amount() const;
+    /**
+     * @brief a_payTx
+     * @return
+     */
+    std::string a_payTx() const;
+    /**
+     * @brief a_refTx
+     * @return
+     */
+    std::string a_refTx() const;
+    /**
+     * @brief a_bintxid
+     * @return
+     */
+    std::string a_bintxid() const;
 
     // TODO remove script
+    /**
+     * @brief a_innerScript
+     * @return
+     */
     std::vector<unsigned char> a_innerScript() const;
 
-    uint256                    a_datatxid() const;
+    /**
+     * @brief a_datatxid
+     * @return
+     */
+    uint256 a_datatxid() const;
+    /**
+     * @brief a_pk1
+     * @return
+     */
     std::vector<unsigned char> a_pk1() const;
 
     // uint256                    secondId() const;
+    /**
+     * @brief b_address
+     * @return
+     */
     std::vector<unsigned char> b_address() const;
+    /**
+     * @brief b_destination
+     * @return
+     */
     std::vector<unsigned char> b_destination() const;
-    std::string                b_currency() const;
-    uint64_t                   b_amount() const;
-    std::string                b_payTx() const;
-    std::string                b_refTx() const;
-    std::string                b_bintxid() const;
+    /**
+     * @brief b_currency
+     * @return
+     */
+    std::string b_currency() const;
+    /**
+     * @brief b_amount
+     * @return
+     */
+    uint64_t b_amount() const;
+    /**
+     * @brief b_payTx
+     * @return
+     */
+    std::string b_payTx() const;
+    /**
+     * @brief b_refTx
+     * @return
+     */
+    std::string b_refTx() const;
+    /**
+     * @brief b_bintxid
+     * @return
+     */
+    std::string b_bintxid() const;
 
     // TODO remove script
+    /**
+     * @brief b_innerScript
+     * @return
+     */
     std::vector<unsigned char> b_innerScript() const;
 
     // uint256                    b_datatxid() const;
+    /**
+     * @brief b_pk1
+     * @return
+     */
     std::vector<unsigned char> b_pk1() const;
 
+    /**
+     * @brief tryJoin
+     * @param other
+     * @return
+     */
     bool tryJoin(const TransactionPtr other);
 
-    bool                       setKeys(const std::vector<unsigned char> & addr,
-                                       const uint256 & datatxid,
-                                       const std::vector<unsigned char> & pk);
-    bool                       setBinTxId(const std::vector<unsigned char> &addr,
-                                          const std::string & id,
-                                          const std::vector<unsigned char> & innerScript);
+    /**
+     * @brief setKeys
+     * @param addr
+     * @param datatxid
+     * @param pk
+     * @return
+     */
+    bool setKeys(const std::vector<unsigned char> & addr,
+                 const uint256 & datatxid,
+                 const std::vector<unsigned char> & pk);
+    /**
+     * @brief setBinTxId
+     * @param addr
+     * @param id
+     * @param innerScript
+     * @return
+     */
+    bool setBinTxId(const std::vector<unsigned char> &addr,
+                    const std::string & id,
+                    const std::vector<unsigned char> & innerScript);
 
     friend std::ostream & operator << (std::ostream & out, const TransactionPtr & tx);
 

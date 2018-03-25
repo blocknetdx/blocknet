@@ -73,9 +73,24 @@ public:
 
 public:
     // service functions
+    /**
+     * @brief sendListOfTransactions - send pending transactions into network
+     * if exchange mode enabled - send bradcast exchange transactions
+     */
     void sendListOfTransactions();
+    /**
+     * @brief checkFinishedTransactions - checks state of all transactions,
+     * remove dropped, cancelled, finished transactions. Check lifetime of transaction,
+     * removed expired and send broadcast message about it
+     */
     void checkFinishedTransactions();
+    /**
+     * @brief eraseExpiredPendingTransactions - erase pending transactions with expired lifetime
+     */
     void eraseExpiredPendingTransactions();
+    /**
+     * @brief getAddressBook
+     */
     void getAddressBook();
 
 private:
