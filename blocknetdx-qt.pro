@@ -285,7 +285,6 @@ SOURCES += \
     src/s3downloader.cpp \
     src/coinvalidator.cpp \
     src/xbridge/xbitcoinaddress.cpp \
-    src/xbridge/xbitcoinsecret.cpp \
     src/qt/xbridgeui/xbridgeaddressbookmodel.cpp \
     src/qt/xbridgeui/xbridgeaddressbookview.cpp \
     src/qt/xbridgeui/xbridgetransactiondialog.cpp \
@@ -573,7 +572,6 @@ HEADERS += \
     src/s3downloader.h \
     src/coinvalidator.h \
     src/xbridge/xbitcoinaddress.h \
-    src/xbridge/xbitcoinsecret.h \
     src/qt/xbridgeui/xbridgeaddressbookmodel.h \
     src/qt/xbridgeui/xbridgeaddressbookview.h \
     src/qt/xbridgeui/xbridgetransactiondialog.h \

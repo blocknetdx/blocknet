@@ -18,7 +18,6 @@
 #include "bitcoinrpcconnector.h"
 #include "xbitcointransaction.h"
 #include "xbitcoinaddress.h"
-#include "xbitcoinsecret.h"
 #include "script/script.h"
 #include "base58.h"
 #include "activeservicenode.h"
