@@ -11,8 +11,6 @@
 #include "util/logger.h"
 #include "util/txlog.h"
 
-#include "xkey.h"
-#include "xbitcoinsecret.h"
 #include "xbitcoinaddress.h"
 #include "xbitcointransaction.h"
 

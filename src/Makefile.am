@@ -371,7 +371,6 @@ libxbridge_xbridge_a_SOURCES = \
   xbridge/config.h \
   xbridge/version.h \
   xbridge/xbitcoinaddress.h \
-  xbridge/xbitcoinsecret.h \
   xbridge/xbitcointransaction.h \
   xbridge/xbridgedef.h \
   xbridge/xbridgeapp.h \
