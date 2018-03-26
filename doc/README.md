@@ -30,6 +30,7 @@ Drag Phore-Qt to your applications folder, and then run Phore-Qt.
 for help and more information.
 * Ask for help on [BitcoinTalk](https://bitcointalk.org/index.php?topic=1262920.0) or on the [Phore Forum](http://forum.phore.org/).
 * Join one of our Slack groups [Phore Slack Groups](https://phore.org/slack-logins/).
+* Join our Discord server [Discord Server](https://discord.gg/dTRhamf)
 
 Building
 ---------------------

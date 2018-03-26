@@ -144,8 +144,9 @@ void PrivacyDialog::on_pasteButton_clicked()
 
 void PrivacyDialog::on_addressBookButton_clicked()
 {
-    if (!walletModel)
+    if (!walletModel || !walletModel->getOptionsModel())
         return;
+
     AddressBookPage dlg(AddressBookPage::ForSelection, AddressBookPage::SendingTab, this);
     dlg.setModel(walletModel->getAddressTableModel());
     if (dlg.exec()) {
@@ -224,6 +225,8 @@ void PrivacyDialog::on_pushButtonMintzPHR_clicked()
 
     }
 
+    ui->TEMintStatus->verticalScrollBar()->setValue(ui->TEMintStatus->verticalScrollBar()->maximum()); // Automatically scroll to end of text
+
     // Available balance isn't always updated, so force it.
     setBalance(walletModel->getBalance(), walletModel->getUnconfirmedBalance(), walletModel->getImmatureBalance(),
                walletModel->getZerocoinBalance(), walletModel->getUnconfirmedZerocoinBalance(), walletModel->getImmatureZerocoinBalance(),
@@ -235,9 +238,6 @@ void PrivacyDialog::on_pushButtonMintzPHR_clicked()
 
 void PrivacyDialog::on_pushButtonMintReset_clicked()
 {
-    if (!walletModel || !walletModel->getOptionsModel())
-        return;
-
     ui->TEMintStatus->setPlainText(tr("Starting ResetMintZerocoin: rescanning complete blockchain, this will need up to 30 minutes depending on your hardware. \nPlease be patient..."));
     ui->TEMintStatus->repaint ();
 
@@ -246,15 +246,13 @@ void PrivacyDialog::on_pushButtonMintReset_clicked()
     double fDuration = (double)(GetTimeMillis() - nTime)/1000.0;
     ui->TEMintStatus->setPlainText(QString::fromStdString(strResetMintResult) + tr("Duration: ") + QString::number(fDuration) + tr(" sec.\n"));
     ui->TEMintStatus->repaint ();
+    ui->TEMintStatus->verticalScrollBar()->setValue(ui->TEMintStatus->verticalScrollBar()->maximum()); // Automatically scroll to end of text
 
     return;
 }
 
 void PrivacyDialog::on_pushButtonSpentReset_clicked()
 {
-    if (!walletModel || !walletModel->getOptionsModel())
-        return;
-
     ui->TEMintStatus->setPlainText(tr("Starting ResetSpentZerocoin: "));
     ui->TEMintStatus->repaint ();
     int64_t nTime = GetTimeMillis();
@@ -262,6 +260,7 @@ void PrivacyDialog::on_pushButtonSpentReset_clicked()
     double fDuration = (double)(GetTimeMillis() - nTime)/1000.0;
     ui->TEMintStatus->setPlainText(QString::fromStdString(strResetSpentResult) + tr("Duration: ") + QString::number(fDuration) + tr(" sec.\n"));
     ui->TEMintStatus->repaint ();
+    ui->TEMintStatus->verticalScrollBar()->setValue(ui->TEMintStatus->verticalScrollBar()->maximum()); // Automatically scroll to end of text
 
     return;
 }
@@ -296,6 +295,8 @@ void PrivacyDialog::on_pushButtonSpendzPHR_clicked()
 
 void PrivacyDialog::on_pushButtonZPhrControl_clicked()
 {
+    if (!walletModel || !walletModel->getOptionsModel())
+        return;
     ZPhrControlDialog* zPhrControl = new ZPhrControlDialog(this);
     zPhrControl->setModel(walletModel);
     zPhrControl->exec();
@@ -444,11 +445,23 @@ void PrivacyDialog::sendzPHR()
         }
         ui->zPHRpayAmount->setFocus();
         ui->TEMintStatus->repaint();
+        ui->TEMintStatus->verticalScrollBar()->setValue(ui->TEMintStatus->verticalScrollBar()->maximum()); // Automatically scroll to end of text
         return;
+    }
+
+    if (walletModel && walletModel->getAddressTableModel()) {
+        // If zPHR was spent successfully update the addressbook with the label
+        std::string labelText = ui->addAsLabel->text().toStdString();
+        if (!labelText.empty())
+            walletModel->updateAddressBookLabels(address.Get(), labelText, "send");
+        else
+            walletModel->updateAddressBookLabels(address.Get(), "(no label)", "send");
     }
 
     // Clear zphr selector in case it was used
     ZPhrControlDialog::listSelectedMints.clear();
+    ui->labelzPHRSelected_int->setText(QString("0"));
+    ui->labelQuantitySelected_int->setText(QString("0"));
 
     // Some statistics for entertainment
     QString strStats = "";
@@ -489,6 +502,7 @@ void PrivacyDialog::sendzPHR()
 
     ui->TEMintStatus->setPlainText(strReturn);
     ui->TEMintStatus->repaint();
+    ui->TEMintStatus->verticalScrollBar()->setValue(ui->TEMintStatus->verticalScrollBar()->maximum()); // Automatically scroll to end of text
 }
 
 void PrivacyDialog::on_payTo_textChanged(const QString& address)
@@ -511,6 +525,9 @@ void PrivacyDialog::coinControlClipboardAmount()
 // Coin Control: button inputs -> show actual coin control dialog
 void PrivacyDialog::coinControlButtonClicked()
 {
+    if (!walletModel || !walletModel->getOptionsModel())
+        return;
+
     CoinControlDialog dlg;
     dlg.setModel(walletModel);
     dlg.exec();
@@ -577,6 +594,7 @@ void PrivacyDialog::setBalance(const CAmount& balance, const CAmount& unconfirme
         mapImmature.insert(make_pair(denom, 0));
     }
 
+    int nBestHeight = chainActive.Height();
     for (auto& mint : listMints){
         // All denominations
         mapDenomBalances.at(mint.GetDenomination())++;
@@ -588,8 +606,9 @@ void PrivacyDialog::setBalance(const CAmount& balance, const CAmount& unconfirme
         else {
             // After a denomination is confirmed it might still be immature because < 3 of the same denomination were minted after it
             CBlockIndex *pindex = chainActive[mint.GetHeight() + 1];
+            int nHeight2CheckpointsDeep = nBestHeight - (nBestHeight % 10) - 20;
             int nMintsAdded = 0;
-            while (pindex->nHeight < chainActive.Height() - 30) { // 30 just to make sure that its at least 2 checkpoints from the top block
+            while (pindex->nHeight < nHeight2CheckpointsDeep) { //at least 2 checkpoints from the top block
                 nMintsAdded += count(pindex->vMintDenominationsInBlock.begin(), pindex->vMintDenominationsInBlock.end(), mint.GetDenomination());
                 if (nMintsAdded >= Params().Zerocoin_RequiredAccumulation())
                     break;

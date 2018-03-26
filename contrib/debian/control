@@ -1,8 +1,8 @@
 Source: phore
 Section: utils
 Priority: optional
-Maintainer: Jonas Smedegaard <dr@jones.dk> ***TODO***
-Uploaders: Micah Anderson <micah@debian.org> ***TODO***
+Maintainer: Julian Meyer <julian@phore.io>
+Uploaders: Julian Meyer <julian@phore.io>
 Build-Depends: debhelper,
  devscripts,
  automake,

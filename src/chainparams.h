@@ -60,7 +60,6 @@ public:
     /** Used if GenerateBitcoins is called with a negative number of threads */
     int DefaultMinerThreads() const { return nMinerThreads; }
     const CBlock& GenesisBlock() const { return genesis; }
-    bool RequireRPCPassword() const { return fRequireRPCPassword; }
     /** Make miner wait to have peers to avoid wasting work */
     bool MiningRequiresPeers() const { return fMiningRequiresPeers; }
     /** Headers first syncing is disabled */
@@ -142,7 +141,6 @@ protected:
     std::string strNetworkID;
     CBlock genesis;
     std::vector<CAddress> vFixedSeeds;
-    bool fRequireRPCPassword;
     bool fMiningRequiresPeers;
     bool fAllowMinDifficultyBlocks;
     bool fDefaultConsistencyChecks;

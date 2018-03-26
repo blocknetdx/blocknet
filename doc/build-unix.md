@@ -33,6 +33,7 @@ These dependencies are required:
  ------------|------------------|----------------------
  libssl      | SSL Support      | Secure communications
  libboost    | Boost            | C++ Library
+ libevent    | Events           | Asynchronous event notification
 
 Optional dependencies:
 
@@ -43,6 +44,7 @@ Optional dependencies:
  qt          | GUI              | GUI toolkit (only needed when GUI enabled)
  protobuf    | Payments in GUI  | Data interchange format used for payment protocol (only needed when GUI enabled)
  libqrencode | QR codes in GUI  | Optional for generating QR codes (only needed when GUI enabled)
+ univalue    | Utility          | JSON parsing and encoding (bundled version will be used unless --with-system-univalue passed to configure)
 
 For the versions used in the release, see [release-process.md](release-process.md) under *Fetch and build inputs*.
 
@@ -57,7 +59,7 @@ Dependency Build Instructions: Ubuntu & Debian
 ----------------------------------------------
 Build requirements:
 
-	sudo apt-get install build-essential libtool autotools-dev autoconf pkg-config libssl-dev
+	sudo apt-get install build-essential libtool autotools-dev autoconf pkg-config libssl-dev libevent-dev
 
 For Ubuntu 12.04 and later or Debian 7 and later libboost-all-dev has to be installed:
 

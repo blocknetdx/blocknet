@@ -44,6 +44,7 @@ private slots:
     void on_copyKeyButton_ENC_clicked();
     void on_clearButton_ENC_clicked();
     /* decrypt key */
+    void on_pasteButton_DEC_clicked();
     void on_decryptKeyButton_DEC_clicked();
     void on_importAddressButton_DEC_clicked();
     void on_clearButton_DEC_clicked();

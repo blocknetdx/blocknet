@@ -14,6 +14,7 @@
 #include <QCompleter>
 
 class ClientModel;
+class RPCTimerInterface;
 
 namespace Ui
 {
@@ -21,6 +22,7 @@ class RPCConsole;
 }
 
 QT_BEGIN_NAMESPACE
+class QMenu;
 class QItemSelection;
 QT_END_NAMESPACE
 
@@ -58,6 +60,14 @@ private slots:
     void resizeEvent(QResizeEvent* event);
     void showEvent(QShowEvent* event);
     void hideEvent(QHideEvent* event);
+    /** Show custom context menu on Peers tab */
+    void showPeersTableContextMenu(const QPoint& point);
+    /** Show custom context menu on Bans tab */
+    void showBanTableContextMenu(const QPoint& point);
+    /** Hides ban table if no bans are present */
+    void showOrHideBanTableIfRequired();
+    /** clear the selected node */
+    void clearSelectedNode();
 
 public slots:
     void clear();
@@ -101,6 +111,12 @@ public slots:
     void peerSelected(const QItemSelection& selected, const QItemSelection& deselected);
     /** Handle updated peer information */
     void peerLayoutChanged();
+    /** Disconnect a selected node on the Peers tab */
+    void disconnectSelectedNode();
+    /** Ban a selected node on the Peers tab */
+    void banSelectedNode(int bantime);
+    /** Unban a selected node on the Bans tab */
+    void unbanSelectedNode();
     /** Show folder with wallet backups in default browser */
     void showBackups();
 
@@ -123,7 +139,9 @@ private:
     enum ColumnWidths {
         ADDRESS_COLUMN_WIDTH = 170,
         SUBVERSION_COLUMN_WIDTH = 140,
-        PING_COLUMN_WIDTH = 80
+        PING_COLUMN_WIDTH = 80,
+        BANSUBNET_COLUMN_WIDTH = 200,
+        BANTIME_COLUMN_WIDTH = 250
     };
 
     Ui::RPCConsole* ui;
@@ -132,6 +150,9 @@ private:
     int historyPtr;
     NodeId cachedNodeid;
     QCompleter *autoCompleter;
+    QMenu *peersTableContextMenu;
+    QMenu *banTableContextMenu;
+    RPCTimerInterface *rpcTimerInterface;
 };
 
 #endif // BITCOIN_QT_RPCCONSOLE_H

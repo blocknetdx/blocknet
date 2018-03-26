@@ -67,6 +67,7 @@ void ZPhrControlDialog::updateList()
     this->listMints = list;
 
     //populate rows with mint info
+    int nBestHeight = chainActive.Height();
     for(const CZerocoinMint mint : listMints) {
         // assign this mint to the correct denomination in the tree view
         libzerocoin::CoinDenomination denom = mint.GetDenomination();
@@ -81,7 +82,7 @@ void ZPhrControlDialog::updateList()
         itemMint->setText(COLUMN_DENOMINATION, QString::number(mint.GetDenomination()));
         itemMint->setText(COLUMN_PUBCOIN, QString::fromStdString(strPubCoin));
 
-        int nConfirmations = (mint.GetHeight() ? chainActive.Height() - mint.GetHeight() : 0);
+        int nConfirmations = (mint.GetHeight() ? nBestHeight - mint.GetHeight() : 0);
         if (nConfirmations < 0) {
             // Sanity check
             nConfirmations = 0;
@@ -91,9 +92,11 @@ void ZPhrControlDialog::updateList()
 
         // check to make sure there are at least 3 other mints added to the accumulators after this
         int nMintsAdded = 0;
-        if(mint.GetHeight() != 0 && mint.GetHeight() < chainActive.Height() - 2) {
+        if(mint.GetHeight() != 0 && mint.GetHeight() < nBestHeight - 2) {
             CBlockIndex *pindex = chainActive[mint.GetHeight() + 1];
-            while(pindex->nHeight < chainActive.Height() - 30) { // 30 just to make sure that its at least 2 checkpoints from the top block
+
+            int nHeight2CheckpointsDeep = nBestHeight - (nBestHeight % 10) - 20;
+            while (pindex->nHeight < nHeight2CheckpointsDeep) { // 20 just to make sure that its at least 2 checkpoints from the top block
                 nMintsAdded += count(pindex->vMintDenominationsInBlock.begin(), pindex->vMintDenominationsInBlock.end(), mint.GetDenomination());
                 if(nMintsAdded >= Params().Zerocoin_RequiredAccumulation())
                     break;

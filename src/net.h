@@ -33,6 +33,7 @@
 
 class CAddrMan;
 class CBlockIndex;
+class CScheduler;
 class CNode;
 
 namespace boost
@@ -68,6 +69,7 @@ void AddOneShot(std::string strDest);
 bool RecvLine(SOCKET hSocket, std::string& strLine);
 void AddressCurrentlyConnected(const CService& addr);
 CNode* FindNode(const CNetAddr& ip);
+CNode* FindNode(const CSubNet& subNet);
 CNode* FindNode(const std::string& addrName);
 CNode* FindNode(const CService& ip);
 CNode* ConnectNode(CAddress addrConnect, const char* pszDest = NULL, bool obfuScationMaster = false);
@@ -75,7 +77,7 @@ bool OpenNetworkConnection(const CAddress& addrConnect, CSemaphoreGrant* grantOu
 void MapPort(bool fUseUPnP);
 unsigned short GetListenPort();
 bool BindListenPort(const CService& bindAddr, std::string& strError, bool fWhitelisted = false);
-void StartNode(boost::thread_group& threadGroup);
+void StartNode(boost::thread_group& threadGroup, CScheduler& scheduler);
 bool StopNode();
 void SocketSendData(CNode* pnode);
 
@@ -117,7 +119,6 @@ bool IsLocal(const CService& addr);
 bool GetLocal(CService& addr, const CNetAddr* paddrPeer = NULL);
 bool IsReachable(enum Network net);
 bool IsReachable(const CNetAddr& addr);
-void SetReachable(enum Network net, bool fFlag = true);
 CAddress GetLocalAddress(const CNetAddr* paddrPeer = NULL);
 
 
@@ -157,6 +158,7 @@ public:
     int64_t nLastSend;
     int64_t nLastRecv;
     int64_t nTimeConnected;
+    int64_t nTimeOffset;
     std::string addrName;
     int nVersion;
     std::string cleanSubVer;
@@ -212,6 +214,68 @@ public:
 };
 
 
+typedef enum BanReason
+{
+    BanReasonUnknown          = 0,
+    BanReasonNodeMisbehaving  = 1,
+    BanReasonManuallyAdded    = 2
+} BanReason;
+
+class CBanEntry
+{
+public:
+    static const int CURRENT_VERSION=1;
+    int nVersion;
+    int64_t nCreateTime;
+    int64_t nBanUntil;
+    uint8_t banReason;
+
+    CBanEntry()
+    {
+        SetNull();
+    }
+
+    CBanEntry(int64_t nCreateTimeIn)
+    {
+        SetNull();
+        nCreateTime = nCreateTimeIn;
+    }
+
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+        READWRITE(this->nVersion);
+        nVersion = this->nVersion;
+        READWRITE(nCreateTime);
+        READWRITE(nBanUntil);
+        READWRITE(banReason);
+    }
+
+    void SetNull()
+    {
+        nVersion = CBanEntry::CURRENT_VERSION;
+        nCreateTime = 0;
+        nBanUntil = 0;
+        banReason = BanReasonUnknown;
+    }
+
+    std::string banReasonToString()
+    {
+        switch (banReason) {
+        case BanReasonNodeMisbehaving:
+            return "node misbehabing";
+        case BanReasonManuallyAdded:
+            return "manually added";
+        default:
+            return "unknown";
+        }
+    }
+};
+
+typedef std::map<CSubNet, CBanEntry> banmap_t;
+
+
 /** Information about a peer */
 class CNode
 {
@@ -235,6 +299,7 @@ public:
     int64_t nLastSend;
     int64_t nLastRecv;
     int64_t nTimeConnected;
+    int64_t nTimeOffset;
     CAddress addr;
     std::string addrName;
     CService addrLocal;
@@ -271,8 +336,9 @@ public:
 protected:
     // Denial-of-service detection/prevention
     // Key is IP address, value is banned-until-time
-    static std::map<CNetAddr, int64_t> setBanned;
+    static banmap_t setBanned;
     static CCriticalSection cs_setBanned;
+    static bool setBannedIsDirty;
 
     std::vector<std::string> vecRequestsFulfilled; //keep track of what client has asked for
 
@@ -634,7 +700,21 @@ public:
     // new code.
     static void ClearBanned(); // needed for unit testing
     static bool IsBanned(CNetAddr ip);
-    static bool Ban(const CNetAddr& ip);
+    static bool IsBanned(CSubNet subnet);
+    static void Ban(const CNetAddr &ip, const BanReason &banReason, int64_t bantimeoffset = 0, bool sinceUnixEpoch = false);
+    static void Ban(const CSubNet &subNet, const BanReason &banReason, int64_t bantimeoffset = 0, bool sinceUnixEpoch = false);
+    static bool Unban(const CNetAddr &ip);
+    static bool Unban(const CSubNet &ip);
+    static void GetBanned(banmap_t &banmap);
+    static void SetBanned(const banmap_t &banmap);
+
+    //!check is the banlist has unwritten changes
+    static bool BannedSetIsDirty();
+    //!set the "dirty" flag for the banlist
+    static void SetBannedSetDirty(bool dirty=true);
+    //!clean unused entires (if bantime has expired)
+    static void SweepBanned();
+
     void copyStats(CNodeStats& stats);
 
     static bool IsWhitelistedRange(const CNetAddr& ip);
@@ -671,5 +751,18 @@ public:
     bool Write(const CAddrMan& addr);
     bool Read(CAddrMan& addr);
 };
+
+/** Access to the banlist database (banlist.dat) */
+class CBanDB
+{
+private:
+    boost::filesystem::path pathBanlist;
+public:
+    CBanDB();
+    bool Write(const banmap_t& banSet);
+    bool Read(banmap_t& banSet);
+};
+
+void DumpBanlist();
 
 #endif // BITCOIN_NET_H
