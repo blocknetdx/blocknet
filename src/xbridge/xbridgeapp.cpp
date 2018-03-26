@@ -13,7 +13,6 @@
 #include "rpcserver.h"
 #include "net.h"
 #include "util.h"
-#include "xkey.h"
 #include "ui_interface.h"
 #include "init.h"
 #include "wallet.h"
@@ -280,16 +279,16 @@ bool App::Impl::start()
                 wp.m_port                      = s.get<std::string>(*i + ".Port");
                 wp.m_user                      = s.get<std::string>(*i + ".Username");
                 wp.m_passwd                    = s.get<std::string>(*i + ".Password");
-                wp.addrPrefix[0]               = s.get<int>(*i + ".AddressPrefix", 0);
-                wp.scriptPrefix[0]             = s.get<int>(*i + ".ScriptPrefix", 0);
-                wp.secretPrefix[0]             = s.get<int>(*i + ".SecretPrefix", 0);
-                wp.COIN                        = s.get<uint64_t>(*i + ".COIN", 0);
-                wp.txVersion                   = s.get<uint32_t>(*i + ".TxVersion", 1);
-                wp.minTxFee                    = s.get<uint64_t>(*i + ".MinTxFee", 0);
-                wp.feePerByte                  = s.get<uint64_t>(*i + ".FeePerByte", 200);
+                wp.addrPrefix[0]               = s.get<int>        (*i + ".AddressPrefix", 0);
+                wp.scriptPrefix[0]             = s.get<int>        (*i + ".ScriptPrefix", 0);
+                wp.secretPrefix[0]             = s.get<int>        (*i + ".SecretPrefix", 0);
+                wp.COIN                        = s.get<uint64_t>   (*i + ".COIN", 0);
+                wp.txVersion                   = s.get<uint32_t>   (*i + ".TxVersion", 1);
+                wp.minTxFee                    = s.get<uint64_t>   (*i + ".MinTxFee", 0);
                 wp.method                      = s.get<std::string>(*i + ".CreateTxMethod");
-                wp.blockTime                   = s.get<int>(*i + ".BlockTime", 0);
-                wp.requiredConfirmations       = s.get<int>(*i + ".Confirmations", 0);
+                wp.blockTime                   = s.get<int>        (*i + ".BlockTime", 0);
+                wp.requiredConfirmations       = s.get<int>        (*i + ".Confirmations", 0);
+                wp.txWithTimeField             = s.get<bool>       (*i + ".TxWithTimeField", false);
 
                 if (wp.m_ip.empty() || wp.m_port.empty() ||
                     wp.m_user.empty() || wp.m_passwd.empty() ||
@@ -373,13 +372,6 @@ bool App::init(int argc, char *argv[])
         LOG() << "Finished loading config" << path;
     }
 
-    // init secp256
-    if(!ECC_Start()) {
-
-        ERR() << "can't start secp256, xbridgeApp not started " << __FUNCTION__;
-        throw  std::runtime_error("can't start secp256, xbridgeApp not started ");
-
-    }
     // init exchange
     Exchange & e = Exchange::instance();
     e.init();
@@ -428,9 +420,6 @@ bool App::Impl::stop()
     }
 
     m_threads.join_all();
-
-    // secp stop
-    ECC_Stop();
 
     return true;
 }

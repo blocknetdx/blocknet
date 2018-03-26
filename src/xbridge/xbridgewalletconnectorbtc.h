@@ -6,6 +6,8 @@
 
 #include "xbridgewalletconnector.h"
 
+#include <memory>
+
 //*****************************************************************************
 //*****************************************************************************
 namespace xbridge
@@ -15,6 +17,8 @@ namespace xbridge
 //*****************************************************************************
 class BtcWalletConnector : public WalletConnector
 {
+    class Impl;
+
 public:
     BtcWalletConnector();
 
@@ -47,6 +51,12 @@ public:
     bool isDustAmount(const double & amount) const;
 
     bool newKeyPair(std::vector<unsigned char> & pubkey, std::vector<unsigned char> & privkey);
+    bool sign(const std::vector<unsigned char> & key,
+              const uint256 & data,
+              std::vector<unsigned char> & signature);
+    bool verify(const std::vector<unsigned char> & pubkey,
+                const uint256 & data,
+                const std::vector<unsigned char> & signature);
 
     std::vector<unsigned char> getKeyId(const std::vector<unsigned char> & pubkey);
     std::vector<unsigned char> getScriptId(const std::vector<unsigned char> & script);
@@ -90,6 +100,9 @@ public:
                                   const std::vector<unsigned char> & innerScript,
                                   std::string & txId,
                                   std::string & rawTx);
+
+private:
+    std::shared_ptr<Impl> m_p;
 };
 
 } // namespace xbridge

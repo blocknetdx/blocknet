@@ -284,8 +284,6 @@ SOURCES += \
     src/bip38.cpp \
     src/s3downloader.cpp \
     src/coinvalidator.cpp \
-    src/xbridge/xkey.cpp \
-    src/xbridge/xpubkey.cpp \
     src/xbridge/xbitcoinaddress.cpp \
     src/xbridge/xbitcoinsecret.cpp \
     src/qt/xbridgeui/xbridgeaddressbookmodel.cpp \
@@ -574,8 +572,6 @@ HEADERS += \
     src/compat/byteswap.h \
     src/s3downloader.h \
     src/coinvalidator.h \
-    src/xbridge/xkey.h \
-    src/xbridge/xpubkey.h \
     src/xbridge/xbitcoinaddress.h \
     src/xbridge/xbitcoinsecret.h \
     src/qt/xbridgeui/xbridgeaddressbookmodel.h \
