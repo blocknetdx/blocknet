@@ -5,6 +5,7 @@
 #define XBRIDGEWALLETCONNECTOR_H
 
 #include "xbridgewallet.h"
+#include "uint256.h"
 
 #include <vector>
 #include <string>
@@ -66,7 +67,14 @@ public:
 
     virtual bool isDustAmount(const double & amount) const = 0;
 
-    virtual bool newKeyPair(std::vector<unsigned char> & pubkey, std::vector<unsigned char> & privkey) = 0;
+    virtual bool newKeyPair(std::vector<unsigned char> & pubkey,
+                            std::vector<unsigned char> & privkey) = 0;
+    virtual bool sign(const std::vector<unsigned char> & key,
+                      const uint256 & data,
+                      std::vector<unsigned char> & signature) = 0;
+    virtual bool verify(const std::vector<unsigned char> & pubkey,
+                        const uint256 & data,
+                        const std::vector<unsigned char> & signature) = 0;
 
     virtual std::vector<unsigned char> getKeyId(const std::vector<unsigned char> & pubkey) = 0;
     virtual std::vector<unsigned char> getScriptId(const std::vector<unsigned char> & script) = 0;
