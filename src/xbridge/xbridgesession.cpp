@@ -2495,6 +2495,14 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet)
     // remove from pending packets (if added)
     xapp.removePackets(txid);
 
+    // If refund transaction id not defined, do not attempt to rollback
+    if (xtx->refTx.empty()) {
+        LOG() << "no refund tx id " << xtx->id.GetHex() << " " << __FUNCTION__;
+        return true;
+    }
+
+    // Process rollback
+
     std::string sid;
     int32_t errCode = 0;
     std::string errorMessage;

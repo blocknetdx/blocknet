@@ -617,7 +617,7 @@ Value dxMakeOrder(const Array &params, bool fHelp)
 
     Object result;
     statusCode = app.checkCreateParams(fromCurrency, toCurrency,
-                                       util::xBridgeAmountFromReal(fromAmount));
+                                       util::xBridgeAmountFromReal(fromAmount), fromAddress);
     switch (statusCode) {
     case xbridge::SUCCESS:{
         // If dryrun
@@ -733,7 +733,7 @@ Value dxTakeOrder(const Array & params, bool fHelp)
 
     Object result;
     xbridge::TransactionDescrPtr txDescr;
-    statusCode = app.checkAcceptParams(id, txDescr);
+    statusCode = app.checkAcceptParams(id, txDescr, fromAddress);
 
     switch (statusCode)
     {
@@ -795,6 +795,7 @@ Value dxTakeOrder(const Array & params, bool fHelp)
 
     }
 
+    // TODO swap is destructive on state (also complicates historical data)
     std::swap(txDescr->fromCurrency, txDescr->toCurrency);
     std::swap(txDescr->fromAmount, txDescr->toAmount);
 
@@ -816,6 +817,9 @@ Value dxTakeOrder(const Array & params, bool fHelp)
         return result;
 
     } else {
+        // restore state on error
+        std::swap(txDescr->fromCurrency, txDescr->toCurrency);
+        std::swap(txDescr->fromAmount, txDescr->toAmount);
         return util::makeError(statusCode, __FUNCTION__);
     }
 }
@@ -847,7 +851,7 @@ Value dxCancelOrder(const Array &params, bool fHelp)
 
     if (tx->state >= xbridge::TransactionDescr::trCreated)
     {
-        return util::makeError(xbridge::INVALID_STATE, __FUNCTION__);
+        return util::makeError(xbridge::INVALID_STATE, __FUNCTION__, "order is already " + tx->strState());
     }
 
     const auto res = xbridge::App::instance().cancelXBridgeTransaction(id, crRpcRequest);
@@ -1438,7 +1442,7 @@ json_spirit::Value dxGetMyOrders(const json_spirit::Array& params, bool fHelp)
         // taker data
         o.emplace_back(Pair("taker", t->toCurrency));
         o.emplace_back(Pair("taker_size", util::xBridgeStringValueFromAmount(t->toAmount)));
-        o.emplace_back(Pair("taker_address", connFrom->fromXAddr(t->to)));
+        o.emplace_back(Pair("taker_address", connTo->fromXAddr(t->to)));
         // dates
         o.emplace_back(Pair("updated_at", util::iso8601(t->txtime)));
         o.emplace_back(Pair("created_at", util::iso8601(t->created)));
