@@ -1138,10 +1138,17 @@ bool BtcWalletConnector::requestAddressBook(std::vector<wallet::AddressBookEntry
 
 bool BtcWalletConnector::getInfo(rpc::WalletInfo & info) const
 {
-    if(rpc::getinfo(m_user, m_passwd, m_ip, m_port, info))
+    rpc::WalletInfo info;
+    if (!rpc::getblockchaininfo(m_user, m_passwd, m_ip, m_port, info) ||
+        !rpc::getnetworkinfo(m_user, m_passwd, m_ip, m_port, info))
     {
-        LOG() << "rpc::getinfo failed " << __FUNCTION__;
-        return false;
+        LOG() << "getblockchaininfo & getnetworkinfo failed, trying call getinfo " << __FUNCTION__;
+
+        if (!rpc::getinfo(m_user, m_passwd, m_ip, m_port, info))
+        {
+            WARN() << "all calls of getblockchaininfo & getnetworkinfo and getinfo failed " << __FUNCTION__;
+            return false;
+        }
     }
 
     return true;
