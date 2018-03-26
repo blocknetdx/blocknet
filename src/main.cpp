@@ -5796,14 +5796,14 @@ bool ProcessMessages(CNode* pfrom)
                 // Allow exceptions from over-long size
                 LogPrintf("ProcessMessages(%s, %u bytes): Exception '%s' caught\n", SanitizeString(strCommand), nMessageSize, e.what());
             } else {
-                PrintExceptionContinue(&e, "ProcessMessages()");
+                PrintExceptionContinue(&e, string("ProcessMessages() " + strCommand).c_str());
             }
         } catch (boost::thread_interrupted) {
             throw;
         } catch (std::exception& e) {
-            PrintExceptionContinue(&e, "ProcessMessages()");
+            PrintExceptionContinue(&e, string("ProcessMessages() " + strCommand).c_str());
         } catch (...) {
-            PrintExceptionContinue(NULL, "ProcessMessages()");
+            PrintExceptionContinue(NULL, string("ProcessMessages() " + strCommand).c_str());
         }
 
         if (!fRet)

@@ -80,24 +80,71 @@ public:
 
     uint256 blockHash() const;
 
-    // state of transaction
+    //
+    /**
+     * @brief state
+     * @return state of transaction
+     */
     State state() const;
-    // update state counter and update state
+    //
+    /**
+     * @brief increaseStateCounter update state counter and update state
+     * @param state
+     * @param from
+     * @return
+     */
     State increaseStateCounter(const State state, const std::vector<unsigned char> & from);
 
+    /**
+     * @brief strState
+     * @param state - transaction state
+     * @return string name of state
+     */
     static std::string strState(const State state);
+    /**
+     * @brief strState
+     * @return  string name of state
+     */
     std::string strState() const;
 
+    /**
+     * @brief updateTimestamp - update transaction time
+     */
     void updateTimestamp();
+    /**
+     * @brief createdTime
+     * @return time of creation transaction
+     */
     boost::posix_time::ptime createdTime() const;
 
+    /**
+     * @brief isFinished
+     * @return true if transaction finished, canclelled or dropped
+     */
     bool isFinished() const;
+    /**
+     * @brief isValid
+     * @return true, if transaction not invalid
+     */
     bool isValid() const;
+    /**
+     * @brief isExpired check time of last transaction update
+     * @return true, if la
+     */
     bool isExpired() const;
     bool isExpiredByBlockNumber() const;
 
+    /**
+     * @brief cancel - set transaction state to trCancelled
+     */
     void cancel();
+    /**
+     * @brief drop - set transaction state to trDropped
+     */
     void drop();
+    /**
+     * @brief finish - set transaction state to finished
+     */
     void finish();
 
     // uint256                    firstId() const;
@@ -138,6 +185,8 @@ public:
     bool                       setBinTxId(const std::vector<unsigned char> &addr,
                                           const std::string & id,
                                           const std::vector<unsigned char> & innerScript);
+
+    friend std::ostream & operator << (std::ostream & out, const TransactionPtr & tx);
 
 public:
     boost::mutex               m_lock;

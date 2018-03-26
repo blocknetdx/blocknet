@@ -41,26 +41,40 @@ public:
 //        return boost::apply_visitor(CBitcoinAddressVisitor(this), dest);
 //    }
 
+    /**
+     * @brief IsValid
+     * @return  true, if address size correctly
+     */
     bool IsValid() const
     {
         unsigned int nExpectedSize = 20;
         return vchData.size() == nExpectedSize;
     }
 
-    XBitcoinAddress()
-    {
-    }
+    XBitcoinAddress() = default;
 
+    /**
+     * @brief XBitcoinAddress  construct new XBircoinAddressfrom string
+     * @param strAddress new address value
+     */
     XBitcoinAddress(const std::string& strAddress)
     {
         SetString(strAddress);
     }
 
+    /**
+     * @brief XBitcoinAddress  contruct new XBircoinAddress from C style string
+     * @param pszAddress - new address value
+     */
     XBitcoinAddress(const char* pszAddress)
     {
         SetString(pszAddress);
     }
 
+    /**
+     * @brief Get
+     * @return serialized public key
+     */
     CKeyID Get() const
     {
         if (!IsValid())

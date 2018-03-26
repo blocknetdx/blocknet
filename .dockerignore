@@ -1,0 +1,12 @@
+.git*/**
+**/*.o
+**/*.a
+**/*.pb.cc
+**/*.moc
+**/*.moc
+**/moc_*
+
+.DS_Store
+wallet.dat
+configure
+config.status

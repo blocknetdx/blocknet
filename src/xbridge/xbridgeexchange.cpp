@@ -101,10 +101,7 @@ bool Exchange::init()
         std::string user       = s.get<std::string>(*i + ".Username");
         std::string passwd     = s.get<std::string>(*i + ".Password");
         uint64_t    minAmount  = s.get<uint64_t>(*i + ".MinimumAmount", 0);
-        uint64_t    dustAmount = s.get<uint64_t>(*i + ".DustAmount", 0);
         uint32_t    txVersion  = s.get<uint32_t>(*i + ".TxVersion", 1);
-        uint64_t    minTxFee   = s.get<uint64_t>(*i + ".MinTxFee", 0);
-        uint64_t    feePerByte = s.get<uint64_t>(*i + ".FeePerByte", 200);
 
 
         if (/*address.empty() || */ip.empty() || port.empty() ||
@@ -121,11 +118,8 @@ bool Exchange::init()
         wp.m_port       = port;
         wp.m_user       = user;
         wp.m_passwd     = passwd;
-        wp.m_minAmount  = minAmount;
-        wp.dustAmount = dustAmount;
+        wp.dustAmount  = minAmount;
         wp.txVersion  = txVersion;
-        wp.minTxFee   = minTxFee;
-        wp.feePerByte = feePerByte;
 
         LOG() << "read wallet " << *i << " \"" << label << "\" address <" << address << ">";
     }
@@ -266,6 +260,14 @@ bool Exchange::getUtxoItems(const uint256 & txid, std::vector<wallet::UtxoEntry>
 {
     boost::mutex::scoped_lock l(m_p->m_utxoLocker);
 
+    if(txid.IsNull())
+    {
+        for(const wallet::UtxoEntry & entry : m_p->m_utxoItems)
+            items.push_back(entry);
+
+        return true;
+    }
+
     if (m_p->m_utxoTxMap.count(txid))
     {
         for(const wallet::UtxoEntry & entry : m_p->m_utxoTxMap[txid])
@@ -315,13 +317,13 @@ bool Exchange::createTransaction(const uint256                        & txid,
 
     // check amounts
     {
-        if (wp.m_minAmount && wp.m_minAmount > sourceAmount)
+        if (wp.dustAmount && wp.dustAmount > sourceAmount)
         {
             LOG() << "tx " <<  txid.ToString()
                   << " rejected because sourceAmount less than minimum payment";
             return false;
         }
-        if (wp2.m_minAmount && wp2.m_minAmount > destAmount)
+        if (wp2.dustAmount && wp2.dustAmount > destAmount)
         {
             LOG() << "tx " << txid.ToString()
                   << " rejected because destAmount less than minimum payment";
@@ -385,20 +387,7 @@ bool Exchange::createTransaction(const uint256                        & txid,
     }
 
     // add locked items
-    {
-        // check locked items
-        {
-            boost::mutex::scoped_lock l(m_p->m_utxoLocker);
-
-            for (const wallet::UtxoEntry & item : items)
-            {
-                m_p->m_utxoItems.insert(item);
-            }
-
-            // store tx data
-            m_p->m_utxoTxMap[txid] = items;
-        }
-    }
+    lockUtxos(txid, items);
 
     return true;
 }
@@ -503,20 +492,7 @@ bool Exchange::acceptTransaction(const uint256                        & txid,
     }
 
     // add locked items
-    {
-        // check locked items
-        {
-            boost::mutex::scoped_lock l(m_p->m_utxoLocker);
-
-            for (const wallet::UtxoEntry & item : items)
-            {
-                m_p->m_utxoItems.insert(item);
-            }
-
-            // store tx data
-            m_p->m_utxoTxMap[txid] = items;
-        }
-    }
+    lockUtxos(txid, items);
 
     return true;
 }
@@ -529,22 +505,13 @@ bool Exchange::deletePendingTransaction(const uint256 & id)
 
     LOG() << "delete pending transaction <" << id.GetHex() << ">";
 
+    // if there are any locked utxo's for this txid, unlock them
+    unlockUtxos(id);
+
     if (!m_p->m_pendingTransactions.count(id))
         return false;
 
     m_p->m_pendingTransactions.erase(id);
-
-    {
-        boost::mutex::scoped_lock l(m_p->m_utxoLocker);
-
-        if (m_p->m_utxoTxMap.count(id))
-        {
-            for (const wallet::UtxoEntry & item : m_p->m_utxoTxMap[id])
-                m_p->m_utxoItems.erase(item);
-
-            m_p->m_utxoTxMap.erase(id);
-        }
-    }
 
     return true;
 }
@@ -559,24 +526,15 @@ bool Exchange::deleteTransaction(const uint256 & txid)
 
     m_p->m_transactions.erase(txid);
 
-    {
-        boost::mutex::scoped_lock l(m_p->m_utxoLocker);
+    unlockUtxos(txid);
 
-        if (m_p->m_utxoTxMap.count(txid))
-        {
-            for (const wallet::UtxoEntry & item : m_p->m_utxoTxMap[txid])
-                m_p->m_utxoItems.erase(item);
-
-            m_p->m_utxoTxMap.erase(txid);
-        }
-    }
     return true;
 }
 
 //*****************************************************************************
 //*****************************************************************************
 bool Exchange::updateTransactionWhenHoldApplyReceived(const TransactionPtr & tx,
-                                                             const std::vector<unsigned char> & from)
+                                                      const std::vector<unsigned char> & from)
 {
     if (tx->increaseStateCounter(xbridge::Transaction::trJoined, from) == xbridge::Transaction::trHold)
     {
@@ -756,38 +714,72 @@ size_t Exchange::eraseExpiredTransactions()
 
     boost::mutex::scoped_lock l(m_p->m_pendingTransactionsLock);
 
-    for (const std::pair<uint256, TransactionPtr> & i : m_p->m_pendingTransactions)
+    // Use non-hoisted iterator to prevent invalidation during erase
+    for (auto it = m_p->m_pendingTransactions.cbegin(); it != m_p->m_pendingTransactions.cend(); )
     {
-        TransactionPtr ptr = i.second;
+        TransactionPtr ptr = it->second;
 
-        boost::mutex::scoped_lock l(ptr->m_lock);
+        boost::mutex::scoped_lock l1(ptr->m_lock);
 
         if (ptr->isExpired() || ptr->isExpiredByBlockNumber())
         {
-            LOG() << "transaction expired <" << ptr->id().ToString() << ">";
+            LOG() << __FUNCTION__ << std::endl << "order expired" << ptr;
 
-            m_p->m_pendingTransactions.erase(ptr->id());
+            m_p->m_pendingTransactions.erase(it);
 
-            {
-                boost::mutex::scoped_lock l(m_p->m_utxoLocker);
-
-                if (m_p->m_utxoTxMap.count(ptr->id()))
-                {
-                    for (const wallet::UtxoEntry & item : m_p->m_utxoTxMap[ptr->id()])
-                        m_p->m_utxoItems.erase(item);
-
-                    m_p->m_utxoTxMap.erase(ptr->id());
-                }
-            }
+            unlockUtxos(ptr->id());
 
             ++result;
         }
+
+        if (m_p->m_pendingTransactions.empty())
+            break;
+
+        ++it;
     }
 
     if(result > 0)
         LOG() << "deleted " << result << "  expired transactions";
 
     return result;
+}
+
+bool Exchange::lockUtxos(const uint256 &id, const std::vector<wallet::UtxoEntry> &items) {
+    if (items.empty())
+        return false;
+
+    boost::mutex::scoped_lock l(m_p->m_utxoLocker);
+    // use set to prevent overwriting utxo's from 'A' or 'B' role
+    std::set<wallet::UtxoEntry> utxoTxMapItems;
+    for (const wallet::UtxoEntry & item : m_p->m_utxoTxMap[id])
+        utxoTxMapItems.insert(item);
+
+    for (const wallet::UtxoEntry & item : items)
+    {
+        m_p->m_utxoItems.insert(item);
+        if (!utxoTxMapItems.count(item)) {
+            utxoTxMapItems.insert(item);
+            m_p->m_utxoTxMap[id].push_back(item);
+        }
+    }
+
+    return true;
+}
+
+bool Exchange::unlockUtxos(const uint256 &id) {
+    boost::mutex::scoped_lock l(m_p->m_utxoLocker);
+
+    if (m_p->m_utxoTxMap.count(id))
+    {
+        for (const wallet::UtxoEntry & item : m_p->m_utxoTxMap[id])
+            m_p->m_utxoItems.erase(item);
+
+        m_p->m_utxoTxMap.erase(id);
+    } else {
+        return false;
+    }
+
+    return true;
 }
 
 } // namespace xbridge
