@@ -1272,6 +1272,7 @@ bool BtcWalletConnector::Impl::getPubKey(const std::vector<unsigned char> & key,
     secp256k1_ec_pubkey_serialize(context, &pub[0],
                                   &clen, &pubkey,
                                   SECP256K1_EC_COMPRESSED);
+    pub.resize(clen);
     return true;
 }
 
