@@ -617,7 +617,7 @@ Value dxMakeOrder(const Array &params, bool fHelp)
 
     Object result;
     statusCode = app.checkCreateParams(fromCurrency, toCurrency,
-                                       util::xBridgeAmountFromReal(fromAmount));
+                                       util::xBridgeAmountFromReal(fromAmount), fromAddress);
     switch (statusCode) {
     case xbridge::SUCCESS:{
         // If dryrun
@@ -733,7 +733,7 @@ Value dxTakeOrder(const Array & params, bool fHelp)
 
     Object result;
     xbridge::TransactionDescrPtr txDescr;
-    statusCode = app.checkAcceptParams(id, txDescr);
+    statusCode = app.checkAcceptParams(id, txDescr, fromAddress);
 
     switch (statusCode)
     {
@@ -795,6 +795,7 @@ Value dxTakeOrder(const Array & params, bool fHelp)
 
     }
 
+    // TODO swap is destructive on state (also complicates historical data)
     std::swap(txDescr->fromCurrency, txDescr->toCurrency);
     std::swap(txDescr->fromAmount, txDescr->toAmount);
 
@@ -816,6 +817,9 @@ Value dxTakeOrder(const Array & params, bool fHelp)
         return result;
 
     } else {
+        // restore state on error
+        std::swap(txDescr->fromCurrency, txDescr->toCurrency);
+        std::swap(txDescr->fromAmount, txDescr->toAmount);
         return util::makeError(statusCode, __FUNCTION__);
     }
 }
@@ -847,7 +851,7 @@ Value dxCancelOrder(const Array &params, bool fHelp)
 
     if (tx->state >= xbridge::TransactionDescr::trCreated)
     {
-        return util::makeError(xbridge::INVALID_STATE, __FUNCTION__);
+        return util::makeError(xbridge::INVALID_STATE, __FUNCTION__, "order is already " + tx->strState());
     }
 
     const auto res = xbridge::App::instance().cancelXBridgeTransaction(id, crRpcRequest);
@@ -1438,7 +1442,7 @@ json_spirit::Value dxGetMyOrders(const json_spirit::Array& params, bool fHelp)
         // taker data
         o.emplace_back(Pair("taker", t->toCurrency));
         o.emplace_back(Pair("taker_size", util::xBridgeStringValueFromAmount(t->toAmount)));
-        o.emplace_back(Pair("taker_address", connFrom->fromXAddr(t->to)));
+        o.emplace_back(Pair("taker_address", connTo->fromXAddr(t->to)));
         // dates
         o.emplace_back(Pair("updated_at", util::iso8601(t->txtime)));
         o.emplace_back(Pair("created_at", util::iso8601(t->created)));
@@ -1506,10 +1510,10 @@ Value dxGetLockedUtxos(const json_spirit::Array& params, bool fHelp)
                             "Return list of locked utxo of an order.");
     }
 
-    if (params.size() != 1)
+    if (params.size() != 0 || params.size() != 1)
     {
         Object error;
-        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS, "requered transaction id")));
+        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS, "requered transaction id or empty param")));
         error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
         error.emplace_back(Pair("name",     __FUNCTION__));
         return error;
@@ -1525,22 +1529,12 @@ Value dxGetLockedUtxos(const json_spirit::Array& params, bool fHelp)
         return error;
     }
 
-    uint256 id(params[0].get_str());
+    uint256 id;
 
-    xbridge::TransactionPtr pendingTx = e.pendingTransaction(id);
-    xbridge::TransactionPtr acceptedTx = e.transaction(id);
-
-    if (!pendingTx->isValid() && !acceptedTx->isValid())
-    {
-        Object error;
-        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::Error::TRANSACTION_NOT_FOUND, id.GetHex())));
-        error.emplace_back(Pair("code",     xbridge::Error::TRANSACTION_NOT_FOUND));
-        error.emplace_back(Pair("name",     __FUNCTION__));
-        return error;
-    }
+    if(params.size() == 1)
+        id = uint256(params[0].get_str());
 
     std::vector<xbridge::wallet::UtxoEntry> items;
-
     if(!e.getUtxoItems(id, items))
     {
 
@@ -1557,12 +1551,31 @@ Value dxGetLockedUtxos(const json_spirit::Array& params, bool fHelp)
         utxo.emplace_back(entry.toString());
 
     Object obj;
+    if(id.IsNull())
+    {
+        obj.emplace_back(Pair("all_locked_utxo", utxo));
+
+        return obj;
+    }
+
+    xbridge::TransactionPtr pendingTx = e.pendingTransaction(id);
+    xbridge::TransactionPtr acceptedTx = e.transaction(id);
+
+    if (!pendingTx->isValid() && !acceptedTx->isValid())
+    {
+        Object error;
+        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::Error::TRANSACTION_NOT_FOUND, id.GetHex())));
+        error.emplace_back(Pair("code",     xbridge::Error::TRANSACTION_NOT_FOUND));
+        error.emplace_back(Pair("name",     __FUNCTION__));
+        return error;
+    }
+
     obj.emplace_back(Pair("id", id.GetHex()));
 
     if(pendingTx->isValid())
         obj.emplace_back(Pair(pendingTx->a_currency(), utxo));
     else if(acceptedTx->isValid())
-        obj.emplace_back(Pair(acceptedTx->a_currency() + " and " + acceptedTx->b_currency(), utxo));
+        obj.emplace_back(Pair(acceptedTx->a_currency() + "_and_" + acceptedTx->b_currency(), utxo));
 
     return obj;
 }

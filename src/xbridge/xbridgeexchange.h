@@ -230,6 +230,20 @@ public:
      */
     size_t eraseExpiredTransactions();
 
+    /**
+     * @brief lockUtxos - locks the utxo's with the specified tx id
+     * @param id - id of transaction
+     * @return true, if utxo's were added
+     */
+    bool lockUtxos(const uint256 &id, const std::vector<wallet::UtxoEntry> &items);
+
+    /**
+     * @brief unlockUtxos - unlocks the utxo's with the specified tx id
+     * @param id - id of transaction
+     * @return true, if utxo's were removed
+     */
+    bool unlockUtxos(const uint256 & id);
+
 private:
     std::unique_ptr<Impl> m_p;
 };

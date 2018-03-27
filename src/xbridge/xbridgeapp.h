@@ -185,27 +185,30 @@ public:
      * @brief checkAcceptParams checks the correctness of the parameters
      * @param id - id accepted transaction
      * @param ptr - smart pointer to accepted transaction
+     * @param fromAddress - address to pull utxo's from
      * @return xbridge::SUCCESS, if all parameters valid
      */
-    xbridge::Error checkAcceptParams(const uint256 &id, TransactionDescrPtr &ptr);
+    xbridge::Error checkAcceptParams(const uint256 &id, TransactionDescrPtr &ptr, const std::string &fromAddress);
 
     /**
      * @brief checkCreateParams - checks parameter needs to success created transaction
      * @param fromCurrency - from currency
      * @param toCurrency - to currency
      * @param fromAmount -  amount
+     * @param fromAddress - address to pull utxo's from
      * @return xbridge::SUCCES, if all parameters valid
      */
-    xbridge::Error checkCreateParams(const std::string &fromCurrency, const std::string &toCurrency, const uint64_t &fromAmount);
+    xbridge::Error checkCreateParams(const std::string &fromCurrency, const std::string &toCurrency, const uint64_t &fromAmount, const std::string &fromAddress);
 
     /**
      * @brief checkAmount - checks wallet balance
      * @param currency - currency name
      * @param amount - amount
+     * @param address - optional address to pull utxo's from
      * @return xbridge::SUCCES, if  the session currency is open and
      * on account has sufficient funds for operations
      */
-    xbridge::Error checkAmount(const std::string &currency, const uint64_t &amount);
+    xbridge::Error checkAmount(const std::string &currency, const uint64_t &amount, const std::string &address = "");
 public:
     // connectors
 
@@ -317,6 +320,19 @@ public:
 
 private:
     std::unique_ptr<Impl> m_p;
+
+    /**
+     * @brief selectUtxos - Selects available utxos and writes to param outputsForUse.
+     * @param addr - currency name
+     * @param outputs - available outputs to search
+     * @param outputsForUse - selected outputs for use
+     * @param utxoAmount - total utxoAmount of selected outputs
+     * @param fee1 - min tx fee for outputs
+     * @param fee2
+     */
+    void selectUtxos(const std::string &addr, const std::vector<wallet::UtxoEntry> &outputs, const WalletConnectorPtr &connFrom,
+                     const uint64_t &fromAmount, std::vector<wallet::UtxoEntry> &outputsForUse, uint64_t &utxoAmount,
+                     uint64_t &fee1, uint64_t &fee2, bool fillInputs = true) const;
 };
 
 } // namespace xbridge
