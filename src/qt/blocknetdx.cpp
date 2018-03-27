@@ -38,6 +38,8 @@
 
 #ifdef ENABLE_WALLET
 #include "wallet.h"
+#include "walletnonencryptwarningdialog.h"
+#include "askpassphrasedialog.h"
 #endif
 
 #include <stdint.h>
@@ -468,7 +470,28 @@ void BitcoinApplication::initializeResult(int retval)
 #ifdef ENABLE_WALLET
         if (pwalletMain) {
             walletModel = new WalletModel(pwalletMain, optionsModel);
+            
+            /// Warn user that the wallet is not encrypted and auto-backups are enabled
+            if (walletModel)
+            {
+                int nWalletBackups = GetArg("-createwalletbackups", 10);
+                bool enableWarning = GetBoolArg("-shownoencryptwarning", true);
+                if (nWalletBackups>0 && enableWarning)
+                {
+                    WalletModel::EncryptionStatus status = walletModel->getEncryptionStatus();
+                    if (status == WalletModel::EncryptionStatus::Unencrypted)
+                    {
+                        WalletNonEncryptWarningDialog dlg;
+                        if (dlg.exec())
+                        {
+                            AskPassphraseDialog dlg(AskPassphraseDialog::Encrypt, window, walletModel);
+                            dlg.exec();
 
+                            //emit encryptionStatusChanged(walletModel->getEncryptionStatus());
+                        }
+                    }
+                }
+            }
             window->addWallet(BitcoinGUI::DEFAULT_WALLET, walletModel);
             window->setCurrentWallet(BitcoinGUI::DEFAULT_WALLET);
 
