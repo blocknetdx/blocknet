@@ -19,8 +19,10 @@
 #include "servicenodeman.h"
 #include "xbridgewalletconnector.h"
 #include "xbridgewalletconnectorbtc.h"
+#include "xbridgecryptoproviderbtc.h"
 #include "xbridgewalletconnectorbcc.h"
 #include "xbridgewalletconnectorsys.h"
+#include "xbridgecryptoproviderseq.h"
 
 #include <assert.h>
 
@@ -311,7 +313,7 @@ bool App::Impl::start()
                 }
                 else if (wp.method == "BTC")
                 {
-                    conn.reset(new BtcWalletConnector);
+                    conn.reset(new BtcWalletConnector<BtcCryptoProvider>);
                     *conn = wp;
                 }
                 else if (wp.method == "BCC")
@@ -322,6 +324,11 @@ bool App::Impl::start()
                 else if (wp.method == "SYS")
                 {
                     conn.reset(new SysWalletConnector);
+                    *conn = wp;
+                }
+                else if (wp.method == "SEQ")
+                {
+                    conn.reset(new BtcWalletConnector<SeqCryptoProvider>);
                     *conn = wp;
                 }
 //                else if (wp.method == "RPC")

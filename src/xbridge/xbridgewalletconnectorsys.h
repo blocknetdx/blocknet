@@ -5,6 +5,7 @@
 #define XBRIDGEWALLETCONNECTORSYS_H
 
 #include "xbridgewalletconnectorbtc.h"
+#include "xbridgecryptoproviderbtc.h"
 
 //*****************************************************************************
 //*****************************************************************************
@@ -13,7 +14,7 @@ namespace xbridge
 
 //******************************************************************************
 //******************************************************************************
-class SysWalletConnector : public BtcWalletConnector
+class SysWalletConnector : public BtcWalletConnector<BtcCryptoProvider>
 {
 public:
     SysWalletConnector();
