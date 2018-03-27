@@ -15,6 +15,7 @@ namespace xbridge
 
 //*****************************************************************************
 //*****************************************************************************
+template <class CryptoProvider>
 class BtcWalletConnector : public WalletConnector
 {
     class Impl;
@@ -102,7 +103,7 @@ public:
                                   std::string & rawTx);
 
 private:
-    std::shared_ptr<Impl> m_p;
+    CryptoProvider m_cp;
 };
 
 } // namespace xbridge
