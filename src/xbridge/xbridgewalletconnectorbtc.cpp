@@ -7,7 +7,6 @@
 
 #include "xbridgewalletconnectorbtc.h"
 #include "xbridgecryptoproviderbtc.h"
-#include "xbridgecryptoproviderseq.h"
 #include "base58.h"
 
 #include "util/logger.h"
@@ -1577,6 +1576,7 @@ bool BtcWalletConnector<CryptoProvider>::createRefundTransaction(const std::vect
         return false;
     }
     tx->nVersion  = txUnsigned->nVersion;
+    tx->nTime     = txUnsigned->nTime;
     tx->vin.push_back(CTxIn(txUnsigned->vin[0].prevout, redeem, std::numeric_limits<uint32_t>::max()-1));
     tx->vout      = txUnsigned->vout;
     tx->nLockTime = txUnsigned->nLockTime;
@@ -1640,6 +1640,7 @@ bool BtcWalletConnector<CryptoProvider>::createPaymentTransaction(const std::vec
         return false;
     }
     tx->nVersion  = txUnsigned->nVersion;
+    tx->nTime     = txUnsigned->nTime;
     tx->vin.push_back(CTxIn(txUnsigned->vin[0].prevout, redeem));
     tx->vout      = txUnsigned->vout;
 
@@ -1661,6 +1662,5 @@ bool BtcWalletConnector<CryptoProvider>::createPaymentTransaction(const std::vec
 
 // explicit instantiation
 BtcWalletConnector<BtcCryptoProvider> variable;
-BtcWalletConnector<SeqCryptoProvider> variable2;
 
 } // namespace xbridge

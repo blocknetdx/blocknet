@@ -360,6 +360,7 @@ libxbridge_xbridge_a_SOURCES = \
   xbridge/xbridgetransactionmember.cpp \
   xbridge/xbridgewalletconnector.cpp \
   xbridge/xbridgewalletconnectorbtc.cpp \
+  xbridge/xbridgecryptoproviderbtc.cpp \
   xbridge/xbridgewalletconnectorbcc.cpp \
   xbridge/xbridgewalletconnectorsys.cpp \
   xbridge/xbitcoinaddress.cpp \
@@ -383,6 +384,7 @@ libxbridge_xbridge_a_SOURCES = \
   xbridge/xbridgetransactionmember.h \
   xbridge/xbridgewalletconnector.h \
   xbridge/xbridgewalletconnectorbtc.h \
+  xbridge/xbridgecryptoproviderbtc.h \
   xbridge/xbridgewalletconnectorbcc.h \
   xbridge/xbridgewalletconnectorsys.h \
   xbridge/xbridgewallet.h \
