@@ -894,24 +894,8 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
         return xbridge::Error::DUST;
     }
 
-    // check amount
-    std::vector<wallet::UtxoEntry> outputs;
-    connFrom->getUnspent(outputs);
-
-    uint64_t utxoAmount = 0;
-    uint64_t fee1       = 0;
-    uint64_t fee2       = connFrom->minTxFee2(1, 1) * TransactionDescr::COIN;
-
-    // Select utxos
     std::vector<wallet::UtxoEntry> outputsForUse;
-    selectUtxos(from, outputs, connFrom, fromAmount, outputsForUse, utxoAmount, fee1, fee2);
-
-    LOG() << "fee1: " << (static_cast<double>(fee1) / TransactionDescr::COIN);
-    LOG() << "fee2: " << (static_cast<double>(fee2) / TransactionDescr::COIN);
-    LOG() << "amount of used utxo items: " << (static_cast<double>(utxoAmount) / TransactionDescr::COIN)
-          << " required amount + fees: " << (static_cast<double>(fromAmount + fee1 + fee2) / TransactionDescr::COIN);
-
-    if (utxoAmount < (fromAmount + fee1 + fee2))
+    if (!connFrom->getUtxoEntriesForAmount(fromAmount, outputsForUse))
     {
         WARN() << "insufficient funds for <" << fromCurrency << "> " << __FUNCTION__;
         return xbridge::Error::INSIFFICIENT_FUNDS;
@@ -1135,21 +1119,11 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
         return xbridge::Error::DUST;
     }
 
-    // check amount
-    std::vector<wallet::UtxoEntry> outputs;
-    connFrom->getUnspent(outputs);
-
-    uint64_t utxoAmount = 0;
-    uint64_t fee1       = 0;
-    uint64_t fee2       = connFrom->minTxFee2(1, 1) * TransactionDescr::COIN;
-
     std::vector<wallet::UtxoEntry> outputsForUse;
-    selectUtxos(from, outputs, connFrom, ptr->fromAmount, outputsForUse, utxoAmount, fee1, fee2);
-
-    if (utxoAmount < (ptr->fromAmount + fee1 + fee2))
+    if (!connFrom->getUtxoEntriesForAmount(ptr->fromAmount, outputsForUse))
     {
         WARN() << "insufficient funds for <" << ptr->fromCurrency << "> " << __FUNCTION__;
-        return xbridge::INSIFFICIENT_FUNDS;
+        return xbridge::Error::INSIFFICIENT_FUNDS;
     }
 
     // sign used coins

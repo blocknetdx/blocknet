@@ -1262,7 +1262,7 @@ std::string BtcWalletConnector::scriptIdToString(const std::vector<unsigned char
 // calculate tx fee for deposit tx
 // output count always 1
 //******************************************************************************
-double BtcWalletConnector::minTxFee1(const uint32_t inputCount, const uint32_t outputCount)
+double BtcWalletConnector::minTxFee1(const uint32_t inputCount, const uint32_t outputCount) const
 {
     uint64_t fee = (148*inputCount + 34*outputCount + 10) * feePerByte;
     if (fee < minTxFee)
@@ -1276,7 +1276,7 @@ double BtcWalletConnector::minTxFee1(const uint32_t inputCount, const uint32_t o
 // calculate tx fee for payment/refund tx
 // input count always 1
 //******************************************************************************
-double BtcWalletConnector::minTxFee2(const uint32_t inputCount, const uint32_t outputCount)
+double BtcWalletConnector::minTxFee2(const uint32_t inputCount, const uint32_t outputCount) const
 {
     uint64_t fee = (180*inputCount + 34*outputCount + 10) * feePerByte;
     if (fee < minTxFee)
