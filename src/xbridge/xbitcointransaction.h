@@ -43,19 +43,6 @@ public:
     unsigned int nLockTime;
 
     /**
-     * @brief nDoS - count of Denial-of-service detection:
-     */
-    mutable int nDoS;
-
-    /**
-     * @brief DoS- change Denial-of-service detection counter
-     * @param nDoSIn -
-     * @param fIn
-     * @return
-     */
-    bool DoS(int nDoSIn, bool fIn) const { nDoS += nDoSIn; return fIn; }
-
-    /**
      * @brief CTransaction - defult constructor,
      * set all fields in default values
      */
@@ -98,7 +85,6 @@ public:
         nTime                  = static_cast<unsigned int>(time(0));// GetAdjustedTime();
         serializeWithTimeField = false;
         nLockTime              = 0;
-        nDoS                   = 0;  // Denial-of-service prevention
 
         vin.clear();
         vout.clear();
@@ -120,26 +106,6 @@ public:
     virtual uint256 GetHash() const
     {
         return SerializeHash(*this);
-    }
-
-    bool IsCoinBase() const
-    {
-        return (vin.size() == 1 && vin[0].prevout.IsNull() && vout.size() >= 1);
-    }
-
-    /**
-      * @brief IsCoinStake the coin stake transaction is marked with the first output empty
-      * @return true
-      */
-    bool IsCoinStake() const
-    {
-        // ppcoin: the coin stake transaction is marked with the first output empty
-        return (vin.size() > 0 && (!vin[0].prevout.IsNull()) && vout.size() >= 2 && vout[0].IsEmpty());
-    }
-
-    bool IsCoinBaseOrStake() const
-    {
-        return (IsCoinBase() || IsCoinStake());
     }
 
     friend bool operator==(const CTransaction& a, const CTransaction& b)
@@ -285,9 +251,15 @@ public:
      * @param nVersion
      */
     template<typename S>
-    void Serialize(S &s, int nType, int nVersion) const {
+    void Serialize(S &s, int nType, int nVersion) const
+    {
         // Serialize nVersion
         ::Serialize(s, txTo.nVersion, nType, nVersion);
+        if (txTo.serializeWithTimeField)
+        {
+            // Serialize nTime
+            ::Serialize(s, txTo.nTime, nType, nVersion);
+        }
         // Serialize vin
         unsigned int nInputs = fAnyoneCanPay ? 1 : txTo.vin.size();
         ::WriteCompactSize(s, nInputs);

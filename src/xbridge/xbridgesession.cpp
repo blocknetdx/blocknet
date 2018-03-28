@@ -1155,7 +1155,6 @@ bool Session::Impl::processTransactionHoldApply(XBridgePacketPtr packet)
             reply1->append(tr->a_destination());
             reply1->append(m_myid);
             reply1->append(id.begin(), XBridgePacket::hashSize);
-            reply1->append(static_cast<uint16_t>('A'));
             reply1->append(tr->a_address());
             reply1->append(fc);
             reply1->append(tr->a_amount());
@@ -1176,7 +1175,6 @@ bool Session::Impl::processTransactionHoldApply(XBridgePacketPtr packet)
             reply2->append(tr->b_destination());
             reply2->append(m_myid);
             reply2->append(id.begin(), XBridgePacket::hashSize);
-            reply2->append(static_cast<uint16_t>('B'));
             reply2->append(tr->b_address());
             reply2->append(sc);
             reply2->append(tr->b_amount());
@@ -1201,10 +1199,10 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet)
 {
     DEBUG_TRACE();
 
-    if (packet->size() != 146)
+    if (packet->size() != 144)
     {
         ERR() << "incorrect packet size for xbcTransactionInit "
-              << "need 146 bytes, received " << packet->size() << " "
+              << "need 144 bytes, received " << packet->size() << " "
               << __FUNCTION__;
         return false;
     }
@@ -1242,9 +1240,6 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet)
         WARN() << "invalid packet signature " << __FUNCTION__;
         return true;
     }
-
-    const char role = static_cast<char>((*reinterpret_cast<uint16_t *>(packet->data()+offset)));
-    offset += sizeof(uint16_t);
 
     std::vector<unsigned char> from(packet->data()+offset,
                                     packet->data()+offset+XBridgePacket::addressSize);
@@ -1316,25 +1311,15 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet)
     // store service node public key
     xtx->sPubKey = std::vector<unsigned char>(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
 
-    xtx->role = role;
-
-//    // x key
+    // x key
     uint256 datatxtd;
-    if (role == 'A')
+    if (xtx->role == 'A')
     {
         WalletConnectorPtr conn = xapp.connectorByCurrency(xtx->toCurrency);
         if (!conn)
         {
             WARN() << "no connector for <" << xtx->toCurrency << "> " << __FUNCTION__;
             return true;
-        }
-
-        conn->newKeyPair(xtx->xPubKey, xtx->xPrivKey);
-
-        if(xtx->xPubKey.size() != 33)
-        {
-            ERR() << "bad pubkey size " << __FUNCTION__;
-            return false;
         }
 
         // send blocknet tx with hash of X
