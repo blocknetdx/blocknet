@@ -22,6 +22,7 @@
 #include "xbridgewalletconnectorbtc.h"
 #include "xbridgewalletconnectorbcc.h"
 #include "xbridgewalletconnectorsys.h"
+#include "xbridgewalletconnectordgb.h"
 
 #include <assert.h>
 
@@ -323,6 +324,11 @@ bool App::Impl::start()
                 else if (wp.method == "SYS")
                 {
                     conn.reset(new SysWalletConnector);
+                    *conn = wp;
+                }
+                else if (wp.method == "DGB")
+                {
+                    conn.reset(new DgbWalletConnector);
                     *conn = wp;
                 }
 //                else if (wp.method == "RPC")
