@@ -84,7 +84,7 @@ public:
         method                      = other.method;
         blockTime                   = other.blockTime;
         requiredConfirmations       = other.requiredConfirmations;
-        // serviceNodeFee = other.serviceNodeFee;
+        txWithTimeField             = other.txWithTimeField;
 
         return *this;
     }
@@ -119,6 +119,9 @@ public:
 
     //service node fee, see rpc::storeDataIntoBlockchain
     const double               serviceNodeFee;
+
+    // serialized transaction contains time field (default not)
+    bool                       txWithTimeField;
 };
 
 } // namespace xbridge
