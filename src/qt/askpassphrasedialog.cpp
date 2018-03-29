@@ -56,10 +56,7 @@ AskPassphraseDialog::AskPassphraseDialog(Mode mode, QWidget* parent, WalletModel
         ui->passLabel2->hide();
         ui->passEdit2->hide();
         ui->passLabel3->hide();
-        ui->passEdit3->hide();
-        ui->anonymizationCheckBox->setChecked(false);
-        ui->anonymizationCheckBox->setVisible(true);
-        ui->anonymizationCheckBox->show();
+        ui->passEdit3->hide();        
         setWindowTitle(tr("Unlock wallet"));
         break;
     case Decrypt: // Ask passphrase

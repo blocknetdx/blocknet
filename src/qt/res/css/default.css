@@ -131,16 +131,54 @@ color:#ffffff;
 }
 
 .QRadioButton { /* Radio Button Labels */
-color:#cf5932;
+color:#cf59f2;
 }
 
-.QCheckBox { /* Checkbox Labels */
+QCheckBox { /* Checkbox Labels */
 color:#c5e9eb;
 background-color:transparent;
+spacing: 5px;    
 }
 
-.QCheckBox:hover {
+QCheckBox:hover {
 background-color:transparent;
+}
+
+QCheckBox::indicator {
+width: 32px;
+height: 32px;
+}
+
+QCheckBox::indicator:unchecked {
+image:url(':/images/checkbox_unchecked');
+}
+
+QCheckBox::indicator:unchecked:hover {
+image:url(':/images/checkbox_unchecked_hover');
+}
+
+QCheckBox::indicator:unchecked:pressed {
+image:url(':/images/checkbox_unchecked_pressed');
+}
+
+QCheckBox::indicator:checked {
+image:url(':/images/checkbox_checked');
+}
+
+QCheckBox::indicator:checked:hover {
+image:url(':/images/checkbox_checked_hover');
+}
+
+QCheckBox::indicator:checked:pressed {
+image:url(':/images/checkbox_checked_pressed');
+}
+
+QCheckBox::indicator:indeterminate:hover {
+image:url(':/images/checkbox_indeterminate_hover');
+}
+
+QCheckBox::indicator:indeterminate:pressed {
+image:url(':/images/checkbox_indeterminate_pressed');
 }
 
 .QValidatedLineEdit, .QLineEdit { /* Text Entry Fields */
