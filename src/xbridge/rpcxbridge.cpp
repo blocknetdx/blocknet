@@ -879,6 +879,7 @@ Value dxCancelOrder(const Array &params, bool fHelp)
     obj.emplace_back(Pair("taker", tx->toCurrency));
     obj.emplace_back(Pair("taker_size", util::xBridgeStringValueFromAmount(tx->toAmount)));
     obj.emplace_back(Pair("taker_address", connTo->fromXAddr(tx->to)));
+    obj.emplace_back(Pair("refund_tx", tx->refTx));
 
     obj.emplace_back(Pair("updated_at", util::iso8601(tx->txtime)));
     obj.emplace_back(Pair("created_at", util::iso8601(tx->created)));
