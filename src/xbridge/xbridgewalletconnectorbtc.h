@@ -21,7 +21,7 @@ class BtcWalletConnector : public WalletConnector
     class Impl;
 
 public:
-    BtcWalletConnector();
+    BtcWalletConnector() {}
 
     bool init();
 

@@ -1037,14 +1037,6 @@ bool verifyMessage(const std::string & rpcuser, const std::string & rpcpasswd,
 //*****************************************************************************
 //*****************************************************************************
 template <class CryptoProvider>
-BtcWalletConnector<CryptoProvider>::BtcWalletConnector()
-{
-
-}
-
-//*****************************************************************************
-//*****************************************************************************
-template <class CryptoProvider>
 bool BtcWalletConnector<CryptoProvider>::init()
 {
     rpc::WalletInfo info;
