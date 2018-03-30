@@ -144,7 +144,7 @@ QCheckBox:hover {
 background-color:transparent;
 }
 
-QCheckBox::indicator {
+/*QCheckBox::indicator {
 width: 32px;
 height: 32px;
 }
@@ -179,7 +179,7 @@ image:url(':/images/checkbox_indeterminate_hover');
 
 QCheckBox::indicator:indeterminate:pressed {
 image:url(':/images/checkbox_indeterminate_pressed');
-}
+}*/
 
 .QValidatedLineEdit, .QLineEdit { /* Text Entry Fields */
 border: 1px solid #1F487E;
