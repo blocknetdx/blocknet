@@ -134,7 +134,7 @@ color:#ffffff;
 color:#cf59f2;
 }
 
-QCheckBox { /* Checkbox Labels */
+/*QCheckBox { /* Checkbox Labels 
 color:#c5e9eb;
 background-color:transparent;
 spacing: 5px;    
@@ -142,7 +142,7 @@ spacing: 5px;
 
 QCheckBox:hover {
 background-color:transparent;
-}
+}*/
 
 /*QCheckBox::indicator {
 width: 32px;
