@@ -83,14 +83,6 @@
         <file alias="walletFrame">res/images/walletFrame.png</file>
         <file alias="splash">res/images/splash.png</file>
         <file alias="splash_testnet">res/images/splash_testnet.png</file>
-        <file alias="checkbox_unchecked">res/images/checkbox_unchecked.png</file>
-        <file alias="checkbox_unchecked_hover">res/images/checkbox_unchecked_hover.png</file>
-        <file alias="checkbox_unchecked_pressed">res/images/checkbox_unchecked_pressed.png</file>
-        <file alias="checkbox_checked">res/images/checkbox_checked.png</file>
-        <file alias="checkbox_checked_hover">res/images/checkbox_checked_hover.png</file>
-        <file alias="checkbox_checked_pressed">res/images/checkbox_checked_pressed.png</file>
-        <file alias="checkbox_indeterminate_pressed">res/images/checkbox_indeterminate_pressed.png</file>
-        <file alias="checkbox_indeterminate_hover">res/images/checkbox_indeterminate_hover.png</file>
 
     </qresource>
     <qresource prefix="/movies">

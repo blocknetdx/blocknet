@@ -332,16 +332,7 @@ RES_IMAGES = \
   qt/res/images/rightArrow_small.png \
   qt/res/images/qtreeview_selected.png \
   qt/res/images/walletFrame.png \
-  qt/res/images/walletFrame_bg.png \
-  qt/res/images/walletFrame_bg.png \
-  qt/res/images/checkbox_unchecked.png \
-  qt/res/images/checkbox_unchecked_hover.png \
-  qt/res/images/checkbox_unchecked_pressed.png \
-  qt/res/images/checkbox_checked.png \
-  qt/res/images/checkbox_checked_hover.png \
-  qt/res/images/checkbox_checked_pressed.png \
-  qt/res/images/checkbox_indeterminate_pressed.png \
-  qt/res/images/checkbox_indeterminate_hover.png
+  qt/res/images/walletFrame_bg.png
 
 
 RES_CSS = \
