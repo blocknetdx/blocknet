@@ -250,7 +250,7 @@ bool operator<(const CInv& a, const CInv& b)
 
 bool CInv::IsKnownType() const
 {
-    int masked = type & (MSG_TYPE_MASK | MSG_WITNESS_FLAG);
+    int masked = type & MSG_TYPE_MASK;
     return (masked >= 1 && masked <= MSG_TYPE_MAX);
 }
 
