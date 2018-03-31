@@ -111,6 +111,7 @@ class AuthServiceProxy(object):
 
         log.debug("-%s-> %s %s"%(AuthServiceProxy.__id_count, self.__service_name,
                                  json.dumps(args, default=EncodeDecimal)))
+        print self.__service_name, args
         postdata = json.dumps({'version': '1.1',
                                'method': self.__service_name,
                                'params': args,

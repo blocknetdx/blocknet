@@ -130,6 +130,7 @@ HEADERS += src/activemasternode.h \
            src/wallet.h \
            src/wallet_ismine.h \
            src/walletdb.h \
+           src/validationinterface.h \
            src/compat/sanity.h \
            src/config/phore-config.h \
            src/crypto/common.h \
@@ -430,6 +431,7 @@ SOURCES += src/activemasternode.cpp \
            src/wallet.cpp \
            src/wallet_ismine.cpp \
            src/walletdb.cpp \
+           src/validationinterface.cpp \
            src/compat/glibc_compat.cpp \
            src/compat/glibc_sanity.cpp \
            src/compat/glibcxx_compat.cpp \
