@@ -32,21 +32,21 @@ BOOST_AUTO_TEST_CASE(subsidy_limit_test)
 
     BOOST_CHECK(nSum > 0 && nSum <= nMoneySupplyPoWEnd);
 
-    for (int nHeight = 201; nHeight < 250001; nHeight += 1) {
+    for (int nHeight = 201; nHeight < 775601; nHeight += 1) {
         /* PoS Phase One */
         CAmount nSubsidy = GetBlockValue(nHeight);
         BOOST_CHECK(nSubsidy <= 7 * COIN);
         nSum += nSubsidy;
     }
 
-    for (int nHeight = 250001; nHeight < 518400; nHeight += 1) {
+    for (int nHeight = 775601; nHeight < 1044000; nHeight += 1) {
         /* PoS Phase Two */
         CAmount nSubsidy = GetBlockValue(nHeight);
         BOOST_CHECK(nSubsidy <= 4.5 * COIN);
         nSum += nSubsidy;
     }
 
-    for (int nHeight = 518400; nHeight < 1036799; nHeight += 1) {
+    for (int nHeight = 1044000; nHeight < 1562398; nHeight += 1) {
         /* PoS Phase Two */
         CAmount nSubsidy = GetBlockValue(nHeight);
         BOOST_CHECK(nSubsidy <= 3.6 * COIN);

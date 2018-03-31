@@ -3,8 +3,8 @@
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-from test_framework.test_framework import BitcoinTestFramework
-from test_framework.util import *
+from test_framework import BitcoinTestFramework
+from util import *
 
 # Create one-input, one-output, no-fee transaction:
 class RawTransactionsTest(BitcoinTestFramework):
@@ -41,9 +41,9 @@ class RawTransactionsTest(BitcoinTestFramework):
         #            = 2 bytes * minRelayTxFeePerByte
         feeTolerance = 2 * min_relay_tx_fee/1000
 
-        self.nodes[2].generate(1)
+        self.nodes[2].setgenerate(True, 1)
         self.sync_all()
-        self.nodes[0].generate(121)
+        self.nodes[0].setgenerate(True, 121)
         self.sync_all()
 
         watchonly_address = self.nodes[0].getnewaddress()

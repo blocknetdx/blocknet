@@ -30,6 +30,7 @@
 #include "txmempool.h"
 #include "uint256.h"
 #include "undo.h"
+#include "validationinterface.h"
 
 #include <algorithm>
 #include <exception>
