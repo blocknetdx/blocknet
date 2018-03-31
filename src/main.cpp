@@ -2957,6 +2957,11 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
 
             std::vector<CScriptCheck> vChecks;
             unsigned int flags = SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_DERSIG;
+
+            if (GetSporkValue(SPORK_17_SEGWIT_ACTIVATION) < block->nTime) {
+                flags |= SCRIPT_VERIFY_WITNESS;
+            }
+
             if (!CheckInputs(tx, state, view, fScriptChecks, flags, false, nScriptCheckThreads ? &vChecks : NULL))
                 return false;
             control.Add(vChecks);
