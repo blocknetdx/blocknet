@@ -394,7 +394,7 @@ public:
 
 const uint32_t MSG_WITNESS_FLAG = 1 << 30;
 const uint32_t MSG_TYPE_MASK    = 0xffffffff >> 2;
-enum {
+enum GetDataMsg {
     MSG_TX = 1,
     MSG_BLOCK,
     // The following can only occur in getdata. Invs always use TX or BLOCK.
@@ -412,8 +412,12 @@ enum {
     MSG_MASTERNODE_ANNOUNCE,
     MSG_MASTERNODE_PING,
     MSG_DSTX,
+};
+
+enum GetDataMsgWithFlags {
     MSG_WITNESS_BLOCK = MSG_BLOCK | MSG_WITNESS_FLAG,
-    MSG_WITNESS_TX = MSG_TX | MSG_WITNESS_FLAG
+    MSG_WITNESS_TX = MSG_TX | MSG_WITNESS_FLAG,
+    MSG_FILTERED_WITNESS_BLOCK = MSG_FILTERED_BLOCK | MSG_WITNESS_FLAG,
 };
 
 const int MSG_TYPE_MAX = MSG_FILTERED_BLOCK;
