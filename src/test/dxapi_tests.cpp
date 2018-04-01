@@ -84,6 +84,14 @@ BOOST_AUTO_TEST_CASE(dx_get_order_fills)
     BOOST_CHECK_THROW(CallRPC("dxGetOrderFills LTC SYS no_bool"), runtime_error);
     BOOST_CHECK_THROW(CallRPC("dxGetOrderFills LTC SYS 1"), runtime_error);
     BOOST_CHECK_THROW(CallRPC("dxGetOrderFills 01cdb308781f2729052d926868a6559"), runtime_error);
+    Value value;
+    value = CallRPC("dxGetOrderFills LTC SYS");
+    BOOST_CHECK(find_value(value.get_string(), "id").get_string() == true);
+    BOOST_CHECK(find_value(value.get_string(), "time").get_string() == true);
+    BOOST_CHECK(find_value(value.get_string(), "maker").get_string() == true);
+    BOOST_CHECK(find_value(value.get_string(), "maker_size").get_string() == true);
+    BOOST_CHECK(find_value(value.get_string(), "taker").get_string() == true);
+    BOOST_CHECK(find_value(value.get_string(), "taker_size").get_string() == true);
 }
 
 
