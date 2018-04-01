@@ -97,6 +97,10 @@ BOOST_AUTO_TEST_CASE(dx_get_order_book)
     BOOST_CHECK_THROW(CallRPC("dxGetOrderBook -1 LTC SYS no_bool"), runtime_error);
     BOOST_CHECK_THROW(CallRPC("dxGetOrderBook 1 LTC SYS -1"), runtime_error);
     BOOST_CHECK_THROW(CallRPC("dxGetOrderBook SYS LTC"), runtime_error);
+    Value value;
+    value = CallRPC("dxGetOrderBook 2 LTC SYS ");
+    BOOST_CHECK(find_value(value.get_obj(), "bids").get_bool() == true);
+    BOOST_CHECK(find_value(value.get_obj(), "asks").get_bool() == true);
 }
 
 BOOST_AUTO_TEST_CASE(dx_get_locked_utxos)
