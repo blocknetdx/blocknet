@@ -58,6 +58,17 @@ BOOST_AUTO_TEST_CASE(dx_get_my_orders)
 {
     BOOST_CHECK_THROW(CallRPC("dxGetMyOrders txid"), runtime_error);
     BOOST_CHECK_NO_THROW(CallRPC("dxGetMyOrders"));
+    Value value;
+    value = CallRPC("dxGetOrderFills LTC SYS");
+    BOOST_CHECK(find_value(value.get_string(), "id").get_string() == true);
+    BOOST_CHECK(find_value(value.get_string(), "maker").get_string() == true);
+    BOOST_CHECK(find_value(value.get_string(), "maker_address").get_string() == true);
+    BOOST_CHECK(find_value(value.get_string(), "maker_size").get_string() == true);
+    BOOST_CHECK(find_value(value.get_string(), "taker").get_string() == true);
+    BOOST_CHECK(find_value(value.get_string(), "taker_size").get_string() == true);
+    BOOST_CHECK(find_value(value.get_string(), "taker_address").get_string() == true);
+    BOOST_CHECK(find_value(value.get_string(), "updated_at").get_string() == true);
+    BOOST_CHECK(find_value(value.get_string(), "created_at").get_string() == true);
 }
 
 BOOST_AUTO_TEST_CASE(dx_cancel_order)
