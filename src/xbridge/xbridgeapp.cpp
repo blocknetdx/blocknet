@@ -894,9 +894,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
         return xbridge::Error::DUST;
     }
 
-    double blockWalletBalance = 0.0;
-    bool getBalanceSuccess = rpc::getBalance(blockWalletBalance);
-    if(!getBalanceSuccess || blockWalletBalance < connTo->serviceNodeFee)
+    if(pwalletMain->GetBalance() < connTo->serviceNodeFee)
     {
         return xbridge::Error::INSIFFICIENT_FUNDS_DX;
     }

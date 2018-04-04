@@ -31,13 +31,6 @@ namespace rpc
                                  const std::vector<unsigned char> & data,
                                  std::string & txid);
     /**
-     * @brief getBalance
-     * @param amount
-     * @return
-     */
-    bool getBalance(double & amount);
-
-    /**
      * @brief getDataFromTx
      * @param txid
      * @param data
