@@ -1138,7 +1138,6 @@ bool BtcWalletConnector::requestAddressBook(std::vector<wallet::AddressBookEntry
 
 bool BtcWalletConnector::getInfo(rpc::WalletInfo & info) const
 {
-    rpc::WalletInfo info;
     if (!rpc::getblockchaininfo(m_user, m_passwd, m_ip, m_port, info) ||
         !rpc::getnetworkinfo(m_user, m_passwd, m_ip, m_port, info))
     {
