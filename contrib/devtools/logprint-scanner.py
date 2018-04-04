@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 import os, sys
 from subprocess import check_output
 
@@ -29,7 +29,7 @@ if __name__ == "__main__":
     filelist = [os.path.join(dp, f) for dp, dn, filenames in os.walk(srcDir) for f in filenames if os.path.splitext(f)[1] == '.cpp' or os.path.splitext(f)[1] == '.h' ]
     incorrectInstanceCounter = 0
 
-    for file in filelist:    
+    for file in filelist:
         f = open(file,"r")
         data = f.read()
         rows = data.split("\n")
@@ -78,7 +78,7 @@ if __name__ == "__main__":
                             print "Line = " + tempLine
                             print("numRelevantCommas = " + str(numCommas) + ", numRelevantPercents = " + str(numPercents))
                             print ""
-                            
+
                             incorrectInstanceCounter += 1
 
                     # Done with this multiline, clear tempLine
