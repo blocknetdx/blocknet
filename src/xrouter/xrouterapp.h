@@ -4,12 +4,16 @@
 #ifndef XROUTERAPP_H
 #define XROUTERAPP_H
 
+#include "util/xroutererror.h"
+
 #include <memory>
 
+#include "uint256.h"
 //*****************************************************************************
 //*****************************************************************************
 namespace xrouter
 {
+
 //*****************************************************************************
 //*****************************************************************************
 class App
@@ -49,6 +53,11 @@ public:
      * @return
      */
     bool stop();
+
+    /**
+     * @brief sendXBridgeTransaction - create new xbridge transaction and send to network
+     */
+    Error getBlocks(uint256& id);
 };
 
 } // namespace xrouter
