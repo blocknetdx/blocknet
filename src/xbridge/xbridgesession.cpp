@@ -2698,6 +2698,35 @@ void Session::eraseExpiredPendingTransactions()
     e.eraseExpiredTransactions();
 
     // check client transactions
+    if(e.isStarted())
+        return;
+
+    xbridge::App & xapp = xbridge::App::instance();
+
+    std::map<uint256, xbridge::TransactionDescrPtr> list = xapp.transactions();
+    std::map<uint256, xbridge::TransactionDescrPtr>::iterator i = list.begin();
+
+    for (; i != list.end(); ++i)
+    {
+        const TransactionDescrPtr & ptr = *i->second;
+
+        if(!ptr->isLocal())
+            continue;
+
+        if(ptr->state != xbridge::TransactionDescr::trRemoved)
+            continue;
+
+        WalletConnectorPtr conn = xapp.connectorByCurrency(ptr->fromCurrency);
+        if (!conn)
+        {
+            WARN() << "no connector for <" << ptr->toCurrency << "> " << __FUNCTION__;
+            continue;
+        }
+
+        // unlock coins
+        if(conn->lockCoins(ptr->usedCoins, false))
+            ptr->state = xbridge::TransactionDescr::trReleased;
+    }
 }
 
 //*****************************************************************************
