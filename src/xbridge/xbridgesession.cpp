@@ -2708,7 +2708,7 @@ void Session::eraseExpiredPendingTransactions()
 
     for (; i != list.end(); ++i)
     {
-        const TransactionDescrPtr & ptr = *i->second;
+        const TransactionDescrPtr & ptr = i->second;
 
         if(!ptr->isLocal())
             continue;
