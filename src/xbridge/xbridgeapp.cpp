@@ -899,6 +899,11 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     {
         return xbridge::Error::DUST;
     }
+    
+    if(pwalletMain->GetBalance() < connTo->serviceNodeFee)
+    {
+        return xbridge::Error::INSIFFICIENT_FUNDS_DX;
+    }
 
     std::vector<wallet::UtxoEntry> outputsForUse;
     if (!connFrom->getUtxoEntriesForAmount(fromAmount, outputsForUse))

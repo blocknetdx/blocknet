@@ -58,6 +58,8 @@ const std::string xbridgeErrorText(const Error & error, const std::string & argu
             return "Blocknet is not running as an exchange node";
         case DUST:
             return "Amount is dust (very small)";
+        case INSIFFICIENT_FUNDS_DX:
+            return "Blocnetdx wallet amount is small to make fee payment";
     }
     return "invalid error value";
 }
