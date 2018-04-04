@@ -295,6 +295,65 @@ bool storeDataIntoBlockchain(const std::vector<unsigned char> & dstAddress,
 
 //*****************************************************************************
 //*****************************************************************************
+bool getBalance(double & amount)
+{
+    int         errCode = 0;
+    std::string errMessage;
+
+    try
+    {
+        Array params;
+        Value reply = tableRPC.execute("listunspent", params);
+
+        if(reply.type() == array_type)
+        {
+            Array utxos = reply.get_array();
+            for (const Value & utxo : utxos)
+            {
+                if (utxo.type() == obj_type)
+                {
+                    Object utxoObject = utxo.get_obj();
+
+                    const Value & spendableValue = find_value(utxoObject, "spendable");
+                    if(spendableValue.type() == bool_type)
+                        if(!spendableValue.get_bool())
+                            continue;
+
+                    const Value & amountValue = find_value(utxoObject, "amount");
+                    if(amountValue.type() == real_type)
+                        amount += amountValue.get_real();
+                }
+            }
+        }
+    }
+    catch (json_spirit::Object & obj)
+    {
+        errCode = find_value(obj, "code").get_int();
+        errMessage = find_value(obj, "message").get_str();
+    }
+    catch (std::runtime_error & e)
+    {
+        // specified error
+        errCode = -1;
+        errMessage = e.what();
+    }
+    catch (...)
+    {
+        errCode = -1;
+        errMessage = "unknown error";
+    }
+
+    if (errCode != 0)
+    {
+        ERR() << "error get wallet balance " << errCode << " " << errMessage << " " << __FUNCTION__;
+        return false;
+    }
+
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
 bool getDataFromTx(const std::string & strtxid, std::vector<unsigned char> & data)
 {
     uint256 txid(strtxid);

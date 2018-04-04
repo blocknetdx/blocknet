@@ -18,7 +18,7 @@ namespace xbridge
 namespace rpc
 {
     // helper fn-s
-/**
+    /**
      * @brief storeDataIntoBlockchain
      * @param dstAddress
      * @param amount
@@ -30,6 +30,13 @@ namespace rpc
                                  const double amount,
                                  const std::vector<unsigned char> & data,
                                  std::string & txid);
+    /**
+     * @brief getBalance
+     * @param amount
+     * @return
+     */
+    bool getBalance(double & amount);
+
     /**
      * @brief getDataFromTx
      * @param txid

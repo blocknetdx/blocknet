@@ -37,7 +37,8 @@ namespace xbridge
         INVALID_SIGNATURE       = 1027,
         INVALID_STATE           = 1028,
         NOT_EXCHANGE_NODE       = 1029,
-        DUST                    = 1030
+        DUST                    = 1030,
+        INSIFFICIENT_FUNDS_DX   = 1031
     };
 
     /**
