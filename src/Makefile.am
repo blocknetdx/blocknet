@@ -406,7 +406,9 @@ libxbridge_xbridge_a_SOURCES = \
 
 libxrouter_xrouter_a_CPPFLAGS =  $(BITCOIN_INCLUDES)
 libxrouter_xrouter_a_SOURCES = \
+	xrouter/xrouterapp.cpp \
 	xrouter/rpcxrouter.cpp \
+	xrouter/xrouterapp.h \
 	$(BITCOIN_CORE_H)
 
 
