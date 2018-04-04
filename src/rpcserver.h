@@ -599,6 +599,31 @@ extern json_spirit::Value dxGetLockedUtxos(const json_spirit::Array& params, boo
 extern json_spirit::Value  dxGetTokenBalances(const json_spirit::Array& params, bool fHelp);
 /** @} */
 
+/** \defgroup xRouterAPI xRouter API
+ * @brief XBridge functions exposed to RPC
+ *  @{
+ */
+
+/** @brief Look up a block in the specified blockchain.
+  * @param params The list of input params - should be empty
+  * @param fHelp If is true then an exception with parameter description message will be thrown
+  * @return The list of open and pending transactions as JSON value. Open transactions go first.
+  * * Example:<br>
+  * \verbatim
+    xrGetBlocks
+￼
+    [
+        {
+        },
+        {
+        }
+    ]
+  * \endverbatim
+  */
+
+extern json_spirit::Value xrGetBlocks(const json_spirit::Array& params, bool fHelp);
+/** @} */
+
 
 // in rest.cpp
 extern bool HTTPReq_REST(AcceptedConnection* conn,
