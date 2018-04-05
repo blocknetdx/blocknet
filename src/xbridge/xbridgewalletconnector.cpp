@@ -193,6 +193,8 @@ bool WalletConnector::getUtxoEntriesForAmount(const uint64_t& amount, std::vecto
         std::vector<wallet::UtxoEntry> uniqueOutputsSmallerThanTarget(outputsSmallerThanTarget);
         std::vector<wallet::UtxoEntry> outputsForUse;
 
+        uint64_t utxoAmount = 0;
+
         while (!uniqueOutputsSmallerThanTarget.empty())
         {
             const auto it = random_element(uniqueOutputsSmallerThanTarget.begin(),
@@ -205,7 +207,7 @@ bool WalletConnector::getUtxoEntriesForAmount(const uint64_t& amount, std::vecto
 
             fee1 = minTxFee1(outputsForUse.size(), 3) * TransactionDescr::COIN;
 
-            uint64_t utxoAmount = (entry.amount * TransactionDescr::COIN);
+            utxoAmount += (entry.amount * TransactionDescr::COIN);
 
             uint64_t fullAmount = amount + fee1 + fee2;
 
