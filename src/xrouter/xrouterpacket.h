@@ -32,20 +32,7 @@ enum XRouterCommand
 {
     xbcInvalid = 0,
 
-    // client use this message for announce your addresses for network
-    //
-    // xbcAnnounceAddresses
-    //     uint160 client address
-    // xbcAnnounceAddresses = 1,
-
-    // xchat message
-    //
-    // xbcXChatMessage
-    //     uint160 destination address
-    //     serialized p2p message from bitcoin network
-    xbcXChatMessage = 2,
-
-    xrGetBlocks = 3
+    xrGetBlocks = 1
 };
 
 //******************************************************************************

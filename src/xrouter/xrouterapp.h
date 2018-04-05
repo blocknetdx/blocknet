@@ -6,6 +6,7 @@
 
 #include "xrouterpacket.h"
 #include "util/xroutererror.h"
+#include "validationstate.h"
 
 #include <memory>
 
@@ -79,6 +80,17 @@ public:
      * @param packet
      */
     void sendPacket(const std::vector<unsigned char> & id, const XRouterPacketPtr & packet);
+
+    // call when message from xrouter network received
+    /**
+     * @brief onMessageReceived  call when message from xrouter network received
+     * @param id packet id
+     * @param message
+     * @param state
+     */
+    void onMessageReceived(const std::vector<unsigned char> & id,
+                           const std::vector<unsigned char> & message,
+                           CValidationState & state);
 };
 
 } // namespace xrouter

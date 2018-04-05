@@ -4,9 +4,14 @@
 #include "xrouterapp.h"
 #include "util/xutil.h"
 #include "net.h"
+#include "wallet.h"
+#include "keystore.h"
+#include "init.h"
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <iostream>
+
+static const CAmount minBlock = 2;
 
 //*****************************************************************************
 //*****************************************************************************
@@ -162,9 +167,101 @@ void App::sendPacket(const std::vector<unsigned char> & id, const XRouterPacketP
 
 //*****************************************************************************
 //*****************************************************************************
+static bool processGetBlocks(XRouterPacketPtr packet) {
+  std::cout << "Processing GetBlocks\n";
+  return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+void App::onMessageReceived(const std::vector<unsigned char> & id,
+                            const std::vector<unsigned char> & message,
+                            CValidationState & /*state*/)
+{
+        std::cerr << "Received xrouter packet\n";
+
+    XRouterPacketPtr packet(new XRouterPacket);
+    if (!packet->copyFrom(message))
+    {
+      std::clog << "incorrect packet received " << __FUNCTION__;
+        return;
+    }
+
+    if (!packet->verify())
+    {
+      std::clog << "unsigned packet or signature error " << __FUNCTION__;
+        return;
+    }
+
+    /* std::clog << "received message to " << util::base64_encode(std::string((char*)&id[0], 20)).c_str() */
+    /*           << " command " << packet->command(); */
+
+    switch (packet->command()) {
+      case xrGetBlocks:
+        processGetBlocks(packet);
+        break;
+      default:
+        std::clog << "Unkown packet\n";
+        break;
+    }
+}
+
+//*****************************************************************************
+//*****************************************************************************
+static bool satisfyBlockRequirement(
+    uint256& txHash,
+    uint32_t& vout,
+    CKey& key)
+{
+    if (!pwalletMain) {
+        return false;
+    }
+    for (auto& addressCoins : pwalletMain->AvailableCoinsByAddress()) {
+        for (auto& output : addressCoins.second) {
+          if (output.Value() >= minBlock) {
+            CKeyID keyID;
+            if (!addressCoins.first.GetKeyID(keyID)) {
+              std::cerr << "GetKeyID failed\n";
+              return false;
+            }
+            if (!pwalletMain->GetKey(keyID, key)) {
+              std::cerr << "GetKey failed\n";
+              return false;
+            }
+            txHash = output.tx->GetHash();
+            vout = output.i;
+            return true;
+          }
+        }
+    }
+    return false;
+}
+
+//*****************************************************************************
+//*****************************************************************************
 Error App::getBlocks(uint256& id)
 {
     XRouterPacketPtr packet{new XRouterPacket{xrGetBlocks}};
+
+    uint256 txHash;
+    uint32_t vout;
+    CKey key;
+    if (!satisfyBlockRequirement(txHash, vout, key)) {
+      std::cerr << "Minimum block requirement not satisfied\n";
+      return UNKNOWN_ERROR;
+    }
+
+    std::cout << "Sending xrGetBlock packet...\n";
+    packet->append(txHash.begin(), 32);
+    packet->append(vout);
+
+    auto pubKey = key.GetPubKey();
+    std::vector<unsigned char> pubKeyData{pubKey.begin(), pubKey.end()};
+
+    auto privKey = key.GetPrivKey_256();
+    std::vector<unsigned char> privKeyData{privKey.begin(), privKey.end()};
+
+    packet->sign(pubKeyData, privKeyData);
     sendPacket(packet);
     return SUCCESS;
 }
