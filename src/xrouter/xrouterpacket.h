@@ -15,6 +15,10 @@
 //#include <assert.h>
 #include <string.h>
 
+//*****************************************************************************
+//*****************************************************************************
+namespace xrouter
+{
 //******************************************************************************
 //******************************************************************************
 enum TxCancelReason
@@ -297,7 +301,7 @@ private:
 
 typedef std::shared_ptr<XRouterPacket> XRouterPacketPtr;
 typedef std::deque<XRouterPacketPtr>   XRouterPacketQueue;
+} // namespace xrouter
 
 
 #endif // XROUTERPACKET_H
-

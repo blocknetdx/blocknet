@@ -2,6 +2,11 @@
 //*****************************************************************************
 
 #include "xrouterapp.h"
+#include "util/xutil.h"
+#include "net.h"
+
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <iostream>
 
 //*****************************************************************************
 //*****************************************************************************
@@ -31,6 +36,14 @@ protected:
      * @return true
      */
     bool stop();
+
+    /**
+     * @brief onSend  send packet to xrouter network to specified id,
+     *  or broadcast, when id is empty
+     * @param id
+     * @param message
+     */
+    void onSend(const std::vector<unsigned char>& id, const std::vector<unsigned char>& message);
 };
 
 //*****************************************************************************
@@ -93,8 +106,54 @@ bool App::Impl::stop()
 
 //*****************************************************************************
 //*****************************************************************************
+void App::sendPacket(const XRouterPacketPtr & packet)
+{
+    static std::vector<unsigned char> addr(20, 0);
+    m_p->onSend(addr, packet->body());
+}
+
+//*****************************************************************************
+// send packet to xrouter network to specified id,
+// or broadcast, when id is empty
+//*****************************************************************************
+void App::Impl::onSend(const std::vector<unsigned char>& id, const std::vector<unsigned char>& message)
+{
+    std::vector<unsigned char> msg(id);
+    if (msg.size() != 20) {
+        std::cerr << "bad send address " << __FUNCTION__;
+        return;
+    }
+
+    // timestamp
+    boost::posix_time::ptime timestamp = boost::posix_time::microsec_clock::universal_time();
+    uint64_t timestampValue = xrouter::util::timeToInt(timestamp);
+    unsigned char* ptr = reinterpret_cast<unsigned char*>(&timestampValue);
+    msg.insert(msg.end(), ptr, ptr + sizeof(uint64_t));
+
+    // body
+    msg.insert(msg.end(), message.begin(), message.end());
+
+    uint256 hash = Hash(msg.begin(), msg.end());
+
+    LOCK(cs_vNodes);
+    for (CNode* pnode : vNodes) {
+        if (pnode->setKnown.insert(hash).second) {
+            pnode->PushMessage("xrouter", msg);
+        }
+    }
+}
+
+//*****************************************************************************
+//*****************************************************************************
+void App::sendPacket(const std::vector<unsigned char> & id, const XRouterPacketPtr & packet)
+{
+    m_p->onSend(id, packet->body());
+}
+
+//*****************************************************************************
+//*****************************************************************************
 Error App::getBlocks(uint256& id)
 {
-  return SUCCESS;
+    return SUCCESS;
 }
 } // namespace xrouter
