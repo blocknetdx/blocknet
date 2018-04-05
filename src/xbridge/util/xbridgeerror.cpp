@@ -59,7 +59,7 @@ const std::string xbridgeErrorText(const Error & error, const std::string & argu
         case DUST:
             return "Amount is dust (very small)";
         case INSIFFICIENT_FUNDS_DX:
-            return "Blocnetdx wallet amount is small to make fee payment";
+            return "Blocknet wallet amount is too small to cover the fee payment";
     }
     return "invalid error value";
 }
