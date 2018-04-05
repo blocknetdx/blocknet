@@ -105,7 +105,9 @@ background-color:#646f6d;
 QWidget {
 selection-background-color:#1F487E; /* Object highlight color */
 selection-color:#fff;
-outline:0; /* Remove Annoying Focus Rectangle */
+outline: 0; /* Remove Annoying Focus Rectangle */
+/*color:#c5e9eb;
+background-color:transparent;*/
 }
 
 QGroupBox {
@@ -114,7 +116,7 @@ color:#ddd;
 }
 
 QToolTip {
-background-color:#575757;
+background-color:transparent;
 color:#cf5932;
 }
 
@@ -131,17 +133,73 @@ color:#ffffff;
 }
 
 .QRadioButton { /* Radio Button Labels */
-color:#cf5932;
+color:#cf59f2;
+/*background-color: transparent;*/
+/*outline: 0;*/ /* Remove Annoying Focus Rectangle */ 
+/*border: none;*/
 }
 
-.QCheckBox { /* Checkbox Labels */
+QRadioButton:focus {
+/*background-color:transparent;*/
+/*border: none;*/
+}
+
+QCheckBox:unchecked { /* Checkbox Labels */
 color:#c5e9eb;
 background-color:transparent;
+/*spacing: 3px;*/    
 }
 
-.QCheckBox:hover {
+QCheckBox:checked { /* Checkbox Labels */
+color:#c5e9eb;
+background-color:transparent;
+/*spacing: 3px;*/    
+}
+
+QCheckBox:hover {
 background-color:transparent;
 }
+
+/*
+QCheckBox::indicator {
+border: 3px solid #ee0000;
+background: none;
+width: 16px;
+height: 16px;
+}
+
+QCheckBox::indicator:unchecked {
+image:url(':/images/checkbox_unchecked');
+}
+
+QCheckBox::indicator:unchecked:hover {
+image:url(':/images/checkbox_unchecked_hover');
+}
+
+QCheckBox::indicator:unchecked:pressed {
+image:url(':/images/checkbox_unchecked_pressed');
+}
+
+QCheckBox::indicator:checked {
+image:url(':/images/checkbox_checked');
+}
+
+QCheckBox::indicator:checked:hover {
+image:url(':/images/checkbox_checked_hover');
+}
+
+QCheckBox::indicator:checked:pressed {
+image:url(':/images/checkbox_checked_pressed');
+}
+
+QCheckBox::indicator:indeterminate:hover {
+image:url(':/images/checkbox_indeterminate_hover');
+}
+
+QCheckBox::indicator:indeterminate:pressed {
+image:url(':/images/checkbox_indeterminate_pressed');
+}
+*/
 
 .QValidatedLineEdit, .QLineEdit { /* Text Entry Fields */
 border: 1px solid #1F487E;
