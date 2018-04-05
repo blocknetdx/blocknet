@@ -43,6 +43,12 @@ public:
     static App & instance();
 
     /**
+     * @brief isEnabled
+     * @return enabled by default
+     */
+    static bool isEnabled();
+
+    /**
      * @brief start - start xrouter
      * run services, sessions,
      * @return true if all components run successfull

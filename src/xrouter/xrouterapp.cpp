@@ -77,6 +77,15 @@ App& App::instance()
 
 //*****************************************************************************
 //*****************************************************************************
+// static
+bool App::isEnabled()
+{
+    // enabled by default
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
 bool App::start()
 {
     return m_p->start();
@@ -137,9 +146,10 @@ void App::Impl::onSend(const std::vector<unsigned char>& id, const std::vector<u
 
     LOCK(cs_vNodes);
     for (CNode* pnode : vNodes) {
-        if (pnode->setKnown.insert(hash).second) {
-            pnode->PushMessage("xrouter", msg);
-        }
+        // TODO: Need a better way to determine which peer to send to; for now
+        // just send to the first.
+        pnode->PushMessage("xrouter", msg);
+        break;
     }
 }
 
@@ -154,6 +164,8 @@ void App::sendPacket(const std::vector<unsigned char> & id, const XRouterPacketP
 //*****************************************************************************
 Error App::getBlocks(uint256& id)
 {
+    XRouterPacketPtr packet{new XRouterPacket{xrGetBlocks}};
+    sendPacket(packet);
     return SUCCESS;
 }
 } // namespace xrouter

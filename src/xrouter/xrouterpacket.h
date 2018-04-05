@@ -44,6 +44,8 @@ enum XRouterCommand
     //     uint160 destination address
     //     serialized p2p message from bitcoin network
     xbcXChatMessage = 2,
+
+    xrGetBlocks = 3
 };
 
 //******************************************************************************
