@@ -1594,8 +1594,8 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet)
     }
 
     // lock time
-    uint32_t lTime = connFrom->lockTime(xtx->role);
-    if (lTime == 0)
+    xtx->lockTimeTx1 = connFrom->lockTime(xtx->role);
+    if (xtx->lockTimeTx1 == 0)
     {
         LOG() << "lockTime error, transaction canceled " << __FUNCTION__;
         sendCancelTransaction(xtx, crRpcError);
@@ -1617,7 +1617,7 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet)
 #endif
 
     // create address for first tx
-    connFrom->createDepositUnlockScript(xtx->mPubKey, mPubKey, hx, lTime, xtx->innerScript);
+    connFrom->createDepositUnlockScript(xtx->mPubKey, mPubKey, hx, xtx->lockTimeTx1, xtx->innerScript);
     xtx->depositP2SH = connFrom->scriptIdToString(connFrom->getScriptId(xtx->innerScript));
 
     // depositTx
@@ -1689,7 +1689,7 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet)
 
         if (!connFrom->createRefundTransaction(inputs, outputs,
                                                xtx->mPubKey, xtx->mPrivKey,
-                                               xtx->innerScript, lTime,
+                                               xtx->innerScript, xtx->lockTimeTx1,
                                                xtx->refTxId, xtx->refTx))
         {
             // cancel transaction
