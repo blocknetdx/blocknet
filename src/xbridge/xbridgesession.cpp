@@ -1884,8 +1884,8 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet)
     }
 
     // lock time
-    uint32_t lTime = connFrom->lockTime(xtx->role);
-    if (lTime == 0)
+    xtx->lockTimeTx1 = connFrom->lockTime(xtx->role);
+    if (xtx->lockTimeTx1 == 0)
     {
         LOG() << "lockTime error, transaction canceled " << __FUNCTION__;
         sendCancelTransaction(xtx, crRpcError);
@@ -1907,7 +1907,7 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet)
 #endif
 
     // create address for first tx
-    connFrom->createDepositUnlockScript(xtx->mPubKey, mPubKey, hx, lTime, xtx->innerScript);
+    connFrom->createDepositUnlockScript(xtx->mPubKey, mPubKey, hx, xtx->lockTimeTx1, xtx->innerScript);
     xtx->depositP2SH = connFrom->scriptIdToString(connFrom->getScriptId(xtx->innerScript));
 
     // depositTx
@@ -1979,7 +1979,7 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet)
 
         if (!connFrom->createRefundTransaction(inputs, outputs,
                                                xtx->mPubKey, xtx->mPrivKey,
-                                               xtx->innerScript, lTime,
+                                               xtx->innerScript, xtx->lockTimeTx1,
                                                xtx->refTxId, xtx->refTx))
         {
             // cancel transaction
@@ -2756,16 +2756,31 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet)
     std::string sid;
     int32_t errCode = 0;
     std::string errorMessage;
-    if (!conn->sendRawTransaction(xtx->refTx, sid, errCode, errorMessage))
+    xbridge::rpc::WalletInfo info;
+
+    bool infoRecieved = conn->getInfo(info);
+
+    if(infoRecieved && info.blocks < xtx->lockTimeTx1)
     {
-        // TODO move packet to pending if error
-        LOG() << "send rollback error, tx " << txid.GetHex() << " " << __FUNCTION__;
-        xtx->state = TransactionDescr::trRollbackFailed;
+        LOG() << "waiting for loctime expiration before refund tx " << txid.GetHex() << " " << __FUNCTION__;
         xapp.processLater(txid, packet);
     }
     else
     {
-        xtx->state = TransactionDescr::trRollback;
+        if(!infoRecieved)
+            LOG() << "can't get wallet info to calc locktime, let's try to send without it " << txid.GetHex() << " " << __FUNCTION__;
+
+        if (!conn->sendRawTransaction(xtx->refTx, sid, errCode, errorMessage))
+        {
+            // TODO move packet to pending if error
+            LOG() << "send rollback error, tx " << txid.GetHex() << " " << __FUNCTION__;
+            xtx->state = TransactionDescr::trRollbackFailed;
+            xapp.processLater(txid, packet);
+        }
+        else
+        {
+            xtx->state = TransactionDescr::trRollback;
+        }
     }
 
     LOG() << __FUNCTION__ << xtx;
