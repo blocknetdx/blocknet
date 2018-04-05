@@ -98,7 +98,7 @@ T random_element(T begin, T end)
 
 bool WalletConnector::getUtxoEntriesForAmount(const uint64_t& amount, std::vector<wallet::UtxoEntry>& entries) const
 {
-    uint64_t fee2 = minTxFee2(1, 1) * TransactionDescr::COIN;
+    uint64_t fee2 = minTxFee2(1, 1) * COIN;
     uint64_t fee1 = 0;
 
     std::vector<wallet::UtxoEntry> outputs;
@@ -120,14 +120,14 @@ bool WalletConnector::getUtxoEntriesForAmount(const uint64_t& amount, std::vecto
     std::vector<wallet::UtxoEntry> greaterThanTargetOutput;
 
     //try to find best matching one output or one larger output
-    fee1 = minTxFee1(1, 3) * TransactionDescr::COIN;
+    fee1 = minTxFee1(1, 3) * COIN;
     for(const wallet::UtxoEntry & entry : outputs)
     {
-        uint64_t utxoAmount = (entry.amount * TransactionDescr::COIN);
+        uint64_t utxoAmount = (entry.amount * COIN);
         uint64_t fullAmount = amount + fee1 + fee2;
 
         if(utxoAmount == fullAmount &&
-           !isDustAmount(static_cast<double>(utxoAmount - fullAmount) / TransactionDescr::COIN))
+           !isDustAmount(static_cast<double>(utxoAmount - fullAmount) / COIN))
         {
             //we are lucky
             entries.emplace_back(entry);
@@ -135,7 +135,7 @@ bool WalletConnector::getUtxoEntriesForAmount(const uint64_t& amount, std::vecto
         }
 
         if (utxoAmount > fullAmount &&
-            !isDustAmount(static_cast<double>(utxoAmount - fullAmount) / TransactionDescr::COIN))
+            !isDustAmount(static_cast<double>(utxoAmount - fullAmount) / COIN))
         {
             greaterThanTargetOutput.emplace_back(entry);
             break;
@@ -146,7 +146,7 @@ bool WalletConnector::getUtxoEntriesForAmount(const uint64_t& amount, std::vecto
     std::vector<wallet::UtxoEntry> outputsSmallerThanTarget;
     std::copy_if(outputs.begin(), outputs.end(), std::inserter(outputsSmallerThanTarget, outputsSmallerThanTarget.end()),
                  [&amount](const wallet::UtxoEntry & entry){
-        return amount > entry.amount * TransactionDescr::COIN;
+        return amount > entry.amount * COIN;
     });
 
     bool smallerOutputsLargerThanTarget = false;
@@ -159,15 +159,15 @@ bool WalletConnector::getUtxoEntriesForAmount(const uint64_t& amount, std::vecto
             std::vector<wallet::UtxoEntry> outputsForUse;
             outputsForUse.push_back(entry);
 
-            fee1 = minTxFee1(outputsForUse.size(), 3) * TransactionDescr::COIN;
+            fee1 = minTxFee1(outputsForUse.size(), 3) * COIN;
 
-            utxoAmount = (entry.amount * TransactionDescr::COIN);
+            utxoAmount = (entry.amount * COIN);
         }
 
         uint64_t fullAmount = amount + fee1 + fee2;
 
         if (utxoAmount >= fullAmount &&
-            !isDustAmount(static_cast<double>(utxoAmount - fullAmount) / TransactionDescr::COIN))
+            !isDustAmount(static_cast<double>(utxoAmount - fullAmount) / COIN))
             smallerOutputsLargerThanTarget = true;
     }
 
@@ -193,6 +193,8 @@ bool WalletConnector::getUtxoEntriesForAmount(const uint64_t& amount, std::vecto
         std::vector<wallet::UtxoEntry> uniqueOutputsSmallerThanTarget(outputsSmallerThanTarget);
         std::vector<wallet::UtxoEntry> outputsForUse;
 
+        uint64_t utxoAmount = 0;
+
         while (!uniqueOutputsSmallerThanTarget.empty())
         {
             const auto it = random_element(uniqueOutputsSmallerThanTarget.begin(),
@@ -203,14 +205,14 @@ bool WalletConnector::getUtxoEntriesForAmount(const uint64_t& amount, std::vecto
 
             outputsForUse.push_back(entry);
 
-            fee1 = minTxFee1(outputsForUse.size(), 3) * TransactionDescr::COIN;
+            fee1 = minTxFee1(outputsForUse.size(), 3) * COIN;
 
-            uint64_t utxoAmount = (entry.amount * TransactionDescr::COIN);
+            utxoAmount += (entry.amount * COIN);
 
             uint64_t fullAmount = amount + fee1 + fee2;
 
             if (utxoAmount >= fullAmount &&
-                !isDustAmount(static_cast<double>(utxoAmount - fullAmount) / TransactionDescr::COIN))
+                !isDustAmount(static_cast<double>(utxoAmount - fullAmount) / COIN))
             {
                 if(fee1 < smallestFee)
                 {
@@ -238,10 +240,10 @@ bool WalletConnector::getUtxoEntriesForAmount(const uint64_t& amount, std::vecto
         uint64_t bestSmallerOutputsCombinationValue = 0;
 
         for(const wallet::UtxoEntry & entry : greaterThanTargetOutput)
-            greaterThanTargetOutputValue += (entry.amount * TransactionDescr::COIN);
+            greaterThanTargetOutputValue += (entry.amount * COIN);
 
         for(const wallet::UtxoEntry & entry : bestSmallerOutputsCombination)
-            bestSmallerOutputsCombinationValue += (entry.amount * TransactionDescr::COIN);
+            bestSmallerOutputsCombinationValue += (entry.amount * COIN);
 
         if(greaterThanTargetOutputValue < bestSmallerOutputsCombinationValue)
             entries = greaterThanTargetOutput;
