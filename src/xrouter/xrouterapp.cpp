@@ -18,6 +18,7 @@
 #include "xbridge/xbridgewalletconnectorbcc.h"
 #include "xbridge/xbridgewalletconnectorsys.h"
 
+#include "json/json_spirit_writer_template.h"
 #include <assert.h>
 
 #include <boost/chrono/chrono.hpp>
@@ -29,6 +30,7 @@
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <iostream>
+#include <sstream>
 
 static const CAmount minBlock = 2;
 
@@ -237,6 +239,17 @@ void App::addConnector(const xbridge::WalletConnectorPtr & conn)
     m_p->m_connectorCurrencyMap[conn->currency] = conn;
 }
 
+xbridge::WalletConnectorPtr App::connectorByCurrency(const std::string & currency) const
+{
+    boost::mutex::scoped_lock l(m_p->m_connectorsLock);
+    if (m_p->m_connectorCurrencyMap.count(currency))
+    {
+        return m_p->m_connectorCurrencyMap.at(currency);
+    }
+
+    return xbridge::WalletConnectorPtr();
+}
+
 //*****************************************************************************
 //*****************************************************************************
 void App::sendPacket(const XRouterPacketPtr& packet)
@@ -265,8 +278,6 @@ void App::Impl::onSend(const std::vector<unsigned char>& id, const std::vector<u
 
     // body
     msg.insert(msg.end(), message.begin(), message.end());
-
-    uint256 hash = Hash(msg.begin(), msg.end());
 
     LOCK(cs_vNodes);
     for (CNode* pnode : vNodes) {
@@ -367,6 +378,15 @@ bool App::processGetBlocks(XRouterPacketPtr packet) {
     //
     // SEND THE QUERY TO WALLET CONNECTOR HERE
     //
+    
+    xbridge::WalletConnectorPtr conn = connectorByCurrency(currency);
+    if (conn)
+    {
+        Array a {blockHash};
+        Object res = conn->executeRpcCall("getblock", a);
+        const Value& res_val(res);
+        result = json_spirit::write_string(res_val, true);
+    }
 
     XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
 

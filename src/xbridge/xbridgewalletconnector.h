@@ -5,7 +5,10 @@
 #define XBRIDGEWALLETCONNECTOR_H
 
 #include "xbridgewallet.h"
-
+#include "json/json_spirit_reader_template.h"
+#include "json/json_spirit_writer_template.h"
+#include "json/json_spirit_utils.h"
+using namespace json_spirit;
 #include <vector>
 #include <string>
 #include <memory>
@@ -79,6 +82,8 @@ public:
 
     virtual bool signMessage(const std::string & address, const std::string & message, std::string & signature) = 0;
     virtual bool verifyMessage(const std::string & address, const std::string & message, const std::string & signature) = 0;
+    
+    Object executeRpcCall(std::string command,  const Array & params) { return Object(); }
 
 public:
     // helper functions

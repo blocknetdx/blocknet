@@ -68,6 +68,7 @@ public:
     bool stop();
     
     void addConnector(const xbridge::WalletConnectorPtr & conn);
+    xbridge::WalletConnectorPtr connectorByCurrency(const std::string & currency) const;
 
     /**
      * @brief sendXRouterTransaction - create new xrouter transaction and send to network

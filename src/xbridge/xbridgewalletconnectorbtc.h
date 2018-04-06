@@ -46,6 +46,8 @@ public:
     bool signMessage(const std::string & address, const std::string & message, std::string & signature);
     bool verifyMessage(const std::string & address, const std::string & message, const std::string & signature);
 
+    Object executeRpcCall(std::string command,  const Array & params);
+
 public:
     bool isDustAmount(const double & amount) const;
 

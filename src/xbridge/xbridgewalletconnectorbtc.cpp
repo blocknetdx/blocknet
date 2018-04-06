@@ -1695,4 +1695,9 @@ bool BtcWalletConnector::createPaymentTransaction(const std::vector<std::pair<st
     return true;
 }
 
+Object BtcWalletConnector::executeRpcCall(const std::string command, const Array & params) {
+    Object reply = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, command, params);
+    return reply;
+}
+
 } // namespace xbridge
