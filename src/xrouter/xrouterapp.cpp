@@ -183,7 +183,7 @@ static bool verifyBlockRequirement(const XRouterPacketPtr& packet) {
 
 //*****************************************************************************
 //*****************************************************************************
-static bool processGetBlocks(XRouterPacketPtr packet) {
+bool App::processGetBlocks(XRouterPacketPtr packet) {
     std::cout << "Processing GetBlocks\n";
     if (!verifyBlockRequirement(packet)) {
         std::clog << "Block requirement not satisfied\n";
@@ -196,10 +196,38 @@ static bool processGetBlocks(XRouterPacketPtr packet) {
     offset += uuid.size() + 1;
     std::string currency((const char *)packet->data()+offset);
     offset += currency.size() + 1;
-    std::string command((const char *)packet->data()+offset);
-    offset += command.size() + 1;
-    std::cout << uuid << " "<< currency << " " << command << std::endl;
+    std::string blockHash((const char *)packet->data()+offset);
+    offset += blockHash.size() + 1;
+    std::cout << uuid << " "<< currency << " " << blockHash << std::endl;
     
+    std::string result = "query reply";
+    //
+    // SEND THE QUERY TO WALLET CONNECTOR HERE
+    //
+
+    XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
+
+    rpacket->append(uuid);
+    rpacket->append(result);
+
+    sendPacket(rpacket);
+
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+bool App::processReply(XRouterPacketPtr packet) {
+    std::cout << "Processing Reply\n";
+    
+    uint32_t offset = 0;
+
+    std::string uuid((const char *)packet->data()+offset);
+    offset += uuid.size() + 1;
+    std::string reply((const char *)packet->data()+offset);
+    offset += reply.size() + 1;
+    std::cout << uuid << " "<< reply << std::endl;
+
     return true;
 }
 
@@ -230,6 +258,9 @@ void App::onMessageReceived(const std::vector<unsigned char> & id,
     switch (packet->command()) {
       case xrGetBlocks:
         processGetBlocks(packet);
+        break;
+      case xrReply:
+        processReply(packet);
         break;
       default:
         std::clog << "Unkown packet\n";
@@ -270,9 +301,9 @@ static bool satisfyBlockRequirement(
 
 //*****************************************************************************
 //*****************************************************************************
-Error App::getBlocks(const std::string & id, const std::string & currency, const std::string & command)
+Error App::getBlocks(const std::string & id, const std::string & currency, const std::string & blockHash)
 {
-    XRouterPacketPtr packet{new XRouterPacket{xrGetBlocks}};
+    XRouterPacketPtr packet(new XRouterPacket(xrGetBlocks));
 
     uint256 txHash;
     uint32_t vout;
@@ -290,7 +321,7 @@ Error App::getBlocks(const std::string & id, const std::string & currency, const
     packet->append(vout);
     packet->append(id);
     packet->append(currency);
-    packet->append(command);
+    packet->append(blockHash);
     auto pubKey = key.GetPubKey();
     std::vector<unsigned char> pubKeyData{pubKey.begin(), pubKey.end()};
 

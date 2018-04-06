@@ -65,7 +65,10 @@ public:
     /**
      * @brief sendXRouterTransaction - create new xrouter transaction and send to network
      */
-    Error getBlocks(const std::string & id, const std::string & currency, const std::string & command);
+    Error getBlocks(const std::string & id, const std::string & currency, const std::string & blockHash);
+
+    bool processGetBlocks(XRouterPacketPtr packet);
+    bool processReply(XRouterPacketPtr packet);
 
     //
     /**

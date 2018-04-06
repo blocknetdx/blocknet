@@ -32,7 +32,8 @@ enum XRouterCommand
 {
     xbcInvalid = 0,
 
-    xrGetBlocks = 1
+    xrReply = 1,
+    xrGetBlocks = 2
 };
 
 //******************************************************************************
