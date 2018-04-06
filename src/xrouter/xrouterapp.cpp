@@ -184,12 +184,23 @@ static bool verifyBlockRequirement(const XRouterPacketPtr& packet) {
 //*****************************************************************************
 //*****************************************************************************
 static bool processGetBlocks(XRouterPacketPtr packet) {
-  std::cout << "Processing GetBlocks\n";
-  if (!verifyBlockRequirement(packet)) {
-    std::clog << "Block requirement not satisfied\n";
-    return false;
-  }
-  return true;
+    std::cout << "Processing GetBlocks\n";
+    if (!verifyBlockRequirement(packet)) {
+        std::clog << "Block requirement not satisfied\n";
+        return false;
+    }
+    
+    uint32_t offset = 36;
+
+    std::string uuid((const char *)packet->data()+offset);
+    offset += uuid.size() + 1;
+    std::string currency((const char *)packet->data()+offset);
+    offset += currency.size() + 1;
+    std::string command((const char *)packet->data()+offset);
+    offset += command.size() + 1;
+    std::cout << uuid << " "<< currency << " " << command << std::endl;
+    
+    return true;
 }
 
 //*****************************************************************************
@@ -203,7 +214,7 @@ void App::onMessageReceived(const std::vector<unsigned char> & id,
     XRouterPacketPtr packet(new XRouterPacket);
     if (!packet->copyFrom(message))
     {
-      std::clog << "incorrect packet received " << __FUNCTION__;
+        std::clog << "incorrect packet received " << __FUNCTION__;
         return;
     }
 
@@ -259,7 +270,7 @@ static bool satisfyBlockRequirement(
 
 //*****************************************************************************
 //*****************************************************************************
-Error App::getBlocks(uint256& id)
+Error App::getBlocks(const std::string & id, const std::string & currency, const std::string & command)
 {
     XRouterPacketPtr packet{new XRouterPacket{xrGetBlocks}};
 
@@ -274,9 +285,12 @@ Error App::getBlocks(uint256& id)
     std::cout << "vout = " << vout << "\n";
 
     std::cout << "Sending xrGetBlock packet...\n";
+
     packet->append(txHash.begin(), 32);
     packet->append(vout);
-
+    packet->append(id);
+    packet->append(currency);
+    packet->append(command);
     auto pubKey = key.GetPubKey();
     std::vector<unsigned char> pubKeyData{pubKey.begin(), pubKey.end()};
 
