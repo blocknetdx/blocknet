@@ -42,7 +42,7 @@ class App::Impl
 {
     friend class App;
 
-    mutable boost::mutex                               m_connectorsLock;
+    mutable boost::mutex                                        m_connectorsLock;
     xbridge::Connectors                                         m_connectors;
     xbridge::ConnectorsAddrMap                                  m_connectorAddressMap;
     xbridge::ConnectorsCurrencyMap                              m_connectorCurrencyMap;
@@ -389,6 +389,7 @@ bool App::processReply(XRouterPacketPtr packet) {
     std::string reply((const char *)packet->data()+offset);
     offset += reply.size() + 1;
     std::cout << uuid << " " << reply << std::endl;
+    boost::mutex::scoped_lock l(queriesLock);
     queries[uuid] = reply;
     return true;
 }
@@ -488,6 +489,7 @@ Error App::getBlocks(const std::string & id, const std::string & currency, const
 
     packet->sign(pubKeyData, privKeyData);
     sendPacket(packet);
+    boost::mutex::scoped_lock l(queriesLock);
     queries[id] = "Waiting for reply...";
     return SUCCESS;
 }

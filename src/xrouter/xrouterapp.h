@@ -38,6 +38,7 @@ private:
 
     std::unique_ptr<Impl> m_p;
 
+    mutable boost::mutex queriesLock;
     boost::container::map<std::string, std::string> queries;
 
 public:
