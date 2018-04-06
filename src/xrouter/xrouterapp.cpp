@@ -218,12 +218,6 @@ static bool verifyBlockRequirement(const XRouterPacketPtr& packet)
         return false;
     }
 
-    std::cout << "destination = " << txKeyID->ToString() << "\n";
-    std::cout << "packet keyid = " << packetKey.GetID().ToString() << "\n";
-    std::cout << "distnation.which() = " << destination.which() << "\n";
-    std::cout << "txHash = " << txHash.ToString() << "\n";
-    std::cout << "vout = " << vout << "\n";
-    std::cout << "value = " << coins.vout[vout].nValue << "\n";
     return true;
 }
 
