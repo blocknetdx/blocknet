@@ -22,7 +22,7 @@ public:
 
 public:
     // reimplement for currency
-    std::string fromXAddr(const std::vector<unsigned char> & xaddr) const;
+    std::string fromXAddr(const unsigned char * xaddr) const;
     std::vector<unsigned char> toXAddr(const std::string & addr) const;
 
 public:

@@ -590,7 +590,6 @@ HEADERS += \
     src/xbridge/xbridgewalletconnector.h \
     src/xbridge/xbridgewalletconnectorbtc.h \
     src/xbridge/xbridgewalletconnectorbcc.h \
-    src/xbridge/xbridgewalletconnectorsys.h \
     src/xbridge/xbridgewalletconnectordgb.h \
     src/xbridge/xbridgedef.h
 
