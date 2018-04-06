@@ -8,6 +8,23 @@
 #include "keystore.h"
 #include "init.h"
 
+#include "xbridge/xkey.h"
+#include "xbridge/util/settings.h"
+#include "xbridge/xbridgewallet.h"
+#include "xbridge/xbridgewalletconnector.h"
+#include "xbridge/xbridgewalletconnectorbtc.h"
+#include "xbridge/xbridgewalletconnectorbcc.h"
+#include "xbridge/xbridgewalletconnectorsys.h"
+
+#include <assert.h>
+
+#include <boost/chrono/chrono.hpp>
+#include <boost/thread/thread.hpp>
+#include <boost/thread.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <iostream>
 
@@ -22,6 +39,11 @@ namespace xrouter
 class App::Impl
 {
     friend class App;
+
+    mutable boost::mutex                               m_connectorsLock;
+    xbridge::Connectors                                         m_connectors;
+    xbridge::ConnectorsAddrMap                                  m_connectorAddressMap;
+    xbridge::ConnectorsCurrencyMap                              m_connectorCurrencyMap;
 
 protected:
     /**
@@ -100,6 +122,94 @@ bool App::start()
 //*****************************************************************************
 bool App::Impl::start()
 {
+    // start xbrige
+    try
+    {
+        // sessions
+        xrouter::App & app = xrouter::App::instance();
+        {
+            Settings & s = settings();
+            std::vector<std::string> wallets = s.exchangeWallets();
+            for (std::vector<std::string>::iterator i = wallets.begin(); i != wallets.end(); ++i)
+            {
+                xbridge::WalletParam wp;
+                wp.currency                    = *i;
+                wp.title                       = s.get<std::string>(*i + ".Title");
+                wp.address                     = s.get<std::string>(*i + ".Address");
+                wp.m_ip                        = s.get<std::string>(*i + ".Ip");
+                wp.m_port                      = s.get<std::string>(*i + ".Port");
+                wp.m_user                      = s.get<std::string>(*i + ".Username");
+                wp.m_passwd                    = s.get<std::string>(*i + ".Password");
+                wp.addrPrefix[0]               = s.get<int>(*i + ".AddressPrefix", 0);
+                wp.scriptPrefix[0]             = s.get<int>(*i + ".ScriptPrefix", 0);
+                wp.secretPrefix[0]             = s.get<int>(*i + ".SecretPrefix", 0);
+                wp.COIN                        = s.get<uint64_t>(*i + ".COIN", 0);
+                wp.txVersion                   = s.get<uint32_t>(*i + ".TxVersion", 1);
+                wp.minTxFee                    = s.get<uint64_t>(*i + ".MinTxFee", 0);
+                wp.feePerByte                  = s.get<uint64_t>(*i + ".FeePerByte", 200);
+                wp.method                      = s.get<std::string>(*i + ".CreateTxMethod");
+                wp.blockTime                   = s.get<int>(*i + ".BlockTime", 0);
+                wp.requiredConfirmations       = s.get<int>(*i + ".Confirmations", 0);
+
+                if (wp.m_ip.empty() || wp.m_port.empty() ||
+                    wp.m_user.empty() || wp.m_passwd.empty() ||
+                    wp.COIN == 0 || wp.blockTime == 0)
+                {
+                    continue;
+                }
+
+                xbridge::WalletConnectorPtr conn;
+                if (wp.method == "ETHER")
+                {
+                    //LOG() << "wp.method ETHER not implemented" << __FUNCTION__;
+                    // session.reset(new XBridgeSessionEthereum(wp));
+                }
+                else if (wp.method == "BTC")
+                {
+                    conn.reset(new xbridge::BtcWalletConnector);
+                    *conn = wp;
+                }
+                else if (wp.method == "BCC")
+                {
+                    conn.reset(new xbridge::BccWalletConnector);
+                    *conn = wp;
+                }
+                else if (wp.method == "SYS")
+                {
+                    conn.reset(new xbridge::SysWalletConnector);
+                    *conn = wp;
+                }
+//                else if (wp.method == "RPC")
+//                {
+//                    LOG() << "wp.method RPC not implemented" << __FUNCTION__;
+//                    // session.reset(new XBridgeSessionRpc(wp));
+//                }
+                else
+                {
+                    // session.reset(new XBridgeSession(wp));
+                    //ERR() << "unknown session type " << __FUNCTION__;
+                }
+                if (!conn)
+                {
+                    continue;
+                }
+
+                if (!conn->init())
+                {
+                    //ERR() << "connection not initialized " << *i << " " << __FUNCTION__;
+                    continue;
+                }
+
+                app.addConnector(conn);
+            }
+        }
+    }
+    catch (std::exception & e)
+    {
+        //ERR() << e.what();
+        //ERR() << __FUNCTION__;
+    }
+
     return true;
 }
 
@@ -116,6 +226,13 @@ bool App::stop()
 bool App::Impl::stop()
 {
     return true;
+}
+
+void App::addConnector(const xbridge::WalletConnectorPtr & conn)
+{
+    boost::mutex::scoped_lock l(m_p->m_connectorsLock);
+    m_p->m_connectors.push_back(conn);
+    m_p->m_connectorCurrencyMap[conn->currency] = conn;
 }
 
 //*****************************************************************************
@@ -188,7 +305,7 @@ bool App::processGetBlocks(XRouterPacketPtr packet) {
     if (!packet->verify())
     {
       std::clog << "unsigned packet or signature error " << __FUNCTION__;
-        return;
+        return false;
     }
     
     if (!verifyBlockRequirement(packet)) {

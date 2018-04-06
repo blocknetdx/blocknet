@@ -7,6 +7,7 @@
 #include "xrouterpacket.h"
 #include "util/xroutererror.h"
 #include "validationstate.h"
+#include "xbridge/xbridgedef.h"
 
 #include <memory>
 #include <boost/container/map.hpp>
@@ -64,6 +65,8 @@ public:
      * @return
      */
     bool stop();
+    
+    void addConnector(const xbridge::WalletConnectorPtr & conn);
 
     /**
      * @brief sendXRouterTransaction - create new xrouter transaction and send to network
