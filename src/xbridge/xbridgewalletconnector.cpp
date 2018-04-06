@@ -70,7 +70,8 @@ double WalletConnector::getWalletBalance(const std::string &addr) const
  *
  * If the specified wallet address has a valid prefix the method returns true, otherwise false.
  */
-bool WalletConnector::hasValidAddressPrefix(const std::string &addr) const {
+bool WalletConnector::hasValidAddressPrefix(const std::string &addr) const
+{
     std::vector<unsigned char> decoded;
     if (!DecodeBase58Check(addr, decoded))
     {
