@@ -38,3 +38,18 @@ Value xrGetBlocks(const Array & params, bool fHelp)
         return error;
     }
 }
+
+Value xrGetReply(const Array & params, bool fHelp)
+{
+    if (fHelp) {
+        throw std::runtime_error("xrGetBlocks\nLookup blocks in a specified blockchain.");
+    }
+
+    std::string uuid = params[0].get_str();
+    Object result;
+
+    std::string reply = xrouter::App::instance().getReply(uuid);
+    Object obj;
+    obj.emplace_back(Pair("reply", reply));
+    return obj;
+}

@@ -60,7 +60,7 @@ App::Impl::Impl()
 //*****************************************************************************
 //*****************************************************************************
 App::App()
-    : m_p(new Impl)
+    : m_p(new Impl), queries()
 {
 }
 
@@ -185,6 +185,12 @@ static bool verifyBlockRequirement(const XRouterPacketPtr& packet) {
 //*****************************************************************************
 bool App::processGetBlocks(XRouterPacketPtr packet) {
     std::cout << "Processing GetBlocks\n";
+    if (!packet->verify())
+    {
+      std::clog << "unsigned packet or signature error " << __FUNCTION__;
+        return;
+    }
+    
     if (!verifyBlockRequirement(packet)) {
         std::clog << "Block requirement not satisfied\n";
         return false;
@@ -209,7 +215,6 @@ bool App::processGetBlocks(XRouterPacketPtr packet) {
 
     rpacket->append(uuid);
     rpacket->append(result);
-
     sendPacket(rpacket);
 
     return true;
@@ -226,8 +231,8 @@ bool App::processReply(XRouterPacketPtr packet) {
     offset += uuid.size() + 1;
     std::string reply((const char *)packet->data()+offset);
     offset += reply.size() + 1;
-    std::cout << uuid << " "<< reply << std::endl;
-
+    std::cout << uuid << " " << reply << std::endl;
+    queries[uuid] = reply;
     return true;
 }
 
@@ -237,18 +242,12 @@ void App::onMessageReceived(const std::vector<unsigned char> & id,
                             const std::vector<unsigned char> & message,
                             CValidationState & /*state*/)
 {
-        std::cerr << "Received xrouter packet\n";
+    std::cerr << "Received xrouter packet\n";
 
     XRouterPacketPtr packet(new XRouterPacket);
     if (!packet->copyFrom(message))
     {
         std::clog << "incorrect packet received " << __FUNCTION__;
-        return;
-    }
-
-    if (!packet->verify())
-    {
-      std::clog << "unsigned packet or signature error " << __FUNCTION__;
         return;
     }
 
@@ -263,17 +262,14 @@ void App::onMessageReceived(const std::vector<unsigned char> & id,
         processReply(packet);
         break;
       default:
-        std::clog << "Unkown packet\n";
+        std::clog << "Unknown packet\n";
         break;
     }
 }
 
 //*****************************************************************************
 //*****************************************************************************
-static bool satisfyBlockRequirement(
-    uint256& txHash,
-    uint32_t& vout,
-    CKey& key)
+static bool satisfyBlockRequirement(uint256& txHash, uint32_t& vout, CKey& key)
 {
     if (!pwalletMain) {
         return false;
@@ -323,13 +319,22 @@ Error App::getBlocks(const std::string & id, const std::string & currency, const
     packet->append(currency);
     packet->append(blockHash);
     auto pubKey = key.GetPubKey();
-    std::vector<unsigned char> pubKeyData{pubKey.begin(), pubKey.end()};
+    std::vector<unsigned char> pubKeyData(pubKey.begin(), pubKey.end());
 
     auto privKey = key.GetPrivKey_256();
-    std::vector<unsigned char> privKeyData{privKey.begin(), privKey.end()};
+    std::vector<unsigned char> privKeyData(privKey.begin(), privKey.end());
 
     packet->sign(pubKeyData, privKeyData);
     sendPacket(packet);
+    queries[id] = "Waiting for reply...";
     return SUCCESS;
+}
+
+std::string App::getReply(const std::string & uuid) {
+    if (queries.count(uuid) == 0) {
+        return "Query not found";
+    }
+    
+    return queries[uuid];
 }
 } // namespace xrouter
