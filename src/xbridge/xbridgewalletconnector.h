@@ -34,8 +34,13 @@ public:
 
 public:
     // reimplement for currency
-    virtual std::string fromXAddr(const std::vector<unsigned char> & xaddr) const = 0;
+    virtual std::string fromXAddr(const unsigned char * xaddr) const = 0;
     virtual std::vector<unsigned char> toXAddr(const std::string & addr) const = 0;
+
+    virtual std::string fromXAddr(const std::vector<unsigned char> & xaddr) const
+    {
+        return fromXAddr(&xaddr[0]);
+    }
 
 public:
     // wallet RPC

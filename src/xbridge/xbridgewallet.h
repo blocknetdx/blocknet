@@ -27,6 +27,7 @@ struct UtxoEntry
     uint32_t    vout;
     double      amount;
     std::string address;
+    std::string scriptPubKey;
 
     std::vector<unsigned char> rawAddress;
     std::vector<unsigned char> signature;

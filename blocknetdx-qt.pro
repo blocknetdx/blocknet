@@ -297,8 +297,7 @@ SOURCES += \
     src/xbridge/xbridgewalletconnectorbtc.cpp \
     src/xbridge/xbridgewalletconnectorbcc.cpp \
     src/xbridge/xbridgewalletconnectorsys.cpp \
-    src/xbridge/xbridgepacket.cpp \
-    src/xbridge/xbridgecryptoproviderbtc.cpp
+    src/xbridge/xbridgepacket.cpp
 
 #protobuf generated
 SOURCES += \
@@ -572,7 +571,10 @@ HEADERS += \
     src/compat/byteswap.h \
     src/s3downloader.h \
     src/coinvalidator.h \
+    src/xbridge/xkey.h \
+    src/xbridge/xpubkey.h \
     src/xbridge/xbitcoinaddress.h \
+    src/xbridge/xbitcoinsecret.h \
     src/qt/xbridgeui/xbridgeaddressbookmodel.h \
     src/qt/xbridgeui/xbridgeaddressbookview.h \
     src/qt/xbridgeui/xbridgetransactiondialog.h \
@@ -585,7 +587,6 @@ HEADERS += \
     src/xbridge/xbridgewalletconnectorbtc.h \
     src/xbridge/xbridgewalletconnectorbcc.h \
     src/xbridge/xbridgedef.h \
-    src/xbridge/xbridgewalletconnectorsys.h \
     src/xbridge/xbridgecryptoproviderbtc.h
 
 #ENABLE_ZMQ

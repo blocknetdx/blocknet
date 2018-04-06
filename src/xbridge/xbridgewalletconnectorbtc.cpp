@@ -270,7 +270,8 @@ bool listUnspent(const std::string & rpcuser,
     const static std::string txid("txid");
     const static std::string vout("vout");
     const static std::string amount("amount");
-    const static std::string address("address");
+    const static std::string scriptPubKey("scriptPubKey");
+
 
     try
     {
@@ -324,9 +325,9 @@ bool listUnspent(const std::string & rpcuser,
                     {
                         u.amount = v.value_.get_real();
                     }
-                    else if (v.name_ == address)
+                    else if (v.name_ == scriptPubKey)
                     {
-                        u.address = v.value_.get_str();
+                        u.scriptPubKey = v.value_.get_str();
                     }
                 }
 
@@ -407,7 +408,7 @@ bool lockUnspent(const std::string & rpcuser,
     }
     catch (std::exception & e)
     {
-        LOG() << "listunspent exception " << e.what();
+        LOG() << "lockunspent exception " << e.what();
         return false;
     }
 
@@ -460,7 +461,7 @@ bool gettxout(const std::string & rpcuser,
     }
     catch (std::exception & e)
     {
-        LOG() << "listunspent exception " << e.what();
+        LOG() << "gettxout exception " << e.what();
         return false;
     }
 
@@ -1060,7 +1061,7 @@ bool BtcWalletConnector<CryptoProvider>::init()
 //*****************************************************************************
 //*****************************************************************************
 template <class CryptoProvider>
-std::string BtcWalletConnector<CryptoProvider>::fromXAddr(const std::vector<unsigned char> & xaddr) const
+std::string BtcWalletConnector<CryptoProvider>::fromXAddr(const unsigned char * xaddr) const
 {
     xbridge::XBitcoinAddress addr;
     addr.Set(CKeyID(uint160(xaddr)), addrPrefix[0]);
@@ -1113,6 +1114,28 @@ bool BtcWalletConnector<CryptoProvider>::getUnspent(std::vector<wallet::UtxoEntr
     {
         LOG() << "rpc::listUnspent failed " << __FUNCTION__;
         return false;
+    }
+
+    for (size_t i = 0; i < inputs.size(); )
+    {
+        wallet::UtxoEntry & entry = inputs[i];
+
+        std::vector<unsigned char> script = ParseHex(entry.scriptPubKey);
+        // check p2pkh (like 76a91476bba472620ff0ecbfbf93d0d3909c6ca84ac81588ac)
+        if (script.size() == 25 &&
+            script[0] == 0x76 && script[1] == 0xa9 && script[2] == 0x14 &&
+            script[23] == 0x88 && script[24] == 0xac)
+        {
+            entry.address = fromXAddr(&script[3]);
+        }
+        else
+        {
+            // skip all other addresses, like p2sh, p2pk, etc
+            inputs.erase(inputs.begin() + i);
+            continue;
+        }
+
+        ++i;
     }
 
     return true;

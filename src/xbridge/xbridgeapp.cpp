@@ -21,7 +21,6 @@
 #include "xbridgewalletconnectorbtc.h"
 #include "xbridgecryptoproviderbtc.h"
 #include "xbridgewalletconnectorbcc.h"
-#include "xbridgewalletconnectorsys.h"
 
 #include <assert.h>
 
@@ -310,7 +309,7 @@ bool App::Impl::start()
                     LOG() << "wp.method ETHER not implemented" << __FUNCTION__;
                     // session.reset(new XBridgeSessionEthereum(wp));
                 }
-                else if (wp.method == "BTC")
+                else if (wp.method == "BTC" || wp.method == "SYS")
                 {
                     conn.reset(new BtcWalletConnector<BtcCryptoProvider>);
                     *conn = wp;
@@ -318,11 +317,6 @@ bool App::Impl::start()
                 else if (wp.method == "BCC")
                 {
                     conn.reset(new BccWalletConnector);
-                    *conn = wp;
-                }
-                else if (wp.method == "SYS")
-                {
-                    conn.reset(new SysWalletConnector);
                     *conn = wp;
                 }
 //                else if (wp.method == "RPC")
