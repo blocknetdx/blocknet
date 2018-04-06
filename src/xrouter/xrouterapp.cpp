@@ -167,8 +167,28 @@ void App::sendPacket(const std::vector<unsigned char> & id, const XRouterPacketP
 
 //*****************************************************************************
 //*****************************************************************************
+static bool verifyBlockRequirement(const XRouterPacketPtr& packet) {
+  if (packet->size() < 36) {
+    std::clog << "packet not big enough\n";
+    return false;
+  }
+
+  uint256 txHash(packet->data());
+  int offset = 32;
+  uint32_t vout = *static_cast<uint32_t*>(static_cast<void*>(packet->data() + offset));
+  std::cout << "txHash = " << txHash.ToString() << "\n";
+  std::cout << "vout = " << vout << "\n";
+  return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
 static bool processGetBlocks(XRouterPacketPtr packet) {
   std::cout << "Processing GetBlocks\n";
+  if (!verifyBlockRequirement(packet)) {
+    std::clog << "Block requirement not satisfied\n";
+    return false;
+  }
   return true;
 }
 
@@ -250,6 +270,8 @@ Error App::getBlocks(uint256& id)
       std::cerr << "Minimum block requirement not satisfied\n";
       return UNKNOWN_ERROR;
     }
+    std::cout << "txHash = " << txHash.ToString() << "\n";
+    std::cout << "vout = " << vout << "\n";
 
     std::cout << "Sending xrGetBlock packet...\n";
     packet->append(txHash.begin(), 32);
