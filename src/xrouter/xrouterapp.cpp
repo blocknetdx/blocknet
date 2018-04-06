@@ -7,6 +7,8 @@
 #include "wallet.h"
 #include "keystore.h"
 #include "init.h"
+#include "main.h"
+#include "script/standard.h"
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <iostream>
@@ -176,8 +178,51 @@ static bool verifyBlockRequirement(const XRouterPacketPtr& packet) {
   uint256 txHash(packet->data());
   int offset = 32;
   uint32_t vout = *static_cast<uint32_t*>(static_cast<void*>(packet->data() + offset));
+
+  CCoins coins;
+  if (!pcoinsTip->GetCoins(txHash, coins)) {
+    std::clog << "Could not find " << txHash.ToString() << "\n";
+    return false;
+  }
+
+  if (vout > coins.vout.size()) {
+    std::clog << "Invalid vout index " << vout << "\n";
+    return false;
+  }
+
+  auto& txOut = coins.vout[vout];
+
+  if (txOut.nValue < minBlock) {
+    std::clog << "Insufficient BLOCK " << coins.vout[vout].nValue << "\n";
+    return false;
+  }
+
+  CTxDestination destination;
+  if(!ExtractDestination(txOut.scriptPubKey, destination)) {
+    std::clog << "Unable to extract destination\n";
+    return false;
+  }
+
+  auto txKeyID = boost::get<CKeyID>(&destination);
+  if (!txKeyID) {
+    std::clog << "destination must be a single address\n";
+    return false;
+  }
+
+  CPubKey packetKey(packet->pubkey(),
+      packet->pubkey() + XRouterPacket::pubkeySize);
+
+  if (packetKey.GetID() != *txKeyID) {
+    std::clog << "Public key provided doesn't match UTXO destination.\n";
+    return false;
+  }
+
+  std::cout << "destination = " << txKeyID->ToString() << "\n";
+  std::cout << "packet keyid = " << packetKey.GetID().ToString() << "\n";
+  std::cout << "distnation.which() = " << destination.which() << "\n";
   std::cout << "txHash = " << txHash.ToString() << "\n";
   std::cout << "vout = " << vout << "\n";
+  std::cout << "value = " << coins.vout[vout].nValue << "\n";
   return true;
 }
 
@@ -242,11 +287,11 @@ static bool satisfyBlockRequirement(
             CKeyID keyID;
             if (!addressCoins.first.GetKeyID(keyID)) {
               std::cerr << "GetKeyID failed\n";
-              return false;
+              continue;
             }
             if (!pwalletMain->GetKey(keyID, key)) {
               std::cerr << "GetKey failed\n";
-              return false;
+              continue;
             }
             txHash = output.tx->GetHash();
             vout = output.i;
