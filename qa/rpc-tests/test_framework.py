@@ -24,7 +24,7 @@ class BitcoinTestFramework(object):
     def run_test(self):
         for node in self.nodes:
             assert_equal(node.getblockcount(), 200)
-            assert_equal(node.getbalance(), 25*50)
+            assert_equal(node.getbalance(), 125000)
 
     def add_options(self, parser):
         pass
@@ -110,10 +110,13 @@ class BitcoinTestFramework(object):
         try:
             if not os.path.isdir(self.options.tmpdir):
                 os.makedirs(self.options.tmpdir)
+            print("setting up chains")
             self.setup_chain()
 
+            print("setting up network")
             self.setup_network()
 
+            print("running tests")
             self.run_test()
 
             success = True
@@ -140,3 +143,4 @@ class BitcoinTestFramework(object):
         else:
             print("Failed")
             sys.exit(1)
+            

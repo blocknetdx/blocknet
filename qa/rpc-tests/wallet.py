@@ -22,7 +22,7 @@ from test_framework import BitcoinTestFramework
 from util import *
 
 
-class WalletTest (BitcoinTestFramework):
+class WalletTest(BitcoinTestFramework):
 
     def setup_chain(self):
         print("Initializing test directory "+self.options.tmpdir)
@@ -45,13 +45,14 @@ class WalletTest (BitcoinTestFramework):
         self.nodes[1].setgenerate(True, 32)
         self.sync_all()
 
-        assert_equal(self.nodes[0].getbalance(), 60001)
-        assert_equal(self.nodes[1].getbalance(), 4250)
+        assert_equal(self.nodes[0].getbalance(), 17500000)
+        assert_equal(self.nodes[1].getbalance(), 80000)
         assert_equal(self.nodes[2].getbalance(), 0)
 
         # Send 601 BTC from 0 to 2 using sendtoaddress call.
         # Second transaction will be child of first, and will require a fee
         self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(), 351)
+        self.nodes[0].setgenerate(True, 1)
         self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(), 350)
 
         # Have node0 mine a block, thus he will collect his own fee.
@@ -64,16 +65,16 @@ class WalletTest (BitcoinTestFramework):
 
         # node0 should end up with 100 btc in block rewards plus fees, but
         # minus the 21 plus fees sent to node2
-        assert_greater_than(self.nodes[0].getbalance(), 59549)
+        assert_greater_than(self.nodes[0].getbalance(), 17504298)
         assert_equal(self.nodes[2].getbalance(), 701)
 
         # Node0 should have two unspent outputs.
         # Create a couple of transactions to send them to node2, submit them through
         # node1, and make sure both node0 and node2 pick them up properly:
         node0utxos = self.nodes[0].listunspent(1)
-        assert_equal(len(node0utxos), 2)
+        assert_equal(len(node0utxos), 3)
 
-        # create both transactions
+        # create 3 transactions
         txns_to_send = []
         for utxo in node0utxos:
             inputs = []
@@ -86,15 +87,16 @@ class WalletTest (BitcoinTestFramework):
         # Have node 1 (miner) send the transactions
         self.nodes[1].sendrawtransaction(txns_to_send[0]["hex"], True)
         self.nodes[1].sendrawtransaction(txns_to_send[1]["hex"], True)
+        self.nodes[1].sendrawtransaction(txns_to_send[2]["hex"], True)
 
         # Have node1 mine a block to confirm transactions:
         self.nodes[1].setgenerate(True, 1)
         self.sync_all()
 
         assert_equal(self.nodes[0].getbalance(), 0)
-        assert_greater_than(self.nodes[2].getbalance(), 60250)
-        assert_greater_than(self.nodes[2].getbalance("from1"), 59549)
+        assert_greater_than(self.nodes[2].getbalance(), 5701)
+        assert_greater_than(self.nodes[2].getbalance("from1"), 17501798)
 
 
 if __name__ == '__main__':
-    WalletTest ().main ()
+    WalletTest().main()

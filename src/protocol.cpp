@@ -136,8 +136,6 @@ static const char* ppszTypeName[] =
         "tx",
         "block",
         "filtered block",
-        "witness block",
-        "witness tx",
         "tx lock request",
         "tx lock vote",
         "spork",
@@ -263,7 +261,10 @@ const char* CInv::GetCommand() const
     if (!IsKnownType())
         LogPrint("net", "CInv::GetCommand() : type=%d unknown type", type);
 
-    return ppszTypeName[type];
+    if (type < sizeof(ppszTypeName))
+        return ppszTypeName[type];
+    else
+        return "unknown";
 }
 
 std::string CInv::ToString() const
