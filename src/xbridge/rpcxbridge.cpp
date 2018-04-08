@@ -536,7 +536,7 @@ Value dxMakeOrder(const Array &params, bool fHelp)
         fromAmount = boost::lexical_cast<double>(params[1].get_str());
         toAmount   = boost::lexical_cast<double>(params[4].get_str());
     } catch (...) {
-        return util::makeError(xbridge::INVALID_PARAMETERS, "invalid maker or taker value  ");
+        return util::makeError(xbridge::INVALID_PARAMETERS, "maker taker value need be is number");
     }
 
 
