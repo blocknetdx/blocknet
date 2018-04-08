@@ -530,11 +530,20 @@ Value dxMakeOrder(const Array &params, bool fHelp)
     }
 
     std::string fromCurrency    = params[0].get_str();
-    double      fromAmount      = boost::lexical_cast<double>(params[1].get_str());
+    double      fromAmount = 0.0;
+    double      toAmount   = 0.0;
+    try {
+        fromAmount = boost::lexical_cast<double>(params[1].get_str());
+        toAmount   = boost::lexical_cast<double>(params[4].get_str());
+    } catch (...) {
+        return util::makeError(xbridge::INVALID_PARAMETERS, "invalid maker or taker value  ");
+    }
+
+
     std::string fromAddress     = params[2].get_str();
 
     std::string toCurrency      = params[3].get_str();
-    double      toAmount        = boost::lexical_cast<double>(params[4].get_str());
+
     std::string toAddress       = params[5].get_str();
 
     std::string type            = params[6].get_str();
