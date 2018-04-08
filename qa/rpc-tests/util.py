@@ -42,6 +42,7 @@ def sync_blocks(rpc_connections):
     """
     while True:
         counts = [ x.getblockcount() for x in rpc_connections ]
+        print(counts)
         if counts == [ counts[0] ]*len(counts):
             break
         time.sleep(1)
@@ -55,6 +56,7 @@ def sync_mempools(rpc_connections):
         pool = set(rpc_connections[0].getrawmempool())
         num_match = 1
         for i in range(1, len(rpc_connections)):
+            print(i, rpc_connections[i].getrawmempool())
             if set(rpc_connections[i].getrawmempool()) == pool:
                 num_match = num_match+1
         if num_match == len(rpc_connections):
@@ -111,9 +113,7 @@ def initialize_chain(test_dir):
         for i in range(2):
             for peer in range(4):
                 for j in range(25):
-                    set_node_times(rpcs, block_time)
                     rpcs[peer].setgenerate(True, 1)
-                    block_time += 10*60
                 # Must sync before next peer starts generating blocks
                 sync_blocks(rpcs)
 

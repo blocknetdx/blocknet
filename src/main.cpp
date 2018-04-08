@@ -4945,10 +4945,20 @@ bool RewindBlockIndex(const CChainParams& params)
             setDirtyBlockIndex.insert(pindexIter);
             // Update setBlockIndexCandidates
             setBlockIndexCandidates.erase(pindexIter);
+            std::pair<std::multimap<CBlockIndex*, CBlockIndex*>::iterator, std::multimap<CBlockIndex*, CBlockIndex*>::iterator> ret = mapBlocksUnlinked.equal_range(pindexIter->pprev);
+            while (ret.first != ret.second) {
+                if (ret.first->second == pindexIter) {
+                    mapBlocksUnlinked.erase(ret.first++);
+                } else {
+                    ++ret.first;
+                }
+            }
         } else if (pindexIter->IsValid(BLOCK_VALID_TRANSACTIONS) && pindexIter->nChainTx) {
             setBlockIndexCandidates.insert(pindexIter);
         }
     }
+
+    PruneBlockIndexCandidates();
 
     CheckBlockIndex();
 
@@ -6009,10 +6019,10 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         int64_t sigTime;
 
         if (strCommand == NetMsgType::TX) {
-            vRecv >> tx;
+            WithOrVersion(&vRecv, SERIALIZE_TRANSACTION_WITNESS) >> tx;
         } else if (strCommand == NetMsgType::DSTX) {
             //these allow masternodes to publish a limited amount of free transactions
-            vRecv >> tx >> vin >> vchSig >> sigTime;
+            WithOrVersion(&vRecv, SERIALIZE_TRANSACTION_WITNESS) >> tx >> vin >> vchSig >> sigTime;
 
             CMasternode* pmn = mnodeman.Find(vin);
             if (pmn != NULL) {
@@ -6047,7 +6057,6 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
                 }
             }
         }
-        WithOrVersion(&vRecv, SERIALIZE_TRANSACTION_WITNESS) >> tx;
 
         CInv inv(MSG_TX, tx.GetHash());
         pfrom->AddInventoryKnown(inv);

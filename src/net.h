@@ -468,7 +468,7 @@ public:
         {
             LOCK(cs_inventory);
             if ((inv.type == MSG_TX || inv.type == MSG_WITNESS_TX) && setInventoryKnown.count(inv))
-                return
+                return;
             vInventoryToSend.push_back(inv);
         }
     }
