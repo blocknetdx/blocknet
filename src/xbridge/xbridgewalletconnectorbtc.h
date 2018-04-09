@@ -28,7 +28,7 @@ public:
 public:
     bool requestAddressBook(std::vector<wallet::AddressBookEntry> & entries);
 
-    bool getUnspent(std::vector<wallet::UtxoEntry> & inputs) const;
+    bool getUnspent(std::vector<wallet::UtxoEntry> & inputs, const bool withoutDust = true) const;
     bool lockCoins(const std::vector<wallet::UtxoEntry> & inputs, const bool lock = true) const;
 
     bool getNewAddress(std::string & addr);
