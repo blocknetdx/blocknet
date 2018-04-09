@@ -325,14 +325,16 @@ private:
      * @brief selectUtxos - Selects available utxos and writes to param outputsForUse.
      * @param addr - currency name
      * @param outputs - available outputs to search
+     * @param connFrom - connector
+     * @param requiredAmount - amount of required coins
      * @param outputsForUse - selected outputs for use
      * @param utxoAmount - total utxoAmount of selected outputs
      * @param fee1 - min tx fee for outputs
      * @param fee2
      */
-    void selectUtxos(const std::string &addr, const std::vector<wallet::UtxoEntry> &outputs, const WalletConnectorPtr &connFrom,
-                     const uint64_t &fromAmount, std::vector<wallet::UtxoEntry> &outputsForUse, uint64_t &utxoAmount,
-                     uint64_t &fee1, uint64_t &fee2, bool fillInputs = true) const;
+    bool selectUtxos(const std::string &addr, const std::vector<wallet::UtxoEntry> &outputs, const WalletConnectorPtr &connFrom,
+                     const uint64_t &requiredAmount, std::vector<wallet::UtxoEntry> &outputsForUse,
+                     uint64_t &utxoAmount, uint64_t &fee1, uint64_t &fee2) const;
 };
 
 } // namespace xbridge

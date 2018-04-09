@@ -65,7 +65,7 @@ public:
 
     virtual bool getInfo(rpc::WalletInfo & info) const = 0;
 
-    virtual bool getUnspent(std::vector<wallet::UtxoEntry> & inputs) const = 0;
+    virtual bool getUnspent(std::vector<wallet::UtxoEntry> & inputs, const bool withoutDust = true) const = 0;
 
     virtual bool lockCoins(const std::vector<wallet::UtxoEntry> & inputs,
                              const bool lock = true) const = 0;
@@ -83,7 +83,6 @@ public:
 public:
     // helper functions
     bool hasValidAddressPrefix(const std::string & addr) const;
-    bool getUtxoEntriesForAmount(const uint64_t & amount, std::vector<wallet::UtxoEntry> & entries) const;
 
     virtual bool isDustAmount(const double & amount) const = 0;
 

@@ -1155,12 +1155,21 @@ bool BtcWalletConnector::getInfo(rpc::WalletInfo & info) const
 
 //******************************************************************************
 //******************************************************************************
-bool BtcWalletConnector::getUnspent(std::vector<wallet::UtxoEntry> & inputs) const
+bool BtcWalletConnector::getUnspent(std::vector<wallet::UtxoEntry> & inputs, const bool withoutDust) const
 {
     if (!rpc::listUnspent(m_user, m_passwd, m_ip, m_port, inputs))
     {
         LOG() << "rpc::listUnspent failed " << __FUNCTION__;
         return false;
+    }
+
+    if (withoutDust)
+    {
+        std::remove_if(inputs.begin(), inputs.end(),
+                [this](const wallet::UtxoEntry & entry)
+        {
+            return isDustAmount(entry.amount);
+        });
     }
 
     return true;

@@ -30,7 +30,8 @@ public:
 
     bool getInfo(rpc::WalletInfo & info) const;
 
-    bool getUnspent(std::vector<wallet::UtxoEntry> & inputs) const;
+    bool getUnspent(std::vector<wallet::UtxoEntry> & inputs, const bool withoutDust = true) const;
+
     bool lockCoins(const std::vector<wallet::UtxoEntry> & inputs, const bool lock = true) const;
 
     bool getNewAddress(std::string & addr);
