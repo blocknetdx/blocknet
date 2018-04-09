@@ -28,6 +28,8 @@ public:
 public:
     bool requestAddressBook(std::vector<wallet::AddressBookEntry> & entries);
 
+    bool getInfo(rpc::WalletInfo & info) const;
+
     bool getUnspent(std::vector<wallet::UtxoEntry> & inputs) const;
     bool lockCoins(const std::vector<wallet::UtxoEntry> & inputs, const bool lock = true) const;
 
@@ -52,8 +54,8 @@ public:
     std::vector<unsigned char> getScriptId(const std::vector<unsigned char> & script);
     std::string scriptIdToString(const std::vector<unsigned char> & id) const;
 
-    double minTxFee1(const uint32_t inputCount, const uint32_t outputCount);
-    double minTxFee2(const uint32_t inputCount, const uint32_t outputCount);
+    double minTxFee1(const uint32_t inputCount, const uint32_t outputCount) const;
+    double minTxFee2(const uint32_t inputCount, const uint32_t outputCount) const;
 
     bool checkTransaction(const std::string & depositTxId,
                           const std::string & /*destination*/,

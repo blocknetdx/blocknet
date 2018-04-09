@@ -30,6 +30,8 @@ struct TransactionDescr
 
     enum State
     {
+        trReleased = -3,
+        trRemoved = -2,
         trExpired = -1,
         trNew = 0,
         trOffline,
@@ -193,6 +195,8 @@ struct TransactionDescr
             case trDropped:   return std::string("dropped");
             case trExpired:   return std::string("expired");
             case trOffline:   return std::string("offline");
+            case trReleased:  return std::string("utxo's released");
+            case trRemoved:   return std::string("removed");
             default:          return std::string("unknown");
         }
     }

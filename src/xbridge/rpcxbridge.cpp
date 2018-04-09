@@ -1148,7 +1148,7 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 //calculate bids and push to array
                 const auto bidAmount    = bidsVector[i]->toAmount;
                 const auto bidPrice     = util::priceBid(bidsVector[i]);
-                const auto bidSize      = util::xBridgeStringValueFromAmount(bidAmount);
+                auto bidSize            = bidAmount;
                 const auto bidsCount    = std::count_if(bidsList.begin(), bidsList.end(),
                                                      [bidPrice, floatCompare](const TransactionPair &a)
                 {
@@ -1161,11 +1161,13 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
 
                     return floatCompare(price, bidPrice);
                 });
-
+                //array sorted by bid price, we can to skip the transactions with equals bid price
+                while((++i < bound) && floatCompare(util::priceBid(bidsVector[i]), bidPrice)) {
+                    bidSize += bidsVector[i]->toAmount;
+                }
                 bid.emplace_back(util::xBridgeStringValueFromPrice(bidPrice));
-                bid.emplace_back(bidSize);
-                bid.emplace_back((int64_t)bidsCount);
-
+                bid.emplace_back(util::xBridgeStringValueFromPrice(bidSize));
+                bid.emplace_back(static_cast<int64_t>(bidsCount));
                 bids.emplace_back(bid);
             }
 
@@ -1178,9 +1180,9 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
 
                 Array ask;
                 //calculate asks and push to array
-                const auto bidAmount    = asksVector[i]->fromAmount;
+                const auto askAmount    = asksVector[i]->fromAmount;
                 const auto askPrice     = util::price(asksVector[i]);
-                const auto bidSize      = util::xBridgeStringValueFromAmount(bidAmount);
+                auto askSize            = askAmount;
                 const auto asksCount    = std::count_if(asksList.begin(), asksList.end(),
                                                      [askPrice, floatCompare](const TransactionPair &a)
                 {
@@ -1194,10 +1196,13 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                     return floatCompare(price, askPrice);
                 });
 
+                //array sorted by price, we can to skip the transactions with equals price
+                while((++i < bound) && floatCompare(util::price(asksVector[i]), askPrice)){
+                    askSize += asksVector[i]->fromAmount;
+                }
                 ask.emplace_back(util::xBridgeStringValueFromPrice(askPrice));
-                ask.emplace_back(bidSize);
+                ask.emplace_back(util::xBridgeStringValueFromAmount(askSize));
                 ask.emplace_back(static_cast<int64_t>(asksCount));
-
                 asks.emplace_back(ask);
             }
 
@@ -1233,10 +1238,10 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                     continue;
 
                 Array ask;
-                const auto bidAmount    = asksVector[i]->fromAmount;
+                const auto askAmount    = asksVector[i]->fromAmount;
                 const auto askPrice     = util::price(asksVector[i]);
                 ask.emplace_back(util::xBridgeStringValueFromPrice(askPrice));
-                ask.emplace_back(util::xBridgeStringValueFromAmount(bidAmount));
+                ask.emplace_back(util::xBridgeStringValueFromAmount(askAmount));
                 ask.emplace_back(asksVector[i]->id.GetHex());
 
                 asks.emplace_back(ask);
