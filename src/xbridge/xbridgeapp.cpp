@@ -903,7 +903,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
 
     // Select utxos
     std::vector<wallet::UtxoEntry> outputsForUse;
-    if (selectUtxos(from, outputs, connFrom, fromAmount, outputsForUse, utxoAmount, fee1, fee2))
+    if (!selectUtxos(from, outputs, connFrom, fromAmount, outputsForUse, utxoAmount, fee1, fee2))
     {
         WARN() << "insufficient funds for <" << fromCurrency << "> " << __FUNCTION__;
         return xbridge::Error::INSIFFICIENT_FUNDS;
@@ -1141,7 +1141,7 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
 
     // Select utxos
     std::vector<wallet::UtxoEntry> outputsForUse;
-    if (selectUtxos(from, outputs, connFrom, ptr->fromAmount, outputsForUse, utxoAmount, fee1, fee2))
+    if (!selectUtxos(from, outputs, connFrom, ptr->fromAmount, outputsForUse, utxoAmount, fee1, fee2))
     {
         WARN() << "insufficient funds for <" << ptr->fromCurrency << "> " << __FUNCTION__;
         return xbridge::Error::INSIFFICIENT_FUNDS;
