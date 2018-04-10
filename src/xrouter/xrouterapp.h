@@ -38,7 +38,7 @@ private:
 
     std::unique_ptr<Impl> m_p;
 
-    mutable boost::mutex queriesLock;
+    boost::container::map<std::string, std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> > > queriesLocks;
     boost::container::map<std::string, std::string> queries;
 
 public:
@@ -73,7 +73,7 @@ public:
     /**
      * @brief sendXRouterTransaction - create new xrouter transaction and send to network
      */
-    Error getBlocks(const std::string & id, const std::string & currency, const std::string & blockHash);
+    std::string getBlocks(const std::string & id, const std::string & currency, const std::string & blockHash);
 
     std::string getReply(const std::string & uuid);
 

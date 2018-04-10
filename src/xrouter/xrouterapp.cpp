@@ -409,8 +409,10 @@ bool App::processReply(XRouterPacketPtr packet) {
     std::string reply((const char *)packet->data()+offset);
     offset += reply.size() + 1;
     std::cout << uuid << " " << reply << std::endl;
-    boost::mutex::scoped_lock l(queriesLock);
+    // TODO: check uuid is in queriesLock keys
+    boost::mutex::scoped_lock l(*queriesLocks[uuid].first);
     queries[uuid] = reply;
+    queriesLocks[uuid].second->notify_all();
     return true;
 }
 
@@ -479,7 +481,7 @@ static bool satisfyBlockRequirement(uint256& txHash, uint32_t& vout, CKey& key)
 
 //*****************************************************************************
 //*****************************************************************************
-Error App::getBlocks(const std::string & id, const std::string & currency, const std::string & blockHash)
+std::string App::getBlocks(const std::string & id, const std::string & currency, const std::string & blockHash)
 {
   std::cout << "process Query" << std::endl;
     XRouterPacketPtr packet(new XRouterPacket(xrGetBlocks));
@@ -489,7 +491,7 @@ Error App::getBlocks(const std::string & id, const std::string & currency, const
     CKey key;
     if (!satisfyBlockRequirement(txHash, vout, key)) {
         std::cerr << "Minimum block requirement not satisfied\n";
-        return UNKNOWN_ERROR;
+        return "Minimum block";
     }
     std::cout << "txHash = " << txHash.ToString() << "\n";
     std::cout << "vout = " << vout << "\n";
@@ -508,10 +510,18 @@ Error App::getBlocks(const std::string & id, const std::string & currency, const
     std::vector<unsigned char> privKeyData(privKey.begin(), privKey.end());
 
     packet->sign(pubKeyData, privKeyData);
+
+    boost::shared_ptr<boost::mutex> m(new boost::mutex());
+    boost::shared_ptr<boost::condition_variable> cond(new boost::condition_variable());
+    boost::mutex::scoped_lock lock(*m);
     sendPacket(packet);
-    boost::mutex::scoped_lock l(queriesLock);
-    queries[id] = "Waiting for reply...";
-    return SUCCESS;
+
+    queriesLocks[id] = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m, cond);
+    if(!cond->timed_wait(lock, boost::posix_time::milliseconds(3000))) {
+        return "Failed to get response";
+    } else {
+        return queries[id];
+    }
 }
 
 std::string App::getReply(const std::string & uuid) {

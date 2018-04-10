@@ -41,18 +41,10 @@ Value xrGetBlocks(const Array & params, bool fHelp)
     std::string id = boost::uuids::to_string(uuid);
     Object result;
 
-    auto statusCode = xrouter::App::instance().getBlocks(id, currency, params[1].get_str());
-    if (statusCode == xrouter::SUCCESS) {
-        Object obj;
-        obj.emplace_back(Pair("query-id", id));
-        return obj;
-    } else {
-        Object error;
-        error.emplace_back(json_spirit::Pair("error", ""));
-        error.emplace_back(json_spirit::Pair("code", statusCode));
-        error.emplace_back(json_spirit::Pair("name", __FUNCTION__));
-        return error;
-    }
+    std::string reply = xrouter::App::instance().getBlocks(id, currency, params[1].get_str());
+    Object obj;
+    obj.emplace_back(Pair("reply", reply));
+    return obj;
 }
 
 Value xrGetReply(const Array & params, bool fHelp)
