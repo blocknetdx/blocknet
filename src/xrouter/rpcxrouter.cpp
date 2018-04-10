@@ -20,6 +20,22 @@ Value xrGetBlocks(const Array & params, bool fHelp)
         throw std::runtime_error("xrGetBlocks\nLookup blocks in a specified blockchain.");
     }
 
+    if (params.size() < 1)
+    {
+        Object error;
+        error.emplace_back(Pair("error", "Currency not specified"));
+        error.emplace_back(Pair("name",     __FUNCTION__));
+        return error;
+    }
+
+    if (params.size() < 2)
+    {
+        Object error;
+        error.emplace_back(Pair("error", "Block hash not specified"));
+        error.emplace_back(Pair("name",     __FUNCTION__));
+        return error;
+    }
+
     std::string currency    = params[0].get_str();
     boost::uuids::uuid uuid = boost::uuids::random_generator()();
     std::string id = boost::uuids::to_string(uuid);
@@ -45,9 +61,15 @@ Value xrGetReply(const Array & params, bool fHelp)
         throw std::runtime_error("xrGetBlocks\nLookup blocks in a specified blockchain.");
     }
 
-    std::string uuid = params[0].get_str();
-    Object result;
+    if (params.size() < 1)
+    {
+        Object error;
+        error.emplace_back(Pair("error", "Query ID not specified"));
+        error.emplace_back(Pair("name",     __FUNCTION__));
+        return error;
+    }
 
+    std::string uuid = params[0].get_str();
     std::string reply = xrouter::App::instance().getReply(uuid);
     Object obj;
     obj.emplace_back(Pair("reply", reply));
