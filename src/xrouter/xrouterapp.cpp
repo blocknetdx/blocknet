@@ -483,7 +483,7 @@ static bool satisfyBlockRequirement(uint256& txHash, uint32_t& vout, CKey& key)
 //*****************************************************************************
 std::string App::getBlocks(const std::string & id, const std::string & currency, const std::string & blockHash)
 {
-  std::cout << "process Query" << std::endl;
+    std::cout << "process Query" << std::endl;
     XRouterPacketPtr packet(new XRouterPacket(xrGetBlocks));
 
     uint256 txHash;
@@ -522,13 +522,5 @@ std::string App::getBlocks(const std::string & id, const std::string & currency,
     } else {
         return queries[id];
     }
-}
-
-std::string App::getReply(const std::string & uuid) {
-    if (queries.count(uuid) == 0) {
-        return "Query not found";
-    }
-    
-    return queries[uuid];
 }
 } // namespace xrouter

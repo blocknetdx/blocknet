@@ -46,24 +46,3 @@ Value xrGetBlocks(const Array & params, bool fHelp)
     obj.emplace_back(Pair("reply", reply));
     return obj;
 }
-
-Value xrGetReply(const Array & params, bool fHelp)
-{
-    if (fHelp) {
-        throw std::runtime_error("xrGetBlocks\nLookup blocks in a specified blockchain.");
-    }
-
-    if (params.size() < 1)
-    {
-        Object error;
-        error.emplace_back(Pair("error", "Query ID not specified"));
-        error.emplace_back(Pair("name",     __FUNCTION__));
-        return error;
-    }
-
-    std::string uuid = params[0].get_str();
-    std::string reply = xrouter::App::instance().getReply(uuid);
-    Object obj;
-    obj.emplace_back(Pair("reply", reply));
-    return obj;
-}

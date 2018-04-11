@@ -75,9 +75,6 @@ public:
      */
     std::string getBlocks(const std::string & id, const std::string & currency, const std::string & blockHash);
 
-    std::string getReply(const std::string & uuid);
-
-
     bool processGetBlocks(XRouterPacketPtr packet);
     bool processReply(XRouterPacketPtr packet);
 
