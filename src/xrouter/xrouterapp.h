@@ -83,14 +83,14 @@ public:
      * @brief sendPacket send packet btadcast to xrouter network
      * @param packet send message via xrouter
      */
-    void sendPacket(const XRouterPacketPtr & packet);
+    void sendPacket(const XRouterPacketPtr & packet, std::string wallet="");
 
     /**
      * @brief sendPacket send packet to xrouter network to specified id,
      * @param id
      * @param packet
      */
-    void sendPacket(const std::vector<unsigned char> & id, const XRouterPacketPtr & packet);
+    void sendPacket(const std::vector<unsigned char> & id, const XRouterPacketPtr & packet, std::string wallet="");
 
     // call when message from xrouter network received
     /**

@@ -6,6 +6,9 @@
 #include "keystore.h"
 #include "main.h"
 #include "net.h"
+#include "servicenodeconfig.h"
+#include "servicenodeman.h"
+#include "addrman.h"
 #include "script/standard.h"
 #include "util/xutil.h"
 #include "wallet.h"
@@ -27,10 +30,10 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
-
-#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/algorithm/string.hpp>
 #include <iostream>
 #include <sstream>
+#include <vector>
 
 static const CAmount minBlock = 2;
 
@@ -74,7 +77,7 @@ protected:
      * @param id
      * @param message
      */
-    void onSend(const std::vector<unsigned char>& id, const std::vector<unsigned char>& message);
+    void onSend(const std::vector<unsigned char>& id, const std::vector<unsigned char>& message, std::string wallet="");
 };
 
 //*****************************************************************************
@@ -252,17 +255,17 @@ xbridge::WalletConnectorPtr App::connectorByCurrency(const std::string & currenc
 
 //*****************************************************************************
 //*****************************************************************************
-void App::sendPacket(const XRouterPacketPtr& packet)
+void App::sendPacket(const XRouterPacketPtr& packet, std::string wallet)
 {
     static std::vector<unsigned char> addr(20, 0);
-    m_p->onSend(addr, packet->body());
+    m_p->onSend(addr, packet->body(), wallet);
 }
 
 //*****************************************************************************
 // send packet to xrouter network to specified id,
 // or broadcast, when id is empty
 //*****************************************************************************
-void App::Impl::onSend(const std::vector<unsigned char>& id, const std::vector<unsigned char>& message)
+void App::Impl::onSend(const std::vector<unsigned char>& id, const std::vector<unsigned char>& message, std::string wallet)
 {
     std::vector<unsigned char> msg(id);
     if (msg.size() != 20) {
@@ -278,21 +281,47 @@ void App::Impl::onSend(const std::vector<unsigned char>& id, const std::vector<u
 
     // body
     msg.insert(msg.end(), message.begin(), message.end());
-
+    
+    if (wallet.empty()) {
+        // TODO: here send only back to the sender
+        for (CNode* pnode : vNodes) {
+            pnode->PushMessage("xrouter", msg);
+        }
+    }
+    
+    // Send only to the service nodes that have the required wallet
+    int nHeight;
+    {
+        LOCK(cs_main);
+        CBlockIndex* pindex = chainActive.Tip();
+        if(!pindex) return;
+        nHeight = pindex->nHeight;
+    }
+    std::vector<pair<int, CServicenode> > vServicenodeRanks = mnodeman.GetServicenodeRanks(nHeight);
+    
     LOCK(cs_vNodes);
     for (CNode* pnode : vNodes) {
-        // TODO: Need a better way to determine which peer to send to; for now
-        // just send to the first.
-        pnode->PushMessage("xrouter", msg);
-        break;
+        BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
+            if (s.second.addr.ToString() == pnode->addr.ToString()) {
+                // This node is a service node
+                std::cout << "sn " << s.second.addr.ToString() << " " << s.second.GetConnectedWalletsStr() << std::endl;
+                std::vector<string> wallets;
+                std::string wstr = s.second.GetConnectedWalletsStr();
+                boost::split(wallets, wstr, boost::is_any_of(","));
+                if (std::find(wallets.begin(), wallets.end(), wallet) != wallets.end()) {
+                    pnode->PushMessage("xrouter", msg);
+                }
+            }
+            
+        }
     }
 }
 
 //*****************************************************************************
 //*****************************************************************************
-void App::sendPacket(const std::vector<unsigned char>& id, const XRouterPacketPtr& packet)
+void App::sendPacket(const std::vector<unsigned char>& id, const XRouterPacketPtr& packet, std::string wallet)
 {
-    m_p->onSend(id, packet->body());
+    m_p->onSend(id, packet->body(), wallet);
 }
 
 //*****************************************************************************
@@ -514,7 +543,7 @@ std::string App::getBlocks(const std::string & id, const std::string & currency,
     boost::shared_ptr<boost::mutex> m(new boost::mutex());
     boost::shared_ptr<boost::condition_variable> cond(new boost::condition_variable());
     boost::mutex::scoped_lock lock(*m);
-    sendPacket(packet);
+    sendPacket(packet, currency);
 
     queriesLocks[id] = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m, cond);
     if(!cond->timed_wait(lock, boost::posix_time::milliseconds(3000))) {
