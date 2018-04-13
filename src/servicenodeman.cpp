@@ -11,6 +11,7 @@
 #include "obfuscation.h"
 #include "spork.h"
 #include "util.h"
+#include "arith_uint256.h"
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
 
@@ -18,26 +19,26 @@
 CServicenodeMan mnodeman;
 
 struct CompareLastPaid {
-    bool operator()(const pair<int64_t, CTxIn>& t1,
-        const pair<int64_t, CTxIn>& t2) const
-    {
-        return t1.first < t2.first;
-    }
-};
-
-struct CompareScoreTxIn {
-    bool operator()(const pair<int64_t, CTxIn>& t1,
-        const pair<int64_t, CTxIn>& t2) const
+    bool operator()(const pair<int64_t, CServicenode*>& t1,
+        const pair<int64_t, CServicenode*>& t2) const
     {
         return t1.first < t2.first;
     }
 };
 
 struct CompareScoreMN {
-    bool operator()(const pair<int64_t, CServicenode>& t1,
-        const pair<int64_t, CServicenode>& t2) const
+    bool operator()(const pair<int64_t, CServicenode*>& t1,
+        const pair<int64_t, CServicenode*>& t2) const
     {
         return t1.first < t2.first;
+    }
+};
+
+struct CompareScoreMN2 {
+    bool operator()(const std::pair<int64_t, CServicenode*>& t1,
+                    const std::pair<int64_t, CServicenode*>& t2) const
+    {
+        return (t1.first != t2.first) ? (t1.first < t2.first) : (t1.second->vin < t2.second->vin);
     }
 };
 
@@ -423,17 +424,15 @@ CServicenode* CServicenodeMan::Find(const CPubKey& pubKeyServicenode)
 //
 CServicenode* CServicenodeMan::GetNextServicenodeInQueueForPayment(int nBlockHeight, bool fFilterSigTime, int& nCount)
 {
-    LOCK(cs);
+    CServicenode* pBestServicenode = nullptr;
+    std::vector<pair<int64_t, CServicenode*> > vecServicenodeLastPaid;
 
-    CServicenode* pBestServicenode = NULL;
-    std::vector<pair<int64_t, CTxIn> > vecServicenodeLastPaid;
+    // Need LOCK2 here to ensure consistent locking order because the GetBlockHash call below locks cs_main
+    LOCK2(cs_main, cs);
 
-    /*
-        Make a vector with all of the last paid times
-    */
-
+    // Make a vector with all of the last paid times
     int nMnCount = CountEnabled();
-    BOOST_FOREACH (CServicenode& mn, vServicenodes) {
+    for (CServicenode& mn : vServicenodes) {
         mn.Check();
         if (!mn.IsEnabled()) continue;
 
@@ -449,7 +448,7 @@ CServicenode* CServicenodeMan::GetNextServicenodeInQueueForPayment(int nBlockHei
         //make sure it has as many confirmations as there are servicenodes
         if (mn.GetServicenodeInputAge() < nMnCount) continue;
 
-        vecServicenodeLastPaid.push_back(make_pair(mn.SecondsSincePayment(), mn.vin));
+        vecServicenodeLastPaid.emplace_back(mn.SecondsSincePayment(), &mn);
     }
 
     nCount = (int)vecServicenodeLastPaid.size();
@@ -460,21 +459,31 @@ CServicenode* CServicenodeMan::GetNextServicenodeInQueueForPayment(int nBlockHei
     // Sort them high to low
     sort(vecServicenodeLastPaid.rbegin(), vecServicenodeLastPaid.rend(), CompareLastPaid());
 
+    uint256 blockHash;
+    if(!GetBlockHash(blockHash, nBlockHeight - 101)) {
+        LogPrintf("CServicenodeMan::GetNextServicenodeInQueueForPayment - ERROR: GetBlockHash() failed at nBlockHeight %d\n", nBlockHeight - 101);
+        return nullptr;
+    }
+
     // Look at 1/10 of the oldest nodes (by last payment), calculate their scores and pay the best one
     //  -- This doesn't look at who is being paid in the +8-10 blocks, allowing for double payments very rarely
     //  -- 1/100 payments should be a double payment on mainnet - (1/(3000/10))*2
     //  -- (chance per block * chances before IsScheduled will fire)
-    int nTenthNetwork = CountEnabled() / 10;
+    int nTenthNetwork = nMnCount / 10;
     int nCountTenth = 0;
-    uint256 nHigh = 0;
-    BOOST_FOREACH (PAIRTYPE(int64_t, CTxIn) & s, vecServicenodeLastPaid) {
-        CServicenode* pmn = Find(s.second);
-        if (!pmn) break;
-
-        uint256 n = pmn->CalculateScore(1, nBlockHeight - 100);
-        if (n > nHigh) {
-            nHigh = n;
-            pBestServicenode = pmn;
+    int64_t nHigh = 0;
+    for (auto & s : vecServicenodeLastPaid) {
+        int64_t score = 0;
+        if (IsSporkActive(SPORK_19_SERVICENODE_RANK)) {
+            arith_uint256 n = s.second->CalculateScore2(blockHash);
+            score = n.GetCompact(false);
+        } else {
+            uint256 n = s.second->CalculateScore(1, nBlockHeight - 101);
+            score = n.GetCompact(false);
+        }
+        if (score > nHigh) {
+            nHigh = score;
+            pBestServicenode = s.second;
         }
         nCountTenth++;
         if (nCountTenth >= nTenthNetwork) break;
@@ -514,57 +523,79 @@ CServicenode* CServicenodeMan::FindRandomNotInVec(std::vector<CTxIn>& vecToExclu
     return NULL;
 }
 
-CServicenode* CServicenodeMan::GetCurrentServiceNode(int mod, int64_t nBlockHeight, int minProtocol)
+bool CServicenodeMan::GetServicenodeScores(uint256 &blockHash, int64_t nBlockHeight,
+                                           std::vector<pair<int64_t, CServicenode*>> &vecServicenodeScoresRet,
+                                           int minProtocol, bool fOnlyActive)
 {
-    int64_t score = 0;
-    CServicenode* winner = NULL;
+    vecServicenodeScoresRet.clear();
 
-    // scan for winner
-    BOOST_FOREACH (CServicenode& mn, vServicenodes) {
-        mn.Check();
-        if (mn.protocolVersion < minProtocol || !mn.IsEnabled()) continue;
+    // If list is not synced no point in checking
+    if (!servicenodeSync.IsServicenodeListSynced())
+        return false;
 
-        // calculate the score for each Servicenode
-        uint256 n = mn.CalculateScore(mod, nBlockHeight);
-        int64_t n2 = n.GetCompact(false);
+    AssertLockHeld(cs);
 
-        // determine the winner
-        if (n2 > score) {
-            score = n2;
-            winner = &mn;
+    // Store servicenode scores by vin
+    for (CServicenode &mn : vServicenodes) {
+        if (mn.protocolVersion < minProtocol) continue;
+        if (fOnlyActive) {
+            mn.Check();
+            if (!mn.IsEnabled()) continue; // TODO Consider including disabled states to stabilize list
         }
+
+        int64_t score = -1;
+        if (IsSporkActive(SPORK_19_SERVICENODE_RANK)) {
+            arith_uint256 n = mn.CalculateScore2(blockHash);
+            score = n.GetCompact(false);
+        } else {
+            uint256 n = mn.CalculateScore(1, nBlockHeight);
+            score = n.GetCompact(false);
+        }
+
+        vecServicenodeScoresRet.emplace_back(score, &mn);
     }
 
+    if (IsSporkActive(SPORK_19_SERVICENODE_RANK)) {
+        sort(vecServicenodeScoresRet.rbegin(), vecServicenodeScoresRet.rend(), CompareScoreMN2());
+    } else {
+        sort(vecServicenodeScoresRet.rbegin(), vecServicenodeScoresRet.rend(), CompareScoreMN());
+    }
+
+    return !vecServicenodeScoresRet.empty();
+}
+
+CServicenode* CServicenodeMan::GetCurrentServiceNode(int mod, int64_t nBlockHeight, int minProtocol)
+{
+    uint256 hash;
+    if (!GetBlockHash(hash, nBlockHeight)) return nullptr;
+
+    LOCK(cs);
+
+    std::vector<pair<int64_t, CServicenode*> > vecServicenodeScores;
+    if (!GetServicenodeScores(hash, nBlockHeight, vecServicenodeScores, minProtocol))
+        return nullptr;
+
+    // scores are sorted ascending, pick first
+    CServicenode* winner = vecServicenodeScores.front().second;
     return winner;
 }
 
 int CServicenodeMan::GetServicenodeRank(const CTxIn& vin, int64_t nBlockHeight, int minProtocol, bool fOnlyActive)
 {
-    std::vector<pair<int64_t, CTxIn> > vecServicenodeScores;
-
     //make sure we know about this block
-    uint256 hash = 0;
+    uint256 hash;
     if (!GetBlockHash(hash, nBlockHeight)) return -1;
 
-    // scan for winner
-    BOOST_FOREACH (CServicenode& mn, vServicenodes) {
-        if (mn.protocolVersion < minProtocol) continue;
-        if (fOnlyActive) {
-            mn.Check();
-            if (!mn.IsEnabled()) continue;
-        }
-        uint256 n = mn.CalculateScore(1, nBlockHeight);
-        int64_t n2 = n.GetCompact(false);
+    LOCK(cs);
 
-        vecServicenodeScores.push_back(make_pair(n2, mn.vin));
-    }
-
-    sort(vecServicenodeScores.rbegin(), vecServicenodeScores.rend(), CompareScoreTxIn());
+    std::vector<pair<int64_t, CServicenode*> > vecServicenodeScores;
+    if (!GetServicenodeScores(hash, nBlockHeight, vecServicenodeScores, minProtocol, fOnlyActive))
+        return -1;
 
     int rank = 0;
-    BOOST_FOREACH (PAIRTYPE(int64_t, CTxIn) & s, vecServicenodeScores) {
-        rank++;
-        if (s.second.prevout == vin.prevout) {
+    for (auto & s : vecServicenodeScores) {
+        ++rank;
+        if (s.second->vin.prevout == vin.prevout) {
             return rank;
         }
     }
@@ -574,36 +605,22 @@ int CServicenodeMan::GetServicenodeRank(const CTxIn& vin, int64_t nBlockHeight, 
 
 std::vector<pair<int, CServicenode> > CServicenodeMan::GetServicenodeRanks(int64_t nBlockHeight, int minProtocol)
 {
-    std::vector<pair<int64_t, CServicenode> > vecServicenodeScores;
+    std::vector<pair<int64_t, CServicenode*> > vecServicenodeScores;
     std::vector<pair<int, CServicenode> > vecServicenodeRanks;
 
     //make sure we know about this block
-    uint256 hash = 0;
+    uint256 hash;
     if (!GetBlockHash(hash, nBlockHeight)) return vecServicenodeRanks;
 
-    // scan for winner
-    BOOST_FOREACH (CServicenode& mn, vServicenodes) {
-        mn.Check();
+    LOCK(cs);
 
-        if (mn.protocolVersion < minProtocol) continue;
-
-        if (!mn.IsEnabled()) {
-            vecServicenodeScores.push_back(make_pair(9999, mn));
-            continue;
-        }
-
-        uint256 n = mn.CalculateScore(1, nBlockHeight);
-        int64_t n2 = n.GetCompact(false);
-
-        vecServicenodeScores.push_back(make_pair(n2, mn));
-    }
-
-    sort(vecServicenodeScores.rbegin(), vecServicenodeScores.rend(), CompareScoreMN());
+    if (!GetServicenodeScores(hash, nBlockHeight, vecServicenodeScores, minProtocol))
+        return vecServicenodeRanks;
 
     int rank = 0;
-    BOOST_FOREACH (PAIRTYPE(int64_t, CServicenode) & s, vecServicenodeScores) {
-        rank++;
-        vecServicenodeRanks.push_back(make_pair(rank, s.second));
+    for (auto & s : vecServicenodeScores) {
+        ++rank;
+        vecServicenodeRanks.emplace_back(rank, *s.second);
     }
 
     return vecServicenodeRanks;
@@ -611,33 +628,24 @@ std::vector<pair<int, CServicenode> > CServicenodeMan::GetServicenodeRanks(int64
 
 CServicenode* CServicenodeMan::GetServicenodeByRank(int nRank, int64_t nBlockHeight, int minProtocol, bool fOnlyActive)
 {
-    std::vector<pair<int64_t, CTxIn> > vecServicenodeScores;
+    //make sure we know about this block
+    uint256 hash;
+    if (!GetBlockHash(hash, nBlockHeight)) return nullptr;
 
-    // scan for winner
-    BOOST_FOREACH (CServicenode& mn, vServicenodes) {
-        if (mn.protocolVersion < minProtocol) continue;
-        if (fOnlyActive) {
-            mn.Check();
-            if (!mn.IsEnabled()) continue;
-        }
+    LOCK(cs);
 
-        uint256 n = mn.CalculateScore(1, nBlockHeight);
-        int64_t n2 = n.GetCompact(false);
-
-        vecServicenodeScores.push_back(make_pair(n2, mn.vin));
-    }
-
-    sort(vecServicenodeScores.rbegin(), vecServicenodeScores.rend(), CompareScoreTxIn());
+    std::vector<pair<int64_t, CServicenode*> > vecServicenodeScores;
+    if (!GetServicenodeScores(hash, nBlockHeight, vecServicenodeScores, minProtocol, fOnlyActive))
+        return nullptr;
 
     int rank = 0;
-    BOOST_FOREACH (PAIRTYPE(int64_t, CTxIn) & s, vecServicenodeScores) {
-        rank++;
-        if (rank == nRank) {
-            return Find(s.second);
-        }
+    for (auto & s : vecServicenodeScores) {
+        ++rank;
+        if (rank == nRank)
+            return s.second;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 void CServicenodeMan::ProcessServicenodeConnections()

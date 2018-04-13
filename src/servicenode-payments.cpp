@@ -481,7 +481,7 @@ bool CServicenodePayments::IsScheduled(CServicenode& mn, int nNotBlockHeight)
 bool CServicenodePayments::AddWinningServicenode(CServicenodePaymentWinner& winnerIn)
 {
     uint256 blockHash = 0;
-    if (!GetBlockHash(blockHash, winnerIn.nBlockHeight - 100)) {
+    if (!GetBlockHash(blockHash, winnerIn.nBlockHeight - 101)) {
         return false;
     }
 
@@ -646,7 +646,7 @@ bool CServicenodePaymentWinner::IsValid(CNode* pnode, std::string& strError)
         return false;
     }
 
-    int n = mnodeman.GetServicenodeRank(vinServicenode, nBlockHeight - 100, ActiveProtocol());
+    int n = mnodeman.GetServicenodeRank(vinServicenode, nBlockHeight - 101, ActiveProtocol());
 
     if (n > MNPAYMENTS_SIGNATURES_TOTAL) {
         //It's common to have servicenodes mistakenly think they are in the top 10
@@ -668,7 +668,7 @@ bool CServicenodePayments::ProcessBlock(int nBlockHeight)
 
     //reference node - hybrid mode
 
-    int n = mnodeman.GetServicenodeRank(activeServicenode.vin, nBlockHeight - 100, ActiveProtocol());
+    int n = mnodeman.GetServicenodeRank(activeServicenode.vin, nBlockHeight - 101, ActiveProtocol());
 
     if (n == -1) {
         LogPrint("mnpayments", "CServicenodePayments::ProcessBlock - Unknown Servicenode\n");

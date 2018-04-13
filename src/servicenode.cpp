@@ -5,6 +5,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "servicenode.h"
+#include "arith_uint256.h"
 #include "addrman.h"
 #include "servicenodeman.h"
 #include "obfuscation.h"
@@ -14,52 +15,6 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/range/adaptor/transformed.hpp>
-
-// keep track of the scanning errors I've seen
-map<uint256, int> mapSeenServicenodeScanningErrors;
-// cache block hashes as we calculate them
-std::map<int64_t, uint256> mapCacheBlockHashes;
-
-//Get the last hash that matches the modulus given. Processed in reverse order
-bool GetBlockHash(uint256& hash, int nBlockHeight)
-{
-    if (chainActive.Tip() == NULL) return false;
-
-    if (nBlockHeight == 0)
-        nBlockHeight = chainActive.Tip()->nHeight;
-
-    if (mapCacheBlockHashes.count(nBlockHeight)) {
-        hash = mapCacheBlockHashes[nBlockHeight];
-        return true;
-    }
-
-    const CBlockIndex* BlockLastSolved = chainActive.Tip();
-    const CBlockIndex* BlockReading = chainActive.Tip();
-
-    if (BlockLastSolved == NULL || BlockLastSolved->nHeight == 0 || chainActive.Tip()->nHeight + 1 < nBlockHeight) return false;
-
-    int nBlocksAgo = 0;
-    if (nBlockHeight > 0) nBlocksAgo = (chainActive.Tip()->nHeight + 1) - nBlockHeight;
-    assert(nBlocksAgo >= 0);
-
-    int n = 0;
-    for (unsigned int i = 1; BlockReading && BlockReading->nHeight > 0; i++) {
-        if (n >= nBlocksAgo) {
-            hash = BlockReading->GetBlockHash();
-            mapCacheBlockHashes[nBlockHeight] = hash;
-            return true;
-        }
-        n++;
-
-        if (BlockReading->pprev == NULL) {
-            assert(BlockReading);
-            break;
-        }
-        BlockReading = BlockReading->pprev;
-    }
-
-    return false;
-}
 
 CServicenode::CServicenode()
 {
@@ -112,6 +67,7 @@ CServicenode::CServicenode(const CServicenode& other)
     nLastDsee                     = other.nLastDsee;  // temporary, do not save. Remove after migration to v12
     nLastDseep                    = other.nLastDseep; // temporary, do not save. Remove after migration to v12
     connectedWallets              = other.connectedWallets;
+    nCollateralMinConfBlockHash   = other.nCollateralMinConfBlockHash;
 }
 
 CServicenode::CServicenode(const CServicenodeBroadcast& mnb)
@@ -139,6 +95,7 @@ CServicenode::CServicenode(const CServicenodeBroadcast& mnb)
     nLastDsee                     = 0; // temporary, do not save. Remove after migration to v12
     nLastDseep                    = 0; // temporary, do not save. Remove after migration to v12
     connectedWallets              = mnb.connectedWallets;
+    nCollateralMinConfBlockHash   = 0;
 }
 
 //
@@ -196,6 +153,15 @@ uint256 CServicenode::CalculateScore(int /*mod*/, int64_t nBlockHeight)
     uint256 r = (hash3 > hash2 ? hash3 - hash2 : hash2 - hash3);
 
     return r;
+}
+
+//
+// Deterministically calculate a "score" for a Servicenode based on any given block hash.
+//
+arith_uint256 CServicenode::CalculateScore2(uint256 &blockHash) const {
+    CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
+    ss << vin.prevout << nCollateralMinConfBlockHash << blockHash;
+    return UintToArith256(ss.GetHash());
 }
 
 void CServicenode::Check(bool forceCheck)
@@ -657,20 +623,31 @@ bool CServicenodeBroadcast::CheckInputsAndAdd(int& nDoS)
         return false;
     }
 
+    // Height of servicenode collateral
+    int collateralMinConfHeight = 0;
+
     // verify that sig time is legit in past
-    // should be at least not earlier than block when 1000 BLOCK tx got SERVICENODE_MIN_CONFIRMATIONS
+    // should be at least not earlier than block when snode BLOCK tx got SERVICENODE_MIN_CONFIRMATIONS
     uint256 hashBlock = 0;
     CTransaction tx2;
     GetTransaction(vin.prevout.hash, tx2, hashBlock, true);
     BlockMap::iterator mi = mapBlockIndex.find(hashBlock);
     if (mi != mapBlockIndex.end() && (*mi).second) {
-        CBlockIndex* pMNIndex = (*mi).second;                                                        // block for 1000 BlocknetDX tx -> 1 confirmation
-        CBlockIndex* pConfIndex = chainActive[pMNIndex->nHeight + SERVICENODE_MIN_CONFIRMATIONS - 1]; // block where tx got SERVICENODE_MIN_CONFIRMATIONS
+        CBlockIndex* pMNIndex = (*mi).second;                                            // block for snode BlocknetDX tx -> 1 confirmation
+        collateralMinConfHeight = pMNIndex->nHeight + SERVICENODE_MIN_CONFIRMATIONS - 1;
+        CBlockIndex* pConfIndex = chainActive[collateralMinConfHeight];                  // block where tx got SERVICENODE_MIN_CONFIRMATIONS
         if (pConfIndex->GetBlockTime() > sigTime) {
             LogPrintf("mnb - Bad sigTime %d for Servicenode %s (%i conf block is at %d)\n",
                 sigTime, vin.prevout.hash.ToString(), SERVICENODE_MIN_CONFIRMATIONS, pConfIndex->GetBlockTime());
             return false;
         }
+    }
+
+    // Set snode collateral hash where it had minimum required confirmations
+    if (collateralMinConfHeight > 0) {
+        nCollateralMinConfBlockHash = chainActive[collateralMinConfHeight]->GetBlockHash();
+    } else {
+        LogPrintf("mnb - Invalid block height for Servicenode collateral %s\n", vin.prevout.hash.ToString());
     }
 
     LogPrintf("mnb - Got NEW Servicenode entry - %s - %lli \n", vin.prevout.hash.ToString(), sigTime);

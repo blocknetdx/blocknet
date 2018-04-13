@@ -316,6 +316,7 @@ libbitcoin_common_a_CPPFLAGS = $(BITCOIN_INCLUDES)
 libbitcoin_common_a_SOURCES = \
   allocators.cpp \
   amount.cpp \
+  arith_uint256.cpp \
   base58.cpp \
   bip38.cpp \
   chainparams.cpp \

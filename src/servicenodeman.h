@@ -134,6 +134,11 @@ public:
         return vServicenodes;
     }
 
+    /// Get servicenode scores
+    bool GetServicenodeScores(uint256 &blockHash, int64_t nBlockHeight,
+                              std::vector<pair<int64_t, CServicenode*>> &vecServicenodeScoresRet,
+                              int minProtocol = 0, bool fOnlyActive = true);
+
     std::vector<pair<int, CServicenode> > GetServicenodeRanks(int64_t nBlockHeight, int minProtocol = 0);
     int GetServicenodeRank(const CTxIn& vin, int64_t nBlockHeight, int minProtocol = 0, bool fOnlyActive = true);
     CServicenode* GetServicenodeByRank(int nRank, int64_t nBlockHeight, int minProtocol = 0, bool fOnlyActive = true);
