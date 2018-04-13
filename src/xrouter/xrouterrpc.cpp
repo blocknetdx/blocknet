@@ -44,7 +44,7 @@ static const char* pszBase58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnop
 
 //******************************************************************************
 //******************************************************************************
-Object CallRPC(const std::string auth, const std::string & rpcip, const std::string & rpcport,
+Object CallRPCAuthorized(const std::string auth, const std::string & rpcip, const std::string & rpcport,
                const std::string & strMethod, const Array & params)
 {
 //    if (mapArgs["-rpcuser"] == "" && mapArgs["-rpcpassword"] == "")

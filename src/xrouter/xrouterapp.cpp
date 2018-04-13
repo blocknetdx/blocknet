@@ -12,6 +12,7 @@
 #include "script/standard.h"
 #include "util/xutil.h"
 #include "wallet.h"
+#include "xrouterrpc.h"
 
 #include "xbridge/xkey.h"
 #include "xbridge/util/settings.h"
@@ -173,7 +174,7 @@ bool App::Impl::start()
                 }
                 else if (wp.method == "BTC")
                 {
-                    conn.reset(new xbridge::BtcWalletConnector);
+                    conn.reset(new BtcWalletConnectorXRouter);
                     *conn = wp;
                 }
                 else if (wp.method == "BCC")
