@@ -29,6 +29,9 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -530,6 +533,53 @@ std::string App::getBlocks(const std::string & id, const std::string & currency,
     packet->append(id);
     packet->append(currency);
     packet->append(blockHash);
+    auto pubKey = key.GetPubKey();
+    std::vector<unsigned char> pubKeyData(pubKey.begin(), pubKey.end());
+
+    auto privKey = key.GetPrivKey_256();
+    std::vector<unsigned char> privKeyData(privKey.begin(), privKey.end());
+
+    packet->sign(pubKeyData, privKeyData);
+
+    boost::shared_ptr<boost::mutex> m(new boost::mutex());
+    boost::shared_ptr<boost::condition_variable> cond(new boost::condition_variable());
+    boost::mutex::scoped_lock lock(*m);
+    sendPacket(packet, currency);
+
+    queriesLocks[id] = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m, cond);
+    if(!cond->timed_wait(lock, boost::posix_time::milliseconds(3000))) {
+        return "Failed to get response";
+    } else {
+        return queries[id];
+    }
+}
+
+//*****************************************************************************
+//*****************************************************************************
+std::string App::getBalances(const std::string & currency, const std::string & auth)
+{
+    std::cout << "process Query get Balances" << std::endl;
+    XRouterPacketPtr packet(new XRouterPacket(xrGetBalances));
+
+    uint256 txHash;
+    uint32_t vout;
+    CKey key;
+    if (!satisfyBlockRequirement(txHash, vout, key)) {
+        std::cerr << "Minimum block requirement not satisfied\n";
+        return "Minimum block";
+    }
+    std::cout << "txHash = " << txHash.ToString() << "\n";
+    std::cout << "vout = " << vout << "\n";
+
+    std::cout << "Sending xrGetBlock packet...\n";
+
+    boost::uuids::uuid uuid = boost::uuids::random_generator()();
+    std::string id = boost::uuids::to_string(uuid);
+    packet->append(txHash.begin(), 32);
+    packet->append(vout);
+    packet->append(id);
+    packet->append(currency);
+    packet->append(auth);
     auto pubKey = key.GetPubKey();
     std::vector<unsigned char> pubKeyData(pubKey.begin(), pubKey.end());
 
