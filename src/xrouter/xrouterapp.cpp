@@ -429,6 +429,55 @@ bool App::processGetBlocks(XRouterPacketPtr packet) {
 
 //*****************************************************************************
 //*****************************************************************************
+bool App::processGetBalances(XRouterPacketPtr packet) {
+    std::cout << "Processing GetBalances\n";
+    if (!packet->verify())
+    {
+      std::clog << "unsigned packet or signature error " << __FUNCTION__;
+        return false;
+    }
+    
+    if (!verifyBlockRequirement(packet)) {
+        std::clog << "Block requirement not satisfied\n";
+        return false;
+    }
+    
+    uint32_t offset = 36;
+
+    std::string uuid((const char *)packet->data()+offset);
+    offset += uuid.size() + 1;
+    std::string currency((const char *)packet->data()+offset);
+    offset += currency.size() + 1;
+    std::string auth((const char *)packet->data()+offset);
+    offset += auth.size() + 1;
+    std::cout << uuid << " "<< currency << " " << auth << std::endl;
+    
+    std::string result = "query reply";
+    //
+    // SEND THE QUERY TO WALLET CONNECTOR HERE
+    //
+    
+    xbridge::WalletConnectorPtr conn = connectorByCurrency(currency);
+    if (conn)
+    {
+        Array a;
+        Object res = conn->executeAuthorizedRpcCall(auth, "getbalance", a);
+        const Value& res_val(res);
+        result = json_spirit::write_string(res_val, true);
+    }
+
+    XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
+
+    rpacket->append(uuid);
+    rpacket->append(result);
+    sendPacket(rpacket);
+
+    return true;
+}
+
+
+//*****************************************************************************
+//*****************************************************************************
 bool App::processReply(XRouterPacketPtr packet) {
     std::cout << "Processing Reply\n";
     
@@ -469,8 +518,11 @@ void App::onMessageReceived(const std::vector<unsigned char>& id,
     /*           << " command " << packet->command(); */
 
     switch (packet->command()) {
-    case xrGetBlocks:
+      case xrGetBlocks:
         processGetBlocks(packet);
+        break;
+      case xrGetBalances:
+        processGetBalances(packet);
         break;
       case xrReply:
         processReply(packet);

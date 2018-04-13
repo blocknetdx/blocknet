@@ -79,6 +79,8 @@ public:
 
 
     bool processGetBlocks(XRouterPacketPtr packet);
+    bool processGetBalances(XRouterPacketPtr packet);
+    
     bool processReply(XRouterPacketPtr packet);
 
     //
