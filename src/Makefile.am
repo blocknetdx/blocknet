@@ -409,12 +409,13 @@ libxrouter_xrouter_a_SOURCES = \
 	xrouter/xrouterapp.cpp \
 	xrouter/rpcxrouter.cpp \
 	xrouter/xrouterpacket.cpp \
-  xrouter/util/xutil.cpp \
+    xrouter/util/xutil.cpp \
 	xrouter/version.h \
 	xrouter/xrouterapp.h \
-  xrouter/util/xroutererror.h \
-  xrouter/util/xutil.h \
+    xrouter/util/xroutererror.h \
+    xrouter/util/xutil.h \
 	xrouter/xrouterpacket.h \
+	xrouter/xrouterrpc.h \
 	$(BITCOIN_CORE_H)
 
 
