@@ -18,9 +18,6 @@
 #include "xbridge/util/settings.h"
 #include "xbridge/xbridgewallet.h"
 #include "xbridge/xbridgewalletconnector.h"
-#include "xbridge/xbridgewalletconnectorbtc.h"
-#include "xbridge/xbridgewalletconnectorbcc.h"
-#include "xbridge/xbridgewalletconnectorsys.h"
 
 #include "json/json_spirit_writer_template.h"
 #include <assert.h>
@@ -179,12 +176,12 @@ bool App::Impl::start()
                 }
                 else if (wp.method == "BCC")
                 {
-                    conn.reset(new xbridge::BccWalletConnector);
+                    conn.reset(new BccWalletConnectorXRouter);
                     *conn = wp;
                 }
                 else if (wp.method == "SYS")
                 {
-                    conn.reset(new xbridge::SysWalletConnector);
+                    conn.reset(new SysWalletConnectorXRouter);
                     *conn = wp;
                 }
 //                else if (wp.method == "RPC")
