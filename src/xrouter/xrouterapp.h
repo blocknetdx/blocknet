@@ -73,7 +73,7 @@ public:
     /**
      * @brief sendXRouterTransaction - create new xrouter transaction and send to network
      */
-    std::string getBlocks(const std::string & id, const std::string & currency, const std::string & blockHash);
+    std::string getBlocks(const std::string & currency, const std::string & blockHash);
 
     std::string getBalances(const std::string & currency, const std::string & auth);
 

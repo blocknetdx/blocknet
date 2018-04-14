@@ -563,7 +563,7 @@ static bool satisfyBlockRequirement(uint256& txHash, uint32_t& vout, CKey& key)
 
 //*****************************************************************************
 //*****************************************************************************
-std::string App::getBlocks(const std::string & id, const std::string & currency, const std::string & blockHash)
+std::string App::getBlocks(const std::string & currency, const std::string & blockHash)
 {
     std::cout << "process Query" << std::endl;
     XRouterPacketPtr packet(new XRouterPacket(xrGetBlocks));
@@ -577,9 +577,11 @@ std::string App::getBlocks(const std::string & id, const std::string & currency,
     }
     std::cout << "txHash = " << txHash.ToString() << "\n";
     std::cout << "vout = " << vout << "\n";
-
     std::cout << "Sending xrGetBlock packet...\n";
-
+    
+    boost::uuids::uuid uuid = boost::uuids::random_generator()();
+    std::string id = boost::uuids::to_string(uuid);
+    
     packet->append(txHash.begin(), 32);
     packet->append(vout);
     packet->append(id);
