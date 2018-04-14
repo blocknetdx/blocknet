@@ -779,7 +779,13 @@ inline const char* FormatIterator::streamStateFromFormat(std::ostream& out,
         break;
     case 'X':
         out.setf(std::ios::uppercase);
-        [[gnu::fallthrough]];
+        // [[gnu::fallthrough]] (or __attribute__ ((fallthrough))) was 
+        // introduced in GCC 7, and causes warning
+        // "warning: attributes at the beginning of statement are ignored [-Wattributes]"
+        // in GCC 5. Changing to /* fall through */ marker comment will
+        // suppress that warning and compatible with GCC 5/7, Clang.
+        //[[gnu::fallthrough]];
+        /* fall through */
     case 'x':
     case 'p':
         out.setf(std::ios::hex, std::ios::basefield);
@@ -787,20 +793,23 @@ inline const char* FormatIterator::streamStateFromFormat(std::ostream& out,
         break;
     case 'E':
         out.setf(std::ios::uppercase);
-        [[gnu::fallthrough]];
+        //[[gnu::fallthrough]];
+        /* fall through */
     case 'e':
         out.setf(std::ios::scientific, std::ios::floatfield);
         out.setf(std::ios::dec, std::ios::basefield);
         break;
     case 'F':
         out.setf(std::ios::uppercase);
-        [[gnu::fallthrough]];
+        //[[gnu::fallthrough]];
+        /* fall through */
     case 'f':
         out.setf(std::ios::fixed, std::ios::floatfield);
         break;
     case 'G':
         out.setf(std::ios::uppercase);
-        [[gnu::fallthrough]];
+        //[[gnu::fallthrough]];
+        /* fall through */
     case 'g':
         out.setf(std::ios::dec, std::ios::basefield);
         // As in boost::format, let stream decide float format.
