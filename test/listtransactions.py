@@ -8,6 +8,7 @@
 from test_framework.test_framework import BitcoinTestFramework
 from test_framework.authproxy import AuthServiceProxy, JSONRPCException
 from test_framework.util import *
+from test_case_base import TestCaseBase
 
 
 def check_array_result(object_array, to_match, expected):
@@ -31,14 +32,17 @@ def check_array_result(object_array, to_match, expected):
     if num_matched == 0:
         raise AssertionError("No objects matched %s"%(str(to_match)))
 
-class ListTransactionsTest(BitcoinTestFramework):
+class ListTransactionsTest(TestCaseBase) :
     def set_test_params(self):
         self.num_nodes = 2
         self.enable_mocktime()
 
-    def run_test(self):
-        # Simple send, 0 to 1:
+    def initialize(self) :
         self.nodes[0].setgenerate(True, 100)
+        self.nodes[1].setgenerate(True, 100)
+
+    def test_simple_send(self):
+        # Simple send, 0 to 1:
         #print("====== ", self.nodes[0].getblockcount(), " === ", self.nodes[0].listtransactions())
         self.sync_all()
         txid = self.nodes[0].sendtoaddress(self.nodes[1].getnewaddress(), 0.1)
@@ -71,6 +75,7 @@ class ListTransactionsTest(BitcoinTestFramework):
                            {"txid":txid},
                            {"category":"receive","account":"","amount":Decimal("0.1"),"confirmations":2})
 
+    def test_send_to_self(self):
         # send-to-self:
         txid = self.nodes[0].sendtoaddress(self.nodes[0].getnewaddress(), 0.2)
         check_array_result(self.nodes[0].listtransactions("", 1000),
@@ -80,6 +85,7 @@ class ListTransactionsTest(BitcoinTestFramework):
                            {"txid":txid, "category":"receive"},
                            {"amount":Decimal("0.2")})
 
+    def test_send_many(self):
         # sendmany from node1: twice to self, twice to node2:
         send_to = { self.nodes[0].getnewaddress() : 0.11,
                     self.nodes[1].getnewaddress() : 0.22,
