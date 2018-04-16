@@ -72,7 +72,7 @@ BOOST_AUTO_TEST_CASE(checkzerocoinmint_test)
     bool fFoundMint = false;
     for(unsigned int i = 0; i < tx.vout.size(); i++){
         if(!tx.vout[i].scriptPubKey.empty() && tx.vout[i].scriptPubKey.IsZerocoinMint()) {
-            BOOST_CHECK(CheckZerocoinMint(tx.GetHash(), tx.vout[i], state, true));
+            BOOST_CHECK(CheckZerocoinMint(tx.GetHash(), tx.vout[i], state, &zerocoinParams, true));
             fFoundMint = true;
         }
     }
@@ -114,7 +114,7 @@ bool CheckZerocoinSpendNoDB(const CTransaction tx, string& strError)
         if (!txin.scriptSig.IsZerocoinSpend())
             continue;
 
-        CoinSpend newSpend = TxInToZerocoinSpend(txin);
+        CoinSpend newSpend = TxInToZerocoinSpend(txin, Params().Zerocoin_LastOldParams());
         vSpends.push_back(newSpend);
 
         //check that the denomination is valid
@@ -141,7 +141,7 @@ bool CheckZerocoinSpendNoDB(const CTransaction tx, string& strError)
             return false;
         }
 
-        Accumulator accumulator(Params().Zerocoin_Params(), newSpend.getDenomination(), bnAccumulatorValue);
+        Accumulator accumulator(&zerocoinParams, newSpend.getDenomination(), bnAccumulatorValue);
 
         //Check that the coin is on the accumulator
         if (!newSpend.Verify(accumulator)) {
@@ -179,12 +179,12 @@ BOOST_AUTO_TEST_CASE(checkzerocoinspend_test)
     //load our serialized pubcoin
     CBigNum bnpubcoin;
     BOOST_CHECK_MESSAGE(bnpubcoin.SetHexBool(rawTxpub1), "Failed to set CBigNum from hex string");
-    PublicCoin pubCoin(Params().Zerocoin_Params(), bnpubcoin, CoinDenomination::ZQ_ONE);
+    PublicCoin pubCoin(&zerocoinParams, bnpubcoin, CoinDenomination::ZQ_ONE);
     BOOST_CHECK_MESSAGE(pubCoin.validate(), "Failed to validate pubCoin created from hex string");
 
     //initialize and Accumulator and AccumulatorWitness
-    Accumulator accumulator(Params().Zerocoin_Params(), CoinDenomination::ZQ_ONE);
-    AccumulatorWitness witness(Params().Zerocoin_Params(), accumulator, pubCoin);
+    Accumulator accumulator(&zerocoinParams, CoinDenomination::ZQ_ONE);
+    AccumulatorWitness witness(&zerocoinParams, accumulator, pubCoin);
 
     //populate the witness and accumulators
     CValidationState state;
@@ -194,8 +194,8 @@ BOOST_AUTO_TEST_CASE(checkzerocoinspend_test)
 
         for(const CTxOut out : tx.vout){
             if(!out.scriptPubKey.empty() && out.scriptPubKey.IsZerocoinMint()) {
-                PublicCoin publicCoin(Params().Zerocoin_Params());
-                BOOST_CHECK_MESSAGE(TxOutToPublicCoin(out, publicCoin, state), "Failed to convert CTxOut " << out.ToString() << " to PublicCoin");
+                PublicCoin publicCoin(&zerocoinParams);
+                BOOST_CHECK_MESSAGE(TxOutToPublicCoin(out, publicCoin, state, &zerocoinParams), "Failed to convert CTxOut " << out.ToString() << " to PublicCoin");
 
                 accumulator += publicCoin;
                 witness += publicCoin;
@@ -208,7 +208,7 @@ BOOST_AUTO_TEST_CASE(checkzerocoinspend_test)
     zerocoinMint.SetRandomness(CBigNum(rawTxRand1));
     zerocoinMint.SetSerialNumber(CBigNum(rawTxSerial1));
     // Create a New Zerocoin with specific denomination given by pubCoin
-    PrivateCoin privateCoin(Params().Zerocoin_Params(), pubCoin.getDenomination());
+    PrivateCoin privateCoin(&zerocoinParams, pubCoin.getDenomination());
     privateCoin.setPublicCoin(pubCoin);
     privateCoin.setRandomness(zerocoinMint.GetRandomness());
     privateCoin.setSerialNumber(zerocoinMint.GetSerialNumber());
@@ -216,7 +216,7 @@ BOOST_AUTO_TEST_CASE(checkzerocoinspend_test)
     //Get the checksum of the accumulator we use for the spend and also add it to our checksum map
     uint32_t nChecksum = GetChecksum(accumulator.getValue());
     AddAccumulatorChecksum(nChecksum, accumulator.getValue(), true);
-    CoinSpend coinSpend(Params().Zerocoin_Params(), privateCoin, accumulator, nChecksum, witness, 0);
+    CoinSpend coinSpend(&zerocoinParams, privateCoin, accumulator, nChecksum, witness, 0);
 
     CBigNum serial = coinSpend.getCoinSerialNumber();
     BOOST_CHECK_MESSAGE(serial, "Serial Number can't be 0");

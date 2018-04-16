@@ -201,7 +201,7 @@ bool CalculateAccumulatorCheckpoint(int nHeight, uint256& nCheckpoint, Accumulat
         }
 
         std::list<PublicCoin> listPubcoins;
-        if (!BlockToPubcoinList(block, listPubcoins)) {
+        if (!BlockToPubcoinList(block, listPubcoins, nHeight)) {
             return error("%s: failed to get zerocoin mintlist from block %d\n", __func__, pindex->nHeight);
         }
 
@@ -349,7 +349,7 @@ bool GenerateAccumulatorWitness(const PublicCoin &coin, Accumulator& accumulator
             }
 
             list<PublicCoin> listPubcoins;
-            if(!BlockToPubcoinList(block, listPubcoins)) {
+            if(!BlockToPubcoinList(block, listPubcoins, pindex->nHeight)) {
                 LogPrintf("%s: failed to get zerocoin mintlist from block %n\n", __func__, pindex->nHeight);
                 return false;
             }

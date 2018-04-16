@@ -71,7 +71,7 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet* 
         parts.append(sub);
     } else if (wtx.IsZerocoinSpend()) {
         // a zerocoin spend that was created by this wallet
-        libzerocoin::CoinSpend zcspend = TxInToZerocoinSpend(wtx.vin[0]);
+        libzerocoin::CoinSpend zcspend = TxInToZerocoinSpend(wtx.vin[0], wtx.GetDepthInMainChain(false));
         bool fSpendFromMe = wallet->IsMyZerocoinSpend(zcspend.getCoinSerialNumber());
 
         //zerocoin spend outputs

@@ -946,6 +946,10 @@ int GetZerocoinStartHeight()
     return Params().Zerocoin_StartHeight();
 }
 
+libzerocoin::ZerocoinParams* GetZerocoinParams(int nHeight) {
+    return nHeight > Params().Zerocoin_LastOldParams() ? Params().Zerocoin_Params() : Params().OldZerocoin_Params(); 
+}
+
 void FindMints(vector<CZerocoinMint> vMintsToFind, vector<CZerocoinMint>& vMintsToUpdate, vector<CZerocoinMint>& vMissingMints, bool fExtendedSearch)
 {
     // see which mints are in our public zerocoin database. The mint should be here if it exists, unless
@@ -1028,7 +1032,7 @@ void FindMints(vector<CZerocoinMint> vMintsToFind, vector<CZerocoinMint>& vMints
                 continue;
 
             list<CZerocoinMint> vMints;
-            if(!BlockToZerocoinMintList(block, vMints))
+            if(!BlockToZerocoinMintList(block, vMints, i))
                 continue;
 
             // search the blocks mints to see if it contains the mint that is requesting meta data updates
@@ -1115,7 +1119,7 @@ bool RecordMintToDB(PublicCoin publicZerocoin, const uint256& txHash)
     return true;
 }
 
-bool TxOutToPublicCoin(const CTxOut txout, PublicCoin& pubCoin, CValidationState& state)
+bool TxOutToPublicCoin(const CTxOut txout, PublicCoin& pubCoin, CValidationState& state, libzerocoin::ZerocoinParams* zerocoinParams)
 {
     CBigNum publicZerocoin;
     vector<unsigned char> vchZeroMint;
@@ -1128,13 +1132,13 @@ bool TxOutToPublicCoin(const CTxOut txout, PublicCoin& pubCoin, CValidationState
     if (denomination == ZQ_ERROR)
         return state.DoS(100, error("TxOutToPublicCoin : txout.nValue is not correct"));
 
-    PublicCoin checkPubCoin(Params().Zerocoin_Params(), publicZerocoin, denomination);
+    PublicCoin checkPubCoin(zerocoinParams, publicZerocoin, denomination);
     pubCoin = checkPubCoin;
 
     return true;
 }
 
-bool BlockToPubcoinList(const CBlock& block, list<PublicCoin>& listPubcoins)
+bool BlockToPubcoinList(const CBlock& block, list<PublicCoin>& listPubcoins, int nHeight)
 {
     for (const CTransaction tx : block.vtx) {
         if(!tx.IsZerocoinMint())
@@ -1147,8 +1151,9 @@ bool BlockToPubcoinList(const CBlock& block, list<PublicCoin>& listPubcoins)
                 continue;
 
             CValidationState state;
-            PublicCoin pubCoin(Params().Zerocoin_Params());
-            if(!TxOutToPublicCoin(txOut, pubCoin, state))
+            libzerocoin::ZerocoinParams *params = GetZerocoinParams(nHeight);
+            PublicCoin pubCoin(params);
+            if(!TxOutToPublicCoin(txOut, pubCoin, state, params))
                 return false;
 
             listPubcoins.emplace_back(pubCoin);
@@ -1159,7 +1164,7 @@ bool BlockToPubcoinList(const CBlock& block, list<PublicCoin>& listPubcoins)
 }
 
 //return a list of zerocoin mints contained in a specific block
-bool BlockToZerocoinMintList(const CBlock& block, std::list<CZerocoinMint>& vMints)
+bool BlockToZerocoinMintList(const CBlock& block, std::list<CZerocoinMint>& vMints, int nHeight)
 {
     for (const CTransaction tx : block.vtx) {
         if(!tx.IsZerocoinMint())
@@ -1171,8 +1176,9 @@ bool BlockToZerocoinMintList(const CBlock& block, std::list<CZerocoinMint>& vMin
                 continue;
 
             CValidationState state;
-            PublicCoin pubCoin(Params().Zerocoin_Params());
-            if(!TxOutToPublicCoin(txOut, pubCoin, state))
+            libzerocoin::ZerocoinParams *params = GetZerocoinParams(nHeight);
+            PublicCoin pubCoin(params);
+            if(!TxOutToPublicCoin(txOut, pubCoin, state, params))
                 return false;
 
             CZerocoinMint mint = CZerocoinMint(pubCoin.getDenomination(), pubCoin.getValue(), 0, 0, false);
@@ -1184,7 +1190,7 @@ bool BlockToZerocoinMintList(const CBlock& block, std::list<CZerocoinMint>& vMin
     return true;
 }
 
-bool BlockToMintValueVector(const CBlock& block, const CoinDenomination denom, vector<CBigNum>& vValues)
+bool BlockToMintValueVector(const CBlock& block, const CoinDenomination denom, vector<CBigNum>& vValues, int nHeight)
 {
     for (const CTransaction tx : block.vtx) {
         if(!tx.IsZerocoinMint())
@@ -1195,8 +1201,9 @@ bool BlockToMintValueVector(const CBlock& block, const CoinDenomination denom, v
                 continue;
 
             CValidationState state;
-            PublicCoin coin(Params().Zerocoin_Params());
-            if(!TxOutToPublicCoin(txOut, coin, state))
+            libzerocoin::ZerocoinParams *params = GetZerocoinParams(nHeight);
+            PublicCoin coin(params);
+            if(!TxOutToPublicCoin(txOut, coin, state, params))
                 return false;
 
             if (coin.getDenomination() != denom)
@@ -1228,10 +1235,10 @@ std::list<libzerocoin::CoinDenomination> ZerocoinSpendListFromBlock(const CBlock
     return vSpends;
 }
 
-bool CheckZerocoinMint(const uint256& txHash, const CTxOut& txout, CValidationState& state, bool fCheckOnly)
+bool CheckZerocoinMint(const uint256& txHash, const CTxOut& txout, CValidationState& state, libzerocoin::ZerocoinParams* params, bool fCheckOnly)
 {
-    PublicCoin pubCoin(Params().Zerocoin_Params());
-    if(!TxOutToPublicCoin(txout, pubCoin, state))
+    PublicCoin pubCoin(params);
+    if(!TxOutToPublicCoin(txout, pubCoin, state, params))
         return state.DoS(100, error("CheckZerocoinMint(): TxOutToPublicCoin() failed"));
 
     if (!pubCoin.validate())
@@ -1243,14 +1250,14 @@ bool CheckZerocoinMint(const uint256& txHash, const CTxOut& txout, CValidationSt
     return true;
 }
 
-CoinSpend TxInToZerocoinSpend(const CTxIn& txin)
+CoinSpend TxInToZerocoinSpend(const CTxIn& txin, int nHeight)
 {
     // Deserialize the CoinSpend intro a fresh object
     std::vector<char, zero_after_free_allocator<char> > dataTxIn;
     dataTxIn.insert(dataTxIn.end(), txin.scriptSig.begin() + BIGNUM_SIZE, txin.scriptSig.end());
 
     CDataStream serializedCoinSpend(dataTxIn, SER_NETWORK, PROTOCOL_VERSION);
-    return CoinSpend(Params().Zerocoin_Params(), serializedCoinSpend);
+    return CoinSpend(GetZerocoinParams(nHeight), serializedCoinSpend);
 }
 
 //Check a zerocoinspend considering external context such as blockchain data, height, etc.
@@ -1274,7 +1281,7 @@ bool ContextualCheckCoinSpend(const CoinSpend& spend, CBlockIndex* pindex, const
     return true;
 }
 
-bool CheckZerocoinSpend(const CTransaction tx, bool fVerifySignature, CValidationState& state)
+bool CheckZerocoinSpend(const CTransaction tx, bool fVerifySignature, CValidationState& state, int nHeight)
 {
     //max needed non-mint outputs should be 2 - one for redemption address and a possible 2nd for change
     if (tx.vout.size() > 2) {
@@ -1305,7 +1312,7 @@ bool CheckZerocoinSpend(const CTransaction tx, bool fVerifySignature, CValidatio
         if (!txin.scriptSig.IsZerocoinSpend())
             continue;
 
-        CoinSpend newSpend = TxInToZerocoinSpend(txin);
+        CoinSpend newSpend = TxInToZerocoinSpend(txin, nHeight);
         vSpends.push_back(newSpend);
 
         //check that the denomination is valid
@@ -1327,7 +1334,7 @@ bool CheckZerocoinSpend(const CTransaction tx, bool fVerifySignature, CValidatio
             if(!zerocoinDB->ReadAccumulatorValue(newSpend.getAccumulatorChecksum(), bnAccumulatorValue))
                 return state.DoS(100, error("Zerocoinspend could not find accumulator associated with checksum"));
 
-            Accumulator accumulator(Params().Zerocoin_Params(), newSpend.getDenomination(), bnAccumulatorValue);
+            Accumulator accumulator(GetZerocoinParams(nHeight), newSpend.getDenomination(), bnAccumulatorValue);
 
             //Check that the coin is on the accumulator
             if(!newSpend.Verify(accumulator))
@@ -1364,7 +1371,7 @@ bool CheckZerocoinSpend(const CTransaction tx, bool fVerifySignature, CValidatio
     return fValidated;
 }
 
-bool CheckTransaction(const CTransaction& tx, bool fZerocoinActive, bool fRejectBadUTXO, CValidationState& state, bool fWitnessEnabled)
+bool CheckTransaction(const CTransaction& tx, bool fZerocoinActive, bool fRejectBadUTXO, CValidationState& state, libzerocoin::ZerocoinParams* params, bool fWitnessEnabled)
 {
     // Basic checks that don't depend on any context
     if (tx.vin.empty())
@@ -1398,7 +1405,7 @@ bool CheckTransaction(const CTransaction& tx, bool fZerocoinActive, bool fReject
             return state.DoS(100, error("CheckTransaction() : txout total out of range"),
                 REJECT_INVALID, "bad-txns-txouttotal-toolarge");
         if (fZerocoinActive && txout.IsZerocoinMint()) {
-            if(!CheckZerocoinMint(tx.GetHash(), txout, state, false))
+            if(!CheckZerocoinMint(tx.GetHash(), txout, state, params, false))
                 return state.DoS(100, error("CheckTransaction() : invalid zerocoin mint"));
         }
         if (fZerocoinActive && txout.scriptPubKey.IsZerocoinSpend())
@@ -1419,7 +1426,7 @@ bool CheckTransaction(const CTransaction& tx, bool fZerocoinActive, bool fReject
 
             // Do not require signature verification if this is initial sync and a block over 24 hours old
             bool fVerifySignature = !IsInitialBlockDownload() && (GetTime() - chainActive.Tip()->GetBlockTime() < (60*60*24));
-            if (!CheckZerocoinSpend(tx, fVerifySignature, state))
+            if (!CheckZerocoinSpend(tx, fVerifySignature, state, chainActive.Height()))
                 return state.DoS(100, error("CheckTransaction() : invalid zerocoin spend"));
         }
     }
@@ -1523,7 +1530,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
     if (GetAdjustedTime() > GetSporkValue(SPORK_16_ZEROCOIN_MAINTENANCE_MODE) && tx.ContainsZerocoins())
         return state.DoS(10, error("AcceptToMemoryPool : Zerocoin transactions are temporarily disabled for maintenance"), REJECT_INVALID, "bad-tx");
 
-    if (!CheckTransaction(tx, chainActive.Height() >= Params().Zerocoin_StartHeight(), true, state, GetSporkValue(SPORK_17_SEGWIT_ACTIVATION) < chainActive.Tip()->nTime))
+    if (!CheckTransaction(tx, chainActive.Height() >= Params().Zerocoin_StartHeight(), true, state, GetZerocoinParams(chainActive.Height()), GetSporkValue(SPORK_17_SEGWIT_ACTIVATION) < chainActive.Tip()->nTime))
         return state.DoS(100, error("AcceptToMemoryPool: : CheckTransaction failed"), REJECT_INVALID, "bad-tx");
 
     // Coinbase is only valid in a block, not as a loose transaction
@@ -1597,7 +1604,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
             for (const CTxIn& txIn : tx.vin) {
                 if (!txIn.scriptSig.IsZerocoinSpend())
                     continue;
-                CoinSpend spend = TxInToZerocoinSpend(txIn);
+                CoinSpend spend = TxInToZerocoinSpend(txIn, chainActive.Height());
                 if (!ContextualCheckCoinSpend(spend, chainActive.Tip(), txid))
                     return state.Invalid(error("%s: zPHR spend in tx %s failed to pass context checks", __func__, txid.GetHex()));
             }
@@ -1799,7 +1806,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState& state, const CTransact
     if (pfMissingInputs)
         *pfMissingInputs = false;
 
-    if (!CheckTransaction(tx, chainActive.Height() >= Params().Zerocoin_StartHeight(), true, state, GetSporkValue(SPORK_17_SEGWIT_ACTIVATION) < chainActive.Tip()->nTime))
+    if (!CheckTransaction(tx, chainActive.Height() >= Params().Zerocoin_StartHeight(), true, state, GetZerocoinParams(chainActive.Height()), GetSporkValue(SPORK_17_SEGWIT_ACTIVATION) < chainActive.Tip()->nTime))
         return error("AcceptableInputs: : CheckTransaction failed");
 
     // Coinbase is only valid in a block, not as a loose transaction
@@ -2458,7 +2465,7 @@ bool DisconnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex
                 //erase all zerocoinspends in this transaction
                 for (const CTxIn txin : tx.vin) {
                     if (txin.scriptSig.IsZerocoinSpend()) {
-                        CoinSpend spend = TxInToZerocoinSpend(txin);
+                        CoinSpend spend = TxInToZerocoinSpend(txin, pindex->nHeight);
                         if (!zerocoinDB->EraseCoinSpend(spend.getCoinSerialNumber()))
                             return error("failed to erase spent zerocoin in block");
                     }
@@ -2470,8 +2477,10 @@ bool DisconnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex
                     if (txout.scriptPubKey.empty() || !txout.scriptPubKey.IsZerocoinMint())
                         continue;
 
-                    PublicCoin pubCoin(Params().Zerocoin_Params());
-                    if (!TxOutToPublicCoin(txout, pubCoin, state))
+
+                    libzerocoin::ZerocoinParams* params = GetZerocoinParams(pindex->nHeight); 
+                    PublicCoin pubCoin(params);
+                    if (!TxOutToPublicCoin(txout, pubCoin, state, params))
                         return error("DisconnectBlock(): TxOutToPublicCoin() failed");
 
                     if(!zerocoinDB->EraseCoinMint(pubCoin.getValue()))
@@ -2600,7 +2609,7 @@ void RecalculateZPHRMinted()
         assert(ReadBlockFromDisk(block, pindex));
 
         std::list<CZerocoinMint> listMints;
-        BlockToZerocoinMintList(block, listMints);
+        BlockToZerocoinMintList(block, listMints, pindex->nHeight);
 
         vector<libzerocoin::CoinDenomination> vDenomsBefore = pindex->vMintDenominationsInBlock;
         pindex->vMintDenominationsInBlock.clear();
@@ -2730,7 +2739,7 @@ bool ReindexAccumulators(list<uint256>& listMissingCheckpoints, string& strError
                 //uiInterface.ShowProgress(_("Calculating missing accumulators..."), (int) (dPercent * 100));
                 if (find(listMissingCheckpoints.begin(), listMissingCheckpoints.end(), pindex->nAccumulatorCheckpoint) != listMissingCheckpoints.end()) {
                     uint256 nCheckpointCalculated = 0;
-                    AccumulatorMap mapAccumulators;
+                    AccumulatorMap mapAccumulators(GetZerocoinParams(pindex->nHeight));
                     if (!CalculateAccumulatorCheckpoint(pindex->nHeight, nCheckpointCalculated, mapAccumulators)) {
                         // GetCheckpoint could have terminated due to a shutdown request. Check this here.
                         if (ShutdownRequested())
@@ -2933,7 +2942,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
             for (const CTxIn& txIn : tx.vin) {
                 if (!txIn.scriptSig.IsZerocoinSpend())
                     continue;
-                CoinSpend spend = TxInToZerocoinSpend(txIn);
+                CoinSpend spend = TxInToZerocoinSpend(txIn, pindex->nHeight);
                 nValueIn += spend.getDenomination() * COIN;
 
                 //Perform checks on the spend that are based on blockchain context
@@ -3024,7 +3033,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
     }
 
     // Ensure that accumulator checkpoints are valid and in the same state as this instance of the chain
-    AccumulatorMap mapAccumulators;
+    AccumulatorMap mapAccumulators(GetZerocoinParams(pindex->nHeight));
     if (!ValidateAccumulatorCheckpoint(block, pindex, mapAccumulators))
         return state.DoS(100, error("%s: Failed to validate accumulator checkpoint for block=%s height=%d", __func__,
                                     block.GetHash().GetHex(), pindex->nHeight), REJECT_INVALID, "bad-acc-checkpoint");
@@ -4033,14 +4042,14 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
     bool fZerocoinActive = block.GetBlockTime() > Params().Zerocoin_StartTime();
     vector<CBigNum> vBlockSerials;
     for (const CTransaction& tx : block.vtx) {
-        if (!CheckTransaction(tx, fZerocoinActive, chainActive.Height() + 1 >= Params().Zerocoin_Block_EnforceSerialRange(), state, GetSporkValue(SPORK_17_SEGWIT_ACTIVATION) < block.nTime))
+        if (!CheckTransaction(tx, fZerocoinActive, chainActive.Height() + 1 >= Params().Zerocoin_Block_EnforceSerialRange(), state, GetZerocoinParams(chainActive.Height() + 1), GetSporkValue(SPORK_17_SEGWIT_ACTIVATION) < block.nTime))
             return error("CheckBlock() : CheckTransaction failed");
 
         // double check that there are no double spent zPhr spends in this block
         if (tx.IsZerocoinSpend()) {
             for (const CTxIn txIn : tx.vin) {
                 if (txIn.scriptSig.IsZerocoinSpend()) {
-                    libzerocoin::CoinSpend spend = TxInToZerocoinSpend(txIn);
+                    libzerocoin::CoinSpend spend = TxInToZerocoinSpend(txIn, chainActive.Height() + 1);
                     if (count(vBlockSerials.begin(), vBlockSerials.end(), spend.getCoinSerialNumber()))
                         return state.DoS(100, error("%s : Double spending of zPhr serial %s in block\n Block: %s",
                                                     __func__, spend.getCoinSerialNumber().GetHex(), block.ToString()));
