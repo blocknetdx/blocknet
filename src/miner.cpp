@@ -385,8 +385,8 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
                 bool fDoubleSerial = false;
                 for (const CTxIn txIn : tx.vin) {
                     if (txIn.scriptSig.IsZerocoinSpend()) {
-                        libzerocoin::CoinSpend spend = TxInToZerocoinSpend(txIn);
-                        if (!spend.HasValidSerial(Params().Zerocoin_Params()))
+                        libzerocoin::CoinSpend spend = TxInToZerocoinSpend(txIn, chainActive.Height());
+                        if (!spend.HasValidSerial(GetZerocoinParams(chainActive.Height())))
                             fDoubleSerial = true;
                         if (count(vBlockSerials.begin(), vBlockSerials.end(), spend.getCoinSerialNumber()))
                             fDoubleSerial = true;
@@ -473,7 +473,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
         pblock->nBits = GetNextWorkRequired(pindexPrev, pblock);
         pblock->nNonce = 0;
         uint256 nCheckpoint = 0;
-        AccumulatorMap mapAccumulators;
+        AccumulatorMap mapAccumulators(GetZerocoinParams(nHeight));
         if(fZerocoinActive && !CalculateAccumulatorCheckpoint(nHeight, nCheckpoint, mapAccumulators)){
             LogPrintf("%s: failed to get accumulator checkpoint\n", __func__);
         }

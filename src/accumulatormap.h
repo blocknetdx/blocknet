@@ -12,8 +12,9 @@ class AccumulatorMap
 {
 private:
     std::map<libzerocoin::CoinDenomination, std::unique_ptr<libzerocoin::Accumulator> > mapAccumulators;
+    libzerocoin::ZerocoinParams* params;
 public:
-    AccumulatorMap();
+    AccumulatorMap(libzerocoin::ZerocoinParams* currentParams);
     bool Load(uint256 nCheckpoint);
     bool Accumulate(libzerocoin::PublicCoin pubCoin, bool fSkipValidation = false);
     CBigNum GetValue(libzerocoin::CoinDenomination denom);

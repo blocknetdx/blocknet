@@ -100,7 +100,9 @@ public:
 
     /** Zerocoin **/
     std::string Zerocoin_Modulus() const { return zerocoinModulus; }
+    std::string OldZerocoin_Modulus() const { return oldZerocoinModulus; }
     libzerocoin::ZerocoinParams* Zerocoin_Params() const;
+    libzerocoin::ZerocoinParams* OldZerocoin_Params() const;
     int Zerocoin_MaxSpendsPerTransaction() const { return nMaxZerocoinSpendsPerTransaction; }
     CAmount Zerocoin_MintFee() const { return nMinZerocoinMintFee; }
     int Zerocoin_MintRequiredConfirmations() const { return nMintRequiredConfirmations; }
@@ -114,6 +116,7 @@ public:
     int Zerocoin_StartHeight() const { return nZerocoinStartHeight; }
     int Zerocoin_Block_EnforceSerialRange() const { return nBlockEnforceSerialRange; }
     int Zerocoin_StartTime() const { return nZerocoinStartTime; }
+    int Zerocoin_LastOldParams() const { return nZerocoinLastOldParams; }
 
 protected:
     CChainParams() {}
@@ -158,6 +161,7 @@ protected:
     std::string strObfuscationPoolDummyAddress;
     int64_t nStartMasternodePayments;
     std::string zerocoinModulus;
+    std::string oldZerocoinModulus;
     int nMaxZerocoinSpendsPerTransaction;
     CAmount nMinZerocoinMintFee;
     int nMintRequiredConfirmations;
@@ -168,6 +172,7 @@ protected:
     int nZerocoinStartHeight;
     int nZerocoinStartTime;
     int nBlockEnforceSerialRange;
+    int nZerocoinLastOldParams;
 };
 
 /**
