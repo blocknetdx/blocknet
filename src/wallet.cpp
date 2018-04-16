@@ -653,6 +653,9 @@ bool CWallet::AddToWallet(const CWalletTx& wtxIn, bool fFromLoadWallet)
             wtx.nOrderPos = IncOrderPosNext();
             wtx.nTimeSmart = ComputeTimeSmart(wtx);
             AddToSpends(hash);
+            
+            // wqking -- fix a bug that listtransactions doesn't return recent transactions.
+            wtxOrdered.insert(make_pair(wtx.nOrderPos, TxPair(&wtx, (CAccountingEntry*)0)));
         }
 
         bool fUpdated = false;
