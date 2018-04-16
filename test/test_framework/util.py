@@ -408,7 +408,7 @@ def sync_mempools(rpc_connections):
         pool = set(rpc_connections[0].getrawmempool())
         num_match = 1
         for i in range(1, len(rpc_connections)):
-            print(i, rpc_connections[i].getrawmempool())
+            #print("sync_mempools: ", i, rpc_connections[i].getrawmempool())
             if set(rpc_connections[i].getrawmempool()) == pool:
                 num_match = num_match+1
         if num_match == len(rpc_connections):
