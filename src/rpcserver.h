@@ -622,8 +622,8 @@ extern json_spirit::Value  dxGetTokenBalances(const json_spirit::Array& params, 
   */
 
 extern json_spirit::Value xrGetBlocks(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value xrGetTransaction(const json_spirit::Array& params, bool fHelp);
 
-extern json_spirit::Value xrGetReply(const json_spirit::Array& params, bool fHelp);
 /** @} */
 
 
