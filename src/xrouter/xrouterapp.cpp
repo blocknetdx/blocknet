@@ -509,7 +509,7 @@ void App::onMessageReceived(const std::vector<unsigned char>& id,
         return;
     }
 
-    if (!packet->verify()) {
+    if ((packet->command() != xrReply) && !packet->verify()) {
         std::clog << "unsigned packet or signature error " << __FUNCTION__;
         return;
     }
