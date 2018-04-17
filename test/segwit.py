@@ -32,7 +32,7 @@ def witness_script(version, pubkey):
         pkscript = "0014" + pubkeyhash
     elif (version == 1):
         # 1-of-1 multisig
-        scripthash = encode_hex(decode_hex(sha256(("5121" + pubkey + "51ae"))))
+        scripthash = encode_hex(sha256(decode_hex("5121" + pubkey + "51ae")))
         pkscript = "0020" + scripthash
     else:
         assert("Wrong version" == "0 or 1")
@@ -46,8 +46,8 @@ def addlength(script):
 def create_witnessprogram(version, node, utxo, pubkey, encode_p2sh, amount):
     pkscript = witness_script(version, pubkey);
     if (encode_p2sh):
-        p2sh_hash = hexlify(ripemd160(sha256(pkscript.decode("hex"))))
-        pkscript = "a914"+p2sh_hash+"87"
+        p2sh_hash = ripemd160(sha256(decode_hex(pkscript)))
+        pkscript = "a914" + encode_hex(p2sh_hash) + "87"
     inputs = []
     outputs = {}
     inputs.append({ "txid" : utxo["txid"], "vout" : utxo["vout"]} )
@@ -63,7 +63,7 @@ def send_to_witness(version, node, utxo, pubkey, encode_p2sh, amount, sign=True,
     tx_to_witness = create_witnessprogram(version, node, utxo, pubkey, encode_p2sh, amount)
     if (sign):
         signed = node.signrawtransaction(tx_to_witness)
-        return node.sendrawtransaction(signed["hex"])
+        return node.sendrawtransaction(signed["hex"], True)
     else:
         if (insert_redeem_script):
             tx_to_witness = tx_to_witness[0:82] + addlength(insert_redeem_script) + tx_to_witness[84:]
@@ -134,9 +134,6 @@ class SegWitTest(BitcoinTestFramework):
         #assert(tmpl['transactions'][0]['sigops'] == 2)
         self.nodes[0].setgenerate(True, 1) #block 162
 
-        #below test doesn't work yet because AcceptToMemoryPool in main.cpp returns false when sendrawtransaction in send_to_witness
-        return;
-
         self.pubkey = []
         p2sh_ids = [] # p2sh_ids[NODE][VER] is an array of txids that spend to a witness version VER pkscript to an address for NODE embedded in p2sh
         wit_ids = [] # wit_ids[NODE][VER] is an array of txids that spend to a witness version VER pkscript to an address for NODE via bare witness
@@ -158,7 +155,7 @@ class SegWitTest(BitcoinTestFramework):
                     wit_ids[n][v].append(send_to_witness(v, self.nodes[0], self.nodes[0].listunspent()[0], self.pubkey[n], False, Decimal("49.999")))
                     p2sh_ids[n][v].append(send_to_witness(v, self.nodes[0], self.nodes[0].listunspent()[0], self.pubkey[n], True, Decimal("49.999")))
 
-        self.nodes[0].generate(1) #block 163
+        self.nodes[0].setgenerate(True, 1) #block 163
         sync_blocks(self.nodes)
 
     def BAKrun_test(self):
