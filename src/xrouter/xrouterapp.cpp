@@ -427,6 +427,52 @@ bool App::processGetBlocks(XRouterPacketPtr packet) {
     return true;
 }
 
+bool App::processGetTransaction(XRouterPacketPtr packet) {
+    std::cout << "Processing GetTransaction\n";
+    if (!packet->verify())
+    {
+      std::clog << "unsigned packet or signature error " << __FUNCTION__;
+        return false;
+    }
+    
+    if (!verifyBlockRequirement(packet)) {
+        std::clog << "Block requirement not satisfied\n";
+        return false;
+    }
+    
+    uint32_t offset = 36;
+
+    std::string uuid((const char *)packet->data()+offset);
+    offset += uuid.size() + 1;
+    std::string currency((const char *)packet->data()+offset);
+    offset += currency.size() + 1;
+    std::string hash((const char *)packet->data()+offset);
+    offset += hash.size() + 1;
+    std::cout << uuid << " "<< currency << " " << hash << std::endl;
+    
+    std::string result = "query reply";
+    //
+    // SEND THE QUERY TO WALLET CONNECTOR HERE
+    //
+    
+    xbridge::WalletConnectorPtr conn = connectorByCurrency(currency);
+    if (conn)
+    {
+        Array a {hash};
+        Object res = conn->executeRpcCall("gettransaction", a);
+        const Value& res_val(res);
+        result = json_spirit::write_string(res_val, true);
+    }
+
+    XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
+
+    rpacket->append(uuid);
+    rpacket->append(result);
+    sendPacket(rpacket);
+
+    return true;
+}
+
 //*****************************************************************************
 //*****************************************************************************
 bool App::processGetBalances(XRouterPacketPtr packet) {
@@ -521,6 +567,9 @@ void App::onMessageReceived(const std::vector<unsigned char>& id,
       case xrGetBlocks:
         processGetBlocks(packet);
         break;
+      case xrGetTransaction:
+        processGetTransaction(packet);
+        break;
       case xrGetBalances:
         processGetBalances(packet);
         break;
@@ -587,6 +636,51 @@ std::string App::getBlocks(const std::string & currency, const std::string & blo
     packet->append(id);
     packet->append(currency);
     packet->append(blockHash);
+    auto pubKey = key.GetPubKey();
+    std::vector<unsigned char> pubKeyData(pubKey.begin(), pubKey.end());
+
+    auto privKey = key.GetPrivKey_256();
+    std::vector<unsigned char> privKeyData(privKey.begin(), privKey.end());
+
+    packet->sign(pubKeyData, privKeyData);
+
+    boost::shared_ptr<boost::mutex> m(new boost::mutex());
+    boost::shared_ptr<boost::condition_variable> cond(new boost::condition_variable());
+    boost::mutex::scoped_lock lock(*m);
+    sendPacket(packet, currency);
+
+    queriesLocks[id] = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m, cond);
+    if(!cond->timed_wait(lock, boost::posix_time::milliseconds(3000))) {
+        return "Failed to get response";
+    } else {
+        return queries[id];
+    }
+}
+
+std::string App::getTransaction(const std::string & currency, const std::string & hash)
+{
+    std::cout << "process get transaction" << std::endl;
+    XRouterPacketPtr packet(new XRouterPacket(xrGetTransaction));
+
+    uint256 txHash;
+    uint32_t vout;
+    CKey key;
+    if (!satisfyBlockRequirement(txHash, vout, key)) {
+        std::cerr << "Minimum block requirement not satisfied\n";
+        return "Minimum block";
+    }
+    std::cout << "txHash = " << txHash.ToString() << "\n";
+    std::cout << "vout = " << vout << "\n";
+    std::cout << "Sending xrGetTransaction packet...\n";
+    
+    boost::uuids::uuid uuid = boost::uuids::random_generator()();
+    std::string id = boost::uuids::to_string(uuid);
+    
+    packet->append(txHash.begin(), 32);
+    packet->append(vout);
+    packet->append(id);
+    packet->append(currency);
+    packet->append(hash);
     auto pubKey = key.GetPubKey();
     std::vector<unsigned char> pubKeyData(pubKey.begin(), pubKey.end());
 

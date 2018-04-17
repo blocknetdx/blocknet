@@ -34,7 +34,8 @@ enum XRouterCommand
 
     xrReply = 1,
     xrGetBlocks = 2,
-    xrGetBalances = 3
+    xrGetBalances = 3,
+    xrGetTransaction = 4
 };
 
 //******************************************************************************
