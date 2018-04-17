@@ -334,7 +334,6 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
             if (nBlockCost + nTxCost >= nBlockMaxCost)
                 continue;
 
-<<<<<<< HEAD
 
             // Skip free transactions if we're past the minimum block size:
             const uint256& hash = tx.GetHash();
@@ -342,28 +341,6 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
             CAmount nFeeDelta = 0;
             mempool.ApplyDeltas(hash, dPriorityDelta, nFeeDelta);
             if (!tx.IsZerocoinSpend() && fSortedByFee && (dPriorityDelta <= 0) && (nFeeDelta <= 0) && (feeRate < ::minRelayTxFee) && (nBlockCost + nTxCost >= nBlockMinCost))
-=======
-            unsigned int nTxSize = ::GetSerializeSize(iter->GetTx(), SER_NETWORK, PROTOCOL_VERSION);
-            int64_t nTxCost = GetTransactionCost(tx);
-            if (fPriorityBlock &&
-                (nBlockSize + nTxSize >= nBlockPrioritySize || !AllowFree(actualPriority))) {
-                fPriorityBlock = false;
-                waitPriMap.clear();
-            }
-            if (!priorityTx &&
-                (iter->GetModifiedFee() < ::minRelayTxFee.GetFee(nTxSize) && nBlockSize >= nBlockMinSize)) {
-                break;
-            }
-            if (nBlockSize + nTxSize >= nBlockMaxSize || nBlockCost + nTxCost > nBlockMaxCost) {
-                if (nBlockSize > nBlockMaxSize - 100 || nBlockCost > nBlockMaxCost - 400 || lastFewTxs > 50) {
-                    break;
-                }
-                // Once we're within 1000 bytes (or 4000 cost) of a full block,
-                // only look at 50 more txs to try to fill the remaining space.
-                if (nBlockSize > nBlockMaxSize - 1000 || nBlockCost > nBlockMaxCost - 4000) {
-                    lastFewTxs++;
-                }
->>>>>>> d8b5db9... Correctly count maximum size in mining
                 continue;
 
             // Prioritise by fee once past the priority size or we run out of high-priority
