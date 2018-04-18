@@ -261,7 +261,7 @@ const char* CInv::GetCommand() const
     if (!IsKnownType())
         LogPrint("net", "CInv::GetCommand() : type=%d unknown type", type);
 
-    if (type < sizeof(ppszTypeName))
+    if (type < (int)sizeof(ppszTypeName))
         return ppszTypeName[type];
     else
         return "unknown";

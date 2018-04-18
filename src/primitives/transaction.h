@@ -14,7 +14,7 @@
 
 #include <list>
 
-static const int SERIALIZE_TRANSACTION_WITNESS = 0x40000000;
+static const int SERIALIZE_TRANSACTION_NO_WITNESS = 0x40000000;
 static const unsigned int WITNESS_SCALE_FACTOR = 4;
 
 
@@ -294,7 +294,7 @@ inline void SerializeTransaction(TxType& tx, Stream& s, Operation ser_action, in
         const_cast<CTxWitness*>(&tx.wit)->SetNull();
         /* Try to read the vin. In case the dummy is there, this will be read as an empty vector. */
         READWRITE(*const_cast<std::vector<CTxIn>*>(&tx.vin));
-        if (tx.vin.size() == 0 && (nVersion & SERIALIZE_TRANSACTION_WITNESS)) {
+        if (tx.vin.size() == 0 && !(nVersion & SERIALIZE_TRANSACTION_NO_WITNESS)) {
             /* We read a dummy or an empty vin. */
             READWRITE(flags);
             if (flags != 0) {
@@ -305,7 +305,7 @@ inline void SerializeTransaction(TxType& tx, Stream& s, Operation ser_action, in
             /* We read a non-empty vin. Assume a normal vout follows. */
             READWRITE(*const_cast<std::vector<CTxOut>*>(&tx.vout));
         }
-        if ((flags & 1) && (nVersion & SERIALIZE_TRANSACTION_WITNESS)) {
+        if ((flags & 1) && !(nVersion & SERIALIZE_TRANSACTION_NO_WITNESS)) {
             /* The witness flag is present, and we support witnesses. */
             flags ^= 1;
             const_cast<CTxWitness*>(&tx.wit)->vtxinwit.resize(tx.vin.size());
@@ -317,7 +317,7 @@ inline void SerializeTransaction(TxType& tx, Stream& s, Operation ser_action, in
         }
     } else {
         assert(tx.wit.vtxinwit.size() <= tx.vin.size());
-        if (nVersion & SERIALIZE_TRANSACTION_WITNESS) {
+        if (!(nVersion & SERIALIZE_TRANSACTION_NO_WITNESS)) {
             /* Check whether witnesses need to be serialized. */
             if (!tx.wit.IsNull()) {
                 flags |= 1;
