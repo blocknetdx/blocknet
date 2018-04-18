@@ -11,10 +11,10 @@ using namespace json_spirit;
 
 //******************************************************************************
 //******************************************************************************
-Value xrGetBlocks(const Array & params, bool fHelp)
+Value xrGetBlock(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetBlocks\nLookup blocks in a specified blockchain.");
+        throw std::runtime_error("xrGetBlock\nLookup blocks in a specified blockchain.");
     }
 
     if (params.size() < 1)
@@ -36,7 +36,7 @@ Value xrGetBlocks(const Array & params, bool fHelp)
     std::string currency    = params[0].get_str();
     Object result;
 
-    std::string reply = xrouter::App::instance().getBlocks(currency, params[1].get_str());
+    std::string reply = xrouter::App::instance().getBlock(currency, params[1].get_str());
     Object obj;
     obj.emplace_back(Pair("reply", reply));
     return obj;

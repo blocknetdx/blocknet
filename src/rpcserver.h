@@ -610,7 +610,7 @@ extern json_spirit::Value  dxGetTokenBalances(const json_spirit::Array& params, 
   * @return The list of open and pending transactions as JSON value. Open transactions go first.
   * * Example:<br>
   * \verbatim
-    xrGetBlocks
+    xrGetBlock
 ￼
     [
         {
@@ -621,7 +621,7 @@ extern json_spirit::Value  dxGetTokenBalances(const json_spirit::Array& params, 
   * \endverbatim
   */
 
-extern json_spirit::Value xrGetBlocks(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value xrGetBlock(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrGetTransaction(const json_spirit::Array& params, bool fHelp);
 
 /** @} */

@@ -381,7 +381,7 @@ static bool verifyBlockRequirement(const XRouterPacketPtr& packet)
 
 //*****************************************************************************
 //*****************************************************************************
-bool App::processGetBlocks(XRouterPacketPtr packet) {
+bool App::processGetBlock(XRouterPacketPtr packet) {
     std::cout << "Processing GetBlocks\n";
     if (!packet->verify())
     {
@@ -565,7 +565,7 @@ void App::onMessageReceived(const std::vector<unsigned char>& id,
 
     switch (packet->command()) {
       case xrGetBlocks:
-        processGetBlocks(packet);
+        processGetBlock(packet);
         break;
       case xrGetTransaction:
         processGetTransaction(packet);
@@ -612,7 +612,7 @@ static bool satisfyBlockRequirement(uint256& txHash, uint32_t& vout, CKey& key)
 
 //*****************************************************************************
 //*****************************************************************************
-std::string App::getBlocks(const std::string & currency, const std::string & blockHash)
+std::string App::getBlock(const std::string & currency, const std::string & blockHash)
 {
     std::cout << "process Query" << std::endl;
     XRouterPacketPtr packet(new XRouterPacket(xrGetBlocks));
