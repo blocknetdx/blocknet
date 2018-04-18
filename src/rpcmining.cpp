@@ -427,10 +427,10 @@ UniValue getblocktemplate(const UniValue& params, bool fHelp)
     if (strMode != "template")
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid mode");
 
-    if (vNodes.empty())
+    if (vNodes.empty() && Params().NetworkID() != CBaseChainParams::REGTEST)
         throw JSONRPCError(RPC_CLIENT_NOT_CONNECTED, "Phore is not connected!");
 
-    if (IsInitialBlockDownload())
+    if (IsInitialBlockDownload() && Params().NetworkID() != CBaseChainParams::REGTEST)
         throw JSONRPCError(RPC_CLIENT_IN_INITIAL_DOWNLOAD, "Phore is downloading blocks...");
 
     static unsigned int nTransactionsUpdatedLast;
