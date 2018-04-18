@@ -51,10 +51,15 @@ public:
 
     double getWalletBalance(const std::string &addr = "") const;
 
-    virtual bool getUnspent(std::vector<wallet::UtxoEntry> & inputs) const = 0;
+    virtual bool getUnspent(std::vector<wallet::UtxoEntry> & inputs, const bool withLocked = false) const = 0;
 
+    // if lock returns false if already locked
+    // if unlock always return true
     virtual bool lockCoins(const std::vector<wallet::UtxoEntry> & inputs,
-                             const bool lock = true) const = 0;
+                           const bool lock = true);
+
+    // remove locked coins (lockedCoins) from array
+    void removeLocked(std::vector<wallet::UtxoEntry> & inputs) const;
 
     virtual bool getTxOut(wallet::UtxoEntry & entry) = 0;
 

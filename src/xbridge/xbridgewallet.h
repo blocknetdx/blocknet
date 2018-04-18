@@ -9,6 +9,7 @@
 #include <set>
 #include <stdint.h>
 #include <cstring>
+#include <mutex>
 
 //*****************************************************************************
 //*****************************************************************************
@@ -38,6 +39,11 @@ struct UtxoEntry
     {
         return (txId < r.txId) || ((txId == r.txId) && (vout < r.vout));
     }
+
+    bool operator == (const UtxoEntry & r) const
+    {
+        return (txId == r.txId) && (vout ==r.vout);
+    }
 };
 
 } // namespace wallet
@@ -56,6 +62,8 @@ public:
         , blockTime(0)
         , requiredConfirmations(0)
         , serviceNodeFee(.005)
+        , txWithTimeField(false)
+        , isLockCoinsSupported(false)
     {
         memset(addrPrefix,   0, sizeof(addrPrefix));
         memset(scriptPrefix, 0, sizeof(scriptPrefix));
@@ -86,43 +94,49 @@ public:
         blockTime                   = other.blockTime;
         requiredConfirmations       = other.requiredConfirmations;
         txWithTimeField             = other.txWithTimeField;
+        isLockCoinsSupported        = other.isLockCoinsSupported;
 
         return *this;
     }
 
 // TODO temporary public
 public:
-    std::string                title;
-    std::string                currency;
+    std::string                  title;
+    std::string                  currency;
 
-    std::string                address;
+    std::string                  address;
 
-    std::string                m_ip;
-    std::string                m_port;
-    std::string                m_user;
-    std::string                m_passwd;
+    std::string                  m_ip;
+    std::string                  m_port;
+    std::string                  m_user;
+    std::string                  m_passwd;
 
-    char                       addrPrefix[8];
-    char                       scriptPrefix[8];
-    char                       secretPrefix[8];
-    uint32_t                   txVersion;
-    uint64_t                   COIN;
-    uint64_t                   minTxFee;
-    uint64_t                   feePerByte;
-    uint64_t                   dustAmount;
-    std::string                method;
+    char                         addrPrefix[8];
+    char                         scriptPrefix[8];
+    char                         secretPrefix[8];
+    uint32_t                     txVersion;
+    uint64_t                     COIN;
+    uint64_t                     minTxFee;
+    uint64_t                     feePerByte;
+    uint64_t                     dustAmount;
+    std::string                  method;
 
     // block time in seconds
-    uint32_t                   blockTime;
+    uint32_t                     blockTime;
 
     // required confirmations for tx
-    uint32_t                   requiredConfirmations;
+    uint32_t                     requiredConfirmations;
 
     //service node fee, see rpc::storeDataIntoBlockchain
-    const double               serviceNodeFee;
+    const double                 serviceNodeFee;
 
     // serialized transaction contains time field (default not)
-    bool                       txWithTimeField;
+    bool                         txWithTimeField;
+
+    // support for lock/unlock coins (default off)
+    bool                         isLockCoinsSupported;
+    mutable std::mutex           lockedCoinsLocker;
+    std::set<wallet::UtxoEntry>  lockedCoins;
 };
 
 } // namespace xbridge

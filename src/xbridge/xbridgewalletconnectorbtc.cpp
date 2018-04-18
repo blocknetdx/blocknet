@@ -1108,7 +1108,8 @@ bool BtcWalletConnector<CryptoProvider>::requestAddressBook(std::vector<wallet::
 //******************************************************************************
 //******************************************************************************
 template <class CryptoProvider>
-bool BtcWalletConnector<CryptoProvider>::getUnspent(std::vector<wallet::UtxoEntry> & inputs) const
+bool BtcWalletConnector<CryptoProvider>::getUnspent(std::vector<wallet::UtxoEntry> & inputs,
+                                                    const bool withLocked) const
 {
     if (!rpc::listUnspent(m_user, m_passwd, m_ip, m_port, inputs))
     {
@@ -1138,6 +1139,11 @@ bool BtcWalletConnector<CryptoProvider>::getUnspent(std::vector<wallet::UtxoEntr
         ++i;
     }
 
+    if (!isLockCoinsSupported && !withLocked)
+    {
+        removeLocked(inputs);
+    }
+
     return true;
 }
 
@@ -1145,12 +1151,19 @@ bool BtcWalletConnector<CryptoProvider>::getUnspent(std::vector<wallet::UtxoEntr
 //******************************************************************************
 template <class CryptoProvider>
 bool BtcWalletConnector<CryptoProvider>::lockCoins(const std::vector<wallet::UtxoEntry> & inputs,
-                                            const bool lock) const
+                                                   const bool lock)
 {
-    if (!rpc::lockUnspent(m_user, m_passwd, m_ip, m_port, inputs, lock))
+    if (!WalletConnector::lockCoins(inputs, lock))
     {
-        LOG() << "rpc::lockUnspent failed " << __FUNCTION__;
         return false;
+    }
+
+    if (isLockCoinsSupported)
+    {
+        if (!rpc::lockUnspent(m_user, m_passwd, m_ip, m_port, inputs, lock))
+        {
+            LOG() << "rpc::lockUnspent failed " << __FUNCTION__;
+        }
     }
 
     return true;
