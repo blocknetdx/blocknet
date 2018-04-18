@@ -124,13 +124,19 @@ class SegWitTest(BitcoinTestFramework):
         assert(tmpl['sigoplimit'] == MAX_BLOCK_SIGOPS_COST)
         #print(txid)
         #print(tmpl)
+        #TODO
+        #assert_greater_than(len(tmpl['transactions']), 0)
+        #TODO
         #assert(tmpl['transactions'][0]['hash'] == txid)
+        #TODO
         #assert(tmpl['transactions'][0]['sigops'] == 2)
         tmpl = self.nodes[0].getblocktemplate({'rules':['segwit']})
         assert(tmpl['sizelimit'] == MAX_BLOCK_SERIALIZED_SIZE)
         assert('weightlimit' not in tmpl)
         assert(tmpl['sigoplimit'] == MAX_BLOCK_SIGOPS_COST)
+        #TODO
         #assert(tmpl['transactions'][0]['hash'] == txid)
+        #TODO
         #assert(tmpl['transactions'][0]['sigops'] == 2)
         self.nodes[0].setgenerate(True, 1) #block 162
 
