@@ -372,6 +372,19 @@ def connect_nodes_bi(nodes, a, b):
     connect_nodes(nodes[a], b)
     connect_nodes(nodes[b], a)
 
+def OLDsync_blocks(rpc_connections, *, wait=1, timeout=60):
+    """
+    Wait until everybody has the same block count
+    """
+    counts = []
+    stop_time = time.time() + timeout
+    while time.time() <= stop_time:
+        counts = [ x.getblockcount() for x in rpc_connections ]
+        if counts == [ counts[0] ]*len(counts):
+            return
+        time.sleep(wait)
+    raise AssertionError("Block sync timed out:{}".format("".join("\n  {!r}".format(b) for b in counts)))
+
 def sync_blocks(rpc_connections, *, wait=1, timeout=60):
     """
     Wait until everybody has the same tip.
@@ -493,7 +506,7 @@ def random_transaction(nodes, amount, min_fee, fee_increment, fee_variants):
 def create_confirmed_utxos(fee, node, count):
     to_generate = int(0.5 * count) + 101
     while to_generate > 0:
-        node.generate(min(25, to_generate))
+        node.setgenerate(True, min(25, to_generate))
         to_generate -= 25
     utxos = node.listunspent()
     iterations = count - len(utxos)
@@ -514,7 +527,7 @@ def create_confirmed_utxos(fee, node, count):
         node.sendrawtransaction(signed_tx)
 
     while (node.getmempoolinfo()['size'] > 0):
-        node.generate(1)
+        node.setgenerate(True, 1)
 
     utxos = node.listunspent()
     assert(len(utxos) >= count)
@@ -579,4 +592,4 @@ def mine_large_block(node, utxos=None):
         utxos.extend(node.listunspent())
     fee = 100 * node.getnetworkinfo()["relayfee"]
     create_lots_of_big_transactions(node, txouts, utxos, num, fee=fee)
-    node.generate(1)
+    node.setgenerate(True, 1)

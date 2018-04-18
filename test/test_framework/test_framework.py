@@ -432,6 +432,8 @@ class BitcoinTestFramework(metaclass=BitcoinTestMetaClass):
                         block_time += 1 * 60
                     # Must sync before next peer starts generating blocks
                     sync_blocks(self.nodes)
+            #self.nodes[0].setgenerate(True, 200)
+            #sync_blocks(self.nodes)
 
             # Shut them down, and clean up cache directories:
             self.stop_nodes()
@@ -443,7 +445,7 @@ class BitcoinTestFramework(metaclass=BitcoinTestMetaClass):
 
             for i in range(MAX_NODES):
                 for entry in os.listdir(cache_path(i)):
-                    if entry not in ['wallets', 'chainstate', 'blocks']:
+                    if entry in ['backups']:
                         try :
                             os.remove(cache_path(i, entry))
                         except :

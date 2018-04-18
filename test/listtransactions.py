@@ -27,7 +27,7 @@ def check_array_result(object_array, to_match, expected):
             continue
         for key,value in expected.items():
             if item[key] != value:
-                raise AssertionError("%s : expected %s=%s"%(str(item), str(key), str(value)))
+                raise AssertionError("%s : expected %s=%s got %s" % (str(item), str(key), str(value), str(item[key])))
             num_matched = num_matched+1
     if num_matched == 0:
         raise AssertionError("No objects matched %s"%(str(to_match)))
@@ -38,8 +38,7 @@ class ListTransactionsTest(TestCaseBase) :
         self.enable_mocktime()
 
     def initialize(self) :
-        self.nodes[0].setgenerate(True, 100)
-        self.nodes[1].setgenerate(True, 100)
+        pass
 
     def test_simple_send(self):
         # Simple send, 0 to 1:
@@ -87,10 +86,10 @@ class ListTransactionsTest(TestCaseBase) :
 
     def test_send_many(self):
         # sendmany from node1: twice to self, twice to node2:
-        send_to = { self.nodes[0].getnewaddress() : 0.11,
-                    self.nodes[1].getnewaddress() : 0.22,
-                    self.nodes[0].getaccountaddress("from1") : 0.33,
-                    self.nodes[1].getaccountaddress("toself") : 0.44 }
+        send_to = {
+            self.nodes[0].getnewaddress() : 0.11,
+            self.nodes[1].getnewaddress() : 0.22
+        }
         txid = self.nodes[1].sendmany("", send_to)
         self.sync_all()
         check_array_result(self.nodes[1].listtransactions("", 1000),
@@ -105,18 +104,6 @@ class ListTransactionsTest(TestCaseBase) :
         check_array_result(self.nodes[1].listtransactions("", 1000),
                            {"category":"receive","amount":Decimal("0.22")},
                            {"txid":txid} )
-        check_array_result(self.nodes[1].listtransactions("", 1000),
-                           {"category":"send","amount":Decimal("-0.33")},
-                           {"txid":txid} )
-        #check_array_result(self.nodes[0].listtransactions("", 1000),
-        #                   {"category":"receive","amount":Decimal("0.33")},
-        #                   {"txid":txid, "account" : "from1"} )
-        check_array_result(self.nodes[1].listtransactions("", 1000),
-                           {"category":"send","amount":Decimal("-0.44")},
-                           {"txid":txid, "account" : ""} )
-        #check_array_result(self.nodes[1].listtransactions("", 1000),
-        #                   {"category":"receive","amount":Decimal("0.44")},
-        #                   {"txid":txid, "account" : "toself"} )
 
 if __name__ == '__main__':
     ListTransactionsTest().main()
