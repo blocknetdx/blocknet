@@ -122,6 +122,7 @@ class TestNode():
         # unclean shutdown), it will get overwritten anyway by bitcoind, and
         # potentially interfere with our attempt to authenticate
         delete_cookie_file(self.datadir)
+        #print("=====", self.args + extra_args)
         self.process = subprocess.Popen(self.args + extra_args, stderr=stderr, *args, **kwargs)
         self.running = True
         self.log.debug("phored started, waiting for RPC to come up")
