@@ -233,11 +233,11 @@ public:
         nMinerThreads = 0;
         nTargetTimespan = 1 * 60; // Phore: 1 day
         nTargetSpacing = 1 * 10;  // Phore: 1 minute
-        nLastPOWBlock = 200;
         nMaturity = 15;
         nMasternodeCountDrift = 4;
         nModifierUpdateBlock = 51197; //approx Mon, 17 Apr 2017 04:00:00 GMT
         nMaxMoneyOut = 43199500 * COIN;
+        nLastPOWBlock = 200000;
         nZerocoinStartHeight = 201576;
 
         //! Modify the testnet genesis block so the timestamp is valid for a later start.
