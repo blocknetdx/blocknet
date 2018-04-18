@@ -381,6 +381,49 @@ static bool verifyBlockRequirement(const XRouterPacketPtr& packet)
 
 //*****************************************************************************
 //*****************************************************************************
+bool App::processGetBlockCount(XRouterPacketPtr packet) {
+    std::cout << "Processing GetBlocks\n";
+    if (!packet->verify())
+    {
+      std::clog << "unsigned packet or signature error " << __FUNCTION__;
+        return false;
+    }
+    
+    if (!verifyBlockRequirement(packet)) {
+        std::clog << "Block requirement not satisfied\n";
+        return false;
+    }
+    
+    uint32_t offset = 36;
+
+    std::string uuid((const char *)packet->data()+offset);
+    offset += uuid.size() + 1;
+    std::string currency((const char *)packet->data()+offset);
+    offset += currency.size() + 1;
+    std::cout << uuid << " "<< currency << std::endl;
+    
+    std::string result = "query reply";
+    //
+    // SEND THE QUERY TO WALLET CONNECTOR HERE
+    //
+    
+    xbridge::WalletConnectorPtr conn = connectorByCurrency(currency);
+    if (conn)
+    {
+        Object res = conn->executeRpcCall("getblockcount", Array());
+        const Value& res_val(res);
+        result = json_spirit::write_string(res_val, true);
+    }
+
+    XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
+
+    rpacket->append(uuid);
+    rpacket->append(result);
+    sendPacket(rpacket);
+
+    return true;
+}
+
 bool App::processGetBlock(XRouterPacketPtr packet) {
     std::cout << "Processing GetBlocks\n";
     if (!packet->verify())
@@ -564,7 +607,10 @@ void App::onMessageReceived(const std::vector<unsigned char>& id,
     /*           << " command " << packet->command(); */
 
     switch (packet->command()) {
-      case xrGetBlocks:
+      case xrGetBlockCount:
+        processGetBlockCount(packet);
+        break;
+      case xrGetBlock:
         processGetBlock(packet);
         break;
       case xrGetTransaction:
@@ -612,10 +658,54 @@ static bool satisfyBlockRequirement(uint256& txHash, uint32_t& vout, CKey& key)
 
 //*****************************************************************************
 //*****************************************************************************
+std::string App::getBlockCount(const std::string & currency)
+{
+    std::cout << "process Query" << std::endl;
+    XRouterPacketPtr packet(new XRouterPacket(xrGetBlockCount));
+
+    uint256 txHash;
+    uint32_t vout;
+    CKey key;
+    if (!satisfyBlockRequirement(txHash, vout, key)) {
+        std::cerr << "Minimum block requirement not satisfied\n";
+        return "Minimum block";
+    }
+    std::cout << "txHash = " << txHash.ToString() << "\n";
+    std::cout << "vout = " << vout << "\n";
+    std::cout << "Sending xrGetBlock packet...\n";
+    
+    boost::uuids::uuid uuid = boost::uuids::random_generator()();
+    std::string id = boost::uuids::to_string(uuid);
+    
+    packet->append(txHash.begin(), 32);
+    packet->append(vout);
+    packet->append(id);
+    packet->append(currency);
+    auto pubKey = key.GetPubKey();
+    std::vector<unsigned char> pubKeyData(pubKey.begin(), pubKey.end());
+
+    auto privKey = key.GetPrivKey_256();
+    std::vector<unsigned char> privKeyData(privKey.begin(), privKey.end());
+
+    packet->sign(pubKeyData, privKeyData);
+
+    boost::shared_ptr<boost::mutex> m(new boost::mutex());
+    boost::shared_ptr<boost::condition_variable> cond(new boost::condition_variable());
+    boost::mutex::scoped_lock lock(*m);
+    sendPacket(packet, currency);
+
+    queriesLocks[id] = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m, cond);
+    if(!cond->timed_wait(lock, boost::posix_time::milliseconds(3000))) {
+        return "Failed to get response";
+    } else {
+        return queries[id];
+    }
+}
+
 std::string App::getBlock(const std::string & currency, const std::string & blockHash)
 {
     std::cout << "process Query" << std::endl;
-    XRouterPacketPtr packet(new XRouterPacket(xrGetBlocks));
+    XRouterPacketPtr packet(new XRouterPacket(xrGetBlock));
 
     uint256 txHash;
     uint32_t vout;

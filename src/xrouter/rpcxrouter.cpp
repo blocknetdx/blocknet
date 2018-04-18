@@ -11,6 +11,29 @@ using namespace json_spirit;
 
 //******************************************************************************
 //******************************************************************************
+Value xrGetBlockCount(const Array & params, bool fHelp)
+{
+    if (fHelp) {
+        throw std::runtime_error("xrGetBlock\nLookup blocks in a specified blockchain.");
+    }
+
+    if (params.size() < 1)
+    {
+        Object error;
+        error.emplace_back(Pair("error", "Currency not specified"));
+        error.emplace_back(Pair("name",     __FUNCTION__));
+        return error;
+    }
+
+    std::string currency    = params[0].get_str();
+    Object result;
+
+    std::string reply = xrouter::App::instance().getBlockCount(currency);
+    Object obj;
+    obj.emplace_back(Pair("reply", reply));
+    return obj;
+}
+
 Value xrGetBlock(const Array & params, bool fHelp)
 {
     if (fHelp) {
