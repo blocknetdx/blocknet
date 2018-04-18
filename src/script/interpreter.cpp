@@ -255,7 +255,7 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, un
     set_error(serror, SCRIPT_ERR_UNKNOWN_ERROR);
     if (script.size() > 10000)
         return set_error(serror, SCRIPT_ERR_SCRIPT_SIZE);
-    int nOpCount = 0;
+    unsigned int nOpCount = 0;
     bool fRequireMinimal = (flags & SCRIPT_VERIFY_MINIMALDATA) != 0;
 
     try
@@ -829,7 +829,7 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, un
                         return set_error(serror, SCRIPT_ERR_INVALID_STACK_OPERATION);
 
                     int nKeysCount = CScriptNum(stacktop(-i), fRequireMinimal).getint();
-                    if (nKeysCount < 0 || nKeysCount > MAX_PUBKEYS_PER_MULTISIG)
+                    if (nKeysCount < 0 || (unsigned int) nKeysCount > MAX_PUBKEYS_PER_MULTISIG)
                         return set_error(serror, SCRIPT_ERR_PUBKEY_COUNT);
                     nOpCount += nKeysCount;
                     if (nOpCount > MAX_OPS_PER_SCRIPT)

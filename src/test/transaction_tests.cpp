@@ -142,7 +142,7 @@ BOOST_AUTO_TEST_CASE(tx_valid)
             }
 
             string transaction = test[1].get_str();
-            CDataStream stream(ParseHex(transaction), SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_WITNESS);
+            CDataStream stream(ParseHex(transaction), SER_NETWORK, PROTOCOL_VERSION);
             CTransaction tx;
             stream >> tx;
 
@@ -227,7 +227,7 @@ BOOST_AUTO_TEST_CASE(tx_invalid)
             }
 
             string transaction = test[1].get_str();
-            CDataStream stream(ParseHex(transaction), SER_NETWORK, PROTOCOL_VERSION  | SERIALIZE_TRANSACTION_WITNESS);
+            CDataStream stream(ParseHex(transaction), SER_NETWORK, PROTOCOL_VERSION);
             CTransaction tx;
             stream >> tx;
 
@@ -357,8 +357,8 @@ void CreateCreditAndSpend(const CKeyStore& keystore, const CScript& outscript, C
     outputm.vout[0].nValue = 1;
     outputm.vout[0].scriptPubKey = outscript;
     CDataStream ssout(SER_NETWORK, PROTOCOL_VERSION);
-    WithOrVersion(&ssout, SERIALIZE_TRANSACTION_WITNESS) << outputm;
-    WithOrVersion(&ssout, SERIALIZE_TRANSACTION_WITNESS) >> output;
+    ssout << outputm;
+    ssout >> output;
     assert(output.vin.size() == 1);
     assert(output.vin[0] == outputm.vin[0]);
     assert(output.vout.size() == 1);
@@ -377,8 +377,8 @@ void CreateCreditAndSpend(const CKeyStore& keystore, const CScript& outscript, C
     bool ret = SignSignature(keystore, output, inputm, 0, SIGHASH_ALL);
     assert(ret == success);
     CDataStream ssin(SER_NETWORK, PROTOCOL_VERSION);
-    WithOrVersion(&ssin, SERIALIZE_TRANSACTION_WITNESS) << inputm;
-    WithOrVersion(&ssin, SERIALIZE_TRANSACTION_WITNESS) >> input;
+    ssin << inputm;
+    ssin >> input;
     assert(input.vin.size() == 1);
     assert(input.vin[0] == inputm.vin[0]);
     assert(input.vout.size() == 1);
