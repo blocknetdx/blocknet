@@ -262,6 +262,22 @@ void App::sendPacket(const XRouterPacketPtr& packet, std::string wallet)
     m_p->onSend(addr, packet->body(), wallet);
 }
 
+std::string App::sendPacketAndWait(const XRouterPacketPtr & packet, std::string id, std::string currency, int timeout)
+{
+    boost::shared_ptr<boost::mutex> m(new boost::mutex());
+    boost::shared_ptr<boost::condition_variable> cond(new boost::condition_variable());
+    boost::mutex::scoped_lock lock(*m);
+    sendPacket(packet, currency);
+
+    queriesLocks[id] = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m, cond);
+    if(!cond->timed_wait(lock, boost::posix_time::milliseconds(timeout))) {
+        return "Failed to get response";
+    } else {
+        return queries[id];
+    }
+}
+
+
 //*****************************************************************************
 // send packet to xrouter network to specified id,
 // or broadcast, when id is empty
@@ -428,7 +444,7 @@ bool App::processGetBlock(XRouterPacketPtr packet) {
     std::cout << "Processing GetBlocks\n";
     if (!packet->verify())
     {
-      std::clog << "unsigned packet or signature error " << __FUNCTION__;
+        std::clog << "unsigned packet or signature error " << __FUNCTION__;
         return false;
     }
     
@@ -474,7 +490,7 @@ bool App::processGetTransaction(XRouterPacketPtr packet) {
     std::cout << "Processing GetTransaction\n";
     if (!packet->verify())
     {
-      std::clog << "unsigned packet or signature error " << __FUNCTION__;
+        std::clog << "unsigned packet or signature error " << __FUNCTION__;
         return false;
     }
     
@@ -681,25 +697,9 @@ std::string App::getBlockCount(const std::string & currency)
     packet->append(vout);
     packet->append(id);
     packet->append(currency);
-    auto pubKey = key.GetPubKey();
-    std::vector<unsigned char> pubKeyData(pubKey.begin(), pubKey.end());
-
-    auto privKey = key.GetPrivKey_256();
-    std::vector<unsigned char> privKeyData(privKey.begin(), privKey.end());
-
-    packet->sign(pubKeyData, privKeyData);
-
-    boost::shared_ptr<boost::mutex> m(new boost::mutex());
-    boost::shared_ptr<boost::condition_variable> cond(new boost::condition_variable());
-    boost::mutex::scoped_lock lock(*m);
-    sendPacket(packet, currency);
-
-    queriesLocks[id] = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m, cond);
-    if(!cond->timed_wait(lock, boost::posix_time::milliseconds(3000))) {
-        return "Failed to get response";
-    } else {
-        return queries[id];
-    }
+    packet->sign(key);
+    
+    return sendPacketAndWait(packet, id, currency);
 }
 
 std::string App::getBlock(const std::string & currency, const std::string & blockHash)
@@ -726,25 +726,9 @@ std::string App::getBlock(const std::string & currency, const std::string & bloc
     packet->append(id);
     packet->append(currency);
     packet->append(blockHash);
-    auto pubKey = key.GetPubKey();
-    std::vector<unsigned char> pubKeyData(pubKey.begin(), pubKey.end());
+    packet->sign(key);
 
-    auto privKey = key.GetPrivKey_256();
-    std::vector<unsigned char> privKeyData(privKey.begin(), privKey.end());
-
-    packet->sign(pubKeyData, privKeyData);
-
-    boost::shared_ptr<boost::mutex> m(new boost::mutex());
-    boost::shared_ptr<boost::condition_variable> cond(new boost::condition_variable());
-    boost::mutex::scoped_lock lock(*m);
-    sendPacket(packet, currency);
-
-    queriesLocks[id] = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m, cond);
-    if(!cond->timed_wait(lock, boost::posix_time::milliseconds(3000))) {
-        return "Failed to get response";
-    } else {
-        return queries[id];
-    }
+    return sendPacketAndWait(packet, id, currency);
 }
 
 std::string App::getTransaction(const std::string & currency, const std::string & hash)
@@ -771,25 +755,9 @@ std::string App::getTransaction(const std::string & currency, const std::string 
     packet->append(id);
     packet->append(currency);
     packet->append(hash);
-    auto pubKey = key.GetPubKey();
-    std::vector<unsigned char> pubKeyData(pubKey.begin(), pubKey.end());
+    packet->sign(key);
 
-    auto privKey = key.GetPrivKey_256();
-    std::vector<unsigned char> privKeyData(privKey.begin(), privKey.end());
-
-    packet->sign(pubKeyData, privKeyData);
-
-    boost::shared_ptr<boost::mutex> m(new boost::mutex());
-    boost::shared_ptr<boost::condition_variable> cond(new boost::condition_variable());
-    boost::mutex::scoped_lock lock(*m);
-    sendPacket(packet, currency);
-
-    queriesLocks[id] = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m, cond);
-    if(!cond->timed_wait(lock, boost::posix_time::milliseconds(3000))) {
-        return "Failed to get response";
-    } else {
-        return queries[id];
-    }
+    return sendPacketAndWait(packet, id, currency);
 }
 
 //*****************************************************************************
@@ -818,24 +786,8 @@ std::string App::getBalances(const std::string & currency, const std::string & a
     packet->append(id);
     packet->append(currency);
     packet->append(auth);
-    auto pubKey = key.GetPubKey();
-    std::vector<unsigned char> pubKeyData(pubKey.begin(), pubKey.end());
+    packet->sign(key);
 
-    auto privKey = key.GetPrivKey_256();
-    std::vector<unsigned char> privKeyData(privKey.begin(), privKey.end());
-
-    packet->sign(pubKeyData, privKeyData);
-
-    boost::shared_ptr<boost::mutex> m(new boost::mutex());
-    boost::shared_ptr<boost::condition_variable> cond(new boost::condition_variable());
-    boost::mutex::scoped_lock lock(*m);
-    sendPacket(packet, currency);
-
-    queriesLocks[id] = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m, cond);
-    if(!cond->timed_wait(lock, boost::posix_time::milliseconds(3000))) {
-        return "Failed to get response";
-    } else {
-        return queries[id];
-    }
+    return sendPacketAndWait(packet, id, currency);
 }
 } // namespace xrouter

@@ -14,6 +14,7 @@
 #include <iostream>
 //#include <assert.h>
 #include <string.h>
+#include "keystore.h"
 
 //*****************************************************************************
 //*****************************************************************************
@@ -252,6 +253,7 @@ public:
 
     bool sign(const std::vector<unsigned char> & pubkey,
               const std::vector<unsigned char> & privkey);
+    bool sign(CKey key);
     bool verify();
     bool verify(const std::vector<unsigned char> & pubkey);
 

@@ -88,6 +88,17 @@ bool XRouterPacket::sign(const std::vector<unsigned char> & pubkey,
     return verify();
 }
 
+bool XRouterPacket::sign(CKey key)
+{
+    auto pubKey = key.GetPubKey();
+    std::vector<unsigned char> pubKeyData(pubKey.begin(), pubKey.end());
+
+    auto privKey = key.GetPrivKey_256();
+    std::vector<unsigned char> privKeyData(privKey.begin(), privKey.end());
+
+    return sign(pubKeyData, privKeyData);
+}
+
 //******************************************************************************
 // verify signature
 //******************************************************************************
