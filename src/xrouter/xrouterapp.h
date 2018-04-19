@@ -74,6 +74,7 @@ public:
     /**
      * @brief sendXRouterTransaction - create new xrouter transaction and send to network
      */
+    std::string xrouterCall(enum XRouterCommand command, const std::string & currency, std::string param1="", std::string param2="");
     std::string getBlockCount(const std::string & currency);
     std::string getBlock(const std::string & currency, const std::string & blockHash);
     std::string getTransaction(const std::string & currency, const std::string & hash);

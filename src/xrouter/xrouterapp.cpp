@@ -674,10 +674,10 @@ static bool satisfyBlockRequirement(uint256& txHash, uint32_t& vout, CKey& key)
 
 //*****************************************************************************
 //*****************************************************************************
-std::string App::getBlockCount(const std::string & currency)
+std::string App::xrouterCall(enum XRouterCommand command, const std::string & currency, std::string param1, std::string param2)
 {
     std::cout << "process Query" << std::endl;
-    XRouterPacketPtr packet(new XRouterPacket(xrGetBlockCount));
+    XRouterPacketPtr packet(new XRouterPacket(command));
 
     uint256 txHash;
     uint32_t vout;
@@ -697,97 +697,32 @@ std::string App::getBlockCount(const std::string & currency)
     packet->append(vout);
     packet->append(id);
     packet->append(currency);
+    if (!param1.empty())
+        packet->append(param1);
+    if (!param2.empty())
+        packet->append(param2);
     packet->sign(key);
     
     return sendPacketAndWait(packet, id, currency);
+}
+
+std::string App::getBlockCount(const std::string & currency)
+{
+    return this->xrouterCall(xrGetBlockCount, currency);
 }
 
 std::string App::getBlock(const std::string & currency, const std::string & blockHash)
 {
-    std::cout << "process Query" << std::endl;
-    XRouterPacketPtr packet(new XRouterPacket(xrGetBlock));
-
-    uint256 txHash;
-    uint32_t vout;
-    CKey key;
-    if (!satisfyBlockRequirement(txHash, vout, key)) {
-        std::cerr << "Minimum block requirement not satisfied\n";
-        return "Minimum block";
-    }
-    std::cout << "txHash = " << txHash.ToString() << "\n";
-    std::cout << "vout = " << vout << "\n";
-    std::cout << "Sending xrGetBlock packet...\n";
-    
-    boost::uuids::uuid uuid = boost::uuids::random_generator()();
-    std::string id = boost::uuids::to_string(uuid);
-    
-    packet->append(txHash.begin(), 32);
-    packet->append(vout);
-    packet->append(id);
-    packet->append(currency);
-    packet->append(blockHash);
-    packet->sign(key);
-
-    return sendPacketAndWait(packet, id, currency);
+    return this->xrouterCall(xrGetBlock, currency, blockHash);
 }
 
 std::string App::getTransaction(const std::string & currency, const std::string & hash)
 {
-    std::cout << "process get transaction" << std::endl;
-    XRouterPacketPtr packet(new XRouterPacket(xrGetTransaction));
-
-    uint256 txHash;
-    uint32_t vout;
-    CKey key;
-    if (!satisfyBlockRequirement(txHash, vout, key)) {
-        std::cerr << "Minimum block requirement not satisfied\n";
-        return "Minimum block";
-    }
-    std::cout << "txHash = " << txHash.ToString() << "\n";
-    std::cout << "vout = " << vout << "\n";
-    std::cout << "Sending xrGetTransaction packet...\n";
-    
-    boost::uuids::uuid uuid = boost::uuids::random_generator()();
-    std::string id = boost::uuids::to_string(uuid);
-    
-    packet->append(txHash.begin(), 32);
-    packet->append(vout);
-    packet->append(id);
-    packet->append(currency);
-    packet->append(hash);
-    packet->sign(key);
-
-    return sendPacketAndWait(packet, id, currency);
+    return this->xrouterCall(xrGetTransaction, currency, hash);
 }
 
-//*****************************************************************************
-//*****************************************************************************
 std::string App::getBalances(const std::string & currency, const std::string & auth)
 {
-    std::cout << "process Query get Balances" << std::endl;
-    XRouterPacketPtr packet(new XRouterPacket(xrGetBalances));
-
-    uint256 txHash;
-    uint32_t vout;
-    CKey key;
-    if (!satisfyBlockRequirement(txHash, vout, key)) {
-        std::cerr << "Minimum block requirement not satisfied\n";
-        return "Minimum block";
-    }
-    std::cout << "txHash = " << txHash.ToString() << "\n";
-    std::cout << "vout = " << vout << "\n";
-
-    std::cout << "Sending xrGetBlock packet...\n";
-
-    boost::uuids::uuid uuid = boost::uuids::random_generator()();
-    std::string id = boost::uuids::to_string(uuid);
-    packet->append(txHash.begin(), 32);
-    packet->append(vout);
-    packet->append(id);
-    packet->append(currency);
-    packet->append(auth);
-    packet->sign(key);
-
-    return sendPacketAndWait(packet, id, currency);
+    return this->xrouterCall(xrGetBalances, currency, auth);
 }
 } // namespace xrouter
