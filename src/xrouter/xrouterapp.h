@@ -76,12 +76,14 @@ public:
      */
     std::string xrouterCall(enum XRouterCommand command, const std::string & currency, std::string param1="", std::string param2="");
     std::string getBlockCount(const std::string & currency);
+    std::string getBlockHash(const std::string & currency, const std::string & blockId);
     std::string getBlock(const std::string & currency, const std::string & blockHash);
     std::string getTransaction(const std::string & currency, const std::string & hash);
     std::string getBalances(const std::string & currency, const std::string & auth);
 
 
     bool processGetBlockCount(XRouterPacketPtr packet);
+    bool processGetBlockHash(XRouterPacketPtr packet);
     bool processGetBlock(XRouterPacketPtr packet);
     bool processGetTransaction(XRouterPacketPtr packet);
     bool processGetBalances(XRouterPacketPtr packet);

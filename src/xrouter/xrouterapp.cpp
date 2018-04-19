@@ -440,6 +440,52 @@ bool App::processGetBlockCount(XRouterPacketPtr packet) {
     return true;
 }
 
+bool App::processGetBlockHash(XRouterPacketPtr packet) {
+    std::cout << "Processing GetBlocks\n";
+    if (!packet->verify())
+    {
+        std::clog << "unsigned packet or signature error " << __FUNCTION__;
+        return false;
+    }
+    
+    if (!verifyBlockRequirement(packet)) {
+        std::clog << "Block requirement not satisfied\n";
+        return false;
+    }
+    
+    uint32_t offset = 36;
+
+    std::string uuid((const char *)packet->data()+offset);
+    offset += uuid.size() + 1;
+    std::string currency((const char *)packet->data()+offset);
+    offset += currency.size() + 1;
+    std::string blockId((const char *)packet->data()+offset);
+    offset += blockId.size() + 1;
+    std::cout << uuid << " "<< currency << " " << blockId << std::endl;
+    
+    std::string result = "query reply";
+    //
+    // SEND THE QUERY TO WALLET CONNECTOR HERE
+    //
+    
+    xbridge::WalletConnectorPtr conn = connectorByCurrency(currency);
+    if (conn)
+    {
+        Array a {blockId};
+        Object res = conn->executeRpcCall("getblock", a);
+        const Value& res_val(res);
+        result = json_spirit::write_string(res_val, true);
+    }
+
+    XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
+
+    rpacket->append(uuid);
+    rpacket->append(result);
+    sendPacket(rpacket);
+
+    return true;
+}
+
 bool App::processGetBlock(XRouterPacketPtr packet) {
     std::cout << "Processing GetBlocks\n";
     if (!packet->verify())
@@ -626,6 +672,9 @@ void App::onMessageReceived(const std::vector<unsigned char>& id,
       case xrGetBlockCount:
         processGetBlockCount(packet);
         break;
+      case xrGetBlockHash:
+        processGetBlockHash(packet);
+        break;
       case xrGetBlock:
         processGetBlock(packet);
         break;
@@ -709,6 +758,11 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
 std::string App::getBlockCount(const std::string & currency)
 {
     return this->xrouterCall(xrGetBlockCount, currency);
+}
+
+std::string App::getBlockHash(const std::string & currency, const std::string & blockId)
+{
+    return this->xrouterCall(xrGetBlockHash, currency, blockId);
 }
 
 std::string App::getBlock(const std::string & currency, const std::string & blockHash)

@@ -622,6 +622,7 @@ extern json_spirit::Value  dxGetTokenBalances(const json_spirit::Array& params, 
   */
 
 extern json_spirit::Value xrGetBlockCount(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value xrGetBlockHash(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrGetBlock(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrGetTransaction(const json_spirit::Array& params, bool fHelp);
 
