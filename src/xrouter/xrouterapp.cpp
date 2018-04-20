@@ -580,7 +580,7 @@ bool App::processGetTransaction(XRouterPacketPtr packet) {
 
 //*****************************************************************************
 //*****************************************************************************
-bool App::processGetBalances(XRouterPacketPtr packet) {
+bool App::processGetBalance(XRouterPacketPtr packet) {
     std::cout << "Processing GetBalances\n";
     if (!packet->verify())
     {
@@ -599,9 +599,9 @@ bool App::processGetBalances(XRouterPacketPtr packet) {
     offset += uuid.size() + 1;
     std::string currency((const char *)packet->data()+offset);
     offset += currency.size() + 1;
-    std::string auth((const char *)packet->data()+offset);
-    offset += auth.size() + 1;
-    std::cout << uuid << " "<< currency << " " << auth << std::endl;
+    std::string account((const char *)packet->data()+offset);
+    offset += account.size() + 1;
+    std::cout << uuid << " "<< currency << " " << account << std::endl;
     
     std::string result = "query reply";
     //
@@ -612,7 +612,7 @@ bool App::processGetBalances(XRouterPacketPtr packet) {
     if (conn)
     {
         Array a;
-        Object res = conn->executeAuthorizedRpcCall(auth, "getbalance", a);
+        Object res = conn->executeRpcCall("getbalance", a);
         const Value& res_val(res);
         result = json_spirit::write_string(res_val, true);
     }
@@ -681,8 +681,8 @@ void App::onMessageReceived(const std::vector<unsigned char>& id,
       case xrGetTransaction:
         processGetTransaction(packet);
         break;
-      case xrGetBalances:
-        processGetBalances(packet);
+      case xrGetBalance:
+        processGetBalance(packet);
         break;
       case xrReply:
         processReply(packet);
@@ -775,8 +775,8 @@ std::string App::getTransaction(const std::string & currency, const std::string 
     return this->xrouterCall(xrGetTransaction, currency, hash);
 }
 
-std::string App::getBalances(const std::string & currency, const std::string & auth)
+std::string App::getBalance(const std::string & currency, const std::string & account)
 {
-    return this->xrouterCall(xrGetBalances, currency, auth);
+    return this->xrouterCall(xrGetBalance, currency, account);
 }
 } // namespace xrouter

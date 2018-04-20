@@ -145,16 +145,16 @@ Value xrGetBalance(const Array & params, bool fHelp)
     if (params.size() < 2)
     {
         Object error;
-        error.emplace_back(Pair("error", "Auth data not specified"));
+        error.emplace_back(Pair("error", "Account not specified"));
         error.emplace_back(Pair("name",     __FUNCTION__));
         return error;
     }
 
     std::string currency = params[0].get_str();
-    std::string auth = params[1].get_str();
+    std::string account = params[1].get_str();
     Object result;
 
-    std::string reply = xrouter::App::instance().getBalances(currency, auth);
+    std::string reply = xrouter::App::instance().getBalance(currency, account);
     Object obj;
     obj.emplace_back(Pair("reply", reply));
     return obj;
