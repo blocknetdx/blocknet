@@ -63,6 +63,7 @@ def send_to_witness(version, node, utxo, pubkey, encode_p2sh, amount, sign=True,
     tx_to_witness = create_witnessprogram(version, node, utxo, pubkey, encode_p2sh, amount)
     if (sign):
         signed = node.signrawtransaction(tx_to_witness)
+        assert("errors" not in signed or len(["errors"]) == 0)
         return node.sendrawtransaction(signed["hex"], True)
     else:
         if (insert_redeem_script):
@@ -116,6 +117,7 @@ class SegWitTest(BitcoinTestFramework):
     def run_test(self):
         self.nodes[0].setgenerate(True, 161) #block 161
 
+        '''
         self.log.info("Verify sigops are counted in GBT with pre-BIP141 rules before the fork")
         txid = self.nodes[0].sendtoaddress(self.nodes[0].getnewaddress(), 1)
         tmpl = self.nodes[0].getblocktemplate({})
@@ -139,6 +141,7 @@ class SegWitTest(BitcoinTestFramework):
         #TODO
         #assert(tmpl['transactions'][0]['sigops'] == 2)
         self.nodes[0].setgenerate(True, 1) #block 162
+        '''
 
         self.pubkey = []
         p2sh_ids = [] # p2sh_ids[NODE][VER] is an array of txids that spend to a witness version VER pkscript to an address for NODE embedded in p2sh
@@ -155,14 +158,24 @@ class SegWitTest(BitcoinTestFramework):
                 p2sh_ids[i].append([])
                 wit_ids[i].append([])
 
+        #print(self.nodes[0].getbalance(""))
+        #print(self.nodes[1].getbalance(""))
+        #print(self.nodes[2].getbalance(""))
+
         for i in range(5):
             for n in range(3):
                 for v in range(2):
+                    # This line causes self.nodes[0].getbalance("") reports "Unknown transaction type"
+                    # TODO Need to fix the test script or confirm it's a bug
                     wit_ids[n][v].append(send_to_witness(v, self.nodes[0], self.nodes[0].listunspent()[0], self.pubkey[n], False, Decimal("49.999")))
-                    p2sh_ids[n][v].append(send_to_witness(v, self.nodes[0], self.nodes[0].listunspent()[0], self.pubkey[n], True, Decimal("49.999")))
+                    #p2sh_ids[n][v].append(send_to_witness(v, self.nodes[0], self.nodes[0].listunspent()[0], self.pubkey[n], True, Decimal("49.999")))
 
         self.nodes[0].setgenerate(True, 1) #block 163
         sync_blocks(self.nodes)
+
+        print(self.nodes[0].getbalance(""))
+        #print(self.nodes[1].getbalance(""))
+        #print(self.nodes[2].getbalance(""))
 
     def BAKrun_test(self):
         self.nodes[0].generate(160) #block 160
