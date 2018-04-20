@@ -19,6 +19,7 @@
 #include "xbridge/xbridgewallet.h"
 #include "xbridge/xbridgewalletconnector.h"
 
+#include "json/json_spirit_reader_template.h"
 #include "json/json_spirit_writer_template.h"
 #include <assert.h>
 
@@ -615,8 +616,138 @@ bool App::processGetAllBlocks(XRouterPacketPtr packet) {
         Value res_val;
         for (int id = number; id <= blockcount; id++) {
             Array a { Value(id) };
-            res = conn->executeRpcCall("getblockhash", a);
+            std::string hash = Value(conn->executeRpcCall("getblockhash", a)).get_str();
+            Array b { Value(hash) };
+            Object block = conn->executeRpcCall("getblock", b);
             result.push_back(Value(res));
+        }
+    }
+
+    XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
+
+    rpacket->append(uuid);
+    rpacket->append(json_spirit::write_string(Value(result), true));
+    sendPacket(rpacket);
+
+    return true;
+}
+
+static double parseVout(Value vout, std::string account) {
+    double result = 0.0;
+    mValue voutjmap;
+    json_spirit::read_string(json_spirit::write_string(Value(vout), true), voutjmap);
+    mObject voutj = voutjmap.get_obj();
+    mObject src = voutj.find("scriptPubKey")->second.get_obj();
+    mArray addr = mValue(src.find("addresses")->second).get_array();
+    
+    for (uint k = 0; k != addr.size(); k++ ) {
+        std::string cur_addr = mValue(addr[k]).get_str();
+        if (cur_addr == account)
+            result += mValue(voutj.find("value")->second).get_real();
+    }
+    
+    return result;
+}
+
+static double getBalanceChange(xbridge::WalletConnectorPtr conn, Object tx, std::string account) {
+    double result = 0.0;
+    for (Object::size_type i = 0; i != tx.size(); i++ ) {
+        if (tx[i].name_ == "vout") {
+            Array vout = Value(tx[i].value_).get_array();
+            for (uint j = 0; j != vout.size(); i++ ) {
+                result += parseVout(vout[j], account);
+            }
+        }
+        
+        if (tx[i].name_ == "vin") {
+            Array vin = Value(tx[i].value_).get_array();
+            for (uint j = 0; j != vin.size(); i++ ) {
+                std::string txid;
+                int voutid;
+                Object vinj = vin[j].get_obj();
+                for (Object::size_type k = 0; k != vinj.size(); k++ ) {
+                    if (vinj[k].name_ == "txid")
+                        txid = Value(vinj[k].value_).get_str();
+                    if (vinj[k].name_ == "vout")
+                        voutid = Value(vinj[k].value_).get_int();
+                }
+                
+                Array c { Value(txid) };
+                std::string txdata = Value(conn->executeRpcCall("getrawtransaction", c)).get_str();
+                Array d { Value(txdata) };
+                Object prev_tx = conn->executeRpcCall("decoderawtransaction", d);
+                for (Object::size_type i = 0; i != prev_tx.size(); i++ ) {
+                    if (prev_tx[i].name_ == "vout") {
+                        Array prev_vouts = Value(prev_tx[i].value_).get_array();
+                        result -= parseVout(prev_vouts[voutid], account);
+                    }
+                }
+            }
+        }
+    }
+    
+    return result;
+}
+
+bool App::processGetAllTransactions(XRouterPacketPtr packet) {
+    std::cout << "Processing GetTransaction\n";
+    if (!packet->verify())
+    {
+        std::clog << "unsigned packet or signature error " << __FUNCTION__;
+        return false;
+    }
+    
+    if (!verifyBlockRequirement(packet)) {
+        std::clog << "Block requirement not satisfied\n";
+        return false;
+    }
+    
+    uint32_t offset = 36;
+
+    std::string uuid((const char *)packet->data()+offset);
+    offset += uuid.size() + 1;
+    std::string currency((const char *)packet->data()+offset);
+    offset += currency.size() + 1;
+    std::string account((const char *)packet->data()+offset);
+    offset += account.size() + 1;
+    std::string number_s((const char *)packet->data()+offset);
+    offset += number_s.size() + 1;
+    std::cout << uuid << " "<< currency << " " << number_s << std::endl;
+    int number = std::stoi(number_s);
+    
+    //
+    // SEND THE QUERY TO WALLET CONNECTOR HERE
+    //
+    
+    xbridge::WalletConnectorPtr conn = connectorByCurrency(currency);
+    Array result;
+    if (conn)
+    {
+        Object res = conn->executeRpcCall("getblockcount", Array());
+        int blockcount = Value(res).get_int();
+        Value res_val;
+        for (int id = number; id <= blockcount; id++) {
+            Array a { Value(id) };
+            std::string hash = Value(conn->executeRpcCall("getblockhash", a)).get_str();
+            Array b { Value(hash) };
+            Object block = conn->executeRpcCall("getblock", b);
+            for (Object::size_type i = 0; i != block.size(); i++ ) {
+                if(block[i].name_ == "tx") {
+                    Array txs = block[i].value_.get_array();
+                    for (uint j = 0; j < txs.size(); i++) {
+                        std::string txid = Value(txs[i]).get_str();
+                        Array c { Value(txid) };
+                        std::string txdata = Value(conn->executeRpcCall("getrawtransaction", c)).get_str();
+                        Array d { Value(txdata) };
+                        Object tx = conn->executeRpcCall("decoderawtransaction", d);
+                        if (getBalanceChange(conn, tx, account) != 0.0)
+                            result.push_back(Value(tx));
+                    }
+                    break;
+                }
+            }
+            
+            //result.push_back(Value(res));
         }
     }
 
@@ -735,6 +866,9 @@ void App::onMessageReceived(const std::vector<unsigned char>& id,
       case xrGetAllBlocks:
         processGetAllBlocks(packet);
         break;
+      case xrGetAllTransactions:
+        processGetAllTransactions(packet);
+        break;
       case xrGetBalance:
         processGetBalance(packet);
         break;
@@ -832,6 +966,11 @@ std::string App::getTransaction(const std::string & currency, const std::string 
 std::string App::getAllBlocks(const std::string & currency, const std::string & number)
 {
     return this->xrouterCall(xrGetAllBlocks, currency, number);
+}
+
+std::string App::getAllTransactions(const std::string & currency, const std::string & account, const std::string & number)
+{
+    return this->xrouterCall(xrGetAllTransactions, currency, account, number);
 }
 
 std::string App::getBalance(const std::string & currency, const std::string & account)

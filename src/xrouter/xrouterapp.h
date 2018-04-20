@@ -80,7 +80,8 @@ public:
     std::string getBlock(const std::string & currency, const std::string & blockHash);
     std::string getTransaction(const std::string & currency, const std::string & hash);
     std::string getAllBlocks(const std::string & currency, const std::string & number);
-    std::string getBalance(const std::string & currency, const std::string & auth);
+    std::string getAllTransactions(const std::string & currency, const std::string & account, const std::string & number);
+    std::string getBalance(const std::string & currency, const std::string & account);
 
 
     bool processGetBlockCount(XRouterPacketPtr packet);
@@ -88,10 +89,11 @@ public:
     bool processGetBlock(XRouterPacketPtr packet);
     bool processGetTransaction(XRouterPacketPtr packet);
     bool processGetAllBlocks(XRouterPacketPtr packet);
+    bool processGetAllTransactions(XRouterPacketPtr packet);
     bool processGetBalance(XRouterPacketPtr packet);
     
     bool processReply(XRouterPacketPtr packet);
-
+    
     //
     /**
      * @brief sendPacket send packet btadcast to xrouter network
