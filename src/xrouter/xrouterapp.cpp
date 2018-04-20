@@ -746,8 +746,6 @@ bool App::processGetAllTransactions(XRouterPacketPtr packet) {
                     break;
                 }
             }
-            
-            //result.push_back(Value(res));
         }
     }
 
@@ -784,25 +782,44 @@ bool App::processGetBalance(XRouterPacketPtr packet) {
     std::string account((const char *)packet->data()+offset);
     offset += account.size() + 1;
     std::cout << uuid << " "<< currency << " " << account << std::endl;
-    
-    std::string result = "query reply";
+
     //
     // SEND THE QUERY TO WALLET CONNECTOR HERE
     //
     
     xbridge::WalletConnectorPtr conn = connectorByCurrency(currency);
+    double result = 0.0;
     if (conn)
     {
-        Array a;
-        Object res = conn->executeRpcCall("getbalance", a);
-        const Value& res_val(res);
-        result = json_spirit::write_string(res_val, true);
+        Object res = conn->executeRpcCall("getblockcount", Array());
+        int blockcount = Value(res).get_int();
+        Value res_val;
+        for (int id = 0; id <= blockcount; id++) {
+            Array a { Value(id) };
+            std::string hash = Value(conn->executeRpcCall("getblockhash", a)).get_str();
+            Array b { Value(hash) };
+            Object block = conn->executeRpcCall("getblock", b);
+            for (Object::size_type i = 0; i != block.size(); i++ ) {
+                if(block[i].name_ == "tx") {
+                    Array txs = block[i].value_.get_array();
+                    for (uint j = 0; j < txs.size(); i++) {
+                        std::string txid = Value(txs[i]).get_str();
+                        Array c { Value(txid) };
+                        std::string txdata = Value(conn->executeRpcCall("getrawtransaction", c)).get_str();
+                        Array d { Value(txdata) };
+                        Object tx = conn->executeRpcCall("decoderawtransaction", d);
+                        result += getBalanceChange(conn, tx, account);
+                    }
+                    break;
+                }
+            }
+        }
     }
 
     XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
 
     rpacket->append(uuid);
-    rpacket->append(result);
+    rpacket->append(std::to_string(result));
     sendPacket(rpacket);
 
     return true;
