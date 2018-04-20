@@ -399,18 +399,6 @@ static bool verifyBlockRequirement(const XRouterPacketPtr& packet)
 //*****************************************************************************
 //*****************************************************************************
 bool App::processGetBlockCount(XRouterPacketPtr packet) {
-    std::cout << "Processing GetBlocks\n";
-    if (!packet->verify())
-    {
-      std::clog << "unsigned packet or signature error " << __FUNCTION__;
-        return false;
-    }
-    
-    if (!verifyBlockRequirement(packet)) {
-        std::clog << "Block requirement not satisfied\n";
-        return false;
-    }
-    
     uint32_t offset = 36;
 
     std::string uuid((const char *)packet->data()+offset);
@@ -420,9 +408,6 @@ bool App::processGetBlockCount(XRouterPacketPtr packet) {
     std::cout << uuid << " "<< currency << std::endl;
     
     std::string result = "query reply";
-    //
-    // SEND THE QUERY TO WALLET CONNECTOR HERE
-    //
     
     xbridge::WalletConnectorPtr conn = connectorByCurrency(currency);
     if (conn)
@@ -442,18 +427,6 @@ bool App::processGetBlockCount(XRouterPacketPtr packet) {
 }
 
 bool App::processGetBlockHash(XRouterPacketPtr packet) {
-    std::cout << "Processing GetBlocks\n";
-    if (!packet->verify())
-    {
-        std::clog << "unsigned packet or signature error " << __FUNCTION__;
-        return false;
-    }
-    
-    if (!verifyBlockRequirement(packet)) {
-        std::clog << "Block requirement not satisfied\n";
-        return false;
-    }
-    
     uint32_t offset = 36;
 
     std::string uuid((const char *)packet->data()+offset);
@@ -465,9 +438,6 @@ bool App::processGetBlockHash(XRouterPacketPtr packet) {
     std::cout << uuid << " "<< currency << " " << blockId << std::endl;
     
     std::string result = "query reply";
-    //
-    // SEND THE QUERY TO WALLET CONNECTOR HERE
-    //
     
     xbridge::WalletConnectorPtr conn = connectorByCurrency(currency);
     if (conn)
@@ -488,18 +458,6 @@ bool App::processGetBlockHash(XRouterPacketPtr packet) {
 }
 
 bool App::processGetBlock(XRouterPacketPtr packet) {
-    std::cout << "Processing GetBlocks\n";
-    if (!packet->verify())
-    {
-        std::clog << "unsigned packet or signature error " << __FUNCTION__;
-        return false;
-    }
-    
-    if (!verifyBlockRequirement(packet)) {
-        std::clog << "Block requirement not satisfied\n";
-        return false;
-    }
-    
     uint32_t offset = 36;
 
     std::string uuid((const char *)packet->data()+offset);
@@ -511,9 +469,6 @@ bool App::processGetBlock(XRouterPacketPtr packet) {
     std::cout << uuid << " "<< currency << " " << blockHash << std::endl;
     
     std::string result = "query reply";
-    //
-    // SEND THE QUERY TO WALLET CONNECTOR HERE
-    //
     
     xbridge::WalletConnectorPtr conn = connectorByCurrency(currency);
     if (conn)
@@ -534,18 +489,6 @@ bool App::processGetBlock(XRouterPacketPtr packet) {
 }
 
 bool App::processGetTransaction(XRouterPacketPtr packet) {
-    std::cout << "Processing GetTransaction\n";
-    if (!packet->verify())
-    {
-        std::clog << "unsigned packet or signature error " << __FUNCTION__;
-        return false;
-    }
-    
-    if (!verifyBlockRequirement(packet)) {
-        std::clog << "Block requirement not satisfied\n";
-        return false;
-    }
-    
     uint32_t offset = 36;
 
     std::string uuid((const char *)packet->data()+offset);
@@ -557,9 +500,6 @@ bool App::processGetTransaction(XRouterPacketPtr packet) {
     std::cout << uuid << " "<< currency << " " << hash << std::endl;
     
     std::string result = "query reply";
-    //
-    // SEND THE QUERY TO WALLET CONNECTOR HERE
-    //
     
     xbridge::WalletConnectorPtr conn = connectorByCurrency(currency);
     if (conn)
@@ -580,18 +520,6 @@ bool App::processGetTransaction(XRouterPacketPtr packet) {
 }
 
 bool App::processGetAllBlocks(XRouterPacketPtr packet) {
-    std::cout << "Processing GetTransaction\n";
-    if (!packet->verify())
-    {
-        std::clog << "unsigned packet or signature error " << __FUNCTION__;
-        return false;
-    }
-    
-    if (!verifyBlockRequirement(packet)) {
-        std::clog << "Block requirement not satisfied\n";
-        return false;
-    }
-    
     uint32_t offset = 36;
 
     std::string uuid((const char *)packet->data()+offset);
@@ -602,10 +530,6 @@ bool App::processGetAllBlocks(XRouterPacketPtr packet) {
     offset += number_s.size() + 1;
     std::cout << uuid << " "<< currency << " " << number_s << std::endl;
     int number = std::stoi(number_s);
-    
-    //
-    // SEND THE QUERY TO WALLET CONNECTOR HERE
-    //
     
     xbridge::WalletConnectorPtr conn = connectorByCurrency(currency);
     Array result;
@@ -690,18 +614,6 @@ static double getBalanceChange(xbridge::WalletConnectorPtr conn, Object tx, std:
 }
 
 bool App::processGetAllTransactions(XRouterPacketPtr packet) {
-    std::cout << "Processing GetTransaction\n";
-    if (!packet->verify())
-    {
-        std::clog << "unsigned packet or signature error " << __FUNCTION__;
-        return false;
-    }
-    
-    if (!verifyBlockRequirement(packet)) {
-        std::clog << "Block requirement not satisfied\n";
-        return false;
-    }
-    
     uint32_t offset = 36;
 
     std::string uuid((const char *)packet->data()+offset);
@@ -714,10 +626,6 @@ bool App::processGetAllTransactions(XRouterPacketPtr packet) {
     offset += number_s.size() + 1;
     std::cout << uuid << " "<< currency << " " << number_s << std::endl;
     int number = std::stoi(number_s);
-    
-    //
-    // SEND THE QUERY TO WALLET CONNECTOR HERE
-    //
     
     xbridge::WalletConnectorPtr conn = connectorByCurrency(currency);
     Array result;
@@ -761,18 +669,6 @@ bool App::processGetAllTransactions(XRouterPacketPtr packet) {
 //*****************************************************************************
 //*****************************************************************************
 bool App::processGetBalance(XRouterPacketPtr packet) {
-    std::cout << "Processing GetBalances\n";
-    if (!packet->verify())
-    {
-      std::clog << "unsigned packet or signature error " << __FUNCTION__;
-        return false;
-    }
-    
-    if (!verifyBlockRequirement(packet)) {
-        std::clog << "Block requirement not satisfied\n";
-        return false;
-    }
-    
     uint32_t offset = 36;
 
     std::string uuid((const char *)packet->data()+offset);
@@ -782,10 +678,6 @@ bool App::processGetBalance(XRouterPacketPtr packet) {
     std::string account((const char *)packet->data()+offset);
     offset += account.size() + 1;
     std::cout << uuid << " "<< currency << " " << account << std::endl;
-
-    //
-    // SEND THE QUERY TO WALLET CONNECTOR HERE
-    //
     
     xbridge::WalletConnectorPtr conn = connectorByCurrency(currency);
     double result = 0.0;
@@ -861,6 +753,11 @@ void App::onMessageReceived(const std::vector<unsigned char>& id,
 
     if ((packet->command() != xrReply) && !packet->verify()) {
         std::clog << "unsigned packet or signature error " << __FUNCTION__;
+        return;
+    }
+    
+    if ((packet->command() != xrReply) && !verifyBlockRequirement(packet)) {
+        std::clog << "Block requirement not satisfied\n";
         return;
     }
 
