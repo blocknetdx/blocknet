@@ -578,6 +578,57 @@ bool App::processGetTransaction(XRouterPacketPtr packet) {
     return true;
 }
 
+bool App::processGetAllBlocks(XRouterPacketPtr packet) {
+    std::cout << "Processing GetTransaction\n";
+    if (!packet->verify())
+    {
+        std::clog << "unsigned packet or signature error " << __FUNCTION__;
+        return false;
+    }
+    
+    if (!verifyBlockRequirement(packet)) {
+        std::clog << "Block requirement not satisfied\n";
+        return false;
+    }
+    
+    uint32_t offset = 36;
+
+    std::string uuid((const char *)packet->data()+offset);
+    offset += uuid.size() + 1;
+    std::string currency((const char *)packet->data()+offset);
+    offset += currency.size() + 1;
+    std::string number_s((const char *)packet->data()+offset);
+    offset += number_s.size() + 1;
+    std::cout << uuid << " "<< currency << " " << number_s << std::endl;
+    int number = std::stoi(number_s);
+    
+    //
+    // SEND THE QUERY TO WALLET CONNECTOR HERE
+    //
+    
+    xbridge::WalletConnectorPtr conn = connectorByCurrency(currency);
+    Array result;
+    if (conn)
+    {
+        Object res = conn->executeRpcCall("getblockcount", Array());
+        int blockcount = Value(res).get_int();
+        Value res_val;
+        for (int id = number; id <= blockcount; id++) {
+            Array a { Value(id) };
+            res = conn->executeRpcCall("getblockhash", a);
+            result.push_back(Value(res));
+        }
+    }
+
+    XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
+
+    rpacket->append(uuid);
+    rpacket->append(json_spirit::write_string(Value(result), true));
+    sendPacket(rpacket);
+
+    return true;
+}
+
 //*****************************************************************************
 //*****************************************************************************
 bool App::processGetBalance(XRouterPacketPtr packet) {
@@ -681,6 +732,9 @@ void App::onMessageReceived(const std::vector<unsigned char>& id,
       case xrGetTransaction:
         processGetTransaction(packet);
         break;
+      case xrGetAllBlocks:
+        processGetAllBlocks(packet);
+        break;
       case xrGetBalance:
         processGetBalance(packet);
         break;
@@ -773,6 +827,11 @@ std::string App::getBlock(const std::string & currency, const std::string & bloc
 std::string App::getTransaction(const std::string & currency, const std::string & hash)
 {
     return this->xrouterCall(xrGetTransaction, currency, hash);
+}
+
+std::string App::getAllBlocks(const std::string & currency, const std::string & number)
+{
+    return this->xrouterCall(xrGetAllBlocks, currency, number);
 }
 
 std::string App::getBalance(const std::string & currency, const std::string & account)

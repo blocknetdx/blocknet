@@ -79,6 +79,7 @@ public:
     std::string getBlockHash(const std::string & currency, const std::string & blockId);
     std::string getBlock(const std::string & currency, const std::string & blockHash);
     std::string getTransaction(const std::string & currency, const std::string & hash);
+    std::string getAllBlocks(const std::string & currency, const std::string & number);
     std::string getBalance(const std::string & currency, const std::string & auth);
 
 
@@ -86,6 +87,7 @@ public:
     bool processGetBlockHash(XRouterPacketPtr packet);
     bool processGetBlock(XRouterPacketPtr packet);
     bool processGetTransaction(XRouterPacketPtr packet);
+    bool processGetAllBlocks(XRouterPacketPtr packet);
     bool processGetBalance(XRouterPacketPtr packet);
     
     bool processReply(XRouterPacketPtr packet);
