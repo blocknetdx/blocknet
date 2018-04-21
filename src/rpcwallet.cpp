@@ -2999,9 +2999,8 @@ UniValue makekeypair(const UniValue& params, bool fHelp)
     CKey key;
     key.MakeNewKey(false);
 
-    CPrivKey vchPrivKey = key.GetPrivKey();
     UniValue result(UniValue::VOBJ);
-    result.push_back(Pair("PrivateKey", HexStr<CPrivKey::iterator>(vchPrivKey.begin(), vchPrivKey.end())));
+    result.push_back(Pair("PrivateKey", CBitcoinSecret(key).ToString()));
     result.push_back(Pair("PublicKey", HexStr(key.GetPubKey().Raw())));
     return result;
 }
