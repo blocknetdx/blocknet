@@ -46,6 +46,8 @@ using namespace boost::asio;
 
 const unsigned int MAX_SIZE = 0x02000000;
 
+static CCriticalSection cs_rpcBlockchainStore;
+
 //******************************************************************************
 //******************************************************************************
 int readHTTP(std::basic_istream<char>& stream, map<string, string>& mapHeadersRet, string& strMessageRet)
@@ -153,6 +155,8 @@ bool storeDataIntoBlockchain(const std::vector<unsigned char> & dstAddress,
                              const std::vector<unsigned char> & data,
                              string & txid)
 {
+    LOCK(cs_rpcBlockchainStore);
+
     const static std::string createCommand("createrawtransaction");
     const static std::string fundCommand("fundrawtransaction");
     const static std::string signCommand("signrawtransaction");
