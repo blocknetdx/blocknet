@@ -432,8 +432,6 @@ class BitcoinTestFramework(metaclass=BitcoinTestMetaClass):
                         block_time += 1 * 60
                     # Must sync before next peer starts generating blocks
                     sync_blocks(self.nodes)
-            #self.nodes[0].setgenerate(True, 200)
-            #sync_blocks(self.nodes)
 
             # Shut them down, and clean up cache directories:
             self.stop_nodes()
