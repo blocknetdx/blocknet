@@ -982,7 +982,7 @@ public:
             CScript basescript = GetScriptForDestination(keyID);
             isminetype typ;
             typ = IsMine(*pwalletMain, basescript, SIGVERSION_WITNESS_V0);
-            if (typ != ISMINE_SPENDABLE && typ != ISMINE_WATCH_SOLVABLE)
+            if (typ != ISMINE_SPENDABLE)
                 return false;
             CScript witscript = GetScriptForWitness(basescript);
             pwalletMain->AddCScript(witscript);
@@ -1003,7 +1003,7 @@ public:
             }
             isminetype typ;
             typ = IsMine(*pwalletMain, subscript, SIGVERSION_WITNESS_V0);
-            if (typ != ISMINE_SPENDABLE && typ != ISMINE_WATCH_SOLVABLE)
+            if (typ != ISMINE_SPENDABLE)
                 return false;
             CScript witscript = GetScriptForWitness(subscript);
             pwalletMain->AddCScript(witscript);
