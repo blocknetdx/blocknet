@@ -271,6 +271,14 @@ class SegWitTest(BitcoinTestFramework):
         self.success_mine(self.nodes[2], wit_ids[NODE_2][WIT_V0][1], False) #block 428
         self.success_mine(self.nodes[2], wit_ids[NODE_2][WIT_V1][1], False) #block 429
 
+        print("Verify unsigned p2sh witness txs without a redeem script are invalid")
+        self.fail_accept(self.nodes[2], p2sh_ids[NODE_2][WIT_V0][1], False)
+        self.fail_accept(self.nodes[2], p2sh_ids[NODE_2][WIT_V1][1], False)
+
+        print("Verify unsigned p2sh witness txs with a redeem script in versionbits-settings blocks are valid before the fork")
+        self.success_mine(self.nodes[2], p2sh_ids[NODE_2][WIT_V0][1], False, addlength(witness_script(0, self.pubkey[2]))) #block 430
+        self.success_mine(self.nodes[2], p2sh_ids[NODE_2][WIT_V1][1], False, addlength(witness_script(1, self.pubkey[2]))) #block 431
+
     def BAKrun_test(self):
         self.nodes[0].generate(160) #block 160
 
