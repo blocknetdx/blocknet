@@ -61,6 +61,7 @@ class TestNode():
         self.index = i
         self.datadir = datadir
         self.rpchost = rpchost
+        self.mocktime = mocktime
         if timewait:
             self.rpc_timeout = timewait
         else:
@@ -141,6 +142,7 @@ class TestNode():
                 self.rpc_connected = True
                 self.url = self.rpc.url
                 self.log.debug("RPC successfully started")
+                self.setmocktime(self.mocktime)
                 return
             except IOError as e:
                 if e.errno != errno.ECONNREFUSED:  # Port not yet open?
