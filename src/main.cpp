@@ -1400,7 +1400,7 @@ bool CheckTransaction(const CTransaction& tx, bool fZerocoinActive, bool fReject
         return state.DoS(100, false, REJECT_INVALID, "bad-txns-oversize");
 
     // Reject transactions with witness before segregated witness activates (override with -prematurewitness)
-    if (!GetBoolArg("-prematurewitness",false) && !tx.wit.IsNull() && fWitnessEnabled) {
+    if (!GetBoolArg("-prematurewitness",false) && !tx.wit.IsNull() && !fWitnessEnabled) {
         return state.DoS(0, false, REJECT_NONSTANDARD, "no-witness-yet", true);
     }
 
