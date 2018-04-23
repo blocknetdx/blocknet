@@ -33,8 +33,8 @@ public:
 public:
     bool requestAddressBook(std::vector<wallet::AddressBookEntry> & entries);
 
-    bool getUnspent(std::vector<wallet::UtxoEntry> & inputs) const;
-    bool lockCoins(const std::vector<wallet::UtxoEntry> & inputs, const bool lock = true) const;
+    bool getUnspent(std::vector<wallet::UtxoEntry> & inputs, const bool withLocked = false) const;
+    bool lockCoins(const std::vector<wallet::UtxoEntry> & inputs, const bool lock = true);
 
     bool getNewAddress(std::string & addr);
 

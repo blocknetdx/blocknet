@@ -289,6 +289,7 @@ bool App::Impl::start()
                 wp.blockTime                   = s.get<int>        (*i + ".BlockTime", 0);
                 wp.requiredConfirmations       = s.get<int>        (*i + ".Confirmations", 0);
                 wp.txWithTimeField             = s.get<bool>       (*i + ".TxWithTimeField", false);
+                wp.isLockCoinsSupported        = s.get<bool>       (*i + ".LockCoinsSupported", false);
 
                 if (wp.m_ip.empty() || wp.m_port.empty() ||
                     wp.m_user.empty() || wp.m_passwd.empty() ||
@@ -1350,7 +1351,7 @@ bool App::isValidAddress(const string &address) const
 
 //******************************************************************************
 //******************************************************************************
-Error App::checkAcceptParams(const uint256 &id, TransactionDescrPtr &ptr, const string &fromAddress)
+Error App::checkAcceptParams(const uint256 &id, TransactionDescrPtr &ptr, const string & /*fromAddress*/)
 {
     // TODO need refactoring
     ptr = transaction(id);
@@ -1360,7 +1361,8 @@ Error App::checkAcceptParams(const uint256 &id, TransactionDescrPtr &ptr, const 
         return xbridge::TRANSACTION_NOT_FOUND;
     }
 
-    return checkAmount(ptr->toCurrency, ptr->toAmount, ""); // TODO enforce by address after improving addressbook
+    // TODO enforce by address after improving addressbook
+    return checkAmount(ptr->toCurrency, ptr->toAmount, "");
 }
 
 //******************************************************************************
