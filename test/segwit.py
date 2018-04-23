@@ -106,10 +106,36 @@ class SegWitTest(BitcoinTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 3
+        self.enable_mocktime(4070908800 + 10000)
         # This test tests SegWit both pre and post-activation, so use the normal BIP9 activation.
-        self.extra_args = [["-walletprematurewitness", "-rpcserialversion=0", "-vbparams=segwit:0:999999999999", "-addresstype=legacy", "-deprecatedrpc=addwitnessaddress"],
-                           ["-blockversion=4", "-promiscuousmempoolflags=517", "-prematurewitness", "-walletprematurewitness", "-rpcserialversion=1", "-vbparams=segwit:0:999999999999", "-addresstype=legacy", "-deprecatedrpc=addwitnessaddress"],
-                           ["-blockversion=536870915", "-promiscuousmempoolflags=517", "-prematurewitness", "-walletprematurewitness", "-vbparams=segwit:0:999999999999", "-addresstype=legacy", "-deprecatedrpc=addwitnessaddress"]]
+        self.extra_args = [
+            [
+                "-walletprematurewitness",
+                "-rpcserialversion=0",
+                "-vbparams=segwit:0:999999999999",
+                "-addresstype=legacy",
+                "-deprecatedrpc=addwitnessaddress"
+            ],
+            [
+                "-blockversion=4",
+                "-promiscuousmempoolflags=517",
+                "-prematurewitness",
+                "-walletprematurewitness",
+                "-rpcserialversion=1",
+                "-vbparams=segwit:0:999999999999",
+                "-addresstype=legacy",
+                "-deprecatedrpc=addwitnessaddress"
+            ],
+            [
+                "-blockversion=536870915",
+                "-promiscuousmempoolflags=517",
+                "-prematurewitness",
+                "-walletprematurewitness",
+                "-vbparams=segwit:0:999999999999",
+                "-addresstype=legacy",
+                "-deprecatedrpc=addwitnessaddress"
+            ]
+        ]
 
     def setup_network(self):
         super().setup_network()
@@ -190,7 +216,7 @@ class SegWitTest(BitcoinTestFramework):
                 p2sh_ids[i].append([])
                 wit_ids[i].append([])
 
-        print(self.nodes[0].getbalance(""))
+        #print(self.nodes[0].getbalance(""))
         #print(self.nodes[1].getbalance(""))
         #print(self.nodes[2].getbalance(""))
 
@@ -205,7 +231,7 @@ class SegWitTest(BitcoinTestFramework):
         self.nodes[0].setgenerate(True, 1) #block 163
         sync_blocks(self.nodes)
 
-        print(self.nodes[0].getbalance(""))
+        #print(self.nodes[0].getbalance(""))
         #print(self.nodes[1].getbalance(""))
         #print(self.nodes[2].getbalance(""))
 

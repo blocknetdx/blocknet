@@ -334,7 +334,7 @@ class BitcoinTestFramework(metaclass=BitcoinTestMetaClass):
             sync_blocks(group)
             sync_mempools(group)
 
-    def enable_mocktime(self):
+    def enable_mocktime(self, time = 1388534400 + (201 * 10 * 60)):
         """Enable mocktime for the script.
 
         mocktime may be needed for scripts that use the cached version of the
@@ -344,7 +344,7 @@ class BitcoinTestFramework(metaclass=BitcoinTestMetaClass):
         For backward compatibility of the python scripts with previous
         versions of the cache, this helper function sets mocktime to Jan 1,
         2014 + (201 * 10 * 60)"""
-        self.mocktime = 0 #1388534400 + (201 * 10 * 60)
+        self.mocktime = time
 
     def disable_mocktime(self):
         self.mocktime = 0
