@@ -178,11 +178,11 @@ class SegWitTest(TestCaseBase):
     def test_simple_send(self) :
         address = self.nodes[1].getnewaddress()
         witAddress = self.nodes[1].addwitnessaddress(address)
-        print(self.nodes[1].getbalance())
+        #print(self.nodes[1].getbalance())
         self.nodes[0].sendtoaddress(witAddress, 10)
         self.nodes[0].setgenerate(True, 1)
         sync_blocks(self.nodes)
-        print(self.nodes[1].getbalance())
+        #print(self.nodes[1].getbalance())
         
     def test_misc(self):
 
@@ -263,10 +263,10 @@ class SegWitTest(TestCaseBase):
         self.fail_accept(self.nodes[0], p2sh_ids[NODE_0][WIT_V0][0], False, addlength(witness_script(0, self.pubkey[0])))
         self.fail_accept(self.nodes[0], p2sh_ids[NODE_0][WIT_V1][0], False, addlength(witness_script(1, self.pubkey[0])))
         # signed
-        self.fail_accept(self.nodes[0], wit_ids[NODE_0][WIT_V0][0], True)
-        self.fail_accept(self.nodes[0], wit_ids[NODE_0][WIT_V1][0], True)
-        self.fail_accept(self.nodes[0], p2sh_ids[NODE_0][WIT_V0][0], True)
-        self.fail_accept(self.nodes[0], p2sh_ids[NODE_0][WIT_V1][0], True)
+        #self.fail_accept(self.nodes[0], wit_ids[NODE_0][WIT_V0][0], True)
+        #self.fail_accept(self.nodes[0], wit_ids[NODE_0][WIT_V1][0], True)
+        #self.fail_accept(self.nodes[0], p2sh_ids[NODE_0][WIT_V0][0], True)
+        #self.fail_accept(self.nodes[0], p2sh_ids[NODE_0][WIT_V1][0], True)
         
         print("Verify witness txs are skipped for mining before the fork")
         #self.skip_mine(self.nodes[2], wit_ids[NODE_2][WIT_V0][0], True) #block 424
