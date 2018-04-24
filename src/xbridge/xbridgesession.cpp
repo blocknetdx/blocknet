@@ -1356,6 +1356,13 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet)
         }
 
         datatxtd = uint256(strtxid);
+
+        if(datatxtd.IsNull())
+        {
+            LOG() << "storeDataIntoBlockchain failed with zero tx id, process packet later " << __FUNCTION__;
+            xapp.processLater(txid, packet);
+            return true;
+        }
     }
 
     LOG() << __FUNCTION__ << xtx;
