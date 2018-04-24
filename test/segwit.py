@@ -23,6 +23,7 @@ import os
 import shutil
 import hashlib
 from binascii import hexlify
+from test_case_base import TestCaseBase
 
 NODE_0 = 0
 NODE_1 = 1
@@ -102,7 +103,7 @@ def getutxo(txid):
 MAX_BLOCK_SERIALIZED_SIZE = 4000000
 MAX_BLOCK_SIGOPS_COST = 80000
 
-class SegWitTest(BitcoinTestFramework):
+class SegWitTest(TestCaseBase):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 3
@@ -171,11 +172,20 @@ class SegWitTest(BitcoinTestFramework):
         assert_raises_rpc_error(-1, "CreateNewBlock: TestBlockValidity failed", node.generate, 1)
         sync_blocks(self.nodes)
 
-    def run_test(self):
+    def initialize(self) :
         self.nodes[0].setgenerate(True, 161) #block 161
-        assert_equal(self.nodes[0].getblockcount(), 161)
 
-        '''
+    def test_simple_send(self) :
+        address = self.nodes[1].getnewaddress()
+        witAddress = self.nodes[1].addwitnessaddress(address)
+        print(self.nodes[1].getbalance())
+        self.nodes[0].sendtoaddress(witAddress, 10)
+        self.nodes[0].setgenerate(True, 1)
+        sync_blocks(self.nodes)
+        print(self.nodes[1].getbalance())
+        
+    def test_misc(self):
+
         self.log.info("Verify sigops are counted in GBT with pre-BIP141 rules before the fork")
         txid = self.nodes[0].sendtoaddress(self.nodes[0].getnewaddress(), 1)
         tmpl = self.nodes[0].getblocktemplate({})
@@ -199,7 +209,6 @@ class SegWitTest(BitcoinTestFramework):
         #TODO
         #assert(tmpl['transactions'][0]['sigops'] == 2)
         self.nodes[0].setgenerate(True, 1) #block 162
-        '''
 
         self.pubkey = []
         p2sh_ids = [] # p2sh_ids[NODE][VER] is an array of txids that spend to a witness version VER pkscript to an address for NODE embedded in p2sh
