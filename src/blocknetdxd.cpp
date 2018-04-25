@@ -15,6 +15,7 @@
 #include "ui_interface.h"
 #include "util.h"
 #include "xbridge/xbridgeapp.h"
+#include "xrouter/xrouterapp.h"
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/filesystem.hpp>
@@ -158,6 +159,8 @@ bool AppInit(int argc, char* argv[])
             // init xbridge
             xbridge::App & xapp = xbridge::App::instance();
             xapp.init(argc, argv);
+            xrouter::App & xrapp = xrouter::App::instance();
+            xrapp.init(argc, argv);
         }
 
         detectShutdownThread = new boost::thread(boost::bind(&DetectShutdownThread, &threadGroup));
