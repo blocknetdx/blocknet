@@ -150,7 +150,7 @@ BOOST_AUTO_TEST_CASE(tx_valid)
             stream >> tx;
 
             CValidationState state;
-            BOOST_CHECK_MESSAGE(CheckTransaction(tx, false, false, state, false), strTest);
+            BOOST_CHECK_MESSAGE(CheckTransaction(tx, false, false, state, true), strTest);
             BOOST_CHECK(state.IsValid());
 
             for (unsigned int i = 0; i < tx.vin.size(); i++)
