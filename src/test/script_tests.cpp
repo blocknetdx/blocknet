@@ -40,7 +40,7 @@ using namespace std;
 using namespace boost::algorithm;
 
 // Uncomment if you want to output updated JSON tests.
-#define UPDATE_JSON_TESTS
+// #define UPDATE_JSON_TESTS
 
 static const unsigned int flags = SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC;
 
