@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2014 The Bitcoin developers
-// Copyright (c) 2017 The Phore developers
+// Copyright (c) 2017-2018 The Phore developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -8,28 +8,12 @@
 
 #if defined(HAVE_CONFIG_H)
 #include "config/phore-config.h"
-#else
-
-/**
- * client versioning and copyright year
- */
-
-//! These need to be macros, as clientversion.cpp's and phore*-res.rc's voodoo requires it
-#define CLIENT_VERSION_MAJOR 1
-#define CLIENT_VERSION_MINOR 2
-#define CLIENT_VERSION_REVISION 1
-#define CLIENT_VERSION_BUILD 0
-
-//! Set to true for release, false for prerelease or test build
-#define CLIENT_VERSION_IS_RELEASE true
-
-/**
- * Copyright year (2009-this)
- * Todo: update this when changing our copyright comments in the source
- */
-#define COPYRIGHT_YEAR 2017
-
 #endif //HAVE_CONFIG_H
+
+// Check that required client information is defined
+#if !defined(CLIENT_VERSION_MAJOR) || !defined(CLIENT_VERSION_MINOR) || !defined(CLIENT_VERSION_REVISION) || !defined(CLIENT_VERSION_BUILD) || !defined(CLIENT_VERSION_IS_RELEASE) || !defined(COPYRIGHT_YEAR)
+#error Client version information missing: version is not defined by phore-config.h or in any other way
+#endif
 
 /**
  * Converts the parameter X to a string after macro replacement on X has been performed.

@@ -25,7 +25,7 @@
     <height>0</height>
    </size>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout_8" stretch="0,0">
+  <layout class="QVBoxLayout" name="verticalLayout_1" stretch="0,0">
    <item>
     <layout class="QVBoxLayout" name="verticalLayout_Master" stretch="0,1">
      <property name="spacing">
@@ -75,7 +75,7 @@
            </widget>
           </item>
           <item>
-           <spacer name="horizontalSpacer_3">
+           <spacer name="horizontalSpacer_1">
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
             </property>
@@ -297,6 +297,12 @@
                         </item>
                         <item>
                          <widget class="QLabel" name="labelzPHRAmountValue">
+                          <property name="font">
+                           <font>
+                            <weight>75</weight>
+                            <bold>true</bold>
+                           </font>
+                          </property>
                           <property name="toolTip">
                            <string>Enter an amount of PHR to convert to zPHR</string>
                           </property>
@@ -567,9 +573,6 @@
                         <property name="backgroundVisible">
                          <bool>true</bool>
                         </property>
-                        <property name="placeholderText">
-                         <string/>
-                        </property>
                        </widget>
                       </item>
                       <item>
@@ -707,7 +710,7 @@
                           <property name="toolTip">
                            <string>Available (mature and spendable) zPHR for spending
 
-zPHR are mature when they have more than 20 confirmations AND more than 2 mints of the same denomination after them were minted</string>
+zPHR are mature when they have more than 20 confirmations AND more than 1 mint of the same denomination after them were minted</string>
                           </property>
                           <property name="text">
                            <string>0 zPHR</string>
@@ -784,8 +787,11 @@ zPHR are mature when they have more than 20 confirmations AND more than 2 mints 
                        </layout>
                       </item>
                       <item>
-                       <layout class="QHBoxLayout" name="horizontalLayout_7">
-                        <item>
+                       <layout class="QGridLayout" name="gridLayout_7">
+                        <property name="spacing">
+                         <number>12</number>
+                        </property>
+                        <item row="0" column="0">
                          <widget class="QLabel" name="payToLabel">
                           <property name="minimumSize">
                            <size>
@@ -804,7 +810,7 @@ zPHR are mature when they have more than 20 confirmations AND more than 2 mints 
                           </property>
                          </widget>
                         </item>
-                        <item>
+                        <item row="0" column="1">
                          <layout class="QHBoxLayout" name="payToLayout">
                           <property name="spacing">
                            <number>0</number>
@@ -861,11 +867,7 @@ zPHR are mature when they have more than 20 confirmations AND more than 2 mints 
                           </item>
                          </layout>
                         </item>
-                       </layout>
-                      </item>
-                      <item>
-                       <layout class="QHBoxLayout" name="horizontalLayout_8">
-                        <item>
+                        <item row="1" column="0">
                          <widget class="QLabel" name="labelLabel">
                           <property name="minimumSize">
                            <size>
@@ -884,18 +886,14 @@ zPHR are mature when they have more than 20 confirmations AND more than 2 mints 
                           </property>
                          </widget>
                         </item>
-                        <item>
+                        <item row="1" column="1">
                          <widget class="QLineEdit" name="addAsLabel">
                           <property name="toolTip">
                            <string>Enter a label for this address to add it to the list of used addresses</string>
                           </property>
                          </widget>
                         </item>
-                       </layout>
-                      </item>
-                      <item>
-                       <layout class="QHBoxLayout" name="horizontalLayout_9">
-                        <item>
+                        <item row="2" column="0">
                          <widget class="QLabel" name="amountLabel">
                           <property name="minimumSize">
                            <size>
@@ -914,77 +912,87 @@ zPHR are mature when they have more than 20 confirmations AND more than 2 mints 
                           </property>
                          </widget>
                         </item>
-                        <item>
-                         <widget class="QLineEdit" name="zPHRpayAmount"/>
+                        <item row="2" column="1">
+                         <layout class="QHBoxLayout" name="horizontalLayout_9">
+                          <property name="spacing">
+                           <number>0</number>
+                          </property>
+                          <item>
+                           <widget class="QLineEdit" name="zPHRpayAmount"/>
+                          </item>
+                          <item>
+                           <widget class="QLabel" name="labelzPHR">
+                            <property name="alignment">
+                             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                            </property>
+                            <property name="minimumSize">
+                             <size>
+                              <width>55</width>
+                              <height>0</height>
+                             </size>
+                            </property>
+                            <property name="text">
+                             <string>zPHR</string>
+                            </property>
+                           </widget>
+                          </item>
+                         </layout>
                         </item>
-                        <item>
-                         <widget class="QLabel" name="labelzPHR">
-                          <property name="minimumSize">
-                           <size>
-                            <width>55</width>
-                            <height>0</height>
-                           </size>
-                          </property>
-                          <property name="text">
-                           <string>zPHR</string>
-                          </property>
-                         </widget>
-                        </item>
-                       </layout>
-                      </item>
-                      <item>
-                       <layout class="QHBoxLayout" name="horizontalLayout_10">
-                        <item>
-                         <spacer name="horizontalSpacer_5">
-                          <property name="orientation">
-                           <enum>Qt::Horizontal</enum>
-                          </property>
-                          <property name="sizeHint" stdset="0">
-                           <size>
-                            <width>40</width>
-                            <height>20</height>
-                           </size>
-                          </property>
-                         </spacer>
-                        </item>
-                        <item>
-                         <widget class="QCheckBox" name="checkBoxMintChange">
-                          <property name="sizePolicy">
-                           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-                            <horstretch>0</horstretch>
-                            <verstretch>0</verstretch>
-                           </sizepolicy>
-                          </property>
-                          <property name="layoutDirection">
-                           <enum>Qt::LeftToRight</enum>
-                          </property>
-                          <property name="text">
-                           <string>Convert Change to Zerocoin (might cost additional fees)</string>
-                          </property>
-                         </widget>
-                        </item>
-                        <item>
-                         <widget class="QCheckBox" name="checkBoxMinimizeChange">
-                          <property name="toolTip">
-                           <string>If checked, the wallet tries to minimize the returning change instead of minimizing the number of spent denominations.</string>
-                          </property>
-                          <property name="text">
-                           <string>Minimize Change</string>
-                          </property>
-                         </widget>
-                        </item>
-                        <item>
-                         <spacer name="horizontalSpacer_6">
-                          <property name="orientation">
-                           <enum>Qt::Horizontal</enum>
-                          </property>
-                          <property name="sizeHint" stdset="0">
-                           <size>
-                            <width>40</width>
-                            <height>20</height>
-                           </size>
-                          </property>
-                         </spacer>
+                        <item row="3" column="0" colspan="2">
+                         <layout class="QHBoxLayout" name="horizontalLayout_10">
+                          <item>
+                           <spacer name="horizontalSpacer_5">
+                            <property name="orientation">
+                             <enum>Qt::Horizontal</enum>
+                            </property>
+                            <property name="sizeHint" stdset="0">
+                             <size>
+                              <width>40</width>
+                              <height>20</height>
+                             </size>
+                            </property>
+                           </spacer>
+                          </item>
+                          <item>
+                           <widget class="QCheckBox" name="checkBoxMintChange">
+                            <property name="sizePolicy">
+                             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                              <horstretch>0</horstretch>
+                              <verstretch>0</verstretch>
+                             </sizepolicy>
+                            </property>
+                            <property name="layoutDirection">
+                             <enum>Qt::LeftToRight</enum>
+                            </property>
+                            <property name="text">
+                             <string>Convert Change to Zerocoin (might cost additional fees)</string>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QCheckBox" name="checkBoxMinimizeChange">
+                            <property name="toolTip">
+                             <string>If checked, the wallet tries to minimize the returning change instead of minimizing the number of spent denominations.</string>
+                            </property>
+                            <property name="text">
+                             <string>Minimize Change</string>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <spacer name="horizontalSpacer_6">
+                            <property name="orientation">
+                             <enum>Qt::Horizontal</enum>
+                            </property>
+                            <property name="sizeHint" stdset="0">
+                             <size>
+                              <width>40</width>
+                              <height>20</height>
+                             </size>
+                            </property>
+                           </spacer>
+                          </item>
+                         </layout>
                         </item>
                        </layout>
                       </item>

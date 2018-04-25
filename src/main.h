@@ -158,8 +158,8 @@ extern int64_t nReserveBalance;
 
 extern std::map<uint256, int64_t> mapRejectedBlocks;
 extern std::map<unsigned int, unsigned int> mapHashedBlocks;
-extern std::map<CBigNum, CAmount> mapInvalidSerials;
 extern std::set<std::pair<COutPoint, unsigned int> > setStakeSeen;
+extern std::map<uint256, int64_t> mapZerocoinspends; //txid, time received
 
 /** Best header we've seen so far (used for getheaders queries' starting points). */
 extern CBlockIndex* pindexBestHeader;
@@ -400,6 +400,7 @@ void UpdateCoins(const CTransaction& tx, CValidationState& state, CCoinsViewCach
 bool CheckTransaction(const CTransaction& tx, bool fZerocoinActive, bool fRejectBadUTXO, CValidationState& state);
 bool CheckZerocoinMint(const uint256& txHash, const CTxOut& txout, CValidationState& state, bool fCheckOnly = false);
 bool CheckZerocoinSpend(const CTransaction tx, bool fVerifySignature, CValidationState& state);
+bool ContextualCheckCoinSpend(const libzerocoin::CoinSpend& spend, CBlockIndex* pindex, const uint256& txid);
 libzerocoin::CoinSpend TxInToZerocoinSpend(const CTxIn& txin);
 bool TxOutToPublicCoin(const CTxOut txout, libzerocoin::PublicCoin& pubCoin, CValidationState& state);
 bool BlockToPubcoinList(const CBlock& block, list<libzerocoin::PublicCoin>& listPubcoins);
@@ -699,20 +700,4 @@ struct CBlockTemplate {
     std::vector<int64_t> vTxSigOps;
 };
 
-/*
-class CValidationInterface
-{
-protected:
-    virtual void SyncTransaction(const CTransaction& tx, const CBlock* pblock){};
-    virtual void EraseFromWallet(const uint256& hash){};
-    virtual void SetBestChain(const CBlockLocator& locator){};
-    virtual bool UpdatedTransaction(const uint256& hash) { return false; };
-    virtual void Inventory(const uint256& hash){};
-    virtual void ResendWalletTransactions(){};
-    virtual void BlockChecked(const CBlock&, const CValidationState&){};
-    friend void ::RegisterValidationInterface(CValidationInterface*);
-    friend void ::UnregisterValidationInterface(CValidationInterface*);
-    friend void ::UnregisterAllValidationInterfaces();
-};
-*/
 #endif // BITCOIN_MAIN_H

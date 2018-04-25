@@ -61,6 +61,9 @@ bool ProcessConsensusVote(CNode* pnode, CConsensusVote& ctx);
 // keep transaction locks in memory for an hour
 void CleanTransactionLocksList();
 
+// get the accepted transaction lock signatures
+int GetTransactionLockSignatures(uint256 txHash);
+
 int64_t GetAverageVoteTime();
 
 class CConsensusVote
