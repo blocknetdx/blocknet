@@ -69,17 +69,23 @@ public:
      * @param packet
      * @return true, if packet decrypted and packet command executed
      */
-    bool processPacket(XBridgePacketPtr packet);
+    bool processPacket(XBridgePacketPtr packet) const;
 
 public:
     // service functions
-    void sendListOfTransactions();
-    void checkFinishedTransactions();
-    void eraseExpiredPendingTransactions();
-    void getAddressBook();
+    void sendListOfTransactions() const;
+    void checkFinishedTransactions() const;
+    void eraseExpiredPendingTransactions() const;
+    void getAddressBook() const;
+    bool isWorking() const { return m_isWorking; }
+
+private:
+    void setWorking() { m_isWorking = true; }
+    void setNotWorking() { m_isWorking = false; }
 
 private:
     std::unique_ptr<Impl> m_p;
+    bool m_isWorking;
 };
 
 } // namespace xbridge
