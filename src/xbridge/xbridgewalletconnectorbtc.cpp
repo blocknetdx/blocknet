@@ -470,6 +470,83 @@ bool gettxout(const std::string & rpcuser,
 
 //*****************************************************************************
 //*****************************************************************************
+bool gettransaction(const std::string & rpcuser,
+                    const std::string & rpcpasswd,
+                    const std::string & rpcip,
+                    const std::string & rpcport,
+                    wallet::UtxoEntry & txout)
+{
+    try
+    {
+        LOG() << "rpc call <gettransaction>";
+
+        txout.amount = 0;
+
+        Array params;
+        params.push_back(txout.txId);
+        Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport,
+                               "gettransaction", params);
+
+        // Parse reply
+        const Value & result = find_value(reply, "result");
+        const Value & error  = find_value(reply, "error");
+
+        if (error.type() != null_type)
+        {
+            // Error
+            LOG() << "error: " << write_string(error, false);
+            return false;
+        }
+        else if (result.type() != obj_type)
+        {
+            // Result
+            LOG() << "result not an object " <<
+                     (result.type() == null_type ? "" :
+                      result.type() == str_type  ? result.get_str() :
+                                                   write_string(result, true));
+            return false;
+        }
+
+        Object o = result.get_obj();
+
+        const Value & details = find_value(o, "details");
+        if(details.type() != array_type)
+        {
+            LOG() << "details not an array type";
+            return false;
+        }
+
+        for(const Value & element : details.get_array())
+        {
+            if(element.type() != obj_type)
+            {
+                LOG() << "details element not an object type";
+                return false;
+            }
+
+            Object elementObj = element.get_obj();
+
+            int vout = find_value(elementObj, "vout").get_int();
+            std::string category = find_value(elementObj, "category").get_str();
+
+            if(vout == txout.vout && category == "receive")
+            {
+                txout.amount = find_value(elementObj, "amount").get_real();
+                break;
+            }
+        }
+    }
+    catch (std::exception & e)
+    {
+        LOG() << "gettransaction exception " << e.what();
+        return false;
+    }
+
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
 bool getRawTransaction(const std::string & rpcuser,
                        const std::string & rpcpasswd,
                        const std::string & rpcip,
@@ -1190,8 +1267,13 @@ bool BtcWalletConnector<CryptoProvider>::getTxOut(wallet::UtxoEntry & entry)
 {
     if (!rpc::gettxout(m_user, m_passwd, m_ip, m_port, entry))
     {
-        LOG() << "rpc::gettxout failed " << __FUNCTION__;
-        return false;
+        LOG() << "gettxout failed, trying call gettransaction " << __FUNCTION__;
+
+        if(!rpc::gettransaction(m_user, m_passwd, m_ip, m_port, entry))
+        {
+            WARN() << "both calls of gettxout and gettransaction failed " << __FUNCTION__;
+            return false;
+        }
     }
 
     return true;
