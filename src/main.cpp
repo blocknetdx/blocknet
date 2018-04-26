@@ -1408,8 +1408,10 @@ bool CheckTransaction(const CTransaction& tx, bool fZerocoinActive, bool fReject
     CAmount nValueOut = 0;
     int nZCSpendCount = 0;
     BOOST_FOREACH (const CTxOut& txout, tx.vout) {
-        if (txout.IsEmpty() && !tx.IsCoinBase() && !tx.IsCoinStake())
-            return state.DoS(100, error("CheckTransaction(): txout empty for user transaction"));
+        // Remove this check since Bitcoin Core doesn't have this check too.
+        // And the test data in tx_valid for CHECKSEQUENCEVERIFY doesn't have non-empty tx out.
+        //if (txout.IsEmpty() && !tx.IsCoinBase() && !tx.IsCoinStake())
+        //    return state.DoS(100, error("CheckTransaction(): txout empty for user transaction"));
 
         if (txout.nValue < 0)
             return state.DoS(100, error("CheckTransaction() : txout.nValue negative"),
