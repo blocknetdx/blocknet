@@ -126,6 +126,11 @@ public:
         return false;
     }
 
+    virtual bool CheckSequence(const CScriptNum& nSequence) const
+    {
+         return false;
+    }
+
     virtual ~BaseSignatureChecker() {}
 };
 
@@ -142,6 +147,7 @@ protected:
 public:
     TransactionSignatureChecker(const CTransaction* txToIn, unsigned int nInIn, const CAmount& amountIn) : txTo(txToIn), nIn(nInIn), amount(amountIn) {}
     bool CheckSig(const std::vector<unsigned char>& scriptSig, const std::vector<unsigned char>& vchPubKey, const CScript& scriptCode, SigVersion sigversion) const;
+    bool CheckSequence(const CScriptNum& nSequence) const;
 };
 
 class MutableTransactionSignatureChecker : public TransactionSignatureChecker
