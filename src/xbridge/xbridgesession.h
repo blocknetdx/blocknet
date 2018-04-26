@@ -42,6 +42,8 @@ public:
 
     ~Session();
 
+    bool isWorking() const { return m_isWorking; }
+
 public:
     // helper functions
     /**
@@ -77,7 +79,6 @@ public:
     void checkFinishedTransactions() const;
     void eraseExpiredPendingTransactions() const;
     void getAddressBook() const;
-    void isWorking() const { return m_isWorking; }
 
 private:
     void setWorking() { m_isWorking = true; }
