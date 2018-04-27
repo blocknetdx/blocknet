@@ -37,7 +37,7 @@
 #include <sstream>
 #include <vector>
 
-static const CAmount minBlock = 2;
+static const CAmount minBlock = 200;
 
 //*****************************************************************************
 //*****************************************************************************
@@ -120,6 +120,21 @@ bool App::isEnabled()
     return true;
 }
 
+bool App::init(int argc, char *argv[])
+{
+    // init xbridge settings
+    Settings & s = settings();
+    {
+        std::string path(GetDataDir(false).string());
+        path += "/xbridge.conf";
+        s.read(path.c_str());
+        s.parseCmdLine(argc, argv);
+        std::cout << "Finished loading config" << path << std::endl;
+    }
+    
+    return true;
+}
+
 //*****************************************************************************
 //*****************************************************************************
 bool App::start()
@@ -143,6 +158,7 @@ bool App::Impl::start()
             {
                 xbridge::WalletParam wp;
                 wp.currency                    = *i;
+                std::cout << "currency " << wp.currency << std::endl;
                 wp.title                       = s.get<std::string>(*i + ".Title");
                 wp.address                     = s.get<std::string>(*i + ".Address");
                 wp.m_ip                        = s.get<std::string>(*i + ".Ip");
@@ -173,7 +189,7 @@ bool App::Impl::start()
                     //LOG() << "wp.method ETHER not implemented" << __FUNCTION__;
                     // session.reset(new XBridgeSessionEthereum(wp));
                 }
-                else if (wp.method == "BTC")
+                else if ((wp.method == "BTC") || (wp.method == "BLOCK"))
                 {
                     conn.reset(new BtcWalletConnectorXRouter);
                     *conn = wp;
@@ -307,6 +323,11 @@ void App::Impl::onSend(const std::vector<unsigned char>& id, const std::vector<u
         }
     }
     
+    for (CNode* pnode : vNodes) {
+        pnode->PushMessage("xrouter", msg);
+    }
+    return;
+    
     // Send only to the service nodes that have the required wallet
     int nHeight;
     {
@@ -415,6 +436,7 @@ bool App::processGetBlockCount(XRouterPacketPtr packet) {
         Object res = conn->executeRpcCall("getblockcount", Array());
         const Value& res_val(res);
         result = json_spirit::write_string(res_val, true);
+        std::cout << result << std::endl;
     }
 
     XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
@@ -519,41 +541,13 @@ bool App::processGetTransaction(XRouterPacketPtr packet) {
     return true;
 }
 
-bool App::processGetAllBlocks(XRouterPacketPtr packet) {
-    uint32_t offset = 36;
-
-    std::string uuid((const char *)packet->data()+offset);
-    offset += uuid.size() + 1;
-    std::string currency((const char *)packet->data()+offset);
-    offset += currency.size() + 1;
-    std::string number_s((const char *)packet->data()+offset);
-    offset += number_s.size() + 1;
-    std::cout << uuid << " "<< currency << " " << number_s << std::endl;
-    int number = std::stoi(number_s);
-    
-    xbridge::WalletConnectorPtr conn = connectorByCurrency(currency);
-    Array result;
-    if (conn)
-    {
-        Object res = conn->executeRpcCall("getblockcount", Array());
-        int blockcount = Value(res).get_int();
-        Value res_val;
-        for (int id = number; id <= blockcount; id++) {
-            Array a { Value(id) };
-            std::string hash = Value(conn->executeRpcCall("getblockhash", a)).get_str();
-            Array b { Value(hash) };
-            Object block = conn->executeRpcCall("getblock", b);
-            result.push_back(Value(res));
-        }
+static Value getResult(Object obj) {
+    for (Object::size_type i = 0; i != obj.size(); i++ ) {
+        if (obj[i].name_ == "result") {
+            return obj[i].value_;
+        }    
     }
-
-    XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
-
-    rpacket->append(uuid);
-    rpacket->append(json_spirit::write_string(Value(result), true));
-    sendPacket(rpacket);
-
-    return true;
+    return Object();
 }
 
 static double parseVout(Value vout, std::string account) {
@@ -613,6 +607,42 @@ static double getBalanceChange(xbridge::WalletConnectorPtr conn, Object tx, std:
     return result;
 }
 
+bool App::processGetAllBlocks(XRouterPacketPtr packet) {
+    uint32_t offset = 36;
+
+    std::string uuid((const char *)packet->data()+offset);
+    offset += uuid.size() + 1;
+    std::string currency((const char *)packet->data()+offset);
+    offset += currency.size() + 1;
+    std::string number_s((const char *)packet->data()+offset);
+    offset += number_s.size() + 1;
+    std::cout << uuid << " "<< currency << " " << number_s << std::endl;
+    int number = std::stoi(number_s);
+    
+    xbridge::WalletConnectorPtr conn = connectorByCurrency(currency);
+    Array result;
+    if (conn)
+    {
+        Value res = getResult(conn->executeRpcCall("getblockcount", Array()));
+        int blockcount = res.get_int();
+        Value res_val;
+        for (int id = number; id <= blockcount; id++) {
+            Array a { Value(id) };
+            std::string hash = getResult(conn->executeRpcCall("getblockhash", a)).get_str();
+            Array b { Value(hash) };
+            result.push_back(getResult(conn->executeRpcCall("getblock", b)));
+        }
+    }
+
+    XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
+
+    rpacket->append(uuid);
+    rpacket->append(json_spirit::write_string(Value(result), true));
+    sendPacket(rpacket);
+
+    return true;
+}
+
 bool App::processGetAllTransactions(XRouterPacketPtr packet) {
     uint32_t offset = 36;
 
@@ -631,8 +661,8 @@ bool App::processGetAllTransactions(XRouterPacketPtr packet) {
     Array result;
     if (conn)
     {
-        Object res = conn->executeRpcCall("getblockcount", Array());
-        int blockcount = Value(res).get_int();
+        Value res = getResult(conn->executeRpcCall("getblockcount", Array()));
+        int blockcount = res.get_int();
         Value res_val;
         for (int id = number; id <= blockcount; id++) {
             Array a { Value(id) };
@@ -756,10 +786,10 @@ void App::onMessageReceived(const std::vector<unsigned char>& id,
         return;
     }
     
-    if ((packet->command() != xrReply) && !verifyBlockRequirement(packet)) {
+    /*if ((packet->command() != xrReply) && !verifyBlockRequirement(packet)) {
         std::clog << "Block requirement not satisfied\n";
         return;
-    }
+    }*/
 
     /* std::clog << "received message to " << util::base64_encode(std::string((char*)&id[0], 20)).c_str() */
     /*           << " command " << packet->command(); */

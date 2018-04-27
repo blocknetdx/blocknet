@@ -67,6 +67,8 @@ public:
      */
     bool stop();
     
+    bool init(int argc, char *argv[]);
+    
     void addConnector(const xbridge::WalletConnectorPtr & conn);
     xbridge::WalletConnectorPtr connectorByCurrency(const std::string & currency) const;
     
