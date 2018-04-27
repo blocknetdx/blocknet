@@ -42,6 +42,8 @@ public:
 
     ~Session();
 
+    bool isWorking() const { return m_isWorking; }
+
 public:
     // helper functions
     /**
@@ -69,7 +71,7 @@ public:
      * @param packet
      * @return true, if packet decrypted and packet command executed
      */
-    bool processPacket(XBridgePacketPtr packet) const;
+    bool processPacket(XBridgePacketPtr packet);
 
 public:
     // service functions
@@ -77,7 +79,6 @@ public:
     void checkFinishedTransactions() const;
     void eraseExpiredPendingTransactions() const;
     void getAddressBook() const;
-    bool isWorking() const { return m_isWorking; }
 
 private:
     void setWorking() { m_isWorking = true; }
