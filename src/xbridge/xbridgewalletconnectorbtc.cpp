@@ -485,7 +485,7 @@ bool gettransaction(const std::string & rpcuser,
         Array params;
         params.push_back(txout.txId);
         Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport,
-                               "gettransaction", params);
+                               "getrawtransaction", params);
 
         // Parse reply
         const Value & result = find_value(reply, "result");
@@ -497,41 +497,62 @@ bool gettransaction(const std::string & rpcuser,
             LOG() << "error: " << write_string(error, false);
             return false;
         }
-        else if (result.type() != obj_type)
+        else if (result.type() != str_type)
         {
             // Result
-            LOG() << "result not an object " <<
+            LOG() << "result of getrawtransaction not a string " <<
                      (result.type() == null_type ? "" :
                       result.type() == str_type  ? result.get_str() :
                                                    write_string(result, true));
             return false;
         }
 
-        Object o = result.get_obj();
 
-        const Value & details = find_value(o, "details");
-        if(details.type() != array_type)
+        Array d { Value(result.get_str()) };
+        reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "decoderawtransaction", d);
+        
+        const Value & result2 = find_value(reply, "result");
+        const Value & error2  = find_value(reply, "error");
+
+        if (error2.type() != null_type)
         {
-            LOG() << "details not an array type";
+            // Error
+            LOG() << "error: " << write_string(error2, false);
+            return false;
+        }
+        else if (result2.type() != obj_type)
+        {
+            // Result
+            LOG() << "result of decoderawtransaction not an object " <<
+                     (result2.type() == null_type ? "" :
+                      result2.type() == str_type  ? result2.get_str() :
+                                                   write_string(result2, true));
+            return false;
+        }
+        
+        Object o = result2.get_obj();
+
+        const Value & vouts = find_value(o, "vout");
+        if(vouts.type() != array_type)
+        {
+            LOG() << "vout not an array type";
             return false;
         }
 
-        for(const Value & element : details.get_array())
+        for(const Value & element : vouts.get_array())
         {
             if(element.type() != obj_type)
             {
-                LOG() << "details element not an object type";
+                LOG() << "vouts element not an object type";
                 return false;
             }
 
             Object elementObj = element.get_obj();
 
-            int vout = find_value(elementObj, "vout").get_int();
-            std::string category = find_value(elementObj, "category").get_str();
-
-            if(vout == txout.vout && category == "receive")
+            uint vout = find_value(elementObj, "n").get_int();
+            if(vout == txout.vout)
             {
-                txout.amount = find_value(elementObj, "amount").get_real();
+                txout.amount = find_value(elementObj, "value").get_real();
                 break;
             }
         }
