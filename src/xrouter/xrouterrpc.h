@@ -30,42 +30,17 @@ namespace xrouter
 
 class BtcWalletConnectorXRouter : public xbridge::BtcWalletConnector {
 public:
-    Object executeRpcCall(const std::string command, const Array & params) {
-        Object reply = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, command, params);
-        return reply;
-    }
-    
-    Object executeAuthorizedRpcCall(const std::string auth, const std::string command, const Array & params) {
-        Object reply = rpc::CallRPCAuthorized(auth, m_ip, m_port, command, params);
-        return reply;
-    }
+
 };
 
 class SysWalletConnectorXRouter : public xbridge::SysWalletConnector {
 public:
-    Object executeRpcCall(const std::string command, const Array & params) {
-        Object reply = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, command, params);
-        return reply;
-    }
-    
-    Object executeAuthorizedRpcCall(const std::string auth, const std::string command, const Array & params) {
-        Object reply = rpc::CallRPCAuthorized(auth, m_ip, m_port, command, params);
-        return reply;
-    }
-};
 
+};
 
 class BccWalletConnectorXRouter : public xbridge::BccWalletConnector {
 public:
-    Object executeRpcCall(const std::string command, const Array & params) {
-        Object reply = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, command, params);
-        return reply;
-    }
-    
-    Object executeAuthorizedRpcCall(const std::string auth, const std::string command, const Array & params) {
-        Object reply = rpc::CallRPCAuthorized(auth, m_ip, m_port, command, params);
-        return reply;
-    }
+
 };
 
 

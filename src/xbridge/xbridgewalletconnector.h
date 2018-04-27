@@ -83,8 +83,7 @@ public:
     virtual bool signMessage(const std::string & address, const std::string & message, std::string & signature) = 0;
     virtual bool verifyMessage(const std::string & address, const std::string & message, const std::string & signature) = 0;
     
-    Object executeRpcCall(std::string command,  const Array & params) { return Object(); }
-    Object executeAuthorizedRpcCall(std::string auth, std::string command,  const Array & params) { return Object(); }
+    virtual Object executeRpcCall(std::string command, const Array & params) = 0;
 
 public:
     // helper functions
