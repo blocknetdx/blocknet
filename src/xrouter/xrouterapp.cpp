@@ -510,6 +510,33 @@ bool App::processGetBlock(XRouterPacketPtr packet) {
     return true;
 }
 
+static Value getResult(Object obj) {
+    for (Object::size_type i = 0; i != obj.size(); i++ ) {
+        if (obj[i].name_ == "result") {
+            return obj[i].value_;
+        }    
+    }
+    return Object();
+}
+
+static bool getResultOrError(Object obj, Value& res) {
+    for (Object::size_type i = 0; i != obj.size(); i++ ) {
+        if (obj[i].name_ == "result") {
+            res =  obj[i].value_;
+            return true;
+        }    
+    }
+    
+    for (Object::size_type i = 0; i != obj.size(); i++ ) {
+        if (obj[i].name_ == "error") {
+            res =  obj[i].value_;
+            return false;
+        }    
+    }
+    res = Object();
+    return false;
+}
+
 bool App::processGetTransaction(XRouterPacketPtr packet) {
     uint32_t offset = 36;
 
@@ -526,10 +553,17 @@ bool App::processGetTransaction(XRouterPacketPtr packet) {
     xbridge::WalletConnectorPtr conn = connectorByCurrency(currency);
     if (conn)
     {
-        Array a {hash};
-        Object res = conn->executeRpcCall("gettransaction", a);
-        const Value& res_val(res);
-        result = json_spirit::write_string(res_val, true);
+        Array a { hash };
+        Value raw;
+        bool code = getResultOrError(conn->executeRpcCall("getrawtransaction", a), raw);
+        if (!code) {
+            result = raw.get_str();
+        } else {
+            std::string txdata = raw.get_str();
+            Array d { Value(txdata) };
+            Value res_val = getResult(conn->executeRpcCall("decoderawtransaction", d));
+            result = json_spirit::write_string(res_val, true);
+        }
     }
 
     XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
@@ -539,15 +573,6 @@ bool App::processGetTransaction(XRouterPacketPtr packet) {
     sendPacket(rpacket);
 
     return true;
-}
-
-static Value getResult(Object obj) {
-    for (Object::size_type i = 0; i != obj.size(); i++ ) {
-        if (obj[i].name_ == "result") {
-            return obj[i].value_;
-        }    
-    }
-    return Object();
 }
 
 static double parseVout(Value vout, std::string account) {
