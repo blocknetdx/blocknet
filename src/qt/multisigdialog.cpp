@@ -261,7 +261,7 @@ bool MultisigDialog::addMultisig(int m, vector<string> keys){
 
         ui->addMultisigStatus->setStyleSheet("QLabel { color: black; }");
         ui->addMultisigStatus->setText("Multisignature address " +
-                                       QString::fromStdString(CBitcoinAddress(innerID).ToString()) +
+                                       QString::fromStdString(EncodeDestination(CTxDestination(innerID))) +
                                        " has been added to the wallet.\nSend the redeem below for other owners to import:\n" +
                                        QString::fromStdString(redeem.ToString()));
     }catch(const runtime_error& e) {
@@ -318,7 +318,7 @@ void MultisigDialog::on_createButton_clicked()
             QWidget* dest = qobject_cast<QWidget*>(ui->destinationsList->itemAt(i)->widget());
             QValidatedLineEdit* addr = dest->findChild<QValidatedLineEdit*>("destinationAddress");
             BitcoinAmountField* amt = dest->findChild<BitcoinAmountField*>("destinationAmount");
-            CBitcoinAddress address;
+            CTxDestination address;
 
             bool validDest = true;
 
@@ -326,7 +326,7 @@ void MultisigDialog::on_createButton_clicked()
                 addr->setValid(false);
                 validDest = false;
             }else{
-                address = CBitcoinAddress(addr->text().toStdString());
+                address = DecodeDestination(addr->text().toStdString());
             }
 
             if(!amt->validate()){
@@ -339,7 +339,7 @@ void MultisigDialog::on_createButton_clicked()
                 continue;
             }
 
-            CScript scriptPubKey = GetScriptForDestination(address.Get());
+            CScript scriptPubKey = GetScriptForDestination(address);
             CTxOut out(amt->value(), scriptPubKey);
             vUserOut.push_back(out);
         }
@@ -805,9 +805,9 @@ bool MultisigDialog::createRedeemScript(int m, vector<string> vKeys, CScript& re
             string keyString = *it;
 #ifdef ENABLE_WALLET
             // Case 1: Phore address and we have full public key:
-            CBitcoinAddress address(keyString);
-            if (pwalletMain && address.IsValid()) {
-                CKeyID keyID;
+            if (pwalletMain && IsValidDestinationString(keyString)) {
+                CTxDestination address = DecodeDestination(keyString);
+                CKeyID keyID = boost::get<CKeyID>(&address);
                 if (!address.GetKeyID(keyID)) {
                     throw runtime_error(
                         strprintf("%s does not refer to a key", keyString));

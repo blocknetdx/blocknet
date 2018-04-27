@@ -122,7 +122,7 @@ void Bip38ToolDialog::on_encryptKeyButton_ENC_clicked()
         return;
     }
 
-    CBitcoinAddress addr(ui->addressIn_ENC->text().toStdString());
+    CTxDestination addr = DecodeDestination(ui->addressIn_ENC->text().toStdString());
     if (!addr.IsValid()) {
         ui->statusLabel_ENC->setStyleSheet("QLabel { color: red; }");
         ui->statusLabel_ENC->setText(tr("The entered address is invalid.") + QString(" ") + tr("Please check the address and try again."));
@@ -192,7 +192,7 @@ void Bip38ToolDialog::on_decryptKeyButton_DEC_clicked()
 
     key.Set(privKey.begin(), privKey.end(), fCompressed);
     CPubKey pubKey = key.GetPubKey();
-    CBitcoinAddress address(pubKey.GetID());
+    CTxDestination address(pubKey.GetID());
 
     ui->decryptedKeyOut_DEC->setText(QString::fromStdString(CBitcoinSecret(key).ToString()));
     ui->addressOut_DEC->setText(QString::fromStdString(address.ToString()));
@@ -207,10 +207,10 @@ void Bip38ToolDialog::on_importAddressButton_DEC_clicked()
         return;
     }
 
-    CBitcoinAddress address(ui->addressOut_DEC->text().toStdString());
+    CTxDestination address = DecodeDestination(ui->addressOut_DEC->text().toStdString());
     CPubKey pubkey = key.GetPubKey();
 
-    if (!address.IsValid() || !key.IsValid() || CBitcoinAddress(pubkey.GetID()).ToString() != address.ToString()) {
+    if (!address.IsValid() || !key.IsValid() || DecodeDestination(CTxDestination(pubkey.GetID())) != address.ToString()) {
         ui->statusLabel_DEC->setStyleSheet("QLabel { color: red; }");
         ui->statusLabel_DEC->setText(tr("Data Not Valid.") + QString(" ") + tr("Please try again."));
         return;

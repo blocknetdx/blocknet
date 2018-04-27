@@ -122,7 +122,7 @@ BOOST_AUTO_TEST_CASE(base58_keys_valid_parse)
     UniValue tests = read_json(std::string(json_tests::base58_keys_valid, json_tests::base58_keys_valid + sizeof(json_tests::base58_keys_valid)));
     std::vector<unsigned char> result;
     CBitcoinSecret secret;
-    CBitcoinAddress addr;
+    CTxDestination destination;
 
     for (unsigned int idx = 0; idx < tests.size(); idx++) {
         UniValue test = tests[idx];
@@ -141,11 +141,10 @@ BOOST_AUTO_TEST_CASE(base58_keys_valid_parse)
             SelectParams(CBaseChainParams::TESTNET);
         else
             SelectParams(CBaseChainParams::MAIN);
-        if(isPrivkey)
-        {
+        bool try_case_flip = find_value(metadata, "tryCaseFlip").isNull() ? false : find_value(metadata, "tryCaseFlip").get_bool();
+        if (isPrivkey) {
             bool isCompressed = find_value(metadata, "isCompressed").get_bool();
             // Must be valid private key
-            // Note: CBitcoinSecret::SetString tests isValid, whereas CBitcoinAddress does not!
             BOOST_CHECK_MESSAGE(secret.SetString(exp_base58string), "!SetString:"+ strTest);
             BOOST_CHECK_MESSAGE(secret.IsValid(), "!IsValid:" + strTest);
             CKey privkey = secret.GetKey();
@@ -153,18 +152,31 @@ BOOST_AUTO_TEST_CASE(base58_keys_valid_parse)
             BOOST_CHECK_MESSAGE(privkey.size() == exp_payload.size() && std::equal(privkey.begin(), privkey.end(), exp_payload.begin()), "key mismatch:" + strTest);
 
             // Private key must be invalid public key
-            addr.SetString(exp_base58string);
-            BOOST_CHECK_MESSAGE(!addr.IsValid(), "IsValid privkey as pubkey:" + strTest);
+            destination = DecodeDestination(exp_base58string);
+            BOOST_CHECK_MESSAGE(!IsValidDestination(destination), "IsValid privkey as pubkey:" + strTest);
         }
         else
         {
-            std::string exp_addrType = find_value(metadata, "addrType").get_str(); // "script" or "pubkey"
             // Must be valid public key
-            BOOST_CHECK_MESSAGE(addr.SetString(exp_base58string), "SetString:" + strTest);
-            BOOST_CHECK_MESSAGE(addr.IsValid(), "!IsValid:" + strTest);
-            BOOST_CHECK_MESSAGE(addr.IsScript() == (exp_addrType == "script"), "isScript mismatch" + strTest);
-            CTxDestination dest = addr.Get();
-            BOOST_CHECK_MESSAGE(boost::apply_visitor(TestAddrTypeVisitor(exp_addrType), dest), "addrType mismatch" + strTest);
+            destination = DecodeDestination(exp_base58string);
+            CScript script = GetScriptForDestination(destination);
+            BOOST_CHECK_MESSAGE(IsValidDestination(destination), "!IsValid:" + strTest);
+            BOOST_CHECK_EQUAL(HexStr(script), HexStr(exp_payload));
+
+            // Try flipped case version
+            for (char& c : exp_base58string) {
+                if (c >= 'a' && c <= 'z') {
+                    c = (c - 'a') + 'A';
+                } else if (c >= 'A' && c <= 'Z') {
+                    c = (c - 'A') + 'a';
+                }
+            }
+            destination = DecodeDestination(exp_base58string);
+            BOOST_CHECK_MESSAGE(IsValidDestination(destination) == try_case_flip, "!IsValid case flipped:" + strTest);
+            if (IsValidDestination(destination)) {
+                script = GetScriptForDestination(destination);
+                BOOST_CHECK_EQUAL(HexStr(script), HexStr(exp_payload));
+            }
 
             // Public key must be invalid private key
             secret.SetString(exp_base58string);
@@ -211,36 +223,17 @@ BOOST_AUTO_TEST_CASE(base58_keys_valid_gen)
         {
             std::string exp_addrType = find_value(metadata, "addrType").get_str();
             CTxDestination dest;
-            if(exp_addrType == "pubkey")
-            {
-                dest = CKeyID(uint160(exp_payload));
-            }
-            else if(exp_addrType == "script")
-            {
-                dest = CScriptID(uint160(exp_payload));
-            }
-            else if(exp_addrType == "none")
-            {
-                dest = CNoDestination();
-            }
-            else
-            {
-                BOOST_ERROR("Bad addrtype: " << strTest);
-                continue;
-            }
-            CBitcoinAddress addrOut;
-            BOOST_CHECK_MESSAGE(addrOut.Set(dest), "encode dest: " + strTest);
-            BOOST_CHECK_MESSAGE(addrOut.ToString() == exp_base58string, "mismatch: " + strTest);
+            CScript exp_script(exp_payload.begin(), exp_payload.end());
+            ExtractDestination(exp_script, dest);
+            std::string address = EncodeDestination(dest);
+
+            BOOST_CHECK_EQUAL(address, exp_base58string);
         }
     }
 
-    // Visiting a CNoDestination must fail
-    CBitcoinAddress dummyAddr;
-    CTxDestination nodest = CNoDestination();
-    BOOST_CHECK(!dummyAddr.Set(nodest));
-
     SelectParams(CBaseChainParams::UNITTEST);
 }
+
 
 // Goal: check that base58 parsing code is robust against a variety of corrupted data
 BOOST_AUTO_TEST_CASE(base58_keys_invalid)
@@ -248,7 +241,7 @@ BOOST_AUTO_TEST_CASE(base58_keys_invalid)
     UniValue tests = read_json(std::string(json_tests::base58_keys_invalid, json_tests::base58_keys_invalid + sizeof(json_tests::base58_keys_invalid))); // Negative testcases
     std::vector<unsigned char> result;
     CBitcoinSecret secret;
-    CBitcoinAddress addr;
+    CTxDestination addr;
 
     for (unsigned int idx = 0; idx < tests.size(); idx++) {
         UniValue test = tests[idx];
@@ -261,13 +254,9 @@ BOOST_AUTO_TEST_CASE(base58_keys_invalid)
         std::string exp_base58string = test[0].get_str();
 
         // must be invalid as public and as private key
-        addr.SetString(exp_base58string);
-        BOOST_CHECK_MESSAGE(!addr.IsValid(), "IsValid pubkey:" + strTest);
-        secret.SetString(exp_base58string);
-        BOOST_CHECK_MESSAGE(!secret.IsValid(), "IsValid privkey:" + strTest);
+        BOOST_CHECK_MESSAGE(!IsValidDestinationString(exp_base58string), "IsValid pubkey:" + strTest);
     }
 }
 
 
 BOOST_AUTO_TEST_SUITE_END()
-

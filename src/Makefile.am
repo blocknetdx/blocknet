@@ -98,6 +98,7 @@ BITCOIN_CORE_H = \
   allocators.h \
   amount.h \
   base58.h \
+  bech32.h \
   bip38.h \
   bloom.h \
   chain.h \
@@ -165,6 +166,8 @@ BITCOIN_CORE_H = \
   script/standard.h \
   script/script_error.h \
   serialize.h \
+  support/allocators/zeroafterfree.h \
+  support/cleanse.h \
   spork.h \
   sporkdb.h \
   streams.h \
@@ -342,6 +345,7 @@ libbitcoin_common_a_SOURCES = \
   allocators.cpp \
   amount.cpp \
   base58.cpp \
+  bech32.cpp \
   bip38.cpp \
   chainparams.cpp \
   coins.cpp \
@@ -366,6 +370,7 @@ libbitcoin_common_a_SOURCES = \
   script/sign.cpp \
   script/standard.cpp \
   script/script_error.cpp \
+  support/cleanse.cpp \
   spork.cpp \
   sporkdb.cpp \
   $(BITCOIN_CORE_H)
