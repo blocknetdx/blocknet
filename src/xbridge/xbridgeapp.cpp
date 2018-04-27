@@ -491,9 +491,17 @@ SessionPtr App::Impl::getSession()
     SessionPtr ptr;
 
     boost::mutex::scoped_lock l(m_sessionsLock);
+
     ptr = m_sessions.front();
     m_sessions.pop();
     m_sessions.push(ptr);
+
+    if(ptr->isWorking())
+    {
+        ptr = SessionPtr(new Session());
+        m_sessions.push(ptr);
+        m_sessionAddressMap[ptr->sessionAddr()] = ptr;
+    }
 
     return ptr;
 }
@@ -543,7 +551,7 @@ void App::onMessageReceived(const std::vector<unsigned char> & id,
         return;
     }
 
-    LOG() << "received message to " << util::base64_encode(std::string((char *)&id[0], 20)).c_str()
+    LOG() << "received message to " << std::string((char *)&id[0], 20)
              << " command " << packet->command();
 
     // check direct session address
@@ -560,6 +568,13 @@ void App::onMessageReceived(const std::vector<unsigned char> & id,
             boost::mutex::scoped_lock l(m_p->m_connectorsLock);
             if (m_p->m_connectorAddressMap.count(id))
             {
+                WalletConnectorPtr conn = m_p->m_connectorAddressMap.at(id);
+
+                LOG() << "handling message with connector currency: "
+                      << conn->currency
+                      << " and address: "
+                      << conn->fromXAddr(id);
+
                 ptr = m_p->getSession();
             }
         }
