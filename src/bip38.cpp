@@ -128,10 +128,8 @@ std::string BIP38_Encrypt(std::string strAddress, std::string strPassphrase, uin
     return EncodeBase58(encryptedKey.begin(), encryptedKey.begin() + 43);
 }
 
-bool BIP38_Decrypt(std::string strPassphrase, std::string strEncryptedKey, uint256& privKey, bool& fCompressed)
+bool BIP38_Decrypt(std::string strPassphrase, std::string strKey, uint256& privKey, bool& fCompressed)
 {
-    std::string strKey = DecodeBase58(strEncryptedKey.c_str());
-
     //incorrect encoding of key, it must be 39 bytes - and another 4 bytes for base58 checksum
     if (strKey.size() != (78 + 8))
         return false;
@@ -235,7 +233,7 @@ bool BIP38_Decrypt(std::string strPassphrase, std::string strEncryptedKey, uint2
     CKey k;
     k.Set(privKey.begin(), privKey.end(), fCompressed);
     CPubKey pubkey = k.GetPubKey();
-    string address = CBitcoinAddress(pubkey.GetID()).ToString();
+    string address = EncodeDestination(pubkey.GetID());
 
     return strAddressHash == AddressToBip38Hash(address);
 }

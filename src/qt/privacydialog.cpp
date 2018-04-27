@@ -318,17 +318,18 @@ void PrivacyDialog::sendzPHR()
     QSettings settings;
 
     // Handle 'Pay To' address options
-    CBitcoinAddress address(ui->payTo->text().toStdString());
     if(ui->payTo->text().isEmpty()){
         QMessageBox::information(this, tr("Spend Zerocoin"), tr("No 'Pay To' address provided, creating local payment"), QMessageBox::Ok, QMessageBox::Ok);
     }
     else{
-        if (!address.IsValid()) {
+        if (!IsValidDestinationString(ui->payTo->text().toStdString())) {
             QMessageBox::warning(this, tr("Spend Zerocoin"), tr("Invalid Phore Address"), QMessageBox::Ok, QMessageBox::Ok);
             ui->payTo->setFocus();
             return;
         }
     }
+
+    CTxDestination address = DecodeDestination(ui->payTo->text().toStdString());
 
     // Double is allowed now
     double dAmount = ui->zPHRpayAmount->text().toDouble();
@@ -385,7 +386,7 @@ void PrivacyDialog::sendzPHR()
     // General info
     QString strQuestionString = tr("Are you sure you want to send?<br /><br />");
     QString strAmount = "<b>" + QString::number(dAmount, 'f', 8) + " zPHR</b>";
-    QString strAddress = tr(" to address ") + QString::fromStdString(address.ToString()) + strAddressLabel + " <br />";
+    QString strAddress = tr(" to address ") + QString::fromStdString(EncodeDestination(address)) + strAddressLabel + " <br />";
 
     if(ui->payTo->text().isEmpty()){
         // No address provided => send to local address
@@ -453,9 +454,9 @@ void PrivacyDialog::sendzPHR()
         // If zPHR was spent successfully update the addressbook with the label
         std::string labelText = ui->addAsLabel->text().toStdString();
         if (!labelText.empty())
-            walletModel->updateAddressBookLabels(address.Get(), labelText, "send");
+            walletModel->updateAddressBookLabels(address, labelText, "send");
         else
-            walletModel->updateAddressBookLabels(address.Get(), "(no label)", "send");
+            walletModel->updateAddressBookLabels(address, "(no label)", "send");
     }
 
     // Clear zphr selector in case it was used
@@ -485,7 +486,7 @@ void PrivacyDialog::sendzPHR()
         if(txout.scriptPubKey.IsZerocoinMint())
             strStats += tr("zPhr Mint");
         else if(ExtractDestination(txout.scriptPubKey, dest))
-            strStats += tr(CBitcoinAddress(dest).ToString().c_str());
+            strStats += tr(EncodeDestination(dest).c_str());
         strStats += "\n";
     }
     double fDuration = (double)(GetTimeMillis() - nTime)/1000.0;

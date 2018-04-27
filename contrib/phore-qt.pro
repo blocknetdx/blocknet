@@ -29,6 +29,8 @@ DEPENDPATH += . \
               src/qt/test \
               src/secp256k1/include \
               src/secp256k1/src \
+              src/support \
+              src/support/allocators \
               src/test/data \
               src/leveldb/doc/bench \
               src/leveldb/helpers/memenv \
@@ -51,6 +53,8 @@ INCLUDEPATH += . \
                src/consensus \
                src/secp256k1/include \
                src/leveldb/helpers/memenv \
+               src/support \
+               src/support/allocators \
                src/test/data \
                src/test \
                src/qt/test \
@@ -64,6 +68,7 @@ HEADERS += src/activemasternode.h \
            src/allocators.h \
            src/amount.h \
            src/base58.h \
+           src/bech32.h \
            src/bloom.h \
            src/chain.h \
            src/chainparams.h \
@@ -115,6 +120,8 @@ HEADERS += src/activemasternode.h \
            src/serialize.h \
            src/spork.h \
            src/streams.h \
+           src/support/allocators/zeroafterfree.h \
+           src/support/cleanse.h \
            src/sync.h \
            src/threadsafety.h \
            src/timedata.h \
@@ -366,6 +373,7 @@ SOURCES += src/activemasternode.cpp \
            src/allocators.cpp \
            src/amount.cpp \
            src/base58.cpp \
+           src/bech32.cpp \
            src/bloom.cpp \
            src/chain.cpp \
            src/chainparams.cpp \
@@ -423,6 +431,7 @@ SOURCES += src/activemasternode.cpp \
            src/rpcserver.cpp \
            src/rpcwallet.cpp \
            src/spork.cpp \
+           src/support/cleanse.cpp \
            src/sync.cpp \
            src/timedata.cpp \
            src/txdb.cpp \
@@ -552,6 +561,7 @@ SOURCES += src/activemasternode.cpp \
            src/test/sanity_tests.cpp \
            src/test/script_P2SH_tests.cpp \
            src/test/script_tests.cpp \
+           src/test/script_standard_tests.cpp \
            src/test/scriptnum_tests.cpp \
            src/test/serialize_tests.cpp \
            src/test/sighash_tests.cpp \

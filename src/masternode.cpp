@@ -426,7 +426,7 @@ bool CMasternodeBroadcast::Create(CTxIn txin, CService service, CKey keyCollater
     if (fImporting || fReindex) return false;
 
     LogPrint("masternode", "CMasternodeBroadcast::Create -- pubKeyCollateralAddressNew = %s, pubKeyMasternodeNew.GetID() = %s\n",
-        CBitcoinAddress(pubKeyCollateralAddressNew.GetID()).ToString(),
+        EncodeDestination(CTxDestination(pubKeyCollateralAddressNew.GetID())),
         pubKeyMasternodeNew.GetID().ToString());
 
     CMasternodePing mnp(txin);
