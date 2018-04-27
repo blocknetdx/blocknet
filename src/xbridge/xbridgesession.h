@@ -71,7 +71,7 @@ public:
      * @param packet
      * @return true, if packet decrypted and packet command executed
      */
-    bool processPacket(XBridgePacketPtr packet) const;
+    bool processPacket(XBridgePacketPtr packet);
 
 public:
     // service functions

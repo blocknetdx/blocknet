@@ -262,7 +262,7 @@ bool Session::Impl::checkPacketAddress(XBridgePacketPtr packet) const
 
 //*****************************************************************************
 //*****************************************************************************
-bool Session::processPacket(XBridgePacketPtr packet) const
+bool Session::processPacket(XBridgePacketPtr packet)
 {
     // DEBUG_TRACE();
 
