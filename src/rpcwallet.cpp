@@ -1058,15 +1058,15 @@ UniValue addwitnessaddress(const UniValue& params, bool fHelp)
         throw JSONRPCError(RPC_WALLET_ERROR, "Segregated witness not enabled on network");
     }
 
-    if (!IsValidDestinationString(params[0].get_str()))
+    CTxDestination dest = DecodeDestination(params[0].get_str());
+    if (!IsValidDestination(dest)) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Bitcoin address");
+    }
 
     bool p2sh = true;
     if (!params[1].isNull()) {
         p2sh = params[1].get_bool();
     }
-
-    CTxDestination dest = DecodeDestination(params[0].get_str());
 
     Witnessifier w;
     bool ret = boost::apply_visitor(w, dest);
@@ -1085,7 +1085,7 @@ UniValue addwitnessaddress(const UniValue& params, bool fHelp)
             throw JSONRPCError(RPC_WALLET_ERROR, "Cannot convert between witness address types");
         }
     } else {
-        pwalletMain->AddCScript(witprogram);
+        pwalletMain->AddCScript(witprogram); // Implicit for single-key now, but necessary for multisig and for compatibility with older software
         pwalletMain->SetAddressBook(w.result, "", "receive");
     }
 
