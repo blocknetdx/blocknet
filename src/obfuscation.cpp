@@ -419,7 +419,7 @@ void CObfuscationPool::SetNull()
 bool CObfuscationPool::SetCollateralAddress(std::string strAddress)
 {
     CTxDestination dest = DecodeDestination(strAddress);
-    if (dest.which() != 0) {
+    if (dest.which() == 0) {
         LogPrintf("CObfuscationPool::SetCollateralAddress - Invalid Obfuscation collateral address\n");
         return false;
     }
