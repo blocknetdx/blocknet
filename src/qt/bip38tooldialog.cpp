@@ -122,15 +122,16 @@ void Bip38ToolDialog::on_encryptKeyButton_ENC_clicked()
         return;
     }
 
-    CTxDestination addr = DecodeDestination(ui->addressIn_ENC->text().toStdString());
-    if (!addr.IsValid()) {
+    if (!IsValidDestinationString(ui->addressIn_ENC->text().toStdString())) {
         ui->statusLabel_ENC->setStyleSheet("QLabel { color: red; }");
         ui->statusLabel_ENC->setText(tr("The entered address is invalid.") + QString(" ") + tr("Please check the address and try again."));
         return;
     }
 
-    CKeyID keyID;
-    if (!addr.GetKeyID(keyID)) {
+    CTxDestination addr = DecodeDestination(ui->addressIn_ENC->text().toStdString());
+
+    CKeyID keyID = GetKeyForDestination(*pwalletMain, addr);
+    if (keyID.IsNull()) {
         ui->addressIn_ENC->setValid(false);
         ui->statusLabel_ENC->setStyleSheet("QLabel { color: red; }");
         ui->statusLabel_ENC->setText(tr("The entered address does not refer to a key.") + QString(" ") + tr("Please check the address and try again."));
@@ -151,7 +152,7 @@ void Bip38ToolDialog::on_encryptKeyButton_ENC_clicked()
         return;
     }
 
-    std::string encryptedKey = BIP38_Encrypt(addr.ToString(), qstrPassphrase.toStdString(), key.GetPrivKey_256(), key.IsCompressed());
+    std::string encryptedKey = BIP38_Encrypt(EncodeDestination(addr), qstrPassphrase.toStdString(), key.GetPrivKey_256(), key.IsCompressed());
     ui->encryptedKeyOut_ENC->setText(QString::fromStdString(encryptedKey));
 }
 
@@ -195,7 +196,7 @@ void Bip38ToolDialog::on_decryptKeyButton_DEC_clicked()
     CTxDestination address(pubKey.GetID());
 
     ui->decryptedKeyOut_DEC->setText(QString::fromStdString(CBitcoinSecret(key).ToString()));
-    ui->addressOut_DEC->setText(QString::fromStdString(address.ToString()));
+    ui->addressOut_DEC->setText(QString::fromStdString(EncodeDestination(address)));
 }
 
 void Bip38ToolDialog::on_importAddressButton_DEC_clicked()
@@ -207,17 +208,19 @@ void Bip38ToolDialog::on_importAddressButton_DEC_clicked()
         return;
     }
 
-    CTxDestination address = DecodeDestination(ui->addressOut_DEC->text().toStdString());
     CPubKey pubkey = key.GetPubKey();
 
-    if (!address.IsValid() || !key.IsValid() || DecodeDestination(CTxDestination(pubkey.GetID())) != address.ToString()) {
+    if (!IsValidDestinationString(ui->addressOut_DEC->text().toStdString())) {
         ui->statusLabel_DEC->setStyleSheet("QLabel { color: red; }");
         ui->statusLabel_DEC->setText(tr("Data Not Valid.") + QString(" ") + tr("Please try again."));
         return;
     }
 
-    CKeyID vchAddress = pubkey.GetID();
+    CTxDestination address = DecodeDestination(ui->addressOut_DEC->text().toStdString());
+
+    if (!key.IsValid() || EncodeDestination(pubkey.GetID()) != EncodeDestination(address))
     {
+        CKeyID vchAddress = pubkey.GetID();
         ui->statusLabel_DEC->setStyleSheet("QLabel { color: red; }");
         ui->statusLabel_DEC->setText(tr("Please wait while key is imported"));
 

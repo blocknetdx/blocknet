@@ -434,8 +434,8 @@ QString AddressTableModel::labelForAddress(const QString& address) const
 {
     {
         LOCK(wallet->cs_wallet);
-        CTxDestination address_parsed = DecodeDestination(address);
-        std::map<CTxDestination, CAddressBookData>::iterator mi = wallet->mapAddressBook.find(address_parsed.Get());
+        CTxDestination address_parsed = DecodeDestination(address.toStdString());
+        std::map<CTxDestination, CAddressBookData>::iterator mi = wallet->mapAddressBook.find(address_parsed);
         if (mi != wallet->mapAddressBook.end()) {
             return QString::fromStdString(mi->second.name);
         }
