@@ -395,8 +395,11 @@ QString AddressTableModel::addRow(const QString& type, const QString& label, con
                 return QString();
             }
         }
-        strAddress = EncodeDestination(CTxDestination(newKey.GetID()));
-    } else {
+        wallet->LearnRelatedScripts(newKey, g_address_type);
+        strAddress = EncodeDestination(GetDestinationForKey(newKey, g_address_type));
+    }
+    else
+    {
         return QString();
     }
 

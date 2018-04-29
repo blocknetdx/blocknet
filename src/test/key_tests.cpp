@@ -21,10 +21,10 @@ static const string strSecret1     ("88rZ37TerZ3hMw3Y4BDJmeZKdXMf9yz1TAi874VoYa5
 static const string strSecret2     ("87X8C4vzdeui65KtGvzFzhJ4SaesVxq86RH9C1rA1hQV7jnykNp");
 static const string strSecret1C    ("YVfiQKWe5iSu9PYC525KS4mfECzBQeWczVrWMkS8SLyPhz1MXKup");
 static const string strSecret2C    ("YPmxjrMKNnKeMQ6MKKHjBerJBuY9tqRQJvAF9cjxn5Lf6TJfgSR3");
-static const CTxDestination addr1  = DecodeDestination("P8dKq5MfsTED7GDeiYkf1rdcAUc9KmL97C");
-static const CTxDestination addr2  = DecodeDestination("PEt8QagBLy3jAGnZ58cSDcu9SyZ7nhZf9F");
-static const CTxDestination addr1C = DecodeDestination("PXLdAeb1zt1MrocfVarDMtxPejD8vPSkUQ");
-static const CTxDestination addr2C = DecodeDestination("PRyhkCVSbV5JCaBncYDnZ43s4kD6LPbacA");
+static const string addr1  = "P8dKq5MfsTED7GDeiYkf1rdcAUc9KmL97C";
+static const string addr2  = "PEt8QagBLy3jAGnZ58cSDcu9SyZ7nhZf9F";
+static const string addr1C = "PXLdAeb1zt1MrocfVarDMtxPejD8vPSkUQ";
+static const string addr2C = "PRyhkCVSbV5JCaBncYDnZ43s4kD6LPbacA";
 
 
 static const string strAddressBad("Xta1praZQjyELweyMByXyiREw1ZRsjXzVP");
@@ -103,10 +103,10 @@ BOOST_AUTO_TEST_CASE(key_test1)
     BOOST_CHECK(!key2C.VerifyPubKey(pubkey2));
     BOOST_CHECK(key2C.VerifyPubKey(pubkey2C));
 
-    BOOST_CHECK(addr1 == CTxDestination(pubkey1.GetID()));
-    BOOST_CHECK(addr2  == CTxDestination(pubkey2.GetID()));
-    BOOST_CHECK(addr1C == CTxDestination(pubkey1C.GetID()));
-    BOOST_CHECK(addr2C == CTxDestination(pubkey2C.GetID()));
+    BOOST_CHECK(DecodeDestination(addr1) == CTxDestination(pubkey1.GetID()));
+    BOOST_CHECK(DecodeDestination(addr2)  == CTxDestination(pubkey2.GetID()));
+    BOOST_CHECK(DecodeDestination(addr1C) == CTxDestination(pubkey1C.GetID()));
+    BOOST_CHECK(DecodeDestination(addr2C) == CTxDestination(pubkey2C.GetID()));
 
     for (int n=0; n<16; n++)
     {
