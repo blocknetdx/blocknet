@@ -797,10 +797,6 @@ void CoinControlDialog::updateView()
         int nInputSum = 0;
         for(const COutput& out: coins.second) {
             isminetype mine = pwalletMain->IsMine(out.tx->vout[out.i]);
-            bool fMultiSigUTXO = (mine & ISMINE_MULTISIG);
-            // when multisig is enabled, it will only display outputs from multisig addresses
-            if (fMultisigEnabled && !fMultiSigUTXO)
-                continue;
             int nInputSize = 0;
             nSum += out.tx->vout[out.i].nValue;
             nChildren++;
@@ -813,19 +809,7 @@ void CoinControlDialog::updateView()
             itemOutput->setFlags(flgCheckbox);
             itemOutput->setCheckState(COLUMN_CHECKBOX, Qt::Unchecked);
 
-            //MultiSig
-            if (fMultiSigUTXO) {
-                itemOutput->setText(COLUMN_TYPE, "MultiSig");
-
-                if (!fMultisigEnabled) {
-                    COutPoint outpt(out.tx->GetHash(), out.i);
-                    coinControl->UnSelect(outpt); // just to be sure
-                    itemOutput->setDisabled(true);
-                    itemOutput->setIcon(COLUMN_CHECKBOX, QIcon(":/icons/lock_closed"));
-                }
-            } else {
-                itemOutput->setText(COLUMN_TYPE, "Personal");
-            }
+            itemOutput->setText(COLUMN_TYPE, "Personal");
 
             // address
             CTxDestination outputAddress;

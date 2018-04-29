@@ -261,7 +261,7 @@ bool MultisigDialog::addMultisig(int m, vector<string> keys){
 
         ui->addMultisigStatus->setStyleSheet("QLabel { color: black; }");
         ui->addMultisigStatus->setText("Multisignature address " +
-                                       QString::fromStdString(EncodeDestination(CTxDestination(innerID))) +
+                                       QString::fromStdString(EncodeDestination(innerID)) +
                                        " has been added to the wallet.\nSend the redeem below for other owners to import:\n" +
                                        QString::fromStdString(redeem.ToString()));
     }catch(const runtime_error& e) {
@@ -807,8 +807,8 @@ bool MultisigDialog::createRedeemScript(int m, vector<string> vKeys, CScript& re
             // Case 1: Phore address and we have full public key:
             if (pwalletMain && IsValidDestinationString(keyString)) {
                 CTxDestination address = DecodeDestination(keyString);
-                CKeyID keyID = boost::get<CKeyID>(&address);
-                if (!address.GetKeyID(keyID)) {
+                CKeyID keyID = GetKeyForDestination(*pwalletMain, address);
+                if (keyID.IsNull()) {
                     throw runtime_error(
                         strprintf("%s does not refer to a key", keyString));
                 }
