@@ -178,6 +178,37 @@ bool CalculateAccumulatorCheckpoint(int nHeight, uint256& nCheckpoint, Accumulat
         }
     }
 
+    if (nHeight == Params().Zerocoin_LastOldParams() + 1) {
+        mapAccumulators.SetZerocoinParams(GetZerocoinParams(nHeight));
+        
+        CBlockIndex *pindex = chainActive[Params().Zerocoin_StartHeight()]; // we should accumulate all coins instead
+
+        LogPrintf("Recalculating accumulators starting at block %d, ending at block %d using new modulus\n", Params().Zerocoin_StartHeight(), nHeight - 10);
+
+        while (pindex->nHeight < nHeight - 10) {
+            //grab mints from this block
+            CBlock block;
+            if(!ReadBlockFromDisk(block, pindex)) {
+                return error("%s: failed to read block from disk\n", __func__);
+            }
+
+            std::list<PublicCoin> listPubcoins;
+            if (!BlockToPubcoinList(block, listPubcoins, nHeight)) {
+                return error("%s: failed to get zerocoin mintlist from block %d\n", __func__, pindex->nHeight);
+            }
+
+            LogPrint("zero", "%s found %d mints\n", __func__, listPubcoins.size());
+
+            //add the pubcoins to accumulator
+            for (const PublicCoin pubcoin : listPubcoins) {
+                if(!mapAccumulators.Accumulate(pubcoin, true)) {
+                    return error("%s: failed to add pubcoin to accumulator at height %n\n", __func__, pindex->nHeight);
+                }
+            }
+            pindex = chainActive.Next(pindex);
+        }
+    }
+
     //Accumulate all coins over the last ten blocks that havent been accumulated (height - 20 through height - 11)
     int nTotalMintsFound = 0;
     CBlockIndex *pindex = chainActive[nHeight - 20];

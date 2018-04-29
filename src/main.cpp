@@ -1265,7 +1265,7 @@ bool ContextualCheckCoinSpend(const CoinSpend& spend, CBlockIndex* pindex, const
 {
     // Make sure that the serial number is in valid range
     if (pindex->nHeight >= Params().Zerocoin_Block_EnforceSerialRange()) {
-        if (!spend.HasValidSerial(Params().Zerocoin_Params()))
+        if (!spend.HasValidSerial(GetZerocoinParams(pindex->nHeight)))
             return error("%s : txid=%s in block %d contains invalid serial %s\n", __func__, txid.GetHex(),
                          pindex->nHeight, spend.getCoinSerialNumber());
     }

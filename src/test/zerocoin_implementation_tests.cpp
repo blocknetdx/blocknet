@@ -172,6 +172,17 @@ bool CheckZerocoinSpendNoDB(const CTransaction tx, string& strError)
     return fValidated;
 }
 
+BOOST_AUTO_TEST_CASE(zerocoinparams_test)
+{
+    ZerocoinParams* params = Params().Zerocoin_Params();
+
+    CBigNum modulus = params->accumulatorParams.accumulatorModulus;
+
+    for(int i = 2; i < 100000; i++) {
+        BOOST_CHECK_MESSAGE(modulus % CBigNum(i) != 0, "modulus divisible by " << std::to_string(i) << ", modulo = " << (modulus % CBigNum(i)).ToString());
+    }
+}
+
 BOOST_AUTO_TEST_CASE(checkzerocoinspend_test)
 {
     cout << "Running check_zerocoinspend_test...\n";
