@@ -87,4 +87,11 @@ uint256 AccumulatorMap::GetCheckpoint()
     return nCheckpoint;
 }
 
+libzerocoin::ZerocoinParams* AccumulatorMap::GetZerocoinParams() {
+    return params;
+}
 
+void AccumulatorMap::SetZerocoinParams(libzerocoin::ZerocoinParams* newParams) {
+    params = newParams;
+    Reset();
+}

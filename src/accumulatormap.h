@@ -18,6 +18,8 @@ public:
     bool Load(uint256 nCheckpoint);
     bool Accumulate(libzerocoin::PublicCoin pubCoin, bool fSkipValidation = false);
     CBigNum GetValue(libzerocoin::CoinDenomination denom);
+    libzerocoin::ZerocoinParams* GetZerocoinParams();
+    void SetZerocoinParams(libzerocoin::ZerocoinParams* params);
     uint256 GetCheckpoint();
     void Reset();
 };
