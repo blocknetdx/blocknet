@@ -39,6 +39,7 @@
 #include <vector>
 
 static const CAmount minBlock = 200;
+static const int confirmations = 3;
 
 //*****************************************************************************
 //*****************************************************************************
@@ -285,13 +286,23 @@ std::string App::sendPacketAndWait(const XRouterPacketPtr & packet, std::string 
     boost::shared_ptr<boost::mutex> m(new boost::mutex());
     boost::shared_ptr<boost::condition_variable> cond(new boost::condition_variable());
     boost::mutex::scoped_lock lock(*m);
+    queriesLocks[id] = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m, cond);
     sendPacket(packet, currency);
 
-    queriesLocks[id] = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m, cond);
     if(!cond->timed_wait(lock, boost::posix_time::milliseconds(timeout))) {
         return "Failed to get response";
     } else {
-        return queries[id];
+        for (uint i = 0; i < queries[id].size(); i++) {
+            std::string cand = queries[id][i];
+            int cnt = 0;
+            for (uint j = 0; j < queries[id].size(); j++)
+                if (queries[id][j] == cand) {
+                    cnt++;
+                    if (cnt > confirmations / 2)
+                        return cand;
+                }
+        }
+        return "No consensus between responses";
     }
 }
 
@@ -322,6 +333,8 @@ void App::Impl::onSend(const std::vector<unsigned char>& id, const std::vector<u
         for (CNode* pnode : vNodes) {
             pnode->PushMessage("xrouter", msg);
         }
+        
+        return;
     }
     
     for (CNode* pnode : vNodes) {
@@ -811,8 +824,11 @@ bool App::processReply(XRouterPacketPtr packet) {
     std::cout << uuid << " " << reply << std::endl;
     // TODO: check uuid is in queriesLock keys
     boost::mutex::scoped_lock l(*queriesLocks[uuid].first);
-    queries[uuid] = reply;
-    queriesLocks[uuid].second->notify_all();
+    if (!queries.count(uuid))
+        queries[uuid] = vector<std::string>();
+    queries[uuid].push_back(reply);
+    if (queries[uuid].size() == confirmations)
+        queriesLocks[uuid].second->notify_all();
     return true;
 }
 

@@ -39,7 +39,7 @@ private:
     std::unique_ptr<Impl> m_p;
 
     boost::container::map<std::string, std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> > > queriesLocks;
-    boost::container::map<std::string, std::string> queries;
+    boost::container::map<std::string, std::vector<std::string> > queries;
 
 public:
     /**
