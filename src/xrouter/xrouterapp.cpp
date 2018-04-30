@@ -822,7 +822,11 @@ bool App::processReply(XRouterPacketPtr packet) {
     std::string reply((const char *)packet->data()+offset);
     offset += reply.size() + 1;
     std::cout << uuid << " " << reply << std::endl;
-    // TODO: check uuid is in queriesLock keys
+    
+    // check uuid is in queriesLock keys
+    if (!queriesLocks.count(uuid))
+        return true;
+    
     boost::mutex::scoped_lock l(*queriesLocks[uuid].first);
     if (!queries.count(uuid))
         queries[uuid] = vector<std::string>();
