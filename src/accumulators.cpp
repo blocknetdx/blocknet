@@ -213,6 +213,8 @@ bool CalculateAccumulatorCheckpoint(int nHeight, uint256& nCheckpoint, Accumulat
     int nTotalMintsFound = 0;
     CBlockIndex *pindex = chainActive[nHeight - 20];
 
+    LogPrintf("accumulating from %d to %d\n", pindex->nHeight, nHeight - 10);
+
     while (pindex->nHeight < nHeight - 10) {
         // checking whether we should stop this process due to a shutdown request
         if (ShutdownRequested()) {

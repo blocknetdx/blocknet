@@ -115,7 +115,6 @@ public:
     int LAST_POW_BLOCK() const { return nLastPOWBlock; }
     int Zerocoin_StartHeight() const { return nZerocoinStartHeight; }
     int Zerocoin_Block_EnforceSerialRange() const { return nBlockEnforceSerialRange; }
-    int Zerocoin_StartTime() const { return nZerocoinStartTime; }
     int Zerocoin_LastOldParams() const { return nZerocoinLastOldParams; }
 
 protected:
@@ -170,7 +169,6 @@ protected:
     int nZerocoinHeaderVersion;
     int64_t nBudget_Fee_Confirmations;
     int nZerocoinStartHeight;
-    int nZerocoinStartTime;
     int nBlockEnforceSerialRange;
     int nZerocoinLastOldParams;
 };
