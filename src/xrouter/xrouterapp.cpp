@@ -21,6 +21,7 @@
 
 #include "json/json_spirit_reader_template.h"
 #include "json/json_spirit_writer_template.h"
+#include "json/json_spirit_utils.h"
 #include <assert.h>
 
 #include <boost/chrono/chrono.hpp>
@@ -516,7 +517,7 @@ static Value getResult(Object obj) {
             return obj[i].value_;
         }    
     }
-    return Object();
+    return Value();
 }
 
 static bool getResultOrError(Object obj, Value& res) {
@@ -577,16 +578,17 @@ bool App::processGetTransaction(XRouterPacketPtr packet) {
 
 static double parseVout(Value vout, std::string account) {
     double result = 0.0;
-    mValue voutjmap;
-    json_spirit::read_string(json_spirit::write_string(Value(vout), true), voutjmap);
-    mObject voutj = voutjmap.get_obj();
-    mObject src = voutj.find("scriptPubKey")->second.get_obj();
-    mArray addr = mValue(src.find("addresses")->second).get_array();
+    double val = find_value(vout.get_obj(), "value").get_real();
+    Object src = find_value(vout.get_obj(), "scriptPubKey").get_obj();
+    const Value & addr_val = find_value(src, "addresses");
+    if (addr_val.is_null())
+        return 0.0;
+    Array addr = addr_val.get_array();
     
     for (uint k = 0; k != addr.size(); k++ ) {
-        std::string cur_addr = mValue(addr[k]).get_str();
+        std::string cur_addr = Value(addr[k]).get_str();
         if (cur_addr == account)
-            result += mValue(voutj.find("value")->second).get_real();
+            result += val;
     }
     
     return result;
@@ -594,39 +596,25 @@ static double parseVout(Value vout, std::string account) {
 
 static double getBalanceChange(xbridge::WalletConnectorPtr conn, Object tx, std::string account) {
     double result = 0.0;
-    for (Object::size_type i = 0; i != tx.size(); i++ ) {
-        if (tx[i].name_ == "vout") {
-            Array vout = Value(tx[i].value_).get_array();
-            for (uint j = 0; j != vout.size(); i++ ) {
-                result += parseVout(vout[j], account);
-            }
-        }
-        
-        if (tx[i].name_ == "vin") {
-            Array vin = Value(tx[i].value_).get_array();
-            for (uint j = 0; j != vin.size(); i++ ) {
-                std::string txid;
-                int voutid;
-                Object vinj = vin[j].get_obj();
-                for (Object::size_type k = 0; k != vinj.size(); k++ ) {
-                    if (vinj[k].name_ == "txid")
-                        txid = Value(vinj[k].value_).get_str();
-                    if (vinj[k].name_ == "vout")
-                        voutid = Value(vinj[k].value_).get_int();
-                }
-                
-                Array c { Value(txid) };
-                std::string txdata = Value(conn->executeRpcCall("getrawtransaction", c)).get_str();
-                Array d { Value(txdata) };
-                Object prev_tx = conn->executeRpcCall("decoderawtransaction", d);
-                for (Object::size_type i = 0; i != prev_tx.size(); i++ ) {
-                    if (prev_tx[i].name_ == "vout") {
-                        Array prev_vouts = Value(prev_tx[i].value_).get_array();
-                        result -= parseVout(prev_vouts[voutid], account);
-                    }
-                }
-            }
-        }
+
+    Array vout = find_value(tx, "vout").get_array();
+    for (uint j = 0; j != vout.size(); j++ ) {
+        result += parseVout(vout[j], account);
+    }
+
+    Array vin = find_value(tx, "vin").get_array();
+    for (uint j = 0; j != vin.size(); j++ ) {
+        const Value& txid_val = find_value(vin[j].get_obj(), "txid");
+        if (txid_val.is_null())
+            continue;
+        std::string txid = txid_val.get_str();
+        int voutid = find_value(vin[j].get_obj(), "vout").get_int();
+        Array c { Value(txid) };
+        std::string txdata = getResult(conn->executeRpcCall("getrawtransaction", c)).get_str();
+        Array d { Value(txdata) };
+        Object prev_tx = getResult(conn->executeRpcCall("decoderawtransaction", d)).get_obj();
+        Array prev_vouts = find_value(prev_tx, "vout").get_array();
+        result -= parseVout(prev_vouts[voutid], account);
     }
     
     return result;
@@ -688,26 +676,21 @@ bool App::processGetAllTransactions(XRouterPacketPtr packet) {
     {
         Value res = getResult(conn->executeRpcCall("getblockcount", Array()));
         int blockcount = res.get_int();
-        Value res_val;
         for (int id = number; id <= blockcount; id++) {
             Array a { Value(id) };
-            std::string hash = Value(conn->executeRpcCall("getblockhash", a)).get_str();
+            std::string hash = getResult(conn->executeRpcCall("getblockhash", a)).get_str();
             Array b { Value(hash) };
-            Object block = conn->executeRpcCall("getblock", b);
-            for (Object::size_type i = 0; i != block.size(); i++ ) {
-                if(block[i].name_ == "tx") {
-                    Array txs = block[i].value_.get_array();
-                    for (uint j = 0; j < txs.size(); i++) {
-                        std::string txid = Value(txs[i]).get_str();
-                        Array c { Value(txid) };
-                        std::string txdata = Value(conn->executeRpcCall("getrawtransaction", c)).get_str();
-                        Array d { Value(txdata) };
-                        Object tx = conn->executeRpcCall("decoderawtransaction", d);
-                        if (getBalanceChange(conn, tx, account) != 0.0)
-                            result.push_back(Value(tx));
-                    }
-                    break;
-                }
+            Object block = getResult(conn->executeRpcCall("getblock", b)).get_obj();
+            Array txs = find_value(block, "tx").get_array();
+            std::cout << "block " << id << " " << txs.size() << std::endl;
+            for (uint j = 0; j < txs.size(); j++) {
+                std::string txid = Value(txs[j]).get_str();
+                Array c { Value(txid) };
+                std::string txdata = getResult(conn->executeRpcCall("getrawtransaction", c)).get_str();
+                Array d { Value(txdata) };
+                Object tx = getResult(conn->executeRpcCall("decoderawtransaction", d)).get_obj();
+                if (getBalanceChange(conn, tx, account) != 0.0)
+                    result.push_back(Value(tx));
             }
         }
     }
@@ -738,31 +721,26 @@ bool App::processGetBalance(XRouterPacketPtr packet) {
     double result = 0.0;
     if (conn)
     {
-        Object res = conn->executeRpcCall("getblockcount", Array());
-        int blockcount = Value(res).get_int();
-        Value res_val;
+        Value res = getResult(conn->executeRpcCall("getblockcount", Array()));
+        int blockcount = res.get_int();
         for (int id = 0; id <= blockcount; id++) {
             Array a { Value(id) };
-            std::string hash = Value(conn->executeRpcCall("getblockhash", a)).get_str();
+            std::string hash = getResult(conn->executeRpcCall("getblockhash", a)).get_str();
             Array b { Value(hash) };
-            Object block = conn->executeRpcCall("getblock", b);
-            for (Object::size_type i = 0; i != block.size(); i++ ) {
-                if(block[i].name_ == "tx") {
-                    Array txs = block[i].value_.get_array();
-                    for (uint j = 0; j < txs.size(); i++) {
-                        std::string txid = Value(txs[i]).get_str();
-                        Array c { Value(txid) };
-                        std::string txdata = Value(conn->executeRpcCall("getrawtransaction", c)).get_str();
-                        Array d { Value(txdata) };
-                        Object tx = conn->executeRpcCall("decoderawtransaction", d);
-                        result += getBalanceChange(conn, tx, account);
-                    }
-                    break;
-                }
+            Object block = getResult(conn->executeRpcCall("getblock", b)).get_obj();
+            Array txs = find_value(block, "tx").get_array();
+            std::cout << "block " << id << " " << txs.size() << std::endl;
+            for (uint j = 0; j < txs.size(); j++) {
+                std::string txid = Value(txs[j]).get_str();
+                Array c { Value(txid) };
+                std::string txdata = getResult(conn->executeRpcCall("getrawtransaction", c)).get_str();
+                Array d { Value(txdata) };
+                Object tx = getResult(conn->executeRpcCall("decoderawtransaction", d)).get_obj();
+                result += getBalanceChange(conn, tx, account);
             }
         }
     }
-
+    
     XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
 
     rpacket->append(uuid);
@@ -909,7 +887,7 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
         packet->append(param2);
     packet->sign(key);
     
-    return sendPacketAndWait(packet, id, currency);
+    return sendPacketAndWait(packet, id, currency, 300000);
 }
 
 std::string App::getBlockCount(const std::string & currency)
