@@ -41,7 +41,7 @@ enum XRouterCommand
     xrGetAllBlocks = 6,
     xrGetAllTransactions = 7,
     xrGetBalance = 8,
-    xrUpdateBalance = 9
+    xrGetBalanceUpdate = 9
     
 };
 

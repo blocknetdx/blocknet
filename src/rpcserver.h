@@ -628,6 +628,7 @@ extern json_spirit::Value xrGetTransaction(const json_spirit::Array& params, boo
 extern json_spirit::Value xrGetAllBlocks(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrGetAllTransactions(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrGetBalance(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value xrGetBalanceUpdate(const json_spirit::Array& params, bool fHelp);
 
 /** @} */
 

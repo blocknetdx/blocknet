@@ -750,6 +750,52 @@ bool App::processGetBalance(XRouterPacketPtr packet) {
     return true;
 }
 
+bool App::processGetBalanceUpdate(XRouterPacketPtr packet) {
+    uint32_t offset = 36;
+
+    std::string uuid((const char *)packet->data()+offset);
+    offset += uuid.size() + 1;
+    std::string currency((const char *)packet->data()+offset);
+    offset += currency.size() + 1;
+    std::string account((const char *)packet->data()+offset);
+    offset += account.size() + 1;
+    std::string number_s((const char *)packet->data()+offset);
+    offset += number_s.size() + 1;
+    std::cout << uuid << " "<< currency << " " << number_s << std::endl;
+    int number = std::stoi(number_s);
+    
+    xbridge::WalletConnectorPtr conn = connectorByCurrency(currency);
+    double result = 0.0;
+    if (conn)
+    {
+        Value res = getResult(conn->executeRpcCall("getblockcount", Array()));
+        int blockcount = res.get_int();
+        for (int id = number; id <= blockcount; id++) {
+            Array a { Value(id) };
+            std::string hash = getResult(conn->executeRpcCall("getblockhash", a)).get_str();
+            Array b { Value(hash) };
+            Object block = getResult(conn->executeRpcCall("getblock", b)).get_obj();
+            Array txs = find_value(block, "tx").get_array();
+            std::cout << "block " << id << " " << txs.size() << std::endl;
+            for (uint j = 0; j < txs.size(); j++) {
+                std::string txid = Value(txs[j]).get_str();
+                Array c { Value(txid) };
+                std::string txdata = getResult(conn->executeRpcCall("getrawtransaction", c)).get_str();
+                Array d { Value(txdata) };
+                Object tx = getResult(conn->executeRpcCall("decoderawtransaction", d)).get_obj();
+                result += getBalanceChange(conn, tx, account);
+            }
+        }
+    }
+    
+    XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
+
+    rpacket->append(uuid);
+    rpacket->append(std::to_string(result));
+    sendPacket(rpacket);
+
+    return true;
+}
 
 //*****************************************************************************
 //*****************************************************************************
@@ -818,6 +864,9 @@ void App::onMessageReceived(const std::vector<unsigned char>& id,
         break;
       case xrGetBalance:
         processGetBalance(packet);
+        break;
+      case xrGetBalanceUpdate:
+        processGetBalanceUpdate(packet);
         break;
       case xrReply:
         processReply(packet);
@@ -923,5 +972,10 @@ std::string App::getAllTransactions(const std::string & currency, const std::str
 std::string App::getBalance(const std::string & currency, const std::string & account)
 {
     return this->xrouterCall(xrGetBalance, currency, account);
+}
+
+std::string App::getBalanceUpdate(const std::string & currency, const std::string & account, const std::string & number)
+{
+    return this->xrouterCall(xrGetBalanceUpdate, currency, account, number);
 }
 } // namespace xrouter
