@@ -1661,11 +1661,11 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
         CAmount nFees = nValueIn - nValueOut;
         double dPriority = view.GetPriority(tx, chainActive.Height());
 
-        CTxMemPoolEntry entry(tx, nFees, GetTime(), dPriority, chainActive.Height());
+        CTxMemPoolEntry entry(tx, nFees, GetTime(), dPriority, chainActive.Height(), nSigOpsCost);
 
         unsigned int nSize = entry.GetTxSize();
 
-        if ((nSigOpsCost > MAX_STANDARD_TX_SIGOPS_COST) || (nBytesPerSigOp && nSigOpsCost > nSize * WITNESS_SCALE_FACTOR / nBytesPerSigOp))
+        if ((nSigOpsCost > MAX_STANDARD_TX_SIGOPS_COST) || (nBytesPerSigOp && nSigOpsCost > nSize * WITNESS_SCALE_FACTOR / nBytesPerSigOp && !tx.ContainsZerocoins()))
             return state.DoS(0, false, REJECT_NONSTANDARD, "bad-txns-too-many-sigops");
 
         // Don't accept it if it can't get into a block
@@ -1907,7 +1907,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState& state, const CTransact
         CAmount nFees = nValueIn - nValueOut;
         double dPriority = view.GetPriority(tx, chainActive.Height());
 
-        CTxMemPoolEntry entry(tx, nFees, GetTime(), dPriority, chainActive.Height());
+        CTxMemPoolEntry entry(tx, nFees, GetTime(), dPriority, chainActive.Height(), nSigOpsCost);
 
         unsigned int nSize = entry.GetTxSize();
 
@@ -3908,17 +3908,6 @@ bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, bool f
         return state.DoS(50, error("CheckBlockHeader() : proof of work failed"),
             REJECT_INVALID, "high-hash");
 
-    // Version 4 header must be used after Params().Zerocoin_StartHeight(). And never before.
-    if (block.GetBlockTime() > Params().Zerocoin_StartTime()) {
-        if(block.nVersion < Params().Zerocoin_HeaderVersion())
-            return state.DoS(50, error("CheckBlockHeader() : block version must be above 4 after ZerocoinStartHeight"),
-            REJECT_INVALID, "block-version");
-    } else {
-        if (block.nVersion >= Params().Zerocoin_HeaderVersion())
-            return state.DoS(50, error("CheckBlockHeader() : block version must be below 4 before ZerocoinStartHeight"),
-            REJECT_INVALID, "block-version");
-    }
-
     return true;
 }
 
@@ -4035,27 +4024,6 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
         } else {
             if (fDebug)
                 LogPrintf("CheckBlock(): Masternode payment check skipped on sync - skipping IsBlockPayeeValid()\n");
-        }
-    }
-
-    // Check transactions
-    bool fZerocoinActive = block.GetBlockTime() > Params().Zerocoin_StartTime();
-    vector<CBigNum> vBlockSerials;
-    for (const CTransaction& tx : block.vtx) {
-        if (!CheckTransaction(tx, fZerocoinActive, chainActive.Height() + 1 >= Params().Zerocoin_Block_EnforceSerialRange(), state, GetZerocoinParams(chainActive.Height() + 1), GetSporkValue(SPORK_17_SEGWIT_ACTIVATION) < block.nTime))
-            return error("CheckBlock() : CheckTransaction failed");
-
-        // double check that there are no double spent zPhr spends in this block
-        if (tx.IsZerocoinSpend()) {
-            for (const CTxIn txIn : tx.vin) {
-                if (txIn.scriptSig.IsZerocoinSpend()) {
-                    libzerocoin::CoinSpend spend = TxInToZerocoinSpend(txIn, chainActive.Height() + 1);
-                    if (count(vBlockSerials.begin(), vBlockSerials.end(), spend.getCoinSerialNumber()))
-                        return state.DoS(100, error("%s : Double spending of zPhr serial %s in block\n Block: %s",
-                                                    __func__, spend.getCoinSerialNumber().GetHex(), block.ToString()));
-                    vBlockSerials.emplace_back(spend.getCoinSerialNumber());
-                }
-            }
         }
     }
 
@@ -4237,6 +4205,36 @@ bool IsTransactionInChain(uint256 txId, int& nHeightTx)
 bool ContextualCheckBlock(const CBlock& block, CValidationState& state, CBlockIndex* const pindexPrev)
 {
     const int nHeight = pindexPrev == NULL ? 0 : pindexPrev->nHeight + 1;
+
+    // Version 4 header must be used after Params().Zerocoin_StartHeight(). And never before.
+    if (nHeight > Params().Zerocoin_StartHeight()) {
+        if(block.nVersion < Params().Zerocoin_HeaderVersion())
+            return state.DoS(50, error("CheckBlockHeader() : block version must be above 4 after ZerocoinStartHeight"),
+            REJECT_INVALID, "block-version");
+        
+        vector<CBigNum> vBlockSerials;
+        for (const CTransaction& tx : block.vtx) {
+            if (!CheckTransaction(tx, true, chainActive.Height() + 1 >= Params().Zerocoin_Block_EnforceSerialRange(), state, GetZerocoinParams(chainActive.Height() + 1), GetSporkValue(SPORK_17_SEGWIT_ACTIVATION) < block.nTime))
+                return error("CheckBlock() : CheckTransaction failed");
+
+            // double check that there are no double spent zPhr spends in this block
+            if (tx.IsZerocoinSpend()) {
+                for (const CTxIn txIn : tx.vin) {
+                    if (txIn.scriptSig.IsZerocoinSpend()) {
+                        libzerocoin::CoinSpend spend = TxInToZerocoinSpend(txIn, chainActive.Height() + 1);
+                        if (count(vBlockSerials.begin(), vBlockSerials.end(), spend.getCoinSerialNumber()))
+                            return state.DoS(100, error("%s : Double spending of zPHR serial %s in block\n Block: %s",
+                                                        __func__, spend.getCoinSerialNumber().GetHex(), block.ToString()));
+                        vBlockSerials.emplace_back(spend.getCoinSerialNumber());
+                    }
+                }
+            }
+        }
+    } else {
+        if (block.nVersion >= Params().Zerocoin_HeaderVersion())
+            return state.DoS(50, error("CheckBlockHeader() : block version must be below 4 before ZerocoinStartHeight"),
+            REJECT_INVALID, "block-version");
+    }
 
     // Check that all transactions are finalized
     BOOST_FOREACH (const CTransaction& tx, block.vtx)
