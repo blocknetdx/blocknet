@@ -567,6 +567,8 @@ void CTxMemPool::check(const CCoinsViewCache* pcoins) const
         const CTransaction& tx = it->second.GetTx();
         bool fDependsWait = false;
         BOOST_FOREACH (const CTxIn& txin, tx.vin) {
+            if (tx.IsZerocoinSpend())
+                continue;
             // Check that every mempool transaction's inputs refer to available coins, or other mempool tx's.
             std::map<uint256, CTxMemPoolEntry>::const_iterator it2 = mapTx.find(txin.prevout.hash);
             if (it2 != mapTx.end()) {

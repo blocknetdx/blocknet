@@ -254,11 +254,15 @@ double CCoinsViewCache::GetPriority(const CTransaction& tx, int nHeight) const
         return 0.0;
     double dResult = 0.0;
     for (const CTxIn& txin:  tx.vin) {
-        const CCoins* coins = AccessCoins(txin.prevout.hash);
-        assert(coins);
-        if (!coins->IsAvailable(txin.prevout.n)) continue;
-        if (coins->nHeight < nHeight) {
-            dResult += coins->vout[txin.prevout.n].nValue * (nHeight - coins->nHeight);
+        if (!tx.IsZerocoinSpend()) {
+            const CCoins* coins = AccessCoins(txin.prevout.hash);
+            assert(coins);
+            if (!coins->IsAvailable(txin.prevout.n)) continue;
+            if (coins->nHeight < nHeight) {
+                dResult += coins->vout[txin.prevout.n].nValue * (nHeight - coins->nHeight); // value * age
+            }
+        } else {
+            dResult += tx.GetZerocoinSpent(); // we do not know the age of a zerocoin tx
         }
     }
     return tx.ComputePriority(dResult);
