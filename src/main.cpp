@@ -836,7 +836,7 @@ int64_t GetTransactionSigOpCost(const CTransaction& tx, const CCoinsViewCache& i
 {
     int64_t nSigOps = GetLegacySigOpCount(tx) * WITNESS_SCALE_FACTOR;
 
-    if (tx.IsCoinBase())
+    if (tx.IsCoinBase() || tx.ContainsZerocoins())
         return nSigOps;
 
     if (flags & SCRIPT_VERIFY_P2SH) {
@@ -2774,6 +2774,7 @@ bool ReindexAccumulators(list<uint256>& listMissingCheckpoints, string& strError
 bool UpdateZPHRSupply(const CBlock& block, CBlockIndex* pindex)
 {
     std::list<CZerocoinMint> listMints;
+    BlockToZerocoinMintList(block, listMints, pindex->nHeight);
     std::list<libzerocoin::CoinDenomination> listSpends = ZerocoinSpendListFromBlock(block);
 
     // Initialize zerocoin supply to the supply from previous block
@@ -3007,6 +3008,8 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
         UpdateCoins(tx, state, view, i == 0 ? undoDummy : blockundo.vtxundo.back(), pindex->nHeight);
         pos.nTxOffset += ::GetSerializeSize(tx, SER_DISK, CLIENT_VERSION);
     }
+
+    UpdateZPHRSupply(block, pindex);
 
     // track money supply and mint amount info
     CAmount nMoneySupplyPrev = pindex->pprev ? pindex->pprev->nMoneySupply : 0;
