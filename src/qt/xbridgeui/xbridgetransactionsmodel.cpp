@@ -326,7 +326,6 @@ void XBridgeTransactionsModel::onTimer()
                   m_transactions[i]->state == xbridge::TransactionDescr::trOffline) &&
                  td.total_seconds() > xbridge::Transaction::TTL)
         {
-            m_transactions[i]->state = xbridge::TransactionDescr::trRemoved;
             emit beginRemoveRows(QModelIndex(), i, i);
             m_transactions.erase(m_transactions.begin()+i);
             emit endRemoveRows();
