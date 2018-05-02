@@ -24,6 +24,7 @@
 #include "xbridgewalletconnectorsys.h"
 
 #include <assert.h>
+#include <numeric>
 
 #include <boost/chrono/chrono.hpp>
 #include <boost/thread/thread.hpp>
@@ -1436,21 +1437,22 @@ bool App::selectUtxos(const std::string &addr, const std::vector<wallet::UtxoEnt
                       uint64_t &fee1, uint64_t &fee2) const
 {
 
-    auto getUtxos = [&connFrom, &requiredAmount, &outputsForUse, &utxoAmount, &fee1, &fee2](const std::vector<wallet::UtxoEntry> & outputsForSelection) -> bool
+    auto getUtxos = [&connFrom, &requiredAmount, &outputsForUse, &utxoAmount, &fee1, &fee2](const std::vector<wallet::UtxoEntry> & o) -> bool
     {
         fee2 = connFrom->minTxFee2(1, 1) * TransactionDescr::COIN;
 
-        if(outputsForSelection.empty())
+        if(o.empty())
         {
             LOG() << "outputs list are empty " << __FUNCTION__;
             return false;
         }
 
         //sort entries from smaller to larger
+        std::vector<wallet::UtxoEntry> outputsForSelection = o;
         std::sort(outputsForSelection.begin(), outputsForSelection.end(),
-            [](const wallet::UtxoEntry & a, const wallet::UtxoEntry & b) {
-                return (a.amount) < (b.amount);
-            });
+                  [](const wallet::UtxoEntry a, const wallet::UtxoEntry b) {
+                      return (a.amount) < (b.amount);
+                  });
 
         //one output that larger than target value
         std::vector<wallet::UtxoEntry> greaterThanTargetOutput;
@@ -1631,10 +1633,7 @@ bool App::selectUtxos(const std::string &addr, const std::vector<wallet::UtxoEnt
         return true;
 
     //try to fill outputs from any address
-    if(getUtxos(outputs))
-        return true;
-
-    return false;
+    return getUtxos(outputs);
 }
 
 //******************************************************************************
