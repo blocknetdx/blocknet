@@ -1216,10 +1216,11 @@ bool BtcWalletConnector::sendRawTransaction(const std::string & rawtx,
     if (!rpc::sendRawTransaction(m_user, m_passwd, m_ip, m_port,
                                  rawtx, txid, errorCode, message))
     {
-        LOG() << "rpc::createRawTransaction failed, error code: "
+        LOG() << "rpc::sendRawTransaction failed, error code: <"
               << errorCode
-              << " message: "
+              << "> message: '"
               << message
+              << "' "
               << __FUNCTION__;
         return false;
     }
@@ -1399,7 +1400,7 @@ uint32_t BtcWalletConnector::lockTime(const char role) const
 
         if (!rpc::getinfo(m_user, m_passwd, m_ip, m_port, info))
         {
-            WARN() << "init error: both calls of getblockchaininfo and getinfo failed " << __FUNCTION__;
+            WARN() << "both calls of getblockchaininfo and getinfo failed " << __FUNCTION__;
             return 0;
         }
     }

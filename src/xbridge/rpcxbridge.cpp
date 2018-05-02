@@ -879,6 +879,7 @@ Value dxCancelOrder(const Array &params, bool fHelp)
     obj.emplace_back(Pair("taker", tx->toCurrency));
     obj.emplace_back(Pair("taker_size", util::xBridgeStringValueFromAmount(tx->toAmount)));
     obj.emplace_back(Pair("taker_address", connTo->fromXAddr(tx->to)));
+    obj.emplace_back(Pair("refund_tx", tx->refTx));
 
     obj.emplace_back(Pair("updated_at", util::iso8601(tx->txtime)));
     obj.emplace_back(Pair("created_at", util::iso8601(tx->created)));
@@ -1458,17 +1459,16 @@ json_spirit::Value dxGetMyOrders(const json_spirit::Array& params, bool fHelp)
 //******************************************************************************
 json_spirit::Value  dxGetTokenBalances(const json_spirit::Array& params, bool fHelp)
 {
-    if (fHelp) {
-
+    if (fHelp)
+    {
         throw runtime_error("dxGetTokenBalances\n"
                             "List of connected wallet balances. These balances do not include orders that are using \n"
                             "locked utxos to support a pending or open order. The DX works best with presliced utxos \n"
                             "so that your entire wallet balance is capable of multiple simultaneous trades.");
-
     }
 
-    if (params.size() != 0) {
-
+    if (params.size() != 0)
+    {
         Object error;
         error.emplace_back(Pair("error",
                                             xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS,
@@ -1476,25 +1476,23 @@ json_spirit::Value  dxGetTokenBalances(const json_spirit::Array& params, bool fH
         error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
         error.emplace_back(Pair("name",     __FUNCTION__));
         return  error;
-
     }
 
     Object res;
 
     // Wallet balance
-    res.emplace_back("Wallet", util::xBridgeStringValueFromPrice(pwalletMain->GetBalance()/COIN));
+    double walletBalance = boost::numeric_cast<double>(pwalletMain->GetBalance()) / boost::numeric_cast<double>(COIN);
+    res.emplace_back("Wallet", util::xBridgeStringValueFromPrice(walletBalance));
 
     // Add connected wallet balances
     const auto &connectors = xbridge::App::instance().connectors();
-    for(const auto &connector : connectors) {
-
+    for(const auto &connector : connectors)
+    {
         const auto balance = connector->getWalletBalance();
-        if(balance >= 0) {//ignore not connected wallets
 
+        //ignore not connected wallets
+        if(balance >= 0)
             res.emplace_back(connector->currency, util::xBridgeStringValueFromPrice(balance));
-
-        }
-
     }
 
     return res;

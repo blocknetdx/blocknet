@@ -92,7 +92,7 @@ Transaction::State Transaction::increaseStateCounter(const Transaction::State st
                                                      const std::vector<unsigned char> & from)
 {
     LOG() << "confirm transaction state <" << strState(state)
-          << "> from " << util::to_str(from);
+          << "> from " << HexStr(from);
 
     if (state == trJoined && m_state == state)
     {
