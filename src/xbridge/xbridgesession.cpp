@@ -1554,7 +1554,10 @@ bool Session::Impl::processTransactionCreate(XBridgePacketPtr packet)
 
     if (xtx->role == 'B')
     {
-        assert(xtx->xPubKey.size() == 0 && "bad role");
+        if(xtx->xPubKey.size() != 0) {
+            ERR() << "bad role " << __FUNCTION__;
+            return  false;
+        }
 
         // for B need to check A deposit tx
         // check packet length
