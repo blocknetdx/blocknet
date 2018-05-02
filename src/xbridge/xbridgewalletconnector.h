@@ -17,6 +17,24 @@ namespace xbridge
 
 //*****************************************************************************
 //*****************************************************************************
+namespace rpc
+{
+struct WalletInfo
+{
+    double   relayFee;
+    uint32_t blocks;
+
+    WalletInfo()
+        : relayFee(0)
+        , blocks(0)
+    {
+
+    }
+};
+} //namespace rpc
+
+//*****************************************************************************
+//*****************************************************************************
 class WalletConnector : public WalletParam
 {
 public:
@@ -44,6 +62,8 @@ public:
     virtual bool requestAddressBook(std::vector<wallet::AddressBookEntry> & entries) = 0;
 
     double getWalletBalance(const std::string &addr = "") const;
+
+    virtual bool getInfo(rpc::WalletInfo & info) const = 0;
 
     virtual bool getUnspent(std::vector<wallet::UtxoEntry> & inputs) const = 0;
 
