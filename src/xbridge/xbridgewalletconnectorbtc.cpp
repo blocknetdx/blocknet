@@ -1216,10 +1216,11 @@ bool BtcWalletConnector::sendRawTransaction(const std::string & rawtx,
     if (!rpc::sendRawTransaction(m_user, m_passwd, m_ip, m_port,
                                  rawtx, txid, errorCode, message))
     {
-        LOG() << "rpc::createRawTransaction failed, error code: "
+        LOG() << "rpc::sendRawTransaction failed, error code: <"
               << errorCode
-              << " message: "
+              << "> message: '"
               << message
+              << "' "
               << __FUNCTION__;
         return false;
     }

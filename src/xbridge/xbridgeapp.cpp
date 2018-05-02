@@ -22,6 +22,7 @@
 #include "xbridgewalletconnectorbtc.h"
 #include "xbridgewalletconnectorbcc.h"
 #include "xbridgewalletconnectorsys.h"
+#include "xbridgewalletconnectordgb.h"
 
 #include <assert.h>
 
@@ -325,6 +326,11 @@ bool App::Impl::start()
                     conn.reset(new SysWalletConnector);
                     *conn = wp;
                 }
+                else if (wp.method == "DGB")
+                {
+                    conn.reset(new DgbWalletConnector);
+                    *conn = wp;
+                }
 //                else if (wp.method == "RPC")
 //                {
 //                    LOG() << "wp.method RPC not implemented" << __FUNCTION__;
@@ -543,7 +549,7 @@ void App::onMessageReceived(const std::vector<unsigned char> & id,
         return;
     }
 
-    LOG() << "received message to " << util::base64_encode(std::string((char *)&id[0], 20)).c_str()
+    LOG() << "received message to " << HexStr(id)
              << " command " << packet->command();
 
     // check direct session address
@@ -552,7 +558,6 @@ void App::onMessageReceived(const std::vector<unsigned char> & id,
     {
         ptr->processPacket(packet);
     }
-
     else
     {
         {
@@ -560,6 +565,11 @@ void App::onMessageReceived(const std::vector<unsigned char> & id,
             boost::mutex::scoped_lock l(m_p->m_connectorsLock);
             if (m_p->m_connectorAddressMap.count(id))
             {
+                LOG() << "transfer packet to session with currency: "
+                      << m_p->m_connectorAddressMap[id]->currency
+                      << " address: "
+                      << m_p->m_connectorAddressMap[id]->fromXAddr(id);
+
                 ptr = m_p->getSession();
             }
         }
