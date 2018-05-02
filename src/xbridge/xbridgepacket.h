@@ -151,11 +151,10 @@ enum XBridgeCommand
     xbcTransactionHoldApply = 7,
 
     //
-    // xbcTransactionInit (146 bytes min)
+    // xbcTransactionInit (144 bytes min)
     //    uint160 client address
     //    uint160 hub address
     //    uint256 hub transaction id
-    //    uint16_t  role ( 'A' (Alice) or 'B' (Bob) :) )
     //    20 bytes source address
     //    8 bytes source currency
     //    uint64 source amount
