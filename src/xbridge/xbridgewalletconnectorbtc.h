@@ -28,6 +28,8 @@ public:
 public:
     bool requestAddressBook(std::vector<wallet::AddressBookEntry> & entries);
 
+    bool getInfo(rpc::WalletInfo & info) const;
+
     bool getUnspent(std::vector<wallet::UtxoEntry> & inputs) const;
     bool lockCoins(const std::vector<wallet::UtxoEntry> & inputs, const bool lock = true) const;
 
