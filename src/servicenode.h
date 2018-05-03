@@ -28,10 +28,6 @@ using namespace std;
 class CServicenode;
 class CServicenodeBroadcast;
 class CServicenodePing;
-extern map<int64_t, uint256> mapCacheBlockHashes;
-
-bool GetBlockHash(uint256& hash, int nBlockHeight);
-
 
 //
 // The Servicenode Ping Class : Contains a different serialize method for sending pings from servicenodes throughout the network
@@ -164,6 +160,9 @@ public:
     // xbridge wallets list, connected to service node
     std::vector<CServicenodeXWallet> connectedWallets;
 
+    // hash of block collateral + minimum confirmations
+    uint256 nCollateralMinConfBlockHash;
+
     int64_t nLastDsee;  // temporary, do not save. Remove after migration to v12
     int64_t nLastDseep; // temporary, do not save. Remove after migration to v12
 
@@ -196,6 +195,7 @@ public:
         swap(first.nScanningErrorCount, second.nScanningErrorCount);
         swap(first.nLastScanningErrorBlockHeight, second.nLastScanningErrorBlockHeight);
         swap(first.connectedWallets, second.connectedWallets);
+        swap(first.nCollateralMinConfBlockHash, second.nCollateralMinConfBlockHash);
     }
 
     CServicenode& operator=(CServicenode from)
@@ -213,6 +213,7 @@ public:
     }
 
     uint256 CalculateScore(int mod = 1, int64_t nBlockHeight = 0);
+    arith_uint256 CalculateScore2(uint256 &blockHash) const;
 
     ADD_SERIALIZE_METHODS;
 

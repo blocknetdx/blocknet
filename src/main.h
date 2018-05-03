@@ -441,6 +441,12 @@ bool ContextualCheckBlock(const CBlock& block, CValidationState& state, CBlockIn
 /** Check a block is completely valid from start to finish (only works on top of our current best block, with cs_main held) */
 bool TestBlockValidity(CValidationState& state, const CBlock& block, CBlockIndex* pindexPrev, bool fCheckPOW = true, bool fCheckMerkleRoot = true);
 
+/**
+ * Return true if hash can be found in chainActive at nBlockHeight height.
+ * Fills hashRet with found hash, if no nBlockHeight is specified - chainActive.Height() is used.
+ */
+bool GetBlockHash(uint256& hashRet, int nBlockHeight = -1);
+
 /** Store block on disk. If dbp is provided, the file is known to already reside on disk */
 bool AcceptBlock(CBlock& block, CValidationState& state, CBlockIndex** pindex, CDiskBlockPos* dbp = NULL);
 bool AcceptBlockHeader(const CBlockHeader& block, CValidationState& state, CBlockIndex** ppindex = NULL);
