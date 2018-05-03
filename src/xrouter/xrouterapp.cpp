@@ -810,6 +810,27 @@ bool App::processGetBalanceUpdate(XRouterPacketPtr packet) {
     return true;
 }
 
+bool App::processSendTransaction(XRouterPacketPtr packet) {
+    uint32_t offset = 36;
+
+    std::string uuid((const char *)packet->data()+offset);
+    offset += uuid.size() + 1;
+    std::string currency((const char *)packet->data()+offset);
+    offset += currency.size() + 1;
+    std::string transaction((const char *)packet->data()+offset);
+    offset += transaction.size() + 1;
+    
+    std::string result;
+    
+    XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
+
+    rpacket->append(uuid);
+    rpacket->append(result);
+    sendPacket(rpacket);
+
+    return true;
+}
+
 //*****************************************************************************
 //*****************************************************************************
 bool App::processReply(XRouterPacketPtr packet) {
@@ -855,10 +876,10 @@ void App::onMessageReceived(const std::vector<unsigned char>& id,
         return;
     }
     
-    /*if ((packet->command() != xrReply) && !verifyBlockRequirement(packet)) {
+    if ((packet->command() != xrReply) && !verifyBlockRequirement(packet)) {
         std::clog << "Block requirement not satisfied\n";
         return;
-    }*/
+    }
 
     /* std::clog << "received message to " << util::base64_encode(std::string((char*)&id[0], 20)).c_str() */
     /*           << " command " << packet->command(); */
@@ -997,5 +1018,10 @@ std::string App::getBalance(const std::string & currency, const std::string & ac
 std::string App::getBalanceUpdate(const std::string & currency, const std::string & account, const std::string & number)
 {
     return this->xrouterCall(xrGetBalanceUpdate, currency, account, number);
+}
+
+std::string App::sendTransaction(const std::string & currency, const std::string & transaction)
+{
+    return this->xrouterCall(xrSendTransaction, currency, transaction);
 }
 } // namespace xrouter

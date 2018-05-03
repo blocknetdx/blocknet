@@ -387,7 +387,9 @@ static const CRPCCommand vRPCCommands[] =
         {"xrouter", "xrGetAllBlocks",                       &xrGetAllBlocks,             true, true, true},
         {"xrouter", "xrGetAllTransactions",                 &xrGetAllTransactions,       true, true, true},
         {"xrouter", "xrGetBalance",                         &xrGetBalance,               true, true, true},
-        {"xrouter", "xrGetBalanceUpdate",                   &xrGetBalanceUpdate,         true, true, true}
+        {"xrouter", "xrGetBalanceUpdate",                   &xrGetBalanceUpdate,         true, true, true},
+        
+        {"xrouter", "xrSendTransaction",                    &xrSendTransaction,          true, true, true}
     #endif // ENABLE_WALLET
 };
 
