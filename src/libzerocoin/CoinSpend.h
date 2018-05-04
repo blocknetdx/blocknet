@@ -33,9 +33,9 @@ class CoinSpend
 {
 public:
     template <typename Stream>
-    CoinSpend(const ZerocoinParams* p, Stream& strm) : accumulatorPoK(&p->accumulatorParams),
-                                                       serialNumberSoK(p),
-                                                       commitmentPoK(&p->serialNumberSoKCommitmentGroup, &p->accumulatorParams.accumulatorPoKCommitmentGroup)
+    CoinSpend(const ZerocoinParams* paramsAccumulator, const ZerocoinParams* paramsCoin, Stream& strm) : accumulatorPoK(&paramsAccumulator->accumulatorParams),
+                                                                                                         serialNumberSoK(paramsCoin),
+                                                                                                         commitmentPoK(&paramsAccumulator->serialNumberSoKCommitmentGroup, &paramsAccumulator->accumulatorParams.accumulatorPoKCommitmentGroup)
     {
         strm >> *this;
     }
@@ -55,14 +55,15 @@ public:
 	 * 3) that the serial number is unspent
 	 * 4) that the transaction
 	 *
-	 * @param p cryptographic parameters
+	 * @param paramsAccumulator cryptographic parameters to be used for the accumulator
+     * @param paramsCoin cryptographic parameters to be used for the coin
 	 * @param coin The coin to be spend
 	 * @param a The current accumulator containing the coin
 	 * @param witness The witness showing that the accumulator contains the coin
 	 * @param a hash of the partial transaction that contains this coin spend
 	 * @throw ZerocoinException if the process fails
 	 */
-    CoinSpend(const ZerocoinParams* p, const PrivateCoin& coin, Accumulator& a, const uint32_t checksum, const AccumulatorWitness& witness, const uint256& ptxHash);
+    CoinSpend(const ZerocoinParams* paramsAccumulator, const ZerocoinParams* paramsCoin, const PrivateCoin& coin, Accumulator& a, const uint32_t checksum, const AccumulatorWitness& witness, const uint256& ptxHash);
 
     /** Returns the serial number of the coin spend by this proof.
 	 *

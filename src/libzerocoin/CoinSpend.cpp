@@ -14,12 +14,12 @@
 #include <iostream>
 namespace libzerocoin
 {
-CoinSpend::CoinSpend(const ZerocoinParams* p, const PrivateCoin& coin, Accumulator& a, const uint32_t checksum, const AccumulatorWitness& witness, const uint256& ptxHash) : accChecksum(checksum),
+CoinSpend::CoinSpend(const ZerocoinParams* paramsAccumulator, const ZerocoinParams* paramsCoin, const PrivateCoin& coin, Accumulator& a, const uint32_t checksum, const AccumulatorWitness& witness, const uint256& ptxHash) : accChecksum(checksum),
                                                                                                                                                                              ptxHash(ptxHash),
                                                                                                                                                                              coinSerialNumber((coin.getSerialNumber())),
-                                                                                                                                                                             accumulatorPoK(&p->accumulatorParams),
-                                                                                                                                                                             serialNumberSoK(p),
-                                                                                                                                                                             commitmentPoK(&p->serialNumberSoKCommitmentGroup, &p->accumulatorParams.accumulatorPoKCommitmentGroup)
+                                                                                                                                                                             accumulatorPoK(&paramsAccumulator->accumulatorParams),
+                                                                                                                                                                             serialNumberSoK(paramsCoin),
+                                                                                                                                                                             commitmentPoK(&paramsCoin->serialNumberSoKCommitmentGroup, &paramsAccumulator->accumulatorParams.accumulatorPoKCommitmentGroup)
 {
     denomination = coin.getPublicCoin().getDenomination();
     // Sanity check: let's verify that the Witness is valid with respect to
@@ -36,22 +36,22 @@ CoinSpend::CoinSpend(const ZerocoinParams* p, const PrivateCoin& coin, Accumulat
     // Specifically, our serial number proof requires the order of the commitment group
     // to be the same as the modulus of the upper group. The Accumulator proof requires a
     // group with a significantly larger order.
-    const Commitment fullCommitmentToCoinUnderSerialParams(&p->serialNumberSoKCommitmentGroup, coin.getPublicCoin().getValue());
+    const Commitment fullCommitmentToCoinUnderSerialParams(&paramsCoin->serialNumberSoKCommitmentGroup, coin.getPublicCoin().getValue());
     this->serialCommitmentToCoinValue = fullCommitmentToCoinUnderSerialParams.getCommitmentValue();
 
-    const Commitment fullCommitmentToCoinUnderAccParams(&p->accumulatorParams.accumulatorPoKCommitmentGroup, coin.getPublicCoin().getValue());
+    const Commitment fullCommitmentToCoinUnderAccParams(&paramsAccumulator->accumulatorParams.accumulatorPoKCommitmentGroup, coin.getPublicCoin().getValue());
     this->accCommitmentToCoinValue = fullCommitmentToCoinUnderAccParams.getCommitmentValue();
 
     // 2. Generate a ZK proof that the two commitments contain the same public coin.
-    this->commitmentPoK = CommitmentProofOfKnowledge(&p->serialNumberSoKCommitmentGroup, &p->accumulatorParams.accumulatorPoKCommitmentGroup, fullCommitmentToCoinUnderSerialParams, fullCommitmentToCoinUnderAccParams);
+    this->commitmentPoK = CommitmentProofOfKnowledge(&paramsCoin->serialNumberSoKCommitmentGroup, &paramsAccumulator->accumulatorParams.accumulatorPoKCommitmentGroup, fullCommitmentToCoinUnderSerialParams, fullCommitmentToCoinUnderAccParams);
 
     // Now generate the two core ZK proofs:
     // 3. Proves that the committed public coin is in the Accumulator (PoK of "witness")
-    this->accumulatorPoK = AccumulatorProofOfKnowledge(&p->accumulatorParams, fullCommitmentToCoinUnderAccParams, witness, a);
+    this->accumulatorPoK = AccumulatorProofOfKnowledge(&paramsAccumulator->accumulatorParams, fullCommitmentToCoinUnderAccParams, witness, a);
 
     // 4. Proves that the coin is correct w.r.t. serial number and hidden coin secret
     // (This proof is bound to the coin 'metadata', i.e., transaction hash)
-    this->serialNumberSoK = SerialNumberSignatureOfKnowledge(p, coin, fullCommitmentToCoinUnderSerialParams, signatureHash());
+    this->serialNumberSoK = SerialNumberSignatureOfKnowledge(paramsCoin, coin, fullCommitmentToCoinUnderSerialParams, signatureHash());
 }
 
 bool CoinSpend::Verify(const Accumulator& a) const

@@ -167,7 +167,6 @@ bool CalculateAccumulatorCheckpoint(int nHeight, uint256& nCheckpoint, Accumulat
     }
 
     //set the accumulators to last checkpoint value
-    mapAccumulators.Reset();
     if (!mapAccumulators.Load(chainActive[nHeight - 1]->nAccumulatorCheckpoint)) {
         if (chainActive[nHeight - 1]->nAccumulatorCheckpoint == 0) {
             //Before zerocoin is fully activated so set to init state
@@ -181,9 +180,9 @@ bool CalculateAccumulatorCheckpoint(int nHeight, uint256& nCheckpoint, Accumulat
     if (nHeight == Params().Zerocoin_LastOldParams() + 1) {
         mapAccumulators.SetZerocoinParams(GetZerocoinParams(nHeight));
         
-        CBlockIndex *pindex = chainActive[Params().Zerocoin_StartHeight()]; // we should accumulate all coins instead
+        CBlockIndex *pindex = chainActive[Params().Zerocoin_StartHeight() - 20]; // we should accumulate all coins instead
 
-        LogPrintf("Recalculating accumulators starting at block %d, ending at block %d using new modulus\n", Params().Zerocoin_StartHeight(), nHeight - 10);
+        LogPrintf("Recalculating accumulators starting at block %d, ending at block %d using new modulus\n", Params().Zerocoin_StartHeight() - 20, nHeight - 10);
 
         while (pindex->nHeight < nHeight - 10) {
             //grab mints from this block
@@ -207,54 +206,53 @@ bool CalculateAccumulatorCheckpoint(int nHeight, uint256& nCheckpoint, Accumulat
             }
             pindex = chainActive.Next(pindex);
         }
-    }
+    } else {
+         //Accumulate all coins over the last ten blocks that havent been accumulated (height - 20 through height - 11)
+        int nTotalMintsFound = 0;
+        CBlockIndex *pindex = chainActive[nHeight - 20];
 
-    //Accumulate all coins over the last ten blocks that havent been accumulated (height - 20 through height - 11)
-    int nTotalMintsFound = 0;
-    CBlockIndex *pindex = chainActive[nHeight - 20];
+        LogPrintf("accumulating from %d to %d\n", pindex->nHeight, nHeight - 10);
 
-    LogPrintf("accumulating from %d to %d\n", pindex->nHeight, nHeight - 10);
-
-    while (pindex->nHeight < nHeight - 10) {
-        // checking whether we should stop this process due to a shutdown request
-        if (ShutdownRequested()) {
-            return false;
-        }
-
-        //make sure this block is eligible for accumulation
-        if (pindex->nHeight < Params().Zerocoin_StartHeight()) {
-            pindex = chainActive[pindex->nHeight + 1];
-            continue;
-        }
-
-        //grab mints from this block
-        CBlock block;
-        if(!ReadBlockFromDisk(block, pindex)) {
-            return error("%s: failed to read block from disk\n", __func__);
-        }
-
-        std::list<PublicCoin> listPubcoins;
-        if (!BlockToPubcoinList(block, listPubcoins, nHeight)) {
-            return error("%s: failed to get zerocoin mintlist from block %d\n", __func__, pindex->nHeight);
-        }
-
-        nTotalMintsFound += listPubcoins.size();
-        LogPrint("zero", "%s found %d mints\n", __func__, listPubcoins.size());
-
-        //add the pubcoins to accumulator
-        for (const PublicCoin pubcoin : listPubcoins) {
-            if(!mapAccumulators.Accumulate(pubcoin, true)) {
-                return error("%s: failed to add pubcoin to accumulator at height %n\n", __func__, pindex->nHeight);
+        while (pindex->nHeight < nHeight - 10) {
+            // checking whether we should stop this process due to a shutdown request
+            if (ShutdownRequested()) {
+                return false;
             }
-        }
-        pindex = chainActive.Next(pindex);
-    }
 
-    // if there were no new mints found, the accumulator checkpoint will be the same as the last checkpoint
-    if (nTotalMintsFound == 0)
-        nCheckpoint = chainActive[nHeight - 1]->nAccumulatorCheckpoint;
-    else
-        nCheckpoint = mapAccumulators.GetCheckpoint();
+            //make sure this block is eligible for accumulation
+            if (pindex->nHeight < Params().Zerocoin_StartHeight()) {
+                pindex = chainActive[pindex->nHeight + 1];
+                continue;
+            }
+
+            //grab mints from this block
+            CBlock block;
+            if(!ReadBlockFromDisk(block, pindex)) {
+                return error("%s: failed to read block from disk\n", __func__);
+            }
+
+            std::list<PublicCoin> listPubcoins;
+            if (!BlockToPubcoinList(block, listPubcoins, nHeight)) {
+                return error("%s: failed to get zerocoin mintlist from block %d\n", __func__, pindex->nHeight);
+            }
+
+            nTotalMintsFound += listPubcoins.size();
+            LogPrint("zero", "%s found %d mints\n", __func__, listPubcoins.size());
+
+            //add the pubcoins to accumulator
+            for (const PublicCoin pubcoin : listPubcoins) {
+                if(!mapAccumulators.Accumulate(pubcoin, true)) {
+                    return error("%s: failed to add pubcoin to accumulator at height %n\n", __func__, pindex->nHeight);
+                }
+            }
+            pindex = chainActive.Next(pindex);
+        }
+        // if there were no new mints found, the accumulator checkpoint will be the same as the last checkpoint
+        if (nTotalMintsFound == 0)
+            nCheckpoint = chainActive[nHeight - 1]->nAccumulatorCheckpoint;
+        else
+            nCheckpoint = mapAccumulators.GetCheckpoint();
+    }
 
     DatabaseChecksums(mapAccumulators);
 
@@ -299,10 +297,9 @@ bool GenerateAccumulatorWitness(const PublicCoin &coin, Accumulator& accumulator
         return false;
     }
 
-    int nHeightMintAdded= mapBlockIndex[hashBlock]->nHeight;
+    int nHeightMintAdded = mapBlockIndex[hashBlock]->nHeight;
     uint256 nCheckpointBeforeMint = 0;
     CBlockIndex* pindex = chainActive[nHeightMintAdded];
-    int nChanges = 0;
 
     //find the checksum when this was added to the accumulator officially, which will be two checksum changes later
     //reminder that checksums are generated when the block height is a multiple of 10
@@ -314,12 +311,8 @@ bool GenerateAccumulatorWitness(const PublicCoin &coin, Accumulator& accumulator
 
         //check if the next checksum was generated
         if (pindex->nHeight % 10 == 0) {
-            nChanges++;
-
-            if (nChanges == 1) {
-                nCheckpointBeforeMint = pindex->nAccumulatorCheckpoint;
-                break;
-            }
+            nCheckpointBeforeMint = pindex->nAccumulatorCheckpoint;
+            break;
         }
         pindex = chainActive.Next(pindex);
     }
@@ -329,13 +322,14 @@ bool GenerateAccumulatorWitness(const PublicCoin &coin, Accumulator& accumulator
 
     //Get the accumulator that is right before the cluster of blocks containing our mint was added to the accumulator
     CBigNum bnAccValue = 0;
-    if (GetAccumulatorValueFromDB(nCheckpointBeforeMint, coin.getDenomination(), bnAccValue)) {
+    bool shouldAccumulateAll = nHeightMintAdded <= Params().Zerocoin_LastOldParams() + 20 && chainActive.Height() > Params().Zerocoin_LastOldParams() + 20;
+    if (GetAccumulatorValueFromDB(nCheckpointBeforeMint, coin.getDenomination(), bnAccValue) && !shouldAccumulateAll) {
         if (bnAccValue > 0) {
+            LogPrintf("Reading checksum from block %d\n", pindex->nHeight);
             accumulator.setValue(bnAccValue);
             witness.resetValue(accumulator, coin);
         }
     }
-
     //security level: this is an important prevention of tracing the coins via timing. Security level represents how many checkpoints
     //of accumulated coins are added *beyond* the checkpoint that the mint being spent was added too. If each spend added the exact same
     //amounts of checkpoints after the mint was accumulated, then you could know the range of blocks that the mint originated from.
@@ -349,12 +343,17 @@ bool GenerateAccumulatorWitness(const PublicCoin &coin, Accumulator& accumulator
     }
 
     //add the pubcoins (zerocoinmints that have been published to the chain) up to the next checksum starting from the block
-    pindex = chainActive[nAccStartHeight];
+    if (shouldAccumulateAll) {
+        // start at the zerocoin start height if this mint was made before the switch to the new modulus
+        pindex = chainActive[Params().Zerocoin_StartHeight()];
+    } else {
+        pindex = chainActive[nAccStartHeight];
+    }
     int nChainHeight = chainActive.Height();
-    int nHeightStop = nChainHeight % 10;
-    nHeightStop = nChainHeight - nHeightStop - 20; // at least two checkpoints deep
+    int nHeightStop = nChainHeight - (nChainHeight % 10) - 20; // at least two checkpoints deep
     int nCheckpointsAdded = 0;
     nMintsAdded = 0;
+    LogPrintf("generating witness using mints from block %d to %d or %d accumulators\n", pindex->nHeight, nHeightStop + 1, nSecurityLevel);
     while (pindex->nHeight < nHeightStop + 1) {
         if (pindex->nHeight != nAccStartHeight && pindex->pprev->nAccumulatorCheckpoint != pindex->nAccumulatorCheckpoint)
             ++nCheckpointsAdded;
@@ -363,6 +362,7 @@ bool GenerateAccumulatorWitness(const PublicCoin &coin, Accumulator& accumulator
         //then initialize the accumulator at this point and break
         if ((pindex->nHeight == nHeightStop || (nSecurityLevel != 100 && nCheckpointsAdded >= nSecurityLevel))) {
             uint32_t nChecksum = ParseChecksum(chainActive[pindex->nHeight + 10]->nAccumulatorCheckpoint, coin.getDenomination());
+            LogPrintf("Reading checksum from block %d\n", pindex->nHeight + 10);
             CBigNum bnAccValue = 0;
             if (!zerocoinDB->ReadAccumulatorValue(nChecksum, bnAccValue)) {
                 LogPrintf("%s : failed to find checksum in database for accumulator\n", __func__);
@@ -382,7 +382,7 @@ bool GenerateAccumulatorWitness(const PublicCoin &coin, Accumulator& accumulator
             }
 
             list<PublicCoin> listPubcoins;
-            if(!BlockToPubcoinList(block, listPubcoins, pindex->nHeight)) {
+            if(!BlockToPubcoinList(block, listPubcoins, nChainHeight - 20)) { // we want to use old params to generate witnesses until 520
                 LogPrintf("%s: failed to get zerocoin mintlist from block %n\n", __func__, pindex->nHeight);
                 return false;
             }

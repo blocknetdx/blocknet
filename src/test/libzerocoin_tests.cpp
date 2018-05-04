@@ -418,13 +418,13 @@ Test_MintAndSpend()
 		cc << *gCoins[0];
 		PrivateCoin myCoin(g_Params,cc);
 
-		CoinSpend spend(g_Params, myCoin, acc, 0, wAcc, 0);
+		CoinSpend spend(g_Params, g_Params, myCoin, acc, 0, wAcc, 0);
 
 		// Serialize the proof and deserialize into newSpend
 		CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
 		ss << spend;
 		gProofSize = ss.size();
-		CoinSpend newSpend(g_Params, ss);
+		CoinSpend newSpend(g_Params, g_Params, ss);
 
 		// See if we can verify the deserialized proof (return our result)
 		bool ret =  newSpend.Verify(acc);

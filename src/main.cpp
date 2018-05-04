@@ -1257,7 +1257,7 @@ CoinSpend TxInToZerocoinSpend(const CTxIn& txin, int nHeight)
     dataTxIn.insert(dataTxIn.end(), txin.scriptSig.begin() + BIGNUM_SIZE, txin.scriptSig.end());
 
     CDataStream serializedCoinSpend(dataTxIn, SER_NETWORK, PROTOCOL_VERSION);
-    return CoinSpend(GetZerocoinParams(nHeight), serializedCoinSpend);
+    return CoinSpend(GetZerocoinParams(nHeight), GetZerocoinParams(chainActive.Height()), serializedCoinSpend);
 }
 
 //Check a zerocoinspend considering external context such as blockchain data, height, etc.
