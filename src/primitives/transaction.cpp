@@ -201,7 +201,7 @@ CAmount CTransaction::GetZerocoinSpent() const
         dataTxIn.insert(dataTxIn.end(), txin.scriptSig.begin() + 4, txin.scriptSig.end());
 
         CDataStream serializedCoinSpend(dataTxIn, SER_NETWORK, PROTOCOL_VERSION);
-        libzerocoin::CoinSpend spend(Params().Zerocoin_Params(), serializedCoinSpend);
+        libzerocoin::CoinSpend spend(Params().Zerocoin_Params(), Params().Zerocoin_Params(), serializedCoinSpend);
         nValueOut += libzerocoin::ZerocoinDenominationToAmount(spend.getDenomination());
     }
 
