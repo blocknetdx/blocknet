@@ -39,7 +39,7 @@
 #include <vector>
 
 static const CAmount minBlock = 200;
-static const int confirmations = 3;
+static const int confirmations = 1;
 
 //*****************************************************************************
 //*****************************************************************************
@@ -478,8 +478,8 @@ bool App::processGetBlockHash(XRouterPacketPtr packet) {
     xbridge::WalletConnectorPtr conn = connectorByCurrency(currency);
     if (conn)
     {
-        Array a {blockId};
-        Object res = conn->executeRpcCall("getblock", a);
+        Array a { std::stoi(blockId) };
+        Object res = conn->executeRpcCall("getblockhash", a);
         const Value& res_val(res);
         result = json_spirit::write_string(res_val, true);
     }
@@ -876,10 +876,10 @@ void App::onMessageReceived(const std::vector<unsigned char>& id,
         return;
     }
     
-    if ((packet->command() != xrReply) && !verifyBlockRequirement(packet)) {
+    /*if ((packet->command() != xrReply) && !verifyBlockRequirement(packet)) {
         std::clog << "Block requirement not satisfied\n";
         return;
-    }
+    }*/
 
     /* std::clog << "received message to " << util::base64_encode(std::string((char*)&id[0], 20)).c_str() */
     /*           << " command " << packet->command(); */
