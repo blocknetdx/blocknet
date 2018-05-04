@@ -77,6 +77,7 @@ def create_witnessprogram(version, node, utxo, pubkey, encode_p2sh, amount):
     #DUMMY_P2SH = "2MySexEGVzZpRgNQ1JdjdP5bRETznm3roQ2" # P2SH of "OP_1 OP_DROP"
     DUMMY_P2SH = "yCSYtmhzg1FnWSjrL9KWuprunG9HqtDqPz"
     outputs[DUMMY_P2SH] = float(amount)
+    #print(outputs)
     tx_to_witness = node.createrawtransaction(inputs,outputs)
     #replace dummy output with our own
     tx_to_witness = tx_to_witness[0:110] + addlength(pkscript) + tx_to_witness[-8:]
@@ -93,6 +94,16 @@ def send_to_witness(version, node, utxo, pubkey, encode_p2sh, amount, sign=True,
             tx_to_witness = tx_to_witness[0:82] + addlength(insert_redeem_script) + tx_to_witness[84:]
 
     return node.sendrawtransaction(tx_to_witness)
+    
+def send_raw_transaction(node, utxo, to_address, amount) :
+    inputs = []
+    outputs = {}
+    inputs.append({ "txid" : utxo["txid"], "vout" : utxo["vout"]} )
+    outputs[to_address] = float(amount)
+    #print(outputs)
+    tx_to_witness = node.createrawtransaction(inputs,outputs)
+    signed = node.signrawtransaction(tx_to_witness)
+    return node.sendrawtransaction(signed["hex"], True)
 
 def getutxo(txid):
     utxo = {}
@@ -176,16 +187,33 @@ class SegWitTest(TestCaseBase):
         self.nodes[0].setgenerate(True, 161) #block 161
         sync_blocks(self.nodes)
 
-    def test_simple_send(self) :
+    def test_sendtoaddress(self) :
         address = self.nodes[1].getnewaddress()
         witAddress = self.nodes[1].addwitnessaddress(address)
-        print(self.nodes[1].getbalance())
-        self.nodes[0].sendtoaddress(address, 10)
-        self.nodes[0].setgenerate(True, 101)
+        oldBalance = self.nodes[1].getbalance()
+        self.nodes[0].sendtoaddress(witAddress, 10)
+        self.nodes[0].setgenerate(True, 1)
         sync_blocks(self.nodes)
+        newBalance = self.nodes[1].getbalance()
+        assert_equal(newBalance, oldBalance + 10)
+        
+    def test_send_to_witness(self) :
+        print(self.nodes[0].getbalance(), self.nodes[0].getblockcount())
+        print(self.nodes[1].getbalance(), self.nodes[1].getblockcount())
+        newaddress = self.nodes[1].getnewaddress()
+        pubkey = self.nodes[1].validateaddress(newaddress)["pubkey"]
+        self.nodes[1].addwitnessaddress(newaddress)
+        #send_to_witness(0, self.nodes[0], self.nodes[0].listunspent()[0], pubkey, False, 10) #Decimal("49.999"))
+        #send_to_witness(1, self.nodes[0], self.nodes[0].listunspent()[0], pubkey, True, 10) #Decimal("49.999"))
+        print(send_raw_transaction(self.nodes[0], self.nodes[0].listunspent()[0], self.nodes[1].getnewaddress(), 100))
+        #self.nodes[0].sendtoaddress(self.nodes[1].getnewaddress(), 50)
+        self.nodes[0].setgenerate(True, 1)
+        sync_blocks(self.nodes)
+        newBalance = self.nodes[1].getbalance()
+        print(self.nodes[0].getbalance(), self.nodes[0].getblockcount())
         print(self.nodes[1].getbalance(), self.nodes[1].getblockcount())
         
-    def test_misc(self):
+    def Xtest_misc(self):
 
         self.log.info("Verify sigops are counted in GBT with pre-BIP141 rules before the fork")
         txid = self.nodes[0].sendtoaddress(self.nodes[0].getnewaddress(), 1)
@@ -210,24 +238,22 @@ class SegWitTest(TestCaseBase):
                 p2sh_ids[i].append([])
                 wit_ids[i].append([])
 
-        #print(self.nodes[0].getbalance(""))
-        #print(self.nodes[1].getbalance(""))
-        #print(self.nodes[2].getbalance(""))
+        #print(self.nodes[0].getbalance())
+        #print(self.nodes[1].getbalance())
+        #print(self.nodes[2].getbalance())
 
         for i in range(5):
             for n in range(3):
                 for v in range(2):
-                    # This line causes self.nodes[0].getbalance("") reports "Unknown transaction type"
-                    # TODO Need to fix the test script or confirm it's a bug
                     wit_ids[n][v].append(send_to_witness(v, self.nodes[0], self.nodes[0].listunspent()[0], self.pubkey[n], False, Decimal("49.999")))
                     p2sh_ids[n][v].append(send_to_witness(v, self.nodes[0], self.nodes[0].listunspent()[0], self.pubkey[n], True, Decimal("49.999")))
 
         self.nodes[0].setgenerate(True, 1) #block 163
         sync_blocks(self.nodes)
 
-        #print(self.nodes[0].getbalance(""))
-        #print(self.nodes[1].getbalance(""))
-        #print(self.nodes[2].getbalance(""))
+        #print(self.nodes[0].getbalance())
+        #print(self.nodes[1].getbalance())
+        #print(self.nodes[2].getbalance())
 
         # Make sure all nodes recognize the transactions as theirs
         # TODO
