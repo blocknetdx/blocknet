@@ -82,7 +82,7 @@ class TestNode():
         self.args = [self.binary, "-datadir=" + self.datadir, "-logtimemicros", "-debug", "-debugexclude=libevent", "-debugexclude=leveldb", "-mocktime=" + str(mocktime), "-uacomment=testnode%d" % i]
         #print(self.args)
 
-        self.cli = TestNodeCLI(os.getenv("BITCOINCLI", "bitcoin-cli"), self.datadir)
+        self.cli = TestNodeCLI(os.getenv("PHORECLI", "phore-cli"), self.datadir)
         self.use_cli = use_cli
 
         self.running = False

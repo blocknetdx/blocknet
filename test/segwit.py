@@ -174,15 +174,16 @@ class SegWitTest(TestCaseBase):
 
     def initialize(self) :
         self.nodes[0].setgenerate(True, 161) #block 161
+        sync_blocks(self.nodes)
 
     def test_simple_send(self) :
         address = self.nodes[1].getnewaddress()
         witAddress = self.nodes[1].addwitnessaddress(address)
-        #print(self.nodes[1].getbalance())
-        self.nodes[0].sendtoaddress(witAddress, 10)
-        self.nodes[0].setgenerate(True, 1)
+        print(self.nodes[1].getbalance())
+        self.nodes[0].sendtoaddress(address, 10)
+        self.nodes[0].setgenerate(True, 101)
         sync_blocks(self.nodes)
-        #print(self.nodes[1].getbalance())
+        print(self.nodes[1].getbalance(), self.nodes[1].getblockcount())
         
     def test_misc(self):
 
