@@ -206,6 +206,7 @@ bool CalculateAccumulatorCheckpoint(int nHeight, uint256& nCheckpoint, Accumulat
             }
             pindex = chainActive.Next(pindex);
         }
+        nCheckpoint = mapAccumulators.GetCheckpoint();
     } else {
          //Accumulate all coins over the last ten blocks that havent been accumulated (height - 20 through height - 11)
         int nTotalMintsFound = 0;
