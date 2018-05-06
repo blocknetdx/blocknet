@@ -39,7 +39,6 @@
 #include <vector>
 
 static const CAmount minBlock = 200;
-static const int confirmations = 1;
 
 //*****************************************************************************
 //*****************************************************************************
@@ -281,7 +280,7 @@ void App::sendPacket(const XRouterPacketPtr& packet, std::string wallet)
     m_p->onSend(addr, packet->body(), wallet);
 }
 
-std::string App::sendPacketAndWait(const XRouterPacketPtr & packet, std::string id, std::string currency, int timeout)
+std::string App::sendPacketAndWait(const XRouterPacketPtr & packet, std::string id, std::string currency, int confirmations, int timeout)
 {
     boost::shared_ptr<boost::mutex> m(new boost::mutex());
     boost::shared_ptr<boost::condition_variable> cond(new boost::condition_variable());
@@ -289,7 +288,11 @@ std::string App::sendPacketAndWait(const XRouterPacketPtr & packet, std::string 
     queriesLocks[id] = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m, cond);
     sendPacket(packet, currency);
 
-    if(!cond->timed_wait(lock, boost::posix_time::milliseconds(timeout))) {
+    int confirmation_count = 0;
+    while ((confirmation_count < confirmations) && cond->timed_wait(lock, boost::posix_time::milliseconds(timeout)))
+        confirmation_count++;
+    
+    if(confirmation_count < confirmations / 2) {
         return "Failed to get response";
     } else {
         for (uint i = 0; i < queries[id].size(); i++) {
@@ -852,8 +855,7 @@ bool App::processReply(XRouterPacketPtr packet) {
     if (!queries.count(uuid))
         queries[uuid] = vector<std::string>();
     queries[uuid].push_back(reply);
-    if (queries[uuid].size() == confirmations)
-        queriesLocks[uuid].second->notify_all();
+    queriesLocks[uuid].second->notify_all();
     return true;
 }
 
@@ -948,7 +950,7 @@ static bool satisfyBlockRequirement(uint256& txHash, uint32_t& vout, CKey& key)
 
 //*****************************************************************************
 //*****************************************************************************
-std::string App::xrouterCall(enum XRouterCommand command, const std::string & currency, std::string param1, std::string param2)
+std::string App::xrouterCall(enum XRouterCommand command, const std::string & currency, std::string param1, std::string param2, int confirmations)
 {
     std::cout << "process Query" << std::endl;
     XRouterPacketPtr packet(new XRouterPacket(command));
@@ -977,7 +979,7 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
         packet->append(param2);
     packet->sign(key);
     
-    return sendPacketAndWait(packet, id, currency, 300000);
+    return sendPacketAndWait(packet, id, currency, confirmations, 300000);
 }
 
 std::string App::getBlockCount(const std::string & currency)
@@ -1022,6 +1024,6 @@ std::string App::getBalanceUpdate(const std::string & currency, const std::strin
 
 std::string App::sendTransaction(const std::string & currency, const std::string & transaction)
 {
-    return this->xrouterCall(xrSendTransaction, currency, transaction);
+    return this->xrouterCall(xrSendTransaction, currency, transaction, "", 1);
 }
 } // namespace xrouter

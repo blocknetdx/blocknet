@@ -76,7 +76,7 @@ public:
     /**
      * @brief sendXRouterTransaction - create new xrouter transaction and send to network
      */
-    std::string xrouterCall(enum XRouterCommand command, const std::string & currency, std::string param1="", std::string param2="");
+    std::string xrouterCall(enum XRouterCommand command, const std::string & currency, std::string param1="", std::string param2="", int confirmations=3);
     std::string getBlockCount(const std::string & currency);
     std::string getBlockHash(const std::string & currency, const std::string & blockId);
     std::string getBlock(const std::string & currency, const std::string & blockHash);
@@ -114,7 +114,7 @@ public:
      */
     void sendPacket(const std::vector<unsigned char> & id, const XRouterPacketPtr & packet, std::string wallet="");
 
-    std::string sendPacketAndWait(const XRouterPacketPtr & packet, std::string id, std::string currency, int timeout=3000);
+    std::string sendPacketAndWait(const XRouterPacketPtr & packet, std::string id, std::string currency, int confirmations=3, int timeout=3000);
 
     // call when message from xrouter network received
     /**
