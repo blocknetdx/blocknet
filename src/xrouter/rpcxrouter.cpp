@@ -81,12 +81,8 @@ Value xrGetBlockHash(const Array & params, bool fHelp)
     }
     
     std::string currency    = params[0].get_str();
-    Object result;
-
     std::string reply = xrouter::App::instance().getBlockHash(currency, params[1].get_str());
-    Object obj;
-    obj.emplace_back(Pair("reply", reply));
-    return obj;
+    return form_reply(reply);
 }
 
 Value xrGetBlock(const Array & params, bool fHelp)
@@ -112,12 +108,8 @@ Value xrGetBlock(const Array & params, bool fHelp)
     }
 
     std::string currency    = params[0].get_str();
-    Object result;
-
     std::string reply = xrouter::App::instance().getBlock(currency, params[1].get_str());
-    Object obj;
-    obj.emplace_back(Pair("reply", reply));
-    return obj;
+    return form_reply(reply);
 }
 
 Value xrGetTransaction(const Array & params, bool fHelp)
@@ -176,13 +168,8 @@ Value xrGetAllBlocks(const Array & params, bool fHelp)
     }
 
     std::string currency = params[0].get_str();
-    
-    Object result;
-
     std::string reply = xrouter::App::instance().getAllBlocks(currency, number);
-    Object obj;
-    obj.emplace_back(Pair("reply", reply));
-    return obj;
+    return form_reply(reply);
 }
 
 Value xrGetAllTransactions(const Array & params, bool fHelp)
@@ -218,13 +205,8 @@ Value xrGetAllTransactions(const Array & params, bool fHelp)
     }
 
     std::string currency = params[0].get_str();
-    
-    Object result;
-
     std::string reply = xrouter::App::instance().getAllTransactions(currency, params[1].get_str(), number);
-    Object obj;
-    obj.emplace_back(Pair("reply", reply));
-    return obj;
+    return form_reply(reply);
 }
 
 Value xrGetBalance(const Array & params, bool fHelp)
@@ -251,12 +233,8 @@ Value xrGetBalance(const Array & params, bool fHelp)
 
     std::string currency = params[0].get_str();
     std::string account = params[1].get_str();
-    Object result;
-
     std::string reply = xrouter::App::instance().getBalance(currency, account);
-    Object obj;
-    obj.emplace_back(Pair("reply", reply));
-    return obj;
+    return form_reply(reply);
 }
 
 Value xrGetBalanceUpdate(const Array & params, bool fHelp)
@@ -293,12 +271,8 @@ Value xrGetBalanceUpdate(const Array & params, bool fHelp)
     
     std::string currency = params[0].get_str();
     std::string account = params[1].get_str();
-    Object result;
-
     std::string reply = xrouter::App::instance().getBalanceUpdate(currency, account, number);
-    Object obj;
-    obj.emplace_back(Pair("reply", reply));
-    return obj;
+    return form_reply(reply);
 }
 
 Value xrSendTransaction(const Array & params, bool fHelp)
