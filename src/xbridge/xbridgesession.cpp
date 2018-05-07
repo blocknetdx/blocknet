@@ -72,58 +72,56 @@ protected:
     void init();
 
 protected:
-    void sendPacket(const std::vector<unsigned char> & to, const XBridgePacketPtr & packet);
-    void sendPacketBroadcast(XBridgePacketPtr packet);
+    void sendPacket(const std::vector<unsigned char> & to, const XBridgePacketPtr & packet) const;
+    void sendPacketBroadcast(XBridgePacketPtr packet) const;
 
     // return true if packet not for me, relayed
-    bool checkPacketAddress(XBridgePacketPtr packet);
+    bool checkPacketAddress(XBridgePacketPtr packet) const;
 
     // fn search xaddress in transaction and restore full 'coin' address as string
     bool isAddressInTransaction(const std::vector<unsigned char> & address,
-                                const TransactionPtr & tx);
+                                const TransactionPtr & tx) const;
 
 protected:
-    bool encryptPacket(XBridgePacketPtr packet);
-    bool decryptPacket(XBridgePacketPtr packet);
+    bool encryptPacket(XBridgePacketPtr packet) const;
+    bool decryptPacket(XBridgePacketPtr packet) const;
 
 protected:
-    bool processInvalid(XBridgePacketPtr packet);
-    bool processZero(XBridgePacketPtr packet);
-    bool processXChatMessage(XBridgePacketPtr packet);
+    bool processInvalid(XBridgePacketPtr packet) const;
+    bool processZero(XBridgePacketPtr packet) const;
+    bool processXChatMessage(XBridgePacketPtr packet) const;
 
-    bool processTransaction(XBridgePacketPtr packet);
-    bool processPendingTransaction(XBridgePacketPtr packet);
-    bool processTransactionAccepting(XBridgePacketPtr packet);
+    bool processTransaction(XBridgePacketPtr packet) const;
+    bool processPendingTransaction(XBridgePacketPtr packet) const;
+    bool processTransactionAccepting(XBridgePacketPtr packet) const;
 
-    bool processTransactionHold(XBridgePacketPtr packet);
-    bool processTransactionHoldApply(XBridgePacketPtr packet);
+    bool processTransactionHold(XBridgePacketPtr packet) const;
+    bool processTransactionHoldApply(XBridgePacketPtr packet) const;
 
-    bool processTransactionInit(XBridgePacketPtr packet);
-    bool processTransactionInitialized(XBridgePacketPtr packet);
+    bool processTransactionInit(XBridgePacketPtr packet) const;
+    bool processTransactionInitialized(XBridgePacketPtr packet) const;
 
-    bool processTransactionCreateA(XBridgePacketPtr packet);
-    bool processTransactionCreateB(XBridgePacketPtr packet);
-    bool processTransactionCreatedA(XBridgePacketPtr packet);
-    bool processTransactionCreatedB(XBridgePacketPtr packet);
+    bool processTransactionCreateA(XBridgePacketPtr packet) const;
+    bool processTransactionCreateB(XBridgePacketPtr packet) const;
+    bool processTransactionCreatedA(XBridgePacketPtr packet) const;
+    bool processTransactionCreatedB(XBridgePacketPtr packet) const;
 
-    bool processTransactionConfirmA(XBridgePacketPtr packet);
-    bool processTransactionConfirmedA(XBridgePacketPtr packet);
+    bool processTransactionConfirmA(XBridgePacketPtr packet) const;
+    bool processTransactionConfirmedA(XBridgePacketPtr packet) const;
 
-    bool processTransactionConfirmB(XBridgePacketPtr packet);
-    bool processTransactionConfirmedB(XBridgePacketPtr packet);
+    bool processTransactionConfirmB(XBridgePacketPtr packet) const;
+    bool processTransactionConfirmedB(XBridgePacketPtr packet) const;
 
-    bool finishTransaction(TransactionPtr tr);
-//    bool sendRejectTransaction(const std::vector<unsigned char> & to,
-//                               const uint256 & txid,
-//                               const TxRejectReason & reason);
+    bool finishTransaction(TransactionPtr tr) const;
+
     bool sendCancelTransaction(const TransactionPtr & tx,
-                               const TxCancelReason & reason);
+                               const TxCancelReason & reason) const;
     bool sendCancelTransaction(const TransactionDescrPtr & tx,
-                               const TxCancelReason & reason);
+                               const TxCancelReason & reason) const;
 
-    bool processTransactionCancel(XBridgePacketPtr packet);
+    bool processTransactionCancel(XBridgePacketPtr packet) const;
 
-    bool processTransactionFinished(XBridgePacketPtr packet);
+    bool processTransactionFinished(XBridgePacketPtr packet) const;
 
 protected:
     std::vector<unsigned char> m_myid;
@@ -137,6 +135,7 @@ protected:
 //*****************************************************************************
 Session::Session()
     : m_p(new Impl)
+    , m_isWorking(false)
 {
     m_p->init();
 }
@@ -206,7 +205,7 @@ void Session::Impl::init()
 
 //*****************************************************************************
 //*****************************************************************************
-bool Session::Impl::encryptPacket(XBridgePacketPtr /*packet*/)
+bool Session::Impl::encryptPacket(XBridgePacketPtr /*packet*/) const
 {
     // DEBUG_TRACE();
     // TODO implement this
@@ -215,7 +214,7 @@ bool Session::Impl::encryptPacket(XBridgePacketPtr /*packet*/)
 
 //*****************************************************************************
 //*****************************************************************************
-bool Session::Impl::decryptPacket(XBridgePacketPtr /*packet*/)
+bool Session::Impl::decryptPacket(XBridgePacketPtr /*packet*/) const
 {
     // DEBUG_TRACE();
     // TODO implement this
@@ -225,7 +224,7 @@ bool Session::Impl::decryptPacket(XBridgePacketPtr /*packet*/)
 //*****************************************************************************
 //*****************************************************************************
 void Session::Impl::sendPacket(const std::vector<unsigned char> & to,
-                               const XBridgePacketPtr & packet)
+                               const XBridgePacketPtr & packet) const
 {
     xbridge::App & app = xbridge::App::instance();
     app.sendPacket(to, packet);
@@ -233,7 +232,7 @@ void Session::Impl::sendPacket(const std::vector<unsigned char> & to,
 
 //*****************************************************************************
 //*****************************************************************************
-void Session::Impl::sendPacketBroadcast(XBridgePacketPtr packet)
+void Session::Impl::sendPacketBroadcast(XBridgePacketPtr packet) const
 {
     // DEBUG_TRACE();
 
@@ -244,7 +243,7 @@ void Session::Impl::sendPacketBroadcast(XBridgePacketPtr packet)
 //*****************************************************************************
 // return true if packet for me and need to process
 //*****************************************************************************
-bool Session::Impl::checkPacketAddress(XBridgePacketPtr packet)
+bool Session::Impl::checkPacketAddress(XBridgePacketPtr packet) const
 {
     if (packet->size() < 20)
     {
@@ -268,9 +267,12 @@ bool Session::processPacket(XBridgePacketPtr packet)
 {
     // DEBUG_TRACE();
 
+    setWorking();
+
     if (!m_p->decryptPacket(packet))
     {
         ERR() << "packet decoding error " << __FUNCTION__;
+        setNotWorking();
         return false;
     }
 
@@ -279,24 +281,27 @@ bool Session::processPacket(XBridgePacketPtr packet)
     if (m_p->m_handlers.count(c) == 0)
     {
         ERR() << "unknown command code <" << c << "> " << __FUNCTION__;
-        m_p->m_handlers[xbcInvalid](packet);
+        m_p->m_handlers.at(xbcInvalid)(packet);
+        setNotWorking();
         return false;
     }
 
     TRACE() << "received packet, command code <" << c << ">";
 
-    if (!m_p->m_handlers[c](packet))
+    if (!m_p->m_handlers.at(c)(packet))
     {
         ERR() << "packet processing error <" << c << "> " << __FUNCTION__;
+        setNotWorking();
         return false;
     }
 
+    setNotWorking();
     return true;
 }
 
 //*****************************************************************************
 //*****************************************************************************
-bool Session::Impl::processInvalid(XBridgePacketPtr /*packet*/)
+bool Session::Impl::processInvalid(XBridgePacketPtr /*packet*/) const
 {
     // DEBUG_TRACE();
     // LOG() << "xbcInvalid instead of " << packet->command();
@@ -305,7 +310,7 @@ bool Session::Impl::processInvalid(XBridgePacketPtr /*packet*/)
 
 //*****************************************************************************
 //*****************************************************************************
-bool Session::Impl::processZero(XBridgePacketPtr /*packet*/)
+bool Session::Impl::processZero(XBridgePacketPtr /*packet*/) const
 {
     return true;
 }
@@ -343,7 +348,7 @@ bool Session::checkXBridgePacketVersion(XBridgePacketPtr packet)
 //*****************************************************************************
 // retranslate packets from wallet to xbridge network
 //*****************************************************************************
-bool Session::Impl::processXChatMessage(XBridgePacketPtr /*packet*/)
+bool Session::Impl::processXChatMessage(XBridgePacketPtr /*packet*/) const
 {
     LOG() << "Session::Impl::processXChatMessage not implemented";
     return true;
@@ -372,7 +377,7 @@ bool Session::Impl::processXChatMessage(XBridgePacketPtr /*packet*/)
 //*****************************************************************************
 // broadcast
 //*****************************************************************************
-bool Session::Impl::processTransaction(XBridgePacketPtr packet)
+bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
 {
     // check and process packet if bridge is exchange
     Exchange & e = Exchange::instance();
@@ -628,7 +633,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet)
 //******************************************************************************
 // broadcast
 //******************************************************************************
-bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
+bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
 {
     Exchange & e = Exchange::instance();
     if (e.isEnabled())
@@ -742,7 +747,7 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet)
 
 //*****************************************************************************
 //*****************************************************************************
-bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet)
+bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
 {
 
     // check and process packet if bridge is exchange
@@ -933,7 +938,7 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet)
 
 //******************************************************************************
 //******************************************************************************
-bool Session::Impl::processTransactionHold(XBridgePacketPtr packet)
+bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
 {
 
     DEBUG_TRACE();
@@ -1080,7 +1085,7 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet)
 
 //*****************************************************************************
 //*****************************************************************************
-bool Session::Impl::processTransactionHoldApply(XBridgePacketPtr packet)
+bool Session::Impl::processTransactionHoldApply(XBridgePacketPtr packet) const
 {
 
     DEBUG_TRACE();
@@ -1197,7 +1202,7 @@ bool Session::Impl::processTransactionHoldApply(XBridgePacketPtr packet)
 
 //******************************************************************************
 //******************************************************************************
-bool Session::Impl::processTransactionInit(XBridgePacketPtr packet)
+bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
 {
     DEBUG_TRACE();
 
@@ -1350,6 +1355,13 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet)
         }
 
         datatxtd = uint256(strtxid);
+
+        if(datatxtd.IsNull())
+        {
+            LOG() << "storeDataIntoBlockchain failed with zero tx id, process packet later " << __FUNCTION__;
+            xapp.processLater(txid, packet);
+            return true;
+        }
     }
 
     LOG() << __FUNCTION__ << xtx;
@@ -1370,7 +1382,7 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet)
 
 //*****************************************************************************
 //*****************************************************************************
-bool Session::Impl::processTransactionInitialized(XBridgePacketPtr packet)
+bool Session::Impl::processTransactionInitialized(XBridgePacketPtr packet) const
 {
     DEBUG_TRACE();
 
@@ -1463,7 +1475,7 @@ bool Session::Impl::processTransactionInitialized(XBridgePacketPtr packet)
 //******************************************************************************
 //******************************************************************************
 bool Session::Impl::isAddressInTransaction(const std::vector<unsigned char> & address,
-                                           const TransactionPtr & tx)
+                                           const TransactionPtr & tx) const
 {
     if (tx->a_address() == address ||
         tx->b_address() == address ||
@@ -1477,7 +1489,7 @@ bool Session::Impl::isAddressInTransaction(const std::vector<unsigned char> & ad
 
 //******************************************************************************
 //******************************************************************************
-bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet)
+bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
 {
     DEBUG_TRACE();
 
@@ -1737,7 +1749,7 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet)
 
 //******************************************************************************
 //******************************************************************************
-bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet)
+bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
 {
     DEBUG_TRACE();
 
@@ -2027,7 +2039,7 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet)
 
 //*****************************************************************************
 //*****************************************************************************
-bool Session::Impl::processTransactionCreatedA(XBridgePacketPtr packet)
+bool Session::Impl::processTransactionCreatedA(XBridgePacketPtr packet) const
 {
     DEBUG_TRACE();
 
@@ -2120,7 +2132,7 @@ bool Session::Impl::processTransactionCreatedA(XBridgePacketPtr packet)
 
 //*****************************************************************************
 //*****************************************************************************
-bool Session::Impl::processTransactionCreatedB(XBridgePacketPtr packet)
+bool Session::Impl::processTransactionCreatedB(XBridgePacketPtr packet) const
 {
     DEBUG_TRACE();
 
@@ -2213,7 +2225,7 @@ bool Session::Impl::processTransactionCreatedB(XBridgePacketPtr packet)
 
 //******************************************************************************
 //******************************************************************************
-bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet)
+bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet) const
 {
     DEBUG_TRACE();
 
@@ -2365,7 +2377,7 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet)
 
 //*****************************************************************************
 //*****************************************************************************
-bool Session::Impl::processTransactionConfirmedA(XBridgePacketPtr packet)
+bool Session::Impl::processTransactionConfirmedA(XBridgePacketPtr packet) const
 {
     DEBUG_TRACE();
 
@@ -2447,7 +2459,7 @@ bool Session::Impl::processTransactionConfirmedA(XBridgePacketPtr packet)
 
 //******************************************************************************
 //******************************************************************************
-bool Session::Impl::processTransactionConfirmB(XBridgePacketPtr packet)
+bool Session::Impl::processTransactionConfirmB(XBridgePacketPtr packet) const
 {
     DEBUG_TRACE();
 
@@ -2582,7 +2594,7 @@ bool Session::Impl::processTransactionConfirmB(XBridgePacketPtr packet)
 
 //*****************************************************************************
 //*****************************************************************************
-bool Session::Impl::processTransactionConfirmedB(XBridgePacketPtr packet)
+bool Session::Impl::processTransactionConfirmedB(XBridgePacketPtr packet) const
 {
     DEBUG_TRACE();
 
@@ -2652,7 +2664,7 @@ bool Session::Impl::processTransactionConfirmedB(XBridgePacketPtr packet)
 
 //*****************************************************************************
 //*****************************************************************************
-bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet)
+bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet) const
 {
     DEBUG_TRACE();
 
@@ -2786,7 +2798,7 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet)
 
 //*****************************************************************************
 //*****************************************************************************
-bool Session::Impl::finishTransaction(TransactionPtr tr)
+bool Session::Impl::finishTransaction(TransactionPtr tr) const
 {
     if (tr == nullptr)
     {
@@ -2815,32 +2827,8 @@ bool Session::Impl::finishTransaction(TransactionPtr tr)
 
 //*****************************************************************************
 //*****************************************************************************
-//bool Session::Impl::sendRejectTransaction(const std::vector<unsigned char> & to,
-//                                          const uint256 & txid,
-//                                          const TxRejectReason & reason)
-//{
-//    Exchange & e = Exchange::instance();
-//    if (!e.isStarted())
-//    {
-//        return false;
-//    }
-
-//    LOG() << "reject transaction <" << txid.GetHex() << ">";
-
-//    XBridgePacketPtr reply(new XBridgePacket(xbcTransactionReject));
-//    reply->append(txid.begin(), 32);
-//    reply->append(static_cast<uint32_t>(reason));
-
-//    reply->sign(e.pubKey(), e.privKey());
-
-//    sendPacket(to, reply);
-//    return true;
-//}
-
-//*****************************************************************************
-//*****************************************************************************
 bool Session::Impl::sendCancelTransaction(const TransactionPtr & tx,
-                                          const TxCancelReason & reason)
+                                          const TxCancelReason & reason) const
 {
     Exchange & e = Exchange::instance();
     if (!e.isStarted())
@@ -2863,7 +2851,7 @@ bool Session::Impl::sendCancelTransaction(const TransactionPtr & tx,
 //*****************************************************************************
 //*****************************************************************************
 bool Session::Impl::sendCancelTransaction(const TransactionDescrPtr & tx,
-                                          const TxCancelReason & reason)
+                                          const TxCancelReason & reason) const
 {
     LOG() << "cancel transaction <" << tx->id.GetHex() << ">";
 
@@ -2885,7 +2873,7 @@ bool Session::Impl::sendCancelTransaction(const TransactionDescrPtr & tx,
 
 //*****************************************************************************
 //*****************************************************************************
-void Session::sendListOfTransactions()
+void Session::sendListOfTransactions() const
 {
     xbridge::App & xapp = xbridge::App::instance();
 
@@ -2949,18 +2937,16 @@ void Session::sendListOfTransactions()
 
 //*****************************************************************************
 //*****************************************************************************
-void Session::eraseExpiredPendingTransactions()
+void Session::eraseExpiredPendingTransactions() const
 {
     // check xbridge transactions
     Exchange & e = Exchange::instance();
     e.eraseExpiredTransactions();
-
-    // check client transactions
 }
 
 //*****************************************************************************
 //*****************************************************************************
-void Session::checkFinishedTransactions()
+void Session::checkFinishedTransactions() const
 {
     Exchange & e = Exchange::instance();
     if (!e.isStarted())
@@ -3016,7 +3002,7 @@ void Session::checkFinishedTransactions()
 
 //*****************************************************************************
 //*****************************************************************************
-void Session::getAddressBook()
+void Session::getAddressBook() const
 {
     App & xapp = App::instance();
     Connectors conns = xapp.connectors();
@@ -3045,7 +3031,7 @@ void Session::getAddressBook()
 
 //******************************************************************************
 //******************************************************************************
-bool Session::Impl::processTransactionFinished(XBridgePacketPtr packet)
+bool Session::Impl::processTransactionFinished(XBridgePacketPtr packet) const
 {
     DEBUG_TRACE();
 

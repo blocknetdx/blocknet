@@ -42,6 +42,8 @@ public:
 
     ~Session();
 
+    bool isWorking() const { return m_isWorking; }
+
 public:
     // helper functions
     /**
@@ -73,13 +75,18 @@ public:
 
 public:
     // service functions
-    void sendListOfTransactions();
-    void checkFinishedTransactions();
-    void eraseExpiredPendingTransactions();
-    void getAddressBook();
+    void sendListOfTransactions() const;
+    void checkFinishedTransactions() const;
+    void eraseExpiredPendingTransactions() const;
+    void getAddressBook() const;
+
+private:
+    void setWorking() { m_isWorking = true; }
+    void setNotWorking() { m_isWorking = false; }
 
 private:
     std::unique_ptr<Impl> m_p;
+    bool m_isWorking;
 };
 
 } // namespace xbridge

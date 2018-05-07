@@ -1155,12 +1155,21 @@ bool BtcWalletConnector::getInfo(rpc::WalletInfo & info) const
 
 //******************************************************************************
 //******************************************************************************
-bool BtcWalletConnector::getUnspent(std::vector<wallet::UtxoEntry> & inputs) const
+bool BtcWalletConnector::getUnspent(std::vector<wallet::UtxoEntry> & inputs, const bool withoutDust) const
 {
     if (!rpc::listUnspent(m_user, m_passwd, m_ip, m_port, inputs))
     {
         LOG() << "rpc::listUnspent failed " << __FUNCTION__;
         return false;
+    }
+
+    if (withoutDust)
+    {
+        std::remove_if(inputs.begin(), inputs.end(),
+                [this](const wallet::UtxoEntry & entry)
+        {
+            return isDustAmount(entry.amount);
+        });
     }
 
     return true;
@@ -1311,7 +1320,7 @@ std::string BtcWalletConnector::scriptIdToString(const std::vector<unsigned char
 // calculate tx fee for deposit tx
 // output count always 1
 //******************************************************************************
-double BtcWalletConnector::minTxFee1(const uint32_t inputCount, const uint32_t outputCount)
+double BtcWalletConnector::minTxFee1(const uint32_t inputCount, const uint32_t outputCount) const
 {
     uint64_t fee = (148*inputCount + 34*outputCount + 10) * feePerByte;
     if (fee < minTxFee)
@@ -1325,7 +1334,7 @@ double BtcWalletConnector::minTxFee1(const uint32_t inputCount, const uint32_t o
 // calculate tx fee for payment/refund tx
 // input count always 1
 //******************************************************************************
-double BtcWalletConnector::minTxFee2(const uint32_t inputCount, const uint32_t outputCount)
+double BtcWalletConnector::minTxFee2(const uint32_t inputCount, const uint32_t outputCount) const
 {
     uint64_t fee = (180*inputCount + 34*outputCount + 10) * feePerByte;
     if (fee < minTxFee)
