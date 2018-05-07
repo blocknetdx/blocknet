@@ -25,10 +25,12 @@ CTxMemPoolEntry::CTxMemPoolEntry(const CTransaction& _tx, const CAmount& _nFee,
     tx(_tx), nFee(_nFee), nTime(_nTime), dPriority(_dPriority), nHeight(_nHeight),
     sigOpCost(_sigOpsCost)
 {
+    nTxSize = ::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION);
 }
 
 CTxMemPoolEntry::CTxMemPoolEntry(const CTransaction& _tx, const CAmount& _nFee, int64_t _nTime, double _dPriority, unsigned int _nHeight) : tx(_tx), nFee(_nFee), nTime(_nTime), dPriority(_dPriority), nHeight(_nHeight)
 {
+    nTxSize = ::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION);
     nTxCost = GetTransactionCost(_tx);
 }
 
@@ -42,7 +44,7 @@ CTxMemPoolEntry::CTxMemPoolEntry(): nFee(0), nTxCost(0), nModSize(0), nTime(0), 
 }
 
 size_t CTxMemPoolEntry::GetTxSize() const {
-    return GetVirtualTransactionSize(nTxCost);
+    return nTxSize;
 }
 
 double CTxMemPoolEntry::GetPriority(unsigned int currentHeight) const

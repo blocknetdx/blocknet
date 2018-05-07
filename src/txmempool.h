@@ -41,6 +41,7 @@ class CTxMemPoolEntry
 private:
     CTransaction tx;
     CAmount nFee;              //!< Cached to avoid expensive parent-transaction lookups
+    size_t nTxSize;       //! ... and avoid recomputing tx size
     size_t nTxCost;            //!< ... and avoid recomputing tx cost (also used for GetTxSize())
     size_t nModSize;           //!< ... and modified size for priority
     int64_t nTime;             //!< Local time when entering the mempool
