@@ -9,6 +9,33 @@
 #include "uint256.h"
 using namespace json_spirit;
 
+static Object form_reply(std::string reply)
+{
+    Object ret;
+    Value reply_val;
+    read_string(reply, reply_val);
+    if (reply_val.type() != obj_type) {
+        ret.emplace_back(Pair("reply", reply));
+        return ret;
+    }
+    
+    Object reply_obj = reply_val.get_obj();
+    const Value & result = find_value(reply_obj, "result");
+    const Value & error  = find_value(reply_obj, "error");
+
+    
+    if (error.type() != null_type)
+    {
+        ret.emplace_back(Pair("error", error));
+    }
+    else if (result.type() != null_type)
+    {
+        ret.emplace_back(Pair("reply", result));
+    }
+    
+    return ret;
+}
+
 //******************************************************************************
 //******************************************************************************
 Value xrGetBlockCount(const Array & params, bool fHelp)
@@ -26,12 +53,8 @@ Value xrGetBlockCount(const Array & params, bool fHelp)
     }
 
     std::string currency    = params[0].get_str();
-    Object result;
-
     std::string reply = xrouter::App::instance().getBlockCount(currency);
-    Object obj;
-    obj.emplace_back(Pair("reply", reply));
-    return obj;
+    return form_reply(reply);
 }
 
 Value xrGetBlockHash(const Array & params, bool fHelp)

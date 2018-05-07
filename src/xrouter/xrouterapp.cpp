@@ -823,7 +823,7 @@ bool App::processSendTransaction(XRouterPacketPtr packet) {
     std::string transaction((const char *)packet->data()+offset);
     offset += transaction.size() + 1;
     
-    std::string result;
+    std::string result = "sent";
     
     XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
 
