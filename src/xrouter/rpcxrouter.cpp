@@ -41,7 +41,7 @@ static Object form_reply(std::string reply)
 Value xrGetBlockCount(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetBlock\nLookup blocks in a specified blockchain.");
+        throw std::runtime_error("xrGetBlock currency\nLookup total number of blocks in a specified blockchain.");
     }
 
     if (params.size() < 1)
@@ -60,7 +60,7 @@ Value xrGetBlockCount(const Array & params, bool fHelp)
 Value xrGetBlockHash(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetBlock\nLookup blocks in a specified blockchain.");
+        throw std::runtime_error("xrGetBlock currency number\nLookup block hash by block number in a specified blockchain.");
     }
 
     if (params.size() < 1)
@@ -92,7 +92,7 @@ Value xrGetBlockHash(const Array & params, bool fHelp)
 Value xrGetBlock(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetBlock\nLookup blocks in a specified blockchain.");
+        throw std::runtime_error("xrGetBlock currency hash\nLookup block data by block hash in a specified blockchain.");
     }
 
     if (params.size() < 1)
@@ -123,7 +123,7 @@ Value xrGetBlock(const Array & params, bool fHelp)
 Value xrGetTransaction(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetTransaction\nLookup blocks in a specified blockchain.");
+        throw std::runtime_error("xrGetTransaction currency txid\nLookup transaction data by transaction id in a specified blockchain.");
     }
 
     if (params.size() < 1)
@@ -154,7 +154,7 @@ Value xrGetTransaction(const Array & params, bool fHelp)
 Value xrGetAllBlocks(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetBalance\nReturns balances for selected currency.");
+        throw std::runtime_error("xrGetBalance\nReturns a list of all blocks starting with n for selected currency.");
     }
 
     if (params.size() < 1)
@@ -188,7 +188,7 @@ Value xrGetAllBlocks(const Array & params, bool fHelp)
 Value xrGetAllTransactions(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetBalance\nReturns balances for selected currency.");
+        throw std::runtime_error("xrGetBalance currency account [number]\nReturns all transactions to/from account starting from block [number] for selected currency.");
     }
 
     if (params.size() < 1)
@@ -230,7 +230,7 @@ Value xrGetAllTransactions(const Array & params, bool fHelp)
 Value xrGetBalance(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetBalance\nReturns balances for selected currency.");
+        throw std::runtime_error("xrGetBalance currency account\nReturns balance for selected account for selected currency.");
     }
 
     if (params.size() < 1)
@@ -262,7 +262,7 @@ Value xrGetBalance(const Array & params, bool fHelp)
 Value xrGetBalanceUpdate(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetBalance\nReturns balances for selected currency.");
+        throw std::runtime_error("xrGetBalance currency account [number]\nReturns balance update for account starting with block number (default: 0) for selected currency.");
     }
 
     if (params.size() < 1)
@@ -304,7 +304,7 @@ Value xrGetBalanceUpdate(const Array & params, bool fHelp)
 Value xrSendTransaction(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetBalance\nReturns balances for selected currency.");
+        throw std::runtime_error("xrGetBalance txdata\nSends signed transaction for selected currency.");
     }
 
     if (params.size() < 1)
