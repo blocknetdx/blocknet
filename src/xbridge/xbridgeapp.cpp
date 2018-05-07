@@ -558,8 +558,8 @@ void App::onMessageReceived(const std::vector<unsigned char> & id,
         return;
     }
 
-    LOG() << "received message to " << std::string((char *)&id[0], 20)
-             << " command " << packet->command();
+    LOG() << "received message to " << HexStr(id)
+          << " command " << packet->command();
 
     // check direct session address
     SessionPtr ptr = m_p->getSession(id);
@@ -567,7 +567,6 @@ void App::onMessageReceived(const std::vector<unsigned char> & id,
     {
         ptr->processPacket(packet);
     }
-
     else
     {
         {
@@ -915,7 +914,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     {
         return xbridge::Error::DUST;
     }
-    
+
     if(pwalletMain->GetBalance() < connTo->serviceNodeFee)
     {
         return xbridge::Error::INSIFFICIENT_FUNDS_DX;
