@@ -390,24 +390,29 @@ static bool verifyBlockRequirement(const XRouterPacketPtr& packet)
     }
 
     uint256 txHash(packet->data());
+    CTransaction txval;
+    uint256 hashBlock;
     int offset = 32;
     uint32_t vout = *static_cast<uint32_t*>(static_cast<void*>(packet->data() + offset));
 
     CCoins coins;
-    if (!pcoinsTip->GetCoins(txHash, coins)) {
+    CTxOut txOut;
+    if (pcoinsTip->GetCoins(txHash, coins)) {
+        if (vout > coins.vout.size()) {
+            std::clog << "Invalid vout index " << vout << "\n";
+            return false;
+        }   
+        
+        txOut = coins.vout[vout];
+    } else if (GetTransaction(txHash, txval, hashBlock, true)) {
+        txOut = txval.vout[vout];
+    } else {
         std::clog << "Could not find " << txHash.ToString() << "\n";
-        return false;
+        return false;   
     }
-
-    if (vout > coins.vout.size()) {
-        std::clog << "Invalid vout index " << vout << "\n";
-        return false;
-    }
-
-    auto& txOut = coins.vout[vout];
 
     if (txOut.nValue < minBlock) {
-        std::clog << "Insufficient BLOCK " << coins.vout[vout].nValue << "\n";
+        std::clog << "Insufficient BLOCK " << txOut.nValue << "\n";
         return false;
     }
 
@@ -902,13 +907,10 @@ void App::onMessageReceived(const std::vector<unsigned char>& id,
         return;
     }
     
-    /*if ((packet->command() != xrReply) && !verifyBlockRequirement(packet)) {
+    if ((packet->command() != xrReply) && !verifyBlockRequirement(packet)) {
         std::clog << "Block requirement not satisfied\n";
         return;
-    }*/
-
-    /* std::clog << "received message to " << util::base64_encode(std::string((char*)&id[0], 20)).c_str() */
-    /*           << " command " << packet->command(); */
+    }
 
     switch (packet->command()) {
       case xrGetBlockCount:
