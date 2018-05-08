@@ -43,7 +43,8 @@ enum XRouterCommand
     xrGetBalance = 8,
     xrGetBalanceUpdate = 9,
     xrGetTransactionsBloomFilter = 10,
-    xrSendTransaction = 11
+    xrSendTransaction = 11,
+    xrGetPaymentAddress = 12
     
 };
 

@@ -8,6 +8,7 @@
 #include "util/xroutererror.h"
 #include "validationstate.h"
 #include "xbridge/xbridgedef.h"
+#include "net.h"
 
 #include <memory>
 #include <boost/container/map.hpp>
@@ -182,6 +183,14 @@ public:
      * @return 
      */
     std::string sendTransaction(const std::string & currency, const std::string & transaction);
+    
+    /**
+     * @brief gets an account for comission payment
+     * @param node service node
+     * @return 
+     */
+    std::string getPaymentAddress(CNode* node);
+
 
     /**
      * @brief process GetBlockCount call on service node side
@@ -252,6 +261,13 @@ public:
      * @return 
      */
     bool processSendTransaction(XRouterPacketPtr packet);
+    
+    /**
+     * @brief process GetPaymentAddress call on service node side
+     * @param packet Xrouter packet received over the network
+     * @return 
+     */
+    bool processGetPaymentAddress(XRouterPacketPtr packet);
     
     /**
      * @brief process reply from service node on *client* side

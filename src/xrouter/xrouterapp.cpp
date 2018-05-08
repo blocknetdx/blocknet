@@ -863,6 +863,10 @@ bool App::processSendTransaction(XRouterPacketPtr packet) {
     return true;
 }
 
+bool App::processGetPaymentAddress(XRouterPacketPtr packet) {
+    
+}
+
 //*****************************************************************************
 //*****************************************************************************
 bool App::processReply(XRouterPacketPtr packet) {
@@ -1056,5 +1060,10 @@ std::string App::getTransactionsBloomFilter(const std::string & currency, const 
 std::string App::sendTransaction(const std::string & currency, const std::string & transaction)
 {
     return this->xrouterCall(xrSendTransaction, currency, transaction, "", 1);
+}
+
+std::string App::getPaymentAddress(CNode* node)
+{
+    
 }
 } // namespace xrouter
