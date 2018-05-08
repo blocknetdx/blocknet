@@ -813,6 +813,30 @@ bool App::processGetBalanceUpdate(XRouterPacketPtr packet) {
     return true;
 }
 
+bool App::processGetTransactionsBloomFilter(XRouterPacketPtr packet) {
+    uint32_t offset = 36;
+
+    std::string uuid((const char *)packet->data()+offset);
+    offset += uuid.size() + 1;
+    std::string currency((const char *)packet->data()+offset);
+    offset += currency.size() + 1;
+    std::string account((const char *)packet->data()+offset);
+    offset += account.size() + 1;
+    std::string number_s((const char *)packet->data()+offset);
+    offset += number_s.size() + 1;
+    std::cout << uuid << " "<< currency << " " << number_s << std::endl;
+    int number = std::stoi(number_s);
+    
+    xbridge::WalletConnectorPtr conn = connectorByCurrency(currency);
+
+    XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
+
+    rpacket->append(uuid);
+    sendPacket(rpacket);
+
+    return true;
+}
+
 bool App::processSendTransaction(XRouterPacketPtr packet) {
     uint32_t offset = 36;
 
@@ -1020,6 +1044,11 @@ std::string App::getBalance(const std::string & currency, const std::string & ac
 std::string App::getBalanceUpdate(const std::string & currency, const std::string & account, const std::string & number)
 {
     return this->xrouterCall(xrGetBalanceUpdate, currency, account, number);
+}
+
+std::string App::getTransactionsBloomFilter(const std::string & currency, const std::string & account, const std::string & number)
+{
+    return this->xrouterCall(xrGetTransactionsBloomFilter, currency, account, number);
 }
 
 std::string App::sendTransaction(const std::string & currency, const std::string & transaction)

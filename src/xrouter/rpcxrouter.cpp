@@ -275,6 +275,44 @@ Value xrGetBalanceUpdate(const Array & params, bool fHelp)
     return form_reply(reply);
 }
 
+Value xrGetTransactionsBloomFilter(const Array & params, bool fHelp)
+{
+    if (fHelp) {
+        throw std::runtime_error("xrGetTransactionsBloomFilter currency account [number]\nReturns transactions for account starting with block number (default: 0) for selected currency.");
+    }
+
+    if (params.size() < 1)
+    {
+        Object error;
+        error.emplace_back(Pair("error", "Currency not specified"));
+        error.emplace_back(Pair("name",     __FUNCTION__));
+        return error;
+    }
+
+    if (params.size() < 2)
+    {
+        Object error;
+        error.emplace_back(Pair("error", "Account not specified"));
+        error.emplace_back(Pair("name",     __FUNCTION__));
+        return error;
+    }
+
+    std::string number;
+    if (params.size() < 3)
+    {
+        number = "0";
+    }
+    else
+    {
+        number = params[2].get_str();
+    }
+    
+    std::string currency = params[0].get_str();
+    std::string account = params[1].get_str();
+    std::string reply = xrouter::App::instance().getTransactionsBloomFilter(currency, account, number);
+    return form_reply(reply);
+}
+
 Value xrSendTransaction(const Array & params, bool fHelp)
 {
     if (fHelp) {

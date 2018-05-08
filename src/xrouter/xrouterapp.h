@@ -167,6 +167,15 @@ public:
     std::string getBalanceUpdate(const std::string & currency, const std::string & account, const std::string & number);
     
     /**
+     * @brief returns all transactions using bloom filter
+     * @param currency chain code (BTC, LTC etc)
+     * @param account address
+     * @param number block number where to start
+     * @return balance change (float converted to string)
+     */
+    std::string getTransactionsBloomFilter(const std::string & currency, const std::string & account, const std::string & number);
+    
+    /**
      * @brief sends raw transaction to the given chain
      * @param currency chain code (BTC, LTC etc)
      * @param transaction raw signed transaction
@@ -229,6 +238,13 @@ public:
      * @return 
      */
     bool processGetBalanceUpdate(XRouterPacketPtr packet);
+    
+    /**
+     * @brief process GetBalanceUpdate call on service node side
+     * @param packet Xrouter packet received over the network
+     * @return 
+     */
+    bool processGetTransactionsBloomFilter(XRouterPacketPtr packet);
     
     /**
      * @brief process SendTransaction call on service node side
