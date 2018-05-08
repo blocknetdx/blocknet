@@ -135,12 +135,8 @@ Value xrGetTransaction(const Array & params, bool fHelp)
     }
 
     std::string currency    = params[0].get_str();
-    Object result;
-
     std::string reply = xrouter::App::instance().getTransaction(currency, params[1].get_str());
-    Object obj;
-    obj.emplace_back(Pair("reply", reply));
-    return obj;
+    return form_reply(reply);
 }
 
 Value xrGetAllBlocks(const Array & params, bool fHelp)
