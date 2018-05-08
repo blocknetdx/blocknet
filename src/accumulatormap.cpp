@@ -49,6 +49,13 @@ bool AccumulatorMap::Load(uint256 nCheckpoint)
     return true;
 }
 
+//Load a checkpoint containing 8 32bit checksums of accumulator values.
+void AccumulatorMap::Load(const AccumulatorCheckpoints::Checkpoint& checkpoint)
+{
+    for (auto it : checkpoint)
+        mapAccumulators.at(it.first)->setValue(it.second);
+}
+
 //Add a zerocoin to the accumulator of its denomination.
 bool AccumulatorMap::Accumulate(PublicCoin pubCoin, bool fSkipValidation)
 {

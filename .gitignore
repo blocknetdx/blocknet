@@ -74,6 +74,7 @@ src/leveldb/build_config.mk
 *.dmg
 
 *.json.h
+!accumulatorcheckpoints.json.h
 *.raw.h
 
 #libtool object files

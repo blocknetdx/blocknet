@@ -2999,7 +2999,25 @@ UniValue importzerocoins(const UniValue& params, bool fHelp)
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, h must be positive");
 
         bool fUsed = find_value(o, "u").get_bool();
-        CZerocoinMint mint(denom, bnValue, bnRandom, bnSerial, fUsed);
+        //Assume coin is version 1 unless it has the version actually set
+        uint8_t nVersion = 1;
+        const UniValue& vVersion = find_value(o, "v");
+        if (vVersion.isNum())
+            nVersion = static_cast<uint8_t>(vVersion.get_int());
+
+        //Set the privkey if applicable
+        CPrivKey privkey;
+        if (nVersion >= libzerocoin::PrivateCoin::PUBKEY_VERSION) {
+            std::string strPrivkey = find_value(o, "k").get_str();
+            CKey key;
+            uint256 nPrivKey(strPrivkey);
+            key.Set(nPrivKey.begin(), nPrivKey.end(), true);
+            if (!key.IsValid())
+                return JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "privkey is not valid");
+            privkey = key.GetPrivKey();
+        }
+
+        CZerocoinMint mint(denom, bnValue, bnRandom, bnSerial, fUsed, nVersion, &privkey);
         mint.SetTxHash(txid);
         mint.SetHeight(nHeight);
         walletdb.WriteZerocoinMint(mint);
