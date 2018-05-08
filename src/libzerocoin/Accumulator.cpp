@@ -108,7 +108,7 @@ void AccumulatorWitness::resetValue(const Accumulator& checkpoint, const PublicC
 }
 
 void AccumulatorWitness::AddElement(const PublicCoin& c) {
-	if(element != c) {
+	if(element.getValue() != c.getValue()) {
 		witness += c;
 	}
 }
