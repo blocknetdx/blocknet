@@ -60,14 +60,21 @@ QValidator::State BitcoinAddressEntryValidator::validate(QString& input, int& po
 
     // Validation
     QValidator::State state = QValidator::Acceptable;
+    bool isBech32 = false;
+    if(input.size() > 2
+        && input.at(0).unicode() == 'p'
+        && input.at(1).unicode() == 'h') {
+        isBech32 = true;
+    }
     for (int idx = 0; idx < input.size(); ++idx) {
-        int ch = input.at(idx).unicode();
+        const int ch = input.at(idx).unicode();
 
         if (((ch >= '0' && ch <= '9') ||
                 (ch >= 'a' && ch <= 'z') ||
                 (ch >= 'A' && ch <= 'Z')) &&
             ch != 'l' && ch != 'I' && ch != '0' && ch != 'O') {
             // Alphanumeric and not a 'forbidden' character
+        } else if(isBech32 && (ch == 'l' || ch == 'I' || ch == '0' || ch == 'O')) {
         } else {
             state = QValidator::Invalid;
         }
