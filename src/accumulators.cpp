@@ -281,7 +281,7 @@ bool CalculateAccumulatorCheckpoint(int nHeight, uint256& nCheckpoint, Accumulat
 bool ValidateAccumulatorCheckpoint(const CBlock& block, CBlockIndex* pindex, AccumulatorMap& mapAccumulators)
 {
     //V1 accumulators are completely phased out by the time this code hits the public and begins generating new checkpoints
-    //It is VERY IMPORTANT that when this is being run and height < v2_start, then zPIV need to be disabled at the same time!!
+    //It is VERY IMPORTANT that when this is being run and height < v2_start, then zPHR need to be disabled at the same time!!
     if (pindex->nHeight <= Params().Zerocoin_LastOldParams() || fVerifyingBlocks)
         return true;
 

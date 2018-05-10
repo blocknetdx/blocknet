@@ -217,7 +217,7 @@ void OverviewPage::setBalance(const CAmount& balance, const CAmount& unconfirmed
     CAmount nTotalWatchBalance = watchOnlyBalance + watchUnconfBalance + watchImmatureBalance;    
     CAmount nUnlockedBalance = nTotalBalance - nLockedBalance;
     // zPHR Balance
-    CAmount matureZerocoinBalance = zerocoinBalance - immatureZerocoinBalance;
+    CAmount matureZerocoinBalance = zerocoinBalance - unconfirmedZerocoinBalance - immatureZerocoinBalance;
     // Percentages
     QString szPercentage = "";
     QString sPercentage = "";

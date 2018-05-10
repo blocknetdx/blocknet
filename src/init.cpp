@@ -72,7 +72,7 @@ using namespace std;
 
 #ifdef ENABLE_WALLET
 CWallet* pwalletMain = NULL;
-CzPIVWallet* zwalletMain = NULL;
+CzPHRWallet* zwalletMain = NULL;
 int nWalletBackups = 10;
 #endif
 volatile bool fFeeEstimatesInitialized = false;
@@ -1442,6 +1442,61 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
                     break;
                 }
 
+                if (GetBoolArg("-reindexzerocoin", false)) {
+                    uiInterface.InitMessage(_("Reindexing zerocoin database..."));
+                    if (!zerocoinDB->WipeCoins("spends") || !zerocoinDB->WipeCoins("mints")) {
+                        strLoadError = _("Failed to wipe zerocoinDB");
+                        break;
+                    }
+
+                    CBlockIndex* pindex = chainActive[Params().Zerocoin_StartHeight()];
+                    while (pindex) {
+                        if (pindex->nHeight % 1000 == 0)
+                            LogPrintf("Reindexing zerocoin : block %d...\n", pindex->nHeight);
+
+                        CBlock block;
+                        if (!ReadBlockFromDisk(block, pindex)) {
+                            strLoadError = _("Reindexing zerocoin failed");
+                            break;
+                        }
+
+                        for (const CTransaction& tx : block.vtx) {
+                            for (unsigned int i = 0; i < tx.vin.size(); i++) {
+                                if (tx.IsCoinBase())
+                                    break;
+
+                                if (tx.ContainsZerocoins()) {
+                                    uint256 txid = tx.GetHash();
+                                    //Record Serials
+                                    if (tx.IsZerocoinSpend()) {
+                                        for (auto& in : tx.vin) {
+                                            if (!in.scriptSig.IsZerocoinSpend())
+                                                continue;
+
+                                            libzerocoin::CoinSpend spend = TxInToZerocoinSpend(in);
+                                            zerocoinDB->WriteCoinSpend(spend.getCoinSerialNumber(), txid);
+                                        }
+                                    }
+
+                                    //Record mints
+                                    if (tx.IsZerocoinMint()) {
+                                        for (auto& out : tx.vout) {
+                                            if (!out.IsZerocoinMint())
+                                                continue;
+
+                                            CValidationState state;
+                                            libzerocoin::PublicCoin coin(Params().Zerocoin_Params(pindex->nHeight < Params().Zerocoin_Block_V2_Start()));
+                                            TxOutToPublicCoin(out, coin, state);
+                                            zerocoinDB->WriteCoinMint(coin, txid);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        pindex = chainActive.Next(pindex);
+                    }
+                }
+
                 // Recalculate money supply for blocks that are impacted by accounting issue after zerocoin activation
                 if (GetBoolArg("-reindexmoneysupply", false)) {
                     if (chainActive.Height() > Params().Zerocoin_StartHeight()) {
@@ -1540,6 +1595,7 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
 #ifdef ENABLE_WALLET
     if (fDisableWallet) {
         pwalletMain = NULL;
+        zwalletMain = NULL;
         LogPrintf("Wallet disabled!\n");
     } else {
         // needed to restore wallet transaction meta data after -zapwallettxes
@@ -1612,6 +1668,9 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
         LogPrintf("%s", strErrors.str());
         LogPrintf(" wallet      %15dms\n", GetTimeMillis() - nStart);
 
+        zwalletMain = new CzPHRWallet(pwalletMain->strWalletFile);
+        pwalletMain->setZWallet(zwalletMain);
+
         RegisterValidationInterface(pwalletMain);
 
         CBlockIndex* pindexRescan = chainActive.Tip();
@@ -1656,6 +1715,8 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
         }
         fVerifyingBlocks = false;
 
+        uiInterface.InitMessage(_("Syncing zPHR wallet..."));
+
         bool fEnableZPhrBackups = GetBoolArg("-backupzphr", true);
         pwalletMain->setZPhrAutoBackups(fEnableZPhrBackups);
 
@@ -1668,6 +1729,10 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
         if (g_change_type == OUTPUT_TYPE_NONE) {
             return InitError(strprintf(_("Unknown change type '%s'"), GetArg("-changetype", "")));
         }
+
+        pwalletMain->zphrTracker->Init();
+        zwalletMain->LoadMintPoolFromDB();
+        zwalletMain->SyncWithChain();
     }  // (!fDisableWallet)
 #else  // ENABLE_WALLET
     LogPrintf("No wallet compiled in!\n");

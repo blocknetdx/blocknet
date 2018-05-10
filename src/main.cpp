@@ -950,14 +950,14 @@ libzerocoin::ZerocoinParams* GetZerocoinParams(int nHeight) {
     return nHeight > Params().Zerocoin_LastOldParams() ? Params().Zerocoin_Params() : Params().OldZerocoin_Params(); 
 }
 
-void FindMints(vector<CZerocoinMint> vMintsToFind, vector<CZerocoinMint>& vMintsToUpdate, vector<CZerocoinMint>& vMissingMints, bool fExtendedSearch)
+void FindMints(vector<CMintMeta> vMintsToFind, vector<CMintMeta>& vMintsToUpdate, vector<CMintMeta>& vMissingMints)
 {
     // see which mints are in our public zerocoin database. The mint should be here if it exists, unless
     // something went wrong
-    for (CZerocoinMint mint : vMintsToFind) {
+    for (CMintMeta mint : vMintsToFind) {
         uint256 txHash;
-        if (!zerocoinDB->ReadCoinMint(mint.GetValue(), txHash)) {
-            vMissingMints.push_back(mint);
+        if (!zerocoinDB->ReadCoinMint(meta.hashPubcoin, txHash)) {
+            vMissingMints.push_back(meta);
             continue;
         }
 
@@ -966,97 +966,67 @@ void FindMints(vector<CZerocoinMint> vMintsToFind, vector<CZerocoinMint>& vMints
         uint256 hashBlock;
         if (!GetTransaction(txHash, tx, hashBlock, true)) {
             LogPrintf("%s : cannot find tx %s\n", __func__, txHash.GetHex());
-            vMissingMints.push_back(mint);
+            vMissingMints.push_back(meta);
             continue;
         }
 
         if (!mapBlockIndex.count(hashBlock)) {
             LogPrintf("%s : cannot find block %s\n", __func__, hashBlock.GetHex());
-            vMissingMints.push_back(mint);
+            vMissingMints.push_back(meta);
             continue;
         }
 
         //see if this mint is spent
         uint256 hashTxSpend = 0;
-        zerocoinDB->ReadCoinSpend(mint.GetSerialNumber(), hashTxSpend);
-        bool fSpent = hashTxSpend != 0;
+        bool fSpent = zerocoinDB->ReadCoinSpend(meta.hashSerial, hashTxSpend);
 
         //if marked as spent, check that it actually made it into the chain
         CTransaction txSpend;
         uint256 hashBlockSpend;
         if (fSpent && !GetTransaction(hashTxSpend, txSpend, hashBlockSpend, true)) {
             LogPrintf("%s : cannot find spend tx %s\n", __func__, hashTxSpend.GetHex());
-            zerocoinDB->EraseCoinSpend(mint.GetSerialNumber());
-            mint.SetUsed(false);
-            vMintsToUpdate.push_back(mint);
+            meta.isUsed = false;
+            vMintsToUpdate.push_back(meta);
             continue;
         }
 
         //The mint has been incorrectly labelled as spent in zerocoinDB and needs to be undone
         int nHeightTx = 0;
-        if (fSpent && !IsSerialInBlockchain(mint.GetSerialNumber(), nHeightTx)) {
+        uint256 hashSerial = meta.hashSerial;
+        uint256 txidSpend;
+        if (fSpent && !IsSerialInBlockchain(hashSerial, nHeightTx, txidSpend)) {
             LogPrintf("%s : cannot find block %s. Erasing coinspend from zerocoinDB.\n", __func__, hashBlockSpend.GetHex());
-            zerocoinDB->EraseCoinSpend(mint.GetSerialNumber());
-            mint.SetUsed(false);
-            vMintsToUpdate.push_back(mint);
+            meta.isUsed = false;
+            vMintsToUpdate.push_back(meta);
             continue;
+        }
+
+        // is the denomination correct?
+        for (auto& out : tx.vout) {
+            if (!out.IsZerocoinMint())
+                continue;
+            PublicCoin pubcoin(Params().Zerocoin_Params(meta.nVersion < libzerocoin::PrivateCoin::PUBKEY_VERSION));
+            CValidationState state;
+            TxOutToPublicCoin(out, pubcoin, state);
+            if (GetPubCoinHash(pubcoin.getValue()) == meta.hashPubcoin && pubcoin.getDenomination() != meta.denom) {
+                LogPrintf("%s: found mismatched denom pubcoinhash = %s\n", __func__, meta.hashPubcoin.GetHex());
+                meta.denom = pubcoin.getDenomination();
+                vMintsToUpdate.emplace_back(meta);
+            }
         }
 
         // if meta data is correct, then no need to update
-        if (mint.GetTxHash() == txHash && mint.GetHeight() == mapBlockIndex[hashBlock]->nHeight && mint.IsUsed() == fSpent)
+        if (mint.txid == txHash && mint.nHeight == mapBlockIndex[hashBlock]->nHeight && mint.isUsed == fSpent)
             continue;
 
         //mark this mint for update
-        mint.SetTxHash(txHash);
-        mint.SetHeight(mapBlockIndex[hashBlock]->nHeight);
-        mint.SetUsed(fSpent);
+        meta.txid = txHash;
+        meta.nHeight = mapBlockIndex[hashBlock]->nHeight;
+        meta.isUsed = fSpent;
+        LogPrintf("%s: found updates for pubcoinhash = %s\n", __func__, meta.hashPubcoin.GetHex());
 
-        vMintsToUpdate.push_back(mint);
+        vMintsToUpdate.push_back(meta);
     }
-
-    if (fExtendedSearch)
-    {
-        // search the blockchain for the meta data on our missing mints
-        int nZerocoinStartHeight = GetZerocoinStartHeight();
-
-        for (int i = nZerocoinStartHeight; i < chainActive.Height(); i++) {
-
-            if(i % 1000 == 0)
-                LogPrintf("%s : scanned %d blocks\n", __func__, i - nZerocoinStartHeight);
-
-            if(chainActive[i]->vMintDenominationsInBlock.empty())
-                continue;
-
-            CBlock block;
-            if(!ReadBlockFromDisk(block, chainActive[i]))
-                continue;
-
-            list<CZerocoinMint> vMints;
-            if(!BlockToZerocoinMintList(block, vMints))
-                continue;
-
-            // search the blocks mints to see if it contains the mint that is requesting meta data updates
-            for (CZerocoinMint mintBlockChain : vMints) {
-                for (CZerocoinMint mintMissing : vMissingMints) {
-                    if (mintMissing.GetValue() == mintBlockChain.GetValue()) {
-                        LogPrintf("%s FOUND %s in block %d\n", __func__, mintMissing.GetValue().GetHex(), i);
-                        mintMissing.SetHeight(i);
-                        mintMissing.SetTxHash(mintBlockChain.GetTxHash());
-                        vMintsToUpdate.push_back(mintMissing);
-                    }
-                }
-            }
-        }
-    }
-
-    //remove any missing mints that were found
-    for (CZerocoinMint mintMissing : vMissingMints) {
-        for (CZerocoinMint mintFound : vMintsToUpdate) {
-            if (mintMissing.GetValue() == mintFound.GetValue())
-                std::remove(vMissingMints.begin(), vMissingMints.end(), mintMissing);
-        }
-    }
-
 }
 
 bool GetZerocoinMint(const CBigNum& bnPubcoin, uint256& txHash)
@@ -1065,29 +1035,38 @@ bool GetZerocoinMint(const CBigNum& bnPubcoin, uint256& txHash)
     return zerocoinDB->ReadCoinMint(bnPubcoin, txHash);
 }
 
+bool IsPubcoinInBlockchain(const uint256& hashPubcoin, uint256& txid)
+{
+    txid = 0;
+    return zerocoinDB->ReadCoinMint(hashPubcoin, txid);
+}
+
 bool IsSerialKnown(const CBigNum& bnSerial)
 {
     uint256 txHash = 0;
     return zerocoinDB->ReadCoinSpend(bnSerial, txHash);
 }
 
-bool IsSerialInBlockchain(const CBigNum& bnSerial, int& nHeightTx)
-{
+bool IsSerialInBlockchain(const CBigNum& bnSerial, int& nHeightTx) {
     uint256 txHash = 0;
     // if not in zerocoinDB then its not in the blockchain
     if (!zerocoinDB->ReadCoinSpend(bnSerial, txHash))
         return false;
 
+    return IsTransactionInChain(txHash, nHeightTx);
+}
+
+bool IsSerialInBlockchain(const uint256& hashSerial, int& nHeightTx, uint256& txidSpend) {
     CTransaction tx;
-    uint256 hashBlock;
-    if (!GetTransaction(txHash, tx, hashBlock, true))
+    return IsSerialInBlockchain(hashSerial, nHeightTx, txidSpend, tx);
+}
+
+bool IsSerialInBlockchain(const uint256& hashSerial, int& nHeightTx, uint256& txidSpend, CTransaction& tx) {
+    txidSpend = 0;
+    // if not in zerocoinDB then its not in the blockchain
+    if (!zerocoinDB->ReadCoinSpend(hashSerial, txidSpend))
         return false;
-
-    bool inChain = mapBlockIndex.count(hashBlock) && chainActive.Contains(mapBlockIndex[hashBlock]);
-    if (inChain)
-        nHeightTx = mapBlockIndex.at(hashBlock)->nHeight;
-
-    return inChain;
+    return IsTransactionInChain(txidSpend, nHeightTx, tx);
 }
 
 bool RemoveSerialFromDB(const CBigNum& bnSerial)
@@ -1241,9 +1220,6 @@ bool CheckZerocoinMint(const uint256& txHash, const CTxOut& txout, CValidationSt
     if (!pubCoin.validate())
         return state.DoS(100, error("CheckZerocoinMint() : PubCoin does not validate"));
 
-    if(!fCheckOnly && !RecordMintToDB(pubCoin, txHash))
-        return state.DoS(100, error("CheckZerocoinMint(): RecordMintToDB() failed"));
-
     return true;
 }
 
@@ -1257,47 +1233,46 @@ CoinSpend TxInToZerocoinSpend(const CTxIn& txin)
     return CoinSpend(Params().Zerocoin_Params(), GetZerocoinParams(chainActive.Height()), serializedCoinSpend);
 }
 
-//Check a zerocoinspend considering external context such as blockchain data, height, etc.
-bool ContextualCheckCoinSpend(const CoinSpend& spend, CBlockIndex* pindex, const uint256& txid)
-{
-    //Check to see if the zPIV is properly signed
-    if (pindex->nHeight >= Params().Zerocoin_LastOldParams()) {
-        if (!spend.HasValidSignature())
-            return error("%s: V2 zPIV spend does not have a valid signature", __func__);
-
-        libzerocoin::SpendType expectedType = libzerocoin::SpendType::SPEND;
-        if (spend.getSpendType() != expectedType) {
-            return error("%s: trying to spend zPIV without the correct spend type", __func__);
-        }
-    }
-
-    // Make sure that the serial number is in valid range
-    if (pindex->nHeight >= Params().Zerocoin_Block_EnforceSerialRange()) {
-        if (!spend.HasValidSerial(GetZerocoinParams(pindex->nHeight)))
-            return error("%s : txid=%s in block %d contains invalid serial %s\n", __func__, txid.GetHex(),
-                         pindex->nHeight, spend.getCoinSerialNumber());
-    }
-
-    //Is the serial already in the blockchain?
-    int nHeightTxSpend = 0;
-    if (IsSerialInBlockchain(spend.getCoinSerialNumber(), nHeightTxSpend)) {
-        if(!fVerifyingBlocks || (fVerifyingBlocks && pindex->nHeight > nHeightTxSpend))
-            return error("%s : zPhr with serial %s is already in the block %d\n", __func__,
-                         spend.getCoinSerialNumber().GetHex(), nHeightTxSpend);
-    }
-
-    return true;
-}
-
-bool ContextualCheckZerocoinMint(const CTransaction& tx, const PublicCoin& coin, const CBlockIndex* pindex)
-{
-    if (pindex->nHeight > Params().Zerocoin_LastOldParams()) {
+bool ContextualCheckZerocoinMint(const CTransaction& tx, const PublicCoin& coin, const CBlockIndex* pindex) {
+   if (pindex->nHeight > Params().Zerocoin_LastOldParams() && Params().NetworkID() != CBaseChainParams::TESTNET) {
+        //See if this coin has already been added to the blockchain
         uint256 txid;
         if(zerocoinDB->ReadCoinMint(coin.getValue(), txid))
             return error("%s: pubcoin %s was already accumulated in tx %s", __func__,
-                          coin.getValue().GetHex().substr(0, 10),
-                          txid.GetHex());
+                         coin.getValue().GetHex().substr(0, 10),
+                         txid.GetHex());
     }
+    return true;
+}
+
+bool ContextualCheckZerocoinSpend(const CTransaction& tx, const CoinSpend& spend, CBlockIndex* pindex, const uint256& hashBlock) {
+    //Check to see if the zPHR is properly signed
+    if (pindex->nHeight > Params().Zerocoin_LastOldParams()) {
+        if (!spend.HasValidSignature())
+            return error("%s: V2 zPHR spend does not have a valid signature", __func__);
+
+        libzerocoin::SpendType expectedType = libzerocoin::SpendType::SPEND;
+        if (tx.IsCoinStake())
+            expectedType = libzerocoin::SpendType::STAKE;
+        if (spend.getSpendType() != expectedType) {
+            return error("%s: trying to spend zPHR without the correct spend type. txid=%s", __func__,
+                         tx.GetHash().GetHex());
+        }
+    }
+
+    //Reject serial's that are already in the blockchain
+    int nHeightTx = 0;
+    if (IsSerialInBlockchain(spend.getCoinSerialNumber(), nHeightTx))
+        return error("%s : zPHR spend with serial %s is already in block %d\n", __func__,
+                     spend.getCoinSerialNumber().GetHex(), nHeightTx);
+
+    //Reject serial's that are not in the acceptable value range
+    bool fUseV1Params = spend.getVersion() < libzerocoin::PrivateCoin::PUBKEY_VERSION;
+    if (pindex->nHeight > Params().Zerocoin_Block_EnforceSerialRange() &&
+        !spend.HasValidSerial(Params().Zerocoin_Params(fUseV1Params)))
+        return error("%s : zPHR spend with serial %s from tx %s is not in valid range\n", __func__,
+                     spend.getCoinSerialNumber().GetHex(), tx.GetHash().GetHex());
+
     return true;
 }
 
@@ -1375,19 +1350,6 @@ bool CheckZerocoinSpend(const CTransaction tx, bool fVerifySignature, CValidatio
     if (nTotalRedeemed < tx.GetValueOut()) {
         LogPrintf("redeemed = %s , spend = %s \n", FormatMoney(nTotalRedeemed), FormatMoney(tx.GetValueOut()));
         return state.DoS(100, error("Transaction spend more than was redeemed in zerocoins"));
-    }
-
-    // Send signal to wallet if this is ours
-    if (pwalletMain) {
-        CWalletDB walletdb(pwalletMain->strWalletFile);
-        list <CBigNum> listMySerials = walletdb.ListMintedCoinsSerial();
-        for (const auto& newSpend : vSpends) {
-            list<CBigNum>::iterator it = find(listMySerials.begin(), listMySerials.end(), newSpend.getCoinSerialNumber());
-            if (it != listMySerials.end()) {
-                LogPrintf("%s: %s detected spent zerocoin mint in transaction %s \n", __func__, it->GetHex(), tx.GetHash().GetHex());
-                pwalletMain->NotifyZerocoinChanged(pwalletMain, it->GetHex(), "Used", CT_UPDATED);
-            }
-        }
     }
 
     return fValidated;
@@ -1619,16 +1581,17 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
             //Check that txid is not already in the chain
             int nHeightTx = 0;
             if (IsTransactionInChain(tx.GetHash(), nHeightTx))
-                return state.Invalid(error("AcceptToMemoryPool : zPhr spend tx %s already in block %d", tx.GetHash().GetHex(), nHeightTx),
-                                     REJECT_DUPLICATE, "bad-txns-inputs-spent");
+                return state.Invalid(error("AcceptToMemoryPool : zPHR spend tx %s already in block %d",
+                                           tx.GetHash().GetHex(), nHeightTx), REJECT_DUPLICATE, "bad-txns-inputs-spent");
 
             //Check for double spending of serial #'s
             for (const CTxIn& txIn : tx.vin) {
                 if (!txIn.scriptSig.IsZerocoinSpend())
                     continue;
                 CoinSpend spend = TxInToZerocoinSpend(txIn, chainActive.Height());
-                if (!ContextualCheckCoinSpend(spend, chainActive.Tip(), txid))
-                    return state.Invalid(error("%s: zPHR spend in tx %s failed to pass context checks", __func__, txid.GetHex()));
+                if (!ContextualCheckZerocoinSpend(tx, spend, chainActive.Tip(), txid, 0))
+                    return state.Invalid(error("%s: ContextualCheckZerocoinSpend failed for tx %s", __func__,
+                                               tx.GetHash().GetHex()), REJECT_INVALID, "bad-txns-invalid-zphr");
             }
         } else {
             LOCK(pool.cs);
@@ -1649,6 +1612,22 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
                     return false;
                 }
             }
+
+            // Check that zPHR mints are not already known
+            if (tx.IsZerocoinMint()) {
+                for (auto& out : tx.vout) {
+                    if (!out.IsZerocoinMint())
+                        continue;
+
+                    PublicCoin coin(Params().Zerocoin_Params());
+                    if (!TxOutToPublicCoin(out, coin, state))
+                        return state.Invalid(error("%s: failed final check of zerocoinmint for tx %s", __func__, tx.GetHash().GetHex()));
+
+                    if (!ContextualCheckZerocoinMint(tx, coin, chainActive.Tip()))
+                        return state.Invalid(error("%s: zerocoin mint failed contextual check", __func__));
+                }
+            }
+
 
             // are the actual inputs available?
             if (!view.HaveInputs(tx))
@@ -1899,7 +1878,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState& state, const CTransact
                 }
             }
 
-            // Check that zPIV mints are not already known
+            // Check that zPHR mints are not already known
             if (tx.IsZerocoinMint()) {
                 for (auto& out : tx.vout) {
                     if (!out.IsZerocoinMint())
@@ -2176,22 +2155,19 @@ double ConvertBitsToDouble(unsigned int nBits)
 
 int64_t GetBlockValue(int nHeight)
 {
-    int64_t nSubsidy = 0;
-
     if (nHeight == 0) {
-        nSubsidy = 17500000 * COIN;
+        return 17500000 * COIN;
     } else if (nHeight > 0 && nHeight <= 200) {
-        nSubsidy = 2500 * COIN;
+        return 2500 * COIN;
     } else if (nHeight > 200 && nHeight <= 775600) {
-        nSubsidy = 7 * COIN;
+        return 7 * COIN;
     } else if (nHeight > 775600 && nHeight <= 1043999) {
-        nSubsidy = 4.5 * COIN;
+        return 4.5 * COIN;
     } else if (nHeight > 1043999 && nHeight <= 1562398) {
-        nSubsidy = 3.6 * COIN;
+        return 3.6 * COIN;
     } else {
-        nSubsidy = 2.7 * COIN;
+        return 2.7 * COIN;
     }
-    return nSubsidy;
 }
 
 int64_t GetMasternodePayment(int nHeight, int64_t blockValue, int nMasternodeCount)
@@ -2761,34 +2737,32 @@ bool ReindexAccumulators(list<uint256>& listMissingCheckpoints, string& strError
         LogPrintf("%s : finding missing checkpoints\n", __func__);
 
         //search the chain to see when zerocoin started
-        int nZerocoinStart = Params().Zerocoin_StartHeight();
+        int nZerocoinStart = Params().Zerocoin_LastOldParams() + 1;
 
         // find each checkpoint that is missing
         CBlockIndex* pindex = chainActive[nZerocoinStart];
-        while (!listMissingCheckpoints.empty()) {
+        while (pindex) {
             if (ShutdownRequested())
                 return false;
 
             // find checkpoints by iterating through the blockchain beginning with the first zerocoin block
             if (pindex->nAccumulatorCheckpoint != pindex->pprev->nAccumulatorCheckpoint) {
-                //double dPercent = (pindex->nHeight - nZerocoinStart) / (double) (chainActive.Height() - nZerocoinStart);
-                //uiInterface.ShowProgress(_("Calculating missing accumulators..."), (int) (dPercent * 100));
                 if (find(listMissingCheckpoints.begin(), listMissingCheckpoints.end(), pindex->nAccumulatorCheckpoint) != listMissingCheckpoints.end()) {
                     uint256 nCheckpointCalculated = 0;
-                    AccumulatorMap mapAccumulators(GetZerocoinParams(pindex->nHeight));
+                    AccumulatorMap mapAccumulators(Params().Zerocoin_Params());
                     if (!CalculateAccumulatorCheckpoint(pindex->nHeight, nCheckpointCalculated, mapAccumulators)) {
                         // GetCheckpoint could have terminated due to a shutdown request. Check this here.
                         if (ShutdownRequested())
                             break;
                         strError = _("Failed to calculate accumulator checkpoint");
-                        return false;
+                        return error("%s: %s", __func__, strError);
                     }
 
                     //check that the calculated checkpoint is what is in the index.
                     if (nCheckpointCalculated != pindex->nAccumulatorCheckpoint) {
                         LogPrintf("%s : height=%d calculated_checkpoint=%s actual=%s\n", __func__, pindex->nHeight, nCheckpointCalculated.GetHex(), pindex->nAccumulatorCheckpoint.GetHex());
                         strError = _("Calculated accumulator checkpoint is not what is recorded by block index");
-                        return false;
+                        return error("%s: %s", __func__, strError);
                     }
 
                     DatabaseChecksums(mapAccumulators);
@@ -2798,10 +2772,7 @@ bool ReindexAccumulators(list<uint256>& listMissingCheckpoints, string& strError
             }
 
             // if we have iterated to the end of the blockchain, then checkpoints should be in sync
-            if (pindex->nHeight + 1 <= chainActive.Height())
-                pindex = chainActive.Next(pindex);
-            else
-                break;
+            pindex = chainActive.Next(pindex);
         }
     }
     return true;
@@ -2824,10 +2795,32 @@ bool UpdateZPHRSupply(const CBlock& block, CBlockIndex* pindex)
     CAmount nAmountZerocoinSpent = 0;
     pindex->vMintDenominationsInBlock.clear();
     if (pindex->pprev) {
+        std::set<uint256> setAddedToWallet;
         for (auto& m : listMints) {
             libzerocoin::CoinDenomination denom = m.GetDenomination();
             pindex->vMintDenominationsInBlock.push_back(m.GetDenomination());
             pindex->mapZerocoinSupply.at(denom)++;
+
+             //Remove any of our own mints from the mintpool
+            if (pwalletMain) {
+                if (pwalletMain->IsMyMint(m.GetValue())) {
+                    pwalletMain->UpdateMint(m.GetValue(), pindex->nHeight, m.GetTxHash(), m.GetDenomination());
+
+                    // Add the transaction to the wallet
+                    for (auto& tx : block.vtx) {
+                        uint256 txid = tx.GetHash();
+                        if (setAddedToWallet.count(txid))
+                            continue;
+                        if (txid == m.GetTxHash()) {
+                            CWalletTx wtx(pwalletMain, tx);
+                            wtx.nTimeReceived = block.GetBlockTime();
+                            wtx.SetMerkleBranch(block);
+                            pwalletMain->AddToWallet(wtx);
+                            setAddedToWallet.insert(txid);
+                        }
+                    }
+                }
+            }
         }
 
         for (auto& denom : listSpends) {
@@ -2943,6 +2936,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
     std::vector<std::pair<uint256, CDiskTxPos> > vPosTxid;
     std::vector<std::pair<uint160, CExtDiskTxPos> > vPosAddrid;
     std::vector<pair<CoinSpend, uint256> > vSpends;
+    vector<pair<PublicCoin, uint256> > vMints;
     if (fTxIndex)
         vPosTxid.reserve(block.vtx.size());
     if (fAddrIndex)
@@ -2953,6 +2947,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
     CAmount nValueOut = 0;
     CAmount nValueIn = 0;
     vector<uint256> vSpendsInBlock;
+    uint256 hashBlock = block.GetHash();
     for (unsigned int i = 0; i < block.vtx.size(); i++) {
         const CTransaction& tx = block.vtx[i];
 
@@ -2982,18 +2977,50 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                 CoinSpend spend = TxInToZerocoinSpend(txIn, pindex->nHeight);
                 nValueIn += spend.getDenomination() * COIN;
 
-                //Perform checks on the spend that are based on blockchain context
-                if (!ContextualCheckCoinSpend(spend, pindex, txid))
-                    return state.DoS(100, error("%s: Coinspend is not valid in block %s", __func__, block.GetHash().GetHex()));
-
                 //queue for db write after the 'justcheck' section has concluded
                 vSpends.emplace_back(make_pair(spend, tx.GetHash()));
+
+                if (!ContextualCheckZerocoinSpend(tx, spend, pindex, hashBlock))
+                    return state.DoS(100, error("%s: failed to add block %s with invalid zerocoinspend", __func__, tx.GetHash().GetHex()), REJECT_INVALID);
+                }
+
+            // Check that zPHR mints are not already known
+            if (tx.IsZerocoinMint()) {
+                for (auto& out : tx.vout) {
+                    if (!out.IsZerocoinMint())
+                        continue;
+
+                    PublicCoin coin(Params().Zerocoin_Params());
+                    if (!TxOutToPublicCoin(out, coin, state))
+                        return state.DoS(100, error("%s: failed final check of zerocoinmint for tx %s", __func__, tx.GetHash().GetHex()));
+
+                    if (!ContextualCheckZerocoinMint(tx, coin, pindex))
+                        return state.DoS(100, error("%s: zerocoin mint failed contextual check", __func__));
+
+                    vMints.emplace_back(make_pair(coin, tx.GetHash()));
+                }
             }
         } else if (!tx.IsCoinBase()) {
             if (!view.HaveInputs(tx))
                 return state.DoS(100, error("ConnectBlock() : inputs missing/spent"),
                     REJECT_INVALID, "bad-txns-inputs-missingorspent");
+            
+            // Check that zPHR mints are not already known
+            if (tx.IsZerocoinMint()) {
+                for (auto& out : tx.vout) {
+                    if (!out.IsZerocoinMint())
+                        continue;
 
+                    PublicCoin coin(Params().Zerocoin_Params());
+                    if (!TxOutToPublicCoin(out, coin, state))
+                        return state.DoS(100, error("%s: failed final check of zerocoinmint for tx %s", __func__, tx.GetHash().GetHex()));
+
+                    if (!ContextualCheckZerocoinMint(tx, coin, pindex))
+                        return state.DoS(100, error("%s: zerocoin mint failed contextual check", __func__));
+
+                    vMints.emplace_back(make_pair(coin, tx.GetHash()));
+                }
+            }
 
             if (!tx.IsCoinStake())
                 nFees += view.GetValueIn(tx) - tx.GetValueOut();
@@ -3052,7 +3079,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
     pindex->nMoneySupply = nMoneySupplyPrev + nValueOut - nValueIn;
     pindex->nMint = pindex->nMoneySupply - nMoneySupplyPrev + nFees;
 
-//    LogPrintf("XX69----------> ConnectBlock(): nValueOut: %s, nValueIn: %s, nFees: %s, nMint: %s zPhrSpent: %s\n",
+//    LogPrintf("XX69----------> ConnectBlock(): nValueOut: %s, nValueIn: %s, nFees: %s, nMint: %s zPHRSpent: %s\n",
 //              FormatMoney(nValueOut), FormatMoney(nValueIn),
 //              FormatMoney(nFees), FormatMoney(pindex->nMint), FormatMoney(nAmountZerocoinSpent));
 
@@ -3106,10 +3133,40 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
     }
 
     //Record zPHR serials
+    set<uint256> setAddedTx;
     for (pair<CoinSpend, uint256> pSpend : vSpends) {
         //record spend to database
         if (!zerocoinDB->WriteCoinSpend(pSpend.first.getCoinSerialNumber(), pSpend.second))
             return state.Error(("Failed to record coin serial to database"));
+
+        // Send signal to wallet if this is ours
+        if (pwalletMain) {
+            if (pwalletMain->IsMyZerocoinSpend(pSpend.first.getCoinSerialNumber())) {
+                LogPrintf("%s: %s detected zerocoinspend in transaction %s \n", __func__, pSpend.first.getCoinSerialNumber().GetHex(), pSpend.second.GetHex());
+                pwalletMain->NotifyZerocoinChanged(pwalletMain, pSpend.first.getCoinSerialNumber().GetHex(), "Used", CT_UPDATED);
+
+                //Don't add the same tx multiple times
+                if (setAddedTx.count(pSpend.second))
+                    continue;
+
+                //Search block for matching tx, turn into wtx, set merkle branch, add to wallet
+                for (CTransaction tx : block.vtx) {
+                    if (tx.GetHash() == pSpend.second) {
+                        CWalletTx wtx(pwalletMain, tx);
+                        wtx.nTimeReceived = pindex->GetBlockTime();
+                        wtx.SetMerkleBranch(block);
+                        pwalletMain->AddToWallet(wtx);
+                        setAddedTx.insert(pSpend.second);
+                    }
+                }
+            }
+        }
+    }
+
+    //Record mints to db
+    for (pair<PublicCoin, uint256> pMint : vMints) {
+        if (!zerocoinDB->WriteCoinMint(pMint.first, pMint.second))
+            return state.Abort(("Failed to record new mint to database"));
     }
 
     //Record accumulator checksums
@@ -3660,7 +3717,10 @@ bool ActivateBestChain(CValidationState& state, CBlock* pblock, bool fAlreadyChe
             uiInterface.NotifyBlockTip(hashNewTip);
             GetMainSignals().UpdatedBlockTip(pindexNewTip);
 
-            unsigned size = GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION);
+            unsigned size = 0;
+
+            if (pblock)
+                size = GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION);
             // If the size is over 1 MB notify external listeners, and it is within the last 5 minutes
             if (size > MAX_BLOCK_SIZE_LEGACY && pblock->GetBlockTime() > GetAdjustedTime() - 300) {
                 uiInterface.NotifyBlockSize(static_cast<int>(size), hashNewTip);
@@ -4229,16 +4289,20 @@ bool IsBlockHashInChain(const uint256& hashBlock)
     return chainActive.Contains(mapBlockIndex[hashBlock]);
 }
 
-bool IsTransactionInChain(uint256 txId, int& nHeightTx)
-{
+bool IsTransactionInChain(const uint256& txId, int& nHeightTx, CTransaction& tx) {
     uint256 hashBlock;
-    CTransaction tx;
-    GetTransaction(txId, tx, hashBlock, true);
+    if (!GetTransaction(txId, tx, hashBlock, true))
+        return false;
     if (!IsBlockHashInChain(hashBlock))
         return false;
 
     nHeightTx = mapBlockIndex.at(hashBlock)->nHeight;
     return true;
+}
+
+bool IsTransactionInChain(const uint256& txId, int& nHeightTx) {
+    CTransaction tx;
+    return IsTransactionInChain(txId, nHeightTx, tx);
 }
 
 bool ContextualCheckBlock(const CBlock& block, CValidationState& state, CBlockIndex* const pindexPrev)
@@ -4256,7 +4320,7 @@ bool ContextualCheckBlock(const CBlock& block, CValidationState& state, CBlockIn
             if (!CheckTransaction(tx, true, chainActive.Height() + 1 >= Params().Zerocoin_Block_EnforceSerialRange(), state, GetZerocoinParams(chainActive.Height() + 1), GetSporkValue(SPORK_17_SEGWIT_ACTIVATION) < block.nTime))
                 return error("CheckBlock() : CheckTransaction failed");
 
-            // double check that there are no double spent zPhr spends in this block
+            // double check that there are no double spent zPHR spends in this block
             if (tx.IsZerocoinSpend()) {
                 for (const CTxIn txIn : tx.vin) {
                     if (txIn.scriptSig.IsZerocoinSpend()) {
@@ -4556,7 +4620,7 @@ bool ProcessNewBlock(CValidationState& state, CNode* pfrom, CBlock* pblock, CDis
         }
     }
     if (nMints || nSpends)
-        LogPrintf("%s : block contains %d zPhr mints and %d zPhr spends\n", __func__, nMints, nSpends);
+        LogPrintf("%s : block contains %d zPHR mints and %d zPHR spends\n", __func__, nMints, nSpends);
 
     // ppcoin: check proof-of-stake
     // Limited duplicity on stake: prevents block flood attack
