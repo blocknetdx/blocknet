@@ -95,6 +95,7 @@ void UpdateTime(CBlockHeader* pblock, const CBlockIndex* pindexPrev)
         pblock->nBits = GetNextWorkRequired(pindexPrev, pblock);
 }
 
+std::pair<int, std::pair<uint256, uint256> > pCheckpointCache;
 CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, bool fProofOfStake)
 {
     CReserveKey reservekey(pwallet);
@@ -386,7 +387,8 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
                 for (const CTxIn txIn : tx.vin) {
                     if (txIn.scriptSig.IsZerocoinSpend()) {
                         libzerocoin::CoinSpend spend = TxInToZerocoinSpend(txIn, chainActive.Height());
-                        if (!spend.HasValidSerial(GetZerocoinParams(chainActive.Height())))
+                        int effectiveHeight = libzerocoin::ExtractVersionFromSerial(spend.getCoinSerialNumber()) < libzerocoin::PrivateCoin::PUBKEY_VERSION ? Params().Zerocoin_LastOldParams() : Params().Zerocoin_LastOldParams() + 1;
+                        if (!spend.HasValidSerial(GetZerocoinParams(effectiveHeight)))
                             fDoubleSerial = true;
                         if (count(vBlockSerials.begin(), vBlockSerials.end(), spend.getCoinSerialNumber()))
                             fDoubleSerial = true;
@@ -397,7 +399,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
                         vTxSerials.emplace_back(spend.getCoinSerialNumber());
                     }
                 }
-                //This zPhr serial has already been included in the block, do not add this tx.
+                //This zPHR serial has already been included in the block, do not add this tx.
                 if (fDoubleSerial)
                     continue;
             }
@@ -472,12 +474,27 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
             UpdateTime(pblock, pindexPrev);
         pblock->nBits = GetNextWorkRequired(pindexPrev, pblock);
         pblock->nNonce = 0;
-        uint256 nCheckpoint = 0;
-        AccumulatorMap mapAccumulators(GetZerocoinParams(nHeight));
-        if(fZerocoinActive && !CalculateAccumulatorCheckpoint(nHeight, nCheckpoint, mapAccumulators)){
-            LogPrintf("%s: failed to get accumulator checkpoint\n", __func__);
+        //Calculate the accumulator checkpoint only if the previous cached checkpoint need to be updated
+        uint256 nCheckpoint;
+        uint256 hashBlockLastAccumulated = chainActive[nHeight - (nHeight % 10) - 10]->GetBlockHash();
+        if (nHeight >= pCheckpointCache.first || pCheckpointCache.second.first != hashBlockLastAccumulated) {
+            //For the period before v2 activation, zPIV will be disabled and previous block's checkpoint is all that will be needed
+            pCheckpointCache.second.second = pindexPrev->nAccumulatorCheckpoint;
+            if (pindexPrev->nHeight + 2 >= Params().Zerocoin_LastOldParams()) {
+                AccumulatorMap mapAccumulators(Params().Zerocoin_Params());
+                if (fZerocoinActive && !CalculateAccumulatorCheckpoint(nHeight, nCheckpoint, mapAccumulators)) {
+                    LogPrintf("%s: failed to get accumulator checkpoint\n", __func__);
+                } else {
+                    // the next time the accumulator checkpoint should be recalculated ( the next height that is multiple of 10)
+                    pCheckpointCache.first = nHeight + (10 - (nHeight % 10));
+
+                    // the block hash of the last block used in the accumulator checkpoint calc. This will handle reorg situations.
+                    pCheckpointCache.second.first = hashBlockLastAccumulated;
+                    pCheckpointCache.second.second = nCheckpoint;
+                }
+            }
         }
-        pblock->nAccumulatorCheckpoint = nCheckpoint;
+        pblock->nAccumulatorCheckpoint = pCheckpointCache.second.second;
         pblocktemplate->vTxSigOpsCost[0] = WITNESS_SCALE_FACTOR * GetLegacySigOpCount(pblock->vtx[0]);
 
         CValidationState state;
