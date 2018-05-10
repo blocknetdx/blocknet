@@ -21,7 +21,6 @@ Block DX is a completely decentralized and trustless exchange built on the Block
 - Service Node Requirement: 5000 BLOCK
 - Staking Requirement: No Minimum
 - Governance: Decentralized Voting/Funding With Superblocks
-- Supports Fast Transactions w/ SwiftTX
 
 
 #### Decentralized Atomic Swap Algo Summary
