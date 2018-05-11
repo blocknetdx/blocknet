@@ -322,12 +322,6 @@ void App::Impl::onSend(const std::vector<unsigned char>& id, const std::vector<u
         return;
     }
 
-    // timestamp
-    boost::posix_time::ptime timestamp = boost::posix_time::microsec_clock::universal_time();
-    uint64_t timestampValue = xrouter::util::timeToInt(timestamp);
-    unsigned char* ptr = reinterpret_cast<unsigned char*>(&timestampValue);
-    msg.insert(msg.end(), ptr, ptr + sizeof(uint64_t));
-
     // body
     msg.insert(msg.end(), message.begin(), message.end());
     

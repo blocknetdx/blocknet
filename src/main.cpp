@@ -5651,8 +5651,6 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
                 std::vector<unsigned char> addr(raw.begin(), raw.begin() + 20);
                 // remove addr from raw
                 raw.erase(raw.begin(), raw.begin() + 20);
-                // remove timestamp from raw
-                raw.erase(raw.begin(), raw.begin() + sizeof(uint64_t));
 
                 xrouter::App& app = xrouter::App::instance();
 
