@@ -105,7 +105,7 @@ enum ZerocoinSpendStatus {
     ZPHR_TX_TOO_LARGE = 15                          // The transaction is larger than the max tx size
 };
 
-enum OutputType
+enum OutputType : int
 {
     OUTPUT_TYPE_NONE,
     OUTPUT_TYPE_LEGACY,
