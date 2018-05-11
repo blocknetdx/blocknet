@@ -179,21 +179,24 @@ struct TransactionDescr
     {
         switch (state)
         {
-            case trInvalid:   return std::string("invalid");
-            case trNew:       return std::string("new");
-            case trPending:   return std::string("open");
-            case trAccepting: return std::string("accepting");
-            case trHold:      return std::string("hold");
-            case trCreated:   return std::string("created");
-            case trSigned:    return std::string("signed");
-            case trCommited:  return std::string("commited");
-            case trFinished:  return std::string("finished");
-            case trCancelled: return std::string("canceled");
-            case trRollback:  return std::string("rolled Back");
-            case trDropped:   return std::string("dropped");
-            case trExpired:   return std::string("expired");
-            case trOffline:   return std::string("offline");
-            default:          return std::string("unknown");
+            case trExpired:        return std::string("expired");
+            case trNew:            return std::string("new");
+            case trOffline:        return std::string("offline");
+            case trPending:        return std::string("open");
+            case trAccepting:      return std::string("accepting");
+            case trHold:           return std::string("hold");
+            case trInitialized:    return std::string("initialized");
+            case trCreated:        return std::string("created");
+            case trSigned:         return std::string("signed");
+            case trCommited:       return std::string("commited");
+            case trFinished:       return std::string("finished");
+            case trRollback:       return std::string("rolled back");
+            case trRollbackFailed: return std::string("rollback failed");
+            case trDropped:        return std::string("dropped");
+            case trCancelled:      return std::string("canceled");
+            case trInvalid:        return std::string("invalid");
+
+            default:               return std::string("unknown");
         }
     }
 
