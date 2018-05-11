@@ -751,3 +751,8 @@ bool WalletModel::isMine(CTxDestination address)
 {
     return IsMine(*wallet, address);
 }
+
+OutputType WalletModel::getDefaultAddressType() const
+{
+    return g_address_type;
+}

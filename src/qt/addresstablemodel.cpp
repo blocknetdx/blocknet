@@ -360,7 +360,7 @@ void AddressTableModel::updateEntry(const QString &pubCoin, const QString &isUse
 
 
 
-QString AddressTableModel::addRow(const QString& type, const QString& label, const QString& address)
+QString AddressTableModel::addRow(const QString& type, const QString& label, const QString& address, const OutputType address_type)
 {
     std::string strLabel = label.toStdString();
     std::string strAddress = address.toStdString();
@@ -395,8 +395,8 @@ QString AddressTableModel::addRow(const QString& type, const QString& label, con
                 return QString();
             }
         }
-        wallet->LearnRelatedScripts(newKey, g_address_type);
-        strAddress = EncodeDestination(GetDestinationForKey(newKey, g_address_type));
+        wallet->LearnRelatedScripts(newKey, address_type);
+        strAddress = EncodeDestination(GetDestinationForKey(newKey, address_type));
     }
     else
     {
