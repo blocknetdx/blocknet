@@ -209,7 +209,7 @@ ZerocoinTutorial()
 
 		// Construct the CoinSpend object. This acts like a signature on the
 		// transaction.
-        libzerocoin::CoinSpend spend(params, params, newCoin, accumulator, 0, witness, 0);//(0) - Presstab
+        libzerocoin::CoinSpend spend(params, params, newCoin, accumulator, 0, witness, 0, libzerocoin::SpendType::SPEND);//(0) - Presstab
 
 		// This is a sanity check. The CoinSpend object should always verify,
 		// but why not check before we put it onto the wire?

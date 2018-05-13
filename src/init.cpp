@@ -1485,7 +1485,7 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
                                                 continue;
 
                                             CValidationState state;
-                                            libzerocoin::PublicCoin coin(Params().Zerocoin_Params(pindex->nHeight < Params().Zerocoin_Block_V2_Start()));
+                                            libzerocoin::PublicCoin coin(GetZerocoinParams(pindex->nHeight));
                                             TxOutToPublicCoin(out, coin, state);
                                             zerocoinDB->WriteCoinMint(coin, txid);
                                         }

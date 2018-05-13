@@ -796,7 +796,6 @@ void CoinControlDialog::updateView()
         int nChildren = 0;
         int nInputSum = 0;
         for(const COutput& out: coins.second) {
-            isminetype mine = pwalletMain->IsMine(out.tx->vout[out.i]);
             int nInputSize = 0;
             nSum += out.tx->vout[out.i].nValue;
             nChildren++;

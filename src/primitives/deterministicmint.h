@@ -2,12 +2,12 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef PIVX_DETERMINISTICMINT_H
-#define PIVX_DETERMINISTICMINT_H
+#ifndef PHORE_DETERMINISTICMINT_H
+#define PHORE_DETERMINISTICMINT_H
 
-#include <libzerocoin/Denominations.h>
-#include <uint256.h>
-#include <serialize.h>
+#include "libzerocoin/Denominations.h"
+#include "uint256.h"
+#include "serialize.h"
 
 //struct that is safe to store essential mint data, without holding any information that allows for actual spending (serial, randomness, private key)
 class CDeterministicMint
@@ -64,4 +64,4 @@ public:
     };
 };
 
-#endif //PIVX_DETERMINISTICMINT_H
+#endif //PHORE_DETERMINISTICMINT_H

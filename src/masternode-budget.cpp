@@ -220,7 +220,7 @@ void CBudgetManager::SubmitFinalBudget()
 
     if (!mapCollateralTxids.count(tempBudget.GetHash())) {
         CWalletTx wtx;
-        if (!pwalletMain->GetBudgetFinalizationCollateralTX(wtx, tempBudget.GetHash(), false)) {
+        if (!pwalletMain->GetBudgetSystemCollateralTX(wtx, tempBudget.GetHash(), false)) {
             LogPrint("mnbudget","CBudgetManager::SubmitFinalBudget - Can't make collateral transaction\n");
             return;
         }
@@ -696,7 +696,7 @@ TrxValidationStatus CBudgetManager::IsTransactionValid(const CTransaction& txNew
     /*
         If budget doesn't have 5% of the network votes, then we should pay a masternode instead
     */
-    if (nHighestCount < nFivePercent) return TrxValidationStatus::InValid;
+    if (nHighestCount < nFivePercent) return TrxValidationStatus::Invalid;
 
     // check the highest finalized budgets (+/- 10% to assist in consensus)
 
@@ -2084,6 +2084,7 @@ bool CFinalizedBudget::IsPaidAlready(uint256 nProposalHash, int nBlockHeight)
 
 TrxValidationStatus CFinalizedBudget::IsTransactionValid(const CTransaction& txNew, int nBlockHeight)
 {
+    TrxValidationStatus transactionStatus = TrxValidationStatus::Invalid;
     int nCurrentBudgetPayment = nBlockHeight - GetBlockStart();
     if (nCurrentBudgetPayment < 0) {
         LogPrint("mnbudget","CFinalizedBudget::IsTransactionValid - Invalid block - height: %d start: %d\n", nBlockHeight, GetBlockStart());

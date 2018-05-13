@@ -114,7 +114,7 @@ bool CheckZerocoinSpendNoDB(const CTransaction tx, string& strError)
         if (!txin.scriptSig.IsZerocoinSpend())
             continue;
 
-        CoinSpend newSpend = TxInToZerocoinSpend(txin, Params().Zerocoin_LastOldParams());
+        CoinSpend newSpend = TxInToZerocoinSpend(txin);
         vSpends.push_back(newSpend);
 
         //check that the denomination is valid

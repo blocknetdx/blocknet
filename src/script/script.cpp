@@ -256,8 +256,10 @@ bool CScript::IsZerocoinMint() const
 
 bool CScript::IsZerocoinSpend() const
 {
-    return (this->size() > 0 &&
-        this->at(0) == OP_ZEROCOINSPEND);
+    if (this->empty())
+        return false;
+
+    return this->at(0) == OP_ZEROCOINSPEND;
 }
 
 bool CScript::IsPayToWitnessScriptHash() const
