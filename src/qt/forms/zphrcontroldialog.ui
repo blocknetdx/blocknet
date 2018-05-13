@@ -17,7 +17,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>Select zPhr to Spend</string>
+   <string>Select zPHR to Spend</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,0,0">
    <item>
@@ -117,74 +117,83 @@
      </item>
     </layout>
    </item>
-   <item>
-    <widget class="QTreeWidget" name="treeWidget">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>0</width>
-       <height>250</height>
-      </size>
-     </property>
-     <property name="alternatingRowColors">
-      <bool>true</bool>
-     </property>
-     <property name="sortingEnabled">
-      <bool>true</bool>
-     </property>
-     <property name="columnCount">
-      <number>5</number>
-     </property>
-     <attribute name="headerDefaultSectionSize">
-      <number>100</number>
-     </attribute>
-     <column>
-      <property name="text">
-       <string notr="true">Select</string>
+   <item row="1" column="0">
+    <layout class="QVBoxLayout" name="verticalLayout1">
+     <item>
+      <widget class="QTreeWidget" name="treeWidget">
+      <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+          </sizepolicy>
       </property>
-     </column>
-     <column>
-      <property name="text">
-       <string notr="true">Denomination</string>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>250</height>
+        </size>
+       </property>
+       <property name="alternatingRowColors">
+        <bool>true</bool>
+       </property>
+       <property name="sortingEnabled">
+        <bool>true</bool>
+       </property>
+       <property name="columnCount">
+        <number>5</number>
+       </property>
+       <attribute name="headerDefaultSectionSize">
+        <number>100</number>
+       </attribute>
+       <column>
+        <property name="text">
+         <string notr="true">Select</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string notr="true">Denomination</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string notr="true">zPHR ID</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string notr="true">zPHR Version</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string notr="true">Confirmations</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>Is Spendable</string>
+        </property>
+       </column>
+      </widget>
+     </item>
+     <item>
+      <widget class="QDialogButtonBox" name="buttonBox">
+      <property name="sizePolicy">
+          <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+          </sizepolicy>
       </property>
-     </column>
-     <column>
-      <property name="text">
-       <string notr="true">zPhr Public ID</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string notr="true">Confirmations</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Is Spendable</string>
-      </property>
-     </column>
-    </widget>
-   </item>
-   <item>
-    <widget class="QDialogButtonBox" name="buttonBox">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Ok</set>
-     </property>
-    </widget>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="standardButtons">
+        <set>QDialogButtonBox::Ok</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
   </layout>
  </widget>

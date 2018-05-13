@@ -27,9 +27,9 @@ public:
 
     void setModel(WalletModel* model);
 
-    static std::list<std::string> listSelectedMints;
-    static std::list<CZerocoinMint> listMints;
-    static std::vector<CZerocoinMint> GetSelectedMints();
+    static std::set<std::string> setSelectedMints;
+    static std::set<CMintMeta> setMints;
+    static std::vector<CMintMeta> GetSelectedMints();
 
 private:
     Ui::ZPhrControlDialog *ui;
@@ -43,6 +43,7 @@ private:
         COLUMN_CHECKBOX,
         COLUMN_DENOMINATION,
         COLUMN_PUBCOIN,
+        COLUMN_VERSION,
         COLUMN_CONFIRMATIONS,
         COLUMN_ISSPENDABLE
     };

@@ -355,6 +355,9 @@ static const CRPCCommand vRPCCommands[] =
         /* Phore features */
         {"phore", "masternode", &masternode, true, true, false},
         {"phore", "listmasternodes", &listmasternodes, true, true, false},
+        {"phore", "createmasternodebroadcast", &createmasternodebroadcast, true, true, false},
+        {"phore", "decodemasternodebroadcast", &decodemasternodebroadcast, true, true, false},
+        {"phore", "relaymasternodebroadcast", &relaymasternodebroadcast, true, true, false},
         {"phore", "getmasternodecount", &getmasternodecount, true, true, false},
         {"phore", "masternodeconnect", &masternodeconnect, true, true, false},
         {"phore", "masternodecurrent", &masternodecurrent, true, true, false},
@@ -382,8 +385,6 @@ static const CRPCCommand vRPCCommands[] =
         {"phore", "getpoolinfo", &getpoolinfo, true, true, false},
         {"phore", "makekeypair", &makekeypair, true, true, false},
 #ifdef ENABLE_WALLET
-        {"phore", "obfuscation", &obfuscation, false, false, true}, /* not threadSafe because of SendMoney */
-
         /* Wallet */
         {"wallet", "addmultisigaddress", &addmultisigaddress, true, false, true},
         {"wallet", "addwitnessaddress", &addwitnessaddress, true, false, true},
@@ -446,7 +447,9 @@ static const CRPCCommand vRPCCommands[] =
         {"zerocoin", "importzerocoins", &importzerocoins, false, false, true},
         {"zerocoin", "exportzerocoins", &exportzerocoins, false, false, true},
         {"zerocoin", "reconsiderzerocoins", &reconsiderzerocoins, false, false, true},
-        {"zerocoin", "getspentzerocoinamount", &getspentzerocoinamount, false, false, false}
+        {"zerocoin", "getspentzerocoinamount", &getspentzerocoinamount, false, false, false},
+        {"zerocoin", "getzphrseed", &getzphrseed, false, false, true},
+        {"zerocoin", "setzphrseed", &setzphrseed, false, false, true}
 
 #endif // ENABLE_WALLET
 };

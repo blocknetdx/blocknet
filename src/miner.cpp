@@ -386,7 +386,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
                 bool fDoubleSerial = false;
                 for (const CTxIn txIn : tx.vin) {
                     if (txIn.scriptSig.IsZerocoinSpend()) {
-                        libzerocoin::CoinSpend spend = TxInToZerocoinSpend(txIn, chainActive.Height());
+                        libzerocoin::CoinSpend spend = TxInToZerocoinSpend(txIn);
                         int effectiveHeight = libzerocoin::ExtractVersionFromSerial(spend.getCoinSerialNumber()) < libzerocoin::PrivateCoin::PUBKEY_VERSION ? Params().Zerocoin_LastOldParams() : Params().Zerocoin_LastOldParams() + 1;
                         if (!spend.HasValidSerial(GetZerocoinParams(effectiveHeight)))
                             fDoubleSerial = true;
@@ -478,7 +478,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
         uint256 nCheckpoint;
         uint256 hashBlockLastAccumulated = chainActive[nHeight - (nHeight % 10) - 10]->GetBlockHash();
         if (nHeight >= pCheckpointCache.first || pCheckpointCache.second.first != hashBlockLastAccumulated) {
-            //For the period before v2 activation, zPIV will be disabled and previous block's checkpoint is all that will be needed
+            //For the period before v2 activation, zPHR will be disabled and previous block's checkpoint is all that will be needed
             pCheckpointCache.second.second = pindexPrev->nAccumulatorCheckpoint;
             if (pindexPrev->nHeight + 2 >= Params().Zerocoin_LastOldParams()) {
                 AccumulatorMap mapAccumulators(Params().Zerocoin_Params());

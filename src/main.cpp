@@ -954,7 +954,7 @@ void FindMints(vector<CMintMeta> vMintsToFind, vector<CMintMeta>& vMintsToUpdate
 {
     // see which mints are in our public zerocoin database. The mint should be here if it exists, unless
     // something went wrong
-    for (CMintMeta mint : vMintsToFind) {
+    for (CMintMeta meta : vMintsToFind) {
         uint256 txHash;
         if (!zerocoinDB->ReadCoinMint(meta.hashPubcoin, txHash)) {
             vMissingMints.push_back(meta);
@@ -1005,7 +1005,7 @@ void FindMints(vector<CMintMeta> vMintsToFind, vector<CMintMeta>& vMintsToUpdate
         for (auto& out : tx.vout) {
             if (!out.IsZerocoinMint())
                 continue;
-            PublicCoin pubcoin(Params().Zerocoin_Params(meta.nVersion < libzerocoin::PrivateCoin::PUBKEY_VERSION));
+            PublicCoin pubcoin(meta.nVersion < libzerocoin::PrivateCoin::PUBKEY_VERSION ? Params().OldZerocoin_Params() : Params().Zerocoin_Params());
             CValidationState state;
             TxOutToPublicCoin(out, pubcoin, state);
             if (GetPubCoinHash(pubcoin.getValue()) == meta.hashPubcoin && pubcoin.getDenomination() != meta.denom) {
@@ -1016,7 +1016,7 @@ void FindMints(vector<CMintMeta> vMintsToFind, vector<CMintMeta>& vMintsToUpdate
         }
 
         // if meta data is correct, then no need to update
-        if (mint.txid == txHash && mint.nHeight == mapBlockIndex[hashBlock]->nHeight && mint.isUsed == fSpent)
+        if (meta.txid == txHash && meta.nHeight == mapBlockIndex[hashBlock]->nHeight && meta.isUsed == fSpent)
             continue;
 
         //mark this mint for update
@@ -1267,9 +1267,9 @@ bool ContextualCheckZerocoinSpend(const CTransaction& tx, const CoinSpend& spend
                      spend.getCoinSerialNumber().GetHex(), nHeightTx);
 
     //Reject serial's that are not in the acceptable value range
-    bool fUseV1Params = spend.getVersion() < libzerocoin::PrivateCoin::PUBKEY_VERSION;
+    libzerocoin::ZerocoinParams* paramsToUse = spend.getVersion() < libzerocoin::PrivateCoin::PUBKEY_VERSION ? Params().OldZerocoin_Params() : Params().Zerocoin_Params();
     if (pindex->nHeight > Params().Zerocoin_Block_EnforceSerialRange() &&
-        !spend.HasValidSerial(Params().Zerocoin_Params(fUseV1Params)))
+        !spend.HasValidSerial(paramsToUse))
         return error("%s : zPHR spend with serial %s from tx %s is not in valid range\n", __func__,
                      spend.getCoinSerialNumber().GetHex(), tx.GetHash().GetHex());
 
@@ -1307,7 +1307,7 @@ bool CheckZerocoinSpend(const CTransaction tx, bool fVerifySignature, CValidatio
         if (!txin.scriptSig.IsZerocoinSpend())
             continue;
 
-        CoinSpend newSpend = TxInToZerocoinSpend(txin, nHeight);
+        CoinSpend newSpend = TxInToZerocoinSpend(txin);
         vSpends.push_back(newSpend);
 
         //check that the denomination is valid
@@ -1574,7 +1574,6 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
         CCoinsViewCache view(&dummy);
 
         CAmount nValueIn = 0;
-        uint256 txid = tx.GetHash();
         if(tx.IsZerocoinSpend()){
             nValueIn = tx.GetZerocoinSpent();
 
@@ -1588,8 +1587,8 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
             for (const CTxIn& txIn : tx.vin) {
                 if (!txIn.scriptSig.IsZerocoinSpend())
                     continue;
-                CoinSpend spend = TxInToZerocoinSpend(txIn, chainActive.Height());
-                if (!ContextualCheckZerocoinSpend(tx, spend, chainActive.Tip(), txid, 0))
+                CoinSpend spend = TxInToZerocoinSpend(txIn);
+                if (!ContextualCheckZerocoinSpend(tx, spend, chainActive.Tip(), 0))
                     return state.Invalid(error("%s: ContextualCheckZerocoinSpend failed for tx %s", __func__,
                                                tx.GetHash().GetHex()), REJECT_INVALID, "bad-txns-invalid-zphr");
             }
@@ -2478,7 +2477,7 @@ bool DisconnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex
                 //erase all zerocoinspends in this transaction
                 for (const CTxIn txin : tx.vin) {
                     if (txin.scriptSig.IsZerocoinSpend()) {
-                        CoinSpend spend = TxInToZerocoinSpend(txin, pindex->nHeight);
+                        CoinSpend spend = TxInToZerocoinSpend(txin);
                         if (!zerocoinDB->EraseCoinSpend(spend.getCoinSerialNumber()))
                             return error("failed to erase spent zerocoin in block");
                     }
@@ -2974,7 +2973,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
             for (const CTxIn& txIn : tx.vin) {
                 if (!txIn.scriptSig.IsZerocoinSpend())
                     continue;
-                CoinSpend spend = TxInToZerocoinSpend(txIn, pindex->nHeight);
+                CoinSpend spend = TxInToZerocoinSpend(txIn);
                 nValueIn += spend.getDenomination() * COIN;
 
                 //queue for db write after the 'justcheck' section has concluded
@@ -3166,7 +3165,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
     //Record mints to db
     for (pair<PublicCoin, uint256> pMint : vMints) {
         if (!zerocoinDB->WriteCoinMint(pMint.first, pMint.second))
-            return state.Abort(("Failed to record new mint to database"));
+            return state.Error(("Failed to record new mint to database"));
     }
 
     //Record accumulator checksums
@@ -4324,7 +4323,7 @@ bool ContextualCheckBlock(const CBlock& block, CValidationState& state, CBlockIn
             if (tx.IsZerocoinSpend()) {
                 for (const CTxIn txIn : tx.vin) {
                     if (txIn.scriptSig.IsZerocoinSpend()) {
-                        libzerocoin::CoinSpend spend = TxInToZerocoinSpend(txIn, chainActive.Height() + 1);
+                        libzerocoin::CoinSpend spend = TxInToZerocoinSpend(txIn);
                         if (count(vBlockSerials.begin(), vBlockSerials.end(), spend.getCoinSerialNumber()))
                             return state.DoS(100, error("%s : Double spending of zPHR serial %s in block\n Block: %s",
                                                         __func__, spend.getCoinSerialNumber().GetHex(), block.ToString()));

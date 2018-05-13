@@ -636,6 +636,15 @@ void CTxMemPool::queryHashes(vector<uint256>& vtxid)
         vtxid.push_back((*mi).first);
 }
 
+void CTxMemPool::getTransactions(std::set<uint256>& setTxid)
+{
+    setTxid.clear();
+
+    LOCK(cs);
+    for (map<uint256, CTxMemPoolEntry>::iterator mi = mapTx.begin(); mi != mapTx.end(); ++mi)
+        setTxid.insert((*mi).first);
+}
+
 bool CTxMemPool::lookup(uint256 hash, CTransaction& result) const
 {
     LOCK(cs);
