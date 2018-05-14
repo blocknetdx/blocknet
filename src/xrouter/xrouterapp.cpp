@@ -636,6 +636,47 @@ static double getBalanceChange(xbridge::WalletConnectorPtr conn, Object tx, std:
     return result;
 }
 
+static bool checkFilterFit(xbridge::WalletConnectorPtr conn, Object tx, CBloomFilter filter) {
+    Array vout = find_value(tx, "vout").get_array();
+    for (uint j = 0; j != vout.size(); j++ ) {
+        Object src = find_value(vout[j].get_obj(), "scriptPubKey").get_obj();
+        std::string outkey = find_value(src, "hex").get_str();
+        std::vector<unsigned char> outkeyv(outkey.begin(), outkey.end());
+        CScript vouts(outkeyv.begin(), outkeyv.end());
+        CScript::const_iterator pc = vouts.begin();
+        vector<unsigned char> data;
+        while (pc < vouts.end()) {
+            opcodetype opcode;
+            if (!vouts.GetOp(pc, opcode, data))
+                break;
+            if (data.size() != 0 && filter.contains(data)) {
+                return true;
+            }
+        }
+    }
+
+    Array vin = find_value(tx, "vin").get_array();
+    for (uint j = 0; j != vin.size(); j++ ) {
+        const Value& txid_val = find_value(vin[j].get_obj(), "scriptSig");
+        if (txid_val.is_null())
+            continue;
+        std::string inkey = find_value(txid_val.get_obj(), "hex").get_str();
+        std::vector<unsigned char> inkeyv(inkey.begin(), inkey.end());
+        CScript vins(inkeyv.begin(), inkeyv.end());
+        CScript::const_iterator pc = vins.begin();
+        vector<unsigned char> data;
+        while (pc < vins.end()) {
+            opcodetype opcode;
+            if (!vins.GetOp(pc, opcode, data))
+                break;
+            if (data.size() != 0 && filter.contains(data))
+                return true;
+        }
+    }
+    
+    return false;
+}
+
 bool App::processGetAllBlocks(XRouterPacketPtr packet) {
     uint32_t offset = 36;
 
@@ -830,14 +871,39 @@ bool App::processGetTransactionsBloomFilter(XRouterPacketPtr packet) {
     int number = std::stoi(number_s);
     
     xbridge::WalletConnectorPtr conn = connectorByCurrency(currency);
-    CBloomFilter f;
-    stream >> f;
-    CBloomFilter f2(f);
-    f2.UpdateEmptyFull();
+    CBloomFilter ft;
+    stream >> ft;
+    CBloomFilter filter(ft);
+    filter.UpdateEmptyFull();
     
+    Array result;
+    if (conn)
+    {
+        Value res = getResult(conn->executeRpcCall("getblockcount", Array()));
+        int blockcount = res.get_int();
+        for (int id = number; id <= blockcount; id++) {
+            Array a { Value(id) };
+            std::string hash = getResult(conn->executeRpcCall("getblockhash", a)).get_str();
+            Array b { Value(hash) };
+            Object block = getResult(conn->executeRpcCall("getblock", b)).get_obj();
+            Array txs = find_value(block, "tx").get_array();
+            std::cout << "block " << id << " " << txs.size() << std::endl;
+            for (uint j = 0; j < txs.size(); j++) {
+                std::string txid = Value(txs[j]).get_str();
+                Array c { Value(txid) };
+                std::string txdata = getResult(conn->executeRpcCall("getrawtransaction", c)).get_str();
+                Array d { Value(txdata) };
+                Object tx = getResult(conn->executeRpcCall("decoderawtransaction", d)).get_obj();
+                if (checkFilterFit(conn, tx, filter))
+                    result.push_back(Value(tx));
+            }
+        }
+    }
+
     XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
 
     rpacket->append(uuid);
+    rpacket->append(json_spirit::write_string(Value(result), true));
     sendPacket(rpacket);
 
     return true;
