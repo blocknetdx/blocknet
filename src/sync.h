@@ -1,5 +1,6 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2013 The Bitcoin developers
+// Copyright (c) 2009-2017 The Bitcoin developers
+// Copyright (c) 2017-2018 The PIVX developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -14,11 +15,11 @@
 #include <boost/thread/recursive_mutex.hpp>
 
 
-////////////////////////////////////////////////
-//                                            //
-// THE SIMPLE DEFINITON, EXCLUDING DEBUG CODE //
-//                                            //
-////////////////////////////////////////////////
+/////////////////////////////////////////////////
+//                                             //
+// THE SIMPLE DEFINITION, EXCLUDING DEBUG CODE //
+//                                             //
+/////////////////////////////////////////////////
 
 /*
 CCriticalSection mutex;
@@ -41,15 +42,16 @@ LEAVE_CRITICAL_SECTION(mutex); // no RAII
     mutex.unlock();
  */
 
-
 ///////////////////////////////
 //                           //
 // THE ACTUAL IMPLEMENTATION //
 //                           //
 ///////////////////////////////
 
-// Template mixin that adds -Wthread-safety locking annotations to a
-// subset of the mutex API.
+/**
+ * Template mixin that adds -Wthread-safety locking
+ * annotations to a subset of the mutex API.
+ */
 template <typename PARENT>
 class LOCKABLE AnnotatedMixin : public PARENT
 {
@@ -101,7 +103,6 @@ typedef AnnotatedMixin<boost::mutex> CWaitableCriticalSection;
 
 /** Just a typedef for boost::condition_variable, can be wrapped later if desired */
 typedef boost::condition_variable CConditionVariable;
-
 
 #ifdef DEBUG_LOCKCONTENTION
 void PrintLockContention(const char* pszName, const char* pszFile, int nLine);

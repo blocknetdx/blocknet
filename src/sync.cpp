@@ -1,4 +1,5 @@
-// Copyright (c) 2011-2012 The Bitcoin developers
+// Copyright (c) 2011-2014 The Bitcoin developers
+// Copyright (c) 2017-2018 The PIVX developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -47,7 +48,7 @@ struct CLockLocation {
     }
 
     std::string MutexName() const { return mutexName; }
-    
+
     bool fTry;
 private:
     std::string mutexName;
@@ -56,6 +57,8 @@ private:
 };
 
 typedef std::vector<std::pair<void*, CLockLocation> > LockStack;
+typedef std::map<std::pair<void*, void*>, LockStack> LockOrders;
+typedef std::set<std::pair<void*, void*> > InvLockOrders;
 
 struct LockData {
     // Very ugly hack: as the global constructs and destructors run single
@@ -88,10 +91,12 @@ static void potential_deadlock_detected(const std::pair<void*, void*>& mismatch,
     }
     LogPrintf("Current lock order is:\n");
     BOOST_FOREACH (const PAIRTYPE(void*, CLockLocation) & i, s1) {
-        if (i.first == mismatch.first)
+        if (i.first == mismatch.first) {
             LogPrintf(" (1)");
-        if (i.first == mismatch.second)
+        }
+        if (i.first == mismatch.second) {
             LogPrintf(" (2)");
+        }
         LogPrintf(" %s\n", i.second.ToString());
     }
 }
@@ -101,7 +106,6 @@ static void push_lock(void* c, const CLockLocation& locklocation, bool fTry)
     if (lockstack.get() == NULL)
         lockstack.reset(new LockStack);
 
-    LogPrint("lock", "Locking: %s\n", locklocation.ToString());
     boost::unique_lock<boost::mutex> lock(lockdata.dd_mutex);
 
     (*lockstack).push_back(std::make_pair(c, locklocation));
