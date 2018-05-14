@@ -5763,6 +5763,12 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
             vRecv >> LIMITED_STRING(pfrom->strSubVer, 256);
             pfrom->cleanSubVer = SanitizeString(pfrom->strSubVer);
         }
+        // broken release with wrong protocol version
+        if (pfrom->cleanSubVer == "/Phore Core:1.1.0/") {
+            LOCK(cs_main);
+            Misbehaving(pfrom->GetId(), 100); // instantly ban them because they have old block data
+            return false;
+        }
         if (!vRecv.empty())
             vRecv >> pfrom->nStartingHeight;
         if (!vRecv.empty())
