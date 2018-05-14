@@ -1211,7 +1211,7 @@ std::list<libzerocoin::CoinDenomination> ZerocoinSpendListFromBlock(const CBlock
     return vSpends;
 }
 
-bool CheckZerocoinMint(const uint256& txHash, const CTxOut& txout, CValidationState& state, libzerocoin::ZerocoinParams* params, bool fCheckOnly)
+bool CheckZerocoinMint(const uint256& txHash, const CTxOut& txout, CValidationState& state, bool fCheckOnly)
 {
     PublicCoin pubCoin(Params().Zerocoin_Params());
     if(!TxOutToPublicCoin(txout, pubCoin, state))
@@ -1355,7 +1355,7 @@ bool CheckZerocoinSpend(const CTransaction tx, bool fVerifySignature, CValidatio
     return fValidated;
 }
 
-bool CheckTransaction(const CTransaction& tx, bool fZerocoinActive, bool fRejectBadUTXO, CValidationState& state, libzerocoin::ZerocoinParams* params, bool fWitnessEnabled)
+bool CheckTransaction(const CTransaction& tx, bool fZerocoinActive, bool fRejectBadUTXO, CValidationState& state, bool fWitnessEnabled)
 {
     // Basic checks that don't depend on any context
     if (tx.vin.empty())
@@ -1389,7 +1389,7 @@ bool CheckTransaction(const CTransaction& tx, bool fZerocoinActive, bool fReject
             return state.DoS(100, error("CheckTransaction() : txout total out of range"),
                 REJECT_INVALID, "bad-txns-txouttotal-toolarge");
         if (fZerocoinActive && txout.IsZerocoinMint()) {
-            if(!CheckZerocoinMint(tx.GetHash(), txout, state, params, true))
+            if(!CheckZerocoinMint(tx.GetHash(), txout, state, true))
                 return state.DoS(100, error("CheckTransaction() : invalid zerocoin mint"));
         }
         if (fZerocoinActive && txout.scriptPubKey.IsZerocoinSpend())
@@ -1514,7 +1514,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
     if (GetAdjustedTime() > GetSporkValue(SPORK_16_ZEROCOIN_MAINTENANCE_MODE) && tx.ContainsZerocoins())
         return state.DoS(10, error("AcceptToMemoryPool : Zerocoin transactions are temporarily disabled for maintenance"), REJECT_INVALID, "bad-tx");
 
-    if (!CheckTransaction(tx, chainActive.Height() >= Params().Zerocoin_StartHeight(), true, state, GetZerocoinParams(chainActive.Height()), GetSporkValue(SPORK_17_SEGWIT_ACTIVATION) < chainActive.Tip()->nTime))
+    if (!CheckTransaction(tx, chainActive.Height() >= Params().Zerocoin_StartHeight(), true, state, GetSporkValue(SPORK_17_SEGWIT_ACTIVATION) < chainActive.Tip()->nTime))
         return state.DoS(100, error("AcceptToMemoryPool: : CheckTransaction failed"), REJECT_INVALID, "bad-tx");
 
     // Coinbase is only valid in a block, not as a loose transaction
@@ -1806,7 +1806,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState& state, const CTransact
     if (pfMissingInputs)
         *pfMissingInputs = false;
 
-    if (!CheckTransaction(tx, chainActive.Height() >= Params().Zerocoin_StartHeight(), true, state, GetZerocoinParams(chainActive.Height()), GetSporkValue(SPORK_17_SEGWIT_ACTIVATION) < chainActive.Tip()->nTime))
+    if (!CheckTransaction(tx, chainActive.Height() >= Params().Zerocoin_StartHeight(), true, state, GetSporkValue(SPORK_17_SEGWIT_ACTIVATION) < chainActive.Tip()->nTime))
         return error("AcceptableInputs: : CheckTransaction failed");
 
     // Coinbase is only valid in a block, not as a loose transaction
@@ -4316,7 +4316,7 @@ bool ContextualCheckBlock(const CBlock& block, CValidationState& state, CBlockIn
         
         vector<CBigNum> vBlockSerials;
         for (const CTransaction& tx : block.vtx) {
-            if (!CheckTransaction(tx, true, chainActive.Height() + 1 >= Params().Zerocoin_Block_EnforceSerialRange(), state, GetZerocoinParams(chainActive.Height() + 1), GetSporkValue(SPORK_17_SEGWIT_ACTIVATION) < block.nTime))
+            if (!CheckTransaction(tx, true, chainActive.Height() + 1 >= Params().Zerocoin_Block_EnforceSerialRange(), state, GetSporkValue(SPORK_17_SEGWIT_ACTIVATION) < block.nTime))
                 return error("CheckBlock() : CheckTransaction failed");
 
             // double check that there are no double spent zPHR spends in this block
