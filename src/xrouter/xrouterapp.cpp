@@ -13,6 +13,7 @@
 #include "util/xutil.h"
 #include "wallet.h"
 #include "xrouterrpc.h"
+#include "bloom.h"
 
 #include "xbridge/xkey.h"
 #include "xbridge/util/settings.h"
@@ -819,15 +820,21 @@ bool App::processGetTransactionsBloomFilter(XRouterPacketPtr packet) {
     offset += uuid.size() + 1;
     std::string currency((const char *)packet->data()+offset);
     offset += currency.size() + 1;
-    std::string account((const char *)packet->data()+offset);
-    offset += account.size() + 1;
     std::string number_s((const char *)packet->data()+offset);
     offset += number_s.size() + 1;
-    std::cout << uuid << " "<< currency << " " << number_s << std::endl;
+
+    CDataStream stream(SER_NETWORK, PROTOCOL_VERSION);
+    stream.resize(packet->size() - offset);
+    memcpy(&stream[0], packet->data()+offset, packet->size() - offset);
+    std::cout << uuid << " "<< currency << " " << stream.str() << " " << stream.size() << " " << number_s << std::endl;
     int number = std::stoi(number_s);
     
     xbridge::WalletConnectorPtr conn = connectorByCurrency(currency);
-
+    CBloomFilter f;
+    stream >> f;
+    CBloomFilter f2(f);
+    f2.UpdateEmptyFull();
+    
     XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
 
     rpacket->append(uuid);
@@ -934,6 +941,9 @@ void App::onMessageReceived(const std::vector<unsigned char>& id,
         break;
       case xrGetBalanceUpdate:
         processGetBalanceUpdate(packet);
+        break;
+      case xrGetTransactionsBloomFilter:
+        processGetTransactionsBloomFilter(packet);
         break;
       case xrReply:
         processReply(packet);
@@ -1046,9 +1056,9 @@ std::string App::getBalanceUpdate(const std::string & currency, const std::strin
     return this->xrouterCall(xrGetBalanceUpdate, currency, account, number);
 }
 
-std::string App::getTransactionsBloomFilter(const std::string & currency, const std::string & account, const std::string & number)
+std::string App::getTransactionsBloomFilter(const std::string & currency, const std::string & number, const std::string & filter)
 {
-    return this->xrouterCall(xrGetTransactionsBloomFilter, currency, account, number);
+    return this->xrouterCall(xrGetTransactionsBloomFilter, currency, number, filter);
 }
 
 std::string App::sendTransaction(const std::string & currency, const std::string & transaction)
