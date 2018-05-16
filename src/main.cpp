@@ -2800,7 +2800,7 @@ bool UpdateZPHRSupply(const CBlock& block, CBlockIndex* pindex)
             pindex->vMintDenominationsInBlock.push_back(m.GetDenomination());
             pindex->mapZerocoinSupply.at(denom)++;
 
-             //Remove any of our own mints from the mintpool
+            //Remove any of our own mints from the mintpool
             if (pwalletMain) {
                 if (pwalletMain->IsMyMint(m.GetValue())) {
                     pwalletMain->UpdateMint(m.GetValue(), pindex->nHeight, m.GetTxHash(), m.GetDenomination());

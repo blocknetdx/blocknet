@@ -346,7 +346,7 @@ public:
         fRequireStandard = false;
         fMineBlocksOnDemand = true;
         fTestnetToBeDeprecatedFieldRPC = false;
-        nRequiredAccumulation = 0;
+        nRequiredAccumulation = 1;
     }
     const Checkpoints::CCheckpointData& Checkpoints() const
     {
