@@ -579,7 +579,9 @@ bool App::processGetTransaction(XRouterPacketPtr packet) {
             std::string txdata = raw.get_str();
             Array d { Value(txdata) };
             Value res_val = getResult(conn->executeRpcCall("decoderawtransaction", d));
-            result = json_spirit::write_string(res_val, true);
+            Object wrap;
+            wrap.emplace_back(Pair("result", res_val));
+            result = json_spirit::write_string(Value(wrap), true);
         }
     }
 
@@ -1060,7 +1062,7 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
     CKey key;
     if (!satisfyBlockRequirement(txHash, vout, key)) {
         std::cerr << "Minimum block requirement not satisfied\n";
-        return "Minimum block";
+        return "Minimum block requirement not satisfied";
     }
     std::cout << "txHash = " << txHash.ToString() << "\n";
     std::cout << "vout = " << vout << "\n";
