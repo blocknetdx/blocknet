@@ -1,7 +1,7 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2014 The Bitcoin developers
 // Copyright (c) 2014-2015 The Dash developers
-// Copyright (c) 2015-2017 The PIVX developers
+// Copyright (c) 2015-2018 The PIVX developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -13,6 +13,7 @@
 #include "serialize.h"
 #include "spork.h"
 #include "sync.h"
+#include "txdb.h"
 #include "util.h"
 #include "utiltime.h"
 #include "wallet.h"
@@ -908,14 +909,14 @@ void NotifyBacked(const CWallet& wallet, bool fSuccess, string strMessage)
 {
     LogPrintf("%s", strMessage.data());
     wallet.NotifyWalletBacked(fSuccess, strMessage);
-}    
+}
 
-bool BackupWallet(const CWallet& wallet, const boost::filesystem::path& strDest, bool fEnableCustom)
+bool BackupWallet(const CWallet& wallet, const filesystem::path& strDest, bool fEnableCustom)
 {
     filesystem::path pathCustom;
     filesystem::path pathWithFile;
     if (!wallet.fFileBacked) {
-         return false;
+        return false;
     } else if(fEnableCustom) {
         pathWithFile = GetArg("-backuppath", "");
         if(!pathWithFile.empty()) {
@@ -932,8 +933,8 @@ bool BackupWallet(const CWallet& wallet, const boost::filesystem::path& strDest,
                 pathCustom = "";
             }
         }
-    } 
-    
+    }
+
     while (true) {
         {
             LOCK(bitdb.cs_db);
@@ -951,6 +952,7 @@ bool BackupWallet(const CWallet& wallet, const boost::filesystem::path& strDest,
                     pathDest /= wallet.strWalletFile;
                 }
                 bool defaultPath = AttemptBackupWallet(wallet, pathSrc.string(), pathDest.string());
+
                 if(defaultPath && !pathCustom.empty()) {
                     int nThreshold = GetArg("-custombackupthreshold", DEFAULT_CUSTOMBACKUPTHRESHOLD);
                     if (nThreshold > 0) {
@@ -1180,7 +1182,7 @@ bool CWalletDB::ReadZerocoinMint(const CBigNum &bnPubCoinValue, CZerocoinMint& z
     ss << bnPubCoinValue;
     uint256 hash = Hash(ss.begin(), ss.end());
 
-    return Read(hash, zerocoinMint);
+    return ReadZerocoinMint(hash, zerocoinMint);
 }
 
 bool CWalletDB::ReadZerocoinMint(const uint256& hashPubcoin, CZerocoinMint& mint) {
@@ -1217,9 +1219,9 @@ bool CWalletDB::ArchiveMintOrphan(const CZerocoinMint& zerocoinMint)
 
 bool CWalletDB::ArchiveDeterministicOrphan(const CDeterministicMint& dMint)
 {
-if (!Write(make_pair(string("dzco"), dMint.GetPubcoinHash()), dMint))
+    if (!Write(make_pair(string("dzco"), dMint.GetPubcoinHash()), dMint))
         return error("%s: write failed", __func__);
- 
+
     if (!Erase(make_pair(string("dzphr"), dMint.GetPubcoinHash())))
         return error("%s: failed to erase", __func__);
 
@@ -1284,13 +1286,14 @@ bool CWalletDB::EraseZPHRSeed()
     }
     if(!WriteCurrentSeedHash(0)) {
         return error("Failed to write empty seedHash");
-     }
- 
+    }
+
     return true;
 }
+
 bool CWalletDB::EraseZPHRSeed_deprecated()
 {
-return Erase(string("dzs"));
+    return Erase(string("dzs"));
 }
 
 bool CWalletDB::ReadZPHRSeed(const uint256& hashSeed, vector<unsigned char>& seed)
@@ -1354,6 +1357,20 @@ std::map<uint256, std::vector<pair<uint256, uint32_t> > > CWalletDB::MapMintPool
 
         uint256 hashMasterSeed;
         ssValue >> hashMasterSeed;
+
+        uint32_t nCount;
+        ssValue >> nCount;
+
+        pair<uint256, uint32_t> pMint;
+        pMint.first = hashPubcoin;
+        pMint.second = nCount;
+        if (mapPool.count(hashMasterSeed)) {
+            mapPool.at(hashMasterSeed).emplace_back(pMint);
+        } else {
+            vector<pair<uint256, uint32_t> > vPairs;
+            vPairs.emplace_back(pMint);
+            mapPool.insert(make_pair(hashMasterSeed, vPairs));
+        }
     }
 
     pcursor->close();
@@ -1383,23 +1400,23 @@ std::list<CDeterministicMint> CWalletDB::ListDeterministicMints()
         {
             pcursor->close();
             throw runtime_error(std::string(__func__)+" : error scanning DB");
-         }
- 
+        }
+
         // Unserialize
         string strType;
         ssKey >> strType;
         if (strType != "dzphr")
             break;
- 
+
         uint256 hashPubcoin;
         ssKey >> hashPubcoin;
 
         CDeterministicMint mint;
         ssValue >> mint;
- 
+
         listMints.emplace_back(mint);
-     }
- 
+    }
+
     pcursor->close();
     return listMints;
 }
@@ -1588,4 +1605,4 @@ std::list<CDeterministicMint> CWalletDB::ListArchivedDeterministicMints()
 
     pcursor->close();
     return listMints;
-} 
+}
