@@ -2728,7 +2728,7 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet) const
     WalletConnectorPtr conn = xapp.connectorByCurrency(xtx->fromCurrency);
     if (!conn)
     {
-        WARN() << "no connector for <" << xtx->toCurrency << "> " << __FUNCTION__;
+        WARN() << "no connector for <" << xtx->fromCurrency << "> " << __FUNCTION__;
         return false;
     }
 
@@ -2765,7 +2765,10 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet) const
 
     bool infoRecieved = conn->getInfo(info);
 
-    if(infoRecieved && info.blocks < xtx->lockTimeTx1)
+    // lock time
+    uint32_t lt = info.blocks / conn->blockTime;
+
+    if(infoRecieved && lt < xtx->lockTimeTx1)
     {
         LOG() << "waiting for loctime expiration before refund tx " << txid.GetHex() << " " << __FUNCTION__;
         xapp.processLater(txid, packet);
