@@ -100,14 +100,14 @@ public:
      * @param confirmations number of service nodes to call (final result is selected from all answers by majority vote)
      * @return reply from service node
      */
-    std::string xrouterCall(enum XRouterCommand command, const std::string & currency, std::string param1="", std::string param2="", int confirmations=3);
+    std::string xrouterCall(enum XRouterCommand command, const std::string & currency, std::string param1="", std::string param2="", std::string confirmations="");
     
     /**
      * @brief returns block count (highest tree) in the selected chain
      * @param currency chain code (BTC, LTC etc)
      * @return json reply of getblockcount
      */
-    std::string getBlockCount(const std::string & currency);
+    std::string getBlockCount(const std::string & currency, const std::string & confirmations);
     
     /**
      * @brief returns block hash for given block number
@@ -115,7 +115,7 @@ public:
      * @param blockId block number (integer converted to string)
      * @return json reply of getblockhash
      */
-    std::string getBlockHash(const std::string & currency, const std::string & blockId);
+    std::string getBlockHash(const std::string & currency, const std::string & blockId, const std::string & confirmations);
     
     /**
      * @brief returns block data by hash
@@ -123,7 +123,7 @@ public:
      * @param blockHash block hash string
      * @return json reply of getblock
      */
-    std::string getBlock(const std::string & currency, const std::string & blockHash);
+    std::string getBlock(const std::string & currency, const std::string & blockHash, const std::string & confirmations);
     
     /**
      * @brief returns transaction by hash (requires tx idnex on server side)
@@ -131,7 +131,7 @@ public:
      * @param hash tx hash
      * @return json reply of decoderawtransaction
      */
-    std::string getTransaction(const std::string & currency, const std::string & hash);
+    std::string getTransaction(const std::string & currency, const std::string & hash, const std::string & confirmations);
     
     /**
      * @brief returns all blocks starting from given number
@@ -139,7 +139,7 @@ public:
      * @param number block number (int converted to string)
      * @return json array with block data
      */
-    std::string getAllBlocks(const std::string & currency, const std::string & number);
+    std::string getAllBlocks(const std::string & currency, const std::string & number, const std::string & confirmations);
     
     /**
      * @brief returns transactions belonging to account after given block
@@ -148,7 +148,7 @@ public:
      * @param number block number where to start
      * @return json array of transaction data
      */
-    std::string getAllTransactions(const std::string & currency, const std::string & account, const std::string & number);
+    std::string getAllTransactions(const std::string & currency, const std::string & account, const std::string & number, const std::string & confirmations);
     
     /**
      * @brief returns balance for given account
@@ -156,7 +156,7 @@ public:
      * @param account address
      * @return balance (float converted to string)
      */
-    std::string getBalance(const std::string & currency, const std::string & account);
+    std::string getBalance(const std::string & currency, const std::string & account, const std::string & confirmations);
     
     /**
      * @brief returns balance cange since given block number
@@ -165,7 +165,7 @@ public:
      * @param number block number where to start
      * @return balance change (float converted to string)
      */
-    std::string getBalanceUpdate(const std::string & currency, const std::string & account, const std::string & number);
+    std::string getBalanceUpdate(const std::string & currency, const std::string & account, const std::string & number, const std::string & confirmations);
     
     /**
      * @brief returns all transactions using bloom filter
@@ -174,7 +174,7 @@ public:
      * @param number block number where to start
      * @return balance change (float converted to string)
      */
-    std::string getTransactionsBloomFilter(const std::string & currency, const std::string & account, const std::string & number);
+    std::string getTransactionsBloomFilter(const std::string & currency, const std::string & account, const std::string & number, const std::string & confirmations);
     
     /**
      * @brief sends raw transaction to the given chain

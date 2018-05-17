@@ -1052,7 +1052,7 @@ static bool satisfyBlockRequirement(uint256& txHash, uint32_t& vout, CKey& key)
 
 //*****************************************************************************
 //*****************************************************************************
-std::string App::xrouterCall(enum XRouterCommand command, const std::string & currency, std::string param1, std::string param2, int confirmations)
+std::string App::xrouterCall(enum XRouterCommand command, const std::string & currency, std::string param1, std::string param2, std::string confirmations)
 {
     std::cout << "process Query" << std::endl;
     XRouterPacketPtr packet(new XRouterPacket(command));
@@ -1081,57 +1081,60 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
         packet->append(param2);
     packet->sign(key);
     
-    return sendPacketAndWait(packet, id, currency, confirmations, 300000);
+    if (!confirmations.empty())
+        return sendPacketAndWait(packet, id, currency, std::stoi(confirmations), 300000);
+    else
+        return sendPacketAndWait(packet, id, currency);
 }
 
-std::string App::getBlockCount(const std::string & currency)
+std::string App::getBlockCount(const std::string & currency, const std::string & confirmations)
 {
-    return this->xrouterCall(xrGetBlockCount, currency);
+    return this->xrouterCall(xrGetBlockCount, currency, "", "", confirmations);
 }
 
-std::string App::getBlockHash(const std::string & currency, const std::string & blockId)
+std::string App::getBlockHash(const std::string & currency, const std::string & blockId, const std::string & confirmations)
 {
-    return this->xrouterCall(xrGetBlockHash, currency, blockId);
+    return this->xrouterCall(xrGetBlockHash, currency, blockId, "", confirmations);
 }
 
-std::string App::getBlock(const std::string & currency, const std::string & blockHash)
+std::string App::getBlock(const std::string & currency, const std::string & blockHash, const std::string & confirmations)
 {
-    return this->xrouterCall(xrGetBlock, currency, blockHash);
+    return this->xrouterCall(xrGetBlock, currency, blockHash, "", confirmations);
 }
 
-std::string App::getTransaction(const std::string & currency, const std::string & hash)
+std::string App::getTransaction(const std::string & currency, const std::string & hash, const std::string & confirmations)
 {
-    return this->xrouterCall(xrGetTransaction, currency, hash);
+    return this->xrouterCall(xrGetTransaction, currency, hash, "", confirmations);
 }
 
-std::string App::getAllBlocks(const std::string & currency, const std::string & number)
+std::string App::getAllBlocks(const std::string & currency, const std::string & number, const std::string & confirmations)
 {
-    return this->xrouterCall(xrGetAllBlocks, currency, number);
+    return this->xrouterCall(xrGetAllBlocks, currency, number, "", confirmations);
 }
 
-std::string App::getAllTransactions(const std::string & currency, const std::string & account, const std::string & number)
+std::string App::getAllTransactions(const std::string & currency, const std::string & account, const std::string & number, const std::string & confirmations)
 {
-    return this->xrouterCall(xrGetAllTransactions, currency, account, number);
+    return this->xrouterCall(xrGetAllTransactions, currency, account, number, confirmations);
 }
 
-std::string App::getBalance(const std::string & currency, const std::string & account)
+std::string App::getBalance(const std::string & currency, const std::string & account, const std::string & confirmations)
 {
-    return this->xrouterCall(xrGetBalance, currency, account);
+    return this->xrouterCall(xrGetBalance, currency, account, "", confirmations);
 }
 
-std::string App::getBalanceUpdate(const std::string & currency, const std::string & account, const std::string & number)
+std::string App::getBalanceUpdate(const std::string & currency, const std::string & account, const std::string & number, const std::string & confirmations)
 {
-    return this->xrouterCall(xrGetBalanceUpdate, currency, account, number);
+    return this->xrouterCall(xrGetBalanceUpdate, currency, account, number, confirmations);
 }
 
-std::string App::getTransactionsBloomFilter(const std::string & currency, const std::string & number, const std::string & filter)
+std::string App::getTransactionsBloomFilter(const std::string & currency, const std::string & number, const std::string & filter, const std::string & confirmations)
 {
-    return this->xrouterCall(xrGetTransactionsBloomFilter, currency, number, filter);
+    return this->xrouterCall(xrGetTransactionsBloomFilter, currency, number, filter, confirmations);
 }
 
 std::string App::sendTransaction(const std::string & currency, const std::string & transaction)
 {
-    return this->xrouterCall(xrSendTransaction, currency, transaction, "", 1);
+    return this->xrouterCall(xrSendTransaction, currency, transaction, "", "1");
 }
 
 std::string App::getPaymentAddress(CNode* node)

@@ -52,9 +52,15 @@ Value xrGetBlockCount(const Array & params, bool fHelp)
         error.emplace_back(Pair("name",     __FUNCTION__));
         return error;
     }
+    
+    std::string confirmations = "";
+    if (params.size() >= 2)
+    {
+        confirmations = params[1].get_str();
+    }
 
     std::string currency    = params[0].get_str();
-    std::string reply = xrouter::App::instance().getBlockCount(currency);
+    std::string reply = xrouter::App::instance().getBlockCount(currency, confirmations);
     return form_reply(reply);
 }
 
@@ -81,8 +87,14 @@ Value xrGetBlockHash(const Array & params, bool fHelp)
         return error;
     }
     
+    std::string confirmations = "";
+    if (params.size() >= 3)
+    {
+        confirmations = params[2].get_str();
+    }
+    
     std::string currency    = params[0].get_str();
-    std::string reply = xrouter::App::instance().getBlockHash(currency, params[1].get_str());
+    std::string reply = xrouter::App::instance().getBlockHash(currency, params[1].get_str(), confirmations);
     return form_reply(reply);
 }
 
@@ -107,9 +119,15 @@ Value xrGetBlock(const Array & params, bool fHelp)
         error.emplace_back(Pair("name",     __FUNCTION__));
         return error;
     }
+    
+    std::string confirmations = "";
+    if (params.size() >= 3)
+    {
+        confirmations = params[2].get_str();
+    }
 
     std::string currency    = params[0].get_str();
-    std::string reply = xrouter::App::instance().getBlock(currency, params[1].get_str());
+    std::string reply = xrouter::App::instance().getBlock(currency, params[1].get_str(), confirmations);
     return form_reply(reply);
 }
 
@@ -134,9 +152,15 @@ Value xrGetTransaction(const Array & params, bool fHelp)
         error.emplace_back(Pair("name",     __FUNCTION__));
         return error;
     }
+    
+    std::string confirmations = "";
+    if (params.size() >= 3)
+    {
+        confirmations = params[2].get_str();
+    }
 
     std::string currency    = params[0].get_str();
-    std::string reply = xrouter::App::instance().getTransaction(currency, params[1].get_str());
+    std::string reply = xrouter::App::instance().getTransaction(currency, params[1].get_str(), confirmations);
     return form_reply(reply);
 }
 
@@ -163,9 +187,15 @@ Value xrGetAllBlocks(const Array & params, bool fHelp)
     {
         number = params[1].get_str();
     }
+    
+    std::string confirmations = "";
+    if (params.size() >= 3)
+    {
+        confirmations = params[2].get_str();
+    }
 
     std::string currency = params[0].get_str();
-    std::string reply = xrouter::App::instance().getAllBlocks(currency, number);
+    std::string reply = xrouter::App::instance().getAllBlocks(currency, number, confirmations);
     return form_reply(reply);
 }
 
@@ -200,9 +230,15 @@ Value xrGetAllTransactions(const Array & params, bool fHelp)
     {
         number = params[2].get_str();
     }
+    
+    std::string confirmations = "";
+    if (params.size() >= 4)
+    {
+        confirmations = params[3].get_str();
+    }
 
     std::string currency = params[0].get_str();
-    std::string reply = xrouter::App::instance().getAllTransactions(currency, params[1].get_str(), number);
+    std::string reply = xrouter::App::instance().getAllTransactions(currency, params[1].get_str(), number, confirmations);
     return form_reply(reply);
 }
 
@@ -227,10 +263,16 @@ Value xrGetBalance(const Array & params, bool fHelp)
         error.emplace_back(Pair("name",     __FUNCTION__));
         return error;
     }
+    
+    std::string confirmations = "";
+    if (params.size() >= 3)
+    {
+        confirmations = params[2].get_str();
+    }
 
     std::string currency = params[0].get_str();
     std::string account = params[1].get_str();
-    std::string reply = xrouter::App::instance().getBalance(currency, account);
+    std::string reply = xrouter::App::instance().getBalance(currency, account, confirmations);
     return form_reply(reply);
 }
 
@@ -266,9 +308,15 @@ Value xrGetBalanceUpdate(const Array & params, bool fHelp)
         number = params[2].get_str();
     }
     
+    std::string confirmations = "";
+    if (params.size() >= 4)
+    {
+        confirmations = params[3].get_str();
+    }
+    
     std::string currency = params[0].get_str();
     std::string account = params[1].get_str();
-    std::string reply = xrouter::App::instance().getBalanceUpdate(currency, account, number);
+    std::string reply = xrouter::App::instance().getBalanceUpdate(currency, account, number, confirmations);
     return form_reply(reply);
 }
 
@@ -304,6 +352,12 @@ Value xrGetTransactionsBloomFilter(const Array & params, bool fHelp)
         number = params[2].get_str();
     }
     
+    std::string confirmations = "";
+    if (params.size() >= 4)
+    {
+        confirmations = params[3].get_str();
+    }
+    
     std::string currency = params[0].get_str();
     std::string account = params[1].get_str();
     
@@ -316,7 +370,7 @@ Value xrGetTransactionsBloomFilter(const Array & params, bool fHelp)
             std::cout << (int)addr[i];
         std::cout << std::endl;
 
-    std::string reply = xrouter::App::instance().getTransactionsBloomFilter(currency, number, stream.str());
+    std::string reply = xrouter::App::instance().getTransactionsBloomFilter(currency, number, stream.str(), confirmations);
     return form_reply(reply);
 }
 
