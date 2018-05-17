@@ -206,15 +206,10 @@ bool App::Impl::start()
                     conn.reset(new SysWalletConnectorXRouter);
                     *conn = wp;
                 }
-//                else if (wp.method == "RPC")
-//                {
-//                    LOG() << "wp.method RPC not implemented" << __FUNCTION__;
-//                    // session.reset(new XBridgeSessionRpc(wp));
-//                }
                 else
                 {
-                    // session.reset(new XBridgeSession(wp));
-                    //ERR() << "unknown session type " << __FUNCTION__;
+                    conn.reset(new BtcWalletConnectorXRouter);
+                    *conn = wp;
                 }
                 if (!conn)
                 {
@@ -223,7 +218,6 @@ bool App::Impl::start()
 
                 if (!conn->init())
                 {
-                    //ERR() << "connection not initialized " << *i << " " << __FUNCTION__;
                     continue;
                 }
 
