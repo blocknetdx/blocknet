@@ -475,21 +475,22 @@ bool App::processGetBlockHash(XRouterPacketPtr packet) {
     offset += blockId.size() + 1;
     std::cout << uuid << " "<< currency << " " << blockId << std::endl;
     
-    std::string result = "query reply";
+    Object result;
+    Object error;
     
     xbridge::WalletConnectorPtr conn = connectorByCurrency(currency);
-    if (conn)
-    {
+    if (conn) {
         Array a { std::stoi(blockId) };
-        Object res = conn->executeRpcCall("getblockhash", a);
-        const Value& res_val(res);
-        result = json_spirit::write_string(res_val, true);
+        result = conn->executeRpcCall("getblockhash", a);
+    } else {
+        error.emplace_back(Pair("error", "No connector for currency " + currency));
+        result = error;
     }
 
     XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
 
     rpacket->append(uuid);
-    rpacket->append(result);
+    rpacket->append(json_spirit::write_string(Value(result), true));
     sendPacket(rpacket);
 
     return true;
@@ -506,21 +507,23 @@ bool App::processGetBlock(XRouterPacketPtr packet) {
     offset += blockHash.size() + 1;
     std::cout << uuid << " "<< currency << " " << blockHash << std::endl;
     
-    std::string result = "query reply";
+    Object result;
+    Object error;
     
     xbridge::WalletConnectorPtr conn = connectorByCurrency(currency);
     if (conn)
     {
         Array a {blockHash};
-        Object res = conn->executeRpcCall("getblock", a);
-        const Value& res_val(res);
-        result = json_spirit::write_string(res_val, true);
+        result = conn->executeRpcCall("getblock", a);
+    } else {
+        error.emplace_back(Pair("error", "No connector for currency " + currency));
+        result = error;
     }
 
     XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
 
     rpacket->append(uuid);
-    rpacket->append(result);
+    rpacket->append(json_spirit::write_string(Value(result), true));
     sendPacket(rpacket);
 
     return true;
