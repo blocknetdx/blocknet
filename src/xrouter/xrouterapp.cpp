@@ -444,21 +444,21 @@ bool App::processGetBlockCount(XRouterPacketPtr packet) {
     offset += currency.size() + 1;
     std::cout << uuid << " "<< currency << std::endl;
     
-    std::string result = "query reply";
-    
+    Object result;
+    Object error;
+
     xbridge::WalletConnectorPtr conn = connectorByCurrency(currency);
-    if (conn)
-    {
-        Object res = conn->executeRpcCall("getblockcount", Array());
-        const Value& res_val(res);
-        result = json_spirit::write_string(res_val, true);
-        std::cout << result << std::endl;
+    if (conn) {
+        result = conn->executeRpcCall("getblockcount", Array());
+    } else {
+        error.emplace_back(Pair("error", "No connector for currency " + currency));
+        result = error;
     }
 
     XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
 
     rpacket->append(uuid);
-    rpacket->append(result);
+    rpacket->append(json_spirit::write_string(Value(result), true));
     sendPacket(rpacket);
 
     return true;
