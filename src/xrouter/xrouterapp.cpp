@@ -293,8 +293,11 @@ std::string App::sendPacketAndWait(const XRouterPacketPtr & packet, std::string 
     while ((confirmation_count < confirmations) && cond->timed_wait(lock, boost::posix_time::milliseconds(timeout)))
         confirmation_count++;
     
-    if(confirmation_count < confirmations / 2) {
-        return "Failed to get response";
+    Object error;
+    
+    if(confirmation_count <= confirmations / 2) {
+        error.emplace_back(Pair("error", "Failed to get response"));
+        return json_spirit::write_string(Value(error), true);
     } else {
         for (uint i = 0; i < queries[id].size(); i++) {
             std::string cand = queries[id][i];
@@ -306,7 +309,9 @@ std::string App::sendPacketAndWait(const XRouterPacketPtr & packet, std::string 
                         return cand;
                 }
         }
-        return "No consensus between responses";
+        
+        error.emplace_back(Pair("error", "No consensus between responses"));
+        return json_spirit::write_string(Value(error), true);
     }
 }
 
