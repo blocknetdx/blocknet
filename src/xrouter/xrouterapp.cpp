@@ -567,30 +567,35 @@ bool App::processGetTransaction(XRouterPacketPtr packet) {
     offset += hash.size() + 1;
     std::cout << uuid << " "<< currency << " " << hash << std::endl;
     
-    std::string result = "query reply";
+    Object result;
+    Object error;
     
     xbridge::WalletConnectorPtr conn = connectorByCurrency(currency);
     if (conn)
     {
         Array a { hash };
         Value raw;
-        bool code = getResultOrError(conn->executeRpcCall("getrawtransaction", a), raw);
+        Object raw_trans = conn->executeRpcCall("getrawtransaction", a);
+        bool code = getResultOrError(raw_trans, raw);
         if (!code) {
-            result = raw.get_str();
+            result = raw_trans;
         } else {
             std::string txdata = raw.get_str();
             Array d { Value(txdata) };
             Value res_val = getResult(conn->executeRpcCall("decoderawtransaction", d));
             Object wrap;
             wrap.emplace_back(Pair("result", res_val));
-            result = json_spirit::write_string(Value(wrap), true);
+            result = wrap;
         }
+    } else {
+        error.emplace_back(Pair("error", "No connector for currency " + currency));
+        result = error;
     }
 
     XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
 
     rpacket->append(uuid);
-    rpacket->append(result);
+    rpacket->append(json_spirit::write_string(Value(result), true));
     sendPacket(rpacket);
 
     return true;
