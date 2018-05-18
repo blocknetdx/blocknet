@@ -291,6 +291,7 @@ std::string App::sendPacketAndWait(const XRouterPacketPtr & packet, std::string 
     
     if(confirmation_count <= confirmations / 2) {
         error.emplace_back(Pair("error", "Failed to get response"));
+        error.emplace_back(Pair("uuid", id));
         return json_spirit::write_string(Value(error), true);
     } else {
         for (uint i = 0; i < queries[id].size(); i++) {
