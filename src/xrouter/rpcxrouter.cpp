@@ -67,7 +67,7 @@ Value xrGetBlockCount(const Array & params, bool fHelp)
 Value xrGetBlockHash(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetBlock currency number\nLookup block hash by block number in a specified blockchain.");
+        throw std::runtime_error("xrGetBlockHash currency number\nLookup block hash by block number in a specified blockchain.");
     }
 
     if (params.size() < 1)
@@ -202,7 +202,7 @@ Value xrGetAllBlocks(const Array & params, bool fHelp)
 Value xrGetAllTransactions(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetBalance currency account [number]\nReturns all transactions to/from account starting from block [number] for selected currency.");
+        throw std::runtime_error("xrGetAllTransactions currency account [number]\nReturns all transactions to/from account starting from block [number] for selected currency.");
     }
 
     if (params.size() < 1)
@@ -279,7 +279,7 @@ Value xrGetBalance(const Array & params, bool fHelp)
 Value xrGetBalanceUpdate(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetBalance currency account [number]\nReturns balance update for account starting with block number (default: 0) for selected currency.");
+        throw std::runtime_error("xrGetBalanceUpdate currency account [number]\nReturns balance update for account starting with block number (default: 0) for selected currency.");
     }
 
     if (params.size() < 1)
@@ -323,7 +323,7 @@ Value xrGetBalanceUpdate(const Array & params, bool fHelp)
 Value xrGetTransactionsBloomFilter(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetTransactionsBloomFilter currency account [number]\nReturns transactions for account starting with block number (default: 0) for selected currency.");
+        throw std::runtime_error("xrGetTransactionsBloomFilter currency filter [number]\nReturns transactions fitting bloom filter starting with block number (default: 0) for selected currency.");
     }
 
     if (params.size() < 1)
@@ -337,7 +337,7 @@ Value xrGetTransactionsBloomFilter(const Array & params, bool fHelp)
     if (params.size() < 2)
     {
         Object error;
-        error.emplace_back(Pair("error", "Account not specified"));
+        error.emplace_back(Pair("error", "Filter not specified"));
         error.emplace_back(Pair("name",     __FUNCTION__));
         return error;
     }
