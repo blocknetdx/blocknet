@@ -68,7 +68,7 @@ public:
 
     bool checkTransaction(const std::string & depositTxId,
                           const std::string & /*destination*/,
-                          const uint64_t & /*amount*/,
+                          double & amount,
                           bool & isGood);
 
     uint32_t lockTime(const char role) const;
@@ -79,12 +79,12 @@ public:
                                    const uint32_t lockTime,
                                    std::vector<unsigned char> & resultSript);
 
-    bool createDepositTransaction(const std::vector<std::pair<std::string, int> > & inputs,
+    bool createDepositTransaction(const std::vector<XTxIn> & inputs,
                                   const std::vector<std::pair<std::string, double> > & outputs,
                                   std::string & txId,
                                   std::string & rawTx);
 
-    bool createRefundTransaction(const std::vector<std::pair<std::string, int> > & inputs,
+    bool createRefundTransaction(const std::vector<XTxIn> & inputs,
                                  const std::vector<std::pair<std::string, double> > & outputs,
                                  const std::vector<unsigned char> & mpubKey,
                                  const std::vector<unsigned char> & mprivKey,
@@ -93,7 +93,7 @@ public:
                                  std::string & txId,
                                  std::string & rawTx);
 
-    bool createPaymentTransaction(const std::vector<std::pair<std::string, int> > & inputs,
+    bool createPaymentTransaction(const std::vector<XTxIn> & inputs,
                                   const std::vector<std::pair<std::string, double> > & outputs,
                                   const std::vector<unsigned char> & mpubKey,
                                   const std::vector<unsigned char> & mprivKey,

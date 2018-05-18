@@ -1487,7 +1487,7 @@ bool Session::Impl::processTransactionCreate(XBridgePacketPtr packet)
 
     // destination address
     uint32_t offset = 72;
-    std::vector<unsigned char> destAddress(packet->data()+offset, packet->data()+offset+20);
+    // std::vector<unsigned char> destAddress(packet->data()+offset, packet->data()+offset+20);
     offset += 20;
 
     uint256 datatxid(packet->data()+offset);
@@ -1553,8 +1553,9 @@ bool Session::Impl::processTransactionCreate(XBridgePacketPtr packet)
             return true;
         }
 
-        bool isGood = false;
-        if (!connTo->checkTransaction(binATxId, std::string(), 0, isGood))
+        bool  isGood       = false;
+        double checkAmount = 0;
+        if (!connTo->checkTransaction(binATxId, std::string(), checkAmount, isGood))
         {
             // move packet to pending
             xapp.processLater(txid, packet);
@@ -1634,13 +1635,13 @@ bool Session::Impl::processTransactionCreate(XBridgePacketPtr packet)
 
     // depositTx
     {
-        std::vector<std::pair<std::string, int> >    inputs;
+        std::vector<xbridge::XTxIn>                  inputs;
         std::vector<std::pair<std::string, double> > outputs;
 
         // inputs
         for (const wallet::UtxoEntry & entry : usedInTx)
         {
-            inputs.push_back(std::make_pair(entry.txId, entry.vout));
+            inputs.emplace_back(entry.txId, entry.vout, entry.amount);
         }
 
         // outputs
@@ -1679,11 +1680,11 @@ bool Session::Impl::processTransactionCreate(XBridgePacketPtr packet)
 
     // refundTx
     {
-        std::vector<std::pair<std::string, int> >    inputs;
+        std::vector<xbridge::XTxIn>                  inputs;
         std::vector<std::pair<std::string, double> > outputs;
 
         // inputs from binTx
-        inputs.push_back(std::make_pair(xtx->binTxId, 0));
+        inputs.emplace_back(xtx->binTxId, 0, outAmount+fee2);
 
         // outputs
         {
@@ -2010,12 +2011,15 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet)
         return true;
     }
 
+    double outAmount   = static_cast<double>(xtx->toAmount)/TransactionDescr::COIN;
+    double checkAmount = outAmount;
+
     // check B deposit tx
     {
         // TODO check tx in blockchain and move packet to pending if not
 
-        bool isGood = false;
-        if (!conn->checkTransaction(binTxId, std::string(), 0, isGood))
+        bool   isGood      = false;
+        if (!conn->checkTransaction(binTxId, std::string(), checkAmount, isGood))
         {
             xapp.processLater(txid, packet);
             return true;
@@ -2032,15 +2036,14 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet)
 
     // payTx
     {
-        std::vector<std::pair<std::string, int> >    inputs;
+        std::vector<xbridge::XTxIn>                  inputs;
         std::vector<std::pair<std::string, double> > outputs;
 
         // inputs from binTx
-        inputs.push_back(std::make_pair(binTxId, 0));
+        inputs.emplace_back(binTxId, 0, checkAmount);
 
         // outputs
         {
-            double outAmount = static_cast<double>(xtx->toAmount)/TransactionDescr::COIN;
             outputs.push_back(std::make_pair(conn->fromXAddr(xtx->to), outAmount));
         }
 
@@ -2249,15 +2252,27 @@ bool Session::Impl::processTransactionConfirmB(XBridgePacketPtr packet)
 
     // payTx
     {
-        std::vector<std::pair<std::string, int> >    inputs;
+        double outAmount   = static_cast<double>(xtx->toAmount)/TransactionDescr::COIN;
+        double checkAmount = outAmount;
+
+        bool isGood = false;
+        if (!conn->checkTransaction(binTxId, std::string(), checkAmount, isGood) || !isGood)
+        {
+            // oops....shit happens, alert needed
+            // this tx already checked before deposit created
+            WARN() << "deposit not found " << binTxId << " " << __FUNCTION__;
+            sendCancelTransaction(xtx, crBadADepositTx);
+            return true;
+        }
+
+        std::vector<xbridge::XTxIn>                  inputs;
         std::vector<std::pair<std::string, double> > outputs;
 
         // inputs from binTx
-        inputs.push_back(std::make_pair(binTxId, 0));
+        inputs.emplace_back(binTxId, 0, checkAmount);
 
         // outputs
         {
-            double outAmount = static_cast<double>(xtx->toAmount)/TransactionDescr::COIN;
             outputs.push_back(std::make_pair(conn->fromXAddr(xtx->to), outAmount));
         }
 

@@ -689,7 +689,7 @@ bool createRawTransaction(const std::string & rpcuser,
                           const std::string & rpcpasswd,
                           const std::string & rpcip,
                           const std::string & rpcport,
-                          const std::vector<std::pair<string, int> > & inputs,
+                          const std::vector<XTxIn> & inputs,
                           const std::vector<std::pair<std::string, double> > & outputs,
                           const uint32_t lockTime,
                           std::string & tx)
@@ -700,11 +700,11 @@ bool createRawTransaction(const std::string & rpcuser,
 
         // inputs
         Array i;
-        for (const std::pair<string, int> & input : inputs)
+        for (const XTxIn & input : inputs)
         {
             Object tmp;
-            tmp.push_back(Pair("txid", input.first));
-            tmp.push_back(Pair("vout", input.second));
+            tmp.push_back(Pair("txid", input.txid));
+            tmp.push_back(Pair("vout", static_cast<int>(input.n)));
 
             i.push_back(tmp);
         }
@@ -1132,6 +1132,92 @@ bool verifyMessage(const std::string & rpcuser, const std::string & rpcpasswd,
 
 } // namespace rpc
 
+namespace
+{
+
+/**
+ * @brief SignatureHash  compute hash of transaction signature
+ * @param scriptCode
+ * @param txTo
+ * @param nIn
+ * @param nHashType
+ * @return hash of transaction signature
+ */
+uint256 SignatureHash(const CScript& scriptCode, const CTransactionPtr & txTo,
+                      unsigned int nIn, int nHashType
+                      /*, const CAmount& amount,
+                       * SigVersion sigversion,
+                       * const PrecomputedTransactionData* cache*/)
+{
+//    if (sigversion == SIGVERSION_WITNESS_V0) {
+//        uint256 hashPrevouts;
+//        uint256 hashSequence;
+//        uint256 hashOutputs;
+
+//        if (!(nHashType & SIGHASH_ANYONECANPAY)) {
+//            hashPrevouts = cache ? cache->hashPrevouts : GetPrevoutHash(txTo);
+//        }
+
+//        if (!(nHashType & SIGHASH_ANYONECANPAY) && (nHashType & 0x1f) != SIGHASH_SINGLE && (nHashType & 0x1f) != SIGHASH_NONE) {
+//            hashSequence = cache ? cache->hashSequence : GetSequenceHash(txTo);
+//        }
+
+
+//        if ((nHashType & 0x1f) != SIGHASH_SINGLE && (nHashType & 0x1f) != SIGHASH_NONE) {
+//            hashOutputs = cache ? cache->hashOutputs : GetOutputsHash(txTo);
+//        } else if ((nHashType & 0x1f) == SIGHASH_SINGLE && nIn < txTo.vout.size()) {
+//            CHashWriter ss(SER_GETHASH, 0);
+//            ss << txTo.vout[nIn];
+//            hashOutputs = ss.GetHash();
+//        }
+
+//        CHashWriter ss(SER_GETHASH, 0);
+//        // Version
+//        ss << txTo.nVersion;
+//        // Input prevouts/nSequence (none/all, depending on flags)
+//        ss << hashPrevouts;
+//        ss << hashSequence;
+//        // The input being signed (replacing the scriptSig with scriptCode + amount)
+//        // The prevout may already be contained in hashPrevout, and the nSequence
+//        // may already be contain in hashSequence.
+//        ss << txTo.vin[nIn].prevout;
+//        ss << static_cast<const CScriptBase&>(scriptCode);
+//        ss << amount;
+//        ss << txTo.vin[nIn].nSequence;
+//        // Outputs (none/one/all, depending on flags)
+//        ss << hashOutputs;
+//        // Locktime
+//        ss << txTo.nLockTime;
+//        // Sighash type
+//        ss << nHashType;
+
+//        return ss.GetHash();
+//    }
+
+    static const uint256 one(uint256S("0000000000000000000000000000000000000000000000000000000000000001"));
+    if (nIn >= txTo->vin.size()) {
+        //  nIn out of range
+        return one;
+    }
+
+    // Check for invalid use of SIGHASH_SINGLE
+    if ((nHashType & 0x1f) == SIGHASH_SINGLE) {
+        if (nIn >= txTo->vout.size()) {
+            //  nOut out of range
+            return one;
+        }
+    }
+
+    // Wrapper to serialize only the necessary parts of the transaction being signed
+    CTransactionSignatureSerializer txTmp(*txTo, scriptCode, nIn, nHashType);
+
+    // Serialize and hash
+    CHashWriter ss(SER_GETHASH, 0);
+    ss << txTmp << nHashType;
+    return ss.GetHash();
+}
+
+} // namespace
 
 //*****************************************************************************
 //*****************************************************************************
@@ -1456,12 +1542,13 @@ double BtcWalletConnector<CryptoProvider>::minTxFee2(const uint32_t inputCount, 
 // return false if deposit tx not found (need wait tx)
 // true if tx found and checked
 // isGood == true id depost tx is OK
+// amount in - for check vout[0].value, out = vout[0].value
 //******************************************************************************
 template <class CryptoProvider>
 bool BtcWalletConnector<CryptoProvider>::checkTransaction(const std::string & depositTxId,
-                                                 const std::string & /*destination*/,
-                                                 const uint64_t & /*amount*/,
-                                                 bool & isGood)
+                                                          const std::string & /*destination*/,
+                                                          double & amount,
+                                                          bool & isGood)
 {
     isGood  = false;
 
@@ -1500,9 +1587,16 @@ bool BtcWalletConnector<CryptoProvider>::checkTransaction(const std::string & de
         }
     }
 
-    // TODO check amount in tx
-
-    isGood = true;
+    // TODO check amount in tx, temporary only first vout
+    json_spirit::Array  vout    = json_spirit::find_value(txo, "vout");
+    json_spirit::Object vout0   = vout[0].get_obj();
+    json_spirit::Value  vamount = json_spirit::find_value(vout0, "value");
+    double receivedAmount = vamount.get_real();
+    if (receivedAmount > amount)
+    {
+        amount = receivedAmount;
+        isGood = true;
+    }
 
     return true;
 }
@@ -1576,10 +1670,10 @@ bool BtcWalletConnector<CryptoProvider>::createDepositUnlockScript(const std::ve
 //******************************************************************************
 //******************************************************************************
 template <class CryptoProvider>
-bool BtcWalletConnector<CryptoProvider>::createDepositTransaction(const std::vector<std::pair<std::string, int> > & inputs,
-                                                         const std::vector<std::pair<std::string, double> > & outputs,
-                                                         std::string & txId,
-                                                         std::string & rawTx)
+bool BtcWalletConnector<CryptoProvider>::createDepositTransaction(const std::vector<XTxIn> & inputs,
+                                                                  const std::vector<std::pair<std::string, double> > & outputs,
+                                                                  std::string & txId,
+                                                                  std::string & rawTx)
 {
     if (!rpc::createRawTransaction(m_user, m_passwd, m_ip, m_port,
                                    inputs, outputs, 0, rawTx))
@@ -1626,7 +1720,7 @@ xbridge::CTransactionPtr createTransaction(const bool txWithTimeField = false)
 
 //******************************************************************************
 //******************************************************************************
-xbridge::CTransactionPtr createTransaction(const std::vector<std::pair<std::string, int> > & inputs,
+xbridge::CTransactionPtr createTransaction(const std::vector<XTxIn> & inputs,
                                            const std::vector<std::pair<std::string, double> >  & outputs,
                                            const uint64_t COIN,
                                            const uint32_t txversion,
@@ -1644,9 +1738,9 @@ xbridge::CTransactionPtr createTransaction(const std::vector<std::pair<std::stri
 //        tx->vin.push_back(CTxIn(COutPoint(uint256(in.first), in.second),
 //                                CScript(), sequence));
 //    }
-    for (const std::pair<std::string, int> & in : inputs)
+    for (const XTxIn & in : inputs)
     {
-        tx->vin.push_back(CTxIn(COutPoint(uint256(in.first), in.second)));
+        tx->vin.push_back(CTxIn(COutPoint(uint256(in.txid), in.n)));
     }
 
     for (const std::pair<std::string, double> & out : outputs)
@@ -1661,14 +1755,14 @@ xbridge::CTransactionPtr createTransaction(const std::vector<std::pair<std::stri
 //******************************************************************************
 //******************************************************************************
 template <class CryptoProvider>
-bool BtcWalletConnector<CryptoProvider>::createRefundTransaction(const std::vector<std::pair<std::string, int> > & inputs,
-                                                        const std::vector<std::pair<std::string, double> > & outputs,
-                                                        const std::vector<unsigned char> & mpubKey,
-                                                        const std::vector<unsigned char> & mprivKey,
-                                                        const std::vector<unsigned char> & innerScript,
-                                                        const uint32_t lockTime,
-                                                        std::string & txId,
-                                                        std::string & rawTx)
+bool BtcWalletConnector<CryptoProvider>::createRefundTransaction(const std::vector<XTxIn> & inputs,
+                                                                 const std::vector<std::pair<std::string, double> > & outputs,
+                                                                 const std::vector<unsigned char> & mpubKey,
+                                                                 const std::vector<unsigned char> & mprivKey,
+                                                                 const std::vector<unsigned char> & innerScript,
+                                                                 const uint32_t lockTime,
+                                                                 std::string & txId,
+                                                                 std::string & rawTx)
 {
     xbridge::CTransactionPtr txUnsigned = createTransaction(inputs, outputs,
                                                             COIN, txVersion,
@@ -1684,7 +1778,7 @@ bool BtcWalletConnector<CryptoProvider>::createRefundTransaction(const std::vect
         tmp << raw << OP_TRUE << inner;
 
         std::vector<unsigned char> signature;
-        uint256 hash = xbridge::SignatureHash2(inner, txUnsigned, 0, SIGHASH_ALL);
+        uint256 hash = SignatureHash(inner, txUnsigned, 0, SIGHASH_ALL);
         if (!sign(mprivKey, hash, signature))
         {
             // cancel transaction
@@ -1731,14 +1825,14 @@ bool BtcWalletConnector<CryptoProvider>::createRefundTransaction(const std::vect
 //******************************************************************************
 //******************************************************************************
 template <class CryptoProvider>
-bool BtcWalletConnector<CryptoProvider>::createPaymentTransaction(const std::vector<std::pair<std::string, int> > & inputs,
-                                                         const std::vector<std::pair<std::string, double> > & outputs,
-                                                         const std::vector<unsigned char> & mpubKey,
-                                                         const std::vector<unsigned char> & mprivKey,
-                                                         const std::vector<unsigned char> & xpubKey,
-                                                         const std::vector<unsigned char> & innerScript,
-                                                         std::string & txId,
-                                                         std::string & rawTx)
+bool BtcWalletConnector<CryptoProvider>::createPaymentTransaction(const std::vector<XTxIn> & inputs,
+                                                                  const std::vector<std::pair<std::string, double> > & outputs,
+                                                                  const std::vector<unsigned char> & mpubKey,
+                                                                  const std::vector<unsigned char> & mprivKey,
+                                                                  const std::vector<unsigned char> & xpubKey,
+                                                                  const std::vector<unsigned char> & innerScript,
+                                                                  std::string & txId,
+                                                                  std::string & rawTx)
 {
     xbridge::CTransactionPtr txUnsigned = createTransaction(inputs, outputs,
                                                             COIN, txVersion,
@@ -1747,7 +1841,7 @@ bool BtcWalletConnector<CryptoProvider>::createPaymentTransaction(const std::vec
     CScript inner(innerScript.begin(), innerScript.end());
 
     std::vector<unsigned char> signature;
-    uint256 hash = xbridge::SignatureHash2(inner, txUnsigned, 0, SIGHASH_ALL);
+    uint256 hash = SignatureHash(inner, txUnsigned, 0, SIGHASH_ALL);
     if (!sign(mprivKey, hash, signature))
     {
         // cancel transaction

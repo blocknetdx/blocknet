@@ -20,7 +20,7 @@
 #include "xbridgewalletconnector.h"
 #include "xbridgewalletconnectorbtc.h"
 #include "xbridgecryptoproviderbtc.h"
-#include "xbridgewalletconnectorbcc.h"
+#include "xbridgewalletconnectorbch.h"
 
 #include <assert.h>
 
@@ -317,7 +317,7 @@ bool App::Impl::start()
                 }
                 else if (wp.method == "BCC")
                 {
-                    conn.reset(new BccWalletConnector);
+                    conn.reset(new BchWalletConnector);
                     *conn = wp;
                 }
 //                else if (wp.method == "RPC")
