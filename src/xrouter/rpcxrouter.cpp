@@ -405,3 +405,25 @@ Value xrSendTransaction(const Array & params, bool fHelp)
     obj.emplace_back(Pair("reply", reply));
     return obj;
 }
+
+Value xrGetReply(const Array & params, bool fHelp)
+{
+    if (fHelp) {
+        throw std::runtime_error("xrGetBalance txdata\nSends signed transaction for selected currency.");
+    }
+
+    if (params.size() < 1)
+    {
+        Object error;
+        error.emplace_back(Pair("error", "UUID not specified"));
+        error.emplace_back(Pair("name",     __FUNCTION__));
+        return error;
+    }
+    
+    std::string id = params[0].get_str();
+    Object result;
+    std::string reply = xrouter::App::instance().getReply(id);
+    Object obj;
+    obj.emplace_back(Pair("reply", reply));
+    return obj;
+}

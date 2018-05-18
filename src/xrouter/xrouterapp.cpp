@@ -1140,6 +1140,24 @@ std::string App::getTransactionsBloomFilter(const std::string & currency, const 
     return this->xrouterCall(xrGetTransactionsBloomFilter, currency, number, filter, confirmations);
 }
 
+std::string App::getReply(const std::string & id)
+{
+    Object result;
+    
+    if(queries[id].size() == 0) {
+        result.emplace_back(Pair("error", "No replies found"));
+        result.emplace_back(Pair("uuid", id));
+        return json_spirit::write_string(Value(result), true);
+    } else {
+        for (uint i = 0; i < queries[id].size(); i++) {
+            std::string cand = queries[id][i];
+            result.emplace_back(Pair("reply" + std::to_string(i+1), cand));
+        }
+        
+        return json_spirit::write_string(Value(result), true);
+    }
+}
+
 std::string App::sendTransaction(const std::string & currency, const std::string & transaction)
 {
     return this->xrouterCall(xrSendTransaction, currency, transaction, "", "1");

@@ -630,6 +630,7 @@ extern json_spirit::Value xrGetAllTransactions(const json_spirit::Array& params,
 extern json_spirit::Value xrGetBalance(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrGetBalanceUpdate(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrGetTransactionsBloomFilter(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value xrGetReply(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrSendTransaction(const json_spirit::Array& params, bool fHelp);
 
 /** @} */

@@ -177,6 +177,13 @@ public:
     std::string getTransactionsBloomFilter(const std::string & currency, const std::string & account, const std::string & number, const std::string & confirmations);
     
     /**
+     * @brief fetches the reply to the giver request
+     * @param id UUID of the query
+     * @return 
+     */
+    std::string getReply(const std::string & id);
+    
+    /**
      * @brief sends raw transaction to the given chain
      * @param currency chain code (BTC, LTC etc)
      * @param transaction raw signed transaction
